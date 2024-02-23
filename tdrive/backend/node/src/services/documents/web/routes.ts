@@ -17,21 +17,21 @@ const routes: FastifyPluginCallback = (fastify: FastifyInstance, _options, next)
   fastify.route({
     method: "GET",
     url: `${serviceUrl}`,
-    preValidation: [fastify.authenticateOptional],
+    preValidation: fastify.authenticateOptional,
     handler: documentsController.listRootFolder.bind(documentsController),
   });
 
   fastify.route({
     method: "GET",
     url: `${serviceUrl}/:id`,
-    preValidation: [fastify.authenticateOptional],
+    preValidation: fastify.authenticateOptional,
     handler: documentsController.get.bind(documentsController),
   });
 
   fastify.route({
     method: "POST",
     url: serviceUrl,
-    preValidation: [fastify.authenticateOptional],
+    preValidation: fastify.authenticateOptional,
     schema: createDocumentSchema,
     handler: documentsController.create.bind(documentsController),
   });
@@ -39,42 +39,42 @@ const routes: FastifyPluginCallback = (fastify: FastifyInstance, _options, next)
   fastify.route({
     method: "POST",
     url: `${serviceUrl}/:id`,
-    preValidation: [fastify.authenticateOptional],
+    preValidation: fastify.authenticateOptional,
     handler: documentsController.update.bind(documentsController),
   });
 
   fastify.route({
     method: "POST",
     url: `${serviceUrl}/:id/level`,
-    preValidation: [fastify.authenticateOptional],
+    preValidation: fastify.authenticateOptional,
     handler: documentsController.updateLevel.bind(documentsController),
   });
 
   fastify.route({
     method: "DELETE",
     url: `${serviceUrl}/:id`,
-    preValidation: [fastify.authenticateOptional],
+    preValidation: fastify.authenticateOptional,
     handler: documentsController.delete.bind(documentsController),
   });
 
   fastify.route({
     method: "POST",
     url: `${serviceUrl}/:id/restore`,
-    preValidation: [fastify.authenticateOptional],
+    preValidation: fastify.authenticateOptional,
     handler: documentsController.restore.bind(documentsController),
   });
 
   fastify.route({
     method: "GET",
     url: `${serviceUrl}/:id/user/:user_id/access`,
-    preValidation: [fastify.authenticateOptional],
+    preValidation: fastify.authenticateOptional,
     handler: documentsController.getAccess.bind(documentsController),
   });
 
   fastify.route({
     method: "POST",
     url: `${serviceUrl}/:id/version`,
-    preValidation: [fastify.authenticateOptional],
+    preValidation: fastify.authenticateOptional,
     schema: createVersionSchema,
     handler: documentsController.createVersion.bind(documentsController),
   });
@@ -82,56 +82,56 @@ const routes: FastifyPluginCallback = (fastify: FastifyInstance, _options, next)
   fastify.route({
     method: "GET",
     url: `${serviceUrl}/download/token`,
-    preValidation: [fastify.authenticateOptional],
+    preValidation: fastify.authenticateOptional,
     handler: documentsController.downloadGetToken.bind(documentsController),
   });
 
   fastify.route({
     method: "GET",
     url: `${serviceUrl}/:id/download`,
-    preValidation: [fastify.authenticate],
+    preValidation: fastify.authenticate,
     handler: documentsController.download.bind(documentsController),
   });
 
   fastify.route({
     method: "GET",
     url: `${serviceUrl}/download/zip`,
-    preValidation: [fastify.authenticate],
+    preValidation: fastify.authenticate,
     handler: documentsController.downloadZip.bind(documentsController),
   });
 
   fastify.route({
     method: "POST",
     url: `${baseUrl}/search`,
-    preValidation: [fastify.authenticate],
+    preValidation: fastify.authenticate,
     handler: documentsController.search.bind(documentsController),
   });
 
   fastify.route({
     method: "POST",
     url: `${baseUrl}/shared-with-me`,
-    preValidation: [fastify.authenticate],
+    preValidation: fastify.authenticate,
     handler: documentsController.sharedWithMe.bind(documentsController),
   });
 
   fastify.route({
     method: "POST",
     url: `${baseUrl}/browse/:id`,
-    preValidation: [fastify.authenticate],
+    preValidation: fastify.authenticate,
     handler: documentsController.browse.bind(documentsController),
   });
 
   fastify.route({
     method: "GET",
     url: `${baseUrl}/tabs/:tab_id`,
-    preValidation: [fastify.authenticate],
+    preValidation: fastify.authenticate,
     handler: documentsController.getTab.bind(documentsController),
   });
 
   fastify.route({
     method: "POST",
     url: `${baseUrl}/tabs/:tab_id`,
-    preValidation: [fastify.authenticate],
+    preValidation: fastify.authenticate,
     handler: documentsController.setTab.bind(documentsController),
   });
 

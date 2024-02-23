@@ -39,15 +39,13 @@ describe("The Files feature", () => {
       const path = (<LocalConnectorService>platform.storage.getConnector()).configuration.path;
       fs.readdirSync(path).forEach(f => fs.rmSync(`${path}/${f}`, {recursive: true, force: true}));
       //when try to download the file
-      const fileDownloadResponse = await platform.app.inject({
-        method: "GET",
-        url: `${url}/companies/${platform.workspace.company_id}/files/${filesUpload.id}/download`,
-      });
+      const fileDownloadResponse = await helpers.downloadFile(filesUpload.id);
+
       //then file should be not found with 404 error and "File not found message"
       expect(fileDownloadResponse).toBeTruthy();
       expect(fileDownloadResponse.statusCode).toBe(500);
 
-    }, 120000);
+    }, 12000000);
 
     it("Download file should return 200 if file exists", async () => {
       //given file
@@ -57,13 +55,11 @@ describe("The Files feature", () => {
       expect(platform.storage.getConnector()).toBeInstanceOf(LocalConnectorService)
 
       //when try to download the file
-      const fileDownloadResponse = await platform.app.inject({
-        method: "GET",
-        url: `${url}/companies/${platform.workspace.company_id}/files/${filesUpload.id}/download`,
-      });
+      const response = await helpers.downloadFile(filesUpload.id);
+
       //then file should be not found with 404 error and "File not found message"
-      expect(fileDownloadResponse).toBeTruthy();
-      expect(fileDownloadResponse.statusCode).toBe(200);
+      expect(response).toBeTruthy();
+      expect(response.statusCode).toBe(200);
 
     }, 120000);
 

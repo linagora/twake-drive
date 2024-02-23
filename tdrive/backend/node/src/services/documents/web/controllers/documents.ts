@@ -300,7 +300,7 @@ export class DocumentsController {
     }>,
   ): Promise<any> => {
     const { id } = request.params;
-    const update = request.body;
+    const update: any = request.body;
 
     if (!id) throw new CrudException("Missing id", 400);
 

@@ -94,6 +94,25 @@ export default class TestHelpers {
         return filesUpload.resource;
     }
 
+    async downloadFile(id: string) {
+        const url = "/internal/services/files/v1";
+        return await this.platform.app.inject({
+            method: "GET",
+            headers: { "authorization": `Bearer ${this.jwt}` },
+            url: `${url}/companies/${this.platform.workspace.company_id}/files/${id}/download`,
+        });
+    }
+
+    async getCompany(companyId: string) {
+        const url = "/internal/services/users/v1";
+
+        return await this.platform.app.inject({
+            method: "GET",
+            headers: { "authorization": `Bearer ${this.jwt}` },
+            url: `${url}/companies/${companyId}`,
+        })
+    }
+
     private getJWTTokenForUser(userId: string): string {
         const payload = {
             sub: userId,

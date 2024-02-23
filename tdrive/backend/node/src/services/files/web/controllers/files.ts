@@ -1,5 +1,5 @@
 import { FastifyReply, FastifyRequest } from "fastify";
-import { Multipart } from "fastify-multipart";
+import { MultipartFile } from "@fastify/multipart";
 import { ResourceDeleteResponse } from "../../../../utils/types";
 import { CompanyExecutionContext } from "../types";
 import { UploadOptions } from "../../types";
@@ -16,11 +16,11 @@ export class FileController {
   ): Promise<{ resource: PublicFile }> {
     const context = getCompanyExecutionContext(request);
 
-    let file: null | Multipart = null;
+    let file: null | MultipartFile = null;
     if (request.isMultipart()) {
       file = await request.file();
     }
-    const q = request.query;
+    const q: any = request.query;
     const options: UploadOptions = {
       totalChunks: parseInt(q.resumableTotalChunks || q.total_chunks) || 1,
       totalSize: parseInt(q.resumableTotalSize || q.total_size) || 0,

@@ -1,6 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Run all e2e [MongoDB]" type="JavaScriptTestRunnerJest">
-    <node-interpreter value="project" />
+    <node-interpreter value="$USER_HOME$/.nvm/versions/node/v20.11.0/bin/node" />
+    <node-options value="--experimental-specifier-resolution=node --experimental-vm-modules" />
     <jest-package value="$PROJECT_DIR$/tdrive/backend/node/node_modules/jest" />
     <working-dir value="$PROJECT_DIR$/tdrive/backend/node" />
     <jest-options value="--forceExit --testTimeout=30000 --maxWorkers=1" />

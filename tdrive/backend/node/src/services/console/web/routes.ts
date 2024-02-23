@@ -39,7 +39,7 @@ const routes: FastifyPluginCallback = (fastify: FastifyInstance, options, next) 
   fastify.route({
     method: "POST",
     url: "/token",
-    preValidation: [fastify.authenticate],
+    preValidation: fastify.authenticate,
     schema: tokenRenewalSchema,
     handler: controller.tokenRenewal.bind(controller),
   });
@@ -47,7 +47,7 @@ const routes: FastifyPluginCallback = (fastify: FastifyInstance, options, next) 
   fastify.route({
     method: "POST",
     url: "/resend-verification-email",
-    preValidation: [fastify.authenticate],
+    preValidation: fastify.authenticate,
     handler: controller.resendVerificationEmail.bind(controller),
   });
 

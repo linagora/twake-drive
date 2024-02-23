@@ -29,7 +29,7 @@ const routes: FastifyPluginCallback = (fastify: FastifyInstance, options, next) 
     method: "GET",
     url: `${usersUrl}/:id`,
     preHandler: accessControl,
-    preValidation: [fastify.authenticate],
+    preValidation: fastify.authenticate,
     schema: getUserSchema,
     handler: usersController.get.bind(usersController),
   });
@@ -47,7 +47,7 @@ const routes: FastifyPluginCallback = (fastify: FastifyInstance, options, next) 
     method: "POST",
     url: `${usersUrl}/me/preferences`,
     preHandler: accessControl,
-    preValidation: [fastify.authenticate],
+    preValidation: fastify.authenticate,
     schema: setUserPreferencesSchema,
     handler: usersController.setPreferences.bind(usersController),
   });
@@ -56,7 +56,7 @@ const routes: FastifyPluginCallback = (fastify: FastifyInstance, options, next) 
     method: "POST",
     url: `${usersUrl}/me`,
     preHandler: accessControl,
-    preValidation: [fastify.authenticate],
+    preValidation: fastify.authenticate,
     schema: setUserPreferencesSchema,
     handler: usersController.save.bind(usersController),
   });
@@ -65,7 +65,7 @@ const routes: FastifyPluginCallback = (fastify: FastifyInstance, options, next) 
     method: "GET",
     url: `${usersUrl}`,
     preHandler: accessControl,
-    preValidation: [fastify.authenticate],
+    preValidation: fastify.authenticate,
     schema: getUsersSchema,
     handler: usersController.list.bind(usersController),
   });
@@ -74,7 +74,7 @@ const routes: FastifyPluginCallback = (fastify: FastifyInstance, options, next) 
     method: "POST",
     url: `${usersUrl}/:companyId/all`,
     preHandler: accessControl,
-    preValidation: [fastify.authenticate],
+    preValidation: fastify.authenticate,
     schema: getUsersSchema,
     handler: usersController.all.bind(usersController),
   });
@@ -84,7 +84,7 @@ const routes: FastifyPluginCallback = (fastify: FastifyInstance, options, next) 
     method: "GET",
     url: `${usersUrl}/:id/companies`,
     preHandler: accessControl,
-    preValidation: [fastify.authenticate],
+    preValidation: fastify.authenticate,
     schema: getUserCompaniesSchema, //Fixme currently not working because we don't know features in advances and so it doesn't pass
     handler: usersController.getUserCompanies.bind(usersController),
   });
@@ -93,7 +93,6 @@ const routes: FastifyPluginCallback = (fastify: FastifyInstance, options, next) 
   fastify.route({
     method: "GET",
     url: "/companies/:id",
-    preValidation: [fastify.authenticateOptional],
     schema: getCompanySchema, //Fixme currently not working because we don't know features in advances and so it doesn't pass
     handler: usersController.getCompany.bind(usersController),
   });
@@ -102,7 +101,7 @@ const routes: FastifyPluginCallback = (fastify: FastifyInstance, options, next) 
     method: "POST",
     url: "/devices",
     preHandler: accessControl,
-    preValidation: [fastify.authenticate],
+    preValidation: fastify.authenticate,
     schema: postDevicesSchema,
     handler: usersController.registerUserDevice.bind(usersController),
   });
@@ -111,7 +110,7 @@ const routes: FastifyPluginCallback = (fastify: FastifyInstance, options, next) 
     method: "GET",
     url: "/devices",
     preHandler: accessControl,
-    preValidation: [fastify.authenticate],
+    preValidation: fastify.authenticate,
     schema: getDevicesSchema,
     handler: usersController.getRegisteredDevices.bind(usersController),
   });
@@ -120,7 +119,7 @@ const routes: FastifyPluginCallback = (fastify: FastifyInstance, options, next) 
     method: "DELETE",
     url: "/devices/:value",
     preHandler: accessControl,
-    preValidation: [fastify.authenticate],
+    preValidation: fastify.authenticate,
     schema: deleteDeviceSchema,
     handler: usersController.deregisterUserDevice.bind(usersController),
   });
@@ -129,7 +128,7 @@ const routes: FastifyPluginCallback = (fastify: FastifyInstance, options, next) 
   fastify.route({
     method: "GET",
     url: "/companies/:id/users/recent",
-    preValidation: [fastify.authenticateOptional],
+    preValidation: fastify.authenticateOptional,
     handler: usersController.recent.bind(usersController),
   });
 

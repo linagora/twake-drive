@@ -8,6 +8,7 @@ import TestHelpers from "../common/common_test_helpers";
 describe("The /users API", () => {
   const url = "/internal/services/users/v1";
   let platform: TestPlatform;
+  let currentUser: TestHelpers;
 
   let testDbService: TestDbService;
 
@@ -15,6 +16,7 @@ describe("The /users API", () => {
 
   beforeEach(async () => {
     platform = await init();
+    currentUser = await TestHelpers.getInstance(platform);
   });
   afterEach(async () => {
     await platform.tearDown();
@@ -315,24 +317,21 @@ describe("The /users API", () => {
 
   describe("The GET /companies/:company_id route", () => {
     it("should 404 when company does not exists", async () => {
-      const response = await platform.app.inject({
-        method: "GET",
-        url: `${url}/companies/11111111-1111-1111-1111-111111111111`,
-      });
+      //when
+      const response = await currentUser.getCompany("11111111-1111-1111-1111-111111111111");
+
+      //then
       expect(response.statusCode).toBe(404);
     });
 
     it("should 200 when company exists", async () => {
-      const companyId = testDbService.company.id;
+      //when
+      const response = await currentUser.getCompany(currentUser.workspace.company_id);
 
-      const response = await platform.app.inject({
-        method: "GET",
-        url: `${url}/companies/${companyId}`,
-      });
+      //then
       expect(response.statusCode).toBe(200);
 
       const json = response.json();
-
       expect(json.resource).toMatchObject({
         id: expect.any(String),
         name: expect.any(String),

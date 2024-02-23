@@ -1,6 +1,6 @@
 import { randomBytes } from "crypto";
 import { Readable } from "stream";
-import { Multipart } from "fastify-multipart";
+import { MultipartFile } from "@fastify/multipart";
 import { UploadOptions } from "../types";
 import { File } from "../entities/file";
 import Repository from "../../../../src/core/platform/services/database/services/orm/repository/repository";
@@ -40,7 +40,7 @@ export class FileServiceImpl {
 
   async save(
     id: string,
-    file: Multipart,
+    file: MultipartFile,
     options: UploadOptions,
     context: CompanyExecutionContext,
   ): Promise<File> {
@@ -311,7 +311,5 @@ export class FileServiceImpl {
 }
 
 function getFilePath(entity: File): string {
-  return `${gr.platformServices.storage.getHomeDir()}/files/${entity.company_id}/${
-    entity.user_id || "anonymous"
-  }/${entity.id}`;
+  return `/files/${entity.company_id}/${entity.user_id || "anonymous"}/${entity.id}`;
 }

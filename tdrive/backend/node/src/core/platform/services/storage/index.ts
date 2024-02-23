@@ -111,6 +111,10 @@ export default class StorageService extends TdriveService<StorageAPI> implements
 
       const chunks = options?.totalChunks || 1;
       let count = 1;
+
+      //check that the file a really exists
+      await self._read(options?.totalChunks ? `${path}/chunk${count}` : path);
+
       let stream: any;
       async function factory(callback: (err?: Error, stream?: Stream) => unknown) {
         if (count > chunks) {
@@ -132,11 +136,11 @@ export default class StorageService extends TdriveService<StorageAPI> implements
           if (decipher) {
             stream = stream.pipe(decipher);
           }
+          callback(null, stream);
         } catch (err) {
           logger.error(err);
           callback(err, null);
         }
-        callback(null, stream);
         return;
       }
 
@@ -159,6 +163,7 @@ export default class StorageService extends TdriveService<StorageAPI> implements
         stream = stream.pipe(decipher);
       } catch (err) {
         logger.error("Unable to createDecipheriv: %s", err);
+        throw err;
       }
     }
     return stream;

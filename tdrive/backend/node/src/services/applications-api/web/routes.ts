@@ -26,8 +26,8 @@ const routes: FastifyPluginCallback = (fastify: FastifyInstance, options, next) 
   fastify.route({
     method: "GET",
     url: "/console/v1/me",
-    preValidation: [fastify.authenticate],
-    preHandler: [checkApplication],
+    preValidation: fastify.authenticate,
+    preHandler: checkApplication,
     handler: controller.me.bind(controller),
   });
 
@@ -35,7 +35,7 @@ const routes: FastifyPluginCallback = (fastify: FastifyInstance, options, next) 
   fastify.route({
     method: "POST",
     url: "/console/v1/configure",
-    preValidation: [fastify.authenticate],
+    preValidation: fastify.authenticate,
     schema: configureRequestSchema,
     handler: controller.configure.bind(controller),
   });
@@ -44,7 +44,7 @@ const routes: FastifyPluginCallback = (fastify: FastifyInstance, options, next) 
   fastify.route({
     method: ["POST", "GET", "DELETE", "PUT"],
     url: "/:service/:version/companies/:company_id/*",
-    preValidation: [fastify.authenticate],
+    preValidation: fastify.authenticate,
     handler: (request, reply) => controller.proxy.bind(controller)(request, reply, fastify),
   });
 
@@ -52,7 +52,7 @@ const routes: FastifyPluginCallback = (fastify: FastifyInstance, options, next) 
   fastify.route({
     method: "POST",
     url: "/sync",
-    preValidation: [fastify.authenticate],
+    preValidation: fastify.authenticate,
     preHandler: [checkApplication],
     handler: controller.syncUsers.bind(controller),
   });

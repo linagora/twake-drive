@@ -3,7 +3,6 @@ import { deserialize } from "class-transformer";
 import { File } from "../../../src/services/files/entities/file";
 import { ResourceUpdateResponse } from "../../../src/utils/types";
 import { init, TestPlatform } from "../setup";
-import { TestDbService } from "../utils.prepare.db";
 import {
   e2e_createDocument,
   e2e_createDocumentFile,
@@ -23,7 +22,6 @@ import {
 describe("the Drive feature", () => {
   let platform: TestPlatform;
   let currentUser: TestHelpers;
-  let dbService: TestDbService;
 
   beforeEach(async () => {
     platform = await init({
@@ -49,7 +47,6 @@ describe("the Drive feature", () => {
       ],
     });
     currentUser = await TestHelpers.getInstance(platform);
-    dbService = await TestDbService.getInstance(platform, true);
   }, 300000000);
 
   afterAll(async () => {
@@ -58,7 +55,6 @@ describe("the Drive feature", () => {
   });
 
   const createItem = async (): Promise<DriveFileMockClass> => {
-    await TestDbService.getInstance(platform, true);
     const scope: "personal" | "shared" = "shared";
     const item = {
       name: "new test file",
@@ -82,8 +78,6 @@ describe("the Drive feature", () => {
   });
 
   it("did fetch the drive item", async () => {
-    await TestDbService.getInstance(platform, true);
-
     const response = await e2e_getDocument(platform, "");
     const result = deserialize<DriveItemDetailsMockClass>(DriveItemDetailsMockClass, response.body);
 
@@ -92,8 +86,6 @@ describe("the Drive feature", () => {
   });
 
   it("did fetch the trash", async () => {
-    await TestDbService.getInstance(platform, true);
-
     const response = await e2e_getDocument(platform, "trash");
     const result = deserialize<DriveItemDetailsMockClass>(DriveItemDetailsMockClass, response.body);
 

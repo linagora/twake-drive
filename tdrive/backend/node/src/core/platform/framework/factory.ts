@@ -20,9 +20,13 @@ class StaticTdriveServiceFactory {
     if (configuration) {
       config = new Configuration(configuration);
     }
-
-    const instance = new module({ configuration: config });
-
+    let instance: T;
+    try {
+      instance = new module({ configuration: config });
+    } catch (e) {
+      e.toLocaleString();
+      throw e;
+    }
     instance.context = context;
 
     return instance;

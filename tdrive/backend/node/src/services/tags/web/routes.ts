@@ -31,7 +31,7 @@ const routes: FastifyPluginCallback = (fastify: FastifyInstance, options, next) 
     method: "GET",
     url: `${tagsUrl}/:tag_id`,
     preHandler: accessControlCompanyOnly,
-    preValidation: [fastify.authenticate],
+    preValidation: fastify.authenticate,
     handler: tagsController.get.bind(tagsController),
   });
 
@@ -39,7 +39,7 @@ const routes: FastifyPluginCallback = (fastify: FastifyInstance, options, next) 
     method: "GET",
     url: tagsUrl,
     preHandler: accessControlCompanyOnly,
-    preValidation: [fastify.authenticate],
+    preValidation: fastify.authenticate,
     handler: tagsController.list.bind(tagsController),
   });
 
@@ -47,7 +47,7 @@ const routes: FastifyPluginCallback = (fastify: FastifyInstance, options, next) 
     method: "POST",
     url: tagsUrl,
     preHandler: accessControlOwnerOrAdmin,
-    preValidation: [fastify.authenticate],
+    preValidation: fastify.authenticate,
     handler: tagsController.save.bind(tagsController),
   });
 
@@ -55,7 +55,7 @@ const routes: FastifyPluginCallback = (fastify: FastifyInstance, options, next) 
     method: "POST",
     url: `${tagsUrl}/:tag_id`,
     preHandler: accessControlOwnerOrAdmin,
-    preValidation: [fastify.authenticate],
+    preValidation: fastify.authenticate,
     handler: tagsController.save.bind(tagsController),
   });
 
@@ -63,7 +63,7 @@ const routes: FastifyPluginCallback = (fastify: FastifyInstance, options, next) 
     method: "DELETE",
     url: `${tagsUrl}/:tag_id`,
     preHandler: accessControlOwnerOrAdmin,
-    preValidation: [fastify.authenticate],
+    preValidation: fastify.authenticate,
     handler: tagsController.delete.bind(tagsController),
   });
 

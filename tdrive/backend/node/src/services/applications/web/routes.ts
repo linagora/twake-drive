@@ -20,7 +20,7 @@ const routes: FastifyPluginCallback = (fastify: FastifyInstance, options, next) 
   fastify.route({
     method: "GET",
     url: `${applicationsUrl}/:application_id`,
-    preValidation: [fastify.authenticate],
+    preValidation: fastify.authenticate,
     // schema: applicationGetSchema,
     handler: applicationController.get.bind(applicationController),
   });
@@ -35,7 +35,7 @@ const routes: FastifyPluginCallback = (fastify: FastifyInstance, options, next) 
   fastify.route({
     method: "GET",
     url: `${companyApplicationsUrl}`,
-    preValidation: [fastify.authenticate],
+    preValidation: fastify.authenticate,
     handler: companyApplicationController.list.bind(companyApplicationController),
   });
 
@@ -43,7 +43,7 @@ const routes: FastifyPluginCallback = (fastify: FastifyInstance, options, next) 
   fastify.route({
     method: "GET",
     url: `${companyApplicationsUrl}/:application_id`,
-    preValidation: [fastify.authenticate],
+    preValidation: fastify.authenticate,
     handler: companyApplicationController.get.bind(companyApplicationController),
   });
 
@@ -51,7 +51,7 @@ const routes: FastifyPluginCallback = (fastify: FastifyInstance, options, next) 
   fastify.route({
     method: "POST",
     url: `${applicationsUrl}/:application_id/event`,
-    preValidation: [fastify.authenticate],
+    preValidation: fastify.authenticate,
     schema: applicationEventHookSchema,
     handler: applicationController.event.bind(applicationController),
   });
