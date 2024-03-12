@@ -20,6 +20,7 @@ export default (props: {
   const { search, result, query } = useSearchUsers({ scope: 'company' });
   const [isFocus, setFocus] = useState(false);
   const inputElement = useRef<HTMLInputElement>(null);
+  const maxUserResultsShown = 5;
 
   useEffect(() => {
     if (users.length) props.onChange(users);
@@ -55,7 +56,7 @@ export default (props: {
                 <Info>{Languages.t('components.user_picker.modal_no_result')}</Info>
               </div>
             )}
-            {_.reverse(result.slice(0, 5)).map((user, i) => {
+            {_.reverse(result.slice(0, maxUserResultsShown)).map((user, i) => {
               return (
                 <div key={user.id} className={"rounded m-1 p-3 new-direct-channel-proposed-user flex flex-row items-center justify-center align-baseline" + (i > 0 ? ' border-t' : '')}>
                   <div className="grow">
@@ -78,6 +79,12 @@ export default (props: {
                   </div>
               );
             })}
+            {result.length > maxUserResultsShown &&
+              <div className='grow text-center italic'>
+                {Languages.t('components.user_picker.modal_results_trucated',
+                  [maxUserResultsShown, result.length],
+                  'First {{$1}} results of {{$2}} shown...')}
+              </div>}
             <div className='-mb-px' />
           </div>
         </div>
