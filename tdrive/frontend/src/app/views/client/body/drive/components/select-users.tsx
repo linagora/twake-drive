@@ -9,12 +9,14 @@ import { SearchIcon } from '@heroicons/react/solid';
 import { Info } from '@atoms/text';
 import Languages from '@features/global/services/languages-service';
 import _ from 'lodash';
+import { DriveFileAccessLevel } from 'app/features/drive/types';
 
 
 export default (props: {
   className?: string;
   onChange: (users: UserType[]) => void;
   initialUsers: UserType[];
+  level: DriveFileAccessLevel;
 }) => {
   const [users, setUsers] = useState<UserType[]>(props.initialUsers);
   const { search, result, query } = useSearchUsers({ scope: 'company' });
@@ -73,7 +75,7 @@ export default (props: {
                       }}
                       size="sm"
                     >
-                      {Languages.t('general.add')}
+                      {Languages.t('components.user_picker.modal.result_add.' + props.level)}
                     </Button>
                   </div>
                   </div>

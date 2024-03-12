@@ -165,6 +165,7 @@ const UserAccessSelector = ({ id, disabled }: { id: string; disabled: boolean })
       <div className="grow">
         <SelectUsers
           className="rounded-r-none"
+          level={level}
           onChange={(users: UserType[]) => {
             const id = users[0]?.id;
             update({
