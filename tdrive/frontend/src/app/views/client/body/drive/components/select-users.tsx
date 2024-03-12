@@ -23,10 +23,40 @@ export default (props: {
   const [isFocus, setFocus] = useState(false);
   const inputElement = useRef<HTMLInputElement>(null);
   const maxUserResultsShown = 5;
+  const [selectedUserKey, setSelectedUserKey] = useState('');
 
   useEffect(() => {
     if (users.length) props.onChange(users);
   }, [users]);
+
+  const shownResults = _.reverse(result.slice(0, maxUserResultsShown));
+  const selectedKeyIndex = shownResults.findIndex(({id}) => id === selectedUserKey);
+
+  const moveSelection = (offset: number) => {
+    if (selectedKeyIndex === -1) {
+      if (offset < 0)
+        setSelectedUserKey(shownResults[shownResults.length - 1].id || '');
+      else if (offset > 0)
+        setSelectedUserKey(shownResults[0].id || '');
+    } else {
+      const nextIndex = (selectedKeyIndex + shownResults.length + offset) % shownResults.length;
+      setSelectedUserKey(shownResults[nextIndex].id || '');
+    }
+  };
+  const doEnterKey = () => {
+    const user = shownResults[selectedKeyIndex];
+    if (user) {
+      setUsers([user]);
+      search('');
+    }
+    setSelectedUserKey('');
+  };
+
+  const keyEvents : { [key: string]: () => void } = {
+    "ArrowUp": () => moveSelection(-1),
+    "ArrowDown": () => moveSelection(1),
+    "Enter": () => doEnterKey(),
+  };
 
   return (
     <div className="w-full relative">
@@ -42,10 +72,19 @@ export default (props: {
                 }
               }, 200);
             }}
+            onKeyDown={(e) => {
+              if (e.code in keyEvents) {
+                keyEvents[e.code]();
+                e.preventDefault();
+              }
+            }}
             placeholder={Languages.t('components.select-users_search_users')}
             className={props.className + ' ' + className + ' w-full'}
             theme="plain"
-            onChange={e => search(e.target.value)}
+            onChange={e => {
+              search(e.target.value);
+              setSelectedUserKey('');
+            }}
             inputRef={inputElement}
           />
         )}
@@ -58,9 +97,11 @@ export default (props: {
                 <Info>{Languages.t('components.user_picker.modal_no_result')}</Info>
               </div>
             )}
-            {_.reverse(result.slice(0, maxUserResultsShown)).map((user, i) => {
+            {shownResults.map((user, i) => {
               return (
-                <div key={user.id} className={"rounded m-1 p-3 new-direct-channel-proposed-user flex flex-row items-center justify-center align-baseline" + (i > 0 ? ' border-t' : '')}>
+                <div key={user.id} className={
+                  "rounded m-1 p-3 new-direct-channel-proposed-user flex flex-row items-center justify-center align-baseline"
+                  + (i === selectedKeyIndex ? ' ring' : (i > 0 && i !== (selectedKeyIndex + 1) ? ' border-t' : ''))}>
                   <div className="grow">
                     <div className='font-bold'>
                     <User data={user} />
@@ -72,6 +113,7 @@ export default (props: {
                       onClick={() => {
                         setUsers([user]);
                         search('');
+                        setSelectedUserKey('');
                       }}
                       size="sm"
                     >
