@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { PublicIcon } from '../components/public-icon';
 import { CheckableIcon, DriveItemProps } from './common';
 import './style.scss';
+import Tooltip from '@components/tooltip/ToolTip';
 
 export const FolderRow = ({
   item,
@@ -50,7 +51,9 @@ export const FolderRow = ({
       </div>
       <div className="shrink-0 ml-4">
         {item?.access_info?.public?.level !== 'none' && (
-          <PublicIcon className="h-5 w-5 text-blue-500" />
+          <Tooltip tooltip="Public access" position="bottom">
+            <PublicIcon className="h-5 w-5 text-blue-500" />         
+          </Tooltip>  
         )}
       </div>
       <div className="shrink-0 ml-4 text-right minWidth80">

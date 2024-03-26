@@ -4,6 +4,7 @@ import AppGrid from '../common/app-grid';
 import Search from '../common/search';
 import { Info } from "@atoms/text";
 import version from '../../../environment/version';
+import Tooltip from '@components/tooltip/ToolTip';
 
 export default ({ openSideMenu }: { openSideMenu: () => void }) => {
   return (
@@ -40,7 +41,9 @@ export default ({ openSideMenu }: { openSideMenu: () => void }) => {
 
       <div className="sm:block hidden grow"></div>
       <div className="sm:block">
-        <AppGrid className="mr-4" />
+        <Tooltip tooltip="Twake apps" position="default">
+          <AppGrid className="mr-4" />
+        </Tooltip>
       </div>
       <Account />
     </div>

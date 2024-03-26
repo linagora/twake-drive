@@ -20,6 +20,7 @@ import {
   useViewerDataLoading,
   useViewerDisplayData,
 } from '@features/viewer/hooks/use-viewer';
+import Tooltip from '@components/tooltip/ToolTip';
 
 let animationTimeout: number = setTimeout(() => undefined);
 
@@ -151,20 +152,20 @@ const Footer = () => {
             {formatSize(status.details?.metadata?.size)}
           </Text.Info>
         </div>
-
         <div className="whitespace-nowrap">
           <Controls type={type} />
-
-          <Button
-            iconSize="lg"
-            className="ml-4 !rounded-full"
-            theme="dark"
-            size="lg"
-            icon={DownloadIcon}
-            onClick={() => {
-              download && (window.location.href = download);
-            }}
-          />
+          <Tooltip tooltip = "Download" position="left">
+            <Button
+              iconSize="lg"
+              className="ml-4 !rounded-full"
+              theme="dark"
+              size="lg"
+              icon={DownloadIcon}
+              onClick={() => {
+                download && (window.location.href = download);
+              }}
+            />
+          </Tooltip>
         </div>
       </div>
     </>

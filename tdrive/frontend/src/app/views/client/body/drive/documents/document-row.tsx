@@ -24,6 +24,7 @@ import './style.scss';
 import { useHistory } from 'react-router-dom';
 import RouterServices from '@features/router/services/router-service';
 import useRouteState from 'app/features/router/hooks/use-route-state';
+import Tooltip from '@components/tooltip/ToolTip';
 
 export const DocumentRow = ({
   item,
@@ -125,7 +126,9 @@ export const DocumentRow = ({
       </div>
       <div className="shrink-0 ml-4">
         {item?.access_info?.public?.level !== 'none' && (
-          <PublicIcon className="h-5 w-5 text-blue-500" />
+          <Tooltip tooltip="Public access" position="bottom">
+            <PublicIcon className="h-5 w-5 text-blue-500" />         
+          </Tooltip>
         )}
       </div>
       <div className="shrink-0 ml-4 text-right minWidth80">
