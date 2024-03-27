@@ -10,6 +10,7 @@ import useRouterCompany from '../../../features/router/hooks/use-router-company'
 import { DriveCurrentFolderAtom } from '../body/drive/browser';
 import { ConfirmDeleteModalAtom } from '../body/drive/modals/confirm-delete';
 import { CreateModal, CreateModalAtom } from '../body/drive/modals/create';
+import { UploadModelAtom, UploadModal } from '../body/drive/modals/upload'
 import { Button } from '@atoms/button/button';
 import Languages from "features/global/services/languages-service";
 import { useCurrentUser } from 'app/features/users/hooks/use-current-user';
@@ -20,6 +21,7 @@ export const CreateModalWithUploadZones = ({ initialParentId }: { initialParentI
   const uploadZoneRef = useRef<UploadZone | null>(null);
   const uploadFolderZoneRef = useRef<UploadZone | null>(null);
   const setCreationModalState = useSetRecoilState(CreateModalAtom);
+  const setUploadModalState = useSetRecoilState(UploadModelAtom);
   const { uploadTree, uploadFromUrl } = useDriveUpload();
   const { user } = useCurrentUser();
   const [parentId, _] = useRecoilState(
@@ -73,7 +75,18 @@ export const CreateModalWithUploadZones = ({ initialParentId }: { initialParentI
             parentId,
           });
         }}
-      />
+    />
+    <UploadModal
+        selectFolderFromDevice={() => uploadFolderZoneRef.current?.open()}
+        selectFromDevice={() => uploadZoneRef.current?.open()}
+        addFromUrl={(url, name) => {
+            setUploadModalState({ parent_id: '', open: false });
+            uploadFromUrl(url, name, {
+                companyId,
+                parentId,
+            });
+        }}
+     />
     </>
   );
 };
@@ -91,10 +104,15 @@ export default () => {
 
   const setConfirmDeleteModalState = useSetRecoilState(ConfirmDeleteModalAtom);
   const setCreationModalState = useSetRecoilState(CreateModalAtom);
+  const setUploadModalState = useSetRecoilState(UploadModelAtom);
 
   const openItemModal = useCallback(() => {
     if (item?.id) setCreationModalState({ open: true, parent_id: item.id });
   }, [item?.id, setCreationModalState]);
+
+  const uploadItemModal = useCallback(() => {
+    if (item?.id) setUploadModalState({ open: true, parent_id: item.id });
+  }, [item?.id, setUploadModalState]);
 
   return (
     <div className="-m-4 overflow-hidden">
@@ -141,9 +159,7 @@ export default () => {
               />
 
               <Button
-                onClick={() => {
-                  uploadZoneRef.current?.open();
-                }}
+                onClick={() => uploadItemModal()}
                 size="lg"
                 theme="primary"
                 className="w-full mb-2 justify-center"

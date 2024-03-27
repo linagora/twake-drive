@@ -85,16 +85,6 @@ export const CreateModal = ({
                 onClick={() => setState({ ...state, type: 'folder' })}
               />
               <CreateModalOption
-                icon={<DocumentDownloadIcon className="w-5 h-5" />}
-                text={Languages.t('components.create_modal.upload_files')}
-                onClick={() => selectFromDevice()}
-              />
-              <CreateModalOption
-                icon={<FolderDownloadIcon className="w-5 h-5" />}
-                text={Languages.t('components.create_modal.upload_folders')}
-                onClick={() => selectFolderFromDevice()}
-              />
-              <CreateModalOption
                 icon={<LinkIcon className="w-5 h-5" />}
                 text={Languages.t('components.create_modal.create_link')}
                 onClick={() => setState({ ...state, type: 'link' })}
