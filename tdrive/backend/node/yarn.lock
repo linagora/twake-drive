@@ -451,7 +451,7 @@
   dependencies:
     fastify-plugin "^3.0.0"
 
-"@fastify/static@^5.0.1":
+"@fastify/static@^5.0.0", "@fastify/static@^5.0.1":
   version "5.0.2"
   resolved "https://registry.npmjs.org/@fastify/static/-/static-5.0.2.tgz"
   integrity sha512-HvyXZ5a7hUHoSBRq9jKUuKIUCkHMkCDcmiAeEmixXlGOx8pEWx3NYOIaiivcjWa6/NLvfdUT+t/jzfVQ2PA7Gw==
@@ -464,10 +464,17 @@
     readable-stream "^3.4.0"
     send "^0.17.1"
 
-"@ffprobe-installer/darwin-arm64@5.0.1":
-  version "5.0.1"
-  resolved "https://registry.npmjs.org/@ffprobe-installer/darwin-arm64/-/darwin-arm64-5.0.1.tgz"
-  integrity sha512-vwNCNjokH8hfkbl6m95zICHwkSzhEvDC3GVBcUp5HX8+4wsX10SP3B+bGur7XUzTIZ4cQpgJmEIAx6TUwRepMg==
+"@fastify/swagger@^6.0.1":
+  version "6.1.1"
+  resolved "https://registry.npmjs.org/@fastify/swagger/-/swagger-6.1.1.tgz"
+  integrity sha512-i+6UzvJf9tWT9+Cg+Tb/sM/+LMGpc2yGh+dvZYM2jT5p71PVK7YiEac93mJpLW9CH3RDOXV70PFey5pWpL6SJA==
+  dependencies:
+    "@fastify/static" "^5.0.0"
+    fastify-plugin "^3.0.0"
+    js-yaml "^4.0.0"
+    json-schema-resolver "^1.3.0"
+    openapi-types "^10.0.0"
+    rfdc "^1.3.0"
 
 "@ffprobe-installer/ffprobe@^1.4.1":
   version "1.4.2"
@@ -482,6 +489,11 @@
     "@ffprobe-installer/linux-x64" "5.1.0"
     "@ffprobe-installer/win32-ia32" "5.1.0"
     "@ffprobe-installer/win32-x64" "5.1.0"
+
+"@ffprobe-installer/linux-x64@5.1.0":
+  version "5.1.0"
+  resolved "https://registry.npmjs.org/@ffprobe-installer/linux-x64/-/linux-x64-5.1.0.tgz"
+  integrity sha512-r7cGOjNb8AMnKAEvz5f8N/WsWsre02LhAfDKZX0m5J0bsrYgs2HUlnnQiwjRCH9CYXYerjYqq592o/GXvxDS+Q==
 
 "@gar/promisify@^1.1.3":
   version "1.1.3"
@@ -507,17 +519,29 @@
   resolved "https://registry.npmjs.org/@humanwhocodes/object-schema/-/object-schema-1.2.1.tgz"
   integrity sha512-ZnQMnLV4e7hDlUvw8H+U8ASL02SS2Gn6+9Ac3wGGLIe7+je2AeAOxPY+izIPJDfFDb7eDjev0Us8MO1iFRN8hA==
 
-"@img/sharp-darwin-arm64@0.33.1":
-  version "0.33.1"
-  resolved "https://registry.npmjs.org/@img/sharp-darwin-arm64/-/sharp-darwin-arm64-0.33.1.tgz"
-  integrity sha512-esr2BZ1x0bo+wl7Gx2hjssYhjrhUsD88VQulI0FrG8/otRQUOxLWHMBd1Y1qo2Gfg2KUvXNpT0ASnV9BzJCexw==
-  optionalDependencies:
-    "@img/sharp-libvips-darwin-arm64" "1.0.0"
-
-"@img/sharp-libvips-darwin-arm64@1.0.0":
+"@img/sharp-libvips-linux-x64@1.0.0":
   version "1.0.0"
-  resolved "https://registry.npmjs.org/@img/sharp-libvips-darwin-arm64/-/sharp-libvips-darwin-arm64-1.0.0.tgz"
-  integrity sha512-VzYd6OwnUR81sInf3alj1wiokY50DjsHz5bvfnsFpxs5tqQxESoHtJO6xyksDs3RIkyhMWq2FufXo6GNSU9BMw==
+  resolved "https://registry.npmjs.org/@img/sharp-libvips-linux-x64/-/sharp-libvips-linux-x64-1.0.0.tgz"
+  integrity sha512-naldaJy4hSVhWBgEjfdBY85CAa4UO+W1nx6a1sWStHZ7EUfNiuBTTN2KUYT5dH1+p/xij1t2QSXfCiFJoC5S/Q==
+
+"@img/sharp-libvips-linuxmusl-x64@1.0.0":
+  version "1.0.0"
+  resolved "https://registry.npmjs.org/@img/sharp-libvips-linuxmusl-x64/-/sharp-libvips-linuxmusl-x64-1.0.0.tgz"
+  integrity sha512-FW8iK6rJrg+X2jKD0Ajhjv6y74lToIBEvkZhl42nZt563FfxkCYacrXZtd+q/sRQDypQLzY5WdLkVTbJoPyqNg==
+
+"@img/sharp-linux-x64@0.33.1":
+  version "0.33.1"
+  resolved "https://registry.npmjs.org/@img/sharp-linux-x64/-/sharp-linux-x64-0.33.1.tgz"
+  integrity sha512-4y8osC0cAc1TRpy02yn5omBeloZZwS62fPZ0WUAYQiLhSFSpWJfY/gMrzKzLcHB9ulUV6ExFiu2elMaixKDbeg==
+  optionalDependencies:
+    "@img/sharp-libvips-linux-x64" "1.0.0"
+
+"@img/sharp-linuxmusl-x64@0.33.1":
+  version "0.33.1"
+  resolved "https://registry.npmjs.org/@img/sharp-linuxmusl-x64/-/sharp-linuxmusl-x64-0.33.1.tgz"
+  integrity sha512-LOGKNu5w8uu1evVqUAUKTix2sQu1XDRIYbsi5Q0c/SrXhvJ4QyOx+GaajxmOg5PZSsSnCYPSmhjHHsRBx06/wQ==
+  optionalDependencies:
+    "@img/sharp-libvips-linuxmusl-x64" "1.0.0"
 
 "@istanbuljs/load-nyc-config@^1.0.0":
   version "1.1.0"
@@ -3586,38 +3610,6 @@ fastify-socket.io@^3.0.0:
   dependencies:
     fastify-plugin "^3.0.0"
 
-"fastify-static-deprecated@npm:fastify-static@4.6.1":
-  version "4.6.1"
-  resolved "https://registry.npmjs.org/fastify-static/-/fastify-static-4.6.1.tgz"
-  integrity sha512-vy7N28U4AMhuOim12ZZWHulEE6OQKtzZbHgiB8Zj4llUuUQXPka0WHAQI3njm1jTCx4W6fixUHfpITxweMtAIA==
-  dependencies:
-    content-disposition "^0.5.3"
-    encoding-negotiator "^2.0.1"
-    fastify-plugin "^3.0.0"
-    glob "^7.1.4"
-    p-limit "^3.1.0"
-    readable-stream "^3.4.0"
-    send "^0.17.1"
-
-fastify-static@^4.0.0, fastify-static@^4.7.0:
-  version "4.7.0"
-  resolved "https://registry.npmjs.org/fastify-static/-/fastify-static-4.7.0.tgz"
-  integrity sha512-zZhCfJv/hkmud2qhWqpU3K9XVAuy3+IV8Tp9BC5J5U+GyA2XwoB6h8lh9GqpEIqdXOw01WyWQllV7dOWVyAlXg==
-  dependencies:
-    fastify-static-deprecated "npm:fastify-static@4.6.1"
-    process-warning "^1.0.0"
-
-fastify-swagger@^4.12.6:
-  version "4.17.1"
-  resolved "https://registry.npmjs.org/fastify-swagger/-/fastify-swagger-4.17.1.tgz"
-  integrity sha512-VUo8W7C+YIw/e+YbNTc15Nhl5xa9MpRMPFDKkRgwvgh0cn1mvGgT34sk77mlDclKwiEO471ayW+EFSL0OYXE1A==
-  dependencies:
-    fastify-plugin "^3.0.0"
-    fastify-static "^4.0.0"
-    js-yaml "^4.0.0"
-    json-schema-resolver "^1.3.0"
-    openapi-types "^10.0.0"
-
 fastify-websocket@^2.0.11:
   version "2.1.0"
   resolved "https://registry.npmjs.org/fastify-websocket/-/fastify-websocket-2.1.0.tgz"
@@ -3865,11 +3857,6 @@ fs.realpath@^1.0.0:
   version "1.0.0"
   resolved "https://registry.npmjs.org/fs.realpath/-/fs.realpath-1.0.0.tgz"
   integrity sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw==
-
-fsevents@^2.3.2, fsevents@~2.3.2:
-  version "2.3.2"
-  resolved "https://registry.npmjs.org/fsevents/-/fsevents-2.3.2.tgz"
-  integrity sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==
 
 function-bind@^1.1.1:
   version "1.1.1"
@@ -6907,7 +6894,7 @@ reusify@^1.0.0, reusify@^1.0.4:
   resolved "https://registry.npmjs.org/reusify/-/reusify-1.0.4.tgz"
   integrity sha512-U9nH88a3fc/ekCF1l0/UP1IosiuIjyTh7hBvXVMHYgVcfGvt897Xguj2UOLDeI5BG2m7/uwyaLVT6fbtCwTyzw==
 
-rfdc@^1.1.4, rfdc@^1.2.0:
+rfdc@^1.1.4, rfdc@^1.2.0, rfdc@^1.3.0:
   version "1.3.0"
   resolved "https://registry.npmjs.org/rfdc/-/rfdc-1.3.0.tgz"
   integrity sha512-V2hovdzFbOi77/WajaSMXk2OLm+xNIeQdMMuB7icj7bk6zi2F8GGAxigcnDFpJHbNyNcgyJDiP+8nOrY5cZGrA==
