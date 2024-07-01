@@ -4,6 +4,7 @@ import apiService from '@/services/api.service';
 import driveService from '@/services/drive.service';
 import fileService from '@/services/file.service';
 import loggerService from '@/services/logger.service';
+import onlyofficeService, * as OnlyOffice from '@/services/onlyoffice.service';
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
@@ -21,7 +22,16 @@ interface SaveRequestBody {
   users: string[];
 }
 
+/** These expose a OnlyOffice document storage service methods, called by the OnlyOffice document editing service
+ * to load and save files
+ */
 class OnlyOfficeController {
+  /**
+   * Get a file from Twake Drive backend, and proxy it back the previewer/editor (via the document editing service).
+   *
+   * Parameters are standard Express middleware.
+   * @see https://api.onlyoffice.com/editors/open
+   */
   public read = async (req: Request<{}, {}, {}, RequestQuery>, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { token } = req.query;
@@ -55,6 +65,13 @@ class OnlyOfficeController {
     }
   };
 
+  /**
+   * Receive a file from OnlyOffice document editing service and save it into Twake Drive backend
+   *
+   * Parameters are standard Express middleware.
+   * @see https://api.onlyoffice.com/editors/save
+   * @see https://api.onlyoffice.com/editors/callback
+   */
   public save = async (req: Request<{}, {}, SaveRequestBody, RequestQuery>, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { url, key } = req.body;
@@ -113,7 +130,9 @@ class OnlyOfficeController {
         });
       } else {
         loggerService.error('URL not present, force saving file');
-        await apiService.runCommand('forcesave', key);
+        await onlyofficeService.forceSave(key).catch(error => {
+          loggerService.warn("Expected error while force saving without changes (ignored):", error);
+        });
       }
 
       res.send({
