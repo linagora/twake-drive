@@ -88,12 +88,19 @@ export class PostgresQueryBuilder {
     if (whereClause && whereClause.endsWith("AND ")) whereClause = whereClause.slice(0, -4);
 
     // ==== ORDER BY =====
-    const orderByClause = `${entityDefinition.options.primaryKey
+    let orderByClause = `${entityDefinition.options.primaryKey
       .slice(1)
       .map(
         (key: string) =>
           `${key} ${(columnsDefinition[key].options.order || "ASC") === "ASC" ? "DESC" : "ASC"}`,
       )}`;
+
+    // ==== ORDER BY CUSTOM COLUMN =====
+    if (options?.sort) {
+      orderByClause = Object.keys(options.sort)
+        .map(key => `${key} ${options.sort[key].toUpperCase()}`)
+        .join(", ");
+    }
 
     // ==== PAGING =====
     let limit = 100;

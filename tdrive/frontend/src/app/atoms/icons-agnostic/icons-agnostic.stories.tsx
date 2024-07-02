@@ -22,6 +22,7 @@ import {
   StatusCheckIcon,
   UsersIcon,
   CheckOutlineIcon,
+  SortIcon,
 } from '@atoms/icons-agnostic/index';
 
 export default {
@@ -69,6 +70,7 @@ const Template: ComponentStory<any> = () => {
         <Icon icon={<StatusCheckDoubleIcon />} title="StatusCheckDouble" />
         <Icon icon={<StatusCheckIcon />} title="StatusCheck" />
         <Icon icon={<UsersIcon />} title="Users" />
+        <Icon icon={<SortIcon />} title="Sort" />
       </div>
     </>
   );

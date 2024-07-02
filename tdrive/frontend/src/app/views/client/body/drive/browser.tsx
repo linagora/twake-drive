@@ -7,7 +7,7 @@ import UploadZone from '@components/uploads/upload-zone';
 import { setTdriveTabToken } from '@features/drive/api-client/api-client';
 import { useDriveItem } from '@features/drive/hooks/use-drive-item';
 import { useDriveUpload } from '@features/drive/hooks/use-drive-upload';
-import { DriveItemSelectedList } from '@features/drive/state/store';
+import { DriveItemSelectedList, DriveItemSort } from '@features/drive/state/store';
 import { formatBytes } from '@features/drive/utils';
 import useRouterCompany from '@features/router/hooks/use-router-company';
 import _ from 'lodash';
@@ -19,9 +19,11 @@ import {
   useOnBuildFileTypeContextMenu,
   useOnBuildPeopleContextMenu,
   useOnBuildDateContextMenu,
+  useOnBuildSortContextMenu,
 } from './context-menu';
 import {DocumentRow, DocumentRowOverlay} from './documents/document-row';
 import { FolderRow } from './documents/folder-row';
+import { FolderRowSkeleton } from './documents/folder-row-skeleton';
 import HeaderPath from './header-path';
 import { ConfirmDeleteModal } from './modals/confirm-delete';
 import { ConfirmTrashModal } from './modals/confirm-trash';
@@ -46,6 +48,8 @@ import { ConfirmModalAtom } from './modals/confirm-move/index';
 import { useCurrentUser } from 'app/features/users/hooks/use-current-user';
 import { ConfirmModal } from './modals/confirm-move';
 import { useHistory } from 'react-router-dom';
+import { SortIcon } from 'app/atoms/icons-agnostic';
+import { useDrivePreview, useDrivePreviewLoading } from 'app/features/drive/hooks/use-drive-preview';
 
 export const DriveCurrentFolderAtom = atomFamily<
     string,
@@ -70,18 +74,30 @@ export default memo(
     const { user } = useCurrentUser();
     const companyId = useRouterCompany();
     const history = useHistory();
-    const role = user ? (user?.companies || []).find(company => company?.company.id === companyId)?.role : "member";
+    const role = user
+      ? (user?.companies || []).find(company => company?.company.id === companyId)?.role
+      : 'member';
     setTdriveTabToken(tdriveTabContextToken || null);
     const [filter, __] = useRecoilState(SharedWithMeFilterState);
-    const { viewId, dirId } = useRouteState();
+    const { viewId, dirId, itemId } = useRouteState();
+    const { status } = useDrivePreview();
+    const { openWithId, close } = useDrivePreview();
+    const { loading: isModalLoading } = useDrivePreviewLoading();
     const [parentId, _setParentId] = useRecoilState(
-      DriveCurrentFolderAtom({ context: context, initialFolderId: dirId || viewId || initialParentId || 'user_'+user?.id }),
+      DriveCurrentFolderAtom({
+        context: context,
+        initialFolderId: dirId || viewId || initialParentId || 'user_' + user?.id,
+      }),
     );
 
     // set the initial view to the user's home directory
     useEffect(() => {
-      !dirId && !viewId && history.push(RouterServices.generateRouteFromState({viewId: parentId}));
+      !dirId &&
+        !viewId &&
+        history.push(RouterServices.generateRouteFromState({ viewId: parentId }));
     }, [viewId, dirId]);
+
+
 
     const [loadingParentChange, setLoadingParentChange] = useState(false);
     const {
@@ -94,6 +110,7 @@ export default memo(
       children,
       loading: loadingParent,
       path,
+      loadNextPage,
     } = useDriveItem(parentId);
     const { uploadTree } = useDriveUpload();
 
@@ -131,10 +148,6 @@ export default memo(
       if (item?.id) setUploadModalState({ open: true, parent_id: item.id });
     }, [item?.id, setUploadModalState]);
 
-    const selectedCount = Object.values(checked).filter(v => v).length;
-    const folders = children
-      .filter(i => i.is_directory)
-      .sort((a, b) => a.name.localeCompare(b.name));
     const documents = (
       item?.is_directory === false
         ? //We use this hack for public shared single file
@@ -142,27 +155,28 @@ export default memo(
           ? [item]
           : []
         : children
-    )
-      .filter(i => !i.is_directory)
-      .sort((a, b) => a.name.localeCompare(b.name));
+    ).filter(i => !i.is_directory);
+
+    const selectedCount = Object.values(checked).filter(v => v).length;
 
     const onBuildContextMenu = useOnBuildContextMenu(children, initialParentId);
+    const onBuildSortContextMenu = useOnBuildSortContextMenu();
 
-    const handleDragOver = (event: { preventDefault: () => void; }) => {
+    const handleDragOver = (event: { preventDefault: () => void }) => {
       event.preventDefault();
-    }
-    const handleDrop = async (event: {dataTransfer: any; preventDefault: () => void;}) => {
+    };
+    const handleDrop = async (event: { dataTransfer: any; preventDefault: () => void }) => {
       event.preventDefault();
       const dataTransfer = event.dataTransfer;
-              if (dataTransfer) {
-                const tree = await getFilesTree(dataTransfer);
-                setCreationModalState({ parent_id: '', open: false });
-                await uploadTree(tree, {
-                  companyId,
-                  parentId,
-              });
-              }
-    }
+      if (dataTransfer) {
+        const tree = await getFilesTree(dataTransfer);
+        setCreationModalState({ parent_id: '', open: false });
+        await uploadTree(tree, {
+          companyId,
+          parentId,
+        });
+      }
+    };
 
     const buildFileTypeContextMenu = useOnBuildFileTypeContextMenu();
     const buildPeopleContextMen = useOnBuildPeopleContextMenu();
@@ -170,24 +184,24 @@ export default memo(
     const setConfirmModalState = useSetRecoilState(ConfirmModalAtom);
     const [activeIndex, setActiveIndex] = useState(null);
     const [activeChild, setActiveChild] = useState(null);
-    const {update} = useDriveActions();
+    const { update } = useDriveActions();
     const sensors = useSensors(
       useSensor(PointerSensor, {
         activationConstraint: {
           distance: 8,
         },
-      })
+      }),
     );
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-    function handleDragStart(event:any) {
+    function handleDragStart(event: any) {
       setActiveIndex(event.active.id);
       setActiveChild(event.active.data.current.child.props.item);
     }
-    function handleDragEnd(event:any) {
+    function handleDragEnd(event: any) {
       setActiveIndex(null);
       setActiveChild(null);
-      if (event.over){
+      if (event.over) {
         setConfirmModalState({
           open: true,
           parent_id: inTrash ? 'root' : event.over.data.current.child.props.item.id,
@@ -204,35 +218,49 @@ export default memo(
               event.active.data.current.child.props.item.parent_id,
             );
           },
-        })
+        });
       }
-
     }
 
     function draggableMarkup(index: number, child: any) {
       const commonProps = {
         key: index,
         className:
-            (index === 0 ? 'rounded-t-md ' : '') +
-            (index === documents.length - 1 ? 'rounded-b-md ' : ''),
+          (index === 0 ? 'rounded-t-md ' : '') +
+          (index === documents.length - 1 ? 'rounded-b-md ' : ''),
         item: child,
         checked: checked[child.id] || false,
-        onCheck: (v: boolean) =>
-            setChecked(_.pickBy({ ...checked, [child.id]: v }, _.identity)),
+        onCheck: (v: boolean) => setChecked(_.pickBy({ ...checked, [child.id]: v }, _.identity)),
         onBuildContextMenu: () => onBuildContextMenu(details, child),
         inPublicSharing,
       };
-      return (
-          isMobile ? (
-            <DocumentRow {...commonProps} />
-          ) : (
-            <Draggable id={index} key={index}>
-              <DocumentRow {...commonProps} />
-            </Draggable>
-          )
+      return isMobile ? (
+        <DocumentRow {...commonProps} />
+      ) : (
+        <Draggable id={index}>
+          <DocumentRow {...commonProps} />
+        </Draggable>
       );
     }
 
+    // Infinite scroll
+    const scrollViwer = useRef<HTMLDivElement>(null);
+
+    const handleScroll = async () => {
+      const scrollTop = scrollViwer.current?.scrollTop || 0;
+      const scrollHeight = scrollViwer.current?.scrollHeight || 0;
+      const clientHeight = scrollViwer.current?.clientHeight || 0;
+      if (scrollTop > 0 && scrollTop + clientHeight >= scrollHeight) {
+        await loadNextPage(parentId);
+      }
+    };
+
+    useEffect(() => {
+      scrollViwer.current?.addEventListener('scroll', handleScroll, { passive: true });
+      return () => {
+        scrollViwer.current?.removeEventListener('scroll', handleScroll);
+      };
+    }, [parentId]);
 
     return (
       <>
@@ -363,6 +391,15 @@ export default memo(
                     {formatBytes(item?.size || 0)} {Languages.t('scenes.app.drive.used')}
                   </BaseSmall>
                 )}
+                <Menu menu={() => onBuildSortContextMenu()}>
+                  {' '}
+                  <Button theme="outline" className="ml-4 flex flex-row items-center">
+                    <SortIcon className="h-4 w-4 mr-2 -ml-1" />
+                    <span>By date</span>
+
+                    <ChevronDownIcon className="h-4 w-4 ml-2 -mr-1" />
+                  </Button>
+                </Menu>
                 {viewId !== 'shared_with_me' && (
                   <Menu menu={() => onBuildContextMenu(details)}>
                     {' '}
@@ -380,76 +417,47 @@ export default memo(
               </div>
 
               <DndContext sensors={sensors} onDragEnd={handleDragEnd} onDragStart={handleDragStart}>
-                <div className="grow overflow-auto">
-                  {folders.length > 0 && (
-                    <>
-                      <Title className="mb-2 block">
-                        {Languages.t('scenes.app.drive.folders')}
-                      </Title>
-
-                      {folders.map((child, index) => (
-                        <Droppable id={index} key={index}>
-                          <FolderRow
-                            key={index}
-                            className={
-                              (index === 0 ? 'rounded-t-md ' : '') +
-                              (index === folders.length - 1 ? 'rounded-b-md ' : '')
-                            }
-                            item={child}
-                            onClick={() => {
-                              const route = RouterServices.generateRouteFromState({
-                                dirId: child.id,
-                              });
-                              history.push(route);
-                              if (inPublicSharing) return setParentId(child.id);
-                            }}
-                            checked={checked[child.id] || false}
-                            onCheck={v =>
-                              setChecked(_.pickBy({ ...checked, [child.id]: v }, _.identity))
-                            }
-                            onBuildContextMenu={() => onBuildContextMenu(details, child)}
-                          />
-                        </Droppable>
-                      ))}
-                      <div className="my-6" />
-                    </>
+                <div className="grow overflow-auto" ref={scrollViwer}>
+                  {children.map((child, index) =>
+                    child.is_directory ? (
+                      <Droppable id={index} key={index}>
+                        <FolderRow
+                          key={index}
+                          className={
+                            (index === 0 ? 'rounded-t-md ' : '') +
+                            (index === children.length - 1 ? 'rounded-b-md ' : '')
+                          }
+                          item={child}
+                          onClick={() => {
+                            const route = RouterServices.generateRouteFromState({
+                              dirId: child.id,
+                            });
+                            history.push(route);
+                            if (inPublicSharing) return setParentId(child.id);
+                          }}
+                          checked={checked[child.id] || false}
+                          onCheck={v =>
+                            setChecked(_.pickBy({ ...checked, [child.id]: v }, _.identity))
+                          }
+                          onBuildContextMenu={() => onBuildContextMenu(details, child)}
+                        />
+                      </Droppable>
+                    ) : (
+                      draggableMarkup(index, child)
+                    ),
                   )}
-
-                  <Title className="mb-2 block">{Languages.t('scenes.app.drive.documents')}</Title>
-
-                  {documents.length === 0 && !loading && (
-                    <div className="mt-4 text-center border-2 border-dashed rounded-md p-8">
-                      <Subtitle className="block mb-2">
-                        {Languages.t('scenes.app.drive.nothing')}
-                      </Subtitle>
-                      {!inTrash && access != 'read' && (
-                        <>
-                          <Base>{Languages.t('scenes.app.drive.drag_and_drop')}</Base>
-                          <br />
-                          <Button
-                            onClick={() => uploadItemModal()}
-                            theme="primary"
-                            className="mt-4"
-                          >
-                            {Languages.t('scenes.app.drive.add_doc')}
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  )}
-
-                  {documents.map((child, index) => draggableMarkup(index, child))}
                   <DragOverlay>
                     {activeIndex ? (
                       <DocumentRowOverlay
                         className={
                           (activeIndex === 0 ? 'rounded-t-md ' : '') +
-                          (activeIndex === documents.length - 1 ? 'rounded-b-md ' : '')
+                          (activeIndex === children.length - 1 ? 'rounded-b-md ' : '')
                         }
                         item={activeChild}
                       ></DocumentRowOverlay>
                     ) : null}
                   </DragOverlay>
+                  {loading && <FolderRowSkeleton />}
                 </div>
               </DndContext>
             </div>

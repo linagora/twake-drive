@@ -22,6 +22,12 @@ export type inType = [string, Array<any>];
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type likeType = [string, any];
 
+type SortDirection = "asc" | "desc";
+
+type SortOption = {
+  [field: string]: SortDirection;
+};
+
 export type FindOptions = {
   pagination?: Pagination;
   $lt?: comparisonType[];
@@ -34,6 +40,7 @@ export type FindOptions = {
   $in?: inType[];
   $nin?: inType[];
   $like?: likeType[];
+  sort?: SortOption;
 };
 
 /**

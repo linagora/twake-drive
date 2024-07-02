@@ -1,9 +1,9 @@
 import { ToasterService } from '@features/global/services/toaster-service';
 import { LoadingStateInitTrue } from '@features/global/state/atoms/Loading';
 import useRouterCompany from '@features/router/hooks/use-router-company';
-import { useCallback } from 'react';
-import { useRecoilState, useRecoilValue } from 'recoil';
-import { DriveItemAtom, DriveItemChildrenAtom } from '../state/store';
+import { useCallback, useState } from 'react';
+import { useRecoilCallback, useRecoilState, useRecoilValue } from 'recoil';
+import { DriveItemAtom, DriveItemChildrenAtom, DriveItemPagination } from '../state/store';
 import { DriveItem } from '../types';
 import { useDriveActions } from './use-drive-actions';
 import { useDriveUpload } from './use-drive-upload';
@@ -17,8 +17,10 @@ import short from 'short-uuid';
 export const useDriveItem = (id: string) => {
   const companyId = useRouterCompany();
   const item = useRecoilValue(DriveItemAtom(id));
-  const children = useRecoilValue(DriveItemChildrenAtom(id));
+  // const children = useRecoilValue(DriveItemChildrenAtom(id));
+  const [children, setChildren] = useRecoilState(DriveItemChildrenAtom(id));
   const [loading, setLoading] = useRecoilState(LoadingStateInitTrue('useDriveItem-' + id));
+  const [_, setPaginateItem] = useRecoilState(DriveItemPagination);
   const {
     refresh: refreshItem,
     create,
@@ -26,19 +28,20 @@ export const useDriveItem = (id: string) => {
     updateLevel: _updateLevel,
     remove: _remove,
     restore: _restore,
+    nextPage,
   } = useDriveActions();
   const { uploadVersion: _uploadVersion } = useDriveUpload();
-
   const refresh = useCallback(
-    async (parentId: string) => {
+    async (parentId: string, resetPagination?: boolean) => {
       setLoading(true);
       try {
-        await refreshItem(parentId);
+        setPaginateItem(prev => ({ ...prev, page: 0 }));
+        await refreshItem(parentId, resetPagination);
       } finally {
         setLoading(false);
       }
     },
-    [setLoading, refreshItem],
+    [id, setLoading, refreshItem],
   );
 
   const remove = useCallback(async () => {
@@ -100,6 +103,44 @@ export const useDriveItem = (id: string) => {
     [companyId, id, setLoading, refresh, item?.item?.parent_id],
   );
 
+  const loadNextPage = useRecoilCallback(
+    ({ set, snapshot }) =>
+      async (id: string) => {
+        // get current pagination state
+        const pagination = await snapshot.getPromise(DriveItemPagination);
+
+        // if end is true, do not load more
+        if (pagination.lastPage === true) return;
+        setLoading(true);
+
+        try {
+          const details = await nextPage(id);
+          if (details.children.length === 0) {
+            set(DriveItemPagination, prev => ({
+              ...prev,
+              lastPage: true,
+            }));
+          }
+          setChildren(prev => [...prev, ...details.children]);
+        } catch (e) {
+          // set pagination end to true
+          set(DriveItemPagination, prev => ({
+            ...prev,
+            lastPage: true,
+          }));
+          console.log('error loading next page: ', e);
+          ToasterService.error('Unable to load more items.');
+        } finally {
+          set(DriveItemPagination, prev => ({
+            ...prev,
+            page: (prev.page + prev.limit),
+          }));
+        }
+        setLoading(false);
+      },
+    [id, nextPage],
+  );
+
   const inTrash =
     id.includes('trash') ||
     item?.path?.some(i => i?.parent_id?.includes('trash')) ||
@@ -123,6 +164,7 @@ export const useDriveItem = (id: string) => {
     updateLevel,
     remove,
     refresh,
+    loadNextPage,
   };
 };
 

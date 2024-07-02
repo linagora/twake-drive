@@ -29,8 +29,10 @@ import {
   DriveFileAccessLevel,
   DriveItemDetails,
   DriveTdriveTab,
+  PaginateDocumentBody,
   RootType,
   SearchDocumentsOptions,
+  SortDocumentsBody,
   TrashType,
 } from "../types";
 import {
@@ -104,6 +106,8 @@ export class DocumentsService {
   browse = async (
     id: string,
     options: SearchDocumentsOptions,
+    sort: SortDocumentsBody,
+    paginate: PaginateDocumentBody,
     context: DriveExecutionContext & { public_token?: string },
   ): Promise<BrowseDetails> => {
     if (isSharedWithMeFolder(id)) {
@@ -111,7 +115,7 @@ export class DocumentsService {
     } else {
       return {
         nextPage: null,
-        ...(await this.get(id, context)),
+        ...(await this.get(id, context, sort, paginate)),
       };
     }
   };
@@ -153,6 +157,8 @@ export class DocumentsService {
   get = async (
     id: string,
     context: DriveExecutionContext & { public_token?: string },
+    sort?: SortDocumentsBody,
+    paginate?: PaginateDocumentBody,
   ): Promise<DriveItemDetails> => {
     if (!context) {
       this.logger.error("invalid context");
@@ -205,7 +211,20 @@ export class DocumentsService {
           )
         ).getEntities();
 
+    const sortFieldMapping = {
+      directory: "is_directory",
+      name: "name",
+      date: "added",
+      shared: "scope",
+      sized: "size",
+    };
+    const sortField = {};
+    sortField[sortFieldMapping[sort?.by] || "is_directory"] = sort?.order || "asc";
+    const dbType = await globalResolver.database.getConnector().getType();
+    const dbOffset = dbType === "mongodb" ? 0 : 1;
     //Get children if it is a directory
+    let pagination: Pagination;
+    if (paginate) pagination = new Pagination(`${paginate?.page || dbOffset}`, `${paginate.limit}`, false);
     let children = isDirectory
       ? (
           await this.repository.find(
@@ -228,7 +247,10 @@ export class DocumentsService {
                     is_in_trash: false,
                   }),
             },
-            {},
+            {
+              sort: sortField,
+              pagination,
+            },
             context,
           )
         ).getEntities()

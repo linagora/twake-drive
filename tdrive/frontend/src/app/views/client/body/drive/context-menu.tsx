@@ -15,7 +15,7 @@ import { DriveApiClient, getPublicLinkToken } from '@features/drive/api-client/a
 import { useDriveActions } from '@features/drive/hooks/use-drive-actions';
 import { getPublicLink } from '@features/drive/hooks/use-drive-item';
 import { useDrivePreview } from '@features/drive/hooks/use-drive-preview';
-import { DriveItemSelectedList } from '@features/drive/state/store';
+import { DriveItemSelectedList, DriveItemSort } from '@features/drive/state/store';
 import { DriveItem, DriveItemDetails } from '@features/drive/types';
 import { ToasterService } from '@features/global/services/toaster-service';
 import { copyToClipboard } from '@features/global/utils/CopyClipboard';
@@ -24,7 +24,7 @@ import { getCurrentUserList } from '@features/users/hooks/use-user-list';
 import useRouteState from 'app/features/router/hooks/use-route-state';
 import RouterServices from '@features/router/services/router-service';
 import useRouterCompany from '@features/router/hooks/use-router-company';
-import _ from 'lodash';
+import _, { set } from 'lodash';
 import Languages from 'features/global/services/languages-service';
 import { hasAnyPublicLinkAccess } from '@features/files/utils/access-info-helpers';
 
@@ -518,4 +518,114 @@ export const useOnBuildFileContextMenu = () => {
     },
     [download, preview],
   );
+};
+
+export const useOnBuildSortContextMenu = () => {
+  const [sortItem, setSortItem] = useRecoilState(DriveItemSort);
+  return useCallback(() => {
+    const menuItems = [
+      {
+        type: 'menu',
+        text: 'Directory',
+        icon: sortItem.by === 'directory' ? 'check' : 'sort-check',
+        onClick: () => {
+          // keep the old value for sortItem and change the by value
+          setSortItem(prevSortItem => {
+            const newSortItem = {
+              ...prevSortItem,
+              by: 'directory',
+            };
+            return newSortItem;
+          });
+        },
+      },
+      {
+        type: 'menu',
+        text: 'Date',
+        icon: sortItem.by === 'date' ? 'check' : 'sort-check',
+        onClick: () => {
+          // keep the old value for sortItem and change the by value
+          setSortItem(prevSortItem => {
+            const newSortItem = {
+              ...prevSortItem,
+              by: 'date',
+            };
+            return newSortItem;
+          });
+        },
+      },
+      {
+        type: 'menu',
+        text: 'Name',
+        icon: sortItem.by === 'name' ? 'check' : 'sort-check',
+        onClick: () => {
+          setSortItem(prevSortItem => {
+            const newSortItem = {
+              ...prevSortItem,
+              by: 'name',
+            };
+            return newSortItem;
+          });
+        },
+      },
+      {
+        type: 'menu',
+        text: 'Size',
+        icon: sortItem.by === 'size' ? 'check' : 'sort-check',
+        onClick: () => {
+          setSortItem(prevSortItem => {
+            const newSortItem = {
+              ...prevSortItem,
+              by: 'size',
+            };
+            return newSortItem;
+          });
+        },
+      },
+      {
+        type: 'menu',
+        text: 'Shared',
+        icon: sortItem.by === 'shared' ? 'check' : 'sort-check',
+        onClick: () => {
+          setSortItem(prevSortItem => {
+            const newSortItem = {
+              ...prevSortItem,
+              by: 'shared',
+            };
+            return newSortItem;
+          });
+        },
+      },
+      {type:"separator"},
+      {
+        type: 'menu',
+        text: 'Ascending',
+        icon: sortItem.order === 'asc' ? 'check' : 'sort-check',
+        onClick: () => {
+          setSortItem(prevSortItem => {
+            const newSortItem = {
+              ...prevSortItem,
+              order: 'asc',
+            };
+            return newSortItem;
+          });
+        },
+      },
+      {
+        type: 'menu',
+        text: 'Descending',
+        icon: sortItem.order === 'desc' ? 'check' : 'sort-check',
+        onClick: () => {
+          setSortItem(prevSortItem => {
+            const newSortItem = {
+              ...prevSortItem,
+              order: 'desc',
+            };
+            return newSortItem;
+          });
+        },
+      }
+    ];
+    return menuItems;
+  }, [sortItem]);
 };
