@@ -95,6 +95,20 @@ const routes: FastifyPluginCallback = (fastify: FastifyInstance, _options, next)
   });
 
   fastify.route({
+    method: "POST",
+    url: `${serviceUrl}/editing_session/:editing_session_key`,
+    preValidation: [fastify.authenticateOptional],
+    handler: documentsController.endEditing.bind(documentsController),
+  });
+
+  fastify.route({
+    method: "DELETE",
+    url: `${serviceUrl}/editing_session/:editing_session_key`,
+    preValidation: [fastify.authenticateOptional],
+    handler: documentsController.endEditing.bind(documentsController),
+  });
+
+  fastify.route({
     method: "GET",
     url: `${serviceUrl}/download/token`,
     preValidation: [fastify.authenticateOptional],

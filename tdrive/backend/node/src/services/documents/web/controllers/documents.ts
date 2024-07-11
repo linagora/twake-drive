@@ -360,6 +360,44 @@ export class DocumentsController {
     }
   };
 
+  /**
+   * Finish an editing session by cancelling it.
+   */
+  cancelEditing = async (
+    request: FastifyRequest<{
+      Params: ItemRequestByEditingSessionKeyParams;
+      Body: { editorApplicationId: string };
+    }>,
+  ) => {
+    try {
+      const context = getDriveExecutionContext(request);
+      const { editing_session_key } = request.params;
+
+      if (!editing_session_key) throw new CrudException("Missing editing_session_key", 400);
+
+      return await globalResolver.services.documents.documents.endEditing(
+        editing_session_key,
+        null,
+        context,
+      );
+    } catch (error) {
+      logger.error({ error: `${error}` }, "Failed to begin editing Drive item");
+      CrudException.throwMe(error, new CrudException("Failed to begin editing Drive item", 500));
+    }
+  };
+  //TODO: will need a save under session key, but without ending the edit (for force saves)
+  /**
+   * Finish an editing session for a given `editing_session_key` by uploading the new version of the File
+   */
+  endEditing = async (
+    request: FastifyRequest<{
+      Params: ItemRequestByEditingSessionKeyParams;
+      Body: { editorApplicationId: string };
+    }>,
+  ) => {
+    console.log(request); // make linter happy
+  };
+
   downloadGetToken = async (
     request: FastifyRequest<{
       Params: ItemRequestParams;

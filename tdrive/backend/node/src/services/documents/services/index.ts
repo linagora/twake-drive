@@ -991,6 +991,80 @@ export class DocumentsService {
       CrudException.throwMe(error, new CrudException("Failed to begin editing Drive item", 500));
     }
   };
+
+  /**
+   * End editing session either by providing a URL to a new file to create a version,
+   * or not, to just cancel the session.
+   * @param editing_session_key Editing key of the DriveFile
+   * @param newFileUrl Optional URL to a new version of the file to store
+   * @param options Optional upload information from the request
+   */
+  endEditing = async (
+    editing_session_key: string,
+    newFileUrl: string | null,
+    context: DriveExecutionContext,
+  ) => {
+    if (!context) {
+      this.logger.error("invalid execution context");
+      return null;
+    }
+    if (!editing_session_key) {
+      this.logger.error("Invalid editing_session_key: " + JSON.stringify(editing_session_key));
+      throw new CrudException("Invalid editing_session_key", 400);
+    }
+
+    const driveFile = await this.repository.findOne({ editing_session_key }, {}, context);
+    if (!driveFile) {
+      this.logger.error("Drive item not found by editing session key");
+      throw new CrudException("Item not found by editing session key", 404);
+    }
+
+    const hasAccess = await checkAccess(driveFile.id, driveFile, "write", this.repository, context);
+    if (!hasAccess) {
+      logger.error("user does not have access drive item " + driveFile.id);
+      CrudException.throwMe(
+        new Error("user does not have access to the drive item"),
+        new CrudException("user does not have access drive item", 401),
+      );
+    }
+
+    if (newFileUrl) {
+      // const response = await axios.request({
+      //   url: domain + req.url,
+      //   method: req.method as any,
+      //   headers: _.omit(req.headers, "host", "content-length") as {
+      //     [key: string]: string;
+      //   },
+      //   data: req.body as any,
+      //   responseType: "stream",
+      //   maxRedirects: 0,
+      //   validateStatus: null,
+      // });
+      //TODO: save file into new version
+    }
+
+    try {
+      const result = await this.repository.atomicCompareAndSet(
+        driveFile,
+        "editing_session_key",
+        editing_session_key,
+        null,
+      );
+      if (!result.didSet)
+        throw new Error(
+          `Couldn't set editing_session_key ${JSON.stringify(
+            editing_session_key,
+          )} on DriveFile ${JSON.stringify(driveFile.id)} because it is ${JSON.stringify(
+            result.currentValue,
+          )}`,
+        );
+      return { ok: true };
+    } catch (error) {
+      logger.error({ error: `${error}` }, "Failed to cancel editing Drive item");
+      CrudException.throwMe(error, new CrudException("Failed to cancel editing Drive item", 500));
+    }
+  };
+
   downloadGetToken = async (
     ids: string[],
     versionId: string | null,

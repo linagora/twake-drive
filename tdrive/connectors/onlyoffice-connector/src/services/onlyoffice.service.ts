@@ -171,7 +171,10 @@ class OnlyOfficeService {
   constructor() {
     this.poller = new PolledThingieValue('Connect to Only Office', () => this.getVersion(), 10 * 1000 * 60);
   }
-  /** Get the latest Only Office version */
+  /** Get the latest Only Office version from polling. If the return is `undefined`
+   * it probably means there is a connection issue contacting the OnlyOffice server
+   * from the connector.
+   */
   public getLatestVersion() {
     return this.poller.latest();
   }
