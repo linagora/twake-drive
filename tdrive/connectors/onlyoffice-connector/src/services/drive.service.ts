@@ -2,7 +2,8 @@ import { DriveFileType, IDriveService } from '@/interfaces/drive.interface';
 import apiService from './api.service';
 import logger from '../lib/logger';
 
-/** Client for Twake Drive's APIs dealing with `DriveItem`s, using {@see apiService}
+/**
+ * Client for Twake Drive's APIs dealing with `DriveItem`s, using {@see apiService}
  * to handle authorization
  */
 class DriveService implements IDriveService {
@@ -47,6 +48,15 @@ class DriveService implements IDriveService {
       return Promise.reject();
     }
   };
+
+  public beginEditing(drive_file_id: string): string {
+    return "";
+  }
+
+  public endEditing(editing_session_id: string) {
+    return "";
+  }
+
 }
 
 export default new DriveService();

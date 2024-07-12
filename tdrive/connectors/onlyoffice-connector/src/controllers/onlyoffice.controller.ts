@@ -74,7 +74,7 @@ class OnlyOfficeController {
     try {
       const { url, key } = req.body;
       const { token } = req.query;
-      logger.info('Save request', { key, url, token });
+      logger.info('OO callback', req.body);
 
       const officeTokenPayload = jwt.verify(token, CREDENTIALS_SECRET) as OfficeToken;
       const { preview, company_id, file_id, /* user_id, */ drive_file_id, in_page_token } = officeTokenPayload;
@@ -85,6 +85,9 @@ class OnlyOfficeController {
 
       switch (req.body.status) {
         case OnlyOffice.Callback.Status.BEING_EDITED:
+          // TODO this call back we recieve almost all the time, and here we save
+          // the user identifiers who start file editing and even control the amount of onlin users
+          // to have license constraint warning before OnlyOffice error about this
         case OnlyOffice.Callback.Status.BEING_EDITED_BUT_IS_SAVED:
           // No-op
           break;

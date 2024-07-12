@@ -338,10 +338,12 @@ export class DocumentsController {
   beginEditing = async (
     request: FastifyRequest<{
       Params: ItemRequestParams;
+      //TODO application id should be received from the token that we have during the login
       Body: { editorApplicationId: string };
     }>,
   ) => {
     try {
+      //TODO create application execution context with the application identifier inside
       const context = getDriveExecutionContext(request);
       const { id } = request.params;
 

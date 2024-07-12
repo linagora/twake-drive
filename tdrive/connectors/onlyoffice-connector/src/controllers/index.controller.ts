@@ -74,17 +74,27 @@ class IndexController {
         throw new Error('You do not have access to this file');
       }
 
+      let editingSessionId = null;
+      if (!preview) {
+        editingSessionId = driveService.beginEditing(drive_file_id);
+        //TODO catch error and display to the user when we can't stopped editing
+
+        //TODO Log error with format to be able to set up grafana alert fir such king of errors
+      }
+
       const officeToken = jwt.sign(
         {
           user_id: user.id, //To verify that link is opened by the same user
           company_id,
           drive_file_id,
+          editing_session_id: editingSessionId,
           file_id: file.id,
           file_name: file.filename || file?.metadata?.name || '',
           preview: !!preview,
         } as OfficeToken,
         CREDENTIALS_SECRET,
         {
+          //one month, never expiring token
           expiresIn: 60 * 60 * 24 * 30,
         },
       );
@@ -93,6 +103,7 @@ class IndexController {
         Utils.joinURL([SERVER_ORIGIN ?? '', SERVER_PREFIX, 'editor'], {
           token,
           file_id,
+          editing_session_id: editingSessionId,
           company_id,
           preview,
           office_token: officeToken,
