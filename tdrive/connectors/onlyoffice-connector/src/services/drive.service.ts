@@ -50,13 +50,12 @@ class DriveService implements IDriveService {
   };
 
   public beginEditing(drive_file_id: string): string {
-    return "";
+    return '';
   }
 
   public endEditing(editing_session_id: string) {
-    return "";
+    return '';
   }
-
 }
 
 export default new DriveService();

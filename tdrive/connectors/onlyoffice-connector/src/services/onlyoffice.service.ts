@@ -25,6 +25,11 @@ export namespace Callback {
     USER_INITIATED_FORCE_SAVE = 2,
   }
 
+  interface Action {
+    type: ActionType;
+    userid: string;
+  }
+
   enum ForceSaveType {
     FROM_COMMAND_SERVICE = 0,
     FORCE_SAVE_BUTTON_CLICKED = 1,
@@ -45,10 +50,6 @@ export namespace Callback {
     ERROR_FORCE_SAVING = 7,
   }
 
-  interface Action {
-    type: ActionType;
-    userid: string;
-  }
   /** Parameters given to the callback by the editing service */
   export interface Parameters {
     key: string;
@@ -86,18 +87,18 @@ namespace CommandService {
     }
   }
 
-  abstract class BaseRequest<TSuccessResponse extends BaseResponse> {
-    constructor(public c: string) {}
+  abstract class BaseRequest<TSuccessResponse extends SuccessResponse> {
+    constructor(public readonly c: string) {}
 
     /** POST this OnlyOffice command, does not check the `error` field of the response */
     async postUnsafe(): Promise<ErrorResponse | TSuccessResponse> {
       logger.silly(`OnlyOffice command ${this.c} sent: ${JSON.stringify(this)}`);
-      const result = await axios.post(`${ONLY_OFFICE_SERVER}coauthoring/CommandService.ashx`, this);
+      const result = await axios.post(Utils.joinURL([ONLY_OFFICE_SERVER, 'coauthoring/CommandService.ashx']), this);
       logger.info(`OnlyOffice command ${this.c} response: ${result.status}: ${JSON.stringify(result.data)}`);
       return result.data as ErrorResponse | TSuccessResponse;
     }
 
-    /** POST this request, and return the result, or throw if the `errorCode` returned isn't 0 */
+    /** POST this request, and return the result, or throws if the `errorCode` returned isn't `ErrorCode.SUCCESS` */
     async post(): Promise<TSuccessResponse> {
       const result = await this.postUnsafe();
       if (result.error === ErrorCode.SUCCESS) return result;
@@ -121,7 +122,7 @@ namespace CommandService {
       key: string;
     }
     export class Request extends BaseRequest<Response> {
-      constructor(public key: string, public userdata: string = '') {
+      constructor(public readonly key: string, public readonly userdata: string = '') {
         super('forcesave');
       }
     }
@@ -133,7 +134,7 @@ namespace CommandService {
       url: string;
     }
     export class Request extends BaseRequest<Response> {
-      constructor(public key: string) {
+      constructor(public readonly key: string) {
         super('getForgotten');
       }
     }
@@ -155,7 +156,7 @@ namespace CommandService {
       key: string;
     }
     export class Request extends BaseRequest<Response> {
-      constructor(public key: string) {
+      constructor(public readonly key: string) {
         super('deleteForgotten');
       }
     }
@@ -178,6 +179,10 @@ class OnlyOfficeService {
   public getLatestVersion() {
     return this.poller.latest();
   }
+
+  // Note that `async` is important in the functions below. While they avoid the overhead
+  // of `await`, the `async` is still required to catch the throw in `.post()`
+
   /** Return the version string of OnlyOffice */
   async getVersion(): Promise<string> {
     return new CommandService.Version.Request().post().then(response => response.version);
