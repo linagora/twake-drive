@@ -19,4 +19,7 @@ export type DriveRequestParams = {
 export interface IDriveService {
   get: (params: DriveRequestParams) => Promise<DriveFileType>;
   createVersion: (params: { company_id: string; drive_file_id: string; file_id: string }) => Promise<DriveFileType['item']['last_version_cache']>;
+  beginEditingSession: (company_id: string, drive_file_id: string) => Promise<string>;
+  endEditing: (company_id: string, editing_session_key: string) => Promise<void>;
+  getByEditingSessionKey: (params: { company_id: string; editing_session_key: string; user_token?: string }) => Promise<DriveFileType>;
 }

@@ -49,6 +49,26 @@ class ApiService implements IApiService {
     return await axiosWithToken.get(url, config);
   };
 
+  public delete = async <T>(params: IApiServiceRequestParams<T>): Promise<T> => {
+    const { url, token, responseType, headers } = params;
+
+    const axiosWithToken = await this.requireAxios();
+
+    const config: AxiosRequestConfig = {};
+
+    if (token) {
+      config['headers'] = {
+        Authorization: `Bearer ${token}`,
+        ...headers,
+      };
+    }
+
+    if (responseType) {
+      config['responseType'] = responseType;
+    }
+    return await axiosWithToken.delete(url, config);
+  };
+
   public post = async <T, R>(params: IApiServiceRequestParams<T>): Promise<R> => {
     const { url, payload, headers } = params;
 

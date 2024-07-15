@@ -49,13 +49,58 @@ class DriveService implements IDriveService {
     }
   };
 
-  public beginEditing(drive_file_id: string): string {
-    return '';
+  public async beginEditingSession(company_id: string, drive_file_id: string) {
+    try {
+      const resource = await apiService.post<{}, { editingSessionKey: string }>({
+        url: `/internal/services/documents/v1/companies/${company_id}/item/${drive_file_id}/editing_session`,
+        payload: {
+          editorApplicationId: 'mock_application_id',
+        },
+      });
+      if (resource?.editingSessionKey) {
+        return resource.editingSessionKey;
+      } else {
+        throw new Error(`Failed to obtain editing session key, response: ${JSON.stringify(resource)}`);
+      }
+    } catch (error) {
+      logger.error('Failed to begin editing session: ', error.stack);
+      throw error;
+    }
   }
 
-  public endEditing(editing_session_id: string) {
-    return '';
+  public async endEditing(company_id: string, editing_session_key: string) {
+    try {
+      await apiService.delete<{}>({
+        url: `/internal/services/documents/v1/companies/${company_id}/item/editing_session/${editing_session_key}`,
+      });
+    } catch (error) {
+      logger.error('Failed to begin editing session: ', error.stack);
+      throw error;
+      //TODO make monitoring for such kind of errors
+    }
   }
+
+  /**
+   * Get the document information by the editing session key. Just simple call to the drive API
+   * /item/editing_session/${editing_session_key}
+   * @param params
+   */
+  public getByEditingSessionKey = async (params: {
+    company_id: string;
+    editing_session_key: string;
+    user_token?: string;
+  }): Promise<DriveFileType> => {
+    try {
+      const { company_id, editing_session_key } = params;
+      return await apiService.get<DriveFileType>({
+        url: `/internal/services/documents/v1/companies/${company_id}/item/editing_session/${editing_session_key}`,
+        token: params.user_token,
+      });
+    } catch (error) {
+      logger.error('Failed to fetch file metadata by editing session key: ', error.stack);
+      throw error;
+    }
+  };
 }
 
 export default new DriveService();

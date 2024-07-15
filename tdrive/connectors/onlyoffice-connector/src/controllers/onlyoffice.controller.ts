@@ -28,7 +28,7 @@ class OnlyOfficeController {
       const { token } = req.query;
 
       const officeTokenPayload = jwt.verify(token, CREDENTIALS_SECRET) as OfficeToken;
-      const { company_id, drive_file_id, file_id, in_page_token } = officeTokenPayload;
+      const { company_id, drive_file_id, file_id, in_page_token, editing_session_key } = officeTokenPayload;
       let fileId = file_id;
 
       // check token is an in_page_token
@@ -36,9 +36,9 @@ class OnlyOfficeController {
 
       if (drive_file_id) {
         //Get the drive file
-        const driveFile = await driveService.get({
+        const driveFile = await driveService.getByEditingSessionKey({
           company_id,
-          drive_file_id,
+          editing_session_key,
         });
         if (driveFile) {
           fileId = driveFile?.item?.last_version_cache?.file_metadata?.external_id;
@@ -77,7 +77,7 @@ class OnlyOfficeController {
       logger.info('OO callback', req.body);
 
       const officeTokenPayload = jwt.verify(token, CREDENTIALS_SECRET) as OfficeToken;
-      const { preview, company_id, file_id, /* user_id, */ drive_file_id, in_page_token } = officeTokenPayload;
+      const { preview, company_id, file_id, /* user_id, */ drive_file_id, in_page_token, editing_session_key } = officeTokenPayload;
 
       // check token is an in_page_token and allow save
       if (!in_page_token) throw new Error('Invalid token, must be a in_page_token');
@@ -93,6 +93,14 @@ class OnlyOfficeController {
           break;
 
         case OnlyOffice.Callback.Status.READY_FOR_SAVING:
+          const driveFile = await driveService.getByEditingSessionKey({
+            company_id,
+            editing_session_key,
+          });
+          if (!driveFile) {
+            throw new Error('Error getting drive files ');
+          }
+
           const newVersionFile = await fileService.save({
             company_id,
             file_id,
@@ -106,6 +114,7 @@ class OnlyOfficeController {
             file_id: newVersionFile?.resource?.id,
           });
           logger.info('New version created', version);
+
           return respondToOO();
 
         case OnlyOffice.Callback.Status.CLOSED_WITHOUT_CHANGES:

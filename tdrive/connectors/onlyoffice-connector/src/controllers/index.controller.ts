@@ -74,9 +74,9 @@ class IndexController {
         throw new Error('You do not have access to this file');
       }
 
-      let editingSessionId = null;
+      let editingSessionKey = null;
       if (!preview) {
-        editingSessionId = driveService.beginEditing(drive_file_id);
+        editingSessionKey = await driveService.beginEditingSession(company_id, drive_file_id);
         //TODO catch error and display to the user when we can't stopped editing
 
         //TODO Log error with format to be able to set up grafana alert fir such king of errors
@@ -87,7 +87,7 @@ class IndexController {
           user_id: user.id, //To verify that link is opened by the same user
           company_id,
           drive_file_id,
-          editing_session_id: editingSessionId,
+          editing_session_key: editingSessionKey,
           file_id: file.id,
           file_name: file.filename || file?.metadata?.name || '',
           preview: !!preview,
@@ -103,7 +103,7 @@ class IndexController {
         Utils.joinURL([SERVER_ORIGIN ?? '', SERVER_PREFIX, 'editor'], {
           token,
           file_id,
-          editing_session_id: editingSessionId,
+          editing_session_key: editingSessionKey,
           company_id,
           preview,
           office_token: officeToken,
@@ -123,10 +123,13 @@ class IndexController {
       const { user } = req;
 
       const officeTokenPayload = jwt.verify(office_token, CREDENTIALS_SECRET) as OfficeToken;
-      const { preview, user_id, company_id, file_name, file_id, drive_file_id } = officeTokenPayload;
+      const { preview, user_id, company_id, file_name, file_id, drive_file_id, editing_session_key } = officeTokenPayload;
 
       if (user_id !== user.id) {
         throw new Error('You do not have access to this link');
+      }
+      if (!preview && !editing_session_key) {
+        throw new Error('Cant start editing without "editing session key"');
       }
 
       const initResponse = await editorService.init(company_id, file_name, file_id, user, preview, drive_file_id || file_id);

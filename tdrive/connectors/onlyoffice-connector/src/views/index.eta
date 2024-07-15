@@ -44,7 +44,7 @@
         token: "<%= it.file_id %>",
         type: screen.width < 600 ? 'mobile' : 'desktop',
         editorConfig: {
-          callbackUrl: `${window.baseURL}save?file_id=<%= it.file_id %>&company_id=<%= it.company_id %>&token=<%= it.token %>`,
+          callbackUrl: `${window.baseURL}callback?file_id=<%= it.file_id %>&company_id=<%= it.company_id %>&token=<%= it.token %>`,
           lang: window.user.language,
           user: {
             id: window.user.id,
@@ -52,7 +52,7 @@
           },
           customization: {
             chat: false,
-            compactToolbar: true,
+            compactToolbar: false,
             about: false,
             feedback: false,
             goback: {
