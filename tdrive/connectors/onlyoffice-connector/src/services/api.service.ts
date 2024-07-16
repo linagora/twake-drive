@@ -5,28 +5,49 @@ import {
   IApiServiceApplicationTokenResponse,
 } from '@/interfaces/api.interface';
 import axios, { Axios, AxiosRequestConfig, AxiosResponse } from 'axios';
-import { CREDENTIALS_ENDPOINT, CREDENTIALS_ID, CREDENTIALS_SECRET } from '@config';
+import {
+  CREDENTIALS_ENDPOINT,
+  CREDENTIALS_ID,
+  CREDENTIALS_SECRET,
+  twakeDriveTokenRefrehPeriodMS,
+  onlyOfficeForgottenFilesCheckPeriodMS,
+} from '@config';
 import logger from '../lib/logger';
 import * as Utils from '@/utils';
 import { PolledThingieValue } from '@/lib/polled-thingie-value';
+import onlyofficeService from './onlyoffice.service';
 
 /**
  * Client for the Twake Drive backend API on behalf of the plugin (or provided token in parameters).
  * Periodically updates authorization and adds to requests.
  */
 class ApiService implements IApiService {
-  private readonly poller: PolledThingieValue<Axios>;
+  private readonly tokenPoller: PolledThingieValue<Axios>;
+  private readonly forgottenFilesPoller: PolledThingieValue<number>;
 
   constructor() {
-    this.poller = new PolledThingieValue('Refresh Twake Drive token', async () => this.refreshToken(), 1000 * 60); //TODO: should be Every 10 minutes
+    this.tokenPoller = new PolledThingieValue('Refresh Twake Drive token', async () => await this.refreshToken(), twakeDriveTokenRefrehPeriodMS);
+    this.forgottenFilesPoller = new PolledThingieValue(
+      'Process forgotten files in OO',
+      async () => await this.processForgottenFiles(),
+      onlyOfficeForgottenFilesCheckPeriodMS,
+    );
   }
 
   public async hasToken() {
-    return (await this.poller.latestValueWithTry()) !== undefined;
+    return (await this.tokenPoller.latestValueWithTry()) !== undefined;
   }
 
   private requireAxios() {
-    return this.poller.requireLatestValueWithTry('Token Kind 538 not ready');
+    return this.tokenPoller.requireLatestValueWithTry('No Twake Drive app token.');
+  }
+
+  private async processForgottenFiles() {
+    if (!this.tokenPoller.hasValue()) return -1;
+    return await onlyofficeService.processForgotten(async (/* key, url */) => {
+      //TODO: when endpoint decided, call here. See if accept HTTP 202 for ex. to avoid deleting.
+      return false;
+    });
   }
 
   public get = async <T>(params: IApiServiceRequestParams<T>): Promise<T> => {

@@ -45,8 +45,13 @@ class App {
     });
 
     this.app.get('/health', (_req, res) => {
-      Promise.all([onlyofficeService.getLatestVersion(), apiService.hasToken()]).then(
-        ([version, twakeDriveToken]) => res.status(version && twakeDriveToken ? 200 : 500).send({ version, twakeDriveToken }),
+      Promise.all([onlyofficeService.getLatestLicence(), apiService.hasToken()]).then(
+        ([onlyOfficeLicense, twakeDriveToken]) =>
+          res.status(onlyOfficeLicense && twakeDriveToken ? 200 : 500).send({
+            uptime: process.uptime(),
+            onlyOfficeLicense,
+            twakeDriveToken,
+          }),
         err => res.status(500).send(err),
       );
     });

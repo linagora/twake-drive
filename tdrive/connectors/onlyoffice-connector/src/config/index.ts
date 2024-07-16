@@ -12,3 +12,7 @@ export const {
   SERVER_PREFIX,
   SERVER_ORIGIN,
 } = process.env;
+
+export const twakeDriveTokenRefrehPeriodMS = 10 * 60 * 1000;
+export const onlyOfficeForgottenFilesCheckPeriodMS = 10 * 60 * 1000;
+export const onlyOfficeConnectivityCheckPeriodMS = 10 * 60 * 1000;

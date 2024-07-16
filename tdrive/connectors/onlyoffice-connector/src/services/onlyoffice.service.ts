@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { ONLY_OFFICE_SERVER } from '@config';
+import { ONLY_OFFICE_SERVER, onlyOfficeConnectivityCheckPeriodMS } from '@config';
 import { PolledThingieValue } from '@/lib/polled-thingie-value';
 import logger from '@/lib/logger';
 import * as Utils from '@/utils';
@@ -161,6 +161,20 @@ namespace CommandService {
       }
     }
   }
+
+  export namespace License {
+    export interface Response extends SuccessResponse {
+      // @see https://api.onlyoffice.com/editors/command/license
+      license: object;
+      server: object;
+      quota: object;
+    }
+    export class Request extends BaseRequest<Response> {
+      constructor() {
+        super('license');
+      }
+    }
+  }
 }
 
 /**
@@ -168,16 +182,50 @@ namespace CommandService {
  * @see https://api.onlyoffice.com/editors/command/
  */
 class OnlyOfficeService {
-  private readonly poller: PolledThingieValue<string>;
+  private readonly poller: PolledThingieValue<CommandService.License.Response>;
+
   constructor() {
-    this.poller = new PolledThingieValue('Connect to Only Office', () => this.getVersion(), 10 * 1000 * 60);
+    this.poller = new PolledThingieValue(
+      'Connect to Only Office',
+      async () => {
+        logger.info('Only Office license status');
+        return await this.getLicense();
+      },
+      onlyOfficeConnectivityCheckPeriodMS,
+    );
   }
-  /** Get the latest Only Office version from polling. If the return is `undefined`
+  /** Get the latest Only Office licence status from polling. If the return is `undefined`
    * it probably means there is a connection issue contacting the OnlyOffice server
    * from the connector.
    */
-  public getLatestVersion() {
+  public getLatestLicence() {
     return this.poller.latest();
+  }
+
+  /**
+   * Iterate over all the forgotten files as returned by OnlyOffice, call the processor for each..
+   * @param processor Handler to process the forgotten file (available at `url`). If `true` is returned,
+   * the file is deleted from the forgotten file list in OnlyOffice. If false is returned, the
+   * same forgotten file will reappear in a future batch
+   * @returns The number of files processed and deleted
+   */
+  public async processForgotten(processor: (key: string, url: string) => Promise<boolean>): Promise<number> {
+    const forgottenFiles = await this.getForgottenList();
+    if (forgottenFiles.length === 0) return 0;
+    Utils.fisherYattesShuffleInPlace(forgottenFiles);
+    logger.info(`Forgotten files found: ${forgottenFiles.length}`);
+    let deleted = 0;
+    for (const forgottenFileKey of forgottenFiles) {
+      const forgottenFileURL = await this.getForgotten(forgottenFileKey);
+      logger.info(`Forgotten file about to process: ${JSON.stringify(forgottenFileKey)}`, { url: forgottenFileURL });
+      const shouldDelete = await processor(forgottenFileKey, forgottenFileURL);
+      if (shouldDelete) {
+        logger.info(`Forgotten file about to be deleted: ${JSON.stringify(forgottenFileKey)}`);
+        await this.deleteForgotten(forgottenFileKey);
+        deleted++;
+      }
+    }
+    return deleted;
   }
 
   // Note that `async` is important in the functions below. While they avoid the overhead
@@ -186,6 +234,11 @@ class OnlyOfficeService {
   /** Return the version string of OnlyOffice */
   async getVersion(): Promise<string> {
     return new CommandService.Version.Request().post().then(response => response.version);
+  }
+  /** Return the version string of OnlyOffice */
+  async getLicense(): Promise<CommandService.License.Response> {
+    //TODO: When typing the response more fully, don't return the response object itself as here
+    return new CommandService.License.Request().post();
   }
   /** Force a save in the editing session key provided. `userdata` will be forwarded to the callback */
   async forceSave(key: string, userdata = ''): Promise<string> {
