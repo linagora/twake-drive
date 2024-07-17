@@ -45,12 +45,13 @@ class App {
     });
 
     this.app.get('/health', (_req, res) => {
-      Promise.all([onlyofficeService.getLatestLicence(), apiService.hasToken()]).then(
-        ([onlyOfficeLicense, twakeDriveToken]) =>
+      Promise.all([onlyofficeService.getLatestLicence(), apiService.hasToken(), onlyofficeService.getForgottenList()]).then(
+        ([onlyOfficeLicense, twakeDriveToken, forgottenKeys]) =>
           res.status(onlyOfficeLicense && twakeDriveToken ? 200 : 500).send({
             uptime: process.uptime(),
             onlyOfficeLicense,
             twakeDriveToken,
+            forgottenKeys,
           }),
         err => res.status(500).send(err),
       );
