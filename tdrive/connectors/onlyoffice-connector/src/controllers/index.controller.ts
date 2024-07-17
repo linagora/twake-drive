@@ -144,6 +144,7 @@ class IndexController {
 
       res.render('index', {
         ...initResponse,
+        docId: preview ? file_id : editing_session_key,
         server: Utils.joinURL([SERVER_ORIGIN, SERVER_PREFIX]),
         token: inPageToken,
       });

@@ -28,26 +28,15 @@ class OnlyOfficeController {
       const { token } = req.query;
 
       const officeTokenPayload = jwt.verify(token, CREDENTIALS_SECRET) as OfficeToken;
-      const { company_id, drive_file_id, file_id, in_page_token, editing_session_key } = officeTokenPayload;
-      let fileId = file_id;
+      const { company_id, file_id, in_page_token } = officeTokenPayload;
 
       // check token is an in_page_token
       if (!in_page_token) throw new Error('Invalid token, must be a in_page_token');
 
-      if (drive_file_id) {
-        //Get the drive file
-        const driveFile = await driveService.getByEditingSessionKey({
-          company_id,
-          editing_session_key,
-        });
-        if (driveFile) {
-          fileId = driveFile?.item?.last_version_cache?.file_metadata?.external_id;
-        }
-      }
-
+      if (!file_id) throw new Error(`File id is missing in the last version cache for ${JSON.stringify(file_id)}`);
       const file = await fileService.download({
         company_id,
-        file_id: fileId,
+        file_id: file_id,
       });
 
       file.pipe(res);

@@ -26,7 +26,7 @@
         title: "<%= it.filename %>",
         url: `${window.baseURL}read?file_id=<%= it.file_id %>&company_id=<%= it.company_id %>&token=<%= it.token %>`,
         fileType: "<%= it.file_type %>",
-        key: "<%= it.file_version_id %>",
+        key: "<%= it.docId %>",
         token: "<%= it.file_id %>",
         permissions: {
           download: true,
