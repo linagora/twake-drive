@@ -82,28 +82,9 @@ class OnlyOfficeController {
           break;
 
         case OnlyOffice.Callback.Status.READY_FOR_SAVING:
-          const driveFile = await driveService.getByEditingSessionKey({
-            company_id,
-            editing_session_key,
-          });
-          if (!driveFile) {
-            throw new Error('Error getting drive files ');
-          }
+          await driveService.endEditing(company_id, editing_session_key, url);
 
-          const newVersionFile = await fileService.save({
-            company_id,
-            file_id,
-            url,
-            create_new: true,
-          });
-
-          const version = await driveService.createVersion({
-            company_id,
-            drive_file_id,
-            file_id: newVersionFile?.resource?.id,
-          });
-          logger.info('New version created', version);
-
+          logger.info(`New version for session ${editing_session_key} created`);
           return respondToOO();
 
         case OnlyOffice.Callback.Status.CLOSED_WITHOUT_CHANGES:

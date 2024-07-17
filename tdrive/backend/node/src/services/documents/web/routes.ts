@@ -105,7 +105,7 @@ const routes: FastifyPluginCallback = (fastify: FastifyInstance, _options, next)
     method: "DELETE",
     url: `${serviceUrl}/editing_session/:editing_session_key`,
     preValidation: [fastify.authenticateOptional],
-    handler: documentsController.endEditing.bind(documentsController),
+    handler: documentsController.cancelEditing.bind(documentsController),
   });
 
   fastify.route({

@@ -409,6 +409,36 @@ export default class UserApi {
       });
   }
 
+  async endEditingDocument(
+    editingSessionKey: string
+  ): Promise<Response> {
+    const fullPath = `${__dirname}/assets/${UserApi.ALL_FILES[0]}`;
+    const readable= Readable.from(fs.createReadStream(fullPath));
+    const form = formAutoContent({ file: readable });
+    form.headers["authorization"] = `Bearer ${this.jwt}`;
+
+    return await this.platform.app.inject({
+      method: "POST",
+      url: `${UserApi.DOC_URL}/companies/${this.platform.workspace.company_id}/item/editing_session/${editingSessionKey}`,
+      headers: {
+        authorization: `Bearer ${this.jwt}`
+      },
+      ...form,
+    });
+  }
+
+  async cancelEditingDocument(
+    editingSessionKey: string,
+  ): Promise<Response> {
+    return await this.platform.app.inject({
+      method: "DELETE",
+      url: `${UserApi.DOC_URL}/companies/${this.platform.workspace.company_id}/item/editing_session/${editingSessionKey}`,
+      headers: {
+        authorization: `Bearer ${this.jwt}`
+      }
+    });
+  }
+
   async beginEditingDocumentExpectOk(
     driveFileId: string,
     editorApplicationId: string,

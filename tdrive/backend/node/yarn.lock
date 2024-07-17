@@ -1357,13 +1357,6 @@
   resolved "https://registry.npmjs.org/@types/lodash/-/lodash-4.17.1.tgz"
   integrity sha512-X+2qazGS3jxLAIz5JDXDzglAF3KpijdhFxlf/V1+hEsOUc+HnWi81L/uv/EvGuV90WY+7mPGFCUDGfQC3Gj95Q==
 
-"@types/long@~5.0.0":
-  version "5.0.0"
-  resolved "https://registry.npmjs.org/@types/long/-/long-5.0.0.tgz"
-  integrity sha512-eQs9RsucA/LNjnMoJvWG/nXa7Pot/RbBzilF/QRIU/xRl+0ApxrSUFsV5lmf01SvSlqMzJ7Zwxe440wmz2SJGA==
-  dependencies:
-    long "*"
-
 "@types/mime@^1":
   version "1.3.5"
   resolved "https://registry.npmjs.org/@types/mime/-/mime-1.3.5.tgz"
@@ -1394,7 +1387,7 @@
   dependencies:
     "@types/node" "*"
 
-"@types/node@*", "@types/node@^18.11", "@types/node@>=10.0.0", "@types/node@>=8":
+"@types/node@*", "@types/node@^18.11", "@types/node@>=10.0.0":
   version "18.19.31"
   resolved "https://registry.npmjs.org/@types/node/-/node-18.19.31.tgz"
   integrity sha512-ArgCD39YpyyrtFKIqMDvjz79jto5fcI/SVUs2HwB+f0dAzq68yqOdyaSivLiLugSziTpNXLQrVb7RZFmdZzbhA==
@@ -1724,11 +1717,6 @@ acorn-walk@^8.1.1:
   version "8.11.3"
   resolved "https://registry.npmjs.org/acorn/-/acorn-8.11.3.tgz"
   integrity sha512-Y9rRfJG5jcKOE0CLisYbojUjIrIEE7AGMzA/Sm4BslANhbS+cDMpgBdcPT91oJ7OuJ9hYJBx59RjbhxVnrF8Xg==
-
-adm-zip@~0.5.10:
-  version "0.5.12"
-  resolved "https://registry.npmjs.org/adm-zip/-/adm-zip-0.5.12.tgz"
-  integrity sha512-6TVU49mK6KZb4qG6xWaaM4C7sA/sgUMLy/JYMOzkcp3BvVLpW0fXDFQiIzAuxFCt/2+xD7fNIiPFAoLZPhVNLQ==
 
 agent-base@^6.0.2, agent-base@6:
   version "6.0.2"
@@ -2363,16 +2351,6 @@ caniuse-lite@^1.0.30001587:
   version "1.0.30001616"
   resolved "https://registry.npmjs.org/caniuse-lite/-/caniuse-lite-1.0.30001616.tgz"
   integrity sha512-RHVYKov7IcdNjVHJFNY/78RdG4oGVjbayxv8u5IO74Wv7Hlq4PnJE6mo/OjFijjVFNy5ijnCt6H3IIo4t+wfEw==
-
-cassandra-driver@^4.6.0:
-  version "4.7.2"
-  resolved "https://registry.npmjs.org/cassandra-driver/-/cassandra-driver-4.7.2.tgz"
-  integrity sha512-gwl1DeYvL8Wy3i1GDMzFtpUg5G473fU7EnHFZj7BUtdLB7loAfgZgB3zBhROc9fbaDSUDs6YwOPPojS5E1kbSA==
-  dependencies:
-    "@types/long" "~5.0.0"
-    "@types/node" ">=8"
-    adm-zip "~0.5.10"
-    long "~5.2.3"
 
 cb2promise@~1.1.1:
   version "1.1.1"
@@ -5166,11 +5144,6 @@ log-symbols@^4.1.0:
   dependencies:
     chalk "^4.1.0"
     is-unicode-supported "^0.1.0"
-
-long@*, long@~5.2.3:
-  version "5.2.3"
-  resolved "https://registry.npmjs.org/long/-/long-5.2.3.tgz"
-  integrity sha512-lcHwpNoggQTObv5apGNCTdJrO69eHOZMi4BNC+rTLER8iHAqGrUVeLh/irVIM7zTw2bOXA8T6uNPeujwOLg/2Q==
 
 loupe@^2.3.6:
   version "2.3.7"

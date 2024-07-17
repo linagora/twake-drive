@@ -380,6 +380,7 @@ export class DocumentsController {
       return await globalResolver.services.documents.documents.endEditing(
         editing_session_key,
         null,
+        null,
         context,
       );
     } catch (error) {
@@ -394,10 +395,44 @@ export class DocumentsController {
   endEditing = async (
     request: FastifyRequest<{
       Params: ItemRequestByEditingSessionKeyParams;
-      Body: { editorApplicationId: string };
+      Querystring: Record<string, string>;
+      Body: {
+        item: Partial<DriveFile>;
+        version: Partial<FileVersion>;
+      };
     }>,
   ) => {
-    console.log(request); // make linter happy
+    const { editing_session_key } = request.params;
+    if (!editing_session_key) throw new CrudException("Editing session key must be set", 400);
+
+    const context = getDriveExecutionContext(request);
+
+    if (request.isMultipart()) {
+      const file = await request.file();
+      const q: Record<string, string> = request.query;
+      const options: UploadOptions = {
+        totalChunks: parseInt(q.resumableTotalChunks || q.total_chunks) || 1,
+        totalSize: parseInt(q.resumableTotalSize || q.total_size) || 0,
+        chunkNumber: parseInt(q.resumableChunkNumber || q.chunk_number) || 1,
+        filename: q.resumableFilename || q.filename || file?.filename || undefined,
+        type: q.resumableType || q.type || file?.mimetype || undefined,
+        waitForThumbnail: !!q.thumbnail_sync,
+        ignoreThumbnails: false,
+      };
+      return await globalResolver.services.documents.documents.endEditing(
+        editing_session_key,
+        file,
+        options,
+        context,
+      );
+    } else {
+      return await globalResolver.services.documents.documents.endEditing(
+        editing_session_key,
+        null,
+        null,
+        context,
+      );
+    }
   };
 
   downloadGetToken = async (

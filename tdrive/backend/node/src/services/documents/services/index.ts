@@ -59,6 +59,8 @@ import archiver from "archiver";
 import internal from "stream";
 import config from "config";
 import { randomUUID } from "crypto";
+import { MultipartFile } from "@fastify/multipart";
+import { UploadOptions } from "src/services/files/types";
 
 export class DocumentsService {
   version: "1";
@@ -996,13 +998,15 @@ export class DocumentsService {
    * End editing session either by providing a URL to a new file to create a version,
    * or not, to just cancel the session.
    * @param editing_session_key Editing key of the DriveFile
-   * @param newFileUrl Optional URL to a new version of the file to store
+   * @param file Multipart files from the incoming http request
    * @param options Optional upload information from the request
+   * @param context
    */
   endEditing = async (
     editing_session_key: string,
-    newFileUrl: string | null,
-    context: DriveExecutionContext,
+    file: MultipartFile,
+    options: UploadOptions,
+    context: CompanyExecutionContext,
   ) => {
     if (!context) {
       this.logger.error("invalid execution context");
@@ -1028,19 +1032,21 @@ export class DocumentsService {
       );
     }
 
-    if (newFileUrl) {
-      // const response = await axios.request({
-      //   url: domain + req.url,
-      //   method: req.method as any,
-      //   headers: _.omit(req.headers, "host", "content-length") as {
-      //     [key: string]: string;
-      //   },
-      //   data: req.body as any,
-      //   responseType: "stream",
-      //   maxRedirects: 0,
-      //   validateStatus: null,
-      // });
-      //TODO: save file into new version
+    if (file) {
+      const fileEntity = await globalResolver.services.files.save(null, file, options, context);
+
+      await globalResolver.services.documents.documents.createVersion(
+        driveFile.id,
+        {
+          drive_item_id: driveFile.id,
+          provider: "internal",
+          file_metadata: {
+            external_id: fileEntity.id,
+            source: "internal",
+          },
+        },
+        context,
+      );
     }
 
     try {
@@ -1058,7 +1064,6 @@ export class DocumentsService {
             result.currentValue,
           )}`,
         );
-      return { ok: true };
     } catch (error) {
       logger.error({ error: `${error}` }, "Failed to cancel editing Drive item");
       CrudException.throwMe(error, new CrudException("Failed to cancel editing Drive item", 500));
