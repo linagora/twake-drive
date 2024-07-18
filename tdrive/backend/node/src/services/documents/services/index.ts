@@ -13,7 +13,7 @@ import { PublicFile } from "../../../services/files/entities/file";
 import globalResolver from "../../../services/global-resolver";
 import { hasCompanyAdminLevel } from "../../../utils/company";
 import gr from "../../global-resolver";
-import { DriveFile, TYPE } from "../entities/drive-file";
+import { DriveFile, EditingSessionKeyFormat, TYPE } from "../entities/drive-file";
 import { FileVersion, TYPE as FileVersionType } from "../entities/file-version";
 import User, { TYPE as UserType } from "../../user/entities/user";
 
@@ -58,7 +58,6 @@ import {
 import archiver from "archiver";
 import internal from "stream";
 import config from "config";
-import { randomUUID } from "crypto";
 import { MultipartFile } from "@fastify/multipart";
 import { UploadOptions } from "src/services/files/types";
 
@@ -936,31 +935,16 @@ export class DocumentsService {
     editorApplicationId: string,
     context: DriveExecutionContext,
   ) => {
-    const isoUTCDateNoSpecialCharsNoMS = new Date()
-      .toISOString()
-      .replace(/\..+$/, "")
-      .replace(/[ZT:-]/g, "");
-    const newKey = [
-      isoUTCDateNoSpecialCharsNoMS,
-      editorApplicationId,
-      randomUUID().replace(/-+/g, ""),
-    ].join("-");
-    // OnlyOffice key limits: 128 chars, [0-9a-zA-z=_-]
-    // This is specific to it, but the constraint seems strict enough
-    // that any other system needing such a unique identifier would find
-    // this compatible. This value must be ensured to be the strictest
-    // common denominator to all plugin/interop systems. Plugins that
-    // require something even stricter have the option of maintaining
-    // a look up table to an acceptable value.
-    if (newKey.length > 128 || !/^[0-9a-zA-Z=_]+$/m.test(editorApplicationId))
-      CrudException.throwMe(
-        new Error('Invalid "editorApplicationId" string. Must be short and only alpha numeric'),
-        new CrudException("Invalid editorApplicationId", 400),
-      );
-
     if (!context) {
       this.logger.error("invalid execution context");
       return null;
+    }
+
+    let newKey: string;
+    try {
+      newKey = EditingSessionKeyFormat.generate(editorApplicationId, context.user.id);
+    } catch (e) {
+      CrudException.throwMe(e, new CrudException("Error generating new editing_session_key", 500));
     }
 
     const hasAccess = await checkAccess(id, null, "write", this.repository, context);

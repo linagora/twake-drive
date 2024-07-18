@@ -1,4 +1,5 @@
 import { Type } from "class-transformer";
+import { randomUUID } from "crypto";
 import { Column, Entity } from "../../../core/platform/services/database/services/orm/decorators";
 import { DriveFileAccessLevel, publicAccessLevel } from "../types";
 import { FileVersion } from "./file-version";
@@ -93,8 +94,9 @@ export class DriveFile {
 
   /**
    * If this field is non-null, then an editing session is in progress (probably in OnlyOffice).
-   * Should be in the format `timestamp-appid-hexuuid` where `appid` and `timestamp` have no `-`
-   * characters.
+   * Use {@see EditingSessionKeyFormat} to generate and interpret it.
+   * Values should ensure that sorting lexicographically is chronological (assuming perfect clocks everywhere),
+   * and that the application and user that started the edit session are retrievable.
    */
   @Type(() => String)
   @Column("editing_session_key", "string")
@@ -119,6 +121,81 @@ export class DriveFile {
   @Column("scope", "string")
   scope: DriveScope;
 }
+
+/** Reference implementation for generating then parsing the {@link DriveFile.editing_session_key} field */
+export const EditingSessionKeyFormat = {
+  // OnlyOffice key limits: 128 chars, [0-9a-zA-z=_-]
+  // This is specific to it, but the constraint seems strict enough
+  // that any other system needing such a unique identifier would find
+  // this compatible. This value must be ensured to be the strictest
+  // common denominator to all plugin/interop systems. Plugins that
+  // require something even stricter have the option of maintaining
+  // a look up table to an acceptable value.
+  generate(applicationId: string, userId: string) {
+    if (!/^[0-9a-zA-Z_-]+$/m.test(applicationId))
+      throw new Error(
+        `Invalid applicationId string (${JSON.stringify(
+          applicationId,
+        )}). Must be short and only alpha numeric`,
+      );
+    const isoUTCDateNoSpecialCharsNoMS = new Date()
+      .toISOString()
+      .replace(/\..+$/, "")
+      .replace(/[ZT:-]/g, "");
+    const newKey = [
+      isoUTCDateNoSpecialCharsNoMS,
+      applicationId,
+      userId.replace(/-+/g, ""),
+      randomUUID().replace(/-+/g, ""),
+    ].join("=");
+    if (newKey.length > 128 || !/^[0-9a-zA-Z=_-]+$/m.test(newKey))
+      throw new Error(
+        `Invalid generated editingSessionKey (${JSON.stringify(
+          newKey,
+        )}) string. Must be <128 chars, and only contain [0-9a-zA-z=_-]`,
+      );
+    return newKey;
+  },
+
+  parse(editingSessionKey: string) {
+    const parts = editingSessionKey.split("=");
+    const expectedParts = 4;
+    if (parts.length !== expectedParts)
+      throw new Error(
+        `Invalid editingSessionKey (${JSON.stringify(
+          editingSessionKey,
+        )}). Expected ${expectedParts} parts`,
+      );
+    const [timestampStr, appId, userId, _random] = parts;
+    const timestampMatch = timestampStr.match(
+      /^(?<year>\d{4})(?<month>\d\d)(?<day>\d\d)(?<hour>\d\d)(?<minute>\d\d)(?<second>\d\d)$/,
+    );
+    if (!timestampMatch)
+      throw new Error(
+        `Invalid editingSessionKey (${JSON.stringify(
+          editingSessionKey,
+        )}). Didn't start with valid timestamp`,
+      );
+    const { year, month, day, hour, minute, second } = timestampMatch.groups!;
+    const userIdMatch = userId.match(
+      /^([a-z0-f]{8})([a-z0-f]{4})([a-z0-f]{4})([a-z0-f]{4})([a-z0-f]{12})$/i,
+    );
+    if (!userIdMatch)
+      throw new Error(
+        `Invalid editingSessionKey (${JSON.stringify(
+          editingSessionKey,
+        )}). UserID has wrong number of digits`,
+      );
+    const [, userIdPart1, userIdPart2, userIdPart3, userIdPart4, userIdPart5] = userIdMatch;
+    return {
+      timestamp: new Date(
+        Date.parse(`${[year, month, day].join("-")}T${[hour, minute, second].join(":")}Z`),
+      ),
+      applicationId: appId,
+      userId: [userIdPart1, userIdPart2, userIdPart3, userIdPart4, userIdPart5].join("-"),
+    };
+  },
+};
 
 export type AccessInformation = {
   public?: {

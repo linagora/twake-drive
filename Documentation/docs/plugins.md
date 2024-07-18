@@ -43,7 +43,7 @@ Links in top right drop down application grid can be configured in the `applicat
 
 Plugins are defined as entries under the `applications.plugins` array, with at least the following properties:
 
-- `id` is mandatory and must be unique to each plugin
+- `id` is mandatory and must be unique to each plugin. It must be rather short, and alphanumeric with `_`s only.
 - `internal_domain` is the internal domain of the plugin's server, it must be the same as the one in the docker-compose.yml file for ex. or resolvable and accessible to the Twake Drive backend server.
 - `external_prefix` is the external URL prefix of the plugin exposed by the backend and proxied to the `internal_domain`.
 - `api.private_key` is the shared secret used by the plugin's server to authentify to the backend
