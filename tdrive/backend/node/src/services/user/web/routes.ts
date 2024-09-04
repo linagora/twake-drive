@@ -100,7 +100,7 @@ const routes: FastifyPluginCallback = (fastify: FastifyInstance, options, next) 
 
   fastify.route({
     method: "POST",
-    url: "/devices",
+    url: "/:companyId/devices",
     preHandler: accessControl,
     preValidation: [fastify.authenticate],
     schema: postDevicesSchema,

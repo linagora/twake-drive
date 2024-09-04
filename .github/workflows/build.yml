@@ -62,7 +62,7 @@ jobs:
       - name: e2e-mongo-s3-test
         run: |
           cd tdrive
-          docker compose -f docker-compose.tests.yml run --rm -e NODE_OPTIONS=--unhandled-rejections=warn -e SEARCH_DRIVER=mongodb -e DB_DRIVER=mongodb -e PUBSUB_TYPE=local node npm run test:all
+          docker compose -f docker-compose.tests.yml run --rm -e "NODE_OPTIONS=--unhandled-rejections=warn --experimental-vm-modules" -e SEARCH_DRIVER=mongodb -e DB_DRIVER=mongodb -e PUBSUB_TYPE=local node npm run test:all
           docker compose -f docker-compose.tests.yml down
       - name: e2e-opensearch-test
         run: |

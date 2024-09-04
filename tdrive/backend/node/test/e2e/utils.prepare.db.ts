@@ -202,6 +202,34 @@ export class TestDbService {
     return this.deviceRepository.findOne({ id });
   }
 
+  async createDevice(
+    options: {
+      id?: string;
+      password?: string;
+      user_id?: string;
+      company_id?: string;
+      type?: string;
+      version?: string;
+      push_notifications?: boolean;
+    } = {},
+  ): Promise<void> {
+    const user = await gr.services.users.get( {id: options.user_id } );
+    const device = new Device();
+    device.id = options.id;
+    device.password = options.password;
+    device.user_id = options.user_id;
+    device.company_id = options.company_id;
+    device.type = options.type;
+    device.version = options.version;
+    device.push_notifications = options.push_notifications;
+    const execution_context = {
+      user: user,
+  }
+    await this.deviceRepository.save(device, execution_context);
+    user.devices.push(device.id);
+    await this.userRepository.save(user, execution_context);
+  }
+
   getCompanyFromDb(companyId: uuid) {
     return gr.services.companies.getCompany({ id: companyId });
   }

@@ -36,6 +36,7 @@ import { formatCompany, getCompanyStats } from "../utils";
 import { formatUser } from "../../../utils/users";
 import gr from "../../global-resolver";
 import config from "config";
+import { DeviceTypesEnum } from "../entities/device";
 
 export class UsersCrudController
   implements
@@ -247,24 +248,31 @@ export class UsersCrudController
   }
 
   async registerUserDevice(
-    request: FastifyRequest<{ Body: RegisterDeviceBody }>,
+    request: FastifyRequest<{ Body: RegisterDeviceBody; Params: CompanyUsersParameters }>,
     _reply: FastifyReply,
   ): Promise<ResourceGetResponse<RegisterDeviceParams>> {
     const resource = request.body.resource;
-    if (resource.type !== "FCM") {
-      throw CrudException.badRequest("Type should be FCM only");
+    if (!(resource.type in DeviceTypesEnum)) {
+      throw CrudException.badRequest("Type should be a value of DeviceTypesEnum");
     }
     const context = getExecutionContext(request);
 
-    await gr.services.users.registerUserDevice(
+    const password = await gr.services.users.registerUserDevice(
       { id: context.user.id },
       resource.value,
       resource.type,
       resource.version,
+      null,
+      request.params.companyId,
     );
 
     return {
-      resource: request.body.resource,
+      resource: {
+        type: resource.type,
+        value: resource.value,
+        version: resource.version,
+        password: password,
+      },
     };
   }
 

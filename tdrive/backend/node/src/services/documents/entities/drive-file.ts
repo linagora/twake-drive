@@ -2,6 +2,7 @@ import { Type } from "class-transformer";
 import { Column, Entity } from "../../../core/platform/services/database/services/orm/decorators";
 import { DriveFileAccessLevel, publicAccessLevel } from "../types";
 import { FileVersion } from "./file-version";
+import { DriveLock } from "./drive-file-lock";
 import search from "./drive-file.search";
 
 export const TYPE = "drive_files";
@@ -118,6 +119,9 @@ export class DriveFile {
   @Type(() => String)
   @Column("scope", "string")
   scope: DriveScope;
+
+  @Column("locks", "encoded_json")
+  locks: DriveLock[];
 }
 
 export type AccessInformation = {

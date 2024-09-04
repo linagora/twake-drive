@@ -1,5 +1,5 @@
 import { mkdirSync, existsSync, promises as fsPromise, createWriteStream, readFileSync } from "fs";
-import { Readable } from "stream";
+import { Readable, Transform } from "stream";
 import { v4 as uuidv4 } from "uuid";
 
 const { unlink } = fsPromise;
@@ -79,6 +79,44 @@ export const readableToBuffer = async (input: Readable): Promise<Buffer> => {
     input.on("end", () => resolve(Buffer.concat(buffer)));
     input.on("error", err => reject(err));
   });
+};
+
+/**
+ * Create a size adding transform stream meant to be piped into,
+ * that sums up the sizes of what are expected to be `Buffer` instances
+ * that are written to it, and transparently pass the data through.
+ * @param input If a readable is provided, it will be piped into the
+ *   the transformer stream and the resulting piped stream will be in
+ *   the result's `stream` property. If none is provided, that property
+ *   will be the transform stream the caller will need to pipe to themself.
+ * @returns An object with:
+ *    - `stream`: Either the result of `input.pipe(sizeAdderTransform)` if an input
+ *      was provided, or directly the stream the caller must pipe into.
+ *    - `getSize`: A function that can only be called when the stream is
+ *      finished, and returns the total size that was written into the
+ *      `sizeAdderTransform` stream.
+ */
+export const createStreamSizeCounter = (input?: Readable) => {
+  let size = 0;
+  let finished = false;
+  let stream = new Transform({
+    transform(chunk, encoding, callback) {
+      size += chunk.length;
+      callback(null, chunk);
+    },
+    final(callback) {
+      finished = true;
+      callback();
+    },
+  });
+  if (input) stream = input.pipe(stream);
+  return {
+    stream,
+    getSize: () => {
+      if (!finished) throw new Error("Cannot read size of stream before it is finished");
+      return size;
+    },
+  };
 };
 
 /**

@@ -1,4 +1,5 @@
 import { PaginationQueryParameters } from "../../../utils/types";
+import type { DeviceTypesEnum } from "../entities/device";
 import User from "../entities/user";
 
 export interface UserListQueryParameters extends PaginationQueryParameters {
@@ -138,9 +139,10 @@ export interface RegisterDeviceBody {
 }
 
 export interface RegisterDeviceParams {
-  type: "FCM";
+  type: DeviceTypesEnum;
   value: string;
   version: string;
+  password?: string;
 }
 
 export interface DeregisterDeviceParams {

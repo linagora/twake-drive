@@ -31,6 +31,7 @@ import { isNumber, isString } from "lodash";
 import NodeCache from "node-cache";
 import gr from "../../../global-resolver";
 import { TYPE as DriveFileType, DriveFile } from "../../../documents/entities/drive-file";
+import { randomUUID } from "crypto";
 
 export class UserServiceImpl {
   version: "1";
@@ -186,6 +187,21 @@ export class UserServiceImpl {
     );
   }
 
+  async getByDevice(
+    kv: { id: string; password: string },
+    context?: ExecutionContext,
+  ): Promise<User> {
+    const device = await this.deviceRepository.findOne(kv, {}, context);
+    return this.get({ id: device.user_id }, context);
+  }
+
+  async getDevice(
+    kv: { id: string; password: string },
+    context?: ExecutionContext,
+  ): Promise<Device> {
+    return await this.deviceRepository.findOne(kv, {}, context);
+  }
+
   async setPreferences(
     pk: UserPrimaryKey,
     preferences: User["preferences"],
@@ -289,24 +305,38 @@ export class UserServiceImpl {
   async registerUserDevice(
     userPrimaryKey: UserPrimaryKey,
     id: string,
-    type: string,
+    type: Device["type"],
     version: string,
+    password?: string,
+    company_id?: string,
     context?: ExecutionContext,
-  ): Promise<void> {
+  ): Promise<string> {
     await this.deregisterUserDevice(id);
 
     const user = await this.get(userPrimaryKey);
     if (!user) {
       throw CrudException.notFound(`User ${userPrimaryKey} not found`);
     }
-    user.devices = user.devices || [];
-    user.devices.push(id);
 
+    if (!password) {
+      password = randomUUID();
+    }
     await this.repository.save(user, context);
     await this.deviceRepository.save(
-      getDeviceInstance({ id, type, version, user_id: user.id }),
+      getDeviceInstance({
+        id: id,
+        password: password,
+        type: type,
+        version: version,
+        user_id: user.id,
+        company_id: company_id,
+      }),
       context,
     );
+    user.devices = user.devices || [];
+    user.devices.push(id);
+    await this.repository.save(user, context);
+    return password;
   }
 
   async deregisterUserDevice(id: string, context?: ExecutionContext): Promise<void> {
@@ -352,5 +382,26 @@ export class UserServiceImpl {
     }
 
     return [user.password, null];
+  }
+
+  async createDevice(
+    userPrimaryKey: UserPrimaryKey,
+    type: Device["type"],
+    company_id?: string,
+    context?: ExecutionContext,
+  ): Promise<void> {
+    const user = await this.get(userPrimaryKey);
+    if (!user) {
+      throw CrudException.notFound(`User ${userPrimaryKey.id} not found`);
+    }
+    await this.registerUserDevice(
+      userPrimaryKey,
+      randomUUID(),
+      type,
+      "undefined",
+      randomUUID(),
+      company_id,
+      context,
+    );
   }
 }

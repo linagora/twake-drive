@@ -2,6 +2,7 @@ import * as Minio from "minio";
 import { logger } from "../../../../../../core/platform/framework";
 import { Readable } from "stream";
 import { StorageConnectorAPI, WriteMetadata } from "../../provider";
+import { createStreamSizeCounter } from "../../../../../../utils/files";
 
 export type S3Configuration = {
   bucket: string;
@@ -23,34 +24,12 @@ export default class S3ConnectorService implements StorageConnectorAPI {
     this.minioConfiguration = S3Configuration;
   }
 
-  write(path: string, stream: Readable): Promise<WriteMetadata> {
-    return new Promise((resolve, reject) => {
-      let totalSize = 0;
-      let didCompletePutObject = false;
-      let didCompleteCalculateSize = false;
-      const doResolve = () =>
-        didCompletePutObject &&
-        didCompleteCalculateSize &&
-        resolve({
-          size: totalSize,
-        });
-      stream
-        .on("data", function (chunk) {
-          totalSize += chunk.length;
-        })
-        .on("end", () => {
-          // TODO: this could be bad practice as it puts the stream in flow mode before putObject gets to it
-          didCompleteCalculateSize = true;
-          doResolve();
-        });
-      this.client
-        .putObject(this.minioConfiguration.bucket, path, stream)
-        .then(_x => {
-          didCompletePutObject = true;
-          doResolve();
-        })
-        .catch(reject);
-    });
+  async write(path: string, stream: Readable): Promise<WriteMetadata> {
+    const sizeCounter = createStreamSizeCounter(stream);
+    await this.client.putObject(this.minioConfiguration.bucket, path, sizeCounter.stream);
+    return {
+      size: sizeCounter.getSize(),
+    };
   }
 
   async read(path: string): Promise<Readable> {
