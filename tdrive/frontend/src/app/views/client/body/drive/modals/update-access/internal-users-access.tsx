@@ -81,7 +81,10 @@ export const InternalUsersAccessManager = ({
   return (
     <>
       <div className="rounded-md border-t mt-2 dark:border-zinc-700">
-        <div className="p-4 flex flex-row items-center justify-center rounded-t-md border-x dark:border-zinc-700">
+        <div className={
+          "p-4 flex flex-row items-center justify-center rounded-t-md border-x dark:border-zinc-700"
+          + (showResults ? ' rounded-b-md' : '')
+          }>
           <div className="grow">
             <InputDecorationIcon
               prefix={SearchIcon}
@@ -157,7 +160,7 @@ export const InternalUsersAccessManager = ({
             id={id}
             userId={user?.id}
             disabled={disabled}
-            className={(showResults ? '!rounded-none !rounded-t-md' : '') + (index === usersWithAccess.length - 1 ? ' rounded-b-md border-y' : ' border-t')}
+            className={(showResults ? '!rounded-none' : '') + (index === usersWithAccess.length - 1 ? ' !rounded-b-md border-y' : ' border-t')}
             />
           )}
         {(usersWithAccess?.length ?? 0) < minUserHeight &&

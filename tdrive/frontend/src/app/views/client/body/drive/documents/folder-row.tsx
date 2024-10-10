@@ -23,7 +23,7 @@ export const FolderRow = ({
   return (
     <div
       className={
-        'flex flex-row items-center border border-zinc-200 dark:border-zinc-800 -mt-px px-4 py-3 cursor-pointer ' +
+        'flex flex-row items-center border border-zinc-200 dark:border-zinc-800 px-4 py-3 cursor-pointer ' +
         (className || '') +
         (checked
           ? 'bg-blue-500 bg-opacity-10 hover:bg-opacity-25 '

@@ -227,8 +227,8 @@ export default memo(
       const commonProps = {
         key: index,
         className:
-          (index === 0 ? 'rounded-t-md ' : '') +
-          (index === documents.length - 1 ? 'rounded-b-md ' : ''),
+          (index === 0 ? 'rounded-t-md ' : '-mt-px ') +
+          (index === items.length - 1 ? 'rounded-b-md ' : ''),
         item: child,
         checked: checked[child.id] || false,
         onCheck: (v: boolean) => setChecked(_.pickBy({ ...checked, [child.id]: v }, _.identity)),
@@ -238,7 +238,7 @@ export default memo(
       return isMobile ? (
         <DocumentRow {...commonProps} />
       ) : (
-        <Draggable id={index}>
+        <Draggable id={index} key={index}>
           <DocumentRow {...commonProps} />
         </Draggable>
       );
@@ -450,7 +450,7 @@ export default memo(
                         <FolderRow
                           key={index}
                           className={
-                            (index === 0 ? 'rounded-t-md ' : '') +
+                            (index === 0 ? 'rounded-t-md ' : '-mt-px ') +
                             (index === items.length - 1 ? 'rounded-b-md ' : '')
                           }
                           item={child}
@@ -476,7 +476,7 @@ export default memo(
                     {activeIndex ? (
                       <DocumentRowOverlay
                         className={
-                          (activeIndex === 0 ? 'rounded-t-md ' : '') +
+                          (activeIndex === 0 ? 'rounded-t-md ' : '-mt-px ') +
                           (activeIndex === items.length - 1 ? 'rounded-b-md ' : '')
                         }
                         item={activeChild}
