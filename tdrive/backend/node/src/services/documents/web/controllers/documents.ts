@@ -422,7 +422,7 @@ export class DocumentsController {
         totalChunks: parseInt(q.resumableTotalChunks || q.total_chunks) || 1,
         totalSize: parseInt(q.resumableTotalSize || q.total_size) || 0,
         chunkNumber: parseInt(q.resumableChunkNumber || q.chunk_number) || 1,
-        filename: q.resumableFilename || q.filename || file?.filename || undefined,
+        filename: q.filename || undefined,
         type: q.resumableType || q.type || file?.mimetype || undefined,
         waitForThumbnail: !!q.thumbnail_sync,
         ignoreThumbnails: false,

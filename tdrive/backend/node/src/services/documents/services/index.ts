@@ -1150,7 +1150,15 @@ export class DocumentsService {
     }
 
     if (file) {
-      const fileEntity = await globalResolver.services.files.save(null, file, options, context);
+      const fileEntity = await globalResolver.services.files.save(
+        null,
+        file,
+        {
+          ...options,
+          filename: options.filename ?? driveFile.name,
+        },
+        context,
+      );
 
       await globalResolver.services.documents.documents.createVersion(
         driveFile.id,
@@ -1160,6 +1168,7 @@ export class DocumentsService {
           file_metadata: {
             external_id: fileEntity.id,
             source: "internal",
+            name: file.filename ?? driveFile.name,
           },
         },
         context,
@@ -1186,8 +1195,14 @@ export class DocumentsService {
             )}`,
           );
       } catch (error) {
-        logger.error({ error: `${error}` }, "Failed to cancel editing Drive item");
-        CrudException.throwMe(error, new CrudException("Failed to cancel editing Drive item", 500));
+        logger.error(
+          { error: `${error}` },
+          `Failed to ${keepEditing ? "update" : "end"} editing Drive item`,
+        );
+        CrudException.throwMe(
+          error,
+          new CrudException(`Failed to ${keepEditing ? "update" : "end"} editing Drive item`, 500),
+        );
       }
     }
   };
