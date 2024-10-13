@@ -293,6 +293,7 @@
     "scenes.app.workspaces.welcome_page.add_new_email": "Добавить аккаунт электронной почты",
     "scenes.app.workspaces.welcome_page.add_secondary_emails": "Добавить еще один аккаунт электронной почты",
     "scenes.app.workspaces.welcome_page.new_email": "Добавить еще один аккаунт электронной почты",
+    "scenes.apps.account-webdav.title": "WebDAV",
     "scenes.apps.account.account.change_username": "Изменить имя пользователя.",
     "scenes.apps.account.account.description_main": "Ваш основной адрес - это тот, на который Tdrive отправляет уведомления. Прочие адреса позволяют автоматически приглашать вас в рабочие среды, которые их используют.",
     "scenes.apps.account.account.email_add": "Добавить новый аккаунт электронной почты",

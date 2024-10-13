@@ -237,6 +237,7 @@
     "documents",
     "applications",
     "applications-api",
-    "tags"
+    "tags",
+    "webdav"
   ]
 }

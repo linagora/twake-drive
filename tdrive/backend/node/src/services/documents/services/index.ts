@@ -59,6 +59,7 @@ import {
 import archiver from "archiver";
 import internal from "stream";
 import config from "config";
+import assert from "assert";
 import { MultipartFile } from "@fastify/multipart";
 import { UploadOptions } from "src/services/files/types";
 import { SortType } from "src/core/platform/services/search/api";
@@ -291,6 +292,8 @@ export class DocumentsService {
             this.repository,
             context,
           ),
+          is_directory: isDirectory,
+          locks: [],
         } as DriveFile),
       versions: versions,
       children: children,
@@ -545,7 +548,15 @@ export class DocumentsService {
         throw Error("content mismatch");
       }
 
-      const updatable = ["access_info", "name", "tags", "parent_id", "description", "is_in_trash"];
+      const updatable = [
+        "access_info",
+        "name",
+        "tags",
+        "parent_id",
+        "description",
+        "is_in_trash",
+        "locks",
+      ];
       let renamedTo: string | undefined;
       for (const key of updatable) {
         if ((content as any)[key]) {
@@ -1332,7 +1343,7 @@ export class DocumentsService {
   /**
    * Search for Drive items.
    *
-   * @param {SearchDocumentsOptions} options - the search optins.
+   * @param {SearchDocumentsOptions} options - the search options.
    * @param {DriveExecutionContext} context - the execution context.
    * @returns {Promise<ListResult<DriveFile>>} - the search result.
    */
@@ -1500,6 +1511,158 @@ export class DocumentsService {
     }
   };
 
+  /**
+   * Returns the file
+   * @param name
+   * @param parent_id
+   * @param context
+   */
+  findByName = async (
+    name: string,
+    parent_id: string | null,
+    context: CompanyExecutionContext,
+  ): Promise<DriveFile> => {
+    if (!context) {
+      this.logger.error("invalid context");
+      return null;
+    }
+    //Get requested entity
+    const driveFile = await this.repository.findOne(
+      {
+        company_id: context.company.id,
+        parent_id: parent_id,
+        name: name,
+      },
+      {},
+      context,
+    );
+    if (!driveFile) {
+      this.logger.error("Drive item not found");
+      throw new CrudException("Item not found", 404);
+    }
+    //Check access to entity
+    try {
+      const hasAccess = await checkAccess(
+        driveFile.id,
+        driveFile,
+        "read",
+        this.repository,
+        context,
+      );
+      if (!hasAccess) {
+        this.logger.error("user does not have access drive item " + driveFile);
+        throw Error("user does not have access to this item");
+      }
+    } catch (error) {
+      this.logger.error({ error: `${error}` }, "Failed to grant access to the drive item");
+      throw new CrudException("User does not have access to this item or its children", 401);
+    }
+    return Promise.resolve(driveFile);
+  };
+
+  /**
+   * Copies item to destination
+   * @param id
+   * @param file
+   * @param content
+   * @param context
+   */
+  copy = async (
+    id: string,
+    file: DriveFile | null,
+    content: Partial<DriveFile>,
+    context: DriveExecutionContext,
+  ): Promise<void> => {
+    assert(id != null, "Cannot copy null");
+    const item = await this.get(id, undefined, context);
+    assert(item.item.parent_id != null, "Cannot copy root");
+    assert(
+      await checkAccess(id, file, "read", this.repository, context),
+      "User does not have access to this item",
+    );
+    // TODO: properly check name
+    assert(content.parent_id != null && content.name != "root", "Cannot copy parent");
+    assert(
+      await checkAccess(content.parent_id, null, "write", this.repository, context),
+      "User does not have access to this item",
+    );
+    // now check that we can force copy if the item exists
+    // TODO: keep it or "write" level-access to parent allows to change any child?
+    // try {
+    //   const copy_item = await this.findByName(item.item.name, parent_id, context);
+    //   assert(
+    //     await checkAccess(copy_item.id, copy_item, "write", this.repository, context),
+    //     "User does not have access to this item",
+    //   );
+    // } catch (err) {
+    //   if (err.message === "User does not have access to this item") {
+    //     throw err;
+    //   }
+    // }
+    // now check if the item exists, then update it, if not - create new one
+    let file_item = null;
+    try {
+      file_item = await this.findByName(content.name, content.parent_id, context);
+    } catch (err) {}
+
+    if (file_item != null) {
+      await this.update(file_item.id, file, context);
+    } else {
+      const new_file = getDefaultDriveItem(file, context);
+      new_file.parent_id = content.parent_id;
+      new_file.name = content.name;
+      new_file.id = undefined;
+      // TODO: check if this copies item's content
+      await this.create(null, new_file, {}, context);
+    }
+  };
+
+  /**
+   * Moves item to destination
+   * @param id
+   * @param file
+   * @param content
+   * @param context
+   */
+  move = async (
+    id: string,
+    file: DriveFile | null,
+    content: Partial<DriveFile>,
+    context: DriveExecutionContext,
+  ): Promise<void> => {
+    assert(id != null, "Cannot move null");
+    const item = await this.get(id, undefined, context);
+    assert(item.item.parent_id != null, "Cannot move root");
+    assert(
+      await checkAccess(id, file, "manage", this.repository, context),
+      "User does not have access to this item",
+    );
+    assert(content.parent_id != null && content.name != "root", "Cannot move to root");
+    assert(
+      await checkAccess(content.parent_id, null, "write", this.repository, context),
+      "User does not have access to this item",
+    );
+    await this.update(item.item.id, content, context);
+  };
+  /**
+   * Clean up expired locks
+   */
+  // TODO[GK]: need to implement more wisely and not go through all the files
+  lockCleanUp = async (): Promise<void> => {
+    const now = new Date();
+    const allDriveFiles = await this.repository.find({});
+
+    for (const driveFile of allDriveFiles.getEntities()) {
+      if (driveFile.locks && driveFile.locks.length > 0) {
+        driveFile.locks = driveFile.locks.filter(lock => {
+          const expirationDate = new Date(lock.created_at + lock.timeout);
+          return expirationDate > now;
+        });
+
+        await this.repository.save(driveFile);
+      }
+    }
+  };
   getSortFieldMapping = (sort: SortType) => {
     const sortFieldMapping = {
       name: "name",

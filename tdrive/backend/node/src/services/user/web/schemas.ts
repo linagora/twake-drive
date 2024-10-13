@@ -265,6 +265,37 @@ export const postDevicesSchema = {
   },
 };
 
+export const ensureHaveDeviceKindSchema = {
+  type: "object",
+  params: {
+    type: "object",
+    properties: {
+      companyId: {
+        description: "User ID",
+        type: "string",
+      },
+      // See DeviceTypesEnum
+      type: { type: "string", enum: ["FCM", "WebDAV"] },
+    },
+  },
+  required: ["companyId", "type"],
+  response: {
+    "2xx": {
+      type: "object",
+      properties: {
+        resource: {
+          type: "object",
+          properties: {
+            id: { type: "string" },
+            password: { type: "string" },
+          },
+        },
+      },
+      required: ["resource"],
+    },
+  },
+};
+
 export const getDevicesSchema = {
   response: {
     "2xx": {

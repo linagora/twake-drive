@@ -285,6 +285,7 @@
     "scenes.app.workspaces.welcome_page.add_new_email": "Ajouter un e-mail",
     "scenes.app.workspaces.welcome_page.add_secondary_emails": "Ajouter un e-mail secondaire",
     "scenes.app.workspaces.welcome_page.new_email": "Ajouter un e-mail secondaire",
+    "scenes.apps.account-webdav.title": "WebDAV",
     "scenes.apps.account.account.change_username": "Modifiez votre nom unique d'utilisateur.",
     "scenes.apps.account.account.description_main": "Votre adresse principale est celle à laquelle Twake Drive envoie vos notifications. Vos adresses secondaires vous permettent d'être invité automatiquement dans les espaces de travail qui les utilisent.",
     "scenes.apps.account.account.email_add": "Ajouter un nouvel e-mail",

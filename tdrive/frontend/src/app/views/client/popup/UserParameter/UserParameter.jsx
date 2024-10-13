@@ -18,6 +18,19 @@ import Attribute from 'components/parameters/attribute.tsx';
 import { Button } from '../../../../atoms/button/button';
 import * as Text from '../../../../atoms/text';
 import './UserParameter.scss';
+import { CopyLinkButton } from '../../body/drive/modals/public-link/copy-link-button';
+
+
+const Page = {
+  Account: {
+    num: 1,
+    title: 'scenes.apps.account.title',
+  },
+  WebDAV: {
+    num: 2,
+    title: 'scenes.apps.account-webdav.title',
+  },
+};
 
 export default class UserParameter extends Component {
   constructor(props) {
@@ -35,6 +48,7 @@ export default class UserParameter extends Component {
       last_name: user ? user.last_name : '',
       first_name: user ? user.first_name : '',
       thumbnail: false,
+      companyId: props.companyId,
     };
     Collections.get('users').addListener(this);
     Collections.get('users').listenOnly(this, [
@@ -58,10 +72,10 @@ export default class UserParameter extends Component {
   }
 
   displayScene() {
-    if (this.state.page === 1) {
+    if (this.state.page === Page.Account.num) {
       return (
         <form className="" autoComplete="off">
-          <div className="title">{this.state.i18n.t('scenes.apps.account.title')}</div>
+          <div className="title">{this.state.i18n.t(Page.Account.title)}</div>
               <div className="group_section">
                 <Attribute
                   label={this.state.i18n.t('scenes.apps.account.languages.menu_title')}
@@ -69,6 +83,7 @@ export default class UserParameter extends Component {
                 >
                   <div className="parameters_form">
                     <select
+                      className="bg-zinc-100 dark:bg-zinc-800 dark:text-white"
                       value={this.state.i18n.language}
                       onChange={ev => currentUserService.updateLanguage(ev.target.value)}
                     >
@@ -81,6 +96,22 @@ export default class UserParameter extends Component {
               </div>
         </form>
       );
+    } else if (this.state.page === Page.WebDAV.num) {
+      return (
+        <form className="" autoComplete="off">
+          <div className="title">{this.state.i18n.t(Page.WebDAV.title)}</div>
+          <div className="group_section">
+            <CopyLinkButton
+              textToCopy={false}
+              onGetTextToCopy={async () => {
+                const result = await currentUserService.ensureDeviceKind(this.state.companyId, "WebDAV");
+                return `${document.location.protocol}//${encodeURIComponent(result.id)}:${encodeURIComponent(result.password)}@${document.location.host}/internal/services/webdav/v1/webdav/My%20Drive`;
+              }}
+            />
+          </div>
+        </form>
+      );
+
     }
   }
 
@@ -88,21 +119,27 @@ export default class UserParameter extends Component {
     popupManager.popupStates['user_parameters'] = page;
     this.setState({ page: page });
   }
+
+  makeMenuPageEntry(page) {
+    return {
+      type: 'menu',
+      text: this.state.i18n.t(page.title),
+      selected: this.state.page === page.num ? 'selected' : '',
+      onClick: () => {
+        this.setPage(page.num);
+      },
+    };
+  }
+
   render() {
     return (
-      <div className="userParameter fade_in">
+      <div className="userParameter fade_in bg-zinc-100 dark:bg-zinc-800 dark:text-white">
         <div className="main">
           <div className="sideBar">
             <MenuList
               menu={[
-                {
-                  type: 'menu',
-                  text: this.state.i18n.t('scenes.apps.account.title'),
-                  selected: this.state.page === 1 ? 'selected' : '',
-                  onClick: () => {
-                    this.setPage(1);
-                  },
-                },
+                this.makeMenuPageEntry(Page.Account),
+                this.makeMenuPageEntry(Page.WebDAV),
               ]}
             />
           </div>

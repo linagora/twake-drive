@@ -274,6 +274,7 @@
     "scenes.app.workspaces.welcome_page.add_new_email": "Thêm email",
     "scenes.app.workspaces.welcome_page.add_secondary_emails": "Thêm email phụ",
     "scenes.app.workspaces.welcome_page.new_email": "Thêm email phụ",
+    "scenes.apps.account-webdav.title": "WebDAV",
     "scenes.apps.account.account.change_username": "Thay đổi tên người dùng duy nhất của bạn.",
     "scenes.apps.account.account.description_main": "Địa chỉ email chính của bạn là nơi Tdrive gửi thông báo cho bạn. Các email phụ của bạn cho phép bạn được tự động mời tham gia vào các không gian làm việc sử dụng chúng.",
     "scenes.apps.account.account.email_add": "Thêm e-mail mới",
