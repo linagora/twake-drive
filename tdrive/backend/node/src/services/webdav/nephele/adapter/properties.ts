@@ -1,7 +1,7 @@
 import type { INepheleProperties, INepheleUser, NepheleModule } from "../loader";
 import { Resource } from "./resource";
 
-export class PropertiesService implements INepheleProperties {
+export class Properties implements INepheleProperties {
   /**
    * The resource these properties belong to.
    */
@@ -291,6 +291,6 @@ export class PropertiesService implements INepheleProperties {
    * Same as listDead, but for a specific user.
    */
   listDeadByUser(_user: INepheleUser): Promise<string[]> {
-    return Promise.resolve(["undefined"]);
+    throw new this.nephele.MethodNotImplementedError();
   }
 }

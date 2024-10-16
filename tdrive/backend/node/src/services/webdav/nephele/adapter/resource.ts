@@ -8,7 +8,7 @@ import {
 } from "../loader";
 
 import { Readable } from "stream";
-import { PropertiesService } from "./properties";
+import { Properties } from "./properties";
 import { Lock } from "./lock";
 
 import gr from "../../../global-resolver";
@@ -190,7 +190,7 @@ export class Resource implements INepheleResource {
    * Return a properties object for this resource.
    */
   async getProperties(): Promise<INepheleProperties> {
-    return new PropertiesService(this.nephele, this);
+    return new Properties(this.nephele, this);
   }
 
   /**

@@ -1,1 +1,1 @@
-export { adapterServiceReady, getAdapterService } from "./adapter";
+export { Adapter } from "./adapter";
