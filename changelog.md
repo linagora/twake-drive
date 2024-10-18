@@ -1,3 +1,24 @@
+# Twake Drive v1.0.5-rc1
+
+## Features
+
+- Updated the navigation bar/app grid
+- Added FileVersion.filename and FileVersion.file_metadata.name to output to backend cli
+- Added Shared with me feature flag
+- Added offset pagination to db connector
+- Added healthchecks to the docker compose services used in CI testing removed scylladb.
+- Sorted all locales json keys, as per jq --sort-keys
+
+## Fixes and Improvements
+
+- Fix translation of disk usage to plural tolerant
+- Fix Vietnamese code to correct ISO of "vi", added to selector in account settings
+- Fix onlyoffice filename corrupted after editing
+- Fix UI bugs related to borders in lists
+- Fix set rights modal had similar border issues as browser
+- Fix file browser vertical borders (and fix react warning)
+- Fix only office filename getting overwritten at session end
+
 # Twake Drive v1.0.4
 
 ## Features
