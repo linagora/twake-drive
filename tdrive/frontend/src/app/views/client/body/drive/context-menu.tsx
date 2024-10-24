@@ -146,6 +146,7 @@ export const useOnBuildContextMenu = (
                       },
                       item.id,
                       item.parent_id,
+                      item.name,
                     );
                   },
                 }),
