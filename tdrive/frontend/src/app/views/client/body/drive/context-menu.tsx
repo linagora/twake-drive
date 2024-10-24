@@ -80,26 +80,28 @@ export const useOnBuildContextMenu = (
           //Add item related menus
           const upToDateItem = await DriveApiClient.get(item.company_id, item.id);
           const access = upToDateItem.access || 'none';
+          const hideShareItem = access === 'read' || getPublicLinkToken() || inTrash;
+          const hideManageAccessItem =
+            access === 'read'
+            || getPublicLinkToken()
+            || inTrash
+            || !FeatureTogglesService.isActiveFeatureName(FeatureNames.COMPANY_MANAGE_ACCESS);
           const newMenuActions = [
             {
               type: 'menu',
               icon: 'share-alt',
               text: Languages.t('components.item_context_menu.share'),
-              hide: access === 'read' || getPublicLinkToken() || inTrash,
+              hide: hideShareItem,
               onClick: () => setPublicLinkModalState({ open: true, id: item.id }),
             },
             {
               type: 'menu',
               icon: 'users-alt',
               text: Languages.t('components.item_context_menu.manage_access'),
-              hide:
-                access === 'read' ||
-                getPublicLinkToken() ||
-                inTrash ||
-                !FeatureTogglesService.isActiveFeatureName(FeatureNames.COMPANY_MANAGE_ACCESS),
+              hide: hideManageAccessItem,
               onClick: () => setAccessModalState({ open: true, id: item.id }),
             },
-            { type: 'separator', hide: inTrash },
+            { type: 'separator', hide: inTrash || (hideShareItem && hideManageAccessItem) },
             {
               type: 'menu',
               icon: 'download-alt',
@@ -130,7 +132,7 @@ export const useOnBuildContextMenu = (
               type: 'menu',
               icon: 'folder-question',
               text: Languages.t('components.item_context_menu.move'),
-              hide: access === 'read' || inTrash,
+              hide: access === 'read' || inTrash || inPublicSharing,
               onClick: () =>
                 setSelectorModalState({
                   open: true,
