@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { CompanyType } from '@features/companies/types/company';
-import { UserPreferencesType, UserType } from '@features/users/types/user';
+import { DeviceTypesEnum, EnsureDeviceByKindResponse, UserPreferencesType, UserType } from '@features/users/types/user';
 import Api from '../../global/framework/api-service';
 import { TdriveService } from '../../global/framework/registry-decorator-service';
 import WorkspaceAPIClient from '../../workspaces/api/workspace-api-client';
@@ -252,6 +252,16 @@ class UserAPIClientService {
         ...partials,
       },
     );
+  }
+
+  async ensureHaveDeviceType(companyId: string, kind: DeviceTypesEnum) {
+    const result = await Api.post<{}, EnsureDeviceByKindResponse>(
+      `/internal/services/users/v1/companies/${encodeURIComponent(companyId)}/devices/${encodeURIComponent(kind)}`,
+      {},
+    );
+    if (!result.resource)
+      throw new Error(`Error ensuring device by kind: ${JSON.stringify(result)}`);
+    return result.resource;
   }
 }
 const UserAPIClient = new UserAPIClientService();

@@ -38,6 +38,7 @@ export default class LocalConnectorService implements StorageConnectorAPI {
         .on("finish", () => {
           const stats = statSync(path);
           logger.trace(`File ${path} have been written`);
+          //TODO: Check what's up with this, the encrypted size is not the same as the file size
           resolve({
             size: stats.size,
           });

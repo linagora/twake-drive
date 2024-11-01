@@ -116,7 +116,15 @@ export default class WebServerService extends TdriveService<WebServerAPI> implem
       },
     });
     this.server.register(formbody);
-    this.server.register(corsPlugin, this.configuration.get<FastifyCorsOptions>("cors", {}));
+    //TODO Ensure the non strict and continuance to preflight isn't an issue in the rest of drive
+    this.server.register(corsPlugin, {
+      // This is required because WebDAV clients don't send CORS headers when querying OPTIONS
+      // See configuration at https://github.com/fastify/fastify-cors
+      strictPreflight: false,
+      // Need to pass on to Nephele to handle, seems ok with the other URLs
+      preflightContinue: true,
+      ...this.configuration.get<FastifyCorsOptions>("cors", {}),
+    });
 
     return this;
   }

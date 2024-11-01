@@ -62,7 +62,7 @@ jobs:
       - name: e2e-mongo-s3-test
         run: |
           cd tdrive
-          docker compose -f docker-compose.tests.yml run --rm -e NODE_OPTIONS=--unhandled-rejections=warn node npm run test:all
+          docker compose -f docker-compose.tests.yml run --rm -e NODE_OPTIONS="--unhandled-rejections=warn --experimental-vm-modules" node npm run test:all
           docker compose -f docker-compose.tests.yml down
       - name: e2e-opensearch-test
         run: |
@@ -70,7 +70,7 @@ jobs:
           docker compose -f docker-compose.dev.tests.opensearch.yml up -d --force-recreate opensearch-node1 postgres node
           sleep 60
           docker compose -f docker-compose.dev.tests.opensearch.yml logs
-          docker compose -f docker-compose.dev.tests.opensearch.yml run -e NODE_OPTIONS=--unhandled-rejections=warn -e SEARCH_DRIVER=opensearch -e DB_DRIVER=postgres -e PUBSUB_TYPE=local node npm run test:all
+          docker compose -f docker-compose.dev.tests.opensearch.yml run -e NODE_OPTIONS="--unhandled-rejections=warn --experimental-vm-modules" -e SEARCH_DRIVER=opensearch -e DB_DRIVER=postgres -e PUBSUB_TYPE=local node npm run test:all
           docker compose -f docker-compose.dev.tests.opensearch.yml down
 
   build-frontend:
