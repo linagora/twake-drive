@@ -1,8 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React from 'react';
+import React, { useEffect } from 'react';
 import _ from 'lodash';
+import { addShortcut, removeShortcut } from 'app/features/global/services/shortcut-service';
 
-export type ButtonTheme = 'primary' | 'secondary' | 'danger' | 'default' | 'outline' | 'dark' | 'white' | 'green';
+export type ButtonTheme =
+  | 'primary'
+  | 'secondary'
+  | 'danger'
+  | 'default'
+  | 'outline'
+  | 'dark'
+  | 'white'
+  | 'green';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   theme?: ButtonTheme;
@@ -12,6 +21,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean;
   disabled?: boolean;
   children?: React.ReactNode;
+  shortcut?: string;
 }
 
 export const Button = (props: ButtonProps) => {
@@ -42,9 +52,7 @@ export const Button = (props: ButtonProps) => {
     className =
       'text-zinc-300 border-0 bg-zinc-900 hover:bg-zinc-800 hover:text-white active:bg-zinc-900';
 
-  if (props.theme === 'green')
-    className =
-      'text-zinc-300 border-0 bg-green-700';
+  if (props.theme === 'green') className = 'text-zinc-300 border-0 bg-green-700';
 
   if (disabled) className += ' opacity-50 pointer-events-none';
 
@@ -58,8 +66,30 @@ export const Button = (props: ButtonProps) => {
     else className = className + ' w-9 !p-0 justify-center';
   }
 
+  useEffect(() => {
+    const handler = (event?: KeyboardEvent) => {
+      // Disable default behavior for the shortcut
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      props.onClick && props.onClick({} as any);
+    };
+
+    const shortcut = props.shortcut || '';
+
+    // Add shortcut with default behavior prevention
+    addShortcut({
+      shortcut,
+      handler: event => {
+        handler(event as KeyboardEvent);
+      },
+    });
+  }, [props.onClick, props.shortcut]);
+
   return (
     <button
+      aria-keyshortcuts={props.shortcut}
       type="button"
       className={
         ' inline-flex items-center px-4 py-2 border font-medium rounded-md focus:outline-none ' +
@@ -103,6 +133,15 @@ export const Button = (props: ButtonProps) => {
         />
       )}
       {props.children}
+      {props.shortcut && props.theme !== 'white' && (
+        <span
+          className={`ml-2 text-xs w-5 h-5 leading-[22px] text-center rounded-sm opacity-100 ${
+            props.theme === 'primary' ? 'text-gray-200 bg-[#004591]' : 'text-gray-400 bg-gray-200'
+          }`}
+        >
+          {props.shortcut}
+        </span>
+      )}
     </button>
   );
 };
