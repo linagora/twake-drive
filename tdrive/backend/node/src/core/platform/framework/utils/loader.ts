@@ -1,4 +1,4 @@
-import { logger } from "../logger";
+import { platformLogger } from "../logger";
 import fs from "fs";
 
 export class Loader {
@@ -14,7 +14,7 @@ export class Loader {
           try {
             return await import(modulePath);
           } catch (err) {
-            logger.debug(
+            platformLogger.debug(
               { err },
               `${modulePath} can not be loaded (file was found but we were unable to import the module)`,
             );
@@ -28,7 +28,9 @@ export class Loader {
     if (!classes || !classes.length) {
       modulesPaths.map(modulePath => {
         if (fs.existsSync(modulePath)) {
-          logger.debug(`${modulePath} content was: [${fs.readdirSync(modulePath).join(", ")}]`);
+          platformLogger.debug(
+            `${modulePath} content was: [${fs.readdirSync(modulePath).join(", ")}]`,
+          );
         }
       });
       throw new Error(
@@ -38,7 +40,7 @@ export class Loader {
       );
     }
 
-    logger.debug(`Loaded ${componentName}`);
+    platformLogger.debug(`Loaded ${componentName}`);
 
     return classes[0].default;
   }

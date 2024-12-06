@@ -3,7 +3,7 @@ import { TdriveService } from "./service";
 import { TdriveServiceProvider } from "./service-provider";
 import { ServiceDefinition } from "./service-definition";
 import { TdriveServiceState } from "./service-state";
-import { logger } from "../logger";
+import { platformLogger } from "../logger";
 
 export class TdriveComponent {
   instance: TdriveService<TdriveServiceProvider>;
@@ -38,7 +38,7 @@ export class TdriveComponent {
     recursionDepth?: number,
   ): Promise<void> {
     if (recursionDepth > 10) {
-      logger.error("Maximum recursion depth exceeded (will exit process)");
+      platformLogger.error("Maximum recursion depth exceeded (will exit process)");
       process.exit(1);
     }
 
@@ -50,10 +50,10 @@ export class TdriveComponent {
       for (const component of this.components) {
         await component.switchToState(state, (recursionDepth || 0) + 1);
       }
-      logger.info(`Children of ${this.name} are all in ${state} state`);
-      logger.info(this.getStateTree());
+      platformLogger.info(`Children of ${this.name} are all in ${state} state`);
+      platformLogger.info(this.getStateTree());
     } else {
-      logger.info(`${this.name} does not have children`);
+      platformLogger.info(`${this.name} does not have children`);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -1,5 +1,5 @@
 import { isEqual } from "lodash";
-import { logger } from "../../framework";
+import { messageQueueLogger } from "../../framework";
 import {
   MessageQueueClient,
   MessageQueueListener,
@@ -40,7 +40,7 @@ export default class MessageQueueProxyService implements MessageQueueProxy {
   constructor(private client?: MessageQueueClient) {}
 
   async setClient(client: MessageQueueClient): Promise<void> {
-    logger.info(`${LOG_PREFIX} Setting new message-queue client`);
+    messageQueueLogger.info(`${LOG_PREFIX} Setting new message-queue client`);
     // TODO: The client can be removed or replaced while we are looping here
     // We may wait until things are done, or discard some...
     if (!client) {
@@ -48,7 +48,7 @@ export default class MessageQueueProxyService implements MessageQueueProxy {
     }
 
     if (this.client) {
-      logger.info(`${LOG_PREFIX} MessageQueue client already set. Overriding`);
+      messageQueueLogger.info(`${LOG_PREFIX} MessageQueue client already set. Overriding`);
     }
 
     this.client = client;
@@ -59,11 +59,11 @@ export default class MessageQueueProxyService implements MessageQueueProxy {
         const listeners = entries[1];
 
         return Array.from(listeners).map(async listener => {
-          logger.debug(`${LOG_PREFIX} Subscribing to topic ${topic} from cache`);
+          messageQueueLogger.debug(`${LOG_PREFIX} Subscribing to topic ${topic} from cache`);
           try {
             await this.subscribe(topic, listener.listener, listener.options);
           } catch (err) {
-            logger.warn(
+            messageQueueLogger.warn(
               { err },
               `${LOG_PREFIX} Error while subscribing with cached subscription to topic ${topic}`,
             );
@@ -75,10 +75,12 @@ export default class MessageQueueProxyService implements MessageQueueProxy {
     await Promise.all(
       this.publicationsBuffer.map(async publication => {
         try {
-          logger.debug(`${LOG_PREFIX} Publishing to topic ${publication.topic} from cache`);
+          messageQueueLogger.debug(
+            `${LOG_PREFIX} Publishing to topic ${publication.topic} from cache`,
+          );
           await this.publish(publication.topic, publication.message);
         } catch (err) {
-          logger.warn(
+          messageQueueLogger.warn(
             { err },
             `${LOG_PREFIX} Error while publishing cached data on topic ${publication.topic}`,
           );
@@ -101,7 +103,7 @@ export default class MessageQueueProxyService implements MessageQueueProxy {
     try {
       await this.client?.close?.();
     } catch (err) {
-      logger.debug({ err }, `${LOG_PREFIX} Error on closing the message-queue layer`);
+      messageQueueLogger.debug({ err }, `${LOG_PREFIX} Error on closing the message-queue layer`);
     }
   }
 
@@ -139,7 +141,9 @@ export default class MessageQueueProxyService implements MessageQueueProxy {
     }
 
     const subscriptions = this.subscriptionsCache.get(topic);
-    logger.debug(`${LOG_PREFIX} Subscriptions for topic ${topic}: ${subscriptions.size}`);
+    messageQueueLogger.debug(
+      `${LOG_PREFIX} Subscriptions for topic ${topic}: ${subscriptions.size}`,
+    );
 
     const values = [...subscriptions];
     const cachedListener = values.find(
@@ -147,16 +151,16 @@ export default class MessageQueueProxyService implements MessageQueueProxy {
     );
 
     if (!cachedListener) {
-      logger.debug(`${LOG_PREFIX} Caching subscription to ${topic} topic: Yes`);
+      messageQueueLogger.debug(`${LOG_PREFIX} Caching subscription to ${topic} topic: Yes`);
       this.subscriptionsCache.get(topic).add({ listener, options });
     } else {
-      logger.debug(`${LOG_PREFIX} Caching subscription to ${topic} topic: No`);
+      messageQueueLogger.debug(`${LOG_PREFIX} Caching subscription to ${topic} topic: No`);
     }
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private addPublishCache(topic: string, message: any): void {
-    logger.debug(`${LOG_PREFIX} Caching publication to ${topic} topic`);
+    messageQueueLogger.debug(`${LOG_PREFIX} Caching publication to ${topic} topic`);
     this.publicationsBuffer.push({ topic, message });
   }
 
@@ -166,7 +170,10 @@ export default class MessageQueueProxyService implements MessageQueueProxy {
     listener: MessageQueueListener<any>,
     options?: MessageQueueSubscriptionOptions,
   ): Promise<void> {
-    logger.debug(`${LOG_PREFIX} Trying to subscribe to ${topic} topic with options %o`, options);
+    messageQueueLogger.debug(
+      `${LOG_PREFIX} Trying to subscribe to ${topic} topic with options %o`,
+      options,
+    );
     return this.client?.subscribe(topic, listener, options);
   }
 }

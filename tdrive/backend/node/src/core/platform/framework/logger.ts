@@ -23,3 +23,7 @@ export const logger = pino({
 
 export const getLogger = (name?: string): TdriveLogger =>
   logger.child({ name: `tdrive${name ? "." + name : ""}` });
+
+export const platformLogger = getLogger("platform");
+
+export const messageQueueLogger = getLogger("message-queue");

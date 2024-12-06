@@ -1,4 +1,4 @@
-import { logger } from "../../framework";
+import { messageQueueLogger } from "../../framework";
 import { MessageQueueHandler, MessageQueueServiceAPI, MessageQueueServiceProcessor } from "./api";
 
 const LOG_PREFIX = "service.message-queue.Processor";
@@ -20,9 +20,9 @@ export class Processor {
     this.started = true;
     await Promise.all(
       Array.from(this.registry.processors.keys()).map(async name => {
-        logger.info(`${LOG_PREFIX} - Starting notification processor ${name}`);
+        messageQueueLogger.info(`${LOG_PREFIX} - Starting notification processor ${name}`);
         await this.registry.processors.get(name)?.init();
-        logger.info(`${LOG_PREFIX} - notification processor ${name} is started`);
+        messageQueueLogger.info(`${LOG_PREFIX} - notification processor ${name} is started`);
       }),
     );
   }
@@ -41,7 +41,7 @@ export class Processor {
       throw new Error(`${LOG_PREFIX} - Can not add null handler`);
     }
 
-    logger.info(`${LOG_PREFIX} - Adding message-queue handler ${handler.name}`);
+    messageQueueLogger.info(`${LOG_PREFIX} - Adding message-queue handler ${handler.name}`);
     this.registry.register(handler);
 
     if (this.started) {
@@ -50,17 +50,17 @@ export class Processor {
   }
 
   async startHandler(name: string): Promise<void> {
-    logger.info(`${LOG_PREFIX} - Starting message-queue handler ${name}`);
+    messageQueueLogger.info(`${LOG_PREFIX} - Starting message-queue handler ${name}`);
     await this.registry.processors.get(name)?.init();
   }
 
   stopHandler(name: string): void {
-    logger.info(`${LOG_PREFIX} - Stopping message-queue handler ${name}`);
+    messageQueueLogger.info(`${LOG_PREFIX} - Stopping message-queue handler ${name}`);
     this.registry.processors.get(name)?.stop();
   }
 
   removeHandler(name: string): void {
-    logger.info(`${LOG_PREFIX} - Removing message-queue handler ${name}`);
+    messageQueueLogger.info(`${LOG_PREFIX} - Removing message-queue handler ${name}`);
     this.stopHandler(name);
     this.registry.processors.delete(name);
   }

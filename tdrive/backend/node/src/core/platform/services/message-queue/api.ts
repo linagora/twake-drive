@@ -1,6 +1,6 @@
 import { Subject } from "rxjs";
 import { v4 as uuidv4 } from "uuid";
-import { Initializable, logger, TdriveServiceProvider } from "../../framework";
+import { Initializable, messageQueueLogger, TdriveServiceProvider } from "../../framework";
 import { Processor } from "./processor";
 import { ExecutionContext } from "../../framework/api/crud-service";
 
@@ -187,7 +187,7 @@ export class MessageQueueServiceProcessor<In, Out>
     try {
       await this.subscribe(this.messageQueue);
     } catch (err) {
-      logger.warn(
+      messageQueueLogger.warn(
         { err },
         `MessageQueueServiceProcessor.handler.${this.handler.name} -  Not able to start handler`,
       );
@@ -202,7 +202,7 @@ export class MessageQueueServiceProcessor<In, Out>
   }
 
   async process(message: IncomingMessageQueueMessage<In>): Promise<Out> {
-    logger.info(
+    messageQueueLogger.info(
       `MessageQueueServiceProcessor.handler.${this.handler.name}:${message.id} - Processing message`,
     );
     return this.handler.process(message.data);
@@ -212,7 +212,7 @@ export class MessageQueueServiceProcessor<In, Out>
     //TODO this is where we do not receive the call
 
     if (this.handler.topics && this.handler.topics.in) {
-      logger.info(
+      messageQueueLogger.info(
         `MessageQueueServiceProcessor.handler.${this.handler.name} - Subscribing to topic ${this.handler?.topics?.in} with options %o`,
         this.handler.options,
       );
@@ -233,7 +233,7 @@ export class MessageQueueServiceProcessor<In, Out>
       const isValid = this.handler.validate(message.data);
 
       if (!isValid) {
-        logger.error(
+        messageQueueLogger.error(
           `MessageQueueServiceProcessor.handler.${this.handler.name}:${message.id} - Message is invalid`,
         );
 
@@ -246,7 +246,7 @@ export class MessageQueueServiceProcessor<In, Out>
     try {
       const result = await this.process(message);
       if (this.handler?.options?.ack && message?.ack) {
-        logger.debug(
+        messageQueueLogger.debug(
           `MessageQueueServiceProcessor.handler.${this.handler.name}:${message.id} - Acknowledging message %o`,
           message,
         );
@@ -266,13 +266,13 @@ export class MessageQueueServiceProcessor<In, Out>
 
   private async sendResult(message: IncomingMessageQueueMessage<In>, result: Out): Promise<void> {
     if (!this.handler.topics.out) {
-      logger.info(
+      messageQueueLogger.info(
         `MessageQueueServiceProcessor.handler.${this.handler.name}:${message.id} - Message processing result is skipped`,
       );
       return;
     }
 
-    logger.info(
+    messageQueueLogger.info(
       `MessageQueueServiceProcessor.handler.${this.handler.name}:${message.id} - Sending processing result to ${this.handler.topics.out}`,
     );
 
@@ -284,7 +284,7 @@ export class MessageQueueServiceProcessor<In, Out>
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private async handleError(message: IncomingMessageQueueMessage<In>, err: any) {
-    logger.error(
+    messageQueueLogger.error(
       { err },
       `MessageQueueServiceProcessor.handler.${this.handler.name}:${message.id} - Error while processing message`,
     );

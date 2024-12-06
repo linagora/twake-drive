@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types */
 import {
-  logger,
+  platformLogger,
   TdriveComponent,
   TdriveContext,
   TdriveServiceFactory,
@@ -28,7 +28,7 @@ export async function buildDependenciesTree(
             `The component dependency ${dependencyName} has not been found for component ${name}`,
           );
         } else {
-          logger.warn(
+          platformLogger.warn(
             `(warning) The component dependency ${dependencyName} has not been found for component ${name} it will be imported asynchronously`,
           );
 
@@ -99,10 +99,10 @@ export async function switchComponentsToState(
   const states = [];
 
   for (const [name, component] of components) {
-    logger.info(`Asking for ${state} on ${name} dependencies`);
+    platformLogger.info(`Asking for ${state} on ${name} dependencies`);
     states.push(component.getServiceInstance().state);
     await component.switchToState(state);
   }
 
-  logger.info(`All components are now in ${state} state`);
+  platformLogger.info(`All components are now in ${state} state`);
 }
