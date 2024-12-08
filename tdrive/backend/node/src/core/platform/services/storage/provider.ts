@@ -1,6 +1,7 @@
 import { Stream, Readable } from "stream";
 import { TdriveServiceProvider } from "../../framework";
 import { ExecutionContext } from "../../framework/api/crud-service";
+import { IServiceDiagnosticProvider } from "../../framework/api/diagnostics";
 
 export type WriteMetadata = {
   size: number;
@@ -22,7 +23,7 @@ export type DeleteOptions = {
   totalChunks?: number;
 };
 
-export interface StorageConnectorAPI {
+export interface StorageConnectorAPI extends IServiceDiagnosticProvider {
   /**
    * Returns identifier of a storage that should've been set in configuration.
    *

@@ -32,8 +32,8 @@ export class AVServiceImpl implements TdriveServiceProvider, Initializable {
           },
         });
       }
-    } catch (error) {
-      logger.error({ error: `${error}` }, "Error while initializing Antivirus Service");
+    } catch (err) {
+      logger.error({ err }, "Error while initializing Antivirus Service");
       throw AVException.initializationFailed("Failed to initialize Antivirus service");
     }
     return this;

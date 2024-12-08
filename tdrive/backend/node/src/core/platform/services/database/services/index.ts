@@ -7,6 +7,10 @@ import { MongoConnectionOptions } from "./orm/connectors/mongodb/mongodb";
 import { EntityTarget } from "./orm/types";
 import { RepositoryManager } from "./orm/repository/manager";
 import { PostgresConnectionOptions } from "./orm/connectors/postgres/postgres";
+import type {
+  TDiagnosticResult,
+  TServiceDiagnosticDepth,
+} from "../../../framework/api/diagnostics";
 
 export default class DatabaseService implements DatabaseServiceAPI {
   version = "1";
@@ -36,6 +40,15 @@ export default class DatabaseService implements DatabaseServiceAPI {
       await this.connector.disconnect();
       this.connector = null;
     }
+  }
+
+  async getDiagnostics(depth: TServiceDiagnosticDepth): Promise<TDiagnosticResult> {
+    const connector = this.getConnector();
+    const result = await connector.getDiagnostics(depth);
+    return {
+      type: connector.getType(),
+      ...result,
+    };
   }
 
   getManager(): Manager<unknown> {

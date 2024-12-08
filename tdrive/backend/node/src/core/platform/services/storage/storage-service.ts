@@ -64,6 +64,10 @@ export default class StorageService extends TdriveService<StorageAPI> implements
     return this.connector;
   }
 
+  getDiagnostics(depth) {
+    return this.getConnector().getDiagnostics(depth);
+  }
+
   getHomeDir(): string {
     return this.homeDir;
   }

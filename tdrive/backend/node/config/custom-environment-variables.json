@@ -16,6 +16,14 @@
   "logger": {
     "level": "LOG_LEVEL"
   },
+  "diagnostics": {
+    "skipKeys": {
+      "__name": "DIAG_SKIP_KEYS",
+      "__format": "json"
+    },
+    "probeSecret": "DIAG_PROBE_SECRET",
+    "secret": "DIAG_SECRET"
+  },
   "webserver": {
     "host": "TWAKE_DRIVE_HOST",
     "logger": {
