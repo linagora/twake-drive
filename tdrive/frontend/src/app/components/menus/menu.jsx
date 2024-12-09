@@ -63,6 +63,8 @@ export default class Menu extends React.Component {
         this.props.menu,
         elementRect,
         this.props.position,
+        {},
+        this.props.testClassId
       );
       this.setState({ isMenuOpen: true }, () => this.open = true);
       this.open = true;

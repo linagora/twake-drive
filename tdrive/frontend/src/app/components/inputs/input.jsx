@@ -76,7 +76,7 @@ export default class Input extends Component {
           }
           this.onKeyDown(evt);
         }}
-        className={'input ' + (className || '')}
+        className={'input ' + (className || '') + ` testid:${this.props.testClassId}`}
         onBlur={this.props.onBlur}
         onChange={this.props.onChange}
       />

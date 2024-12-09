@@ -52,6 +52,7 @@ const ConfirmModalContent = () => {
         theme="primary"
         className="float-right"
         onClick={handleClose}
+        testClassId="confirm-modal-button-move"
       >
         <>{Languages.t('components.SelectorModalContent_move_to')} '{selected[0]?.name}'</>
       </Button>

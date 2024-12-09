@@ -62,6 +62,7 @@ export default class ButtonWithTimeout extends React.Component {
             (this.props.className ? this.props.className : '')
           }
           onClick={this.props.onClick}
+          testClassId={this.props.testClassId}
         >
           {this.props.value}
         </Button>

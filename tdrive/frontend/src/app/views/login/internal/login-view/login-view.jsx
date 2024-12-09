@@ -80,6 +80,7 @@ export default class LoginView extends Component {
                   }
                 }}
                 onChange={evt => this.setState({ form_login: evt.target.value })}
+                testClassId="login-input-username"
               />
 
               <Input
@@ -100,6 +101,7 @@ export default class LoginView extends Component {
                   }
                 }}
                 onChange={evt => this.setState({ form_password: evt.target.value })}
+                testClassId="login-input-password"
               />
 
               {this.state.login.login_error && (
@@ -121,6 +123,7 @@ export default class LoginView extends Component {
                     remember_me: true,
                   })
                 }
+                testClassId="login-button-submit"
               >
                 {this.state.i18n.t('scenes.login.home.login_btn')}
               </Button>

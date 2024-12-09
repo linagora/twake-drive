@@ -57,7 +57,7 @@ class MenusManager extends Observable {
 
     this.notify();
   }
-  async openMenu(menu, domRect, positionType, options) {
+  async openMenu(menu, domRect, positionType, options, dataMenuId) {
     this.isOpen = 1;
     if(typeof menu === 'function') {
       menu = await menu();
@@ -85,6 +85,7 @@ class MenusManager extends Observable {
       level: 0,
       id: Number.unid(),
       allowClickOut: options.allowClickOut !== undefined ? options.allowClickOut : true,
+      dataMenuId,
     });
     this.last_opened_id = Number.unid();
     this.notify();

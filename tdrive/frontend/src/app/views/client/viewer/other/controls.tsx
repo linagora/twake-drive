@@ -43,6 +43,7 @@ export default () => {
               );
             }
           }}
+          testClassId="other-control-button-edit"
         >
           {Languages.t('scenes.apps.drive.viewer.edit_with_button', [
             candidates[0].app?.identity.name,
@@ -74,6 +75,7 @@ export default () => {
               { margin: 0 },
             );
           }}
+          testClassId="other-control-button-open"
         >
           {Languages.t('scenes.apps.drive.viewer.open_with_button')}
         </Button>

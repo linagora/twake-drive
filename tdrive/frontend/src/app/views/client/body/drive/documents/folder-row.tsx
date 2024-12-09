@@ -17,6 +17,7 @@ export const FolderRow = ({
   checked,
   onClick,
   onBuildContextMenu,
+  testClassId,
 }: DriveItemProps) => {
   const [hover, setHover] = useState(false);
 
@@ -28,7 +29,8 @@ export const FolderRow = ({
         (checked
           ? 'bg-blue-500 bg-opacity-10 hover:bg-opacity-25 '
           : 'hover:bg-zinc-500 hover:bg-opacity-10 ') +
-        (className || '')
+        (className || '') +
+        ` testid:${testClassId}`
       }
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
@@ -58,12 +60,13 @@ export const FolderRow = ({
         <BaseSmall>{formatBytes(item.size)}</BaseSmall>
       </div>
       <div className="shrink-0 ml-4">
-        <Menu menu={onBuildContextMenu}>
+        <Menu menu={onBuildContextMenu} testClassId="folder-row-menu">
           <Button
             theme={'secondary'}
             size="sm"
             className={'!rounded-full '}
             icon={DotsHorizontalIcon}
+            testClassId="folder-row-button-open-menu"
           />
         </Menu>
       </div>

@@ -105,6 +105,7 @@ const PropertiesModalContent = ({ id, onClose, inPublicSharing }: { id: string; 
               }
             }}
             placeholder={Languages.t('components.PropertiesModalContent_place_holder')}
+            testClassId="properties-modal-input-update-name"
           />
         }
       />
@@ -115,6 +116,7 @@ const PropertiesModalContent = ({ id, onClose, inPublicSharing }: { id: string; 
         theme="primary"
         loading={loading}
         onClick={doSave}
+        testClassId="properties-modal-button-update-name"
       >
         {Languages.t('components.PropertiesModalContent_update_button')}
       </Button>

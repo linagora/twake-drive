@@ -74,7 +74,7 @@ export const PathRender = ({
   const pathLength = (pathToRender || []).reduce((acc, curr) => acc + curr.name.length, 0);
 
   return (
-    <nav className="overflow-hidden whitespace-nowrap mr-2 pl-px inline-flex">
+    <nav className="overflow-hidden whitespace-nowrap mr-2 pl-px inline-flex testid:header-path">
       {pathLength < 70 ? (
         (pathToRender || [])?.map((a, i) => (
           <PathItem
@@ -136,7 +136,7 @@ const PathItem = ({
     <div className="flex items-center">
       <a
         href="#"
-        className="text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white"
+        className="text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white testid:header-path-item"
         onClick={evt => {
           evt.preventDefault();
 
