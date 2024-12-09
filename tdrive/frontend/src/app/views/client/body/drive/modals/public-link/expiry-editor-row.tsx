@@ -130,6 +130,7 @@ export const ExpiryEditorRow = (props: {
                 else if (e.key == 'Enter')
                   confirmSaveExpiry(currentEditedValue);
               }}
+              testClassId="expiry-editor-row-expired-date"
             />
             <Button
               disabled={disabled}
@@ -137,7 +138,8 @@ export const ExpiryEditorRow = (props: {
               size="sm"
               className="max-w-xs mr-2 mt-1"
               onClick={() => confirmSaveExpiry(currentEditedValue)}
-              >
+              testClassId="expiry-editor-row-button-confirm"
+            >
               {Languages.t('components.public-link-security_field_confirm_edit')}
             </Button>
           </>
@@ -153,7 +155,8 @@ export const ExpiryEditorRow = (props: {
               } else
                 confirmSaveExpiry(0);
             }}
-            />
+            testClassId="expiry-editor-row-checkbox"
+          />
       }
       />
     <ConfirmModal

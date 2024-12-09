@@ -113,6 +113,7 @@ export const InternalUsersAccessManager = ({
                   }}
                   value={searchString}
                   inputRef={inputElement}
+                  testClassId="access-management-search-users"
                 />
               )}
             />
@@ -125,6 +126,7 @@ export const InternalUsersAccessManager = ({
               hiddenLevels={['remove']}
               level={level}
               onChange={level => setLevel(level)}
+              testClassId="access-management-dropdown"
             />
           </div>
         </div>
@@ -179,7 +181,8 @@ export const InternalUsersAccessManager = ({
           size="sm"
           className='text-center'
           onClick={onCloseModal}
-          >
+          testClassId="access-management-public-link-security-field-confirm-edit"
+        >
           {Languages.t('components.public-link-security_field_confirm_edit')}
         </Button>
       </div>
@@ -209,7 +212,8 @@ const UserAccessLevel = (props: {
         ? <Button
             disabled={loading || props.disabled || user?.id === currentUser?.id}
             size="sm"
-            >
+            testClassId={`user-access-button-${props.isSearchResultAdd}`}
+          >
             {Languages.t('components.user_picker.modal.result_add.' + props.isSearchResultAdd)}
           </Button>
 
@@ -218,7 +222,8 @@ const UserAccessLevel = (props: {
             noRedWhenLevelNone={true}
             level={(item && getUserAccessLevel(item, props.userId)) || "none"}
             onChange={level => item && update(changeUserAccess(item, props.userId, level === 'remove' ? false : level))}
-            />
+            testClassId="user-access-dropdown"
+          />
       }
     />
   );

@@ -53,6 +53,7 @@ export const CreateLink = () => {
         placeholder={ Languages.t('components.create_link_modal.hint')}
         className="w-full mt-4"
         onChange={e => setName(e.target.value)}
+        testClassId="create-link-name-input"
       />
 
       <Input
@@ -60,6 +61,7 @@ export const CreateLink = () => {
         placeholder="https://example.com"
         className="w-full mt-4"
         onChange={e => setLink(e.target.value)}
+        testClassId="create-link-input"
       />
 
       <Button
@@ -70,6 +72,7 @@ export const CreateLink = () => {
           await createLink();
           setState({ ...state, open: false });
         }}
+        testClassId="create-link-button"
       >
         { Languages.t('components.create_link_modal.button')}
       </Button>

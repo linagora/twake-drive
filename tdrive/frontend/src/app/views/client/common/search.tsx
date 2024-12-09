@@ -44,6 +44,7 @@ export default (): JSX.Element => {
               readOnly
               placeholder={Languages.t('scenes.client.main_view.main_header.search_input')}
               onClick={() => setOpen()}
+              testClassId="header-search-input"
             />
           )}
         />

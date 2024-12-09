@@ -14,13 +14,13 @@ export const PublicLinkAccessOptions = (props: {
       password={props.password}
       onChangePassword={props.onChangePassword}
       isLinkExpired={!!props.expiration && props.expiration < Date.now()}
-      />
+    />
     <ExpiryEditorRow
       disabled={props.disabled}
       value={props.expiration ?? 0}
       onChange={props.onChangeExpiration}
       isLinkPasswordProtected={!!props.password?.length}
-      />
+    />
   </>
 );
 

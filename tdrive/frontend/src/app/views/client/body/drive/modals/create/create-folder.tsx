@@ -43,6 +43,7 @@ export const CreateFolder = () => {
             }
           }}
           onChange={(e: any) => setName(e.target.value)}
+          testClassId="create-folder-input"
         />
       </div>
       <Button
@@ -50,6 +51,7 @@ export const CreateFolder = () => {
         loading={loading}
         className="mt-4 float-right"
         onClick={createFolderHandler}
+        testClassId="create-folder-button"
       >
         Create
       </Button>

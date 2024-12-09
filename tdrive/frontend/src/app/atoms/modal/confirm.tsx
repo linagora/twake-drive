@@ -42,13 +42,15 @@ export const ConfirmModal = (props: ConfirmModalProps) => {
               className="ml-2"
               theme={props.buttonOkTheme || "danger"}
               onClick={dialogCloseHandler(true)}
-              >
+              testClassId="confirm-modal-button-confirm"
+            >
               {Languages.t(props.buttonOkLabel)}
             </Button>
             <Button
               theme='default'
               onClick={dialogCloseHandler(false)}
-              >
+              testClassId="confirm-modal-button-cancel"
+            >
               {Languages.t(props.buttonCancelLabel || "general.cancel")}
             </Button>
           </>

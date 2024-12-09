@@ -17,6 +17,7 @@ interface InputProps
   inputClassName?: string;
   className?: string;
   inputRef?: React.Ref<HTMLInputElement | HTMLTextAreaElement>;
+  testClassId?: string;
 }
 
 export type ThemeName = 'plain' | 'outline' | 'blue' | 'rose';
@@ -66,7 +67,8 @@ export const Input = (props: InputProps) => {
           <textarea
             ref={props.inputRef as React.Ref<HTMLTextAreaElement>}
             className={inputClassName + ' ' + props.inputClassName + ' ' + props.className}
-            {..._.omit(props as any, 'label', 'inputClassName', 'inputRef', 'className', 'value', 'size')}
+            {..._.omit(props as any, 'label', 'inputClassName', 'inputRef', 'className', 'value', 'size', 'testClassId')}
+            data-input-id={props.testClassId}
           >
             {props.value}
           </textarea>
@@ -74,8 +76,8 @@ export const Input = (props: InputProps) => {
           <input
             ref={props.inputRef as React.Ref<HTMLInputElement>}
             type="text"
-            className={inputClassName + ' ' + props.inputClassName + ' ' + props.className}
-            {..._.omit(props, 'label', 'inputClassName', 'inputRef', 'className', 'size')}
+            className={`${inputClassName} ${props.inputClassName} ${props.className} testid:${props.testClassId}`}
+            {..._.omit(props, 'label', 'inputClassName', 'inputRef', 'className', 'size', 'testClassId')}
           />
         ))}
     </>
