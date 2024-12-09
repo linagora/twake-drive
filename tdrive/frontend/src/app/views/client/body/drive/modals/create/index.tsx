@@ -82,11 +82,13 @@ export const CreateModal = ({
                 icon={<FolderAddIcon className="w-5 h-5" />}
                 text={Languages.t('components.create_modal.create_folder')}
                 onClick={() => setState({ ...state, type: 'folder' })}
+                testClassId="create-folder-option"
               />
               <CreateModalOption
                 icon={<LinkIcon className="w-5 h-5" />}
                 text={Languages.t('components.create_modal.create_link')}
                 onClick={() => setState({ ...state, type: 'link' })}
+                testClassId="create-link-option"
               />
 
               {(applications || [])
@@ -132,6 +134,7 @@ export const CreateModal = ({
                       onClick={() =>
                         addFromUrl(app.emptyFile.url, app.emptyFile.filename || app.emptyFile.name)
                       }
+                      testClassId={app.emptyFile.name}
                     />
                   );
                 })}
@@ -167,11 +170,11 @@ export const CreateModal = ({
   );
 };
 
-const CreateModalOption = (props: { icon: ReactNode; text: string; onClick: () => void }) => {
+const CreateModalOption = (props: { testClassId?: string; icon: ReactNode; text: string; onClick: () => void }) => {
   return (
     <div
       onClick={props.onClick}
-      className="flex flex-row p-4 dark:bg-zinc-900 dark:text-white bg-zinc-100 hover:bg-opacity-75 cursor-pointer rounded-md m-2"
+      className={`flex flex-row p-4 dark:bg-zinc-900 dark:text-white bg-zinc-100 hover:bg-opacity-75 cursor-pointer rounded-md m-2 testid:${props.testClassId}`}
     >
       <div className="flex items-center justify-center">{props.icon}</div>
       <div className="grow flex items-center ml-2">

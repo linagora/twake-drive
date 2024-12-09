@@ -138,6 +138,7 @@ const SelectorModalContent = (key: any) => {
           setState({ ...state, open: false });
           setLoading(false);
         }}
+        testClassId="selector-modal-button"
       >
         {selected.length === 0 ? (
           <>{Languages.t('components.SelectorModalContent_no_items')}</>

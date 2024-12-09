@@ -8,6 +8,7 @@ export default function A(
     href?: string;
     children: React.ReactNode;
     noColor?: boolean;
+    testClassId?: string;
   },
 ) {
   const colors = props.noColor ? '' : 'hover:text-blue-700 active:text-blue-800 text-blue-500';
@@ -27,8 +28,8 @@ export default function A(
   return (
     <a
       href={(props.href || '#').replace(/^javascript:/, '')}
-      className={colors + ' ' + (props.className || '')}
-      {..._.omit(props, 'children', 'className', 'noColor')}
+      className={colors + ' ' + (props.className || '') + ' ' + `testid:${props.testClassId}`}
+      {..._.omit(props, 'children', 'className', 'noColor', 'testClassId')}
     >
       {props.children}
     </a>

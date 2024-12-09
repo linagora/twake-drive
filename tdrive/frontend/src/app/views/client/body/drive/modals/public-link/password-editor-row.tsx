@@ -112,6 +112,7 @@ return <>
                 else if (e.key == 'Enter')
                   confirmSavePassword(currentEditedPassword);
               }}
+              testClassId="pasword-editor-row-editting-password"
             />
             <Button
               disabled={disabled}
@@ -119,7 +120,8 @@ return <>
               size="sm"
               className="max-w-xs mr-2 mt-1"
               onClick={() => confirmSavePassword(currentEditedPassword)}
-              >
+              testClassId="password-editor-row-button-confirm"
+            >
               {Languages.t('components.public-link-security_field_confirm_edit')}
             </Button>
           </>
@@ -135,7 +137,8 @@ return <>
               } else
                 confirmSavePassword("");
             }}
-            />
+            testClassId="password-editor-row-checkbox"
+          />
       }
       />
 
@@ -145,9 +148,8 @@ return <>
       text={Languages.t("components.public-link-security_password_removal_body")}
       buttonOkTheme='primary'
       buttonOkLabel='components.public-link-security_password_removal_confirm'
-
       onClose={() => setIsConfirmingPasswordRemoval(false)}
       onOk={() => savePassword("")}
-      />
+    />
   </>;
 }

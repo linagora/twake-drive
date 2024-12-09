@@ -12,6 +12,7 @@ export default () => {
         size="lg"
         icon={ZoomOutIcon}
         onClick={() => getImageControls().zoomOut()}
+        testClassId="image-control-button-zoom-out"
       />
       <Button
         iconSize="lg"
@@ -20,6 +21,7 @@ export default () => {
         size="lg"
         icon={ZoomInIcon}
         onClick={() => getImageControls().zoomIn()}
+        testClassId="image-control-button-zoom-in"
       />
       <Button
         iconSize="lg"
@@ -28,6 +30,7 @@ export default () => {
         size="lg"
         icon={RotateCwIcon}
         onClick={() => getImageControls().rotateCw()}
+        testClassId="image-control-button-rotate"
       />
     </>
   );

@@ -33,6 +33,7 @@ export const CreateModalWithUploadZones = ({ initialParentId }: { initialParentI
       <UploadZone
         overClassName={'!hidden'}
         className="hidden"
+        testClassId="create-modal-upload-file-zone"
         disableClick
         parent={''}
         multiple={true}
@@ -51,6 +52,7 @@ export const CreateModalWithUploadZones = ({ initialParentId }: { initialParentI
       <UploadZone
         overClassName={'!hidden'}
         className="hidden"
+        testClassId="create-modal-upload-folder-zone"
         disableClick
         parent={''}
         multiple={true}
@@ -135,6 +137,7 @@ export default () => {
                 theme="danger"
                 className="w-full mb-2 justify-center"
                 disabled={!(trashChildren.length > 0)}
+                testClassId="create-modal-in-trash-button-empty-trash"
               >
                 <TruckIcon className="w-5 h-5 mr-2" /> { Languages.t('components.side_menu.buttons.empty_trash') }
               </Button>
@@ -158,6 +161,7 @@ export default () => {
                     parentId,
                   });
                 }}
+                testClassId="sidebar-action-upload-zone"
               />
 
               <Button
@@ -166,6 +170,7 @@ export default () => {
                 theme="primary"
                 className="w-full mb-2 justify-center"
                 style={{ boxShadow: '0 0 10px 0 rgba(0, 122, 255, 0.5)' }}
+                testClassId="sidebar-action-button-empty-trash"
               >
                 <UploadIcon className="w-5 h-5 mr-2" /> {Languages.t('components.side_menu.buttons.upload')}
               </Button>
@@ -174,6 +179,7 @@ export default () => {
                 size="lg"
                 theme="secondary"
                 className="w-full mb-2 justify-center"
+                testClassId="sidebar-action-button-open-modal"
               >
                 <PlusIcon className="w-5 h-5 mr-2" /> {Languages.t('components.side_menu.buttons.create')}
               </Button>
