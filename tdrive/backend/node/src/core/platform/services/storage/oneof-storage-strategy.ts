@@ -8,6 +8,7 @@ import {
 } from "../storage/provider";
 import { logger } from "../../../platform/framework";
 import { FileNotFountException, WriteFileException } from "./exceptions";
+import type { TDiagnosticResult, TServiceDiagnosticDepth } from "../../framework/api/diagnostics";
 
 /**
  * OneOfStorageStrategy is responsible for managing multiple storage backends.
@@ -32,6 +33,17 @@ export class OneOfStorageStrategy implements StorageConnectorAPI {
       this.id = this.storages.map(s => s.getId()).join("_");
     }
     return this.id;
+  }
+
+  async getDiagnostics(depth: TServiceDiagnosticDepth): Promise<TDiagnosticResult> {
+    const states = await Promise.all(
+      this.storages.map(async s => ({ id: s.getId(), ...(await s.getDiagnostics(depth)) })),
+    );
+    return {
+      ...(states.every(s => s.ok) ? {} : { warn: "not_all_storages_ok" }),
+      ok: states.some(s => s.ok),
+      states: states,
+    };
   }
 
   /**

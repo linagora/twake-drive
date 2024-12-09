@@ -4,6 +4,7 @@ import { Readable } from "stream";
 import { StorageConnectorAPI, WriteMetadata } from "../../provider";
 import { randomUUID } from "crypto";
 import _ from "lodash";
+import { TDiagnosticResult, TServiceDiagnosticDepth } from "../../../../framework/api/diagnostics";
 
 export type S3Configuration = {
   id: string;
@@ -41,6 +42,20 @@ export default class S3ConnectorService implements StorageConnectorAPI {
 
   getId() {
     return this.id;
+  }
+
+  async getDiagnostics(depth: TServiceDiagnosticDepth): Promise<TDiagnosticResult> {
+    switch (depth) {
+      case TServiceDiagnosticDepth.alive:
+        return { ok: await this.client.bucketExists(this.minioConfiguration.bucket) };
+      case TServiceDiagnosticDepth.stats_basic:
+      case TServiceDiagnosticDepth.stats_track:
+      case TServiceDiagnosticDepth.stats_deep:
+        return { ok: true, warn: "s3_statistics_not_implemented" };
+
+      default:
+        throw new Error(`Unexpected TServiceDiagnosticDepth: ${JSON.stringify(depth)}`);
+    }
   }
 
   write(path: string, stream: Readable): Promise<WriteMetadata> {

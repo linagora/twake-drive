@@ -68,6 +68,8 @@ services:
       - SEARCH_OS_PASSWORD=admin
       - SEARCH_OS_USE_AUTH=true
       - SEARCH_OS_USERNAME=admin
+      - DIAG_PROBE_SECRET=super_diagnostic_probe_secret
+      - DIAG_SECRET=super_diagnostic_secret
     depends_on:
       - postgres
       - opensearch-node1

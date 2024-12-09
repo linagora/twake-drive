@@ -6,6 +6,7 @@ import { StorageConnectorAPI, WriteMetadata } from "../../provider";
 import fs from "fs";
 import { logger } from "../../../../framework/logger";
 import { randomUUID } from "crypto";
+import { TDiagnosticResult, TServiceDiagnosticDepth } from "../../../../framework/api/diagnostics";
 
 export type LocalConfiguration = {
   id: string;
@@ -27,6 +28,19 @@ export default class LocalConnectorService implements StorageConnectorAPI {
 
   getId() {
     return this.id;
+  }
+
+  async getDiagnostics(depth: TServiceDiagnosticDepth): Promise<TDiagnosticResult> {
+    switch (depth) {
+      case TServiceDiagnosticDepth.alive:
+      case TServiceDiagnosticDepth.stats_basic:
+      case TServiceDiagnosticDepth.stats_track:
+      case TServiceDiagnosticDepth.stats_deep:
+        return { ok: true, warn: "local_s3_alway_ok" };
+
+      default:
+        throw new Error(`Unexpected TServiceDiagnosticDepth: ${JSON.stringify(depth)}`);
+    }
   }
 
   write(relativePath: string, stream: Readable): Promise<WriteMetadata> {

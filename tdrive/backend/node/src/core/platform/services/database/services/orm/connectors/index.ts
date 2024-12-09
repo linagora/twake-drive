@@ -5,6 +5,7 @@ import { ColumnDefinition, EntityDefinition } from "../types";
 import { FindOptions } from "../repository/repository";
 import { ListResult, Paginable, Pagination } from "../../../../../framework/api/crud-service";
 import { PostgresConnectionOptions } from "./postgres/postgres";
+import type { IServiceDiagnosticProvider } from "../../../../../framework/api/diagnostics";
 
 export * from "./mongodb/mongodb";
 
@@ -14,7 +15,7 @@ export type UpsertOptions = {
 
 export type RemoveOptions = any;
 
-export interface Connector extends Initializable {
+export interface Connector extends Initializable, IServiceDiagnosticProvider {
   /**
    * Connect to the database
    */

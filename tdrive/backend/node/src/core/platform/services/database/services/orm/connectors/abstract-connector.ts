@@ -4,12 +4,17 @@ import { ConnectionOptions, DatabaseType } from "../..";
 import { FindOptions } from "../repository/repository";
 import { ColumnDefinition, EntityDefinition } from "../types";
 import { ListResult, Paginable, Pagination } from "../../../../../framework/api/crud-service";
+import type {
+  TDiagnosticResult,
+  TServiceDiagnosticDepth,
+} from "../../../../../framework/api/diagnostics";
 
 export abstract class AbstractConnector<T extends ConnectionOptions> implements Connector {
   constructor(protected type: DatabaseType, protected options: T, protected secret: string) {}
 
   abstract connect(): Promise<this>;
   abstract disconnect(): Promise<this>;
+  abstract getDiagnostics(depth: TServiceDiagnosticDepth): Promise<TDiagnosticResult>;
 
   abstract drop(): Promise<this>;
 

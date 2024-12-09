@@ -35,6 +35,12 @@
   "logger": {
     "level": "debug"
   },
+  "diagnostics": {
+    "skipKeys": [],
+    "probeSecret": "",
+    "secret": "",
+    "secretChallengeRefreshS": 15
+  },
   "tracker": {
     "type": "segment",
     "segment": {
@@ -226,6 +232,7 @@
   },
   "services": [
     "auth",
+    "diagnostics",
     "push",
     "storage",
     "webserver",
