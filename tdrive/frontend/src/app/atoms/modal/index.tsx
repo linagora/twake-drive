@@ -4,6 +4,7 @@ import { Fragment, ReactNode, useCallback, useEffect, useState } from 'react';
 import { atom, useRecoilState } from 'recoil';
 import { DismissIcon } from '../icons-colored';
 import { Title } from '../text';
+import { Button } from '@atoms/button/button';
 
 const ModalsCountState = atom({
   key: 'ModalsState',
@@ -126,13 +127,15 @@ export const Modal = (props: {
               >
                 {props.closable !== false && (
                   <div className="absolute top-0 right-0 pt-4 pr-4">
-                    <button
+                    <Button
                       type="button"
                       className="hover:opacity-75 focus:outline-none "
                       onClick={() => props.onClose && props.onClose()}
+                      shortcut="esc"
+                      theme="white"
                     >
                       {props.closeIcon ? props.closeIcon : <DismissIcon />}
-                    </button>
+                    </Button>
                   </div>
                 )}
                 {didOpenOnce && props.children}
@@ -177,7 +180,7 @@ export const ModalContent = (props: {
           }
         >
           <Title className="pr-8 overflow-hidden text-ellipsis">{props.title}</Title>
-          <div className="mt-2">
+          <div className="mt-4">
             <p className="text-sm text-gray-500">{props.text || ''}</p>
           </div>
         </div>
