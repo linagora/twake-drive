@@ -63,6 +63,8 @@ export default class Input extends Component {
       );
     }
 
+    const testId = this.props.testClassId ? `testid:${this.props.testClassId}` : '';
+
     return (
       <input
         ref={node => {
@@ -76,7 +78,7 @@ export default class Input extends Component {
           }
           this.onKeyDown(evt);
         }}
-        className={'input ' + (className || '') + ` testid:${this.props.testClassId}`}
+        className={'input ' + (className || '') + ' ' + testId}
         onBlur={this.props.onBlur}
         onChange={this.props.onChange}
       />

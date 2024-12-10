@@ -58,6 +58,7 @@ export default ({ pendingFileState, pendingFile }: PropsType) => {
       }}
     >
       <Row
+        className="testid:pending-files-row"
         justify="space-between"
         align="middle"
         wrap={false}
@@ -75,6 +76,7 @@ export default ({ pendingFileState, pendingFile }: PropsType) => {
                   maxWidth: isPendingFileStatusPause(pendingFile.status) ? 130 : 160,
                   verticalAlign: 'middle',
                 }}
+                className="testid:pending-file-name"
               >
                 {capitalize(pendingFile?.originalFile.name)}
               </Text>
@@ -156,6 +158,7 @@ export default ({ pendingFileState, pendingFile }: PropsType) => {
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
+                  className="testid:pending-file-button-status"
                 />
               </Tooltip>
             ) : (
@@ -191,6 +194,7 @@ export default ({ pendingFileState, pendingFile }: PropsType) => {
                 icon={<Trash2 size={16} color={'var(--black)'} />}
                 onClick={() => cancelUpload(pendingFileState.id)}
                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                className="testid:pending-file-button-cancel"
               />
             </Tooltip>
           ) : (
@@ -198,7 +202,7 @@ export default ({ pendingFileState, pendingFile }: PropsType) => {
           )}
         </Col>
       </Row>
-      <div className="file-progress-bar-container">
+      <div className="file-progress-bar-container testid:pending-file-progress-bar">
         <Progress
           type="line"
           className="file-progress-bar"

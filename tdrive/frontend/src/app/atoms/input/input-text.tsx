@@ -60,15 +60,16 @@ export const Input = (props: InputProps) => {
     else inputClassName = inputClassName + ' h-9';
   }
 
+  const testId = props.testClassId ? `testid:${props.testClassId}` : '';
+
   return (
     <>
       {props.inputComponent ||
         (props.multiline ? (
           <textarea
             ref={props.inputRef as React.Ref<HTMLTextAreaElement>}
-            className={inputClassName + ' ' + props.inputClassName + ' ' + props.className}
+            className={inputClassName + ' ' + props.inputClassName + ' ' + props.className + ' ' + testId}
             {..._.omit(props as any, 'label', 'inputClassName', 'inputRef', 'className', 'value', 'size', 'testClassId')}
-            data-input-id={props.testClassId}
           >
             {props.value}
           </textarea>
@@ -76,7 +77,7 @@ export const Input = (props: InputProps) => {
           <input
             ref={props.inputRef as React.Ref<HTMLInputElement>}
             type="text"
-            className={`${inputClassName} ${props.inputClassName} ${props.className} testid:${props.testClassId}`}
+            className={`${inputClassName} ${props.inputClassName} ${props.className} ${props.testClassId ? `testid:${props.testClassId}` : ''}`}
             {..._.omit(props, 'label', 'inputClassName', 'inputRef', 'className', 'size', 'testClassId')}
           />
         ))}

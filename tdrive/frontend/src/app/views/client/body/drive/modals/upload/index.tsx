@@ -40,7 +40,7 @@ export const UploadModal = ({
     <Modal
       open={state.open}
       onClose={() => setState({ ...state, open: false })}
-      className="!max-w-sm"
+      className="!max-w-sm testid:upload-modal"
     >
       <ModalContent
         title={

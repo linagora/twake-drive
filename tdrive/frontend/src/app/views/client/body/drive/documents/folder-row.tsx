@@ -21,6 +21,8 @@ export const FolderRow = ({
 }: DriveItemProps) => {
   const [hover, setHover] = useState(false);
 
+  const testId = testClassId ? ` testid:${testClassId}` : '';
+
   return (
     <div
       className={
@@ -29,8 +31,8 @@ export const FolderRow = ({
         (checked
           ? 'bg-blue-500 bg-opacity-10 hover:bg-opacity-25 '
           : 'hover:bg-zinc-500 hover:bg-opacity-10 ') +
-        (className || '') +
-        ` testid:${testClassId}`
+        (className || '') + ' ' +
+        testId
       }
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}

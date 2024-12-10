@@ -27,7 +27,7 @@ export const ConfirmDeleteModal = () => {
     return (
         <>
             {state.items.length > 0 && (
-                <Modal open={state.open} onClose={() => setState({ ...state, open: false })}>
+                <Modal className="testid:confirm-delete-modal" open={state.open} onClose={() => setState({ ...state, open: false })}>
                     <ConfirmDeleteModalContent items={state.items} />
                 </Modal>
             )}

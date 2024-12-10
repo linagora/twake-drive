@@ -13,6 +13,7 @@ interface AvatarProps extends React.InputHTMLAttributes<HTMLInputElement> {
   icon?: JSX.Element | false;
   title?: string;
   nogradient?: boolean;
+  testClassId?: string;
 }
 
 const sizes = { xl: 24, lg: 14, md: 10, sm: 9, xs: 6 };
@@ -68,12 +69,13 @@ export default function Avatar(props: AvatarProps) {
     className += ' ';
     return (
       <div
-        {...restProps}
+        {..._.omit(restProps, 'testClassId')}
         style={style}
         className={
           className +
           ' text-white overflow-hidden flex items-center justify-center ' +
-          addedClassName
+          addedClassName + ' ' +
+          (props.testClassId ? `testid:${props.testClassId}` : '')
         }
       >
         {props.icon}
@@ -83,18 +85,18 @@ export default function Avatar(props: AvatarProps) {
 
   if (props.avatar) {
     return (
-      <div {...restProps}>
+      <div {..._.omit(restProps, 'testClassId')}>
         <img
           alt={props.title}
           src={props.avatar}
-          className={className + ' object-cover ' + addedClassName}
+          className={className + ' object-cover ' + addedClassName + ' ' + (props.testClassId ? `testid:${props.testClassId}` : '')}
         />
       </div>
     );
   }
 
   return (
-    <div className={className + ' ' + addedClassName} {...restProps} style={style}>
+    <div className={className + ' ' + addedClassName + ' ' + (props.testClassId ? `testid:${props.testClassId}` : '')} {..._.omit(restProps, 'testClassId')} style={style}>
       <div className={lettersClass}>{letters.toUpperCase()}</div>
     </div>
   );

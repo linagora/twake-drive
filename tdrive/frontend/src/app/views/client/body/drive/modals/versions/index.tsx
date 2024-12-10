@@ -29,7 +29,7 @@ export const VersionsModal = () => {
   const [state, setState] = useRecoilState(VersionsModalAtom);
 
   return (
-    <Modal open={state.open} onClose={() => setState({ ...state, open: false })}>
+    <Modal className="testid:version-modal" open={state.open} onClose={() => setState({ ...state, open: false })}>
       {!!state.id && <VersionModalContent id={state.id} />}
     </Modal>
   );

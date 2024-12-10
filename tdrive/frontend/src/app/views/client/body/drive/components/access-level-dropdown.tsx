@@ -40,11 +40,14 @@ export const AccessLevelDropdown = ({
 }) => {
   const createOption = (level: DriveFileAccessLevelOrRemove) =>
     !hiddenLevels?.includes(level) && <option value={level}>{(labelOverrides || {})[level] || translateAccessLevel(level)}</option>;
+
+  const testId = testClassId ? `testid:${testClassId}` : '';
+
   return (
     <Select
       disabled={disabled}
       size={size}
-      className={className + ' w-auto' + ` testid:${testClassId}`}
+      className={className + ' w-auto' + ' ' + testId}
       theme={(!noRedWhenLevelNone && level === 'none') ? 'rose' : 'outline'}
       value={level || 'none'}
       onChange={e => onChange(e.target.value as DriveFileAccessLevel & 'remove')}

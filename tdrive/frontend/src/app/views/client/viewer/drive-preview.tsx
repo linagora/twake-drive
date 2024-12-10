@@ -99,12 +99,12 @@ export const DrivePreview: React.FC<DrivePreviewProps> = ({ items }) => {
     <Modal
       open={isOpen}
       closable={false}
-      className="bg-black bg-opacity-50 !sm:max-w-none !w-full !rounded-none !p-0"
+      className="bg-black bg-opacity-50 !sm:max-w-none !w-full !rounded-none !p-0 testid:preview-modal"
       style={{ maxWidth: 'none', margin: 0, left: 0, top: 0, height: '100vh' }}
       positioned={false}
     >
       <XIcon
-        className="z-10 cursor-pointer absolute right-5 top-5 w-20 h-20 text-white hover:text-black rounded-full p-1 bg-gray-500 hover:bg-white bg-opacity-25"
+        className="z-10 cursor-pointer absolute right-5 top-5 w-20 h-20 text-white hover:text-black rounded-full p-1 bg-gray-500 hover:bg-white bg-opacity-25 testid:preview-button-close"
         onClick={() => {
           close();
           // small delay to allow the modal to close
@@ -132,10 +132,10 @@ export const DrivePreview: React.FC<DrivePreviewProps> = ({ items }) => {
         </div>
         <div className="z-10 p-5 bg-black w-full flex text-white">
           <div className="grow overflow-hidden text-ellipsis">
-            <Text.Base noColor className="w-full block text-white whitespace-nowrap">
+            <Text.Base noColor className="w-full block text-white whitespace-nowrap testid:preview-file-name">
               {name}
             </Text.Base>
-            <Text.Info className="whitespace-nowrap">
+            <Text.Info className="whitespace-nowrap testid:preview-file-info">
               {formatDate(
                 +(status.details?.item.added || '') ||
                 status.details?.item.last_version_cache.date_added,

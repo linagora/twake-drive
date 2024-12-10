@@ -4,7 +4,7 @@ import { UserType } from '@features/users/types/user';
 
 export default ({ user }: { user?: UserType }) => {
   return (
-    <div className="flex overflow-hidden whitespace-nowrap text-ellipsis">
+    <div className="flex overflow-hidden whitespace-nowrap text-ellipsis testid:result-context">
       {!!user && <>{UsersService.getFullName(user)}</>}
     </div>
   );

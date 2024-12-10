@@ -51,7 +51,7 @@ export default (props: { driveItem: DriveItem & { user?: UserType }}) => {
             textToHighlight={name}
           />
         </Text.Base>
-        <Text.Info className="block">
+        <Text.Info className="block testid:drive-item-file">
           {extension?.toLocaleUpperCase()} • {formatDate(parseInt(file?.last_modified))} •{' '}
           {formatSize(file?.size)}
         </Text.Info>
@@ -69,6 +69,7 @@ export default (props: { driveItem: DriveItem & { user?: UserType }}) => {
             theme="outline"
             className="w-9 !p-0 flex items-center justify-center ml-2 rounded-full border-none"
             onClick={() => onDriveItemDownloadClick(file)}
+            testClassId="drive-item-button-download"
           >
             <DownloadIcon className="text-blue-500 w-6 h-6" />
           </Button>

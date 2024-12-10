@@ -59,6 +59,8 @@ export const Button = (props: ButtonProps) => {
     else className = className + ' w-9 !p-0 justify-center';
   }
 
+  const testId = props.testClassId ? `testid:${props.testClassId}` : '';
+
   return (
     <button
       type="button"
@@ -68,7 +70,7 @@ export const Button = (props: ButtonProps) => {
         ' ' +
         props.className +
         ' ' +
-        `testid:${props.testClassId}`
+        testId
       }
       disabled={disabled}
       {..._.omit(props, 'loading', 'children', 'className', 'icon', 'iconSize', 'testClassId')}

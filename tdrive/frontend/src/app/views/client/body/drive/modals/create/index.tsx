@@ -46,7 +46,7 @@ export const CreateModal = ({
     <Modal
       open={state.open}
       onClose={() => setState({ ...state, open: false })}
-      className="!max-w-sm"
+      className="!max-w-sm testid:create-modal"
     >
       <ModalContent
         title={
@@ -171,10 +171,12 @@ export const CreateModal = ({
 };
 
 const CreateModalOption = (props: { testClassId?: string; icon: ReactNode; text: string; onClick: () => void }) => {
+  const testId = props.testClassId ? `testid:${props.testClassId}` : '';
+
   return (
     <div
       onClick={props.onClick}
-      className={`flex flex-row p-4 dark:bg-zinc-900 dark:text-white bg-zinc-100 hover:bg-opacity-75 cursor-pointer rounded-md m-2 testid:${props.testClassId}`}
+      className={`flex flex-row p-4 dark:bg-zinc-900 dark:text-white bg-zinc-100 hover:bg-opacity-75 cursor-pointer rounded-md m-2 ${testId}`}
     >
       <div className="flex items-center justify-center">{props.icon}</div>
       <div className="grow flex items-center ml-2">

@@ -46,6 +46,8 @@ export const DocumentRow = ({
     // history.push(RouterServices.generateRouteFromState({ companyId: company, itemId: item.id }));
   };
 
+  const testId = testClassId ? `testid:${testClassId}` : '';
+
   return (
     <div
       className={
@@ -53,8 +55,8 @@ export const DocumentRow = ({
         (checked
           ? (notSafe ? 'bg-rose-500' : 'bg-blue-500') + ' bg-opacity-10 hover:bg-opacity-25'
           : 'hover:bg-zinc-500 hover:bg-opacity-10 ') +
-        (className || '') +
-        ` testid:${testClassId}`
+        (className || '') + ' ' +
+        testId
       }
       id={`DR-${item.id}`}
       onMouseEnter={() => setHover(true)}

@@ -27,7 +27,7 @@ export const PropertiesModal = () => {
   const [state, setState] = useRecoilState(PropertiesModalAtom);
 
   return (
-    <Modal open={state.open} onClose={() => setState({ ...state, open: false })}>
+    <Modal className="testid:properties-modal" open={state.open} onClose={() => setState({ ...state, open: false })}>
       {!!state.id && (
         <PropertiesModalContent
           id={state.id}

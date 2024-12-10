@@ -41,6 +41,7 @@ export const PublicLinkModal = () => {
         setIsOnAdvancedScreen(false);
         setState({ ...state, open: false });
       }}
+      className="testid:public-link-modal"
       >
       {!!state.id &&
         <PublicLinkModalContent
@@ -155,6 +156,7 @@ const PublicLinkModalContent = (props: {
       <Modal
         open={props.isOnAdvancedScreen}
         onClose={() => { props.onShowAdvancedScreen(false); }}
+        className="testid:public-link-advance-setting-modal"
       >
         <ModalContent
           title={

@@ -22,10 +22,12 @@ export default (): JSX.Element => {
       menu={[
         // user name / email
         {
+          id: 'username',
           type: 'text',
           text: currentUserService.getFullName(user),
         },
         {
+          id: 'email',
           type: 'text',
           text: user.email,
           icon: 'envelope-info',
@@ -33,6 +35,7 @@ export default (): JSX.Element => {
         },
         { type: 'separator' },
         {
+          id: 'account-setting',
           type: 'menu',
           icon: 'user',
           text: Languages.t('scenes.app.channelsbar.currentuser.title'),
@@ -42,6 +45,7 @@ export default (): JSX.Element => {
           },
         },
         {
+          id: 'logout',
           type: 'menu',
           icon: 'sign-out-alt',
           text: Languages.t('scenes.app.channelsbar.currentuser.logout'),
@@ -57,6 +61,7 @@ export default (): JSX.Element => {
         className="shrink-0 border-0"
         avatar={user.thumbnail}
         title={currentUserService.getFullName(user)}
+        testClassId="account-avatar"
       />
     </Menu>
   );

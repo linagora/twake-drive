@@ -69,7 +69,7 @@ export default () => {
           <div className="flex flex-row items-center justify-center bg-blue-500 px-4 py-2">
             <div className="grow flex flex-row items-center">
               {group.logo && (
-                <Avatar avatar={group.logo} className="inline-block mr-3" size="sm" type="square" />
+                <Avatar avatar={group.logo} className="inline-block mr-3" size="sm" type="square" testClassId="shared-view-avatar" />
               )}
               <span className="text-white font-semibold" style={{ lineHeight: '32px' }}>
                 Twake Drive
@@ -162,6 +162,7 @@ const AccessChecker = ({
               className="-mr-px rounded-r-none border-r-none"
               value={password}
               onChange={e => setPassword(e.target.value)}
+              testClassId="access-checker-input-password"
             />
             <Button
               className="rounded-l-none"
@@ -170,6 +171,7 @@ const AccessChecker = ({
                 await setPublicToken(token || '', password);
                 await refresh(folderId);
               }}
+              testClassId="access-checker-button-submit"
             >
               Submit
             </Button>

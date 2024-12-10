@@ -44,19 +44,19 @@ const DiskUsage = () => {
           <div className="w-full">
             <div className="overflow-hidden h-4 mb-4 text-xs flex rounded bg-emerald-200">
               {used > 90 && (
-              <div style={{  width: used +  '%',}} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-red-500"></div>
+              <div style={{  width: used +  '%',}} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-red-500 testid:disk-usage-over-90"></div>
               )}
               {used < 80  && (
-                <div style={{ width: used +  '%',}} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-green-500"></div>
+                <div style={{ width: used +  '%',}} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-green-500 testid:disk-usage-less-than-80"></div>
               )}
               { (used >= 80  && used <= 90 )&& (
-                <div style={{ width: used +  '%',}} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-yellow-500"></div>
+                <div style={{ width: used +  '%',}} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-yellow-500 testid:disk-usage-80-to-90"></div>
               )}
 
-              <div style={{ width: (100 - used) +  '%' }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-grey-500"></div>
+              <div style={{ width: (100 - used) +  '%' }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-grey-500 testid:disk-usage-100"></div>
             </div>
             {/*<div className="bg-blue-600 h-1.5 rounded-full dark:bg-blue-500" style={usedStyle}></div>*/}
-            <Base>
+            <Base className="testid:disk-usage-text">
               {formatBytesToInt(usedBytes)}
               <Base>  { Languages.t('components.disk_usage.of')} </Base>
               {formatBytesToInt(totalBytes || 0)}
@@ -69,7 +69,7 @@ const DiskUsage = () => {
       {!FeatureTogglesService.isActiveFeatureName(FeatureNames.COMPANY_USER_QUOTA) && (
         <div className="bg-zinc-500 dark:bg-zinc-900 bg-opacity-10 rounded-md p-4 w-auto max-w-md">
           <div className="w-full">
-            <Base>
+            <Base className="testid:disk-usage-text">
               {formatBytesToInt(usedBytes)}
               <Base>  { Languages.t('components.disk_usage.used')} </Base>
             </Base>

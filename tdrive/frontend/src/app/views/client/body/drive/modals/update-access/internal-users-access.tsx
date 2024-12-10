@@ -181,7 +181,7 @@ export const InternalUsersAccessManager = ({
           size="sm"
           className='text-center'
           onClick={onCloseModal}
-          testClassId="access-management-public-link-security-field-confirm-edit"
+          testClassId="public-link-button-confirm-edit"
         >
           {Languages.t('components.public-link-security_field_confirm_edit')}
         </Button>

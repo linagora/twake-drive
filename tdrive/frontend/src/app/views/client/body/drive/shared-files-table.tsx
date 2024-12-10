@@ -29,7 +29,7 @@ export const SharedFilesTable = () => {
     return formattedDate;
   };
   return (
-    <div>
+    <div className="testid:shared-file-table">
       <Title className="mb-4 block">{Languages.t('scenes.app.shared_with_me.shared_with_me')}</Title>
       {/* Filters */}
       <div className="flex items-center space-x-4 mb-6">

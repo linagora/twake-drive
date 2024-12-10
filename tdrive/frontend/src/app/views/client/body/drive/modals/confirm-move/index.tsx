@@ -68,7 +68,7 @@ export const ConfirmModal = () => {
   };
 
   return (
-    <Modal open={state.open} onClose={handleClose}>
+    <Modal className="testid:confirm-modal" open={state.open} onClose={handleClose}>
       <ConfirmModalContent key={state.parent_id} />
     </Modal>
   );
