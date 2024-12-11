@@ -41,6 +41,40 @@
     padding: 0 8px;
   }
 
+  .username {
+    .text {
+      font-size: 16px;
+      font-weight: 500;
+    }
+  }
+
+  .email {
+    height: 46px !important;
+    line-height: 46px !important;
+    .icon {
+      font-size: 24px;
+    }
+    .text {
+      margin-left: 10px;
+      font-size: 13px;
+      cursor: text;
+      user-select: text !important;
+      -webkit-user-select: text !important;
+    }
+  }
+
+  .account-menu {
+    height: 46px !important;
+    line-height: 46px !important;
+    .icon {
+      font-size: 24px !important;
+      margin-left: 0 !important;
+    }
+    .text {
+      margin-left: 10px;
+    }
+  }
+
   .menu-text {
     font-size: 12px;
     font-weight: 500;
@@ -119,6 +153,9 @@
       color: var(--primary);
       .icon {
         color: var(--primary);
+        svg {
+          stroke: var(--primary);
+        }
       }
     }
 
