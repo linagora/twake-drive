@@ -210,7 +210,7 @@ export default class MenusBodyLayer extends React.Component {
                           : 'skew_in_right_nobounce'
                         : 'fade_in'
                     }
-                    testClassId={item.dataMenuId}
+                    testClassId={item.menuTestClassId}
                   />
                 </div>
               </OutsideClickHandler>

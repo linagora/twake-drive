@@ -28,7 +28,7 @@ export const ConfirmTrashModal = () => {
   const [state, setState] = useRecoilState(ConfirmTrashModalAtom);
 
   return (
-    <Modal className="confirm-trash-modal" open={state.open} onClose={() => setState({ ...state, open: false })}>
+    <Modal className="testid:confirm-trash-modal" open={state.open} onClose={() => setState({ ...state, open: false })}>
       {!!state.items.length && <ConfirmTrashModalContent items={state.items} />}
     </Modal>
   );

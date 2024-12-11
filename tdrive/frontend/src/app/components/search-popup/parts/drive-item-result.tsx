@@ -38,7 +38,7 @@ export default (props: { driveItem: DriveItem & { user?: UserType }}) => {
 
   return (
     <div
-      className="flex items-center p-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded-md cursor-pointer"
+      className="flex items-center p-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded-md cursor-pointer testid:drive-item-result"
       onClick={() => {history.push(RouterServices.generateRouteFromState({companyId: company, itemId: file.id})); openDoc(file)}}
     >
       <FileResultMedia file={file} className="w-16 h-16 mr-3" />
@@ -55,7 +55,7 @@ export default (props: { driveItem: DriveItem & { user?: UserType }}) => {
           {extension?.toLocaleUpperCase()} • {formatDate(parseInt(file?.last_modified))} •{' '}
           {formatSize(file?.size)}
         </Text.Info>
-        <ResultContext user={file.user} />
+        <ResultContext user={file.user} testClassId="search-result-context" />
       </div>
       {!file.is_directory && (
         <div

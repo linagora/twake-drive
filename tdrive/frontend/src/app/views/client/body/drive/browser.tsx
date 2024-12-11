@@ -375,7 +375,7 @@ export default memo(
                               buildFileTypeContextMenu(),
                               { x: evt.clientX, y: evt.clientY },
                               'center',
-                              {},
+                              undefined,
                               "browser-share-with-me-menu-file-type"
                             );
                           }}
@@ -398,7 +398,7 @@ export default memo(
                               buildPeopleContextMen(),
                               { x: evt.clientX, y: evt.clientY },
                               'center',
-                              {},
+                              undefined,
                               "browser-share-with-me-menu-people"
                             );
                           }}
@@ -418,7 +418,7 @@ export default memo(
                               buildDateContextMenu(),
                               { x: evt.clientX, y: evt.clientY },
                               'center',
-                              {},
+                              undefined,
                               "browser-share-with-me-menu-last-modified"
                             );
                           }}
@@ -465,9 +465,9 @@ export default memo(
                   </Button>
                 </Menu>
                 {viewId !== 'shared_with_me' && (
-                  <Menu menu={() => onBuildContextMenu(details)} testClassId="browser-menu-context">
+                  <Menu menu={() => onBuildContextMenu(details)} testClassId="browser-menu-more">
                     {' '}
-                    <Button theme="secondary" className="ml-4 flex flex-row items-center" testClassId="browser-button-context">
+                    <Button theme="secondary" className="ml-4 flex flex-row items-center" testClassId="browser-button-more">
                       <span>
                         {selectedCount > 1
                           ? `${selectedCount} items`

@@ -53,7 +53,7 @@ const DiskUsage = () => {
                 <div style={{ width: used +  '%',}} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-yellow-500 testid:disk-usage-80-to-90"></div>
               )}
 
-              <div style={{ width: (100 - used) +  '%' }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-grey-500 testid:disk-usage-100"></div>
+              <div style={{ width: (100 - used) +  '%' }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-grey-500 testid:disk-usage-free-space"></div>
             </div>
             {/*<div className="bg-blue-600 h-1.5 rounded-full dark:bg-blue-500" style={usedStyle}></div>*/}
             <Base className="testid:disk-usage-text">

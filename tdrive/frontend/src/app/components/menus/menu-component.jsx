@@ -87,7 +87,7 @@ export default class MenuComponent extends React.Component {
                       {typeof item.icon === 'string' ? <Icon type={item.icon} /> : item.icon}
                     </div>
                   )}
-                  <div className={`text testid:menu-item-${item.id}`}>{item.text}</div>
+                  <div className={`text testid:menu-item-${item.testClassId}`}>{item.text}</div>
                 </div>
               );
             } else if (item.type == 'react-element') {
@@ -135,7 +135,7 @@ export default class MenuComponent extends React.Component {
                       <Emojione type={item.emoji} />
                     </div>
                   )}
-                  <div className={`text testid:menu-item-${item.id}`}>{item.text}</div>
+                  <div className={`text testid:menu-item-${item.testClassId}`}>{item.text}</div>
                   <div className="more">
                     {item.rightIcon && <Icon type={item.rightIcon} />}
                     {item.submenu && !item.submenu_replace && <Icon type="angle-right" />}
