@@ -25,16 +25,16 @@ export default (): JSX.Element => {
 
   return (
     <>
-      <div className="w-full max-w-lg">
+      <div className="w-full max-w-lg testid:header-search">
         <InputDecorationIcon
           prefix={() => (
             <SearchIcon className={'h-5 w-5 absolute m-auto top-0 bottom-0 left-3 text-blue-500'} />
           )}
           suffix={() =>
             <XIcon
-              className={'h-4 w-4 absolute m-auto top-0 bottom-0 right-3 cursor-pointer text-zinc-500 ' + (searchState.query?.length ? '' : 'hidden')}
+              className={'h-4 w-4 absolute m-auto top-0 bottom-0 right-3 cursor-pointer text-zinc-500 ' + (searchState.query?.length ? '' : 'hidden') + ' testid:button-clear'}
               onClick={() => setSearchState({ ...searchState, query: '' }) }
-              />
+            />
           }
           input={({ className }) => (
             <Input
@@ -44,7 +44,7 @@ export default (): JSX.Element => {
               readOnly
               placeholder={Languages.t('scenes.client.main_view.main_header.search_input')}
               onClick={() => setOpen()}
-              testClassId="header-search-input"
+              testClassId="input-search"
             />
           )}
         />

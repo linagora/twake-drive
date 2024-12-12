@@ -8,9 +8,12 @@ export const Checkbox = (props: {
   value?: boolean;
   className?: string;
   disabled?: boolean;
+  testClassId?: string;
 }) => {
   const renderSwitch = () => {
     const className = props.className || '';
+
+    const testId = props.testClassId ? `testid:${props.testClassId}` : '';
 
     return (
       <div
@@ -22,7 +25,8 @@ export const Checkbox = (props: {
           ' ' +
           (props.disabled ? 'opacity-50' : 'cursor-pointer') +
           ' ' +
-          (className || '')
+          (className || '') + ' ' +
+          testId
         }
         onClick={() =>
           !props.label && !props.disabled && props.onChange && props.onChange(!props.value)

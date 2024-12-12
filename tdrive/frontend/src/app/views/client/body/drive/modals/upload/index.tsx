@@ -69,20 +69,20 @@ export const UploadModal = ({
             as="div"
             {...(!state.type ? slideXTransitionReverted : slideXTransition)}
           >
-          <div className="-m-2" >
-                  <CreateModalOption
-                      icon={<DocumentDownloadIcon className="w-5 h-5" />}
-                      text={Languages.t('components.create_modal.upload_files')}
-                      onClick={() => selectFromDevice()}
-                      testClassId="upload-file-from-device"
-                  />
-                  <CreateModalOption
-                      icon={<FolderDownloadIcon className="w-5 h-5" />}
-                      text={Languages.t('components.create_modal.upload_folders')}
-                      onClick={() => selectFolderFromDevice()}
-                      testClassId="upload-folder-from-device"
-                  />
-                </div>
+            <div className="-m-2" >
+              <CreateModalOption
+                icon={<DocumentDownloadIcon className="w-5 h-5" />}
+                text={Languages.t('components.create_modal.upload_files')}
+                onClick={() => selectFromDevice()}
+                testClassId="upload-file-from-device"
+              />
+              <CreateModalOption
+                icon={<FolderDownloadIcon className="w-5 h-5" />}
+                text={Languages.t('components.create_modal.upload_folders')}
+                onClick={() => selectFolderFromDevice()}
+                testClassId="upload-folder-from-device"
+              />
+            </div>
           </Transition>
         </div>
       </ModalContent>

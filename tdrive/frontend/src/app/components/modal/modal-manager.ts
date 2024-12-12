@@ -20,7 +20,7 @@ class ModalManagerService extends Observable {
     this.notify();
   }
 
-  open(component: any, position: any, canClose?: boolean, clearState?: any) {
+  open(component: any, position: any, canClose?: boolean, clearState?: any, modalTestClassId?: string) {
     this.close();
 
     this.mountedComponent = null;
@@ -33,7 +33,7 @@ class ModalManagerService extends Observable {
       if (clearState) {
         delete this.popupStates[clearState];
       }
-      this.component.push({ component: component, canClose: canClose !== false });
+      this.component.push({ component: component, canClose: canClose !== false, modalTestClassId });
       this.notify();
     }, 100);
   }
@@ -75,6 +75,9 @@ class ModalManagerService extends Observable {
   }
   getComponent() {
     return this.component[this.component.length - 1]?.component || '';
+  }
+  getModalTestClassId() {
+    return this.component[this.component.length - 1]?.modalTestClassId || '';
   }
 }
 

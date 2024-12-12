@@ -40,7 +40,8 @@ export default function Avatar(props: AvatarProps) {
   const fontSize = fontSizes[props.size || 'md'];
   const addedClassName = props.className || '';
   const avatarTitle = props.title || '';
-  const restProps = _.omit(props, 'size', 'type', 'avatar', 'title', 'className', 'icon');
+  const testClassId = props.testClassId;
+  const restProps = _.omit(props, 'size', 'type', 'avatar', 'title', 'className', 'icon', 'testClassId');
 
   let className = `w-${avatarSize} h-${avatarSize} ${
     avatarType === 'circle' ? 'rounded-full' : 'rounded-sm'
@@ -65,17 +66,19 @@ export default function Avatar(props: AvatarProps) {
     ? {}
     : { backgroundImage: `url('${getGradient(props.title || '')}')` };
 
+  const testId = testClassId ? `testid:${testClassId}` : ''
+
   if (props.icon) {
     className += ' ';
     return (
       <div
-        {..._.omit(restProps, 'testClassId')}
+        {...restProps}
         style={style}
         className={
           className +
           ' text-white overflow-hidden flex items-center justify-center ' +
           addedClassName + ' ' +
-          (props.testClassId ? `testid:${props.testClassId}` : '')
+          testId
         }
       >
         {props.icon}
@@ -85,18 +88,18 @@ export default function Avatar(props: AvatarProps) {
 
   if (props.avatar) {
     return (
-      <div {..._.omit(restProps, 'testClassId')}>
+      <div {...restProps}>
         <img
           alt={props.title}
           src={props.avatar}
-          className={className + ' object-cover ' + addedClassName + ' ' + (props.testClassId ? `testid:${props.testClassId}` : '')}
+          className={className + ' object-cover ' + addedClassName + ' ' + testId}
         />
       </div>
     );
   }
 
   return (
-    <div className={className + ' ' + addedClassName + ' ' + (props.testClassId ? `testid:${props.testClassId}` : '')} {..._.omit(restProps, 'testClassId')} style={style}>
+    <div className={className + ' ' + addedClassName + ' ' + testId} {...restProps} style={style}>
       <div className={lettersClass}>{letters.toUpperCase()}</div>
     </div>
   );

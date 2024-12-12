@@ -48,7 +48,7 @@ export default () => {
     dirId && viewId && setParentId(dirId);
   }, [viewId, itemId, dirId]);
   return (
-    <div className="grow flex flex-col overflow-auto -m-4 p-4 relative">
+    <div className="grow flex flex-col overflow-auto -m-4 p-4 relative testid:sidebar">
       <div className="grow">
         <div className="sm:hidden block mb-2">
           <div className="flex flex-row space-between w-full">

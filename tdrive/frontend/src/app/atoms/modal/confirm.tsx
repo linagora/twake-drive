@@ -30,7 +30,7 @@ export const ConfirmModal = (props: ConfirmModalProps) => {
     };
   }
   return <>
-    <Modal open={props.open} onClose={dialogCloseHandler()}>
+    <Modal className="testid:confirm-modal" open={props.open} onClose={dialogCloseHandler()}>
       <ModalContent
         title={props.title}
         text={props.text}
@@ -42,14 +42,14 @@ export const ConfirmModal = (props: ConfirmModalProps) => {
               className="ml-2"
               theme={props.buttonOkTheme || "danger"}
               onClick={dialogCloseHandler(true)}
-              testClassId="confirm-modal-button-confirm"
+              testClassId="button-confirm"
             >
               {Languages.t(props.buttonOkLabel)}
             </Button>
             <Button
               theme='default'
               onClick={dialogCloseHandler(false)}
-              testClassId="confirm-modal-button-cancel"
+              testClassId="button-cancel"
             >
               {Languages.t(props.buttonCancelLabel || "general.cancel")}
             </Button>

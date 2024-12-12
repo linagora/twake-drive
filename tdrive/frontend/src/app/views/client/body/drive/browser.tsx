@@ -10,7 +10,7 @@ import { useDriveUpload } from '@features/drive/hooks/use-drive-upload';
 import { DriveItemSelectedList, DriveItemSort } from '@features/drive/state/store';
 import { formatBytes } from '@features/drive/utils';
 import useRouterCompany from '@features/router/hooks/use-router-company';
-import _, { get, set } from 'lodash';
+import _ from 'lodash';
 import { memo, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { atomFamily, useRecoilState, useSetRecoilState } from 'recoil';
 import { DrivePreview } from '../../viewer/drive-preview';
@@ -232,10 +232,10 @@ export default memo(
         inPublicSharing,
       };
       return isMobile ? (
-        <DocumentRow {...commonProps} testClassId="browser-document-row" />
+        <DocumentRow {...commonProps} />
       ) : (
         <Draggable id={index} key={index}>
-          <DocumentRow {...commonProps} testClassId="browser-document-row" />
+          <DocumentRow {...commonProps} />
         </Draggable>
       );
     }
@@ -379,7 +379,7 @@ export default memo(
                               "browser-share-with-me-menu-file-type"
                             );
                           }}
-                          testClassId="browser-share-with-me-button-file-type"
+                          testClassId="button-open-menu-file-type"
                         >
                           <span>
                             {filter.mimeType.key && filter.mimeType.key != 'All'
@@ -402,7 +402,7 @@ export default memo(
                               "browser-share-with-me-menu-people"
                             );
                           }}
-                          testClassId="browser-share-with-me-button-people"
+                          testClassId="button-open-menu-people"
                         >
                           <span>{Languages.t('scenes.app.shared_with_me.people')}</span>
                           <ChevronDownIcon className="h-4 w-4 ml-2 -mr-1" />
@@ -422,7 +422,7 @@ export default memo(
                               "browser-share-with-me-menu-last-modified"
                             );
                           }}
-                          testClassId="browser-share-with-me-button-last-modified"
+                          testClassId="button-open-menu-last-modified"
                         >
                           <span>
                             {filter.date.key && filter.date.key != 'All'
@@ -452,7 +452,7 @@ export default memo(
 
                 <Menu menu={() => onBuildSortContextMenu()} sortData={sortLabel} testClassId="browser-menu-sorting">
                   {' '}
-                  <Button theme="outline" className="ml-4 flex flex-row items-center" testClassId="browser-button-sorting">
+                  <Button theme="outline" className="ml-4 flex flex-row items-center" testClassId="button-sorting">
                     <SortIcon
                       className={`h-4 w-4 mr-2 -ml-1 ${
                         sortLabel.order === 'asc' ? 'transform rotate-180' : ''
@@ -467,7 +467,7 @@ export default memo(
                 {viewId !== 'shared_with_me' && (
                   <Menu menu={() => onBuildContextMenu(details)} testClassId="browser-menu-more">
                     {' '}
-                    <Button theme="secondary" className="ml-4 flex flex-row items-center" testClassId="browser-button-more">
+                    <Button theme="secondary" className="ml-4 flex flex-row items-center" testClassId="button-more">
                       <span>
                         {selectedCount > 1
                           ? `${selectedCount} items`
@@ -495,7 +495,7 @@ export default memo(
                             onClick={() => uploadItemModal()}
                             theme="primary"
                             className="mt-4"
-                            testClassId="browser-button-add-doc"
+                            testClassId="button-add-doc"
                           >
                             {Languages.t('scenes.app.drive.add_doc')}
                           </Button>
@@ -525,7 +525,6 @@ export default memo(
                             setChecked(_.pickBy({ ...checked, [child.id]: v }, _.identity))
                           }
                           onBuildContextMenu={() => onBuildContextMenu(details, child)}
-                          testClassId="browser-folder-row"
                         />
                       </Droppable>
                     ) : (

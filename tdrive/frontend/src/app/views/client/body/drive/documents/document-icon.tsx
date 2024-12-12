@@ -45,9 +45,10 @@ export const DocumentIcon = (props: {
         size="xs"
         type="square"
         title={metadata.name}
+        testClassId="avatar"
       />
     : props.item?.is_directory
-      ? <FolderIcon className={className + (props.blueiffyFolders || props.blueiffyFolders == null ? ' text-blue-500' : '')} />
-      : <SpecificFileTypeIcon className={className} />
+      ? <FolderIcon className={className + (props.blueiffyFolders || props.blueiffyFolders == null ? ' text-blue-500' : '') + ' testid:folder-icon'} />
+      : <SpecificFileTypeIcon className={className + ' testid:specific-file-type-icon'} />
   );
 };

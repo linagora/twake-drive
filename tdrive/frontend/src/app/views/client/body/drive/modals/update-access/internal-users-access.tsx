@@ -145,7 +145,7 @@ export const InternalUsersAccessManager = ({
                     onAddSearchResult={(userId) => {
                       item && update(changeUserAccess(item, userId, level));
                     }}
-                    />
+                  />
                 )}
                 {!loading && resultFooterText && <>
                   <div className={(result.length == 0 ? 'rounded-md' : 'rounded-b-md') + ' grow text-center text-zinc-700 dark:text-white dark:opacity-75 py-2 dark:border-zinc-700 border-t bg-zinc-100 dark:bg-zinc-900'}>
@@ -163,8 +163,8 @@ export const InternalUsersAccessManager = ({
             userId={user?.id}
             disabled={disabled}
             className={(showResults ? '!rounded-none' : '') + (index === usersWithAccess.length - 1 ? ' !rounded-b-md border-y' : ' border-t')}
-            />
-          )}
+          />
+        )}
         {(usersWithAccess?.length ?? 0) < minUserHeight &&
           [...Array(minUserHeight - (usersWithAccess?.length ?? 0))].map((_, i) =>
             <div key={i} className="p-4 flex flex-row">
@@ -181,7 +181,7 @@ export const InternalUsersAccessManager = ({
           size="sm"
           className='text-center'
           onClick={onCloseModal}
-          testClassId="public-link-button-confirm-edit"
+          testClassId="button-confirm-edit"
         >
           {Languages.t('components.public-link-security_field_confirm_edit')}
         </Button>
@@ -212,7 +212,7 @@ const UserAccessLevel = (props: {
         ? <Button
             disabled={loading || props.disabled || user?.id === currentUser?.id}
             size="sm"
-            testClassId={`user-access-button-${props.isSearchResultAdd}`}
+            testClassId="button-grant-access"
           >
             {Languages.t('components.user_picker.modal.result_add.' + props.isSearchResultAdd)}
           </Button>

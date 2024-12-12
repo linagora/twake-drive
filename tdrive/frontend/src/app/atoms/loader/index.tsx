@@ -1,7 +1,7 @@
 export const Loader = (props: { className?: string }) => {
   return (
     <svg
-      className={'animate-spin text-gray-400 inline ' + (props.className || '')}
+      className={'animate-spin text-gray-400 inline ' + (props.className || '') + ' testid:loader'}
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"

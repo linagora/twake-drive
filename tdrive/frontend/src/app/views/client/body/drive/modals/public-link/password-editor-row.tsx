@@ -75,7 +75,7 @@ export const PasswordEditorRow = (props: {
 
 return <>
     <BaseBlock
-      className={"m-4" + (disabled ? Styles.Disabled.Yes : "")}
+      className={"m-4" + (disabled ? Styles.Disabled.Yes : "") + ' testid:password-editor-row'}
       disabled={disabled}
       avatar={<ShieldCheckIcon className={Styles.SmallIconClasses} />}
       title={
@@ -83,7 +83,7 @@ return <>
           <label htmlFor={chkPasswordId}>{Languages.t('components.public-link-security_password')}</label>
           {!!props.password?.length && !isEditingPassword &&
             <a
-              className={disabled ? Styles.Disabled.Yes : "!text-zinc-800"}
+              className={(disabled ? Styles.Disabled.Yes : "!text-zinc-800") + ' testid:button-edit'}
               onClick={() => {
                 if (!disabled) {
                   setCurrentEditedPassword(props.password!);
@@ -112,7 +112,7 @@ return <>
                 else if (e.key == 'Enter')
                   confirmSavePassword(currentEditedPassword);
               }}
-              testClassId="pasword-editor-row-editting-password"
+              testClassId="input-edit-password"
             />
             <Button
               disabled={disabled}
@@ -120,7 +120,7 @@ return <>
               size="sm"
               className="max-w-xs mr-2 mt-1"
               onClick={() => confirmSavePassword(currentEditedPassword)}
-              testClassId="password-editor-row-button-confirm"
+              testClassId="button-confirm"
             >
               {Languages.t('components.public-link-security_field_confirm_edit')}
             </Button>
@@ -137,7 +137,7 @@ return <>
               } else
                 confirmSavePassword("");
             }}
-            testClassId="password-editor-row-checkbox"
+            testClassId="checkbox"
           />
       }
       />

@@ -79,18 +79,18 @@ export const CreateModalWithUploadZones = ({ initialParentId }: { initialParentI
             parentId,
           });
         }}
-    />
-    <UploadModal
+      />
+      <UploadModal
         selectFolderFromDevice={() => uploadFolderZoneRef.current?.open()}
         selectFromDevice={() => uploadZoneRef.current?.open()}
         addFromUrl={(url, name) => {
-            setUploadModalState({ parent_id: '', open: false });
-            uploadFromUrl(url, name, {
-                companyId,
-                parentId,
-            });
+          setUploadModalState({ parent_id: '', open: false });
+          uploadFromUrl(url, name, {
+            companyId,
+            parentId,
+          });
         }}
-     />
+      />
     </>
   );
 };
@@ -119,7 +119,7 @@ export default () => {
   }, [item?.id, setUploadModalState]);
 
   return (
-    <div className="-m-4 overflow-hidden">
+    <div className="-m-4 overflow-hidden testid:sidebar-actions">
       <AnimatedHeight>
         <div className="p-4">
           <CreateModalWithUploadZones initialParentId={parentId} />
@@ -170,7 +170,7 @@ export default () => {
                 theme="primary"
                 className="w-full mb-2 justify-center"
                 style={{ boxShadow: '0 0 10px 0 rgba(0, 122, 255, 0.5)' }}
-                testClassId="sidebar-action-button-upload"
+                testClassId="button-upload"
               >
                 <UploadIcon className="w-5 h-5 mr-2" /> {Languages.t('components.side_menu.buttons.upload')}
               </Button>
@@ -179,7 +179,7 @@ export default () => {
                 size="lg"
                 theme="secondary"
                 className="w-full mb-2 justify-center"
-                testClassId="sidebar-action-button-open-create-modal"
+                testClassId="button-open-create-modal"
               >
                 <PlusIcon className="w-5 h-5 mr-2" /> {Languages.t('components.side_menu.buttons.create')}
               </Button>

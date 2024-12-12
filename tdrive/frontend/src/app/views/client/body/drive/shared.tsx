@@ -65,18 +65,18 @@ export default () => {
   return (
     <FeatureToggles features={activeFeatureNames}>
       <>
-        <div className="flex flex-col h-full w-full dark:bg-zinc-900">
+        <div className="flex flex-col h-full w-full dark:bg-zinc-900 testid:shared-view">
           <div className="flex flex-row items-center justify-center bg-blue-500 px-4 py-2">
             <div className="grow flex flex-row items-center">
               {group.logo && (
-                <Avatar avatar={group.logo} className="inline-block mr-3" size="sm" type="square" testClassId="shared-view-avatar" />
+                <Avatar avatar={group.logo} className="inline-block mr-3" size="sm" type="square" testClassId="avatar" />
               )}
               <span className="text-white font-semibold" style={{ lineHeight: '32px' }}>
                 Twake Drive
               </span>
             </div>
             <div className="shrink-0">
-              <a href="https://twake.app" target="_BLANK" rel="noreferrer" className="!text-white">
+              <a href="https://twake.app" target="_BLANK" rel="noreferrer" className="!text-white testid:create-account-link">
                 <span className="nomobile text-white">
                   {Languages.t('scenes.app.mainview.create_account')}
                 </span>
@@ -145,7 +145,7 @@ const AccessChecker = ({
 
   if ((!details?.item?.id && !loading) || accessGranted === false) {
     return (
-      <div className="text-center">
+      <div className="text-center testid:access-checker">
         <div style={{ height: '20vh' }} />
         <div className="inline-block text-left max-w-sm margin-auto bg-zinc-50 dark:bg-zinc-900 rounded-md p-4">
           <Title>You don't have access to this document or folder.</Title>
@@ -162,7 +162,7 @@ const AccessChecker = ({
               className="-mr-px rounded-r-none border-r-none"
               value={password}
               onChange={e => setPassword(e.target.value)}
-              testClassId="access-checker-input-password"
+              testClassId="input-password"
             />
             <Button
               className="rounded-l-none"
@@ -171,7 +171,7 @@ const AccessChecker = ({
                 await setPublicToken(token || '', password);
                 await refresh(folderId);
               }}
-              testClassId="access-checker-button-submit"
+              testClassId="button-submit"
             >
               Submit
             </Button>

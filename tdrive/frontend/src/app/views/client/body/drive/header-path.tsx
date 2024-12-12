@@ -133,20 +133,22 @@ const PathItem = ({
   const { access: trashAccess } = useDriveItem('trash');
   const isInSharedWithMe = viewId === 'shared_with_me';
   return (
-    <div className="flex items-center">
+    <div className="flex items-center testid:header-path-item">
       <a
         href="#"
-        className="text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white testid:header-path-item"
+        className="text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white testid:item-link"
         onClick={evt => {
           evt.preventDefault();
 
           const trashMenuItems = [
             {
+              testClassId: 'my-trash',
               type: 'menu',
               text: Languages.t('components.header_path.my_trash'),
               onClick: () => onClick('trash_' + user?.id, ''),
             },
             {
+              testClassId: 'shared-trash',
               type: 'menu',
               text: Languages.t('components.header_path.shared_trash'),
               onClick: () => onClick('trash', ''),
@@ -160,7 +162,13 @@ const PathItem = ({
 
           if (first && user?.id) {
             if (viewId?.includes('trash')) {
-              MenusManager.openMenu(trashMenuItems, { x: evt.clientX, y: evt.clientY }, 'center');
+              MenusManager.openMenu(
+                trashMenuItems,
+                { x: evt.clientX, y: evt.clientY },
+                'center',
+                undefined,
+                'menu-trash'
+              );
             } else {
               if (viewId === 'root') {
                 onClick('root', '');

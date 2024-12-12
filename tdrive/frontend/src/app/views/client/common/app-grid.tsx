@@ -41,6 +41,7 @@ export default ({ className }: { className?: string }): JSX.Element => {
           ),
         },
       ]}
+      testClassId="menu-apps"
     >
       <Button
         theme="default"

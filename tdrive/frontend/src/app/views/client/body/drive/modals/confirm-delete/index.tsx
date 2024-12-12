@@ -71,7 +71,7 @@ const ConfirmDeleteModalContent = ({ items }: { items: DriveItem[] }) => {
           setSelected({});
           setState({ ...state, open: false });
         }}
-        testClassId="confirm-delete-modal-button-delete"
+        testClassId="button-delete"
       >
         Delete
       </Button>

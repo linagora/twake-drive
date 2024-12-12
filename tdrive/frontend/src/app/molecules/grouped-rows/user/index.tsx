@@ -19,7 +19,7 @@ interface UserBlockProps {
 
 export default function UserBlock(props: UserBlockProps) {
   return <BaseBlock
-    className={props.className}
+    className={props.className + ' testid:user-block'}
     suffix={props.suffix}
     title_suffix={props.title_suffix}
     subtitle_suffix={props.subtitle_suffix}
@@ -29,7 +29,8 @@ export default function UserBlock(props: UserBlockProps) {
         avatar={props.user?.thumbnail || ''}
         title={props.user ? getFullName(props.user) : '-'}
         size="sm"
-        />
+        testClassId="avatar"
+      />
     }
     title={
       <>
@@ -40,5 +41,5 @@ export default function UserBlock(props: UserBlockProps) {
     subtitle={
       <div className='text-sm text-slate-500'>{props.user?.email || ""}</div>
     }
-    />
+  />
 }

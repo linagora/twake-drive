@@ -64,7 +64,7 @@ const VersionModalContent = ({ id }: { id: string }) => {
           await uploadVersion(file);
           await refresh(id);
         }}
-        testClassId="version-modal-upload-zone"
+        testClassId="upload-zone"
       >
         {access !== 'read' && (
           <div

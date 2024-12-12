@@ -1,6 +1,5 @@
 import {
   DotsHorizontalIcon,
-  ShieldCheckIcon,
   ShieldExclamationIcon,
   BanIcon,
 } from '@heroicons/react/outline';
@@ -32,7 +31,6 @@ export const DocumentRow = ({
   checked,
   onClick,
   onBuildContextMenu,
-  testClassId,
 }: DriveItemProps) => {
   const history = useHistory();
   const [hover, setHover] = useState(false);
@@ -46,8 +44,6 @@ export const DocumentRow = ({
     // history.push(RouterServices.generateRouteFromState({ companyId: company, itemId: item.id }));
   };
 
-  const testId = testClassId ? `testid:${testClassId}` : '';
-
   return (
     <div
       className={
@@ -56,7 +52,7 @@ export const DocumentRow = ({
           ? (notSafe ? 'bg-rose-500' : 'bg-blue-500') + ' bg-opacity-10 hover:bg-opacity-25'
           : 'hover:bg-zinc-500 hover:bg-opacity-10 ') +
         (className || '') + ' ' +
-        testId
+        'testid:document-row'
       }
       id={`DR-${item.id}`}
       onMouseEnter={() => setHover(true)}

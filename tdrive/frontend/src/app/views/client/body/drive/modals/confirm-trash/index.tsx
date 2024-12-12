@@ -74,7 +74,7 @@ const ConfirmTrashModalContent = ({ items }: { items: DriveItem[] }) => {
           await refresh("trash");
           setState({ ...state, open: false });
         }}
-        testClassId="cofirm-trash-modal-button-remove"
+        testClassId="button-remove"
       >
         {Languages.t('components.ConfirmTrashModalContent_move_to_trash')}
       </Button>

@@ -79,7 +79,7 @@ const ChangePublicLinkAccessLevelRow = (props: {
           level={props.level}
           hiddenLevels={['remove']}
           onChange={props.onChange}
-          testClassId="public-link-access-level-dropdown"
+          testClassId="level-dropdown"
         />
       }
       />
@@ -103,7 +103,7 @@ const SwitchToAdvancedSettingsRow = (props: {
           if (!props.disabled)
             props.onShowAdvancedScreen(true);
         }}
-        testClassId="public-link-access-advance-switcher"
+        testClassId="advance-switcher"
       >
         {Languages.t("components.public-link-security-change")}
       </A>

@@ -57,6 +57,8 @@ const NewVersionComponent = (): JSX.Element => {
             size: { width: '600px' },
           },
           false,
+          undefined,
+          'modal-new-version'
         );
       }
 
@@ -80,9 +82,10 @@ const NewVersionComponent = (): JSX.Element => {
         <Banner
           height={32}
           type="primary"
+          testClassId="new-version-banner"
           content={
             <Row align="middle" gutter={[8, 0]}>
-              <Col>
+              <Col className="testid:new-version-text">
                 <b>{Languages.t('components.newversion.new_version_component.row.part_1')}</b>,{' '}
                 {Languages.t('components.newversion.new_version_component.row.part_2')}{' '}
                 <Emojione type="rocket" />
@@ -92,6 +95,7 @@ const NewVersionComponent = (): JSX.Element => {
                   style={{ color: 'var(--white)' }}
                   underline
                   onClick={() => window.location.reload()}
+                  className="testid:button-reload"
                 >
                   {Languages.t('components.newversion.new_version_component.link')}
                 </Typography.Link>

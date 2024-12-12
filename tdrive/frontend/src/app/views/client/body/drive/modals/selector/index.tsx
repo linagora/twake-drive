@@ -32,7 +32,7 @@ export const SelectorModal = () => {
   const [state, setState] = useRecoilState(SelectorModalAtom);
 
   return (
-    <Modal open={state.open} onClose={() => setState({ ...state, open: false })}>
+    <Modal className="testid:modal-selector" open={state.open} onClose={() => setState({ ...state, open: false })}>
       <SelectorModalContent key={state.parent_id} showfiles={false}/>
     </Modal>
   );
@@ -78,7 +78,8 @@ const SelectorModalContent = (key: any) => {
             key={folder.id}
             className={
               'flex flex-row items-center border-t -mt-px px-4 py-2 cursor-pointer ' +
-              'hover:bg-zinc-500 hover:bg-opacity-10 '
+              'hover:bg-zinc-500 hover:bg-opacity-10 ' +
+              'testid:folder'
             }
             onClick={() => {
               setParentId(folder.id);
@@ -93,35 +94,36 @@ const SelectorModalContent = (key: any) => {
 
         {key.showfiles && (
         <>
-        {files.map(file => (
-          <div
-          key={file.id}
-          className={
-            'flex flex-row items-center border-t -mt-px px-4 py-2 cursor-pointer ' +
-            'hover:bg-zinc-500 hover:bg-opacity-10 '
-          }
-          onClick={() => {
-            if (state.mode === 'select-files') {
-              if (!selected.some(i => i.id === file.id)) {
-                setSelected([...selected, file]);
-              } else {
-                setSelected(selected.filter(i => i.id !== file.id));
+          {files.map(file => (
+            <div
+              key={file.id}
+              className={
+                'flex flex-row items-center border-t -mt-px px-4 py-2 cursor-pointer ' +
+                'hover:bg-zinc-500 hover:bg-opacity-10 ' +
+                'testid:file'
               }
-            } else if (state.mode === 'select-file') {
-              setSelected([file]);
-            }
-          }}
-          >
-          <div className="grow flex flex-row items-center dark:text-white">
-            <DocumentIcon className="h-5 w-5 shrink-0 text-gray-400 mr-2" />
-            {file.name}
-          </div>
-          {(state.mode === 'select-file' || state.mode === 'select-files') && (
-            <div className="shrink-0" onClick={e => e.stopPropagation()}>
-              <Checkbox value={selected.some(i => i.id === file.id)} />
+              onClick={() => {
+                if (state.mode === 'select-files') {
+                  if (!selected.some(i => i.id === file.id)) {
+                    setSelected([...selected, file]);
+                  } else {
+                    setSelected(selected.filter(i => i.id !== file.id));
+                  }
+                } else if (state.mode === 'select-file') {
+                  setSelected([file]);
+                }
+              }}
+            >
+              <div className="grow flex flex-row items-center dark:text-white">
+                <DocumentIcon className="h-5 w-5 shrink-0 text-gray-400 mr-2" />
+                {file.name}
+              </div>
+              {(state.mode === 'select-file' || state.mode === 'select-files') && (
+                <div className="shrink-0" onClick={e => e.stopPropagation()}>
+                  <Checkbox value={selected.some(i => i.id === file.id)} testClassId="checkbox-select-file" />
+                </div>
+              )}
             </div>
-          )}
-          </div>
           ))}
         </>
         )}
@@ -138,7 +140,7 @@ const SelectorModalContent = (key: any) => {
           setState({ ...state, open: false });
           setLoading(false);
         }}
-        testClassId="selector-modal-button"
+        testClassId="button-select"
       >
         {selected.length === 0 ? (
           <>{Languages.t('components.SelectorModalContent_no_items')}</>

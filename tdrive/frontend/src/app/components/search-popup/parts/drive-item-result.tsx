@@ -69,7 +69,7 @@ export default (props: { driveItem: DriveItem & { user?: UserType }}) => {
             theme="outline"
             className="w-9 !p-0 flex items-center justify-center ml-2 rounded-full border-none"
             onClick={() => onDriveItemDownloadClick(file)}
-            testClassId="drive-item-button-download"
+            testClassId="button-download"
           >
             <DownloadIcon className="text-blue-500 w-6 h-6" />
           </Button>
@@ -96,21 +96,21 @@ export const FileResultMedia = (props: {
 
   if (file.is_directory) {
     return (
-      <div className={'relative flex bg-blue-100 rounded-md ' + (props.className || '')}>
-        <FolderIcon className="w-10 h-10 m-auto text-blue-500" />
+      <div className={'relative flex bg-blue-100 rounded-md ' + (props.className || '') + ' testid:folder-result-media'}>
+        <FolderIcon className="w-10 h-10 m-auto text-blue-500 testid:folder-icon" />
       </div>
     );
   }
 
   return (
-    <div className={'relative flex bg-zinc-200 rounded-md ' + (props.className || '')}>
+    <div className={'relative flex bg-zinc-200 rounded-md ' + (props.className || '') + ' testid:file-result-media'}>
       <Media
         size={props.size || 'md'}
         url={url}
         duration={type === 'video' ? extension : undefined}
       />
       {(!['image', 'video'].includes(type) || !url) && (
-          <DocumentIcon item={file} fileType={type} className={iconClassName} />
+        <DocumentIcon item={file} fileType={type} className={iconClassName} />
       )}
     </div>
   );

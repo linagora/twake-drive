@@ -27,7 +27,7 @@ export const UsersModal = () => {
   const [state, setState] = useRecoilState(UsersModalAtom);
   const userList = useUserCompanyList();
   return (
-    <Modal open={state.open} onClose={() => setState({ open: false })}>
+    <Modal className="testid:manage-users-modal" open={state.open} onClose={() => setState({ open: false })}>
       <Base className="block mt-4 mb-1">
         {Languages.t('components.internal-manage_root_users')}
       </Base>
@@ -59,15 +59,16 @@ const UserAccessLevel = ({
   //const level = role == "admin" ? "manage" : "read";
 
   return (
-    <div className="p-4 border-t flex flex-row items-center justify-center">
+    <div className="p-4 border-t flex flex-row items-center justify-center testid:user-access-level">
       <div className="shrink-0">
         <Avatar
           avatar={user?.thumbnail || ''}
           title={!user ? '-' : currentUserService.getFullName(user)}
           size="sm"
+          testClassId="avatar"
         />
       </div>
-      <div className="grow ml-2">
+      <div className="grow ml-2 testid:username">
         <Base>{username} </Base>{' '}
         {user?.id === currentUser?.id && (
           <Info>{Languages.t('components.internal-access_specific_rules_you')}</Info>

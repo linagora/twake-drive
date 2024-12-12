@@ -38,7 +38,7 @@ export default React.memo((): JSX.Element => {
   if (user?.id) {
     page = (
       <DesktopRedirect>
-        <div className="fade_in bg-zinc-100 dark:bg-black flex flex-col gap-2 h-full">
+        <div className="fade_in bg-zinc-100 dark:bg-black flex flex-col gap-2 h-full testid:header">
           <DownloadAppBanner/>
           <NewVersionComponent />
 
