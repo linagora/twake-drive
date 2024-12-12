@@ -38,6 +38,7 @@ export const SearchInput = () => {
             value={input.query}
             className={className}
             placeholder={Languages.t('scenes.app.mainview.quick_search_placeholder')}
+            testClassId="input-quick-search"
           />
         )}
       />

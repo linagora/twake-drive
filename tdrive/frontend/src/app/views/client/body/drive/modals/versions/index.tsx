@@ -29,7 +29,7 @@ export const VersionsModal = () => {
   const [state, setState] = useRecoilState(VersionsModalAtom);
 
   return (
-    <Modal open={state.open} onClose={() => setState({ ...state, open: false })}>
+    <Modal className="testid:version-modal" open={state.open} onClose={() => setState({ ...state, open: false })}>
       {!!state.id && <VersionModalContent id={state.id} />}
     </Modal>
   );
@@ -64,6 +64,7 @@ const VersionModalContent = ({ id }: { id: string }) => {
           await uploadVersion(file);
           await refresh(id);
         }}
+        testClassId="upload-zone"
       >
         {access !== 'read' && (
           <div
@@ -80,6 +81,7 @@ const VersionModalContent = ({ id }: { id: string }) => {
                   theme="primary"
                   onClick={() => uploadZoneRef.current?.open()}
                   loading={loading}
+                  testClassId="button-create-version"
                 >
                   {Languages.t('components.VersionModalContent_create')}
                 </Button>
@@ -113,6 +115,7 @@ const VersionModalContent = ({ id }: { id: string }) => {
               <Button
                 theme="outline"
                 onClick={() => download(id, item.av_status === 'malicious', version.id)}
+                testClassId="button-download-version"
               >
                 {Languages.t('components.VersionModalContent_donwload')}
               </Button>

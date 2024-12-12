@@ -191,7 +191,7 @@ export default class UploadZone extends React.Component<PropsType, StateType> {
       <div
         ref={node => node && (this.node = node)}
         style={this.props.style}
-        className={classNames('upload_drop_zone', this.props.className)}
+        className={classNames('upload_drop_zone', this.props.className, this.props.testClassId ? `testid:${this.props.testClassId}` : '')}
         onClick={() => {
           if (!this.props.disableClick) {
             this.open();

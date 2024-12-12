@@ -19,7 +19,8 @@ export const AccessLevel = ({
       className={
         className +
         ' w-auto ' +
-        (level === 'none' ? '!text-rose-500 !bg-rose-100 dark-bg-rose-800' : '')
+        (level === 'none' ? '!text-rose-500 !bg-rose-100 dark-bg-rose-800' : '') +
+        ' testid:select-access-level'
       }
       value={level || 'read'}
       onChange={e => onChange(e.target.value as DriveFileAccessLevel & 'remove')}

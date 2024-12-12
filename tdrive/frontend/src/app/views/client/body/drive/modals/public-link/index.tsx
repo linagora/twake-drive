@@ -41,6 +41,7 @@ export const PublicLinkModal = () => {
         setIsOnAdvancedScreen(false);
         setState({ ...state, open: false });
       }}
+      className="testid:public-link-modal"
       >
       {!!state.id &&
         <PublicLinkModalContent
@@ -78,7 +79,8 @@ const ChangePublicLinkAccessLevelRow = (props: {
           level={props.level}
           hiddenLevels={['remove']}
           onChange={props.onChange}
-          />
+          testClassId="level-dropdown"
+        />
       }
       />
   );
@@ -101,7 +103,8 @@ const SwitchToAdvancedSettingsRow = (props: {
           if (!props.disabled)
             props.onShowAdvancedScreen(true);
         }}
-        >
+        testClassId="advance-switcher"
+      >
         {Languages.t("components.public-link-security-change")}
       </A>
     }
@@ -126,58 +129,59 @@ const PublicLinkModalContent = (props: {
   return (
     <ModalContent
       title={
-          <>
-            {Languages.t('components.public-link-security-title') + ' '}
-            <strong>{item?.name}</strong>
-          </>
-        }
-      >
-        <div className="rounded-md border dark:border-zinc-700 my-5 mb-8">
-          <ChangePublicLinkAccessLevelRow
-            disabled={loading}
-            level={item?.access_info?.public?.level || 'none'}
-            onChange={level => {
-              item && update(changePublicLink(item, { level }));
-            }}
-            />
-          <SwitchToAdvancedSettingsRow
-              disabled={!havePublicLink}
-              onShowAdvancedScreen={props.onShowAdvancedScreen}
+        <>
+          {Languages.t('components.public-link-security-title') + ' '}
+          <strong>{item?.name}</strong>
+        </>
+      }
+    >
+      <div className="rounded-md border dark:border-zinc-700 my-5 mb-8">
+        <ChangePublicLinkAccessLevelRow
+          disabled={loading}
+          level={item?.access_info?.public?.level || 'none'}
+          onChange={level => {
+            item && update(changePublicLink(item, { level }));
+          }}
           />
-        </div>
+        <SwitchToAdvancedSettingsRow
+          disabled={!havePublicLink}
+          onShowAdvancedScreen={props.onShowAdvancedScreen}
+        />
+      </div>
 
-        <div className="flex flex-row place-content-end my-4">
-          <CopyLinkButton textToCopy={havePublicLink && publicLink} />
-        </div>
+      <div className="flex flex-row place-content-end my-4">
+        <CopyLinkButton textToCopy={havePublicLink && publicLink} />
+      </div>
 
-        <Modal
-          open={props.isOnAdvancedScreen}
-          onClose={() => { props.onShowAdvancedScreen(false); }}
-          >
-          <ModalContent
-            title={
-              <>
-                {Languages.t('components.public-link-security-title') + ' '}
-                <strong>{item?.name}</strong>
-              </>
-            }
-            >
-              <div className='my-4'><Subtitle>{Languages.t('components.public-link-security')}</Subtitle></div>
-              <div className={Styles.RoundedBorderSection}>
-                <PublicLinkAccessOptions
-                  disabled={loading || access !== 'manage'}
-                  password={item?.access_info?.public?.password}
-                  expiration={item?.access_info?.public?.expiration}
-                  onChangePassword={async (password: string) => {
-                    item && await update(changePublicLink(item, { password: password || '' }));
-                  }}
-                  onChangeExpiration={async (expiration: number) => {
-                    item && await update(changePublicLink(item, { expiration }));
-                  }}
-                  />
-              </div>
-            </ModalContent>
-        </Modal>
-      </ModalContent>
+      <Modal
+        open={props.isOnAdvancedScreen}
+        onClose={() => { props.onShowAdvancedScreen(false); }}
+        className="testid:public-link-advance-setting-modal"
+      >
+        <ModalContent
+          title={
+            <>
+              {Languages.t('components.public-link-security-title') + ' '}
+              <strong>{item?.name}</strong>
+            </>
+          }
+        >
+          <div className='my-4'><Subtitle>{Languages.t('components.public-link-security')}</Subtitle></div>
+          <div className={Styles.RoundedBorderSection}>
+            <PublicLinkAccessOptions
+              disabled={loading || access !== 'manage'}
+              password={item?.access_info?.public?.password}
+              expiration={item?.access_info?.public?.expiration}
+              onChangePassword={async (password: string) => {
+                item && await update(changePublicLink(item, { password: password || '' }));
+              }}
+              onChangeExpiration={async (expiration: number) => {
+                item && await update(changePublicLink(item, { expiration }));
+              }}
+            />
+          </div>
+        </ModalContent>
+      </Modal>
+    </ModalContent>
   );
 }

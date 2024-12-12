@@ -12,6 +12,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean;
   disabled?: boolean;
   children?: React.ReactNode;
+  testClassId?: string;
 }
 
 export const Button = (props: ButtonProps) => {
@@ -58,6 +59,8 @@ export const Button = (props: ButtonProps) => {
     else className = className + ' w-9 !p-0 justify-center';
   }
 
+  const testId = props.testClassId ? `testid:${props.testClassId}` : '';
+
   return (
     <button
       type="button"
@@ -65,10 +68,12 @@ export const Button = (props: ButtonProps) => {
         ' inline-flex items-center px-4 py-2 border font-medium rounded-md focus:outline-none ' +
         className +
         ' ' +
-        props.className
+        props.className +
+        ' ' +
+        testId
       }
       disabled={disabled}
-      {..._.omit(props, 'loading', 'children', 'className', 'icon', 'iconSize')}
+      {..._.omit(props, 'loading', 'children', 'className', 'icon', 'iconSize', 'testClassId')}
     >
       {props.loading && (
         <>

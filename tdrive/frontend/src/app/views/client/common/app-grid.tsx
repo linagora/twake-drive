@@ -27,7 +27,7 @@ export default ({ className }: { className?: string }): JSX.Element => {
                     target="_blank"
                     rel="noreferrer"
                     href={app.url}
-                    className="inline-block flex flex-col items-center justify-center cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md p-2 pb-1"
+                    className={`inline-block flex flex-col items-center justify-center cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md p-2 pb-1 testid:app-${app.name}`}
                   >
                     <img src={app.logo} className="w-11 h-11 mb-1" />
                     <Base style={{
@@ -41,12 +41,14 @@ export default ({ className }: { className?: string }): JSX.Element => {
           ),
         },
       ]}
+      testClassId="menu-apps"
     >
       <Button
         theme="default"
         size="md"
         className={'!rounded-full border-0 ' + className}
         icon={() => <ViewGridIcon className="w-6 h-6 text-blue-500" />}
+        testClassId="app-grid-button"
       />
     </Menu>
   );

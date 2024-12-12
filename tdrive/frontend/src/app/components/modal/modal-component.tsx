@@ -44,6 +44,7 @@ export default () => {
       footer={null}
       destroyOnClose={true}
       width={ModalManager.getPosition()?.size?.width || '700px'}
+      className={`testid:${ModalManager.getModalTestClassId()}`}
     >
       {component}
     </Modal>

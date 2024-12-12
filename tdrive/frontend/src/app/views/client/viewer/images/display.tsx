@@ -35,7 +35,7 @@ export default ({ download, loading, setLoading}: PropsType) => {
         return (
           <TransformComponent wrapperClass="absolute w-full h-full top-0 left-0 right-0 bottom-0">
             <img
-              className="object-contain"
+              className="object-contain testid:image-display"
               style={{
                 transform: `rotate(${rotated}deg)`,
                 transition: 'transform 200ms',

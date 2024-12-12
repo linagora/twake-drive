@@ -27,7 +27,7 @@ export const PropertiesModal = () => {
   const [state, setState] = useRecoilState(PropertiesModalAtom);
 
   return (
-    <Modal open={state.open} onClose={() => setState({ ...state, open: false })}>
+    <Modal className="testid:properties-modal" open={state.open} onClose={() => setState({ ...state, open: false })}>
       {!!state.id && (
         <PropertiesModalContent
           id={state.id}
@@ -105,6 +105,7 @@ const PropertiesModalContent = ({ id, onClose, inPublicSharing }: { id: string; 
               }
             }}
             placeholder={Languages.t('components.PropertiesModalContent_place_holder')}
+            testClassId="input-update-name"
           />
         }
       />
@@ -115,6 +116,7 @@ const PropertiesModalContent = ({ id, onClose, inPublicSharing }: { id: string; 
         theme="primary"
         loading={loading}
         onClick={doSave}
+        testClassId="button-update-name"
       >
         {Languages.t('components.PropertiesModalContent_update_button')}
       </Button>

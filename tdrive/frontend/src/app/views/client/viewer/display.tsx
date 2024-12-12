@@ -45,7 +45,7 @@ export default () => {
   }
 
   return (
-    <div className="text-white m-auto w-full text-center block h-full flex items-center">
+    <div className="text-white m-auto w-full text-center block h-full flex items-center testid:cannot-display">
       <span className="block w-full text-center">We can't display this document.</span>
     </div>
   );

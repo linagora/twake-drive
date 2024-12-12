@@ -13,6 +13,7 @@ interface AvatarProps extends React.InputHTMLAttributes<HTMLInputElement> {
   icon?: JSX.Element | false;
   title?: string;
   nogradient?: boolean;
+  testClassId?: string;
 }
 
 const sizes = { xl: 24, lg: 14, md: 10, sm: 9, xs: 6 };
@@ -39,7 +40,8 @@ export default function Avatar(props: AvatarProps) {
   const fontSize = fontSizes[props.size || 'md'];
   const addedClassName = props.className || '';
   const avatarTitle = props.title || '';
-  const restProps = _.omit(props, 'size', 'type', 'avatar', 'title', 'className', 'icon');
+  const testClassId = props.testClassId;
+  const restProps = _.omit(props, 'size', 'type', 'avatar', 'title', 'className', 'icon', 'testClassId');
 
   let className = `w-${avatarSize} h-${avatarSize} ${
     avatarType === 'circle' ? 'rounded-full' : 'rounded-sm'
@@ -64,6 +66,8 @@ export default function Avatar(props: AvatarProps) {
     ? {}
     : { backgroundImage: `url('${getGradient(props.title || '')}')` };
 
+  const testId = testClassId ? `testid:${testClassId}` : ''
+
   if (props.icon) {
     className += ' ';
     return (
@@ -73,7 +77,8 @@ export default function Avatar(props: AvatarProps) {
         className={
           className +
           ' text-white overflow-hidden flex items-center justify-center ' +
-          addedClassName
+          addedClassName + ' ' +
+          testId
         }
       >
         {props.icon}
@@ -87,14 +92,14 @@ export default function Avatar(props: AvatarProps) {
         <img
           alt={props.title}
           src={props.avatar}
-          className={className + ' object-cover ' + addedClassName}
+          className={className + ' object-cover ' + addedClassName + ' ' + testId}
         />
       </div>
     );
   }
 
   return (
-    <div className={className + ' ' + addedClassName} {...restProps} style={style}>
+    <div className={className + ' ' + addedClassName + ' ' + testId} {...restProps} style={style}>
       <div className={lettersClass}>{letters.toUpperCase()}</div>
     </div>
   );

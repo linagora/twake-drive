@@ -10,7 +10,7 @@ import { useDriveUpload } from '@features/drive/hooks/use-drive-upload';
 import { DriveItemSelectedList, DriveItemSort } from '@features/drive/state/store';
 import { formatBytes } from '@features/drive/utils';
 import useRouterCompany from '@features/router/hooks/use-router-company';
-import _, { get, set } from 'lodash';
+import _ from 'lodash';
 import { memo, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { atomFamily, useRecoilState, useSetRecoilState } from 'recoil';
 import { DrivePreview } from '../../viewer/drive-preview';
@@ -339,6 +339,7 @@ export default memo(
             onDragOver={handleDragOver}
             onDrop={handleDrop}
             disabled={inTrash || access === 'read'}
+            testClassId="browser-upload-zone"
           >
             {role == 'admin' && <UsersModal />}
             <VersionsModal />
@@ -374,8 +375,11 @@ export default memo(
                               buildFileTypeContextMenu(),
                               { x: evt.clientX, y: evt.clientY },
                               'center',
+                              undefined,
+                              "browser-share-with-me-menu-file-type"
                             );
                           }}
+                          testClassId="button-open-menu-file-type"
                         >
                           <span>
                             {filter.mimeType.key && filter.mimeType.key != 'All'
@@ -394,8 +398,11 @@ export default memo(
                               buildPeopleContextMen(),
                               { x: evt.clientX, y: evt.clientY },
                               'center',
+                              undefined,
+                              "browser-share-with-me-menu-people"
                             );
                           }}
+                          testClassId="button-open-menu-people"
                         >
                           <span>{Languages.t('scenes.app.shared_with_me.people')}</span>
                           <ChevronDownIcon className="h-4 w-4 ml-2 -mr-1" />
@@ -411,8 +418,11 @@ export default memo(
                               buildDateContextMenu(),
                               { x: evt.clientX, y: evt.clientY },
                               'center',
+                              undefined,
+                              "browser-share-with-me-menu-last-modified"
                             );
                           }}
+                          testClassId="button-open-menu-last-modified"
                         >
                           <span>
                             {filter.date.key && filter.date.key != 'All'
@@ -440,9 +450,9 @@ export default memo(
                   </BaseSmall>
                 )}
 
-                <Menu menu={() => onBuildSortContextMenu()} sortData={sortLabel}>
+                <Menu menu={() => onBuildSortContextMenu()} sortData={sortLabel} testClassId="browser-menu-sorting">
                   {' '}
-                  <Button theme="outline" className="ml-4 flex flex-row items-center">
+                  <Button theme="outline" className="ml-4 flex flex-row items-center" testClassId="button-sorting">
                     <SortIcon
                       className={`h-4 w-4 mr-2 -ml-1 ${
                         sortLabel.order === 'asc' ? 'transform rotate-180' : ''
@@ -455,9 +465,9 @@ export default memo(
                   </Button>
                 </Menu>
                 {viewId !== 'shared_with_me' && (
-                  <Menu menu={() => onBuildContextMenu(details)}>
+                  <Menu menu={() => onBuildContextMenu(details)} testClassId="browser-menu-more">
                     {' '}
-                    <Button theme="secondary" className="ml-4 flex flex-row items-center">
+                    <Button theme="secondary" className="ml-4 flex flex-row items-center" testClassId="button-more">
                       <span>
                         {selectedCount > 1
                           ? `${selectedCount} items`
@@ -485,6 +495,7 @@ export default memo(
                             onClick={() => uploadItemModal()}
                             theme="primary"
                             className="mt-4"
+                            testClassId="button-add-doc"
                           >
                             {Languages.t('scenes.app.drive.add_doc')}
                           </Button>

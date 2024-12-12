@@ -17,7 +17,7 @@ const NewVersionModal = () => {
         </>
       }
       footer={
-        <Button type="primary" onClick={onClickBtn}>
+        <Button type="primary" onClick={onClickBtn} className="testid:button-reload">
           {Languages.t('scenes.app.header.disconnected.reload')}
         </Button>
       }

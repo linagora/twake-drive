@@ -15,6 +15,7 @@ type PropsType = {
   contentColumnStyle?: CSSProperties;
   className?: string;
   children?: JSX.Element | JSX.Element[];
+  testClassId?: string;
 };
 
 const Banner: FC<PropsType> = ({
@@ -27,6 +28,7 @@ const Banner: FC<PropsType> = ({
   style,
   contentColumnStyle,
   className,
+  testClassId,
 }) => {
   const headerStyle = {
     height: height ? height : 68,
@@ -34,13 +36,15 @@ const Banner: FC<PropsType> = ({
     ...style,
   };
 
+  const testId = testClassId ? `testid:${testClassId}` : ''
+
   return (
-    <Layout.Header className={`banner-container ${type} ${className || ''}`} style={headerStyle}>
+    <Layout.Header className={`banner-container ${type} ${className || ''} ${testId}`} style={headerStyle}>
       <Row align="middle" justify="space-between" gutter={[0, 0]} style={headerStyle}>
         <Col /* ghost column */></Col>
         <Col style={contentColumnStyle}>{content || children || ''}</Col>
         <Col className="banner-col-icon">
-          {closable && <X size={16} className="icon" onClick={onClose} />}
+          {closable && <X size={16} className="icon testid:button-close" onClick={onClose} />}
         </Col>
       </Row>
     </Layout.Header>

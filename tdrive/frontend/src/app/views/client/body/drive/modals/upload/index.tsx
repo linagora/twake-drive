@@ -40,7 +40,7 @@ export const UploadModal = ({
     <Modal
       open={state.open}
       onClose={() => setState({ ...state, open: false })}
-      className="!max-w-sm"
+      className="!max-w-sm testid:upload-modal"
     >
       <ModalContent
         title={
@@ -69,18 +69,20 @@ export const UploadModal = ({
             as="div"
             {...(!state.type ? slideXTransitionReverted : slideXTransition)}
           >
-          <div className="-m-2" >
-                  <CreateModalOption
-                      icon={<DocumentDownloadIcon className="w-5 h-5" />}
-                      text={Languages.t('components.create_modal.upload_files')}
-                      onClick={() => selectFromDevice()}
-                  />
-                  <CreateModalOption
-                      icon={<FolderDownloadIcon className="w-5 h-5" />}
-                      text={Languages.t('components.create_modal.upload_folders')}
-                      onClick={() => selectFolderFromDevice()}
-                  />
-                </div>
+            <div className="-m-2" >
+              <CreateModalOption
+                icon={<DocumentDownloadIcon className="w-5 h-5" />}
+                text={Languages.t('components.create_modal.upload_files')}
+                onClick={() => selectFromDevice()}
+                testClassId="upload-file-from-device"
+              />
+              <CreateModalOption
+                icon={<FolderDownloadIcon className="w-5 h-5" />}
+                text={Languages.t('components.create_modal.upload_folders')}
+                onClick={() => selectFolderFromDevice()}
+                testClassId="upload-folder-from-device"
+              />
+            </div>
           </Transition>
         </div>
       </ModalContent>
@@ -88,11 +90,11 @@ export const UploadModal = ({
   );
 };
 
-const CreateModalOption = (props: { icon: ReactNode; text: string; onClick: () => void }) => {
+const CreateModalOption = (props: { icon: ReactNode; text: string; onClick: () => void; testClassId?: string; }) => {
   return (
     <div
       onClick={props.onClick}
-      className="flex flex-row p-4 dark:bg-zinc-900 dark:text-white bg-zinc-100 hover:bg-opacity-75 cursor-pointer rounded-md m-2"
+      className={`flex flex-row p-4 dark:bg-zinc-900 dark:text-white bg-zinc-100 hover:bg-opacity-75 cursor-pointer rounded-md m-2 testid:${props.testClassId}`}
     >
       <div className="flex items-center justify-center">{props.icon}</div>
       <div className="grow flex items-center ml-2">

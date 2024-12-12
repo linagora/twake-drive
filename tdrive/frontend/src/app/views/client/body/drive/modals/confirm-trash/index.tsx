@@ -28,7 +28,7 @@ export const ConfirmTrashModal = () => {
   const [state, setState] = useRecoilState(ConfirmTrashModalAtom);
 
   return (
-    <Modal open={state.open} onClose={() => setState({ ...state, open: false })}>
+    <Modal className="testid:confirm-trash-modal" open={state.open} onClose={() => setState({ ...state, open: false })}>
       {!!state.items.length && <ConfirmTrashModalContent items={state.items} />}
     </Modal>
   );
@@ -74,6 +74,7 @@ const ConfirmTrashModalContent = ({ items }: { items: DriveItem[] }) => {
           await refresh("trash");
           setState({ ...state, open: false });
         }}
+        testClassId="button-remove"
       >
         {Languages.t('components.ConfirmTrashModalContent_move_to_trash')}
       </Button>

@@ -81,7 +81,7 @@ export const ExpiryEditorRow = (props: {
 
   return <>
     <BaseBlock
-      className={"m-4" + (disabled ? Styles.Disabled.Yes : "")}
+      className={"m-4" + (disabled ? Styles.Disabled.Yes : "") + ' testid:expiry-editor-row'}
       disabled={disabled}
       avatar={<CalendarIcon className={Styles.SmallIconClasses} />}
       title={
@@ -90,7 +90,7 @@ export const ExpiryEditorRow = (props: {
           {!!props.value && !isEditing &&
             <>
               <a
-                className={disabled ? Styles.Disabled.Yes : ""}
+                className={(disabled ? Styles.Disabled.Yes : "") + ' testid:button-edit'}
                 onClick={() => {
                   if (!disabled) {
                     setCurrentEditedValue(props.value);
@@ -130,6 +130,7 @@ export const ExpiryEditorRow = (props: {
                 else if (e.key == 'Enter')
                   confirmSaveExpiry(currentEditedValue);
               }}
+              testClassId="input-expired-date"
             />
             <Button
               disabled={disabled}
@@ -137,7 +138,8 @@ export const ExpiryEditorRow = (props: {
               size="sm"
               className="max-w-xs mr-2 mt-1"
               onClick={() => confirmSaveExpiry(currentEditedValue)}
-              >
+              testClassId="button-confirm"
+            >
               {Languages.t('components.public-link-security_field_confirm_edit')}
             </Button>
           </>
@@ -153,7 +155,8 @@ export const ExpiryEditorRow = (props: {
               } else
                 confirmSaveExpiry(0);
             }}
-            />
+            testClassId="checkbox"
+          />
       }
       />
     <ConfirmModal

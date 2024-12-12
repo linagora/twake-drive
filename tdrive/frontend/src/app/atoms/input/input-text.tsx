@@ -17,6 +17,7 @@ interface InputProps
   inputClassName?: string;
   className?: string;
   inputRef?: React.Ref<HTMLInputElement | HTMLTextAreaElement>;
+  testClassId?: string;
 }
 
 export type ThemeName = 'plain' | 'outline' | 'blue' | 'rose';
@@ -59,14 +60,16 @@ export const Input = (props: InputProps) => {
     else inputClassName = inputClassName + ' h-9';
   }
 
+  const testId = props.testClassId ? `testid:${props.testClassId}` : '';
+
   return (
     <>
       {props.inputComponent ||
         (props.multiline ? (
           <textarea
             ref={props.inputRef as React.Ref<HTMLTextAreaElement>}
-            className={inputClassName + ' ' + props.inputClassName + ' ' + props.className}
-            {..._.omit(props as any, 'label', 'inputClassName', 'inputRef', 'className', 'value', 'size')}
+            className={inputClassName + ' ' + props.inputClassName + ' ' + props.className + ' ' + testId}
+            {..._.omit(props as any, 'label', 'inputClassName', 'inputRef', 'className', 'value', 'size', 'testClassId')}
           >
             {props.value}
           </textarea>
@@ -74,8 +77,8 @@ export const Input = (props: InputProps) => {
           <input
             ref={props.inputRef as React.Ref<HTMLInputElement>}
             type="text"
-            className={inputClassName + ' ' + props.inputClassName + ' ' + props.className}
-            {..._.omit(props, 'label', 'inputClassName', 'inputRef', 'className', 'size')}
+            className={`${inputClassName} ${props.inputClassName} ${props.className} ${props.testClassId ? `testid:${props.testClassId}` : ''}`}
+            {..._.omit(props, 'label', 'inputClassName', 'inputRef', 'className', 'size', 'testClassId')}
           />
         ))}
     </>

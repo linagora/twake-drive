@@ -52,6 +52,7 @@ const ConfirmModalContent = () => {
         theme="primary"
         className="float-right"
         onClick={handleClose}
+        testClassId="button-move"
       >
         <>{Languages.t('components.SelectorModalContent_move_to')} '{selected[0]?.name}'</>
       </Button>
@@ -67,7 +68,7 @@ export const ConfirmModal = () => {
   };
 
   return (
-    <Modal open={state.open} onClose={handleClose}>
+    <Modal className="testid:confirm-move-modal" open={state.open} onClose={handleClose}>
       <ConfirmModalContent key={state.parent_id} />
     </Modal>
   );

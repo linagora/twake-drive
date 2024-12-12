@@ -85,6 +85,7 @@ export const useOnBuildContextMenu = (
             !FeatureTogglesService.isActiveFeatureName(FeatureNames.COMPANY_MANAGE_ACCESS);
           const newMenuActions = [
             {
+              testClassId: 'share',
               type: 'menu',
               icon: 'share-alt',
               text: Languages.t('components.item_context_menu.share'),
@@ -92,6 +93,7 @@ export const useOnBuildContextMenu = (
               onClick: () => setPublicLinkModalState({ open: true, id: item.id }),
             },
             {
+              testClassId: 'manage-access',
               type: 'menu',
               icon: 'users-alt',
               text: Languages.t('components.item_context_menu.manage_access'),
@@ -99,6 +101,7 @@ export const useOnBuildContextMenu = (
               onClick: () => setAccessModalState({ open: true, id: item.id }),
             },
             {
+              testClassId: 'rescan-document',
               type: 'menu',
               icon: 'shield-check',
               text: Languages.t('components.item_context_menu.rescan_document'),
@@ -115,6 +118,7 @@ export const useOnBuildContextMenu = (
                 (notSafe && !(item.av_status === 'scan_failed')),
             },
             {
+              testClassId: 'download',
               type: 'menu',
               icon: 'download-alt',
               text: Languages.t('components.item_context_menu.download'),
@@ -141,6 +145,7 @@ export const useOnBuildContextMenu = (
             }, // */
             { type: 'separator', hide: notSafe },
             {
+              testClassId: 'move',
               type: 'menu',
               icon: 'folder-question',
               text: Languages.t('components.item_context_menu.move'),
@@ -166,6 +171,7 @@ export const useOnBuildContextMenu = (
                 }),
             },
             {
+              testClassId: 'rename',
               type: 'menu',
               icon: 'file-edit-alt',
               text: Languages.t('components.item_context_menu.rename'),
@@ -173,6 +179,7 @@ export const useOnBuildContextMenu = (
               onClick: () => setPropertiesModalState({ open: true, id: item.id, inPublicSharing }),
             },
             {
+              testClassId: 'copy-link',
               type: 'menu',
               icon: 'link',
               text: Languages.t('components.item_context_menu.copy_link'),
@@ -189,6 +196,7 @@ export const useOnBuildContextMenu = (
               },
             },
             {
+              testClassId: 'version',
               type: 'menu',
               icon: 'history',
               text: Languages.t('components.item_context_menu.versions'),
@@ -197,6 +205,7 @@ export const useOnBuildContextMenu = (
             },
             { type: 'separator', hide: access !== 'manage' || inTrash || notSafe },
             {
+              testClassId: 'move-to-trash',
               type: 'menu',
               icon: 'trash',
               text: Languages.t('components.item_context_menu.move_to_trash'),
@@ -205,6 +214,7 @@ export const useOnBuildContextMenu = (
               onClick: () => setConfirmTrashModalState({ open: true, items: [item] }),
             },
             {
+              testClassId: 'restore',
               type: 'menu',
               text: Languages.t('components.item_context_menu.restore'),
               className: 'error',
@@ -215,6 +225,7 @@ export const useOnBuildContextMenu = (
               },
             },
             {
+              testClassId: 'delete',
               type: 'menu',
               text: Languages.t('components.item_context_menu.delete'),
               className: 'error',
@@ -231,6 +242,7 @@ export const useOnBuildContextMenu = (
           // Add selected items related menus
           const newMenuActions: any[] = [
             {
+              testClassId: 'move-multiple',
               type: 'menu',
               text: Languages.t('components.item_context_menu.move_multiple'),
               hide: parent.access === 'read' || inTrash,
@@ -255,6 +267,7 @@ export const useOnBuildContextMenu = (
                 }),
             },
             {
+              testClassId: 'download-multiple',
               type: 'menu',
               text: Languages.t('components.item_context_menu.download_multiple'),
               hide: inTrash,
@@ -272,12 +285,14 @@ export const useOnBuildContextMenu = (
               },
             },
             {
+              testClassId: 'clear-selection',
               type: 'menu',
               text: Languages.t('components.item_context_menu.clear_selection'),
               onClick: () => setChecked({}),
             },
             { type: 'separator', hide: parent.access === 'read' || notSafe },
             {
+              testClassId: 'delete-multiple',
               type: 'menu',
               text: Languages.t('components.item_context_menu.delete_multiple'),
               hide: !inTrash || parent.access !== 'manage',
@@ -290,6 +305,7 @@ export const useOnBuildContextMenu = (
               },
             },
             {
+              testClassId: 'move-to-trash-multiple',
               type: 'menu',
               text: Languages.t('components.item_context_menu.to_trash_multiple'),
               hide: inTrash || parent.access !== 'manage',
@@ -310,6 +326,7 @@ export const useOnBuildContextMenu = (
           const newMenuActions: any[] = inTrash
             ? [
                 {
+                  testClassId: 'empty-trash',
                   type: 'menu',
                   text: Languages.t('components.item_context_menu.trash.empty'),
                   className: 'error',
@@ -324,6 +341,7 @@ export const useOnBuildContextMenu = (
               ]
             : [
                 {
+                  testClassId: 'add-documents',
                   type: 'menu',
                   text: Languages.t('components.item_context_menu.add_documents'),
                   hide: inTrash || parent.access === 'read',
@@ -332,6 +350,7 @@ export const useOnBuildContextMenu = (
                     setUploadModalState({ open: true, parent_id: parent?.item?.id }),
                 },
                 {
+                  testClassId: 'download-folder',
                   type: 'menu',
                   text: Languages.t('components.item_context_menu.download_folder'),
                   hide: inTrash,
@@ -349,6 +368,7 @@ export const useOnBuildContextMenu = (
                   },
                 },
                 {
+                  testClassId: 'copy-link',
                   type: 'menu',
                   text: Languages.t('components.item_context_menu.copy_link'),
                   hide: !hasAnyPublicLinkAccess(item),
@@ -361,6 +381,7 @@ export const useOnBuildContextMenu = (
                 },
                 { type: 'separator', hide: parent.item!.id != 'root' },
                 {
+                  testClassId: 'manage-users',
                   type: 'menu',
                   text: Languages.t('components.item_context_menu.manage_users'),
                   hide: parent.item!.id != 'root',
@@ -419,6 +440,7 @@ export const useOnBuildFileTypeContextMenu = () => {
   return useCallback(() => {
     const menuItems = mimeTypes.map(item => {
       return {
+        testClassId: item.key,
         type: 'menu',
         text: item.key,
         onClick: () => {
@@ -444,6 +466,7 @@ export const useOnBuildPeopleContextMenu = () => {
   return useCallback(() => {
     const menuItems = userList.map(user => {
       return {
+        id: user.first_name,
         type: 'menu',
         text: user.first_name,
         onClick: () => {
@@ -466,6 +489,7 @@ export const useOnBuildDateContextMenu = () => {
   return useCallback(() => {
     const menuItems = [
       {
+        testClassId: 'all-date',
         type: 'menu',
         text: Languages.t('components.item_context_menu.all'),
         onClick: () => {
@@ -482,6 +506,7 @@ export const useOnBuildDateContextMenu = () => {
         },
       },
       {
+        testClassId: 'today',
         type: 'menu',
         text: Languages.t('components.item_context_menu.today'),
         onClick: () => {
@@ -498,6 +523,7 @@ export const useOnBuildDateContextMenu = () => {
         },
       },
       {
+        testClassId: 'last-week',
         type: 'menu',
         text: Languages.t('components.item_context_menu.last_week'),
         onClick: () => {
@@ -514,6 +540,7 @@ export const useOnBuildDateContextMenu = () => {
         },
       },
       {
+        testClassId: 'last-month',
         type: 'menu',
         text: Languages.t('components.item_context_menu.last_month'),
         onClick: () => {
@@ -540,11 +567,13 @@ export const useOnBuildFileContextMenu = () => {
     (item: DriveItem) => {
       const menuItems = [
         {
+          testClassId: 'preview',
           type: 'menu',
           text: Languages.t('components.item_context_menu.preview'),
           onClick: () => preview(item),
         },
         {
+          testClassId: 'download',
           type: 'menu',
           text: Languages.t('components.item_context_menu.download'),
           onClick: () => {
@@ -563,6 +592,7 @@ export const useOnBuildSortContextMenu = () => {
   return useCallback(() => {
     const menuItems = [
       {
+        testClassId: 'sorting-by-date',
         type: 'menu',
         text: Languages.t('components.item_context_menu.sorting.by.date'),
         icon: sortItem.by === 'date' ? 'check' : 'sort-check',
@@ -578,6 +608,7 @@ export const useOnBuildSortContextMenu = () => {
         },
       },
       {
+        testClassId: 'sorting-by-name',
         type: 'menu',
         text: Languages.t('components.item_context_menu.sorting.by.name'),
         icon: sortItem.by === 'name' ? 'check' : 'sort-check',
@@ -592,6 +623,7 @@ export const useOnBuildSortContextMenu = () => {
         },
       },
       {
+        testClassId: 'sorting-by-size',
         type: 'menu',
         text: Languages.t('components.item_context_menu.sorting.by.size'),
         icon: sortItem.by === 'size' ? 'check' : 'sort-check',
@@ -607,6 +639,7 @@ export const useOnBuildSortContextMenu = () => {
       },
       {type:"separator"},
       {
+        testClassId: 'sorting-order-asc',
         type: 'menu',
         text: Languages.t('components.item_context_menu.sorting.order.asc'),
         icon: sortItem.order === 'asc' ? 'check' : 'sort-check',
@@ -621,6 +654,7 @@ export const useOnBuildSortContextMenu = () => {
         },
       },
       {
+        testClassId: 'sorting-order-desc',
         type: 'menu',
         text: Languages.t('components.item_context_menu.sorting.order.desc'),
         icon: sortItem.order === 'desc' ? 'check' : 'sort-check',

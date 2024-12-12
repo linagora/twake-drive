@@ -1,6 +1,5 @@
 import {
   DotsHorizontalIcon,
-  ShieldCheckIcon,
   ShieldExclamationIcon,
   BanIcon,
 } from '@heroicons/react/outline';
@@ -52,7 +51,8 @@ export const DocumentRow = ({
         (checked
           ? (notSafe ? 'bg-rose-500' : 'bg-blue-500') + ' bg-opacity-10 hover:bg-opacity-25'
           : 'hover:bg-zinc-500 hover:bg-opacity-10 ') +
-        (className || '')
+        (className || '') + ' ' +
+        'testid:document-row'
       }
       id={`DR-${item.id}`}
       onMouseEnter={() => setHover(true)}
@@ -102,12 +102,13 @@ export const DocumentRow = ({
         </div>
       )}
       <div className="shrink-0 ml-4">
-        <Menu menu={onBuildContextMenu}>
+        <Menu menu={onBuildContextMenu} testClassId="document-row-menu">
           <Button
             theme={'secondary'}
             size="sm"
             className={'!rounded-full '}
             icon={DotsHorizontalIcon}
+            testClassId="document-row-button-open-menu"
           />
         </Menu>
       </div>

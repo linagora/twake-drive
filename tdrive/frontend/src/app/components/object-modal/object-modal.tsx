@@ -38,7 +38,7 @@ const ObjectModal: FC<PropsType> = (props: PropsType) => {
       hasSider={false}
       style={props.style || {}}
     >
-      <Header className="modal-layout-header" style={props.headerStyle || {}}>
+      <Header className="modal-layout-header testid:modal-header" style={props.headerStyle || {}}>
         <Row justify="space-between" align="middle" className="modal-layout-row" wrap={false}>
           {props.titleCenter && <Col style={{ width: 32 }}></Col>}
           {props.title && (
@@ -62,7 +62,7 @@ const ObjectModal: FC<PropsType> = (props: PropsType) => {
                 type="times"
                 className={`m-icon-small square-button ${
                   props.headerStyle?.backgroundColor ? 'red' : ''
-                }`}
+                } testid:button-close-modal`}
                 onClick={() => (props?.onClose ? props.onClose() : ModalManager.closeAll())}
               />
             </Col>
@@ -71,7 +71,7 @@ const ObjectModal: FC<PropsType> = (props: PropsType) => {
       </Header>
       {props.children && <Content style={props.contentStyle}>{props.children}</Content>}
       {props.footer && (
-        <Footer className="modal-layout-footer">
+        <Footer className="modal-layout-footer testid:modal-footer">
           {!props.hideFooterDivider && (
             <Divider className="y-margin" style={props.footerDividerStyle} />
           )}

@@ -23,11 +23,14 @@ export default class Button extends React.Component {
     ) {
       className += ' small';
     }
+
+    const testId = this.props.testClassId ? `testid:${this.props.testClassId}` : '';
+
     return (
       <button
         ref={this.props.refButton}
         {...this.props}
-        className={'button no-tw ' + className}
+        className={'button no-tw ' + className + ' ' + testId}
         onClick={evt => {
           evt.target.blur();
           this.props.onClick && this.props.onClick(evt);

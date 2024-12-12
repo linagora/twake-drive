@@ -29,7 +29,7 @@ export const SharedFilesTable = () => {
     return formattedDate;
   };
   return (
-    <div>
+    <div className="testid:shared-file">
       <Title className="mb-4 block">{Languages.t('scenes.app.shared_with_me.shared_with_me')}</Title>
       {/* Filters */}
       <div className="flex items-center space-x-4 mb-6">
@@ -42,8 +42,11 @@ export const SharedFilesTable = () => {
                 buildFileTypeContextMenu(),
                 { x: evt.clientX, y: evt.clientY },
                 'center',
+                undefined,
+                'shared-file-menu-file-types'
               );
             }}
+            testClassId="button-open-menu-file-types"
           >
             <span>{filter.mimeType ? filter.mimeType : Languages.t('scenes.app.shared_with_me.file_type')}</span>
             <ChevronDownIcon className="h-4 w-4 ml-2 -mr-1" />
@@ -58,8 +61,11 @@ export const SharedFilesTable = () => {
                 buildPeopleContextMen(),
                 { x: evt.clientX, y: evt.clientY },
                 'center',
+                undefined,
+                'shared-file-menu-people'
               );
             }}
+            testClassId="button-open-menu-people"
           >
             <span>{Languages.t('scenes.app.shared_with_me.people')}</span>
             <ChevronDownIcon className="h-4 w-4 ml-2 -mr-1" />
@@ -75,8 +81,11 @@ export const SharedFilesTable = () => {
                 buildDateContextMenu(),
                 { x: evt.clientX, y: evt.clientY },
                 'center',
+                undefined,
+                'shared-file-menu-last-modified'
               );
             }}
+            testClassId="button-open-menu-last-modified"
           >
             <span>{Languages.t('scenes.app.shared_with_me.last_modified')}</span>
             <ChevronDownIcon className="h-4 w-4 ml-2 -mr-1" />
@@ -85,7 +94,7 @@ export const SharedFilesTable = () => {
       </div>
       <Title className="mb-4 block">{Languages.t('scenes.app.drive.documents')}:</Title>
       <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
-        <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+        <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400 testid:shared-file-table">
           <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-blue-500 dark:text-white">
             <tr>
               <th scope="col" className="px-6 py-3">
@@ -107,7 +116,7 @@ export const SharedFilesTable = () => {
               driveItems.map((file: any, index: any) => (
                 <tr
                   key={index}
-                  className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                  className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 testid:table-row"
                 >
                   <th
                     scope="row"

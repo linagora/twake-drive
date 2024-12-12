@@ -42,7 +42,7 @@ export default () => {
     <Modal
       open={isOpen}
       closable={false}
-      className="bg-black bg-opacity-50 !sm:max-w-none !w-full !rounded-none !p-0"
+      className="bg-black bg-opacity-50 !sm:max-w-none !w-full !rounded-none !p-0 testid:modal-viewer"
       style={{ maxWidth: 'none', margin: 0, left: 0, top: 0, height: '100vh' }}
       positioned={false}
     >
@@ -92,7 +92,7 @@ const Navigation = () => {
   return (
     <>
       <XIcon
-        className="z-10 cursor-pointer absolute right-5 top-5 w-12 h-12 text-zinc-300 hover:text-white rounded-full p-1 hover:bg-black hover:bg-opacity-25"
+        className="z-10 cursor-pointer absolute right-5 top-5 w-12 h-12 text-zinc-300 hover:text-white rounded-full p-1 hover:bg-black hover:bg-opacity-25 testid:button-close"
         onClick={() => close()}
       />
 
@@ -103,7 +103,7 @@ const Navigation = () => {
         {...fadeZoomTransition}
       >
         <ChevronLeftIcon
-          className="cursor-pointer w-10 h-10 text-zinc-300 hover:text-white"
+          className="cursor-pointer w-10 h-10 text-zinc-300 hover:text-white testid:button-previous"
           onClick={() => previous()}
         />
       </Transition>
@@ -115,7 +115,7 @@ const Navigation = () => {
         {...fadeZoomTransition}
       >
         <ChevronRightIcon
-          className="cursor-pointer w-10 h-10 text-zinc-300 hover:text-white"
+          className="cursor-pointer w-10 h-10 text-zinc-300 hover:text-white testid:button-next"
           onClick={() => next()}
         />
       </Transition>
@@ -133,18 +133,19 @@ const Footer = () => {
 
   return (
     <>
-      <div className="z-10 p-5 bg-black w-full flex text-white">
+      <div className="z-10 p-5 bg-black w-full flex text-white testid:footer">
         <div className="mr-4 w-12">
           <Avatar
             title={currentUserService.getFullName(user)}
             src={currentUserService.getThumbnail(user)}
+            testClassId="avatar"
           />
         </div>
         <div className="grow overflow-hidden text-ellipsis">
-          <Text.Base noColor className="w-full block text-white whitespace-nowrap">
+          <Text.Base noColor className="w-full block text-white whitespace-nowrap testid:text-name">
             {name}
           </Text.Base>
-          <Text.Info className="whitespace-nowrap">
+          <Text.Info className="whitespace-nowrap testid:file-info">
             {currentUserService.getFullName(user)} • {extension?.toLocaleUpperCase()},{' '}
             {formatSize(status.details?.metadata?.size)}
           </Text.Info>
@@ -162,6 +163,7 @@ const Footer = () => {
             onClick={() => {
               download && (window.location.href = download);
             }}
+            testClassId="button-download"
           />
         </div>
       </div>

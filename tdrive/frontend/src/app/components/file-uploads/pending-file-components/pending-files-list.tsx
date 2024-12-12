@@ -49,7 +49,7 @@ export default ({ pendingFilesState, visible }: PropsType) => {
   }, [getOnePendingFile, pendingFilesState]);
 
   return pendingFilesState.length > 0 ? (
-    <Layout className={'pending-files-list-layout ' + (visible ? 'visible' : '')}>
+    <Layout className={'pending-files-list-layout ' + (visible ? 'visible' : '') + ' testid:pending-file-list'}>
       <Header
         className={classNames('pending-files-list-header')}
         onClick={() => setHiddenPendingFiles(!hiddenPendingFiles)}

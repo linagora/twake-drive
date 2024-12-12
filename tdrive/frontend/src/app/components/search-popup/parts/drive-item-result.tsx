@@ -38,7 +38,7 @@ export default (props: { driveItem: DriveItem & { user?: UserType }}) => {
 
   return (
     <div
-      className="flex items-center p-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded-md cursor-pointer"
+      className="flex items-center p-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 rounded-md cursor-pointer testid:drive-item-result"
       onClick={() => {history.push(RouterServices.generateRouteFromState({companyId: company, itemId: file.id})); openDoc(file)}}
     >
       <FileResultMedia file={file} className="w-16 h-16 mr-3" />
@@ -51,11 +51,11 @@ export default (props: { driveItem: DriveItem & { user?: UserType }}) => {
             textToHighlight={name}
           />
         </Text.Base>
-        <Text.Info className="block">
+        <Text.Info className="block testid:drive-item-file">
           {extension?.toLocaleUpperCase()} • {formatDate(parseInt(file?.last_modified))} •{' '}
           {formatSize(file?.size)}
         </Text.Info>
-        <ResultContext user={file.user} />
+        <ResultContext user={file.user} testClassId="search-result-context" />
       </div>
       {!file.is_directory && (
         <div
@@ -69,6 +69,7 @@ export default (props: { driveItem: DriveItem & { user?: UserType }}) => {
             theme="outline"
             className="w-9 !p-0 flex items-center justify-center ml-2 rounded-full border-none"
             onClick={() => onDriveItemDownloadClick(file)}
+            testClassId="button-download"
           >
             <DownloadIcon className="text-blue-500 w-6 h-6" />
           </Button>
@@ -95,21 +96,21 @@ export const FileResultMedia = (props: {
 
   if (file.is_directory) {
     return (
-      <div className={'relative flex bg-blue-100 rounded-md ' + (props.className || '')}>
-        <FolderIcon className="w-10 h-10 m-auto text-blue-500" />
+      <div className={'relative flex bg-blue-100 rounded-md ' + (props.className || '') + ' testid:folder-result-media'}>
+        <FolderIcon className="w-10 h-10 m-auto text-blue-500 testid:folder-icon" />
       </div>
     );
   }
 
   return (
-    <div className={'relative flex bg-zinc-200 rounded-md ' + (props.className || '')}>
+    <div className={'relative flex bg-zinc-200 rounded-md ' + (props.className || '') + ' testid:file-result-media'}>
       <Media
         size={props.size || 'md'}
         url={url}
         duration={type === 'video' ? extension : undefined}
       />
       {(!['image', 'video'].includes(type) || !url) && (
-          <DocumentIcon item={file} fileType={type} className={iconClassName} />
+        <DocumentIcon item={file} fileType={type} className={iconClassName} />
       )}
     </div>
   );

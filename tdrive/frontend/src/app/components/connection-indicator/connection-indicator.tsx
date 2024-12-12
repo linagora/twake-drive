@@ -12,19 +12,19 @@ export default () => {
   const [{ connected, reconnecting }] = useRecoilState(ConnectedState);
 
   return (
-    <div className={'connection_indicator ' + (connected === false ? 'visible' : '')}>
+    <div className={'connection_indicator ' + (connected === false ? 'visible' : '') + ' testid:connection-indicator'}>
       {connected === false && reconnecting !== true && (
-        <div>
+        <div className="testid:disconnected-status">
           <ErrorOutlinedIcon /> <span>{Languages.t('general.connexion_status.disconnected')}</span>
         </div>
       )}
       {connected === false && reconnecting === true && (
-        <div>
+        <div className="testid:reconnect-status">
           <HourglassEmpty /> <span>{Languages.t('general.connexion_status.connecting')}</span>
         </div>
       )}
       {connected === true && (
-        <div>
+        <div className="testid:connected-status">
           <CheckCircleIcon /> <span>{Languages.t('general.connexion_status.connected')}</span>
         </div>
       )}

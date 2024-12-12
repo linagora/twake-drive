@@ -124,6 +124,7 @@ export default (): JSX.Element => {
                   loading={busy}
                   type="primary"
                   onClick={onCreateCompanyBtnClick}
+                  className="testid:button-create-company"
                 >
                   {Languages.t('scenes.join.create_the_company_button')}
                 </Button>
@@ -163,6 +164,7 @@ export default (): JSX.Element => {
                         loading={busy}
                         type="primary"
                         onClick={onJoinAccountBtnClick}
+                        className="testid:button-login-first"
                       >
                         {Languages.t('scenes.join.login_first_button')}
                       </Button>
@@ -172,6 +174,7 @@ export default (): JSX.Element => {
                         loading={busy}
                         type="primary"
                         onClick={onJoinAccountBtnClick}
+                        className="testid:button-join-team"
                       >
                         {Languages.t('scenes.join.join_the_team_button')}
                       </Button>

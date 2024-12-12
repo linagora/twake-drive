@@ -57,7 +57,8 @@ export default class MenuComponent extends React.Component {
       <div
         ref={node => (this.original_menu = node)}
         className={
-          'menu-list ' + (this.props.withFrame ? 'as_frame text-black bg-white dark:bg-zinc-900 dark:text-white rounded-lg ' : '') + this.props.animationClass
+          'menu-list ' + (this.props.withFrame ? 'as_frame text-black bg-white dark:bg-zinc-900 dark:text-white rounded-lg ' : '') + this.props.animationClass + ' ' +
+          `${this.props.testClassId ? `testid:${this.props.testClassId}` : ''}`
         }
       >
         {(this.props.menu || [])
@@ -76,7 +77,7 @@ export default class MenuComponent extends React.Component {
                 <div
                   key={'menu_' + index}
                   ref={node => (item.ref = node)}
-                  className={'menu-text ' + item.className}
+                  className={'menu-text ' + item.className + ' testid:menu-item'}
                   onMouseEnter={evt => {
                     this.hoverMenu(item.ref, item);
                   }}
@@ -86,14 +87,14 @@ export default class MenuComponent extends React.Component {
                       {typeof item.icon === 'string' ? <Icon type={item.icon} /> : item.icon}
                     </div>
                   )}
-                  <div className="text">{item.text}</div>
+                  <div className={`text testid:menu-item-${item.testClassId}`}>{item.text}</div>
                 </div>
               );
             } else if (item.type == 'react-element') {
               return (
                 <div
                   key={'menu_' + index}
-                  className={'menu-custom ' + item.className}
+                  className={'menu-custom ' + item.className + ' testid:menu-item'}
                   onClick={item.onClick}
                 >
                   {typeof item.reactElement == 'function'
@@ -114,7 +115,8 @@ export default class MenuComponent extends React.Component {
                     this.last_hovered == item
                       ? 'hovered '
                       : '') +
-                    (item.selected ? 'selected ' : '')
+                    (item.selected ? 'selected ' : '') +
+                    ' testid:menu-item'
                   }
                   onMouseEnter={evt => {
                     this.hoverMenu(item.ref, item);
@@ -133,7 +135,7 @@ export default class MenuComponent extends React.Component {
                       <Emojione type={item.emoji} />
                     </div>
                   )}
-                  <div className="text">{item.text}</div>
+                  <div className={`text testid:menu-item-${item.testClassId}`}>{item.text}</div>
                   <div className="more">
                     {item.rightIcon && <Icon type={item.rightIcon} />}
                     {item.submenu && !item.submenu_replace && <Icon type="angle-right" />}

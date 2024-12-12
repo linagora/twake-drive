@@ -16,7 +16,7 @@ export default () => {
   return (
     <div>
       {!!isRecent && (
-        <Text.Subtitle className="block">
+        <Text.Subtitle className="block testid:drive-recent-files">
           {Languages.t('components.searchpopup.recent_files')}
         </Text.Subtitle>
       )}

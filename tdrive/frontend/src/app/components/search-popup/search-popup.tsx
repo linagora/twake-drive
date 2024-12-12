@@ -8,7 +8,7 @@ export default () => {
   const { open, setOpen } = useSearchModal();
 
   return (
-    <Modal open={open} onClose={() => setOpen(false)} className="sm:w-[80vw] sm:max-w-4xl">
+    <Modal open={open} onClose={() => setOpen(false)} className="sm:w-[80vw] sm:max-w-4xl testid:search-popup">
       <SearchBox/>
     </Modal>
   );

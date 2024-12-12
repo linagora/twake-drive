@@ -4,7 +4,7 @@ export default (props: { download: string; name: string }) => {
   return (
     <>
       <iframe
-        className="w-full h-full left-0 right-0 absolute bottom-0 top-0"
+        className="w-full h-full left-0 right-0 absolute bottom-0 top-0 testid:pdf-display"
         title={props.name}
         src={url}
       />

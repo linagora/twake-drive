@@ -63,12 +63,12 @@ export default class Signin extends Component {
           </div>
 
           {this.state.login.error_subscribe_username && this.state.username && (
-            <div className={'error text bottom-margin'}>
+            <div className={'error text bottom-margin testid:signin-username-exist-text'}>
               {this.state.i18n.t('scenes.login.create_account.username_already_exist')}
             </div>
           )}
           {this.state.username && this.state.errorUsername && (
-            <div className={'text error bottom-margin'}>
+            <div className={'text error bottom-margin testid:signin-fill-in-username'}>
               {this.state.i18n.t('scenes.login.create_account.fill_in_username', [])}
             </div>
           )}
@@ -91,6 +91,7 @@ export default class Signin extends Component {
             )}
             value={this.state.firstName}
             onChange={evt => this.setState({ firstName: evt.target.value })}
+            testClassId="signin-input-first-name"
           />
           <Input
             id="last_name_create"
@@ -107,18 +108,19 @@ export default class Signin extends Component {
             )}
             value={this.state.lastName}
             onChange={evt => this.setState({ lastName: evt.target.value })}
+            testClassId="signin-input-last-name"
           />
 
           <br />
           <br />
 
           {this.state.login.error_subscribe_mailalreadyused && this.state.email && (
-            <div className="text error bottom-margin">
+            <div className="text error bottom-margin testid:signin-email-used-text">
               {this.state.i18n.t('scenes.login.create_account.email_used')}
             </div>
           )}
           {this.state.errorMail && (
-            <div className={'text error bottom-margin'}>
+            <div className={'text error bottom-margin testid:signin-fill-in-email-text'}>
               {this.state.i18n.t('scenes.login.create_account.fill_in_email')}
             </div>
           )}
@@ -137,6 +139,7 @@ export default class Signin extends Component {
             placeholder={this.state.i18n.t('scenes.login.create_account.email')}
             value={this.state.email}
             onChange={evt => this.setState({ email: evt.target.value })}
+            testClassId="signin-input-email"
           />
 
           {this.state.errorPassword && (
@@ -159,6 +162,7 @@ export default class Signin extends Component {
             placeholder={this.state.i18n.t('scenes.login.create_account.password')}
             value={this.state.password}
             onChange={evt => this.setState({ password: evt.target.value })}
+            testClassId="signin-input-password"
           />
           <div className="bottom">
             {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
@@ -173,6 +177,7 @@ export default class Signin extends Component {
               value={this.state.i18n.t('general.continue')}
               loading={this.state.login.login_loading}
               loadingTimeout={2000}
+              testClassId="signin-button-continue"
             />
           </div>
         </div>
@@ -207,6 +212,7 @@ export default class Signin extends Component {
             value={'Send again'}
             loading={this.state.login.login_loading}
             loadingTimeout={2000}
+            testClassId="signin-button-subscribe-mail"
           />
         </div>
       );
