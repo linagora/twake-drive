@@ -8,6 +8,10 @@ import { getEntityDefinition } from "../../../orm/utils";
 import { UpsertOptions } from "src/core/platform/services/database/services/orm/connectors";
 import { PostgresDataTransformer, TypeMappings } from "./postgres-data-transform";
 import { PostgresQueryBuilder, Query } from "./postgres-query-builder";
+import {
+  TDiagnosticResult,
+  TServiceDiagnosticDepth,
+} from "../../../../../../framework/api/diagnostics";
 
 export interface PostgresConnectionOptions {
   database: string;
@@ -25,6 +29,7 @@ export interface PostgresConnectionOptions {
 export class PostgresConnector extends AbstractConnector<PostgresConnectionOptions> {
   private logger = getLogger("PostgresConnector");
   private client: Client = new Client(this.options);
+  private connected = false;
   private dataTransformer = new PostgresDataTransformer({ secret: this.secret });
   private queryBuilder = new PostgresQueryBuilder(this.secret);
 
@@ -40,10 +45,12 @@ export class PostgresConnector extends AbstractConnector<PostgresConnectionOptio
     if (this.client) {
       this.logger.info("Connecting to DB");
       this.client.on("error", err => {
-        this.logger.warn(err, "PostgreSQL connection error");
+        this.logger.error(err, "PostgreSQL connection error");
       });
+      this.client.on("end", () => (this.connected = false));
 
       await this.client.connect();
+      this.connected = true;
       this.logger.info("Connection pool created");
       await this.healthcheck();
     }
@@ -54,6 +61,56 @@ export class PostgresConnector extends AbstractConnector<PostgresConnectionOptio
     if (this.client) await this.client.end();
     this.client = null;
     return this;
+  }
+
+  private async ping(): Promise<boolean> {
+    const wasConnected = this.connected;
+    if (wasConnected) await this.healthcheck();
+    else await this.connect();
+    return !wasConnected;
+  }
+
+  async getDiagnostics(depth: TServiceDiagnosticDepth): Promise<TDiagnosticResult> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const safeRequest = async (query: string, values?: any[]) => {
+      try {
+        return (await this.client.query(query, values)).rows;
+      } catch (err) {
+        const logId = "pg-diags-error-" + Math.floor(process.uptime() * 1000);
+        logger.error(
+          { err, query, values, logId, errCode: err.code },
+          `Error running postgresql statistics at ${depth} ( ${logId} ) `,
+        );
+        return { error: true, logId };
+      }
+    };
+    switch (depth) {
+      // This is the only required `ok`
+      case TServiceDiagnosticDepth.alive:
+        return { ok: true, didConnect: await this.ping() };
+
+      // Statistics can silently fail, and do it granularly if there is
+      // a permission issue only on some of the stats
+      case TServiceDiagnosticDepth.stats_track:
+        return {
+          ok: true,
+          db: await safeRequest("select * from pg_stat_database where datname = $1", [
+            this.options.database,
+          ]),
+        };
+      case TServiceDiagnosticDepth.stats_basic:
+        return { ok: true, warn: "pgsql_basic_has_no_basic_level_stats" };
+      case TServiceDiagnosticDepth.stats_deep:
+        return {
+          ok: true,
+          databases: await safeRequest("select * from pg_stat_database"),
+          tables: await safeRequest("select * from pg_stat_user_tables"),
+          indexes: await safeRequest("select * from pg_stat_user_indexes"),
+        };
+
+      default:
+        throw new Error(`Unexpected TServiceDiagnosticDepth: ${JSON.stringify(depth)}`);
+    }
   }
 
   async init(): Promise<this> {
@@ -111,7 +168,7 @@ export class PostgresConnector extends AbstractConnector<PostgresConnectionOptio
         const indexName = globalIndex.join("_");
         const indexDbName = `index_${entity.name}_${indexName}`;
 
-        const query = `CREATE INDEX IF NOT EXISTS ${indexDbName} ON "${entity.name}" 
+        const query = `CREATE INDEX IF NOT EXISTS ${indexDbName} ON "${entity.name}"
         (${globalIndex.length === 1 ? globalIndex[0] : `(${globalIndex[0]}), ${globalIndex[1]}`})`;
 
         try {
@@ -133,11 +190,11 @@ export class PostgresConnector extends AbstractConnector<PostgresConnectionOptio
       const query = `
         do $$
         begin
-        IF NOT EXISTS 
-          (SELECT constraint_name 
-          FROM information_schema.table_constraints 
-          WHERE table_name = '${entity.name}' 
-          and constraint_type = 'PRIMARY KEY') 
+        IF NOT EXISTS
+          (SELECT constraint_name
+          FROM information_schema.table_constraints
+          WHERE table_name = '${entity.name}'
+          and constraint_type = 'PRIMARY KEY')
         THEN
           ALTER TABLE "${entity.name}" ADD PRIMARY KEY (
           ${entity.options.primaryKey.join(", ")});
@@ -172,14 +229,14 @@ export class PostgresConnector extends AbstractConnector<PostgresConnectionOptio
 
   async drop(): Promise<this> {
     const query = `
-        DO $$ 
-        DECLARE 
+        DO $$
+        DECLARE
           tablename text;
-        BEGIN 
-          FOR tablename IN (SELECT table_name FROM information_schema.tables WHERE table_schema = 'public') 
-          LOOP 
-            EXECUTE 'DELETE FROM  "' || tablename || '" CASCADE'; 
-          END LOOP; 
+        BEGIN
+          FOR tablename IN (SELECT table_name FROM information_schema.tables WHERE table_schema = 'public')
+          LOOP
+            EXECUTE 'DELETE FROM  "' || tablename || '" CASCADE';
+          END LOOP;
         END $$;`;
     logger.debug(`service.database.orm.postgres.drop - Query: "${query}"`);
     await this.client.query(query);
@@ -188,14 +245,14 @@ export class PostgresConnector extends AbstractConnector<PostgresConnectionOptio
 
   async dropTables(): Promise<this> {
     const query = `
-        DO $$ 
-        DECLARE 
+        DO $$
+        DECLARE
           tablename text;
-        BEGIN 
-          FOR tablename IN (SELECT table_name FROM information_schema.tables WHERE table_schema = 'public') 
-          LOOP 
-            EXECUTE 'DROP TABLE IF EXISTS "' || tablename || '" CASCADE'; 
-          END LOOP; 
+        BEGIN
+          FOR tablename IN (SELECT table_name FROM information_schema.tables WHERE table_schema = 'public')
+          LOOP
+            EXECUTE 'DROP TABLE IF EXISTS "' || tablename || '" CASCADE';
+          END LOOP;
         END $$;`;
     logger.debug(`service.database.orm.postgres.dropTables - Query: "${query}"`);
     await this.client.query(query);
@@ -343,13 +400,13 @@ export class PostgresConnector extends AbstractConnector<PostgresConnectionOptio
 
   async getTableDefinition(name: string): Promise<string[]> {
     try {
-      const query = `SELECT 
-           table_name, 
-           column_name, 
-           data_type 
-        FROM 
+      const query = `SELECT
+           table_name,
+           column_name,
+           data_type
+        FROM
            information_schema.columns
-        WHERE 
+        WHERE
            table_name = $1`;
       const dbResult: QueryResult<TableRowInfo> = await this.client.query(query, [name]);
       return dbResult.rows.map(row => row.column_name);

@@ -19,6 +19,10 @@ export class DefaultStorageStrategy implements StorageConnectorAPI {
     return this.connector.getId();
   }
 
+  getDiagnostics(depth) {
+    return this.connector.getDiagnostics(depth);
+  }
+
   write = (
     path: string,
     stream: Stream,

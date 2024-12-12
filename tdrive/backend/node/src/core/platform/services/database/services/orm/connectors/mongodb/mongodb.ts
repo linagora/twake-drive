@@ -8,6 +8,10 @@ import { AbstractConnector } from "../abstract-connector";
 import { buildSelectQuery } from "./query-builder";
 import { transformValueFromDbString, transformValueToDbString } from "./typeTransforms";
 import { logger } from "../../../../../../framework";
+import {
+  TDiagnosticResult,
+  TServiceDiagnosticDepth,
+} from "../../../../../../framework/api/diagnostics";
 
 export interface MongoConnectionOptions {
   // TODO: More options
@@ -40,6 +44,51 @@ export class MongoConnector extends AbstractConnector<MongoConnectionOptions> {
     if (this.client) await this.client.close();
     this.client = null;
     return this;
+  }
+
+  private async ping(): Promise<boolean> {
+    const wasConnected = !!this.client;
+    await (await this.getDatabase()).admin().ping();
+    return !wasConnected;
+  }
+
+  private async dbStats(): Promise<object> {
+    return (await this.getDatabase()).stats();
+  }
+
+  private async collectionsStats(deep: boolean): Promise<object> {
+    const db = await this.getDatabase();
+    const result = { collections: {} };
+    for (const collection of await db.collections()) {
+      const stats = await collection.aggregate([
+        {
+          $collStats: {
+            latencyStats: { histograms: true },
+            storageStats: deep ? {} : undefined, // Really a lot of keys with 0 occurances
+            count: {},
+            queryExecStats: {},
+          },
+        },
+      ]);
+      result.collections[collection.collectionName] = await stats.toArray();
+    }
+    return result;
+  }
+
+  async getDiagnostics(depth: TServiceDiagnosticDepth): Promise<TDiagnosticResult> {
+    switch (depth) {
+      case TServiceDiagnosticDepth.alive:
+        return { ok: true, didConnect: await this.ping() };
+      case TServiceDiagnosticDepth.stats_track:
+        return { ok: true, ...(await this.dbStats()) };
+      case TServiceDiagnosticDepth.stats_basic:
+        return { ok: true, ...(await this.collectionsStats(false)) };
+      case TServiceDiagnosticDepth.stats_deep:
+        return { ok: true, ...(await this.collectionsStats(true)) };
+
+      default:
+        throw new Error(`Unexpected TServiceDiagnosticDepth: ${JSON.stringify(depth)}`);
+    }
   }
 
   getClient(): mongo.MongoClient {

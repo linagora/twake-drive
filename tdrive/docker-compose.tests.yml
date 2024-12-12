@@ -84,6 +84,7 @@ services:
       - STORAGE_S3_ENDPOINT=minio
       - STORAGE_S3_ACCESS_KEY=admin
       - STORAGE_S3_SECRET_KEY=adminminio
+      - DIAG_PROBE_SECRET=super_diagnostic_probe_secret
     depends_on:
       minio:
         condition: service_healthy
