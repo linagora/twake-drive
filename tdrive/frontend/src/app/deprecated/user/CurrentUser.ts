@@ -12,6 +12,7 @@ import JWTStorage from '@features/auth/jwt-storage-service';
 import Globals from '@features/global/services/globals-tdrive-app-service';
 import UserAPIClient from '../../features/users/api/user-api-client';
 import { getUser } from '@features/users/hooks/use-user-list';
+import { DeviceTypesEnum } from 'app/features/users/types/user';
 
 class CurrentUser extends Observable {
   loading: boolean;
@@ -86,6 +87,10 @@ class CurrentUser extends Observable {
       .then(() => console.log(preferences))
       .then(() => window.location.reload())
       .catch(e => "Error setting user preferences " + e);
+  }
+
+  async ensureDeviceKind(companyId: string, kind: DeviceTypesEnum) {
+    return UserAPIClient.ensureHaveDeviceType(companyId, kind);
   }
 
   updateUserName(username: string) {

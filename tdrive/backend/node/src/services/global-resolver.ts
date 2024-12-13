@@ -34,6 +34,7 @@ import { AVServiceImpl } from "./av/service";
 
 import { PreviewEngine } from "./previews/services/files/engine";
 import { I18nService } from "./i18n";
+import { WebDAVServiceImpl } from "./webdav/services";
 import { getConfigOrDefault } from "../utils/get-config";
 
 type PlatformServices = {
@@ -72,6 +73,7 @@ type TdriveServices = {
   av?: AVServiceImpl;
   tags: TagsService;
   i18n: I18nService;
+  webdav: WebDAVServiceImpl;
 };
 
 class GlobalResolver {
@@ -133,6 +135,7 @@ class GlobalResolver {
       },
       tags: await new TagsService().init(),
       i18n: await new I18nService().init(),
+      webdav: await new WebDAVServiceImpl().init(),
     };
 
     // AV service is optional
