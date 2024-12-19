@@ -39,12 +39,13 @@ export const UploadModal = ({
   return (
     <Modal
       open={state.open}
+      closable={true}
       onClose={() => setState({ ...state, open: false })}
-      className="!max-w-sm testid:upload-modal"
+      className="md:!max-w-sm testid:upload-modal"
     >
       <ModalContent
         title={
-          <div className="flex flex-row items-center justify-start">
+          <div className="hidden md:flex flex-row items-center justify-start">
             {!!state.type && (
               <A onClick={() => setState({ ...state, type: '' })}>
                 <ChevronLeftIcon className="w-6 h-6" />
@@ -94,7 +95,7 @@ const CreateModalOption = (props: { icon: ReactNode; text: string; onClick: () =
   return (
     <div
       onClick={props.onClick}
-      className={`flex flex-row p-4 dark:bg-zinc-900 dark:text-white bg-zinc-100 hover:bg-opacity-75 cursor-pointer rounded-md m-2 testid:${props.testClassId}`}
+      className={`flex flex-row py-2 md:p-4 md:dark:bg-zinc-900 dark:text-white md:bg-zinc-100 md:hover:bg-opacity-75 cursor-pointer rounded-md m-2 testid:${props.testClassId}`}
     >
       <div className="flex items-center justify-center">{props.icon}</div>
       <div className="grow flex items-center ml-2">
