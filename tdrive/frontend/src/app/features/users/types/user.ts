@@ -14,6 +14,20 @@ export type UserPreferencesType = null | {
   notifications?: UserNotificationPreferences[];
 };
 
+/* Warning: mirror in tdrive/backend/node/src/services/user/entities/device.ts */
+export enum DeviceTypesEnum {
+  FCM = "FCM",
+  WebDAV = "WebDAV",
+}
+
+/* Warning: mirror in tdrive/backend/node/src/services/user/web/types.ts */
+export type EnsureDeviceByKindResponse = {
+  resource: {
+    id: string;
+    password: string;
+  };
+};
+
 export type UserNotificationPreferences = {
   company_id: string | 'all';
   workspace_id: string | 'all';

@@ -131,6 +131,7 @@ export const getDefaultDriveItem = (
     name: item.name || "",
     size: item.size || 0,
     tags: item.tags || [],
+    locks: item.locks || [],
   });
 
   if (item.id) {

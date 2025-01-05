@@ -2,6 +2,7 @@ import * as Minio from "minio";
 import { logger } from "../../../../../../core/platform/framework";
 import { Readable } from "stream";
 import { StorageConnectorAPI, WriteMetadata } from "../../provider";
+import { createStreamSizeCounter } from "../../../../../../utils/files";
 import { randomUUID } from "crypto";
 import _ from "lodash";
 import { TDiagnosticResult, TServiceDiagnosticDepth } from "../../../../framework/api/diagnostics";

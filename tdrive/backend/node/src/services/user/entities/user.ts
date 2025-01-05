@@ -115,7 +115,7 @@ export default class User {
   };
 
   @Column("devices", "encoded_json")
-  devices: Array<string>;
+  devices: Array<string> = [];
 
   @Column("salt", "string")
   salt: string;

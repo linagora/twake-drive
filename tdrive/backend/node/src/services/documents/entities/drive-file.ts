@@ -3,6 +3,7 @@ import { randomUUID } from "crypto";
 import { Column, Entity } from "../../../core/platform/services/database/services/orm/decorators";
 import { DriveFileAccessLevel, publicAccessLevel } from "../types";
 import { FileVersion } from "./file-version";
+import { DriveLock } from "./drive-file-lock";
 import search from "./drive-file.search";
 import * as UUIDTools from "../../../utils/uuid";
 
@@ -135,6 +136,9 @@ export class DriveFile {
   @Type(() => String)
   @Column("scope", "string")
   scope: DriveScope;
+
+  @Column("locks", "encoded_json")
+  locks: DriveLock[];
 
   @Type(() => String)
   @Column("av_status", "string")

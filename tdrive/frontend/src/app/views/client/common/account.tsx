@@ -1,6 +1,7 @@
 import Avatar from '@atoms/avatar';
 import Menu from '@components/menus/menu';
 import LoginService from '@features/auth/login-service';
+import { useCurrentCompany } from '@features/companies/hooks/use-companies';
 import { useCurrentUser } from '@features/users/hooks/use-current-user';
 import currentUserService from '@features/users/services/current-user-service';
 import AccountParameter from '@views/client/popup/UserParameter/UserParameter';
@@ -13,6 +14,7 @@ import Icon from '@components/icon/icon.jsx';
 
 export default (): JSX.Element => {
   const { user } = useCurrentUser();
+  const { company: { id: companyId } } = useCurrentCompany();
 
   if (!user) return <></>;
 
@@ -45,7 +47,7 @@ export default (): JSX.Element => {
           text: Languages.t('scenes.app.channelsbar.currentuser.title'),
           //hide: InitService.server_infos?.configuration?.accounts?.type === 'remote',
           onClick: () => {
-            ModalManagerDepreciated.open(<AccountParameter />, true, 'account_parameters');
+            ModalManagerDepreciated.open(<AccountParameter companyId={companyId} />, true, 'account_parameters');
           },
         },
         {
