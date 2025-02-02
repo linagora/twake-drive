@@ -1,4 +1,5 @@
 import { PaginationQueryParameters } from "../../../utils/types";
+import type { DeviceTypesEnum } from "../entities/device";
 import User from "../entities/user";
 
 export interface UserListQueryParameters extends PaginationQueryParameters {
@@ -135,14 +136,27 @@ export interface CompanyObject {
   identity_provider_id: string;
 }
 
-export interface RegisterDeviceBody {
-  resource: RegisterDeviceParams;
+/* Warning: mirror in tdrive/backend/node/src/services/user/web/types.ts */
+export interface EnsureDeviceByKindParams {
+  companyId: string;
+  type: DeviceTypesEnum;
+}
+
+/* Warning: mirror in tdrive/backend/node/src/services/user/web/types.ts */
+export interface EnsureDeviceByKindResponse {
+  id: string;
+  password: string;
 }
 
 export interface RegisterDeviceParams {
-  type: "FCM";
+  type: DeviceTypesEnum;
   value: string;
   version: string;
+  password?: string;
+}
+
+export interface RegisterDeviceBody {
+  resource: RegisterDeviceParams;
 }
 
 export interface DeregisterDeviceParams {

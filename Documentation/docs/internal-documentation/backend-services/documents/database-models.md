@@ -25,6 +25,7 @@ export class DriveFile {
   size: number;
   last_version_cache: Partial<FileVersion>;
   scope: DriveScope;
+  locks: DriveLock[];
 }
 
 type AccessInformation = {
@@ -86,4 +87,22 @@ type DriveFileThumbnail = {
   url: string;
   full_url?: string;
 };
+```
+
+**DriveLock**
+```Typescript
+export class DriveLock {
+  company_id: string;
+  user_id: string;
+  id: string;
+  drive_file_id: string;
+  token: string;
+  created_at: number;
+  timeout: number;
+  scope: "exclusive" | "shared";
+  depth: "0" | "infinity";
+  provisional: boolean;
+  owner: any;
+  principal: string;
+}
 ```
