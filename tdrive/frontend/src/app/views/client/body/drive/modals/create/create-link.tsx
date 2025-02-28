@@ -21,6 +21,7 @@ export const CreateLink = () => {
       type: 'text/uri-list',
     });
 
+    FileUploadService.resetStates();
     await FileUploadService.upload([{ root: file.name, file }], {
       context: {
         parentId: state.parent_id,
