@@ -16,6 +16,7 @@ export const useDriveUpload = () => {
 
   const uploadVersion = async (file: File, context: { companyId: string; id: string }) => {
     return new Promise(r => {
+      FileUploadService.resetStates();
       FileUploadService.upload([{ root: file.name, file }], {
         context: {
           companyId: context.companyId,
@@ -49,6 +50,7 @@ export const useDriveUpload = () => {
     context: { companyId: string; parentId: string },
   ) => {
     logger.debug('Start creating directories and file upload ...');
+    FileUploadService.resetStates();
     await FileUploadService.createDirectories(tree, context);
     await refresh(context.parentId, true);
   };
@@ -68,6 +70,7 @@ export const useDriveUpload = () => {
             `Unexpected response status code: ${request.status} from ${JSON.stringify(url)}`,
           );
         const file = new File([request.response], name);
+        FileUploadService.resetStates();
         FileUploadService.upload([{ root: file.name, file }], {
           context: {
             companyId: context.companyId,
