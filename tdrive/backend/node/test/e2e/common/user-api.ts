@@ -149,9 +149,10 @@ export default class UserApi {
     return helpers;
   }
 
-  async uploadRandomFile() {
+  async uploadRandomFile(overridenDestinationFilename?: string) {
     return await this.uploadFile(
       UserApi.ALL_FILES[Math.floor(Math.random() * UserApi.ALL_FILES.length)],
+      overridenDestinationFilename,
     );
   }
 
@@ -170,10 +171,10 @@ export default class UserApi {
     });
   }
 
-  async uploadFile(filename: string) {
-    logger.info(`Upload ${filename} for the user: ${this.user.id}`);
+  async uploadFile(filename: string, overridenDestinationFilename?: string) {
+    logger.info(`Upload ${filename} for the user: ${this.user.id} as ${JSON.stringify(overridenDestinationFilename)}`);
     const fullPath = `${__dirname}/assets/${filename}`;
-    const filesUploadRaw = await this.injectUploadRequest(fs.createReadStream(fullPath));
+    const filesUploadRaw = await this.injectUploadRequest(fs.createReadStream(fullPath), overridenDestinationFilename);
 
     if (filesUploadRaw.statusCode == 200) {
       const filesUpload: ResourceUpdateResponse<File> = deserialize<ResourceUpdateResponse<File>>(
@@ -194,6 +195,22 @@ export default class UserApi {
       role: "",
     };
     return this.platform.authService.sign(payload);
+  }
+
+  public async getUser(userId?: string, expectedStatus?: undefined | 200): Promise<User>;
+  public async getUser(userId: string | undefined, expectedStatus: number): Promise<Response>;
+  public async getUser(userId: string = this.user.id, expectedStatus: number = 200): Promise<Response | User> {
+    const response = await this.platform.app.inject({
+      method: "GET",
+      url: `/internal/services/users/v1/users/${encodeURIComponent(userId)}`,
+      headers: {
+        authorization: `Bearer ${this.jwt}`,
+      },
+    });
+    expect(response.statusCode).toBe(expectedStatus);
+    if (expectedStatus === 200)
+      return response.json()["resource"];
+    return response;
   }
 
   async uploadEicarTestFile(filename: string) {
@@ -227,8 +244,8 @@ export default class UserApi {
     return this.uploadEicarTestFile(filename).then(f => this.createDocumentFromFile(f, parent_id));
   }
 
-  async uploadRandomFileAndCreateDocument(parent_id = "root") {
-    return this.uploadRandomFile().then(f => this.createDocumentFromFile(f, parent_id));
+  async uploadRandomFileAndCreateDocument(parent_id = "root", overridenDestinationFilename?: string) {
+    return this.uploadRandomFile(overridenDestinationFilename).then(f => this.createDocumentFromFile(f, parent_id));
   }
 
   async uploadAllFilesAndCreateDocuments(parent_id = "root") {
