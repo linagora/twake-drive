@@ -1,4 +1,5 @@
 import { useUpload } from '@features/files/hooks/use-upload';
+import Portal from '../portal';
 import PendingRootList from './pending-root-components/pending-root-list';
 
 const UploadsViewer = (): JSX.Element => {
@@ -13,7 +14,9 @@ const UploadsViewer = (): JSX.Element => {
     return <></>;
   }
 
-  return <PendingRootList roots={roots} status={status} parentId={parentId} />;
+  return <Portal className="relative z-[11]">
+    <PendingRootList roots={roots} status={status} parentId={parentId} />
+  </Portal>;
 };
 
 export default UploadsViewer;
