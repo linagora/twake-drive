@@ -8,6 +8,10 @@ import type { TdrivePlatform } from "../../core/platform/platform";
 //TODO: When this gets used for all commands; update verboseDuringRun from search/index-all and move to root index
 //      And consider moving print-config-summary call here.
 
+const waitForFlush = (stream: NodeJS.WriteStream) =>
+  new Promise<void>((resolve, reject) =>
+    stream.write("\r\n", err => (err ? reject(err) : resolve())),
+  );
 /**
  * Start the platform and its services, run the command (passed as
  * the `handler` callback), then cleanly shut down the platform.
@@ -35,6 +39,8 @@ export default async function runWithPlatform(
     spinner.fail(err.stack || err);
     process.exitCode = 1;
   }
+  // Spinner seems to interrupt still buffered output otherwise
+  await Promise.all([waitForFlush(process.stdout), waitForFlush(process.stderr)]);
   spinner.start("Platform: shutting down...");
   await platform.stop();
   spinner.succeed("Platform: shutdown");
