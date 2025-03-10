@@ -77,6 +77,10 @@ export default class StorageService extends TdriveService<StorageAPI> implements
     return this.getConnector().exists(path + "/chunk1", options);
   }
 
+  enumeratePathsForFile(filePath: string): Promise<string[]> {
+    return this.getConnector().enumeratePathsForFile(filePath);
+  }
+
   async write(path: string, stream: Stream, options?: WriteOptions): Promise<WriteMetadata> {
     try {
       if (options?.encryptionKey) {
@@ -168,12 +172,18 @@ export default class StorageService extends TdriveService<StorageAPI> implements
     return stream;
   }
 
-  async remove(path: string, options?: DeleteOptions) {
+  async remove(
+    path: string,
+    options?: DeleteOptions,
+    context?: undefined,
+    deletionCause?: undefined | "admin:user_account_deletion",
+  ) {
     try {
       for (let count = 1; count <= (options?.totalChunks || 1); count++) {
         const chunk = options?.totalChunks ? `${path}/chunk${count}` : path;
-        await this.getConnector().remove(chunk);
+        await this.getConnector().remove(chunk, options, context, deletionCause);
       }
+      if (!options) await this.getConnector().remove(path, options, context, deletionCause);
       return true;
     } catch (err) {
       logger.error("Unable to remove file %s", err);
@@ -203,7 +213,8 @@ export default class StorageService extends TdriveService<StorageAPI> implements
    *       "useSSL": false,
    *       "accessKey": "ABCD",
    *       "secretKey": "x1yz",
-   *       "disableRemove": false
+   *       "disableRemove": false,
+   *       "overrideDisableRemoveForUserAccountDeletion": true,
    *     },
    *     "local": {
    *       "path": "/tdrive"

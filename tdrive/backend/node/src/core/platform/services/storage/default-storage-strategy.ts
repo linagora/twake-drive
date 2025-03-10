@@ -40,11 +40,16 @@ export class DefaultStorageStrategy implements StorageConnectorAPI {
     return this.connector.exists(path, options, context);
   };
 
+  enumeratePathsForFile = (filePath: string): Promise<string[]> => {
+    return this.connector.enumeratePathsForFile(filePath);
+  };
+
   remove = (
     path: string,
     options?: DeleteOptions,
     context?: ExecutionContext,
+    deletionCause?: undefined | "admin:user_account_deletion",
   ): Promise<boolean> => {
-    return this.connector.remove(path, options, context);
+    return this.connector.remove(path, options, context, deletionCause);
   };
 }

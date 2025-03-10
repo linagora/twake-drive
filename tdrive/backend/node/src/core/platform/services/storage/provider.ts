@@ -61,8 +61,22 @@ export interface StorageConnectorAPI extends IServiceDiagnosticProvider {
    * Remove a path
    *
    * @param path
+   * @param deletionCause In case of exceptional uses of deletion, eg. legal compliance, a reason
+   *   for the deletion can be provided here and evaluated by the StorageConnector.
+   *
+   *   In normal use, pass `undefined`
    */
-  remove(path: string, options?: DeleteOptions, context?: ExecutionContext): Promise<boolean>;
+  remove(
+    path: string,
+    options?: DeleteOptions,
+    context?: ExecutionContext,
+    deletionCause?: undefined | "admin:user_account_deletion",
+  ): Promise<boolean>;
+
+  /**
+   * Enumerate all physical storage paths related to the provided file path
+   */
+  enumeratePathsForFile(filePath: string): Promise<string[]>;
 }
 
 export default interface StorageAPI extends TdriveServiceProvider, StorageConnectorAPI {

@@ -158,13 +158,29 @@ export class OneOfStorageStrategy implements StorageConnectorAPI {
     return false;
   };
 
+  /** If any of the storages fails, then fail. Otherwise return a union of all paths related to that file's path */
+  async enumeratePathsForFile(filePath: string): Promise<string[]> {
+    const paths = new Set<string>();
+    // This needs all storages to respond. Until then, deletion must be retried, so fail.
+    for (const storage of this.storages)
+      for (const path of await storage.enumeratePathsForFile(filePath)) paths.add(path);
+    return [...paths.values()];
+  }
+
   /**
    * Removes a file from all configured storages.
    * @param path - The path of the file to be removed.
    * @param options
    */
-  remove = async (path: string, options?: DeleteOptions): Promise<boolean> => {
-    return Promise.all(this.storages.map(storage => storage.remove(path, options))).then(array => {
+  remove = async (
+    path: string,
+    options?: DeleteOptions,
+    context?: undefined,
+    deletionCause?: "admin:user_account_deletion",
+  ): Promise<boolean> => {
+    return Promise.all(
+      this.storages.map(storage => storage.remove(path, options, context, deletionCause)),
+    ).then(array => {
       return array.reduce((a, b) => a && b);
     });
   };
