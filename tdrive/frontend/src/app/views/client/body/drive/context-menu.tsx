@@ -66,6 +66,8 @@ export const useOnBuildContextMenu = (
         const inTrash = parent.path?.[0]?.id.includes('trash') || viewId?.includes('trash');
         const isPersonal = item?.scope === 'personal';
         const selectedCount = checked.length;
+        const isLargeFileUploaded = !item?.is_directory &&
+          (item?.av_status || '').length > 0 && item?.av_status === 'skipped';
         const notSafe =
           !item?.is_directory &&
           (item?.av_status || '').length > 0 &&
@@ -89,7 +91,7 @@ export const useOnBuildContextMenu = (
               type: 'menu',
               icon: 'share-alt',
               text: Languages.t('components.item_context_menu.share'),
-              hide: hideShareItem || notSafe,
+              hide: hideShareItem || (!isLargeFileUploaded && notSafe),
               onClick: () => setPublicLinkModalState({ open: true, id: item.id }),
             },
             {
@@ -97,7 +99,7 @@ export const useOnBuildContextMenu = (
               type: 'menu',
               icon: 'users-alt',
               text: Languages.t('components.item_context_menu.manage_access'),
-              hide: hideManageAccessItem || notSafe,
+              hide: hideManageAccessItem || (!isLargeFileUploaded && notSafe),
               onClick: () => setAccessModalState({ open: true, id: item.id }),
             },
             {
