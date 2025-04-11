@@ -405,6 +405,30 @@ export class UsersCrudController
       return error;
     }
   }
+
+  async migrated(
+    request: FastifyRequest<{ Body: UpdateUser; Params: UserParameters }>,
+    reply: FastifyReply,
+  ): Promise<ResourceCreateResponse<UserObject>> {
+    try {
+      const id = request.params.id;
+      const user = await gr.services.users.get({ id: id });
+      if (!user) {
+        reply.notFound(`User ${id} not found`);
+        return;
+      }
+
+      user.migrated = true;
+      user.migration_date = Date.now();
+      await gr.services.users.save(user);
+
+      return {
+        resource: await formatUser(user),
+      };
+    } catch (error) {
+      return error;
+    }
+  }
 }
 
 function getExecutionContext(request: FastifyRequest): ExecutionContext {

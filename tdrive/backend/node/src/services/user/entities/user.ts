@@ -78,6 +78,12 @@ export default class User {
   @Column("deleted", "tdrive_boolean")
   deleted: boolean;
 
+  @Column("migrated", "tdrive_boolean")
+  migrated: boolean;
+
+  @Column("migration_date", "number")
+  migration_date: number;
+
   /**
    * If set, a restartable suppression process is currently incomplete.
    */

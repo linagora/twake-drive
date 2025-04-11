@@ -270,6 +270,26 @@ export class DocumentsController {
     return await globalResolver.services.documents.documents.update(id, update, context);
   };
 
+  /**
+   * Migrated drive item
+   *
+   * @param {FastifyRequest} request
+   * @returns {Promise<DriveFile>}
+   */
+  migrated = async (
+    request: FastifyRequest<{
+      Params: ItemRequestParams;
+      Querystring: { public_token?: string };
+    }>,
+  ): Promise<DriveFile> => {
+    const context = getDriveExecutionContext(request);
+    const { id } = request.params;
+
+    if (!id) throw new CrudException("Missing id", 400);
+
+    return await globalResolver.services.documents.documents.migrated(id, context);
+  };
+
   updateLevel = async (
     request: FastifyRequest<{
       Params: ItemRequestParams;

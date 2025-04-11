@@ -1,0 +1,64 @@
+{
+  "name": "cozy-drive-migration",
+  "type": "commonjs",
+  "version": "0.0.1",
+  "packageManager": "pnpm@10.6.2",
+  "description": "A cozy client for migrating users data from twake drive",
+  "homepage": "https://github.com/linagora/twake-drive",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/antfu/pkg-placeholder.git"
+  },
+  "bugs": "https://github.com/antfu/pkg-placeholder/issues",
+  "keywords": [],
+  "sideEffects": false,
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./package.json": "./package.json"
+  },
+  "main": "./dist/index.mjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "unbuild",
+    "build:dev": "unbuild --stub",
+    "lint": "eslint",
+    "prepublishOnly": "nr build",
+    "release": "bumpp && pnpm publish",
+    "dev": "tsx src/index.ts",
+    "test": "vitest",
+    "typecheck": "tsc --noEmit",
+    "prepare": "simple-git-hooks"
+  },
+  "dependencies": {
+    "@types/amqplib": "^0.10.7",
+    "amqplib": "^0.10.7",
+    "axios": "^1.8.4",
+    "cozy-client": "catalog:",
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "catalog:cli",
+    "@antfu/ni": "catalog:cli",
+    "@antfu/utils": "catalog:inlined",
+    "@types/node": "catalog:types",
+    "bumpp": "catalog:cli",
+    "eslint": "catalog:cli",
+    "lint-staged": "catalog:cli",
+    "simple-git-hooks": "catalog:cli",
+    "tinyexec": "catalog:utils",
+    "tsx": "catalog:cli",
+    "typescript": "catalog:cli",
+    "unbuild": "catalog:cli",
+    "vite": "catalog:cli",
+    "vitest": "catalog:testing",
+    "vitest-package-exports": "catalog:testing",
+    "yaml": "catalog:testing"
+  },
+  "lint-staged": {
+    "*": "eslint --fix"
+  }
+}

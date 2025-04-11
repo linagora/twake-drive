@@ -707,6 +707,37 @@ export class DocumentsService {
   };
 
   /**
+   * Migrate a DriveFile item
+   *
+   * @param {string} id - the id of the DriveFile to update.
+   * @param {DriveExecutionContext} context - the company execution context
+   * @returns {Promise<DriveFile>} - the updated DriveFile
+   */
+  migrated = async (id: string, context: CompanyExecutionContext): Promise<DriveFile> => {
+    if (!context) {
+      this.logger.error("invalid execution context");
+      return null;
+    }
+
+    try {
+      const item = await this.repository.findOne({
+        company_id: context.company.id,
+        id,
+      });
+      if (!item) {
+        this.logger.error("Drive item not found");
+        throw Error("Item not found");
+      }
+      item.migrated = true;
+      item.migration_date = Date.now();
+      await this.repository.save(item);
+    } catch (err) {
+      this.logger.error({ err }, "Failed to update drive item");
+      throw new CrudException("Failed to update item", 500);
+    }
+  };
+
+  /**
    * deletes or moves to Trash a Drive Document and its children
    *
    * @param {string} id - the item id
