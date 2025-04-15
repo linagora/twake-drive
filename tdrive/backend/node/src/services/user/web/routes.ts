@@ -150,6 +150,14 @@ const routes: FastifyPluginCallback = (fastify: FastifyInstance, options, next) 
     handler: usersController.update.bind(usersController),
   });
 
+  // migration related
+  fastify.route({
+    method: "POST",
+    url: `${usersUrl}/:id/migrated`,
+    preValidation: [fastify.authenticate],
+    handler: usersController.migrated.bind(usersController),
+  });
+
   next();
 };
 
