@@ -56,6 +56,7 @@ export interface UserObject {
   full_name: string;
   created_at: number;
   deleted: boolean;
+  marked_to_delete: boolean;
   status: string; //Single string for the status
   last_activity: number;
   last_seen?: number;

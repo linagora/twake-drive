@@ -30,9 +30,11 @@ type TokenPayload = {
 
 export type User = {
   id: string;
+  email?: string;
   first_name?: string;
   isWorkspaceModerator?: boolean;
   deleted?: boolean,
+  marked_to_delete?: boolean;
   delete_process_started_epoch?: number,
   preferences?: {
     language?: string;

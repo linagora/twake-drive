@@ -301,10 +301,32 @@ describe("The users deletion API", () => {
     });
 
     it("should have no objects left other than user (and untestable files)", async () => {
-      expect(await (await Promise.all(
-        Object.entries(listByUserIn)
-          .flatMap(async ([key, fn]) => (await fn(myUserId)).getEntities().map(e => ({"": e.constructor.name, ...e})))
-        )).flat()).toHaveLength(0);
+      expect((await Promise.all(
+          Object.entries(listByUserIn)
+              .flatMap(async ([_, fn]) => (await fn(myUserId)).getEntities().map(e => ({"": e.constructor.name, ...e})))
+      )).flat()).toHaveLength(0);
     });
+
+    it("'existing user with to_delete flag' should return 404 if user is not found", async () => {
+      const secret = adminConfig.endpointSecret;
+      const email = "notexistingemail@test.com";
+      const response = await platform!.app.inject({
+        method: "POST",
+        url: `/admin/api/user/delete/mark`,
+        body: { secret, email },
+      });
+      expect(response.statusCode).toBe(404);
+    });
+
+    it("'existing user with to_delete flag' should return 200", async () => {
+      const user = await UserApi.getInstance(platform);
+      const response = await platform!.app.inject({
+        method: "POST",
+        url: `/admin/api/user/delete/mark`,
+        body: { secret: adminConfig.endpointSecret, email: (await user.getUser()).email },
+      });
+      expect(response.statusCode).toBe(200);
+    });
+
   });
 });

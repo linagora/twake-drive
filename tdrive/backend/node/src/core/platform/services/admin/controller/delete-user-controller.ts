@@ -1,4 +1,3 @@
-import { UserPrimaryKey } from "src/services/user/entities/user";
 import gr from "../../../../../services/global-resolver";
 
 import type { ExecutionContext } from "../../../../platform/framework/api/crud-service";
@@ -11,6 +10,25 @@ export class AdminDeleteUserController {
     if (!this._repos)
       this._repos = await buildUserDeletionRepositories(gr.database, gr.platformServices.search);
     return this._repos;
+  }
+
+  async markToDelete(
+    userId: string,
+  ): Promise<{ status: "failed" | "deleting" | "done"; userId?: string }> {
+    try {
+      await gr.services.console.getClient().userWasDeletedForceLogout(userId);
+      await gr.services.users.markToDeleted({ id: userId });
+    } catch (err) {
+      adminLogger.error({ err, userId }, "[DELETE USER] Error dustin updating user ");
+      return {
+        status: "failed",
+        userId,
+      };
+    }
+    return {
+      status: "done",
+      userId,
+    };
   }
 
   /** Begin or forward the deletion process of a user, if `deleteData` is false, only anonymises the user entry */

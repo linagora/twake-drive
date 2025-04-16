@@ -82,6 +82,7 @@ export class WorkspaceUsersCrudController
         full_name: [user.first_name, user.last_name].join(" "),
         created_at: user.creation_date,
         deleted: Boolean(user.deleted),
+        marked_to_delete: Boolean(user.marked_to_delete),
         status: user.status_icon,
         last_activity: user.last_activity,
         cache: {

@@ -75,6 +75,10 @@ export default class User {
   @Column("password", "string")
   password: string;
 
+  //just mark user as deleted not to be able to login
+  @Column("marked_to_delete", "tdrive_boolean")
+  marked_to_delete: boolean;
+
   @Column("deleted", "tdrive_boolean")
   deleted: boolean;
 

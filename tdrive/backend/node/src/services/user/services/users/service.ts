@@ -201,6 +201,12 @@ export class UserServiceImpl {
     }
   }
 
+  async markToDeleted(pk: UserPrimaryKey) {
+    const user = await this.get(pk);
+    user.marked_to_delete = true;
+    await this.save(user);
+  }
+
   async search(
     pagination: Pagination,
     options?: SearchUserOptions,

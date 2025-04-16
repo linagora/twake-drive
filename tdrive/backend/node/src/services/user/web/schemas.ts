@@ -15,6 +15,7 @@ export const userObjectSchema = {
     last_name: { type: "string" },
     created_at: { type: "number" },
     deleted: { type: "boolean" },
+    marked_to_delete: { type: "boolean" },
     delete_process_started_epoch: { type: "number" },
 
     status: { type: "string" },

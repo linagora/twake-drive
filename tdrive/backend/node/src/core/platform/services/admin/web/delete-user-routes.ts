@@ -62,6 +62,19 @@ const routes: FastifyPluginCallback = async (fastify: FastifyInstance, _opts, ne
 
       return { id: userId };
     });
+
+    fastify.post(`${urlRoot}/mark`, async (request, reply) => {
+      if (!authenticateAdminQuery(request, reply)) return false;
+
+      const { email } = request.body as TUserGetIdByEmailBody;
+      const userId = await controller.getUserIdByEmail(email);
+
+      if (!userId) {
+        return reply.status(404).send({ message: "User not found" });
+      }
+
+      return await controller.markToDelete(userId);
+    });
   }
   next();
 };

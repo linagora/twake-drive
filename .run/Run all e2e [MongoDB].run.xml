@@ -10,6 +10,7 @@
       <env name="PUBSUB_TYPE" value="local" />
       <env name="SEARCH_DRIVER" value="mongodb" />
       <env name="STORAGE_LOCAL_PATH" value="/tmp" />
+      <env name="ADMIN_ENDPOINT_SECRET" value="123" />
     </envs>
     <scope-kind value="DIRECTORY" />
     <test-directory value="$PROJECT_DIR$/tdrive/backend/node/test/e2e" />
