@@ -13,9 +13,10 @@ export enum FeatureNames {
   COMPANY_USER_QUOTA = 'company:user_quota',
   COMPANY_MANAGE_ACCESS = 'company:managed_access',
   COMPANY_AV_ENABLED = 'company:av_enabled',
+  COMPANY_AV_STATUS_ALLOWED = 'company:av_status_allowed',
 }
 
-export type FeatureValueType = boolean | number;
+export type FeatureValueType = boolean | number | { [key: string]: string[] };
 
 const availableFeaturesWithDefaults = new Map<FeatureNames, any>();
 
@@ -33,6 +34,7 @@ availableFeaturesWithDefaults.set(FeatureNames.COMPANY_DISPLAY_EMAIL, true);
 availableFeaturesWithDefaults.set(FeatureNames.COMPANY_USER_QUOTA, false);
 availableFeaturesWithDefaults.set(FeatureNames.COMPANY_MANAGE_ACCESS, true);
 availableFeaturesWithDefaults.set(FeatureNames.COMPANY_AV_ENABLED, false);
+availableFeaturesWithDefaults.set(FeatureNames.COMPANY_AV_STATUS_ALLOWED, {});
 
 /**
  * ChannelServiceImpl that allow you to manage feature flipping in Tdrive using react feature toggles

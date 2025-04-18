@@ -88,6 +88,7 @@ export enum CompanyFeaturesEnum {
   COMPANY_USER_QUOTA = "company:user_quota",
   COMPANY_MANAGE_ACCESS = "company:managed_access",
   COMPANY_AV_ENABLED = "company:av_enabled",
+  COMPANY_AV_STATUS_ALLOWED = "company:av_status_allowed",
 }
 
 export type CompanyFeaturesObject = {
@@ -102,6 +103,7 @@ export type CompanyFeaturesObject = {
   [CompanyFeaturesEnum.COMPANY_USER_QUOTA]?: boolean;
   [CompanyFeaturesEnum.COMPANY_MANAGE_ACCESS]?: boolean;
   [CompanyFeaturesEnum.COMPANY_AV_ENABLED]?: boolean;
+  [CompanyFeaturesEnum.COMPANY_AV_STATUS_ALLOWED]?: { [key: string]: string[] };
 };
 
 export type CompanyLimitsObject = {

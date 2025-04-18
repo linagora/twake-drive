@@ -97,6 +97,7 @@ export const companyObjectSchema = {
             [CompanyFeaturesEnum.COMPANY_USER_QUOTA]: { type: "boolean" },
             [CompanyFeaturesEnum.COMPANY_MANAGE_ACCESS]: { type: "boolean" },
             [CompanyFeaturesEnum.COMPANY_AV_ENABLED]: { type: "boolean" },
+            [CompanyFeaturesEnum.COMPANY_AV_STATUS_ALLOWED]: {} as { [key: string]: string[] },
             guests: { type: "number" }, // to rename or delete
             members: { type: "number" }, //  to rename or delete
             storage: { type: "number" }, //  to rename or delete

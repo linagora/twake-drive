@@ -70,6 +70,17 @@ export const useOnBuildContextMenu = (
           !item?.is_directory &&
           (item?.av_status || '').length > 0 &&
           !['uploaded', 'scanning', 'safe'].includes(item?.av_status || '');
+        
+        const avStatusAllowed: { [key: string]: string[] } = FeatureTogglesService.getFeatureValue(FeatureNames.COMPANY_AV_STATUS_ALLOWED);
+        const isCheckFileActionByAvStatus = !item?.is_directory && (item?.av_status || '').length > 0;
+        const isAllowToShare = isCheckFileActionByAvStatus && avStatusAllowed['share']?.includes(item?.av_status as string);
+        const isAllowToManageAccess = isCheckFileActionByAvStatus && avStatusAllowed['manage_access']?.includes(item?.av_status as string);
+        const isAllowToRescan = isCheckFileActionByAvStatus && avStatusAllowed['rescan']?.includes(item?.av_status as string);
+        const isAllowToDownload = isCheckFileActionByAvStatus && avStatusAllowed['download']?.includes(item?.av_status as string);
+        const isAllowToMove = isCheckFileActionByAvStatus && avStatusAllowed['move']?.includes(item?.av_status as string);
+        const isAllowToRename = isCheckFileActionByAvStatus && avStatusAllowed['rename']?.includes(item?.av_status as string);
+        const isAllowToCopyLink = isCheckFileActionByAvStatus && avStatusAllowed['copy_link']?.includes(item?.av_status as string);
+        const isAllowToCreateVersion = isCheckFileActionByAvStatus && avStatusAllowed['version']?.includes(item?.av_status as string);
 
         let menu: any[] = [];
 
@@ -89,7 +100,7 @@ export const useOnBuildContextMenu = (
               type: 'menu',
               icon: 'share-alt',
               text: Languages.t('components.item_context_menu.share'),
-              hide: hideShareItem || notSafe,
+              hide: hideShareItem || !isAllowToShare,
               onClick: () => setPublicLinkModalState({ open: true, id: item.id }),
             },
             {
@@ -97,7 +108,7 @@ export const useOnBuildContextMenu = (
               type: 'menu',
               icon: 'users-alt',
               text: Languages.t('components.item_context_menu.manage_access'),
-              hide: hideManageAccessItem || notSafe,
+              hide: hideManageAccessItem || !isAllowToManageAccess,
               onClick: () => setAccessModalState({ open: true, id: item.id }),
             },
             {
@@ -105,7 +116,7 @@ export const useOnBuildContextMenu = (
               type: 'menu',
               icon: 'shield-check',
               text: Languages.t('components.item_context_menu.rescan_document'),
-              hide: !(item.av_status === 'scan_failed'),
+              hide: !isAllowToRescan,
               onClick: () => {
                 reScan(item);
               },
@@ -122,12 +133,13 @@ export const useOnBuildContextMenu = (
               type: 'menu',
               icon: 'download-alt',
               text: Languages.t('components.item_context_menu.download'),
+              hide: !isAllowToDownload,
               onClick: () => {
                 if (item && item.is_directory) {
                   downloadZip([item!.id]);
                   console.log(item!.id);
                 } else {
-                  download(item.id, notSafe);
+                  download(item.id, !isAllowToDownload);
                 }
               },
             },
@@ -149,7 +161,7 @@ export const useOnBuildContextMenu = (
               type: 'menu',
               icon: 'folder-question',
               text: Languages.t('components.item_context_menu.move'),
-              hide: access === 'read' || inTrash || inPublicSharing || notSafe,
+              hide: access === 'read' || inTrash || inPublicSharing || !isAllowToMove,
               onClick: () =>
                 setSelectorModalState({
                   open: true,
@@ -175,7 +187,7 @@ export const useOnBuildContextMenu = (
               type: 'menu',
               icon: 'file-edit-alt',
               text: Languages.t('components.item_context_menu.rename'),
-              hide: access === 'read' || inTrash || notSafe,
+              hide: access === 'read' || inTrash || !isAllowToRename,
               onClick: () => setPropertiesModalState({ open: true, id: item.id, inPublicSharing }),
             },
             {
@@ -187,7 +199,7 @@ export const useOnBuildContextMenu = (
                 !item.access_info.public?.level ||
                 item.access_info.public?.level === 'none' ||
                 inTrash ||
-                notSafe,
+                !isAllowToCopyLink,
               onClick: () => {
                 copyToClipboard(getPublicLink(item || parent?.item));
                 ToasterService.success(
@@ -200,7 +212,7 @@ export const useOnBuildContextMenu = (
               type: 'menu',
               icon: 'history',
               text: Languages.t('components.item_context_menu.versions'),
-              hide: item.is_directory || inTrash || notSafe,
+              hide: item.is_directory || inTrash || !isAllowToCreateVersion,
               onClick: () => setVersionModal({ open: true, id: item.id }),
             },
             { type: 'separator', hide: access !== 'manage' || inTrash || notSafe },

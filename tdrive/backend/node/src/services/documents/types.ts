@@ -123,12 +123,14 @@ export enum DocumentEvents {
   DOCUMENT_SAHRED = "document_shared",
   DOCUMENT_VERSION_UPDATED = "document_version_updated",
   DOCUMENT_AV_SCAN_ALERT = "document_av_scan_alert",
+  INFECTED_DOCUMENT_REMOVED = "infected_document_removed",
 }
 
 export const eventToTemplateMap: Record<string, any> = {
   [DocumentEvents.DOCUMENT_AV_SCAN_ALERT]: "notification-document-av-scan-alert",
   [DocumentEvents.DOCUMENT_VERSION_UPDATED]: "notification-document-version-updated",
   [DocumentEvents.DOCUMENT_SAHRED]: "notification-document-shared",
+  [DocumentEvents.INFECTED_DOCUMENT_REMOVED]: "notification-infected-document-deletion-alert",
 };
 
 export enum NotificationActionType {

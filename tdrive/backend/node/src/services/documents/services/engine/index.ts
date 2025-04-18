@@ -83,6 +83,13 @@ export class DocumentsEngine implements Initializable {
       },
     );
 
+    localEventBus.subscribe(
+      DocumentEvents.INFECTED_DOCUMENT_REMOVED,
+      async (e: NotificationPayloadType) => {
+        await this.DispatchDocumentEvent(e, DocumentEvents.INFECTED_DOCUMENT_REMOVED);
+      },
+    );
+
     return this;
   }
 
@@ -96,5 +103,9 @@ export class DocumentsEngine implements Initializable {
 
   notifyDocumentAVScanAlert(notificationPayload: NotificationPayloadType) {
     localEventBus.publish(DocumentEvents.DOCUMENT_AV_SCAN_ALERT, notificationPayload);
+  }
+
+  notifyInfectedDocumentRemoved(notificationPayload: NotificationPayloadType) {
+    localEventBus.publish(DocumentEvents.INFECTED_DOCUMENT_REMOVED, notificationPayload);
   }
 }

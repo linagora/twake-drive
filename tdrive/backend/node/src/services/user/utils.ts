@@ -70,6 +70,8 @@ export function formatCompany(
       [CompanyFeaturesEnum.COMPANY_AV_ENABLED]: JSON.parse(
         config.get("drive.featureAntivirus") || "false",
       ),
+      [CompanyFeaturesEnum.COMPANY_AV_STATUS_ALLOWED]:
+        config.get("drive.featureAvStatusAllowed") || {},
     },
     {
       ...(res.plan?.features || {}),

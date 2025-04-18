@@ -3,7 +3,7 @@ import { getLogger, logger, TdriveLogger } from "../../../core/platform/framewor
 import NodeClam from "clamscan";
 import { AVStatus, DriveFile } from "src/services/documents/entities/drive-file";
 import { FileVersion } from "src/services/documents/entities/file-version";
-import { DriveExecutionContext } from "src/services/documents/types";
+import { DriveExecutionContext, NotificationActionType } from "../../documents/types";
 import globalResolver from "../../../services/global-resolver";
 import { getFilePath } from "../../files/services";
 import { getConfigOrDefault } from "../../../utils/get-config";
@@ -14,7 +14,8 @@ export class AVServiceImpl implements TdriveServiceProvider, Initializable {
   av: NodeClam = null;
   logger: TdriveLogger = getLogger("Antivirus Service");
   avEnabled: boolean = getConfigOrDefault<boolean>("drive.featureAntivirus", false);
-  private MAX_FILE_SIZE: number = getConfigOrDefault<number>("av.maxFileSize", 26214400); // 25 MB
+  deleteInfectedFileEnabled: boolean = getConfigOrDefault<boolean>("av.deleteInfectedFiles", false);
+  private MAX_FILE_SIZE: number = getConfigOrDefault<number>("av.maxFileSize", 4294967295); // 4GB
 
   async init(): Promise<this> {
     try {
@@ -56,6 +57,7 @@ export class AVServiceImpl implements TdriveServiceProvider, Initializable {
         this.logger.error(`File ${version.file_metadata.external_id} not found`);
         throw AVException.fileNotFound(`File ${version.file_metadata.external_id} not found`);
       }
+
       // check if the file is too large
       if (file.upload_data.size > this.MAX_FILE_SIZE) {
         this.logger.info(
@@ -79,6 +81,11 @@ export class AVServiceImpl implements TdriveServiceProvider, Initializable {
         } else if (isInfected) {
           await onScanComplete("malicious");
           this.logger.info(`Item ${item.id} is malicious. Viruses found: ${viruses.join(", ")}`);
+
+          // Delete infected files if feature flag is enabled
+          if (this.deleteInfectedFileEnabled) {
+            await this.deleteInfectedFile(item, context);
+          }
         } else {
           await onScanComplete("safe");
           this.logger.info(`Item ${item.id} is safe with no viruses detected.`);
@@ -93,6 +100,29 @@ export class AVServiceImpl implements TdriveServiceProvider, Initializable {
       // log the error
       this.logger.error(`Error scanning file ${item.last_version_cache.file_metadata.external_id}`);
       throw AVException.scanFailed("Document scanning encountered an error");
+    }
+  }
+
+  async deleteInfectedFile(item: Partial<DriveFile>, context: DriveExecutionContext) {
+    try {
+      // Delete infected file for permanent
+      await globalResolver.services.documents.documents.delete(item.id, null, context, true);
+      this.logger.info(`Infected file ${item.id} was automatically deleted`);
+
+      // Send notification to user about the file deletion
+      globalResolver.services.documents.engine.notifyInfectedDocumentRemoved({
+        context,
+        item: {
+          ...item,
+          company_id: context.company.id,
+        } as DriveFile,
+        type: NotificationActionType.DIRECT,
+        notificationReceiver: context.user.id,
+        notificationEmitter: "",
+      });
+      this.logger.info(`Sent notification to ${context.user.id} about file deletion`);
+    } catch (error) {
+      this.logger.error(`Failed to delete infected file ${item.id}: ${error}`);
     }
   }
 }

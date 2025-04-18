@@ -149,13 +149,18 @@
     "featureDisplayEmail": "ENABLE_FEATURE_DISPLAY_EMAIL",
     "featureUserQuota": "ENABLE_FEATURE_USER_QUOTA",
     "featureManageAccess": "ENABLE_FEATURE_MANAGE_ACCESS",
-    "featureAntivirus": "ENABLE_FEATURE_ANTIVIRUS"
+    "featureAntivirus": "ENABLE_FEATURE_ANTIVIRUS",
+    "featureAvStatusAllowed": {
+      "__name": "FEATURE_AV_STATUS_ALLOWED",
+      "__format": "json"
+    }
   },
   "av": {
     "host": "AV_HOST",
     "port": "AV_PORT",
     "debugMode": "AV_DEBUG_MODE",
     "timeout": "AV_TIMEOUT",
-    "maxFileSize": "AV_MAX_FILE_SIZE"
+    "maxFileSize": "AV_MAX_FILE_SIZE",
+    "deleteInfectedFiles": "AV_DELETE_INFECTED_FILES"
   }
 }

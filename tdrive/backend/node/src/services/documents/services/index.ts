@@ -718,6 +718,7 @@ export class DocumentsService {
     id: string | RootType | TrashType,
     item?: DriveFile,
     context?: DriveExecutionContext,
+    isPermanentlyDelete?: boolean,
   ): Promise<void> => {
     if (!id) {
       //We can't remove the root folder
@@ -864,6 +865,10 @@ export class DocumentsService {
         }
 
         await this.update(item.id, item, context);
+
+        if (isPermanentlyDelete) {
+          await this.delete(item.id, item, context);
+        }
       }
       await updateItemSize(previousParentId, this.repository, context);
     }
@@ -1833,7 +1838,10 @@ export class DocumentsService {
     item.av_status = status;
     await this.repository.save(item);
 
-    if (["malicious", "scan_failed"].includes(status)) {
+    if (
+      (!globalResolver.services.av?.deleteInfectedFileEnabled && status === "malicious") ||
+      status === "scan_failed"
+    ) {
       await this.notifyAVScanAlert(item, context);
     }
   };

@@ -128,14 +128,25 @@
     "featureManageAccess": true,
     "defaultCompany": "00000000-0000-4000-0000-000000000000",
     "defaultUserQuota": 200000000,
-    "featureAntivirus": false
+    "featureAntivirus": false,
+    "featureAvStatusAllowed": {
+      "download": ["uploaded", "safe", "scanning", "scan_failed", "malicious"],
+      "share": ["uploaded", "safe", "scanning", "skipped"],
+      "rename": ["uploaded", "safe", "scanning"],
+      "move": ["uploaded", "safe", "scanning"],
+      "rescan": ["scan_failed"],
+      "copy_link": ["uploaded", "safe", "scanning"],
+      "manage_access": ["uploaded", "safe", "scanning", "skipped"],
+      "version": ["uploaded", "safe", "scanning"]
+    }
   },
   "av": {
     "host": "av",
     "port": 3310,
     "debugMode": false,
     "timeout": 2000,
-    "maxFileSize": 26214400
+    "maxFileSize": 4294967295,
+    "deleteInfectedFiles": false
   },
   "applications": {
     "grid": [
