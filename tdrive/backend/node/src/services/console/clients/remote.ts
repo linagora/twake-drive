@@ -332,6 +332,7 @@ export class ConsoleRemoteClient implements ConsoleServiceClient {
     const sessionRepository = gr.services.console.getSessionRepo();
     if (!sessionRepository) return;
     const sessions = (await sessionRepository.find({ sub: userId })).getEntities();
+    logger.info({ sessions }, "Sessions to delete");
     for (const session of sessions)
       if (!session.revoked_at) {
         session.revoked_at = new Date().getTime();
