@@ -187,7 +187,7 @@ export class UserServiceImpl {
         user.deleted = true;
         user.delete_process_started_epoch = new Date().getTime();
 
-        await gr.services.console.getClient().userWasDeletedForceLogout(user.id);
+        await gr.services.console.getClient().userWasDeletedForceLogout(userCopy.email_canonical);
 
         await this.save(user);
 
