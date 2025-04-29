@@ -109,6 +109,12 @@ export class DriveFile {
   @Column("access_info", "encoded_json")
   access_info: AccessInformation;
 
+  @Column("migrated", "tdrive_boolean")
+  migrated: boolean;
+
+  @Column("migration_date", "number")
+  migration_date: number;
+
   /**
    * If this field is non-null, then an editing session is in progress (probably in OnlyOffice).
    * Use {@see EditingSessionKeyFormat} to generate and interpret it.

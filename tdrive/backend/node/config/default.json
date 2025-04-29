@@ -149,6 +149,13 @@
     "maxFileSize": 4294967295,
     "deleteInfectedFiles": false
   },
+  "migration": {
+    "cozyDomain": "stg.lin-saas.com",
+    "cozyManagerUrl": "https://manager-int.cozycloud.cc/api/public",
+    "cozyManagerToken": "COZY_TOKEN_HERE",
+    "pollInterval": 5000,
+    "maxRetries": 3
+  },
   "applications": {
     "grid": [
       {

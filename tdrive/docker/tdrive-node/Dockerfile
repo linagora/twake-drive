@@ -16,7 +16,7 @@ COPY backend/node/package*.json ./
 # Test Stage
 FROM node-base AS test
 
-RUN npm install
+RUN npm install --legacy-peer-deps
 COPY backend/node/ .
 
 # Add frontend Stage
@@ -25,7 +25,7 @@ FROM node-base AS installed-libs
 COPY backend/node/ .
 #Install dev dependancies for build
 ENV NODE_ENV=development
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 #Build in production mode
 ENV NODE_ENV=production
@@ -40,7 +40,7 @@ FROM installed-libs AS development
 ENV NODE_ENV=development
 RUN npm install -g pino-pretty && \
     npm install -g tsc-watch && \
-    npm ci
+    npm ci --legacy-peer-deps
 CMD ["npm", "run", "dev:debug"]
 
 # Production Stage

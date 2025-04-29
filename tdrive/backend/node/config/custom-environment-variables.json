@@ -162,5 +162,12 @@
     "timeout": "AV_TIMEOUT",
     "maxFileSize": "AV_MAX_FILE_SIZE",
     "deleteInfectedFiles": "AV_DELETE_INFECTED_FILES"
+  },
+  "migration": {
+    "cozyDomain": "COZY_DOMAIN",
+    "cozyManagerUrl": "COZY_MANAGER_URL",
+    "cozyManagerToken": "COZY_MANAGER_TOKEN",
+    "pollInterval": "MIGRATUION_POLL_INTERVAL",
+    "maxRetries": "MIGRATION_MAX_RETRIES"
   }
 }
