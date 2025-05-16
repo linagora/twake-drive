@@ -1,3 +1,29 @@
+# Twake Drive v1.0.7-rc12
+
+## Fixes and Improvements
+
+- Fix sessions could not remove after delete account success
+- Fix bug cannot update email with account remote
+
+# Twake Drive v1.0.7
+
+## Features
+
+- Big folder upload with new upload modal
+- Added root folder for all uploads, document creation, and cleanup after
+- Add testing identifier to new upload modal
+- Add delete user endpoint.
+- Added migration cli commands for user(s) and file(s).
+
+## Fixes and Improvements
+
+- Print memory usage periodically in the backend
+- Rollup final script file to add dependencies after
+- Made performance test runnable
+- Drive items are now properly removed from the search index when deleted
+- Faster listing for trash
+- Fix file/folder upload picker.
+
 # Twake Drive v1.0.6
 
 ## Features
