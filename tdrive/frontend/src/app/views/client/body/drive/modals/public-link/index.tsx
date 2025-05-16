@@ -140,7 +140,10 @@ const PublicLinkModalContent = (props: {
           disabled={loading}
           level={item?.access_info?.public?.level || 'none'}
           onChange={level => {
-            item && update(changePublicLink(item, { level }));
+            item && update({
+              ...changePublicLink(item, { level }),
+              is_update_access_to_share_link: true,
+            });
           }}
           />
         <SwitchToAdvancedSettingsRow

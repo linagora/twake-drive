@@ -114,7 +114,7 @@ export class DriveApiClient {
     );
   }
 
-  static async update(companyId: string, id: string, update: Partial<DriveItem>) {
+  static async update(companyId: string, id: string, update: Partial<DriveItem> & { is_update_access_to_share_link?: boolean }) {
     return await Api.post<Partial<DriveItem>, DriveItem>(
       `/internal/services/documents/v1/companies/${companyId}/item/${id}${appendTdriveToken()}`,
       update,

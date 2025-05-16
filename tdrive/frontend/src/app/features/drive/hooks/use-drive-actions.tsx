@@ -235,7 +235,7 @@ export const useDriveActions = (inPublicSharing?: boolean) => {
   );
 
   const update = useCallback(
-    async (update: Partial<DriveItem>, id: string, parentId: string, previousName?: string) => {
+    async (update: Partial<DriveItem> & { is_update_access_to_share_link?: boolean }, id: string, parentId: string, previousName?: string) => {
       try {
         const newItem = await DriveApiClient.update(companyId, id, update);
         if (previousName && previousName !== newItem.name && !update.name)

@@ -65,7 +65,7 @@ export const useDriveItem = (id: string) => {
   }, [id, setLoading, refresh, item?.item?.parent_id]);
 
   const update = useCallback(
-    async (update: Partial<DriveItem>, skipLoading = false) => {
+    async (update: Partial<DriveItem> & { is_update_access_to_share_link?: boolean }, skipLoading = false) => {
       if (!skipLoading) setLoading(true);
       try {
         await _update(update, id, item?.item?.parent_id || '');

@@ -257,7 +257,7 @@ export class DocumentsController {
   update = async (
     request: FastifyRequest<{
       Params: ItemRequestParams;
-      Body: Partial<DriveFile>;
+      Body: Partial<DriveFile> & { is_update_access_to_share_link?: boolean };
       Querystring: { public_token?: string };
     }>,
   ): Promise<DriveFile> => {

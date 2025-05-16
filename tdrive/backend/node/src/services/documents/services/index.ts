@@ -550,7 +550,7 @@ export class DocumentsService {
    */
   update = async (
     id: string,
-    content: Partial<DriveFile>,
+    content: Partial<DriveFile> & { is_update_access_to_share_link?: boolean },
     context: CompanyExecutionContext,
   ): Promise<DriveFile> => {
     if (!context) {
@@ -614,7 +614,7 @@ export class DocumentsService {
           }
           if (key === "access_info") {
             // if manage access is disabled, we don't allow changing access level
-            if (!this.manageAccessEnabled) {
+            if (!this.manageAccessEnabled && !content.is_update_access_to_share_link) {
               delete content.access_info;
             } else if (content.access_info) {
               const sharedWith = content.access_info.entities.filter(
