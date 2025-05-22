@@ -1,6 +1,8 @@
 /* eslint-disable prettier/prettier */
 import axios from "axios";
 import config from "config";
+import { Readable } from "stream";
+import { request } from "undici";
 
 export const DEFAULT_COMPANY = config.get<string>("drive.defaultCompany");
 export const COZY_DOMAIN = config.get<string>("migration.cozyDomain");
@@ -145,7 +147,8 @@ export async function uploadFile(
   userId: string,
   fileDirPath: string,
   userToken: string,
-  fileReadable: ReadableStream<any>,
+  fileReadable: Readable,
+  onProgress?: (chunkSize: number) => void,
 ) {
   const baseUrl = `https://${userId}.${COZY_DOMAIN}/files/${fileDirPath}`;
   const params = {
@@ -156,14 +159,16 @@ export async function uploadFile(
     Size: "",
   };
   const uploadUrl = buildUploadUrl(baseUrl, params);
-  const resp = await fetch(uploadUrl, {
+  fileReadable.on("data", chunk => {
+    if (onProgress) onProgress(chunk.length);
+  });
+  const { statusCode, body } = await request(uploadUrl, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${userToken}`,
       "Content-Type": "application/octet-stream",
     },
-    duplex: "half",
     body: fileReadable,
-  } as RequestInit);
-  return resp;
+  });
+  return { statusCode, body };
 }
