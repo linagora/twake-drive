@@ -6,7 +6,13 @@ import PaletteIcon from 'cozy-ui/transpiled/react/Icons/Palette'
 
 import { FolderCustomizerModal } from '../../views/Folder/FolderCustomizer'
 
-const personalizeFolder = ({ t, pushModal, popModal, hasWriteAccess }) => {
+const personalizeFolder = ({
+  t,
+  pushModal,
+  popModal,
+  driveId,
+  hasWriteAccess
+}) => {
   const icon = PaletteIcon
   const label = t('actions.personalizeFolder.label')
 
@@ -24,7 +30,11 @@ const personalizeFolder = ({ t, pushModal, popModal, hasWriteAccess }) => {
         const folderId = docs[0]._id
 
         pushModal(
-          <FolderCustomizerModal folderId={folderId} onClose={popModal} />
+          <FolderCustomizerModal
+            folderId={folderId}
+            driveId={driveId}
+            onClose={popModal}
+          />
         )
       }
     }
