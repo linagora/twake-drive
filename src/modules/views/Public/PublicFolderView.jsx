@@ -48,6 +48,7 @@ import {
 } from '@/modules/actions'
 import { duplicateTo } from '@/modules/actions/components/duplicateTo'
 import { moveTo } from '@/modules/actions/components/moveTo'
+import { personalizeFolder } from '@/modules/actions/components/personalizeFolder'
 import { makeExtraColumnsNamesFromMedia } from '@/modules/certifications'
 import { useExtraColumns } from '@/modules/certifications/useExtraColumns'
 import AddMenuProvider from '@/modules/drive/AddMenu/AddMenuProvider'
@@ -187,6 +188,7 @@ const PublicFolderView = () => {
       duplicateTo,
       hr,
       rename,
+      personalizeFolder,
       versions,
       hr,
       trash

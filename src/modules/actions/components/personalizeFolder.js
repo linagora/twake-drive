@@ -6,7 +6,7 @@ import PaletteIcon from 'cozy-ui/transpiled/react/Icons/Palette'
 
 import { FolderCustomizerModal } from '../../views/Folder/FolderCustomizer'
 
-const personalizeFolder = ({ t, pushModal, popModal }) => {
+const personalizeFolder = ({ t, pushModal, popModal, hasWriteAccess }) => {
   const icon = PaletteIcon
   const label = t('actions.personalizeFolder.label')
 
@@ -16,6 +16,7 @@ const personalizeFolder = ({ t, pushModal, popModal }) => {
     icon,
     displayCondition: docs =>
       flag('drive.folder-personalization.enabled') &&
+      hasWriteAccess &&
       docs.length === 1 &&
       docs[0].type === 'directory',
     action: docs => {
