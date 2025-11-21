@@ -21,10 +21,15 @@ import { COLORS } from '@/components/ColorPicker/constants'
 import { IconPicker } from '@/components/IconPicker/index.jsx'
 import { addRecentIcon } from '@/hooks'
 import logger from '@/lib/logger'
-import { buildFileOrFolderByIdQuery } from '@/queries'
+import {
+  buildFileOrFolderByIdQuery,
+  buildSharedDriveFileOrFolderByIdQuery
+} from '@/queries'
 
-export const FolderCustomizerModal = ({ folderId, onClose }) => {
-  const folderQuery = buildFileOrFolderByIdQuery(folderId)
+export const FolderCustomizerModal = ({ folderId, driveId, onClose }) => {
+  const folderQuery = driveId
+    ? buildSharedDriveFileOrFolderByIdQuery({ fileId: folderId, driveId })
+    : buildFileOrFolderByIdQuery(folderId)
   const result = useQuery(folderQuery.definition, folderQuery.options)
   const { fetchStatus, data: folder } = result
 
@@ -33,13 +38,13 @@ export const FolderCustomizerModal = ({ folderId, onClose }) => {
       <Spinner size="xxlarge" middle noMargin color="var(--white)" />
     </Backdrop>
   ) : (
-    <DumbFolderCustomizer folder={folder} onClose={onClose} />
+    <DumbFolderCustomizer folder={folder} driveId={driveId} onClose={onClose} />
   )
 }
 
 FolderCustomizerModal.displayName = 'FolderCustomizerModal'
 
-const DumbFolderCustomizer = ({ folder, onClose }) => {
+const DumbFolderCustomizer = ({ folder, driveId, onClose }) => {
   const { t } = useI18n()
   const tabItems = ['colors', 'icons']
   const [selectedColor, setSelectedColor] = useState(
@@ -83,13 +88,23 @@ const DumbFolderCustomizer = ({ folder, onClose }) => {
         delete decorations.icon_color
       }
 
-      await client.save({
-        ...folder,
-        metadata: {
-          ...folder.metadata,
-          decorations
-        }
-      })
+      if (driveId) {
+        await client.collection('io.cozy.files', { driveId }).update({
+          ...folder,
+          metadata: {
+            ...folder.metadata,
+            decorations
+          }
+        })
+      } else {
+        await client.save({
+          ...folder,
+          metadata: {
+            ...folder.metadata,
+            decorations
+          }
+        })
+      }
 
       if (selectedIcon && selectedIcon !== 'none') {
         addRecentIcon(selectedIcon)
