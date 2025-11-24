@@ -2,7 +2,7 @@
   "name": "Drive",
   "name_prefix": "Twake",
   "slug": "drive",
-  "version": "1.86.0",
+  "version": "1.87.0",
   "type": "webapp",
   "licence": "AGPL-3.0",
   "icon": "assets/app-icon.svg",
