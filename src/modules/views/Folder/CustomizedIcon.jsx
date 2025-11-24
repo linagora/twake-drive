@@ -13,7 +13,6 @@ export const CustomizedIcon = ({
   selectedIconColor,
   size
 }) => {
-  console.log('CustomizedIcon selectedColor', selectedColor)
   return (
     <div>
       <IconStack
