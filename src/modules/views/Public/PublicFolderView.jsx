@@ -178,7 +178,10 @@ const PublicFolderView = () => {
     byDocId,
     selectAll: () => toggleSelectAllItems(filesResult.data),
     isSelectAll,
-    isMobile
+    isMobile,
+    onClose: () => {
+      refreshAfterChange()
+    }
   }
   const actions = makeActions(
     [
