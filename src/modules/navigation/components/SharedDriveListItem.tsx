@@ -40,7 +40,11 @@ const SharedDriveListItem: FC<SharedDriveListItemProps> = ({
 }) => {
   const classes = useStyles()
 
-  const { driveId } = useParams()
+  const { driveId, folderId } = useParams()
+
+  const sharedDriveFolderId = sharedDrive.rules[0]?.values?.[0]
+  const isCurrentSharedDrive =
+    sharedDrive._id === driveId || sharedDriveFolderId === folderId
 
   const { link } = useSharedDriveLink(sharedDrive)
   const [isMenuAvailable, setIsMenuAvailable] = useState(false)
@@ -61,7 +65,7 @@ const SharedDriveListItem: FC<SharedDriveListItemProps> = ({
       >
         <NavIcon
           icon={
-            driveId === sharedDrive._id
+            isCurrentSharedDrive
               ? FileTypeSharedDriveActiveIcon
               : FileTypeSharedDriveIcon
           }
