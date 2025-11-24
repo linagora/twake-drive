@@ -11,7 +11,8 @@ const personalizeFolder = ({
   pushModal,
   popModal,
   driveId,
-  hasWriteAccess
+  hasWriteAccess,
+  onClose
 }) => {
   const icon = PaletteIcon
   const label = t('actions.personalizeFolder.label')
@@ -33,7 +34,10 @@ const personalizeFolder = ({
           <FolderCustomizerModal
             folderId={folderId}
             driveId={driveId}
-            onClose={popModal}
+            onClose={() => {
+              popModal()
+              onClose?.()
+            }}
           />
         )
       }
