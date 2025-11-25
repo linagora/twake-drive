@@ -15,7 +15,8 @@ import AddFolder from '@/modules/filelist/AddFolder'
 const AddFolderWrapper = ({
   columns,
   currentFolderId,
-  refreshFolderContent
+  refreshFolderContent,
+  driveId
 }) => {
   const vaultClient = useVaultClient()
   const { viewType } = useViewSwitcherContext()
@@ -27,6 +28,7 @@ const AddFolderWrapper = ({
           vaultClient={vaultClient}
           currentFolderId={currentFolderId}
           refreshFolderContent={refreshFolderContent}
+          driveId={driveId}
         />
       </div>
     )

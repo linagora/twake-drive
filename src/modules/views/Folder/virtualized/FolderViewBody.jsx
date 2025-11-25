@@ -23,6 +23,7 @@ const FolderViewBody = ({
   canDrag,
   withFilePath = false,
   refreshFolderContent = null,
+  driveId,
   orderProps = {
     sortOrder: {},
     setOrder: () => {},
@@ -117,6 +118,7 @@ const FolderViewBody = ({
           columns={columns}
           currentFolderId={currentFolderId}
           refreshFolderContent={refreshFolderContent}
+          driveId={driveId}
         />
       )
     }
@@ -140,6 +142,7 @@ const FolderViewBody = ({
       isEmpty={isEmpty}
       canDrag={canDrag}
       withFilePath={withFilePath}
+      driveId={driveId}
       orderProps={{
         sortOrder,
         setOrder
