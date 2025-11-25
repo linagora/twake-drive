@@ -115,7 +115,8 @@ const FolderViewBodyContent = ({
               registerCancelable,
               sharedPaths,
               t,
-              refreshFolderContent
+              refreshFolderContent,
+              displayedFolder
             })
           }}
           fetchMore={fetchMore}
@@ -149,7 +150,8 @@ const FolderViewBodyContent = ({
               registerCancelable,
               sharedPaths,
               t,
-              refreshFolderContent
+              refreshFolderContent,
+              displayedFolder
             })
           }}
           onInteractWithFile={onInteractWithFile}
