@@ -329,6 +329,7 @@
     "copy_files_only": "Impossible de copier les dossiers",
     "copy_not_allowed": "L'opération de copie n'est pas autorisée dans cette vue.",
     "cut_not_allowed": "L'opération de coupe n'est pas autorisée dans cette vue.",
+    "delete_not_allowed": "L'opération de suppression n'est pas autorisée dans cette vue.",
     "paste_error": "Une erreur s'est produite lors du collage des fichiers",
     "paste_failed": "Échec du collage des fichiers",
     "paste_sharing_error": "Impossible de coller les fichiers en raison de restrictions de partage. Veuillez utiliser l'action Déplacer à la place.",

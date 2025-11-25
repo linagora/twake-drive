@@ -147,7 +147,12 @@ const PublicFolderView = () => {
     sharingContext: null,
     allowCopy: hasWritePermissions && flag('drive.keyboard-shortcuts.enabled'),
     allowCut: hasWritePermissions && flag('drive.keyboard-shortcuts.enabled'),
-    isPublic: true
+    allowDelete:
+      hasWritePermissions && flag('drive.keyboard-shortcuts.enabled'),
+    isPublic: true,
+    pushModal,
+    popModal,
+    refresh: refreshAfterChange
   })
 
   useEffect(() => {

@@ -68,6 +68,7 @@ const SharedDriveFolderView = () => {
     sharingContext,
     allowCut: canWriteToCurrentFolder,
     allowCopy: false,
+    allowDelete: canWriteToCurrentFolder,
     pushModal,
     popModal,
     refresh

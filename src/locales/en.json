@@ -332,6 +332,7 @@
     "copy_files_only": "Cannot copy folders",
     "copy_not_allowed": "Copy operation is not allowed in this view.",
     "cut_not_allowed": "Cut operation is not allowed in this view.",
+    "delete_not_allowed": "Delete operation is not allowed in this view.",
     "paste_error": "An error occurred while pasting files",
     "paste_failed": "Failed to paste files",
     "paste_sharing_error": "Cannot paste files due to sharing restrictions. Please use the Move action instead.",
