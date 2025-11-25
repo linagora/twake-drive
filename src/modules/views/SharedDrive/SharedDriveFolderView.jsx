@@ -145,7 +145,7 @@ const SharedDriveFolderView = () => {
             <SharedDriveBreadcrumb driveId={driveId} folderId={folderId} />
             <Toolbar
               canUpload={false}
-              canCreateFolder={false}
+              canCreateFolder={canWriteToCurrentFolder}
               driveId={driveId}
               showShareButton={isInRootOfSharedDrive}
             />
@@ -160,6 +160,7 @@ const SharedDriveFolderView = () => {
               canDrag
               canUpload={canWriteToCurrentFolder}
               withFilePath={false}
+              driveId={driveId}
               orderProps={{
                 sortOrder,
                 setOrder: setSortOrder,

@@ -55,6 +55,7 @@ const Table = forwardRef(
       currentFolderId,
       withFilePath,
       actions,
+      driveId,
       orderProps = {
         sortOrder: {},
         setOrder: () => {}
@@ -107,6 +108,7 @@ const Table = forwardRef(
               actions={actions}
               onInteractWithFile={onInteractWithFile}
               refreshFolderContent={refreshFolderContent}
+              driveId={driveId}
             />
           )
         }
@@ -116,7 +118,8 @@ const Table = forwardRef(
         withFilePath,
         actions,
         onInteractWithFile,
-        refreshFolderContent
+        refreshFolderContent,
+        driveId
       ]
     )
 
