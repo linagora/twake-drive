@@ -60,6 +60,7 @@ const Grid = forwardRef(
       fetchMore,
       dragProps,
       currentFolderId,
+      driveId,
       onInteractWithFile,
       selectedItems,
       isSelectedItem
@@ -105,6 +106,7 @@ const Grid = forwardRef(
               vaultClient={vaultClient}
               currentFolderId={currentFolderId}
               refreshFolderContent={refreshFolderContent}
+              driveId={driveId}
             />
           )}
         </>
@@ -119,7 +121,8 @@ const Grid = forwardRef(
         sharingsValue,
         onInteractWithFile,
         vaultClient,
-        currentFolderId
+        currentFolderId,
+        driveId
       ]
     )
 

@@ -35,6 +35,7 @@ const FolderViewBodyContent = ({
   isEmpty,
   canDrag,
   withFilePath,
+  driveId,
   orderProps = {
     sortOrder: {},
     setOrder: () => {}
@@ -126,6 +127,7 @@ const FolderViewBodyContent = ({
           currentFolderId={currentFolderId}
           withFilePath={withFilePath}
           actions={actions}
+          driveId={driveId}
           ref={folderViewRef}
           onInteractWithFile={onInteractWithFile}
           orderProps={orderProps}
@@ -140,6 +142,7 @@ const FolderViewBodyContent = ({
           fetchMore={fetchMore}
           selectedItems={selectedItems}
           isSelectedItem={isSelectedItem}
+          driveId={driveId}
           dragProps={{
             enabled: canDrag,
             dragId: 'drag-drive',
