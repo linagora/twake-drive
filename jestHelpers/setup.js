@@ -2,6 +2,27 @@ import React from 'react'
 
 global.cozy = {}
 
+global.fetch = jest.fn(() =>
+  Promise.resolve({
+    ok: true,
+    status: 200,
+    headers: {
+      get: jest.fn(name => {
+        if (name.toLowerCase() === 'content-type') {
+          return 'application/json'
+        }
+        return null
+      })
+    },
+    json: async () => ({
+      rows: [],
+      data: []
+    }),
+    text: async () => '',
+    blob: async () => new Blob()
+  })
+)
+
 jest.mock('cozy-bar', () => ({
   ...jest.requireActual('cozy-bar'),
   BarComponent: () => <div>Bar</div>,
