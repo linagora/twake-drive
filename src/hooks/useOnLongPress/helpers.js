@@ -44,7 +44,7 @@ export const handleClick = ({
     setSelectedItems({ [file._id]: file })
   }
 
-  onInteractWithFile(file._id, event)
+  onInteractWithFile?.(file._id, event)
   setLastClickTime(currentTime)
 }
 
