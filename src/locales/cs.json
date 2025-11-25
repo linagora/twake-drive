@@ -1,0 +1,600 @@
+{
+  "Nav": {
+    "item_drive": "Soubory",
+    "item_recent": "Nedávné",
+    "item_sharings": "Sdílení",
+    "item_shared": "Sdílené mnou",
+    "item_activity": "Aktivita",
+    "item_trash": "Koš",
+    "item_settings": "Nastavení",
+    "item_collect": "Administrace",
+    "item_shared_drives": "Sdílené disky",
+    "item_favorites": "Oblíbené",
+    "item_my_drive": "Můj disk",
+    "btn-client": "Získejte Twake Drive pro počítač",
+    "btn-client-web": "Získejte Twake",
+    "btn-client-mobile": "Vezměte si svůj osobní cloud s sebou: nainstalujte %{name} na všechna svá zařízení!",
+    "banner-txt-client": "Získejte %{name} pro počítač a synchronizujte své soubory bezpečně, aby byly kdykoli dostupné.",
+    "banner-btn-client": "Stáhnout",
+    "link-client": "https://cozy.io/en/download/",
+    "link-client-desktop": "https://nuts.cozycloud.cc/download/channel/stable/",
+    "link-client-android": "https://play.google.com/store/apps/details?id=io.cozy.flagship.mobile",
+    "link-client-ios": "https://apps.apple.com/app/cloud-personnel-cozy/id1600636174",
+    "link-client-web": "https://cozy.io/try-it",
+    "view_more": "Zobrazit více",
+    "view_less": "Zobrazit méně"
+  },
+  "breadcrumb": {
+    "title_drive": "Soubory",
+    "title_recent": "Nedávné",
+    "title_sharings": "Sdílení",
+    "title_shared": "Sdílené mnou",
+    "title_activity": "Aktivita",
+    "title_trash": "Koš",
+    "label": "Zobrazit cestu",
+    "title_shared_drives": "Disky",
+    "title_favorites": "Oblíbené"
+  },
+  "Toolbar": {
+    "more": "Více"
+  },
+  "toolbar": {
+    "menu_upload": "Nahrát soubory",
+    "item_more": "Více",
+    "menu_new_folder": "Složka",
+    "menu_new_encrypted_folder": "Šifrovaná složka",
+    "menu_select": "Vybrat položky",
+    "menu_share_folder": "Sdílet složku",
+    "menu_download": "Stáhnout",
+    "menu_sync_cozy": "Synchronizovat se s mým Twake",
+    "add_to_mine": "Přidat do mého Twake",
+    "menu_download_folder": "Stáhnout složku",
+    "menu_download_file": "Stáhnout tento soubor",
+    "menu_create_note": "Poznámka",
+    "menu_create_docs": "Dokumenty",
+    "menu_create_shortcut": "Zástupce",
+    "share": "Sdílet",
+    "trash": "Odstranit",
+    "leave": "Opustit sdílenou složku a smazat ji",
+    "menu_add": "Přidat",
+    "menu_create": "Vytvořit",
+    "menu_add_item": "Přidat položku",
+    "menu_onlyOffice": {
+      "text": "Textový dokument",
+      "spreadsheet": "Tabulka",
+      "slide": "Prezentace"
+    }
+  },
+  "Share": {
+    "create-cozy": "Vytvořit můj Twake"
+  },
+  "Files": {
+    "share": {
+      "cta": "Sdílet",
+      "title": "Sdílet",
+      "details": {
+        "title": "Detaily sdílení",
+        "createdAt": "Dne %{date}",
+        "ro": "Může číst",
+        "rw": "Může upravovat",
+        "desc": {
+          "ro": "Můžete si tento obsah prohlížet, stahovat a přidat do svého Twake. Budete dostávat aktualizace od vlastníka, ale sami ho nebudete moci upravovat.",
+          "rw": "Můžete tento obsah prohlížet, upravovat, mazat a přidat do svého Twake. Vaše úpravy budou viditelné v ostatních Cozies."
+        }
+      },
+      "error": {
+        "generic": "Při vytváření sdílecího odkazu došlo k chybě, zkuste to prosím znovu.",
+        "revoke": "Jejda, došlo k chybě. Kontaktujte nás prosím, abychom tuto chybu co nejdříve napravili."
+      },
+      "publicLink": {
+        "copied": "Zkopírováno",
+        "copy": "Kopírovat",
+        "title": "Odkaz ke sdílení",
+        "subtitle": "Veřejný odkaz"
+      },
+      "shared": "Sdílené",
+      "sharedBy": "Sdíleno uživatelem %{name}",
+      "sharedByMe": "Sdílené mnou",
+      "sharedWithMe": "Sdílené se mnou",
+      "sharingLink": {
+        "copied": "Zkopírováno",
+        "copy": "Kopírovat",
+        "title": "Odkaz ke sdílení"
+      },
+      "specialCase": {
+        "base": "Tento %{type} nelze sdílet jinak, pouze pomocí odkazu, protože",
+        "hasSharedFolder": "obsahuje sdílenou složku",
+        "isInSharedFolder": "je ve sdílené složce"
+      },
+      "title": "Sdílet",
+      "whoHasAccess": {
+        "title": "1 osoba má přístup |||| %{smart_count} lidí má přístup"
+      }
+    },
+    "viewer-fallback": "Pokud se soubor začal stahovat, můžete tento dialog zavřít.",
+    "dropzone": {
+      "teaser": "Přetáhněte soubory sem pro nahrání do:",
+      "noFolderSupport": "Přetahování složek ve vašem prohlížeči momentálně není podporováno. Prosím, nahrajte soubory ručně."
+    }
+  },
+  "table": {
+    "head_name": "Název",
+    "head_update": "Poslední aktualizace",
+    "head_size": "Velikost",
+    "head_status": "Sdílení",
+    "head_thumbnail_size": "Přepnout velikost náhledů",
+    "head_view_mode": "Způsob zobrazení",
+    "head_view_list": "Seznamové zobrazení",
+    "head_view_grid": "Mřížkové zobrazení",
+    "row_update_format": "LLL d, yyyy",
+    "row_update_format_full": "LLLL d, yyyy",
+    "row_read_only": "Sdílení (pouze pro čtení)",
+    "row_read_write": "Sdílení (čtení a zápis)",
+    "row_size_symbols": {
+      "B": "B",
+      "KB": "KB",
+      "MB": "MB",
+      "GB": "GB"
+    },
+    "head_updated_at_asc": "Nejprve nejstarší",
+    "head_updated_at_desc": "Nejprve nejnovější",
+    "head_size_asc": "Nejprve nejmenší",
+    "head_size_desc": "Nejprve největší",
+    "tooltip": {
+      "carbonCopy": {
+        "title": "Ověřená kopie",
+        "caption": "Indikuje, zda je dokument definován jako ověřená kopie poskytovaná třetí stranou, přičemž nebyl nijak upraven."
+      },
+      "electronicSafe": {
+        "title": "Elektronický trezor",
+        "caption": "Indikuje, zda je původní dokument zabezpečen službou s právní hodnotou a zárukou uchování po dobu 50 let od jeho uložení."
+      }
+    }
+  },
+  "Storage": {
+    "title": "Úložiště",
+    "availability": "%{smart_count} GB k dispozici",
+    "increase": "Rozšířit kapacitu"
+  },
+  "SelectionBar": {
+    "selected_count": "1 položka vybrána |||| %{smart_count} položek vybráno",
+    "share": "Sdílet",
+    "download": "Stáhnout",
+    "trash": "Odstranit",
+    "destroy": "Smazat natrvalo",
+    "rename": "Přejmenovat",
+    "restore": "Obnovit",
+    "close": "Zavřít",
+    "openWith": "Otevřít pomocí...",
+    "applePreview": "Náhled (Apple)",
+    "forward": "Přeposlat",
+    "forwardTo": "Přeposlat na...",
+    "moveto": "Přesunout do…",
+    "moveto_mobile": "Přesunout",
+    "phone-download": "Zpřístupnit offline",
+    "qualify": "Kategorizovat",
+    "history": "Historie",
+    "more": "Více",
+    "openWithinNextcloud": "Otevřít v Nextcloudu"
+  },
+  "DeleteConfirm": {
+    "title": "Smazat %{filename}? |||| Smazat %{smart_count} %{type}?",
+    "trash": "Bude přesunuto do koše. |||| Budou přesunuty do koše.",
+    "restore": "Stále jej můžete kdykoli obnovit. |||| Stále je můžete kdykoli obnovit.",
+    "share_accepted": "Sdílení bude ukončeno. Následující kontakty si ponechají kopii, ale vaše změny již nebudou synchronizovány:",
+    "share_waiting": "Sdílení bude ukončeno. Následujícím kontaktům již nebude sdílení zachováno a nebudou moci přistupovat ke sdílenému obsahu:",
+    "share_both": "Sdílení bude ukončeno. To znamená, že kontakty, které si uložily soubory do svého Twake, si ponechají kopii, zatímco ostatní kontakty ke sdílenému obsahu již nebudou mít přístup:",
+    "link": "Sdílení odkazem již nebude aktivní",
+    "referenced": "Některé soubory ve výběru jsou součástí sdíleného alba. Budou z něj odstraněny, pokud je přesunete do koše.",
+    "cancel": "Zrušit",
+    "delete": "Odstranit"
+  },
+  "EmptyTrashConfirm": {
+    "title": "Smazat natrvalo?",
+    "forbidden": "K těmto souborům již nebudete mít přístup.",
+    "restore": "Těchto souborů již nebudete moci obnovit, pokud jste si neudělali zálohu.",
+    "cancel": "Zrušit",
+    "delete": "Smazat vše",
+    "processing": "Koš se právě vyprazdňuje. Může to chvíli trvat.",
+    "success": "Koš byl vyprázdněn.",
+    "error": "Došlo k chybě, zkuste to prosím znovu."
+  },
+  "DestroyConfirm": {
+    "title": "Smazat %{filename}? |||| Smazat %{smart_count} %{type}?",
+    "forbidden": "K tomuto %{type} již nebudete mít přístup. |||| K těmto %{type} již nebudete mít přístup.",
+    "restore": "Tento %{type} již nebudete moct obnovit, pokud jste si neudělali zálohu. |||| Tyto %{type} již nebudete moct obnovit, pokud jste si neudělali zálohu.",
+    "cancel": "Zrušit",
+    "delete": "Smazat natrvalo",
+    "success": "Tento %{type} byl natrvalo smazán. |||| %{smart_count} %{type} bylo natrvalo smazáno.",
+    "error": "Došlo k chybě, zkuste to prosím znovu."
+  },
+  "quotaalert": {
+    "title": "Vaše úložiště je plné :(",
+    "desc": "Odstraňte prosím soubory, vyprázdněte koš nebo rozšiřte kapacitu úložiště před dalším nahráním souborů.",
+    "confirm": "OK",
+    "increase": "Zvětšit kapacitu disku"
+  },
+  "loading": {
+    "message": "Načítám",
+    "onlyOfficeCreateInProgress": "Vytváří se aktuální soubor..."
+  },
+  "empty": {
+    "title": "V této složce nemáte žádné soubory.",
+    "text": "Klikněte na tlačítko \"Vytvořit\" a přidejte do této složky soubory.",
+    "trash_title": "V koši nemáte žádné smazané soubory.",
+    "trash_text": "Přesuňte nepotřebné soubory do koše a trvale smažte položky, abyste uvolnili místo v úložišti."
+  },
+  "error": {
+    "open_folder": "Při otevírání složky došlo k chybě.",
+    "open_file": "Při otevírání souboru došlo k chybě.",
+    "button": {
+      "reload": "Aktualizovat nyní"
+    },
+    "download_file": {
+      "offline": "Pro stažení tohoto souboru musíte být připojeni k síti.",
+      "missing": "Tento soubor není k dispozici.",
+      "encryption_many": "Nelze stáhnout více šifrovaných souborů najednou."
+    }
+  },
+  "alert": {
+    "could_not_open_file": "Soubor nelze otevřít",
+    "try_again": "Došlo k chybě, zkuste to prosím za chvíli.",
+    "restore_file_success": "Výběr byl úspěšně obnoven.",
+    "trash_file_success": "Výběr byl přesunut do koše.",
+    "destroy_file_success": "Výběr byl natrvalo smazán.",
+    "folder_name": "Prvek %{folderName} již existuje, zvolte nové jméno.",
+    "file_name": "Prvek %{fileName} již existuje, zvolte nové jméno.",
+    "file_name_missing": "Jméno souboru chybí, zvolte nové jméno.",
+    "file_name_illegal_name": "Název %{fileName} je neplatný, zvolte prosím jiné.",
+    "file_name_illegal_characters": "Prvek %{fileName} obsahuje neplatné znaky: %{characters}",
+    "folder_generic": "Došlo k chybě, zkuste to prosím znovu.",
+    "folder_abort": "Pro uložení nové složky musíte zadat jméno. Vaše data nebyla uložena.",
+    "offline": "Tato funkce není dostupná offline.",
+    "preparing": "Příprava souborů…"
+  },
+  "intents": {
+    "alert": {
+      "error": "Nepodařilo se automaticky nahrát soubor, nahrajte jej prosím ručně pomocí menu nahrávání."
+    },
+    "picker": {
+      "select": "Vybrat",
+      "cancel": "Zrušit",
+      "new_folder": "Nová složka",
+      "instructions": "Vyberte cíl"
+    }
+  },
+  "UploadQueue": {
+    "header": "Nahrává se %{smart_count} fotografie do Twake Drive |||| Nahrává se %{smart_count} fotografií do Twake Drive",
+    "header_mobile": "Nahrává se %{done} z %{total}",
+    "header_done": "Úspěšně nahráno %{done} z %{total}",
+    "success_flagship": "%{smart_count} soubor byl úspěšně nahrán. |||| %{smart_count} souborů bylo úspěšně nahráno.",
+    "close": "Zavřít",
+    "item": {
+      "pending": "Čeká"
+    }
+  },
+  "Viewer": {
+    "close": "Zavřít",
+    "noviewer": {
+      "download": "Stáhnout tento soubor",
+      "openWith": "Otevřít v...",
+      "openInOnlyOffice": "Otevřít v Only Office",
+      "cta": {
+        "saveTime": "Ušetřete čas!",
+        "installDesktop": "Nainstalujte synchronizační nástroj pro váš počítač",
+        "accessFiles": "Přistupujte ke svým souborům přímo z počítače"
+      }
+    },
+    "actions": {
+      "download": "Stáhnout",
+      "forward": "Přeposlat"
+    },
+    "loading": {
+      "error": "Tento soubor se nepodařilo načíst. Máte právě funkční připojení k internetu?",
+      "retry": "Zkusit znovu"
+    },
+    "error": {
+      "noapp": "Žádná aplikace na vašem zařízení nemůže tento soubor otevřít.",
+      "generic": "Při otevírání souboru došlo k chybě, zkuste to prosím znovu.",
+      "noNetwork": "Momentálně jste offline."
+    },
+    "panel": {
+      "title": "Užitečné informace"
+    }
+  },
+  "Move": {
+    "to": "Přesunout do:",
+    "action": "Přesunout",
+    "cancel": "Zrušit",
+    "modalTitle": "Přesunout",
+    "title": "1 položka |||| %{smart_count} položek",
+    "success": "%{subject} byl přesunut do %{target}. |||| %{smart_count} položek bylo přesunuto do %{target}.",
+    "error": "Při přesunu tohoto prvku došlo k chybě, zkuste to prosím později. |||| Při přesunu těchto položek došlo k chybě, zkuste to prosím později.",
+    "cancelled": "%{subject} byl přesunut zpět do původní složky. |||| %{smart_count} položek bylo přesunuto zpět do původní složky.",
+    "cancelledWithRestoreErrors": "Položka %{subject} byla vrácena do původní složky, došlo k %{restoreErrorsCount} chybám při obnově souborů z koše. |||| %{smart_count} položek bylo vráceno do původní složky, došlo k %{restoreErrorsCount} chybám při obnově souborů z koše.",
+    "cancelled_error": "Omlouváme se, při vracení souboru došlo k chybě. |||| Omlouváme se, při vracení těchto položek došlo k chybě.",
+    "multipleEntries": "1 položka |||| %{smart_count} položek",
+    "addFolder": "Přidat složku",
+    "outsideSharedFolder": {
+      "title": "Přesouvání mimo složku %{sharedFolder}",
+      "content_1": "Pozor, chcete přesunout %{name} ze sdílené složky %{sharedFolder}. |||| Pozor, chcete přesunout %{smart_count} %{type}s ze sdílené složky %{sharedFolder}.",
+      "content_2": "Tento přesun odstraní %{type} %{name} ze sdílené složky %{sharedFolder} a uloží ho do koše u všech účastníků sdílení. |||| Tímto přemístěním bude %{smart_count} %{type}s ze sdílené složky %{sharedFolder} odstraněno a uloženo do koše u všech účastníků sdílení.",
+      "cancel": "Zrušit",
+      "confirm": "Rozumím"
+    },
+    "insideSharedFolder": {
+      "title": "Přesunout do sdílené složky?",
+      "content": "Všichni uživatelé s přístupem do %{destination} budou mít také přístup k vybranému %{type}.",
+      "cancel": "Zrušit",
+      "confirm": "OK"
+    },
+    "sharedFolderInsideAnother": {
+      "title": "Nelze přesunout",
+      "content_1": "Pokoušíte se přesunout sdílený prvek do sdílené složky. Tento typ přesunu není povolen.",
+      "content_2": "Pokud přesto chcete %{source} přesunout do %{destination}, nejprve ukončete sdílení:",
+      "cancel": "Zrušit přesun",
+      "confirm": "Ukončit sdílení"
+    }
+  },
+  "ImportToDrive": {
+    "title": "1 položka |||| %{smart_count} položek",
+    "to": "Uložit do:",
+    "action": "Uložit",
+    "cancel": "Zrušit",
+    "success": "Uložen %{smart_count} soubor |||| Uloženo %{smart_count} souborů",
+    "error": "Něco se pokazilo. Zkuste to prosím znovu."
+  },
+  "FileOpenerExternal": {
+    "fileNotFoundError": "Chyba: soubor nenalezen"
+  },
+  "TOS": {
+    "updated": {
+      "title": "GDPR nabylo účinnosti!",
+      "detail": "V souvislosti s obecným nařízením o ochraně osobních údajů (GDPR) Twake aktualizoval své smluvní podmínky (%{link}) a změna bude platná pro všechny naše uživatele Twake od 25. května 2018.",
+      "cta": "Přijmout podmínky a pokračovat",
+      "disconnect": "Odmítnout a odhlásit se",
+      "error": "Něco se pokazilo, zkuste to prosím později."
+    }
+  },
+  "manifest": {
+    "permissions": {
+      "contacts": {
+        "description": "Nutné pro sdílení souborů s vašimi kontakty"
+      },
+      "groups": {
+        "description": "Nutné pro sdílení souborů s vašimi skupinami"
+      }
+    }
+  },
+  "models": {
+    "contact": {
+      "defaultDisplayName": "Anonymní"
+    }
+  },
+  "Scan": {
+    "none": "Nic",
+    "scan_a_doc": "Naskenovat dokument",
+    "save_doc": "Uložit dokument",
+    "filename": "Název souboru",
+    "save": "Uložit",
+    "cancel": "Zrušit",
+    "qualify": "Kategorizovat",
+    "requalify": "Překategorizovat",
+    "apply": "Použít",
+    "error": {
+      "offline": "Momentálně jste offline a tuto funkci nemůžete použít. Zkuste to později.",
+      "uploading": "Právě nahráváte jiný soubor. Počkejte na dokončení a zkuste to znovu.",
+      "generic": "Něco se pokazilo. Zkuste to prosím znovu."
+    },
+    "successful": {
+      "qualified_ok": "Váš soubor byl úspěšně kategorizován."
+    }
+  },
+  "History": {
+    "description": "Posledních 20 verzí vašich souborů je automaticky uchováváno. Vyberte verzi pro stažení.",
+    "current_version": "Aktuální verze",
+    "loading": "Načítání...",
+    "noFileVersionEnabled": "Twake brzy bude schopno archivovat poslední úpravy souborů, abyste o ně již nikdy nepřišli."
+  },
+  "External": {
+    "redirection": {
+      "title": "Přesměrování",
+      "text": "Budete přesměrováni…",
+      "error": "Při přesměrování došlo k chybě. Obvykle to znamená, že obsah souboru není ve správném formátu."
+    }
+  },
+  "RenameModal": {
+    "title": "Přejmenovat",
+    "description": "Chystáte se změnit příponu souboru. Chcete pokračovat?",
+    "continue": "Pokračovat",
+    "cancel": "Zrušit"
+  },
+  "Shortcut": {
+    "title_modal": "Vytvořit zástupce",
+    "filename": "Název",
+    "url": "URL",
+    "cancel": "Zrušit",
+    "create": "Vytvořit",
+    "created": "Váš zástupce byl vytvořen",
+    "errored": "Došlo k chybě",
+    "filename_error_ends": "Jméno musí končit na .url",
+    "needs_info": "Zástupce musí mít alespoň URL a název",
+    "url_badformat": "URL není ve správném formátu"
+  },
+  "OnlyOffice": {
+    "Error": {
+      "title": "Něco se pokazilo",
+      "text": "Zkuste stránku prosím obnovit"
+    },
+    "readOnly": {
+      "title": "Pouze ke čtení",
+      "tooltip": "Máte oprávnění pouze ke čtení tohoto dokumentu. Kontaktujte vlastníka, aby vám udělil právo zápisu."
+    },
+    "createFileName": {
+      "text": "Nový textový dokument",
+      "spreadsheet": "Nová tabulka",
+      "slide": "Nová prezentace"
+    },
+    "toolbar": {
+      "goToHome": "Domů"
+    },
+    "actions": {
+      "edit": "Upravit",
+      "validate": "Potvrdit"
+    },
+    "tooltip": {
+      "title": "Upravit dokument",
+      "text": "Dokument je momentálně pouze ke čtení. Kliknutím zde jej můžete upravit.",
+      "actions": {
+        "ok": "OK",
+        "hide": "Nezobrazovat"
+      }
+    }
+  },
+  "Migration": {
+    "title": "Aktualizace Twake Drive",
+    "content": "Twake Drive je třeba aktualizovat, aby byla zajištěna jeho stabilita. Chcete to provést nyní? Pokud odmítnete, zeptáme se znovu později.",
+    "confirm": "Dobře, aktualizovat!",
+    "cancel": "Ne, nyní ne"
+  },
+  "searchbar": {
+    "placeholder": "Vyhledat...",
+    "empty": "Pro dotaz „%{query}“ nebyl nalezen žádný výsledek."
+  },
+  "button": {
+    "back": "Zpět",
+    "add": "Přidat",
+    "create": "Vytvořit"
+  },
+  "search": {
+    "action": "Hledat",
+    "empty": {
+      "title": "Žádný výsledek",
+      "subtitle": "Pro dotaz „%{query}“ nebyl nalezen žádný výsledek."
+    }
+  },
+  "PushBanner": {
+    "quota": {
+      "text": "Skoro jste vyčerpali úložiště. Pokud dosáhnete limitu, Twake přestane synchronizovat soubory. Můžete smazat soubory, vyprázdnit koš nebo změnit tarif.",
+      "actions": {
+        "first": "Rozumím",
+        "second": "Podívat se na plány"
+      }
+    }
+  },
+  "FileDivergedModal": {
+    "title": "Někdo tento soubor upravil",
+    "content": "Někdo tento soubor upravil mimo Twake, zatímco jste na něm pracoval(a). Máte dvě možnosti: zobrazit jeho změny místo svých nebo pokračovat v úpravách v novém souboru.",
+    "confirm": "Pokračovat v úpravách",
+    "cancel": "Zobrazit změny",
+    "error": "Došlo k chybě, zkuste to prosím znovu.",
+    "confirmReload": {
+      "title": "Zobrazit změny",
+      "content": "Pokud přejdete do nového souboru, vaše změny budou zrušeny.",
+      "cancel": "Zrušit",
+      "confirm": "Rozumím"
+    },
+    "viewMode": {
+      "title": "Někdo tento soubor upravil",
+      "content": "Někdo změnil obsah tohoto souboru. Můžete tyto změny zobrazit.",
+      "confirm": "Zobrazit změny"
+    }
+  },
+  "FileDeletedModal": {
+    "title": "Někdo tento soubor smazal",
+    "content": "Někdo tento soubor smazal, zatímco jste ho upravoval(a). Můžete přestat upravovat nebo soubor obnovit pro pokračování v úpravách.",
+    "confirm": "Obnovit soubor",
+    "cancel": "Vrátit změny zpět",
+    "error": "Došlo k chybě, zkuste to prosím znovu."
+  },
+  "TrashedBanner": {
+    "text": "Položka je v koši",
+    "destroy": "Smazat natrvalo",
+    "restore": "Obnovit",
+    "restoreSuccess": "Položka byla obnovena",
+    "restoreError": "Došlo k chybě, zkuste to prosím znovu.",
+    "destroySuccess": "Položka byla smazána"
+  },
+  "EntriesType": {
+    "file": "soubor |||| soubory",
+    "directory": "složka |||| složky",
+    "element": "prvek |||| prvky"
+  },
+  "NotFound": {
+    "title": "Položka nebyla nalezena",
+    "text": "Na této adrese nic nebylo nalezeno. Může se jednat o chybný zápis."
+  },
+  "NextcloudBreadcrumb": {
+    "root": "Sdílené disky",
+    "trash": "Koš"
+  },
+  "NextcloudToolbar": {
+    "share": "Sdílet"
+  },
+  "NextcloudDeleteConfirm": {
+    "title": "Smazat %{filename}? |||| Smazat %{smart_count} %{type}?",
+    "trash": "Položka bude přesunuta do koše v Nextcloudu. |||| Položky budou přesunuty do koše v Nextcloudu.",
+    "restore": "Vždy ji můžete obnovit z koše v Nextcloudu, kdykoli budete chtít.",
+    "error": "Došlo k chybě, zkuste to prosím znovu.",
+    "cancel": "Zrušit",
+    "delete": "Smazat"
+  },
+  "FileName": {
+    "sharedDrive": "Disky",
+    "trash": "Koš"
+  },
+  "NextcloudBanner": {
+    "title": "Níže uvedené položky jsou zobrazeny z úložiště Nextcloud a nejsou uloženy ve vašem Twake."
+  },
+  "favorites": {
+    "label": {
+      "add": "Přidat do oblíbených",
+      "addMobile": "Oblíbené",
+      "remove": "Odebrat z oblíbených"
+    },
+    "error": "Došlo k chybě, zkuste to prosím znovu.",
+    "success": {
+      "add": "%{filename} byl přidán do oblíbených |||| Tyto položky byly přidány do oblíbených",
+      "remove": "%{filename} byl odstraněn z oblíbených |||| Tyto položky byly odstraněny z oblíbených"
+    }
+  },
+  "TrashToolbar": {
+    "emptyTrash": "Vyprázdnit koš"
+  },
+  "RestoreNextcloudFile": {
+    "label": "Obnovit",
+    "success": "Položka byla obnovena",
+    "error": "Došlo k chybě, zkuste to prosím znovu."
+  },
+  "actions": {
+    "infos": "Detaily a kategorizace",
+    "infosMobile": "Detaily",
+    "duplicateTo": {
+      "label": "Duplikovat do…"
+    },
+    "duplicateToMobile": {
+      "label": "Duplikovat"
+    }
+  },
+  "DuplicateModal": {
+    "subTitle": "Duplikovat do:",
+    "confirmLabel": "Duplikovat sem",
+    "success": "%{fileName} byl duplikován do %{destinationName}. |||| %{smart_count} položek bylo duplikováno do %{destinationName}.",
+    "error": "Došlo k chybě, zkuste to prosím znovu."
+  },
+  "OpenFolderButton": {
+    "label": "Otevřít složku"
+  },
+  "LastUpdate": {
+    "titleFormat": "LLLL dd, yyyy, HH:MM"
+  },
+  "AddMenu": {
+    "readOnlyFolder": "Toto je složka pouze pro čtení. Nemůžete provést tuto akci."
+  },
+  "PublicNoteRedirect": {
+    "error": {
+      "title": "Nelze otevřít dokument",
+      "subtitle": "Odkaz ke sdílení chybí nebo je neplatný. Zkontrolujte u vlastníka přístupová práva."
+    }
+  }
+}
