@@ -685,7 +685,8 @@
     },
     "personalizeFolder": {
       "label": "Personalize folder"
-    }
+    },
+    "summariseByAI": "Summarise"
   },
   "DuplicateModal": {
     "subTitle": "Duplicate to:",

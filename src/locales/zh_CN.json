@@ -92,7 +92,8 @@
   "actions": {
     "personalizeFolder": {
       "label": "个性化文件夹"
-    }
+    },
+    "summariseByAI": "总结"
   },
   "FolderCustomizer": {
     "title": "个性化文件夹",

@@ -33,7 +33,8 @@ import {
   versions,
   hr,
   share,
-  selectAllItems
+  selectAllItems,
+  summariseByAI
 } from '@/modules/actions'
 import { addToFavorites } from '@/modules/actions/components/addToFavorites'
 import { moveTo } from '@/modules/actions/components/moveTo'
@@ -126,6 +127,8 @@ export const RecentView = () => {
       share,
       shareNative,
       download,
+      hr,
+      summariseByAI,
       hr,
       rename,
       moveTo,

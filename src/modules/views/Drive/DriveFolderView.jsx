@@ -34,7 +34,8 @@ import {
   infos,
   versions,
   hr,
-  selectAllItems
+  selectAllItems,
+  summariseByAI
 } from '@/modules/actions'
 import { addToFavorites } from '@/modules/actions/components/addToFavorites'
 import { duplicateTo } from '@/modules/actions/components/duplicateTo'
@@ -181,6 +182,8 @@ const DriveFolderView = () => {
       share,
       shareNative,
       download,
+      hr,
+      summariseByAI,
       hr,
       rename,
       moveTo,
