@@ -297,11 +297,14 @@ export const useKeyboardShortcuts = ({
   const handleDelete = useCallback(() => {
     if (!selectedItems.length || !pushModal || !popModal || !refresh) return
 
+    const driveId = selectedItems[0]?.driveId
+
     pushModal(
       <DeleteConfirm
         files={selectedItems}
         afterConfirmation={refresh}
         onClose={popModal}
+        driveId={driveId}
       />
     )
   }, [selectedItems, pushModal, popModal, refresh])
