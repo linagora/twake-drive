@@ -45,6 +45,7 @@ interface UseKeyboardShortcutsProps {
   sharingContext?: unknown
   allowCopy?: boolean
   allowCut?: boolean
+  allowDelete?: boolean
   isNextCloudFolder?: boolean
   isPublic?: boolean
   pushModal?: (modal: React.ReactElement) => void
@@ -60,6 +61,7 @@ export const useKeyboardShortcuts = ({
   sharingContext = null,
   allowCopy = true,
   allowCut = true,
+  allowDelete = true,
   isNextCloudFolder = false,
   isPublic = false,
   pushModal,
@@ -297,6 +299,14 @@ export const useKeyboardShortcuts = ({
   const handleDelete = useCallback(() => {
     if (!selectedItems.length || !pushModal || !popModal || !refresh) return
 
+    if (!allowDelete) {
+      showAlert({
+        message: t('alert.delete_not_allowed'),
+        severity: 'secondary'
+      })
+      return
+    }
+
     const driveId = selectedItems[0]?.driveId
 
     pushModal(
@@ -307,7 +317,7 @@ export const useKeyboardShortcuts = ({
         driveId={driveId}
       />
     )
-  }, [selectedItems, pushModal, popModal, refresh])
+  }, [selectedItems, pushModal, popModal, refresh, allowDelete, showAlert, t])
 
   useEffect(() => {
     if (!flag('drive.keyboard-shortcuts.enabled')) {
