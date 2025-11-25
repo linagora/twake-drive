@@ -1,6 +1,5 @@
-import { move } from 'cozy-client/dist/models/file'
-
 import logger from '@/lib/logger'
+import { executeMove } from '@/modules/paste'
 
 export const makeRows = ({ queryResults, IsAddingFolder, syncingFakeFile }) => {
   const rows = queryResults.flatMap(el => el.data)
@@ -24,7 +23,8 @@ export const onDrop =
     registerCancelable,
     sharedPaths,
     t,
-    refreshFolderContent
+    refreshFolderContent,
+    displayedFolder
   }) =>
   async (draggedItems, itemHovered, selectedItems) => {
     if (
@@ -45,9 +45,13 @@ export const onDrop =
             Array.isArray(sharedPaths) &&
             !sharedPaths.includes(itemHovered.path)
           await registerCancelable(
-            move(client, draggedItem, itemHovered, {
+            executeMove(
+              client,
+              draggedItem,
+              displayedFolder,
+              itemHovered,
               force
-            })
+            )
           )
         })
       )
