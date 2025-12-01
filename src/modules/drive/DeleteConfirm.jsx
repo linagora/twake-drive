@@ -85,7 +85,12 @@ export const DeleteConfirm = ({
   }, [client, files])
 
   const onDelete = useCallback(async () => {
+    // Prevent double executions
+    if (isDeleting) return
+
     setDeleting(true)
+    showAlert({ message: t('alert.trash_file_processing'), severity: 'info' })
+    onClose()
     await trashFiles(client, files, { showAlert, t, driveId })
     afterConfirmation()
     setSelectedItems(prevSelectedItems => {
@@ -96,7 +101,6 @@ export const DeleteConfirm = ({
         )
       )
     })
-    onClose()
   }, [
     client,
     files,
@@ -105,7 +109,8 @@ export const DeleteConfirm = ({
     showAlert,
     t,
     setSelectedItems,
-    driveId
+    driveId,
+    isDeleting
   ])
 
   const entriesType = getEntriesTypeTranslated(t, files)

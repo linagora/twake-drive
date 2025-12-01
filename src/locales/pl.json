@@ -75,6 +75,7 @@
     "items_pasted": "%{count} elementów zostało przeniesionych",
     "copy_files_only": "Nie można kopiować folderów",
     "copy_not_allowed": "Operacja kopiowania nie jest dozwolona w tym widoku.",
+    "cut_not_allowed": "Operacja wycinania nie jest dozwolona w tym widoku.",
     "paste_error": "Wystąpił błąd podczas wklejania plików",
     "paste_failed": "Wklejanie plików nie powiodło się",
     "paste_sharing_error": "Nie można wkleić plików z powodu ograniczeń udostępniania. Zamiast tego użyj akcji Przenieś.",
@@ -82,5 +83,25 @@
     "paste_not_allowed": "Nie możesz wkleić do tego folderu",
     "cannot_move_shared_drive": "Nie możesz przenieść folderu dysku udostępnionego",
     "cannot_copy_shared_drive": "Nie możesz skopiować folderu dysku współdzielonego"
+  },
+  "actions": {
+    "personalizeFolder": {
+      "label": "Personalizuj folder"
+    }
+  },
+  "FolderCustomizer": {
+    "title": "Personalizuj folder",
+    "description": "Wybierz konkretny kolor dla swojego folderu",
+    "cancel": "Anuluj",
+    "apply": "Zastosuj",
+    "error": "Wystąpił błąd, spróbuj ponownie.",
+    "tabs": {
+      "colors": "Kolory",
+      "icons": "Ikony"
+    },
+    "iconPicker": {
+      "recents": "Ostatnie",
+      "chooseCustomIcon": "Wybierz niestandardową ikonę"
+    }
   }
 }

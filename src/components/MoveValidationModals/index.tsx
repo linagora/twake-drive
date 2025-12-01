@@ -36,6 +36,7 @@ const MoveValidationModals: React.FC = () => {
           entries={[moveValidationModal.file]}
           onCancel={handleCancel}
           onConfirm={handleConfirm}
+          driveId={moveValidationModal.file?.driveId}
         />
       )
     case 'moveInside':
@@ -45,6 +46,7 @@ const MoveValidationModals: React.FC = () => {
           folderId={moveValidationModal.targetFolder._id}
           onCancel={handleCancel}
           onConfirm={handleConfirm}
+          driveId={moveValidationModal.targetFolder.driveId}
         />
       )
     case 'moveSharedInside':
@@ -54,6 +56,7 @@ const MoveValidationModals: React.FC = () => {
           folderId={moveValidationModal.targetFolder._id}
           onCancel={handleCancel}
           onConfirm={handleConfirm}
+          driveId={moveValidationModal.targetFolder.driveId}
         />
       )
     default:

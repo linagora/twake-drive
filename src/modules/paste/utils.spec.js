@@ -119,9 +119,16 @@ describe('resolveNameConflictsForCut', () => {
   let mockClient
 
   beforeEach(() => {
+    const mockStatById = jest.fn()
     mockClient = {
-      query: jest.fn()
+      query: jest.fn(),
+      collection: jest.fn(() => ({
+        statById: mockStatById
+      }))
     }
+    // Store reference to statById mock for easy access in tests
+    mockClient.mockStatById = mockStatById
+
     isFile.mockImplementation(file => file.type === 'file')
     jest.clearAllMocks()
   })
@@ -191,5 +198,90 @@ describe('resolveNameConflictsForCut', () => {
     expect(result[0].needsRename).toBe(true)
     expect(result[0].uniqueName).toBe('Documents (1)')
     expect(result[0].attributes.name).toBe('Documents (1)')
+  })
+
+  describe('Public mode (isPublic=true)', () => {
+    it('should resolve conflicts for files in public mode', async () => {
+      const files = [
+        {
+          _id: 'file1',
+          name: 'test.txt',
+          type: 'file',
+          attributes: { name: 'test.txt' }
+        },
+        {
+          _id: 'file2',
+          name: 'document.pdf',
+          type: 'file',
+          attributes: { name: 'document.pdf' }
+        }
+      ]
+
+      const existingItems = [{ name: 'test.txt' }, { name: 'other.txt' }]
+
+      mockClient.mockStatById.mockResolvedValue({
+        included: existingItems
+      })
+
+      const targetFolder = { _id: 'target-folder' }
+      const result = await resolveNameConflictsForCut(
+        mockClient,
+        files,
+        targetFolder,
+        true
+      )
+
+      expect(result).toHaveLength(2)
+
+      // First file should be renamed due to conflict
+      expect(result[0].needsRename).toBe(true)
+      expect(result[0].uniqueName).toBe('test (1).txt')
+      expect(result[0].attributes.name).toBe('test (1).txt')
+
+      // Second file should not be renamed (no conflict)
+      expect(result[1].needsRename).toBe(false)
+      expect(result[1].uniqueName).toBe('document.pdf')
+      expect(result[1].attributes.name).toBe('document.pdf')
+
+      // Should use collection.statById method for public mode
+      expect(mockClient.collection).toHaveBeenCalledWith('io.cozy.files')
+      expect(mockClient.mockStatById).toHaveBeenCalledWith('target-folder')
+      expect(mockClient.query).not.toHaveBeenCalled()
+    })
+
+    it('should resolve conflicts for folders in public mode', async () => {
+      const folders = [
+        {
+          _id: 'folder1',
+          name: 'Documents',
+          type: 'directory',
+          attributes: { name: 'Documents' }
+        }
+      ]
+
+      const existingItems = [{ name: 'Documents' }, { name: 'Pictures' }]
+
+      mockClient.mockStatById.mockResolvedValue({
+        included: existingItems
+      })
+
+      const targetFolder = { _id: 'target-folder' }
+      const result = await resolveNameConflictsForCut(
+        mockClient,
+        folders,
+        targetFolder,
+        true
+      )
+
+      expect(result).toHaveLength(1)
+      expect(result[0].needsRename).toBe(true)
+      expect(result[0].uniqueName).toBe('Documents (1)')
+      expect(result[0].attributes.name).toBe('Documents (1)')
+
+      // Should use collection.statById method for public mode
+      expect(mockClient.collection).toHaveBeenCalledWith('io.cozy.files')
+      expect(mockClient.mockStatById).toHaveBeenCalledWith('target-folder')
+      expect(mockClient.query).not.toHaveBeenCalled()
+    })
   })
 })

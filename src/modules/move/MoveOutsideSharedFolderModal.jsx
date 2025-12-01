@@ -15,11 +15,16 @@ import { buildFolderByPathQuery } from '@/queries'
 /**
  * Alert the user when is trying to move a folder/file outside of a shared folder
  */
-const MoveOutsideSharedFolderModal = ({ entries, onCancel, onConfirm }) => {
+const MoveOutsideSharedFolderModal = ({
+  entries,
+  driveId,
+  onCancel,
+  onConfirm
+}) => {
   const { t } = useI18n()
   const { getSharedParentPath } = useSharingContext()
 
-  const sharedParentPath = getSharedParentPath(entries[0].path)
+  const sharedParentPath = getSharedParentPath(entries[0]?.path || '')
   const folderByPathQuery = buildFolderByPathQuery(sharedParentPath)
   const { fetchStatus, data } = useQuery(
     folderByPathQuery.definition,
@@ -29,25 +34,29 @@ const MoveOutsideSharedFolderModal = ({ entries, onCancel, onConfirm }) => {
   if (fetchStatus === 'loaded') {
     const type = getEntriesTypeTranslated(t, entries)
 
+    const sharedFolderName = !driveId
+      ? data[0]?.name
+      : entries[0]?.path?.split('/')?.[2] ?? ''
+
     return (
       <ConfirmDialog
         open
         title={t('Move.outsideSharedFolder.title', {
-          sharedFolder: data[0].name
+          sharedFolder: sharedFolderName
         })}
         content={
           <>
             <Typography variant="body1" className="u-mb-half">
               {t('Move.outsideSharedFolder.content_1', {
-                sharedFolder: data[0].name,
-                name: entries[0].name,
+                sharedFolder: sharedFolderName,
+                name: entries[0]?.name,
                 type,
                 smart_count: entries.length
               })}
             </Typography>
             <Typography variant="body1">
               {t('Move.outsideSharedFolder.content_2', {
-                name: entries[0].name,
+                name: entries[0]?.name,
                 type,
                 smart_count: entries.length
               })}

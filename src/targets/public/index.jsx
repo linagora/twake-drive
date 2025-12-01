@@ -4,6 +4,7 @@
 // otherwise the themes will not be supplied and the app crashes
 import 'cozy-ui/transpiled/react/stylesheet.css'
 import 'cozy-ui/dist/cozy-ui.utils.min.css'
+import 'cozy-ui-plus/dist/stylesheet.css'
 import 'cozy-viewer/dist/stylesheet.css'
 import 'cozy-bar/dist/stylesheet.css'
 import 'cozy-sharing/dist/stylesheet.css'
@@ -16,7 +17,7 @@ import 'whatwg-fetch'
 import CozyClient, { models } from 'cozy-client'
 import { Document } from 'cozy-doctypes'
 import getSharedDocument from 'cozy-sharing/dist/getSharedDocument'
-import CozyTheme from 'cozy-ui/transpiled/react/providers/CozyTheme'
+import CozyTheme from 'cozy-ui-plus/dist/providers/CozyTheme'
 import { I18n, initTranslation } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import AppRouter from './components/AppRouter'

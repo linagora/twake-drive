@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { useClient } from 'cozy-client'
+import { fetchBlobFileById, isFile } from 'cozy-client/dist/models/file'
 import { useWebviewIntent } from 'cozy-intent'
 import { useVaultClient } from 'cozy-keys-lib'
 import {
@@ -49,7 +50,6 @@ export const useMoreMenuActions = file => {
   const showPrintAction = isPDFDoc && isPrintAvailable
   const isCozySharing = window.location.pathname === '/preview'
   const isSharedDrive = window.location.href.includes('/shareddrive/')
-  const isDisplayInSharedDrive = !(isSharedDrive && !canWriteToCurrentFolder)
 
   const actions = makeActions(
     [
@@ -61,9 +61,9 @@ export const useMoreMenuActions = file => {
       showPrintAction && print,
       hr,
       moveTo,
-      isDisplayInSharedDrive && duplicateTo,
-      isDisplayInSharedDrive && addToFavorites,
-      isDisplayInSharedDrive && removeFromFavorites,
+      !isSharedDrive && duplicateTo, // TO DO: Remove condtion when duplicating is available in shared drive
+      addToFavorites,
+      removeFromFavorites,
       hr,
       versions,
       hr,
@@ -79,7 +79,7 @@ export const useMoreMenuActions = file => {
       refresh: () => navigate('..'),
       navigate,
       hasWriteAccess: canWriteToCurrentFolder,
-      canMove: isDisplayInSharedDrive,
+      canMove: canWriteToCurrentFolder,
       isPublic: false,
       allLoaded,
       showAlert,
@@ -91,6 +91,8 @@ export const useMoreMenuActions = file => {
       openSharingLinkDisplayed: isCozySharing,
       syncSharingLink,
       isMobile,
+      fetchBlobFileById,
+      isFile,
       addSharingLink,
       driveId: file.driveId
     }

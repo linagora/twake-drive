@@ -10,6 +10,8 @@ import ExternalRedirect from '@/modules/navigation/ExternalRedirect'
 import { PublicNoteRedirect } from '@/modules/navigation/PublicNoteRedirect'
 import LightFileViewer from '@/modules/public/LightFileViewer'
 import PublicLayout from '@/modules/public/PublicLayout'
+import { PublicFolderDuplicateView } from '@/modules/views/Folder/PublicFolderDuplicateView'
+import { MovePublicFilesView } from '@/modules/views/Modal/MovePublicFilesView'
 import OnlyOfficeView from '@/modules/views/OnlyOffice'
 import OnlyOfficeCreateView from '@/modules/views/OnlyOffice/Create'
 import OnlyOfficePaywallView from '@/modules/views/OnlyOffice/OnlyOfficePaywallView'
@@ -91,6 +93,8 @@ const AppRouter = ({
                 path="paywall"
                 element={<OnlyOfficePaywallView isPublic={true} />}
               />
+              <Route path="move" element={<MovePublicFilesView />} />
+              <Route path="duplicate" element={<PublicFolderDuplicateView />} />
             </Route>
             <Route path="note/:fileId" element={<PublicNoteRedirect />} />
             <Route path="external/:fileId" element={<ExternalRedirect />} />

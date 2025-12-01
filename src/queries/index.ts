@@ -1,7 +1,12 @@
 import CozyClient, { Q, QueryDefinition } from 'cozy-client'
 import { QueryOptions } from 'cozy-client/types/types'
+import flag from 'cozy-flags'
 
-import { SHARED_DRIVES_DIR_ID, TRASH_DIR_ID } from '@/constants/config'
+import {
+  SHARED_DRIVES_DIR_ID,
+  TRASH_DIR_ID,
+  SETTINGS_DIR_PATH
+} from '@/constants/config'
 import {
   DOCTYPE_FILES_ENCRYPTION,
   DOCTYPE_ALBUMS,
@@ -37,20 +42,34 @@ export const buildDriveQuery: QueryBuilder<buildDriveQueryParams> = ({
   sortAttribute,
   sortOrder
 }) => ({
-  definition: () =>
-    Q('io.cozy.files')
+  definition: (): QueryDefinition => {
+    const shouldHideSettingsFolder = flag(
+      'home.wallpaper-personalization.enabled'
+    )
+    const partialIndexFilters: {
+      _id: { $nin: string[] }
+      path?: Record<string, unknown>
+    } = {
+      // This is to avoid fetching shared drives
+      // They are hidden clientside
+      _id: {
+        $nin: [TRASH_DIR_ID, 'io.cozy.files.shared-drives-dir']
+      }
+    }
+
+    if (shouldHideSettingsFolder) {
+      partialIndexFilters.path = {
+        $or: [{ $exists: false }, { $nin: [SETTINGS_DIR_PATH] }]
+      }
+    }
+
+    return Q('io.cozy.files')
       .where({
         dir_id: currentFolderId,
         type,
         [sortAttribute]: { $gt: null }
       })
-      .partialIndex({
-        // This is to avoid fetching shared drives
-        // They are hidden clientside
-        _id: {
-          $nin: [TRASH_DIR_ID, 'io.cozy.files.shared-drives-dir']
-        }
-      })
+      .partialIndex(partialIndexFilters)
       .indexFields(['dir_id', 'type', sortAttribute])
       .sortBy([
         { dir_id: sortOrder },
@@ -58,7 +77,8 @@ export const buildDriveQuery: QueryBuilder<buildDriveQueryParams> = ({
         { [sortAttribute]: sortOrder }
       ])
       .include(['encryption'])
-      .limitBy(100),
+      .limitBy(100)
+  },
   options: {
     as: formatFolderQueryId(type, currentFolderId, sortAttribute, sortOrder),
     fetchPolicy: defaultFetchPolicy
@@ -329,6 +349,23 @@ export const buildFileOrFolderByIdQuery: QueryBuilder<string> = fileId => ({
     fetchPolicy: defaultFetchPolicy,
     singleDocData: true,
     enabled: !!fileId
+  }
+})
+
+interface BuildSharedDriveFileOrFolderByIdQuery {
+  fileId: string
+  driveId: string
+}
+
+export const buildSharedDriveFileOrFolderByIdQuery: QueryBuilder<
+  BuildSharedDriveFileOrFolderByIdQuery
+> = ({ fileId, driveId }) => ({
+  definition: () => Q('io.cozy.files').getById(fileId).sharingById(driveId),
+  options: {
+    as: `io.cozy.files/${driveId}/${fileId}`,
+    fetchPolicy: defaultFetchPolicy,
+    singleDocData: true,
+    enabled: !!fileId && !!driveId
   }
 })
 

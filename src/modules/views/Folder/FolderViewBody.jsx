@@ -21,6 +21,7 @@ import styles from '@/styles/folder-view.styl'
 import { EmptyWrapper } from '@/components/Error/Empty'
 import Oops from '@/components/Error/Oops'
 import RightClickFileMenu from '@/components/RightClick/RightClickFileMenu'
+import { useFolderSort } from '@/hooks'
 import { useShiftSelection } from '@/hooks/useShiftSelection'
 import AcceptingSharingContext from '@/lib/AcceptingSharingContext'
 import { useThumbnailSizeContext } from '@/lib/ThumbnailSizeContext'
@@ -34,7 +35,6 @@ import FileListRowsPlaceholder from '@/modules/filelist/FileListRowsPlaceholder'
 import LoadMore from '@/modules/filelist/LoadMoreV2'
 import { isTypingNewFolderName } from '@/modules/filelist/duck'
 import { FolderUnlocker } from '@/modules/folder/components/FolderUnlocker'
-import { useFolderSort } from '@/modules/navigation/duck'
 import SelectionBar from '@/modules/selection/SelectionBar'
 import { isReferencedByShareInSharingContext } from '@/modules/views/Folder/syncHelpers'
 
@@ -61,7 +61,8 @@ const FolderViewBody = ({
   canUpload = true,
   withFilePath = false,
   refreshFolderContent = null,
-  extraColumns
+  extraColumns,
+  orderProps
 }) => {
   const { isDesktop } = useBreakpoints()
   const navigate = useNavigate()
@@ -110,7 +111,13 @@ const FolderViewBody = ({
 
   const { isBigThumbnail } = useThumbnailSizeContext()
   const { sharingsValue } = useContext(AcceptingSharingContext)
-  const [sortOrder, setSortOrder] = useFolderSort(currentFolderId)
+  const [internalSortOrder, internalSetSortOrder, internalIsSettingsLoaded] =
+    useFolderSort(currentFolderId)
+  const sortOrder = orderProps?.sortOrder ?? internalSortOrder
+  const setSortOrder = orderProps?.setOrder ?? internalSetSortOrder
+  const isSettingsLoaded =
+    orderProps?.isSettingsLoaded ?? internalIsSettingsLoaded
+
   const vaultClient = useVaultClient()
   const changeSortOrder = useCallback(
     (_, attribute, order) => setSortOrder({ attribute, order }),
@@ -125,7 +132,8 @@ const FolderViewBody = ({
     !hasDataToShow &&
     queryResults.some(
       query => query.fetchStatus === 'loading' && !query.lastUpdate
-    )
+    ) &&
+    !isSettingsLoaded
   const isEmpty = !isInError && !isLoading && !hasDataToShow
   const showEmpty = displayedFolder !== null && !IsAddingFolder && isEmpty
   const isSharingContextEmpty = Object.keys(sharingsValue).length <= 0
@@ -235,9 +243,7 @@ const FolderViewBody = ({
                             <RightClickFileMenu
                               key={file._id}
                               doc={file}
-                              actions={actions.filter(
-                                action => !action.selectAllItems
-                              )}
+                              actions={actions}
                             >
                               <File
                                 key={file._id}

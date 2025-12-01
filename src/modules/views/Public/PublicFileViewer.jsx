@@ -7,12 +7,14 @@ import Viewer, {
 } from 'cozy-viewer'
 
 import { FilesViewerLoading } from '@/components/FilesViewerLoading'
+import useHead from '@/components/useHead'
 import { useCurrentFolderId } from '@/hooks'
 import usePublicFilesQuery from '@/modules/views/Public/usePublicFilesQuery'
 
 const PublicFileViewer = () => {
   const { fileId } = useParams()
   const navigate = useNavigate()
+  useHead()
 
   const [fetchingMore, setFetchingMore] = useState(false)
 

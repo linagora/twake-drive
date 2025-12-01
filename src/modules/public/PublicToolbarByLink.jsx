@@ -13,6 +13,7 @@ import { useDisplayedFolder } from '@/hooks'
 import { addItems, download, hr, select } from '@/modules/actions'
 import AddMenuProvider from '@/modules/drive/AddMenu/AddMenuProvider'
 import AddButton from '@/modules/drive/Toolbar/components/AddButton'
+import ViewSwitcher from '@/modules/drive/Toolbar/components/ViewSwitcher'
 import { DownloadFilesButton } from '@/modules/public/DownloadFilesButton'
 import PublicToolbarMoreMenu from '@/modules/public/PublicToolbarMoreMenu'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
@@ -72,11 +73,13 @@ const PublicToolbarByLink = ({
                   className="u-mr-half"
                   label={t('upload.label')}
                   displayedFolder={displayedFolder}
+                  onUploaded={refreshFolderContent}
                 />
                 <AddButton className="u-mr-half" isPublic />
               </>
             )}
             {files.length > 0 && <DownloadFilesButton files={files} />}
+            <ViewSwitcher className="u-ml-half" />
           </>
         )}
         {isMoreMenuDisplayed && (

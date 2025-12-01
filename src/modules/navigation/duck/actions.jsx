@@ -1,7 +1,8 @@
 import React from 'react'
 
 import { isDirectory } from 'cozy-client/dist/models/file'
-import { QuotaPaywall } from 'cozy-ui/transpiled/react/Paywall'
+import flag from 'cozy-flags'
+import { QuotaPaywall } from 'cozy-ui-plus/dist/Paywall'
 
 import { ROOT_DIR_ID, TRASH_DIR_ID } from '@/constants/config'
 import { MAX_PAYLOAD_SIZE_IN_GB } from '@/constants/config'
@@ -146,7 +147,9 @@ const uploadQueueProcessed =
 
     if (quotas.length > 0) {
       logger.warn(`Upload module triggers a quota alert: ${quotas}`)
-      dispatch(showModal(<QuotaPaywall />))
+      dispatch(
+        showModal(<QuotaPaywall isIapEnabled={flag('flagship.iap.enabled')} />)
+      )
     } else if (networkErrors.length > 0) {
       logger.warn(`Upload module triggers a network error: ${networkErrors}`)
       showAlert({

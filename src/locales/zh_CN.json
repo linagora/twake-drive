@@ -80,6 +80,7 @@
     "items_pasted": "%{count}个项目已移动",
     "copy_files_only": "无法复制文件夹",
     "copy_not_allowed": "此视图中不允许复制操作。",
+    "cut_not_allowed": "此视图中不允许剪切操作。",
     "paste_error": "粘贴文件时出错",
     "paste_failed": "粘贴文件失败",
     "paste_sharing_error": "由于共享限制，无法粘贴文件。请改用移动操作。",
@@ -87,5 +88,25 @@
     "paste_not_allowed": "您无法粘贴到此文件夹",
     "cannot_move_shared_drive": "您无法移动共享驱动器文件夹",
     "cannot_copy_shared_drive": "您无法复制共享云端硬盘文件夹"
+  },
+  "actions": {
+    "personalizeFolder": {
+      "label": "个性化文件夹"
+    }
+  },
+  "FolderCustomizer": {
+    "title": "个性化文件夹",
+    "description": "为您的文件夹选择特定颜色",
+    "cancel": "取消",
+    "apply": "应用",
+    "error": "发生错误，请重试。",
+    "tabs": {
+      "colors": "颜色",
+      "icons": "图标"
+    },
+    "iconPicker": {
+      "recents": "最近使用",
+      "chooseCustomIcon": "选择自定义图标"
+    }
   }
 }

@@ -53,7 +53,7 @@ const setup = () => {
     subscribe: jest.fn(),
     unsubscribe: jest.fn()
   }
-  client.query = jest.fn().mockReturnValue([])
+  client.query = jest.fn().mockReturnValue({ data: [] })
   client.stackClient.fetchJSON = jest
     .fn()
     .mockReturnValue({ data: [], rows: [] })

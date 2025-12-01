@@ -12,6 +12,8 @@ import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import { useModalContext } from '@/lib/ModalContext'
 import { download, infos, versions, rename, trash, hr } from '@/modules/actions'
+import { moveTo } from '@/modules/actions/components/moveTo'
+import { personalizeFolder } from '@/modules/actions/components/personalizeFolder'
 import { FolderBody } from '@/modules/folder/components/FolderBody'
 
 const SharedDriveFolderBody = ({
@@ -44,6 +46,7 @@ const SharedDriveFolderBody = ({
     hasWriteAccess: canWriteToCurrentFolder,
     byDocId,
     dispatch,
+    canMove: true,
     navigate,
     showAlert,
     pushModal,
@@ -51,7 +54,18 @@ const SharedDriveFolderBody = ({
     refresh
   }
   const actions = makeActions(
-    [download, hr, rename, infos, hr, versions, hr, trash],
+    [
+      download,
+      hr,
+      rename,
+      moveTo,
+      personalizeFolder,
+      infos,
+      hr,
+      versions,
+      hr,
+      trash
+    ],
     actionsOptions
   )
 

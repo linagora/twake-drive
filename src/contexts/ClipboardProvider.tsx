@@ -27,12 +27,17 @@ interface ClipboardState {
   cutItemIds: Set<string>
   sourceFolderIds: Set<string> | null
   moveValidationModal: MoveValidationModal
+  sourceDirectory: IOCozyFile
 }
 
 interface ClipboardContextValue {
   clipboardData: ClipboardState
   copyFiles: (files: IOCozyFile[], sourceFolderIds?: Set<string>) => void
-  cutFiles: (files: IOCozyFile[], sourceFolderIds?: Set<string>) => void
+  cutFiles: (
+    files: IOCozyFile[],
+    sourceFolderIds?: Set<string>,
+    sourceDirectory?: IOCozyFile
+  ) => void
   clearClipboard: () => void
   hasClipboardData: boolean
   isItemCut: (itemId: string) => boolean
@@ -56,13 +61,18 @@ const HIDE_SHARING_MODAL = 'HIDE_SHARING_MODAL'
 type ClipboardAction =
   | {
       type: typeof COPY_FILES
-      payload: { files: IOCozyFile[]; sourceFolderIds?: Set<string> }
+      payload: {
+        files: IOCozyFile[]
+        sourceFolderIds?: Set<string>
+        sourceDirectory?: IOCozyFile
+      }
     }
   | {
       type: typeof CUT_FILES
       payload: {
         files: IOCozyFile[]
         sourceFolderIds?: Set<string>
+        sourceDirectory?: IOCozyFile
       }
     }
   | { type: typeof CLEAR_CLIPBOARD }
@@ -84,6 +94,7 @@ const initialState: ClipboardState = {
   timestamp: null,
   cutItemIds: new Set(),
   sourceFolderIds: new Set(),
+  sourceDirectory: {} as IOCozyFile,
   moveValidationModal: {
     isVisible: false,
     type: null,
@@ -106,7 +117,8 @@ const clipboardReducer = (
         operation: OPERATION_COPY,
         timestamp: Date.now(),
         cutItemIds: new Set(),
-        sourceFolderIds: action.payload.sourceFolderIds ?? null
+        sourceFolderIds: action.payload.sourceFolderIds ?? null,
+        sourceDirectory: action.payload.sourceDirectory ?? ({} as IOCozyFile)
       }
     case CUT_FILES:
       return {
@@ -115,7 +127,8 @@ const clipboardReducer = (
         operation: OPERATION_CUT,
         timestamp: Date.now(),
         cutItemIds: new Set(action.payload.files.map(file => file._id)),
-        sourceFolderIds: action.payload.sourceFolderIds ?? null
+        sourceFolderIds: action.payload.sourceFolderIds ?? null,
+        sourceDirectory: action.payload.sourceDirectory ?? ({} as IOCozyFile)
       }
     case CLEAR_CLIPBOARD:
       return {
@@ -158,16 +171,23 @@ const ClipboardProvider: React.FC<ClipboardProviderProps> = ({ children }) => {
 
   const copyFiles = useCallback(
     (files: IOCozyFile[], sourceFolderIds?: Set<string>) => {
-      dispatch({ type: COPY_FILES, payload: { files, sourceFolderIds } })
+      dispatch({
+        type: COPY_FILES,
+        payload: { files, sourceFolderIds }
+      })
     },
     []
   )
 
   const cutFiles = useCallback(
-    (files: IOCozyFile[], sourceFolderIds?: Set<string>) => {
+    (
+      files: IOCozyFile[],
+      sourceFolderIds?: Set<string>,
+      sourceDirectory?: IOCozyFile
+    ) => {
       dispatch({
         type: CUT_FILES,
-        payload: { files, sourceFolderIds }
+        payload: { files, sourceFolderIds, sourceDirectory }
       })
     },
     []

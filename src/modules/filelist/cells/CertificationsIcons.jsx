@@ -1,7 +1,7 @@
 import get from 'lodash/get'
 import React from 'react'
 
-import AppIcon from 'cozy-ui/transpiled/react/AppIcon'
+import AppIcon from 'cozy-ui-plus/dist/AppIcon'
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import CarbonCopyIcon from 'cozy-ui/transpiled/react/Icons/CarbonCopy'
 

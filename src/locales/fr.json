@@ -216,6 +216,7 @@
     "share": "Partager",
     "download": "Télécharger",
     "trash": "Supprimer",
+    "trash_all": "Supprimer tout",
     "destroy": "Supprimer définitivement",
     "rename": "Renommer",
     "restore": "Restaurer",
@@ -262,7 +263,8 @@
     "cancel": "Annuler",
     "delete": "Supprimer définitivement",
     "success": "Le %{type} a été supprimé définitivement. |||| %{smart_count} %{type} ont été supprimés définitivement.",
-    "error": "Une erreur est survenue, merci de réessayer."
+    "error": "Une erreur est survenue, merci de réessayer.",
+    "processing": "La suppression est en cours. Cela peut prendre quelques instants."
   },
   "quotaalert": {
     "title": "Votre espace disque est plein :(",
@@ -304,6 +306,7 @@
     "try_again": "Une erreur est survenue, merci de réessayer dans un instant.",
     "restore_file_success": "La sélection a été restaurée avec succès.",
     "trash_file_success": "La sélection a été déplacée dans la Corbeille.",
+    "trash_file_processing": "Le déplacement vers la Corbeille est en cours...",
     "trash_shared_drive_success": "Le drive partagé a été déplacé dans la Corbeille.",
     "destroy_file_success": "La sélection a été supprimée définitivement.",
     "folder_name": "L'élément %{folderName} existe déjà, merci de choisir un nouveau nom.",
@@ -325,6 +328,8 @@
     "items_pasted": "%{count} éléments ont été déplacés",
     "copy_files_only": "Impossible de copier les dossiers",
     "copy_not_allowed": "L'opération de copie n'est pas autorisée dans cette vue.",
+    "cut_not_allowed": "L'opération de coupe n'est pas autorisée dans cette vue.",
+    "delete_not_allowed": "L'opération de suppression n'est pas autorisée dans cette vue.",
     "paste_error": "Une erreur s'est produite lors du collage des fichiers",
     "paste_failed": "Échec du collage des fichiers",
     "paste_sharing_error": "Impossible de coller les fichiers en raison de restrictions de partage. Veuillez utiliser l'action Déplacer à la place.",
@@ -674,6 +679,24 @@
     },
     "duplicateToMobile": {
       "label": "Dupliquer"
+    },
+    "personalizeFolder": {
+      "label": "Personnaliser le dossier"
+    }
+  },
+  "FolderCustomizer": {
+    "title": "Personnaliser le dossier",
+    "description": "Choisissez une couleur spécifique pour votre dossier",
+    "cancel": "Annuler",
+    "apply": "Appliquer",
+    "error": "Une erreur est survenue, merci de réessayer.",
+    "tabs": {
+      "colors": "Couleurs",
+      "icons": "Icônes"
+    },
+    "iconPicker": {
+      "recents": "Récents",
+      "chooseCustomIcon": "Choisir une icône personnalisée"
     }
   },
   "DuplicateModal": {

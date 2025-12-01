@@ -14,7 +14,9 @@ import Viewer, {
 } from 'cozy-viewer'
 
 import { FilesViewerLoading } from '@/components/FilesViewerLoading'
+import RightClickFileMenu from '@/components/RightClick/RightClickFileMenu'
 import { useCurrentFileId } from '@/hooks'
+import { useMoreMenuActions } from '@/hooks/useMoreMenuActions'
 import {
   isEncryptedFile,
   getEncryptionKeyFromDirId,
@@ -160,6 +162,8 @@ const FilesViewer = ({ filesQuery, files, onClose, onChange, viewerProps }) => {
     [hasCurrentIndex, currentIndex]
   )
 
+  const actions = useMoreMenuActions(currentFile ?? {})
+
   // If we can't find the file, we fallback to the (potentially loading)
   // direct stat made by the viewer
   if (currentIndex === -1 && !currentFile) {
@@ -167,34 +171,42 @@ const FilesViewer = ({ filesQuery, files, onClose, onChange, viewerProps }) => {
   }
 
   return (
-    <RemoveScroll>
-      <Viewer
-        files={viewerFiles}
-        currentURL={currentDecryptedFileURL}
-        currentIndex={viewerIndex}
-        onChangeRequest={handleOnChange}
-        onCloseRequest={handleOnClose}
-        renderFallbackExtraContent={file => <Fallback file={file} t={t} />}
-        componentsProps={{
-          OnlyOfficeViewer: {
-            isEnabled: isOfficeEnabled(isDesktop),
-            opener: file => navigate(makeOnlyOfficeFileRoute(file.id))
-          },
-          toolbarProps: {
-            showFilePath: true
-          },
-          ...(viewerProps || {})
-        }}
-      >
-        <ToolbarButtons>
-          <MoreMenu />
-        </ToolbarButtons>
-        <FooterActionButtons>
-          <SharingButton />
-          <ForwardOrDownloadButton variant="buttonIcon" />
-        </FooterActionButtons>
-      </Viewer>
-    </RemoveScroll>
+    <RightClickFileMenu
+      key={viewerFiles[viewerIndex]?._id}
+      doc={viewerFiles[viewerIndex]}
+      actions={actions}
+      disabled={!viewerFiles[viewerIndex]}
+      prefixMenuId="FileViewerMenu"
+    >
+      <RemoveScroll>
+        <Viewer
+          files={viewerFiles}
+          currentURL={currentDecryptedFileURL}
+          currentIndex={viewerIndex}
+          onChangeRequest={handleOnChange}
+          onCloseRequest={handleOnClose}
+          renderFallbackExtraContent={file => <Fallback file={file} t={t} />}
+          componentsProps={{
+            OnlyOfficeViewer: {
+              isEnabled: isOfficeEnabled(isDesktop),
+              opener: file => navigate(makeOnlyOfficeFileRoute(file.id))
+            },
+            toolbarProps: {
+              showFilePath: true
+            },
+            ...(viewerProps || {})
+          }}
+        >
+          <ToolbarButtons>
+            <MoreMenu file={viewerFiles[viewerIndex]} />
+          </ToolbarButtons>
+          <FooterActionButtons>
+            <SharingButton />
+            <ForwardOrDownloadButton variant="buttonIcon" />
+          </FooterActionButtons>
+        </Viewer>
+      </RemoveScroll>
+    </RightClickFileMenu>
   )
 }
 

@@ -15,19 +15,11 @@ const NewItemHighlightProvider = ({ children }) => {
       throw new Error('addItems expects an array')
     }
 
-    const filtered = newItems.filter(
-      item => item && item._id && !ids.has(item._id)
-    )
+    const validItems = newItems.filter(item => item?._id)
+    if (validItems.length === 0) return
 
-    if (filtered.length === 0) return
-
-    setHighlightedItems(prev => [...prev, ...filtered])
-
-    setIds(prev => {
-      const next = new Set(prev)
-      filtered.forEach(i => next.add(i._id))
-      return next
-    })
+    setHighlightedItems(validItems)
+    setIds(new Set(validItems.map(item => item._id)))
   }
 
   const clearItems = useCallback(() => {

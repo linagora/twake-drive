@@ -18,9 +18,10 @@ import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 import HarvestBanner from './HarvestBanner'
 
 import useHead from '@/components/useHead'
+import { DEFAULT_SORT } from '@/config/sort'
 import { ROOT_DIR_ID } from '@/constants/config'
 import { useClipboardContext } from '@/contexts/ClipboardProvider'
-import { useCurrentFolderId, useDisplayedFolder } from '@/hooks'
+import { useCurrentFolderId, useDisplayedFolder, useFolderSort } from '@/hooks'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { FabContext } from '@/lib/FabProvider'
 import { useModalContext } from '@/lib/ModalContext'
@@ -38,13 +39,13 @@ import {
 import { addToFavorites } from '@/modules/actions/components/addToFavorites'
 import { duplicateTo } from '@/modules/actions/components/duplicateTo'
 import { moveTo } from '@/modules/actions/components/moveTo'
+import { personalizeFolder } from '@/modules/actions/components/personalizeFolder'
 import { removeFromFavorites } from '@/modules/actions/components/removeFromFavorites'
 import { makeExtraColumnsNamesFromMedia } from '@/modules/certifications'
 import { useExtraColumns } from '@/modules/certifications/useExtraColumns'
 import AddMenuProvider from '@/modules/drive/AddMenu/AddMenuProvider'
 import FabWithAddMenuContext from '@/modules/drive/FabWithAddMenuContext'
 import Toolbar from '@/modules/drive/Toolbar'
-import { useFolderSort } from '@/modules/navigation/duck'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 import Dropzone from '@/modules/upload/Dropzone'
 import DropzoneDnD from '@/modules/upload/DropzoneDnD'
@@ -105,13 +106,19 @@ const DriveFolderView = () => {
 
   useTrashRedirect(displayedFolder)
 
-  const [sortOrder] = useFolderSort(currentFolderId)
+  const [sortOrder, setSortOrder, isSettingsLoaded] =
+    useFolderSort(currentFolderId)
 
+  // Sort by size does not work for directory, so in case sorting by size we will change to default sorting
   const folderQuery = buildDriveQuery({
     currentFolderId,
     type: 'directory',
-    sortAttribute: sortOrder.attribute,
-    sortOrder: sortOrder.order
+    sortAttribute:
+      sortOrder.attribute !== 'size'
+        ? sortOrder.attribute
+        : DEFAULT_SORT.attribute,
+    sortOrder:
+      sortOrder.attribute !== 'size' ? sortOrder.order : DEFAULT_SORT.order
   })
   const fileQuery = buildDriveQuery({
     currentFolderId,
@@ -137,7 +144,10 @@ const DriveFolderView = () => {
     canPaste: hasClipboardData && canWriteToCurrentFolder,
     client,
     items: [...(foldersResult.data || []), ...(filesResult.data || [])],
-    sharingContext
+    sharingContext,
+    pushModal,
+    popModal,
+    refresh
   })
 
   const actionsOptions = {
@@ -177,6 +187,7 @@ const DriveFolderView = () => {
       duplicateTo,
       addToFavorites,
       removeFromFavorites,
+      personalizeFolder,
       infos,
       hr,
       versions,
@@ -242,6 +253,11 @@ const DriveFolderView = () => {
             extraColumns={extraColumns}
             canDrag
             canUpload={canWriteToCurrentFolder}
+            orderProps={{
+              sortOrder,
+              setOrder: setSortOrder,
+              isSettingsLoaded
+            }}
           />
         ) : (
           <FolderViewBody
@@ -252,6 +268,11 @@ const DriveFolderView = () => {
             displayedFolder={displayedFolder}
             extraColumns={extraColumns}
             canUpload={canWriteToCurrentFolder}
+            orderProps={{
+              sortOrder,
+              setOrder: setSortOrder,
+              isSettingsLoaded
+            }}
           />
         )}
         {isFabDisplayed && (

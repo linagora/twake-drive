@@ -16,6 +16,7 @@ import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 import { BarRightOnMobile } from '@/components/Bar'
 import useCurrentFolderId from '@/hooks/useCurrentFolderId'
 import { download, hr, select } from '@/modules/actions'
+import ViewSwitcher from '@/modules/drive/Toolbar/components/ViewSwitcher'
 import { DownloadFilesButton } from '@/modules/public/DownloadFilesButton'
 import PublicToolbarMoreMenu from '@/modules/public/PublicToolbarMoreMenu'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
@@ -63,13 +64,18 @@ const PublicToolbarCozyToCozy = ({ sharingInfos, files }) => {
 
   return (
     <BarRightOnMobile>
-      {!isMobile && files.length > 0 && <DownloadFilesButton files={files} />}
-      {!isMobile && !isSharingShortcutCreated && isOnSharedFolder && (
-        <OpenSharingLinkButton
-          className="u-ml-half"
-          link={addSharingLink}
-          isSharingShortcutCreated={isSharingShortcutCreated}
-        />
+      {!isMobile && (
+        <>
+          {files.length > 0 && <DownloadFilesButton files={files} />}
+          {!isSharingShortcutCreated && isOnSharedFolder && (
+            <OpenSharingLinkButton
+              className="u-ml-half"
+              link={addSharingLink}
+              isSharingShortcutCreated={isSharingShortcutCreated}
+            />
+          )}
+          <ViewSwitcher className="u-ml-half" />
+        </>
       )}
       <PublicToolbarMoreMenu
         files={files}

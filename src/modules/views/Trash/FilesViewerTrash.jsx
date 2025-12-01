@@ -4,8 +4,8 @@ import { useNavigate } from 'react-router-dom'
 import { useQuery } from 'cozy-client'
 
 import { FilesViewerLoading } from '@/components/FilesViewerLoading'
-import { useCurrentFolderId } from '@/hooks'
-import { useFolderSort } from '@/modules/navigation/duck'
+import useHead from '@/components/useHead'
+import { useCurrentFolderId, useFolderSort } from '@/hooks'
 import FilesViewer from '@/modules/viewer/FilesViewer'
 import { buildTrashQuery } from '@/queries'
 
@@ -13,6 +13,7 @@ const FilesViewerTrash = () => {
   const currentFolderId = useCurrentFolderId()
   const [sortOrder] = useFolderSort(currentFolderId)
   const navigate = useNavigate()
+  useHead()
 
   const fileQuery = buildTrashQuery({
     currentFolderId,

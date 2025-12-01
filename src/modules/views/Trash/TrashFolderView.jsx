@@ -15,13 +15,13 @@ import FolderViewHeader from '../Folder/FolderViewHeader'
 import FolderViewBodyVz from '../Folder/virtualized/FolderViewBody'
 
 import useHead from '@/components/useHead'
-import { useCurrentFolderId, useDisplayedFolder } from '@/hooks'
+import { SORT_BY_UPDATE_DATE } from '@/config/sort'
+import { useCurrentFolderId, useDisplayedFolder, useFolderSort } from '@/hooks'
 import { restore, selectAllItems } from '@/modules/actions'
 import { makeExtraColumnsNamesFromMedia } from '@/modules/certifications'
 import { useExtraColumns } from '@/modules/certifications/useExtraColumns'
 import AddMenuProvider from '@/modules/drive/AddMenu/AddMenuProvider'
 import FabWithAddMenuContext from '@/modules/drive/FabWithAddMenuContext'
-import { useFolderSort } from '@/modules/navigation/duck'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 import { TrashBreadcrumb } from '@/modules/trash/components/TrashBreadcrumb'
 import { TrashToolbar } from '@/modules/trash/components/TrashToolbar'
@@ -60,13 +60,21 @@ export const TrashFolderView = () => {
     currentFolderId
   })
 
-  const [sortOrder] = useFolderSort(currentFolderId)
+  const [sortOrder, setSortOrder, isSettingsLoaded] =
+    useFolderSort(currentFolderId)
 
+  // Sort by size does not work for directory, so in case sorting by size we will change to default sorting
   const folderQuery = buildTrashQuery({
     currentFolderId,
     type: 'directory',
-    sortAttribute: sortOrder.attribute,
-    sortOrder: sortOrder.order
+    sortAttribute:
+      sortOrder.attribute !== 'size'
+        ? sortOrder.attribute
+        : SORT_BY_UPDATE_DATE.attribute,
+    sortOrder:
+      sortOrder.attribute !== 'size'
+        ? sortOrder.order
+        : SORT_BY_UPDATE_DATE.order
   })
   const fileQuery = buildTrashQuery({
     currentFolderId,
@@ -104,9 +112,14 @@ export const TrashFolderView = () => {
             actions={actions}
             queryResults={[foldersResult, filesResult]}
             currentFolderId={currentFolderId}
-            withFilePath={true}
+            withFilePath={false}
             extraColumns={extraColumns}
-            sortOrder={sortOrder}
+            canUpload={false}
+            orderProps={{
+              sortOrder,
+              setOrder: setSortOrder,
+              isSettingsLoaded
+            }}
           />
         ) : (
           <FolderViewBody
@@ -114,8 +127,15 @@ export const TrashFolderView = () => {
             displayedFolder={displayedFolder}
             actions={actions}
             queryResults={[foldersResult, filesResult]}
+            withFilePath={false}
             canSort
             extraColumns={extraColumns}
+            canUpload={false}
+            orderProps={{
+              sortOrder,
+              setOrder: setSortOrder,
+              isSettingsLoaded
+            }}
           />
         )}
         <Outlet />

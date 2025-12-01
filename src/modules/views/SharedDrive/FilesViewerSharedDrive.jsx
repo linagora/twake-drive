@@ -5,8 +5,8 @@ import { useQuery } from 'cozy-client'
 import { useSharingContext } from 'cozy-sharing'
 
 import { FilesViewerLoading } from '@/components/FilesViewerLoading'
-import { useCurrentFolderId } from '@/hooks'
-import { useFolderSort } from '@/modules/navigation/duck'
+import useHead from '@/components/useHead'
+import { useCurrentFolderId, useFolderSort } from '@/hooks'
 import {
   getSharedDrivePath,
   getSharedDriveViewerPath
@@ -20,6 +20,7 @@ const FilesViewerSharedDrive = () => {
   const folderId = useCurrentFolderId()
   const { driveId } = useParams()
   const { hasWriteAccess } = useSharingContext()
+  useHead()
 
   const buildedFilesQuery = buildSharedDriveQuery({
     currentFolderId: folderId,

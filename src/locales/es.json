@@ -282,6 +282,7 @@
     "items_pasted": "%{count} elementos han sido movidos",
     "copy_files_only": "No se pueden copiar carpetas",
     "copy_not_allowed": "La operación de copia no está permitida en esta vista.",
+    "cut_not_allowed": "La operación de corte no está permitida en esta vista.",
     "paste_error": "Ha ocurrido un error al pegar los archivos",
     "paste_failed": "Error al pegar los archivos",
     "paste_sharing_error": "No se pueden pegar los archivos debido a restricciones de compartición. Por favor use la acción Mover en su lugar.",
@@ -448,6 +449,26 @@
   "search": {
     "empty": {
       "subtitle": "No se ha encontrado ningún resultado para su consulta “%{query}”"
+    }
+  },
+  "actions": {
+    "personalizeFolder": {
+      "label": "Personalizar carpeta"
+    }
+  },
+  "FolderCustomizer": {
+    "title": "Personalizar carpeta",
+    "description": "Elija un color específico para su carpeta",
+    "cancel": "Cancelar",
+    "apply": "Aplicar",
+    "error": "Se ha producido un error, por favor inténtelo de nuevo.",
+    "tabs": {
+      "colors": "Colores",
+      "icons": "Iconos"
+    },
+    "iconPicker": {
+      "recents": "Recientes",
+      "chooseCustomIcon": "Elegir un icono personalizado"
     }
   }
 }

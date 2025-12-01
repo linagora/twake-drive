@@ -256,6 +256,7 @@
     "items_pasted": "%{count}個のアイテムが移動されました",
     "copy_files_only": "フォルダーはコピーできません",
     "copy_not_allowed": "このビューではコピー操作は許可されていません。",
+    "cut_not_allowed": "このビューでは切り取り操作は許可されていません。",
     "paste_error": "ファイルの貼り付け中にエラーが発生しました",
     "paste_failed": "ファイルの貼り付けに失敗しました",
     "paste_sharing_error": "共有制限のためファイルを貼り付けることができません。代わりに移動アクションを使用してください。",
@@ -411,5 +412,25 @@
   "searchbar": {
     "placeholder": "検索します",
     "empty": "問い合わせ “%{query}” の結果が見つかりません"
+  },
+  "actions": {
+    "personalizeFolder": {
+      "label": "フォルダをカスタマイズ"
+    }
+  },
+  "FolderCustomizer": {
+    "title": "フォルダをカスタマイズ",
+    "description": "フォルダの特定の色を選択します",
+    "cancel": "キャンセル",
+    "apply": "適用",
+    "error": "エラーが発生しました。もう一度お試しください。",
+    "tabs": {
+      "colors": "色",
+      "icons": "アイコン"
+    },
+    "iconPicker": {
+      "recents": "最近使用",
+      "chooseCustomIcon": "カスタムアイコンを選択"
+    }
   }
 }

@@ -12,6 +12,7 @@ import AppLike from 'test/components/AppLike'
 
 import useDisplayedFolder from '@/hooks/useDisplayedFolder'
 import { DOCTYPE_FILES_SHORTCUT } from '@/lib/doctypes'
+import { useNewItemHighlightContext } from '@/modules/upload/NewItemHighlightProvider'
 
 const tMock = jest.fn()
 const showAlert = jest.fn()
@@ -27,6 +28,14 @@ jest.mock('lib/logger', () => ({
   error: jest.fn()
 }))
 jest.mock('hooks/useDisplayedFolder')
+jest.mock('@/modules/upload/NewItemHighlightProvider', () => {
+  const React = require('react')
+  return {
+    __esModule: true,
+    NewItemHighlightProvider: ({ children }) => <>{children}</>,
+    useNewItemHighlightContext: jest.fn()
+  }
+})
 
 function createMatchMedia(width) {
   return query => ({
@@ -37,6 +46,7 @@ function createMatchMedia(width) {
 }
 const client = new createMockClient({})
 const onCloseSpy = jest.fn()
+const addItemsMock = jest.fn()
 const defaultProps = {
   displayedFolder: {
     id: 'id'
@@ -52,6 +62,10 @@ describe('ShortcutCreationModal', () => {
     window.matchMedia = createMatchMedia(window.innerWidth)
     tMock.mockImplementation(key => key)
     useAlert.mockReturnValue({ showAlert })
+    addItemsMock.mockReset()
+    useNewItemHighlightContext.mockReturnValue({
+      addItems: addItemsMock
+    })
   })
 
   const setup = props => {
@@ -92,7 +106,7 @@ describe('ShortcutCreationModal', () => {
     const { urlInput, filenameInput, submitButton } = setup(defaultProps)
     fireEvent.change(urlInput, { target: { value: 'https://cozy.io' } })
     fireEvent.change(filenameInput, { target: { value: 'filename.url' } })
-    client.save.mockResolvedValue({ data: {} })
+    client.save.mockResolvedValue({ data: { _id: 'shortcut-id' } })
 
     // When
     fireEvent.click(submitButton)
@@ -111,6 +125,9 @@ describe('ShortcutCreationModal', () => {
         expect.objectContaining({ severity: 'success' })
       )
     })
+    expect(addItemsMock).toHaveBeenCalledWith([
+      expect.objectContaining({ _id: 'shortcut-id' })
+    ])
   })
 
   it('should call the optional onCreated prop', async () => {

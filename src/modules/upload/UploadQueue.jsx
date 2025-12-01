@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react'
 import { connect } from 'react-redux'
 
-import UIUploadQueue from 'cozy-ui/transpiled/react/UploadQueue'
 import { translate } from 'cozy-ui/transpiled/react/providers/I18n'
+import UIUploadQueue from 'cozy-ui-plus/dist/UploadQueue'
 
 import {
   getUploadQueue,

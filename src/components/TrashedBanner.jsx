@@ -57,7 +57,6 @@ const TrashedBanner = ({ fileId, isPublic }) => {
       message: t('TrashedBanner.destroySuccess'),
       severity: 'secondary'
     })
-    navigate(`/trash/${fileResult.data.dir_id}`)
   }
 
   return (
@@ -95,6 +94,7 @@ const TrashedBanner = ({ fileId, isPublic }) => {
           files={[fileResult.data]}
           onCancel={handleDestroyCancel}
           onConfirm={handleDestroyConfirm}
+          onClose={navigate(`/trash/${fileResult.data.dir_id}`)}
         />
       ) : null}
     </>

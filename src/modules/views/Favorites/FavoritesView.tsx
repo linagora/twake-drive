@@ -10,10 +10,12 @@ import {
   shareNative
 } from 'cozy-sharing'
 import { makeActions } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
+import { Content } from 'cozy-ui/transpiled/react/Layout'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
+import { useFolderSort } from '@/hooks'
 import { useModalContext } from '@/lib/ModalContext'
 import {
   download,
@@ -37,7 +39,6 @@ import AddMenuProvider from '@/modules/drive/AddMenu/AddMenuProvider'
 import FabWithAddMenuContext from '@/modules/drive/FabWithAddMenuContext'
 import Toolbar from '@/modules/drive/Toolbar'
 import { FolderBody } from '@/modules/folder/components/FolderBody'
-import { useFolderSort } from '@/modules/navigation/duck'
 import { isNextcloudShortcut } from '@/modules/nextcloud/helpers'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 import FolderView from '@/modules/views/Folder/FolderView'
@@ -132,35 +133,37 @@ const FavoritesView: FC = () => {
   )
   return (
     <FolderView isNotFound={false}>
-      <FolderViewHeader>
-        <Breadcrumb path={[{ name: t('breadcrumb.title_favorites') }]} />
-        <Toolbar canUpload={false} canCreateFolder={false} />
-      </FolderViewHeader>
-      <FolderBody
-        folderId="io.cozy.files.shared-drives-dir"
-        queryResults={[favoritesResult]}
-        extraColumns={extraColumns}
-        actions={actions}
-        canSort={true}
-        canInteractWith={handleInteractWith}
-      />
-      <Outlet />
-      {isMobile && (
-        <AddMenuProvider
-          canCreateFolder={true}
-          canUpload={true}
-          disabled={false}
-          displayedFolder={null}
-          isSelectionBarVisible={isSelectionBarVisible}
-          isPublic={false}
-          isReadOnly={false}
-          refreshFolderContent={(): void => {
-            // Empty function needed because this props is required
-          }}
-        >
-          <FabWithAddMenuContext noSidebar={false} />
-        </AddMenuProvider>
-      )}
+      <Content className={isMobile ? '' : 'u-pt-1'}>
+        <FolderViewHeader>
+          <Breadcrumb path={[{ name: t('breadcrumb.title_favorites') }]} />
+          <Toolbar canUpload={false} canCreateFolder={false} />
+        </FolderViewHeader>
+        <FolderBody
+          folderId="io.cozy.files.shared-drives-dir"
+          queryResults={[favoritesResult]}
+          extraColumns={extraColumns}
+          actions={actions}
+          canSort={true}
+          canInteractWith={handleInteractWith}
+        />
+        <Outlet />
+        {isMobile && (
+          <AddMenuProvider
+            canCreateFolder={true}
+            canUpload={true}
+            disabled={false}
+            displayedFolder={null}
+            isSelectionBarVisible={isSelectionBarVisible}
+            isPublic={false}
+            isReadOnly={false}
+            refreshFolderContent={(): void => {
+              // Empty function needed because this props is required
+            }}
+          >
+            <FabWithAddMenuContext noSidebar={false} />
+          </AddMenuProvider>
+        )}
+      </Content>
     </FolderView>
   )
 }

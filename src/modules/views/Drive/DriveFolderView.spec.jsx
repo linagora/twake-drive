@@ -31,7 +31,8 @@ jest.mock('../Folder/FolderViewBreadcrumb', () =>
 
 jest.mock('hooks', () => ({
   useCurrentFolderId: jest.fn().mockReturnValue('1234'),
-  useDisplayedFolder: jest.fn().mockReturnValue('5678')
+  useDisplayedFolder: jest.fn().mockReturnValue('5678'),
+  useFolderSort: jest.fn(() => [{ attribute: 'name', order: 'asc' }, jest.fn()])
 }))
 
 jest.mock('modules/shareddrives/hooks/useSharedDrives', () => ({

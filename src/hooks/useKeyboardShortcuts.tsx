@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react'
+import React, { useEffect, useCallback } from 'react'
 import { useDispatch } from 'react-redux'
 
 import { isFile } from 'cozy-client/dist/models/file'
@@ -8,7 +8,7 @@ import flag from 'cozy-flags'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
-import { isEditableTarget, normalizeKey } from './helpers'
+import { shouldBlockKeyboardShortcuts, normalizeKey } from './helpers'
 
 import { isMacOS } from '@/components/pushClient'
 import { SHARED_DRIVES_DIR_ID } from '@/constants/config'
@@ -17,10 +17,25 @@ import {
   OPERATION_CUT
 } from '@/contexts/ClipboardProvider'
 import { useDisplayedFolder } from '@/hooks'
+import DeleteConfirm from '@/modules/drive/DeleteConfirm'
 import { startRenamingAsync } from '@/modules/drive/rename'
 import { useNextcloudCurrentFolder } from '@/modules/nextcloud/hooks/useNextcloudCurrentFolder'
 import { handlePasteOperation } from '@/modules/paste'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
+import { useNewItemHighlightContext } from '@/modules/upload/NewItemHighlightProvider'
+
+// Type for the result returned by copy/move operations from cozy-client
+interface PasteResultFile {
+  data?: IOCozyFile
+  moved?: IOCozyFile
+}
+
+interface PasteOperationResult {
+  success: boolean
+  file: PasteResultFile | IOCozyFile
+  error?: Error
+  operation: string
+}
 
 interface UseKeyboardShortcutsProps {
   onPaste?: (() => void) | null
@@ -29,7 +44,13 @@ interface UseKeyboardShortcutsProps {
   items?: IOCozyFile[]
   sharingContext?: unknown
   allowCopy?: boolean
+  allowCut?: boolean
+  allowDelete?: boolean
   isNextCloudFolder?: boolean
+  isPublic?: boolean
+  pushModal?: (modal: React.ReactElement) => void
+  popModal?: () => void
+  refresh?: () => void
 }
 
 export const useKeyboardShortcuts = ({
@@ -39,7 +60,13 @@ export const useKeyboardShortcuts = ({
   items = [],
   sharingContext = null,
   allowCopy = true,
-  isNextCloudFolder = false
+  allowCut = true,
+  allowDelete = true,
+  isNextCloudFolder = false,
+  isPublic = false,
+  pushModal,
+  popModal,
+  refresh
 }: UseKeyboardShortcutsProps): void => {
   const dispatch = useDispatch()
   const { t } = useI18n()
@@ -65,6 +92,9 @@ export const useKeyboardShortcuts = ({
     hasClipboardData,
     showMoveValidationModal
   } = useClipboardContext()
+  const { addItems } = useNewItemHighlightContext() as {
+    addItems: (items: IOCozyFile[]) => void
+  }
 
   const { displayedFolder } = useDisplayedFolder()
   const currentNextCloudFolder = useNextcloudCurrentFolder()
@@ -109,6 +139,14 @@ export const useKeyboardShortcuts = ({
   const handleCut = useCallback(() => {
     if (!selectedItems.length) return
 
+    if (!allowCut) {
+      showAlert({
+        message: t('alert.cut_not_allowed'),
+        severity: 'secondary'
+      })
+      return
+    }
+
     const parentFolderIds = selectedItems.map(item => item.dir_id)
 
     if (parentFolderIds.includes(SHARED_DRIVES_DIR_ID)) {
@@ -119,14 +157,26 @@ export const useKeyboardShortcuts = ({
       return
     }
 
-    cutFiles(selectedItems, new Set(parentFolderIds))
+    cutFiles(
+      selectedItems,
+      new Set(parentFolderIds),
+      currentFolder as IOCozyFile
+    )
     const message =
       selectedItems.length === 1
         ? t('alert.item_cut')
         : t('alert.items_cut', { count: selectedItems.length })
     showAlert({ message, severity: 'success' })
     clearSelection()
-  }, [selectedItems, cutFiles, showAlert, t, clearSelection])
+  }, [
+    selectedItems,
+    allowCut,
+    currentFolder,
+    cutFiles,
+    t,
+    showAlert,
+    clearSelection
+  ])
 
   const handlePaste = useCallback(async () => {
     if (!hasClipboardData || !client || !currentFolder) return
@@ -152,18 +202,20 @@ export const useKeyboardShortcuts = ({
     }
 
     try {
-      const results = await handlePasteOperation(
+      const results = (await handlePasteOperation(
         client,
         clipboardData.files,
         clipboardData.operation,
+        clipboardData.sourceDirectory,
         currentFolder,
         {
           showAlert,
           t,
           sharingContext,
-          showMoveValidationModal
+          showMoveValidationModal,
+          isPublic
         }
-      )
+      )) as PasteOperationResult[]
 
       const successCount = results.filter(r => r.success).length
       const failureCount = results.filter(r => !r.success).length
@@ -174,6 +226,24 @@ export const useKeyboardShortcuts = ({
             ? t('alert.item_pasted')
             : t('alert.items_pasted', { count: successCount })
         showAlert({ message, severity: 'success' })
+
+        const successfulFiles = results
+          .filter(r => r.success)
+          .map(r => {
+            const file = r.file
+            if ('data' in file && file.data) {
+              return file.data
+            }
+            if ('moved' in file && file.moved) {
+              return file.moved
+            }
+            return null
+          })
+          .filter((file): file is IOCozyFile => file !== null)
+
+        if (successfulFiles.length > 0) {
+          addItems(successfulFiles)
+        }
       } else if (failureCount > 0) {
         showAlert({
           message: t('alert.paste_failed'),
@@ -194,16 +264,21 @@ export const useKeyboardShortcuts = ({
     }
   }, [
     hasClipboardData,
-    canPaste,
     client,
     currentFolder,
-    clipboardData,
+    canPaste,
+    clipboardData.operation,
+    clipboardData.sourceFolderIds,
+    clipboardData.files,
+    clipboardData.sourceDirectory,
     showAlert,
     t,
     sharingContext,
     showMoveValidationModal,
+    isPublic,
+    onPaste,
     clearClipboard,
-    onPaste
+    addItems
   ])
 
   const handleSelectAll = useCallback(() => {
@@ -221,6 +296,29 @@ export const useKeyboardShortcuts = ({
     clearClipboard()
   }, [hideSelectionBar, clearClipboard])
 
+  const handleDelete = useCallback(() => {
+    if (!selectedItems.length || !pushModal || !popModal || !refresh) return
+
+    if (!allowDelete) {
+      showAlert({
+        message: t('alert.delete_not_allowed'),
+        severity: 'secondary'
+      })
+      return
+    }
+
+    const driveId = selectedItems[0]?.driveId
+
+    pushModal(
+      <DeleteConfirm
+        files={selectedItems}
+        afterConfirmation={refresh}
+        onClose={popModal}
+        driveId={driveId}
+      />
+    )
+  }, [selectedItems, pushModal, popModal, refresh, allowDelete, showAlert, t])
+
   useEffect(() => {
     if (!flag('drive.keyboard-shortcuts.enabled')) {
       return
@@ -233,11 +331,12 @@ export const useKeyboardShortcuts = ({
         'Ctrl+v': handlePaste,
         'Ctrl+a': handleSelectAll,
         f2: handleRename,
-        escape: handleEscape
+        escape: handleEscape,
+        delete: handleDelete
       }
 
     const handleKeyDown = (event: KeyboardEvent): void => {
-      if (!event.target || isEditableTarget(event.target)) return
+      if (!event.target || shouldBlockKeyboardShortcuts(event.target)) return
 
       const combo = normalizeKey(event, isApple)
       const handler = shortcuts[combo]
@@ -258,6 +357,7 @@ export const useKeyboardShortcuts = ({
     handlePaste,
     handleSelectAll,
     handleRename,
-    handleEscape
+    handleEscape,
+    handleDelete
   ])
 }

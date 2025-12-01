@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import React from 'react'
 
-import { createMockClient } from 'cozy-client'
+import { createMockClient, useQuery } from 'cozy-client'
 import { move } from 'cozy-client/dist/models/file'
 import { useSharingContext } from 'cozy-sharing'
 
@@ -22,7 +22,14 @@ const onCloseSpy = jest.fn()
 const refreshSpy = jest.fn()
 
 jest.mock('cozy-client/dist/models/file', () => ({
-  move: jest.fn()
+  move: jest.fn(),
+  isFile: jest.fn(),
+  moveRelateToSharedDrive: jest.fn()
+}))
+
+jest.mock('cozy-client', () => ({
+  ...jest.requireActual('cozy-client'),
+  useQuery: jest.fn()
 }))
 
 CozyFile.splitFilename.mockImplementation(({ name }) => ({
@@ -125,6 +132,21 @@ describe('MoveModal component', () => {
       classes: { paper: {} }
     }
 
+    // Mock the useQuery hook for shared folder data
+    const sharedParentPath = getSharedParentPath(entries[0]?.path || '')
+    if (sharedParentPath) {
+      const folderName = sharedParentPath.split('/').pop() || 'Bills'
+      useQuery.mockReturnValue({
+        fetchStatus: 'loaded',
+        data: [{ name: folderName }]
+      })
+    } else {
+      useQuery.mockReturnValue({
+        fetchStatus: 'loaded',
+        data: []
+      })
+    }
+
     useSharingContext.mockReturnValue({
       sharedPaths,
       refresh: refreshSpy,
@@ -219,7 +241,9 @@ describe('MoveModal component', () => {
     it('should display an alert when moving files outside a shared folder', async () => {
       setup({
         sharedPaths: ['/bills'],
-        getSharedParentPath: () => '/bills'
+        getSharedParentPath: path =>
+          path.includes('/bills') ? '/bills' : null,
+        byDocId: {}
       })
 
       const moveButton = await screen.findByText('Move')
@@ -227,7 +251,7 @@ describe('MoveModal component', () => {
 
       await waitFor(() => {
         expect(
-          screen.getByText('Moving outside the Bills folder')
+          screen.getByText('Moving outside the bills folder')
         ).toBeInTheDocument()
       })
     })
@@ -235,7 +259,9 @@ describe('MoveModal component', () => {
     it('should move files when user confirms', async () => {
       setup({
         sharedPaths: ['/bills'],
-        getSharedParentPath: () => '/bills'
+        getSharedParentPath: path =>
+          path.includes('/bills') ? '/bills' : null,
+        byDocId: {}
       })
 
       const moveButton = await screen.findByText('Move')
@@ -258,7 +284,9 @@ describe('MoveModal component', () => {
     it('should display an alert when moving files inside a shared folder', async () => {
       setup({
         sharedPaths: ['/Destination Folder'],
-        getSharedParentPath: () => '/bills'
+        getSharedParentPath: path =>
+          path.includes('/Destination Folder') ? '/Destination Folder' : null,
+        byDocId: {}
       })
 
       const moveButton = await screen.findByText('Move')
@@ -271,7 +299,9 @@ describe('MoveModal component', () => {
     it('should move files when user confirms', async () => {
       setup({
         sharedPaths: ['/Destination Folder'],
-        getSharedParentPath: () => '/bills'
+        getSharedParentPath: path =>
+          path.includes('/Destination Folder') ? '/Destination Folder' : null,
+        byDocId: {}
       })
 
       const moveButton = await screen.findByText('Move')
@@ -295,14 +325,19 @@ describe('MoveModal component', () => {
       )
 
       setup({
-        sharedPaths: ['/bills/bill_201903.pdf', '/Destination Folder'],
+        sharedPaths: ['/bills', '/Destination Folder'],
         byDocId: {
           bill_201903: {
             permissions: [],
-            sharings: []
+            sharings: ['sharing-id-1']
           }
         },
-        getSharedParentPath: () => null
+        getSharedParentPath: path =>
+          path.includes('/bills')
+            ? '/bills'
+            : path.includes('/Destination Folder')
+            ? '/Destination Folder'
+            : null
       })
 
       const moveButton = await screen.findByText('Move')
@@ -321,14 +356,19 @@ describe('MoveModal component', () => {
       const revokeSelfSpy = jest.fn()
 
       setup({
-        sharedPaths: ['/bills/bill_201903.pdf', '/Destination Folder'],
+        sharedPaths: ['/bills', '/Destination Folder'],
         byDocId: {
           bill_201903: {
             permissions: [],
-            sharings: []
+            sharings: ['sharing-id-1']
           }
         },
-        getSharedParentPath: () => null,
+        getSharedParentPath: path =>
+          path.includes('/bills')
+            ? '/bills'
+            : path.includes('/Destination Folder')
+            ? '/Destination Folder'
+            : null,
         sharingContext: {
           isOwner: () => true,
           revokeAllRecipients: revokeAllSpy,
@@ -361,14 +401,19 @@ describe('MoveModal component', () => {
       const revokeSelfSpy = jest.fn()
 
       setup({
-        sharedPaths: ['/bills/bill_201903.pdf', '/Destination Folder'],
+        sharedPaths: ['/bills', '/Destination Folder'],
         byDocId: {
           bill_201903: {
             permissions: [],
-            sharings: []
+            sharings: ['sharing-id-1']
           }
         },
-        getSharedParentPath: () => null,
+        getSharedParentPath: path =>
+          path.includes('/bills')
+            ? '/bills'
+            : path.includes('/Destination Folder')
+            ? '/Destination Folder'
+            : null,
         sharingContext: {
           isOwner: () => false,
           revokeAllRecipients: revokeAllSpy,

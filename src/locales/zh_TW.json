@@ -166,6 +166,7 @@
     "items_pasted": "%{count}個項目已移動",
     "copy_files_only": "無法複製資料夾",
     "copy_not_allowed": "此檢視中不允許複製操作。",
+    "cut_not_allowed": "此檢視中不允許剪下操作。",
     "paste_error": "貼上檔案時發生錯誤",
     "paste_failed": "貼上檔案失敗",
     "paste_sharing_error": "由於共享限制，無法貼上檔案。請改用移動操作。",
@@ -173,5 +174,25 @@
     "paste_not_allowed": "您無法貼上到此資料夾",
     "cannot_move_shared_drive": "您無法移動共享磁碟機資料夾",
     "cannot_copy_shared_drive": "您無法複製共用雲端硬碟資料夾"
+  },
+  "actions": {
+    "personalizeFolder": {
+      "label": "個性化資料夾"
+    }
+  },
+  "FolderCustomizer": {
+    "title": "個性化資料夾",
+    "description": "為您的資料夾選擇特定顏色",
+    "cancel": "取消",
+    "apply": "套用",
+    "error": "發生錯誤，請重試。",
+    "tabs": {
+      "colors": "顏色",
+      "icons": "圖示"
+    },
+    "iconPicker": {
+      "recents": "最近使用",
+      "chooseCustomIcon": "選擇自訂圖示"
+    }
   }
 }

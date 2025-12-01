@@ -16,6 +16,10 @@ const mergedConfig = mergeRsbuildConfig(config, {
           {
             from: 'src/assets/onlyOffice',
             to: 'onlyOffice'
+          },
+          {
+            from: 'src/assets/favicons',
+            to: 'favicons'
           }
         ]
       }

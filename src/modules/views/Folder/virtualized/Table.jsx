@@ -1,8 +1,9 @@
-import React, { forwardRef } from 'react'
+import React, { forwardRef, useMemo, useRef, useState } from 'react'
 
-import VirtuosoTableDnd from 'cozy-ui/transpiled/react/Table/Virtualized/Dnd'
+import VirtualizedTable from 'cozy-ui/transpiled/react/Table/Virtualized'
 import TableRowDnD from 'cozy-ui/transpiled/react/Table/Virtualized/Dnd/TableRow'
 import virtuosoComponentsDnd from 'cozy-ui/transpiled/react/Table/Virtualized/Dnd/virtuosoComponents'
+import CustomDragLayer from 'cozy-ui/transpiled/react/utils/Dnd/CustomDrag/CustomDragLayer'
 
 import { secondarySort } from '../helpers'
 
@@ -11,13 +12,15 @@ import { useClipboardContext } from '@/contexts/ClipboardProvider'
 import Cell from '@/modules/filelist/virtualized/cells/Cell'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 import { useNewItemHighlightContext } from '@/modules/upload/NewItemHighlightProvider'
+import useScrollToHighlightedItem from '@/modules/views/Folder/virtualized/useScrollToHighlightedItem'
 
 const TableRow = forwardRef(({ item, context, children, ...props }, ref) => {
   const { isItemCut } = useClipboardContext()
   const isCut = isItemCut(item._id)
+  const { actions } = context
 
   return (
-    <RightClickFileMenu doc={item} actions={context.actions} {...props}>
+    <RightClickFileMenu doc={item} actions={actions} {...props}>
       <TableRowDnD
         ref={ref}
         item={item}
@@ -52,14 +55,22 @@ const Table = forwardRef(
       currentFolderId,
       withFilePath,
       actions,
-      orderProps,
-      onInteractWithFile
+      driveId,
+      orderProps = {
+        sortOrder: {},
+        setOrder: () => {}
+      },
+      onInteractWithFile,
+      refreshFolderContent
     },
     ref
   ) => {
     const { toggleSelectedItem } = useSelectionContext()
     const { isNew } = useNewItemHighlightContext()
-    const { order, orderBy, setOrder, setOrderBy } = orderProps
+    const virtuosoRef = useRef(null)
+    const [itemsInDropProcess, setItemsInDropProcess] = useState([])
+
+    const { sortOrder, setOrder } = orderProps
 
     const handleRowSelect = (row, event) => {
       toggleSelectedItem(row)
@@ -67,9 +78,52 @@ const Table = forwardRef(
     }
 
     const handleSort = ({ order, orderBy }) => {
-      setOrder(order)
-      setOrderBy(orderBy)
+      setOrder({
+        order,
+        attribute: orderBy
+      })
     }
+
+    const tableContext = useMemo(
+      () => ({
+        actions,
+        selectedItems,
+        isSelectedItem,
+        dragProps,
+        itemsInDropProcess,
+        setItemsInDropProcess
+      }),
+      [actions, selectedItems, isSelectedItem, dragProps, itemsInDropProcess]
+    )
+
+    // Memoize componentsProps to avoid recreating the Cell component on every render
+    // This follows Virtuoso's recommendation to not define custom components inline
+    const componentsProps = useMemo(
+      () => ({
+        rowContent: {
+          children: (
+            <Cell
+              currentFolderId={currentFolderId}
+              withFilePath={withFilePath}
+              actions={actions}
+              onInteractWithFile={onInteractWithFile}
+              refreshFolderContent={refreshFolderContent}
+              driveId={driveId}
+            />
+          )
+        }
+      }),
+      [
+        currentFolderId,
+        withFilePath,
+        actions,
+        onInteractWithFile,
+        refreshFolderContent,
+        driveId
+      ]
+    )
+
+    useScrollToHighlightedItem(virtuosoRef, rows)
 
     return (
       <div
@@ -78,14 +132,18 @@ const Table = forwardRef(
         tabIndex={0}
         style={{ outline: 'none' }}
       >
-        <VirtuosoTableDnd
-          context={{ actions }}
+        {dragProps?.dragId && <CustomDragLayer dragId={dragProps.dragId} />}
+        <VirtualizedTable
+          ref={virtuosoRef}
+          context={tableContext}
           components={components}
           rows={rows}
           columns={columns}
-          dragProps={dragProps}
           endReached={fetchMore}
-          defaultOrder={{ direction: order, by: orderBy }}
+          defaultOrder={{
+            direction: sortOrder.order,
+            by: sortOrder.attribute
+          }}
           secondarySort={secondarySort}
           onSelectAll={selectAll}
           onSelect={handleRowSelect}
@@ -94,18 +152,7 @@ const Table = forwardRef(
           selectedItems={selectedItems}
           increaseViewportBy={200}
           onSortChange={handleSort}
-          componentsProps={{
-            rowContent: {
-              children: (
-                <Cell
-                  currentFolderId={currentFolderId}
-                  withFilePath={withFilePath}
-                  actions={actions}
-                  onInteractWithFile={onInteractWithFile}
-                />
-              )
-            }
-          }}
+          componentsProps={componentsProps}
         />
       </div>
     )

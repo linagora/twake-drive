@@ -49,7 +49,7 @@ const NavItem = ({
 
 NavItem.propTypes = {
   to: PropTypes.string,
-  icon: PropTypes.oneOfType(PropTypes.string, PropTypes.object),
+  icon: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   label: PropTypes.string,
   forcedLabel: PropTypes.string,
   rx: PropTypes.shape(RegExp),

@@ -219,6 +219,7 @@
     "cut": "Cut",
     "paste": "Paste",
     "trash": "Remove",
+    "trash_all": "Remove all",
     "destroy": "Delete permanently",
     "rename": "Rename",
     "restore": "Restore",
@@ -264,7 +265,8 @@
     "cancel": "Cancel",
     "delete": "Delete permanently",
     "success": "The %{type} has been deleted permanently. |||| %{smart_count} %{type} have been deleted permanently.",
-    "error": "An error occurred, please try again."
+    "error": "An error occurred, please try again.",
+    "processing": "The deletion is in progress. This might take a few moments."
   },
   "quotaalert": {
     "title": "Your disk space is full :(",
@@ -307,6 +309,7 @@
     "try_again": "An error has occurred, please try again in a moment.",
     "restore_file_success": "The selection has been successfully restored.",
     "trash_file_success": "The selection has been moved to the Trash.",
+    "trash_file_processing": "The move to Trash is in progress...",
     "trash_shared_drive_success": "The shared drive has been moved to the Trash.",
     "destroy_file_success": "The selection has been deleted permanently.",
     "folder_name": "The element %{folderName} already exists, please choose a new name.",
@@ -328,6 +331,8 @@
     "items_pasted": "%{count} items were moved",
     "copy_files_only": "Cannot copy folders",
     "copy_not_allowed": "Copy operation is not allowed in this view.",
+    "cut_not_allowed": "Cut operation is not allowed in this view.",
+    "delete_not_allowed": "Delete operation is not allowed in this view.",
     "paste_error": "An error occurred while pasting files",
     "paste_failed": "Failed to paste files",
     "paste_sharing_error": "Cannot paste files due to sharing restrictions. Please use the Move action instead.",
@@ -677,6 +682,9 @@
     },
     "duplicateToMobile": {
       "label": "Duplicate"
+    },
+    "personalizeFolder": {
+      "label": "Personalize folder"
     }
   },
   "DuplicateModal": {
@@ -698,6 +706,21 @@
     "error": {
       "title": "Unable to access document",
       "subtitle": "The share link appears to be missing or invalid. Please ask the document owner to check access"
+    }
+  },
+  "FolderCustomizer": {
+    "title": "Personalize folder",
+    "description": "Choose a specific color for your folder",
+    "cancel": "Cancel",
+    "apply": "Apply",
+    "error": "An error occurred, please try again.",
+    "tabs": {
+      "colors": "Colors",
+      "icons": "Icons"
+    },
+    "iconPicker": {
+      "recents": "Recents",
+      "chooseCustomIcon": "Choose a custom icon"
     }
   }
 }

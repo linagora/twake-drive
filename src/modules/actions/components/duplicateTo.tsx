@@ -16,6 +16,7 @@ interface duplicateToProps {
   pathname: string
   isMobile: boolean
   search?: string
+  canDuplicate?: boolean
 }
 
 const duplicateTo = ({
@@ -23,7 +24,8 @@ const duplicateTo = ({
   pathname,
   navigate,
   isMobile,
-  search
+  search,
+  canDuplicate = true
 }: duplicateToProps): Action => {
   const icon = MultiFilesIcon
   const label = isMobile
@@ -34,7 +36,8 @@ const duplicateTo = ({
     name: 'duplicateTo',
     label,
     icon,
-    displayCondition: docs => docs.length === 1 && isFile(docs[0]),
+    displayCondition: docs =>
+      docs.length === 1 && isFile(docs[0]) && canDuplicate,
     action: (files): void => {
       navigateToModalWithMultipleFile({
         files,

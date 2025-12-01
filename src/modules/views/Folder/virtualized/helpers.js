@@ -1,6 +1,5 @@
-import { move } from 'cozy-client/dist/models/file'
-
 import logger from '@/lib/logger'
+import { executeMove } from '@/modules/paste'
 
 export const makeRows = ({ queryResults, IsAddingFolder, syncingFakeFile }) => {
   const rows = queryResults.flatMap(el => el.data)
@@ -17,7 +16,16 @@ export const makeRows = ({ queryResults, IsAddingFolder, syncingFakeFile }) => {
 }
 
 export const onDrop =
-  ({ client, showAlert, selectAll, registerCancelable, sharedPaths, t }) =>
+  ({
+    client,
+    showAlert,
+    selectAll,
+    registerCancelable,
+    sharedPaths,
+    t,
+    refreshFolderContent,
+    displayedFolder
+  }) =>
   async (draggedItems, itemHovered, selectedItems) => {
     if (
       itemHovered.type !== 'directory' ||
@@ -33,11 +41,17 @@ export const onDrop =
     try {
       await Promise.all(
         draggedItems.map(async draggedItem => {
-          const force = !sharedPaths.includes(itemHovered.path)
+          const force =
+            Array.isArray(sharedPaths) &&
+            !sharedPaths.includes(itemHovered.path)
           await registerCancelable(
-            move(client, draggedItem, itemHovered, {
+            executeMove(
+              client,
+              draggedItem,
+              displayedFolder,
+              itemHovered,
               force
-            })
+            )
           )
         })
       )
@@ -49,6 +63,9 @@ export const onDrop =
           smart_count: draggedItems.length
         })
       })
+      if (refreshFolderContent) {
+        refreshFolderContent()
+      }
     } catch (error) {
       logger.warn(`Error while dragging files:`, error)
       showAlert({

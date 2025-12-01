@@ -7,6 +7,7 @@ import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import { ROOT_DIR_ID } from '@/constants/config'
+import { useFolderSort } from '@/hooks'
 import useDisplayedFolder from '@/hooks/useDisplayedFolder'
 import { makeExtraColumnsNamesFromMedia } from '@/modules/certifications'
 import {
@@ -14,7 +15,6 @@ import {
   ExtraColumn
 } from '@/modules/certifications/useExtraColumns'
 import { FolderBody } from '@/modules/folder/components/FolderBody'
-import { useFolderSort } from '@/modules/navigation/duck'
 import FolderView from '@/modules/views/Folder/FolderView'
 import FolderViewBreadcrumb from '@/modules/views/Folder/FolderViewBreadcrumb'
 import FolderViewHeader from '@/modules/views/Folder/FolderViewHeader'

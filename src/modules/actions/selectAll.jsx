@@ -32,6 +32,8 @@ export const selectAllItems = ({ t, selectAll, isSelectAll, isMobile }) => {
     name: 'selectAllItems',
     label,
     icon,
+    displayInSelectionBar: true,
+    displayInContextMenu: false,
     displayCondition: files => files.length > 0,
     action: () => selectAll(),
     Component: makeComponent(label, icon)

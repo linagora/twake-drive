@@ -1,6 +1,6 @@
 import React from 'react'
 
-import FileImageLoader from 'cozy-ui/transpiled/react/FileImageLoader'
+import FileImageLoader from 'cozy-ui-plus/dist/FileImageLoader'
 
 import styles from '@/styles/filelist.styl'
 
@@ -13,6 +13,7 @@ const FileIcon = ({ file, size, isEncrypted, viewType = 'list' }) => {
   if (isImage || file.class === 'pdf')
     return (
       <FileImageLoader
+        key={file._id}
         file={file}
         linkType={viewType === 'grid' ? 'small' : 'tiny'}
         render={src => (

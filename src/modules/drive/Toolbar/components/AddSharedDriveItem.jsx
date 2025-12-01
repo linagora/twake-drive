@@ -4,7 +4,7 @@ import { useDispatch } from 'react-redux'
 import { SharedDriveModal } from 'cozy-sharing'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
 import Icon from 'cozy-ui/transpiled/react/Icon'
-import FileTypeServerIcon from 'cozy-ui/transpiled/react/Icons/FileTypeServer'
+import FileTypeSharedDriveIcon from 'cozy-ui/transpiled/react/Icons/FileTypeSharedDrive'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
@@ -36,7 +36,7 @@ const AddSharedDriveItem = ({ onClick, isReadOnly }) => {
   return (
     <ActionsMenuItem data-testid="add-folder-link" onClick={handleClick}>
       <ListItemIcon>
-        <Icon icon={FileTypeServerIcon} />
+        <Icon icon={FileTypeSharedDriveIcon} />
       </ListItemIcon>
       <ListItemText primary={t('toolbar.menu_new_shared_drive')} />
     </ActionsMenuItem>

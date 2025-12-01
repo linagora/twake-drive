@@ -43,7 +43,7 @@ const SelectionProvider = ({ children }) => {
   }
 
   const toggleSelectedItem = item => {
-    if (highlightedItems?.length > 0) {
+    if (highlightedItems?.length) {
       clearItems()
     }
 

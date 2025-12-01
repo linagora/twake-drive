@@ -14,6 +14,7 @@ import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 import { useDisplayedFolder } from '@/hooks'
 import { displayedFolderOrRootFolder } from '@/hooks/helpers'
 import { DOCTYPE_FILES_SHORTCUT } from '@/lib/doctypes'
+import { useNewItemHighlightContext } from '@/modules/upload/NewItemHighlightProvider'
 
 const ENTER_KEY = 13
 
@@ -39,6 +40,7 @@ const ShortcutCreationModal = ({ onClose, onCreated }) => {
   const client = useClient()
   const { showAlert } = useAlert()
   const isOffline = useBrowserOffline()
+  const { addItems } = useNewItemHighlightContext()
 
   const _displayedFolder = displayedFolderOrRootFolder(displayedFolder)
 
@@ -56,12 +58,16 @@ const ShortcutCreationModal = ({ onClose, onCreated }) => {
       if (isOffline) {
         showAlert({ message: t('alert.offline'), severity: 'error' })
       } else {
-        await client.save({
+        const response = await client.save({
           _type: DOCTYPE_FILES_SHORTCUT,
           dir_id: _displayedFolder.id,
           name: fileName.endsWith('.url') ? fileName : fileName + '.url',
           url: makedURL
         })
+        const createdShortcut = response?.data ?? response
+        if (createdShortcut) {
+          addItems([createdShortcut])
+        }
         showAlert({ message: t('Shortcut.created'), severity: 'success' })
         if (onCreated) onCreated()
       }
@@ -108,7 +114,8 @@ const ShortcutCreationModal = ({ onClose, onCreated }) => {
     url,
     _displayedFolder,
     isOffline,
-    showAlert
+    showAlert,
+    addItems
   ])
 
   const handleKeyDown = e => {

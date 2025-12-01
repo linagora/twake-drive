@@ -1,7 +1,6 @@
 import cx from 'classnames'
 import React from 'react'
 
-import flag from 'cozy-flags'
 import {
   TableHead,
   TableHeader,
@@ -13,11 +12,7 @@ import HeaderCell from './HeaderCell'
 
 import styles from '@/styles/filelist.styl'
 
-import {
-  SORTABLE_ATTRIBUTES,
-  DEFAULT_SORT,
-  SORT_BY_UPDATE_DATE
-} from '@/config/sort'
+import { SORTABLE_ATTRIBUTES } from '@/config/sort'
 
 const FileListHeaderDesktop = ({
   folderId,
@@ -28,11 +23,6 @@ const FileListHeaderDesktop = ({
   viewType
 }) => {
   const { t } = useI18n()
-  const actualSort =
-    sort ||
-    (flag('drive.default-updated-at-sort.enabled')
-      ? SORT_BY_UPDATE_DATE
-      : DEFAULT_SORT)
 
   return (
     <TableHead
@@ -60,7 +50,7 @@ const FileListHeaderDesktop = ({
                 />
               )
             }
-            const isActive = actualSort && actualSort.attribute === attr
+            const isActive = sort && sort.attribute === attr
             return (
               <HeaderCell
                 key={`key_cell_${index}`}
@@ -68,7 +58,7 @@ const FileListHeaderDesktop = ({
                 attr={attr}
                 css={css}
                 defaultOrder={defaultOrder}
-                order={isActive ? actualSort.order : null}
+                order={isActive ? sort.order : null}
                 onSort={(attr, order) => onFolderSort(folderId, attr, order)}
                 className={styles['fil-content-header--capitalize']}
               />

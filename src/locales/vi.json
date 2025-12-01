@@ -319,6 +319,7 @@
     "items_pasted": "%{count} mục đã được di chuyển",
     "copy_files_only": "Không thể sao chép thư mục",
     "copy_not_allowed": "Thao tác sao chép không được phép trong chế độ xem này.",
+    "cut_not_allowed": "Thao tác cắt không được phép trong chế độ xem này.",
     "paste_error": "Đã xảy ra lỗi khi dán tệp",
     "paste_failed": "Dán tệp thất bại",
     "paste_sharing_error": "Không thể dán tệp do hạn chế chia sẻ. Vui lòng sử dụng hành động Di chuyển thay thế.",
@@ -668,6 +669,24 @@
     },
     "duplicateToMobile": {
       "label": "Nhân bản"
+    },
+    "personalizeFolder": {
+      "label": "Cá nhân hóa thư mục"
+    }
+  },
+  "FolderCustomizer": {
+    "title": "Cá nhân hóa thư mục",
+    "description": "Chọn màu cụ thể cho thư mục của bạn",
+    "cancel": "Hủy",
+    "apply": "Áp dụng",
+    "error": "Đã xảy ra lỗi, vui lòng thử lại.",
+    "tabs": {
+      "colors": "Màu sắc",
+      "icons": "Biểu tượng"
+    },
+    "iconPicker": {
+      "recents": "Gần đây",
+      "chooseCustomIcon": "Chọn biểu tượng tùy chỉnh"
     }
   },
   "DuplicateModal": {

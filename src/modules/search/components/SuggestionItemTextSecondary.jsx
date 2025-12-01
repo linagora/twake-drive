@@ -2,9 +2,7 @@ import React from 'react'
 
 import { generateWebLink, useClient } from 'cozy-client'
 import { isFlagshipApp } from 'cozy-device-helper'
-import AppLinker, {
-  generateUniversalLink
-} from 'cozy-ui/transpiled/react/AppLinker'
+import AppLinker, { generateUniversalLink } from 'cozy-ui-plus/dist/AppLinker'
 
 import styles from '@/modules/search/components/styles.styl'
 

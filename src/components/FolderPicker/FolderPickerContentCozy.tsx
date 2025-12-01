@@ -29,6 +29,7 @@ interface FolderPickerContentCozyProps {
   entries: FolderPickerEntry[]
   navigateTo: (folder: import('./types').File) => void
   showNextcloudFolder?: boolean
+  showSharedDriveFolder?: boolean
 }
 
 const FolderPickerContentCozy: React.FC<FolderPickerContentCozyProps> = ({
@@ -37,7 +38,8 @@ const FolderPickerContentCozy: React.FC<FolderPickerContentCozyProps> = ({
   hideFolderCreation,
   entries,
   navigateTo,
-  showNextcloudFolder
+  showNextcloudFolder,
+  showSharedDriveFolder
 }) => {
   const client = useClient()
   const contentQuery = buildMoveOrImportQuery(folder._id)
@@ -68,7 +70,10 @@ const FolderPickerContentCozy: React.FC<FolderPickerContentCozyProps> = ({
   const isEncrypted = isEncryptedFolder(folder)
 
   const files: IOCozyFile[] = useMemo(() => {
-    if (folder._id === ROOT_DIR_ID && showNextcloudFolder) {
+    if (
+      folder._id === ROOT_DIR_ID &&
+      (showNextcloudFolder || showSharedDriveFolder)
+    ) {
       return [
         ...(sharedFolderResult.fetchStatus === 'loaded'
           ? sharedFolderResult.data ?? []
@@ -77,7 +82,14 @@ const FolderPickerContentCozy: React.FC<FolderPickerContentCozyProps> = ({
       ]
     }
     return [...(filesData ?? [])]
-  }, [filesData, sharedFolderResult, folder, showNextcloudFolder])
+  }, [
+    folder._id,
+    showNextcloudFolder,
+    showSharedDriveFolder,
+    filesData,
+    sharedFolderResult.fetchStatus,
+    sharedFolderResult.data
+  ])
 
   const handleFolderUnlockerDismiss = async (): Promise<void> => {
     const parentFolderQuery = buildFileOrFolderByIdQuery(folder.dir_id)

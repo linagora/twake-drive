@@ -6,8 +6,8 @@ import {
   isQueryLoading,
   generateWebLink
 } from 'cozy-client'
-import AppLinker from 'cozy-ui/transpiled/react/AppLinker'
 import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
+import AppLinker from 'cozy-ui-plus/dist/AppLinker'
 
 import { computeHomeApp } from '@/modules/views/OnlyOffice/Toolbar/helpers'
 import { buildAppsQuery, buildSettingsByIdQuery } from '@/queries'

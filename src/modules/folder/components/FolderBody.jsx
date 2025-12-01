@@ -9,6 +9,7 @@ import styles from '@/styles/folder-view.styl'
 import { EmptyDrive } from '@/components/Error/Empty'
 import Oops from '@/components/Error/Oops'
 import RightClickFileMenu from '@/components/RightClick/RightClickFileMenu'
+import { useFolderSort } from '@/hooks'
 import { useThumbnailSizeContext } from '@/lib/ThumbnailSizeContext'
 import { useViewSwitcherContext } from '@/lib/ViewSwitcherContext'
 import AddFolder from '@/modules/filelist/AddFolder'
@@ -20,7 +21,6 @@ import FileListRowsPlaceholder from '@/modules/filelist/FileListRowsPlaceholder'
 import LoadMore from '@/modules/filelist/LoadMoreV2'
 import { useNeedsToWait } from '@/modules/folder/hooks/useNeedsToWait'
 import { useScrollToTop } from '@/modules/folder/hooks/useScrollToTop'
-import { useFolderSort } from '@/modules/navigation/duck'
 import SelectionBar from '@/modules/selection/SelectionBar'
 
 /**
@@ -59,6 +59,8 @@ const FolderBody = ({
 
   useScrollToTop(folderId)
 
+  const [sortOrder, setSortOrder, isSettingsLoaded] = useFolderSort(folderId)
+
   const isError = queryResults.some(query => query.fetchStatus === 'failed')
   const hasData =
     !isError && queryResults.some(query => query.data && query.data.length > 0)
@@ -66,17 +68,16 @@ const FolderBody = ({
     !hasData &&
     queryResults.some(
       query => query.fetchStatus === 'loading' && !query.lastUpdate
-    )
+    ) &&
+    !isSettingsLoaded
   const isEmpty = !isError && !isLoading && !hasData
   const needsToWait = useNeedsToWait({ isLoading })
 
   const { isBigThumbnail } = useThumbnailSizeContext()
-  const [sortOrder, setSortOrder] = useFolderSort(folderId)
   const { viewType, switchView } = useViewSwitcherContext()
 
   const changeSortOrder = useCallback(
-    (folderId_legacy, attribute, order) =>
-      setSortOrder({ sortAttribute: attribute, sortOrder: order }),
+    (folderId_legacy, attribute, order) => setSortOrder({ attribute, order }),
     [setSortOrder]
   )
 
@@ -139,9 +140,7 @@ const FolderBody = ({
                       <RightClickFileMenu
                         key={file._id}
                         doc={file}
-                        actions={actions.filter(
-                          action => !action.selectAllItems
-                        )}
+                        actions={actions}
                       >
                         <File
                           key={file._id}

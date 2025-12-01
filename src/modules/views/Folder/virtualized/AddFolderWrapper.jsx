@@ -12,7 +12,12 @@ import styles from '@/styles/folder-view.styl'
 import { useViewSwitcherContext } from '@/lib/ViewSwitcherContext'
 import AddFolder from '@/modules/filelist/AddFolder'
 
-const AddFolderTable = ({ columns, currentFolderId }) => {
+const AddFolderWrapper = ({
+  columns,
+  currentFolderId,
+  refreshFolderContent,
+  driveId
+}) => {
   const vaultClient = useVaultClient()
   const { viewType } = useViewSwitcherContext()
 
@@ -22,6 +27,8 @@ const AddFolderTable = ({ columns, currentFolderId }) => {
         <AddFolder
           vaultClient={vaultClient}
           currentFolderId={currentFolderId}
+          refreshFolderContent={refreshFolderContent}
+          driveId={driveId}
         />
       </div>
     )
@@ -47,6 +54,7 @@ const AddFolderTable = ({ columns, currentFolderId }) => {
             <AddFolder
               vaultClient={vaultClient}
               currentFolderId={currentFolderId}
+              refreshFolderContent={refreshFolderContent}
             />
           </TableCell>
           <TableCell>—</TableCell>
@@ -58,4 +66,4 @@ const AddFolderTable = ({ columns, currentFolderId }) => {
   )
 }
 
-export default AddFolderTable
+export default AddFolderWrapper

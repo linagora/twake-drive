@@ -10,7 +10,10 @@ import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import { LoaderModal } from '@/components/LoaderModal'
 import { getEntriesName } from '@/modules/move/helpers'
-import { buildFileOrFolderByIdQuery } from '@/queries'
+import {
+  buildFileOrFolderByIdQuery,
+  buildSharedDriveFileOrFolderByIdQuery
+} from '@/queries'
 
 /**
  * Alert the user when is trying to move a shared folder/file inside another shared folder
@@ -18,12 +21,15 @@ import { buildFileOrFolderByIdQuery } from '@/queries'
 const MoveSharedFolderInsideAnotherModal = ({
   entries,
   folderId,
+  driveId,
   onCancel,
   onConfirm
 }) => {
   const { t } = useI18n()
   const { byDocId } = useSharingContext()
-  const folderQuery = buildFileOrFolderByIdQuery(folderId)
+  const folderQuery = driveId
+    ? buildSharedDriveFileOrFolderByIdQuery({ fileId: folderId, driveId })
+    : buildFileOrFolderByIdQuery(folderId)
   const { fetchStatus, data } = useQuery(
     folderQuery.definition,
     folderQuery.options

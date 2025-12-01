@@ -21,6 +21,8 @@ import FolderViewHeader from '../Folder/FolderViewHeader'
 import FolderViewBodyVz from '../Folder/virtualized/FolderViewBody'
 
 import useHead from '@/components/useHead'
+import { RECENT_FOLDER_ID } from '@/constants/config'
+import { useFolderSort } from '@/hooks'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { useModalContext } from '@/lib/ModalContext'
 import {
@@ -67,6 +69,8 @@ export const RecentView = () => {
   const dispatch = useDispatch()
   useHead()
   const { showAlert } = useAlert()
+  const [sortOrder, setSortOrder, isSettingsLoaded] =
+    useFolderSort(RECENT_FOLDER_ID)
 
   const extraColumnsNames = makeExtraColumnsNamesFromMedia({
     isMobile,
@@ -86,7 +90,10 @@ export const RecentView = () => {
     client,
     items: result?.data || [],
     sharingContext,
-    allowCopy: false
+    allowCopy: false,
+    pushModal,
+    popModal,
+    refresh
   })
 
   const actionsOptions = {
@@ -146,6 +153,11 @@ export const RecentView = () => {
             queryResults={[result]}
             withFilePath={true}
             extraColumns={extraColumns}
+            orderProps={{
+              sortOrder,
+              setOrder: setSortOrder,
+              isSettingsLoaded
+            }}
           />
         ) : (
           <FolderViewBody

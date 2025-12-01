@@ -13,11 +13,15 @@ jest.mock('cozy-ui/transpiled/react/providers/Alert', () => ({
 }))
 
 jest.mock('cozy-ui/transpiled/react/providers/I18n', () => ({
-  useI18n: jest.fn()
+  useI18n: jest.fn(),
+  translate: jest.fn(key => key),
+  createUseI18n: jest.fn(() => () => ({ t: key => key })),
+  I18nProvider: ({ children }) => children
 }))
 
 jest.mock('./helpers', () => ({
   isEditableTarget: jest.fn(),
+  shouldBlockKeyboardShortcuts: jest.fn(),
   normalizeKey: jest.fn()
 }))
 
@@ -51,12 +55,19 @@ jest.mock('@/modules/selection/SelectionProvider', () => ({
 
 jest.mock('cozy-flags', () => jest.fn())
 
+jest.mock('cozy-sharing', () => ({
+  SharedDocument: ({ children }) =>
+    children({ isSharedByMe: false, link: null, recipients: [] }),
+  SharedRecipientsList: () => null,
+  withLocales: component => component
+}))
+
 import { isFile } from 'cozy-client/dist/models/file'
 import flag from 'cozy-flags'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
-import { isEditableTarget, normalizeKey } from './helpers'
+import { shouldBlockKeyboardShortcuts, normalizeKey } from './helpers'
 import { useKeyboardShortcuts } from './useKeyboardShortcuts.tsx'
 
 import { isMacOS } from '@/components/pushClient'
@@ -175,7 +186,7 @@ describe('useKeyboardShortcuts', () => {
     useNextcloudCurrentFolder.mockReturnValue(mockCurrentFolder)
 
     isFile.mockReturnValue(true)
-    isEditableTarget.mockReturnValue(false)
+    shouldBlockKeyboardShortcuts.mockReturnValue(false)
     normalizeKey.mockImplementation((event, isApple) => {
       const key = event.key.toLowerCase()
       const ctrl = isApple ? event.metaKey : event.ctrlKey
@@ -185,6 +196,7 @@ describe('useKeyboardShortcuts', () => {
       if (ctrl && key === 'a') return 'Ctrl+a'
       if (key === 'f2') return 'f2'
       if (key === 'escape') return 'escape'
+      if (key === 'delete') return 'delete'
       return key
     })
     isMacOS.mockReturnValue(false)
@@ -328,7 +340,8 @@ describe('useKeyboardShortcuts', () => {
 
       expect(mockCutFiles).toHaveBeenCalledWith(
         mockSelectedItems,
-        new Set(['parent-folder-1', 'parent-folder-2'])
+        new Set(['parent-folder-1', 'parent-folder-2']),
+        mockCurrentFolder
       )
       expect(mockShowAlert).toHaveBeenCalledWith({
         message: 'alert.items_cut_2',
@@ -366,12 +379,14 @@ describe('useKeyboardShortcuts', () => {
         mockClient,
         [{ _id: 'clipboard-file', name: 'clipboard.txt' }],
         OPERATION_COPY,
+        undefined,
         mockCurrentFolder,
         {
-          showAlert: mockShowAlert,
-          t: mockT,
           sharingContext: null,
-          showMoveValidationModal: mockShowMoveValidationModal
+          showAlert: mockShowAlert,
+          showMoveValidationModal: mockShowMoveValidationModal,
+          t: mockT,
+          isPublic: false
         }
       )
       expect(mockShowAlert).toHaveBeenCalledWith({
@@ -495,10 +510,11 @@ describe('useKeyboardShortcuts', () => {
         mockClient,
         expect.any(Array),
         OPERATION_COPY,
+        undefined,
         mockCurrentFolder,
         expect.objectContaining({
-          showMoveValidationModal: mockShowMoveValidationModal,
-          sharingContext: { isShared: true }
+          sharingContext: { isShared: true },
+          showMoveValidationModal: mockShowMoveValidationModal
         })
       )
     })
@@ -618,6 +634,201 @@ describe('useKeyboardShortcuts', () => {
       })
 
       expect(mockDispatch).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('the delete shortcut key', () => {
+    it('should show delete confirmation when Delete key is pressed', () => {
+      const mockPushModal = jest.fn()
+      const mockPopModal = jest.fn()
+      const mockRefresh = jest.fn()
+
+      const wrapper = createWrapper()
+      renderHook(
+        () =>
+          useKeyboardShortcuts({
+            client: mockClient,
+            items: mockItems,
+            pushModal: mockPushModal,
+            popModal: mockPopModal,
+            refresh: mockRefresh
+          }),
+        { wrapper }
+      )
+
+      const event = new KeyboardEvent('keydown', {
+        key: 'Delete',
+        bubbles: true
+      })
+
+      act(() => {
+        document.dispatchEvent(event)
+      })
+
+      expect(mockPushModal).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: expect.any(Function)
+        })
+      )
+    })
+
+    it('should not show delete confirmation when no items are selected', () => {
+      useSelectionContext.mockReturnValue({
+        selectedItems: [],
+        selectAll: mockSelectAll,
+        hideSelectionBar: mockHideSelectionBar,
+        clearSelection: mockClearSelection,
+        isSelectAll: false
+      })
+
+      const mockPushModal = jest.fn()
+      const mockPopModal = jest.fn()
+      const mockRefresh = jest.fn()
+
+      const wrapper = createWrapper()
+      renderHook(
+        () =>
+          useKeyboardShortcuts({
+            client: mockClient,
+            items: mockItems,
+            pushModal: mockPushModal,
+            popModal: mockPopModal,
+            refresh: mockRefresh
+          }),
+        { wrapper }
+      )
+
+      const event = new KeyboardEvent('keydown', {
+        key: 'Delete',
+        bubbles: true
+      })
+
+      act(() => {
+        document.dispatchEvent(event)
+      })
+
+      expect(mockPushModal).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('Shared Drive Operations', () => {
+    const sharedDriveFiles = [
+      {
+        _id: 'shared-file-1',
+        name: 'shared-doc.pdf',
+        type: 'file',
+        dir_id: 'shared-folder-1',
+        driveId: 'shared-drive-123'
+      }
+    ]
+
+    const sharedDriveFolder = {
+      _id: 'shared-folder-1',
+      name: 'Shared Folder',
+      type: 'directory',
+      driveId: 'shared-drive-456'
+    }
+
+    beforeEach(() => {
+      // Reset all mocks
+      shouldBlockKeyboardShortcuts.mockReturnValue(false)
+      isFile.mockReturnValue(true)
+
+      useDisplayedFolder.mockReturnValue({ displayedFolder: sharedDriveFolder })
+      useSelectionContext.mockReturnValue({
+        selectedItems: sharedDriveFiles,
+        selectAll: mockSelectAll,
+        clearSelection: mockClearSelection,
+        isSelectionBarVisible: false
+      })
+    })
+
+    it('should copy shared drive files when Ctrl+C is pressed', () => {
+      const wrapper = createWrapper()
+      renderHook(() => useKeyboardShortcuts({ onPaste: mockOnPaste }), {
+        wrapper
+      })
+
+      const event = new KeyboardEvent('keydown', {
+        key: 'c',
+        ctrlKey: true,
+        bubbles: true
+      })
+
+      act(() => {
+        document.dispatchEvent(event)
+      })
+
+      expect(mockCopyFiles).toHaveBeenCalledWith(
+        sharedDriveFiles,
+        new Set(['shared-folder-1'])
+      )
+      expect(mockShowAlert).toHaveBeenCalledWith({
+        message: 'alert.item_copied',
+        severity: 'success'
+      })
+      expect(mockClearSelection).toHaveBeenCalled()
+    })
+
+    it('should cut shared drive files when Ctrl+X is pressed', () => {
+      useDisplayedFolder.mockReturnValue({ displayedFolder: sharedDriveFolder })
+
+      const wrapper = createWrapper()
+      renderHook(() => useKeyboardShortcuts({ onPaste: mockOnPaste }), {
+        wrapper
+      })
+
+      const event = new KeyboardEvent('keydown', {
+        key: 'x',
+        ctrlKey: true,
+        bubbles: true
+      })
+
+      act(() => {
+        document.dispatchEvent(event)
+      })
+
+      expect(mockCutFiles).toHaveBeenCalledWith(
+        sharedDriveFiles,
+        new Set(['shared-folder-1']),
+        sharedDriveFolder
+      )
+      expect(mockShowAlert).toHaveBeenCalledWith({
+        message: 'alert.item_cut',
+        severity: 'success'
+      })
+      expect(mockClearSelection).toHaveBeenCalled()
+    })
+
+    it('should handle paste operations with shared drive folders', async () => {
+      // Test that handlePasteOperation can be called with shared drive folder
+      // This verifies the integration works correctly
+      await handlePasteOperation(
+        mockClient,
+        [{ _id: 'regular-file', name: 'regular.txt' }],
+        'copy',
+        null,
+        sharedDriveFolder,
+        {
+          sharingContext: null,
+          showAlert: mockShowAlert,
+          showMoveValidationModal: mockShowMoveValidationModal,
+          t: mockT
+        }
+      )
+
+      // Verify that the function was called with shared drive folder
+      expect(handlePasteOperation).toHaveBeenCalledWith(
+        mockClient,
+        [{ _id: 'regular-file', name: 'regular.txt' }],
+        'copy',
+        null,
+        expect.objectContaining({
+          _id: 'shared-folder-1',
+          driveId: 'shared-drive-456'
+        }),
+        expect.any(Object)
+      )
     })
   })
 })

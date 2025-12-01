@@ -14,10 +14,28 @@ jest.mock('cozy-keys-lib', () => ({
 
 jest.mock('cozy-sharing', () => ({
   ...jest.requireActual('cozy-sharing'),
-  useSharingContext: jest.fn()
+  useSharingContext: jest.fn(),
+  SharingCollection: {
+    data: jest.fn().mockResolvedValue({ data: [] })
+  }
 }))
 
 useSharingContext.mockReturnValue({ byDocId: [] })
+
+jest.mock('@/components/FolderPicker/FolderPickerBody', () => ({
+  FolderPickerBody: jest
+    .fn()
+    .mockImplementation(({ isFolderCreationDisplayed }) => (
+      <div data-testid="folder-picker-body">
+        <div>Mocked Folder Picker Body</div>
+        {isFolderCreationDisplayed && (
+          <div data-testid="name-input">
+            <input placeholder="Folder name" />
+          </div>
+        )}
+      </div>
+    ))
+}))
 
 describe('FolderPicker', () => {
   const cozyFile = {
@@ -99,5 +117,38 @@ describe('FolderPicker', () => {
 
     const filenameInput = await screen.findByTestId('name-input')
     expect(filenameInput).toBeInTheDocument()
+  })
+
+  it('should render with the provided folder', async () => {
+    setup()
+
+    expect(screen.getByTestId('folder-picker-body')).toBeInTheDocument()
+
+    const {
+      FolderPickerBody
+    } = require('@/components/FolderPicker/FolderPickerBody')
+
+    const props = FolderPickerBody.mock.calls[0][0]
+
+    expect(props.folder).toEqual(cozyFolder)
+    expect(props.entries).toEqual([cozyFile])
+    expect(typeof props.navigateTo).toBe('function')
+  })
+
+  it('should allow folder creation when canCreateFolder is true', async () => {
+    const mockClient = createMockClient()
+    render(
+      <AppLike client={mockClient}>
+        <FolderPicker
+          currentFolder={cozyFolder}
+          entries={[cozyFile]}
+          onClose={onCloseSpy}
+          onConfirm={onConfirmSpy}
+          canCreateFolder={true}
+        />
+      </AppLike>
+    )
+
+    expect(screen.getByTestId('folder-picker-body')).toBeInTheDocument()
   })
 })

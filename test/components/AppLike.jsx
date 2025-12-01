@@ -1,4 +1,6 @@
 import React, { Fragment } from 'react'
+import { DndProvider } from 'react-dnd'
+import { HTML5Backend } from 'react-dnd-html5-backend'
 import { Provider } from 'react-redux'
 import { HashRouter } from 'react-router-dom'
 import { createStore } from 'redux'
@@ -9,8 +11,8 @@ import { SharingContext, NativeFileSharingProvider } from 'cozy-sharing'
 import { Layout } from 'cozy-ui/transpiled/react/Layout'
 import AlertProvider from 'cozy-ui/transpiled/react/providers/Alert'
 import { BreakpointsProvider } from 'cozy-ui/transpiled/react/providers/Breakpoints'
-import CozyTheme from 'cozy-ui/transpiled/react/providers/CozyTheme'
 import { I18n } from 'cozy-ui/transpiled/react/providers/I18n'
+import CozyTheme from 'cozy-ui-plus/dist/providers/CozyTheme'
 
 import PushBannerProvider from '@/components/PushBanner/PushBannerProvider'
 import RightClickProvider from '@/components/RightClick/RightClickProvider'
@@ -88,11 +90,13 @@ const AppLike = ({
                                     modalContextValue || mockModalContextValue
                                   }
                                 >
-                                  <FabProvider>
-                                    <RightClickProvider>
-                                      <Layout>{children}</Layout>
-                                    </RightClickProvider>
-                                  </FabProvider>
+                                  <DndProvider backend={HTML5Backend}>
+                                    <FabProvider>
+                                      <RightClickProvider>
+                                        <Layout>{children}</Layout>
+                                      </RightClickProvider>
+                                    </FabProvider>
+                                  </DndProvider>
                                 </ModalContext.Provider>
                               </ClipboardProvider>
                             </PushBannerProvider>

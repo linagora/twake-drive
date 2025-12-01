@@ -34,7 +34,12 @@ const canDropHelper = evt => {
   return true
 }
 
-export const Dropzone = ({ displayedFolder, children }) => {
+export const Dropzone = ({
+  displayedFolder,
+  disabled,
+  refreshFolderContent = null,
+  children
+}) => {
   const client = useClient()
   const { t } = useI18n()
   const { isMobile } = useBreakpoints()
@@ -43,11 +48,17 @@ export const Dropzone = ({ displayedFolder, children }) => {
   const vaultClient = useVaultClient()
   const dispatch = useDispatch()
   const { addItems } = useNewItemHighlightContext()
+
+  const fileUploadCallback = refreshFolderContent
+    ? refreshFolderContent
+    : () => null
+
   const [{ canDrop, isOver }, dropRef] = useDrop(
     () => ({
       accept: [NativeTypes.FILE],
-      canDrop: item => canDropHelper(item),
+      canDrop: item => !disabled && canDropHelper(item),
       drop(item) {
+        if (disabled) return
         const filesToUpload = canHandleFolders(item)
           ? item.dataTransfer.items
           : item.files
@@ -56,7 +67,7 @@ export const Dropzone = ({ displayedFolder, children }) => {
             filesToUpload,
             displayedFolder._id,
             sharingState,
-            () => null,
+            fileUploadCallback,
             {
               client,
               vaultClient,
@@ -95,14 +106,27 @@ export const Dropzone = ({ displayedFolder, children }) => {
   )
 }
 
-const DropzoneWrapper = ({ displayedFolder, disabled, children }) => {
+const DropzoneWrapper = ({
+  displayedFolder,
+  disabled,
+  refreshFolderContent,
+  children
+}) => {
   const { isMobile } = useBreakpoints()
 
   if (disabled) {
     return <Content className={isMobile ? '' : 'u-pt-1'}>{children}</Content>
   }
 
-  return <Dropzone displayedFolder={displayedFolder}>{children}</Dropzone>
+  return (
+    <Dropzone
+      displayedFolder={displayedFolder}
+      disabled={disabled}
+      refreshFolderContent={refreshFolderContent}
+    >
+      {children}
+    </Dropzone>
+  )
 }
 
 export default DropzoneWrapper

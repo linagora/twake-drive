@@ -34,8 +34,19 @@ const DestroyConfirm: React.FC<DestroyConfirmProps> = ({
   const entriesType = getEntriesTypeTranslated(t, files)
 
   const handleDestroy = async (): Promise<void> => {
+    // Prevent double executions
+    if (isBusy) return
+
+    setBusy(true)
     try {
-      setBusy(true)
+      showAlert({
+        message: t('DestroyConfirm.processing', {
+          smart_count: files.length,
+          type: entriesType
+        }),
+        severity: 'info'
+      })
+      onClose()
       await onConfirm()
       showAlert({
         message: t('DestroyConfirm.success', {
@@ -51,7 +62,6 @@ const DestroyConfirm: React.FC<DestroyConfirmProps> = ({
       })
     } finally {
       setBusy(false)
-      onClose()
     }
   }
 

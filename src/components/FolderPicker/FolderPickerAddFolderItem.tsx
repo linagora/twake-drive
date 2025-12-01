@@ -22,6 +22,7 @@ interface FolderPickerAddFolderItemProps {
   visible: boolean
   afterSubmit: () => void
   afterAbort: () => void
+  driveId?: string
 }
 
 const FolderPickerAddFolderItem: FC<FolderPickerAddFolderItemProps> = ({
@@ -29,7 +30,8 @@ const FolderPickerAddFolderItem: FC<FolderPickerAddFolderItemProps> = ({
   currentFolderId,
   visible,
   afterSubmit,
-  afterAbort
+  afterAbort,
+  driveId
 }) => {
   const { isMobile } = useBreakpoints()
   const gutters = isMobile ? 'default' : 'double'
@@ -41,11 +43,18 @@ const FolderPickerAddFolderItem: FC<FolderPickerAddFolderItemProps> = ({
 
   const handleSubmit = (name: string): void => {
     dispatch(
-      createFolder(client, vaultClient, name, currentFolderId, {
-        isEncryptedFolder: isEncrypted,
-        showAlert,
-        t
-      })
+      createFolder(
+        client,
+        vaultClient,
+        name,
+        currentFolderId,
+        {
+          isEncryptedFolder: isEncrypted,
+          showAlert,
+          t
+        },
+        driveId
+      )
     )
     if (typeof afterSubmit === 'function') {
       afterSubmit()

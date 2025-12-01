@@ -28,7 +28,9 @@ import {
   SHARING_TAB_ALL,
   SHARING_TAB_DRIVES
 } from '@/constants/config'
+import { useFolderSort } from '@/hooks'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
+import { useTransformFolderListHasSharedDriveShortcuts } from '@/hooks/useTransformFolderListHasSharedDriveShortcuts'
 import { useModalContext } from '@/lib/ModalContext'
 import {
   download,
@@ -53,7 +55,6 @@ import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 import { deleteSharedDrive } from '@/modules/shareddrives/components/actions/deleteSharedDrive'
 import { leaveSharedDrive } from '@/modules/shareddrives/components/actions/leaveSharedDrive'
 import { manageAccess } from '@/modules/shareddrives/components/actions/manageAccess'
-import { useSharedDrives } from '@/modules/shareddrives/hooks/useSharedDrives'
 import {
   buildSharingsQuery,
   buildSharingsWithMetadataAttributeQuery
@@ -73,13 +74,13 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
   const { isSelectionBarVisible, toggleSelectAllItems, isSelectAll } =
     useSelectionContext()
   const sharingContext = useSharingContext()
-  const { allLoaded, refresh, isOwner } = sharingContext
+  const { allLoaded, refresh } = sharingContext
   const { isNativeFileSharingAvailable, shareFilesNative } =
     useNativeFileSharing()
-  const { sharedDrives } = useSharedDrives()
   const dispatch = useDispatch()
   useHead()
   const { showAlert } = useAlert()
+  const [sortOrder, setSortOrder, isSettingsLoaded] = useFolderSort('sharings')
 
   const [tab, setTab] = useState(tabParam)
 
@@ -98,10 +99,36 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
   })
 
   const query = useMemo(
-    () => buildSharingsQuery({ ids: sharedDocumentIds, enabled: allLoaded }),
+    () =>
+      buildSharingsQuery({
+        ids: sharedDocumentIds,
+        enabled: allLoaded && sharedDocumentIds?.length > 0
+      }),
     [sharedDocumentIds, allLoaded]
   )
   const result = useQuery(query.definition, query.options)
+
+  /**
+   * Problem:
+   * - In the recipient's Sharing section, shared drives appear only as shortcuts
+   *   and don’t contain a root folder id (the folder id in the owner's shared drive).
+   *
+   * Why:
+   * - To open a shared drive, we need a URL like `shareddrive/:driveId/:rootFolderId`.
+   * - This information exists in `io.cozy.sharings`, which includes root folder id,
+   *   but the structure is not compatible with the directory format expected
+   *   in the Sharing UI.
+   *
+   * Solution:
+   * - Transform `sharedDrives` into directory-like objects with the required
+   *   properties (`id`, `path`, `attributes`,...) so they can be displayed
+   *   and opened consistently.
+   */
+  const {
+    sharedDrives: transformedSharedDrives,
+    nonSharedDriveList,
+    sharedDrivesLoaded
+  } = useTransformFolderListHasSharedDriveShortcuts(result.data)
 
   const filteredResult = useMemo(() => {
     if (!isEnabledSharedDrive) {
@@ -110,84 +137,46 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
         []
       return {
         ...result,
+        // If there are no shared documents, we consider the data is loaded by setting fetchStatus to 'loaded' and lastFetch to now.
+        fetchStatus:
+          sharedDocumentIds?.length > 0 ? result.fetchStatus : 'loaded',
+        lastFetch:
+          sharedDocumentIds?.length > 0 ? result.lastFetch : Date.now(),
         data: filteredResultData,
         count: filteredResultData.length
       }
     }
-
-    /**
-     * Problem:
-     * - In the recipient's Sharing section, shared drives appear only as shortcuts
-     *   and don’t contain a root folder id (the folder id in the owner's shared drive).
-     *
-     * Why:
-     * - To open a shared drive, we need a URL like `shareddrive/:driveId/:rootFolderId`.
-     * - This information exists in `io.cozy.sharings`, which includes root folder id,
-     *   but the structure is not compatible with the directory format expected
-     *   in the Sharing UI.
-     *
-     * Solution:
-     * - Transform `sharedDrives` into directory-like objects with the required
-     *   properties (`id`, `path`, `attributes`,...) so they can be displayed
-     *   and opened consistently.
-     */
-    const transformedSharedDrives = (sharedDrives || []).map(sharing => {
-      const [rootFolderId, driveName] = [
-        sharing.rules?.[0]?.values?.[0],
-        sharing.rules?.[0]?.title
-      ]
-
-      // Find the file from sharing section that has same `driveId` then override it into directory-like objects
-      const fileInSharingSection = result.data?.find(
-        item => item.relationships?.referenced_by?.data?.[0]?.id === sharing.id
-      )
-
-      if (fileInSharingSection && isOwner(fileInSharingSection?.id))
-        return fileInSharingSection
-
-      const directoryData = {
-        type: 'directory',
-        name: driveName,
-        dir_id: SHARED_DRIVES_DIR_ID,
-        driveId: sharing.id
-      }
-
-      return {
-        ...fileInSharingSection,
-        _id: rootFolderId,
-        id: SHARED_DRIVES_DIR_ID,
-        _type: 'io.cozy.files',
-        path: `/Drives/${driveName}`,
-        ...directoryData,
-        attributes: directoryData
-      }
-    })
-
-    /**
-     * Exclude shared drives from the original result,
-     * since it will be replaced with transformed ones above.
-     */
-    const filteredResultData =
-      result.data?.filter(item => !(item.dir_id === SHARED_DRIVES_DIR_ID)) || []
-
     const combinedData =
       tab === SHARING_TAB_DRIVES
         ? transformedSharedDrives
-        : [...transformedSharedDrives, ...filteredResultData]
+        : [...transformedSharedDrives, ...nonSharedDriveList]
 
     return {
       ...result,
+      fetchStatus:
+        sharedDocumentIds?.length > 0 ? result.fetchStatus : 'loaded',
+      lastFetch: sharedDocumentIds?.length > 0 ? result.lastFetch : Date.now(),
       data: combinedData,
       count: combinedData.length
     }
-  }, [sharedDrives, result, tab, isOwner, isEnabledSharedDrive])
+  }, [
+    isEnabledSharedDrive,
+    tab,
+    transformedSharedDrives,
+    nonSharedDriveList,
+    result,
+    sharedDocumentIds?.length
+  ])
 
   useKeyboardShortcuts({
     onPaste: () => refresh(),
     client,
     items: filteredResult?.data || [],
     sharingContext,
-    allowCopy: false
+    allowCopy: false,
+    pushModal,
+    popModal,
+    refresh
   })
 
   const actionsOptions = {
@@ -242,7 +231,9 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
           <Toolbar canUpload={false} canCreateFolder={false} />
         </FolderViewHeader>
         {isEnabledSharedDrive && <SharingTab tab={tab} setTab={setTab} />}
-        {!allLoaded || !hasQueryBeenLoaded(result) ? (
+        {!allLoaded ||
+        !sharedDrivesLoaded ||
+        !hasQueryBeenLoaded(filteredResult) ? (
           <FileListRowsPlaceholder />
         ) : (
           <>
@@ -252,6 +243,11 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
                 queryResults={[filteredResult]}
                 withFilePath={true}
                 extraColumns={extraColumns}
+                orderProps={{
+                  sortOrder,
+                  setOrder: setSortOrder,
+                  isSettingsLoaded
+                }}
               />
             ) : (
               <FolderViewBody
@@ -260,6 +256,11 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
                 canSort={false}
                 withFilePath={true}
                 extraColumns={extraColumns}
+                orderProps={{
+                  sortOrder,
+                  setOrder: setSortOrder,
+                  isSettingsLoaded
+                }}
               />
             )}
             <Outlet />

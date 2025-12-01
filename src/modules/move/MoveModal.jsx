@@ -2,7 +2,6 @@ import PropTypes from 'prop-types'
 import React, { useState } from 'react'
 
 import { useClient } from 'cozy-client'
-import { move } from 'cozy-client/dist/models/file'
 import { useSharingContext } from 'cozy-sharing'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
@@ -18,6 +17,7 @@ import { MoveSharedFolderInsideAnotherModal } from '@/modules/move/MoveSharedFol
 import { hasOneOfEntriesShared } from '@/modules/move/helpers'
 import { useCancelable } from '@/modules/move/hooks/useCancelable'
 import { computeNextcloudFolderQueryId } from '@/modules/nextcloud/helpers'
+import { executeMove } from '@/modules/paste'
 
 /**
  * Modal to move a folder to an other
@@ -26,7 +26,11 @@ const MoveModal = ({
   onClose,
   currentFolder,
   entries,
-  showNextcloudFolder
+  showNextcloudFolder,
+  onMovingSuccess,
+  isPublic,
+  showSharedDriveFolder,
+  driveId
 }) => {
   const client = useClient()
   const {
@@ -63,9 +67,14 @@ const MoveModal = ({
     const targetPath = joinPath(folder.path, entries[0].name)
 
     const areMovedFilesShared = hasOneOfEntriesShared(entries, byDocId)
-    const isOriginParentShared = hasSharedParent(entries[0].path)
-    const isTargetShared = hasSharedParent(targetPath)
-    const isInsideSameSharedFolder = targetPath.startsWith(sharedParentPath)
+    const isOriginParentShared = hasSharedParent(entries[0].path) || !!driveId
+    const isTargetShared =
+      hasSharedParent(targetPath) ||
+      (!!folder.driveId && folder.driveId !== driveId)
+    const isInsideSameSharedFolder =
+      (sharedParentPath && targetPath.startsWith(sharedParentPath)) ||
+      (!!folder.driveId && !!driveId && folder.driveId === driveId) ||
+      isPublic
 
     if (isInsideSameSharedFolder) {
       moveEntries(folder)
@@ -94,13 +103,11 @@ const MoveModal = ({
     try {
       setMoveInProgress(true)
       const trashedFiles = []
+      const force = !sharedPaths.includes(folder.path)
       await Promise.all(
         entries.map(async entry => {
-          const force = !sharedPaths.includes(folder.path)
           const moveResponse = await registerCancelable(
-            move(client, entry, folder, {
-              force
-            })
+            executeMove(client, entry, currentFolder, folder, force)
           )
           if (moveResponse.deleted) {
             trashedFiles.push(moveResponse.deleted)
@@ -129,6 +136,8 @@ const MoveModal = ({
       })
 
       if (refreshSharing) refreshSharing()
+
+      onMovingSuccess?.()
     } catch (e) {
       logger.warn(e)
       showAlert({
@@ -207,23 +216,27 @@ const MoveModal = ({
     <>
       <FolderPicker
         showNextcloudFolder={showNextcloudFolder}
+        showSharedDriveFolder={showSharedDriveFolder}
         currentFolder={currentFolder}
         entries={entries}
         onConfirm={handleConfirm}
         onClose={onClose}
-        isBusy={isMoveInProgress || !allLoaded}
+        isBusy={isMoveInProgress || (!isPublic && !allLoaded)}
+        isPublic={isPublic}
       />
       {isMovingOutsideSharedFolder ? (
         <MoveOutsideSharedFolderModal
           entries={entries}
           onCancel={handleCancelMovingOutside}
           onConfirm={handleConfirmMovingOutside}
+          driveId={driveId}
         />
       ) : null}
       {isMovingSharedFolderInsideAnother ? (
         <MoveSharedFolderInsideAnotherModal
           entries={entries}
           folderId={folderSelected._id}
+          driveId={folderSelected.driveId}
           onCancel={() => setMovingSharedFolderInsideAnother(false)}
           onConfirm={handleMovingSharedFolderInsideAnother}
         />
@@ -234,6 +247,7 @@ const MoveModal = ({
           onConfirm={handleConfirmMovingInside}
           entries={entries}
           folderId={folderSelected._id}
+          driveId={folderSelected.driveId}
         />
       ) : null}
     </>
@@ -242,7 +256,8 @@ const MoveModal = ({
 
 MoveModal.propTypes = {
   /** List of files or folder to move */
-  entries: PropTypes.array
+  entries: PropTypes.array,
+  onMovingSuccess: PropTypes.func
 }
 
 export { MoveModal }

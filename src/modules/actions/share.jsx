@@ -26,7 +26,8 @@ const share = ({ t, hasWriteAccess, navigate, pathname, allLoaded }) => {
         hasWriteAccess &&
         files?.length === 1 &&
         !isEncryptedFileOrFolder(files[0]) &&
-        !isSharedDriveFolder(files[0])
+        !isSharedDriveFolder(files[0]) &&
+        !files[0]?.driveId
       )
     },
     action: files =>

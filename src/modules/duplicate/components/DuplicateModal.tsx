@@ -18,13 +18,15 @@ interface DuplicateModalProps {
   currentFolder: File
   onClose: () => void | Promise<void>
   showNextcloudFolder?: boolean
+  isPublic?: boolean
 }
 
 const DuplicateModal: FC<DuplicateModalProps> = ({
   entries,
   currentFolder,
   onClose,
-  showNextcloudFolder
+  showNextcloudFolder,
+  isPublic
 }) => {
   const { t } = useI18n()
   const { showAlert } = useAlert()
@@ -103,6 +105,7 @@ const DuplicateModal: FC<DuplicateModalProps> = ({
         }
       }}
       canPickEntriesParentFolder
+      isPublic={isPublic}
     />
   )
 }

@@ -1,7 +1,8 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { OnlyOfficePaywall } from 'cozy-ui/transpiled/react/Paywall'
+import flag from 'cozy-flags'
+import { OnlyOfficePaywall } from 'cozy-ui-plus/dist/Paywall'
 
 const OnlyOfficePaywallView = ({ isPublic = false }) => {
   const navigate = useNavigate()
@@ -10,7 +11,13 @@ const OnlyOfficePaywallView = ({ isPublic = false }) => {
     navigate('..')
   }
 
-  return <OnlyOfficePaywall isPublic={isPublic} onClose={onClose} />
+  return (
+    <OnlyOfficePaywall
+      isPublic={isPublic}
+      isIapEnabled={flag('flagship.iap.enabled')}
+      onClose={onClose}
+    />
+  )
 }
 
 export default OnlyOfficePaywallView

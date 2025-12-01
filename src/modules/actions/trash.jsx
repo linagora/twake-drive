@@ -14,7 +14,12 @@ const makeComponent = ({ icon, t, byDocId, isOwner }) => {
       byDocId !== undefined &&
       byDocId[props.docs[0].id] &&
       !isOwner(props.docs[0].id)
-    const label = sharedWithMe ? t('toolbar.leave') : t('SelectionBar.trash')
+
+    const label = sharedWithMe
+      ? t('toolbar.leave')
+      : props.docs.length > 1
+      ? t('SelectionBar.trash_all')
+      : t('SelectionBar.trash')
 
     return (
       <ActionsMenuItem {...props} ref={ref}>

@@ -6,6 +6,10 @@ export declare function displayedFolderOrRootFolder(displayedFolder: unknow): {
 
 export declare function isEditableTarget(target: EventTarget | null): boolean
 
+export declare function shouldBlockKeyboardShortcuts(
+  target: EventTarget | null
+): boolean
+
 export declare function normalizeKey(
   event: KeyboardEvent,
   isApple: boolean

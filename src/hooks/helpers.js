@@ -31,6 +31,37 @@ export const isEditableTarget = target =>
   (target instanceof HTMLElement && target.isContentEditable)
 
 /**
+ * Check if targeted element can editable except checkbox
+ * @param {EventTarget | null} target
+ * @returns {boolean}
+ */
+export const shouldBlockKeyboardShortcuts = target => {
+  if (!target || !(target instanceof HTMLElement)) return false
+
+  const tag = target.tagName.toLowerCase()
+  const type = target.getAttribute('type')?.toLowerCase()
+
+  if (
+    tag === 'input' &&
+    type !== 'checkbox' &&
+    !target.readOnly &&
+    !target.disabled
+  ) {
+    return true
+  }
+
+  if (tag === 'textarea' && !target.readOnly && !target.disabled) {
+    return true
+  }
+
+  if (target.isContentEditable) {
+    return true
+  }
+
+  return false
+}
+
+/**
  * Normalize shortcut keys
  * @param {KeyboardEvent} event
  * @param {boolean} isApple
@@ -40,6 +71,14 @@ export const normalizeKey = (event, isApple) => {
   const keys = []
 
   if (isApple ? event.metaKey : event.ctrlKey) keys.push('Ctrl')
-  keys.push(event.key.toLowerCase())
+
+  const key = event.key.toLowerCase()
+
+  if (key === 'delete' || key === 'del') {
+    keys.push('delete')
+  } else {
+    keys.push(key)
+  }
+
   return keys.join('+')
 }

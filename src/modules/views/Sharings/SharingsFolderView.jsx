@@ -9,14 +9,16 @@ import { makeActions } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
+import flag from 'cozy-flags'
 
 import FolderView from '../Folder/FolderView'
 import FolderViewBody from '../Folder/FolderViewBody'
+import FolderViewBodyVz from '@/modules/views/Folder/virtualized/FolderViewBody'
 import FolderViewBreadcrumb from '../Folder/FolderViewBreadcrumb'
 import FolderViewHeader from '../Folder/FolderViewHeader'
 
 import useHead from '@/components/useHead'
-import { useCurrentFolderId, useDisplayedFolder } from '@/hooks'
+import { useCurrentFolderId, useDisplayedFolder, useFolderSort } from '@/hooks'
 import { useModalContext } from '@/lib/ModalContext'
 import {
   share,
@@ -28,10 +30,10 @@ import {
   selectAllItems
 } from '@/modules/actions'
 import { moveTo } from '@/modules/actions/components/moveTo'
+import { personalizeFolder } from '@/modules/actions/components/personalizeFolder'
 import { makeExtraColumnsNamesFromMedia } from '@/modules/certifications'
 import { useExtraColumns } from '@/modules/certifications/useExtraColumns'
 import Toolbar from '@/modules/drive/Toolbar'
-import { useFolderSort } from '@/modules/navigation/duck'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 import Dropzone from '@/modules/upload/Dropzone'
 import {
@@ -70,7 +72,8 @@ const SharingsFolderView = ({ sharedDocumentIds }) => {
     currentFolderId
   })
 
-  const [sortOrder] = useFolderSort(currentFolderId)
+  const [sortOrder, setSortOrder, isSettingsLoaded] =
+    useFolderSort(currentFolderId)
 
   const folderQuery = buildDriveQuery({
     currentFolderId,
@@ -86,6 +89,8 @@ const SharingsFolderView = ({ sharedDocumentIds }) => {
   })
   const foldersResult = useQuery(folderQuery.definition, folderQuery.options)
   const filesResult = useQuery(fileQuery.definition, fileQuery.options)
+
+  const allResults = [foldersResult, filesResult]
 
   const hasWrite = hasWriteAccess(currentFolderId)
 
@@ -111,7 +116,17 @@ const SharingsFolderView = ({ sharedDocumentIds }) => {
     isSelectAll
   }
   const actions = makeActions(
-    [selectAllItems, share, download, trash, rename, moveTo, qualify, versions],
+    [
+      selectAllItems,
+      share,
+      download,
+      trash,
+      rename,
+      moveTo,
+      qualify,
+      versions,
+      personalizeFolder
+    ],
     actionsOptions
   )
 
@@ -135,13 +150,30 @@ const SharingsFolderView = ({ sharedDocumentIds }) => {
           )}
           <Toolbar canUpload={hasWrite} canCreateFolder={hasWrite} />
         </FolderViewHeader>
-        <FolderViewBody
-          actions={actions}
-          queryResults={[foldersResult, filesResult]}
-          canSort
-          extraColumns={extraColumns}
-          currentFolderId={currentFolderId}
-        />
+        {flag('drive.virtualization.enabled') && !isMobile ? (
+          <FolderViewBodyVz
+            actions={actions}
+            queryResults={allResults}
+            currentFolderId={currentFolderId}
+            displayedFolder={displayedFolder}
+            extraColumns={extraColumns}
+            canDrag
+            canUpload={hasWrite}
+            orderProps={{
+              sortOrder,
+              setOrder: setSortOrder,
+              isSettingsLoaded
+            }}
+          />
+        ) : (
+          <FolderViewBody
+            actions={actions}
+            queryResults={allResults}
+            canSort
+            extraColumns={extraColumns}
+            currentFolderId={currentFolderId}
+          />
+        )}
         <Outlet />
       </Dropzone>
     </FolderView>

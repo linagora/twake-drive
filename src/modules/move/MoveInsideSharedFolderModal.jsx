@@ -8,20 +8,26 @@ import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import { LoaderModal } from '@/components/LoaderModal'
 import { getEntriesTypeTranslated } from '@/lib/entries'
-import { buildFileOrFolderByIdQuery } from '@/queries'
+import {
+  buildFileOrFolderByIdQuery,
+  buildSharedDriveFileOrFolderByIdQuery
+} from '@/queries'
 
 /**
- * Alert the user when is trying to move a folder/file outside of a shared folder
+ * Alert the user when is trying to move a folder/file inside of a shared folder
  */
 const MoveInsideSharedFolderModal = ({
   entries,
   folderId,
+  driveId,
   onCancel,
   onConfirm
 }) => {
   const { t } = useI18n()
 
-  const folderQuery = buildFileOrFolderByIdQuery(folderId)
+  const folderQuery = driveId
+    ? buildSharedDriveFileOrFolderByIdQuery({ fileId: folderId, driveId })
+    : buildFileOrFolderByIdQuery(folderId)
   const { fetchStatus, data } = useQuery(
     folderQuery.definition,
     folderQuery.options

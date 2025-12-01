@@ -3,7 +3,7 @@ import React from 'react'
 
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import FileTypeFolderIcon from 'cozy-ui/transpiled/react/Icons/FileTypeFolder'
-import FileTypeServerIcon from 'cozy-ui/transpiled/react/Icons/FileTypeServer'
+import FileTypeSharedDriveIcon from 'cozy-ui/transpiled/react/Icons/FileTypeSharedDriveGrey'
 import Tab from 'cozy-ui/transpiled/react/Tab'
 import Tabs from 'cozy-ui/transpiled/react/Tabs'
 import ToggleButton from 'cozy-ui/transpiled/react/ToggleButton'
@@ -58,7 +58,7 @@ const SharingTab = ({ tab, setTab }) => {
                 icon={
                   tabItem === 'sharings_tab_all'
                     ? FileTypeFolderIcon
-                    : FileTypeServerIcon
+                    : FileTypeSharedDriveIcon
                 }
                 className={cx(styles['fil-tab-icon'], 'u-mr-1')}
               />

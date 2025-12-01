@@ -11,8 +11,8 @@ import {
 import SharingProvider, { NativeFileSharingProvider } from 'cozy-sharing'
 import AlertProvider from 'cozy-ui/transpiled/react/providers/Alert'
 import { BreakpointsProvider } from 'cozy-ui/transpiled/react/providers/Breakpoints'
-import CozyTheme from 'cozy-ui/transpiled/react/providers/CozyTheme'
 import { I18n } from 'cozy-ui/transpiled/react/providers/I18n'
+import CozyTheme from 'cozy-ui-plus/dist/providers/CozyTheme'
 
 import RightClickProvider from '@/components/RightClick/RightClickProvider'
 import FabProvider from '@/lib/FabProvider'

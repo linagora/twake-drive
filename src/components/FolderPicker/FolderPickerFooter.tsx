@@ -1,10 +1,12 @@
 import React from 'react'
 
+import { IOCozyFile } from 'cozy-client/types/types'
 import Buttons from 'cozy-ui/transpiled/react/Buttons'
 import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import { areTargetsInCurrentDir } from '@/components/FolderPicker/helpers'
 import { File, FolderPickerEntry } from '@/components/FolderPicker/types'
+import { ROOT_DIR_ID, SHARED_DRIVES_DIR_ID } from '@/constants/config'
 
 interface FolderPickerFooterProps {
   onConfirm: (folder: File) => void
@@ -40,7 +42,8 @@ const FolderPickerFooter: React.FC<FolderPickerFooterProps> = ({
 
   const isDisabled =
     isBusy ||
-    folder._id === 'io.cozy.files.shared-drives-dir' ||
+    ((folder as IOCozyFile).dir_id === ROOT_DIR_ID &&
+      folder._id === SHARED_DRIVES_DIR_ID) ||
     (!canPickEntriesParentFolder && areTargetsInCurrentDir(entries, folder))
 
   return (

@@ -7,6 +7,7 @@ import Box from 'cozy-ui/transpiled/react/Box'
 import GhostFileBadge from 'cozy-ui/transpiled/react/GhostFileBadge'
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import FileTypeServerIcon from 'cozy-ui/transpiled/react/Icons/FileTypeServer'
+import FileTypeSharedDriveIcon from 'cozy-ui/transpiled/react/Icons/FileTypeSharedDrive'
 import LinkIcon from 'cozy-ui/transpiled/react/Icons/Link'
 import TrashDuotoneIcon from 'cozy-ui/transpiled/react/Icons/TrashDuotone'
 import InfosBadge from 'cozy-ui/transpiled/react/InfosBadge'
@@ -71,9 +72,18 @@ const FileThumbnail: React.FC<FileThumbnailProps> = ({
 
   if (
     file._id === 'io.cozy.files.shared-drives-dir' ||
-    isNextcloudShortcut(file) ||
     isSharedDriveFolder(file)
   ) {
+    return (
+      <Icon
+        className="u-mr-half"
+        icon={FileTypeSharedDriveIcon}
+        size={size ?? 32}
+      />
+    )
+  }
+
+  if (isNextcloudShortcut(file)) {
     return (
       <Icon className="u-mr-half" icon={FileTypeServerIcon} size={size ?? 32} />
     )

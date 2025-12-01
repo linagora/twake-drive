@@ -4,6 +4,7 @@
 // otherwise the themes will not be supplied and the app crashes
 import 'cozy-ui/transpiled/react/stylesheet.css'
 import 'cozy-ui/dist/cozy-ui.utils.min.css'
+import 'cozy-ui-plus/dist/stylesheet.css'
 import 'cozy-viewer/dist/stylesheet.css'
 import 'cozy-bar/dist/stylesheet.css'
 import 'cozy-sharing/dist/stylesheet.css'

@@ -26,6 +26,7 @@ import styles from '@/styles/filelist.styl'
 import { useClipboardContext } from '@/contexts/ClipboardProvider'
 import { useViewSwitcherContext } from '@/lib/ViewSwitcherContext'
 import { ActionMenuWithHeader } from '@/modules/actionmenu/ActionMenuWithHeader'
+import { getContextMenuActions } from '@/modules/actions/helpers'
 import { extraColumnsPropTypes } from '@/modules/certifications'
 import {
   isRenaming as isRenamingReducer,
@@ -141,6 +142,8 @@ const File = ({
     canInteractWithFile &&= canInteractWith(attributes)
   }
 
+  const contextMenuActions = getContextMenuActions(actions)
+
   return (
     <FileWrapper
       viewType={viewType}
@@ -151,7 +154,9 @@ const File = ({
     >
       <SelectBox
         viewType={viewType}
-        withSelectionCheckbox={withSelectionCheckbox && actions?.length > 0}
+        withSelectionCheckbox={
+          withSelectionCheckbox && contextMenuActions?.length > 0
+        }
         selected={selected}
         onClick={toggle}
         disabled={
@@ -237,7 +242,7 @@ const File = ({
         )}
         <SharingShortcutBadge file={attributes} />
       </FileOpener>
-      {actions && canInteractWithFile && (
+      {contextMenuActions && canInteractWithFile && (
         <FileAction
           t={t}
           ref={filerowMenuToggleRef}
@@ -248,11 +253,11 @@ const File = ({
           }}
         />
       )}
-      {actions && actionMenuVisible && (
+      {contextMenuActions && actionMenuVisible && (
         <ActionMenuWithHeader
           file={attributes}
           anchorElRef={filerowMenuToggleRef}
-          actions={actions.filter(action => !action.selectAllItems)}
+          actions={contextMenuActions}
           onClose={hideActionMenu}
         />
       )}

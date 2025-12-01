@@ -127,11 +127,21 @@ const getProgress = (state, action) => {
   }
 }
 
-const item = (state, action = { isUpdate: false }) => ({
-  ...state,
-  status: getStatus(state.status, action),
-  progress: getProgress(state.progress, action)
-})
+const item = (state, action = { isUpdate: false }) => {
+  const resolvedUploadedItem =
+    action.uploadedItem !== undefined
+      ? action.uploadedItem
+      : state?.uploadedItem
+
+  return {
+    ...state,
+    status: getStatus(state.status, action),
+    progress: getProgress(state.progress, action),
+    ...(resolvedUploadedItem !== undefined
+      ? { uploadedItem: resolvedUploadedItem }
+      : {})
+  }
+}
 
 export const queue = (state = [], action) => {
   switch (action.type) {
@@ -205,8 +215,8 @@ export const processNextFile =
           },
           driveId
         )
-        addItems?.([newDir])
         fileUploadedCallback(newDir)
+        dispatch({ type: RECEIVE_UPLOAD_SUCCESS, file, uploadedItem: newDir })
       } else {
         const withProgress = {
           onUploadProgress: event => {
@@ -225,10 +235,13 @@ export const processNextFile =
           },
           driveId
         )
-        addItems?.([uploadedFile])
         fileUploadedCallback(uploadedFile)
+        dispatch({
+          type: RECEIVE_UPLOAD_SUCCESS,
+          file,
+          uploadedItem: uploadedFile
+        })
       }
-      dispatch({ type: RECEIVE_UPLOAD_SUCCESS, file })
     } catch (uploadError) {
       error = uploadError
       if (uploadError.status === CONFLICT_ERROR) {
@@ -248,9 +261,13 @@ export const processNextFile =
             },
             driveId
           )
-          addItems?.([uploadedFile])
           fileUploadedCallback(uploadedFile)
-          dispatch({ type: RECEIVE_UPLOAD_SUCCESS, file, isUpdate: true })
+          dispatch({
+            type: RECEIVE_UPLOAD_SUCCESS,
+            file,
+            isUpdate: true,
+            uploadedItem: uploadedFile
+          })
           error = null
         } catch (updateError) {
           error = updateError
@@ -498,13 +515,21 @@ export const onQueueEmpty = callback => (dispatch, getState) => {
   const errors = getErrors(queue)
   const fileTooLargeErrors = getfileTooLargeErrors(queue)
 
+  // Extract complete uploaded items (with _id) from the queue
+  const createdItems = created
+    .map(item => item.uploadedItem)
+    .filter(item => item && item._id)
+  const updatedItems = updated
+    .map(item => item.uploadedItem)
+    .filter(item => item && item._id)
+
   return callback(
-    created,
+    createdItems,
     quotas,
     conflicts,
     networkErrors,
     errors,
-    updated,
+    updatedItems,
     fileTooLargeErrors
   )
 }

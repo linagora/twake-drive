@@ -2,7 +2,7 @@
   "name": "Drive",
   "name_prefix": "Twake",
   "slug": "drive",
-  "version": "1.84.1",
+  "version": "1.88.0",
   "type": "webapp",
   "licence": "AGPL-3.0",
   "icon": "assets/app-icon.svg",
@@ -223,6 +223,11 @@
       "description": "Required by the cozy Assistant",
       "type": "io.cozy.ai.chat.events",
       "verbs": ["GET"]
+    },
+    "driveSettings": {
+      "description": "Required to access the drive settings",
+      "type": "io.cozy.drive.settings",
+      "verbs": ["ALL"]
     }
   },
   "accept_from_flagship": true,

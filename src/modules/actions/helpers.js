@@ -25,3 +25,14 @@ export const navigateToModalWithMultipleFile = ({
     }
   )
 }
+
+/**
+ * Returns the context menu visible actions
+ *
+ * @param {Object[]} actions - the list of actions
+ * @returns {Object[]} - the list of actions to be displayed
+ */
+export const getContextMenuActions = (actions = []) =>
+  actions.filter(
+    action => Object.values(action)[0]?.displayInContextMenu !== false
+  )

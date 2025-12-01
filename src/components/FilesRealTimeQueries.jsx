@@ -26,6 +26,7 @@ const getParentFolder = async (client, dirId) => {
   }
   return parentDir
 }
+
 export const ensureFileHasPath = async (doc, client) => {
   if (doc.path) return doc
 
@@ -59,10 +60,18 @@ const processEvents = async (client, mutationType) => {
     mutationFn = Mutations.deleteDocument
     multipleMutationFn = Mutations.deleteDocuments
   }
-  if (bufferFiles.length === 0) return
+  if (bufferFiles.size === 0) return
 
   const fileIdsToProcess = bufferFiles.keys()
-  const filesByFolder = groupFilesByFolder(bufferFiles)
+  let filesByFolder = {}
+  if (mutationType == 'deleted') {
+    filesByFolder['io.cozy.files.trash-dir'] = Array.from(
+      bufferFiles.values()
+    ).filter(file => file.dir_id === 'io.cozy.files.trash-dir')
+  } else {
+    filesByFolder = groupFilesByFolder(bufferFiles)
+  }
+
   for (const folderId in filesByFolder) {
     const files = []
     const folder = await getParentFolder(client, folderId)
@@ -88,7 +97,9 @@ const processEvents = async (client, mutationType) => {
   }
   // Remove processed files from buffer
   // Do not clear all at once in case pending events arrived during the processing
-  fileIdsToProcess.forEach(fileId => bufferFiles.delete(fileId))
+  for (const fileId of fileIdsToProcess) {
+    bufferFiles.delete(fileId)
+  }
 }
 
 const debouncedDispatchEvents = debounce(

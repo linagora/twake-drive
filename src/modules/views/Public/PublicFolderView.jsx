@@ -12,10 +12,7 @@ import {
   useSharingInfos,
   OpenSharingLinkFabButton
 } from 'cozy-sharing'
-import {
-  divider,
-  makeActions
-} from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
+import { makeActions } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
 import { Content } from 'cozy-ui/transpiled/react/Layout'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
@@ -27,13 +24,17 @@ import FolderViewBody from '../Folder/FolderViewBody'
 import FolderViewBreadcrumb from '../Folder/FolderViewBreadcrumb'
 import FolderViewHeader from '../Folder/FolderViewHeader'
 import OldFolderViewBreadcrumb from '../Folder/OldFolderViewBreadcrumb'
+import FolderViewBodyVz from '../Folder/virtualized/FolderViewBody'
 
+import useHead from '@/components/useHead'
 import { ROOT_DIR_ID } from '@/constants/config'
+import { useClipboardContext } from '@/contexts/ClipboardProvider'
 import {
   useCurrentFolderId,
   useDisplayedFolder,
   useParentFolder
 } from '@/hooks'
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { FabContext } from '@/lib/FabProvider'
 import { ModalStack, useModalContext } from '@/lib/ModalContext'
 import { ModalManager } from '@/lib/react-cozy-helpers'
@@ -42,8 +43,12 @@ import {
   trash,
   rename,
   versions,
-  selectAllItems
+  selectAllItems,
+  hr
 } from '@/modules/actions'
+import { duplicateTo } from '@/modules/actions/components/duplicateTo'
+import { moveTo } from '@/modules/actions/components/moveTo'
+import { personalizeFolder } from '@/modules/actions/components/personalizeFolder'
 import { makeExtraColumnsNamesFromMedia } from '@/modules/certifications'
 import { useExtraColumns } from '@/modules/certifications/useExtraColumns'
 import AddMenuProvider from '@/modules/drive/AddMenu/AddMenuProvider'
@@ -52,6 +57,7 @@ import Main from '@/modules/layout/Main'
 import PublicToolbar from '@/modules/public/PublicToolbar'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 import Dropzone from '@/modules/upload/Dropzone'
+import DropzoneDnD from '@/modules/upload/DropzoneDnD'
 
 const getBreadcrumbPath = (t, displayedFolder, parentFolder) =>
   uniqBy(
@@ -78,7 +84,7 @@ const mobileExtraColumnsNames = []
 
 const PublicFolderView = () => {
   const navigate = useNavigate()
-  const { pathname } = useLocation()
+  const { pathname, state } = useLocation()
   const client = useClient()
   const { t, lang } = useI18n()
   const { isMobile, isDesktop } = useBreakpoints()
@@ -100,6 +106,8 @@ const PublicFolderView = () => {
     sharingInfos.sharing?.rules?.some(rule =>
       rule.values.includes(currentFolderId)
     )
+  useHead()
+  const { hasClipboardData } = useClipboardContext()
 
   const filesResult = usePublicFilesQuery(currentFolderId)
   const files = filesResult.data
@@ -117,12 +125,43 @@ const PublicFolderView = () => {
     files
   })
 
-  const refreshFolderContent = () => filesResult.forceRefetch() // We don't have enough permissions to rely on the realtime notifications or on a cozy-client query to update the view when something changes, so we relaod the view instead
+  // We don't have enough permissions to rely on the realtime notifications or on a cozy-client query to update the view when something changes, so we relaod the view instead
+  const refreshFolderContent = useCallback(
+    () => filesResult.forceRefetch(),
+    [filesResult]
+  )
 
   const refreshAfterChange = () => {
     refresh()
     refreshFolderContent()
   }
+
+  useKeyboardShortcuts({
+    onPaste: refreshAfterChange,
+    canPaste:
+      hasWritePermissions &&
+      hasClipboardData &&
+      flag('drive.keyboard-shortcuts.enabled'),
+    client,
+    items: filesResult.data,
+    sharingContext: null,
+    allowCopy: hasWritePermissions && flag('drive.keyboard-shortcuts.enabled'),
+    allowCut: hasWritePermissions && flag('drive.keyboard-shortcuts.enabled'),
+    allowDelete:
+      hasWritePermissions && flag('drive.keyboard-shortcuts.enabled'),
+    isPublic: true,
+    pushModal,
+    popModal,
+    refresh: refreshAfterChange
+  })
+
+  useEffect(() => {
+    if (state?.refresh === true) {
+      refreshFolderContent()
+      // Clear the state to prevent repeated refreshes
+      navigate(pathname, { replace: true, state: null })
+    }
+  }, [state, refreshFolderContent, navigate, pathname])
 
   const actionOptions = {
     client,
@@ -136,15 +175,32 @@ const PublicFolderView = () => {
     showAlert,
     pathname,
     hasWriteAccess: hasWritePermissions,
-    canMove: false,
+    canMove: hasWritePermissions && flag('drive.keyboard-shortcuts.enabled'),
+    canDuplicate:
+      hasWritePermissions && flag('drive.keyboard-shortcuts.enabled'),
     isPublic: true,
     isOwner,
     byDocId,
     selectAll: () => toggleSelectAllItems(filesResult.data),
-    isSelectAll
+    isSelectAll,
+    isMobile,
+    onClose: () => {
+      refreshAfterChange()
+    }
   }
   const actions = makeActions(
-    [selectAllItems, download, rename, versions, divider, trash],
+    [
+      selectAllItems,
+      download,
+      moveTo,
+      duplicateTo,
+      hr,
+      rename,
+      personalizeFolder,
+      versions,
+      hr,
+      trash
+    ],
     actionOptions
   )
 
@@ -185,13 +241,16 @@ const PublicFolderView = () => {
 
   const isAddToMyCozyFabDisplayed = isMobile && isPreview && isShareNotAdded
 
+  const DropzoneComp =
+    flag('drive.virtualization.enabled') && !isMobile ? DropzoneDnD : Dropzone
+
   return (
     <Main isPublic={true}>
       <ModalStack />
       <ModalManager />
       {isSharingBannerPluginDisplayed && <SharingBannerPlugin />}
       <Content className={isMobile ? '' : 'u-ml-1 u-pt-1'}>
-        <Dropzone
+        <DropzoneComp
           disabled={!hasWritePermissions}
           displayedFolder={displayedFolder}
           refreshFolderContent={refreshFolderContent}
@@ -219,16 +278,29 @@ const PublicFolderView = () => {
               </>
             )}
           </FolderViewHeader>
-          <FolderViewBody
-            actions={actions}
-            queryResults={[filesResult]}
-            canSort={false}
-            currentFolderId={currentFolderId}
-            refreshFolderContent={refreshFolderContent}
-            canUpload={hasWritePermissions}
-            extraColumns={extraColumns}
-            isPublic={true}
-          />
+          {flag('drive.virtualization.enabled') && !isMobile ? (
+            <FolderViewBodyVz
+              actions={actions}
+              queryResults={[filesResult]}
+              currentFolderId={currentFolderId}
+              displayedFolder={displayedFolder}
+              extraColumns={extraColumns}
+              canDrag
+              canUpload={hasWritePermissions}
+              refreshFolderContent={refreshFolderContent}
+            />
+          ) : (
+            <FolderViewBody
+              actions={actions}
+              queryResults={[filesResult]}
+              canSort={false}
+              currentFolderId={currentFolderId}
+              refreshFolderContent={refreshFolderContent}
+              canUpload={hasWritePermissions}
+              extraColumns={extraColumns}
+              isPublic={true}
+            />
+          )}
           {isFabDisplayed && (
             <AddMenuProvider
               componentsProps={{
@@ -252,7 +324,7 @@ const PublicFolderView = () => {
           {isAddToMyCozyFabDisplayed && (
             <OpenSharingLinkFabButton link={sharingInfos.addSharingLink} />
           )}
-        </Dropzone>
+        </DropzoneComp>
         <Outlet />
       </Content>
     </Main>

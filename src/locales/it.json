@@ -223,6 +223,7 @@
     "items_pasted": "%{count} elementi sono stati spostati",
     "copy_files_only": "Non è possibile copiare le cartelle",
     "copy_not_allowed": "L'operazione di copia non è consentita in questa vista.",
+    "cut_not_allowed": "L'operazione di taglio non è consentita in questa vista.",
     "paste_error": "Si è verificato un errore durante l'incollaggio dei file",
     "paste_failed": "Incollaggio dei file fallito",
     "paste_sharing_error": "Impossibile incollare i file a causa di restrizioni di condivisione. Si prega di utilizzare l'azione Sposta invece.",
@@ -298,6 +299,26 @@
   "search": {
     "empty": {
       "subtitle": "Nessun risultato trovato per la richiesta “%{query}”"
+    }
+  },
+  "actions": {
+    "personalizeFolder": {
+      "label": "Personalizza cartella"
+    }
+  },
+  "FolderCustomizer": {
+    "title": "Personalizza cartella",
+    "description": "Scegli un colore specifico per la tua cartella",
+    "cancel": "Annulla",
+    "apply": "Applica",
+    "error": "Si è verificato un errore, riprova.",
+    "tabs": {
+      "colors": "Colori",
+      "icons": "Icone"
+    },
+    "iconPicker": {
+      "recents": "Recenti",
+      "chooseCustomIcon": "Scegli un'icona personalizzata"
     }
   }
 }

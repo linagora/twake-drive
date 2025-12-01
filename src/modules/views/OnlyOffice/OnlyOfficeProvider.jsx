@@ -9,7 +9,6 @@ import React, {
 import { useSearchParams } from 'react-router-dom'
 
 import { useClient, useQuery } from 'cozy-client'
-import flag from 'cozy-flags'
 import { useSharingContext } from 'cozy-sharing'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
@@ -85,18 +84,14 @@ const OnlyOfficeProvider = ({
   useEffect(() => {
     if (!hasWriteAccess(fileId, driveId)) return
 
-    if (flag('drive.onlyoffice.editor-mode-by-access.enabled')) {
-      setEditorMode('edit')
-      return
-    }
-
     if (
+      isEditorModeView ||
       searchParam.get('fromCreate') === 'true' ||
       searchParam.get('fromEdit') === 'true'
     ) {
       setEditorMode('edit')
     }
-  }, [searchParam, fileId, driveId, hasWriteAccess])
+  }, [searchParam, fileId, driveId, hasWriteAccess, isEditorModeView])
 
   useEffect(() => {
     if (fileResult.data?.trashed) {

@@ -1,7 +1,6 @@
 import cx from 'classnames'
 import React, { useState, useCallback } from 'react'
 
-import flag from 'cozy-flags'
 import Button from 'cozy-ui/transpiled/react/Buttons'
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import ListIcon from 'cozy-ui/transpiled/react/Icons/List'
@@ -16,8 +15,6 @@ import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 import MobileSortMenu from './MobileSortMenu'
 
 import styles from '@/styles/filelist.styl'
-
-import { DEFAULT_SORT, SORT_BY_UPDATE_DATE } from '@/config/sort'
 
 const FileListHeaderMobile = ({
   folderId,
@@ -40,11 +37,6 @@ const FileListHeaderMobile = ({
   )
 
   if (!canSort) return null
-  const actualSort =
-    sort ||
-    (flag('drive.default-updated-at-sort.enabled')
-      ? SORT_BY_UPDATE_DATE
-      : DEFAULT_SORT)
 
   return (
     <TableHead className={styles['fil-content-mobile-head']}>
@@ -55,19 +47,17 @@ const FileListHeaderMobile = ({
             styles['fil-content-mobile-header'],
             styles['fil-content-header--capitalize'],
             {
-              [styles['fil-content-header-sortasc']]:
-                actualSort.order === 'asc',
-              [styles['fil-content-header-sortdesc']]:
-                actualSort.order === 'desc'
+              [styles['fil-content-header-sortasc']]: sort.order === 'asc',
+              [styles['fil-content-header-sortdesc']]: sort.order === 'desc'
             }
           )}
         >
-          {t(`table.mobile.head_${actualSort.attribute}_${actualSort.order}`)}
+          {t(`table.mobile.head_${sort.attribute}_${sort.order}`)}
         </TableHeader>
         {isShowingSortMenu && (
           <MobileSortMenu
             t={t}
-            sort={actualSort}
+            sort={sort}
             onClose={hideSortMenu}
             onSort={(attr, order) => onFolderSort(folderId, attr, order)}
           />

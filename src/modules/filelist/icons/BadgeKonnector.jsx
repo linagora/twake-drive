@@ -7,7 +7,7 @@ import {
   isReferencedBy,
   useQuery
 } from 'cozy-client'
-import AppIcon from 'cozy-ui/transpiled/react/AppIcon'
+import AppIcon from 'cozy-ui-plus/dist/AppIcon'
 import Badge from 'cozy-ui/transpiled/react/Badge'
 import { makeStyles } from 'cozy-ui/transpiled/react/styles'
 

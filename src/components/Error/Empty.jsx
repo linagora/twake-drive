@@ -23,7 +23,8 @@ const EmptyCanvas = ({ type, canUpload, localeKey, hasTextMobileVersion }) => {
   const { displayedFolder } = useDisplayedFolder()
 
   const IconToShow = type === 'trash' ? TrashIllustration : FolderEmptyIllu
-  const showUploadLayout = type === 'drive' || type === 'encrypted'
+  const showUploadLayout =
+    (type === 'drive' || type === 'encrypted') && canUpload
   const showSharedDriveLayout = type === 'sharing'
   const title = localeKey ? t(`empty.${type}_title`) : undefined
   const text =

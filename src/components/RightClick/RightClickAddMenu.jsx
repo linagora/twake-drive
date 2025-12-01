@@ -1,4 +1,5 @@
 import React, { useContext } from 'react'
+import { useLocation } from 'react-router-dom'
 
 import { useSharingContext } from 'cozy-sharing'
 import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'
@@ -14,9 +15,12 @@ const AddMenu = ({ children, ...props }) => {
   const { onOpen } = useRightClick()
   const { handleToggle, handleOfflineClick, isOffline } =
     useContext(AddMenuContext)
+  const location = useLocation()
+
+  const isInViewerMode = location.pathname.includes('/file/')
 
   if (!children) return null
-  if (!isDesktop)
+  if (!isDesktop || isInViewerMode)
     return React.Children.map(children, child =>
       React.isValidElement(child)
         ? React.cloneElement(child, {
@@ -46,10 +50,14 @@ const RightClickAddMenu = ({ children, ...props }) => {
   const { isOpen, position } = useRightClick()
   const { displayedFolder } = useDisplayedFolder()
   const { hasWriteAccess } = useSharingContext()
+  const location = useLocation()
 
   const isFolderReadOnly = displayedFolder
     ? !hasWriteAccess(displayedFolder._id, displayedFolder.driveId)
     : false
+
+  const isInViewerMode = location.pathname.includes('/file/')
+  const shouldShowAddMenu = isOpen('AddMenu') && !isInViewerMode
 
   return (
     <AddMenuProvider
@@ -62,7 +70,7 @@ const RightClickAddMenu = ({ children, ...props }) => {
       componentsProps={{
         AddMenu: {
           anchorReference: 'anchorPosition',
-          anchorPosition: isOpen('AddMenu')
+          anchorPosition: shouldShowAddMenu
             ? { top: position.mouseY, left: position.mouseX }
             : undefined
         }

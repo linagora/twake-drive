@@ -294,6 +294,7 @@
     "items_pasted": "%{count} Elemente wurden verschoben",
     "copy_files_only": "Ordner können nicht kopiert werden",
     "copy_not_allowed": "Der Kopiervorgang ist in dieser Ansicht nicht erlaubt.",
+    "cut_not_allowed": "Der Ausschneiden-Vorgang ist in dieser Ansicht nicht erlaubt.",
     "paste_error": "Beim Einfügen der Dateien ist ein Fehler aufgetreten",
     "paste_failed": "Einfügen der Dateien fehlgeschlagen",
     "paste_sharing_error": "Dateien können aufgrund von Freigabebeschränkungen nicht eingefügt werden. Bitte verwenden Sie stattdessen die Verschieben-Aktion.",
@@ -476,5 +477,25 @@
   "searchbar": {
     "placeholder": "Alle Dateien durchsuchen",
     "empty": "Es wurde kein Ergebnis für die Suche \"%{query}\" gefunden"
+  },
+  "actions": {
+    "personalizeFolder": {
+      "label": "Ordner personalisieren"
+    }
+  },
+  "FolderCustomizer": {
+    "title": "Ordner personalisieren",
+    "description": "Wählen Sie eine bestimmte Farbe für Ihren Ordner",
+    "cancel": "Abbrechen",
+    "apply": "Anwenden",
+    "error": "Ein Fehler ist aufgetreten, bitte versuchen Sie es erneut.",
+    "tabs": {
+      "colors": "Farben",
+      "icons": "Symbole"
+    },
+    "iconPicker": {
+      "recents": "Zuletzt verwendet",
+      "chooseCustomIcon": "Wählen Sie ein benutzerdefiniertes Symbol"
+    }
   }
 }

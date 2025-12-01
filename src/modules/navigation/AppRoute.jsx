@@ -36,6 +36,7 @@ import { KonnectorRoutes } from '@/modules/views/Drive/KonnectorRoutes'
 import { FavoritesView } from '@/modules/views/Favorites/FavoritesView'
 import { FolderDuplicateView } from '@/modules/views/Folder/FolderDuplicateView'
 import { MoveFilesView } from '@/modules/views/Modal/MoveFilesView'
+import { MoveSharedDriveFilesView } from '@/modules/views/Modal/MoveSharedDriveFilesView'
 import { QualifyFileView } from '@/modules/views/Modal/QualifyFileView'
 import { ShareDisplayedFolderView } from '@/modules/views/Modal/ShareDisplayedFolderView'
 import { ShareFileView } from '@/modules/views/Modal/ShareFileView'
@@ -89,7 +90,7 @@ const AppRoute = () => (
         >
           <Route path="v/revision" element={<FileHistory />} />
           <Route path="v/share" element={<ShareFileView />} />
-          <Route path="v/move" element={<MoveFilesView />} />
+          <Route path="v/move" element={<MoveFilesView isOpenInViewer />} />
           <Route path="v/duplicate" element={<FolderDuplicateView />} />
         </Route>
         <Route path="file/:fileId/revision" element={<FileHistory />} />
@@ -142,6 +143,7 @@ const AppRoute = () => (
             <Route path="file/:fileId/revision" element={<FileHistory />} />
             <Route path="file/:fileId/v/revision" element={<FileHistory />} />
             <Route path="share" element={<ShareDisplayedFolderView />} />
+            <Route path="move" element={<MoveSharedDriveFilesView />} />
           </Route>
         </>
       ) : null}
@@ -153,7 +155,7 @@ const AppRoute = () => (
         >
           <Route path="v/revision" element={<FileHistory />} />
           <Route path="v/share" element={<ShareFileView />} />
-          <Route path="v/move" element={<MoveFilesView />} />
+          <Route path="v/move" element={<MoveFilesView isOpenInViewer />} />
           <Route path="v/duplicate" element={<FolderDuplicateView />} />
         </Route>
         <Route path="file/:fileId/revision" element={<FileHistory />} />
@@ -184,7 +186,7 @@ const AppRoute = () => (
           >
             <Route path="v/revision" element={<FileHistory />} />
             <Route path="v/share" element={<ShareFileView />} />
-            <Route path="v/move" element={<MoveFilesView />} />
+            <Route path="v/move" element={<MoveFilesView isOpenInViewer />} />
             <Route path="v/duplicate" element={<FolderDuplicateView />} />
           </Route>
           {/* This route must be a child of SharingsView so the modal opens on top of the sharing view */}

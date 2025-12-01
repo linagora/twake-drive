@@ -110,7 +110,7 @@ describe('FilesViewer', () => {
       data: generateFile({ i: '51' })
     })
     const fetchMore = jest.fn().mockImplementation(async () => {
-      await sleep(10)
+      await sleep(50)
     })
 
     const hasMore = jest.fn().mockReturnValue(true)

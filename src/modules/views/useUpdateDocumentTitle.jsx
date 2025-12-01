@@ -1,11 +1,10 @@
 import { useMemo, useEffect } from 'react'
 
-import { useClient, models, useQuery } from 'cozy-client'
+import { useClient, models } from 'cozy-client'
 import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import { TRASH_DIR_PATH } from '@/constants/config'
 import { makeParentFolderPath } from '@/modules/filelist/helpers'
-import { buildFileOrFolderByIdQuery } from '@/queries'
 
 export const makeTitle = (file, appFullName, t) => {
   if (!file) return
@@ -49,15 +48,9 @@ export const makeTitle = (file, appFullName, t) => {
   return `${fileName}${path}${separator}${appFullName}`
 }
 
-const useUpdateDocumentTitle = docId => {
+const useUpdateDocumentTitle = (file, fetchStatus) => {
   const { t } = useI18n()
   const client = useClient()
-
-  const fileQuery = buildFileOrFolderByIdQuery(docId)
-  const { data: file, fetchStatus } = useQuery(
-    fileQuery.definition,
-    fileQuery.options
-  )
 
   const appFullName = useMemo(
     () => `${client.appMetadata.prefix} ${client.appMetadata.name}`,

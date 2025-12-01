@@ -173,7 +173,8 @@ describe('processNextFile function', () => {
     expect(dispatchSpy).toHaveBeenNthCalledWith(2, {
       type: 'RECEIVE_UPLOAD_SUCCESS',
       file,
-      isUpdate: true
+      isUpdate: true,
+      uploadedItem: file
     })
   })
 

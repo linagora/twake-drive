@@ -4,7 +4,7 @@ import ActionsMenu from 'cozy-ui/transpiled/react/ActionsMenu'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
 import BreadcrumbMui from 'cozy-ui/transpiled/react/Breadcrumbs'
 import Icon from 'cozy-ui/transpiled/react/Icon'
-import FileTypeServerIcon from 'cozy-ui/transpiled/react/Icons/FileTypeServer'
+import FileTypeSharedDriveIcon from 'cozy-ui/transpiled/react/Icons/FileTypeSharedDriveGrey'
 import FolderIcon from 'cozy-ui/transpiled/react/Icons/Folder'
 import RightIcon from 'cozy-ui/transpiled/react/Icons/Right'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
@@ -100,7 +100,7 @@ const DesktopBreadcrumb = ({ onBreadcrumbClick, path }) => {
                 onClick={onBreadcrumbClick}
                 item={breadcrumbPath}
                 isCurrent={index === pathToDisplay.length - 1}
-                icon={FileTypeServerIcon}
+                icon={FileTypeSharedDriveIcon}
               />
             )
           }

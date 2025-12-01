@@ -10,18 +10,22 @@ jest.mock('react-redux', () => ({
   useSelector: jest.fn(() => null)
 }))
 
-import { useCurrentFolderId } from '@/hooks'
-import { useFolderSort } from '@/modules/navigation/duck/hooks'
+import { useCurrentFolderId, useFolderSort } from '@/hooks'
 
 jest.mock('@/hooks', () => ({
   useCurrentFolderId: jest.fn(() => 'io.cozy.files.trash-dir'),
   useDisplayedFolder: jest.fn(() => ({
     displayedFolder: { _id: 'trash' },
     isNotFound: false
-  }))
+  })),
+  useFolderSort: jest.fn(() => [
+    { attribute: 'updated_at', order: 'desc' },
+    jest.fn()
+  ])
 }))
 
 const client = createMockClient({})
+client.query = jest.fn().mockReturnValue({ data: [] })
 
 function TestComponent({ onResult }) {
   const currentFolderId = useCurrentFolderId()

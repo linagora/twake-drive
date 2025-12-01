@@ -28,7 +28,9 @@ const removeFromFavorites = ({
     label,
     icon,
     displayCondition: docs =>
-      docs.length > 0 && docs.every(doc => doc.cozyMetadata?.favorite),
+      docs.length > 0 &&
+      docs.every(doc => doc.cozyMetadata?.favorite) &&
+      !docs[0]?.driveId,
     action: async (files): Promise<void> => {
       try {
         for (const file of files) {

@@ -119,6 +119,7 @@
     "items_pasted": "تم نقل %{count} عنصر",
     "copy_files_only": "لا يمكن نسخ المجلدات",
     "copy_not_allowed": "عملية النسخ غير مسموحة في هذا العرض.",
+    "cut_not_allowed": "عملية القص غير مسموحة في هذا العرض.",
     "paste_error": "حدث خطأ أثناء لصق الملفات",
     "paste_failed": "فشل في لصق الملفات",
     "paste_sharing_error": "لا يمكن لصق الملفات بسبب قيود المشاركة. يرجى استخدام إجراء النقل بدلاً من ذلك.",
@@ -143,6 +144,26 @@
     },
     "loading": {
       "retry": "إعادة المحاولة"
+    }
+  },
+  "actions": {
+    "personalizeFolder": {
+      "label": "تخصيص المجلد"
+    }
+  },
+  "FolderCustomizer": {
+    "title": "تخصيص المجلد",
+    "description": "اختر لونًا محددًا لمجلدك",
+    "cancel": "إلغاء",
+    "apply": "تطبيق",
+    "error": "حدث خطأ، يرجى المحاولة مرة أخرى.",
+    "tabs": {
+      "colors": "الألوان",
+      "icons": "الأيقونات"
+    },
+    "iconPicker": {
+      "recents": "المستخدمة مؤخراً",
+      "chooseCustomIcon": "اختر أيقونة مخصصة"
     }
   }
 }
