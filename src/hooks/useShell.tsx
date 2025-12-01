@@ -98,7 +98,13 @@ export const ShellProvider = ({
 export const useShell = (): ShellContextType => {
   const context = useContext(ShellContext)
   if (!context) {
-    throw new Error('useShell must be used within a ShellProvider')
+    return {
+      runsInShell: false,
+      setRunsInShell: () => {},
+      selectedFile: null,
+      setSelectedFile: () => {},
+      openFileInParent: () => {}
+    }
   }
   return context
 }
