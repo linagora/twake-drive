@@ -2,7 +2,7 @@ import React from 'react'
 import { useDispatch } from 'react-redux'
 import { useNavigate, Outlet, useLocation } from 'react-router-dom'
 
-import { useClient, useQuery } from 'cozy-client'
+import { useClient } from 'cozy-client'
 import flag from 'cozy-flags'
 import {
   useSharingContext,
@@ -24,6 +24,7 @@ import useHead from '@/components/useHead'
 import { RECENT_FOLDER_ID } from '@/constants/config'
 import { useFolderSort } from '@/hooks'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
+import useRecentFiles from '@/hooks/useRecentFiles'
 import { useModalContext } from '@/lib/ModalContext'
 import {
   download,
@@ -45,10 +46,7 @@ import AddMenuProvider from '@/modules/drive/AddMenu/AddMenuProvider'
 import FabWithAddMenuContext from '@/modules/drive/FabWithAddMenuContext'
 import Toolbar from '@/modules/drive/Toolbar'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
-import {
-  buildRecentQuery,
-  buildRecentWithMetadataAttributeQuery
-} from '@/queries'
+import { buildRecentWithMetadataAttributeQuery } from '@/queries'
 
 const desktopExtraColumnsNames = ['carbonCopy', 'electronicSafe']
 const mobileExtraColumnsNames = []
@@ -83,12 +81,11 @@ export const RecentView = () => {
     queryBuilder: buildRecentWithMetadataAttributeQuery
   })
 
-  const query = buildRecentQuery()
-  const result = useQuery(query.definition, query.options)
+  const recentsResult = useRecentFiles()
 
   useKeyboardShortcuts({
     client,
-    items: result?.data || [],
+    items: recentsResult?.data || [],
     sharingContext,
     allowCopy: false,
     pushModal,
@@ -116,7 +113,7 @@ export const RecentView = () => {
     isMobile,
     isNativeFileSharingAvailable,
     shareFilesNative,
-    selectAll: () => toggleSelectAllItems(result.data),
+    selectAll: () => toggleSelectAllItems(recentsResult?.data || []),
     isSelectAll
   }
 
@@ -150,7 +147,7 @@ export const RecentView = () => {
         {flag('drive.virtualization.enabled') && !isMobile ? (
           <FolderViewBodyVz
             actions={actions}
-            queryResults={[result]}
+            queryResults={[recentsResult]}
             withFilePath={true}
             extraColumns={extraColumns}
             orderProps={{
@@ -162,7 +159,7 @@ export const RecentView = () => {
         ) : (
           <FolderViewBody
             actions={actions}
-            queryResults={[result]}
+            queryResults={[recentsResult]}
             canSort={false}
             withFilePath={true}
             extraColumns={extraColumns}

@@ -9,6 +9,7 @@ import styles from '@/styles/filelist.styl'
 
 import CertificationsIcons from '@/modules/filelist/cells/CertificationsIcons.jsx'
 import { getFileNameAndExtension } from '@/modules/filelist/helpers'
+import { getFolderPath, getSharedDrivePath } from '@/modules/routeUtils'
 
 const FileNamePath = ({
   attributes,
@@ -45,9 +46,13 @@ const FileNamePath = ({
     )
   }
 
+  const to = attributes.driveId
+    ? getSharedDrivePath(attributes.driveId, attributes.dir_id)
+    : getFolderPath(attributes.dir_id)
+
   return (
     <Link
-      to={`/folder/${attributes.dir_id}`}
+      to={to}
       // Please do not modify the className as it is used in event handling, see FileOpener
       className={styles['fil-file-path']}
     >

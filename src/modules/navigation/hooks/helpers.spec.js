@@ -302,6 +302,40 @@ describe('computePath', () => {
     )
   })
 
+  it('should return correct path for shared-drive-file', () => {
+    const file = {
+      _id: 'file123',
+      dir_id: 'dir456',
+      driveId: 'drive789',
+      _type: 'io.cozy.files'
+    }
+    expect(
+      computePath(file, { type: 'shared-drive-file', pathname: '/any' })
+    ).toBe('/shareddrive/drive789/dir456/file/file123')
+  })
+
+  it('should throw error for shared-drive-file without driveId', () => {
+    const file = {
+      _id: 'file123',
+      dir_id: 'dir456',
+      _type: 'io.cozy.files'
+    }
+    expect(() =>
+      computePath(file, { type: 'shared-drive-file', pathname: '/any' })
+    ).toThrow('Missing driveId or invalid file type in shared drive file')
+  })
+
+  it('should throw error for shared-drive-file without dir_id', () => {
+    const file = {
+      _id: 'file123',
+      driveId: 'drive789',
+      _type: 'io.cozy.files'
+    }
+    expect(() =>
+      computePath(file, { type: 'shared-drive-file', pathname: '/any' })
+    ).toThrow('Missing dir_id in shared drive file')
+  })
+
   it('should return correct path for default case', () => {
     const file = { _id: 'file123' }
     expect(computePath(file, { type: 'unknown', pathname: '/any' })).toBe(
