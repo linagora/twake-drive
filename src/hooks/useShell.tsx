@@ -1,9 +1,11 @@
+// Imports
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { BarLeft } from 'cozy-bar'
 import type { File } from '@/components/FolderPicker/types'
 
+// Types
 interface ShellContextType {
   runsInShell: boolean
   setRunsInShell: React.Dispatch<React.SetStateAction<boolean>>
@@ -12,6 +14,7 @@ interface ShellContextType {
   openFileInParent: (file: File) => void
 }
 
+// Context
 const ShellContext = createContext<ShellContextType | undefined>(undefined)
 
 export const ShellProvider = ({
@@ -34,22 +37,18 @@ export const ShellProvider = ({
         return
       if (e.data === 'inShell:true') {
         setRunsInShell(true)
-        // console.log('Set runsInShell to true from parent')
       }
       if (e.data.startsWith('selectedFile:')) {
         const fileId = e.data.split('selectedFile:')[1].trim()
-        // console.log('Set selectedFile to ' + fileId + ' from parent')
         setSelectedFile(fileId)
       }
       if (e.data.startsWith('openFolder:')) {
         const folderId = e.data.split('openFolder:')[1].trim()
-        // console.log('Set folderId to ' + folderId + ' from parent')
         navigate(`/folder/${folderId}`)
       }
     }
   }, [navigate])
 
-  // if runs in shell, add global CSS
   if (runsInShell) {
     const CSS = `
       .coz-bar-container nav, .coz-bar-container a {
@@ -95,15 +94,22 @@ export const ShellProvider = ({
   )
 }
 
+// Hook
 export const useShell = (): ShellContextType => {
   const context = useContext(ShellContext)
   if (!context) {
     return {
       runsInShell: false,
-      setRunsInShell: () => {},
+      setRunsInShell: (): void => {
+        return
+      },
       selectedFile: null,
-      setSelectedFile: () => {},
-      openFileInParent: () => {}
+      setSelectedFile: (): void => {
+        return
+      },
+      openFileInParent: (): void => {
+        return
+      }
     }
   }
   return context
