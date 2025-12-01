@@ -1,7 +1,6 @@
 import { render, fireEvent, act } from '@testing-library/react'
 import React from 'react'
 
-import { useQuery } from 'cozy-client'
 import { useSharingContext } from 'cozy-sharing'
 
 import RecentViewWithProvider from './index'
@@ -44,9 +43,15 @@ jest.mock('cozy-sharing', () => ({
   useSharingContext: jest.fn()
 }))
 
+jest.mock('cozy-dataproxy-lib', () => ({
+  useDataProxy: jest.fn()
+}))
+
+const mockUseDataProxy = require('cozy-dataproxy-lib').useDataProxy
+
 useSharingContext.mockReturnValue({ byDocId: [] })
 
-const setup = () => {
+const setup = ({ nbFiles, path, dir_id, updated_at }) => {
   const { store, client } = setupStoreAndClient()
 
   client.plugins.realtime = {
@@ -57,6 +62,24 @@ const setup = () => {
   client.stackClient.fetchJSON = jest
     .fn()
     .mockReturnValue({ data: [], rows: [] })
+
+  const filesFixture = generateFileFixtures({
+    nbFiles,
+    path,
+    dir_id,
+    updated_at
+  })
+
+  const filesWithPath = filesFixture.map(f => ({
+    ...f,
+    displayedPath: path
+  }))
+
+  // Mock useDataProxy to return a dataProxy object
+  mockUseDataProxy.mockReturnValue({
+    dataProxyServicesAvailable: true,
+    recents: jest.fn().mockResolvedValue(filesWithPath)
+  })
 
   const rendered = render(
     <AppLike client={client} store={store}>
@@ -76,23 +99,6 @@ describe('Recent View', () => {
     const path = '/test'
     const dir_id = '123'
     const updated_at = '2020-05-14T10:33:31.365224+02:00'
-
-    const filesFixture = generateFileFixtures({
-      nbFiles,
-      path,
-      dir_id,
-      updated_at
-    })
-
-    const filesFixtureWithPath = {
-      data: filesFixture.map(f => {
-        return {
-          ...f,
-          displayedPath: path
-        }
-      })
-    }
-    useQuery.mockReturnValue(filesFixtureWithPath)
 
     const { getByText } = setup({
       nbFiles,
