@@ -24,6 +24,7 @@ import {
 import styles from '@/styles/filelist.styl'
 
 import { useClipboardContext } from '@/contexts/ClipboardProvider'
+import { useShell } from '@/hooks/useShell'
 import { useViewSwitcherContext } from '@/lib/ViewSwitcherContext'
 import { ActionMenuWithHeader } from '@/modules/actionmenu/ActionMenuWithHeader'
 import { getContextMenuActions } from '@/modules/actions/helpers'
@@ -35,7 +36,6 @@ import {
 import FileOpener from '@/modules/filelist/FileOpener'
 import FileThumbnail from '@/modules/filelist/icons/FileThumbnail'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
-import { useShell } from '@/hooks/useShell'
 
 const FileWrapper = ({ children, viewType, className, onContextMenu }) =>
   viewType === 'list' ? (
@@ -104,7 +104,8 @@ const File = ({
   const isCut = isItemCut(attributes._id)
 
   const selected = isItemSelected(attributes._id)
-  const selectedInShell = runsInShell && selectedFile && selectedFile === attributes._id;
+  const selectedInShell =
+    runsInShell && selectedFile && selectedFile === attributes._id
 
   const filContentRowSelected = cx(styles['fil-content-row'], {
     [styles['fil-content-row-selected']]: selected || selectedInShell,

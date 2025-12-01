@@ -56,7 +56,7 @@ const useFileLink = (
   const { isDesktop } = useBreakpoints()
   const isOfficeEnabled = computeOfficeEnabled(isDesktop)
   const { isPublic } = usePublicContext()
-  const { runsInShell, selectedFile, openFileInParent } = useShell()
+  const { runsInShell, openFileInParent } = useShell()
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
   const cozyUrl = client?.getStackClient().uri as string
@@ -130,19 +130,28 @@ const useFileLink = (
         shouldBeOpenedInNewTab
       ) {
         window.open(href, '_blank')
-      } else if (runsInShell && file.type && file.type === "file") {
-        if (file.name && file.name.endsWith(".docs-note")) {
-          openFileInParent(file);
+      } else if (runsInShell && file.type && file.type === 'file') {
+        if (file.name && file.name.endsWith('.docs-note')) {
+          openFileInParent(file)
         } else {
           window.open(href, '_blank')
-        } 
+        }
       } else if (app === 'drive') {
         navigate(to)
       } else {
         window.location.href = href
       }
     },
-    [app, href, navigate, to, shouldBeOpenedInNewTab]
+    [
+      app,
+      href,
+      navigate,
+      to,
+      shouldBeOpenedInNewTab,
+      runsInShell,
+      file,
+      openFileInParent
+    ]
   )
 
   return {
