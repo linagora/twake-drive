@@ -194,7 +194,10 @@ const File = ({
             showSharedBadge={isMobile}
             componentsProps={{
               sharedBadge: {
-                className: styles['fil-content-shared']
+                className:
+                  styles[
+                    `fil-content-shared${viewType === 'grid' ? '-grid' : ''}`
+                  ]
               }
             }}
           />
