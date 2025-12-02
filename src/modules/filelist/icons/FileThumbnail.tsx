@@ -121,7 +121,7 @@ const FileThumbnail: React.FC<FileThumbnailProps> = ({
                   <SharedBadge
                     docId={file._id}
                     {...componentsProps.sharedBadge}
-                    xsmall
+                    small
                   />
                 )}
             </BadgeKonnector>
@@ -139,7 +139,7 @@ const FileThumbnail: React.FC<FileThumbnailProps> = ({
                   <SharedBadge
                     docId={file._id}
                     {...componentsProps.sharedBadge}
-                    xsmall
+                    small
                   />
                 )}
             </>
