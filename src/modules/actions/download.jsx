@@ -26,7 +26,15 @@ const makeComponent = (label, icon) => {
   return Component
 }
 
-export const download = ({ client, t, vaultClient, showAlert, driveId }) => {
+export const download = ({
+  client,
+  t,
+  vaultClient,
+  showAlert,
+  driveId,
+  isSelectAll,
+  displayedFolder
+}) => {
   const label = t('SelectionBar.download')
   const icon = DownloadIcon
 
@@ -45,9 +53,13 @@ export const download = ({ client, t, vaultClient, showAlert, driveId }) => {
       )
     },
     action: files => {
+      let selectedFiles = files
+      if (isSelectAll) {
+        selectedFiles = [displayedFolder]
+      }
       return downloadFiles(
         client,
-        files,
+        selectedFiles,
         { vaultClient, showAlert, t },
         driveId
       )
