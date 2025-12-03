@@ -173,7 +173,8 @@ const DriveFolderView = () => {
     shareFilesNative,
     selectAll: () =>
       toggleSelectAllItems(allResults.map(query => query.data).flat()),
-    isSelectAll
+    isSelectAll,
+    displayedFolder
   }
   const actions = makeActions(
     [
