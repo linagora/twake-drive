@@ -18,6 +18,14 @@ jest.mock('cozy-ui/transpiled/react/providers/Alert', () => ({
   useAlert: jest.fn()
 }))
 
+jest.mock('@/lib/ViewSwitcherContext', () => ({
+  ViewSwitcherContextProvider: ({ children }) => children,
+  useViewSwitcherContext: jest.fn(() => ({
+    viewType: 'list',
+    switchView: jest.fn()
+  }))
+}))
+
 describe('RenameInput', () => {
   let client
   let onAbort

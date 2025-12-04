@@ -1,4 +1,4 @@
-import { render, fireEvent } from '@testing-library/react'
+import { render, fireEvent, act } from '@testing-library/react'
 import React from 'react'
 
 import DeleteItem from './DeleteItem'
@@ -15,7 +15,7 @@ jest.mock('lib/logger', () => ({
 }))
 
 describe('DeleteItem', () => {
-  const setup = () => {
+  const setup = async () => {
     const displayedFolder = {
       _id: 'displayed-folder-id',
       name: 'My Folder'
@@ -24,20 +24,23 @@ describe('DeleteItem', () => {
 
     jest.spyOn(store, 'dispatch')
     const onLeave = jest.fn()
-    const container = render(
-      <AppLike client={client} store={store}>
-        <DeleteItem
-          isSharedWithMe={false}
-          onLeave={onLeave}
-          displayedFolder={displayedFolder}
-        />
-      </AppLike>
-    )
+    let container
+    await act(async () => {
+      container = render(
+        <AppLike client={client} store={store}>
+          <DeleteItem
+            isSharedWithMe={false}
+            onLeave={onLeave}
+            displayedFolder={displayedFolder}
+          />
+        </AppLike>
+      )
+    })
     return { container, store, displayedFolder }
   }
 
   it('should show a modal', async () => {
-    const { container, store, displayedFolder } = setup()
+    const { container, store, displayedFolder } = await setup()
     const confirmButton = container.getByText('Remove')
     fireEvent.click(confirmButton)
     expect(store.dispatch).toHaveBeenCalledWith(

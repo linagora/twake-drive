@@ -44,6 +44,14 @@ jest.mock('cozy-viewer', () => ({
   default: () => <div data-testid="ViewerForTest" />
 }))
 
+jest.mock('@/lib/ViewSwitcherContext', () => ({
+  ViewSwitcherContextProvider: ({ children }) => children,
+  useViewSwitcherContext: jest.fn(() => ({
+    viewType: 'list',
+    switchView: jest.fn()
+  }))
+}))
+
 const client = createMockClient({})
 client.plugins = {
   realtime: {

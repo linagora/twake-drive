@@ -20,6 +20,14 @@ jest.mock('cozy-keys-lib', () => ({
   WebVaultClient: jest.fn().mockReturnValue({})
 }))
 
+jest.mock('@/lib/ViewSwitcherContext', () => ({
+  ViewSwitcherContextProvider: ({ children }) => children,
+  useViewSwitcherContext: jest.fn(() => ({
+    viewType: 'list',
+    switchView: jest.fn()
+  }))
+}))
+
 describe('AddFolder', () => {
   const setup = () => {
     const { client, store } = setupStoreAndClient({})

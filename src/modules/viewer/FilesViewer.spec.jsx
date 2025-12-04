@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, act } from '@testing-library/react'
 import React from 'react'
 
 import CozyClient, { useQuery } from 'cozy-client'
@@ -31,6 +31,14 @@ jest.mock('cozy-viewer', () => ({
   ...jest.requireActual('cozy-viewer'),
   __esModule: true,
   default: () => <div>Viewer</div>
+}))
+
+jest.mock('@/lib/ViewSwitcherContext', () => ({
+  ViewSwitcherContextProvider: ({ children }) => children,
+  useViewSwitcherContext: jest.fn(() => ({
+    viewType: 'list',
+    switchView: jest.fn()
+  }))
 }))
 
 const sleep = duration => new Promise(resolve => setTimeout(resolve, duration))
@@ -115,15 +123,17 @@ describe('FilesViewer', () => {
 
     const hasMore = jest.fn().mockReturnValue(true)
 
-    setup({
-      client,
-      nbFiles: 50,
-      totalCount: 100,
-      fileId: 'file-foobar48',
-      useQueryResultAttributes: {
-        fetchMore,
-        hasMore
-      }
+    await act(async () => {
+      setup({
+        client,
+        nbFiles: 50,
+        totalCount: 100,
+        fileId: 'file-foobar48',
+        useQueryResultAttributes: {
+          fetchMore,
+          hasMore
+        }
+      })
     })
 
     const viewer = await screen.findByText('Viewer')
