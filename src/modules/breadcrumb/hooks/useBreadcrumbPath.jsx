@@ -4,7 +4,7 @@ import { useClient } from 'cozy-client'
 import log from 'cozy-logger'
 
 import { SHARED_DRIVES_DIR_ID } from '@/constants/config'
-import { fetchFolder } from '@/modules/breadcrumb/utils/fetchFolder'
+import { fetchFolder, useFolder } from '@/modules/breadcrumb/utils/fetchFolder'
 
 /**
  * @typedef {Object} BreadcrumbPath
@@ -30,17 +30,28 @@ export const useBreadcrumbPath = ({
   const client = useClient()
   const [paths, setPaths] = useState([])
 
+  const folder = useFolder({ folderId: currentFolderId, driveId })
+  const folderAttributes = {
+    id: folder?.id,
+    name: folder?.name,
+    dirId: folder?.dir_id
+  }
+
   useEffect(() => {
+    if (!folderAttributes.id || !folderAttributes.name) return
+
     const hasAccessToSharedDocument = id => {
       if (!sharedDocumentIds) return true
       return !sharedDocumentIds.includes(id)
     }
 
     let isSubscribed = true
-    const returnedPaths = []
+    const returnedPaths = [
+      { name: folderAttributes.name, id: folderAttributes.id }
+    ]
 
     const fetchBreadcrumbs = async () => {
-      let id = currentFolderId
+      let id = folderAttributes.dirId
       while (
         !!id &&
         id !== rootBreadcrumbPath.id &&
@@ -56,7 +67,10 @@ export const useBreadcrumbPath = ({
       }
 
       if (isSubscribed) {
-        if (rootBreadcrumbPath.name !== 'Public') {
+        const shouldAddRoot =
+          rootBreadcrumbPath.name !== 'Public' &&
+          returnedPaths[0]?.id !== rootBreadcrumbPath.id
+        if (shouldAddRoot) {
           returnedPaths.unshift(rootBreadcrumbPath)
         }
         setPaths(returnedPaths)
@@ -74,7 +88,7 @@ export const useBreadcrumbPath = ({
         }
         log(
           'error',
-          `Error while fetching folder for breadcrumbs of folder id: ${currentFolderId}, here is the error: ${error}`
+          `Error while fetching folder for breadcrumbs of folder id: ${folderAttributes.id}, here is the error: ${error}`
         )
       }
     })
@@ -82,7 +96,15 @@ export const useBreadcrumbPath = ({
     return () => {
       isSubscribed = false
     }
-  }, [currentFolderId, client, sharedDocumentIds, rootBreadcrumbPath, driveId])
+  }, [
+    client,
+    sharedDocumentIds,
+    rootBreadcrumbPath,
+    driveId,
+    folderAttributes.id,
+    folderAttributes.name,
+    folderAttributes.dirId
+  ])
 
   return paths
 }
