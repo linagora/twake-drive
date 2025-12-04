@@ -101,7 +101,7 @@
     "cozy-realtime": "^5.8.0",
     "cozy-search": "^0.14.1",
     "cozy-sharing": "^28.0.2",
-    "cozy-stack-client": "^60.17.2",
+    "cozy-stack-client": "^60.19.0",
     "cozy-ui": "^135.0.0",
     "cozy-ui-plus": "^4.0.0",
     "cozy-viewer": "^26.0.3",
