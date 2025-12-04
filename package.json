@@ -97,7 +97,7 @@
     "cozy-keys-lib": "^7.0.0",
     "cozy-logger": "^1.17.0",
     "cozy-minilog": "3.9.1",
-    "cozy-pouch-link": "^60.17.2",
+    "cozy-pouch-link": "^60.19.0",
     "cozy-realtime": "^5.8.0",
     "cozy-search": "^0.14.1",
     "cozy-sharing": "^28.0.2",
