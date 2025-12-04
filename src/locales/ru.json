@@ -673,7 +673,8 @@
     },
     "personalizeFolder": {
       "label": "Персонализировать папку"
-    }
+    },
+    "summariseByAI": "Резюмировать"
   },
   "FolderCustomizer": {
     "title": "Персонализировать папку",

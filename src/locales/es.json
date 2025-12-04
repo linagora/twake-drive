@@ -454,7 +454,8 @@
   "actions": {
     "personalizeFolder": {
       "label": "Personalizar carpeta"
-    }
+    },
+    "summariseByAI": "Resumir"
   },
   "FolderCustomizer": {
     "title": "Personalizar carpeta",
