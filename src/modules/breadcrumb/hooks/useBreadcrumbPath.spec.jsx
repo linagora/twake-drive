@@ -9,7 +9,7 @@ import {
   dummyRootBreadcrumbPath
 } from 'test/dummies/dummyBreadcrumbPath'
 
-import { fetchFolder } from '@/modules/breadcrumb/utils/fetchFolder'
+import { fetchFolder, useFolder } from '@/modules/breadcrumb/utils/fetchFolder'
 
 jest.mock('cozy-logger')
 jest.mock('cozy-client')
@@ -17,9 +17,15 @@ jest.mock('modules/breadcrumb/utils/fetchFolder')
 
 describe('useBreadcrumbPath', () => {
   const rootBreadcrumbPath = dummyRootBreadcrumbPath()
+  const createFolder = ({ id, name, dirId }) => ({
+    id,
+    name,
+    dir_id: dirId
+  })
 
   beforeEach(() => {
     jest.resetAllMocks()
+    useFolder.mockReturnValue(null)
   })
 
   it('should get useClient from cozy-client', () => {
@@ -31,6 +37,13 @@ describe('useBreadcrumbPath', () => {
   })
 
   it('should return only Drive link when id undefined', async () => {
+    useFolder.mockReturnValue(
+      createFolder({
+        id: rootBreadcrumbPath.id,
+        name: rootBreadcrumbPath.name,
+        dirId: undefined
+      })
+    )
     // When
     const { result } = await renderHook(() =>
       useBreadcrumbPath({ rootBreadcrumbPath })
@@ -41,6 +54,13 @@ describe('useBreadcrumbPath', () => {
   })
 
   it('should return only Drive link when id is root_breadcrumb_path id', async () => {
+    useFolder.mockReturnValue(
+      createFolder({
+        id: rootBreadcrumbPath.id,
+        name: rootBreadcrumbPath.name,
+        dirId: undefined
+      })
+    )
     // When
     let render
     await act(async () => {
@@ -60,6 +80,14 @@ describe('useBreadcrumbPath', () => {
     // Given
     const currentFolderId = '1234'
     useClient.mockReturnValue('cozy-client')
+    const parentFolderId = 'parentFolderId'
+    useFolder.mockReturnValue(
+      createFolder({
+        id: currentFolderId,
+        name: 'current',
+        dirId: parentFolderId
+      })
+    )
     fetchFolder.mockReturnValueOnce({ dir_id: rootBreadcrumbPath.id })
 
     // When
@@ -72,7 +100,7 @@ describe('useBreadcrumbPath', () => {
     // Then
     expect(fetchFolder).toHaveBeenCalledWith({
       client: 'cozy-client',
-      folderId: currentFolderId
+      folderId: parentFolderId
     })
   })
 
@@ -81,6 +109,14 @@ describe('useBreadcrumbPath', () => {
     const currentFolderId = '1234'
     useClient.mockReturnValue('cozy-client')
     fetchFolder.mockRejectedValue('error')
+    const parentFolderId = 'parentFolderId'
+    useFolder.mockReturnValue(
+      createFolder({
+        id: currentFolderId,
+        name: 'current',
+        dirId: parentFolderId
+      })
+    )
 
     // When
     let render
@@ -103,6 +139,14 @@ describe('useBreadcrumbPath', () => {
     const currentFolderId = '1234'
     useClient.mockReturnValue('cozy-client')
     fetchFolder.mockReturnValueOnce(undefined)
+    const parentFolderId = 'parentFolderId'
+    useFolder.mockReturnValue(
+      createFolder({
+        id: currentFolderId,
+        name: 'current',
+        dirId: parentFolderId
+      })
+    )
 
     // When
     await act(async () => {
@@ -121,11 +165,13 @@ describe('useBreadcrumbPath', () => {
     const parentFolderId = 'parentFolderId'
     const grandParentFolderId = 'grandParentFolderId'
     useClient.mockReturnValue('cozy-client')
-    fetchFolder.mockReturnValueOnce({
-      id: currentFolderId,
-      name: 'current',
-      dir_id: parentFolderId
-    })
+    useFolder.mockReturnValue(
+      createFolder({
+        id: currentFolderId,
+        name: 'current',
+        dirId: parentFolderId
+      })
+    )
     fetchFolder.mockReturnValueOnce({
       id: parentFolderId,
       name: 'parent',
@@ -146,14 +192,14 @@ describe('useBreadcrumbPath', () => {
     })
 
     // Then
-    expect(fetchFolder).toHaveBeenCalledTimes(3)
+    expect(fetchFolder).toHaveBeenCalledTimes(2)
     expect(fetchFolder).toHaveBeenCalledWith({
       client: 'cozy-client',
-      folderId: currentFolderId
+      folderId: parentFolderId
     })
     expect(fetchFolder).toHaveBeenNthCalledWith(2, {
       client: 'cozy-client',
-      folderId: parentFolderId
+      folderId: grandParentFolderId
     })
     expect(render.result.current).toEqual(dummyBreadcrumbPathWithRootLarge())
   })
@@ -163,6 +209,14 @@ describe('useBreadcrumbPath', () => {
     const currentFolderId = '1234'
     useClient.mockReturnValue('cozy-client')
     fetchFolder.mockReturnValueOnce({ dir_id: rootBreadcrumbPath.id })
+    const parentFolderId = 'parentFolderId'
+    useFolder.mockReturnValue(
+      createFolder({
+        id: currentFolderId,
+        name: 'current',
+        dirId: parentFolderId
+      })
+    )
 
     // When
     let render
@@ -187,11 +241,13 @@ describe('useBreadcrumbPath', () => {
     }
     const currentFolderId = 'currentFolderId'
     useClient.mockReturnValue('cozy-client')
-    fetchFolder.mockReturnValueOnce({
-      id: currentFolderId,
-      name: 'current',
-      dir_id: publicViewRootBreadcrumbPath.id
-    })
+    useFolder.mockReturnValue(
+      createFolder({
+        id: currentFolderId,
+        name: 'current',
+        dirId: publicViewRootBreadcrumbPath.id
+      })
+    )
 
     // When
     let render
@@ -217,20 +273,17 @@ describe('useBreadcrumbPath', () => {
     const notSharedFolderId = 'notSharedFolderId'
     const sharedDocumentIds = [parentFolderId, 'another-id']
     useClient.mockReturnValue('cozy-client')
-    fetchFolder.mockReturnValueOnce({
-      id: currentFolderId,
-      name: 'current',
-      dir_id: parentFolderId
-    })
+    useFolder.mockReturnValue(
+      createFolder({
+        id: currentFolderId,
+        name: 'current',
+        dirId: parentFolderId
+      })
+    )
     fetchFolder.mockReturnValueOnce({
       id: parentFolderId,
       name: 'parent',
       dir_id: notSharedFolderId
-    })
-    fetchFolder.mockReturnValueOnce({
-      id: notSharedFolderId,
-      name: 'whatever-not-called',
-      dir_id: 'whatever-not-called-id'
     })
     const sharingsViewRootBreadcrumbPath = {
       id: rootBreadcrumbPath.id,
@@ -255,20 +308,27 @@ describe('useBreadcrumbPath', () => {
       { id: 'parentFolderId', name: 'parent' },
       { id: 'currentFolderId', name: 'current' }
     ])
+    expect(fetchFolder).toHaveBeenCalledTimes(1)
+    expect(fetchFolder).toHaveBeenCalledWith({
+      client: 'cozy-client',
+      folderId: parentFolderId
+    })
   })
 
-  it('should fetch folder until first shared documents on SharingView', async () => {
+  it('should stop at the first shared document even when current is shared', async () => {
     // Given
     const currentFolderId = 'currentFolderId'
     const parentFolderId = 'parentFolderId'
     const notSharedFolderId = 'notSharedFolderId'
     const sharedDocumentIds = [parentFolderId, currentFolderId, 'another-id']
     useClient.mockReturnValue('cozy-client')
-    fetchFolder.mockReturnValueOnce({
-      id: currentFolderId,
-      name: 'current',
-      dir_id: parentFolderId
-    })
+    useFolder.mockReturnValue(
+      createFolder({
+        id: currentFolderId,
+        name: 'current',
+        dirId: parentFolderId
+      })
+    )
     fetchFolder.mockReturnValueOnce({
       id: parentFolderId,
       name: 'parent',
@@ -294,7 +354,13 @@ describe('useBreadcrumbPath', () => {
     // Then
     expect(render.result.current).toEqual([
       sharingsViewRootBreadcrumbPath,
+      { id: 'parentFolderId', name: 'parent' },
       { id: 'currentFolderId', name: 'current' }
     ])
+    expect(fetchFolder).toHaveBeenCalledTimes(1)
+    expect(fetchFolder).toHaveBeenCalledWith({
+      client: 'cozy-client',
+      folderId: parentFolderId
+    })
   })
 })
