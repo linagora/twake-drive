@@ -20,6 +20,9 @@ const useStyles = makeStyles({
     flex: 1,
     minWidth: 0
   },
+  menuItem: {
+    minWidth: 0
+  },
   menuContainer: {
     display: 'flex',
     alignItems: 'center',
@@ -60,7 +63,11 @@ const SharedDriveListItem: FC<SharedDriveListItemProps> = ({
     >
       <FileLink
         link={link}
-        className={cx(NavLink.className, isMenuAvailable && classes.withMenu)}
+        className={cx(
+          NavLink.className,
+          isMenuAvailable && classes.withMenu,
+          classes.menuItem
+        )}
         onClick={(): void => setLastClicked(undefined)}
       >
         <NavIcon
