@@ -6,6 +6,8 @@ import RenameIcon from 'cozy-ui/transpiled/react/Icons/Rename'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 
+import { isFolderFromSharedDriveOwner } from '../shareddrives/helpers'
+
 import { startRenamingAsync } from '@/modules/drive/rename'
 
 const makeComponent = (label, icon) => {
@@ -32,7 +34,10 @@ export const rename = ({ t, hasWriteAccess, dispatch }) => {
     name: 'rename',
     label,
     icon,
-    displayCondition: selection => hasWriteAccess && selection.length === 1,
+    displayCondition: selection =>
+      hasWriteAccess &&
+      selection.length === 1 &&
+      isFolderFromSharedDriveOwner(selection[0]),
     action: files => dispatch(startRenamingAsync(files[0])),
     Component: makeComponent(label, icon)
   }

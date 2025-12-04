@@ -85,7 +85,7 @@
     "@sentry/react": "7.119.0",
     "classnames": "2.3.1",
     "cozy-bar": "^27.0.0",
-    "cozy-client": "^60.17.2",
+    "cozy-client": "^60.19.0",
     "cozy-dataproxy-lib": "^4.13.0",
     "cozy-device-helper": "^4.0.1",
     "cozy-devtools": "^1.2.1",
@@ -97,11 +97,11 @@
     "cozy-keys-lib": "^7.0.0",
     "cozy-logger": "^1.17.0",
     "cozy-minilog": "3.9.1",
-    "cozy-pouch-link": "^60.17.2",
+    "cozy-pouch-link": "^60.19.0",
     "cozy-realtime": "^5.8.0",
     "cozy-search": "^0.13.3",
     "cozy-sharing": "^27.1.0",
-    "cozy-stack-client": "^60.17.2",
+    "cozy-stack-client": "^60.19.0",
     "cozy-ui": "^134.0.0",
     "cozy-ui-plus": "^3.0.0",
     "cozy-viewer": "^24.1.7",
@@ -131,6 +131,7 @@
     "redux-logger": "3.0.6",
     "redux-mock-store": "1.5.4",
     "redux-thunk": "2.4.2",
+    "twake-i18n": "^0.3.0",
     "whatwg-fetch": "3.0.0"
   }
 }
