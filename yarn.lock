@@ -5876,10 +5876,10 @@ cozy-tsconfig@^1.8.1:
   resolved "https://registry.yarnpkg.com/cozy-tsconfig/-/cozy-tsconfig-1.8.1.tgz#5f206f4e6e041a4afc6691098264ba630bdeb7e2"
   integrity sha512-/9QBxK8Tc12O2ojuyRpSMjPpXpqldVvzfNB1+/nPD+IkIBkU+mqxpHYJwKWjNYHGraCSy69mIwt9J3aiaJdz9w==
 
-cozy-ui-plus@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/cozy-ui-plus/-/cozy-ui-plus-3.0.0.tgz#2ccb9f62a3cdd4993bea92179e69207d629b3427"
-  integrity sha512-XJiAjtKBOXtEqfglJARVRj0ABVWPemMBUnwStcN+yguL4b9BUi5E77KNKWrhUh/dV/AQDWYpTX+lYOd6ofhi5Q==
+cozy-ui-plus@^3.1.0:
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/cozy-ui-plus/-/cozy-ui-plus-3.1.0.tgz#6d3c542b8e7c6ac9f3d089f54d13e76b06ed2b5a"
+  integrity sha512-VSIYnPJDPZwPArZIbyi9VPk6irfRvjaBAIIhl6zZjr1mC0CO8WghK2edxB7qQNTrRFk5pANFchCtMgGFtB50LA==
   dependencies:
     classnames "^2.5.1"
     cozy-interapp "^0.5.4"

@@ -6,6 +6,7 @@ import flag from 'cozy-flags'
 
 import ExternalRedirect from './ExternalRedirect'
 import Index from './Index'
+import AIAssistantPaywallView from '../views/AI/AIAssistantPaywallView'
 import { DriveFolderView } from '../views/Drive/DriveFolderView'
 import FilesViewerDrive from '../views/Drive/FilesViewerDrive'
 import OnlyOfficeView from '../views/OnlyOffice'
@@ -92,6 +93,7 @@ const AppRoute = () => (
           <Route path="v/share" element={<ShareFileView />} />
           <Route path="v/move" element={<MoveFilesView isOpenInViewer />} />
           <Route path="v/duplicate" element={<FolderDuplicateView />} />
+          <Route path="v/ai/paywall" element={<AIAssistantPaywallView />} />
         </Route>
         <Route path="file/:fileId/revision" element={<FileHistory />} />
         <Route path="file/:fileId/share" element={<ShareFileView />} />
