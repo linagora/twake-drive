@@ -7,6 +7,7 @@ import useBrowserOffline from 'cozy-ui/transpiled/react/hooks/useBrowserOffline'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 
 import { abortRenaming } from './rename'
+import { isFolderFromSharedDriveOwner } from '../shareddrives/helpers'
 
 import { CozyFile } from '@/models'
 import FilenameInput from '@/modules/filelist/FilenameInput'
@@ -14,6 +15,15 @@ import FilenameInput from '@/modules/filelist/FilenameInput'
 // If we set the _rev then CozyClient tries to update. Else
 // it tries to create
 const updateFileNameQuery = async (client, file, newName) => {
+  if (isFolderFromSharedDriveOwner(file)) {
+    const sharing = {
+      _id: file.relationships.referenced_by.data[0].id,
+      rules: [{ values: [file.id] }]
+    }
+    return client
+      .collection('io.cozy.sharings')
+      .renameSharedDrive(sharing, newName)
+  }
   return client.collection('io.cozy.files', { driveId: file.driveId }).update({
     ...file,
     name: newName,
