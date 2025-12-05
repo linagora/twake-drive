@@ -36,24 +36,27 @@ const FileListHeaderMobile = ({
     [setIsShowingSortMenu]
   )
 
-  if (!canSort) return null
-
   return (
     <TableHead className={styles['fil-content-mobile-head']}>
       <TableRow className={styles['fil-content-row-head']}>
-        <TableHeader
-          onClick={showSortMenu}
-          className={cx(
-            styles['fil-content-mobile-header'],
-            styles['fil-content-header--capitalize'],
-            {
-              [styles['fil-content-header-sortasc']]: sort.order === 'asc',
-              [styles['fil-content-header-sortdesc']]: sort.order === 'desc'
-            }
-          )}
-        >
-          {t(`table.mobile.head_${sort.attribute}_${sort.order}`)}
-        </TableHeader>
+        {canSort ? (
+          <TableHeader
+            onClick={showSortMenu}
+            className={cx(
+              styles['fil-content-mobile-header'],
+              styles['fil-content-header--capitalize'],
+              {
+                [styles['fil-content-header-sortasc']]: sort.order === 'asc',
+                [styles['fil-content-header-sortdesc']]: sort.order === 'desc'
+              }
+            )}
+          >
+            {t(`table.mobile.head_${sort.attribute}_${sort.order}`)}
+          </TableHeader>
+        ) : (
+          <div className="u-flex-auto" /> // to keep the viewType switch to the right side
+        )}
+
         {isShowingSortMenu && (
           <MobileSortMenu
             t={t}

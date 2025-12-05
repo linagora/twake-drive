@@ -162,7 +162,6 @@ export const RecentView = () => {
           <FolderViewBody
             actions={actions}
             queryResults={[recentsResult]}
-            canSort={false}
             withFilePath={true}
             extraColumns={extraColumns}
           />
