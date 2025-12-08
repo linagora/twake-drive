@@ -111,6 +111,16 @@ declare module 'cozy-client/dist/models/note' {
   ) => Promise<string>
 }
 
+declare module 'cozy-client/dist/models/instance' {
+  export const buildPremiumLink: (instanceInfo: InstanceInfo) => string
+}
+
+declare module 'cozy-ui-plus/dist/Paywall' {
+  export const AiAssistantPaywall: React.ComponentType<{
+    onClose: () => void
+  }>
+}
+
 declare module '*.svg' {
   import { FC, SVGProps } from 'react'
   const content: FC<SVGProps<SVGElement>>

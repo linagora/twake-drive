@@ -11,7 +11,15 @@ import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import { useModalContext } from '@/lib/ModalContext'
-import { download, infos, versions, rename, trash, hr } from '@/modules/actions'
+import {
+  download,
+  infos,
+  versions,
+  rename,
+  trash,
+  hr,
+  summariseByAI
+} from '@/modules/actions'
 import { moveTo } from '@/modules/actions/components/moveTo'
 import { personalizeFolder } from '@/modules/actions/components/personalizeFolder'
 import { FolderBody } from '@/modules/folder/components/FolderBody'
@@ -56,6 +64,8 @@ const SharedDriveFolderBody = ({
   const actions = makeActions(
     [
       download,
+      hr,
+      summariseByAI,
       hr,
       rename,
       moveTo,

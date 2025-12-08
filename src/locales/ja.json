@@ -416,7 +416,8 @@
   "actions": {
     "personalizeFolder": {
       "label": "フォルダをカスタマイズ"
-    }
+    },
+    "summariseByAI": "要約"
   },
   "FolderCustomizer": {
     "title": "フォルダをカスタマイズ",

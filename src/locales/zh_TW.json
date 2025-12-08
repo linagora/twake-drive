@@ -178,7 +178,8 @@
   "actions": {
     "personalizeFolder": {
       "label": "個性化資料夾"
-    }
+    },
+    "summariseByAI": "總結"
   },
   "FolderCustomizer": {
     "title": "個性化資料夾",

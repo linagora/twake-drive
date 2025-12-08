@@ -39,7 +39,8 @@ import {
   versions,
   share,
   hr,
-  selectAllItems
+  selectAllItems,
+  summariseByAI
 } from '@/modules/actions'
 import { addToFavorites } from '@/modules/actions/components/addToFavorites'
 import { moveTo } from '@/modules/actions/components/moveTo'
@@ -207,6 +208,8 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
       share,
       shareNative,
       download,
+      hr,
+      summariseByAI,
       hr,
       rename,
       moveTo,

@@ -149,7 +149,8 @@
   "actions": {
     "personalizeFolder": {
       "label": "تخصيص المجلد"
-    }
+    },
+    "summariseByAI": "تلخيص"
   },
   "FolderCustomizer": {
     "title": "تخصيص المجلد",

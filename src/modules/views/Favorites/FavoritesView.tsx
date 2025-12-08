@@ -24,7 +24,8 @@ import {
   versions,
   share,
   hr,
-  trash
+  trash,
+  summariseByAI
 } from '@/modules/actions'
 import { addToFavorites } from '@/modules/actions/components/addToFavorites'
 import { moveTo } from '@/modules/actions/components/moveTo'
@@ -118,6 +119,8 @@ const FavoritesView: FC = () => {
       share,
       shareNative,
       download,
+      hr,
+      summariseByAI,
       hr,
       rename,
       moveTo,
