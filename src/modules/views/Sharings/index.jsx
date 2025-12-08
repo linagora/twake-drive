@@ -256,7 +256,7 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
               <FolderViewBody
                 actions={actions}
                 queryResults={[filteredResult]}
-                canSort={false}
+                canSort={true}
                 withFilePath={true}
                 extraColumns={extraColumns}
                 orderProps={{
