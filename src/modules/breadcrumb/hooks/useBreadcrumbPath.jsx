@@ -50,35 +50,27 @@ export const useBreadcrumbPath = ({
       { name: folderAttributes.name, id: folderAttributes.id }
     ]
 
-    const fetchBreadcrumbs = async () => {
-      let id = folderAttributes.dirId
-      while (
-        !!id &&
-        id !== rootBreadcrumbPath.id &&
-        id !== SHARED_DRIVES_DIR_ID
-      ) {
-        const folder = await fetchFolder({ client, driveId, folderId: id })
-        if (!folder) {
-          id = undefined
-        } else {
-          returnedPaths.unshift({ name: folder.name, id: folder.id })
-          id = hasAccessToSharedDocument(folder.id) ? folder.dir_id : undefined
-        }
-      }
-
-      if (isSubscribed) {
-        const shouldAddRoot =
-          rootBreadcrumbPath.name !== 'Public' &&
-          returnedPaths[0]?.id !== rootBreadcrumbPath.id
-        if (shouldAddRoot) {
-          returnedPaths.unshift(rootBreadcrumbPath)
-        }
-        setPaths(returnedPaths)
-      }
+    const shouldContinueLoop = id => {
+      return !!id && id !== rootBreadcrumbPath.id && id !== SHARED_DRIVES_DIR_ID
     }
 
-    fetchBreadcrumbs().catch(error => {
-      if (rootBreadcrumbPath && rootBreadcrumbPath.name === 'Public') {
+    const processFolder = async id => {
+      const folder = await fetchFolder({ client, driveId, folderId: id })
+      if (!folder) return undefined
+
+      returnedPaths.unshift({ name: folder.name, id: folder.id })
+      return hasAccessToSharedDocument(folder.id) ? folder.dir_id : undefined
+    }
+
+    const shouldAddRootPath = () => {
+      return (
+        rootBreadcrumbPath.name !== 'Public' &&
+        returnedPaths[0]?.id !== rootBreadcrumbPath.id
+      )
+    }
+
+    const handleBreadcrumbError = error => {
+      if (rootBreadcrumbPath?.name === 'Public') {
         if (isSubscribed) {
           setPaths(returnedPaths)
         }
@@ -91,7 +83,23 @@ export const useBreadcrumbPath = ({
           `Error while fetching folder for breadcrumbs of folder id: ${folderAttributes.id}, here is the error: ${error}`
         )
       }
-    })
+    }
+
+    const fetchBreadcrumbs = async () => {
+      let id = folderAttributes.dirId
+      while (shouldContinueLoop(id)) {
+        id = await processFolder(id)
+      }
+
+      if (isSubscribed) {
+        if (shouldAddRootPath()) {
+          returnedPaths.unshift(rootBreadcrumbPath)
+        }
+        setPaths(returnedPaths)
+      }
+    }
+
+    fetchBreadcrumbs().catch(handleBreadcrumbError)
 
     return () => {
       isSubscribed = false
