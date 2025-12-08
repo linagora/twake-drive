@@ -133,7 +133,6 @@ const File = ({
   let canInteractWithFile =
     attributes._id &&
     attributes._id !== 'io.cozy.files.shared-drives-dir' &&
-    attributes.dir_id !== 'io.cozy.files.shared-drives-dir' &&
     !attributes._id.endsWith('.trash-dir')
   if (typeof canInteractWith === 'function') {
     canInteractWithFile &&= canInteractWith(attributes)
