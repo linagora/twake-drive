@@ -1,3 +1,4 @@
+import classNames from 'classnames'
 import React from 'react'
 
 import { isReferencedBy, models } from 'cozy-client'
@@ -75,11 +76,20 @@ const FileThumbnail: React.FC<FileThumbnailProps> = ({
     isSharedDriveFolder(file)
   ) {
     return (
-      <Icon
-        className="u-mr-half"
-        icon={FileTypeSharedDriveIcon}
-        size={size ?? 32}
-      />
+      <>
+        <Icon icon={FileTypeSharedDriveIcon} size={size ?? 32} />
+        <div
+          className={classNames('u-pos-absolute', {
+            'u-bottom-xs u-right-xs': viewType === 'list',
+            'u-bottom-0 u-right-0': viewType === 'grid'
+          })}
+        >
+          <SharingOwnerAvatar
+            docId={file._id}
+            size={viewType === 'list' ? 'xs' : 's'}
+          />
+        </div>
+      </>
     )
   }
 
