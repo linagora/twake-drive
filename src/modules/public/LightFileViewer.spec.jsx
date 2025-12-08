@@ -1,5 +1,6 @@
 import { render } from '@testing-library/react'
 import React from 'react'
+import I18n from 'twake-i18n'
 
 import { createMockClient } from 'cozy-client'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
@@ -32,9 +33,11 @@ const setup = ({ isDesktop = false, isMobile = false } = {}) => {
   useBreakpoints.mockReturnValue({ isDesktop, isMobile })
   const root = render(
     <AppLike client={client}>
-      <LightFileViewer
-        files={[{ id: '01', type: 'file', name: 'fileName.txt' }]}
-      />
+      <I18n lang="en" dictRequire={() => ''}>
+        <LightFileViewer
+          files={[{ id: '01', type: 'file', name: 'fileName.txt' }]}
+        />
+      </I18n>
     </AppLike>
   )
 

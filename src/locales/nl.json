@@ -104,7 +104,8 @@
   "actions": {
     "personalizeFolder": {
       "label": "Map personaliseren"
-    }
+    },
+    "summariseByAI": "Samenvatten"
   },
   "FolderCustomizer": {
     "title": "Map personaliseren",

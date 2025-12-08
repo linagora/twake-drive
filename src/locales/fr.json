@@ -682,7 +682,8 @@
     },
     "personalizeFolder": {
       "label": "Personnaliser le dossier"
-    }
+    },
+    "summariseByAI": "Résumer"
   },
   "FolderCustomizer": {
     "title": "Personnaliser le dossier",

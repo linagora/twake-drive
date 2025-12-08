@@ -87,7 +87,8 @@
   "actions": {
     "personalizeFolder": {
       "label": "Personalizuj folder"
-    }
+    },
+    "summariseByAI": "Podsumuj"
   },
   "FolderCustomizer": {
     "title": "Personalizuj folder",

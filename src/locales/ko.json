@@ -90,7 +90,8 @@
   "actions": {
     "personalizeFolder": {
       "label": "폴더 개인화"
-    }
+    },
+    "summariseByAI": "요약"
   },
   "FolderCustomizer": {
     "title": "폴더 개인화",

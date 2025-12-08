@@ -170,6 +170,10 @@ const FilesViewer = ({ filesQuery, files, onClose, onChange, viewerProps }) => {
     return <FilesViewerLoading />
   }
 
+  const redirectToPaywall = () => {
+    navigate('v/ai/paywall', { replace: true })
+  }
+
   return (
     <RightClickFileMenu
       key={viewerFiles[viewerIndex]?._id}
@@ -192,7 +196,8 @@ const FilesViewer = ({ filesQuery, files, onClose, onChange, viewerProps }) => {
               opener: file => navigate(makeOnlyOfficeFileRoute(file.id))
             },
             toolbarProps: {
-              showFilePath: true
+              showFilePath: true,
+              onPaywallRedirect: redirectToPaywall
             },
             ...(viewerProps || {})
           }}
