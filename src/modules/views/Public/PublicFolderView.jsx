@@ -288,7 +288,6 @@ const PublicFolderView = () => {
               queryResults={[filesResult]}
               currentFolderId={currentFolderId}
               displayedFolder={displayedFolder}
-              extraColumns={extraColumns}
               canDrag
               canUpload={hasWritePermissions}
               refreshFolderContent={refreshFolderContent}

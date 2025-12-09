@@ -3,17 +3,16 @@ import { useDispatch } from 'react-redux'
 import { useNavigate, Outlet, useLocation } from 'react-router-dom'
 
 import { useQuery, useClient } from 'cozy-client'
+import flag from 'cozy-flags'
 import { useSharingContext } from 'cozy-sharing'
 import SharedDocuments from 'cozy-sharing/dist/components/SharedDocuments'
 import { makeActions } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
-import flag from 'cozy-flags'
 
 import FolderView from '../Folder/FolderView'
 import FolderViewBody from '../Folder/FolderViewBody'
-import FolderViewBodyVz from '@/modules/views/Folder/virtualized/FolderViewBody'
 import FolderViewBreadcrumb from '../Folder/FolderViewBreadcrumb'
 import FolderViewHeader from '../Folder/FolderViewHeader'
 
@@ -36,6 +35,7 @@ import { useExtraColumns } from '@/modules/certifications/useExtraColumns'
 import Toolbar from '@/modules/drive/Toolbar'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 import Dropzone from '@/modules/upload/Dropzone'
+import FolderViewBodyVz from '@/modules/views/Folder/virtualized/FolderViewBody'
 import {
   buildDriveQuery,
   buildFileWithSpecificMetadataAttributeQuery
@@ -156,7 +156,6 @@ const SharingsFolderView = ({ sharedDocumentIds }) => {
             queryResults={allResults}
             currentFolderId={currentFolderId}
             displayedFolder={displayedFolder}
-            extraColumns={extraColumns}
             canDrag
             canUpload={hasWrite}
             orderProps={{
