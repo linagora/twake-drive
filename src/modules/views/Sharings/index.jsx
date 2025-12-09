@@ -245,7 +245,6 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
                 actions={actions}
                 queryResults={[filteredResult]}
                 withFilePath={true}
-                extraColumns={extraColumns}
                 orderProps={{
                   sortOrder,
                   setOrder: setSortOrder,

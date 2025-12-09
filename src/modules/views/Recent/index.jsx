@@ -152,7 +152,6 @@ export const RecentView = () => {
             actions={actions}
             queryResults={[recentsResult]}
             withFilePath={true}
-            extraColumns={extraColumns}
             orderProps={{
               sortOrder,
               setOrder: setSortOrder,
