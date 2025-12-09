@@ -13,6 +13,7 @@ import LinkIcon from 'cozy-ui/transpiled/react/Icons/Link'
 import TrashDuotoneIcon from 'cozy-ui/transpiled/react/Icons/TrashDuotone'
 import InfosBadge from 'cozy-ui/transpiled/react/InfosBadge'
 import Spinner from 'cozy-ui/transpiled/react/Spinner'
+import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import styles from '@/styles/filelist.styl'
 
@@ -51,6 +52,7 @@ const FileThumbnail: React.FC<FileThumbnailProps> = ({
   }
 }) => {
   const { viewType } = useViewSwitcherContext()
+  const { isMobile } = useBreakpoints()
 
   if (isNextcloudFile(file)) {
     return <FileIconMime file={file} size={size} />
@@ -84,10 +86,12 @@ const FileThumbnail: React.FC<FileThumbnailProps> = ({
             'u-bottom-0 u-right-0': viewType === 'grid'
           })}
         >
-          <SharingOwnerAvatar
-            docId={file._id}
-            size={viewType === 'list' ? 'xs' : 's'}
-          />
+          {isMobile && (
+            <SharingOwnerAvatar
+              docId={file._id}
+              size={viewType === 'list' ? 'xs' : 's'}
+            />
+          )}
         </div>
       </>
     )
