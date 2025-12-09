@@ -4,7 +4,6 @@ import React, {
   useContext,
   useState,
   useEffect,
-  useMemo,
   useRef
 } from 'react'
 import { useSelector } from 'react-redux'
@@ -14,6 +13,7 @@ import { isSharingShortcut } from 'cozy-client/dist/models/file'
 import { useVaultClient } from 'cozy-keys-lib'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
+import { useFileSorting } from './hooks/useFileSorting'
 import { useSyncingFakeFile } from './useSyncingFakeFile'
 
 import styles from '@/styles/folder-view.styl'
@@ -21,7 +21,6 @@ import styles from '@/styles/folder-view.styl'
 import { EmptyWrapper } from '@/components/Error/Empty'
 import Oops from '@/components/Error/Oops'
 import RightClickFileMenu from '@/components/RightClick/RightClickFileMenu'
-import { useFolderSort } from '@/hooks'
 import { useShiftSelection } from '@/hooks/useShiftSelection'
 import AcceptingSharingContext from '@/lib/AcceptingSharingContext'
 import { useThumbnailSizeContext } from '@/lib/ThumbnailSizeContext'
@@ -70,18 +69,11 @@ const FolderViewBody = ({
   const folderViewRef = useRef()
   const IsAddingFolder = useSelector(isTypingNewFolderName)
 
-  const allFiles = useMemo(() => {
-    const files = []
-    queryResults.forEach(query => {
-      if (query.data && query.data.length > 0) {
-        files.push(...query.data)
-      }
-    })
-    return files
-  }, [queryResults])
+  const { sortOrder, isSettingsLoaded, sortedFiles, changeSortOrder } =
+    useFileSorting(currentFolderId, queryResults, orderProps)
 
   const { setLastInteractedItem, onShiftClick } = useShiftSelection(
-    { items: allFiles, viewType },
+    { items: sortedFiles, viewType },
     folderViewRef
   )
 
@@ -111,18 +103,7 @@ const FolderViewBody = ({
 
   const { isBigThumbnail } = useThumbnailSizeContext()
   const { sharingsValue } = useContext(AcceptingSharingContext)
-  const [internalSortOrder, internalSetSortOrder, internalIsSettingsLoaded] =
-    useFolderSort(currentFolderId)
-  const sortOrder = orderProps?.sortOrder ?? internalSortOrder
-  const setSortOrder = orderProps?.setOrder ?? internalSetSortOrder
-  const isSettingsLoaded =
-    orderProps?.isSettingsLoaded ?? internalIsSettingsLoaded
-
   const vaultClient = useVaultClient()
-  const changeSortOrder = useCallback(
-    (_, attribute, order) => setSortOrder({ attribute, order }),
-    [setSortOrder]
-  )
 
   const isInError = queryResults.some(query => query.fetchStatus === 'failed')
   const hasDataToShow =
@@ -234,49 +215,48 @@ const FolderViewBody = ({
                   extraColumns={extraColumns}
                   currentFolderId={currentFolderId}
                 />
-                {queryResults.map((query, queryIndex) => {
-                  if (query.data !== null && query.data.length > 0) {
-                    return (
-                      <React.Fragment key={queryIndex}>
-                        {query.data.map(file => {
-                          return (
-                            <RightClickFileMenu
-                              key={file._id}
-                              doc={file}
-                              actions={actions}
-                            >
-                              <File
-                                key={file._id}
-                                attributes={file}
-                                withSelectionCheckbox
-                                withFilePath={withFilePath}
-                                thumbnailSizeBig={isBigThumbnail}
-                                actions={actions}
-                                refreshFolderContent={refreshFolderContent}
-                                isInSyncFromSharing={
-                                  !isSharingContextEmpty &&
-                                  isSharingShortcut(file) &&
-                                  isReferencedByShareInSharingContext(
-                                    file,
-                                    sharingsValue
-                                  )
-                                }
-                                extraColumns={extraColumns}
-                                onToggleSelect={e => {
-                                  onToggleSelect(file?._id, e)
-                                }}
-                              />
-                            </RightClickFileMenu>
+                {sortedFiles.map(file => {
+                  return (
+                    <RightClickFileMenu
+                      key={file._id}
+                      doc={file}
+                      actions={actions}
+                    >
+                      <File
+                        key={file._id}
+                        attributes={file}
+                        withSelectionCheckbox
+                        withFilePath={withFilePath}
+                        thumbnailSizeBig={isBigThumbnail}
+                        actions={actions}
+                        refreshFolderContent={refreshFolderContent}
+                        isInSyncFromSharing={
+                          !isSharingContextEmpty &&
+                          isSharingShortcut(file) &&
+                          isReferencedByShareInSharingContext(
+                            file,
+                            sharingsValue
                           )
-                        })}
-                        {query.hasMore && (
-                          <LoadMore fetchMore={query.fetchMore} />
-                        )}
-                      </React.Fragment>
-                    )
-                  }
-                  return null
+                        }
+                        extraColumns={extraColumns}
+                        onToggleSelect={e => {
+                          onToggleSelect(file?._id, e)
+                        }}
+                      />
+                    </RightClickFileMenu>
+                  )
                 })}
+                {queryResults.some(query => query.hasMore) && (
+                  <LoadMore
+                    fetchMore={() => {
+                      queryResults.forEach(query => {
+                        if (query.hasMore && query.fetchMore) {
+                          query.fetchMore()
+                        }
+                      })
+                    }}
+                  />
+                )}
               </>
             </FileListBodyWrapper>
           )}
