@@ -2,7 +2,7 @@ import React, { forwardRef } from 'react'
 
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
 import Icon from 'cozy-ui/transpiled/react/Icon'
-import TrashIcon from 'cozy-ui/transpiled/react/Icons/Trash'
+import LogoutIcon from 'cozy-ui/transpiled/react/Icons/Logout'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 
@@ -10,7 +10,7 @@ import { isFolderFromSharedDriveRecipient } from '@/modules/shareddrives/helpers
 
 export const leaveSharedDrive = ({ sharedDrive, client, showAlert, t }) => {
   const label = t('toolbar.menu_leave_shared_drive')
-  const icon = TrashIcon
+  const icon = LogoutIcon
 
   return {
     name: 'leaveSharedDrive',
