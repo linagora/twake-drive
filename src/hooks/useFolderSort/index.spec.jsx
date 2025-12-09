@@ -1,23 +1,28 @@
 import { renderHook, act } from '@testing-library/react-hooks'
 
-import { useClient } from 'cozy-client'
+import { useClient, useQuery } from 'cozy-client'
 import flag from 'cozy-flags'
 
 import { useFolderSort } from './index'
 
 import { DEFAULT_SORT, SORT_BY_UPDATE_DATE } from '@/config/sort'
 import { TRASH_DIR_ID } from '@/constants/config'
-import { DOCTYPE_DRIVE_SETTINGS } from '@/lib/doctypes'
 import logger from '@/lib/logger'
 import { usePublicContext } from '@/modules/public/PublicProvider'
 
 jest.mock('cozy-client', () => ({
   useClient: jest.fn(),
-  Q: jest.fn().mockReturnValue('mocked-query'),
   useQuery: jest.fn()
 }))
 
 jest.mock('cozy-flags', () => jest.fn())
+
+jest.mock('@/queries', () => ({
+  getDriveSettingQuery: {
+    definition: jest.fn(),
+    options: { as: 'io.cozy.drive.settings' }
+  }
+}))
 
 jest.mock('@/lib/logger', () => ({
   warn: jest.fn(),
@@ -30,6 +35,7 @@ jest.mock('@/modules/public/PublicProvider', () => ({
 }))
 
 const mockUseClient = useClient
+const mockUseQuery = useQuery
 const mockFlag = flag
 const mockUsePublicContext = usePublicContext
 
@@ -43,10 +49,10 @@ describe('useFolderSort', () => {
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
 
     mockClient = {
-      save: jest.fn().mockResolvedValue({}),
-      query: jest.fn().mockResolvedValue({ data: [] })
+      save: jest.fn().mockResolvedValue({})
     }
     mockUseClient.mockReturnValue(mockClient)
+    mockUseQuery.mockReturnValue({ data: [] })
 
     mockFlag.mockImplementation(flagName => {
       if (flagName === 'drive.save-sort-choice.enabled') {
@@ -67,9 +73,7 @@ describe('useFolderSort', () => {
   describe('default sort behavior', () => {
     it('should use DEFAULT_SORT for regular folders', () => {
       const folderId = 'regular-folder-id'
-      mockClient.query.mockResolvedValue({
-        data: []
-      })
+      mockUseQuery.mockReturnValue({ data: [] })
 
       const { result } = renderHook(() => useFolderSort(folderId))
 
@@ -79,9 +83,7 @@ describe('useFolderSort', () => {
 
     it('should use SORT_BY_UPDATE_DATE for trash folder', () => {
       const folderId = TRASH_DIR_ID
-      mockClient.query.mockResolvedValue({
-        data: []
-      })
+      mockUseQuery.mockReturnValue({ data: [] })
 
       const { result } = renderHook(() => useFolderSort(folderId))
 
@@ -91,9 +93,7 @@ describe('useFolderSort', () => {
 
     it('should use SORT_BY_UPDATE_DATE for recent folder', () => {
       const folderId = 'recent'
-      mockClient.query.mockResolvedValue({
-        data: []
-      })
+      mockUseQuery.mockReturnValue({ data: [] })
 
       const { result } = renderHook(() => useFolderSort(folderId))
 
@@ -103,26 +103,22 @@ describe('useFolderSort', () => {
   })
 
   describe('loading existing sorting settings', () => {
-    it('should load and apply existing sorting settings when available', async () => {
+    it('should load and apply existing sorting settings when available', () => {
       const folderId = 'test-folder'
       const existingSettings = {
         _id: 'settings-id',
-        _type: DOCTYPE_DRIVE_SETTINGS,
+        _type: 'io.cozy.drive.settings',
         attributes: {
           attribute: 'updated_at',
           order: 'desc'
         }
       }
 
-      mockClient.query.mockResolvedValue({
+      mockUseQuery.mockReturnValue({
         data: [existingSettings]
       })
 
-      const { result, waitForNextUpdate } = renderHook(() =>
-        useFolderSort(folderId)
-      )
-
-      await waitForNextUpdate()
+      const { result } = renderHook(() => useFolderSort(folderId))
 
       const [currentSort] = result.current
       expect(currentSort).toEqual({
@@ -135,10 +131,10 @@ describe('useFolderSort', () => {
       const folderId = 'test-folder'
       const existingSettings = {
         _id: 'settings-id',
-        _type: DOCTYPE_DRIVE_SETTINGS
+        _type: 'io.cozy.drive.settings'
       }
 
-      mockClient.query.mockResolvedValue({
+      mockUseQuery.mockReturnValue({
         data: [existingSettings]
       })
 
@@ -148,26 +144,22 @@ describe('useFolderSort', () => {
       expect(currentSort).toEqual(DEFAULT_SORT)
     })
 
-    it('should return consistent sort values on multiple renders', async () => {
+    it('should return consistent sort values on multiple renders', () => {
       const folderId = 'test-folder'
       const existingSettings = {
         _id: 'settings-id',
-        _type: DOCTYPE_DRIVE_SETTINGS,
+        _type: 'io.cozy.drive.settings',
         attributes: {
           attribute: 'name',
           order: 'asc'
         }
       }
 
-      mockClient.query.mockResolvedValue({
+      mockUseQuery.mockReturnValue({
         data: [existingSettings]
       })
 
-      const { result, rerender, waitForNextUpdate } = renderHook(() =>
-        useFolderSort(folderId)
-      )
-
-      await waitForNextUpdate()
+      const { result, rerender } = renderHook(() => useFolderSort(folderId))
 
       const [firstSort] = result.current
       expect(firstSort).toEqual({
@@ -190,9 +182,7 @@ describe('useFolderSort', () => {
       const folderId = 'test-folder'
       const newSort = { attribute: 'updated_at', order: 'desc' }
 
-      mockClient.query.mockResolvedValue({
-        data: []
-      })
+      mockUseQuery.mockReturnValue({ data: [] })
 
       const { result } = renderHook(() => useFolderSort(folderId))
 
@@ -202,9 +192,8 @@ describe('useFolderSort', () => {
       })
 
       expect(mockClient.save).toHaveBeenCalledWith({
-        _type: DOCTYPE_DRIVE_SETTINGS,
+        _type: 'io.cozy.drive.settings',
         attributes: {
-          ...DEFAULT_SORT,
           attribute: 'updated_at',
           order: 'desc'
         }
@@ -220,7 +209,7 @@ describe('useFolderSort', () => {
       const folderId = 'test-folder'
       const existingSettings = {
         _id: 'settings-id',
-        _type: DOCTYPE_DRIVE_SETTINGS,
+        _type: 'io.cozy.drive.settings',
         attributes: {
           attribute: 'name',
           order: 'asc'
@@ -228,16 +217,11 @@ describe('useFolderSort', () => {
       }
       const newSort = { attribute: 'updated_at', order: 'desc' }
 
-      mockClient.query.mockResolvedValue({
+      mockUseQuery.mockReturnValue({
         data: [existingSettings]
       })
 
-      const { result, waitForNextUpdate } = renderHook(() =>
-        useFolderSort(folderId)
-      )
-
-      // Wait for the settings to load
-      await waitForNextUpdate()
+      const { result } = renderHook(() => useFolderSort(folderId))
 
       const [, setSortOrder] = result.current
       await act(async () => {
@@ -258,15 +242,47 @@ describe('useFolderSort', () => {
       )
     })
 
+    it('should preserve other attributes when updating sorting settings', async () => {
+      const folderId = 'test-folder'
+      const existingSettings = {
+        _id: 'settings-id',
+        _type: 'io.cozy.drive.settings',
+        attributes: {
+          attribute: 'name',
+          order: 'asc',
+          preferredDriveViewType: 'grid'
+        }
+      }
+      const newSort = { attribute: 'updated_at', order: 'desc' }
+
+      mockUseQuery.mockReturnValue({
+        data: [existingSettings]
+      })
+
+      const { result } = renderHook(() => useFolderSort(folderId))
+
+      const [, setSortOrder] = result.current
+      await act(async () => {
+        await setSortOrder(newSort)
+      })
+
+      expect(mockClient.save).toHaveBeenCalledWith({
+        ...existingSettings,
+        attributes: {
+          attribute: 'updated_at',
+          order: 'desc',
+          preferredDriveViewType: 'grid'
+        }
+      })
+    })
+
     it('should handle save errors gracefully', async () => {
       const folderId = 'test-folder'
       const newSort = { attribute: 'updated_at', order: 'desc' }
       const saveError = new Error('Save failed')
 
       mockClient.save.mockRejectedValue(saveError)
-      mockClient.query.mockResolvedValue({
-        data: []
-      })
+      mockUseQuery.mockReturnValue({ data: [] })
 
       const { result } = renderHook(() => useFolderSort(folderId))
 
@@ -283,11 +299,11 @@ describe('useFolderSort', () => {
   })
 
   describe('public context behavior', () => {
-    it('should not load settings in public view', async () => {
+    it('should not load settings in public view', () => {
       const folderId = 'test-folder'
       const existingSettings = {
         _id: 'settings-id',
-        _type: DOCTYPE_DRIVE_SETTINGS,
+        _type: 'io.cozy.drive.settings',
         attributes: {
           attribute: 'updated_at',
           order: 'desc'
@@ -298,7 +314,7 @@ describe('useFolderSort', () => {
         isPublic: true
       })
 
-      mockClient.query.mockResolvedValue({
+      mockUseQuery.mockReturnValue({
         data: [existingSettings]
       })
 
@@ -307,8 +323,6 @@ describe('useFolderSort', () => {
       const [currentSort] = result.current
 
       expect(currentSort).toEqual(DEFAULT_SORT)
-
-      expect(mockClient.query).not.toHaveBeenCalled()
     })
 
     it('should not persist settings in public view', async () => {
@@ -331,8 +345,6 @@ describe('useFolderSort', () => {
       )
 
       expect(mockClient.save).not.toHaveBeenCalled()
-
-      expect(mockClient.query).not.toHaveBeenCalled()
     })
   })
 })

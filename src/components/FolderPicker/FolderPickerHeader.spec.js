@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react'
+import { render, act } from '@testing-library/react'
 import React from 'react'
 
 import CozyClient from 'cozy-client'
@@ -11,7 +11,7 @@ jest.mock('lib/logger', () => ({
 }))
 
 describe('FolderPickerHeader', () => {
-  const setupComponent = ({ entries = [], title, subTitle }) => {
+  const setupComponent = async ({ entries = [], title, subTitle }) => {
     const props = {
       entries,
 
@@ -20,26 +20,30 @@ describe('FolderPickerHeader', () => {
     }
     const client = new CozyClient({})
 
-    return render(
-      <AppLike client={client}>
-        <FolderPickerHeader {...props} />
-      </AppLike>
-    )
+    let component
+    await act(async () => {
+      component = render(
+        <AppLike client={client}>
+          <FolderPickerHeader {...props} />
+        </AppLike>
+      )
+    })
+    return component
   }
-  it('should fallback to Move title if no title is given', () => {
-    const { getByText } = setupComponent({
+  it('should fallback to Move title if no title is given', async () => {
+    const { getByText } = await setupComponent({
       entries: [{ file: 1 }, { file: 2 }]
     })
     expect(getByText('2 elements'))
   })
-  it('should display title if title is given and no file', () => {
-    const { getByText } = setupComponent({
+  it('should display title if title is given and no file', async () => {
+    const { getByText } = await setupComponent({
       title: 'My Title'
     })
     expect(getByText('My Title'))
   })
-  it('should display the right title if only one io.cozy.files', () => {
-    const { getByText } = setupComponent({
+  it('should display the right title if only one io.cozy.files', async () => {
+    const { getByText } = await setupComponent({
       title: 'My Title',
       entries: [
         {
@@ -51,8 +55,8 @@ describe('FolderPickerHeader', () => {
     expect(getByText('FileName.txt'))
   })
 
-  it('should display the right title if it comes from the outside', () => {
-    const { getByText } = setupComponent({
+  it('should display the right title if it comes from the outside', async () => {
+    const { getByText } = await setupComponent({
       title: 'My Title',
       entries: [
         {
@@ -62,8 +66,8 @@ describe('FolderPickerHeader', () => {
     })
     expect(getByText('FileName.txt'))
   })
-  it('should display the right title if more than one files', () => {
-    const { getByText } = setupComponent({
+  it('should display the right title if more than one files', async () => {
+    const { getByText } = await setupComponent({
       title: 'My Title',
       entries: [
         {

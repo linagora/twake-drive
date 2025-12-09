@@ -1,10 +1,10 @@
 import React, { useState, useContext, createContext, useEffect } from 'react'
 
-import { useClient, Q } from 'cozy-client'
+import { useClient, useQuery } from 'cozy-client'
 
 import logger from './logger'
-
-import { DOCTYPE_FILES_SETTINGS } from '@/lib/doctypes'
+import { getDriveSettingQuery } from '@/queries'
+import { DOCTYPE_DRIVE_SETTINGS } from '@/lib/doctypes'
 
 interface QueryResult {
   data: [
@@ -31,53 +31,31 @@ const ViewSwitcherContext = createContext<ViewSwitcherContextProps>({
 const ViewSwitcherContextProvider: React.FC = ({ children }) => {
   const client = useClient()
   const [viewType, setViewType] = useState(DEFAULT_VIEW_TYPE)
+  const settingsQuery = useQuery(
+    getDriveSettingQuery.definition,
+    getDriveSettingQuery.options
+  ) as QueryResult
 
   useEffect(() => {
-    const load = async (): Promise<void> => {
-      if (!client) return
-
-      try {
-        const result = (await client.query(
-          Q(DOCTYPE_FILES_SETTINGS)
-        )) as QueryResult
-
-        if (!result?.data) return
-
-        const preferred = result?.data?.[0]?.attributes?.preferredDriveViewType
-
-        setViewType(preferred || DEFAULT_VIEW_TYPE)
-      } catch (error) {
-        logger.error('Failed to load settings:', error)
-        setViewType(DEFAULT_VIEW_TYPE)
-      }
+    if (settingsQuery.data?.length) {
+      const preferred =
+        settingsQuery.data[0]?.attributes?.preferredDriveViewType
+      setViewType(preferred || DEFAULT_VIEW_TYPE)
     }
-
-    void load()
-  }, [client])
+  }, [settingsQuery.data])
 
   const switchView = async (viewTypeParam: string): Promise<void> => {
     setViewType(viewTypeParam)
     if (!client) {
       logger.warn('Client not available')
-
       return
     }
 
     try {
-      const { data } = (await client.query(
-        Q(DOCTYPE_FILES_SETTINGS)
-      )) as QueryResult
-
-      if (!data) {
-        logger.warn('Settings not found')
-
-        return
-      }
-
-      const existing = data?.[0]
+      const existing = settingsQuery.data?.[0]
 
       await client.save({
-        ...(existing || { _type: DOCTYPE_FILES_SETTINGS }),
+        ...(existing || { _type: DOCTYPE_DRIVE_SETTINGS }),
         attributes: {
           ...(existing?.attributes || {}),
           preferredDriveViewType: viewTypeParam

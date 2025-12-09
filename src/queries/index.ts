@@ -10,7 +10,8 @@ import {
 import {
   DOCTYPE_FILES_ENCRYPTION,
   DOCTYPE_ALBUMS,
-  DOCTYPE_FILES_SETTINGS
+  DOCTYPE_FILES_SETTINGS,
+  DOCTYPE_DRIVE_SETTINGS
 } from '@/lib/doctypes'
 import { formatFolderQueryId } from '@/lib/queries'
 
@@ -669,3 +670,15 @@ export const buildSharedDriveIdQuery: QueryBuilder<
     enabled: !!driveId
   }
 })
+
+/**
+ * Drive application settings query
+ *
+ * @type {QueryConfig}
+ */
+export const getDriveSettingQuery: QueryConfig = {
+  definition: () => Q(DOCTYPE_DRIVE_SETTINGS),
+  options: {
+    as: DOCTYPE_DRIVE_SETTINGS
+  }
+}
