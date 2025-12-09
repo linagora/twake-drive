@@ -156,7 +156,6 @@ const SharingsFolderView = ({ sharedDocumentIds }) => {
             queryResults={allResults}
             currentFolderId={currentFolderId}
             displayedFolder={displayedFolder}
-            extraColumns={extraColumns}
             canDrag
             canUpload={hasWrite}
             orderProps={{
