@@ -2,9 +2,9 @@ import cx from 'classnames'
 import get from 'lodash/get'
 import React from 'react'
 
-import AppIcon from 'cozy-ui-plus/dist/AppIcon'
 import { TableCell } from 'cozy-ui/transpiled/react/deprecated/Table'
 import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
+import AppIcon from 'cozy-ui-plus/dist/AppIcon'
 
 import styles from '@/styles/filelist.styl'
 

@@ -41,8 +41,10 @@ const ViewSwitcherContextProvider: React.FC = ({ children }) => {
           Q(DOCTYPE_FILES_SETTINGS)
         )) as QueryResult
 
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (!result?.data) return
 
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         const preferred = result?.data?.[0]?.attributes?.preferredDriveViewType
 
         setViewType(preferred || DEFAULT_VIEW_TYPE)
@@ -68,6 +70,7 @@ const ViewSwitcherContextProvider: React.FC = ({ children }) => {
         Q(DOCTYPE_FILES_SETTINGS)
       )) as QueryResult
 
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (!data) {
         logger.warn('Settings not found')
 
@@ -77,8 +80,10 @@ const ViewSwitcherContextProvider: React.FC = ({ children }) => {
       const existing = data?.[0]
 
       await client.save({
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         ...(existing || { _type: DOCTYPE_FILES_SETTINGS }),
         attributes: {
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
           ...(existing?.attributes || {}),
           preferredDriveViewType: viewTypeParam
         }
