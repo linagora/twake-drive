@@ -17,9 +17,7 @@ export const useResumeUploadFromFlagship = (): void => {
 
   useEffect(() => {
     const doResumeCheck = async (): Promise<void> => {
-      if (!webviewIntent) return
-      // If we are on the upload page, we don't want to resume
-      if (uploadQueue.length > 0) return
+      if (!webviewIntent || uploadQueue.length > 0) return
 
       try {
         const { filesToHandle } = (await webviewIntent.call(
