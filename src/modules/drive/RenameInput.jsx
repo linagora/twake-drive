@@ -14,11 +14,14 @@ import FilenameInput from '@/modules/filelist/FilenameInput'
 
 // If we set the _rev then CozyClient tries to update. Else
 // it tries to create
-const updateFileNameQuery = async (client, file, newName) => {
+export const updateFileNameQuery = async (client, file, newName) => {
   if (isFolderFromSharedDriveOwner(file)) {
     const referencedBy = file.relationships?.referenced_by?.data?.[0]
     if (!referencedBy?.id) {
       throw new Error('Shared drive folder is missing required relationships')
+    }
+    if (!file.id) {
+      throw new Error('Shared drive folder is missing required id')
     }
     const sharing = {
       _id: referencedBy.id,
