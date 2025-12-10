@@ -1,11 +1,11 @@
 import React, { FC } from 'react'
 import { useSearchParams, useLocation, useNavigate } from 'react-router-dom'
+import { useI18n } from 'twake-i18n'
 
 import { useClient } from 'cozy-client'
 import { UseQueryReturnValue } from 'cozy-client/types/types'
 import { makeActions } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import { FolderBody } from '@/modules/folder/components/FolderBody'
 import { restoreNextcloudFile } from '@/modules/nextcloud/components/actions/restoreNextcloudFile'

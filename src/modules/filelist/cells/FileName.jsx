@@ -1,13 +1,13 @@
 import cx from 'classnames'
 import React from 'react'
 import { Link } from 'react-router-dom'
+import { useI18n } from 'twake-i18n'
 
 import { isDirectory } from 'cozy-client/dist/models/file'
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import ShareIcon from 'cozy-ui/transpiled/react/Icons/Share'
 import MidEllipsis from 'cozy-ui/transpiled/react/MidEllipsis'
 import { TableCell } from 'cozy-ui/transpiled/react/deprecated/Table'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import styles from '@/styles/filelist.styl'
 

@@ -1,10 +1,10 @@
 import React from 'react'
 import { useParams } from 'react-router-dom'
+import { translate } from 'twake-i18n'
 
 import { useClient, useFetchShortcut } from 'cozy-client'
 import Empty from 'cozy-ui/transpiled/react/Empty'
 import GlobeIcon from 'cozy-ui/transpiled/react/Icons/Globe'
-import { translate } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import EmptyIcon from '@/assets/icons/icon-folder-broken.svg'
 import { DummyLayout } from '@/modules/layout/DummyLayout'

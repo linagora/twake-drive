@@ -1,9 +1,9 @@
 import React from 'react'
 import { Outlet, useParams } from 'react-router-dom'
+import { useI18n } from 'twake-i18n'
 
 import { Content } from 'cozy-ui/transpiled/react/Layout'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import { NextcloudBanner } from '@/modules/nextcloud/components/NextcloudBanner'
 import { NextcloudBreadcrumb } from '@/modules/nextcloud/components/NextcloudBreadcrumb'

@@ -1,11 +1,11 @@
 import React from 'react'
+import { useI18n } from 'twake-i18n'
 
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import ListMinIcon from 'cozy-ui/transpiled/react/Icons/ListMin'
 import MosaicMinIcon from 'cozy-ui/transpiled/react/Icons/MosaicMin'
 import ToggleButton from 'cozy-ui/transpiled/react/ToggleButton'
 import ToggleButtonGroup from 'cozy-ui/transpiled/react/ToggleButtonGroup'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import { useViewSwitcherContext } from '@/lib/ViewSwitcherContext'
 

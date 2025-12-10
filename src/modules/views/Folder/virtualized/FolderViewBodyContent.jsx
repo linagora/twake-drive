@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
+import { useI18n } from 'twake-i18n'
 
 import { useClient } from 'cozy-client'
 import { useSharingContext } from 'cozy-sharing'
@@ -9,7 +10,6 @@ import {
   getComparator
 } from 'cozy-ui/transpiled/react/Table/Virtualized/helpers'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import Grid from './Grid'
 import { secondarySort } from '../helpers'

@@ -8,12 +8,12 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { RemoveScroll } from 'react-remove-scroll'
 import { useNavigate, useParams } from 'react-router-dom'
+import { translate, useI18n } from 'twake-i18n'
 
 import { useClient } from 'cozy-client'
 import Spinner from 'cozy-ui/transpiled/react/Spinner'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
-import { translate, useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 import Viewer, {
   FooterActionButtons,
   ForwardOrDownloadButton,

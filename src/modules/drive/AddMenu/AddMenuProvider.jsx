@@ -5,10 +5,10 @@ import React, {
   useMemo,
   createContext
 } from 'react'
+import { useI18n } from 'twake-i18n'
 
 import useBrowserOffline from 'cozy-ui/transpiled/react/hooks/useBrowserOffline'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import { isEncryptedFolder } from '@/lib/encryption'
 import logger from '@/lib/logger'

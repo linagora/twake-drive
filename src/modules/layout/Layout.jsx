@@ -1,6 +1,7 @@
 import React, { Fragment, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { Outlet, useNavigate } from 'react-router-dom'
+import { useI18n } from 'twake-i18n'
 
 import { BarComponent } from 'cozy-bar'
 import CozyDevtools from 'cozy-devtools'
@@ -11,7 +12,6 @@ import Sprite from 'cozy-ui/transpiled/react/Icon/Sprite'
 import { Layout as LayoutUI } from 'cozy-ui/transpiled/react/Layout'
 import Sidebar from 'cozy-ui/transpiled/react/Sidebar'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 import Storage from 'cozy-ui-plus/dist/Storage'
 
 import ButtonClient from '@/components/pushClient/Button'

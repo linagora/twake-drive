@@ -1,5 +1,6 @@
 import React from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useI18n } from 'twake-i18n'
 
 import { isQueryLoading, useClient, useQuery } from 'cozy-client'
 import { getQualification } from 'cozy-client/dist/models/document'
@@ -12,7 +13,6 @@ import IconStack from 'cozy-ui/transpiled/react/IconStack'
 import FileDuotoneIcon from 'cozy-ui/transpiled/react/Icons/FileDuotone'
 import FileTypeNoteIcon from 'cozy-ui/transpiled/react/Icons/FileTypeNote'
 import NestedSelectResponsive from 'cozy-ui/transpiled/react/NestedSelect/NestedSelectResponsive'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import { LoaderModal } from '@/components/LoaderModal'
 import { buildFileOrFolderByIdQuery } from '@/queries'

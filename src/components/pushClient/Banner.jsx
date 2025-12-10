@@ -4,6 +4,7 @@
 import localforage from 'localforage'
 import flow from 'lodash/flow'
 import React, { Component } from 'react'
+import { translate } from 'twake-i18n'
 
 import { withClient } from 'cozy-client'
 import Banner from 'cozy-ui/transpiled/react/Banner'
@@ -12,7 +13,6 @@ import Icon from 'cozy-ui/transpiled/react/Icon'
 import DesktopDownloadIcon from 'cozy-ui/transpiled/react/Icons/DesktopDownload'
 import DownloadIcon from 'cozy-ui/transpiled/react/Icons/Download'
 import PhoneDownloadIcon from 'cozy-ui/transpiled/react/Icons/PhoneDownload'
-import { translate } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import {
   getMobileAppDownloadLink,

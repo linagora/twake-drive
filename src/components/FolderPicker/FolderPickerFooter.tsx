@@ -1,8 +1,8 @@
 import React from 'react'
+import { useI18n } from 'twake-i18n'
 
 import { IOCozyFile } from 'cozy-client/types/types'
 import Buttons from 'cozy-ui/transpiled/react/Buttons'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import { areTargetsInCurrentDir } from '@/components/FolderPicker/helpers'
 import { File, FolderPickerEntry } from '@/components/FolderPicker/types'

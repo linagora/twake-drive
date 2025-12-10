@@ -1,13 +1,13 @@
 import compose from 'lodash/flowRight'
 import PropTypes from 'prop-types'
 import React from 'react'
+import { translate } from 'twake-i18n'
 
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import TrashIcon from 'cozy-ui/transpiled/react/Icons/Trash'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
-import { translate } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import deleteContainer from './delete'
 

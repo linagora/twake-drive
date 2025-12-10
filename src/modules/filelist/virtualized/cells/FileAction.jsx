@@ -1,10 +1,10 @@
 import React, { forwardRef } from 'react'
+import { useI18n } from 'twake-i18n'
 
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
 import DotsIcon from 'cozy-ui/transpiled/react/Icons/Dots'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 const FileAction = forwardRef(function FileAction({ onClick, disabled }, ref) {
   const { t } = useI18n()

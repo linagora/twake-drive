@@ -2,8 +2,7 @@
 
 import React from 'react'
 import renderer from 'react-test-renderer'
-
-import { I18n } from 'cozy-ui/transpiled/react/providers/I18n'
+import { I18n } from 'twake-i18n'
 
 import File from '../../src/components/File'
 

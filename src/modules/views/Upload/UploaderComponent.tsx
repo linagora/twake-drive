@@ -1,10 +1,10 @@
 import React from 'react'
+import { useI18n } from 'twake-i18n'
 
 import { useQuery } from 'cozy-client'
 import { IOCozyFile } from 'cozy-client/types/types'
 import { FixedDialog } from 'cozy-ui/transpiled/react/CozyDialogs'
 import Spinner from 'cozy-ui/transpiled/react/Spinner'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import { FolderPicker } from '@/components/FolderPicker/FolderPicker'
 import { File, FolderPickerEntry } from '@/components/FolderPicker/types'

@@ -18,7 +18,7 @@ import CozyClient, { models } from 'cozy-client'
 import { Document } from 'cozy-doctypes'
 import getSharedDocument from 'cozy-sharing/dist/getSharedDocument'
 import CozyTheme from 'cozy-ui-plus/dist/providers/CozyTheme'
-import { I18n, initTranslation } from 'cozy-ui/transpiled/react/providers/I18n'
+import { I18n, initTranslation } from 'twake-i18n'
 
 import AppRouter from './components/AppRouter'
 

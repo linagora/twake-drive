@@ -1,8 +1,8 @@
 import React from 'react'
+import { useI18n } from 'twake-i18n'
 
 import Card from 'cozy-ui/transpiled/react/Card'
 import Typography from 'cozy-ui/transpiled/react/Typography'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import { FolderPickerHeaderIllustration } from '@/components/FolderPicker/FolderPickerHeaderIllustration'
 import { FolderPickerEntry } from '@/components/FolderPicker/types'

@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useI18n } from 'twake-i18n'
 
 import { useClient, useQuery } from 'cozy-client'
 import Alert from 'cozy-ui/transpiled/react/Alert'
@@ -8,7 +9,6 @@ import Icon from 'cozy-ui/transpiled/react/Icon'
 import TrashDuotoneIcon from 'cozy-ui/transpiled/react/Icons/TrashDuotone'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import logger from '@/lib/logger'
 import DestroyConfirm from '@/modules/trash/components/DestroyConfirm'

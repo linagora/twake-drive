@@ -1,9 +1,9 @@
 import React from 'react'
+import { useI18n } from 'twake-i18n'
 
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import SafeIcon from 'cozy-ui/transpiled/react/Icons/Safe'
 import { TableHeader } from 'cozy-ui/transpiled/react/deprecated/Table'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import styles from '@/styles/filelist.styl'
 

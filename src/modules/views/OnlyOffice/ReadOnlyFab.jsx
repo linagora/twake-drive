@@ -1,12 +1,12 @@
 import React, { useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useI18n } from 'twake-i18n'
 
 import Fab from 'cozy-ui/transpiled/react/Fab'
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import CheckIcon from 'cozy-ui/transpiled/react/Icons/Check'
 import RenameIcon from 'cozy-ui/transpiled/react/Icons/Rename'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import { useFabStyles } from '@/modules/drive/helpers'
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'

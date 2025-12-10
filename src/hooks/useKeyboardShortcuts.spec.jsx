@@ -12,11 +12,14 @@ jest.mock('cozy-ui/transpiled/react/providers/Alert', () => ({
   useAlert: jest.fn()
 }))
 
-jest.mock('cozy-ui/transpiled/react/providers/I18n', () => ({
+jest.mock('twake-i18n', () => ({
   useI18n: jest.fn(),
   translate: jest.fn(key => key),
   createUseI18n: jest.fn(() => () => ({ t: key => key })),
-  I18nProvider: ({ children }) => children
+  I18nProvider: ({ children }) => children,
+  withOnlyLocales: jest.fn(() => Component => Component),
+  withLocales: jest.fn(() => Component => Component),
+  useExtendI18n: jest.fn()
 }))
 
 jest.mock('./helpers', () => ({
@@ -62,10 +65,11 @@ jest.mock('cozy-sharing', () => ({
   withLocales: component => component
 }))
 
+import { useI18n } from 'twake-i18n'
+
 import { isFile } from 'cozy-client/dist/models/file'
 import flag from 'cozy-flags'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import { shouldBlockKeyboardShortcuts, normalizeKey } from './helpers'
 import { useKeyboardShortcuts } from './useKeyboardShortcuts.tsx'

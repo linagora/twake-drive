@@ -1,12 +1,12 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useI18n } from 'twake-i18n'
 
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import PeopleIcon from 'cozy-ui/transpiled/react/Icons/People'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 const ManageAccessItem = ({ onClick }) => {
   const navigate = useNavigate()

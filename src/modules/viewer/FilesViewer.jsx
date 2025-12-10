@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect, useState, useMemo } from 'react'
 import { RemoveScroll } from 'react-remove-scroll'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useI18n } from 'twake-i18n'
 
 import { Q, useClient } from 'cozy-client'
 import { useVaultClient } from 'cozy-keys-lib'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 import Viewer, {
   FooterActionButtons,
   ForwardOrDownloadButton,

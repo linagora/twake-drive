@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useI18n } from 'twake-i18n'
 
 import { useWebviewIntent } from 'cozy-intent'
 import logger from 'cozy-logger'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import { getErrorMessage } from '@/modules/drive/helpers'
 import { ADD_TO_UPLOAD_QUEUE, purgeUploadQueue } from '@/modules/upload'

@@ -1,9 +1,9 @@
 import React from 'react'
+import { useI18n } from 'twake-i18n'
 
 import { isDirectory } from 'cozy-client/dist/models/file'
 import Filename from 'cozy-ui/transpiled/react/Filename'
 import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import styles from '@/styles/filelist.styl'
 

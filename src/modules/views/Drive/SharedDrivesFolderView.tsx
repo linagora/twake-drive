@@ -1,10 +1,10 @@
 import React, { FC, useMemo } from 'react'
 import { Outlet } from 'react-router-dom'
+import { useI18n } from 'twake-i18n'
 
 import { useQuery } from 'cozy-client'
 import { Content } from 'cozy-ui/transpiled/react/Layout'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import { ROOT_DIR_ID } from '@/constants/config'
 import { useFolderSort } from '@/hooks'

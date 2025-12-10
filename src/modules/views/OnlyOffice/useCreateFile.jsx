@@ -1,8 +1,8 @@
 import { useEffect, useState, useMemo } from 'react'
+import { useI18n } from 'twake-i18n'
 
 import { useClient } from 'cozy-client'
 import { uploadFileWithConflictStrategy } from 'cozy-client/dist/models/file'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import logger from '@/lib/logger'
 import {

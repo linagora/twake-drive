@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react'
+import { useI18n } from 'twake-i18n'
 
 import { useClient } from 'cozy-client'
 import { splitFilename } from 'cozy-client/dist/models/file'
@@ -9,7 +10,6 @@ import Icon from 'cozy-ui/transpiled/react/Icon'
 import Stack from 'cozy-ui/transpiled/react/Stack'
 import Typography from 'cozy-ui/transpiled/react/Typography'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import { useSelectionContext } from '../selection/SelectionProvider'
 

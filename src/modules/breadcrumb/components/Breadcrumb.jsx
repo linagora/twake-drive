@@ -1,11 +1,11 @@
 import cx from 'classnames'
 import PropTypes from 'prop-types'
 import React, { useState, useRef, useEffect, useCallback } from 'react'
+import { useI18n } from 'twake-i18n'
 
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import RightIcon from 'cozy-ui/transpiled/react/Icons/Right'
 import Spinner from 'cozy-ui/transpiled/react/Spinner'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import styles from '@/modules/breadcrumb/styles/breadcrumb.styl'
 

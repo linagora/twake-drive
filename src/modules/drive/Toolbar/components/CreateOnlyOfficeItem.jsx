@@ -1,12 +1,12 @@
 import React, { useCallback, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { useI18n } from 'twake-i18n'
 
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import { ROOT_DIR_ID, TRASH_DIR_ID } from '@/constants/config'
 import {

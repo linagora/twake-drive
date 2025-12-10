@@ -1,9 +1,9 @@
 import PropTypes from 'prop-types'
 import React from 'react'
+import { useI18n } from 'twake-i18n'
 
 import Button from 'cozy-ui/transpiled/react/Buttons'
 import Empty from 'cozy-ui/transpiled/react/Empty'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import styles from './oops.styl'
 

@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useI18n } from 'twake-i18n'
 
 import { useClient, useQuery, Q, isQueryLoading } from 'cozy-client'
 import Buttons from 'cozy-ui/transpiled/react/Buttons'
@@ -8,7 +9,6 @@ import LightbulbIcon from 'cozy-ui/transpiled/react/Icons/Lightbulb'
 import RenameIcon from 'cozy-ui/transpiled/react/Icons/Rename'
 import Tooltip from 'cozy-ui/transpiled/react/Tooltip'
 import Typography from 'cozy-ui/transpiled/react/Typography'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 import { makeStyles } from 'cozy-ui/transpiled/react/styles'
 
 import { DOCTYPE_FILES_SETTINGS } from '@/lib/doctypes'
