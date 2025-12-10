@@ -1,11 +1,11 @@
 import React, { useState, useRef } from 'react'
+import { useI18n } from 'twake-i18n'
 
 import { useClient, useQuery } from 'cozy-client'
 import Backdrop from 'cozy-ui/transpiled/react/Backdrop'
 import Buttons from 'cozy-ui/transpiled/react/Buttons'
 import { FixedDialog } from 'cozy-ui/transpiled/react/CozyDialogs'
 import Grid from 'cozy-ui/transpiled/react/Grid'
-import { useI18n } from 'cozy-ui/transpiled/react/I18n'
 import { Spinner } from 'cozy-ui/transpiled/react/Spinner'
 import Tab from 'cozy-ui/transpiled/react/Tab'
 import Tabs from 'cozy-ui/transpiled/react/Tabs'

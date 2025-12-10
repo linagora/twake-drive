@@ -22,7 +22,7 @@ declare module 'cozy-ui/transpiled/react' {
   export const MuiCozyTheme: React.ComponentType
 }
 
-declare module 'cozy-ui/transpiled/react/providers/I18n' {
+declare module 'twake-i18n' {
   export const useI18n: () => {
     t: (key: string, options?: Record<string, unknown>) => string
     f: (date: Date | number, format: string) => string

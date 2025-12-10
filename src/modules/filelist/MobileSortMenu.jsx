@@ -1,11 +1,11 @@
 import React from 'react'
+import { useI18n } from 'twake-i18n'
 
 import ActionMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
 import ActionMenuWrapper from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuWrapper'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import Radio from 'cozy-ui/transpiled/react/Radios'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import { SORTABLE_ATTRIBUTES } from '@/config/sort'
 

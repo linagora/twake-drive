@@ -1,11 +1,11 @@
 import cx from 'classnames'
 import React, { Component } from 'react'
+import { translate } from 'twake-i18n'
 
 import { isDirectory } from 'cozy-client/dist/models/file'
 import Button from 'cozy-ui/transpiled/react/Buttons'
 import { Dialog } from 'cozy-ui/transpiled/react/CozyDialogs'
 import Spinner from 'cozy-ui/transpiled/react/Spinner'
-import { translate } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import styles from '@/styles/filenameinput.styl'
 

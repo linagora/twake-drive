@@ -1,7 +1,7 @@
 import { useMemo, useEffect } from 'react'
+import { useI18n } from 'twake-i18n'
 
 import { useClient, models } from 'cozy-client'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import { TRASH_DIR_PATH } from '@/constants/config'
 import { makeParentFolderPath } from '@/modules/filelist/helpers'

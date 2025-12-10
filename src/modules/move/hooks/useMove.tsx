@@ -1,8 +1,8 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useI18n } from 'twake-i18n'
 
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import { File, FolderPickerEntry } from '@/components/FolderPicker/types'
 import { MoveModalSuccessAction } from '@/modules/move/components/MoveModalSuccessAction'

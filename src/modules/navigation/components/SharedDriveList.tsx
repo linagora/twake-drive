@@ -1,7 +1,7 @@
 import React, { FC } from 'react'
+import { useI18n } from 'twake-i18n'
 
 import { NavDesktopDropdown } from 'cozy-ui/transpiled/react/Nav'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import { SharedDriveListItem } from '@/modules/navigation/components/SharedDriveListItem'
 import { SharedDrive } from '@/modules/shareddrives/helpers'

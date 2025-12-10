@@ -1,9 +1,9 @@
 import React from 'react'
 import { useSearchParams, useLocation, useNavigate } from 'react-router-dom'
+import { useI18n } from 'twake-i18n'
 
 import { useClient } from 'cozy-client'
 import { makeActions } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import { moveNextcloud } from './actions/moveNextcloud'
 

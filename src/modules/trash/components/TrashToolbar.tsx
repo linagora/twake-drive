@@ -1,6 +1,7 @@
 import cx from 'classnames'
 import React, { FC } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useI18n } from 'twake-i18n'
 
 import { BarRight } from 'cozy-bar'
 import { makeActions } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
@@ -8,7 +9,6 @@ import Button from 'cozy-ui/transpiled/react/Buttons'
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import TrashIcon from 'cozy-ui/transpiled/react/Icons/Trash'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import { MoreMenu } from '@/components/MoreMenu'
 import { selectable } from '@/modules/actions/components/selectable'

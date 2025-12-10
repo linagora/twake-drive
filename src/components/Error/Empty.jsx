@@ -1,11 +1,11 @@
 import cx from 'classnames'
 import React from 'react'
 import { useLocation } from 'react-router-dom'
+import { useI18n } from 'twake-i18n'
 
 import Empty from 'cozy-ui/transpiled/react/Empty'
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import styles from './empty.styl'
 

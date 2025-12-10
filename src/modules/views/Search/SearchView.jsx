@@ -2,6 +2,7 @@ import cx from 'classnames'
 import React, { useState, useCallback } from 'react'
 import { useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { useI18n } from 'twake-i18n'
 
 import { BarLeft, BarSearch } from 'cozy-bar'
 import { models, useClient } from 'cozy-client'
@@ -12,7 +13,6 @@ import List from 'cozy-ui/transpiled/react/List'
 import LoadMore from 'cozy-ui/transpiled/react/LoadMore'
 import Input from 'cozy-ui/transpiled/react/legacy/Input'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import styles from '@/modules/search/components/styles.styl'
 

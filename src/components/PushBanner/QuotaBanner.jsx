@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { useI18n } from 'twake-i18n'
 
 import { useInstanceInfo } from 'cozy-client'
 import {
@@ -12,7 +13,6 @@ import Banner from 'cozy-ui/transpiled/react/Banner'
 import Button from 'cozy-ui/transpiled/react/Buttons'
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import CloudSyncIcon from 'cozy-ui/transpiled/react/Icons/CloudSync'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import { usePushBannerContext } from './PushBannerProvider'
 

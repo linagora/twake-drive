@@ -1,11 +1,11 @@
 import cx from 'classnames'
 import get from 'lodash/get'
 import React from 'react'
+import { useI18n } from 'twake-i18n'
 
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import CheckIcon from 'cozy-ui/transpiled/react/Icons/Check'
 import { TableCell } from 'cozy-ui/transpiled/react/deprecated/Table'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 import AppIcon from 'cozy-ui-plus/dist/AppIcon'
 
 import styles from '@/styles/filelist.styl'

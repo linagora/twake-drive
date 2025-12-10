@@ -1,8 +1,8 @@
 import React, { FC } from 'react'
 import { NavigateFunction } from 'react-router-dom'
+import { useI18n } from 'twake-i18n'
 
 import Button from 'cozy-ui/transpiled/react/Buttons'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import { File } from '@/components/FolderPicker/types'
 

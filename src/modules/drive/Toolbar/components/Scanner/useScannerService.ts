@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useDispatch } from 'react-redux'
+import { useI18n } from 'twake-i18n'
 
 import { useClient } from 'cozy-client'
 import { useWebviewIntent } from 'cozy-intent'
 import logger from 'cozy-logger'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import {
   getErrorMessage,

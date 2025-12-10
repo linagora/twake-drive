@@ -1,8 +1,8 @@
 import PropTypes from 'prop-types'
 import React from 'react'
+import { useI18n } from 'twake-i18n'
 
 import { NavItem as UINavItem } from 'cozy-ui/transpiled/react/Nav'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import { NavContent } from '@/modules/navigation/NavContent'
 import { NavLink } from '@/modules/navigation/NavLink'

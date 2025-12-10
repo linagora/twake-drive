@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { useNavigate, useLocation, Outlet } from 'react-router-dom'
+import { useI18n } from 'twake-i18n'
 
 import { useClient, hasQueryBeenLoaded, useQuery } from 'cozy-client'
 import flag from 'cozy-flags'
@@ -13,7 +14,6 @@ import { makeActions } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
 import { Content } from 'cozy-ui/transpiled/react/Layout'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import SharingTab from './SharingTab'
 import withSharedDocumentIds from './withSharedDocumentIds'

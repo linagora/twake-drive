@@ -1,10 +1,10 @@
 import React from 'react'
 import { connect } from 'react-redux'
+import { useI18n } from 'twake-i18n'
 
 import { useClient } from 'cozy-client'
 import useBrowserOffline from 'cozy-ui/transpiled/react/hooks/useBrowserOffline'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import { abortRenaming } from './rename'
 

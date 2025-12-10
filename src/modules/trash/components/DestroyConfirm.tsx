@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useI18n } from 'twake-i18n'
 
 import { splitFilename } from 'cozy-client/dist/models/file'
 import Button from 'cozy-ui/transpiled/react/Buttons'
@@ -11,7 +12,6 @@ import ListItem from 'cozy-ui/transpiled/react/ListItem'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import { File } from '@/components/FolderPicker/types'
 import { getEntriesTypeTranslated } from '@/lib/entries'

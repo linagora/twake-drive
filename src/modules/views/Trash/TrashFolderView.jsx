@@ -1,5 +1,6 @@
 import React from 'react'
 import { useNavigate, Outlet, useLocation } from 'react-router-dom'
+import { useI18n } from 'twake-i18n'
 
 import { useQuery, useClient } from 'cozy-client'
 import flag from 'cozy-flags'
@@ -7,7 +8,6 @@ import { useSharingContext } from 'cozy-sharing'
 import { makeActions } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
 import { Content } from 'cozy-ui/transpiled/react/Layout'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import FolderView from '../Folder/FolderView'
 import FolderViewBody from '../Folder/FolderViewBody'

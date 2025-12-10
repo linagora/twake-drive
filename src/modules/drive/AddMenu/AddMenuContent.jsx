@@ -1,4 +1,5 @@
 import React, { forwardRef } from 'react'
+import { useI18n } from 'twake-i18n'
 
 import flag from 'cozy-flags'
 import ActionsMenuMobileHeader from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuMobileHeader'
@@ -6,7 +7,6 @@ import Divider from 'cozy-ui/transpiled/react/Divider'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import AddEncryptedFolderItem from '@/modules/drive/Toolbar/components/AddEncryptedFolderItem'
 import AddFolderItem from '@/modules/drive/Toolbar/components/AddFolderItem'

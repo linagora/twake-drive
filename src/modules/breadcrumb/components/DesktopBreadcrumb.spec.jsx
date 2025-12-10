@@ -1,8 +1,8 @@
 import { render, fireEvent, act } from '@testing-library/react'
 import React from 'react'
+import { useI18n } from 'twake-i18n'
 
 import { BreakpointsProvider } from 'cozy-ui/transpiled/react/providers/Breakpoints'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import DesktopBreadcrumb from './DesktopBreadcrumb'
 import {
@@ -24,7 +24,7 @@ jest.mock(
       <div data-testid="action-menu-item">{children}</div>
 )
 
-jest.mock('cozy-ui/transpiled/react/providers/I18n')
+jest.mock('twake-i18n')
 describe('DesktopBreadcrumb', () => {
   beforeEach(() => {
     useI18n.mockReturnValue({ t: () => 'Show path' })

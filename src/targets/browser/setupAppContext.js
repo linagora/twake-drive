@@ -1,9 +1,9 @@
 import memoize from 'lodash/memoize'
+import { initTranslation } from 'twake-i18n'
 
 import CozyClient, { DataProxyLink, StackLink } from 'cozy-client'
 import { Document } from 'cozy-doctypes'
 import flag from 'cozy-flags'
-import { initTranslation } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import appMetadata from '@/lib/appMetadata'
 import { schema } from '@/lib/doctypes'

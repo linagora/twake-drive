@@ -1,6 +1,7 @@
 import React, { FC } from 'react'
 import { useDispatch } from 'react-redux'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
+import { useI18n } from 'twake-i18n'
 
 import { useClient, useQuery } from 'cozy-client'
 import { IOCozyFile } from 'cozy-client/types/types'
@@ -13,7 +14,6 @@ import { makeActions } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
 import { Content } from 'cozy-ui/transpiled/react/Layout'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import { useFolderSort } from '@/hooks'
 import { useModalContext } from '@/lib/ModalContext'

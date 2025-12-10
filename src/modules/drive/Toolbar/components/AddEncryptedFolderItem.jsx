@@ -1,12 +1,12 @@
 import React from 'react'
 import { connect } from 'react-redux'
+import { useI18n } from 'twake-i18n'
 
 import { useVaultUnlockContext } from 'cozy-keys-lib'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import { showNewFolderInput, encryptedFolder } from '@/modules/filelist/duck'
 import EncryptedFolderIcon from '@/modules/views/Folder/EncryptedFolderIcon'

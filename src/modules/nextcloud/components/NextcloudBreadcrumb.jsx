@@ -1,7 +1,6 @@
 import React from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
+import { useI18n } from 'twake-i18n'
 
 import { ROOT_DIR_ID } from '@/constants/config'
 import { MobileAwareBreadcrumb as Breadcrumb } from '@/modules/breadcrumb/components/MobileAwareBreadcrumb'

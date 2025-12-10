@@ -1,10 +1,10 @@
 import React, { FC } from 'react'
+import { useI18n } from 'twake-i18n'
 
 import { useQuery } from 'cozy-client'
 import { IOCozyFile } from 'cozy-client/types/types'
 import List from 'cozy-ui/transpiled/react/List'
 import ListSubheader from 'cozy-ui/transpiled/react/ListSubheader'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import { ExternalDriveListItem } from './ExternalDriveListItem'
 

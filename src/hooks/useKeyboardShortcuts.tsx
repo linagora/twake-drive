@@ -1,12 +1,12 @@
 import React, { useEffect, useCallback } from 'react'
 import { useDispatch } from 'react-redux'
+import { useI18n } from 'twake-i18n'
 
 import { isFile } from 'cozy-client/dist/models/file'
 import CozyClient from 'cozy-client/types/CozyClient'
 import { IOCozyFile } from 'cozy-client/types/types'
 import flag from 'cozy-flags'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import { shouldBlockKeyboardShortcuts, normalizeKey } from './helpers'
 

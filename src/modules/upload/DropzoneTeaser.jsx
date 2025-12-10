@@ -1,8 +1,8 @@
 import React from 'react'
+import { translate } from 'twake-i18n'
 
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import UploadIcon from 'cozy-ui/transpiled/react/Icons/Upload'
-import { translate } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import styles from '@/styles/dropzone.styl'
 

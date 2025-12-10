@@ -1,9 +1,9 @@
 import React, { FC } from 'react'
+import { useI18n } from 'twake-i18n'
 
 import { useQuery } from 'cozy-client'
 import { IOCozyFile } from 'cozy-client/types/types'
 import { NavDesktopDropdown } from 'cozy-ui/transpiled/react/Nav'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import { FavoriteListItem } from '@/modules/navigation/FavoriteListItem'
 import { buildFavoritesQuery } from '@/queries'

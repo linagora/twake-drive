@@ -1,5 +1,6 @@
 import React, { FC, useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { useI18n } from 'twake-i18n'
 
 import { useClient } from 'cozy-client'
 import { fetchURL } from 'cozy-client/dist/models/note'
@@ -7,7 +8,6 @@ import Empty from 'cozy-ui/transpiled/react/Empty'
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import SadCozyIcon from 'cozy-ui/transpiled/react/Icons/SadCozy'
 import Spinner from 'cozy-ui/transpiled/react/Spinner'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import { joinPath } from '@/lib/path'
 import { DummyLayout } from '@/modules/layout/DummyLayout'

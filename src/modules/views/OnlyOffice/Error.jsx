@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react'
 import { RemoveScroll } from 'react-remove-scroll'
+import { useI18n } from 'twake-i18n'
 
 import { isQueryLoading, useQuery } from 'cozy-client'
 import Spinner from 'cozy-ui/transpiled/react/Spinner'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 import Viewer, {
   FooterActionButtons,
   ForwardOrDownloadButton,

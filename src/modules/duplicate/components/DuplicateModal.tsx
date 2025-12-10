@@ -1,10 +1,10 @@
 import React, { FC, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useI18n } from 'twake-i18n'
 
 import { useClient } from 'cozy-client'
 import { copy } from 'cozy-client/dist/models/file'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import { OpenFolderButton } from '@/components/Button/OpenFolderButton'
 import { FolderPicker } from '@/components/FolderPicker/FolderPicker'

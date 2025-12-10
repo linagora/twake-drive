@@ -1,9 +1,9 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
+import { useI18n } from 'twake-i18n'
 
 import MidEllipsis from 'cozy-ui/transpiled/react/MidEllipsis'
 import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'
-import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 
 import styles from '@/styles/filelist.styl'
 
