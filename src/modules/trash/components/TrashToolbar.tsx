@@ -13,9 +13,9 @@ import { useI18n } from 'cozy-ui/transpiled/react/providers/I18n'
 import { MoreMenu } from '@/components/MoreMenu'
 import { selectable } from '@/modules/actions/components/selectable'
 import SearchButton from '@/modules/drive/Toolbar/components/SearchButton'
+import ViewSwitcher from '@/modules/drive/Toolbar/components/ViewSwitcher'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 import { emptyTrash } from '@/modules/trash/components/actions/emptyTrash'
-import ViewSwitcher from '@/modules/drive/Toolbar/components/ViewSwitcher'
 
 const TrashToolbar: FC = () => {
   const { t } = useI18n()

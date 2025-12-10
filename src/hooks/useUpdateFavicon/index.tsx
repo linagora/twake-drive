@@ -4,8 +4,9 @@ import { IOCozyFile } from 'cozy-client/types/types'
 import flag from 'cozy-flags'
 
 import { updateFavicon } from './helpers'
-import { getFileMimetype } from '@/lib/getFileMimetype'
+
 import { FAVICON_BY_MIMETYPE } from '@/hooks/useUpdateFavicon/constants'
+import { getFileMimetype } from '@/lib/getFileMimetype'
 
 const useUpdateFavicon = (
   file: IOCozyFile | undefined,
