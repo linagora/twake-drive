@@ -16,8 +16,12 @@ import FilenameInput from '@/modules/filelist/FilenameInput'
 // it tries to create
 const updateFileNameQuery = async (client, file, newName) => {
   if (isFolderFromSharedDriveOwner(file)) {
+    const referencedBy = file.relationships?.referenced_by?.data?.[0]
+    if (!referencedBy?.id) {
+      throw new Error('Shared drive folder is missing required relationships')
+    }
     const sharing = {
-      _id: file.relationships.referenced_by.data[0].id,
+      _id: referencedBy.id,
       rules: [{ values: [file.id] }]
     }
     return client
