@@ -55,7 +55,9 @@ export const useBreadcrumbPath = ({
     ]
 
     const shouldContinueLoop = id => {
-      return !!id && id !== rootBreadcrumbPath.id && id !== SHARED_DRIVES_DIR_ID
+      return (
+        !!id && id !== rootBreadcrumbPath?.id && id !== SHARED_DRIVES_DIR_ID
+      )
     }
 
     const processFolder = async id => {
