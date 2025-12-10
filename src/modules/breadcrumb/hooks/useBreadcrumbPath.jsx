@@ -38,7 +38,11 @@ export const useBreadcrumbPath = ({
   }
 
   useEffect(() => {
-    if (!folderAttributes.id || !folderAttributes.name) return
+    if (!folderAttributes.id || !folderAttributes.name) {
+      // Optionally set loading state or clear paths
+      setPaths([])
+      return
+    }
 
     const hasAccessToSharedDocument = id => {
       if (!sharedDocumentIds) return true
@@ -64,7 +68,7 @@ export const useBreadcrumbPath = ({
 
     const shouldAddRootPath = () => {
       return (
-        rootBreadcrumbPath.name !== 'Public' &&
+        rootBreadcrumbPath?.name !== 'Public' &&
         returnedPaths[0]?.id !== rootBreadcrumbPath.id
       )
     }
