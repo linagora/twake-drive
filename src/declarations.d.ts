@@ -215,3 +215,23 @@ declare module 'cozy-realtime' {
     stop: () => void
   }
 }
+
+declare module 'cozy-viewer/dist/Panel/AI/AIAssistantPanel' {
+  const AIAssistantPanel: React.ComponentType<{
+    className?: string
+  }>
+  export default AIAssistantPanel
+}
+
+declare module 'cozy-viewer/dist/hoc/withViewerLocales' {
+  const withViewerLocales: <P>(
+    Component: React.ComponentType<P>
+  ) => React.ComponentType<P>
+  export { withViewerLocales }
+}
+
+declare module 'cozy-viewer/dist/providers/ViewerProvider' {
+  export const useViewer: () => {
+    isOpenAiAssistant: boolean
+  }
+}

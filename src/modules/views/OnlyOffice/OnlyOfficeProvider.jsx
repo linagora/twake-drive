@@ -129,7 +129,8 @@ const OnlyOfficeProvider = ({
         isEditorModeView,
         setOfficeKey,
         officeKey,
-        isTrashed
+        isTrashed,
+        file: fileResult?.data
       }}
     >
       {children}

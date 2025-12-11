@@ -24,6 +24,7 @@ import HomeIcon from '@/modules/views/OnlyOffice/Toolbar/HomeIcon'
 import HomeLinker from '@/modules/views/OnlyOffice/Toolbar/HomeLinker'
 import Separator from '@/modules/views/OnlyOffice/Toolbar/Separator'
 import Sharing from '@/modules/views/OnlyOffice/Toolbar/Sharing'
+import SummarizeByAIButtonWrapper from '@/modules/views/OnlyOffice/Toolbar/SummarizeByAIButtonWrapper'
 import { isOfficeEditingEnabled } from '@/modules/views/OnlyOffice/helpers'
 import { buildFileOrFolderByIdQuery, buildFileWhereByIdQuery } from '@/queries'
 
@@ -124,6 +125,8 @@ const Toolbar = ({ sharingInfos }) => {
       {isPublic && !isCozyToCozySharingSynced && (
         <PublicToolbarMoreMenu files={[file]} actions={actions} />
       )}
+
+      <SummarizeByAIButtonWrapper isLoaded={isEditorReady} />
 
       {!isPublic && isEditorReady && (
         <>

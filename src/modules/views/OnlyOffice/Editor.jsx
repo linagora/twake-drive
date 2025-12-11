@@ -3,6 +3,7 @@ import React from 'react'
 import { isIOS } from 'cozy-device-helper'
 import flag from 'cozy-flags'
 import { DialogContent } from 'cozy-ui/transpiled/react/Dialog'
+import ViewerProvider from 'cozy-viewer/dist/providers/ViewerProvider'
 
 import Error from '@/modules/views/OnlyOffice/Error'
 import Loading from '@/modules/views/OnlyOffice/Loading'
@@ -29,8 +30,14 @@ const getEditorToolbarHeight = editorToolbarHeightFlag => {
 
 export const Editor = () => {
   const { config, status } = useConfig()
-  const { isEditorModeView, hasFileDiverged, hasFileDeleted } =
-    useOnlyOfficeContext()
+  const {
+    isEditorModeView,
+    hasFileDiverged,
+    hasFileDeleted,
+    file,
+    isReadOnly,
+    isPublic
+  } = useOnlyOfficeContext()
 
   if (status === 'error') return <Error />
   if (status !== 'loaded' || !config) return <Loading />
@@ -41,7 +48,7 @@ export const Editor = () => {
     flag('drive.onlyoffice.editorToolbarHeight')
   )
   return (
-    <>
+    <ViewerProvider file={file} isPublic={isPublic} isReadOnly={isReadOnly}>
       <Title />
       <DialogContent
         style={
@@ -61,7 +68,7 @@ export const Editor = () => {
         {hasFileDiverged ? <FileDivergedModal /> : null}
         {hasFileDeleted ? <FileDeletedModal /> : null}
       </DialogContent>
-    </>
+    </ViewerProvider>
   )
 }
 
