@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useContext, useEffect } from 'react'
 import { useDispatch } from 'react-redux'
 import { Outlet, useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useI18n } from 'twake-i18n'
@@ -16,11 +16,15 @@ import { SHARED_DRIVES_DIR_ID } from '@/constants/config'
 import { useClipboardContext } from '@/contexts/ClipboardProvider'
 import { useDisplayedFolder, useFolderSort } from '@/hooks'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
+import { FabContext } from '@/lib/FabProvider'
 import { useModalContext } from '@/lib/ModalContext'
 import { download, infos, versions, rename, trash, hr } from '@/modules/actions'
 import { moveTo } from '@/modules/actions/components/moveTo'
 import { personalizeFolder } from '@/modules/actions/components/personalizeFolder'
+import AddMenuProvider from '@/modules/drive/AddMenu/AddMenuProvider'
+import FabWithAddMenuContext from '@/modules/drive/FabWithAddMenuContext'
 import Toolbar from '@/modules/drive/Toolbar'
+import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 import { SharedDriveBreadcrumb } from '@/modules/shareddrives/components/SharedDriveBreadcrumb'
 import { SharedDriveFolderBody } from '@/modules/shareddrives/components/SharedDriveFolderBody'
 import { useSharedDriveFolder } from '@/modules/shareddrives/hooks/useSharedDriveFolder'
@@ -35,7 +39,8 @@ const SharedDriveFolderView = () => {
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const { isMobile } = useBreakpoints()
-  const { driveId, folderId } = useParams()
+  const params = useParams()
+  const { driveId, folderId } = params
   const sharingContext = useSharingContext()
   const { isOwner, byDocId, hasWriteAccess, refresh } = sharingContext
   const { displayedFolder } = useDisplayedFolder()
@@ -45,6 +50,8 @@ const SharedDriveFolderView = () => {
   const dispatch = useDispatch()
   const vaultClient = useVaultClient()
   const isInRootOfSharedDrive = displayedFolder?.dir_id === SHARED_DRIVES_DIR_ID
+  const { isFabDisplayed, setIsFabDisplayed } = useContext(FabContext)
+  const { isSelectionBarVisible } = useSelectionContext()
 
   const { sharedDriveResult } = useSharedDriveFolder({
     driveId,
@@ -58,6 +65,13 @@ const SharedDriveFolderView = () => {
   const canWriteToCurrentFolder = hasWriteAccess(folderId, driveId)
 
   const { hasClipboardData } = useClipboardContext()
+
+  useEffect(() => {
+    setIsFabDisplayed(canWriteToCurrentFolder && isMobile)
+    return () => {
+      setIsFabDisplayed(false)
+    }
+  }, [setIsFabDisplayed, isMobile, canWriteToCurrentFolder])
 
   const [sortOrder, setSortOrder, isSettingsLoaded] = useFolderSort(folderId)
 
@@ -175,6 +189,26 @@ const SharedDriveFolderView = () => {
             />
           )}
           <Outlet />
+          {isFabDisplayed && (
+            <AddMenuProvider
+              componentsProps={{
+                AddMenu: {
+                  anchorOrigin: {
+                    vertical: 'top',
+                    horizontal: 'left'
+                  }
+                }
+              }}
+              canCreateFolder={true}
+              canUpload={true}
+              disabled={false}
+              refreshFolderContent={refresh}
+              displayedFolder={displayedFolder}
+              isSelectionBarVisible={isSelectionBarVisible}
+            >
+              <FabWithAddMenuContext />
+            </AddMenuProvider>
+          )}
         </Content>
       </DropzoneComp>
     </FolderView>
