@@ -1,4 +1,3 @@
-import cx from 'classnames'
 import React from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
@@ -16,12 +15,14 @@ const ShareButtonWithProps = ({ isDisabled, className, useShortLabel }) => {
     navigate(getPathToShareDisplayedFolder(pathname))
   }
 
+  if (!displayedFolder) return null
+
   return (
     <ShareButton
       docId={displayedFolder.id}
       disabled={isDisabled}
       useShortLabel={useShortLabel}
-      className={cx('u-hide--mob', className)}
+      className={className}
       onClick={() => share(displayedFolder)}
     />
   )
