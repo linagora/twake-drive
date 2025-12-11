@@ -47,6 +47,14 @@ jest.mock('cozy-client/dist/models/file', () => ({
   ensureFilePath: jest.fn(doc => ({ ...doc, path: '/' }))
 }))
 
+jest.mock(
+  '@/modules/views/OnlyOffice/Toolbar/SummarizeByAIButtonWrapper',
+  () => ({
+    __esModule: true,
+    default: () => null
+  })
+)
+
 const client = createMockClient({})
 client.stackClient.uri = 'http://cozy.tools'
 client.plugins = {

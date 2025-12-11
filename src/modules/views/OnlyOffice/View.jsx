@@ -5,6 +5,7 @@ import Spinner from 'cozy-ui/transpiled/react/Spinner'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import Error from '@/modules/views/OnlyOffice/Error'
+import OnlyOfficeAIAssistantPanel from '@/modules/views/OnlyOffice/OnlyOfficeAIAssistantPanel'
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
 import ReadOnlyFab from '@/modules/views/OnlyOffice/ReadOnlyFab'
 import { FRAME_EDITOR_NAME } from '@/modules/views/OnlyOffice/config'
@@ -68,7 +69,10 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
           <Spinner size="xxlarge" />
         </div>
       )}
-      <div id="onlyOfficeEditor" />
+      <div className="u-flex u-flex-grow-1">
+        <div id="onlyOfficeEditor" />
+        <OnlyOfficeAIAssistantPanel />
+      </div>
       {showReadOnlyFab && <ReadOnlyFab />}
     </>
   )
