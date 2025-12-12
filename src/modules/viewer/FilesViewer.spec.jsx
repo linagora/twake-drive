@@ -27,6 +27,11 @@ jest.mock('lib/encryption', () => ({
 
 jest.mock('hooks')
 
+jest.mock('@/components/FilesRealTimeQueries', () => ({
+  ...jest.requireActual('@/components/FilesRealTimeQueries'),
+  ensureFileHasPath: jest.fn().mockImplementation(file => Promise.resolve(file))
+}))
+
 jest.mock('cozy-viewer', () => ({
   ...jest.requireActual('cozy-viewer'),
   __esModule: true,
@@ -96,6 +101,36 @@ describe('FilesViewer', () => {
 
     const viewer = await screen.findByText('Viewer')
     expect(viewer).toBeInTheDocument()
+    expect(client.query).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'file-foobar51',
+        doctype: 'io.cozy.files'
+      })
+    )
+  })
+
+  it('should call ensureFileHasPath when fetching file', async () => {
+    const client = new CozyClient({})
+    const fileData = generateFile({ i: '51' })
+    const fileWithPath = { ...fileData, path: '/test/path' }
+
+    client.query = jest.fn().mockResolvedValue({
+      data: fileData
+    })
+
+    const { ensureFileHasPath } = require('@/components/FilesRealTimeQueries')
+    ensureFileHasPath.mockResolvedValue(fileWithPath)
+
+    setup({
+      client,
+      nbFiles: 50,
+      totalCount: 100,
+      fileId: 'file-foobar51'
+    })
+
+    const viewer = await screen.findByText('Viewer')
+    expect(viewer).toBeInTheDocument()
+    expect(ensureFileHasPath).toHaveBeenCalledWith(fileData, client)
     expect(client.query).toHaveBeenCalledWith(
       expect.objectContaining({
         id: 'file-foobar51',
