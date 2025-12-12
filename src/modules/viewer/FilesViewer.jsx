@@ -13,6 +13,7 @@ import Viewer, {
   SharingButton
 } from 'cozy-viewer'
 
+import { ensureFileHasPath } from '@/components/FilesRealTimeQueries'
 import { FilesViewerLoading } from '@/components/FilesViewerLoading'
 import RightClickFileMenu from '@/components/RightClick/RightClickFileMenu'
 import { useCurrentFileId } from '@/hooks'
@@ -91,7 +92,8 @@ const FilesViewer = ({ filesQuery, files, onClose, onChange, viewerProps }) => {
         const { data } = await client.query(
           Q('io.cozy.files').getById(fileId).sharingById(driveId)
         )
-        isMounted && setCurrentFile(data)
+        const fileWithPath = await ensureFileHasPath(data, client)
+        isMounted && setCurrentFile(fileWithPath)
       } catch (e) {
         logger.warn("can't find the file")
         handleOnClose()
