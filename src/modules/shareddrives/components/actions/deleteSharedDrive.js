@@ -76,7 +76,7 @@ export const deleteSharedDrive = ({
           <ListItemIcon>
             <Icon icon={icon} className="u-error" />
           </ListItemIcon>
-          <ListItemText primary={label} />
+          <ListItemText primary={label} className="u-error" />
         </ActionsMenuItem>
       )
     })
