@@ -186,14 +186,25 @@ const FileThumbnail: React.FC<FileThumbnailProps> = ({
         />
       )}
       {isRegularShortcut && (
-        <InfosBadge badgeContent={<Icon icon={LinkIcon} size={10} />}>
-          <FileIcon
-            file={file}
-            size={size}
-            isEncrypted={isEncrypted}
-            viewType={viewType}
-          />
-        </InfosBadge>
+        <>
+          {viewType !== 'grid' ? (
+            <InfosBadge badgeContent={<Icon icon={LinkIcon} size={10} />}>
+              <FileIcon
+                file={file}
+                size={size}
+                isEncrypted={isEncrypted}
+                viewType={viewType}
+              />
+            </InfosBadge>
+          ) : (
+            <FileIcon
+              file={file}
+              size={size}
+              isEncrypted={isEncrypted}
+              viewType={viewType}
+            />
+          )}
+        </>
       )}
       {isSharingShortcut && (
         <GhostFileBadge
@@ -217,9 +228,16 @@ const FileThumbnail: React.FC<FileThumbnailProps> = ({
        * The next functionnal's task is to work on sharing and we'll remove
        * this badge from here. In the meantime, we take this workaround
        */}
-      {file.class !== 'shortcut' && showSharedBadge && !isInSyncFromSharing && (
-        <SharedBadge docId={file._id} {...componentsProps.sharedBadge} xsmall />
-      )}
+      {file.class !== 'shortcut' &&
+        showSharedBadge &&
+        !isInSyncFromSharing &&
+        viewType === 'grid' && (
+          <SharedBadge
+            docId={file._id}
+            {...componentsProps.sharedBadge}
+            xsmall
+          />
+        )}
     </>
   )
 }
