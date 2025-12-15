@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useContext, useEffect } from 'react'
 import { useDispatch } from 'react-redux'
 import { useNavigate, Outlet, useLocation } from 'react-router-dom'
 import { useI18n } from 'twake-i18n'
@@ -18,6 +18,7 @@ import FolderViewHeader from '../Folder/FolderViewHeader'
 
 import useHead from '@/components/useHead'
 import { useCurrentFolderId, useDisplayedFolder, useFolderSort } from '@/hooks'
+import { FabContext } from '@/lib/FabProvider'
 import { useModalContext } from '@/lib/ModalContext'
 import {
   share,
@@ -32,6 +33,8 @@ import { moveTo } from '@/modules/actions/components/moveTo'
 import { personalizeFolder } from '@/modules/actions/components/personalizeFolder'
 import { makeExtraColumnsNamesFromMedia } from '@/modules/certifications'
 import { useExtraColumns } from '@/modules/certifications/useExtraColumns'
+import AddMenuProvider from '@/modules/drive/AddMenu/AddMenuProvider'
+import FabWithAddMenuContext from '@/modules/drive/FabWithAddMenuContext'
 import Toolbar from '@/modules/drive/Toolbar'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 import Dropzone from '@/modules/upload/Dropzone'
@@ -57,7 +60,9 @@ const SharingsFolderView = ({ sharedDocumentIds }) => {
   const { pushModal, popModal } = useModalContext()
   const dispatch = useDispatch()
   const { displayedFolder, isNotFound } = useDisplayedFolder()
-  const { toggleSelectAllItems, isSelectAll } = useSelectionContext()
+  const { toggleSelectAllItems, isSelectAll, isSelectionBarVisible } =
+    useSelectionContext()
+  const { isFabDisplayed, setIsFabDisplayed } = useContext(FabContext)
   useHead()
 
   const extraColumnsNames = makeExtraColumnsNamesFromMedia({
@@ -93,6 +98,13 @@ const SharingsFolderView = ({ sharedDocumentIds }) => {
   const allResults = [foldersResult, filesResult]
 
   const hasWrite = hasWriteAccess(currentFolderId)
+
+  useEffect(() => {
+    setIsFabDisplayed(hasWrite && isMobile)
+    return () => {
+      setIsFabDisplayed(false)
+    }
+  }, [setIsFabDisplayed, isMobile, hasWrite])
 
   const actionsOptions = {
     client,
@@ -174,6 +186,26 @@ const SharingsFolderView = ({ sharedDocumentIds }) => {
           />
         )}
         <Outlet />
+        {isFabDisplayed && (
+          <AddMenuProvider
+            componentsProps={{
+              AddMenu: {
+                anchorOrigin: {
+                  vertical: 'top',
+                  horizontal: 'left'
+                }
+              }
+            }}
+            canCreateFolder={hasWrite}
+            canUpload={hasWrite}
+            disabled={!hasWrite}
+            refreshFolderContent={refresh}
+            displayedFolder={displayedFolder}
+            isSelectionBarVisible={isSelectionBarVisible}
+          >
+            <FabWithAddMenuContext />
+          </AddMenuProvider>
+        )}
       </Dropzone>
     </FolderView>
   )
