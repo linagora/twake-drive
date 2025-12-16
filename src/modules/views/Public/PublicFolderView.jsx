@@ -1,5 +1,3 @@
-import get from 'lodash/get'
-import uniqBy from 'lodash/uniqBy'
 import React, { useCallback, useContext, useEffect } from 'react'
 import { useDispatch } from 'react-redux'
 import { useNavigate, useLocation, Outlet } from 'react-router-dom'
@@ -29,11 +27,7 @@ import FolderViewBodyVz from '../Folder/virtualized/FolderViewBody'
 import useHead from '@/components/useHead'
 import { ROOT_DIR_ID } from '@/constants/config'
 import { useClipboardContext } from '@/contexts/ClipboardProvider'
-import {
-  useCurrentFolderId,
-  useDisplayedFolder,
-  useParentFolder
-} from '@/hooks'
+import { useCurrentFolderId, useDisplayedFolder } from '@/hooks'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { FabContext } from '@/lib/FabProvider'
 import { ModalStack, useModalContext } from '@/lib/ModalContext'
@@ -50,6 +44,7 @@ import {
 import { duplicateTo } from '@/modules/actions/components/duplicateTo'
 import { moveTo } from '@/modules/actions/components/moveTo'
 import { personalizeFolder } from '@/modules/actions/components/personalizeFolder'
+import { fetchFolder } from '@/modules/breadcrumb/utils/fetchFolder'
 import { makeExtraColumnsNamesFromMedia } from '@/modules/certifications'
 import { useExtraColumns } from '@/modules/certifications/useExtraColumns'
 import AddMenuProvider from '@/modules/drive/AddMenu/AddMenuProvider'
@@ -60,30 +55,35 @@ import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 import Dropzone from '@/modules/upload/Dropzone'
 import DropzoneDnD from '@/modules/upload/DropzoneDnD'
 
-const getBreadcrumbPath = (t, displayedFolder, parentFolder) =>
-  uniqBy(
-    [
-      {
-        id: get(parentFolder, 'id'),
-        name: get(parentFolder, 'name')
-      },
-      {
-        id: displayedFolder.id,
-        name: displayedFolder.name
-      }
-    ],
-    'id'
-  )
-    .filter(({ id }) => Boolean(id))
-    .map(breadcrumb => ({
-      id: breadcrumb.id,
-      name: breadcrumb.name || '…'
-    }))
+const fetchParentFolder = async ({ client, folderId }) => {
+  try {
+    return await fetchFolder({ client, folderId })
+  } catch (_err) {
+    return null
+  }
+}
+
+const getBreadcrumbPath = async ({
+  client,
+  displayedFolder,
+  sharedDocumentId
+}) => {
+  if (!displayedFolder) return
+  const returnPath = [{ id: displayedFolder?.id, name: displayedFolder?.name }]
+  let folder = displayedFolder
+  while (folder && folder.id !== sharedDocumentId) {
+    folder = await fetchParentFolder({ client, folderId: folder?.dir_id })
+    if (folder) {
+      returnPath.unshift({ id: folder?.id, name: folder?.name })
+    }
+  }
+  return returnPath
+}
 
 const desktopExtraColumnsNames = ['carbonCopy', 'electronicSafe']
 const mobileExtraColumnsNames = []
 
-const PublicFolderView = () => {
+const PublicFolderView = ({ sharedDocumentId }) => {
   const navigate = useNavigate()
   const { pathname, state } = useLocation()
   const client = useClient()
@@ -92,8 +92,6 @@ const PublicFolderView = () => {
   const { isFabDisplayed, setIsFabDisplayed } = useContext(FabContext)
   const currentFolderId = useCurrentFolderId()
   const { displayedFolder } = useDisplayedFolder()
-  const parentDirId = get(displayedFolder, 'dir_id')
-  const parentFolder = useParentFolder(parentDirId)
   const { isSelectionBarVisible, toggleSelectAllItems, isSelectAll } =
     useSelectionContext()
   const { hasWritePermissions } = usePublicWritePermissions()
@@ -208,11 +206,6 @@ const PublicFolderView = () => {
     actionOptions
   )
 
-  const geTranslatedBreadcrumbPath = useCallback(
-    displayedFolder => getBreadcrumbPath(t, displayedFolder, parentFolder),
-    [t, parentFolder]
-  )
-
   const rootBreadcrumbPath = {
     id: ROOT_DIR_ID,
     name: 'Public'
@@ -264,8 +257,9 @@ const PublicFolderView = () => {
               <>
                 {isOldBreadcrumb ? (
                   <OldFolderViewBreadcrumb
-                    currentFolderId={currentFolderId}
-                    getBreadcrumbPath={geTranslatedBreadcrumbPath}
+                    displayedFolder={displayedFolder}
+                    sharedDocumentId={sharedDocumentId}
+                    getBreadcrumbPath={getBreadcrumbPath}
                   />
                 ) : (
                   <FolderViewBreadcrumb
