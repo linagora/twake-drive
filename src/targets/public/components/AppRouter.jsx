@@ -79,14 +79,20 @@ const AppRouter = ({
               path="/files/:folderId"
               element={<Navigate to="/folder/:folderId" />}
             />
-            <Route path="folder" element={<PublicFolderView />}>
+            <Route
+              path="folder"
+              element={<PublicFolderView sharedDocumentId={sharedDocumentId} />}
+            >
               <Route path="file/:fileId/revision" element={<FileHistory />} />
               <Route
                 path="paywall"
                 element={<OnlyOfficePaywallView isPublic={true} />}
               />
             </Route>
-            <Route path="folder/:folderId" element={<PublicFolderView />}>
+            <Route
+              path="folder/:folderId"
+              element={<PublicFolderView sharedDocumentId={sharedDocumentId} />}
+            >
               <Route path="file/:fileId" element={<PublicFileViewer />} />
               <Route path="file/:fileId/revision" element={<FileHistory />} />
               <Route
