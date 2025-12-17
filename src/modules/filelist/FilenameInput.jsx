@@ -57,7 +57,9 @@ class FilenameInput extends Component {
   handleBlur() {
     const { value } = this.state
     if (valueIsEmpty(value)) {
-      this.abort()
+      // For folder creation (no initial name), exit without notification (abort(false))
+      // For file renaming (has initial name), show notification (abort(true))
+      this.abort(!!this.fileNameOnMount)
     } else {
       this.submit()
     }
