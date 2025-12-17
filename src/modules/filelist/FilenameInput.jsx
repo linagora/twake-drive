@@ -24,22 +24,24 @@ class FilenameInput extends Component {
       value: props.name || '',
       working: false,
       error: false,
-      hasBeenSubmitedOrAborted: false,
       isModalOpened: false
     }
     this.fileNameOnMount = props.name
     this.abort = this.abort.bind(this)
     this.save = this.save.bind(this)
+    this.isSubmitting = false
   }
 
   handleKeyDown(e) {
     const { value } = this.state
 
-    if (e.keyCode === ENTER_KEY && !valueIsEmpty(value)) {
-      this.setState({ hasBeenSubmitedOrAborted: true })
-      this.submit()
+    if (e.keyCode === ENTER_KEY) {
+      if (valueIsEmpty(value)) {
+        this.abort(true)
+      } else {
+        this.submit()
+      }
     } else if (e.keyCode === ESC_KEY) {
-      this.setState({ hasBeenSubmitedOrAborted: true })
       this.abort()
     }
   }
@@ -53,21 +55,20 @@ class FilenameInput extends Component {
   }
 
   handleBlur() {
-    const { hasBeenSubmitedOrAborted, value } = this.state
-
-    // On top of "normal" blurs, the event happens all the time after a submit or an abort, because this component is removed from the DOM while having the focus.
-    // we want to do things only on "normal" blurs, *not* after a submit/abort
-    if (!hasBeenSubmitedOrAborted) {
-      // when it's a regular blur, we want to abort, except is the value is non-empty
-      if (valueIsEmpty(value)) this.abort(true)
-      else this.submit()
+    const { value } = this.state
+    if (valueIsEmpty(value)) {
+      this.abort()
+    } else {
+      this.submit()
     }
   }
 
   submit() {
+    if (this.isSubmitting) return
     const { value } = this.state
     const { file } = this.props
     this.setState({ working: true, error: false })
+    this.isSubmitting = true
     if (!this.fileNameOnMount) return this.save()
     if (file && !isDirectory(file)) {
       const previousExtension = CozyFile.splitFilename({
@@ -100,6 +101,8 @@ class FilenameInput extends Component {
         working: false,
         error: true
       })
+    } finally {
+      this.isSubmitting = false
     }
   }
 
@@ -109,6 +112,7 @@ class FilenameInput extends Component {
 
     if (isModalOpened) this.setState({ isModalOpened: false })
     onAbort && onAbort(accidental)
+    this.isSubmitting = false
   }
 
   handleFocus() {
