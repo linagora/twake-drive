@@ -76,6 +76,30 @@ describe('useBreadcrumbPath', () => {
     expect(render.result.current).toEqual([dummyRootBreadcrumbPath()])
   })
 
+  it('should return only rootBreadcrumbPath when currentFolderId equals rootBreadcrumbPath.id (early return)', async () => {
+    const someFolderId = 'some-folder-id'
+    useFolder.mockReturnValue(
+      createFolder({
+        id: someFolderId,
+        name: 'Some Folder',
+        dirId: rootBreadcrumbPath.id
+      })
+    )
+
+    let render
+    await act(async () => {
+      render = await renderHook(() =>
+        useBreadcrumbPath({
+          rootBreadcrumbPath,
+          currentFolderId: rootBreadcrumbPath.id
+        })
+      )
+    })
+
+    expect(render.result.current).toEqual([rootBreadcrumbPath])
+    expect(fetchFolder).not.toHaveBeenCalled()
+  })
+
   it('should call fetch folder', async () => {
     // Given
     const currentFolderId = '1234'
