@@ -38,6 +38,11 @@ export const useBreadcrumbPath = ({
   }
 
   useEffect(() => {
+    if (rootBreadcrumbPath && currentFolderId === rootBreadcrumbPath.id) {
+      setPaths([rootBreadcrumbPath])
+      return
+    }
+
     if (!folderAttributes.id || !folderAttributes.name) {
       // Optionally set loading state or clear paths
       setPaths([])
@@ -117,7 +122,8 @@ export const useBreadcrumbPath = ({
     driveId,
     folderAttributes.id,
     folderAttributes.name,
-    folderAttributes.dirId
+    folderAttributes.dirId,
+    currentFolderId
   ])
 
   return paths
