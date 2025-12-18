@@ -6,6 +6,7 @@ import { useDataProxy } from 'cozy-dataproxy-lib'
 
 import useDataProxyRecents from './useRecentFiles'
 
+import { SETTINGS_DIR_PATH } from '@/constants/config'
 import logger from '@/lib/logger'
 import { buildRecentQuery } from '@/queries'
 
@@ -232,6 +233,150 @@ describe('useDataProxyRecents', () => {
       expect(result.current.error).toEqual(new Error('Client not available'))
       expect(result.current.data).toEqual([])
       expect(mockClient.fetchQueryAndGetFromState).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('filtering out Settings files', () => {
+    it('should filter out files with paths starting with SETTINGS_DIR_PATH from dataProxy', async () => {
+      const mockData = [
+        {
+          id: '1',
+          name: 'file1',
+          path: '/Documents/file1.txt'
+        },
+        {
+          id: '2',
+          name: 'settings-file',
+          path: `${SETTINGS_DIR_PATH}/config.json`
+        },
+        {
+          id: '3',
+          name: 'file2',
+          path: '/Downloads/file2.pdf'
+        },
+        {
+          id: '4',
+          name: 'another-settings',
+          path: `${SETTINGS_DIR_PATH}/preferences.xml`
+        }
+      ]
+      const expectedFilteredData = [
+        { id: '1', name: 'file1', path: '/Documents/file1.txt' },
+        { id: '3', name: 'file2', path: '/Downloads/file2.pdf' }
+      ]
+      const mockDataProxy = {
+        dataProxyServicesAvailable: true,
+        recents: jest.fn().mockResolvedValue(mockData)
+      }
+
+      mockUseDataProxy.mockReturnValue(mockDataProxy)
+
+      const { result, waitForNextUpdate } = renderHook(() =>
+        useDataProxyRecents()
+      )
+
+      expect(result.current.fetchStatus).toBe('loading')
+      expect(result.current.data).toEqual([])
+
+      await act(async () => {
+        await waitForNextUpdate()
+      })
+
+      expect(result.current.fetchStatus).toBe('loaded')
+      expect(result.current.data).toEqual(expectedFilteredData)
+      expect(result.current.error).toBe(null)
+      expect(mockDataProxy.recents).toHaveBeenCalledTimes(1)
+    })
+
+    it('should filter out files with paths starting with SETTINGS_DIR_PATH from fallback query', async () => {
+      const mockDataProxy = {
+        dataProxyServicesAvailable: true,
+        recents: jest.fn().mockRejectedValue(new Error('DataProxy error'))
+      }
+      const fallbackData = [
+        {
+          id: '5',
+          name: 'file5',
+          path: '/Pictures/photo.jpg'
+        },
+        {
+          id: '6',
+          name: 'settings-config',
+          path: `${SETTINGS_DIR_PATH}/app-settings.json`
+        },
+        {
+          id: '7',
+          name: 'file6',
+          path: '/Music/song.mp3'
+        }
+      ]
+      const expectedFilteredData = [
+        { id: '5', name: 'file5', path: '/Pictures/photo.jpg' },
+        { id: '7', name: 'file6', path: '/Music/song.mp3' }
+      ]
+
+      mockUseDataProxy.mockReturnValue(mockDataProxy)
+      mockClient.fetchQueryAndGetFromState.mockResolvedValue({
+        data: fallbackData
+      })
+
+      const { result, waitForValueToChange } = renderHook(() =>
+        useDataProxyRecents()
+      )
+
+      expect(result.current.fetchStatus).toBe('loading')
+      expect(result.current.data).toEqual([])
+
+      // Wait for fallback query to complete
+      await act(async () => {
+        await waitForValueToChange(() => result.current.fetchStatus, {
+          timeout: 2000
+        })
+      })
+
+      expect(result.current.fetchStatus).toBe('loaded')
+      expect(result.current.data).toEqual(expectedFilteredData)
+      expect(result.current.error).toBe(null)
+      expect(mockClient.fetchQueryAndGetFromState).toHaveBeenCalledTimes(1)
+    })
+
+    it('should handle files without path property', async () => {
+      const mockData = [
+        {
+          id: '1',
+          name: 'file1',
+          path: '/Documents/file1.txt'
+        },
+        {
+          id: '2',
+          name: 'file-without-path'
+        }, // No path property
+        {
+          id: '3',
+          name: 'settings-file',
+          path: `${SETTINGS_DIR_PATH}/config.json`
+        }
+      ]
+      const expectedFilteredData = [
+        { id: '1', name: 'file1', path: '/Documents/file1.txt' },
+        { id: '2', name: 'file-without-path' } // Should be included since path is undefined
+      ]
+      const mockDataProxy = {
+        dataProxyServicesAvailable: true,
+        recents: jest.fn().mockResolvedValue(mockData)
+      }
+
+      mockUseDataProxy.mockReturnValue(mockDataProxy)
+
+      const { result, waitForNextUpdate } = renderHook(() =>
+        useDataProxyRecents()
+      )
+
+      await act(async () => {
+        await waitForNextUpdate()
+      })
+
+      expect(result.current.data).toEqual(expectedFilteredData)
     })
   })
 })
