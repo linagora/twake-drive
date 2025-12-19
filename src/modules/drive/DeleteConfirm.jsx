@@ -119,11 +119,15 @@ export const DeleteConfirm = ({
     <ConfirmDialog
       open={true}
       onClose={onClose}
-      title={t('DeleteConfirm.title', {
-        filename: splitFilename(files[0]).filename,
-        smart_count: fileCount,
-        type: entriesType
-      })}
+      title={
+        <Typography variant="h3" className="u-ellipsis">
+          {t('DeleteConfirm.title', {
+            filename: splitFilename(files[0]).filename,
+            smart_count: fileCount,
+            type: entriesType
+          })}
+        </Typography>
+      }
       content={
         <Stack>
           <Message type="trash" fileCount={fileCount} />
