@@ -178,7 +178,6 @@ const FilesViewer = ({ filesQuery, files, onClose, onChange, viewerProps }) => {
 
   return (
     <RightClickFileMenu
-      key={viewerFiles[viewerIndex]?._id}
       doc={viewerFiles[viewerIndex]}
       actions={actions}
       disabled={!viewerFiles[viewerIndex]}
