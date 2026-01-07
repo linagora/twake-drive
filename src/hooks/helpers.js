@@ -74,7 +74,7 @@ export const normalizeKey = (event, isApple) => {
 
   const key = event.key.toLowerCase()
 
-  if (key === 'delete' || key === 'del') {
+  if (key === 'delete' || key === 'del' || (isApple && key === 'backspace')) {
     keys.push('delete')
   } else {
     keys.push(key)
