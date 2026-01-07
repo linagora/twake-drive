@@ -27,7 +27,7 @@ export const usePublicFilesQuery = currentFolderId => {
   const [hasMore, setHasMore] = useState(false)
 
   const [fetchCounter, updateFetchCounter] = useState(1)
-  const forceRefetch = () => updateFetchCounter(fetchCounter + 1)
+  const forceRefetch = () => updateFetchCounter(prev => prev + 1)
 
   const nextCursor = useRef(null)
 
