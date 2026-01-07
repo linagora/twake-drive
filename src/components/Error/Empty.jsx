@@ -17,7 +17,13 @@ import { isEncryptedFolder } from '@/lib/encryption'
 import UploadButton from '@/modules/upload/UploadButton'
 import CreateSharedDriveButton from '@/modules/views/SharedDrive/CreateSharedDriveButton'
 
-const EmptyCanvas = ({ type, canUpload, localeKey, hasTextMobileVersion }) => {
+const EmptyCanvas = ({
+  type,
+  canUpload,
+  localeKey,
+  hasTextMobileVersion,
+  onUploaded
+}) => {
   const { t } = useI18n()
   const { isDesktop } = useBreakpoints()
   const { displayedFolder } = useDisplayedFolder()
@@ -57,6 +63,7 @@ const EmptyCanvas = ({ type, canUpload, localeKey, hasTextMobileVersion }) => {
                 }}
                 label={t('toolbar.menu_upload')}
                 displayedFolder={displayedFolder}
+                onUploaded={onUploaded}
               />
             </span>
           )}
@@ -91,7 +98,8 @@ export const EmptyTrash = props => (
 export const EmptyWrapper = ({
   currentFolderId,
   displayedFolder,
-  canUpload
+  canUpload,
+  refreshFolderContent
 }) => {
   const { pathname } = useLocation()
 
@@ -103,9 +111,10 @@ export const EmptyWrapper = ({
       <EmptyDrive
         isEncrypted={isEncryptedFolder(displayedFolder)}
         canUpload={canUpload}
+        onUploaded={refreshFolderContent}
       />
     )
   }
 
-  return <EmptyTrash canUpload={canUpload} />
+  return <EmptyTrash canUpload={canUpload} onUploaded={refreshFolderContent} />
 }

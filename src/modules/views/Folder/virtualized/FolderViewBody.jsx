@@ -128,6 +128,7 @@ const FolderViewBody = ({
         currentFolderId={currentFolderId}
         displayedFolder={displayedFolder}
         canUpload={canUpload}
+        refreshFolderContent={refreshFolderContent}
       />
     )
   }
