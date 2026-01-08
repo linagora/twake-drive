@@ -9,6 +9,7 @@ import { MoreButton } from '@/components/Button'
 import AddMenuProvider from '@/modules/drive/AddMenu/AddMenuProvider'
 import AddMenuItem from '@/modules/drive/Toolbar/components/AddMenuItem'
 import DownloadButtonItem from '@/modules/drive/Toolbar/components/DownloadButtonItem'
+import FavoritesItem from '@/modules/drive/Toolbar/components/FavoritesItem'
 import InsideRegularFolder from '@/modules/drive/Toolbar/components/InsideRegularFolder'
 import LeaveSharedDriveButtonItem from '@/modules/drive/Toolbar/components/LeaveSharedDriveButtonItem'
 import ManageAccessItem from '@/modules/drive/Toolbar/components/ManageAccessItem'
@@ -99,6 +100,14 @@ const MoreMenu = ({
             {isMobile && hasWriteAccess && <AddMenuItem />}
             <SelectableItem onClick={showSelectionBar} />
             {isSharedDriveOwner && <ManageAccessItem />}
+            {hasWriteAccess && (
+              <InsideRegularFolder
+                displayedFolder={displayedFolder}
+                folderId={folderId}
+              >
+                <FavoritesItem displayedFolder={displayedFolder} />
+              </InsideRegularFolder>
+            )}
             {hasWriteAccess && (
               <InsideRegularFolder
                 displayedFolder={displayedFolder}
