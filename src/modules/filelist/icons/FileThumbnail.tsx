@@ -4,6 +4,7 @@ import React from 'react'
 import { isReferencedBy, models } from 'cozy-client'
 import { isDirectory } from 'cozy-client/dist/models/file'
 import { SharedBadge, SharingOwnerAvatar } from 'cozy-sharing'
+import Badge from 'cozy-ui/transpiled/react/Badge'
 import Box from 'cozy-ui/transpiled/react/Box'
 import GhostFileBadge from 'cozy-ui/transpiled/react/GhostFileBadge'
 import Icon from 'cozy-ui/transpiled/react/Icon'
@@ -20,6 +21,7 @@ import styles from '@/styles/filelist.styl'
 import type { File, FolderPickerEntry } from '@/components/FolderPicker/types'
 import { useViewSwitcherContext } from '@/lib/ViewSwitcherContext'
 import { DOCTYPE_KONNECTORS } from '@/lib/doctypes'
+import { isInfected } from '@/modules/filelist/helpers'
 import { BadgeKonnector } from '@/modules/filelist/icons/BadgeKonnector'
 import FileIcon from '@/modules/filelist/icons/FileIcon'
 import FileIconMime from '@/modules/filelist/icons/FileIconMime'
@@ -53,6 +55,15 @@ const FileThumbnail: React.FC<FileThumbnailProps> = ({
 }) => {
   const { viewType } = useViewSwitcherContext()
   const { isMobile } = useBreakpoints()
+
+  const fileIcon = (
+    <FileIcon
+      file={file}
+      size={size}
+      isEncrypted={isEncrypted}
+      viewType={viewType}
+    />
+  )
 
   if (isNextcloudFile(file)) {
     return <FileIconMime file={file} size={size} />
@@ -123,12 +134,7 @@ const FileThumbnail: React.FC<FileThumbnailProps> = ({
         >
           {isKonnectorFolder ? (
             <BadgeKonnector file={file}>
-              <FileIcon
-                file={file}
-                size={size}
-                isEncrypted={isEncrypted}
-                viewType={viewType}
-              />
+              {fileIcon}
               {file.class !== 'shortcut' &&
                 showSharedBadge &&
                 viewType === 'grid' && (
@@ -141,12 +147,7 @@ const FileThumbnail: React.FC<FileThumbnailProps> = ({
             </BadgeKonnector>
           ) : (
             <>
-              <FileIcon
-                file={file}
-                size={size}
-                isEncrypted={isEncrypted}
-                viewType={viewType}
-              />
+              {fileIcon}
               {file.class !== 'shortcut' &&
                 showSharedBadge &&
                 viewType === 'grid' && (
@@ -163,46 +164,38 @@ const FileThumbnail: React.FC<FileThumbnailProps> = ({
     }
   }
   if (isKonnectorFolder) {
-    return (
-      <BadgeKonnector file={file}>
-        <FileIcon
-          file={file}
-          size={size}
-          isEncrypted={isEncrypted}
-          viewType={viewType}
-        />
-      </BadgeKonnector>
-    )
+    return <BadgeKonnector file={file}>{fileIcon}</BadgeKonnector>
   }
+
+  const infected = isInfected(file)
+
+  const fileIconWithInfection = infected ? (
+    <Badge
+      size="large"
+      badgeContent={<Icon icon="warning-circle" color="var(--errorColor)" size={20} />}
+      withBorder={false}
+      anchorOrigin={{
+        vertical: 'bottom',
+        horizontal: 'right'
+      }}
+    >
+      {fileIcon}
+    </Badge>
+  ) : (
+    fileIcon
+  )
 
   return (
     <>
-      {isSimpleFile && (
-        <FileIcon
-          file={file}
-          size={size}
-          isEncrypted={isEncrypted}
-          viewType={viewType}
-        />
-      )}
+      {isSimpleFile && fileIconWithInfection}
       {isRegularShortcut && (
         <>
           {viewType !== 'grid' ? (
             <InfosBadge badgeContent={<Icon icon={LinkIcon} size={10} />}>
-              <FileIcon
-                file={file}
-                size={size}
-                isEncrypted={isEncrypted}
-                viewType={viewType}
-              />
+              {fileIcon}
             </InfosBadge>
           ) : (
-            <FileIcon
-              file={file}
-              size={size}
-              isEncrypted={isEncrypted}
-              viewType={viewType}
-            />
+            fileIcon
           )}
         </>
       )}

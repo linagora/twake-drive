@@ -55,3 +55,21 @@ export const getFileNameAndExtension = (
     extension
   }
 }
+
+interface FileWithAntivirusScan {
+  antivirus_scan?: {
+    status?: string
+  }
+}
+
+export const isInfected = (
+  file: FileWithAntivirusScan | Record<string, unknown>
+): boolean => {
+  return (
+    'antivirus_scan' in file &&
+    typeof file.antivirus_scan === 'object' &&
+    file.antivirus_scan !== null &&
+    'status' in file.antivirus_scan &&
+    file.antivirus_scan.status === 'infected'
+  )
+}
