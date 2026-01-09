@@ -15,6 +15,7 @@ import LeaveSharedDriveButtonItem from '@/modules/drive/Toolbar/components/Leave
 import ManageAccessItem from '@/modules/drive/Toolbar/components/ManageAccessItem'
 import DeleteItem from '@/modules/drive/Toolbar/delete/DeleteItem'
 import MoveItem from '@/modules/drive/Toolbar/move/MoveItem'
+import PersonalizeFolderItem from '@/modules/drive/Toolbar/personalizeFolder/PersonalizeFolderItem'
 import SelectableItem from '@/modules/drive/Toolbar/selectable/SelectableItem'
 import ShareItem from '@/modules/drive/Toolbar/share/ShareItem'
 
@@ -98,6 +99,10 @@ const MoreMenu = ({
                 <DownloadButtonItem files={[displayedFolder]} />
               )}
               <MoveItem
+                displayedFolder={displayedFolder}
+                hasWriteAccess={hasWriteAccess}
+              />
+              <PersonalizeFolderItem
                 displayedFolder={displayedFolder}
                 hasWriteAccess={hasWriteAccess}
               />
