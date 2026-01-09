@@ -14,6 +14,7 @@ import InsideRegularFolder from '@/modules/drive/Toolbar/components/InsideRegula
 import LeaveSharedDriveButtonItem from '@/modules/drive/Toolbar/components/LeaveSharedDriveButtonItem'
 import ManageAccessItem from '@/modules/drive/Toolbar/components/ManageAccessItem'
 import DeleteItem from '@/modules/drive/Toolbar/delete/DeleteItem'
+import MoveItem from '@/modules/drive/Toolbar/move/MoveItem'
 import SelectableItem from '@/modules/drive/Toolbar/selectable/SelectableItem'
 import ShareItem from '@/modules/drive/Toolbar/share/ShareItem'
 
@@ -96,6 +97,10 @@ const MoreMenu = ({
               {!isSharedDriveRecipient && (
                 <DownloadButtonItem files={[displayedFolder]} />
               )}
+              <MoveItem
+                displayedFolder={displayedFolder}
+                hasWriteAccess={hasWriteAccess}
+              />
             </InsideRegularFolder>
             {isMobile && hasWriteAccess && <AddMenuItem />}
             <SelectableItem onClick={showSelectionBar} />
