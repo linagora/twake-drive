@@ -81,7 +81,7 @@ const MoreMenu = ({
               horizontal: 'right'
             }}
           >
-            {isMobile && allLoaded && (
+            {allLoaded && (
               <InsideRegularFolder
                 displayedFolder={displayedFolder}
                 folderId={folderId}
