@@ -55,3 +55,13 @@ export const getFileNameAndExtension = (
     extension
   }
 }
+
+export interface FileWithAntivirusScan {
+  antivirus_scan?: {
+    status?: 'clean' | 'infected' | 'skipped' | 'error' | 'pending'
+  }
+}
+
+export const isInfected = (file?: FileWithAntivirusScan | null): boolean => {
+  return file?.antivirus_scan?.status === 'infected'
+}
