@@ -187,6 +187,10 @@ export const processNextFile =
     addItems
   ) =>
   async (dispatch, getState) => {
+    const safeCallback =
+      typeof fileUploadedCallback === 'function'
+        ? fileUploadedCallback
+        : () => {}
     let error = null
     if (!client) {
       throw new Error(
@@ -215,7 +219,7 @@ export const processNextFile =
           },
           driveId
         )
-        fileUploadedCallback(newDir)
+        safeCallback(newDir)
         dispatch({ type: RECEIVE_UPLOAD_SUCCESS, file, uploadedItem: newDir })
       } else {
         const withProgress = {
@@ -235,7 +239,7 @@ export const processNextFile =
           },
           driveId
         )
-        fileUploadedCallback(uploadedFile)
+        safeCallback(uploadedFile)
         dispatch({
           type: RECEIVE_UPLOAD_SUCCESS,
           file,
@@ -261,7 +265,7 @@ export const processNextFile =
             },
             driveId
           )
-          fileUploadedCallback(uploadedFile)
+          safeCallback(uploadedFile)
           dispatch({
             type: RECEIVE_UPLOAD_SUCCESS,
             file,
@@ -506,6 +510,7 @@ export const addToUploadQueue =
 export const purgeUploadQueue = () => ({ type: PURGE_UPLOAD_QUEUE })
 
 export const onQueueEmpty = callback => (dispatch, getState) => {
+  const safeCallback = typeof callback === 'function' ? callback : () => {}
   const queue = getUploadQueue(getState())
   const quotas = getQuotaErrors(queue)
   const conflicts = getConflicts(queue)
@@ -523,7 +528,7 @@ export const onQueueEmpty = callback => (dispatch, getState) => {
     .map(item => item.uploadedItem)
     .filter(item => item && item._id)
 
-  return callback(
+  return safeCallback(
     createdItems,
     quotas,
     conflicts,
