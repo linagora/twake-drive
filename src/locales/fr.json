@@ -720,5 +720,8 @@
       "title": "Impossible d'accéder au document",
       "subtitle": "Le lien de partage semble manquant ou invalide. Merci de demander au propriétaire du document de vérifier les accès"
     }
+  },
+  "antivirus": {
+    "infected": "Ce fichier est infecté par un virus"
   }
 }

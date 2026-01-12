@@ -723,5 +723,8 @@
       "recents": "Recents",
       "chooseCustomIcon": "Choose a custom icon"
     }
+  },
+  "antivirus": {
+    "infectedFile": "This file is infected with a virus"
   }
 }
