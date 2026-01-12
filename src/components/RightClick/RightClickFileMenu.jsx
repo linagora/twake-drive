@@ -5,6 +5,7 @@ import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import { useRightClick } from '@/components/RightClick/RightClickProvider'
 import { getContextMenuActions } from '@/modules/actions/helpers'
+import { isInfected } from '@/modules/filelist/helpers'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 
 const RightClickFileMenu = ({
@@ -19,7 +20,11 @@ const RightClickFileMenu = ({
   const { isDesktop } = useBreakpoints()
   const { selectedItems, isItemSelected } = useSelectionContext()
 
-  const contextMenuActions = getContextMenuActions(actions)
+  const infected = isInfected(doc)
+  const contextMenuActions = getContextMenuActions(actions).filter(action => {
+    const isRemoveAction = Object.keys(action).includes('trash')
+    return infected ? isRemoveAction : true
+  })
 
   if (!children) return null
   if (disabled || !isDesktop)
