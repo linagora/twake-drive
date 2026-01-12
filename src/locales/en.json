@@ -649,7 +649,8 @@
   },
   "FileName": {
     "sharedDrive": "Drives",
-    "trash": "Trash"
+    "trash": "Trash",
+    "infected": "This file is infected with a virus"
   },
   "NextcloudBanner": {
     "title": "The items below are displayed from a NextCloud drive and are not stored in your Twake."
