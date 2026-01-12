@@ -11,6 +11,7 @@ import { useThumbnailSizeContext } from '@/lib/ThumbnailSizeContext'
 import RenameInput from '@/modules/drive/RenameInput'
 import {
   getFileNameAndExtension,
+  isInfected,
   makeParentFolderPath
 } from '@/modules/filelist/helpers'
 import FileThumbnail from '@/modules/filelist/icons/FileThumbnail'
@@ -34,6 +35,8 @@ const FileName = ({
   const hidePath = withFilePath
     ? !parentFolderPath
     : isDirectory(attributes) || !isMobile
+
+  const infected = isInfected(attributes)
 
   if (isRenaming) {
     return (
@@ -62,7 +65,7 @@ const FileName = ({
   }
 
   return (
-    <span title={title}>
+    <span title={infected ? t('antivirus.infectedFile') : title}>
       <Filename
         icon={
           <FileThumbnail
