@@ -114,6 +114,7 @@ const uploadQueueProcessed =
     addItems
   ) =>
   dispatch => {
+    const safeAddItems = typeof addItems === 'function' ? addItems : () => {}
     const conflictCount = conflicts.length
     const createdCount = created.length
     const updatedCount = updated.length
@@ -126,7 +127,7 @@ const uploadQueueProcessed =
     // Add new items to the NewContext
     const successfulUploads = [...created, ...updated]
     if (successfulUploads.length > 0) {
-      addItems(successfulUploads)
+      safeAddItems(successfulUploads)
     }
 
     // Add logging to debug upload completion
@@ -274,6 +275,7 @@ export const createFolder = (
   driveId,
   addItems = () => {}
 ) => {
+  const safeAddItems = typeof addItems === 'function' ? addItems : () => {}
   return async (dispatch, getState) => {
     const state = getState()
     let targetFolderId = currentFolderId
@@ -329,7 +331,7 @@ export const createFolder = (
 
       // Add newly created folder to new items
       if (createdFolder) {
-        addItems([createdFolder.data])
+        safeAddItems([createdFolder.data])
       }
 
       if (navigateAfterCreate && createdFolder) {
