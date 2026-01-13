@@ -66,15 +66,15 @@ describe('processNextFile function', () => {
       client: fakeClient
     })
     result(dispatchSpy, getState)
-    expect(queueCompletedCallbackSpy).toHaveBeenCalledWith(
-      [],
-      [],
-      [],
-      [],
-      [],
-      [],
-      []
-    )
+    expect(queueCompletedCallbackSpy).toHaveBeenCalledWith({
+      createdItems: [],
+      quotas: [],
+      conflicts: [],
+      networkErrors: [],
+      errors: [],
+      updatedItems: [],
+      fileTooLargeErrors: []
+    })
   })
 
   it('should process files in the queue', async () => {

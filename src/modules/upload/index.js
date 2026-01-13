@@ -528,7 +528,7 @@ export const onQueueEmpty = callback => (dispatch, getState) => {
     .map(item => item.uploadedItem)
     .filter(item => item && item._id)
 
-  return safeCallback(
+  return safeCallback({
     createdItems,
     quotas,
     conflicts,
@@ -536,7 +536,7 @@ export const onQueueEmpty = callback => (dispatch, getState) => {
     errors,
     updatedItems,
     fileTooLargeErrors
-  )
+  })
 }
 
 // selectors
