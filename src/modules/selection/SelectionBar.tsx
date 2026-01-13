@@ -2,6 +2,7 @@ import React from 'react'
 
 import ActionsBar from 'cozy-ui/transpiled/react/ActionsBar'
 
+import { isInfected } from '@/modules/filelist/helpers'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 
 type DriveAction = Record<
@@ -30,7 +31,15 @@ const SelectionBar: React.FC<{
     useSelectionContext()
 
   if (isSelectionBarVisible && actions) {
-    const convertedActions = driveActionsToSelectionBarActions(actions)
+    let convertedActions = driveActionsToSelectionBarActions(actions)
+
+    const hasInfectedItem = selectedItems.some(item => isInfected(item))
+    if (hasInfectedItem) {
+      convertedActions = convertedActions.filter(driveAction => {
+        const actionName = Object.keys(driveAction)[0]
+        return actionName === 'trash'
+      })
+    }
 
     return (
       <ActionsBar
