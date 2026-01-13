@@ -1,6 +1,8 @@
 import { getI18n } from 'twake-i18n'
 
 import ar from './ar.json'
+import cs from './cs.json'
+import cs_CZ from './cs_CZ.json'
 import de from './de.json'
 import en from './en.json'
 import es from './es.json'
@@ -17,6 +19,8 @@ import zh_TW from './zh_TW.json'
 
 export const locales = {
   ar,
+  cs,
+  cs_CZ,
   de,
   en,
   es,
