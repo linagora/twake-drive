@@ -68,23 +68,23 @@ export const uploadFiles =
         targetDirId,
         sharingState,
         fileUploadedCallback,
-        (
-          loaded,
+        ({
+          createdItems,
           quotas,
           conflicts,
           networkErrors,
           errors,
-          updated,
+          updatedItems,
           fileTooLargeErrors
-        ) =>
+        }) =>
           dispatch(
             uploadQueueProcessed(
-              loaded,
+              createdItems,
               quotas,
               conflicts,
               networkErrors,
               errors,
-              updated,
+              updatedItems,
               showAlert,
               t,
               fileTooLargeErrors,
