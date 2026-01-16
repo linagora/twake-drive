@@ -14,13 +14,15 @@ interface addToFavoritesProps {
   client: CozyClient
   isMobile: boolean
   showAlert: import('cozy-ui/transpiled/react/providers/Alert').showAlertFunction
+  isInfected?: boolean
 }
 
 const addToFavorites = ({
   t,
   client,
   isMobile,
-  showAlert
+  showAlert,
+  isInfected
 }: addToFavoritesProps): Action => {
   const icon = StarOutlineIcon
   const label = isMobile
@@ -32,6 +34,7 @@ const addToFavorites = ({
     label,
     icon,
     displayCondition: docs =>
+      !isInfected &&
       docs.length > 0 &&
       docs.every(doc => !doc.cozyMetadata?.favorite) &&
       !docs[0]?.driveId,
