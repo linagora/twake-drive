@@ -722,6 +722,10 @@
     }
   },
   "antivirus": {
-    "infected": "Ce fichier est infecté par un virus"
+    "infectedFile": "Ce fichier est infecté par un virus",
+    "popover": {
+      "title": "Le téléchargement et le partage sont bloqués pour des raisons de sécurité",
+      "description": "Le système Twake a détecté un virus"
+    }
   }
 }
