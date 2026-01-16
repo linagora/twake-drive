@@ -28,6 +28,7 @@ import { addToFavorites } from '@/modules/actions/components/addToFavorites'
 import { duplicateTo } from '@/modules/actions/components/duplicateTo'
 import { moveTo } from '@/modules/actions/components/moveTo'
 import { removeFromFavorites } from '@/modules/actions/components/removeFromFavorites'
+import { isInfected } from '@/modules/filelist/helpers'
 
 export const useMoreMenuActions = file => {
   const [isPrintAvailable, setIsPrintAvailable] = useState(false)
@@ -45,6 +46,7 @@ export const useMoreMenuActions = file => {
   const currentFolderId = useCurrentFolderId()
   const { isSharingShortcutCreated, addSharingLink, syncSharingLink } =
     useSharingInfos()
+  const infected = isInfected(file)
   const canWriteToCurrentFolder = hasWriteAccess(currentFolderId, file.driveId)
   const isPDFDoc = file.mime === 'application/pdf'
   const showPrintAction = isPDFDoc && isPrintAvailable
@@ -54,19 +56,19 @@ export const useMoreMenuActions = file => {
   const actions = makeActions(
     [
       share,
-      shareNative,
-      isCozySharing && addToCozySharingLink,
-      isCozySharing && syncToCozySharingLink,
+      !infected && shareNative,
+      !infected && isCozySharing && addToCozySharingLink,
+      !infected && isCozySharing && syncToCozySharingLink,
       download,
-      showPrintAction && print,
-      hr,
+      !infected && showPrintAction && print,
+      !infected && hr,
       moveTo,
       !isSharedDrive && duplicateTo, // TO DO: Remove condtion when duplicating is available in shared drive
       addToFavorites,
       removeFromFavorites,
-      hr,
+      !infected && hr,
       versions,
-      hr,
+      !infected && hr,
       trash
     ],
     {
@@ -94,7 +96,8 @@ export const useMoreMenuActions = file => {
       fetchBlobFileById,
       isFile,
       addSharingLink,
-      driveId: file.driveId
+      driveId: file.driveId,
+      isInfected: infected
     }
   )
 
