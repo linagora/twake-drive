@@ -17,6 +17,7 @@ interface duplicateToProps {
   isMobile: boolean
   search?: string
   canDuplicate?: boolean
+  isInfected?: boolean
 }
 
 const duplicateTo = ({
@@ -25,7 +26,8 @@ const duplicateTo = ({
   navigate,
   isMobile,
   search,
-  canDuplicate = true
+  canDuplicate = true,
+  isInfected
 }: duplicateToProps): Action => {
   const icon = MultiFilesIcon
   const label = isMobile
@@ -37,7 +39,7 @@ const duplicateTo = ({
     label,
     icon,
     displayCondition: docs =>
-      docs.length === 1 && isFile(docs[0]) && canDuplicate,
+      !isInfected && docs.length === 1 && isFile(docs[0]) && canDuplicate,
     action: (files): void => {
       navigateToModalWithMultipleFile({
         files,

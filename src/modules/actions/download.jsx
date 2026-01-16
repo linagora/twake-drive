@@ -33,7 +33,8 @@ export const download = ({
   showAlert,
   driveId,
   isSelectAll,
-  displayedFolder
+  displayedFolder,
+  isInfected
 }) => {
   const label = t('SelectionBar.download')
   const icon = DownloadIcon
@@ -47,6 +48,7 @@ export const download = ({
       // Then, we do not display the download button when the selection
       // includes an encrypted folder or several encrypted files
       return (
+        !isInfected &&
         files.length > 0 &&
         !files.some(file => isEncryptedFolder(file)) &&
         !(files.length > 1 && files.some(file => isEncryptedFile(file)))

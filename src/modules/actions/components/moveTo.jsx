@@ -9,7 +9,15 @@ import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import { navigateToModalWithMultipleFile } from '@/modules/actions/helpers'
 import { isSharedDriveFolder } from '@/modules/shareddrives/helpers'
 
-const moveTo = ({ t, canMove, pathname, navigate, isMobile, search }) => {
+const moveTo = ({
+  t,
+  canMove,
+  pathname,
+  navigate,
+  isMobile,
+  search,
+  isInfected
+}) => {
   const icon = MovetoIcon
   const label = isMobile
     ? t('SelectionBar.moveto_mobile')
@@ -21,6 +29,7 @@ const moveTo = ({ t, canMove, pathname, navigate, isMobile, search }) => {
     icon,
     displayCondition: docs => {
       return (
+        !isInfected &&
         docs.length > 0 &&
         canMove &&
         docs.every(doc => !isSharedDriveFolder(doc))

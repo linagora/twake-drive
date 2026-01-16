@@ -12,7 +12,14 @@ import { isEncryptedFileOrFolder } from '@/lib/encryption'
 import { navigateToModal } from '@/modules/actions/helpers'
 import { isSharedDriveFolder } from '@/modules/shareddrives/helpers'
 
-const share = ({ t, hasWriteAccess, navigate, pathname, allLoaded }) => {
+const share = ({
+  t,
+  hasWriteAccess,
+  navigate,
+  pathname,
+  allLoaded,
+  isInfected
+}) => {
   const label = t('Files.share.cta')
   const icon = ShareIcon
 
@@ -22,6 +29,7 @@ const share = ({ t, hasWriteAccess, navigate, pathname, allLoaded }) => {
     icon,
     displayCondition: files => {
       return (
+        !isInfected &&
         allLoaded && // We need to wait for the sharing context to be completely loaded to avoid race conditions
         hasWriteAccess &&
         files?.length === 1 &&

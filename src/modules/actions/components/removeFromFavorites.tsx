@@ -13,12 +13,14 @@ interface removeFromFavoritesProps {
   t: (key: string, options?: Record<string, unknown>) => string
   client: CozyClient
   showAlert: import('cozy-ui/transpiled/react/providers/Alert').showAlertFunction
+  isInfected?: boolean
 }
 
 const removeFromFavorites = ({
   t,
   client,
-  showAlert
+  showAlert,
+  isInfected
 }: removeFromFavoritesProps): Action => {
   const label = t('favorites.label.remove')
   const icon = StarIcon
@@ -28,6 +30,7 @@ const removeFromFavorites = ({
     label,
     icon,
     displayCondition: docs =>
+      !isInfected &&
       docs.length > 0 &&
       docs.every(doc => doc.cozyMetadata?.favorite) &&
       !docs[0]?.driveId,
