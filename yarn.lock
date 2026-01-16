@@ -5838,10 +5838,10 @@ cozy-search@^0.14.1:
     react-type-animation "3.2.0"
     rooks "7.14.1"
 
-cozy-sharing@^28.1.1:
-  version "28.1.1"
-  resolved "https://registry.yarnpkg.com/cozy-sharing/-/cozy-sharing-28.1.1.tgz#c684e62cbb785dcc196813b79b7726c48f464dd0"
-  integrity sha512-1caXO0a13PO5i+UWf0v9keyep6o3qSDgPTR+CksRuH8HPR1L0MFE7hoLfD+sVqIczXZqmmDunXvHtnmJoKH7lg==
+cozy-sharing@^28.2.1:
+  version "28.2.1"
+  resolved "https://registry.yarnpkg.com/cozy-sharing/-/cozy-sharing-28.2.1.tgz#4e459c9782dfbe8be2bbac722634a794b6c2771e"
+  integrity sha512-Nms5Gsbir9z2E/FgfDFjVaxb7q0XIz9ivQzHNAdcjO6CNLXlqHxCTl6XTB+GCashDHKujiJXV5Tir5u/LyI08g==
   dependencies:
     "@cozy/minilog" "^1.0.0"
     classnames "^2.5.1"
@@ -10875,9 +10875,9 @@ msgpack5@^4.0.2:
     readable-stream "^2.3.6"
     safe-buffer "^5.1.2"
 
-"mui-bottom-sheet@git+https://github.com/cozy/mui-bottom-sheet.git#v1.0.9":
+"mui-bottom-sheet@https://github.com/cozy/mui-bottom-sheet.git#v1.0.9":
   version "1.0.8"
-  resolved "git+https://github.com/cozy/mui-bottom-sheet.git#3dc4c2a245ab39079bc2f73546bccf80847be14c"
+  resolved "https://github.com/cozy/mui-bottom-sheet.git#3dc4c2a245ab39079bc2f73546bccf80847be14c"
   dependencies:
     "@juggle/resize-observer" "^3.1.3"
     jest-environment-jsdom-sixteen "^1.0.3"
