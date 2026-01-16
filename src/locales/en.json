@@ -234,7 +234,11 @@
     "qualify": "Categorize",
     "history": "History",
     "more": "More",
-    "openWithinNextcloud": "Open within Nextcloud"
+    "openWithinNextcloud": "Open within Nextcloud",
+    "infectedPopover": {
+      "title": "Downloading and sharing is blocked for security reasons",
+      "description": "Twake system detected a virus"
+    }
   },
   "DeleteConfirm": {
     "title": "Delete %{filename}? |||| Delete %{smart_count} %{type}?",

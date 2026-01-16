@@ -232,7 +232,11 @@
     "qualify": "Qualifier",
     "history": "Versions",
     "more": "Afficher plus d'action",
-    "openWithinNextcloud": "Ouvrir dans Nextcloud"
+    "openWithinNextcloud": "Ouvrir dans Nextcloud",
+    "infectedPopover": {
+      "title": "Le téléchargement et le partage sont bloqués pour des raisons de sécurité",
+      "description": "Le système Twake a détecté un virus"
+    }
   },
   "DeleteConfirm": {
     "title": "Supprimer %{filename} ? |||| Supprimer %{smart_count} %{type} ?",
