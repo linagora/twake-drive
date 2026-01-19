@@ -172,7 +172,9 @@ const FileThumbnail: React.FC<FileThumbnailProps> = ({
   const fileIconWithInfection = infected ? (
     <Badge
       size="large"
-      badgeContent={<Icon icon="warning-circle" color="var(--errorColor)" size={20} />}
+      badgeContent={
+        <Icon icon="warning-circle" color="var(--errorColor)" size={20} />
+      }
       withBorder={false}
       anchorOrigin={{
         vertical: 'bottom',

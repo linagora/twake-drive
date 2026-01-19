@@ -12,19 +12,18 @@ import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import Paper from 'cozy-ui/transpiled/react/Paper'
 import Popover from 'cozy-ui/transpiled/react/Popover'
 
-import { isInfected } from '@/modules/filelist/helpers'
+import {
+  filterActionsByPolicy,
+  hasAnyInfectedFile
+} from '@/modules/actions/policies'
+import type { DriveAction } from '@/modules/actions/types'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 
-type DriveAction = Record<
-  string,
-  {
-    displayInSelectionBar?: boolean
-  }
->
+type WrappedDriveAction = Record<string, DriveAction>
 
 const driveActionsToSelectionBarActions = (
-  driveActions: DriveAction[]
-): DriveAction[] => {
+  driveActions: WrappedDriveAction[]
+): WrappedDriveAction[] => {
   return driveActions.filter(driveAction => {
     const action = Object.values(driveAction)[0]
     return (
@@ -34,7 +33,7 @@ const driveActionsToSelectionBarActions = (
 }
 
 const SelectionBar: React.FC<{
-  actions?: DriveAction[]
+  actions?: WrappedDriveAction[]
   autoClose?: boolean
 }> = ({ actions, autoClose = false }) => {
   const { t } = useI18n()
@@ -52,16 +51,15 @@ const SelectionBar: React.FC<{
   }
 
   if (isSelectionBarVisible && actions) {
+    const selectedArray = Object.values(selectedItems)
     let convertedActions = driveActionsToSelectionBarActions(actions)
+    convertedActions = filterActionsByPolicy(convertedActions, selectedArray)
+    const hasInfectedItem = hasAnyInfectedFile(selectedArray)
 
     let color = 'default'
     let iconComponent = null
-    const hasInfectedItem = selectedItems.some(item => isInfected(item))
+
     if (hasInfectedItem) {
-      convertedActions = convertedActions.filter(driveAction => {
-        const actionName = Object.keys(driveAction)[0]
-        return actionName === 'trash'
-      })
       color = 'error'
       iconComponent = (): JSX.Element => (
         <div onMouseEnter={handlePopoverOpen} onMouseLeave={handlePopoverClose}>
@@ -102,7 +100,7 @@ const SelectionBar: React.FC<{
     return (
       <ActionsBar
         actions={convertedActions}
-        docs={selectedItems}
+        docs={selectedArray}
         onClose={hideSelectionBar}
         autoClose={autoClose}
         color={color}

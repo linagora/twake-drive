@@ -25,7 +25,7 @@ const makeComponent = (label, icon) => {
   return Component
 }
 
-export const versions = ({ t, navigate, pathname, isInfected }) => {
+export const versions = ({ t, navigate, pathname }) => {
   const label = t('SelectionBar.history')
   const icon = HistoryIcon
 
@@ -33,8 +33,9 @@ export const versions = ({ t, navigate, pathname, isInfected }) => {
     name: 'history',
     label,
     icon,
+    allowInfectedFiles: false,
     displayCondition: selection => {
-      return !isInfected && selection.length === 1 && isFile(selection[0])
+      return selection.length === 1 && isFile(selection[0])
     },
     action: files => {
       return navigateToModal({ navigate, pathname, files, path: 'revision' })
