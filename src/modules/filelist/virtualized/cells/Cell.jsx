@@ -13,6 +13,7 @@ import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import AcceptingSharingContext from '@/lib/AcceptingSharingContext'
 import { ActionMenuWithHeader } from '@/modules/actionmenu/ActionMenuWithHeader'
 import { getContextMenuActions } from '@/modules/actions/helpers'
+import { filterActionsByPolicy } from '@/modules/actions/policies'
 import {
   isRenaming as isRenamingSelector,
   getRenamingFile
@@ -156,11 +157,12 @@ const Cell = ({
       row._id !== 'io.cozy.files.shared-drives-dir' &&
       !row._id.endsWith('.trash-dir')
 
-    const contextMenuActions = getContextMenuActions(actions)
-
     if (!actions || !canInteractWithFile) {
       return null
     }
+
+    const filteredActions = filterActionsByPolicy(actions, [row])
+    const contextMenuActions = getContextMenuActions(filteredActions)
 
     return (
       <>

@@ -28,7 +28,7 @@ import { addToFavorites } from '@/modules/actions/components/addToFavorites'
 import { duplicateTo } from '@/modules/actions/components/duplicateTo'
 import { moveTo } from '@/modules/actions/components/moveTo'
 import { removeFromFavorites } from '@/modules/actions/components/removeFromFavorites'
-import { isInfected } from '@/modules/filelist/helpers'
+import { filterActionsByPolicy } from '@/modules/actions/policies'
 
 export const useMoreMenuActions = file => {
   const [isPrintAvailable, setIsPrintAvailable] = useState(false)
@@ -46,7 +46,6 @@ export const useMoreMenuActions = file => {
   const currentFolderId = useCurrentFolderId()
   const { isSharingShortcutCreated, addSharingLink, syncSharingLink } =
     useSharingInfos()
-  const infected = isInfected(file)
   const canWriteToCurrentFolder = hasWriteAccess(currentFolderId, file.driveId)
   const isPDFDoc = file.mime === 'application/pdf'
   const showPrintAction = isPDFDoc && isPrintAvailable
@@ -56,19 +55,19 @@ export const useMoreMenuActions = file => {
   const actions = makeActions(
     [
       share,
-      !infected && shareNative,
-      !infected && isCozySharing && addToCozySharingLink,
-      !infected && isCozySharing && syncToCozySharingLink,
+      shareNative,
+      isCozySharing && addToCozySharingLink,
+      isCozySharing && syncToCozySharingLink,
       download,
-      !infected && showPrintAction && print,
-      !infected && hr,
+      showPrintAction && print,
+      hr,
       moveTo,
-      !isSharedDrive && duplicateTo, // TO DO: Remove condtion when duplicating is available in shared drive
+      !isSharedDrive && duplicateTo, // TO DO: Remove condition when duplicating is available in shared drive
       addToFavorites,
       removeFromFavorites,
-      !infected && hr,
+      hr,
       versions,
-      !infected && hr,
+      hr,
       trash
     ],
     {
@@ -96,10 +95,11 @@ export const useMoreMenuActions = file => {
       fetchBlobFileById,
       isFile,
       addSharingLink,
-      driveId: file.driveId,
-      isInfected: infected
+      driveId: file.driveId
     }
   )
+
+  const filteredActions = filterActionsByPolicy(actions, [file])
 
   useEffect(() => {
     const init = async () => {
@@ -112,5 +112,5 @@ export const useMoreMenuActions = file => {
     init()
   }, [webviewIntent])
 
-  return actions
+  return filteredActions
 }

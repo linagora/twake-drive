@@ -53,6 +53,7 @@ export const trash = ({
   return {
     name: 'trash',
     icon,
+    allowInfectedFiles: true,
     displayCondition: files => files.length > 0 && hasWriteAccess,
     action: files => {
       return pushModal(

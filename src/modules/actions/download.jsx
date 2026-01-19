@@ -33,8 +33,7 @@ export const download = ({
   showAlert,
   driveId,
   isSelectAll,
-  displayedFolder,
-  isInfected
+  displayedFolder
 }) => {
   const label = t('SelectionBar.download')
   const icon = DownloadIcon
@@ -43,12 +42,12 @@ export const download = ({
     name: 'download',
     label,
     icon,
+    allowInfectedFiles: false,
     displayCondition: files => {
       // We cannot generate archive for encrypted files, for now.
       // Then, we do not display the download button when the selection
       // includes an encrypted folder or several encrypted files
       return (
-        !isInfected &&
         files.length > 0 &&
         !files.some(file => isEncryptedFolder(file)) &&
         !(files.length > 1 && files.some(file => isEncryptedFile(file)))

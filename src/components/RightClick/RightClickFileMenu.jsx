@@ -5,7 +5,7 @@ import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import { useRightClick } from '@/components/RightClick/RightClickProvider'
 import { getContextMenuActions } from '@/modules/actions/helpers'
-import { isInfected } from '@/modules/filelist/helpers'
+import { filterActionsByPolicy } from '@/modules/actions/policies'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 
 const RightClickFileMenu = ({
@@ -20,11 +20,14 @@ const RightClickFileMenu = ({
   const { isDesktop } = useBreakpoints()
   const { selectedItems, isItemSelected } = useSelectionContext()
 
-  const infected = isInfected(doc)
-  const contextMenuActions = getContextMenuActions(actions).filter(action => {
-    const isRemoveAction = Object.keys(action).includes('trash')
-    return infected ? isRemoveAction : true
-  })
+  const targetFiles = isItemSelected(doc._id)
+    ? Object.values(selectedItems)
+    : [doc]
+
+  const contextMenuActions = filterActionsByPolicy(
+    getContextMenuActions(actions),
+    targetFiles
+  )
 
   if (!children) return null
   if (disabled || !isDesktop)
@@ -53,7 +56,7 @@ const RightClickFileMenu = ({
       {isOpen(`${prefixMenuId ?? 'FileMenu'}-${doc._id}}`) && (
         <ActionsMenu
           open
-          docs={isItemSelected(doc._id) ? selectedItems : [doc]}
+          docs={targetFiles}
           actions={contextMenuActions}
           anchorReference="anchorPosition"
           anchorPosition={{ top: position.mouseY, left: position.mouseX }}

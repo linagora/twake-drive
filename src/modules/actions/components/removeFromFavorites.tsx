@@ -2,26 +2,25 @@ import React, { forwardRef } from 'react'
 
 import { splitFilename } from 'cozy-client/dist/models/file'
 import CozyClient from 'cozy-client/types/CozyClient'
-import { Action } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import StarIcon from 'cozy-ui/transpiled/react/Icons/Star'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 
+import type { ActionWithPolicy } from '../types'
+
 interface removeFromFavoritesProps {
   t: (key: string, options?: Record<string, unknown>) => string
   client: CozyClient
   showAlert: import('cozy-ui/transpiled/react/providers/Alert').showAlertFunction
-  isInfected?: boolean
 }
 
 const removeFromFavorites = ({
   t,
   client,
-  showAlert,
-  isInfected
-}: removeFromFavoritesProps): Action => {
+  showAlert
+}: removeFromFavoritesProps): ActionWithPolicy => {
   const label = t('favorites.label.remove')
   const icon = StarIcon
 
@@ -29,8 +28,8 @@ const removeFromFavorites = ({
     name: 'removeFromFavorites',
     label,
     icon,
+    allowInfectedFiles: false,
     displayCondition: docs =>
-      !isInfected &&
       docs.length > 0 &&
       docs.every(doc => doc.cozyMetadata?.favorite) &&
       !docs[0]?.driveId,

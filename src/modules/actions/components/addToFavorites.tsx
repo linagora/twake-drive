@@ -2,28 +2,27 @@ import React, { forwardRef } from 'react'
 
 import { splitFilename } from 'cozy-client/dist/models/file'
 import CozyClient from 'cozy-client/types/CozyClient'
-import { Action } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import StarOutlineIcon from 'cozy-ui/transpiled/react/Icons/StarOutline'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 
+import type { ActionWithPolicy } from '../types'
+
 interface addToFavoritesProps {
   t: (key: string, options?: Record<string, unknown>) => string
   client: CozyClient
   isMobile: boolean
   showAlert: import('cozy-ui/transpiled/react/providers/Alert').showAlertFunction
-  isInfected?: boolean
 }
 
 const addToFavorites = ({
   t,
   client,
   isMobile,
-  showAlert,
-  isInfected
-}: addToFavoritesProps): Action => {
+  showAlert
+}: addToFavoritesProps): ActionWithPolicy => {
   const icon = StarOutlineIcon
   const label = isMobile
     ? t('favorites.label.addMobile')
@@ -33,8 +32,8 @@ const addToFavorites = ({
     name: 'addToFavourites',
     label,
     icon,
+    allowInfectedFiles: false,
     displayCondition: docs =>
-      !isInfected &&
       docs.length > 0 &&
       docs.every(doc => !doc.cozyMetadata?.favorite) &&
       !docs[0]?.driveId,
