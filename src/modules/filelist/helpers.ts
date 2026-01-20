@@ -1,4 +1,5 @@
 import { splitFilename } from 'cozy-client/dist/models/file'
+import type { IOCozyFile } from 'cozy-client/types/types'
 
 import type { File } from '@/components/FolderPicker/types'
 import {
@@ -62,6 +63,8 @@ export interface FileWithAntivirusScan {
   }
 }
 
-export const isInfected = (file?: FileWithAntivirusScan | null): boolean => {
+export const isInfected = (
+  file?: (FileWithAntivirusScan & Partial<IOCozyFile>) | null
+): boolean => {
   return file?.antivirus_scan?.status === 'infected'
 }
