@@ -84,15 +84,35 @@ const useTransformFolderListHasSharedDriveShortcuts = (
   )
 
   /**
+   * Create a Set of shared drive IDs for efficient lookup
+   */
+  const sharedDriveIds = useMemo(
+    () =>
+      new Set(
+        sharedDrives
+          .filter(d => !isNextcloudShortcut(d as unknown as IOCozyFile))
+          .map((drive: SharedDrive) => drive.id)
+      ),
+    [sharedDrives]
+  )
+
+  /**
    * Exclude shared drives from the folderList,
    * since it will be replaced with transformed ones above.
+   * Also exclude files that are referenced by a shared drive to avoid duplicates.
    */
-  const nonSharedDriveList =
-    folderList?.filter(
-      item =>
-        item.dir_id !== SHARED_DRIVES_DIR_ID &&
-        (!showNextcloudFolder ? !isNextcloudShortcut(item) : true)
-    ) ?? []
+  const nonSharedDriveList = useMemo(
+    () =>
+      folderList?.filter(item => {
+        const referencedById = item.relationships?.referenced_by?.data?.[0]?.id
+        return (
+          item.dir_id !== SHARED_DRIVES_DIR_ID &&
+          !(referencedById && sharedDriveIds.has(referencedById)) &&
+          (!showNextcloudFolder ? !isNextcloudShortcut(item) : true)
+        )
+      }) ?? [],
+    [folderList, sharedDriveIds, showNextcloudFolder]
+  )
 
   return {
     sharedDrives: transformedSharedDrives,

@@ -25,7 +25,7 @@ const mockUseSharedDrives =
 
 describe('useTransformFolderListHasSharedDriveShortcuts', () => {
   beforeEach(() => {
-    jest.clearAllMocks()
+    jest.resetAllMocks()
 
     mockUseSharingContext.mockReturnValue({
       isOwner: jest.fn(() => false)
@@ -209,6 +209,62 @@ describe('useTransformFolderListHasSharedDriveShortcuts', () => {
         'Regular File',
         'Nextcloud File'
       ])
+    })
+
+    it('should exclude files referenced by shared drives to avoid duplicates', () => {
+      const mockSharedDrives = [
+        {
+          id: 'sharing-1',
+          rules: [
+            {
+              values: ['folder-1'],
+              title: 'Shared Drive 1'
+            }
+          ]
+        }
+      ]
+
+      const mockFolderList = [
+        {
+          _id: 'file-1',
+          id: 'file-1',
+          name: 'Regular File',
+          dir_id: 'regular-folder',
+          relationships: {}
+        },
+        {
+          _id: 'file-2',
+          id: 'file-2',
+          name: 'Shared Drive File',
+          dir_id: 'regular-folder',
+          relationships: {
+            referenced_by: {
+              data: [{ id: 'sharing-1' }]
+            }
+          }
+        }
+      ]
+
+      mockUseSharedDrives.mockReturnValue({
+        sharedDrives: mockSharedDrives,
+        isLoaded: true
+      })
+
+      mockUseSharingContext.mockReturnValue({
+        isOwner: jest.fn(id => id === 'file-2')
+      })
+
+      const { result } = renderHook(() =>
+        useTransformFolderListHasSharedDriveShortcuts(mockFolderList, true)
+      )
+
+      // The file referenced by the shared drive should not be in nonSharedDriveList
+      expect(result.current.nonSharedDriveList).toHaveLength(1)
+      expect(result.current.nonSharedDriveList[0].name).toBe('Regular File')
+
+      // But it should be in transformedSharedDrives
+      expect(result.current.sharedDrives).toHaveLength(1)
+      expect(result.current.sharedDrives[0].name).toBe('Shared Drive File')
     })
   })
 })
