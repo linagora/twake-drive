@@ -10,7 +10,7 @@ import 'cozy-bar/dist/stylesheet.css'
 import 'cozy-sharing/dist/stylesheet.css'
 
 import React from 'react'
-import { render } from 'react-dom'
+import { createRoot } from 'react-dom/client'
 import { HashRouter } from 'react-router-dom'
 import 'whatwg-fetch'
 
@@ -34,15 +34,14 @@ import configureStore from '@/store/configureStore'
 import styles from '@/styles/main.styl'
 
 const renderError = (lang, root) =>
-  render(
+  createRoot(root).render(
     <I18n lang={lang} dictRequire={lang => require(`@/locales/${lang}`)}>
       <CozyTheme ignoreCozySettings className="u-w-100">
         <main className={styles['center-layout']}>
           <ErrorShare errorType="public_unshared" />
         </main>
       </CozyTheme>
-    </I18n>,
-    root
+    </I18n>
   )
 
 const init = async () => {
@@ -93,7 +92,7 @@ const init = async () => {
         pathname: joinPath(location.pathname, '')
       })
     } else {
-      render(
+      createRoot(root).render(
         <App
           isPublic
           lang={lang}
@@ -110,8 +109,7 @@ const init = async () => {
               sharedDocumentId={sharedDocumentId}
             />
           </HashRouter>
-        </App>,
-        root
+        </App>
       )
     }
   } catch (e) {

@@ -1,4 +1,4 @@
-import { render, act } from '@testing-library/react'
+import { render, waitFor } from '@testing-library/react'
 import React from 'react'
 
 import { useAppLinkWithStoreFallback } from 'cozy-client'
@@ -18,12 +18,13 @@ mockCozyClientRequestQuery()
 const setup = async (
   { folderId = 'directory-foobar0' } = {},
   {
-    isDisabled = false,
+    isUploadDisabled = false,
     canCreateFolder = false,
     canUpload = true,
-    hasWriteAccess = true,
+    refreshFolderContent = true,
     isPublic = false,
-    isEncryptedFolder = false
+    isEncryptedFolder = false,
+    isReadOnly = false
   } = {}
 ) => {
   const { client, store } = await setupFolderContent({
@@ -38,19 +39,19 @@ const setup = async (
     <AppLike client={client} store={store}>
       <ScannerProvider displayedFolder={displayedFolder}>
         <AddMenuContent
-          isDisabled={isDisabled}
+          isUploadDisabled={isUploadDisabled}
           canCreateFolder={canCreateFolder}
           canUpload={canUpload}
-          hasWriteAccess={hasWriteAccess}
+          refreshFolderContent={refreshFolderContent}
           isPublic={isPublic}
           isEncryptedFolder={isEncryptedFolder}
           displayedFolder={displayedFolder}
           onClick={() => {}}
+          isReadOnly={isReadOnly}
         />
       </ScannerProvider>
     </AppLike>
   )
-
   return { root }
 }
 
@@ -64,7 +65,7 @@ describe('AddMenuContent', () => {
     })
 
     it('does not display createNote on public Page', async () => {
-      await act(async () => {
+      await waitFor(async () => {
         const { root } = await setup(
           { folderId: 'directory-foobar0' },
           { isPublic: true }
@@ -75,7 +76,7 @@ describe('AddMenuContent', () => {
     })
 
     it('displays createNote on private Page', async () => {
-      await act(async () => {
+      await waitFor(async () => {
         const { root } = await setup(
           { folderId: 'directory-foobar0' },
           { isPublic: false }
@@ -86,7 +87,7 @@ describe('AddMenuContent', () => {
     })
 
     it('does not display non-supported items inside an encrypted directory', async () => {
-      await act(async () => {
+      await waitFor(async () => {
         const { root } = await setup(
           { folderId: 'directory-foobar0' },
           { isEncryptedFolder: true }

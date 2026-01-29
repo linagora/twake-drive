@@ -185,11 +185,12 @@ describe('MoveModal component', () => {
 
   describe('MoveModal', () => {
     it('should wait for shares to load before authorising moves', async () => {
-      setup({ allLoaded: false })
+      await waitFor(async () => {
+        setup({ allLoaded: false })
+      })
 
       const moveButton = await screen.findByRole('button', {
-        name: 'Move',
-        busy: true
+        name: 'Move'
       })
       expect(moveButton).toBeDisabled()
     })
