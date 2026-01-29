@@ -15,7 +15,7 @@ import 'cozy-sharing/dist/stylesheet.css'
 
 import 'whatwg-fetch'
 import React from 'react'
-import { render } from 'react-dom'
+import { createRoot } from 'react-dom/client'
 import { HashRouter } from 'react-router-dom'
 
 import setupApp from './setupAppContext'
@@ -33,17 +33,23 @@ const AppComponent = props => (
   </App>
 )
 
+let appRoot = null
+
 const init = () => {
   const { locale, polyglot, client, store, root } = setupApp()
 
-  render(
+  // To avoid duplicate appRoot due to multiple init()
+  if (!appRoot) {
+    appRoot = createRoot(root)
+  }
+
+  appRoot.render(
     <AppComponent
       lang={locale}
       polyglot={polyglot}
       client={client}
       store={store}
-    />,
-    root
+    />
   )
 }
 document.addEventListener('DOMContentLoaded', () => {
