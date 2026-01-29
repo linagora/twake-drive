@@ -302,6 +302,7 @@
     }
   },
   "actions": {
+    "details": "Dettagli",
     "personalizeFolder": {
       "label": "Personalizza cartella"
     },

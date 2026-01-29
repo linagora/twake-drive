@@ -662,6 +662,7 @@
     "error": "Đã xảy ra lỗi, vui lòng thử lại."
   },
   "actions": {
+    "details": "Chi tiết",
     "infos": "Chi tiết và phân loại",
     "infosMobile": "Chi tiết",
     "duplicateTo": {

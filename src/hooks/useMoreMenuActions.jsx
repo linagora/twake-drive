@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useI18n } from 'twake-i18n'
 
 import { useClient } from 'cozy-client'
@@ -28,6 +28,7 @@ import { addToFavorites } from '@/modules/actions/components/addToFavorites'
 import { duplicateTo } from '@/modules/actions/components/duplicateTo'
 import { moveTo } from '@/modules/actions/components/moveTo'
 import { removeFromFavorites } from '@/modules/actions/components/removeFromFavorites'
+import { details } from '@/modules/actions/details'
 import { filterActionsByPolicy } from '@/modules/actions/policies'
 
 export const useMoreMenuActions = file => {
@@ -46,6 +47,7 @@ export const useMoreMenuActions = file => {
   const currentFolderId = useCurrentFolderId()
   const { isSharingShortcutCreated, addSharingLink, syncSharingLink } =
     useSharingInfos()
+  const location = useLocation()
   const canWriteToCurrentFolder = hasWriteAccess(currentFolderId, file.driveId)
   const isPDFDoc = file.mime === 'application/pdf'
   const showPrintAction = isPDFDoc && isPrintAvailable
@@ -60,6 +62,7 @@ export const useMoreMenuActions = file => {
       isCozySharing && syncToCozySharingLink,
       download,
       showPrintAction && print,
+      details,
       hr,
       moveTo,
       !isSharedDrive && duplicateTo, // TO DO: Remove condition when duplicating is available in shared drive
@@ -95,7 +98,8 @@ export const useMoreMenuActions = file => {
       fetchBlobFileById,
       isFile,
       addSharingLink,
-      driveId: file.driveId
+      driveId: file.driveId,
+      location
     }
   )
 

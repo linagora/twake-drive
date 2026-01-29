@@ -414,6 +414,7 @@
     "empty": "問い合わせ “%{query}” の結果が見つかりません"
   },
   "actions": {
+    "details": "詳細",
     "personalizeFolder": {
       "label": "フォルダをカスタマイズ"
     },

@@ -176,6 +176,7 @@
     "cannot_copy_shared_drive": "您無法複製共用雲端硬碟資料夾"
   },
   "actions": {
+    "details": "詳細資訊",
     "personalizeFolder": {
       "label": "個性化資料夾"
     },

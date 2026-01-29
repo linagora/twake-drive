@@ -88,6 +88,7 @@
     }
   },
   "actions": {
+    "details": "세부 정보",
     "personalizeFolder": {
       "label": "폴더 개인화"
     },

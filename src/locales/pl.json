@@ -85,6 +85,7 @@
     "cannot_copy_shared_drive": "Nie możesz skopiować folderu dysku współdzielonego"
   },
   "actions": {
+    "details": "Szczegóły",
     "personalizeFolder": {
       "label": "Personalizuj folder"
     },

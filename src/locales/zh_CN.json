@@ -90,6 +90,7 @@
     "cannot_copy_shared_drive": "您无法复制共享云端硬盘文件夹"
   },
   "actions": {
+    "details": "详细信息",
     "personalizeFolder": {
       "label": "个性化文件夹"
     },
