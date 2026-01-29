@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import React from 'react'
 
 import { createMockClient, useQuery } from 'cozy-client'
@@ -185,11 +185,12 @@ describe('MoveModal component', () => {
 
   describe('MoveModal', () => {
     it('should wait for shares to load before authorising moves', async () => {
-      setup({ allLoaded: false })
+      await act(async () => {
+        setup({ allLoaded: false })
+      })
 
       const moveButton = await screen.findByRole('button', {
-        name: 'Move',
-        busy: true
+        name: 'Move'
       })
       expect(moveButton).toBeDisabled()
     })

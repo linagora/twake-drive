@@ -1,4 +1,4 @@
-import { render, fireEvent } from '@testing-library/react'
+import { render, fireEvent, act } from '@testing-library/react'
 import React from 'react'
 
 import { AddFolder } from './AddFolder'
@@ -35,11 +35,18 @@ describe('AddFolder', () => {
   }
 
   it('should call onSubmit with folder name', async () => {
-    const { container, onSubmit } = setup()
+    let container, onSubmit
+    await act(async () => {
+      const result = setup()
+      container = result.container
+      onSubmit = result.onSubmit
+    })
 
     const input = await container.findByRole('textbox')
-    fireEvent.change(input, { target: { value: 'Mes photos de chat' } })
-    input.blur()
+    await act(async () => {
+      fireEvent.change(input, { target: { value: 'Mes photos de chat' } })
+      input.blur()
+    })
 
     expect(onSubmit).toHaveBeenCalledWith(
       'Mes photos de chat',
