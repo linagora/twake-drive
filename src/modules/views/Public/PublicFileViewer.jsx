@@ -88,6 +88,11 @@ const PublicFileViewer = () => {
       isPublic={true}
       onChangeRequest={handleChange}
       onCloseRequest={handleClose}
+      componentsProps={{
+        toolbarProps: {
+          hideSummarizeBtn: true
+        }
+      }}
     >
       <FooterActionButtons>
         <ForwardOrDownloadButton />

@@ -25,7 +25,7 @@ const makeComponent = (label, icon) => {
   return Component
 }
 
-export const summariseByAI = ({ t, hasWriteAccess, navigate }) => {
+export const summariseByAI = ({ t, hasWriteAccess, navigate, isPublic }) => {
   const label = t('actions.summariseByAI')
   const icon = ArticleIcon
 
@@ -36,7 +36,8 @@ export const summariseByAI = ({ t, hasWriteAccess, navigate }) => {
     displayCondition: files =>
       flag('ai.available') &&
       isFileSummaryCompatible(files[0]) &&
-      hasWriteAccess,
+      hasWriteAccess &&
+      !isPublic,
     action: files => {
       const file = files[0]
       navigate(`file/${file._id}`, {
