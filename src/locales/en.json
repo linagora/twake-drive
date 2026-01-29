@@ -675,6 +675,7 @@
     "error": "An error occurred, please try again."
   },
   "actions": {
+    "details": "Details",
     "infos": "Details and qualification",
     "infosMobile": "Details",
     "duplicateTo": {

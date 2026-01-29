@@ -147,6 +147,7 @@
     }
   },
   "actions": {
+    "details": "تفاصيل",
     "personalizeFolder": {
       "label": "تخصيص المجلد"
     },

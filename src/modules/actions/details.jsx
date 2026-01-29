@@ -3,10 +3,9 @@ import React, { forwardRef } from 'react'
 import flag from 'cozy-flags'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
 import Icon from 'cozy-ui/transpiled/react/Icon'
-import ArticleIcon from 'cozy-ui/transpiled/react/Icons/Article'
+import InfoOutlinedIcon from 'cozy-ui/transpiled/react/Icons/InfoOutlined'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
-import { isFileSummaryCompatible } from 'cozy-viewer/dist/helpers'
 
 const makeComponent = (label, icon) => {
   const Component = forwardRef((props, ref) => {
@@ -20,29 +19,32 @@ const makeComponent = (label, icon) => {
     )
   })
 
-  Component.displayName = 'summariseByAI'
+  Component.displayName = 'details'
 
   return Component
 }
 
-export const summariseByAI = ({ t, hasWriteAccess, navigate }) => {
-  const label = t('actions.summariseByAI')
-  const icon = ArticleIcon
+export const details = ({ t, navigate, location }) => {
+  const icon = InfoOutlinedIcon
+  const label = t('actions.details')
 
   return {
-    name: 'summariseByAI',
-    label,
+    name: 'details',
     icon,
-    displayCondition: files =>
-      flag('ai.available') &&
-      isFileSummaryCompatible(files[0]) &&
-      hasWriteAccess,
-    action: files => {
-      const file = files[0]
-      navigate(`file/${file._id}`, {
-        state: { showAIAssistant: true }
+    label,
+    allowInfectedFiles: false,
+    displayCondition: () =>
+      flag('drive.new-file-viewer-ui.enabled') &&
+      location?.state?.showDetailPanel === false,
+    Component: makeComponent(label, icon),
+    action: () => {
+      navigate(location.pathname, {
+        replace: true,
+        state: {
+          ...location.state,
+          showDetailPanel: true
+        }
       })
-    },
-    Component: makeComponent(label, icon)
+    }
   }
 }

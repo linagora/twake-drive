@@ -102,6 +102,7 @@
     "cannot_copy_shared_drive": "Je kunt de gedeelde schijfmap niet kopiëren"
   },
   "actions": {
+    "details": "Details",
     "personalizeFolder": {
       "label": "Map personaliseren"
     },

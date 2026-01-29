@@ -672,6 +672,7 @@
     "error": "Une erreur est survenue, merci de réessayer."
   },
   "actions": {
+    "details": "Détails",
     "infos": "Détails et qualification",
     "infosMobile": "Détails",
     "duplicateTo": {

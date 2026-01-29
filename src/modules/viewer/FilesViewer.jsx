@@ -4,7 +4,11 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useI18n } from 'twake-i18n'
 
 import { Q, useClient } from 'cozy-client'
+import flag from 'cozy-flags'
 import { useVaultClient } from 'cozy-keys-lib'
+import Button from 'cozy-ui/transpiled/react/Buttons'
+import Icon from 'cozy-ui/transpiled/react/Icon'
+import ShareIcon from 'cozy-ui/transpiled/react/Icons/Share'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import Viewer, {
   FooterActionButtons,
@@ -24,6 +28,7 @@ import {
   getDecryptedFileURL
 } from '@/lib/encryption'
 import logger from '@/lib/logger'
+import { navigateToModal } from '@/modules/actions/helpers'
 import Fallback from '@/modules/viewer/Fallback'
 import MoreMenu from '@/modules/viewer/MoreMenu'
 import {
@@ -205,6 +210,23 @@ const FilesViewer = ({ filesQuery, files, onClose, onChange, viewerProps }) => {
         >
           <ToolbarButtons>
             <MoreMenu file={viewerFiles[viewerIndex]} />
+
+            {flag('drive.new-file-viewer-ui.enabled') && (
+              <Button
+                variant="secondary"
+                aria-label={t('Viewer.share_btn')}
+                label={t('Viewer.share_btn')}
+                startIcon={<Icon icon={ShareIcon} />}
+                onClick={() =>
+                  navigateToModal({
+                    navigate,
+                    pathname: '',
+                    files,
+                    path: 'share'
+                  })
+                }
+              />
+            )}
           </ToolbarButtons>
           <FooterActionButtons>
             <SharingButton />

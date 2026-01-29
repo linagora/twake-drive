@@ -452,6 +452,7 @@
     }
   },
   "actions": {
+    "details": "Detalles",
     "personalizeFolder": {
       "label": "Personalizar carpeta"
     },

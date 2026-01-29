@@ -479,6 +479,7 @@
     "empty": "Es wurde kein Ergebnis für die Suche \"%{query}\" gefunden"
   },
   "actions": {
+    "details": "Details",
     "personalizeFolder": {
       "label": "Ordner personalisieren"
     },
