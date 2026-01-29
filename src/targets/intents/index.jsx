@@ -8,7 +8,7 @@ import 'cozy-sharing/dist/stylesheet.css'
 import 'whatwg-fetch'
 import React from 'react'
 import { getQueryParameter } from '@/lib/react-cozy-helpers'
-import { render } from 'react-dom'
+import { createRoot } from 'react-dom/client'
 
 import CozyClient from 'cozy-client'
 
@@ -39,14 +39,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   registerClientPlugins(client)
 
-  render(
+  createRoot(root).render(
     <DriveProvider
       client={client}
       lang={data.locale}
       dictRequire={lang => require(`@/locales/${lang}`)}
     >
       <IntentHandler intentId={intent} />
-    </DriveProvider>,
-    root
+    </DriveProvider>
   )
 })

@@ -1,6 +1,6 @@
 'use strict'
 
-import { render, fireEvent } from '@testing-library/react'
+import { render, fireEvent, waitFor } from '@testing-library/react'
 import React from 'react'
 
 import { createMockClient } from 'cozy-client'
@@ -76,18 +76,28 @@ describe('File', () => {
     it('should show actions menu when clicking the actionsMenu button', async () => {
       // TODO : Fix https://github.com/cozy/cozy-drive/issues/2913
       jest.spyOn(console, 'warn').mockImplementation()
-      const { root } = setup()
+      let root
+      await waitFor(async () => {
+        root = setup().root
+      })
       const { getByRole, findByText } = root
 
-      fireEvent.click(getByRole('button', { description: 'More' }))
+      await waitFor(async () => {
+        fireEvent.click(getByRole('button', { name: 'More' }))
+      })
       expect(await findByText('ActionsMenuItem'))
     })
 
     it('should not show select all in actions menu when clicking the actionsMenu button', async () => {
-      const { root } = setup()
+      let root
+      await waitFor(async () => {
+        root = setup().root
+      })
       const { getByRole, queryByText } = root
 
-      fireEvent.click(getByRole('button', { description: 'More' }))
+      await waitFor(async () => {
+        fireEvent.click(getByRole('button', { name: 'More' }))
+      })
       // "SelectAllMenuItem" should be filtered out by File before rendering
       expect(queryByText('SelectAllMenuItem')).toBeNull()
     })
@@ -112,11 +122,16 @@ describe('File', () => {
       expect(getByTestId('fil-file-thumbnail--spinner'))
     })
 
-    it('should not show actions menu when clicking the actionsMenu button', () => {
-      const { root } = setup({ isInSyncFromSharing: true })
+    it('should not show actions menu when clicking the actionsMenu button', async () => {
+      let root
+      await waitFor(async () => {
+        root = setup({ isInSyncFromSharing: true }).root
+      })
       const { getByRole, queryByText } = root
 
-      fireEvent.click(getByRole('button', { description: 'More' }))
+      await waitFor(async () => {
+        fireEvent.click(getByRole('button', { name: 'More' }))
+      })
       expect(queryByText('ActionsMenuItem')).toBeNull()
     })
 
