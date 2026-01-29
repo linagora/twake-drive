@@ -1,3 +1,4 @@
+import cx from 'classnames'
 import React, { forwardRef, useMemo, useRef, useState } from 'react'
 
 import VirtualizedTable from 'cozy-ui/transpiled/react/Table/Virtualized'
@@ -6,6 +7,8 @@ import virtuosoComponentsDnd from 'cozy-ui/transpiled/react/Table/Virtualized/Dn
 import CustomDragLayer from 'cozy-ui/transpiled/react/utils/Dnd/CustomDrag/CustomDragLayer'
 
 import { secondarySort } from '../helpers'
+
+import styles from '@/styles/filelist.styl'
 
 import RightClickFileMenu from '@/components/RightClick/RightClickFileMenu'
 import { useClipboardContext } from '@/contexts/ClipboardProvider'
@@ -26,6 +29,7 @@ const TableRow = forwardRef(({ item, context, children, ...props }, ref) => {
         item={item}
         context={context}
         componentsProps={{ tableRow: { disabled: isCut } }}
+        data-file-id={item._id}
       >
         {children}
       </TableRowDnD>
@@ -58,7 +62,7 @@ const Table = forwardRef(
       driveId,
       orderProps = {
         sortOrder: {},
-        setOrder: () => {}
+        setOrder: () => { }
       },
       onInteractWithFile,
       refreshFolderContent
@@ -127,7 +131,7 @@ const Table = forwardRef(
 
     return (
       <div
-        className="u-h-100"
+        className={cx('u-h-100', styles['fil-file-list-container'])}
         ref={ref}
         tabIndex={0}
         style={{ outline: 'none' }}
