@@ -18,7 +18,8 @@ const RightClickFileMenu = ({
 }) => {
   const { position, isOpen, onOpen, onClose } = useRightClick()
   const { isDesktop } = useBreakpoints()
-  const { selectedItems, isItemSelected } = useSelectionContext()
+  const { selectedItems, isItemSelected, setSelectedItems, showSelectionBar } =
+    useSelectionContext()
 
   const targetFiles = isItemSelected(doc._id)
     ? Object.values(selectedItems)
@@ -46,14 +47,19 @@ const RightClickFileMenu = ({
           ? React.cloneElement(child, {
               ...props,
               onContextMenu: ev => {
-                onOpen(ev, `${prefixMenuId ?? 'FileMenu'}-${doc._id}}`)
+                // If the file is not already selected, select it (clearing other selections)
+                if (!isItemSelected(doc._id)) {
+                  setSelectedItems({ [doc._id]: doc })
+                  showSelectionBar()
+                }
+                onOpen(ev, `${prefixMenuId ?? 'FileMenu'}-${doc._id}`)
                 ev.preventDefault()
                 ev.stopPropagation()
               }
             })
           : null
       )}
-      {isOpen(`${prefixMenuId ?? 'FileMenu'}-${doc._id}}`) && (
+      {isOpen(`${prefixMenuId ?? 'FileMenu'}-${doc._id}`) && (
         <ActionsMenu
           open
           docs={targetFiles}
