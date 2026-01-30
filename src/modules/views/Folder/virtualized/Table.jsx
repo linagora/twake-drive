@@ -7,6 +7,7 @@ import React, {
   useState
 } from 'react'
 
+import flag from 'cozy-flags'
 import VirtualizedTable from 'cozy-ui/transpiled/react/Table/Virtualized'
 import TableRowDnD from 'cozy-ui/transpiled/react/Table/Virtualized/Dnd/TableRow'
 import virtuosoComponentsDnd from 'cozy-ui/transpiled/react/Table/Virtualized/Dnd/virtuosoComponents'
@@ -68,7 +69,7 @@ const Table = forwardRef(
       driveId,
       orderProps = {
         sortOrder: {},
-        setOrder: () => { }
+        setOrder: () => {}
       },
       onInteractWithFile,
       refreshFolderContent
@@ -155,6 +156,7 @@ const Table = forwardRef(
           components={components}
           rows={rows}
           columns={columns}
+          withCheckbox={!flag('drive.dynamic-selection.enabled')}
           endReached={fetchMore}
           defaultOrder={{
             direction: sortOrder.order,
