@@ -64,12 +64,15 @@ const Grid = forwardRef(
       driveId,
       onInteractWithFile,
       selectedItems,
-      isSelectedItem
+      isSelectedItem,
+      virtuosoRef: parentVirtuosoRef,
+      scrollerRef
     },
     ref
   ) => {
     const vaultClient = useVaultClient()
-    const virtuosoRef = useRef(null)
+    const internalVirtuosoRef = useRef(null)
+    const virtuosoRef = parentVirtuosoRef || internalVirtuosoRef
     const [itemsInDropProcess, setItemsInDropProcess] = useState([])
 
     const componentProps = useMemo(
@@ -163,6 +166,7 @@ const Grid = forwardRef(
         {dragProps?.dragId && <CustomDragLayer dragId={dragProps.dragId} />}
         <VirtualizedGridList
           ref={virtuosoRef}
+          scrollerRef={scrollerRef}
           components={mergedComponents}
           items={items}
           endReached={fetchMore}
