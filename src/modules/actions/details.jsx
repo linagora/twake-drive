@@ -33,16 +33,15 @@ export const details = ({ t, navigate, location }) => {
     icon,
     label,
     allowInfectedFiles: false,
-    displayCondition: () =>
-      flag('drive.new-file-viewer-ui.enabled') &&
-      location?.state?.showDetailPanel === false,
+    displayCondition: () => flag('drive.new-file-viewer-ui.enabled'),
     Component: makeComponent(label, icon),
     action: () => {
       navigate(location.pathname, {
         replace: true,
         state: {
           ...location.state,
-          showDetailPanel: true
+          triggerDetailPanelTime:
+            (location?.state?.triggerDetailPanelTime || 0) + 1
         }
       })
     }
