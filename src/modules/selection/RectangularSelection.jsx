@@ -1,4 +1,4 @@
-import React, { useRef, useCallback } from 'react'
+import React, { useRef, useCallback, useState, useMemo } from 'react'
 import Selecto from 'react-selecto'
 
 import styles from './RectangularSelection.styl'
@@ -14,15 +14,18 @@ import { useSelectionContext } from './SelectionProvider'
  * @param {Array<Object>} props.items - List of file items available for selection
  * @param {React.RefObject} props.scrollContainerRef - Ref to the scrollable container for auto-scroll during selection (fallback)
  * @param {HTMLElement|null} props.scrollElement - Direct HTMLElement for the scroll container (preferred over scrollContainerRef)
+ * @param {HTMLElement|React.RefObject} props.dragContainer - Container element where drag selection can be initiated (defaults to containerRef.current)
  * @returns {React.ReactElement} The rectangular selection wrapper component
  */
 const RectangularSelection = ({
   children,
   items,
   scrollContainerRef,
-  scrollElement
+  scrollElement,
+  dragContainer: dragContainerProp
 }) => {
-  const containerRef = useRef(null)
+  // Use state instead of ref to trigger re-render when container is mounted
+  const [containerElement, setContainerElement] = useState(null)
   const { setSelectedItems, selectedItems, setIsSelectAll } =
     useSelectionContext()
   const isDraggingRef = useRef(false)
@@ -35,7 +38,7 @@ const RectangularSelection = ({
    * @param {Element} el - DOM element with data-file-id attribute
    * @returns {Object|undefined} The file object matching the element's ID, or undefined if not found
    */
-  const itemsMap = React.useMemo(() => {
+  const itemsMap = useMemo(() => {
     const map = new Map()
     for (const item of items) {
       map.set(item._id, item)
@@ -191,38 +194,49 @@ const RectangularSelection = ({
   // or fall back to scrollContainerRef.current for non-virtualized containers
   const scrollContainer = scrollElement || scrollContainerRef?.current
 
+  const dragContainer = useMemo(() => {
+    if (dragContainerProp !== undefined) {
+      const propValue = dragContainerProp?.current || dragContainerProp
+      // If prop is provided but value is null, fallback to internal container
+      return propValue || containerElement
+    }
+    return containerElement
+  }, [dragContainerProp, containerElement])
+
   return (
     <div
-      ref={containerRef}
+      ref={setContainerElement}
       className="u-h-100 rectangular-selection-container"
       onClick={handleContainerClick}
     >
       {children}
-      <Selecto
-        className={styles['cozy-selecto-box']}
-        container={containerRef.current}
-        dragContainer={window}
-        selectableTargets={['[data-file-id]']}
-        selectByClick={false}
-        selectFromInside={false}
-        hitRate={10}
-        ratio={0}
-        toggleContinueSelect="ctrl"
-        continueSelect={false}
-        dragCondition={dragCondition}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-        onSelect={handleSelect}
-        scrollOptions={
-          scrollContainer
-            ? {
-                container: scrollContainer,
-                throttleTime: 30,
-                threshold: 30
-              }
-            : undefined
-        }
-      />
+      {containerElement && dragContainer && (
+        <Selecto
+          className={styles['cozy-selecto-box']}
+          container={containerElement}
+          dragContainer={dragContainer}
+          selectableTargets={['[data-file-id]']}
+          selectByClick={false}
+          selectFromInside={false}
+          hitRate={10}
+          ratio={0}
+          toggleContinueSelect="ctrl" // special key to extend the current selection
+          continueSelect={false} // do not allow to extend the current selection without special key
+          dragCondition={dragCondition}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          onSelect={handleSelect}
+          scrollOptions={
+            scrollContainer
+              ? {
+                  container: scrollContainer,
+                  throttleTime: 30,
+                  threshold: 30
+                }
+              : undefined
+          }
+        />
+      )}
     </div>
   )
 }
