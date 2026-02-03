@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react'
+import { render, waitFor } from '@testing-library/react'
 import localforage from 'localforage'
 import React from 'react'
 
@@ -23,26 +23,29 @@ describe('CallToAction', () => {
     localforage.getItem = jest.fn().mockResolvedValueOnce(false)
 
     // When
-    await render(<CallToAction t={jest.fn()} />)
+    await waitFor(async () => {
+      render(<CallToAction t={jest.fn()} />)
+    })
 
     // Then
     expect(localforage.getItem).toHaveBeenCalledWith(NOVIEWER_DESKTOP_CTA)
   })
 
-  it('should use rel="noreferrer" (which implies rel="noopener", because it is a security risk', done => {
+  it('should use rel="noreferrer" (which implies rel="noopener", because it is a security risk', async () => {
     // Given
     localforage.getItem = jest.fn().mockResolvedValueOnce(false)
 
     // When
-    const { container } = render(<CallToAction t={jest.fn()} />)
+    let container
+    await waitFor(async () => {
+      const result = render(<CallToAction t={jest.fn()} />)
+      container = result.container
+    })
 
     // Then
-    setTimeout(() => {
-      expect(container.querySelector('a[target="_blank"]')).toHaveAttribute(
-        'rel',
-        'noreferrer'
-      )
-      done()
-    }, 1)
+    expect(container.querySelector('a[target="_blank"]')).toHaveAttribute(
+      'rel',
+      'noreferrer'
+    )
   })
 })
