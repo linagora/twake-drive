@@ -121,35 +121,34 @@ const RectangularSelection = ({
    */
   const handleDragStart = useCallback(e => {
     dragStartPosRef.current = { x: e.clientX, y: e.clientY }
+    isDraggingRef.current = false
+  }, [])
+
+  /**
+   * Handles drag movement during the selection.
+   * Calculates distance from drag start and marks it as a real drag if moved more than 5 pixels.
+   *
+   * @param {Object} e - Drag event
+   * @param {number} e.clientX - X coordinate of the drag
+   * @param {number} e.clientY - Y coordinate of the drag
+   */
+  const handleDrag = useCallback(e => {
+    const start = dragStartPosRef.current
+    if (!start) return
+
+    const dx = e.clientX - start.x
+    const dy = e.clientY - start.y
+
+    if (Math.hypot(dx, dy) > 5) {
+      isDraggingRef.current = true
+    }
   }, [])
 
   /**
    * Handles the end of a drag operation.
-   * Calculates drag distance to distinguish between clicks and rectangular selections.
-   * Only considers it a real drag if the mouse moved more than 5 pixels.
-   *
-   * @param {Object} e - Drag end event
-   * @param {number} e.clientX - X coordinate of the drag end
-   * @param {number} e.clientY - Y coordinate of the drag end
+   * Cleans up the drag start position reference.
    */
-  const handleDragEnd = useCallback(e => {
-    // Calculate the distance moved during the drag
-    const startPos = dragStartPosRef.current
-    if (startPos) {
-      const dx = e.clientX - startPos.x
-      const dy = e.clientY - startPos.y
-      const distance = Math.sqrt(dx * dx + dy * dy)
-
-      // Only consider it a real drag if the mouse moved more than 5 pixels
-      // This distinguishes between a click and a rectangular selection
-      if (distance > 5) {
-        isDraggingRef.current = true
-        // Reset the flag after the click event has been processed
-        setTimeout(() => {
-          isDraggingRef.current = false
-        }, 0)
-      }
-    }
+  const handleDragEnd = useCallback(() => {
     dragStartPosRef.current = null
   }, [])
 
@@ -224,6 +223,7 @@ const RectangularSelection = ({
           continueSelect={false} // do not allow to extend the current selection without special key
           dragCondition={dragCondition}
           onDragStart={handleDragStart}
+          onDrag={handleDrag}
           onDragEnd={handleDragEnd}
           onSelect={handleSelect}
           scrollOptions={
