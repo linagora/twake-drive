@@ -45,8 +45,6 @@ const FolderViewBodyContent = ({
   refreshFolderContent
 }) => {
   const folderViewRef = useRef()
-  // Store the drag container element to force re-render when it becomes available
-  const [dragContainerElement, setDragContainerElement] = useState(null)
   // Stores the actual scroll container HTMLElement from virtuoso's scrollerRef callback.
   // This is needed because virtuosoRef.current only exposes the handle API (scrollTo, scrollBy, etc.),
   // not the DOM element required for RectangularSelection's auto-scroll functionality.
@@ -187,14 +185,13 @@ const FolderViewBodyContent = ({
       folder={displayedFolder}
       onDismiss={handleFolderUnlockerDismiss}
     >
-      <div ref={setDragContainerElement} className="u-h-100 u-w-100">
+      <div className="u-h-100 u-w-100">
         <SelectionBar actions={actions} />
         {isDynamicSelectionEnabled ? (
           <RectangularSelection
             items={sortedRows}
             scrollContainerRef={folderViewRef}
             scrollElement={scrollElement}
-            dragContainer={dragContainerElement}
           >
             {viewContent}
           </RectangularSelection>
