@@ -4,6 +4,9 @@ import Selecto from 'react-selecto'
 import styles from './RectangularSelection.styl'
 import { useSelectionContext } from './SelectionProvider'
 
+const INTERACTIVE_ELEMENTS_SELECTOR =
+  'button,a,input,select,textarea,label,[role="button"],[role="menuitem"],[role="option"]'
+
 /**
  * Component that enables rectangular selection of files in a grid view.
  * Wraps children with a selection area that allows users to drag-select
@@ -106,9 +109,7 @@ const RectangularSelection = ({
     const target = e.inputEvent?.target
     if (!target) return true
 
-    const isInteractive = target.closest(
-      'button,a,input,select,textarea,[role="button"]'
-    )
+    const isInteractive = target.closest(INTERACTIVE_ELEMENTS_SELECTOR)
     if (isInteractive) return false
 
     const fileElement = target.closest('[data-file-id]')
@@ -181,9 +182,7 @@ const RectangularSelection = ({
       const isOnFile = target.closest('[data-file-id]')
       if (isOnFile) return
 
-      const isInteractive = target.closest(
-        'button,a,input,select,textarea,[role="button"]'
-      )
+      const isInteractive = target.closest(INTERACTIVE_ELEMENTS_SELECTOR)
       if (isInteractive) return
 
       // If clicked in empty space, clear selection
