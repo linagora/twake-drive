@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useState, useMemo } from 'react'
+import React, { useRef, useCallback, useMemo, useState, useEffect } from 'react'
 import Selecto from 'react-selecto'
 
 import styles from './RectangularSelection.styl'
@@ -14,22 +14,26 @@ import { useSelectionContext } from './SelectionProvider'
  * @param {Array<Object>} props.items - List of file items available for selection
  * @param {React.RefObject} props.scrollContainerRef - Ref to the scrollable container for auto-scroll during selection (fallback)
  * @param {HTMLElement|null} props.scrollElement - Direct HTMLElement for the scroll container (preferred over scrollContainerRef)
- * @param {HTMLElement|React.RefObject} props.dragContainer - Container element where drag selection can be initiated (defaults to containerRef.current)
  * @returns {React.ReactElement} The rectangular selection wrapper component
  */
 const RectangularSelection = ({
   children,
   items,
   scrollContainerRef,
-  scrollElement,
-  dragContainer: dragContainerProp
+  scrollElement
 }) => {
-  // Use state instead of ref to trigger re-render when container is mounted
-  const [containerElement, setContainerElement] = useState(null)
+  const containerRef = useRef(null)
+  const [isContainerReady, setIsContainerReady] = useState(false)
   const { setSelectedItems, selectedItems, setIsSelectAll } =
     useSelectionContext()
   const isDraggingRef = useRef(false)
   const dragStartPosRef = useRef(null)
+
+  useEffect(() => {
+    if (containerRef.current) {
+      setIsContainerReady(true)
+    }
+  }, [])
 
   /**
    * Extracts file data from a DOM element using the data-file-id attribute.
@@ -193,27 +197,18 @@ const RectangularSelection = ({
   // or fall back to scrollContainerRef.current for non-virtualized containers
   const scrollContainer = scrollElement || scrollContainerRef?.current
 
-  const dragContainer = useMemo(() => {
-    if (dragContainerProp !== undefined) {
-      const propValue = dragContainerProp?.current || dragContainerProp
-      // If prop is provided but value is null, fallback to internal container
-      return propValue || containerElement
-    }
-    return containerElement
-  }, [dragContainerProp, containerElement])
-
   return (
     <div
-      ref={setContainerElement}
+      ref={containerRef}
       className="u-h-100 rectangular-selection-container"
       onClick={handleContainerClick}
     >
       {children}
-      {containerElement && dragContainer && (
+      {isContainerReady && (
         <Selecto
           className={styles['cozy-selecto-box']}
-          container={containerElement}
-          dragContainer={dragContainer}
+          container={containerRef.current}
+          dragContainer={window}
           selectableTargets={['[data-file-id]']}
           selectByClick={false}
           selectFromInside={false}
