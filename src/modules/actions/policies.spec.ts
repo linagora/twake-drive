@@ -8,15 +8,6 @@ import {
 } from './policies'
 import type { DriveAction, ActionPolicyContext } from './types'
 
-// Mock the isInfected helper
-jest.mock('@/modules/filelist/helpers', () => ({
-  isInfected: jest.fn(
-    (file: { antivirus_scan?: { status?: string } } | null | undefined) => {
-      return file?.antivirus_scan?.status === 'infected'
-    }
-  )
-}))
-
 // Mock cozy-client isDirectory
 jest.mock('cozy-client/dist/models/file', () => ({
   isDirectory: jest.fn((file: { type?: string }) => file.type === 'directory')
@@ -41,12 +32,14 @@ describe('policies', () => {
       infected?: boolean
       trashed?: boolean
       type?: 'file' | 'directory'
+      pending?: boolean
     } = {}
   ): Partial<IOCozyFile> => ({
     _id: id,
     type: options.type ?? 'file',
     trashed: options.trashed ?? false,
-    ...(options.infected && { antivirus_scan: { status: 'infected' } })
+    ...(options.infected && { antivirus_scan: { status: 'infected' } }),
+    ...(options.pending && { antivirus_scan: { status: 'pending' } })
   })
 
   describe('buildPolicyContext', () => {
@@ -110,6 +103,7 @@ describe('policies', () => {
       const policyNames = ACTION_POLICIES.map(p => p.name)
 
       expect(policyNames).toContain('infection')
+      expect(policyNames).toContain('notScanned')
       expect(policyNames).toContain('multipleFiles')
       expect(policyNames).toContain('folders')
       expect(policyNames).toContain('trashed')
@@ -141,6 +135,37 @@ describe('policies', () => {
         const ctx = { hasInfectedFile: true } as ActionPolicyContext
 
         expect(infectionPolicy.allows(action, ctx)).toBe(true)
+      })
+    })
+
+    describe('notScanned policy', () => {
+      const notScannedPolicy = ACTION_POLICIES.find(
+        p => p.name === 'notScanned'
+      )
+
+      if (!notScannedPolicy) {
+        throw new Error('notScanned policy not found')
+      }
+
+      it('should allow action when no pending files', () => {
+        const action = { allowNotScannedFiles: false }
+        const ctx = { hasNotScannedFile: false } as ActionPolicyContext
+
+        expect(notScannedPolicy.allows(action, ctx)).toBe(true)
+      })
+
+      it('should block action when pending files and not allowed', () => {
+        const action = { allowNotScannedFiles: false }
+        const ctx = { hasNotScannedFile: true } as ActionPolicyContext
+
+        expect(notScannedPolicy.allows(action, ctx)).toBe(false)
+      })
+
+      it('should allow action when pending files and explicitly allowed', () => {
+        const action = { allowNotScannedFiles: true }
+        const ctx = { hasNotScannedFile: true } as ActionPolicyContext
+
+        expect(notScannedPolicy.allows(action, ctx)).toBe(true)
       })
     })
 

@@ -1,5 +1,6 @@
 import { isDirectory } from 'cozy-client/dist/models/file'
 import type { IOCozyFile } from 'cozy-client/types/types'
+import flag from 'cozy-flags'
 
 import type {
   ActionPolicyContext,
@@ -8,7 +9,7 @@ import type {
   DriveActionPolicyFlags
 } from './types'
 
-import { isInfected } from '@/modules/filelist/helpers'
+import { isInfected, isNotScanned } from '@/modules/filelist/helpers'
 
 /**
  * Builds the policy context from the selected files.
@@ -21,17 +22,34 @@ import { isInfected } from '@/modules/filelist/helpers'
 export const buildPolicyContext = (
   files: IOCozyFile[]
 ): ActionPolicyContext => {
-  return {
-    files,
-    hasInfectedFile: files.some(file => isInfected(file)),
-    hasMultipleFiles: files.length > 1,
-    hasFolder: files.some(file => isDirectory(file)),
-    hasSharedFile: files.some(
-      file =>
+  let hasInfected = false
+  let hasNotScanned = false
+  let hasFolder = false
+  let hasSharedFile = false
+  let allInTrash = files.length > 0
+
+  for (const file of files) {
+    if (!hasInfected && isInfected(file)) hasInfected = true
+    if (!hasNotScanned && isNotScanned(file)) hasNotScanned = true
+    if (!hasFolder && isDirectory(file)) hasFolder = true
+    if (!hasSharedFile) {
+      hasSharedFile =
         file.referenced_by?.some(ref => ref.type === 'io.cozy.sharings') ??
         false
-    ),
-    allInTrash: files.length > 0 && files.every(file => file.trashed)
+    }
+    if (allInTrash && !file.trashed) allInTrash = false
+  }
+
+  return {
+    files,
+    hasInfectedFile: hasInfected,
+    hasNotScannedFile: flag('drive.not-scanned-file-action.enabled')
+      ? hasNotScanned
+      : false,
+    hasMultipleFiles: files.length > 1,
+    hasFolder,
+    hasSharedFile,
+    allInTrash
   }
 }
 
@@ -43,6 +61,22 @@ const infectionPolicy: ActionPolicyDefinition = {
   name: 'infection',
   allows: (action: DriveActionPolicyFlags, ctx: ActionPolicyContext): boolean =>
     !ctx.hasInfectedFile || action.allowInfectedFiles === true
+}
+
+/**
+ * Policy for files that haven't been scanned yet.
+ * Actions are blocked when files are not scanned unless they explicitly allow it.
+ */
+const notScannedPolicy: ActionPolicyDefinition = {
+  name: 'notScanned',
+  allows: (
+    action: DriveActionPolicyFlags,
+    ctx: ActionPolicyContext
+  ): boolean => {
+    const allowed =
+      !ctx.hasNotScannedFile || action.allowNotScannedFiles === true
+    return allowed
+  }
 }
 
 /**
@@ -83,6 +117,7 @@ const trashedPolicy: ActionPolicyDefinition = {
  */
 export const ACTION_POLICIES: ActionPolicyDefinition[] = [
   infectionPolicy,
+  notScannedPolicy,
   multipleFilesPolicy,
   foldersPolicy,
   trashedPolicy
@@ -134,14 +169,17 @@ export const filterActionsByPolicy = <T extends Record<string, DriveAction>>(
   // Build the policy context once for all checks
   const ctx = buildPolicyContext(files)
 
-  return actions.filter(wrappedAction => {
+  const result = actions.filter(wrappedAction => {
     // makeActions guarantees wrappers contain an action, so empty wrappers
     // cannot occur. This fail-open behavior is safe and intentional.
     const action = getActionFromWrapper(wrappedAction)
     if (!action) return true
 
-    return isActionAllowedByPolicies(action, ctx)
+    const isAllowed = isActionAllowedByPolicies(action, ctx)
+    return isAllowed
   })
+
+  return result
 }
 
 /**

@@ -54,6 +54,7 @@ export const trash = ({
     name: 'trash',
     icon,
     allowInfectedFiles: true,
+    allowNotScannedFiles: true,
     displayCondition: files => files.length > 0 && hasWriteAccess,
     action: files => {
       return pushModal(

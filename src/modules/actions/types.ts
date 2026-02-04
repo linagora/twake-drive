@@ -12,6 +12,8 @@ export interface ActionPolicyContext {
   files: IOCozyFile[]
   /** Whether any file in the selection is infected */
   hasInfectedFile: boolean
+  /** Whether any file has not been scanned yet */
+  hasNotScannedFile: boolean
   /** Whether multiple files are selected */
   hasMultipleFiles: boolean
   /** Whether any file is a folder */
@@ -44,6 +46,7 @@ export interface ActionPolicyDefinition {
  */
 export interface DriveActionPolicyFlags {
   allowInfectedFiles?: boolean
+  allowNotScannedFiles?: boolean
   allowMultiple?: boolean
   allowFolders?: boolean
   allowTrashed?: boolean

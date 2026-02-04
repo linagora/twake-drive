@@ -68,3 +68,10 @@ export const isInfected = (
 ): boolean => {
   return file?.antivirus_scan?.status === 'infected'
 }
+
+export const isNotScanned = (
+  file?: (FileWithAntivirusScan & Partial<IOCozyFile>) | null
+): boolean => {
+  const status = file?.antivirus_scan?.status
+  return status === 'pending' || status === 'skipped' || status === 'error'
+}
