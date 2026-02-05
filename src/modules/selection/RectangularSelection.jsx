@@ -24,33 +24,23 @@ const RectangularSelection = ({ children, items, scrollContainerRef }) => {
 
   /**
    * Extracts file data from a DOM element using the data-file-id attribute.
-   * Uses a Map for O(1) lookups instead of O(n) array.find().
    *
    * @param {Element} el - DOM element with data-file-id attribute
    * @returns {Object|undefined} The file object matching the element's ID, or undefined if not found
    */
-  const itemsMap = React.useMemo(() => {
-    const map = new Map()
-    for (const item of items) {
-      map.set(item._id, item)
-    }
-    return map
-  }, [items])
-
   const getFileFromElement = useCallback(
     el => {
       const fileId = el.getAttribute('data-file-id')
       if (!fileId) return undefined
-      return itemsMap.get(fileId)
+      return items.find(item => item._id === fileId)
     },
-    [itemsMap]
+    [items]
   )
 
   /**
    * Handles the selection event from react-selecto.
    * Updates the selected items state based on elements inside the selection rectangle.
    * Supports additive selection when Ctrl/Cmd key is held.
-   * Optimized: tracks count directly instead of Object.keys().length
    *
    * @param {Object} e - Selecto event object
    * @param {Array<Element>} e.selected - Array of DOM elements inside the selection rectangle
@@ -58,12 +48,16 @@ const RectangularSelection = ({ children, items, scrollContainerRef }) => {
    */
   const handleSelect = useCallback(
     e => {
-      const isMultiSelect = e.inputEvent?.ctrlKey || e.inputEvent?.metaKey
-      const newSelection = isMultiSelect ? { ...selectedItems } : {}
+      const baseSelection =
+        e.inputEvent?.ctrlKey || e.inputEvent?.metaKey
+          ? { ...selectedItems }
+          : {}
+
+      const newSelection = { ...baseSelection }
 
       for (const el of e.selected) {
         const file = getFileFromElement(el)
-        if (file && !newSelection[file._id]) {
+        if (file) {
           newSelection[file._id] = file
         }
       }
@@ -71,13 +65,7 @@ const RectangularSelection = ({ children, items, scrollContainerRef }) => {
       setSelectedItems(newSelection)
       setIsSelectAll(Object.keys(newSelection).length === items.length)
     },
-    [
-      items.length,
-      selectedItems,
-      getFileFromElement,
-      setSelectedItems,
-      setIsSelectAll
-    ]
+    [items, selectedItems, getFileFromElement, setSelectedItems, setIsSelectAll]
   )
 
   /**
@@ -160,23 +148,26 @@ const RectangularSelection = ({ children, items, scrollContainerRef }) => {
         return
       }
 
+      const target = e.target
+
       // Don't clear if Ctrl/Cmd is pressed (user wants to add to selection)
       if (e.ctrlKey || e.metaKey) return
 
-      const target = e.target
-
       // Check if clicked on a file or interactive element
       const isOnFile = target.closest('[data-file-id]')
-      if (isOnFile) return
+      const isInteractive =
+        target.closest('button') ||
+        target.closest('a') ||
+        target.closest('input') ||
+        target.closest('select') ||
+        target.closest('textarea') ||
+        target.getAttribute('role') === 'button'
 
-      const isInteractive = target.closest(
-        'button,a,input,select,textarea,[role="button"]'
-      )
-      if (isInteractive) return
-
-      // If clicked in empty space, clear selection
-      setSelectedItems({})
-      setIsSelectAll(false)
+      // If clicked in empty space (not on file and not on interactive element), clear selection
+      if (!isOnFile && !isInteractive) {
+        setSelectedItems({})
+        setIsSelectAll(false)
+      }
     },
     [setSelectedItems, setIsSelectAll]
   )
