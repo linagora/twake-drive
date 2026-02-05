@@ -7,7 +7,6 @@ import React, {
   useState
 } from 'react'
 
-import flag from 'cozy-flags'
 import { useVaultClient } from 'cozy-keys-lib'
 import VirtualizedGridList from 'cozy-ui/transpiled/react/GridList/Virtualized'
 import virtuosoComponents from 'cozy-ui/transpiled/react/GridList/Virtualized/Dnd/virtuosoComponents'
@@ -89,7 +88,7 @@ const Grid = forwardRef(
               <GridFile
                 key={file?._id}
                 attributes={file}
-                withSelectionCheckbox={!flag('drive.dynamic-selection.enabled')}
+                withSelectionCheckbox
                 withFilePath={withFilePath}
                 actions={actions}
                 refreshFolderContent={refreshFolderContent}

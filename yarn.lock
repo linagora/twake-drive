@@ -5927,10 +5927,10 @@ cozy-tsconfig@^1.8.1:
   resolved "https://registry.yarnpkg.com/cozy-tsconfig/-/cozy-tsconfig-1.8.1.tgz#5f206f4e6e041a4afc6691098264ba630bdeb7e2"
   integrity sha512-/9QBxK8Tc12O2ojuyRpSMjPpXpqldVvzfNB1+/nPD+IkIBkU+mqxpHYJwKWjNYHGraCSy69mIwt9J3aiaJdz9w==
 
-cozy-ui-plus@^4.4.1:
-  version "4.4.1"
-  resolved "https://registry.yarnpkg.com/cozy-ui-plus/-/cozy-ui-plus-4.4.1.tgz#7821c2d624c6e28deb36c0bd3c7ba50ba5833612"
-  integrity sha512-YlGEcteZwH6VpZW7smx3zakZZFI9YuMVdL+rThDXVoxxfw/wfRQmYjJi5oJKkgMB9eL3A4BYRJTkwhI/571x2w==
+cozy-ui-plus@^4.4.0:
+  version "4.4.0"
+  resolved "https://registry.yarnpkg.com/cozy-ui-plus/-/cozy-ui-plus-4.4.0.tgz#806c7750e6ab312b9c7a19d2a1e21216cae0461b"
+  integrity sha512-ZDZ1zOMZzSFLqnasaDOqq8iGOOnmpBQYWvsViWggAOU297GwrfDYV/MpjyxNu207YRVapxzYr13GOSDb9aj6ew==
   dependencies:
     classnames "^2.5.1"
     cozy-interapp "^0.5.4"
@@ -5943,10 +5943,10 @@ cozy-ui-plus@^4.4.1:
     react-final-form-arrays "3.1.4"
     rooks "7.14.1"
 
-cozy-ui@^135.8.0:
-  version "135.8.0"
-  resolved "https://registry.yarnpkg.com/cozy-ui/-/cozy-ui-135.8.0.tgz#c0c2784dc7e1043493117812acd59491324fc144"
-  integrity sha512-xwfXmByKT78SYRZaNf0rDfMcmSu3XI0MfRbfZ4XRldhY9NLySmP/2i6HTggFQMW3sOmGQHj2m7YstflzO6iDXQ==
+cozy-ui@^135.6.0:
+  version "135.6.0"
+  resolved "https://registry.yarnpkg.com/cozy-ui/-/cozy-ui-135.6.0.tgz#813803ad0de704b9c18f5c6c28ead0b2c1bc37ac"
+  integrity sha512-Ihr22z78Dc9V6vcZOifimz9ScDq1bopH5ifg0RAAgZH1dUkGUB9aM7bo4z9HsxhkUz+2QeJK8bD8MGv44lho9g==
   dependencies:
     "@babel/runtime" "^7.3.4"
     "@date-io/date-fns" "1"
