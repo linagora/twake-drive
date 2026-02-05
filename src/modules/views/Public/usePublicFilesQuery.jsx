@@ -30,6 +30,7 @@ export const usePublicFilesQuery = currentFolderId => {
   const forceRefetch = () => updateFetchCounter(prev => prev + 1)
 
   const nextCursor = useRef(null)
+  const isFetching = useRef(false)
 
   useEffect(() => {
     const initialFetch = async () => {
@@ -48,18 +49,23 @@ export const usePublicFilesQuery = currentFolderId => {
   }, [currentFolderId, fetchCounter, client])
 
   const fetchMore = async () => {
+    if (isFetching.current) return
+    isFetching.current = true
     try {
       const { included, cursor } = await statById(
         client,
         currentFolderId,
         nextCursor.current
       )
-      nextCursor.current = cursor
-      setData([...data, ...included])
+      const safeIncluded = included || []
+      setData(prevData => [...prevData, ...safeIncluded])
       setHasMore(!!cursor)
+      nextCursor.current = cursor
       setFetchStatus('loaded')
     } catch (error) {
       setFetchStatus('error')
+    } finally {
+      isFetching.current = false
     }
   }
 
