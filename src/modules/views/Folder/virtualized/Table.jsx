@@ -72,16 +72,13 @@ const Table = forwardRef(
         setOrder: () => {}
       },
       onInteractWithFile,
-      refreshFolderContent,
-      virtuosoRef: parentVirtuosoRef,
-      scrollerRef
+      refreshFolderContent
     },
     ref
   ) => {
     const { toggleSelectedItem } = useSelectionContext()
     const { isNew } = useNewItemHighlightContext()
-    const internalVirtuosoRef = useRef(null)
-    const virtuosoRef = parentVirtuosoRef || internalVirtuosoRef
+    const virtuosoRef = useRef(null)
     const [itemsInDropProcess, setItemsInDropProcess] = useState([])
 
     const { sortOrder, setOrder } = orderProps
@@ -155,7 +152,6 @@ const Table = forwardRef(
         {dragProps?.dragId && <CustomDragLayer dragId={dragProps.dragId} />}
         <VirtualizedTable
           ref={virtuosoRef}
-          scrollerRef={scrollerRef}
           context={tableContext}
           components={components}
           rows={rows}

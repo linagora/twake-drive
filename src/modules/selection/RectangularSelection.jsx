@@ -12,16 +12,10 @@ import { useSelectionContext } from './SelectionProvider'
  * @param {Object} props - Component props
  * @param {React.ReactNode} props.children - Child elements to render inside the selection container
  * @param {Array<Object>} props.items - List of file items available for selection
- * @param {React.RefObject} props.scrollContainerRef - Ref to the scrollable container for auto-scroll during selection (fallback)
- * @param {HTMLElement|null} props.scrollElement - Direct HTMLElement for the scroll container (preferred over scrollContainerRef)
+ * @param {React.RefObject} props.scrollContainerRef - Ref to the scrollable container for auto-scroll during selection
  * @returns {React.ReactElement} The rectangular selection wrapper component
  */
-const RectangularSelection = ({
-  children,
-  items,
-  scrollContainerRef,
-  scrollElement
-}) => {
+const RectangularSelection = ({ children, items, scrollContainerRef }) => {
   const containerRef = useRef(null)
   const { setSelectedItems, selectedItems, setIsSelectAll } =
     useSelectionContext()
@@ -187,10 +181,6 @@ const RectangularSelection = ({
     [setSelectedItems, setIsSelectAll]
   )
 
-  // Use the directly provided scrollElement (from virtuoso's scrollerRef),
-  // or fall back to scrollContainerRef.current for non-virtualized containers
-  const scrollContainer = scrollElement || scrollContainerRef?.current
-
   return (
     <div
       ref={containerRef}
@@ -214,9 +204,9 @@ const RectangularSelection = ({
         onDragEnd={handleDragEnd}
         onSelect={handleSelect}
         scrollOptions={
-          scrollContainer
+          scrollContainerRef?.current
             ? {
-                container: scrollContainer,
+                container: scrollContainerRef.current,
                 throttleTime: 30,
                 threshold: 30
               }

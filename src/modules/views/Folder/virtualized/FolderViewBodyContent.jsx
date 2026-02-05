@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useMemo, useRef } from 'react'
 import { useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { useI18n } from 'twake-i18n'
@@ -45,15 +45,6 @@ const FolderViewBodyContent = ({
   refreshFolderContent
 }) => {
   const folderViewRef = useRef()
-  // Stores the actual scroll container HTMLElement from virtuoso's scrollerRef callback.
-  // This is needed because virtuosoRef.current only exposes the handle API (scrollTo, scrollBy, etc.),
-  // not the DOM element required for RectangularSelection's auto-scroll functionality.
-  const [scrollElement, setScrollElement] = useState(null)
-  // Ref to store the virtuoso imperative handle (scrollTo, scrollToIndex, etc.).
-  // Note: This is a plain ref and does not trigger re-renders on assignment.
-  // Consumers should access virtuosoRef.current when needed (e.g., in effects
-  // triggered by other state changes like highlightedItems).
-  const virtuosoRef = useRef(null)
 
   const client = useClient()
 
@@ -151,8 +142,6 @@ const FolderViewBodyContent = ({
       actions={actions}
       driveId={driveId}
       ref={folderViewRef}
-      virtuosoRef={virtuosoRef}
-      scrollerRef={setScrollElement}
       onInteractWithFile={onInteractWithFile}
       orderProps={orderProps}
       refreshFolderContent={refreshFolderContent}
@@ -172,8 +161,6 @@ const FolderViewBodyContent = ({
       dragProps={dragProps}
       onInteractWithFile={onInteractWithFile}
       ref={folderViewRef}
-      virtuosoRef={virtuosoRef}
-      scrollerRef={setScrollElement}
       refreshFolderContent={refreshFolderContent}
     />
   )
@@ -190,7 +177,6 @@ const FolderViewBodyContent = ({
         <RectangularSelection
           items={sortedRows}
           scrollContainerRef={folderViewRef}
-          scrollElement={scrollElement}
         >
           {viewContent}
         </RectangularSelection>
