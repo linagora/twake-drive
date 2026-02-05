@@ -107,7 +107,6 @@ const GridFile = ({
 
   return (
     <Card
-      data-file-id={attributes._id}
       className={cx(
         styles['fil-content-column'],
         styles['fil-content-column-virtualized'],

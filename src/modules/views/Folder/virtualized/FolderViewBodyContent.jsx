@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom'
 import { useI18n } from 'twake-i18n'
 
 import { useClient } from 'cozy-client'
-import flag from 'cozy-flags'
 import { useSharingContext } from 'cozy-sharing'
 import {
   stableSort,
@@ -22,7 +21,6 @@ import { useViewSwitcherContext } from '@/lib/ViewSwitcherContext'
 import { isTypingNewFolderName } from '@/modules/filelist/duck'
 import { FolderUnlocker } from '@/modules/folder/components/FolderUnlocker'
 import { useCancelable } from '@/modules/move/hooks/useCancelable'
-import RectangularSelection from '@/modules/selection/RectangularSelection'
 import SelectionBar from '@/modules/selection/SelectionBar'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 import Table from '@/modules/views/Folder/virtualized/Table'
@@ -98,90 +96,71 @@ const FolderViewBodyContent = ({
     navigate('/folder')
   }, [navigate])
 
-  const isDynamicSelectionEnabled = flag('drive.dynamic-selection.enabled')
-
-  const dragProps = useMemo(
-    () => ({
-      enabled: canDrag,
-      dragId: 'drag-drive',
-      onDrop: onDrop({
-        client,
-        showAlert,
-        selectAll,
-        registerCancelable,
-        sharedPaths,
-        t,
-        refreshFolderContent,
-        displayedFolder
-      })
-    }),
-    [
-      canDrag,
-      client,
-      showAlert,
-      selectAll,
-      registerCancelable,
-      sharedPaths,
-      t,
-      refreshFolderContent,
-      displayedFolder
-    ]
-  )
-
-  const tableComponent = (
-    <Table
-      rows={sortedRows}
-      columns={columns}
-      dragProps={dragProps}
-      fetchMore={fetchMore}
-      selectAll={selectAll}
-      isSelectedItem={isSelectedItem}
-      selectedItems={selectedItems}
-      currentFolderId={currentFolderId}
-      withFilePath={withFilePath}
-      actions={actions}
-      driveId={driveId}
-      ref={folderViewRef}
-      onInteractWithFile={onInteractWithFile}
-      orderProps={orderProps}
-      refreshFolderContent={refreshFolderContent}
-    />
-  )
-
-  const gridComponent = (
-    <Grid
-      items={sortedRows}
-      currentFolderId={currentFolderId}
-      withFilePath={withFilePath}
-      actions={actions}
-      fetchMore={fetchMore}
-      selectedItems={selectedItems}
-      isSelectedItem={isSelectedItem}
-      driveId={driveId}
-      dragProps={dragProps}
-      onInteractWithFile={onInteractWithFile}
-      ref={folderViewRef}
-      refreshFolderContent={refreshFolderContent}
-    />
-  )
-
-  const viewContent = viewType === 'list' ? tableComponent : gridComponent
-
   return (
     <FolderUnlocker
       folder={displayedFolder}
       onDismiss={handleFolderUnlockerDismiss}
     >
       <SelectionBar actions={actions} />
-      {isDynamicSelectionEnabled ? (
-        <RectangularSelection
-          items={sortedRows}
-          scrollContainerRef={folderViewRef}
-        >
-          {viewContent}
-        </RectangularSelection>
+      {viewType === 'list' ? (
+        <Table
+          rows={rows}
+          columns={columns}
+          dragProps={{
+            enabled: canDrag,
+            dragId: 'drag-drive',
+            onDrop: onDrop({
+              client,
+              showAlert,
+              selectAll,
+              registerCancelable,
+              sharedPaths,
+              t,
+              refreshFolderContent,
+              displayedFolder
+            })
+          }}
+          fetchMore={fetchMore}
+          selectAll={selectAll}
+          isSelectedItem={isSelectedItem}
+          selectedItems={selectedItems}
+          currentFolderId={currentFolderId}
+          withFilePath={withFilePath}
+          actions={actions}
+          driveId={driveId}
+          ref={folderViewRef}
+          onInteractWithFile={onInteractWithFile}
+          orderProps={orderProps}
+          refreshFolderContent={refreshFolderContent}
+        />
       ) : (
-        viewContent
+        <Grid
+          items={sortedRows}
+          currentFolderId={currentFolderId}
+          withFilePath={withFilePath}
+          actions={actions}
+          fetchMore={fetchMore}
+          selectedItems={selectedItems}
+          isSelectedItem={isSelectedItem}
+          driveId={driveId}
+          dragProps={{
+            enabled: canDrag,
+            dragId: 'drag-drive',
+            onDrop: onDrop({
+              client,
+              showAlert,
+              selectAll,
+              registerCancelable,
+              sharedPaths,
+              t,
+              refreshFolderContent,
+              displayedFolder
+            })
+          }}
+          onInteractWithFile={onInteractWithFile}
+          ref={folderViewRef}
+          refreshFolderContent={refreshFolderContent}
+        />
       )}
     </FolderUnlocker>
   )
