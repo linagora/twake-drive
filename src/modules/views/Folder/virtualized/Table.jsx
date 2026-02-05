@@ -1,11 +1,5 @@
 import cx from 'classnames'
-import React, {
-  forwardRef,
-  useCallback,
-  useMemo,
-  useRef,
-  useState
-} from 'react'
+import React, { forwardRef, useMemo, useRef, useState } from 'react'
 
 import VirtualizedTable from 'cozy-ui/transpiled/react/Table/Virtualized'
 import TableRowDnD from 'cozy-ui/transpiled/react/Table/Virtualized/Dnd/TableRow'
@@ -82,14 +76,10 @@ const Table = forwardRef(
 
     const { sortOrder, setOrder } = orderProps
 
-    const handleRowSelect = useCallback(
-      (row, event) => {
-        event?.stopPropagation?.()
-        toggleSelectedItem(row)
-        onInteractWithFile?.(row?._id, event)
-      },
-      [toggleSelectedItem, onInteractWithFile]
-    )
+    const handleRowSelect = (row, event) => {
+      toggleSelectedItem(row)
+      onInteractWithFile?.(row?._id, event)
+    }
 
     const handleSort = ({ order, orderBy }) => {
       setOrder({
@@ -115,7 +105,6 @@ const Table = forwardRef(
     const componentsProps = useMemo(
       () => ({
         rowContent: {
-          onClick: handleRowSelect,
           children: (
             <Cell
               currentFolderId={currentFolderId}
@@ -129,7 +118,6 @@ const Table = forwardRef(
         }
       }),
       [
-        handleRowSelect,
         currentFolderId,
         withFilePath,
         actions,
