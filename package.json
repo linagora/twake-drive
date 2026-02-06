@@ -1,6 +1,6 @@
 {
   "name": "cozy-drive",
-  "version": "1.90.0",
+  "version": "1.90.1",
   "main": "src/main.jsx",
   "scripts": {
     "build": "rsbuild build",
