@@ -55,6 +55,7 @@ const AddFolderWrapper = ({
               vaultClient={vaultClient}
               currentFolderId={currentFolderId}
               refreshFolderContent={refreshFolderContent}
+              driveId={driveId}
             />
           </TableCell>
           <TableCell>—</TableCell>
