@@ -3,6 +3,7 @@ import React from 'react'
 import { useLocation } from 'react-router-dom'
 import { useI18n } from 'twake-i18n'
 
+import flag from 'cozy-flags'
 import Empty from 'cozy-ui/transpiled/react/Empty'
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
@@ -27,17 +28,20 @@ const EmptyCanvas = ({
   const { t } = useI18n()
   const { isDesktop } = useBreakpoints()
   const { displayedFolder } = useDisplayedFolder()
+  const isSharedDriveEnabled = flag('drive.shared-drive.enabled')
 
   const IconToShow = type === 'trash' ? TrashIllustration : FolderEmptyIllu
+  const showSharedDriveLayout = type === 'sharing' && isSharedDriveEnabled
   const showUploadLayout =
-    (type === 'drive' || type === 'encrypted') && canUpload
-  const showSharedDriveLayout = type === 'sharing'
+    type === 'drive' ||
+    (type === 'encrypted' && canUpload) ||
+    (type === 'sharing' && !isSharedDriveEnabled)
   const title = localeKey ? t(`empty.${type}_title`) : undefined
   const text =
     (hasTextMobileVersion && !isDesktop && t(`empty.mobile_text`)) ||
     (localeKey && t(`empty.${localeKey}_text`)) ||
-    (canUpload && t('empty.text')) ||
-    (type === 'sharing' && t('empty.shared-drive_text'))
+    (showUploadLayout && t('empty.text')) ||
+    (type === 'sharing' && isSharedDriveEnabled && t('empty.shared-drive_text'))
 
   return (
     <Empty
