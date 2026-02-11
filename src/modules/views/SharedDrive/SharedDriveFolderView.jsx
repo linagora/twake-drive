@@ -12,6 +12,7 @@ import { Content } from 'cozy-ui/transpiled/react/Layout'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
+import useHead from '@/components/useHead'
 import { SHARED_DRIVES_DIR_ID } from '@/constants/config'
 import { useClipboardContext } from '@/contexts/ClipboardProvider'
 import { useDisplayedFolder, useFolderSort } from '@/hooks'
@@ -40,6 +41,7 @@ const SharedDriveFolderView = () => {
   const { pathname } = useLocation()
   const { isMobile } = useBreakpoints()
   const params = useParams()
+  useHead()
   const { driveId, folderId } = params
   const sharingContext = useSharingContext()
   const { isOwner, byDocId, hasWriteAccess, refresh } = sharingContext
