@@ -38,18 +38,16 @@ const CreateNoteItem = ({
   const _displayedFolder = displayedFolderOrRootFolder(displayedFolder)
   const { driveId, id: folderId } = _displayedFolder
 
-  let notesAppUrl = undefined
-  let notesAppIsInstalled = true
-
   const { fetchStatus, url, isInstalled } = useAppLinkWithStoreFallback(
     'notes',
     client
   )
 
-  if (fetchStatus === 'loaded') {
-    notesAppUrl = url
-    notesAppIsInstalled = isInstalled
+  if (fetchStatus !== 'loaded' || !isInstalled) {
+    return null
   }
+
+  const notesAppUrl = url
 
   let returnUrl = ''
   if (isFlagshipApp() && webviewIntent) {
@@ -86,35 +84,29 @@ const CreateNoteItem = ({
 
     if (notesAppUrl === undefined) return
 
-    if (notesAppIsInstalled) {
-      const { data: file } = await client
-        .collection('io.cozy.notes', { driveId })
-        .create({
-          dir_id: folderId
-        })
+    const { data: file } = await client
+      .collection('io.cozy.notes', { driveId })
+      .create({
+        dir_id: folderId
+      })
 
-      if (driveId) {
-        navigate(`/note/${driveId}/${file.id}`)
-        return
-      }
-
-      const privateUrl = await models.note.generatePrivateUrl(
-        notesAppUrl,
-        file,
-        { returnUrl }
-      )
-
-      /**
-       * Not using AppLinker here because it would require too much refactoring and would be risky
-       * Instead we use the webviewIntent programmatically to open the cozy-note app on the note href
-       */
-      if (isFlagshipApp() && webviewIntent)
-        return webviewIntent.call('openApp', privateUrl, { slug: 'notes' })
-
-      window.location.href = privateUrl
-    } else {
-      window.location.href = notesAppUrl
+    if (driveId) {
+      navigate(`/note/${driveId}/${file.id}`)
+      return
     }
+
+    const privateUrl = await models.note.generatePrivateUrl(notesAppUrl, file, {
+      returnUrl
+    })
+
+    /**
+     * Not using AppLinker here because it would require too much refactoring and would be risky
+     * Instead we use the webviewIntent programmatically to open the cozy-note app on the note href
+     */
+    if (isFlagshipApp() && webviewIntent)
+      return webviewIntent.call('openApp', privateUrl, { slug: 'notes' })
+
+    window.location.href = privateUrl
   }
 
   return (
