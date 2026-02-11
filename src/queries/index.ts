@@ -654,7 +654,8 @@ export const buildSharedDriveFolderQuery: QueryBuilder<
     as: `io.cozy.files/driveId/${driveId}/folderId/${folderId}`,
     // fetchPolicy: defaultFetchPolicy, // FIXME we do not use cache here to get the "included" part of the result of the query
     // see https://github.com/cozy/cozy-client/issues/1620
-    enabled: !!driveId && !!folderId
+    enabled: !!driveId && !!folderId,
+    singleDocData: true
   }
 })
 
