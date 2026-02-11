@@ -58,7 +58,8 @@ describe('AddMenuContent', () => {
   describe('Menu', () => {
     beforeAll(() => {
       useAppLinkWithStoreFallback.mockReturnValue({
-        fetchStatus: 'loaded'
+        fetchStatus: 'loaded',
+        isInstalled: true
       })
     })
 
