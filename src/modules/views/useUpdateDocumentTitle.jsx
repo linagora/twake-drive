@@ -48,7 +48,7 @@ export const makeTitle = (file, appFullName, t) => {
   return `${fileName}${path}${separator}${appFullName}`
 }
 
-const useUpdateDocumentTitle = (file, fetchStatus) => {
+const useUpdateDocumentTitle = (file, fetchStatus, customTitle) => {
   const { t } = useI18n()
   const client = useClient()
 
@@ -57,16 +57,19 @@ const useUpdateDocumentTitle = (file, fetchStatus) => {
     [client.appMetadata]
   )
 
-  const title = useMemo(
-    () => makeTitle(file, appFullName, t),
-    [file, appFullName, t]
-  )
+  const title = useMemo(() => {
+    if (customTitle) {
+      return `${customTitle} - ${appFullName}`
+    }
+    return makeTitle(file, appFullName, t)
+  }, [file, appFullName, t, customTitle])
 
   useEffect(() => {
-    if (fetchStatus === 'loaded' && title !== document.title) {
+    const shouldUpdate = customTitle || fetchStatus === 'loaded'
+    if (shouldUpdate && title && title !== document.title) {
       document.title = title
     }
-  }, [fetchStatus, title])
+  }, [fetchStatus, title, customTitle])
 }
 
 export default useUpdateDocumentTitle

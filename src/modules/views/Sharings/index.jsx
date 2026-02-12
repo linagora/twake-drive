@@ -79,7 +79,7 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
   const { isNativeFileSharingAvailable, shareFilesNative } =
     useNativeFileSharing()
   const dispatch = useDispatch()
-  useHead()
+  useHead({ title: t('breadcrumb.title_sharings') })
   const { showAlert } = useAlert()
   const [sortOrder, setSortOrder, isSettingsLoaded] = useFolderSort('sharings')
 
