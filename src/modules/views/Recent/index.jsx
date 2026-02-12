@@ -66,7 +66,7 @@ export const RecentView = () => {
   const { isNativeFileSharingAvailable, shareFilesNative } =
     useNativeFileSharing()
   const dispatch = useDispatch()
-  useHead()
+  useHead({ title: t('breadcrumb.title_recent') })
   const { showAlert } = useAlert()
   const [sortOrder, setSortOrder, isSettingsLoaded] =
     useFolderSort(RECENT_FOLDER_ID)

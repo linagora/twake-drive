@@ -10,7 +10,7 @@ import {
   buildSharedDriveFolderQuery
 } from '@/queries'
 
-const useHead = () => {
+const useHead = ({ title } = {}) => {
   const { driveId, folderId, fileId } = useParams()
 
   const isFileOpen = useMemo(() => fileId !== undefined, [fileId])
@@ -26,7 +26,7 @@ const useHead = () => {
     fileQuery.options
   )
 
-  useUpdateDocumentTitle(file, fetchStatus)
+  useUpdateDocumentTitle(file, fetchStatus, title)
   useUpdateFavicon(file, fetchStatus)
 }
 
