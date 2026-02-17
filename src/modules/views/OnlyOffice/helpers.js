@@ -11,6 +11,10 @@ import FileTypeTextIcon from 'cozy-ui/transpiled/react/Icons/FileTypeText'
  * @returns {boolean} - Returns true if the Office feature is enabled, false otherwise.
  */
 export const isOfficeEnabled = isDesktop => {
+  console.log('isOfficeEnabled', flag('drive.office.cryptpad.enabled'))
+  // CryptPad mode enables office editing without needing a server
+  if (flag('drive.office.cryptpad.enabled') === true) return true
+
   const officeEnabled = flag(
     `drive.office.${!isDesktop || isMobile() ? 'touchScreen.' : ''}enabled`
   )
@@ -25,6 +29,9 @@ export const isOfficeEnabled = isDesktop => {
 }
 
 export function canWriteOfficeDocument() {
+  // CryptPad mode supports editing
+  if (flag('drive.office.cryptpad.enabled') === true) return true
+
   const officeWrite = flag('drive.office.write')
   if (officeWrite !== null) {
     return officeWrite
@@ -164,6 +171,17 @@ export const makeMimeByClass = fileClass => {
   }
 
   return mimeByClass[fileClass]
+}
+
+/**
+ * Checks if CryptPad mode is enabled.
+ * When enabled, office documents are opened using CryptPad's client-side
+ * OnlyOffice wrapper instead of a remote OnlyOffice Document Server.
+ *
+ * @returns {boolean}
+ */
+export const isCryptPadEnabled = () => {
+  return flag('drive.office.cryptpad.enabled') === true
 }
 
 // The sharing banner need to be shown only on the first arrival
