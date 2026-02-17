@@ -71,7 +71,7 @@ const EditorContent = ({ config, status, isCryptPad }) => {
             docEditorConfig={docEditorConfig}
           />
         )}
-        {hasFileDiverged ? <FileDivergedModal /> : null}
+        {hasFileDiverged && !isCryptPad ? <FileDivergedModal /> : null}
         {hasFileDeleted ? <FileDeletedModal /> : null}
       </DialogContent>
     </ViewerProvider>
