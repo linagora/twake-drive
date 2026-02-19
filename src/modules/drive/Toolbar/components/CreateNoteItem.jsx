@@ -53,7 +53,7 @@ const CreateNoteItem = ({
   let returnUrl = ''
   if (
     (isFlagshipApp() && webviewIntent) ||
-    flag('cozy.universal-link.disabled') === true
+    flag('cozy.universal-link.disabled')
   ) {
     returnUrl = generateWebLink({
       slug: 'drive',
