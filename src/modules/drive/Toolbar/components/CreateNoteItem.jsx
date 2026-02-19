@@ -11,6 +11,7 @@ import {
   useCapabilities
 } from 'cozy-client'
 import { isFlagshipApp } from 'cozy-device-helper'
+import flag from 'cozy-flags'
 import { useWebviewIntent } from 'cozy-intent'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
 import Icon from 'cozy-ui/transpiled/react/Icon'
@@ -50,7 +51,10 @@ const CreateNoteItem = ({
   const notesAppUrl = url
 
   let returnUrl = ''
-  if (isFlagshipApp() && webviewIntent) {
+  if (
+    (isFlagshipApp() && webviewIntent) ||
+    flag('cozy.universal-link.disabled') === true
+  ) {
     returnUrl = generateWebLink({
       slug: 'drive',
       cozyUrl: client.getStackClient().uri,
