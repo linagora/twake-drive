@@ -86,6 +86,9 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
   const [tab, setTab] = useState(tabParam)
 
   const isEnabledSharedDrive = flag('drive.shared-drive.enabled')
+  const isEnabledFederatedSharedFolder = flag(
+    'drive.federated-shared-folder.enabled'
+  )
 
   const extraColumnsNames = makeExtraColumnsNamesFromMedia({
     isMobile,
@@ -132,7 +135,7 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
   } = useTransformFolderListHasSharedDriveShortcuts(result.data)
 
   const filteredResult = useMemo(() => {
-    if (!isEnabledSharedDrive) {
+    if (!isEnabledSharedDrive && !isEnabledFederatedSharedFolder) {
       const filteredResultData =
         result.data?.filter(item => !(item.dir_id === SHARED_DRIVES_DIR_ID)) ||
         []
@@ -162,6 +165,7 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
     }
   }, [
     isEnabledSharedDrive,
+    isEnabledFederatedSharedFolder,
     tab,
     transformedSharedDrives,
     nonSharedDriveList,

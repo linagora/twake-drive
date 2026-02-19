@@ -132,7 +132,8 @@ const AppRoute = () => (
         </>
       ) : null}
 
-      {flag('drive.shared-drive.enabled') ? (
+      {flag('drive.shared-drive.enabled') ||
+      flag('drive.federated-shared-folder.enabled') ? (
         <>
           <Route
             path="shareddrive/:driveId/:folderId"
