@@ -20,6 +20,10 @@ const mergedConfig = mergeRsbuildConfig(config, {
           {
             from: 'src/assets/favicons',
             to: 'favicons'
+          },
+          {
+            from: 'vendor/cryptpad-onlyoffice',
+            to: 'vendor/cryptpad-onlyoffice'
           }
         ]
       }

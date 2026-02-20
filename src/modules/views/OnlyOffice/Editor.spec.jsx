@@ -24,7 +24,8 @@ jest.mock('cozy-client/dist/hooks/useFetchJSON', () => ({
 jest.mock('modules/views/OnlyOffice/helpers', () => ({
   ...jest.requireActual('modules/views/OnlyOffice/helpers'),
   isOfficeEnabled: jest.fn(),
-  isOfficeEditingEnabled: jest.fn()
+  isOfficeEditingEnabled: jest.fn(),
+  isCryptPadEnabled: jest.fn().mockReturnValue(false)
 }))
 
 jest.mock('cozy-ui/transpiled/react/providers/Breakpoints', () => ({

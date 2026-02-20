@@ -29,4 +29,5 @@ const flagsList = () => {
   flag('drive.hide-nextcloud-dev')
   flag('drive.keyboard-shortcuts.enabled', true)
   flag('drive.highlight-new-items.enabled', true)
+  flag('drive.office.cryptpad.enabled', true)
 }
