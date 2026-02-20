@@ -147,7 +147,7 @@ const Table = forwardRef(
 
     return (
       <div
-        className={cx('u-h-100', styles['fil-file-list-container'])}
+        className={cx('u-h-100', 'u-pl-1', styles['fil-file-list-container'])}
         ref={ref}
         tabIndex={0}
         style={{ outline: 'none' }}
