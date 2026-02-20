@@ -42,3 +42,6 @@ konnector-dev-config.json
 
 # SWC
 .swc
+
+# CryptPad OnlyOffice vendor assets (installed via scripts/install-cryptpad-vendor.sh)
+vendor/
