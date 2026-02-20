@@ -41,6 +41,20 @@ const Toolbar = ({
     isFolderFromSharedDriveRecipient(displayedFolder)
   const isSharedDriveOwner = isFolderFromSharedDriveOwner(displayedFolder)
 
+  const moreMenuProps = {
+    isDisabled,
+    hasWriteAccess,
+    isSharedWithMe,
+    canCreateFolder,
+    canUpload,
+    folderId,
+    displayedFolder,
+    showSelectionBar,
+    isSelectionBarVisible,
+    isSharedDriveRecipient,
+    isSharedDriveOwner
+  }
+
   if (disabled) {
     return null
   }
@@ -70,20 +84,10 @@ const Toolbar = ({
         )}
       </InsideRegularFolder>
       <ViewSwitcher className="u-mr-half" />
-      <MoreMenu
-        isDisabled={isDisabled}
-        hasWriteAccess={hasWriteAccess}
-        isSharedWithMe={isSharedWithMe}
-        canCreateFolder={canCreateFolder}
-        canUpload={canUpload}
-        folderId={folderId}
-        displayedFolder={displayedFolder}
-        showSelectionBar={showSelectionBar}
-        isSelectionBarVisible={isSelectionBarVisible}
-        isSharedDriveRecipient={isSharedDriveRecipient}
-        isSharedDriveOwner={isSharedDriveOwner}
-      />
-      <BarRightOnMobile>{isMobile && <SearchButton />}</BarRightOnMobile>
+      <BarRightOnMobile>
+        {isMobile && <SearchButton />}
+        <MoreMenu {...moreMenuProps} />
+      </BarRightOnMobile>
     </div>
   )
 }
