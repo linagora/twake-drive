@@ -2,7 +2,6 @@ import cx from 'classnames'
 import React, { useState, useCallback } from 'react'
 import { useI18n } from 'twake-i18n'
 
-import { useSharingContext } from 'cozy-sharing'
 import Button from 'cozy-ui/transpiled/react/Buttons'
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import ListIcon from 'cozy-ui/transpiled/react/Icons/List'
@@ -14,13 +13,10 @@ import {
 } from 'cozy-ui/transpiled/react/deprecated/Table'
 
 import MobileSortMenu from './MobileSortMenu'
-import ShareButton from '../drive/Toolbar/share/ShareButton'
 
 import styles from '@/styles/filelist.styl'
 
-import { ROOT_DIR_ID, TRASH_DIR_ID } from '@/constants/config'
 import { useCurrentFolderId } from '@/hooks'
-import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 
 const FileListHeaderMobile = ({
   canSort,
@@ -31,16 +27,8 @@ const FileListHeaderMobile = ({
 }) => {
   const { t } = useI18n()
   const [isShowingSortMenu, setIsShowingSortMenu] = useState(false)
-  const { isSelectionBarVisible } = useSelectionContext()
-  const { allLoaded } = useSharingContext()
 
   const folderId = useCurrentFolderId()
-  const showShareButton = Boolean(
-    folderId && folderId !== ROOT_DIR_ID && folderId !== TRASH_DIR_ID
-  )
-
-  const isDisabled = isSelectionBarVisible
-  const isSharingDisabled = isDisabled || !allLoaded
 
   const showSortMenu = useCallback(
     () => setIsShowingSortMenu(true),
@@ -79,16 +67,6 @@ const FileListHeaderMobile = ({
             onClose={hideSortMenu}
             onSort={(attr, order) => onFolderSort(folderId, attr, order)}
           />
-        )}
-        {showShareButton && (
-          <TableHeader
-            className={cx(
-              styles['fil-content-mobile-header'],
-              styles['fil-content-header--capitalize']
-            )}
-          >
-            <ShareButton isDisabled={isSharingDisabled} useShortLabel={true} />
-          </TableHeader>
         )}
         <TableHeader
           className={cx(
