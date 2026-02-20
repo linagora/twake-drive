@@ -24,11 +24,14 @@ import AppRoute from '@/modules/navigation/AppRoute'
 
 // ambient styles
 import styles from '@/styles/main.styl' // eslint-disable-line no-unused-vars
+import { ShellProvider } from '@/hooks/useShell'
 
 const AppComponent = props => (
   <App {...props}>
     <HashRouter>
-      <AppRoute />
+      <ShellProvider>
+        <AppRoute />
+      </ShellProvider>
     </HashRouter>
   </App>
 )

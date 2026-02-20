@@ -24,6 +24,7 @@ import {
 import styles from '@/styles/filelist.styl'
 
 import { useClipboardContext } from '@/contexts/ClipboardProvider'
+import { useShell } from '@/hooks/useShell'
 import { useViewSwitcherContext } from '@/lib/ViewSwitcherContext'
 import { ActionMenuWithHeader } from '@/modules/actionmenu/ActionMenuWithHeader'
 import { getContextMenuActions } from '@/modules/actions/helpers'
@@ -74,6 +75,7 @@ const File = ({
   onToggleSelect
 }) => {
   const { viewType } = useViewSwitcherContext()
+  const { runsInShell, selectedFile } = useShell()
 
   const [actionMenuVisible, setActionMenuVisible] = useState(false)
   const filerowMenuToggleRef = useRef()
@@ -102,9 +104,11 @@ const File = ({
   const isCut = isItemCut(attributes._id)
 
   const selected = isItemSelected(attributes._id)
+  const selectedInShell =
+    runsInShell && selectedFile && selectedFile === attributes._id
 
   const filContentRowSelected = cx(styles['fil-content-row'], {
-    [styles['fil-content-row-selected']]: selected,
+    [styles['fil-content-row-selected']]: selected || selectedInShell,
     [styles['fil-content-row-actioned']]: actionMenuVisible,
     [styles['fil-content-row-disabled']]: styleDisabled || isCut
   })
