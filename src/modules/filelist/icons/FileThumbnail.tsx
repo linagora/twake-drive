@@ -3,6 +3,7 @@ import React from 'react'
 
 import { isReferencedBy, models } from 'cozy-client'
 import { isDirectory } from 'cozy-client/dist/models/file'
+import flag from 'cozy-flags'
 import { SharedBadge, SharingOwnerAvatar } from 'cozy-sharing'
 import Badge from 'cozy-ui/transpiled/react/Badge'
 import Box from 'cozy-ui/transpiled/react/Box'
@@ -85,8 +86,9 @@ const FileThumbnail: React.FC<FileThumbnailProps> = ({
   }
 
   if (
-    file._id === 'io.cozy.files.shared-drives-dir' ||
-    isSharedDriveFolder(file)
+    flag('drive.shared-drive.enabled') &&
+    (file._id === 'io.cozy.files.shared-drives-dir' ||
+      isSharedDriveFolder(file))
   ) {
     return (
       <>
@@ -115,9 +117,12 @@ const FileThumbnail: React.FC<FileThumbnailProps> = ({
   }
 
   const isSharingShortcut =
-    models.file.isSharingShortcut(file) && !isInSyncFromSharing
+    models.file.isSharingShortcut(file) && !isInSyncFromSharing && !file.driveId
   const isRegularShortcut =
-    !isSharingShortcut && file.class === 'shortcut' && !isInSyncFromSharing
+    !isSharingShortcut &&
+    file.class === 'shortcut' &&
+    !isInSyncFromSharing &&
+    !file.driveId
   const isSimpleFile =
     !isSharingShortcut && !isRegularShortcut && !isInSyncFromSharing
   const isFolder = isSimpleFile && isDirectory(file)

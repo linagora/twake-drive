@@ -9,7 +9,7 @@ import FileIconShortcut from '@/modules/filelist/icons/FileIconShortcut'
 
 const FileIcon = ({ file, size, isEncrypted, viewType = 'list' }) => {
   const isImage = file.class === 'image'
-  const isShortcut = file.class === 'shortcut'
+  const isShortcut = file.class === 'shortcut' && !file.driveId
   if (isImage || file.class === 'pdf')
     return (
       <FileImageLoader
