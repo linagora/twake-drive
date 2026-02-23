@@ -10,6 +10,10 @@ import {
 import { isNextcloudShortcut } from '@/modules/nextcloud/helpers'
 
 export const makeParentFolderPath = (file: File): string => {
+  if (file.dir_id === SHARED_DRIVES_DIR_ID) {
+    return '/sharings'
+  }
+
   if (!file.path) return ''
 
   return file.dir_id === ROOT_DIR_ID

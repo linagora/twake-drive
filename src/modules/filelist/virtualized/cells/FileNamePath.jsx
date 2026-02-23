@@ -9,7 +9,7 @@ import styles from '@/styles/filelist.styl'
 
 import CertificationsIcons from '@/modules/filelist/cells/CertificationsIcons.jsx'
 import { getFileNameAndExtension } from '@/modules/filelist/helpers'
-import { getFolderPath, getSharedDrivePath } from '@/modules/routeUtils'
+import { getFolderPath } from '@/modules/routeUtils'
 
 const FileNamePath = ({
   attributes,
@@ -45,10 +45,7 @@ const FileNamePath = ({
       </div>
     )
   }
-
-  const to = attributes.driveId
-    ? getSharedDrivePath(attributes.driveId, attributes.dir_id)
-    : getFolderPath(attributes.dir_id)
+  const to = attributes.driveId ? '/sharings' : getFolderPath(attributes.dir_id)
 
   return (
     <Link
