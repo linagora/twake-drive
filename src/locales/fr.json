@@ -350,7 +350,7 @@
       "success_conflicts": "%{smart_count} %{type} importé avec %{conflictNumber} conflit(s). |||| %{smart_count} %{type}s importés avec %{conflictNumber} conflit(s).",
       "success_updated": "%{smart_count} %{type} importé et %{updatedCount} mis à jour. |||| %{smart_count} %{type}s importés et %{updatedCount} mis à jour.",
       "success_updated_conflicts": "%{smart_count} %{type} importé, %{updatedCount} mis à jour et %{conflictCount} conflit(s). |||| %{smart_count} %{type}s importés, %{updatedCount} mis à jour et %{conflictCount} conflit(s).",
-      "updated": "%{smart_count} %{type} mis à jour. |||| %{smart_count} %{type}s mis à jour.",
+      "updated": "%{smart_count} %{type} mis à jour. |||| %{smart_count} %{type} mis à jour.",
       "updated_conflicts": "%{smart_count} %{type} mis à jour avec %{conflictCount} conflit(s). |||| %{smart_count} %{type}s mis à jour avec %{conflictCount} conflit(s).",
       "errors": "Une erreur est survenue lors de l’import du %{type}, merci de réessayer plus tard.",
       "network": "Vous ne disposez pas d'une connexion internet. Merci de réessayer quand ce sera le cas.",
