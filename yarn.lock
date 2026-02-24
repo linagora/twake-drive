@@ -5626,6 +5626,11 @@ cozy-device-helper@^4.0.1:
   resolved "https://registry.yarnpkg.com/cozy-device-helper/-/cozy-device-helper-4.0.1.tgz#15dd904ff1e0d32fe0f735e0f08e818ddb4dcc03"
   integrity sha512-n6zs2M0nt8cKlpeOgSuqva1UjU93UwgefDYQWjA+j0Qa2K2zBes0X3yWjhDmOvWyu/sZChv4wshhVjojhwfo5A==
 
+cozy-device-helper@^4.0.2:
+  version "4.0.2"
+  resolved "https://registry.yarnpkg.com/cozy-device-helper/-/cozy-device-helper-4.0.2.tgz#eaddb41b0df2be09a5af9663dba9dcf4033f8415"
+  integrity sha512-CrE6n9cBX8xGkLoMnrDHf+7TK4xKA73nFoehb2Df7MS5NdN4YhBGi4iYv2w+lShQPSPNkX+B47ZzQMznN3i/9w==
+
 cozy-devtools@^1.2.1:
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/cozy-devtools/-/cozy-devtools-1.2.1.tgz#680976ab69ebdf2d2727cffc07243705794d1a83"
@@ -5661,6 +5666,17 @@ cozy-doctypes@^1.98.2:
   version "1.98.2"
   resolved "https://registry.yarnpkg.com/cozy-doctypes/-/cozy-doctypes-1.98.2.tgz#77a7bd98c49bc611c31a88eeba47b1430b3b1b5d"
   integrity sha512-KJDzO4Pe00TXyZQoyUHXto5btVwWkYASaIK0ZQUIL/AFh4w4EqW/3AdLpxO3OviJ+rEcY/UxIdPrud0WVJRUaw==
+  dependencies:
+    cozy-logger "^1.17.0"
+    date-fns "^1.30.1"
+    es6-promise-pool "^2.5.0"
+    lodash "^4.17.21"
+    prop-types "^15.7.2"
+
+cozy-doctypes@^1.98.3:
+  version "1.98.3"
+  resolved "https://registry.yarnpkg.com/cozy-doctypes/-/cozy-doctypes-1.98.3.tgz#a1fa24e352aafd5a1962a8c848000605810d2a72"
+  integrity sha512-1IVp7DqaIjGw9HNb/kyh31J4/3NES+uua33v1GIWOEYgA8j63LJhMZvJTXgZUitym7dOYa900O4re2fua/3eIw==
   dependencies:
     cozy-logger "^1.17.0"
     date-fns "^1.30.1"
@@ -5874,15 +5890,15 @@ cozy-search@^0.14.1:
     react-type-animation "3.2.0"
     rooks "7.14.1"
 
-cozy-sharing@^28.3.0:
-  version "28.3.0"
-  resolved "https://registry.yarnpkg.com/cozy-sharing/-/cozy-sharing-28.3.0.tgz#46eb42bda68890e431d346f30c9ac1f114f23588"
-  integrity sha512-OlPmum/fFQR61sEnSotzsfMTaMuM6bKIR1kw9eVE0mbeRb/hliGKJ8kEF7olAIqLIaNGbUXNrzQ0Dzg4Lx0peg==
+cozy-sharing@^28.4.0:
+  version "28.4.0"
+  resolved "https://registry.yarnpkg.com/cozy-sharing/-/cozy-sharing-28.4.0.tgz#377b6edc57ab544e955f9800377e3e64b6a571e4"
+  integrity sha512-XxniwDH2oyx4i6nVmIkR7AiP3zcXAvkhFS0H2dTiB9g2GC+kJFtev4/Sg29iiQE6bYPq7rmVBMcQHOo5r/lBJQ==
   dependencies:
     "@cozy/minilog" "^1.0.0"
     classnames "^2.5.1"
-    cozy-device-helper "^4.0.1"
-    cozy-doctypes "^1.98.2"
+    cozy-device-helper "^4.0.2"
+    cozy-doctypes "^1.98.3"
     date-fns "2.30.0"
     lodash "^4.17.21"
     react-autosuggest "^10.1.0"
