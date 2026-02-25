@@ -38,6 +38,17 @@ const useTransformFolderListHasSharedDriveShortcuts = (
   const { sharedDrives, isLoaded: sharedDrivesLoaded } = useSharedDrives()
 
   /**
+   * Filter out Nextcloud shortcuts from shared drives.
+   */
+  const filteredSharedDrives = useMemo(
+    () =>
+      sharedDrives.filter(
+        sharing => !isNextcloudShortcut(sharing as unknown as IOCozyFile)
+      ),
+    [sharedDrives]
+  )
+
+  /**
    * The recipient's shared drives are displayed as shortcuts which cannot accessible
    * In some cases (like open shared drive from folder picker or sharing section...),
    *  we want to access to shared drives as directories for both owner and recipient
@@ -45,56 +56,47 @@ const useTransformFolderListHasSharedDriveShortcuts = (
    */
   const transformedSharedDrives = useMemo(
     () =>
-      sharedDrives
-        .filter(
-          sharing => !isNextcloudShortcut(sharing as unknown as IOCozyFile)
-        )
-        .map((sharing: SharedDrive) => {
-          const [rootFolderId, driveName] = [
-            sharing.rules[0]?.values?.[0],
-            sharing.rules[0]?.title ?? ''
-          ]
+      filteredSharedDrives.map((sharing: SharedDrive) => {
+        const [rootFolderId, driveName] = [
+          sharing.rules[0]?.values?.[0],
+          sharing.rules[0]?.title ?? ''
+        ]
 
-          const fileInSharingSection = folderList?.find(item =>
-            item.relationships?.referenced_by?.data?.some(
-              ref => ref.id === sharing.id
-            )
+        const fileInSharingSection = folderList?.find(item =>
+          item.relationships?.referenced_by?.data?.some(
+            ref => ref.id === sharing.id
           )
+        )
 
-          if (fileInSharingSection && isOwner(fileInSharingSection.id ?? ''))
-            return fileInSharingSection as TransformedSharedDrive
+        if (fileInSharingSection && isOwner(fileInSharingSection.id ?? ''))
+          return fileInSharingSection as TransformedSharedDrive
 
-          const directoryData = {
-            type: 'directory' as const,
-            name: driveName,
-            dir_id: SHARED_DRIVES_DIR_ID,
-            driveId: sharing.id
-          }
+        const directoryData = {
+          type: 'directory' as const,
+          name: driveName,
+          dir_id: SHARED_DRIVES_DIR_ID,
+          driveId: sharing.id
+        }
 
-          return {
-            ...fileInSharingSection,
-            _id: rootFolderId,
-            id: rootFolderId,
-            _type: 'io.cozy.files' as const,
-            path: `/Drives/${driveName}`,
-            ...directoryData,
-            attributes: directoryData
-          } as TransformedSharedDrive
-        }),
-    [sharedDrives, folderList, isOwner]
+        return {
+          ...fileInSharingSection,
+          _id: rootFolderId,
+          id: rootFolderId,
+          _type: 'io.cozy.files' as const,
+          path: `/Drives/${driveName}`,
+          ...directoryData,
+          attributes: directoryData
+        } as TransformedSharedDrive
+      }),
+    [filteredSharedDrives, folderList, isOwner]
   )
 
   /**
    * Create a Set of shared drive IDs for efficient lookup
    */
   const sharedDriveIds = useMemo(
-    () =>
-      new Set(
-        sharedDrives
-          .filter(d => !isNextcloudShortcut(d as unknown as IOCozyFile))
-          .map((drive: SharedDrive) => drive.id)
-      ),
-    [sharedDrives]
+    () => new Set(filteredSharedDrives.map((drive: SharedDrive) => drive.id)),
+    [filteredSharedDrives]
   )
 
   /**
