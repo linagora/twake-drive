@@ -55,9 +55,10 @@ const useTransformFolderListHasSharedDriveShortcuts = (
             sharing.rules[0]?.title ?? ''
           ]
 
-          const fileInSharingSection = folderList?.find(
-            item =>
-              item.relationships?.referenced_by?.data?.[0]?.id === sharing.id
+          const fileInSharingSection = folderList?.find(item =>
+            item.relationships?.referenced_by?.data?.some(
+              ref => ref.id === sharing.id
+            )
           )
 
           if (fileInSharingSection && isOwner(fileInSharingSection.id ?? ''))
@@ -104,10 +105,13 @@ const useTransformFolderListHasSharedDriveShortcuts = (
   const nonSharedDriveList = useMemo(
     () =>
       folderList?.filter(item => {
-        const referencedById = item.relationships?.referenced_by?.data?.[0]?.id
+        const referencedByData = item.relationships?.referenced_by?.data ?? []
+        const isReferencedBySharedDrive = referencedByData.some(ref =>
+          sharedDriveIds.has(ref.id)
+        )
         return (
           item.dir_id !== SHARED_DRIVES_DIR_ID &&
-          !(referencedById && sharedDriveIds.has(referencedById)) &&
+          !isReferencedBySharedDrive &&
           (!showNextcloudFolder ? !isNextcloudShortcut(item) : true)
         )
       }) ?? [],
