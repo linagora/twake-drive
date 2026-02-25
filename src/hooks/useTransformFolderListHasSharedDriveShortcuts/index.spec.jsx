@@ -63,7 +63,7 @@ describe('useTransformFolderListHasSharedDriveShortcuts', () => {
       expect(result.current.sharedDrives).toHaveLength(1)
       expect(result.current.sharedDrives[0]).toMatchObject({
         _id: 'folder-1',
-        id: SHARED_DRIVES_DIR_ID,
+        id: 'folder-1',
         _type: 'io.cozy.files',
         type: 'directory',
         name: 'Shared Drive 1',

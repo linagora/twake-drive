@@ -73,7 +73,7 @@ const useTransformFolderListHasSharedDriveShortcuts = (
           return {
             ...fileInSharingSection,
             _id: rootFolderId,
-            id: SHARED_DRIVES_DIR_ID,
+            id: rootFolderId,
             _type: 'io.cozy.files' as const,
             path: `/Drives/${driveName}`,
             ...directoryData,
