@@ -20,3 +20,4 @@ export const MAX_PAYLOAD_SIZE = MAX_PAYLOAD_SIZE_IN_GB * 1024 * 1024 * 1024
 export const SHARING_TAB_ALL = 0
 export const SHARING_TAB_DRIVES = 1
 export const DEFAULT_UPLOAD_PROGRESS_HIDE_DELAY = 5000
+export const SHARINGS_VIEW_ROUTE = '/sharings'

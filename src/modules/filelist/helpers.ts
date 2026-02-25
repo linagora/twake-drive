@@ -5,13 +5,14 @@ import type { File } from '@/components/FolderPicker/types'
 import {
   TRASH_DIR_ID,
   ROOT_DIR_ID,
-  SHARED_DRIVES_DIR_ID
+  SHARED_DRIVES_DIR_ID,
+  SHARINGS_VIEW_ROUTE
 } from '@/constants/config'
 import { isNextcloudShortcut } from '@/modules/nextcloud/helpers'
 
 export const makeParentFolderPath = (file: File): string => {
   if (file.dir_id === SHARED_DRIVES_DIR_ID) {
-    return '/sharings'
+    return SHARINGS_VIEW_ROUTE
   }
 
   if (!file.path) return ''

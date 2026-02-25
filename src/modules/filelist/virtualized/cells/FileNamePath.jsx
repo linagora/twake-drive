@@ -7,6 +7,7 @@ import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import styles from '@/styles/filelist.styl'
 
+import { SHARINGS_VIEW_ROUTE } from '@/constants/config'
 import CertificationsIcons from '@/modules/filelist/cells/CertificationsIcons.jsx'
 import { getFileNameAndExtension } from '@/modules/filelist/helpers'
 import { getFolderPath } from '@/modules/routeUtils'
@@ -45,7 +46,9 @@ const FileNamePath = ({
       </div>
     )
   }
-  const to = attributes.driveId ? '/sharings' : getFolderPath(attributes.dir_id)
+  const to = attributes.driveId
+    ? SHARINGS_VIEW_ROUTE
+    : getFolderPath(attributes.dir_id)
 
   return (
     <Link
