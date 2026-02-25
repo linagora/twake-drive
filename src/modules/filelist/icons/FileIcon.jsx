@@ -4,12 +4,13 @@ import FileImageLoader from 'cozy-ui-plus/dist/FileImageLoader'
 
 import styles from '@/styles/filelist.styl'
 
+import { isDriveBackedFile } from '@/modules/filelist/helpers'
 import FileIconMime from '@/modules/filelist/icons/FileIconMime'
 import FileIconShortcut from '@/modules/filelist/icons/FileIconShortcut'
 
 const FileIcon = ({ file, size, isEncrypted, viewType = 'list' }) => {
   const isImage = file.class === 'image'
-  const isShortcut = file.class === 'shortcut' && !file.driveId
+  const isShortcut = file.class === 'shortcut' && !isDriveBackedFile(file)
   if (isImage || file.class === 'pdf')
     return (
       <FileImageLoader

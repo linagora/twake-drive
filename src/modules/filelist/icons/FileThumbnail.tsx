@@ -22,7 +22,7 @@ import styles from '@/styles/filelist.styl'
 import type { File, FolderPickerEntry } from '@/components/FolderPicker/types'
 import { useViewSwitcherContext } from '@/lib/ViewSwitcherContext'
 import { DOCTYPE_KONNECTORS } from '@/lib/doctypes'
-import { isInfected } from '@/modules/filelist/helpers'
+import { isInfected, isDriveBackedFile } from '@/modules/filelist/helpers'
 import { BadgeKonnector } from '@/modules/filelist/icons/BadgeKonnector'
 import FileIcon from '@/modules/filelist/icons/FileIcon'
 import FileIconMime from '@/modules/filelist/icons/FileIconMime'
@@ -117,12 +117,13 @@ const FileThumbnail: React.FC<FileThumbnailProps> = ({
   }
 
   const isSharingShortcut =
-    models.file.isSharingShortcut(file) && !isInSyncFromSharing && !file.driveId
-  const isRegularShortcut =
-    !isSharingShortcut &&
-    file.class === 'shortcut' &&
+    models.file.isSharingShortcut(file) &&
     !isInSyncFromSharing &&
-    !file.driveId
+    !isDriveBackedFile(file)
+  models.file.isSharingShortcut(file) && !isInSyncFromSharing && !file.driveId
+  const isRegularShortcut =
+    !isSharingShortcut && !isInSyncFromSharing && !isDriveBackedFile(file)
+  !isInSyncFromSharing && !file.driveId
   const isSimpleFile =
     !isSharingShortcut && !isRegularShortcut && !isInSyncFromSharing
   const isFolder = isSimpleFile && isDirectory(file)
