@@ -42,7 +42,13 @@ export const rename = ({ t, hasWriteAccess, dispatch }) => {
       (hasWriteAccess ||
         (isSharedDriveFolder(selection[0]) &&
           isFolderFromSharedDriveOwner(selection[0]))),
-    action: files => dispatch(startRenamingAsync(files[0])),
+    action: files => {
+      // Use setTimeout to defer dispatch until after click event completes
+      // This prevents focus loss on the rename input
+      setTimeout(() => {
+        dispatch(startRenamingAsync(files[0]))
+      }, 0)
+    },
     Component: makeComponent(label, icon)
   }
 }
