@@ -120,10 +120,11 @@ const FileThumbnail: React.FC<FileThumbnailProps> = ({
     models.file.isSharingShortcut(file) &&
     !isInSyncFromSharing &&
     !isDriveBackedFile(file)
-  models.file.isSharingShortcut(file) && !isInSyncFromSharing && !file.driveId
   const isRegularShortcut =
-    !isSharingShortcut && !isInSyncFromSharing && !isDriveBackedFile(file)
-  !isInSyncFromSharing && !file.driveId
+    !isSharingShortcut &&
+    file.class === 'shortcut' &&
+    !isInSyncFromSharing &&
+    !isDriveBackedFile(file)
   const isSimpleFile =
     !isSharingShortcut && !isRegularShortcut && !isInSyncFromSharing
   const isFolder = isSimpleFile && isDirectory(file)
