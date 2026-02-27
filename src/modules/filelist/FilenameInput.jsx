@@ -1,5 +1,5 @@
 import cx from 'classnames'
-import React, { Component } from 'react'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { translate } from 'twake-i18n'
 
 import { isDirectory } from 'cozy-client/dist/models/file'
@@ -16,65 +16,103 @@ const ESC_KEY = 27
 
 const valueIsEmpty = value => value.toString() === ''
 
-class FilenameInput extends Component {
-  constructor(props) {
-    super(props)
-    this.textInput = React.createRef()
-    this.state = {
-      value: props.name || '',
-      working: false,
-      error: false,
-      isModalOpened: false
+const FilenameInput = ({
+  name: initialName = '',
+  file,
+  onSubmit,
+  onAbort,
+  onChange,
+  t,
+  className,
+  style
+}) => {
+  const textInput = useRef()
+  const [value, setValue] = useState(initialName || '')
+  const [working, setWorking] = useState(false)
+  const [error, setError] = useState(false)
+  const [isModalOpened, setIsModalOpened] = useState(false)
+
+  // Use a ref for synchronous guard to prevent race conditions
+  // when Enter and blur fire in quick succession
+  const isSubmittingRef = useRef(false)
+  const isSavingRef = useRef(false)
+
+  const save = useCallback(async () => {
+    if (isSavingRef.current) return
+    isSavingRef.current = true
+    if (!onSubmit) {
+      setWorking(false)
+      isSubmittingRef.current = false
+      isSavingRef.current = false
+      return
     }
-    this.fileNameOnMount = props.name
-    this.abort = this.abort.bind(this)
-    this.save = this.save.bind(this)
-    this.isSubmitting = false
-  }
 
-  handleKeyDown(e) {
-    const { value } = this.state
+    try {
+      await onSubmit(value)
+    } catch (e) {
+      setError(true)
+    } finally {
+      setWorking(false)
+      isSubmittingRef.current = false
+      isSavingRef.current = false
+    }
+  }, [onSubmit, value])
 
+  const abort = useCallback(
+    (accidental = false) => {
+      if (isModalOpened) {
+        setIsModalOpened(false)
+      }
+      onAbort && onAbort(accidental)
+      isSubmittingRef.current = false
+      setWorking(false)
+    },
+    [isModalOpened, onAbort]
+  )
+
+  const handleKeyDown = e => {
     if (e.keyCode === ENTER_KEY) {
       if (valueIsEmpty(value)) {
-        this.abort(true)
+        abort(true)
       } else {
-        this.submit()
+        submit()
       }
     } else if (e.keyCode === ESC_KEY) {
-      this.abort()
+      abort()
     }
   }
 
-  handleChange(e) {
-    const { onChange } = this.props
-
-    const value = e.target.value
-    this.setState({ value })
-    onChange && onChange(value)
+  const handleChange = e => {
+    const newValue = e.target.value
+    setValue(newValue)
+    onChange && onChange(newValue)
   }
 
-  handleBlur() {
-    const { value } = this.state
+  const handleBlur = () => {
     if (valueIsEmpty(value)) {
-      // For folder creation (no initial name), exit without notification (abort(false))
-      // For file renaming (has initial name), show notification (abort(true))
-      this.abort(!!this.fileNameOnMount)
+      abort(!!initialName)
     } else {
-      this.submit()
+      submit()
     }
   }
 
-  submit() {
-    if (this.isSubmitting) return
-    const { value } = this.state
-    const { file } = this.props
-    this.setState({ working: true, error: false })
-    this.isSubmitting = true
-    if (!this.fileNameOnMount) return this.save()
+  const submit = () => {
+    // Use ref for synchronous guard - state updates are async
+    // so they don't prevent double submission in same event loop
+    if (isSubmittingRef.current) return
+
+    isSubmittingRef.current = true
+    setWorking(true)
+    setError(false)
+
+    if (!initialName) {
+      save()
+      return
+    }
+
     if (file && !isDirectory(file)) {
       const previousExtension = CozyFile.splitFilename({
-        name: this.fileNameOnMount,
+        name: initialName,
         type: 'file'
       }).extension
       const newExtension = CozyFile.splitFilename({
@@ -82,106 +120,80 @@ class FilenameInput extends Component {
         type: 'file'
       }).extension
       if (previousExtension !== newExtension) {
-        this.setState({ isModalOpened: true })
+        setIsModalOpened(true)
       } else {
-        this.save()
+        save()
       }
     } else {
-      this.save()
+      save()
     }
   }
 
-  save = async () => {
-    const { onSubmit } = this.props
-    const { value } = this.state
+  const shouldSetSelection = useRef(false)
 
-    if (!onSubmit) return
-    try {
-      await onSubmit(value)
-    } catch (e) {
-      this.setState({
-        working: false,
-        error: true
-      })
-    } finally {
-      this.isSubmitting = false
-    }
+  const handleFocus = () => {
+    if (!initialName) return
+    shouldSetSelection.current = true
   }
 
-  abort(accidental = false) {
-    const { isModalOpened } = this.state
-    const { onAbort } = this.props
+  useEffect(() => {
+    if (!shouldSetSelection.current || !textInput.current) return
+    if (!initialName) return
 
-    if (isModalOpened) this.setState({ isModalOpened: false })
-    onAbort && onAbort(accidental)
-    this.isSubmitting = false
-  }
+    const { filename } = CozyFile.splitFilename({
+      name: initialName,
+      type: 'file'
+    })
 
-  handleFocus() {
-    const { name, file } = this.props
-    // the component is also display when creating a Folder, in which case there is no
-    // name yet at first. So we don't want to call splitFilename in that case because
-    // it would throw an error even if it works well. Let's remove sentry error noise.
-    if (!name) return
-    const { filename } = CozyFile.splitFilename({ name, type: 'file' })
-    // Since we're mounting the component and focusing it at the same time
-    // let's add a small timeout to be sure the ref is populated
-    setTimeout(() => {
-      if (this.textInput.current)
-        this.textInput.current.setSelectionRange(
-          0,
-          isDirectory(file) ? name.length : filename.length
-        )
-    }, 5)
-  }
-
-  render() {
-    const { value, working, error, isModalOpened } = this.state
-    const { t, className, style } = this.props
-
-    return (
-      <div
-        data-testid="name-input"
-        className={cx(styles['fil-file-name-input'], className)}
-        style={style}
-      >
-        <input
-          type="text"
-          value={value}
-          ref={this.textInput}
-          disabled={working}
-          onChange={e => this.handleChange(e)}
-          onFocus={() => this.handleFocus()}
-          onBlur={() => this.handleBlur()}
-          onKeyDown={e => this.handleKeyDown(e)}
-          className={error ? styles['error'] : null}
-          autoFocus="autofocus"
-        />
-        {working && <Spinner />}
-        <Dialog
-          onClose={this.abort}
-          open={isModalOpened}
-          title={t('RenameModal.title')}
-          content={t('RenameModal.description')}
-          actions={
-            <>
-              <Button
-                variant="secondary"
-                onClick={this.abort}
-                label={t('RenameModal.cancel')}
-              />
-              <Button
-                variant="primary"
-                label={t('RenameModal.continue')}
-                onClick={this.save}
-              />
-            </>
-          }
-          actionsLayout="row"
-        />
-      </div>
+    textInput.current.setSelectionRange(
+      0,
+      isDirectory(file) ? initialName.length : filename.length
     )
-  }
+    shouldSetSelection.current = false
+  }, [initialName, file])
+
+  return (
+    <div
+      data-testid="name-input"
+      className={cx(styles['fil-file-name-input'], className)}
+      style={style}
+    >
+      <input
+        type="text"
+        value={value}
+        ref={textInput}
+        disabled={working}
+        onChange={handleChange}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
+        className={error ? styles['error'] : null}
+        autoFocus
+      />
+      {working && <Spinner />}
+      <Dialog
+        onClose={abort}
+        open={isModalOpened}
+        title={t('RenameModal.title')}
+        content={t('RenameModal.description')}
+        actions={
+          <>
+            <Button
+              variant="secondary"
+              onClick={abort}
+              label={t('RenameModal.cancel')}
+            />
+            <Button
+              variant="primary"
+              label={t('RenameModal.continue')}
+              onClick={save}
+            />
+          </>
+        }
+        actionsLayout="row"
+      />
+    </div>
+  )
 }
 
 export default translate()(FilenameInput)

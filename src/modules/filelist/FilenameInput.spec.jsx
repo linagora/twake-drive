@@ -1,7 +1,7 @@
 'use strict'
 
 import '@testing-library/jest-dom'
-import { render, fireEvent, screen } from '@testing-library/react'
+import { render, fireEvent, screen, act } from '@testing-library/react'
 import React from 'react'
 
 import { createMockClient } from 'cozy-client'
@@ -38,71 +38,79 @@ describe('FilenameInput', () => {
   }
 
   describe('handleKeyDown behavior', () => {
-    it('should call submit when ENTER_KEY is pressed with non-empty value', () => {
+    it('should call submit when ENTER_KEY is pressed with non-empty value', async () => {
       const { onSubmit } = setup()
       const input = screen.getByRole('textbox')
 
       // Type some text
-      fireEvent.change(input, { target: { value: 'test-file' } })
-
-      // Press Enter
-      fireEvent.keyDown(input, { keyCode: 13 })
+      await act(async () => {
+        fireEvent.change(input, { target: { value: 'test-file' } })
+        fireEvent.keyDown(input, { keyCode: 13 })
+      })
 
       expect(onSubmit).toHaveBeenCalledWith('test-file')
     })
 
-    it('should call abort with accidental=true when ENTER_KEY is pressed with empty value', () => {
+    it('should call abort with accidental=true when ENTER_KEY is pressed with empty value', async () => {
       const { onAbort } = setup()
       const input = screen.getByRole('textbox')
 
       // Press Enter with empty value
-      fireEvent.keyDown(input, { keyCode: 13 })
+      await act(async () => {
+        fireEvent.keyDown(input, { keyCode: 13 })
+      })
 
       expect(onAbort).toHaveBeenCalledWith(true)
     })
 
-    it('should call abort when ESC_KEY is pressed', () => {
+    it('should call abort when ESC_KEY is pressed', async () => {
       const { onAbort } = setup()
       const input = screen.getByRole('textbox')
 
       // Press Escape
-      fireEvent.keyDown(input, { keyCode: 27 })
+      await act(async () => {
+        fireEvent.keyDown(input, { keyCode: 27 })
+      })
 
       expect(onAbort).toHaveBeenCalled()
     })
   })
 
   describe('handleBlur behavior', () => {
-    it('should call submit when blurred with non-empty value', () => {
+    it('should call submit when blurred with non-empty value', async () => {
       const { onSubmit } = setup()
       const input = screen.getByRole('textbox')
 
-      // Type some text
-      fireEvent.change(input, { target: { value: 'test-file' } })
-
-      // Blur the input
-      fireEvent.blur(input)
+      // Type some text and blur
+      await act(async () => {
+        fireEvent.change(input, { target: { value: 'test-file' } })
+        fireEvent.blur(input)
+      })
 
       expect(onSubmit).toHaveBeenCalledWith('test-file')
     })
 
-    it('should call abort when blurred with empty value', () => {
+    it('should call abort when blurred with empty value', async () => {
       const { onAbort } = setup()
       const input = screen.getByRole('textbox')
 
       // Blur with empty value
-      fireEvent.blur(input)
+      await act(async () => {
+        fireEvent.blur(input)
+      })
 
       expect(onAbort).toHaveBeenCalled()
     })
   })
 
   describe('handleChange behavior', () => {
-    it('should update state and call onChange when input changes', () => {
+    it('should update state and call onChange when input changes', async () => {
       const { onChange } = setup()
       const input = screen.getByRole('textbox')
 
-      fireEvent.change(input, { target: { value: 'new-value' } })
+      await act(async () => {
+        fireEvent.change(input, { target: { value: 'new-value' } })
+      })
 
       expect(onChange).toHaveBeenCalledWith('new-value')
       expect(input.value).toBe('new-value')
@@ -110,25 +118,29 @@ describe('FilenameInput', () => {
   })
 
   describe('race condition fix verification', () => {
-    it('should not show unwanted notification for empty filename on ENTER_KEY', () => {
+    it('should not show unwanted notification for empty filename on ENTER_KEY', async () => {
       const { onAbort } = setup()
       const input = screen.getByRole('textbox')
 
       // Simulate pressing Enter with empty value
-      fireEvent.keyDown(input, { keyCode: 13 })
+      await act(async () => {
+        fireEvent.keyDown(input, { keyCode: 13 })
+      })
 
       // Should call abort with accidental=true, not show unwanted notification
       expect(onAbort).toHaveBeenCalledWith(true)
       expect(onAbort).toHaveBeenCalledTimes(1)
     })
 
-    it('should handle blur correctly without race condition', () => {
+    it('should handle blur correctly without race condition', async () => {
       const { onSubmit, onAbort } = setup()
       const input = screen.getByRole('textbox')
 
       // Type some text and blur
-      fireEvent.change(input, { target: { value: 'valid-file' } })
-      fireEvent.blur(input)
+      await act(async () => {
+        fireEvent.change(input, { target: { value: 'valid-file' } })
+        fireEvent.blur(input)
+      })
 
       // Should submit without any race condition issues
       expect(onSubmit).toHaveBeenCalledWith('valid-file')
@@ -137,27 +149,29 @@ describe('FilenameInput', () => {
   })
 
   describe('edge cases', () => {
-    it('should handle whitespace-only value as non-empty', () => {
+    it('should handle whitespace-only value as non-empty', async () => {
       const { onSubmit } = setup()
       const input = screen.getByRole('textbox')
 
       // Type whitespace and press Enter
-      fireEvent.change(input, { target: { value: '   ' } })
-      fireEvent.keyDown(input, { keyCode: 13 })
+      await act(async () => {
+        fireEvent.change(input, { target: { value: '   ' } })
+        fireEvent.keyDown(input, { keyCode: 13 })
+      })
 
       // Whitespace is considered non-empty by the component
       expect(onSubmit).toHaveBeenCalledWith('   ')
     })
-    it('should not submit twice when Enter is followed by blur', () => {
+    it('should handle Enter followed by blur correctly', async () => {
       const { onSubmit, onAbort } = setup()
       const input = screen.getByRole('textbox')
 
-      // Type a value
-      fireEvent.change(input, { target: { value: 'test-file' } })
-
-      // Press Enter, then blur immediately
-      fireEvent.keyDown(input, { keyCode: 13 })
-      fireEvent.blur(input)
+      // Type a value and press Enter
+      await act(async () => {
+        fireEvent.change(input, { target: { value: 'test-file' } })
+        fireEvent.keyDown(input, { keyCode: 13 })
+        fireEvent.blur(input)
+      })
 
       // Should only submit once, not twice
       expect(onSubmit).toHaveBeenCalledTimes(1)
