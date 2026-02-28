@@ -11,7 +11,7 @@
       "icons": "resources/%theme-type%(light|dark)/icon%scale%(default).%extension%(png)",
       "isViewer": false,
       "EditorsSupport": ["word"],
-      "type": "panelRight",
+      "type": "panel",
       "initDataType": "text",
       "initOnSelectionChanged": true,
       "buttons": [],

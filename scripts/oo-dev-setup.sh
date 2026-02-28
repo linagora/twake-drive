@@ -88,6 +88,16 @@ docker exec "${CONTAINER_NAME}" supervisorctl start ds:example 2>/dev/null \
   || echo "Could not start example service. Try: docker exec ${CONTAINER_NAME} supervisorctl start ds:example"
 
 echo ""
+echo "=== Fixing Plugin File Ownership ==="
+# Docker changes ownership of mounted files to container's internal user.
+# Fix it so the host user can edit plugin files without sudo.
+docker exec "${CONTAINER_NAME}" chown -R "$(id -u):$(id -g)" "${PLUGIN_CONTAINER_PATH}" 2>/dev/null \
+  && echo "File ownership fixed." \
+  || echo "Could not fix ownership. Run: sudo chown -R \$(whoami):\$(whoami) plugins/onlyoffice-scribe/"
+# Remove .gz files created by OO (may contain stale cached versions)
+rm -f "${PLUGIN_HOST_PATH}"/*.gz "${PLUGIN_HOST_PATH}"/scripts/*.gz 2>/dev/null
+
+echo ""
 echo "=== Registering Scribe Plugin ==="
 docker exec "${CONTAINER_NAME}" bash -c \
   '/usr/bin/documentserver-pluginsmanager.sh --directory="/var/www/onlyoffice/documentserver/sdkjs-plugins" --update="/var/www/onlyoffice/documentserver/sdkjs-plugins/plugin-list-default.json"' \
@@ -98,8 +108,8 @@ echo ""
 echo "=== Setup Complete ==="
 echo ""
 echo "Next steps:"
-echo "  1. Open http://localhost in your browser"
-echo "  2. Create a new document or upload a .docx file"
+echo "  1. Open http://localhost/example/ in your browser"
+echo "  2. Create a new document or open an existing one"
 echo "  3. Open browser DevTools console (F12)"
 echo "  4. Look for '[Scribe] Plugin loaded' message"
 echo ""

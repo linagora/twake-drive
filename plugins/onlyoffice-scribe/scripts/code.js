@@ -109,6 +109,8 @@
   }
 
   // ---- PLUG-05: Insert text after selection ----
+  // InsertContent replaces the selection, so we re-create the original
+  // paragraphs and append the new text after them.
   function insertAfterSelection() {
     if (!lastSelectedText) {
       log("No selection for insert");
@@ -117,13 +119,26 @@
     var transformed = mockTransform(lastSelectedText);
     log("Inserting mock transform after selection...");
     Asc.scope.textToInsert = transformed;
+    Asc.scope.originalLines = lastSelectedText.split("\n");
     window.Asc.plugin.callCommand(function() {
       var oDocument = Api.GetDocument();
-      var oParagraph = Api.CreateParagraph();
-      oParagraph.AddText(Asc.scope.textToInsert);
-      oDocument.InsertContent([oParagraph]);
+      var content = [];
+      // Re-create original text paragraphs (preserves paragraph structure)
+      for (var i = 0; i < Asc.scope.originalLines.length; i++) {
+        var p = Api.CreateParagraph();
+        p.AddText(Asc.scope.originalLines[i]);
+        content.push(p);
+      }
+      // Add transformed text as new paragraph after original
+      var insertLines = Asc.scope.textToInsert.split("\n");
+      for (var j = 0; j < insertLines.length; j++) {
+        var pNew = Api.CreateParagraph();
+        pNew.AddText(insertLines[j]);
+        content.push(pNew);
+      }
+      oDocument.InsertContent(content);
     }, false, false, function() {
-      log("InsertContent callCommand completed");
+      log("InsertContent completed (original preserved + insert after)");
     });
     log("callCommand dispatched for InsertContent");
   }
