@@ -34,11 +34,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   6. When the user selects text in the document, the plugin detects the selection event and can read the selected text
   7. The plugin can programmatically replace the selected text with different text
   8. The plugin can programmatically insert text after the current selection with a line break
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
+- [ ] 01-01-PLAN.md — Dev environment setup, plugin scaffold, Docker volume mount, OO version check
+- [ ] 01-02-PLAN.md — Plugin API capabilities (selection, read, replace, insert) with test panel
 
 ### Phase 2: Contextual Trigger and Communication Bridge
 **Goal**: Users can trigger Scribe from a contextual button and the selected text flows from the OnlyOffice plugin to Cozy Drive via a reliable postMessage protocol
@@ -92,7 +92,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Plugin OnlyOffice POC | 0/0 | Not started | - |
+| 1. Plugin OnlyOffice POC | 0/2 | Planned | - |
 | 2. Contextual Trigger and Communication Bridge | 0/0 | Not started | - |
 | 3. Scribe Interface with Mock AI | 0/0 | Not started | - |
 | 4. End-to-End Actions | 0/0 | Not started | - |
