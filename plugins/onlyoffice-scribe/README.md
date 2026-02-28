@@ -88,21 +88,28 @@ plugins/onlyoffice-scribe/
 
 The plugin manifest defines:
 - **name/guid**: Unique plugin identity (`asc.{C36B0B33-0C65-4E88-9EE0-C1D6A40434EC}`)
-- **type: "background"**: Plugin runs silently without its own UI panel inside OO
+- **type: "panelRight"**: Plugin renders a visible panel on the right side of the editor (POC test panel; will switch to `"background"` in Phase 2+)
 - **initOnSelectionChanged: true**: The `init()` function is called on every text selection change
 - **initDataType: "text"**: Selection data is passed as a text string to `init()`
 - **EditorsSupport: ["word"]**: Plugin only loads in the word processor
-- **events**: Context menu integration hooks
+- **events**: Context menu integration hooks (`onContextMenuShow`, `onContextMenuClick`)
 
 ### index.html
 
-Minimal HTML that loads two scripts in order:
-1. The OnlyOffice Plugin SDK (`plugins.js`) from the official CDN
-2. The plugin logic (`scripts/code.js`)
+HTML entry point with two parts:
+1. **Test panel UI**: Status indicator, selected text display, Read/Replace/Insert buttons, and a log output area
+2. **Script loading**: OnlyOffice Plugin SDK (`plugins.js`) from the official CDN, then `scripts/code.js`
 
 ### scripts/code.js
 
-Plugin logic. In the current minimal scaffold, it only logs when the plugin initializes and when text is selected.
+Full POC plugin logic implementing:
+- **Selection detection** (PLUG-02): `plugin.init(data)` receives selected text on every change
+- **Read selected text** (PLUG-03): `GetSelectedText` via "Read Selection" button
+- **Replace selected text** (PLUG-04): `PasteText` with mock-transformed text via "Replace with Mock" button
+- **Insert after selection** (PLUG-05): `callCommand` + `InsertContent` via "Insert After" button
+- **Mock transform** (MOCK-01): Prefixes lines with "$ ", adds "--- SCRIBE START/END ---" markers
+- **Context menu**: "Scribe - AI Assistant" item appears on right-click when text is selected
+- **Test panel wiring**: All buttons and status updates driven from code.js
 
 ## Docker Details
 
@@ -228,3 +235,114 @@ docker rm -f oo-dev
 1. Make sure you are looking at the correct console context. In Chrome DevTools, check the console scope dropdown -- you may need to select the correct iframe context.
 2. Try a hard refresh (**Ctrl+Shift+R**) to clear cached scripts.
 3. Verify the plugin is loaded by checking the Plugins tab in the OO editor toolbar.
+
+## Test Plan
+
+### Prerequisites
+- OO Document Server running (via `./scripts/oo-dev-setup.sh`)
+- Browser with DevTools open (Console tab)
+- A document with some text paragraphs open in the editor
+
+### Test 1: Plugin Loads (ENV-01, PLUG-01)
+- [ ] Open the editor at http://localhost/example/
+- [ ] Check Plugins tab -- Scribe should appear with its icon
+- [ ] Test panel visible on the right side of the editor
+- [ ] Console shows "[Scribe] Plugin loaded, test panel ready"
+- [ ] Status indicator shows "No selection" (gray dot)
+
+### Test 2: Selection Detection (PLUG-02)
+- [ ] Select some text in the document
+- [ ] Console shows "[Scribe] Selection: ..."
+- [ ] Test panel status dot turns green
+- [ ] Status text changes to "Selection active"
+- [ ] Selected text appears in the test panel's "Selected Text" area
+- [ ] Deselect text (click without selecting) -- status returns to gray/"No selection"
+
+### Test 3: Read Selected Text (PLUG-03)
+- [ ] Select text in the document
+- [ ] Click the "Read Selection" button in the test panel
+- [ ] Console shows "[Scribe] GetSelectedText result: ..."
+- [ ] Test panel displays the selected text (should match what is shown via init)
+- [ ] Try with no selection -- log should show "(empty)"
+
+### Test 4: Replace Selected Text (PLUG-04)
+- [ ] Select a paragraph of text
+- [ ] Click "Replace with Mock"
+- [ ] Selected text is replaced with mock transform in the document:
+  - Lines prefixed with "$ "
+  - "--- SCRIBE START ---" at the beginning
+  - "--- SCRIBE END ---" at the end
+- [ ] Console shows "[Scribe] Replacing selection with mock transform..." and "[Scribe] PasteText called"
+- [ ] Undo (Ctrl+Z) restores the original text
+- [ ] With no selection, button should be disabled
+
+### Test 5: Insert After Selection (PLUG-05)
+- [ ] Select a paragraph of text
+- [ ] Click "Insert After"
+- [ ] New paragraph appears with mock-transformed text
+- [ ] **Critical finding:** Does the new paragraph appear AFTER the selection (preserving original), or does it REPLACE the selection?
+- [ ] Console shows "[Scribe] Inserting mock transform after selection..." and "[Scribe] callCommand dispatched for InsertContent"
+- [ ] Undo (Ctrl+Z) removes the inserted text
+- [ ] With no selection, button should be disabled
+
+### Test 6: Formatted Document
+- [ ] Open a document with bold, italic, bullet lists
+- [ ] Select formatted text
+- [ ] Test Read -- does it capture plain text correctly?
+- [ ] Test Replace -- does it preserve surrounding formatting?
+- [ ] Test Insert -- does the inserted text appear as a normal paragraph?
+
+### Test 7: Context Menu (PLUG-02)
+- [ ] Select text in the document
+- [ ] Right-click to open context menu
+- [ ] "Scribe - AI Assistant" menu item should appear
+- [ ] Click it -- console should show "[Scribe] Context menu 'Scribe' clicked"
+- [ ] Right-click without selection -- "Scribe" should NOT appear
+
+### Test 8: Dev Iteration (ENV-03)
+- [ ] Edit code.js (e.g., change a log message)
+- [ ] Hard refresh browser (Ctrl+Shift+R)
+- [ ] Verify the change is reflected (new log message visible)
+- [ ] Time from save to seeing the change: ___ seconds (target: < 10s)
+
+### Test 9: Selection Persistence
+- [ ] Select text in the document
+- [ ] Click the "Read Selection" button in the test panel
+- [ ] Does the selection persist in the editor after clicking the panel button?
+- [ ] **Critical finding:** Does clicking in the test panel iframe cause selection loss?
+- [ ] If selection is lost, does the cached `lastSelectedText` still allow Replace/Insert to work?
+
+## API Findings
+
+### Selection Detection (initOnSelectionChanged)
+- **Reliability:** _To be determined during testing_
+- **Loop issues:** Expected to be safe on OO 9.3.0 (bug fixed in 8.2.1)
+- **Edge cases:** _To be determined -- empty selections, cursor-only, etc._
+
+### GetSelectedText
+- **Format returned:** _To be determined -- plain text, how paragraphs are separated_
+- **Paragraph separator:** Expected to be "\n" (configured in options)
+- **Formatted text handling:** _To be determined -- does it strip formatting?_
+
+### PasteText
+- **Selection replacement:** _To be determined -- does it reliably replace the selection?_
+- **No selection behavior:** _To be determined -- does it insert at cursor?_
+- **Selection loss workaround:** If selection is lost when clicking test panel, may need SearchAndReplace fallback
+
+### InsertContent via callCommand
+- **Insert vs Replace:** _Critical finding -- does InsertContent insert AFTER selection or replace it?_
+- **Cursor positioning:** _To be determined -- where does the cursor end up after insert?_
+- **Asc.scope serialization:** Expected to work for plain text strings
+
+### Context Menu
+- **Visibility:** _To be determined -- does "Scribe" appear reliably?_
+- **Click handling:** _To be determined -- does attachContextMenuClickEvent work?_
+
+## Known Issues
+
+_Issues discovered during testing will be documented here._
+
+### Pending Investigation
+1. **InsertContent behavior:** Does `InsertContent` insert after or replace the selection? (Open Question 2 from Research)
+2. **Selection persistence:** Does clicking in the test panel (same iframe) cause selection loss? (Pitfall 3 from Research)
+3. **panelRight + initOnSelectionChanged:** Does `initOnSelectionChanged` work correctly with `type: "panelRight"`? (was originally designed for `type: "background"`)
