@@ -123,7 +123,7 @@
       oParagraph.AddText(Asc.scope.textToInsert);
       oDocument.InsertContent([oParagraph]);
     }, false, false, function() {
-      // Callback runs back in plugin context after callCommand completes
+      log("InsertContent callCommand completed");
     });
     log("callCommand dispatched for InsertContent");
   }
