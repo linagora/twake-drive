@@ -3,122 +3,91 @@
 
   // ---- State ----
   var lastSelectedText = "";
-  var logMessages = [];
+  var pendingIntents = {};
+  var cozyOrigin = "*"; // TODO: restrict to actual Cozy origin in production
 
   // ---- Helper: log(msg) ----
   function log(msg) {
     console.log("[Scribe] " + msg);
-    logMessages.push(timestamp() + " " + msg);
-    if (logMessages.length > 10) {
-      logMessages.shift();
-    }
-    var el = document.getElementById("log-output");
-    if (el) {
-      el.textContent = logMessages.join("\n");
-      el.scrollTop = el.scrollHeight;
-    }
   }
 
-  function timestamp() {
-    var d = new Date();
-    return d.getHours().toString().padStart(2, "0") + ":" +
-           d.getMinutes().toString().padStart(2, "0") + ":" +
-           d.getSeconds().toString().padStart(2, "0");
-  }
-
-  // ---- Helper: mockTransform(text) -- MOCK-01 ----
-  function mockTransform(text) {
-    var lines = text.split("\n");
-    var prefixed = [];
-    for (var i = 0; i < lines.length; i++) {
-      prefixed.push("$ " + lines[i]);
+  // ---- Helper: generateIntentId() ----
+  function generateIntentId() {
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+      return crypto.randomUUID();
     }
-    return "--- SCRIBE START ---\n" + prefixed.join("\n") + "\n--- SCRIBE END ---";
+    // Fallback: timestamp + random
+    return "intent-" + Date.now() + "-" + Math.random().toString(36).substr(2, 9);
   }
 
-  // ---- Helper: updateUI() ----
+  // ---- UI: updateUI() ----
   function updateUI() {
-    var selEl = document.getElementById("selected-text");
-    var dotEl = document.getElementById("status-dot");
-    var statusEl = document.getElementById("status-text");
-    var btnReplace = document.getElementById("btn-replace");
-    var btnInsert = document.getElementById("btn-insert");
-
-    if (selEl) {
-      selEl.textContent = lastSelectedText || "(no selection)";
-    }
+    var btn = document.getElementById("scribe-trigger");
+    var hint = document.getElementById("scribe-hint");
 
     var hasSelection = lastSelectedText.length > 0;
 
-    if (dotEl) {
+    if (btn) {
+      btn.disabled = !hasSelection;
+    }
+    if (hint) {
       if (hasSelection) {
-        dotEl.classList.add("active");
+        hint.classList.add("hidden");
       } else {
-        dotEl.classList.remove("active");
+        hint.classList.remove("hidden");
       }
     }
-    if (statusEl) {
-      statusEl.textContent = hasSelection ? "Selection active" : "No selection";
-    }
-    if (btnReplace) {
-      btnReplace.disabled = !hasSelection;
-    }
-    if (btnInsert) {
-      btnInsert.disabled = !hasSelection;
+  }
+
+  // ---- castIntent: send an intent to Cozy Drive via postMessage ----
+  // Per locked user decision: Promise-based API.
+  // The plugin iframe (not callCommand) runs in a modern browser context
+  // where Promise should be available. Fallback to callback-only if not.
+  function castIntent(action, data) {
+    var intentId = generateIntentId();
+    var message = {
+      type: "cozy-bridge:intent",
+      version: 1,
+      intentId: intentId,
+      action: action,
+      source: "onlyoffice-plugin",
+      data: data
+    };
+
+    window.top.postMessage(message, cozyOrigin);
+    log("Intent cast: " + action + " id=" + intentId);
+
+    if (typeof Promise !== "undefined") {
+      return new Promise(function(resolve, reject) {
+        pendingIntents[intentId] = { action: action, resolve: resolve, reject: reject };
+      });
+    } else {
+      // Fallback: store for correlation, response handled via message listener + handleIntentResponse
+      // castIntent returns undefined in this case -- callers should not depend on the return value
+      log("Promise unavailable in sandbox -- using callback fallback");
+      pendingIntents[intentId] = { action: action, resolve: null, reject: null };
+      return undefined;
     }
   }
 
-  // ---- PLUG-02: Selection detection (via init) ----
-  window.Asc.plugin.init = function(data) {
-    lastSelectedText = data || "";
-    log("Selection: " + (lastSelectedText ? lastSelectedText.substring(0, 80) + "..." : "(none)"));
-    updateUI();
-  };
-
-  // ---- Required: button handler ----
-  window.Asc.plugin.button = function(id) {
-    this.executeCommand("close", "");
-  };
-
-  // ---- PLUG-03: Read selected text (explicit via GetSelectedText) ----
-  function readSelection() {
-    log("Reading selection via GetSelectedText...");
-    window.Asc.plugin.executeMethod("GetSelectedText", [{
-      Numbering: false,
-      Math: false,
-      TableCellSeparator: "\n",
-      ParaSeparator: "\n",
-      TabSymbol: String.fromCharCode(9)
-    }], function(text) {
-      lastSelectedText = text || "";
-      log("GetSelectedText result: " + (lastSelectedText ? lastSelectedText.substring(0, 80) : "(empty)"));
-      updateUI();
-    });
-  }
-
-  // ---- PLUG-04: Replace selected text ----
-  function replaceWithMock() {
-    if (!lastSelectedText) {
-      log("No selection to replace");
-      return;
+  // ---- handleIntentResponse: apply document modification from response ----
+  function handleIntentResponse(msg) {
+    if (msg.action === "replace") {
+      log("Applying replace: " + (msg.data && msg.data.text ? msg.data.text.substring(0, 80) : "(empty)"));
+      window.Asc.plugin.executeMethod("PasteText", [msg.data.text]);
+    } else if (msg.action === "insert") {
+      log("Applying insert after selection");
+      insertAfterWithText(msg.data.text);
+    } else if (msg.action === "cancel") {
+      log("Intent cancelled -- no document modification");
     }
-    var transformed = mockTransform(lastSelectedText);
-    log("Replacing selection with mock transform...");
-    window.Asc.plugin.executeMethod("PasteText", [transformed]);
-    log("PasteText called");
   }
 
-  // ---- PLUG-05: Insert text after selection ----
+  // ---- Insert after selection helper (Phase 1 workaround) ----
   // InsertContent replaces the selection, so we re-create the original
   // paragraphs and append the new text after them.
-  function insertAfterSelection() {
-    if (!lastSelectedText) {
-      log("No selection for insert");
-      return;
-    }
-    var transformed = mockTransform(lastSelectedText);
-    log("Inserting mock transform after selection...");
-    Asc.scope.textToInsert = transformed;
+  function insertAfterWithText(newText) {
+    Asc.scope.textToInsert = newText;
     Asc.scope.originalLines = lastSelectedText.split("\n");
     window.Asc.plugin.callCommand(function() {
       var oDocument = Api.GetDocument();
@@ -129,7 +98,7 @@
         p.AddText(Asc.scope.originalLines[i]);
         content.push(p);
       }
-      // Add transformed text as new paragraph after original
+      // Add new text as paragraphs after original
       var insertLines = Asc.scope.textToInsert.split("\n");
       for (var j = 0; j < insertLines.length; j++) {
         var pNew = Api.CreateParagraph();
@@ -140,10 +109,42 @@
     }, false, false, function() {
       log("InsertContent completed (original preserved + insert after)");
     });
-    log("callCommand dispatched for InsertContent");
   }
 
-  // ---- Context menu: show "Scribe" when text selected ----
+  // ---- Response message listener ----
+  window.addEventListener("message", function(event) {
+    var msg = event.data;
+    if (!msg || msg.type !== "cozy-bridge:response" || msg.version !== 1) return;
+
+    var pending = pendingIntents[msg.intentId];
+    if (!pending) return;
+
+    delete pendingIntents[msg.intentId];
+    log("Intent response: action=" + msg.action + " status=" + msg.status);
+
+    // Resolve the Promise if available
+    if (pending.resolve) {
+      pending.resolve({ action: msg.action, result: msg.data });
+    }
+
+    // Always handle the response for document modification
+    if (msg.status === "ok") {
+      handleIntentResponse(msg);
+    }
+  });
+
+  // ---- Selection detection (via init) ----
+  window.Asc.plugin.init = function(data) {
+    lastSelectedText = data || "";
+    updateUI();
+  };
+
+  // ---- Required: button handler ----
+  window.Asc.plugin.button = function(id) {
+    this.executeCommand("close", "");
+  };
+
+  // ---- Context menu: show "Scribe" when text is selected ----
   window.Asc.plugin.event_onContextMenuShow = function(options) {
     if (options.type === "Selection") {
       this.executeMethod("AddContextMenuItem", [{
@@ -151,8 +152,8 @@
         items: [{
           id: "onClickScribe",
           text: {
-            en: "Scribe - AI Assistant",
-            fr: "Scribe - Assistant IA"
+            en: "Scribe",
+            fr: "Scribe"
           }
         }]
       }]);
@@ -172,32 +173,22 @@
       lastSelectedText = selectedText || "";
       log("Context menu read: " + (lastSelectedText ? lastSelectedText.substring(0, 80) : "(empty)"));
       updateUI();
-      // Send to Cozy Drive host
-      window.top.postMessage({
-        type: "scribe:selection-ready",
-        source: "scribe-plugin",
-        payload: { text: lastSelectedText }
-      }, "*"); // TODO: restrict origin in production
+      castIntent("AI_TEXT_EDIT", { text: lastSelectedText });
     });
   });
 
-  // ---- Wire button click handlers ----
+  // ---- Trigger button click handler ----
   document.addEventListener("DOMContentLoaded", function() {
-    var btnRead = document.getElementById("btn-read");
-    var btnReplace = document.getElementById("btn-replace");
-    var btnInsert = document.getElementById("btn-insert");
-
-    if (btnRead) {
-      btnRead.addEventListener("click", readSelection);
-    }
-    if (btnReplace) {
-      btnReplace.addEventListener("click", replaceWithMock);
-    }
-    if (btnInsert) {
-      btnInsert.addEventListener("click", insertAfterSelection);
+    var btn = document.getElementById("scribe-trigger");
+    if (btn) {
+      btn.addEventListener("click", function() {
+        if (lastSelectedText) {
+          castIntent("AI_TEXT_EDIT", { text: lastSelectedText });
+        }
+      });
     }
 
-    log("Plugin loaded, test panel ready");
+    log("Plugin loaded, Scribe trigger ready");
     updateUI();
   });
 

@@ -2,116 +2,70 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Scribe Plugin</title>
+  <title>Scribe</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: monospace;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       font-size: 12px;
-      background: #fff;
-      padding: 8px;
-      color: #333;
-    }
-    #scribe-test-panel {
+      background: transparent;
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      height: 100%;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 8px;
+      min-height: 60px;
     }
-    .status {
+    #scribe-trigger {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      background: rgba(255, 255, 255, 0.9);
+      cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 6px;
-      font-weight: bold;
-      padding: 4px 0;
+      justify-content: center;
+      transition: background 0.15s, box-shadow 0.15s, opacity 0.15s;
+      padding: 0;
     }
-    .status-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: #999;
-      flex-shrink: 0;
+    #scribe-trigger:hover:not(:disabled) {
+      background: rgba(99, 102, 241, 0.08);
+      box-shadow: 0 1px 4px rgba(99, 102, 241, 0.2);
     }
-    .status-dot.active {
-      background: #22c55e;
+    #scribe-trigger:active:not(:disabled) {
+      background: rgba(99, 102, 241, 0.15);
     }
-    h3 {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: #666;
-      margin-bottom: 2px;
-    }
-    #selected-text {
-      background: #f5f5f5 !important;
-      color: #333 !important;
-      border: 1px solid #ddd;
-      padding: 6px;
-      min-height: 60px;
-      max-height: 120px;
-      overflow-y: auto;
-      white-space: pre-wrap;
-      word-break: break-word;
-      font-size: 11px;
-    }
-    .btn-group {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    button {
-      padding: 6px 10px;
-      border: 1px solid #ccc;
-      background: #f0f0f0;
-      cursor: pointer;
-      font-family: monospace;
-      font-size: 12px;
-      text-align: left;
-    }
-    button:hover:not(:disabled) {
-      background: #e0e0e0;
-    }
-    button:disabled {
-      opacity: 0.5;
+    #scribe-trigger:disabled {
+      opacity: 0.35;
       cursor: not-allowed;
     }
-    #log-output {
-      background: #1e1e1e;
-      color: #d4d4d4;
-      padding: 6px;
-      min-height: 80px;
-      max-height: 150px;
-      overflow-y: auto;
-      white-space: pre-wrap;
-      word-break: break-word;
+    #scribe-trigger svg {
+      width: 20px;
+      height: 20px;
+    }
+    #scribe-hint {
+      margin-top: 6px;
       font-size: 10px;
-      flex-grow: 1;
+      color: rgba(0, 0, 0, 0.45);
+      text-align: center;
+      transition: opacity 0.15s;
+    }
+    #scribe-hint.hidden {
+      opacity: 0;
     }
   </style>
 </head>
 <body>
-  <div id="scribe-test-panel">
-    <div class="status">
-      <div id="status-dot" class="status-dot"></div>
-      <span id="status-text">Loading...</span>
-    </div>
-
-    <div>
-      <h3>Selected Text</h3>
-      <pre id="selected-text" style="color:#333!important">(no selection)</pre>
-    </div>
-
-    <div class="btn-group">
-      <button id="btn-read">Read Selection</button>
-      <button id="btn-replace" disabled>Replace with Mock</button>
-      <button id="btn-insert" disabled>Insert After</button>
-    </div>
-
-    <div>
-      <h3>Log</h3>
-      <pre id="log-output"></pre>
-    </div>
-  </div>
+  <button id="scribe-trigger" disabled title="Scribe">
+    <!-- Sparkle / wand icon (inline SVG) -->
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.582a.5.5 0 0 1 0 .963L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
+      <path d="M20 3v4"/>
+      <path d="M22 5h-4"/>
+    </svg>
+  </button>
+  <div id="scribe-hint">Select text to activate</div>
 
   <script type="text/javascript"
     src="https://onlyoffice.github.io/sdkjs-plugins/v1/plugins.js">

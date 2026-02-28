@@ -2,7 +2,7 @@
   "name": "Scribe",
   "guid": "asc.{C36B0B33-0C65-4E88-9EE0-C1D6A40434EC}",
   "baseUrl": "",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "minVersion": "8.2.0",
   "variations": [
     {
