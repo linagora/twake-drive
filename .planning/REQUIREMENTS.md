@@ -12,11 +12,11 @@
 - [ ] **PLUG-03**: Le plugin peut lire le texte sélectionné par l'utilisateur
 - [ ] **PLUG-04**: Le plugin peut remplacer le texte sélectionné par un nouveau texte
 - [ ] **PLUG-05**: Le plugin peut insérer du texte après la sélection avec un retour à la ligne
-- [ ] **PLUG-06**: Un bouton contextuel "Scribe" apparaît quand du texte est sélectionné
+- [x] **PLUG-06**: Un bouton contextuel "Scribe" apparaît quand du texte est sélectionné
 
 ### Communication
 
-- [ ] **COMM-01**: Le plugin OnlyOffice communique avec Cozy Drive via postMessage
+- [x] **COMM-01**: Le plugin OnlyOffice communique avec Cozy Drive via postMessage
 - [ ] **COMM-02**: Cozy Drive gère l'ouverture/fermeture de l'interface Scribe
 - [ ] **COMM-03**: L'interface Scribe reçoit le texte sélectionné depuis le plugin
 
@@ -82,8 +82,8 @@
 | PLUG-03 | Phase 1 | Pending |
 | PLUG-04 | Phase 1 | Pending |
 | PLUG-05 | Phase 1 | Pending |
-| PLUG-06 | Phase 1 | Pending |
-| COMM-01 | Phase 2 | Pending |
+| PLUG-06 | Phase 1 | Complete |
+| COMM-01 | Phase 2 | Complete |
 | COMM-02 | Phase 2 | Pending |
 | COMM-03 | Phase 2 | Pending |
 | UI-01 | Phase 3 | Pending |
