@@ -14,7 +14,7 @@ Scribe integrates an AI writing assistant into the OnlyOffice editor within Cozy
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Plugin OnlyOffice POC** - Set up the plugin dev environment (Docker mounting, install process, fast iteration), then validate the OO plugin API: load plugin, detect selection, read text, write text back
+- [x] **Phase 1: Plugin OnlyOffice POC** - Set up the plugin dev environment (Docker mounting, install process, fast iteration), then validate the OO plugin API: load plugin, detect selection, read text, write text back
 - [ ] **Phase 2: Contextual Trigger and Communication Bridge** - Wire the Scribe button and postMessage protocol between plugin and Cozy Drive
 - [ ] **Phase 3: Scribe Interface with Mock AI** - Build the Scribe panel UI with mock text transformation and preview
 - [ ] **Phase 4: End-to-End Actions** - Complete the round-trip: Replace, Insert, and Cancel actions modify the document from the Scribe panel
@@ -37,8 +37,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans:** 2 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Dev environment setup, plugin scaffold, Docker volume mount, OO version check
-- [ ] 01-02-PLAN.md — Plugin API capabilities (selection, read, replace, insert) with test panel
+- [x] 01-01-PLAN.md — Dev environment setup, plugin scaffold, Docker volume mount, OO version check
+- [x] 01-02-PLAN.md — Plugin API capabilities (selection, read, replace, insert) with test panel
 
 ### Phase 2: Contextual Trigger and Communication Bridge
 **Goal**: Users can trigger Scribe from a contextual button and the selected text flows from the OnlyOffice plugin to Cozy Drive via a reliable postMessage protocol
@@ -49,11 +49,11 @@ Plans:
   2. Clicking the Scribe button causes Cozy Drive to open the Scribe interface (placeholder at this stage)
   3. The selected text is transmitted from the plugin to Cozy Drive via postMessage with origin validation
   4. Cozy Drive can send commands back to the plugin (close, replace, insert) and the plugin receives them
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
+- [ ] 02-01-PLAN.md — cozy-bridge protocol module and plugin-side trigger with intent casting
+- [ ] 02-02-PLAN.md — Cozy Drive host-side integration (useCozyBridge hook, ScribeModal, round-trip verification)
 
 ### Phase 3: Scribe Interface with Mock AI
 **Goal**: Users see a functional Scribe panel that displays selected text, applies a mock AI transformation, and shows a preview of the result
@@ -92,7 +92,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Plugin OnlyOffice POC | 0/2 | Planned | - |
-| 2. Contextual Trigger and Communication Bridge | 0/0 | Not started | - |
+| 1. Plugin OnlyOffice POC | 2/2 | Complete | 2026-02-28 |
+| 2. Contextual Trigger and Communication Bridge | 0/2 | Planned | - |
 | 3. Scribe Interface with Mock AI | 0/0 | Not started | - |
 | 4. End-to-End Actions | 0/0 | Not started | - |
