@@ -3,10 +3,117 @@
 <head>
   <meta charset="UTF-8">
   <title>Scribe Plugin</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: monospace;
+      font-size: 12px;
+      background: #fff;
+      padding: 8px;
+      color: #333;
+    }
+    #scribe-test-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      height: 100%;
+    }
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: bold;
+      padding: 4px 0;
+    }
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #999;
+      flex-shrink: 0;
+    }
+    .status-dot.active {
+      background: #22c55e;
+    }
+    h3 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #666;
+      margin-bottom: 2px;
+    }
+    #selected-text {
+      background: #f5f5f5;
+      border: 1px solid #ddd;
+      padding: 6px;
+      min-height: 60px;
+      max-height: 120px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 11px;
+    }
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    button {
+      padding: 6px 10px;
+      border: 1px solid #ccc;
+      background: #f0f0f0;
+      cursor: pointer;
+      font-family: monospace;
+      font-size: 12px;
+      text-align: left;
+    }
+    button:hover:not(:disabled) {
+      background: #e0e0e0;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    #log-output {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 6px;
+      min-height: 80px;
+      max-height: 150px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 10px;
+      flex-grow: 1;
+    }
+  </style>
   <script type="text/javascript"
     src="https://onlyoffice.github.io/sdkjs-plugins/v1/plugins.js">
   </script>
   <script type="text/javascript" src="scripts/code.js"></script>
 </head>
-<body></body>
+<body>
+  <div id="scribe-test-panel">
+    <div class="status">
+      <div id="status-dot" class="status-dot"></div>
+      <span id="status-text">Loading...</span>
+    </div>
+
+    <div>
+      <h3>Selected Text</h3>
+      <pre id="selected-text">(no selection)</pre>
+    </div>
+
+    <div class="btn-group">
+      <button id="btn-read">Read Selection</button>
+      <button id="btn-replace" disabled>Replace with Mock</button>
+      <button id="btn-insert" disabled>Insert After</button>
+    </div>
+
+    <div>
+      <h3>Log</h3>
+      <pre id="log-output"></pre>
+    </div>
+  </div>
+</body>
 </html>
