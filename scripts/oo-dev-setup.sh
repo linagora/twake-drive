@@ -82,6 +82,45 @@ docker exec "${CONTAINER_NAME}" dpkg -l onlyoffice-documentserver 2>/dev/null \
   || echo "Could not determine version. Container may still be initializing."
 
 echo ""
+echo "=== Disabling Browser JWT Validation ==="
+# OO 9.x JS client validates that the JWT payload matches the editor config.
+# Cozy Drive modifies editorConfig after token generation (customization, user),
+# causing a payload mismatch and "security token not correctly formed" error.
+# Disable browser-side JWT while keeping server-to-server JWT (inbox/outbox).
+# JWT_ENABLED=false env var alone is insufficient in OO 9.x.
+docker exec "${CONTAINER_NAME}" python3 -c "
+import json
+with open('/etc/onlyoffice/documentserver/local.json') as f:
+    d = json.load(f)
+d['services']['CoAuthoring']['token']['enable']['browser'] = False
+with open('/etc/onlyoffice/documentserver/local.json', 'w') as f:
+    json.dump(d, f, indent=2)
+" 2>/dev/null && echo "Browser JWT disabled." \
+  || echo "WARNING: Could not disable browser JWT. You may see 'security token' errors."
+
+echo ""
+echo "=== Adding Host Entry for Cozy Stack ==="
+# The OO container needs to reach the Cozy stack at alice.localhost:8080.
+# Docker containers can reach the host via the gateway IP (172.17.0.1).
+GATEWAY_IP=$(docker exec "${CONTAINER_NAME}" ip route 2>/dev/null | grep default | awk '{print $3}')
+if [ -n "${GATEWAY_IP}" ]; then
+  docker exec "${CONTAINER_NAME}" bash -c "echo '${GATEWAY_IP} alice.localhost' >> /etc/hosts" 2>/dev/null \
+    && echo "Host entry added: ${GATEWAY_IP} alice.localhost" \
+    || echo "WARNING: Could not add host entry."
+else
+  echo "WARNING: Could not determine Docker gateway IP."
+  echo "  Manually add host entry: docker exec ${CONTAINER_NAME} bash -c 'echo \"172.17.0.1 alice.localhost\" >> /etc/hosts'"
+fi
+
+echo ""
+echo "=== Restarting Document Service ==="
+# Restart docservice to pick up the JWT config change.
+docker exec "${CONTAINER_NAME}" supervisorctl restart ds:docservice 2>/dev/null \
+  && echo "Document service restarted." \
+  || echo "WARNING: Could not restart docservice."
+sleep 3
+
+echo ""
 echo "=== Starting Example Service ==="
 docker exec "${CONTAINER_NAME}" supervisorctl start ds:example 2>/dev/null \
   && echo "Example service started." \
@@ -107,21 +146,31 @@ docker exec "${CONTAINER_NAME}" bash -c \
 echo ""
 echo "=== Setup Complete ==="
 echo ""
-echo "Next steps:"
+echo "Cozy stack setup (required for Scribe testing via Cozy Drive):"
+echo ""
+echo "  1. Ensure ~/.cozy/cozy.yml has:"
+echo "       host: 0.0.0.0"
+echo "       office:"
+echo "         default:"
+echo "           onlyoffice_url: http://localhost"
+echo "           onlyoffice_inbox_secret: <secret from: docker exec ${CONTAINER_NAME} python3 -c \"import json; print(json.load(open('/etc/onlyoffice/documentserver/local.json'))['services']['CoAuthoring']['secret']['inbox']['string'])\">"
+echo "           onlyoffice_outbox_secret: <same secret>"
+echo ""
+echo "  2. Start the stack:"
+echo "       cozy-stack serve --appdir drive:./build/ --disable-csp"
+echo ""
+echo "  3. Open http://alice.localhost:8080/ and open a .docx file"
+echo ""
+echo "Quick test (OO only, no Cozy stack):"
 echo "  1. Open http://localhost/example/ in your browser"
-echo "  2. Create a new document or open an existing one"
-echo "  3. Open browser DevTools console (F12)"
+echo "  2. Create a new document"
+echo "  3. Open DevTools console (F12)"
 echo "  4. Look for '[Scribe] Plugin loaded' message"
 echo ""
 echo "Dev iteration:"
 echo "  - Edit files in plugins/onlyoffice-scribe/"
 echo "  - Hard refresh browser (Ctrl+Shift+R)"
 echo "  - Check console for [Scribe] messages"
-echo ""
-echo "Alternative plugin loading (if volume mount doesn't register):"
-echo "  1. In another terminal: cd plugins/onlyoffice-scribe && npx http-server -p 3500 --cors"
-echo "  2. In browser DevTools, select 'frameEditor' in console scope"
-echo "  3. Run: Asc.editor.installDeveloperPlugin('http://localhost:3500/config.json')"
 echo ""
 echo "Useful commands:"
 echo "  docker logs ${CONTAINER_NAME}          # View server logs"

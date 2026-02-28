@@ -105,10 +105,7 @@ const useConfig = () => {
               reviewDisplay: 'markup'
             }
           },
-          // token omitted: OO browser JWT is disabled in dev, and the token
-          // payload doesn't match our modified editorConfig (customization override).
-          // In production, the stack and OO config must align.
-          // token: onlyoffice.token,
+          token: onlyoffice.token,
           documentType: onlyoffice.documentType,
           events: {
             onAppReady: () => setIsEditorReady(true)
