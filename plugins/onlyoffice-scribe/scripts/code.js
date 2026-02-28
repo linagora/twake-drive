@@ -6,6 +6,28 @@
   var pendingIntents = {};
   var cozyOrigin = "*"; // TODO: restrict to actual Cozy origin in production
 
+  // ---- Target window for postMessage ----
+  // Cozy apps run inside an iframe from the Cozy Stack, so the frame hierarchy is:
+  //   Cozy Stack (window.top) > Cozy Drive iframe > OO Editor iframe > Plugin iframe
+  // CozyBridge listens on the Cozy Drive iframe window, which is window.parent.parent.
+  // We post to all ancestor frames so the message reaches CozyBridge regardless of nesting.
+  function postToAncestors(message) {
+    var current = window.parent;
+    var count = 0;
+    while (current && current !== window) {
+      try {
+        current.postMessage(message, cozyOrigin);
+        count++;
+      } catch (e) {
+        // Cross-origin frame we can't post to — stop
+        break;
+      }
+      if (current === current.parent) break;
+      current = current.parent;
+    }
+    log("Posted to " + count + " ancestor frame(s)");
+  }
+
   // ---- Helper: log(msg) ----
   function log(msg) {
     console.log("[Scribe] " + msg);
@@ -54,7 +76,7 @@
       data: data
     };
 
-    window.top.postMessage(message, cozyOrigin);
+    postToAncestors(message);
     log("Intent cast: " + action + " id=" + intentId);
 
     if (typeof Promise !== "undefined") {
@@ -134,8 +156,12 @@
   });
 
   // ---- Selection detection (via init) ----
+  // OO calls init with the selected text. When the selection is cleared,
+  // it may send an empty string, whitespace-only, or stop calling init.
+  // We trim and treat whitespace-only as no selection.
   window.Asc.plugin.init = function(data) {
-    lastSelectedText = data || "";
+    var text = (data || "").replace(/^\s+|\s+$/g, "");
+    lastSelectedText = text;
     updateUI();
   };
 
