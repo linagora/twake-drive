@@ -74,8 +74,11 @@ export class CozyBridge {
    * @param {MessageEvent} event
    */
   _onMessage(event) {
-    // 1. Origin validation
-    if (!this.allowedOrigins.includes(event.origin)) {
+    // 1. Origin validation (skip if wildcard '*' is in allowedOrigins)
+    if (
+      !this.allowedOrigins.includes('*') &&
+      !this.allowedOrigins.includes(event.origin)
+    ) {
       // Only warn if the message looks like it could be a cozy-bridge message
       const msg = event.data
       if (
