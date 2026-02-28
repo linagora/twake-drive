@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types'
-import React, { useEffect, useCallback, useState } from 'react'
+import React, { useEffect, useCallback, useMemo, useState } from 'react'
 
 import Spinner from 'cozy-ui/transpiled/react/Spinner'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
@@ -8,8 +8,10 @@ import Error from '@/modules/views/OnlyOffice/Error'
 import OnlyOfficeAIAssistantPanel from '@/modules/views/OnlyOffice/OnlyOfficeAIAssistantPanel'
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
 import ReadOnlyFab from '@/modules/views/OnlyOffice/ReadOnlyFab'
+import { ScribeModal } from '@/modules/views/OnlyOffice/ScribeModal'
 import { FRAME_EDITOR_NAME } from '@/modules/views/OnlyOffice/config'
 import { isOfficeEditingEnabled } from '@/modules/views/OnlyOffice/helpers'
+import { useCozyBridge } from '@/modules/views/OnlyOffice/useCozyBridge'
 
 const forceIframeHeight = value => {
   const iframe = document.getElementsByName(FRAME_EDITOR_NAME)[0]
@@ -21,6 +23,29 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
 
   const { isEditorReady, isReadOnly, isTrashed } = useOnlyOfficeContext()
   const { isMobile, isDesktop } = useBreakpoints()
+
+  // cozy-bridge: listen for Scribe intents from OO plugin
+  // In dev, allow all origins. In production, derive from serverUrl/instance.
+  const allowedOrigins = useMemo(() => ['*'], []) // TODO: restrict in production
+  const { pendingIntent, respond } = useCozyBridge(allowedOrigins)
+
+  const handleReplace = useCallback(
+    text => {
+      respond({ status: 'ok', action: 'replace', data: { text } })
+    },
+    [respond]
+  )
+
+  const handleInsert = useCallback(
+    text => {
+      respond({ status: 'ok', action: 'insert', data: { text } })
+    },
+    [respond]
+  )
+
+  const handleCancel = useCallback(() => {
+    respond({ status: 'ok', action: 'cancel', data: {} })
+  }, [respond])
 
   const initEditor = useCallback(() => {
     new window.DocsAPI.DocEditor('onlyOfficeEditor', docEditorConfig)
@@ -73,6 +98,13 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
         <div id="onlyOfficeEditor" />
         <OnlyOfficeAIAssistantPanel />
       </div>
+      <ScribeModal
+        open={!!pendingIntent}
+        selectedText={pendingIntent?.data?.text || ''}
+        onReplace={handleReplace}
+        onInsert={handleInsert}
+        onCancel={handleCancel}
+      />
       {showReadOnlyFab && <ReadOnlyFab />}
     </>
   )
