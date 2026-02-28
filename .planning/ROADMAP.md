@@ -15,7 +15,7 @@ Scribe integrates an AI writing assistant into the OnlyOffice editor within Cozy
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Plugin OnlyOffice POC** - Set up the plugin dev environment (Docker mounting, install process, fast iteration), then validate the OO plugin API: load plugin, detect selection, read text, write text back
-- [ ] **Phase 2: Contextual Trigger and Communication Bridge** - Wire the Scribe button and postMessage protocol between plugin and Cozy Drive
+- [x] **Phase 2: Contextual Trigger and Communication Bridge** - Wire the Scribe button and postMessage protocol between plugin and Cozy Drive
 - [ ] **Phase 3: Scribe Interface with Mock AI** - Build the Scribe panel UI with mock text transformation and preview
 - [ ] **Phase 4: End-to-End Actions** - Complete the round-trip: Replace, Insert, and Cancel actions modify the document from the Scribe panel
 
@@ -52,8 +52,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — cozy-bridge protocol module and plugin-side trigger with intent casting
-- [ ] 02-02-PLAN.md — Cozy Drive host-side integration (useCozyBridge hook, ScribeModal, round-trip verification)
+- [x] 02-01-PLAN.md — cozy-bridge protocol module and plugin-side trigger with intent casting
+- [x] 02-02-PLAN.md — Cozy Drive host-side integration (useCozyBridge hook, ScribeModal, round-trip verification)
 
 ### Phase 3: Scribe Interface with Mock AI
 **Goal**: Users see a functional Scribe panel that displays selected text, applies a mock AI transformation, and shows a preview of the result
@@ -93,6 +93,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Plugin OnlyOffice POC | 2/2 | Complete | 2026-02-28 |
-| 2. Contextual Trigger and Communication Bridge | 0/2 | Planned | - |
+| 2. Contextual Trigger and Communication Bridge | 2/2 | Complete | 2026-02-28 |
 | 3. Scribe Interface with Mock AI | 0/0 | Not started | - |
 | 4. End-to-End Actions | 0/0 | Not started | - |

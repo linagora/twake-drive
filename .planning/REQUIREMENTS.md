@@ -17,8 +17,8 @@
 ### Communication
 
 - [x] **COMM-01**: Le plugin OnlyOffice communique avec Cozy Drive via postMessage
-- [ ] **COMM-02**: Cozy Drive gère l'ouverture/fermeture de l'interface Scribe
-- [ ] **COMM-03**: L'interface Scribe reçoit le texte sélectionné depuis le plugin
+- [x] **COMM-02**: Cozy Drive gère l'ouverture/fermeture de l'interface Scribe
+- [x] **COMM-03**: L'interface Scribe reçoit le texte sélectionné depuis le plugin
 
 ### Interface Scribe (rudimentaire)
 
@@ -84,8 +84,8 @@
 | PLUG-05 | Phase 1 | Pending |
 | PLUG-06 | Phase 1 | Complete |
 | COMM-01 | Phase 2 | Complete |
-| COMM-02 | Phase 2 | Pending |
-| COMM-03 | Phase 2 | Pending |
+| COMM-02 | Phase 2 | Complete |
+| COMM-03 | Phase 2 | Complete |
 | UI-01 | Phase 3 | Pending |
 | UI-02 | Phase 3 | Pending |
 | UI-03 | Phase 3 | Pending |

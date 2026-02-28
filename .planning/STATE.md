@@ -5,31 +5,31 @@
 See: .planning/PROJECT.md (updated 2026-02-26)
 
 **Core value:** La chaine de communication complete -- depuis la selection de texte dans OnlyOffice jusqu'a la reinjection du texte modifie -- doit fonctionner de bout en bout.
-**Current focus:** Phase 2: Contextual Trigger and Communication Bridge — IN PROGRESS
+**Current focus:** Phase 2: Contextual Trigger and Communication Bridge — COMPLETE
 
 ## Current Position
 
-Phase: 2 of 4 (Contextual Trigger and Communication Bridge)
-Plan: 1 of 2 in current phase (Plan 01 complete)
-Status: Plan 02-01 complete, ready for Plan 02-02
-Last activity: 2026-02-28 -- Plan 02-01 executed (cozy-bridge protocol + plugin trigger)
+Phase: 2 of 4 (Contextual Trigger and Communication Bridge) -- COMPLETE
+Plan: 2 of 2 in current phase (All plans complete)
+Status: Phase 2 complete, ready for Phase 3 planning
+Last activity: 2026-02-28 -- Plan 02-02 executed (useCozyBridge hook, ScribeModal, round-trip verified)
 
-Progress: [█████░░░░░] 50% (Phase 2)
-Overall:  [████░░░░░░] 37% (Phase 1 complete + Phase 2 plan 1/2)
+Progress: [██████████] 100% (Phase 2)
+Overall:  [█████░░░░░] 50% (Phases 1-2 complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 2
-- Average duration: ~2 hours per plan (same session)
-- Total execution time: ~4 hours
+- Total plans completed: 4
+- Average duration: ~1 hour per plan
+- Total execution time: ~5 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01 | 2 | ~4h | ~2h |
-| 02 | 1/2 | 3min | 3min |
+| 02 | 2/2 | ~48min | ~24min |
 
 *Updated after each plan completion*
 
@@ -50,11 +50,16 @@ Recent decisions affecting current work:
 - Kept plugin type "panel" for Phase 2 (not "background") -- initOnSelectionChanged confirmed working
 - cozy-bridge intent protocol: type/version/intentId/action/source/data message format
 - castIntent Promise-based API with ES5 fallback guard
+- Wildcard origin ['*'] for dev; production should derive from Cozy instance URL and OO server URL
+- Post to ancestor frames via frame traversal instead of window.top (OO nested iframes)
+- Removed browser JWT token from OO editor config (Cozy stack proxy handles auth)
+- Button disable on deselection deferred (requires floating button redesign)
 
 ### Pending Todos
 
 - Fix "Selected Text" white-on-white in OO dark theme (cosmetic)
 - Test context menu integration (not tested during checkpoint)
+- Button disable on deselection when no text selected (deferred from 02-02)
 
 ### Blockers/Concerns
 
@@ -69,5 +74,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 02-01-PLAN.md (cozy-bridge protocol + plugin trigger)
-Resume file: .planning/phases/02-contextual-trigger-and-communication-bridge/02-02-PLAN.md
+Stopped at: Completed 02-02-PLAN.md (Phase 2 complete -- useCozyBridge hook, ScribeModal, round-trip verified)
+Resume file: Phase 3 planning needed
