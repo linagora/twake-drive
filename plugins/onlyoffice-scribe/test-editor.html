@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Scribe Plugin Test</title>
+  <style>
+    body { margin: 0; padding: 0; height: 100vh; }
+    #editor { width: 100%; height: 100%; }
+  </style>
+</head>
+<body>
+  <div id="editor"></div>
+  <script src="/web-apps/apps/api/documents/api.js"></script>
+  <script>
+    new DocsAPI.DocEditor("editor", {
+      documentType: "word",
+      document: {
+        fileType: "docx",
+        key: "test-" + Date.now(),
+        title: "Test Document",
+        url: "http://localhost/example/files/sample/new.docx"
+      },
+      editorConfig: {
+        mode: "edit",
+        callbackUrl: "http://localhost/example/editor?type=desktop&fileName=new.docx",
+        customization: {
+          forcesave: false
+        }
+      },
+      events: {
+        onError: function(e) {
+          console.log("[Test] OO error (ignored):", e.data);
+        }
+      }
+    });
+  </script>
+</body>
+</html>

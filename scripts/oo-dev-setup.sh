@@ -43,6 +43,9 @@ else
   docker run -itd \
     -p 80:80 \
     --name "${CONTAINER_NAME}" \
+    -e JWT_ENABLED=false \
+    -e DS_EXAMPLE_ENABLE=true \
+    -e ALLOW_PRIVATE_IP_ADDRESS=true \
     -v "${PLUGIN_HOST_PATH}:${PLUGIN_CONTAINER_PATH}" \
     "${OO_IMAGE}"
 
@@ -77,6 +80,12 @@ echo "=== OO Document Server Version ==="
 docker exec "${CONTAINER_NAME}" dpkg -l onlyoffice-documentserver 2>/dev/null \
   | grep onlyoffice-documentserver \
   || echo "Could not determine version. Container may still be initializing."
+
+echo ""
+echo "=== Starting Example Service ==="
+docker exec "${CONTAINER_NAME}" supervisorctl start ds:example 2>/dev/null \
+  && echo "Example service started." \
+  || echo "Could not start example service. Try: docker exec ${CONTAINER_NAME} supervisorctl start ds:example"
 
 echo ""
 echo "=== Registering Scribe Plugin ==="

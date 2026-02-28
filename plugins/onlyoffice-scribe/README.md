@@ -18,9 +18,9 @@ Scribe is an AI writing assistant plugin for OnlyOffice, integrated into Cozy Dr
 
 2. Wait for the server to start (1-2 minutes on first run). The script will print the OO Document Server version.
 
-3. Open **http://localhost** in your browser.
+3. Open **http://localhost/example/** in your browser.
 
-4. Create a new document or upload a `.docx` file.
+4. Create a new document or open an existing one.
 
 5. Open browser DevTools console (**F12** or **Cmd+Opt+I**).
 
@@ -117,6 +117,22 @@ Container: /var/www/onlyoffice/documentserver/sdkjs-plugins/scribe
 
 **Important:** Only the Scribe subfolder is mounted, NOT the entire `sdkjs-plugins/` directory. Mounting the parent directory would hide all default plugins that ship with the OO Docker image (the Docker bind mount replaces the container directory contents entirely).
 
+### File Ownership
+
+The Docker volume mount may change ownership of files in `plugins/onlyoffice-scribe/` to the container's internal user. If you get permission errors editing files, fix with:
+
+```bash
+sudo chown -R $(whoami):$(whoami) plugins/onlyoffice-scribe/
+```
+
+### Docker Environment Variables
+
+The setup script configures these env vars for local dev:
+
+- `JWT_ENABLED=false` — Disables JWT authentication (not needed for local dev)
+- `DS_EXAMPLE_ENABLE=true` — Enables the built-in example page at `/example/`
+- `ALLOW_PRIVATE_IP_ADDRESS=true` — Disables SSRF protection that blocks localhost URLs (OO's document service needs to fetch documents from itself)
+
 ### Common Docker Commands
 
 ```bash
@@ -143,9 +159,9 @@ docker exec -it oo-dev bash
 
 After running the setup script, record the Document Server version here.
 
-**Version:** ____
+**Version:** 9.3.0-138
 
-The version must be >= 8.2.0 (minimum for context menu API). Ideally >= 8.2.1 (fix for `initOnSelectionChanged` infinite loop bug).
+The version must be >= 8.2.0 (minimum for context menu API). Ideally >= 8.2.1 (fix for `initOnSelectionChanged` infinite loop bug). Version 9.3.0 is well above both thresholds.
 
 To check the version at any time:
 
