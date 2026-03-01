@@ -98,14 +98,14 @@ const useConfig = () => {
           // complete config doc : https://api.onlyoffice.com/editors/advanced
           document: onlyoffice.document,
           editorConfig: {
-            ...onlyoffice.editor,
-            mode: onlyoffice.editor.mode === 'edit' ? editorMode : 'view',
+            ...(onlyoffice.editorConfig || onlyoffice.editor),
+            mode: (onlyoffice.editorConfig || onlyoffice.editor).mode === 'edit' ? editorMode : 'view',
             user: { name },
             customization: {
+              ...(onlyoffice.editorConfig || onlyoffice.editor).customization,
               reviewDisplay: 'markup'
             }
           },
-          token: onlyoffice.token,
           documentType: onlyoffice.documentType,
           events: {
             onAppReady: () => setIsEditorReady(true)

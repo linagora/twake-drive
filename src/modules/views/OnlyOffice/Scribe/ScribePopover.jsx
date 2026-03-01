@@ -6,7 +6,6 @@ import Popover from 'cozy-ui/transpiled/react/Popover'
 import { ScribeActionMenu } from '@/modules/views/OnlyOffice/Scribe/ScribeActionMenu'
 import { mockTransform } from '@/modules/views/OnlyOffice/Scribe/mockTransform'
 import { ScribeResultPanel } from '@/modules/views/OnlyOffice/Scribe/ScribeResultPanel'
-import '@/modules/views/OnlyOffice/Scribe/scribe.styl'
 
 /**
  * ScribePopover - Main popover container managing the two-step state machine.
@@ -49,21 +48,15 @@ const ScribePopover = ({ open, selectedText, onReplace, onInsert, onCancel }) =>
   )
 
   const handleClose = useCallback(() => {
-    setStep('menu')
-    setResult({ text: '', breadcrumb: '' })
     onCancel()
   }, [onCancel])
 
   const handleReplace = useCallback(() => {
     onReplace(result.text)
-    setStep('menu')
-    setResult({ text: '', breadcrumb: '' })
   }, [result.text, onReplace])
 
   const handleInsert = useCallback(() => {
     onInsert(result.text)
-    setStep('menu')
-    setResult({ text: '', breadcrumb: '' })
   }, [result.text, onInsert])
 
   return (
@@ -76,7 +69,8 @@ const ScribePopover = ({ open, selectedText, onReplace, onInsert, onCancel }) =>
       PaperProps={{
         style: {
           borderRadius: 8,
-          boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+          boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+          overflow: 'visible'
         }
       }}
     >

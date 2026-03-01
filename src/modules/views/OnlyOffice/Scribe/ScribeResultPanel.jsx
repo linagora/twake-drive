@@ -7,6 +7,8 @@ import CrossIcon from 'cozy-ui/transpiled/react/Icons/Cross'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
 import Typography from 'cozy-ui/transpiled/react/Typography'
 
+import styles from '@/modules/views/OnlyOffice/Scribe/scribe.styl'
+
 /**
  * ScribeResultPanel - Step 2 of the Scribe two-step flow.
  *
@@ -38,8 +40,8 @@ const ScribeResultPanel = ({
   onClose
 }) => {
   return (
-    <div className="scribe-result-panel">
-      <div className="scribe-result-header">
+    <div className={styles['scribe-result-panel']}>
+      <div className={styles['scribe-result-header']}>
         <Typography variant="subtitle2" color="textSecondary">
           {breadcrumb}
         </Typography>
@@ -48,9 +50,9 @@ const ScribeResultPanel = ({
         </IconButton>
       </div>
 
-      <div className="scribe-result-text">{resultText}</div>
+      <div className={styles['scribe-result-text']}>{resultText}</div>
 
-      <div className="scribe-result-actions">
+      <div className={styles['scribe-result-actions']}>
         <Buttons variant="text" label="Replace" onClick={onReplace} />
         <Buttons label="Inserer" onClick={onInsert} />
       </div>

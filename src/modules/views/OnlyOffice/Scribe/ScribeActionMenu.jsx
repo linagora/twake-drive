@@ -95,10 +95,7 @@ const ScribeActionMenu = ({ onSelect, selectedText: _selectedText }) => {
                       <Icon icon={child.icon} />
                     </ListItemIcon>
                   )}
-                  <ListItemText
-                    primary={child.label}
-                    inset={!child.icon}
-                  />
+                  <ListItemText primary={child.label} />
                 </ListItem>
               ))}
             </Paper>

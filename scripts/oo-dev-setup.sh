@@ -40,9 +40,15 @@ else
   echo "  Plugin mount: ${PLUGIN_HOST_PATH} -> ${PLUGIN_CONTAINER_PATH}"
   echo ""
 
+  # Detect Docker gateway IP for host access from container
+  # --add-host is required because .localhost domains are resolved to 127.0.0.1
+  # by libcurl/Node.js per RFC 6761, ignoring /etc/hosts entries.
+  GATEWAY_IP="172.17.0.1"
+
   docker run -itd \
     -p 80:80 \
     --name "${CONTAINER_NAME}" \
+    --add-host alice.localhost:"${GATEWAY_IP}" \
     -e JWT_ENABLED=false \
     -e DS_EXAMPLE_ENABLE=true \
     -e ALLOW_PRIVATE_IP_ADDRESS=true \
@@ -82,35 +88,29 @@ docker exec "${CONTAINER_NAME}" dpkg -l onlyoffice-documentserver 2>/dev/null \
   || echo "Could not determine version. Container may still be initializing."
 
 echo ""
-echo "=== Disabling Browser JWT Validation ==="
-# OO 9.x JS client validates that the JWT payload matches the editor config.
-# Cozy Drive modifies editorConfig after token generation (customization, user),
-# causing a payload mismatch and "security token not correctly formed" error.
-# Disable browser-side JWT while keeping server-to-server JWT (inbox/outbox).
-# JWT_ENABLED=false env var alone is insufficient in OO 9.x.
+echo "=== Configuring JWT ==="
+# OO 9.x validates JWT even when token.enable flags are false (checkJwt runs
+# regardless). The secret must match the one in cozy-stack's cozy.yml.
+# We also disable token.enable flags to avoid additional validation checks
+# (callbackUrl requirement, payload mismatch with editorConfig).
+OO_SECRET="1Ji0VcWaWi7CPslwPtYLDf9yDDkNcF62"
 docker exec "${CONTAINER_NAME}" python3 -c "
 import json
+SECRET = '${OO_SECRET}'
 with open('/etc/onlyoffice/documentserver/local.json') as f:
     d = json.load(f)
 d['services']['CoAuthoring']['token']['enable']['browser'] = False
+d['services']['CoAuthoring']['token']['enable']['request']['inbox'] = False
+# outbox must stay True so OO signs callbacks to cozy-stack
+d['services']['CoAuthoring']['token']['enable']['request']['outbox'] = True
+d['services']['CoAuthoring']['secret']['inbox']['string'] = SECRET
+d['services']['CoAuthoring']['secret']['outbox']['string'] = SECRET
+d['services']['CoAuthoring']['secret']['session']['string'] = SECRET
+d['services']['CoAuthoring']['secret']['browser']['string'] = SECRET
 with open('/etc/onlyoffice/documentserver/local.json', 'w') as f:
     json.dump(d, f, indent=2)
-" 2>/dev/null && echo "Browser JWT disabled." \
-  || echo "WARNING: Could not disable browser JWT. You may see 'security token' errors."
-
-echo ""
-echo "=== Adding Host Entry for Cozy Stack ==="
-# The OO container needs to reach the Cozy stack at alice.localhost:8080.
-# Docker containers can reach the host via the gateway IP (172.17.0.1).
-GATEWAY_IP=$(docker exec "${CONTAINER_NAME}" ip route 2>/dev/null | grep default | awk '{print $3}')
-if [ -n "${GATEWAY_IP}" ]; then
-  docker exec "${CONTAINER_NAME}" bash -c "echo '${GATEWAY_IP} alice.localhost' >> /etc/hosts" 2>/dev/null \
-    && echo "Host entry added: ${GATEWAY_IP} alice.localhost" \
-    || echo "WARNING: Could not add host entry."
-else
-  echo "WARNING: Could not determine Docker gateway IP."
-  echo "  Manually add host entry: docker exec ${CONTAINER_NAME} bash -c 'echo \"172.17.0.1 alice.localhost\" >> /etc/hosts'"
-fi
+" 2>/dev/null && echo "JWT configured (secret: ${OO_SECRET:0:8}...)." \
+  || echo "WARNING: Could not configure JWT. You may see 'security token' errors."
 
 echo ""
 echo "=== Restarting Document Service ==="

@@ -5,6 +5,9 @@ import MagicTrickIcon from 'cozy-ui/transpiled/react/Icons/MagicTrick'
 import ContractIcon from 'cozy-ui/transpiled/react/Icons/Contract'
 import ExpandIcon from 'cozy-ui/transpiled/react/Icons/Expand'
 import ListIcon from 'cozy-ui/transpiled/react/Icons/List'
+import CompanyIcon from 'cozy-ui/transpiled/react/Icons/Company'
+import CocktailIcon from 'cozy-ui/transpiled/react/Icons/Cocktail'
+import HandIcon from 'cozy-ui/transpiled/react/Icons/Hand'
 
 /**
  * Declarative action tree that drives the Scribe menu rendering.
@@ -40,9 +43,9 @@ export const SCRIBE_ACTIONS = [
     label: 'Change tone',
     icon: PenIcon,
     children: [
-      { id: 'tone-professional', label: 'More professional', icon: null },
-      { id: 'tone-casual', label: 'More casual', icon: null },
-      { id: 'tone-polite', label: 'More polite', icon: null }
+      { id: 'tone-professional', label: 'More professional', icon: CompanyIcon },
+      { id: 'tone-casual', label: 'More casual', icon: CocktailIcon },
+      { id: 'tone-polite', label: 'More polite', icon: HandIcon }
     ]
   },
   {
