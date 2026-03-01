@@ -22,17 +22,17 @@
 
 ### Interface Scribe (rudimentaire)
 
-- [ ] **UI-01**: Interface HTML/JS basique (pas de React/cozy-ui pour l'instant)
+- [x] **UI-01**: Interface HTML/JS basique (pas de React/cozy-ui pour l'instant)
 - [ ] **UI-02**: Affichage du texte sélectionné dans l'interface
 - [ ] **UI-03**: Bouton pour déclencher la transformation mock (pas d'API IA réelle)
-- [ ] **UI-04**: Prévisualisation du résultat de la transformation
+- [x] **UI-04**: Prévisualisation du résultat de la transformation
 - [ ] **UI-05**: Bouton "Remplacer" pour substituer le texte original dans le document
 - [ ] **UI-06**: Bouton "Insérer" pour ajouter le résultat après la sélection (avec retour à la ligne)
 - [ ] **UI-07**: Bouton "Annuler" pour fermer l'interface sans appliquer de modification
 
 ### Mock IA
 
-- [ ] **MOCK-01**: Transformation mock : ajouter du texte au début et à la fin du bloc, préfixer chaque ligne avec `$ `
+- [x] **MOCK-01**: Transformation mock : ajouter du texte au début et à la fin du bloc, préfixer chaque ligne avec `$ `
 
 ## v2 Requirements
 
@@ -86,14 +86,14 @@
 | COMM-01 | Phase 2 | Complete |
 | COMM-02 | Phase 2 | Complete |
 | COMM-03 | Phase 2 | Complete |
-| UI-01 | Phase 3 | Pending |
+| UI-01 | Phase 3 | Complete |
 | UI-02 | Phase 3 | Pending |
 | UI-03 | Phase 3 | Pending |
-| UI-04 | Phase 3 | Pending |
+| UI-04 | Phase 3 | Complete |
 | UI-05 | Phase 3 | Pending |
 | UI-06 | Phase 3 | Pending |
 | UI-07 | Phase 3 | Pending |
-| MOCK-01 | Phase 3 | Pending |
+| MOCK-01 | Phase 3 | Complete |
 
 **Coverage:**
 - v1 requirements: 17 total
