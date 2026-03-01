@@ -97,11 +97,11 @@ Plans:
   3. Le bouton flottant apparaît à la sélection et disparaît quand la sélection est perdue
   4. Cliquer sur le bouton flottant ouvre le popover Scribe ancré à cette position (le flux existant menu → résultat → Replace/Insert est préservé)
   5. Le panneau latéral du plugin n'est plus nécessaire pour déclencher Scribe
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 05-01: TBD
-- [ ] 05-02: TBD
+- [ ] 05-01-PLAN.md — Selection coordinate emission (plugin mouse tracking + SELECTION_POSITION protocol), CozyBridge handler, useCozyBridge extension, ScribeFloatingButton component with portal rendering and coordinate conversion
+- [ ] 05-02-PLAN.md — Wire floating button to ScribePopover with dynamic anchorPosition, triggerIntent for synthetic intent flow, remove side panel, human verification
 
 ### Phase 6: Affinement UI/UX
 **Goal**: Aligner l'interface Scribe (bouton flottant, popover, menu d'actions, panneau de résultat) sur les maquettes de référence — styles, espacements, icônes, animations, gestion du thème sombre OO, et polish général
@@ -129,5 +129,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | 2. Contextual Trigger and Communication Bridge | 2/2 | Complete | 2026-02-28 |
 | 3. Scribe Interface with Mock AI | 2/2 | Complete | 2026-03-01 |
 | 4. End-to-End Actions | 0/0 | Complete (covered by Phase 2-3) | 2026-03-01 |
-| 5. Bouton Scribe flottant ancré à la sélection | 0/0 | Not started | - |
+| 5. Bouton Scribe flottant ancré à la sélection | 0/2 | In progress | - |
 | 6. Affinement UI/UX | 0/0 | Not started | - |
