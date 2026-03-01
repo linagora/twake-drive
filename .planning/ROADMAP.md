@@ -64,11 +64,11 @@ Plans:
   2. The selected text from the document is displayed in the Scribe interface
   3. The user can trigger a mock transformation that prefixes each line with `$ ` and adds text at the beginning and end
   4. The transformed text is shown as a preview in the interface before any action is taken
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 03-01: TBD
-- [ ] 03-02: TBD
+- [ ] 03-01-PLAN.md — Core Scribe data layer (action definitions, mock transform) and popover container with result panel
+- [ ] 03-02-PLAN.md — Action menu with submenus, free prompt input, View.jsx integration, human verification
 
 ### Phase 4: End-to-End Actions
 **Goal**: The complete Scribe loop works: users preview the AI result and choose to replace the original text, insert after it, or cancel -- and the document updates accordingly
@@ -94,5 +94,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 |-------|----------------|--------|-----------|
 | 1. Plugin OnlyOffice POC | 2/2 | Complete | 2026-02-28 |
 | 2. Contextual Trigger and Communication Bridge | 2/2 | Complete | 2026-02-28 |
-| 3. Scribe Interface with Mock AI | 0/0 | Not started | - |
+| 3. Scribe Interface with Mock AI | 0/2 | In progress | - |
 | 4. End-to-End Actions | 0/0 | Not started | - |
