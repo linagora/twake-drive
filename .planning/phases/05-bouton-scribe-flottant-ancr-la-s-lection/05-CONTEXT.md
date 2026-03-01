@@ -54,6 +54,7 @@ Replace the Scribe trigger from the plugin's side panel with a floating button r
 <specifics>
 ## Specific Ideas
 
+- **Priorité plan 1 : le positionnement.** La première étape (plan 1) doit porter sur la récupération de la position de la sélection dans l'éditeur OO et l'affichage du bouton flottant aux bonnes coordonnées. C'est le fondement technique de toute la phase — le reste (popover ancré, suppression du side panel) en découle.
 - The floating button should feel like Google Docs' inline toolbar that appears on text selection — contextual, unobtrusive, right where you need it
 - The transition from floating button → Scribe popover should feel seamless — button disappears, popover appears at the same location
 - The plugin should become mostly invisible to the user — no side panel UI, just the floating button rendered by Cozy Drive
