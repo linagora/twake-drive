@@ -2,8 +2,8 @@ import React, { useState, useCallback, useEffect } from 'react'
 import PropTypes from 'prop-types'
 
 import Popover from 'cozy-ui/transpiled/react/Popover'
-import Typography from 'cozy-ui/transpiled/react/Typography'
 
+import { ScribeActionMenu } from '@/modules/views/OnlyOffice/Scribe/ScribeActionMenu'
 import { mockTransform } from '@/modules/views/OnlyOffice/Scribe/mockTransform'
 import { ScribeResultPanel } from '@/modules/views/OnlyOffice/Scribe/ScribeResultPanel'
 import '@/modules/views/OnlyOffice/Scribe/scribe.styl'
@@ -11,8 +11,7 @@ import '@/modules/views/OnlyOffice/Scribe/scribe.styl'
 /**
  * ScribePopover - Main popover container managing the two-step state machine.
  *
- * Step 1 ('menu'): Action selection - currently a placeholder (Plan 03-02 will
- *   create ScribeActionMenu.jsx and wire it here).
+ * Step 1 ('menu'): Action selection via ScribeActionMenu (submenus + free prompt).
  * Step 2 ('result'): Displays the mock-transformed text via ScribeResultPanel.
  *
  * Same prop interface as ScribeModal for drop-in replacement.
@@ -82,13 +81,7 @@ const ScribePopover = ({ open, selectedText, onReplace, onInsert, onCancel }) =>
       }}
     >
       {step === 'menu' ? (
-        /* Placeholder for action menu - Plan 03-02 will replace this
-           with <ScribeActionMenu onSelect={handleActionSelect} selectedText={selectedText} /> */
-        <div style={{ padding: 16, minWidth: 220 }}>
-          <Typography variant="body2" color="textSecondary">
-            Action menu (Plan 03-02)
-          </Typography>
-        </div>
+        <ScribeActionMenu onSelect={handleActionSelect} selectedText={selectedText} />
       ) : (
         <ScribeResultPanel
           breadcrumb={result.breadcrumb}
