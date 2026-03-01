@@ -155,6 +155,16 @@
     }
   });
 
+  // ---- Trigger-intent listener (floating button click from Cozy Drive) ----
+  window.addEventListener("message", function(event) {
+    var msg = event.data;
+    if (!msg || msg.type !== "cozy-bridge:trigger-intent" || msg.version !== 1) return;
+    if (msg.action === "AI_TEXT_EDIT" && lastSelectedText.length > 0) {
+      log("Trigger-intent received, casting AI_TEXT_EDIT");
+      castIntent("AI_TEXT_EDIT", { text: lastSelectedText });
+    }
+  });
+
   // ---- Mouse position tracking for floating button coordinates ----
   var lastMousePosition = { x: 0, y: 0 };
 

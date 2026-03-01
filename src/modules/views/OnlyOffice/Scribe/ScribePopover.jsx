@@ -22,7 +22,7 @@ import { ScribeResultPanel } from '@/modules/views/OnlyOffice/Scribe/ScribeResul
  * @param {Function} props.onInsert - Called with transformed text when Inserer is clicked
  * @param {Function} props.onCancel - Called when closed without action
  */
-const ScribePopover = ({ open, selectedText, onReplace, onInsert, onCancel }) => {
+const ScribePopover = ({ open, selectedText, onReplace, onInsert, onCancel, anchorEl }) => {
   const [step, setStep] = useState('menu') // 'menu' | 'result'
   const [result, setResult] = useState({ text: '', breadcrumb: '' })
 
@@ -59,11 +59,16 @@ const ScribePopover = ({ open, selectedText, onReplace, onInsert, onCancel }) =>
     onInsert(result.text)
   }, [result.text, onInsert])
 
+  const useElementAnchor = anchorEl && anchorEl instanceof Element
+
   return (
     <Popover
       open={open}
-      anchorReference="anchorPosition"
-      anchorPosition={{ top: 200, left: typeof window !== 'undefined' ? window.innerWidth / 2 : 500 }}
+      anchorReference={useElementAnchor ? 'anchorEl' : 'anchorPosition'}
+      anchorEl={useElementAnchor ? anchorEl : undefined}
+      anchorPosition={useElementAnchor ? undefined : { top: 200, left: typeof window !== 'undefined' ? window.innerWidth / 2 : 500 }}
+      anchorOrigin={useElementAnchor ? { vertical: 'bottom', horizontal: 'left' } : undefined}
+      transformOrigin={useElementAnchor ? { vertical: 'top', horizontal: 'left' } : undefined}
       onClose={handleClose}
       BackdropProps={{ invisible: true }}
       PaperProps={{
@@ -94,7 +99,8 @@ ScribePopover.propTypes = {
   selectedText: PropTypes.string.isRequired,
   onReplace: PropTypes.func.isRequired,
   onInsert: PropTypes.func.isRequired,
-  onCancel: PropTypes.func.isRequired
+  onCancel: PropTypes.func.isRequired,
+  anchorEl: PropTypes.object
 }
 
 export { ScribePopover }
