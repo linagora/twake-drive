@@ -8,7 +8,7 @@ import Error from '@/modules/views/OnlyOffice/Error'
 import OnlyOfficeAIAssistantPanel from '@/modules/views/OnlyOffice/OnlyOfficeAIAssistantPanel'
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
 import ReadOnlyFab from '@/modules/views/OnlyOffice/ReadOnlyFab'
-import { ScribeModal } from '@/modules/views/OnlyOffice/ScribeModal'
+import { ScribePopover } from '@/modules/views/OnlyOffice/Scribe/ScribePopover'
 import { FRAME_EDITOR_NAME } from '@/modules/views/OnlyOffice/config'
 import { isOfficeEditingEnabled } from '@/modules/views/OnlyOffice/helpers'
 import { useCozyBridge } from '@/modules/views/OnlyOffice/useCozyBridge'
@@ -98,7 +98,7 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
         <div id="onlyOfficeEditor" />
         <OnlyOfficeAIAssistantPanel />
       </div>
-      <ScribeModal
+      <ScribePopover
         open={!!pendingIntent}
         selectedText={pendingIntent?.data?.text || ''}
         onReplace={handleReplace}
