@@ -16,6 +16,7 @@ import { CozyBridge } from '@/lib/cozy-bridge'
  */
 export function useCozyBridge(allowedOrigins) {
   const [pendingIntent, setPendingIntent] = useState(null)
+  const [selectionState, setSelectionState] = useState(null)
   const bridgeRef = useRef(null)
   const respondRef = useRef(null)
 
@@ -26,6 +27,19 @@ export function useCozyBridge(allowedOrigins) {
     bridge.onIntent('AI_TEXT_EDIT', (intentMessage, respondFn) => {
       setPendingIntent(intentMessage)
       respondRef.current = respondFn
+    })
+
+    bridge.onSelectionState(data => {
+      if (data.hasSelection) {
+        setSelectionState({
+          hasSelection: true,
+          text: data.text,
+          top: data.top,
+          left: data.left
+        })
+      } else {
+        setSelectionState(null)
+      }
     })
 
     return () => {
@@ -43,7 +57,8 @@ export function useCozyBridge(allowedOrigins) {
     respondRef.current(responsePayload)
     respondRef.current = null
     setPendingIntent(null)
+    setSelectionState(null)
   }, [])
 
-  return { pendingIntent, respond }
+  return { pendingIntent, selectionState, respond }
 }
