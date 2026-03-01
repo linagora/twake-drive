@@ -1,14 +1,15 @@
 # Phase 3: Scribe Interface with Mock AI - Context
 
 **Gathered:** 2026-03-01
+**Updated:** 2026-03-01 (UX mockups integrated)
 **Status:** Ready for planning
 
 <domain>
 ## Phase Boundary
 
-Build the Scribe panel UI that displays selected text, offers AI action presets and free prompt input, applies a mock transformation, and shows a preview with editable result. The existing communication bridge (useCozyBridge, postMessage protocol) from Phase 2 is the foundation — this phase adds the user-facing interface on top of it.
+Build the Scribe popover UI that offers AI action presets (with nested submenus), a free prompt input, applies a mock transformation, and shows a result panel with Replace/Insert actions. The existing communication bridge (useCozyBridge, postMessage protocol) from Phase 2 is the foundation — this phase replaces the Phase 2 placeholder ScribeModal with the real UI.
 
-Not in scope: real AI backend integration, production i18n, floating button redesign.
+Not in scope: real AI backend integration, production i18n, editable result text, floating button redesign.
 
 </domain>
 
@@ -16,25 +17,41 @@ Not in scope: real AI backend integration, production i18n, floating button rede
 ## Implementation Decisions
 
 ### Panel placement and form factor
-- Centered modal dialog with dimmed backdrop (blocks interaction with editor)
-- All close actions (Escape, click outside, Cancel) behave identically: close without modifying document
-- Claude's discretion: modal sizing (fixed vs responsive), exact dimensions
+- **Floating contextual popover** positioned near the Scribe button/selection — NOT a centered modal
+- No dimmed backdrop — the editor remains visible and unblocked behind the popover
+- Close (X button) dismisses without modifying the document
+- Click outside dismisses (standard popover behavior)
 
-### Action menu and flow
-- Two-step flow inside the modal:
-  - Step 1: Display selected text + action menu (presets + free prompt)
-  - Step 2: Display preview with original and proposition, plus Replace/Insert/Cancel buttons
-- Core 4 preset actions: Ameliorer, Reformuler, Traduire, Corriger
-- Free prompt text input below the presets for custom instructions
-- Back arrow in the preview step to return to action selection and try a different action
+### Action menu structure (Step 1)
+- Popover menu with 4 top-level actions, each with an icon:
+  1. **Correct grammar** — direct action (no submenu, no chevron)
+  2. **Translate >** — submenu with language choices: Francais, Anglais, Russe, Vietnamien
+  3. **Change tone >** — submenu with 3 options: More professional, More casual, More polite (each with icon)
+  4. **Improve >** — submenu with 4 options: Make it shorter, Expand context, Emojify, Transform to bullets (each with icon)
+- Chevron (>) on items 2, 3, 4 indicates submenu availability
+- Submenus open to the right of the main menu
+- **Free prompt input** below the menu: placeholder "Help me write" with a send button (arrow icon)
+- Labels in English for actions (matching the mockups)
+- Language names in French in Translate submenu (Francais, Anglais, Russe, Vietnamien)
 
-### Preview and editing experience
-- Before/after stacked layout: original text on top (read-only), proposition below (editable textarea)
-- User can edit the proposition text before applying Replace or Insert
-- Claude's discretion: regenerate button (refresh icon to re-run same action), mock transformation strategy per action
+### Result panel (Step 2)
+- After selecting an action, the menu is **replaced** by a result panel (same floating position)
+- **Header**: action breadcrumb showing the path taken (e.g. "Translate > Anglais") + close button (X)
+- **Result text**: displayed as plain read-only text (not an editable textarea)
+- **2 action buttons** at bottom-right:
+  - "Replace" — text/link style, blue
+  - "Inserer" — primary button, blue background/pill shape
+- Clicking Replace or Insert closes Scribe and sends the result to the editor
+- X closes without modifying the document
+
+### Two-step flow
+- Step 1: Action selection (menu with submenus + free prompt)
+- Step 2: Result display (breadcrumb + result text + Replace/Insert)
+- No back arrow in step 2 — user closes (X) and re-triggers if they want a different action
+- No "before/after" comparison — only the result is shown
 
 ### Mock AI behavior
-- Claude's discretion: mock transformation strategy (simple prefix vs action-specific markers)
+- Claude's discretion: mock transformation strategy (should produce visibly different text per action type)
 - Claude's discretion: instant vs simulated delay with loading state
 
 </decisions>
@@ -42,9 +59,12 @@ Not in scope: real AI backend integration, production i18n, floating button rede
 <specifics>
 ## Specific Ideas
 
-- Labels in PROJECT.md are French: Ameliorer, Reformuler, Traduire, Corriger — use these as the action names
-- The two-step flow should feel like a focused wizard: choose action -> review result -> apply or go back
-- Editable textarea is a key requirement from PROJECT.md: "L'utilisateur peut modifier le texte propose avant de l'appliquer"
+- The popover should feel lightweight and contextual — not a heavy modal experience
+- Action breadcrumb in result panel (e.g. "Translate > Anglais") gives the user context about what was applied
+- Each action and sub-action has its own icon (design details in mockups)
+- The "Help me write" free prompt is always visible below the action menu, acting as a fallback for custom instructions
+- Result text is read-only for this phase — editable textarea is a future enhancement
+- After Replace/Insert, Scribe closes completely and the document is updated
 
 </specifics>
 
@@ -52,33 +72,36 @@ Not in scope: real AI backend integration, production i18n, floating button rede
 ## Existing Code Insights
 
 ### Reusable Assets
-- `ScribeModal.jsx`: Phase 2 placeholder using cozy-ui ConfirmDialog — evolve into the full two-step interface
-- `useCozyBridge.js`: Hook managing intent/response lifecycle — pendingIntent triggers modal, respond() sends action back
-- `CozyBridge` class (`src/lib/cozy-bridge/index.js`): Host-side protocol handler with origin validation
-- Plugin `code.js`: Handles Replace/Insert/Cancel responses, postToAncestors for nested iframe communication
+- `ScribeModal.jsx`: Phase 2 placeholder using cozy-ui ConfirmDialog — will be **replaced** with the new popover component (not evolved, since the UX is fundamentally different)
+- `useCozyBridge.js`: Hook managing intent/response lifecycle — pendingIntent triggers popover, respond() sends action back. Unchanged.
+- `CozyBridge` class (`src/lib/cozy-bridge/index.js`): Host-side protocol handler with origin validation. Unchanged.
+- Plugin `code.js`: Handles Replace/Insert/Cancel responses, postToAncestors for nested iframe communication. Unchanged.
 
 ### Established Patterns
-- React + cozy-ui component model (ConfirmDialog, Buttons, Typography)
+- React + cozy-ui component model — popover may use cozy-ui Popover/Menu components or custom implementation
 - Stylus (.styl) files for component-level styles
 - useCallback/useMemo for memoized handlers in View.jsx
 - cozy-ui utility classes: `u-flex`, `u-flex-grow-1`, etc.
 
 ### Integration Points
-- `View.jsx` renders ScribeModal and wires useCozyBridge — the only file that needs updating for new props
-- `handleReplace`, `handleInsert`, `handleCancel` callbacks already exist — Phase 3 adds the text transformation in between
+- `View.jsx` renders ScribeModal and wires useCozyBridge — will render the new Scribe popover component instead
+- `handleReplace`, `handleInsert`, `handleCancel` callbacks already exist — Phase 3 adds mock transformation before calling respond()
 - Protocol response format: `{ status: 'ok', action: 'replace'|'insert'|'cancel', data: { text } }` — unchanged
 - Plugin's `handleIntentResponse` applies document changes — unchanged
+- Popover positioning: needs to be anchored near the Scribe button or selection area within the OO editor iframe context
 
 </code_context>
 
 <deferred>
 ## Deferred Ideas
 
+- Editable result textarea (user modifies AI proposition before applying) — future phase
+- Back arrow in result panel to try a different action without closing — future enhancement
+- Regenerate button (re-run same action for different result) — future enhancement
 - Button disable on text deselection (deferred from Phase 2 — requires floating button redesign)
 - OO dark theme CSS fix for "Selected Text" display (cosmetic, Phase 2 pending todo)
 - Real AI backend integration (Phase 4 or separate milestone)
 - Production i18n with Cozy Drive's locales system (post-MVP)
-- Language picker for Traduire action (when real AI is connected)
 
 </deferred>
 
@@ -86,3 +109,4 @@ Not in scope: real AI backend integration, production i18n, floating button rede
 
 *Phase: 03-scribe-interface-with-mock-ai*
 *Context gathered: 2026-03-01*
+*Updated: 2026-03-01 (UX mockups from user)*
