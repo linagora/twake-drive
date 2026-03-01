@@ -155,14 +155,56 @@
     }
   });
 
+  // ---- Mouse position tracking for floating button coordinates ----
+  var lastMousePosition = { x: 0, y: 0 };
+
+  try {
+    window.parent.document.addEventListener("mouseup", function(e) {
+      lastMousePosition.x = e.clientX;
+      lastMousePosition.y = e.clientY;
+    });
+    log("Mouse tracking attached to parent document");
+  } catch (e) {
+    log("Cannot attach to parent document (cross-origin): " + e.message);
+  }
+
+  // ---- Selection state notification ----
+  var selectionDebounceTimer = null;
+  var SELECTION_DEBOUNCE_MS = 300;
+
+  function notifySelectionState(hasSelection, text) {
+    postToAncestors({
+      type: "cozy-bridge:selection-state",
+      version: 1,
+      source: "onlyoffice-plugin",
+      data: {
+        hasSelection: hasSelection,
+        text: hasSelection ? text : "",
+        top: hasSelection ? lastMousePosition.y : 0,
+        left: hasSelection ? lastMousePosition.x : 0
+      }
+    });
+  }
+
   // ---- Selection detection (via init) ----
   // OO calls init with the selected text. When the selection is cleared,
   // it may send an empty string, whitespace-only, or stop calling init.
   // We trim and treat whitespace-only as no selection.
   window.Asc.plugin.init = function(data) {
+    log("init() called, data=" + (data ? data.substring(0, 60) : "(null)"));
     var text = (data || "").replace(/^\s+|\s+$/g, "");
     lastSelectedText = text;
     updateUI();
+
+    if (selectionDebounceTimer) clearTimeout(selectionDebounceTimer);
+
+    if (text.length > 0) {
+      selectionDebounceTimer = setTimeout(function() {
+        notifySelectionState(true, text);
+      }, SELECTION_DEBOUNCE_MS);
+    } else {
+      notifySelectionState(false, "");
+    }
   };
 
   // ---- Required: button handler ----
@@ -202,6 +244,30 @@
       castIntent("AI_TEXT_EDIT", { text: lastSelectedText });
     });
   });
+
+  // ---- Ctrl+K / Cmd+K shortcut for Scribe ----
+  try {
+    window.parent.document.addEventListener("keydown", function(e) {
+      var isCtrlK = (e.ctrlKey || e.metaKey) && e.key === "k";
+      if (isCtrlK && lastSelectedText.length > 0) {
+        e.preventDefault();
+        log("Ctrl+K triggered Scribe");
+        castIntent("AI_TEXT_EDIT", { text: lastSelectedText });
+      }
+    });
+    log("Ctrl+K shortcut registered on parent document");
+  } catch (e) {
+    log("Cannot register Ctrl+K on parent document: " + e.message);
+    // Fallback: register on plugin's own document (limited, but still useful)
+    document.addEventListener("keydown", function(e) {
+      var isCtrlK = (e.ctrlKey || e.metaKey) && e.key === "k";
+      if (isCtrlK && lastSelectedText.length > 0) {
+        e.preventDefault();
+        log("Ctrl+K triggered Scribe (fallback)");
+        castIntent("AI_TEXT_EDIT", { text: lastSelectedText });
+      }
+    });
+  }
 
   // ---- Trigger button click handler ----
   document.addEventListener("DOMContentLoaded", function() {
