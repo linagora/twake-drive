@@ -6,7 +6,7 @@ status: unknown
 last_updated: "2026-03-01T09:48:31.906Z"
 progress:
   total_phases: 6
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 6
   completed_plans: 6
 ---
@@ -18,17 +18,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-26)
 
 **Core value:** La chaine de communication complete -- depuis la selection de texte dans OnlyOffice jusqu'a la reinjection du texte modifie -- doit fonctionner de bout en bout.
-**Current focus:** Phase 4: End-to-End Actions
+**Current focus:** Phase 5: Bouton Scribe flottant ancré à la sélection
 
 ## Current Position
 
-Phase: 4 of 6 (End-to-End Actions)
+Phase: 5 of 6 (Bouton Scribe flottant ancré à la sélection)
 Plan: 0 of 0 in current phase (not yet planned)
-Status: Phase 3 complete — full Scribe UI with mock AI working end-to-end
-Last activity: 2026-03-01 -- Phase 3 completed, phases 5-6 added to roadmap
+Status: Phase 4 skipped (already covered by Phases 2-3), moving to Phase 5
+Last activity: 2026-03-01 -- Phases 3-4 complete, planning Phase 5
 
-Progress: [██████████] 100% (Phase 3)
-Overall:  [█████░░░░░] 50% (Phases 1-3 complete, 3 remaining)
+Progress: [░░░░░░░░░░] 0% (Phase 5)
+Overall:  [██████░░░░] 67% (Phases 1-4 complete, 2 remaining)
 
 ## Performance Metrics
 

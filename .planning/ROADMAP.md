@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Plugin OnlyOffice POC** - Set up the plugin dev environment (Docker mounting, install process, fast iteration), then validate the OO plugin API: load plugin, detect selection, read text, write text back
 - [x] **Phase 2: Contextual Trigger and Communication Bridge** - Wire the Scribe button and postMessage protocol between plugin and Cozy Drive
 - [x] **Phase 3: Scribe Interface with Mock AI** - Build the Scribe panel UI with mock text transformation and preview
-- [ ] **Phase 4: End-to-End Actions** - Complete the round-trip: Replace, Insert, and Cancel actions modify the document from the Scribe panel
+- [x] **Phase 4: End-to-End Actions** - Complete the round-trip: Replace, Insert, and Cancel actions modify the document from the Scribe panel
 - [ ] **Phase 5: Bouton Scribe flottant ancré à la sélection** - Remplacer le bouton Scribe du panneau latéral par un bouton flottant positionné au-dessus de l'éditeur, à proximité de la sélection de texte
 - [ ] **Phase 6: Affinement UI/UX** - Aligner l'interface Scribe sur les maquettes de référence (styles, espacements, animations, thème sombre, responsive)
 
@@ -128,6 +128,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | 1. Plugin OnlyOffice POC | 2/2 | Complete | 2026-02-28 |
 | 2. Contextual Trigger and Communication Bridge | 2/2 | Complete | 2026-02-28 |
 | 3. Scribe Interface with Mock AI | 2/2 | Complete | 2026-03-01 |
-| 4. End-to-End Actions | 0/0 | Not started | - |
+| 4. End-to-End Actions | 0/0 | Complete (covered by Phase 2-3) | 2026-03-01 |
 | 5. Bouton Scribe flottant ancré à la sélection | 0/0 | Not started | - |
 | 6. Affinement UI/UX | 0/0 | Not started | - |
