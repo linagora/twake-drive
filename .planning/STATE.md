@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-01T09:48:31.906Z"
+last_updated: "2026-03-01T14:41:18.000Z"
 progress:
   total_phases: 6
   completed_phases: 4
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 8
+  completed_plans: 7
 ---
 
 # Project State
@@ -23,12 +23,12 @@ See: .planning/PROJECT.md (updated 2026-02-26)
 ## Current Position
 
 Phase: 5 of 6 (Bouton Scribe flottant ancré à la sélection)
-Plan: 0 of 0 in current phase (not yet planned)
-Status: Phase 4 skipped (already covered by Phases 2-3), moving to Phase 5
-Last activity: 2026-03-01 -- Phases 3-4 complete, planning Phase 5
+Plan: 1 of 2 in current phase (Plan 05-01 complete)
+Status: Executing Phase 5 -- Plan 05-01 complete, Plan 05-02 next
+Last activity: 2026-03-01 -- Plan 05-01 executed (selection-state protocol + floating button)
 
-Progress: [░░░░░░░░░░] 0% (Phase 5)
-Overall:  [██████░░░░] 67% (Phases 1-4 complete, 2 remaining)
+Progress: [█████░░░░░] 50% (Phase 5)
+Overall:  [████████░░] 88% (Phases 1-4 complete, Phase 5 plan 1/2 done)
 
 ## Performance Metrics
 
@@ -47,6 +47,7 @@ Overall:  [██████░░░░] 67% (Phases 1-4 complete, 2 remaining
 
 *Updated after each plan completion*
 | Phase 03 P01 | 3min | 2 tasks | 5 files |
+| Phase 05 P01 | 6min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -73,6 +74,10 @@ Recent decisions affecting current work:
 - ScribePopover uses anchorPosition with viewport center -- avoids cross-iframe anchor issues
 - Menu step renders placeholder for Plan 03-02 (interface-first approach)
 - [Phase 03]: Instant mock transformation (no simulated delay) per research recommendation
+- [Phase 05]: Selection-state messages are fire-and-forget (no intentId/response) -- separate from intent protocol
+- [Phase 05]: Mouse coordinates captured via mouseup on parent document for floating button positioning
+- [Phase 05]: 300ms debounce on selection, instant deselection notification
+- [Phase 05]: ScribeFloatingButton uses React portal to document.body with position:fixed
 
 ### Pending Todos
 
@@ -93,5 +98,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Phase 5 context gathered
-Resume file: .planning/phases/05-bouton-scribe-flottant-ancr-la-s-lection/05-CONTEXT.md
+Stopped at: Completed 05-01-PLAN.md
+Resume file: .planning/phases/05-bouton-scribe-flottant-ancr-la-s-lection/05-01-SUMMARY.md
