@@ -18,6 +18,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Contextual Trigger and Communication Bridge** - Wire the Scribe button and postMessage protocol between plugin and Cozy Drive
 - [ ] **Phase 3: Scribe Interface with Mock AI** - Build the Scribe panel UI with mock text transformation and preview
 - [ ] **Phase 4: End-to-End Actions** - Complete the round-trip: Replace, Insert, and Cancel actions modify the document from the Scribe panel
+- [ ] **Phase 5: Bouton Scribe flottant ancré à la sélection** - Remplacer le bouton Scribe du panneau latéral par un bouton flottant positionné au-dessus de l'éditeur, à proximité de la sélection de texte
+- [ ] **Phase 6: Affinement UI/UX** - Aligner l'interface Scribe sur les maquettes de référence (styles, espacements, animations, thème sombre, responsive)
 
 ## Phase Details
 
@@ -85,6 +87,37 @@ Plans:
 - [ ] 04-01: TBD
 - [ ] 04-02: TBD
 
+### Phase 5: Bouton Scribe flottant ancré à la sélection
+**Goal**: Remplacer le déclenchement de Scribe depuis le panneau latéral du plugin par un bouton flottant positionné directement au-dessus de l'éditeur, ancré à la sélection de texte — le plugin transmet les coordonnées de la sélection via postMessage et Cozy Drive rend un bouton flottant au-dessus de l'iframe OnlyOffice
+**Depends on**: Phase 4
+**Requirements**: UI-FLOAT-01, UI-FLOAT-02, COMM-04
+**Success Criteria** (what must be TRUE):
+  1. Le plugin détecte la position (coordonnées viewport) de la sélection de texte et l'envoie via postMessage en plus du texte sélectionné
+  2. Cozy Drive reçoit les coordonnées et affiche un bouton flottant "Scribe" positionné au-dessus de l'iframe OO, à proximité de la sélection (conversion repère iframe → page hôte)
+  3. Le bouton flottant apparaît à la sélection et disparaît quand la sélection est perdue
+  4. Cliquer sur le bouton flottant ouvre le popover Scribe ancré à cette position (le flux existant menu → résultat → Replace/Insert est préservé)
+  5. Le panneau latéral du plugin n'est plus nécessaire pour déclencher Scribe
+**Plans**: TBD
+
+Plans:
+- [ ] 05-01: TBD
+- [ ] 05-02: TBD
+
+### Phase 6: Affinement UI/UX
+**Goal**: Aligner l'interface Scribe (bouton flottant, popover, menu d'actions, panneau de résultat) sur les maquettes de référence — styles, espacements, icônes, animations, gestion du thème sombre OO, et polish général
+**Depends on**: Phase 5
+**Requirements**: UX-01, UX-02, UX-03
+**Success Criteria** (what must be TRUE):
+  1. L'apparence visuelle de Scribe correspond aux maquettes fournies (couleurs, typographie, espacements, icônes)
+  2. Les interactions sont fluides (transitions menu → résultat, apparition/disparition du bouton flottant, hover sur sous-menus)
+  3. Scribe fonctionne correctement avec le thème sombre d'OnlyOffice (pas de texte blanc sur fond blanc, contrastes corrects)
+  4. Le popover et le bouton flottant se repositionnent correctement si la fenêtre est redimensionnée ou si l'éditeur scrolle
+**Plans**: TBD
+
+Plans:
+- [ ] 06-01: TBD
+- [ ] 06-02: TBD
+
 ## Progress
 
 **Execution Order:**
@@ -96,3 +129,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | 2. Contextual Trigger and Communication Bridge | 2/2 | Complete | 2026-02-28 |
 | 3. Scribe Interface with Mock AI | 0/2 | In progress | - |
 | 4. End-to-End Actions | 0/0 | Not started | - |
+| 5. Bouton Scribe flottant ancré à la sélection | 0/0 | Not started | - |
+| 6. Affinement UI/UX | 0/0 | Not started | - |
