@@ -93,5 +93,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Phase 3 complete, proceeding to Phase 4
-Resume file: none
+Stopped at: Phase 5 context gathered
+Resume file: .planning/phases/05-bouton-scribe-flottant-ancr-la-s-lection/05-CONTEXT.md
