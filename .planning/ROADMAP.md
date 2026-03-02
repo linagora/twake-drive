@@ -112,11 +112,11 @@ Plans:
   2. Les interactions sont fluides (transitions menu → résultat, apparition/disparition du bouton flottant, hover sur sous-menus)
   3. Scribe fonctionne correctement avec le thème sombre d'OnlyOffice (pas de texte blanc sur fond blanc, contrastes corrects)
   4. Le popover et le bouton flottant se repositionnent correctement si la fenêtre est redimensionnée ou si l'éditeur scrolle
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 06-01: TBD
-- [ ] 06-02: TBD
+- [ ] 06-01-PLAN.md — Result panel dynamic sizing (content-aware height/width, min/max bounds, CSS transition)
+- [ ] 06-02-PLAN.md — Menu parameterization with AI prompt templates and config-driven mockTransform
 
 ## Progress
 
