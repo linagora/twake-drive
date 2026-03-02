@@ -31,7 +31,7 @@ jest.mock('../Folder/FolderViewBreadcrumb', () =>
 
 jest.mock('hooks', () => ({
   useCurrentFolderId: jest.fn().mockReturnValue('1234'),
-  useDisplayedFolder: jest.fn().mockReturnValue('5678'),
+  useDisplayedFolder: jest.fn().mockReturnValue({ id: '5678' }),
   useFolderSort: jest.fn(() => [{ attribute: 'name', order: 'asc' }, jest.fn()])
 }))
 
@@ -44,6 +44,13 @@ jest.mock('cozy-keys-lib', () => ({
 }))
 
 jest.mock('components/useHead', () => jest.fn())
+
+jest.mock('@/modules/shareddrives/hooks/useSharedDriveFolder', () => ({
+  useSharedDriveFolder: jest.fn().mockReturnValue({
+    sharedDriveQuery: {},
+    sharedDriveResult: { data: null }
+  })
+}))
 
 describe('Drive View', () => {
   const setup = () => {
