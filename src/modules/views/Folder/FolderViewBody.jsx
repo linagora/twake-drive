@@ -61,7 +61,8 @@ const FolderViewBody = ({
   withFilePath = false,
   refreshFolderContent = null,
   extraColumns,
-  orderProps
+  orderProps,
+  driveId
 }) => {
   const { isDesktop } = useBreakpoints()
   const navigate = useNavigate()
@@ -194,6 +195,7 @@ const FolderViewBody = ({
               currentFolderId={currentFolderId}
               displayedFolder={displayedFolder}
               canUpload={canUpload}
+              driveId={driveId}
             />
           )}
           {hasDataToShow && !needsToWait && (

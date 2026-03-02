@@ -65,7 +65,7 @@ const useSharedDriveFolder = ({
       setSharedDriveResult(newSharedDriveResult)
     }
 
-    if (client) {
+    if (client && driveId && folderId) {
       void fetchSharedDriveFolder()
     }
 
@@ -74,7 +74,7 @@ const useSharedDriveFolder = ({
     }, 500)
 
     let realtime: CozyRealtime | undefined
-    if (client) {
+    if (client && driveId) {
       realtime = new CozyRealtime({ client, sharedDriveId: driveId })
       realtime.subscribe('updated', 'io.cozy.files', debouncedFetch)
       realtime.subscribe('created', 'io.cozy.files', debouncedFetch)
@@ -87,7 +87,7 @@ const useSharedDriveFolder = ({
       }
       debouncedFetch.cancel()
     }
-  }, [client, driveId, sharedDriveQuery])
+  }, [client, driveId, folderId, sharedDriveQuery])
 
   return {
     sharedDriveQuery,

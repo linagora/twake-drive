@@ -13,8 +13,9 @@ import styles from './empty.styl'
 import FolderEmptyIllu from '@/assets/icons/illu-folder-empty.svg'
 import TrashIllustration from '@/assets/icons/illu-trash-empty.svg'
 import { TRASH_DIR_ID } from '@/constants/config'
-import { useDisplayedFolder } from '@/hooks'
+import { useCurrentFolderId, useDisplayedFolder } from '@/hooks'
 import { isEncryptedFolder } from '@/lib/encryption'
+import { useSharedDriveFolder } from '@/modules/shareddrives/hooks/useSharedDriveFolder'
 import UploadButton from '@/modules/upload/UploadButton'
 import CreateSharedDriveButton from '@/modules/views/SharedDrive/CreateSharedDriveButton'
 
@@ -23,12 +24,16 @@ const EmptyCanvas = ({
   canUpload,
   localeKey,
   hasTextMobileVersion,
-  onUploaded
+  onUploaded,
+  driveId
 }) => {
   const { t } = useI18n()
   const { isDesktop } = useBreakpoints()
+  const folderId = useCurrentFolderId()
   const { displayedFolder } = useDisplayedFolder()
+  const { sharedDriveResult } = useSharedDriveFolder({ driveId, folderId })
   const isSharedDriveEnabled = flag('drive.shared-drive.enabled')
+  const displayedSharedFolder = sharedDriveResult?.data
 
   const IconToShow = type === 'trash' ? TrashIllustration : FolderEmptyIllu
   const showSharedDriveLayout = type === 'sharing' && isSharedDriveEnabled
@@ -66,7 +71,7 @@ const EmptyCanvas = ({
                   button: { variant: 'secondary' }
                 }}
                 label={t('toolbar.menu_upload')}
-                displayedFolder={displayedFolder}
+                displayedFolder={displayedSharedFolder || displayedFolder}
                 onUploaded={onUploaded}
               />
             </span>
@@ -103,12 +108,13 @@ export const EmptyWrapper = ({
   currentFolderId,
   displayedFolder,
   canUpload,
-  refreshFolderContent
+  refreshFolderContent,
+  driveId
 }) => {
   const { pathname } = useLocation()
 
   if (pathname === '/sharings') {
-    return <EmptyCanvas type="sharing" />
+    return <EmptyCanvas type="sharing" driveId={driveId} />
   }
   if (currentFolderId !== TRASH_DIR_ID) {
     return (
@@ -116,6 +122,7 @@ export const EmptyWrapper = ({
         isEncrypted={isEncryptedFolder(displayedFolder)}
         canUpload={canUpload}
         onUploaded={refreshFolderContent}
+        driveId={driveId}
       />
     )
   }
