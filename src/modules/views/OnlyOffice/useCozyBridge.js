@@ -5,18 +5,19 @@ import { CozyBridge } from '@/lib/cozy-bridge'
 /**
  * React hook wrapping CozyBridge lifecycle with intent state.
  *
- * Creates a CozyBridge instance on mount, registers a handler for
- * AI_TEXT_EDIT intents, and provides a respond callback to send
- * responses back to the plugin.
+ * Creates a CozyBridge instance on mount, registers handlers for
+ * AI_TEXT_EDIT intents (opens Scribe popover) and SHOW/HIDE_SCRIBE_BUTTON
+ * intents (controls the floating button), and provides a respond callback
+ * to send responses back to the plugin.
  *
  * @param {string[]} allowedOrigins - Stable array of allowed origins.
  *   In dev: ['*']. In prod: derive from instance URL and OO server URL.
  *   Must be memoized by the parent to avoid unnecessary re-renders.
- * @returns {{ pendingIntent: import('@/lib/cozy-bridge/types').IntentMessage|null, respond: Function }}
+ * @returns {{ pendingIntent: object|null, showScribeButton: object|null, respond: Function }}
  */
 export function useCozyBridge(allowedOrigins) {
   const [pendingIntent, setPendingIntent] = useState(null)
-  const [selectionState, setSelectionState] = useState(null)
+  const [showScribeButton, setShowScribeButton] = useState(null)
   const bridgeRef = useRef(null)
   const respondRef = useRef(null)
 
@@ -29,17 +30,12 @@ export function useCozyBridge(allowedOrigins) {
       respondRef.current = respondFn
     })
 
-    bridge.onSelectionState(data => {
-      if (data.hasSelection) {
-        setSelectionState({
-          hasSelection: true,
-          text: data.text,
-          top: data.top,
-          left: data.left
-        })
-      } else {
-        setSelectionState(null)
-      }
+    bridge.onIntent('SHOW_SCRIBE_BUTTON', intentMessage => {
+      setShowScribeButton({ text: intentMessage.data.text })
+    })
+
+    bridge.onIntent('HIDE_SCRIBE_BUTTON', () => {
+      setShowScribeButton(null)
     })
 
     return () => {
@@ -57,8 +53,8 @@ export function useCozyBridge(allowedOrigins) {
     respondRef.current(responsePayload)
     respondRef.current = null
     setPendingIntent(null)
-    setSelectionState(null)
+    setShowScribeButton(null)
   }, [])
 
-  return { pendingIntent, selectionState, respond }
+  return { pendingIntent, showScribeButton, respond }
 }

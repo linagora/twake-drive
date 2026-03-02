@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react'
+import React, { useState, useCallback, useEffect, useRef } from 'react'
 import PropTypes from 'prop-types'
 
 import Popover from 'cozy-ui/transpiled/react/Popover'
@@ -22,7 +22,7 @@ import { ScribeResultPanel } from '@/modules/views/OnlyOffice/Scribe/ScribeResul
  * @param {Function} props.onInsert - Called with transformed text when Inserer is clicked
  * @param {Function} props.onCancel - Called when closed without action
  */
-const ScribePopover = ({ open, selectedText, onReplace, onInsert, onCancel, anchorEl }) => {
+const ScribePopover = ({ open, selectedText, onReplace, onInsert, onCancel }) => {
   const [step, setStep] = useState('menu') // 'menu' | 'result'
   const [result, setResult] = useState({ text: '', breadcrumb: '' })
 
@@ -59,28 +59,42 @@ const ScribePopover = ({ open, selectedText, onReplace, onInsert, onCancel, anch
     onInsert(result.text)
   }, [result.text, onInsert])
 
-  const useElementAnchor = anchorEl && anchorEl instanceof Element
+  const menuRef = useRef(null)
+
+  const handleEntered = useCallback(() => {
+    // Blur the OO iframe to release focus, then focus the menu
+    if (document.activeElement) {
+      document.activeElement.blur()
+    }
+    setTimeout(() => {
+      if (menuRef.current) {
+        menuRef.current.focus()
+      }
+    }, 50)
+  }, [])
 
   return (
     <Popover
       open={open}
-      anchorReference={useElementAnchor ? 'anchorEl' : 'anchorPosition'}
-      anchorEl={useElementAnchor ? anchorEl : undefined}
-      anchorPosition={useElementAnchor ? undefined : { top: 200, left: typeof window !== 'undefined' ? window.innerWidth / 2 : 500 }}
-      anchorOrigin={useElementAnchor ? { vertical: 'bottom', horizontal: 'left' } : undefined}
-      transformOrigin={useElementAnchor ? { vertical: 'top', horizontal: 'left' } : undefined}
+      TransitionProps={{ onEntered: handleEntered }}
+      disableAutoFocus
+      disableEnforceFocus
+      anchorReference="anchorPosition"
+      anchorPosition={{ top: typeof window !== 'undefined' ? window.innerHeight / 2 : 400, left: typeof window !== 'undefined' ? window.innerWidth / 2 : 500 }}
+      transformOrigin={{ vertical: 'center', horizontal: 'center' }}
       onClose={handleClose}
-      BackdropProps={{ invisible: true }}
+      BackdropProps={{ style: { backgroundColor: 'rgba(0, 0, 0, 0.5)' } }}
       PaperProps={{
         style: {
           borderRadius: 8,
-          boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+          boxShadow: 'none',
+          backgroundColor: 'transparent',
           overflow: 'visible'
         }
       }}
     >
       {step === 'menu' ? (
-        <ScribeActionMenu onSelect={handleActionSelect} selectedText={selectedText} />
+        <ScribeActionMenu ref={menuRef} onSelect={handleActionSelect} onClose={handleClose} selectedText={selectedText} />
       ) : (
         <ScribeResultPanel
           breadcrumb={result.breadcrumb}
@@ -99,8 +113,7 @@ ScribePopover.propTypes = {
   selectedText: PropTypes.string.isRequired,
   onReplace: PropTypes.func.isRequired,
   onInsert: PropTypes.func.isRequired,
-  onCancel: PropTypes.func.isRequired,
-  anchorEl: PropTypes.object
+  onCancel: PropTypes.func.isRequired
 }
 
 export { ScribePopover }

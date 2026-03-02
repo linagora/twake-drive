@@ -16,9 +16,6 @@ export const MSG_TYPE_INTENT = 'cozy-bridge:intent'
 /** @type {string} Message type for responses (host -> plugin) */
 export const MSG_TYPE_RESPONSE = 'cozy-bridge:response'
 
-/** @type {string} Message type for selection state (plugin -> host) */
-export const MSG_TYPE_SELECTION_STATE = 'cozy-bridge:selection-state'
-
 /** @type {number} Maximum allowed size for message data payload (1MB) */
 const MAX_DATA_SIZE = 1_000_000
 
@@ -111,83 +108,6 @@ export function validateIntent(msg) {
     }
   } catch (e) {
     console.warn('[cozy-bridge] Invalid intent: data is not serializable')
-    return false
-  }
-
-  return true
-}
-
-/**
- * Validate a selection-state message.
- * Checks structure, required fields, types, version, and data size.
- *
- * @param {*} msg - Message to validate
- * @returns {boolean} True if valid
- */
-export function validateSelectionState(msg) {
-  if (!msg || typeof msg !== 'object') {
-    console.warn('[cozy-bridge] Invalid selection-state: not an object')
-    return false
-  }
-  if (msg.type !== MSG_TYPE_SELECTION_STATE) {
-    console.warn(
-      '[cozy-bridge] Invalid selection-state: wrong type:',
-      msg.type
-    )
-    return false
-  }
-  if (msg.version !== PROTOCOL_VERSION) {
-    console.warn(
-      '[cozy-bridge] Invalid selection-state: unsupported version:',
-      msg.version
-    )
-    return false
-  }
-  if (typeof msg.source !== 'string' || !msg.source) {
-    console.warn(
-      '[cozy-bridge] Invalid selection-state: missing or invalid source'
-    )
-    return false
-  }
-  if (!msg.data || typeof msg.data !== 'object') {
-    console.warn(
-      '[cozy-bridge] Invalid selection-state: missing or invalid data'
-    )
-    return false
-  }
-  if (typeof msg.data.hasSelection !== 'boolean') {
-    console.warn(
-      '[cozy-bridge] Invalid selection-state: hasSelection must be a boolean'
-    )
-    return false
-  }
-  if (msg.data.hasSelection) {
-    if (typeof msg.data.text !== 'string' || !msg.data.text) {
-      console.warn(
-        '[cozy-bridge] Invalid selection-state: text must be a non-empty string when hasSelection is true'
-      )
-      return false
-    }
-    if (typeof msg.data.top !== 'number' || typeof msg.data.left !== 'number') {
-      console.warn(
-        '[cozy-bridge] Invalid selection-state: top and left must be numbers when hasSelection is true'
-      )
-      return false
-    }
-  }
-
-  // Size limit validation
-  try {
-    if (JSON.stringify(msg.data).length > MAX_DATA_SIZE) {
-      console.warn(
-        '[cozy-bridge] Invalid selection-state: data payload exceeds 1MB limit'
-      )
-      return false
-    }
-  } catch (e) {
-    console.warn(
-      '[cozy-bridge] Invalid selection-state: data is not serializable'
-    )
     return false
   }
 

@@ -23,14 +23,15 @@ echo "=== OnlyOffice Document Server - Scribe Dev Setup ==="
 echo ""
 
 # Check if container already exists
+NEED_WAIT=false
 if docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
   echo "Container '${CONTAINER_NAME}' already exists."
   if docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
-    echo "Container is running. To restart: docker restart ${CONTAINER_NAME}"
-    echo "To remove and recreate: docker rm -f ${CONTAINER_NAME} && ./scripts/oo-dev-setup.sh"
+    echo "Container is running."
   else
     echo "Container is stopped. Starting it..."
     docker start "${CONTAINER_NAME}"
+    NEED_WAIT=true
   fi
   echo ""
 else
@@ -56,29 +57,34 @@ else
     "${OO_IMAGE}"
 
   echo "Container started."
+  NEED_WAIT=true
 fi
 
-echo ""
-echo "Waiting for OnlyOffice Document Server to be ready..."
-echo "(This may take 1-2 minutes on first start)"
+if [ "$NEED_WAIT" = "false" ]; then
+  # Container was already running — skip wait, jump straight to JWT config
+  echo "Skipping wait (container already running)."
+  echo ""
+else
+  echo "(This may take 1-2 minutes on first start)"
 
-# Wait for the server to respond (up to 120 seconds)
-TIMEOUT=120
-ELAPSED=0
-while [ $ELAPSED -lt $TIMEOUT ]; do
-  if curl -s -o /dev/null -w "%{http_code}" http://localhost 2>/dev/null | grep -q "200\|302"; then
-    echo "Server is ready."
-    break
+  # Wait for the server to respond (up to 120 seconds)
+  TIMEOUT=120
+  ELAPSED=0
+  while [ $ELAPSED -lt $TIMEOUT ]; do
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost 2>/dev/null | grep -q "200\|302"; then
+      echo "Server is ready."
+      break
+    fi
+    sleep 5
+    ELAPSED=$((ELAPSED + 5))
+    echo "  Still waiting... (${ELAPSED}s)"
+  done
+
+  if [ $ELAPSED -ge $TIMEOUT ]; then
+    echo "WARNING: Server did not respond within ${TIMEOUT}s."
+    echo "Check logs with: docker logs ${CONTAINER_NAME}"
+    echo "The server may still be starting up. Wait a bit and try http://localhost"
   fi
-  sleep 5
-  ELAPSED=$((ELAPSED + 5))
-  echo "  Still waiting... (${ELAPSED}s)"
-done
-
-if [ $ELAPSED -ge $TIMEOUT ]; then
-  echo "WARNING: Server did not respond within ${TIMEOUT}s."
-  echo "Check logs with: docker logs ${CONTAINER_NAME}"
-  echo "The server may still be starting up. Wait a bit and try http://localhost"
 fi
 
 echo ""
@@ -174,5 +180,9 @@ echo "  - Check console for [Scribe] messages"
 echo ""
 echo "Useful commands:"
 echo "  docker logs ${CONTAINER_NAME}          # View server logs"
-echo "  docker restart ${CONTAINER_NAME}       # Restart server"
+echo "  ./scripts/oo-dev-setup.sh             # Restart (re-applies JWT config)"
 echo "  docker rm -f ${CONTAINER_NAME}         # Remove container"
+echo ""
+echo "WARNING: Do NOT use 'docker restart ${CONTAINER_NAME}' directly."
+echo "  OO regenerates its JWT config on restart, breaking Cozy Stack auth."
+echo "  Always use ./scripts/oo-dev-setup.sh to restart."

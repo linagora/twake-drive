@@ -19,10 +19,8 @@
 
 import {
   MSG_TYPE_INTENT,
-  MSG_TYPE_SELECTION_STATE,
   PROTOCOL_VERSION,
   validateIntent,
-  validateSelectionState,
   createResponseMessage
 } from './protocol'
 
@@ -57,16 +55,6 @@ export class CozyBridge {
    */
   onIntent(action, handler) {
     this.handlers.set(action, handler)
-  }
-
-  /**
-   * Register a handler for selection state updates from the plugin.
-   *
-   * @param {Function} handler - (selectionData) => void
-   *   selectionData: { hasSelection: boolean, text: string, top: number, left: number }
-   */
-  onSelectionState(handler) {
-    this._selectionStateHandler = handler
   }
 
   /**
@@ -109,19 +97,7 @@ export class CozyBridge {
 
     const msg = event.data
 
-    // 2a. Check for selection-state messages (fire-and-forget, no response)
-    if (
-      msg &&
-      msg.type === MSG_TYPE_SELECTION_STATE &&
-      msg.version === PROTOCOL_VERSION
-    ) {
-      if (validateSelectionState(msg) && this._selectionStateHandler) {
-        this._selectionStateHandler(msg.data)
-      }
-      return
-    }
-
-    // 2b. Check message type and version for intents
+    // 2. Check message type and version for intents
     if (!msg || msg.type !== MSG_TYPE_INTENT || msg.version !== PROTOCOL_VERSION)
       return
 
@@ -165,6 +141,5 @@ export class CozyBridge {
   destroy() {
     window.removeEventListener('message', this._listener)
     this.handlers.clear()
-    this._selectionStateHandler = null
   }
 }

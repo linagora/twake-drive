@@ -1,74 +1,94 @@
-import React, { useRef, useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import PropTypes from 'prop-types'
 
-const BUTTON_HEIGHT = 32
-const OFFSET = 8
+const baseStyle = {
+  position: 'fixed',
+  bottom: 80,
+  right: 40,
+  zIndex: 100000,
+  opacity: 0.4,
+  transition: 'opacity 200ms ease',
+  cursor: 'pointer',
+  borderRadius: 20,
+  padding: '8px 16px',
+  background: 'white',
+  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+  border: 'none',
+  display: 'flex',
+  alignItems: 'center',
+  gap: 6,
+  fontSize: 14,
+  fontFamily: 'inherit',
+  color: '#333'
+}
 
-const SPARKLE_ICON = (
-  <svg
-    width="16"
-    height="16"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.8"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.582a.5.5 0 0 1 0 .963L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
-    <path d="M20 3v4" />
-    <path d="M22 5h-4" />
-  </svg>
-)
+const tooltipStyle = {
+  position: 'absolute',
+  bottom: '100%',
+  right: 0,
+  marginBottom: 8,
+  padding: '6px 10px',
+  background: '#333',
+  borderRadius: 6,
+  fontSize: 12,
+  whiteSpace: 'nowrap',
+  pointerEvents: 'none',
+  display: 'flex',
+  alignItems: 'center',
+  gap: 4
+}
 
-const ScribeFloatingButton = ({ visible, position, onClick, buttonRef }) => {
-  const [show, setShow] = useState(false)
-  const internalRef = useRef(null)
-  const ref = buttonRef || internalRef
+/**
+ * Floating "Scribe" button rendered in bottom-right of the viewport.
+ * Translucent by default, opaque on hover. Rendered via portal on document.body.
+ *
+ * @param {{ visible: boolean, onClick: () => void }} props
+ */
+export const ScribeFloatingButton = ({ visible, onClick }) => {
+  const [hovered, setHovered] = useState(false)
 
-  // Fade-in: set show=true after mount to trigger CSS transition
   useEffect(() => {
-    if (visible && position) {
-      const frame = requestAnimationFrame(() => setShow(true))
-      return () => cancelAnimationFrame(frame)
-    } else {
-      setShow(false)
-    }
-  }, [visible, position])
+    if (visible) setHovered(false)
+  }, [visible])
 
-  if (!visible || !position) return null
+  if (!visible) return null
 
   return createPortal(
     <button
-      ref={ref}
-      className="scribe-floating-button"
+      style={{ ...baseStyle, opacity: hovered ? 1 : 0.4 }}
       onClick={onClick}
-      style={{
-        position: 'fixed',
-        top: position.top - BUTTON_HEIGHT - OFFSET,
-        left: position.left,
-        zIndex: 99999,
-        opacity: show ? 1 : 0,
-        transition: 'opacity 150ms ease-in',
-        pointerEvents: 'auto'
-      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      type="button"
     >
-      {SPARKLE_ICON}
-      <span className="scribe-floating-button-label">Scribe</span>
+      {hovered && (
+        <span style={tooltipStyle}>
+          <span style={{ color: 'white' }}>Text AI</span>
+          <span style={{ color: '#999' }}>(Ctrl+I)</span>
+        </span>
+      )}
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 16 16"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M8 1l1.796 4.204L14 7l-4.204 1.796L8 13l-1.796-4.204L2 7l4.204-1.796L8 1z"
+          fill="#7C3AED"
+          stroke="#7C3AED"
+          strokeWidth="0.5"
+        />
+        <path
+          d="M12.5 1l.898 2.102L15.5 4l-2.102.898L12.5 7l-.898-2.102L9.5 4l2.102-.898L12.5 1z"
+          fill="#7C3AED"
+          stroke="#7C3AED"
+          strokeWidth="0.3"
+        />
+      </svg>
+      Scribe
     </button>,
     document.body
   )
 }
-
-ScribeFloatingButton.propTypes = {
-  visible: PropTypes.bool.isRequired,
-  position: PropTypes.shape({
-    top: PropTypes.number.isRequired,
-    left: PropTypes.number.isRequired
-  }),
-  onClick: PropTypes.func.isRequired,
-  buttonRef: PropTypes.object
-}
-
-export { ScribeFloatingButton }

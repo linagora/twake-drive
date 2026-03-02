@@ -14,8 +14,8 @@ Cozy Stack (window.top)
 
 **Communication flow:**
 1. User selects text → plugin detects via `initOnSelectionChanged`
-2. User clicks Scribe trigger → plugin sends `AI_TEXT_EDIT` intent via `postMessage`
-3. CozyBridge in Cozy Drive receives intent → opens ScribeModal
+2. User triggers Scribe (toolbar button, Ctrl+K, or context menu) → plugin sends `AI_TEXT_EDIT` intent via `postMessage`
+3. CozyBridge in Cozy Drive receives intent → opens ScribePopover
 4. User clicks Replace/Insert/Cancel → response sent back to plugin
 5. Plugin modifies document via `PasteText` (replace) or `InsertContent` (insert)
 
@@ -42,12 +42,6 @@ This creates a Docker container with:
 
 ### 2. Configure Cozy Stack
 
-Get the OO JWT secret from the container:
-
-```bash
-docker exec oo-dev python3 -c "import json; print(json.load(open('/etc/onlyoffice/documentserver/local.json'))['services']['CoAuthoring']['secret']['inbox']['string'])"
-```
-
 Edit `~/.cozy/cozy.yml`:
 
 ```yaml
@@ -56,9 +50,11 @@ host: 0.0.0.0    # Required: Docker containers must reach the stack
 office:
   default:
     onlyoffice_url: http://localhost
-    onlyoffice_inbox_secret: <secret from above>
-    onlyoffice_outbox_secret: <secret from above>
+    onlyoffice_inbox_secret: 1Ji0VcWaWi7CPslwPtYLDf9yDDkNcF62
+    onlyoffice_outbox_secret: 1Ji0VcWaWi7CPslwPtYLDf9yDDkNcF62
 ```
+
+> The secret is hardcoded in `scripts/oo-dev-setup.sh`. The script re-applies it on every run.
 
 ### 3. Build and Start
 
@@ -72,28 +68,41 @@ cozy-stack serve --appdir drive:./build/ --disable-csp
 1. Open http://alice.localhost:8080/
 2. Open a `.docx` file
 3. Select text in the document
-4. Click the Scribe button in the left panel
-5. The Scribe modal should appear with Replace / Insert After / Cancel buttons
+4. Trigger Scribe via one of:
+   - **Toolbar button**: click "Scribe" in the Plugins tab
+   - **Keyboard shortcut**: Ctrl+K (or Cmd+K on Mac)
+   - **Context menu**: right-click → "Scribe"
+5. The Scribe popover should appear with action choices, then Replace / Insert After / Cancel buttons
+
+> **Note:** A floating button positioned near the text selection was considered but abandoned — the OO API does not expose selection coordinates (the editor renders on canvas, not DOM).
 
 ## Dev Iteration
 
 ```bash
-# Plugin changes (code.js, index.html, config.json):
-# Just hard-refresh the browser (Ctrl+Shift+R)
+# Plugin changes (code.js, index.html):
+# Delete .gz cache then hard-refresh:
+rm -f plugins/onlyoffice-scribe/**/*.gz plugins/onlyoffice-scribe/*.gz
+# Then Ctrl+Shift+R in the browser
+
+# Plugin config changes (config.json):
+# Re-run setup (restarts OO + re-applies JWT config):
+./scripts/oo-dev-setup.sh
 
 # React changes (useCozyBridge, ScribeModal, View.jsx):
 yarn build  # then refresh browser
 
-# Container rebuild (after config.json structural changes):
+# Container rebuild (nuclear option):
 docker rm -f oo-dev && ./scripts/oo-dev-setup.sh
 ```
+
+> **Never use `docker restart oo-dev` directly.** OO regenerates its JWT config on restart, breaking Cozy Stack authentication. Always use `./scripts/oo-dev-setup.sh` — it re-applies the JWT secret automatically.
 
 ## Plugin Structure
 
 ```
 plugins/onlyoffice-scribe/
-  config.json          # Plugin manifest (v0.2.0, panel type, selection events)
-  index.html           # Minimal trigger button (sparkle icon, 36x36px)
+  config.json          # Plugin manifest (v0.2.0, background type, selection events)
+  index.html           # Minimal shell (loads plugin SDK and code.js)
   scripts/
     code.js            # Intent casting, response handling, document modification
   resources/
@@ -158,9 +167,11 @@ All plugin code (`code.js`) must use ES5 syntax (`var`, `function`, no arrow fun
 ## Common Commands
 
 ```bash
+./scripts/oo-dev-setup.sh              # Start or restart OO (always use this)
 docker logs oo-dev                     # View OO server logs
-docker restart oo-dev                  # Restart OO server
 docker rm -f oo-dev                    # Remove container
 docker exec -it oo-dev bash            # Shell into container
 docker exec oo-dev supervisorctl restart ds:docservice  # Restart docservice only
 ```
+
+> Do NOT use `docker restart oo-dev` — see [Dev Iteration](#dev-iteration).

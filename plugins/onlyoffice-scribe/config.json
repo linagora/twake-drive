@@ -11,11 +11,11 @@
       "icons": "resources/%theme-type%(light|dark)/icon%scale%(default).%extension%(png)",
       "isViewer": false,
       "EditorsSupport": ["word"],
-      "type": "panel",
+      "type": "background",
       "initDataType": "text",
       "initOnSelectionChanged": true,
       "buttons": [],
-      "events": ["onContextMenuShow", "onContextMenuClick"]
+      "events": ["onContextMenuShow", "onContextMenuClick", "onToolbarMenuClick"]
     }
   ]
 }

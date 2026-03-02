@@ -42,30 +42,11 @@
     return "intent-" + Date.now() + "-" + Math.random().toString(36).substr(2, 9);
   }
 
-  // ---- UI: updateUI() ----
-  function updateUI() {
-    var btn = document.getElementById("scribe-trigger");
-    var hint = document.getElementById("scribe-hint");
-
-    var hasSelection = lastSelectedText.length > 0;
-
-    if (btn) {
-      btn.disabled = !hasSelection;
-    }
-    if (hint) {
-      if (hasSelection) {
-        hint.classList.add("hidden");
-      } else {
-        hint.classList.remove("hidden");
-      }
-    }
-  }
-
   // ---- castIntent: send an intent to Cozy Drive via postMessage ----
   // Per locked user decision: Promise-based API.
   // The plugin iframe (not callCommand) runs in a modern browser context
   // where Promise should be available. Fallback to callback-only if not.
-  function castIntent(action, data) {
+  function castIntent(action, data, oneWay) {
     var intentId = generateIntentId();
     var message = {
       type: "cozy-bridge:intent",
@@ -77,15 +58,15 @@
     };
 
     postToAncestors(message);
-    log("Intent cast: " + action + " id=" + intentId);
+    log("Intent cast: " + action + " id=" + intentId + (oneWay ? " (one-way)" : ""));
+
+    if (oneWay) return undefined;
 
     if (typeof Promise !== "undefined") {
       return new Promise(function(resolve, reject) {
         pendingIntents[intentId] = { action: action, resolve: resolve, reject: reject };
       });
     } else {
-      // Fallback: store for correlation, response handled via message listener + handleIntentResponse
-      // castIntent returns undefined in this case -- callers should not depend on the return value
       log("Promise unavailable in sandbox -- using callback fallback");
       pendingIntents[intentId] = { action: action, resolve: null, reject: null };
       return undefined;
@@ -155,65 +136,84 @@
     }
   });
 
-  // ---- Trigger-intent listener (floating button click from Cozy Drive) ----
+  // ---- Trigger-intent listener (host -> plugin) ----
+  // Cozy Drive sends trigger-intent to ask the plugin to cast an AI_TEXT_EDIT intent
   window.addEventListener("message", function(event) {
     var msg = event.data;
-    if (!msg || msg.type !== "cozy-bridge:trigger-intent" || msg.version !== 1) return;
+    if (!msg || msg.type !== "cozy-bridge:trigger-intent") return;
+
     if (msg.action === "AI_TEXT_EDIT" && lastSelectedText.length > 0) {
       log("Trigger-intent received, casting AI_TEXT_EDIT");
       castIntent("AI_TEXT_EDIT", { text: lastSelectedText });
     }
   });
 
-  // ---- Mouse position tracking for floating button coordinates ----
-  var lastMousePosition = { x: 0, y: 0 };
-
-  try {
-    window.parent.document.addEventListener("mouseup", function(e) {
-      lastMousePosition.x = e.clientX;
-      lastMousePosition.y = e.clientY;
-    });
-    log("Mouse tracking attached to parent document");
-  } catch (e) {
-    log("Cannot attach to parent document (cross-origin): " + e.message);
-  }
-
-  // ---- Selection state notification ----
+  // ---- Selection detection (via init + polling) ----
+  // OO calls init with the selected text when a selection is made,
+  // but does NOT call init when the selection is cleared.
+  // We poll with GetSelectedText to detect deselection.
   var selectionDebounceTimer = null;
   var SELECTION_DEBOUNCE_MS = 300;
+  var hideCheckInterval = null;
+  var HIDE_CHECK_MS = 500;
+  var toolbarButtonAdded = false;
+  var scribeButtonShown = false;
 
-  function notifySelectionState(hasSelection, text) {
-    postToAncestors({
-      type: "cozy-bridge:selection-state",
-      version: 1,
-      source: "onlyoffice-plugin",
-      data: {
-        hasSelection: hasSelection,
-        text: hasSelection ? text : "",
-        top: hasSelection ? lastMousePosition.y : 0,
-        left: hasSelection ? lastMousePosition.x : 0
-      }
-    });
+  function startHidePolling() {
+    if (hideCheckInterval) return;
+    hideCheckInterval = setInterval(function() {
+      window.Asc.plugin.executeMethod("GetSelectedText", [{
+        Numbering: false,
+        Math: false,
+        TableCellSeparator: "\n",
+        ParaSeparator: "\n",
+        TabSymbol: String.fromCharCode(9)
+      }], function(text) {
+        var trimmed = (text || "").replace(/^\s+|\s+$/g, "");
+        if (trimmed.length === 0) {
+          log("Polling: selection cleared");
+          lastSelectedText = "";
+          scribeButtonShown = false;
+          castIntent("HIDE_SCRIBE_BUTTON", {}, true);
+          stopHidePolling();
+        }
+      });
+    }, HIDE_CHECK_MS);
   }
 
-  // ---- Selection detection (via init) ----
-  // OO calls init with the selected text. When the selection is cleared,
-  // it may send an empty string, whitespace-only, or stop calling init.
-  // We trim and treat whitespace-only as no selection.
+  function stopHidePolling() {
+    if (hideCheckInterval) {
+      clearInterval(hideCheckInterval);
+      hideCheckInterval = null;
+    }
+  }
+
   window.Asc.plugin.init = function(data) {
     log("init() called, data=" + (data ? data.substring(0, 60) : "(null)"));
+
+    // Add toolbar button on first init (API is ready at this point)
+    if (!toolbarButtonAdded) {
+      addToolbarButton();
+      toolbarButtonAdded = true;
+    }
+
     var text = (data || "").replace(/^\s+|\s+$/g, "");
     lastSelectedText = text;
-    updateUI();
 
     if (selectionDebounceTimer) clearTimeout(selectionDebounceTimer);
 
     if (text.length > 0) {
       selectionDebounceTimer = setTimeout(function() {
-        notifySelectionState(true, text);
+        castIntent("SHOW_SCRIBE_BUTTON", { text: text }, true);
+        scribeButtonShown = true;
+        startHidePolling();
       }, SELECTION_DEBOUNCE_MS);
     } else {
-      notifySelectionState(false, "");
+      if (scribeButtonShown) {
+        scribeButtonShown = false;
+        castIntent("HIDE_SCRIBE_BUTTON", {}, true);
+      }
+      stopHidePolling();
     }
   };
 
@@ -250,48 +250,80 @@
     }], function(selectedText) {
       lastSelectedText = selectedText || "";
       log("Context menu read: " + (lastSelectedText ? lastSelectedText.substring(0, 80) : "(empty)"));
-      updateUI();
+  
       castIntent("AI_TEXT_EDIT", { text: lastSelectedText });
     });
   });
 
-  // ---- Ctrl+K / Cmd+K shortcut for Scribe ----
+  // ---- Ctrl+I / Cmd+K shortcut for Scribe ----
   try {
     window.parent.document.addEventListener("keydown", function(e) {
-      var isCtrlK = (e.ctrlKey || e.metaKey) && e.key === "k";
+      var isCtrlK = (e.ctrlKey || e.metaKey) && e.key === "i";
       if (isCtrlK && lastSelectedText.length > 0) {
         e.preventDefault();
-        log("Ctrl+K triggered Scribe");
+        log("Ctrl+I triggered Scribe");
         castIntent("AI_TEXT_EDIT", { text: lastSelectedText });
       }
     });
-    log("Ctrl+K shortcut registered on parent document");
+    log("Ctrl+I shortcut registered on parent document");
   } catch (e) {
-    log("Cannot register Ctrl+K on parent document: " + e.message);
+    log("Cannot register Ctrl+I on parent document: " + e.message);
     // Fallback: register on plugin's own document (limited, but still useful)
     document.addEventListener("keydown", function(e) {
-      var isCtrlK = (e.ctrlKey || e.metaKey) && e.key === "k";
+      var isCtrlK = (e.ctrlKey || e.metaKey) && e.key === "i";
       if (isCtrlK && lastSelectedText.length > 0) {
         e.preventDefault();
-        log("Ctrl+K triggered Scribe (fallback)");
+        log("Ctrl+I triggered Scribe (fallback)");
         castIntent("AI_TEXT_EDIT", { text: lastSelectedText });
       }
     });
   }
 
-  // ---- Trigger button click handler ----
-  document.addEventListener("DOMContentLoaded", function() {
-    var btn = document.getElementById("scribe-trigger");
-    if (btn) {
-      btn.addEventListener("click", function() {
-        if (lastSelectedText) {
-          castIntent("AI_TEXT_EDIT", { text: lastSelectedText });
-        }
-      });
-    }
+  // ---- Toolbar button ----
+  // Add a "Scribe" button in the OO toolbar (Plugins tab).
+  // Available since OO 8.1 via AddToolbarMenuItem API.
+  function addToolbarButton() {
+    window.Asc.plugin.executeMethod("AddToolbarMenuItem", [{
+      guid: window.Asc.plugin.guid,
+      tabs: [{
+        id: "plugins",
+        items: [{
+          id: "scribeToolbarBtn",
+          type: "button",
+          text: "Scribe",
+          hint: "Scribe AI writing assistant",
+          lockInViewMode: true,
+          icons: "resources/%theme-type%(light|dark)/icon%scale%(default).%extension%(png)"
+        }]
+      }]
+    }]);
 
+    window.Asc.plugin.attachToolbarMenuClickEvent("scribeToolbarBtn", function() {
+      log("Toolbar button clicked (attachEvent)");
+      triggerScribeIfSelection();
+    });
+
+    log("Toolbar button added");
+  }
+
+  // Fallback: global toolbar click event
+  window.Asc.plugin.event_onToolbarMenuClick = function(id) {
+    log("Toolbar menu click event: " + id);
+    if (id === "scribeToolbarBtn") {
+      triggerScribeIfSelection();
+    }
+  };
+
+  function triggerScribeIfSelection() {
+    if (lastSelectedText.length > 0) {
+      castIntent("AI_TEXT_EDIT", { text: lastSelectedText });
+    } else {
+      log("No text selected — toolbar click ignored");
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", function() {
     log("Plugin loaded, Scribe trigger ready");
-    updateUI();
   });
 
 })(window, undefined);
