@@ -14,11 +14,11 @@ Replace mock transforms with live LLM calls via cozy-stack, with loading feedbac
 ## Implementation Decisions
 
 ### API call approach
-- Use `chatCompletion()` from `cozy-client/dist/models/ai` — handles auth, URL construction, hits `POST /ai/v1/chat/completions`
-- Same function already used by cozy-viewer's AIAssistantPanel — proven in the ecosystem
+- Use `client.stackClient.fetchJSON('POST', '/ai/v1/chat/completions', body, { signal })` directly — research discovered `chatCompletion()` merges options into the request body instead of passing them as fetch options, so it cannot forward an AbortController signal (breaks LOAD-02 cancellation)
+- Same endpoint as `chatCompletion()` (`POST /ai/v1/chat/completions`), same auth handling via stackClient
 - Non-streaming: send request, await full response, display result. Streaming deferred to future milestone
 - Access cozy-client instance via `useClient()` hook inside ScribePopover (already in CozyProvider tree)
-- Frontend builds prompts: interpolate `{selectedText}` (and `{language}` for translate) into existing `scribeActions.js` prompt templates before calling chatCompletion()
+- Frontend builds prompts: interpolate `{selectedText}` (and `{language}` for translate) into existing `scribeActions.js` prompt templates before calling the AI endpoint
 - No backend/cozy-stack changes required
 
 ### Loading experience
@@ -67,7 +67,7 @@ Replace mock transforms with live LLM calls via cozy-stack, with loading feedbac
 ## Existing Code Insights
 
 ### Reusable Assets
-- `chatCompletion()` from `cozy-client/dist/models/ai`: proven API call function, handles auth + URL
+- `client.stackClient.fetchJSON()`: direct API call with signal support for AbortController cancellation
 - `scribeActions.js` prompt templates: complete prompts per action, ready for LLM use
 - `useClient()` hook: standard way to access cozy-client in React components
 - `cozy-ui` Spinner component: available for loading indicator
@@ -80,7 +80,7 @@ Replace mock transforms with live LLM calls via cozy-stack, with loading feedbac
 
 ### Integration Points
 - `ScribePopover.handleActionSelect()`: the exact function to make async — currently calls `mockTransform()` synchronously
-- `chatCompletion(client, messages)`: the API function to call, returns `response.choices[0].message.content`
+- `client.stackClient.fetchJSON('POST', '/ai/v1/chat/completions', body, { signal })`: the API call pattern, returns `response.choices[0].message.content`
 - Plugin code (`code.js`): requires zero changes — intent/response protocol already handles arbitrary text
 
 </code_context>
