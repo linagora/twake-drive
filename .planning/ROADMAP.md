@@ -39,11 +39,11 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
   3. Free-prompt action sends the user's custom instruction to the LLM and returns a real AI result
   4. User can close the popover while the AI is processing, which cancels the in-flight request
   5. Each Scribe action (rewrite, simplify, translate, etc.) sends the correct prompt structure to the API
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 07-01: TBD
-- [ ] 07-02: TBD
+- [ ] 07-01-PLAN.md — Create scribeAI module (API call wrapper, prompt builder, loading messages)
+- [ ] 07-02-PLAN.md — Wire ScribePopover to scribeAI with loading UI and cancellation
 
 ### Phase 8: Error Handling
 **Goal**: User receives clear, actionable feedback when AI requests fail, with retry for transient errors
@@ -84,6 +84,6 @@ Plans:
 | 4. End-to-End Actions | v1.0 | 0/0 | Complete | 2026-03-01 |
 | 5. Bouton Scribe flottant | v1.0 | 2/2 | Complete | 2026-03-03 |
 | 6. Affinement UI/UX | v1.0 | 2/2 | Complete | 2026-03-03 |
-| 7. Real AI Integration | v2.0 | 0/? | Not started | - |
+| 7. Real AI Integration | v2.0 | 0/2 | Planning complete | - |
 | 8. Error Handling | v2.0 | 0/? | Not started | - |
 | 9. Internationalization | v2.0 | 0/? | Not started | - |
