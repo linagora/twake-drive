@@ -2,18 +2,24 @@ import React, { useState, useCallback, useEffect, useRef } from 'react'
 import PropTypes from 'prop-types'
 
 import Popover from 'cozy-ui/transpiled/react/Popover'
+import Paper from 'cozy-ui/transpiled/react/Paper'
+import Spinner from 'cozy-ui/transpiled/react/Spinner'
+import Typography from 'cozy-ui/transpiled/react/Typography'
+import { useClient } from 'cozy-client'
 
 import { ScribeActionMenu } from '@/modules/views/OnlyOffice/Scribe/ScribeActionMenu'
-import { mockTransform } from '@/modules/views/OnlyOffice/Scribe/mockTransform'
+import { callScribeAI, buildMessages, deriveLoadingMessage } from '@/modules/views/OnlyOffice/Scribe/scribeAI'
 import { ScribeResultPanel } from '@/modules/views/OnlyOffice/Scribe/ScribeResultPanel'
+import styles from '@/modules/views/OnlyOffice/Scribe/scribe.styl'
 
 /**
- * ScribePopover - Main popover container managing the two-step state machine.
+ * ScribePopover - Main popover container managing the three-step state machine.
  *
  * Step 1 ('menu'): Action selection via ScribeActionMenu (submenus + free prompt).
- * Step 2 ('result'): Displays the mock-transformed text via ScribeResultPanel.
+ * Step 2 ('loading'): Spinner + action-specific loading message while AI processes.
+ * Step 3 ('result'): Displays the AI-transformed text via ScribeResultPanel.
  *
- * Same prop interface as ScribeModal for drop-in replacement.
+ * Closing the popover during loading aborts the in-flight API request via AbortController.
  *
  * @param {Object} props
  * @param {boolean} props.open - Whether the popover is visible
@@ -23,33 +29,73 @@ import { ScribeResultPanel } from '@/modules/views/OnlyOffice/Scribe/ScribeResul
  * @param {Function} props.onCancel - Called when closed without action
  */
 const ScribePopover = ({ open, selectedText, onReplace, onInsert, onCancel }) => {
-  const [step, setStep] = useState('menu') // 'menu' | 'result'
-  const [result, setResult] = useState({ text: '', breadcrumb: '' })
+  const client = useClient()
+  const abortRef = useRef(null)
+
+  const [step, setStep] = useState('menu') // 'menu' | 'loading' | 'result'
+  const [result, setResult] = useState({ text: '', breadcrumb: '', error: '' })
+  const [loadingMessage, setLoadingMessage] = useState('')
 
   // Reset to menu state when popover opens with new intent
   useEffect(() => {
     if (open) {
       setStep('menu')
-      setResult({ text: '', breadcrumb: '' })
+      setResult({ text: '', breadcrumb: '', error: '' })
+      setLoadingMessage('')
+      if (abortRef.current) {
+        abortRef.current.abort()
+        abortRef.current = null
+      }
     }
   }, [open])
 
   /**
    * Handle action selection from the menu.
-   * Calls mockTransform, stores result, transitions to 'result' step.
+   * Calls callScribeAI with real prompts, shows loading state, transitions to 'result'.
    * For translate-custom, passes the user-typed language as extra.
    */
   const handleActionSelect = useCallback(
-    (actionId, label, breadcrumb) => {
-      const extra = actionId === 'translate-custom' ? { language: label } : undefined
-      const transformed = mockTransform(actionId, selectedText, extra)
-      setResult({ text: transformed, breadcrumb })
-      setStep('result')
+    async (actionId, label, breadcrumb) => {
+      // 1. Transition to loading
+      setStep('loading')
+      setLoadingMessage(deriveLoadingMessage(actionId, label))
+      setResult({ text: '', breadcrumb, error: '' })
+
+      // 2. Create AbortController
+      const controller = new AbortController()
+      abortRef.current = controller
+
+      try {
+        // 3. Build messages and call API
+        const extra = actionId === 'translate-custom' ? { language: label } : undefined
+        const messages = buildMessages(actionId, selectedText, label, extra)
+        const text = await callScribeAI(client, messages, { signal: controller.signal })
+
+        // 4. Show result
+        setResult({ text, breadcrumb, error: '' })
+        setStep('result')
+      } catch (err) {
+        if (err.name === 'AbortError') {
+          // User closed popover during loading — do nothing
+          return
+        }
+        // Show error in result panel (Phase 7: simple inline error, Phase 8 adds retry)
+        setResult({ text: '', breadcrumb, error: 'No result received. Try again.' })
+        setStep('result')
+      } finally {
+        if (abortRef.current === controller) {
+          abortRef.current = null
+        }
+      }
     },
-    [selectedText]
+    [selectedText, client]
   )
 
   const handleClose = useCallback(() => {
+    if (abortRef.current) {
+      abortRef.current.abort()
+      abortRef.current = null
+    }
     onCancel()
   }, [onCancel])
 
@@ -95,12 +141,21 @@ const ScribePopover = ({ open, selectedText, onReplace, onInsert, onCancel }) =>
         }
       }}
     >
-      {step === 'menu' ? (
+      {step === 'menu' && (
         <ScribeActionMenu ref={menuRef} onSelect={handleActionSelect} onClose={handleClose} selectedText={selectedText} />
-      ) : (
+      )}
+      {step === 'loading' && (
+        <Paper className={styles['scribe-loading-panel']} elevation={0}>
+          <Spinner size="large" />
+          <Typography variant="body2" color="textSecondary" className={styles['scribe-loading-message']}>
+            {loadingMessage}
+          </Typography>
+        </Paper>
+      )}
+      {step === 'result' && (
         <ScribeResultPanel
           breadcrumb={result.breadcrumb}
-          resultText={result.text}
+          resultText={result.error || result.text}
           onReplace={handleReplace}
           onInsert={handleInsert}
           onClose={handleClose}
