@@ -10,8 +10,8 @@ Requirements for milestone v2.0 Scribe Live AI. Each maps to roadmap phases.
 ### API Integration
 
 - [ ] **API-01**: User sees real AI-generated text when selecting a Scribe action (replaces mock)
-- [ ] **API-02**: Scribe sends correct prompt to LLM based on selected action and text via POST /ai/v1/chat/completions
-- [ ] **API-03**: Free-prompt action sends user's custom instruction to LLM with selected text
+- [x] **API-02**: Scribe sends correct prompt to LLM based on selected action and text via POST /ai/v1/chat/completions
+- [x] **API-03**: Free-prompt action sends user's custom instruction to LLM with selected text
 
 ### Loading State
 
@@ -70,8 +70,8 @@ Deferred to v2.x or later. Tracked but not in current roadmap.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | API-01 | Phase 7 | Pending |
-| API-02 | Phase 7 | Pending |
-| API-03 | Phase 7 | Pending |
+| API-02 | Phase 7 | Complete |
+| API-03 | Phase 7 | Complete |
 | LOAD-01 | Phase 7 | Pending |
 | LOAD-02 | Phase 7 | Pending |
 | ERR-01 | Phase 8 | Pending |
