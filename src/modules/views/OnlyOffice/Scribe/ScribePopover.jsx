@@ -37,10 +37,12 @@ const ScribePopover = ({ open, selectedText, onReplace, onInsert, onCancel }) =>
   /**
    * Handle action selection from the menu.
    * Calls mockTransform, stores result, transitions to 'result' step.
+   * For translate-custom, passes the user-typed language as extra.
    */
   const handleActionSelect = useCallback(
     (actionId, label, breadcrumb) => {
-      const transformed = mockTransform(actionId, selectedText)
+      const extra = actionId === 'translate-custom' ? { language: label } : undefined
+      const transformed = mockTransform(actionId, selectedText, extra)
       setResult({ text: transformed, breadcrumb })
       setStep('result')
     },
