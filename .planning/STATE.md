@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: unknown
-last_updated: "2026-03-01T14:41:18.000Z"
+status: in_progress
+last_updated: "2026-03-03T00:04:08.000Z"
 progress:
   total_phases: 6
-  completed_phases: 4
-  total_plans: 8
-  completed_plans: 7
+  completed_phases: 5
+  total_plans: 10
+  completed_plans: 9
 ---
 
 # Project State
@@ -18,17 +18,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-26)
 
 **Core value:** La chaine de communication complete -- depuis la selection de texte dans OnlyOffice jusqu'a la reinjection du texte modifie -- doit fonctionner de bout en bout.
-**Current focus:** Phase 5: Bouton Scribe flottant ancré à la sélection
+**Current focus:** Phase 6: Affinement UI/UX
 
 ## Current Position
 
-Phase: 5 of 6 (Bouton Scribe flottant ancré à la sélection)
-Plan: 1 of 2 in current phase (Plan 05-01 complete)
-Status: Executing Phase 5 -- Plan 05-01 complete, Plan 05-02 next
-Last activity: 2026-03-01 -- Plan 05-01 executed (selection-state protocol + floating button)
+Phase: 6 of 6 IN PROGRESS (Affinement UI/UX)
+Plan: 1 of 2 in Phase 6 (06-01 complete, 06-02 remaining)
+Status: Executing Phase 6 plans
+Last activity: 2026-03-03 -- Plan 06-01 complete (result panel dynamic sizing)
 
-Progress: [█████░░░░░] 50% (Phase 5)
-Overall:  [████████░░] 88% (Phases 1-4 complete, Phase 5 plan 1/2 done)
+Progress: [█████░░░░░] 50% (Phase 6)
+Overall:  [█████████░] 95% (Phases 1-5 complete, Phase 6 in progress)
 
 ## Performance Metrics
 
@@ -48,6 +48,8 @@ Overall:  [████████░░] 88% (Phases 1-4 complete, Phase 5 pla
 *Updated after each plan completion*
 | Phase 03 P01 | 3min | 2 tasks | 5 files |
 | Phase 05 P01 | 6min | 3 tasks | 6 files |
+| Phase 05 P02 | ~15min | 2 tasks | 4 files |
+| Phase 06 P01 | 1min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -78,6 +80,11 @@ Recent decisions affecting current work:
 - [Phase 05]: Mouse coordinates captured via mouseup on parent document for floating button positioning
 - [Phase 05]: 300ms debounce on selection, instant deselection notification
 - [Phase 05]: ScribeFloatingButton uses React portal to document.body with position:fixed
+- [Phase 05]: Floating button click sends trigger-intent to plugin (all intents originate from plugin)
+- [Phase 05]: Iframe coords converted to host-page coords via getBoundingClientRect()
+- [Phase 05]: ScribePopover accepts anchorEl prop for element-based anchoring
+- [Phase 06]: Result panel uses fit-content width with min/max bounds (300-560px) for content-adaptive sizing
+- [Phase 06]: Inline styles consolidated into Stylus file for single source of truth
 
 ### Pending Todos
 
@@ -97,6 +104,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-01
-Stopped at: Completed 05-01-PLAN.md
-Resume file: .planning/phases/05-bouton-scribe-flottant-ancr-la-s-lection/05-01-SUMMARY.md
+Last session: 2026-03-03
+Stopped at: Completed 06-01-PLAN.md (result panel dynamic sizing)
+Resume file: .planning/phases/06-affinement-ui-ux/06-01-SUMMARY.md
