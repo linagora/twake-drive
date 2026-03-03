@@ -100,8 +100,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 05-01-PLAN.md — Selection coordinate emission (plugin mouse tracking + SELECTION_POSITION protocol), CozyBridge handler, useCozyBridge extension, ScribeFloatingButton component with portal rendering and coordinate conversion
-- [ ] 05-02-PLAN.md — Wire floating button to ScribePopover with dynamic anchorPosition, triggerIntent for synthetic intent flow, remove side panel, human verification
+- [x] 05-01-PLAN.md — Selection coordinate emission (plugin mouse tracking + SELECTION_POSITION protocol), CozyBridge handler, useCozyBridge extension, ScribeFloatingButton component with portal rendering and coordinate conversion
+- [x] 05-02-PLAN.md — Wire floating button to ScribePopover with dynamic anchorPosition, triggerIntent for synthetic intent flow, remove side panel, human verification
 
 ### Phase 6: Affinement UI/UX
 **Goal**: Aligner l'interface Scribe (bouton flottant, popover, menu d'actions, panneau de résultat) sur les maquettes de référence — styles, espacements, icônes, animations, gestion du thème sombre OO, et polish général
@@ -115,8 +115,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 06-01-PLAN.md — Result panel dynamic sizing (content-aware height/width, min/max bounds, CSS transition)
-- [ ] 06-02-PLAN.md — Menu parameterization with AI prompt templates and config-driven mockTransform
+- [x] 06-01-PLAN.md — Result panel dynamic sizing (content-aware height/width, min/max bounds, CSS transition)
+- [x] 06-02-PLAN.md — Menu parameterization with AI prompt templates and config-driven mockTransform
 
 ## Progress
 
@@ -129,5 +129,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | 2. Contextual Trigger and Communication Bridge | 2/2 | Complete | 2026-02-28 |
 | 3. Scribe Interface with Mock AI | 2/2 | Complete | 2026-03-01 |
 | 4. End-to-End Actions | 0/0 | Complete (covered by Phase 2-3) | 2026-03-01 |
-| 5. Bouton Scribe flottant ancré à la sélection | 0/2 | In progress | - |
-| 6. Affinement UI/UX | 0/0 | Not started | - |
+| 5. Bouton Scribe flottant ancré à la sélection | 2/2 | Complete | 2026-03-03 |
+| 6. Affinement UI/UX | 2/2 | Complete | 2026-03-03 |
