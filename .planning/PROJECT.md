@@ -23,7 +23,7 @@ La chaîne de communication complète — depuis la sélection de texte dans Onl
 
 ### Active
 
-- [ ] Intégration API Anthropic Claude via cozy-stack (extension des routes /ai existantes)
+- [ ] Intégration API LLM via route existante cozy-stack POST /ai/v1/chat/completions (format OpenAI)
 - [ ] Streaming UX — affichage progressif token par token dans le panneau de résultat
 - [ ] Annulation en cours de stream
 - [ ] Gestion d'erreurs API (échecs, rate limits, erreurs réseau)
@@ -33,18 +33,15 @@ La chaîne de communication complète — depuis la sélection de texte dans Onl
 
 ## Current Milestone: v2.0 Scribe Live AI
 
-**Goal:** Remplacer le mock AI par une intégration réelle Anthropic Claude, avec streaming UX et polish.
+**Goal:** Remplacer le mock AI par une intégration LLM réelle via la route existante cozy-stack, avec streaming UX et polish.
 
 **Target features:**
-- Extension des routes /ai cozy-stack pour proxy Anthropic Claude (clé API globale, streaming SSE)
-- Intégration frontend — remplacement de mockTransform par appels API réels
-- Streaming UX — tokens affichés progressivement, annulation mid-stream
+- Appels à POST /ai/v1/chat/completions (format OpenAI, déjà disponible dans cozy-stack)
+- Streaming UX — tokens affichés progressivement via SSE, annulation mid-stream
 - Bug fixes — dark theme, bouton disable, menu contextuel
 - Gestion d'erreurs — échecs API, rate limits, dégradation gracieuse
 
-**Two repos:**
-- `~/go/src/github.com/cozy/cozy-stack` — AI route extension
-- `~/Dev-local/cozy-drive` — frontend integration
+**Repo unique:** `~/Dev-local/cozy-drive` — frontend uniquement, pas de modification cozy-stack
 
 ### Out of Scope
 
@@ -87,8 +84,7 @@ Tech stack : React 18 + MUI + cozy-ui, postMessage protocol, OO Plugin API, Dock
 - **Écosystème** : Doit s'intégrer dans l'écosystème Cozy Cloud existant (cozy-client, cozy-ui)
 - **Plugin ES5** : Le code plugin OO doit utiliser la syntaxe ES5 (pas d'arrow functions, pas de const/let)
 - **OnlyOffice** : Compatibilité vérifiée avec OO 9.3.0-138
-- **API Backend** : Utilisation de l'API Anthropic Claude via proxy cozy-stack
-- **Multi-repo** : Modifications dans cozy-stack (Go) et cozy-drive (React) simultanément
+- **API Backend** : Utilisation de la route existante POST /ai/v1/chat/completions (format OpenAI, proxy cozy-stack → serveur RAG) — pas de modification stack
 
 ## Key Decisions
 
