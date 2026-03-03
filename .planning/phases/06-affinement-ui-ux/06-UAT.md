@@ -1,5 +1,5 @@
 ---
-status: complete
+status: resolved
 phase: 06-affinement-ui-ux
 source: [06-01-SUMMARY.md, 06-02-SUMMARY.md]
 started: 2026-03-03T00:15:00Z
@@ -51,20 +51,26 @@ skipped: 0
 ## Gaps
 
 - truth: "Result panel max-width adapts appropriately to content"
-  status: failed
+  status: resolved
   reason: "User reported: la largeur max peut être plus grande"
   severity: cosmetic
   test: 1
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "max-width 560px in scribe.styl is too conservative"
+  artifacts:
+    - path: "src/modules/views/OnlyOffice/Scribe/scribe.styl"
+      issue: "max-width 560px too narrow"
+  missing:
+    - "Increase max-width to ~700px or wider"
   debug_session: ""
 - truth: "Result panel expands appropriately for long content with sensible max bounds"
-  status: failed
+  status: resolved
   reason: "User reported: la largeur max peut être encore un peu plus large, et la hauteur max être plus grande, par exemple 70%"
   severity: cosmetic
   test: 2
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "max-height min(400px, 60vh) in scribe.styl is too restrictive — user wants ~70vh"
+  artifacts:
+    - path: "src/modules/views/OnlyOffice/Scribe/scribe.styl"
+      issue: "max-height min(400px, 60vh) too small"
+  missing:
+    - "Increase max-width and change max-height to min(500px, 70vh)"
   debug_session: ""
