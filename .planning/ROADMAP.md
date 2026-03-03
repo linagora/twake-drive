@@ -18,8 +18,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Contextual Trigger and Communication Bridge** - Wire the Scribe button and postMessage protocol between plugin and Cozy Drive
 - [x] **Phase 3: Scribe Interface with Mock AI** - Build the Scribe panel UI with mock text transformation and preview
 - [x] **Phase 4: End-to-End Actions** - Complete the round-trip: Replace, Insert, and Cancel actions modify the document from the Scribe panel
-- [ ] **Phase 5: Bouton Scribe flottant ancré à la sélection** - Remplacer le bouton Scribe du panneau latéral par un bouton flottant positionné au-dessus de l'éditeur, à proximité de la sélection de texte
-- [ ] **Phase 6: Affinement UI/UX** - Aligner l'interface Scribe sur les maquettes de référence (styles, espacements, animations, thème sombre, responsive)
+- [x] **Phase 5: Bouton Scribe flottant ancré à la sélection** - Remplacer le bouton Scribe du panneau latéral par un bouton flottant positionné au-dessus de l'éditeur, à proximité de la sélection de texte
+- [x] **Phase 6: Affinement UI/UX** - Aligner l'interface Scribe sur les maquettes de référence (styles, espacements, animations, thème sombre, responsive)
 
 ## Phase Details
 
@@ -81,11 +81,10 @@ Plans:
   2. Clicking "Insert" in the Scribe panel adds the transformed text after the original selection with a line break, preserving the original text
   3. Clicking "Cancel" closes the Scribe interface without modifying the document
   4. After any action (Replace, Insert, Cancel), the Scribe interface closes and the user is back in the normal editing state
-**Plans**: TBD
+**Plans**: 0 plans (covered by Phases 2-3)
 
 Plans:
-- [ ] 04-01: TBD
-- [ ] 04-02: TBD
+- N/A — End-to-end actions (Replace, Insert, Cancel) were implemented during Phases 2-3
 
 ### Phase 5: Bouton Scribe flottant ancré à la sélection
 **Goal**: Remplacer le déclenchement de Scribe depuis le panneau latéral du plugin par un bouton flottant positionné directement au-dessus de l'éditeur, ancré à la sélection de texte — le plugin transmet les coordonnées de la sélection via postMessage et Cozy Drive rend un bouton flottant au-dessus de l'iframe OnlyOffice
