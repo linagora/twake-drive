@@ -66,7 +66,6 @@ const ScribeResultPanel = ({
   return (
     <Paper
       className={styles['scribe-result-panel']}
-      style={{ borderRadius: 8, boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}
       elevation={0}
       onKeyDown={handleKeyDown}
     >
