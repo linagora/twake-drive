@@ -1,263 +1,396 @@
-# Stack Research
+# Technology Stack: v2.0 Scribe Live AI
 
-**Domain:** OnlyOffice plugin development + cross-iframe AI assistant integration within Cozy Drive
-**Researched:** 2026-02-26
-**Confidence:** MEDIUM (OnlyOffice plugin APIs verified against official docs and source code; Cozy-deployed Document Server version unknown -- a critical variable)
+**Project:** Scribe pour OnlyOffice -- Anthropic Claude API integration with streaming
+**Researched:** 2026-03-03
+**Scope:** NEW stack additions only. Existing v1.0 stack (React 18, MUI, cozy-ui, OO plugin, postMessage protocol) is validated and not re-researched.
 
-## Recommended Stack
+## Recommended Stack Additions
 
-### Core Technologies
+### Backend: Anthropic Go SDK (cozy-stack)
 
-| Technology | Version | Purpose | Why Recommended | Confidence |
-|------------|---------|---------|-----------------|------------|
-| OnlyOffice Plugin SDK v1 | v1 (CDN: `sdkjs-plugins/v1/plugins.js`) | Plugin runtime inside OnlyOffice editor iframe | Only supported SDK version. All plugins including the official AI plugin use this. The `v1` in the CDN path is the SDK generation, not a semver -- it has been stable across Document Server 7.x-9.x. | HIGH |
-| OnlyOffice Office JS API | Aligns with Document Server version | Document content manipulation (`Api.GetDocument()`, `Api.CreateParagraph()`, etc.) | The Office JS API is what `callCommand` executes. It is the only way to create and insert content into documents from plugins. | HIGH |
-| `executeMethod` API | Aligns with Document Server version | Read data from documents (`GetSelectedText`, `GetCurrentWord`) and perform editor operations (`PasteText`, `InputText`, `AddContextMenuItem`) | `executeMethod` is the counterpart to `callCommand` -- it reads from the document and invokes editor-level operations. Combined, they cover the full read/write cycle. | HIGH |
-| React 18.2.0 | 18.2.0 (existing) | Scribe iframe UI | Already in the Cozy Drive stack. The Scribe iframe is served from Cozy Drive's codebase (PROJECT.md decision), so it shares the existing React runtime. No reason to introduce a second framework. | HIGH |
-| TypeScript 4.9.5 | 4.9.5 (existing) | Type safety for Scribe iframe and postMessage protocol | Already in the Cozy Drive stack. Critical for defining typed postMessage message schemas. | HIGH |
-| `window.postMessage` / `MessageEvent` | Web API (no library) | Cross-iframe communication between OnlyOffice plugin, Cozy Drive, and Scribe iframe | The only standard mechanism for cross-origin iframe communication. No library needed -- raw `postMessage` with typed message schemas is simpler and more debuggable than any abstraction. | HIGH |
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| `github.com/anthropics/anthropic-sdk-go` | v1.26.0 | Official Anthropic Go client for Claude Messages API | Official SDK from Anthropic. Type-safe, streaming support via iterator pattern, built-in retries (2x), context-based cancellation. Requires Go 1.22+ (cozy-stack uses Go 1.24). HIGH confidence. |
+| Claude Haiku 4.5 (primary model) | `claude-haiku-4-5-20250929` | Text transformations (rewrite, translate, correct, expand) | Best cost/speed ratio for Scribe use cases. $1/$5 per M input/output tokens. 4-5x faster than Sonnet. Scribe tasks are simple text transforms, not complex reasoning. Configurable per-instance to allow upgrading to Sonnet if quality insufficient. |
+| Claude Sonnet 4.5 (fallback/premium) | `claude-sonnet-4-5-20250929` | Higher-quality free-prompt and complex rewrites | $3/$15 per M tokens. Use as configurable upgrade when Haiku quality is insufficient. Do NOT default to Sonnet -- cost is 3x Haiku for marginal improvement on simple edits. |
 
-### OnlyOffice Plugin Structure (Required Files)
+**Model choice rationale:** Scribe actions are bounded text transforms (grammar correction, tone changes, translation, bullet points). These are not open-ended creative tasks. Haiku 4.5 delivers performance comparable to Sonnet 4 at 1/3 the cost and 4-5x speed. Start with Haiku, make model configurable.
 
-| File | Purpose | Notes |
-|------|---------|-------|
-| `config.json` | Plugin metadata, GUID, supported editors, events, variations | Must declare `"events": ["onContextMenuShow", "onContextMenuClick"]` for context menu integration. Set `"type": "background"` for persistent operation. |
-| `index.html` | Plugin entry point HTML | Loads SDK scripts from CDN and plugin code. Minimal HTML -- logic lives in JS. |
-| `scripts/code.js` | Plugin logic | Contains `window.Asc.plugin.init`, event handlers, `executeMethod`/`callCommand` calls. |
-| `resources/` | Icons (icon.png, icon@2x.png) | Required for plugin manager display. |
+### Backend: SSE Streaming Route (cozy-stack)
 
-### Key OnlyOffice Plugin API Methods
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| Echo v4 SSE via `http.Flusher` | v4.15.1 (existing) | Stream Claude responses as SSE to frontend | Cozy-stack already uses Echo. Echo's `Response` implements `http.Flusher`. Existing pattern confirmed in `web/apps/apps.go` and `web/instances/checks.go`. Do NOT use the realtime WebSocket system -- it is designed for CouchDB document events, not request-scoped AI streams. |
+| `text/event-stream` content type | HTTP standard | SSE wire format | Standard SSE format. Frontend consumes via `fetch()` + `ReadableStream`, not `EventSource` (because we need POST, not GET). |
 
-| Method | Signature | Purpose | When to Use |
-|--------|-----------|---------|-------------|
-| `Asc.plugin.executeMethod` | `executeMethod("MethodName", [params], callback)` | Execute editor methods that return data or perform operations | Reading selected text, adding context menu items, pasting text |
-| `GetSelectedText` | `executeMethod("GetSelectedText", [options])` | Get the currently selected text from the document | When user triggers Scribe -- extract the selection to send to AI |
-| `PasteText` | `executeMethod("PasteText", [text])` | Paste plain text at current cursor/selection position | Replace selected text with AI-modified text |
-| `InputText` | `executeMethod("InputText", [text, options])` | Input text at cursor position | Insert AI text after selection |
-| `AddContextMenuItem` | `executeMethod("AddContextMenuItem", [itemsObj])` | Add items to the editor's right-click context menu | Show "Scribe" option when text is selected |
-| `Asc.plugin.callCommand` | `callCommand(func, isClose, isCalc, callback)` | Execute Office JS API commands to create/insert structured content | Insert formatted paragraphs, preserve styling when replacing content |
-| `Asc.plugin.attachEvent` | `attachEvent("eventName", handler)` | Listen for editor events | Listen for `onContextMenuShow`, `onContextMenuClick` |
-| `Asc.plugin.attachEditorEvent` | `attachEditorEvent("eventName", handler)` | Listen for lower-level editor events (v8.2+) | Track selection changes, key events |
+**Why NOT use the existing RAG/realtime pattern:**
+The existing `model/rag/chat.go` pattern uses:
+1. Job queue (`rag-query` worker) to process chat asynchronously
+2. CouchDB to persist conversation state
+3. Realtime WebSocket hub (`publishDelta`) to stream tokens to frontend
 
-### Supporting Libraries
+This is over-engineered for Scribe:
+- Scribe has no conversation history (single-shot transforms)
+- Scribe needs no persistence (text in, text out)
+- Scribe needs synchronous request-response, not async job processing
+- The job queue adds latency and complexity
 
-| Library | Version | Purpose | When to Use |
-|---------|---------|---------|-------------|
-| cozy-ui | 135.8.0 (existing) | Design system for Scribe iframe UI | All Scribe UI components (buttons, dialogs, text areas, action menus) |
-| cozy-client | 60.20.0 (existing) | API communication with Cozy stack | Calling the Scribe AI backend API through Cozy's HTTP client |
-| cozy-intent | 2.30.1 (existing) | Inter-app communication via intents | Alternative to raw postMessage if Scribe becomes a separate Cozy app later |
-| cozy-realtime | 5.8.0 (existing) | WebSocket real-time updates | Streaming AI responses if the backend supports SSE/WebSocket |
-| cozy-flags | 4.6.1 (existing) | Feature flags | Gate Scribe behind feature flag for gradual rollout |
+**Instead, use a direct SSE proxy pattern:**
+1. Frontend POSTs to `/ai/scribe` with action + selected text
+2. cozy-stack creates Anthropic streaming request with `context.Context`
+3. cozy-stack proxies SSE events directly to the HTTP response
+4. Frontend reads stream via `fetch()` + `ReadableStream` reader
+5. Cancellation: frontend aborts fetch -> Go context cancelled -> Anthropic stream closed
 
-### Development Tools
+### Frontend: Streaming State Management
 
-| Tool | Purpose | Notes |
-|------|---------|-------|
-| OnlyOffice Document Server (Docker) | Local development environment | Already running locally. Plugin development requires mounting the plugin folder into the container's `sdkjs-plugins` directory. |
-| Browser DevTools | Debug cross-iframe postMessage | Use `monitorEvents(window, 'message')` or add temporary `addEventListener('message', console.log)` to debug message flow between frames. |
-| OnlyOffice Plugin Debugger | Debug plugin code inside editor iframe | Chrome DevTools can attach to the plugin iframe. OnlyOffice published a debugging guide (Nov 2025). |
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| `fetch()` + `ReadableStream` | Web API (native) | Consume SSE stream from `/ai/scribe` | Cannot use `EventSource` because it only supports GET. Scribe needs POST with body (selected text, action, prompt). `fetch()` with `ReadableStream` reader is the standard pattern for POST-based SSE. No library needed. |
+| `AbortController` | Web API (native) | Cancel mid-stream requests | Native browser API. Create per-request, pass `signal` to `fetch()`. Call `.abort()` on cancel button click. Propagates to Go `context.Done()` channel. |
+| `useRef` for AbortController | React 18 (existing) | Store AbortController reference across renders | Standard React pattern. `abortControllerRef.current = new AbortController()` on each request. Cleanup in `useEffect` return. |
+| `useState` for streaming state | React 18 (existing) | Progressive text accumulation | `const [streamedText, setStreamedText] = useState('')`. Append each delta: `setStreamedText(prev => prev + delta)`. No external state library needed for this simple case. |
 
-## Architecture Decision: Plugin vs. Connector (Automation API)
+**Why NOT use cozy-realtime (WebSocket):**
+- `cozy-realtime` (v5.8.0) manages WebSocket subscriptions to CouchDB document changes
+- It subscribes to doctypes (e.g., `io.cozy.files`) and receives `created`/`updated`/`deleted` events
+- Scribe streaming is request-scoped (one request, one stream, one response), not document-change-driven
+- Using realtime would require: create a CouchDB doc, push a job, subscribe to events, correlate events to the request, clean up subscription -- all unnecessary complexity
+- Direct SSE via fetch is simpler, faster, and maps naturally to the request/response lifecycle
 
-**Decision: Use Plugin API, NOT the Connector/Automation API.**
+### Frontend: Stream UI Components
 
-| Criterion | Plugin API | Connector (Automation API) |
-|-----------|-----------|---------------------------|
-| Licensing | Included in all OnlyOffice Docs editions | Paid add-on for ONLYOFFICE Docs Developer edition only |
-| Access pattern | Runs inside editor iframe | Called from parent page via `docEditor.createConnector()` |
-| API surface | `executeMethod`, `callCommand`, context menu, events | Same API surface (mirrors plugin interface) |
-| Deployment | Drop plugin folder into `sdkjs-plugins/` | No deployment -- code runs in parent page |
-| Cozy compatibility | Unknown if Cozy's OnlyOffice license includes Connector | Plugin works with any Document Server edition |
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| `ScribeResultPanel` (existing) | - | Display streamed text progressively | Already exists. Currently receives `resultText` as a static string. Change to receive `streamedText` that grows as tokens arrive. Minimal modification needed. |
+| CSS `white-space: pre-wrap` | CSS (existing) | Preserve line breaks in streamed text | Already in `scribe.styl`. Ensures multi-line responses display correctly during and after streaming. |
+| Loading/typing indicator | cozy-ui `Spinner` or custom | Show streaming-in-progress state | Use a simple blinking cursor or "..." at the end of streamed text while `isStreaming` is true. Keep it minimal -- the text appearing progressively IS the indicator. |
 
-**Rationale:** The Connector API would be architecturally cleaner (call from Cozy Drive directly without a plugin), but it is a paid add-on that may not be available in Cozy's OnlyOffice deployment. The Plugin API provides the same capabilities and works universally. The official OnlyOffice AI plugin uses the Plugin API, confirming it is the standard approach.
+## Integration Points with Existing cozy-stack
 
-## Cross-iframe Communication Protocol
-
-### The iframe Nesting Problem
-
-The architecture involves three nested iframe levels:
+### New Route: `/ai/scribe` (POST)
 
 ```
-Cozy Drive (top window)
-  └── OnlyOffice Editor iframe (frameEditor)
-        └── OnlyOffice Plugin iframe (plugin's index.html)
-```
+POST /data/ai/scribe
+Content-Type: application/json
+Accept: text/event-stream
 
-**Critical implication:** From inside the plugin, `window.parent` points to the OnlyOffice editor, NOT to Cozy Drive. To reach Cozy Drive, the plugin must use `window.top.postMessage()`. This has been confirmed by OnlyOffice community members solving the same problem.
-
-### Recommended postMessage Protocol
-
-**Message schema (TypeScript):**
-
-```typescript
-// Shared types between plugin, Cozy Drive, and Scribe iframe
-interface ScribeMessage {
-  type: string;
-  source: 'scribe-plugin' | 'cozy-drive' | 'scribe-iframe';
-  payload: unknown;
-}
-
-// Plugin -> Cozy Drive
-interface SelectionReadyMessage extends ScribeMessage {
-  type: 'scribe:selection-ready';
-  source: 'scribe-plugin';
-  payload: { selectedText: string; hasFormatting: boolean };
-}
-
-// Cozy Drive -> Plugin
-interface ReplaceTextMessage extends ScribeMessage {
-  type: 'scribe:replace-text';
-  source: 'cozy-drive';
-  payload: { newText: string; mode: 'replace' | 'insert-after' };
-}
-
-// Scribe iframe -> Cozy Drive
-interface AIRequestMessage extends ScribeMessage {
-  type: 'scribe:ai-request';
-  source: 'scribe-iframe';
-  payload: { text: string; action: string; instruction?: string };
-}
-
-// Cozy Drive -> Scribe iframe
-interface AIResponseMessage extends ScribeMessage {
-  type: 'scribe:ai-response';
-  source: 'cozy-drive';
-  payload: { modifiedText: string; status: 'success' | 'error' };
+{
+  "action": "correct-grammar",
+  "text": "selected text here",
+  "prompt": "optional custom prompt for free-prompt",
+  "model": "claude-haiku-4-5-20250929"  // optional override
 }
 ```
 
-**Security rules:**
-1. Always specify `targetOrigin` -- never use `"*"` in production
-2. Always validate `event.origin` in message handlers
-3. Namespace all message types with `scribe:` prefix to avoid conflicts with OnlyOffice's own postMessage traffic
-4. Validate `event.data.source` to distinguish Scribe messages from other postMessage traffic
-
-### Communication Flow
-
+**Response (SSE):**
 ```
-1. User right-clicks selected text in OnlyOffice
-2. Plugin receives onContextMenuShow event (type: "Selection")
-3. Plugin adds "Scribe" context menu item via AddContextMenuItem
-4. User clicks "Scribe"
-5. Plugin receives onContextMenuClick event
-6. Plugin calls GetSelectedText via executeMethod
-7. Plugin sends selection to Cozy Drive via window.top.postMessage
-8. Cozy Drive opens Scribe iframe overlay
-9. Cozy Drive forwards selected text to Scribe iframe via postMessage
-10. User chooses AI action in Scribe iframe
-11. Scribe iframe sends action request to Cozy Drive via window.parent.postMessage
-12. Cozy Drive calls AI backend API via cozy-client
-13. Cozy Drive forwards AI response to Scribe iframe
-14. User reviews/edits, clicks "Replace" or "Insert"
-15. Scribe iframe sends confirmed text to Cozy Drive
-16. Cozy Drive forwards to plugin via postMessage into OnlyOffice iframe
-17. Plugin calls PasteText or callCommand to update document
+event: delta
+data: {"text": "Correc"}
+
+event: delta
+data: {"text": "ted text "}
+
+event: delta
+data: {"text": "here."}
+
+event: done
+data: {"usage": {"input_tokens": 42, "output_tokens": 15}}
+
+event: error
+data: {"message": "rate limit exceeded", "code": "rate_limit"}
 ```
+
+### Configuration: Extend RAGServer or Separate Config
+
+**Recommendation: Separate `anthropic` config block in cozy.yaml**, not reuse `rag` config.
+
+```yaml
+# cozy.yaml
+anthropic:
+  default:
+    api_key: "sk-ant-..."
+    model: "claude-haiku-4-5-20250929"
+    max_tokens: 4096
+```
+
+**Why separate from RAG:**
+- RAG config points to an internal RAGondin server (different API, different auth)
+- Anthropic API has its own endpoint (api.anthropic.com), its own auth (x-api-key header)
+- The SDK handles the base URL, retries, and authentication natively
+- Mixing them in the same config creates confusion
+
+### Permission Model
+
+Use existing `io.cozy.ai.chat.conversations` permission type (already defined in consts) OR create a new `io.cozy.ai.scribe` doctype. The existing pattern in `web/ai/ai.go` checks:
+```go
+middlewares.AllowWholeType(c, permission.POST, consts.ChatConversations)
+```
+
+For Scribe, either reuse this permission or add a `Scribe` constant to `consts/doctype.go`.
+
+### System Prompt Architecture
+
+System prompts live in `scribeActions.js` (already defined as `prompt` field per action). The frontend sends the `action` id, and cozy-stack maps it to a system prompt. Two approaches:
+
+**Option A (recommended): Frontend sends action + text, backend has prompt templates.**
+- System prompts stored in cozy-stack as Go constants or config
+- Frontend sends: `{"action": "correct-grammar", "text": "..."}`
+- Backend builds the full Messages API request with system prompt + user message
+- **Advantage:** Prompts are not exposed to the client, can be updated without frontend deploy
+
+**Option B: Frontend sends full prompt.**
+- Frontend builds the prompt from `scribeActions.js` and sends the complete user message
+- Backend is a dumb proxy
+- **Advantage:** Simpler backend, but prompts are visible in network tab and tied to frontend releases
+
+**Choose Option A** because it keeps prompt engineering server-side and allows A/B testing or improvement without redeployment.
+
+## What NOT to Add
+
+| Avoid | Why | What to Do Instead |
+|-------|-----|---------------------|
+| Conversation persistence (CouchDB) | Scribe is single-shot, not a chatbot. No conversation history needed. | Stateless request/response. Each Scribe action is independent. |
+| Job queue (`rag-query` worker pattern) | Adds latency. Scribe needs synchronous streaming, not async background processing. | Direct SSE proxy in the HTTP handler. |
+| `cozy-realtime` WebSocket for streaming | Designed for CouchDB document change events, not request-scoped AI streams. Over-engineering. | `fetch()` + `ReadableStream` consuming direct SSE from `/ai/scribe`. |
+| `EventSource` on frontend | Only supports GET requests. Scribe needs POST (sends text + action in body). | `fetch()` with `ReadableStream` reader. |
+| Third-party SSE library (e.g., `sse.js`, `eventsource-polyfill`) | Unnecessary. Native `fetch()` + `TextDecoder` + `ReadableStream` is sufficient and well-supported. | Native Web APIs. |
+| OpenAI-compatible proxy format | Existing `OpenAICompletion` route proxies to RAGondin which speaks OpenAI format. Anthropic has its own format. The SDK handles it. | Use Anthropic SDK directly. Its SSE format is different from OpenAI's. |
+| Community Go Anthropic libraries (`liushuangls/go-anthropic`, `unfunco/anthropic-sdk-go`) | Unofficial. The official `anthropics/anthropic-sdk-go` exists since 2024 and is actively maintained. | Use official SDK only. |
+| Rate limit handling library | Anthropic SDK has built-in retry with exponential backoff for 429s. | Configure `option.WithMaxRetries(2)` (default). Surface rate limit errors to frontend as `event: error`. |
 
 ## Alternatives Considered
 
-| Recommended | Alternative | Why Not |
-|-------------|-------------|---------|
-| OnlyOffice Plugin SDK v1 | Connector (Automation) API | Paid add-on; licensing status with Cozy unknown; Plugin API has identical capabilities |
-| Raw `window.postMessage` | comlink / post-robot / penpal | These libraries add abstraction over postMessage with RPC patterns, but they are unnecessary for our protocol (simple request-response messages). They also complicate debugging and add bundle size. The message count is small (< 10 types). |
-| Raw `window.postMessage` | BroadcastChannel API | BroadcastChannel only works same-origin. OnlyOffice editor iframe is cross-origin (different host). |
-| Raw `window.postMessage` | cozy-intent | cozy-intent is designed for inter-Cozy-app communication. Scribe is not a separate Cozy app (it lives in the same repo). Using intents would be over-engineering. When/if Scribe migrates to a separate app, revisit. |
-| Context menu trigger | `initOnSelectionChanged` + floating button | `initOnSelectionChanged` fires on every selection change, triggering `init()` repeatedly. An OnlyOffice community report confirmed this causes infinite loops when combined with `executeMethod`+`callCommand`. Context menu is safer, more predictable, and matches user expectations for text actions. |
-| Plugin type: `background` | Plugin type: `panel` or `window` | The Scribe UI lives in Cozy Drive's iframe, not inside the plugin. The plugin should be invisible (`background` type) -- it only bridges selection data and text replacement between OnlyOffice and Cozy Drive. |
-
-## What NOT to Use
-
-| Avoid | Why | Use Instead |
-|-------|-----|-------------|
-| `initOnSelectionChanged: true` in config.json | Causes the plugin's `init()` to fire on every selection change. Combined with `executeMethod`/`callCommand` calls, this creates infinite execution loops (confirmed OnlyOffice community bug report). | Use `onContextMenuShow` event to detect selection and offer Scribe only on right-click. |
-| `window.parent.postMessage()` from the plugin | `window.parent` from a plugin iframe points to the OnlyOffice editor iframe, NOT to Cozy Drive. Messages never reach the host app. | Use `window.top.postMessage()` to reach Cozy Drive (the topmost window). |
-| `"*"` as targetOrigin in postMessage | Security vulnerability. Any page could intercept messages containing document text. | Specify the exact origin of the target window. |
-| Connector/Automation API (`docEditor.createConnector()`) | Paid add-on for ONLYOFFICE Docs Developer only. Not confirmed available in Cozy's deployment. | Use Plugin API which works with all editions. |
-| comlink, post-robot, or other postMessage wrapper libraries | Over-engineering for ~8 message types. Adds bundle size, debugging opacity, and a dependency that may conflict with OnlyOffice's own postMessage handling. | Raw `window.postMessage` with typed TypeScript interfaces. |
-| BroadcastChannel API | Same-origin only. OnlyOffice editor runs on a different origin than Cozy Drive. | `window.postMessage` which works cross-origin. |
-| Building Scribe UI inside the OnlyOffice plugin | Plugin UI is constrained to OnlyOffice's plugin panel/window system. Limited styling control, no access to Cozy UI components, no cozy-client access. | Build Scribe UI as a Cozy Drive component rendered in its own iframe overlay, communicating with the plugin via postMessage. |
-| `isSystem: true` in plugin config | Deprecated field. | Use `"type": "background"` instead. |
-| `isVisual: true/false` in plugin config | Deprecated field. | Use `"type": "background"` for invisible plugins, `"type": "panel"` for visible ones. |
-
-## Stack Patterns by Variant
-
-**If Cozy has ONLYOFFICE Docs Developer with Connector API:**
-- Could skip the plugin entirely and use `docEditor.createConnector()` from Cozy Drive
-- Simpler architecture (no plugin deployment, no triple-iframe nesting)
-- Verify with Cozy Cloud team before pursuing this path
-
-**If OnlyOffice Document Server version is < 8.2:**
-- `attachEditorEvent` method not available (added in 8.2)
-- Context menu API may behave differently
-- Must verify `GetSelectedText`, `PasteText`, `AddContextMenuItem` availability
-- The AI plugin requires minVersion 8.2.0, which is a useful baseline
-
-**If text formatting preservation is required:**
-- `GetSelectedText` returns plain text only
-- For formatted content, use `callCommand` with `Api.GetDocument().GetRangeBySelect().GetAllParagraphs()` to access paragraph-level formatting
-- Reinsertion with formatting requires `callCommand` with `Api.CreateParagraph()` and styled runs
-- This is significantly more complex -- recommend starting with plain text for POC
-
-## Version Compatibility
-
-| Component | Minimum Version | Recommended | Notes |
-|-----------|-----------------|-------------|-------|
-| OnlyOffice Document Server | 8.2.0 | 9.x (latest) | 8.2.0 is the minimum for `attachEditorEvent`, context menu API improvements, and is the minVersion for the official AI plugin |
-| OnlyOffice Plugin SDK | v1 | v1 | Only version available. CDN: `https://onlyoffice.github.io/sdkjs-plugins/v1/plugins.js` |
-| React (Scribe iframe) | 18.2.0 | 18.2.0 | Match existing Cozy Drive version |
-| TypeScript | 4.9.5 | 4.9.5 | Match existing Cozy Drive version |
-| Node.js | 20 | 20 | Match existing Cozy Drive `.nvmrc` |
-| cozy-client | 60.20.0 | 60.20.0 | Match existing for API calls to AI backend |
+| Category | Recommended | Alternative | Why Not |
+|----------|-------------|-------------|---------|
+| Go Anthropic client | `anthropics/anthropic-sdk-go` (official) | `liushuangls/go-anthropic` (community) | Official SDK has better type safety, streaming support, is maintained by Anthropic. Community libs may lag API changes. |
+| Streaming transport | Direct SSE proxy (POST -> SSE response) | Realtime WebSocket (existing `cozy-realtime` pattern) | WebSocket is for persistent subscriptions to document changes. Scribe is request/response. SSE is simpler, maps to the lifecycle naturally. |
+| Model | Haiku 4.5 (default) | Sonnet 4.5 (premium) | Haiku is 3x cheaper, 4-5x faster. Text transforms don't need Sonnet's reasoning depth. Make model configurable, default to Haiku. |
+| Frontend SSE consumption | `fetch()` + `ReadableStream` | `EventSource` API | `EventSource` is GET-only. Scribe needs POST with body. |
+| Frontend SSE consumption | `fetch()` + `ReadableStream` | `@microsoft/fetch-event-source` library | Adds a dependency for what is ~30 lines of code. The parsing is trivial for our simple event format. |
+| State management for streaming | `useState` + `useRef` | Redux/Zustand/Jotai | Massive over-engineering. Streaming state is local to `ScribePopover`. One component, one piece of state (`streamedText`). |
+| Backend prompt location | Server-side prompt templates | Client-side prompts (current `scribeActions.js`) | Server-side allows prompt iteration without frontend redeploy. Keeps prompts out of network inspector. |
+| Configuration | Separate `anthropic` config block | Reuse `rag` config block | Different API, different auth, different endpoint. Mixing creates confusion. |
 
 ## Installation
 
+### cozy-stack (Go backend)
+
 ```bash
-# No new npm packages needed for Cozy Drive side.
-# The Scribe iframe UI uses existing React/cozy-ui/cozy-client.
-# The OnlyOffice plugin is pure vanilla JS (no npm dependencies).
+cd ~/Dev-local/cozy-stack
 
-# Plugin deployment (Docker dev environment):
-# Mount plugin folder into OnlyOffice Document Server container:
-# docker cp ./scribe-plugin <container>:/var/www/onlyoffice/documentserver/sdkjs-plugins/scribe/
-
-# OR pack as .plugin file:
-# cd scribe-plugin && zip -r ../scribe.plugin . && cd ..
-# Install via OnlyOffice Plugin Manager
+# Add official Anthropic Go SDK
+go get -u 'github.com/anthropics/anthropic-sdk-go@v1.26.0'
 ```
 
-## Reference: OnlyOffice AI Plugin Architecture
+**Files to create/modify:**
+- `model/ai/scribe.go` -- Anthropic client, system prompts, streaming logic
+- `web/ai/ai.go` -- Add `POST /ai/scribe` route with SSE handler
+- `pkg/config/config/config.go` -- Add `Anthropic` config struct and `makeAnthropicConfig`
+- `model/instance/instance.go` -- Add `AnthropicConfig()` method (mirrors `RAGServer()`)
+- `pkg/consts/doctype.go` -- Add `ScribeEvents` doctype if needed for permissions
 
-The official OnlyOffice AI plugin (v3.0.8, minVersion 8.2.0) serves as the primary reference implementation. Key patterns observed from its source code at `github.com/ONLYOFFICE/onlyoffice.github.io/tree/master/sdkjs-plugins/content/ai`:
+### cozy-drive (React frontend)
 
-| Pattern | How AI Plugin Does It | Relevance to Scribe |
-|---------|----------------------|---------------------|
-| Get selected text | `await Asc.Library.GetSelectedText()` (wrapper around `executeMethod("GetSelectedText")`) | Direct pattern to follow |
-| Insert text | `await Asc.Library.PasteText(data)` | Use for "Replace" action |
-| Context menu | Listens to `onContextMenuShow`, `onContextMenuClick` events | Exact same pattern needed |
-| Plugin type | `background` with panel UI | Scribe plugin should be `background` only (UI in Cozy Drive) |
-| Data passing | `Asc.scope` for passing data into `callCommand` | Use for formatted text operations |
-| Block operations | `Asc.Editor.callMethod("StartAction", ["Block"])` / `EndAction` | Group undo operations for text replacement |
+```bash
+# No new npm packages needed.
+# All required capabilities exist in:
+# - Native Web APIs: fetch, ReadableStream, AbortController, TextDecoder
+# - React 18: useState, useRef, useCallback, useEffect
+# - cozy-client 60.20.0: HTTP client for cozy-stack API calls
+```
+
+**Files to create/modify:**
+- `src/modules/views/OnlyOffice/Scribe/useScribeStream.js` -- Custom hook: fetch + SSE parsing + AbortController
+- `src/modules/views/OnlyOffice/Scribe/scribeApi.js` -- Replace `mockTransform.js` with API call via `useScribeStream`
+- `src/modules/views/OnlyOffice/Scribe/ScribePopover.jsx` -- Wire streaming state (`isStreaming`, `streamedText`, `cancel`)
+- `src/modules/views/OnlyOffice/Scribe/ScribeResultPanel.jsx` -- Accept streaming text, show progress indicator
+
+## Key Implementation Patterns
+
+### Go: SSE Proxy Handler Pattern
+
+```go
+// web/ai/ai.go - Scribe SSE streaming handler
+func ScribeTransform(c echo.Context) error {
+    // 1. Parse request
+    var req ScribeRequest
+    if err := c.Bind(&req); err != nil {
+        return err
+    }
+
+    // 2. Build Anthropic messages
+    inst := middlewares.GetInstance(c)
+    cfg := inst.AnthropicConfig()
+    client := anthropic.NewClient(option.WithAPIKey(cfg.APIKey))
+
+    // 3. Create streaming request with request context
+    //    (cancelled when client disconnects)
+    ctx := c.Request().Context()
+    stream := client.Messages.NewStreaming(ctx, anthropic.MessageNewParams{
+        Model:     anthropic.Model(cfg.Model),
+        MaxTokens: int64(cfg.MaxTokens),
+        System:    []anthropic.TextBlockParam{{Text: systemPromptFor(req.Action)}},
+        Messages:  []anthropic.MessageParam{
+            anthropic.NewUserMessage(anthropic.NewTextBlock(req.Text)),
+        },
+    })
+
+    // 4. Set SSE headers
+    w := c.Response()
+    w.Header().Set("Content-Type", "text/event-stream")
+    w.Header().Set("Cache-Control", "no-cache")
+    w.Header().Set("Connection", "keep-alive")
+    w.WriteHeader(http.StatusOK)
+
+    // 5. Stream deltas
+    for stream.Next() {
+        event := stream.Current()
+        switch v := event.AsAny().(type) {
+        case anthropic.ContentBlockDeltaEvent:
+            switch d := v.Delta.AsAny().(type) {
+            case anthropic.TextDelta:
+                fmt.Fprintf(w, "event: delta\ndata: %s\n\n",
+                    jsonMarshal(map[string]string{"text": d.Text}))
+                if f, ok := w.(http.Flusher); ok {
+                    f.Flush()
+                }
+            }
+        }
+    }
+
+    if err := stream.Err(); err != nil {
+        fmt.Fprintf(w, "event: error\ndata: %s\n\n",
+            jsonMarshal(map[string]string{"message": err.Error()}))
+        if f, ok := w.(http.Flusher); ok {
+            f.Flush()
+        }
+        return nil // error already sent via SSE
+    }
+
+    // 6. Send done event
+    fmt.Fprintf(w, "event: done\ndata: {}\n\n")
+    if f, ok := w.(http.Flusher); ok {
+        f.Flush()
+    }
+    return nil
+}
+```
+
+### JavaScript: useScribeStream Hook Pattern
+
+```javascript
+// useScribeStream.js
+import { useState, useRef, useCallback } from 'react'
+
+export function useScribeStream() {
+  const [streamedText, setStreamedText] = useState('')
+  const [isStreaming, setIsStreaming] = useState(false)
+  const [error, setError] = useState(null)
+  const abortRef = useRef(null)
+
+  const startStream = useCallback(async (action, text, extra) => {
+    // Cancel any existing stream
+    abortRef.current?.abort()
+    abortRef.current = new AbortController()
+
+    setStreamedText('')
+    setIsStreaming(true)
+    setError(null)
+
+    try {
+      const res = await fetch('/data/ai/scribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
+        body: JSON.stringify({ action, text, ...extra }),
+        signal: abortRef.current.signal
+      })
+
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() // keep incomplete line
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = JSON.parse(line.slice(6))
+            if (data.text) {
+              setStreamedText(prev => prev + data.text)
+            }
+          }
+          // event: error is handled by checking the event line
+        }
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        setError(err.message)
+      }
+    } finally {
+      setIsStreaming(false)
+    }
+  }, [])
+
+  const cancelStream = useCallback(() => {
+    abortRef.current?.abort()
+    setIsStreaming(false)
+  }, [])
+
+  return { streamedText, isStreaming, error, startStream, cancelStream }
+}
+```
+
+### Cancellation Flow
+
+```
+User clicks Cancel → cancelStream() → AbortController.abort()
+  → fetch signal aborted → ReadableStream closed
+  → Server: c.Request().Context().Done() fires
+  → Go: stream.Next() returns false (context cancelled)
+  → Anthropic SDK: HTTP connection to api.anthropic.com closed
+  → No more tokens billed after cancellation
+```
+
+## Version Compatibility
+
+| Component | Required | Current | Notes |
+|-----------|----------|---------|-------|
+| Go | >= 1.22 | 1.24.0 | cozy-stack go.mod. Meets anthropic-sdk-go requirement. |
+| anthropic-sdk-go | v1.26.0 | (new) | Latest stable. Published 2026-02-19. |
+| Echo | v4 | v4.15.1 | Existing. Supports `http.Flusher` for SSE. |
+| React | >= 18 | 18.2.0 | Existing. Hooks for streaming state. |
+| cozy-client | any | 60.20.0 | Existing. Used for auth token in fetch headers. |
+| Browser (fetch ReadableStream) | Chrome 43+, FF 65+, Safari 10.1+ | Modern | All Cozy-supported browsers handle this. |
+
+## Pricing Estimates
+
+| Model | Input Cost | Output Cost | Typical Scribe Request | Estimated Cost/Request |
+|-------|------------|-------------|----------------------|----------------------|
+| Haiku 4.5 | $1/M tokens | $5/M tokens | ~200 input + ~300 output tokens | ~$0.0017 |
+| Sonnet 4.5 | $3/M tokens | $15/M tokens | ~200 input + ~300 output tokens | ~$0.0051 |
+
+At 1000 Scribe uses/day with Haiku: ~$1.70/day, ~$51/month.
+At 1000 Scribe uses/day with Sonnet: ~$5.10/day, ~$153/month.
 
 ## Sources
 
-- [OnlyOffice Plugin & Macros Documentation](https://api.onlyoffice.com/docs/plugin-and-macros/get-started/) -- Plugin structure, configuration, API overview (HIGH confidence)
-- [OnlyOffice Plugin Configuration Reference](https://api.onlyoffice.com/docs/plugin-and-macros/structure/configuration/) -- config.json schema, field documentation (HIGH confidence)
-- [OnlyOffice How to Call Methods](https://api.onlyoffice.com/docs/plugin-and-macros/interacting-with-editors/overview/how-to-call-methods/) -- `executeMethod` syntax and usage (HIGH confidence)
-- [OnlyOffice How to Call Commands](https://api.onlyoffice.com/docs/plugin-and-macros/interacting-with-editors/overview/how-to-call-commands/) -- `callCommand` syntax, `Asc.scope`, limitations (HIGH confidence)
-- [OnlyOffice Context Menu API](https://api.onlyoffice.com/docs/plugin-and-macros/customization/context-menu/) -- `AddContextMenuItem`, `onContextMenuShow` events (HIGH confidence)
-- [OnlyOffice Context Menu and Events Sample](https://api.onlyoffice.com/docs/plugin-and-macros/samples/plugin-samples/context-menu-and-events/) -- Working example with selection type detection (HIGH confidence)
-- [OnlyOffice AI Plugin Source Code](https://github.com/ONLYOFFICE/onlyoffice.github.io/tree/master/sdkjs-plugins/content/ai) -- Reference implementation for text selection, replacement, context menu (HIGH confidence)
-- [OnlyOffice AI Plugin Customization Guide](https://www.onlyoffice.com/blog/2025/12/how-to-add-custom-features-to-the-onlyoffice-ai-plugin) -- Architecture details, code patterns (MEDIUM confidence)
-- [OnlyOffice Automation/Connector API](https://api.onlyoffice.com/docs/docs-api/usage-api/automation-api/) -- Connector alternative, paid licensing (MEDIUM confidence)
-- [OnlyOffice Plugin Debugging Guide](https://www.onlyoffice.com/blog/2025/11/debugging-onlyoffice-plugins-practical-guide) -- Dev workflow (MEDIUM confidence)
-- [OnlyOffice Community: Plugin-to-React postMessage](https://community.onlyoffice.com/t/how-to-send-message-from-the-plugin-to-react-app-using-iframe/14454) -- `window.top.postMessage` solution for triple-iframe nesting (MEDIUM confidence)
-- [OnlyOffice Community: initOnSelectionChanged infinite loop](https://community.onlyoffice.com/t/when-the-plugin-enables-the-initonselectionchanged-configuration-executing-both-executemethod-and-callcommand-causes-an-infinite-loop-of-execution/11536) -- Known bug with selection events (MEDIUM confidence)
-- [OnlyOffice DocumentServer GitHub Releases](https://github.com/ONLYOFFICE/DocumentServer/releases) -- Version history (v9.3.0 is latest as of Feb 2025) (HIGH confidence)
-- [OnlyOffice API Updates December 2025](https://www.onlyoffice.com/blog/2025/12/api-updates-december-2025) -- Latest API additions in v9.2 (MEDIUM confidence)
-- [OnlyOffice PostMessage / WOPI Protocol](https://api.onlyoffice.com/docs/docs-api/using-wopi/postmessage/) -- OnlyOffice's own postMessage protocol for host-editor communication (HIGH confidence)
-- [MDN: Window.postMessage()](https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage) -- Web API reference (HIGH confidence)
-- [Cozy Cloud OnlyOffice Administration](https://docs.cozy.io/en/tutorials/selfhosting/administration/office/) -- Cozy's OnlyOffice deployment docs (HIGH confidence)
+- [Anthropic Go SDK (official)](https://github.com/anthropics/anthropic-sdk-go) -- v1.26.0, streaming examples, error handling (HIGH confidence)
+- [Anthropic Go SDK documentation](https://platform.claude.com/docs/en/api/sdks/go) -- Official installation, usage, streaming, error patterns (HIGH confidence)
+- [Anthropic Messages Streaming API](https://platform.claude.com/docs/en/api/messages-streaming) -- SSE event types, wire format, event flow (HIGH confidence)
+- [Anthropic Pricing](https://platform.claude.com/docs/en/about-claude/pricing) -- Token costs per model (HIGH confidence)
+- [Echo v4 SSE cookbook](https://echo.labstack.com/docs/cookbook/sse) -- SSE handler pattern with Flush (MEDIUM confidence -- page content not fully loaded)
+- [Existing cozy-stack SSE patterns](file:///home/ben/Dev-local/cozy-stack/web/apps/apps.go) -- `http.Flusher` usage confirmed in codebase (HIGH confidence)
+- [Existing cozy-stack RAG/chat streaming](file:///home/ben/Dev-local/cozy-stack/model/rag/chat.go) -- `foreachSSE`, `publishDelta`, realtime pattern (HIGH confidence -- read directly)
+- [Existing cozy-stack AI routes](file:///home/ben/Dev-local/cozy-stack/web/ai/ai.go) -- Route structure, permission model (HIGH confidence -- read directly)
+- [cozy-stack config for RAG](file:///home/ben/Dev-local/cozy-stack/pkg/config/config/config.go) -- RAGServer config pattern to mirror for Anthropic (HIGH confidence -- read directly)
+- [SSE with POST (not EventSource)](https://solovyov.net/blog/2023/eventsource-post/) -- Why fetch+ReadableStream instead of EventSource for POST-based SSE (MEDIUM confidence)
 
 ---
-*Stack research for: OnlyOffice plugin + AI editor integration within Cozy Drive*
-*Researched: 2026-02-26*
+*Stack research for: v2.0 Scribe Live AI -- Anthropic Claude integration with streaming*
+*Researched: 2026-03-03*
