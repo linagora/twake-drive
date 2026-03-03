@@ -23,9 +23,28 @@ La chaîne de communication complète — depuis la sélection de texte dans Onl
 
 ### Active
 
-- [ ] Intégration API LLM réelle (remplacer mockTransform)
-- [ ] Refactoring Scribe en composant autonome intégrable dans d'autres apps Cozy
-- [ ] Gestion du formatage : markdown ↔ document (sérialisation/désérialisation)
+- [ ] Intégration API Anthropic Claude via cozy-stack (extension des routes /ai existantes)
+- [ ] Streaming UX — affichage progressif token par token dans le panneau de résultat
+- [ ] Annulation en cours de stream
+- [ ] Gestion d'erreurs API (échecs, rate limits, erreurs réseau)
+- [ ] Fix dark theme (texte blanc sur blanc)
+- [ ] Désactivation du bouton flottant quand pas de sélection
+- [ ] Intégration menu contextuel
+
+## Current Milestone: v2.0 Scribe Live AI
+
+**Goal:** Remplacer le mock AI par une intégration réelle Anthropic Claude, avec streaming UX et polish.
+
+**Target features:**
+- Extension des routes /ai cozy-stack pour proxy Anthropic Claude (clé API globale, streaming SSE)
+- Intégration frontend — remplacement de mockTransform par appels API réels
+- Streaming UX — tokens affichés progressivement, annulation mid-stream
+- Bug fixes — dark theme, bouton disable, menu contextuel
+- Gestion d'erreurs — échecs API, rate limits, dégradation gracieuse
+
+**Two repos:**
+- `~/go/src/github.com/cozy/cozy-stack` — AI route extension
+- `~/Dev-local/cozy-drive` — frontend integration
 
 ### Out of Scope
 
@@ -68,7 +87,8 @@ Tech stack : React 18 + MUI + cozy-ui, postMessage protocol, OO Plugin API, Dock
 - **Écosystème** : Doit s'intégrer dans l'écosystème Cozy Cloud existant (cozy-client, cozy-ui)
 - **Plugin ES5** : Le code plugin OO doit utiliser la syntaxe ES5 (pas d'arrow functions, pas de const/let)
 - **OnlyOffice** : Compatibilité vérifiée avec OO 9.3.0-138
-- **API Backend** : Le contrat d'API du moteur IA Scribe n'est pas encore figé
+- **API Backend** : Utilisation de l'API Anthropic Claude via proxy cozy-stack
+- **Multi-repo** : Modifications dans cozy-stack (Go) et cozy-drive (React) simultanément
 
 ## Key Decisions
 
@@ -84,4 +104,4 @@ Tech stack : React 18 + MUI + cozy-ui, postMessage protocol, OO Plugin API, Dock
 | Plugin type "panel" pour le POC | Panneaux latéraux, non-bloquant | ⚠️ Revisit — bouton flottant a remplacé le panneau |
 
 ---
-*Last updated: 2026-03-03 after v1.0 milestone*
+*Last updated: 2026-03-03 after v2.0 milestone start*
