@@ -70,15 +70,16 @@ function findActionConfig(actionId) {
  * @returns {Array<{role: string, content: string}>} Messages array for the AI endpoint
  */
 export function buildMessages(actionId, selectedText, label, extra) {
-  const systemMsg = { role: 'system', content: SYSTEM_PROMPT }
+  // Prepend system instructions to user message (single user role)
+  // to avoid issues with RAG backends that may not support the system role
+  const systemPrefix = SYSTEM_PROMPT + '\n\n'
 
   // Free-prompt: wrap user instruction with guardrail template
   if (actionId === 'free-prompt') {
     return [
-      systemMsg,
       {
         role: 'user',
-        content: `Apply the following instruction to the text below. Return only the modified text.\n\nInstruction: ${label}\n\nText: ${selectedText}`
+        content: `${systemPrefix}Apply the following instruction to the text below. Return only the modified text.\n\nInstruction: ${label}\n\nText: ${selectedText}`
       }
     ]
   }
@@ -88,10 +89,9 @@ export function buildMessages(actionId, selectedText, label, extra) {
   if (!action || !action.prompt) {
     // Fallback: send selectedText as-is with label as instruction
     return [
-      systemMsg,
       {
         role: 'user',
-        content: `${label}:\n\n${selectedText}`
+        content: `${systemPrefix}${label}:\n\n${selectedText}`
       }
     ]
   }
@@ -109,7 +109,7 @@ export function buildMessages(actionId, selectedText, label, extra) {
     prompt = prompt.replace('{language}', extra.language)
   }
 
-  return [systemMsg, { role: 'user', content: prompt }]
+  return [{ role: 'user', content: `${systemPrefix}${prompt}` }]
 }
 
 /**
@@ -131,7 +131,7 @@ export async function callScribeAI(client, messages, { signal } = {}) {
   const response = await client.stackClient.fetchJSON(
     'POST',
     '/ai/v1/chat/completions',
-    { messages },
+    { messages, temperature: 0.3 },
     { signal }
   )
 
