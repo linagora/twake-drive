@@ -93,9 +93,7 @@ describe('useDataProxyRecents', () => {
       expect(result.current.data).toEqual([])
 
       // Wait for fallback query to complete
-      await waitFor(() => expect(result.current.fetchStatus).toBe('loaded'), {
-        timeout: 2000
-      })
+      await waitFor(() => expect(result.current.fetchStatus).toBe('loaded'))
       expect(result.current.data).toEqual(fallbackData)
       expect(result.current.error).toBe(null)
       expect(logger.warn).toHaveBeenCalledWith(
@@ -123,9 +121,7 @@ describe('useDataProxyRecents', () => {
       const { result } = renderHook(() => useDataProxyRecents())
 
       // Wait for fallback query error to be processed
-      await waitFor(() => expect(result.current.fetchStatus).toBe('error'), {
-        timeout: 2000
-      })
+      await waitFor(() => expect(result.current.fetchStatus).toBe('error'))
       expect(result.current.error).toEqual(fallbackError)
       expect(logger.warn).toHaveBeenCalledWith(
         'Error fetching recents from dataproxy',

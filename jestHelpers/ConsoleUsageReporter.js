@@ -28,7 +28,8 @@ module.exports = class ConsoleUsageReporter {
   }
 
   static recordConsoleUsedInCurrentTestFile() {
-    const { testPath } = global.jasmine
+    const testPath =
+      global.jasmine?.testPath || expect.getState()?.testPath || ''
     const testFilesThatUsedConsole = this.getTestFilesThatUsedConsole()
 
     if (!testFilesThatUsedConsole.includes(testPath)) {

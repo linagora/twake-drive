@@ -120,6 +120,8 @@ describe('useFolderSort', () => {
 
       const { result } = renderHook(() => useFolderSort(folderId))
 
+      await waitFor(() => expect(result.current[2]).toBe(true))
+
       await waitFor(() =>
         expect(result.current[0]).toEqual({
           attribute: 'updated_at',
@@ -167,6 +169,8 @@ describe('useFolderSort', () => {
       })
 
       const { result, rerender } = renderHook(() => useFolderSort(folderId))
+
+      await waitFor(() => expect(result.current[2]).toBe(true))
 
       await waitFor(() =>
         expect(result.current[0]).toEqual({ attribute: 'name', order: 'asc' })
@@ -238,6 +242,8 @@ describe('useFolderSort', () => {
       const { result } = renderHook(() => useFolderSort(folderId))
 
       // Wait for the settings to load
+      await waitFor(() => expect(result.current[2]).toBe(true))
+
       await waitFor(() =>
         expect(result.current[0]).toEqual({ attribute: 'name', order: 'asc' })
       )
