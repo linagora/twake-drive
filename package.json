@@ -46,7 +46,6 @@
     "@swc/jest": "^0.2.39",
     "@testing-library/jest-dom": "5.17.0",
     "@testing-library/react": "14.3.1",
-    "@testing-library/react-hooks": "8.0.1",
     "@types/react-redux": "7.1.26",
     "@typescript-eslint/eslint-plugin": "5.62.0",
     "@typescript-eslint/parser": "5.62.0",
