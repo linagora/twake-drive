@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react-hooks'
+import { renderHook, waitFor } from '@testing-library/react'
 
 import flag from 'cozy-flags'
 
@@ -44,9 +44,7 @@ describe('useScrollToHighlightedItem', () => {
     setHighlightedItems([{ _id: 'match' }])
     const items = [{ _id: 'foo' }, { _id: 'match' }, { _id: 'bar' }]
 
-    const { waitFor } = renderHook(() =>
-      useScrollToHighlightedItem(virtuosoRef, items)
-    )
+    renderHook(() => useScrollToHighlightedItem(virtuosoRef, items))
 
     await waitFor(() =>
       expect(virtuosoRef.current.scrollToIndex).toHaveBeenCalledWith({

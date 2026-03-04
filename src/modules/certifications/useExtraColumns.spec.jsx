@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react-hooks'
+import { renderHook } from '@testing-library/react'
 import React from 'react'
 
 import { createMockClient, models } from 'cozy-client'
@@ -31,23 +31,18 @@ const setup = ({ columnsNames, queryBuilder, conditionBuilder, files }) => {
 }
 
 describe('useExtraColumns', () => {
-  it('should return error if no queryBuilder or conditionBuilder passed', async () => {
-    const { result } = setup({
-      columnsNames: ['carbonCopy']
-    })
-
-    expect(result.error).toMatchObject(
-      new Error('useExtraColumns must have queryBuilder or conditionBuilder')
+  it('should return error if no queryBuilder or conditionBuilder passed', () => {
+    jest.spyOn(console, 'error').mockImplementation()
+    expect(() => setup({ columnsNames: ['carbonCopy'] })).toThrow(
+      'useExtraColumns must have queryBuilder or conditionBuilder'
     )
   })
 })
 
 describe('useExtraColumns : queryBuilder', () => {
-  it('should not query anything if no queryBuilder passed', async () => {
-    setup({
-      columnsNames: ['carbonCopy']
-    })
-
+  it('should not query anything if no queryBuilder passed', () => {
+    jest.spyOn(console, 'error').mockImplementation()
+    expect(() => setup({ columnsNames: ['carbonCopy'] })).toThrow()
     expect(client.query).not.toHaveBeenCalled()
   })
 

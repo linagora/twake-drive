@@ -1,4 +1,4 @@
-import { renderHook, act } from '@testing-library/react-hooks'
+import { renderHook, act } from '@testing-library/react'
 import { RefObject } from 'react'
 
 import { IOCozyFile } from 'cozy-client/types/types'

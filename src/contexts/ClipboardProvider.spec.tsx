@@ -1,6 +1,11 @@
 import '@testing-library/jest-dom'
-import { render, screen, fireEvent } from '@testing-library/react'
-import { renderHook, act as actHook } from '@testing-library/react-hooks'
+import {
+  render,
+  screen,
+  fireEvent,
+  renderHook,
+  act as actHook
+} from '@testing-library/react'
 import React from 'react'
 
 import { IOCozyFile } from 'cozy-client/types/types'

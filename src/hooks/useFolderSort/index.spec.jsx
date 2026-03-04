@@ -1,4 +1,4 @@
-import { renderHook, act } from '@testing-library/react-hooks'
+import { renderHook, act, waitFor } from '@testing-library/react'
 
 import { useClient } from 'cozy-client'
 import flag from 'cozy-flags'
@@ -118,11 +118,14 @@ describe('useFolderSort', () => {
         data: [existingSettings]
       })
 
-      const { result, waitForNextUpdate } = renderHook(() =>
-        useFolderSort(folderId)
-      )
+      const { result } = renderHook(() => useFolderSort(folderId))
 
-      await waitForNextUpdate()
+      await waitFor(() =>
+        expect(result.current[0]).toEqual({
+          attribute: 'updated_at',
+          order: 'desc'
+        })
+      )
 
       const [currentSort] = result.current
       expect(currentSort).toEqual({
@@ -163,11 +166,11 @@ describe('useFolderSort', () => {
         data: [existingSettings]
       })
 
-      const { result, rerender, waitForNextUpdate } = renderHook(() =>
-        useFolderSort(folderId)
-      )
+      const { result, rerender } = renderHook(() => useFolderSort(folderId))
 
-      await waitForNextUpdate()
+      await waitFor(() =>
+        expect(result.current[0]).toEqual({ attribute: 'name', order: 'asc' })
+      )
 
       const [firstSort] = result.current
       expect(firstSort).toEqual({
@@ -232,12 +235,12 @@ describe('useFolderSort', () => {
         data: [existingSettings]
       })
 
-      const { result, waitForNextUpdate } = renderHook(() =>
-        useFolderSort(folderId)
-      )
+      const { result } = renderHook(() => useFolderSort(folderId))
 
       // Wait for the settings to load
-      await waitForNextUpdate()
+      await waitFor(() =>
+        expect(result.current[0]).toEqual({ attribute: 'name', order: 'asc' })
+      )
 
       const [, setSortOrder] = result.current
       await act(async () => {
