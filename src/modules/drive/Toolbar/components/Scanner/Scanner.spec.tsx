@@ -116,7 +116,7 @@ describe('Scanner', () => {
 
     const calls = mockUploadFiles.mock.calls as unknown[][]
 
-    expect(onClickMock).toBeCalledTimes(1)
+    expect(onClickMock).toHaveBeenCalledTimes(1)
     expect(calls[0][0]).toEqual([mockFile]) // File
     expect(calls[0][1]).toBe('test') // Directory ID
     expect(calls[0][2]).toEqual({ isScanned: true }) // Upload options
