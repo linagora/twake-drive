@@ -1,7 +1,8 @@
 /* eslint-disable class-methods-use-this */
-const { red, reset } = require('chalk')
 const fs = require('fs')
 const path = require('path')
+
+const { red, reset } = require('chalk')
 
 const TMP_FILE_PATH = path.join(process.cwd(), '.consoleUsageReporter.json')
 
@@ -27,9 +28,6 @@ module.exports = class ConsoleUsageReporter {
   }
 
   static recordConsoleUsedInCurrentTestFile() {
-    // When using babel-jest, the global.jasmine object is not available
-    if (!global.jasmine) return
-
     const { testPath } = global.jasmine
     const testFilesThatUsedConsole = this.getTestFilesThatUsedConsole()
 
@@ -138,7 +136,8 @@ console as is:
   onRunComplete() {
     const isWatchModeEnabled =
       this.globalConfig.watch || this.globalConfig.watchAll
-    const testFilesThatUsedConsole = ConsoleUsageReporter.getTestFilesThatUsedConsole()
+    const testFilesThatUsedConsole =
+      ConsoleUsageReporter.getTestFilesThatUsedConsole()
 
     ConsoleUsageReporter.deleteTemporaryFile()
 

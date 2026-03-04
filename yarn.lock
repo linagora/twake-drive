@@ -4582,7 +4582,7 @@ axios@^1.7.5:
     form-data "^4.0.0"
     proxy-from-env "^1.1.0"
 
-babel-jest@30.2.0, babel-jest@^30.0.0:
+babel-jest@30.2.0:
   version "30.2.0"
   resolved "https://registry.yarnpkg.com/babel-jest/-/babel-jest-30.2.0.tgz#fd44a1ec9552be35ead881f7381faa7d8f3b95ac"
   integrity sha512-0YiBEOxWqKkSQWL9nNGGEgndoeL0ZpWrbLMNL5u/Kaxrli3Eaxlt3ZtIDktEvXt4L/R9r3ODr2zKwGM/2BjxVw==
