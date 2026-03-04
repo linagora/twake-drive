@@ -177,7 +177,7 @@ describe('FolderPickerTopbar', () => {
     })
     fireEvent.click(addFolderButton)
     waitFor(() => {
-      expect(showFolderCreation).toBeCalled()
+      expect(showFolderCreation).toHaveBeenCalled()
     })
   })
 
