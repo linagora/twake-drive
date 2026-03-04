@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Scribe Live AI
 status: active
-last_updated: "2026-03-03T23:11:35.243Z"
+last_updated: "2026-03-04T22:35:23.462Z"
 progress:
   total_phases: 3
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # Project State
@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-03)
 
 **Core value:** La chaine de communication complete -- depuis la selection de texte dans OnlyOffice jusqu'a la reinjection du texte modifie par l'IA -- de bout en bout, transparente pour l'utilisateur.
-**Current focus:** Phase 7 -- Real AI Integration (replace mock with live LLM calls)
+**Current focus:** Phase 8 -- Error Handling (graceful error states with retry)
 
 ## Current Position
 
-Phase: 7 of 9 (Real AI Integration)
-Plan: 1 of 2 in current phase
-Status: Executing
-Last activity: 2026-03-03 -- Completed 07-01 scribeAI module
+Phase: 8 of 9 (Error Handling)
+Plan: 0 of ? in current phase (planning not started)
+Status: Phase 7 complete, Phase 8 next
+Last activity: 2026-03-04 -- Completed 07-02 ScribePopover wiring
 
-Progress: [█████░░░░░] 50%
+Progress: [███████░░░] 67%
 
 ## Performance Metrics
 
@@ -43,6 +43,7 @@ Progress: [█████░░░░░] 50%
 | v1.0 phases 1-6 | 10 | ~30h | ~3h |
 | v2.0 phases 7-9 | - | - | - |
 | Phase 07 P01 | 1min | 1 tasks | 1 files |
+| Phase 07 P02 | 5min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -56,6 +57,8 @@ All decisions logged in PROJECT.md Key Decisions table.
 - 07-01: Use fetchJSON directly instead of chatCompletion() for AbortController signal support
 - 07-01: Defensive response extraction (response.content || response.choices[0].message.content)
 - 07-01: Loading messages via lookup map of known labels to gerund forms
+- [Phase 07]: 07-02: Removed system role from messages -- RAG backend does not support it; system prompt prepended to user message
+- [Phase 07]: 07-02: Added temperature: 0.3 to chat completions request (required by cozy-stack AI endpoint)
 
 ### Pending Todos (carried from v1.0)
 
@@ -73,6 +76,6 @@ All decisions logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-03-03
-Stopped at: Completed 07-01-PLAN.md (scribeAI module)
+Last session: 2026-03-04
+Stopped at: Completed 07-02-PLAN.md (ScribePopover wired to real AI)
 Resume file: None

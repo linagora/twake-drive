@@ -23,7 +23,7 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 
 ### v2.0 Scribe Live AI
 
-- [ ] **Phase 7: Real AI Integration** — Replace mock transforms with live LLM calls via cozy-stack, with loading feedback and cancellation
+- [x] **Phase 7: Real AI Integration** — Replace mock transforms with live LLM calls via cozy-stack, with loading feedback and cancellation
 - [ ] **Phase 8: Error Handling** — Graceful error states with retry for transient failures and clear messages for permanent ones
 - [ ] **Phase 9: Internationalization** — All Scribe UI strings through cozy-ui i18n with full locale coverage
 
@@ -42,8 +42,8 @@ Full details: `.planning/milestones/v1.0-ROADMAP.md`
 **Plans**: 2 plans
 
 Plans:
-- [ ] 07-01-PLAN.md — Create scribeAI module (API call wrapper, prompt builder, loading messages)
-- [ ] 07-02-PLAN.md — Wire ScribePopover to scribeAI with loading UI and cancellation
+- [x] 07-01-PLAN.md — Create scribeAI module (API call wrapper, prompt builder, loading messages)
+- [x] 07-02-PLAN.md — Wire ScribePopover to scribeAI with loading UI and cancellation
 
 ### Phase 8: Error Handling
 **Goal**: User receives clear, actionable feedback when AI requests fail, with retry for transient errors
@@ -84,6 +84,6 @@ Plans:
 | 4. End-to-End Actions | v1.0 | 0/0 | Complete | 2026-03-01 |
 | 5. Bouton Scribe flottant | v1.0 | 2/2 | Complete | 2026-03-03 |
 | 6. Affinement UI/UX | v1.0 | 2/2 | Complete | 2026-03-03 |
-| 7. Real AI Integration | v2.0 | 0/2 | Planning complete | - |
+| 7. Real AI Integration | v2.0 | 2/2 | Complete | 2026-03-04 |
 | 8. Error Handling | v2.0 | 0/? | Not started | - |
 | 9. Internationalization | v2.0 | 0/? | Not started | - |
