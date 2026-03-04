@@ -74,7 +74,6 @@
     "mockdate": "^3.0.5",
     "npm-run-all2": "5.0.0",
     "prettier": "2.8.8",
-    "react-test-renderer": "18.2.0",
     "rsbuild-config-cozy-app": "^0.7.1",
     "stylint": "1.5.9",
     "stylus-config-cozy-app": "^0.1.0",
