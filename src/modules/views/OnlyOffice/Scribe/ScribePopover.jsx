@@ -8,7 +8,7 @@ import Typography from 'cozy-ui/transpiled/react/Typography'
 import { useClient } from 'cozy-client'
 
 import { ScribeActionMenu } from '@/modules/views/OnlyOffice/Scribe/ScribeActionMenu'
-import { callScribeAI, buildMessages, deriveLoadingMessage } from '@/modules/views/OnlyOffice/Scribe/scribeAI'
+import { callScribeAI, buildMessages, deriveLoadingMessage, classifyScribeError } from '@/modules/views/OnlyOffice/Scribe/scribeAI'
 import { ScribeResultPanel } from '@/modules/views/OnlyOffice/Scribe/ScribeResultPanel'
 import styles from '@/modules/views/OnlyOffice/Scribe/scribe.styl'
 
@@ -33,15 +33,17 @@ const ScribePopover = ({ open, selectedText, onReplace, onInsert, onCancel }) =>
   const abortRef = useRef(null)
 
   const [step, setStep] = useState('menu') // 'menu' | 'loading' | 'result'
-  const [result, setResult] = useState({ text: '', breadcrumb: '', error: '' })
+  const [result, setResult] = useState({ text: '', breadcrumb: '', error: '', canRetry: false })
   const [loadingMessage, setLoadingMessage] = useState('')
+  const [lastAction, setLastAction] = useState(null)
 
   // Reset to menu state when popover opens with new intent
   useEffect(() => {
     if (open) {
       setStep('menu')
-      setResult({ text: '', breadcrumb: '', error: '' })
+      setResult({ text: '', breadcrumb: '', error: '', canRetry: false })
       setLoadingMessage('')
+      setLastAction(null)
       if (abortRef.current) {
         abortRef.current.abort()
         abortRef.current = null
@@ -63,10 +65,13 @@ const ScribePopover = ({ open, selectedText, onReplace, onInsert, onCancel }) =>
    */
   const handleActionSelect = useCallback(
     async (actionId, label, breadcrumb) => {
+      // Store action params for retry
+      setLastAction({ actionId, label, breadcrumb })
+
       // 1. Transition to loading
       setStep('loading')
       setLoadingMessage(deriveLoadingMessage(actionId, label))
-      setResult({ text: '', breadcrumb, error: '' })
+      setResult({ text: '', breadcrumb, error: '', canRetry: false })
 
       // 2. Create AbortController
       const controller = new AbortController()
@@ -79,15 +84,16 @@ const ScribePopover = ({ open, selectedText, onReplace, onInsert, onCancel }) =>
         const text = await callScribeAI(client, messages, { signal: controller.signal })
 
         // 4. Show result
-        setResult({ text, breadcrumb, error: '' })
+        setResult({ text, breadcrumb, error: '', canRetry: false })
         setStep('result')
       } catch (err) {
         if (err.name === 'AbortError') {
           // User closed popover during loading — do nothing
           return
         }
-        // Show error in result panel (Phase 7: simple inline error, Phase 8 adds retry)
-        setResult({ text: '', breadcrumb, error: 'No result received. Try again.' })
+        // Classify error for user-facing message and retry eligibility
+        const classified = classifyScribeError(err)
+        setResult({ text: '', breadcrumb, error: classified.message, canRetry: classified.canRetry })
         setStep('result')
       } finally {
         if (abortRef.current === controller) {
@@ -113,6 +119,12 @@ const ScribePopover = ({ open, selectedText, onReplace, onInsert, onCancel }) =>
   const handleInsert = useCallback(() => {
     onInsert(result.text)
   }, [result.text, onInsert])
+
+  const handleRetry = useCallback(() => {
+    if (lastAction) {
+      handleActionSelect(lastAction.actionId, lastAction.label, lastAction.breadcrumb)
+    }
+  }, [lastAction, handleActionSelect])
 
   const menuRef = useRef(null)
   const loadingRef = useRef(null)
@@ -163,7 +175,10 @@ const ScribePopover = ({ open, selectedText, onReplace, onInsert, onCancel }) =>
       {step === 'result' && (
         <ScribeResultPanel
           breadcrumb={result.breadcrumb}
-          resultText={result.error || result.text}
+          resultText={result.text}
+          error={result.error}
+          canRetry={result.canRetry}
+          onRetry={handleRetry}
           onReplace={handleReplace}
           onInsert={handleInsert}
           onClose={handleClose}

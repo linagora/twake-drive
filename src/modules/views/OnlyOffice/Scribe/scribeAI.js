@@ -4,7 +4,7 @@
  * Calls POST /ai/v1/chat/completions via client.stackClient.fetchJSON() directly
  * (not chatCompletion()) to support AbortController signal for request cancellation.
  *
- * Exports: callScribeAI, buildMessages, deriveLoadingMessage, SYSTEM_PROMPT
+ * Exports: callScribeAI, buildMessages, deriveLoadingMessage, classifyScribeError, SYSTEM_PROMPT
  */
 
 import {
@@ -182,4 +182,67 @@ export function deriveLoadingMessage(actionId, label) {
 
   // Fallback: use label directly with ellipsis
   return `${label}...`
+}
+
+/**
+ * Classify a Scribe AI error into a user-facing message and retry eligibility.
+ *
+ * @param {Error} err - The error thrown by callScribeAI
+ * @returns {{ message: string, canRetry: boolean }}
+ */
+export function classifyScribeError(err) {
+  // AbortError: user cancelled — handled upstream, safety catch
+  if (err.name === 'AbortError') {
+    return { message: '', canRetry: false }
+  }
+
+  // FetchError from cozy-stack-client (check by name, not instanceof)
+  if (err.name === 'FetchError' && typeof err.status === 'number') {
+    if (err.status === 401 || err.status === 403) {
+      return {
+        message: 'Authorization error. Please check your Cozy permissions.',
+        canRetry: false
+      }
+    }
+    if (err.status === 429) {
+      return {
+        message: 'Too many requests. Please wait a moment and try again.',
+        canRetry: true
+      }
+    }
+    if (err.status >= 500) {
+      return {
+        message: 'The AI service is temporarily unavailable. Please try again.',
+        canRetry: true
+      }
+    }
+    return {
+      message: 'Something went wrong. Please try again later.',
+      canRetry: false
+    }
+  }
+
+  // Network errors (TypeError or fetch failure messages)
+  if (
+    err instanceof TypeError ||
+    (err.message &&
+      (err.message.includes('Failed to fetch') ||
+        err.message.includes('Network request failed')))
+  ) {
+    return {
+      message: 'Network error. Check your connection and try again.',
+      canRetry: true
+    }
+  }
+
+  // Empty response from AI
+  if (err.message === 'Empty response from AI') {
+    return { message: 'No result received. Please try again.', canRetry: true }
+  }
+
+  // Default: unexpected error, allow retry
+  return {
+    message: 'An unexpected error occurred. Please try again.',
+    canRetry: true
+  }
 }
