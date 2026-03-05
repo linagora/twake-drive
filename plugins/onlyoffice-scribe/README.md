@@ -14,7 +14,7 @@ Cozy Stack (window.top)
 
 **Communication flow:**
 1. User selects text → plugin detects via `initOnSelectionChanged`
-2. User triggers Scribe (toolbar button, Ctrl+K, or context menu) → plugin sends `AI_TEXT_EDIT` intent via `postMessage`
+2. User triggers Scribe (toolbar button, Ctrl+I, or context menu) → plugin sends `AI_TEXT_EDIT` intent via `postMessage`
 3. CozyBridge in Cozy Drive receives intent → opens ScribePopover
 4. User clicks Replace/Insert/Cancel → response sent back to plugin
 5. Plugin modifies document via `PasteText` (replace) or `InsertContent` (insert)
@@ -56,21 +56,35 @@ office:
 
 > The secret is hardcoded in `scripts/oo-dev-setup.sh`. The script re-applies it on every run.
 
-### 3. Build and Start
+### 3. Enable the Scribe feature flag
+
+Scribe is gated behind a feature flag. Enable it for your dev instance:
+
+```bash
+cozy-stack features flags '{"drive.scribe.enabled": true}' --domain alice.localhost:8080
+```
+
+Or enable it for all instances on the stack:
+
+```bash
+cozy-stack features defaults '{"drive.scribe.enabled": true}'
+```
+
+### 4. Build and Start
 
 ```bash
 yarn build
 cozy-stack serve --appdir drive:./build/ --disable-csp
 ```
 
-### 4. Test
+### 5. Test
 
 1. Open http://alice.localhost:8080/
 2. Open a `.docx` file
 3. Select text in the document
 4. Trigger Scribe via one of:
    - **Toolbar button**: click "Scribe" in the Plugins tab
-   - **Keyboard shortcut**: Ctrl+K (or Cmd+K on Mac)
+   - **Keyboard shortcut**: Ctrl+I (or Cmd+I on Mac)
    - **Context menu**: right-click → "Scribe"
 5. The Scribe popover should appear with action choices, then Replace / Insert After / Cancel buttons
 
