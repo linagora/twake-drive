@@ -49,6 +49,13 @@ const ScribePopover = ({ open, selectedText, onReplace, onInsert, onCancel }) =>
     }
   }, [open])
 
+  // Focus the loading panel when step transitions to 'loading'
+  useEffect(() => {
+    if (step === 'loading' && loadingRef.current) {
+      loadingRef.current.focus()
+    }
+  }, [step])
+
   /**
    * Handle action selection from the menu.
    * Calls callScribeAI with real prompts, shows loading state, transitions to 'result'.
@@ -108,6 +115,7 @@ const ScribePopover = ({ open, selectedText, onReplace, onInsert, onCancel }) =>
   }, [result.text, onInsert])
 
   const menuRef = useRef(null)
+  const loadingRef = useRef(null)
 
   const handleEntered = useCallback(() => {
     // Blur the OO iframe to release focus, then focus the menu
@@ -145,7 +153,7 @@ const ScribePopover = ({ open, selectedText, onReplace, onInsert, onCancel }) =>
         <ScribeActionMenu ref={menuRef} onSelect={handleActionSelect} onClose={handleClose} selectedText={selectedText} />
       )}
       {step === 'loading' && (
-        <Paper className={styles['scribe-loading-panel']} elevation={0}>
+        <Paper ref={loadingRef} tabIndex={-1} className={styles['scribe-loading-panel']} elevation={0} style={{ outline: 'none' }}>
           <Spinner size="large" />
           <Typography variant="body2" color="textSecondary" className={styles['scribe-loading-message']}>
             {loadingMessage}
