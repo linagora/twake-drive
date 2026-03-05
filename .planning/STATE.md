@@ -25,7 +25,7 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 Phase: 8 of 9 (Error Handling)
 Plan: 0 of ? in current phase (planning not started)
 Status: Phase 7 complete, Phase 8 next
-Last activity: 2026-03-04 -- Completed 07-02 ScribePopover wiring
+Last activity: 2026-03-05 - Completed quick task 2: Feature flag for Scribe
 
 Progress: [███████░░░] 67%
 
@@ -73,6 +73,12 @@ All decisions logged in PROJECT.md Key Decisions table.
 - No cozy-stack modifications -- frontend only
 - InsertContent replaces selection (workaround in place)
 - OO caches plugin config at container startup -- must recreate container after config changes
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 2 | Feature flag for Scribe | 2026-03-05 | 2057cc9dc | [2-feature-flag-for-scribe](./quick/2-feature-flag-for-scribe/) |
 
 ## Session Continuity
 
