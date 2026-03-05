@@ -5,6 +5,7 @@ import { useTheme } from 'cozy-ui/transpiled/react/styles'
 import Buttons from 'cozy-ui/transpiled/react/Buttons'
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import CrossIcon from 'cozy-ui/transpiled/react/Icons/Cross'
+import SyncIcon from 'cozy-ui/transpiled/react/Icons/Sync'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
 import Paper from 'cozy-ui/transpiled/react/Paper'
 import Typography from 'cozy-ui/transpiled/react/Typography'
@@ -14,12 +15,19 @@ import styles from '@/modules/views/OnlyOffice/Scribe/scribe.styl'
 /**
  * ScribeResultPanel - Step 2 of the Scribe two-step flow.
  *
- * Focus is trapped between Insert, Replace and Close (X) buttons.
+ * Displays either the AI-transformed text (success) or an error message.
+ * In error state, Insert/Replace buttons are hidden to prevent inserting error text.
+ * A Retry button is shown for transient (retryable) errors.
+ *
+ * Focus is trapped between the available action buttons.
  * Tab/Shift+Tab and Arrow keys cycle through them.
  */
 const ScribeResultPanel = ({
   breadcrumb,
   resultText,
+  error,
+  canRetry,
+  onRetry,
   onReplace,
   onInsert,
   onClose
@@ -28,18 +36,33 @@ const ScribeResultPanel = ({
   const insertRef = useRef(null)
   const replaceRef = useRef(null)
   const closeRef = useRef(null)
+  const retryRef = useRef(null)
 
-  // Order: Insert → Replace → Close → Insert ...
-  const getFocusables = useCallback(
-    () => [insertRef.current, replaceRef.current, closeRef.current].filter(Boolean),
-    []
-  )
+  // Return the focusable buttons based on current state
+  const getFocusables = useCallback(() => {
+    if (error && canRetry) {
+      return [retryRef.current, closeRef.current].filter(Boolean)
+    }
+    if (error) {
+      return [closeRef.current].filter(Boolean)
+    }
+    return [insertRef.current, replaceRef.current, closeRef.current].filter(
+      Boolean
+    )
+  }, [error, canRetry])
 
+  // Auto-focus the appropriate button on mount
   useEffect(() => {
     setTimeout(() => {
-      if (insertRef.current) insertRef.current.focus()
+      if (error && canRetry && retryRef.current) {
+        retryRef.current.focus()
+      } else if (error && closeRef.current) {
+        closeRef.current.focus()
+      } else if (insertRef.current) {
+        insertRef.current.focus()
+      }
     }, 50)
-  }, [])
+  }, [error, canRetry])
 
   const handleKeyDown = useCallback(
     e => {
@@ -80,14 +103,38 @@ const ScribeResultPanel = ({
 
       <div
         className={styles['scribe-result-text']}
-        style={{ backgroundColor: theme.palette.action.hover }}
+        style={{
+          backgroundColor: theme.palette.action.hover,
+          ...(error ? { color: theme.palette.error.main } : {})
+        }}
       >
-        {resultText}
+        {error || resultText}
       </div>
 
       <div className={styles['scribe-result-actions']}>
-        <Buttons ref={replaceRef} variant="text" label="Replace" onClick={onReplace} />
-        <Buttons ref={insertRef} label="Inserer" onClick={onInsert} />
+        {error ? (
+          <>
+            {canRetry && onRetry && (
+              <Buttons
+                ref={retryRef}
+                variant="text"
+                label="Retry"
+                startIcon={<Icon icon={SyncIcon} />}
+                onClick={onRetry}
+              />
+            )}
+          </>
+        ) : (
+          <>
+            <Buttons
+              ref={replaceRef}
+              variant="text"
+              label="Replace"
+              onClick={onReplace}
+            />
+            <Buttons ref={insertRef} label="Inserer" onClick={onInsert} />
+          </>
+        )}
       </div>
     </Paper>
   )
@@ -96,9 +143,18 @@ const ScribeResultPanel = ({
 ScribeResultPanel.propTypes = {
   breadcrumb: PropTypes.string.isRequired,
   resultText: PropTypes.string.isRequired,
+  error: PropTypes.string,
+  canRetry: PropTypes.bool,
+  onRetry: PropTypes.func,
   onReplace: PropTypes.func.isRequired,
   onInsert: PropTypes.func.isRequired,
   onClose: PropTypes.func.isRequired
+}
+
+ScribeResultPanel.defaultProps = {
+  error: '',
+  canRetry: false,
+  onRetry: undefined
 }
 
 export { ScribeResultPanel }
