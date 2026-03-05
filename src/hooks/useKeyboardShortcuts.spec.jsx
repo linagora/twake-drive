@@ -65,11 +65,10 @@ jest.mock('cozy-sharing', () => ({
   withLocales: component => component
 }))
 
-import { useI18n } from 'twake-i18n'
-
 import { isFile } from 'cozy-client/dist/models/file'
 import flag from 'cozy-flags'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
+import { useI18n } from 'twake-i18n'
 
 import { shouldBlockKeyboardShortcuts, normalizeKey } from './helpers'
 import { useKeyboardShortcuts } from './useKeyboardShortcuts.tsx'

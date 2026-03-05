@@ -184,7 +184,7 @@ const useShiftSelection = (
     container.focus()
 
     container.addEventListener('keydown', handleKeyDown)
-    return () => {
+    return (): void => {
       container.removeEventListener('keydown', handleKeyDown)
     }
   }, [isMobile, ref, handleKeyDown])

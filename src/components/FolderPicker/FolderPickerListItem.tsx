@@ -1,6 +1,5 @@
 import { filesize } from 'filesize'
 import React, { FC } from 'react'
-import { useI18n } from 'twake-i18n'
 
 import { isDirectory } from 'cozy-client/dist/models/file'
 import Divider from 'cozy-ui/transpiled/react/Divider'
@@ -8,6 +7,7 @@ import ListItem from 'cozy-ui/transpiled/react/ListItem'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
+import { useI18n } from 'twake-i18n'
 
 import styles from '@/styles/folder-picker.styl'
 

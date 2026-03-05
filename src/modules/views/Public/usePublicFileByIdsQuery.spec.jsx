@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { renderHook } from '@testing-library/react'
 
 import { useClient } from 'cozy-client'

@@ -24,7 +24,7 @@ const useUpdateFavicon = (
       originalFaviconUrlRef.current = originalFavicon.href
     }
 
-    return () => {
+    return (): void => {
       const originalUrl = originalFaviconUrlRef.current
 
       if (originalUrl) {

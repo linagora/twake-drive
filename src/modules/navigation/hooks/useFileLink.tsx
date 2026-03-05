@@ -56,7 +56,7 @@ const useFileLink = (
   const isOfficeEnabled = computeOfficeEnabled(isDesktop)
   const { isPublic } = usePublicContext()
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   const cozyUrl = client?.getStackClient().uri as string
 
   const type = computeFileType(file, {

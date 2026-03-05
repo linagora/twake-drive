@@ -1,6 +1,5 @@
 import React, { FC } from 'react'
 import { useDispatch } from 'react-redux'
-import { useI18n } from 'twake-i18n'
 
 import { useClient } from 'cozy-client'
 import { useVaultClient } from 'cozy-keys-lib'
@@ -11,6 +10,7 @@ import ListItem from 'cozy-ui/transpiled/react/ListItem'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
+import { useI18n } from 'twake-i18n'
 
 import FilenameInput from '@/modules/filelist/FilenameInput'
 import { createFolder } from '@/modules/navigation/duck'

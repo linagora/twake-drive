@@ -7,7 +7,7 @@ interface ThumbnailSizeContextProps {
 
 const ThumbnailSizeContext = createContext<ThumbnailSizeContextProps>({
   isBigThumbnail: false,
-  toggleThumbnailSize: () => {} // eslint-disable-line @typescript-eslint/no-empty-function
+  toggleThumbnailSize: () => {}
 })
 
 const ThumbnailSizeContextProvider: React.FC = ({ children }) => {
