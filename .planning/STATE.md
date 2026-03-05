@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-03-03)
 ## Current Position
 
 Phase: 8 of 9 (Error Handling)
-Plan: 0 of ? in current phase (planning not started)
-Status: Phase 7 complete, Phase 8 next
-Last activity: 2026-03-05 - Completed quick task 2: Feature flag for Scribe
+Plan: 1 of 1 in current phase (plan 01 complete)
+Status: Phase 8 Plan 01 complete
+Last activity: 2026-03-06 - Completed 08-01 error classification and retry
 
-Progress: [███████░░░] 67%
+Progress: [████████░░] 78%
 
 ## Performance Metrics
 
@@ -44,6 +44,7 @@ Progress: [███████░░░] 67%
 | v2.0 phases 7-9 | - | - | - |
 | Phase 07 P01 | 1min | 1 tasks | 1 files |
 | Phase 07 P02 | 5min | 2 tasks | 3 files |
+| Phase 08 P01 | 2min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -59,6 +60,8 @@ All decisions logged in PROJECT.md Key Decisions table.
 - 07-01: Loading messages via lookup map of known labels to gerund forms
 - [Phase 07]: 07-02: Removed system role from messages -- RAG backend does not support it; system prompt prepended to user message
 - [Phase 07]: 07-02: Added temperature: 0.3 to chat completions request (required by cozy-stack AI endpoint)
+- [Phase 08]: 08-01: Duck-typed FetchError detection (err.name === 'FetchError') for cross-module error classification
+- [Phase 08]: 08-01: Used Sync icon from cozy-ui for Retry button (Renew not available)
 
 ### Pending Todos (carried from v1.0)
 
@@ -82,6 +85,6 @@ All decisions logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-03-04
-Stopped at: Completed 07-02-PLAN.md (ScribePopover wired to real AI)
+Last session: 2026-03-06
+Stopped at: Completed 08-01-PLAN.md (error classification, retry, error UI)
 Resume file: None

@@ -20,9 +20,9 @@ Requirements for milestone v2.0 Scribe Live AI. Each maps to roadmap phases.
 
 ### Error Handling
 
-- [ ] **ERR-01**: User sees clear error message when API call fails (network error, server error, timeout)
-- [ ] **ERR-02**: User can retry after a transient error (429 rate limit, 500 server error, network)
-- [ ] **ERR-03**: User sees appropriate non-retryable message for auth/config errors (401, 403)
+- [x] **ERR-01**: User sees clear error message when API call fails (network error, server error, timeout)
+- [x] **ERR-02**: User can retry after a transient error (429 rate limit, 500 server error, network)
+- [x] **ERR-03**: User sees appropriate non-retryable message for auth/config errors (401, 403)
 
 ### Internationalization
 
@@ -74,9 +74,9 @@ Deferred to v2.x or later. Tracked but not in current roadmap.
 | API-03 | Phase 7 | Complete |
 | LOAD-01 | Phase 7 | Complete |
 | LOAD-02 | Phase 7 | Complete |
-| ERR-01 | Phase 8 | Pending |
-| ERR-02 | Phase 8 | Pending |
-| ERR-03 | Phase 8 | Pending |
+| ERR-01 | Phase 8 | Complete |
+| ERR-02 | Phase 8 | Complete |
+| ERR-03 | Phase 8 | Complete |
 | I18N-01 | Phase 9 | Pending |
 | I18N-02 | Phase 9 | Pending |
 | I18N-03 | Phase 9 | Pending |
