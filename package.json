@@ -13,6 +13,7 @@
     "lint:styles": "stylint src --config ./node_modules/stylus-config-cozy-app/.stylintrc",
     "lint:js": "eslint '{src,test}/**/*.{js,jsx,ts,tsx}'",
     "test": "env NODE_ENV='test' jest",
+    "build:scribe-plugin": "./scripts/build-scribe-plugin.sh",
     "service": "yarn cozy-konnector-dev -m ./manifest.webapp"
   },
   "repository": {

@@ -178,6 +178,46 @@ The plugin is 2 iframes deep (OO editor + plugin). `window.top.postMessage()` re
 
 All plugin code (`code.js`) must use ES5 syntax (`var`, `function`, no arrow functions). The only ES6 feature used is `Promise` (a runtime API, not syntax), guarded by `typeof Promise !== "undefined"`.
 
+## Production Deployment
+
+### 1. Build and deploy the plugin
+
+```bash
+yarn build:scribe-plugin
+scp -r build-scribe-OO-plugin/ user@oo-server:/var/www/onlyoffice/documentserver/sdkjs-plugins/scribe/
+```
+
+Then restart the docservice on the OO server so it picks up the new plugin:
+
+```bash
+supervisorctl restart ds:docservice
+```
+
+### 2. Enable the feature flag on cozy-stack
+
+The plugin is installed but invisible until the flag is enabled:
+
+```bash
+# For all instances
+cozy-stack features defaults '{"drive.scribe.enabled": true}'
+
+# Or for a specific instance
+cozy-stack features flags '{"drive.scribe.enabled": true}' --domain myinstance.example.com
+```
+
+### 3. Verify the AI backend
+
+The cozy-stack must have a RAG/AI backend configured in `cozy.yml`:
+
+```yaml
+rag:
+  default:
+    url: https://your-rag-server.example.com
+    api_key: your_api_key
+```
+
+Without this, Scribe API calls (`POST /ai/v1/chat/completions`) will fail.
+
 ## Common Commands
 
 ```bash
