@@ -54,9 +54,11 @@ const PublicNoteRedirect: FC = () => {
     }
   }, [fileId, driveId, client])
 
-  if (noteUrl) {
-    window.location.href = noteUrl
-  }
+  useEffect(() => {
+    if (noteUrl) {
+      window.location.href = noteUrl
+    }
+  }, [noteUrl])
 
   return (
     <DummyLayout>

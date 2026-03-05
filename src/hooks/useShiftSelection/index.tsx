@@ -53,7 +53,9 @@ const useShiftSelection = (
   const { isMobile } = useBreakpoints()
 
   const itemsRef = useRef<IOCozyFile[]>([])
-  itemsRef.current = useMemo(() => items, [items])
+  useEffect(() => {
+    itemsRef.current = items
+  }, [items])
 
   const { selectedItems, setSelectedItems, isItemSelected, setIsSelectAll } =
     useSelectionContext()
@@ -64,9 +66,9 @@ const useShiftSelection = (
 
   const lastInteractedIdx = useMemo(() => {
     return lastInteractedItem
-      ? itemsRef.current.findIndex(item => item._id === lastInteractedItem)
+      ? items.findIndex(item => item._id === lastInteractedItem)
       : 0
-  }, [lastInteractedItem])
+  }, [lastInteractedItem, items])
 
   const selectedItemMap: SelectedItems = useMemo(() => {
     return selectedItems.reduce<SelectedItems>(
