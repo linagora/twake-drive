@@ -54,10 +54,10 @@ Plans:
   2. User can tap "Retry" after a transient error (429 rate limit, 500, network) and the request re-fires
   3. User sees a non-retryable message for auth/config errors (401, 403) without a retry button
   4. Error state does not break the popover — user can close and start a new action normally
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 08-01: TBD
+- [ ] 08-01-PLAN.md — Error classification, retry logic, and error UI in result panel
 
 ### Phase 9: Internationalization
 **Goal**: All Scribe UI text is translated via cozy-ui i18n for every supported locale
@@ -85,5 +85,5 @@ Plans:
 | 5. Bouton Scribe flottant | v1.0 | 2/2 | Complete | 2026-03-03 |
 | 6. Affinement UI/UX | v1.0 | 2/2 | Complete | 2026-03-03 |
 | 7. Real AI Integration | v2.0 | 2/2 | Complete | 2026-03-04 |
-| 8. Error Handling | v2.0 | 0/? | Not started | - |
+| 8. Error Handling | v2.0 | 0/1 | Planning complete | - |
 | 9. Internationalization | v2.0 | 0/? | Not started | - |
