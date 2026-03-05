@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types'
 import React, { useEffect, useCallback, useMemo, useState } from 'react'
 
+import flag from 'cozy-flags'
 import Spinner from 'cozy-ui/transpiled/react/Spinner'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
@@ -24,6 +25,7 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
 
   const { isEditorReady, isReadOnly, isTrashed } = useOnlyOfficeContext()
   const { isMobile, isDesktop } = useBreakpoints()
+  const isScribeEnabled = flag('drive.scribe.enabled')
 
   // cozy-bridge: listen for Scribe intents from OO plugin
   // In dev, allow all origins. In production, derive from serverUrl/instance.
@@ -129,17 +131,21 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
         <div id="onlyOfficeEditor" />
         <OnlyOfficeAIAssistantPanel />
       </div>
-      <ScribeFloatingButton
-        visible={!!showScribeButton && !pendingIntent}
-        onClick={triggerScribe}
-      />
-      <ScribePopover
-        open={!!pendingIntent}
-        selectedText={pendingIntent?.data?.text || ''}
-        onReplace={handleReplace}
-        onInsert={handleInsert}
-        onCancel={handleCancel}
-      />
+      {isScribeEnabled && (
+        <>
+          <ScribeFloatingButton
+            visible={!!showScribeButton && !pendingIntent}
+            onClick={triggerScribe}
+          />
+          <ScribePopover
+            open={!!pendingIntent}
+            selectedText={pendingIntent?.data?.text || ''}
+            onReplace={handleReplace}
+            onInsert={handleInsert}
+            onCancel={handleCancel}
+          />
+        </>
+      )}
       {showReadOnlyFab && <ReadOnlyFab />}
     </>
   )
