@@ -41,15 +41,13 @@ else
   echo "  Plugin mount: ${PLUGIN_HOST_PATH} -> ${PLUGIN_CONTAINER_PATH}"
   echo ""
 
-  # Detect Docker gateway IP for host access from container
-  # --add-host is required because .localhost domains are resolved to 127.0.0.1
-  # by libcurl/Node.js per RFC 6761, ignoring /etc/hosts entries.
-  GATEWAY_IP="172.17.0.1"
+  # Use --network=host so the container shares the host's network stack.
+  # This way ALL *.localhost subdomains (alice.localhost, alice2.localhost, etc.)
+  # resolve correctly without needing --add-host entries for each one.
 
   docker run -itd \
-    -p 80:80 \
+    --network=host \
     --name "${CONTAINER_NAME}" \
-    --add-host alice.localhost:"${GATEWAY_IP}" \
     -e JWT_ENABLED=false \
     -e DS_EXAMPLE_ENABLE=true \
     -e ALLOW_PRIVATE_IP_ADDRESS=true \
