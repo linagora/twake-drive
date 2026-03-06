@@ -52,11 +52,11 @@ Full details: `.planning/milestones/v2.0-ROADMAP.md`
   1. Quand l'utilisateur selectionne du texte gras/italique et declenche Scribe, le HTML formate est extrait (pas seulement le texte brut)
   2. Le HTML extrait arrive dans le composant Scribe de Cozy Drive via le protocole postMessage avec le champ format:"html"
   3. Si l'extraction HTML echoue (API indisponible, plugin incompatible), Scribe fonctionne normalement avec le texte brut comme avant
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 10-01: TBD
-- [ ] 10-02: TBD
+- [ ] 10-01-PLAN.md -- HTML extraction from OO with initDataType:"html", class stripping, and plain text fallback
+- [ ] 10-02-PLAN.md -- Protocol extension: add html/format fields to AI_TEXT_EDIT intents and pass through to React
 
 ### Phase 11: Pipeline de Conversion
 **Goal**: La conversion bidirectionnelle HTML/Markdown fonctionne pour tous les elements supportes
@@ -116,7 +116,7 @@ Phases execute in numeric order: 10, 11, 12, 13
 | 7. Real AI Integration | v2.0 | 2/2 | Complete | 2026-03-04 |
 | 8. Error Handling | v2.0 | 1/1 | Complete | 2026-03-05 |
 | 9. Internationalization | v2.0 | 2/2 | Complete | 2026-03-06 |
-| 10. Extraction Rich Text | v2.1 | 0/? | Not started | - |
+| 10. Extraction Rich Text | v2.1 | 0/2 | Planning | - |
 | 11. Pipeline de Conversion | v2.1 | 0/? | Not started | - |
 | 12. Preview Markdown | v2.1 | 0/? | Not started | - |
 | 13. Reinjection et Integrite Pipeline | v2.1 | 0/? | Not started | - |
