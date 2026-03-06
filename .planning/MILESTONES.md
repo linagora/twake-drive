@@ -1,5 +1,20 @@
 # Milestones
 
+## v2.0 Scribe Live AI (Shipped: 2026-03-06)
+
+**Phases completed:** 3 phases, 5 plans, 9 tasks
+**Timeline:** 3 days (2026-03-04 → 2026-03-06)
+**Commits:** 24 | **Files modified:** 39 (+3,392 / -131 lines)
+
+**Key accomplishments:**
+- Intégration LLM réelle — module scribeAI avec appels API via cozy-stack POST /ai/v1/chat/completions
+- Loading UX — machine d'état 3 étapes (menu/loading/result) avec spinner et annulation AbortController
+- Gestion d'erreurs — classifyScribeError avec retry pour erreurs transitoires, messages clairs pour erreurs permanentes
+- Couche i18n — 40 clés de traduction dans 5 locales (fr, en, de, es, it) avec pattern labelKey
+- Composants JSX i18n — les 6 composants Scribe utilisent t() — zéro chaîne hardcodée
+
+---
+
 ## v1.0 Scribe Interface Mock AI (Shipped: 2026-03-03)
 
 **Phases completed:** 6 phases, 10 plans

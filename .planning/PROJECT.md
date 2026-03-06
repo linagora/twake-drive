@@ -2,7 +2,7 @@
 
 ## What This Is
 
-Un assistant d'écriture IA intégré à OnlyOffice au sein de Cozy Drive. L'utilisateur sélectionne du texte dans l'éditeur, un bouton flottant Scribe apparaît, il choisit une action IA (réécriture, traduction, correction, prompt libre…), prévisualise le résultat dans un panneau adaptatif, puis remplace ou insère dans le document.
+Un assistant d'écriture IA intégré à OnlyOffice au sein de Cozy Drive. L'utilisateur sélectionne du texte dans l'éditeur, un bouton flottant Scribe apparaît, il choisit une action IA (réécriture, traduction, correction, prompt libre…), prévisualise le résultat dans un panneau adaptatif, puis remplace ou insère dans le document. Les appels IA passent par cozy-stack (format OpenAI), avec gestion d'erreurs et retry. L'interface est internationalisée (fr, en, de, es, it).
 
 ## Core Value
 
@@ -20,26 +20,23 @@ La chaîne de communication complète — depuis la sélection de texte dans Onl
 - ✓ Config déclarative SCRIBE_ACTIONS avec prompts AI par action — v1.0
 - ✓ Panneau de résultat adaptatif (fit-content, viewport-relative) — v1.0
 - ✓ Transformations mock fonctionnelles (préparation API réelle) — v1.0
+- ✓ Intégration API LLM via cozy-stack POST /ai/v1/chat/completions (format OpenAI) — v2.0
+- ✓ Loading UX avec indicateur visuel et annulation via AbortController — v2.0
+- ✓ Gestion d'erreurs API avec retry (429, 500, réseau) et messages clairs (401, 403) — v2.0
+- ✓ Internationalisation complète (fr, en, de, es, it) via twake-i18n — v2.0
 
 ### Active
 
-- [ ] Intégration API LLM via route existante cozy-stack POST /ai/v1/chat/completions (format OpenAI)
 - [ ] Streaming UX — affichage progressif token par token dans le panneau de résultat
 - [ ] Annulation en cours de stream
-- [ ] Gestion d'erreurs API (échecs, rate limits, erreurs réseau)
 - [ ] Fix dark theme (texte blanc sur blanc)
 - [ ] Désactivation du bouton flottant quand pas de sélection
 - [ ] Intégration menu contextuel
 
-## Current Milestone: v2.0 Scribe Live AI
+## Shipped: v2.0 Scribe Live AI (2026-03-06)
 
-**Goal:** Remplacer le mock AI par une intégration LLM réelle via la route existante cozy-stack, avec streaming UX et polish.
-
-**Target features:**
-- Appels à POST /ai/v1/chat/completions (format OpenAI, déjà disponible dans cozy-stack)
-- Streaming UX — tokens affichés progressivement via SSE, annulation mid-stream
-- Bug fixes — dark theme, bouton disable, menu contextuel
-- Gestion d'erreurs — échecs API, rate limits, dégradation gracieuse
+Intégration LLM réelle via cozy-stack, gestion d'erreurs avec retry, internationalisation 5 locales.
+3 phases, 5 plans, 24 commits. Voir `.planning/MILESTONES.md` pour le détail.
 
 **Repo unique:** `~/Dev-local/cozy-drive` — frontend uniquement, pas de modification cozy-stack
 
@@ -53,11 +50,11 @@ La chaîne de communication complète — depuis la sélection de texte dans Onl
 
 ## Context
 
-### Shipped v1.0
+### Shipped v2.0
 
-~1,610 LOC (1,207 React/Stylus + 403 OO plugin ES5).
-Tech stack : React 18 + MUI + cozy-ui, postMessage protocol, OO Plugin API, Docker dev env.
-4 jours de développement (2026-02-28 → 2026-03-03), 10 plans exécutés.
+~1,636 LOC Scribe module (React/Stylus + OO plugin ES5). 39 fichiers modifiés, +3,392 lignes.
+Tech stack : React 18 + MUI + cozy-ui + twake-i18n, cozy-stack AI proxy, postMessage protocol, OO Plugin API.
+v1.0 : 4 jours (2026-02-28 → 2026-03-03), 10 plans. v2.0 : 3 jours (2026-03-04 → 2026-03-06), 5 plans.
 
 ### Architecture à 3 couches (frame hierarchy)
 
@@ -75,7 +72,6 @@ Tech stack : React 18 + MUI + cozy-ui, postMessage protocol, OO Plugin API, Dock
 
 ### Risques ouverts
 
-- API backend LLM pas encore intégrée (mock uniquement)
 - Formatage riche (bold, italic) perdu lors de l'extraction/réinjection
 - OO dark theme pas systématiquement testé
 
@@ -98,6 +94,11 @@ Tech stack : React 18 + MUI + cozy-ui, postMessage protocol, OO Plugin API, Dock
 | SCRIBE_ACTIONS config déclarative | Source de vérité unique menu + prompts + transform | ✓ Good — extensibilité confirmée |
 | mockResult DSL string-based | Sérialisable, prêt pour stockage JSON futur | ✓ Good — transition API facile |
 | Plugin type "panel" pour le POC | Panneaux latéraux, non-bloquant | ⚠️ Revisit — bouton flottant a remplacé le panneau |
+| fetchJSON direct au lieu de chatCompletion() | Support AbortController signal | ✓ Good — annulation fiable |
+| Non-streaming pour v2.0 | Streaming déféré, simplifier l'intégration initiale | ✓ Good — fonctionnel, streaming en v2.x |
+| Duck-typed FetchError (err.name) | Détection cross-module sans import | ✓ Good — classification d'erreurs robuste |
+| labelKey pattern pour i18n | Actions déclaratives, résolution t() au render | ✓ Good — zéro chaîne hardcodée |
+| 5 locales européennes (fr, en, de, es, it) | Couverture utilisateurs Cozy principaux | ✓ Good — extensible |
 
 ---
-*Last updated: 2026-03-03 after v2.0 milestone start*
+*Last updated: 2026-03-06 after v2.0 milestone*
