@@ -15,6 +15,7 @@ import {
   FREE_PROMPT_CONFIG,
   buildTranslateChildren
 } from '@/modules/views/OnlyOffice/Scribe/scribeActions'
+import { htmlToMarkdown } from '@/modules/views/OnlyOffice/Scribe/scribeConversion'
 
 /**
  * System prompt framing Scribe as a writing assistant.
@@ -77,12 +78,15 @@ export function buildMessages(actionId, selectedText, label, extra) {
   // to avoid issues with RAG backends that may not support the system role
   const systemPrefix = SYSTEM_PROMPT + '\n\n'
 
+  // When HTML is available (v2.1 rich text pipeline), convert to Markdown for better LLM input
+  const textForPrompt = extra?.html ? htmlToMarkdown(extra.html) : selectedText
+
   // Free-prompt: wrap user instruction with guardrail template
   if (actionId === 'free-prompt') {
     return [
       {
         role: 'user',
-        content: `${systemPrefix}Apply the following instruction to the text below. Return only the modified text.\n\nInstruction: ${label}\n\nText: ${selectedText}`
+        content: `${systemPrefix}Apply the following instruction to the text below. Return only the modified text.\n\nInstruction: ${label}\n\nText: ${textForPrompt}`
       }
     ]
   }
@@ -94,13 +98,13 @@ export function buildMessages(actionId, selectedText, label, extra) {
     return [
       {
         role: 'user',
-        content: `${systemPrefix}${label}:\n\n${selectedText}`
+        content: `${systemPrefix}${label}:\n\n${textForPrompt}`
       }
     ]
   }
 
   let prompt = action.prompt
-  prompt = prompt.replace('{selectedText}', selectedText)
+  prompt = prompt.replace('{selectedText}', textForPrompt)
 
   // translate-custom: label contains the user-typed language name (Pitfall 5)
   if (actionId === 'translate-custom') {

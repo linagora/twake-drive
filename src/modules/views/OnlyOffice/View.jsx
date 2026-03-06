@@ -33,16 +33,6 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
   const { pendingIntent, showScribeButton, respond } =
     useCozyBridge(allowedOrigins)
 
-  // Temporary: log HTML extraction for Phase 10 verification
-  useEffect(() => {
-    if (pendingIntent?.data?.format === 'html') {
-      console.log(
-        '[Scribe] HTML received:',
-        pendingIntent.data.html?.substring(0, 200)
-      )
-    }
-  }, [pendingIntent])
-
   // Send trigger-intent to plugin iframe (nested inside OO editor iframe).
   // We broadcast to all descendant iframes so the message reaches the plugin.
   const triggerScribe = useCallback(() => {
