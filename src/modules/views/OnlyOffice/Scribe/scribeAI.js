@@ -22,7 +22,7 @@ import { htmlToMarkdown } from '@/modules/views/OnlyOffice/Scribe/scribeConversi
  * Prompt templates stay in English; output language handled by system prompt.
  */
 export const SYSTEM_PROMPT =
-  'You are a writing assistant. Return only the transformed text, no explanations or commentary. Respond in the same language as the input text.'
+  'You are a writing assistant. Return only the transformed text, no explanations or commentary. Preserve any Markdown formatting (bold, italic, lists, headings) present in the input. Respond in the same language as the input text.'
 
 /**
  * Search SCRIBE_ACTIONS (including children and dynamic translate children)

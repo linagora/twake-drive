@@ -131,21 +131,22 @@ docker exec "${CONTAINER_NAME}" supervisorctl start ds:example 2>/dev/null \
   || echo "Could not start example service. Try: docker exec ${CONTAINER_NAME} supervisorctl start ds:example"
 
 echo ""
-echo "=== Fixing Plugin File Ownership ==="
-# Docker changes ownership of mounted files to container's internal user.
-# Fix it so the host user can edit plugin files without sudo.
-docker exec "${CONTAINER_NAME}" chown -R "$(id -u):$(id -g)" "${PLUGIN_CONTAINER_PATH}" 2>/dev/null \
-  && echo "File ownership fixed." \
-  || echo "Could not fix ownership. Run: sudo chown -R \$(whoami):\$(whoami) plugins/onlyoffice-scribe/"
-# Remove .gz files created by OO (may contain stale cached versions)
-rm -f "${PLUGIN_HOST_PATH}"/*.gz "${PLUGIN_HOST_PATH}"/scripts/*.gz 2>/dev/null
-
-echo ""
 echo "=== Registering Scribe Plugin ==="
 docker exec "${CONTAINER_NAME}" bash -c \
   '/usr/bin/documentserver-pluginsmanager.sh --directory="/var/www/onlyoffice/documentserver/sdkjs-plugins" --update="/var/www/onlyoffice/documentserver/sdkjs-plugins/plugin-list-default.json"' \
   2>/dev/null \
   || echo "Plugin registration command failed. The plugin may still load -- try opening a document."
+
+echo ""
+echo "=== Fixing Plugin File Ownership ==="
+# Docker/OO changes ownership of mounted files to container's internal user.
+# Fix ownership AND permissions so the host user can always edit plugin files.
+# Runs AFTER plugin registration since OO may create/modify files during registration.
+docker exec "${CONTAINER_NAME}" bash -c "chown -R $(id -u):$(id -g) '${PLUGIN_CONTAINER_PATH}' && chmod -R a+rw '${PLUGIN_CONTAINER_PATH}'" 2>/dev/null \
+  && echo "File ownership and permissions fixed." \
+  || echo "Could not fix permissions. Run: sudo chown -R \$(whoami):\$(whoami) plugins/onlyoffice-scribe/"
+# Remove .gz files created by OO (may contain stale cached versions)
+rm -f "${PLUGIN_HOST_PATH}"/*.gz "${PLUGIN_HOST_PATH}"/scripts/*.gz 2>/dev/null
 
 echo ""
 echo "=== Setup Complete ==="

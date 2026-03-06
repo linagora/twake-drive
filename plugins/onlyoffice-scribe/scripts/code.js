@@ -208,7 +208,7 @@
   }
 
   window.Asc.plugin.init = function(data) {
-    log("init() called, html=" + (data ? data.substring(0, 80) : "(null)"));
+    log("init() called");
 
     // Add toolbar button on first init (API is ready at this point)
     if (!toolbarButtonAdded) {
