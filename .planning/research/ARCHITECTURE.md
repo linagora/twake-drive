@@ -1,921 +1,409 @@
-# Architecture: Anthropic Claude Integration into Cozy-Stack + Cozy-Drive
+# Architecture Patterns: Rich Text Formatting Preservation
 
-**Domain:** LLM API proxy integration + SSE streaming for writing assistant
-**Researched:** 2026-03-03
-**Confidence:** HIGH (existing code analyzed directly, Anthropic API docs verified, cozy-stack RAG patterns well-understood)
+**Domain:** Rich text extraction, Markdown conversion, and formatted reinsertion in a 3-layer iframe architecture
+**Researched:** 2026-03-06
 
-## Executive Summary
+## Recommended Architecture
 
-The integration follows a **proxy pattern** where cozy-stack acts as an intermediary between the cozy-drive frontend and the Anthropic Claude API. The existing `/ai` route group and `rag` model package already implement a nearly identical pattern for the RAGondin chatbot. Scribe v2.0 reuses this architecture with one critical difference: Scribe uses **direct SSE streaming** from cozy-stack to the browser (no realtime/WebSocket intermediary), because Scribe is a stateless text transformation -- not a persistent conversation.
+The rich text pipeline introduces a bidirectional conversion chain that flows through the existing postMessage protocol. The key architectural decision: **all conversion logic lives in the Cozy Drive React app**, not in the ES5 plugin. The plugin's role changes from "extract plain text" to "extract HTML" (a config change) and from "paste plain text" to "paste HTML" (a method change).
 
-## Existing Architecture (What We Have)
-
-### Current RAG Chat Flow (reference pattern)
+### High-Level Data Flow
 
 ```
-Browser (cozy-search)
-  |
-  | POST /ai/chat/conversations/:id  {q: "question"}
-  v
-cozy-stack (web/ai/ai.go)
-  |
-  | 1. Save user message to CouchDB
-  | 2. Push "rag-query" job to worker queue
-  v
-Job Worker (model/rag/chat.go)
-  |
-  | POST /v1/chat/completions  (to RAG server)
-  | Stream: SSE from RAG -> parse -> realtime events
-  v
-RAG Server (external)
-  |
-  | SSE stream: data: {"choices": [{"delta": {"content": "token"}}]}
-  v
-cozy-stack Realtime Hub
-  |
-  | WebSocket: io.cozy.ai.chat.events {object: "delta", content: "token", position: N}
-  v
-Browser (cozy-realtime plugin subscribes, updates UI)
+[OO Editor] --init(html)--> [Plugin iframe] --postMessage--> [CozyBridge/Cozy Drive]
+                                                                    |
+                                                              turndown(html->md)
+                                                                    |
+                                                              buildMessages(md)
+                                                                    |
+                                                              callScribeAI() --> LLM
+                                                                    |
+                                                              LLM returns markdown
+                                                                    |
+                                                              react-markdown for preview
+                                                              marked(md->html) for reinsertion
+                                                                    |
+                                                              respond({ html })
+                                                                    |
+[OO Editor] <--PasteHtml--- [Plugin iframe] <--postMessage-- [CozyBridge/Cozy Drive]
 ```
 
-**Key observation:** The RAG chat uses a **2-hop streaming architecture**:
-1. RAG server -> cozy-stack (SSE, parsed by `foreachSSE` in `chat.go`)
-2. cozy-stack -> browser (realtime WebSocket via `publishDelta`)
-
-This 2-hop pattern exists because RAG chat is **persistent** (stored in CouchDB) and **async** (job worker). Scribe does NOT need either.
-
-### Current cozy-stack AI Components
-
-| File | Purpose | Modify? |
-|------|---------|---------|
-| `web/ai/ai.go` | Route handlers: Chat, OpenAICompletion, ExecuteTool | **YES -- add ScribeCompletion** |
-| `model/rag/chat.go` | RAG chat logic, SSE parsing, realtime publishing | **NO -- reference only** |
-| `model/rag/index.go` | Document indexing for RAG | NO |
-| `pkg/config/config/config.go` | RAGServer struct (URL + APIKey) | **YES -- add AnthropicServer** |
-| `model/instance/instance.go` | `RAGServer()` method | **YES -- add AnthropicServer() method** |
-
-### Current Frontend Components
-
-| File | Purpose | Modify? |
-|------|---------|---------|
-| `ScribePopover.jsx` | Two-step state machine (menu -> result) | **YES -- add streaming state** |
-| `ScribeResultPanel.jsx` | Displays transformed text | **YES -- progressive text display** |
-| `ScribeActionMenu.jsx` | Action selection UI | NO |
-| `scribeActions.js` | Declarative action config (prompts, mockResults) | **Minor -- may remove mockResult** |
-| `mockTransform.js` | Mock transformation logic | **REPLACE with API call** |
-| `useCozyBridge.js` | PostMessage bridge for plugin comms | NO |
-
-## Recommended Architecture (What To Build)
-
-### Design Decision: Direct SSE vs Realtime WebSocket
-
-**Use direct SSE streaming** (cozy-stack -> browser), NOT the realtime WebSocket pattern.
-
-Rationale:
-- Scribe is **stateless**: no conversation history, no CouchDB persistence needed
-- Scribe is **synchronous**: user waits for result, no background jobs
-- SSE is simpler: one HTTP request/response, no WebSocket subscription setup
-- The existing `OpenAICompletion` handler already does direct streaming (`c.Stream()`)
-- Anthropic's API returns SSE natively -- cozy-stack just proxies it through
-
-The realtime pattern adds unnecessary complexity (CouchDB write, job queue, WebSocket subscription, event routing) for a simple text-in/text-out transformation.
-
-### End-to-End Data Flow
-
-```
-                           SCRIBE v2.0 DATA FLOW
-                           ======================
-
-Browser (cozy-drive)
-  |
-  | 1. User selects text, picks Scribe action
-  | 2. ScribePopover calls scribeTransform(actionId, selectedText)
-  |
-  | POST /ai/scribe/completions
-  | Headers: Authorization (cozy-stack session token)
-  | Body: {
-  |   "system": "You are a writing assistant...",
-  |   "prompt": "Rewrite in a professional tone:\n\nHello world",
-  |   "max_tokens": 4096,
-  |   "stream": true
-  | }
-  |
-  v
-cozy-stack (web/ai/ai.go -- NEW: ScribeCompletion handler)
-  |
-  | 1. Permission check (POST io.cozy.ai.scribe)
-  | 2. Read request body
-  | 3. Build Anthropic Messages API payload:
-  |    {
-  |      "model": "claude-sonnet-4-5-20250514",
-  |      "max_tokens": 4096,
-  |      "system": "You are a writing assistant...",
-  |      "messages": [{"role": "user", "content": "Rewrite..."}],
-  |      "stream": true
-  |    }
-  | 4. POST to https://api.anthropic.com/v1/messages
-  |    with x-api-key from config
-  |
-  v
-Anthropic API (api.anthropic.com)
-  |
-  | SSE stream:
-  |   event: message_start
-  |   data: {"type":"message_start","message":{...}}
-  |
-  |   event: content_block_start
-  |   data: {"type":"content_block_start","index":0,...}
-  |
-  |   event: content_block_delta
-  |   data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Hello"}}
-  |   ...more deltas...
-  |
-  |   event: message_stop
-  |   data: {"type":"message_stop"}
-  |
-  v
-cozy-stack (proxy -- transparent pass-through OR simplified relay)
-  |
-  | Option A: Transparent proxy (stream Anthropic SSE directly to browser)
-  |   - Simplest: c.Stream(res.StatusCode, "text/event-stream", res.Body)
-  |   - Frontend parses Anthropic's native SSE format
-  |
-  | Option B: Simplified relay (parse + re-emit simpler events)       <-- RECOMMENDED
-  |   - cozy-stack parses Anthropic SSE, re-emits simplified events:
-  |     data: {"type":"delta","text":"Hello"}
-  |     data: {"type":"done"}
-  |     data: {"type":"error","message":"..."}
-  |   - Decouples frontend from Anthropic's format
-  |   - Allows switching LLM provider without frontend changes
-  |
-  v
-Browser (EventSource or fetch + ReadableStream)
-  |
-  | Frontend reads SSE events, appends text to ScribeResultPanel
-  | progressively
-  |
-  v
-ScribeResultPanel renders tokens as they arrive
-```
-
-### Why Option B (Simplified Relay)
-
-1. **Provider independence**: If Scribe later uses a different LLM (OpenAI, Mistral, local model), only cozy-stack changes. Frontend stays the same.
-2. **Error normalization**: Anthropic errors (`overloaded_error`, rate limits) get translated to a consistent format.
-3. **Security**: Anthropic-specific response metadata (usage tokens, model IDs) stays server-side. Only text content reaches the browser.
-4. **Precedent**: The existing RAG proxy already does this (parses OpenAI-format SSE, re-emits simplified `delta`/`done`/`error` events via realtime).
-
-The simplified relay format:
-
-```
-# Success stream
-data: {"type":"start"}
-
-data: {"type":"delta","text":"Hello"}
-
-data: {"type":"delta","text":" world"}
-
-data: {"type":"done"}
-
-
-# Error
-data: {"type":"error","message":"Rate limit exceeded","code":"rate_limit"}
-```
-
-## Component Architecture
-
-### New Components
-
-#### 1. cozy-stack: `web/ai/ai.go` -- ScribeCompletion handler
-
-```go
-// ScribeCompletion proxies writing assistant requests to Anthropic Claude.
-// It handles SSE streaming, translating Anthropic's event format to a
-// simplified delta/done/error format for the frontend.
-func ScribeCompletion(c echo.Context) error {
-    // 1. Permission check
-    if err := middlewares.AllowWholeType(c, permission.POST, consts.AIScribe); err != nil {
-        return middlewares.ErrForbidden
-    }
-
-    // 2. Parse request
-    var payload ScribePayload
-    if err := c.Bind(&payload); err != nil {
-        return echo.NewHTTPError(http.StatusBadRequest, "Invalid request")
-    }
-
-    // 3. Get Anthropic config
-    inst := middlewares.GetInstance(c)
-    anthropic := inst.AnthropicServer()
-    if anthropic.URL == "" {
-        return echo.NewHTTPError(http.StatusServiceUnavailable, "AI not configured")
-    }
-
-    // 4. Build Anthropic Messages API request
-    // 5. Make request, stream response back with simplified events
-    // 6. Handle errors, rate limits
-}
-```
-
-Route registration addition:
-```go
-func Routes(router *echo.Group) {
-    router.POST("/chat/conversations/:id", Chat)
-    router.POST("/v1/chat/completions", OpenAICompletion)
-    router.POST("/v1/tools/execute", ExecuteTool)
-    router.POST("/scribe/completions", ScribeCompletion)  // NEW
-}
-```
-
-#### 2. cozy-stack: `model/ai/scribe.go` -- NEW file
-
-```go
-package ai
-
-// ScribePayload is the request body from the frontend
-type ScribePayload struct {
-    System    string `json:"system"`
-    Prompt    string `json:"prompt"`
-    MaxTokens int    `json:"max_tokens"`
-    Stream    bool   `json:"stream"`
-}
-
-// CallAnthropic sends a request to the Anthropic Messages API
-// and returns the HTTP response for streaming.
-func CallAnthropic(inst *instance.Instance, payload ScribePayload) (*http.Response, error) {
-    // Build Anthropic API request
-    // POST https://api.anthropic.com/v1/messages
-    // Headers: x-api-key, anthropic-version, content-type
-}
-
-// StreamAnthropicResponse parses Anthropic SSE and writes simplified
-// events to the HTTP response writer.
-func StreamAnthropicResponse(w http.ResponseWriter, body io.Reader) error {
-    // Parse: content_block_delta -> extract text_delta.text -> emit {"type":"delta","text":"..."}
-    // Parse: message_stop -> emit {"type":"done"}
-    // Parse: error -> emit {"type":"error","message":"..."}
-}
-```
-
-#### 3. cozy-stack: Config extension in `pkg/config/config/config.go`
-
-```go
-// AnthropicServer contains config for Anthropic Claude API.
-type AnthropicServer struct {
-    URL    string  // default: "https://api.anthropic.com"
-    APIKey string
-    Model  string  // default: "claude-sonnet-4-5-20250514"
-}
-```
-
-cozy.yaml addition:
-```yaml
-anthropic:
-  default:
-    url: https://api.anthropic.com
-    api_key: sk-ant-...
-    model: claude-sonnet-4-5-20250514
-```
-
-#### 4. cozy-drive: `src/modules/views/OnlyOffice/Scribe/scribeApi.js` -- NEW file
-
-```javascript
-/**
- * Call the Scribe API endpoint on cozy-stack, returning an SSE stream.
- *
- * @param {CozyClient} client - cozy-client instance (for auth headers + base URL)
- * @param {string} system - System prompt
- * @param {string} prompt - User prompt (with selected text embedded)
- * @param {AbortSignal} [signal] - For cancellation
- * @returns {ReadableStream} SSE event stream
- */
-export async function scribeStream(client, system, prompt, signal) {
-    const stackClient = client.getStackClient()
-    const url = stackClient.fullpath('/ai/scribe/completions')
-    const token = stackClient.getAuthorizationHeader()
-
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-            'Authorization': token,
-            'Content-Type': 'application/json',
-            'Accept': 'text/event-stream',
-        },
-        body: JSON.stringify({
-            system,
-            prompt,
-            max_tokens: 4096,
-            stream: true,
-        }),
-        signal,
-        credentials: 'include',
-    })
-
-    if (!response.ok) {
-        throw new Error(`Scribe API error: ${response.status}`)
-    }
-
-    return response.body  // ReadableStream
-}
-```
-
-#### 5. cozy-drive: `src/modules/views/OnlyOffice/Scribe/useScribeStream.js` -- NEW hook
-
-```javascript
-/**
- * React hook that manages an SSE stream from the Scribe API.
- *
- * Returns: { streamText, isStreaming, error, startStream, cancelStream }
- *
- * Replaces mockTransform as the transformation engine.
- */
-export function useScribeStream() {
-    const [streamText, setStreamText] = useState('')
-    const [isStreaming, setIsStreaming] = useState(false)
-    const [error, setError] = useState(null)
-    const abortRef = useRef(null)
-    const client = useClient()
-
-    const startStream = useCallback(async (system, prompt) => {
-        // 1. Create AbortController
-        // 2. Call scribeStream()
-        // 3. Read from ReadableStream, parse SSE lines
-        // 4. For each {"type":"delta","text":"..."} -> append to streamText
-        // 5. On {"type":"done"} -> set isStreaming=false
-        // 6. On {"type":"error"} -> set error
-    }, [client])
-
-    const cancelStream = useCallback(() => {
-        if (abortRef.current) abortRef.current.abort()
-        setIsStreaming(false)
-    }, [])
-
-    return { streamText, isStreaming, error, startStream, cancelStream }
-}
-```
-
-### Modified Components
-
-#### 6. ScribePopover.jsx -- Add streaming state
-
-Current state machine: `menu` -> `result` (instant, via `mockTransform`)
-
-New state machine: `menu` -> `streaming` -> `result`
-
-```
- [menu]
-   |
-   | user selects action
-   v
- [streaming]  <-- NEW STATE
-   |   |
-   |   | tokens arrive via SSE
-   |   | ScribeResultPanel shows partial text
-   |   |
-   |   +-- user clicks Cancel -> back to [menu]
-   |
-   | stream completes (type: "done")
-   v
- [result]
-   |
-   | user clicks Replace/Insert/Close
-   v
- [closed]
-```
-
-Key change in `handleActionSelect`:
-```javascript
-// BEFORE (sync, instant):
-const transformed = mockTransform(actionId, selectedText, extra)
-setResult({ text: transformed, breadcrumb })
-setStep('result')
-
-// AFTER (async, streaming):
-setStep('streaming')
-setResult({ text: '', breadcrumb })
-const system = buildSystemPrompt(actionId)
-const prompt = buildUserPrompt(actionId, selectedText, extra)
-startStream(system, prompt)
-// ScribeResultPanel receives streamText progressively
-// On stream complete: setStep('result')
-```
-
-#### 7. ScribeResultPanel.jsx -- Progressive text display
-
-Changes needed:
-- Accept `isStreaming` prop to show loading indicator / cursor
-- Accept `streamText` that updates on every delta
-- Disable Replace/Insert buttons while streaming
-- Add Cancel button during streaming (calls `cancelStream`)
-- Auto-scroll the text area as new content arrives
-
-### Component Boundaries (v2.0)
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                        Browser (Cozy Drive)                                 │
-│                                                                             │
-│  ┌───────────────────────────────────────────────────────────────────────┐  │
-│  │  OnlyOffice Editor Page                                               │  │
-│  │                                                                       │  │
-│  │  ┌─────────────────────┐                                              │  │
-│  │  │  useCozyBridge      │  (unchanged -- handles plugin communication) │  │
-│  │  └────────┬────────────┘                                              │  │
-│  │           │ pendingIntent / showScribeButton                          │  │
-│  │           v                                                           │  │
-│  │  ┌─────────────────────┐                                              │  │
-│  │  │  ScribeFloatingButton│  (unchanged)                                │  │
-│  │  └────────┬────────────┘                                              │  │
-│  │           │ click                                                     │  │
-│  │           v                                                           │  │
-│  │  ┌──────────────────────────────────────────────────────────────┐     │  │
-│  │  │  ScribePopover  (state: menu|streaming|result)               │     │  │
-│  │  │                                                              │     │  │
-│  │  │  ┌────────────────────┐  ┌─────────────────────────────────┐│     │  │
-│  │  │  │  ScribeActionMenu  │  │  ScribeResultPanel              ││     │  │
-│  │  │  │  (unchanged)       │  │  + isStreaming prop             ││     │  │
-│  │  │  │  + ScribePromptInput│  │  + progressiveText             ││     │  │
-│  │  │  └────────────────────┘  │  + cancel button (streaming)   ││     │  │
-│  │  │                          │  + disabled btns (streaming)   ││     │  │
-│  │  │                          └─────────────────────────────────┘│     │  │
-│  │  │                                                              │     │  │
-│  │  │  ┌──────────────────────────────────────────────────────────┐│     │  │
-│  │  │  │  useScribeStream  (NEW)                                  ││     │  │
-│  │  │  │  - manages fetch + ReadableStream                        ││     │  │
-│  │  │  │  - exposes: streamText, isStreaming, error,              ││     │  │
-│  │  │  │    startStream, cancelStream                             ││     │  │
-│  │  │  └──────────────────────────────────────────────────────────┘│     │  │
-│  │  └──────────────────────────────────────────────────────────────┘     │  │
-│  └───────────────────────────────────────────────────────────────────────┘  │
-│                                                                             │
-│  API call: POST /ai/scribe/completions                                     │
-│  Auth: session cookie / Authorization header (from cozy-client)            │
-│                                                                             │
-└──────────────────────────────┬──────────────────────────────────────────────┘
-                               │
-                               │ HTTPS
-                               v
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                          cozy-stack                                         │
-│                                                                             │
-│  ┌───────────────────────────────────────────────────────────────────────┐  │
-│  │  web/ai/ai.go                                                         │  │
-│  │  Route: POST /ai/scribe/completions -> ScribeCompletion()             │  │
-│  │                                                                       │  │
-│  │  1. Permission check (io.cozy.ai.scribe)                             │  │
-│  │  2. Parse ScribePayload (system, prompt, max_tokens, stream)         │  │
-│  │  3. Get AnthropicServer config from instance context                  │  │
-│  │  4. Build Anthropic Messages API request                              │  │
-│  │  5. Forward to Anthropic API                                          │  │
-│  │  6. Parse Anthropic SSE, re-emit simplified events to client          │  │
-│  └───────────────────────────────────────────────────────────────────────┘  │
-│                                                                             │
-│  ┌───────────────────────────────────────────────────────────────────────┐  │
-│  │  model/ai/scribe.go (NEW)                                            │  │
-│  │  - CallAnthropic(): HTTP request to api.anthropic.com/v1/messages     │  │
-│  │  - StreamAnthropicResponse(): parse SSE, emit simplified events       │  │
-│  │  - ParseAnthropicError(): normalize error responses                   │  │
-│  └───────────────────────────────────────────────────────────────────────┘  │
-│                                                                             │
-│  ┌───────────────────────────────────────────────────────────────────────┐  │
-│  │  pkg/config/config/config.go (MODIFIED)                               │  │
-│  │  + AnthropicServer struct {URL, APIKey, Model}                        │  │
-│  │  + makeAnthropicServers() parser                                      │  │
-│  │  + config.AnthropicServers map[string]AnthropicServer                 │  │
-│  └───────────────────────────────────────────────────────────────────────┘  │
-│                                                                             │
-│  ┌───────────────────────────────────────────────────────────────────────┐  │
-│  │  model/instance/instance.go (MODIFIED)                                │  │
-│  │  + AnthropicServer() config.AnthropicServer                           │  │
-│  └───────────────────────────────────────────────────────────────────────┘  │
-│                                                                             │
-│  ┌───────────────────────────────────────────────────────────────────────┐  │
-│  │  pkg/consts/doctype.go (MODIFIED)                                     │  │
-│  │  + AIScribe = "io.cozy.ai.scribe"  // permission doctype              │  │
-│  └───────────────────────────────────────────────────────────────────────┘  │
-│                                                                             │
-└──────────────────────────────┬──────────────────────────────────────────────┘
-                               │
-                               │ HTTPS + SSE
-                               v
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                     Anthropic API (api.anthropic.com)                        │
-│                                                                             │
-│  POST /v1/messages                                                          │
-│  Headers:                                                                   │
-│    x-api-key: sk-ant-...                                                    │
-│    anthropic-version: 2023-06-01                                            │
-│    content-type: application/json                                           │
-│                                                                             │
-│  Request:                                                                   │
-│    {                                                                        │
-│      "model": "claude-sonnet-4-5-20250514",                                 │
-│      "max_tokens": 4096,                                                    │
-│      "system": "You are a writing assistant. Output ONLY the transformed    │
-│                 text. No explanations, no markdown formatting.",             │
-│      "messages": [{"role":"user","content":"Rewrite...\n\nHello world"}],   │
-│      "stream": true                                                         │
-│    }                                                                        │
-│                                                                             │
-│  Response: SSE stream with Anthropic event types                            │
-│    event: message_start / content_block_delta / message_stop                │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-## SSE Parsing Detail
-
-### Anthropic SSE -> Simplified SSE Translation
-
-cozy-stack reads Anthropic's SSE stream and translates events:
-
-```
-ANTHROPIC INPUT                                  COZY OUTPUT
-==================                               ===========
-
-event: message_start                         --> data: {"type":"start"}
-data: {"type":"message_start",...}
-
-event: content_block_start                   --> (skip, no output)
-data: {"type":"content_block_start",...}
-
-event: content_block_delta                   --> data: {"type":"delta","text":"Hello"}
-data: {"type":"content_block_delta",
-  "delta":{"type":"text_delta",
-    "text":"Hello"}}
-
-event: content_block_delta                   --> data: {"type":"delta","text":" world"}
-data: {"type":"content_block_delta",
-  "delta":{"type":"text_delta",
-    "text":" world"}}
-
-event: content_block_stop                    --> (skip)
-
-event: message_delta                         --> (skip -- contains usage stats)
-
-event: message_stop                          --> data: {"type":"done"}
-data: {"type":"message_stop"}
-
-event: error                                 --> data: {"type":"error","message":"...","code":"..."}
-data: {"type":"error",
-  "error":{"type":"overloaded_error",
-    "message":"Overloaded"}}
-```
-
-### Frontend SSE Parsing
-
-The frontend uses `fetch` + `ReadableStream` (NOT `EventSource`), because:
-1. `EventSource` only supports GET requests -- we need POST
-2. `fetch` gives us control over headers (Authorization) and cancellation (AbortController)
-3. `ReadableStream` with a `TextDecoder` and line-by-line parsing is simple and well-supported
-
-```javascript
-// Simplified SSE parser for fetch ReadableStream
-async function parseSSEStream(body, onDelta, onDone, onError) {
-    const reader = body.getReader()
-    const decoder = new TextDecoder()
-    let buffer = ''
-
-    while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        buffer += decoder.decode(value, { stream: true })
-        const lines = buffer.split('\n')
-        buffer = lines.pop() // keep incomplete line in buffer
-
-        for (const line of lines) {
-            if (line.startsWith('data: ')) {
-                const data = JSON.parse(line.slice(6))
-                if (data.type === 'delta') onDelta(data.text)
-                else if (data.type === 'done') onDone()
-                else if (data.type === 'error') onError(data)
-            }
-        }
-    }
-}
-```
-
-## Authentication and Permissions
-
-### How Auth Works
-
-1. cozy-drive is served as a webapp by cozy-stack, which sets a session cookie
-2. `cozy-client` includes the session cookie on requests (`credentials: 'include'`)
-3. For the Scribe endpoint, we use the standard cozy-stack permission system
-
-### Permission Model
-
-The webapp's manifest declares the required permission:
+### Component Boundaries
+
+| Component | Responsibility | Changes from v2.0 |
+|-----------|---------------|-------------------|
+| **Plugin config.json** | Declares `initDataType` | Change `"text"` to `"html"` |
+| **Plugin code.js (ES5)** | Receives selection, posts to ancestors, applies responses | Sends HTML instead of text; uses `PasteHtml` instead of `PasteText`; strips OO class attributes from HTML before sending |
+| **CozyBridge protocol** | Message routing between plugin and Cozy Drive | Data payload changes from `{ text: string }` to `{ text: string, html: string }` |
+| **useCozyBridge hook** | React state management for intents | Passes `html` field through to ScribePopover |
+| **htmlToMarkdown module (NEW)** | HTML-to-Markdown conversion | New module using turndown |
+| **markdownToHtml module (NEW)** | Markdown-to-HTML conversion | New module using marked |
+| **ScribePopover** | State machine (menu/loading/result) | Converts HTML to Markdown before LLM call; converts Markdown result for preview |
+| **ScribeResultPanel** | Displays AI result | Renders Markdown via react-markdown instead of plain text |
+| **scribeAI.js** | LLM prompt building and API calls | System prompt updated to request Markdown output |
+| **View.jsx** | Orchestrates Scribe components | `handleReplace`/`handleInsert` pass `html` instead of `text` |
+
+## Detailed Design: Where Each Step Lives
+
+### Step 1: Rich Text Extraction (Plugin side -- minimal changes)
+
+**Where:** `plugins/onlyoffice-scribe/config.json` + `code.js`
+**Confidence:** HIGH
+
+The official ONLYOFFICE HTML plugin demonstrates the pattern: set `initDataType: "html"` in config.json, and `init(data)` receives HTML instead of plain text. This is a config-level change -- OO handles the conversion internally.
 
 ```json
-{
-  "permissions": {
-    "ai-scribe": {
-      "type": "io.cozy.ai.scribe",
-      "verbs": ["POST"]
-    }
-  }
-}
+// config.json change
+"initDataType": "html"
 ```
 
-cozy-stack checks this via `middlewares.AllowWholeType(c, permission.POST, consts.AIScribe)`.
+The plugin code.js needs three changes:
 
-**Alternative (simpler):** Reuse the existing `io.cozy.ai.chat.conversations` permission with `POST` verb. This avoids creating a new doctype and modifying the cozy-drive manifest. The downside is less granular permission control. Use the existing permission for v2.0, add a dedicated one later if needed.
+1. **Store raw HTML** in `lastSelectedHtml` (new var). The `init(data)` callback now receives HTML.
+2. **Strip OO class attributes** from extracted HTML before sending (OO injects internal CSS classes like `class="MsoNormal"` that are meaningless outside the editor). The official HTML plugin does exactly this: `text.replace(/class="[a-zA-Z0-9-:;+"\\/=]*/g, "")`
+3. **Also extract plain text** via `GetSelectedText` for the `text` field (used for display, word count, fallback) -- this runs in parallel via `executeMethod`
 
-## Config Architecture
-
-### Separate from RAG or Same Entry?
-
-**Recommendation: Separate config entry.** The RAG server is an internal Cozy service (RAGondin). The Anthropic API is an external third-party API with different auth (API key vs bearer token), different headers (`x-api-key` + `anthropic-version`), and a completely different API format (Anthropic Messages API vs OpenAI-compatible).
-
-```yaml
-# cozy.yaml
-rag:
-  default:
-    url: http://localhost:8000
-    api_key: $3cr3t
-
-anthropic:
-  default:
-    url: https://api.anthropic.com
-    api_key: sk-ant-api03-...
-    model: claude-sonnet-4-5-20250514
+The intent payload becomes:
+```javascript
+castIntent("AI_TEXT_EDIT", { text: plainText, html: cleanedHtml });
 ```
 
-### Model Selection
+For the SHOW_SCRIBE_BUTTON one-way intent, continue sending plain text only (it is only used for display/presence detection).
 
-Default to `claude-sonnet-4-5-20250514` because:
-- Best cost/quality ratio for text transformation tasks
-- Fast enough for streaming UX (Haiku is faster but lower quality for rewriting)
-- Configurable per context (instance admins can change it)
+### Step 2: HTML-to-Markdown Conversion (Cozy Drive side)
 
-Model is server-side config only -- the frontend never specifies or sees the model.
+**Where:** New module `src/modules/views/OnlyOffice/Scribe/htmlToMarkdown.js`
+**Library:** turndown (v7.2.x)
+**Confidence:** HIGH
 
-## System Prompts
-
-System prompts live in the `SCRIBE_ACTIONS` config on the frontend and are sent to cozy-stack in the request body. This keeps the prompt logic declarative and co-located with the action definitions.
-
-**Design principle:** The frontend owns "what to ask" (system prompt + user prompt with selected text). cozy-stack owns "how to ask" (which API, which model, which API key).
-
-Example system prompt for the Scribe writing assistant:
-
-```
-You are a writing assistant integrated into a document editor. Your task is to transform the user's text according to their instructions. Rules:
-1. Output ONLY the transformed text -- no explanations, no commentary, no markdown code blocks.
-2. Preserve the original formatting (paragraphs, line breaks) unless the transformation requires changing it.
-3. If the user asks for a translation, output only in the target language.
-4. Match the length and style of the original unless explicitly asked to change it.
-```
-
-The action-specific instruction is in the user prompt (from `scribeActions.js`):
-
-```
-Rewrite the following text in a more professional tone:
-
-Hello world, this is some text the user selected.
-```
-
-## Cancellation Architecture
-
-### Frontend Cancellation
+turndown converts HTML to Markdown. It runs in the Cozy Drive React app, not in the ES5 plugin, because:
+- turndown uses modern JS (classes, arrow functions) incompatible with ES5 plugin constraints
+- The React app already bundles dependencies via webpack
+- Keeps the plugin thin (extraction only, no conversion logic)
 
 ```javascript
-const abortController = new AbortController()
+import TurndownService from 'turndown'
 
-// Pass signal to fetch
-const response = await fetch(url, { signal: abortController.signal })
+const turndown = new TurndownService({
+  headingStyle: 'atx',        // # Heading instead of underline
+  bulletListMarker: '-',
+  codeBlockStyle: 'fenced'
+})
 
-// User clicks Cancel
-abortController.abort()
-// -> fetch throws AbortError
-// -> ReadableStream reader rejects
-// -> cleanup in catch block
-```
-
-### Server-Side Implications
-
-When the frontend aborts, the HTTP connection closes. cozy-stack detects this via the request context:
-
-```go
-// In the streaming loop
-select {
-case <-c.Request().Context().Done():
-    // Client disconnected, close Anthropic connection
-    return nil
-default:
-    // Continue reading from Anthropic
+export function htmlToMarkdown(html) {
+  if (!html || html.trim() === '') return ''
+  return turndown.turndown(html)
 }
 ```
 
-The Anthropic HTTP response body should be closed when the handler returns, which stops the upstream SSE stream. This is handled by `defer res.Body.Close()`.
+The conversion happens in ScribePopover's `handleActionSelect`, right before building messages:
 
-## Non-Streaming Fallback
-
-For reliability, the API should also work without streaming (`"stream": false`). In this mode:
-1. cozy-stack makes a non-streaming request to Anthropic
-2. Waits for the full response
-3. Returns a simple JSON response: `{"text": "transformed text"}`
-
-This is useful for:
-- Debugging / testing without SSE complexity
-- Fallback if streaming fails
-- Short transformations where streaming adds no UX value
-
-## Error Handling Architecture
-
-### Error Categories
-
-| Error | Source | HTTP Status | Frontend Display |
-|-------|--------|-------------|------------------|
-| Invalid request | cozy-stack | 400 | "Invalid request" |
-| No AI configured | cozy-stack config | 503 | "AI service not available" |
-| Auth failure | Anthropic API | 401 | "AI service configuration error" |
-| Rate limited | Anthropic API | 429 | "AI service busy, try again" |
-| Overloaded | Anthropic SSE | 529 | "AI service busy, try again" |
-| Model error | Anthropic API | 500 | "AI service error, try again" |
-| Network timeout | cozy-stack -> Anthropic | 504 | "AI service timeout" |
-| User cancel | Browser | N/A | Return to menu |
-
-### Error Flow
-
-```
-Anthropic error
-  |
-  v
-cozy-stack catches in SSE parser or HTTP status
-  |
-  v
-Emits: data: {"type":"error","message":"...","code":"rate_limit"}
-  |
-  v
-Frontend useScribeStream sets error state
-  |
-  v
-ScribeResultPanel shows error message with Retry button
+```javascript
+const markdown = htmlToMarkdown(pendingIntent.data.html)
+const messages = buildMessages(actionId, markdown, label, extra)
 ```
 
-## Suggested Build Order
+### Step 3: LLM Interaction (Cozy Drive side -- minimal change)
 
-The build order is designed so each phase produces a testable artifact.
+**Where:** `scribeAI.js`
+**Confidence:** HIGH
 
-### Phase 1: cozy-stack Config + Route Skeleton (backend, no Anthropic yet)
+The system prompt needs a single addition telling the LLM to preserve and output Markdown formatting:
 
-**What:** Add `AnthropicServer` config struct, parse from cozy.yaml, add the `/ai/scribe/completions` route that returns a mock SSE stream.
+```javascript
+export const SYSTEM_PROMPT =
+  'You are a writing assistant. Return only the transformed text in Markdown format, preserving any formatting (bold, italic, headings, lists). No explanations or commentary. Respond in the same language as the input text.'
+```
 
-**Files:**
-- `pkg/config/config/config.go` -- add `AnthropicServer` struct + `makeAnthropicServers()`
-- `model/instance/instance.go` -- add `AnthropicServer()` method
-- `web/ai/ai.go` -- add `ScribeCompletion()` handler with mock SSE response
-- `pkg/consts/doctype.go` -- add `AIScribe` doctype (if using new permission)
+No structural changes to `buildMessages()` or `callScribeAI()` -- they already pass strings through. The prompt templates in `SCRIBE_ACTIONS` use `{selectedText}` which now contains Markdown instead of plain text.
 
-**Test:** `curl -X POST http://localhost:8080/ai/scribe/completions` returns mock SSE events.
+### Step 4: Markdown Rendering in Result Panel (Cozy Drive side)
 
-**Why first:** This gives the frontend team a real endpoint to integrate against while the Anthropic proxy is built. The mock SSE response matches the final format.
+**Where:** `ScribeResultPanel.jsx`
+**Library:** react-markdown (v9.x)
+**Confidence:** HIGH
 
-### Phase 2: Frontend SSE Consumer (frontend, against mock backend)
+The result panel currently renders `resultText` as plain text inside a `<div>`. Change this to render Markdown:
 
-**What:** Replace `mockTransform` with the SSE-based `useScribeStream` hook. Wire into `ScribePopover` state machine.
+```jsx
+import ReactMarkdown from 'react-markdown'
 
-**Files (cozy-drive):**
-- NEW: `Scribe/scribeApi.js` -- fetch-based SSE client
-- NEW: `Scribe/useScribeStream.js` -- React hook
-- MODIFY: `Scribe/ScribePopover.jsx` -- add `streaming` state, wire hook
-- MODIFY: `Scribe/ScribeResultPanel.jsx` -- progressive text, cancel button
+// In the render:
+<div className={styles['scribe-result-text']}>
+  {error ? error : <ReactMarkdown>{resultText}</ReactMarkdown>}
+</div>
+```
 
-**Test:** Full UI flow works against the mock SSE endpoint from Phase 1.
+react-markdown renders to React elements (no dangerouslySetInnerHTML, safe by default). It supports CommonMark and GFM (tables, strikethrough) with the remark-gfm plugin.
 
-**Why second:** Frontend changes are the most visible. Getting the streaming UX right with a mock backend means the team can iterate on UX without waiting for real Anthropic calls.
+Style the rendered Markdown with scoped CSS in a new `scribe-markdown.styl` targeting `.scribe-result-text h1`, `.scribe-result-text strong`, `.scribe-result-text ul`, etc. Use the existing MUI theme for colors and typography.
 
-### Phase 3: Anthropic API Proxy (backend, real calls)
+### Step 5: Markdown-to-HTML Conversion for Reinsertion (Cozy Drive side)
 
-**What:** Replace the mock SSE response with real Anthropic API calls. Add SSE parsing, error handling, rate limit handling.
+**Where:** New module `src/modules/views/OnlyOffice/Scribe/markdownToHtml.js`
+**Library:** marked (v15.x)
+**Confidence:** HIGH
 
-**Files:**
-- NEW: `model/ai/scribe.go` -- `CallAnthropic()`, `StreamAnthropicResponse()`
-- MODIFY: `web/ai/ai.go` -- `ScribeCompletion()` calls real proxy
-- MODIFY: `cozy.yaml` -- add real Anthropic API key
+When the user clicks Replace or Insert, the Markdown result must be converted back to HTML for `PasteHtml`:
 
-**Test:** End-to-end streaming from browser through cozy-stack to Anthropic and back.
+```javascript
+import { marked } from 'marked'
 
-### Phase 4: Error Handling + Cancellation
+marked.setOptions({
+  breaks: true,     // Convert \n to <br>
+  gfm: true         // GitHub Flavored Markdown
+})
 
-**What:** Robust error handling for all failure modes. Mid-stream cancellation. Retry UI.
+export function markdownToHtml(markdown) {
+  if (!markdown || markdown.trim() === '') return ''
+  return marked.parse(markdown)
+}
+```
 
-**Backend:**
-- Timeout configuration for Anthropic requests
-- Graceful handling of client disconnect
-- Rate limit header parsing for retry-after
+This is called in View.jsx's response handlers:
 
-**Frontend:**
-- AbortController wiring
-- Error display in ScribeResultPanel
-- Retry button
-- Cancel button during streaming
+```javascript
+const handleReplace = useCallback(
+  text => {
+    const html = markdownToHtml(text)
+    respond({ status: 'ok', action: 'replace', data: { text, html } })
+    setTimeout(focusEditor, 100)
+  },
+  [respond, focusEditor]
+)
+```
 
-### Phase 5: Polish + Non-Streaming Fallback
+### Step 6: Formatted Reinsertion (Plugin side -- minimal change)
 
-**What:** Non-streaming mode, prompt refinement, dark theme fix, remaining UX issues.
+**Where:** `plugins/onlyoffice-scribe/code.js`
+**Confidence:** HIGH for PasteHtml, MEDIUM for insert-after workaround
 
-- Non-streaming fallback (stream=false)
-- System prompt tuning per action type
-- Token count / cost awareness (optional)
-- Dark theme fixes (existing bug)
+The `handleIntentResponse` function switches from `PasteText` to `PasteHtml`:
+
+```javascript
+// Before (v2.0):
+window.Asc.plugin.executeMethod("PasteText", [msg.data.text]);
+
+// After (v2.1):
+window.Asc.plugin.executeMethod("PasteHtml", [msg.data.html || msg.data.text]);
+```
+
+`PasteHtml` is documented in the ONLYOFFICE API: `window.Asc.plugin.executeMethod("PasteHtml", ["<p><b>Bold text</b></p>"])`. It accepts a string of HTML and inserts it at the current cursor position or replaces the selection.
+
+The `insertAfterWithText` function needs an HTML variant. Since `PasteHtml` replaces the current selection (same behavior as `PasteText`), the approach for "insert after" is:
+
+**Recommended:** For "insert after", concatenate original HTML + separator + new HTML into a single string and call PasteHtml once:
+```javascript
+function insertAfterWithHtml(originalHtml, newHtml) {
+  var combined = originalHtml + "<hr/>" + newHtml;
+  window.Asc.plugin.executeMethod("PasteHtml", [combined]);
+}
+```
+
+This eliminates the callCommand/InsertContent workaround entirely for the formatted case. The separator (`<hr/>`, `<br/><br/>`, or empty paragraph) is a UX decision.
+
+## Protocol Changes
+
+### Intent Payload (plugin -> Cozy Drive)
+
+```javascript
+// v2.0
+{ text: "selected plain text" }
+
+// v2.1
+{ text: "selected plain text", html: "<p><b>selected</b> plain text</p>" }
+```
+
+Both fields sent for backward compatibility. `text` used for display (loading messages, word count). `html` used for the conversion pipeline.
+
+### Response Payload (Cozy Drive -> plugin)
+
+```javascript
+// v2.0
+{ text: "transformed plain text" }
+
+// v2.1
+{ text: "transformed markdown", html: "<p><b>transformed</b> markdown</p>" }
+```
+
+The plugin uses `html` for PasteHtml reinsertion, falls back to `text` with PasteText if `html` is absent.
+
+### Protocol Version
+
+Keep version at 1. These are additive payload changes (new optional fields), not breaking protocol changes. The existing `MAX_DATA_SIZE` (1MB) is sufficient -- HTML of selected text will rarely exceed a few KB.
+
+## New vs Modified Components
+
+### New Files (3)
+
+| File | Purpose | Size Estimate |
+|------|---------|---------------|
+| `src/.../Scribe/htmlToMarkdown.js` | Turndown wrapper, HTML-to-Markdown | ~30 LOC |
+| `src/.../Scribe/markdownToHtml.js` | Marked wrapper, Markdown-to-HTML | ~20 LOC |
+| `src/.../Scribe/scribe-markdown.styl` | Styles for rendered Markdown in result panel | ~50 LOC |
+
+### Modified Files (7)
+
+| File | Changes |
+|------|---------|
+| `plugins/onlyoffice-scribe/config.json` | `initDataType: "html"` |
+| `plugins/onlyoffice-scribe/scripts/code.js` | HTML storage, class stripping, PasteHtml, dual text+html in intents, insertAfterWithHtml |
+| `src/lib/cozy-bridge/types.js` | Document new `html` field in IntentMessage/ResponseMessage typedefs |
+| `src/.../Scribe/ScribePopover.jsx` | Import htmlToMarkdown, convert HTML->MD before LLM call, pass markdown to result |
+| `src/.../Scribe/ScribeResultPanel.jsx` | Import react-markdown, render Markdown instead of plain text |
+| `src/.../Scribe/scribeAI.js` | Update SYSTEM_PROMPT to request Markdown output |
+| `src/.../OnlyOffice/View.jsx` | Import markdownToHtml, convert MD->HTML in handleReplace/handleInsert |
+
+### Unchanged Files
+
+| File | Why Unchanged |
+|------|---------------|
+| `src/lib/cozy-bridge/index.js` | CozyBridge routes messages generically -- no format awareness needed |
+| `src/lib/cozy-bridge/protocol.js` | Additive optional fields, no protocol version bump needed |
+| `src/.../useCozyBridge.js` | Already passes `intentMessage.data` through -- html field flows automatically |
+| `src/.../Scribe/scribeActions.js` | Action configs unchanged; `{selectedText}` placeholder works with Markdown input |
+| `src/.../Scribe/ScribeActionMenu.jsx` | Menu UI unchanged |
+| `src/.../Scribe/ScribeFloatingButton.jsx` | Button UI unchanged |
+| `src/.../Scribe/mockTransform.js` | Already replaced by real API in v2.0 |
 
 ## Patterns to Follow
 
-### Pattern 1: Echo SSE Streaming
+### Pattern 1: Thin Plugin, Smart Host
 
-Use Echo's streaming response with `Flush()` for SSE:
+**What:** Keep the ES5 plugin as thin as possible. It extracts and reinserts. All conversion logic (turndown, marked, react-markdown) lives in the React app.
 
-```go
-func ScribeCompletion(c echo.Context) error {
-    // ... setup ...
+**Why:** The plugin runs in an ES5-constrained iframe with no bundler. Every library added there must be ES5-compatible and manually loaded via `<script>` tags. The React app has webpack, npm, and modern JS.
 
-    c.Response().Header().Set("Content-Type", "text/event-stream")
-    c.Response().Header().Set("Cache-Control", "no-cache")
-    c.Response().Header().Set("Connection", "keep-alive")
-    c.Response().WriteHeader(http.StatusOK)
+**Example:** The plugin sends raw HTML. The React app converts HTML->Markdown->LLM->Markdown->HTML. The plugin receives HTML and calls PasteHtml. The plugin never needs to know about Markdown.
 
-    flusher, ok := c.Response().Writer.(http.Flusher)
-    if !ok {
-        return echo.NewHTTPError(http.StatusInternalServerError, "Streaming not supported")
-    }
+### Pattern 2: Dual-Field Payloads for Graceful Degradation
 
-    // Write events
-    fmt.Fprintf(c.Response(), "data: %s\n\n", jsonEvent)
-    flusher.Flush()
-}
+**What:** Always send both `text` and `html` in payloads.
+
+**Why:** If HTML extraction fails (OO version edge case, unsupported content type), the system falls back to plain text behavior identical to v2.0. No feature regression.
+
+**Example:**
+```javascript
+// Plugin: if html extraction fails, send text-only
+castIntent("AI_TEXT_EDIT", { text: plainText, html: htmlContent || "" });
+
+// React: check html field, fall back to text
+const markdown = pendingIntent.data.html
+  ? htmlToMarkdown(pendingIntent.data.html)
+  : pendingIntent.data.text  // plain text used as-is (no conversion)
 ```
 
-### Pattern 2: Config Lookup by Instance Context
+### Pattern 3: Conversion Modules as Pure Functions
 
-Follow the exact pattern of `RAGServer()`:
+**What:** `htmlToMarkdown()` and `markdownToHtml()` are pure functions with no React or state dependencies.
 
-```go
-func (i *Instance) AnthropicServer() config.AnthropicServer {
-    servers := config.GetConfig().AnthropicServers
-    if i.ContextName != "" {
-        if server, ok := servers[i.ContextName]; ok {
-            return server
-        }
-    }
-    return servers[config.DefaultInstanceContext]
-}
+**Why:** Testable in isolation with simple string assertions. Can be called from any component. No coupling to Scribe-specific logic. Easy to unit test edge cases (empty input, malformed HTML, nested formatting).
+
+### Pattern 4: Canonical Format is Markdown
+
+**What:** After initial extraction, Markdown is the canonical format throughout the pipeline. HTML exists only at the edges (extraction input and reinsertion output).
+
+**Why:** The LLM thinks in Markdown. The preview renders Markdown. The system prompt asks for Markdown. Having one canonical format avoids confusion about "which version of the text is current."
+
+**Data format at each stage:**
 ```
-
-### Pattern 3: Frontend Auth via cozy-client stackClient
-
-Use `stackClient.fullpath()` for URL construction and `stackClient.getAuthorizationHeader()` for auth, but use raw `fetch()` (not `fetchJSON`) because we need the raw `Response.body` ReadableStream for SSE parsing.
+OO Editor  -> HTML (extraction)
+Plugin     -> HTML (passthrough via postMessage)
+Cozy Drive -> Markdown (after turndown conversion)
+LLM        -> Markdown (input and output)
+Result UI  -> Markdown (rendered by react-markdown)
+Cozy Drive -> HTML (after marked conversion, for reinsertion)
+Plugin     -> HTML (passthrough to PasteHtml)
+OO Editor  -> Rich text (OO converts HTML internally)
+```
 
 ## Anti-Patterns to Avoid
 
-### Anti-Pattern 1: Using Realtime WebSocket for Scribe
+### Anti-Pattern 1: Putting Conversion Logic in the Plugin
 
-**What:** Routing Scribe responses through the realtime hub like RAG chat does.
-**Why bad:** Adds 4 unnecessary layers (CouchDB write, job queue, realtime publish, WebSocket subscription) for a stateless transformation.
-**Instead:** Direct SSE from cozy-stack to browser via HTTP streaming.
+**What:** Loading turndown/marked in the plugin iframe.
+**Why bad:** ES5 constraint. No bundler. Script loading order issues. Increases plugin complexity and fragility. Plugin currently has zero external dependencies.
+**Instead:** All conversions in React app. Plugin handles raw HTML only.
 
-### Anti-Pattern 2: Using EventSource API
+### Anti-Pattern 2: Storing Intermediate Formats in State
 
-**What:** Using the browser's `EventSource` API to consume the SSE stream.
-**Why bad:** `EventSource` only supports GET requests. Scribe needs POST with a JSON body. `EventSource` also lacks AbortController support and custom headers.
-**Instead:** Use `fetch()` with `ReadableStream` + manual SSE line parsing.
+**What:** Storing HTML, Markdown, and plain text versions of the same content in React state.
+**Why bad:** State sync bugs. Three sources of truth. Hard to debug which version is stale.
+**Instead:** Store the canonical form (Markdown for result text, HTML for original input). Convert on-demand at the point of use.
 
-### Anti-Pattern 3: Transparent Anthropic Proxy
+### Anti-Pattern 3: Custom HTML Parsing
 
-**What:** Forwarding Anthropic's raw SSE events directly to the frontend.
-**Why bad:** Leaks Anthropic-specific format to the frontend. Model info, usage tokens, and Anthropic event types become frontend concerns. Switching providers requires frontend changes.
-**Instead:** Parse and re-emit simplified `delta`/`done`/`error` events.
+**What:** Regex-based or manual HTML-to-Markdown conversion instead of using turndown.
+**Why bad:** HTML is not regular. Edge cases with nested tags, entities, self-closing tags, OO-specific markup. Maintenance burden grows with each formatting type.
+**Instead:** Use turndown (battle-tested, 7M+ weekly npm downloads, handles edge cases).
 
-### Anti-Pattern 4: Storing API Keys in Frontend
+### Anti-Pattern 4: Protocol Version Bump for Additive Changes
 
-**What:** Having the Anthropic API key accessible to the browser in any way.
-**Why bad:** API key exposure. The whole point of the proxy is to keep the key server-side.
-**Instead:** API key is only in cozy.yaml, read by cozy-stack, never sent to the browser.
+**What:** Incrementing protocol version to 2 for adding optional `html` field.
+**Why bad:** Forces migration logic, breaks backward compatibility unnecessarily. A v1 plugin still works because it just ignores the `html` field.
+**Instead:** Additive optional fields. Check for presence, fall back gracefully.
 
-### Anti-Pattern 5: Large System Prompts in scribeActions.js
+### Anti-Pattern 5: Using PasteHtml for Plain Text Fallback
 
-**What:** Putting the full multi-paragraph system prompt in the declarative config.
-**Why bad:** Makes scribeActions.js hard to read. System prompts may need A/B testing or server-side override.
-**Instead:** A small `buildSystemPrompt()` function that composes the system prompt from the action config. Keep the per-action instruction concise in SCRIBE_ACTIONS; build the full system prompt separately.
+**What:** Wrapping plain text in `<p>` tags and calling PasteHtml when no HTML is available.
+**Why bad:** PasteHtml may interpret plain text differently (entity encoding, whitespace). PasteText is designed for plain text.
+**Instead:** Check for `html` field. If present, use PasteHtml. If absent, use PasteText (v2.0 behavior).
+
+## Build Order (Dependency-Aware)
+
+The build order follows the data flow: extraction must work before conversion can be tested, conversion must work before reinsertion can be tested.
+
+```
+Phase 1: HTML Extraction
+    |-- config.json: initDataType "html"
+    |-- code.js: store HTML, strip classes, parallel GetSelectedText for plain text
+    |-- code.js: send { text, html } in AI_TEXT_EDIT intent
+    |-- Test: log received HTML in CozyBridge handler, verify formatting tags present
+    v
+Phase 2: HTML-to-Markdown Conversion
+    |-- New: htmlToMarkdown.js (turndown wrapper)
+    |-- ScribePopover: convert HTML to MD before buildMessages()
+    |-- scribeAI.js: update SYSTEM_PROMPT for Markdown output
+    |-- Test: select bold text, verify LLM receives **bold** in prompt
+    v
+Phase 3: Markdown Preview
+    |-- ScribeResultPanel: render with react-markdown
+    |-- New: scribe-markdown.styl for Markdown element styles
+    |-- Test: LLM returns **bold** text, verify it renders as bold in result panel
+    v
+Phase 4: Markdown-to-HTML Reinsertion
+    |-- New: markdownToHtml.js (marked wrapper)
+    |-- View.jsx: convert MD to HTML in handleReplace/handleInsert
+    |-- code.js: PasteHtml in handleIntentResponse
+    |-- Test: click Replace, verify document shows bold formatting
+    v
+Phase 5: Insert-After + Edge Cases
+    |-- code.js: insertAfterWithHtml using concatenated HTML
+    |-- Graceful degradation: plain text fallback when html field is empty
+    |-- Test: click Insert, verify original formatting preserved + new content added
+```
+
+Each phase is independently committable and testable. Phase 2 depends on Phase 1 for real HTML input but can be developed with hardcoded HTML test strings. Phase 3 depends on Phase 2 only for integration (can develop with hardcoded Markdown). Phase 4 depends on Phase 3 for user flow but is mechanically independent.
 
 ## Scalability Considerations
 
-| Concern | 10 users | 1K users | 10K users |
-|---------|----------|----------|-----------|
-| Anthropic rate limits | No issue | Monitor rate limits, add retry logic | Need Anthropic rate limit increase or request queuing |
-| cozy-stack memory (streaming) | Negligible | ~1KB per active stream | Monitor goroutine count, consider max concurrent streams |
-| Cost | ~$0.01/request | ~$10/day | Implement per-user rate limiting, consider caching common transformations |
-| Latency | Direct connection | Direct connection | Consider connection pooling to Anthropic API |
+| Concern | Impact | Notes |
+|---------|--------|-------|
+| Payload size | Low | HTML is ~3-5x larger than plain text, but typical selections are <10KB. Well under the 1MB protocol limit. |
+| Conversion time | Negligible | turndown + marked each process in <5ms for typical document selections |
+| LLM token overhead | ~20% increase | Markdown adds formatting tokens vs plain text. Minimal cost impact. |
+| Bundle size increase | ~34KB gzipped | turndown (~14KB) + marked (~12KB) + react-markdown (~8KB). Acceptable for the feature value. |
+| OO initDataType change | Backward compatible | If OO version doesn't support `initDataType: "html"`, it falls back to text (verified: Scribe requires OO 8.2.0+, HTML init has been supported since before that) |
 
 ## Sources
 
-- Anthropic Messages API: [https://platform.claude.com/docs/en/api/messages](https://platform.claude.com/docs/en/api/messages) (verified 2026-03-03)
-- Anthropic Streaming docs: [https://platform.claude.com/docs/en/build-with-claude/streaming](https://platform.claude.com/docs/en/build-with-claude/streaming) (verified 2026-03-03)
-- cozy-stack `web/ai/ai.go`: analyzed at `/home/ben/Dev-local/cozy-stack/web/ai/ai.go`
-- cozy-stack `model/rag/chat.go`: analyzed at `/home/ben/Dev-local/cozy-stack/model/rag/chat.go`
-- cozy-stack config: analyzed at `/home/ben/Dev-local/cozy-stack/pkg/config/config/config.go`
-- cozy-client `models/ai.js`: existing `chatCompletion()` function uses `fetchJSON('POST', '/ai/v1/chat/completions')`
-- cozy-search `AssistantProvider.js`: reference for realtime-based streaming pattern (WebSocket approach we are NOT using)
-- cozy-stack-client `CozyStackClient.js`: `fetch()` method provides auth headers + URL construction
+- [ONLYOFFICE Plugin Configuration - initDataType](https://api.onlyoffice.com/docs/plugin-and-macros/structure/configuration/) -- HIGH confidence
+- [ONLYOFFICE GetSelectedText API](https://api.onlyoffice.com/docs/plugin-and-macros/interacting-with-editors/text-document-api/Methods/GetSelectedText/) -- HIGH confidence
+- [ONLYOFFICE PasteHtml API](https://api.onlyoffice.com/docs/plugin-and-macros/interacting-with-editors/text-document-api/Methods/PasteHtml/) -- HIGH confidence
+- [ONLYOFFICE Official HTML Plugin (Get and Paste HTML)](https://api.onlyoffice.com/samples/docs/plugin-and-macros/plugin-samples/get-and-paste-html/) -- HIGH confidence (reference implementation using initDataType html + PasteHtml)
+- [ONLYOFFICE HTML Plugin Source on GitHub](https://github.com/ONLYOFFICE/onlyoffice.github.io/blob/master/sdkjs-plugins/content/html/scripts/code.js) -- HIGH confidence
+- [ONLYOFFICE GetRangeBySelect API](https://api.onlyoffice.com/docs/office-api/usage-api/text-document-api/ApiDocument/Methods/GetRangeBySelect/) -- MEDIUM confidence (alternative approach for per-run formatting extraction, not recommended)
+- [turndown - HTML to Markdown](https://github.com/mixmark-io/turndown) -- HIGH confidence
+- [marked - Markdown to HTML](https://github.com/markedjs/marked) -- HIGH confidence
+- [react-markdown - React Markdown renderer](https://github.com/remarkjs/react-markdown) -- HIGH confidence
+- [ONLYOFFICE community: getSelectedText HTML format](https://community.onlyoffice.com/t/getselectedtext-html-format-paste-via-context-menu/8733) -- MEDIUM confidence (community confirmation that GetSelectedText returns plain text only, GetSelectedContent or initDataType html needed for formatted content)

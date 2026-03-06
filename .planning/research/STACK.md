@@ -1,396 +1,310 @@
-# Technology Stack: v2.0 Scribe Live AI
+# Technology Stack: v2.1 Rich Text Formatting
 
-**Project:** Scribe pour OnlyOffice -- Anthropic Claude API integration with streaming
-**Researched:** 2026-03-03
-**Scope:** NEW stack additions only. Existing v1.0 stack (React 18, MUI, cozy-ui, OO plugin, postMessage protocol) is validated and not re-researched.
+**Project:** Scribe pour OnlyOffice -- Rich text extraction, Markdown conversion, and formatted reinsertion
+**Researched:** 2026-03-06
+**Scope:** NEW stack additions only for the rich text formatting pipeline. Existing v2.0 stack (React 18, MUI, cozy-ui, OO plugin ES5, postMessage protocol, cozy-stack AI proxy) is validated and not re-researched.
 
 ## Recommended Stack Additions
 
-### Backend: Anthropic Go SDK (cozy-stack)
+### OO Document Builder API (no new dependencies -- already available in plugin context)
 
 | Technology | Version | Purpose | Why |
 |------------|---------|---------|-----|
-| `github.com/anthropics/anthropic-sdk-go` | v1.26.0 | Official Anthropic Go client for Claude Messages API | Official SDK from Anthropic. Type-safe, streaming support via iterator pattern, built-in retries (2x), context-based cancellation. Requires Go 1.22+ (cozy-stack uses Go 1.24). HIGH confidence. |
-| Claude Haiku 4.5 (primary model) | `claude-haiku-4-5-20250929` | Text transformations (rewrite, translate, correct, expand) | Best cost/speed ratio for Scribe use cases. $1/$5 per M input/output tokens. 4-5x faster than Sonnet. Scribe tasks are simple text transforms, not complex reasoning. Configurable per-instance to allow upgrading to Sonnet if quality insufficient. |
-| Claude Sonnet 4.5 (fallback/premium) | `claude-sonnet-4-5-20250929` | Higher-quality free-prompt and complex rewrites | $3/$15 per M tokens. Use as configurable upgrade when Haiku quality is insufficient. Do NOT default to Sonnet -- cost is 3x Haiku for marginal improvement on simple edits. |
+| `Api.GetDocument().GetRangeBySelect()` | OO 9.3.0 | Get current selection as an ApiRange object | Returns an ApiRange representing the user's selection. This is the entry point for rich text extraction. Available via `callCommand`. Confirmed in OO API docs. HIGH confidence. |
+| `ApiRange.GetAllParagraphs()` | OO 9.3.0 | Get all paragraphs in the selection | Returns `ApiParagraph[]` from a range. Each paragraph can be iterated for its child elements (runs). HIGH confidence. |
+| `ApiParagraph.GetElement(i)` / `GetElementsCount()` | OO 9.3.0 | Iterate text runs within a paragraph | Each element is an ApiRun. `GetElementsCount()` returns the count, `GetElement(i)` returns run at index i. HIGH confidence. |
+| `ApiRun.GetText()` + formatting getters | OO 9.3.0 | Read text content and formatting of each run | `GetText()`, `GetBold()`, `GetItalic()`, `GetUnderline()`, `GetStrikeout()`, `GetFontFamily()`, `GetFontSize()`. All confirmed in API docs. HIGH confidence. |
+| `ApiParagraph.GetStyle()` | OO 9.3.0 | Detect heading level, list type | Returns the paragraph style name (e.g., "Heading 1", "List Paragraph"). Used to identify structural elements. HIGH confidence. |
+| `ApiParagraph.GetNumbering()` | OO 9.3.0 | Detect numbered/bulleted list membership | Returns numbering definition for the paragraph. Combined with GetStyle to distinguish bullet from numbered lists. HIGH confidence. |
+| `ApiParagraph.GetParentTable()` / `GetParentTableCell()` | OO 9.3.0 | Detect if paragraph is inside a table cell | Returns the parent table/cell or null. Essential for table extraction. HIGH confidence. |
+| `Api.CreateParagraph()` + `Api.CreateRun()` | OO 9.3.0 | Reconstruct formatted content for reinsertion | Create paragraphs with individually formatted runs. `oRun.SetBold(true)`, `oRun.SetItalic(true)` etc. Already used in `insertAfterWithText`. HIGH confidence. |
+| `Api.CreateTable(cols, rows)` | OO 9.3.0 | Insert tables from Markdown table syntax | Creates a table element that can be populated cell-by-cell and inserted via `InsertContent`. HIGH confidence. |
+| `ApiDocument.CreateNumbering("bullet"/"numbered")` | OO 9.3.0 | Create numbered/bulleted lists for reinsertion | Returns a numbering definition that can be applied to paragraphs via `SetNumbering`. HIGH confidence. |
 
-**Model choice rationale:** Scribe actions are bounded text transforms (grammar correction, tone changes, translation, bullet points). These are not open-ended creative tasks. Haiku 4.5 delivers performance comparable to Sonnet 4 at 1/3 the cost and 4-5x speed. Start with Haiku, make model configurable.
+**Key constraint:** All OO API code runs inside `callCommand` which executes in the OO editor context (NOT the plugin iframe). Data must be serialized via `Asc.scope` (simple objects/arrays only, no functions or DOM refs). Code inside `callCommand` must be ES5.
 
-### Backend: SSE Streaming Route (cozy-stack)
-
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| Echo v4 SSE via `http.Flusher` | v4.15.1 (existing) | Stream Claude responses as SSE to frontend | Cozy-stack already uses Echo. Echo's `Response` implements `http.Flusher`. Existing pattern confirmed in `web/apps/apps.go` and `web/instances/checks.go`. Do NOT use the realtime WebSocket system -- it is designed for CouchDB document events, not request-scoped AI streams. |
-| `text/event-stream` content type | HTTP standard | SSE wire format | Standard SSE format. Frontend consumes via `fetch()` + `ReadableStream`, not `EventSource` (because we need POST, not GET). |
-
-**Why NOT use the existing RAG/realtime pattern:**
-The existing `model/rag/chat.go` pattern uses:
-1. Job queue (`rag-query` worker) to process chat asynchronously
-2. CouchDB to persist conversation state
-3. Realtime WebSocket hub (`publishDelta`) to stream tokens to frontend
-
-This is over-engineered for Scribe:
-- Scribe has no conversation history (single-shot transforms)
-- Scribe needs no persistence (text in, text out)
-- Scribe needs synchronous request-response, not async job processing
-- The job queue adds latency and complexity
-
-**Instead, use a direct SSE proxy pattern:**
-1. Frontend POSTs to `/ai/scribe` with action + selected text
-2. cozy-stack creates Anthropic streaming request with `context.Context`
-3. cozy-stack proxies SSE events directly to the HTTP response
-4. Frontend reads stream via `fetch()` + `ReadableStream` reader
-5. Cancellation: frontend aborts fetch -> Go context cancelled -> Anthropic stream closed
-
-### Frontend: Streaming State Management
+### Frontend: Markdown Rendering (React side)
 
 | Technology | Version | Purpose | Why |
 |------------|---------|---------|-----|
-| `fetch()` + `ReadableStream` | Web API (native) | Consume SSE stream from `/ai/scribe` | Cannot use `EventSource` because it only supports GET. Scribe needs POST with body (selected text, action, prompt). `fetch()` with `ReadableStream` reader is the standard pattern for POST-based SSE. No library needed. |
-| `AbortController` | Web API (native) | Cancel mid-stream requests | Native browser API. Create per-request, pass `signal` to `fetch()`. Call `.abort()` on cancel button click. Propagates to Go `context.Done()` channel. |
-| `useRef` for AbortController | React 18 (existing) | Store AbortController reference across renders | Standard React pattern. `abortControllerRef.current = new AbortController()` on each request. Cleanup in `useEffect` return. |
-| `useState` for streaming state | React 18 (existing) | Progressive text accumulation | `const [streamedText, setStreamedText] = useState('')`. Append each delta: `setStreamedText(prev => prev + delta)`. No external state library needed for this simple case. |
+| `react-markdown` | ^10.1.0 | Render Markdown in ScribeResultPanel | The standard React component for safe Markdown rendering. Builds a virtual DOM (no `dangerouslySetInnerHTML`). Supports custom components for MUI styling integration. 100% CommonMark compliant. Peer dep: React >= 18 (we have 18.2.0). HIGH confidence. |
+| `remark-gfm` | ^4.0.1 | GFM extensions: tables, strikethrough, task lists | Required plugin for `react-markdown` to render tables (which the LLM frequently returns as Markdown tables), strikethrough (`~~text~~`), and task lists. Without it, table syntax renders as plain text. HIGH confidence. |
 
-**Why NOT use cozy-realtime (WebSocket):**
-- `cozy-realtime` (v5.8.0) manages WebSocket subscriptions to CouchDB document changes
-- It subscribes to doctypes (e.g., `io.cozy.files`) and receives `created`/`updated`/`deleted` events
-- Scribe streaming is request-scoped (one request, one stream, one response), not document-change-driven
-- Using realtime would require: create a CouchDB doc, push a job, subscribe to events, correlate events to the request, clean up subscription -- all unnecessary complexity
-- Direct SSE via fetch is simpler, faster, and maps naturally to the request/response lifecycle
+**Why `react-markdown` and NOT an editable Markdown editor:**
+The result panel is read-only preview. The user views the AI output and clicks Insert/Replace. There is no need for the user to edit Markdown. An editable Markdown editor (MDXEditor, @uiw/react-md-editor) would add 100-400KB of bundle weight for functionality we do not need. `react-markdown` is ~12KB gzipped and renders beautifully.
 
-### Frontend: Stream UI Components
+### Frontend: No Markdown Conversion Library Needed
 
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| `ScribeResultPanel` (existing) | - | Display streamed text progressively | Already exists. Currently receives `resultText` as a static string. Change to receive `streamedText` that grows as tokens arrive. Minimal modification needed. |
-| CSS `white-space: pre-wrap` | CSS (existing) | Preserve line breaks in streamed text | Already in `scribe.styl`. Ensures multi-line responses display correctly during and after streaming. |
-| Loading/typing indicator | cozy-ui `Spinner` or custom | Show streaming-in-progress state | Use a simple blinking cursor or "..." at the end of streamed text while `isStreaming` is true. Keep it minimal -- the text appearing progressively IS the indicator. |
+**Why no `turndown`, `unified`, or `remark-stringify`:**
 
-## Integration Points with Existing cozy-stack
-
-### New Route: `/ai/scribe` (POST)
+The conversion pipeline does NOT involve HTML at any point:
 
 ```
-POST /data/ai/scribe
-Content-Type: application/json
-Accept: text/event-stream
+OO Document Model → custom serializer (ES5, in callCommand) → Markdown string
+                                                                    ↓
+                                                              sent to LLM
+                                                                    ↓
+                                                          Markdown string back
+                                                                    ↓
+Markdown string → custom deserializer (ES5, in callCommand) → OO Document Model
+```
 
-{
-  "action": "correct-grammar",
-  "text": "selected text here",
-  "prompt": "optional custom prompt for free-prompt",
-  "model": "claude-haiku-4-5-20250929"  // optional override
+- **Extraction (OO -> Markdown):** We traverse the OO document model (ApiParagraph/ApiRun) and build a Markdown string manually. This is ~80 lines of ES5 code. The OO API gives us structured data (bold, italic, heading style), not HTML. There is no HTML to convert.
+- **Reinsertion (Markdown -> OO):** We parse the LLM's Markdown output and create OO API objects (CreateParagraph, CreateRun, SetBold, etc.). This is a simple line-by-line Markdown parser (~120 lines of ES5). We do NOT need a full AST parser because our Markdown subset is bounded (bold, italic, headings, lists, links, tables).
+- **LLM display:** `react-markdown` handles rendering the Markdown string in the result panel. No intermediate conversion needed.
+
+Adding `turndown` (HTML->MD) or `unified/remark` (MD AST) would be over-engineering. We never have HTML. Our Markdown subset is small and predictable.
+
+## Integration Points with Existing Architecture
+
+### Modified postMessage Protocol
+
+Currently, the plugin sends plain text via the intent:
+```javascript
+// Current (v2.0)
+castIntent("AI_TEXT_EDIT", { text: lastSelectedText });
+```
+
+For v2.1, the plugin extracts rich text as Markdown and sends it:
+```javascript
+// New (v2.1)
+castIntent("AI_TEXT_EDIT", { text: lastSelectedText, markdown: markdownText });
+```
+
+The `markdown` field contains the Markdown-formatted version of the selection. The `text` field remains as fallback for actions that do not need formatting (e.g., translation). The intent protocol (postMessage) is unchanged -- we just add a field to the data payload.
+
+### Modified callCommand for Extraction
+
+Currently, `GetSelectedText` returns plain text. For v2.1, we add a new extraction function using `callCommand`:
+
+```javascript
+// In code.js (ES5) -- extract formatted text as Markdown
+function extractFormattedSelection(callback) {
+  window.Asc.plugin.callCommand(function() {
+    var oDocument = Api.GetDocument();
+    var oRange = oDocument.GetRangeBySelect();
+    if (!oRange) return "";
+
+    var paragraphs = oRange.GetAllParagraphs();
+    var lines = [];
+
+    for (var p = 0; p < paragraphs.length; p++) {
+      var para = paragraphs[p];
+      var style = para.GetStyle() ? para.GetStyle().GetName() : "";
+      var elemCount = para.GetElementsCount();
+      var lineText = "";
+
+      // Build inline-formatted text from runs
+      for (var r = 0; r < elemCount; r++) {
+        var run = para.GetElement(r);
+        var text = run.GetText();
+        if (!text) continue;
+
+        var isBold = run.GetBold();
+        var isItalic = run.GetItalic();
+        var isStrike = run.GetStrikeout();
+
+        if (isBold && isItalic) text = "***" + text + "***";
+        else if (isBold) text = "**" + text + "**";
+        else if (isItalic) text = "*" + text + "*";
+        if (isStrike) text = "~~" + text + "~~";
+
+        lineText += text;
+      }
+
+      // Apply paragraph-level formatting
+      if (style.indexOf("Heading 1") !== -1) lineText = "# " + lineText;
+      else if (style.indexOf("Heading 2") !== -1) lineText = "## " + lineText;
+      else if (style.indexOf("Heading 3") !== -1) lineText = "### " + lineText;
+
+      lines.push(lineText);
+    }
+
+    return lines.join("\n");
+  }, false, false, function(markdown) {
+    callback(markdown);
+  });
 }
 ```
 
-**Response (SSE):**
+### Modified callCommand for Reinsertion
+
+Currently, `handleIntentResponse` uses `PasteText` (plain text) or `InsertContent` with plain paragraphs. For v2.1, we parse Markdown and create formatted OO elements:
+
+```javascript
+// In code.js (ES5) -- insert Markdown as formatted OO content
+function insertMarkdownContent(markdown) {
+  Asc.scope.markdownText = markdown;
+  window.Asc.plugin.callCommand(function() {
+    var md = Asc.scope.markdownText;
+    var oDocument = Api.GetDocument();
+    var content = [];
+    var lines = md.split("\n");
+
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      var para = Api.CreateParagraph();
+
+      // Heading detection
+      var headingMatch = line.match(/^(#{1,6})\s+(.*)$/);
+      if (headingMatch) {
+        para.SetStyle(oDocument.GetStyle("Heading " + headingMatch[1].length));
+        addFormattedRuns(para, headingMatch[2]);
+      }
+      // Bullet list
+      else if (line.match(/^[-*+]\s+/)) {
+        addFormattedRuns(para, line.replace(/^[-*+]\s+/, ""));
+        // Apply bullet numbering
+        var numbering = oDocument.CreateNumbering("bullet");
+        para.SetNumbering(numbering.GetLevel(0));
+      }
+      // Normal paragraph
+      else {
+        addFormattedRuns(para, line);
+      }
+
+      content.push(para);
+    }
+
+    oDocument.InsertContent(content);
+  }, false, false);
+}
+
+// Parse inline Markdown formatting into OO runs (simplified)
+function addFormattedRuns(para, text) {
+  // Regex-based inline parsing for **bold**, *italic*, ~~strike~~
+  // Creates ApiRun objects with appropriate SetBold/SetItalic/SetStrikeout
+}
 ```
-event: delta
-data: {"text": "Correc"}
 
-event: delta
-data: {"text": "ted text "}
+### ScribeResultPanel Changes
 
-event: delta
-data: {"text": "here."}
+```jsx
+// Before (v2.0): plain text display
+<div className={styles['scribe-result-text']}>
+  {error || resultText}
+</div>
 
-event: done
-data: {"usage": {"input_tokens": 42, "output_tokens": 15}}
+// After (v2.1): Markdown rendering
+import Markdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
-event: error
-data: {"message": "rate limit exceeded", "code": "rate_limit"}
+<div className={styles['scribe-result-text']}>
+  {error || <Markdown remarkPlugins={[remarkGfm]}>{resultText}</Markdown>}
+</div>
 ```
 
-### Configuration: Extend RAGServer or Separate Config
+### System Prompt Changes
 
-**Recommendation: Separate `anthropic` config block in cozy.yaml**, not reuse `rag` config.
+The system prompt must instruct the LLM to preserve and return Markdown formatting:
 
-```yaml
-# cozy.yaml
-anthropic:
-  default:
-    api_key: "sk-ant-..."
-    model: "claude-haiku-4-5-20250929"
-    max_tokens: 4096
+```javascript
+// Updated SYSTEM_PROMPT in scribeAI.js
+export const SYSTEM_PROMPT =
+  'You are a writing assistant. Return only the transformed text using Markdown formatting. ' +
+  'Preserve the original formatting structure (headings, bold, italic, lists, tables). ' +
+  'Respond in the same language as the input text.'
 ```
-
-**Why separate from RAG:**
-- RAG config points to an internal RAGondin server (different API, different auth)
-- Anthropic API has its own endpoint (api.anthropic.com), its own auth (x-api-key header)
-- The SDK handles the base URL, retries, and authentication natively
-- Mixing them in the same config creates confusion
-
-### Permission Model
-
-Use existing `io.cozy.ai.chat.conversations` permission type (already defined in consts) OR create a new `io.cozy.ai.scribe` doctype. The existing pattern in `web/ai/ai.go` checks:
-```go
-middlewares.AllowWholeType(c, permission.POST, consts.ChatConversations)
-```
-
-For Scribe, either reuse this permission or add a `Scribe` constant to `consts/doctype.go`.
-
-### System Prompt Architecture
-
-System prompts live in `scribeActions.js` (already defined as `prompt` field per action). The frontend sends the `action` id, and cozy-stack maps it to a system prompt. Two approaches:
-
-**Option A (recommended): Frontend sends action + text, backend has prompt templates.**
-- System prompts stored in cozy-stack as Go constants or config
-- Frontend sends: `{"action": "correct-grammar", "text": "..."}`
-- Backend builds the full Messages API request with system prompt + user message
-- **Advantage:** Prompts are not exposed to the client, can be updated without frontend deploy
-
-**Option B: Frontend sends full prompt.**
-- Frontend builds the prompt from `scribeActions.js` and sends the complete user message
-- Backend is a dumb proxy
-- **Advantage:** Simpler backend, but prompts are visible in network tab and tied to frontend releases
-
-**Choose Option A** because it keeps prompt engineering server-side and allows A/B testing or improvement without redeployment.
 
 ## What NOT to Add
 
 | Avoid | Why | What to Do Instead |
 |-------|-----|---------------------|
-| Conversation persistence (CouchDB) | Scribe is single-shot, not a chatbot. No conversation history needed. | Stateless request/response. Each Scribe action is independent. |
-| Job queue (`rag-query` worker pattern) | Adds latency. Scribe needs synchronous streaming, not async background processing. | Direct SSE proxy in the HTTP handler. |
-| `cozy-realtime` WebSocket for streaming | Designed for CouchDB document change events, not request-scoped AI streams. Over-engineering. | `fetch()` + `ReadableStream` consuming direct SSE from `/ai/scribe`. |
-| `EventSource` on frontend | Only supports GET requests. Scribe needs POST (sends text + action in body). | `fetch()` with `ReadableStream` reader. |
-| Third-party SSE library (e.g., `sse.js`, `eventsource-polyfill`) | Unnecessary. Native `fetch()` + `TextDecoder` + `ReadableStream` is sufficient and well-supported. | Native Web APIs. |
-| OpenAI-compatible proxy format | Existing `OpenAICompletion` route proxies to RAGondin which speaks OpenAI format. Anthropic has its own format. The SDK handles it. | Use Anthropic SDK directly. Its SSE format is different from OpenAI's. |
-| Community Go Anthropic libraries (`liushuangls/go-anthropic`, `unfunco/anthropic-sdk-go`) | Unofficial. The official `anthropics/anthropic-sdk-go` exists since 2024 and is actively maintained. | Use official SDK only. |
-| Rate limit handling library | Anthropic SDK has built-in retry with exponential backoff for 429s. | Configure `option.WithMaxRetries(2)` (default). Surface rate limit errors to frontend as `event: error`. |
+| `turndown` (HTML->Markdown) | We never have HTML. OO API gives structured document model, not HTML. | Custom ES5 serializer that reads ApiRun formatting directly. |
+| `unified` / `remark-parse` / `remark-stringify` | Full Markdown AST parsing is over-engineered for our bounded subset. We only handle: bold, italic, strikethrough, headings 1-6, bullet lists, numbered lists, tables, links. | Simple line-by-line ES5 parser (~120 lines). Regex for inline formatting. |
+| MDXEditor / @uiw/react-md-editor | Editable Markdown editors. The result panel is read-only. 100-400KB bundle for unused functionality. | `react-markdown` (12KB gzipped) for read-only rendering. |
+| `marked` / `markdown-it` | Full Markdown-to-HTML parsers. We need Markdown-to-OO-API-objects, not HTML. | Custom ES5 parser in `callCommand` context. |
+| Clipboard API (`navigator.clipboard`) for rich text | Unreliable across iframe boundaries (Cozy Stack > Drive > OO > Plugin). Permission issues. | Direct OO Document Builder API via `callCommand`. |
+| OO `PasteHtml` executeMethod | Exists but produces unreliable formatting. We control exact output via CreateRun/SetBold. | `InsertContent` with explicit ApiParagraph/ApiRun construction. |
+| OOXML manipulation | Directly editing the document XML is fragile, undocumented for plugins, and breaks collaboration. | Use the public Document Builder API (ApiParagraph, ApiRun, etc.). |
 
 ## Alternatives Considered
 
 | Category | Recommended | Alternative | Why Not |
 |----------|-------------|-------------|---------|
-| Go Anthropic client | `anthropics/anthropic-sdk-go` (official) | `liushuangls/go-anthropic` (community) | Official SDK has better type safety, streaming support, is maintained by Anthropic. Community libs may lag API changes. |
-| Streaming transport | Direct SSE proxy (POST -> SSE response) | Realtime WebSocket (existing `cozy-realtime` pattern) | WebSocket is for persistent subscriptions to document changes. Scribe is request/response. SSE is simpler, maps to the lifecycle naturally. |
-| Model | Haiku 4.5 (default) | Sonnet 4.5 (premium) | Haiku is 3x cheaper, 4-5x faster. Text transforms don't need Sonnet's reasoning depth. Make model configurable, default to Haiku. |
-| Frontend SSE consumption | `fetch()` + `ReadableStream` | `EventSource` API | `EventSource` is GET-only. Scribe needs POST with body. |
-| Frontend SSE consumption | `fetch()` + `ReadableStream` | `@microsoft/fetch-event-source` library | Adds a dependency for what is ~30 lines of code. The parsing is trivial for our simple event format. |
-| State management for streaming | `useState` + `useRef` | Redux/Zustand/Jotai | Massive over-engineering. Streaming state is local to `ScribePopover`. One component, one piece of state (`streamedText`). |
-| Backend prompt location | Server-side prompt templates | Client-side prompts (current `scribeActions.js`) | Server-side allows prompt iteration without frontend redeploy. Keeps prompts out of network inspector. |
-| Configuration | Separate `anthropic` config block | Reuse `rag` config block | Different API, different auth, different endpoint. Mixing creates confusion. |
+| Rich text extraction | `callCommand` + `GetRangeBySelect` + ApiParagraph/ApiRun traversal | `GetSelectedText` with custom separators | `GetSelectedText` returns plain text only. No formatting info. |
+| Markdown rendering | `react-markdown` + `remark-gfm` | `dangerouslySetInnerHTML` with `marked` | XSS risk. `react-markdown` builds vDOM safely. |
+| Markdown rendering | `react-markdown` + `remark-gfm` | Custom rendering with regex | Fragile. `react-markdown` is battle-tested for edge cases (nested formatting, code blocks, etc.). |
+| Markdown-to-OO conversion | Custom ES5 parser in `callCommand` | External library loaded in plugin iframe | `callCommand` runs in OO editor context. Cannot import npm modules. Must be self-contained ES5. |
+| Intermediate format | Markdown (text-based) | HTML or JSON AST | Markdown is what LLMs natively produce and understand. No conversion overhead. Human-readable in transit. |
+| Table extraction | `GetParentTable` + cell-by-cell iteration | Skip tables entirely | Tables are common in documents. Users will expect formatting preservation. |
+| List extraction | `GetNumbering` + `GetStyle` detection | Skip lists entirely | Lists are extremely common. Must-have for formatting preservation. |
 
 ## Installation
-
-### cozy-stack (Go backend)
-
-```bash
-cd ~/Dev-local/cozy-stack
-
-# Add official Anthropic Go SDK
-go get -u 'github.com/anthropics/anthropic-sdk-go@v1.26.0'
-```
-
-**Files to create/modify:**
-- `model/ai/scribe.go` -- Anthropic client, system prompts, streaming logic
-- `web/ai/ai.go` -- Add `POST /ai/scribe` route with SSE handler
-- `pkg/config/config/config.go` -- Add `Anthropic` config struct and `makeAnthropicConfig`
-- `model/instance/instance.go` -- Add `AnthropicConfig()` method (mirrors `RAGServer()`)
-- `pkg/consts/doctype.go` -- Add `ScribeEvents` doctype if needed for permissions
 
 ### cozy-drive (React frontend)
 
 ```bash
-# No new npm packages needed.
-# All required capabilities exist in:
-# - Native Web APIs: fetch, ReadableStream, AbortController, TextDecoder
-# - React 18: useState, useRef, useCallback, useEffect
-# - cozy-client 60.20.0: HTTP client for cozy-stack API calls
+cd ~/Dev-local/cozy-drive
+
+# Markdown rendering in result panel
+npm install react-markdown@^10.1.0 remark-gfm@^4.0.1
 ```
 
-**Files to create/modify:**
-- `src/modules/views/OnlyOffice/Scribe/useScribeStream.js` -- Custom hook: fetch + SSE parsing + AbortController
-- `src/modules/views/OnlyOffice/Scribe/scribeApi.js` -- Replace `mockTransform.js` with API call via `useScribeStream`
-- `src/modules/views/OnlyOffice/Scribe/ScribePopover.jsx` -- Wire streaming state (`isStreaming`, `streamedText`, `cancel`)
-- `src/modules/views/OnlyOffice/Scribe/ScribeResultPanel.jsx` -- Accept streaming text, show progress indicator
+### OO Plugin (no installation)
 
-## Key Implementation Patterns
+All rich text extraction/reinsertion code uses the OO Document Builder API available natively inside `callCommand`. No npm packages, no bundling. Pure ES5 code added to `plugins/onlyoffice-scribe/scripts/code.js`.
 
-### Go: SSE Proxy Handler Pattern
+## Files to Create/Modify
 
-```go
-// web/ai/ai.go - Scribe SSE streaming handler
-func ScribeTransform(c echo.Context) error {
-    // 1. Parse request
-    var req ScribeRequest
-    if err := c.Bind(&req); err != nil {
-        return err
-    }
+### Plugin (ES5, in OO context)
 
-    // 2. Build Anthropic messages
-    inst := middlewares.GetInstance(c)
-    cfg := inst.AnthropicConfig()
-    client := anthropic.NewClient(option.WithAPIKey(cfg.APIKey))
+- `plugins/onlyoffice-scribe/scripts/code.js` -- Add `extractFormattedSelection()` and `insertMarkdownContent()` functions. Modify `handleIntentResponse` to use Markdown-aware insertion. Modify selection handlers to extract formatted text.
 
-    // 3. Create streaming request with request context
-    //    (cancelled when client disconnects)
-    ctx := c.Request().Context()
-    stream := client.Messages.NewStreaming(ctx, anthropic.MessageNewParams{
-        Model:     anthropic.Model(cfg.Model),
-        MaxTokens: int64(cfg.MaxTokens),
-        System:    []anthropic.TextBlockParam{{Text: systemPromptFor(req.Action)}},
-        Messages:  []anthropic.MessageParam{
-            anthropic.NewUserMessage(anthropic.NewTextBlock(req.Text)),
-        },
-    })
+### Frontend (React, in Cozy Drive context)
 
-    // 4. Set SSE headers
-    w := c.Response()
-    w.Header().Set("Content-Type", "text/event-stream")
-    w.Header().Set("Cache-Control", "no-cache")
-    w.Header().Set("Connection", "keep-alive")
-    w.WriteHeader(http.StatusOK)
+- `src/modules/views/OnlyOffice/Scribe/ScribeResultPanel.jsx` -- Replace plain text display with `<Markdown>` component. Style Markdown elements to match MUI theme.
+- `src/modules/views/OnlyOffice/Scribe/scribeAI.js` -- Update SYSTEM_PROMPT to instruct LLM to preserve/return Markdown. Update `buildMessages` to include Markdown-formatted input.
+- `src/modules/views/OnlyOffice/Scribe/scribe.styl` -- Add styles for rendered Markdown elements (headings, lists, tables, code blocks) within the result panel.
 
-    // 5. Stream deltas
-    for stream.Next() {
-        event := stream.Current()
-        switch v := event.AsAny().(type) {
-        case anthropic.ContentBlockDeltaEvent:
-            switch d := v.Delta.AsAny().(type) {
-            case anthropic.TextDelta:
-                fmt.Fprintf(w, "event: delta\ndata: %s\n\n",
-                    jsonMarshal(map[string]string{"text": d.Text}))
-                if f, ok := w.(http.Flusher); ok {
-                    f.Flush()
-                }
-            }
-        }
-    }
+### Protocol
 
-    if err := stream.Err(); err != nil {
-        fmt.Fprintf(w, "event: error\ndata: %s\n\n",
-            jsonMarshal(map[string]string{"message": err.Error()}))
-        if f, ok := w.(http.Flusher); ok {
-            f.Flush()
-        }
-        return nil // error already sent via SSE
-    }
+- `src/lib/cozy-bridge.js` -- No changes needed. The `markdown` field is just additional data in the existing intent payload.
+- `src/modules/views/OnlyOffice/useCozyBridge.js` -- No changes needed. Already passes through `intentMessage.data`.
 
-    // 6. Send done event
-    fmt.Fprintf(w, "event: done\ndata: {}\n\n")
-    if f, ok := w.(http.Flusher); ok {
-        f.Flush()
-    }
-    return nil
-}
-```
+## Supported Markdown Subset
 
-### JavaScript: useScribeStream Hook Pattern
+The custom ES5 serializer/parser handles this bounded set:
 
-```javascript
-// useScribeStream.js
-import { useState, useRef, useCallback } from 'react'
+| Format | Markdown Syntax | OO API Read | OO API Write |
+|--------|----------------|-------------|--------------|
+| Bold | `**text**` | `ApiRun.GetBold()` | `ApiRun.SetBold(true)` |
+| Italic | `*text*` | `ApiRun.GetItalic()` | `ApiRun.SetItalic(true)` |
+| Bold+Italic | `***text***` | `GetBold() && GetItalic()` | `SetBold(true) + SetItalic(true)` |
+| Strikethrough | `~~text~~` | `ApiRun.GetStrikeout()` | `ApiRun.SetStrikeout(true)` |
+| Heading 1-6 | `# text` | `ApiParagraph.GetStyle().GetName()` | `ApiParagraph.SetStyle("Heading N")` |
+| Bullet list | `- text` | `ApiParagraph.GetNumbering()` type=bullet | `CreateNumbering("bullet")` + `SetNumbering` |
+| Numbered list | `1. text` | `ApiParagraph.GetNumbering()` type=numbered | `CreateNumbering("numbered")` + `SetNumbering` |
+| Link | `[text](url)` | `ApiHyperlink.GetText()` + `.GetLink()` | `ApiParagraph.AddHyperlink(url, text)` |
+| Table | `\| a \| b \|` | `GetParentTable()` + cell iteration | `Api.CreateTable(cols, rows)` + populate |
 
-export function useScribeStream() {
-  const [streamedText, setStreamedText] = useState('')
-  const [isStreaming, setIsStreaming] = useState(false)
-  const [error, setError] = useState(null)
-  const abortRef = useRef(null)
-
-  const startStream = useCallback(async (action, text, extra) => {
-    // Cancel any existing stream
-    abortRef.current?.abort()
-    abortRef.current = new AbortController()
-
-    setStreamedText('')
-    setIsStreaming(true)
-    setError(null)
-
-    try {
-      const res = await fetch('/data/ai/scribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
-        body: JSON.stringify({ action, text, ...extra }),
-        signal: abortRef.current.signal
-      })
-
-      const reader = res.body.getReader()
-      const decoder = new TextDecoder()
-      let buffer = ''
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        buffer += decoder.decode(value, { stream: true })
-        const lines = buffer.split('\n')
-        buffer = lines.pop() // keep incomplete line
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = JSON.parse(line.slice(6))
-            if (data.text) {
-              setStreamedText(prev => prev + data.text)
-            }
-          }
-          // event: error is handled by checking the event line
-        }
-      }
-    } catch (err) {
-      if (err.name !== 'AbortError') {
-        setError(err.message)
-      }
-    } finally {
-      setIsStreaming(false)
-    }
-  }, [])
-
-  const cancelStream = useCallback(() => {
-    abortRef.current?.abort()
-    setIsStreaming(false)
-  }, [])
-
-  return { streamedText, isStreaming, error, startStream, cancelStream }
-}
-```
-
-### Cancellation Flow
-
-```
-User clicks Cancel → cancelStream() → AbortController.abort()
-  → fetch signal aborted → ReadableStream closed
-  → Server: c.Request().Context().Done() fires
-  → Go: stream.Next() returns false (context cancelled)
-  → Anthropic SDK: HTTP connection to api.anthropic.com closed
-  → No more tokens billed after cancellation
-```
+**Explicitly out of scope (v2.1):** Images, code blocks, blockquotes, horizontal rules, footnotes. These can be added incrementally in later versions.
 
 ## Version Compatibility
 
 | Component | Required | Current | Notes |
 |-----------|----------|---------|-------|
-| Go | >= 1.22 | 1.24.0 | cozy-stack go.mod. Meets anthropic-sdk-go requirement. |
-| anthropic-sdk-go | v1.26.0 | (new) | Latest stable. Published 2026-02-19. |
-| Echo | v4 | v4.15.1 | Existing. Supports `http.Flusher` for SSE. |
-| React | >= 18 | 18.2.0 | Existing. Hooks for streaming state. |
-| cozy-client | any | 60.20.0 | Existing. Used for auth token in fetch headers. |
-| Browser (fetch ReadableStream) | Chrome 43+, FF 65+, Safari 10.1+ | Modern | All Cozy-supported browsers handle this. |
-
-## Pricing Estimates
-
-| Model | Input Cost | Output Cost | Typical Scribe Request | Estimated Cost/Request |
-|-------|------------|-------------|----------------------|----------------------|
-| Haiku 4.5 | $1/M tokens | $5/M tokens | ~200 input + ~300 output tokens | ~$0.0017 |
-| Sonnet 4.5 | $3/M tokens | $15/M tokens | ~200 input + ~300 output tokens | ~$0.0051 |
-
-At 1000 Scribe uses/day with Haiku: ~$1.70/day, ~$51/month.
-At 1000 Scribe uses/day with Sonnet: ~$5.10/day, ~$153/month.
+| OnlyOffice | >= 8.2.1 | 9.3.0-138 | All Document Builder APIs used are available. Confirmed. |
+| React | >= 18 | 18.2.0 | Peer dep for react-markdown 10.x. Met. |
+| react-markdown | ^10.1.0 | (new) | Latest stable. ~12KB gzipped. |
+| remark-gfm | ^4.0.1 | (new) | Compatible with react-markdown 10.x. |
 
 ## Sources
 
-- [Anthropic Go SDK (official)](https://github.com/anthropics/anthropic-sdk-go) -- v1.26.0, streaming examples, error handling (HIGH confidence)
-- [Anthropic Go SDK documentation](https://platform.claude.com/docs/en/api/sdks/go) -- Official installation, usage, streaming, error patterns (HIGH confidence)
-- [Anthropic Messages Streaming API](https://platform.claude.com/docs/en/api/messages-streaming) -- SSE event types, wire format, event flow (HIGH confidence)
-- [Anthropic Pricing](https://platform.claude.com/docs/en/about-claude/pricing) -- Token costs per model (HIGH confidence)
-- [Echo v4 SSE cookbook](https://echo.labstack.com/docs/cookbook/sse) -- SSE handler pattern with Flush (MEDIUM confidence -- page content not fully loaded)
-- [Existing cozy-stack SSE patterns](file:///home/ben/Dev-local/cozy-stack/web/apps/apps.go) -- `http.Flusher` usage confirmed in codebase (HIGH confidence)
-- [Existing cozy-stack RAG/chat streaming](file:///home/ben/Dev-local/cozy-stack/model/rag/chat.go) -- `foreachSSE`, `publishDelta`, realtime pattern (HIGH confidence -- read directly)
-- [Existing cozy-stack AI routes](file:///home/ben/Dev-local/cozy-stack/web/ai/ai.go) -- Route structure, permission model (HIGH confidence -- read directly)
-- [cozy-stack config for RAG](file:///home/ben/Dev-local/cozy-stack/pkg/config/config/config.go) -- RAGServer config pattern to mirror for Anthropic (HIGH confidence -- read directly)
-- [SSE with POST (not EventSource)](https://solovyov.net/blog/2023/eventsource-post/) -- Why fetch+ReadableStream instead of EventSource for POST-based SSE (MEDIUM confidence)
+- [OO GetSelectedText API](https://api.onlyoffice.com/docs/plugin-and-macros/interacting-with-editors/text-document-api/Methods/GetSelectedText/) -- Returns plain text only, confirms we need callCommand for rich text (HIGH confidence)
+- [OO ApiParagraph class](https://api.onlyoffice.com/docs/office-api/usage-api/text-document-api/ApiParagraph/) -- GetElement, GetElementsCount, GetText, GetStyle, GetNumbering, GetParentTable (HIGH confidence)
+- [OO ApiRun class](https://api.onlyoffice.com/docs/office-api/usage-api/text-document-api/ApiRun/) -- GetText, GetBold, GetItalic, GetUnderline, GetStrikeout, GetFontFamily, GetFontSize (HIGH confidence)
+- [OO ApiDocument class](https://api.onlyoffice.com/docs/office-api/usage-api/text-document-api/ApiDocument/) -- GetRangeBySelect, InsertContent, CreateNumbering, GetElement, GetElementsCount (HIGH confidence)
+- [OO ApiRange.GetAllParagraphs](https://api.onlyoffice.com/docs/office-api/usage-api/text-document-api/ApiRange/Methods/GetAllParagraphs/) -- Returns ApiParagraph[] from a range (HIGH confidence)
+- [OO callCommand documentation](https://api.onlyoffice.com/docs/plugin-and-macros/interacting-with-editors/overview/how-to-call-commands/) -- How to execute code in editor context, data passing via Asc.scope (HIGH confidence)
+- [OO CreateTable API](https://api.onlyoffice.com/docs/office-api/usage-api/text-document-api/Api/Methods/CreateTable/) -- Table creation for Markdown table reinsertion (HIGH confidence)
+- [OO CreateNumbering API](https://api.onlyoffice.com/docs/office-api/usage-api/text-document-api/ApiDocument/Methods/CreateNumbering/) -- Bullet and numbered list creation (HIGH confidence)
+- [OO InsertContent API](https://api.onlyoffice.com/docs/office-api/usage-api/text-document-api/ApiDocument/Methods/InsertContent/) -- Insert formatted paragraphs and tables at current position (HIGH confidence)
+- [react-markdown on GitHub](https://github.com/remarkjs/react-markdown) -- v10.1.0, React component for safe Markdown rendering, custom components support (HIGH confidence)
+- [remark-gfm on GitHub](https://github.com/remarkjs/remark-gfm) -- v4.0.1, GFM extension for tables, strikethrough, task lists (HIGH confidence)
+- [OO community: GetSelectedText HTML format request](https://community.onlyoffice.com/t/getselectedtext-html-format-paste-via-context-menu/8733) -- Confirms GetSelectedText does not support rich text output (MEDIUM confidence)
+- [OO API updates December 2025](https://www.onlyoffice.com/blog/2025/12/api-updates-december-2025) -- Confirms expanded ApiRun getter methods (MEDIUM confidence)
 
 ---
-*Stack research for: v2.0 Scribe Live AI -- Anthropic Claude integration with streaming*
-*Researched: 2026-03-03*
+*Stack research for: v2.1 Rich Text Formatting -- OO extraction, Markdown conversion, formatted reinsertion*
+*Researched: 2026-03-06*

@@ -1,333 +1,219 @@
-# Feature Landscape: v2.0 Scribe Live AI
+# Feature Landscape: v2.1 Rich Text Formatting Preservation
 
-**Domain:** LLM integration for AI writing assistant (Scribe) in OnlyOffice / Cozy Drive
-**Researched:** 2026-03-03
-**Milestone context:** v2.0 -- replacing mock AI with real Anthropic Claude API, adding streaming UX
-**Confidence:** HIGH -- Anthropic streaming API is well-documented; patterns for streaming UX, error handling, and cancellation are well-established across industry; existing cozy-stack AI routes provide clear extension points.
+**Domain:** Rich text formatting preservation for AI writing assistant (Scribe) in OnlyOffice / Cozy Drive
+**Researched:** 2026-03-06
+**Milestone context:** v2.1 -- preserving and restoring rich text formatting through the Scribe AI cycle (extraction, Markdown conversion, LLM processing, preview, reinsertion)
+**Confidence:** MEDIUM-HIGH -- OO APIs (GetSelectedContent, PasteHtml) are documented and proven by official plugins; conversion libraries (Turndown, marked, react-markdown) are mature and battle-tested; the integration between them in this specific plugin context needs validation.
 
 ---
 
-## Existing v1.0 Foundation (Already Shipped)
+## Existing v2.0 Foundation (Already Shipped)
 
-These features are built and working. v2.0 builds directly on top of them.
+These features are built and working. v2.1 builds directly on top of them.
 
 | Feature | Status | Location |
 |---------|--------|----------|
-| Text selection detection in OO | Shipped | `plugins/onlyoffice-scribe/` |
-| Action menu (Correct grammar, Translate, Change tone, Improve, Free prompt) | Shipped | `ScribeActionMenu.jsx`, `scribeActions.js` |
-| Result preview panel (Insert/Replace/Cancel) | Shipped | `ScribeResultPanel.jsx` |
-| Floating button with Ctrl+I shortcut | Shipped | React portal on `document.body` |
-| Mock AI transformation (instant, config-driven) | Shipped | `mockTransform.js` |
-| Declarative SCRIBE_ACTIONS config (prompts + mock results) | Shipped | `scribeActions.js` |
-| Two-step state machine (menu -> result) | Shipped | `ScribePopover.jsx` |
-| postMessage protocol (plugin <-> host) | Shipped | `cozy-bridge/protocol.js` |
+| Plain text extraction via `GetSelectedText` | Shipped | `plugins/onlyoffice-scribe/scripts/code.js` |
+| Plain text insertion via `PasteText` | Shipped | `code.js` handleIntentResponse |
+| Insert-after via `InsertContent` (callCommand) | Shipped | `code.js` insertAfterWithText |
+| Action menu, submenus, free prompt | Shipped | `ScribeActionMenu.jsx`, `scribeActions.js` |
+| Result preview panel (Insert/Replace/Cancel) | Shipped | `ScribeResultPanel.jsx` -- plain text display |
+| LLM integration via cozy-stack (non-streaming) | Shipped | `scribeAI.js` |
+| Error handling with retry, i18n (5 locales) | Shipped | `ScribePopover.jsx`, `ScribeResultPanel.jsx` |
+| Floating button, Ctrl+I, context menu, toolbar | Shipped | `ScribeFloatingButton.jsx`, `code.js` |
+
+---
+
+## Pipeline Overview
+
+The rich text milestone introduces a 5-stage pipeline:
+
+```
+[1] Extraction  -->  [2] Rich-to-MD  -->  [3] LLM  -->  [4] MD Preview  -->  [5] MD-to-Rich Reinsertion
+    (OO API)         (Turndown)        (existing)     (react-markdown)      (marked + PasteHtml)
+```
+
+Stages 1 and 5 interact with the OO Plugin API (highest risk -- ES5 constrained, cross-iframe). Stages 2 and 5 are pure conversion (lowest risk, well-established libraries). Stage 4 is React UI rendering. Stage 3 (LLM call) already exists and needs no change -- LLMs handle Markdown natively and produce better-structured output when given Markdown input.
 
 ---
 
 ## Table Stakes
 
-Features users expect when a mock AI is replaced with a real one. Missing any of these means the product feels broken or worse than the mock.
+Features users expect. Missing any of these means the formatting milestone is incomplete.
 
-| Feature | Why Expected | Complexity | Dependency on Existing UI |
-|---------|--------------|------------|--------------------------|
-| **Real AI text transformation** | The mock prefix/wrap transforms are obviously fake. Users expect actual rewriting, translation, correction from a real LLM. This is the entire point of v2.0. | MEDIUM | Replace `mockTransform()` call in `ScribePopover.handleActionSelect` with real API call. `SCRIBE_ACTIONS.prompt` templates already contain the right prompts with `{selectedText}` placeholders. |
-| **Loading state during AI processing** | Mock transforms were instant. Real API calls take 1-5s (TTFT) + generation time. Users need visual feedback that something is happening. | LOW | Add a third step `'loading'` to `ScribePopover`'s `step` state machine (currently `'menu'` / `'result'`). Show spinner/skeleton in the result panel area. |
-| **Error feedback on API failure** | Network errors, rate limits (429), overload (529), server errors (500) will happen. Users must see a clear message, not a silent failure or infinite spinner. | MEDIUM | New error state in `ScribePopover`. Display in the result panel area with a "Try again" button. Must distinguish retryable (429, 529, network) from non-retryable (400, 401) errors. |
-| **Retry on transient failure** | 529 (overloaded) and 429 (rate limit) are expected from Anthropic's API. Automatic retry with exponential backoff is standard practice. | MEDIUM | Implement in the API service layer, transparent to UI. Retry 529/429 up to 3 times with exponential backoff (1s, 2s, 4s) + jitter. Surface error to UI only after retries exhausted. |
-| **Dark theme text visibility** | Known bug: "Selected Text" white-on-white in OO dark theme. With real AI output appearing in the result panel, this becomes critical -- users cannot read the AI response. | LOW | Use `theme.palette.text.primary` and `theme.palette.background.paper` from MUI/cozy-ui theme. The `ScribeResultPanel` already uses `useTheme()` for the background but the text color may not adapt. Ensure WCAG 4.5:1 contrast ratio. |
-| **Prompt template interpolation** | `SCRIBE_ACTIONS` already has prompt templates like `"Correct the grammar and spelling of the following text:\n\n{selectedText}"`. These must be sent to the real API with the actual selected text substituted. | LOW | Simple string replacement already implied by the config. Build a `buildPrompt(action, selectedText, extra)` function that replaces `{selectedText}` and `{language}` placeholders, then sends to API. |
+| # | Feature | Category | Why Expected | Complexity | Dependencies | Notes |
+|---|---------|----------|-------------|------------|--------------|-------|
+| 1 | **Extract selected text with HTML formatting** | Extraction | Without formatted extraction, the entire pipeline has no structured input. The current `GetSelectedText` strips all formatting. | Medium | OO Plugin API `GetSelectedContent({type:"html"})` returns HTML string of the selection. Proven by the official [OO HTML plugin](https://github.com/ONLYOFFICE/plugin-html). | Must run in plugin ES5 context via `executeMethod`. Returns HTML with `<b>`, `<i>`, `<h1>`-`<h6>`, `<ul>/<ol>/<li>`, `<a>`, `<table>`, `<p>` tags. Config needs `"initDataType": "html"` and `"initOnSelectionChanged": true`. |
+| 2 | **Convert extracted HTML to Markdown** | Conversion | Markdown is the lingua franca for LLMs. Sending structured Markdown input produces better, more structured output than plain text. | Low | [Turndown](https://github.com/mixmark-io/turndown) library (~4.6kB gzip). Runs on the React/Cozy Drive side, not in the ES5 plugin. | One function call: `new TurndownService().turndown(htmlString)`. Handles bold, italic, headings, lists, links, paragraphs out of the box. Custom rules available for OO-specific quirks (e.g., stripping `<img>` data URIs, normalizing OO's span-based formatting). |
+| 3 | **Render LLM response as formatted Markdown in result panel** | Preview | Users must see what the formatted result looks like before accepting. A plain-text dump of Markdown source (`**bold**`, `# heading`) is confusing. | Medium | [react-markdown](https://github.com/remarkjs/react-markdown) + [remark-gfm](https://github.com/remarkjs/remark-gfm) for GFM table/strikethrough support. | Current `ScribeResultPanel` displays `{error \|\| resultText}` in a plain div. Must be replaced with `<ReactMarkdown>{resultText}</ReactMarkdown>`. Needs styling to match Scribe UI theme (Paper background, theme-aware text colors). Safe by default -- no `dangerouslySetInnerHTML`. |
+| 4 | **Convert Markdown response back to HTML** | Conversion | HTML is the required input format for OO reinsertion via `PasteHtml`. | Low | [marked](https://github.com/markedjs/marked) library (~40kB, fast, CommonMark compliant). | Single function call: `marked.parse(markdownString)`. Produces clean HTML. Alternative: use `react-markdown`'s internal pipeline to render to HTML string, but marked is simpler and avoids coupling to React. |
+| 5 | **Reinsert formatted text into OO editor** | Reinsertion | The whole point -- formatted text must appear correctly in the document with bold, italic, headings, lists preserved. | Medium | OO Plugin API `PasteHtml(htmlString)`. Replaces current `PasteText` call. | Proven by official OO HTML plugin and [Get and Paste HTML sample](https://api.onlyoffice.com/docs/plugin-and-macros/samples/plugin-samples/get-and-paste-html/). Official example: `executeMethod("PasteHtml", ["<p><b>Bold</b></p><ul><li>Item</li></ul>"])`. PasteHtml replaces the current selection, which aligns with the "Replace" action. |
+| 6 | **Adapt "Insert After" for HTML content** | Reinsertion | The current `insertAfterWithText` uses `callCommand` with `Api.CreateParagraph().AddText()` which is plain-text only. Must handle HTML/formatted content for the "Insert" action. | Medium | OO Document Builder API inside `callCommand`. | Two approaches: (a) Use `PasteHtml` after moving cursor past selection (complex cursor manipulation), or (b) Use `callCommand` to create paragraphs with formatting via `ApiRun.SetBold()`, `SetItalic()` etc (requires parsing HTML to API calls). Approach (a) is simpler if cursor positioning works reliably. |
+| 7 | **Pass HTML through postMessage protocol** | Protocol | HTML strings must flow from plugin (ES5) through postMessage to React (Cozy Drive frame) and back. | Low | Existing `castIntent` / `handleIntentResponse` protocol. | HTML is just a string -- postMessage handles it. The `data.text` field in the intent protocol currently carries plain text; it will carry HTML. No protocol changes needed, just larger payloads. Must ensure no HTML size limits in postMessage (there are none in practice). |
+| 8 | **Bold and italic round-trip** | Pipeline integrity | The most common formatting. Users will immediately notice if bold/italic is lost. | Low | All pipeline stages. | `<strong>`/`<b>` maps to `**text**` (Turndown) and back to `<strong>` (marked). `<em>`/`<i>` maps to `*text*` and back. Clean bidirectional mapping. |
+| 9 | **Heading round-trip** | Pipeline integrity | Users with heading-structured text expect headings to survive the AI cycle. | Low | All pipeline stages. | `<h1>`-`<h6>` maps to `#`-`######` (Turndown) and back (marked). PasteHtml supports heading tags. Clean mapping. |
+| 10 | **List round-trip (bulleted and numbered)** | Pipeline integrity | Lists are among the most common formatting structures. The "Improve > Bullets" action explicitly creates lists. | Low-Medium | All pipeline stages. | `<ul>/<ol>/<li>` maps to `- item` / `1. item` (Turndown). Nested lists need attention -- depth > 2 can produce surprising Markdown indentation. PasteHtml supports list tags. |
+| 11 | **Paragraph structure preservation** | Pipeline integrity | Multi-paragraph selections must maintain paragraph breaks through the cycle. | Low | All pipeline stages. | `<p>` tags map to `\n\n` in Markdown and back. Natural mapping at every stage. |
 
 ---
 
 ## Differentiators
 
-Features that elevate v2.0 beyond "mock replaced with real API." These create the perception of a polished, professional AI writing tool.
+Features that add polish. Not strictly required for a working pipeline but significantly improve perceived quality.
 
-| Feature | Value Proposition | Complexity | Dependency on Existing UI |
-|---------|-------------------|------------|--------------------------|
-| **Streaming response (token-by-token display)** | Users perceive streaming as 40-60% faster than waiting for a complete response. The "AI typing" effect transforms a 3-10s wait into an engaging experience. Every major AI chat product (ChatGPT, Claude.ai, Gemini) uses streaming. For a text editor integration, this is becoming table stakes in 2026. | HIGH | Major change to `ScribeResultPanel`: must accept incremental text updates instead of a static `resultText` string. The result panel currently renders `{resultText}` as a static string in a div. Must become a live-updating display. New `step` value `'streaming'` in the state machine. The `ScribePopover` must manage an `AbortController` for cancellation. |
-| **Cancel mid-stream** | If the AI starts generating obviously wrong output, users need to stop it immediately rather than waiting 10+ seconds for completion. Every streaming AI interface has a "Stop" button. | MEDIUM | Add a "Stop generating" button visible only during `step === 'streaming'`. On click, abort the fetch via `AbortController.abort()`. Transition to `'result'` step with whatever text was accumulated so far. User can then Replace/Insert the partial result or Close. The cozy-stack proxy must forward the client disconnect to close the upstream Anthropic connection. |
-| **Graceful degradation (non-streaming fallback)** | If the SSE stream breaks mid-response (network hiccup, proxy timeout), the UI should not crash. Show accumulated text with a "Response interrupted" notice and still allow Replace/Insert on partial text. | LOW | Catch stream errors in the fetch reader loop. On error, transition from `'streaming'` to `'result'` with accumulated text + error banner. The `onAbort` vs `onFinish` distinction from the fetch is key here. |
-| **Regenerate (try again)** | After seeing the AI result, users may want to try again with the same prompt. "Regenerate" is standard in ChatGPT, Copilot (Regenerate), Google Docs (Retry). | LOW | Add a "Regenerate" button to `ScribeResultPanel` next to Replace/Insert/Close. On click, transition back to `'loading'` / `'streaming'` and re-call the API with the same prompt. Store the original `actionId` and `selectedText` in state so regeneration is trivial. |
-| **Context menu integration** | Users right-click in text editors constantly. Having Scribe actions available in the OO context menu is a natural discovery path alongside the floating button. | MEDIUM | Requires OO plugin API `AddContextMenuItem`. The plugin must register menu items and handle click events. When clicked, sends intent to host. This is independent of the streaming/API work but is a v2.0 polish feature. |
-| **Keyboard shortcut (Ctrl+I) reliability** | The shortcut exists but may be inconsistent across OS/browser combinations. Making it reliable is a quality signal. | LOW | Already implemented. Verify cross-browser behavior and fix edge cases. |
+| # | Feature | Category | Value Proposition | Complexity | Dependencies | Notes |
+|---|---------|----------|-------------------|------------|--------------|-------|
+| D1 | **Table formatting round-trip** | Pipeline integrity | Tables in documents should survive the AI cycle. Not all users have tables, but those who do will immediately notice breakage. | Medium | [turndown-plugin-gfm](https://github.com/mixmark-io/turndown-plugin-gfm) for HTML-to-MD table conversion. [remark-gfm](https://github.com/remarkjs/remark-gfm) for preview rendering. marked supports GFM tables natively. | GFM pipe table syntax (`\| col \| col \|`). Turndown needs the GFM plugin explicitly for tables. OO PasteHtml supports `<table>`. |
+| D2 | **Link preservation** | Pipeline integrity | Hyperlinks in text should survive and remain clickable in the document. | Low | All pipeline stages. | `<a href="url">text</a>` maps to `[text](url)` cleanly. Low effort, high perceived quality. |
+| D3 | **Code block/inline code round-trip** | Pipeline integrity | Users with code snippets in documents expect preservation. | Low | All pipeline stages. | `<code>` maps to backticks. `<pre><code>` maps to fenced code blocks. Standard Markdown. |
+| D4 | **Graceful fallback to plain text** | Resilience | If `GetSelectedContent` fails (unsupported OO version, edge case), fall back silently to `GetSelectedText`. | Low | Error handling in plugin code. | The current plain-text pipeline should remain as fallback. Try HTML extraction first; on error, use plain text. The rest of the pipeline handles plain text already. |
+| D5 | **Copy raw Markdown to clipboard** | Preview UX | Power users may want the raw Markdown for use elsewhere (notes, emails, other editors). | Low | `navigator.clipboard.writeText()` | Small icon button in result panel header. Trivial to implement. |
+| D6 | **Styled Markdown preview matching Scribe theme** | Preview UX | The rendered Markdown must use the Scribe UI's colors, fonts, and spacing -- not default browser styling. | Medium | CSS/styled-components for react-markdown custom components. | react-markdown accepts a `components` prop to override default HTML elements with custom styled React components. Must use MUI `theme.palette` tokens for dark/light mode. |
+| D7 | **Strip unsupported elements before conversion** | Resilience | OO may include `<img>` tags (with data URIs), `<svg>`, `<math>`, or proprietary spans in the extracted HTML. These should be cleaned before Markdown conversion. | Low | HTML sanitization before Turndown. | Use Turndown's `remove` rules to strip `<img>`, `<svg>`, `<math>`. Or use a lightweight DOM parser (DOMParser available in browser) to strip before passing to Turndown. |
 
 ---
 
 ## Anti-Features
 
-Features to explicitly NOT build in v2.0.
+Features to explicitly NOT build for this milestone.
 
 | Anti-Feature | Why Avoid | What to Do Instead |
 |--------------|-----------|-------------------|
-| **Client-side Anthropic API calls** | Exposing the API key in the browser is a security disaster. Even with obfuscation, browser DevTools reveal it instantly. The cozy-stack proxy pattern exists for this reason. | All API calls go through cozy-stack's `/ai/` routes, which hold the API key server-side. The frontend never sees the key. |
-| **Model selection UI** | Adding Claude model picker (Haiku vs Sonnet vs Opus) creates confusion for non-technical users and complicates the backend. Cozy controls the model server-side. | Use a single model configured in cozy-stack. The backend team selects the best model for the use case. Users do not need to know or care. |
-| **Conversation/chat memory** | Maintaining multi-turn context across Scribe invocations is architecturally complex (session state, token budget management, context window limits) and misaligned with the "select text, transform, apply" paradigm. | Each Scribe action is a single-shot API call. The prompt template contains all necessary context. Defer conversation memory to v3.0 if needed. |
-| **Editable preview before applying** | While listed as a v1.0 differentiator, implementing a contenteditable area that correctly handles the AI output, cursor positioning, and then re-sends the edited text to OO adds significant complexity for marginal value. | Keep the preview read-only for v2.0. Users can always Replace into the document and then edit there. Revisit if users specifically request this. |
-| **Markdown rendering in preview** | The AI may return markdown (bullet lists, bold, etc.) but the preview panel is plain text and the OO InsertContent API works with plain text. Rendering markdown creates a WYSIWYG expectation that cannot be fulfilled on insert. | Display AI output as plain text in the preview. If the AI returns markdown formatting, it will be visible as-is. Instruct the AI via system prompt to return plain text only. |
-| **Usage tracking/token counting UI** | Showing users how many tokens they consumed, cost per request, or usage limits is unnecessary complexity for an integrated tool. | Handle rate limiting silently with retries. If hard limits are hit, show a simple "Service temporarily unavailable, try again later" message. |
+| **Editable Markdown editor in result panel** | Adding a full Markdown editor (MDXEditor, CodeMirror, textarea+preview) to the result panel introduces major complexity: controlled state management, cursor handling, re-rendering on every keystroke, two-panel layout. The result panel is a preview/decision UI, not an editing environment. | Keep the result panel read-only with rendered Markdown. Users accept or reject. If they want to tweak, they Replace into OO and edit there. Revisit in v2.2+ if user feedback demands it. |
+| **Custom font/color/size preservation** | Markdown has no concept of font families, sizes, or colors. Attempting to preserve these through `<span style="...">` tags would require a parallel HTML pipeline bypassing Markdown entirely, defeating the purpose of the Markdown-based architecture. | Preserve structural formatting only (bold, italic, headings, lists, links, tables, code). Document this limitation. Font/color applied by the document's styles will be reapplied by OO based on the document's style definitions. |
+| **Image extraction/reinsertion** | Images in OO are embedded objects with internal references or base64 data URIs. They cannot survive the LLM round-trip (LLMs cannot process images in a text completion context). Including them inflates the HTML payload and confuses Turndown. | Strip `<img>` tags from extracted HTML before conversion. If the selection contains only images, fall back to plain text with a user-facing message. |
+| **Track changes / revision marks** | OO track changes are a separate document layer with accept/reject semantics. Mixing AI replacement with tracked changes creates confusing revision history and potential data corruption. | Apply AI changes as final content, not tracked changes. The user's explicit Replace/Insert action is the approval mechanism. |
+| **Streaming Markdown rendering** | Rendering partial Markdown as it streams produces flickering, broken formatting (incomplete `**bold**` markers, half-built tables). The current non-streaming LLM integration avoids this problem entirely. | Keep non-streaming for v2.1. The Markdown is rendered only after the full LLM response is received. Streaming Markdown rendering (with token buffering) is a v3.0 concern. |
+| **Math/equation preservation** | LaTeX/MathML equations require specialized Markdown extensions (KaTeX, MathJax) and add significant complexity for a niche use case. | Strip or pass through as plain text. Flag as known limitation. |
+| **Merge original + LLM formatting** | Attempting to keep the original document's formatting (e.g., specific fonts, spacing) while applying the LLM's structural changes (new headings, reordered lists) is an unsolved diffing problem. | The LLM's Markdown output defines the formatting. On "Replace", original formatting is replaced entirely. On "Insert After", the new content uses the document's default styles. |
+| **Diff view between original and result** | Showing a word-level diff between original and AI-transformed text with formatting is visually complex and computationally expensive. Better suited for a future milestone. | Show the full rendered result. Users compare visually with the document behind the Scribe panel. Defer diff view to v2.2+. |
 
 ---
 
 ## Feature Dependencies
 
+### Pipeline Data Flow
+
 ```
-[cozy-stack /ai/ route extension]  (NEW - backend)
-    |
-    +--provides--> [SSE streaming endpoint for text transformation]
-    |                   |
-    |                   +--consumed by--> [Frontend API service layer]  (NEW)
-    |                                         |
-    |                                         +--manages--> [AbortController for cancellation]
-    |                                         +--handles--> [Retry logic with exponential backoff]
-    |                                         +--handles--> [Error classification (retryable vs fatal)]
-    |                                         |
-    |                                         +--feeds--> [ScribePopover state machine]  (MODIFIED)
-    |                                                         |
-    |                                                         +-- step: 'menu' (existing)
-    |                                                         +-- step: 'loading' (NEW: TTFT wait)
-    |                                                         +-- step: 'streaming' (NEW: tokens arriving)
-    |                                                         +-- step: 'result' (existing, now also for stream-complete)
-    |                                                         +-- step: 'error' (NEW: API failure)
-    |                                                         |
-    |                                                         +--renders--> [ScribeResultPanel]  (MODIFIED)
-    |                                                                          |
-    |                                                                          +-- Loading skeleton (NEW)
-    |                                                                          +-- Streaming text display (NEW)
-    |                                                                          +-- "Stop generating" button (NEW)
-    |                                                                          +-- "Regenerate" button (NEW)
-    |                                                                          +-- Error message + retry (NEW)
-    |                                                                          +-- Dark theme fix (BUG FIX)
+Plugin (ES5, OO iframe)                    React (Cozy Drive iframe)
+========================                    ==========================
 
-[Floating button disable on deselection]  (BUG FIX, independent)
-
-[Context menu integration]  (ENHANCEMENT, independent of streaming work)
+GetSelectedContent(html)
+        |
+        v
+  castIntent("AI_TEXT_EDIT",
+    { text: htmlString })
+        |                    postMessage
+        +-------------------------------------->  useCozyBridge receives intent
+                                                        |
+                                                        v
+                                                  Turndown: HTML -> Markdown
+                                                        |
+                                                        v
+                                                  LLM call (existing scribeAI.js)
+                                                  prompt: "...\n\n{markdownText}"
+                                                        |
+                                                        v
+                                                  LLM response (Markdown string)
+                                                        |
+                                                  +-----+-----+
+                                                  |           |
+                                                  v           v
+                                            react-markdown  marked: MD -> HTML
+                                            (preview)       (for reinsertion)
+                                                              |
+                                              respond({       |
+                                                action:"replace",
+                                                data:{ html: htmlString }
+                                              })              |
+                                                  |           |
+        +<--------------------------------------+
+        |                    postMessage
+        v
+  handleIntentResponse
+  executeMethod("PasteHtml", [htmlString])
 ```
 
-### Key Dependency: cozy-stack Backend
+### Stage-by-Stage Dependencies
 
-The frontend cannot call Anthropic directly. The cozy-stack `/ai/` routes must be extended to:
-1. Accept a text transformation request (prompt + selected text)
-2. Forward to Anthropic Claude API with streaming enabled
-3. Proxy the SSE stream back to the frontend
-4. Handle API key management server-side
-
-The existing cozy-stack `callAI()` function already uses `c.Stream()` to pipe upstream responses. The pattern is established -- it needs extension for text transformation specifically.
-
-### Key Dependency: SSE Consumption in Frontend
-
-The native `EventSource` API only supports GET requests. Since the AI transformation requires sending the prompt + selected text (POST body), the frontend must use `fetch()` with `ReadableStream` to consume the SSE response. This is a well-established pattern:
-
-```javascript
-// Pattern: POST-based SSE consumption with AbortController
-const controller = new AbortController()
-const response = await fetch('/ai/transform', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ prompt, text }),
-  signal: controller.signal
-})
-
-const reader = response.body.getReader()
-const decoder = new TextDecoder()
-let accumulated = ''
-
-while (true) {
-  const { done, value } = await reader.read()
-  if (done) break
-  const chunk = decoder.decode(value, { stream: true })
-  // Parse SSE events from chunk, extract text deltas
-  accumulated += parseTextDelta(chunk)
-  onChunk(accumulated)  // Update UI
-}
 ```
+Feature 1 (GetSelectedContent)  ----required by---->  Feature 2 (Turndown HTML->MD)
+Feature 2 (Turndown)            ----required by---->  LLM call (existing, no change)
+LLM response                    ----required by---->  Feature 3 (react-markdown preview)
+LLM response                    ----required by---->  Feature 4 (marked MD->HTML)
+Feature 4 (marked)              ----required by---->  Feature 5 (PasteHtml reinsertion)
+Feature 5 (PasteHtml)           ----required by---->  Feature 6 (Insert After adaptation)
+Feature 7 (postMessage HTML)    ----required by---->  Features 1 & 5 (data transport)
+
+Features 8-11 (format round-trips) ----validated across---->  All stages
+```
+
+**Key insight:** Features 1, 5, and 6 are the OO integration points (highest risk, ES5 constrained). Features 2 and 4 are pure library calls (lowest risk). Feature 3 is standard React rendering. Feature 7 is trivial (strings through postMessage).
+
+### Protocol Change
+
+The intent protocol currently carries `{ text: "plain string" }`. For rich text, it must carry `{ text: "html string", format: "html" }`. The `format` field enables the fallback: when `format` is absent or `"text"`, the existing plain-text pipeline runs. When `format` is `"html"`, the rich-text pipeline runs.
+
+The response protocol similarly changes: `{ action: "replace", data: { text: "..." } }` becomes `{ action: "replace", data: { html: "..." } }`. The plugin checks for `data.html` first, falls back to `data.text`.
 
 ---
 
-## Streaming UX Specification
+## MVP Recommendation
 
-### State Machine
+### Phase 1: OO API validation + conversion pipeline (Features 1, 5, 7, 2, 4)
 
-The `ScribePopover` state machine expands from 2 steps to 5:
+Build the extraction and reinsertion endpoints first. These are the highest-risk, least-known parts.
 
-| State | Trigger | UI | User Actions |
-|-------|---------|-------|--------------|
-| `menu` | Popover opens | Action menu + prompt input | Select action, type prompt, close |
-| `loading` | Action selected, API call initiated | Breadcrumb + loading skeleton/spinner | Close (cancels request) |
-| `streaming` | First token arrives (TTFT) | Breadcrumb + live-updating text + "Stop" button | Stop generating, close |
-| `result` | Stream completes or user stops | Breadcrumb + final text + Insert/Replace/Regenerate/Close | Insert, Replace, Regenerate, Close |
-| `error` | API error after retries exhausted | Breadcrumb + error message + "Try again" button | Try again, Close |
+1. **Feature 1** -- Replace `GetSelectedText` with `GetSelectedContent({type:"html"})` in plugin
+2. **Feature 7** -- Pass HTML string through postMessage (add `format: "html"` field)
+3. **Feature 2** -- Add Turndown on React side: HTML -> Markdown before LLM call
+4. **Feature 4** -- Add marked on React side: Markdown -> HTML after LLM response
+5. **Feature 5** -- Replace `PasteText` with `PasteHtml` in plugin response handler
 
-### Streaming Text Display
+Validate with a simple test: select bold text in OO, run "Correct grammar", verify bold survives in the replaced text.
 
-During `streaming` state, the result panel text area updates as tokens arrive:
+### Phase 2: Preview rendering (Feature 3, D4, D6, D7)
 
-- **No cursor blink animation** -- unlike chat UIs, this is a text transformation tool. A blinking cursor implies the user should type. Instead, simply append text smoothly.
-- **Skip expensive parsing during stream** -- do not apply markdown rendering, syntax highlighting, or diff visualization while tokens are arriving. Apply formatting only after stream completes (if ever).
-- **Scroll to bottom** -- if the generated text exceeds the visible area, auto-scroll to show the latest tokens.
-- **Show partial text count** -- optional: display "(generating...)" or a subtle animation near the text to indicate more is coming.
+6. **Feature 3** -- Replace plain-text div with react-markdown in ScribeResultPanel
+7. **D6** -- Style the rendered Markdown to match Scribe theme
+8. **D4** -- Add fallback to GetSelectedText on extraction failure
+9. **D7** -- Strip images/unsupported elements before Turndown
 
-### Cancel Semantics
+### Phase 3: Format coverage + Insert After (Features 6, 8-11, D1-D3)
 
-When the user clicks "Stop generating":
-1. `AbortController.abort()` is called
-2. The fetch reader loop catches the `AbortError`
-3. State transitions to `'result'` with the accumulated text so far
-4. The user can Replace/Insert the partial result, or Close
-5. The cozy-stack proxy should detect the closed connection and terminate the upstream Anthropic request (standard HTTP behavior)
+10. **Feature 6** -- Adapt insertAfterWithText for HTML content
+11. **Features 8-11** -- Systematic round-trip validation for each format type
+12. **D1** -- Add GFM table support (turndown-plugin-gfm + remark-gfm)
+13. **D2** -- Validate link preservation
+14. **D3** -- Validate code block preservation
 
-### Error Classification
+### Defer:
 
-| Error Type | HTTP Status | Retryable | User Message | Action |
-|------------|-------------|-----------|--------------|--------|
-| Rate limited | 429 | Yes (auto) | *(not shown -- auto-retry)* | Exponential backoff, max 3 retries |
-| Overloaded | 529 | Yes (auto) | *(not shown -- auto-retry)* | Exponential backoff, max 3 retries |
-| Network error | 0 / timeout | Yes (manual) | "Connection lost. Check your internet and try again." | Show "Try again" button |
-| Server error | 500 | Yes (manual) | "Something went wrong. Please try again." | Show "Try again" button |
-| Auth error | 401/403 | No | "AI service is not configured. Contact your administrator." | Show Close only |
-| Bad request | 400 | No | "Unable to process this text. Try selecting different text." | Show Close only |
-| Stream error | 200 then error event | Partial | "Response was interrupted." + show partial text | Show partial result + "Try again" |
-| Mid-stream SSE error | `overloaded_error` in event stream | Yes (manual) | "Response was interrupted due to high demand." + show partial text | Show partial result + "Try again" |
-
-### Anthropic-Specific Error Events
-
-Per official documentation, errors can occur mid-stream even after a 200 response:
-```
-event: error
-data: {"type": "error", "error": {"type": "overloaded_error", "message": "Overloaded"}}
-```
-The SSE parser must handle these gracefully -- treat as stream interruption, preserve accumulated text, show error state.
-
----
-
-## Dark Theme Fix Specification
-
-### Current Bug
-
-In OO dark theme, text appears white-on-white in certain elements. This is caused by:
-1. OO sets a dark background on its editor
-2. The Scribe UI (rendered in the Cozy Drive frame) uses MUI theme which may or may not match
-3. Some elements use hardcoded colors or inherit incorrectly
-
-### Fix Approach
-
-| Element | Current Issue | Fix |
-|---------|---------------|-----|
-| Result panel text area | `backgroundColor: theme.palette.action.hover` is set but text color inherits from parent which may be wrong | Explicitly set `color: theme.palette.text.primary` on the text area |
-| Result panel background | Uses `Paper` which should respect theme, but verify | Ensure `Paper` component receives the correct theme context |
-| Loading/streaming states | New elements -- must be theme-aware from the start | Use `theme.palette.text.secondary` for loading indicators, `theme.palette.text.primary` for streaming text |
-| Error messages | New elements | Use `theme.palette.error.main` for error text with sufficient contrast |
-
-### WCAG Compliance
-
-- Normal text: minimum 4.5:1 contrast ratio
-- Large text (>= 18px or >= 14px bold): minimum 3:1 contrast ratio
-- Use MUI theme tokens (not hardcoded colors) to automatically adapt to light/dark mode
-
----
-
-## API Integration Points
-
-### Where mockTransform Gets Replaced
-
-In `ScribePopover.jsx`, the `handleActionSelect` callback currently calls:
-```javascript
-const transformed = mockTransform(actionId, selectedText, extra)
-setResult({ text: transformed, breadcrumb })
-setStep('result')
-```
-
-This becomes:
-```javascript
-setResult({ text: '', breadcrumb })
-setStep('loading')
-const prompt = buildPrompt(actionId, selectedText, extra)
-try {
-  await streamTransform(prompt, {
-    onFirstToken: () => setStep('streaming'),
-    onChunk: (accumulated) => setResult(r => ({ ...r, text: accumulated })),
-    onComplete: () => setStep('result'),
-    onError: (error) => { setError(error); setStep('error') },
-    signal: abortControllerRef.current.signal
-  })
-} catch (e) {
-  if (e.name !== 'AbortError') {
-    setError(classifyError(e))
-    setStep('error')
-  }
-}
-```
-
-### New Files Needed
-
-| File | Purpose |
-|------|---------|
-| `scribeApi.js` | API service layer: `streamTransform(prompt, callbacks)`, SSE parsing, retry logic |
-| `scribeErrors.js` | Error classification: `classifyError(error)` -> `{ type, message, retryable }` |
-| `buildPrompt.js` | Prompt construction: `buildPrompt(actionId, selectedText, extra)` from SCRIBE_ACTIONS config |
-
-### Files Modified
-
-| File | Changes |
-|------|---------|
-| `ScribePopover.jsx` | Expanded state machine (5 states), AbortController management, API call integration |
-| `ScribeResultPanel.jsx` | Loading state, streaming display, Stop button, Regenerate button, error display, dark theme fix |
-| `scribeActions.js` | Add system prompt prefix configuration for real AI calls |
-
----
-
-## MVP Recommendation for v2.0
-
-### Must Have (launch blockers)
-
-1. **Real API integration via cozy-stack** -- the entire point of v2.0
-2. **Loading state** -- users cannot stare at nothing while API responds
-3. **Error handling with retry** -- API will fail; users need clear feedback
-4. **Dark theme fix** -- existing bug, becomes critical with real content
-5. **Prompt template interpolation** -- SCRIBE_ACTIONS prompts must work with real API
-
-### Should Have (significant quality improvement)
-
-6. **Streaming response** -- transforms the UX from "wait and see" to "watch it write"
-7. **Cancel mid-stream** -- safety valve for wrong outputs
-8. **Regenerate** -- standard expectation, trivial once API integration exists
-
-### Defer to v2.x
-
-9. **Context menu integration** -- independent enhancement, not blocking
-10. **Visual diff between original and result** -- nice but not essential
-11. **Editable preview** -- complexity not justified yet
-12. **Conversation memory** -- architectural complexity, defer to v3.0
+- **Editable Markdown** -- Not needed for v2.1. Preview is sufficient.
+- **Diff view** -- Nice-to-have, not essential. Defer to v2.2+.
+- **Streaming Markdown** -- Requires buffering strategy. Defer to v3.0.
 
 ---
 
 ## Sources
 
-### Official Documentation (HIGH confidence)
-- [Anthropic Claude Streaming API](https://platform.claude.com/docs/en/build-with-claude/streaming) -- event types, text_delta format, error recovery
-- [Anthropic API Errors](https://platform.claude.com/docs/en/api/errors) -- HTTP error codes (400, 401, 429, 500, 529), error shapes, request IDs
-- [Cozy Stack AI Documentation](https://docs.cozy.io/en/cozy-stack/ai/) -- existing RAG endpoint, WebSocket streaming, chat conversations
-- [Cozy Stack GitHub - web/ai/ai.go](https://github.com/cozy/cozy-stack/tree/master/web/ai) -- route definitions, `callAI()` proxy pattern, `c.Stream()` usage
+### OnlyOffice API (HIGH confidence)
+- [GetSelectedContent](https://api.onlyoffice.com/docs/plugin-and-macros/interacting-with-editors/text-document-api/Methods/GetSelectedContent/) -- returns HTML string of selection with `{type:"html"}` param
+- [PasteHtml](https://api.onlyoffice.com/docs/plugin-and-macros/interacting-with-editors/text-document-api/Methods/PasteHtml/) -- inserts HTML into document at cursor/selection
+- [Get and Paste HTML sample](https://api.onlyoffice.com/docs/plugin-and-macros/samples/plugin-samples/get-and-paste-html/) -- official plugin sample showing both methods
+- [Official plugin-html (GitHub)](https://github.com/ONLYOFFICE/plugin-html) -- first-party reference implementation proving the HTML extraction/reinsertion pattern
+- [ApiParagraph reference](https://api.onlyoffice.com/docs/office-api/usage-api/text-document-api/ApiParagraph/) -- Document Builder API for callCommand-based formatting
+- [Text Document API plugin methods](https://api.onlyoffice.com/docs/plugin-and-macros/interacting-with-editors/text-document-api/Methods/) -- full method list including GetSelectedContent, PasteHtml
 
-### Implementation Patterns (MEDIUM confidence)
-- [AI SDK - Stopping Streams](https://ai-sdk.dev/docs/advanced/stopping-streams) -- AbortSignal, onAbort callback, stop() helper pattern
-- [Streaming LLM Responses Guide](https://dev.to/hobbada/the-complete-guide-to-streaming-llm-responses-in-web-applications-from-sse-to-real-time-ui-3534) -- SSE implementation, React rendering, backpressure, error recovery
-- [Simon Willison - How Streaming LLM APIs Work](https://til.simonwillison.net/llms/streaming-llm-apis) -- SSE protocol mechanics
-- [Beyond EventSource: ReadableStream](https://rob-blackbourn.medium.com/beyond-eventsource-streaming-fetch-with-readablestream-5765c7de21a1) -- POST-based SSE consumption pattern
+### Conversion Libraries (HIGH confidence)
+- [Turndown (HTML-to-Markdown)](https://github.com/mixmark-io/turndown) -- de facto standard, ~4.6kB gzip, browser + Node, customizable rules
+- [marked (Markdown-to-HTML)](https://github.com/markedjs/marked) -- fast, CommonMark compliant, ~40kB, single function call
+- [react-markdown](https://github.com/remarkjs/react-markdown) -- safe React Markdown renderer, no dangerouslySetInnerHTML, extensible via remark/rehype plugins
 
-### Competitor Analysis (MEDIUM confidence)
-- [Notion AI vs Coda AI vs Google Docs AI](https://genesysgrowth.com/blog/notion-ai-vs-coda-ai-vs-google-docs-ai) -- feature comparison, 2026 landscape
-- [Notion 3.2 Release](https://www.notion.com/releases/2026-01-20) -- multi-model selection, mobile AI
-- [Gemini vs Notion AI](https://www.eesel.ai/blog/gemini-vs-notion-ai) -- writing assistant comparison
-
-### Error Handling (MEDIUM confidence)
-- [Handling Claude API overloaded_error](https://coldfusion-example.blogspot.com/2026/02/handling-claude-api-overloadederror-and.html) -- exponential backoff, circuit breaker pattern
-- [API Rate Limits Best Practices](https://orq.ai/blog/api-rate-limit) -- client-side rate limiting, graceful degradation
-
-### Accessibility (MEDIUM confidence)
-- [WCAG Color Contrast Guide 2025](https://www.allaccessible.org/blog/color-contrast-accessibility-wcag-guide-2025) -- 4.5:1 minimum ratio
-- [Accessible Dark Mode Design](https://medium.com/@design.ebuniged/designing-accessible-dark-mode-a-wcag-compliant-interface-redesign-0e0225833aa4) -- dark grey vs pure black, contrast requirements
+### Community Validation (MEDIUM confidence)
+- [OO community: retaining formatting with AI responses](https://community.onlyoffice.com/t/best-practices-for-retaining-formatting-when-pasting-ai-responses-in-onlyoffice/12811) -- confirms PasteHtml as recommended approach for AI content insertion
+- [OO API Updates December 2025](https://www.onlyoffice.com/blog/2025/12/api-updates-december-2025) -- confirms active API development, expanded paragraph/run methods
 
 ---
-*Feature research for: v2.0 Scribe Live AI -- LLM integration, streaming, error handling*
-*Researched: 2026-03-03*
+*Feature research for: v2.1 Rich Text Formatting Preservation*
+*Researched: 2026-03-06*
