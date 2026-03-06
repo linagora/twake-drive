@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Formatage Riche
 status: active
-stopped_at: null
+stopped_at: "Completed 10-01-PLAN.md"
 last_updated: "2026-03-06"
-last_activity: 2026-03-06 — Roadmap created for v2.1
+last_activity: 2026-03-06 — Completed plan 10-01 HTML extraction
 progress:
   total_phases: 4
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  total_plans: 1
+  completed_plans: 1
+  percent: 25
 ---
 
 # Project State
@@ -26,18 +26,18 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 ## Current Position
 
 Phase: 10 of 13 (Extraction Rich Text) -- first of 4 phases in v2.1
-Plan: --
-Status: Ready to plan
-Last activity: 2026-03-06 -- Roadmap created for v2.1
+Plan: 01 of 01 complete
+Status: Phase 10 plan 01 complete
+Last activity: 2026-03-06 -- Completed plan 10-01 HTML extraction
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██░░░░░░░░] 25%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 15 (v1.0: 10, v2.0: 5)
-- v2.0 average duration: ~3 min/plan
-- v2.0 total execution time: ~15 min
+- Total plans completed: 16 (v1.0: 10, v2.0: 5, v2.1: 1)
+- v2.1 average duration: ~4 min/plan
+- v2.1 total execution time: ~4 min
 
 **By Phase (v2.0):**
 
@@ -58,6 +58,8 @@ Recent decisions affecting current work:
 - v2.0: System prompt prepended to user message (RAG backend no system role support)
 - v2.1: Research recommends HTML extraction with turndown/marked ("thin plugin, smart host" pattern)
 - v2.1: Go/no-go gate on initDataType:"html" with background plugin must be validated first
+- v2.1: Regex class stripping for OO HTML (ES5 compatible, no DOMParser)
+- v2.1: Parallel plain text fetch via GetSelectedText alongside HTML extraction
 
 ### Pending Todos (carried from v1.0)
 
@@ -75,10 +77,10 @@ Recent decisions affecting current work:
 
 ### Blockers/Concerns
 
-- initDataType:"html" untested with background-type plugins -- Phase 10 gate
+- initDataType:"html" config applied -- needs browser verification to confirm OO sends HTML
 
 ## Session Continuity
 
 Last session: 2026-03-06
-Stopped at: Roadmap created for v2.1
-Resume file: None -- ready to plan Phase 10
+Stopped at: Completed 10-01-PLAN.md
+Resume file: .planning/phases/10-extraction-rich-text/10-01-SUMMARY.md
