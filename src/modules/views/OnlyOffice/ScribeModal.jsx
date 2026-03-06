@@ -1,6 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 
+import { useI18n } from 'twake-i18n'
 import Buttons from 'cozy-ui/transpiled/react/Buttons'
 import { ConfirmDialog } from 'cozy-ui/transpiled/react/CozyDialogs'
 import Typography from 'cozy-ui/transpiled/react/Typography'
@@ -23,6 +24,7 @@ import Typography from 'cozy-ui/transpiled/react/Typography'
  * @param {Function} props.onCancel - Called when Cancel is clicked
  */
 const ScribeModal = ({ open, selectedText, onReplace, onInsert, onCancel }) => {
+  const { t } = useI18n()
   return (
     <ConfirmDialog
       open={open}
@@ -31,7 +33,7 @@ const ScribeModal = ({ open, selectedText, onReplace, onInsert, onCancel }) => {
       content={
         <>
           <Typography variant="caption" color="textSecondary">
-            Selected text:
+            {t('Scribe.modal.selected_text')}
           </Typography>
           <div
             style={{
@@ -52,14 +54,14 @@ const ScribeModal = ({ open, selectedText, onReplace, onInsert, onCancel }) => {
       }
       actions={
         <>
-          <Buttons variant="secondary" label="Cancel" onClick={onCancel} />
+          <Buttons variant="secondary" label={t('Scribe.button.cancel')} onClick={onCancel} />
           <Buttons
             variant="secondary"
-            label="Insert After"
+            label={t('Scribe.button.insert_after')}
             onClick={() => onInsert(selectedText)}
           />
           <Buttons
-            label="Replace"
+            label={t('Scribe.button.replace')}
             onClick={() => onReplace(selectedText)}
           />
         </>

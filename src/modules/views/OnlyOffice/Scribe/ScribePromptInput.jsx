@@ -1,12 +1,14 @@
 import React, { useState, useCallback, useRef, forwardRef, useImperativeHandle } from 'react'
 import PropTypes from 'prop-types'
 
+import { useI18n } from 'twake-i18n'
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
 import PaperplaneIcon from 'cozy-ui/transpiled/react/Icons/Paperplane'
 import InputBase from 'cozy-ui/transpiled/react/InputBase'
 
 const ScribePromptInput = forwardRef(({ onSubmit, onArrow, onEscape }, ref) => {
+  const { t } = useI18n()
   const [value, setValue] = useState('')
   const inputRef = useRef(null)
 
@@ -58,7 +60,7 @@ const ScribePromptInput = forwardRef(({ onSubmit, onArrow, onEscape }, ref) => {
     >
       <InputBase
         inputRef={inputRef}
-        placeholder="Help me write"
+        placeholder={t('Scribe.prompt.placeholder')}
         value={value}
         onChange={e => setValue(e.target.value)}
         onKeyDown={handleKeyDown}

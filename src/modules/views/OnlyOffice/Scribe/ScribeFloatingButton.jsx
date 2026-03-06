@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 
+import { useI18n } from 'twake-i18n'
+
 const baseStyle = {
   position: 'fixed',
   bottom: 80,
@@ -45,6 +47,7 @@ const tooltipStyle = {
  * @param {{ visible: boolean, onClick: () => void }} props
  */
 export const ScribeFloatingButton = ({ visible, onClick }) => {
+  const { t } = useI18n()
   const [hovered, setHovered] = useState(false)
 
   useEffect(() => {
@@ -63,7 +66,7 @@ export const ScribeFloatingButton = ({ visible, onClick }) => {
     >
       {hovered && (
         <span style={tooltipStyle}>
-          <span style={{ color: 'white' }}>Text AI</span>
+          <span style={{ color: 'white' }}>{t('Scribe.button.text_ai')}</span>
           <span style={{ color: '#999' }}>(Ctrl+I)</span>
         </span>
       )}

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useCallback } from 'react'
 import PropTypes from 'prop-types'
 
+import { useI18n } from 'twake-i18n'
 import { useTheme } from 'cozy-ui/transpiled/react/styles'
 import Buttons from 'cozy-ui/transpiled/react/Buttons'
 import Icon from 'cozy-ui/transpiled/react/Icon'
@@ -32,6 +33,7 @@ const ScribeResultPanel = ({
   onInsert,
   onClose
 }) => {
+  const { t } = useI18n()
   const theme = useTheme()
   const insertRef = useRef(null)
   const replaceRef = useRef(null)
@@ -118,7 +120,7 @@ const ScribeResultPanel = ({
               <Buttons
                 ref={retryRef}
                 variant="text"
-                label="Retry"
+                label={t('Scribe.button.retry')}
                 startIcon={<Icon icon={SyncIcon} />}
                 onClick={onRetry}
               />
@@ -129,10 +131,10 @@ const ScribeResultPanel = ({
             <Buttons
               ref={replaceRef}
               variant="text"
-              label="Replace"
+              label={t('Scribe.button.replace')}
               onClick={onReplace}
             />
-            <Buttons ref={insertRef} label="Inserer" onClick={onInsert} />
+            <Buttons ref={insertRef} label={t('Scribe.button.insert')} onClick={onInsert} />
           </>
         )}
       </div>
