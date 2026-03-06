@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Formatage Riche
 status: in-progress
-stopped_at: Completed 11-01-PLAN.md
-last_updated: "2026-03-06T20:12:34.000Z"
-last_activity: 2026-03-06 -- Completed plan 11-01 scribeConversion TDD module
+stopped_at: Completed 11-02-PLAN.md
+last_updated: "2026-03-06T20:21:50Z"
+last_activity: 2026-03-06 -- Completed plan 11-02 pipeline integration
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 4
-  completed_plans: 3
-  percent: 75
+  completed_plans: 4
+  percent: 100
 ---
 
 # Project State
@@ -26,18 +26,18 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 ## Current Position
 
 Phase: 11 of 13 (Pipeline de Conversion) -- second of 4 phases in v2.1
-Plan: 01 of 02 complete
-Status: In progress
-Last activity: 2026-03-06 -- Completed plan 11-01 scribeConversion TDD module
+Plan: 02 of 02 complete
+Status: Phase 11 complete
+Last activity: 2026-03-06 -- Completed plan 11-02 pipeline integration
 
-Progress: [████████░░] 75%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 18 (v1.0: 10, v2.0: 5, v2.1: 3)
-- v2.1 average duration: ~3 min/plan
-- v2.1 total execution time: ~9 min
+- Total plans completed: 19 (v1.0: 10, v2.0: 5, v2.1: 4)
+- v2.1 average duration: ~4 min/plan
+- v2.1 total execution time: ~15 min
 
 **By Phase (v2.0):**
 
@@ -48,6 +48,7 @@ Progress: [████████░░] 75%
 | 09 Internationalization | 2 | 7min | 3.5min |
 | Phase 10 P02 | 2min | 2 tasks | 2 files |
 | Phase 11 P01 | 3min | 2 tasks | 5 files |
+| Phase 11 P02 | 6min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -65,6 +66,8 @@ Recent decisions affecting current work:
 - [Phase 10]: buildEditIntentData() centralizes intent data with optional html/format fields
 - [Phase 11]: Override Turndown built-in img rule with addRule (remove() doesn't override built-ins)
 - [Phase 11]: marked ESM requires jest transformIgnorePatterns entry
+- [Phase 11]: textForPrompt variable pattern keeps selectedText param unchanged for backward compat
+- [Phase 11]: Extra object built incrementally (not ternary) for multi-field construction
 
 ### Pending Todos (carried from v1.0)
 
@@ -86,6 +89,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-06T20:12:34Z
-Stopped at: Completed 11-01-PLAN.md
+Last session: 2026-03-06T20:21:50Z
+Stopped at: Completed 11-02-PLAN.md
 Resume file: None
