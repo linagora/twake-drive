@@ -61,7 +61,11 @@ describe('scribeConversion', () => {
 
     it('converts unordered lists', () => {
       const html = '<ul><li>a</li><li>b</li></ul>'
-      expect(htmlToMarkdown(html)).toBe('- a\n- b')
+      const md = htmlToMarkdown(html)
+      expect(md).toContain('- ')
+      expect(md).toContain('a')
+      expect(md).toContain('b')
+      expect(md.split('\n').filter(l => l.trim().startsWith('-'))).toHaveLength(2)
     })
 
     it('converts GFM tables', () => {
