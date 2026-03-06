@@ -499,5 +499,62 @@
       "recents": "Zuletzt verwendet",
       "chooseCustomIcon": "Wählen Sie ein benutzerdefiniertes Symbol"
     }
+  },
+  "Scribe": {
+    "menu": {
+      "correct_grammar": "Grammatik korrigieren",
+      "translate": "Übersetzen",
+      "change_tone": "Tonfall ändern",
+      "improve": "Verbessern"
+    },
+    "tone": {
+      "professional": "Professioneller",
+      "casual": "Lockerer",
+      "polite": "Höflicher"
+    },
+    "improve": {
+      "shorter": "Kürzer fassen",
+      "expand": "Ausführlicher",
+      "emojify": "Emojis hinzufügen",
+      "bullets": "In Aufzählung umwandeln"
+    },
+    "translate": {
+      "other_language": "Andere Sprache...",
+      "translating_to": "Wird übersetzt nach %{language}..."
+    },
+    "prompt": {
+      "placeholder": "Hilf mir beim Schreiben"
+    },
+    "button": {
+      "text_ai": "Text-KI",
+      "insert": "Einfügen",
+      "replace": "Ersetzen",
+      "retry": "Erneut versuchen",
+      "cancel": "Abbrechen",
+      "insert_after": "Danach einfügen"
+    },
+    "modal": {
+      "selected_text": "Ausgewählter Text:"
+    },
+    "loading": {
+      "processing": "Wird verarbeitet...",
+      "correct_grammar": "Grammatik wird korrigiert...",
+      "tone_professional": "Wird professioneller formuliert...",
+      "tone_casual": "Wird lockerer formuliert...",
+      "tone_polite": "Wird höflicher formuliert...",
+      "improve_shorter": "Wird gekürzt...",
+      "improve_expand": "Wird ausführlicher...",
+      "improve_emojify": "Emojis werden hinzugefügt...",
+      "improve_bullets": "Wird in Aufzählung umgewandelt..."
+    },
+    "error": {
+      "auth": "Autorisierungsfehler. Bitte überprüfen Sie Ihre Cozy-Berechtigungen.",
+      "rate_limit": "Zu viele Anfragen. Bitte warten Sie einen Moment und versuchen Sie es erneut.",
+      "server": "Der KI-Dienst ist vorübergehend nicht verfügbar. Bitte versuchen Sie es erneut.",
+      "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es später erneut.",
+      "network": "Netzwerkfehler. Überprüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+      "empty_response": "Kein Ergebnis erhalten. Bitte versuchen Sie es erneut.",
+      "unexpected": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
+    }
   }
 }

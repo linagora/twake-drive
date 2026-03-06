@@ -472,5 +472,62 @@
       "recents": "Recientes",
       "chooseCustomIcon": "Elegir un icono personalizado"
     }
+  },
+  "Scribe": {
+    "menu": {
+      "correct_grammar": "Corregir gramática",
+      "translate": "Traducir",
+      "change_tone": "Cambiar tono",
+      "improve": "Mejorar"
+    },
+    "tone": {
+      "professional": "Más profesional",
+      "casual": "Más informal",
+      "polite": "Más cortés"
+    },
+    "improve": {
+      "shorter": "Acortar",
+      "expand": "Ampliar",
+      "emojify": "Añadir emojis",
+      "bullets": "Convertir en lista"
+    },
+    "translate": {
+      "other_language": "Otro idioma...",
+      "translating_to": "Traduciendo a %{language}..."
+    },
+    "prompt": {
+      "placeholder": "Ayúdame a escribir"
+    },
+    "button": {
+      "text_ai": "IA de Texto",
+      "insert": "Insertar",
+      "replace": "Reemplazar",
+      "retry": "Reintentar",
+      "cancel": "Cancelar",
+      "insert_after": "Insertar después"
+    },
+    "modal": {
+      "selected_text": "Texto seleccionado:"
+    },
+    "loading": {
+      "processing": "Procesando...",
+      "correct_grammar": "Corrigiendo gramática...",
+      "tone_professional": "Haciendo más profesional...",
+      "tone_casual": "Haciendo más informal...",
+      "tone_polite": "Haciendo más cortés...",
+      "improve_shorter": "Acortando...",
+      "improve_expand": "Ampliando...",
+      "improve_emojify": "Añadiendo emojis...",
+      "improve_bullets": "Convirtiendo en lista..."
+    },
+    "error": {
+      "auth": "Error de autorización. Verifique sus permisos de Cozy.",
+      "rate_limit": "Demasiadas solicitudes. Espere un momento e inténtelo de nuevo.",
+      "server": "El servicio de IA no está disponible temporalmente. Inténtelo de nuevo.",
+      "generic": "Algo salió mal. Inténtelo de nuevo más tarde.",
+      "network": "Error de red. Verifique su conexión e inténtelo de nuevo.",
+      "empty_response": "No se recibió resultado. Inténtelo de nuevo.",
+      "unexpected": "Ocurrió un error inesperado. Inténtelo de nuevo."
+    }
   }
 }

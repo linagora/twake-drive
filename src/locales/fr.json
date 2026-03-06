@@ -728,5 +728,62 @@
       "title": "Le téléchargement et le partage sont bloqués pour des raisons de sécurité",
       "description": "Le système Twake a détecté un virus"
     }
+  },
+  "Scribe": {
+    "menu": {
+      "correct_grammar": "Corriger la grammaire",
+      "translate": "Traduire",
+      "change_tone": "Changer le ton",
+      "improve": "Améliorer"
+    },
+    "tone": {
+      "professional": "Plus professionnel",
+      "casual": "Plus décontracté",
+      "polite": "Plus poli"
+    },
+    "improve": {
+      "shorter": "Raccourcir",
+      "expand": "Développer",
+      "emojify": "Emojifier",
+      "bullets": "Transformer en liste"
+    },
+    "translate": {
+      "other_language": "Autre langue...",
+      "translating_to": "Traduction en %{language}..."
+    },
+    "prompt": {
+      "placeholder": "Aidez-moi à écrire"
+    },
+    "button": {
+      "text_ai": "IA Texte",
+      "insert": "Insérer",
+      "replace": "Remplacer",
+      "retry": "Réessayer",
+      "cancel": "Annuler",
+      "insert_after": "Insérer après"
+    },
+    "modal": {
+      "selected_text": "Texte sélectionné :"
+    },
+    "loading": {
+      "processing": "Traitement en cours...",
+      "correct_grammar": "Correction de la grammaire...",
+      "tone_professional": "Ton plus professionnel...",
+      "tone_casual": "Ton plus décontracté...",
+      "tone_polite": "Ton plus poli...",
+      "improve_shorter": "Raccourcissement...",
+      "improve_expand": "Développement...",
+      "improve_emojify": "Ajout d'emojis...",
+      "improve_bullets": "Transformation en liste..."
+    },
+    "error": {
+      "auth": "Erreur d'autorisation. Vérifiez vos permissions Cozy.",
+      "rate_limit": "Trop de requêtes. Veuillez patienter et réessayer.",
+      "server": "Le service IA est temporairement indisponible. Veuillez réessayer.",
+      "generic": "Une erreur est survenue. Veuillez réessayer plus tard.",
+      "network": "Erreur réseau. Vérifiez votre connexion et réessayez.",
+      "empty_response": "Aucun résultat reçu. Veuillez réessayer.",
+      "unexpected": "Une erreur inattendue est survenue. Veuillez réessayer."
+    }
   }
 }

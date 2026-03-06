@@ -322,5 +322,62 @@
       "recents": "Recenti",
       "chooseCustomIcon": "Scegli un'icona personalizzata"
     }
+  },
+  "Scribe": {
+    "menu": {
+      "correct_grammar": "Correggi grammatica",
+      "translate": "Traduci",
+      "change_tone": "Cambia tono",
+      "improve": "Migliora"
+    },
+    "tone": {
+      "professional": "Più professionale",
+      "casual": "Più informale",
+      "polite": "Più cortese"
+    },
+    "improve": {
+      "shorter": "Accorcia",
+      "expand": "Espandi",
+      "emojify": "Aggiungi emoji",
+      "bullets": "Trasforma in elenco"
+    },
+    "translate": {
+      "other_language": "Altra lingua...",
+      "translating_to": "Traduzione in %{language}..."
+    },
+    "prompt": {
+      "placeholder": "Aiutami a scrivere"
+    },
+    "button": {
+      "text_ai": "IA Testo",
+      "insert": "Inserisci",
+      "replace": "Sostituisci",
+      "retry": "Riprova",
+      "cancel": "Annulla",
+      "insert_after": "Inserisci dopo"
+    },
+    "modal": {
+      "selected_text": "Testo selezionato:"
+    },
+    "loading": {
+      "processing": "Elaborazione in corso...",
+      "correct_grammar": "Correzione della grammatica...",
+      "tone_professional": "Rendo più professionale...",
+      "tone_casual": "Rendo più informale...",
+      "tone_polite": "Rendo più cortese...",
+      "improve_shorter": "Accorciamento...",
+      "improve_expand": "Espansione...",
+      "improve_emojify": "Aggiunta emoji...",
+      "improve_bullets": "Trasformazione in elenco..."
+    },
+    "error": {
+      "auth": "Errore di autorizzazione. Verifica i tuoi permessi Cozy.",
+      "rate_limit": "Troppe richieste. Attendi un momento e riprova.",
+      "server": "Il servizio IA è temporaneamente non disponibile. Riprova.",
+      "generic": "Qualcosa è andato storto. Riprova più tardi.",
+      "network": "Errore di rete. Verifica la connessione e riprova.",
+      "empty_response": "Nessun risultato ricevuto. Riprova.",
+      "unexpected": "Si è verificato un errore imprevisto. Riprova."
+    }
   }
 }
