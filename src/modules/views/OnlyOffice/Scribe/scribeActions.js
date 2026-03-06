@@ -48,6 +48,7 @@ export function buildTranslateChildren(accountLang) {
   children.push({
     id: 'translate-en',
     label: 'English',
+    labelKey: null, // language names use label directly (native script)
     icon: null,
     prompt: 'Translate the following text to English:\n\n{selectedText}',
     mockResult: 'wrap:[EN] Translation::[/EN]'
@@ -61,6 +62,7 @@ export function buildTranslateChildren(accountLang) {
     children.push({
       id: 'translate-' + acctCode,
       label,
+      labelKey: null, // language names use label directly (native script)
       icon: null,
       prompt: 'Translate the following text to ' + label + ':\n\n{selectedText}',
       mockResult: 'wrap:[' + acctCode.toUpperCase() + '] Translation::[/' + acctCode.toUpperCase() + ']'
@@ -75,6 +77,7 @@ export function buildTranslateChildren(accountLang) {
     children.push({
       id: 'translate-' + browserCode,
       label,
+      labelKey: null, // language names use label directly (native script)
       icon: null,
       prompt: 'Translate the following text to ' + label + ':\n\n{selectedText}',
       mockResult: 'wrap:[' + browserCode.toUpperCase() + '] Translation::[/' + browserCode.toUpperCase() + ']'
@@ -85,6 +88,8 @@ export function buildTranslateChildren(accountLang) {
   children.push({
     id: 'translate-custom',
     label: '',
+    labelKey: null, // custom input uses placeholderKey instead
+    placeholderKey: 'Scribe.translate.other_language',
     icon: null,
     type: 'input',
     prompt: 'Translate the following text to {language}:\n\n{selectedText}',
@@ -99,17 +104,19 @@ export function buildTranslateChildren(accountLang) {
  *
  * Each action has:
  * - id: unique identifier used by mockTransform and event handlers
- * - label: display text
+ * - labelKey: i18n key for display text (resolved via t() at render time)
  * - icon: cozy-ui icon component, 'emoji' string, or null
  * - prompt: AI prompt template with {selectedText} placeholder (null for parent actions)
  * - mockResult: instruction for mockTransform output (null for parent actions)
  * - children: array of sub-actions, or null for direct actions (no submenu)
  *   Translate children are built dynamically via buildTranslateChildren().
+ *
+ * prompt fields are LLM instructions — do NOT translate
  */
 export const SCRIBE_ACTIONS = [
   {
     id: 'correct-grammar',
-    label: 'Correct grammar',
+    labelKey: 'Scribe.menu.correct_grammar',
     icon: CheckIcon,
     children: null,
     prompt: 'Correct the grammar and spelling of the following text:\n\n{selectedText}',
@@ -117,7 +124,7 @@ export const SCRIBE_ACTIONS = [
   },
   {
     id: 'translate',
-    label: 'Translate',
+    labelKey: 'Scribe.menu.translate',
     icon: GlobeIcon,
     children: null, // populated dynamically
     prompt: null,
@@ -125,28 +132,28 @@ export const SCRIBE_ACTIONS = [
   },
   {
     id: 'change-tone',
-    label: 'Change tone',
+    labelKey: 'Scribe.menu.change_tone',
     icon: PenIcon,
     prompt: null,
     mockResult: null,
     children: [
       {
         id: 'tone-professional',
-        label: 'More professional',
+        labelKey: 'Scribe.tone.professional',
         icon: CompanyIcon,
         prompt: 'Rewrite the following text in a more professional tone:\n\n{selectedText}',
         mockResult: 'wrap:Dear Sir/Madam,:Best regards.'
       },
       {
         id: 'tone-casual',
-        label: 'More casual',
+        labelKey: 'Scribe.tone.casual',
         icon: CocktailIcon,
         prompt: 'Rewrite the following text in a more casual, friendly tone:\n\n{selectedText}',
         mockResult: 'wrap:Hey!:Cheers!'
       },
       {
         id: 'tone-polite',
-        label: 'More polite',
+        labelKey: 'Scribe.tone.polite',
         icon: HandIcon,
         prompt: 'Rewrite the following text in a more polite and courteous tone:\n\n{selectedText}',
         mockResult: 'wrap:If I may,:Thank you kindly.'
@@ -155,35 +162,35 @@ export const SCRIBE_ACTIONS = [
   },
   {
     id: 'improve',
-    label: 'Improve',
+    labelKey: 'Scribe.menu.improve',
     icon: MagicTrickIcon,
     prompt: null,
     mockResult: null,
     children: [
       {
         id: 'improve-shorter',
-        label: 'Make it shorter',
+        labelKey: 'Scribe.improve.shorter',
         icon: ContractIcon,
         prompt: 'Make the following text shorter and more concise while preserving the key meaning:\n\n{selectedText}',
         mockResult: 'truncate-half'
       },
       {
         id: 'improve-expand',
-        label: 'Expand context',
+        labelKey: 'Scribe.improve.expand',
         icon: ExpandIcon,
         prompt: 'Expand the following text with additional context, detail and explanation:\n\n{selectedText}',
         mockResult: 'suffix: (expanded with additional context and detail)'
       },
       {
         id: 'improve-emojify',
-        label: 'Emojify',
+        labelKey: 'Scribe.improve.emojify',
         icon: 'emoji',
         prompt: 'Add relevant emojis to the following text to make it more expressive:\n\n{selectedText}',
         mockResult: 'emojify'
       },
       {
         id: 'improve-bullets',
-        label: 'Transform to bullets',
+        labelKey: 'Scribe.improve.bullets',
         icon: ListIcon,
         prompt: 'Transform the following text into a bullet-point list:\n\n{selectedText}',
         mockResult: 'bullets'

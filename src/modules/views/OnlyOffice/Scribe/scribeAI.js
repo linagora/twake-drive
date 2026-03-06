@@ -5,6 +5,9 @@
  * (not chatCompletion()) to support AbortController signal for request cancellation.
  *
  * Exports: callScribeAI, buildMessages, deriveLoadingMessage, classifyScribeError, SYSTEM_PROMPT
+ *
+ * deriveLoadingMessage returns { key, params? } i18n descriptors (not strings).
+ * classifyScribeError returns { messageKey, canRetry } with i18n keys (not strings).
  */
 
 import {
@@ -147,79 +150,76 @@ export async function callScribeAI(client, messages, { signal } = {}) {
 }
 
 /**
- * Derive a user-friendly loading message for a Scribe action.
- *
- * @param {string} actionId - The action identifier
- * @param {string} label - The action's display label
- * @returns {string} Loading message (e.g. "Correcting grammar...")
+ * Map of action IDs to their i18n loading message keys.
  */
-export function deriveLoadingMessage(actionId, label) {
-  // Free-prompt: label is the user's full prompt, not suitable for display (Pitfall 4)
-  if (actionId === 'free-prompt') {
-    return 'Processing...'
-  }
-
-  // Translate actions: use explicit "Translating to..." pattern
-  if (actionId.startsWith('translate-')) {
-    return `Translating to ${label}...`
-  }
-
-  // Known action labels: map to natural gerund form
-  const loadingMessages = {
-    'Correct grammar': 'Correcting grammar...',
-    'More professional': 'Making it more professional...',
-    'More casual': 'Making it more casual...',
-    'More polite': 'Making it more polite...',
-    'Make it shorter': 'Making it shorter...',
-    'Expand context': 'Expanding context...',
-    'Emojify': 'Emojifying...',
-    'Transform to bullets': 'Transforming to bullets...'
-  }
-
-  if (loadingMessages[label]) {
-    return loadingMessages[label]
-  }
-
-  // Fallback: use label directly with ellipsis
-  return `${label}...`
+const LOADING_KEYS = {
+  'correct-grammar': 'Scribe.loading.correct_grammar',
+  'tone-professional': 'Scribe.loading.tone_professional',
+  'tone-casual': 'Scribe.loading.tone_casual',
+  'tone-polite': 'Scribe.loading.tone_polite',
+  'improve-shorter': 'Scribe.loading.improve_shorter',
+  'improve-expand': 'Scribe.loading.improve_expand',
+  'improve-emojify': 'Scribe.loading.improve_emojify',
+  'improve-bullets': 'Scribe.loading.improve_bullets'
 }
 
 /**
- * Classify a Scribe AI error into a user-facing message and retry eligibility.
+ * Derive a loading message descriptor for a Scribe action.
+ *
+ * Returns an object with { key, params? } so the caller can resolve
+ * the translated string via t(result.key, result.params).
+ *
+ * @param {string} actionId - The action identifier
+ * @param {string} label - The action's display label (used as language name for translate actions)
+ * @returns {{ key: string, params?: Object }} i18n descriptor for the loading message
+ */
+export function deriveLoadingMessage(actionId, label) {
+  // Free-prompt: label is the user's full prompt, not suitable for display
+  if (actionId === 'free-prompt') {
+    return { key: 'Scribe.loading.processing' }
+  }
+
+  // Translate actions: use interpolated "Translating to %{language}..." pattern
+  if (actionId.startsWith('translate-')) {
+    return { key: 'Scribe.translate.translating_to', params: { language: label } }
+  }
+
+  // Known action IDs: map to i18n loading key
+  if (LOADING_KEYS[actionId]) {
+    return { key: LOADING_KEYS[actionId] }
+  }
+
+  // Fallback for unknown IDs
+  return { key: 'Scribe.loading.processing' }
+}
+
+/**
+ * Classify a Scribe AI error into an i18n message key and retry eligibility.
+ *
+ * Returns { messageKey, canRetry } so the caller can resolve the translated
+ * error string via t(result.messageKey).
  *
  * @param {Error} err - The error thrown by callScribeAI
- * @returns {{ message: string, canRetry: boolean }}
+ * @returns {{ messageKey: string, canRetry: boolean }}
  */
 export function classifyScribeError(err) {
   // AbortError: user cancelled — handled upstream, safety catch
   if (err.name === 'AbortError') {
-    return { message: '', canRetry: false }
+    return { messageKey: '', canRetry: false }
   }
 
   // FetchError from cozy-stack-client (check by name, not instanceof)
   if (err.name === 'FetchError' && typeof err.status === 'number') {
     if (err.status === 401 || err.status === 403) {
-      return {
-        message: 'Authorization error. Please check your Cozy permissions.',
-        canRetry: false
-      }
+      return { messageKey: 'Scribe.error.auth', canRetry: false }
     }
     if (err.status === 429) {
-      return {
-        message: 'Too many requests. Please wait a moment and try again.',
-        canRetry: true
-      }
+      return { messageKey: 'Scribe.error.rate_limit', canRetry: true }
     }
     if (err.status >= 500) {
-      return {
-        message: 'The AI service is temporarily unavailable. Please try again.',
-        canRetry: true
-      }
+      return { messageKey: 'Scribe.error.server', canRetry: true }
     }
-    return {
-      message: 'Something went wrong. Please try again later.',
-      canRetry: false
-    }
+    return { messageKey: 'Scribe.error.generic', canRetry: false }
   }
 
   // Network errors (TypeError or fetch failure messages)
@@ -229,20 +229,14 @@ export function classifyScribeError(err) {
       (err.message.includes('Failed to fetch') ||
         err.message.includes('Network request failed')))
   ) {
-    return {
-      message: 'Network error. Check your connection and try again.',
-      canRetry: true
-    }
+    return { messageKey: 'Scribe.error.network', canRetry: true }
   }
 
   // Empty response from AI
   if (err.message === 'Empty response from AI') {
-    return { message: 'No result received. Please try again.', canRetry: true }
+    return { messageKey: 'Scribe.error.empty_response', canRetry: true }
   }
 
   // Default: unexpected error, allow retry
-  return {
-    message: 'An unexpected error occurred. Please try again.',
-    canRetry: true
-  }
+  return { messageKey: 'Scribe.error.unexpected', canRetry: true }
 }
