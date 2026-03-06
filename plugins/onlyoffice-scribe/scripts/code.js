@@ -3,6 +3,7 @@
 
   // ---- State ----
   var lastSelectedText = "";
+  var lastSelectedHtml = "";
   var pendingIntents = {};
   var cozyOrigin = "*"; // TODO: restrict to actual Cozy origin in production
 
@@ -148,6 +149,13 @@
     }
   });
 
+  // ---- Strip OO-internal CSS classes from extracted HTML ----
+  // Based on official OO HTML plugin pattern -- removes class attributes
+  // that contain OO-specific styling metadata not useful for AI processing
+  function stripOoClasses(html) {
+    return html.replace(/\s*class="[^"]*"/g, "");
+  }
+
   // ---- Selection detection (via init + polling) ----
   // OO calls init with the selected text when a selection is made,
   // but does NOT call init when the selection is cleared.
@@ -173,6 +181,7 @@
         if (trimmed.length === 0) {
           log("Polling: selection cleared");
           lastSelectedText = "";
+          lastSelectedHtml = "";
           scribeButtonShown = false;
           castIntent("HIDE_SCRIBE_BUTTON", {}, true);
           stopHidePolling();
@@ -189,7 +198,7 @@
   }
 
   window.Asc.plugin.init = function(data) {
-    log("init() HTML gate test - data type: " + typeof data + ", starts with: " + (data ? data.substring(0, 100) : "(null)"));
+    log("init() called, html=" + (data ? data.substring(0, 80) : "(null)"));
 
     // Add toolbar button on first init (API is ready at this point)
     if (!toolbarButtonAdded) {
@@ -197,24 +206,45 @@
       toolbarButtonAdded = true;
     }
 
-    var text = (data || "").replace(/^\s+|\s+$/g, "");
-    lastSelectedText = text;
+    // With initDataType:"html", data contains HTML string from OO
+    // Store class-stripped HTML for rich text pipeline
+    lastSelectedHtml = stripOoClasses(data || "");
 
-    if (selectionDebounceTimer) clearTimeout(selectionDebounceTimer);
+    // Fetch plain text in parallel via GetSelectedText (needed for button display and fallback)
+    window.Asc.plugin.executeMethod("GetSelectedText", [{
+      Numbering: false,
+      Math: false,
+      TableCellSeparator: "\n",
+      ParaSeparator: "\n",
+      TabSymbol: String.fromCharCode(9)
+    }], function(text) {
+      var plainText = (text || "").replace(/^\s+|\s+$/g, "");
 
-    if (text.length > 0) {
-      selectionDebounceTimer = setTimeout(function() {
-        castIntent("SHOW_SCRIBE_BUTTON", { text: text }, true);
-        scribeButtonShown = true;
-        startHidePolling();
-      }, SELECTION_DEBOUNCE_MS);
-    } else {
-      if (scribeButtonShown) {
-        scribeButtonShown = false;
-        castIntent("HIDE_SCRIBE_BUTTON", {}, true);
+      // If GetSelectedText returned empty but we have HTML, extract text approximation
+      if (plainText.length === 0 && data) {
+        plainText = data.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").replace(/^\s+|\s+$/g, "");
       }
-      stopHidePolling();
-    }
+
+      lastSelectedText = plainText;
+
+      if (selectionDebounceTimer) clearTimeout(selectionDebounceTimer);
+
+      if (plainText.length > 0) {
+        selectionDebounceTimer = setTimeout(function() {
+          castIntent("SHOW_SCRIBE_BUTTON", { text: plainText }, true);
+          scribeButtonShown = true;
+          startHidePolling();
+        }, SELECTION_DEBOUNCE_MS);
+      } else {
+        // No text found -- also clear HTML since selection is empty
+        lastSelectedHtml = "";
+        if (scribeButtonShown) {
+          scribeButtonShown = false;
+          castIntent("HIDE_SCRIBE_BUTTON", {}, true);
+        }
+        stopHidePolling();
+      }
+    });
   };
 
   // ---- Required: button handler ----
