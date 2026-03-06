@@ -5,6 +5,7 @@ import Popover from 'cozy-ui/transpiled/react/Popover'
 import Paper from 'cozy-ui/transpiled/react/Paper'
 import Spinner from 'cozy-ui/transpiled/react/Spinner'
 import Typography from 'cozy-ui/transpiled/react/Typography'
+import { useI18n } from 'twake-i18n'
 import { useClient } from 'cozy-client'
 
 import { ScribeActionMenu } from '@/modules/views/OnlyOffice/Scribe/ScribeActionMenu'
@@ -29,6 +30,7 @@ import styles from '@/modules/views/OnlyOffice/Scribe/scribe.styl'
  * @param {Function} props.onCancel - Called when closed without action
  */
 const ScribePopover = ({ open, selectedText, onReplace, onInsert, onCancel }) => {
+  const { t } = useI18n()
   const client = useClient()
   const abortRef = useRef(null)
 
@@ -70,7 +72,8 @@ const ScribePopover = ({ open, selectedText, onReplace, onInsert, onCancel }) =>
 
       // 1. Transition to loading
       setStep('loading')
-      setLoadingMessage(deriveLoadingMessage(actionId, label))
+      const loadingInfo = deriveLoadingMessage(actionId, label)
+      setLoadingMessage(loadingInfo.params ? t(loadingInfo.key, loadingInfo.params) : t(loadingInfo.key))
       setResult({ text: '', breadcrumb, error: '', canRetry: false })
 
       // 2. Create AbortController
@@ -93,7 +96,7 @@ const ScribePopover = ({ open, selectedText, onReplace, onInsert, onCancel }) =>
         }
         // Classify error for user-facing message and retry eligibility
         const classified = classifyScribeError(err)
-        setResult({ text: '', breadcrumb, error: classified.message, canRetry: classified.canRetry })
+        setResult({ text: '', breadcrumb, error: classified.messageKey ? t(classified.messageKey) : '', canRetry: classified.canRetry })
         setStep('result')
       } finally {
         if (abortRef.current === controller) {

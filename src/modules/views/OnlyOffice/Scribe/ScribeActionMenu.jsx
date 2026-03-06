@@ -17,7 +17,7 @@ import { ScribePromptInput } from '@/modules/views/OnlyOffice/Scribe/ScribePromp
 const PROMPT_INDEX = SCRIBE_ACTIONS.length
 
 const ScribeActionMenu = forwardRef(({ onSelect, onClose, selectedText: _selectedText }, ref) => {
-  const { lang } = useI18n()
+  const { t, lang } = useI18n()
   const theme = useTheme()
   const [activeSubmenu, setActiveSubmenu] = useState(null)
   const [focusIndex, setFocusIndex] = useState(0)
@@ -70,21 +70,25 @@ const ScribeActionMenu = forwardRef(({ onSelect, onClose, selectedText: _selecte
   const selectAction = useCallback(
     (action, child) => {
       if (child) {
-        onSelect(child.id, child.label, `${action.label} > ${child.label}`)
+        const childLabel = child.labelKey ? t(child.labelKey) : child.label
+        const parentLabel = t(action.labelKey)
+        onSelect(child.id, childLabel, `${parentLabel} > ${childLabel}`)
       } else if (!action.children) {
-        onSelect(action.id, action.label, action.label)
+        const label = t(action.labelKey)
+        onSelect(action.id, label, label)
       }
     },
-    [onSelect]
+    [onSelect, t]
   )
 
   const handleCustomLangSubmit = useCallback(() => {
     const trimmed = customLang.trim()
     if (trimmed) {
-      onSelect('translate-custom', trimmed, `Translate > ${trimmed}`)
+      const translateLabel = t(actions.find(a => a.id === 'translate').labelKey)
+      onSelect('translate-custom', trimmed, `${translateLabel} > ${trimmed}`)
       setCustomLang('')
     }
-  }, [customLang, onSelect])
+  }, [customLang, onSelect, t, actions])
 
   // Called by ScribePromptInput when arrow keys are pressed in the input
   const handlePromptArrow = useCallback(
@@ -251,7 +255,7 @@ const ScribeActionMenu = forwardRef(({ onSelect, onClose, selectedText: _selecte
               }}
               onClick={
                 !action.children
-                  ? () => onSelect(action.id, action.label, action.label)
+                  ? () => { const label = t(action.labelKey); onSelect(action.id, label, label) }
                   : () => {
                       setActiveSubmenu(action.id)
                       setSubmenuFocusIndex(0)
@@ -261,7 +265,7 @@ const ScribeActionMenu = forwardRef(({ onSelect, onClose, selectedText: _selecte
               <ListItemIcon>
                 <Icon icon={action.icon} />
               </ListItemIcon>
-              <ListItemText primary={action.label} />
+              <ListItemText primary={t(action.labelKey)} />
               {action.children && <Icon icon={RightIcon} size={16} />}
             </ListItem>
 
@@ -295,7 +299,7 @@ const ScribeActionMenu = forwardRef(({ onSelect, onClose, selectedText: _selecte
                     >
                       <InputBase
                         inputRef={customLangRef}
-                        placeholder="Other language..."
+                        placeholder={t(child.placeholderKey)}
                         value={customLang}
                         onChange={e => setCustomLang(e.target.value)}
                         onKeyDown={e => {
@@ -324,13 +328,11 @@ const ScribeActionMenu = forwardRef(({ onSelect, onClose, selectedText: _selecte
                         ...(childIndex === 0 ? { borderRadius: '4px 4px 0 0' } : {}),
                         ...(childIndex === action.children.length - 1 ? { borderRadius: '0 0 4px 4px' } : {})
                       }}
-                      onClick={() =>
-                        onSelect(
-                          child.id,
-                          child.label,
-                          `${action.label} > ${child.label}`
-                        )
-                      }
+                      onClick={() => {
+                        const childLabel = child.labelKey ? t(child.labelKey) : child.label
+                        const parentLabel = t(action.labelKey)
+                        onSelect(child.id, childLabel, `${parentLabel} > ${childLabel}`)
+                      }}
                       onMouseEnter={() => setSubmenuFocusIndex(childIndex)}
                     >
                       {child.icon && (
@@ -347,7 +349,7 @@ const ScribeActionMenu = forwardRef(({ onSelect, onClose, selectedText: _selecte
                           )}
                         </ListItemIcon>
                       )}
-                      <ListItemText primary={child.label} />
+                      <ListItemText primary={child.labelKey ? t(child.labelKey) : child.label} />
                     </ListItem>
                   )
                 )}
