@@ -74,6 +74,16 @@
     }
   }
 
+  // Build AI_TEXT_EDIT intent data with optional HTML field (EXTR-02)
+  function buildEditIntentData() {
+    var data = { text: lastSelectedText };
+    if (lastSelectedHtml && lastSelectedHtml.length > 0) {
+      data.html = lastSelectedHtml;
+      data.format = "html";
+    }
+    return data;
+  }
+
   // ---- handleIntentResponse: apply document modification from response ----
   function handleIntentResponse(msg) {
     if (msg.action === "replace") {
@@ -145,7 +155,7 @@
 
     if (msg.action === "AI_TEXT_EDIT" && lastSelectedText.length > 0) {
       log("Trigger-intent received, casting AI_TEXT_EDIT");
-      castIntent("AI_TEXT_EDIT", { text: lastSelectedText });
+      castIntent("AI_TEXT_EDIT", buildEditIntentData());
     }
   });
 
@@ -280,8 +290,8 @@
     }], function(selectedText) {
       lastSelectedText = selectedText || "";
       log("Context menu read: " + (lastSelectedText ? lastSelectedText.substring(0, 80) : "(empty)"));
-  
-      castIntent("AI_TEXT_EDIT", { text: lastSelectedText });
+      // Use stored HTML from latest init() call
+      castIntent("AI_TEXT_EDIT", buildEditIntentData());
     });
   });
 
@@ -292,7 +302,7 @@
       if (isCtrlK && lastSelectedText.length > 0) {
         e.preventDefault();
         log("Ctrl+I triggered Scribe");
-        castIntent("AI_TEXT_EDIT", { text: lastSelectedText });
+        castIntent("AI_TEXT_EDIT", buildEditIntentData());
       }
     });
     log("Ctrl+I shortcut registered on parent document");
@@ -304,7 +314,7 @@
       if (isCtrlK && lastSelectedText.length > 0) {
         e.preventDefault();
         log("Ctrl+I triggered Scribe (fallback)");
-        castIntent("AI_TEXT_EDIT", { text: lastSelectedText });
+        castIntent("AI_TEXT_EDIT", buildEditIntentData());
       }
     });
   }
@@ -346,7 +356,7 @@
 
   function triggerScribeIfSelection() {
     if (lastSelectedText.length > 0) {
-      castIntent("AI_TEXT_EDIT", { text: lastSelectedText });
+      castIntent("AI_TEXT_EDIT", buildEditIntentData());
     } else {
       log("No text selected — toolbar click ignored");
     }
