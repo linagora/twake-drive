@@ -37,7 +37,7 @@ Full details: `.planning/milestones/v2.0-ROADMAP.md`
 
 **Milestone Goal:** Preserver et restituer le formatage riche du texte a travers le cycle Scribe (extraction, Markdown, LLM, reconversion, reinjection).
 
-- [ ] **Phase 10: Extraction Rich Text** - Extraire le HTML formate depuis OO et le transporter via le protocole postMessage
+- [x] **Phase 10: Extraction Rich Text** - Extraire le HTML formate depuis OO et le transporter via le protocole postMessage (completed 2026-03-06)
 - [ ] **Phase 11: Pipeline de Conversion** - Convertir HTML en Markdown (vers LLM) et Markdown en HTML (vers OO) avec nettoyage
 - [ ] **Phase 12: Preview Markdown** - Afficher le resultat AI en Markdown rendu dans le panneau de resultat
 - [ ] **Phase 13: Reinjection et Integrite Pipeline** - Reinjecter le texte formate dans OO et valider le round-trip complet
@@ -116,7 +116,7 @@ Phases execute in numeric order: 10, 11, 12, 13
 | 7. Real AI Integration | v2.0 | 2/2 | Complete | 2026-03-04 |
 | 8. Error Handling | v2.0 | 1/1 | Complete | 2026-03-05 |
 | 9. Internationalization | v2.0 | 2/2 | Complete | 2026-03-06 |
-| 10. Extraction Rich Text | v2.1 | 1/2 | In Progress | - |
+| 10. Extraction Rich Text | 2/2 | Complete   | 2026-03-06 | - |
 | 11. Pipeline de Conversion | v2.1 | 0/? | Not started | - |
 | 12. Preview Markdown | v2.1 | 0/? | Not started | - |
 | 13. Reinjection et Integrite Pipeline | v2.1 | 0/? | Not started | - |

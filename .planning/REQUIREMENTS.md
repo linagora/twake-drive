@@ -10,7 +10,7 @@ Requirements for rich text formatting preservation. Each maps to roadmap phases.
 ### Extraction
 
 - [x] **EXTR-01**: Le plugin extrait le HTML formaté de la sélection via `GetSelectedContent({type:"html"})`
-- [ ] **EXTR-02**: Le protocole postMessage transporte le HTML avec un champ `format:"html"`
+- [x] **EXTR-02**: Le protocole postMessage transporte le HTML avec un champ `format:"html"`
 - [x] **EXTR-03**: Si l'extraction HTML échoue, le système revient silencieusement au texte brut
 
 ### Conversion
@@ -65,7 +65,7 @@ Requirements for rich text formatting preservation. Each maps to roadmap phases.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | EXTR-01 | Phase 10 | Complete |
-| EXTR-02 | Phase 10 | Pending |
+| EXTR-02 | Phase 10 | Complete |
 | EXTR-03 | Phase 10 | Complete |
 | CONV-01 | Phase 11 | Pending |
 | CONV-02 | Phase 11 | Pending |

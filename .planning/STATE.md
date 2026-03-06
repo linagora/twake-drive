@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Formatage Riche
-status: active
-stopped_at: "Completed 10-01-PLAN.md"
-last_updated: "2026-03-06"
-last_activity: 2026-03-06 — Completed plan 10-01 HTML extraction
+status: completed
+stopped_at: Completed 10-02-PLAN.md
+last_updated: "2026-03-06T19:52:29.417Z"
+last_activity: 2026-03-06 -- Completed plan 10-02 intent protocol HTML extension
 progress:
   total_phases: 4
-  completed_phases: 0
-  total_plans: 1
-  completed_plans: 1
+  completed_phases: 1
+  total_plans: 2
+  completed_plans: 2
   percent: 25
 ---
 
@@ -26,18 +26,18 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 ## Current Position
 
 Phase: 10 of 13 (Extraction Rich Text) -- first of 4 phases in v2.1
-Plan: 01 of 01 complete
-Status: Phase 10 plan 01 complete
-Last activity: 2026-03-06 -- Completed plan 10-01 HTML extraction
+Plan: 02 of 02 complete
+Status: Phase 10 complete
+Last activity: 2026-03-06 -- Completed plan 10-02 intent protocol HTML extension
 
-Progress: [██░░░░░░░░] 25%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 16 (v1.0: 10, v2.0: 5, v2.1: 1)
-- v2.1 average duration: ~4 min/plan
-- v2.1 total execution time: ~4 min
+- Total plans completed: 17 (v1.0: 10, v2.0: 5, v2.1: 2)
+- v2.1 average duration: ~3 min/plan
+- v2.1 total execution time: ~6 min
 
 **By Phase (v2.0):**
 
@@ -46,6 +46,7 @@ Progress: [██░░░░░░░░] 25%
 | 07 Real AI Integration | 2 | 6min | 3min |
 | 08 Error Handling | 1 | 2min | 2min |
 | 09 Internationalization | 2 | 7min | 3.5min |
+| Phase 10 P02 | 2min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -60,6 +61,7 @@ Recent decisions affecting current work:
 - v2.1: Go/no-go gate on initDataType:"html" with background plugin must be validated first
 - v2.1: Regex class stripping for OO HTML (ES5 compatible, no DOMParser)
 - v2.1: Parallel plain text fetch via GetSelectedText alongside HTML extraction
+- [Phase 10]: buildEditIntentData() centralizes intent data with optional html/format fields
 
 ### Pending Todos (carried from v1.0)
 
@@ -81,6 +83,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-06
-Stopped at: Completed 10-01-PLAN.md
-Resume file: .planning/phases/10-extraction-rich-text/10-01-SUMMARY.md
+Last session: 2026-03-06T19:52:29.414Z
+Stopped at: Completed 10-02-PLAN.md
+Resume file: None
