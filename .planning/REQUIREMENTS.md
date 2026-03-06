@@ -1,91 +1,91 @@
-# Requirements: Scribe pour OnlyOffice
+# Requirements: Scribe v2.1 Formatage Riche
 
-**Defined:** 2026-03-03
-**Core Value:** La chaîne de communication complète — depuis la sélection de texte dans OnlyOffice jusqu'à la réinjection du texte modifié par l'IA — doit fonctionner de bout en bout, de manière transparente pour l'utilisateur.
+**Defined:** 2026-03-06
+**Core Value:** La chaîne de communication complète — depuis la sélection de texte dans OnlyOffice jusqu'à la réinjection du texte modifié par l'IA — de bout en bout, transparente pour l'utilisateur.
 
-## v2.0 Requirements
+## v2.1 Requirements
 
-Requirements for milestone v2.0 Scribe Live AI. Each maps to roadmap phases.
+Requirements for rich text formatting preservation. Each maps to roadmap phases.
 
-### API Integration
+### Extraction
 
-- [x] **API-01**: User sees real AI-generated text when selecting a Scribe action (replaces mock)
-- [x] **API-02**: Scribe sends correct prompt to LLM based on selected action and text via POST /ai/v1/chat/completions
-- [x] **API-03**: Free-prompt action sends user's custom instruction to LLM with selected text
+- [ ] **EXTR-01**: Le plugin extrait le HTML formaté de la sélection via `GetSelectedContent({type:"html"})`
+- [ ] **EXTR-02**: Le protocole postMessage transporte le HTML avec un champ `format:"html"`
+- [ ] **EXTR-03**: Si l'extraction HTML échoue, le système revient silencieusement au texte brut
 
-### Loading State
+### Conversion
 
-- [x] **LOAD-01**: User sees visual feedback (loading indicator) while AI processes request
-- [x] **LOAD-02**: User can close the popover during loading (cancels the in-flight request)
+- [ ] **CONV-01**: Le HTML extrait est converti en Markdown via Turndown côté Cozy Drive
+- [ ] **CONV-02**: La réponse Markdown du LLM est reconvertie en HTML via marked pour réinjection
+- [ ] **CONV-03**: Les éléments non supportés (images, SVG, math) sont nettoyés avant conversion
 
-### Error Handling
+### Preview
 
-- [x] **ERR-01**: User sees clear error message when API call fails (network error, server error, timeout)
-- [x] **ERR-02**: User can retry after a transient error (429 rate limit, 500 server error, network)
-- [x] **ERR-03**: User sees appropriate non-retryable message for auth/config errors (401, 403)
+- [ ] **PREV-01**: Le panneau de résultat affiche le Markdown rendu (react-markdown) au lieu du texte brut
+- [ ] **PREV-02**: Le rendu Markdown utilise les tokens MUI du thème Scribe (dark/light mode)
 
-### Internationalization
+### Réinjection
 
-- [x] **I18N-01**: All Scribe UI strings use cozy-ui i18n system (no hardcoded French or English strings)
-- [x] **I18N-02**: Translations provided for all cozy-ui supported locales
-- [x] **I18N-03**: Action labels, button text, error messages, and tooltips are all translated
+- [ ] **REINJ-01**: L'action "Replace" utilise `PasteHtml` pour réinjecter le texte formaté
+- [ ] **REINJ-02**: L'action "Insert After" insère du contenu HTML formaté après la sélection
+
+### Intégrité du pipeline
+
+- [ ] **PIPE-01**: Le formatage inline (gras, italique) survit au cycle complet (extraction → LLM → réinjection)
+- [ ] **PIPE-02**: Les blocs (titres, listes à puces/numérotées, paragraphes) survivent au cycle complet
+- [ ] **PIPE-03**: Les tableaux GFM survivent au cycle complet
+- [ ] **PIPE-04**: Les liens et blocs de code survivent au cycle complet
 
 ## Future Requirements
 
-Deferred to v2.x or later. Tracked but not in current roadmap.
+### Édition du résultat
 
-### Streaming UX
+- **EDIT-01**: L'utilisateur peut modifier le résultat Markdown dans le panneau avant insertion (éditeur MD éditable)
 
-- **STREAM-01**: User sees AI response appear token-by-token (streaming)
-- **STREAM-02**: User can cancel mid-stream and keep partial result
-- **STREAM-03**: User can regenerate (re-call API with same params)
+### Streaming
 
-### UI Polish
+- **STRM-01**: Affichage progressif token par token avec rendu Markdown incrémental
 
-- **POLISH-01**: Dark theme text visibility fix (white-on-white)
-- **POLISH-02**: Floating button disabled when no text selected
-- **POLISH-03**: Keyboard shortcut does not conflict with OO italic
+### Comparaison
 
-### Context Menu
-
-- **CTX-01**: Scribe actions available in OO right-click context menu
-
-### Formatting
-
-- **FMT-01**: Rich text formatting preserved during extract/transform/reinsert
+- **DIFF-01**: Vue diff entre le texte original et le résultat AI
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| cozy-stack modifications | Route POST /ai/v1/chat/completions already exists |
-| Client-side API keys | Security — all API calls go through cozy-stack proxy |
-| Model selection UI | Model configured server-side in RAG server |
-| Conversation memory | Architectural complexity, single-shot transforms only |
-| Real-time grammar underlining | Performance prohibitive |
-| Markdown rendering in preview | WYSIWYG mismatch with plain text insert |
+| Préservation font/color/size custom | Markdown n'a pas de concept de polices, tailles ou couleurs — nécessiterait un pipeline HTML parallèle |
+| Extraction/réinjection d'images | Les images ne survivent pas au round-trip LLM (text completion) |
+| Track changes / marques de révision | Mélanger IA et tracked changes crée une confusion dans l'historique |
+| Math/équations (LaTeX, MathML) | Complexité élevée pour un cas d'usage niche |
+| Fusion formatage original + LLM | Problème de diffing non résolu — le MD du LLM définit le formatage |
 
 ## Traceability
 
+Which phases cover which requirements. Updated during roadmap creation.
+
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| API-01 | Phase 7 | Complete |
-| API-02 | Phase 7 | Complete |
-| API-03 | Phase 7 | Complete |
-| LOAD-01 | Phase 7 | Complete |
-| LOAD-02 | Phase 7 | Complete |
-| ERR-01 | Phase 8 | Complete |
-| ERR-02 | Phase 8 | Complete |
-| ERR-03 | Phase 8 | Complete |
-| I18N-01 | Phase 9 | Complete |
-| I18N-02 | Phase 9 | Complete |
-| I18N-03 | Phase 9 | Complete |
+| EXTR-01 | — | Pending |
+| EXTR-02 | — | Pending |
+| EXTR-03 | — | Pending |
+| CONV-01 | — | Pending |
+| CONV-02 | — | Pending |
+| CONV-03 | — | Pending |
+| PREV-01 | — | Pending |
+| PREV-02 | — | Pending |
+| REINJ-01 | — | Pending |
+| REINJ-02 | — | Pending |
+| PIPE-01 | — | Pending |
+| PIPE-02 | — | Pending |
+| PIPE-03 | — | Pending |
+| PIPE-04 | — | Pending |
 
 **Coverage:**
-- v2.0 requirements: 11 total
-- Mapped to phases: 11
-- Unmapped: 0
+- v2.1 requirements: 14 total
+- Mapped to phases: 0
+- Unmapped: 14
 
 ---
-*Requirements defined: 2026-03-03*
-*Last updated: 2026-03-03 after roadmap creation*
+*Requirements defined: 2026-03-06*
+*Last updated: 2026-03-06 after initial definition*
