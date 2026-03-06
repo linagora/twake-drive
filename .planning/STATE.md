@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Formatage Riche
 status: completed
-stopped_at: Completed 11-02-PLAN.md
-last_updated: "2026-03-06T20:24:35.554Z"
+stopped_at: Phase 12 context gathered
+last_updated: "2026-03-06T23:44:29.226Z"
 last_activity: 2026-03-06 -- Completed plan 11-02 pipeline integration
 progress:
   total_phases: 4
@@ -89,6 +89,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-06T20:21:50Z
-Stopped at: Completed 11-02-PLAN.md
-Resume file: None
+Last session: 2026-03-06T23:44:29.224Z
+Stopped at: Phase 12 context gathered
+Resume file: .planning/phases/12-preview-markdown/12-CONTEXT.md
