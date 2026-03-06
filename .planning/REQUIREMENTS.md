@@ -26,9 +26,9 @@ Requirements for milestone v2.0 Scribe Live AI. Each maps to roadmap phases.
 
 ### Internationalization
 
-- [ ] **I18N-01**: All Scribe UI strings use cozy-ui i18n system (no hardcoded French or English strings)
-- [ ] **I18N-02**: Translations provided for all cozy-ui supported locales
-- [ ] **I18N-03**: Action labels, button text, error messages, and tooltips are all translated
+- [x] **I18N-01**: All Scribe UI strings use cozy-ui i18n system (no hardcoded French or English strings)
+- [x] **I18N-02**: Translations provided for all cozy-ui supported locales
+- [x] **I18N-03**: Action labels, button text, error messages, and tooltips are all translated
 
 ## Future Requirements
 
@@ -77,9 +77,9 @@ Deferred to v2.x or later. Tracked but not in current roadmap.
 | ERR-01 | Phase 8 | Complete |
 | ERR-02 | Phase 8 | Complete |
 | ERR-03 | Phase 8 | Complete |
-| I18N-01 | Phase 9 | Pending |
-| I18N-02 | Phase 9 | Pending |
-| I18N-03 | Phase 9 | Pending |
+| I18N-01 | Phase 9 | Complete |
+| I18N-02 | Phase 9 | Complete |
+| I18N-03 | Phase 9 | Complete |
 
 **Coverage:**
 - v2.0 requirements: 11 total

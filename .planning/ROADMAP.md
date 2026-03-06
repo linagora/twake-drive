@@ -87,4 +87,4 @@ Plans:
 | 6. Affinement UI/UX | v1.0 | 2/2 | Complete | 2026-03-03 |
 | 7. Real AI Integration | v2.0 | 2/2 | Complete | 2026-03-04 |
 | 8. Error Handling | 1/1 | Complete   | 2026-03-05 | - |
-| 9. Internationalization | v2.0 | 0/2 | Not started | - |
+| 9. Internationalization | 1/2 | In Progress|  | - |

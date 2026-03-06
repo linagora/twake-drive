@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-03)
 
 **Core value:** La chaine de communication complete -- depuis la selection de texte dans OnlyOffice jusqu'a la reinjection du texte modifie par l'IA -- de bout en bout, transparente pour l'utilisateur.
-**Current focus:** Phase 8 -- Error Handling (graceful error states with retry)
+**Current focus:** Phase 9 -- Internationalization (i18n for all Scribe UI strings)
 
 ## Current Position
 
-Phase: 8 of 9 (Error Handling)
+Phase: 9 of 9 (Internationalization)
 Plan: 1 of 1 in current phase (plan 01 complete)
-Status: Phase 8 Plan 01 complete
-Last activity: 2026-03-06 - Completed 08-01 error classification and retry
+Status: Phase 9 Plan 01 complete
+Last activity: 2026-03-06 - Completed 09-01 i18n data layer
 
-Progress: [████████░░] 78%
+Progress: [█████████░] 89%
 
 ## Performance Metrics
 
@@ -48,6 +48,7 @@ Progress: [████████░░] 78%
 | Phase 07 P01 | 1min | 1 tasks | 1 files |
 | Phase 07 P02 | 5min | 2 tasks | 3 files |
 | Phase 08 P01 | 2min | 2 tasks | 3 files |
+| Phase 09 P01 | 4min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -65,6 +66,9 @@ All decisions logged in PROJECT.md Key Decisions table.
 - [Phase 07]: 07-02: Added temperature: 0.3 to chat completions request (required by cozy-stack AI endpoint)
 - [Phase 08]: 08-01: Duck-typed FetchError detection (err.name === 'FetchError') for cross-module error classification
 - [Phase 08]: 08-01: Used Sync icon from cozy-ui for Retry button (Renew not available)
+- [Phase 09]: 09-01: deriveLoadingMessage returns { key, params? } descriptors instead of English strings
+- [Phase 09]: 09-01: classifyScribeError returns messageKey instead of message (caller resolves via t())
+- [Phase 09]: 09-01: Translate children keep label for native names, labelKey: null; custom input uses placeholderKey
 
 ### Pending Todos (carried from v1.0)
 
@@ -88,6 +92,6 @@ All decisions logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-03-05T23:58:04.261Z
-Stopped at: Phase 9 context gathered
-Resume file: .planning/phases/09-internationalization/09-CONTEXT.md
+Last session: 2026-03-06T00:14:42Z
+Stopped at: Completed 09-01-PLAN.md
+Resume file: .planning/phases/09-internationalization/09-01-SUMMARY.md
