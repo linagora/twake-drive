@@ -30,73 +30,40 @@ const LANG_NAMES = {
 }
 
 /**
- * Build the translate children list dynamically:
- * 1. Always "English"
- * 2. User's Cozy account language (if not English)
- * 3. Browser language (if different from the above)
- * Last item is a special { id: 'translate-custom', type: 'input' } for free text.
+ * Sort translate children using 'by-language-frequency' strategy:
+ * 1. English always first
+ * 2. Account language second (if not English)
+ * 3. Remaining languages sorted alphabetically by native name
+ * Non-language entries (type: 'input') are appended at the end.
  *
+ * @param {Array} children - children from SCRIBE_ACTIONS translate entry
  * @param {string} accountLang - Language code from Cozy account (e.g. 'fr')
- * @returns {Array} Translate sub-actions
+ * @returns {Array} Sorted translate sub-actions
  */
 export function buildTranslateChildren(accountLang) {
-  const seen = new Set()
-  const children = []
+  var translateAction = SCRIBE_ACTIONS.find(function (a) { return a.id === 'translate' })
+  var all = translateAction.children
+  var acctCode = (accountLang || '').slice(0, 2).toLowerCase()
 
-  // 1. Always English
-  seen.add('en')
-  children.push({
-    id: 'translate-en',
-    label: 'English',
-    labelKey: null, // language names use label directly (native script)
-    icon: null,
-    prompt: 'Translate the following text to English:\n\n{selectedText}',
-    mockResult: 'wrap:[EN] Translation::[/EN]'
+  var langs = all.filter(function (c) { return c.type !== 'input' })
+  var other = all.filter(function (c) { return c.type === 'input' })
+
+  var enChild = langs.find(function (c) { return c.id === 'translate-en' })
+  var acctChild = acctCode && acctCode !== 'en'
+    ? langs.find(function (c) { return c.id === 'translate-' + acctCode })
+    : null
+
+  var remaining = langs.filter(function (c) {
+    return c !== enChild && c !== acctChild
+  }).sort(function (a, b) {
+    return a.label.localeCompare(b.label)
   })
 
-  // 2. Account language
-  const acctCode = (accountLang || '').slice(0, 2).toLowerCase()
-  if (acctCode && !seen.has(acctCode)) {
-    seen.add(acctCode)
-    const label = LANG_NAMES[acctCode] || accountLang
-    children.push({
-      id: 'translate-' + acctCode,
-      label,
-      labelKey: null, // language names use label directly (native script)
-      icon: null,
-      prompt: 'Translate the following text to ' + label + ':\n\n{selectedText}',
-      mockResult: 'wrap:[' + acctCode.toUpperCase() + '] Translation::[/' + acctCode.toUpperCase() + ']'
-    })
-  }
+  var sorted = [enChild]
+  if (acctChild) { sorted.push(acctChild) }
+  sorted = sorted.concat(remaining).concat(other)
 
-  // 3. Browser language
-  const browserCode = (navigator.language || '').slice(0, 2).toLowerCase()
-  if (browserCode && !seen.has(browserCode)) {
-    seen.add(browserCode)
-    const label = LANG_NAMES[browserCode] || navigator.language
-    children.push({
-      id: 'translate-' + browserCode,
-      label,
-      labelKey: null, // language names use label directly (native script)
-      icon: null,
-      prompt: 'Translate the following text to ' + label + ':\n\n{selectedText}',
-      mockResult: 'wrap:[' + browserCode.toUpperCase() + '] Translation::[/' + browserCode.toUpperCase() + ']'
-    })
-  }
-
-  // 4. Custom input
-  children.push({
-    id: 'translate-custom',
-    label: '',
-    labelKey: null, // custom input uses placeholderKey instead
-    placeholderKey: 'Scribe.translate.other_language',
-    icon: null,
-    type: 'input',
-    prompt: 'Translate the following text to {language}:\n\n{selectedText}',
-    mockResult: 'wrap:[{language}] Translation::[/{language}]'
-  })
-
-  return children
+  return sorted
 }
 
 /**
@@ -126,9 +93,61 @@ export const SCRIBE_ACTIONS = [
     id: 'translate',
     labelKey: 'Scribe.menu.translate',
     icon: GlobeIcon,
-    children: null, // populated dynamically
+    sortStrategy: 'by-language-frequency',
     prompt: null,
-    mockResult: null
+    mockResult: null,
+    children: [
+      {
+        id: 'translate-en',
+        label: 'English',
+        labelKey: null,
+        icon: null,
+        prompt: 'Translate the following text to English:\n\n{selectedText}',
+        mockResult: 'wrap:[EN] Translation::[/EN]'
+      },
+      {
+        id: 'translate-fr',
+        label: 'Français',
+        labelKey: null,
+        icon: null,
+        prompt: 'Translate the following text to Français:\n\n{selectedText}',
+        mockResult: 'wrap:[FR] Translation::[/FR]'
+      },
+      {
+        id: 'translate-de',
+        label: 'Deutsch',
+        labelKey: null,
+        icon: null,
+        prompt: 'Translate the following text to Deutsch:\n\n{selectedText}',
+        mockResult: 'wrap:[DE] Translation::[/DE]'
+      },
+      {
+        id: 'translate-es',
+        label: 'Español',
+        labelKey: null,
+        icon: null,
+        prompt: 'Translate the following text to Español:\n\n{selectedText}',
+        mockResult: 'wrap:[ES] Translation::[/ES]'
+      },
+      {
+        id: 'translate-it',
+        label: 'Italiano',
+        labelKey: null,
+        icon: null,
+        prompt: 'Translate the following text to Italiano:\n\n{selectedText}',
+        mockResult: 'wrap:[IT] Translation::[/IT]'
+      },
+      {
+        id: 'translate-custom',
+        label: '',
+        labelKey: null,
+        placeholderKey: 'Scribe.translate.other_language',
+        icon: null,
+        type: 'input',
+        prompt: 'Translate the following text to {language}:\n\n{selectedText}',
+        mockResult: 'wrap:[{language}] Translation::[/{language}]'
+      }
+    ]
   },
   {
     id: 'change-tone',
