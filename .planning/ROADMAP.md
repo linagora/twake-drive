@@ -67,10 +67,11 @@ Plans:
   1. No hardcoded French or English strings remain in any Scribe component
   2. Switching the Cozy locale changes all Scribe UI text (action labels, buttons, tooltips, error messages)
   3. Translation files exist for all cozy-ui supported locales
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 09-01: TBD
+- [ ] 09-01-PLAN.md — Add Scribe i18n keys to 5 locale files, refactor scribeActions.js and scribeAI.js to use i18n keys
+- [ ] 09-02-PLAN.md — Wire all 6 Scribe JSX components to use t() for translated UI text
 
 ## Progress
 
@@ -86,4 +87,4 @@ Plans:
 | 6. Affinement UI/UX | v1.0 | 2/2 | Complete | 2026-03-03 |
 | 7. Real AI Integration | v2.0 | 2/2 | Complete | 2026-03-04 |
 | 8. Error Handling | 1/1 | Complete   | 2026-03-05 | - |
-| 9. Internationalization | v2.0 | 0/? | Not started | - |
+| 9. Internationalization | v2.0 | 0/2 | Not started | - |
