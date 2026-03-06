@@ -1,36 +1,34 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: completed
-stopped_at: Completed 09-02-PLAN.md
-last_updated: "2026-03-06T17:47:59.740Z"
-last_activity: 2026-03-06 - Completed 09-02 Scribe component i18n wiring
+milestone: v2.1
+milestone_name: Formatage Riche
+status: active
+stopped_at: null
+last_updated: "2026-03-06"
+last_activity: 2026-03-06 — Milestone v2.1 started
 progress:
   total_phases: 0
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
-  percent: 100
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-03)
+See: .planning/PROJECT.md (updated 2026-03-06)
 
-**Core value:** La chaine de communication complete -- depuis la selection de texte dans OnlyOffice jusqu'a la reinjection du texte modifie par l'IA -- de bout en bout, transparente pour l'utilisateur.
-**Current focus:** Phase 9 -- Internationalization (i18n for all Scribe UI strings)
+**Core value:** La chaîne de communication complète — depuis la sélection de texte dans OnlyOffice jusqu'à la réinjection du texte modifié par l'IA — de bout en bout, transparente pour l'utilisateur.
+**Current focus:** Defining requirements for v2.1 Formatage Riche
 
 ## Current Position
 
-Phase: 9 of 9 (Internationalization)
-Plan: 2 of 2 in current phase (plan 02 complete)
-Status: Phase 9 complete -- all v2.0 phases done
-Last activity: 2026-03-06 - Completed 09-02 Scribe component i18n wiring
-
-Progress: [██████████] 100%
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-06 — Milestone v2.1 started
 
 ## Performance Metrics
 

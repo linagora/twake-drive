@@ -27,11 +27,21 @@ La chaîne de communication complète — depuis la sélection de texte dans Onl
 
 ### Active
 
-- [ ] Streaming UX — affichage progressif token par token dans le panneau de résultat
-- [ ] Annulation en cours de stream
-- [ ] Fix dark theme (texte blanc sur blanc)
-- [ ] Désactivation du bouton flottant quand pas de sélection
-- [ ] Intégration menu contextuel
+- [ ] Extraction du texte formaté depuis OnlyOffice (gras, italique, titres, listes, tableaux, liens…)
+- [ ] Conversion rich text → Markdown pour envoi au LLM
+- [ ] Conversion Markdown → rich text pour réinjection dans l'éditeur
+- [ ] Rendu Markdown riche dans le panneau de résultat
+- [ ] Préservation du formatage à travers le cycle complet (extraction → LLM → réinjection)
+
+## Current Milestone: v2.1 Formatage Riche
+
+**Goal:** Préserver et restituer le formatage riche du texte à travers le cycle Scribe (extraction → Markdown → LLM → reconversion → réinjection).
+
+**Target features:**
+- Extraction du texte avec métadonnées de formatage depuis l'API OO
+- Pipeline de conversion bidirectionnelle (rich text ↔ Markdown)
+- Rendu Markdown dans le panneau de résultat
+- Réinjection du texte formaté dans l'éditeur
 
 ## Shipped: v2.0 Scribe Live AI (2026-03-06)
 
@@ -101,4 +111,4 @@ v1.0 : 4 jours (2026-02-28 → 2026-03-03), 10 plans. v2.0 : 3 jours (2026-03-04
 | 5 locales européennes (fr, en, de, es, it) | Couverture utilisateurs Cozy principaux | ✓ Good — extensible |
 
 ---
-*Last updated: 2026-03-06 after v2.0 milestone*
+*Last updated: 2026-03-06 after v2.1 milestone start*
