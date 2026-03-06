@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Formatage Riche
-status: completed
-stopped_at: Completed 10-02-PLAN.md
-last_updated: "2026-03-06T19:55:23.692Z"
-last_activity: 2026-03-06 -- Completed plan 10-02 intent protocol HTML extension
+status: in-progress
+stopped_at: Completed 11-01-PLAN.md
+last_updated: "2026-03-06T20:12:34.000Z"
+last_activity: 2026-03-06 -- Completed plan 11-01 scribeConversion TDD module
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
-  percent: 100
+  total_plans: 4
+  completed_plans: 3
+  percent: 75
 ---
 
 # Project State
@@ -21,23 +21,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-06)
 
 **Core value:** La chaine de communication complete -- depuis la selection de texte dans OnlyOffice jusqu'a la reinjection du texte modifie par l'IA -- de bout en bout, transparente pour l'utilisateur.
-**Current focus:** Phase 10 - Extraction Rich Text
+**Current focus:** Phase 11 - Pipeline de Conversion
 
 ## Current Position
 
-Phase: 10 of 13 (Extraction Rich Text) -- first of 4 phases in v2.1
-Plan: 02 of 02 complete
-Status: Phase 10 complete
-Last activity: 2026-03-06 -- Completed plan 10-02 intent protocol HTML extension
+Phase: 11 of 13 (Pipeline de Conversion) -- second of 4 phases in v2.1
+Plan: 01 of 02 complete
+Status: In progress
+Last activity: 2026-03-06 -- Completed plan 11-01 scribeConversion TDD module
 
-Progress: [██████████] 100%
+Progress: [████████░░] 75%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 17 (v1.0: 10, v2.0: 5, v2.1: 2)
+- Total plans completed: 18 (v1.0: 10, v2.0: 5, v2.1: 3)
 - v2.1 average duration: ~3 min/plan
-- v2.1 total execution time: ~6 min
+- v2.1 total execution time: ~9 min
 
 **By Phase (v2.0):**
 
@@ -47,6 +47,7 @@ Progress: [██████████] 100%
 | 08 Error Handling | 1 | 2min | 2min |
 | 09 Internationalization | 2 | 7min | 3.5min |
 | Phase 10 P02 | 2min | 2 tasks | 2 files |
+| Phase 11 P01 | 3min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -62,6 +63,8 @@ Recent decisions affecting current work:
 - v2.1: Regex class stripping for OO HTML (ES5 compatible, no DOMParser)
 - v2.1: Parallel plain text fetch via GetSelectedText alongside HTML extraction
 - [Phase 10]: buildEditIntentData() centralizes intent data with optional html/format fields
+- [Phase 11]: Override Turndown built-in img rule with addRule (remove() doesn't override built-ins)
+- [Phase 11]: marked ESM requires jest transformIgnorePatterns entry
 
 ### Pending Todos (carried from v1.0)
 
@@ -83,6 +86,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-06T19:52:29.414Z
-Stopped at: Completed 10-02-PLAN.md
+Last session: 2026-03-06T20:12:34Z
+Stopped at: Completed 11-01-PLAN.md
 Resume file: None

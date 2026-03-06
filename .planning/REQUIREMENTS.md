@@ -15,9 +15,9 @@ Requirements for rich text formatting preservation. Each maps to roadmap phases.
 
 ### Conversion
 
-- [ ] **CONV-01**: Le HTML extrait est converti en Markdown via Turndown côté Cozy Drive
-- [ ] **CONV-02**: La réponse Markdown du LLM est reconvertie en HTML via marked pour réinjection
-- [ ] **CONV-03**: Les éléments non supportés (images, SVG, math) sont nettoyés avant conversion
+- [x] **CONV-01**: Le HTML extrait est converti en Markdown via Turndown côté Cozy Drive
+- [x] **CONV-02**: La réponse Markdown du LLM est reconvertie en HTML via marked pour réinjection
+- [x] **CONV-03**: Les éléments non supportés (images, SVG, math) sont nettoyés avant conversion
 
 ### Preview
 
@@ -67,9 +67,9 @@ Requirements for rich text formatting preservation. Each maps to roadmap phases.
 | EXTR-01 | Phase 10 | Complete |
 | EXTR-02 | Phase 10 | Complete |
 | EXTR-03 | Phase 10 | Complete |
-| CONV-01 | Phase 11 | Pending |
-| CONV-02 | Phase 11 | Pending |
-| CONV-03 | Phase 11 | Pending |
+| CONV-01 | Phase 11 | Complete |
+| CONV-02 | Phase 11 | Complete |
+| CONV-03 | Phase 11 | Complete |
 | PREV-01 | Phase 12 | Pending |
 | PREV-02 | Phase 12 | Pending |
 | REINJ-01 | Phase 13 | Pending |
