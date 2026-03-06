@@ -29,7 +29,7 @@ import styles from '@/modules/views/OnlyOffice/Scribe/scribe.styl'
  * @param {Function} props.onInsert - Called with transformed text when Inserer is clicked
  * @param {Function} props.onCancel - Called when closed without action
  */
-const ScribePopover = ({ open, selectedText, onReplace, onInsert, onCancel }) => {
+const ScribePopover = ({ open, selectedText, selectedHtml, onReplace, onInsert, onCancel }) => {
   const { t } = useI18n()
   const client = useClient()
   const abortRef = useRef(null)
@@ -82,8 +82,14 @@ const ScribePopover = ({ open, selectedText, onReplace, onInsert, onCancel }) =>
 
       try {
         // 3. Build messages and call API
-        const extra = actionId === 'translate-custom' ? { language: label } : undefined
-        const messages = buildMessages(actionId, selectedText, label, extra)
+        const extra = {}
+        if (actionId === 'translate-custom') {
+          extra.language = label
+        }
+        if (selectedHtml) {
+          extra.html = selectedHtml
+        }
+        const messages = buildMessages(actionId, selectedText, label, Object.keys(extra).length > 0 ? extra : undefined)
         const text = await callScribeAI(client, messages, { signal: controller.signal })
 
         // 4. Show result
@@ -104,7 +110,7 @@ const ScribePopover = ({ open, selectedText, onReplace, onInsert, onCancel }) =>
         }
       }
     },
-    [selectedText, client]
+    [selectedText, selectedHtml, client]
   )
 
   const handleClose = useCallback(() => {
@@ -194,6 +200,7 @@ const ScribePopover = ({ open, selectedText, onReplace, onInsert, onCancel }) =>
 ScribePopover.propTypes = {
   open: PropTypes.bool.isRequired,
   selectedText: PropTypes.string.isRequired,
+  selectedHtml: PropTypes.string,
   onReplace: PropTypes.func.isRequired,
   onInsert: PropTypes.func.isRequired,
   onCancel: PropTypes.func.isRequired
