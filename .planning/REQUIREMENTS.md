@@ -62,30 +62,28 @@ Requirements for rich text formatting preservation. Each maps to roadmap phases.
 
 ## Traceability
 
-Which phases cover which requirements. Updated during roadmap creation.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| EXTR-01 | — | Pending |
-| EXTR-02 | — | Pending |
-| EXTR-03 | — | Pending |
-| CONV-01 | — | Pending |
-| CONV-02 | — | Pending |
-| CONV-03 | — | Pending |
-| PREV-01 | — | Pending |
-| PREV-02 | — | Pending |
-| REINJ-01 | — | Pending |
-| REINJ-02 | — | Pending |
-| PIPE-01 | — | Pending |
-| PIPE-02 | — | Pending |
-| PIPE-03 | — | Pending |
-| PIPE-04 | — | Pending |
+| EXTR-01 | Phase 10 | Pending |
+| EXTR-02 | Phase 10 | Pending |
+| EXTR-03 | Phase 10 | Pending |
+| CONV-01 | Phase 11 | Pending |
+| CONV-02 | Phase 11 | Pending |
+| CONV-03 | Phase 11 | Pending |
+| PREV-01 | Phase 12 | Pending |
+| PREV-02 | Phase 12 | Pending |
+| REINJ-01 | Phase 13 | Pending |
+| REINJ-02 | Phase 13 | Pending |
+| PIPE-01 | Phase 13 | Pending |
+| PIPE-02 | Phase 13 | Pending |
+| PIPE-03 | Phase 13 | Pending |
+| PIPE-04 | Phase 13 | Pending |
 
 **Coverage:**
 - v2.1 requirements: 14 total
-- Mapped to phases: 0
-- Unmapped: 14
+- Mapped to phases: 14
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-06*
-*Last updated: 2026-03-06 after initial definition*
+*Last updated: 2026-03-06 after roadmap creation*
