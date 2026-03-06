@@ -2403,6 +2403,11 @@
     prop-types "^15.7.2"
     react-is "^16.8.0 || ^17.0.0"
 
+"@mixmark-io/domino@^2.2.0":
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/@mixmark-io/domino/-/domino-2.2.0.tgz#4e8ec69bf1afeb7a14f0628b7e2c0f35bdb336c3"
+  integrity sha512-Y28PR25bHXUg88kCV7nivXrP2Nj2RueZ3/l/jdx6J9f8J4nsEGcgX0Qe6lt7Pa+J79+kPiJU3LguR6O/6zrLOw==
+
 "@module-federation/error-codes@0.18.0":
   version "0.18.0"
   resolved "https://registry.yarnpkg.com/@module-federation/error-codes/-/error-codes-0.18.0.tgz#00830ece3b5b6bcda0a874a8426bcd94599bf738"
@@ -10664,6 +10669,11 @@ markdown-escapes@^1.0.0:
   resolved "https://registry.yarnpkg.com/markdown-escapes/-/markdown-escapes-1.0.4.tgz#c95415ef451499d7602b91095f3c8e8975f78535"
   integrity sha512-8z4efJYk43E0upd0NbVXwgSTQs6cT3T06etieCMEg7dRbzCbxUCK/GHlX8mhHRDcp+OLlHkPKsvqQTCvsRl2cg==
 
+marked@^17.0.4:
+  version "17.0.4"
+  resolved "https://registry.yarnpkg.com/marked/-/marked-17.0.4.tgz#38293b06b0605db39107803f3398938bbbed1b28"
+  integrity sha512-NOmVMM+KAokHMvjWmC5N/ZOvgmSWuqJB8FoYI019j4ogb/PeRMKoKIjReZ2w3376kkA8dSJIP8uD993Kxc0iRQ==
+
 math-intrinsics@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/math-intrinsics/-/math-intrinsics-1.1.0.tgz#a0dd74be81e2aa5c2f27e65ce283605ee4e2b7f9"
@@ -14751,6 +14761,18 @@ tunnel-agent@^0.6.0:
   integrity sha1-J6XeoGs2sEoKmWZ3SykIaPD8QP0=
   dependencies:
     safe-buffer "^5.0.1"
+
+turndown-plugin-gfm@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/turndown-plugin-gfm/-/turndown-plugin-gfm-1.0.2.tgz#6f8678a361f35220b2bdf5619e6049add75bf1c7"
+  integrity sha512-vwz9tfvF7XN/jE0dGoBei3FXWuvll78ohzCZQuOb+ZjWrs3a0XhQVomJEb2Qh4VHTPNRO4GPZh0V7VRbiWwkRg==
+
+turndown@^7.2.2:
+  version "7.2.2"
+  resolved "https://registry.yarnpkg.com/turndown/-/turndown-7.2.2.tgz#9557642b54046c5912b3d433f34dd588de455a43"
+  integrity sha512-1F7db8BiExOKxjSMU2b7if62D/XOyQyZbPKq/nUwopfgnHlqXHqQ0lvfUTeUIr1lZJzOPFn43dODyMSIfvWRKQ==
+  dependencies:
+    "@mixmark-io/domino" "^2.2.0"
 
 twake-i18n@^0.3.0:
   version "0.3.0"
