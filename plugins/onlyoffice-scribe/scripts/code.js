@@ -189,7 +189,7 @@
   }
 
   window.Asc.plugin.init = function(data) {
-    log("init() called, data=" + (data ? data.substring(0, 60) : "(null)"));
+    log("init() HTML gate test - data type: " + typeof data + ", starts with: " + (data ? data.substring(0, 100) : "(null)"));
 
     // Add toolbar button on first init (API is ready at this point)
     if (!toolbarButtonAdded) {
