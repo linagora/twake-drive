@@ -66,11 +66,11 @@ Plans:
   1. Le HTML OO (avec inline styles) est converti en Markdown propre que le LLM recoit dans son prompt
   2. Le Markdown retourne par le LLM est converti en HTML valide pret pour reinjection dans OO
   3. Les elements non supportes (images, SVG, math) sont nettoyes silencieusement au lieu de produire du Markdown casse
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 11-01: TBD
-- [ ] 11-02: TBD
+- [ ] 11-01-PLAN.md -- TDD conversion module: scribeConversion.js with htmlToMarkdown (Turndown + OO normalizer) and markdownToHtml (marked)
+- [ ] 11-02-PLAN.md -- Integration: wire converters into scribeAI.js buildMessages and ScribePopover selectedHtml prop
 
 ### Phase 12: Preview Markdown
 **Goal**: L'utilisateur voit le resultat AI avec le formatage rendu dans le panneau de resultat
@@ -117,6 +117,6 @@ Phases execute in numeric order: 10, 11, 12, 13
 | 8. Error Handling | v2.0 | 1/1 | Complete | 2026-03-05 |
 | 9. Internationalization | v2.0 | 2/2 | Complete | 2026-03-06 |
 | 10. Extraction Rich Text | 2/2 | Complete    | 2026-03-06 | - |
-| 11. Pipeline de Conversion | v2.1 | 0/? | Not started | - |
+| 11. Pipeline de Conversion | v2.1 | 0/2 | Not started | - |
 | 12. Preview Markdown | v2.1 | 0/? | Not started | - |
 | 13. Reinjection et Integrite Pipeline | v2.1 | 0/? | Not started | - |
