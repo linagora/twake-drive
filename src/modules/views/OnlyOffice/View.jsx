@@ -9,6 +9,7 @@ import Error from '@/modules/views/OnlyOffice/Error'
 import OnlyOfficeAIAssistantPanel from '@/modules/views/OnlyOffice/OnlyOfficeAIAssistantPanel'
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
 import ReadOnlyFab from '@/modules/views/OnlyOffice/ReadOnlyFab'
+import { markdownToHtml } from '@/modules/views/OnlyOffice/Scribe/scribeConversion'
 import { ScribeFloatingButton } from '@/modules/views/OnlyOffice/Scribe/ScribeFloatingButton'
 import { ScribePopover } from '@/modules/views/OnlyOffice/Scribe/ScribePopover'
 import { FRAME_EDITOR_NAME } from '@/modules/views/OnlyOffice/config'
@@ -61,7 +62,8 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
 
   const handleReplace = useCallback(
     text => {
-      respond({ status: 'ok', action: 'replace', data: { text } })
+      const html = markdownToHtml(text)
+      respond({ status: 'ok', action: 'replace', data: { text, html } })
       setTimeout(focusEditor, 100)
     },
     [respond, focusEditor]
@@ -69,7 +71,8 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
 
   const handleInsert = useCallback(
     text => {
-      respond({ status: 'ok', action: 'insert', data: { text } })
+      const html = markdownToHtml(text)
+      respond({ status: 'ok', action: 'insert', data: { text, html } })
       setTimeout(focusEditor, 100)
     },
     [respond, focusEditor]
