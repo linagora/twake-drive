@@ -11,6 +11,7 @@ import IconButton from 'cozy-ui/transpiled/react/IconButton'
 import Paper from 'cozy-ui/transpiled/react/Paper'
 import Typography from 'cozy-ui/transpiled/react/Typography'
 
+import { MarkdownPreview } from '@/modules/views/OnlyOffice/Scribe/MarkdownPreview'
 import styles from '@/modules/views/OnlyOffice/Scribe/scribe.styl'
 
 /**
@@ -110,7 +111,7 @@ const ScribeResultPanel = ({
           ...(error ? { color: theme.palette.error.main } : {})
         }}
       >
-        {error || resultText}
+        {error ? error : <MarkdownPreview>{resultText}</MarkdownPreview>}
       </div>
 
       <div className={styles['scribe-result-actions']}>
