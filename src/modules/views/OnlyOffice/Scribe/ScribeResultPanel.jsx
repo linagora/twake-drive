@@ -19,10 +19,11 @@ import styles from '@/modules/views/OnlyOffice/Scribe/scribe.styl'
  * ScribeResultPanel - Step 2 of the Scribe two-step flow.
  *
  * Displays either the AI-transformed text (success) or an error message.
- * In dev mode (devData prop), shows 3 side-by-side panels:
- *   1. Source HTML (prettified + highlight.js syntax colored)
- *   2. Converted Markdown (highlight.js syntax colored)
- *   3. Rendered Markdown preview
+ * In dev mode (devData prop), shows 4 panels in a 2x2 grid:
+ *   1. Source HTML from OO (prettified + highlight.js syntax colored)
+ *   2. Normalized HTML after normalizeHtml (prettified + highlight.js)
+ *   3. Converted Markdown (highlight.js syntax colored)
+ *   4. Rendered Markdown preview
  *
  * highlight.js is loaded lazily only when devData is present.
  */
@@ -46,17 +47,28 @@ const ScribeResultPanel = ({
 
   // Dev mode: highlighted HTML from highlight.js (loaded lazily from CDN)
   const [highlightedHtml, setHighlightedHtml] = useState('')
+  const [highlightedNormalized, setHighlightedNormalized] = useState('')
   const [highlightedMd, setHighlightedMd] = useState('')
 
   useEffect(() => {
     if (!devData) return
 
+    const beautifyOpts = { indent_size: 2, wrap_line_length: 80 }
+    const doBeautify = (beautify, src) =>
+      beautify.html_beautify
+        ? beautify.html_beautify(src, beautifyOpts)
+        : beautify(src, beautifyOpts)
+
     Promise.all([loadHighlightJs(), loadBeautify()]).then(([hljs, beautify]) => {
       if (devData.html) {
-        const pretty = beautify.html_beautify
-          ? beautify.html_beautify(devData.html, { indent_size: 2, wrap_line_length: 80 })
-          : beautify(devData.html, { indent_size: 2, wrap_line_length: 80 })
-        setHighlightedHtml(hljs.highlight(pretty, { language: 'xml' }).value)
+        setHighlightedHtml(
+          hljs.highlight(doBeautify(beautify, devData.html), { language: 'xml' }).value
+        )
+      }
+      if (devData.normalizedHtml) {
+        setHighlightedNormalized(
+          hljs.highlight(doBeautify(beautify, devData.normalizedHtml), { language: 'xml' }).value
+        )
       }
       if (devData.md) {
         setHighlightedMd(
@@ -117,10 +129,11 @@ const ScribeResultPanel = ({
   const codeColor = isDark ? '#d4d4d4' : '#333'
 
   const devColumnStyle = {
-    flex: 1,
     minWidth: 0,
+    minHeight: 0,
     display: 'flex',
-    flexDirection: 'column'
+    flexDirection: 'column',
+    overflow: 'hidden'
   }
 
   const devLabelStyle = {
@@ -171,7 +184,7 @@ const ScribeResultPanel = ({
           ? {
               maxWidth: '95vw',
               width: 'auto',
-              height: 'min(600px, 80vh)',
+              height: '90vh',
               display: 'flex',
               flexDirection: 'column'
             }
@@ -200,15 +213,16 @@ const ScribeResultPanel = ({
       {devData ? (
         <div
           style={{
-            display: 'flex',
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gridTemplateRows: '1fr 1fr',
             gap: 8,
-            minWidth: 0,
             flex: 1,
             overflow: 'hidden'
           }}
         >
           <div style={devColumnStyle}>
-            <div style={devLabelStyle}>HTML source</div>
+            <div style={devLabelStyle}>HTML source (OO)</div>
             <pre
               className="hljs"
               style={devPreStyle}
@@ -223,6 +237,21 @@ const ScribeResultPanel = ({
             />
           </div>
           <div style={devColumnStyle}>
+            <div style={devLabelStyle}>HTML normalisé</div>
+            <pre
+              className="hljs"
+              style={devPreStyle}
+              dangerouslySetInnerHTML={{
+                __html:
+                  highlightedNormalized ||
+                  (devData.normalizedHtml || '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+              }}
+            />
+          </div>
+          <div style={devColumnStyle}>
             <div style={devLabelStyle}>Markdown</div>
             <pre
               className="hljs"
@@ -230,7 +259,7 @@ const ScribeResultPanel = ({
               dangerouslySetInnerHTML={{
                 __html:
                   highlightedMd ||
-                  devData.md
+                  (devData.md || '')
                     .replace(/&/g, '&amp;')
                     .replace(/</g, '&lt;')
                     .replace(/>/g, '&gt;')
@@ -293,6 +322,7 @@ ScribeResultPanel.propTypes = {
   onClose: PropTypes.func.isRequired,
   devData: PropTypes.shape({
     html: PropTypes.string,
+    normalizedHtml: PropTypes.string,
     md: PropTypes.string
   })
 }
