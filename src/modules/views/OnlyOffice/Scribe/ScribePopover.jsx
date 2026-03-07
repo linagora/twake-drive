@@ -10,7 +10,7 @@ import { useClient } from 'cozy-client'
 
 import { ScribeActionMenu } from '@/modules/views/OnlyOffice/Scribe/ScribeActionMenu'
 import { callScribeAI, buildMessages, deriveLoadingMessage, classifyScribeError } from '@/modules/views/OnlyOffice/Scribe/scribeAI'
-import { htmlToMarkdown } from '@/modules/views/OnlyOffice/Scribe/scribeConversion'
+import { htmlToMarkdown, normalizeHtml } from '@/modules/views/OnlyOffice/Scribe/scribeConversion'
 import { ScribeResultPanel } from '@/modules/views/OnlyOffice/Scribe/ScribeResultPanel'
 import { isScribeDevMd } from '@/modules/views/OnlyOffice/Scribe/scribeDevMode'
 import styles from '@/modules/views/OnlyOffice/Scribe/scribe.styl'
@@ -63,9 +63,12 @@ const ScribePopover = ({ open, selectedText, selectedHtml, onReplace, onInsert, 
       // Compute intermediate MD for dev panels
       const inputMd = selectedHtml ? htmlToMarkdown(selectedHtml) : selectedText
 
+      // Compute normalized HTML for dev panels
+      const normalized = selectedHtml ? normalizeHtml(selectedHtml) : ''
+
       // Dev mode: test-markdown bypasses LLM entirely
       if (actionId === 'test-markdown') {
-        setDevData({ html: selectedHtml || '', md: inputMd })
+        setDevData({ html: selectedHtml || '', normalizedHtml: normalized, md: inputMd })
         setResult({ text: inputMd, breadcrumb: 'Test MD', error: '', canRetry: false })
         setStep('result')
         return
@@ -76,7 +79,7 @@ const ScribePopover = ({ open, selectedText, selectedHtml, onReplace, onInsert, 
 
       // Capture dev data for normal flow too
       if (isScribeDevMd()) {
-        setDevData({ html: selectedHtml || '', md: inputMd })
+        setDevData({ html: selectedHtml || '', normalizedHtml: normalized, md: inputMd })
       }
 
       // 1. Transition to loading
