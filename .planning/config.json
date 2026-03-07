@@ -1,6 +1,5 @@
 {
   "mode": "interactive",
-  "depth": "standard",
   "model_profile": "quality",
   "commit_docs": true,
   "search_gitignored": false,
@@ -14,5 +13,6 @@
     "nyquist_validation": false
   },
   "parallelization": true,
-  "brave_search": false
+  "brave_search": false,
+  "granularity": "standard"
 }
