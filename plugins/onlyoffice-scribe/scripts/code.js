@@ -87,14 +87,33 @@
   // ---- handleIntentResponse: apply document modification from response ----
   function handleIntentResponse(msg) {
     if (msg.action === "replace") {
-      log("Applying replace: " + (msg.data && msg.data.text ? msg.data.text.substring(0, 80) : "(empty)"));
-      window.Asc.plugin.executeMethod("PasteText", [msg.data.text]);
+      if (msg.data && msg.data.html) {
+        log("Applying replace (HTML): " + msg.data.html.substring(0, 80));
+        window.Asc.plugin.executeMethod("PasteHtml", [msg.data.html]);
+      } else {
+        log("Applying replace (plain text): " + (msg.data && msg.data.text ? msg.data.text.substring(0, 80) : "(empty)"));
+        window.Asc.plugin.executeMethod("PasteText", [msg.data.text]);
+      }
     } else if (msg.action === "insert") {
-      log("Applying insert after selection");
-      insertAfterWithText(msg.data.text);
+      if (msg.data && msg.data.html) {
+        log("Applying insert after (HTML)");
+        insertAfterWithHtml(msg.data.html);
+      } else {
+        log("Applying insert after (plain text)");
+        insertAfterWithText(msg.data.text);
+      }
     } else if (msg.action === "cancel") {
       log("Intent cancelled -- no document modification");
     }
+  }
+
+  // ---- Insert after selection helper (HTML version) ----
+  // Concatenates original HTML + separator + new HTML and uses PasteHtml
+  // to replace the selection with both, effectively inserting after.
+  function insertAfterWithHtml(newHtml) {
+    var combined = lastSelectedHtml + "<p>&nbsp;</p>" + newHtml;
+    log("insertAfterWithHtml: combined length=" + combined.length);
+    window.Asc.plugin.executeMethod("PasteHtml", [combined]);
   }
 
   // ---- Insert after selection helper (Phase 1 workaround) ----
