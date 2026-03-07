@@ -79,10 +79,10 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Le panneau de resultat affiche le Markdown rendu (titres, gras, listes, tableaux) au lieu du texte brut
   2. Le rendu Markdown respecte le theme Scribe (couleurs, typographie MUI) en mode clair et sombre
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 12-01: TBD
+- [ ] 12-01-PLAN.md -- MarkdownPreview component with react-markdown + remark-gfm, theme-aware styling, ScribeResultPanel integration
 
 ### Phase 13: Reinjection et Integrite Pipeline
 **Goal**: Le texte formate par l'IA est reinjecte dans OO avec son formatage preserve, completant le cycle de bout en bout
@@ -118,5 +118,5 @@ Phases execute in numeric order: 10, 11, 12, 13
 | 9. Internationalization | v2.0 | 2/2 | Complete | 2026-03-06 |
 | 10. Extraction Rich Text | 2/2 | Complete    | 2026-03-06 | - |
 | 11. Pipeline de Conversion | 2/2 | Complete    | 2026-03-06 | - |
-| 12. Preview Markdown | v2.1 | 0/? | Not started | - |
+| 12. Preview Markdown | v2.1 | 0/1 | Not started | - |
 | 13. Reinjection et Integrite Pipeline | v2.1 | 0/? | Not started | - |
