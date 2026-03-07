@@ -62,7 +62,7 @@ module.exports = {
     '^.+\\.webapp$': '<rootDir>/test/jestLib/json-transformer.js'
   },
   transformIgnorePatterns: [
-    'node_modules/(?!cozy-ui|cozy-harvest-lib|cozy-keys-lib|cozy-sharing|marked|)',
+    'node_modules/(?!cozy-ui|cozy-harvest-lib|cozy-keys-lib|cozy-sharing|marked|react-markdown|remark-gfm|unified|bail|devlop|is-plain-obj|trough|remark-.*|rehype-.*|hast-util-.*|mdast-util-.*|micromark.*|unist-.*|vfile|vfile-message|html-void-elements|zwitch|hastscript|web-namespaces|property-information|space-separated-tokens|comma-separated-tokens|decode-named-character-reference|character-entities|ccount|escape-string-regexp|markdown-table|longest-streak|)',
     'jest-runner'
   ],
   testEnvironment: 'jsdom',
