@@ -14,11 +14,9 @@
   // We post to all ancestor frames so the message reaches CozyBridge regardless of nesting.
   function postToAncestors(message) {
     var current = window.parent;
-    var count = 0;
     while (current && current !== window) {
       try {
         current.postMessage(message, cozyOrigin);
-        count++;
       } catch (e) {
         // Cross-origin frame we can't post to — stop
         break;
@@ -26,7 +24,6 @@
       if (current === current.parent) break;
       current = current.parent;
     }
-    log("Posted to " + count + " ancestor frame(s)");
   }
 
   // ---- Helper: log(msg) ----
@@ -59,7 +56,7 @@
     };
 
     postToAncestors(message);
-    log("Intent cast: " + action + " id=" + intentId + (oneWay ? " (one-way)" : ""));
+    if (!oneWay) log("Intent cast: " + action);
 
     if (oneWay) return undefined;
 
@@ -84,22 +81,95 @@
     return data;
   }
 
+  // ---- Paste HTML with smart spacing ----
+  // Prevents init() and polling from interfering during paste.
+  var pasteInProgress = false;
+
+  // Rich text paste pipeline:
+  // 1. callCommand: read adjacent chars around selection, detect if spaces needed
+  //    For insert mode: collapse cursor to end of selection first
+  // 2. PasteHtml: paste HTML with smart spaces prepended/appended
+  //    Replace mode: replaces the selection. Insert mode: inserts at cursor (after selection).
+  // This produces a single undo point (PasteHtml only — the read-only callCommand doesn't count).
+  // NOTE: post-paste selection of inserted content is not yet implemented (OO returns
+  // inconsistent cursor positions after PasteHtml — see phase13-paste-select.md).
+  function pasteHtml(html, mode) {
+    pasteInProgress = true;
+    stopHidePolling();
+    Asc.scope._mode = mode || "replace";
+
+    // Step 1: detect adjacent chars + position cursor for insert
+    window.Asc.plugin.callCommand(function() {
+      var doc = Api.GetDocument();
+      var range = doc.GetRangeBySelect();
+      if (!range) return null;
+      var selStart = range.GetStartPos();
+      var selEnd = range.GetEndPos();
+      var result = { spaceBefore: false, spaceAfter: false };
+      var isInsert = Asc.scope._mode === "insert";
+      var WS = /[\s\n\r\t\u00A0]/;
+
+      if (isInsert) {
+        // Check last char of selection (before) and first char after selection (after)
+        var beforeRange = doc.GetRange(selEnd - 5 >= 0 ? selEnd - 5 : 0, selEnd);
+        var beforeText = beforeRange ? beforeRange.GetText() : "";
+        var beforeChar = beforeText.length > 0 ? beforeText.charAt(beforeText.length - 1) : "";
+        if (beforeChar && !WS.test(beforeChar)) result.spaceBefore = true;
+
+        var afterRange = doc.GetRange(selEnd, selEnd + 5);
+        var afterText = afterRange ? afterRange.GetText() : "";
+        var afterChar = afterText.length > 0 ? afterText.charAt(0) : "";
+        if (afterChar && !WS.test(afterChar)) result.spaceAfter = true;
+
+        // Collapse cursor to end of selection
+        var cursorRange = doc.GetRange(selEnd, selEnd);
+        if (cursorRange) cursorRange.Select();
+      } else {
+        // Check char before selection and char after selection
+        if (selStart > 0) {
+          var beforeRange2 = doc.GetRange(selStart - 5 >= 0 ? selStart - 5 : 0, selStart);
+          var beforeText2 = beforeRange2 ? beforeRange2.GetText() : "";
+          var beforeChar2 = beforeText2.length > 0 ? beforeText2.charAt(beforeText2.length - 1) : "";
+          if (beforeChar2 && !WS.test(beforeChar2)) result.spaceBefore = true;
+        }
+        var afterRange2 = doc.GetRange(selEnd, selEnd + 5);
+        var afterText2 = afterRange2 ? afterRange2.GetText() : "";
+        var afterChar2 = afterText2.length > 0 ? afterText2.charAt(0) : "";
+        if (afterChar2 && !WS.test(afterChar2)) result.spaceAfter = true;
+      }
+      return JSON.stringify(result);
+    }, false, false, function(prepResult) {
+      var prep = prepResult ? JSON.parse(prepResult) : null;
+      if (!prep) { pasteInProgress = false; return; }
+
+      // Step 2: build HTML with smart spaces and paste
+      var spaceBefore = prep.spaceBefore ? "&nbsp;" : "";
+      var spaceAfter = prep.spaceAfter ? "&nbsp;" : "";
+      var finalHtml = spaceBefore + html + spaceAfter;
+      var spacesLog = (prep.spaceBefore ? "before " : "") + (prep.spaceAfter ? "after" : "");
+      log("PasteHtml (" + (mode || "replace") + ")" + (spacesLog ? " spaces=" + spacesLog : ""));
+      window.Asc.plugin.executeMethod("PasteHtml", [finalHtml], function() {
+        pasteInProgress = false;
+      });
+    });
+  }
+
   // ---- handleIntentResponse: apply document modification from response ----
   function handleIntentResponse(msg) {
     if (msg.action === "replace") {
       if (msg.data && msg.data.html) {
-        log("Applying replace (HTML): " + msg.data.html.substring(0, 80));
-        window.Asc.plugin.executeMethod("PasteHtml", [msg.data.html]);
+        log("Replace (HTML)");
+        pasteHtml(msg.data.html, "replace");
       } else {
-        log("Applying replace (plain text): " + (msg.data && msg.data.text ? msg.data.text.substring(0, 80) : "(empty)"));
+        log("Replace (plain text)");
         window.Asc.plugin.executeMethod("PasteText", [msg.data.text]);
       }
     } else if (msg.action === "insert") {
       if (msg.data && msg.data.html) {
-        log("Applying insert after (HTML)");
+        log("Insert (HTML)");
         insertAfterWithHtml(msg.data.html);
       } else {
-        log("Applying insert after (plain text)");
+        log("Insert (plain text)");
         insertAfterWithText(msg.data.text);
       }
     } else if (msg.action === "cancel") {
@@ -107,18 +177,13 @@
     }
   }
 
-  // ---- Insert after selection helper (HTML version) ----
-  // Concatenates original HTML + separator + new HTML and uses PasteHtml
-  // to replace the selection with both, effectively inserting after.
+  // Insert after selection (HTML): collapse cursor to end of selection, then PasteHtml.
   function insertAfterWithHtml(newHtml) {
-    var combined = lastSelectedHtml + "<p>&nbsp;</p>" + newHtml;
-    log("insertAfterWithHtml: combined length=" + combined.length);
-    window.Asc.plugin.executeMethod("PasteHtml", [combined]);
+    pasteHtml(newHtml, "insert");
   }
 
-  // ---- Insert after selection helper (Phase 1 workaround) ----
-  // InsertContent replaces the selection, so we re-create the original
-  // paragraphs and append the new text after them.
+  // Insert after selection (plain text fallback): InsertContent replaces the
+  // selection, so we re-create the original paragraphs and append the new text.
   function insertAfterWithText(newText) {
     Asc.scope.textToInsert = newText;
     Asc.scope.originalLines = lastSelectedText.split("\n");
@@ -153,7 +218,7 @@
     if (!pending) return;
 
     delete pendingIntents[msg.intentId];
-    log("Intent response: action=" + msg.action + " status=" + msg.status);
+    log("Response: " + msg.action);
 
     // Resolve the Promise if available
     if (pending.resolve) {
@@ -227,8 +292,11 @@
   }
 
   window.Asc.plugin.init = function(data) {
-    log("init() called");
-
+    // Ignore init calls triggered by our own paste operations
+    if (pasteInProgress) {
+      log("init() called (ignored — paste in progress)");
+      return;
+    }
     // Add toolbar button on first init (API is ready at this point)
     if (!toolbarButtonAdded) {
       addToolbarButton();
@@ -308,17 +376,16 @@
       TabSymbol: String.fromCharCode(9)
     }], function(selectedText) {
       lastSelectedText = selectedText || "";
-      log("Context menu read: " + (lastSelectedText ? lastSelectedText.substring(0, 80) : "(empty)"));
       // Use stored HTML from latest init() call
       castIntent("AI_TEXT_EDIT", buildEditIntentData());
     });
   });
 
-  // ---- Ctrl+I / Cmd+K shortcut for Scribe ----
+  // ---- Ctrl+I / Cmd+I shortcut for Scribe ----
   try {
     window.parent.document.addEventListener("keydown", function(e) {
-      var isCtrlK = (e.ctrlKey || e.metaKey) && e.key === "i";
-      if (isCtrlK && lastSelectedText.length > 0) {
+      var isCtrlI = (e.ctrlKey || e.metaKey) && e.key === "i";
+      if (isCtrlI && lastSelectedText.length > 0) {
         e.preventDefault();
         log("Ctrl+I triggered Scribe");
         castIntent("AI_TEXT_EDIT", buildEditIntentData());
@@ -329,8 +396,8 @@
     log("Cannot register Ctrl+I on parent document: " + e.message);
     // Fallback: register on plugin's own document (limited, but still useful)
     document.addEventListener("keydown", function(e) {
-      var isCtrlK = (e.ctrlKey || e.metaKey) && e.key === "i";
-      if (isCtrlK && lastSelectedText.length > 0) {
+      var isCtrlI = (e.ctrlKey || e.metaKey) && e.key === "i";
+      if (isCtrlI && lastSelectedText.length > 0) {
         e.preventDefault();
         log("Ctrl+I triggered Scribe (fallback)");
         castIntent("AI_TEXT_EDIT", buildEditIntentData());
@@ -358,7 +425,6 @@
     }]);
 
     window.Asc.plugin.attachToolbarMenuClickEvent("scribeToolbarBtn", function() {
-      log("Toolbar button clicked (attachEvent)");
       triggerScribeIfSelection();
     });
 
@@ -367,7 +433,6 @@
 
   // Fallback: global toolbar click event
   window.Asc.plugin.event_onToolbarMenuClick = function(id) {
-    log("Toolbar menu click event: " + id);
     if (id === "scribeToolbarBtn") {
       triggerScribeIfSelection();
     }

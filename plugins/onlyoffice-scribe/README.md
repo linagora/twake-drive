@@ -17,7 +17,50 @@ Cozy Stack (window.top)
 2. User triggers Scribe (toolbar button, Ctrl+I, or context menu) → plugin sends `AI_TEXT_EDIT` intent via `postMessage`
 3. CozyBridge in Cozy Drive receives intent → opens ScribePopover
 4. User clicks Replace/Insert/Cancel → response sent back to plugin
-5. Plugin modifies document via `PasteText` (replace) or `InsertContent` (insert)
+5. Plugin modifies document (see [Rich Text Reinjection Pipeline](#rich-text-reinjection-pipeline))
+
+## Rich Text Reinjection Pipeline
+
+When the user clicks **Replace** or **Insert** in the Scribe panel, the LLM response (markdown) is converted to HTML and pasted into the document with smart spacing.
+
+```
+Markdown (LLM response)
+    │
+    ▼
+markdownToHtml()              ← View.jsx — marked.parse()
+    │
+    ▼
+unwrapSingleParagraph()       ← View.jsx — strips <p> wrapper on single-paragraph
+    │                            HTML to avoid extra line breaks on inline paste
+    ▼
+postMessage {text, html}      ← cozy-bridge response → plugin iframe
+    │
+    ▼
+callCommand (read-only)       ← code.js — reads adjacent chars around selection
+    │                            Insert mode: collapses cursor to end of selection
+    ▼
+" " + html + " "             ← smart spacing: adds spaces if adjacent chars
+    │                            are non-whitespace (including \u00A0 nbsp)
+    ▼
+PasteHtml                    ← executeMethod — single undo point
+                               Replace: replaces selection
+                               Insert: inserts at cursor (after selection)
+```
+
+**Fallback:** If no HTML is available, plain text is used via `PasteText` (replace) or `InsertContent` with `Api.CreateParagraph()` (insert).
+
+**Current limitations:**
+- Post-paste selection of inserted content is not implemented (OO returns inconsistent cursor positions after PasteHtml)
+- Complex objects (tables, images, colored text) are not preserved through the markdown round-trip
+- These will require building content programmatically via the Document Builder API (`Api.CreateParagraph()`, `Api.CreateRun()`, etc.) inside `callCommand`
+
+### Key technical details
+
+- `callCommand` runs in OO's document sandbox — all operations in one call = one undo point
+- `executeMethod` (PasteHtml, etc.) runs in the plugin context — each call = separate undo point
+- Data passes between plugin and `callCommand` via `Asc.scope` (JSON-serializable only)
+- OO uses charCode 160 (nbsp `\u00A0`) not 32 for spaces — whitespace detection must include it
+- Plugin code.js must use ES5 syntax (no const/let/arrow functions)
 
 ## Prerequisites
 
@@ -142,7 +185,7 @@ The protocol is defined in `src/lib/cozy-bridge/`:
   "intentId": "<uuid>",
   "action": "AI_TEXT_EDIT",
   "source": "onlyoffice-plugin",
-  "data": { "text": "selected text" }
+  "data": { "text": "selected text", "html": "<b>selected</b> text", "format": "html" }
 }
 ```
 
@@ -154,7 +197,7 @@ The protocol is defined in `src/lib/cozy-bridge/`:
   "intentId": "<uuid>",
   "status": "ok",
   "action": "replace|insert|cancel",
-  "data": { "text": "result text" }
+  "data": { "text": "markdown text", "html": "<p><strong>rich</strong> text</p>" }
 }
 ```
 

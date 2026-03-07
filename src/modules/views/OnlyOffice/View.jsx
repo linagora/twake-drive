@@ -16,6 +16,15 @@ import { FRAME_EDITOR_NAME } from '@/modules/views/OnlyOffice/config'
 import { isOfficeEditingEnabled } from '@/modules/views/OnlyOffice/helpers'
 import { useCozyBridge } from '@/modules/views/OnlyOffice/useCozyBridge'
 
+// Strip <p>...</p> wrapper when HTML is a single paragraph,
+// so PasteHtml inserts inline without creating extra line breaks.
+// Multi-paragraph, lists, headings etc. are left untouched.
+const unwrapSingleParagraph = html => {
+  const match = html.match(/^<p>(.*)<\/p>$/s)
+  if (match && !match[1].includes('<p>')) return match[1]
+  return html
+}
+
 const forceIframeHeight = value => {
   const iframe = document.getElementsByName(FRAME_EDITOR_NAME)[0]
   if (iframe) iframe.style.height = value
@@ -62,7 +71,7 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
 
   const handleReplace = useCallback(
     text => {
-      const html = markdownToHtml(text)
+      const html = unwrapSingleParagraph(markdownToHtml(text).trim())
       respond({ status: 'ok', action: 'replace', data: { text, html } })
       setTimeout(focusEditor, 100)
     },
@@ -71,7 +80,7 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
 
   const handleInsert = useCallback(
     text => {
-      const html = markdownToHtml(text)
+      const html = unwrapSingleParagraph(markdownToHtml(text).trim())
       respond({ status: 'ok', action: 'insert', data: { text, html } })
       setTimeout(focusEditor, 100)
     },
