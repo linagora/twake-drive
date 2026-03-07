@@ -94,11 +94,10 @@ Plans:
   3. Le formatage inline (gras, italique) survit au cycle complet: selection dans OO, envoi au LLM, retour, reinjection dans OO
   4. Les blocs structurels (titres, listes a puces, listes numerotees, paragraphes) survivent au cycle complet
   5. Les tableaux, liens et blocs de code survivent au cycle complet
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 13-01: TBD
-- [ ] 13-02: TBD
+- [ ] 13-01-PLAN.md -- Wire PasteHtml reinsertion in View.jsx and plugin code.js with plain text fallback
 
 ## Progress
 
@@ -119,4 +118,4 @@ Phases execute in numeric order: 10, 11, 12, 13
 | 10. Extraction Rich Text | 2/2 | Complete    | 2026-03-06 | - |
 | 11. Pipeline de Conversion | 2/2 | Complete    | 2026-03-06 | - |
 | 12. Preview Markdown | 1/1 | Complete   | 2026-03-07 | - |
-| 13. Reinjection et Integrite Pipeline | v2.1 | 0/? | Not started | - |
+| 13. Reinjection et Integrite Pipeline | v2.1 | 0/1 | Not started | - |
