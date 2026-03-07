@@ -21,7 +21,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-06)
 
 **Core value:** La chaine de communication complete -- depuis la selection de texte dans OnlyOffice jusqu'a la reinjection du texte modifie par l'IA -- de bout en bout, transparente pour l'utilisateur.
-**Current focus:** Phase 12 - Preview Markdown
+**Current focus:** Phase 12 complete, Phase 13 next - Reinjection et Integrite Pipeline
 
 ## Current Position
 
@@ -93,6 +93,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-07T07:42:11Z
-Stopped at: Completed 12-01 Markdown Preview
-Resume file: .planning/phases/12-preview-markdown/12-01-SUMMARY.md
+Last session: 2026-03-07
+Stopped at: Phase 12 UAT passed, ready for Phase 13
+Resume file: none

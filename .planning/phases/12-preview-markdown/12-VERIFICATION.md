@@ -1,7 +1,7 @@
 ---
 phase: 12-preview-markdown
 verified: 2026-03-07T08:00:00Z
-status: human_needed
+status: passed
 score: 5/5 must-haves verified
 re_verification: false
 human_verification:
@@ -74,31 +74,14 @@ No orphaned requirements found -- ROADMAP.md maps PREV-01 and PREV-02 to Phase 1
 
 No TODOs, FIXMEs, placeholders, empty implementations, or console.log-only handlers detected in any phase artifact.
 
-### Human Verification Required
+### Human Verification — PASSED (2026-03-07)
 
-### 1. Markdown Rendering Visual Check
-
-**Test:** Trigger an AI action on formatted text, verify result panel shows rendered Markdown
-**Expected:** Headings, bold, italic, lists, tables render as formatted HTML, not raw Markdown syntax
-**Why human:** Visual rendering verification requires browser
-
-### 2. Dark Mode Theme Check
-
-**Test:** Toggle dark mode and inspect code blocks, table headers, blockquotes
-**Expected:** Dark backgrounds (grey[800]) for code/table headers in dark mode, light backgrounds (grey[100]/grey[50]) in light mode
-**Why human:** Theme-dependent visual styling requires browser inspection
-
-### 3. Horizontal Scroll for Wide Content
-
-**Test:** Trigger AI action that returns a wide table or long code block
-**Expected:** Content scrolls horizontally within the result panel without breaking overall layout
-**Why human:** Overflow behavior requires visual inspection in actual viewport
-
-### 4. Error Display Check
-
-**Test:** Trigger an error condition (e.g., network failure) and check the result panel
-**Expected:** Error message displays as plain red text, not passed through Markdown rendering
-**Why human:** Error state requires triggering real error condition in running application
+| # | Test | Result |
+|---|------|--------|
+| 1 | Markdown rendering (headings, bold, italic, lists, tables) | PASS |
+| 2 | Dark mode theme (code blocks, table headers, blockquotes) | PASS |
+| 3 | Horizontal scroll for wide tables/code | PASS |
+| 4 | Error display as plain red text | PASS |
 
 ### Gaps Summary
 
