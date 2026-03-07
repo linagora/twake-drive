@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from 'react'
+import React, { useEffect, useRef, useCallback, useState } from 'react'
 import PropTypes from 'prop-types'
 
 import { useI18n } from 'twake-i18n'
@@ -12,17 +12,19 @@ import Paper from 'cozy-ui/transpiled/react/Paper'
 import Typography from 'cozy-ui/transpiled/react/Typography'
 
 import { MarkdownPreview } from '@/modules/views/OnlyOffice/Scribe/MarkdownPreview'
+import { loadBeautify, loadHighlightJs } from '@/modules/views/OnlyOffice/Scribe/scribeDevMode'
 import styles from '@/modules/views/OnlyOffice/Scribe/scribe.styl'
 
 /**
  * ScribeResultPanel - Step 2 of the Scribe two-step flow.
  *
  * Displays either the AI-transformed text (success) or an error message.
- * In error state, Insert/Replace buttons are hidden to prevent inserting error text.
- * A Retry button is shown for transient (retryable) errors.
+ * In dev mode (devData prop), shows 3 side-by-side panels:
+ *   1. Source HTML (prettified + highlight.js syntax colored)
+ *   2. Converted Markdown (highlight.js syntax colored)
+ *   3. Rendered Markdown preview
  *
- * Focus is trapped between the available action buttons.
- * Tab/Shift+Tab and Arrow keys cycle through them.
+ * highlight.js is loaded lazily only when devData is present.
  */
 const ScribeResultPanel = ({
   breadcrumb,
@@ -32,7 +34,8 @@ const ScribeResultPanel = ({
   onRetry,
   onReplace,
   onInsert,
-  onClose
+  onClose,
+  devData
 }) => {
   const { t } = useI18n()
   const theme = useTheme()
@@ -41,7 +44,28 @@ const ScribeResultPanel = ({
   const closeRef = useRef(null)
   const retryRef = useRef(null)
 
-  // Return the focusable buttons based on current state
+  // Dev mode: highlighted HTML from highlight.js (loaded lazily from CDN)
+  const [highlightedHtml, setHighlightedHtml] = useState('')
+  const [highlightedMd, setHighlightedMd] = useState('')
+
+  useEffect(() => {
+    if (!devData) return
+
+    Promise.all([loadHighlightJs(), loadBeautify()]).then(([hljs, beautify]) => {
+      if (devData.html) {
+        const pretty = beautify.html_beautify
+          ? beautify.html_beautify(devData.html, { indent_size: 2, wrap_line_length: 80 })
+          : beautify(devData.html, { indent_size: 2, wrap_line_length: 80 })
+        setHighlightedHtml(hljs.highlight(pretty, { language: 'xml' }).value)
+      }
+      if (devData.md) {
+        setHighlightedMd(
+          hljs.highlight(devData.md, { language: 'markdown' }).value
+        )
+      }
+    })
+  }, [devData])
+
   const getFocusables = useCallback(() => {
     if (error && canRetry) {
       return [retryRef.current, closeRef.current].filter(Boolean)
@@ -54,7 +78,6 @@ const ScribeResultPanel = ({
     )
   }, [error, canRetry])
 
-  // Auto-focus the appropriate button on mount
   useEffect(() => {
     setTimeout(() => {
       if (error && canRetry && retryRef.current) {
@@ -89,32 +112,144 @@ const ScribeResultPanel = ({
     [getFocusables]
   )
 
+  const isDark = (theme.palette.type || theme.palette.mode) === 'dark'
+  const codeBg = isDark ? '#1e1e1e' : '#f5f5f5'
+  const codeColor = isDark ? '#d4d4d4' : '#333'
+
+  const devColumnStyle = {
+    flex: 1,
+    minWidth: 0,
+    display: 'flex',
+    flexDirection: 'column'
+  }
+
+  const devLabelStyle = {
+    fontSize: 10,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+    color: theme.palette.text.secondary,
+    marginBottom: 4,
+    letterSpacing: '0.5px',
+    flexShrink: 0
+  }
+
+  const devPreStyle = {
+    flex: 1,
+    overflowY: 'auto',
+    overflowX: 'auto',
+    padding: 12,
+    borderRadius: 4,
+    backgroundColor: codeBg,
+    color: codeColor,
+    fontFamily: '"Fira Code", "Consolas", "Monaco", monospace',
+    fontSize: 11,
+    lineHeight: 1.4,
+    whiteSpace: 'pre',
+    margin: 0
+  }
+
+  const resultContent = (
+    <div
+      className={styles['scribe-result-text']}
+      style={{
+        backgroundColor: theme.palette.action.hover,
+        ...(error ? { color: theme.palette.error.main } : {}),
+        ...(devData ? { flex: 1, minWidth: 0, maxHeight: 'none' } : {})
+      }}
+    >
+      {error ? error : <MarkdownPreview>{resultText}</MarkdownPreview>}
+    </div>
+  )
+
   return (
     <Paper
       className={styles['scribe-result-panel']}
       elevation={0}
       onKeyDown={handleKeyDown}
+      style={
+        devData
+          ? {
+              maxWidth: '95vw',
+              width: 'auto',
+              height: 'min(600px, 80vh)',
+              display: 'flex',
+              flexDirection: 'column'
+            }
+          : undefined
+      }
     >
-      <div className={styles['scribe-result-header']}>
+      <div
+        className={styles['scribe-result-header']}
+        style={devData ? { flexShrink: 0 } : undefined}
+      >
         <Typography variant="subtitle2" color="textSecondary">
           {breadcrumb}
+          {devData && (
+            <span
+              style={{ marginLeft: 8, color: '#ff9800', fontSize: 11 }}
+            >
+              DEV MD
+            </span>
+          )}
         </Typography>
         <IconButton ref={closeRef} size="small" onClick={onClose}>
           <Icon icon={CrossIcon} size={16} />
         </IconButton>
       </div>
 
-      <div
-        className={styles['scribe-result-text']}
-        style={{
-          backgroundColor: theme.palette.action.hover,
-          ...(error ? { color: theme.palette.error.main } : {})
-        }}
-      >
-        {error ? error : <MarkdownPreview>{resultText}</MarkdownPreview>}
-      </div>
+      {devData ? (
+        <div
+          style={{
+            display: 'flex',
+            gap: 8,
+            minWidth: 0,
+            flex: 1,
+            overflow: 'hidden'
+          }}
+        >
+          <div style={devColumnStyle}>
+            <div style={devLabelStyle}>HTML source</div>
+            <pre
+              className="hljs"
+              style={devPreStyle}
+              dangerouslySetInnerHTML={{
+                __html:
+                  highlightedHtml ||
+                  (devData.html || '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+              }}
+            />
+          </div>
+          <div style={devColumnStyle}>
+            <div style={devLabelStyle}>Markdown</div>
+            <pre
+              className="hljs"
+              style={devPreStyle}
+              dangerouslySetInnerHTML={{
+                __html:
+                  highlightedMd ||
+                  devData.md
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+              }}
+            />
+          </div>
+          <div style={devColumnStyle}>
+            <div style={devLabelStyle}>Rendu</div>
+            {resultContent}
+          </div>
+        </div>
+      ) : (
+        resultContent
+      )}
 
-      <div className={styles['scribe-result-actions']}>
+      <div
+        className={styles['scribe-result-actions']}
+        style={devData ? { flexShrink: 0 } : undefined}
+      >
         {error ? (
           <>
             {canRetry && onRetry && (
@@ -135,7 +270,11 @@ const ScribeResultPanel = ({
               label={t('Scribe.button.replace')}
               onClick={onReplace}
             />
-            <Buttons ref={insertRef} label={t('Scribe.button.insert')} onClick={onInsert} />
+            <Buttons
+              ref={insertRef}
+              label={t('Scribe.button.insert')}
+              onClick={onInsert}
+            />
           </>
         )}
       </div>
@@ -151,13 +290,18 @@ ScribeResultPanel.propTypes = {
   onRetry: PropTypes.func,
   onReplace: PropTypes.func.isRequired,
   onInsert: PropTypes.func.isRequired,
-  onClose: PropTypes.func.isRequired
+  onClose: PropTypes.func.isRequired,
+  devData: PropTypes.shape({
+    html: PropTypes.string,
+    md: PropTypes.string
+  })
 }
 
 ScribeResultPanel.defaultProps = {
   error: '',
   canRetry: false,
-  onRetry: undefined
+  onRetry: undefined,
+  devData: null
 }
 
 export { ScribeResultPanel }

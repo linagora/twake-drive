@@ -10,7 +10,9 @@ import { useClient } from 'cozy-client'
 
 import { ScribeActionMenu } from '@/modules/views/OnlyOffice/Scribe/ScribeActionMenu'
 import { callScribeAI, buildMessages, deriveLoadingMessage, classifyScribeError } from '@/modules/views/OnlyOffice/Scribe/scribeAI'
+import { htmlToMarkdown } from '@/modules/views/OnlyOffice/Scribe/scribeConversion'
 import { ScribeResultPanel } from '@/modules/views/OnlyOffice/Scribe/ScribeResultPanel'
+import { isScribeDevMd } from '@/modules/views/OnlyOffice/Scribe/scribeDevMode'
 import styles from '@/modules/views/OnlyOffice/Scribe/scribe.styl'
 
 /**
@@ -21,13 +23,6 @@ import styles from '@/modules/views/OnlyOffice/Scribe/scribe.styl'
  * Step 3 ('result'): Displays the AI-transformed text via ScribeResultPanel.
  *
  * Closing the popover during loading aborts the in-flight API request via AbortController.
- *
- * @param {Object} props
- * @param {boolean} props.open - Whether the popover is visible
- * @param {string} props.selectedText - Text selected in the editor
- * @param {Function} props.onReplace - Called with transformed text when Replace is clicked
- * @param {Function} props.onInsert - Called with transformed text when Inserer is clicked
- * @param {Function} props.onCancel - Called when closed without action
  */
 const ScribePopover = ({ open, selectedText, selectedHtml, onReplace, onInsert, onCancel }) => {
   const { t } = useI18n()
@@ -38,6 +33,8 @@ const ScribePopover = ({ open, selectedText, selectedHtml, onReplace, onInsert, 
   const [result, setResult] = useState({ text: '', breadcrumb: '', error: '', canRetry: false })
   const [loadingMessage, setLoadingMessage] = useState('')
   const [lastAction, setLastAction] = useState(null)
+  // Dev mode: store source HTML and intermediate MD for debug panels
+  const [devData, setDevData] = useState({ html: '', md: '' })
 
   // Reset to menu state when popover opens with new intent
   useEffect(() => {
@@ -46,6 +43,7 @@ const ScribePopover = ({ open, selectedText, selectedHtml, onReplace, onInsert, 
       setResult({ text: '', breadcrumb: '', error: '', canRetry: false })
       setLoadingMessage('')
       setLastAction(null)
+      setDevData({ html: '', md: '' })
       if (abortRef.current) {
         abortRef.current.abort()
         abortRef.current = null
@@ -60,15 +58,26 @@ const ScribePopover = ({ open, selectedText, selectedHtml, onReplace, onInsert, 
     }
   }, [step])
 
-  /**
-   * Handle action selection from the menu.
-   * Calls callScribeAI with real prompts, shows loading state, transitions to 'result'.
-   * For translate-custom, passes the user-typed language as extra.
-   */
   const handleActionSelect = useCallback(
     async (actionId, label, breadcrumb) => {
+      // Compute intermediate MD for dev panels
+      const inputMd = selectedHtml ? htmlToMarkdown(selectedHtml) : selectedText
+
+      // Dev mode: test-markdown bypasses LLM entirely
+      if (actionId === 'test-markdown') {
+        setDevData({ html: selectedHtml || '', md: inputMd })
+        setResult({ text: inputMd, breadcrumb: 'Test MD', error: '', canRetry: false })
+        setStep('result')
+        return
+      }
+
       // Store action params for retry
       setLastAction({ actionId, label, breadcrumb })
+
+      // Capture dev data for normal flow too
+      if (isScribeDevMd()) {
+        setDevData({ html: selectedHtml || '', md: inputMd })
+      }
 
       // 1. Transition to loading
       setStep('loading')
@@ -97,10 +106,8 @@ const ScribePopover = ({ open, selectedText, selectedHtml, onReplace, onInsert, 
         setStep('result')
       } catch (err) {
         if (err.name === 'AbortError') {
-          // User closed popover during loading — do nothing
           return
         }
-        // Classify error for user-facing message and retry eligibility
         const classified = classifyScribeError(err)
         setResult({ text: '', breadcrumb, error: classified.messageKey ? t(classified.messageKey) : '', canRetry: classified.canRetry })
         setStep('result')
@@ -110,7 +117,7 @@ const ScribePopover = ({ open, selectedText, selectedHtml, onReplace, onInsert, 
         }
       }
     },
-    [selectedText, selectedHtml, client]
+    [selectedText, selectedHtml, client, t]
   )
 
   const handleClose = useCallback(() => {
@@ -139,7 +146,6 @@ const ScribePopover = ({ open, selectedText, selectedHtml, onReplace, onInsert, 
   const loadingRef = useRef(null)
 
   const handleEntered = useCallback(() => {
-    // Blur the OO iframe to release focus, then focus the menu
     if (document.activeElement) {
       document.activeElement.blur()
     }
@@ -149,6 +155,8 @@ const ScribePopover = ({ open, selectedText, selectedHtml, onReplace, onInsert, 
       }
     }, 50)
   }, [])
+
+  const devMode = isScribeDevMd()
 
   return (
     <Popover
@@ -166,7 +174,8 @@ const ScribePopover = ({ open, selectedText, selectedHtml, onReplace, onInsert, 
           borderRadius: 8,
           boxShadow: 'none',
           backgroundColor: 'transparent',
-          overflow: 'visible'
+          overflow: 'visible',
+          ...(devMode && step === 'result' ? { maxWidth: '95vw' } : {})
         }
       }}
     >
@@ -191,6 +200,7 @@ const ScribePopover = ({ open, selectedText, selectedHtml, onReplace, onInsert, 
           onReplace={handleReplace}
           onInsert={handleInsert}
           onClose={handleClose}
+          devData={devMode ? devData : null}
         />
       )}
     </Popover>

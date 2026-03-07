@@ -4,6 +4,7 @@ import PropTypes from 'prop-types'
 import { useI18n } from 'twake-i18n'
 import { useTheme } from 'cozy-ui/transpiled/react/styles'
 import Icon from 'cozy-ui/transpiled/react/Icon'
+import BugIcon from 'cozy-ui/transpiled/react/Icons/BugReport'
 import RightIcon from 'cozy-ui/transpiled/react/Icons/Right'
 import InputBase from 'cozy-ui/transpiled/react/InputBase'
 import ListItem from 'cozy-ui/transpiled/react/ListItem'
@@ -13,8 +14,17 @@ import Paper from 'cozy-ui/transpiled/react/Paper'
 
 import { SCRIBE_ACTIONS, buildTranslateChildren } from '@/modules/views/OnlyOffice/Scribe/scribeActions'
 import { ScribePromptInput } from '@/modules/views/OnlyOffice/Scribe/ScribePromptInput'
+import { isScribeDevMd } from '@/modules/views/OnlyOffice/Scribe/scribeDevMode'
 
-const PROMPT_INDEX = SCRIBE_ACTIONS.length
+const DEV_MD_ACTION = {
+  id: 'test-markdown',
+  labelKey: null,
+  label: 'Test MD',
+  icon: BugIcon,
+  children: null,
+  prompt: null,
+  mockResult: null
+}
 
 const ScribeActionMenu = forwardRef(({ onSelect, onClose, selectedText: _selectedText }, ref) => {
   const { t, lang } = useI18n()
@@ -27,13 +37,16 @@ const ScribeActionMenu = forwardRef(({ onSelect, onClose, selectedText: _selecte
   const promptRef = useRef(null)
   const customLangRef = useRef(null)
 
-  // Build actions with dynamic translate children
+  // Build actions with dynamic translate children + optional dev action
   const actions = useMemo(() => {
     const translateChildren = buildTranslateChildren(lang)
-    return SCRIBE_ACTIONS.map(action =>
+    const base = SCRIBE_ACTIONS.map(action =>
       action.id === 'translate' ? { ...action, children: translateChildren } : action
     )
+    return isScribeDevMd() ? [DEV_MD_ACTION, ...base] : base
   }, [lang])
+
+  const PROMPT_INDEX = actions.length
 
   // Expose focus() to parent via ref
   useImperativeHandle(ref, () => ({
@@ -255,7 +268,7 @@ const ScribeActionMenu = forwardRef(({ onSelect, onClose, selectedText: _selecte
               }}
               onClick={
                 !action.children
-                  ? () => { const label = t(action.labelKey); onSelect(action.id, label, label) }
+                  ? () => { const label = action.labelKey ? t(action.labelKey) : action.label; onSelect(action.id, label, label) }
                   : () => {
                       setActiveSubmenu(action.id)
                       setSubmenuFocusIndex(0)
@@ -265,7 +278,7 @@ const ScribeActionMenu = forwardRef(({ onSelect, onClose, selectedText: _selecte
               <ListItemIcon>
                 <Icon icon={action.icon} />
               </ListItemIcon>
-              <ListItemText primary={t(action.labelKey)} />
+              <ListItemText primary={action.labelKey ? t(action.labelKey) : action.label} />
               {action.children && <Icon icon={RightIcon} size={16} />}
             </ListItem>
 
