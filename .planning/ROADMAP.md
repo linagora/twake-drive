@@ -39,7 +39,7 @@ Full details: `.planning/milestones/v2.0-ROADMAP.md`
 
 - [x] **Phase 10: Extraction Rich Text** - Extraire le HTML formate depuis OO et le transporter via le protocole postMessage (completed 2026-03-06)
 - [x] **Phase 11: Pipeline de Conversion** - Convertir HTML en Markdown (vers LLM) et Markdown en HTML (vers OO) avec nettoyage (completed 2026-03-06)
-- [ ] **Phase 12: Preview Markdown** - Afficher le resultat AI en Markdown rendu dans le panneau de resultat
+- [x] **Phase 12: Preview Markdown** - Afficher le resultat AI en Markdown rendu dans le panneau de resultat (completed 2026-03-07)
 - [ ] **Phase 13: Reinjection et Integrite Pipeline** - Reinjecter le texte formate dans OO et valider le round-trip complet
 
 ## Phase Details
@@ -118,5 +118,5 @@ Phases execute in numeric order: 10, 11, 12, 13
 | 9. Internationalization | v2.0 | 2/2 | Complete | 2026-03-06 |
 | 10. Extraction Rich Text | 2/2 | Complete    | 2026-03-06 | - |
 | 11. Pipeline de Conversion | 2/2 | Complete    | 2026-03-06 | - |
-| 12. Preview Markdown | v2.1 | 0/1 | Not started | - |
+| 12. Preview Markdown | 1/1 | Complete   | 2026-03-07 | - |
 | 13. Reinjection et Integrite Pipeline | v2.1 | 0/? | Not started | - |

@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Formatage Riche
-status: completed
-stopped_at: Phase 12 context gathered
-last_updated: "2026-03-06T23:44:29.226Z"
-last_activity: 2026-03-06 -- Completed plan 11-02 pipeline integration
+status: in-progress
+stopped_at: Completed 12-01 Markdown Preview
+last_updated: "2026-03-07T07:42:52.198Z"
+last_activity: 2026-03-07 -- Completed plan 12-01 Markdown Preview
 progress:
   total_phases: 4
-  completed_phases: 2
-  total_plans: 4
-  completed_plans: 4
+  completed_phases: 3
+  total_plans: 5
+  completed_plans: 5
   percent: 100
 ---
 
@@ -21,23 +21,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-06)
 
 **Core value:** La chaine de communication complete -- depuis la selection de texte dans OnlyOffice jusqu'a la reinjection du texte modifie par l'IA -- de bout en bout, transparente pour l'utilisateur.
-**Current focus:** Phase 11 - Pipeline de Conversion
+**Current focus:** Phase 12 - Preview Markdown
 
 ## Current Position
 
-Phase: 11 of 13 (Pipeline de Conversion) -- second of 4 phases in v2.1
-Plan: 02 of 02 complete
-Status: Phase 11 complete
-Last activity: 2026-03-06 -- Completed plan 11-02 pipeline integration
+Phase: 12 of 13 (Preview Markdown) -- third of 4 phases in v2.1
+Plan: 01 of 01 complete
+Status: Phase 12 complete
+Last activity: 2026-03-07 -- Completed plan 12-01 Markdown Preview
 
 Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 19 (v1.0: 10, v2.0: 5, v2.1: 4)
-- v2.1 average duration: ~4 min/plan
-- v2.1 total execution time: ~15 min
+- Total plans completed: 20 (v1.0: 10, v2.0: 5, v2.1: 5)
+- v2.1 average duration: ~3.5 min/plan
+- v2.1 total execution time: ~17 min
 
 **By Phase (v2.0):**
 
@@ -49,6 +49,7 @@ Progress: [██████████] 100%
 | Phase 10 P02 | 2min | 2 tasks | 2 files |
 | Phase 11 P01 | 3min | 2 tasks | 5 files |
 | Phase 11 P02 | 6min | 2 tasks | 3 files |
+| Phase 12 P01 | 2min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -68,6 +69,9 @@ Recent decisions affecting current work:
 - [Phase 11]: marked ESM requires jest transformIgnorePatterns entry
 - [Phase 11]: textForPrompt variable pattern keeps selectedText param unchanged for backward compat
 - [Phase 11]: Extra object built incrementally (not ternary) for multi-field construction
+- [Phase 12]: react-markdown v10 with remark-gfm for GFM rendering in result panel
+- [Phase 12]: Inline styles with MUI theme tokens for dark/light mode (no separate CSS)
+- [Phase 12]: Errors stay plain text, all non-error results through MarkdownPreview unconditionally
 
 ### Pending Todos (carried from v1.0)
 
@@ -89,6 +93,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-06T23:44:29.224Z
-Stopped at: Phase 12 context gathered
-Resume file: .planning/phases/12-preview-markdown/12-CONTEXT.md
+Last session: 2026-03-07T07:42:11Z
+Stopped at: Completed 12-01 Markdown Preview
+Resume file: .planning/phases/12-preview-markdown/12-01-SUMMARY.md

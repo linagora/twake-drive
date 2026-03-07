@@ -21,8 +21,8 @@ Requirements for rich text formatting preservation. Each maps to roadmap phases.
 
 ### Preview
 
-- [ ] **PREV-01**: Le panneau de résultat affiche le Markdown rendu (react-markdown) au lieu du texte brut
-- [ ] **PREV-02**: Le rendu Markdown utilise les tokens MUI du thème Scribe (dark/light mode)
+- [x] **PREV-01**: Le panneau de résultat affiche le Markdown rendu (react-markdown) au lieu du texte brut
+- [x] **PREV-02**: Le rendu Markdown utilise les tokens MUI du thème Scribe (dark/light mode)
 
 ### Réinjection
 
@@ -70,8 +70,8 @@ Requirements for rich text formatting preservation. Each maps to roadmap phases.
 | CONV-01 | Phase 11 | Complete |
 | CONV-02 | Phase 11 | Complete |
 | CONV-03 | Phase 11 | Complete |
-| PREV-01 | Phase 12 | Pending |
-| PREV-02 | Phase 12 | Pending |
+| PREV-01 | Phase 12 | Complete |
+| PREV-02 | Phase 12 | Complete |
 | REINJ-01 | Phase 13 | Pending |
 | REINJ-02 | Phase 13 | Pending |
 | PIPE-01 | Phase 13 | Pending |
