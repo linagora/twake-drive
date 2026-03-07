@@ -25,7 +25,7 @@ const MarkdownPreview = ({ children }) => {
   }
 
   const components = {
-    pre: ({ children: preChildren }) => (
+    pre: ({ node, children: preChildren }) => (
       <pre
         style={{
           background: isDark
@@ -64,7 +64,7 @@ const MarkdownPreview = ({ children }) => {
         </code>
       )
     },
-    table: ({ children: tableChildren }) => (
+    table: ({ node, children: tableChildren }) => (
       <div style={{ overflowX: 'auto' }}>
         <table
           style={{
@@ -77,7 +77,7 @@ const MarkdownPreview = ({ children }) => {
         </table>
       </div>
     ),
-    th: ({ children: thChildren }) => (
+    th: ({ node, children: thChildren }) => (
       <th
         style={{
           border: `1px solid ${theme.palette.divider}`,
@@ -91,7 +91,7 @@ const MarkdownPreview = ({ children }) => {
         {thChildren}
       </th>
     ),
-    td: ({ children: tdChildren }) => (
+    td: ({ node, children: tdChildren }) => (
       <td
         style={{
           border: `1px solid ${theme.palette.divider}`,
@@ -101,12 +101,12 @@ const MarkdownPreview = ({ children }) => {
         {tdChildren}
       </td>
     ),
-    a: ({ children: aChildren, ...props }) => (
+    a: ({ node, children: aChildren, ...props }) => (
       <a style={{ color: theme.palette.primary.main }} {...props}>
         {aChildren}
       </a>
     ),
-    blockquote: ({ children: bqChildren }) => (
+    blockquote: ({ node, children: bqChildren }) => (
       <blockquote
         style={{
           borderLeft: `3px solid ${theme.palette.divider}`,
@@ -118,32 +118,32 @@ const MarkdownPreview = ({ children }) => {
         {bqChildren}
       </blockquote>
     ),
-    p: ({ children: pChildren }) => (
+    p: ({ node, children: pChildren }) => (
       <p style={{ margin: '4px 0' }}>{pChildren}</p>
     ),
-    h1: ({ children: hChildren }) => (
+    h1: ({ node, children: hChildren }) => (
       <h1 style={{ margin: '4px 0' }}>{hChildren}</h1>
     ),
-    h2: ({ children: hChildren }) => (
+    h2: ({ node, children: hChildren }) => (
       <h2 style={{ margin: '4px 0' }}>{hChildren}</h2>
     ),
-    h3: ({ children: hChildren }) => (
+    h3: ({ node, children: hChildren }) => (
       <h3 style={{ margin: '4px 0' }}>{hChildren}</h3>
     ),
-    h4: ({ children: hChildren }) => (
+    h4: ({ node, children: hChildren }) => (
       <h4 style={{ margin: '4px 0' }}>{hChildren}</h4>
     ),
-    h5: ({ children: hChildren }) => (
+    h5: ({ node, children: hChildren }) => (
       <h5 style={{ margin: '4px 0' }}>{hChildren}</h5>
     ),
-    h6: ({ children: hChildren }) => (
+    h6: ({ node, children: hChildren }) => (
       <h6 style={{ margin: '4px 0' }}>{hChildren}</h6>
     ),
-    ul: ({ children: ulChildren }) => (
-      <ul style={{ margin: '4px 0' }}>{ulChildren}</ul>
+    ul: ({ node, children: ulChildren }) => (
+      <ul style={{ margin: '4px 0', paddingLeft: '2em' }}>{ulChildren}</ul>
     ),
-    ol: ({ children: olChildren }) => (
-      <ol style={{ margin: '4px 0' }}>{olChildren}</ol>
+    ol: ({ node, children: olChildren }) => (
+      <ol style={{ margin: '4px 0', paddingLeft: '2em' }}>{olChildren}</ol>
     )
   }
 
