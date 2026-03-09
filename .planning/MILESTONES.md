@@ -1,5 +1,21 @@
 # Milestones
 
+## v2.1 Formatage Riche (Shipped: 2026-03-09)
+
+**Phases completed:** 4 phases, 6 plans, ~13 tasks
+**Timeline:** 3 days (2026-03-06 → 2026-03-09)
+**Commits:** 33 | **Files modified:** 44 (+5,943 / -187 lines)
+
+**Key accomplishments:**
+- Extraction HTML depuis OO — GetSelectedContent avec class stripping et fallback texte brut
+- Pipeline de conversion bidirectionnelle — Turndown (HTML→MD) + marked (MD→HTML) avec nettoyage OO
+- Rendu Markdown dans le panneau de résultat — react-markdown + remark-gfm, thème MUI (dark/light)
+- Réinjection formatée via PasteHtml — Replace et Insert After avec smart spacing (nbsp) et fallback PasteText
+- Round-trip complet vérifié — gras, italique, titres, listes, tableaux, code blocks survivent le cycle OO→LLM→OO
+- 14/14 requirements satisfaits, UAT 5/5 passé
+
+---
+
 ## v2.0 Scribe Live AI (Shipped: 2026-03-06)
 
 **Phases completed:** 3 phases, 5 plans, 9 tasks

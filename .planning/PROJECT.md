@@ -24,24 +24,19 @@ La chaîne de communication complète — depuis la sélection de texte dans Onl
 - ✓ Loading UX avec indicateur visuel et annulation via AbortController — v2.0
 - ✓ Gestion d'erreurs API avec retry (429, 500, réseau) et messages clairs (401, 403) — v2.0
 - ✓ Internationalisation complète (fr, en, de, es, it) via twake-i18n — v2.0
+- ✓ Extraction HTML formaté depuis OO (GetSelectedContent + class stripping + fallback) — v2.1
+- ✓ Conversion bidirectionnelle HTML↔Markdown (Turndown + marked) — v2.1
+- ✓ Rendu Markdown dans le panneau de résultat (react-markdown + remark-gfm) — v2.1
+- ✓ Réinjection formatée via PasteHtml avec smart spacing et fallback PasteText — v2.1
+- ✓ Round-trip complet : formatage inline, blocs, tableaux, liens, code survivent le cycle — v2.1
 
 ### Active
 
-- [ ] Extraction du texte formaté depuis OnlyOffice (gras, italique, titres, listes, tableaux, liens…)
-- [ ] Conversion rich text → Markdown pour envoi au LLM
-- [ ] Conversion Markdown → rich text pour réinjection dans l'éditeur
-- [ ] Rendu Markdown riche dans le panneau de résultat
-- [ ] Préservation du formatage à travers le cycle complet (extraction → LLM → réinjection)
+(À définir pour le prochain milestone)
 
-## Current Milestone: v2.1 Formatage Riche
+## Shipped: v2.1 Formatage Riche (2026-03-09)
 
-**Goal:** Préserver et restituer le formatage riche du texte à travers le cycle Scribe (extraction → Markdown → LLM → reconversion → réinjection).
-
-**Target features:**
-- Extraction du texte avec métadonnées de formatage depuis l'API OO
-- Pipeline de conversion bidirectionnelle (rich text ↔ Markdown)
-- Rendu Markdown dans le panneau de résultat
-- Réinjection du texte formaté dans l'éditeur
+Pipeline de formatage riche complet : extraction HTML depuis OO, conversion bidirectionnelle HTML↔Markdown (Turndown/marked), rendu Markdown dans le panneau de résultat (react-markdown), réinjection via PasteHtml avec smart spacing. 14/14 requirements, 4 phases, 6 plans. Voir `.planning/MILESTONES.md`.
 
 ## Shipped: v2.0 Scribe Live AI (2026-03-06)
 
@@ -60,11 +55,11 @@ Intégration LLM réelle via cozy-stack, gestion d'erreurs avec retry, internati
 
 ## Context
 
-### Shipped v2.0
+### Shipped v2.1
 
-~1,636 LOC Scribe module (React/Stylus + OO plugin ES5). 39 fichiers modifiés, +3,392 lignes.
-Tech stack : React 18 + MUI + cozy-ui + twake-i18n, cozy-stack AI proxy, postMessage protocol, OO Plugin API.
-v1.0 : 4 jours (2026-02-28 → 2026-03-03), 10 plans. v2.0 : 3 jours (2026-03-04 → 2026-03-06), 5 plans.
+~2,000+ LOC Scribe module (React/Stylus + OO plugin ES5). 44 fichiers modifiés pour v2.1, +5,943 lignes.
+Tech stack : React 18 + MUI + cozy-ui + twake-i18n, cozy-stack AI proxy, postMessage protocol, OO Plugin API, Turndown, marked, react-markdown, remark-gfm.
+v1.0 : 4 jours, 10 plans. v2.0 : 3 jours, 5 plans. v2.1 : 3 jours, 6 plans.
 
 ### Architecture à 3 couches (frame hierarchy)
 
@@ -82,8 +77,8 @@ v1.0 : 4 jours (2026-02-28 → 2026-03-03), 10 plans. v2.0 : 3 jours (2026-03-04
 
 ### Risques ouverts
 
-- Formatage riche (bold, italic) perdu lors de l'extraction/réinjection
 - OO dark theme pas systématiquement testé
+- Post-paste selection non fonctionnelle avec PasteHtml (deferred to rich content milestone)
 
 ## Constraints
 
@@ -109,6 +104,11 @@ v1.0 : 4 jours (2026-02-28 → 2026-03-03), 10 plans. v2.0 : 3 jours (2026-03-04
 | Duck-typed FetchError (err.name) | Détection cross-module sans import | ✓ Good — classification d'erreurs robuste |
 | labelKey pattern pour i18n | Actions déclaratives, résolution t() au render | ✓ Good — zéro chaîne hardcodée |
 | 5 locales européennes (fr, en, de, es, it) | Couverture utilisateurs Cozy principaux | ✓ Good — extensible |
+| Turndown + marked pour conversion HTML↔MD | Libraries matures, GFM support natif | ✓ Good — conversion fiable |
+| Regex class stripping (ES5) | Plugin sandbox interdit DOMParser | ✓ Good — compatible ES5 |
+| PasteHtml avec smart nbsp spacing | Préserve formatage, simple à implémenter | ✓ Good — suffisant pour v2.1 |
+| react-markdown + remark-gfm pour preview | Rendu MD natif React, support tables GFM | ✓ Good — thème MUI intégré |
+| Document Builder API déféré à v3.x | PasteHtml suffisant pour v2.1, Builder API pour objets complexes | — Pending |
 
 ---
-*Last updated: 2026-03-06 after v2.1 milestone start*
+*Last updated: 2026-03-09 after v2.1 milestone*

@@ -4,7 +4,7 @@ milestone: v2.1
 milestone_name: Formatage Riche
 status: completed
 stopped_at: Completed 13-01 Rich Text Reinsertion Pipeline -- v2.1 milestone complete
-last_updated: "2026-03-09T06:36:21.882Z"
+last_updated: "2026-03-09T06:39:20.539Z"
 last_activity: 2026-03-09 -- Completed plan 13-01 Rich Text Reinsertion Pipeline
 progress:
   total_phases: 4
@@ -18,10 +18,10 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-06)
+See: .planning/PROJECT.md (updated 2026-03-09)
 
 **Core value:** La chaine de communication complete -- depuis la selection de texte dans OnlyOffice jusqu'a la reinjection du texte modifie par l'IA -- de bout en bout, transparente pour l'utilisateur.
-**Current focus:** v2.1 Formatage Riche milestone COMPLETE -- all 4 phases done
+**Current focus:** Planning next milestone
 
 ## Current Position
 
