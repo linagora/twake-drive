@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Formatage Riche
-status: complete
-stopped_at: Completed 13-01 Reinjection et Integrite Pipeline
-last_updated: "2026-03-09T06:31:29Z"
+status: completed
+stopped_at: Completed 13-01 Rich Text Reinsertion Pipeline -- v2.1 milestone complete
+last_updated: "2026-03-09T06:36:21.882Z"
 last_activity: 2026-03-09 -- Completed plan 13-01 Rich Text Reinsertion Pipeline
 progress:
   total_phases: 4

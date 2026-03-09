@@ -118,4 +118,4 @@ Phases execute in numeric order: 10, 11, 12, 13
 | 10. Extraction Rich Text | 2/2 | Complete    | 2026-03-06 | - |
 | 11. Pipeline de Conversion | 2/2 | Complete    | 2026-03-06 | - |
 | 12. Preview Markdown | 1/1 | Complete   | 2026-03-07 | - |
-| 13. Reinjection et Integrite Pipeline | v2.1 | 1/1 | Complete | 2026-03-09 |
+| 13. Reinjection et Integrite Pipeline | v2.1 | Complete    | 2026-03-09 | 2026-03-09 |
