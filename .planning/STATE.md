@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.1
 milestone_name: Formatage Riche
-status: in-progress
-stopped_at: Completed 12-01 Markdown Preview
-last_updated: "2026-03-07T07:42:52.198Z"
-last_activity: 2026-03-07 -- Completed plan 12-01 Markdown Preview
+status: complete
+stopped_at: Completed 13-01 Reinjection et Integrite Pipeline
+last_updated: "2026-03-09T06:31:29Z"
+last_activity: 2026-03-09 -- Completed plan 13-01 Rich Text Reinsertion Pipeline
 progress:
   total_phases: 4
-  completed_phases: 3
-  total_plans: 5
-  completed_plans: 5
+  completed_phases: 4
+  total_plans: 6
+  completed_plans: 6
   percent: 100
 ---
 
@@ -21,23 +21,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-06)
 
 **Core value:** La chaine de communication complete -- depuis la selection de texte dans OnlyOffice jusqu'a la reinjection du texte modifie par l'IA -- de bout en bout, transparente pour l'utilisateur.
-**Current focus:** Phase 12 complete, Phase 13 next - Reinjection et Integrite Pipeline
+**Current focus:** v2.1 Formatage Riche milestone COMPLETE -- all 4 phases done
 
 ## Current Position
 
-Phase: 12 of 13 (Preview Markdown) -- third of 4 phases in v2.1
+Phase: 13 of 13 (Reinjection et Integrite Pipeline) -- fourth of 4 phases in v2.1
 Plan: 01 of 01 complete
-Status: Phase 12 complete
-Last activity: 2026-03-07 -- Completed plan 12-01 Markdown Preview
+Status: v2.1 milestone complete
+Last activity: 2026-03-09 -- Completed plan 13-01 Rich Text Reinsertion Pipeline
 
 Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 20 (v1.0: 10, v2.0: 5, v2.1: 5)
-- v2.1 average duration: ~3.5 min/plan
-- v2.1 total execution time: ~17 min
+- Total plans completed: 21 (v1.0: 10, v2.0: 5, v2.1: 6)
+- v2.1 average duration: ~5 min/plan
+- v2.1 total execution time: ~32 min
 
 **By Phase (v2.0):**
 
@@ -50,6 +50,7 @@ Progress: [██████████] 100%
 | Phase 11 P01 | 3min | 2 tasks | 5 files |
 | Phase 11 P02 | 6min | 2 tasks | 3 files |
 | Phase 12 P01 | 2min | 2 tasks | 5 files |
+| Phase 13 P01 | 15min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -72,6 +73,10 @@ Recent decisions affecting current work:
 - [Phase 12]: react-markdown v10 with remark-gfm for GFM rendering in result panel
 - [Phase 12]: Inline styles with MUI theme tokens for dark/light mode (no separate CSS)
 - [Phase 12]: Errors stay plain text, all non-error results through MarkdownPreview unconditionally
+- [Phase 13]: PasteHtml with smart nbsp spacing for formatted reinsertion
+- [Phase 13]: unwrapSingleParagraph to avoid wrapping inline content in paragraph tags
+- [Phase 13]: pasteInProgress flag guards against init()/polling interference during paste
+- [Phase 13]: Removed broken post-paste selection code -- deferred to rich content milestone
 
 ### Pending Todos (carried from v1.0)
 
@@ -93,6 +98,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-07
-Stopped at: Phase 12 UAT passed, ready for Phase 13
+Last session: 2026-03-09
+Stopped at: Completed 13-01 Rich Text Reinsertion Pipeline -- v2.1 milestone complete
 Resume file: none

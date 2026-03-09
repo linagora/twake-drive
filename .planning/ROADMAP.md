@@ -4,7 +4,7 @@
 
 - ✅ **v1.0 Scribe Interface Mock AI** -- Phases 1-6 (shipped 2026-03-03)
 - ✅ **v2.0 Scribe Live AI** -- Phases 7-9 (shipped 2026-03-06)
-- 🚧 **v2.1 Formatage Riche** -- Phases 10-13 (in progress)
+- ✅ **v2.1 Formatage Riche** -- Phases 10-13 (shipped 2026-03-09)
 
 ## Phases
 
@@ -33,14 +33,14 @@ Full details: `.planning/milestones/v2.0-ROADMAP.md`
 
 </details>
 
-### 🚧 v2.1 Formatage Riche (In Progress)
+### ✅ v2.1 Formatage Riche (Shipped 2026-03-09)
 
 **Milestone Goal:** Preserver et restituer le formatage riche du texte a travers le cycle Scribe (extraction, Markdown, LLM, reconversion, reinjection).
 
 - [x] **Phase 10: Extraction Rich Text** - Extraire le HTML formate depuis OO et le transporter via le protocole postMessage (completed 2026-03-06)
 - [x] **Phase 11: Pipeline de Conversion** - Convertir HTML en Markdown (vers LLM) et Markdown en HTML (vers OO) avec nettoyage (completed 2026-03-06)
 - [x] **Phase 12: Preview Markdown** - Afficher le resultat AI en Markdown rendu dans le panneau de resultat (completed 2026-03-07)
-- [ ] **Phase 13: Reinjection et Integrite Pipeline** - Reinjecter le texte formate dans OO et valider le round-trip complet
+- [x] **Phase 13: Reinjection et Integrite Pipeline** - Reinjecter le texte formate dans OO et valider le round-trip complet (completed 2026-03-09)
 
 ## Phase Details
 
@@ -97,7 +97,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 13-01-PLAN.md -- Wire PasteHtml reinsertion in View.jsx and plugin code.js with plain text fallback
+- [x] 13-01-PLAN.md -- Wire PasteHtml reinsertion in View.jsx and plugin code.js with plain text fallback (completed 2026-03-09)
 
 ## Progress
 
@@ -118,4 +118,4 @@ Phases execute in numeric order: 10, 11, 12, 13
 | 10. Extraction Rich Text | 2/2 | Complete    | 2026-03-06 | - |
 | 11. Pipeline de Conversion | 2/2 | Complete    | 2026-03-06 | - |
 | 12. Preview Markdown | 1/1 | Complete   | 2026-03-07 | - |
-| 13. Reinjection et Integrite Pipeline | v2.1 | 0/1 | Not started | - |
+| 13. Reinjection et Integrite Pipeline | v2.1 | 1/1 | Complete | 2026-03-09 |

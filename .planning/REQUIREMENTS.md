@@ -26,15 +26,15 @@ Requirements for rich text formatting preservation. Each maps to roadmap phases.
 
 ### Réinjection
 
-- [ ] **REINJ-01**: L'action "Replace" utilise `PasteHtml` pour réinjecter le texte formaté
-- [ ] **REINJ-02**: L'action "Insert After" insère du contenu HTML formaté après la sélection
+- [x] **REINJ-01**: L'action "Replace" utilise `PasteHtml` pour réinjecter le texte formaté
+- [x] **REINJ-02**: L'action "Insert After" insère du contenu HTML formaté après la sélection
 
 ### Intégrité du pipeline
 
-- [ ] **PIPE-01**: Le formatage inline (gras, italique) survit au cycle complet (extraction → LLM → réinjection)
-- [ ] **PIPE-02**: Les blocs (titres, listes à puces/numérotées, paragraphes) survivent au cycle complet
-- [ ] **PIPE-03**: Les tableaux GFM survivent au cycle complet
-- [ ] **PIPE-04**: Les liens et blocs de code survivent au cycle complet
+- [x] **PIPE-01**: Le formatage inline (gras, italique) survit au cycle complet (extraction → LLM → réinjection)
+- [x] **PIPE-02**: Les blocs (titres, listes à puces/numérotées, paragraphes) survivent au cycle complet
+- [x] **PIPE-03**: Les tableaux GFM survivent au cycle complet
+- [x] **PIPE-04**: Les liens et blocs de code survivent au cycle complet
 
 ## Future Requirements
 
@@ -72,12 +72,12 @@ Requirements for rich text formatting preservation. Each maps to roadmap phases.
 | CONV-03 | Phase 11 | Complete |
 | PREV-01 | Phase 12 | Complete |
 | PREV-02 | Phase 12 | Complete |
-| REINJ-01 | Phase 13 | Pending |
-| REINJ-02 | Phase 13 | Pending |
-| PIPE-01 | Phase 13 | Pending |
-| PIPE-02 | Phase 13 | Pending |
-| PIPE-03 | Phase 13 | Pending |
-| PIPE-04 | Phase 13 | Pending |
+| REINJ-01 | Phase 13 | Complete |
+| REINJ-02 | Phase 13 | Complete |
+| PIPE-01 | Phase 13 | Complete |
+| PIPE-02 | Phase 13 | Complete |
+| PIPE-03 | Phase 13 | Complete |
+| PIPE-04 | Phase 13 | Complete |
 
 **Coverage:**
 - v2.1 requirements: 14 total
