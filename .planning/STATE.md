@@ -1,13 +1,13 @@
 ---
 gsd_state_version: 1.0
 milestone: v2.2
-milestone_name: Améliorations UX
-status: defining_requirements
-stopped_at: Milestone v2.2 started — defining requirements
+milestone_name: Ameliorations UX
+status: ready_to_plan
+stopped_at: Roadmap created -- ready to plan Phase 14
 last_updated: "2026-03-10"
-last_activity: 2026-03-10 -- Milestone v2.2 started
+last_activity: 2026-03-10 -- Roadmap created for v2.2
 progress:
-  total_phases: 0
+  total_phases: 2
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -21,14 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-10)
 
 **Core value:** La chaine de communication complete -- depuis la selection de texte dans OnlyOffice jusqu'a la reinjection du texte modifie par l'IA -- de bout en bout, transparente pour l'utilisateur.
-**Current focus:** Defining v2.2 requirements
+**Current focus:** Phase 14 -- Navigation, clavier et micro-interactions
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-03-10 — Milestone v2.2 started
+Phase: 14 of 15 (Navigation, clavier et micro-interactions)
+Plan: --
+Status: Ready to plan
+Last activity: 2026-03-10 -- Roadmap created for v2.2
+
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -62,5 +64,5 @@ All decisions logged in PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-03-10
-Stopped at: Milestone v2.2 started — defining requirements
+Stopped at: Roadmap created for v2.2 -- ready to plan Phase 14
 Resume file: none

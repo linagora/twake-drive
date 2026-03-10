@@ -1,26 +1,26 @@
-# Requirements: Scribe v2.2 Améliorations UX
+# Requirements: Scribe v2.2 Ameliorations UX
 
 **Defined:** 2026-03-10
-**Core Value:** La chaîne de communication complète — depuis la sélection de texte dans OnlyOffice jusqu'à la réinjection du texte modifié par l'IA — de bout en bout, transparente pour l'utilisateur.
+**Core Value:** La chaine de communication complete -- depuis la selection de texte dans OnlyOffice jusqu'a la reinjection du texte modifie par l'IA -- de bout en bout, transparente pour l'utilisateur.
 
 ## v2.2 Requirements
 
-Requirements pour le milestone v2.2 Améliorations UX.
+Requirements pour le milestone v2.2 Ameliorations UX.
 
 ### Navigation & Clavier
 
-- [ ] **NAV-01**: L'utilisateur peut ouvrir Scribe avec Ctrl+Shift+I (au lieu de Ctrl+I qui déclenche la mise en italique)
-- [ ] **NAV-02**: Dans le panneau de résultat, Tab et flèche droite passent de Insérer à Remplacer (ordre de focus inversé par rapport à l'actuel)
+- [ ] **NAV-01**: L'utilisateur peut ouvrir Scribe avec Ctrl+Shift+I (au lieu de Ctrl+I qui declenche la mise en italique)
+- [ ] **NAV-02**: Dans le panneau de resultat, Tab et fleche droite passent de Inserer a Remplacer (ordre de focus inverse par rapport a l'actuel)
 
 ### Interactions Souris
 
-- [ ] **MOUSE-01**: À l'ouverture du menu, un item sous la souris n'est pas sélectionné tant que la souris ne se déplace pas vers un autre item
-- [ ] **MOUSE-02**: L'utilisateur peut déplacer la fenêtre de résultat en cliquant-glissant sur le fond (hors boutons et zone de texte)
-- [ ] **MOUSE-03**: L'utilisateur peut redimensionner la fenêtre de résultat via un handle discret en bas à droite
+- [ ] **MOUSE-01**: A l'ouverture du menu, un item sous la souris n'est pas selectionne tant que la souris ne se deplace pas vers un autre item
+- [ ] **MOUSE-02**: L'utilisateur peut deplacer la fenetre de resultat en cliquant-glissant sur le fond (hors boutons et zone de texte)
+- [ ] **MOUSE-03**: L'utilisateur peut redimensionner la fenetre de resultat via un handle discret en bas a droite
 
 ### Micro-interactions
 
-- [ ] **MICRO-01**: Le tooltip du bouton flottant Scribe n'apparaît qu'après 1 seconde de survol continu
+- [ ] **MICRO-01**: Le tooltip du bouton flottant Scribe n'apparait qu'apres 1 seconde de survol continu
 
 ## Future Requirements
 
@@ -33,35 +33,35 @@ Requirements pour le milestone v2.2 Améliorations UX.
 
 ### Carried from v2.1 Out of Scope
 
-- **EDIT-01**: Éditeur MD éditable dans le panneau de résultat
-- **STRM-01**: Streaming token par token avec rendu incrémental
-- **DIFF-01**: Vue diff entre texte original et résultat AI
+- **EDIT-01**: Editeur MD editable dans le panneau de resultat
+- **STRM-01**: Streaming token par token avec rendu incremental
+- **DIFF-01**: Vue diff entre texte original et resultat AI
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Streaming LLM responses | Déféré à v3.x — non-streaming suffisant |
-| Document Builder API | Déféré à v3.x — PasteHtml suffisant pour v2.x |
-| Migration vers application Cozy séparée | Projet v3.0 |
+| Streaming LLM responses | Defere a v3.x -- non-streaming suffisant |
+| Document Builder API | Defere a v3.x -- PasteHtml suffisant pour v2.x |
+| Migration vers application Cozy separee | Projet v3.0 |
 | Mobile natif | Web-first |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| NAV-01 | — | Pending |
-| NAV-02 | — | Pending |
-| MOUSE-01 | — | Pending |
-| MOUSE-02 | — | Pending |
-| MOUSE-03 | — | Pending |
-| MICRO-01 | — | Pending |
+| NAV-01 | Phase 14 | Pending |
+| NAV-02 | Phase 14 | Pending |
+| MOUSE-01 | Phase 14 | Pending |
+| MOUSE-02 | Phase 15 | Pending |
+| MOUSE-03 | Phase 15 | Pending |
+| MICRO-01 | Phase 14 | Pending |
 
 **Coverage:**
 - v2.2 requirements: 6 total
-- Mapped to phases: 0
-- Unmapped: 6 ⚠️
+- Mapped to phases: 6
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-10*
-*Last updated: 2026-03-10 after initial definition*
+*Last updated: 2026-03-10 after roadmap creation*

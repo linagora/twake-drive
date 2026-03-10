@@ -5,6 +5,7 @@
 - ✅ **v1.0 Scribe Interface Mock AI** -- Phases 1-6 (shipped 2026-03-03)
 - ✅ **v2.0 Scribe Live AI** -- Phases 7-9 (shipped 2026-03-06)
 - ✅ **v2.1 Formatage Riche** -- Phases 10-13 (shipped 2026-03-09)
+- 🚧 **v2.2 Ameliorations UX** -- Phases 14-15 (in progress)
 
 ## Phases
 
@@ -45,7 +46,46 @@ Full details: `.planning/milestones/v2.1-ROADMAP.md`
 
 </details>
 
+### 🚧 v2.2 Ameliorations UX (In Progress)
+
+**Milestone Goal:** Ameliorer l'ergonomie de Scribe -- navigation clavier, interactions souris, et micro-interactions du bouton flottant et du panneau de resultat.
+
+- [ ] **Phase 14: Navigation, clavier et micro-interactions** - Raccourci, focus order, hover prevention, tooltip delay
+- [ ] **Phase 15: Panneau de resultat interactif** - Fenetre deplacable et redimensionnable
+
+## Phase Details
+
+### Phase 14: Navigation, clavier et micro-interactions
+**Goal**: L'utilisateur navigue dans Scribe de maniere fluide au clavier et a la souris, sans conflits de raccourcis ni comportements inattendus
+**Depends on**: Phase 13 (v2.1 complete)
+**Requirements**: NAV-01, NAV-02, MOUSE-01, MICRO-01
+**Success Criteria** (what must be TRUE):
+  1. User presses Ctrl+Shift+I and Scribe opens -- Ctrl+I still triggers italic in OO as expected
+  2. In the result panel, pressing Tab moves focus from Insert to Replace (left-to-right), and Shift+Tab does the reverse
+  3. When the Scribe menu opens with the mouse cursor already over a menu item, that item is not highlighted until the mouse physically moves to a different item
+  4. The floating button tooltip appears only after 1 second of continuous hover -- moving away before 1s prevents the tooltip from showing
+**Plans**: TBD
+
+Plans:
+- [ ] 14-01: TBD
+
+### Phase 15: Panneau de resultat interactif
+**Goal**: L'utilisateur peut repositionner et redimensionner la fenetre de resultat pour l'adapter a son flux de travail
+**Depends on**: Phase 14
+**Requirements**: MOUSE-02, MOUSE-03
+**Success Criteria** (what must be TRUE):
+  1. User can click and drag the result panel background to move the window to a different position -- dragging on buttons or text content does not trigger drag
+  2. A subtle resize handle is visible in the bottom-right corner of the result panel
+  3. User can drag the resize handle to make the result panel larger or smaller, and the content reflows accordingly
+**Plans**: TBD
+
+Plans:
+- [ ] 15-01: TBD
+
 ## Progress
+
+**Execution Order:**
+Phases execute in numeric order: 14 -> 15
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -62,3 +102,5 @@ Full details: `.planning/milestones/v2.1-ROADMAP.md`
 | 11. Pipeline de Conversion | v2.1 | 2/2 | Complete | 2026-03-06 |
 | 12. Preview Markdown | v2.1 | 1/1 | Complete | 2026-03-07 |
 | 13. Reinjection et Integrite Pipeline | v2.1 | 1/1 | Complete | 2026-03-09 |
+| 14. Navigation, clavier et micro-interactions | v2.2 | 0/? | Not started | - |
+| 15. Panneau de resultat interactif | v2.2 | 0/? | Not started | - |
