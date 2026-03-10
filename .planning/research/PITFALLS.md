@@ -1,329 +1,242 @@
 # Domain Pitfalls
 
-**Domain:** Document Builder API injection added to existing OnlyOffice plugin (Scribe v2.4)
-**Researched:** 2026-03-15
-**Confidence:** MEDIUM-HIGH -- based on OO official docs, community forum issues, OO blog pitfalls article, and direct analysis of existing plugin code (code.js). Some Builder API edge cases are LOW confidence (no first-party documentation found).
+**Domain:** Chat side panel addition to existing OnlyOffice writing assistant (Scribe v3.0)
+**Researched:** 2026-03-10
+**Confidence:** MEDIUM-HIGH (OO iframe behavior from direct codebase analysis + official API docs; conversation storage from official cozy-stack docs; state management from React ecosystem evidence; performance concerns from community experience)
 
 ---
 
 ## Critical Pitfalls
 
-Mistakes that cause rewrites, data loss, or fundamental architecture failures.
+Mistakes that cause rewrites, broken editor experience, or data loss.
 
 ---
 
-### Pitfall 1: callCommand Sandbox Only Allows InsertContent -- No DOM APIs, No External Libraries, No Require
+### Pitfall 1: OO Editor Iframe Has No Resize Callback -- Blind Resize Causes Layout Corruption
 
 **What goes wrong:**
-The developer writes a Markdown parser that uses `DOMParser`, `document.createElement`, regex libraries, or any browser/Node API inside `callCommand`. The code silently fails or throws an undefined reference error inside the OO editor sandbox.
+The side panel opens by reducing the OO editor iframe width (e.g., from 100% to 70%). The OO editor does not detect the container size change. The document canvas, ruler, page layout, and scroll positions remain calculated for the old width. Text reflows incorrectly or not at all. The editor appears cropped, shows horizontal scrollbars, or renders blank areas. Closing the panel does not restore the correct layout.
 
 **Why it happens:**
-`callCommand` executes in an isolated JavaScript context inside the OO editor -- NOT in the plugin iframe window. This sandbox has access to the Office API (`Api.*`) and basic JS primitives, but nothing else. No `window`, no `document`, no `DOMParser`, no `require`, no `fetch`, no `console.log` (use the callback return value to debug). The existing code already discovered this: `stripOoClasses()` uses regex instead of DOMParser for exactly this reason (see code.js line 249, project memory: "Plugin sandbox interdit DOMParser").
+The OnlyOffice Docs API has **no resize event or callback** for when the editor's container element changes dimensions. The official events API (onAppReady, onDocumentReady, onDocumentStateChange, onInfo, etc.) covers document lifecycle and user actions -- none relate to container/iframe size changes. The editor internally listens to `window.resize` on its own iframe window, but changing the iframe element's CSS width from the parent frame does not necessarily trigger a `resize` event inside the iframe's own window context. The behavior depends on how the browser propagates layout changes to cross-origin iframes.
+
+In the current codebase, View.jsx uses `forceIframeHeight` to manipulate the iframe directly:
+```javascript
+const forceIframeHeight = value => {
+  const iframe = document.getElementsByName(FRAME_EDITOR_NAME)[0]
+  if (iframe) iframe.style.height = value
+}
+```
+The existing `OnlyOfficeAIAssistantPanel` already uses `width: 30%` in styles.styl alongside the editor, placed in a flex container. This means the pattern of side-by-side layout already exists, but its actual behavior under resize is unverified at scale.
 
 **Consequences:**
-Any Markdown-to-Builder-API converter that relies on DOM parsing will fail completely inside `callCommand`. The parser must be pure ES5 string/regex manipulation only.
+- Document appears cropped or has wrong page width after panel opens
+- Text reflow fails: lines extend beyond visible area, pagination breaks
+- User cannot edit properly with the panel open (effectively broken editor)
+- Closing the panel may not restore correct layout without a full editor reload
+- The failure is visual and immediate -- users will report it as a critical bug
 
 **Prevention:**
-1. Parse Markdown OUTSIDE `callCommand` -- in the plugin iframe context where `window`, `DOMParser`, and libraries are available
-2. Transform the parsed AST/tokens into a serializable instruction set (plain JSON array)
-3. Pass the instruction set via `Asc.scope` to `callCommand`
-4. Inside `callCommand`, iterate the instruction set and call Builder API methods
 
-This is the only viable architecture: **parse outside, build inside**.
+1. **Test the existing `OnlyOfficeAIAssistantPanel` behavior first.** Open the AI assistant panel (if available via feature flag), verify whether OO correctly reflows when the panel appears. This is a 5-minute validation that reveals the actual OO behavior on resize. The existing `width: 30%` in `styles.styl` and flex layout in View.jsx suggest someone has already attempted this pattern.
+
+2. **Force a `window.resize` dispatch inside the OO iframe after changing its container width:**
+   ```javascript
+   const iframe = document.getElementsByName(FRAME_EDITOR_NAME)[0]
+   if (iframe && iframe.contentWindow) {
+     try {
+       iframe.contentWindow.dispatchEvent(new Event('resize'))
+     } catch (e) {
+       // Cross-origin: cannot dispatch events into OO iframe
+     }
+   }
+   ```
+   This may fail due to cross-origin restrictions (the OO editor iframe is served from a different origin than Cozy Drive). If it fails, the only option is to set the iframe width via CSS and hope OO handles it internally.
+
+3. **Use CSS flex/grid layout, not JavaScript width manipulation.** Let the browser handle the iframe sizing via flex properties. OO may respond better to a gradual flex-based resize than to a sudden `style.width` change:
+   ```css
+   .onlyoffice-container { display: flex; }
+   .editor-wrapper { flex: 1 1 auto; min-width: 0; }
+   .side-panel { flex: 0 0 400px; } /* or percentage */
+   ```
+
+4. **Add a CSS transition on the editor container width** (200-300ms). A gradual transition may trigger the browser to fire resize events that OO picks up, whereas an instant width change may not. Test both.
+
+5. **Fallback: reload the editor config with new width.** If OO truly cannot handle container resize, the nuclear option is to destroy and recreate the DocsAPI.DocEditor instance with updated configuration. This is terrible UX (document flickers, loses undo history, may trigger a save cycle) but guarantees correct layout. Use this only as last resort.
+
+6. **Add a ResizeObserver on the editor container** to detect when the actual resize happens, and debounce any follow-up actions (like dispatching resize events) to avoid resize loops.
 
 **Detection:**
-- `callCommand` callback returns `undefined` when the function should return data
-- No visible error (sandbox swallows exceptions silently in some OO versions)
-- Content is not inserted but no error callback fires
+- Open panel, look at the OO editor. If page margins, ruler width, or text reflow look wrong, the resize was not detected.
+- Check if horizontal scrollbars appear in the OO editor iframe after resize.
+- Measure the OO canvas element width vs. the iframe width -- they should match.
 
-**Phase to address:** Phase 1 (architecture) -- this is the foundational design decision. Getting this wrong means rewriting the entire parser.
+**Phase to address:** Phase 1, first task. This is a go/no-go gate. If OO cannot handle container resize at all, the side panel architecture must change (overlay instead of resize, or full-page takeover).
+
+**Confidence:** MEDIUM -- the existing `OnlyOfficeAIAssistantPanel` code suggests this pattern has been attempted, but its actual runtime behavior is unverified. OO's internal resize handling is not documented.
 
 ---
 
-### Pitfall 2: Asc.scope Cannot Pass Functions and Has JSON Serialization Limits
+### Pitfall 2: Cross-Origin Iframe Blocks Resize Event Dispatch and Direct DOM Access
 
 **What goes wrong:**
-The developer puts a parsed AST object with methods, circular references, or very large strings into `Asc.scope`. Inside `callCommand`, the data arrives as `undefined` or is truncated.
+The developer tries to dispatch `resize` events, read `contentWindow.innerWidth`, or access the OO editor's internal DOM from the Cozy Drive parent. All attempts fail with `SecurityError: Blocked a frame with origin "X" from accessing a cross-origin frame`.
 
 **Why it happens:**
-`Asc.scope` serializes data across the message bridge between the plugin iframe and the editor sandbox. Per OO docs: "The functions cannot be passed to the callCommand method using the Asc.scope object." Only JSON-serializable primitives work: strings, numbers, booleans, arrays, plain objects. The OO blog (Jan 2026) warns: "The bridge is optimized for JSON-like payloads; large strings or nested objects increase latency."
+The frame hierarchy is: Cozy Stack > Cozy Drive iframe > OO Editor iframe > Plugin iframe. The OO editor iframe is served from the OO document server (a different origin than Cozy Drive). The Same-Origin Policy prevents:
+- Dispatching events into the OO iframe's window
+- Reading or writing the OO iframe's document or DOM
+- Accessing `iframe.contentWindow.innerWidth` or similar properties
+- Calling any methods on `iframe.contentDocument`
 
-The existing code already uses `Asc.scope` correctly (line 99: `Asc.scope._mode = mode`, lines 189-190: `Asc.scope.textToInsert`, `Asc.scope.originalLines`). These are small strings and arrays -- they work fine.
+The only cross-origin communication channel is `postMessage`, which the existing cozy-bridge protocol already uses.
 
 **Consequences:**
-- Functions silently become `undefined`
-- Very large base64 image strings may cause latency spikes or silent failures
-- Circular references cause serialization errors
+- Cannot programmatically trigger OO to detect its new size
+- Cannot read OO's internal state (canvas width, page layout, scroll position)
+- Cannot verify whether OO correctly handled the resize
+- Debugging is harder because you cannot inspect the OO iframe from Cozy Drive's DevTools context
 
 **Prevention:**
-1. Design the instruction set as a flat array of plain objects: `[{type: "paragraph", children: [{type: "run", text: "hello", bold: true}]}]`
-2. Keep base64 image data separate from the instruction set -- pass as a separate `Asc.scope` property or handle images in a dedicated second `callCommand` call
-3. Test with realistic payload sizes (a full page of Markdown with formatting)
-4. Never put functions, class instances, or DOM nodes into `Asc.scope`
+
+1. **Do not attempt direct DOM access to the OO iframe.** Rely exclusively on CSS-based sizing (flex/grid) and let the browser propagate layout changes.
+
+2. **The OO plugin CAN detect its own iframe resize.** If needed, add logic to the plugin's `code.js` that listens for `window` resize events (the plugin has access to its parent OO editor frame via postMessage). The plugin could notify Cozy Drive that OO has (or has not) detected a resize:
+   ```javascript
+   // In plugin code.js (runs inside OO's iframe tree)
+   window.addEventListener('resize', function() {
+     postToAncestors({ type: 'cozy-bridge:intent', action: 'EDITOR_RESIZED', ... })
+   })
+   ```
+
+3. **Test with the actual OO dev setup.** The cross-origin behavior depends on the exact deployment configuration. In dev, OO runs at `localhost:80` while Cozy Drive runs at `drive.cozy.localhost:8080` -- they are cross-origin. In production, the origins may differ further.
+
+4. **Consider using the plugin as a resize coordinator.** Since the plugin can access `window.Asc.plugin.executeMethod` and runs inside OO's context, it could potentially trigger an internal OO relayout. Research whether any executeMethod or callCommand can force OO to recalculate its layout.
 
 **Detection:**
-- `Asc.scope.myData` is `undefined` inside `callCommand` even though it was set outside
-- `callCommand` callback fires immediately with no result
-- Insertion works for short text but fails for longer content
+- `try { iframe.contentWindow.innerWidth } catch(e) { /* SecurityError */ }` -- if this throws, you are cross-origin.
+- Check browser console for "Blocked a frame with origin" errors.
 
-**Phase to address:** Phase 1 (instruction set design) -- validate the serialization boundary early with a representative payload.
+**Phase to address:** Phase 1 (alongside Pitfall 1 -- both are part of the resize feasibility validation).
+
+**Confidence:** HIGH -- cross-origin restrictions are a browser standard, verified in the existing architecture (the entire cozy-bridge protocol exists because of this constraint).
 
 ---
 
-### Pitfall 3: Multiple callCommand Calls Create Multiple Undo Points -- User Must Ctrl+Z Repeatedly
+### Pitfall 3: State Desynchronization Between Inline Mode and Chat Panel Mode
 
 **What goes wrong:**
-The developer chains two `callCommand` calls (e.g., one to clear the selection, one to insert content). The user presses Ctrl+Z expecting to undo the entire Scribe operation, but only the second operation is undone. They press Ctrl+Z again to undo the first. Worse, if they don't know about the second undo, the document is left in a half-modified state.
+The user selects text, opens the inline Scribe popover, gets a result, then switches to the chat panel to ask a follow-up question about the same text. The chat panel does not know about the inline interaction. Conversely, the user has a conversation in the chat panel, then closes it and triggers inline Scribe -- the inline mode does not know the chat context. The two modes operate as completely separate systems despite the user expecting continuity.
+
+Worse: the user opens the chat panel while an inline operation is in progress. Both modes try to communicate with the plugin simultaneously via the cozy-bridge protocol. The plugin responds to one but not the other, or the responses get crossed.
 
 **Why it happens:**
-Each `callCommand` call that modifies the document creates a separate undo history entry. The existing v2.1 code understood this: `pasteHtml()` uses a read-only `callCommand` (to detect adjacent chars) followed by a single `PasteHtml` (the only undo point). The comment at line 93 explicitly says: "This produces a single undo point (PasteHtml only -- the read-only callCommand doesn't count)."
+The current architecture has a clear single-mode flow:
+1. Plugin detects selection -> SHOW_SCRIBE_BUTTON intent -> floating button appears
+2. User clicks button -> trigger-intent -> plugin casts AI_TEXT_EDIT -> pendingIntent state in useCozyBridge
+3. ScribePopover opens with pendingIntent data, user picks action, gets result
+4. User clicks Replace/Insert/Cancel -> respond() clears pendingIntent
 
-With the Builder API approach, all content creation AND insertion must happen in a single `callCommand` call to maintain a single undo point.
+This flow assumes exactly one interaction at a time. Adding a second mode (chat panel) that also needs to communicate with the plugin creates:
+- **Protocol conflicts**: Who handles the AI_TEXT_EDIT intent when both modes are available?
+- **Selection state ownership**: Does the plugin send selection data to the inline mode, the chat panel, or both?
+- **Response routing**: When the user says "replace with this" in the chat, who sends the response to the plugin?
 
 **Consequences:**
-- User confusion: "Undo didn't work" (it only undid half the operation)
-- Document corruption: half-applied Scribe result mixed with original content
-- No programmatic way to group multiple `callCommand` calls into one undo point
+- User sees stale selection data in the chat panel
+- Plugin sends intent responses to the wrong handler
+- Race conditions between inline popover and chat panel competing for the same intent
+- Confusing UX where actions in one mode do not reflect in the other
 
 **Prevention:**
-1. Build ALL content (paragraphs, runs, tables, images) and call `InsertContent` exactly once, all within a single `callCommand` function
-2. Do NOT split the operation across multiple `callCommand` calls (e.g., "first call creates paragraphs, second call creates tables")
-3. If you need pre-insertion data (like the current selection range), use a read-only `callCommand` first (read-only commands don't create undo points), then do the actual insertion in a second `callCommand`
-4. The existing pattern in `pasteHtml()` (read-only prep + single modification) is the correct model
+
+1. **Establish a single "active mode" state.** At any given time, only one mode is active (inline or panel). When the panel is open, the floating button and inline popover are disabled. When the panel is closed, inline mode resumes:
+   ```javascript
+   const [activeMode, setActiveMode] = useState('inline') // 'inline' | 'panel'
+   ```
+
+2. **Lift selection state above both modes.** The current `useCozyBridge` hook manages `pendingIntent` and `showScribeButton`. Create a higher-level state manager that both modes consume:
+   ```javascript
+   // ScribeContext provides:
+   // - currentSelection: { text, html } (from plugin)
+   // - activeMode: 'inline' | 'panel'
+   // - respondToPlugin: (response) => void
+   ```
+
+3. **Do NOT allow both modes to receive intents simultaneously.** The cozy-bridge handler for AI_TEXT_EDIT must route to exactly one consumer based on `activeMode`.
+
+4. **Share conversation context.** When the user switches from inline to panel, the inline result (if any) should appear as the first message in the chat. When switching from panel to inline, the last AI response from the chat could pre-populate the result panel.
+
+5. **Guard the plugin communication channel.** Add a mutex-like mechanism so that only one operation (inline replace/insert OR chat-initiated document modification) can be in progress at a time. Queue subsequent requests.
 
 **Detection:**
-- Press Ctrl+Z after Scribe insert -- if the document goes to an intermediate state instead of back to original, you have multiple undo points
-- Count the number of `callCommand` calls with `isCalc: true` (default) that modify content
+- Open panel while inline popover is showing -- check if both remain functional or if one breaks.
+- Select text, start inline action, switch to panel mid-operation -- check if operation completes or hangs.
+- Have a chat conversation, close panel, trigger inline Scribe -- check if selection data is fresh.
 
-**Phase to address:** Phase 1 (architecture) -- the single-callCommand constraint shapes the entire instruction interpreter design.
+**Phase to address:** Phase 2 (protocol and state architecture). Must be designed before building either the panel UI or the mode toggle.
+
+**Confidence:** HIGH -- this is a fundamental architectural concern visible directly from the current codebase structure.
 
 ---
 
-### Pitfall 4: Redo Is Broken After callCommand -- Known OO Bug
+### Pitfall 4: Conversation Persistence via io.cozy.ai.chat.conversations API is Async + Websocket-Based
 
 **What goes wrong:**
-After a `callCommand` execution, the Redo button is permanently disabled. The user performs an action, undoes it with Ctrl+Z (works), then tries Ctrl+Y to redo -- nothing happens.
+The developer calls `POST /ai/chat/conversations/:id` expecting a synchronous response with the AI's answer. Instead, the API returns `202 Accepted` immediately with the conversation document (containing only the user's message). The AI response arrives later via websocket (`io.cozy.ai.chat.events`). The developer does not set up the websocket subscription, so the response is never received. The chat shows the user's message but never shows the AI's reply.
+
+Alternatively: the developer sets up the websocket but does not handle the streaming protocol correctly. The `io.cozy.ai.chat.events` doctype sends `delta` objects (individual tokens) and a `done` signal. Missing the `done` signal means the chat never knows the response is complete. Missing `delta` objects means the response is incomplete.
 
 **Why it happens:**
-This is a confirmed OnlyOffice bug (reported March 2025, registered as a bug by the OO team). The `callCommand` method disrupts the redo history regardless of whether the command modifies content or not. The OO team's workaround suggestion was to use `executeMethod` instead, but `executeMethod` cannot create structured content via the Builder API.
+The existing Scribe AI integration (`scribeAI.js`) uses a different endpoint: `POST /ai/v1/chat/completions`, which is synchronous (returns the full response in the HTTP body). The chat conversations API (`POST /ai/chat/conversations/:id`) uses a fundamentally different pattern:
+1. POST creates a job on the server
+2. Server returns 202 with the conversation document (user message added)
+3. Server pushes response tokens via realtime websocket on `io.cozy.ai.chat.events`
+4. Client accumulates tokens and displays them
+5. `done` event signals completion, includes sources (relevant documents from RAG)
+
+These are two different APIs with different protocols. The v3.0 chat panel must use the conversations API (for persistence and streaming), while the inline mode continues using the completions API (for simplicity).
 
 **Consequences:**
-- Users cannot redo Scribe operations
-- Users cannot redo ANY operation after Scribe has executed a `callCommand`
-- This is an upstream OO bug -- no workaround exists within the plugin
+- Chat panel shows user messages but no AI responses (if websocket not connected)
+- Partial responses if token streaming is not handled correctly
+- "Conversation saved but response missing" if the websocket connection drops mid-stream
+- Duplicate responses if the websocket reconnects and replays events
 
 **Prevention:**
-1. Accept this as a known limitation and document it
-2. Do NOT try to work around it by chaining `executeMethod` calls -- the Builder API requires `callCommand`
-3. Minimize the number of `callCommand` calls to reduce the window where redo is disrupted
-4. Monitor the OO bug tracker for a fix (it was registered as a bug, fix not yet released as of March 2026)
+
+1. **Use cozy-realtime for websocket subscriptions.** Cozy Drive already uses `cozy-realtime` (5.8.0) for file change subscriptions (see `OnlyOfficeProvider.jsx`). Use the same pattern:
+   ```javascript
+   const realtime = client.plugins.realtime
+   realtime.subscribe('created', 'io.cozy.ai.chat.events', conversationId, handleEvent)
+   ```
+
+2. **Handle the streaming protocol explicitly:**
+   - `object: "delta"` -> append `content` to accumulated response, update chat UI
+   - `object: "done"` -> mark response as complete, save final state
+   - Handle `position` field for ordering (tokens may arrive out of order in edge cases)
+
+3. **Implement reconnection logic.** If the websocket drops during a response:
+   - Re-fetch the conversation document to get any persisted partial response
+   - Re-subscribe to events
+   - Show a "reconnecting..." indicator in the chat
+
+4. **Keep the inline mode's synchronous API (`/ai/v1/chat/completions`) unchanged.** Do not try to unify both modes onto the same API. They serve different purposes: inline = quick one-shot, panel = multi-turn conversational.
+
+5. **Test the conversation lifecycle end-to-end early.** Before building the chat UI, verify:
+   - POST creates conversation and returns 202
+   - Websocket events arrive with correct format
+   - Final conversation document has both user and assistant messages
+   - Conversation can be re-fetched by ID for history display
 
 **Detection:**
-- After any Scribe operation, check if Ctrl+Y / Redo button works for operations done before the Scribe action
+- POST to conversations API, check response status code. If 200 with AI response -> wrong API. If 202 without AI response -> correct API, need websocket.
+- Check browser DevTools Network tab for websocket frames after posting.
+- Look for `io.cozy.ai.chat.events` in websocket traffic.
 
-**Phase to address:** All phases -- this is an upstream limitation to accept and document, not to fix.
+**Phase to address:** Phase 2 or 3 (when implementing the chat panel's AI interaction). Requires early validation of the API behavior.
 
----
-
-### Pitfall 5: ES5 Constraint Inside callCommand -- No Arrow Functions, No const/let, No Template Literals, No Destructuring
-
-**What goes wrong:**
-The developer writes the `callCommand` function body using modern JS syntax. The code fails silently or throws a syntax error in the OO editor sandbox.
-
-**Why it happens:**
-The `callCommand` function body is serialized as a string and executed in the OO editor's JS engine, which requires ES5 syntax. This is already documented in the project memory and code.js uses ES5 throughout. But the NEW risk is: the Markdown-to-Builder instruction interpreter will be the most complex code ever written inside `callCommand` for this plugin. It's easy to slip into ES6 syntax when writing 50+ lines of loop/switch logic.
-
-**Consequences:**
-- Silent failure: content not inserted, no error visible
-- Intermittent: may work in dev (if OO desktop uses a newer engine) but fail in production web editor
-
-**Prevention:**
-1. Write the `callCommand` interpreter function in a separate file, clearly marked ES5-only
-2. Use a linter rule or pre-commit check to flag ES6 syntax in that function
-3. Test in the actual OO web editor (not just desktop), as the web sandbox is more restrictive
-4. Patterns to avoid inside callCommand:
-   - `const` / `let` -- use `var`
-   - `() => {}` -- use `function() {}`
-   - `` `template ${literals}` `` -- use `"string " + concatenation`
-   - `{a, b} = obj` -- use `var a = obj.a; var b = obj.b;`
-   - `for...of` -- use indexed `for` loops
-   - `Array.from`, `Object.entries`, `Array.includes` -- use ES5 equivalents
-
-**Detection:**
-- callCommand silently does nothing
-- Works in one OO environment but not another
-- Browser console shows syntax error from OO internal eval
-
-**Phase to address:** Phase 1 onward -- every phase that writes code inside callCommand must follow ES5.
-
----
-
-## High-Severity Pitfalls
-
-Mistakes that cause significant bugs, data issues, or major rework.
-
----
-
-### Pitfall 6: InsertContent Replaces the Current Selection -- Must Manage Selection State Carefully
-
-**What goes wrong:**
-The developer calls `InsertContent` expecting it to insert at the cursor position, but it replaces whatever is currently selected. If the user's selection has changed between the time Scribe received the text and the time the Builder API runs, wrong content gets replaced.
-
-**Why it happens:**
-`InsertContent` inserts at the current document position, which means it replaces the active selection. The existing code handles this for `PasteHtml` (replace mode) and carefully manages cursor position for insert mode (see `pasteHtml()` lines 102-140). The Builder API via `InsertContent` has the same behavior.
-
-The risk is amplified because the Builder API path involves more processing time (parse MD, build instruction set, execute), during which the user might click elsewhere in the document.
-
-**Consequences:**
-- Wrong text gets replaced
-- User loses content they didn't intend to modify
-- Especially dangerous in "insert after" mode -- the cursor must be positioned at the end of the selection before `InsertContent`
-
-**Prevention:**
-1. Use the same two-step pattern as the existing `pasteHtml()`: read-only `callCommand` to capture selection state + position cursor, then modification `callCommand` to insert
-2. Set `pasteInProgress = true` before the operation to suppress `init()` interference (already done in existing code, line 97)
-3. Stop hide polling during the operation (already done, line 98)
-4. Keep the time between selection capture and insertion minimal -- do all MD parsing BEFORE the first callCommand, not between the two
-
-**Detection:**
-- Content appears in the wrong place in the document
-- Original selection is not replaced (or wrong text is replaced)
-- `init()` fires during the operation and resets `lastSelectedText`
-
-**Phase to address:** Phase 1 -- selection management must be designed alongside the instruction interpreter.
-
----
-
-### Pitfall 7: Post-Insertion Selection Is Unreliable -- GetRange/Select After InsertContent Fails
-
-**What goes wrong:**
-After `InsertContent`, the developer tries to select the newly inserted content (to highlight what Scribe added). `GetRange()` on the inserted paragraphs throws an error or returns null. `Select()` does nothing. The cursor ends up in an unpredictable position.
-
-**Why it happens:**
-This is a known OO limitation documented in their community forums. After `InsertContent`, the inserted elements are not yet fully processed as document elements. `GetRange()` on the inserted paragraph throws, `GetPosInParent()` returns null, and `Select()` does not work. The OO-suggested workaround is: use `Search()` to find the inserted text, then `GetRangeBySelect()` to get a range.
-
-The project memory confirms this was already investigated: "OO returns inconsistent positions after PasteHtml -- see phase13-paste-select.md" and "post-paste selection was previously impossible with PasteHtml."
-
-**Consequences:**
-- Cannot highlight the inserted content for the user
-- Cursor position after insert is unpredictable
-- Attempting to select inserted content may cause OO errors
-
-**Prevention:**
-1. Do NOT try to select inserted content within the same `callCommand` that calls `InsertContent` -- the elements are not queryable yet
-2. If post-insert selection is needed, use a separate follow-up approach:
-   a. Insert a unique marker string (e.g., a zero-width character or unique ID) at the start and end of the content
-   b. In a second (read-only) `callCommand`, use `Search()` to find the markers, then `GetRangeBySelect()` to select between them
-   c. In a third `callCommand`, remove the markers
-3. Accept that post-insert selection is a stretch goal, not a Phase 1 requirement
-4. The Builder API may offer better positioning than PasteHtml since you control element creation -- but this needs empirical validation
-
-**Detection:**
-- `GetRange()` throws inside callCommand after InsertContent
-- Cursor appears at the document start or end instead of at the insertion point
-- Selection highlight does not appear
-
-**Phase to address:** Dedicated late phase -- post-insert selection is complex and should not block core injection functionality.
-
----
-
-### Pitfall 8: Base64 Images Via Asc.scope Can Bloat the Payload and Cause Latency or Failure
-
-**What goes wrong:**
-The developer passes base64-encoded images (extracted from the original document) through `Asc.scope` to recreate them via `Api.CreateImage("data:image/jpeg;base64,...")`. For documents with multiple images or high-resolution images, the `Asc.scope` payload becomes several megabytes. The bridge slows down or silently drops the data.
-
-**Why it happens:**
-Base64 encoding increases data size by ~33%. A single high-res image can be 2-5MB in base64. The OO message bridge between the plugin iframe and editor sandbox is optimized for small JSON payloads (the OO blog specifically warns about this). Additionally, OO's JWT documentation warns against sending base64 images through JWT because "the token will be too long" -- the same principle applies to `Asc.scope`.
-
-**Consequences:**
-- Insertion hangs or takes several seconds
-- Large images silently fail to insert
-- Plugin appears frozen during the bridge transfer
-
-**Prevention:**
-1. For the initial Builder API implementation, skip image handling entirely -- focus on text formatting (bold, italic, lists, headings)
-2. When images are needed, consider alternatives to base64:
-   a. If the image has a URL (e.g., hosted on Cozy), pass the URL to `Api.CreateImage(url, width, height)` instead of base64
-   b. If base64 is required, pass images as separate Asc.scope properties (not inline in the instruction array) and reference them by index
-3. Set a size limit: skip images larger than 500KB base64 and log a warning
-4. Test with realistic image sizes from actual Cozy Drive documents
-
-**Detection:**
-- callCommand takes > 2 seconds to execute
-- Callback never fires for documents with images
-- Small-image documents work, large-image documents fail
-
-**Phase to address:** Dedicated image phase (not Phase 1) -- text formatting first, images second.
-
----
-
-### Pitfall 9: Markdown Parser Must Handle LLM Output Quirks, Not Just Spec-Compliant Markdown
-
-**What goes wrong:**
-The ES5 Markdown parser handles standard Markdown correctly but fails on common LLM output patterns: inconsistent heading levels, code blocks without language tags, lists with mixed indentation, bare URLs, excessive blank lines, markdown inside code blocks.
-
-**Why it happens:**
-LLMs (GPT, Claude, Mistral) produce Markdown-like output that often deviates from CommonMark:
-- Double newlines inside list items (breaks list continuation)
-- `**bold**` immediately adjacent to punctuation without spaces
-- Nested lists with 2-space indent (CommonMark requires 4)
-- HTML entities mixed with Markdown (`&mdash;` inside bold markers)
-- Trailing whitespace that creates unintended `<br>` in strict parsers
-
-The existing pipeline uses `marked` (a mature parser) on the React side for preview rendering, but the callCommand parser must be a custom ES5 implementation that handles these same quirks.
-
-**Consequences:**
-- Bold/italic not detected in edge cases
-- Lists rendered as separate paragraphs instead of list items
-- Preview (react-markdown) looks correct but injected document looks wrong
-
-**Prevention:**
-1. Build a test suite of real LLM outputs (capture 20+ actual Scribe responses across all actions)
-2. Compare parsed output against `marked` output for each test case
-3. Handle common LLM quirks explicitly:
-   - Normalize line endings (`\r\n` to `\n`)
-   - Collapse 3+ blank lines to 2
-   - Support both 2-space and 4-space list indentation
-   - Handle `**bold**` adjacent to punctuation
-4. Keep the parser simple: support headings, bold, italic, lists (ordered/unordered), code blocks, paragraphs. Do NOT try to support the full CommonMark spec -- it's unnecessary and adds ES5 complexity
-5. Use a token-based approach (line-by-line for blocks, regex for inline) rather than a full AST parser
-
-**Detection:**
-- Preview panel shows correct formatting but inserted document has wrong formatting
-- Lists appear as numbered paragraphs
-- Bold text appears as `**text**` literally in the document
-
-**Phase to address:** Phase 1-2 -- the parser is foundational. Build with test cases from day one.
-
----
-
-### Pitfall 10: CreateTable Width/Formatting Lost When InsertContent Places Table in Document
-
-**What goes wrong:**
-The developer creates a table with `Api.CreateTable(cols, rows)`, sets column widths with `SetWidth("twips", value)`, applies cell formatting -- then calls `InsertContent([table])`. The table appears in the document but column widths are reset to auto, borders are missing, or cell alignment is lost.
-
-**Why it happens:**
-`InsertContent` has a `KeepTextOnly` option and default property-preservation behavior that may strip table formatting. The `isInline` parameter behavior with tables is undocumented. Additionally, tables created via Builder API may have different default styling than tables created through the OO UI -- the UI applies the current table style, while the API creates unstyled tables.
-
-**Consequences:**
-- Tables appear but look wrong (wrong widths, no borders, misaligned)
-- Significant debugging time because the table "works" but looks different from what the user expects
-
-**Prevention:**
-1. After creating a table, explicitly set ALL formatting properties:
-   - `table.SetWidth("percent", 100)` for full-width tables
-   - `table.SetTableLayout("fixed")` if column widths should be preserved
-   - Set borders explicitly on each cell (do not rely on default table style)
-   - Set cell padding/margin explicitly
-2. Test table insertion with `InsertContent` specifically -- table formatting that works with `Push()` in Document Builder standalone may behave differently with `InsertContent` in a plugin
-3. Start with simple tables (no merged cells, uniform column widths) and add complexity incrementally
-
-**Detection:**
-- Table appears in document but looks different from the preview
-- Column widths are equal despite being set to different values
-- Borders are missing or inconsistent
-
-**Phase to address:** Dedicated table phase -- tables are complex enough to warrant their own implementation phase after basic text formatting works.
+**Confidence:** HIGH -- verified from official cozy-stack documentation (docs.cozy.io/en/cozy-stack/ai/).
 
 ---
 
@@ -331,171 +244,408 @@ The developer creates a table with `Api.CreateTable(cols, rows)`, sets column wi
 
 ---
 
-### Pitfall 11: PasteHtml Fallback Path Must Be Preserved -- Builder API Is Not a Complete Replacement on Day One
+### Pitfall 5: Chat History Growth Degrades React Rendering Performance
 
 **What goes wrong:**
-The developer removes the existing `PasteHtml` path (lines 96-155 of code.js) to replace it with Builder API injection. The Builder API handles basic formatting but fails on an edge case (e.g., complex nested lists). The user gets no content insertion at all instead of a degraded-but-functional PasteHtml insertion.
+After 50+ messages in a conversation (or many conversations loaded in the sidebar), the chat panel becomes sluggish. Typing in the input field has noticeable lag. Scrolling through history stutters. Each new AI token during streaming causes a re-render of the entire message list.
 
 **Why it happens:**
-The Builder API migration is incremental. The v2.1 PasteHtml pipeline works for most cases. Removing it before the Builder API handles ALL cases means regression.
+React re-renders the entire message list component when state changes (new message added, streaming token appended). With 50+ messages, each containing potentially rich Markdown content rendered via react-markdown, a single state update triggers:
+1. Re-render of the message list component
+2. Re-render of each message component (unless memoized)
+3. Re-parse and re-render of Markdown in each message (if using react-markdown)
+
+The streaming case is worst: every 50-100ms a new token arrives, triggering a state update that re-renders the entire list.
+
+**Consequences:**
+- Visible lag when typing in the chat input (blocked by rendering)
+- Scroll jank during history browsing
+- Browser tab becomes unresponsive during long AI responses
+- OO editor (sharing the same main thread) becomes sluggish
 
 **Prevention:**
-1. Keep PasteHtml as a fallback: `if (builderApiSupported && !fallbackNeeded) { useBuilderApi() } else { usePasteHtml() }`
-2. Add a feature flag or capability check to switch between Builder API and PasteHtml
-3. The Builder API path should be additive (new code path), not a replacement of existing code
-4. Only remove PasteHtml after ALL content types (text, lists, tables, images) are handled by Builder API
+
+1. **Virtualize the message list.** Only render messages visible in the viewport. Use a lightweight virtualizer (react-window or similar) for the message list. Estimated row heights work for variable-height chat messages.
+
+2. **Memoize individual message components aggressively:**
+   ```javascript
+   const ChatMessage = React.memo(({ message }) => {
+     // Only re-render if message content changes
+     return <MarkdownPreview content={message.content} />
+   })
+   ```
+
+3. **For streaming, update only the last message.** Do not replace the entire messages array. Use a ref or separate state for the in-progress message:
+   ```javascript
+   const [messages, setMessages] = useState([]) // completed messages
+   const streamingContentRef = useRef('') // current streaming message
+   const [streamingDisplay, setStreamingDisplay] = useState('')
+   // Batch token updates: flush every 100-200ms, not every token
+   ```
+
+4. **Render streaming content as plain text, switch to Markdown on completion.** Parsing Markdown on every token is expensive. Show raw text during streaming, render as Markdown only after the `done` event.
+
+5. **Paginate conversation history.** Do not load all conversations at once. Load the 10 most recent conversations, fetch older ones on scroll or explicit "load more."
+
+6. **Limit message count per conversation in the UI.** If a conversation exceeds 100 messages, show only the last 50 with a "load earlier messages" button.
 
 **Detection:**
-- Content that previously inserted correctly now fails to insert
-- Regression in basic text insertion while working on advanced features
+- Open Chrome DevTools Performance tab during a streaming response with 30+ existing messages. Look for long tasks > 50ms.
+- Type in the input field with 50+ messages rendered -- if keystroke-to-character delay > 100ms, the list is too heavy.
 
-**Phase to address:** Phase 1 (architecture) -- design the fallback strategy from the start.
+**Phase to address:** Phase 3 (chat UI implementation). Design the component structure with performance in mind from the start -- retrofitting virtualization is harder than building with it.
+
+**Confidence:** HIGH -- React re-rendering costs with large lists and Markdown parsing are well-documented.
 
 ---
 
-### Pitfall 12: Paragraph Properties (Alignment, Spacing, Indentation) Not Preserved Through Markdown Round-Trip
+### Pitfall 6: Panel Open/Close Loses Plugin Selection State
 
 **What goes wrong:**
-The user has a paragraph with center alignment, 1.5 line spacing, and 12pt after-paragraph spacing. Scribe extracts the text, sends it to the LLM, gets back Markdown, and injects via Builder API. The new paragraph has default properties: left-aligned, single-spaced, no extra spacing. The formatting of the original document is destroyed.
+The user selects text in OO, opens the side panel, and starts chatting. Mid-conversation, they click elsewhere in the document (changing the selection) or OO auto-deselects. The chat panel still shows the old selection context, but the plugin's `lastSelectedText` and `lastSelectedHtml` now reflect the new (or empty) selection. When the user says "replace the selected text with this," the plugin operates on the wrong selection or fails because nothing is selected.
 
 **Why it happens:**
-Markdown has no concept of paragraph alignment, spacing, or indentation. The HTML-to-Markdown conversion (Turndown) loses these properties. The LLM operates on Markdown text and cannot preserve what was lost. The Builder API creates paragraphs with default properties.
+The plugin's selection tracking (`init()` callback + polling) is designed for ephemeral interactions (inline Scribe). It continuously updates `lastSelectedText` as the user's selection changes. There is no mechanism to "pin" a selection for a long-running chat conversation.
 
-This is acknowledged in the project requirements: "Strategie de preservation du formatage d'origine perdu par l'aller-retour Markdown."
+When the panel is open, the user may:
+- Click in the document to position the cursor (deselects)
+- Select different text for a new question
+- Navigate to a different page in the document
+- The OO editor may auto-deselect after certain operations
+
+**Consequences:**
+- "Replace" action from chat modifies wrong text or fails
+- User confusion: chat shows "your selected text: X" but the actual selection is Y
+- Silent data corruption: AI response replaces the wrong paragraph
 
 **Prevention:**
-1. Before sending to the LLM, capture the paragraph properties of the selected content via a read-only `callCommand`:
-   - `paragraph.GetJc()` (alignment)
-   - `paragraph.GetSpacingBefore()` / `GetSpacingAfter()`
-   - `paragraph.GetIndLeft()` / `GetIndRight()` / `GetIndFirstLine()`
-   - `paragraph.GetStyle()` (style name)
-2. Store these properties alongside the instruction set
-3. When building paragraphs in the insertion callCommand, apply the captured properties:
-   - `newParagraph.SetJc(originalAlignment)`
-   - `newParagraph.SetSpacingBefore(originalSpacing)`
-4. For "replace" mode: apply the first original paragraph's properties to all new paragraphs (or map 1:1 if paragraph count matches)
-5. For "insert" mode: use the last original paragraph's properties as a template
+
+1. **Snapshot the selection when the panel opens or when the user explicitly attaches context.** Store the snapshot (text, HTML, document position) separately from the live plugin selection state:
+   ```javascript
+   const [pinnedSelection, setPinnedSelection] = useState(null)
+   // When user opens panel with selection:
+   setPinnedSelection({ text: currentSelection.text, html: currentSelection.html })
+   ```
+
+2. **Show a clear visual indicator of the pinned selection in the chat panel.** Display the pinned text as a quote or chip that the user can see and dismiss. Make it obvious what text the conversation is about.
+
+3. **Require explicit re-selection for document modification.** When the user wants to replace text from the chat:
+   - Option A: Re-select the original text programmatically (if OO supports selecting by position -- risky, positions may have changed if the document was edited)
+   - Option B: Ask the user to re-select the target text ("Please select the text you want to replace, then click Replace")
+   - Option C: Show the replacement text and let the user copy-paste manually
+
+4. **Track whether the original selection is still valid.** If the document has been edited since the selection was pinned (detectable via `onDocumentStateChange` event), warn the user that the original context may have changed.
+
+5. **Separate "context for conversation" from "target for modification."** The pinned selection is context for the AI conversation. The current live selection is the target for insert/replace. These may be different, and the UI should reflect that.
 
 **Detection:**
-- Inserted text has different alignment than original
-- Line spacing changes after Scribe replace
-- Indentation is lost
+- Open panel with selected text, click elsewhere in document, try to use "Replace" from chat. If it replaces wrong text or errors, selection sync is broken.
+- Open panel, edit the document (add/remove paragraphs before the selected text), try to use Replace. If the replacement lands in the wrong position, positional tracking is broken.
 
-**Phase to address:** Phase 2-3 -- property preservation requires the read-only prep callCommand to be extended.
+**Phase to address:** Phase 2 (state architecture) and Phase 3 (UI for pinned selection).
+
+**Confidence:** HIGH -- this is a direct consequence of the existing plugin architecture's ephemeral selection model.
 
 ---
 
-### Pitfall 13: OO Ordered List Bug (#79263) Still Exists -- Builder API May Have the Same Issue
+### Pitfall 7: CSS z-index and Stacking Context Conflicts Between Panel, Floating Button, and Popover
 
 **What goes wrong:**
-Ordered lists inserted via the API render incorrectly -- numbering restarts at 1 for each item, or list items are not recognized as part of a list.
+The side panel renders behind the OO editor iframe, or the floating button appears on top of the panel, or the inline popover renders inside the panel instead of over the editor area. Z-index values that worked for a single overlay (floating button) break when a second persistent UI element (side panel) is added.
 
 **Why it happens:**
-The project context mentions a known OO bug (#79263) with ordered lists in PasteHtml. This may or may not affect Builder API list creation (different code path in OO). But `Api.CreateNumbering("numbered")` and paragraph `SetNumbering()` use the same internal numbering engine.
+The current UI uses:
+- ScribeFloatingButton: rendered via React portal on `document.body` with `z-index: 100000`
+- ScribePopover: MUI Popover (renders in a portal with its own z-index)
+- OO editor iframe: has very high z-index (set internally by OO)
+- OnlyOfficeAIAssistantPanel: existing panel with `width: 30%` in a flex container
+
+Adding a side panel creates a new stacking context participant. The panel must:
+- Be above the page background but below modals/popovers
+- Not overlap with the OO editor area
+- Not interfere with the floating button (which should be hidden when the panel is open)
+- Work correctly when MUI Popover/Dialog components are used inside the panel
+
+**Consequences:**
+- Panel invisible (behind OO iframe)
+- UI elements overlapping incorrectly
+- Click events captured by the wrong layer
+- MUI components inside the panel (menus, autocomplete, dialogs) clipped or hidden
 
 **Prevention:**
-1. Test ordered list creation via Builder API early -- before building the full parser
-2. Create a minimal test: 3-item numbered list via `callCommand` with `Api.CreateNumbering("numbered")` and verify rendering
-3. If the bug affects Builder API too, document it and provide a workaround (e.g., manually setting list level and start number)
-4. Compare Builder API list rendering with PasteHtml list rendering to determine which is more reliable
+
+1. **Use flex layout, not absolute/fixed positioning with z-index, for the panel.** The panel should be a sibling of the OO editor container in the DOM, not a portal:
+   ```jsx
+   <div className="u-flex u-flex-grow-1">
+     <div id="onlyOfficeEditor" style={{ flex: 1 }} />
+     {showPanel && <SidePanel style={{ width: 400 }} />}
+   </div>
+   ```
+   This is the pattern already used by `OnlyOfficeAIAssistantPanel` in `View.jsx`.
+
+2. **Hide the floating button when the panel is open.** Do not rely on z-index to prevent overlap:
+   ```javascript
+   const showButton = showScribeButton && !pendingIntent && !isPanelOpen
+   ```
+
+3. **Ensure the panel does not create a new stacking context that traps MUI portals.** MUI components (Popover, Menu, Dialog) use React portals to render on `document.body`. If the panel has `overflow: hidden` or `transform` or `filter` CSS, it creates a stacking context that can clip these portals. Avoid these properties on the panel container.
+
+4. **Test MUI components inside the panel:** autocomplete dropdowns, select menus, tooltip popovers. Verify they render above the panel and are not clipped.
 
 **Detection:**
-- Numbered list starts at 1 for every item instead of incrementing
-- List items appear as regular paragraphs with "1. " prefix text
-- List indentation is wrong
+- Open panel, check if it is visible and correctly positioned beside (not behind) the OO editor.
+- Open a MUI Menu/Select inside the panel. If the dropdown is clipped at the panel boundary, there is a stacking context issue.
 
-**Phase to address:** Phase 1-2 -- test early, before investing in a complex list parser.
+**Phase to address:** Phase 1 (layout implementation) and Phase 3 (chat UI with interactive components).
+
+**Confidence:** HIGH -- z-index issues with iframes and MUI portals are well-documented in the React/MUI ecosystem.
 
 ---
 
-### Pitfall 14: callCommand Return Value Only Supports JS Standard Types -- Objects Return as undefined
+### Pitfall 8: Toggle Animation Causes OO Editor Blank Flash or Content Jump
 
 **What goes wrong:**
-The developer returns a complex object from `callCommand` to get information about the insertion result (e.g., position, paragraph count). The callback receives `undefined`.
+When the user toggles the side panel open or closed, the OO editor area resizes. During the transition, the editor shows a blank white area, or the document content jumps/shifts abruptly, or there is a visible "repaint flash" where the old layout briefly coexists with the new one.
 
 **Why it happens:**
-Per OO docs: "Only the js standard types are available (any objects will be replaced with undefined)." This means you can return strings, numbers, booleans -- but not objects or arrays directly. You must `JSON.stringify()` inside callCommand and `JSON.parse()` in the callback. The existing code already does this correctly (line 140-141: `return JSON.stringify(result)` inside callCommand, `JSON.parse(prepResult)` in callback).
+OO's internal rendering engine repaints its canvas when the container size changes. If the transition is animated (CSS transition on width), OO may:
+- Repaint on every animation frame (expensive, causes jank)
+- Repaint only at the start and end (causes a sudden jump)
+- Not repaint at all during the transition (shows stale/clipped content)
+- Show a brief blank state while recalculating page layout
+
+The OO editor renders to a `<canvas>` element, not HTML. Canvas rendering is synchronous and does not participate in CSS transitions. The canvas must be explicitly resized and redrawn.
+
+**Consequences:**
+- Jarring visual experience every time the panel opens/closes
+- Users avoid using the panel because the transition feels broken
+- Potential loss of scroll position or cursor position during resize
 
 **Prevention:**
-1. Always `JSON.stringify()` any structured return value inside callCommand
-2. Always `JSON.parse()` in the callback
-3. Keep return payloads small (the return also crosses the message bridge)
-4. Follow the existing pattern in `pasteHtml()` -- it's the proven approach
+
+1. **Test with no animation first.** Implement panel toggle as an instant width change (no CSS transition). If OO handles this correctly, then add animation. If OO cannot handle even instant resize, animation will make it worse.
+
+2. **If animation is desired, hide the editor during transition:**
+   ```javascript
+   const handleToggle = () => {
+     setEditorVisible(false) // or opacity: 0
+     setIsPanelOpen(!isPanelOpen)
+     setTimeout(() => {
+       setEditorVisible(true) // restore after layout settles
+     }, 300) // match transition duration
+   }
+   ```
+   This is a hack but prevents the user from seeing the broken intermediate states.
+
+3. **Use `will-change: width` on the editor container** to hint to the browser that width will change, potentially improving repaint performance.
+
+4. **After the transition completes, force a resize event** (see Pitfall 1 prevention) to ensure OO recalculates its layout for the final width.
+
+5. **Consider an overlay panel instead of a resize panel.** An overlay panel (absolute positioned on top of the editor, partially covering it) avoids the resize issue entirely. The tradeoff is reduced editor visible area, but the editor layout is never disturbed. This is how many editor integrations handle side panels (VS Code extensions, Google Docs add-ons).
 
 **Detection:**
-- Callback receives `undefined` when an object was returned
-- Callback receives `"[object Object]"` (toString instead of serialize)
+- Toggle the panel and watch the editor area during the transition. Any flicker, blank flash, or content jump indicates OO is not handling the resize smoothly.
+- Record the screen at 60fps and step through frames during toggle.
 
-**Phase to address:** All phases -- follow the existing pattern, no new design needed.
+**Phase to address:** Phase 1 (layout/resize validation). The animation polish can wait for later phases, but the basic toggle behavior must work.
+
+**Confidence:** MEDIUM -- OO's canvas rendering behavior during resize is not documented. Must be empirically tested.
+
+---
+
+### Pitfall 9: Conversation ID Management and Race Conditions with cozy-stack
+
+**What goes wrong:**
+The user opens the chat panel and starts typing before a conversation ID is created. The first message is sent to a randomly generated conversation ID. A second message is sent before the first POST returns. Both create separate conversation documents on the server, or the second POST fails because the conversation does not exist yet.
+
+Alternatively: the user opens an old conversation from history, sends a new message, but the server returns a 404 because the conversation was deleted or the ID is wrong.
+
+**Why it happens:**
+The cozy-stack conversations API (`POST /ai/chat/conversations/:id`) expects the client to provide the conversation ID. The client generates a random ID for new conversations. Race conditions arise when:
+1. Two messages are sent before the conversation document is created
+2. The client generates the ID but the server has not yet persisted the document
+3. The user navigates away and back, and the local ID does not match any server document
+4. The websocket subscription uses one ID while the POST uses another
+
+**Consequences:**
+- Messages split across multiple conversation documents
+- Lost messages (sent to non-existent conversation ID)
+- Conversation history shows duplicates or missing entries
+- Websocket events arrive for wrong conversation ID
+
+**Prevention:**
+
+1. **Generate the conversation ID upfront and reuse it.** Create the ID before the first message, store it in state, and use the same ID for all subsequent messages and websocket subscriptions:
+   ```javascript
+   const [conversationId] = useState(() => generateConversationId())
+   ```
+
+2. **Disable the send button until the previous message's POST returns 202.** This prevents concurrent POSTs to the same conversation:
+   ```javascript
+   const [isSending, setIsSending] = useState(false)
+   // On send: setIsSending(true), POST, wait for 202, setIsSending(false)
+   ```
+
+3. **Subscribe to websocket events before sending the first POST.** This ensures you do not miss the response for the first message:
+   ```javascript
+   useEffect(() => {
+     realtime.subscribe('created', 'io.cozy.ai.chat.events', conversationId, handleEvent)
+     return () => realtime.unsubscribe(...)
+   }, [conversationId])
+   ```
+
+4. **When loading conversation history, handle 404 gracefully.** If a conversation document cannot be found, remove it from the local history list and show a message.
+
+5. **Validate conversation state before document operations.** Before sending a "replace" command from a chat message, verify the conversation still exists and the referenced selection/document has not changed.
+
+**Detection:**
+- Send two messages in quick succession. Check if both appear in the same conversation document.
+- Open a conversation from history, send a message. If 404, the conversation was lost.
+- Check websocket events during the first message of a new conversation -- events should arrive for the correct conversation ID.
+
+**Phase to address:** Phase 3 (chat implementation). Design the state management to prevent race conditions.
+
+**Confidence:** HIGH -- verified from the async nature of the cozy-stack conversations API.
+
+---
+
+### Pitfall 10: cozy-ui Components May Not Fit Chat Panel Width Constraints
+
+**What goes wrong:**
+The developer uses cozy-ui components (List, ListItem, TextField, Button, Paper, etc.) inside the 300-400px side panel. Components designed for full-width app views overflow, truncate text awkwardly, or have excessive padding that wastes space. The chat UI looks cramped and unprofessional.
+
+**Why it happens:**
+cozy-ui components are built on Material UI v4 and designed for Cozy apps that typically render at full viewport width. They may have:
+- Minimum widths that exceed the panel width
+- Padding/margins designed for spacious layouts
+- Typography sizes optimized for main content areas, not sidebars
+- Responsive breakpoints that do not account for a narrow panel context
+
+The constraint is "use cozy-ui components without modification" -- no forking components or overriding their internal styles.
+
+**Consequences:**
+- Chat messages overflow horizontally or are truncated
+- Input fields are too wide or too narrow
+- Buttons stack vertically when they should be inline
+- The panel feels like a poorly scaled version of a full-width app
+
+**Prevention:**
+
+1. **Audit cozy-ui components at 300-400px width before committing to the design.** Render each candidate component in a fixed-width container and verify appearance. Priority components to test:
+   - TextField / InputBase (for chat input)
+   - Paper (for message bubbles)
+   - Typography (for message content)
+   - List / ListItem (for conversation history)
+   - IconButton (for send, attachment, model selection)
+   - Spinner (for loading states)
+   - Button (for action buttons in messages)
+
+2. **Use the `dense` prop on MUI-based components** where available to reduce padding.
+
+3. **Wrap cozy-ui components in custom container divs** with appropriate width constraints, rather than modifying the components themselves. This stays within the "no modification" constraint:
+   ```jsx
+   <div style={{ maxWidth: '100%', overflow: 'hidden' }}>
+     <CozyUIComponent />
+   </div>
+   ```
+
+4. **Design the panel at 400px minimum width.** Narrower than 300px will break most component-based designs. Wider than 500px wastes too much editor space.
+
+5. **If a cozy-ui component truly cannot fit, use a basic HTML/CSS alternative** rather than modifying cozy-ui. For chat messages, simple `<div>` elements with inline styles may look better than force-fitting a List component.
+
+**Detection:**
+- Render the panel at target width (400px) with real cozy-ui components. If horizontal scrollbars appear, or text overflows, or layout looks broken, the component does not fit.
+
+**Phase to address:** Phase 1 (component audit and panel width decision). Revisited in Phase 3 (chat UI implementation).
+
+**Confidence:** MEDIUM -- depends on which specific cozy-ui components are used. The constraint is verified (from PROJECT.md).
 
 ---
 
 ## Minor Pitfalls
 
----
-
-### Pitfall 15: Api.CreateRun() vs Paragraph.AddText() -- Formatting Granularity Confusion
-
-**What goes wrong:**
-The developer uses `paragraph.AddText("hello world")` and then tries to apply bold to only "hello". It applies to the entire paragraph text because `AddText` creates a single run.
-
-**Why it happens:**
-`AddText()` is a convenience method that creates one run with the given text. To apply different formatting to different parts of the same paragraph, you must create separate `ApiRun` objects: `var run1 = Api.CreateRun(); run1.AddText("hello"); run1.SetBold(true); paragraph.AddElement(run1);`
-
-**Prevention:**
-1. Use `Api.CreateRun()` for ALL text insertion, never `paragraph.AddText()` for mixed-format paragraphs
-2. Each inline formatting span (bold, italic, bold+italic) needs its own Run
-3. The instruction set should emit one "run" entry per formatting change
-
-**Detection:**
-- Entire paragraph is bold when only one word should be
-- Formatting changes apply to wrong text spans
-
-**Phase to address:** Phase 1 -- the instruction interpreter must use Runs, not AddText.
+Issues that cause friction or minor bugs but are easily fixable.
 
 ---
 
-### Pitfall 16: Image Dimensions Must Be Specified in EMUs (English Metric Units), Not Pixels
+### Pitfall 11: Keyboard Shortcuts Conflict Between Chat Input and OO Editor
 
 **What goes wrong:**
-The developer calls `Api.CreateImage(src, 200, 100)` thinking the dimensions are pixels. The image appears as a tiny speck in the document.
-
-**Why it happens:**
-`Api.CreateImage(sImageSrc, nWidth, nHeight)` expects dimensions in EMUs (1 inch = 914400 EMUs, 1 pixel ~= 9525 EMUs at 96 DPI). The OO docs and examples use values like `150 * 36000` (which is 150mm in EMUs).
+The user types in the chat input field. Ctrl+B triggers OO's bold formatting instead of browser text selection. Ctrl+I triggers Scribe (via the existing shortcut) instead of italic in the input. Enter sends the message but also triggers OO's newline/paragraph break. Tab moves focus to the OO editor instead of indenting in the chat input.
 
 **Prevention:**
-1. Always multiply pixel dimensions by 9525 to convert to EMUs: `Api.CreateImage(src, widthPx * 9525, heightPx * 9525)`
-2. Or use mm: multiply by 36000
-3. Add a helper comment in the callCommand code: `// OO EMU: 1px = 9525 EMU, 1mm = 36000 EMU`
-4. Set reasonable defaults for images without known dimensions (e.g., 300px width, proportional height)
+- Stop propagation of keyboard events from the chat input to prevent them from reaching the OO iframe:
+  ```javascript
+  onKeyDown={(e) => { e.stopPropagation(); if (e.key === 'Enter' && !e.shiftKey) handleSend() }}
+  ```
+- The existing Ctrl+I shortcut (registered on `window.parent.document` by the plugin) should be conditionally disabled when the chat input is focused. Add a focus state to the Scribe context.
+- Test all common keyboard shortcuts (Ctrl+A/C/V/X/Z/B/I/U) with focus in the chat input.
 
-**Detection:**
-- Images appear microscopic in the document
-- Images appear enormous (raw pixel values interpreted as EMUs)
-
-**Phase to address:** Image handling phase -- not Phase 1.
+**Phase to address:** Phase 3 (chat input implementation).
 
 ---
 
-### Pitfall 17: pasteInProgress Guard Must Extend to Builder API Path
+### Pitfall 12: Panel Resize Breaks Floating Button Position Calculation
 
 **What goes wrong:**
-The developer adds a new Builder API insertion path but forgets to set `pasteInProgress = true` before the operation. During the callCommand execution, OO fires `init()` with new selection data (because the document changed), which resets `lastSelectedText` and `lastSelectedHtml`. The next Scribe operation uses stale or empty data.
-
-**Why it happens:**
-The existing `pasteInProgress` guard (code.js line 86, checked at line 296) suppresses `init()` during PasteHtml operations. The Builder API path needs the same guard, plus `stopHidePolling()`.
+The floating button uses fixed positioning relative to the viewport. When the side panel opens, the visible editor area shrinks, but the button remains at its original position (now potentially overlapping the panel or floating in empty space).
 
 **Prevention:**
-1. Set `pasteInProgress = true` and call `stopHidePolling()` at the start of any Builder API insertion
-2. Reset `pasteInProgress = false` in the final callback
-3. Follow the exact same pattern as `pasteHtml()` lines 97-98 and 152
+- Hide the floating button when the panel is open (prevention already in Pitfall 7).
+- If the button should remain visible with the panel open, recalculate its position relative to the editor container (not the viewport). Use the editor container's getBoundingClientRect().
+- The simplest approach: the floating button is only relevant for inline mode. Panel mode has its own trigger UI (a compose area).
 
-**Detection:**
-- `init()` fires during insertion (visible in console as "[Scribe] init() called")
-- `lastSelectedText` becomes empty mid-operation
-- Subsequent Scribe operations fail because selection state was reset
+**Phase to address:** Phase 1 (mode toggle implementation).
 
-**Phase to address:** Phase 1 -- copy the guard pattern from day one.
+---
+
+### Pitfall 13: Conversation History Query Returns All Conversations, Not Just Current Document
+
+**What goes wrong:**
+The conversation history sidebar shows conversations from all documents the user has ever chatted about. The user opens a spreadsheet's chat history while editing a text document. Or the list is overwhelmingly long because it includes every AI interaction.
+
+**Prevention:**
+- Filter conversations by document ID when querying: `Q('io.cozy.ai.chat.conversations').where({ documentId: currentFileId })`
+- Store the `fileId` (from `useOnlyOfficeContext`) as metadata in the conversation document when creating it
+- Provide a "show all conversations" option separately from the document-scoped default view
+- Verify the conversations API supports custom metadata fields alongside the messages array
+
+**Phase to address:** Phase 3 (conversation history UI).
+
+---
+
+### Pitfall 14: Memory Leak from Websocket Subscriptions Not Cleaned Up on Panel Close
+
+**What goes wrong:**
+The user opens and closes the panel multiple times during a session. Each open creates a new websocket subscription for `io.cozy.ai.chat.events`. Subscriptions from closed panels are not unsubscribed. After multiple cycles, dozens of active subscriptions exist, consuming memory and processing events that are no longer displayed.
+
+**Prevention:**
+- Always unsubscribe in the cleanup function of the useEffect that creates the subscription:
+  ```javascript
+  useEffect(() => {
+    realtime.subscribe('created', 'io.cozy.ai.chat.events', convId, handler)
+    return () => realtime.unsubscribe('created', 'io.cozy.ai.chat.events', convId, handler)
+  }, [convId])
+  ```
+- Use a single subscription manager (not per-component) to track active subscriptions
+- Follow the existing pattern from `OnlyOfficeProvider.jsx` which correctly unsubscribes on cleanup
+
+**Phase to address:** Phase 3 (websocket integration).
+
+---
+
+### Pitfall 15: Mobile/Responsive Layout Not Considered for Panel
+
+**What goes wrong:**
+The panel works on desktop but on tablet or narrow browser windows, it squishes the OO editor to an unusable width (< 300px). Or the panel itself becomes too narrow to display chat messages.
+
+**Prevention:**
+- Set minimum widths: editor min-width 500px, panel min-width 300px
+- On mobile (`isMobile` from `useBreakpoints()`), show the panel as a full-screen overlay instead of a side panel
+- Add a breakpoint check: if viewport width < 900px, default to overlay mode
+- The existing codebase already uses `useBreakpoints()` for responsive behavior
+
+**Phase to address:** Phase 1 (layout design).
 
 ---
 
@@ -503,60 +653,53 @@ The existing `pasteInProgress` guard (code.js line 86, checked at line 296) supp
 
 | Phase Topic | Likely Pitfall | Mitigation |
 |-------------|---------------|------------|
-| MD Parser (ES5) | Parser relies on DOM APIs not available in callCommand sandbox | Parse OUTSIDE callCommand, pass instruction set via Asc.scope |
-| MD Parser (ES5) | ES6 syntax slips into callCommand function body | Linter rule or manual review for ES5 compliance |
-| MD Parser (ES5) | LLM output quirks break parser | Build test suite from real Scribe LLM responses |
-| Instruction Interpreter | Multiple callCommand calls create multiple undo points | Single callCommand for all content creation + InsertContent |
-| Instruction Interpreter | Asc.scope payload too large (images) | Defer images; keep initial payload text-only |
-| Instruction Interpreter | Return value from callCommand is undefined (object, not string) | JSON.stringify in callCommand, JSON.parse in callback |
-| Text Formatting | AddText instead of CreateRun for mixed formatting | Always use CreateRun for inline formatting |
-| Text Formatting | Paragraph properties (alignment, spacing) lost | Capture original properties in read-only prep callCommand |
-| List Handling | OO ordered list bug affects Builder API too | Test list creation early with minimal example |
-| Table Handling | Column widths reset after InsertContent | Set table layout to "fixed", set widths explicitly |
-| Image Handling | Base64 bloats Asc.scope, EMU dimensions wrong | URL-based images preferred, convert px to EMU |
-| Selection Post-Insert | GetRange/Select fails after InsertContent | Marker-based search workaround, defer to late phase |
-| Integration | PasteHtml fallback removed prematurely | Keep PasteHtml as fallback until Builder API covers all cases |
-| Integration | pasteInProgress not set for Builder API path | Copy existing guard pattern from pasteHtml() |
+| Iframe resize / layout | OO has no resize callback (Pitfall 1) | Test existing AIAssistantPanel first, validate OO behavior |
+| Iframe resize / layout | Cross-origin blocks direct manipulation (Pitfall 2) | Use CSS flex layout, not DOM access |
+| Iframe resize / layout | Toggle animation causes blank flash (Pitfall 8) | Test instant toggle first, add animation later |
+| State architecture | Two modes desynchronize (Pitfall 3) | Single active-mode state, lifted selection context |
+| State architecture | Selection lost during panel interaction (Pitfall 6) | Pin selection on panel open, explicit re-select for modifications |
+| Protocol architecture | Conversations API is async/websocket (Pitfall 4) | Use cozy-realtime, handle streaming protocol correctly |
+| Chat UI implementation | Performance degrades with message history (Pitfall 5) | Virtualize list, memoize messages, batch streaming updates |
+| Chat UI implementation | cozy-ui components may not fit panel width (Pitfall 10) | Audit at target width before building |
+| Chat UI implementation | Keyboard shortcuts conflict (Pitfall 11) | stopPropagation on chat input |
+| CSS / visual | z-index conflicts with OO iframe (Pitfall 7) | Use flex layout, not z-index stacking |
+| Conversation persistence | Race conditions with conversation IDs (Pitfall 9) | Generate ID upfront, sequential message sends |
+| Conversation persistence | History query unscoped to document (Pitfall 13) | Filter by fileId |
+| Websocket lifecycle | Memory leaks from subscriptions (Pitfall 14) | Unsubscribe on cleanup, follow existing patterns |
+| Responsive | Panel breaks on mobile/narrow viewports (Pitfall 15) | Min-widths, overlay mode on mobile |
 
 ---
 
-## Integration Pitfalls with Existing PasteHtml Fallback
+## "Looks Done But Isn't" Checklist for v3.0
 
-| Scenario | Risk | Mitigation |
-|----------|------|------------|
-| Builder API succeeds for paragraphs but fails for tables | User gets partial content | Detect failure, fall back to PasteHtml for the entire content |
-| Builder API and PasteHtml both active in same session | Inconsistent undo behavior (PasteHtml = 1 undo point via executeMethod, Builder = 1 via callCommand) | Both should be single undo point -- test both paths |
-| Feature flag switches mid-operation | Race condition between paths | Feature flag checked once at operation start, not per-element |
-| Builder API callCommand fails silently | User clicks Replace, nothing happens | Add timeout detection: if callback doesn't fire within 5s, fall back to PasteHtml |
-
----
-
-## Recovery Strategies
-
-| Pitfall | Recovery Cost | Recovery Steps |
-|---------|---------------|----------------|
-| Parser inside callCommand (Pitfall 1) | HIGH | Rewrite: move parser outside, design instruction set, rewrite callCommand as interpreter |
-| Multiple undo points (Pitfall 3) | HIGH | Merge all content creation into single callCommand -- may require rearchitecting the instruction interpreter |
-| ES6 in callCommand (Pitfall 5) | LOW | Find and replace ES6 syntax -- mechanical fix |
-| Lost paragraph properties (Pitfall 12) | MEDIUM | Add property capture in prep callCommand, apply in insertion callCommand |
-| Premature PasteHtml removal (Pitfall 11) | MEDIUM | Restore from git, add fallback branching |
-| Post-insert selection fails (Pitfall 7) | LOW (if deferred) | Accept limitation, implement marker-based workaround in later phase |
+- [ ] **Resize stability**: Open/close panel 10 times rapidly. OO editor should remain correctly laid out every time.
+- [ ] **Selection pinning**: Open panel with selection, click elsewhere in doc, use Replace from chat. Verify correct text is modified.
+- [ ] **Mode switching**: Switch between inline and panel mode 5 times. Each mode should work correctly with fresh state.
+- [ ] **First conversation**: Open panel, send first message to new conversation. AI response should appear via websocket.
+- [ ] **History loading**: Create 3 conversations on the same document. Close and reopen panel. All 3 should appear in history.
+- [ ] **Long conversation**: Send 30+ messages in a single conversation. Chat should remain responsive (type, scroll, receive).
+- [ ] **Streaming display**: During AI response streaming, type in the input field simultaneously. No lag should be felt.
+- [ ] **Panel width**: All cozy-ui components in the panel should render correctly at the chosen panel width. No horizontal overflow.
+- [ ] **Keyboard shortcuts**: With focus in chat input, Ctrl+B/I/U should NOT trigger OO editor commands.
+- [ ] **Mobile fallback**: On a 768px-wide viewport, the panel should not squish the editor below usable width.
+- [ ] **Websocket cleanup**: Open/close panel 5 times, check browser DevTools for active websocket subscriptions. Count should not grow.
+- [ ] **Error recovery**: Disconnect network during AI response, reconnect. Chat should recover gracefully.
+- [ ] **Cross-document isolation**: Open different documents in separate tabs with chat panels. Conversations should not mix.
 
 ---
 
 ## Sources
 
-- [OO callCommand documentation](https://api.onlyoffice.com/docs/plugin-and-macros/interacting-with-editors/overview/how-to-call-commands/) -- HIGH confidence, official docs
-- [OO Redo bug after callCommand](https://community.onlyoffice.com/t/can-not-redo-after-execute-connectors-callcommand-method/12614) -- HIGH confidence, confirmed bug by OO team
-- [OO InsertContent API](https://api.onlyoffice.com/docs/office-api/usage-api/text-document-api/ApiDocument/Methods/InsertContent/) -- HIGH confidence, official docs
-- [OO Creating formatted table sample](https://api.onlyoffice.com/docs/office-api/samples/text-document-editor/creating-formatted-table/) -- HIGH confidence, official example
-- [OO CreateImage API](https://api.onlyoffice.com/docbuilder/textdocumentapi/api/createimage) -- HIGH confidence, official docs
-- [OO Plugin tips, tricks, and pitfalls (Jan 2026)](https://www.onlyoffice.com/blog/2026/01/creating-onlyoffice-plugins-tips-tricks-and-hidden-pitfalls) -- HIGH confidence, official blog
-- [OO Issue: retrieving paragraph after InsertContent](https://community.onlyoffice.com/t/issue-in-retrieving-newly-created-paragraph-element/10415) -- MEDIUM confidence, community forum
-- [OO Creating auto-width table](https://api.onlyoffice.com/docs/office-api/samples/text-document-editor/creating-auto-width-table/) -- HIGH confidence, official sample
-- Direct analysis of `plugins/onlyoffice-scribe/scripts/code.js` -- HIGH confidence, source code
-- Project memory (MEMORY.md) -- HIGH confidence, verified project history
+- [ONLYOFFICE Events API](https://api.onlyoffice.com/docs/docs-api/usage-api/config/events/) -- HIGH confidence (official docs; confirms no resize event exists)
+- [ONLYOFFICE Plugin Windows and Panels](https://api.onlyoffice.com/docs/plugin-and-macros/customization/windows-and-panels/) -- HIGH confidence (official docs)
+- [Cozy-Stack AI Documentation](https://docs.cozy.io/en/cozy-stack/ai/) -- HIGH confidence (official docs; confirms async conversation API with websocket)
+- [io.cozy.ai.chat.conversations Doctype](https://docs.cozy.io/en/cozy-doctypes/docs/io.cozy.ai.chat.conversations/) -- HIGH confidence (official docs; confirms message structure)
+- [ResizeObserver Best Practices](https://web.dev/articles/resize-observer) -- HIGH confidence (web.dev)
+- [iframe-resizer React](https://github.com/davidjbradshaw/iframe-resizer-react) -- MEDIUM confidence (community library)
+- [IndexedDB Chat Persistence Performance](https://www.quora.com/Is-IndexedDB-suitable-for-storing-chat-messages-It%E2%80%99s-getting-too-slow-as-number-of-messages-grow) -- MEDIUM confidence (community experience)
+- [React State Sharing](https://react.dev/learn/sharing-state-between-components) -- HIGH confidence (official React docs)
+- cozy-drive source: `src/modules/views/OnlyOffice/View.jsx`, `src/modules/views/OnlyOffice/OnlyOfficeProvider.jsx`, `src/modules/views/OnlyOffice/OnlyOfficeAIAssistantPanel.tsx`, `src/modules/views/OnlyOffice/useCozyBridge.js`, `src/modules/views/OnlyOffice/styles.styl`, `plugins/onlyoffice-scribe/scripts/code.js`, `src/lib/cozy-bridge/index.js` -- HIGH confidence (direct code analysis)
 
 ---
-*Pitfalls research for: Document Builder API injection in Scribe v2.4 (Cozy Drive + OnlyOffice)*
-*Researched: 2026-03-15*
+*Pitfalls research for: Chat side panel addition to Scribe v3.0 (Cozy Drive + OnlyOffice)*
+*Researched: 2026-03-10*

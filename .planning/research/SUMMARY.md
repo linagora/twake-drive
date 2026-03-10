@@ -1,173 +1,185 @@
 # Project Research Summary
 
-**Project:** Scribe v2.4 -- Document Builder API Injection
-**Domain:** Rich content injection via OnlyOffice Document Builder API in plugin callCommand
-**Researched:** 2026-03-15
+**Project:** Scribe Chat Side Panel (v3.0)
+**Domain:** Conversational AI chat panel integrated into OnlyOffice document editor
+**Researched:** 2026-03-10
 **Confidence:** MEDIUM-HIGH
 
 ## Executive Summary
 
-Scribe v2.4 replaces the current PasteHtml injection path with OnlyOffice's Document Builder API, executed inside `callCommand`. This gives element-level control over every paragraph, run, table, and list -- enabling format preservation, post-injection selection, and proper table rendering that PasteHtml cannot achieve. The approach requires zero new npm dependencies: everything is built with the OO Builder API globals (`Api.CreateParagraph`, `Api.CreateRun`, `Api.CreateTable`, etc.) already available inside `callCommand`, plus a custom ES5 Markdown parser (~150-250 lines) that runs in the same sandbox.
+Scribe v3.0 adds a persistent chat side panel alongside the existing inline popover mode in Cozy Drive's OnlyOffice editor. This is a well-established pattern -- Google Docs Gemini, Microsoft Copilot in Word, and CKEditor AI all ship right-side panels that coexist with the document editor via flex layout. The existing codebase already proves this works: `OnlyOfficeAIAssistantPanel` renders at 30% width as a flex sibling to the OO editor iframe, and the iframe resizes naturally. Zero new npm dependencies are needed -- cozy-ui, localforage, react-markdown, and cozy-stack-client already provide everything required.
 
-The recommended architecture is "parse outside, build inside": tokenize the LLM's Markdown output in the plugin iframe (where modern JS is available), serialize the token array through `Asc.scope`, then interpret tokens as Builder API calls inside a single `callCommand`. This preserves the single-undo-point guarantee that users expect. A format snapshot captured before the LLM round-trip provides document styling defaults (font, size, color, alignment) that Markdown cannot represent, applied via a "fusion" strategy where snapshot values are defaults and Markdown formatting is additive overrides.
+The recommended approach is to introduce a `ScribeContext` provider that centralizes all Scribe state (currently scattered across View.jsx, useCozyBridge, and ScribePopover), then build the chat panel as a flex sibling in the existing layout container. The chat uses the cozy-stack `/ai/chat/conversations` API for server-side persistence and streaming via cozy-realtime websockets, while the inline mode continues using the synchronous `/ai/v1/chat/completions` endpoint. This dual-API approach avoids rearchitecting the working inline mode.
 
-The primary risks are: (1) the callCommand sandbox is ES5-only with no DOM APIs, making parser bugs silent and hard to debug; (2) post-injection selection remains unreliable due to a known OO limitation where `InsertContent` does not return references to inserted elements; and (3) table formatting may be stripped by `InsertContent`. All three are mitigable -- the first by parsing outside the sandbox, the second by deferring selection to a late phase using a sentinel-marker strategy, and the third by explicitly setting all table properties. The existing PasteHtml path must be preserved as a fallback throughout the migration.
+The primary risk is OO iframe resize behavior. While the existing AI panel proves the flex sibling pattern works, OO has no documented resize callback, and the cross-origin iframe prevents direct DOM manipulation. This must be validated in Phase 1 as a go/no-go gate. The second major risk is state desynchronization between inline and panel modes -- a single "active mode" state with lifted selection context prevents both modes from competing for the plugin communication channel.
 
 ## Key Findings
 
 ### Recommended Stack
 
-No new dependencies are needed. The entire milestone is built with OO's built-in Document Builder API (available as globals inside `callCommand`) and ES5 regex patterns for Markdown parsing. The existing stack (React 18, MUI v4, cozy-ui, Turndown, marked, react-markdown) remains unchanged.
+Zero new dependencies. The entire stack is already installed.
 
 **Core technologies:**
-- **OO Document Builder API** (inside callCommand): Element-level content construction -- `Api.CreateParagraph()`, `Api.CreateRun()`, `Api.CreateTable()`, `Api.CreateNumbering()`, `doc.InsertContent()` -- all verified against official OO docs
-- **Custom ES5 Markdown tokenizer**: Converts LLM Markdown output to a JSON instruction set; must be ES5 because callCommand runs in an isolated sandbox with no module system
-- **Asc.scope data bridge**: Passes serialized token arrays and format snapshots from plugin iframe to callCommand sandbox -- already proven in existing code
-- **Sentinel marker strategy** (for post-injection selection): Zero-width characters inserted as boundary markers, found via `doc.Search()`, then deleted -- MEDIUM confidence, needs empirical validation
+- **cozy-ui Panel/Paper/Typography/TextField/IconButton** (135.8.0): All chat UI components, already available and verified
+- **localforage** (1.10.0): Conversation persistence via IndexedDB, already used in `persistedState.js`
+- **cozy-stack-client `fetch()`** (60.19.0): Raw Response for SSE streaming with automatic auth headers
+- **cozy-realtime** (5.8.0): Websocket subscriptions for conversation API streaming events
+- **react-markdown + remark-gfm** (10.1.0 / 4.0.1): Markdown rendering in AI response bubbles, already used in ScribeResultPanel
+- **cozy-flags** (4.6.1): Feature flag `drive.scribe.panel` to gate panel during development
+
+**What NOT to add:** No chat UI libraries (overkill), no MUI Drawer (overlays instead of resizing), no state management libraries (React context sufficient), no WebSocket libraries (cozy-realtime handles it).
 
 ### Expected Features
 
 **Must have (table stakes):**
-- Markdown-to-Builder token pipeline (ES5 parser + callCommand interpreter)
-- Inline formatting: bold, italic, bold+italic, strikethrough, code spans
-- Paragraph separation as distinct OO paragraphs
-- Headings H1-H6 via SetStyle or SetFontSize+SetBold
-- Bullet and numbered lists via CreateNumbering
-- Hyperlinks via AddHyperlink
-- Single undo point (all operations in one callCommand)
-- Smart spacing at injection boundaries
-- PasteHtml fallback on any Builder API failure
+- Side panel container (flex sibling, 380px fixed width)
+- Chat message list with auto-scroll
+- Text input with send button (Enter to send, Shift+Enter for newline)
+- Selection awareness (chip showing selected text context)
+- Action buttons on AI responses (Copy, Replace, Insert)
+- Panel open/close toggle preserving conversation state
+- Loading state with cancel support
+- Multi-turn conversational messages (full history sent to API)
+- Error handling rendered as chat messages with retry
+- Toggle between inline and panel modes
 
-**Should have (differentiators -- why we are migrating):**
-- Post-injection selection (select the exact range of injected content)
-- GFM tables as proper OO tables with column structure
-- Nested list indentation (multi-level numbering)
+**Should have (differentiators):**
+- Selection chip with preview and dismiss
+- Quick action chips (reuse SCRIBE_ACTIONS)
+- Markdown rendering in AI responses (direct reuse from v2.1)
+- Context indicator ("142 words selected")
+- New conversation button
 
-**Defer (v2.5+):**
-- Code blocks with monospace formatting
-- Blockquotes with left border/indent
-- Horizontal rules
-- Image injection (CreateImage has known reliability issues inside callCommand; LLM does not return images)
-- Syntax highlighting (OO has no API for this)
-- Streaming injection (breaks single undo point)
-- Preserving per-run original formatting (too fragile when LLM restructures text)
+**Defer (v3.1+):**
+- Streaming responses (needs backend SSE verification)
+- File/URL/image attachment
+- Model/agent selection
+- Past conversation history browser with search
+- LLM-decided action buttons
+- Resizable panel
+- Document-wide context (full doc as input)
 
 ### Architecture Approach
 
-The architecture adds four new ES5 components to `code.js`, all running inside `callCommand`: a format snapshot extractor (captures original document styling before LLM round-trip), a Markdown parser (tokenizes LLM output into a JSON AST), a Builder content generator (walks the AST and emits Builder API calls with fusion of snapshot defaults + MD overrides), and a post-injection selector (sentinel markers + Search). The format snapshot stays in `code.js` (never round-tripped through React), and `View.jsx` sends raw Markdown instead of HTML to the plugin.
+The architecture centers on a new `ScribeContext` provider that wraps View.jsx and absorbs the existing `useCozyBridge` logic, centralizing panel state, selection tracking, conversation management, and plugin communication. The chat panel renders as a conditional flex sibling to `div#onlyOfficeEditor` in the existing `u-flex u-flex-grow-1` container. Inline mode (ScribePopover) and panel mode (ScribeChatPanel) share the context but enforce mutual exclusion via an `activeMode` state.
 
 **Major components:**
-1. **Format Snapshot Extractor** (`code.js`, ES5) -- Captures paragraph properties (alignment, spacing, indent) and dominant run style (font, size, color) from selected text before LLM round-trip
-2. **Markdown Parser** (`code.js` or plugin context, ES5) -- Tokenizes LLM Markdown into a flat JSON instruction array; handles paragraphs, inline formatting, headings, lists, links, tables
-3. **Builder Content Generator** (`code.js`, inside callCommand) -- Interprets token array, creates ApiParagraph/ApiRun/ApiTable objects, applies format fusion, calls `doc.InsertContent()`
-4. **Post-Injection Selector** (`code.js`, inside or after callCommand) -- Inserts sentinel zero-width chars at content boundaries, uses `doc.Search()` to find them, selects range, removes markers
+1. **ScribeContext** (new provider) -- shared state: panel open/close, current selection, active conversation, mode toggle, plugin communication
+2. **ScribeChatPanel** (new) -- panel container, renders in flex layout, 380px width
+3. **ScribeChatMessages + ScribeChatMessage** (new) -- message list with markdown rendering and action buttons
+4. **ScribeChatInput** (new) -- text input, selection chip, quick actions, send
+5. **scribeAI.js** (modified) -- new `callScribeChatAI` for multi-turn alongside existing `callScribeAI`
+
+**Key architectural decisions:**
+- Fixed 380px panel width (not percentage) for consistent chat UX
+- In-memory conversation state for MVP, localforage persistence added in a later phase
+- Plugin code.js unchanged -- existing selection polling and intent response protocol is sufficient
+- When Scribe panel opens, hide the existing AI summary panel (mutual exclusion)
 
 ### Critical Pitfalls
 
-1. **callCommand sandbox has no DOM APIs** -- Parser must not use DOMParser, document, window, require, or any browser/Node API. Parse Markdown OUTSIDE callCommand, pass instruction set via Asc.scope. Getting this wrong means a full rewrite.
-2. **Multiple callCommand calls = multiple undo points** -- ALL content creation and InsertContent must happen in a single callCommand. The existing two-step pattern (read-only prep + single modification) is correct. Never split insertion across multiple modifying callCommands.
-3. **ES5-only inside callCommand** -- No const/let, no arrow functions, no template literals, no destructuring, no for...of, no Array.includes. The Markdown interpreter will be the most complex callCommand code in the plugin; ES6 slips are easy and failures are silent.
-4. **Post-insertion selection is unreliable** -- InsertContent does not return references to inserted elements. GetRange/Select fails immediately after InsertContent. Use sentinel markers + Search as workaround, and defer this to a late phase.
-5. **Redo is broken after callCommand** -- Confirmed OO bug (March 2025, still unfixed). No workaround exists. Accept and document this limitation.
+1. **OO iframe resize has no callback** -- The editor may not detect container size changes via flex. Must validate with existing AIAssistantPanel as first task. Prevention: CSS flex layout (not JS), test instant toggle before animation, have fallback plan (overlay instead of resize). Phase 1 go/no-go gate.
+
+2. **Cross-origin iframe blocks resize dispatch** -- Cannot dispatch events into or access DOM of the OO iframe. Prevention: rely exclusively on CSS flex sizing, use plugin as resize coordinator if needed (it runs inside OO's context).
+
+3. **State desync between inline and panel modes** -- Both modes competing for plugin communication causes intent routing conflicts and stale selection. Prevention: single `activeMode` state, lifted selection context in ScribeContext, only one mode receives intents at a time.
+
+4. **Conversations API is async + websocket-based** -- `POST /ai/chat/conversations/:id` returns 202, AI response arrives via websocket on `io.cozy.ai.chat.events`. Prevention: use cozy-realtime subscriptions, subscribe before first POST, handle delta/done streaming protocol, keep inline mode on synchronous API.
+
+5. **Selection lost during panel interaction** -- User changes selection while chatting, Replace/Insert acts on wrong text. Prevention: pin selection when attaching context to a message, separate "conversation context" from "modification target", require explicit re-select for document modifications.
 
 ## Implications for Roadmap
 
-Based on research, the milestone naturally splits into 6 phases with clear dependency ordering.
+Based on research, suggested phase structure:
 
-### Phase 1: Token Pipeline + Minimal Builder Injection
-**Rationale:** This is the foundational architecture decision. If the parse-outside-build-inside pattern works, everything else builds on it. If it fails, we need to know immediately.
-**Delivers:** End-to-end proof that Markdown text goes through tokenizer, Asc.scope, callCommand, Builder API, InsertContent, and appears in the document with bold/italic formatting.
-**Addresses:** Table stakes 1-4 (parser, inline formatting, paragraphs), table stake 9 (single undo), table stake 11 (PasteHtml fallback)
-**Avoids:** Pitfall 1 (sandbox constraints), Pitfall 2 (Asc.scope limits), Pitfall 3 (multiple undo points), Pitfall 5 (ES5 constraint), Pitfall 15 (CreateRun vs AddText), Pitfall 17 (pasteInProgress guard)
+### Phase 1: ScribeContext + Panel Layout Validation
 
-### Phase 2: Format Snapshot + Fusion
-**Rationale:** Format preservation is the second-most-important capability after basic injection. Without it, inserted text loses the document's font/size/color -- a visible regression from PasteHtml which inherits surrounding styles. Must come before extended MD support so all subsequent content types benefit.
-**Delivers:** Original document formatting (font family, font size, color, alignment, spacing) preserved through the LLM round-trip via dominant-style fusion.
-**Addresses:** Table stake 10 (smart spacing), Pitfall 12 (paragraph properties lost)
-**Avoids:** Pitfall 6 (selection state management during prep callCommand)
+**Rationale:** OO iframe resize is a go/no-go gate. Must prove the flex sibling layout works before investing in chat UI. ScribeContext is prerequisite for all subsequent work.
+**Delivers:** ScribeContext provider wrapping View.jsx with existing inline mode still working; empty panel shell toggling open/close; verified OO resize behavior; mutual exclusion with AIAssistantPanel.
+**Addresses:** Features 1 (panel container), 7 (open/close toggle)
+**Avoids:** Pitfall 1 (resize corruption), Pitfall 2 (cross-origin), Pitfall 7 (z-index), Pitfall 8 (toggle animation), Pitfall 15 (mobile)
 
-### Phase 3: Extended Markdown Support
-**Rationale:** With the pipeline proven and format fusion working, extend the parser to cover all common LLM output structures. These are independent of each other and can be implemented incrementally.
-**Delivers:** Headings, bullet lists, numbered lists, links, inline code -- all rendered as proper OO elements, not plain text.
-**Addresses:** Table stakes 5-8 (headings, lists, links), differentiator D3 (nested lists)
-**Avoids:** Pitfall 9 (LLM output quirks), Pitfall 13 (OO ordered list bug)
+### Phase 2: Chat Messages + Input + AI Integration
 
-### Phase 4: Tables
-**Rationale:** Tables are the highest-complexity content type and the highest-value differentiator over PasteHtml. They depend on inline formatting (for cell content) being solid, so they come after Phase 3.
-**Delivers:** GFM Markdown tables rendered as proper OO tables with correct column structure, header row styling, and explicit borders.
-**Addresses:** Differentiator D2 (tables with column structure)
-**Avoids:** Pitfall 10 (table width/formatting loss after InsertContent)
+**Rationale:** Core chat functionality builds on the validated panel shell. Multi-turn API integration is the feature that makes the panel useful.
+**Delivers:** Working chat with send/receive, markdown-rendered AI responses, loading states, error handling, auto-scroll.
+**Addresses:** Features 2 (message list), 3 (text input), 8 (loading), 9 (multi-turn), 10 (errors), D5 (markdown rendering)
+**Avoids:** Pitfall 5 (render performance -- design memoization from start), Pitfall 10 (cozy-ui width audit), Pitfall 11 (keyboard shortcuts)
 
-### Phase 5: Post-Injection Selection
-**Rationale:** This is the primary differentiator but has the highest uncertainty. It depends on all content types being insertable (so sentinels bracket the full content). Deferring it ensures core injection is not blocked by selection research.
-**Delivers:** After Replace/Insert, the injected content range is selected (highlighted) in the document.
-**Addresses:** Differentiator D1 (post-injection selection)
-**Avoids:** Pitfall 7 (GetRange/Select fails after InsertContent) -- uses sentinel workaround instead
+### Phase 3: Selection Context + Document Actions
 
-### Phase 6: Polish + Edge Cases
-**Rationale:** Code blocks, blockquotes, horizontal rules are low-value features that round out the implementation. Smart spacing refinements and fallback hardening belong here.
-**Delivers:** Code blocks with monospace font, blockquotes with indent/border, horizontal rules, refined spacing logic, robust error handling.
-**Addresses:** Differentiators D4-D6, remaining edge cases
-**Avoids:** Pitfall 11 (premature PasteHtml removal) -- only remove fallback after all content types verified
+**Rationale:** Connecting chat to the document is what differentiates this from a generic chatbot. Depends on working chat from Phase 2 and ScribeContext selection tracking from Phase 1.
+**Delivers:** Selection chip in input, Replace/Insert buttons on AI responses, context indicator, pinned selection management.
+**Addresses:** Features 4 (selection awareness), 5 (action buttons), D1 (selection chip), D6 (context indicator)
+**Avoids:** Pitfall 3 (state desync -- activeMode enforcement), Pitfall 6 (selection pinning)
+
+### Phase 4: Mode Toggle + Quick Actions
+
+**Rationale:** Polish phase. Both modes are individually functional; this phase connects them and adds efficiency features.
+**Delivers:** Inline/panel mode toggle (Ctrl+I vs Ctrl+Shift+I), quick action chips, floating button behavior update.
+**Addresses:** Features 6 (mode toggle), D2 (quick actions)
+**Avoids:** Pitfall 12 (floating button position)
+
+### Phase 5: Conversation Persistence + History
+
+**Rationale:** Persistence is valuable but not required for a functional chat. Can use in-memory state through Phase 1-4, add persistence as final polish.
+**Delivers:** Conversation saved to localforage keyed by fileId, restore on re-open, new conversation button, basic conversation management.
+**Addresses:** D4 (persistence), D7 (new conversation button)
+**Avoids:** Pitfall 9 (conversation ID races), Pitfall 13 (document-scoped history), Pitfall 14 (websocket cleanup)
 
 ### Phase Ordering Rationale
 
-- **Dependency chain:** Parser (Phase 1) -> Format fusion (Phase 2) -> Extended tokens (Phase 3) -> Tables (Phase 4). Each phase builds on the previous; no phase can be skipped or reordered.
-- **Risk-first:** Phase 1 validates the riskiest architectural decision (parse outside, build inside, single callCommand). Phase 2 validates format capture via Builder API getter methods. Both are validated before investing in feature breadth.
-- **Differentiators last:** Post-injection selection (Phase 5) has the lowest confidence and highest research debt. Deferring it means the core milestone ships even if selection proves infeasible.
-- **Pitfall avoidance:** The phase structure ensures PasteHtml fallback is maintained throughout (Pitfall 11), ES5 compliance is established in Phase 1 (Pitfall 5), and single-undo-point is architecturally guaranteed from the start (Pitfall 3).
+- Phase 1 must come first because iframe resize is a hard blocker -- if OO cannot handle it, the entire architecture changes
+- Phase 2 before Phase 3 because chat must work standalone before adding document integration
+- Phase 3 before Phase 4 because document actions are the core value proposition, while mode toggle is navigation polish
+- Phase 5 last because in-memory conversations are sufficient for MVP; persistence adds complexity with limited immediate impact
+- Each phase delivers a testable, demonstrable increment
 
 ### Research Flags
 
 Phases likely needing deeper research during planning:
-- **Phase 1:** Validate that `Asc.scope` reliably passes medium-sized token arrays (~50 tokens). Validate that a single callCommand can execute 50+ Builder API calls without timeout.
-- **Phase 2:** Empirically test `ApiRun.GetColor()`, `ApiRun.GetFontSize()`, `ApiRun.GetFontFamily()` return types inside callCommand -- docs are ambiguous on whether they return primitives or API objects.
-- **Phase 4:** Test `InsertContent` behavior with mixed content arrays (paragraphs + tables). Verify table formatting survives InsertContent. Test ordered list bug (#79263) with Builder API.
-- **Phase 5:** Test sentinel zero-width character search via `doc.Search()`. Test `ApiRange.Delete()` on zero-width characters. This phase may need a spike before planning.
+- **Phase 1:** OO iframe resize behavior must be empirically validated -- no documentation exists. 5-minute test with existing AIAssistantPanel may resolve this immediately.
+- **Phase 2:** cozy-stack conversations API (async + websocket) needs end-to-end validation before building the UI. May discover the synchronous `/ai/v1/chat/completions` endpoint is simpler for MVP.
+- **Phase 3:** Selection pinning strategy needs prototyping -- "conversation context" vs "modification target" distinction is novel to this codebase.
 
-Phases with standard patterns (skip deep research):
-- **Phase 3:** Headings, lists, links are well-documented Builder API patterns with official examples. Standard implementation.
-- **Phase 6:** Code blocks, blockquotes, horizontal rules are cosmetic paragraph formatting -- straightforward SetFontFamily/SetIndLeft/SetBottomBorder calls.
+Phases with standard patterns (skip research-phase):
+- **Phase 4:** Mode toggle is straightforward React state + keyboard shortcut registration. Well-understood patterns.
+- **Phase 5:** localforage persistence is a known pattern already used in the codebase (`persistedState.js`).
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | Zero new dependencies; all Builder API methods verified against official OO docs |
-| Features | MEDIUM | API surface is clear, but post-injection selection and table formatting through InsertContent have known limitations |
-| Architecture | MEDIUM-HIGH | Parse-outside-build-inside pattern is sound; format snapshot fusion is well-designed but getter method return types need empirical validation |
-| Pitfalls | HIGH | Grounded in existing code analysis, official docs, confirmed OO bugs, and community reports |
+| Stack | HIGH | All dependencies verified present at exact versions. Zero new packages. Integration points confirmed in source code. |
+| Features | MEDIUM-HIGH | Industry patterns well-established (Copilot, Gemini, CKEditor). Scribe-specific integration (iframe, postMessage) builds on proven v2.1 architecture. |
+| Architecture | HIGH | ScribeContext + flex sibling pattern directly follows existing AIAssistantPanel. Component boundaries are clear. ~550 LOC of new code estimated. |
+| Pitfalls | MEDIUM-HIGH | OO iframe resize and conversations API behavior are the two areas of genuine uncertainty. All other pitfalls have clear prevention strategies. |
 
 **Overall confidence:** MEDIUM-HIGH
 
 ### Gaps to Address
 
-- **GetColor/GetFontSize return types:** Do ApiRun getter methods return primitives or API objects inside callCommand? Needs a quick spike in Phase 2. If they return objects, the snapshot extractor needs adaptation.
-- **Asc.scope payload size limit:** No documented limit. Test with realistic payloads (a full page of formatted Markdown, ~100 tokens) early in Phase 1.
-- **InsertContent with mixed content arrays:** Does OO handle paragraphs interleaved with tables correctly? Needs empirical validation in Phase 4.
-- **Sentinel character searchability:** Can `doc.Search()` find zero-width Unicode characters? If not, Phase 5 needs a different marker strategy. Consider a spike before Phase 5 planning.
-- **OO ordered list bug (#79263):** Does this affect Builder API lists the same way it affects PasteHtml lists? Test in Phase 3 before building full list support.
-- **Redo bug after callCommand:** Upstream OO bug, no fix available. Document as known limitation.
+- **OO iframe resize behavior:** Undocumented. Must be tested empirically in Phase 1 before committing to flex sibling layout. Fallback: overlay panel.
+- **cozy-stack streaming support:** `stream: true` is typed in cozy-client but not tested in this project. The conversations API uses websockets, not SSE. Need to determine which API path to use for chat (synchronous completions vs async conversations).
+- **Conversations API availability:** The `io.cozy.ai.chat.conversations` doctype and API may require specific cozy-stack version or permissions. Need to verify availability in the target deployment.
+- **Plugin as resize coordinator:** If CSS flex alone does not trigger OO relayout, the plugin could potentially force it via `executeMethod`. No known method for this exists -- would need exploration.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- [OnlyOffice Text Document API](https://api.onlyoffice.com/docs/office-api/usage-api/text-document-api/) -- Full Builder API reference
-- [OnlyOffice callCommand documentation](https://api.onlyoffice.com/docs/plugin-and-macros/interacting-with-editors/overview/how-to-call-commands/) -- Sandbox constraints, Asc.scope, callback protocol
-- [OnlyOffice InsertContent API](https://api.onlyoffice.com/docs/office-api/usage-api/text-document-api/ApiDocument/Methods/InsertContent/) -- Parameters, isInline, KeepTextOnly
-- [OnlyOffice Plugin Tips & Pitfalls (Jan 2026)](https://www.onlyoffice.com/blog/2026/01/creating-onlyoffice-plugins-tips-tricks-and-hidden-pitfalls) -- Payload size warnings, precompute guidance
-- [OnlyOffice API method references](https://api.onlyoffice.com/docs/office-api/usage-api/text-document-api/ApiRun/) -- ApiRun, ApiParagraph, ApiTable, ApiRange, ApiHyperlink
+- Codebase analysis: `View.jsx`, `Editor.jsx`, `useCozyBridge.js`, `ScribePopover.jsx`, `OnlyOfficeAIAssistantPanel.tsx`, `styles.styl`, `scribeAI.js`, plugin `code.js`
+- cozy-ui components: verified at `node_modules/cozy-ui/transpiled/react/` (Panel, Paper, Typography, TextField, etc.)
+- cozy-stack-client: verified `fetch()` returns raw Response with auth headers (CozyStackClient.js line 217)
+- localforage: verified at 1.10.0, used in `src/store/persistedState.js`
+- [Cozy-Stack AI Documentation](https://docs.cozy.io/en/cozy-stack/ai/) -- conversations API, websocket protocol
+- [io.cozy.ai.chat.conversations Doctype](https://docs.cozy.io/en/cozy-doctypes/docs/io.cozy.ai.chat.conversations/)
+- [ONLYOFFICE Events API](https://api.onlyoffice.com/docs/docs-api/usage-api/config/events/)
 
 ### Secondary (MEDIUM confidence)
-- [OO Community: post-insertion element retrieval](https://community.onlyoffice.com/t/issue-in-retrieving-newly-created-paragraph-element/10415) -- Search workaround for post-insertion selection
-- [OO Community: redo bug after callCommand](https://community.onlyoffice.com/t/can-not-redo-after-execute-connectors-callcommand-method/12614) -- Confirmed bug, registered by OO team
-- [OO Community: cursor positioning after insert](https://community.onlyoffice.com/t/how-to-position-the-cursor-caret-after-inserted-inline-contentcontrol/1423) -- Position tracking limitations
-- [OO Community: inconsistent image insertion](https://community.onlyoffice.com/t/inconsistent-image-insertion-issue-in-onlyoffice-plugin-for-word-documents/5833) -- CreateImage timing issues
-
-### Tertiary (LOW confidence)
-- Sentinel marker strategy for post-injection selection -- Theoretically sound but untested with zero-width characters in OO Search API
-- Position counting fallback for selection -- Community reports suggest InsertContent does not preserve linear character positions
+- Industry patterns: Google Gemini side panel, Microsoft Copilot in Word, CKEditor AI Quick Actions
+- cozy-client AI model types: `stream` option in ChatCompletionOptions typedef (not runtime-tested)
+- Community patterns: React context for editor state, CSS flex iframe resize
 
 ---
-*Research completed: 2026-03-15*
+*Research completed: 2026-03-10*
 *Ready for roadmap: yes*

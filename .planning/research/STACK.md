@@ -1,426 +1,265 @@
-# Technology Stack: Document Builder API Injection
+# Technology Stack
 
-**Project:** Scribe v2.4 -- Document Builder Injection
-**Researched:** 2026-03-15
-**Overall confidence:** HIGH (official OO API docs verified)
+**Project:** Scribe Chat Side Panel (v3.0)
+**Researched:** 2026-03-10
 
-**Scope:** NEW stack additions only for the Builder API injection milestone. Existing v2.3 stack (React 18, MUI v4, cozy-ui, twake-i18n, postMessage protocol, OO Plugin API, Turndown, marked, react-markdown) is validated and not re-researched.
+## Principle: Zero New Dependencies
 
----
+The existing dependency tree already contains everything needed for the chat side panel. No new npm packages required. This is both a constraint (cozy-ui components preferred) and an advantage (no bundle size increase, no version conflicts).
 
 ## Recommended Stack
 
-### No New Dependencies
+### Side Panel Layout
 
-This milestone adds zero npm packages or external libraries. Everything is built with:
-- OO Document Builder API (already available inside `callCommand`)
-- ES5 regex patterns (inline code in plugin)
-- Existing `Asc.scope` data passing mechanism (already in use)
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| cozy-ui `Panel` (Group/Main/Side) | 135.8.0 | Main + side panel flexbox layout | **Already in cozy-ui.** `Panel.Group` = flex row, `Panel.Main` = flex 65%, `Panel.Side` = flex 35%. Responsive: collapses to block on mobile (<48rem). Import from `cozy-ui/transpiled/react/Panel`. |
+| CSS flex overrides | - | Customize panel width | Panel.Side defaults to `flex: 0 0 35%`. Override to `flex: 0 0 380px` (or similar fixed width) for chat panel consistency. Use inline styles or stylus. |
+| cozy-ui `Drawer` | 135.8.0 | **NOT recommended** for desktop | Drawer is a thin wrapper around MUI Drawer (slide-in overlay). Overlays the OO editor instead of resizing it. Only suitable for mobile fallback. |
 
----
+**Layout architecture decision:** Use simple flex siblings inside the existing `u-flex u-flex-grow-1` div in `View.jsx`. The OO iframe + a chat panel div as siblings. This matches the proven pattern from `OnlyOfficeAIAssistantPanel` which already takes 30% width as a sibling div.
 
-## Core: OO Document Builder API (inside callCommand)
+Alternatively, use `Panel.Group` wrapping `Panel.Main` (OO editor) + `Panel.Side` (chat) inside `Editor.jsx`. Both approaches work; the sibling-div approach requires less structural refactoring.
 
-The Builder API is available as global objects inside any `callCommand` callback. The existing codebase already uses `Api.GetDocument()`, `Api.CreateParagraph()`, `doc.InsertContent()`, and `doc.GetRangeBySelect()` (see `insertAfterWithText` at line 190 and `pasteHtml` at line 102 of code.js).
+**Confidence:** HIGH -- verified Panel component source at `node_modules/cozy-ui/transpiled/react/Panel/index.js` and CSS (flex row, 65%/35% split, responsive collapse at 48rem).
 
-### Global `Api` Factory Methods
+### Iframe Resize
 
-| Method | Returns | Purpose |
-|--------|---------|---------|
-| `Api.GetDocument()` | `ApiDocument` | Access the current document |
-| `Api.CreateParagraph()` | `ApiParagraph` | Create a new empty paragraph |
-| `Api.CreateRun()` | `ApiRun` | Create a new empty text run |
-| `Api.CreateTable(cols, rows)` | `ApiTable` | Create table with specified dimensions |
-| `Api.CreateImage(src, widthEMU, heightEMU)` | `ApiImage` | Create image from URL or Base64. Dimensions in EMU |
-| `Api.CreateHyperlink(url, display, tooltip)` | `ApiHyperlink` | Create hyperlink text block |
-| `Api.CreateNumbering(sType)` | `ApiNumbering` | Create numbering. `sType`: `"bullet"` (default) or `"numbered"` |
-| `Api.CreateColorFromRGB(r, g, b)` | `ApiRGBColor` | Create color for text/shading |
-| `Api.CreateSolidFill(color)` | `ApiFill` | Create solid fill for shapes |
-| `Api.CreateNoFill()` | `ApiFill` | Empty fill |
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| CSS flexbox (natural) | - | OO iframe auto-shrinks when panel opens | OO editor is in a `u-flex u-flex-grow-1` div. Adding a sibling panel reduces available width. No JavaScript iframe resize needed. |
+| `forceIframeHeight()` (existing) | - | Already in `View.jsx` for height control | Pattern exists; can extend to width if needed, but flex should handle it. |
 
-### ApiDocument -- Document Manipulation
+**Key insight:** The existing `View.jsx` renders OO inside `<div className="u-flex u-flex-grow-1">`. When the chat panel is added as a sibling, the flex container automatically splits space. The OO iframe resizes because it is inside a flex child.
 
-| Method | Returns | Purpose |
-|--------|---------|---------|
-| `InsertContent(arrContent, isInline, oPr)` | `boolean` | Insert array of elements at current cursor/selection. `arrContent`: `DocumentElement[]`. `isInline`: `boolean` (default false). `oPr`: `{ "KeepTextOnly": true }` optional |
-| `GetRangeBySelect()` | `ApiRange \| null` | Get range of current selection |
-| `GetRange(start, end)` | `ApiRange` | Get range by character positions |
-| `Push(element)` | `boolean` | Append paragraph or table to end of document |
-| `GetElement(idx)` | `DocumentElement` | Get element by position |
-| `GetBookmarkRange(name)` | `ApiRange \| null` | Get range of a named bookmark |
-| `CreateNumbering(sType)` | `ApiNumbering` | Same as Api.CreateNumbering (aliased) |
-| `Search(query)` | `ApiRange[]` | Search document for text, returns array of ranges |
-| `CreateNewHistoryPoint()` | `boolean` | Create undo checkpoint |
-| `AddElement(idx, element)` | `boolean` | Insert element at specific position |
-| `RemoveElement(idx)` | `boolean` | Remove element at position |
+**Precedent:** `OnlyOfficeAIAssistantPanel.tsx` already does exactly this. It renders as a sibling div with `width: 30%` inside the same flex container. OO handles the resize event internally.
 
-### ApiParagraph -- Paragraph Creation & Formatting
+**Confidence:** HIGH -- existing AI assistant panel uses this exact pattern and works.
 
-| Method | Returns | Purpose |
-|--------|---------|---------|
-| `AddText(text)` | `ApiRun` | Add text, returns the created run |
-| `AddElement(element)` | `boolean` | Add a run or other inline element |
-| `AddHyperlink(url, tooltip, bookmark)` | `ApiHyperlink` | Add hyperlink. Use `SetDisplayedText()` on result to set visible text |
-| `AddLineBreak()` | `ApiRun` | Insert line break (soft return) |
-| `SetBold(bool)` | `ApiParagraph` | Bold for all text in paragraph |
-| `SetItalic(bool)` | `ApiParagraph` | Italic for all text in paragraph |
-| `SetUnderline(bool)` | `ApiParagraph` | Underline for all text |
-| `SetStrikeout(bool)` | `ApiParagraph` | Strikethrough for all text |
-| `SetFontSize(halfPts)` | `ApiParagraph` | Font size in half-points (24 = 12pt) |
-| `SetFontFamily(name)` | `ApiParagraph` | Font family for all 4 slots |
-| `SetColor(r, g, b)` | `ApiParagraph` | Text color |
-| `SetHighlight(color)` | `ApiParagraph` | Background highlight |
-| `SetStyle(style)` | `boolean` | Apply named style (e.g. heading) |
-| `SetJc(jc)` | `boolean` | Justification: `"left"`, `"center"`, `"right"`, `"both"` |
-| `SetNumbering(numLevel)` | `boolean` | Apply numbering level from ApiNumberingLevel |
-| `SetIndFirstLine(twips)` | `boolean` | First line indent |
-| `SetIndLeft(twips)` | `boolean` | Left indent |
-| `SetIndRight(twips)` | `boolean` | Right indent |
-| `SetSpacingBefore(twips)` | `boolean` | Space before paragraph |
-| `SetSpacingAfter(twips)` | `boolean` | Space after paragraph |
-| `GetElement(idx)` | `ParagraphContent` | Get inline element by position |
-| `GetElementsCount()` | `number` | Count of inline elements |
-| `RemoveAllElements()` | `boolean` | Clear paragraph content |
-| `Delete()` | `boolean` | Delete paragraph from document |
-| `Copy()` | `ApiParagraph` | Clone paragraph |
-| `Search(query)` | `ApiRange[]` | Search within paragraph |
-| `AddDrawing(image)` | — | Add image/shape to paragraph |
+### Chat UI Components
 
-### ApiRun -- Inline Text with Per-Run Formatting
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| cozy-ui `Paper` | 135.8.0 | Message bubbles, panel container | Already used extensively in Scribe. Theme-aware background + elevation. |
+| cozy-ui `Typography` | 135.8.0 | Message text, timestamps, headers | Already used. Consistent typography scale. |
+| cozy-ui `TextField` | 135.8.0 | Chat input field | MUI TextField wrapper. Already used in codebase (`ShortcutCreationModal.jsx`). Supports `multiline` + `maxRows` for auto-expanding input. |
+| cozy-ui `IconButton` | 135.8.0 | Send button, close, copy, insert actions | Already used. |
+| cozy-ui `Buttons` | 135.8.0 | Action buttons (Insert/Replace) on AI messages | Already used in AIAssistantPanel. |
+| cozy-ui `Spinner` | 135.8.0 | Loading indicator during AI response | Already used. |
+| cozy-ui `Divider` | 135.8.0 | Separator between conversation sections | Available in cozy-ui. |
+| cozy-ui `Stack` | 135.8.0 | Vertical spacing in message list | Already used in AIAssistantPanel. |
+| cozy-ui Icons | 135.8.0 | Chat UI icons | `Send`, `CrossMedium`, `Copy`, `Refresh`, `Assistant` -- all available. |
+| `react-markdown` + `remark-gfm` | 10.1.0 / 4.0.1 | Render AI responses as formatted markdown | Already installed and used in `ScribeResultPanel`. |
 
-This is the critical object for mixed formatting (e.g., "Hello **world** and *italic*").
+**Chat message component:** Build a custom `ChatMessage` component. Each message = `Paper` with `Typography` + optional action buttons. User messages right-aligned (or full-width with distinct background), AI messages left-aligned. This is 50 lines of JSX -- simpler and lighter than any chat UI library.
 
-| Method | Returns | Purpose |
-|--------|---------|---------|
-| `AddText(text)` | `boolean` | Add text to this run |
-| `SetBold(bool)` | `ApiTextPr` | Bold this run only |
-| `SetItalic(bool)` | `ApiTextPr` | Italic this run only |
-| `SetUnderline(bool)` | `ApiTextPr` | Underline this run only |
-| `SetStrikeout(bool)` | `ApiTextPr` | Strikethrough |
-| `SetDoubleStrikeout(bool)` | `ApiTextPr` | Double strikethrough |
-| `SetFontSize(halfPts)` | `ApiTextPr` | Font size (half-points) |
-| `SetFontFamily(name)` | `ApiTextPr` | Font family |
-| `SetColor(r, g, b)` | `ApiTextPr` | Text color |
-| `SetHighlight(color)` | `ApiTextPr` | Background highlight |
-| `SetSmallCaps(bool)` | `ApiTextPr` | Small caps |
-| `SetCaps(bool)` | `ApiTextPr` | All caps |
-| `SetVertAlign(align)` | `ApiTextPr` | `"superscript"`, `"subscript"`, `"baseline"` |
-| `AddLineBreak()` | `boolean` | Line break within run |
-| `AddTabStop()` | `boolean` | Tab character |
-| `GetText()` | `string` | Get run's text content |
-| `Copy()` | `ApiRun` | Clone run |
-| `Delete()` | `boolean` | Remove run |
+**Confidence:** HIGH -- all components verified present in `node_modules/cozy-ui/transpiled/react/`.
 
-**Pattern for mixed formatting in one paragraph:**
-```javascript
-// ES5 inside callCommand
-var p = Api.CreateParagraph();
-var r1 = Api.CreateRun();
-r1.AddText("Hello ");
-p.AddElement(r1);
+### Conversation Persistence
 
-var r2 = Api.CreateRun();
-r2.SetBold(true);
-r2.AddText("bold");
-p.AddElement(r2);
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| `localforage` | 1.10.0 | Persist chat history locally | **Already installed.** Used by `persistedState.js` and push client. IndexedDB-backed with localStorage fallback. Async API. |
 
-var r3 = Api.CreateRun();
-r3.SetItalic(true);
-r3.AddText(" italic");
-p.AddElement(r3);
-```
-
-### ApiTable / ApiTableRow / ApiTableCell -- Table Construction
-
-| Object | Method | Returns | Purpose |
-|--------|--------|---------|---------|
-| `ApiTable` | `GetRow(idx)` | `ApiTableRow` | Get row by index |
-| `ApiTable` | `GetCell(row, col)` | `ApiTableCell` | Get cell directly |
-| `ApiTable` | `SetWidth("twips", value)` | `boolean` | Table width. Also `"auto"`, `"percent"` |
-| `ApiTable` | `SetJc(jc)` | `boolean` | Table alignment |
-| `ApiTable` | `SetTableBorderTop/Bottom/Left/Right(type, size, space, r, g, b)` | `boolean` | Table borders |
-| `ApiTable` | `SetTableBorderInsideH/V(...)` | `boolean` | Internal borders |
-| `ApiTable` | `MergeCells(cellsArray)` | `ApiTableCell` | Merge cells |
-| `ApiTableRow` | `GetCell(idx)` | `ApiTableCell` | Get cell in row |
-| `ApiTableRow` | `GetCellsCount()` | `number` | Cell count |
-| `ApiTableRow` | `SetHeight(twips, rule)` | — | Row height |
-| `ApiTableRow` | `SetTableHeader(bool)` | — | Mark as repeating header |
-| `ApiTableCell` | `GetContent()` | `ApiDocumentContent` | Content container |
-| `ApiTableCell` | `SetWidth("twips", value)` | — | Cell width |
-| `ApiTableCell` | `SetShd(type, r, g, b)` | — | Cell background |
-| `ApiTableCell` | `SetVerticalAlign(align)` | — | `"top"`, `"center"`, `"bottom"` |
-
-**Pattern for populating table cells:**
-```javascript
-// ES5 inside callCommand
-var table = Api.CreateTable(3, 2); // 3 cols, 2 rows
-var cell = table.GetCell(0, 0);    // row 0, col 0
-var content = cell.GetContent();
-var p = content.GetElement(0);     // cells come with one empty paragraph
-p.AddText("Header 1");
-p.SetBold(true);
-```
-
-### ApiNumbering -- List Creation
+**Storage schema:**
 
 ```javascript
-// ES5 inside callCommand
-var doc = Api.GetDocument();
-var bulletNum = doc.CreateNumbering("bullet");
-var numLvl0 = bulletNum.GetLevel(0);  // top-level bullets
-var numLvl1 = bulletNum.GetLevel(1);  // nested bullets (levels 0-7)
-
-var p = Api.CreateParagraph();
-p.AddText("First bullet");
-p.SetNumbering(numLvl0);
-
-var p2 = Api.CreateParagraph();
-p2.AddText("Nested bullet");
-p2.SetNumbering(numLvl1);
+// Key: `scribe-conversations-${fileId}`
+// Value:
+{
+  conversations: [{
+    id: string,              // crypto.randomUUID() or Date.now().toString(36)
+    title: string,           // first user message, truncated
+    createdAt: string,       // ISO 8601
+    updatedAt: string,       // ISO 8601
+    messages: [{
+      role: 'user' | 'assistant',
+      content: string,       // markdown text
+      timestamp: string,     // ISO 8601
+      metadata: {            // optional
+        selectedText: string,  // OO selection context (if any)
+        action: string         // 'replace' | 'insert' | null
+      }
+    }]
+  }]
+}
 ```
 
-### ApiRange -- Selection & Post-Insertion Positioning
+**Why NOT cozy-client doctypes for v3.0:**
+1. New `io.cozy.scribe.conversations` doctype requires cozy-stack changes (permissions in manifest.webapp, server-side registration) -- heavy process.
+2. Chat history is ephemeral data -- losing it is not catastrophic.
+3. localforage is already battle-tested in this codebase.
+4. Can migrate to doctypes in v4.0 if cross-device sync is wanted.
 
-| Method | Returns | Purpose |
-|--------|---------|---------|
-| `Select()` | `boolean` | Set document selection to this range |
-| `GetText()` | `string` | Get text content |
-| `GetStartPos()` | `number` | Start character position |
-| `GetEndPos()` | `number` | End character position |
-| `SetStartPos(pos)` | `boolean` | Adjust start |
-| `SetEndPos(pos)` | `boolean` | Adjust end |
-| `AddBookmark(name)` | — | Create named bookmark on range |
-| `Delete()` | `boolean` | Delete range content |
-| `GetParagraph()` | `ApiParagraph` | Get paragraph in range |
-| `AddText(text)` | `boolean` | Add text at range position |
-| `MoveCursorToPos(pos)` | `boolean` | Move cursor within range |
+**Why NOT sessionStorage or raw localStorage:**
+- localforage uses IndexedDB by default (much larger storage quota, async, non-blocking).
+- Already imported and configured in the project.
 
-### ApiHyperlink -- Hyperlink Configuration
+**Confidence:** HIGH -- localforage verified at 1.10.0, already used in `src/store/persistedState.js`.
 
-| Method | Returns | Purpose |
-|--------|---------|---------|
-| `SetDisplayedText(text)` | — | Set visible link text |
-| `SetLink(url)` | — | Set URL |
-| `SetScreenTipText(tip)` | — | Set tooltip |
-| `GetRange()` | `ApiRange` | Get range of hyperlink |
-| `SetDefaultStyle()` | — | Apply default hyperlink style |
+### Streaming Responses
 
----
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| `client.stackClient.fetch()` (raw) | 60.19.0 | Get raw Response object for SSE streaming | `fetchJSON()` parses response as JSON (unusable for streaming). `fetch()` returns raw Response with `.body` ReadableStream. Handles auth headers automatically. |
+| `ReadableStream` + `TextDecoder` | Browser native | Parse SSE chunks from streaming response | Standard Web API. No polyfill needed (React 18 targets modern browsers). |
+| `{ stream: true }` in request body | - | Enable streaming in cozy-stack AI proxy | Verified in `cozy-client/dist/models/ai.js` -- `ChatCompletionOptions` typedef includes `stream` boolean. |
 
-## Markdown Parser: Custom ES5 Regex (inside callCommand)
-
-**Decision: Write a custom regex-based Markdown-to-Builder parser. No external libraries.**
-
-### Why Custom
-
-1. The `callCommand` sandbox requires ES5 -- no `const`, `let`, arrow functions, module imports
-2. External libraries cannot be loaded inside `callCommand` (no `require`, no `import`, no script tags)
-3. The parser output is Builder API calls, not HTML. No existing library produces this format
-4. The Markdown subset from LLM output is constrained: no need for full CommonMark compliance
-5. Parsing + building in a single `callCommand` = single undo point
-
-### Architecture: Two-Phase Inside One callCommand
-
-**Phase A -- Parse Markdown string to block/inline token array:**
+**Streaming implementation pattern:**
 
 ```javascript
-// ES5 regex-based tokenizer
-// Input: Asc.scope.markdown (string)
-// Output: array of block tokens with inline runs
+async function callScribeAIStream(client, messages, { signal, onChunk }) {
+  const response = await client.stackClient.fetch(
+    'POST',
+    '/ai/v1/chat/completions',
+    JSON.stringify({ messages, stream: true, temperature: 0.3 }),
+    {
+      signal,
+      headers: { 'Content-Type': 'application/json' }
+    }
+  )
 
-// Block-level regex patterns (applied line-by-line):
-// ^#{1,6}\s+(.+)           -> heading (level = # count)
-// ^(\s*)[-*+]\s+(.+)       -> bullet item (indent -> level)
-// ^(\s*)\d+\.\s+(.+)       -> numbered item
-// ^>\s+(.+)                 -> blockquote
-// ^```(\w*)                 -> code block start
-// ^```                      -> code block end
-// ^---+$  or  ^***+$        -> horizontal rule
-// ^\|.+\|$                  -> table row
-// ^!\[(.+?)\]\((.+?)\)     -> image (block-level)
-// (anything else)           -> paragraph
+  const reader = response.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+  let accumulated = ''
 
-// Inline-level regex patterns (applied to text content):
-// \*\*\*(.+?)\*\*\*        -> bold+italic
-// \*\*(.+?)\*\*            -> bold
-// \*(.+?)\*                -> italic
-// ~~(.+?)~~                -> strikethrough
-// `(.+?)`                  -> inline code
-// \[(.+?)\]\((.+?)\)       -> link
-// !\[(.+?)\]\((.+?)\)      -> inline image
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    buffer += decoder.decode(value, { stream: true })
+
+    // Parse SSE lines: "data: {...}\n\n"
+    const lines = buffer.split('\n')
+    buffer = lines.pop() // keep incomplete line
+
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue
+      const data = line.slice(6)
+      if (data === '[DONE]') return accumulated
+
+      const parsed = JSON.parse(data)
+      const delta = parsed.choices?.[0]?.delta?.content || ''
+      accumulated += delta
+      onChunk(accumulated) // update UI with accumulated text
+    }
+  }
+  return accumulated
+}
 ```
 
-**Phase B -- Walk tokens, emit Builder API calls:**
+**Key finding:** `cozy-stack-client`'s `fetch()` method (CozyStackClient.js line 217) returns the raw Response object with automatic auth header injection. Supports `{ signal }` for AbortController. This is exactly what is needed -- no need to bypass cozy-stack-client or use raw `window.fetch`.
 
-```javascript
-// Reads token array, creates ApiParagraph/ApiRun/ApiTable objects
-// Collects into content[] array
-// Calls doc.InsertContent(content)
-```
+**Phased approach:** Start v3.0 with non-streaming (reuse existing `callScribeAI` with multi-turn messages array). Add streaming in a later phase. Chat UX benefits more from streaming than inline mode because responses are longer.
 
-### Supported Markdown Elements (Priority Order)
+**Confidence:** MEDIUM -- `stream: true` is typed in cozy-client and follows OpenAI convention. However, actual cozy-stack server-side SSE support has not been tested in this project. Runtime verification needed.
 
-| Priority | Element | Builder API Approach |
-|----------|---------|---------------------|
-| P0 | **Bold** `**text**` | `run.SetBold(true)` |
-| P0 | **Italic** `*text*` | `run.SetItalic(true)` |
-| P0 | **Bold+Italic** `***text***` | `run.SetBold(true); run.SetItalic(true)` |
-| P0 | **Paragraph** (plain text) | `Api.CreateParagraph()` + `AddText()` |
-| P1 | **Heading 1-6** `# text` | `paragraph.SetBold(true)` + `paragraph.SetFontSize(size)` where H1=32, H2=28, H3=26, H4=24, H5=22, H6=20 (half-points) |
-| P1 | **Bullet list** `- item` | `doc.CreateNumbering("bullet")` + `paragraph.SetNumbering(level)` |
-| P1 | **Numbered list** `1. item` | `doc.CreateNumbering("numbered")` + `paragraph.SetNumbering(level)` |
-| P1 | **Inline code** `` `code` `` | `run.SetFontFamily("Courier New"); run.SetFontSize(20)` |
-| P2 | **Link** `[text](url)` | `paragraph.AddHyperlink(url, "")` then `hyperlink.SetDisplayedText(text)` |
-| P2 | **Code block** ` ```lang ``` ` | Monospace font per-run + optional gray paragraph background |
-| P2 | **Blockquote** `> text` | `paragraph.SetIndLeft(720)` (0.5 inch) + gray text color |
-| P2 | **Strikethrough** `~~text~~` | `run.SetStrikeout(true)` |
-| P3 | **Table (GFM)** | `Api.CreateTable(cols, rows)`, populate cells via `GetCell().GetContent().GetElement(0).AddText()` |
-| P3 | **Horizontal rule** `---` | Empty paragraph with reduced spacing or bottom border |
-| P3 | **Image** `![alt](url)` | `Api.CreateImage(src, w, h)` + `paragraph.AddDrawing(img)`. Width/height require defaults (e.g., 200x150px -> EMU) |
+### Mode Toggle (Inline vs Panel)
 
-### Why NOT Parse Outside callCommand
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| React state in `View.jsx` | - | Runtime panel open/close | Simple `useState(false)` for `isScribePanelOpen`. |
+| `cozy-flags` | 4.6.1 | Feature flag | `flag('drive.scribe.panel')` to gate panel feature during development. Already used for `drive.scribe.enabled`. |
 
-Considered parsing in plugin iframe (modern JS) and passing AST via `Asc.scope`:
-- **Rejected because:** Two-step approach (parse outside, build inside) risks partial state if the callCommand fails between steps. A single callCommand = single undo point. Also, `Asc.scope` serialization of deep instruction trees is fragile (OO uses structured clone, which may not handle complex nested objects reliably).
-- **Parser size estimate:** ~150-250 lines of ES5. Small enough to live inside the callCommand function body.
-
----
+No new dependencies needed. Toggle is pure UI state.
 
 ## Post-Insertion Selection: Sentinel Marker Strategy
 
-**Decision: Use zero-width sentinel characters to bracket injected content, then Search + Select.**
+| Library | Why Not |
+|---------|---------|
+| Chat UI library (`@chatscope/chat-ui-kit-react`, `stream-chat-react`) | Overkill. Chat messages are Paper + Typography. These libraries add 50-200KB for features we don't need (presence, typing indicators, threads, avatar groups). |
+| MUI Drawer (directly) | cozy-ui wraps it as `Drawer`. But wrong for this use case -- overlays content instead of resizing editor. Use `Panel` or flex sibling instead. |
+| WebSocket library | SSE via fetch ReadableStream is sufficient. The AI proxy speaks HTTP. |
+| State management (`zustand`, `jotai`, `recoil`) | Existing React state + context is sufficient. Chat state is local to the panel component tree. Not shared across the app. |
+| `uuid` | Use `crypto.randomUUID()` (native in all modern browsers) or `Date.now().toString(36)` for conversation IDs. |
+| New cozy-client doctype | Defer server-side persistence to v4.0. localforage is sufficient. |
+| `@mui/material` Drawer/Panel directly | Must go through cozy-ui wrappers for ecosystem consistency. |
+| Virtualized list (`react-window`, `react-virtualized`) | Chat message lists won't have thousands of items. Simple `overflow-y: auto` with native scrolling is fine for < 200 messages per conversation. |
 
-### Why Not Bookmarks
+## Integration Points
 
-Bookmarks via `AddBookmark`/`GetBookmarkRange` require first having a range of the inserted content -- but `InsertContent` does not return the range of what it inserted. This is a chicken-and-egg problem. Community reports confirm this limitation.
+### Where the Panel Attaches (View.jsx, line 142)
 
-### Sentinel Strategy (PRIMARY)
+Current structure:
+```jsx
+<div className="u-flex u-flex-grow-1">
+  <div id="onlyOfficeEditor" />
+  <OnlyOfficeAIAssistantPanel />
+</div>
+```
+
+Becomes:
+```jsx
+<div className="u-flex u-flex-grow-1">
+  <div id="onlyOfficeEditor" style={{ flex: '1 1 auto' }} />
+  {isScribePanelOpen && (
+    <div style={{ flex: '0 0 380px', overflow: 'hidden' }}>
+      <ScribeChatPanel
+        onClose={() => setIsScribePanelOpen(false)}
+        fileId={file._id}
+        /* selection context from useCozyBridge */
+      />
+    </div>
+  )}
+</div>
+```
+
+Note: The existing `OnlyOfficeAIAssistantPanel` may need to be hidden or integrated when Scribe panel is open to avoid two side panels competing for space.
+
+### Chat to Plugin Communication
+
+Reuse `useCozyBridge` hook and `respond()` callback from `View.jsx`. When user clicks "Insert" or "Replace" on a chat AI message, call `respond()` exactly as `ScribePopover` does. The plugin already handles these response actions.
+
+Potential new intent: `CHAT_INSERT` for inserting text without requiring prior selection (e.g., user generates new content in chat and wants to insert at cursor). This is a postMessage protocol extension, not a library dependency.
+
+### Extending scribeAI.js for Conversation
+
+Add `callScribeAIChat()` function that accepts the full messages array (multi-turn) instead of building it from a single action. Keep `callScribeAI()` and `buildMessages()` intact for inline mode.
 
 ```javascript
-// ES5 inside callCommand
-var SENTINEL_START = "\u200B\u200C"; // zero-width space + zero-width non-joiner
-var SENTINEL_END = "\u200C\u200B";   // reversed pair (unique in document)
-
-// 1. Prepend sentinel to first run of first paragraph
-// 2. Append sentinel to last run of last paragraph
-// 3. Call InsertContent(content)
-// 4. Search for sentinels:
-var startRanges = doc.Search(SENTINEL_START);
-var endRanges = doc.Search(SENTINEL_END);
-// 5. Compute selection range from startRange[0].GetStartPos() to endRange[0].GetEndPos()
-var selRange = doc.GetRange(
-  startRanges[0].GetStartPos(),
-  endRanges[0].GetEndPos()
-);
-selRange.Select();
-// 6. Clean up sentinels (delete the zero-width chars)
-startRanges[0].Delete();
-// Re-search end sentinel (positions shifted after delete)
-var endRanges2 = doc.Search(SENTINEL_END);
-if (endRanges2.length > 0) endRanges2[0].Delete();
+export async function callScribeAIChat(client, messages, { signal } = {}) {
+  // messages = [{ role: 'system', content: '...' }, { role: 'user', ... }, { role: 'assistant', ... }, ...]
+  const response = await client.stackClient.fetchJSON(
+    'POST',
+    '/ai/v1/chat/completions',
+    { messages, temperature: 0.3 },
+    { signal }
+  )
+  const content = response?.content || response?.choices?.[0]?.message?.content
+  if (!content) throw new Error('Empty response from AI')
+  return content
+}
 ```
 
-**Confidence: MEDIUM.** The sentinel approach is theoretically sound but depends on:
-- `doc.Search()` finding zero-width characters (needs testing)
-- `ApiRange.Delete()` removing just the sentinel without affecting surrounding content
-- Position recalculation after delete being correct
+## Versions Summary
 
-### Fallback: Position Counting
+| Package | Installed | Used For | New? |
+|---------|-----------|----------|------|
+| cozy-ui | 135.8.0 | Panel, Paper, Typography, TextField, IconButton, Buttons, Stack, Divider, Icons | No |
+| cozy-client | 60.20.0 | AI model types (stream option) | No |
+| cozy-stack-client | 60.19.0 | Raw fetch for streaming, fetchJSON for non-streaming | No |
+| react-markdown | 10.1.0 | Render AI markdown in chat bubbles | No |
+| remark-gfm | 4.0.1 | GFM support (tables, strikethrough) in chat | No |
+| localforage | 1.10.0 | Conversation persistence (IndexedDB) | No |
+| turndown | 7.2.2 | HTML-to-MD for OO selection context in chat | No |
+| marked | 17.0.4 | MD-to-HTML for reinsertion from chat | No |
+| date-fns | 2.30.0 | Timestamp formatting in chat messages | No |
+| cozy-flags | 4.6.1 | Feature flag for panel mode | No |
 
-If sentinels fail, use character position arithmetic:
-1. Before InsertContent, record `selEnd = range.GetEndPos()`
-2. After InsertContent, new content occupies positions starting at `selStart` (for replace mode) or `selEnd` (for insert mode)
-3. Calculate total character length of injected content from the markdown
-4. Select range `[insertStart, insertStart + totalLength]`
-
-**Confidence: LOW.** InsertContent may not preserve linear character positions, especially with tables/images.
-
----
-
-## Units Reference
-
-| Unit | Used For | Conversion |
-|------|----------|-----------|
-| **half-points** | `SetFontSize()` | 24 = 12pt, 28 = 14pt, 32 = 16pt |
-| **twips** | Spacing, indentation, table widths | 1 inch = 1440 twips, 1 pt = 20 twips |
-| **EMU** | Image dimensions (`CreateImage`) | 1 inch = 914400 EMU, 1 cm = 360000 EMU, 1 px ~= 9525 EMU |
-| **width type** | `SetWidth()` first param | `"twips"`, `"auto"`, `"percent"` |
-
----
-
-## Integration Pattern
-
-### Data Flow
-
-```
-React panel (markdown result string)
-  -> postMessage response to plugin iframe
-    -> plugin sets Asc.scope.markdown = markdownString
-    -> plugin sets Asc.scope._mode = "replace" | "insert"
-    -> pasteInProgress = true; stopHidePolling();
-      -> callCommand (single call, single undo point):
-           1. If mode === "insert": collapse cursor to end of selection
-           2. Parse markdown to block tokens (ES5 regex)
-           3. Walk tokens, build ApiParagraph/ApiRun/ApiTable objects
-           4. Inject sentinel markers at boundaries
-           5. doc.InsertContent(content)
-           6. Search sentinels, compute range, Select
-           7. Clean up sentinels
-      -> callback: pasteInProgress = false
-```
-
-### Asc.scope Contract
-
-```javascript
-// Set before callCommand:
-Asc.scope.markdown = "**bold** and *italic*\n\n- bullet 1\n- bullet 2";
-Asc.scope._mode = "replace";  // "replace" | "insert"
-
-// Inside callCommand, access via:
-var md = Asc.scope.markdown;
-var mode = Asc.scope._mode;
-```
-
-### Backward Compatibility
-
-The existing `pasteHtml()` function remains as a fallback. If Builder API injection fails (e.g., unsupported content), the system falls back to PasteHtml. The new builder function (`buildAndInsert()`) is called instead of `pasteHtml()` in the response handler, with PasteHtml as the error fallback.
-
----
-
-## Alternatives Considered
-
-| Category | Recommended | Alternative | Why Not |
-|----------|-------------|-------------|---------|
-| MD parser location | Inside callCommand (ES5) | Plugin iframe (modern JS) + Asc.scope AST | Breaks single-undo-point guarantee; Asc.scope deep serialization fragile |
-| MD parser impl | Custom ES5 regex | snarkdown / slimdown | Produce HTML not Builder API instructions; would need HTML-to-Builder converter |
-| MD parser impl | Custom ES5 regex | commonmark.js | ~30KB, ES6 syntax, cannot load in callCommand |
-| MD parser impl | Custom ES5 regex | marked.js | Already used in React side for preview, but outputs HTML not Builder calls |
-| Selection | Sentinel markers | Bookmarks | Chicken-and-egg: need range to create bookmark, but InsertContent doesn't return range |
-| Selection | Sentinel markers | Position arithmetic | InsertContent position behavior is unreliable per community reports |
-| Injection | Builder API | PasteHtml (current) | No per-element control, no post-paste selection, no image/table fidelity |
-
----
+**Total new npm packages: 0**
 
 ## Sources
 
-- [OnlyOffice Text Document API](https://api.onlyoffice.com/docs/office-api/usage-api/text-document-api/) -- HIGH confidence
-- [ApiParagraph methods](https://api.onlyoffice.com/docs/office-api/usage-api/text-document-api/ApiParagraph/) -- HIGH confidence
-- [ApiRun methods](https://api.onlyoffice.com/docs/office-api/usage-api/text-document-api/ApiRun/) -- HIGH confidence
-- [ApiDocument methods](https://api.onlyoffice.com/docs/office-api/usage-api/text-document-api/ApiDocument/) -- HIGH confidence
-- [ApiTable methods](https://api.onlyoffice.com/docs/office-api/usage-api/text-document-api/ApiTable/) -- HIGH confidence
-- [ApiRange methods](https://api.onlyoffice.com/docs/office-api/usage-api/text-document-api/ApiRange/) -- HIGH confidence
-- [ApiTableCell methods](https://api.onlyoffice.com/docs/office-api/usage-api/text-document-api/ApiTableCell/) -- HIGH confidence
-- [ApiHyperlink methods](https://api.onlyoffice.com/docs/office-api/usage-api/text-document-api/ApiHyperlink/) -- HIGH confidence
-- [InsertContent signature](https://api.onlyoffice.com/docs/office-api/usage-api/text-document-api/ApiDocument/Methods/InsertContent/) -- HIGH confidence
-- [CreateNumbering](https://api.onlyoffice.com/docs/office-api/usage-api/text-document-api/ApiDocument/Methods/CreateNumbering/) -- HIGH confidence
-- [CreateTable](https://api.onlyoffice.com/docs/office-api/usage-api/text-document-api/Api/Methods/CreateTable/) -- HIGH confidence
-- [CreateImage](https://api.onlyoffice.com/docs/office-api/usage-api/text-document-api/Api/Methods/CreateImage/) -- HIGH confidence
-- [How to call commands](https://api.onlyoffice.com/docs/plugin-and-macros/interacting-with-editors/overview/how-to-call-commands/) -- HIGH confidence
-- [AddBookmark](https://api.onlyoffice.com/docs/office-api/usage-api/text-document-api/ApiRange/Methods/AddBookmark/) -- HIGH confidence
-- [GetBookmarkRange](https://api.onlyoffice.com/docs/office-api/usage-api/text-document-api/ApiDocument/Methods/GetBookmarkRange/) -- HIGH confidence
-- [Community: retrieving inserted content](https://community.onlyoffice.com/t/issue-in-retrieving-newly-created-paragraph-element/10415) -- MEDIUM confidence
-- [Community: cursor positioning after insert](https://community.onlyoffice.com/t/how-to-position-the-cursor-caret-after-inserted-inline-contentcontrol/1423) -- MEDIUM confidence
+- cozy-ui Panel component: verified at `node_modules/cozy-ui/transpiled/react/Panel/index.js` -- Group (flex row), Main (65%), Side (35% + paleGrey background)
+- cozy-ui Panel CSS: verified at `node_modules/cozy-ui/transpiled/react/stylesheet.css` -- responsive collapse at 48rem breakpoint
+- cozy-ui Drawer: verified at `node_modules/cozy-ui/transpiled/react/Drawer/index.js` -- thin MUI Drawer re-export (overlay, not layout)
+- cozy-stack-client fetch: verified at `node_modules/cozy-stack-client/dist/CozyStackClient.js` lines 206-328 -- raw Response return, auto auth headers, signal support
+- cozy-client AI model: verified at `node_modules/cozy-client/dist/models/ai.js` line 74 -- `stream` option in ChatCompletionOptions typedef
+- Existing AI panel pattern: verified at `src/modules/views/OnlyOffice/OnlyOfficeAIAssistantPanel.tsx` + `styles.styl` -- sibling div, width 30%, inside flex container
+- Existing flex layout: verified at `src/modules/views/OnlyOffice/View.jsx` line 142 -- `u-flex u-flex-grow-1` container
+- localforage usage: verified at `src/store/persistedState.js` (setItem/getItem), `src/components/pushClient/Banner.jsx`
+- cozy-ui component list: verified via `ls node_modules/cozy-ui/transpiled/react/` -- TextField, Divider, Stack, all Icons present
 
 ---
-*Stack research for: v2.4 Document Builder Injection*
-*Researched: 2026-03-15*
+*Stack research for: v3.0 Scribe Chat Side Panel*
+*Researched: 2026-03-10*
