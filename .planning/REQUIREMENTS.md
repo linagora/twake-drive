@@ -1,89 +1,67 @@
-# Requirements: Scribe v2.1 Formatage Riche
+# Requirements: Scribe v2.2 Améliorations UX
 
-**Defined:** 2026-03-06
+**Defined:** 2026-03-10
 **Core Value:** La chaîne de communication complète — depuis la sélection de texte dans OnlyOffice jusqu'à la réinjection du texte modifié par l'IA — de bout en bout, transparente pour l'utilisateur.
 
-## v2.1 Requirements
+## v2.2 Requirements
 
-Requirements for rich text formatting preservation. Each maps to roadmap phases.
+Requirements pour le milestone v2.2 Améliorations UX.
 
-### Extraction
+### Navigation & Clavier
 
-- [x] **EXTR-01**: Le plugin extrait le HTML formaté de la sélection via `GetSelectedContent({type:"html"})`
-- [x] **EXTR-02**: Le protocole postMessage transporte le HTML avec un champ `format:"html"`
-- [x] **EXTR-03**: Si l'extraction HTML échoue, le système revient silencieusement au texte brut
+- [ ] **NAV-01**: L'utilisateur peut ouvrir Scribe avec Ctrl+Shift+I (au lieu de Ctrl+I qui déclenche la mise en italique)
+- [ ] **NAV-02**: Dans le panneau de résultat, Tab et flèche droite passent de Insérer à Remplacer (ordre de focus inversé par rapport à l'actuel)
 
-### Conversion
+### Interactions Souris
 
-- [x] **CONV-01**: Le HTML extrait est converti en Markdown via Turndown côté Cozy Drive
-- [x] **CONV-02**: La réponse Markdown du LLM est reconvertie en HTML via marked pour réinjection
-- [x] **CONV-03**: Les éléments non supportés (images, SVG, math) sont nettoyés avant conversion
+- [ ] **MOUSE-01**: À l'ouverture du menu, un item sous la souris n'est pas sélectionné tant que la souris ne se déplace pas vers un autre item
+- [ ] **MOUSE-02**: L'utilisateur peut déplacer la fenêtre de résultat en cliquant-glissant sur le fond (hors boutons et zone de texte)
+- [ ] **MOUSE-03**: L'utilisateur peut redimensionner la fenêtre de résultat via un handle discret en bas à droite
 
-### Preview
+### Micro-interactions
 
-- [x] **PREV-01**: Le panneau de résultat affiche le Markdown rendu (react-markdown) au lieu du texte brut
-- [x] **PREV-02**: Le rendu Markdown utilise les tokens MUI du thème Scribe (dark/light mode)
-
-### Réinjection
-
-- [x] **REINJ-01**: L'action "Replace" utilise `PasteHtml` pour réinjecter le texte formaté
-- [x] **REINJ-02**: L'action "Insert After" insère du contenu HTML formaté après la sélection
-
-### Intégrité du pipeline
-
-- [x] **PIPE-01**: Le formatage inline (gras, italique) survit au cycle complet (extraction → LLM → réinjection)
-- [x] **PIPE-02**: Les blocs (titres, listes à puces/numérotées, paragraphes) survivent au cycle complet
-- [x] **PIPE-03**: Les tableaux GFM survivent au cycle complet
-- [x] **PIPE-04**: Les liens et blocs de code survivent au cycle complet
+- [ ] **MICRO-01**: Le tooltip du bouton flottant Scribe n'apparaît qu'après 1 seconde de survol continu
 
 ## Future Requirements
 
-### Édition du résultat
+### Carried from v2.1
 
-- **EDIT-01**: L'utilisateur peut modifier le résultat Markdown dans le panneau avant insertion (éditeur MD éditable)
+- Post-paste selection positioning (deferred to rich content milestone)
+- OO dark theme systematic testing
+- Button disable on deselection when no text selected
+- Context menu integration testing
 
-### Streaming
+### Carried from v2.1 Out of Scope
 
-- **STRM-01**: Affichage progressif token par token avec rendu Markdown incrémental
-
-### Comparaison
-
-- **DIFF-01**: Vue diff entre le texte original et le résultat AI
+- **EDIT-01**: Éditeur MD éditable dans le panneau de résultat
+- **STRM-01**: Streaming token par token avec rendu incrémental
+- **DIFF-01**: Vue diff entre texte original et résultat AI
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Préservation font/color/size custom | Markdown n'a pas de concept de polices, tailles ou couleurs — nécessiterait un pipeline HTML parallèle |
-| Extraction/réinjection d'images | Les images ne survivent pas au round-trip LLM (text completion) |
-| Track changes / marques de révision | Mélanger IA et tracked changes crée une confusion dans l'historique |
-| Math/équations (LaTeX, MathML) | Complexité élevée pour un cas d'usage niche |
-| Fusion formatage original + LLM | Problème de diffing non résolu — le MD du LLM définit le formatage |
+| Streaming LLM responses | Déféré à v3.x — non-streaming suffisant |
+| Document Builder API | Déféré à v3.x — PasteHtml suffisant pour v2.x |
+| Migration vers application Cozy séparée | Projet v3.0 |
+| Mobile natif | Web-first |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| EXTR-01 | Phase 10 | Complete |
-| EXTR-02 | Phase 10 | Complete |
-| EXTR-03 | Phase 10 | Complete |
-| CONV-01 | Phase 11 | Complete |
-| CONV-02 | Phase 11 | Complete |
-| CONV-03 | Phase 11 | Complete |
-| PREV-01 | Phase 12 | Complete |
-| PREV-02 | Phase 12 | Complete |
-| REINJ-01 | Phase 13 | Complete |
-| REINJ-02 | Phase 13 | Complete |
-| PIPE-01 | Phase 13 | Complete |
-| PIPE-02 | Phase 13 | Complete |
-| PIPE-03 | Phase 13 | Complete |
-| PIPE-04 | Phase 13 | Complete |
+| NAV-01 | — | Pending |
+| NAV-02 | — | Pending |
+| MOUSE-01 | — | Pending |
+| MOUSE-02 | — | Pending |
+| MOUSE-03 | — | Pending |
+| MICRO-01 | — | Pending |
 
 **Coverage:**
-- v2.1 requirements: 14 total
-- Mapped to phases: 14
-- Unmapped: 0
+- v2.2 requirements: 6 total
+- Mapped to phases: 0
+- Unmapped: 6 ⚠️
 
 ---
-*Requirements defined: 2026-03-06*
-*Last updated: 2026-03-06 after roadmap creation*
+*Requirements defined: 2026-03-10*
+*Last updated: 2026-03-10 after initial definition*
