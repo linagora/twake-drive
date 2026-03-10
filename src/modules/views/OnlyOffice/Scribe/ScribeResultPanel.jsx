@@ -294,15 +294,15 @@ const ScribeResultPanel = ({
         ) : (
           <>
             <Buttons
+              ref={insertRef}
+              label={t('Scribe.button.insert')}
+              onClick={onInsert}
+            />
+            <Buttons
               ref={replaceRef}
               variant="text"
               label={t('Scribe.button.replace')}
               onClick={onReplace}
-            />
-            <Buttons
-              ref={insertRef}
-              label={t('Scribe.button.insert')}
-              onClick={onInsert}
             />
           </>
         )}
