@@ -67,7 +67,7 @@ export const ScribeFloatingButton = ({ visible, onClick }) => {
       {hovered && (
         <span style={tooltipStyle}>
           <span style={{ color: 'white' }}>{t('Scribe.button.text_ai')}</span>
-          <span style={{ color: '#999' }}>(Ctrl+I)</span>
+          <span style={{ color: '#999' }}>(Ctrl+Shift+I)</span>
         </span>
       )}
       <svg

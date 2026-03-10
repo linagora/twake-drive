@@ -381,25 +381,25 @@
     });
   });
 
-  // ---- Ctrl+I / Cmd+I shortcut for Scribe ----
+  // ---- Ctrl+Shift+I / Cmd+Shift+I shortcut for Scribe ----
   try {
     window.parent.document.addEventListener("keydown", function(e) {
-      var isCtrlI = (e.ctrlKey || e.metaKey) && e.key === "i";
-      if (isCtrlI && lastSelectedText.length > 0) {
+      var isCtrlShiftI = (e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "I";
+      if (isCtrlShiftI && lastSelectedText.length > 0) {
         e.preventDefault();
-        log("Ctrl+I triggered Scribe");
+        log("Ctrl+Shift+I triggered Scribe");
         castIntent("AI_TEXT_EDIT", buildEditIntentData());
       }
     });
-    log("Ctrl+I shortcut registered on parent document");
+    log("Ctrl+Shift+I shortcut registered on parent document");
   } catch (e) {
-    log("Cannot register Ctrl+I on parent document: " + e.message);
+    log("Cannot register Ctrl+Shift+I on parent document: " + e.message);
     // Fallback: register on plugin's own document (limited, but still useful)
     document.addEventListener("keydown", function(e) {
-      var isCtrlI = (e.ctrlKey || e.metaKey) && e.key === "i";
-      if (isCtrlI && lastSelectedText.length > 0) {
+      var isCtrlShiftI = (e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "I";
+      if (isCtrlShiftI && lastSelectedText.length > 0) {
         e.preventDefault();
-        log("Ctrl+I triggered Scribe (fallback)");
+        log("Ctrl+Shift+I triggered Scribe (fallback)");
         castIntent("AI_TEXT_EDIT", buildEditIntentData());
       }
     });
