@@ -103,5 +103,5 @@ Phases execute in numeric order: 14 -> 15
 | 11. Pipeline de Conversion | v2.1 | 2/2 | Complete | 2026-03-06 |
 | 12. Preview Markdown | v2.1 | 1/1 | Complete | 2026-03-07 |
 | 13. Reinjection et Integrite Pipeline | v2.1 | 1/1 | Complete | 2026-03-09 |
-| 14. Navigation, clavier et micro-interactions | v2.2 | 0/2 | Not started | - |
+| 14. Navigation, clavier et micro-interactions | 1/2 | In Progress|  | - |
 | 15. Panneau de resultat interactif | v2.2 | 0/? | Not started | - |

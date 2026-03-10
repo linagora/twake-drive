@@ -9,8 +9,8 @@ Requirements pour le milestone v2.2 Ameliorations UX.
 
 ### Navigation & Clavier
 
-- [ ] **NAV-01**: L'utilisateur peut ouvrir Scribe avec Ctrl+Shift+I (au lieu de Ctrl+I qui declenche la mise en italique)
-- [ ] **NAV-02**: Dans le panneau de resultat, Tab et fleche droite passent de Inserer a Remplacer (ordre de focus inverse par rapport a l'actuel)
+- [x] **NAV-01**: L'utilisateur peut ouvrir Scribe avec Ctrl+Shift+I (au lieu de Ctrl+I qui declenche la mise en italique)
+- [x] **NAV-02**: Dans le panneau de resultat, Tab et fleche droite passent de Inserer a Remplacer (ordre de focus inverse par rapport a l'actuel)
 
 ### Interactions Souris
 
@@ -50,8 +50,8 @@ Requirements pour le milestone v2.2 Ameliorations UX.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| NAV-01 | Phase 14 | Pending |
-| NAV-02 | Phase 14 | Pending |
+| NAV-01 | Phase 14 | Complete |
+| NAV-02 | Phase 14 | Complete |
 | MOUSE-01 | Phase 14 | Pending |
 | MOUSE-02 | Phase 15 | Pending |
 | MOUSE-03 | Phase 15 | Pending |

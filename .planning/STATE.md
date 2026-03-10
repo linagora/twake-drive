@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: Ameliorations UX
-status: ready_to_plan
-stopped_at: Roadmap created -- ready to plan Phase 14
-last_updated: "2026-03-10"
-last_activity: 2026-03-10 -- Roadmap created for v2.2
+status: executing
+stopped_at: Completed 14-01-PLAN.md
+last_updated: "2026-03-10T21:53:05.795Z"
+last_activity: 2026-03-10 -- Completed 14-01 keyboard shortcut fix + button order
 progress:
   total_phases: 2
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  total_plans: 2
+  completed_plans: 1
+  percent: 88
 ---
 
 # Project State
@@ -26,22 +26,27 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 ## Current Position
 
 Phase: 14 of 15 (Navigation, clavier et micro-interactions)
-Plan: --
-Status: Ready to plan
-Last activity: 2026-03-10 -- Roadmap created for v2.2
+Plan: 1 of 2
+Status: Executing
+Last activity: 2026-03-10 -- Completed 14-01 keyboard shortcut fix + button order
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█████████░] 88%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 21 (v1.0: 10, v2.0: 5, v2.1: 6)
+- Total plans completed: 22 (v1.0: 10, v2.0: 5, v2.1: 6, v2.2: 1)
+
+| Phase | Plan | Duration | Tasks | Files |
+|-------|------|----------|-------|-------|
+| 14 | 01 | 1min | 2 | 3 |
 
 ## Accumulated Context
 
 ### Decisions
 
 All decisions logged in PROJECT.md Key Decisions table.
+- Phase 14-01: Ctrl+Shift+I chosen to avoid all OO native shortcut conflicts
 
 ### Pending Todos (carried from v2.1)
 
@@ -63,6 +68,6 @@ All decisions logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-03-10
-Stopped at: Roadmap created for v2.2 -- ready to plan Phase 14
-Resume file: none
+Last session: 2026-03-10T21:53:05.793Z
+Stopped at: Completed 14-01-PLAN.md
+Resume file: None
