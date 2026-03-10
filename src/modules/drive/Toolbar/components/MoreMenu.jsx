@@ -102,15 +102,17 @@ const MoreMenu = ({
                 displayedFolder={displayedFolder}
                 hasWriteAccess={hasWriteAccess}
               />
-              <PersonalizeFolderItem
-                displayedFolder={displayedFolder}
-                hasWriteAccess={hasWriteAccess}
-              />
+              {!isSharedDriveRecipient && (
+                <PersonalizeFolderItem
+                  displayedFolder={displayedFolder}
+                  hasWriteAccess={hasWriteAccess}
+                />
+              )}
             </InsideRegularFolder>
             {isMobile && hasWriteAccess && <AddMenuItem />}
             <SelectableItem onClick={showSelectionBar} />
             {isSharedDriveOwner && <ManageAccessItem />}
-            {hasWriteAccess && (
+            {hasWriteAccess && !isSharedDriveRecipient && (
               <InsideRegularFolder
                 displayedFolder={displayedFolder}
                 folderId={folderId}
