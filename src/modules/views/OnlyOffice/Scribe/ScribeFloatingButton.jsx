@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 import { useI18n } from 'twake-i18n'
@@ -49,10 +49,19 @@ const tooltipStyle = {
 export const ScribeFloatingButton = ({ visible, onClick }) => {
   const { t } = useI18n()
   const [hovered, setHovered] = useState(false)
+  const [showTooltip, setShowTooltip] = useState(false)
+  const timerRef = useRef(null)
 
   useEffect(() => {
-    if (visible) setHovered(false)
+    if (visible) {
+      setHovered(false)
+      setShowTooltip(false)
+      clearTimeout(timerRef.current)
+    }
   }, [visible])
+
+  // Cleanup timer on unmount
+  useEffect(() => () => clearTimeout(timerRef.current), [])
 
   if (!visible) return null
 
@@ -60,11 +69,18 @@ export const ScribeFloatingButton = ({ visible, onClick }) => {
     <button
       style={{ ...baseStyle, opacity: hovered ? 1 : 0.4 }}
       onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseEnter={() => {
+        setHovered(true)
+        timerRef.current = setTimeout(() => setShowTooltip(true), 1000)
+      }}
+      onMouseLeave={() => {
+        setHovered(false)
+        setShowTooltip(false)
+        clearTimeout(timerRef.current)
+      }}
       type="button"
     >
-      {hovered && (
+      {showTooltip && (
         <span style={tooltipStyle}>
           <span style={{ color: 'white' }}>{t('Scribe.button.text_ai')}</span>
           <span style={{ color: '#999' }}>(Ctrl+Shift+I)</span>
