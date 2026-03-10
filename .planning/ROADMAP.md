@@ -64,10 +64,11 @@ Full details: `.planning/milestones/v2.1-ROADMAP.md`
   2. In the result panel, pressing Tab moves focus from Insert to Replace (left-to-right), and Shift+Tab does the reverse
   3. When the Scribe menu opens with the mouse cursor already over a menu item, that item is not highlighted until the mouse physically moves to a different item
   4. The floating button tooltip appears only after 1 second of continuous hover -- moving away before 1s prevents the tooltip from showing
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 14-01: TBD
+- [ ] 14-01-PLAN.md — Keyboard shortcut Ctrl+Shift+I and result panel button order
+- [ ] 14-02-PLAN.md — Mouse hover gating on menu and tooltip delay on floating button
 
 ### Phase 15: Panneau de resultat interactif
 **Goal**: L'utilisateur peut repositionner et redimensionner la fenetre de resultat pour l'adapter a son flux de travail
@@ -102,5 +103,5 @@ Phases execute in numeric order: 14 -> 15
 | 11. Pipeline de Conversion | v2.1 | 2/2 | Complete | 2026-03-06 |
 | 12. Preview Markdown | v2.1 | 1/1 | Complete | 2026-03-07 |
 | 13. Reinjection et Integrite Pipeline | v2.1 | 1/1 | Complete | 2026-03-09 |
-| 14. Navigation, clavier et micro-interactions | v2.2 | 0/? | Not started | - |
+| 14. Navigation, clavier et micro-interactions | v2.2 | 0/2 | Not started | - |
 | 15. Panneau de resultat interactif | v2.2 | 0/? | Not started | - |
