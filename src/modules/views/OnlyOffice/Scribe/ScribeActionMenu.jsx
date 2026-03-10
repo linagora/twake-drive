@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useMemo, forwardRef, useImperativeHandle } from 'react'
+import React, { useState, useCallback, useRef, useMemo, useEffect, forwardRef, useImperativeHandle } from 'react'
 import PropTypes from 'prop-types'
 
 import { useI18n } from 'twake-i18n'
@@ -36,6 +36,24 @@ const ScribeActionMenu = forwardRef(({ onSelect, onClose, selectedText: _selecte
   const paperRef = useRef(null)
   const promptRef = useRef(null)
   const customLangRef = useRef(null)
+  const mouseMoveEnabledRef = useRef(false)
+
+  // Gate mouse hover: suppress highlight until mouse physically moves after menu opens
+  useEffect(() => {
+    mouseMoveEnabledRef.current = false
+    const paper = paperRef.current
+    if (!paper) return
+
+    const enableMouse = () => {
+      mouseMoveEnabledRef.current = true
+      paper.removeEventListener('mousemove', enableMouse)
+    }
+    paper.addEventListener('mousemove', enableMouse)
+
+    return () => {
+      paper.removeEventListener('mousemove', enableMouse)
+    }
+  }, [])
 
   // Build actions with dynamic translate children + optional dev action
   const actions = useMemo(() => {
@@ -251,10 +269,12 @@ const ScribeActionMenu = forwardRef(({ onSelect, onClose, selectedText: _selecte
           <div
             key={action.id}
             onMouseEnter={() => {
+              if (!mouseMoveEnabledRef.current) return
               setFocusIndex(index)
               if (action.children) { setActiveSubmenu(action.id); setSubmenuFocusIndex(-1) }
             }}
             onMouseLeave={() => {
+              if (!mouseMoveEnabledRef.current) return
               if (action.children) setActiveSubmenu(null)
             }}
             style={{ position: 'relative' }}
@@ -300,6 +320,7 @@ const ScribeActionMenu = forwardRef(({ onSelect, onClose, selectedText: _selecte
                       key={child.id}
                       selected={submenuFocusIndex === childIndex}
                       onMouseEnter={() => {
+                        if (!mouseMoveEnabledRef.current) return
                         setSubmenuFocusIndex(childIndex)
                         if (customLangRef.current) customLangRef.current.focus()
                       }}
@@ -346,7 +367,7 @@ const ScribeActionMenu = forwardRef(({ onSelect, onClose, selectedText: _selecte
                         const parentLabel = t(action.labelKey)
                         onSelect(child.id, childLabel, `${parentLabel} > ${childLabel}`)
                       }}
-                      onMouseEnter={() => setSubmenuFocusIndex(childIndex)}
+                      onMouseEnter={() => { if (!mouseMoveEnabledRef.current) return; setSubmenuFocusIndex(childIndex) }}
                     >
                       {child.icon && (
                         <ListItemIcon>
@@ -382,7 +403,7 @@ const ScribeActionMenu = forwardRef(({ onSelect, onClose, selectedText: _selecte
             : undefined
         }}
         elevation={0}
-        onMouseEnter={() => updateFocus(PROMPT_INDEX)}
+        onMouseEnter={() => { if (!mouseMoveEnabledRef.current) return; updateFocus(PROMPT_INDEX) }}
       >
         <ScribePromptInput
           ref={promptRef}
