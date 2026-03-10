@@ -19,7 +19,15 @@ import { useDisplayedFolder, useFolderSort } from '@/hooks'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { FabContext } from '@/lib/FabProvider'
 import { useModalContext } from '@/lib/ModalContext'
-import { download, infos, versions, rename, trash, hr } from '@/modules/actions'
+import {
+  download,
+  infos,
+  versions,
+  rename,
+  trash,
+  hr,
+  share
+} from '@/modules/actions'
 import { moveTo } from '@/modules/actions/components/moveTo'
 import { personalizeFolder } from '@/modules/actions/components/personalizeFolder'
 import AddMenuProvider from '@/modules/drive/AddMenu/AddMenuProvider'
@@ -44,7 +52,8 @@ const SharedDriveFolderView = () => {
   useHead()
   const { driveId, folderId } = params
   const sharingContext = useSharingContext()
-  const { isOwner, byDocId, hasWriteAccess, refresh } = sharingContext
+  const { isOwner, byDocId, hasWriteAccess, refresh, allLoaded } =
+    sharingContext
   const { displayedFolder } = useDisplayedFolder()
   const { pushModal, popModal } = useModalContext()
   const { t } = useI18n()
@@ -107,7 +116,8 @@ const SharedDriveFolderView = () => {
       showAlert,
       pushModal,
       popModal,
-      refresh
+      refresh,
+      allLoaded
     }),
     [
       client,
@@ -124,7 +134,8 @@ const SharedDriveFolderView = () => {
       showAlert,
       pushModal,
       popModal,
-      refresh
+      refresh,
+      allLoaded
     ]
   )
 
@@ -132,6 +143,7 @@ const SharedDriveFolderView = () => {
     () =>
       makeActions(
         [
+          share,
           download,
           hr,
           rename,
