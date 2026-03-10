@@ -1,84 +1,47 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.1
-milestone_name: Formatage Riche
-status: completed
-stopped_at: Completed 13-01 Rich Text Reinsertion Pipeline -- v2.1 milestone complete
-last_updated: "2026-03-09T06:39:20.539Z"
-last_activity: 2026-03-09 -- Completed plan 13-01 Rich Text Reinsertion Pipeline
+milestone: v2.2
+milestone_name: Améliorations UX
+status: defining_requirements
+stopped_at: Milestone v2.2 started — defining requirements
+last_updated: "2026-03-10"
+last_activity: 2026-03-10 -- Milestone v2.2 started
 progress:
-  total_phases: 4
-  completed_phases: 4
-  total_plans: 6
-  completed_plans: 6
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-09)
+See: .planning/PROJECT.md (updated 2026-03-10)
 
 **Core value:** La chaine de communication complete -- depuis la selection de texte dans OnlyOffice jusqu'a la reinjection du texte modifie par l'IA -- de bout en bout, transparente pour l'utilisateur.
-**Current focus:** Planning next milestone
+**Current focus:** Defining v2.2 requirements
 
 ## Current Position
 
-Phase: 13 of 13 (Reinjection et Integrite Pipeline) -- fourth of 4 phases in v2.1
-Plan: 01 of 01 complete
-Status: v2.1 milestone complete
-Last activity: 2026-03-09 -- Completed plan 13-01 Rich Text Reinsertion Pipeline
-
-Progress: [██████████] 100%
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-10 — Milestone v2.2 started
 
 ## Performance Metrics
 
 **Velocity:**
 - Total plans completed: 21 (v1.0: 10, v2.0: 5, v2.1: 6)
-- v2.1 average duration: ~5 min/plan
-- v2.1 total execution time: ~32 min
-
-**By Phase (v2.0):**
-
-| Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| 07 Real AI Integration | 2 | 6min | 3min |
-| 08 Error Handling | 1 | 2min | 2min |
-| 09 Internationalization | 2 | 7min | 3.5min |
-| Phase 10 P02 | 2min | 2 tasks | 2 files |
-| Phase 11 P01 | 3min | 2 tasks | 5 files |
-| Phase 11 P02 | 6min | 2 tasks | 3 files |
-| Phase 12 P01 | 2min | 2 tasks | 5 files |
-| Phase 13 P01 | 15min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
 ### Decisions
 
 All decisions logged in PROJECT.md Key Decisions table.
-Recent decisions affecting current work:
 
-- v2.0: fetchJSON direct instead of chatCompletion() for AbortController support
-- v2.0: System prompt prepended to user message (RAG backend no system role support)
-- v2.1: Research recommends HTML extraction with turndown/marked ("thin plugin, smart host" pattern)
-- v2.1: Go/no-go gate on initDataType:"html" with background plugin must be validated first
-- v2.1: Regex class stripping for OO HTML (ES5 compatible, no DOMParser)
-- v2.1: Parallel plain text fetch via GetSelectedText alongside HTML extraction
-- [Phase 10]: buildEditIntentData() centralizes intent data with optional html/format fields
-- [Phase 11]: Override Turndown built-in img rule with addRule (remove() doesn't override built-ins)
-- [Phase 11]: marked ESM requires jest transformIgnorePatterns entry
-- [Phase 11]: textForPrompt variable pattern keeps selectedText param unchanged for backward compat
-- [Phase 11]: Extra object built incrementally (not ternary) for multi-field construction
-- [Phase 12]: react-markdown v10 with remark-gfm for GFM rendering in result panel
-- [Phase 12]: Inline styles with MUI theme tokens for dark/light mode (no separate CSS)
-- [Phase 12]: Errors stay plain text, all non-error results through MarkdownPreview unconditionally
-- [Phase 13]: PasteHtml with smart nbsp spacing for formatted reinsertion
-- [Phase 13]: unwrapSingleParagraph to avoid wrapping inline content in paragraph tags
-- [Phase 13]: pasteInProgress flag guards against init()/polling interference during paste
-- [Phase 13]: Removed broken post-paste selection code -- deferred to rich content milestone
-
-### Pending Todos (carried from v1.0)
+### Pending Todos (carried from v2.1)
 
 - Fix "Selected Text" white-on-white in OO dark theme (cosmetic, deferred)
 - Button disable on deselection when no text selected (deferred)
@@ -94,10 +57,10 @@ Recent decisions affecting current work:
 
 ### Blockers/Concerns
 
-- initDataType:"html" config applied -- needs browser verification to confirm OO sends HTML
+(None)
 
 ## Session Continuity
 
-Last session: 2026-03-09
-Stopped at: Completed 13-01 Rich Text Reinsertion Pipeline -- v2.1 milestone complete
+Last session: 2026-03-10
+Stopped at: Milestone v2.2 started — defining requirements
 Resume file: none

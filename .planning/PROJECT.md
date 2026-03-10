@@ -32,7 +32,24 @@ La chaîne de communication complète — depuis la sélection de texte dans Onl
 
 ### Active
 
-(À définir pour le prochain milestone)
+- [ ] Menu hover prevention on open — ne pas sélectionner un item si la souris est déjà au-dessus à l'ouverture
+- [ ] Raccourci Ctrl+Shift+I au lieu de Ctrl+I — éviter conflit avec mise en italique
+- [ ] Inverser l'ordre de focus clavier dans le panneau de résultat — Tab/flèche gauche : Insérer → Remplacer
+- [ ] Fenêtre de résultat déplaçable à la souris — drag sur le fond (hors boutons/texte)
+- [ ] Fenêtre de résultat redimensionnable — symbole discret en bas à droite
+- [ ] Tooltip du bouton flottant avec délai de 1s
+
+## Current Milestone: v2.2 Améliorations UX
+
+**Goal:** Améliorer l'ergonomie de Scribe — navigation clavier, interactions souris, et micro-interactions du bouton flottant et du panneau de résultat.
+
+**Target features:**
+- Menu hover prevention on open (respect navigation clavier)
+- Raccourci Ctrl+Shift+I (éviter conflit italique)
+- Ordre de focus clavier inversé dans le panneau de résultat
+- Fenêtre de résultat déplaçable (drag)
+- Fenêtre de résultat redimensionnable (resize handle)
+- Tooltip bouton flottant avec délai 1s
 
 ## Shipped: v2.1 Formatage Riche (2026-03-09)
 
@@ -111,4 +128,4 @@ v1.0 : 4 jours, 10 plans. v2.0 : 3 jours, 5 plans. v2.1 : 3 jours, 6 plans.
 | Document Builder API déféré à v3.x | PasteHtml suffisant pour v2.1, Builder API pour objets complexes | — Pending |
 
 ---
-*Last updated: 2026-03-09 after v2.1 milestone*
+*Last updated: 2026-03-10 after v2.2 milestone start*
