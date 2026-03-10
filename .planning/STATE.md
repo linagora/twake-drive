@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: Ameliorations UX
 status: executing
-stopped_at: Completed 14-01-PLAN.md
-last_updated: "2026-03-10T21:53:05.795Z"
-last_activity: 2026-03-10 -- Completed 14-01 keyboard shortcut fix + button order
+stopped_at: Completed 14-02-PLAN.md
+last_updated: "2026-03-10T21:56:10.458Z"
+last_activity: 2026-03-10 -- Completed 14-02 mouse hover + tooltip delay
 progress:
   total_phases: 2
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
-  percent: 88
+  completed_plans: 2
+  percent: 100
 ---
 
 # Project State
@@ -26,20 +26,21 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 ## Current Position
 
 Phase: 14 of 15 (Navigation, clavier et micro-interactions)
-Plan: 1 of 2
-Status: Executing
-Last activity: 2026-03-10 -- Completed 14-01 keyboard shortcut fix + button order
+Plan: 2 of 2
+Status: Phase Complete
+Last activity: 2026-03-10 -- Completed 14-02 mouse hover + tooltip delay
 
-Progress: [█████████░] 88%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 22 (v1.0: 10, v2.0: 5, v2.1: 6, v2.2: 1)
+- Total plans completed: 23 (v1.0: 10, v2.0: 5, v2.1: 6, v2.2: 2)
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
 | 14 | 01 | 1min | 2 | 3 |
+| 14 | 02 | 2min | 2 | 2 |
 
 ## Accumulated Context
 
@@ -47,6 +48,7 @@ Progress: [█████████░] 88%
 
 All decisions logged in PROJECT.md Key Decisions table.
 - Phase 14-01: Ctrl+Shift+I chosen to avoid all OO native shortcut conflicts
+- [Phase 14]: mousemove listener for hover gating; separate showTooltip from hovered state
 
 ### Pending Todos (carried from v2.1)
 
@@ -68,6 +70,6 @@ All decisions logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-03-10T21:53:05.793Z
-Stopped at: Completed 14-01-PLAN.md
+Last session: 2026-03-10T21:56:10.456Z
+Stopped at: Completed 14-02-PLAN.md
 Resume file: None

@@ -14,13 +14,13 @@ Requirements pour le milestone v2.2 Ameliorations UX.
 
 ### Interactions Souris
 
-- [ ] **MOUSE-01**: A l'ouverture du menu, un item sous la souris n'est pas selectionne tant que la souris ne se deplace pas vers un autre item
+- [x] **MOUSE-01**: A l'ouverture du menu, un item sous la souris n'est pas selectionne tant que la souris ne se deplace pas vers un autre item
 - [ ] **MOUSE-02**: L'utilisateur peut deplacer la fenetre de resultat en cliquant-glissant sur le fond (hors boutons et zone de texte)
 - [ ] **MOUSE-03**: L'utilisateur peut redimensionner la fenetre de resultat via un handle discret en bas a droite
 
 ### Micro-interactions
 
-- [ ] **MICRO-01**: Le tooltip du bouton flottant Scribe n'apparait qu'apres 1 seconde de survol continu
+- [x] **MICRO-01**: Le tooltip du bouton flottant Scribe n'apparait qu'apres 1 seconde de survol continu
 
 ## Future Requirements
 
@@ -52,10 +52,10 @@ Requirements pour le milestone v2.2 Ameliorations UX.
 |-------------|-------|--------|
 | NAV-01 | Phase 14 | Complete |
 | NAV-02 | Phase 14 | Complete |
-| MOUSE-01 | Phase 14 | Pending |
+| MOUSE-01 | Phase 14 | Complete |
 | MOUSE-02 | Phase 15 | Pending |
 | MOUSE-03 | Phase 15 | Pending |
-| MICRO-01 | Phase 14 | Pending |
+| MICRO-01 | Phase 14 | Complete |
 
 **Coverage:**
 - v2.2 requirements: 6 total
