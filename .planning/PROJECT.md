@@ -122,7 +122,6 @@ v1.0 : 4 jours, 10 plans. v2.0 : 3 jours, 5 plans. v2.1 : 3 jours, 6 plans. v2.2
 
 ### Risques ouverts
 
-- OO dark theme pas systématiquement testé
 - Post-paste selection non fonctionnelle avec PasteHtml (deferred to rich content milestone)
 
 ## Constraints

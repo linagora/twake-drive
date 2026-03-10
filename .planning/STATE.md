@@ -54,9 +54,9 @@ Recent decisions affecting current work:
 
 ### Pending Todos (carried from v2.3)
 
-- Fix "Selected Text" white-on-white in OO dark theme (cosmetic, deferred)
-- Button disable on deselection when no text selected (deferred)
-- Test context menu integration (deferred)
+- ✓ Fix "Selected Text" white-on-white in OO dark theme — resolved: original label no longer exists, floating button updated with dark theme support via useTheme()
+- ✓ Button disable on deselection — resolved: button is hidden (not disabled) when no text selected via HIDE_SCRIBE_BUTTON polling, better UX
+- ✓ Context menu integration — resolved: implemented in plugin code.js (AddContextMenuItem + attachContextMenuClickEvent), needs manual verification
 
 ### Known Technical Constraints
 

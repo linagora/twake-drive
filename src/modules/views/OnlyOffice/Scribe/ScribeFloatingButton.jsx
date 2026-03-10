@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
+import { useTheme } from 'cozy-ui/transpiled/react/styles'
 import { useI18n } from 'twake-i18n'
 
-const baseStyle = {
+const getBaseStyle = isDark => ({
   position: 'fixed',
   bottom: 80,
   right: 40,
@@ -13,24 +14,26 @@ const baseStyle = {
   cursor: 'pointer',
   borderRadius: 20,
   padding: '8px 16px',
-  background: 'white',
-  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+  background: isDark ? '#2d2d2d' : 'white',
+  boxShadow: isDark
+    ? '0 2px 8px rgba(0,0,0,0.4)'
+    : '0 2px 8px rgba(0,0,0,0.15)',
   border: 'none',
   display: 'flex',
   alignItems: 'center',
   gap: 6,
   fontSize: 14,
   fontFamily: 'inherit',
-  color: '#333'
-}
+  color: isDark ? '#e0e0e0' : '#333'
+})
 
-const tooltipStyle = {
+const getTooltipStyle = isDark => ({
   position: 'absolute',
   bottom: '100%',
   right: 0,
   marginBottom: 8,
   padding: '6px 10px',
-  background: '#333',
+  background: isDark ? '#555' : '#333',
   borderRadius: 6,
   fontSize: 12,
   whiteSpace: 'nowrap',
@@ -38,7 +41,7 @@ const tooltipStyle = {
   display: 'flex',
   alignItems: 'center',
   gap: 4
-}
+})
 
 /**
  * Floating "Scribe" button rendered in bottom-right of the viewport.
@@ -48,6 +51,8 @@ const tooltipStyle = {
  */
 export const ScribeFloatingButton = ({ visible, onClick }) => {
   const { t } = useI18n()
+  const theme = useTheme()
+  const isDark = (theme.palette.type || theme.palette.mode) === 'dark'
   const [hovered, setHovered] = useState(false)
   const [showTooltip, setShowTooltip] = useState(false)
   const timerRef = useRef(null)
@@ -64,6 +69,9 @@ export const ScribeFloatingButton = ({ visible, onClick }) => {
   useEffect(() => () => clearTimeout(timerRef.current), [])
 
   if (!visible) return null
+
+  const baseStyle = getBaseStyle(isDark)
+  const tooltipStyle = getTooltipStyle(isDark)
 
   return createPortal(
     <button
