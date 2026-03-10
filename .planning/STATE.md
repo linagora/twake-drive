@@ -1,30 +1,36 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.6
-milestone_name: Formatage Complet et References Documentaires
-status: complete
-stopped_at: Milestone v2.6 complete
-last_updated: "2026-04-02T22:00:00.000Z"
+milestone: v3.0
+milestone_name: Scribe Chat Panel
+status: active
+stopped_at: null
+last_updated: "2026-03-10"
+last_activity: 2026-03-10 -- Milestone v3.0 started
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 6
-  completed_plans: 6
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-23)
+See: .planning/PROJECT.md (updated 2026-03-10)
 
-**Core value:** La chaine de communication complete -- depuis la selection de texte dans OnlyOffice jusqu'a la reinjection du texte modifie par l'IA -- de bout en bout, transparente pour l'utilisateur.
-**Current focus:** Milestone v2.6 complete — all phases shipped
+**Core value:** L'utilisateur peut interagir avec l'IA de maniere fluide -- actions rapides inline ou chat conversationnel dans un panneau lateral -- pour transformer et manipuler le contenu de son document OnlyOffice.
+**Current focus:** Defining requirements for v3.0
 
 ## Current Position
 
-Phase: 27 (references-documentaires) — COMPLETE
-Milestone v2.6 — ALL 3 PHASES COMPLETE (25, 26, 27)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-10 — Milestone v3.0 started
+
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -71,6 +77,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-04-02T22:00:00.000Z
-Stopped at: Milestone v2.6 complete
-Resume file: .planning/ROADMAP.md
+Last session: 2026-03-10
+Stopped at: Milestone v3.0 started, defining requirements
+Resume file: None

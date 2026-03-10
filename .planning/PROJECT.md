@@ -2,11 +2,11 @@
 
 ## What This Is
 
-Un assistant d'écriture IA intégré à OnlyOffice au sein de Cozy Drive. L'utilisateur sélectionne du texte dans l'éditeur, un bouton flottant Scribe apparaît, il choisit une action IA (réécriture, traduction, correction, prompt libre…), prévisualise le résultat dans un panneau adaptatif déplaçable et redimensionnable, puis remplace ou insère dans le document. Les appels IA passent par cozy-stack (format OpenAI), avec gestion d'erreurs et retry. L'interface est internationalisée (fr, en, de, es, it). La navigation clavier et les micro-interactions sont soignées (raccourci Ctrl+Shift+I, hover gating, tooltip delayed).
+Un assistant d'écriture IA intégré à OnlyOffice au sein de Cozy Drive. Deux modes d'interaction : (1) **Inline** — bouton flottant → actions rapides (réécriture, traduction, correction, prompt libre) → prévisualisation → replace/insert. (2) **Side Panel** — panneau latéral conversationnel pour des échanges plus riches avec l'IA, avec zone de saisie enrichie (sélection OO, contexte, choix modèle/agent) et historique de conversation. Les appels IA passent par cozy-stack (format OpenAI), avec gestion d'erreurs et retry. L'interface est internationalisée (fr, en, de, es, it). La navigation clavier et les micro-interactions sont soignées (raccourci Ctrl+Shift+I, hover gating, tooltip delayed).
 
 ## Core Value
 
-La chaîne de communication complète — depuis la sélection de texte dans OnlyOffice jusqu'à la réinjection du texte modifié par l'IA — doit fonctionner de bout en bout, de manière transparente pour l'utilisateur.
+L'utilisateur peut interagir avec l'IA de manière fluide — que ce soit via des actions rapides inline ou un chat conversationnel dans un panneau latéral — pour transformer, enrichir et manipuler le contenu de son document OnlyOffice.
 
 ## Requirements
 
@@ -55,33 +55,24 @@ La chaîne de communication complète — depuis la sélection de texte dans Onl
 ### Out of Scope
 
 - Développement du moteur IA Scribe (backend) — service existant, on consomme son API
-- Migration de l'interface Scribe vers une application Cozy séparée — projet ultérieur (v3.0)
+- Migration de l'interface Scribe vers une application Cozy séparée — projet ultérieur (v4.0)
 - Support mobile natif — web-first, Cozy Drive est une application web
 - Édition collaborative simultanée avec Scribe — complexité excessive
 - Correction grammaticale passive en temps réel (style Grammarly) — performance prohibitive
-- Streaming LLM responses — déféré à v3.x, non-streaming suffisant
 
-## Shipped: v2.5 Objets Complexes et Blocs Étendus (2026-03-23)
+## Current Milestone: v3.0 Scribe Chat Panel
 
-Pipeline objets complexes complet : images round-trip (Copy/AddDrawing), tableaux round-trip (clone + InsertContent), blocs étendus (code blocks, blockquotes, tables markdown). Extraction enrichie via callCommand avec marqueurs normalisés. PR upstream OO SDK #4868 (GetInlineDrawings). 7 phases, 12 plans, 49 commits. Voir `.planning/MILESTONES.md`.
-
-## Current Milestone: v2.6 Formatage Complet et Références Documentaires
-
-**Goal:** Compléter le support des formatages inline (souligné) et gérer les objets documentaires avancés (sélections partielles de tableaux, notes de bas de page, renvois vers des parties du document).
+**Goal:** Ajouter un panneau latéral conversationnel dans Cozy Drive pour interagir avec l'IA via un chat, en complément du mode inline existant.
 
 **Target features:**
-- Souligné (underline) dans le pipeline d'extraction et de réinjection
-- Sélections partielles de tableaux
-- Notes de bas de page (détection et préservation)
-- Renvois vers des parties du document (cross-références)
-
-## Shipped: v2.4 Document Builder Injection (2026-03-20)
-
-Pipeline Markdown → Document Builder API : tokenisation marked dans le plugin, interprétation via callCommand (single undo), inline formatting (bold/italic/strikethrough/code/links), blocs (headings, lists), smart spacing, sélection post-injection (ref-based + position-based). 3 phases, 6 plans. Voir `.planning/MILESTONES.md`.
-
-## Shipped: v2.3 Menu Responsive (2026-03-15)
-
-Menu Scribe responsive : bottom drawer sur mobile (MUI Drawer, auto-height, drag handle, swipe-to-close), push navigation pour sous-menus avec bouton retour, prompt input pleine largeur. 5/5 requirements, 2 phases, 1 plan. Voir `.planning/MILESTONES.md`.
+- Panneau latéral dans Cozy Drive (redimensionne l'iframe OO)
+- Toggle inline ↔ side panel
+- Zone de saisie enrichie : rappel sélection OO, actions suggérées, ajout de contexte (fichiers, URLs, images), choix modèle/agent
+- Historique conversationnel (prompts + réponses)
+- Historique des discussions passées avec reprise
+- Réponses LLM conversationnelles avec boutons d'action conditionnels (replace/insert décidés par le LLM)
+- Composants cozy-ui au maximum (sans modification)
+- Approche incrémentale
 
 ## Shipped: v2.2 Améliorations UX (2026-03-11)
 
@@ -138,7 +129,7 @@ v1.0 : 4 jours, 10 plans. v2.0 : 3 jours, 5 plans. v2.1 : 3 jours, 6 plans. v2.2
 | POC plugin OnlyOffice en priorité | Composant le plus risqué — lever les incertitudes | ✓ Good — API plugin confirmée viable |
 | Communication via postMessage | Seul mécanisme standard cross-iframe | ✓ Good — protocole cozy-bridge fiable |
 | Prévisualisation avant application | Contrôle utilisateur sur les modifications | ✓ Good — UX validée |
-| Interface dans le repo Cozy Drive | Simplifier le dev initial | ✓ Good — migration prévue en v3.0 |
+| Interface dans le repo Cozy Drive | Simplifier le dev initial | ✓ Good — migration prévue en v4.0 |
 | Bouton flottant via React portal | Éviter les conflits z-index avec iframe OO | ✓ Good — positionnement fiable |
 | SCRIBE_ACTIONS config déclarative | Source de vérité unique menu + prompts + transform | ✓ Good — extensibilité confirmée |
 | mockResult DSL string-based | Sérialisable, prêt pour stockage JSON futur | ✓ Good — transition API facile |
@@ -168,5 +159,9 @@ v1.0 : 4 jours, 10 plans. v2.0 : 3 jours, 5 plans. v2.1 : 3 jours, 6 plans. v2.2
 | DOM walk exclusion pour drag | Exclut boutons/input/texte sans drag handle séparé | ✓ Good — zones interactives préservées |
 | Resize via inline width/height + flex | Meilleur contrôle et clamping que CSS resize | ✓ Good — reflow contenu fiable |
 
+| Side panel dans Cozy Drive (pas plugin OO natif) | Plus de contrôle UI, composants cozy-ui, redimensionnement iframe OO | — Pending |
+| Mode complémentaire inline + panel | Conserver les quick actions, ajouter le chat pour échanges longs | — Pending |
+| Composants cozy-ui sans modification | Cohérence écosystème Cozy, maintenabilité | — Pending |
+
 ---
-*Last updated: 2026-03-23 after v2.5 milestone shipped*
+*Last updated: 2026-03-10 after v3.0 milestone start*
