@@ -1,4 +1,4 @@
-import { renderHook, act } from '@testing-library/react-hooks'
+import { renderHook, act } from '@testing-library/react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 
 import { useClient } from 'cozy-client'

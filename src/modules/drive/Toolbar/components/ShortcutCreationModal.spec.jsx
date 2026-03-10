@@ -96,7 +96,7 @@ describe('ShortcutCreationModal', () => {
     // Then
     expect(client.save).not.toHaveBeenCalled()
     expect(showAlert).toHaveBeenCalledTimes(1)
-    expect(showAlert).toBeCalledWith(
+    expect(showAlert).toHaveBeenCalledWith(
       expect.objectContaining({ severity: 'error' })
     )
   })
@@ -121,7 +121,7 @@ describe('ShortcutCreationModal', () => {
 
     await waitFor(() => {
       expect(showAlert).toHaveBeenCalledTimes(1)
-      expect(showAlert).toBeCalledWith(
+      expect(showAlert).toHaveBeenCalledWith(
         expect.objectContaining({ severity: 'success' })
       )
     })
@@ -144,7 +144,7 @@ describe('ShortcutCreationModal', () => {
 
     await waitFor(() => {
       expect(showAlert).toHaveBeenCalledTimes(1)
-      expect(showAlert).toBeCalledWith(
+      expect(showAlert).toHaveBeenCalledWith(
         expect.objectContaining({ severity: 'success' })
       )
     })
@@ -167,7 +167,7 @@ describe('ShortcutCreationModal', () => {
 
     await waitFor(() => {
       expect(showAlert).toHaveBeenCalledTimes(1)
-      expect(showAlert).toBeCalledWith(
+      expect(showAlert).toHaveBeenCalledWith(
         expect.objectContaining({ severity: 'error', duration: 2000 })
       )
     })
@@ -189,7 +189,7 @@ describe('ShortcutCreationModal', () => {
 
     await waitFor(() => {
       expect(showAlert).toHaveBeenCalledTimes(1)
-      expect(showAlert).toBeCalledWith(
+      expect(showAlert).toHaveBeenCalledWith(
         expect.objectContaining({ severity: 'error' })
       )
     })
@@ -211,7 +211,7 @@ describe('ShortcutCreationModal', () => {
 
     await waitFor(() => {
       expect(showAlert).toHaveBeenCalledTimes(1)
-      expect(showAlert).toBeCalledWith(
+      expect(showAlert).toHaveBeenCalledWith(
         expect.objectContaining({ severity: 'error' })
       )
     })
@@ -230,7 +230,7 @@ describe('ShortcutCreationModal', () => {
 
     await waitFor(() => {
       expect(showAlert).toHaveBeenCalledTimes(1)
-      expect(showAlert).toBeCalledWith(
+      expect(showAlert).toHaveBeenCalledWith(
         expect.objectContaining({ severity: 'error' })
       )
     })
@@ -252,7 +252,7 @@ describe('ShortcutCreationModal', () => {
 
     await waitFor(() => {
       expect(showAlert).toHaveBeenCalledTimes(1)
-      expect(showAlert).toBeCalledWith(
+      expect(showAlert).toHaveBeenCalledWith(
         expect.objectContaining({ severity: 'error' })
       )
     })

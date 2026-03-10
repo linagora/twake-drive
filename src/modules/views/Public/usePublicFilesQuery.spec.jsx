@@ -1,4 +1,4 @@
-import { renderHook, act } from '@testing-library/react-hooks'
+import { renderHook, act, waitFor } from '@testing-library/react'
 import React from 'react'
 
 import { createMockClient } from 'cozy-client'
@@ -32,15 +32,14 @@ describe('usePublicFilesQuery', () => {
       included: mockData,
       links: {}
     })
-    const { result, waitForNextUpdate } = setup()
+    const { result } = setup()
 
     expect(result.current.data).toEqual([])
     expect(result.current.fetchStatus).toEqual('loading')
     expect(result.current.hasMore).toBe(false)
 
-    await act(() => waitForNextUpdate())
+    await waitFor(() => expect(result.current.fetchStatus).toEqual('loaded'))
 
-    expect(result.current.fetchStatus).toEqual('loaded')
     expect(result.current.data).toEqual(mockData)
   })
 
@@ -48,15 +47,14 @@ describe('usePublicFilesQuery', () => {
     statByIdMock.mockResolvedValue({
       links: {}
     })
-    const { result, waitForNextUpdate } = setup()
+    const { result } = setup()
 
     expect(result.current.data).toEqual([])
     expect(result.current.fetchStatus).toEqual('loading')
     expect(result.current.hasMore).toBe(false)
 
-    await act(() => waitForNextUpdate())
+    await waitFor(() => expect(result.current.fetchStatus).toEqual('loaded'))
 
-    expect(result.current.fetchStatus).toEqual('loaded')
     expect(result.current.data).toEqual([])
   })
 
@@ -69,11 +67,10 @@ describe('usePublicFilesQuery', () => {
         next: `/relative/link?page[cursor]=${cursor}&cursor=no&other=alsono`
       }
     })
-    const { result, waitForNextUpdate } = setup()
+    const { result } = setup()
 
-    await act(() => waitForNextUpdate())
+    await waitFor(() => expect(result.current.fetchStatus).toEqual('loaded'))
 
-    expect(result.current.fetchStatus).toEqual('loaded')
     expect(result.current.data).toEqual(mockData)
     expect(result.current.hasMore).toEqual(true)
 
@@ -99,11 +96,10 @@ describe('usePublicFilesQuery', () => {
         next: `/relative/link?page[cursor]=some-cursor&cursor=no&other=alsono`
       }
     })
-    const { result, waitForNextUpdate } = setup()
+    const { result } = setup()
 
-    await act(async () => await waitForNextUpdate())
+    await waitFor(() => expect(result.current.fetchStatus).toEqual('loaded'))
 
-    expect(result.current.fetchStatus).toEqual('loaded')
     expect(result.current.data).toEqual(mockData)
     expect(result.current.hasMore).toEqual(true)
 
@@ -111,7 +107,7 @@ describe('usePublicFilesQuery', () => {
 
     expect(result.current.fetchStatus).toEqual('loading')
 
-    await act(async () => await waitForNextUpdate())
+    await waitFor(() => expect(result.current.fetchStatus).toEqual('loaded'))
     expect(statByIdMock).toHaveBeenCalledWith(mockFolderId, {
       'page[cursor]': undefined
     })
@@ -122,10 +118,8 @@ describe('usePublicFilesQuery', () => {
 
   it('reports error', async () => {
     statByIdMock.mockRejectedValue()
-    const { result, waitForNextUpdate } = setup()
+    const { result } = setup()
 
-    await act(() => waitForNextUpdate())
-
-    expect(result.current.fetchStatus).toEqual('error')
+    await waitFor(() => expect(result.current.fetchStatus).toEqual('error'))
   })
 })

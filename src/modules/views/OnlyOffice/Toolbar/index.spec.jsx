@@ -363,18 +363,13 @@ describe('Toolbar', () => {
     })
   })
 
-  const savedLocation = window.location
   const makeNewLocation = (path = '') => {
-    window.location = new URL(`http://cozy-test.tools/${path}`)
+    window.history.replaceState({}, '', path)
   }
 
   describe('Back Button', () => {
-    beforeEach(() => {
-      delete window.location
-    })
-
     afterEach(() => {
-      window.location = savedLocation
+      window.history.replaceState({}, '', '/')
     })
 
     it('should hide without redirect link into searchParam', () => {

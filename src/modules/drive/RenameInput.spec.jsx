@@ -1,4 +1,4 @@
-import { render, fireEvent, screen, waitFor } from '@testing-library/react'
+import { render, fireEvent, screen, waitFor, act } from '@testing-library/react'
 import React from 'react'
 
 import { createMockClient } from 'cozy-client'
@@ -113,8 +113,10 @@ describe('RenameInput', () => {
     setup({ file: fileWithoutMetaRev })
     const inputNode = document.getElementsByTagName('input')[0]
 
-    fireEvent.change(inputNode, { target: { value: 'new Name.pdf' } })
-    fireEvent.keyDown(inputNode, { key: 'Enter', code: 'Enter', keyCode: 13 })
+    await act(async () => {
+      fireEvent.change(inputNode, { target: { value: 'new Name.pdf' } })
+      fireEvent.keyDown(inputNode, { key: 'Enter', code: 'Enter', keyCode: 13 })
+    })
     // For backward compatibility, don't expect driveId in the collection call
     expect(client.collection).toHaveBeenCalledWith('io.cozy.files', {})
     expect(mockCollection.update).toHaveBeenCalledWith(
@@ -136,8 +138,10 @@ describe('RenameInput', () => {
     setup({ file: fileWithDriveId })
     const inputNode = document.getElementsByTagName('input')[0]
 
-    fireEvent.change(inputNode, { target: { value: 'drive-file.pdf' } })
-    fireEvent.keyDown(inputNode, { key: 'Enter', code: 'Enter', keyCode: 13 })
+    await act(async () => {
+      fireEvent.change(inputNode, { target: { value: 'drive-file.pdf' } })
+      fireEvent.keyDown(inputNode, { key: 'Enter', code: 'Enter', keyCode: 13 })
+    })
 
     // Should include the driveId in the collection options
     expect(client.collection).toHaveBeenCalledWith('io.cozy.files', {
