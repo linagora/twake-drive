@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: Ameliorations UX
-status: completed
-stopped_at: Completed 14-02-PLAN.md
-last_updated: "2026-03-11T07:19:31.865Z"
-last_activity: 2026-03-10 -- Completed 14-02 mouse hover + tooltip delay
+status: in-progress
+stopped_at: Completed 15-01-PLAN.md
+last_updated: "2026-03-11T08:13:10Z"
+last_activity: 2026-03-11 -- Completed 15-01 draggable/resizable result panel
 progress:
   total_phases: 2
-  completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  completed_phases: 2
+  total_plans: 3
+  completed_plans: 3
   percent: 100
 ---
 
@@ -21,26 +21,27 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-10)
 
 **Core value:** La chaine de communication complete -- depuis la selection de texte dans OnlyOffice jusqu'a la reinjection du texte modifie par l'IA -- de bout en bout, transparente pour l'utilisateur.
-**Current focus:** Phase 14 -- Navigation, clavier et micro-interactions
+**Current focus:** Phase 15 -- Panneau de resultat interactif
 
 ## Current Position
 
-Phase: 14 of 15 (Navigation, clavier et micro-interactions)
-Plan: 2 of 2
+Phase: 15 of 15 (Panneau de resultat interactif)
+Plan: 1 of 1
 Status: Phase Complete
-Last activity: 2026-03-10 -- Completed 14-02 mouse hover + tooltip delay
+Last activity: 2026-03-11 -- Completed 15-01 draggable/resizable result panel
 
 Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 23 (v1.0: 10, v2.0: 5, v2.1: 6, v2.2: 2)
+- Total plans completed: 24 (v1.0: 10, v2.0: 5, v2.1: 6, v2.2: 3)
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
 | 14 | 01 | 1min | 2 | 3 |
 | 14 | 02 | 2min | 2 | 2 |
+| 15 | 01 | 3min | 2 | 3 |
 
 ## Accumulated Context
 
@@ -49,6 +50,7 @@ Progress: [██████████] 100%
 All decisions logged in PROJECT.md Key Decisions table.
 - Phase 14-01: Ctrl+Shift+I chosen to avoid all OO native shortcut conflicts
 - [Phase 14]: mousemove listener for hover gating; separate showTooltip from hovered state
+- [Phase 15-01]: DOM walk exclusion for drag start; resize via inline width/height + flex layout
 
 ### Pending Todos (carried from v2.1)
 
@@ -70,6 +72,6 @@ All decisions logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-03-10T21:56:10.456Z
-Stopped at: Completed 14-02-PLAN.md
+Last session: 2026-03-11T08:13:10Z
+Stopped at: Completed 15-01-PLAN.md
 Resume file: None

@@ -51,7 +51,7 @@ Full details: `.planning/milestones/v2.1-ROADMAP.md`
 **Milestone Goal:** Ameliorer l'ergonomie de Scribe -- navigation clavier, interactions souris, et micro-interactions du bouton flottant et du panneau de resultat.
 
 - [x] **Phase 14: Navigation, clavier et micro-interactions** - Raccourci, focus order, hover prevention, tooltip delay (completed 2026-03-10)
-- [ ] **Phase 15: Panneau de resultat interactif** - Fenetre deplacable et redimensionnable
+- [x] **Phase 15: Panneau de resultat interactif** - Fenetre deplacable et redimensionnable (completed 2026-03-11)
 
 ## Phase Details
 
@@ -104,4 +104,4 @@ Phases execute in numeric order: 14 -> 15
 | 12. Preview Markdown | v2.1 | 1/1 | Complete | 2026-03-07 |
 | 13. Reinjection et Integrite Pipeline | v2.1 | 1/1 | Complete | 2026-03-09 |
 | 14. Navigation, clavier et micro-interactions | v2.2 | 2/2 | Complete | 2026-03-10 |
-| 15. Panneau de resultat interactif | v2.2 | 0/1 | Not started | - |
+| 15. Panneau de resultat interactif | 1/1 | Complete   | 2026-03-11 | - |
