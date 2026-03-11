@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: Ameliorations UX
-status: in-progress
+status: completed
 stopped_at: Completed 15-01-PLAN.md
-last_updated: "2026-03-11T08:13:10Z"
+last_updated: "2026-03-11T08:16:23.787Z"
 last_activity: 2026-03-11 -- Completed 15-01 draggable/resizable result panel
 progress:
   total_phases: 2
