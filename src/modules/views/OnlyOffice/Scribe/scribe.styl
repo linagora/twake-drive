@@ -5,6 +5,7 @@
   width fit-content
   border-radius 8px
   box-shadow 0 4px 20px rgba(0,0,0,0.15)
+  position relative
 
 .scribe-result-header
   display flex
@@ -30,6 +31,36 @@
   justify-content flex-end
   align-items center
   gap 8px
+
+.scribe-resize-handle
+  position absolute
+  bottom 0
+  right 0
+  width 16px
+  height 16px
+  cursor nwse-resize
+  opacity 0.3
+  transition opacity 150ms ease
+  &:hover
+    opacity 0.6
+  &::after
+    content ''
+    position absolute
+    bottom 3px
+    right 3px
+    width 8px
+    height 8px
+    border-right 2px solid currentColor
+    border-bottom 2px solid currentColor
+  &::before
+    content ''
+    position absolute
+    bottom 3px
+    right 3px
+    width 4px
+    height 4px
+    border-right 2px solid currentColor
+    border-bottom 2px solid currentColor
 
 .scribe-loading-panel
   padding 32px 48px
