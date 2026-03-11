@@ -1,7 +1,7 @@
 # Requirements: Scribe v3.0 Chat Panel
 
 **Defined:** 2026-03-11
-**Core Value:** L'utilisateur peut interagir avec l'IA de maniere fluide — actions rapides inline ou chat conversationnel dans un panneau lateral — pour transformer et manipuler le contenu de son document OnlyOffice.
+**Core Value:** L'utilisateur peut interagir avec l'IA de maniere fluide -- actions rapides inline ou chat conversationnel dans un panneau lateral -- pour transformer et manipuler le contenu de son document OnlyOffice.
 
 ## v3.0 Requirements
 
@@ -64,39 +64,39 @@ Deferred to v3.1+. Tracked but not in current roadmap.
 
 | Feature | Reason |
 |---------|--------|
-| Rich text input in chat | Users type short prompts, not formatted documents — plain textarea sufficient |
-| LLM-decided action buttons | Requires structured output parsing — v3.0 shows buttons on all responses when selection active |
-| Collaborative chat | Multiple users seeing same chat — massive complexity, unclear value |
+| Rich text input in chat | Users type short prompts, not formatted documents -- plain textarea sufficient |
+| LLM-decided action buttons | Requires structured output parsing -- v3.0 shows buttons on all responses when selection active |
+| Collaborative chat | Multiple users seeing same chat -- massive complexity, unclear value |
 | Voice input | Niche, browser support varies |
-| Document-wide context | Sending full doc expensive — v3.0 uses selected text + conversation history |
+| Document-wide context | Sending full doc expensive -- v3.0 uses selected text + conversation history |
 | Plugin OO natif pour le panel | Moins de controle UI, pas de composants cozy-ui |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PANEL-01 | — | Pending |
-| PANEL-02 | — | Pending |
-| PANEL-03 | — | Pending |
-| PANEL-04 | — | Pending |
-| PANEL-05 | — | Pending |
-| CHAT-01 | — | Pending |
-| CHAT-02 | — | Pending |
-| CHAT-03 | — | Pending |
-| CHAT-04 | — | Pending |
-| CHAT-05 | — | Pending |
-| CHAT-06 | — | Pending |
-| SEL-01 | — | Pending |
-| SEL-02 | — | Pending |
-| ACT-01 | — | Pending |
-| ACT-02 | — | Pending |
-| ACT-03 | — | Pending |
+| PANEL-01 | Phase 14 | Pending |
+| PANEL-02 | Phase 14 | Pending |
+| PANEL-03 | Phase 17 | Pending |
+| PANEL-04 | Phase 14 | Pending |
+| PANEL-05 | Phase 17 | Pending |
+| CHAT-01 | Phase 15 | Pending |
+| CHAT-02 | Phase 15 | Pending |
+| CHAT-03 | Phase 15 | Pending |
+| CHAT-04 | Phase 15 | Pending |
+| CHAT-05 | Phase 15 | Pending |
+| CHAT-06 | Phase 15 | Pending |
+| SEL-01 | Phase 16 | Pending |
+| SEL-02 | Phase 16 | Pending |
+| ACT-01 | Phase 16 | Pending |
+| ACT-02 | Phase 16 | Pending |
+| ACT-03 | Phase 16 | Pending |
 
 **Coverage:**
 - v3.0 requirements: 16 total
-- Mapped to phases: 0
-- Unmapped: 16
+- Mapped to phases: 16
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-11*
-*Last updated: 2026-03-11 after initial definition*
+*Last updated: 2026-03-11 after roadmap creation*
