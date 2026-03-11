@@ -4,6 +4,7 @@ import { useClient, useQuery } from 'cozy-client'
 
 import { DEFAULT_SORT } from '@/config/sort'
 import { SHARED_DRIVES_DIR_ID } from '@/constants/config'
+import { isSharedDrive } from '@/modules/shareddrives/helpers'
 import { buildDriveQuery } from '@/queries'
 
 export const useSharedDrives = () => {
@@ -18,7 +19,13 @@ export const useSharedDrives = () => {
     sortAttribute: DEFAULT_SORT.attribute,
     sortOrder: DEFAULT_SORT.order
   })
-  const { lastUpdate } = useQuery(folderQuery.definition, folderQuery.options)
+
+  const { data: sharedDrivesDir, lastUpdate } = useQuery(
+    folderQuery.definition,
+    folderQuery.options
+  )
+
+  const sharedDrivesDirId = sharedDrivesDir && sharedDrivesDir[0]._id
 
   useEffect(() => {
     let isCancelled = false
@@ -31,7 +38,11 @@ export const useSharedDrives = () => {
           .fetchSharedDrives()
 
         if (!isCancelled) {
-          setSharedDrives(sharedDrives)
+          const filteredSharedDrives = sharedDrives.filter(sharedDrive =>
+            isSharedDrive(sharedDrive, sharedDrivesDirId)
+          )
+
+          setSharedDrives(filteredSharedDrives)
         }
       } finally {
         if (!isCancelled) {
@@ -46,7 +57,7 @@ export const useSharedDrives = () => {
     return () => {
       isCancelled = true
     }
-  }, [client, lastUpdate])
+  }, [client, sharedDrivesDirId, lastUpdate])
 
   return { isLoading, isLoaded, sharedDrives }
 }

@@ -57,3 +57,23 @@ export const isSharedDriveFolder = (
     file.type === 'directory'
   )
 }
+
+export const isSharedDrive = (
+  sharedDrive: SharedDrive,
+  sharedDriveDirId: string
+): boolean => {
+  try {
+    const parentId = sharedDrive.rules[0].values[0]
+
+    return parentId === sharedDriveDirId
+  } catch {
+    return false
+  }
+}
+
+export const isFederatedSharedFolder = (
+  sharedDrive: SharedDrive,
+  sharedDriveDirId: string
+): boolean => {
+  return !isSharedDrive(sharedDrive, sharedDriveDirId)
+}
