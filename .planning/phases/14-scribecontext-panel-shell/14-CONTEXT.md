@@ -1,0 +1,99 @@
+# Phase 14: ScribeContext + Panel Shell - Context
+
+**Gathered:** 2026-03-11
+**Status:** Ready for planning
+
+<domain>
+## Phase Boundary
+
+User can open and close a side panel next to the OO editor, and the editor resizes correctly. This phase delivers: ScribeContext state provider, the panel shell (header + empty body), the floating button expansion (2-button vertical stack), keyboard shortcuts (Ctrl+Shift+I double-tap), and coexistence logic between inline popover and panel modes. Chat UI is Phase 15. Selection context is Phase 16. Panel resize is Phase 17.
+
+</domain>
+
+<decisions>
+## Implementation Decisions
+
+### Floating button & entry points
+- Expand existing floating button into a vertical stack (one floating zone, two buttons)
+- Top button: inline Scribe (existing behavior) — only visible when text is selected
+- Bottom button: panel toggle — always visible (even without text selection)
+- Both buttons share the same translucent-to-opaque hover behavior and dark theme support
+- Ctrl+Shift+I double-tap within 500ms toggles the panel open/closed
+- Ctrl+Shift+I from the inline Scribe popover opens the panel (single press, since popover context is clear)
+
+### Panel appearance
+- Fixed 400px width (not percentage-based)
+- Branded header: Scribe icon on the left, "Scribe" title text, close X button on the right
+- Slide-in animation from the right (~200ms transition)
+- Subtle box-shadow on the panel's left edge for visual separation (no hard border)
+- Theme-aware (dark/light) using MUI useTheme()
+
+### Popover coexistence
+- When panel is open: Ctrl+I redirects action to the panel instead of opening inline popover
+- When panel is open: the entire floating zone hides (no floating buttons visible)
+- When panel is closed: original behavior restores — Ctrl+I opens inline popover, floating zone reappears
+- If inline popover is open when panel opens: popover closes, panel takes over
+
+### Panel initial content
+- Centered Scribe icon with tagline "Votre assistant d'écriture" (i18n-ready)
+- Phase 15 replaces this placeholder with the chat UI
+
+### State persistence
+- Panel open/closed state persisted in localStorage
+- If user had panel open, it reopens on next page load
+
+### Claude's Discretion
+- Exact ScribeContext provider structure and what state it centralizes
+- Animation easing curve and exact timing
+- Floating zone icon choices for the two buttons
+- Exact localStorage key naming
+- How to detect double-tap (timer approach, state machine, etc.)
+
+</decisions>
+
+<specifics>
+## Specific Ideas
+
+- The floating zone is ONE zone with two buttons stacked vertically — not two separate floating elements
+- "Votre assistant d'écriture" as the placeholder tagline (French, matching Cozy ecosystem)
+- The panel toggle button is always visible — this is the persistent entry point for the panel even without text selection
+- Existing OnlyOfficeAIAssistantPanel at 30% width proves the flex sibling layout works — but we use fixed 400px instead
+
+</specifics>
+
+<code_context>
+## Existing Code Insights
+
+### Reusable Assets
+- `ScribeFloatingButton.jsx`: Current single floating button — expand into vertical stack with two buttons
+- `OnlyOfficeAIAssistantPanel.tsx`: Proves flex sibling layout pattern (conditionally rendered, `width: 30%`)
+- `useCozyBridge.js`: Intent lifecycle management — already handles `showScribeButton` state, `AI_TEXT_EDIT`, `SHOW_SCRIBE_BUTTON`/`HIDE_SCRIBE_BUTTON` intents
+- `useTheme()` hook: Already used in ScribeFloatingButton and ScribeResultPanel for dark mode
+- MUI Paper, Typography, IconButton from cozy-ui: Available for panel header
+
+### Established Patterns
+- View.jsx flex container: `<div className="u-flex u-flex-grow-1">` wraps `#onlyOfficeEditor` + panel as flex siblings
+- Portal rendering: ScribeFloatingButton uses `createPortal(component, document.body)` with inline styles
+- Intent-based communication: Plugin → postToAncestors → useCozyBridge → React state
+- Keyboard shortcuts handled in plugin code.js (Ctrl+I already implemented there)
+
+### Integration Points
+- `View.jsx`: New ScribePanel component renders as flex sibling next to `#onlyOfficeEditor`
+- `ScribeFloatingButton.jsx`: Refactored to render 2-button vertical stack
+- `useCozyBridge.js`: Needs to route Ctrl+I intent to panel when panel is open
+- Plugin `code.js`: Needs Ctrl+Shift+I double-tap detection (ES5 syntax required)
+- New `ScribeContext` provider wraps the OnlyOffice view to centralize panel state
+
+</code_context>
+
+<deferred>
+## Deferred Ideas
+
+None — discussion stayed within phase scope
+
+</deferred>
+
+---
+
+*Phase: 14-scribecontext-panel-shell*
+*Context gathered: 2026-03-11*
