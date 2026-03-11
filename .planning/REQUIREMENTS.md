@@ -1,52 +1,102 @@
-# Requirements: Scribe pour OnlyOffice
+# Requirements: Scribe v3.0 Chat Panel
 
-**Defined:** 2026-03-23
-**Core Value:** La chaîne de communication complète — depuis la sélection de texte dans OnlyOffice jusqu'à la réinjection du texte modifié par l'IA — de bout en bout, transparente pour l'utilisateur.
+**Defined:** 2026-03-11
+**Core Value:** L'utilisateur peut interagir avec l'IA de maniere fluide — actions rapides inline ou chat conversationnel dans un panneau lateral — pour transformer et manipuler le contenu de son document OnlyOffice.
 
-## v2.6 Requirements
+## v3.0 Requirements
 
-### Formatage Inline
+Requirements for the Scribe Chat Panel milestone. Each maps to roadmap phases.
 
-- [ ] **FMT-01**: Le souligné (underline) dans la sélection OO est extrait comme markdown et réinjecté avec le formatage préservé
+### Panel Layout
 
-### Sélections Partielles de Tableaux
+- [ ] **PANEL-01**: User can open a side panel to the right of the OO editor
+- [ ] **PANEL-02**: OO editor iframe resizes when panel opens/closes
+- [ ] **PANEL-03**: User can resize the panel width by dragging
+- [ ] **PANEL-04**: User can close the panel via a close button
+- [ ] **PANEL-05**: User can toggle between inline mode and panel mode
 
-- [x] **TBL-01**: Quand la sélection ne couvre qu'une partie d'un tableau (lignes/colonnes partielles), Scribe traite correctement les cellules sélectionnées sans casser la structure du tableau
-- [x] **TBL-02**: Scribe détecte et signale à l'utilisateur quand la sélection coupe un tableau de manière ambiguë
+### Chat
 
-### Références Documentaires
+- [ ] **CHAT-01**: User can type a message and send it to the AI
+- [ ] **CHAT-02**: User sees AI responses rendered in Markdown
+- [ ] **CHAT-03**: Conversation history is displayed as a scrollable message list
+- [ ] **CHAT-04**: AI receives full conversation history (multi-turn)
+- [ ] **CHAT-05**: User sees a loading indicator while AI responds
+- [ ] **CHAT-06**: Errors appear as messages in the chat with retry option
 
-- [ ] **REF-01**: Les notes de bas de page dans la sélection sont détectées et préservées dans le round-trip (le contenu peut être modifié, le renvoi reste intact)
-- [ ] **REF-02**: Les renvois vers des parties du document (cross-références internes) dans la sélection sont détectés et préservés dans le round-trip
+### Selection Context
+
+- [ ] **SEL-01**: Selected text from OO is shown as a chip in the chat input area
+- [ ] **SEL-02**: Selected text is included as context in the AI prompt
+
+### Actions
+
+- [ ] **ACT-01**: User can copy an AI response to clipboard
+- [ ] **ACT-02**: User can replace selected text with AI response
+- [ ] **ACT-03**: User can insert AI response after selected text
 
 ## Future Requirements
 
-Aucun pour le moment.
+Deferred to v3.1+. Tracked but not in current roadmap.
+
+### Streaming
+
+- **STRM-01**: AI responses stream token by token
+- **STRM-02**: User sees partial response while AI generates
+
+### Persistence
+
+- **PERS-01**: Conversations are saved and survive page reload
+- **PERS-02**: User can browse past conversations
+- **PERS-03**: User can resume a past conversation
+
+### Context Attachments
+
+- **CTX-01**: User can attach files as context
+- **CTX-02**: User can attach URLs as context
+- **CTX-03**: User can attach images as context
+
+### Model Selection
+
+- **MOD-01**: User can choose AI model/agent for the conversation
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Couleurs de texte | Pas de syntaxe markdown standard pour les couleurs — déféré |
-| Tables imbriquées | Complexité excessive pour v2.6 |
-| Création de tableaux par le LLM | Le LLM ne peut pas créer de nouveaux tableaux, seulement modifier le contenu des cellules existantes |
-| Images dans les notes de bas de page | Cas marginal, pas prioritaire |
+| Rich text input in chat | Users type short prompts, not formatted documents — plain textarea sufficient |
+| LLM-decided action buttons | Requires structured output parsing — v3.0 shows buttons on all responses when selection active |
+| Collaborative chat | Multiple users seeing same chat — massive complexity, unclear value |
+| Voice input | Niche, browser support varies |
+| Document-wide context | Sending full doc expensive — v3.0 uses selected text + conversation history |
+| Plugin OO natif pour le panel | Moins de controle UI, pas de composants cozy-ui |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FMT-01 | Phase 25 | Pending |
-| TBL-01 | Phase 26 | Complete |
-| TBL-02 | Phase 26 | Complete |
-| REF-01 | Phase 27 | Pending |
-| REF-02 | Phase 27 | Pending |
+| PANEL-01 | — | Pending |
+| PANEL-02 | — | Pending |
+| PANEL-03 | — | Pending |
+| PANEL-04 | — | Pending |
+| PANEL-05 | — | Pending |
+| CHAT-01 | — | Pending |
+| CHAT-02 | — | Pending |
+| CHAT-03 | — | Pending |
+| CHAT-04 | — | Pending |
+| CHAT-05 | — | Pending |
+| CHAT-06 | — | Pending |
+| SEL-01 | — | Pending |
+| SEL-02 | — | Pending |
+| ACT-01 | — | Pending |
+| ACT-02 | — | Pending |
+| ACT-03 | — | Pending |
 
 **Coverage:**
-- v2.6 requirements: 5 total
-- Mapped to phases: 5
-- Unmapped: 0
+- v3.0 requirements: 16 total
+- Mapped to phases: 0
+- Unmapped: 16
 
 ---
-*Requirements defined: 2026-03-23*
-*Last updated: 2026-03-23 after roadmap creation*
+*Requirements defined: 2026-03-11*
+*Last updated: 2026-03-11 after initial definition*
