@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: Ameliorations UX
-status: executing
+status: completed
 stopped_at: Completed 14-02-PLAN.md
-last_updated: "2026-03-10T21:56:10.458Z"
+last_updated: "2026-03-11T07:19:31.865Z"
 last_activity: 2026-03-10 -- Completed 14-02 mouse hover + tooltip delay
 progress:
   total_phases: 2
