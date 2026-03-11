@@ -67,8 +67,8 @@ Full details: `.planning/milestones/v2.1-ROADMAP.md`
 **Plans**: 2 plans
 
 Plans:
-- [ ] 14-01-PLAN.md — Keyboard shortcut Ctrl+Shift+I and result panel button order
-- [ ] 14-02-PLAN.md — Mouse hover gating on menu and tooltip delay on floating button
+- [x] 14-01-PLAN.md — Keyboard shortcut Ctrl+Shift+I and result panel button order
+- [x] 14-02-PLAN.md — Mouse hover gating on menu and tooltip delay on floating button
 
 ### Phase 15: Panneau de resultat interactif
 **Goal**: L'utilisateur peut repositionner et redimensionner la fenetre de resultat pour l'adapter a son flux de travail
@@ -78,10 +78,10 @@ Plans:
   1. User can click and drag the result panel background to move the window to a different position -- dragging on buttons or text content does not trigger drag
   2. A subtle resize handle is visible in the bottom-right corner of the result panel
   3. User can drag the resize handle to make the result panel larger or smaller, and the content reflows accordingly
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 15-01: TBD
+- [ ] 15-01-PLAN.md — Drag-to-move and resize handle for result panel
 
 ## Progress
 
@@ -103,5 +103,5 @@ Phases execute in numeric order: 14 -> 15
 | 11. Pipeline de Conversion | v2.1 | 2/2 | Complete | 2026-03-06 |
 | 12. Preview Markdown | v2.1 | 1/1 | Complete | 2026-03-07 |
 | 13. Reinjection et Integrite Pipeline | v2.1 | 1/1 | Complete | 2026-03-09 |
-| 14. Navigation, clavier et micro-interactions | 2/2 | Complete    | 2026-03-11 | - |
-| 15. Panneau de resultat interactif | v2.2 | 0/? | Not started | - |
+| 14. Navigation, clavier et micro-interactions | v2.2 | 2/2 | Complete | 2026-03-10 |
+| 15. Panneau de resultat interactif | v2.2 | 0/1 | Not started | - |
