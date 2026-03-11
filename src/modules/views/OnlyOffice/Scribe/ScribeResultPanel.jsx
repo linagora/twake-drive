@@ -36,7 +36,11 @@ const ScribeResultPanel = ({
   onReplace,
   onInsert,
   onClose,
-  devData
+  devData,
+  dragOffset,
+  onDragMove,
+  panelSize,
+  onResize
 }) => {
   const { t } = useI18n()
   const theme = useTheme()
@@ -44,6 +48,96 @@ const ScribeResultPanel = ({
   const replaceRef = useRef(null)
   const closeRef = useRef(null)
   const retryRef = useRef(null)
+  const paperRef = useRef(null)
+
+  // Drag-to-move state
+  const dragStateRef = useRef({ dragging: false, startX: 0, startY: 0, startOffsetX: 0, startOffsetY: 0 })
+  // Resize state
+  const resizeStateRef = useRef({ resizing: false, startX: 0, startY: 0, startWidth: 0, startHeight: 0 })
+
+  // --- Drag-to-move handlers ---
+  const handleDragMove = useCallback(e => {
+    const ds = dragStateRef.current
+    if (!ds.dragging) return
+    const dx = e.clientX - ds.startX
+    const dy = e.clientY - ds.startY
+    onDragMove({ x: ds.startOffsetX + dx, y: ds.startOffsetY + dy })
+  }, [onDragMove])
+
+  const handleDragEnd = useCallback(() => {
+    dragStateRef.current.dragging = false
+    document.removeEventListener('mousemove', handleDragMove)
+    document.removeEventListener('mouseup', handleDragEnd)
+  }, [handleDragMove])
+
+  const handleDragStart = useCallback(e => {
+    // Walk up from target to see if we hit an interactive or content element
+    let el = e.target
+    const paper = paperRef.current
+    while (el && el !== paper) {
+      const tag = el.tagName && el.tagName.toLowerCase()
+      if (tag === 'button' || tag === 'a' || tag === 'input' || tag === 'textarea') return
+      if (el.getAttribute && el.getAttribute('role') === 'button') return
+      const cls = el.className || ''
+      const clsStr = typeof cls === 'string' ? cls : (cls.toString ? cls.toString() : '')
+      if (clsStr.indexOf('scribe-result-text') !== -1 || clsStr.indexOf('scribe-result-actions') !== -1) return
+      el = el.parentElement
+    }
+    // Only start drag if we ended up at the paper (background/header area)
+    dragStateRef.current = {
+      dragging: true,
+      startX: e.clientX,
+      startY: e.clientY,
+      startOffsetX: dragOffset ? dragOffset.x : 0,
+      startOffsetY: dragOffset ? dragOffset.y : 0
+    }
+    document.addEventListener('mousemove', handleDragMove)
+    document.addEventListener('mouseup', handleDragEnd)
+    e.preventDefault()
+  }, [dragOffset, handleDragMove, handleDragEnd])
+
+  // --- Resize handlers ---
+  const handleResizeMove = useCallback(e => {
+    const rs = resizeStateRef.current
+    if (!rs.resizing) return
+    const maxW = window.innerWidth * 0.95
+    const maxH = window.innerHeight * 0.9
+    const newWidth = Math.min(maxW, Math.max(250, rs.startWidth + (e.clientX - rs.startX)))
+    const newHeight = Math.min(maxH, Math.max(150, rs.startHeight + (e.clientY - rs.startY)))
+    onResize({ width: newWidth, height: newHeight })
+  }, [onResize])
+
+  const handleResizeEnd = useCallback(() => {
+    resizeStateRef.current.resizing = false
+    document.removeEventListener('mousemove', handleResizeMove)
+    document.removeEventListener('mouseup', handleResizeEnd)
+  }, [handleResizeMove])
+
+  const handleResizeStart = useCallback(e => {
+    e.stopPropagation()
+    e.preventDefault()
+    if (!paperRef.current) return
+    const rect = paperRef.current.getBoundingClientRect()
+    resizeStateRef.current = {
+      resizing: true,
+      startX: e.clientX,
+      startY: e.clientY,
+      startWidth: rect.width,
+      startHeight: rect.height
+    }
+    document.addEventListener('mousemove', handleResizeMove)
+    document.addEventListener('mouseup', handleResizeEnd)
+  }, [handleResizeMove, handleResizeEnd])
+
+  // Cleanup document listeners on unmount
+  useEffect(() => {
+    return () => {
+      document.removeEventListener('mousemove', handleDragMove)
+      document.removeEventListener('mouseup', handleDragEnd)
+      document.removeEventListener('mousemove', handleResizeMove)
+      document.removeEventListener('mouseup', handleResizeEnd)
+    }
+  }, [handleDragMove, handleDragEnd, handleResizeMove, handleResizeEnd])
 
   // Dev mode: highlighted HTML from highlight.js (loaded lazily from CDN)
   const [highlightedHtml, setHighlightedHtml] = useState('')
@@ -167,7 +261,8 @@ const ScribeResultPanel = ({
       style={{
         backgroundColor: theme.palette.action.hover,
         ...(error ? { color: theme.palette.error.main } : {}),
-        ...(devData ? { flex: 1, minWidth: 0, maxHeight: 'none' } : {})
+        ...(devData ? { flex: 1, minWidth: 0, maxHeight: 'none' } : {}),
+        ...(panelSize && !devData ? { flex: 1, minHeight: 0 } : {})
       }}
     >
       {error ? error : <MarkdownPreview>{resultText}</MarkdownPreview>}
@@ -176,20 +271,28 @@ const ScribeResultPanel = ({
 
   return (
     <Paper
+      ref={paperRef}
       className={styles['scribe-result-panel']}
       elevation={0}
       onKeyDown={handleKeyDown}
-      style={
-        devData
-          ? {
-              maxWidth: '95vw',
-              width: 'auto',
-              height: '90vh',
-              display: 'flex',
-              flexDirection: 'column'
-            }
-          : undefined
-      }
+      onMouseDown={handleDragStart}
+      style={{
+        cursor: 'move',
+        ...(panelSize || devData ? {
+          maxWidth: '95vw',
+          display: 'flex',
+          flexDirection: 'column'
+        } : {}),
+        ...(panelSize ? {
+          width: panelSize.width,
+          height: panelSize.height,
+          maxHeight: '90vh'
+        } : {}),
+        ...(devData && !panelSize ? {
+          width: 'auto',
+          height: '90vh'
+        } : {})
+      }}
     >
       <div
         className={styles['scribe-result-header']}
@@ -307,6 +410,11 @@ const ScribeResultPanel = ({
           </>
         )}
       </div>
+      <div
+        className={styles['scribe-resize-handle']}
+        onMouseDown={handleResizeStart}
+        tabIndex={-1}
+      />
     </Paper>
   )
 }
@@ -324,14 +432,28 @@ ScribeResultPanel.propTypes = {
     html: PropTypes.string,
     normalizedHtml: PropTypes.string,
     md: PropTypes.string
-  })
+  }),
+  dragOffset: PropTypes.shape({
+    x: PropTypes.number,
+    y: PropTypes.number
+  }),
+  onDragMove: PropTypes.func,
+  panelSize: PropTypes.shape({
+    width: PropTypes.number,
+    height: PropTypes.number
+  }),
+  onResize: PropTypes.func
 }
 
 ScribeResultPanel.defaultProps = {
   error: '',
   canRetry: false,
   onRetry: undefined,
-  devData: null
+  devData: null,
+  dragOffset: { x: 0, y: 0 },
+  onDragMove: undefined,
+  panelSize: null,
+  onResize: undefined
 }
 
 export { ScribeResultPanel }

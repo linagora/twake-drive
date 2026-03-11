@@ -36,6 +36,11 @@ const ScribePopover = ({ open, selectedText, selectedHtml, onReplace, onInsert, 
   // Dev mode: store source HTML and intermediate MD for debug panels
   const [devData, setDevData] = useState({ html: '', md: '' })
 
+  // Drag offset for result panel repositioning
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
+  // Panel size for result panel resizing (null = use default CSS sizing)
+  const [panelSize, setPanelSize] = useState(null)
+
   // Reset to menu state when popover opens with new intent
   useEffect(() => {
     if (open) {
@@ -44,6 +49,8 @@ const ScribePopover = ({ open, selectedText, selectedHtml, onReplace, onInsert, 
       setLoadingMessage('')
       setLastAction(null)
       setDevData({ html: '', md: '' })
+      setDragOffset({ x: 0, y: 0 })
+      setPanelSize(null)
       if (abortRef.current) {
         abortRef.current.abort()
         abortRef.current = null
@@ -168,7 +175,7 @@ const ScribePopover = ({ open, selectedText, selectedHtml, onReplace, onInsert, 
       disableAutoFocus
       disableEnforceFocus
       anchorReference="anchorPosition"
-      anchorPosition={{ top: typeof window !== 'undefined' ? window.innerHeight / 2 : 400, left: typeof window !== 'undefined' ? window.innerWidth / 2 : 500 }}
+      anchorPosition={{ top: (typeof window !== 'undefined' ? window.innerHeight / 2 : 400) + dragOffset.y, left: (typeof window !== 'undefined' ? window.innerWidth / 2 : 500) + dragOffset.x }}
       transformOrigin={{ vertical: 'center', horizontal: 'center' }}
       onClose={handleClose}
       BackdropProps={{ style: { backgroundColor: 'rgba(0, 0, 0, 0.5)' } }}
@@ -204,6 +211,10 @@ const ScribePopover = ({ open, selectedText, selectedHtml, onReplace, onInsert, 
           onInsert={handleInsert}
           onClose={handleClose}
           devData={devMode ? devData : null}
+          dragOffset={dragOffset}
+          onDragMove={setDragOffset}
+          panelSize={panelSize}
+          onResize={setPanelSize}
         />
       )}
     </Popover>
