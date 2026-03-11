@@ -2,7 +2,7 @@
 
 ## What This Is
 
-Un assistant d'écriture IA intégré à OnlyOffice au sein de Cozy Drive. L'utilisateur sélectionne du texte dans l'éditeur, un bouton flottant Scribe apparaît, il choisit une action IA (réécriture, traduction, correction, prompt libre…), prévisualise le résultat dans un panneau adaptatif, puis remplace ou insère dans le document. Les appels IA passent par cozy-stack (format OpenAI), avec gestion d'erreurs et retry. L'interface est internationalisée (fr, en, de, es, it).
+Un assistant d'écriture IA intégré à OnlyOffice au sein de Cozy Drive. L'utilisateur sélectionne du texte dans l'éditeur, un bouton flottant Scribe apparaît, il choisit une action IA (réécriture, traduction, correction, prompt libre…), prévisualise le résultat dans un panneau adaptatif déplaçable et redimensionnable, puis remplace ou insère dans le document. Les appels IA passent par cozy-stack (format OpenAI), avec gestion d'erreurs et retry. L'interface est internationalisée (fr, en, de, es, it). La navigation clavier et les micro-interactions sont soignées (raccourci Ctrl+Shift+I, hover gating, tooltip delayed).
 
 ## Core Value
 
@@ -29,27 +29,31 @@ La chaîne de communication complète — depuis la sélection de texte dans Onl
 - ✓ Rendu Markdown dans le panneau de résultat (react-markdown + remark-gfm) — v2.1
 - ✓ Réinjection formatée via PasteHtml avec smart spacing et fallback PasteText — v2.1
 - ✓ Round-trip complet : formatage inline, blocs, tableaux, liens, code survivent le cycle — v2.1
+- ✓ Raccourci Ctrl+Shift+I sans conflit avec italique OO — v2.2
+- ✓ Ordre de focus clavier naturel (Insert → Replace) dans le panneau de résultat — v2.2
+- ✓ Menu hover prevention à l'ouverture (mousemove gating) — v2.2
+- ✓ Fenêtre de résultat déplaçable par drag sur fond/header — v2.2
+- ✓ Fenêtre de résultat redimensionnable via grip handle — v2.2
+- ✓ Tooltip bouton flottant avec délai 1s — v2.2
 
 ### Active
 
-- [ ] Menu hover prevention on open — ne pas sélectionner un item si la souris est déjà au-dessus à l'ouverture
-- [ ] Raccourci Ctrl+Shift+I au lieu de Ctrl+I — éviter conflit avec mise en italique
-- [ ] Inverser l'ordre de focus clavier dans le panneau de résultat — Tab/flèche gauche : Insérer → Remplacer
-- [ ] Fenêtre de résultat déplaçable à la souris — drag sur le fond (hors boutons/texte)
-- [ ] Fenêtre de résultat redimensionnable — symbole discret en bas à droite
-- [ ] Tooltip du bouton flottant avec délai de 1s
+(None — next milestone not yet defined)
 
-## Current Milestone: v2.2 Améliorations UX
+### Out of Scope
 
-**Goal:** Améliorer l'ergonomie de Scribe — navigation clavier, interactions souris, et micro-interactions du bouton flottant et du panneau de résultat.
+- Développement du moteur IA Scribe (backend) — service existant, on consomme son API
+- Migration de l'interface Scribe vers une application Cozy séparée — projet ultérieur (v3.0)
+- Support mobile natif — web-first, Cozy Drive est une application web
+- Édition collaborative simultanée avec Scribe — complexité excessive
+- Correction grammaticale passive en temps réel (style Grammarly) — performance prohibitive
+- Streaming LLM responses — déféré à v3.x, non-streaming suffisant
+- Document Builder API — déféré à v3.x, PasteHtml suffisant pour v2.x
+- Post-paste selection positioning — OO renvoie des positions incohérentes après PasteHtml
 
-**Target features:**
-- Menu hover prevention on open (respect navigation clavier)
-- Raccourci Ctrl+Shift+I (éviter conflit italique)
-- Ordre de focus clavier inversé dans le panneau de résultat
-- Fenêtre de résultat déplaçable (drag)
-- Fenêtre de résultat redimensionnable (resize handle)
-- Tooltip bouton flottant avec délai 1s
+## Shipped: v2.2 Améliorations UX (2026-03-11)
+
+Navigation clavier, interactions souris et micro-interactions : Ctrl+Shift+I, focus order, hover gating, tooltip delay, panneau déplaçable et redimensionnable. 6/6 requirements, 2 phases, 3 plans. Voir `.planning/MILESTONES.md`.
 
 ## Shipped: v2.1 Formatage Riche (2026-03-09)
 
@@ -62,21 +66,13 @@ Intégration LLM réelle via cozy-stack, gestion d'erreurs avec retry, internati
 
 **Repo unique:** `~/Dev-local/cozy-drive` — frontend uniquement, pas de modification cozy-stack
 
-### Out of Scope
-
-- Développement du moteur IA Scribe (backend) — service existant, on consomme son API
-- Migration de l'interface Scribe vers une application Cozy séparée — projet ultérieur (v3.0)
-- Support mobile natif — web-first, Cozy Drive est une application web
-- Édition collaborative simultanée avec Scribe — complexité excessive
-- Correction grammaticale passive en temps réel (style Grammarly) — performance prohibitive
-
 ## Context
 
-### Shipped v2.1
+### Shipped v2.2
 
-~2,000+ LOC Scribe module (React/Stylus + OO plugin ES5). 44 fichiers modifiés pour v2.1, +5,943 lignes.
+~2,000+ LOC Scribe module (React/Stylus + OO plugin ES5). 15 phases, 24 plans across 4 milestones.
 Tech stack : React 18 + MUI + cozy-ui + twake-i18n, cozy-stack AI proxy, postMessage protocol, OO Plugin API, Turndown, marked, react-markdown, remark-gfm.
-v1.0 : 4 jours, 10 plans. v2.0 : 3 jours, 5 plans. v2.1 : 3 jours, 6 plans.
+v1.0 : 4 jours, 10 plans. v2.0 : 3 jours, 5 plans. v2.1 : 3 jours, 6 plans. v2.2 : 2 jours, 3 plans.
 
 ### Architecture à 3 couches (frame hierarchy)
 
@@ -117,7 +113,7 @@ v1.0 : 4 jours, 10 plans. v2.0 : 3 jours, 5 plans. v2.1 : 3 jours, 6 plans.
 | mockResult DSL string-based | Sérialisable, prêt pour stockage JSON futur | ✓ Good — transition API facile |
 | Plugin type "panel" pour le POC | Panneaux latéraux, non-bloquant | ⚠️ Revisit — bouton flottant a remplacé le panneau |
 | fetchJSON direct au lieu de chatCompletion() | Support AbortController signal | ✓ Good — annulation fiable |
-| Non-streaming pour v2.0 | Streaming déféré, simplifier l'intégration initiale | ✓ Good — fonctionnel, streaming en v2.x |
+| Non-streaming pour v2.0 | Streaming déféré, simplifier l'intégration initiale | ✓ Good — fonctionnel, streaming en v3.x |
 | Duck-typed FetchError (err.name) | Détection cross-module sans import | ✓ Good — classification d'erreurs robuste |
 | labelKey pattern pour i18n | Actions déclaratives, résolution t() au render | ✓ Good — zéro chaîne hardcodée |
 | 5 locales européennes (fr, en, de, es, it) | Couverture utilisateurs Cozy principaux | ✓ Good — extensible |
@@ -126,6 +122,11 @@ v1.0 : 4 jours, 10 plans. v2.0 : 3 jours, 5 plans. v2.1 : 3 jours, 6 plans.
 | PasteHtml avec smart nbsp spacing | Préserve formatage, simple à implémenter | ✓ Good — suffisant pour v2.1 |
 | react-markdown + remark-gfm pour preview | Rendu MD natif React, support tables GFM | ✓ Good — thème MUI intégré |
 | Document Builder API déféré à v3.x | PasteHtml suffisant pour v2.1, Builder API pour objets complexes | — Pending |
+| Ctrl+Shift+I pour raccourci Scribe | Évite conflit avec Ctrl+I (italique natif OO) | ✓ Good — aucun conflit OO |
+| mousemove gating pour hover menu | Détecte mouvement physique vs ouverture sous curseur | ✓ Good — zéro faux highlight |
+| showTooltip séparé de hovered | Opacité instantanée, tooltip retardé indépendamment | ✓ Good — UX naturelle |
+| DOM walk exclusion pour drag | Exclut boutons/input/texte sans drag handle séparé | ✓ Good — zones interactives préservées |
+| Resize via inline width/height + flex | Meilleur contrôle et clamping que CSS resize | ✓ Good — reflow contenu fiable |
 
 ---
-*Last updated: 2026-03-10 after v2.2 milestone start*
+*Last updated: 2026-03-11 after v2.2 milestone*

@@ -1,5 +1,21 @@
 # Milestones
 
+## v2.2 Ameliorations UX (Shipped: 2026-03-11)
+
+**Phases completed:** 2 phases, 3 plans, 6 tasks
+**Timeline:** 2 days (2026-03-10 → 2026-03-11)
+**Commits:** 5 | **Files modified:** 13 (+782 / -70 lines)
+
+**Key accomplishments:**
+- Raccourci Ctrl+Shift+I — évite le conflit avec l'italique natif OO
+- Ordre des boutons résultat corrigé — Insert à gauche, Replace à droite, Tab naturel
+- Suppression du highlight menu à l'ouverture — mousemove gating empêche les faux survols
+- Tooltip bouton flottant avec délai 1s — timer cleanup sur leave/unmount/visibility
+- Panneau de résultat déplaçable — drag sur fond/header avec exclusion DOM des zones interactives
+- Panneau de résultat redimensionnable — grip handle en bas à droite avec reflow du contenu
+
+---
+
 ## v2.1 Formatage Riche (Shipped: 2026-03-09)
 
 **Phases completed:** 4 phases, 6 plans, ~13 tasks

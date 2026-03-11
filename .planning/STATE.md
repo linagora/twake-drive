@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: Ameliorations UX
 status: completed
-stopped_at: Completed 15-01-PLAN.md
-last_updated: "2026-03-11T08:16:23.787Z"
-last_activity: 2026-03-11 -- Completed 15-01 draggable/resizable result panel
+stopped_at: Milestone v2.2 archived
+last_updated: "2026-03-11"
+last_activity: 2026-03-11 -- Milestone v2.2 completed and archived
 progress:
   total_phases: 2
   completed_phases: 2
@@ -18,17 +18,15 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-10)
+See: .planning/PROJECT.md (updated 2026-03-11)
 
 **Core value:** La chaine de communication complete -- depuis la selection de texte dans OnlyOffice jusqu'a la reinjection du texte modifie par l'IA -- de bout en bout, transparente pour l'utilisateur.
-**Current focus:** Phase 15 -- Panneau de resultat interactif
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Phase: 15 of 15 (Panneau de resultat interactif)
-Plan: 1 of 1
-Status: Phase Complete
-Last activity: 2026-03-11 -- Completed 15-01 draggable/resizable result panel
+Milestone v2.2 Ameliorations UX: SHIPPED (2026-03-11)
+Next: `/gsd:new-milestone` to start next milestone
 
 Progress: [██████████] 100%
 
@@ -48,9 +46,6 @@ Progress: [██████████] 100%
 ### Decisions
 
 All decisions logged in PROJECT.md Key Decisions table.
-- Phase 14-01: Ctrl+Shift+I chosen to avoid all OO native shortcut conflicts
-- [Phase 14]: mousemove listener for hover gating; separate showTooltip from hovered state
-- [Phase 15-01]: DOM walk exclusion for drag start; resize via inline width/height + flex layout
 
 ### Pending Todos (carried from v2.1)
 
@@ -72,6 +67,6 @@ All decisions logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-03-11T08:13:10Z
-Stopped at: Completed 15-01-PLAN.md
+Last session: 2026-03-11
+Stopped at: Milestone v2.2 archived
 Resume file: None
