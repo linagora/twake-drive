@@ -68,11 +68,11 @@ Full details: `.planning/milestones/v2.1-ROADMAP.md`
   4. User can open the panel from the inline Scribe popover via Ctrl+Shift+I
   5. User can open the panel from the editor via double Ctrl+Shift+I
   6. The existing inline Scribe popover continues to work exactly as before
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 14-01: TBD
-- [ ] 14-02: TBD
+- [ ] 14-01-PLAN.md — ScribeContext provider + ScribePanel shell + View.jsx wiring
+- [ ] 14-02-PLAN.md — FloatingZone 2-button stack + Ctrl+Shift+I double-tap + coexistence logic
 
 ### Phase 15: Chat Core
 **Goal**: User can have a multi-turn conversation with the AI in the side panel
@@ -139,7 +139,7 @@ Phases execute in numeric order: 14 -> 15 -> 16 -> 17
 | 11. Pipeline de Conversion | v2.1 | 2/2 | Complete | 2026-03-06 |
 | 12. Preview Markdown | v2.1 | 1/1 | Complete | 2026-03-07 |
 | 13. Reinjection et Integrite Pipeline | v2.1 | 1/1 | Complete | 2026-03-09 |
-| 14. ScribeContext + Panel Shell | v3.0 | 0/? | Not started | - |
+| 14. ScribeContext + Panel Shell | v3.0 | 0/2 | Not started | - |
 | 15. Chat Core | v3.0 | 0/? | Not started | - |
 | 16. Selection Context + Document Actions | v3.0 | 0/? | Not started | - |
 | 17. Panel Resize + Mode Toggle | v3.0 | 0/? | Not started | - |
