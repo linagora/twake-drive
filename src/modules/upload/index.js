@@ -191,7 +191,7 @@ export const processNextFile =
       typeof fileUploadedCallback === 'function'
         ? fileUploadedCallback
         : () => {}
-    let error = null
+    let error
     if (!client) {
       throw new Error(
         'Upload module needs a cozy-client instance to work. This instance should be made available by using the extraArgument function of redux-thunk'

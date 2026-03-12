@@ -116,7 +116,6 @@ export const computePath = (
     case 'public-note':
       return driveId ? `/note/${driveId}/${file._id}` : `/note/${file._id}`
     case 'docs':
-      // eslint-disable-next-line no-case-declarations, @typescript-eslint/restrict-template-expressions
       return `/bridge/docs/${(file as IOCozyFile).metadata.externalId}`
     case 'shortcut':
       return `/external/${file._id}`
@@ -156,7 +155,6 @@ export const computePath = (
       // On mobile, if we are in /favorites tab, we do not want it to appears in computed path
       // so we redirect to root route for files
       if (pathname.startsWith('/favorites')) {
-        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
         return `/folder/${file.dir_id}/file/${file._id}`
       }
 

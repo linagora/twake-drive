@@ -40,10 +40,12 @@ const useQueryMultipleSharedDriveFolders = ({
   )
 
   const fetchSharedDriveResults = useCallback(async () => {
+    if (!client) return
+
     const results = (await Promise.all(
-      sharedDriveQueries.map(async query => {
-        return client?.query(query.definition(), query.options)
-      })
+      sharedDriveQueries.map(query =>
+        client.query(query.definition(), query.options)
+      )
     )) as SharedDriveResult[]
 
     setSharedDriveResults(
@@ -55,6 +57,7 @@ const useQueryMultipleSharedDriveFolders = ({
 
   useEffect(() => {
     if (client) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       void fetchSharedDriveResults()
     }
   }, [client, fetchSharedDriveResults])

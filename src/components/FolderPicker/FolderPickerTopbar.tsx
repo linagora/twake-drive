@@ -1,6 +1,5 @@
 import cx from 'classnames'
 import React, { useCallback, useState } from 'react'
-import { useI18n } from 'twake-i18n'
 
 import { useClient } from 'cozy-client'
 import Icon from 'cozy-ui/transpiled/react/Icon'
@@ -8,6 +7,7 @@ import IconButton from 'cozy-ui/transpiled/react/IconButton'
 import FolderAddIcon from 'cozy-ui/transpiled/react/Icons/FolderAdd'
 import Typography from 'cozy-ui/transpiled/react/Typography'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
+import { useI18n } from 'twake-i18n'
 
 import { getParentFolder } from './helpers'
 

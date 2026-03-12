@@ -57,7 +57,7 @@ const addToFavorites = ({
           }),
           severity: 'success'
         })
-      } catch (error) {
+      } catch (_error) {
         showAlert({ message: t('favorites.error'), severity: 'error' })
       }
     },

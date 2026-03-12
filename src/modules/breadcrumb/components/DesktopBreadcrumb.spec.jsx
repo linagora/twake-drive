@@ -1,8 +1,8 @@
 import { render, fireEvent, act } from '@testing-library/react'
 import React from 'react'
-import { useI18n } from 'twake-i18n'
 
 import { BreakpointsProvider } from 'cozy-ui/transpiled/react/providers/Breakpoints'
+import { useI18n } from 'twake-i18n'
 
 import DesktopBreadcrumb from './DesktopBreadcrumb'
 import {

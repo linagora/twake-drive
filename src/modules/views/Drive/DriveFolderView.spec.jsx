@@ -13,20 +13,21 @@ jest.mock('modules/views/Drive/useTrashRedirect', () => ({
   useTrashRedirect: jest.fn()
 }))
 
-// eslint-disable-next-line react/display-name
 jest.mock('../../upload/Dropzone', () => ({ children }) => (
   <div>{children}</div>
 ))
 
-jest.mock('../Folder/FolderViewBreadcrumb', () =>
-  // eslint-disable-next-line react/display-name
-  ({ rootBreadcrumbPath, currentFolderId }) => (
-    <div
-      data-path={rootBreadcrumbPath}
-      data-folder-id={currentFolderId}
-      data-testid="FolderViewBreadcrumb"
-    />
-  )
+jest.mock(
+  '../Folder/FolderViewBreadcrumb',
+  () =>
+    ({ rootBreadcrumbPath, currentFolderId }) =>
+      (
+        <div
+          data-path={rootBreadcrumbPath}
+          data-folder-id={currentFolderId}
+          data-testid="FolderViewBreadcrumb"
+        />
+      )
 )
 
 jest.mock('hooks', () => ({
