@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.3
 milestone_name: Menu Responsive
-status: defining_requirements
+status: ready_to_plan
 stopped_at: null
 last_updated: "2026-03-12"
-last_activity: 2026-03-12 -- Milestone v2.3 started
+last_activity: 2026-03-12 -- Roadmap created for v2.3 Menu Responsive
 progress:
-  total_phases: 0
+  total_phases: 2
   completed_phases: 0
-  total_plans: 0
+  total_plans: 3
   completed_plans: 0
   percent: 0
 ---
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-12)
 
 **Core value:** La chaine de communication complete -- depuis la selection de texte dans OnlyOffice jusqu'a la reinjection du texte modifie par l'IA -- de bout en bout, transparente pour l'utilisateur.
-**Current focus:** Milestone v2.3 — Menu Responsive
+**Current focus:** Phase 16 - Drawer Scaffold + Breakpoint Split
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-03-12 — Milestone v2.3 started
+Phase: 16 of 17 (Drawer Scaffold + Breakpoint Split)
+Plan: 0 of 1 in current phase
+Status: Ready to plan
+Last activity: 2026-03-12 -- Roadmap created for v2.3 Menu Responsive
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -42,6 +42,13 @@ Progress: [░░░░░░░░░░] 0%
 ### Decisions
 
 All decisions logged in PROJECT.md Key Decisions table.
+Recent decisions affecting current work:
+
+- [v2.3]: Zero new dependencies -- cozy-ui Drawer + useBreakpoints already available
+- [v2.3]: Drawer anchor bottom with height 100% for fullscreen
+- [v2.3]: MUI Drawer needs disableScrollLock, disableEnforceFocus, disableAutoFocus ModalProps
+- [v2.3]: Push navigation via useState (single level: root | actionId)
+- [v2.3]: Desktop path must remain entirely untouched
 
 ### Pending Todos (carried from v2.2)
 
@@ -64,5 +71,5 @@ All decisions logged in PROJECT.md Key Decisions table.
 ## Session Continuity
 
 Last session: 2026-03-12
-Stopped at: Defining requirements for v2.3
+Stopped at: Roadmap created, ready to plan Phase 16
 Resume file: None

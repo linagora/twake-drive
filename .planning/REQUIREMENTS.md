@@ -34,17 +34,17 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| RESP-01 | — | Pending |
-| RESP-02 | — | Pending |
-| RESP-03 | — | Pending |
-| RESP-04 | — | Pending |
-| RESP-05 | — | Pending |
+| RESP-01 | Phase 16 | Pending |
+| RESP-02 | Phase 17 | Pending |
+| RESP-03 | Phase 17 | Pending |
+| RESP-04 | Phase 17 | Pending |
+| RESP-05 | Phase 16 | Pending |
 
 **Coverage:**
 - v2.3 requirements: 5 total
-- Mapped to phases: 0
-- Unmapped: 5 ⚠️
+- Mapped to phases: 5
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-12*
-*Last updated: 2026-03-12 after initial definition*
+*Last updated: 2026-03-12 after roadmap creation*
