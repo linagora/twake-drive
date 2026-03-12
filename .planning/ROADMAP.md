@@ -76,10 +76,10 @@ Full details: `.planning/milestones/v2.2-ROADMAP.md`
   3. Opening the drawer causes no scroll lock layout shift (no body reflow)
   4. On desktop viewport, the existing Popover behavior is completely unchanged -- same position, same flyout submenus, same interactions
   5. Tapping the backdrop closes the drawer
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 16-01: Conditional container and drawer configuration
+- [ ] 16-01-PLAN.md — Breakpoint-conditional container (ScribeContainer) + ScribePopover refactor
 
 ### Phase 17: Push Navigation + Adaptive Layout
 **Goal**: User on mobile can navigate submenus via push navigation and use the prompt input without overflow
