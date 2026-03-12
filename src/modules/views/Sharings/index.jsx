@@ -197,6 +197,7 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
     hasWriteAccess: true,
     canMove: true,
     isPublic: false,
+    shouldHideIfSharedDriveRecipient: true,
     allLoaded,
     showAlert,
     isMobile,
