@@ -122,9 +122,15 @@ const ToolbarWithSharingContext = props => {
     <SharedDocument docId={folderId} driveId={driveId}>
       {sharingProps => {
         const { hasWriteAccess, isSharedWithMe } = sharingProps
+        // We do not want to enable write access actions for recipient for shared drive root folder.
+        // To check if it is shared drive root folder, we check if the document is shared because
+        // in a shared drive only the share drive root folder has a sharing
+        const hasWriteAccessExceptSharedDriveRootFolder = driveId
+          ? hasWriteAccess && !isSharedWithMe
+          : hasWriteAccess
         return (
           <Toolbar
-            hasWriteAccess={hasWriteAccess}
+            hasWriteAccess={hasWriteAccessExceptSharedDriveRootFolder}
             isSharedWithMe={isSharedWithMe}
             folderId={folderId}
             {...props}
