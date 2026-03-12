@@ -12,7 +12,7 @@ import ReadOnlyFab from '@/modules/views/OnlyOffice/ReadOnlyFab'
 import { useScribe } from '@/modules/views/OnlyOffice/Scribe/ScribeContext'
 import { ScribePanel } from '@/modules/views/OnlyOffice/Scribe/ScribePanel'
 import { markdownToHtml } from '@/modules/views/OnlyOffice/Scribe/scribeConversion'
-import { ScribeFloatingButton } from '@/modules/views/OnlyOffice/Scribe/ScribeFloatingButton'
+import { ScribeFloatingZone } from '@/modules/views/OnlyOffice/Scribe/ScribeFloatingButton'
 import { ScribePopover } from '@/modules/views/OnlyOffice/Scribe/ScribePopover'
 import { FRAME_EDITOR_NAME } from '@/modules/views/OnlyOffice/config'
 import { isOfficeEditingEnabled } from '@/modules/views/OnlyOffice/helpers'
@@ -40,12 +40,18 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
   const isScribeEnabled = flag('drive.scribe.enabled')
   const scribe = useScribe()
   const isPanelOpen = scribe ? scribe.isPanelOpen : false
+  const togglePanel = scribe ? scribe.togglePanel : undefined
+  const openPanel = scribe ? scribe.openPanel : undefined
 
   // cozy-bridge: listen for Scribe intents from OO plugin
   // In dev, allow all origins. In production, derive from serverUrl/instance.
   const allowedOrigins = useMemo(() => ['*'], []) // TODO: restrict in production
-  const { pendingIntent, showScribeButton, respond } =
-    useCozyBridge(allowedOrigins)
+  const { pendingIntent, showScribeButton, respond } = useCozyBridge(
+    allowedOrigins,
+    { onTogglePanel: togglePanel }
+  )
+
+  const showFloatingZone = isScribeEnabled && !isPanelOpen
 
   // Store partialTableInfo in a ref (doesn't need to trigger re-renders)
   const partialTableInfoRef = useRef(null)
@@ -114,6 +120,37 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
     setTimeout(focusEditor, 100)
   }, [respond, focusEditor])
 
+  // Use a ref for handleCancel so the keydown listener never goes stale
+  const handleCancelRef = useRef(handleCancel)
+  useEffect(() => {
+    handleCancelRef.current = handleCancel
+  }, [handleCancel])
+
+  // Close popover when panel opens while popover is active
+  useEffect(() => {
+    if (isPanelOpen && pendingIntent) {
+      handleCancelRef.current()
+    }
+  }, [isPanelOpen, pendingIntent])
+
+  // Ctrl+Shift+I single-press from open popover: open panel and close popover
+  useEffect(() => {
+    const popoverOpen = !!pendingIntent && !isPanelOpen
+    if (!popoverOpen) return
+
+    const handler = e => {
+      const isCtrlShiftI =
+        (e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'I' || e.key === 'i')
+      if (!isCtrlShiftI) return
+      e.preventDefault()
+      if (openPanel) openPanel()
+      handleCancelRef.current()
+    }
+
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [pendingIntent, isPanelOpen, openPanel])
+
   const initEditor = useCallback(() => {
     new window.DocsAPI.DocEditor('onlyOfficeEditor', docEditorConfig)
     forceIframeHeight('0')
@@ -168,12 +205,14 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
       </div>
       {isScribeEnabled && (
         <>
-          <ScribeFloatingButton
-            visible={!!showScribeButton && !pendingIntent}
-            onClick={triggerScribe}
+          <ScribeFloatingZone
+            visible={showFloatingZone}
+            showInlineButton={!!showScribeButton && !pendingIntent}
+            onTriggerScribe={triggerScribe}
+            onTogglePanel={togglePanel}
           />
           <ScribePopover
-            open={!!pendingIntent}
+            open={!!pendingIntent && !isPanelOpen}
             selectedText={pendingIntent?.data?.text || ''}
             selectedHtml={pendingIntent?.data?.html || ''}
             enrichedMd={pendingIntent?.data?.enrichedMd || ''}

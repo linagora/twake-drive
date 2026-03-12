@@ -766,7 +766,8 @@
       "replace": "Replace",
       "retry": "Retry",
       "cancel": "Cancel",
-      "insert_after": "Insert After"
+      "insert_after": "Insert After",
+      "open_panel": "Scribe Panel"
     },
     "modal": {
       "selected_text": "Selected text:"

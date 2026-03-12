@@ -763,7 +763,8 @@
       "replace": "Remplacer",
       "retry": "Réessayer",
       "cancel": "Annuler",
-      "insert_after": "Insérer après"
+      "insert_after": "Insérer après",
+      "open_panel": "Panneau Scribe"
     },
     "modal": {
       "selected_text": "Texte sélectionné :"

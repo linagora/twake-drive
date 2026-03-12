@@ -15,11 +15,17 @@ import { CozyBridge } from '@/lib/cozy-bridge'
  *   Must be memoized by the parent to avoid unnecessary re-renders.
  * @returns {{ pendingIntent: object|null, showScribeButton: object|null, respond: Function }}
  */
-export function useCozyBridge(allowedOrigins) {
+export function useCozyBridge(allowedOrigins, { onTogglePanel } = {}) {
   const [pendingIntent, setPendingIntent] = useState(null)
   const [showScribeButton, setShowScribeButton] = useState(null)
   const bridgeRef = useRef(null)
   const respondRef = useRef(null)
+  const togglePanelRef = useRef(onTogglePanel)
+
+  // Keep the ref current to avoid stale closure in bridge handler
+  useEffect(() => {
+    togglePanelRef.current = onTogglePanel
+  }, [onTogglePanel])
 
   useEffect(() => {
     const bridge = new CozyBridge(allowedOrigins)
@@ -36,6 +42,10 @@ export function useCozyBridge(allowedOrigins) {
 
     bridge.onIntent('HIDE_SCRIBE_BUTTON', () => {
       setShowScribeButton(null)
+    })
+
+    bridge.onIntent('TOGGLE_SCRIBE_PANEL', () => {
+      if (togglePanelRef.current) togglePanelRef.current()
     })
 
     return () => {
