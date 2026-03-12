@@ -1,45 +1,41 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.2
-milestone_name: Ameliorations UX
-status: completed
-stopped_at: Milestone v2.2 archived
-last_updated: "2026-03-11"
-last_activity: 2026-03-11 -- Milestone v2.2 completed and archived
+milestone: v2.3
+milestone_name: Menu Responsive
+status: defining_requirements
+stopped_at: null
+last_updated: "2026-03-12"
+last_activity: 2026-03-12 -- Milestone v2.3 started
 progress:
-  total_phases: 2
-  completed_phases: 2
-  total_plans: 3
-  completed_plans: 3
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-11)
+See: .planning/PROJECT.md (updated 2026-03-12)
 
 **Core value:** La chaine de communication complete -- depuis la selection de texte dans OnlyOffice jusqu'a la reinjection du texte modifie par l'IA -- de bout en bout, transparente pour l'utilisateur.
-**Current focus:** Planning next milestone
+**Current focus:** Milestone v2.3 — Menu Responsive
 
 ## Current Position
 
-Milestone v2.2 Ameliorations UX: SHIPPED (2026-03-11)
-Next: `/gsd:new-milestone` to start next milestone
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-12 — Milestone v2.3 started
 
-Progress: [██████████] 100%
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
 **Velocity:**
 - Total plans completed: 24 (v1.0: 10, v2.0: 5, v2.1: 6, v2.2: 3)
-
-| Phase | Plan | Duration | Tasks | Files |
-|-------|------|----------|-------|-------|
-| 14 | 01 | 1min | 2 | 3 |
-| 14 | 02 | 2min | 2 | 2 |
-| 15 | 01 | 3min | 2 | 3 |
 
 ## Accumulated Context
 
@@ -47,7 +43,7 @@ Progress: [██████████] 100%
 
 All decisions logged in PROJECT.md Key Decisions table.
 
-### Pending Todos (carried from v2.1)
+### Pending Todos (carried from v2.2)
 
 - Fix "Selected Text" white-on-white in OO dark theme (cosmetic, deferred)
 - Button disable on deselection when no text selected (deferred)
@@ -67,6 +63,6 @@ All decisions logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-03-11
-Stopped at: Milestone v2.2 archived
+Last session: 2026-03-12
+Stopped at: Defining requirements for v2.3
 Resume file: None

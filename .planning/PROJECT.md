@@ -38,7 +38,9 @@ La chaîne de communication complète — depuis la sélection de texte dans Onl
 
 ### Active
 
-(None — next milestone not yet defined)
+- [ ] Menu Scribe responsive : drawer plein écran sur mobile (breakpoint isMobile cozy-ui)
+- [ ] Navigation push pour sous-menus dans le drawer (remplace la liste, bouton retour)
+- [ ] Prompt input adaptatif à la largeur du drawer
 
 ### Out of Scope
 
@@ -50,6 +52,15 @@ La chaîne de communication complète — depuis la sélection de texte dans Onl
 - Streaming LLM responses — déféré à v3.x, non-streaming suffisant
 - Document Builder API — déféré à v3.x, PasteHtml suffisant pour v2.x
 - Post-paste selection positioning — OO renvoie des positions incohérentes après PasteHtml
+
+## Current Milestone: v2.3 Menu Responsive
+
+**Goal:** Rendre le menu Scribe responsive — drawer plein écran sur mobile avec navigation push pour les sous-menus.
+
+**Target features:**
+- Drawer fullscreen sur breakpoint isMobile
+- Navigation push sous-menus (remplace la liste, bouton retour)
+- Prompt input adaptatif (plus de 500px fixe)
 
 ## Shipped: v2.2 Améliorations UX (2026-03-11)
 
@@ -129,4 +140,4 @@ v1.0 : 4 jours, 10 plans. v2.0 : 3 jours, 5 plans. v2.1 : 3 jours, 6 plans. v2.2
 | Resize via inline width/height + flex | Meilleur contrôle et clamping que CSS resize | ✓ Good — reflow contenu fiable |
 
 ---
-*Last updated: 2026-03-11 after v2.2 milestone*
+*Last updated: 2026-03-12 after v2.3 milestone start*
