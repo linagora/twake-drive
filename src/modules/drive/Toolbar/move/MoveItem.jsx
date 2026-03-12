@@ -10,7 +10,6 @@ import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import { navigateToModalWithMultipleFile } from '@/modules/actions/helpers'
-import { isSharedDriveFolder } from '@/modules/shareddrives/helpers'
 
 const MoveItem = ({ displayedFolder, hasWriteAccess }) => {
   const { t } = useI18n()
@@ -18,7 +17,7 @@ const MoveItem = ({ displayedFolder, hasWriteAccess }) => {
   const { pathname, search } = useLocation()
   const { isMobile } = useBreakpoints()
 
-  if (!hasWriteAccess || isSharedDriveFolder(displayedFolder)) {
+  if (!hasWriteAccess) {
     return null
   }
 
