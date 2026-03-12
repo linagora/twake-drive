@@ -9,11 +9,11 @@ Requirements for milestone v2.3 Menu Responsive. Each maps to roadmap phases.
 
 ### Responsive Menu
 
-- [ ] **RESP-01**: User on mobile viewport sees Scribe menu as a fullscreen drawer instead of a centered popover
+- [x] **RESP-01**: User on mobile viewport sees Scribe menu as a fullscreen drawer instead of a centered popover
 - [ ] **RESP-02**: User can navigate into submenus via push navigation (submenu replaces main list with back button)
 - [ ] **RESP-03**: User can return to main menu from submenu via back button
 - [ ] **RESP-04**: Prompt input adapts to drawer width (no fixed 500px overflow)
-- [ ] **RESP-05**: Breakpoint uses cozy-ui `isMobile` for consistency with Cozy ecosystem
+- [x] **RESP-05**: Breakpoint uses cozy-ui `isMobile` for consistency with Cozy ecosystem
 
 ## Future Requirements
 
@@ -34,11 +34,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| RESP-01 | Phase 16 | Pending |
+| RESP-01 | Phase 16 | Complete |
 | RESP-02 | Phase 17 | Pending |
 | RESP-03 | Phase 17 | Pending |
 | RESP-04 | Phase 17 | Pending |
-| RESP-05 | Phase 16 | Pending |
+| RESP-05 | Phase 16 | Complete |
 
 **Coverage:**
 - v2.3 requirements: 5 total

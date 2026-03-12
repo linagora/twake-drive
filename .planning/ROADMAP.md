@@ -61,7 +61,7 @@ Full details: `.planning/milestones/v2.2-ROADMAP.md`
 
 **Milestone Goal:** Rendre le menu Scribe responsive -- drawer plein ecran sur mobile avec navigation push pour les sous-menus, sans toucher au chemin desktop.
 
-- [ ] **Phase 16: Drawer Scaffold + Breakpoint Split** - Fullscreen drawer on mobile with correct MUI configuration, desktop path unchanged
+- [x] **Phase 16: Drawer Scaffold + Breakpoint Split** - Fullscreen drawer on mobile with correct MUI configuration, desktop path unchanged (completed 2026-03-12)
 - [ ] **Phase 17: Push Navigation + Adaptive Layout** - Push submenu navigation, back button, adaptive prompt input inside drawer
 
 ## Phase Details
@@ -119,5 +119,5 @@ Phases execute in numeric order: 16 → 17
 | 13. Reinjection et Integrite Pipeline | v2.1 | 1/1 | Complete | 2026-03-09 |
 | 14. Navigation, clavier et micro-interactions | v2.2 | 2/2 | Complete | 2026-03-10 |
 | 15. Panneau de resultat interactif | v2.2 | 1/1 | Complete | 2026-03-11 |
-| 16. Drawer Scaffold + Breakpoint Split | v2.3 | 0/1 | Not started | - |
+| 16. Drawer Scaffold + Breakpoint Split | 1/1 | Complete   | 2026-03-12 | - |
 | 17. Push Navigation + Adaptive Layout | v2.3 | 0/2 | Not started | - |
