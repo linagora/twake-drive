@@ -52,8 +52,10 @@ const AddEncryptedFolderItem = ({
 const mapDispatchToProps = dispatch => ({
   // An encrypted folder triggers a new encryption key generation
   addEncryptedFolder: () => {
-    dispatch(encryptedFolder())
-    dispatch(showNewFolderInput())
+    setTimeout(() => {
+      dispatch(encryptedFolder())
+      dispatch(showNewFolderInput())
+    }, 0)
   }
 })
 
