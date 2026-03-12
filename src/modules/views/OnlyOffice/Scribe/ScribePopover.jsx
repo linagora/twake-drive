@@ -1,13 +1,13 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react'
 import PropTypes from 'prop-types'
 
-import Popover from 'cozy-ui/transpiled/react/Popover'
 import Paper from 'cozy-ui/transpiled/react/Paper'
 import Spinner from 'cozy-ui/transpiled/react/Spinner'
 import Typography from 'cozy-ui/transpiled/react/Typography'
 import { useI18n } from 'twake-i18n'
 import { useClient } from 'cozy-client'
 
+import { ScribeContainer } from '@/modules/views/OnlyOffice/Scribe/ScribeContainer'
 import { ScribeActionMenu } from '@/modules/views/OnlyOffice/Scribe/ScribeActionMenu'
 import { callScribeAI, buildMessages, deriveLoadingMessage, classifyScribeError } from '@/modules/views/OnlyOffice/Scribe/scribeAI'
 import { htmlToMarkdown, normalizeHtml } from '@/modules/views/OnlyOffice/Scribe/scribeConversion'
@@ -169,15 +169,15 @@ const ScribePopover = ({ open, selectedText, selectedHtml, onReplace, onInsert, 
   const devMode = isScribeDevMd()
 
   return (
-    <Popover
+    <ScribeContainer
       open={open}
+      onClose={handleClose}
       TransitionProps={{ onEntered: handleEntered }}
       disableAutoFocus
       disableEnforceFocus
       anchorReference="anchorPosition"
       anchorPosition={{ top: (typeof window !== 'undefined' ? window.innerHeight / 2 : 400) + dragOffset.y, left: (typeof window !== 'undefined' ? window.innerWidth / 2 : 500) + dragOffset.x }}
       transformOrigin={{ vertical: 'center', horizontal: 'center' }}
-      onClose={handleClose}
       BackdropProps={{ style: { backgroundColor: 'rgba(0, 0, 0, 0.5)' } }}
       PaperProps={{
         style: {
@@ -217,7 +217,7 @@ const ScribePopover = ({ open, selectedText, selectedHtml, onReplace, onInsert, 
           onResize={setPanelSize}
         />
       )}
-    </Popover>
+    </ScribeContainer>
   )
 }
 
