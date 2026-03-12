@@ -42,7 +42,10 @@ const AddFolderItem = ({ addFolder, onClick, isReadOnly }) => {
 }
 
 const mapDispatchToProps = dispatch => ({
-  addFolder: () => dispatch(showNewFolderInput())
+  addFolder: () =>
+    setTimeout(() => {
+      dispatch(showNewFolderInput())
+    }, 0)
 })
 
 export default connect(null, mapDispatchToProps)(AddFolderItem)
