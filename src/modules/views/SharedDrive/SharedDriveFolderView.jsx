@@ -98,7 +98,6 @@ const SharedDriveFolderView = () => {
     popModal,
     refresh
   })
-
   const actionsOptions = useMemo(
     () => ({
       client,
@@ -111,7 +110,7 @@ const SharedDriveFolderView = () => {
       hasWriteAccess: canWriteToCurrentFolder,
       byDocId,
       dispatch,
-      canMove: true,
+      canMove: canWriteToCurrentFolder,
       navigate,
       showAlert,
       pushModal,

@@ -54,7 +54,7 @@ const SharedDriveFolderBody = ({
     hasWriteAccess: canWriteToCurrentFolder,
     byDocId,
     dispatch,
-    canMove: true,
+    canMove: canWriteToCurrentFolder,
     navigate,
     showAlert,
     pushModal,
