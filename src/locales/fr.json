@@ -730,6 +730,9 @@
     }
   },
   "Scribe": {
+    "panel": {
+      "tagline": "Votre assistant d'ecriture"
+    },
     "menu": {
       "correct_grammar": "Corriger la grammaire",
       "translate": "Traduire",
