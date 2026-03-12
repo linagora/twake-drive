@@ -1,219 +1,181 @@
-# Feature Landscape: v2.1 Rich Text Formatting Preservation
+# Feature Landscape: v2.3 Responsive Drawer Menu
 
-**Domain:** Rich text formatting preservation for AI writing assistant (Scribe) in OnlyOffice / Cozy Drive
-**Researched:** 2026-03-06
-**Milestone context:** v2.1 -- preserving and restoring rich text formatting through the Scribe AI cycle (extraction, Markdown conversion, LLM processing, preview, reinsertion)
-**Confidence:** MEDIUM-HIGH -- OO APIs (GetSelectedContent, PasteHtml) are documented and proven by official plugins; conversion libraries (Turndown, marked, react-markdown) are mature and battle-tested; the integration between them in this specific plugin context needs validation.
-
----
-
-## Existing v2.0 Foundation (Already Shipped)
-
-These features are built and working. v2.1 builds directly on top of them.
-
-| Feature | Status | Location |
-|---------|--------|----------|
-| Plain text extraction via `GetSelectedText` | Shipped | `plugins/onlyoffice-scribe/scripts/code.js` |
-| Plain text insertion via `PasteText` | Shipped | `code.js` handleIntentResponse |
-| Insert-after via `InsertContent` (callCommand) | Shipped | `code.js` insertAfterWithText |
-| Action menu, submenus, free prompt | Shipped | `ScribeActionMenu.jsx`, `scribeActions.js` |
-| Result preview panel (Insert/Replace/Cancel) | Shipped | `ScribeResultPanel.jsx` -- plain text display |
-| LLM integration via cozy-stack (non-streaming) | Shipped | `scribeAI.js` |
-| Error handling with retry, i18n (5 locales) | Shipped | `ScribePopover.jsx`, `ScribeResultPanel.jsx` |
-| Floating button, Ctrl+I, context menu, toolbar | Shipped | `ScribeFloatingButton.jsx`, `code.js` |
+**Domain:** Responsive mobile navigation — drawer with push navigation for AI writing assistant
+**Milestone:** v2.3 — replacing Popover-based menu with a drawer that works on mobile
+**Researched:** 2026-03-12
+**Confidence:** HIGH — drawer patterns are well-established; cozy-ui Drawer and useBreakpoints are confirmed present in the codebase; behavior expectations come from Material Design standards and real React implementations.
 
 ---
 
-## Pipeline Overview
+## Existing Foundation (Already Shipped, Must Not Break)
 
-The rich text milestone introduces a 5-stage pipeline:
+These components are working on desktop and must continue to function after v2.3.
 
-```
-[1] Extraction  -->  [2] Rich-to-MD  -->  [3] LLM  -->  [4] MD Preview  -->  [5] MD-to-Rich Reinsertion
-    (OO API)         (Turndown)        (existing)     (react-markdown)      (marked + PasteHtml)
-```
-
-Stages 1 and 5 interact with the OO Plugin API (highest risk -- ES5 constrained, cross-iframe). Stages 2 and 5 are pure conversion (lowest risk, well-established libraries). Stage 4 is React UI rendering. Stage 3 (LLM call) already exists and needs no change -- LLMs handle Markdown natively and produce better-structured output when given Markdown input.
+| Component | Status | Notes |
+|-----------|--------|-------|
+| `ScribePopover` — centered Popover with backdrop | Shipped | Wraps `ScribeActionMenu` + `ScribeResultPanel` |
+| `ScribeActionMenu` — list + absolute-positioned submenus on hover/click/keyboard | Shipped | 500px prompt input, hover gating, full keyboard nav |
+| `ScribeResultPanel` — draggable/resizable result panel | Shipped | Drag on header/background, resize grip |
+| `ScribeFloatingButton` — portal-rendered bottom-right button | Shipped | z-index 100000, portal on document.body |
+| `useBreakpoints` from `cozy-ui/transpiled/react/providers/Breakpoints` | Available | `isMobile` = width ≤ 768px |
+| `Drawer` from `cozy-ui/transpiled/react` (passes through to MUI) | Available | `temporary` variant for mobile overlay |
 
 ---
 
 ## Table Stakes
 
-Features users expect. Missing any of these means the formatting milestone is incomplete.
+Features that must be present for the responsive milestone to be considered complete. Missing any of these means the mobile experience is broken or the desktop regression has occurred.
 
-| # | Feature | Category | Why Expected | Complexity | Dependencies | Notes |
-|---|---------|----------|-------------|------------|--------------|-------|
-| 1 | **Extract selected text with HTML formatting** | Extraction | Without formatted extraction, the entire pipeline has no structured input. The current `GetSelectedText` strips all formatting. | Medium | OO Plugin API `GetSelectedContent({type:"html"})` returns HTML string of the selection. Proven by the official [OO HTML plugin](https://github.com/ONLYOFFICE/plugin-html). | Must run in plugin ES5 context via `executeMethod`. Returns HTML with `<b>`, `<i>`, `<h1>`-`<h6>`, `<ul>/<ol>/<li>`, `<a>`, `<table>`, `<p>` tags. Config needs `"initDataType": "html"` and `"initOnSelectionChanged": true`. |
-| 2 | **Convert extracted HTML to Markdown** | Conversion | Markdown is the lingua franca for LLMs. Sending structured Markdown input produces better, more structured output than plain text. | Low | [Turndown](https://github.com/mixmark-io/turndown) library (~4.6kB gzip). Runs on the React/Cozy Drive side, not in the ES5 plugin. | One function call: `new TurndownService().turndown(htmlString)`. Handles bold, italic, headings, lists, links, paragraphs out of the box. Custom rules available for OO-specific quirks (e.g., stripping `<img>` data URIs, normalizing OO's span-based formatting). |
-| 3 | **Render LLM response as formatted Markdown in result panel** | Preview | Users must see what the formatted result looks like before accepting. A plain-text dump of Markdown source (`**bold**`, `# heading`) is confusing. | Medium | [react-markdown](https://github.com/remarkjs/react-markdown) + [remark-gfm](https://github.com/remarkjs/remark-gfm) for GFM table/strikethrough support. | Current `ScribeResultPanel` displays `{error \|\| resultText}` in a plain div. Must be replaced with `<ReactMarkdown>{resultText}</ReactMarkdown>`. Needs styling to match Scribe UI theme (Paper background, theme-aware text colors). Safe by default -- no `dangerouslySetInnerHTML`. |
-| 4 | **Convert Markdown response back to HTML** | Conversion | HTML is the required input format for OO reinsertion via `PasteHtml`. | Low | [marked](https://github.com/markedjs/marked) library (~40kB, fast, CommonMark compliant). | Single function call: `marked.parse(markdownString)`. Produces clean HTML. Alternative: use `react-markdown`'s internal pipeline to render to HTML string, but marked is simpler and avoids coupling to React. |
-| 5 | **Reinsert formatted text into OO editor** | Reinsertion | The whole point -- formatted text must appear correctly in the document with bold, italic, headings, lists preserved. | Medium | OO Plugin API `PasteHtml(htmlString)`. Replaces current `PasteText` call. | Proven by official OO HTML plugin and [Get and Paste HTML sample](https://api.onlyoffice.com/docs/plugin-and-macros/samples/plugin-samples/get-and-paste-html/). Official example: `executeMethod("PasteHtml", ["<p><b>Bold</b></p><ul><li>Item</li></ul>"])`. PasteHtml replaces the current selection, which aligns with the "Replace" action. |
-| 6 | **Adapt "Insert After" for HTML content** | Reinsertion | The current `insertAfterWithText` uses `callCommand` with `Api.CreateParagraph().AddText()` which is plain-text only. Must handle HTML/formatted content for the "Insert" action. | Medium | OO Document Builder API inside `callCommand`. | Two approaches: (a) Use `PasteHtml` after moving cursor past selection (complex cursor manipulation), or (b) Use `callCommand` to create paragraphs with formatting via `ApiRun.SetBold()`, `SetItalic()` etc (requires parsing HTML to API calls). Approach (a) is simpler if cursor positioning works reliably. |
-| 7 | **Pass HTML through postMessage protocol** | Protocol | HTML strings must flow from plugin (ES5) through postMessage to React (Cozy Drive frame) and back. | Low | Existing `castIntent` / `handleIntentResponse` protocol. | HTML is just a string -- postMessage handles it. The `data.text` field in the intent protocol currently carries plain text; it will carry HTML. No protocol changes needed, just larger payloads. Must ensure no HTML size limits in postMessage (there are none in practice). |
-| 8 | **Bold and italic round-trip** | Pipeline integrity | The most common formatting. Users will immediately notice if bold/italic is lost. | Low | All pipeline stages. | `<strong>`/`<b>` maps to `**text**` (Turndown) and back to `<strong>` (marked). `<em>`/`<i>` maps to `*text*` and back. Clean bidirectional mapping. |
-| 9 | **Heading round-trip** | Pipeline integrity | Users with heading-structured text expect headings to survive the AI cycle. | Low | All pipeline stages. | `<h1>`-`<h6>` maps to `#`-`######` (Turndown) and back (marked). PasteHtml supports heading tags. Clean mapping. |
-| 10 | **List round-trip (bulleted and numbered)** | Pipeline integrity | Lists are among the most common formatting structures. The "Improve > Bullets" action explicitly creates lists. | Low-Medium | All pipeline stages. | `<ul>/<ol>/<li>` maps to `- item` / `1. item` (Turndown). Nested lists need attention -- depth > 2 can produce surprising Markdown indentation. PasteHtml supports list tags. |
-| 11 | **Paragraph structure preservation** | Pipeline integrity | Multi-paragraph selections must maintain paragraph breaks through the cycle. | Low | All pipeline stages. | `<p>` tags map to `\n\n` in Markdown and back. Natural mapping at every stage. |
+| # | Feature | Why Expected | Complexity | Dependencies | Notes |
+|---|---------|--------------|------------|--------------|-------|
+| 1 | **Drawer opens full-width on mobile** | On narrow screens the existing centered Popover clips or overflows. A full-width bottom-anchored or left-anchored drawer is the standard mobile pattern. | LOW | `useBreakpoints().isMobile`, `Drawer` with `anchor="bottom"` or `anchor="left"`, `variant="temporary"` | Full-width (100vw) or full-height is the correct treatment. Bottom-anchor is most thumb-friendly on phones. |
+| 2 | **Drawer slides in with standard animation** | All established mobile UI (iOS, Android, MUI) slides drawers in. Instant appearance feels broken. | LOW | MUI Drawer transitions are built-in | No custom animation code needed — MUI `temporary` variant handles slide + backdrop. |
+| 3 | **Backdrop closes drawer on tap outside** | Standard modal dismissal behavior. Tapping outside the drawer must close it. | LOW | MUI Drawer `onClose` prop | Already how `ScribePopover` works with Popover `onClose`. Reuse `handleClose`. |
+| 4 | **Submenus replace main list via push navigation** | On mobile, absolute-positioned side-fly submenus are unusable (no hover, no screen width). The standard mobile pattern is push: tapping a parent item replaces the list in place with the submenu content, with a back affordance. | MEDIUM | New navigation state `{ view: 'root' \| 'submenu', activeAction }` in `ScribeActionMenu` or in `ScribePopover` | This replaces the `activeSubmenu` hover-flyout pattern only in mobile mode. Desktop behavior unchanged. |
+| 5 | **Back button / back header in submenu view** | Without a back affordance the user is stuck in the submenu. Standard pattern: a header row with a left-arrow icon + parent label, tapping it returns to the root list. | LOW | Left arrow icon from cozy-ui, click handler resetting navigation state | Should visually match the submenu title (e.g. "Translate", "Change Tone") with back arrow prepended. |
+| 6 | **Prompt input fills drawer width** | The current 500px fixed-width prompt input is narrower than a 390px phone screen. It must adapt to the drawer width. | LOW | Remove `width: 500` from `ScribePromptInput`'s Paper wrapper, replace with `width: '100%'` | Already `fullWidth` on the InputBase; only the Paper wrapper is constrained. |
+| 7 | **Desktop behavior unchanged** | The popover + flyout submenu must work exactly as before for `!isMobile`. | LOW | Conditional rendering based on `isMobile` | Keep both paths in code. Desktop = Popover + ScribeActionMenu as-is. Mobile = Drawer + push-nav variant. |
+| 8 | **Loading and result steps display in drawer on mobile** | The three-step state machine (menu → loading → result) must all render inside the drawer on mobile, not in a floating panel. | MEDIUM | `ScribeResultPanel` inside Drawer must not use drag/resize (no space, no pointer constraints on mobile) | Result panel inside a full-screen drawer is static. Disable drag + resize on mobile. |
 
 ---
 
 ## Differentiators
 
-Features that add polish. Not strictly required for a working pipeline but significantly improve perceived quality.
+Features that go beyond the minimum but are low-cost and meaningfully improve the mobile experience.
 
-| # | Feature | Category | Value Proposition | Complexity | Dependencies | Notes |
-|---|---------|----------|-------------------|------------|--------------|-------|
-| D1 | **Table formatting round-trip** | Pipeline integrity | Tables in documents should survive the AI cycle. Not all users have tables, but those who do will immediately notice breakage. | Medium | [turndown-plugin-gfm](https://github.com/mixmark-io/turndown-plugin-gfm) for HTML-to-MD table conversion. [remark-gfm](https://github.com/remarkjs/remark-gfm) for preview rendering. marked supports GFM tables natively. | GFM pipe table syntax (`\| col \| col \|`). Turndown needs the GFM plugin explicitly for tables. OO PasteHtml supports `<table>`. |
-| D2 | **Link preservation** | Pipeline integrity | Hyperlinks in text should survive and remain clickable in the document. | Low | All pipeline stages. | `<a href="url">text</a>` maps to `[text](url)` cleanly. Low effort, high perceived quality. |
-| D3 | **Code block/inline code round-trip** | Pipeline integrity | Users with code snippets in documents expect preservation. | Low | All pipeline stages. | `<code>` maps to backticks. `<pre><code>` maps to fenced code blocks. Standard Markdown. |
-| D4 | **Graceful fallback to plain text** | Resilience | If `GetSelectedContent` fails (unsupported OO version, edge case), fall back silently to `GetSelectedText`. | Low | Error handling in plugin code. | The current plain-text pipeline should remain as fallback. Try HTML extraction first; on error, use plain text. The rest of the pipeline handles plain text already. |
-| D5 | **Copy raw Markdown to clipboard** | Preview UX | Power users may want the raw Markdown for use elsewhere (notes, emails, other editors). | Low | `navigator.clipboard.writeText()` | Small icon button in result panel header. Trivial to implement. |
-| D6 | **Styled Markdown preview matching Scribe theme** | Preview UX | The rendered Markdown must use the Scribe UI's colors, fonts, and spacing -- not default browser styling. | Medium | CSS/styled-components for react-markdown custom components. | react-markdown accepts a `components` prop to override default HTML elements with custom styled React components. Must use MUI `theme.palette` tokens for dark/light mode. |
-| D7 | **Strip unsupported elements before conversion** | Resilience | OO may include `<img>` tags (with data URIs), `<svg>`, `<math>`, or proprietary spans in the extracted HTML. These should be cleaned before Markdown conversion. | Low | HTML sanitization before Turndown. | Use Turndown's `remove` rules to strip `<img>`, `<svg>`, `<math>`. Or use a lightweight DOM parser (DOMParser available in browser) to strip before passing to Turndown. |
+| # | Feature | Value Proposition | Complexity | Notes |
+|---|---------|-------------------|------------|-------|
+| D1 | **Smooth push animation on submenu transition** | A CSS `translateX` slide-in/out between root and submenu views makes the push navigation feel native rather than an abrupt list swap. | LOW-MEDIUM | CSS transition on a container div. State: `sliding` flag during transition. The list container slides left when entering a submenu, slides right when going back. Two divs (root list + submenu list) with `translateX(0)` / `translateX(-100%)`. | Not required, but standard in iOS-style drawers. |
+| D2 | **Drawer header with action title when loading/result** | The Scribe icon + "Scribe" label in a drawer header gives context on all three steps (menu/loading/result), especially on mobile where the full page isn't visible. | LOW | Static header row inside the Drawer above the step content. Close button (X) in header right corner. | Replaces the current Popover backdrop + no-header treatment. |
+| D3 | **Touch-swipe to close drawer** | On mobile, swipe-down (bottom drawer) or swipe-left (left drawer) to dismiss is ergonomic. | MEDIUM | MUI `SwipeableDrawer` instead of `Drawer`. Already available as `cozy-ui/transpiled/react/SwipeableDrawer`. | SwipeableDrawer has performance cost on iOS (needs `disableBackdropTransition` + `disableDiscovery` on iOS to avoid jank). Only worth it if bottom-anchor is chosen. |
 
 ---
 
 ## Anti-Features
 
-Features to explicitly NOT build for this milestone.
+Features that seem like improvements but should be explicitly avoided for this milestone.
 
 | Anti-Feature | Why Avoid | What to Do Instead |
 |--------------|-----------|-------------------|
-| **Editable Markdown editor in result panel** | Adding a full Markdown editor (MDXEditor, CodeMirror, textarea+preview) to the result panel introduces major complexity: controlled state management, cursor handling, re-rendering on every keystroke, two-panel layout. The result panel is a preview/decision UI, not an editing environment. | Keep the result panel read-only with rendered Markdown. Users accept or reject. If they want to tweak, they Replace into OO and edit there. Revisit in v2.2+ if user feedback demands it. |
-| **Custom font/color/size preservation** | Markdown has no concept of font families, sizes, or colors. Attempting to preserve these through `<span style="...">` tags would require a parallel HTML pipeline bypassing Markdown entirely, defeating the purpose of the Markdown-based architecture. | Preserve structural formatting only (bold, italic, headings, lists, links, tables, code). Document this limitation. Font/color applied by the document's styles will be reapplied by OO based on the document's style definitions. |
-| **Image extraction/reinsertion** | Images in OO are embedded objects with internal references or base64 data URIs. They cannot survive the LLM round-trip (LLMs cannot process images in a text completion context). Including them inflates the HTML payload and confuses Turndown. | Strip `<img>` tags from extracted HTML before conversion. If the selection contains only images, fall back to plain text with a user-facing message. |
-| **Track changes / revision marks** | OO track changes are a separate document layer with accept/reject semantics. Mixing AI replacement with tracked changes creates confusing revision history and potential data corruption. | Apply AI changes as final content, not tracked changes. The user's explicit Replace/Insert action is the approval mechanism. |
-| **Streaming Markdown rendering** | Rendering partial Markdown as it streams produces flickering, broken formatting (incomplete `**bold**` markers, half-built tables). The current non-streaming LLM integration avoids this problem entirely. | Keep non-streaming for v2.1. The Markdown is rendered only after the full LLM response is received. Streaming Markdown rendering (with token buffering) is a v3.0 concern. |
-| **Math/equation preservation** | LaTeX/MathML equations require specialized Markdown extensions (KaTeX, MathJax) and add significant complexity for a niche use case. | Strip or pass through as plain text. Flag as known limitation. |
-| **Merge original + LLM formatting** | Attempting to keep the original document's formatting (e.g., specific fonts, spacing) while applying the LLM's structural changes (new headings, reordered lists) is an unsolved diffing problem. | The LLM's Markdown output defines the formatting. On "Replace", original formatting is replaced entirely. On "Insert After", the new content uses the document's default styles. |
-| **Diff view between original and result** | Showing a word-level diff between original and AI-transformed text with formatting is visually complex and computationally expensive. Better suited for a future milestone. | Show the full rendered result. Users compare visually with the document behind the Scribe panel. Defer diff view to v2.2+. |
+| **Redesigning the desktop menu** | The desktop menu (Popover + flyout submenus) is working well with hover gating, keyboard nav, and all focus management. Touching it to "unify" with the mobile path risks regressions across all the v2.2 work (hover gating, focus order, drag/resize). | Keep desktop path 100% intact. `isMobile` branches cleanly at the `ScribePopover` level. |
+| **Animated transitions in desktop mode** | The desktop popover has no animation today, and users aren't expecting slide animations in a Popover context. Adding them creates complexity without user value. | Animations only in the mobile drawer path. |
+| **Full component rewrite for mobile** | Rewriting `ScribeActionMenu` as a single unified responsive component risks breaking the working desktop implementation. | Create a separate `ScribeDrawer` (or a `ScribeActionMenu` with a `mobile` prop) that renders the push-nav pattern independently. Share only the data (`SCRIBE_ACTIONS`, event handlers) with the desktop menu, not the rendering logic. |
+| **Custom breakpoint logic** | Defining mobile thresholds manually (e.g. `window.innerWidth < 600`) when `cozy-ui` already provides `useBreakpoints().isMobile` (≤768px) creates inconsistency with the rest of Cozy Drive's responsive behavior. | Use `useBreakpoints().isMobile` exclusively. |
+| **Drag and resize in mobile drawer** | The result panel's drag/resize affordances are pointer-device features. On mobile, they are unusable (touch drag conflicts with scroll, resize grip is too small). Enabling them on mobile creates confusion. | Disable `onDragMove` and `onResize` (pass null) when `isMobile` is true. Result panel fills its drawer container statically. |
+| **Bottom sheet instead of drawer** | The existing cozy-ui `BottomSheet` component (used by `ActionsMenuWrapper` for mobile) is designed for action sheets with ~3-6 short items. The Scribe menu has 4 top-level items with deep submenus + prompt input. A bottom sheet would need custom height management and scroll. | Use `Drawer` with `anchor="bottom"` (full height, scrollable content) rather than `BottomSheet`. |
 
 ---
 
 ## Feature Dependencies
 
-### Pipeline Data Flow
-
 ```
-Plugin (ES5, OO iframe)                    React (Cozy Drive iframe)
-========================                    ==========================
+useBreakpoints().isMobile
+    └──controls──> drawer vs popover rendering in ScribePopover
 
-GetSelectedContent(html)
-        |
-        v
-  castIntent("AI_TEXT_EDIT",
-    { text: htmlString })
-        |                    postMessage
-        +-------------------------------------->  useCozyBridge receives intent
-                                                        |
-                                                        v
-                                                  Turndown: HTML -> Markdown
-                                                        |
-                                                        v
-                                                  LLM call (existing scribeAI.js)
-                                                  prompt: "...\n\n{markdownText}"
-                                                        |
-                                                        v
-                                                  LLM response (Markdown string)
-                                                        |
-                                                  +-----+-----+
-                                                  |           |
-                                                  v           v
-                                            react-markdown  marked: MD -> HTML
-                                            (preview)       (for reinsertion)
-                                                              |
-                                              respond({       |
-                                                action:"replace",
-                                                data:{ html: htmlString }
-                                              })              |
-                                                  |           |
-        +<--------------------------------------+
-        |                    postMessage
-        v
-  handleIntentResponse
-  executeMethod("PasteHtml", [htmlString])
+Drawer (mobile path)
+    ├──requires──> Push navigation state (view: 'root'|'submenu', activeAction)
+    │                  └──required by──> Back button / header
+    ├──requires──> Prompt input width: '100%' (remove 500px fixed)
+    └──requires──> Result panel static mode (no drag/resize on mobile)
+
+SCRIBE_ACTIONS data structure
+    └──shared by──> Desktop ScribeActionMenu (hover flyout, unchanged)
+                    Mobile push navigation (new rendering)
+
+ScribePopover step machine (menu → loading → result)
+    └──unchanged──> Same logic, different container (Popover vs Drawer)
 ```
 
-### Stage-by-Stage Dependencies
+### Dependency Notes
 
-```
-Feature 1 (GetSelectedContent)  ----required by---->  Feature 2 (Turndown HTML->MD)
-Feature 2 (Turndown)            ----required by---->  LLM call (existing, no change)
-LLM response                    ----required by---->  Feature 3 (react-markdown preview)
-LLM response                    ----required by---->  Feature 4 (marked MD->HTML)
-Feature 4 (marked)              ----required by---->  Feature 5 (PasteHtml reinsertion)
-Feature 5 (PasteHtml)           ----required by---->  Feature 6 (Insert After adaptation)
-Feature 7 (postMessage HTML)    ----required by---->  Features 1 & 5 (data transport)
-
-Features 8-11 (format round-trips) ----validated across---->  All stages
-```
-
-**Key insight:** Features 1, 5, and 6 are the OO integration points (highest risk, ES5 constrained). Features 2 and 4 are pure library calls (lowest risk). Feature 3 is standard React rendering. Feature 7 is trivial (strings through postMessage).
-
-### Protocol Change
-
-The intent protocol currently carries `{ text: "plain string" }`. For rich text, it must carry `{ text: "html string", format: "html" }`. The `format` field enables the fallback: when `format` is absent or `"text"`, the existing plain-text pipeline runs. When `format` is `"html"`, the rich-text pipeline runs.
-
-The response protocol similarly changes: `{ action: "replace", data: { text: "..." } }` becomes `{ action: "replace", data: { html: "..." } }`. The plugin checks for `data.html` first, falls back to `data.text`.
+- **Push navigation requires `isMobile`:** The push-nav state only activates when in drawer mode. Desktop retains the `activeSubmenu` hover flyout state already in `ScribeActionMenu`.
+- **Back button requires push navigation state:** The back affordance is meaningless without a navigation stack. They are built together.
+- **Width fix is independent:** The 500px prompt input fix is a one-line change that benefits mobile. It can be shipped alone but logically belongs with the drawer work.
+- **Result panel static mode depends on `isMobile`:** The drag/resize props are simply not passed when in mobile mode. `ScribeResultPanel` already handles null `onDragMove`/`onResize` gracefully (the features are optional).
 
 ---
 
-## MVP Recommendation
+## MVP Definition
 
-### Phase 1: OO API validation + conversion pipeline (Features 1, 5, 7, 2, 4)
+### Must Have for v2.3 (Table Stakes 1–8)
 
-Build the extraction and reinsertion endpoints first. These are the highest-risk, least-known parts.
+- [ ] **Drawer opens full-width on mobile** (`isMobile`) with standard MUI slide animation and backdrop close
+- [ ] **Push navigation for submenus** — tap parent item, list is replaced in-place by submenu items
+- [ ] **Back button/header in submenu view** — returns to root list
+- [ ] **Prompt input fills drawer width** — remove 500px fixed width on mobile
+- [ ] **All three steps (menu/loading/result) inside the drawer** on mobile
+- [ ] **Result panel static** (no drag/resize) inside the drawer on mobile
+- [ ] **Desktop Popover path completely unchanged**
 
-1. **Feature 1** -- Replace `GetSelectedText` with `GetSelectedContent({type:"html"})` in plugin
-2. **Feature 7** -- Pass HTML string through postMessage (add `format: "html"` field)
-3. **Feature 2** -- Add Turndown on React side: HTML -> Markdown before LLM call
-4. **Feature 4** -- Add marked on React side: Markdown -> HTML after LLM response
-5. **Feature 5** -- Replace `PasteText` with `PasteHtml` in plugin response handler
+### Add After Validation (v2.3.x)
 
-Validate with a simple test: select bold text in OO, run "Correct grammar", verify bold survives in the replaced text.
+- [ ] **Slide push animation (D1)** — CSS translateX transition on list swap — only if initial implementation without animation feels jarring
+- [ ] **Drawer header with title (D2)** — context header on all steps — quick win once drawer is working
 
-### Phase 2: Preview rendering (Feature 3, D4, D6, D7)
+### Future Consideration (v3.0)
 
-6. **Feature 3** -- Replace plain-text div with react-markdown in ScribeResultPanel
-7. **D6** -- Style the rendered Markdown to match Scribe theme
-8. **D4** -- Add fallback to GetSelectedText on extraction failure
-9. **D7** -- Strip images/unsupported elements before Turndown
+- [ ] **SwipeableDrawer (D3)** — swipe-to-close — adds complexity, only warranted if bottom-anchor is chosen and user testing confirms demand
 
-### Phase 3: Format coverage + Insert After (Features 6, 8-11, D1-D3)
+---
 
-10. **Feature 6** -- Adapt insertAfterWithText for HTML content
-11. **Features 8-11** -- Systematic round-trip validation for each format type
-12. **D1** -- Add GFM table support (turndown-plugin-gfm + remark-gfm)
-13. **D2** -- Validate link preservation
-14. **D3** -- Validate code block preservation
+## Feature Prioritization Matrix
 
-### Defer:
+| Feature | User Value | Implementation Cost | Priority |
+|---------|------------|---------------------|----------|
+| Drawer fullscreen on mobile | HIGH | LOW | P1 |
+| Push navigation for submenus | HIGH | MEDIUM | P1 |
+| Back button/header | HIGH | LOW | P1 |
+| Prompt width fix | HIGH | LOW | P1 |
+| Loading/result in drawer | HIGH | LOW | P1 |
+| Static result panel on mobile | MEDIUM | LOW | P1 |
+| Desktop unchanged | HIGH (regression prevention) | LOW (branch only) | P1 |
+| Slide push animation | MEDIUM | LOW-MEDIUM | P2 |
+| Drawer header with title | LOW | LOW | P2 |
+| SwipeableDrawer | LOW | MEDIUM | P3 |
 
-- **Editable Markdown** -- Not needed for v2.1. Preview is sufficient.
-- **Diff view** -- Nice-to-have, not essential. Defer to v2.2+.
-- **Streaming Markdown** -- Requires buffering strategy. Defer to v3.0.
+---
+
+## Push Navigation — Behavior Specification
+
+This pattern is the most novel feature in v2.3. Explicit specification prevents ambiguity during implementation.
+
+### Root view
+- Shows all top-level actions as a list (same as current desktop menu)
+- Actions with children show a right-arrow icon at the end of the row
+- Tapping a leaf action (no children) → triggers `onSelect`, closes drawer
+- Tapping a parent action (has children) → transitions to submenu view for that action
+- Prompt input below the list (full-width)
+
+### Submenu view
+- Header row: left-arrow icon + parent action label (e.g., "← Translate")
+- Body: list of child items for the parent action
+- Translate submenu includes the custom language input item at the bottom
+- Tapping a child action → triggers `onSelect`, closes drawer
+- Tapping the back header → returns to root view
+- Hardware back button (Android) → returns to root view (standard browser history behavior not applicable here; use a keydown listener for `Escape` key on desktop equivalent)
+
+### Transition
+- Minimum: instant list swap (no animation) — acceptable for MVP
+- Enhanced: CSS translateX slide (root slides left, submenu slides in from right; back reverses direction)
+
+### State shape
+```javascript
+// New state in mobile path (separate from desktop activeSubmenu)
+const [mobileView, setMobileView] = useState('root') // 'root' | 'submenu'
+const [mobileSubmenuAction, setMobileSubmenuAction] = useState(null) // action.id
+```
 
 ---
 
 ## Sources
 
-### OnlyOffice API (HIGH confidence)
-- [GetSelectedContent](https://api.onlyoffice.com/docs/plugin-and-macros/interacting-with-editors/text-document-api/Methods/GetSelectedContent/) -- returns HTML string of selection with `{type:"html"}` param
-- [PasteHtml](https://api.onlyoffice.com/docs/plugin-and-macros/interacting-with-editors/text-document-api/Methods/PasteHtml/) -- inserts HTML into document at cursor/selection
-- [Get and Paste HTML sample](https://api.onlyoffice.com/docs/plugin-and-macros/samples/plugin-samples/get-and-paste-html/) -- official plugin sample showing both methods
-- [Official plugin-html (GitHub)](https://github.com/ONLYOFFICE/plugin-html) -- first-party reference implementation proving the HTML extraction/reinsertion pattern
-- [ApiParagraph reference](https://api.onlyoffice.com/docs/office-api/usage-api/text-document-api/ApiParagraph/) -- Document Builder API for callCommand-based formatting
-- [Text Document API plugin methods](https://api.onlyoffice.com/docs/plugin-and-macros/interacting-with-editors/text-document-api/Methods/) -- full method list including GetSelectedContent, PasteHtml
-
-### Conversion Libraries (HIGH confidence)
-- [Turndown (HTML-to-Markdown)](https://github.com/mixmark-io/turndown) -- de facto standard, ~4.6kB gzip, browser + Node, customizable rules
-- [marked (Markdown-to-HTML)](https://github.com/markedjs/marked) -- fast, CommonMark compliant, ~40kB, single function call
-- [react-markdown](https://github.com/remarkjs/react-markdown) -- safe React Markdown renderer, no dangerouslySetInnerHTML, extensible via remark/rehype plugins
-
-### Community Validation (MEDIUM confidence)
-- [OO community: retaining formatting with AI responses](https://community.onlyoffice.com/t/best-practices-for-retaining-formatting-when-pasting-ai-responses-in-onlyoffice/12811) -- confirms PasteHtml as recommended approach for AI content insertion
-- [OO API Updates December 2025](https://www.onlyoffice.com/blog/2025/12/api-updates-december-2025) -- confirms active API development, expanded paragraph/run methods
+- [MUI Drawer documentation](https://mui.com/material-ui/react-drawer/) — variants, anchor, temporary modal behavior — HIGH confidence
+- [Material Design 3 Navigation Drawer guidelines](https://m3.material.io/components/navigation-drawer/guidelines) — standard behavior expectations — HIGH confidence
+- [Mobile Navigation UX Best Practices 2026](https://www.designstudiouiux.com/blog/mobile-navigation-ux/) — push navigation as standard mobile submenu pattern — MEDIUM confidence
+- cozy-ui source (`/node_modules/cozy-ui/transpiled/react/helpers/breakpoints.js`) — `isMobile` = width ≤ 768px — HIGH confidence (confirmed in codebase)
+- cozy-ui source (`ActionsMenuWrapper.js`) — confirms `useBreakpoints` usage pattern and `isMobile` destructuring — HIGH confidence (confirmed in codebase)
+- cozy-ui module index — `Drawer` and `SwipeableDrawer` both present — HIGH confidence (confirmed in codebase)
 
 ---
-*Feature research for: v2.1 Rich Text Formatting Preservation*
-*Researched: 2026-03-06*
+*Feature research for: v2.3 Responsive Drawer Menu*
+*Researched: 2026-03-12*

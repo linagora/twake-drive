@@ -1,226 +1,196 @@
-# Domain Pitfalls
+# Pitfalls Research
 
-**Domain:** Rich text formatting preservation for AI writing assistant in OnlyOffice plugin (Scribe v2.1)
-**Researched:** 2026-03-06
-**Confidence:** MEDIUM-HIGH (OO Plugin API verified via official docs and community discussions; conversion pitfalls from community experience and library analysis; LLM output reliability from broad ecosystem evidence)
+**Domain:** Responsive drawer with push navigation added to existing desktop Popover menu in nested iframe environment (Scribe v2.3)
+**Researched:** 2026-03-12
+**Confidence:** HIGH — based on direct source analysis of existing Scribe code, cozy-ui Drawer/BottomSheet/BreakpointsProvider internals, and MUI Popover/Drawer behavior patterns.
 
 ---
 
 ## Critical Pitfalls
 
-Mistakes that cause rewrites, data loss, or fundamental architecture failures.
+Mistakes that cause rewrites, broken scroll isolation, or fundamental UX failures.
 
 ---
 
-### Pitfall 1: `initDataType: "html"` May Not Work with `type: "background"` Plugins
+### Pitfall 1: `useBreakpoints()` Reports Cozy Drive Iframe Width, Not Device Width — Mobile Drawer Never Triggers
 
 **What goes wrong:**
-The plugin config is changed from `"initDataType": "text"` to `"initDataType": "html"` expecting to receive HTML-formatted selection in `init()`. The plugin continues to receive plain text, or receives nothing, or fails to initialize entirely.
+`useBreakpoints()` returns `{ isMobile: false }` even on a phone or narrow viewport, because it reads `window.innerWidth` of the Cozy Drive iframe — which is the full page width on desktop. The mobile drawer branch (`isMobile && <Drawer>`) never activates.
 
 **Why it happens:**
-The current Scribe plugin is configured as `"type": "background"` -- a headless plugin with no visible UI panel. The `initDataType: "html"` feature is documented primarily in the context of **visual** plugins (the official "Get and Paste HTML" example uses a panel-type plugin with a CodeMirror editor to display the HTML). Background plugins may receive selection data differently than panel/window plugins.
+`BreakpointsProvider` (in `DriveProvider.jsx`) measures the width of the window it runs in: the Cozy Drive iframe. On desktop, Cozy Drive always occupies the full browser window width (1200px+), so `isMobile` is always `false` regardless of the actual device or outer window.
 
-The OO documentation does not explicitly state which `initDataType` values are supported per plugin type. The only confirmed combination from official examples is:
-- `initDataType: "html"` + `type: "window"` or `type: "panel"` (visual plugins)
-- `initDataType: "text"` + `type: "background"` (current Scribe config)
+The `parentBasedIframe` prop exists to relay breakpoints from the parent window down into child iframes, but it relies on a `postMessage` handshake (`UI-breakpoints-needParentBreakpoints`). In the current setup, `BreakpointsProvider` is NOT configured with `parentBasedIframe: true`. The Cozy Drive app sits inside a Cozy Stack iframe, and the OO editor is yet another level deeper — the chain is: Cozy Stack window > Cozy Drive iframe > OO Editor iframe > Plugin iframe. The Scribe components render in Cozy Drive, which already is an iframe.
 
-Changing to `initDataType: "html"` with `type: "background"` is **untested territory** per official docs.
+In practice, this means: on a phone using Cozy Drive web, the Cozy Drive iframe is the full phone screen width (< 768px), so `isMobile` WILL correctly be `true` at that level. This is the intended behavior. However, if the design assumption is that the OO editor fills the screen and Scribe sits inside it, the breakpoint must reflect the OO editor iframe's width, not Cozy Drive's.
 
-**Consequences:**
-- If it silently falls back to plain text: the entire rich text pipeline receives wrong input, all formatting is lost from step 1
-- If `init()` stops being called: the selection detection mechanism breaks entirely (selection polling, SHOW_SCRIBE_BUTTON intent)
-- The failure is silent -- no error thrown, just wrong data type
+**How to avoid:**
+Verify at which DOM level the Scribe components render. `ScribePopover` is mounted in `View.jsx` inside the Cozy Drive iframe — and the breakpoint from `useBreakpoints()` will reflect the Cozy Drive window width. Since Cozy Drive IS the user-facing window on mobile, this is correct and will work. But explicitly test with a real narrow viewport (devtools device emulation at < 768px) before building the drawer branch. Do not assume it works — verify with a console log of `isMobile` at render time.
 
-**Prevention:**
+**Warning signs:**
+- `isMobile` is always `false` regardless of viewport size during testing
+- Drawer never appears even after narrowing the browser window
+- Breakpoint logs show width > 768 when browser is clearly narrow
 
-1. **Test the combination first, before building anything else.** Change `config.json` to `"initDataType": "html"`, restart OO (`./scripts/oo-dev-setup.sh`), select bold text, and log what `init(data)` receives. This is a 10-minute validation that gates the entire feature.
-
-2. **Have a fallback extraction strategy ready.** If `initDataType: "html"` does not work with background plugins:
-   - **Option A**: Switch to a dual-variation config -- one background variation for selection detection (text), one window/panel variation for HTML extraction on demand
-   - **Option B**: Use `callCommand` with the Document Builder API to manually walk the selection and extract formatting via `ApiRun.GetBold()`, `ApiRun.GetItalic()`, etc. inside the OO sandbox
-   - **Option C**: Use `GetSelectedContent` (newer API, availability depends on OO version) if it returns structured data
-
-3. **If using callCommand for extraction**, remember that `callCommand` runs in OO's internal sandbox -- only JSON-serializable data passes through `Asc.scope`. You must serialize the formatted content structure to a JSON object, pass it through `Asc.scope`, then post it via `castIntent`.
-
-**Detection:**
-- `console.log("[Scribe] init() data type:", typeof data, "length:", data.length, "starts with:", data.substring(0, 50))` -- if the data starts with `<` and contains HTML tags, it works; if it is plain text, it does not
-- Check if data contains `<b>`, `<i>`, `<span style=...>` for a selection with known bold/italic text
-
-**Phase to address:** Phase 1, first task -- this is a go/no-go gate for the architecture.
-
-**Confidence:** MEDIUM -- the feature exists in OO, but the specific combination with background plugins is not documented. Must be empirically validated.
+**Phase to address:** Phase 1 (initial drawer scaffold) — add a diagnostic `console.log('[Scribe] isMobile:', isMobile, window.innerWidth)` on first render and verify the breakpoint triggers correctly before building any behavior on top of it.
 
 ---
 
-### Pitfall 2: OO-Generated HTML is Verbose Inline-Style Soup, Not Semantic HTML
+### Pitfall 2: MUI Drawer `document.body` Scroll Lock Fights the OO Editor Iframe
 
 **What goes wrong:**
-The `initDataType: "html"` (or equivalent extraction) returns HTML like:
-```html
-<span style="font-family: 'Times New Roman'; font-size: 12pt; font-weight: bold; color: #000000;">Bold text</span>
-<span style="font-family: 'Times New Roman'; font-size: 12pt; font-style: italic; color: #000000;">italic text</span>
+When `<Drawer open={true}>` renders, MUI applies `overflow: hidden` to `document.body` (the Cozy Drive document body) to prevent background scroll. This removes the scrollbar from Cozy Drive's layout, causing a layout shift (the page jumps right by the scrollbar width, ~15px). More critically, if Cozy Drive has other scrollable elements, they stop scrolling while the drawer is open.
+
+The existing `BottomSheet` component in cozy-ui has the same issue: it explicitly sets `document.body.style.overflow = 'hidden'` and restores it on unmount. MUI Drawer applies `overflow: hidden` on `<body>` via its `Modal` base component.
+
+**Why it happens:**
+MUI Modal/Drawer uses `disableScrollLock={false}` by default — it manages body scroll lock automatically. Since Cozy Drive runs inside an iframe, the "document body" is already not the root scrollable element from the user's perspective. But MUI doesn't know this and applies the lock anyway.
+
+**How to avoid:**
+Pass `ModalProps={{ disableScrollLock: true }}` to the MUI Drawer. This disables the automatic scroll lock. Since the OO editor iframe occupies most of the screen and has its own scroll management, the Cozy Drive body scroll lock is unnecessary anyway.
+
+```jsx
+<Drawer
+  open={open}
+  anchor="bottom"
+  ModalProps={{ disableScrollLock: true }}
+>
 ```
-instead of semantic `<strong>Bold text</strong><em>italic text</em>`. The HTML-to-Markdown converter (Turndown or similar) does not recognize `font-weight: bold` as "bold" and outputs the text without any formatting markers.
 
-**Why it happens:**
-OnlyOffice internally represents text as runs with explicit style properties, not semantic HTML. When it exports to HTML, it serializes those styles as inline CSS on `<span>` elements. This is how word processors work -- they do not think in terms of `<strong>` and `<em>`.
+**Warning signs:**
+- Page content shifts right by ~15px when drawer opens
+- OO editor iframe content appears to "jump"
+- Existing scroll positions reset when drawer opens
 
-The typical HTML output from OO includes:
-- Inline `style` attributes with `font-weight`, `font-style`, `font-size`, `font-family`, `color`
-- `<p>` tags with `style` attributes for paragraph-level formatting (alignment, spacing, indent)
-- `<table>`, `<tr>`, `<td>` with inline styles for cell dimensions, borders, padding
-- No CSS classes, no semantic tags (`<strong>`, `<em>`, `<h1>`-`<h6>`)
-- Headings may appear as `<p style="font-size: 18pt; font-weight: bold;">` rather than `<h2>`
-
-**Consequences:**
-- Markdown conversion produces plain text with no `**bold**` or `*italic*` markers
-- Headings become regular paragraphs
-- Lists may lose their structure (OO may export `<p>` with manual numbering instead of `<ol>/<li>`)
-- The LLM receives plain text, returns plain text, and all original formatting is permanently lost
-
-**Prevention:**
-
-1. **Build a normalizer between OO HTML extraction and Markdown conversion.** This normalizer converts inline styles to semantic HTML before Turndown processes it:
-   ```javascript
-   // Normalize font-weight: bold spans to <strong>
-   // Normalize font-style: italic spans to <em>
-   // Detect heading-like paragraphs by font-size thresholds
-   // Convert manual numbering patterns to <ol>/<li>
-   ```
-
-2. **Configure Turndown with custom rules** that understand inline-style patterns:
-   ```javascript
-   turndownService.addRule('boldSpan', {
-     filter: function(node) {
-       return node.style && node.style.fontWeight === 'bold'
-     },
-     replacement: function(content) {
-       return '**' + content + '**'
-     }
-   })
-   ```
-
-3. **Test with real OO output, not hand-written HTML.** The normalizer must be built against actual OO HTML output, not assumptions about what it looks like. Extract HTML from selections with different formatting and log the exact output.
-
-4. **Expect the OO HTML format to vary between OO versions.** The exact inline-style output is an implementation detail, not a stable API. Pin the OO version in dev and document the HTML patterns for the target version (9.3.0-138).
-
-**Detection:**
-- Extract HTML from a selection with known bold text. If the Markdown output is `Bold text` instead of `**Bold text**`, the normalizer is missing or incomplete.
-- Check for `<span style=` in the extracted HTML -- if present, normalize before converting.
-
-**Phase to address:** Phase 1 (HTML extraction) and Phase 2 (conversion pipeline).
-
-**Confidence:** HIGH -- this is the documented behavior of word processor HTML export across OO, Google Docs, and MS Word.
+**Phase to address:** Phase 1 (drawer scaffold) — add `disableScrollLock` from the start, not as a later fix.
 
 ---
 
-### Pitfall 3: PasteHtml Numbered List Bug (OO Defect #79263)
+### Pitfall 3: Absolute-Positioned Submenu (left: 100%) Breaks Entirely Inside a Drawer
 
 **What goes wrong:**
-After the LLM returns Markdown with numbered lists, the pipeline converts it to HTML (`<ol><li>...</li></ol>`) and uses `PasteHtml` to insert it back into the document. All list items render as "1." -- the automatic numbering is broken.
+The current submenu renders as a `<Paper>` with `position: absolute; left: 100%` relative to its parent menu item. Inside a drawer (which is typically `position: fixed; width: 100vw`), the submenu flies off the right edge of the drawer and is clipped by `overflow: hidden` on the drawer container — becoming invisible or partially visible.
 
 **Why it happens:**
-This is a confirmed OnlyOffice bug (internal defect #79263, reported in the community thread "Best Practices for Retaining Formatting When Pasting AI Responses in OnlyOffice"). When HTML with `<ol><li>` is pasted via the `PasteHtml` API, the numbering resets to 1 for every item.
+The absolute positioning assumes the submenu has enough horizontal space to the right of the parent menu item. On desktop, the Popover has no width constraint and the submenu flows naturally to the right. In a full-screen drawer on mobile:
+- The drawer width is `100vw`
+- The parent menu items are full-width
+- `left: 100%` places the submenu at `100vw` — completely outside the viewport
+- The drawer's `overflow: hidden` (or `overflow: auto`) clips the submenu entirely
 
-**Consequences:**
-- All ordered lists from LLM output display as `1. 1. 1. 1.` instead of `1. 2. 3. 4.`
-- Users see corrupt formatting and lose trust in the feature
-- Manually fixing list numbering after every AI operation defeats the purpose
+This is why the milestone requirement specifies "push navigation" instead of side-by-side submenus: side-by-side is impossible inside a full-screen drawer.
 
-**Prevention:**
+**How to avoid:**
+The drawer and the Popover must use completely different submenu strategies:
+- **Popover (desktop):** keep existing absolute-positioned submenu as-is
+- **Drawer (mobile):** push navigation — clicking a parent item replaces the menu list with the submenu list. A back button navigates up. No `position: absolute` needed.
 
-1. **Check if the bug is fixed in OO 9.3.0-138.** The bug was reported in 2025 -- it may be patched in newer versions. Test with a simple `PasteHtml` call containing `<ol><li>A</li><li>B</li><li>C</li></ol>` and verify numbering.
+Implement as a conditional render at the `ScribeActionMenu` level based on `isMobile`:
+- If `isMobile`: maintain a `currentView` state (`'root'` or `'submenu'`), render only one list at a time, animate between them
+- If not `isMobile`: keep existing absolute submenu rendering unchanged
 
-2. **If the bug persists, use callCommand with Document Builder API for list insertion instead of PasteHtml:**
-   ```javascript
-   // Inside callCommand (ES5, OO sandbox):
-   var doc = Api.GetDocument();
-   var numbering = doc.CreateNumbering("numbered");
-   for (var i = 0; i < items.length; i++) {
-     var p = Api.CreateParagraph();
-     p.SetNumbering(numbering.GetLevel(0));
-     p.AddText(items[i]);
-     content.push(p);
-   }
-   doc.InsertContent(content);
-   ```
+The key is that `ScribeActionMenu` must be refactored to support both modes without breaking the desktop path.
 
-3. **For unordered (bullet) lists, test separately.** The bug may be specific to `<ol>` -- `<ul>` might work fine via PasteHtml.
+**Warning signs:**
+- Submenu is invisible when drawer is open
+- Browser inspector shows submenu element exists in DOM but is positioned outside viewport
+- Clicking a parent item with children does nothing visible on mobile
 
-4. **Hybrid approach:** Use PasteHtml for simple formatting (bold, italic, paragraphs) and callCommand/InsertContent with Document Builder for structural elements (lists, headings, tables) where PasteHtml has known issues.
-
-**Detection:**
-- Paste `<ol><li>First</li><li>Second</li><li>Third</li></ol>` via PasteHtml. If all items show as "1.", the bug exists in your OO version.
-
-**Phase to address:** Phase 1 (validate during initial API exploration). Phase 3 (implement workaround during reinsertion).
-
-**Confidence:** HIGH -- confirmed bug with OO internal tracking number, reported by multiple users.
+**Phase to address:** Phase 1 — this is the core architectural decision. Attempting to reuse the absolute positioning inside a drawer is not recoverable without a rewrite.
 
 ---
 
-### Pitfall 4: LLM Strips or Corrupts Markdown Formatting in Output
+### Pitfall 4: `width: 500px` Hardcoded on Prompt Input Overflows the Drawer
 
 **What goes wrong:**
-The pipeline sends well-formed Markdown to the LLM (e.g., `**bold text** and *italic text*`). The LLM returns text where formatting markers are inconsistent, missing, or broken: unbalanced asterisks, escaped backticks, heading levels changed, list indentation destroyed.
+`ScribeActionMenu` renders the prompt input `<Paper>` with `width: 500`. On mobile (320-768px viewport), this causes horizontal overflow inside the drawer, creating a horizontal scrollbar or causing the prompt input to be partially cut off.
 
 **Why it happens:**
-LLMs predict tokens one at a time without enforcing structural validity. They were not trained to preserve Markdown syntax -- they were trained to produce likely token sequences. Specific failure modes:
+The 500px width was chosen to match a desktop Popover context where the menu floats freely in a 1200px+ viewport. The Popover has `overflow: visible`, so the 500px prompt input extends beyond the menu card without issues. Inside a drawer with `overflow: hidden`, a 500px element on a 375px iPhone screen overflows the container.
 
-1. **Unbalanced markers**: `**bold text*` (opened with `**`, closed with single `*`)
-2. **Marker stripping**: LLM "simplifies" the text and drops `**` markers entirely, returning plain text
-3. **Heading level drift**: Input has `## Section`, output has `### Section` or `# Section`
-4. **List format changes**: Input uses `- item`, output uses `* item` or `1. item`
-5. **Code block corruption**: Backtick fences inside the response create nested/broken code blocks
-6. **Escaping**: LLM adds backslashes before `*`, `_`, `#` characters, producing `\*\*not bold\*\*`
-7. **Added formatting**: LLM adds Markdown formatting that was not in the input (adds `##` headings, wraps things in code blocks, adds bullet points to prose)
+**How to avoid:**
+Make the prompt input width responsive. Inside a drawer context, it should be `width: '100%'` (filling the drawer). The desktop Popover can keep the fixed `500px` width.
 
-**Why it matters for Scribe specifically:**
-The current system prompt says: "Return only the transformed text, no explanations or commentary." This works for plain text. But for Markdown-formatted input, the LLM needs different instructions. If told "preserve formatting," it may interpret this literally and add formatting. If not told about formatting, it strips markers as "noise."
+Pass a `fullWidth` prop or `variant="drawer"` prop to `ScribeActionMenu` to toggle between fixed and fluid widths:
+```jsx
+// In ScribeActionMenu:
+<Paper style={{ width: isMobile ? '100%' : 500, ... }}>
+```
 
-**Consequences:**
-- Bold text becomes plain text after a "fix grammar" operation
-- The user sees formatting loss even though the pipeline supports formatting
-- Round-trip fidelity degrades with each AI operation (ratcheting formatting loss)
+Or use `useBreakpoints()` directly inside `ScribeActionMenu` to set the width. Since `ScribeActionMenu` is always rendered inside a component that already uses `useBreakpoints()`, the context is available.
 
-**Prevention:**
+**Warning signs:**
+- Horizontal scrollbar appears in drawer on mobile
+- Prompt input is cut off at the right edge of the drawer
+- Inspector shows `overflow-x: scroll` on the drawer container
 
-1. **Add explicit formatting instructions to the system prompt:**
-   ```
-   The input text uses Markdown formatting (bold, italic, headings, lists).
-   Preserve all Markdown formatting markers exactly as they appear in the input.
-   Do not add new formatting markers that were not in the original text.
-   Do not change heading levels.
-   Do not escape Markdown syntax characters.
-   Return only the transformed text with original formatting preserved.
-   ```
+**Phase to address:** Phase 2 (prompt input adaptation) — straightforward fix, but must be done before testing on real mobile dimensions.
 
-2. **Validate Markdown output before rendering/reinsertion.** Run the LLM output through a Markdown parser and check:
-   - All bold markers (`**`) are balanced (even count per line)
-   - All italic markers (`*`) are balanced
-   - Heading levels match input heading levels
-   - No escaped formatting characters (`\*`, `\_`)
+---
 
-3. **Post-process common LLM formatting mistakes:**
-   ```javascript
-   // Fix escaped markers
-   output = output.replace(/\\\*/g, '*')
-   output = output.replace(/\\_/g, '_')
-   // Fix unbalanced bold (odd number of ** on a line)
-   // This is heuristic and imperfect
-   ```
+### Pitfall 5: Focus Management Breaks When Transitioning Between Drawer and Popover Modes
 
-4. **For actions that restructure text (bullets, expand, shorten), accept formatting changes.** Only enforce formatting preservation for actions that should not change structure (grammar, tone, translate).
+**What goes wrong:**
+The existing keyboard navigation system in `ScribeActionMenu` uses a custom focus management model: `tabIndex={-1}` on a `<Paper>`, `imperativeHandle` exposing `focus()`, and keyboard events captured at the Paper level. When the menu is inside a Drawer, MUI Drawer has its own focus trap (`enforceFocus`). The two focus management systems conflict: MUI tries to trap focus inside the drawer, while the custom `onKeyDown` handler intercepts arrows/Enter/Escape before MUI can act on them. The Escape key may close the MUI Drawer OR navigate back from a submenu — not both.
 
-5. **Consider using a diff-based approach for grammar/spelling corrections:** Send the text as Markdown, but also tell the LLM to output a minimal diff (or just the corrected text), then apply only the textual changes while preserving the original Markdown structure programmatically.
+**Why it happens:**
+MUI Drawer wraps content in a `Modal` with `enforceFocus` enabled by default. `enforceFocus` calls `focus()` on the first focusable element inside the modal on every interaction. When `ScribeActionMenu` manages focus itself (focusing a `<Paper tabIndex={-1}>`), MUI may override this with its own focus management, causing visible focus loss or the wrong element being focused.
 
-**Detection:**
-- Select bold text, run "Correct Grammar." If the result is no longer bold, formatting was lost.
-- Select a heading, run "Change Tone." If the heading level changes or disappears, the LLM modified structure.
-- Compare input and output Markdown marker counts.
+Additionally, the existing `ScribePopover` uses `disableAutoFocus` and `disableEnforceFocus` to opt out of MUI's focus management. A new `<Drawer>` component requires the same explicit opt-outs.
 
-**Phase to address:** Phase 2 (prompt engineering and output validation). This is an ongoing concern, not a one-time fix.
+**How to avoid:**
+Add `disableEnforceFocus` and `disableAutoFocus` to the Drawer's `ModalProps`, matching the existing Popover configuration:
+```jsx
+<Drawer
+  open={open}
+  ModalProps={{
+    disableScrollLock: true,
+    disableEnforceFocus: true,
+    disableAutoFocus: true,
+  }}
+>
+```
 
-**Confidence:** HIGH -- this is a universally documented LLM behavior problem, not specific to any model.
+For the Escape key conflict: in drawer mode, Escape from the root list should close the drawer; Escape from a submenu should navigate back to the root list. Implement this as a priority check in the keyboard handler:
+```jsx
+case 'Escape':
+  if (isMobile && currentView !== 'root') {
+    setCurrentView('root') // back navigation
+  } else {
+    onClose() // close drawer
+  }
+```
+
+**Warning signs:**
+- Focus visually disappears after clicking a list item in the drawer
+- Tab key moves focus outside the drawer while it is open
+- Escape key closes the drawer when the user intended to navigate back from a submenu
+
+**Phase to address:** Phase 1 (drawer scaffold) — set the correct ModalProps from the start. Phase 2 (push navigation) — address Escape key semantics.
+
+---
+
+### Pitfall 6: Hover Events Trigger on Touch — Mouse-Move Gating is Irrelevant on Mobile but Active `onMouseLeave` Closes Submenu on Tap
+
+**What goes wrong:**
+The existing menu uses `onMouseEnter` and `onMouseLeave` on the wrapping `<div>` around each list item to show/hide the side submenu. On mobile (where hover does not exist but touch events fire synthetic mouse events), tapping a list item fires `onMouseLeave` on the previous item, which calls `setActiveSubmenu(null)` — potentially hiding a submenu that was just navigated into.
+
+More critically, the `mouseMoveEnabledRef` gating (`mouseMoveEnabledRef.current = false` on mount, enabled by `mousemove`) was designed for desktop cursor hovering. On touch devices, there is no physical `mousemove` event from finger movement (though synthetic events may differ by browser). If `mouseMoveEnabledRef` stays `false` forever on mobile, hover-based submenu reveal is completely disabled — which is fine for push navigation, but the code must not also disable click-based submenu navigation.
+
+**How to avoid:**
+In mobile (drawer) mode, bypass all hover-based interaction entirely:
+- Do not attach `onMouseEnter`/`onMouseLeave` handlers when `isMobile`
+- The push navigation approach replaces hover submenus with click-to-navigate — clicks on parent items call `setCurrentView('submenu')`, not `setActiveSubmenu()`
+- The `mouseMoveEnabledRef` gating is desktop-only; in drawer mode, `onClick` is the only interaction mechanism
+
+Since the existing code will still render `onMouseLeave={() => { if (action.children) setActiveSubmenu(null) }}` on every item, passing `isMobile` into `ScribeActionMenu` and conditionally removing these handlers is the safest approach. Do not rely on `mouseMoveEnabledRef.current` being false to suppress them — that is an implementation detail that could change.
+
+**Warning signs:**
+- On mobile (or Chrome DevTools touch emulation), tapping an item with children briefly shows a submenu then immediately hides it
+- `activeSubmenu` state flickers between a value and `null` on touch tap
+- Push navigation state advances and then resets to root on the same tap
+
+**Phase to address:** Phase 2 (push navigation) — when refactoring `ScribeActionMenu` to support drawer mode, remove hover handlers for the mobile branch rather than working around them.
 
 ---
 
@@ -230,431 +200,255 @@ Mistakes that cause significant bugs or rework but do not invalidate the archite
 
 ---
 
-### Pitfall 5: Markdown Round-Trip Lossy for Tables, Merged Cells, and Nested Lists
+### Pitfall 7: Drawer Animation Conflicts with Popover Backdrop — Both Open Simultaneously
 
 **What goes wrong:**
-The user selects a formatted table with merged cells, nested lists inside table cells, or complex multi-level lists. The HTML-to-Markdown conversion loses structural information that cannot be recovered during Markdown-to-HTML conversion for reinsertion.
+During rapid open/close cycling, or if a state update is missed, the Popover backdrop and the Drawer appear at the same time. The user sees two overlapping overlays, two click-to-close targets, and potentially two onClose callbacks firing.
 
 **Why it happens:**
-Standard Markdown (CommonMark) has fundamental limitations:
+The v2.3 change makes `ScribePopover` conditionally render either a `<Popover>` or a `<Drawer>` based on `isMobile`. If the breakpoint changes while either is in the opening/closing animation (e.g., on screen rotation), the `open` prop for one variant is `true` while the other starts mounting. Both MUI components mount with `open={true}` briefly.
 
-| OO Feature | Markdown Support | What's Lost |
-|-----------|-----------------|-------------|
-| Merged cells (rowspan/colspan) | Not supported | Cells un-merge, data duplicates or disappears |
-| Nested lists in tables | Requires HTML within Markdown | Most parsers reject mixed syntax |
-| Table cell alignment | Partial (`:---`, `:---:`) | Vertical alignment, custom widths lost |
-| Colored/highlighted text | Not supported | Color information disappears |
-| Font size variations | Not supported | All text becomes same size |
-| Superscript/subscript | Not standard | Lost unless using HTML fallback |
-| Inline images | Supported (`![](url)`) | Image data may be too large for postMessage |
-| Footnotes | Extension, not standard | Depends on parser configuration |
-
-The conversion is inherently lossy: `rich OO HTML -> Markdown -> LLM -> Markdown -> HTML -> OO` loses more information at each step.
-
-**Consequences:**
-- Tables with merged cells become garbled
-- Document formatting is visibly degraded after AI operation
-- Users with complex documents avoid the feature entirely
-
-**Prevention:**
-
-1. **Define a supported formatting subset and communicate it clearly.** Start with:
-   - Supported: bold, italic, underline, strikethrough, headings (H1-H6), ordered/unordered lists, simple tables (no merged cells), links, code blocks
-   - Unsupported (with graceful degradation): merged cells, colored text, font sizes, images, footnotes
-
-2. **For unsupported formatting, preserve it as pass-through HTML in the Markdown.** Turndown can be configured to leave unrecognized HTML tags as-is:
-   ```javascript
-   turndownService.keep(['span', 'sup', 'sub', 'mark'])
-   ```
-   The LLM will see raw HTML tags in its input, which it may corrupt -- but at least the data is not silently dropped.
-
-3. **Detect complex formatting in the selection and warn the user** before proceeding:
-   ```
-   "This selection contains formatting (tables, colors) that may not be fully preserved. Continue?"
-   ```
-
-4. **Consider a "text-only" fallback mode** for selections with complex formatting -- use the existing plain-text pipeline (current v2.0 behavior) when the formatting is too complex for the rich text pipeline to handle faithfully.
-
-**Detection:**
-- Select a table with merged cells, run any action, check if the table structure is preserved
-- Select nested lists (3+ levels deep), check if nesting is maintained after round-trip
-
-**Phase to address:** Phase 2 (conversion pipeline design -- define the supported subset). Phase 3 (graceful degradation for unsupported features).
-
-**Confidence:** HIGH -- these are inherent Markdown format limitations, well-documented.
-
----
-
-### Pitfall 6: `callCommand` Sandbox Prevents Library Usage for HTML Extraction
-
-**What goes wrong:**
-The developer tries to use a library (DOMParser, Turndown, marked) inside `callCommand` to extract or convert formatted text. The code crashes with "X is not defined" because `callCommand` runs in OO's isolated JavaScript sandbox, not in the plugin iframe's browser context.
-
-**Why it happens:**
-As documented in the plugin README: "`callCommand` runs in OO's internal JS sandbox, not the plugin's iframe. Only JSON-serializable data passes through `Asc.scope`. No async operations inside `callCommand`."
-
-The sandbox has access to:
-- The Document Builder API (`Api`, `ApiDocument`, `ApiParagraph`, `ApiRun`, etc.)
-- `Asc.scope` for data passing
-- Basic JavaScript builtins
-- **NOT**: `window`, `document`, `DOMParser`, `fetch`, `Promise`, `setTimeout`, external libraries
-
-This means:
-- HTML-to-Markdown conversion must happen in the plugin iframe or in Cozy Drive, not inside callCommand
-- Document Builder API calls for extraction must happen inside callCommand, then pass data out via `Asc.scope`
-- The extraction and conversion are in two different execution contexts with only JSON serialization between them
-
-**Consequences:**
-- Developer wastes time trying to use libraries inside callCommand
-- Extraction logic must be split across two contexts (OO sandbox for API access, plugin iframe for processing)
-- Data serialization through `Asc.scope` adds complexity
-
-**Prevention:**
-
-1. **Split extraction into two steps:**
-   - Step 1 (inside callCommand): Walk the document model, extract a JSON structure representing the formatted content:
-     ```javascript
-     // Inside callCommand (ES5, OO sandbox):
-     var paragraphs = [];
-     // ... walk selection, build JSON structure:
-     // [{ type: "paragraph", runs: [{ text: "Hello", bold: true, italic: false }, ...] }, ...]
-     Asc.scope.extractedContent = JSON.stringify(paragraphs);
-     ```
-   - Step 2 (in plugin iframe): Receive the JSON via `Asc.scope`, convert to Markdown using a library
-
-2. **If using `initDataType: "html"` instead of callCommand extraction**, the HTML arrives directly in `init(data)` in the plugin iframe context, where DOMParser and libraries are available. This is the simpler path -- validate Pitfall 1 first.
-
-3. **If using callCommand for reinsertion**, the Markdown-to-OO conversion (creating ApiParagraph/ApiRun objects with formatting) must happen inside callCommand using the Document Builder API. Pass the structured data (not HTML, not Markdown) through `Asc.scope`:
-   ```javascript
-   // In plugin iframe: convert Markdown to structured JSON
-   Asc.scope.contentToInsert = JSON.stringify([
-     { type: "paragraph", runs: [
-       { text: "Bold ", bold: true },
-       { text: "and normal", bold: false }
-     ]}
-   ]);
-   // In callCommand: create ApiRun objects from JSON
-   ```
-
-**Detection:**
-- `ReferenceError: DOMParser is not defined` inside callCommand
-- `ReferenceError: require is not defined` inside callCommand
-
-**Phase to address:** Phase 1 (architecture decision: which code runs where).
-
-**Confidence:** HIGH -- verified from existing code and README documentation of the callCommand constraint.
-
----
-
-### Pitfall 7: ES5 Constraint Blocks Modern Conversion Libraries in Plugin Iframe
-
-**What goes wrong:**
-The developer adds Turndown (HTML-to-Markdown) or marked/markdown-it (Markdown-to-HTML) to the plugin iframe's `code.js`. The plugin crashes on load because the library uses `const`, `let`, arrow functions, template literals, `class`, or other ES6+ syntax.
-
-**Why it happens:**
-The plugin's `code.js` must use ES5 syntax (documented in README and project memory). The plugin iframe loads the script directly -- there is no build step, no Babel transpilation. The code runs as-is in whatever JavaScript context OO provides for plugin iframes.
-
-Turndown's browser bundle (`turndown.browser.umd.js`) uses ES6 syntax in recent versions (7.x). marked and markdown-it similarly use modern syntax in their current releases.
-
-**Consequences:**
-- Plugin fails to load entirely (syntax error stops all script execution)
-- All Scribe functionality is broken, not just the new formatting feature
-- Debugging is difficult because the error may be swallowed by OO's plugin loader
-
-**Prevention:**
-
-1. **Do NOT run conversion libraries in the plugin iframe.** Run them in the Cozy Drive React context (which has a full Webpack/Babel build pipeline). The plugin extracts HTML and sends it to Cozy Drive via `castIntent`. Cozy Drive does all conversion.
-
-2. **If conversion MUST happen in the plugin iframe** (e.g., for performance or to avoid large postMessage payloads):
-   - Use an older version of the library that targets ES5
-   - Transpile the library with Babel as part of a build step for the plugin
-   - Write a minimal custom converter in ES5 (feasible for the limited formatting subset)
-
-3. **Recommendation: Keep the plugin thin.** The plugin's job is:
-   - Extract content (HTML or structured JSON) from OO
-   - Send it to Cozy Drive via postMessage
-   - Receive converted content back from Cozy Drive
-   - Insert it into OO via PasteHtml or callCommand/InsertContent
-
-   All conversion logic lives in Cozy Drive's React codebase where modern JS and npm libraries are available.
-
-**Detection:**
-- Plugin stops working entirely after adding a library
-- Browser console shows `SyntaxError: Unexpected token 'const'` or similar from the plugin iframe
-- OO's plugin panel shows the plugin as failed/crashed
-
-**Phase to address:** Phase 1 (architecture decision). This is a design constraint, not a bug to fix later.
-
-**Confidence:** HIGH -- verified constraint from existing code and project documentation.
-
----
-
-### Pitfall 8: postMessage Payload Size for Rich HTML Content
-
-**What goes wrong:**
-Large document selections (multi-page, tables, embedded content) produce HTML strings that exceed the cozy-bridge 1MB payload limit. The intent is silently dropped or throws a validation error. The user sees no response from Scribe.
-
-**Why it happens:**
-The cozy-bridge protocol validates payload size:
-```javascript
-if (JSON.stringify(msg.data).length > MAX_DATA_SIZE) {
-  // 1MB limit
-}
+**How to avoid:**
+The conditional rendering should be an either/or at the top level:
+```jsx
+return isMobile
+  ? <Drawer open={open} ...>{menuContent}</Drawer>
+  : <Popover open={open} ...>{menuContent}</Popover>
 ```
 
-OO-generated HTML is verbose -- inline styles on every `<span>` can easily produce 10-50x the character count of the plain text content. A 5,000-character text selection might generate 50,000-250,000 characters of HTML. A selection with tables, multiple formatting runs, and complex structure could approach or exceed 1MB.
+Not:
+```jsx
+<>
+  <Drawer open={open && isMobile} ...>
+  <Popover open={open && !isMobile} ...>
+</>
+```
 
-Additionally, `postMessage` itself uses the structured clone algorithm, which has implementation-dependent limits. While browsers generally handle multi-MB payloads, the serialization/deserialization overhead for very large messages can cause UI jank (the main thread is blocked during structured clone).
+The first form ensures only one is mounted in the DOM at any time. The second form has both mounted and both receiving the `open` prop transition, which can cause animation glitches on breakpoint change.
 
-**Consequences:**
-- Silent failure for large selections (no error shown to user)
-- UI freezes during serialization of large HTML payloads
-- Inconsistent behavior: works for small selections, fails for large ones
+**Warning signs:**
+- Rotating device while menu is open shows a visual flash
+- Two backdrops are visible simultaneously
+- `onClose` fires twice on a single dismiss action
 
-**Prevention:**
-
-1. **Increase the cozy-bridge limit or make it configurable.** 1MB may be too restrictive for HTML payloads. Consider 5MB or 10MB for rich text data, or remove the limit and rely on browser limits.
-
-2. **Compress the HTML or use a compact intermediate format.** Instead of sending raw OO HTML, convert to a compact JSON structure in the plugin:
-   ```javascript
-   // Instead of sending 250KB of HTML:
-   { html: "<span style='font-weight:bold;font-family:...'>" }
-   // Send 5KB of structured data:
-   { runs: [{ text: "Hello", b: true }, { text: " world", b: false }] }
-   ```
-
-3. **Truncate with warning for extremely large selections.** If the selection exceeds a threshold (e.g., 10,000 characters of source text), warn the user and offer to process plain text instead.
-
-4. **Measure actual payload sizes** during development. Log `JSON.stringify(msg.data).length` for various selection sizes and formatting complexity levels.
-
-**Detection:**
-- Select 5+ pages of formatted text, trigger Scribe. If nothing happens, check browser console for cozy-bridge size validation errors.
-- Add logging: `console.log("[Scribe] payload size:", JSON.stringify(data).length)` in `castIntent`
-
-**Phase to address:** Phase 1 (size validation) and Phase 2 (compact format design).
-
-**Confidence:** HIGH -- the 1MB limit is in the existing codebase; HTML verbosity is well-known.
+**Phase to address:** Phase 1 (conditional render structure) — the either/or pattern must be the starting architecture.
 
 ---
 
-### Pitfall 9: Markdown Preview Re-renders Entire Document on Each LLM Token (Streaming)
+### Pitfall 8: Push Navigation History Stack Not Reset on Drawer Close
 
 **What goes wrong:**
-The result panel uses react-markdown to render the LLM's Markdown output. During streaming (if/when streaming is added), each new token triggers a full re-render of the entire Markdown tree. With a 500-word response, the final tokens cause react-markdown to parse and render the full 500-word Markdown document 50+ times per second. The UI freezes, the browser tab becomes unresponsive.
+The user opens the drawer, navigates into a submenu (e.g., Translate > [language submenu visible]), closes the drawer, then reopens it. The drawer reopens showing the submenu level instead of the root menu.
 
 **Why it happens:**
-react-markdown parses the entire input string on every render. It builds a full AST (using remark), transforms it (using rehype), and renders it to React elements. There is no incremental parsing -- even a single new character causes a full re-parse.
+Push navigation requires local state to track the current view (`'root'` or `{ view: 'submenu', parentId: 'translate' }`). If this state is stored as `useState` inside `ScribeActionMenu` and persists across drawer open/close cycles (because the component is not unmounted), the submenu state survives the close.
 
-react-markdown bundle size: ~42.6KB min+gzip (core), ~60KB with rehype-raw. For a writing assistant in an already-heavy OO editor page, this is significant but not prohibitive.
+The existing `activeSubmenu` state has the same characteristic, but on desktop it is reset naturally because the mouse moves away. On mobile with push navigation, there is no equivalent reset trigger.
 
-**Consequences:**
-- UI jank during streaming (browser uses 100% CPU on Markdown parsing)
-- OO editor iframe becomes unresponsive (shares the main thread)
-- Users think the editor is frozen/crashed
+**How to avoid:**
+Reset push navigation state when the drawer closes. The clean solution is to reset state in a `useEffect` on `open`:
+```jsx
+useEffect(() => {
+  if (!open) {
+    setCurrentView('root')
+  }
+}, [open])
+```
 
-**Prevention:**
+The existing pattern in `ScribePopover` already does this for `step`, `result`, and `dragOffset` — follow the same pattern for push navigation state.
 
-1. **For v2.1 (non-streaming), this is less critical.** The full LLM response arrives at once, react-markdown renders once. Performance is fine for responses under ~2000 words.
+**Warning signs:**
+- Opening the drawer after closing it shows the last visited submenu instead of the root
+- Back button is visible when drawer is first opened (should only appear when in submenu)
 
-2. **If/when streaming is added, use the token-batching approach from v2.0 pitfalls research:**
-   - Accumulate tokens in a ref
-   - Flush to state every 100-200ms (not every token)
-   - During streaming, render plain text (not Markdown) for the in-progress content
-   - Only render as Markdown after streaming completes (or after a pause of 500ms+)
-
-3. **Use React.memo on the Markdown renderer component** to prevent re-renders from parent state changes that do not affect the Markdown content.
-
-4. **Consider lighter alternatives to react-markdown:**
-   - `marked` (parse to HTML string) + `dangerouslySetInnerHTML` -- faster but loses React component benefits and requires HTML sanitization
-   - A simple custom renderer for the limited Markdown subset (bold, italic, headings, lists) -- much smaller bundle, much faster parsing
-   - `micromark` -- smaller and faster than remark for simple Markdown
-
-5. **Lazy-load the Markdown renderer.** Use `React.lazy()` + `Suspense` so the Markdown parsing library is not loaded until the user actually triggers Scribe and receives a result.
-
-**Detection:**
-- Open Chrome DevTools Performance tab, trigger a Scribe action with a long response, check for long tasks during rendering
-- Monitor `performance.now()` before and after Markdown render -- if > 16ms, it will cause visible jank
-
-**Phase to address:** Phase 3 (Markdown preview rendering). Less critical for non-streaming v2.1, more critical if streaming is added later.
-
-**Confidence:** MEDIUM -- react-markdown performance is well-documented, but v2.1 is non-streaming so the severity depends on future streaming plans.
+**Phase to address:** Phase 2 (push navigation) — add the reset effect alongside push navigation state implementation.
 
 ---
 
-### Pitfall 10: PasteHtml vs InsertContent: Choosing the Wrong Reinsertion API
+### Pitfall 9: `useBreakpoints()` Not Available Inside `ScribeActionMenu` — Must Thread `isMobile` via Props
 
 **What goes wrong:**
-The developer uses `PasteHtml` for all reinsertion because it accepts HTML strings directly. Some formatting works, some does not. Alternatively, the developer uses `InsertContent` with Document Builder objects for everything, which is verbose and error-prone for complex formatting.
+The developer calls `useBreakpoints()` inside `ScribeActionMenu` to control rendering. It throws: `"Cannot use useBreakpoints without BreakpointsProvider"`.
 
 **Why it happens:**
-OO provides two reinsertion paths, each with tradeoffs:
+`BreakpointsProvider` is mounted in `DriveProvider.jsx` which wraps the entire app. `ScribeActionMenu` is rendered inside `ScribePopover` which is rendered inside `View.jsx`. The provider chain is present. So `useBreakpoints()` should work inside `ScribeActionMenu` — it will NOT throw.
 
-| Aspect | PasteHtml | InsertContent (Document Builder) |
-|--------|-----------|----------------------------------|
-| Input format | HTML string | Array of ApiParagraph objects |
-| Bold/italic | Works (via `<strong>`, `<em>`) | Works (via ApiRun.SetBold()) |
-| Headings | Works (via `<h1>`-`<h6>`) | Works (via ApiParagraph.SetStyle()) |
-| Ordered lists | **BROKEN** (bug #79263) | Works (via CreateNumbering()) |
-| Tables | Mostly works | Complex but reliable |
-| Links | Works (via `<a href>`) | Works (via ApiHyperlink) |
-| Undo support | Single undo step | Single undo step |
-| Code simplicity | Simple (just pass HTML) | Complex (build object tree) |
-| ES5 constraint | N/A (called from plugin iframe) | Must use ES5 inside callCommand |
+However, if tests (unit or Storybook) render `ScribeActionMenu` in isolation without `BreakpointsProvider`, they will throw. The `useBreakpoints` hook throws explicitly (not a graceful fallback) when context is null.
 
-**Consequences:**
-- Using only PasteHtml: ordered lists are broken, some edge cases fail
-- Using only InsertContent: excessive complexity, harder to maintain, more bugs
-- Mixing both without clear rules: inconsistent behavior, harder to debug
+**How to avoid:**
+Two valid approaches:
+1. Call `useBreakpoints()` in `View.jsx` (already done there) and pass `isMobile` as a prop down to `ScribePopover` and then to `ScribeActionMenu`. This keeps the menu component testable in isolation.
+2. Call `useBreakpoints()` directly inside `ScribeActionMenu` but wrap any test renders with `BreakpointsProvider`.
 
-**Prevention:**
+Approach 1 is preferred — it keeps `ScribeActionMenu` a pure component that does not depend on a provider, which is consistent with how it currently receives all other behavioral props.
 
-1. **Use a hybrid approach with clear rules:**
-   - PasteHtml for: paragraphs with inline formatting (bold, italic, underline, links)
-   - InsertContent for: ordered lists, headings with specific styles, tables with complex structure
-   - Decision point: if the HTML contains `<ol>`, route through InsertContent path
+**Warning signs:**
+- Tests for `ScribeActionMenu` throw `"Cannot use useBreakpoints without BreakpointsProvider"`
+- Storybook stories for the menu fail
 
-2. **Validate PasteHtml behavior for each supported formatting type** in your OO version (9.3.0-138) before building the full pipeline. Create a test matrix:
-   - `<strong>` bold
-   - `<em>` italic
-   - `<h1>` through `<h6>` headings
-   - `<ul><li>` unordered lists
-   - `<ol><li>` ordered lists
-   - `<a href>` links
-   - `<table>` simple tables
-
-3. **Wrap the reinsertion in a single function** that chooses the right API based on content analysis:
-   ```javascript
-   function insertFormattedContent(html) {
-     if (hasOrderedLists(html) || hasComplexTables(html)) {
-       return insertViaDocumentBuilder(html)
-     }
-     return insertViaPasteHtml(html)
-   }
-   ```
-
-**Detection:**
-- Build the PasteHtml test matrix in Phase 1. Any cell that fails = needs InsertContent fallback.
-
-**Phase to address:** Phase 1 (API validation), Phase 3 (reinsertion implementation).
-
-**Confidence:** HIGH -- the PasteHtml bug is confirmed; the InsertContent API is documented.
+**Phase to address:** Phase 1 (architecture decision) — decide prop-threading vs. hook at the start. Do not mix both.
 
 ---
 
-## Minor Pitfalls
-
-Issues that cause friction or minor bugs but are easily fixable.
-
----
-
-### Pitfall 11: Turndown Drops Empty Paragraphs and Whitespace
+### Pitfall 10: Keyboard Navigation Bindings Are Inverted for Push Navigation (ArrowRight Opens, ArrowLeft Goes Back)
 
 **What goes wrong:**
-OO HTML contains empty paragraphs (`<p>&nbsp;</p>` or `<p><br/></p>`) used as spacing between sections. Turndown strips these during conversion, collapsing the document's visual structure. After the LLM round-trip, spacing between sections disappears.
+On desktop, `ArrowRight` opens a submenu and `ArrowLeft` closes it. In push navigation (mobile drawer), the user navigates "forward" into a submenu by pressing Enter (or tapping), and "back" by pressing a Back button (or Android hardware back). If the existing keyboard handler still intercepts `ArrowLeft` in push navigation mode and calls `setCurrentView('root')`, it works — but `ArrowRight` from the root list now has nothing to do (there is no floating submenu to open), and pressing it does nothing while the user expects Enter to navigate into the submenu.
 
-**Prevention:**
-- Configure Turndown to preserve blank lines: `turndownService.addRule('blankParagraph', { filter: ... })`
-- Or normalize spacing after conversion: ensure double newlines between paragraphs
-- Test with a document that uses empty paragraphs for spacing (common in business documents)
+**Why it happens:**
+The keyboard handler in `ScribeActionMenu` has two modes: `activeSubmenu` (desktop) and root list. In push navigation mode, `activeSubmenu` is always `null` (the submenu is shown by replacing the whole list, not by floating a `<Paper>`). The keyboard handler's submenu branch therefore never activates. All navigation relies on the root list branch, which does not know about push navigation state.
 
-**Phase to address:** Phase 2 (conversion pipeline).
+**How to avoid:**
+Add a third mode to the keyboard handler for push navigation. When `isMobile && currentView !== 'root'`:
+- `ArrowLeft` or `Escape` → navigate back to root
+- `ArrowUp/Down` → navigate within the submenu items
+- `Enter` → select the focused submenu item
+
+When `isMobile && currentView === 'root'`:
+- `Enter` on an item with children → push to submenu view (same as tap)
+- `ArrowRight` → same as Enter for items with children (optional, for consistency)
+
+Keep the desktop (`!isMobile`) keyboard handler unchanged.
+
+**Warning signs:**
+- Keyboard navigation stops working after refactoring for push navigation
+- Enter key on a parent item with children has no effect on mobile
+- Escape closes the entire drawer instead of navigating back from submenu
+
+**Phase to address:** Phase 2 (push navigation) — keyboard handler is the most complex part of the push navigation implementation.
 
 ---
 
-### Pitfall 12: `dangerouslySetInnerHTML` for Markdown Preview Creates XSS Vector
+### Pitfall 11: Drawer `anchor="bottom"` vs `anchor="left"` — Wrong Anchor Breaks Full-Screen Intent
 
 **What goes wrong:**
-The developer renders LLM Markdown output by converting to HTML with `marked` and inserting via `dangerouslySetInnerHTML`. The LLM output (or a prompt injection attack via the source document) contains `<script>` tags or `onerror` handlers that execute in the Cozy Drive context.
+The milestone specifies "drawer plein écran sur mobile" (fullscreen drawer on mobile). Using `anchor="bottom"` gives a bottom sheet that slides up — not a fullscreen takeover. Using `anchor="left"` gives a side panel that only covers part of the screen. Neither gives true fullscreen by default.
 
-**Prevention:**
-- Use react-markdown (renders via React elements, inherently safe) instead of `dangerouslySetInnerHTML`
-- If using `dangerouslySetInnerHTML`, sanitize with DOMPurify: `DOMPurify.sanitize(html, { ALLOWED_TAGS: ['strong', 'em', 'h1', ...] })`
-- Never trust LLM output as safe HTML
+**Why it happens:**
+MUI Drawer does not have a "fullscreen" option. Fullscreen must be achieved by setting the drawer width/height to 100% via `PaperProps`:
+```jsx
+<Drawer
+  anchor="bottom"
+  PaperProps={{ style: { height: '100%', borderRadius: 0 } }}
+>
+```
+or:
+```jsx
+<Drawer
+  anchor="left"
+  PaperProps={{ style: { width: '100%' } }}
+>
+```
 
-**Phase to address:** Phase 3 (preview rendering). Non-negotiable security requirement.
+Alternatively, cozy-ui's `BottomSheet` component (used by `ActionsMenu` for mobile) is NOT the right choice here — it has drag-to-dismiss, snap points, and complex height management. It is designed for action sheets, not for multi-level navigation menus with text input.
 
----
+**How to avoid:**
+Use MUI Drawer (re-exported as `cozy-ui/transpiled/react/Drawer`) with `anchor="bottom"` and `PaperProps={{ style: { height: '100%' } }}` for the fullscreen experience. Add a header with a title and a close button (X) at the top of the drawer to match cozy-ui design patterns. Do NOT use `BottomSheet` — it will fight against the push navigation content height changes.
 
-### Pitfall 13: Heading Detection Heuristic Produces False Positives
+**Warning signs:**
+- Drawer slides up to 75% screen height and stops (default BottomSheet/Drawer behavior)
+- Drawer has a drag handle at the top (BottomSheet indicator)
+- Content below the drawer is still visible and tappable
 
-**What goes wrong:**
-The HTML normalizer (Pitfall 2 prevention) detects "heading-like" paragraphs by font-size threshold (e.g., font-size > 14pt = heading). A user's document has 14pt body text with 18pt emphasis -- the normalizer incorrectly converts emphasis to headings, which the LLM then treats as section headers.
-
-**Prevention:**
-- Use relative size comparisons (significantly larger than surrounding text), not absolute thresholds
-- Only detect headings that are alone on their paragraph (a paragraph with mixed sizes is not a heading)
-- Consider using OO's internal paragraph styles if accessible via the Document Builder API (`ApiParagraph.GetStyle()`) rather than heuristic font-size analysis
-- Allow users to disable heading detection if it produces false positives
-
-**Phase to address:** Phase 2 (normalizer design).
-
----
-
-### Pitfall 14: Right-to-Left (RTL) Text Direction Lost in Markdown
-
-**What goes wrong:**
-Users with Arabic (`ar`) language locale select RTL text. The HTML contains `dir="rtl"` or `direction: rtl` styles. Markdown has no concept of text direction. After round-trip, the text is inserted as LTR, breaking layout for RTL users.
-
-**Prevention:**
-- Detect RTL direction in the source HTML and preserve it as metadata alongside the Markdown
-- Re-apply direction during reinsertion (set on the paragraph level via Document Builder or as HTML attribute via PasteHtml)
-- Test with Arabic text selection (listed in LANG_NAMES in scribeActions.js)
-
-**Phase to address:** Phase 3 (edge case handling). Lower priority if Arabic users are a small percentage.
+**Phase to address:** Phase 1 (drawer scaffold) — anchor and height are foundational to the drawer UX.
 
 ---
 
-## Phase-Specific Warnings
+## Technical Debt Patterns
 
-| Phase Topic | Likely Pitfall | Mitigation |
-|-------------|---------------|------------|
-| API exploration / go-no-go | `initDataType: "html"` may not work with background plugin (Pitfall 1) | 10-minute test, first task of Phase 1 |
-| API exploration / go-no-go | PasteHtml ordered list bug (Pitfall 3) | Test PasteHtml with `<ol>` in target OO version |
-| HTML extraction | OO HTML is inline-style soup, not semantic (Pitfall 2) | Build normalizer against real OO output |
-| Extraction architecture | callCommand sandbox blocks library usage (Pitfall 6) | Run conversion in Cozy Drive, not plugin |
-| Plugin code | ES5 blocks modern libraries (Pitfall 7) | Keep plugin thin, do conversion in React |
-| postMessage payloads | HTML payloads may exceed 1MB limit (Pitfall 8) | Use compact JSON format, increase limit |
-| Conversion pipeline | Markdown lossy for tables, merged cells (Pitfall 5) | Define supported subset, graceful degradation |
-| LLM prompts | LLM corrupts Markdown structure (Pitfall 4) | Format-aware system prompt, output validation |
-| Reinsertion | PasteHtml vs InsertContent choice (Pitfall 10) | Hybrid approach based on content analysis |
-| Preview rendering | react-markdown size and streaming perf (Pitfall 9) | Lazy load, memo, plain text during stream |
-| Preview rendering | XSS via LLM output (Pitfall 12) | Use react-markdown, not dangerouslySetInnerHTML |
-| Edge cases | RTL text direction, empty paragraphs (Pitfalls 14, 11) | Phase 3 polish |
+| Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
+|----------|-------------------|----------------|-----------------|
+| Duplicate `isMobile` conditional rendering inside `ScribeActionMenu` | Avoids prop threading | Two separate render paths diverge over time, bugs fixed in one not the other | Never — keep a single `isMobile` prop threaded from `View.jsx` |
+| Reuse `activeSubmenu` state for push navigation | No new state variable | Absolute submenu and push nav have different semantics; collisions cause bugs | Never — add a separate `currentView` state for push navigation |
+| BottomSheet for mobile menu | Reuses existing cozy-ui component | Drag gestures, snap points, and height management fight multi-level navigation | Never for this use case |
+| Skip keyboard navigation for mobile | Saves implementation time | Keyboard users (external keyboards on iPad) cannot use the menu | Only acceptable if explicitly out of scope |
+| `width: '100%'` hardcoded for mobile prompt input | Simple fix | No longer accurate if drawer adds horizontal padding | Acceptable if using `flexGrow: 1` or box-model-aware width |
 
 ---
 
-## "Looks Done But Isn't" Checklist for v2.1
+## Integration Gotchas
 
-- [ ] **Bold round-trip**: Select bold text, run "Correct Grammar." Verify the result is still bold after insertion.
-- [ ] **Mixed formatting**: Select a paragraph with bold, italic, and a link. Run "Change Tone." Verify all three formatting types survive.
-- [ ] **Heading preservation**: Select an H2 heading, run "Translate." Verify it is still an H2 after insertion, not a plain paragraph.
-- [ ] **Ordered list**: Select a numbered list (1-5 items). Run any action. Verify numbering is correct (1, 2, 3, 4, 5 -- not 1, 1, 1, 1, 1).
-- [ ] **Table**: Select a simple 3x3 table. Run "Improve." Verify the table structure is preserved.
-- [ ] **Large selection**: Select 3+ pages of formatted text. Verify no postMessage size errors, no UI freeze.
-- [ ] **Plain text fallback**: Select text with no formatting. Verify the feature still works (no regression from v2.0 behavior).
-- [ ] **Preview rendering**: Verify Markdown preview shows bold as bold, headings as headings, lists as lists.
-- [ ] **LLM formatting fidelity**: Run 10 operations on formatted text. Count how many preserve formatting correctly. Target: 8/10 minimum.
-- [ ] **Empty paragraphs**: Select text with blank lines between paragraphs. Verify spacing is preserved after round-trip.
+| Integration | Common Mistake | Correct Approach |
+|-------------|----------------|------------------|
+| MUI Drawer + custom focus management | Letting MUI's `enforceFocus` fight custom `tabIndex={-1}` Paper focus | Add `ModalProps={{ disableEnforceFocus: true, disableAutoFocus: true }}` to Drawer |
+| MUI Drawer + nested iframe | Default scroll lock shifts layout in iframe context | Add `ModalProps={{ disableScrollLock: true }}` to Drawer |
+| `useBreakpoints()` in tests | Hook throws without provider | Thread `isMobile` as a prop OR wrap test renders with `BreakpointsProvider` |
+| Push nav state + drawer open/close | Submenu state persists across close | Reset push nav state via `useEffect` on `open` prop change |
+| Drawer + ScribePopover 3-step state machine | Drawer wraps only the menu step but not loading/result | Keep the `step` state at `ScribePopover` level; only the `menu` step renders the Drawer |
+
+---
+
+## UX Pitfalls
+
+| Pitfall | User Impact | Better Approach |
+|---------|-------------|-----------------|
+| No back button in push navigation | User is trapped in submenu with no way back | Always show a back arrow in the drawer header when `currentView !== 'root'` |
+| Drawer header shows action title but not parent breadcrumb | User loses context of where they are in the menu | Show parent item label (e.g., "Translate") in the drawer header when in submenu |
+| Drawer closes on outside tap without any close button | Power users expect an explicit close affordance | Add an X button in the drawer header AND keep outside-tap-to-close behavior |
+| Prompt input loses submitted text on mobile (auto-clear) | User cannot see what they submitted before result appears | Same behavior as desktop — clear input after submit, breadcrumb shows the submitted text in result step |
+| Drawer animation is slow on low-end Android | Menu feels unresponsive | Test with `transitionDuration={{ enter: 200, exit: 150 }}` on Drawer — reduce from MUI default 225ms/195ms |
+
+---
+
+## "Looks Done But Isn't" Checklist
+
+- [ ] **isMobile trigger**: Open Scribe on a 375px-wide viewport (Chrome DevTools). Verify the drawer appears — NOT the Popover.
+- [ ] **Desktop unaffected**: Open Scribe on a 1200px-wide viewport. Verify the existing Popover with floating submenus still works exactly as before.
+- [ ] **Push navigation state reset**: Navigate into Translate submenu, close the drawer, reopen it. Verify the root menu shows — not the Translate submenu.
+- [ ] **Back button visible only in submenu**: In the root list, no back button is visible. After tapping "Translate", a back arrow appears in the drawer header.
+- [ ] **Prompt input fills drawer width**: On 375px viewport, the prompt input fills the drawer width with no horizontal overflow.
+- [ ] **Submenu on desktop is unchanged**: Hover over "Translate" on desktop, the floating submenu still appears to the right of the menu.
+- [ ] **Escape key semantics**: In submenu view (drawer, mobile), pressing Escape goes back to root. In root view, Escape closes the drawer.
+- [ ] **Scroll lock absent**: Opening the drawer does NOT cause a layout shift in the OO editor or any horizontal jump.
+- [ ] **Focus visible in drawer**: After drawer opens, keyboard focus is visible on the first menu item (or the drawer Paper).
+- [ ] **Free prompt submit works in drawer**: Type a prompt in the drawer, tap the send button. The drawer should close and the loading step should appear.
+
+---
+
+## Recovery Strategies
+
+| Pitfall | Recovery Cost | Recovery Steps |
+|---------|---------------|----------------|
+| Absolute submenu inside drawer (Pitfall 3) | HIGH | Remove absolute submenu render path, implement push navigation — essentially a rewrite of the submenu mechanism |
+| Wrong breakpoint source (Pitfall 1) | MEDIUM | Add diagnostic log, verify breakpoint fires at correct threshold, adjust `BreakpointsProvider` config if needed |
+| MUI focus conflict (Pitfall 5) | LOW | Add `disableEnforceFocus` to Drawer ModalProps — one-line fix |
+| 500px hardcoded width overflow (Pitfall 4) | LOW | Replace `width: 500` with `width: isMobile ? '100%' : 500` |
+| Push nav state not reset on close (Pitfall 8) | LOW | Add `useEffect` with `open` dependency to reset `currentView` |
+| Both Drawer and Popover mounted simultaneously (Pitfall 7) | MEDIUM | Refactor conditional render to either/or pattern, unmount unused variant |
+
+---
+
+## Pitfall-to-Phase Mapping
+
+| Pitfall | Prevention Phase | Verification |
+|---------|------------------|--------------|
+| Breakpoint diagnostic (Pitfall 1) | Phase 1 — drawer scaffold | Console log confirms `isMobile: true` at < 768px |
+| Scroll lock layout shift (Pitfall 2) | Phase 1 — drawer scaffold | Open drawer, verify no horizontal layout jump |
+| Absolute submenu cannot go inside drawer (Pitfall 3) | Phase 1 — architectural decision | Do not attempt to reuse absolute submenu; plan push navigation from day one |
+| 500px prompt input overflow (Pitfall 4) | Phase 2 — prompt input adaptation | Verify no overflow on 375px viewport in devtools |
+| Focus management conflict (Pitfall 5) | Phase 1 — drawer scaffold | Verify keyboard focus visible after drawer opens |
+| Hover handlers break touch interaction (Pitfall 6) | Phase 2 — push navigation | Test tap behavior with devtools touch emulation |
+| Drawer/Popover simultaneous render (Pitfall 7) | Phase 1 — conditional render structure | Use either/or render pattern from the start |
+| Push nav state not reset on close (Pitfall 8) | Phase 2 — push navigation state | Test close + reopen cycle in submenu |
+| `useBreakpoints` in isolation tests (Pitfall 9) | Phase 1 — architecture | Thread `isMobile` as prop, avoid hook in menu component |
+| Keyboard nav for push navigation (Pitfall 10) | Phase 2 — push navigation | Test ArrowDown/Enter/Escape in both root and submenu views on mobile |
+| Wrong Drawer anchor (Pitfall 11) | Phase 1 — drawer scaffold | Verify drawer covers 100% of screen height |
 
 ---
 
 ## Sources
 
-- [OnlyOffice GetSelectedText API](https://api.onlyoffice.com/docs/plugin-and-macros/interacting-with-editors/text-document-api/Methods/GetSelectedText/) -- HIGH confidence (official docs)
-- [OnlyOffice Plugin Configuration (initDataType)](https://api.onlyoffice.com/docs/plugin-and-macros/structure/configuration/) -- HIGH confidence (official docs)
-- [OnlyOffice Get and Paste HTML Plugin Example](https://api.onlyoffice.com/samples/docs/plugin-and-macros/plugin-samples/get-and-paste-html/) -- HIGH confidence (official example)
-- [OnlyOffice Plugin Types](https://api.onlyoffice.com/docs/plugin-and-macros/structure/configuration/types/) -- HIGH confidence (official docs)
-- [OnlyOffice PasteHtml API](https://api.onlyoffice.com/docs/plugin-and-macros/interacting-with-editors/text-document-api/Methods/PasteHtml/) -- HIGH confidence (official docs)
-- [Best Practices for Retaining Formatting When Pasting AI Responses in OnlyOffice](https://community.onlyoffice.com/t/best-practices-for-retaining-formatting-when-pasting-ai-responses-in-onlyoffice/12811) -- HIGH confidence (official community forum, OO team responses, bug #79263 confirmed)
-- [GetSelectedText HTML Format Discussion](https://community.onlyoffice.com/t/getselectedtext-html-format-paste-via-context-menu/8733) -- HIGH confidence (official community, `initDataType: "html"` recommended by OO team)
-- [Turndown HTML-to-Markdown Converter](https://github.com/mixmark-io/turndown) -- HIGH confidence (official repo)
-- [react-markdown Bundle Size](https://bundlephobia.com/package/react-markdown) -- HIGH confidence (official bundlephobia)
-- [react-markdown Performance Discussion](https://github.com/orgs/remarkjs/discussions/1027) -- MEDIUM confidence (community discussion)
-- [Why Can't AI Models Output Clean Markdown?](https://medium.com/@CultmanSachs/why-cant-ai-models-output-clean-markdown-a-technical-mess-that-still-isn-t-fixed-1dc70ff366a3) -- MEDIUM confidence (community analysis)
-- [OnlyOffice Text Extraction Sample](https://api.onlyoffice.com/docs/office-api/samples/text-document-editor/extracting-text-from-document/) -- HIGH confidence (official docs)
-- [OnlyOffice InsertContent API](https://api.onlyoffice.com/docs/office-api/usage-api/text-document-api/ApiDocument/Methods/InsertContent/) -- HIGH confidence (official docs)
-- cozy-drive source: `plugins/onlyoffice-scribe/`, `src/lib/cozy-bridge/protocol.js`, `src/modules/views/OnlyOffice/Scribe/` -- HIGH confidence (direct code analysis)
+- cozy-drive source: `src/modules/views/OnlyOffice/Scribe/ScribeActionMenu.jsx` — direct analysis, HIGH confidence
+- cozy-drive source: `src/modules/views/OnlyOffice/Scribe/ScribePopover.jsx` — direct analysis, HIGH confidence
+- cozy-drive source: `src/lib/DriveProvider.jsx` — BreakpointsProvider setup, HIGH confidence
+- cozy-ui source: `node_modules/cozy-ui/transpiled/react/providers/Breakpoints/index.js` — useBreakpoints, HIGH confidence
+- cozy-ui source: `node_modules/cozy-ui/transpiled/react/providers/Breakpoints/useIframeConnection.js` — iframe postMessage breakpoint protocol, HIGH confidence
+- cozy-ui source: `node_modules/cozy-ui/transpiled/react/helpers/breakpoints.js` — isMobile threshold (0–768px), HIGH confidence
+- cozy-ui source: `node_modules/cozy-ui/transpiled/react/ActionsMenu/ActionsMenuWrapper.js` — cozy-ui's own pattern for isMobile ? BottomSheet : Menu, HIGH confidence
+- cozy-ui source: `node_modules/cozy-ui/transpiled/react/BottomSheet/BottomSheet.js` — `document.body.style.overflow = 'hidden'` scroll lock behavior, HIGH confidence
+- cozy-ui source: `node_modules/cozy-ui/transpiled/react/Drawer/index.js` — re-exports MUI Drawer directly, HIGH confidence
+- MUI Drawer docs — `disableScrollLock`, `ModalProps`, `PaperProps`, `anchor` — MEDIUM confidence (based on MUI v4/v5 knowledge, version used in cozy-ui not explicitly verified)
 
 ---
-*Pitfalls research for: Rich text formatting preservation in Scribe v2.1 (Cozy Drive + OnlyOffice)*
-*Researched: 2026-03-06*
+*Pitfalls research for: Responsive drawer with push navigation in Scribe v2.3 (Cozy Drive + OnlyOffice)*
+*Researched: 2026-03-12*
