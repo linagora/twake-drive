@@ -9,6 +9,8 @@ import Error from '@/modules/views/OnlyOffice/Error'
 import OnlyOfficeAIAssistantPanel from '@/modules/views/OnlyOffice/OnlyOfficeAIAssistantPanel'
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
 import ReadOnlyFab from '@/modules/views/OnlyOffice/ReadOnlyFab'
+import { useScribe } from '@/modules/views/OnlyOffice/Scribe/ScribeContext'
+import { ScribePanel } from '@/modules/views/OnlyOffice/Scribe/ScribePanel'
 import { markdownToHtml } from '@/modules/views/OnlyOffice/Scribe/scribeConversion'
 import { ScribeFloatingButton } from '@/modules/views/OnlyOffice/Scribe/ScribeFloatingButton'
 import { ScribePopover } from '@/modules/views/OnlyOffice/Scribe/ScribePopover'
@@ -36,6 +38,8 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
   const { isEditorReady, isReadOnly, isTrashed } = useOnlyOfficeContext()
   const { isMobile, isDesktop } = useBreakpoints()
   const isScribeEnabled = flag('drive.scribe.enabled')
+  const scribe = useScribe()
+  const isPanelOpen = scribe ? scribe.isPanelOpen : false
 
   // cozy-bridge: listen for Scribe intents from OO plugin
   // In dev, allow all origins. In production, derive from serverUrl/instance.
@@ -158,8 +162,9 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
         </div>
       )}
       <div className="u-flex u-flex-grow-1">
-        <div id="onlyOfficeEditor" />
+        <div id="onlyOfficeEditor" style={{ flex: '1 1 auto', minWidth: 0 }} />
         <OnlyOfficeAIAssistantPanel />
+        {isScribeEnabled && isPanelOpen && <ScribePanel />}
       </div>
       {isScribeEnabled && (
         <>

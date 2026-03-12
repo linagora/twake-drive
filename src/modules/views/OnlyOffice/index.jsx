@@ -6,6 +6,7 @@ import Dialog from 'cozy-ui/transpiled/react/Dialog'
 import useHead from '@/components/useHead'
 import Editor from '@/modules/views/OnlyOffice/Editor'
 import { OnlyOfficeProvider } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
+import { ScribeProvider } from '@/modules/views/OnlyOffice/Scribe/ScribeContext'
 
 const OnlyOffice = ({
   isPublic,
@@ -28,8 +29,10 @@ const OnlyOffice = ({
         username={username}
         isInSharedFolder={isInSharedFolder}
       >
-        <Editor />
-        <Outlet />
+        <ScribeProvider>
+          <Editor />
+          <Outlet />
+        </ScribeProvider>
       </OnlyOfficeProvider>
     </Dialog>
   )
