@@ -1,5 +1,6 @@
 import React, { forwardRef } from 'react'
 
+import { isDirectory } from 'cozy-client/dist/models/file'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import DownloadIcon from 'cozy-ui/transpiled/react/Icons/Download'
@@ -44,6 +45,14 @@ export const download = ({
     icon,
     allowInfectedFiles: false,
     displayCondition: files => {
+      // We cannot download folders or multiple files in shared drives
+      if (
+        driveId &&
+        (files.length > 1 || (files.length === 1 && isDirectory(files[0])))
+      ) {
+        return false
+      }
+
       // We cannot generate archive for encrypted files, for now.
       // Then, we do not display the download button when the selection
       // includes an encrypted folder or several encrypted files
