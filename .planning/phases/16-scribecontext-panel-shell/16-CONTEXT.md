@@ -1,4 +1,4 @@
-# Phase 14: ScribeContext + Panel Shell - Context
+# Phase 16: ScribeContext + Panel Shell - Context
 
 **Gathered:** 2026-03-11
 **Status:** Ready for planning
@@ -6,7 +6,7 @@
 <domain>
 ## Phase Boundary
 
-User can open and close a side panel next to the OO editor, and the editor resizes correctly. This phase delivers: ScribeContext state provider, the panel shell (header + empty body), the floating button expansion (2-button vertical stack), keyboard shortcuts (Ctrl+Shift+I double-tap), and coexistence logic between inline popover and panel modes. Chat UI is Phase 15. Selection context is Phase 16. Panel resize is Phase 17.
+User can open and close a side panel next to the OO editor, and the editor resizes correctly. This phase delivers: ScribeContext state provider, the panel shell (header + empty body), the floating button expansion (2-button vertical stack), keyboard shortcuts (Ctrl+Shift+I double-tap), and coexistence logic between inline popover and panel modes. Chat UI is Phase 17. Selection context is Phase 18. Panel resize is Phase 19.
 
 </domain>
 
@@ -36,7 +36,7 @@ User can open and close a side panel next to the OO editor, and the editor resiz
 
 ### Panel initial content
 - Centered Scribe icon with tagline "Votre assistant d'écriture" (i18n-ready)
-- Phase 15 replaces this placeholder with the chat UI
+- Phase 17 replaces this placeholder with the chat UI
 
 ### State persistence
 - Panel open/closed state persisted in localStorage
@@ -95,5 +95,5 @@ None — discussion stayed within phase scope
 
 ---
 
-*Phase: 14-scribecontext-panel-shell*
+*Phase: 16-scribecontext-panel-shell*
 *Context gathered: 2026-03-11*

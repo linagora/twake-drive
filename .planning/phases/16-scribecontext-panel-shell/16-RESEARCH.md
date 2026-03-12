@@ -1,4 +1,4 @@
-# Phase 14: ScribeContext + Panel Shell - Research
+# Phase 16: ScribeContext + Panel Shell - Research
 
 **Researched:** 2026-03-11
 **Domain:** React context + CSS flex layout + keyboard shortcut detection
@@ -6,7 +6,7 @@
 
 ## Summary
 
-Phase 14 adds a ScribeContext provider to centralize Scribe state, a side panel shell that renders as a flex sibling to the OO editor iframe, a 2-button floating zone, and keyboard shortcuts (Ctrl+Shift+I double-tap). The codebase already has a working proof-of-concept for the flex sibling layout pattern (`OnlyOfficeAIAssistantPanel.tsx` renders conditionally as a flex sibling to `#onlyOfficeEditor`), an established portal-based floating button (`ScribeFloatingButton.jsx`), and a context provider pattern (`OnlyOfficeProvider.jsx`).
+Phase 16 adds a ScribeContext provider to centralize Scribe state, a side panel shell that renders as a flex sibling to the OO editor iframe, a 2-button floating zone, and keyboard shortcuts (Ctrl+Shift+I double-tap). The codebase already has a working proof-of-concept for the flex sibling layout pattern (`OnlyOfficeAIAssistantPanel.tsx` renders conditionally as a flex sibling to `#onlyOfficeEditor`), an established portal-based floating button (`ScribeFloatingButton.jsx`), and a context provider pattern (`OnlyOfficeProvider.jsx`).
 
 All required UI components exist in cozy-ui (Paper, Typography, IconButton) and no new dependencies are needed. The primary risk is OO iframe resize behavior -- the existing flex layout works because OO's `#onlyOfficeEditor` div is a flex child without explicit width, so it should shrink when a sibling appears. The `OnlyOfficeAIAssistantPanel` at 30% width already proves this works. The main engineering tasks are: (1) creating ScribeContext, (2) building the panel shell, (3) refactoring the floating button into a 2-button stack, (4) wiring Ctrl+Shift+I double-tap in plugin code.js, and (5) implementing popover/panel coexistence logic.
 
@@ -101,7 +101,7 @@ OnlyOffice (index.jsx)
               ScribePopover                   <-- MUI Popover (portal)
 ```
 
-### Component Hierarchy (after Phase 14)
+### Component Hierarchy (after Phase 16)
 ```
 OnlyOffice (index.jsx)
   Dialog (fullScreen)
@@ -242,7 +242,7 @@ try {
 The coexistence logic lives in View.jsx:
 - `showScribeButton` state from useCozyBridge controls floating zone visibility
 - When `isPanelOpen` is true: hide floating zone entirely, suppress `ScribePopover` open
-- When `isPanelOpen` is true and Ctrl+I fires: instead of opening popover, the selected text context goes to the panel (Phase 15 will implement the actual chat, but the routing must be set up now)
+- When `isPanelOpen` is true and Ctrl+I fires: instead of opening popover, the selected text context goes to the panel (Phase 17 will implement the actual chat, but the routing must be set up now)
 - If popover is open and user opens panel: call `handleCancel()` on popover, then `openPanel()`
 
 ### Anti-Patterns to Avoid
@@ -348,7 +348,7 @@ const ScribePanel = () => {
         </IconButton>
       </div>
 
-      {/* Body - placeholder for Phase 15 */}
+      {/* Body - placeholder for Phase 17 */}
       <div style={{
         flex: 1,
         display: 'flex',
@@ -439,9 +439,9 @@ const showFloatingZone = isScribeEnabled && !isPanelOpen
 
 | Old Approach | Current Approach | When Changed | Impact |
 |--------------|------------------|--------------|--------|
-| OnlyOfficeAIAssistantPanel at 30% width | ScribePanel at fixed 400px | Phase 14 | Predictable width regardless of viewport |
-| Single floating button (selection only) | 2-button floating zone (selection + panel toggle) | Phase 14 | Panel accessible without text selection |
-| Scribe state scattered across View.jsx | Centralized ScribeContext | Phase 14 | Clean state management for future phases |
+| OnlyOfficeAIAssistantPanel at 30% width | ScribePanel at fixed 400px | Phase 16 | Predictable width regardless of viewport |
+| Single floating button (selection only) | 2-button floating zone (selection + panel toggle) | Phase 16 | Panel accessible without text selection |
+| Scribe state scattered across View.jsx | Centralized ScribeContext | Phase 16 | Clean state management for future phases |
 
 ## Open Questions
 

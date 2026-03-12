@@ -75,22 +75,22 @@ Deferred to v3.1+. Tracked but not in current roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PANEL-01 | Phase 14 | Complete |
-| PANEL-02 | Phase 14 | Complete |
-| PANEL-03 | Phase 17 | Pending |
-| PANEL-04 | Phase 14 | Complete |
-| PANEL-05 | Phase 17 | Pending |
-| CHAT-01 | Phase 15 | Pending |
-| CHAT-02 | Phase 15 | Pending |
-| CHAT-03 | Phase 15 | Pending |
-| CHAT-04 | Phase 15 | Pending |
-| CHAT-05 | Phase 15 | Pending |
-| CHAT-06 | Phase 15 | Pending |
-| SEL-01 | Phase 16 | Pending |
-| SEL-02 | Phase 16 | Pending |
-| ACT-01 | Phase 16 | Pending |
-| ACT-02 | Phase 16 | Pending |
-| ACT-03 | Phase 16 | Pending |
+| PANEL-01 | Phase 16 | Complete |
+| PANEL-02 | Phase 16 | Complete |
+| PANEL-03 | Phase 19 | Pending |
+| PANEL-04 | Phase 16 | Complete |
+| PANEL-05 | Phase 19 | Pending |
+| CHAT-01 | Phase 17 | Pending |
+| CHAT-02 | Phase 17 | Pending |
+| CHAT-03 | Phase 17 | Pending |
+| CHAT-04 | Phase 17 | Pending |
+| CHAT-05 | Phase 17 | Pending |
+| CHAT-06 | Phase 17 | Pending |
+| SEL-01 | Phase 18 | Pending |
+| SEL-02 | Phase 18 | Pending |
+| ACT-01 | Phase 18 | Pending |
+| ACT-02 | Phase 18 | Pending |
+| ACT-03 | Phase 18 | Pending |
 
 **Coverage:**
 - v3.0 requirements: 16 total
