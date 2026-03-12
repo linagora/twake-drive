@@ -8,7 +8,6 @@ import flag from 'cozy-flags'
 import { useVaultClient } from 'cozy-keys-lib'
 import { useSharingContext } from 'cozy-sharing'
 import { makeActions } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
-import { Content } from 'cozy-ui/transpiled/react/Layout'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
@@ -168,61 +167,59 @@ const SharedDriveFolderView = () => {
         disabled={!canWriteToCurrentFolder}
         displayedFolder={displayedFolder}
       >
-        <Content className={isMobile ? '' : 'u-pt-1'}>
-          <FolderViewHeader>
-            <SharedDriveBreadcrumb driveId={driveId} folderId={folderId} />
-            <Toolbar
-              canUpload={false}
-              canCreateFolder={canWriteToCurrentFolder}
-              driveId={driveId}
-              showShareButton={isInRootOfSharedDrive}
-            />
-          </FolderViewHeader>
+        <FolderViewHeader>
+          <SharedDriveBreadcrumb driveId={driveId} folderId={folderId} />
+          <Toolbar
+            canUpload={false}
+            canCreateFolder={canWriteToCurrentFolder}
+            driveId={driveId}
+            showShareButton={isInRootOfSharedDrive}
+          />
+        </FolderViewHeader>
 
-          {flag('drive.virtualization.enabled') && !isMobile ? (
-            <FolderViewBodyVz
-              actions={actions}
-              queryResults={queryResults}
-              currentFolderId={folderId}
-              displayedFolder={displayedFolder}
-              canDrag
-              canUpload={canWriteToCurrentFolder}
-              withFilePath={false}
-              driveId={driveId}
-              orderProps={{
-                sortOrder,
-                setOrder: setSortOrder,
-                isSettingsLoaded
-              }}
-            />
-          ) : (
-            <SharedDriveFolderBody
-              folderId={folderId}
-              queryResults={queryResults}
-            />
-          )}
-          <Outlet />
-          {isFabDisplayed && (
-            <AddMenuProvider
-              componentsProps={{
-                AddMenu: {
-                  anchorOrigin: {
-                    vertical: 'top',
-                    horizontal: 'left'
-                  }
+        {flag('drive.virtualization.enabled') && !isMobile ? (
+          <FolderViewBodyVz
+            actions={actions}
+            queryResults={queryResults}
+            currentFolderId={folderId}
+            displayedFolder={displayedFolder}
+            canDrag
+            canUpload={canWriteToCurrentFolder}
+            withFilePath={false}
+            driveId={driveId}
+            orderProps={{
+              sortOrder,
+              setOrder: setSortOrder,
+              isSettingsLoaded
+            }}
+          />
+        ) : (
+          <SharedDriveFolderBody
+            folderId={folderId}
+            queryResults={queryResults}
+          />
+        )}
+        <Outlet />
+        {isFabDisplayed && (
+          <AddMenuProvider
+            componentsProps={{
+              AddMenu: {
+                anchorOrigin: {
+                  vertical: 'top',
+                  horizontal: 'left'
                 }
-              }}
-              canCreateFolder={true}
-              canUpload={true}
-              disabled={false}
-              refreshFolderContent={refresh}
-              displayedFolder={displayedFolder}
-              isSelectionBarVisible={isSelectionBarVisible}
-            >
-              <FabWithAddMenuContext />
-            </AddMenuProvider>
-          )}
-        </Content>
+              }
+            }}
+            canCreateFolder={true}
+            canUpload={true}
+            disabled={false}
+            refreshFolderContent={refresh}
+            displayedFolder={displayedFolder}
+            isSelectionBarVisible={isSelectionBarVisible}
+          >
+            <FabWithAddMenuContext />
+          </AddMenuProvider>
+        )}
       </DropzoneComp>
     </FolderView>
   )
