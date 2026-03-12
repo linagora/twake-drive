@@ -14,7 +14,7 @@ export const fetchFolder = async ({ client, folderId, driveId }) => {
     definition: definition(),
     options
   })
-  return driveId ? folderQueryResults.data?.[0] : folderQueryResults.data
+  return folderQueryResults.data
 }
 
 /**
@@ -31,5 +31,5 @@ export const useFolder = ({ folderId, driveId }) => {
     : buildFileOrFolderByIdQuery(folderId)
   const { options, definition } = folderQuery
   const folderQueryResults = useQuery(definition, options)
-  return driveId ? folderQueryResults.data?.[0] : folderQueryResults.data
+  return folderQueryResults.data
 }
