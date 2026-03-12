@@ -21,7 +21,6 @@ import {
   summariseByAI
 } from '@/modules/actions'
 import { moveTo } from '@/modules/actions/components/moveTo'
-import { personalizeFolder } from '@/modules/actions/components/personalizeFolder'
 import { FolderBody } from '@/modules/folder/components/FolderBody'
 
 const SharedDriveFolderBody = ({
@@ -69,7 +68,6 @@ const SharedDriveFolderBody = ({
       hr,
       rename,
       moveTo,
-      personalizeFolder,
       infos,
       hr,
       versions,

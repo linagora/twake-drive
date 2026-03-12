@@ -25,7 +25,8 @@ const personalizeFolder = ({
       flag('drive.folder-personalization.enabled') &&
       hasWriteAccess &&
       docs.length === 1 &&
-      docs[0].type === 'directory',
+      docs[0].type === 'directory' &&
+      !driveId,
     action: docs => {
       if (docs.length === 1 && docs[0].type === 'directory') {
         const folderId = docs[0]._id
