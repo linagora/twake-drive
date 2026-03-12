@@ -139,7 +139,7 @@ Phases execute in numeric order: 14 -> 15 -> 16 -> 17
 | 11. Pipeline de Conversion | v2.1 | 2/2 | Complete | 2026-03-06 |
 | 12. Preview Markdown | v2.1 | 1/1 | Complete | 2026-03-07 |
 | 13. Reinjection et Integrite Pipeline | v2.1 | 1/1 | Complete | 2026-03-09 |
-| 14. ScribeContext + Panel Shell | v3.0 | 0/2 | Not started | - |
+| 14. ScribeContext + Panel Shell | 1/2 | In Progress|  | - |
 | 15. Chat Core | v3.0 | 0/? | Not started | - |
 | 16. Selection Context + Document Actions | v3.0 | 0/? | Not started | - |
 | 17. Panel Resize + Mode Toggle | v3.0 | 0/? | Not started | - |
