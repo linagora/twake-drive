@@ -59,7 +59,8 @@ const FolderViewBodyContent = ({
 
   const navigate = useNavigate()
 
-  const { selectAll, selectedItems } = useSelectionContext()
+  const { selectAll, selectedItems, setSelectedItems, setIsSelectAll } =
+    useSelectionContext()
   const { sharedPaths } = useSharingContext()
   const { registerCancelable } = useCancelable()
   const { showAlert } = useAlert()
@@ -108,6 +109,18 @@ const FolderViewBodyContent = ({
   }, [navigate])
 
   const isDynamicSelectionEnabled = flag('drive.dynamic-selection.enabled')
+
+  const handleContainerClick = useCallback(
+    e => {
+      const target = e.target
+      const isOnFile = target.closest('[data-file-id]')
+      if (isOnFile) return
+
+      setSelectedItems({})
+      setIsSelectAll(false)
+    },
+    [setSelectedItems, setIsSelectAll]
+  )
 
   const dragProps = useMemo(
     () => ({
@@ -196,7 +209,9 @@ const FolderViewBodyContent = ({
             {viewContent}
           </RectangularSelection>
         ) : (
-          viewContent
+          <div onClick={handleContainerClick} className="u-h-100">
+            {viewContent}
+          </div>
         )}
       </div>
     </FolderUnlocker>
