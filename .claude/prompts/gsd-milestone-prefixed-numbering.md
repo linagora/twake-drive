@@ -7,27 +7,27 @@ When working on multiple milestones across different git branches, GSD's default
 ## Convention
 
 ### Phase numbering
-- Format: `{milestone}-{sequence}` where milestone is the version without dots
-- Examples for milestone v3.0: phases are `v30-01`, `v30-02`, `v30-03`, `v30-04`
-- Examples for milestone v2.2: phases are `v22-01`, `v22-02`
+- Format: `{milestone}-{sequence}` where milestone is the version with dot preserved
+- Examples for milestone v3.0: phases are `v3.0-01`, `v3.0-02`, `v3.0-03`, `v3.0-04`
+- Examples for milestone v2.2: phases are `v2.2-01`, `v2.2-02`
 - The sequence resets to 01 for each new milestone
 
 ### Plan numbering
 - Format: `{phase}-{plan}` — follows naturally from phase prefix
-- Examples: `v30-01-01-PLAN.md`, `v30-01-02-PLAN.md`
+- Examples: `v3.0-01-01-PLAN.md`, `v3.0-01-02-PLAN.md`
 
 ### Directory naming
 - Format: `.planning/phases/{phase}-{slug}/`
-- Examples: `.planning/phases/v30-01-scribecontext-panel-shell/`
+- Examples: `.planning/phases/v3.0-01-scribecontext-panel-shell/`
 
 ### Requirement IDs
 - Already prefixed by category (PANEL-01, CHAT-01) — no change needed
 - But traceability table in REQUIREMENTS.md must reference prefixed phase names
 
 ### References in docs
-- ROADMAP.md: `Phase v30-01: ScribeContext + Panel Shell`
-- STATE.md: `Phase: v30-01 of v30-04`
-- depends_on in plan frontmatter: `depends_on: [v30-01-01]`
+- ROADMAP.md: `Phase v3.0-01: ScribeContext + Panel Shell`
+- STATE.md: `Phase: v3.0-01 of v3.0-04`
+- depends_on in plan frontmatter: `depends_on: [v3.0-01-01]`
 - Success criteria, verification, etc. all use prefixed format
 
 ## Task
@@ -51,7 +51,7 @@ For each finding from step 1, produce a detailed rename table:
 
 | Current | Should be | Locations |
 |---------|-----------|-----------|
-| Phase 14 | Phase v30-01 | ROADMAP.md, STATE.md, ... |
+| Phase 14 | Phase v3.0-01 | ROADMAP.md, STATE.md, ... |
 
 Include:
 - Directory renames

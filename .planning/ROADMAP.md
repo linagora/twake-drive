@@ -5,7 +5,7 @@
 - ✅ **v1.0 Scribe Interface Mock AI** -- Phases 1-6 (shipped 2026-03-03)
 - ✅ **v2.0 Scribe Live AI** -- Phases 7-9 (shipped 2026-03-06)
 - ✅ **v2.1 Formatage Riche** -- Phases 10-13 (shipped 2026-03-09)
-- **v3.0 Scribe Chat Panel** -- Phases 16-19 (in progress)
+- **v3.0 Scribe Chat Panel** -- Phases v3.0-01 to v3.0-04 (in progress)
 
 ## Phases
 
@@ -50,14 +50,14 @@ Full details: `.planning/milestones/v2.1-ROADMAP.md`
 
 **Milestone Goal:** Add a conversational chat side panel alongside the existing inline popover mode, letting the user have multi-turn AI conversations while working in OnlyOffice.
 
-- [ ] **Phase 16: ScribeContext + Panel Shell** - State provider and flex sibling panel that resizes OO iframe
-- [ ] **Phase 17: Chat Core** - Working conversational chat with AI, markdown rendering, and error handling
-- [ ] **Phase 18: Selection Context + Document Actions** - Selection chip in input, Copy/Replace/Insert on AI responses
-- [ ] **Phase 19: Panel Resize + Mode Toggle** - Drag-resizable panel width and inline/panel mode switching
+- [ ] **Phase v3.0-01: ScribeContext + Panel Shell** - State provider and flex sibling panel that resizes OO iframe
+- [ ] **Phase v3.0-02: Chat Core** - Working conversational chat with AI, markdown rendering, and error handling
+- [ ] **Phase v3.0-03: Selection Context + Document Actions** - Selection chip in input, Copy/Replace/Insert on AI responses
+- [ ] **Phase v3.0-04: Panel Resize + Mode Toggle** - Drag-resizable panel width and inline/panel mode switching
 
 ## Phase Details
 
-### Phase 16: ScribeContext + Panel Shell
+### Phase v3.0-01: ScribeContext + Panel Shell
 **Goal**: User can open and close a side panel next to the OO editor, and the editor resizes correctly
 **Depends on**: Nothing (first phase of v3.0; builds on shipped v2.1 codebase)
 **Requirements**: PANEL-01, PANEL-02, PANEL-04
@@ -71,12 +71,12 @@ Full details: `.planning/milestones/v2.1-ROADMAP.md`
 **Plans**: 2 plans
 
 Plans:
-- [ ] 16-01-PLAN.md — ScribeContext provider + ScribePanel shell + View.jsx wiring
-- [ ] 16-02-PLAN.md — FloatingZone 2-button stack + Ctrl+Shift+I double-tap + coexistence logic
+- [ ] v3.0-01-01-PLAN.md — ScribeContext provider + ScribePanel shell + View.jsx wiring
+- [ ] v3.0-01-02-PLAN.md — FloatingZone 2-button stack + Ctrl+Shift+I double-tap + coexistence logic
 
-### Phase 17: Chat Core
+### Phase v3.0-02: Chat Core
 **Goal**: User can have a multi-turn conversation with the AI in the side panel
-**Depends on**: Phase 16
+**Depends on**: Phase v3.0-01
 **Requirements**: CHAT-01, CHAT-02, CHAT-03, CHAT-04, CHAT-05, CHAT-06
 **Success Criteria** (what must be TRUE):
   1. User can type a message, press Enter or click Send, and see it appear in the conversation
@@ -87,12 +87,12 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [ ] 17-01: TBD
-- [ ] 17-02: TBD
+- [ ] v3.0-02-01: TBD
+- [ ] v3.0-02-02: TBD
 
-### Phase 18: Selection Context + Document Actions
+### Phase v3.0-03: Selection Context + Document Actions
 **Goal**: User can reference selected document text in chat and apply AI responses back to the document
-**Depends on**: Phase 17
+**Depends on**: Phase v3.0-02
 **Requirements**: SEL-01, SEL-02, ACT-01, ACT-02, ACT-03
 **Success Criteria** (what must be TRUE):
   1. When text is selected in OO, a chip showing the selected text appears in the chat input area
@@ -102,12 +102,12 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [ ] 18-01: TBD
-- [ ] 18-02: TBD
+- [ ] v3.0-03-01: TBD
+- [ ] v3.0-03-02: TBD
 
-### Phase 19: Panel Resize + Mode Toggle
+### Phase v3.0-04: Panel Resize + Mode Toggle
 **Goal**: User can drag-resize the panel and switch between inline and panel interaction modes
-**Depends on**: Phase 16
+**Depends on**: Phase v3.0-01
 **Requirements**: PANEL-03, PANEL-05
 **Success Criteria** (what must be TRUE):
   1. User can drag the left edge of the panel to make it wider or narrower
@@ -116,13 +116,13 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [ ] 19-01: TBD
-- [ ] 19-02: TBD
+- [ ] v3.0-04-01: TBD
+- [ ] v3.0-04-02: TBD
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 16 -> 17 -> 18 -> 19
+Phases execute in order: v3.0-01 -> v3.0-02 -> v3.0-03 -> v3.0-04
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -139,7 +139,7 @@ Phases execute in numeric order: 16 -> 17 -> 18 -> 19
 | 11. Pipeline de Conversion | v2.1 | 2/2 | Complete | 2026-03-06 |
 | 12. Preview Markdown | v2.1 | 1/1 | Complete | 2026-03-07 |
 | 13. Reinjection et Integrite Pipeline | v2.1 | 1/1 | Complete | 2026-03-09 |
-| 16. ScribeContext + Panel Shell | v3.0 | 1/2 | In Progress | - |
-| 17. Chat Core | v3.0 | 0/? | Not started | - |
-| 18. Selection Context + Document Actions | v3.0 | 0/? | Not started | - |
-| 19. Panel Resize + Mode Toggle | v3.0 | 0/? | Not started | - |
+| v3.0-01. ScribeContext + Panel Shell | v3.0 | 1/2 | In Progress | - |
+| v3.0-02. Chat Core | v3.0 | 0/? | Not started | - |
+| v3.0-03. Selection Context + Document Actions | v3.0 | 0/? | Not started | - |
+| v3.0-04. Panel Resize + Mode Toggle | v3.0 | 0/? | Not started | - |

@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Scribe Chat Panel
 status: planning
-stopped_at: Completed 16-01-PLAN.md
+stopped_at: Completed v3.0-01-01-PLAN.md
 last_updated: "2026-03-12T07:35:45.918Z"
 last_activity: 2026-03-11 -- Roadmap created for v3.0
 progress:
@@ -21,11 +21,11 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-10)
 
 **Core value:** L'utilisateur peut interagir avec l'IA de maniere fluide -- actions rapides inline ou chat conversationnel dans un panneau lateral -- pour transformer et manipuler le contenu de son document OnlyOffice.
-**Current focus:** Phase 16 - ScribeContext + Panel Shell
+**Current focus:** Phase v3.0-01 - ScribeContext + Panel Shell
 
 ## Current Position
 
-Phase: 16 of 19 (ScribeContext + Panel Shell)
+Phase: v3.0-01 of v3.0-04 (ScribeContext + Panel Shell)
 Plan: --
 Status: Ready to plan
 Last activity: 2026-03-11 -- Roadmap created for v3.0
@@ -47,7 +47,7 @@ Progress: [░░░░░░░░░░] 0%
 | 11 Pipeline de Conversion | 2 | 9min | 4.5min |
 | 12 Preview Markdown | 1 | 2min | 2min |
 | 13 Reinjection Pipeline | 1 | 15min | 15min |
-| Phase 16 P01 | 2min | 2 tasks | 6 files |
+| Phase v3.0-01 P01 | 2min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -63,7 +63,7 @@ Recent decisions affecting v3.0:
 - Existing OnlyOfficeAIAssistantPanel proves flex sibling layout pattern (30% width side panel)
 - Zero new npm dependencies needed
 - Plugin code.js needs zero changes -- all selection data already flows via existing intents
-- [Phase 16]: Null-safe useScribe access in View.jsx for graceful fallback
+- [Phase v3.0-01]: Null-safe useScribe access in View.jsx for graceful fallback
 
 ### Pending Todos (carried from v2.3)
 
@@ -74,16 +74,16 @@ Recent decisions affecting v3.0:
 ### Known Technical Constraints
 
 - Plugin code must use ES5 syntax
-- OO iframe resize has no callback -- must validate empirically in Phase 16
+- OO iframe resize has no callback -- must validate empirically in Phase v3.0-01
 - Cross-origin iframe blocks resize dispatch -- rely on CSS flex sizing
 - No cozy-stack modifications -- frontend only
 
 ### Blockers/Concerns
 
-- OO iframe resize behavior is undocumented -- Phase 16 is a go/no-go gate
+- OO iframe resize behavior is undocumented -- Phase v3.0-01 is a go/no-go gate
 
 ## Session Continuity
 
 Last session: 2026-03-12T07:35:45.915Z
-Stopped at: Completed 16-01-PLAN.md
+Stopped at: Completed v3.0-01-01-PLAN.md
 Resume file: None
