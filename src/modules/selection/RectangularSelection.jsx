@@ -6,6 +6,7 @@ import { useSelectionContext } from './SelectionProvider'
 
 const INTERACTIVE_ELEMENTS_SELECTOR =
   'button,a,input,select,textarea,label,[role="button"],[role="menuitem"],[role="option"]'
+const SCROLL_STEP_IN_PIXELS = 10
 
 /**
  * Component that enables rectangular selection of files in a grid view.
@@ -158,6 +159,26 @@ const RectangularSelection = ({
   }, [])
 
   /**
+   * Handles scroll events from react-selecto during drag selection.
+   * When the selection rectangle reaches the edge of the scrollable container,
+   * Selecto fires this event and we must manually scroll the container.
+   *
+   * @param {Object} e - Selecto scroll event
+   * @param {number[]} e.direction - Scroll direction [x, y], each -1, 0, or 1
+   */
+  const handleScroll = useCallback(
+    e => {
+      const container = scrollElement || scrollContainerRef?.current
+      if (!container) return
+      container.scrollBy(
+        e.direction[0] * SCROLL_STEP_IN_PIXELS,
+        e.direction[1] * SCROLL_STEP_IN_PIXELS
+      )
+    },
+    [scrollElement, scrollContainerRef]
+  )
+
+  /**
    * Handles clicks on the container to clear selection when clicking empty space.
    * Skips if the click was part of a drag operation or if Ctrl/Cmd is pressed.
    * Prevents clearing when clicking on files or interactive elements.
@@ -220,6 +241,7 @@ const RectangularSelection = ({
           onDrag={handleDrag}
           onDragEnd={handleDragEnd}
           onSelect={handleSelect}
+          onScroll={handleScroll}
           scrollOptions={
             scrollContainer
               ? {
