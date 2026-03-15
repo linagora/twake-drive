@@ -3,8 +3,10 @@ import PropTypes from 'prop-types'
 
 import { useI18n } from 'twake-i18n'
 import { useTheme } from 'cozy-ui/transpiled/react/styles'
+import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import BugIcon from 'cozy-ui/transpiled/react/Icons/BugReport'
+import LeftIcon from 'cozy-ui/transpiled/react/Icons/Left'
 import RightIcon from 'cozy-ui/transpiled/react/Icons/Right'
 import InputBase from 'cozy-ui/transpiled/react/InputBase'
 import ListItem from 'cozy-ui/transpiled/react/ListItem'
@@ -29,6 +31,7 @@ const DEV_MD_ACTION = {
 const ScribeActionMenu = forwardRef(({ onSelect, onClose, selectedText: _selectedText }, ref) => {
   const { t, lang } = useI18n()
   const theme = useTheme()
+  const { isMobile } = useBreakpoints()
   const [activeSubmenu, setActiveSubmenu] = useState(null)
   const [focusIndex, setFocusIndex] = useState(0)
   const [submenuFocusIndex, setSubmenuFocusIndex] = useState(0)
@@ -89,7 +92,7 @@ const ScribeActionMenu = forwardRef(({ onSelect, onClose, selectedText: _selecte
     } else {
       focusMenu()
     }
-  }, [focusMenu, focusPrompt])
+  }, [focusMenu, focusPrompt, PROMPT_INDEX])
 
   const handlePromptSubmit = useCallback(
     prompt => {
@@ -124,13 +127,31 @@ const ScribeActionMenu = forwardRef(({ onSelect, onClose, selectedText: _selecte
   // Called by ScribePromptInput when arrow keys are pressed in the input
   const handlePromptArrow = useCallback(
     direction => {
-      if (direction === 'up') {
-        updateFocus(actions.length - 1)
+      if (isMobile && activeSubmenu) {
+        // In mobile submenu: arrow from prompt goes to last child (up) or back button (down)
+        const parent = actions.find(a => a.id === activeSubmenu)
+        const children = parent ? parent.children : []
+        if (direction === 'up') {
+          const last = children.length - 1
+          setSubmenuFocusIndex(last)
+          if (children[last] && children[last].type === 'input') {
+            setTimeout(() => { if (customLangRef.current) customLangRef.current.focus() }, 0)
+          } else {
+            focusMenu()
+          }
+        } else {
+          setSubmenuFocusIndex(-1)
+          focusMenu()
+        }
       } else {
-        updateFocus(0)
+        if (direction === 'up') {
+          updateFocus(actions.length - 1)
+        } else {
+          updateFocus(0)
+        }
       }
     },
-    [updateFocus, actions.length]
+    [updateFocus, actions, isMobile, activeSubmenu, focusMenu]
   )
 
   const handleKeyDown = useCallback(
@@ -145,72 +166,210 @@ const ScribeActionMenu = forwardRef(({ onSelect, onClose, selectedText: _selecte
         const children = parent ? parent.children : []
         const childCount = children.length
 
-        // If focus is on the custom input, handle differently
-        const focusedChild = children[submenuFocusIndex]
-        if (focusedChild && focusedChild.type === 'input') {
-          // Let the input handle most keys, only intercept navigation
-          if (e.key === 'ArrowUp') {
-            e.preventDefault()
-            setSubmenuFocusIndex(i => (i - 1 + childCount) % childCount)
-            focusMenu()
-          } else if (e.key === 'ArrowDown') {
-            e.preventDefault()
-            setSubmenuFocusIndex(i => (i + 1) % childCount)
-            focusMenu()
-          } else if (e.key === 'ArrowLeft') {
-            e.preventDefault()
-            setActiveSubmenu(null)
-            focusMenu()
-          } else if (e.key === 'Escape') {
-            e.preventDefault()
-            e.stopPropagation()
-            setActiveSubmenu(null)
-            focusMenu()
-          } else if (e.key === 'Enter') {
-            e.preventDefault()
-            handleCustomLangSubmit()
-          }
-          return
-        }
+        // Mobile submenu navigation: back button (-1), children (0..n-1), prompt (n)
+        // Desktop submenu navigation: children only (0..n-1), wrapping
+        const BACK_INDEX = -1
+        const PROMPT_SUBMENU_INDEX = childCount
 
-        switch (e.key) {
-          case 'ArrowDown':
-            e.preventDefault()
-            {
-              const next = (submenuFocusIndex + 1) % childCount
-              setSubmenuFocusIndex(next)
-              if (children[next] && children[next].type === 'input') {
-                setTimeout(() => { if (customLangRef.current) customLangRef.current.focus() }, 0)
-              }
-            }
-            break
-          case 'ArrowUp':
-            e.preventDefault()
-            {
-              const prev = (submenuFocusIndex - 1 + childCount) % childCount
+        if (isMobile) {
+          // Mobile: extended range includes back button and prompt
+          const goBack = () => { setActiveSubmenu(null); setSubmenuFocusIndex(0); focusMenu() }
+
+          // If on prompt input, only handle arrows to leave it
+          if (submenuFocusIndex === PROMPT_SUBMENU_INDEX) {
+            if (e.key === 'ArrowUp') {
+              e.preventDefault()
+              const prev = childCount - 1
               setSubmenuFocusIndex(prev)
               if (children[prev] && children[prev].type === 'input') {
                 setTimeout(() => { if (customLangRef.current) customLangRef.current.focus() }, 0)
+              } else {
+                focusMenu()
               }
+            } else if (e.key === 'ArrowDown') {
+              e.preventDefault()
+              setSubmenuFocusIndex(BACK_INDEX)
+              focusMenu()
+            } else if (e.key === 'ArrowLeft' || e.key === 'Escape') {
+              e.preventDefault()
+              e.stopPropagation()
+              goBack()
             }
-            break
-          case 'ArrowLeft':
-            e.preventDefault()
-            setActiveSubmenu(null)
-            break
-          case 'Enter':
-            e.preventDefault()
-            if (parent) {
-              selectAction(parent, parent.children[submenuFocusIndex])
+            return
+          }
+
+          // If on back button
+          if (submenuFocusIndex === BACK_INDEX) {
+            if (e.key === 'ArrowDown') {
+              e.preventDefault()
+              setSubmenuFocusIndex(0)
+              if (children[0] && children[0].type === 'input') {
+                setTimeout(() => { if (customLangRef.current) customLangRef.current.focus() }, 0)
+              }
+            } else if (e.key === 'ArrowUp') {
+              e.preventDefault()
+              setSubmenuFocusIndex(PROMPT_SUBMENU_INDEX)
+              setTimeout(() => focusPrompt(), 0)
+            } else if (e.key === 'Enter' || e.key === 'ArrowLeft') {
+              e.preventDefault()
+              goBack()
+            } else if (e.key === 'Escape') {
+              e.preventDefault()
+              e.stopPropagation()
+              goBack()
             }
-            break
-          case 'Escape':
-            e.preventDefault()
-            e.stopPropagation()
-            setActiveSubmenu(null)
-            break
-          default:
-            break
+            return
+          }
+
+          // If on custom input child
+          const focusedChild = children[submenuFocusIndex]
+          if (focusedChild && focusedChild.type === 'input') {
+            if (e.key === 'ArrowUp') {
+              e.preventDefault()
+              const prev = submenuFocusIndex - 1
+              if (prev < 0) {
+                setSubmenuFocusIndex(BACK_INDEX)
+              } else {
+                setSubmenuFocusIndex(prev)
+              }
+              focusMenu()
+            } else if (e.key === 'ArrowDown') {
+              e.preventDefault()
+              const next = submenuFocusIndex + 1
+              if (next >= childCount) {
+                setSubmenuFocusIndex(PROMPT_SUBMENU_INDEX)
+                setTimeout(() => focusPrompt(), 0)
+              } else {
+                setSubmenuFocusIndex(next)
+                focusMenu()
+              }
+            } else if (e.key === 'ArrowLeft' || e.key === 'Escape') {
+              e.preventDefault()
+              e.stopPropagation()
+              goBack()
+            } else if (e.key === 'Enter') {
+              e.preventDefault()
+              handleCustomLangSubmit()
+            }
+            return
+          }
+
+          // Normal child item on mobile
+          switch (e.key) {
+            case 'ArrowDown':
+              e.preventDefault()
+              {
+                const next = submenuFocusIndex + 1
+                if (next >= childCount) {
+                  setSubmenuFocusIndex(PROMPT_SUBMENU_INDEX)
+                  setTimeout(() => focusPrompt(), 0)
+                } else {
+                  setSubmenuFocusIndex(next)
+                  if (children[next] && children[next].type === 'input') {
+                    setTimeout(() => { if (customLangRef.current) customLangRef.current.focus() }, 0)
+                  }
+                }
+              }
+              break
+            case 'ArrowUp':
+              e.preventDefault()
+              {
+                const prev = submenuFocusIndex - 1
+                if (prev < 0) {
+                  setSubmenuFocusIndex(BACK_INDEX)
+                } else {
+                  setSubmenuFocusIndex(prev)
+                  if (children[prev] && children[prev].type === 'input') {
+                    setTimeout(() => { if (customLangRef.current) customLangRef.current.focus() }, 0)
+                  }
+                }
+              }
+              break
+            case 'Enter':
+              e.preventDefault()
+              if (parent) {
+                selectAction(parent, children[submenuFocusIndex])
+              }
+              break
+            case 'ArrowLeft':
+            case 'Escape':
+              e.preventDefault()
+              e.stopPropagation()
+              goBack()
+              break
+            default:
+              break
+          }
+        } else {
+          // Desktop: submenu wraps within children only
+
+          // If focus is on the custom input, handle differently
+          const focusedChild = children[submenuFocusIndex]
+          if (focusedChild && focusedChild.type === 'input') {
+            // Let the input handle most keys, only intercept navigation
+            if (e.key === 'ArrowUp') {
+              e.preventDefault()
+              setSubmenuFocusIndex(i => (i - 1 + childCount) % childCount)
+              focusMenu()
+            } else if (e.key === 'ArrowDown') {
+              e.preventDefault()
+              setSubmenuFocusIndex(i => (i + 1) % childCount)
+              focusMenu()
+            } else if (e.key === 'ArrowLeft') {
+              e.preventDefault()
+              setActiveSubmenu(null)
+              focusMenu()
+            } else if (e.key === 'Escape') {
+              e.preventDefault()
+              e.stopPropagation()
+              setActiveSubmenu(null)
+              focusMenu()
+            } else if (e.key === 'Enter') {
+              e.preventDefault()
+              handleCustomLangSubmit()
+            }
+            return
+          }
+
+          switch (e.key) {
+            case 'ArrowDown':
+              e.preventDefault()
+              {
+                const next = (submenuFocusIndex + 1) % childCount
+                setSubmenuFocusIndex(next)
+                if (children[next] && children[next].type === 'input') {
+                  setTimeout(() => { if (customLangRef.current) customLangRef.current.focus() }, 0)
+                }
+              }
+              break
+            case 'ArrowUp':
+              e.preventDefault()
+              {
+                const prev = (submenuFocusIndex - 1 + childCount) % childCount
+                setSubmenuFocusIndex(prev)
+                if (children[prev] && children[prev].type === 'input') {
+                  setTimeout(() => { if (customLangRef.current) customLangRef.current.focus() }, 0)
+                }
+              }
+              break
+            case 'ArrowLeft':
+              e.preventDefault()
+              setActiveSubmenu(null)
+              break
+            case 'Enter':
+              e.preventDefault()
+              if (parent) {
+                selectAction(parent, parent.children[submenuFocusIndex])
+              }
+              break
+            case 'Escape':
+              e.preventDefault()
+              e.stopPropagation()
+              setActiveSubmenu(null)
+              break
+            default:
+              break
+          }
         }
       } else {
         switch (e.key) {
@@ -253,152 +412,232 @@ const ScribeActionMenu = forwardRef(({ onSelect, onClose, selectedText: _selecte
         }
       }
     },
-    [activeSubmenu, focusIndex, submenuFocusIndex, selectAction, onClose, updateFocus, actions, handleCustomLangSubmit, focusMenu]
+    [activeSubmenu, focusIndex, submenuFocusIndex, selectAction, onClose, updateFocus, actions, handleCustomLangSubmit, focusMenu, focusPrompt, isMobile]
   )
 
+  // Active submenu parent (used for mobile submenu rendering and prompt highlight)
+  const activeParent = activeSubmenu ? actions.find(a => a.id === activeSubmenu) : null
+
+  // Prompt highlight: in mobile submenu mode, track via submenuFocusIndex; otherwise via focusIndex
+  const isPromptHighlighted = isMobile && activeParent
+    ? submenuFocusIndex === (activeParent.children?.length ?? 0)
+    : focusIndex === PROMPT_INDEX
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMobile ? 'stretch' : 'flex-start', gap: 8, ...(isMobile ? { width: '100%' } : {}) }}>
       <Paper
         ref={paperRef}
         tabIndex={-1}
-        style={{ minWidth: 220, outline: 'none', borderRadius: 8, boxShadow: '0 4px 20px rgba(0,0,0,0.15)' }}
+        style={{ minWidth: isMobile ? undefined : 220, outline: 'none', borderRadius: isMobile ? 0 : 8, boxShadow: isMobile ? 'none' : '0 4px 20px rgba(0,0,0,0.15)' }}
         elevation={0}
         onKeyDown={handleKeyDown}
       >
-        {actions.map((action, index) => (
-          <div
-            key={action.id}
-            onMouseEnter={() => {
-              if (!mouseMoveEnabledRef.current) return
-              setFocusIndex(index)
-              if (action.children) { setActiveSubmenu(action.id); setSubmenuFocusIndex(-1) }
-            }}
-            onMouseLeave={() => {
-              if (!mouseMoveEnabledRef.current) return
-              if (action.children) setActiveSubmenu(null)
-            }}
-            style={{ position: 'relative' }}
-          >
+        {isMobile && activeParent ? (
+          // Mobile: submenu replaces main menu entirely
+          <>
             <ListItem
               button
-              selected={(focusIndex === index && !activeSubmenu) || activeSubmenu === action.id}
-              style={{
-                ...(index === 0 ? { borderRadius: '8px 8px 0 0' } : {}),
-                ...(index === actions.length - 1 ? { borderRadius: '0 0 8px 8px' } : {})
-              }}
-              onClick={
-                !action.children
-                  ? () => { const label = action.labelKey ? t(action.labelKey) : action.label; onSelect(action.id, label, label) }
-                  : () => {
-                      setActiveSubmenu(action.id)
-                      setSubmenuFocusIndex(0)
-                    }
-              }
+              selected={submenuFocusIndex === -1}
+              onClick={() => { setActiveSubmenu(null); setSubmenuFocusIndex(0); focusMenu() }}
             >
               <ListItemIcon>
-                <Icon icon={action.icon} />
+                <Icon icon={LeftIcon} />
               </ListItemIcon>
-              <ListItemText primary={action.labelKey ? t(action.labelKey) : action.label} />
-              {action.children && <Icon icon={RightIcon} size={16} />}
+              <ListItemText primary={t(activeParent.labelKey)} />
             </ListItem>
-
-            {action.children && activeSubmenu === action.id && (
-              <Paper
-                style={{
-                  position: 'absolute',
-                  left: '100%',
-                  top: 0,
-                  minWidth: 180,
-                  zIndex: 1
-                }}
-                elevation={4}
-              >
-                {action.children.map((child, childIndex) =>
-                  child.type === 'input' ? (
-                    <ListItem
-                      button
-                      key={child.id}
-                      selected={submenuFocusIndex === childIndex}
-                      onMouseEnter={() => {
-                        if (!mouseMoveEnabledRef.current) return
-                        setSubmenuFocusIndex(childIndex)
-                        if (customLangRef.current) customLangRef.current.focus()
-                      }}
-                      onClick={() => {
-                        if (customLangRef.current) customLangRef.current.focus()
-                      }}
-                      style={{
-                        ...(childIndex === action.children.length - 1 ? { borderRadius: '0 0 4px 4px' } : {})
-                      }}
-                    >
-                      <InputBase
-                        inputRef={customLangRef}
-                        placeholder={t(child.placeholderKey)}
-                        value={customLang}
-                        onChange={e => setCustomLang(e.target.value)}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault()
-                            e.stopPropagation()
-                            handleCustomLangSubmit()
-                          } else if (e.key === 'Escape') {
-                            e.preventDefault()
-                            e.stopPropagation()
-                            setActiveSubmenu(null)
-                            focusMenu()
-                          }
-                        }}
-                        onFocus={() => setSubmenuFocusIndex(childIndex)}
-                        fullWidth
-                        style={{ fontSize: 14 }}
-                      />
-                    </ListItem>
-                  ) : (
-                    <ListItem
-                      button
-                      key={child.id}
-                      selected={submenuFocusIndex === childIndex}
-                      style={{
-                        ...(childIndex === 0 ? { borderRadius: '4px 4px 0 0' } : {}),
-                        ...(childIndex === action.children.length - 1 ? { borderRadius: '0 0 4px 4px' } : {})
-                      }}
-                      onClick={() => {
-                        const childLabel = child.labelKey ? t(child.labelKey) : child.label
-                        const parentLabel = t(action.labelKey)
-                        onSelect(child.id, childLabel, `${parentLabel} > ${childLabel}`)
-                      }}
-                      onMouseEnter={() => { if (!mouseMoveEnabledRef.current) return; setSubmenuFocusIndex(childIndex) }}
-                    >
-                      {child.icon && (
-                        <ListItemIcon>
-                          {child.icon === 'emoji' ? (
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
-                              <circle cx="5.5" cy="6.5" r="1" fill="currentColor" />
-                              <circle cx="10.5" cy="6.5" r="1" fill="currentColor" />
-                              <path d="M5 10c.5 1.5 2 2.5 3 2.5s2.5-1 3-2.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-                            </svg>
-                          ) : (
-                            <Icon icon={child.icon} />
-                          )}
-                        </ListItemIcon>
+            {activeParent.children.map((child, childIndex) =>
+              child.type === 'input' ? (
+                <ListItem
+                  button
+                  key={child.id}
+                  selected={submenuFocusIndex === childIndex}
+                  onClick={() => {
+                    if (customLangRef.current) customLangRef.current.focus()
+                  }}
+                >
+                  <InputBase
+                    inputRef={customLangRef}
+                    placeholder={t(child.placeholderKey)}
+                    value={customLang}
+                    onChange={e => setCustomLang(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        handleCustomLangSubmit()
+                      } else if (e.key === 'Escape') {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        setActiveSubmenu(null)
+                        focusMenu()
+                      }
+                    }}
+                    onFocus={() => setSubmenuFocusIndex(childIndex)}
+                    fullWidth
+                    style={{ fontSize: 14 }}
+                  />
+                </ListItem>
+              ) : (
+                <ListItem
+                  button
+                  key={child.id}
+                  selected={submenuFocusIndex === childIndex}
+                  onClick={() => {
+                    const childLabel = child.labelKey ? t(child.labelKey) : child.label
+                    const parentLabel = t(activeParent.labelKey)
+                    onSelect(child.id, childLabel, `${parentLabel} > ${childLabel}`)
+                  }}
+                >
+                  {child.icon && (
+                    <ListItemIcon>
+                      {child.icon === 'emoji' ? (
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
+                          <circle cx="5.5" cy="6.5" r="1" fill="currentColor" />
+                          <circle cx="10.5" cy="6.5" r="1" fill="currentColor" />
+                          <path d="M5 10c.5 1.5 2 2.5 3 2.5s2.5-1 3-2.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                        </svg>
+                      ) : (
+                        <Icon icon={child.icon} />
                       )}
-                      <ListItemText primary={child.labelKey ? t(child.labelKey) : child.label} />
-                    </ListItem>
-                  )
-                )}
-              </Paper>
+                    </ListItemIcon>
+                  )}
+                  <ListItemText primary={child.labelKey ? t(child.labelKey) : child.label} />
+                </ListItem>
+              )
             )}
-          </div>
-        ))}
+          </>
+        ) : (
+          // Desktop: main menu with flyout submenus
+          actions.map((action, index) => (
+            <div
+              key={action.id}
+              onMouseEnter={() => {
+                if (!mouseMoveEnabledRef.current) return
+                setFocusIndex(index)
+                if (action.children) { setActiveSubmenu(action.id); setSubmenuFocusIndex(-1) }
+              }}
+              onMouseLeave={() => {
+                if (!mouseMoveEnabledRef.current) return
+                if (action.children) setActiveSubmenu(null)
+              }}
+              style={{ position: 'relative' }}
+            >
+              <ListItem
+                button
+                selected={(focusIndex === index && !activeSubmenu) || activeSubmenu === action.id}
+                style={{
+                  ...(index === 0 ? { borderRadius: '8px 8px 0 0' } : {}),
+                  ...(index === actions.length - 1 ? { borderRadius: '0 0 8px 8px' } : {})
+                }}
+                onClick={
+                  !action.children
+                    ? () => { const label = action.labelKey ? t(action.labelKey) : action.label; onSelect(action.id, label, label) }
+                    : () => {
+                        setActiveSubmenu(action.id)
+                        setSubmenuFocusIndex(0)
+                      }
+                }
+              >
+                <ListItemIcon>
+                  <Icon icon={action.icon} />
+                </ListItemIcon>
+                <ListItemText primary={action.labelKey ? t(action.labelKey) : action.label} />
+                {action.children && <Icon icon={RightIcon} size={16} />}
+              </ListItem>
+
+              {action.children && activeSubmenu === action.id && (
+                <Paper
+                  style={{ position: 'absolute', left: '100%', top: 0, minWidth: 180, zIndex: 1 }}
+                  elevation={4}
+                >
+                  {action.children.map((child, childIndex) =>
+                    child.type === 'input' ? (
+                      <ListItem
+                        button
+                        key={child.id}
+                        selected={submenuFocusIndex === childIndex}
+                        onMouseEnter={() => {
+                          if (!mouseMoveEnabledRef.current) return
+                          setSubmenuFocusIndex(childIndex)
+                          if (customLangRef.current) customLangRef.current.focus()
+                        }}
+                        onClick={() => {
+                          if (customLangRef.current) customLangRef.current.focus()
+                        }}
+                        style={{
+                          ...(childIndex === action.children.length - 1 ? { borderRadius: '0 0 4px 4px' } : {})
+                        }}
+                      >
+                        <InputBase
+                          inputRef={customLangRef}
+                          placeholder={t(child.placeholderKey)}
+                          value={customLang}
+                          onChange={e => setCustomLang(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              handleCustomLangSubmit()
+                            } else if (e.key === 'Escape') {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              setActiveSubmenu(null)
+                              focusMenu()
+                            }
+                          }}
+                          onFocus={() => setSubmenuFocusIndex(childIndex)}
+                          fullWidth
+                          style={{ fontSize: 14 }}
+                        />
+                      </ListItem>
+                    ) : (
+                      <ListItem
+                        button
+                        key={child.id}
+                        selected={submenuFocusIndex === childIndex}
+                        style={{
+                          ...(childIndex === 0 ? { borderRadius: '4px 4px 0 0' } : {}),
+                          ...(childIndex === action.children.length - 1 ? { borderRadius: '0 0 4px 4px' } : {})
+                        }}
+                        onClick={() => {
+                          const childLabel = child.labelKey ? t(child.labelKey) : child.label
+                          const parentLabel = t(action.labelKey)
+                          onSelect(child.id, childLabel, `${parentLabel} > ${childLabel}`)
+                        }}
+                        onMouseEnter={() => { if (!mouseMoveEnabledRef.current) return; setSubmenuFocusIndex(childIndex) }}
+                      >
+                        {child.icon && (
+                          <ListItemIcon>
+                            {child.icon === 'emoji' ? (
+                              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
+                                <circle cx="5.5" cy="6.5" r="1" fill="currentColor" />
+                                <circle cx="10.5" cy="6.5" r="1" fill="currentColor" />
+                                <path d="M5 10c.5 1.5 2 2.5 3 2.5s2.5-1 3-2.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                              </svg>
+                            ) : (
+                              <Icon icon={child.icon} />
+                            )}
+                          </ListItemIcon>
+                        )}
+                        <ListItemText primary={child.labelKey ? t(child.labelKey) : child.label} />
+                      </ListItem>
+                    )
+                  )}
+                </Paper>
+              )}
+            </div>
+          ))
+        )}
       </Paper>
       <Paper
         style={{
-          width: 500,
-          borderRadius: 8,
-          boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+          width: isMobile ? '100%' : 500,
+          borderRadius: isMobile ? 0 : 8,
+          boxShadow: isMobile ? 'none' : '0 4px 20px rgba(0,0,0,0.15)',
           transition: 'background-color 150ms',
-          backgroundColor: focusIndex === PROMPT_INDEX
+          backgroundColor: isPromptHighlighted
             ? ((theme.palette.type || theme.palette.mode) === 'dark' ? theme.palette.grey[700] : theme.palette.grey[200])
             : undefined
         }}

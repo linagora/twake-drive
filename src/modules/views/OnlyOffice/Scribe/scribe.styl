@@ -6,6 +6,13 @@
   border-radius 8px
   box-shadow 0 4px 20px rgba(0,0,0,0.15)
   position relative
+  @media (max-width: 768px)
+    min-width unset
+    max-width unset
+    width 100%
+    border-radius 0
+    box-shadow none
+    box-sizing border-box
 
 .scribe-result-header
   display flex
@@ -72,6 +79,12 @@
   min-width 250px
   border-radius 8px
   box-shadow 0 4px 20px rgba(0,0,0,0.15)
+  @media (max-width: 768px)
+    min-width unset
+    width 100%
+    border-radius 0
+    box-shadow none
+    box-sizing border-box
 
 .scribe-loading-message
   text-align center

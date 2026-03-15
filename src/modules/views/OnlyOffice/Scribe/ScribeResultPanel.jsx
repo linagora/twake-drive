@@ -71,19 +71,14 @@ const ScribeResultPanel = ({
   }, [handleDragMove])
 
   const handleDragStart = useCallback(e => {
-    // Walk up from target to see if we hit an interactive or content element
+    // Skip if clicking on interactive elements (close button in header)
     let el = e.target
-    const paper = paperRef.current
-    while (el && el !== paper) {
+    while (el && el !== e.currentTarget) {
       const tag = el.tagName && el.tagName.toLowerCase()
       if (tag === 'button' || tag === 'a' || tag === 'input' || tag === 'textarea') return
       if (el.getAttribute && el.getAttribute('role') === 'button') return
-      const cls = el.className || ''
-      const clsStr = typeof cls === 'string' ? cls : (cls.toString ? cls.toString() : '')
-      if (clsStr.indexOf('scribe-result-text') !== -1 || clsStr.indexOf('scribe-result-actions') !== -1) return
       el = el.parentElement
     }
-    // Only start drag if we ended up at the paper (background/header area)
     dragStateRef.current = {
       dragging: true,
       startX: e.clientX,
@@ -275,9 +270,7 @@ const ScribeResultPanel = ({
       className={styles['scribe-result-panel']}
       elevation={0}
       onKeyDown={handleKeyDown}
-      onMouseDown={handleDragStart}
       style={{
-        cursor: 'move',
         ...(panelSize || devData ? {
           maxWidth: '95vw',
           display: 'flex',
@@ -296,7 +289,8 @@ const ScribeResultPanel = ({
     >
       <div
         className={styles['scribe-result-header']}
-        style={devData ? { flexShrink: 0 } : undefined}
+        onMouseDown={handleDragStart}
+        style={{ cursor: 'move', ...(devData ? { flexShrink: 0 } : {}) }}
       >
         <Typography variant="subtitle2" color="textSecondary">
           {breadcrumb}
