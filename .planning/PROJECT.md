@@ -35,12 +35,19 @@ La chaîne de communication complète — depuis la sélection de texte dans Onl
 - ✓ Fenêtre de résultat déplaçable par drag sur fond/header — v2.2
 - ✓ Fenêtre de résultat redimensionnable via grip handle — v2.2
 - ✓ Tooltip bouton flottant avec délai 1s — v2.2
+- ✓ Menu Scribe responsive : bottom drawer sur mobile (breakpoint isMobile cozy-ui) — v2.3
+- ✓ Navigation push pour sous-menus dans le drawer (remplace la liste, bouton retour) — v2.3
+- ✓ Prompt input adaptatif à la largeur du drawer — v2.3
 
 ### Active
 
-- [ ] Menu Scribe responsive : drawer plein écran sur mobile (breakpoint isMobile cozy-ui)
-- [ ] Navigation push pour sous-menus dans le drawer (remplace la liste, bouton retour)
-- [ ] Prompt input adaptatif à la largeur du drawer
+- [ ] Parser Markdown → Document Builder API dans le plugin OO (ES5, callCommand)
+- [ ] Injection inline formaté (gras, italique, listes) via Builder API
+- [ ] Injection d'images préservées depuis le document d'origine
+- [ ] Injection de tableaux avec restauration des largeurs de colonnes
+- [ ] Sélection post-injection couvrant exactement le contenu injecté
+- [ ] Smart spacing : espaces/retours à la ligne en début et fin du texte injecté
+- [ ] Stratégie de préservation du formatage d'origine perdu par l'aller-retour Markdown
 
 ### Out of Scope
 
@@ -50,17 +57,21 @@ La chaîne de communication complète — depuis la sélection de texte dans Onl
 - Édition collaborative simultanée avec Scribe — complexité excessive
 - Correction grammaticale passive en temps réel (style Grammarly) — performance prohibitive
 - Streaming LLM responses — déféré à v3.x, non-streaming suffisant
-- Document Builder API — déféré à v3.x, PasteHtml suffisant pour v2.x
-- Post-paste selection positioning — OO renvoie des positions incohérentes après PasteHtml
 
-## Current Milestone: v2.3 Menu Responsive
+## Current Milestone: v2.4 Document Builder Injection
 
-**Goal:** Rendre le menu Scribe responsive — drawer plein écran sur mobile avec navigation push pour les sous-menus.
+**Goal:** Remplacer PasteHtml par l'API Document Builder OO pour injecter le résultat Scribe avec un contrôle fin sur chaque élément, préserver le formatage d'origine, et sélectionner le contenu injecté.
 
 **Target features:**
-- Drawer fullscreen sur breakpoint isMobile
-- Navigation push sous-menus (remplace la liste, bouton retour)
-- Prompt input adaptatif (plus de 500px fixe)
+- Parser Markdown → Document Builder API (ES5, dans callCommand, un seul undo point)
+- Injection progressive : inline formaté → images → tableaux → styles custom
+- Sélection post-injection du bloc injecté
+- Smart spacing (espaces/retours à la ligne en début/fin)
+- Stratégie de préservation du formatage d'origine perdu par le round-trip Markdown
+
+## Shipped: v2.3 Menu Responsive (2026-03-15)
+
+Menu Scribe responsive : bottom drawer sur mobile (MUI Drawer, auto-height, drag handle, swipe-to-close), push navigation pour sous-menus avec bouton retour, prompt input pleine largeur. 5/5 requirements, 2 phases, 1 plan. Voir `.planning/MILESTONES.md`.
 
 ## Shipped: v2.2 Améliorations UX (2026-03-11)
 
@@ -79,9 +90,9 @@ Intégration LLM réelle via cozy-stack, gestion d'erreurs avec retry, internati
 
 ## Context
 
-### Shipped v2.2
+### Shipped v2.3
 
-~2,000+ LOC Scribe module (React/Stylus + OO plugin ES5). 15 phases, 24 plans across 4 milestones.
+~2,000+ LOC Scribe module (React/Stylus + OO plugin ES5). 17 phases, 25 plans across 5 milestones.
 Tech stack : React 18 + MUI + cozy-ui + twake-i18n, cozy-stack AI proxy, postMessage protocol, OO Plugin API, Turndown, marked, react-markdown, remark-gfm.
 v1.0 : 4 jours, 10 plans. v2.0 : 3 jours, 5 plans. v2.1 : 3 jours, 6 plans. v2.2 : 2 jours, 3 plans.
 
@@ -132,7 +143,7 @@ v1.0 : 4 jours, 10 plans. v2.0 : 3 jours, 5 plans. v2.1 : 3 jours, 6 plans. v2.2
 | Regex class stripping (ES5) | Plugin sandbox interdit DOMParser | ✓ Good — compatible ES5 |
 | PasteHtml avec smart nbsp spacing | Préserve formatage, simple à implémenter | ✓ Good — suffisant pour v2.1 |
 | react-markdown + remark-gfm pour preview | Rendu MD natif React, support tables GFM | ✓ Good — thème MUI intégré |
-| Document Builder API déféré à v3.x | PasteHtml suffisant pour v2.1, Builder API pour objets complexes | — Pending |
+| Document Builder API pour v2.4 | PasteHtml insuffisant pour images, tableaux, styles custom — Builder API donne le contrôle élément par élément | ◆ In progress |
 | Ctrl+Shift+I pour raccourci Scribe | Évite conflit avec Ctrl+I (italique natif OO) | ✓ Good — aucun conflit OO |
 | mousemove gating pour hover menu | Détecte mouvement physique vs ouverture sous curseur | ✓ Good — zéro faux highlight |
 | showTooltip séparé de hovered | Opacité instantanée, tooltip retardé indépendamment | ✓ Good — UX naturelle |
@@ -140,4 +151,4 @@ v1.0 : 4 jours, 10 plans. v2.0 : 3 jours, 5 plans. v2.1 : 3 jours, 6 plans. v2.2
 | Resize via inline width/height + flex | Meilleur contrôle et clamping que CSS resize | ✓ Good — reflow contenu fiable |
 
 ---
-*Last updated: 2026-03-12 after v2.3 milestone start*
+*Last updated: 2026-03-15 after v2.4 milestone start*

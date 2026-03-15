@@ -1,36 +1,34 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.3
-milestone_name: Menu Responsive
-status: completed
-stopped_at: Completed 16-01-PLAN.md
-last_updated: "2026-03-12T17:45:56.774Z"
-last_activity: 2026-03-12 -- Completed 16-01 Drawer Scaffold + Breakpoint Split
+milestone: v2.4
+milestone_name: Document Builder Injection
+status: defining_requirements
+stopped_at: null
+last_updated: "2026-03-15"
+last_activity: 2026-03-15 -- Milestone v2.4 started
 progress:
-  total_phases: 2
-  completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-12)
+See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Core value:** La chaine de communication complete -- depuis la selection de texte dans OnlyOffice jusqu'a la reinjection du texte modifie par l'IA -- de bout en bout, transparente pour l'utilisateur.
-**Current focus:** Phase 16 - Drawer Scaffold + Breakpoint Split
+**Current focus:** Defining requirements for v2.4 Document Builder Injection
 
 ## Current Position
 
-Phase: 16 of 17 (Drawer Scaffold + Breakpoint Split)
-Plan: 1 of 1 in current phase
-Status: Phase 16 complete
-Last activity: 2026-03-12 -- Completed 16-01 Drawer Scaffold + Breakpoint Split
-
-Progress: [██████████] 100%
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-15 — Milestone v2.4 started
 
 ## Performance Metrics
 
@@ -44,14 +42,13 @@ Progress: [██████████] 100%
 All decisions logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- [v2.3]: Zero new dependencies -- cozy-ui Drawer + useBreakpoints already available
-- [v2.3]: Drawer anchor bottom with height 100% for fullscreen
-- [v2.3]: MUI Drawer needs disableScrollLock, disableEnforceFocus, disableAutoFocus ModalProps
-- [v2.3]: Push navigation via useState (single level: root | actionId)
-- [v2.3]: Desktop path must remain entirely untouched
-- [Phase 16]: ScribeContainer uses early-return for mobile Drawer, passthrough for desktop Popover
+- [v2.4]: Parser Markdown → Document Builder API runs inside plugin OO (ES5, callCommand sandbox)
+- [v2.4]: Single undo point via callCommand for all injection operations
+- [v2.4]: Progressive scope — inline → images → tableaux → styles custom
+- [v2.4]: Post-injection selection covers entire injected block
+- [v2.4]: Format preservation strategy to be explored (snapshot, fusion, or hybrid)
 
-### Pending Todos (carried from v2.2)
+### Pending Todos (carried from v2.3)
 
 - Fix "Selected Text" white-on-white in OO dark theme (cosmetic, deferred)
 - Button disable on deselection when no text selected (deferred)
@@ -61,9 +58,10 @@ Recent decisions affecting current work:
 
 - Plugin code must use ES5 syntax
 - OO HTML uses inline styles, not semantic tags (needs normalizer for Turndown)
-- PasteHtml has ordered list bug (OO #79263) -- must test in OO 9.3.0-138
-- callCommand sandbox blocks DOMParser/libraries -- all conversion in React app
-- No cozy-stack modifications -- frontend only
+- PasteHtml has ordered list bug (OO #79263) — must test in OO 9.3.0-138
+- callCommand sandbox blocks DOMParser/libraries — all conversion in React app
+- No cozy-stack modifications — frontend only
+- Document Builder API available inside callCommand (Api.CreateParagraph, Api.CreateRun etc.)
 
 ### Blockers/Concerns
 
@@ -71,6 +69,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-12T17:43:10.013Z
-Stopped at: Completed 16-01-PLAN.md
+Last session: 2026-03-15
+Stopped at: Defining requirements
 Resume file: None
