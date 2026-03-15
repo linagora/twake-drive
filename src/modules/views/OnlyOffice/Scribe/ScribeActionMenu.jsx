@@ -28,7 +28,14 @@ const DEV_MD_ACTION = {
   mockResult: null
 }
 
-const ScribeActionMenu = forwardRef(({ onSelect, onClose, selectedText: _selectedText }, ref) => {
+const PanelIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="1.5" y="2.5" width="13" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
+    <line x1="10" y1="2.5" x2="10" y2="13.5" stroke="currentColor" strokeWidth="1.2" />
+  </svg>
+)
+
+const ScribeActionMenu = forwardRef(({ onSelect, onClose, onOpenPanel, selectedText: _selectedText }, ref) => {
   const { t, lang } = useI18n()
   const theme = useTheme()
   const { isMobile } = useBreakpoints()
@@ -415,16 +422,58 @@ const ScribeActionMenu = forwardRef(({ onSelect, onClose, selectedText: _selecte
     [activeSubmenu, focusIndex, submenuFocusIndex, selectAction, onClose, updateFocus, actions, handleCustomLangSubmit, focusMenu, focusPrompt, isMobile]
   )
 
-  // Active submenu parent (used for mobile submenu rendering and prompt highlight)
-  const activeParent = activeSubmenu ? actions.find(a => a.id === activeSubmenu) : null
-
-  // Prompt highlight: in mobile submenu mode, track via submenuFocusIndex; otherwise via focusIndex
-  const isPromptHighlighted = isMobile && activeParent
-    ? submenuFocusIndex === (activeParent.children?.length ?? 0)
-    : focusIndex === PROMPT_INDEX
+  const [hoveredPanelBtn, setHoveredPanelBtn] = useState(false)
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: isMobile ? 'stretch' : 'flex-start', gap: 8, ...(isMobile ? { width: '100%' } : {}) }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+      {onOpenPanel && (
+        <div style={{ alignSelf: 'flex-end', position: 'relative' }}>
+          <button
+            type="button"
+            onClick={onOpenPanel}
+            onMouseEnter={() => setHoveredPanelBtn(true)}
+            onMouseLeave={() => setHoveredPanelBtn(false)}
+            style={{
+              cursor: 'pointer',
+              borderRadius: 8,
+              padding: '6px 10px',
+              background: (theme.palette.type || theme.palette.mode) === 'dark' ? '#2d2d2d' : 'white',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+              border: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              fontSize: 13,
+              fontFamily: 'inherit',
+              color: (theme.palette.type || theme.palette.mode) === 'dark' ? '#e0e0e0' : '#333',
+              opacity: hoveredPanelBtn ? 1 : 0.7,
+              transition: 'opacity 200ms ease'
+            }}
+          >
+            <PanelIcon />
+            {hoveredPanelBtn && (
+              <span style={{
+                position: 'absolute',
+                bottom: '100%',
+                right: 0,
+                marginBottom: 6,
+                padding: '5px 8px',
+                background: (theme.palette.type || theme.palette.mode) === 'dark' ? '#555' : '#333',
+                borderRadius: 6,
+                fontSize: 12,
+                whiteSpace: 'nowrap',
+                pointerEvents: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4
+              }}>
+                <span style={{ color: 'white' }}>{t('Scribe.button.open_panel')}</span>
+                <span style={{ color: '#999' }}>(Ctrl+Shift+I)</span>
+              </span>
+            )}
+          </button>
+        </div>
+      )}
       <Paper
         ref={paperRef}
         tabIndex={-1}
@@ -660,6 +709,7 @@ ScribeActionMenu.displayName = 'ScribeActionMenu'
 ScribeActionMenu.propTypes = {
   onSelect: PropTypes.func.isRequired,
   onClose: PropTypes.func,
+  onOpenPanel: PropTypes.func,
   selectedText: PropTypes.string
 }
 

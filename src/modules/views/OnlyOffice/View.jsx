@@ -48,20 +48,33 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
   const allowedOrigins = useMemo(() => ['*'], []) // TODO: restrict in production
   const { pendingIntent, showScribeButton, respond } = useCozyBridge(
     allowedOrigins,
-    { onTogglePanel: togglePanel }
+    { onTogglePanel: togglePanel, isPanelOpen }
   )
 
   const showFloatingZone = isScribeEnabled && !isPanelOpen
 
-  // Store partialTableInfo in a ref (doesn't need to trigger re-renders)
-  const partialTableInfoRef = useRef(null)
+  // Delay popover display by 200ms to allow double Ctrl+Shift+I to open panel
+  // without a popover flash. If the panel opens during the delay, popover is skipped.
+  const [popoverReady, setPopoverReady] = useState(false)
+  const popoverTimerRef = useRef(null)
+
   useEffect(() => {
-    if (pendingIntent?.data?.partialTableInfo) {
-      partialTableInfoRef.current = pendingIntent.data.partialTableInfo
+    if (pendingIntent && !isPanelOpen) {
+      popoverTimerRef.current = setTimeout(() => {
+        setPopoverReady(true)
+      }, 200)
+      return () => {
+        clearTimeout(popoverTimerRef.current)
+        popoverTimerRef.current = null
+      }
     } else {
-      partialTableInfoRef.current = null
+      setPopoverReady(false)
+      if (popoverTimerRef.current) {
+        clearTimeout(popoverTimerRef.current)
+        popoverTimerRef.current = null
+      }
     }
-  }, [pendingIntent])
+  }, [pendingIntent, isPanelOpen])
 
   // Send trigger-intent to plugin iframe (nested inside OO editor iframe).
   // We broadcast to all descendant iframes so the message reaches the plugin.
@@ -126,12 +139,25 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
     handleCancelRef.current = handleCancel
   }, [handleCancel])
 
-  // Close popover when panel opens while popover is active
+  // Close popover when panel opens while popover is active.
+  // Use respond() directly instead of handleCancel to avoid focusEditor
+  // stealing focus from the panel.
   useEffect(() => {
     if (isPanelOpen && pendingIntent) {
-      handleCancelRef.current()
+      respond({ status: 'ok', action: 'cancel', data: {} })
     }
-  }, [isPanelOpen, pendingIntent])
+  }, [isPanelOpen, pendingIntent, respond])
+
+  // Focus management: return focus to editor when panel closes
+  const prevPanelOpenRef = useRef(isPanelOpen)
+  useEffect(() => {
+    const wasOpen = prevPanelOpenRef.current
+    prevPanelOpenRef.current = isPanelOpen
+
+    if (!isPanelOpen && wasOpen) {
+      setTimeout(focusEditor, 100)
+    }
+  }, [isPanelOpen, focusEditor])
 
   // Ctrl+Shift+I single-press from open popover: open panel and close popover
   useEffect(() => {
@@ -150,6 +176,11 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
   }, [pendingIntent, isPanelOpen, openPanel])
+
+  // Ctrl+Shift+I when panel is open is handled by useCozyBridge:
+  // the plugin casts AI_TEXT_ASSISTANT or TOGGLE_SCRIBE_PANEL, and the bridge
+  // handler closes the panel. No document keydown listener needed here
+  // since OO keeps focus in its cross-origin iframe.
 
   const initEditor = useCallback(() => {
     new window.DocsAPI.DocEditor('onlyOfficeEditor', docEditorConfig)
@@ -212,7 +243,7 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
             onTogglePanel={togglePanel}
           />
           <ScribePopover
-            open={!!pendingIntent && !isPanelOpen}
+            open={popoverReady && !!pendingIntent && !isPanelOpen}
             selectedText={pendingIntent?.data?.text || ''}
             selectedHtml={pendingIntent?.data?.html || ''}
             enrichedMd={pendingIntent?.data?.enrichedMd || ''}
@@ -221,6 +252,10 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
             onReplace={handleReplace}
             onInsert={handleInsert}
             onCancel={handleCancel}
+            onOpenPanel={openPanel ? () => {
+              openPanel()
+              respond({ status: 'ok', action: 'cancel', data: {} })
+            } : undefined}
           />
         </>
       )}

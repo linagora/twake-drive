@@ -79,7 +79,7 @@
     }
   }
 
-  // Build AI_TEXT_ASSISTANT intent data with enriched markdown (EXTR-01)
+  // Build AI_TEXT_ASSISTANT intent data with optional HTML field (EXTR-02)
   function buildEditIntentData() {
     var data = { text: lastSelectedText };
     if (lastEnrichedMd && lastEnrichedMd.length > 0) {
@@ -2877,44 +2877,6 @@
   } catch (e) {
     log("Cannot register Ctrl+Shift+I on parent document: " + e.message);
     document.addEventListener("keydown", handleCtrlShiftI);
-  }
-
-  // ---- Ctrl+Shift+I double-tap for panel toggle ----
-  var lastCtrlShiftITime = 0;
-  var DOUBLE_TAP_MS = 500;
-
-  try {
-    window.parent.document.addEventListener("keydown", function(e) {
-      var isCtrlShiftI = (e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "I" || e.key === "i");
-      if (!isCtrlShiftI) return;
-      e.preventDefault();
-
-      var now = Date.now();
-      if (now - lastCtrlShiftITime < DOUBLE_TAP_MS) {
-        log("Ctrl+Shift+I double-tap: toggle panel");
-        castIntent("TOGGLE_SCRIBE_PANEL", {}, true);
-        lastCtrlShiftITime = 0;
-      } else {
-        lastCtrlShiftITime = now;
-      }
-    });
-    log("Ctrl+Shift+I double-tap registered on parent document");
-  } catch (e) {
-    log("Cannot register Ctrl+Shift+I on parent document: " + e.message);
-    document.addEventListener("keydown", function(e) {
-      var isCtrlShiftI = (e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "I" || e.key === "i");
-      if (!isCtrlShiftI) return;
-      e.preventDefault();
-
-      var now = Date.now();
-      if (now - lastCtrlShiftITime < DOUBLE_TAP_MS) {
-        log("Ctrl+Shift+I double-tap: toggle panel (fallback)");
-        castIntent("TOGGLE_SCRIBE_PANEL", {}, true);
-        lastCtrlShiftITime = 0;
-      } else {
-        lastCtrlShiftITime = now;
-      }
-    });
   }
 
   // ---- Toolbar button ----

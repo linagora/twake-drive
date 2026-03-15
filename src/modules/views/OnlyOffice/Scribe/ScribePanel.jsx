@@ -45,6 +45,7 @@ export const ScribePanel = () => {
 
   return (
     <div
+      data-scribe-panel
       style={{
         width: PANEL_WIDTH,
         flexShrink: 0,

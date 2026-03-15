@@ -14,7 +14,7 @@ Cozy Stack (window.top)
 
 **Communication flow:**
 1. User selects text → plugin detects via `initOnSelectionChanged`
-2. User triggers Scribe (toolbar button, Ctrl+I, or context menu) → plugin sends `AI_TEXT_EDIT` intent via `postMessage`
+2. User triggers Scribe (toolbar button, Ctrl+Shift+I, or context menu) → plugin sends `AI_TEXT_ASSISTANT` intent via `postMessage`
 3. CozyBridge in Cozy Drive receives intent → opens ScribePopover
 4. User clicks Replace/Insert/Cancel → response sent back to plugin
 5. Plugin modifies document (see [Rich Text Reinjection Pipeline](#rich-text-reinjection-pipeline))
@@ -163,7 +163,7 @@ cozy-stack serve --appdir drive:./build/ --disable-csp
 3. Select text in the document
 4. Trigger Scribe via one of:
    - **Toolbar button**: click "Scribe" in the Plugins tab
-   - **Keyboard shortcut**: Ctrl+I (or Cmd+I on Mac)
+   - **Keyboard shortcut**: Ctrl+Shift+I (or Cmd+Shift+I on Mac)
    - **Context menu**: right-click → "Scribe"
 5. The Scribe popover should appear with action choices, then Replace / Insert After / Cancel buttons
 
@@ -219,7 +219,7 @@ The protocol is defined in `src/lib/cozy-bridge/`:
   "type": "cozy-bridge:intent",
   "version": 1,
   "intentId": "<uuid>",
-  "action": "AI_TEXT_EDIT",
+  "action": "AI_TEXT_ASSISTANT",
   "source": "onlyoffice-plugin",
   "data": { "text": "selected text", "html": "<b>selected</b> text", "format": "html" }
 }

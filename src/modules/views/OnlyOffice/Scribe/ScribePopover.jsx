@@ -26,7 +26,7 @@ import styles from '@/modules/views/OnlyOffice/Scribe/scribe.styl'
  *
  * Closing the popover during loading aborts the in-flight API request via AbortController.
  */
-const ScribePopover = ({ open, selectedText, selectedHtml, enrichedMd, tableAmbiguity, partialTableInfo, onReplace, onInsert, onCancel }) => {
+const ScribePopover = ({ open, selectedText, selectedHtml, onReplace, onInsert, onCancel, onOpenPanel }) => {
   const { t } = useI18n()
   const client = useClient()
   const abortRef = useRef(null)
@@ -219,13 +219,8 @@ const ScribePopover = ({ open, selectedText, selectedHtml, enrichedMd, tableAmbi
         }
       }}
     >
-      {ambiguityMessage && step === 'menu' && (
-        <Alert severity="warning" sx={{ m: 1, maxWidth: 400, borderRadius: 2 }}>
-          {ambiguityMessage}
-        </Alert>
-      )}
-      {step === 'menu' && !ambiguityMessage && (
-        <ScribeActionMenu ref={menuRef} onSelect={handleActionSelect} onClose={handleClose} selectedText={selectedText} />
+      {step === 'menu' && (
+        <ScribeActionMenu ref={menuRef} onSelect={handleActionSelect} onClose={handleClose} onOpenPanel={onOpenPanel} selectedText={selectedText} />
       )}
       {step === 'loading' && (
         <Paper ref={loadingRef} tabIndex={-1} className={styles['scribe-loading-panel']} elevation={0} style={{ outline: 'none' }}>
@@ -270,7 +265,8 @@ ScribePopover.propTypes = {
   partialTableInfo: PropTypes.object,
   onReplace: PropTypes.func.isRequired,
   onInsert: PropTypes.func.isRequired,
-  onCancel: PropTypes.func.isRequired
+  onCancel: PropTypes.func.isRequired,
+  onOpenPanel: PropTypes.func
 }
 
 export { ScribePopover }

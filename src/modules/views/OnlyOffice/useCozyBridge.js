@@ -5,33 +5,48 @@ import { CozyBridge } from '@/lib/cozy-bridge'
 /**
  * React hook wrapping CozyBridge lifecycle with intent state.
  *
- * Creates a CozyBridge instance on mount, registers handlers for
- * AI_TEXT_ASSISTANT intents (opens Scribe popover) and SHOW/HIDE_SCRIBE_BUTTON
- * intents (controls the floating button), and provides a respond callback
- * to send responses back to the plugin.
+ * Creates a CozyBridge instance on mount, registers handlers for:
+ * - AI_TEXT_ASSISTANT: opens Scribe popover (or closes panel if panel is open)
+ * - SHOW/HIDE_SCRIBE_BUTTON: controls the floating button visibility
+ * - TOGGLE_SCRIBE_PANEL: toggles the side panel open/closed
  *
  * @param {string[]} allowedOrigins - Stable array of allowed origins.
  *   In dev: ['*']. In prod: derive from instance URL and OO server URL.
  *   Must be memoized by the parent to avoid unnecessary re-renders.
+ * @param {object} [options]
+ * @param {Function} [options.onTogglePanel] - Callback to toggle the panel (from ScribeContext)
+ * @param {boolean} [options.isPanelOpen] - Current panel state; when true, AI_TEXT_ASSISTANT
+ *   closes the panel instead of opening the popover (single Ctrl+Shift+I close)
  * @returns {{ pendingIntent: object|null, showScribeButton: object|null, respond: Function }}
  */
-export function useCozyBridge(allowedOrigins, { onTogglePanel } = {}) {
+export function useCozyBridge(allowedOrigins, { onTogglePanel, isPanelOpen } = {}) {
   const [pendingIntent, setPendingIntent] = useState(null)
   const [showScribeButton, setShowScribeButton] = useState(null)
   const bridgeRef = useRef(null)
   const respondRef = useRef(null)
   const togglePanelRef = useRef(onTogglePanel)
+  const isPanelOpenRef = useRef(isPanelOpen)
 
-  // Keep the ref current to avoid stale closure in bridge handler
+  // Keep refs current to avoid stale closures in bridge handlers
   useEffect(() => {
     togglePanelRef.current = onTogglePanel
   }, [onTogglePanel])
+  useEffect(() => {
+    isPanelOpenRef.current = isPanelOpen
+  }, [isPanelOpen])
 
   useEffect(() => {
     const bridge = new CozyBridge(allowedOrigins)
     bridgeRef.current = bridge
 
     bridge.onIntent('AI_TEXT_ASSISTANT', (intentMessage, respondFn) => {
+      // If panel is open, Ctrl+Shift+I should close the panel
+      // instead of opening a popover
+      if (isPanelOpenRef.current) {
+        respondFn({ status: 'ok', action: 'cancel', data: {} })
+        if (togglePanelRef.current) togglePanelRef.current()
+        return
+      }
       setPendingIntent(intentMessage)
       respondRef.current = respondFn
     })
