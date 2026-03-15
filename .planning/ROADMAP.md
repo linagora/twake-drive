@@ -6,7 +6,8 @@
 - ✅ **v2.0 Scribe Live AI** -- Phases 7-9 (shipped 2026-03-06)
 - ✅ **v2.1 Formatage Riche** -- Phases 10-13 (shipped 2026-03-09)
 - ✅ **v2.2 Ameliorations UX** -- Phases 14-15 (shipped 2026-03-11)
-- 🚧 **v2.3 Menu Responsive** -- Phases 16-17 (in progress)
+- ✅ **v2.3 Menu Responsive** -- Phases 16-17 (shipped 2026-03-15)
+- 🚧 **v2.4 Document Builder Injection** -- Phases 18-20 (in progress)
 
 ## Phases
 
@@ -57,50 +58,76 @@ Full details: `.planning/milestones/v2.2-ROADMAP.md`
 
 </details>
 
-### 🚧 v2.3 Menu Responsive (In Progress)
+<details>
+<summary>✅ v2.3 Menu Responsive (Phases 16-17) -- SHIPPED 2026-03-15</summary>
 
-**Milestone Goal:** Rendre le menu Scribe responsive -- drawer plein ecran sur mobile avec navigation push pour les sous-menus, sans toucher au chemin desktop.
+- [x] Phase 16: Drawer Scaffold + Breakpoint Split (1/1 plan) -- completed 2026-03-12
+- [x] Phase 17: Push Navigation + Adaptive Layout (2/2 plans) -- completed 2026-03-15
 
-- [x] **Phase 16: Drawer Scaffold + Breakpoint Split** - Fullscreen drawer on mobile with correct MUI configuration, desktop path unchanged (completed 2026-03-12)
-- [ ] **Phase 17: Push Navigation + Adaptive Layout** - Push submenu navigation, back button, adaptive prompt input inside drawer
+Full details: `.planning/milestones/v2.3-ROADMAP.md`
+
+</details>
+
+### 🚧 v2.4 Document Builder Injection (In Progress)
+
+**Milestone Goal:** Remplacer PasteHtml par l'API Document Builder OO pour injecter le resultat Scribe avec un controle fin sur chaque element -- pipeline Markdown-to-Builder, formatage inline et blocs, selection post-injection, smart spacing.
+
+- [ ] **Phase 18: Token Pipeline + Minimal Builder Injection** - Prove the parse-outside-build-inside architecture with bold/italic paragraphs injected via Builder API
+- [ ] **Phase 19: Extended Markdown Support** - Complete inline formatting (strikethrough, code spans, links) and block elements (headings, lists) via Builder API
+- [ ] **Phase 20: Injection Polish** - Post-injection selection via sentinel markers and smart spacing at injection boundaries
 
 ## Phase Details
 
-### Phase 16: Drawer Scaffold + Breakpoint Split
-**Goal**: User on mobile sees Scribe open as a fullscreen drawer instead of a popover, with no layout shift or focus conflicts
-**Depends on**: Phase 15
-**Requirements**: RESP-01, RESP-05
+### Phase 18: Token Pipeline + Minimal Builder Injection
+**Goal**: User can trigger Scribe and get AI results injected into the document via Builder API with bold/italic formatting and proper paragraph separation, in a single undo point
+**Depends on**: Phase 17
+**Requirements**: PARSE-01, PARSE-02, PARSE-03, INL-01, BLK-01, INJ-01
 **Success Criteria** (what must be TRUE):
-  1. On a mobile viewport (<=768px), triggering Scribe opens a fullscreen bottom drawer instead of the centered popover
-  2. The drawer uses cozy-ui `isMobile` breakpoint (not a custom media query or hardcoded width)
-  3. Opening the drawer causes no scroll lock layout shift (no body reflow)
-  4. On desktop viewport, the existing Popover behavior is completely unchanged -- same position, same flyout submenus, same interactions
-  5. Tapping the backdrop closes the drawer
-**Plans**: 1 plan
-
-Plans:
-- [ ] 16-01-PLAN.md — Breakpoint-conditional container (ScribeContainer) + ScribePopover refactor
-
-### Phase 17: Push Navigation + Adaptive Layout
-**Goal**: User on mobile can navigate submenus via push navigation and use the prompt input without overflow
-**Depends on**: Phase 16
-**Requirements**: RESP-02, RESP-03, RESP-04
-**Success Criteria** (what must be TRUE):
-  1. Tapping a parent menu item (e.g., Translate) replaces the main list with the submenu items in-place inside the drawer
-  2. A back button appears at the top of the submenu view, and tapping it returns to the main menu list
-  3. The prompt input fills the full width of the drawer (no 500px overflow on narrow screens)
-  4. Closing and reopening the drawer always shows the root menu (push navigation state resets on close)
-  5. Hover handlers from the desktop flyout path do not fire on mobile -- only tap/click interactions apply
+  1. When Scribe injects a multi-paragraph AI result, each paragraph appears as a separate OO paragraph (not newlines within a single paragraph)
+  2. Bold, italic, and bold+italic text from the AI result appears with the correct OO formatting (SetBold, SetItalic) in the injected content
+  3. The entire injection is undoable with a single Ctrl+Z (one undo point, not multiple)
+  4. The Scribe React interface sends raw Markdown to the plugin -- no token format leaks across the boundary
+  5. If the Builder API injection fails for any reason, PasteHtml fallback kicks in and the user still gets their result injected
 **Plans**: TBD
 
 Plans:
-- [ ] 17-01: ScribeDrawerMenu component with push navigation
-- [ ] 17-02: Adaptive prompt input and mobile polish
+- [ ] 18-01: Markdown tokenizer + Asc.scope pipeline + minimal Builder interpreter
+- [ ] 18-02: Bold/italic inline runs + multi-paragraph injection + PasteHtml fallback
+
+### Phase 19: Extended Markdown Support
+**Goal**: User gets headings, bullet lists, numbered lists, strikethrough, code spans, and hyperlinks correctly rendered as native OO elements when Scribe injects AI results
+**Depends on**: Phase 18
+**Requirements**: INL-02, INL-03, INL-04, BLK-02, BLK-03, BLK-04
+**Success Criteria** (what must be TRUE):
+  1. Headings (H1 through H6) in the AI result are injected with the corresponding OO heading styles, visually distinct from body text
+  2. Bullet lists and numbered lists (including nested levels) are injected as native OO lists with proper indentation, not plain text with dashes or numbers
+  3. Links in the AI result are injected as clickable OO hyperlinks (Ctrl+click opens the URL)
+  4. Strikethrough text appears with OO strikethrough formatting and code spans appear in a monospace font
+**Plans**: TBD
+
+Plans:
+- [ ] 19-01: Headings + bullet lists + numbered lists (block elements)
+- [ ] 19-02: Strikethrough + code spans + hyperlinks (inline elements)
+
+### Phase 20: Injection Polish
+**Goal**: After injection, the user sees the injected content selected and the spacing around it is correct regardless of context (replace vs insert, mid-paragraph vs end)
+**Depends on**: Phase 19
+**Requirements**: INJ-02, INJ-03
+**Success Criteria** (what must be TRUE):
+  1. After clicking Replace or Insert, the injected content is visually selected (highlighted) in the OO editor -- the user can immediately see what was injected
+  2. When replacing selected text, appropriate spaces are added at the boundaries so the injected content does not merge with adjacent words
+  3. When inserting after a selection, appropriate line breaks separate the injected content from the existing text
+  4. The selection and spacing work correctly for all content types (plain text, formatted text, lists, headings)
+**Plans**: TBD
+
+Plans:
+- [ ] 20-01: Sentinel marker spike + post-injection selection implementation
+- [ ] 20-02: Smart spacing for replace and insert modes
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 16 → 17
+Phases execute in numeric order: 18 -> 19 -> 20
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -119,5 +146,8 @@ Phases execute in numeric order: 16 → 17
 | 13. Reinjection et Integrite Pipeline | v2.1 | 1/1 | Complete | 2026-03-09 |
 | 14. Navigation, clavier et micro-interactions | v2.2 | 2/2 | Complete | 2026-03-10 |
 | 15. Panneau de resultat interactif | v2.2 | 1/1 | Complete | 2026-03-11 |
-| 16. Drawer Scaffold + Breakpoint Split | 1/1 | Complete    | 2026-03-12 | - |
-| 17. Push Navigation + Adaptive Layout | v2.3 | 0/2 | Not started | - |
+| 16. Drawer Scaffold + Breakpoint Split | v2.3 | 1/1 | Complete | 2026-03-12 |
+| 17. Push Navigation + Adaptive Layout | v2.3 | 2/2 | Complete | 2026-03-15 |
+| 18. Token Pipeline + Minimal Builder Injection | v2.4 | 0/2 | Not started | - |
+| 19. Extended Markdown Support | v2.4 | 0/2 | Not started | - |
+| 20. Injection Polish | v2.4 | 0/2 | Not started | - |

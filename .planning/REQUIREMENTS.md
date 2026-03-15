@@ -62,13 +62,26 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (populated by roadmapper) | | |
+| PARSE-01 | Phase 18 | Pending |
+| PARSE-02 | Phase 18 | Pending |
+| PARSE-03 | Phase 18 | Pending |
+| INL-01 | Phase 18 | Pending |
+| INL-02 | Phase 19 | Pending |
+| INL-03 | Phase 19 | Pending |
+| INL-04 | Phase 19 | Pending |
+| BLK-01 | Phase 18 | Pending |
+| BLK-02 | Phase 19 | Pending |
+| BLK-03 | Phase 19 | Pending |
+| BLK-04 | Phase 19 | Pending |
+| INJ-01 | Phase 18 | Pending |
+| INJ-02 | Phase 20 | Pending |
+| INJ-03 | Phase 20 | Pending |
 
 **Coverage:**
 - v2.4 requirements: 14 total
-- Mapped to phases: 0
-- Unmapped: 14 ⚠️
+- Mapped to phases: 14
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-15*
-*Last updated: 2026-03-15 after initial definition*
+*Last updated: 2026-03-15 after roadmap creation*
