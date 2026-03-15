@@ -1,314 +1,577 @@
-# Architecture Research
+# Architecture: Document Builder API Injection
 
-**Domain:** Responsive drawer integration for Scribe AI assistant in OnlyOffice/Cozy Drive
-**Researched:** 2026-03-12
-**Confidence:** HIGH
+**Domain:** Rich content injection via OO Document Builder API for Scribe AI assistant
+**Researched:** 2026-03-15
+**Confidence:** MEDIUM-HIGH (API surface verified via official docs; format snapshot iteration is partially verified)
 
-## Standard Architecture
-
-### System Overview
+## Current Architecture (v2.1-v2.3)
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                         View.jsx (entry point)                       │
-│  useBreakpoints() → isMobile  (already present, unused for Scribe)  │
-│  useCozyBridge() → { pendingIntent, showScribeButton, respond }      │
-├─────────────────────────────────────────────────────────────────────┤
-│                    ScribePopover.jsx  (MODIFIED)                     │
-│                                                                      │
-│  isMobile=false → MUI Popover (center viewport, existing)           │
-│  isMobile=true  → MUI Drawer  (anchor=bottom, fullscreen)           │
-│                                                                      │
-│  Owns: step machine (menu / loading / result)                        │
-│  Owns: abortRef, result, loadingMessage, lastAction                  │
-│  Owns: dragOffset, panelSize (desktop only — not passed on mobile)   │
-├──────────────────────────┬──────────────────────────────────────────┤
-│  ScribeActionMenu.jsx    │  ScribeResultPanel.jsx                    │
-│  (MODIFIED)              │  (NO STRUCTURAL CHANGE)                   │
-│                          │                                           │
-│  receives isMobile prop  │  Drag/resize props default to null        │
-│                          │  on mobile — handlers exist but are       │
-│  isMobile=false:         │  inert because Drawer owns layout         │
-│    two Paper cards       │                                           │
-│    (existing layout)     │                                           │
-│    flyout submenus       │                                           │
-│    (position: absolute)  │                                           │
-│                          │                                           │
-│  isMobile=true:          │                                           │
-│    delegates to          │                                           │
-│    ScribeDrawerMenu      │                                           │
-│    (push navigation)     │                                           │
-└──────────────┬───────────┴──────────────────────────────────────────┘
-               │
-┌──────────────▼───────────┐
-│   ScribeDrawerMenu.jsx   │
-│   (NEW — mobile only)    │
-│                          │
-│   viewStack state        │
-│   [{ type:'root' }]      │
-│     → { type:'submenu',  │
-│         actionId }       │
-│                          │
-│   Back header row        │
-│   Full-width list items  │
-│   Full-width prompt      │
-└──────────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│  View.jsx                                                        │
+│  markdownToHtml(resultText) → html                               │
+│  unwrapSingleParagraph(html) → finalHtml                         │
+│  respond({ action:'replace', data:{ text, html } })              │
+├──────────────────────────────────────────────────────────────────┤
+│  postMessage (cozy-bridge:response)                              │
+│  ↓                                                               │
+│  code.js (plugin, ES5)                                           │
+│  handleIntentResponse() → pasteHtml(html, mode)                  │
+│    Step 1: callCommand → detect adjacent chars (read-only)       │
+│    Step 2: executeMethod("PasteHtml", [html]) → injects content  │
+│  Result: single undo point (PasteHtml only)                      │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
-### Component Responsibilities
+### What Works
+- HTML round-trip: OO HTML → normalizeHtml → Turndown → MD → LLM → MD → marked → HTML → PasteHtml
+- Single undo point via PasteHtml
+- Smart spacing with nbsp
 
-| Component | Responsibility | Modified for v2.3? |
-|-----------|---------------|---------------------|
-| `View.jsx` | Passes `isMobile` to ScribePopover | YES — one prop added |
-| `ScribePopover.jsx` | Chooses Popover vs Drawer container; owns step machine | YES — major |
-| `ScribeActionMenu.jsx` | Renders desktop two-card layout OR delegates to ScribeDrawerMenu | YES — major |
-| `ScribeDrawerMenu.jsx` | Push-navigation view stack for mobile submenus | YES — new file |
-| `ScribePromptInput.jsx` | Free-prompt input row | YES — remove hard-coded 500px width |
-| `ScribeResultPanel.jsx` | AI result with drag/resize (inert on mobile) | NO — structurally unchanged |
-| `scribeActions.js` | Declarative action tree | NO |
+### What Breaks
+- **No post-paste selection** - PasteHtml returns inconsistent cursor positions
+- **Format loss** - Markdown cannot represent font size, font family, colors, paragraph spacing, indentation
+- **No image preservation** - Images stripped by Turndown (intentionally)
+- **Table structure loss** - Column widths, cell borders, merged cells lost in MD round-trip
+- **No element-level control** - PasteHtml is a black box; cannot manipulate individual runs
 
-## Recommended Project Structure
+## Target Architecture (v2.4)
 
-No new directories. One new component file. The existing Scribe module structure is preserved.
+### Core Principle: Build, Don't Paste
+
+Replace `PasteHtml` with `callCommand` using Document Builder API to construct content element-by-element. This gives:
+1. Element-level control over every paragraph, run, table cell
+2. Ability to apply format metadata (font, size, color) from original selection
+3. Ability to track positions for post-injection selection
+4. Single undo point (callCommand = one undo operation)
+
+### New Data Flow
 
 ```
-src/modules/views/OnlyOffice/Scribe/
-├── ScribePopover.jsx          # MODIFIED: isMobile prop → Popover|Drawer switch
-├── ScribeActionMenu.jsx       # MODIFIED: isMobile prop, delegates to ScribeDrawerMenu on mobile
-├── ScribeDrawerMenu.jsx       # NEW: push-navigation view stack (mobile only)
-├── ScribePromptInput.jsx      # MODIFIED: remove hard-coded width: 500px
-├── ScribeResultPanel.jsx      # unchanged
-├── MarkdownPreview.jsx        # unchanged
-├── scribeActions.js           # unchanged
-├── scribeAI.js                # unchanged
-├── scribeConversion.js        # unchanged
-├── scribeDevMode.js           # unchanged
-├── mockTransform.js           # unchanged
-└── scribe.styl                # MINOR: add .scribe-drawer-header, .scribe-drawer-list classes
+                     CAPTURE PHASE (before LLM)
+┌──────────────────────────────────────────────────────────────┐
+│  code.js: init() receives HTML (existing)                    │
+│  NEW: callCommand → snapshot format metadata from selection   │
+│    - iterate paragraphs via GetAllParagraphs()               │
+│    - iterate runs via GetElement(i) / GetElementsCount()     │
+│    - extract per-run: GetBold, GetItalic, GetFontSize,       │
+│      GetFontFamily, GetColor, GetUnderline, GetStrikeout     │
+│    - extract per-paragraph: GetJc, GetIndLeft, GetIndRight,  │
+│      GetSpacingBefore, GetSpacingAfter                       │
+│    - serialize to JSON → store in lastFormatSnapshot          │
+│  castIntent("AI_TEXT_EDIT", { text, html, formatSnapshot })  │
+└──────────────────────────────────────────────────────────────┘
+                           ↓
+                     LLM ROUND-TRIP (unchanged)
+┌──────────────────────────────────────────────────────────────┐
+│  ScribePopover: htmlToMarkdown → messages → callScribeAI     │
+│  LLM returns markdown text                                   │
+└──────────────────────────────────────────────────────────────┘
+                           ↓
+                     INJECTION PHASE (new)
+┌──────────────────────────────────────────────────────────────┐
+│  View.jsx: respond({ action:'replace',                       │
+│    data:{ text, md, formatSnapshot } })                      │
+│  NOTE: no more markdownToHtml conversion in View.jsx         │
+│  Raw MD sent to plugin                                       │
+├──────────────────────────────────────────────────────────────┤
+│  code.js: handleIntentResponse()                             │
+│    NEW: parseMarkdown(md) → AST (inline MD parser, ES5)      │
+│    NEW: buildContent(ast, formatSnapshot) → Builder API calls │
+│    callCommand(function() {                                  │
+│      // Parse MD → paragraphs + inline tokens                │
+│      // For each paragraph:                                  │
+│      //   p = Api.CreateParagraph()                          │
+│      //   apply para-level format from snapshot              │
+│      //   For each inline token (text, bold, italic, link):  │
+│      //     run = Api.CreateRun()                            │
+│      //     run.AddText(token.text)                          │
+│      //     apply run-level format (merge snapshot + MD)     │
+│      //     p.AddElement(run)                                │
+│      //   content.push(p)                                    │
+│      // For tables: Api.CreateTable(cols, rows)              │
+│      // doc.InsertContent(content)                           │
+│      // Track positions → select injected range              │
+│    })                                                        │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-### Structure Rationale
+## New Components
 
-- **ScribeDrawerMenu.jsx (new):** The push-navigation stack (root view → submenu view) is sufficiently complex — back button, dynamic header, full-width list items, custom lang input inline — to justify its own file rather than a 200-line `if (isMobile)` block inside `ScribeActionMenu`.
-- **ScribePromptInput.jsx:** Only the Paper wrapper in `ScribeActionMenu` has `width: 500px`. The input component itself has no width constraint; the fix is in `ScribeActionMenu`'s layout code, not in `ScribePromptInput`.
+### 1. Format Snapshot Extractor (code.js, ES5)
 
-## Architectural Patterns
+**Location:** `code.js`, new function `captureFormatSnapshot()`
+**Trigger:** Called inside `init()` after selection detected, before castIntent
+**Runs in:** `callCommand` (has access to Builder API)
 
-### Pattern 1: isMobile prop threading
-
-**What:** `isMobile` is read once in `View.jsx` (already calls `useBreakpoints()`) and passed as a prop down to `ScribePopover`, then to `ScribeActionMenu`. No hook duplication, no new context needed.
-
-**When to use:** When a single boolean reaches 2-3 component levels deep. Prop drilling is appropriate at this depth; a dedicated context would add indirection with no benefit.
-
-**Trade-offs:** Explicit and testable. Each component's interface clearly declares its dependency on `isMobile`. Becomes unwieldy only beyond 4-5 levels, which is not the case here.
-
-```jsx
-// View.jsx (add one prop)
-const { isMobile } = useBreakpoints() // already exists
-<ScribePopover isMobile={isMobile} ... />
-
-// ScribePopover.jsx
-const ScribePopover = ({ isMobile, ...rest }) => {
-  const content = (
-    <>
-      {step === 'menu' && (
-        <ScribeActionMenu isMobile={isMobile} ref={menuRef} ... />
-      )}
-      {/* loading and result steps: same on both */}
-    </>
-  )
-  return isMobile ? (
-    <Drawer anchor="bottom" open={open} onClose={handleClose}
-      PaperProps={{ style: { height: '100%', maxHeight: '100%', borderRadius: 0 } }}>
-      {content}
-    </Drawer>
-  ) : (
-    <Popover ... >{content}</Popover>
-  )
-}
 ```
+captureFormatSnapshot() → callCommand(function() {
+  var doc = Api.GetDocument();
+  var range = doc.GetRangeBySelect();
+  var paragraphs = range.GetAllParagraphs();
+  var snapshot = { paragraphs: [] };
 
-### Pattern 2: Push-navigation view stack for mobile submenus
-
-**What:** `ScribeDrawerMenu` maintains a `viewStack` state array tracking navigation history. The current view is `viewStack[viewStack.length - 1]`. Each view is a descriptor: `{ type: 'root' }` or `{ type: 'submenu', actionId: string }`. Push appends; the Back button pops.
-
-**When to use:** Whenever a nested menu needs mobile-style in-place navigation instead of flyout panels. The stack replaces `position: absolute` flyouts (which work on desktop but overflow or clip on mobile).
-
-**Trade-offs:** Simple. No animation library required (the Drawer entry animation handles perceived responsiveness). The action tree never exceeds depth 2 (root + one submenu level), so the stack is always either 1 or 2 entries.
-
-```jsx
-// ScribeDrawerMenu.jsx
-const ScribeDrawerMenu = ({ actions, onSelect, onClose, t }) => {
-  const [viewStack, setViewStack] = useState([{ type: 'root' }])
-  const currentView = viewStack[viewStack.length - 1]
-
-  const pushSubmenu = (actionId) =>
-    setViewStack(prev => [...prev, { type: 'submenu', actionId }])
-
-  const popView = () =>
-    setViewStack(prev => prev.length > 1 ? prev.slice(0, -1) : prev)
-
-  if (currentView.type === 'root') {
-    return <RootView actions={actions} onPush={pushSubmenu} onSelect={onSelect} t={t} />
+  for (var i = 0; i < paragraphs.length; i++) {
+    var para = paragraphs[i];
+    var paraData = {
+      jc: para.GetJc(),
+      indLeft: para.GetIndLeft(),
+      indRight: para.GetIndRight(),
+      spacingBefore: para.GetSpacingBefore(),
+      spacingAfter: para.GetSpacingAfter(),
+      runs: []
+    };
+    var count = para.GetElementsCount();
+    for (var j = 0; j < count; j++) {
+      var el = para.GetElement(j);
+      // Elements may not all be runs - check GetClassType
+      if (el.GetClassType && el.GetClassType() === "run") {
+        paraData.runs.push({
+          text: el.GetText(),
+          bold: el.GetBold(),
+          italic: el.GetItalic(),
+          fontSize: el.GetFontSize(),
+          fontFamily: el.GetFontFamily(),
+          color: el.GetColor(),
+          underline: el.GetUnderline(),
+          strikeout: el.GetStrikeout()
+        });
+      }
+    }
+    snapshot.paragraphs.push(paraData);
   }
-  const parent = actions.find(a => a.id === currentView.actionId)
-  return <SubmenuView parent={parent} onBack={popView} onSelect={onSelect} t={t} />
+  return JSON.stringify(snapshot);
+}, false, false, callback);
+```
+
+**Confidence:** MEDIUM - GetAllParagraphs on range is documented. GetElement/GetElementsCount on paragraph is documented. Whether GetBold/GetItalic etc. return simple values from runs inside callCommand needs testing.
+
+**Risk:** GetColor returns an ApiRGBColor object, not a plain value. May need `.GetClassType()` checks and manual extraction. Test early.
+
+### 2. Markdown Parser (code.js, ES5)
+
+**Location:** `code.js`, new function `parseMarkdown(md)`
+**Constraint:** Must be ES5 (no arrow functions, no const/let, no template literals)
+**Runs in:** Inside `callCommand` (isolated context) OR in plugin context then passed via `Asc.scope`
+
+**Strategy:** Write a minimal inline MD parser. Do NOT try to port a full library.
+
+**Tokens to support (ordered by priority):**
+
+| Priority | Token | MD Syntax | Builder API |
+|----------|-------|-----------|-------------|
+| P0 | Plain text | `text` | `run.AddText()` |
+| P0 | Bold | `**text**` | `run.SetBold(true)` |
+| P0 | Italic | `*text*` | `run.SetItalic(true)` |
+| P0 | Bold+Italic | `***text***` | `run.SetBold(true); run.SetItalic(true)` |
+| P0 | Paragraphs | `\n\n` | `Api.CreateParagraph()` |
+| P1 | Headings | `# text` | `p.SetStyle("Heading N")` or `run.SetFontSize(N)` + `run.SetBold(true)` |
+| P1 | Unordered lists | `- item` | `Api.CreateNumbering("bullet")` + `p.SetNumbering(numbering)` |
+| P1 | Ordered lists | `1. item` | `Api.CreateNumbering("numbered")` + `p.SetNumbering(numbering)` |
+| P1 | Inline code | `` `code` `` | `run.SetFontFamily("Courier New")` + `run.SetShd(...)` |
+| P2 | Links | `[text](url)` | `run.AddHyperlink(url, text)` |
+| P2 | Tables | `\|a\|b\|` | `Api.CreateTable(cols, rows)` |
+| P2 | Code blocks | ` ``` ` | Monospace paragraph with shading |
+| P3 | Images | `![alt](url)` | Deferred - complex (need to handle blob URLs) |
+
+**Architecture decision:** The parser lives entirely in `code.js` as a self-contained ES5 function. It is NOT imported from React. Rationale:
+- It runs inside `callCommand` which is an isolated context
+- No module system available inside callCommand
+- Must be ES5
+- Keeps the injection pipeline atomic (parse + build + insert = single callCommand = single undo)
+
+**Parser output format (AST):**
+```javascript
+[
+  { type: "paragraph", children: [
+    { type: "text", text: "Hello " },
+    { type: "bold", children: [{ type: "text", text: "world" }] },
+    { type: "text", text: "!" }
+  ]},
+  { type: "heading", level: 2, children: [
+    { type: "text", text: "Section" }
+  ]},
+  { type: "list", ordered: false, items: [
+    { children: [{ type: "text", text: "item 1" }] },
+    { children: [{ type: "text", text: "item 2" }] }
+  ]},
+  { type: "table", headers: ["A", "B"], rows: [["1", "2"]] }
+]
+```
+
+### 3. Builder Content Generator (code.js, ES5)
+
+**Location:** `code.js`, new function `buildContent(ast, snapshot)`
+**Runs in:** Inside same `callCommand` as parser
+
+Converts parsed AST + format snapshot into Builder API calls:
+
+```
+buildContent(ast, snapshot) {
+  var content = [];
+  for each node in ast:
+    if paragraph:
+      p = Api.CreateParagraph()
+      applyParaFormat(p, snapshot)  // from snapshot if available
+      for each inline child:
+        run = Api.CreateRun()
+        run.AddText(child.text)
+        applyRunFormat(run, child, snapshot)  // merge MD formatting + snapshot
+        p.AddElement(run)
+      content.push(p)
+    if table:
+      t = Api.CreateTable(cols, rows)
+      // fill cells
+      content.push(t)
+  return content;
 }
 ```
 
-### Pattern 3: ScribeResultPanel unchanged — drag/resize inert on mobile
+### 4. Post-Injection Selector (code.js, ES5)
 
-**What:** `ScribeResultPanel` already accepts `dragOffset`, `onDragMove`, `panelSize`, `onResize` as props that default to `null`. On mobile, `ScribePopover` simply omits these props — the defaultProps take effect and the drag/resize event handlers are never registered.
+**Location:** `code.js`, within the same `callCommand` as buildContent
+**Challenge:** After `InsertContent(content)`, the inserted elements exist in the document but getting their range is non-trivial.
 
-**When to use:** When a component has desktop-only interactive behaviors that must be absent on mobile without modifying the component itself.
-
-**Trade-offs:** Zero mobile-specific code in `ScribeResultPanel`. The Drawer's full-screen layout and native scrolling subsume the need for manual resize and drag.
-
-## Data Flow
-
-### Menu navigation flow — desktop (unchanged)
-
+**Strategy: Bookmark approach**
 ```
-User hover/click on action with children
-    ↓
-ScribeActionMenu: setActiveSubmenu(actionId)
-    ↓
-Absolute-positioned Paper renders at left: 100%
-    ↓
-User clicks child → onSelect(childId, label, breadcrumb)
-    ↓
-ScribePopover: handleActionSelect → AI call → setStep('result')
+// Before InsertContent:
+var startRange = doc.GetRangeBySelect();  // current selection = insertion point
+var startPos = startRange.GetStartPos();
+
+// After InsertContent:
+// Calculate end position from content length
+// Create range from startPos to endPos
+// range.Select()
 ```
 
-### Menu navigation flow — mobile (new)
+**Confidence:** LOW - The community discussion confirms that InsertContent does not return references to inserted elements. The workaround (search for text + GetRangeBySelect) is fragile for non-unique text. Position-based approach (track startPos, calculate endPos from content) needs empirical testing.
 
-```
-User taps action with children (inside ScribeDrawerMenu root view)
-    ↓
-ScribeDrawerMenu: pushSubmenu(actionId)
-    ↓
-Re-render: submenu view replaces root view (in-place, no animation)
-Back header shows parent action label + back button
-    ↓
-User taps child → onSelect(childId, label, breadcrumb)
-    ↓
-ScribePopover: handleActionSelect → AI call → setStep('result')
-(identical downstream flow as desktop from this point)
-```
+**Alternative: Marker approach**
+1. Insert a unique zero-width character (e.g., `\u200B`) at start and end of content
+2. After InsertContent, search for markers
+3. Select range between markers
+4. Delete markers
 
-### Drawer open/close lifecycle
+**Recommendation:** Defer post-injection selection to a sub-phase. Build content injection first, add selection after. The marker approach is more robust than position calculation but adds complexity.
 
+## Format Preservation Strategy
+
+### The Problem
+
+Markdown is a lossy format. When original text goes through the LLM:
 ```
-pendingIntent becomes truthy in useCozyBridge (existing)
-    ↓
-ScribePopover: open=true
-    ↓
-isMobile=false → Popover (center viewport, existing behavior)
-isMobile=true  → Drawer (anchor=bottom, 100% height)
-    ↓
-step='menu'    → ScribeActionMenu (desktop layout or ScribeDrawerMenu)
-step='loading' → Spinner Paper (same on both)
-step='result'  → ScribeResultPanel (drag/resize props omitted on mobile)
-    ↓
-onClose → Drawer/Popover closes → step resets to 'menu' on next open
+Original: 14pt Calibri, blue, 1.5 line spacing, justified
+   ↓ HTML extraction
+   ↓ normalizeHtml → Turndown → Markdown
+"Hello **world**"  (only bold survived)
+   ↓ LLM transforms text
+"Bonjour **monde**"
+   ↓ What formatting should the output have?
 ```
 
-### Key data flows
+### Strategy Comparison
 
-1. **isMobile propagation:** `View.jsx` reads `useBreakpoints()` (already there) → passes `isMobile` to `ScribePopover` → passes to `ScribeActionMenu` → passes to `ScribeDrawerMenu`. Single read point, no hook duplication.
+| Strategy | Description | Pros | Cons |
+|----------|-------------|------|------|
+| **Snapshot-only** | Capture original format, apply wholesale to all output | Simple, preserves document style | Ignores MD formatting entirely |
+| **MD-only** | Parse MD, apply only MD-indicated formatting | Respects LLM's formatting intent | Loses all original styling (font, size, color) |
+| **Fusion** (recommended) | MD formatting as layer on top of snapshot defaults | Best of both worlds | More complex merge logic |
 
-2. **View stack state:** Owned entirely by `ScribeDrawerMenu`. Never propagates upward. When the user selects an action, `onSelect` fires and the stack state is irrelevant from that point forward.
+### Recommended: Fusion Strategy
 
-3. **Prompt input width:** The `width: 500px` Paper wrapper is in `ScribeActionMenu`, not inside `ScribePromptInput`. On mobile, that Paper should be `width: '100%'`. The fix is a conditional style in `ScribeActionMenu`'s JSX: `style={{ width: isMobile ? '100%' : 500 }}`.
+**Principle:** The format snapshot provides *defaults*, MD formatting provides *overrides*.
 
-## Scaling Considerations
+```
+For each output run:
+  1. Start with snapshot defaults (font, size, color, spacing)
+     - Use paragraph-level snapshot for para properties
+     - Use first-run snapshot for run properties (dominant style)
+  2. Apply MD-indicated formatting on top:
+     - **bold** in MD → SetBold(true), regardless of snapshot
+     - *italic* in MD → SetItalic(true), regardless of snapshot
+     - # heading → SetFontSize(large), overrides snapshot size
+     - Plain text → inherit snapshot bold/italic/etc. as-is
+```
 
-Not applicable — this is a responsive layout refactor, not a backend or data scaling concern.
+**Key insight:** MD formatting is *additive*. If the LLM wraps text in `**bold**`, it means "make this bold." If it doesn't, it means "leave formatting as default" -- which should be the original document's style, not browser defaults.
 
-## Anti-Patterns
+**Implementation:**
 
-### Anti-Pattern 1: Duplicating the step machine in a separate mobile component
+```javascript
+function applyRunFormat(run, mdNode, snapshot) {
+  // 1. Apply snapshot defaults (dominant run style)
+  var defaults = snapshot && snapshot.dominantRun;
+  if (defaults) {
+    if (defaults.fontFamily) run.SetFontFamily(defaults.fontFamily);
+    if (defaults.fontSize) run.SetFontSize(defaults.fontSize);
+    if (defaults.color) run.SetColor(defaults.color.r, defaults.color.g, defaults.color.b);
+  }
 
-**What people do:** Create a `ScribeDrawer.jsx` that reimplements menu → loading → result state and the AI call logic for mobile.
+  // 2. Apply MD overrides
+  if (mdNode.type === "bold" || mdNode.bold) run.SetBold(true);
+  if (mdNode.type === "italic" || mdNode.italic) run.SetItalic(true);
+  // ... etc
+}
+```
 
-**Why it's wrong:** The step machine, `handleActionSelect` async logic, `AbortController`, and retry handling all live in `ScribePopover`. Duplicating them creates two sources of truth that diverge over time. The mobile path needs only two things to change: the container shell (Popover → Drawer) and the menu layout (flyout → push navigation).
+**Edge case: bold-in-original + bold-in-MD**
+If original text was bold and LLM returns `**text**`, the output should be bold. If LLM returns `text` (no bold), the output should also be bold (snapshot default). This is correct behavior -- the LLM removing bold markers for originally-bold text is a no-op, not an instruction to un-bold.
 
-**Do this instead:** `ScribePopover` remains the single orchestrator. It chooses its container based on `isMobile`, then renders the same step machine content inside either shell.
+**Edge case: LLM adds structure not in original**
+If original was a plain paragraph and LLM returns a list, the list structure from MD takes precedence. Snapshot paragraph formatting (spacing, alignment) still applies to list items.
 
-### Anti-Pattern 2: Calling useBreakpoints inside ScribeActionMenu
+### Snapshot Granularity Decision
 
-**What people do:** Call `useBreakpoints()` inside `ScribeActionMenu` to avoid prop threading, reasoning it keeps the component self-contained.
+**Option A: Per-run mapping** - Map each original run to each output run. Complex, fragile (LLM may restructure text completely).
 
-**Why it's wrong:** `View.jsx` already calls `useBreakpoints()`. Calling it again in a child creates a second context subscription for the same value. It also couples `ScribeActionMenu` to the global breakpoints context, making it harder to unit test (requires BreakpointsProvider in test setup).
+**Option B: Dominant style** (recommended) - Extract the most common formatting from the selection as "defaults." Simple, robust, handles text restructuring gracefully.
 
-**Do this instead:** Receive `isMobile` as a prop from `ScribePopover`. At 2-level depth (Popover → ActionMenu), props are the right tool.
+Implementation: count occurrences of each font/size/color across all runs in snapshot, pick the mode (most frequent).
 
-### Anti-Pattern 3: Rendering both Drawer and Popover simultaneously
+```javascript
+function computeDominantStyle(snapshot) {
+  var fonts = {}, sizes = {}, colors = {};
+  for (var i = 0; i < snapshot.paragraphs.length; i++) {
+    var runs = snapshot.paragraphs[i].runs;
+    for (var j = 0; j < runs.length; j++) {
+      var r = runs[j];
+      fonts[r.fontFamily] = (fonts[r.fontFamily] || 0) + r.text.length;
+      sizes[r.fontSize] = (sizes[r.fontSize] || 0) + r.text.length;
+      // ... same for color
+    }
+  }
+  return {
+    fontFamily: maxKey(fonts),
+    fontSize: maxKey(sizes),
+    color: maxKey(colors),
+    // para-level: use first paragraph's properties
+    jc: snapshot.paragraphs[0].jc,
+    indLeft: snapshot.paragraphs[0].indLeft
+  };
+}
+```
 
-**What people do:** Keep both mounted but set `open={false}` on whichever is not active, believing it avoids mount/unmount cost on viewport resize.
+## Component Boundaries
 
-**Why it's wrong:** Both MUI Popover and Drawer create Portal elements in `document.body`. Having both mounted adds unnecessary DOM nodes and potential z-index conflicts. `isMobile` only changes on viewport resize (not during a Scribe session), so the mount/unmount cost on resize is negligible.
+| Component | Location | Language | Responsibility | Communicates With |
+|-----------|----------|----------|---------------|-------------------|
+| Format Snapshot Extractor | code.js | ES5 | Capture original format metadata via Builder API | init() triggers it; data sent with AI_TEXT_EDIT intent |
+| MD Parser | code.js | ES5 | Parse LLM markdown result into AST | Called inside buildContent's callCommand |
+| Builder Content Generator | code.js | ES5 | Convert AST + snapshot → Builder API calls → InsertContent | Called inside same callCommand as parser |
+| Post-Injection Selector | code.js | ES5 | Select the injected content range | Called inside same callCommand after InsertContent |
+| View.jsx response handler | View.jsx | React | Pass raw MD + snapshot to plugin (no more markdownToHtml) | Sends via respond() → postMessage |
+| ScribePopover | ScribePopover.jsx | React | State machine unchanged; passes MD text as-is | No structural change |
 
-**Do this instead:** `isMobile ? <Drawer ...> : <Popover ...>` — render only one at a time.
+### What Changes in Existing Components
 
-### Anti-Pattern 4: Adding slide/transition animation to push navigation
+| File | Change | Reason |
+|------|--------|--------|
+| `code.js` | Add captureFormatSnapshot(), parseMarkdown(), buildContent(), new handleIntentResponse branch | Core new functionality |
+| `code.js` | Modify init() to call captureFormatSnapshot before castIntent | Capture format metadata |
+| `code.js` | Add `lastFormatSnapshot` state variable | Store snapshot between capture and injection |
+| `View.jsx` | handleReplace/handleInsert: send `{ text, md: text, formatSnapshot }` instead of `{ text, html }` | Plugin does MD→Builder instead of React doing MD→HTML |
+| `View.jsx` | Remove markdownToHtml call from handleReplace/handleInsert | No longer needed for injection path |
+| `useCozyBridge.js` | No change | Format snapshot is in intent data, flows through existing protocol |
+| `ScribePopover.jsx` | No change | Already passes result.text to onReplace/onInsert |
+| `scribeConversion.js` | No change (still used for preview panel + dev mode) | markdownToHtml still needed for react-markdown preview |
 
-**What people do:** Reach for `react-transition-group` or a custom CSS slide animation to animate root → submenu navigation.
+## Data Flow: Complete Cycle
 
-**Why it's wrong:** The v2.3 requirements state "push navigation" as the interaction model — navigation, not animation. The Drawer's entry animation already provides perceived responsiveness. Adding a transition library adds bundle size and implementation complexity for a non-required polish item.
+### 1. Selection + Snapshot (user selects text)
 
-**Do this instead:** Simple state swap — `currentView` changes, list re-renders immediately. No animation library. Revisit polish only if users request it.
+```
+User selects text in OO Editor
+  → OO calls plugin init(htmlData) [existing]
+  → code.js stores lastSelectedHtml [existing]
+  → code.js calls captureFormatSnapshot() [NEW]
+    → callCommand: iterate selection's paragraphs+runs
+    → callback: store JSON in lastFormatSnapshot [NEW]
+  → code.js calls castIntent("AI_TEXT_EDIT", { text, html, formatSnapshot }) [MODIFIED]
+```
 
-### Anti-Pattern 5: Using keyboard navigation logic from the desktop menu in ScribeDrawerMenu
+**Timing concern:** captureFormatSnapshot uses callCommand which is async. The castIntent must wait for the callback. This changes the init() flow from synchronous to callback-chained.
 
-**What people do:** Reuse the complex arrow-key + submenu focus state from `ScribeActionMenu` in the mobile drawer.
+### 2. LLM Round-Trip (unchanged)
 
-**Why it's wrong:** Mobile touch doesn't use arrow navigation. The desktop keyboard state (`focusIndex`, `submenuFocusIndex`, `mouseMoveEnabledRef`) is entirely irrelevant on mobile. Sharing this logic couples the two layouts unnecessarily.
+```
+CozyBridge receives AI_TEXT_EDIT intent
+  → ScribePopover opens
+  → User picks action
+  → htmlToMarkdown(selectedHtml) → input MD [existing]
+  → callScribeAI(messages) → output MD [existing]
+  → ScribeResultPanel shows preview [existing]
+```
 
-**Do this instead:** `ScribeDrawerMenu` handles only tap/click interactions. No `focusIndex` state, no `mouseMoveEnabledRef`. Keep them cleanly separated.
+### 3. User Confirms (Replace/Insert)
 
-## Integration Points
+```
+User clicks Replace/Insert
+  → View.jsx: respond({ action:'replace', data:{ text, md: resultText }}) [MODIFIED]
+    NOTE: formatSnapshot stored in code.js, not round-tripped through React
+  → postMessage → code.js handleIntentResponse()
+```
 
-### External Services
+**Key design decision:** The formatSnapshot does NOT travel through the React layer. It is captured in code.js and stored there. When the response comes back, code.js already has it. This avoids:
+- Serializing large snapshot objects through postMessage twice
+- React needing to understand format data it doesn't use
+- Potential data loss in the bridge protocol
 
-| Service | Integration Pattern | Notes |
-|---------|---------------------|-------|
-| cozy-ui Drawer | `import Drawer from 'cozy-ui/transpiled/react/Drawer'` — thin re-export of MUI Drawer | `anchor="bottom"`, `PaperProps={{ style: { height: '100%' } }}` for fullscreen. `variant="temporary"` (default). |
-| cozy-ui useBreakpoints | Already imported in View.jsx | `isMobile` is `true` when `window.innerWidth <= 768px`. No change to breakpoint logic. |
-| MUI Popover | Existing desktop container — unchanged | `anchorReference="anchorPosition"`, center viewport positioning |
+### 4. Injection (new)
 
-### Internal Boundaries
+```
+code.js handleIntentResponse():
+  if (msg.data.md) {
+    // NEW: Builder API injection path
+    Asc.scope._md = msg.data.md;
+    Asc.scope._snapshot = lastFormatSnapshot; // captured earlier
+    Asc.scope._mode = msg.action; // "replace" or "insert"
 
-| Boundary | Communication | Notes |
-|----------|---------------|-------|
-| `View.jsx` → `ScribePopover` | `isMobile` prop added | View already reads `useBreakpoints()`; one-line change |
-| `ScribePopover` → `ScribeActionMenu` | `isMobile` prop threaded through | Add to `ScribeActionMenu` PropTypes |
-| `ScribeActionMenu` → `ScribeDrawerMenu` | `actions`, `onSelect`, `onClose`, `t` as props | ScribeDrawerMenu is purely presentational — `useState` only, no external hooks |
-| `ScribePopover` → `ScribeResultPanel` | No interface change | `dragOffset`/`panelSize` not passed on mobile; defaultProps `null` values take effect |
+    callCommand(function() {
+      var md = Asc.scope._md;
+      var snapshot = Asc.scope._snapshot ? JSON.parse(Asc.scope._snapshot) : null;
+      var mode = Asc.scope._mode;
+      var doc = Api.GetDocument();
 
-## Build Order
+      // For insert mode: collapse to end of selection first
+      if (mode === "insert") {
+        var range = doc.GetRangeBySelect();
+        if (range) {
+          var endRange = doc.GetRange(range.GetEndPos(), range.GetEndPos());
+          if (endRange) endRange.Select();
+        }
+      }
 
-Dependencies flow from smallest change to largest integration:
+      // Parse markdown → AST
+      var ast = parseMarkdown(md);
 
-1. **`ScribePromptInput.jsx`** — Remove the hard-coded `width: 500px` from the Paper wrapper in `ScribeActionMenu` (it is in `ScribeActionMenu`, not inside `ScribePromptInput`). Change to `width: isMobile ? '100%' : 500`. This is the smallest change and has zero risk.
+      // Build content from AST + snapshot
+      var content = buildContent(ast, snapshot);
 
-2. **`ScribeDrawerMenu.jsx` (new)** — Build the push-navigation component in complete isolation. Takes `actions`, `t`, `onSelect`, `onClose` as props, manages `viewStack` state internally. No dependency on Popover or Drawer. Testable standalone by rendering with mock actions.
+      // Insert (replaces selection in replace mode, inserts at cursor in insert mode)
+      doc.InsertContent(content);
 
-3. **`ScribeActionMenu.jsx`** — Add `isMobile` prop. On `isMobile=true`: render `<ScribeDrawerMenu .../>` passing through actions and callbacks. On `isMobile=false`: keep the existing two-Paper layout exactly as-is. This is the largest change but isolated to a conditional render.
+      // Post-injection selection (phase 2)
+      // selectInjectedContent(startPos, content);
+    });
+  } else if (msg.data.html) {
+    // FALLBACK: existing PasteHtml path
+    pasteHtml(msg.data.html, msg.action);
+  }
+```
 
-4. **`ScribePopover.jsx`** — Add `isMobile` prop. Conditional container: `isMobile ? <Drawer ...> : <Popover ...>`. Pass `isMobile` to `ScribeActionMenu`. On mobile, do not pass `dragOffset`/`panelSize`/`onDragMove`/`onResize` to `ScribeResultPanel`.
+## Build Order (Progressive Complexity)
 
-5. **`View.jsx`** — Add `isMobile` to the `<ScribePopover>` props call. One-line change; `isMobile` is already destructured from `useBreakpoints()` on line 37.
+### Phase A: Minimal Builder Injection (P0)
+
+**Goal:** Replace PasteHtml with Builder API for plain text + bold/italic. Prove the pipeline works.
+
+1. Write `parseMarkdown()` - handle paragraphs, bold, italic, bold+italic only
+2. Write `buildContent()` - create paragraphs + runs, no snapshot fusion yet
+3. Modify `handleIntentResponse()` to use new path when `msg.data.md` present
+4. Modify `View.jsx` to send `md` field instead of `html`
+5. Test: replace and insert modes work
+
+**No snapshot, no tables, no lists, no selection.** Pure MD-to-Builder proof of concept.
+
+### Phase B: Format Snapshot + Fusion
+
+**Goal:** Preserve original document formatting through the LLM round-trip.
+
+1. Write `captureFormatSnapshot()` in code.js
+2. Modify `init()` to chain snapshot capture before castIntent
+3. Write `computeDominantStyle()` for snapshot → defaults
+4. Modify `buildContent()` to apply fusion (snapshot defaults + MD overrides)
+5. Test: text injected with original font/size/color preserved
+
+### Phase C: Extended MD Support
+
+**Goal:** Support headings, lists, inline code, links.
+
+1. Extend `parseMarkdown()` for headings, unordered lists, ordered lists
+2. Extend `buildContent()` for headings (SetStyle or font size), lists (CreateNumbering)
+3. Add inline code support (font family change)
+4. Add link support (AddHyperlink on run)
+5. Test: all common MD structures render correctly
+
+### Phase D: Tables
+
+**Goal:** Support GFM tables via Builder API.
+
+1. Extend `parseMarkdown()` for table syntax
+2. Extend `buildContent()` to use `Api.CreateTable(cols, rows)`
+3. Apply snapshot formatting to table cells
+4. Test: tables inject with correct structure
+
+### Phase E: Post-Injection Selection
+
+**Goal:** Select the injected content after insertion.
+
+1. Implement marker-based selection (zero-width chars)
+2. Or implement position-tracking selection
+3. Test: injected content is selected after replace/insert
+
+### Phase F: Smart Spacing
+
+**Goal:** Handle leading/trailing whitespace at injection boundaries.
+
+1. Adapt existing smart spacing logic from pasteHtml to Builder path
+2. Handle paragraph-boundary cases (no spacing needed between paragraphs)
+3. Test: no double-spaces or missing spaces at boundaries
+
+## Anti-Patterns to Avoid
+
+### Anti-Pattern 1: Parsing MD in React, sending Builder instructions to plugin
+**Why bad:** Doubles message complexity. React doesn't have Builder API access. Instructions would need serialization/deserialization. Increases postMessage payload size.
+**Instead:** Parse MD inside callCommand where Builder API is available.
+
+### Anti-Pattern 2: Per-run format mapping between original and output
+**Why bad:** LLM may completely restructure text (merge paragraphs, split sentences, reorder). Mapping run-by-run is fragile and breaks on any structural change.
+**Instead:** Use dominant style as defaults. Accept that per-run uniqueness is lost through LLM.
+
+### Anti-Pattern 3: Importing a full MD parser library into plugin
+**Why bad:** Plugin runs ES5 in isolated context. No module system. Full parsers (marked, remark) are complex, ES6+, and way more than needed.
+**Instead:** Write a minimal inline parser handling only the tokens LLMs actually produce.
+
+### Anti-Pattern 4: Two callCommand calls for injection (one to parse, one to insert)
+**Why bad:** Two undo points. User has to undo twice.
+**Instead:** Parse + build + insert all inside a single callCommand.
+
+### Anti-Pattern 5: Sending formatSnapshot through React
+**Why bad:** Extra postMessage round-trips, React doesn't need it, increases protocol complexity.
+**Instead:** Keep snapshot in code.js. It's captured there, consumed there.
+
+## Scalability Considerations
+
+| Concern | Small selection (1-3 paras) | Medium (10-20 paras) | Large (50+ paras) |
+|---------|----------------------------|----------------------|-------------------|
+| Snapshot capture | Instant | ~50ms | ~200ms, may need async chunking |
+| MD parsing | Instant | ~10ms | ~50ms |
+| Builder API calls | Instant | ~100ms | ~500ms, may cause visible delay |
+| InsertContent | Instant | ~50ms | ~200ms |
+
+**Mitigation for large selections:** Consider a size threshold. Above N paragraphs, fall back to PasteHtml (which handles large content well). Document Builder API injection is most valuable for typical Scribe use cases (1-10 paragraphs).
+
+## Open Questions
+
+1. **GetColor() return type** - Does ApiRun.GetColor() return {r, g, b} or an ApiRGBColor object? Needs empirical testing in callCommand context. (MEDIUM risk)
+
+2. **GetElementsCount/GetElement on paragraphs within range** - Does this return runs or all child elements? Non-run elements (drawings, inline content controls) need handling. (LOW risk)
+
+3. **InsertContent behavior with mixed content** - When content array includes both paragraphs and tables, does OO handle ordering correctly? (LOW risk, likely works)
+
+4. **callCommand payload size limit** - Is there a limit on Asc.scope data size? Large snapshots (50+ paragraphs with runs) could be several KB. (LOW risk)
+
+5. **Numbering API** - `Api.CreateNumbering("bullet")` vs `Api.CreateNumbering("numbered")` - exact parameter format needs verification. (LOW risk, documented)
 
 ## Sources
 
-- Codebase: `/src/modules/views/OnlyOffice/Scribe/` (all files read directly)
-- Codebase: `/src/modules/views/OnlyOffice/View.jsx` (line 37: `useBreakpoints()` already present)
-- cozy-ui: `node_modules/cozy-ui/transpiled/react/Drawer/index.js` — `import MuiDrawer from '@material-ui/core/Drawer'; export default MuiDrawer`
-- cozy-ui: `node_modules/cozy-ui/transpiled/react/helpers/breakpoints.js` — `isMobile: [0, 768]`
-- MUI Drawer API: `node_modules/@material-ui/core/Drawer/Drawer.d.ts` — `anchor`, `open`, `onClose`, `PaperProps`, `variant`
-- Project context: `.planning/PROJECT.md` (v2.3 requirements: drawer fullscreen, push submenus, adaptive prompt)
-
----
-*Architecture research for: Scribe responsive drawer — v2.3 milestone*
-*Researched: 2026-03-12*
+- [OnlyOffice callCommand documentation](https://api.onlyoffice.com/docs/plugin-and-macros/interacting-with-editors/overview/how-to-call-commands/)
+- [ApiRun methods](https://api.onlyoffice.com/docs/office-api/usage-api/text-document-api/ApiRun/)
+- [ApiRange methods](https://api.onlyoffice.com/docs/office-api/usage-api/text-document-api/ApiRange/)
+- [ApiParagraph methods](https://api.onlyoffice.com/docs/office-api/usage-api/text-document-api/ApiParagraph/)
+- [CreateTable](https://api.onlyoffice.com/docs/office-api/usage-api/text-document-api/Api/Methods/CreateTable/)
+- [CreateRange](https://api.onlyoffice.com/docs/office-api/usage-api/text-document-api/Api/Methods/CreateRange/)
+- [GetRangeBySelect](https://api.onlyoffice.com/docs/office-api/usage-api/text-document-api/ApiDocument/Methods/GetRangeBySelect/)
+- [Community: post-insertion element retrieval](https://community.onlyoffice.com/t/issue-in-retrieving-newly-created-paragraph-element/10415)
+- [OO API Updates Dec 2025](https://www.onlyoffice.com/blog/2025/12/api-updates-december-2025)
+- [OO Plugin Tips & Pitfalls Jan 2026](https://www.onlyoffice.com/blog/2026/01/creating-onlyoffice-plugins-tips-tricks-and-hidden-pitfalls)

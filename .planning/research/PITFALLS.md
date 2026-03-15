@@ -1,407 +1,533 @@
-# Pitfalls Research
+# Domain Pitfalls
 
-**Domain:** Responsive drawer with push navigation added to existing desktop Popover menu in nested iframe environment (Scribe v2.3)
-**Researched:** 2026-03-12
-**Confidence:** HIGH — based on direct source analysis of existing Scribe code, cozy-ui Drawer/BottomSheet/BreakpointsProvider internals, and MUI Popover/Drawer behavior patterns.
+**Domain:** Document Builder API injection added to existing OnlyOffice plugin (Scribe v2.4)
+**Researched:** 2026-03-15
+**Confidence:** MEDIUM-HIGH -- based on OO official docs, community forum issues, OO blog pitfalls article, and direct analysis of existing plugin code (code.js). Some Builder API edge cases are LOW confidence (no first-party documentation found).
 
 ---
 
 ## Critical Pitfalls
 
-Mistakes that cause rewrites, broken scroll isolation, or fundamental UX failures.
+Mistakes that cause rewrites, data loss, or fundamental architecture failures.
 
 ---
 
-### Pitfall 1: `useBreakpoints()` Reports Cozy Drive Iframe Width, Not Device Width — Mobile Drawer Never Triggers
+### Pitfall 1: callCommand Sandbox Only Allows InsertContent -- No DOM APIs, No External Libraries, No Require
 
 **What goes wrong:**
-`useBreakpoints()` returns `{ isMobile: false }` even on a phone or narrow viewport, because it reads `window.innerWidth` of the Cozy Drive iframe — which is the full page width on desktop. The mobile drawer branch (`isMobile && <Drawer>`) never activates.
+The developer writes a Markdown parser that uses `DOMParser`, `document.createElement`, regex libraries, or any browser/Node API inside `callCommand`. The code silently fails or throws an undefined reference error inside the OO editor sandbox.
 
 **Why it happens:**
-`BreakpointsProvider` (in `DriveProvider.jsx`) measures the width of the window it runs in: the Cozy Drive iframe. On desktop, Cozy Drive always occupies the full browser window width (1200px+), so `isMobile` is always `false` regardless of the actual device or outer window.
+`callCommand` executes in an isolated JavaScript context inside the OO editor -- NOT in the plugin iframe window. This sandbox has access to the Office API (`Api.*`) and basic JS primitives, but nothing else. No `window`, no `document`, no `DOMParser`, no `require`, no `fetch`, no `console.log` (use the callback return value to debug). The existing code already discovered this: `stripOoClasses()` uses regex instead of DOMParser for exactly this reason (see code.js line 249, project memory: "Plugin sandbox interdit DOMParser").
 
-The `parentBasedIframe` prop exists to relay breakpoints from the parent window down into child iframes, but it relies on a `postMessage` handshake (`UI-breakpoints-needParentBreakpoints`). In the current setup, `BreakpointsProvider` is NOT configured with `parentBasedIframe: true`. The Cozy Drive app sits inside a Cozy Stack iframe, and the OO editor is yet another level deeper — the chain is: Cozy Stack window > Cozy Drive iframe > OO Editor iframe > Plugin iframe. The Scribe components render in Cozy Drive, which already is an iframe.
+**Consequences:**
+Any Markdown-to-Builder-API converter that relies on DOM parsing will fail completely inside `callCommand`. The parser must be pure ES5 string/regex manipulation only.
 
-In practice, this means: on a phone using Cozy Drive web, the Cozy Drive iframe is the full phone screen width (< 768px), so `isMobile` WILL correctly be `true` at that level. This is the intended behavior. However, if the design assumption is that the OO editor fills the screen and Scribe sits inside it, the breakpoint must reflect the OO editor iframe's width, not Cozy Drive's.
+**Prevention:**
+1. Parse Markdown OUTSIDE `callCommand` -- in the plugin iframe context where `window`, `DOMParser`, and libraries are available
+2. Transform the parsed AST/tokens into a serializable instruction set (plain JSON array)
+3. Pass the instruction set via `Asc.scope` to `callCommand`
+4. Inside `callCommand`, iterate the instruction set and call Builder API methods
 
-**How to avoid:**
-Verify at which DOM level the Scribe components render. `ScribePopover` is mounted in `View.jsx` inside the Cozy Drive iframe — and the breakpoint from `useBreakpoints()` will reflect the Cozy Drive window width. Since Cozy Drive IS the user-facing window on mobile, this is correct and will work. But explicitly test with a real narrow viewport (devtools device emulation at < 768px) before building the drawer branch. Do not assume it works — verify with a console log of `isMobile` at render time.
+This is the only viable architecture: **parse outside, build inside**.
 
-**Warning signs:**
-- `isMobile` is always `false` regardless of viewport size during testing
-- Drawer never appears even after narrowing the browser window
-- Breakpoint logs show width > 768 when browser is clearly narrow
+**Detection:**
+- `callCommand` callback returns `undefined` when the function should return data
+- No visible error (sandbox swallows exceptions silently in some OO versions)
+- Content is not inserted but no error callback fires
 
-**Phase to address:** Phase 1 (initial drawer scaffold) — add a diagnostic `console.log('[Scribe] isMobile:', isMobile, window.innerWidth)` on first render and verify the breakpoint triggers correctly before building any behavior on top of it.
+**Phase to address:** Phase 1 (architecture) -- this is the foundational design decision. Getting this wrong means rewriting the entire parser.
 
 ---
 
-### Pitfall 2: MUI Drawer `document.body` Scroll Lock Fights the OO Editor Iframe
+### Pitfall 2: Asc.scope Cannot Pass Functions and Has JSON Serialization Limits
 
 **What goes wrong:**
-When `<Drawer open={true}>` renders, MUI applies `overflow: hidden` to `document.body` (the Cozy Drive document body) to prevent background scroll. This removes the scrollbar from Cozy Drive's layout, causing a layout shift (the page jumps right by the scrollbar width, ~15px). More critically, if Cozy Drive has other scrollable elements, they stop scrolling while the drawer is open.
-
-The existing `BottomSheet` component in cozy-ui has the same issue: it explicitly sets `document.body.style.overflow = 'hidden'` and restores it on unmount. MUI Drawer applies `overflow: hidden` on `<body>` via its `Modal` base component.
+The developer puts a parsed AST object with methods, circular references, or very large strings into `Asc.scope`. Inside `callCommand`, the data arrives as `undefined` or is truncated.
 
 **Why it happens:**
-MUI Modal/Drawer uses `disableScrollLock={false}` by default — it manages body scroll lock automatically. Since Cozy Drive runs inside an iframe, the "document body" is already not the root scrollable element from the user's perspective. But MUI doesn't know this and applies the lock anyway.
+`Asc.scope` serializes data across the message bridge between the plugin iframe and the editor sandbox. Per OO docs: "The functions cannot be passed to the callCommand method using the Asc.scope object." Only JSON-serializable primitives work: strings, numbers, booleans, arrays, plain objects. The OO blog (Jan 2026) warns: "The bridge is optimized for JSON-like payloads; large strings or nested objects increase latency."
 
-**How to avoid:**
-Pass `ModalProps={{ disableScrollLock: true }}` to the MUI Drawer. This disables the automatic scroll lock. Since the OO editor iframe occupies most of the screen and has its own scroll management, the Cozy Drive body scroll lock is unnecessary anyway.
+The existing code already uses `Asc.scope` correctly (line 99: `Asc.scope._mode = mode`, lines 189-190: `Asc.scope.textToInsert`, `Asc.scope.originalLines`). These are small strings and arrays -- they work fine.
 
-```jsx
-<Drawer
-  open={open}
-  anchor="bottom"
-  ModalProps={{ disableScrollLock: true }}
->
-```
+**Consequences:**
+- Functions silently become `undefined`
+- Very large base64 image strings may cause latency spikes or silent failures
+- Circular references cause serialization errors
 
-**Warning signs:**
-- Page content shifts right by ~15px when drawer opens
-- OO editor iframe content appears to "jump"
-- Existing scroll positions reset when drawer opens
+**Prevention:**
+1. Design the instruction set as a flat array of plain objects: `[{type: "paragraph", children: [{type: "run", text: "hello", bold: true}]}]`
+2. Keep base64 image data separate from the instruction set -- pass as a separate `Asc.scope` property or handle images in a dedicated second `callCommand` call
+3. Test with realistic payload sizes (a full page of Markdown with formatting)
+4. Never put functions, class instances, or DOM nodes into `Asc.scope`
 
-**Phase to address:** Phase 1 (drawer scaffold) — add `disableScrollLock` from the start, not as a later fix.
+**Detection:**
+- `Asc.scope.myData` is `undefined` inside `callCommand` even though it was set outside
+- `callCommand` callback fires immediately with no result
+- Insertion works for short text but fails for longer content
+
+**Phase to address:** Phase 1 (instruction set design) -- validate the serialization boundary early with a representative payload.
 
 ---
 
-### Pitfall 3: Absolute-Positioned Submenu (left: 100%) Breaks Entirely Inside a Drawer
+### Pitfall 3: Multiple callCommand Calls Create Multiple Undo Points -- User Must Ctrl+Z Repeatedly
 
 **What goes wrong:**
-The current submenu renders as a `<Paper>` with `position: absolute; left: 100%` relative to its parent menu item. Inside a drawer (which is typically `position: fixed; width: 100vw`), the submenu flies off the right edge of the drawer and is clipped by `overflow: hidden` on the drawer container — becoming invisible or partially visible.
+The developer chains two `callCommand` calls (e.g., one to clear the selection, one to insert content). The user presses Ctrl+Z expecting to undo the entire Scribe operation, but only the second operation is undone. They press Ctrl+Z again to undo the first. Worse, if they don't know about the second undo, the document is left in a half-modified state.
 
 **Why it happens:**
-The absolute positioning assumes the submenu has enough horizontal space to the right of the parent menu item. On desktop, the Popover has no width constraint and the submenu flows naturally to the right. In a full-screen drawer on mobile:
-- The drawer width is `100vw`
-- The parent menu items are full-width
-- `left: 100%` places the submenu at `100vw` — completely outside the viewport
-- The drawer's `overflow: hidden` (or `overflow: auto`) clips the submenu entirely
+Each `callCommand` call that modifies the document creates a separate undo history entry. The existing v2.1 code understood this: `pasteHtml()` uses a read-only `callCommand` (to detect adjacent chars) followed by a single `PasteHtml` (the only undo point). The comment at line 93 explicitly says: "This produces a single undo point (PasteHtml only -- the read-only callCommand doesn't count)."
 
-This is why the milestone requirement specifies "push navigation" instead of side-by-side submenus: side-by-side is impossible inside a full-screen drawer.
+With the Builder API approach, all content creation AND insertion must happen in a single `callCommand` call to maintain a single undo point.
 
-**How to avoid:**
-The drawer and the Popover must use completely different submenu strategies:
-- **Popover (desktop):** keep existing absolute-positioned submenu as-is
-- **Drawer (mobile):** push navigation — clicking a parent item replaces the menu list with the submenu list. A back button navigates up. No `position: absolute` needed.
+**Consequences:**
+- User confusion: "Undo didn't work" (it only undid half the operation)
+- Document corruption: half-applied Scribe result mixed with original content
+- No programmatic way to group multiple `callCommand` calls into one undo point
 
-Implement as a conditional render at the `ScribeActionMenu` level based on `isMobile`:
-- If `isMobile`: maintain a `currentView` state (`'root'` or `'submenu'`), render only one list at a time, animate between them
-- If not `isMobile`: keep existing absolute submenu rendering unchanged
+**Prevention:**
+1. Build ALL content (paragraphs, runs, tables, images) and call `InsertContent` exactly once, all within a single `callCommand` function
+2. Do NOT split the operation across multiple `callCommand` calls (e.g., "first call creates paragraphs, second call creates tables")
+3. If you need pre-insertion data (like the current selection range), use a read-only `callCommand` first (read-only commands don't create undo points), then do the actual insertion in a second `callCommand`
+4. The existing pattern in `pasteHtml()` (read-only prep + single modification) is the correct model
 
-The key is that `ScribeActionMenu` must be refactored to support both modes without breaking the desktop path.
+**Detection:**
+- Press Ctrl+Z after Scribe insert -- if the document goes to an intermediate state instead of back to original, you have multiple undo points
+- Count the number of `callCommand` calls with `isCalc: true` (default) that modify content
 
-**Warning signs:**
-- Submenu is invisible when drawer is open
-- Browser inspector shows submenu element exists in DOM but is positioned outside viewport
-- Clicking a parent item with children does nothing visible on mobile
-
-**Phase to address:** Phase 1 — this is the core architectural decision. Attempting to reuse the absolute positioning inside a drawer is not recoverable without a rewrite.
+**Phase to address:** Phase 1 (architecture) -- the single-callCommand constraint shapes the entire instruction interpreter design.
 
 ---
 
-### Pitfall 4: `width: 500px` Hardcoded on Prompt Input Overflows the Drawer
+### Pitfall 4: Redo Is Broken After callCommand -- Known OO Bug
 
 **What goes wrong:**
-`ScribeActionMenu` renders the prompt input `<Paper>` with `width: 500`. On mobile (320-768px viewport), this causes horizontal overflow inside the drawer, creating a horizontal scrollbar or causing the prompt input to be partially cut off.
+After a `callCommand` execution, the Redo button is permanently disabled. The user performs an action, undoes it with Ctrl+Z (works), then tries Ctrl+Y to redo -- nothing happens.
 
 **Why it happens:**
-The 500px width was chosen to match a desktop Popover context where the menu floats freely in a 1200px+ viewport. The Popover has `overflow: visible`, so the 500px prompt input extends beyond the menu card without issues. Inside a drawer with `overflow: hidden`, a 500px element on a 375px iPhone screen overflows the container.
+This is a confirmed OnlyOffice bug (reported March 2025, registered as a bug by the OO team). The `callCommand` method disrupts the redo history regardless of whether the command modifies content or not. The OO team's workaround suggestion was to use `executeMethod` instead, but `executeMethod` cannot create structured content via the Builder API.
 
-**How to avoid:**
-Make the prompt input width responsive. Inside a drawer context, it should be `width: '100%'` (filling the drawer). The desktop Popover can keep the fixed `500px` width.
+**Consequences:**
+- Users cannot redo Scribe operations
+- Users cannot redo ANY operation after Scribe has executed a `callCommand`
+- This is an upstream OO bug -- no workaround exists within the plugin
 
-Pass a `fullWidth` prop or `variant="drawer"` prop to `ScribeActionMenu` to toggle between fixed and fluid widths:
-```jsx
-// In ScribeActionMenu:
-<Paper style={{ width: isMobile ? '100%' : 500, ... }}>
-```
+**Prevention:**
+1. Accept this as a known limitation and document it
+2. Do NOT try to work around it by chaining `executeMethod` calls -- the Builder API requires `callCommand`
+3. Minimize the number of `callCommand` calls to reduce the window where redo is disrupted
+4. Monitor the OO bug tracker for a fix (it was registered as a bug, fix not yet released as of March 2026)
 
-Or use `useBreakpoints()` directly inside `ScribeActionMenu` to set the width. Since `ScribeActionMenu` is always rendered inside a component that already uses `useBreakpoints()`, the context is available.
+**Detection:**
+- After any Scribe operation, check if Ctrl+Y / Redo button works for operations done before the Scribe action
 
-**Warning signs:**
-- Horizontal scrollbar appears in drawer on mobile
-- Prompt input is cut off at the right edge of the drawer
-- Inspector shows `overflow-x: scroll` on the drawer container
-
-**Phase to address:** Phase 2 (prompt input adaptation) — straightforward fix, but must be done before testing on real mobile dimensions.
+**Phase to address:** All phases -- this is an upstream limitation to accept and document, not to fix.
 
 ---
 
-### Pitfall 5: Focus Management Breaks When Transitioning Between Drawer and Popover Modes
+### Pitfall 5: ES5 Constraint Inside callCommand -- No Arrow Functions, No const/let, No Template Literals, No Destructuring
 
 **What goes wrong:**
-The existing keyboard navigation system in `ScribeActionMenu` uses a custom focus management model: `tabIndex={-1}` on a `<Paper>`, `imperativeHandle` exposing `focus()`, and keyboard events captured at the Paper level. When the menu is inside a Drawer, MUI Drawer has its own focus trap (`enforceFocus`). The two focus management systems conflict: MUI tries to trap focus inside the drawer, while the custom `onKeyDown` handler intercepts arrows/Enter/Escape before MUI can act on them. The Escape key may close the MUI Drawer OR navigate back from a submenu — not both.
+The developer writes the `callCommand` function body using modern JS syntax. The code fails silently or throws a syntax error in the OO editor sandbox.
 
 **Why it happens:**
-MUI Drawer wraps content in a `Modal` with `enforceFocus` enabled by default. `enforceFocus` calls `focus()` on the first focusable element inside the modal on every interaction. When `ScribeActionMenu` manages focus itself (focusing a `<Paper tabIndex={-1}>`), MUI may override this with its own focus management, causing visible focus loss or the wrong element being focused.
+The `callCommand` function body is serialized as a string and executed in the OO editor's JS engine, which requires ES5 syntax. This is already documented in the project memory and code.js uses ES5 throughout. But the NEW risk is: the Markdown-to-Builder instruction interpreter will be the most complex code ever written inside `callCommand` for this plugin. It's easy to slip into ES6 syntax when writing 50+ lines of loop/switch logic.
 
-Additionally, the existing `ScribePopover` uses `disableAutoFocus` and `disableEnforceFocus` to opt out of MUI's focus management. A new `<Drawer>` component requires the same explicit opt-outs.
+**Consequences:**
+- Silent failure: content not inserted, no error visible
+- Intermittent: may work in dev (if OO desktop uses a newer engine) but fail in production web editor
 
-**How to avoid:**
-Add `disableEnforceFocus` and `disableAutoFocus` to the Drawer's `ModalProps`, matching the existing Popover configuration:
-```jsx
-<Drawer
-  open={open}
-  ModalProps={{
-    disableScrollLock: true,
-    disableEnforceFocus: true,
-    disableAutoFocus: true,
-  }}
->
-```
+**Prevention:**
+1. Write the `callCommand` interpreter function in a separate file, clearly marked ES5-only
+2. Use a linter rule or pre-commit check to flag ES6 syntax in that function
+3. Test in the actual OO web editor (not just desktop), as the web sandbox is more restrictive
+4. Patterns to avoid inside callCommand:
+   - `const` / `let` -- use `var`
+   - `() => {}` -- use `function() {}`
+   - `` `template ${literals}` `` -- use `"string " + concatenation`
+   - `{a, b} = obj` -- use `var a = obj.a; var b = obj.b;`
+   - `for...of` -- use indexed `for` loops
+   - `Array.from`, `Object.entries`, `Array.includes` -- use ES5 equivalents
 
-For the Escape key conflict: in drawer mode, Escape from the root list should close the drawer; Escape from a submenu should navigate back to the root list. Implement this as a priority check in the keyboard handler:
-```jsx
-case 'Escape':
-  if (isMobile && currentView !== 'root') {
-    setCurrentView('root') // back navigation
-  } else {
-    onClose() // close drawer
-  }
-```
+**Detection:**
+- callCommand silently does nothing
+- Works in one OO environment but not another
+- Browser console shows syntax error from OO internal eval
 
-**Warning signs:**
-- Focus visually disappears after clicking a list item in the drawer
-- Tab key moves focus outside the drawer while it is open
-- Escape key closes the drawer when the user intended to navigate back from a submenu
-
-**Phase to address:** Phase 1 (drawer scaffold) — set the correct ModalProps from the start. Phase 2 (push navigation) — address Escape key semantics.
+**Phase to address:** Phase 1 onward -- every phase that writes code inside callCommand must follow ES5.
 
 ---
 
-### Pitfall 6: Hover Events Trigger on Touch — Mouse-Move Gating is Irrelevant on Mobile but Active `onMouseLeave` Closes Submenu on Tap
+## High-Severity Pitfalls
+
+Mistakes that cause significant bugs, data issues, or major rework.
+
+---
+
+### Pitfall 6: InsertContent Replaces the Current Selection -- Must Manage Selection State Carefully
 
 **What goes wrong:**
-The existing menu uses `onMouseEnter` and `onMouseLeave` on the wrapping `<div>` around each list item to show/hide the side submenu. On mobile (where hover does not exist but touch events fire synthetic mouse events), tapping a list item fires `onMouseLeave` on the previous item, which calls `setActiveSubmenu(null)` — potentially hiding a submenu that was just navigated into.
+The developer calls `InsertContent` expecting it to insert at the cursor position, but it replaces whatever is currently selected. If the user's selection has changed between the time Scribe received the text and the time the Builder API runs, wrong content gets replaced.
 
-More critically, the `mouseMoveEnabledRef` gating (`mouseMoveEnabledRef.current = false` on mount, enabled by `mousemove`) was designed for desktop cursor hovering. On touch devices, there is no physical `mousemove` event from finger movement (though synthetic events may differ by browser). If `mouseMoveEnabledRef` stays `false` forever on mobile, hover-based submenu reveal is completely disabled — which is fine for push navigation, but the code must not also disable click-based submenu navigation.
+**Why it happens:**
+`InsertContent` inserts at the current document position, which means it replaces the active selection. The existing code handles this for `PasteHtml` (replace mode) and carefully manages cursor position for insert mode (see `pasteHtml()` lines 102-140). The Builder API via `InsertContent` has the same behavior.
 
-**How to avoid:**
-In mobile (drawer) mode, bypass all hover-based interaction entirely:
-- Do not attach `onMouseEnter`/`onMouseLeave` handlers when `isMobile`
-- The push navigation approach replaces hover submenus with click-to-navigate — clicks on parent items call `setCurrentView('submenu')`, not `setActiveSubmenu()`
-- The `mouseMoveEnabledRef` gating is desktop-only; in drawer mode, `onClick` is the only interaction mechanism
+The risk is amplified because the Builder API path involves more processing time (parse MD, build instruction set, execute), during which the user might click elsewhere in the document.
 
-Since the existing code will still render `onMouseLeave={() => { if (action.children) setActiveSubmenu(null) }}` on every item, passing `isMobile` into `ScribeActionMenu` and conditionally removing these handlers is the safest approach. Do not rely on `mouseMoveEnabledRef.current` being false to suppress them — that is an implementation detail that could change.
+**Consequences:**
+- Wrong text gets replaced
+- User loses content they didn't intend to modify
+- Especially dangerous in "insert after" mode -- the cursor must be positioned at the end of the selection before `InsertContent`
 
-**Warning signs:**
-- On mobile (or Chrome DevTools touch emulation), tapping an item with children briefly shows a submenu then immediately hides it
-- `activeSubmenu` state flickers between a value and `null` on touch tap
-- Push navigation state advances and then resets to root on the same tap
+**Prevention:**
+1. Use the same two-step pattern as the existing `pasteHtml()`: read-only `callCommand` to capture selection state + position cursor, then modification `callCommand` to insert
+2. Set `pasteInProgress = true` before the operation to suppress `init()` interference (already done in existing code, line 97)
+3. Stop hide polling during the operation (already done, line 98)
+4. Keep the time between selection capture and insertion minimal -- do all MD parsing BEFORE the first callCommand, not between the two
 
-**Phase to address:** Phase 2 (push navigation) — when refactoring `ScribeActionMenu` to support drawer mode, remove hover handlers for the mobile branch rather than working around them.
+**Detection:**
+- Content appears in the wrong place in the document
+- Original selection is not replaced (or wrong text is replaced)
+- `init()` fires during the operation and resets `lastSelectedText`
+
+**Phase to address:** Phase 1 -- selection management must be designed alongside the instruction interpreter.
+
+---
+
+### Pitfall 7: Post-Insertion Selection Is Unreliable -- GetRange/Select After InsertContent Fails
+
+**What goes wrong:**
+After `InsertContent`, the developer tries to select the newly inserted content (to highlight what Scribe added). `GetRange()` on the inserted paragraphs throws an error or returns null. `Select()` does nothing. The cursor ends up in an unpredictable position.
+
+**Why it happens:**
+This is a known OO limitation documented in their community forums. After `InsertContent`, the inserted elements are not yet fully processed as document elements. `GetRange()` on the inserted paragraph throws, `GetPosInParent()` returns null, and `Select()` does not work. The OO-suggested workaround is: use `Search()` to find the inserted text, then `GetRangeBySelect()` to get a range.
+
+The project memory confirms this was already investigated: "OO returns inconsistent positions after PasteHtml -- see phase13-paste-select.md" and "post-paste selection was previously impossible with PasteHtml."
+
+**Consequences:**
+- Cannot highlight the inserted content for the user
+- Cursor position after insert is unpredictable
+- Attempting to select inserted content may cause OO errors
+
+**Prevention:**
+1. Do NOT try to select inserted content within the same `callCommand` that calls `InsertContent` -- the elements are not queryable yet
+2. If post-insert selection is needed, use a separate follow-up approach:
+   a. Insert a unique marker string (e.g., a zero-width character or unique ID) at the start and end of the content
+   b. In a second (read-only) `callCommand`, use `Search()` to find the markers, then `GetRangeBySelect()` to select between them
+   c. In a third `callCommand`, remove the markers
+3. Accept that post-insert selection is a stretch goal, not a Phase 1 requirement
+4. The Builder API may offer better positioning than PasteHtml since you control element creation -- but this needs empirical validation
+
+**Detection:**
+- `GetRange()` throws inside callCommand after InsertContent
+- Cursor appears at the document start or end instead of at the insertion point
+- Selection highlight does not appear
+
+**Phase to address:** Dedicated late phase -- post-insert selection is complex and should not block core injection functionality.
+
+---
+
+### Pitfall 8: Base64 Images Via Asc.scope Can Bloat the Payload and Cause Latency or Failure
+
+**What goes wrong:**
+The developer passes base64-encoded images (extracted from the original document) through `Asc.scope` to recreate them via `Api.CreateImage("data:image/jpeg;base64,...")`. For documents with multiple images or high-resolution images, the `Asc.scope` payload becomes several megabytes. The bridge slows down or silently drops the data.
+
+**Why it happens:**
+Base64 encoding increases data size by ~33%. A single high-res image can be 2-5MB in base64. The OO message bridge between the plugin iframe and editor sandbox is optimized for small JSON payloads (the OO blog specifically warns about this). Additionally, OO's JWT documentation warns against sending base64 images through JWT because "the token will be too long" -- the same principle applies to `Asc.scope`.
+
+**Consequences:**
+- Insertion hangs or takes several seconds
+- Large images silently fail to insert
+- Plugin appears frozen during the bridge transfer
+
+**Prevention:**
+1. For the initial Builder API implementation, skip image handling entirely -- focus on text formatting (bold, italic, lists, headings)
+2. When images are needed, consider alternatives to base64:
+   a. If the image has a URL (e.g., hosted on Cozy), pass the URL to `Api.CreateImage(url, width, height)` instead of base64
+   b. If base64 is required, pass images as separate Asc.scope properties (not inline in the instruction array) and reference them by index
+3. Set a size limit: skip images larger than 500KB base64 and log a warning
+4. Test with realistic image sizes from actual Cozy Drive documents
+
+**Detection:**
+- callCommand takes > 2 seconds to execute
+- Callback never fires for documents with images
+- Small-image documents work, large-image documents fail
+
+**Phase to address:** Dedicated image phase (not Phase 1) -- text formatting first, images second.
+
+---
+
+### Pitfall 9: Markdown Parser Must Handle LLM Output Quirks, Not Just Spec-Compliant Markdown
+
+**What goes wrong:**
+The ES5 Markdown parser handles standard Markdown correctly but fails on common LLM output patterns: inconsistent heading levels, code blocks without language tags, lists with mixed indentation, bare URLs, excessive blank lines, markdown inside code blocks.
+
+**Why it happens:**
+LLMs (GPT, Claude, Mistral) produce Markdown-like output that often deviates from CommonMark:
+- Double newlines inside list items (breaks list continuation)
+- `**bold**` immediately adjacent to punctuation without spaces
+- Nested lists with 2-space indent (CommonMark requires 4)
+- HTML entities mixed with Markdown (`&mdash;` inside bold markers)
+- Trailing whitespace that creates unintended `<br>` in strict parsers
+
+The existing pipeline uses `marked` (a mature parser) on the React side for preview rendering, but the callCommand parser must be a custom ES5 implementation that handles these same quirks.
+
+**Consequences:**
+- Bold/italic not detected in edge cases
+- Lists rendered as separate paragraphs instead of list items
+- Preview (react-markdown) looks correct but injected document looks wrong
+
+**Prevention:**
+1. Build a test suite of real LLM outputs (capture 20+ actual Scribe responses across all actions)
+2. Compare parsed output against `marked` output for each test case
+3. Handle common LLM quirks explicitly:
+   - Normalize line endings (`\r\n` to `\n`)
+   - Collapse 3+ blank lines to 2
+   - Support both 2-space and 4-space list indentation
+   - Handle `**bold**` adjacent to punctuation
+4. Keep the parser simple: support headings, bold, italic, lists (ordered/unordered), code blocks, paragraphs. Do NOT try to support the full CommonMark spec -- it's unnecessary and adds ES5 complexity
+5. Use a token-based approach (line-by-line for blocks, regex for inline) rather than a full AST parser
+
+**Detection:**
+- Preview panel shows correct formatting but inserted document has wrong formatting
+- Lists appear as numbered paragraphs
+- Bold text appears as `**text**` literally in the document
+
+**Phase to address:** Phase 1-2 -- the parser is foundational. Build with test cases from day one.
+
+---
+
+### Pitfall 10: CreateTable Width/Formatting Lost When InsertContent Places Table in Document
+
+**What goes wrong:**
+The developer creates a table with `Api.CreateTable(cols, rows)`, sets column widths with `SetWidth("twips", value)`, applies cell formatting -- then calls `InsertContent([table])`. The table appears in the document but column widths are reset to auto, borders are missing, or cell alignment is lost.
+
+**Why it happens:**
+`InsertContent` has a `KeepTextOnly` option and default property-preservation behavior that may strip table formatting. The `isInline` parameter behavior with tables is undocumented. Additionally, tables created via Builder API may have different default styling than tables created through the OO UI -- the UI applies the current table style, while the API creates unstyled tables.
+
+**Consequences:**
+- Tables appear but look wrong (wrong widths, no borders, misaligned)
+- Significant debugging time because the table "works" but looks different from what the user expects
+
+**Prevention:**
+1. After creating a table, explicitly set ALL formatting properties:
+   - `table.SetWidth("percent", 100)` for full-width tables
+   - `table.SetTableLayout("fixed")` if column widths should be preserved
+   - Set borders explicitly on each cell (do not rely on default table style)
+   - Set cell padding/margin explicitly
+2. Test table insertion with `InsertContent` specifically -- table formatting that works with `Push()` in Document Builder standalone may behave differently with `InsertContent` in a plugin
+3. Start with simple tables (no merged cells, uniform column widths) and add complexity incrementally
+
+**Detection:**
+- Table appears in document but looks different from the preview
+- Column widths are equal despite being set to different values
+- Borders are missing or inconsistent
+
+**Phase to address:** Dedicated table phase -- tables are complex enough to warrant their own implementation phase after basic text formatting works.
 
 ---
 
 ## Moderate Pitfalls
 
-Mistakes that cause significant bugs or rework but do not invalidate the architecture.
-
 ---
 
-### Pitfall 7: Drawer Animation Conflicts with Popover Backdrop — Both Open Simultaneously
+### Pitfall 11: PasteHtml Fallback Path Must Be Preserved -- Builder API Is Not a Complete Replacement on Day One
 
 **What goes wrong:**
-During rapid open/close cycling, or if a state update is missed, the Popover backdrop and the Drawer appear at the same time. The user sees two overlapping overlays, two click-to-close targets, and potentially two onClose callbacks firing.
+The developer removes the existing `PasteHtml` path (lines 96-155 of code.js) to replace it with Builder API injection. The Builder API handles basic formatting but fails on an edge case (e.g., complex nested lists). The user gets no content insertion at all instead of a degraded-but-functional PasteHtml insertion.
 
 **Why it happens:**
-The v2.3 change makes `ScribePopover` conditionally render either a `<Popover>` or a `<Drawer>` based on `isMobile`. If the breakpoint changes while either is in the opening/closing animation (e.g., on screen rotation), the `open` prop for one variant is `true` while the other starts mounting. Both MUI components mount with `open={true}` briefly.
+The Builder API migration is incremental. The v2.1 PasteHtml pipeline works for most cases. Removing it before the Builder API handles ALL cases means regression.
 
-**How to avoid:**
-The conditional rendering should be an either/or at the top level:
-```jsx
-return isMobile
-  ? <Drawer open={open} ...>{menuContent}</Drawer>
-  : <Popover open={open} ...>{menuContent}</Popover>
-```
+**Prevention:**
+1. Keep PasteHtml as a fallback: `if (builderApiSupported && !fallbackNeeded) { useBuilderApi() } else { usePasteHtml() }`
+2. Add a feature flag or capability check to switch between Builder API and PasteHtml
+3. The Builder API path should be additive (new code path), not a replacement of existing code
+4. Only remove PasteHtml after ALL content types (text, lists, tables, images) are handled by Builder API
 
-Not:
-```jsx
-<>
-  <Drawer open={open && isMobile} ...>
-  <Popover open={open && !isMobile} ...>
-</>
-```
+**Detection:**
+- Content that previously inserted correctly now fails to insert
+- Regression in basic text insertion while working on advanced features
 
-The first form ensures only one is mounted in the DOM at any time. The second form has both mounted and both receiving the `open` prop transition, which can cause animation glitches on breakpoint change.
-
-**Warning signs:**
-- Rotating device while menu is open shows a visual flash
-- Two backdrops are visible simultaneously
-- `onClose` fires twice on a single dismiss action
-
-**Phase to address:** Phase 1 (conditional render structure) — the either/or pattern must be the starting architecture.
+**Phase to address:** Phase 1 (architecture) -- design the fallback strategy from the start.
 
 ---
 
-### Pitfall 8: Push Navigation History Stack Not Reset on Drawer Close
+### Pitfall 12: Paragraph Properties (Alignment, Spacing, Indentation) Not Preserved Through Markdown Round-Trip
 
 **What goes wrong:**
-The user opens the drawer, navigates into a submenu (e.g., Translate > [language submenu visible]), closes the drawer, then reopens it. The drawer reopens showing the submenu level instead of the root menu.
+The user has a paragraph with center alignment, 1.5 line spacing, and 12pt after-paragraph spacing. Scribe extracts the text, sends it to the LLM, gets back Markdown, and injects via Builder API. The new paragraph has default properties: left-aligned, single-spaced, no extra spacing. The formatting of the original document is destroyed.
 
 **Why it happens:**
-Push navigation requires local state to track the current view (`'root'` or `{ view: 'submenu', parentId: 'translate' }`). If this state is stored as `useState` inside `ScribeActionMenu` and persists across drawer open/close cycles (because the component is not unmounted), the submenu state survives the close.
+Markdown has no concept of paragraph alignment, spacing, or indentation. The HTML-to-Markdown conversion (Turndown) loses these properties. The LLM operates on Markdown text and cannot preserve what was lost. The Builder API creates paragraphs with default properties.
 
-The existing `activeSubmenu` state has the same characteristic, but on desktop it is reset naturally because the mouse moves away. On mobile with push navigation, there is no equivalent reset trigger.
+This is acknowledged in the project requirements: "Strategie de preservation du formatage d'origine perdu par l'aller-retour Markdown."
 
-**How to avoid:**
-Reset push navigation state when the drawer closes. The clean solution is to reset state in a `useEffect` on `open`:
-```jsx
-useEffect(() => {
-  if (!open) {
-    setCurrentView('root')
-  }
-}, [open])
-```
+**Prevention:**
+1. Before sending to the LLM, capture the paragraph properties of the selected content via a read-only `callCommand`:
+   - `paragraph.GetJc()` (alignment)
+   - `paragraph.GetSpacingBefore()` / `GetSpacingAfter()`
+   - `paragraph.GetIndLeft()` / `GetIndRight()` / `GetIndFirstLine()`
+   - `paragraph.GetStyle()` (style name)
+2. Store these properties alongside the instruction set
+3. When building paragraphs in the insertion callCommand, apply the captured properties:
+   - `newParagraph.SetJc(originalAlignment)`
+   - `newParagraph.SetSpacingBefore(originalSpacing)`
+4. For "replace" mode: apply the first original paragraph's properties to all new paragraphs (or map 1:1 if paragraph count matches)
+5. For "insert" mode: use the last original paragraph's properties as a template
 
-The existing pattern in `ScribePopover` already does this for `step`, `result`, and `dragOffset` — follow the same pattern for push navigation state.
+**Detection:**
+- Inserted text has different alignment than original
+- Line spacing changes after Scribe replace
+- Indentation is lost
 
-**Warning signs:**
-- Opening the drawer after closing it shows the last visited submenu instead of the root
-- Back button is visible when drawer is first opened (should only appear when in submenu)
-
-**Phase to address:** Phase 2 (push navigation) — add the reset effect alongside push navigation state implementation.
+**Phase to address:** Phase 2-3 -- property preservation requires the read-only prep callCommand to be extended.
 
 ---
 
-### Pitfall 9: `useBreakpoints()` Not Available Inside `ScribeActionMenu` — Must Thread `isMobile` via Props
+### Pitfall 13: OO Ordered List Bug (#79263) Still Exists -- Builder API May Have the Same Issue
 
 **What goes wrong:**
-The developer calls `useBreakpoints()` inside `ScribeActionMenu` to control rendering. It throws: `"Cannot use useBreakpoints without BreakpointsProvider"`.
+Ordered lists inserted via the API render incorrectly -- numbering restarts at 1 for each item, or list items are not recognized as part of a list.
 
 **Why it happens:**
-`BreakpointsProvider` is mounted in `DriveProvider.jsx` which wraps the entire app. `ScribeActionMenu` is rendered inside `ScribePopover` which is rendered inside `View.jsx`. The provider chain is present. So `useBreakpoints()` should work inside `ScribeActionMenu` — it will NOT throw.
+The project context mentions a known OO bug (#79263) with ordered lists in PasteHtml. This may or may not affect Builder API list creation (different code path in OO). But `Api.CreateNumbering("numbered")` and paragraph `SetNumbering()` use the same internal numbering engine.
 
-However, if tests (unit or Storybook) render `ScribeActionMenu` in isolation without `BreakpointsProvider`, they will throw. The `useBreakpoints` hook throws explicitly (not a graceful fallback) when context is null.
+**Prevention:**
+1. Test ordered list creation via Builder API early -- before building the full parser
+2. Create a minimal test: 3-item numbered list via `callCommand` with `Api.CreateNumbering("numbered")` and verify rendering
+3. If the bug affects Builder API too, document it and provide a workaround (e.g., manually setting list level and start number)
+4. Compare Builder API list rendering with PasteHtml list rendering to determine which is more reliable
 
-**How to avoid:**
-Two valid approaches:
-1. Call `useBreakpoints()` in `View.jsx` (already done there) and pass `isMobile` as a prop down to `ScribePopover` and then to `ScribeActionMenu`. This keeps the menu component testable in isolation.
-2. Call `useBreakpoints()` directly inside `ScribeActionMenu` but wrap any test renders with `BreakpointsProvider`.
+**Detection:**
+- Numbered list starts at 1 for every item instead of incrementing
+- List items appear as regular paragraphs with "1. " prefix text
+- List indentation is wrong
 
-Approach 1 is preferred — it keeps `ScribeActionMenu` a pure component that does not depend on a provider, which is consistent with how it currently receives all other behavioral props.
-
-**Warning signs:**
-- Tests for `ScribeActionMenu` throw `"Cannot use useBreakpoints without BreakpointsProvider"`
-- Storybook stories for the menu fail
-
-**Phase to address:** Phase 1 (architecture decision) — decide prop-threading vs. hook at the start. Do not mix both.
+**Phase to address:** Phase 1-2 -- test early, before investing in a complex list parser.
 
 ---
 
-### Pitfall 10: Keyboard Navigation Bindings Are Inverted for Push Navigation (ArrowRight Opens, ArrowLeft Goes Back)
+### Pitfall 14: callCommand Return Value Only Supports JS Standard Types -- Objects Return as undefined
 
 **What goes wrong:**
-On desktop, `ArrowRight` opens a submenu and `ArrowLeft` closes it. In push navigation (mobile drawer), the user navigates "forward" into a submenu by pressing Enter (or tapping), and "back" by pressing a Back button (or Android hardware back). If the existing keyboard handler still intercepts `ArrowLeft` in push navigation mode and calls `setCurrentView('root')`, it works — but `ArrowRight` from the root list now has nothing to do (there is no floating submenu to open), and pressing it does nothing while the user expects Enter to navigate into the submenu.
+The developer returns a complex object from `callCommand` to get information about the insertion result (e.g., position, paragraph count). The callback receives `undefined`.
 
 **Why it happens:**
-The keyboard handler in `ScribeActionMenu` has two modes: `activeSubmenu` (desktop) and root list. In push navigation mode, `activeSubmenu` is always `null` (the submenu is shown by replacing the whole list, not by floating a `<Paper>`). The keyboard handler's submenu branch therefore never activates. All navigation relies on the root list branch, which does not know about push navigation state.
+Per OO docs: "Only the js standard types are available (any objects will be replaced with undefined)." This means you can return strings, numbers, booleans -- but not objects or arrays directly. You must `JSON.stringify()` inside callCommand and `JSON.parse()` in the callback. The existing code already does this correctly (line 140-141: `return JSON.stringify(result)` inside callCommand, `JSON.parse(prepResult)` in callback).
 
-**How to avoid:**
-Add a third mode to the keyboard handler for push navigation. When `isMobile && currentView !== 'root'`:
-- `ArrowLeft` or `Escape` → navigate back to root
-- `ArrowUp/Down` → navigate within the submenu items
-- `Enter` → select the focused submenu item
+**Prevention:**
+1. Always `JSON.stringify()` any structured return value inside callCommand
+2. Always `JSON.parse()` in the callback
+3. Keep return payloads small (the return also crosses the message bridge)
+4. Follow the existing pattern in `pasteHtml()` -- it's the proven approach
 
-When `isMobile && currentView === 'root'`:
-- `Enter` on an item with children → push to submenu view (same as tap)
-- `ArrowRight` → same as Enter for items with children (optional, for consistency)
+**Detection:**
+- Callback receives `undefined` when an object was returned
+- Callback receives `"[object Object]"` (toString instead of serialize)
 
-Keep the desktop (`!isMobile`) keyboard handler unchanged.
-
-**Warning signs:**
-- Keyboard navigation stops working after refactoring for push navigation
-- Enter key on a parent item with children has no effect on mobile
-- Escape closes the entire drawer instead of navigating back from submenu
-
-**Phase to address:** Phase 2 (push navigation) — keyboard handler is the most complex part of the push navigation implementation.
+**Phase to address:** All phases -- follow the existing pattern, no new design needed.
 
 ---
 
-### Pitfall 11: Drawer `anchor="bottom"` vs `anchor="left"` — Wrong Anchor Breaks Full-Screen Intent
+## Minor Pitfalls
+
+---
+
+### Pitfall 15: Api.CreateRun() vs Paragraph.AddText() -- Formatting Granularity Confusion
 
 **What goes wrong:**
-The milestone specifies "drawer plein écran sur mobile" (fullscreen drawer on mobile). Using `anchor="bottom"` gives a bottom sheet that slides up — not a fullscreen takeover. Using `anchor="left"` gives a side panel that only covers part of the screen. Neither gives true fullscreen by default.
+The developer uses `paragraph.AddText("hello world")` and then tries to apply bold to only "hello". It applies to the entire paragraph text because `AddText` creates a single run.
 
 **Why it happens:**
-MUI Drawer does not have a "fullscreen" option. Fullscreen must be achieved by setting the drawer width/height to 100% via `PaperProps`:
-```jsx
-<Drawer
-  anchor="bottom"
-  PaperProps={{ style: { height: '100%', borderRadius: 0 } }}
->
-```
-or:
-```jsx
-<Drawer
-  anchor="left"
-  PaperProps={{ style: { width: '100%' } }}
->
-```
+`AddText()` is a convenience method that creates one run with the given text. To apply different formatting to different parts of the same paragraph, you must create separate `ApiRun` objects: `var run1 = Api.CreateRun(); run1.AddText("hello"); run1.SetBold(true); paragraph.AddElement(run1);`
 
-Alternatively, cozy-ui's `BottomSheet` component (used by `ActionsMenu` for mobile) is NOT the right choice here — it has drag-to-dismiss, snap points, and complex height management. It is designed for action sheets, not for multi-level navigation menus with text input.
+**Prevention:**
+1. Use `Api.CreateRun()` for ALL text insertion, never `paragraph.AddText()` for mixed-format paragraphs
+2. Each inline formatting span (bold, italic, bold+italic) needs its own Run
+3. The instruction set should emit one "run" entry per formatting change
 
-**How to avoid:**
-Use MUI Drawer (re-exported as `cozy-ui/transpiled/react/Drawer`) with `anchor="bottom"` and `PaperProps={{ style: { height: '100%' } }}` for the fullscreen experience. Add a header with a title and a close button (X) at the top of the drawer to match cozy-ui design patterns. Do NOT use `BottomSheet` — it will fight against the push navigation content height changes.
+**Detection:**
+- Entire paragraph is bold when only one word should be
+- Formatting changes apply to wrong text spans
 
-**Warning signs:**
-- Drawer slides up to 75% screen height and stops (default BottomSheet/Drawer behavior)
-- Drawer has a drag handle at the top (BottomSheet indicator)
-- Content below the drawer is still visible and tappable
-
-**Phase to address:** Phase 1 (drawer scaffold) — anchor and height are foundational to the drawer UX.
+**Phase to address:** Phase 1 -- the instruction interpreter must use Runs, not AddText.
 
 ---
 
-## Technical Debt Patterns
+### Pitfall 16: Image Dimensions Must Be Specified in EMUs (English Metric Units), Not Pixels
 
-| Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
-|----------|-------------------|----------------|-----------------|
-| Duplicate `isMobile` conditional rendering inside `ScribeActionMenu` | Avoids prop threading | Two separate render paths diverge over time, bugs fixed in one not the other | Never — keep a single `isMobile` prop threaded from `View.jsx` |
-| Reuse `activeSubmenu` state for push navigation | No new state variable | Absolute submenu and push nav have different semantics; collisions cause bugs | Never — add a separate `currentView` state for push navigation |
-| BottomSheet for mobile menu | Reuses existing cozy-ui component | Drag gestures, snap points, and height management fight multi-level navigation | Never for this use case |
-| Skip keyboard navigation for mobile | Saves implementation time | Keyboard users (external keyboards on iPad) cannot use the menu | Only acceptable if explicitly out of scope |
-| `width: '100%'` hardcoded for mobile prompt input | Simple fix | No longer accurate if drawer adds horizontal padding | Acceptable if using `flexGrow: 1` or box-model-aware width |
+**What goes wrong:**
+The developer calls `Api.CreateImage(src, 200, 100)` thinking the dimensions are pixels. The image appears as a tiny speck in the document.
 
----
+**Why it happens:**
+`Api.CreateImage(sImageSrc, nWidth, nHeight)` expects dimensions in EMUs (1 inch = 914400 EMUs, 1 pixel ~= 9525 EMUs at 96 DPI). The OO docs and examples use values like `150 * 36000` (which is 150mm in EMUs).
 
-## Integration Gotchas
+**Prevention:**
+1. Always multiply pixel dimensions by 9525 to convert to EMUs: `Api.CreateImage(src, widthPx * 9525, heightPx * 9525)`
+2. Or use mm: multiply by 36000
+3. Add a helper comment in the callCommand code: `// OO EMU: 1px = 9525 EMU, 1mm = 36000 EMU`
+4. Set reasonable defaults for images without known dimensions (e.g., 300px width, proportional height)
 
-| Integration | Common Mistake | Correct Approach |
-|-------------|----------------|------------------|
-| MUI Drawer + custom focus management | Letting MUI's `enforceFocus` fight custom `tabIndex={-1}` Paper focus | Add `ModalProps={{ disableEnforceFocus: true, disableAutoFocus: true }}` to Drawer |
-| MUI Drawer + nested iframe | Default scroll lock shifts layout in iframe context | Add `ModalProps={{ disableScrollLock: true }}` to Drawer |
-| `useBreakpoints()` in tests | Hook throws without provider | Thread `isMobile` as a prop OR wrap test renders with `BreakpointsProvider` |
-| Push nav state + drawer open/close | Submenu state persists across close | Reset push nav state via `useEffect` on `open` prop change |
-| Drawer + ScribePopover 3-step state machine | Drawer wraps only the menu step but not loading/result | Keep the `step` state at `ScribePopover` level; only the `menu` step renders the Drawer |
+**Detection:**
+- Images appear microscopic in the document
+- Images appear enormous (raw pixel values interpreted as EMUs)
+
+**Phase to address:** Image handling phase -- not Phase 1.
 
 ---
 
-## UX Pitfalls
+### Pitfall 17: pasteInProgress Guard Must Extend to Builder API Path
 
-| Pitfall | User Impact | Better Approach |
-|---------|-------------|-----------------|
-| No back button in push navigation | User is trapped in submenu with no way back | Always show a back arrow in the drawer header when `currentView !== 'root'` |
-| Drawer header shows action title but not parent breadcrumb | User loses context of where they are in the menu | Show parent item label (e.g., "Translate") in the drawer header when in submenu |
-| Drawer closes on outside tap without any close button | Power users expect an explicit close affordance | Add an X button in the drawer header AND keep outside-tap-to-close behavior |
-| Prompt input loses submitted text on mobile (auto-clear) | User cannot see what they submitted before result appears | Same behavior as desktop — clear input after submit, breadcrumb shows the submitted text in result step |
-| Drawer animation is slow on low-end Android | Menu feels unresponsive | Test with `transitionDuration={{ enter: 200, exit: 150 }}` on Drawer — reduce from MUI default 225ms/195ms |
+**What goes wrong:**
+The developer adds a new Builder API insertion path but forgets to set `pasteInProgress = true` before the operation. During the callCommand execution, OO fires `init()` with new selection data (because the document changed), which resets `lastSelectedText` and `lastSelectedHtml`. The next Scribe operation uses stale or empty data.
+
+**Why it happens:**
+The existing `pasteInProgress` guard (code.js line 86, checked at line 296) suppresses `init()` during PasteHtml operations. The Builder API path needs the same guard, plus `stopHidePolling()`.
+
+**Prevention:**
+1. Set `pasteInProgress = true` and call `stopHidePolling()` at the start of any Builder API insertion
+2. Reset `pasteInProgress = false` in the final callback
+3. Follow the exact same pattern as `pasteHtml()` lines 97-98 and 152
+
+**Detection:**
+- `init()` fires during insertion (visible in console as "[Scribe] init() called")
+- `lastSelectedText` becomes empty mid-operation
+- Subsequent Scribe operations fail because selection state was reset
+
+**Phase to address:** Phase 1 -- copy the guard pattern from day one.
 
 ---
 
-## "Looks Done But Isn't" Checklist
+## Phase-Specific Warnings
 
-- [ ] **isMobile trigger**: Open Scribe on a 375px-wide viewport (Chrome DevTools). Verify the drawer appears — NOT the Popover.
-- [ ] **Desktop unaffected**: Open Scribe on a 1200px-wide viewport. Verify the existing Popover with floating submenus still works exactly as before.
-- [ ] **Push navigation state reset**: Navigate into Translate submenu, close the drawer, reopen it. Verify the root menu shows — not the Translate submenu.
-- [ ] **Back button visible only in submenu**: In the root list, no back button is visible. After tapping "Translate", a back arrow appears in the drawer header.
-- [ ] **Prompt input fills drawer width**: On 375px viewport, the prompt input fills the drawer width with no horizontal overflow.
-- [ ] **Submenu on desktop is unchanged**: Hover over "Translate" on desktop, the floating submenu still appears to the right of the menu.
-- [ ] **Escape key semantics**: In submenu view (drawer, mobile), pressing Escape goes back to root. In root view, Escape closes the drawer.
-- [ ] **Scroll lock absent**: Opening the drawer does NOT cause a layout shift in the OO editor or any horizontal jump.
-- [ ] **Focus visible in drawer**: After drawer opens, keyboard focus is visible on the first menu item (or the drawer Paper).
-- [ ] **Free prompt submit works in drawer**: Type a prompt in the drawer, tap the send button. The drawer should close and the loading step should appear.
+| Phase Topic | Likely Pitfall | Mitigation |
+|-------------|---------------|------------|
+| MD Parser (ES5) | Parser relies on DOM APIs not available in callCommand sandbox | Parse OUTSIDE callCommand, pass instruction set via Asc.scope |
+| MD Parser (ES5) | ES6 syntax slips into callCommand function body | Linter rule or manual review for ES5 compliance |
+| MD Parser (ES5) | LLM output quirks break parser | Build test suite from real Scribe LLM responses |
+| Instruction Interpreter | Multiple callCommand calls create multiple undo points | Single callCommand for all content creation + InsertContent |
+| Instruction Interpreter | Asc.scope payload too large (images) | Defer images; keep initial payload text-only |
+| Instruction Interpreter | Return value from callCommand is undefined (object, not string) | JSON.stringify in callCommand, JSON.parse in callback |
+| Text Formatting | AddText instead of CreateRun for mixed formatting | Always use CreateRun for inline formatting |
+| Text Formatting | Paragraph properties (alignment, spacing) lost | Capture original properties in read-only prep callCommand |
+| List Handling | OO ordered list bug affects Builder API too | Test list creation early with minimal example |
+| Table Handling | Column widths reset after InsertContent | Set table layout to "fixed", set widths explicitly |
+| Image Handling | Base64 bloats Asc.scope, EMU dimensions wrong | URL-based images preferred, convert px to EMU |
+| Selection Post-Insert | GetRange/Select fails after InsertContent | Marker-based search workaround, defer to late phase |
+| Integration | PasteHtml fallback removed prematurely | Keep PasteHtml as fallback until Builder API covers all cases |
+| Integration | pasteInProgress not set for Builder API path | Copy existing guard pattern from pasteHtml() |
+
+---
+
+## Integration Pitfalls with Existing PasteHtml Fallback
+
+| Scenario | Risk | Mitigation |
+|----------|------|------------|
+| Builder API succeeds for paragraphs but fails for tables | User gets partial content | Detect failure, fall back to PasteHtml for the entire content |
+| Builder API and PasteHtml both active in same session | Inconsistent undo behavior (PasteHtml = 1 undo point via executeMethod, Builder = 1 via callCommand) | Both should be single undo point -- test both paths |
+| Feature flag switches mid-operation | Race condition between paths | Feature flag checked once at operation start, not per-element |
+| Builder API callCommand fails silently | User clicks Replace, nothing happens | Add timeout detection: if callback doesn't fire within 5s, fall back to PasteHtml |
 
 ---
 
@@ -409,46 +535,28 @@ Use MUI Drawer (re-exported as `cozy-ui/transpiled/react/Drawer`) with `anchor="
 
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| Absolute submenu inside drawer (Pitfall 3) | HIGH | Remove absolute submenu render path, implement push navigation — essentially a rewrite of the submenu mechanism |
-| Wrong breakpoint source (Pitfall 1) | MEDIUM | Add diagnostic log, verify breakpoint fires at correct threshold, adjust `BreakpointsProvider` config if needed |
-| MUI focus conflict (Pitfall 5) | LOW | Add `disableEnforceFocus` to Drawer ModalProps — one-line fix |
-| 500px hardcoded width overflow (Pitfall 4) | LOW | Replace `width: 500` with `width: isMobile ? '100%' : 500` |
-| Push nav state not reset on close (Pitfall 8) | LOW | Add `useEffect` with `open` dependency to reset `currentView` |
-| Both Drawer and Popover mounted simultaneously (Pitfall 7) | MEDIUM | Refactor conditional render to either/or pattern, unmount unused variant |
-
----
-
-## Pitfall-to-Phase Mapping
-
-| Pitfall | Prevention Phase | Verification |
-|---------|------------------|--------------|
-| Breakpoint diagnostic (Pitfall 1) | Phase 1 — drawer scaffold | Console log confirms `isMobile: true` at < 768px |
-| Scroll lock layout shift (Pitfall 2) | Phase 1 — drawer scaffold | Open drawer, verify no horizontal layout jump |
-| Absolute submenu cannot go inside drawer (Pitfall 3) | Phase 1 — architectural decision | Do not attempt to reuse absolute submenu; plan push navigation from day one |
-| 500px prompt input overflow (Pitfall 4) | Phase 2 — prompt input adaptation | Verify no overflow on 375px viewport in devtools |
-| Focus management conflict (Pitfall 5) | Phase 1 — drawer scaffold | Verify keyboard focus visible after drawer opens |
-| Hover handlers break touch interaction (Pitfall 6) | Phase 2 — push navigation | Test tap behavior with devtools touch emulation |
-| Drawer/Popover simultaneous render (Pitfall 7) | Phase 1 — conditional render structure | Use either/or render pattern from the start |
-| Push nav state not reset on close (Pitfall 8) | Phase 2 — push navigation state | Test close + reopen cycle in submenu |
-| `useBreakpoints` in isolation tests (Pitfall 9) | Phase 1 — architecture | Thread `isMobile` as prop, avoid hook in menu component |
-| Keyboard nav for push navigation (Pitfall 10) | Phase 2 — push navigation | Test ArrowDown/Enter/Escape in both root and submenu views on mobile |
-| Wrong Drawer anchor (Pitfall 11) | Phase 1 — drawer scaffold | Verify drawer covers 100% of screen height |
+| Parser inside callCommand (Pitfall 1) | HIGH | Rewrite: move parser outside, design instruction set, rewrite callCommand as interpreter |
+| Multiple undo points (Pitfall 3) | HIGH | Merge all content creation into single callCommand -- may require rearchitecting the instruction interpreter |
+| ES6 in callCommand (Pitfall 5) | LOW | Find and replace ES6 syntax -- mechanical fix |
+| Lost paragraph properties (Pitfall 12) | MEDIUM | Add property capture in prep callCommand, apply in insertion callCommand |
+| Premature PasteHtml removal (Pitfall 11) | MEDIUM | Restore from git, add fallback branching |
+| Post-insert selection fails (Pitfall 7) | LOW (if deferred) | Accept limitation, implement marker-based workaround in later phase |
 
 ---
 
 ## Sources
 
-- cozy-drive source: `src/modules/views/OnlyOffice/Scribe/ScribeActionMenu.jsx` — direct analysis, HIGH confidence
-- cozy-drive source: `src/modules/views/OnlyOffice/Scribe/ScribePopover.jsx` — direct analysis, HIGH confidence
-- cozy-drive source: `src/lib/DriveProvider.jsx` — BreakpointsProvider setup, HIGH confidence
-- cozy-ui source: `node_modules/cozy-ui/transpiled/react/providers/Breakpoints/index.js` — useBreakpoints, HIGH confidence
-- cozy-ui source: `node_modules/cozy-ui/transpiled/react/providers/Breakpoints/useIframeConnection.js` — iframe postMessage breakpoint protocol, HIGH confidence
-- cozy-ui source: `node_modules/cozy-ui/transpiled/react/helpers/breakpoints.js` — isMobile threshold (0–768px), HIGH confidence
-- cozy-ui source: `node_modules/cozy-ui/transpiled/react/ActionsMenu/ActionsMenuWrapper.js` — cozy-ui's own pattern for isMobile ? BottomSheet : Menu, HIGH confidence
-- cozy-ui source: `node_modules/cozy-ui/transpiled/react/BottomSheet/BottomSheet.js` — `document.body.style.overflow = 'hidden'` scroll lock behavior, HIGH confidence
-- cozy-ui source: `node_modules/cozy-ui/transpiled/react/Drawer/index.js` — re-exports MUI Drawer directly, HIGH confidence
-- MUI Drawer docs — `disableScrollLock`, `ModalProps`, `PaperProps`, `anchor` — MEDIUM confidence (based on MUI v4/v5 knowledge, version used in cozy-ui not explicitly verified)
+- [OO callCommand documentation](https://api.onlyoffice.com/docs/plugin-and-macros/interacting-with-editors/overview/how-to-call-commands/) -- HIGH confidence, official docs
+- [OO Redo bug after callCommand](https://community.onlyoffice.com/t/can-not-redo-after-execute-connectors-callcommand-method/12614) -- HIGH confidence, confirmed bug by OO team
+- [OO InsertContent API](https://api.onlyoffice.com/docs/office-api/usage-api/text-document-api/ApiDocument/Methods/InsertContent/) -- HIGH confidence, official docs
+- [OO Creating formatted table sample](https://api.onlyoffice.com/docs/office-api/samples/text-document-editor/creating-formatted-table/) -- HIGH confidence, official example
+- [OO CreateImage API](https://api.onlyoffice.com/docbuilder/textdocumentapi/api/createimage) -- HIGH confidence, official docs
+- [OO Plugin tips, tricks, and pitfalls (Jan 2026)](https://www.onlyoffice.com/blog/2026/01/creating-onlyoffice-plugins-tips-tricks-and-hidden-pitfalls) -- HIGH confidence, official blog
+- [OO Issue: retrieving paragraph after InsertContent](https://community.onlyoffice.com/t/issue-in-retrieving-newly-created-paragraph-element/10415) -- MEDIUM confidence, community forum
+- [OO Creating auto-width table](https://api.onlyoffice.com/docs/office-api/samples/text-document-editor/creating-auto-width-table/) -- HIGH confidence, official sample
+- Direct analysis of `plugins/onlyoffice-scribe/scripts/code.js` -- HIGH confidence, source code
+- Project memory (MEMORY.md) -- HIGH confidence, verified project history
 
 ---
-*Pitfalls research for: Responsive drawer with push navigation in Scribe v2.3 (Cozy Drive + OnlyOffice)*
-*Researched: 2026-03-12*
+*Pitfalls research for: Document Builder API injection in Scribe v2.4 (Cozy Drive + OnlyOffice)*
+*Researched: 2026-03-15*

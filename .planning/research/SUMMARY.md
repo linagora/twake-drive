@@ -1,174 +1,173 @@
 # Project Research Summary
 
-**Project:** Scribe v2.3 — Responsive Drawer Menu
-**Domain:** Responsive UI refactor — fullscreen mobile drawer with push navigation for AI writing assistant
-**Researched:** 2026-03-12
-**Confidence:** HIGH
+**Project:** Scribe v2.4 -- Document Builder API Injection
+**Domain:** Rich content injection via OnlyOffice Document Builder API in plugin callCommand
+**Researched:** 2026-03-15
+**Confidence:** MEDIUM-HIGH
 
 ## Executive Summary
 
-Scribe v2.3 is a focused responsive layout refactor of an existing, working AI writing assistant menu. The current implementation uses a MUI Popover with absolute-positioned flyout submenus — a pattern that works well on desktop but fails entirely on mobile: flyout submenus clip outside the viewport, the 500px fixed prompt input overflows narrow screens, and drag/resize affordances are unusable with touch. The recommended approach is a clean conditional split at the `ScribePopover` level: desktop keeps the existing Popover path 100% intact, while mobile renders a fullscreen MUI Drawer with a new `ScribeDrawerMenu` component implementing push navigation.
+Scribe v2.4 replaces the current PasteHtml injection path with OnlyOffice's Document Builder API, executed inside `callCommand`. This gives element-level control over every paragraph, run, table, and list -- enabling format preservation, post-injection selection, and proper table rendering that PasteHtml cannot achieve. The approach requires zero new npm dependencies: everything is built with the OO Builder API globals (`Api.CreateParagraph`, `Api.CreateRun`, `Api.CreateTable`, etc.) already available inside `callCommand`, plus a custom ES5 Markdown parser (~150-250 lines) that runs in the same sandbox.
 
-No new npm dependencies are required. Every building block — `Drawer`, `Slide`, `useBreakpoints`, `IconButton` — is already installed via `@material-ui/core` 4.12.3 and `cozy-ui` 135.8.0. The implementation strategy is to add one new component file (`ScribeDrawerMenu.jsx`), modify four existing files (`ScribePopover`, `ScribeActionMenu`, `ScribePromptInput`, `View.jsx`), and leave all other Scribe files untouched. The view stack for push navigation is a single `useState` — no router, no animation library needed for MVP.
+The recommended architecture is "parse outside, build inside": tokenize the LLM's Markdown output in the plugin iframe (where modern JS is available), serialize the token array through `Asc.scope`, then interpret tokens as Builder API calls inside a single `callCommand`. This preserves the single-undo-point guarantee that users expect. A format snapshot captured before the LLM round-trip provides document styling defaults (font, size, color, alignment) that Markdown cannot represent, applied via a "fusion" strategy where snapshot values are defaults and Markdown formatting is additive overrides.
 
-The primary risks are architectural decisions that must be made in Phase 1 before any navigation behavior is built. The most important: MUI Drawer requires `ModalProps={{ disableScrollLock: true, disableEnforceFocus: true, disableAutoFocus: true }}` from the start to prevent scroll lock layout shifts (Cozy Drive is already an iframe) and to avoid MUI's built-in focus trap fighting the custom keyboard navigation system. The conditional render must be a strict either/or (`isMobile ? <Drawer> : <Popover>`) — not both mounted simultaneously. Get these three foundational decisions right in Phase 1 and the remaining implementation is straightforward.
+The primary risks are: (1) the callCommand sandbox is ES5-only with no DOM APIs, making parser bugs silent and hard to debug; (2) post-injection selection remains unreliable due to a known OO limitation where `InsertContent` does not return references to inserted elements; and (3) table formatting may be stripped by `InsertContent`. All three are mitigable -- the first by parsing outside the sandbox, the second by deferring selection to a late phase using a sentinel-marker strategy, and the third by explicitly setting all table properties. The existing PasteHtml path must be preserved as a fallback throughout the migration.
 
 ## Key Findings
 
 ### Recommended Stack
 
-The entire v2.3 milestone requires zero new npm dependencies. All components exist at the correct versions in the installed packages. `cozy-ui/transpiled/react/Drawer` is a thin re-export of `@material-ui/core/Drawer` v4.12.3 — use the cozy-ui import path for consistency with the rest of the codebase. `useBreakpoints` from `cozy-ui/transpiled/react/providers/Breakpoints` is already imported in 78 files and defines `isMobile` as `window.innerWidth <= 768px`. Read `isMobile` once in `View.jsx` (where it already exists on line 37) and thread it down as a prop — do not call the hook again in child components.
+No new dependencies are needed. The entire milestone is built with OO's built-in Document Builder API (available as globals inside `callCommand`) and ES5 regex patterns for Markdown parsing. The existing stack (React 18, MUI v4, cozy-ui, Turndown, marked, react-markdown) remains unchanged.
 
 **Core technologies:**
-- `cozy-ui/transpiled/react/Drawer` (MUI v4 Drawer): fullscreen mobile container — already installed, re-exported by cozy-ui, no new install needed
-- `useBreakpoints().isMobile` (cozy-ui 135.8.0): breakpoint detection — established pattern in 78 files, single call in View.jsx
-- `useState` (React 18.2.0): push navigation view stack — no router needed, depth is exactly root + one submenu level
-- `@material-ui/core/Slide` (installed): optional push animation — available but not required for MVP
-
-**What NOT to add:** `react-router-dom` (overkill for one-level depth), `SwipeableDrawer` (gesture complexity without payoff), `framer-motion`/`react-spring` (bundle size for a non-required polish item), MUI v5 (project is on v4 — mixing v4 and v5 import paths causes style conflicts).
+- **OO Document Builder API** (inside callCommand): Element-level content construction -- `Api.CreateParagraph()`, `Api.CreateRun()`, `Api.CreateTable()`, `Api.CreateNumbering()`, `doc.InsertContent()` -- all verified against official OO docs
+- **Custom ES5 Markdown tokenizer**: Converts LLM Markdown output to a JSON instruction set; must be ES5 because callCommand runs in an isolated sandbox with no module system
+- **Asc.scope data bridge**: Passes serialized token arrays and format snapshots from plugin iframe to callCommand sandbox -- already proven in existing code
+- **Sentinel marker strategy** (for post-injection selection): Zero-width characters inserted as boundary markers, found via `doc.Search()`, then deleted -- MEDIUM confidence, needs empirical validation
 
 ### Expected Features
 
-The MVP is 8 table-stakes features. All 8 must ship for v2.3 to be considered complete. Desktop regression is a blocking failure.
-
 **Must have (table stakes):**
-- Fullscreen drawer on mobile (`isMobile`) with standard slide animation and backdrop close
-- Push navigation: tapping a parent item replaces the list with the submenu content in-place
-- Back button/header in submenu view (left-arrow icon + parent label)
-- Prompt input fills drawer width (remove 500px hardcoded Paper wrapper, replace with `width: '100%'`)
-- All three steps (menu / loading / result) render inside the drawer on mobile
-- Result panel static inside drawer — no drag/resize on mobile (omit drag/resize props)
-- Desktop Popover path 100% unchanged
-- Push navigation state resets to root on drawer close
+- Markdown-to-Builder token pipeline (ES5 parser + callCommand interpreter)
+- Inline formatting: bold, italic, bold+italic, strikethrough, code spans
+- Paragraph separation as distinct OO paragraphs
+- Headings H1-H6 via SetStyle or SetFontSize+SetBold
+- Bullet and numbered lists via CreateNumbering
+- Hyperlinks via AddHyperlink
+- Single undo point (all operations in one callCommand)
+- Smart spacing at injection boundaries
+- PasteHtml fallback on any Builder API failure
 
-**Should have (polish, post-validation):**
-- Slide push animation: CSS translateX on list swap — D1, deferred to v2.3.x
-- Drawer header with Scribe title and close button on all steps — D2, quick win once drawer works
+**Should have (differentiators -- why we are migrating):**
+- Post-injection selection (select the exact range of injected content)
+- GFM tables as proper OO tables with column structure
+- Nested list indentation (multi-level numbering)
 
-**Defer (v3.0+):**
-- `SwipeableDrawer` with swipe-to-close — D3, warranted only after user feedback confirms demand
+**Defer (v2.5+):**
+- Code blocks with monospace formatting
+- Blockquotes with left border/indent
+- Horizontal rules
+- Image injection (CreateImage has known reliability issues inside callCommand; LLM does not return images)
+- Syntax highlighting (OO has no API for this)
+- Streaming injection (breaks single undo point)
+- Preserving per-run original formatting (too fragile when LLM restructures text)
 
 ### Architecture Approach
 
-The architecture is a clean conditional split: `ScribePopover` chooses its container based on `isMobile` (`<Drawer>` vs `<Popover>`), then renders the same three-step state machine (menu / loading / result) inside either shell. The step machine, AI call logic, `AbortController`, and retry handling all remain in `ScribePopover` — they are not duplicated. A single new component `ScribeDrawerMenu.jsx` handles the push-navigation layout; it is purely presentational, receiving `actions`, `onSelect`, `onClose`, and `t` as props with all navigation state managed internally via `viewStack`.
+The architecture adds four new ES5 components to `code.js`, all running inside `callCommand`: a format snapshot extractor (captures original document styling before LLM round-trip), a Markdown parser (tokenizes LLM output into a JSON AST), a Builder content generator (walks the AST and emits Builder API calls with fusion of snapshot defaults + MD overrides), and a post-injection selector (sentinel markers + Search). The format snapshot stays in `code.js` (never round-tripped through React), and `View.jsx` sends raw Markdown instead of HTML to the plugin.
 
-**Modified files:**
-1. `View.jsx` — add `isMobile` prop to `<ScribePopover>` (one line, `isMobile` already destructured on line 37)
-2. `ScribePopover.jsx` — conditional container (`isMobile ? <Drawer ...> : <Popover ...>`), pass `isMobile` down
-3. `ScribeActionMenu.jsx` — receive `isMobile` prop, delegate to `ScribeDrawerMenu` on mobile
-4. `ScribePromptInput.jsx` — change Paper wrapper width from `500` to `isMobile ? '100%' : 500`
-
-**New file:**
-5. `ScribeDrawerMenu.jsx` — push navigation with `viewStack` state (`[{ type:'root' }]` pushed to `{ type:'submenu', actionId }`)
-
-**Unchanged:** `ScribeResultPanel`, `MarkdownPreview`, `scribeActions.js`, `scribeAI.js`, all other Scribe files.
+**Major components:**
+1. **Format Snapshot Extractor** (`code.js`, ES5) -- Captures paragraph properties (alignment, spacing, indent) and dominant run style (font, size, color) from selected text before LLM round-trip
+2. **Markdown Parser** (`code.js` or plugin context, ES5) -- Tokenizes LLM Markdown into a flat JSON instruction array; handles paragraphs, inline formatting, headings, lists, links, tables
+3. **Builder Content Generator** (`code.js`, inside callCommand) -- Interprets token array, creates ApiParagraph/ApiRun/ApiTable objects, applies format fusion, calls `doc.InsertContent()`
+4. **Post-Injection Selector** (`code.js`, inside or after callCommand) -- Inserts sentinel zero-width chars at content boundaries, uses `doc.Search()` to find them, selects range, removes markers
 
 ### Critical Pitfalls
 
-1. **MUI Drawer scroll lock shifts the iframe layout** — Pass `ModalProps={{ disableScrollLock: true }}` from day one. Cozy Drive is already an iframe; the body scroll lock is unnecessary and causes a ~15px layout jump when the drawer opens.
-
-2. **MUI focus trap conflicts with custom keyboard navigation** — Pass `ModalProps={{ disableEnforceFocus: true, disableAutoFocus: true }}` to Drawer, matching how the existing `ScribePopover` already opts out of MUI focus management. Without this, MUI overrides the custom `tabIndex={-1}` Paper focus system.
-
-3. **Absolute-positioned submenu (`left: 100%`) is invisible inside a Drawer** — This is not recoverable without a rewrite. The `position: absolute; left: 100%` flyout overflows a full-screen drawer and is clipped. Push navigation must be planned from the start — do not attempt to reuse the flyout submenu inside the drawer.
-
-4. **Both Drawer and Popover mounted simultaneously** — The conditional render must be `isMobile ? <Drawer> : <Popover>`, not both mounted with `open={false}`. Both MUI components create Portal elements in `document.body`; having both mounted causes DOM duplication and animation glitches on orientation change.
-
-5. **Push navigation state persists across drawer close** — Add a `useEffect` on `open` to reset `viewStack` to `[{ type: 'root' }]` when the drawer closes. Without this, reopening the drawer after navigating into a submenu shows the submenu instead of the root list.
-
-6. **Hover event handlers (`onMouseEnter`/`onMouseLeave`) fire on touch and interfere with push navigation** — The mobile branch must bypass all hover interaction logic and use only click/tap handlers. The `mouseMoveEnabledRef` gating is a desktop-only concern; in drawer mode only `onClick` is relevant.
+1. **callCommand sandbox has no DOM APIs** -- Parser must not use DOMParser, document, window, require, or any browser/Node API. Parse Markdown OUTSIDE callCommand, pass instruction set via Asc.scope. Getting this wrong means a full rewrite.
+2. **Multiple callCommand calls = multiple undo points** -- ALL content creation and InsertContent must happen in a single callCommand. The existing two-step pattern (read-only prep + single modification) is correct. Never split insertion across multiple modifying callCommands.
+3. **ES5-only inside callCommand** -- No const/let, no arrow functions, no template literals, no destructuring, no for...of, no Array.includes. The Markdown interpreter will be the most complex callCommand code in the plugin; ES6 slips are easy and failures are silent.
+4. **Post-insertion selection is unreliable** -- InsertContent does not return references to inserted elements. GetRange/Select fails immediately after InsertContent. Use sentinel markers + Search as workaround, and defer this to a late phase.
+5. **Redo is broken after callCommand** -- Confirmed OO bug (March 2025, still unfixed). No workaround exists. Accept and document this limitation.
 
 ## Implications for Roadmap
 
-Based on research, the milestone splits naturally into two sequential phases. Phase 1 establishes all architectural foundations (decisions that are hard to change later). Phase 2 implements push navigation behavior on top of a correct scaffold.
+Based on research, the milestone naturally splits into 6 phases with clear dependency ordering.
 
-### Phase 1: Drawer Scaffold + Breakpoint Split
+### Phase 1: Token Pipeline + Minimal Builder Injection
+**Rationale:** This is the foundational architecture decision. If the parse-outside-build-inside pattern works, everything else builds on it. If it fails, we need to know immediately.
+**Delivers:** End-to-end proof that Markdown text goes through tokenizer, Asc.scope, callCommand, Builder API, InsertContent, and appears in the document with bold/italic formatting.
+**Addresses:** Table stakes 1-4 (parser, inline formatting, paragraphs), table stake 9 (single undo), table stake 11 (PasteHtml fallback)
+**Avoids:** Pitfall 1 (sandbox constraints), Pitfall 2 (Asc.scope limits), Pitfall 3 (multiple undo points), Pitfall 5 (ES5 constraint), Pitfall 15 (CreateRun vs AddText), Pitfall 17 (pasteInProgress guard)
 
-**Rationale:** The three most critical pitfalls (scroll lock, focus conflict, simultaneous render) must all be addressed in the drawer scaffold before any navigation behavior is built on top. Getting the `ModalProps` and conditional render pattern correct from the start avoids medium-to-high cost rework later.
+### Phase 2: Format Snapshot + Fusion
+**Rationale:** Format preservation is the second-most-important capability after basic injection. Without it, inserted text loses the document's font/size/color -- a visible regression from PasteHtml which inherits surrounding styles. Must come before extended MD support so all subsequent content types benefit.
+**Delivers:** Original document formatting (font family, font size, color, alignment, spacing) preserved through the LLM round-trip via dominant-style fusion.
+**Addresses:** Table stake 10 (smart spacing), Pitfall 12 (paragraph properties lost)
+**Avoids:** Pitfall 6 (selection state management during prep callCommand)
 
-**Delivers:** A working fullscreen drawer that opens on mobile when Scribe is triggered, renders the existing `ScribeActionMenu` inside it (desktop submenus broken inside drawer — acceptable at this phase), and keeps the desktop Popover completely unchanged. Drawer closes on backdrop tap. No layout shift, no focus conflict.
+### Phase 3: Extended Markdown Support
+**Rationale:** With the pipeline proven and format fusion working, extend the parser to cover all common LLM output structures. These are independent of each other and can be implemented incrementally.
+**Delivers:** Headings, bullet lists, numbered lists, links, inline code -- all rendered as proper OO elements, not plain text.
+**Addresses:** Table stakes 5-8 (headings, lists, links), differentiator D3 (nested lists)
+**Avoids:** Pitfall 9 (LLM output quirks), Pitfall 13 (OO ordered list bug)
 
-**Addresses features:** Table stakes 1 (fullscreen drawer), 2 (slide animation — built-in), 3 (backdrop close), 7 (desktop unchanged)
+### Phase 4: Tables
+**Rationale:** Tables are the highest-complexity content type and the highest-value differentiator over PasteHtml. They depend on inline formatting (for cell content) being solid, so they come after Phase 3.
+**Delivers:** GFM Markdown tables rendered as proper OO tables with correct column structure, header row styling, and explicit borders.
+**Addresses:** Differentiator D2 (tables with column structure)
+**Avoids:** Pitfall 10 (table width/formatting loss after InsertContent)
 
-**Implements:** `ScribePopover` conditional container, `View.jsx` prop addition, Drawer `ModalProps` configuration (`disableScrollLock`, `disableEnforceFocus`, `disableAutoFocus`), either/or conditional render pattern, `anchor="bottom"` with `PaperProps={{ style: { height: '100%' } }}`
+### Phase 5: Post-Injection Selection
+**Rationale:** This is the primary differentiator but has the highest uncertainty. It depends on all content types being insertable (so sentinels bracket the full content). Deferring it ensures core injection is not blocked by selection research.
+**Delivers:** After Replace/Insert, the injected content range is selected (highlighted) in the document.
+**Addresses:** Differentiator D1 (post-injection selection)
+**Avoids:** Pitfall 7 (GetRange/Select fails after InsertContent) -- uses sentinel workaround instead
 
-**Avoids pitfalls:** Pitfall 1 (breakpoint diagnostic — add console log, verify triggers at < 768px), Pitfall 2 (scroll lock), Pitfall 5 (focus conflict), Pitfall 7 (simultaneous render), Pitfall 11 (drawer anchor + PaperProps for fullscreen)
-
-**Build order within phase:**
-1. Add `isMobile` prop to `ScribePopover` (from `View.jsx`)
-2. Add conditional container in `ScribePopover` with correct `ModalProps`
-3. Add diagnostic: `console.log('[Scribe] isMobile:', isMobile, window.innerWidth)` on first render
-4. Verify drawer covers 100% screen height, no layout shift on open, focus visible
-
-### Phase 2: Push Navigation + Prompt Width + Mobile Polish
-
-**Rationale:** Push navigation depends on the scaffold being correct. Building `ScribeDrawerMenu` in isolation first (no drawer dependency, just mock actions) lets it be validated before integration. Prompt width is a one-line change but belongs here since it requires testing in a real mobile viewport context.
-
-**Delivers:** Complete mobile Scribe experience — fullscreen drawer with push navigation submenus, back button, full-width prompt input, static result panel. All three steps work correctly in the drawer. Keyboard navigation adapted for push navigation semantics (Escape navigates back from submenu, Enter pushes into submenu).
-
-**Addresses features:** Table stakes 4 (push navigation), 5 (back button), 6 (prompt width), 8 (static result panel), plus state reset on close
-
-**Implements:** `ScribeDrawerMenu.jsx` (new, push navigation with `viewStack`), `ScribeActionMenu.jsx` mobile delegation, prompt input width fix (`isMobile ? '100%' : 500`), keyboard handler third mode for push navigation, `useEffect` state reset on drawer close, hover handler removal for mobile branch
-
-**Avoids pitfalls:** Pitfall 3 (absolute submenu never used in drawer — push nav replaces it), Pitfall 4 (500px overflow fixed), Pitfall 6 (hover handlers removed for mobile branch), Pitfall 8 (state reset via useEffect on `open`), Pitfall 10 (keyboard nav adapted for push nav)
-
-**Build order within phase:**
-1. Build `ScribeDrawerMenu.jsx` in isolation with mock actions (no Drawer dependency)
-2. Modify `ScribeActionMenu.jsx` to delegate to `ScribeDrawerMenu` when `isMobile`
-3. Fix prompt input width (`isMobile ? '100%' : 500`)
-4. Add keyboard handler push navigation mode
-5. Add `useEffect` state reset on `open`
-6. Verify complete mobile flow: open > navigate > submit > result > close > reopen (confirm state reset)
+### Phase 6: Polish + Edge Cases
+**Rationale:** Code blocks, blockquotes, horizontal rules are low-value features that round out the implementation. Smart spacing refinements and fallback hardening belong here.
+**Delivers:** Code blocks with monospace font, blockquotes with indent/border, horizontal rules, refined spacing logic, robust error handling.
+**Addresses:** Differentiators D4-D6, remaining edge cases
+**Avoids:** Pitfall 11 (premature PasteHtml removal) -- only remove fallback after all content types verified
 
 ### Phase Ordering Rationale
 
-- Phase 1 before Phase 2 because all navigation behavior must be built on top of a correct architectural scaffold. Attempting push navigation inside a drawer with wrong `ModalProps` means debugging focus and scroll issues while also debugging navigation state simultaneously.
-- Push navigation is built as a new isolated component (`ScribeDrawerMenu`) before being integrated into the existing component tree. This reduces integration risk on the most complex change.
-- Desktop path is never touched (only the `isMobile` branch changes at each step). Each phase ends with desktop behavior verifiably unchanged.
-- The two-phase structure matches the pitfall-to-phase mapping in PITFALLS.md: critical architectural pitfalls (1, 2, 3, 5, 7, 11) all land in Phase 1; behavioral pitfalls (4, 6, 8, 10) land in Phase 2.
+- **Dependency chain:** Parser (Phase 1) -> Format fusion (Phase 2) -> Extended tokens (Phase 3) -> Tables (Phase 4). Each phase builds on the previous; no phase can be skipped or reordered.
+- **Risk-first:** Phase 1 validates the riskiest architectural decision (parse outside, build inside, single callCommand). Phase 2 validates format capture via Builder API getter methods. Both are validated before investing in feature breadth.
+- **Differentiators last:** Post-injection selection (Phase 5) has the lowest confidence and highest research debt. Deferring it means the core milestone ships even if selection proves infeasible.
+- **Pitfall avoidance:** The phase structure ensures PasteHtml fallback is maintained throughout (Pitfall 11), ES5 compliance is established in Phase 1 (Pitfall 5), and single-undo-point is architecturally guaranteed from the start (Pitfall 3).
 
 ### Research Flags
 
-Phases with standard, well-documented patterns (no further research needed):
-- **Phase 1:** MUI Drawer configuration is standard. All `ModalProps` values confirmed in cozy-ui source and MUI docs. Breakpoint threshold confirmed in cozy-ui internals. Zero unknowns.
-- **Phase 2:** Push navigation with `useState` and `viewStack` is a textbook mobile navigation pattern. `SCRIBE_ACTIONS` data structure is already declarative and passes through unchanged. No novel technical challenges.
+Phases likely needing deeper research during planning:
+- **Phase 1:** Validate that `Asc.scope` reliably passes medium-sized token arrays (~50 tokens). Validate that a single callCommand can execute 50+ Builder API calls without timeout.
+- **Phase 2:** Empirically test `ApiRun.GetColor()`, `ApiRun.GetFontSize()`, `ApiRun.GetFontFamily()` return types inside callCommand -- docs are ambiguous on whether they return primitives or API objects.
+- **Phase 4:** Test `InsertContent` behavior with mixed content arrays (paragraphs + tables). Verify table formatting survives InsertContent. Test ordered list bug (#79263) with Builder API.
+- **Phase 5:** Test sentinel zero-width character search via `doc.Search()`. Test `ApiRange.Delete()` on zero-width characters. This phase may need a spike before planning.
 
-No phases require deeper research during planning. All critical questions were resolved by direct source analysis of the codebase, cozy-ui internals, and MUI source files.
+Phases with standard patterns (skip deep research):
+- **Phase 3:** Headings, lists, links are well-documented Builder API patterns with official examples. Standard implementation.
+- **Phase 6:** Code blocks, blockquotes, horizontal rules are cosmetic paragraph formatting -- straightforward SetFontFamily/SetIndLeft/SetBottomBorder calls.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | All components verified by direct file inspection of installed packages. Import paths confirmed. Zero new dependencies. No inference required. |
-| Features | HIGH | Table stakes derived from Material Design standards plus direct analysis of what the current implementation lacks on mobile. MVP scope is unambiguous. |
-| Architecture | HIGH | Based on direct reading of all Scribe component files plus cozy-ui internals. `isMobile` prop threading depth (2 levels) confirmed appropriate. Build order derived from actual dependency graph, not assumptions. |
-| Pitfalls | HIGH | Most pitfalls discovered via direct source code analysis, not pattern matching. `ModalProps` values confirmed in cozy-ui BottomSheet source (`document.body.style.overflow`), Drawer source (MUI Modal base), and existing `ScribePopover` (`disableAutoFocus` already present on line 37). |
+| Stack | HIGH | Zero new dependencies; all Builder API methods verified against official OO docs |
+| Features | MEDIUM | API surface is clear, but post-injection selection and table formatting through InsertContent have known limitations |
+| Architecture | MEDIUM-HIGH | Parse-outside-build-inside pattern is sound; format snapshot fusion is well-designed but getter method return types need empirical validation |
+| Pitfalls | HIGH | Grounded in existing code analysis, official docs, confirmed OO bugs, and community reports |
 
-**Overall confidence:** HIGH
+**Overall confidence:** MEDIUM-HIGH
 
 ### Gaps to Address
 
-- **`anchor="bottom"` vs `anchor="left"` final decision:** Research recommends `anchor="bottom"` for thumb reachability on phones, but the product spec does not specify. Both achieve fullscreen with the correct `PaperProps`. Decide before Phase 1 implementation — it affects the visual direction of the slide animation. Recommendation: `anchor="bottom"`.
-- **Slide push animation scope:** Research flags this as optional polish (D1, v2.3.x deferred). If the product spec requires animation in v2.3, it adds roughly half a phase of work (CSS `translateX` on two panels with `transition` timing). Confirm before Phase 2 planning.
-- **Keyboard navigation on mobile drawer:** Research documents the keyboard handler changes needed for push navigation (Pitfall 10). If the target is touch-only mobile with no external keyboard requirement, this can be simplified. Confirm whether external keyboard on iPad is in scope.
+- **GetColor/GetFontSize return types:** Do ApiRun getter methods return primitives or API objects inside callCommand? Needs a quick spike in Phase 2. If they return objects, the snapshot extractor needs adaptation.
+- **Asc.scope payload size limit:** No documented limit. Test with realistic payloads (a full page of formatted Markdown, ~100 tokens) early in Phase 1.
+- **InsertContent with mixed content arrays:** Does OO handle paragraphs interleaved with tables correctly? Needs empirical validation in Phase 4.
+- **Sentinel character searchability:** Can `doc.Search()` find zero-width Unicode characters? If not, Phase 5 needs a different marker strategy. Consider a spike before Phase 5 planning.
+- **OO ordered list bug (#79263):** Does this affect Builder API lists the same way it affects PasteHtml lists? Test in Phase 3 before building full list support.
+- **Redo bug after callCommand:** Upstream OO bug, no fix available. Document as known limitation.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- Codebase: `src/modules/views/OnlyOffice/Scribe/` — direct analysis of all component files
-- Codebase: `src/modules/views/OnlyOffice/View.jsx` — `useBreakpoints()` confirmed present and already destructuring `isMobile`
-- cozy-ui: `node_modules/cozy-ui/transpiled/react/Drawer/index.js` — confirmed thin re-export of MUI Drawer
-- cozy-ui: `node_modules/cozy-ui/transpiled/react/helpers/breakpoints.js` — `isMobile: [0, 768]` confirmed
-- cozy-ui: `node_modules/cozy-ui/transpiled/react/providers/Breakpoints/index.js` — hook implementation confirmed
-- cozy-ui: `node_modules/cozy-ui/transpiled/react/BottomSheet/BottomSheet.js` — scroll lock pattern confirmed (`document.body.style.overflow = 'hidden'`)
-- cozy-ui: `node_modules/cozy-ui/transpiled/react/ActionsMenu/ActionsMenuWrapper.js` — `isMobile ? BottomSheet : Menu` pattern confirmed
-- Codebase: grep `useBreakpoints` — 78 files using established import pattern
-- `.planning/PROJECT.md` — v2.3 requirements: drawer fullscreen, push submenus, adaptive prompt
+- [OnlyOffice Text Document API](https://api.onlyoffice.com/docs/office-api/usage-api/text-document-api/) -- Full Builder API reference
+- [OnlyOffice callCommand documentation](https://api.onlyoffice.com/docs/plugin-and-macros/interacting-with-editors/overview/how-to-call-commands/) -- Sandbox constraints, Asc.scope, callback protocol
+- [OnlyOffice InsertContent API](https://api.onlyoffice.com/docs/office-api/usage-api/text-document-api/ApiDocument/Methods/InsertContent/) -- Parameters, isInline, KeepTextOnly
+- [OnlyOffice Plugin Tips & Pitfalls (Jan 2026)](https://www.onlyoffice.com/blog/2026/01/creating-onlyoffice-plugins-tips-tricks-and-hidden-pitfalls) -- Payload size warnings, precompute guidance
+- [OnlyOffice API method references](https://api.onlyoffice.com/docs/office-api/usage-api/text-document-api/ApiRun/) -- ApiRun, ApiParagraph, ApiTable, ApiRange, ApiHyperlink
 
 ### Secondary (MEDIUM confidence)
-- MUI v4 Drawer API — `anchor`, `open`, `onClose`, `PaperProps`, `variant`, `ModalProps` options
-- Material Design 3 Navigation Drawer guidelines — push navigation as standard mobile submenu pattern
-- `node_modules/@material-ui/core/Drawer/Drawer.d.ts` — TypeScript definitions for ModalProps options
+- [OO Community: post-insertion element retrieval](https://community.onlyoffice.com/t/issue-in-retrieving-newly-created-paragraph-element/10415) -- Search workaround for post-insertion selection
+- [OO Community: redo bug after callCommand](https://community.onlyoffice.com/t/can-not-redo-after-execute-connectors-callcommand-method/12614) -- Confirmed bug, registered by OO team
+- [OO Community: cursor positioning after insert](https://community.onlyoffice.com/t/how-to-position-the-cursor-caret-after-inserted-inline-contentcontrol/1423) -- Position tracking limitations
+- [OO Community: inconsistent image insertion](https://community.onlyoffice.com/t/inconsistent-image-insertion-issue-in-onlyoffice-plugin-for-word-documents/5833) -- CreateImage timing issues
+
+### Tertiary (LOW confidence)
+- Sentinel marker strategy for post-injection selection -- Theoretically sound but untested with zero-width characters in OO Search API
+- Position counting fallback for selection -- Community reports suggest InsertContent does not preserve linear character positions
 
 ---
-*Research completed: 2026-03-12*
+*Research completed: 2026-03-15*
 *Ready for roadmap: yes*
