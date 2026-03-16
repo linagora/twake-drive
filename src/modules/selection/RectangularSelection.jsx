@@ -27,15 +27,23 @@ const RectangularSelection = ({
   scrollElement
 }) => {
   const containerRef = useRef(null)
+  const selectoRef = useRef(null)
   const [isContainerReady, setIsContainerReady] = useState(false)
   const { setSelectedItems, selectedItems, setIsSelectAll } =
     useSelectionContext()
   const isDraggingRef = useRef(false)
   const dragStartPosRef = useRef(null)
+  const mutationObserverRef = useRef(null)
 
   useEffect(() => {
     if (containerRef.current) {
       setIsContainerReady(true)
+    }
+
+    return () => {
+      if (mutationObserverRef.current) {
+        mutationObserverRef.current.disconnect()
+      }
     }
   }, [])
 
@@ -159,9 +167,38 @@ const RectangularSelection = ({
   }, [])
 
   /**
+   * Sets up a MutationObserver on the scroll container to detect when
+   * virtuoso adds or removes DOM elements (e.g. after scrolling).
+   * When mutations are detected during a drag, we force selecto to
+   * re-discover selectable targets so newly rendered elements can be selected.
+   */
+  useEffect(() => {
+    const container = scrollElement || scrollContainerRef?.current
+    if (!container) return
+
+    if (mutationObserverRef.current) {
+      mutationObserverRef.current.disconnect()
+    }
+
+    const observer = new MutationObserver(() => {
+      if (isDraggingRef.current && selectoRef.current) {
+        selectoRef.current.findSelectableTargets()
+      }
+    })
+
+    observer.observe(container, { childList: true, subtree: true })
+    mutationObserverRef.current = observer
+
+    return () => observer.disconnect()
+  }, [scrollElement, scrollContainerRef])
+
+  /**
    * Handles scroll events from react-selecto during drag selection.
    * When the selection rectangle reaches the edge of the scrollable container,
    * Selecto fires this event and we must manually scroll the container.
+   *
+   * New elements rendered by virtuoso after scrolling are detected by the
+   * MutationObserver which triggers selecto to re-check selectable targets.
    *
    * @param {Object} e - Selecto scroll event
    * @param {number[]} e.direction - Scroll direction [x, y], each -1, 0, or 1
@@ -170,6 +207,7 @@ const RectangularSelection = ({
     e => {
       const container = scrollElement || scrollContainerRef?.current
       if (!container) return
+
       container.scrollBy(
         e.direction[0] * SCROLL_STEP_IN_PIXELS,
         e.direction[1] * SCROLL_STEP_IN_PIXELS
@@ -226,6 +264,7 @@ const RectangularSelection = ({
       {children}
       {isContainerReady && (
         <Selecto
+          ref={selectoRef}
           className={styles['cozy-selecto-box']}
           container={containerRef.current}
           dragContainer={window}
