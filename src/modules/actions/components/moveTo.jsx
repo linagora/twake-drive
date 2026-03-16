@@ -7,8 +7,17 @@ import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 
 import { navigateToModalWithMultipleFile } from '@/modules/actions/helpers'
+import { isFromSharedDriveRecipient } from '@/modules/shareddrives/helpers'
 
-const moveTo = ({ t, canMove, pathname, navigate, isMobile, search }) => {
+const moveTo = ({
+  t,
+  canMove,
+  pathname,
+  navigate,
+  isMobile,
+  search,
+  shouldHideIfSharedDriveRecipient
+}) => {
   const icon = MovetoIcon
   const label = isMobile
     ? t('SelectionBar.moveto_mobile')
@@ -20,10 +29,11 @@ const moveTo = ({ t, canMove, pathname, navigate, isMobile, search }) => {
     icon,
     allowInfectedFiles: false,
     displayCondition: docs => {
-      return (
-        docs.length > 0 &&
-        canMove
-      )
+      // special case for rename in sharings tab
+      const isAllowedForSharedDrive = shouldHideIfSharedDriveRecipient
+        ? docs.every(doc => !isFromSharedDriveRecipient(doc))
+        : true
+      return docs.length > 0 && canMove && isAllowedForSharedDrive
     },
     action: async files => {
       navigateToModalWithMultipleFile({
