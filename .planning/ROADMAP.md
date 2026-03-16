@@ -88,11 +88,11 @@ Full details: `.planning/milestones/v2.3-ROADMAP.md`
   3. The entire injection is undoable with a single Ctrl+Z (one undo point, not multiple)
   4. The Scribe React interface sends raw Markdown to the plugin -- no token format leaks across the boundary
   5. If the Builder API injection fails for any reason, PasteHtml fallback kicks in and the user still gets their result injected
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
-- [ ] 18-01-PLAN.md — Bundle marked + flattenTokens + View.jsx md field (token pipeline setup)
-- [ ] 18-02-PLAN.md — buildAndInject + callCommand interpreter + PasteHtml fallback (Builder injection)
+- [ ] 18-01-PLAN.md ï¿½ Bundle marked + flattenTokens + View.jsx md field (token pipeline setup)
+- [ ] 18-02-PLAN.md ï¿½ buildAndInject + callCommand interpreter + PasteHtml fallback (Builder injection)
 
 ### Phase 19: Extended Markdown Support
 **Goal**: User gets headings, bullet lists, numbered lists, strikethrough, code spans, and hyperlinks correctly rendered as native OO elements when Scribe injects AI results
@@ -148,6 +148,6 @@ Phases execute in numeric order: 18 -> 19 -> 20
 | 15. Panneau de resultat interactif | v2.2 | 1/1 | Complete | 2026-03-11 |
 | 16. Drawer Scaffold + Breakpoint Split | v2.3 | 1/1 | Complete | 2026-03-12 |
 | 17. Push Navigation + Adaptive Layout | v2.3 | 2/2 | Complete | 2026-03-15 |
-| 18. Token Pipeline + Minimal Builder Injection | v2.4 | 0/2 | Not started | - |
+| 18. Token Pipeline + Minimal Builder Injection | 1/2 | In Progress|  | - |
 | 19. Extended Markdown Support | v2.4 | 0/2 | Not started | - |
 | 20. Injection Polish | v2.4 | 0/2 | Not started | - |

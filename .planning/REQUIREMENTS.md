@@ -9,9 +9,9 @@ Requirements for milestone v2.4 Document Builder Injection. Each maps to roadmap
 
 ### Parser & Pipeline
 
-- [ ] **PARSE-01**: Le plugin OO parse le Markdown retourné par le LLM via marked (bundlé dans code.js) et produit des tokens structurés
-- [ ] **PARSE-02**: Les tokens sont passés via Asc.scope à callCommand qui les interprète en appels Document Builder API
-- [ ] **PARSE-03**: L'interface entre Scribe (React) et le plugin reste du Markdown brut (aucune dépendance à un format de tokens spécifique)
+- [x] **PARSE-01**: Le plugin OO parse le Markdown retourné par le LLM via marked (bundlé dans code.js) et produit des tokens structurés
+- [x] **PARSE-02**: Les tokens sont passés via Asc.scope à callCommand qui les interprète en appels Document Builder API
+- [x] **PARSE-03**: L'interface entre Scribe (React) et le plugin reste du Markdown brut (aucune dépendance à un format de tokens spécifique)
 
 ### Inline Formatting
 
@@ -62,9 +62,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PARSE-01 | Phase 18 | Pending |
-| PARSE-02 | Phase 18 | Pending |
-| PARSE-03 | Phase 18 | Pending |
+| PARSE-01 | Phase 18 | Complete |
+| PARSE-02 | Phase 18 | Complete |
+| PARSE-03 | Phase 18 | Complete |
 | INL-01 | Phase 18 | Pending |
 | INL-02 | Phase 19 | Pending |
 | INL-03 | Phase 19 | Pending |
