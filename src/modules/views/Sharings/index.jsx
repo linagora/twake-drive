@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo } from 'react'
 import { useDispatch } from 'react-redux'
 import { useNavigate, useLocation, Outlet } from 'react-router-dom'
 import { useI18n } from 'twake-i18n'
@@ -15,7 +15,6 @@ import { Content } from 'cozy-ui/transpiled/react/Layout'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
-import SharingTab from './SharingTab'
 import withSharedDocumentIds from './withSharedDocumentIds'
 import FolderView from '../Folder/FolderView'
 import FolderViewBody from '../Folder/FolderViewBody'
@@ -65,9 +64,8 @@ const mobileExtraColumnsNames = []
 
 export const SharingsView = ({ sharedDocumentIds = [] }) => {
   const navigate = useNavigate()
-  const { pathname, search } = useLocation()
-  const searchParams = new URLSearchParams(search)
-  const tabParam = Number(searchParams.get('tab')) || SHARING_TAB_ALL
+  const { pathname } = useLocation()
+  const tab = SHARING_TAB_ALL
   const { t, lang } = useI18n()
   const { isMobile } = useBreakpoints()
   const client = useClient()
@@ -82,8 +80,6 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
   useHead({ title: t('breadcrumb.title_sharings') })
   const { showAlert } = useAlert()
   const [sortOrder, setSortOrder, isSettingsLoaded] = useFolderSort('sharings')
-
-  const [tab, setTab] = useState(tabParam)
 
   const isEnabledSharedDrive = flag('drive.shared-drive.enabled')
   const isEnabledFederatedSharedFolder = flag(
@@ -238,7 +234,6 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
           <Breadcrumb path={[{ name: t('breadcrumb.title_sharings') }]} />
           <Toolbar canUpload={false} canCreateFolder={false} />
         </FolderViewHeader>
-        {isEnabledSharedDrive && <SharingTab tab={tab} setTab={setTab} />}
         {!allLoaded ||
         !sharedDrivesLoaded ||
         !hasQueryBeenLoaded(filteredResult) ? (
