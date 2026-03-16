@@ -77,7 +77,7 @@ const ViewSwitcherContextProvider: React.FC = ({ children }) => {
         return
       }
 
-      const existing = data?.[0]
+      const existing = data[0]
 
       await client.save({
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition

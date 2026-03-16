@@ -18,7 +18,6 @@ import SharedRecipients from '@/modules/drive/Toolbar/share/SharedRecipients'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 import {
   isFolderFromSharedDriveRecipient,
-  isFolderFromSharedDriveOwner
 } from '@/modules/shareddrives/helpers'
 
 const Toolbar = ({
@@ -39,7 +38,6 @@ const Toolbar = ({
   const isSharingDisabled = isDisabled || !allLoaded
   const isSharedDriveRecipient =
     isFolderFromSharedDriveRecipient(displayedFolder)
-  const isSharedDriveOwner = isFolderFromSharedDriveOwner(displayedFolder)
 
   const moreMenuProps = {
     isDisabled,
@@ -51,8 +49,7 @@ const Toolbar = ({
     displayedFolder,
     showSelectionBar,
     isSelectionBarVisible,
-    isSharedDriveRecipient,
-    isSharedDriveOwner
+    isSharedDriveRecipient
   }
 
   if (disabled) {

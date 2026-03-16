@@ -11,22 +11,12 @@ import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 
 import deleteContainer from './delete'
 
-const DeleteItem = ({
-  t,
-  isSharedDriveOwner,
-  isSharedWithMe,
-  trashFolder,
-  displayedFolder
-}) => {
+const DeleteItem = ({ t, isSharedWithMe, trashFolder, displayedFolder }) => {
   const handleClick = () => {
     trashFolder(displayedFolder)
   }
 
-  const label = isSharedWithMe
-    ? t('toolbar.leave')
-    : isSharedDriveOwner
-    ? t('toolbar.delete_shared_drive')
-    : t('toolbar.trash')
+  const label = isSharedWithMe ? t('toolbar.leave') : t('toolbar.trash')
 
   return (
     <ActionsMenuItem data-testid="fil-action-delete" onClick={handleClick}>

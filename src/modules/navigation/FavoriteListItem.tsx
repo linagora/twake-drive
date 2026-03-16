@@ -17,7 +17,6 @@ import { FileLink } from './components/FileLink'
 
 import { useFileLink } from '@/modules/navigation/hooks/useFileLink'
 import { isNextcloudShortcut } from '@/modules/nextcloud/helpers'
-import { isSharedDriveFolder } from '@/modules/shareddrives/helpers'
 
 interface FavoriteListItemProps {
   file: IOCozyFile
@@ -25,7 +24,7 @@ interface FavoriteListItemProps {
 }
 
 const makeIcon = (file: IOCozyFile): string | React.ComponentType =>
-  isNextcloudShortcut(file) || isSharedDriveFolder(file)
+  isNextcloudShortcut(file)
     ? FileTypeServerIcon
     : isDirectory(file)
     ? FolderIcon
@@ -37,10 +36,7 @@ const FavoriteListItem: FC<FavoriteListItemProps> = ({
   clickState: [lastClicked, setLastClicked]
 }) => {
   const { link } = useFileLink(file, {
-    forceFolderPath:
-      isSharedDriveFolder(file) || isNote(file) || isOnlyOfficeFile(file)
-        ? false
-        : true
+    forceFolderPath: isNote(file) || isOnlyOfficeFile(file) ? false : true
   })
   const { filename } = splitFilename(file)
 
