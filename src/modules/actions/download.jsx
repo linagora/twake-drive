@@ -10,6 +10,7 @@ import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import { downloadFiles } from './utils'
 
 import { isEncryptedFolder, isEncryptedFile } from '@/lib/encryption'
+import { isFromSharedDriveRecipient } from '@/modules/shareddrives/helpers'
 
 const makeComponent = (label, icon) => {
   const Component = forwardRef((props, ref) => {
@@ -45,11 +46,26 @@ export const download = ({
     icon,
     allowInfectedFiles: false,
     displayCondition: files => {
-      // We cannot download folders or multiple files in shared drives
+      // # We cannot download folders or multiple files in shared drives
+
+      // ## For sharing tab
       if (
         driveId &&
         (files.length > 1 || (files.length === 1 && isDirectory(files[0])))
       ) {
+        return false
+      }
+
+      // ## For shared drive view
+      const isSingleSharedDriveFolder =
+        files.length === 1 &&
+        isFromSharedDriveRecipient(files[0]) &&
+        isDirectory(files[0])
+
+      const hasMultipleFilesIncludeShareDriveFiles =
+        files.length > 1 && files.some(file => isFromSharedDriveRecipient(file))
+
+      if (isSingleSharedDriveFolder || hasMultipleFilesIncludeShareDriveFiles) {
         return false
       }
 
