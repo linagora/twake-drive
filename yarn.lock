@@ -15010,10 +15010,10 @@ tunnel-agent@^0.6.0:
   dependencies:
     safe-buffer "^5.0.1"
 
-twake-i18n@^0.3.0:
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/twake-i18n/-/twake-i18n-0.3.0.tgz#b88b5a43d1b12491ec43d268ed026429bdb843f8"
-  integrity sha512-hXzRbtJO1sJEXKZymnYbHBugkHWhV6MoEdxUwZJl/FyO5/FovgQAvlpONPrde4mEIky0LZtJf5YVWteYOrIbFg==
+twake-i18n@^0.3.4:
+  version "0.3.4"
+  resolved "https://registry.yarnpkg.com/twake-i18n/-/twake-i18n-0.3.4.tgz#0b1458ca0c300edd71c3721cd910b1899727ad34"
+  integrity sha512-iirXxAQKEHgPkGDGyh0kqug5/A3tsFjZkCWJEUgkmQ19Ekbzk36KWdqWL7Jlyok4SW7A4Y+Xi/jbgVTgV9cxQg==
   dependencies:
     date-fns "2.30.0"
     lodash "^4.17.21"
