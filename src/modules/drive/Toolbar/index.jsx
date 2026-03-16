@@ -16,9 +16,7 @@ import ViewSwitcher from '@/modules/drive/Toolbar/components/ViewSwitcher'
 import ShareButton from '@/modules/drive/Toolbar/share/ShareButton'
 import SharedRecipients from '@/modules/drive/Toolbar/share/SharedRecipients'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
-import {
-  isFolderFromSharedDriveRecipient,
-} from '@/modules/shareddrives/helpers'
+import { isFromSharedDriveRecipient } from '@/modules/shareddrives/helpers'
 
 const Toolbar = ({
   folderId,
@@ -36,8 +34,7 @@ const Toolbar = ({
 
   const isDisabled = disabled || isSelectionBarVisible
   const isSharingDisabled = isDisabled || !allLoaded
-  const isSharedDriveRecipient =
-    isFolderFromSharedDriveRecipient(displayedFolder)
+  const isSharedDriveRecipient = isFromSharedDriveRecipient(displayedFolder)
 
   const moreMenuProps = {
     isDisabled,
