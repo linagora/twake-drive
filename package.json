@@ -128,7 +128,7 @@
     "redux-logger": "3.0.6",
     "redux-mock-store": "1.5.4",
     "redux-thunk": "2.4.2",
-    "twake-i18n": "^0.3.0",
+    "twake-i18n": "^0.3.4",
     "whatwg-fetch": "3.0.0"
   }
 }
