@@ -88,11 +88,11 @@ Full details: `.planning/milestones/v2.3-ROADMAP.md`
   3. The entire injection is undoable with a single Ctrl+Z (one undo point, not multiple)
   4. The Scribe React interface sends raw Markdown to the plugin -- no token format leaks across the boundary
   5. If the Builder API injection fails for any reason, PasteHtml fallback kicks in and the user still gets their result injected
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 18-01: Markdown tokenizer + Asc.scope pipeline + minimal Builder interpreter
-- [ ] 18-02: Bold/italic inline runs + multi-paragraph injection + PasteHtml fallback
+- [ ] 18-01-PLAN.md — Bundle marked + flattenTokens + View.jsx md field (token pipeline setup)
+- [ ] 18-02-PLAN.md — buildAndInject + callCommand interpreter + PasteHtml fallback (Builder injection)
 
 ### Phase 19: Extended Markdown Support
 **Goal**: User gets headings, bullet lists, numbered lists, strikethrough, code spans, and hyperlinks correctly rendered as native OO elements when Scribe injects AI results
