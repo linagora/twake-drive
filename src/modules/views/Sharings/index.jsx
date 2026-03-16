@@ -52,6 +52,8 @@ import FabWithAddMenuContext from '@/modules/drive/FabWithAddMenuContext'
 import Toolbar from '@/modules/drive/Toolbar'
 import FileListRowsPlaceholder from '@/modules/filelist/FileListRowsPlaceholder'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
+import { leaveSharedDrive } from '@/modules/shareddrives/components/actions/leaveSharedDrive'
+import { shareSharedDrive } from '@/modules/shareddrives/components/actions/shareSharedDrive'
 import {
   buildSharingsQuery,
   buildSharingsWithMetadataAttributeQuery
@@ -205,6 +207,7 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
       selectAllItems,
       share,
       shareNative,
+      shareSharedDrive,
       download,
       hr,
       summariseByAI,
@@ -213,6 +216,7 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
       moveTo,
       addToFavorites,
       removeFromFavorites,
+      leaveSharedDrive,
       infos,
       hr,
       versions

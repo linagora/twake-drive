@@ -10,8 +10,16 @@ import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import { isEncryptedFileOrFolder } from '@/lib/encryption'
 import { navigateToModal } from '@/modules/actions/helpers'
+import { isFromSharedDriveRecipient } from '@/modules/shareddrives/helpers'
 
-const share = ({ t, hasWriteAccess, navigate, pathname, allLoaded }) => {
+const share = ({
+  t,
+  shouldHideIfSharedDriveRecipient,
+  hasWriteAccess,
+  navigate,
+  pathname,
+  allLoaded
+}) => {
   const label = t('Files.share.cta')
   const icon = ShareIcon
 
@@ -21,6 +29,15 @@ const share = ({ t, hasWriteAccess, navigate, pathname, allLoaded }) => {
     icon,
     allowInfectedFiles: false,
     displayCondition: files => {
+      // Not this sharing action in sharings tab
+      if (
+        shouldHideIfSharedDriveRecipient &&
+        files?.length === 1 &&
+        isFromSharedDriveRecipient(files[0])
+      ) {
+        return false
+      }
+
       return (
         allLoaded && // We need to wait for the sharing context to be completely loaded to avoid race conditions
         hasWriteAccess &&
