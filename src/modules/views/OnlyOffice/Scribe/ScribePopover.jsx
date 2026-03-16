@@ -10,6 +10,7 @@ import { useClient } from 'cozy-client'
 
 import { ScribeContainer } from '@/modules/views/OnlyOffice/Scribe/ScribeContainer'
 import { ScribeActionMenu } from '@/modules/views/OnlyOffice/Scribe/ScribeActionMenu'
+import { useScribe } from '@/modules/views/OnlyOffice/Scribe/ScribeContext'
 import { callScribeAI, buildMessages, deriveLoadingMessage, classifyScribeError } from '@/modules/views/OnlyOffice/Scribe/scribeAI'
 import { htmlToMarkdown, normalizeHtml } from '@/modules/views/OnlyOffice/Scribe/scribeConversion'
 import { transformCellMarkersForPreview } from '@/modules/views/OnlyOffice/Scribe/tableCellMarkers'
@@ -29,6 +30,8 @@ import styles from '@/modules/views/OnlyOffice/Scribe/scribe.styl'
 const ScribePopover = ({ open, selectedText, selectedHtml, onReplace, onInsert, onCancel, onOpenPanel }) => {
   const { t } = useI18n()
   const client = useClient()
+  const scribe = useScribe()
+  const addMessage = scribe?.addMessage
   const abortRef = useRef(null)
 
   const [step, setStep] = useState('menu') // 'menu' | 'loading' | 'result'
@@ -144,6 +147,12 @@ const ScribePopover = ({ open, selectedText, selectedHtml, onReplace, onInsert, 
         setCellWarning(warning)
         setResult({ text: displayMd, breadcrumb, error: '', canRetry: false })
         setStep('result')
+
+        // 5. Mirror action into shared conversation history
+        if (addMessage) {
+          addMessage({ id: Date.now(), role: 'user', content: breadcrumb, timestamp: new Date() })
+          addMessage({ id: Date.now() + 1, role: 'assistant', content: text, timestamp: new Date() })
+        }
       } catch (err) {
         if (err.name === 'AbortError') {
           return
@@ -151,13 +160,19 @@ const ScribePopover = ({ open, selectedText, selectedHtml, onReplace, onInsert, 
         const classified = classifyScribeError(err)
         setResult({ text: '', breadcrumb, error: classified.messageKey ? t(classified.messageKey) : '', canRetry: classified.canRetry })
         setStep('result')
+
+        // Mirror error into shared conversation history
+        if (addMessage) {
+          addMessage({ id: Date.now(), role: 'user', content: breadcrumb, timestamp: new Date() })
+          addMessage({ id: Date.now() + 1, role: 'error', content: classified.messageKey ? t(classified.messageKey) : 'Error', timestamp: new Date() })
+        }
       } finally {
         if (abortRef.current === controller) {
           abortRef.current = null
         }
       }
     },
-    [selectedText, selectedHtml, enrichedMd, tableAmbiguity, client, t]
+    [selectedText, selectedHtml, client, t, addMessage]
   )
 
   const handleClose = useCallback(() => {
