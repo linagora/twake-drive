@@ -83,12 +83,12 @@ Plans:
   2. AI response appears below the user message, rendered with Markdown formatting (bold, lists, code blocks, tables)
   3. Conversation scrolls to show the latest message, and user can scroll up to see earlier messages
   4. Each new message includes full conversation history so the AI maintains context across turns
-  5. While the AI is responding, user sees a loading indicator; errors appear as chat messages with a retry button
-**Plans**: TBD
+  5. While the AI is responding, user sees a loading indicator; errors appear as chat messages
+**Plans**: 2 plans
 
 Plans:
-- [ ] v3.0-02-01: TBD
-- [ ] v3.0-02-02: TBD
+- [ ] v3.0-02-01-PLAN.md — Conversation state in ScribeContext + ChatMessageList + ChatInput + ScribePanel wiring
+- [ ] v3.0-02-02-PLAN.md — Popover actions mirrored to shared conversation + end-to-end verification
 
 ### Phase v3.0-03: Selection Context + Document Actions
 **Goal**: User can reference selected document text in chat and apply AI responses back to the document
@@ -140,6 +140,6 @@ Phases execute in order: v3.0-01 -> v3.0-02 -> v3.0-03 -> v3.0-04
 | 12. Preview Markdown | v2.1 | 1/1 | Complete | 2026-03-07 |
 | 13. Reinjection et Integrite Pipeline | v2.1 | 1/1 | Complete | 2026-03-09 |
 | v3.0-01. ScribeContext + Panel Shell | v3.0 | 1/2 | In Progress | - |
-| v3.0-02. Chat Core | v3.0 | 0/? | Not started | - |
+| v3.0-02. Chat Core | v3.0 | 0/2 | Not started | - |
 | v3.0-03. Selection Context + Document Actions | v3.0 | 0/? | Not started | - |
 | v3.0-04. Panel Resize + Mode Toggle | v3.0 | 0/? | Not started | - |
