@@ -1,21 +1,17 @@
-import classNames from 'classnames'
 import React from 'react'
 
 import { isReferencedBy, models } from 'cozy-client'
 import { isDirectory } from 'cozy-client/dist/models/file'
-import flag from 'cozy-flags'
 import { SharedBadge, SharingOwnerAvatar } from 'cozy-sharing'
 import Badge from 'cozy-ui/transpiled/react/Badge'
 import Box from 'cozy-ui/transpiled/react/Box'
 import GhostFileBadge from 'cozy-ui/transpiled/react/GhostFileBadge'
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import FileTypeServerIcon from 'cozy-ui/transpiled/react/Icons/FileTypeServer'
-import FileTypeSharedDriveIcon from 'cozy-ui/transpiled/react/Icons/FileTypeSharedDrive'
 import LinkIcon from 'cozy-ui/transpiled/react/Icons/Link'
 import TrashDuotoneIcon from 'cozy-ui/transpiled/react/Icons/TrashDuotone'
 import InfosBadge from 'cozy-ui/transpiled/react/InfosBadge'
 import Spinner from 'cozy-ui/transpiled/react/Spinner'
-import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import styles from '@/styles/filelist.styl'
 
@@ -31,7 +27,6 @@ import {
   isNextcloudShortcut,
   isNextcloudFile
 } from '@/modules/nextcloud/helpers'
-import { isSharedDriveFolder } from '@/modules/shareddrives/helpers'
 
 interface FileThumbnailProps {
   file: File | FolderPickerEntry
@@ -55,7 +50,6 @@ const FileThumbnail: React.FC<FileThumbnailProps> = ({
   }
 }) => {
   const { viewType } = useViewSwitcherContext()
-  const { isMobile } = useBreakpoints()
 
   const fileIcon = (
     <FileIcon
@@ -82,31 +76,6 @@ const FileThumbnail: React.FC<FileThumbnailProps> = ({
       </Box>
     ) : (
       <Icon icon={TrashDuotoneIcon} size={size ?? 32} />
-    )
-  }
-
-  if (
-    flag('drive.shared-drive.enabled') &&
-    (file._id === 'io.cozy.files.shared-drives-dir' ||
-      isSharedDriveFolder(file))
-  ) {
-    return (
-      <>
-        <Icon icon={FileTypeSharedDriveIcon} size={size ?? 32} />
-        <div
-          className={classNames('u-pos-absolute', {
-            'u-bottom-xs u-right-xs': viewType === 'list',
-            'u-bottom-0 u-right-0': viewType === 'grid'
-          })}
-        >
-          {isMobile && (
-            <SharingOwnerAvatar
-              docId={file._id}
-              size={viewType === 'list' ? 'xs' : 's'}
-            />
-          )}
-        </div>
-      </>
     )
   }
 
