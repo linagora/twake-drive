@@ -81,6 +81,50 @@
     return data;
   }
 
+  // ---- flattenTokens: convert marked lexer output to flat paragraph+runs ----
+  // Takes the array returned by marked.lexer(md) and produces:
+  //   [{ type: "paragraph", runs: [{ text, bold, italic }] }]
+  // Handles bold (strong), italic (em), nested formatting, and unknown block fallback.
+  function flattenTokens(markedTokens) {
+    var blocks = [];
+
+    function flattenInline(tokens, parentBold, parentItalic) {
+      var runs = [];
+      for (var i = 0; i < tokens.length; i++) {
+        var tok = tokens[i];
+        if (tok.type === "text") {
+          runs.push({ text: tok.text, bold: !!parentBold, italic: !!parentItalic });
+        } else if (tok.type === "strong") {
+          runs = runs.concat(flattenInline(tok.tokens, true, parentItalic));
+        } else if (tok.type === "em") {
+          runs = runs.concat(flattenInline(tok.tokens, parentBold, true));
+        } else if (tok.tokens) {
+          runs = runs.concat(flattenInline(tok.tokens, parentBold, parentItalic));
+        } else if (tok.text) {
+          runs.push({ text: tok.text, bold: !!parentBold, italic: !!parentItalic });
+        }
+      }
+      return runs;
+    }
+
+    for (var i = 0; i < markedTokens.length; i++) {
+      var block = markedTokens[i];
+      if (block.type === "paragraph") {
+        blocks.push({ type: "paragraph", runs: flattenInline(block.tokens || [], false, false) });
+      } else if (block.type === "space") {
+        // skip -- implicit paragraph separator
+      } else if (block.tokens) {
+        // Unknown block type with tokens: treat as paragraph fallback
+        blocks.push({ type: "paragraph", runs: flattenInline(block.tokens || [], false, false) });
+      } else if (block.text) {
+        // Unknown block type with text only: treat as plain paragraph
+        blocks.push({ type: "paragraph", runs: [{ text: block.text, bold: false, italic: false }] });
+      }
+    }
+
+    return blocks;
+  }
+
   // ---- Paste HTML with smart spacing ----
   // Prevents init() and polling from interfering during paste.
   var pasteInProgress = false;
@@ -381,28 +425,69 @@
     });
   });
 
-  // ---- Ctrl+Shift+I / Cmd+Shift+I shortcut for Scribe ----
-  try {
-    window.parent.document.addEventListener("keydown", function(e) {
-      var isCtrlShiftI = (e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "I";
-      if (isCtrlShiftI && lastSelectedText.length > 0) {
-        e.preventDefault();
+  // ---- Ctrl+Shift+I unified handler ----
+  // The plugin doesn't know panel state — it just emits intents. React decides.
+  //
+  // With text selected: AI_TEXT_EDIT is delayed by SHORTCUT_DELAY_MS (200ms).
+  //   A 2nd press within that delay cancels it and casts TOGGLE_SCRIBE_PANEL
+  //   instead (direct-to-panel, no popover flash). After the delay, if the
+  //   popover is open, a 2nd press during EDIT_COOLDOWN_MS also toggles panel.
+  //   If panel is already open, React closes it on receiving AI_TEXT_EDIT.
+  // Without text selected: cast TOGGLE_SCRIBE_PANEL immediately (single press).
+  var editDelayTimer = null;
+  var lastEditIntentTime = 0;
+  var SHORTCUT_DELAY_MS = 200;
+  var EDIT_COOLDOWN_MS = 1500;
+
+  function handleCtrlShiftI(e) {
+    var isCtrlShiftI = (e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "I" || e.key === "i");
+    if (!isCtrlShiftI) return;
+    e.preventDefault();
+
+    var now = Date.now();
+
+    // If AI_TEXT_EDIT is pending (delayed) or was recently cast, 2nd press toggles panel
+    if (editDelayTimer) {
+      clearTimeout(editDelayTimer);
+      editDelayTimer = null;
+      log("Ctrl+Shift+I double-tap: toggle panel");
+      castIntent("TOGGLE_SCRIBE_PANEL", {}, true);
+      lastEditIntentTime = 0;
+      return;
+    }
+    if (now - lastEditIntentTime < EDIT_COOLDOWN_MS) {
+      log("Ctrl+Shift+I during popover: toggle panel");
+      castIntent("TOGGLE_SCRIBE_PANEL", {}, true);
+      lastEditIntentTime = 0;
+      return;
+    }
+
+    if (lastSelectedText.length > 0) {
+      // Text selected: delay AI_TEXT_EDIT to allow double-tap detection
+      editDelayTimer = setTimeout(function() {
+        editDelayTimer = null;
         log("Ctrl+Shift+I triggered Scribe");
-        castIntent("AI_TEXT_EDIT", buildEditIntentData());
-      }
-    });
+        lastEditIntentTime = Date.now();
+        var promise = castIntent("AI_TEXT_EDIT", buildEditIntentData());
+        // Clear cooldown when the intent is resolved (popover closed or
+        // panel closed), so the next Ctrl+Shift+I starts fresh
+        if (promise) {
+          promise.then(function() { lastEditIntentTime = 0; });
+        }
+      }, SHORTCUT_DELAY_MS);
+    } else {
+      // No text selected: toggle panel directly
+      log("Ctrl+Shift+I: toggle panel");
+      castIntent("TOGGLE_SCRIBE_PANEL", {}, true);
+    }
+  }
+
+  try {
+    window.parent.document.addEventListener("keydown", handleCtrlShiftI);
     log("Ctrl+Shift+I shortcut registered on parent document");
   } catch (e) {
     log("Cannot register Ctrl+Shift+I on parent document: " + e.message);
-    // Fallback: register on plugin's own document (limited, but still useful)
-    document.addEventListener("keydown", function(e) {
-      var isCtrlShiftI = (e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "I";
-      if (isCtrlShiftI && lastSelectedText.length > 0) {
-        e.preventDefault();
-        log("Ctrl+Shift+I triggered Scribe (fallback)");
-        castIntent("AI_TEXT_EDIT", buildEditIntentData());
-      }
-    });
+    document.addEventListener("keydown", handleCtrlShiftI);
   }
 
   // ---- Toolbar button ----
