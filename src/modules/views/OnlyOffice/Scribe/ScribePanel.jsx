@@ -5,9 +5,10 @@ import Icon from 'cozy-ui/transpiled/react/Icon'
 import CrossIcon from 'cozy-ui/transpiled/react/Icons/Cross'
 import Typography from 'cozy-ui/transpiled/react/Typography'
 import { useTheme } from 'cozy-ui/transpiled/react/styles'
-import { useI18n } from 'twake-i18n'
 
 import { useScribe } from '@/modules/views/OnlyOffice/Scribe/ScribeContext'
+import { ChatMessageList } from '@/modules/views/OnlyOffice/Scribe/ChatMessageList'
+import { ChatInput } from '@/modules/views/OnlyOffice/Scribe/ChatInput'
 
 export const PANEL_WIDTH = 400
 
@@ -37,7 +38,6 @@ const SparkleSvg = ({ size = 20 }) => (
 )
 
 export const ScribePanel = () => {
-  const { t } = useI18n()
   const theme = useTheme()
   const { closePanel } = useScribe()
 
@@ -82,27 +82,9 @@ export const ScribePanel = () => {
         </IconButton>
       </div>
 
-      {/* Body placeholder */}
-      <div
-        style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: 24,
-          opacity: 0.6
-        }}
-      >
-        <SparkleSvg size={48} />
-        <Typography
-          variant="body2"
-          color="textSecondary"
-          style={{ marginTop: 16 }}
-        >
-          {t('Scribe.panel.tagline')}
-        </Typography>
-      </div>
+      {/* Chat body */}
+      <ChatMessageList />
+      <ChatInput />
     </div>
   )
 }
