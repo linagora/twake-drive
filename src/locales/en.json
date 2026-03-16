@@ -736,6 +736,11 @@
     "panel": {
       "tagline": "Your writing assistant"
     },
+    "chat": {
+      "typing": "Scribe is thinking...",
+      "error_prefix": "Error",
+      "welcome": "Ask me anything about your document"
+    },
     "menu": {
       "correct_grammar": "Correct grammar",
       "translate": "Translate",

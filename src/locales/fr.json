@@ -733,6 +733,11 @@
     "panel": {
       "tagline": "Votre assistant d'ecriture"
     },
+    "chat": {
+      "typing": "Scribe reflechit...",
+      "error_prefix": "Erreur",
+      "welcome": "Posez-moi une question sur votre document"
+    },
     "menu": {
       "correct_grammar": "Corriger la grammaire",
       "translate": "Traduire",
