@@ -12,7 +12,6 @@ import DownloadButtonItem from '@/modules/drive/Toolbar/components/DownloadButto
 import FavoritesItem from '@/modules/drive/Toolbar/components/FavoritesItem'
 import InsideRegularFolder from '@/modules/drive/Toolbar/components/InsideRegularFolder'
 import LeaveSharedDriveButtonItem from '@/modules/drive/Toolbar/components/LeaveSharedDriveButtonItem'
-import ManageAccessItem from '@/modules/drive/Toolbar/components/ManageAccessItem'
 import DeleteItem from '@/modules/drive/Toolbar/delete/DeleteItem'
 import MoveItem from '@/modules/drive/Toolbar/move/MoveItem'
 import PersonalizeFolderItem from '@/modules/drive/Toolbar/personalizeFolder/PersonalizeFolderItem'
@@ -42,8 +41,7 @@ const MoreMenu = ({
   showSelectionBar,
   isSelectionBarVisible,
   isSharedWithMe,
-  isSharedDriveRecipient,
-  isSharedDriveOwner
+  isSharedDriveRecipient
 }) => {
   const [menuIsVisible, setMenuVisible] = useState(false)
   const anchorRef = useRef()
@@ -111,7 +109,6 @@ const MoreMenu = ({
             </InsideRegularFolder>
             {isMobile && hasWriteAccess && <AddMenuItem />}
             <SelectableItem onClick={showSelectionBar} />
-            {isSharedDriveOwner && <ManageAccessItem />}
             {hasWriteAccess && !isSharedDriveRecipient && (
               <InsideRegularFolder
                 displayedFolder={displayedFolder}
@@ -128,7 +125,6 @@ const MoreMenu = ({
                 <Divider className="u-mv-half" />
                 <DeleteItem
                   displayedFolder={displayedFolder}
-                  isSharedDriveOwner={isSharedDriveOwner}
                   isSharedWithMe={isSharedWithMe}
                 />
               </InsideRegularFolder>

@@ -1,8 +1,5 @@
 import { IOCozyFile } from 'cozy-client/types/types'
 
-import type { File, FolderPickerEntry } from '@/components/FolderPicker/types'
-import { SHARED_DRIVES_DIR_ID } from '@/constants/config'
-
 // Temporary type, need to be completed and then put in cozy-client
 export interface SharedDrive {
   _id: string
@@ -41,19 +38,3 @@ export const getFolderIdFromSharing = (
 
 export const isFolderFromSharedDriveRecipient = (folder: IOCozyFile): boolean =>
   folder && Boolean(folder.driveId)
-
-export const isFolderFromSharedDriveOwner = (folder: IOCozyFile): boolean =>
-  folder &&
-  folder._type == 'io.cozy.files' &&
-  folder.dir_id === SHARED_DRIVES_DIR_ID &&
-  !isFolderFromSharedDriveRecipient(folder)
-
-export const isSharedDriveFolder = (
-  file: File | FolderPickerEntry
-): boolean => {
-  return (
-    file._type === 'io.cozy.files' &&
-    file.dir_id === 'io.cozy.files.shared-drives-dir' &&
-    file.type === 'directory'
-  )
-}

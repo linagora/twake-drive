@@ -52,9 +52,6 @@ import FabWithAddMenuContext from '@/modules/drive/FabWithAddMenuContext'
 import Toolbar from '@/modules/drive/Toolbar'
 import FileListRowsPlaceholder from '@/modules/filelist/FileListRowsPlaceholder'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
-import { deleteSharedDrive } from '@/modules/shareddrives/components/actions/deleteSharedDrive'
-import { leaveSharedDrive } from '@/modules/shareddrives/components/actions/leaveSharedDrive'
-import { manageAccess } from '@/modules/shareddrives/components/actions/manageAccess'
 import {
   buildSharingsQuery,
   buildSharingsWithMetadataAttributeQuery
@@ -218,11 +215,7 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
       removeFromFavorites,
       infos,
       hr,
-      versions,
-      manageAccess,
-      hr,
-      deleteSharedDrive,
-      leaveSharedDrive
+      versions
     ],
     actionsOptions
   )

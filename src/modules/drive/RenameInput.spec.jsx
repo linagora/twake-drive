@@ -6,11 +6,8 @@ import useBrowserOffline from 'cozy-ui/transpiled/react/hooks/useBrowserOffline'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 
 import { RenameInput } from './RenameInput'
-import { isFolderFromSharedDriveOwner } from '../shareddrives/helpers'
 import AppLike from 'test/components/AppLike'
 import { generateFile } from 'test/generate'
-
-import { SHARED_DRIVES_DIR_ID } from '@/constants/config'
 
 const showAlert = jest.fn()
 
@@ -20,10 +17,6 @@ jest.mock('cozy-ui/transpiled/react/providers/Alert', () => ({
   __esModule: true,
   useAlert: jest.fn()
 }))
-jest.mock('../shareddrives/helpers', () => ({
-  isFolderFromSharedDriveOwner: jest.fn()
-}))
-
 describe('RenameInput', () => {
   let client
   let onAbort
@@ -57,7 +50,6 @@ describe('RenameInput', () => {
       // No driveId by default for backward compatibility
     }
     useAlert.mockReturnValue({ showAlert })
-    isFolderFromSharedDriveOwner.mockReturnValue(false)
   })
 
   const setup = ({ file }) => {
@@ -156,37 +148,6 @@ describe('RenameInput', () => {
         driveId: 'special-drive-123'
       })
     )
-  })
-
-  it('renames shared drive folders via sharing endpoint', async () => {
-    const sharedDriveFolder = {
-      _id: 'shared-folder-123',
-      id: 'shared-folder-123',
-      _type: 'io.cozy.files',
-      driveId: 'shared-drive',
-      dir_id: SHARED_DRIVES_DIR_ID,
-      name: 'Shared folder',
-      meta: { rev: '1' },
-      relationships: {
-        referenced_by: {
-          data: [{ id: 'sharing-1', type: 'io.cozy.sharings' }]
-        }
-      }
-    }
-    isFolderFromSharedDriveOwner.mockReturnValue(true)
-    setup({ file: sharedDriveFolder })
-    const inputNode = document.getElementsByTagName('input')[0]
-
-    fireEvent.change(inputNode, { target: { value: 'new-share-name' } })
-    fireEvent.keyDown(inputNode, { key: 'Enter', code: 'Enter', keyCode: 13 })
-
-    expect(client.collection).toHaveBeenCalledWith('io.cozy.sharings')
-    expect(mockSharingsCollection.renameSharedDrive).toHaveBeenCalledWith(
-      { _id: 'sharing-1', rules: [{ values: ['shared-folder-123'] }] },
-      'new-share-name'
-    )
-    expect(mockCollection.update).not.toHaveBeenCalled()
-    await waitFor(() => expect(onAbort).toHaveBeenCalled())
   })
 
   it('should alert error on illegal characters', async () => {

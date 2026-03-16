@@ -18,7 +18,6 @@ import {
   getFileNameAndExtension,
   makeParentFolderPath
 } from '@/modules/filelist/helpers'
-import { isSharedDriveFolder } from '@/modules/shareddrives/helpers'
 
 const FileName = ({
   attributes,
@@ -98,7 +97,7 @@ const FileName = ({
                 {isMobile && <CertificationsIcons attributes={attributes} />}
               </div>
             ))}
-          {!withFilePath && isSharedDriveFolder(attributes) && (
+          {!withFilePath && (
             <div className={styles['fil-file-shared']}>
               <Icon
                 icon={ShareIcon}
