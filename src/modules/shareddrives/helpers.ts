@@ -36,5 +36,5 @@ export const getFolderIdFromSharing = (
   }
 }
 
-export const isFolderFromSharedDriveRecipient = (folder: IOCozyFile): boolean =>
+export const isFromSharedDriveRecipient = (folder: IOCozyFile): boolean =>
   folder && Boolean(folder.driveId)
