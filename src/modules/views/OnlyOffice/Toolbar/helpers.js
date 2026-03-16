@@ -2,7 +2,7 @@
 export const computeHomeApp = ({ apps, context }) => {
   const defaultRedirection =
     context && context.attributes && context.attributes.default_redirection
-  let homeApp = null
+  let homeApp
 
   if (!defaultRedirection) {
     homeApp = apps.find(app => app.slug === 'home')

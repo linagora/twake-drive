@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { useI18n } from 'twake-i18n'
 
 import ActionsMenu from 'cozy-ui/transpiled/react/ActionsMenu'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
@@ -9,6 +8,7 @@ import FileTypeSharedDriveIcon from 'cozy-ui/transpiled/react/Icons/FileTypeShar
 import FolderIcon from 'cozy-ui/transpiled/react/Icons/Folder'
 import RightIcon from 'cozy-ui/transpiled/react/Icons/Right'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
+import { useI18n } from 'twake-i18n'
 
 import styles from '@/modules/breadcrumb/styles/breadcrumb.styl'
 
@@ -49,7 +49,7 @@ const DesktopBreadcrumb = ({ onBreadcrumbClick, path }) => {
         trigger.removeEventListener('click', handleDropdownTriggerClick)
       }
     }
-  }, [anchorElRef.current]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [anchorElRef.current]) // eslint-disable-line react-hooks/exhaustive-deps, react-hooks/refs
 
   const Separator = (
     <Icon icon={RightIcon} className={styles['fil-path-separator']} />
@@ -119,6 +119,7 @@ const DesktopBreadcrumb = ({ onBreadcrumbClick, path }) => {
       {menuDisplayed && (
         <ActionsMenu
           open
+          // eslint-disable-next-line react-hooks/refs
           ref={anchorElRef}
           onClose={closeMenu}
           actions={[]}

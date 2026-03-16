@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useI18n } from 'twake-i18n'
 
 import { useClient, useQuery, Q, isQueryLoading } from 'cozy-client'
 import Buttons from 'cozy-ui/transpiled/react/Buttons'
@@ -10,6 +9,7 @@ import RenameIcon from 'cozy-ui/transpiled/react/Icons/Rename'
 import Tooltip from 'cozy-ui/transpiled/react/Tooltip'
 import Typography from 'cozy-ui/transpiled/react/Typography'
 import { makeStyles } from 'cozy-ui/transpiled/react/styles'
+import { useI18n } from 'twake-i18n'
 
 import { DOCTYPE_FILES_SETTINGS } from '@/lib/doctypes'
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'

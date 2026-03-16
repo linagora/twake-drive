@@ -10,7 +10,7 @@ import type {
 export const generateForQueue = (
   files: FileFromNative['file'][]
 ): FileForQueue[] => {
-  // @ts-expect-error fix types
+  // @ts-expect-error fix file types mismatch
   return files.map(file => ({ file: file, isDirectory: false }))
 }
 

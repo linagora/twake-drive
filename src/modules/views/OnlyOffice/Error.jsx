@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react'
 import { RemoveScroll } from 'react-remove-scroll'
-import { useI18n } from 'twake-i18n'
 
 import { isQueryLoading, useQuery } from 'cozy-client'
 import Spinner from 'cozy-ui/transpiled/react/Spinner'
@@ -10,6 +9,7 @@ import Viewer, {
   ToolbarButtons,
   SharingButton
 } from 'cozy-viewer'
+import { useI18n } from 'twake-i18n'
 
 import Oops from '@/components/Error/Oops'
 import { useRedirectLink } from '@/hooks/useRedirectLink'

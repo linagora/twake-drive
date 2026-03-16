@@ -14,7 +14,7 @@ export const usePublicWritePermissions = currentFolderId => {
         const permissions = await models.permission.fetchOwn(client)
         setHasWritePermissions(!models.permission.isReadOnly(permissions[0]))
         setFetchStatus('loaded')
-      } catch (error) {
+      } catch (_error) {
         setFetchStatus('error')
       }
     }

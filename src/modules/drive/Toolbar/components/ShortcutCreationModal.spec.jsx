@@ -1,4 +1,3 @@
-/* eslint-env jest */
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import mediaQuery from 'css-mediaquery'
 import React from 'react'

@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { useI18n } from 'twake-i18n'
 
 import { useClient } from 'cozy-client'
 import { isIOS } from 'cozy-device-helper'
@@ -10,6 +9,7 @@ import Stack from 'cozy-ui/transpiled/react/Stack'
 import TextField from 'cozy-ui/transpiled/react/TextField'
 import useBrowserOffline from 'cozy-ui/transpiled/react/hooks/useBrowserOffline'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
+import { useI18n } from 'twake-i18n'
 
 import { useDisplayedFolder } from '@/hooks'
 import { displayedFolderOrRootFolder } from '@/hooks/helpers'
@@ -22,7 +22,7 @@ const isURLValid = url => {
   try {
     new URL(url)
     return true
-  } catch (e) {
+  } catch (_e) {
     return false
   }
 }

@@ -1,6 +1,5 @@
 import React from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { useI18n } from 'twake-i18n'
 
 import { useQuery } from 'cozy-client'
 import {
@@ -11,6 +10,7 @@ import {
 } from 'cozy-sharing'
 import { makeActions } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
+import { useI18n } from 'twake-i18n'
 
 import FilesRealTimeQueries from '@/components/FilesRealTimeQueries'
 import { useRedirectLink } from '@/hooks/useRedirectLink'

@@ -1,6 +1,5 @@
 import PropTypes from 'prop-types'
 import React, { useState, useEffect } from 'react'
-import { useI18n } from 'twake-i18n'
 
 import Backdrop from 'cozy-ui/transpiled/react/Backdrop'
 import GridList from 'cozy-ui/transpiled/react/GridList'
@@ -10,6 +9,7 @@ import IconButton from 'cozy-ui/transpiled/react/IconButton'
 import { Spinner } from 'cozy-ui/transpiled/react/Spinner'
 import Typography from 'cozy-ui/transpiled/react/Typography'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
+import { useI18n } from 'twake-i18n'
 
 import { IconColorPicker } from './IconColorPicker'
 import { getIcon, getIconList } from './IconIndex'

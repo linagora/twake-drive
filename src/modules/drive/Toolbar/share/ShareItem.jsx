@@ -1,6 +1,5 @@
 import React from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { useI18n } from 'twake-i18n'
 
 import { SharedDocument } from 'cozy-sharing'
 import { AvatarList } from 'cozy-sharing/dist/components/Avatar/AvatarList'
@@ -9,6 +8,7 @@ import Icon from 'cozy-ui/transpiled/react/Icon'
 import ShareIcon from 'cozy-ui/transpiled/react/Icons/Share'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
+import { useI18n } from 'twake-i18n'
 
 import { getPathToShareDisplayedFolder } from '@/modules/drive/Toolbar/share/helpers'
 

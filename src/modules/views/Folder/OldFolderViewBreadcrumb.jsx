@@ -18,6 +18,7 @@ const FolderViewBreadcrumb = ({
   useEffect(() => {
     let isMounted = true
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPath(null)
     if (!displayedFolder || !sharedDocumentId) return
 

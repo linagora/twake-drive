@@ -76,7 +76,7 @@ const FolderPickerContentCozy: React.FC<FolderPickerContentCozyProps> = ({
     ) {
       return [
         ...(sharedFolderResult.fetchStatus === 'loaded'
-          ? sharedFolderResult.data ?? []
+          ? (sharedFolderResult.data ?? [])
           : []),
         ...(filesData ?? [])
       ]

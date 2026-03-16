@@ -1,8 +1,8 @@
 import { render, fireEvent, act } from '@testing-library/react'
 import React from 'react'
-import { useI18n } from 'twake-i18n'
 
 import { BreakpointsProvider } from 'cozy-ui/transpiled/react/providers/Breakpoints'
+import { useI18n } from 'twake-i18n'
 
 import DesktopBreadcrumb from './DesktopBreadcrumb'
 import {
@@ -20,8 +20,7 @@ jest.mock('cozy-ui/transpiled/react/ActionsMenu', () => ({ children }) => (
 jest.mock(
   'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem',
   () =>
-    ({ children }) =>
-      <div data-testid="action-menu-item">{children}</div>
+    ({ children }) => <div data-testid="action-menu-item">{children}</div>
 )
 
 jest.mock('twake-i18n')

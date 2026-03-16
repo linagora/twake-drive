@@ -1,11 +1,11 @@
 import cx from 'classnames'
 import React, { useState, useRef, useEffect, useCallback } from 'react'
-import { translate } from 'twake-i18n'
 
 import { isDirectory } from 'cozy-client/dist/models/file'
 import Button from 'cozy-ui/transpiled/react/Buttons'
 import { Dialog } from 'cozy-ui/transpiled/react/CozyDialogs'
 import Spinner from 'cozy-ui/transpiled/react/Spinner'
+import { translate } from 'twake-i18n'
 
 import styles from '@/styles/filenameinput.styl'
 
@@ -49,7 +49,7 @@ const FilenameInput = ({
 
     try {
       await onSubmit(value)
-    } catch (e) {
+    } catch (_e) {
       setError(true)
     } finally {
       setWorking(false)

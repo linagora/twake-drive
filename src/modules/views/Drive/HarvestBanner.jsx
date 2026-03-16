@@ -36,9 +36,7 @@ const HarvestBanner = ({ folderId }) => {
   )
   const isTriggersLoading = isQueryLoading(triggersQueryLeft)
   const konnector = useQuery(
-    Q('io.cozy.konnectors').getById(
-      `io.cozy.konnectors/${konnectorSlug}` || ' '
-    ),
+    Q('io.cozy.konnectors').getById(`io.cozy.konnectors/${konnectorSlug}`),
     {
       as: `io.cozy.konnectors/${konnectorSlug}`,
       enabled: Boolean(konnectorSlug),

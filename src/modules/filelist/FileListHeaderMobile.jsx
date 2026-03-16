@@ -1,6 +1,5 @@
 import cx from 'classnames'
 import React, { useState, useCallback } from 'react'
-import { useI18n } from 'twake-i18n'
 
 import Button from 'cozy-ui/transpiled/react/Buttons'
 import Icon from 'cozy-ui/transpiled/react/Icon'
@@ -11,6 +10,7 @@ import {
   TableHeader,
   TableRow
 } from 'cozy-ui/transpiled/react/deprecated/Table'
+import { useI18n } from 'twake-i18n'
 
 import MobileSortMenu from './MobileSortMenu'
 

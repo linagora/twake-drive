@@ -48,7 +48,6 @@ const SelectionProvider = ({ children }) => {
     }
 
     if (isItemSelected(item._id)) {
-      // eslint-disable-next-line no-unused-vars
       const { [item._id]: _, ...stillSelected } = selectedItems
       setSelectedItems(stillSelected)
     } else {

@@ -8,7 +8,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { RemoveScroll } from 'react-remove-scroll'
 import { useNavigate, useParams } from 'react-router-dom'
-import { translate, useI18n } from 'twake-i18n'
 
 import { useClient } from 'cozy-client'
 import Spinner from 'cozy-ui/transpiled/react/Spinner'
@@ -20,6 +19,7 @@ import Viewer, {
   ToolbarButtons,
   SharingButton
 } from 'cozy-viewer'
+import { translate, useI18n } from 'twake-i18n'
 
 import { ensureFileHasPath } from '@/components/FilesRealTimeQueries'
 import Fallback from '@/modules/viewer/Fallback'
@@ -59,7 +59,7 @@ const FileOpener = props => {
         const file = await ensureFileHasPath(result.data, client)
 
         setState({ file, loading: false })
-      } catch (e) {
+      } catch (_e) {
         setState({ fileNotFound: true, loading: false })
         showAlert({
           message: t('alert.could_not_open_file')
@@ -72,6 +72,7 @@ const FileOpener = props => {
   useEffect(() => {
     const requestedFileId = fileId ?? props.fileId
     if (requestedFileId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       loadFileInfo(requestedFileId)
     }
   }, [fileId, props.fileId, loadFileInfo])

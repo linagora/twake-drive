@@ -12,6 +12,10 @@ import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import { getParentPath } from '@/lib/path'
 import { computeNextcloudFolderQueryId } from '@/modules/nextcloud/helpers'
 
+interface NextcloudFilesCollection {
+  restore: (file: NextcloudFile) => Promise<void>
+}
+
 interface RestoreNextcloudFileProps {
   t: (key: string) => string
   client: CozyClient
@@ -37,10 +41,10 @@ export const restoreNextcloudFile = ({
 
       try {
         for (const file of files) {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-          await client
-            .collection('io.cozy.remote.nextcloud.files')
-            .restore(file)
+          const collection = client.collection(
+            'io.cozy.remote.nextcloud.files'
+          ) as unknown as NextcloudFilesCollection
+          await collection.restore(file)
         }
 
         const restorePaths = files
@@ -77,7 +81,7 @@ export const restoreNextcloudFile = ({
           message: t('RestoreNextcloudFile.success'),
           severity: 'success'
         })
-      } catch (error) {
+      } catch (_error) {
         showAlert({
           message: t('RestoreNextcloudFile.error'),
           severity: 'error'

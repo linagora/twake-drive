@@ -15,6 +15,7 @@ export const useRecentIcons = () => {
   useEffect(() => {
     try {
       const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY))
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRecentIcons(Array.isArray(parsed) ? parsed : [])
     } catch (error) {
       logger.error('Failed to load recent icons from localStorage:', error)

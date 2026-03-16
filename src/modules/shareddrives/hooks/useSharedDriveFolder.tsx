@@ -81,7 +81,7 @@ const useSharedDriveFolder = ({
       realtime.subscribe('deleted', 'io.cozy.files', debouncedFetch)
     }
 
-    return () => {
+    return (): void => {
       if (realtime) {
         realtime.stop()
       }
