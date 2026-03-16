@@ -17,12 +17,12 @@ Requirements for the Scribe Chat Panel milestone. Each maps to roadmap phases.
 
 ### Chat
 
-- [ ] **CHAT-01**: User can type a message and send it to the AI
-- [ ] **CHAT-02**: User sees AI responses rendered in Markdown
-- [ ] **CHAT-03**: Conversation history is displayed as a scrollable message list
-- [ ] **CHAT-04**: AI receives full conversation history (multi-turn)
-- [ ] **CHAT-05**: User sees a loading indicator while AI responds
-- [ ] **CHAT-06**: Errors appear as messages in the chat with retry option
+- [x] **CHAT-01**: User can type a message and send it to the AI
+- [x] **CHAT-02**: User sees AI responses rendered in Markdown
+- [x] **CHAT-03**: Conversation history is displayed as a scrollable message list
+- [x] **CHAT-04**: AI receives full conversation history (multi-turn)
+- [x] **CHAT-05**: User sees a loading indicator while AI responds
+- [x] **CHAT-06**: Errors appear as messages in the chat with retry option
 
 ### Selection Context
 
@@ -80,12 +80,12 @@ Deferred to v3.1+. Tracked but not in current roadmap.
 | PANEL-03 | Phase v3.0-04 | Pending |
 | PANEL-04 | Phase v3.0-01 | Complete |
 | PANEL-05 | Phase v3.0-04 | Pending |
-| CHAT-01 | Phase v3.0-02 | Pending |
-| CHAT-02 | Phase v3.0-02 | Pending |
-| CHAT-03 | Phase v3.0-02 | Pending |
-| CHAT-04 | Phase v3.0-02 | Pending |
-| CHAT-05 | Phase v3.0-02 | Pending |
-| CHAT-06 | Phase v3.0-02 | Pending |
+| CHAT-01 | Phase v3.0-02 | Complete |
+| CHAT-02 | Phase v3.0-02 | Complete |
+| CHAT-03 | Phase v3.0-02 | Complete |
+| CHAT-04 | Phase v3.0-02 | Complete |
+| CHAT-05 | Phase v3.0-02 | Complete |
+| CHAT-06 | Phase v3.0-02 | Complete |
 | SEL-01 | Phase v3.0-03 | Pending |
 | SEL-02 | Phase v3.0-03 | Pending |
 | ACT-01 | Phase v3.0-03 | Pending |

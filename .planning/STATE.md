@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Scribe Chat Panel
-status: planning
-stopped_at: Completed v3.0-01-01-PLAN.md
-last_updated: "2026-03-12T07:35:45.918Z"
+status: executing
+stopped_at: Completed v3.0-02-01-PLAN.md
+last_updated: "2026-03-16T07:02:20.941Z"
 last_activity: 2026-03-11 -- Roadmap created for v3.0
 progress:
-  total_phases: 4
-  completed_phases: 0
-  total_plans: 2
-  completed_plans: 1
+  total_phases: 6
+  completed_phases: 4
+  total_plans: 10
+  completed_plans: 8
   percent: 0
 ---
 
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-10)
 
 **Core value:** L'utilisateur peut interagir avec l'IA de maniere fluide -- actions rapides inline ou chat conversationnel dans un panneau lateral -- pour transformer et manipuler le contenu de son document OnlyOffice.
-**Current focus:** Phase v3.0-01 - ScribeContext + Panel Shell
+**Current focus:** Phase v3.0-02 - Chat Core
 
 ## Current Position
 
-Phase: v3.0-01 of v3.0-04 (ScribeContext + Panel Shell)
-Plan: --
-Status: Ready to plan
-Last activity: 2026-03-11 -- Roadmap created for v3.0
+Phase: v3.0-02 of v3.0-04 (Chat Core)
+Plan: 01 of 02
+Status: Plan 01 complete
+Last activity: 2026-03-16 -- Completed v3.0-02-01 chat core
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [████████░░] 80%
 
 ## Performance Metrics
 
@@ -48,6 +48,7 @@ Progress: [░░░░░░░░░░] 0%
 | 12 Preview Markdown | 1 | 2min | 2min |
 | 13 Reinjection Pipeline | 1 | 15min | 15min |
 | Phase v3.0-01 P01 | 2min | 2 tasks | 6 files |
+| Phase v3.0-02 P01 | 3min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -64,6 +65,9 @@ Recent decisions affecting v3.0:
 - Zero new npm dependencies needed
 - Plugin code.js needs zero changes -- all selection data already flows via existing intents
 - [Phase v3.0-01]: Null-safe useScribe access in View.jsx for graceful fallback
+- [Phase v3.0-02]: Chat system prompt separate from inline SYSTEM_PROMPT (conversational vs transform-only)
+- [Phase v3.0-02]: messagesRef pattern for stable sendMessage callback
+- [Phase v3.0-02]: addMessage() callback for external message injection from popover
 
 ### Pending Todos (carried from v2.3)
 
@@ -84,6 +88,6 @@ Recent decisions affecting v3.0:
 
 ## Session Continuity
 
-Last session: 2026-03-12T07:35:45.915Z
-Stopped at: Completed v3.0-01-01-PLAN.md
+Last session: 2026-03-16T07:01:28Z
+Stopped at: Completed v3.0-02-01-PLAN.md
 Resume file: None
