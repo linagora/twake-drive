@@ -72,7 +72,7 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
   const handleReplace = useCallback(
     text => {
       const html = unwrapSingleParagraph(markdownToHtml(text).trim())
-      respond({ status: 'ok', action: 'replace', data: { text, html } })
+      respond({ status: 'ok', action: 'replace', data: { text, html, md: text } })
       setTimeout(focusEditor, 100)
     },
     [respond, focusEditor]
@@ -81,7 +81,7 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
   const handleInsert = useCallback(
     text => {
       const html = unwrapSingleParagraph(markdownToHtml(text).trim())
-      respond({ status: 'ok', action: 'insert', data: { text, html } })
+      respond({ status: 'ok', action: 'insert', data: { text, html, md: text } })
       setTimeout(focusEditor, 100)
     },
     [respond, focusEditor]
