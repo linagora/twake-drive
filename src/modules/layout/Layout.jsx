@@ -1,7 +1,6 @@
 import React, { Fragment, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { Outlet, useNavigate } from 'react-router-dom'
-import { useI18n } from 'twake-i18n'
 
 import { BarComponent } from 'cozy-bar'
 import CozyDevtools from 'cozy-devtools'
@@ -13,6 +12,7 @@ import { Layout as LayoutUI } from 'cozy-ui/transpiled/react/Layout'
 import Sidebar from 'cozy-ui/transpiled/react/Sidebar'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import Storage from 'cozy-ui-plus/dist/Storage'
+import { useI18n } from 'twake-i18n'
 
 import Drive from '@/components/Icons/Drive'
 import DriveText from '@/components/Icons/DriveText'

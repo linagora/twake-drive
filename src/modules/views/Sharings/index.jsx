@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react'
 import { useDispatch } from 'react-redux'
 import { useNavigate, useLocation, Outlet } from 'react-router-dom'
-import { useI18n } from 'twake-i18n'
 
 import { useClient, hasQueryBeenLoaded, useQuery } from 'cozy-client'
 import flag from 'cozy-flags'
@@ -14,6 +13,7 @@ import { makeActions } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
 import { Content } from 'cozy-ui/transpiled/react/Layout'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
+import { useI18n } from 'twake-i18n'
 
 import withSharedDocumentIds from './withSharedDocumentIds'
 import FolderView from '../Folder/FolderView'
@@ -140,6 +140,7 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
         fetchStatus:
           sharedDocumentIds?.length > 0 ? result.fetchStatus : 'loaded',
         lastFetch:
+          // eslint-disable-next-line react-hooks/purity
           sharedDocumentIds?.length > 0 ? result.lastFetch : Date.now(),
         data: filteredResultData,
         count: filteredResultData.length
@@ -154,6 +155,7 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
       ...result,
       fetchStatus:
         sharedDocumentIds?.length > 0 ? result.fetchStatus : 'loaded',
+      // eslint-disable-next-line react-hooks/purity
       lastFetch: sharedDocumentIds?.length > 0 ? result.lastFetch : Date.now(),
       data: combinedData,
       count: combinedData.length

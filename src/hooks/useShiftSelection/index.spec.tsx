@@ -40,7 +40,7 @@ const createMockFile = (id: string): IOCozyFile =>
     _id: id,
     name: `file-${id}`,
     type: 'file'
-  } as IOCozyFile)
+  }) as IOCozyFile
 
 const mockFiles = [
   createMockFile('1'),

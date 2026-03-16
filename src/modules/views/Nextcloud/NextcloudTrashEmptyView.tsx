@@ -8,6 +8,10 @@ import {
 
 import { useClient } from 'cozy-client'
 
+interface NextcloudFilesCollection {
+  emptyTrash: (sourceAccount: string | undefined) => Promise<void>
+}
+
 import { getParentPath } from '@/lib/path'
 import { computeNextcloudFolderQueryId } from '@/modules/nextcloud/helpers'
 import { useNextcloudPath } from '@/modules/nextcloud/hooks/useNextcloudPath'
@@ -30,10 +34,10 @@ const NextcloudTrashEmptyView: FC = () => {
   }
 
   const handleConfirm = async (): Promise<void> => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-    await client
-      ?.collection('io.cozy.remote.nextcloud.files')
-      .emptyTrash(sourceAccount)
+    const collection = client?.collection(
+      'io.cozy.remote.nextcloud.files'
+    ) as unknown as NextcloudFilesCollection
+    await collection.emptyTrash(sourceAccount)
     const queryId =
       computeNextcloudFolderQueryId({
         sourceAccount,

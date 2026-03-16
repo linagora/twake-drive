@@ -48,15 +48,16 @@ jest.mock('cozy-ui/transpiled/react/Table/Virtualized', () => {
 
 // Remove the FolderViewBody mock - let the real component run with mocked VirtuosoTableDnd
 
-jest.mock('../Folder/FolderViewBreadcrumb', () =>
-  // eslint-disable-next-line react/display-name
-  ({ rootBreadcrumbPath, currentFolderId }) => (
-    <div
-      data-path={rootBreadcrumbPath}
-      data-folder-id={currentFolderId}
-      data-testid="FolderViewBreadcrumb"
-    />
-  )
+jest.mock(
+  '../Folder/FolderViewBreadcrumb',
+  () =>
+    ({ rootBreadcrumbPath, currentFolderId }) => (
+      <div
+        data-path={rootBreadcrumbPath}
+        data-folder-id={currentFolderId}
+        data-testid="FolderViewBreadcrumb"
+      />
+    )
 )
 jest.mock('cozy-sharing', () => ({
   ...jest.requireActual('cozy-sharing'),

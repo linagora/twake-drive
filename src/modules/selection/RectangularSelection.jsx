@@ -261,6 +261,7 @@ const RectangularSelection = ({
 
   // Use the directly provided scrollElement (from virtuoso's scrollerRef),
   // or fall back to scrollContainerRef.current for non-virtualized containers
+  // eslint-disable-next-line react-hooks/refs
   const scrollContainer = scrollElement || scrollContainerRef?.current
 
   return (
@@ -274,6 +275,7 @@ const RectangularSelection = ({
         <Selecto
           ref={selectoRef}
           className={styles['cozy-selecto-box']}
+          // eslint-disable-next-line react-hooks/refs
           container={containerRef.current}
           dragContainer={window}
           selectableTargets={['[data-file-id]']}

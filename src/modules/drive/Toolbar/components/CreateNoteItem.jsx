@@ -1,7 +1,6 @@
 import get from 'lodash/get'
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { translate } from 'twake-i18n'
 
 import {
   withClient,
@@ -20,6 +19,7 @@ import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import { generateUniversalLink } from 'cozy-ui-plus/dist/AppLinker/native'
+import { translate } from 'twake-i18n'
 
 import { displayedFolderOrRootFolder } from '@/hooks/helpers'
 

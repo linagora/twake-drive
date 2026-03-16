@@ -1,5 +1,4 @@
 import React from 'react'
-import { useI18n } from 'twake-i18n'
 
 import {
   useClient,
@@ -8,6 +7,7 @@ import {
   generateWebLink
 } from 'cozy-client'
 import AppLinker from 'cozy-ui-plus/dist/AppLinker'
+import { useI18n } from 'twake-i18n'
 
 import { computeHomeApp } from '@/modules/views/OnlyOffice/Toolbar/helpers'
 import { buildAppsQuery, buildSettingsByIdQuery } from '@/queries'

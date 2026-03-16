@@ -302,7 +302,7 @@ export const createFolder = (
       throw new Error('alert.folder_name')
     }
 
-    let createdFolder = null
+    let createdFolder
     try {
       if (!isTargetEncrypted) {
         createdFolder = await client

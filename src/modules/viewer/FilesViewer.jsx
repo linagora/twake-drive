@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useState, useMemo } from 'react'
 import { RemoveScroll } from 'react-remove-scroll'
 import { useNavigate, useParams } from 'react-router-dom'
-import { useI18n } from 'twake-i18n'
 
 import { Q, useClient } from 'cozy-client'
 import flag from 'cozy-flags'
@@ -16,6 +15,7 @@ import Viewer, {
   ToolbarButtons,
   SharingButton
 } from 'cozy-viewer'
+import { useI18n } from 'twake-i18n'
 
 import { ensureFileHasPath } from '@/components/FilesRealTimeQueries'
 import { FilesViewerLoading } from '@/components/FilesViewerLoading'
@@ -99,7 +99,7 @@ const FilesViewer = ({ filesQuery, files, onClose, onChange, viewerProps }) => {
         )
         const fileWithPath = await ensureFileHasPath(data, client)
         isMounted && setCurrentFile(fileWithPath)
-      } catch (e) {
+      } catch (_e) {
         logger.warn("can't find the file")
         handleOnClose()
       }

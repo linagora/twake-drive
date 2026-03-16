@@ -337,8 +337,8 @@ describe('MoveModal component', () => {
           path.includes('/bills')
             ? '/bills'
             : path.includes('/Destination Folder')
-            ? '/Destination Folder'
-            : null
+              ? '/Destination Folder'
+              : null
       })
 
       const moveButton = await screen.findByText('Move')
@@ -368,8 +368,8 @@ describe('MoveModal component', () => {
           path.includes('/bills')
             ? '/bills'
             : path.includes('/Destination Folder')
-            ? '/Destination Folder'
-            : null,
+              ? '/Destination Folder'
+              : null,
         sharingContext: {
           isOwner: () => true,
           revokeAllRecipients: revokeAllSpy,
@@ -413,8 +413,8 @@ describe('MoveModal component', () => {
           path.includes('/bills')
             ? '/bills'
             : path.includes('/Destination Folder')
-            ? '/Destination Folder'
-            : null,
+              ? '/Destination Folder'
+              : null,
         sharingContext: {
           isOwner: () => false,
           revokeAllRecipients: revokeAllSpy,

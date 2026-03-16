@@ -20,8 +20,7 @@ jest.mock('cozy-sharing', () => ({
 jest.mock(
   '@/modules/views/OnlyOffice/Toolbar/HomeLinker',
   () =>
-    ({ children }) =>
-      <div data-testid="HomeLinker">{children}</div>
+    ({ children }) => <div data-testid="HomeLinker">{children}</div>
 )
 
 jest.mock('cozy-ui/transpiled/react/providers/Breakpoints', () => ({

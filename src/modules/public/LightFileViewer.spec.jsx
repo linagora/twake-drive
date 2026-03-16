@@ -1,9 +1,9 @@
 import { render } from '@testing-library/react'
 import React from 'react'
-import I18n from 'twake-i18n'
 
 import { createMockClient } from 'cozy-client'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
+import I18n from 'twake-i18n'
 
 import LightFileViewer from './LightFileViewer'
 import AppLike from 'test/components/AppLike'

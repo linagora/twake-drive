@@ -1,11 +1,11 @@
 import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { useI18n } from 'twake-i18n'
 
 import { useClient } from 'cozy-client'
 import flag from 'cozy-flags'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'
+import { useI18n } from 'twake-i18n'
 
 import { useViewSwitcherContext } from '@/lib/ViewSwitcherContext'
 import { AddFolderCard } from '@/modules/filelist/AddFolderCard'
@@ -39,8 +39,8 @@ export const AddFolder = ({
     viewType === 'grid'
       ? AddFolderCard
       : flag('drive.virtualization.enabled') && !isMobile
-      ? AddFolderRowVz
-      : AddFolderRow
+        ? AddFolderRowVz
+        : AddFolderRow
 
   return (
     <Comp
