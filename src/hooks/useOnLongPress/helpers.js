@@ -26,6 +26,12 @@ export const handleClick = ({
   // simply remove this "if" the flag is not necessary anymore
   if (!flag('drive.doubleclick.enabled')) {
     if (selectionModeActive) {
+      if (flag('drive.dynamic-selection.enabled') && !event.shiftKey) {
+        event.stopPropagation()
+        setSelectedItems({ [file._id]: file })
+        onInteractWithFile?.(file._id, event)
+        return
+      }
       return toggle(event)
     } else {
       return openLink(event)

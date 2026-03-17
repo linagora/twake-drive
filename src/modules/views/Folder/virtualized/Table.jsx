@@ -78,7 +78,7 @@ const Table = forwardRef(
     },
     ref
   ) => {
-    const { toggleSelectedItem } = useSelectionContext()
+    const { toggleSelectedItem, setSelectedItems } = useSelectionContext()
     const { isNew } = useNewItemHighlightContext()
     const internalVirtuosoRef = useRef(null)
     const virtuosoRef = parentVirtuosoRef || internalVirtuosoRef
@@ -86,13 +86,27 @@ const Table = forwardRef(
 
     const { sortOrder, setOrder } = orderProps
 
+    const selectedItemsCount = Object.keys(selectedItems || {}).length
     const handleRowSelect = useCallback(
       (row, event) => {
         event?.stopPropagation?.()
-        toggleSelectedItem(row)
+        if (
+          flag('drive.dynamic-selection.enabled') &&
+          selectedItemsCount > 0 &&
+          !event?.shiftKey
+        ) {
+          setSelectedItems({ [row._id]: row })
+        } else {
+          toggleSelectedItem(row)
+        }
         onInteractWithFile?.(row?._id, event)
       },
-      [toggleSelectedItem, onInteractWithFile]
+      [
+        toggleSelectedItem,
+        onInteractWithFile,
+        selectedItemsCount,
+        setSelectedItems
+      ]
     )
 
     const handleSort = ({ order, orderBy }) => {
