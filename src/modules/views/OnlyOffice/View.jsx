@@ -46,7 +46,7 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
   // Send trigger-intent to plugin iframe (nested inside OO editor iframe).
   // We broadcast to all descendant iframes so the message reaches the plugin.
   const triggerScribe = useCallback(() => {
-    const msg = { type: 'cozy-bridge:trigger-intent', action: 'AI_TEXT_EDIT' }
+    const msg = { type: 'cozy-bridge:trigger-intent', action: 'AI_TEXT_ASSISTANT' }
     const broadcastToFrames = win => {
       try {
         for (let i = 0; i < win.frames.length; i++) {

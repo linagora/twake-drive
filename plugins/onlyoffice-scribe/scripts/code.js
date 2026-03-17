@@ -71,7 +71,7 @@
     }
   }
 
-  // Build AI_TEXT_EDIT intent data with optional HTML field (EXTR-02)
+  // Build AI_TEXT_ASSISTANT intent data with optional HTML field (EXTR-02)
   function buildEditIntentData() {
     var data = { text: lastSelectedText };
     if (lastSelectedHtml && lastSelectedHtml.length > 0) {
@@ -79,126 +79,6 @@
       data.format = "html";
     }
     return data;
-  }
-
-  // ---- flattenTokens: convert marked lexer output to flat paragraph+runs ----
-  // Takes the array returned by marked.lexer(md) and produces:
-  //   [{ type: "paragraph", runs: [{ text, bold, italic }] }]
-  // Handles bold (strong), italic (em), nested formatting, and unknown block fallback.
-  function flattenTokens(markedTokens) {
-    var blocks = [];
-
-    function flattenInline(tokens, parentBold, parentItalic) {
-      var runs = [];
-      for (var i = 0; i < tokens.length; i++) {
-        var tok = tokens[i];
-        if (tok.type === "text") {
-          runs.push({ text: tok.text, bold: !!parentBold, italic: !!parentItalic });
-        } else if (tok.type === "strong") {
-          runs = runs.concat(flattenInline(tok.tokens, true, parentItalic));
-        } else if (tok.type === "em") {
-          runs = runs.concat(flattenInline(tok.tokens, parentBold, true));
-        } else if (tok.tokens) {
-          runs = runs.concat(flattenInline(tok.tokens, parentBold, parentItalic));
-        } else if (tok.text) {
-          runs.push({ text: tok.text, bold: !!parentBold, italic: !!parentItalic });
-        }
-      }
-      return runs;
-    }
-
-    for (var i = 0; i < markedTokens.length; i++) {
-      var block = markedTokens[i];
-      if (block.type === "paragraph") {
-        blocks.push({ type: "paragraph", runs: flattenInline(block.tokens || [], false, false) });
-      } else if (block.type === "space") {
-        // skip -- implicit paragraph separator
-      } else if (block.tokens) {
-        // Unknown block type with tokens: treat as paragraph fallback
-        blocks.push({ type: "paragraph", runs: flattenInline(block.tokens || [], false, false) });
-      } else if (block.text) {
-        // Unknown block type with text only: treat as plain paragraph
-        blocks.push({ type: "paragraph", runs: [{ text: block.text, bold: false, italic: false }] });
-      }
-    }
-
-    return blocks;
-  }
-
-  // ---- Builder API injection with PasteHtml fallback ----
-  // Tokenizes markdown via marked.lexer(), flattens to paragraph+runs,
-  // passes through Asc.scope, and interprets as Builder API calls inside
-  // a single callCommand (single undo point). Falls back to PasteHtml
-  // if callCommand fails or times out.
-  function buildAndInject(md, mode, fallbackHtml) {
-    var tokens = window.marked.lexer(md);
-    var flat = flattenTokens(tokens);
-
-    if (flat.length === 0) {
-      log("No blocks parsed -- falling back to PasteHtml");
-      if (fallbackHtml) { pasteHtml(fallbackHtml, mode); }
-      return;
-    }
-
-    pasteInProgress = true;
-    stopHidePolling();
-    Asc.scope.tokens = JSON.stringify(flat);
-    Asc.scope._mode = mode || "replace";
-
-    var callbackFired = false;
-    var fallbackTimer = setTimeout(function() {
-      if (!callbackFired) {
-        log("Builder callCommand timeout -- falling back to PasteHtml");
-        pasteInProgress = false;
-        if (fallbackHtml) { pasteHtml(fallbackHtml, mode); }
-      }
-    }, 5000);
-
-    window.Asc.plugin.callCommand(function() {
-      var tokensJson = Asc.scope.tokens;
-      var mode = Asc.scope._mode;
-      if (!tokensJson) return;
-
-      var blocks = JSON.parse(tokensJson);
-      var doc = Api.GetDocument();
-
-      // For insert mode: collapse cursor to end of selection
-      if (mode === "insert") {
-        var range = doc.GetRangeBySelect();
-        if (range) {
-          var endPos = range.GetEndPos();
-          var endRange = doc.GetRange(endPos, endPos);
-          if (endRange) endRange.Select();
-        }
-      }
-
-      var content = [];
-      for (var i = 0; i < blocks.length; i++) {
-        var block = blocks[i];
-        if (block.type === "paragraph") {
-          var p = Api.CreateParagraph();
-          var runs = block.runs || [];
-          for (var j = 0; j < runs.length; j++) {
-            var run = runs[j];
-            var r = Api.CreateRun();
-            r.AddText(run.text);
-            if (run.bold) r.SetBold(true);
-            if (run.italic) r.SetItalic(true);
-            p.AddElement(r);
-          }
-          content.push(p);
-        }
-      }
-
-      if (content.length > 0) {
-        doc.InsertContent(content);
-      }
-    }, false, false, function() {
-      callbackFired = true;
-      clearTimeout(fallbackTimer);
-      pasteInProgress = false;
-      log("Builder injection complete (" + mode + ")");
-    });
   }
 
   // ---- Paste HTML with smart spacing ----
@@ -275,34 +155,22 @@
   }
 
   // ---- handleIntentResponse: apply document modification from response ----
-  // Routes: md field -> Builder API path, html field -> PasteHtml, text -> plain fallback
   function handleIntentResponse(msg) {
-    if (msg.action === "replace" || msg.action === "insert") {
-      if (msg.data && msg.data.md) {
-        // Builder API path (primary) with PasteHtml fallback
-        log(msg.action + " (Builder API)");
-        try {
-          buildAndInject(msg.data.md, msg.action, msg.data.html || null);
-        } catch (e) {
-          log("Builder injection failed: " + e.message + " -- falling back to PasteHtml");
-          if (msg.data.html) {
-            pasteHtml(msg.data.html, msg.action);
-          } else {
-            window.Asc.plugin.executeMethod("PasteText", [msg.data.text || ""]);
-          }
-        }
-      } else if (msg.data && msg.data.html) {
-        // PasteHtml path (existing fallback)
-        log(msg.action + " (PasteHtml)");
-        pasteHtml(msg.data.html, msg.action);
+    if (msg.action === "replace") {
+      if (msg.data && msg.data.html) {
+        log("Replace (HTML)");
+        pasteHtml(msg.data.html, "replace");
       } else {
-        // Plain text fallback (existing)
-        log(msg.action + " (plain text)");
-        if (msg.action === "replace") {
-          window.Asc.plugin.executeMethod("PasteText", [msg.data.text || ""]);
-        } else {
-          insertAfterWithText(msg.data.text || "");
-        }
+        log("Replace (plain text)");
+        window.Asc.plugin.executeMethod("PasteText", [msg.data.text]);
+      }
+    } else if (msg.action === "insert") {
+      if (msg.data && msg.data.html) {
+        log("Insert (HTML)");
+        insertAfterWithHtml(msg.data.html);
+      } else {
+        log("Insert (plain text)");
+        insertAfterWithText(msg.data.text);
       }
     } else if (msg.action === "cancel") {
       log("Intent cancelled -- no document modification");
@@ -364,14 +232,14 @@
   });
 
   // ---- Trigger-intent listener (host -> plugin) ----
-  // Cozy Drive sends trigger-intent to ask the plugin to cast an AI_TEXT_EDIT intent
+  // Cozy Drive sends trigger-intent to ask the plugin to cast an AI_TEXT_ASSISTANT intent
   window.addEventListener("message", function(event) {
     var msg = event.data;
     if (!msg || msg.type !== "cozy-bridge:trigger-intent") return;
 
-    if (msg.action === "AI_TEXT_EDIT" && lastSelectedText.length > 0) {
-      log("Trigger-intent received, casting AI_TEXT_EDIT");
-      castIntent("AI_TEXT_EDIT", buildEditIntentData());
+    if (msg.action === "AI_TEXT_ASSISTANT" && lastSelectedText.length > 0) {
+      log("Trigger-intent received, casting AI_TEXT_ASSISTANT");
+      castIntent("AI_TEXT_ASSISTANT", buildEditIntentData());
     }
   });
 
@@ -509,18 +377,18 @@
     }], function(selectedText) {
       lastSelectedText = selectedText || "";
       // Use stored HTML from latest init() call
-      castIntent("AI_TEXT_EDIT", buildEditIntentData());
+      castIntent("AI_TEXT_ASSISTANT", buildEditIntentData());
     });
   });
 
   // ---- Ctrl+Shift+I unified handler ----
   // The plugin doesn't know panel state — it just emits intents. React decides.
   //
-  // With text selected: AI_TEXT_EDIT is delayed by SHORTCUT_DELAY_MS (200ms).
+  // With text selected: AI_TEXT_ASSISTANT is delayed by SHORTCUT_DELAY_MS (200ms).
   //   A 2nd press within that delay cancels it and casts TOGGLE_SCRIBE_PANEL
   //   instead (direct-to-panel, no popover flash). After the delay, if the
   //   popover is open, a 2nd press during EDIT_COOLDOWN_MS also toggles panel.
-  //   If panel is already open, React closes it on receiving AI_TEXT_EDIT.
+  //   If panel is already open, React closes it on receiving AI_TEXT_ASSISTANT.
   // Without text selected: cast TOGGLE_SCRIBE_PANEL immediately (single press).
   var editDelayTimer = null;
   var lastEditIntentTime = 0;
@@ -534,7 +402,7 @@
 
     var now = Date.now();
 
-    // If AI_TEXT_EDIT is pending (delayed) or was recently cast, 2nd press toggles panel
+    // If AI_TEXT_ASSISTANT is pending (delayed) or was recently cast, 2nd press toggles panel
     if (editDelayTimer) {
       clearTimeout(editDelayTimer);
       editDelayTimer = null;
@@ -551,12 +419,12 @@
     }
 
     if (lastSelectedText.length > 0) {
-      // Text selected: delay AI_TEXT_EDIT to allow double-tap detection
+      // Text selected: delay AI_TEXT_ASSISTANT to allow double-tap detection
       editDelayTimer = setTimeout(function() {
         editDelayTimer = null;
         log("Ctrl+Shift+I triggered Scribe");
         lastEditIntentTime = Date.now();
-        var promise = castIntent("AI_TEXT_EDIT", buildEditIntentData());
+        var promise = castIntent("AI_TEXT_ASSISTANT", buildEditIntentData());
         // Clear cooldown when the intent is resolved (popover closed or
         // panel closed), so the next Ctrl+Shift+I starts fresh
         if (promise) {
@@ -613,7 +481,7 @@
 
   function triggerScribeIfSelection() {
     if (lastSelectedText.length > 0) {
-      castIntent("AI_TEXT_EDIT", buildEditIntentData());
+      castIntent("AI_TEXT_ASSISTANT", buildEditIntentData());
     } else {
       log("No text selected — toolbar click ignored");
     }

@@ -6,7 +6,7 @@ import { CozyBridge } from '@/lib/cozy-bridge'
  * React hook wrapping CozyBridge lifecycle with intent state.
  *
  * Creates a CozyBridge instance on mount, registers handlers for
- * AI_TEXT_EDIT intents (opens Scribe popover) and SHOW/HIDE_SCRIBE_BUTTON
+ * AI_TEXT_ASSISTANT intents (opens Scribe popover) and SHOW/HIDE_SCRIBE_BUTTON
  * intents (controls the floating button), and provides a respond callback
  * to send responses back to the plugin.
  *
@@ -25,7 +25,7 @@ export function useCozyBridge(allowedOrigins) {
     const bridge = new CozyBridge(allowedOrigins)
     bridgeRef.current = bridge
 
-    bridge.onIntent('AI_TEXT_EDIT', (intentMessage, respondFn) => {
+    bridge.onIntent('AI_TEXT_ASSISTANT', (intentMessage, respondFn) => {
       setPendingIntent(intentMessage)
       respondRef.current = respondFn
     })

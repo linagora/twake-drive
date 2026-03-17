@@ -7,7 +7,7 @@ import { ConfirmDialog } from 'cozy-ui/transpiled/react/CozyDialogs'
 import Typography from 'cozy-ui/transpiled/react/Typography'
 
 /**
- * Placeholder modal for AI_TEXT_EDIT intent display and action.
+ * Placeholder modal for AI_TEXT_ASSISTANT intent display and action.
  *
  * Displays the selected text received from the plugin and offers
  * Replace, Insert After, and Cancel actions. In this Phase 2

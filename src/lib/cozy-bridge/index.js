@@ -7,7 +7,7 @@
  *
  * Usage:
  *   const bridge = new CozyBridge(['https://drive.cozy.localhost'])
- *   bridge.onIntent('AI_TEXT_EDIT', (intent, respond) => {
+ *   bridge.onIntent('AI_TEXT_ASSISTANT', (intent, respond) => {
  *     // Process intent...
  *     respond({ status: 'ok', action: 'replace', data: { text: 'new text' } })
  *   })
@@ -50,7 +50,7 @@ export class CozyBridge {
    * Call respond({ status, action, data }) to send a response back
    * to the plugin that cast the intent.
    *
-   * @param {string} action - Intent action verb to handle, e.g. 'AI_TEXT_EDIT'
+   * @param {string} action - Intent action verb to handle, e.g. 'AI_TEXT_ASSISTANT'
    * @param {Function} handler - Handler function: (intentMessage, respondFn) => void
    */
   onIntent(action, handler) {

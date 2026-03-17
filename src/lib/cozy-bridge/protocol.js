@@ -22,7 +22,7 @@ const MAX_DATA_SIZE = 1_000_000
 /**
  * Create an intent message to be sent from a plugin to Cozy Drive.
  *
- * @param {string} action - Intent action verb, e.g. 'AI_TEXT_EDIT'
+ * @param {string} action - Intent action verb, e.g. 'AI_TEXT_ASSISTANT'
  * @param {Object} data - Intent payload
  * @param {string} source - Sender identity, e.g. 'onlyoffice-plugin'
  * @returns {import('./types').IntentMessage}

@@ -14,7 +14,7 @@
  * @property {string} type - Always 'cozy-bridge:intent'
  * @property {number} version - Protocol version, always 1
  * @property {string} intentId - Unique correlation ID (UUID)
- * @property {string} action - Intent action verb, e.g. 'AI_TEXT_EDIT'
+ * @property {string} action - Intent action verb, e.g. 'AI_TEXT_ASSISTANT'
  * @property {string} source - Sender identity, e.g. 'onlyoffice-plugin'
  * @property {Object} data - Intent payload (action-specific)
  */
