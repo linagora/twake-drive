@@ -1,6 +1,5 @@
 import React, { forwardRef } from 'react'
 
-import { Action } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import TrashIcon from 'cozy-ui/transpiled/react/Icons/Trash'
@@ -8,6 +7,7 @@ import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 
 import { navigateToModalWithMultipleFile } from '@/modules/actions/helpers'
+import type { ActionWithPolicy } from '@/modules/actions/types'
 
 interface destroyProps {
   t: (key: string, options?: Record<string, unknown>) => string
@@ -21,7 +21,7 @@ export const destroy = ({
   navigate,
   pathname,
   search
-}: destroyProps): Action => {
+}: destroyProps): ActionWithPolicy => {
   const label = t('SelectionBar.destroy')
   const icon = TrashIcon
 
@@ -29,6 +29,7 @@ export const destroy = ({
     name: 'destroy',
     label,
     icon,
+    allowTrashed: true,
     action: (files): void => {
       navigateToModalWithMultipleFile({
         files,
