@@ -24,7 +24,8 @@ const RectangularSelection = ({
   children,
   items,
   scrollContainerRef,
-  scrollElement
+  scrollElement,
+  onSelectEnd
 }) => {
   const containerRef = useRef(null)
   const selectoRef = useRef(null)
@@ -86,22 +87,29 @@ const RectangularSelection = ({
       const isMultiSelect = e.inputEvent?.ctrlKey || e.inputEvent?.metaKey
       const newSelection = isMultiSelect ? { ...selectedItems } : {}
 
+      let lastSelectedId = null
       for (const el of e.selected) {
         const file = getFileFromElement(el)
         if (file && !newSelection[file._id]) {
           newSelection[file._id] = file
+          lastSelectedId = file._id
         }
       }
 
       setSelectedItems(newSelection)
       setIsSelectAll(Object.keys(newSelection).length === items.length)
+
+      if (lastSelectedId) {
+        onSelectEnd?.(lastSelectedId)
+      }
     },
     [
       items.length,
       selectedItems,
       getFileFromElement,
       setSelectedItems,
-      setIsSelectAll
+      setIsSelectAll,
+      onSelectEnd
     ]
   )
 
