@@ -4,8 +4,6 @@ import { Link } from 'react-router-dom'
 import { useI18n } from 'twake-i18n'
 
 import { isDirectory } from 'cozy-client/dist/models/file'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import ShareIcon from 'cozy-ui/transpiled/react/Icons/Share'
 import MidEllipsis from 'cozy-ui/transpiled/react/MidEllipsis'
 import { TableCell } from 'cozy-ui/transpiled/react/deprecated/Table'
 
@@ -97,16 +95,6 @@ const FileName = ({
                 {isMobile && <CertificationsIcons attributes={attributes} />}
               </div>
             ))}
-          {!withFilePath && (
-            <div className={styles['fil-file-shared']}>
-              <Icon
-                icon={ShareIcon}
-                size="10"
-                className={styles['fil-file-shared-icon']}
-              />
-              {t('Files.share.shared')}
-            </div>
-          )}
         </div>
       )}
     </TableCell>
