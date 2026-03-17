@@ -205,6 +205,7 @@ const FolderViewBodyContent = ({
             items={sortedRows}
             scrollContainerRef={folderViewRef}
             scrollElement={scrollElement}
+            onSelectEnd={setLastInteractedItem}
           >
             {viewContent}
           </RectangularSelection>
