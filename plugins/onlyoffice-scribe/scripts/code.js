@@ -111,10 +111,47 @@
       return runs;
     }
 
+    function flattenList(listToken, depth) {
+      var items = listToken.items || [];
+      for (var k = 0; k < items.length; k++) {
+        var item = items[k];
+        var itemTokens = item.tokens || [];
+        var inlineTokens = [];
+        var nestedLists = [];
+        for (var m = 0; m < itemTokens.length; m++) {
+          var sub = itemTokens[m];
+          if (sub.type === "list") {
+            nestedLists.push(sub);
+          } else if (sub.type === "text" || sub.type === "paragraph") {
+            inlineTokens = inlineTokens.concat(sub.tokens || []);
+          }
+        }
+        if (inlineTokens.length > 0) {
+          blocks.push({
+            type: "list_item",
+            ordered: !!listToken.ordered,
+            level: depth,
+            runs: flattenInline(inlineTokens, false, false)
+          });
+        }
+        for (var n = 0; n < nestedLists.length; n++) {
+          flattenList(nestedLists[n], depth + 1);
+        }
+      }
+    }
+
     for (var i = 0; i < markedTokens.length; i++) {
       var block = markedTokens[i];
       if (block.type === "paragraph") {
         blocks.push({ type: "paragraph", runs: flattenInline(block.tokens || [], false, false) });
+      } else if (block.type === "heading") {
+        blocks.push({
+          type: "heading",
+          depth: block.depth,
+          runs: flattenInline(block.tokens || [], false, false)
+        });
+      } else if (block.type === "list") {
+        flattenList(block, 0);
       } else if (block.type === "space") {
         // skip -- implicit paragraph separator
       } else if (block.tokens) {
