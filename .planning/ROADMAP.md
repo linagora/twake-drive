@@ -91,8 +91,8 @@ Full details: `.planning/milestones/v2.3-ROADMAP.md`
 **Plans:** 1/2 plans executed
 
 Plans:
-- [ ] 18-01-PLAN.md � Bundle marked + flattenTokens + View.jsx md field (token pipeline setup)
-- [ ] 18-02-PLAN.md � buildAndInject + callCommand interpreter + PasteHtml fallback (Builder injection)
+- [ ] 18-01-PLAN.md — Bundle marked + flattenTokens + View.jsx md field (token pipeline setup)
+- [ ] 18-02-PLAN.md — buildAndInject + callCommand interpreter + PasteHtml fallback (Builder injection)
 
 ### Phase 19: Extended Markdown Support
 **Goal**: User gets headings, bullet lists, numbered lists, strikethrough, code spans, and hyperlinks correctly rendered as native OO elements when Scribe injects AI results
@@ -121,8 +121,8 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 20-01: Sentinel marker spike + post-injection selection implementation
-- [ ] 20-02: Smart spacing for replace and insert modes
+- [ ] 20-01-PLAN.md — Smart spacing for replace and insert modes (INJ-03)
+- [ ] 20-02-PLAN.md — Sentinel markers + post-injection selection (INJ-02)
 
 ## Progress
 
