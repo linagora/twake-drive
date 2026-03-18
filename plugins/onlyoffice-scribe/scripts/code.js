@@ -166,6 +166,38 @@
       var blocks = JSON.parse(tokensJson);
       var doc = Api.GetDocument();
 
+      // Read paragraph-level font style at insertion point
+      // Uses paragraph mark text properties (base style, ignoring local run overrides)
+      // Falls back to document default text properties
+      var srcFontFamily = null;
+      var srcFontSize = null;
+      try {
+        var selRange = doc.GetRangeBySelect();
+        if (selRange) {
+          var para = selRange.GetParagraph();
+          if (para) {
+            var textPr = para.GetTextPr();
+            if (textPr) {
+              srcFontFamily = textPr.GetFontFamily();
+              srcFontSize = textPr.GetFontSize();
+            }
+          }
+        }
+      } catch (e) {
+        // Reading failed — try document default
+      }
+      if (!srcFontFamily || !srcFontSize) {
+        try {
+          var defaultPr = doc.GetDefaultTextPr();
+          if (defaultPr) {
+            if (!srcFontFamily) srcFontFamily = defaultPr.GetFontFamily();
+            if (!srcFontSize) srcFontSize = defaultPr.GetFontSize();
+          }
+        } catch (e) {
+          // No default available — runs will use OO built-in default
+        }
+      }
+
       // For insert mode: collapse cursor to end of selection
       if (mode === "insert") {
         var range = doc.GetRangeBySelect();
@@ -188,6 +220,8 @@
             r.AddText(run.text);
             if (run.bold) r.SetBold(true);
             if (run.italic) r.SetItalic(true);
+            if (srcFontFamily) r.SetFontFamily(srcFontFamily);
+            if (srcFontSize) r.SetFontSize(srcFontSize);
             p.AddElement(r);
           }
           content.push(p);
