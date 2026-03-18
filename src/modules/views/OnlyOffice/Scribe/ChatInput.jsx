@@ -4,6 +4,7 @@ import { useTheme } from 'cozy-ui/transpiled/react/styles'
 import { useI18n } from 'twake-i18n'
 
 import { useScribe } from '@/modules/views/OnlyOffice/Scribe/ScribeContext'
+import { SelectionChip } from '@/modules/views/OnlyOffice/Scribe/SelectionChip'
 
 const SCRIBE_PURPLE = '#7C3AED'
 const MAX_ROWS = 4
@@ -11,7 +12,7 @@ const LINE_HEIGHT = 20
 
 export const ChatInput = () => {
   const [text, setText] = useState('')
-  const { sendMessage, isLoading } = useScribe()
+  const { sendMessage, isLoading, currentSelection, dismissSelection } = useScribe()
   const { t } = useI18n()
   const theme = useTheme()
   const textareaRef = useRef(null)
@@ -51,10 +52,13 @@ export const ChatInput = () => {
         borderTop: `1px solid ${theme.palette.divider}`,
         padding: '8px 12px',
         display: 'flex',
-        alignItems: 'flex-end',
-        gap: 8
+        flexDirection: 'column'
       }}
     >
+      {currentSelection && (
+        <SelectionChip selection={currentSelection} onDismiss={dismissSelection} />
+      )}
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>
       <textarea
         ref={textareaRef}
         value={text}
@@ -107,6 +111,7 @@ export const ChatInput = () => {
           />
         </svg>
       </button>
+      </div>
     </div>
   )
 }

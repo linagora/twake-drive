@@ -42,6 +42,7 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
   const isPanelOpen = scribe ? scribe.isPanelOpen : false
   const togglePanel = scribe ? scribe.togglePanel : undefined
   const openPanel = scribe ? scribe.openPanel : undefined
+  const setCurrentSelection = scribe ? scribe.setCurrentSelection : undefined
 
   // cozy-bridge: listen for Scribe intents from OO plugin
   // In dev, allow all origins. In production, derive from serverUrl/instance.
@@ -75,6 +76,24 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
       }
     }
   }, [pendingIntent, isPanelOpen])
+
+  // Feed selection data from useCozyBridge into ScribeContext
+  useEffect(() => {
+    if (!setCurrentSelection) return
+    if (showScribeButton && showScribeButton.text) {
+      setCurrentSelection(showScribeButton.text, null)
+    } else if (!showScribeButton) {
+      setCurrentSelection(null, null)
+    }
+  }, [showScribeButton, setCurrentSelection])
+
+  useEffect(() => {
+    if (!setCurrentSelection || !pendingIntent?.data) return
+    setCurrentSelection(
+      pendingIntent.data.text || null,
+      pendingIntent.data.html || null
+    )
+  }, [pendingIntent, setCurrentSelection])
 
   // Send trigger-intent to plugin iframe (nested inside OO editor iframe).
   // We broadcast to all descendant iframes so the message reaches the plugin.

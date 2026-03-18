@@ -4,6 +4,7 @@ import { useClient } from 'cozy-client'
 import { useI18n } from 'twake-i18n'
 
 import { callScribeAI, classifyScribeError } from '@/modules/views/OnlyOffice/Scribe/scribeAI'
+import { htmlToMarkdown } from '@/modules/views/OnlyOffice/Scribe/scribeConversion'
 
 const STORAGE_KEY = 'scribe-panel-open'
 
@@ -32,6 +33,7 @@ export const ScribeProvider = ({ children }) => {
   const [isPanelOpen, setIsPanelOpen] = useState(readStorage)
   const [messages, setMessages] = useState([])
   const [isLoading, setIsLoading] = useState(false)
+  const [currentSelection, setCurrentSelectionState] = useState(null)
 
   const client = useClient()
   const { t } = useI18n()
@@ -39,6 +41,9 @@ export const ScribeProvider = ({ children }) => {
   // Use ref to always have current messages in sendMessage without re-creating the callback
   const messagesRef = useRef(messages)
   messagesRef.current = messages
+
+  // Track dismissed selection text so chip doesn't reappear until a NEW different selection arrives
+  const selectionDismissedRef = useRef(null)
 
   useEffect(() => {
     writeStorage(isPanelOpen)
@@ -51,6 +56,26 @@ export const ScribeProvider = ({ children }) => {
   const addMessage = useCallback(msg => {
     setMessages(prev => [...prev, msg])
   }, [])
+
+  const setCurrentSelection = useCallback((text, html) => {
+    if (!text) {
+      setCurrentSelectionState(null)
+      return
+    }
+    // If user dismissed this exact text, don't re-show it
+    if (selectionDismissedRef.current === text) return
+    // New different selection resets the dismissed state
+    selectionDismissedRef.current = null
+    const markdown = html ? htmlToMarkdown(html) : text
+    setCurrentSelectionState({ text, html, markdown })
+  }, [])
+
+  const dismissSelection = useCallback(() => {
+    if (currentSelection) {
+      selectionDismissedRef.current = currentSelection.text
+    }
+    setCurrentSelectionState(null)
+  }, [currentSelection])
 
   const sendMessage = useCallback(async text => {
     const userMessage = {
@@ -105,10 +130,12 @@ export const ScribeProvider = ({ children }) => {
   const value = useMemo(
     () => ({
       isPanelOpen, togglePanel, openPanel, closePanel,
-      messages, isLoading, sendMessage, addMessage
+      messages, isLoading, sendMessage, addMessage,
+      currentSelection, setCurrentSelection, dismissSelection
     }),
     [isPanelOpen, togglePanel, openPanel, closePanel,
-     messages, isLoading, sendMessage, addMessage]
+     messages, isLoading, sendMessage, addMessage,
+     currentSelection, setCurrentSelection, dismissSelection]
   )
 
   return (

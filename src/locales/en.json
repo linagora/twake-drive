@@ -739,7 +739,8 @@
     "chat": {
       "typing": "Scribe is thinking...",
       "error_prefix": "Error",
-      "welcome": "Ask me anything about your document"
+      "welcome": "Ask me anything about your document",
+      "selection_context": "Selected text"
     },
     "menu": {
       "correct_grammar": "Correct grammar",

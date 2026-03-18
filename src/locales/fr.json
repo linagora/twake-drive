@@ -736,7 +736,8 @@
     "chat": {
       "typing": "Scribe reflechit...",
       "error_prefix": "Erreur",
-      "welcome": "Posez-moi une question sur votre document"
+      "welcome": "Posez-moi une question sur votre document",
+      "selection_context": "Texte selectionne"
     },
     "menu": {
       "correct_grammar": "Corriger la grammaire",
