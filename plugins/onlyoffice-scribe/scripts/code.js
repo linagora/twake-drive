@@ -92,20 +92,26 @@
   function flattenTokens(markedTokens) {
     var blocks = [];
 
-    function flattenInline(tokens, parentBold, parentItalic) {
+    function flattenInline(tokens, parentBold, parentItalic, parentStrikethrough, parentCode, parentLink) {
       var runs = [];
       for (var i = 0; i < tokens.length; i++) {
         var tok = tokens[i];
         if (tok.type === "text") {
-          runs.push({ text: tok.text, bold: !!parentBold, italic: !!parentItalic });
+          runs.push({ text: tok.text, bold: !!parentBold, italic: !!parentItalic, strikethrough: !!parentStrikethrough, code: !!parentCode, link: parentLink || null });
         } else if (tok.type === "strong") {
-          runs = runs.concat(flattenInline(tok.tokens, true, parentItalic));
+          runs = runs.concat(flattenInline(tok.tokens, true, parentItalic, parentStrikethrough, parentCode, parentLink));
         } else if (tok.type === "em") {
-          runs = runs.concat(flattenInline(tok.tokens, parentBold, true));
+          runs = runs.concat(flattenInline(tok.tokens, parentBold, true, parentStrikethrough, parentCode, parentLink));
+        } else if (tok.type === "del") {
+          runs = runs.concat(flattenInline(tok.tokens, parentBold, parentItalic, true, parentCode, parentLink));
+        } else if (tok.type === "codespan") {
+          runs.push({ text: tok.text, bold: !!parentBold, italic: !!parentItalic, strikethrough: !!parentStrikethrough, code: true, link: parentLink || null });
+        } else if (tok.type === "link") {
+          runs = runs.concat(flattenInline(tok.tokens || [], parentBold, parentItalic, parentStrikethrough, parentCode, tok.href));
         } else if (tok.tokens) {
-          runs = runs.concat(flattenInline(tok.tokens, parentBold, parentItalic));
+          runs = runs.concat(flattenInline(tok.tokens, parentBold, parentItalic, parentStrikethrough, parentCode, parentLink));
         } else if (tok.text) {
-          runs.push({ text: tok.text, bold: !!parentBold, italic: !!parentItalic });
+          runs.push({ text: tok.text, bold: !!parentBold, italic: !!parentItalic, strikethrough: !!parentStrikethrough, code: !!parentCode, link: parentLink || null });
         }
       }
       return runs;
@@ -131,7 +137,7 @@
             type: "list_item",
             ordered: !!listToken.ordered,
             level: depth,
-            runs: flattenInline(inlineTokens, false, false)
+            runs: flattenInline(inlineTokens, false, false, false, false, null)
           });
         }
         for (var n = 0; n < nestedLists.length; n++) {
@@ -143,12 +149,12 @@
     for (var i = 0; i < markedTokens.length; i++) {
       var block = markedTokens[i];
       if (block.type === "paragraph") {
-        blocks.push({ type: "paragraph", runs: flattenInline(block.tokens || [], false, false) });
+        blocks.push({ type: "paragraph", runs: flattenInline(block.tokens || [], false, false, false, false, null) });
       } else if (block.type === "heading") {
         blocks.push({
           type: "heading",
           depth: block.depth,
-          runs: flattenInline(block.tokens || [], false, false)
+          runs: flattenInline(block.tokens || [], false, false, false, false, null)
         });
       } else if (block.type === "list") {
         flattenList(block, 0);
@@ -156,7 +162,7 @@
         // skip -- implicit paragraph separator
       } else if (block.tokens) {
         // Unknown block type with tokens: treat as paragraph fallback
-        blocks.push({ type: "paragraph", runs: flattenInline(block.tokens || [], false, false) });
+        blocks.push({ type: "paragraph", runs: flattenInline(block.tokens || [], false, false, false, false, null) });
       } else if (block.text) {
         // Unknown block type with text only: treat as plain paragraph
         blocks.push({ type: "paragraph", runs: [{ text: block.text, bold: false, italic: false }] });
