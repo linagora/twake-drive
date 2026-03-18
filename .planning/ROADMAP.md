@@ -50,8 +50,8 @@ Full details: `.planning/milestones/v2.1-ROADMAP.md`
 
 **Milestone Goal:** Add a conversational chat side panel alongside the existing inline popover mode, letting the user have multi-turn AI conversations while working in OnlyOffice.
 
-- [ ] **Phase v3.0-01: ScribeContext + Panel Shell** - State provider and flex sibling panel that resizes OO iframe
-- [ ] **Phase v3.0-02: Chat Core** - Working conversational chat with AI, markdown rendering, and error handling
+- [x] **Phase v3.0-01: ScribeContext + Panel Shell** - State provider and flex sibling panel that resizes OO iframe
+- [x] **Phase v3.0-02: Chat Core** - Working conversational chat with AI, markdown rendering, and error handling
 - [ ] **Phase v3.0-03: Selection Context + Document Actions** - Selection chip in input, Copy/Replace/Insert on AI responses
 - [ ] **Phase v3.0-04: Panel Resize + Mode Toggle** - Drag-resizable panel width and inline/panel mode switching
 
@@ -99,11 +99,11 @@ Plans:
   2. The selected text is automatically included as context when the user sends a message to the AI
   3. User can copy any AI response to the clipboard via a Copy button on the message
   4. When text is selected in OO, AI responses show Replace and Insert buttons that modify the document
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] v3.0-03-01: TBD
-- [ ] v3.0-03-02: TBD
+- [ ] v3.0-03-01-PLAN.md — Selection state in ScribeContext + SelectionChip + selection context in AI prompts
+- [ ] v3.0-03-02-PLAN.md — MessageActions (Copy/Replace/Insert) on AI messages with respond protocol wiring
 
 ### Phase v3.0-04: Panel Resize + Mode Toggle
 **Goal**: User can drag-resize the panel and switch between inline and panel interaction modes
@@ -139,7 +139,7 @@ Phases execute in order: v3.0-01 -> v3.0-02 -> v3.0-03 -> v3.0-04
 | 11. Pipeline de Conversion | v2.1 | 2/2 | Complete | 2026-03-06 |
 | 12. Preview Markdown | v2.1 | 1/1 | Complete | 2026-03-07 |
 | 13. Reinjection et Integrite Pipeline | v2.1 | 1/1 | Complete | 2026-03-09 |
-| v3.0-01. ScribeContext + Panel Shell | v3.0 | 1/2 | In Progress | - |
-| v3.0-02. Chat Core | v3.0 | 0/2 | Not started | - |
-| v3.0-03. Selection Context + Document Actions | v3.0 | 0/? | Not started | - |
+| v3.0-01. ScribeContext + Panel Shell | v3.0 | 2/2 | Complete | 2026-03-15 |
+| v3.0-02. Chat Core | v3.0 | 2/2 | Complete | 2026-03-18 |
+| v3.0-03. Selection Context + Document Actions | v3.0 | 0/2 | Not started | - |
 | v3.0-04. Panel Resize + Mode Toggle | v3.0 | 0/? | Not started | - |
