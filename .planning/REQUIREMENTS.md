@@ -16,9 +16,9 @@ Requirements for milestone v2.4 Document Builder Injection. Each maps to roadmap
 ### Inline Formatting
 
 - [ ] **INL-01**: Le texte **gras**, *italique* et ***gras+italique*** est injecté avec le formatage OO correspondant (SetBold, SetItalic)
-- [ ] **INL-02**: Le texte ~~barré~~ est injecté avec le formatage OO correspondant (SetStrikeout)
-- [ ] **INL-03**: Les `code spans` sont injectés en police monospace (SetFontFamily)
-- [ ] **INL-04**: Les liens [texte](url) sont injectés comme des hyperliens OO cliquables
+- [x] **INL-02**: Le texte ~~barré~~ est injecté avec le formatage OO correspondant (SetStrikeout)
+- [x] **INL-03**: Les `code spans` sont injectés en police monospace (SetFontFamily)
+- [x] **INL-04**: Les liens [texte](url) sont injectés comme des hyperliens OO cliquables
 
 ### Block Elements
 
@@ -66,9 +66,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PARSE-02 | Phase 18 | Complete |
 | PARSE-03 | Phase 18 | Complete |
 | INL-01 | Phase 18 | Pending |
-| INL-02 | Phase 19 | Pending |
-| INL-03 | Phase 19 | Pending |
-| INL-04 | Phase 19 | Pending |
+| INL-02 | Phase 19 | Complete |
+| INL-03 | Phase 19 | Complete |
+| INL-04 | Phase 19 | Complete |
 | BLK-01 | Phase 18 | Pending |
 | BLK-02 | Phase 19 | Complete |
 | BLK-03 | Phase 19 | Complete |
