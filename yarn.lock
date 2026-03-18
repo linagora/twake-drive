@@ -6243,10 +6243,10 @@ cozy-ui-plus@^4.4.1:
     react-final-form-arrays "3.1.4"
     rooks "7.14.1"
 
-cozy-ui@^136.2.2:
-  version "136.2.2"
-  resolved "https://registry.yarnpkg.com/cozy-ui/-/cozy-ui-136.2.2.tgz#39abd89571d686788ce7b008fbadf7d19f7bb08c"
-  integrity sha512-FvJWXFeO1oYFccbpyQkHwepd9Bu6Iv7sgpjnzt1ciiIOyjunRmdMDpgyjSajauH7hwE+oAiUp0KetPB0BcJPmQ==
+cozy-ui@^136.3.0:
+  version "136.3.0"
+  resolved "https://registry.yarnpkg.com/cozy-ui/-/cozy-ui-136.3.0.tgz#1999c005dcb12c0add87d7a072a7d19c1d4f5e10"
+  integrity sha512-4oCbwIFROaefUki1GiItGg4fY7icklPaj6s5+MpWdvJHXQn6GB+EVBqfBewLDDQvMSd8xsP9w9UoiUWT2zpCZw==
   dependencies:
     "@babel/runtime" "^7.3.4"
     "@date-io/date-fns" "1"
