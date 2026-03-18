@@ -149,5 +149,5 @@ Phases execute in numeric order: 18 -> 19 -> 20
 | 16. Drawer Scaffold + Breakpoint Split | v2.3 | 1/1 | Complete | 2026-03-12 |
 | 17. Push Navigation + Adaptive Layout | v2.3 | 2/2 | Complete | 2026-03-15 |
 | 18. Token Pipeline + Minimal Builder Injection | 1/2 | In Progress|  | - |
-| 19. Extended Markdown Support | 2/2 | Complete   | 2026-03-18 | - |
+| 19. Extended Markdown Support | 2/2 | Complete    | 2026-03-18 | - |
 | 20. Injection Polish | v2.4 | 0/2 | Not started | - |
