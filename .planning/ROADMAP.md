@@ -103,11 +103,11 @@ Plans:
   2. Bullet lists and numbered lists (including nested levels) are injected as native OO lists with proper indentation, not plain text with dashes or numbers
   3. Links in the AI result are injected as clickable OO hyperlinks (Ctrl+click opens the URL)
   4. Strikethrough text appears with OO strikethrough formatting and code spans appear in a monospace font
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 19-01: Headings + bullet lists + numbered lists (block elements)
-- [ ] 19-02: Strikethrough + code spans + hyperlinks (inline elements)
+- [ ] 19-01-PLAN.md — Headings + bullet lists + numbered lists (block elements)
+- [ ] 19-02-PLAN.md — Strikethrough + code spans + hyperlinks (inline elements)
 
 ### Phase 20: Injection Polish
 **Goal**: After injection, the user sees the injected content selected and the spacing around it is correct regardless of context (replace vs insert, mid-paragraph vs end)
@@ -118,7 +118,7 @@ Plans:
   2. When replacing selected text, appropriate spaces are added at the boundaries so the injected content does not merge with adjacent words
   3. When inserting after a selection, appropriate line breaks separate the injected content from the existing text
   4. The selection and spacing work correctly for all content types (plain text, formatted text, lists, headings)
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
 - [ ] 20-01: Sentinel marker spike + post-injection selection implementation
