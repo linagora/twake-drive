@@ -52,7 +52,7 @@ Full details: `.planning/milestones/v2.1-ROADMAP.md`
 
 - [x] **Phase v3.0-01: ScribeContext + Panel Shell** - State provider and flex sibling panel that resizes OO iframe
 - [x] **Phase v3.0-02: Chat Core** - Working conversational chat with AI, markdown rendering, and error handling
-- [ ] **Phase v3.0-03: Selection Context + Document Actions** - Selection chip in input, Copy/Replace/Insert on AI responses
+- [x] **Phase v3.0-03: Selection Context + Document Actions** - Selection chip in input, Copy/Replace/Insert on AI responses (completed 2026-03-18)
 - [ ] **Phase v3.0-04: Panel Resize + Mode Toggle** - Drag-resizable panel width and inline/panel mode switching
 
 ## Phase Details
@@ -141,5 +141,5 @@ Phases execute in order: v3.0-01 -> v3.0-02 -> v3.0-03 -> v3.0-04
 | 13. Reinjection et Integrite Pipeline | v2.1 | 1/1 | Complete | 2026-03-09 |
 | v3.0-01. ScribeContext + Panel Shell | v3.0 | 2/2 | Complete | 2026-03-15 |
 | v3.0-02. Chat Core | v3.0 | 2/2 | Complete | 2026-03-18 |
-| v3.0-03. Selection Context + Document Actions | 1/2 | In Progress|  | - |
+| v3.0-03. Selection Context + Document Actions | 1/2 | Complete    | 2026-03-18 | - |
 | v3.0-04. Panel Resize + Mode Toggle | v3.0 | 0/? | Not started | - |
