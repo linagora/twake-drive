@@ -6180,10 +6180,10 @@ cozy-search@^0.14.1:
     react-type-animation "3.2.0"
     rooks "7.14.1"
 
-cozy-sharing@^28.11.1:
-  version "28.11.1"
-  resolved "https://registry.yarnpkg.com/cozy-sharing/-/cozy-sharing-28.11.1.tgz#d5a47a5b545f407245736c7970294d3ca2aee45a"
-  integrity sha512-AGdXf7QzV7RwMOZnAYx7z1h8i9lTOQ+AkJifqjyXhrhbyCcXW1ShoPcjKnZPfVl3AJnxfFDDd0YcHOFZuSnqJw==
+cozy-sharing@^28.11.2:
+  version "28.11.2"
+  resolved "https://registry.yarnpkg.com/cozy-sharing/-/cozy-sharing-28.11.2.tgz#7b750e8f3bf72412fdfd598f1e6755f51c07f1a7"
+  integrity sha512-YkxDbdqbMUSL9qBUc722x5tnyoLxZEnjQw6DrG2A+oDSy0nIQ71/b4EDNGikN+wnWEtQIyddIXUgZZ4AYtEQCQ==
   dependencies:
     "@cozy/minilog" "^1.0.0"
     classnames "^2.5.1"
