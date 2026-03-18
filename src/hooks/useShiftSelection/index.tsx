@@ -17,6 +17,7 @@ import {
   FORWARD_DIRECTION
 } from './helpers'
 
+import { isEditableTarget } from '@/hooks/helpers'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 import { SelectedItems } from '@/modules/selection/types'
 
@@ -181,7 +182,9 @@ const useShiftSelection = (
     if (isMobile || !itemsRef.current.length || !ref.current) return
 
     const container = ref.current
-    container.focus()
+    if (!isEditableTarget(document.activeElement)) {
+      container.focus()
+    }
 
     container.addEventListener('keydown', handleKeyDown)
     return () => {
