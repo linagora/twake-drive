@@ -245,10 +245,57 @@
         }
       }
 
+      // Pre-scan: create numbering objects once if needed
+      var bulletNumbering = null;
+      var orderedNumbering = null;
+      var hasBullets = false;
+      var hasOrdered = false;
+      for (var ii = 0; ii < blocks.length; ii++) {
+        if (blocks[ii].type === "list_item") {
+          if (blocks[ii].ordered) hasOrdered = true;
+          else hasBullets = true;
+        }
+      }
+      if (hasBullets) bulletNumbering = doc.CreateNumbering("bullet");
+      if (hasOrdered) orderedNumbering = doc.CreateNumbering("numbered");
+
       var content = [];
       for (var i = 0; i < blocks.length; i++) {
         var block = blocks[i];
-        if (block.type === "paragraph") {
+        if (block.type === "heading") {
+          var p = Api.CreateParagraph();
+          var styleName = "Heading " + block.depth;
+          var headingStyle = doc.GetStyle(styleName);
+          if (headingStyle) p.SetStyle(headingStyle);
+          var runs = block.runs || [];
+          for (var j = 0; j < runs.length; j++) {
+            var run = runs[j];
+            var r = Api.CreateRun();
+            r.AddText(run.text);
+            if (run.bold) r.SetBold(true);
+            if (run.italic) r.SetItalic(true);
+            // Do NOT apply srcFontFamily/srcFontSize -- headings use their built-in style sizing
+            p.AddElement(r);
+          }
+          content.push(p);
+        } else if (block.type === "list_item") {
+          var p = Api.CreateParagraph();
+          var numbering = block.ordered ? orderedNumbering : bulletNumbering;
+          var numLvl = numbering.GetLevel(block.level);
+          p.SetNumbering(numLvl);
+          var runs = block.runs || [];
+          for (var j = 0; j < runs.length; j++) {
+            var run = runs[j];
+            var r = Api.CreateRun();
+            r.AddText(run.text);
+            if (run.bold) r.SetBold(true);
+            if (run.italic) r.SetItalic(true);
+            if (srcFontFamily) r.SetFontFamily(srcFontFamily);
+            if (srcFontSize) r.SetFontSize(srcFontSize);
+            p.AddElement(r);
+          }
+          content.push(p);
+        } else if (block.type === "paragraph") {
           var p = Api.CreateParagraph();
           var runs = block.runs || [];
           for (var j = 0; j < runs.length; j++) {
