@@ -276,12 +276,22 @@
           var runs = block.runs || [];
           for (var j = 0; j < runs.length; j++) {
             var run = runs[j];
-            var r = Api.CreateRun();
-            r.AddText(run.text);
-            if (run.bold) r.SetBold(true);
-            if (run.italic) r.SetItalic(true);
-            // Do NOT apply srcFontFamily/srcFontSize -- headings use their built-in style sizing
-            p.AddElement(r);
+            if (run.link) {
+              var link = Api.CreateHyperlink(run.link, run.text, "");
+              p.AddElement(link);
+            } else {
+              var r = Api.CreateRun();
+              r.AddText(run.text);
+              if (run.bold) r.SetBold(true);
+              if (run.italic) r.SetItalic(true);
+              if (run.strikethrough) r.SetStrikeout(true);
+              if (run.code) {
+                r.SetFontFamily("Courier New");
+                if (srcFontSize) r.SetFontSize(srcFontSize);
+              }
+              // Heading runs: no srcFont applied (heading style defines sizing)
+              p.AddElement(r);
+            }
           }
           content.push(p);
         } else if (block.type === "list_item") {
@@ -292,13 +302,24 @@
           var runs = block.runs || [];
           for (var j = 0; j < runs.length; j++) {
             var run = runs[j];
-            var r = Api.CreateRun();
-            r.AddText(run.text);
-            if (run.bold) r.SetBold(true);
-            if (run.italic) r.SetItalic(true);
-            if (srcFontFamily) r.SetFontFamily(srcFontFamily);
-            if (srcFontSize) r.SetFontSize(srcFontSize);
-            p.AddElement(r);
+            if (run.link) {
+              var link = Api.CreateHyperlink(run.link, run.text, "");
+              p.AddElement(link);
+            } else {
+              var r = Api.CreateRun();
+              r.AddText(run.text);
+              if (run.bold) r.SetBold(true);
+              if (run.italic) r.SetItalic(true);
+              if (run.strikethrough) r.SetStrikeout(true);
+              if (run.code) {
+                r.SetFontFamily("Courier New");
+                if (srcFontSize) r.SetFontSize(srcFontSize);
+              } else if (block.type !== "heading") {
+                if (srcFontFamily) r.SetFontFamily(srcFontFamily);
+                if (srcFontSize) r.SetFontSize(srcFontSize);
+              }
+              p.AddElement(r);
+            }
           }
           content.push(p);
         } else if (block.type === "paragraph") {
@@ -306,13 +327,24 @@
           var runs = block.runs || [];
           for (var j = 0; j < runs.length; j++) {
             var run = runs[j];
-            var r = Api.CreateRun();
-            r.AddText(run.text);
-            if (run.bold) r.SetBold(true);
-            if (run.italic) r.SetItalic(true);
-            if (srcFontFamily) r.SetFontFamily(srcFontFamily);
-            if (srcFontSize) r.SetFontSize(srcFontSize);
-            p.AddElement(r);
+            if (run.link) {
+              var link = Api.CreateHyperlink(run.link, run.text, "");
+              p.AddElement(link);
+            } else {
+              var r = Api.CreateRun();
+              r.AddText(run.text);
+              if (run.bold) r.SetBold(true);
+              if (run.italic) r.SetItalic(true);
+              if (run.strikethrough) r.SetStrikeout(true);
+              if (run.code) {
+                r.SetFontFamily("Courier New");
+                if (srcFontSize) r.SetFontSize(srcFontSize);
+              } else if (block.type !== "heading") {
+                if (srcFontFamily) r.SetFontFamily(srcFontFamily);
+                if (srcFontSize) r.SetFontSize(srcFontSize);
+              }
+              p.AddElement(r);
+            }
           }
           content.push(p);
         }
