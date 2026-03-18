@@ -68,7 +68,8 @@ const useFileLink = (
   const path = computePath(file, {
     type,
     pathname,
-    isPublic
+    isPublic,
+    client
   })
 
   const shouldBeOpenedInNewTab =

@@ -1,3 +1,4 @@
+import CozyClient, { generateWebLink } from 'cozy-client'
 import { IOCozyFile } from 'cozy-client/types/types'
 
 // Temporary type, need to be completed and then put in cozy-client
@@ -38,3 +39,19 @@ export const getFolderIdFromSharing = (
 
 export const isFromSharedDriveRecipient = (folder: IOCozyFile): boolean =>
   folder && Boolean(folder.driveId)
+
+export const makeSharedDriveNoteReturnUrl = (
+  client: CozyClient,
+  file: IOCozyFile
+): string => {
+  return generateWebLink({
+    slug: 'drive',
+    searchParams: [],
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    cozyUrl: client.getStackClient().uri as string,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    subDomainType: client.getInstanceOptions().subdomain,
+    pathname: '',
+    hash: `/shareddrive/${file.driveId!}/${file.dir_id}`
+  })
+}
