@@ -26,8 +26,8 @@ Requirements for the Scribe Chat Panel milestone. Each maps to roadmap phases.
 
 ### Selection Context
 
-- [ ] **SEL-01**: Selected text from OO is shown as a chip in the chat input area
-- [ ] **SEL-02**: Selected text is included as context in the AI prompt
+- [x] **SEL-01**: Selected text from OO is shown as a chip in the chat input area
+- [x] **SEL-02**: Selected text is included as context in the AI prompt
 
 ### Actions
 
@@ -86,8 +86,8 @@ Deferred to v3.1+. Tracked but not in current roadmap.
 | CHAT-04 | Phase v3.0-02 | Complete |
 | CHAT-05 | Phase v3.0-02 | Complete |
 | CHAT-06 | Phase v3.0-02 | Complete |
-| SEL-01 | Phase v3.0-03 | Pending |
-| SEL-02 | Phase v3.0-03 | Pending |
+| SEL-01 | Phase v3.0-03 | Complete |
+| SEL-02 | Phase v3.0-03 | Complete |
 | ACT-01 | Phase v3.0-03 | Pending |
 | ACT-02 | Phase v3.0-03 | Pending |
 | ACT-03 | Phase v3.0-03 | Pending |

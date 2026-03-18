@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Scribe Chat Panel
-status: planning
-stopped_at: Phase v3.0-03 context gathered
-last_updated: "2026-03-18T22:24:16.994Z"
-last_activity: 2026-03-18 -- Completed v3.0-02 Chat Core
+status: executing
+stopped_at: Completed v3.0-03-01-PLAN.md
+last_updated: "2026-03-18T22:35:05Z"
+last_activity: 2026-03-18 -- Completed v3.0-03-01 Selection Context
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 10
-  completed_plans: 9
-  percent: 50
+  completed_plans: 10
+  percent: 55
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 ## Current Position
 
 Phase: v3.0-03 of v3.0-04 (Selection Context + Document Actions)
-Plan: not yet planned
-Status: Ready to plan
-Last activity: 2026-03-18 -- Completed v3.0-02 Chat Core
+Plan: 1 of 2 complete
+Status: Executing v3.0-03
+Last activity: 2026-03-18 -- Completed v3.0-03-01 Selection Context
 
-Progress: [█████░░░░░] 50%
+Progress: [█████▒░░░░] 55%
 
 ## Performance Metrics
 
@@ -49,6 +49,7 @@ Progress: [█████░░░░░] 50%
 | 13 Reinjection Pipeline | 1 | 15min | 15min |
 | Phase v3.0-01 P01 | 2min | 2 tasks | 6 files |
 | Phase v3.0-02 P01 | 3min | 2 tasks | 6 files |
+| Phase v3.0-03 P01 | 3min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -68,6 +69,9 @@ Recent decisions affecting v3.0:
 - [Phase v3.0-02]: Chat system prompt separate from inline SYSTEM_PROMPT (conversational vs transform-only)
 - [Phase v3.0-02]: messagesRef pattern for stable sendMessage callback
 - [Phase v3.0-02]: addMessage() callback for external message injection from popover
+- [Phase v3.0-03]: selectionDismissedRef tracks dismissed text to prevent chip re-showing until new selection
+- [Phase v3.0-03]: Selection persists after sending for follow-up questions
+- [Phase v3.0-03]: Composite AI prompt uses delimited markers for selection context
 
 ### Pending Todos (carried from v2.3)
 
@@ -88,6 +92,6 @@ Recent decisions affecting v3.0:
 
 ## Session Continuity
 
-Last session: 2026-03-18T22:24:16.992Z
-Stopped at: Phase v3.0-03 context gathered
-Resume file: .planning/phases/v3.0-03-selection-context-document-actions/v3.0-03-CONTEXT.md
+Last session: 2026-03-18T22:35:05Z
+Stopped at: Completed v3.0-03-01-PLAN.md
+Resume file: .planning/phases/v3.0-03-selection-context-document-actions/v3.0-03-02-PLAN.md
