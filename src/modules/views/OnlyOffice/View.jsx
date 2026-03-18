@@ -229,7 +229,7 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
           <Spinner size="xxlarge" />
         </div>
       )}
-      <div className="u-flex u-flex-grow-1">
+      <div className="u-flex u-flex-grow-1" style={{ minHeight: 0, overflow: 'hidden' }}>
         <div id="onlyOfficeEditor" style={{ flex: '1 1 auto', minWidth: 0 }} />
         <OnlyOfficeAIAssistantPanel />
         {isScribeEnabled && isPanelOpen && <ScribePanel />}
