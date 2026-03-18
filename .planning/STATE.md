@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Scribe Chat Panel
 status: executing
-stopped_at: Completed v3.0-03-01-PLAN.md
-last_updated: "2026-03-18T22:35:05Z"
-last_activity: 2026-03-18 -- Completed v3.0-03-01 Selection Context
+stopped_at: Completed v3.0-03-02-PLAN.md
+last_updated: "2026-03-18T22:39:00Z"
+last_activity: 2026-03-18 -- Completed v3.0-03-02 Document Actions
 progress:
   total_phases: 7
-  completed_phases: 5
-  total_plans: 10
-  completed_plans: 10
+  completed_phases: 6
+  total_plans: 12
+  completed_plans: 11
   percent: 55
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-03-10)
 ## Current Position
 
 Phase: v3.0-03 of v3.0-04 (Selection Context + Document Actions)
-Plan: 1 of 2 complete
-Status: Executing v3.0-03
-Last activity: 2026-03-18 -- Completed v3.0-03-01 Selection Context
+Plan: 2 of 2 complete
+Status: Phase v3.0-03 complete
+Last activity: 2026-03-18 -- Completed v3.0-03-02 Document Actions
 
-Progress: [█████▒░░░░] 55%
+Progress: [█████████░] 92%
 
 ## Performance Metrics
 
@@ -50,6 +50,7 @@ Progress: [█████▒░░░░] 55%
 | Phase v3.0-01 P01 | 2min | 2 tasks | 6 files |
 | Phase v3.0-02 P01 | 3min | 2 tasks | 6 files |
 | Phase v3.0-03 P01 | 3min | 2 tasks | 7 files |
+| Phase v3.0-03 P02 | 2min | 1 task | 6 files |
 
 ## Accumulated Context
 
@@ -72,6 +73,8 @@ Recent decisions affecting v3.0:
 - [Phase v3.0-03]: selectionDismissedRef tracks dismissed text to prevent chip re-showing until new selection
 - [Phase v3.0-03]: Selection persists after sending for follow-up questions
 - [Phase v3.0-03]: Composite AI prompt uses delimited markers for selection context
+- [Phase v3.0-03]: panelActions bridge pattern -- View.jsx passes respond handlers into ScribeContext for MessageActions
+- [Phase v3.0-03]: Rich HTML clipboard copy via ClipboardItem API with text/plain fallback
 
 ### Pending Todos (carried from v2.3)
 
@@ -92,6 +95,6 @@ Recent decisions affecting v3.0:
 
 ## Session Continuity
 
-Last session: 2026-03-18T22:35:05Z
-Stopped at: Completed v3.0-03-01-PLAN.md
-Resume file: .planning/phases/v3.0-03-selection-context-document-actions/v3.0-03-02-PLAN.md
+Last session: 2026-03-18T22:39:00Z
+Stopped at: Completed v3.0-03-02-PLAN.md
+Resume file: .planning/phases/v3.0-04-streaming-and-polish/v3.0-04-01-PLAN.md

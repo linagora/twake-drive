@@ -31,9 +31,9 @@ Requirements for the Scribe Chat Panel milestone. Each maps to roadmap phases.
 
 ### Actions
 
-- [ ] **ACT-01**: User can copy an AI response to clipboard
-- [ ] **ACT-02**: User can replace selected text with AI response
-- [ ] **ACT-03**: User can insert AI response after selected text
+- [x] **ACT-01**: User can copy an AI response to clipboard
+- [x] **ACT-02**: User can replace selected text with AI response
+- [x] **ACT-03**: User can insert AI response after selected text
 
 ## Future Requirements
 
@@ -88,9 +88,9 @@ Deferred to v3.1+. Tracked but not in current roadmap.
 | CHAT-06 | Phase v3.0-02 | Complete |
 | SEL-01 | Phase v3.0-03 | Complete |
 | SEL-02 | Phase v3.0-03 | Complete |
-| ACT-01 | Phase v3.0-03 | Pending |
-| ACT-02 | Phase v3.0-03 | Pending |
-| ACT-03 | Phase v3.0-03 | Pending |
+| ACT-01 | Phase v3.0-03 | Complete |
+| ACT-02 | Phase v3.0-03 | Complete |
+| ACT-03 | Phase v3.0-03 | Complete |
 
 **Coverage:**
 - v3.0 requirements: 16 total
