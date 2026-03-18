@@ -77,11 +77,12 @@ export const ScribeProvider = ({ children }) => {
     setCurrentSelectionState(null)
   }, [currentSelection])
 
-  const sendMessage = useCallback(async text => {
+  const sendMessage = useCallback(async (text, selectionContext) => {
     const userMessage = {
       id: Date.now(),
       role: 'user',
       content: text,
+      selection: selectionContext || null,
       timestamp: new Date()
     }
     setMessages(prev => [...prev, userMessage])
@@ -94,7 +95,17 @@ export const ScribeProvider = ({ children }) => {
         { role: 'system', content: CHAT_SYSTEM_PROMPT },
         ...currentMessages
           .filter(m => m.role !== 'error')
-          .map(m => ({ role: m.role, content: m.content }))
+          .map(m => {
+            // For user messages with selection, build composite content for AI
+            if (m.role === 'user' && m.selection) {
+              const selectionMd = m.selection.markdown || m.selection.text
+              return {
+                role: m.role,
+                content: `[Selected text from document]\n${selectionMd}\n[End of selected text]\n\n${m.content}`
+              }
+            }
+            return { role: m.role, content: m.content }
+          })
       ]
 
       const responseText = await callScribeAI(client, aiMessages)

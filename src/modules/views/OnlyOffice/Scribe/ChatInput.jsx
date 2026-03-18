@@ -20,12 +20,16 @@ export const ChatInput = () => {
   const handleSend = useCallback(() => {
     const trimmed = text.trim()
     if (!trimmed || isLoading) return
-    sendMessage(trimmed)
+    if (currentSelection) {
+      sendMessage(trimmed, { text: currentSelection.text, markdown: currentSelection.markdown })
+    } else {
+      sendMessage(trimmed)
+    }
     setText('')
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto'
     }
-  }, [text, isLoading, sendMessage])
+  }, [text, isLoading, sendMessage, currentSelection])
 
   const handleKeyDown = useCallback(e => {
     if (e.key === 'Enter' && !e.shiftKey) {

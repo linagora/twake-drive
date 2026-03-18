@@ -33,7 +33,31 @@ const SparkleSvg = ({ size = 20 }) => (
   </svg>
 )
 
-const UserBubble = ({ content, theme }) => (
+const SCRIBE_PURPLE_08 = 'rgba(124, 58, 237, 0.08)'
+
+const SelectionQuote = ({ selection }) => (
+  <div
+    style={{
+      borderLeft: `3px solid ${SCRIBE_PURPLE}`,
+      background: SCRIBE_PURPLE_08,
+      padding: '4px 8px',
+      marginBottom: 6,
+      borderRadius: '0 4px 4px 0',
+      fontStyle: 'italic',
+      fontSize: 12,
+      lineHeight: 1.4,
+      display: '-webkit-box',
+      WebkitLineClamp: 3,
+      WebkitBoxOrient: 'vertical',
+      overflow: 'hidden',
+      wordBreak: 'break-word'
+    }}
+  >
+    {selection.text}
+  </div>
+)
+
+const UserBubble = ({ content, selection, theme }) => (
   <div
     style={{
       alignSelf: 'flex-end',
@@ -41,13 +65,13 @@ const UserBubble = ({ content, theme }) => (
       padding: '8px 12px',
       borderRadius: '12px 4px 12px 12px',
       maxWidth: '85%',
-      whiteSpace: 'pre-wrap',
       wordBreak: 'break-word',
       fontSize: 14,
       lineHeight: 1.5
     }}
   >
-    {content}
+    {selection && <SelectionQuote selection={selection} />}
+    <div style={{ whiteSpace: 'pre-wrap' }}>{content}</div>
   </div>
 )
 
@@ -145,7 +169,7 @@ export const ChatMessageList = () => {
     >
       {messages.map(msg => {
         if (msg.role === 'user') {
-          return <UserBubble key={msg.id} content={msg.content} theme={theme} />
+          return <UserBubble key={msg.id} content={msg.content} selection={msg.selection} theme={theme} />
         }
         if (msg.role === 'error') {
           return <ErrorBubble key={msg.id} content={msg.content} theme={theme} t={t} />
