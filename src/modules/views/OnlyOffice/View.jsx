@@ -43,6 +43,7 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
   const togglePanel = scribe ? scribe.togglePanel : undefined
   const openPanel = scribe ? scribe.openPanel : undefined
   const setCurrentSelection = scribe ? scribe.setCurrentSelection : undefined
+  const setPanelActions = scribe ? scribe.setPanelActions : undefined
 
   // cozy-bridge: listen for Scribe intents from OO plugin
   // In dev, allow all origins. In production, derive from serverUrl/instance.
@@ -94,6 +95,13 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
       pendingIntent.data.html || null
     )
   }, [pendingIntent, setCurrentSelection])
+
+  // Wire respond-based handlers into ScribeContext so MessageActions can call them
+  useEffect(() => {
+    if (!setPanelActions) return
+    setPanelActions({ replace: handleReplace, insert: handleInsert })
+    return () => setPanelActions(null)
+  }, [setPanelActions, handleReplace, handleInsert])
 
   // Send trigger-intent to plugin iframe (nested inside OO editor iframe).
   // We broadcast to all descendant iframes so the message reaches the plugin.

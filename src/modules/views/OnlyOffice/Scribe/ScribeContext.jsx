@@ -34,6 +34,7 @@ export const ScribeProvider = ({ children }) => {
   const [messages, setMessages] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [currentSelection, setCurrentSelectionState] = useState(null)
+  const [panelActions, setPanelActionsState] = useState(null)
 
   const client = useClient()
   const { t } = useI18n()
@@ -76,6 +77,10 @@ export const ScribeProvider = ({ children }) => {
     }
     setCurrentSelectionState(null)
   }, [currentSelection])
+
+  const setPanelActions = useCallback(actions => {
+    setPanelActionsState(actions)
+  }, [])
 
   const sendMessage = useCallback(async (text, selectionContext) => {
     const userMessage = {
@@ -142,11 +147,13 @@ export const ScribeProvider = ({ children }) => {
     () => ({
       isPanelOpen, togglePanel, openPanel, closePanel,
       messages, isLoading, sendMessage, addMessage,
-      currentSelection, setCurrentSelection, dismissSelection
+      currentSelection, setCurrentSelection, dismissSelection,
+      panelActions, setPanelActions
     }),
     [isPanelOpen, togglePanel, openPanel, closePanel,
      messages, isLoading, sendMessage, addMessage,
-     currentSelection, setCurrentSelection, dismissSelection]
+     currentSelection, setCurrentSelection, dismissSelection,
+     panelActions, setPanelActions]
   )
 
   return (

@@ -773,7 +773,8 @@
       "retry": "Retry",
       "cancel": "Cancel",
       "insert_after": "Insert After",
-      "open_panel": "Scribe Panel"
+      "open_panel": "Scribe Panel",
+      "copy": "Copy"
     },
     "modal": {
       "selected_text": "Selected text:"

@@ -6,6 +6,7 @@ import { useTheme } from 'cozy-ui/transpiled/react/styles'
 import { useI18n } from 'twake-i18n'
 import Markdown from 'react-markdown'
 
+import MessageActions from '@/modules/views/OnlyOffice/Scribe/MessageActions'
 import { useScribe } from '@/modules/views/OnlyOffice/Scribe/ScribeContext'
 
 const SCRIBE_PURPLE = '#7C3AED'
@@ -137,7 +138,7 @@ const WelcomeMessage = ({ t }) => (
 )
 
 export const ChatMessageList = () => {
-  const { messages, isLoading } = useScribe()
+  const { messages, isLoading, currentSelection } = useScribe()
   const { t } = useI18n()
   const theme = useTheme()
   const containerRef = useRef(null)
@@ -174,7 +175,12 @@ export const ChatMessageList = () => {
         if (msg.role === 'error') {
           return <ErrorBubble key={msg.id} content={msg.content} theme={theme} t={t} />
         }
-        return <AssistantBubble key={msg.id} content={msg.content} theme={theme} />
+        return (
+          <div key={msg.id} style={{ alignSelf: 'flex-start', maxWidth: '85%' }}>
+            <AssistantBubble content={msg.content} theme={theme} />
+            <MessageActions content={msg.content} hasSelection={!!currentSelection} />
+          </div>
+        )
       })}
 
       {isLoading && (

@@ -770,7 +770,8 @@
       "retry": "Réessayer",
       "cancel": "Annuler",
       "insert_after": "Insérer après",
-      "open_panel": "Panneau Scribe"
+      "open_panel": "Panneau Scribe",
+      "copy": "Copier"
     },
     "modal": {
       "selected_text": "Texte sélectionné :"
