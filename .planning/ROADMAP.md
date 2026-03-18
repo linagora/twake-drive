@@ -103,7 +103,7 @@ Plans:
   2. Bullet lists and numbered lists (including nested levels) are injected as native OO lists with proper indentation, not plain text with dashes or numbers
   3. Links in the AI result are injected as clickable OO hyperlinks (Ctrl+click opens the URL)
   4. Strikethrough text appears with OO strikethrough formatting and code spans appear in a monospace font
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
 - [ ] 19-01-PLAN.md — Headings + bullet lists + numbered lists (block elements)
@@ -149,5 +149,5 @@ Phases execute in numeric order: 18 -> 19 -> 20
 | 16. Drawer Scaffold + Breakpoint Split | v2.3 | 1/1 | Complete | 2026-03-12 |
 | 17. Push Navigation + Adaptive Layout | v2.3 | 2/2 | Complete | 2026-03-15 |
 | 18. Token Pipeline + Minimal Builder Injection | 1/2 | In Progress|  | - |
-| 19. Extended Markdown Support | v2.4 | 0/2 | Not started | - |
+| 19. Extended Markdown Support | 1/2 | In Progress|  | - |
 | 20. Injection Polish | v2.4 | 0/2 | Not started | - |

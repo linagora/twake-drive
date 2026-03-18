@@ -23,9 +23,9 @@ Requirements for milestone v2.4 Document Builder Injection. Each maps to roadmap
 ### Block Elements
 
 - [ ] **BLK-01**: Les paragraphes multiples sont injectés comme des paragraphes OO séparés (pas un seul bloc avec retours à la ligne)
-- [ ] **BLK-02**: Les headings (# à ######) sont injectés avec les styles heading OO correspondants
-- [ ] **BLK-03**: Les listes à puces (- item) sont injectées comme des listes OO avec numérotation bullet, y compris les listes imbriquées (niveaux d'indentation)
-- [ ] **BLK-04**: Les listes numérotées (1. item) sont injectées comme des listes OO avec numérotation ordonnée, y compris les listes imbriquées
+- [x] **BLK-02**: Les headings (# à ######) sont injectés avec les styles heading OO correspondants
+- [x] **BLK-03**: Les listes à puces (- item) sont injectées comme des listes OO avec numérotation bullet, y compris les listes imbriquées (niveaux d'indentation)
+- [x] **BLK-04**: Les listes numérotées (1. item) sont injectées comme des listes OO avec numérotation ordonnée, y compris les listes imbriquées
 
 ### Injection Behavior
 
@@ -70,9 +70,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INL-03 | Phase 19 | Pending |
 | INL-04 | Phase 19 | Pending |
 | BLK-01 | Phase 18 | Pending |
-| BLK-02 | Phase 19 | Pending |
-| BLK-03 | Phase 19 | Pending |
-| BLK-04 | Phase 19 | Pending |
+| BLK-02 | Phase 19 | Complete |
+| BLK-03 | Phase 19 | Complete |
+| BLK-04 | Phase 19 | Complete |
 | INJ-01 | Phase 18 | Pending |
 | INJ-02 | Phase 20 | Pending |
 | INJ-03 | Phase 20 | Pending |

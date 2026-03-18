@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.4
 milestone_name: Document Builder Injection
-status: paused
-stopped_at: "18-02 Task 1 committed, awaiting human-verify checkpoint (Task 2)"
-last_updated: "2026-03-16"
-last_activity: 2026-03-16 -- 18-02 Task 1 committed (buildAndInject + callCommand interpreter), paused at human-verify checkpoint
+status: executing
+stopped_at: "Completed 19-01-PLAN.md"
+last_updated: "2026-03-18T22:30:01Z"
+last_activity: 2026-03-18 -- Completed 19-01 (Extended Markdown - Headings + Lists)
 progress:
   total_phases: 3
   completed_phases: 0
-  total_plans: 2
-  completed_plans: 1
-  percent: 17
+  total_plans: 4
+  completed_plans: 3
+  percent: 82
 ---
 
 # Project State
@@ -21,26 +21,27 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Core value:** La chaine de communication complete -- depuis la selection de texte dans OnlyOffice jusqu'a la reinjection du texte modifie par l'IA -- de bout en bout, transparente pour l'utilisateur.
-**Current focus:** Phase 18 -- Token Pipeline + Minimal Builder Injection
+**Current focus:** Phase 19 -- Extended Markdown Support
 
 ## Current Position
 
-Phase: 18 of 20 (Token Pipeline + Minimal Builder Injection)
+Phase: 19 of 20 (Extended Markdown Support)
 Plan: 1 of 2 in current phase
 Status: Executing
-Last activity: 2026-03-16 -- Completed 18-01 (Token Pipeline + Marked Bundle)
+Last activity: 2026-03-18 -- Completed 19-01 (Headings + Lists in Builder API)
 
-Progress: [█░░░░░░░░░] 17%
+Progress: [████████░░] 82%
 
 ## Performance Metrics
 
 **Velocity:**
 - Total plans completed: 25 (v1.0: 10, v2.0: 5, v2.1: 6, v2.2: 3, v2.3: 1)
-- v2.4 plans completed: 1/6
+- v2.4 plans completed: 3/6
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
 | 18    | 01   | 3min     | 2     | 4     |
+| 19    | 01   | 1min     | 2     | 1     |
 
 ## Accumulated Context
 
@@ -55,6 +56,8 @@ Recent decisions affecting current work:
 - [v2.4]: Post-injection selection deferred to Phase 20 (sentinel marker strategy needs spike)
 - [v2.4]: PasteHtml fallback preserved throughout migration
 - [Phase 18]: Vendored marked UMD (42KB) in plugin iframe for offline reliability
+- [Phase 19]: Heading runs skip srcFont to preserve OO built-in heading style sizing
+- [Phase 19]: Single numbering object per type (bullet/numbered) pre-scanned and reused
 
 ### Pending Todos (carried from v2.3)
 
@@ -76,7 +79,7 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-16
-Stopped at: Phase 18, Plan 18-02, Task 1 committed (f436cda42). Task 2 is human-verify checkpoint — needs OO restart + manual Builder API test before approving.
+Last session: 2026-03-18
+Stopped at: Completed 19-01-PLAN.md
 Resume file: None
-Resume command: /gsd:execute-phase 18
+Resume command: /gsd:execute-phase 19
