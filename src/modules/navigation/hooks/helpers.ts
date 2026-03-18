@@ -1,3 +1,4 @@
+import CozyClient from 'cozy-client'
 import {
   isShortcut,
   isNote,
@@ -14,6 +15,7 @@ import {
   isNextcloudShortcut,
   isNextcloudFile
 } from '@/modules/nextcloud/helpers'
+import { makeSharedDriveNoteReturnUrl } from '@/modules/shareddrives/helpers'
 import { makeOnlyOfficeFileRoute } from '@/modules/views/OnlyOffice/helpers'
 
 interface ComputeFileTypeOptions {
@@ -26,6 +28,7 @@ interface ComputePathOptions {
   type: string
   pathname: string
   isPublic: boolean
+  client: CozyClient | null
 }
 
 export const computeFileType = (
@@ -92,7 +95,7 @@ export const computeApp = (type: string): string => {
 
 export const computePath = (
   file: File,
-  { type, pathname, isPublic }: ComputePathOptions
+  { type, pathname, isPublic, client }: ComputePathOptions
 ): string => {
   const paths = pathname.split('/').slice(1)
   const driveId = file.driveId as string | undefined
@@ -114,7 +117,17 @@ export const computePath = (
     case 'public-note-same-instance':
       return `/?id=${file._id}`
     case 'public-note':
-      return driveId ? `/note/${driveId}/${file._id}` : `/note/${file._id}`
+      if (driveId) {
+        const returnUrl = client
+          ? makeSharedDriveNoteReturnUrl(client, file as IOCozyFile)
+          : ''
+
+        return `/note/${driveId}/${file._id}?returnUrl=${encodeURIComponent(
+          returnUrl
+        )}`
+      } else {
+        return `/note/${file._id}`
+      }
     case 'docs':
       // eslint-disable-next-line no-case-declarations, @typescript-eslint/restrict-template-expressions
       return `/bridge/docs/${(file as IOCozyFile).metadata.externalId}`

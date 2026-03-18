@@ -238,7 +238,7 @@ describe('computePath', () => {
     const file = { _id: 'note123', driveId: 'drive456' }
     expect(
       computePath(file, { type: 'public-note', pathname: '/public' })
-    ).toBe('/note/drive456/note123')
+    ).toBe('/note/drive456/note123?returnUrl=')
   })
 
   it('should return correct path for public-note-same-instance', () => {

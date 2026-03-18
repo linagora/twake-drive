@@ -1,5 +1,5 @@
 import React, { FC, useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useLocation, useParams } from 'react-router-dom'
 import { useI18n } from 'twake-i18n'
 
 import { useClient } from 'cozy-client'
@@ -15,6 +15,7 @@ import { DummyLayout } from '@/modules/layout/DummyLayout'
 const PublicNoteRedirect: FC = () => {
   const { t } = useI18n()
   const { fileId, driveId } = useParams()
+  const { search } = useLocation()
   const client = useClient()
 
   const [noteUrl, setNoteUrl] = useState<string | null>(null)
@@ -28,6 +29,9 @@ const PublicNoteRedirect: FC = () => {
 
       try {
         // Inside notes, we need to add / at the end of /public/ or /preview/ to avoid 409 error
+        const searchParams = new URLSearchParams(search)
+        const returnUrl = searchParams.get('returnUrl')
+
         const pathname =
           location.pathname === '/'
             ? '/public/'
@@ -39,7 +43,8 @@ const PublicNoteRedirect: FC = () => {
           },
           {
             driveId,
-            pathname
+            pathname,
+            returnUrl
           }
         )
         setNoteUrl(url)
@@ -52,7 +57,7 @@ const PublicNoteRedirect: FC = () => {
     if (fileId) {
       void fetchNoteUrl(fileId)
     }
-  }, [fileId, driveId, client])
+  }, [search, fileId, driveId, client])
 
   if (noteUrl) {
     window.location.href = noteUrl
