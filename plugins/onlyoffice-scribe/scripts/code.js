@@ -81,6 +81,10 @@
     return data;
   }
 
+  // ---- Paste HTML with smart spacing ----
+  // Prevents init() and polling from interfering during paste.
+  var pasteInProgress = false;
+
   // ---- flattenTokens: convert marked lexer output to flat paragraph+runs ----
   // Takes the array returned by marked.lexer(md) and produces:
   //   [{ type: "paragraph", runs: [{ text, bold, italic }] }]
@@ -200,10 +204,6 @@
       log("Builder injection complete (" + mode + ")");
     });
   }
-
-  // ---- Paste HTML with smart spacing ----
-  // Prevents init() and polling from interfering during paste.
-  var pasteInProgress = false;
 
   // Rich text paste pipeline:
   // 1. callCommand: read adjacent chars around selection, detect if spaces needed
