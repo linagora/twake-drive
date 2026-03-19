@@ -96,13 +96,6 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
     )
   }, [pendingIntent, setCurrentSelection])
 
-  // Wire respond-based handlers into ScribeContext so MessageActions can call them
-  useEffect(() => {
-    if (!setPanelActions) return
-    setPanelActions({ replace: handleReplace, insert: handleInsert })
-    return () => setPanelActions(null)
-  }, [setPanelActions, handleReplace, handleInsert])
-
   // Send trigger-intent to plugin iframe (nested inside OO editor iframe).
   // We broadcast to all descendant iframes so the message reaches the plugin.
   const triggerScribe = useCallback(() => {
@@ -154,6 +147,13 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
     },
     [respond, focusEditor]
   )
+
+  // Wire respond-based handlers into ScribeContext so MessageActions can call them
+  useEffect(() => {
+    if (!setPanelActions) return
+    setPanelActions({ replace: handleReplace, insert: handleInsert })
+    return () => setPanelActions(null)
+  }, [setPanelActions, handleReplace, handleInsert])
 
   const handleCancel = useCallback(() => {
     respond({ status: 'ok', action: 'cancel', data: {} })
