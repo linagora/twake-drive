@@ -416,6 +416,8 @@
       }
 
       if (content.length > 0) {
+        var countBefore = doc.GetElementsCount();
+
         if (mode === "insert") {
           // Insert mode: leading empty paragraph creates a line break before content.
           // No trailing paragraph needed — InsertContent in block mode automatically
@@ -431,6 +433,42 @@
           } else {
             doc.InsertContent(content);
           }
+        }
+
+        // Post-injection selection: highlight the injected content
+        try {
+          var countAfter = doc.GetElementsCount();
+          // content.length reflects the actual elements passed to InsertContent
+          // (including the leading empty paragraph for insert mode).
+          // The inserted elements occupy the last content.length positions in the doc.
+          var firstIdx = countAfter - content.length;
+          if (firstIdx < 0) firstIdx = 0;
+
+          // For insert mode, skip the leading empty paragraph separator
+          if (mode === "insert" && content.length > 1) {
+            firstIdx = firstIdx + 1;
+          }
+
+          var lastIdx = countAfter - 1;
+
+          if (firstIdx <= lastIdx) {
+            var firstInserted = doc.GetElement(firstIdx);
+            var lastInserted = doc.GetElement(lastIdx);
+
+            if (firstInserted && lastInserted) {
+              var startRange = firstInserted.GetRange(0, 0);
+              var endRange = lastInserted.GetRange();
+
+              if (startRange && endRange) {
+                var fullRange = startRange.ExpandTo(endRange);
+                if (fullRange) {
+                  fullRange.Select();
+                }
+              }
+            }
+          }
+        } catch (e) {
+          // Selection failed — content is still injected, graceful degradation
         }
       }
     }, false, false, function() {
