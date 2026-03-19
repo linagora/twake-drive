@@ -14,6 +14,8 @@ import Sidebar from 'cozy-ui/transpiled/react/Sidebar'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import Storage from 'cozy-ui-plus/dist/Storage'
 
+import Drive from '@/components/Icons/Drive'
+import DriveText from '@/components/Icons/DriveText'
 import ButtonClient from '@/components/pushClient/Button'
 import { ROOT_DIR_ID } from '@/constants/config'
 import { useDisplayedFolder } from '@/hooks'
@@ -69,6 +71,8 @@ const LayoutContent = () => {
         <BarComponent
           searchOptions={{ enabled: !isMobile }}
           disableInternalStore
+          appIcon={Drive}
+          appTextIcon={DriveText}
         />
         <FlagSwitcher />
         <Sidebar className="u-flex-justify-between">
