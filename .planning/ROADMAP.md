@@ -53,7 +53,7 @@ Full details: `.planning/milestones/v2.1-ROADMAP.md`
 - [x] **Phase v3.0-01: ScribeContext + Panel Shell** - State provider and flex sibling panel that resizes OO iframe
 - [x] **Phase v3.0-02: Chat Core** - Working conversational chat with AI, markdown rendering, and error handling
 - [x] **Phase v3.0-03: Selection Context + Document Actions** - Selection chip in input, Copy/Replace/Insert on AI responses (completed 2026-03-18)
-- [ ] **Phase v3.0-04: Panel Resize + Mode Toggle** - Drag-resizable panel width and inline/panel mode switching
+- [ ] **Phase v3.0-04: Panel Resize** - Drag-resizable panel width
 
 ## Phase Details
 
@@ -105,19 +105,17 @@ Plans:
 - [ ] v3.0-03-01-PLAN.md — Selection state in ScribeContext + SelectionChip + selection context in AI prompts
 - [ ] v3.0-03-02-PLAN.md — MessageActions (Copy/Replace/Insert) on AI messages with respond protocol wiring
 
-### Phase v3.0-04: Panel Resize + Mode Toggle
-**Goal**: User can drag-resize the panel and switch between inline and panel interaction modes
+### Phase v3.0-04: Panel Resize
+**Goal**: User can drag-resize the panel width
 **Depends on**: Phase v3.0-01
-**Requirements**: PANEL-03, PANEL-05
+**Requirements**: PANEL-03
 **Success Criteria** (what must be TRUE):
   1. User can drag the left edge of the panel to make it wider or narrower
   2. The OO editor iframe adjusts its width in real time as the panel is resized
-  3. User can toggle between inline mode (floating button + popover) and panel mode (side panel chat)
 **Plans**: TBD
 
 Plans:
 - [ ] v3.0-04-01: TBD
-- [ ] v3.0-04-02: TBD
 
 ## Progress
 

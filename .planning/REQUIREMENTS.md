@@ -13,7 +13,7 @@ Requirements for the Scribe Chat Panel milestone. Each maps to roadmap phases.
 - [x] **PANEL-02**: OO editor iframe resizes when panel opens/closes
 - [ ] **PANEL-03**: User can resize the panel width by dragging
 - [x] **PANEL-04**: User can close the panel via a close button
-- [ ] **PANEL-05**: User can toggle between inline mode and panel mode
+- [x] **PANEL-05**: User can toggle between inline mode and panel mode
 
 ### Chat
 
@@ -79,7 +79,7 @@ Deferred to v3.1+. Tracked but not in current roadmap.
 | PANEL-02 | Phase v3.0-01 | Complete |
 | PANEL-03 | Phase v3.0-04 | Pending |
 | PANEL-04 | Phase v3.0-01 | Complete |
-| PANEL-05 | Phase v3.0-04 | Pending |
+| PANEL-05 | Phase v3.0-01 | Complete |
 | CHAT-01 | Phase v3.0-02 | Complete |
 | CHAT-02 | Phase v3.0-02 | Complete |
 | CHAT-03 | Phase v3.0-02 | Complete |
