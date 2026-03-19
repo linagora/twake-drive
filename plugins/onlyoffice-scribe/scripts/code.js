@@ -249,32 +249,29 @@
       var needSpaceAfter = false;
       var WS = /[\s\n\r\t\u00A0]/;
 
-      // For insert mode: collapse cursor to end of selection first
+      // For insert mode: collapse cursor to end of selection.
+      // If the next char is a space, extend cursor to consume it so it doesn't
+      // end up as a leading space on the line after the insertion.
       if (mode === "insert") {
-        var range = doc.GetRangeBySelect();
-        if (range) {
-          var endPos = range.GetEndPos();
-          var endRange = doc.GetRange(endPos, endPos);
-          if (endRange) endRange.Select();
+        var insSelRange = doc.GetRangeBySelect();
+        if (insSelRange) {
+          var endPos = insSelRange.GetEndPos();
+          var afterRange = doc.GetRange(endPos, endPos + 1);
+          var afterChar = afterRange ? afterRange.GetText() : "";
+          if (afterChar === " " || afterChar === "\u00A0") {
+            // Select the trailing space so InsertContent consumes it
+            var eatRange = doc.GetRange(endPos, endPos + 1);
+            if (eatRange) eatRange.Select();
+          } else {
+            var endRange = doc.GetRange(endPos, endPos);
+            if (endRange) endRange.Select();
+          }
         }
       }
 
       try {
         if (mode === "insert") {
-          // Insert mode: check chars around the collapsed cursor (selEnd)
-          var insRange = doc.GetRangeBySelect();
-          if (insRange) {
-            var insPos = insRange.GetEndPos();
-            var bRange = doc.GetRange(Math.max(0, insPos - 5), insPos);
-            var bText = bRange ? bRange.GetText() : "";
-            var bChar = bText.length > 0 ? bText.charAt(bText.length - 1) : "";
-            if (bChar && !WS.test(bChar)) needSpaceBefore = true;
-
-            var aRange = doc.GetRange(insPos, insPos + 5);
-            var aText = aRange ? aRange.GetText() : "";
-            var aChar = aText.length > 0 ? aText.charAt(0) : "";
-            if (aChar && !WS.test(aChar)) needSpaceAfter = true;
-          }
+          // Insert mode: spacing handled by paragraph separators, not space runs
         } else {
           // Replace mode: check char before selection start and after selection end
           var repRange = doc.GetRangeBySelect();
@@ -294,7 +291,7 @@
             var aChar2 = aText2.length > 0 ? aText2.charAt(0) : "";
             if (aChar2 && !WS.test(aChar2)) needSpaceAfter = true;
           }
-        }
+        } // end else (replace mode)
       } catch (e) {
         // Spacing detection failed -- proceed without spacing (safe fallback)
       }
@@ -418,13 +415,23 @@
         }
       }
 
-      // Insert mode: add empty paragraph at start for visual separation
-      if (mode === "insert" && content.length > 0) {
-        content.unshift(Api.CreateParagraph());
-      }
-
       if (content.length > 0) {
-        doc.InsertContent(content);
+        if (mode === "insert") {
+          // Insert mode: leading empty paragraph creates a line break before content.
+          // No trailing paragraph needed — InsertContent in block mode automatically
+          // pushes remaining text after the cursor onto a new line.
+          content.unshift(Api.CreateParagraph());
+          doc.InsertContent(content);
+        } else {
+          // Replace mode: single paragraph uses inline mode to merge into existing
+          // paragraph. Multi-paragraph/structural uses block mode.
+          var isSimpleInline = (content.length === 1 && blocks.length === 1 && blocks[0].type === "paragraph");
+          if (isSimpleInline) {
+            doc.InsertContent(content, true);
+          } else {
+            doc.InsertContent(content);
+          }
+        }
       }
     }, false, false, function() {
       callbackFired = true;
