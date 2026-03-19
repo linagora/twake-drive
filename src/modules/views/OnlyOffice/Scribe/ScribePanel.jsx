@@ -7,6 +7,7 @@ import Typography from 'cozy-ui/transpiled/react/Typography'
 import { useTheme } from 'cozy-ui/transpiled/react/styles'
 
 import { useScribe } from '@/modules/views/OnlyOffice/Scribe/ScribeContext'
+import { ResizeHandle } from '@/modules/views/OnlyOffice/Scribe/ResizeHandle'
 import { ChatMessageList } from '@/modules/views/OnlyOffice/Scribe/ChatMessageList'
 import { ChatInput } from '@/modules/views/OnlyOffice/Scribe/ChatInput'
 
@@ -39,7 +40,7 @@ const SparkleSvg = ({ size = 20 }) => (
 
 export const ScribePanel = () => {
   const theme = useTheme()
-  const { closePanel } = useScribe()
+  const { closePanel, panelWidth } = useScribe()
 
   const isDark = (theme.palette.type || theme.palette.mode) === 'dark'
 
@@ -47,44 +48,46 @@ export const ScribePanel = () => {
     <div
       data-scribe-panel
       style={{
-        width: PANEL_WIDTH,
+        width: panelWidth,
         flexShrink: 0,
         display: 'flex',
-        flexDirection: 'column',
+        flexDirection: 'row',
         height: '100%',
         boxShadow: isDark
           ? '-4px 0 12px rgba(0, 0, 0, 0.5)'
           : '-2px 0 8px rgba(0, 0, 0, 0.1)',
         background: theme.palette.background.paper,
-        overflow: 'hidden',
-        transition: 'width 200ms ease-out'
+        overflow: 'hidden'
       }}
     >
-      {/* Header */}
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          padding: '12px 16px',
-          borderBottom: `1px solid ${theme.palette.divider}`
-        }}
-      >
-        <SparkleSvg size={20} />
-        <Typography
-          variant="h6"
-          style={{ marginLeft: 8, flex: 1 }}
+      <ResizeHandle />
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
+        {/* Header */}
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            padding: '12px 16px',
+            borderBottom: `1px solid ${theme.palette.divider}`
+          }}
         >
-          Scribe
-        </Typography>
-        <IconButton size="small" onClick={closePanel}>
-          <Icon icon={CrossIcon} size={16} />
-        </IconButton>
-      </div>
+          <SparkleSvg size={20} />
+          <Typography
+            variant="h6"
+            style={{ marginLeft: 8, flex: 1 }}
+          >
+            Scribe
+          </Typography>
+          <IconButton size="small" onClick={closePanel}>
+            <Icon icon={CrossIcon} size={16} />
+          </IconButton>
+        </div>
 
-      {/* Chat body */}
-      <ChatMessageList />
-      <ChatInput />
+        {/* Chat body */}
+        <ChatMessageList />
+        <ChatInput />
+      </div>
     </div>
   )
 }
