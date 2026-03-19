@@ -29,13 +29,11 @@ const share = ({
     icon,
     allowInfectedFiles: false,
     displayCondition: files => {
-      // Not this sharing action in sharings tab
-      if (
-        shouldHideIfSharedDriveRecipient &&
-        files?.length === 1 &&
-        isFromSharedDriveRecipient(files[0])
-      ) {
-        return false
+      // If shared drive recipient:
+      // - in sharing view, we hide it because it works differently
+      // - in shared drive view, we show it
+      if (files?.length === 1 && isFromSharedDriveRecipient(files[0])) {
+        return !shouldHideIfSharedDriveRecipient
       }
 
       return (
