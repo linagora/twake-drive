@@ -241,7 +241,15 @@
         }
       }
 
-      // For insert mode: collapse cursor to end of selection
+      // ---- Smart spacing detection ----
+      // Mirrors the pasteHtml spacing pattern (lines 378-416) but for Builder API.
+      // Detects adjacent non-whitespace chars around the selection/cursor and sets
+      // flags to inject space runs at content boundaries.
+      var needSpaceBefore = false;
+      var needSpaceAfter = false;
+      var WS = /[\s\n\r\t\u00A0]/;
+
+      // For insert mode: collapse cursor to end of selection first
       if (mode === "insert") {
         var range = doc.GetRangeBySelect();
         if (range) {
@@ -249,6 +257,46 @@
           var endRange = doc.GetRange(endPos, endPos);
           if (endRange) endRange.Select();
         }
+      }
+
+      try {
+        if (mode === "insert") {
+          // Insert mode: check chars around the collapsed cursor (selEnd)
+          var insRange = doc.GetRangeBySelect();
+          if (insRange) {
+            var insPos = insRange.GetEndPos();
+            var bRange = doc.GetRange(Math.max(0, insPos - 5), insPos);
+            var bText = bRange ? bRange.GetText() : "";
+            var bChar = bText.length > 0 ? bText.charAt(bText.length - 1) : "";
+            if (bChar && !WS.test(bChar)) needSpaceBefore = true;
+
+            var aRange = doc.GetRange(insPos, insPos + 5);
+            var aText = aRange ? aRange.GetText() : "";
+            var aChar = aText.length > 0 ? aText.charAt(0) : "";
+            if (aChar && !WS.test(aChar)) needSpaceAfter = true;
+          }
+        } else {
+          // Replace mode: check char before selection start and after selection end
+          var repRange = doc.GetRangeBySelect();
+          if (repRange) {
+            var repStart = repRange.GetStartPos();
+            var repEnd = repRange.GetEndPos();
+
+            if (repStart > 0) {
+              var bRange2 = doc.GetRange(Math.max(0, repStart - 5), repStart);
+              var bText2 = bRange2 ? bRange2.GetText() : "";
+              var bChar2 = bText2.length > 0 ? bText2.charAt(bText2.length - 1) : "";
+              if (bChar2 && !WS.test(bChar2)) needSpaceBefore = true;
+            }
+
+            var aRange2 = doc.GetRange(repEnd, repEnd + 5);
+            var aText2 = aRange2 ? aRange2.GetText() : "";
+            var aChar2 = aText2.length > 0 ? aText2.charAt(0) : "";
+            if (aChar2 && !WS.test(aChar2)) needSpaceAfter = true;
+          }
+        }
+      } catch (e) {
+        // Spacing detection failed -- proceed without spacing (safe fallback)
       }
 
       // Pre-scan: create numbering objects once if needed
@@ -265,14 +313,28 @@
       if (hasBullets) bulletNumbering = doc.CreateNumbering("bullet");
       if (hasOrdered) orderedNumbering = doc.CreateNumbering("numbered");
 
+      // Helper: create a space run matching surrounding font
+      function makeSpaceRun() {
+        var sr = Api.CreateRun();
+        sr.AddText(" ");
+        if (srcFontFamily) sr.SetFontFamily(srcFontFamily);
+        if (srcFontSize) sr.SetFontSize(srcFontSize);
+        return sr;
+      }
+
       var content = [];
       for (var i = 0; i < blocks.length; i++) {
         var block = blocks[i];
+        var isFirst = (i === 0);
+        var isLast = (i === blocks.length - 1);
+
         if (block.type === "heading") {
           var p = Api.CreateParagraph();
           var styleName = "Heading " + block.depth;
           var headingStyle = doc.GetStyle(styleName);
           if (headingStyle) p.SetStyle(headingStyle);
+          // Prepend space run if this is the first block and needs spacing
+          if (isFirst && needSpaceBefore) p.AddElement(makeSpaceRun());
           var runs = block.runs || [];
           for (var j = 0; j < runs.length; j++) {
             var run = runs[j];
@@ -293,12 +355,15 @@
               p.AddElement(r);
             }
           }
+          // Append space run if this is the last block and needs spacing
+          if (isLast && needSpaceAfter) p.AddElement(makeSpaceRun());
           content.push(p);
         } else if (block.type === "list_item") {
           var p = Api.CreateParagraph();
           var numbering = block.ordered ? orderedNumbering : bulletNumbering;
           var numLvl = numbering.GetLevel(block.level);
           p.SetNumbering(numLvl);
+          if (isFirst && needSpaceBefore) p.AddElement(makeSpaceRun());
           var runs = block.runs || [];
           for (var j = 0; j < runs.length; j++) {
             var run = runs[j];
@@ -321,9 +386,11 @@
               p.AddElement(r);
             }
           }
+          if (isLast && needSpaceAfter) p.AddElement(makeSpaceRun());
           content.push(p);
         } else if (block.type === "paragraph") {
           var p = Api.CreateParagraph();
+          if (isFirst && needSpaceBefore) p.AddElement(makeSpaceRun());
           var runs = block.runs || [];
           for (var j = 0; j < runs.length; j++) {
             var run = runs[j];
@@ -346,8 +413,14 @@
               p.AddElement(r);
             }
           }
+          if (isLast && needSpaceAfter) p.AddElement(makeSpaceRun());
           content.push(p);
         }
+      }
+
+      // Insert mode: add empty paragraph at start for visual separation
+      if (mode === "insert" && content.length > 0) {
+        content.unshift(Api.CreateParagraph());
       }
 
       if (content.length > 0) {
