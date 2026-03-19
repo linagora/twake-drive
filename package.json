@@ -81,7 +81,7 @@
   "dependencies": {
     "@sentry/react": "7.119.0",
     "classnames": "2.3.1",
-    "cozy-bar": "^29.3.0",
+    "cozy-bar": "^30.0.0",
     "cozy-client": "^60.23.1",
     "cozy-dataproxy-lib": "^4.13.0",
     "cozy-device-helper": "^4.0.1",
@@ -99,7 +99,7 @@
     "cozy-search": "^0.14.1",
     "cozy-sharing": "^28.11.2",
     "cozy-stack-client": "^60.23.0",
-    "cozy-ui": "^136.3.0",
+    "cozy-ui": "^137.0.0",
     "cozy-ui-plus": "^4.4.1",
     "cozy-viewer": "^26.6.4",
     "date-fns": "2.30.0",
