@@ -346,12 +346,12 @@
       "element": "élément"
     },
     "alert": {
-      "success": "%{smart_count} %{type} importé. |||| %{smart_count} %{type}s importés.",
-      "success_conflicts": "%{smart_count} %{type} importé avec %{conflictNumber} conflit(s). |||| %{smart_count} %{type}s importés avec %{conflictNumber} conflit(s).",
-      "success_updated": "%{smart_count} %{type} importé et %{updatedCount} mis à jour. |||| %{smart_count} %{type}s importés et %{updatedCount} mis à jour.",
-      "success_updated_conflicts": "%{smart_count} %{type} importé, %{updatedCount} mis à jour et %{conflictCount} conflit(s). |||| %{smart_count} %{type}s importés, %{updatedCount} mis à jour et %{conflictCount} conflit(s).",
+      "success": "%{smart_count} %{type} importé. |||| %{smart_count} %{type} importés.",
+      "success_conflicts": "%{smart_count} %{type} importé avec %{conflictNumber} conflit(s). |||| %{smart_count} %{type} importés avec %{conflictNumber} conflit(s).",
+      "success_updated": "%{smart_count} %{type} importé et %{updatedCount} mis à jour. |||| %{smart_count} %{type} importés et %{updatedCount} mis à jour.",
+      "success_updated_conflicts": "%{smart_count} %{type} importé, %{updatedCount} mis à jour et %{conflictCount} conflit(s). |||| %{smart_count} %{type} importés, %{updatedCount} mis à jour et %{conflictCount} conflit(s).",
       "updated": "%{smart_count} %{type} mis à jour. |||| %{smart_count} %{type} mis à jour.",
-      "updated_conflicts": "%{smart_count} %{type} mis à jour avec %{conflictCount} conflit(s). |||| %{smart_count} %{type}s mis à jour avec %{conflictCount} conflit(s).",
+      "updated_conflicts": "%{smart_count} %{type} mis à jour avec %{conflictCount} conflit(s). |||| %{smart_count} %{type} mis à jour avec %{conflictCount} conflit(s).",
       "errors": "Une erreur est survenue lors de l’import du %{type}, merci de réessayer plus tard.",
       "network": "Vous ne disposez pas d'une connexion internet. Merci de réessayer quand ce sera le cas.",
       "fileTooLargeErrors": "Fichier trop volumineux. Taille maximale autorisée par fichier : %{max_size_value} Go"
@@ -422,8 +422,8 @@
     "addFolder": "Ajouter un dossier",
     "outsideSharedFolder": {
       "title": "Déplacement en dehors du dossier %{sharedFolder}",
-      "content_1": "Attention, vous souhaitez déplacer %{name} en dehors du dossier partagé %{sharedFolder}. |||| Attention, vous souhaitez déplacer %{smart_count} %{type}s en dehors du dossier partagé %{sharedFolder}.",
-      "content_2": "Ce déplacement, va retirer le %{type} %{name} du partage. Ce %{type} va donc être mis à la corbeille pour l'ensemble des membres du partage. |||| Ce déplacement, va retirer les %{smart_count} %{type}s du partage. Ces %{type}s vont donc être mis à la corbeille pour l'ensemble des membres du partage.",
+      "content_1": "Attention, vous souhaitez déplacer %{name} en dehors du dossier partagé %{sharedFolder}. |||| Attention, vous souhaitez déplacer %{smart_count} %{type} en dehors du dossier partagé %{sharedFolder}.",
+      "content_2": "Ce déplacement, va retirer le %{type} %{name} du partage. Ce %{type} va donc être mis à la corbeille pour l'ensemble des membres du partage. |||| Ce déplacement, va retirer les %{smart_count} %{type} du partage. Ces %{type} vont donc être mis à la corbeille pour l'ensemble des membres du partage.",
       "cancel": "Annuler",
       "confirm": "J'ai compris"
     },
