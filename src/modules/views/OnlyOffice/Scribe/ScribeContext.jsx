@@ -35,6 +35,7 @@ export const ScribeProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(false)
   const [currentSelection, setCurrentSelectionState] = useState(null)
   const [panelActions, setPanelActionsState] = useState(null)
+  const [panelWidth, setPanelWidthState] = useState(400)
 
   const client = useClient()
   const { t } = useI18n()
@@ -80,6 +81,11 @@ export const ScribeProvider = ({ children }) => {
 
   const setPanelActions = useCallback(actions => {
     setPanelActionsState(actions)
+  }, [])
+
+  const setPanelWidth = useCallback(newWidth => {
+    const clamped = Math.min(Math.max(newWidth, 280), window.innerWidth * 0.6)
+    setPanelWidthState(clamped)
   }, [])
 
   const sendMessage = useCallback(async (text, selectionContext) => {
@@ -148,12 +154,14 @@ export const ScribeProvider = ({ children }) => {
       isPanelOpen, togglePanel, openPanel, closePanel,
       messages, isLoading, sendMessage, addMessage,
       currentSelection, setCurrentSelection, dismissSelection,
-      panelActions, setPanelActions
+      panelActions, setPanelActions,
+      panelWidth, setPanelWidth
     }),
     [isPanelOpen, togglePanel, openPanel, closePanel,
      messages, isLoading, sendMessage, addMessage,
      currentSelection, setCurrentSelection, dismissSelection,
-     panelActions, setPanelActions]
+     panelActions, setPanelActions,
+     panelWidth, setPanelWidth]
   )
 
   return (
