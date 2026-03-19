@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.4
 milestone_name: Document Builder Injection
 status: executing
-stopped_at: Completed 19-02-PLAN.md
-last_updated: "2026-03-18T22:38:08.749Z"
-last_activity: 2026-03-18 -- Completed 19-02 (Extended Inline Formatting)
+stopped_at: Completed 20-01-PLAN.md
+last_updated: "2026-03-19T17:53:49.669Z"
+last_activity: 2026-03-19 -- Completed 20-01 (Smart Spacing)
 progress:
   total_phases: 3
   completed_phases: 1
-  total_plans: 4
-  completed_plans: 3
-  percent: 91
+  total_plans: 6
+  completed_plans: 5
+  percent: 85
 ---
 
 # Project State
@@ -21,28 +21,29 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Core value:** La chaine de communication complete -- depuis la selection de texte dans OnlyOffice jusqu'a la reinjection du texte modifie par l'IA -- de bout en bout, transparente pour l'utilisateur.
-**Current focus:** Phase 19 -- Extended Markdown Support
+**Current focus:** Phase 20 -- Injection Polish
 
 ## Current Position
 
-Phase: 19 of 20 (Extended Markdown Support)
-Plan: 2 of 2 in current phase (COMPLETE)
+Phase: 20 of 20 (Injection Polish)
+Plan: 1 of 2 in current phase
 Status: Executing
-Last activity: 2026-03-18 -- Completed 19-02 (Extended Inline Formatting)
+Last activity: 2026-03-19 -- Completed 20-01 (Smart Spacing)
 
-Progress: [█████████░] 91%
+Progress: [█████████░] 85%
 
 ## Performance Metrics
 
 **Velocity:**
 - Total plans completed: 25 (v1.0: 10, v2.0: 5, v2.1: 6, v2.2: 3, v2.3: 1)
-- v2.4 plans completed: 4/6
+- v2.4 plans completed: 5/6
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
 | 18    | 01   | 3min     | 2     | 4     |
 | 19    | 01   | 1min     | 2     | 1     |
 | 19    | 02   | 2min     | 2     | 1     |
+| 20    | 01   | 4min     | 2     | 1     |
 
 ## Accumulated Context
 
@@ -61,6 +62,9 @@ Recent decisions affecting current work:
 - [Phase 19]: Single numbering object per type (bullet/numbered) pre-scanned and reused
 - [Phase 19]: Hyperlinks use CreateHyperlink API (not styled text) for native OO Ctrl+click
 - [Phase 19]: Code spans use Courier New with srcFontSize but no srcFontFamily override
+- [Phase 20]: Space runs via Builder API for boundary spacing (not HTML entities)
+- [Phase 20]: Insert mode uses leading paragraph separator + trailing space consumption
+- [Phase 20]: Undo restores content but not selection state -- OO API limitation, deferred
 
 ### Pending Todos (carried from v2.3)
 
@@ -82,7 +86,7 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-18
-Stopped at: Completed 19-02-PLAN.md
+Last session: 2026-03-19
+Stopped at: Completed 20-01-PLAN.md
 Resume file: None
-Resume command: /gsd:execute-phase 19
+Resume command: /gsd:execute-phase 20

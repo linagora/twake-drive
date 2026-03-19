@@ -31,7 +31,7 @@ Requirements for milestone v2.4 Document Builder Injection. Each maps to roadmap
 
 - [ ] **INJ-01**: Toute l'injection se fait en un seul callCommand (un seul point d'undo Ctrl+Z)
 - [ ] **INJ-02**: Après injection, le contenu injecté est entièrement sélectionné dans OO
-- [ ] **INJ-03**: Des espaces sont ajoutés intelligemment en début/fin pour le remplacement, et des retours à la ligne pour l'insertion, selon le contexte adjacent
+- [x] **INJ-03**: Des espaces sont ajoutés intelligemment en début/fin pour le remplacement, et des retours à la ligne pour l'insertion, selon le contexte adjacent
 
 ## Future Requirements
 
@@ -75,7 +75,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BLK-04 | Phase 19 | Complete |
 | INJ-01 | Phase 18 | Pending |
 | INJ-02 | Phase 20 | Pending |
-| INJ-03 | Phase 20 | Pending |
+| INJ-03 | Phase 20 | Complete |
 
 **Coverage:**
 - v2.4 requirements: 14 total

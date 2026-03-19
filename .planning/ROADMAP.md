@@ -118,7 +118,7 @@ Plans:
   2. When replacing selected text, appropriate spaces are added at the boundaries so the injected content does not merge with adjacent words
   3. When inserting after a selection, appropriate line breaks separate the injected content from the existing text
   4. The selection and spacing work correctly for all content types (plain text, formatted text, lists, headings)
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
 - [ ] 20-01-PLAN.md — Smart spacing for replace and insert modes (INJ-03)
@@ -150,4 +150,4 @@ Phases execute in numeric order: 18 -> 19 -> 20
 | 17. Push Navigation + Adaptive Layout | v2.3 | 2/2 | Complete | 2026-03-15 |
 | 18. Token Pipeline + Minimal Builder Injection | 1/2 | In Progress|  | - |
 | 19. Extended Markdown Support | 2/2 | Complete    | 2026-03-18 | - |
-| 20. Injection Polish | v2.4 | 0/2 | Not started | - |
+| 20. Injection Polish | 1/2 | In Progress|  | - |
