@@ -112,10 +112,10 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. User can drag the left edge of the panel to make it wider or narrower
   2. The OO editor iframe adjusts its width in real time as the panel is resized
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] v3.0-04-01: TBD
+- [ ] v3.0-04-01-PLAN.md — ResizeHandle component + dynamic panelWidth in ScribeContext + ScribePanel wiring
 
 ## Progress
 
@@ -140,4 +140,4 @@ Phases execute in order: v3.0-01 -> v3.0-02 -> v3.0-03 -> v3.0-04
 | v3.0-01. ScribeContext + Panel Shell | v3.0 | 2/2 | Complete | 2026-03-15 |
 | v3.0-02. Chat Core | v3.0 | 2/2 | Complete | 2026-03-18 |
 | v3.0-03. Selection Context + Document Actions | 1/2 | Complete    | 2026-03-18 | - |
-| v3.0-04. Panel Resize + Mode Toggle | v3.0 | 0/? | Not started | - |
+| v3.0-04. Panel Resize | v3.0 | 0/1 | Not started | - |
