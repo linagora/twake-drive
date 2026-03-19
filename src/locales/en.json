@@ -349,12 +349,12 @@
       "element": "element"
     },
     "alert": {
-      "success": "%{smart_count} %{type} uploaded with success. |||| %{smart_count} %{type}s uploaded with success.",
-      "success_conflicts": "%{smart_count} %{type} uploaded with %{conflictNumber} conflict(s). |||| %{smart_count} %{type}s uploaded with %{conflictNumber} conflict(s).",
-      "success_updated": "%{smart_count} %{type} uploaded and %{updatedCount} updated. |||| %{smart_count} %{type}s uploaded and %{updatedCount} updated.",
-      "success_updated_conflicts": "%{smart_count} %{type} uploaded, %{updatedCount} updated and %{conflictCount} conflict(s). |||| %{smart_count} %{type}s uploaded, %{updatedCount} updated and %{conflictCount} conflict(s).",
+      "success": "%{smart_count} %{type} uploaded with success. |||| %{smart_count} %{type} uploaded with success.",
+      "success_conflicts": "%{smart_count} %{type} uploaded with %{conflictNumber} conflict(s). |||| %{smart_count} %{type} uploaded with %{conflictNumber} conflict(s).",
+      "success_updated": "%{smart_count} %{type} uploaded and %{updatedCount} updated. |||| %{smart_count} %{type} uploaded and %{updatedCount} updated.",
+      "success_updated_conflicts": "%{smart_count} %{type} uploaded, %{updatedCount} updated and %{conflictCount} conflict(s). |||| %{smart_count} %{type} uploaded, %{updatedCount} updated and %{conflictCount} conflict(s).",
       "updated": "%{smart_count} %{type} updated. |||| %{smart_count} %{type} updated.",
-      "updated_conflicts": "%{smart_count} %{type} updated with %{conflictCount} conflict(s). |||| %{smart_count} %{type}s updated with %{conflictCount} conflict(s).",
+      "updated_conflicts": "%{smart_count} %{type} updated with %{conflictCount} conflict(s). |||| %{smart_count} %{type} updated with %{conflictCount} conflict(s).",
       "errors": "Errors occurred during the %{type} upload.",
       "network": "You are currenly offline. Please try again once you're connected.",
       "fileTooLargeErrors": "File too large. Maximum file size: %{max_size_value} GB"
@@ -425,8 +425,8 @@
     "addFolder": "Add a folder",
     "outsideSharedFolder": {
       "title": "Moving outside the %{sharedFolder} folder",
-      "content_1": "Warning, you want to move %{name} out of the shared %{sharedFolder} folder. |||| Warning, you want to move %{smart_count} %{type}s out of the shared %{sharedFolder} folder.",
-      "content_2": "This move, will remove the %{type} %{name} from the share. This %{type} will therefore be trashed for all members of the share. |||| This move, will remove %{smart_count} %{type}s from the share. These %{type}s will therefore be trashed for all members of the share.",
+      "content_1": "Warning, you want to move %{name} out of the shared %{sharedFolder} folder. |||| Warning, you want to move %{smart_count} %{type} out of the shared %{sharedFolder} folder.",
+      "content_2": "This move, will remove the %{type} %{name} from the share. This %{type} will therefore be trashed for all members of the share. |||| This move, will remove %{smart_count} %{type} from the share. These %{type} will therefore be trashed for all members of the share.",
       "cancel": "Cancel",
       "confirm": "I understand"
     },
