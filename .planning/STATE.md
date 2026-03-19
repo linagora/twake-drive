@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Scribe Chat Panel
 status: completed
-stopped_at: Completed v3.0-03-02-PLAN.md
-last_updated: "2026-03-18T22:43:21.560Z"
-last_activity: 2026-03-18 -- Completed v3.0-03-02 Document Actions
+stopped_at: Completed v3.0-04-01-PLAN.md
+last_updated: "2026-03-19T17:27:46.284Z"
+last_activity: 2026-03-19 -- Completed v3.0-04-01 Panel Resize
 progress:
-  total_phases: 7
-  completed_phases: 6
-  total_plans: 12
-  completed_plans: 11
+  total_phases: 8
+  completed_phases: 7
+  total_plans: 13
+  completed_plans: 12
   percent: 92
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-10)
 
 **Core value:** L'utilisateur peut interagir avec l'IA de maniere fluide -- actions rapides inline ou chat conversationnel dans un panneau lateral -- pour transformer et manipuler le contenu de son document OnlyOffice.
-**Current focus:** Phase v3.0-03 - Selection Context + Document Actions
+**Current focus:** Phase v3.0-04 - Panel Resize
 
 ## Current Position
 
-Phase: v3.0-03 of v3.0-04 (Selection Context + Document Actions)
-Plan: 2 of 2 complete
-Status: Phase v3.0-03 complete
-Last activity: 2026-03-18 -- Completed v3.0-03-02 Document Actions
+Phase: v3.0-04 of v3.0-04 (Panel Resize)
+Plan: 1 of 1 complete
+Status: Phase v3.0-04 complete
+Last activity: 2026-03-19 -- Completed v3.0-04-01 Panel Resize
 
 Progress: [█████████░] 92%
 
@@ -51,6 +51,7 @@ Progress: [█████████░] 92%
 | Phase v3.0-02 P01 | 3min | 2 tasks | 6 files |
 | Phase v3.0-03 P01 | 3min | 2 tasks | 7 files |
 | Phase v3.0-03 P02 | 2min | 1 task | 6 files |
+| Phase v3.0-04 P01 | 2min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -75,6 +76,8 @@ Recent decisions affecting v3.0:
 - [Phase v3.0-03]: Composite AI prompt uses delimited markers for selection context
 - [Phase v3.0-03]: panelActions bridge pattern -- View.jsx passes respond handlers into ScribeContext for MessageActions
 - [Phase v3.0-03]: Rich HTML clipboard copy via ClipboardItem API with text/plain fallback
+- [Phase v3.0-04]: Horizontal flex layout in ScribePanel for resize handle placement
+- [Phase v3.0-04]: Removed width transition to avoid laggy feel during real-time drag
 
 ### Pending Todos (carried from v2.3)
 
@@ -95,6 +98,6 @@ Recent decisions affecting v3.0:
 
 ## Session Continuity
 
-Last session: 2026-03-18T22:39:00Z
-Stopped at: Completed v3.0-03-02-PLAN.md
-Resume file: .planning/phases/v3.0-04-streaming-and-polish/v3.0-04-01-PLAN.md
+Last session: 2026-03-19T17:24:39Z
+Stopped at: Completed v3.0-04-01-PLAN.md
+Resume file: N/A (milestone complete)
