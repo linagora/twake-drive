@@ -326,6 +326,46 @@
       if (hasBullets) bulletNumbering = doc.CreateNumbering("bullet");
       if (hasOrdered) orderedNumbering = doc.CreateNumbering("numbered");
 
+      // Pre-scan: detect a quote/citation style from document's predefined styles.
+      // OOXML (and OO) typically include styles like "Quote", "Intense Quote",
+      // or locale variants. We search by heuristic on the style name.
+      var quoteStyle = null;
+      var hasBlockquotes = false;
+      for (var bqi = 0; bqi < blocks.length; bqi++) {
+        if (blocks[bqi].blockquote) { hasBlockquotes = true; break; }
+      }
+      if (hasBlockquotes) {
+        // Try well-known names first (most OO documents have these)
+        var knownQuoteNames = ["Intense Quote", "Citation intense", "Quote", "Citation"];
+        for (var qn = 0; qn < knownQuoteNames.length; qn++) {
+          var candidate = doc.GetStyle(knownQuoteNames[qn]);
+          if (candidate) { quoteStyle = candidate; break; }
+        }
+        // Fallback: enumerate all styles looking for quote/citation keywords
+        if (!quoteStyle) {
+          try {
+            var allStyles = doc.GetAllStyles();
+            if (allStyles) {
+              var quotePatterns = ["quote", "citation", "cita", "blockquote", "bloc de citation"];
+              for (var si = 0; si < allStyles.length; si++) {
+                var sName = "";
+                try { sName = allStyles[si].GetName(); } catch (e) { continue; }
+                var sLower = sName.toLowerCase();
+                for (var qp = 0; qp < quotePatterns.length; qp++) {
+                  if (sLower.indexOf(quotePatterns[qp]) !== -1) {
+                    quoteStyle = allStyles[si];
+                    break;
+                  }
+                }
+                if (quoteStyle) break;
+              }
+            }
+          } catch (e) {
+            // GetAllStyles not available — keep quoteStyle null, fallback to indent
+          }
+        }
+      }
+
       // Helper: create a space run matching surrounding font
       function makeSpaceRun() {
         var sr = Api.CreateRun();
@@ -403,8 +443,8 @@
           content.push(p);
         } else if (block.type === "code_block") {
           var p = Api.CreateParagraph();
-          // Gray background shading (light gray: 230, 230, 230)
-          p.SetShd("clear", 230, 230, 230);
+          // Dark background (charcoal) with light text for code blocks
+          p.SetShd("clear", 40, 44, 52);
           // Tight spacing between code lines
           p.SetSpacingAfter(0);
           p.SetSpacingBefore(0);
@@ -415,6 +455,7 @@
             var r = Api.CreateRun();
             r.AddText(run.text);
             r.SetFontFamily("Courier New");
+            r.SetColor(212, 212, 212);
             if (srcFontSize) r.SetFontSize(srcFontSize);
             p.AddElement(r);
           }
@@ -449,11 +490,16 @@
           content.push(p);
         }
 
-        // Apply blockquote indentation if flagged
+        // Apply blockquote styling if flagged
         if (block.blockquote && content.length > 0) {
           var lastP = content[content.length - 1];
-          // 720 twips = 0.5 inch indent
-          lastP.SetIndLeft(720);
+          if (quoteStyle) {
+            // Use the document's predefined quote/citation style
+            lastP.SetStyle(quoteStyle);
+          } else {
+            // Fallback: manual left indent (720 twips = 0.5 inch)
+            lastP.SetIndLeft(720);
+          }
         }
       }
 

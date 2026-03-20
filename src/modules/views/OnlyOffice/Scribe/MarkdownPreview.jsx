@@ -3,67 +3,24 @@ import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { useTheme } from 'cozy-ui/transpiled/react/styles'
 
+import styles from '@/modules/views/OnlyOffice/Scribe/scribe.styl'
+
 /**
  * MarkdownPreview - Renders Markdown text as formatted HTML.
  *
  * Uses react-markdown with remark-gfm for GitHub Flavored Markdown
- * (tables, strikethrough, task lists). All colors use MUI theme tokens
- * for dark/light mode consistency.
+ * (tables, strikethrough, task lists).
+ *
+ * Code block vs inline code styling is handled via CSS in scribe.styl
+ * using `pre > code` vs `:not(pre) > code` selectors, avoiding the
+ * react-markdown v10 limitation where block <code> without a language
+ * has no className to distinguish it from inline <code>.
  */
 const MarkdownPreview = ({ children }) => {
   const theme = useTheme()
-  const isDark = theme.palette.type === 'dark'
-
-  const wrapperStyle = {
-    fontSize: '0.85em',
-    lineHeight: 1.5,
-    color: theme.palette.text.primary,
-    wordWrap: 'break-word',
-    overflowWrap: 'break-word',
-    whiteSpace: 'normal',
-    fontFamily: 'inherit'
-  }
+  const isDark = (theme.palette.type || theme.palette.mode) === 'dark'
 
   const components = {
-    pre: ({ node, children: preChildren }) => (
-      <pre
-        style={{
-          background: isDark
-            ? theme.palette.grey[800]
-            : theme.palette.grey[100],
-          padding: 12,
-          borderRadius: 4,
-          overflowX: 'auto',
-          margin: '8px 0'
-        }}
-      >
-        {preChildren}
-      </pre>
-    ),
-    code: ({ node, inline, children: codeChildren, ...props }) => {
-      // If parent is <pre>, render as block code (no extra styling)
-      const isInline =
-        inline !== undefined ? inline : !node?.position?.start?.column === 1
-      if (!isInline && node?.parent?.tagName === 'pre') {
-        return <code {...props}>{codeChildren}</code>
-      }
-      // Inline code
-      return (
-        <code
-          style={{
-            background: isDark
-              ? theme.palette.grey[800]
-              : theme.palette.grey[100],
-            padding: '2px 4px',
-            borderRadius: 3,
-            fontSize: '0.9em'
-          }}
-          {...props}
-        >
-          {codeChildren}
-        </code>
-      )
-    },
     table: ({ node, children: tableChildren }) => (
       <div style={{ overflowX: 'auto' }}>
         <table
@@ -148,7 +105,18 @@ const MarkdownPreview = ({ children }) => {
   }
 
   return (
-    <div style={wrapperStyle}>
+    <div
+      className={styles['scribe-md-preview']}
+      style={{
+        fontSize: '0.85em',
+        lineHeight: 1.5,
+        color: theme.palette.text.primary,
+        wordWrap: 'break-word',
+        overflowWrap: 'break-word',
+        whiteSpace: 'normal',
+        fontFamily: 'inherit'
+      }}
+    >
       <Markdown remarkPlugins={[remarkGfm]} components={components}>
         {children}
       </Markdown>
