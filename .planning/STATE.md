@@ -4,12 +4,12 @@ milestone: v2.5
 milestone_name: Objets Complexes et Blocs Etendus
 status: unknown
 stopped_at: Roadmap v2.5 created, ready to plan Phase 21
-last_updated: "2026-03-20T10:15:43.385Z"
+last_updated: "2026-03-20T12:57:02.334Z"
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 0
+  completed_plans: 2
 ---
 
 # Project State
