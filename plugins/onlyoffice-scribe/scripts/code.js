@@ -742,6 +742,9 @@
         }
         // Note: table blocks contribute no text to totalTextLen — they use ref-based
         // selection (block mode) where position arithmetic is not needed.
+        // Note: image_placeholder blocks contribute no text to totalTextLen either --
+        // images are drawings with no text content, and position-based selection
+        // correctly skips them.
         // Account for space runs added by spacing logic
         if (needSpaceBefore) totalTextLen += 1;
         if (needSpaceAfter) totalTextLen += 1;
