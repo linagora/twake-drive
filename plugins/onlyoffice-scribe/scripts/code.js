@@ -4,6 +4,7 @@
   // ---- State ----
   var lastSelectedText = "";
   var lastSelectedHtml = "";
+  var lastEnrichedMd = "";
   var pendingIntents = {};
   var cozyOrigin = "*"; // TODO: restrict to actual Cozy origin in production
 
@@ -71,12 +72,11 @@
     }
   }
 
-  // Build AI_TEXT_ASSISTANT intent data with optional HTML field (EXTR-02)
+  // Build AI_TEXT_ASSISTANT intent data with enriched markdown (EXTR-01)
   function buildEditIntentData() {
     var data = { text: lastSelectedText };
-    if (lastSelectedHtml && lastSelectedHtml.length > 0) {
-      data.html = lastSelectedHtml;
-      data.format = "html";
+    if (lastEnrichedMd && lastEnrichedMd.length > 0) {
+      data.enrichedMd = lastEnrichedMd;
     }
     return data;
   }
@@ -970,6 +970,7 @@
           log("Polling: selection cleared");
           lastSelectedText = "";
           lastSelectedHtml = "";
+          lastEnrichedMd = "";
           scribeButtonShown = false;
           castIntent("HIDE_SCRIBE_BUTTON", {}, true);
           stopHidePolling();
@@ -997,26 +998,88 @@
       toolbarButtonAdded = true;
     }
 
-    // With initDataType:"html", data contains HTML string from OO
-    // Store class-stripped HTML for rich text pipeline
-    lastSelectedHtml = stripOoClasses(data || "");
+    // Run callCommand pre-scan to extract enriched markdown from selection
+    // initDataType:"html" is kept for trigger mechanism; data parameter is ignored
+    window.Asc.plugin.callCommand(function() {
+      // --- All helpers defined inside callCommand (ES5 sandbox) ---
 
-    // Fetch plain text in parallel via GetSelectedText (needed for button display and fallback)
-    window.Asc.plugin.executeMethod("GetSelectedText", [{
-      Numbering: false,
-      Math: false,
-      TableCellSeparator: "\n",
-      ParaSeparator: "\n",
-      TabSymbol: String.fromCharCode(9)
-    }], function(text) {
-      var plainText = (text || "").replace(/^\s+|\s+$/g, "");
-
-      // If GetSelectedText returned empty but we have HTML, extract text approximation
-      if (plainText.length === 0 && data) {
-        plainText = data.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").replace(/^\s+|\s+$/g, "");
+      function escapeMarkdown(text) {
+        return text.replace(/([\\*_`\[\]()~#>+\-|{}!])/g, "\\$1");
       }
 
+      function paragraphToMarkdown(para) {
+        var count = para.GetElementsCount();
+        var parts = [];
+        for (var i = 0; i < count; i++) {
+          var el = para.GetElement(i);
+          var classType = el.GetClassType();
+          if (classType === "run") {
+            var runText = el.GetText();
+            if (!runText || runText.length === 0) continue;
+            var tp = el.GetTextPr();
+            var isBold = tp ? tp.GetBold() : false;
+            var isItalic = tp ? tp.GetItalic() : false;
+            var isStrike = tp ? tp.GetStrikeout() : false;
+            var fontFamily = tp ? tp.GetFontFamily() : null;
+            var isCode = false;
+            if (fontFamily) {
+              var ff = fontFamily.toLowerCase();
+              if (ff.indexOf("courier") !== -1 || ff.indexOf("consolas") !== -1 || ff.indexOf("mono") !== -1) {
+                isCode = true;
+              }
+            }
+            // Escape markdown special chars in raw text BEFORE wrapping
+            var escaped = escapeMarkdown(runText);
+            // Apply formatting markers
+            if (isCode) {
+              escaped = "`" + runText + "`"; // code spans use raw text (no escaping inside backticks)
+            }
+            if (isBold && isItalic) escaped = "***" + escaped + "***";
+            else if (isBold) escaped = "**" + escaped + "**";
+            else if (isItalic) escaped = "*" + escaped + "*";
+            if (isStrike) escaped = "~~" + escaped + "~~";
+            parts.push(escaped);
+          } else if (classType === "hyperlink") {
+            var linkText = el.GetText ? el.GetText() : "";
+            var linkUrl = el.GetLink ? el.GetLink() : "";
+            parts.push("[" + escapeMarkdown(linkText) + "](" + linkUrl + ")");
+          }
+        }
+        return parts.join("");
+      }
+
+      // --- Main extraction logic ---
+      var doc = Api.GetDocument();
+      var range = doc.GetRangeBySelect();
+      if (!range) return JSON.stringify({ text: "", md: "" });
+
+      var paragraphs = range.GetAllParagraphs();
+      var mdParts = [];
+      var plainParts = [];
+
+      for (var p = 0; p < paragraphs.length; p++) {
+        var para = paragraphs[p];
+        mdParts.push(paragraphToMarkdown(para));
+        plainParts.push(para.GetText());
+      }
+
+      return JSON.stringify({
+        text: plainParts.join("\n"),
+        md: mdParts.join("\n\n")
+      });
+    }, true, false, function(resultJson) {
+      // true = read-only (no undo point)
+      var result;
+      try {
+        result = JSON.parse(resultJson);
+      } catch (e) {
+        result = { text: "", md: "" };
+      }
+      var plainText = (result.text || "").replace(/^\s+|\s+$/g, "");
+
       lastSelectedText = plainText;
+      lastEnrichedMd = result.md || "";
+      lastSelectedHtml = ""; // No longer used for primary extraction
 
       if (selectionDebounceTimer) clearTimeout(selectionDebounceTimer);
 
@@ -1027,8 +1090,7 @@
           startHidePolling();
         }, SELECTION_DEBOUNCE_MS);
       } else {
-        // No text found -- also clear HTML since selection is empty
-        lastSelectedHtml = "";
+        lastEnrichedMd = "";
         if (scribeButtonShown) {
           scribeButtonShown = false;
           castIntent("HIDE_SCRIBE_BUTTON", {}, true);
