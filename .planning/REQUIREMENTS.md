@@ -1,11 +1,43 @@
 # Requirements: Scribe pour OnlyOffice
 
-**Defined:** 2026-03-15
+**Defined:** 2026-03-20
 **Core Value:** La chaîne de communication complète — depuis la sélection de texte dans OnlyOffice jusqu'à la réinjection du texte modifié par l'IA — de bout en bout, transparente pour l'utilisateur.
 
-## v2.4 Requirements
+## v2.5 Requirements
 
-Requirements for milestone v2.4 Document Builder Injection. Each maps to roadmap phases.
+Requirements for Objets Complexes et Blocs Étendus. Each maps to roadmap phases.
+
+### Extraction
+
+- [ ] **EXTR-01**: Le plugin OO scanne la sélection via callCommand et produit du markdown enrichi avec marqueurs (au lieu de htmlToMarkdown)
+- [ ] **EXTR-02**: Les images dans la sélection sont détectées, nommées (SetName), et remplacées par des marqueurs dans le markdown
+- [ ] **EXTR-03**: Les tableaux dans la sélection sont détectés, leur texte est extrait cellule par cellule au format [CELL:r,c]...[/CELL]
+- [ ] **EXTR-04**: Le pré-scan s'exécute à chaque sélection (proactivement) et envoie le markdown enrichi à Scribe
+
+### Contrat Marqueurs
+
+- [ ] **MARK-01**: Scribe définit une syntaxe pour les images bloc (![IMG:id](placeholder)) et inline ({{IMG:id}})
+- [ ] **MARK-02**: Scribe définit une syntaxe pour les cellules tableau ([CELL:r,c]texte[/CELL])
+- [ ] **MARK-03**: Scribe parse les marqueurs cellule dans la réponse LLM et valide la cohérence (nombre de cellules)
+- [ ] **MARK-04**: Scribe reconstitue un tableau markdown pour l'affichage utilisateur à partir des cellules traduites
+- [ ] **MARK-05**: Scribe affiche un placeholder visuel dans le markdown pour indiquer l'emplacement d'une image
+
+### Réinjection
+
+- [ ] **REINJ-01**: Les marqueurs image dans le markdown retour sont remplacés par les images originales (Copy + AddDrawing)
+- [ ] **REINJ-02**: Les cellules traduites sont réinjectées dans le tableau OO d'origine (structure préservée : bordures, fonds, largeurs, fusions)
+- [ ] **REINJ-03**: Le formatage des cellules réinjectées applique le md (bold/italic/etc.) + font/size du 1er paragraphe source
+
+### Blocs Étendus
+
+- [ ] **BLK-01**: Les code blocks fenced dans le markdown sont injectés comme paragraphes monospace via Builder API
+- [ ] **BLK-02**: Les blockquotes dans le markdown sont injectés comme paragraphes indentés via Builder API
+- [ ] **BLK-03**: Les tableaux markdown classiques (non marqués) dans le markdown sont injectés comme ApiTable via Builder API
+
+## v2.4 Requirements (Complete)
+
+<details>
+<summary>14/14 requirements — shipped 2026-03-20</summary>
 
 ### Parser & Pipeline
 
@@ -15,46 +47,43 @@ Requirements for milestone v2.4 Document Builder Injection. Each maps to roadmap
 
 ### Inline Formatting
 
-- [ ] **INL-01**: Le texte **gras**, *italique* et ***gras+italique*** est injecté avec le formatage OO correspondant (SetBold, SetItalic)
-- [x] **INL-02**: Le texte ~~barré~~ est injecté avec le formatage OO correspondant (SetStrikeout)
-- [x] **INL-03**: Les `code spans` sont injectés en police monospace (SetFontFamily)
-- [x] **INL-04**: Les liens [texte](url) sont injectés comme des hyperliens OO cliquables
+- [x] **INL-01**: Le texte gras, italique et gras+italique est injecté avec le formatage OO correspondant (SetBold, SetItalic)
+- [x] **INL-02**: Le texte barré est injecté avec le formatage OO correspondant (SetStrikeout)
+- [x] **INL-03**: Les code spans sont injectés en police monospace (SetFontFamily)
+- [x] **INL-04**: Les liens sont injectés comme des hyperliens OO cliquables
 
 ### Block Elements
 
-- [ ] **BLK-01**: Les paragraphes multiples sont injectés comme des paragraphes OO séparés (pas un seul bloc avec retours à la ligne)
-- [x] **BLK-02**: Les headings (# à ######) sont injectés avec les styles heading OO correspondants
-- [x] **BLK-03**: Les listes à puces (- item) sont injectées comme des listes OO avec numérotation bullet, y compris les listes imbriquées (niveaux d'indentation)
-- [x] **BLK-04**: Les listes numérotées (1. item) sont injectées comme des listes OO avec numérotation ordonnée, y compris les listes imbriquées
+- [x] **BLK-01**: Les paragraphes multiples sont injectés comme des paragraphes OO séparés
+- [x] **BLK-02**: Les headings sont injectés avec les styles heading OO correspondants
+- [x] **BLK-03**: Les listes à puces sont injectées comme des listes OO avec numérotation bullet
+- [x] **BLK-04**: Les listes numérotées sont injectées comme des listes OO avec numérotation ordonnée
 
 ### Injection Behavior
 
-- [ ] **INJ-01**: Toute l'injection se fait en un seul callCommand (un seul point d'undo Ctrl+Z)
-- [ ] **INJ-02**: Après injection, le contenu injecté est entièrement sélectionné dans OO
-- [x] **INJ-03**: Des espaces sont ajoutés intelligemment en début/fin pour le remplacement, et des retours à la ligne pour l'insertion, selon le contexte adjacent
+- [x] **INJ-01**: Toute l'injection se fait en un seul callCommand (un seul point d'undo Ctrl+Z)
+- [x] **INJ-02**: Après injection, le contenu injecté est entièrement sélectionné dans OO
+- [x] **INJ-03**: Des espaces sont ajoutés intelligemment en début/fin selon le contexte adjacent
+
+</details>
 
 ## Future Requirements
 
-### Tables & Structures complexes
-- **TBL-01**: Les tableaux GFM sont injectés comme des tableaux OO avec structure de colonnes
-- **TBL-02**: Les code blocks multi-lignes sont injectés en police monospace
-- **TBL-03**: Les blockquotes sont injectés avec indentation/bordure visuelle
+### v3.0 Chat Panel
 
-### Format Preservation
-- **FMT-01**: Les propriétés du document d'origine (font, taille, couleur) sont capturées avant envoi au LLM et réappliquées à l'injection
+- **CHAT-01**: Panneau latéral Scribe avec conversation persistante
+- **CHAT-02**: Actions popover reflétées dans l'historique chat
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Fallback PasteHtml automatique | Pas de cas d'échec Builder constaté — à ajouter si nécessaire |
-| Injection d'images via Builder API | Timing issues confirmés dans callCommand (bug OO communauté) |
-| Streaming injection (progressive rendering) | Casse le single undo point, déféré à v3.x |
+| Préservation des couleurs de texte dans les cellules | Les couleurs ne survivent pas au round-trip markdown — acceptable pour v2.5 |
+| Charts/shapes round-trip | Les LLMs ne produisent pas de charts/shapes — pas pertinent pour l'édition texte |
+| Streaming LLM responses | Déféré à v3.x — non-streaming suffisant |
+| Image editing/transformation par le LLM | Le LLM ne traite pas les images — on préserve seulement leur position |
 | Syntax highlighting dans code blocks | OO n'a pas d'API de coloration syntaxique |
-| Cellules fusionnées / styles par cellule | Le Markdown GFM ne peut pas les représenter |
-| Conversion HTML → Builder (bypass MD) | Complexité excessive, le LLM retourne du MD |
-| Preservation styles originaux (font/color) | Déféré — stratégie snapshot/fusion à explorer en milestone suivante |
-| Desktop menu redesign | Pas lié à cette milestone |
+| Cellules fusionnées / styles par cellule (couleurs) | Le Markdown ne peut pas les représenter — on préserve la structure mais pas les couleurs |
 
 ## Traceability
 
@@ -62,26 +91,27 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PARSE-01 | Phase 18 | Complete |
-| PARSE-02 | Phase 18 | Complete |
-| PARSE-03 | Phase 18 | Complete |
-| INL-01 | Phase 18 | Pending |
-| INL-02 | Phase 19 | Complete |
-| INL-03 | Phase 19 | Complete |
-| INL-04 | Phase 19 | Complete |
-| BLK-01 | Phase 18 | Pending |
-| BLK-02 | Phase 19 | Complete |
-| BLK-03 | Phase 19 | Complete |
-| BLK-04 | Phase 19 | Complete |
-| INJ-01 | Phase 18 | Pending |
-| INJ-02 | Phase 20 | Pending |
-| INJ-03 | Phase 20 | Complete |
+| EXTR-01 | Pending | Pending |
+| EXTR-02 | Pending | Pending |
+| EXTR-03 | Pending | Pending |
+| EXTR-04 | Pending | Pending |
+| MARK-01 | Pending | Pending |
+| MARK-02 | Pending | Pending |
+| MARK-03 | Pending | Pending |
+| MARK-04 | Pending | Pending |
+| MARK-05 | Pending | Pending |
+| REINJ-01 | Pending | Pending |
+| REINJ-02 | Pending | Pending |
+| REINJ-03 | Pending | Pending |
+| BLK-01 | Pending | Pending |
+| BLK-02 | Pending | Pending |
+| BLK-03 | Pending | Pending |
 
 **Coverage:**
-- v2.4 requirements: 14 total
-- Mapped to phases: 14
-- Unmapped: 0
+- v2.5 requirements: 15 total
+- Mapped to phases: 0
+- Unmapped: 15 ⚠️
 
 ---
-*Requirements defined: 2026-03-15*
-*Last updated: 2026-03-15 after roadmap creation*
+*Requirements defined: 2026-03-20*
+*Last updated: 2026-03-20 after initial definition*
