@@ -20,7 +20,7 @@ Requirements for Objets Complexes et Blocs Étendus. Each maps to roadmap phases
 - [x] **MARK-02**: Scribe définit une syntaxe pour les cellules tableau ([CELL:r,c]texte[/CELL])
 - [ ] **MARK-03**: Scribe parse les marqueurs cellule dans la réponse LLM et valide la cohérence (nombre de cellules)
 - [ ] **MARK-04**: Scribe reconstitue un tableau markdown pour l'affichage utilisateur à partir des cellules traduites
-- [ ] **MARK-05**: Scribe affiche un placeholder visuel dans le markdown pour indiquer l'emplacement d'une image
+- [x] **MARK-05**: Scribe affiche un placeholder visuel dans le markdown pour indiquer l'emplacement d'une image
 
 ### Réinjection
 
@@ -99,7 +99,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MARK-01 | Phase 22 | Complete |
 | MARK-02 | Phase 22 | Complete |
 | EXTR-02 | Phase 23 | Pending |
-| MARK-05 | Phase 23 | Pending |
+| MARK-05 | Phase 23 | Complete |
 | REINJ-01 | Phase 23 | Pending |
 | EXTR-03 | Phase 24 | Pending |
 | MARK-03 | Phase 24 | Pending |
