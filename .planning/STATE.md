@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.5
 milestone_name: Objets Complexes et Blocs Etendus
 status: unknown
-stopped_at: Roadmap v2.5 created, ready to plan Phase 21
-last_updated: "2026-03-20T12:57:02.334Z"
+stopped_at: Completed 22-01-PLAN.md (extraction pipeline)
+last_updated: "2026-03-20T13:37:09.212Z"
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 4
+  completed_plans: 3
 ---
 
 # Project State
@@ -19,18 +19,18 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-20)
 
 **Core value:** La chaine de communication complete -- depuis la selection de texte dans OnlyOffice jusqu'a la reinjection du texte modifie par l'IA -- de bout en bout, transparente pour l'utilisateur.
-**Current focus:** Phase 21 — blocs-etendus
+**Current focus:** Phase 22 — Extraction Pipeline et Contrat Marqueurs
 
 ## Current Position
 
-Phase: 21 (blocs-etendus) — EXECUTING
-Plan: 1 of 2
+Phase: 22 (Extraction Pipeline et Contrat Marqueurs) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 31 (v1.0: 10, v2.0: 5, v2.1: 6, v2.2: 3, v2.3: 1, v2.4: 6)
+- Total plans completed: 32 (v1.0: 10, v2.0: 5, v2.1: 6, v2.2: 3, v2.3: 1, v2.4: 6, v2.5: 1)
 
 ## Accumulated Context
 
@@ -46,6 +46,7 @@ Recent decisions affecting current work:
 - [v2.5]: Tables: cell-by-cell extraction with [CELL:r,c] markers, not raw md table to LLM
 - [v2.5]: Table cell formatting: md formatting + font/size from 1st paragraph source cell (accept losing colors)
 - [v2.5]: Images: ID markers only, image data never sent to LLM, Copy/AddDrawing for reinsertion
+- [v2.5]: Plugin-side extraction via callCommand replaces HTML-based extraction; enrichedMd priority chain preserves backward compat
 
 ### Pending Todos (carried from v2.3)
 
@@ -68,6 +69,6 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-03-20
-Stopped at: Roadmap v2.5 created, ready to plan Phase 21
+Stopped at: Completed 22-01-PLAN.md (extraction pipeline)
 Resume file: None
-Resume command: /gsd:plan-phase 21
+Resume command: /gsd:execute-phase 22-02

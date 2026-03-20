@@ -9,10 +9,10 @@ Requirements for Objets Complexes et Blocs Étendus. Each maps to roadmap phases
 
 ### Extraction
 
-- [ ] **EXTR-01**: Le plugin OO scanne la sélection via callCommand et produit du markdown enrichi avec marqueurs (au lieu de htmlToMarkdown)
+- [x] **EXTR-01**: Le plugin OO scanne la sélection via callCommand et produit du markdown enrichi avec marqueurs (au lieu de htmlToMarkdown)
 - [ ] **EXTR-02**: Les images dans la sélection sont détectées, nommées (SetName), et remplacées par des marqueurs dans le markdown
 - [ ] **EXTR-03**: Les tableaux dans la sélection sont détectés, leur texte est extrait cellule par cellule au format [CELL:r,c]...[/CELL]
-- [ ] **EXTR-04**: Le pré-scan s'exécute à chaque sélection (proactivement) et envoie le markdown enrichi à Scribe
+- [x] **EXTR-04**: Le pré-scan s'exécute à chaque sélection (proactivement) et envoie le markdown enrichi à Scribe
 
 ### Contrat Marqueurs
 
@@ -94,8 +94,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BLK-01 | Phase 21 | Pending |
 | BLK-02 | Phase 21 | Pending |
 | BLK-03 | Phase 21 | Pending |
-| EXTR-01 | Phase 22 | Pending |
-| EXTR-04 | Phase 22 | Pending |
+| EXTR-01 | Phase 22 | Complete |
+| EXTR-04 | Phase 22 | Complete |
 | MARK-01 | Phase 22 | Pending |
 | MARK-02 | Phase 22 | Pending |
 | EXTR-02 | Phase 23 | Pending |
