@@ -179,7 +179,7 @@ Phases execute in numeric order: 21 -> 22 -> 23 -> 24
 | 18. Token Pipeline + Minimal Builder Injection | v2.4 | 2/2 | Complete | 2026-03-17 |
 | 19. Extended Markdown Support | v2.4 | 2/2 | Complete | 2026-03-18 |
 | 20. Injection Polish | v2.4 | 2/2 | Complete | 2026-03-20 |
-| 21. Blocs Etendus | v2.5 | 0/2 | Not started | - |
+| 21. Blocs Etendus | 1/2 | In Progress|  | - |
 | 22. Extraction Pipeline et Contrat Marqueurs | v2.5 | 0/2 | Not started | - |
 | 23. Image Round-Trip | v2.5 | 0/2 | Not started | - |
 | 24. Table Round-Trip | v2.5 | 0/2 | Not started | - |

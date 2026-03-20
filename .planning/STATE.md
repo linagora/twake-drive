@@ -2,16 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.5
 milestone_name: Objets Complexes et Blocs Etendus
-status: ready_to_plan
-stopped_at: Roadmap created
-last_updated: "2026-03-20T00:00:00.000Z"
-last_activity: 2026-03-20 -- Roadmap v2.5 created (4 phases, 15 requirements)
+status: unknown
+stopped_at: Roadmap v2.5 created, ready to plan Phase 21
+last_updated: "2026-03-20T10:15:43.385Z"
 progress:
   total_phases: 4
   completed_phases: 0
-  total_plans: 8
+  total_plans: 2
   completed_plans: 0
-  percent: 0
 ---
 
 # Project State
@@ -21,20 +19,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-20)
 
 **Core value:** La chaine de communication complete -- depuis la selection de texte dans OnlyOffice jusqu'a la reinjection du texte modifie par l'IA -- de bout en bout, transparente pour l'utilisateur.
-**Current focus:** Phase 21 -- Blocs Etendus (code blocks, blockquotes, tableaux markdown)
+**Current focus:** Phase 21 — blocs-etendus
 
 ## Current Position
 
-Phase: 21 of 24 (Blocs Etendus) -- first of 4 phases in v2.5
-Plan: --
-Status: Ready to plan
-Last activity: 2026-03-20 -- Roadmap v2.5 created
-
-Progress: [░░░░░░░░░░] 0%
+Phase: 21 (blocs-etendus) — EXECUTING
+Plan: 1 of 2
 
 ## Performance Metrics
 
 **Velocity:**
+
 - Total plans completed: 31 (v1.0: 10, v2.0: 5, v2.1: 6, v2.2: 3, v2.3: 1, v2.4: 6)
 
 ## Accumulated Context
