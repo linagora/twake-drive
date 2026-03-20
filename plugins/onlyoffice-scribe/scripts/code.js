@@ -1010,45 +1010,95 @@
         return text.replace(/([\\*_`\[\]()~#>+\-|{}!])/g, "\\$1");
       }
 
+      // Format a single run element to markdown (inline styles only, no link)
+      function formatRun(runText, tp) {
+        if (!runText || runText.length === 0) return "";
+        var isBold = tp ? tp.GetBold() : false;
+        var isItalic = tp ? tp.GetItalic() : false;
+        var isStrike = tp ? tp.GetStrikeout() : false;
+        var fontFamily = tp ? tp.GetFontFamily() : null;
+        var isCode = false;
+        if (fontFamily) {
+          var ff = fontFamily.toLowerCase();
+          if (ff.indexOf("courier") !== -1 || ff.indexOf("consolas") !== -1 || ff.indexOf("mono") !== -1) {
+            isCode = true;
+          }
+        }
+        var escaped = escapeMarkdown(runText);
+        if (isCode) {
+          escaped = "`" + runText + "`";
+        }
+        if (isBold && isItalic) escaped = "***" + escaped + "***";
+        else if (isBold) escaped = "**" + escaped + "**";
+        else if (isItalic) escaped = "*" + escaped + "*";
+        if (isStrike) escaped = "~~" + escaped + "~~";
+        return escaped;
+      }
+
       function paragraphToMarkdown(para) {
         var count = para.GetElementsCount();
         var parts = [];
         for (var i = 0; i < count; i++) {
           var el = para.GetElement(i);
-          var classType = el.GetClassType();
-          if (classType === "run") {
+          var classType = el.GetClassType ? el.GetClassType() : "";
+
+          if (classType === "hyperlink") {
+            // OO ApiHyperlink: GetLinkedText() = URL, child runs = display text
+            var hUrl = el.GetLinkedText ? el.GetLinkedText() : "";
+            var hParts = [];
+            var hCount = el.GetElementsCount ? el.GetElementsCount() : 0;
+            for (var hi = 0; hi < hCount; hi++) {
+              var hChild = el.GetElement(hi);
+              hParts.push(formatRun(hChild.GetText(), hChild.GetTextPr ? hChild.GetTextPr() : null));
+            }
+            var hText = hParts.length > 0 ? hParts.join("") : (el.GetDisplayedText ? el.GetDisplayedText() : "");
+            if (hUrl) {
+              parts.push("[" + hText + "](" + hUrl + ")");
+            } else {
+              parts.push(hText);
+            }
+          } else if (classType === "run") {
             var runText = el.GetText();
             if (!runText || runText.length === 0) continue;
-            var tp = el.GetTextPr();
-            var isBold = tp ? tp.GetBold() : false;
-            var isItalic = tp ? tp.GetItalic() : false;
-            var isStrike = tp ? tp.GetStrikeout() : false;
-            var fontFamily = tp ? tp.GetFontFamily() : null;
-            var isCode = false;
-            if (fontFamily) {
-              var ff = fontFamily.toLowerCase();
-              if (ff.indexOf("courier") !== -1 || ff.indexOf("consolas") !== -1 || ff.indexOf("mono") !== -1) {
-                isCode = true;
-              }
-            }
-            // Escape markdown special chars in raw text BEFORE wrapping
-            var escaped = escapeMarkdown(runText);
-            // Apply formatting markers
-            if (isCode) {
-              escaped = "`" + runText + "`"; // code spans use raw text (no escaping inside backticks)
-            }
-            if (isBold && isItalic) escaped = "***" + escaped + "***";
-            else if (isBold) escaped = "**" + escaped + "**";
-            else if (isItalic) escaped = "*" + escaped + "*";
-            if (isStrike) escaped = "~~" + escaped + "~~";
-            parts.push(escaped);
-          } else if (classType === "hyperlink") {
-            var linkText = el.GetText ? el.GetText() : "";
-            var linkUrl = el.GetLink ? el.GetLink() : "";
-            parts.push("[" + escapeMarkdown(linkText) + "](" + linkUrl + ")");
+            var tp = el.GetTextPr ? el.GetTextPr() : null;
+            parts.push(formatRun(runText, tp));
+          } else {
+            // Unknown element type — fallback to text
+            var fallbackText = el.GetText ? el.GetText() : "";
+            if (fallbackText) parts.push(escapeMarkdown(fallbackText));
           }
         }
         return parts.join("");
+      }
+
+      // Detect heading level from paragraph style name
+      function getHeadingLevel(para) {
+        var style = para.GetStyle();
+        if (!style) return 0;
+        var name = style.GetName();
+        if (!name) return 0;
+        // Match "Heading N" or "Titre N" (French OO)
+        var match = name.match(/^(?:Heading|Titre)\s+(\d+)$/i);
+        return match ? parseInt(match[1], 10) : 0;
+      }
+
+      // Detect list type from numbering or style name.
+      // Level is resolved later via indentDepthMap (see pre-scan below).
+      function isListParagraph(para) {
+        var numPr = para.GetNumbering();
+        if (numPr) {
+          var numFmt = numPr.GetNumFmt ? numPr.GetNumFmt() : null;
+          var isBullet = !numFmt || numFmt === "bullet" || numFmt === "none";
+          return { type: isBullet ? "bullet" : "ordered" };
+        }
+        // Fallback: check style name
+        var style = para.GetStyle();
+        if (style) {
+          var sn = style.GetName();
+          if (sn && /list\s*bullet/i.test(sn)) return { type: "bullet" };
+          if (sn && /list\s*number/i.test(sn)) return { type: "ordered" };
+        }
+        return null;
       }
 
       // --- Image detection helper (MARK-01) ---
@@ -1128,6 +1178,7 @@
 
       var mdParts = [];
       var plainParts = [];
+      var orderedCounters = {};
 
       // Detect tables in the selection range
       var allTables = doc.GetAllTables();
@@ -1147,6 +1198,31 @@
         }
       }
 
+      // Pre-scan: collect unique indentation values from list paragraphs
+      // to build a depth map (same approach as normalizeHtml margin-left mapping).
+      // Sorted unique indents → index = nesting level.
+      var indentSet = {};
+      for (var ps = 0; ps < paragraphs.length; ps++) {
+        if (isListParagraph(paragraphs[ps])) {
+          var ind = paragraphs[ps].GetIndLeft ? paragraphs[ps].GetIndLeft() : 0;
+          if (ind > 0) indentSet[ind] = true;
+        }
+      }
+      var uniqueIndents = [];
+      for (var key in indentSet) {
+        if (indentSet.hasOwnProperty(key)) uniqueIndents.push(Number(key));
+      }
+      uniqueIndents.sort(function(a, b) { return a - b; });
+
+      // Map an indent value to its depth (0-based)
+      function indentToLevel(indLeft) {
+        if (!indLeft || indLeft <= 0) return 0;
+        for (var idx = 0; idx < uniqueIndents.length; idx++) {
+          if (uniqueIndents[idx] === indLeft) return idx;
+        }
+        return 0;
+      }
+
       for (var p = 0; p < paragraphs.length; p++) {
         var para = paragraphs[p];
         var paraRange = para.GetRange();
@@ -1160,7 +1236,7 @@
             // Emit table cells once (when first cell paragraph is encountered)
             if (!tableRanges[ti].emitted) {
               tableRanges[ti].emitted = true;
-              mdParts.push(extractTableCells(tableRanges[ti].table));
+              mdParts.push({ md: extractTableCells(tableRanges[ti].table), isList: false });
             }
             break;
           }
@@ -1173,9 +1249,18 @@
         // Check for images
         var imgMarker = getDrawingMarker(para);
         if (imgMarker && imgMarker.isBlock) {
-          mdParts.push(imgMarker.md);
+          mdParts.push({ md: imgMarker.md, isList: false });
           plainParts.push(para.GetText());
           continue;
+        }
+
+        // Detect block-level decoration: heading or list
+        var headingLvl = getHeadingLevel(para);
+        var listType = isListParagraph(para);
+        var listInfo = null;
+        if (listType) {
+          var paraIndent = para.GetIndLeft ? para.GetIndLeft() : 0;
+          listInfo = { type: listType.type, level: indentToLevel(paraIndent) };
         }
 
         // Regular paragraph with possible inline images
@@ -1183,13 +1268,53 @@
         if (imgMarker && !imgMarker.isBlock) {
           paraMarkdown = paraMarkdown + " " + imgMarker.md;
         }
-        mdParts.push(paraMarkdown);
+
+        // Apply heading prefix
+        if (headingLvl > 0 && headingLvl <= 6) {
+          var hashes = "";
+          for (var h = 0; h < headingLvl; h++) hashes = hashes + "#";
+          paraMarkdown = hashes + " " + paraMarkdown;
+        }
+
+        // Apply list prefix with nesting indentation
+        if (listInfo) {
+          var indent = "";
+          for (var li = 0; li < listInfo.level; li++) indent = indent + "  ";
+          if (listInfo.type === "bullet") {
+            paraMarkdown = indent + "- " + paraMarkdown;
+          } else {
+            // Track ordered list counters per nesting level
+            if (!orderedCounters[listInfo.level]) orderedCounters[listInfo.level] = 0;
+            orderedCounters[listInfo.level] = orderedCounters[listInfo.level] + 1;
+            paraMarkdown = indent + orderedCounters[listInfo.level] + ". " + paraMarkdown;
+          }
+          // Reset deeper level counters when we're at a shallower level
+          for (var rl = listInfo.level + 1; rl < 10; rl++) {
+            orderedCounters[rl] = 0;
+          }
+        } else {
+          // Not a list item — reset all ordered counters
+          orderedCounters = {};
+        }
+
+        mdParts.push({ md: paraMarkdown, isList: !!listInfo });
         plainParts.push(para.GetText());
+      }
+
+      // Join with \n between consecutive list items, \n\n between other blocks
+      var mdLines = [];
+      for (var j = 0; j < mdParts.length; j++) {
+        if (j > 0) {
+          var prevIsList = mdParts[j - 1].isList;
+          var currIsList = mdParts[j].isList;
+          mdLines.push((prevIsList && currIsList) ? "\n" : "\n\n");
+        }
+        mdLines.push(mdParts[j].md);
       }
 
       return JSON.stringify({
         text: plainParts.join("\n"),
-        md: mdParts.join("\n\n")
+        md: mdLines.join("")
       });
     }, false, false, function(resultJson) {
       // false = read-write (allows SetName on images for stable naming)

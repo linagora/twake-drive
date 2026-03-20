@@ -18,12 +18,15 @@ import styles from '@/modules/views/OnlyOffice/Scribe/scribe.styl'
 
 const DEV_PANELS_STORAGE_KEY = 'SCRIBE_DEV_MD_PANELS'
 const DEV_PANEL_KEYS = ['htmlSource', 'htmlNorm', 'mdConverted', 'llmRaw', 'rendered']
-const DEV_PANEL_LABELS = {
-  htmlSource: 'HTML brut (sélection OO)',
-  htmlNorm: 'HTML normalisé',
-  mdConverted: 'MD converti (sélection → markdown)',
-  llmRaw: 'MD brut LLM (réponse IA)',
-  rendered: 'Rendu final (aperçu)'
+function getDevPanelLabels(source) {
+  const fromPlugin = source === 'plugin'
+  return {
+    htmlSource: fromPlugin ? 'HTML brut (sélection OO) — non utilisé' : 'HTML brut (sélection OO)',
+    htmlNorm: fromPlugin ? 'HTML normalisé — non utilisé' : 'HTML normalisé',
+    mdConverted: fromPlugin ? 'MD enrichi (plugin OO → marqueurs)' : 'MD converti (HTML → Turndown)',
+    llmRaw: 'MD brut LLM (réponse IA)',
+    rendered: 'Rendu final (aperçu)'
+  }
 }
 const DEV_PANEL_DEFAULTS = { htmlSource: true, htmlNorm: true, mdConverted: true, llmRaw: true, rendered: true }
 
@@ -82,12 +85,13 @@ const DevPanelGrid = ({
   resultText,
   resultContent
 }) => {
+  const labels = getDevPanelLabels(devData.source)
   const panels = []
 
   if (devPanelPrefs.htmlSource !== false) {
     panels.push(
       <div key="htmlSource" style={devColumnStyle}>
-        <div style={devLabelStyle}>{DEV_PANEL_LABELS.htmlSource}</div>
+        <div style={devLabelStyle}>{labels.htmlSource}</div>
         <pre
           className="hljs"
           style={devPreStyle}
@@ -102,7 +106,7 @@ const DevPanelGrid = ({
   if (devPanelPrefs.htmlNorm !== false) {
     panels.push(
       <div key="htmlNorm" style={devColumnStyle}>
-        <div style={devLabelStyle}>{DEV_PANEL_LABELS.htmlNorm}</div>
+        <div style={devLabelStyle}>{labels.htmlNorm}</div>
         <pre
           className="hljs"
           style={devPreStyle}
@@ -117,7 +121,7 @@ const DevPanelGrid = ({
   if (devPanelPrefs.mdConverted !== false) {
     panels.push(
       <div key="mdConverted" style={devColumnStyle}>
-        <div style={devLabelStyle}>{DEV_PANEL_LABELS.mdConverted}</div>
+        <div style={devLabelStyle}>{labels.mdConverted}</div>
         <pre
           className="hljs"
           style={devPreStyle}
@@ -132,7 +136,7 @@ const DevPanelGrid = ({
   if (devPanelPrefs.llmRaw !== false) {
     panels.push(
       <div key="llmRaw" style={devColumnStyle}>
-        <div style={devLabelStyle}>{DEV_PANEL_LABELS.llmRaw}</div>
+        <div style={devLabelStyle}>{labels.llmRaw}</div>
         <pre
           className="hljs"
           style={devPreStyle}
@@ -147,7 +151,7 @@ const DevPanelGrid = ({
   if (devPanelPrefs.rendered !== false) {
     panels.push(
       <div key="rendered" style={devColumnStyle}>
-        <div style={devLabelStyle}>{DEV_PANEL_LABELS.rendered}</div>
+        <div style={devLabelStyle}>{labels.rendered}</div>
         {resultContent}
       </div>
     )
@@ -470,7 +474,9 @@ const ScribeResultPanel = ({
             <Icon icon={CrossIcon} size={16} />
           </IconButton>
         </div>
-        {devData && (
+        {devData && (() => {
+          const checkboxLabels = getDevPanelLabels(devData.source)
+          return (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 0, alignItems: 'center', width: '100%', marginTop: 2 }}>
             {DEV_PANEL_KEYS.map(key => (
               <label
@@ -493,12 +499,13 @@ const ScribeResultPanel = ({
                   style={{ padding: 2 }}
                 />
                 <span style={{ color: theme.palette.text.secondary }}>
-                  {DEV_PANEL_LABELS[key]}
+                  {checkboxLabels[key]}
                 </span>
               </label>
             ))}
           </div>
-        )}
+          )
+        })()}
       </div>
 
       {devData ? (

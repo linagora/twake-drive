@@ -75,7 +75,7 @@ const ScribePopover = ({ open, selectedText, selectedHtml, enrichedMd, onReplace
 
       // Dev mode: test-markdown bypasses LLM entirely
       if (actionId === 'test-markdown') {
-        setDevData({ html: selectedHtml || '', normalizedHtml: normalized, md: inputMd })
+        setDevData({ html: selectedHtml || '', normalizedHtml: normalized, md: inputMd, source: enrichedMd ? 'plugin' : 'turndown' })
         setResult({ text: inputMd, breadcrumb: 'Test MD', error: '', canRetry: false })
         setStep('result')
         return
@@ -86,7 +86,7 @@ const ScribePopover = ({ open, selectedText, selectedHtml, enrichedMd, onReplace
 
       // Capture dev data for normal flow too
       if (isScribeDevMd()) {
-        setDevData({ html: selectedHtml || '', normalizedHtml: normalized, md: inputMd })
+        setDevData({ html: selectedHtml || '', normalizedHtml: normalized, md: inputMd, source: enrichedMd ? 'plugin' : 'turndown' })
       }
 
       // 1. Transition to loading
