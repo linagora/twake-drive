@@ -100,7 +100,7 @@ Full details: `.planning/milestones/v2.4-ROADMAP.md`
   2. Un blockquote dans le resultat IA apparait dans OO comme un paragraphe indente, visuellement distinct du texte normal
   3. Un tableau markdown classique (non marque) dans le resultat IA apparait dans OO comme un ApiTable natif avec lignes, colonnes et contenu cellule correct
   4. Les blocs etendus coexistent avec les elements existants (paragraphes, headings, listes, inline formatting) sans regression
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
 - [ ] 21-01: Code blocks + blockquotes dans flattenTokens/buildAndInject
@@ -115,7 +115,7 @@ Plans:
   2. Quand l'utilisateur selectionne du texte contenant un tableau, le markdown recu par Scribe contient des marqueurs [CELL:r,c]...[/CELL] pour chaque cellule avec le texte de la cellule
   3. Le pre-scan s'execute a chaque changement de selection (proactivement) sans delai perceptible pour l'utilisateur
   4. Le markdown enrichi pour du texte simple (sans objets complexes) est equivalent a l'ancien htmlToMarkdown -- pas de regression
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
 - [ ] 22-01: Pre-scan callCommand + markdown generation basique (texte, inline formatting)
@@ -130,7 +130,7 @@ Plans:
   2. Apres injection, chaque image originale reapparait dans le document OO a la position indiquee par le marqueur dans le resultat LLM
   3. Si le LLM deplace un marqueur image dans sa reponse (ex: reordonne des paragraphes), l'image suit le marqueur a sa nouvelle position
   4. L'image reinjectee est identique a l'originale (pas de degradation de qualite ou de redimensionnement)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
 - [ ] 23-01: Placeholder visuel dans le preview markdown + parsing marqueurs image
@@ -146,7 +146,7 @@ Plans:
   3. Apres injection, les cellules traduites remplacent le contenu des cellules du tableau OO original; la structure du tableau (bordures, fonds, largeurs, fusions) est preservee
   4. Le formatage de chaque cellule reinjectee combine le markdown (bold, italic, etc.) avec la police et taille du premier paragraphe de la cellule source
   5. Si la selection contient du texte + un tableau, les deux sont traites correctement (texte via le pipeline standard, tableau via le pipeline cellule)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
 - [ ] 24-01: Parsing marqueurs cellule + validation coherence + reconstitution tableau preview
