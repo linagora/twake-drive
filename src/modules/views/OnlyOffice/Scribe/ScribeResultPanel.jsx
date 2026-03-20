@@ -10,23 +10,170 @@ import SyncIcon from 'cozy-ui/transpiled/react/Icons/Sync'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
 import Paper from 'cozy-ui/transpiled/react/Paper'
 import Typography from 'cozy-ui/transpiled/react/Typography'
+import Checkbox from 'cozy-ui/transpiled/react/Checkbox'
 
 import { MarkdownPreview } from '@/modules/views/OnlyOffice/Scribe/MarkdownPreview'
 import { loadBeautify, loadHighlightJs } from '@/modules/views/OnlyOffice/Scribe/scribeDevMode'
 import styles from '@/modules/views/OnlyOffice/Scribe/scribe.styl'
 
+const DEV_PANELS_STORAGE_KEY = 'SCRIBE_DEV_MD_PANELS'
+const DEV_PANEL_KEYS = ['htmlSource', 'htmlNorm', 'mdConverted', 'llmRaw', 'rendered']
+const DEV_PANEL_LABELS = {
+  htmlSource: 'HTML brut (sélection OO)',
+  htmlNorm: 'HTML normalisé',
+  mdConverted: 'MD converti (sélection → markdown)',
+  llmRaw: 'MD brut LLM (réponse IA)',
+  rendered: 'Rendu final (aperçu)'
+}
+const DEV_PANEL_DEFAULTS = { htmlSource: true, htmlNorm: true, mdConverted: true, llmRaw: true, rendered: true }
+
+function loadDevPanelPrefs() {
+  try {
+    var stored = localStorage.getItem(DEV_PANELS_STORAGE_KEY)
+    if (stored) {
+      var parsed = JSON.parse(stored)
+      // Merge with defaults so new keys are visible
+      return Object.assign({}, DEV_PANEL_DEFAULTS, parsed)
+    }
+  } catch { /* ignore */ }
+  return Object.assign({}, DEV_PANEL_DEFAULTS)
+}
+
+function saveDevPanelPrefs(prefs) {
+  try {
+    localStorage.setItem(DEV_PANELS_STORAGE_KEY, JSON.stringify(prefs))
+  } catch { /* ignore */ }
+}
+
 /**
  * ScribeResultPanel - Step 2 of the Scribe two-step flow.
  *
  * Displays either the AI-transformed text (success) or an error message.
- * In dev mode (devData prop), shows 4 panels in a 2x2 grid:
- *   1. Source HTML from OO (prettified + highlight.js syntax colored)
- *   2. Normalized HTML after normalizeHtml (prettified + highlight.js)
- *   3. Converted Markdown (highlight.js syntax colored)
- *   4. Rendered Markdown preview
+ * In dev mode (devData prop), shows up to 5 panels in a dynamic grid:
+ *   1. HTML brut (sélection OO) — raw HTML from OO (prettified + syntax colored)
+ *   2. HTML normalisé — after normalizeHtml (prettified + syntax colored)
+ *   3. MD converti (sélection → markdown) — converted markdown (syntax colored)
+ *   4. MD brut LLM (réponse IA) — raw markdown returned by the LLM
+ *   5. Rendu final (aperçu) — rendered markdown preview
  *
+ * Each panel can be toggled via checkboxes in the title bar.
+ * Visibility preferences are persisted in localStorage.
  * highlight.js is loaded lazily only when devData is present.
  */
+
+const escapeHtml = str =>
+  (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+/**
+ * DevPanelGrid — renders up to 5 dev panels in a dynamic grid.
+ * Only visible panels (from devPanelPrefs) are rendered.
+ * Grid adapts columns: 1 col for 1-2 panels, 2 cols for 3-4, 3 cols for 5.
+ */
+const DevPanelGrid = ({
+  devPanelPrefs,
+  devColumnStyle,
+  devLabelStyle,
+  devPreStyle,
+  highlightedHtml,
+  highlightedNormalized,
+  highlightedMd,
+  highlightedLlmMd,
+  devData,
+  resultText,
+  resultContent
+}) => {
+  const panels = []
+
+  if (devPanelPrefs.htmlSource !== false) {
+    panels.push(
+      <div key="htmlSource" style={devColumnStyle}>
+        <div style={devLabelStyle}>{DEV_PANEL_LABELS.htmlSource}</div>
+        <pre
+          className="hljs"
+          style={devPreStyle}
+          dangerouslySetInnerHTML={{
+            __html: highlightedHtml || escapeHtml(devData.html)
+          }}
+        />
+      </div>
+    )
+  }
+
+  if (devPanelPrefs.htmlNorm !== false) {
+    panels.push(
+      <div key="htmlNorm" style={devColumnStyle}>
+        <div style={devLabelStyle}>{DEV_PANEL_LABELS.htmlNorm}</div>
+        <pre
+          className="hljs"
+          style={devPreStyle}
+          dangerouslySetInnerHTML={{
+            __html: highlightedNormalized || escapeHtml(devData.normalizedHtml)
+          }}
+        />
+      </div>
+    )
+  }
+
+  if (devPanelPrefs.mdConverted !== false) {
+    panels.push(
+      <div key="mdConverted" style={devColumnStyle}>
+        <div style={devLabelStyle}>{DEV_PANEL_LABELS.mdConverted}</div>
+        <pre
+          className="hljs"
+          style={devPreStyle}
+          dangerouslySetInnerHTML={{
+            __html: highlightedMd || escapeHtml(devData.md)
+          }}
+        />
+      </div>
+    )
+  }
+
+  if (devPanelPrefs.llmRaw !== false) {
+    panels.push(
+      <div key="llmRaw" style={devColumnStyle}>
+        <div style={devLabelStyle}>{DEV_PANEL_LABELS.llmRaw}</div>
+        <pre
+          className="hljs"
+          style={devPreStyle}
+          dangerouslySetInnerHTML={{
+            __html: highlightedLlmMd || escapeHtml(resultText)
+          }}
+        />
+      </div>
+    )
+  }
+
+  if (devPanelPrefs.rendered !== false) {
+    panels.push(
+      <div key="rendered" style={devColumnStyle}>
+        <div style={devLabelStyle}>{DEV_PANEL_LABELS.rendered}</div>
+        {resultContent}
+      </div>
+    )
+  }
+
+  if (panels.length === 0) return null
+
+  const cols = panels.length <= 2 ? panels.length : panels.length <= 4 ? 2 : 3
+  const rows = Math.ceil(panels.length / cols)
+
+  return (
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: `repeat(${cols}, 1fr)`,
+        gridTemplateRows: `repeat(${rows}, 1fr)`,
+        gap: 8,
+        flex: 1,
+        overflow: 'hidden'
+      }}
+    >
+      {panels}
+    </div>
+  )
+}
+
 const ScribeResultPanel = ({
   breadcrumb,
   resultText,
@@ -134,10 +281,21 @@ const ScribeResultPanel = ({
     }
   }, [handleDragMove, handleDragEnd, handleResizeMove, handleResizeEnd])
 
+  // Dev mode: panel visibility prefs (persisted in localStorage)
+  const [devPanelPrefs, setDevPanelPrefs] = useState(loadDevPanelPrefs)
+  const toggleDevPanel = useCallback(key => {
+    setDevPanelPrefs(prev => {
+      const next = Object.assign({}, prev, { [key]: !prev[key] })
+      saveDevPanelPrefs(next)
+      return next
+    })
+  }, [])
+
   // Dev mode: highlighted HTML from highlight.js (loaded lazily from CDN)
   const [highlightedHtml, setHighlightedHtml] = useState('')
   const [highlightedNormalized, setHighlightedNormalized] = useState('')
   const [highlightedMd, setHighlightedMd] = useState('')
+  const [highlightedLlmMd, setHighlightedLlmMd] = useState('')
 
   useEffect(() => {
     if (!devData) return
@@ -164,8 +322,13 @@ const ScribeResultPanel = ({
           hljs.highlight(devData.md, { language: 'markdown' }).value
         )
       }
+      if (resultText) {
+        setHighlightedLlmMd(
+          hljs.highlight(resultText, { language: 'markdown' }).value
+        )
+      }
     })
-  }, [devData])
+  }, [devData, resultText])
 
   const getFocusables = useCallback(() => {
     if (error && canRetry) {
@@ -290,84 +453,68 @@ const ScribeResultPanel = ({
       <div
         className={styles['scribe-result-header']}
         onMouseDown={handleDragStart}
-        style={{ cursor: 'move', ...(devData ? { flexShrink: 0 } : {}) }}
+        style={{ cursor: 'move', ...(devData ? { flexShrink: 0, flexWrap: 'wrap' } : {}) }}
       >
-        <Typography variant="subtitle2" color="textSecondary">
-          {breadcrumb}
-          {devData && (
-            <span
-              style={{ marginLeft: 8, color: '#ff9800', fontSize: 11 }}
-            >
-              DEV MD
-            </span>
-          )}
-        </Typography>
-        <IconButton ref={closeRef} size="small" onClick={onClose}>
-          <Icon icon={CrossIcon} size={16} />
-        </IconButton>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <Typography variant="subtitle2" color="textSecondary">
+            {breadcrumb}
+            {devData && (
+              <span
+                style={{ marginLeft: 8, color: '#ff9800', fontSize: 11 }}
+              >
+                DEV MD
+              </span>
+            )}
+          </Typography>
+          <IconButton ref={closeRef} size="small" onClick={onClose}>
+            <Icon icon={CrossIcon} size={16} />
+          </IconButton>
+        </div>
+        {devData && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 0, alignItems: 'center', width: '100%', marginTop: 2 }}>
+            {DEV_PANEL_KEYS.map(key => (
+              <label
+                key={key}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  fontSize: 10,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  userSelect: 'none',
+                  marginRight: 4
+                }}
+                onMouseDown={e => e.stopPropagation()}
+              >
+                <Checkbox
+                  size="small"
+                  checked={devPanelPrefs[key] !== false}
+                  onChange={() => toggleDevPanel(key)}
+                  style={{ padding: 2 }}
+                />
+                <span style={{ color: theme.palette.text.secondary }}>
+                  {DEV_PANEL_LABELS[key]}
+                </span>
+              </label>
+            ))}
+          </div>
+        )}
       </div>
 
       {devData ? (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gridTemplateRows: '1fr 1fr',
-            gap: 8,
-            flex: 1,
-            overflow: 'hidden'
-          }}
-        >
-          <div style={devColumnStyle}>
-            <div style={devLabelStyle}>HTML source (OO)</div>
-            <pre
-              className="hljs"
-              style={devPreStyle}
-              dangerouslySetInnerHTML={{
-                __html:
-                  highlightedHtml ||
-                  (devData.html || '')
-                    .replace(/&/g, '&amp;')
-                    .replace(/</g, '&lt;')
-                    .replace(/>/g, '&gt;')
-              }}
-            />
-          </div>
-          <div style={devColumnStyle}>
-            <div style={devLabelStyle}>HTML normalisé</div>
-            <pre
-              className="hljs"
-              style={devPreStyle}
-              dangerouslySetInnerHTML={{
-                __html:
-                  highlightedNormalized ||
-                  (devData.normalizedHtml || '')
-                    .replace(/&/g, '&amp;')
-                    .replace(/</g, '&lt;')
-                    .replace(/>/g, '&gt;')
-              }}
-            />
-          </div>
-          <div style={devColumnStyle}>
-            <div style={devLabelStyle}>Markdown</div>
-            <pre
-              className="hljs"
-              style={devPreStyle}
-              dangerouslySetInnerHTML={{
-                __html:
-                  highlightedMd ||
-                  (devData.md || '')
-                    .replace(/&/g, '&amp;')
-                    .replace(/</g, '&lt;')
-                    .replace(/>/g, '&gt;')
-              }}
-            />
-          </div>
-          <div style={devColumnStyle}>
-            <div style={devLabelStyle}>Rendu</div>
-            {resultContent}
-          </div>
-        </div>
+        <DevPanelGrid
+          devPanelPrefs={devPanelPrefs}
+          devColumnStyle={devColumnStyle}
+          devLabelStyle={devLabelStyle}
+          devPreStyle={devPreStyle}
+          highlightedHtml={highlightedHtml}
+          highlightedNormalized={highlightedNormalized}
+          highlightedMd={highlightedMd}
+          highlightedLlmMd={highlightedLlmMd}
+          devData={devData}
+          resultText={resultText}
+          resultContent={resultContent}
+        />
       ) : (
         resultContent
       )}
