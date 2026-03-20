@@ -24,7 +24,7 @@ import styles from '@/modules/views/OnlyOffice/Scribe/scribe.styl'
  *
  * Closing the popover during loading aborts the in-flight API request via AbortController.
  */
-const ScribePopover = ({ open, selectedText, selectedHtml, onReplace, onInsert, onCancel }) => {
+const ScribePopover = ({ open, selectedText, selectedHtml, enrichedMd, onReplace, onInsert, onCancel }) => {
   const { t } = useI18n()
   const client = useClient()
   const abortRef = useRef(null)
@@ -67,8 +67,8 @@ const ScribePopover = ({ open, selectedText, selectedHtml, onReplace, onInsert, 
 
   const handleActionSelect = useCallback(
     async (actionId, label, breadcrumb) => {
-      // Compute intermediate MD for dev panels
-      const inputMd = selectedHtml ? htmlToMarkdown(selectedHtml) : selectedText
+      // Compute intermediate MD for dev panels (enrichedMd preferred over htmlToMarkdown)
+      const inputMd = enrichedMd || (selectedHtml ? htmlToMarkdown(selectedHtml) : selectedText)
 
       // Compute normalized HTML for dev panels
       const normalized = selectedHtml ? normalizeHtml(selectedHtml) : ''
@@ -108,6 +108,9 @@ const ScribePopover = ({ open, selectedText, selectedHtml, onReplace, onInsert, 
         if (selectedHtml) {
           extra.html = selectedHtml
         }
+        if (enrichedMd) {
+          extra.enrichedMd = enrichedMd
+        }
         const messages = buildMessages(actionId, selectedText, label, Object.keys(extra).length > 0 ? extra : undefined)
         const text = await callScribeAI(client, messages, { signal: controller.signal })
 
@@ -127,7 +130,7 @@ const ScribePopover = ({ open, selectedText, selectedHtml, onReplace, onInsert, 
         }
       }
     },
-    [selectedText, selectedHtml, client, t]
+    [selectedText, selectedHtml, enrichedMd, client, t]
   )
 
   const handleClose = useCallback(() => {
@@ -225,6 +228,7 @@ ScribePopover.propTypes = {
   open: PropTypes.bool.isRequired,
   selectedText: PropTypes.string.isRequired,
   selectedHtml: PropTypes.string,
+  enrichedMd: PropTypes.string,
   onReplace: PropTypes.func.isRequired,
   onInsert: PropTypes.func.isRequired,
   onCancel: PropTypes.func.isRequired

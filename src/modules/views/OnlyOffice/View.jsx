@@ -153,6 +153,7 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
             open={!!pendingIntent}
             selectedText={pendingIntent?.data?.text || ''}
             selectedHtml={pendingIntent?.data?.html || ''}
+            enrichedMd={pendingIntent?.data?.enrichedMd || ''}
             onReplace={handleReplace}
             onInsert={handleInsert}
             onCancel={handleCancel}

@@ -78,8 +78,8 @@ export function buildMessages(actionId, selectedText, label, extra) {
   // to avoid issues with RAG backends that may not support the system role
   const systemPrefix = SYSTEM_PROMPT + '\n\n'
 
-  // When HTML is available (v2.1 rich text pipeline), convert to Markdown for better LLM input
-  const textForPrompt = extra?.html ? htmlToMarkdown(extra.html) : selectedText
+  // Prefer enrichedMd (plugin-side extraction) > htmlToMarkdown(html) > plain text
+  const textForPrompt = extra?.enrichedMd || (extra?.html ? htmlToMarkdown(extra.html) : selectedText)
 
   // Free-prompt: wrap user instruction with guardrail template
   if (actionId === 'free-prompt') {
