@@ -91,27 +91,27 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| EXTR-01 | Pending | Pending |
-| EXTR-02 | Pending | Pending |
-| EXTR-03 | Pending | Pending |
-| EXTR-04 | Pending | Pending |
-| MARK-01 | Pending | Pending |
-| MARK-02 | Pending | Pending |
-| MARK-03 | Pending | Pending |
-| MARK-04 | Pending | Pending |
-| MARK-05 | Pending | Pending |
-| REINJ-01 | Pending | Pending |
-| REINJ-02 | Pending | Pending |
-| REINJ-03 | Pending | Pending |
-| BLK-01 | Pending | Pending |
-| BLK-02 | Pending | Pending |
-| BLK-03 | Pending | Pending |
+| BLK-01 | Phase 21 | Pending |
+| BLK-02 | Phase 21 | Pending |
+| BLK-03 | Phase 21 | Pending |
+| EXTR-01 | Phase 22 | Pending |
+| EXTR-04 | Phase 22 | Pending |
+| MARK-01 | Phase 22 | Pending |
+| MARK-02 | Phase 22 | Pending |
+| EXTR-02 | Phase 23 | Pending |
+| MARK-05 | Phase 23 | Pending |
+| REINJ-01 | Phase 23 | Pending |
+| EXTR-03 | Phase 24 | Pending |
+| MARK-03 | Phase 24 | Pending |
+| MARK-04 | Phase 24 | Pending |
+| REINJ-02 | Phase 24 | Pending |
+| REINJ-03 | Phase 24 | Pending |
 
 **Coverage:**
 - v2.5 requirements: 15 total
-- Mapped to phases: 0
-- Unmapped: 15 ⚠️
+- Mapped to phases: 15/15
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-20*
-*Last updated: 2026-03-20 after initial definition*
+*Last updated: 2026-03-20 after roadmap creation*

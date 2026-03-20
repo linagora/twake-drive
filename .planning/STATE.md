@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.5
 milestone_name: Objets Complexes et Blocs Etendus
-status: defining_requirements
-stopped_at: Milestone started
+status: ready_to_plan
+stopped_at: Roadmap created
 last_updated: "2026-03-20T00:00:00.000Z"
-last_activity: 2026-03-20 -- Milestone v2.5 started
+last_activity: 2026-03-20 -- Roadmap v2.5 created (4 phases, 15 requirements)
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
-  total_plans: 0
+  total_plans: 8
   completed_plans: 0
   percent: 0
 ---
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-20)
 
 **Core value:** La chaine de communication complete -- depuis la selection de texte dans OnlyOffice jusqu'a la reinjection du texte modifie par l'IA -- de bout en bout, transparente pour l'utilisateur.
-**Current focus:** Defining requirements for v2.5 — Objets Complexes et Blocs Etendus
+**Current focus:** Phase 21 -- Blocs Etendus (code blocks, blockquotes, tableaux markdown)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-03-20 — Milestone v2.5 started
+Phase: 21 of 24 (Blocs Etendus) -- first of 4 phases in v2.5
+Plan: --
+Status: Ready to plan
+Last activity: 2026-03-20 -- Roadmap v2.5 created
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -45,14 +45,11 @@ All decisions logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
 - [v2.4]: "Parse outside, build inside" -- tokenize MD in plugin iframe, interpret tokens via Asc.scope in callCommand
-- [v2.4]: marked bundled in plugin code.js for tokenization
-- [v2.4]: Single undo point via single callCommand for all Builder API calls
-- [v2.4]: PasteHtml fallback preserved throughout migration
 - [v2.4]: Two selection strategies (selectByRefs / selectByPositions) for inline vs block mode
 - [v2.5]: Plugin OO produces markdown (not htmlToMarkdown in Scribe) -- plugin knows OO structure best
 - [v2.5]: Scribe defines marker contract for images and table cells -- editors must comply
 - [v2.5]: Tables: cell-by-cell extraction with [CELL:r,c] markers, not raw md table to LLM
-- [v2.5]: Table cell formatting: md formatting + font/size from 1st paragraph of source cell (accept losing colors)
+- [v2.5]: Table cell formatting: md formatting + font/size from 1st paragraph source cell (accept losing colors)
 - [v2.5]: Images: ID markers only, image data never sent to LLM, Copy/AddDrawing for reinsertion
 
 ### Pending Todos (carried from v2.3)
@@ -65,8 +62,6 @@ Recent decisions affecting current work:
 
 - Plugin code must use ES5 syntax (no const/let, no arrow functions)
 - callCommand sandbox has no DOM APIs -- parse outside, pass tokens via Asc.scope
-- Post-insertion selection unreliable -- InsertContent does not return element refs (workaround: two strategies)
-- Redo broken after callCommand (confirmed OO bug, no fix)
 - No CloneFormatting API in OO -- must read/reapply run properties manually
 - ApiImage has no public GetSrc() -- use ToJSON/FromJSON for serialization
 - Drawing objects (images) must be wrapped in paragraph via AddDrawing, not directly in InsertContent
@@ -78,6 +73,6 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-03-20
-Stopped at: Milestone v2.5 started, defining requirements
+Stopped at: Roadmap v2.5 created, ready to plan Phase 21
 Resume file: None
-Resume command: Continue with requirements definition
+Resume command: /gsd:plan-phase 21
