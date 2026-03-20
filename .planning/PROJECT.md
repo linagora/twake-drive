@@ -41,10 +41,10 @@ La chaîne de communication complète — depuis la sélection de texte dans Onl
 
 ### Active
 
-- [ ] Pré-scan sélection OO : callCommand produit du markdown enrichi avec marqueurs (images, tableaux)
+- ✓ Pré-scan sélection OO : callCommand produit du markdown enrichi avec marqueurs (images, tableaux) — v2.5 Phase 22
 - [ ] Images round-trip : marqueurs dans le md, image ne quitte jamais OO, réinjection via Copy/AddDrawing
 - [ ] Tableaux round-trip : extraction cellule par cellule [CELL:r,c], réinjection in-place (structure préservée)
-- [ ] Contrat Scribe : syntaxe markdown pour marqueurs images (bloc/inline) et cellules tableau
+- ✓ Contrat Scribe : syntaxe markdown pour marqueurs images (bloc/inline) et cellules tableau — v2.5 Phase 22
 - [ ] Tableaux markdown classiques : support dans flattenTokens + buildAndInject (token table de marked)
 - [ ] Code blocks fenced : paragraphes monospace via Builder API
 - [ ] Blockquotes : paragraphes indentés via Builder API
