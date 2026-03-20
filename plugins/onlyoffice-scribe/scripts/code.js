@@ -416,56 +416,153 @@
       }
 
       if (content.length > 0) {
-        var countBefore = doc.GetElementsCount();
+        // Save selection start position before InsertContent (for replace mode selection)
+        var preSelStart = 0;
+        try {
+          var preRange = doc.GetRangeBySelect();
+          if (preRange) preSelStart = preRange.GetStartPos();
+        } catch (e) {}
+
+        // Calculate total text length from blocks (for position-based selection)
+        var totalTextLen = 0;
+        for (var ti = 0; ti < blocks.length; ti++) {
+          var bRuns = blocks[ti].runs || [];
+          for (var tj = 0; tj < bRuns.length; tj++) {
+            totalTextLen += bRuns[tj].text.length;
+          }
+        }
+        // Account for space runs added by spacing logic
+        if (needSpaceBefore) totalTextLen += 1;
+        if (needSpaceAfter) totalTextLen += 1;
+        var mergedTrailingLen = 0; // track trailing text merged into last paragraph
+
+        var useRefSelection = false; // true = use paragraph refs, false = use position-based
 
         if (mode === "insert") {
           // Insert mode: leading empty paragraph creates a line break before content.
-          // No trailing paragraph needed — InsertContent in block mode automatically
-          // pushes remaining text after the cursor onto a new line.
           content.unshift(Api.CreateParagraph());
           doc.InsertContent(content);
+          useRefSelection = true;
         } else {
-          // Replace mode: single paragraph uses inline mode to merge into existing
-          // paragraph. Multi-paragraph/structural uses block mode.
+          // Replace mode
           var isSimpleInline = (content.length === 1 && blocks.length === 1 && blocks[0].type === "paragraph");
           if (isSimpleInline) {
+            // Single paragraph: inline mode merges into existing paragraph
             doc.InsertContent(content, true);
           } else {
+            // Multi-paragraph: block mode to keep paragraph separation.
+            // Block mode splits the paragraph at selection end, creating a trailing
+            // paragraph. After InsertContent, merge that trailing paragraph into
+            // the last content paragraph to eliminate the extra line break.
             doc.InsertContent(content);
+            useRefSelection = true; // block mode preserves paragraph refs
+            try {
+              var lastContentPara = content[content.length - 1];
+              var lcRange = lastContentPara.GetRange();
+              if (lcRange) {
+                var lcEndPos = lcRange.GetEndPos();
+                var total = doc.GetElementsCount();
+                for (var si = 0; si < total; si++) {
+                  var scanEl = doc.GetElement(si);
+                  var scanRange = scanEl ? scanEl.GetRange() : null;
+                  if (scanRange && scanRange.GetStartPos() >= lcEndPos) {
+                    var trailText = scanRange.GetText();
+                    if (trailText.length > 0) {
+                      // Merge trailing text into last content paragraph
+                      var mRun = Api.CreateRun();
+                      mRun.AddText(trailText);
+                      if (srcFontFamily) mRun.SetFontFamily(srcFontFamily);
+                      if (srcFontSize) mRun.SetFontSize(srcFontSize);
+                      lastContentPara.AddElement(mRun);
+                      mergedTrailingLen = trailText.length;
+                    }
+                    // Remove the trailing paragraph (empty or merged)
+                    doc.RemoveElement(si);
+                    break;
+                  }
+                }
+              }
+            } catch (e) {
+              // Merge failed — trailing line break remains (minor visual issue)
+            }
           }
         }
 
-        // Post-injection selection: highlight the injected content
-        try {
-          var countAfter = doc.GetElementsCount();
-          // content.length reflects the actual elements passed to InsertContent
-          // (including the leading empty paragraph for insert mode).
-          // The inserted elements occupy the last content.length positions in the doc.
-          var firstIdx = countAfter - content.length;
-          if (firstIdx < 0) firstIdx = 0;
+        // ── Post-injection selection ──
+        //
+        // Two distinct strategies are needed because InsertContent behaves
+        // differently in inline vs block mode:
+        //
+        // 1) selectByRefs — used for block-mode insert and block-mode replace.
+        //    InsertContent in block mode keeps each paragraph as a separate
+        //    document element, so the JS object references in content[] remain
+        //    valid after insertion. We can call GetRange() on them directly.
+        //
+        // 2) selectByPositions — used for inline-mode replace (single paragraph).
+        //    InsertContent(content, true) merges the runs INTO the existing
+        //    paragraph, destroying the original object references. content[0]
+        //    no longer maps to a standalone document element, so GetRange()
+        //    on it is unreliable. Instead we use numeric character positions
+        //    (preSelStart + text length) to build the selection range.
+        //
+        // Why not unify?
+        //  - Position-based is fragile for multi-paragraph / block content:
+        //    headings, lists, and paragraph separators introduce invisible
+        //    position markers that make length arithmetic unreliable.
+        //  - Ref-based cannot work after an inline merge because the refs
+        //    are absorbed into the host paragraph.
+        // So we pick the right tool for each insertion mode.
 
-          // For insert mode, skip the leading empty paragraph separator
-          if (mode === "insert" && content.length > 1) {
-            firstIdx = firstIdx + 1;
+        function selectByRefs(doc, content, mode, preSelStart, mergedTrailingLen) {
+          // In insert mode content[0] is the leading empty paragraph (line break),
+          // so the first real content paragraph is content[1].
+          // In replace mode content[0] is the first real content paragraph.
+          var selectFirst = (mode === "insert" && content.length > 1) ? content[1] : content[0];
+          var selectLast = content[content.length - 1];
+          if (!selectFirst || !selectLast) return;
+
+          var startRange;
+          if (mode === "insert") {
+            startRange = selectFirst.GetRange(0, 0);
+          } else {
+            // In block-mode replace, OO merges content[0] with the text that
+            // precedes the selection. content[0].GetRange(0,0) would therefore
+            // start too early. Use the saved pre-insertion position instead.
+            startRange = doc.GetRange(preSelStart, preSelStart);
           }
 
-          var lastIdx = countAfter - 1;
+          var endRange;
+          if (mergedTrailingLen > 0) {
+            // Trailing text from the split paragraph was merged into selectLast.
+            // Exclude it from the selection so we only highlight injected content.
+            var lastFullRange = selectLast.GetRange();
+            var adjEnd = lastFullRange.GetEndPos() - mergedTrailingLen;
+            endRange = doc.GetRange(adjEnd, adjEnd);
+          } else {
+            endRange = selectLast.GetRange();
+          }
 
-          if (firstIdx <= lastIdx) {
-            var firstInserted = doc.GetElement(firstIdx);
-            var lastInserted = doc.GetElement(lastIdx);
+          if (startRange && endRange) {
+            var fullRange = startRange.ExpandTo(endRange);
+            if (fullRange) fullRange.Select();
+          }
+        }
 
-            if (firstInserted && lastInserted) {
-              var startRange = firstInserted.GetRange(0, 0);
-              var endRange = lastInserted.GetRange();
+        function selectByPositions(doc, preSelStart, totalTextLen, mergedTrailingLen) {
+          // Simple arithmetic: the injected text starts at preSelStart and
+          // spans totalTextLen characters. +2 compensates an OO logical
+          // position offset (paragraph start marker).
+          var selTextLen = totalTextLen - mergedTrailingLen;
+          if (selTextLen <= 0) return;
+          var selectRange = doc.GetRange(preSelStart, preSelStart + selTextLen + 2);
+          if (selectRange) selectRange.Select();
+        }
 
-              if (startRange && endRange) {
-                var fullRange = startRange.ExpandTo(endRange);
-                if (fullRange) {
-                  fullRange.Select();
-                }
-              }
-            }
+        try {
+          if (useRefSelection) {
+            selectByRefs(doc, content, mode, preSelStart, mergedTrailingLen);
+          } else {
+            selectByPositions(doc, preSelStart, totalTextLen, mergedTrailingLen);
           }
         } catch (e) {
           // Selection failed — content is still injected, graceful degradation
