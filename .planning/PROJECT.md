@@ -42,7 +42,7 @@ La chaîne de communication complète — depuis la sélection de texte dans Onl
 ### Active
 
 - ✓ Pré-scan sélection OO : callCommand produit du markdown enrichi avec marqueurs (images, tableaux) — v2.5 Phase 22
-- [ ] Images round-trip : marqueurs dans le md, image ne quitte jamais OO, réinjection via Copy/AddDrawing
+- ✓ Images round-trip : marqueurs dans le md, image ne quitte jamais OO, réinjection via ToJSON/FromJSON+AddDrawing — v2.5 Phase 23
 - [ ] Tableaux round-trip : extraction cellule par cellule [CELL:r,c], réinjection in-place (structure préservée)
 - ✓ Contrat Scribe : syntaxe markdown pour marqueurs images (bloc/inline) et cellules tableau — v2.5 Phase 22
 - [ ] Tableaux markdown classiques : support dans flattenTokens + buildAndInject (token table de marked)
@@ -161,4 +161,4 @@ v1.0 : 4 jours, 10 plans. v2.0 : 3 jours, 5 plans. v2.1 : 3 jours, 6 plans. v2.2
 | Resize via inline width/height + flex | Meilleur contrôle et clamping que CSS resize | ✓ Good — reflow contenu fiable |
 
 ---
-*Last updated: 2026-03-20 after v2.5 milestone start*
+*Last updated: 2026-03-20 after Phase 23 (image-round-trip) complete*
