@@ -422,6 +422,65 @@
         }
       }
 
+      // Pre-cache all referenced images via ToJSON BEFORE InsertContent destroys
+      // the selection. ToJSON produces self-contained JSON that survives document
+      // mutations (safer than Copy() whose internal refs may become invalid).
+      var imageCache = {};  // name -> { json: obj, copy: ApiDrawing|null }
+      for (var ic = 0; ic < blocks.length; ic++) {
+        var icBlock = blocks[ic];
+        if (icBlock.type === "image_placeholder" && icBlock.name) {
+          if (!imageCache[icBlock.name]) {
+            var icFound = doc.GetDrawingsByName([icBlock.name]);
+            if (icFound && icFound.length > 0) {
+              var icJson = null;
+              try { icJson = icFound[0].ToJSON(false, false); } catch (e) {}
+              imageCache[icBlock.name] = {
+                json: icJson,
+                copy: icJson ? null : icFound[0].Copy()  // fallback to Copy if ToJSON fails
+              };
+            }
+          }
+        }
+        // Also scan runs for inline imageMarkers
+        if (icBlock.runs) {
+          for (var ir = 0; ir < icBlock.runs.length; ir++) {
+            var irMarker = icBlock.runs[ir].imageMarker;
+            if (irMarker && !imageCache[irMarker]) {
+              var irFound = doc.GetDrawingsByName([irMarker]);
+              if (irFound && irFound.length > 0) {
+                var irJson = null;
+                try { irJson = irFound[0].ToJSON(false, false); } catch (e) {}
+                imageCache[irMarker] = {
+                  json: irJson,
+                  copy: irJson ? null : irFound[0].Copy()
+                };
+              }
+            }
+          }
+        }
+      }
+
+      function restoreImage(name) {
+        var entry = imageCache[name];
+        if (!entry) return null;
+        if (entry.json) {
+          try { return Api.FromJSON(entry.json); } catch (e) {}
+        }
+        // Fallback: Copy() was stored (ToJSON failed), or FromJSON failed
+        if (entry.copy) {
+          var fallback = entry.copy;
+          // After first use, try to re-lookup (Copy is consumed by AddDrawing)
+          var reLookup = doc.GetDrawingsByName([name]);
+          if (reLookup && reLookup.length > 0) {
+            entry.copy = reLookup[0].Copy();
+          } else {
+            entry.copy = null;  // no more copies available
+          }
+          return fallback;
+        }
+        return null;
+      }
+
       // Helper: create a space run matching surrounding font
       function makeSpaceRun() {
         var sr = Api.CreateRun();
@@ -447,7 +506,12 @@
           var runs = block.runs || [];
           for (var j = 0; j < runs.length; j++) {
             var run = runs[j];
-            if (run.link) {
+            if (run.imageMarker) {
+              var imDrawing = restoreImage(run.imageMarker);
+              if (imDrawing) {
+                p.AddDrawing(imDrawing);
+              }
+            } else if (run.link) {
               var link = Api.CreateHyperlink(run.link, run.text, "");
               p.AddElement(link);
             } else {
@@ -476,7 +540,12 @@
           var runs = block.runs || [];
           for (var j = 0; j < runs.length; j++) {
             var run = runs[j];
-            if (run.link) {
+            if (run.imageMarker) {
+              var imDrawing = restoreImage(run.imageMarker);
+              if (imDrawing) {
+                p.AddDrawing(imDrawing);
+              }
+            } else if (run.link) {
               var link = Api.CreateHyperlink(run.link, run.text, "");
               p.AddElement(link);
             } else {
@@ -508,12 +577,19 @@
           var runs = block.runs || [];
           for (var j = 0; j < runs.length; j++) {
             var run = runs[j];
-            var r = Api.CreateRun();
-            r.AddText(run.text);
-            r.SetFontFamily("Courier New");
-            r.SetColor(212, 212, 212);
-            if (srcFontSize) r.SetFontSize(srcFontSize);
-            p.AddElement(r);
+            if (run.imageMarker) {
+              var imDrawing = restoreImage(run.imageMarker);
+              if (imDrawing) {
+                p.AddDrawing(imDrawing);
+              }
+            } else {
+              var r = Api.CreateRun();
+              r.AddText(run.text);
+              r.SetFontFamily("Courier New");
+              r.SetColor(212, 212, 212);
+              if (srcFontSize) r.SetFontSize(srcFontSize);
+              p.AddElement(r);
+            }
           }
           if (isLast && needSpaceAfter) p.AddElement(makeSpaceRun());
           content.push(p);
@@ -597,7 +673,12 @@
           var runs = block.runs || [];
           for (var j = 0; j < runs.length; j++) {
             var run = runs[j];
-            if (run.link) {
+            if (run.imageMarker) {
+              var imDrawing = restoreImage(run.imageMarker);
+              if (imDrawing) {
+                p.AddDrawing(imDrawing);
+              }
+            } else if (run.link) {
               var link = Api.CreateHyperlink(run.link, run.text, "");
               p.AddElement(link);
             } else {
@@ -618,6 +699,16 @@
           }
           if (isLast && needSpaceAfter) p.AddElement(makeSpaceRun());
           content.push(p);
+        } else if (block.type === "image_placeholder") {
+          var imgDrawing = restoreImage(block.name);
+          if (imgDrawing) {
+            var imgPara = Api.CreateParagraph();
+            if (isFirst && needSpaceBefore) imgPara.AddElement(makeSpaceRun());
+            imgPara.AddDrawing(imgDrawing);
+            if (isLast && needSpaceAfter) imgPara.AddElement(makeSpaceRun());
+            content.push(imgPara);
+          }
+          // If not in cache (image was deleted from doc), silently skip
         }
 
         // Apply blockquote styling if flagged
