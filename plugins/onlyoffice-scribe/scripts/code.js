@@ -160,6 +160,22 @@
         flattenList(block, 0);
       } else if (block.type === "space") {
         // skip -- implicit paragraph separator
+      } else if (block.type === "code") {
+        // Fenced code block: split by newlines, each line = one code_block block
+        var codeLines = (block.text || "").split("\n");
+        for (var cl = 0; cl < codeLines.length; cl++) {
+          blocks.push({
+            type: "code_block",
+            runs: [{ text: codeLines[cl] || " ", bold: false, italic: false, strikethrough: false, code: true, link: null }]
+          });
+        }
+      } else if (block.type === "blockquote") {
+        // Blockquote: recursively flatten inner tokens, tag each as blockquote
+        var innerBlocks = flattenTokens(block.tokens || []);
+        for (var bq = 0; bq < innerBlocks.length; bq++) {
+          innerBlocks[bq].blockquote = true;
+          blocks.push(innerBlocks[bq]);
+        }
       } else if (block.tokens) {
         // Unknown block type with tokens: treat as paragraph fallback
         blocks.push({ type: "paragraph", runs: flattenInline(block.tokens || [], false, false, false, false, null) });
@@ -385,6 +401,25 @@
           }
           if (isLast && needSpaceAfter) p.AddElement(makeSpaceRun());
           content.push(p);
+        } else if (block.type === "code_block") {
+          var p = Api.CreateParagraph();
+          // Gray background shading (light gray: 230, 230, 230)
+          p.SetShd("clear", 230, 230, 230);
+          // Tight spacing between code lines
+          p.SetSpacingAfter(0);
+          p.SetSpacingBefore(0);
+          if (isFirst && needSpaceBefore) p.AddElement(makeSpaceRun());
+          var runs = block.runs || [];
+          for (var j = 0; j < runs.length; j++) {
+            var run = runs[j];
+            var r = Api.CreateRun();
+            r.AddText(run.text);
+            r.SetFontFamily("Courier New");
+            if (srcFontSize) r.SetFontSize(srcFontSize);
+            p.AddElement(r);
+          }
+          if (isLast && needSpaceAfter) p.AddElement(makeSpaceRun());
+          content.push(p);
         } else if (block.type === "paragraph") {
           var p = Api.CreateParagraph();
           if (isFirst && needSpaceBefore) p.AddElement(makeSpaceRun());
@@ -412,6 +447,13 @@
           }
           if (isLast && needSpaceAfter) p.AddElement(makeSpaceRun());
           content.push(p);
+        }
+
+        // Apply blockquote indentation if flagged
+        if (block.blockquote && content.length > 0) {
+          var lastP = content[content.length - 1];
+          // 720 twips = 0.5 inch indent
+          lastP.SetIndLeft(720);
         }
       }
 
