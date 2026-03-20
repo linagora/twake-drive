@@ -176,6 +176,33 @@
           innerBlocks[bq].blockquote = true;
           blocks.push(innerBlocks[bq]);
         }
+      } else if (block.type === "table") {
+        // Markdown table: produce a single "table" block with header and rows of cells
+        // Each cell contains flattened inline runs for formatting preservation
+        var headerCells = [];
+        var headerTokens = block.header || [];
+        for (var hi = 0; hi < headerTokens.length; hi++) {
+          headerCells.push({
+            runs: flattenInline(headerTokens[hi].tokens || [], false, false, false, false, null)
+          });
+        }
+        var bodyRows = [];
+        var rowsArr = block.rows || [];
+        for (var ri = 0; ri < rowsArr.length; ri++) {
+          var rowCells = [];
+          for (var ci = 0; ci < rowsArr[ri].length; ci++) {
+            rowCells.push({
+              runs: flattenInline(rowsArr[ri][ci].tokens || [], false, false, false, false, null)
+            });
+          }
+          bodyRows.push(rowCells);
+        }
+        blocks.push({
+          type: "table",
+          header: headerCells,
+          rows: bodyRows,
+          align: block.align || []
+        });
       } else if (block.tokens) {
         // Unknown block type with tokens: treat as paragraph fallback
         blocks.push({ type: "paragraph", runs: flattenInline(block.tokens || [], false, false, false, false, null) });
@@ -461,6 +488,80 @@
           }
           if (isLast && needSpaceAfter) p.AddElement(makeSpaceRun());
           content.push(p);
+        } else if (block.type === "table") {
+          var nCols = (block.header || []).length;
+          var nRows = (block.rows || []).length + 1; // +1 for header row
+          if (nCols === 0 || nRows === 0) continue; // skip degenerate tables
+
+          var table = Api.CreateTable(nCols, nRows);
+          table.SetWidth("percent", 100);
+
+          // Set all borders (thin single line)
+          table.SetTableBorderTop("single", 4, 0, 0, 0, 0);
+          table.SetTableBorderBottom("single", 4, 0, 0, 0, 0);
+          table.SetTableBorderLeft("single", 4, 0, 0, 0, 0);
+          table.SetTableBorderRight("single", 4, 0, 0, 0, 0);
+          table.SetTableBorderInsideH("single", 4, 0, 0, 0, 0);
+          table.SetTableBorderInsideV("single", 4, 0, 0, 0, 0);
+
+          // Helper: fill a cell with formatted runs
+          function fillCell(row, col, runs) {
+            var cell = table.GetCell(row, col);
+            if (!cell) return;
+            var cellContent = cell.GetContent();
+            if (!cellContent) return;
+            var cellPara = cellContent.GetElement(0);
+            if (!cellPara) return;
+            for (var rr = 0; rr < runs.length; rr++) {
+              var run = runs[rr];
+              if (run.link) {
+                var link = Api.CreateHyperlink(run.link, run.text, "");
+                cellPara.AddElement(link);
+              } else {
+                var r = Api.CreateRun();
+                r.AddText(run.text);
+                if (run.bold) r.SetBold(true);
+                if (run.italic) r.SetItalic(true);
+                if (run.strikethrough) r.SetStrikeout(true);
+                if (run.code) {
+                  r.SetFontFamily("Courier New");
+                  if (srcFontSize) r.SetFontSize(srcFontSize);
+                } else {
+                  if (srcFontFamily) r.SetFontFamily(srcFontFamily);
+                  if (srcFontSize) r.SetFontSize(srcFontSize);
+                }
+                cellPara.AddElement(r);
+              }
+            }
+          }
+
+          // Fill header row (row 0) — bold by default
+          var headerCells = block.header || [];
+          for (var hc = 0; hc < headerCells.length; hc++) {
+            var hRuns = headerCells[hc].runs || [];
+            // Force bold on header cell runs
+            var boldRuns = [];
+            for (var hr = 0; hr < hRuns.length; hr++) {
+              var hRun = {};
+              for (var hk in hRuns[hr]) { hRun[hk] = hRuns[hr][hk]; }
+              hRun.bold = true;
+              boldRuns.push(hRun);
+            }
+            fillCell(0, hc, boldRuns);
+          }
+
+          // Fill body rows (rows 1..nRows-1)
+          var bodyRows = block.rows || [];
+          for (var br = 0; br < bodyRows.length; br++) {
+            var rowCells = bodyRows[br] || [];
+            for (var bc = 0; bc < rowCells.length; bc++) {
+              fillCell(br + 1, bc, rowCells[bc].runs || []);
+            }
+          }
+
+          // Note: smart spacing (needSpaceBefore/After) does not apply to tables
+          // since tables are standalone block elements in OO
+          content.push(table);
         } else if (block.type === "paragraph") {
           var p = Api.CreateParagraph();
           if (isFirst && needSpaceBefore) p.AddElement(makeSpaceRun());
@@ -519,6 +620,8 @@
             totalTextLen += bRuns[tj].text.length;
           }
         }
+        // Note: table blocks contribute no text to totalTextLen — they use ref-based
+        // selection (block mode) where position arithmetic is not needed.
         // Account for space runs added by spacing logic
         if (needSpaceBefore) totalTextLen += 1;
         if (needSpaceAfter) totalTextLen += 1;
