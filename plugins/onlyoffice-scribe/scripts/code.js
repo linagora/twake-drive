@@ -5,6 +5,7 @@
   var lastSelectedText = "";
   var lastSelectedHtml = "";
   var lastEnrichedMd = "";
+  var imageCounter = 0;
   var pendingIntents = {};
   var cozyOrigin = "*"; // TODO: restrict to actual Cozy origin in production
 
@@ -1000,6 +1001,8 @@
 
     // Run callCommand pre-scan to extract enriched markdown from selection
     // initDataType:"html" is kept for trigger mechanism; data parameter is ignored
+    // Pass imageCounter via Asc.scope for stable image naming across selections
+    window.Asc.scope.imgCounter = imageCounter;
     window.Asc.plugin.callCommand(function() {
       // --- All helpers defined inside callCommand (ES5 sandbox) ---
 
@@ -1048,18 +1051,139 @@
         return parts.join("");
       }
 
+      // --- Image detection helper (MARK-01) ---
+      function getDrawingMarker(para) {
+        var drawings = para.GetAllDrawingObjects();
+        if (!drawings || drawings.length === 0) return null;
+        var markers = [];
+        var hasUnnamed = false;
+        for (var d = 0; d < drawings.length; d++) {
+          var drawing = drawings[d];
+          var name = drawing.GetName();
+          if (!name || name === "") {
+            name = "scribe-img-" + Asc.scope.imgCounter;
+            Asc.scope.imgCounter = Asc.scope.imgCounter + 1;
+            drawing.SetName(name);
+            hasUnnamed = true;
+          }
+          markers.push({ name: name });
+        }
+        // Determine block vs inline: if paragraph has ONLY drawings and no text
+        var paraText = para.GetText();
+        var trimmed = paraText.replace(/^\s+|\s+$/g, "");
+        if (trimmed.length === 0 && markers.length > 0) {
+          // Block images — one per line
+          var result = [];
+          for (var m = 0; m < markers.length; m++) {
+            result.push("![IMG:" + markers[m].name + "](placeholder)");
+          }
+          return { md: result.join("\n"), isBlock: true, hasUnnamed: hasUnnamed };
+        } else {
+          // Inline images — embed in text
+          var inlineParts = [];
+          for (var m2 = 0; m2 < markers.length; m2++) {
+            inlineParts.push("{{IMG:" + markers[m2].name + "}}");
+          }
+          return { md: inlineParts.join(""), isBlock: false, hasUnnamed: hasUnnamed };
+        }
+      }
+
+      // --- Table cell extraction helper (MARK-02) ---
+      function extractTableCells(table) {
+        var cellMd = [];
+        var rowCount = table.GetRowsCount();
+        for (var r = 0; r < rowCount; r++) {
+          var row = table.GetRow(r);
+          var cellCount = row.GetCellsCount();
+          for (var c = 0; c < cellCount; c++) {
+            var cell = table.GetCell(r, c);
+            var content = cell.GetContent();
+            // Extract text from all paragraphs in the cell
+            var cellText = "";
+            var elemCount = content.GetElementsCount();
+            for (var e = 0; e < elemCount; e++) {
+              var elem = content.GetElement(e);
+              if (elem.GetClassType && elem.GetClassType() === "paragraph") {
+                if (cellText.length > 0) cellText = cellText + " ";
+                cellText = cellText + paragraphToMarkdown(elem);
+              }
+            }
+            cellMd.push("[CELL:" + r + "," + c + "]" + cellText + "[/CELL]");
+          }
+        }
+        return cellMd.join("\n");
+      }
+
       // --- Main extraction logic ---
       var doc = Api.GetDocument();
       var range = doc.GetRangeBySelect();
       if (!range) return JSON.stringify({ text: "", md: "" });
 
       var paragraphs = range.GetAllParagraphs();
+
+      // Performance guard: fall back to simple text for large selections
+      if (paragraphs.length > 100) {
+        return JSON.stringify({ text: range.GetText(), md: "" });
+      }
+
       var mdParts = [];
       var plainParts = [];
 
+      // Detect tables in the selection range
+      var allTables = doc.GetAllTables();
+      var selStart = range.GetStartPos ? range.GetStartPos() : 0;
+      var selEnd = range.GetEndPos ? range.GetEndPos() : 999999;
+
+      // Build set of table ranges that overlap the selection
+      var tableRanges = [];
+      for (var t = 0; t < allTables.length; t++) {
+        var tbl = allTables[t];
+        var tblRange = tbl.GetRange();
+        if (!tblRange) continue;
+        var tStart = tblRange.GetStartPos();
+        var tEnd = tblRange.GetEndPos();
+        if (tEnd >= selStart && tStart <= selEnd) {
+          tableRanges.push({ table: tbl, start: tStart, end: tEnd, emitted: false });
+        }
+      }
+
       for (var p = 0; p < paragraphs.length; p++) {
         var para = paragraphs[p];
-        mdParts.push(paragraphToMarkdown(para));
+        var paraRange = para.GetRange();
+        var pStart = paraRange ? paraRange.GetStartPos() : -1;
+
+        // Check if this paragraph is inside a table
+        var insideTable = false;
+        for (var ti = 0; ti < tableRanges.length; ti++) {
+          if (pStart >= tableRanges[ti].start && pStart <= tableRanges[ti].end) {
+            insideTable = true;
+            // Emit table cells once (when first cell paragraph is encountered)
+            if (!tableRanges[ti].emitted) {
+              tableRanges[ti].emitted = true;
+              mdParts.push(extractTableCells(tableRanges[ti].table));
+            }
+            break;
+          }
+        }
+        if (insideTable) {
+          plainParts.push(para.GetText());
+          continue;
+        }
+
+        // Check for images
+        var imgMarker = getDrawingMarker(para);
+        if (imgMarker && imgMarker.isBlock) {
+          mdParts.push(imgMarker.md);
+          plainParts.push(para.GetText());
+          continue;
+        }
+
+        // Regular paragraph with possible inline images
+        var paraMarkdown = paragraphToMarkdown(para);
+        if (imgMarker && !imgMarker.isBlock) {
+          paraMarkdown = paraMarkdown + " " + imgMarker.md;
+        }
+        mdParts.push(paraMarkdown);
         plainParts.push(para.GetText());
       }
 
@@ -1067,8 +1191,10 @@
         text: plainParts.join("\n"),
         md: mdParts.join("\n\n")
       });
-    }, true, false, function(resultJson) {
-      // true = read-only (no undo point)
+    }, false, false, function(resultJson) {
+      // false = read-write (allows SetName on images for stable naming)
+      // Update module-level imageCounter from Asc.scope
+      imageCounter = window.Asc.scope.imgCounter || imageCounter;
       var result;
       try {
         result = JSON.parse(resultJson);
