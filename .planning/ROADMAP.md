@@ -109,7 +109,7 @@ Plans:
 ### Phase 22: Extraction Pipeline et Contrat Marqueurs
 **Goal**: Le plugin OO scanne proactivement la selection et envoie a Scribe du markdown enrichi contenant des marqueurs normalises pour les images et cellules de tableaux
 **Depends on**: Phase 20 (plugin infrastructure existante)
-**Requirements**: EXTR-01, EXTR-04, MARK-01, MARK-02
+**Requirements**: EXTR-01, EXTR-02, EXTR-04, MARK-01, MARK-02
 **Success Criteria** (what must be TRUE):
   1. Quand l'utilisateur selectionne du texte contenant une image, le markdown recu par Scribe contient un marqueur image (![IMG:id](placeholder) pour bloc, {{IMG:id}} pour inline) a l'emplacement correct
   2. Quand l'utilisateur selectionne du texte contenant un tableau, le markdown recu par Scribe contient des marqueurs [CELL:r,c]...[/CELL] pour chaque cellule avec le texte de la cellule
@@ -124,7 +124,7 @@ Plans:
 ### Phase 23: Image Round-Trip
 **Goal**: Les images dans la selection survivent au round-trip LLM -- le LLM voit un placeholder, l'utilisateur voit un indicateur visuel dans le preview, et l'image originale est reinjectee a sa position dans le document
 **Depends on**: Phase 22 (extraction avec marqueurs image)
-**Requirements**: EXTR-02, MARK-05, REINJ-01
+**Requirements**: MARK-05, REINJ-01
 **Success Criteria** (what must be TRUE):
   1. Dans le panneau de preview Scribe, un placeholder visuel (icone ou badge) indique l'emplacement de chaque image -- l'utilisateur sait ou l'image sera reinseree
   2. Apres injection, chaque image originale reapparait dans le document OO a la position indiquee par le marqueur dans le resultat LLM
