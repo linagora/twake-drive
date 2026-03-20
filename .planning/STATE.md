@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.5
 milestone_name: Objets Complexes et Blocs Etendus
 status: unknown
-stopped_at: Completed 23-01-PLAN.md (image marker recognition)
-last_updated: "2026-03-20T19:41:01.577Z"
+stopped_at: Completed 23-02-PLAN.md (image reinjection)
+last_updated: "2026-03-20T19:45:10.717Z"
 progress:
   total_phases: 4
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 6
-  completed_plans: 5
+  completed_plans: 6
 ---
 
 # Project State
@@ -49,6 +49,7 @@ Recent decisions affecting current work:
 - [v2.5]: Plugin-side extraction via callCommand replaces HTML-based extraction; enrichedMd priority chain preserves backward compat
 - [Phase 22]: callCommand switched to read-write for SetName on images; imageCounter via Asc.scope for stable naming
 - [Phase 23]: Inline markers normalized to standard image syntax before both preview and lexer paths
+- [Phase 23]: ToJSON/FromJSON as primary image serialization strategy over Copy() -- self-contained JSON survives document mutations
 
 ### Pending Todos (carried from v2.3)
 
@@ -70,7 +71,7 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-20T19:41:01.575Z
-Stopped at: Completed 23-01-PLAN.md (image marker recognition)
+Last session: 2026-03-20T19:45:10.714Z
+Stopped at: Completed 23-02-PLAN.md (image reinjection)
 Resume file: None
 Resume command: /gsd:execute-phase 22-02

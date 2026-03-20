@@ -24,7 +24,7 @@ Requirements for Objets Complexes et Blocs Étendus. Each maps to roadmap phases
 
 ### Réinjection
 
-- [ ] **REINJ-01**: Les marqueurs image dans le markdown retour sont remplacés par les images originales (Copy + AddDrawing)
+- [x] **REINJ-01**: Les marqueurs image dans le markdown retour sont remplacés par les images originales (Copy + AddDrawing)
 - [ ] **REINJ-02**: Les cellules traduites sont réinjectées dans le tableau OO d'origine (structure préservée : bordures, fonds, largeurs, fusions)
 - [ ] **REINJ-03**: Le formatage des cellules réinjectées applique le md (bold/italic/etc.) + font/size du 1er paragraphe source
 
@@ -100,7 +100,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | MARK-02 | Phase 22 | Complete |
 | EXTR-02 | Phase 23 | Pending |
 | MARK-05 | Phase 23 | Complete |
-| REINJ-01 | Phase 23 | Pending |
+| REINJ-01 | Phase 23 | Complete |
 | EXTR-03 | Phase 24 | Pending |
 | MARK-03 | Phase 24 | Pending |
 | MARK-04 | Phase 24 | Pending |
