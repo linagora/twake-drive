@@ -109,6 +109,13 @@
           runs.push({ text: tok.text, bold: !!parentBold, italic: !!parentItalic, strikethrough: !!parentStrikethrough, code: true, link: parentLink || null });
         } else if (tok.type === "link") {
           runs = runs.concat(flattenInline(tok.tokens || [], parentBold, parentItalic, parentStrikethrough, parentCode, tok.href));
+        } else if (tok.type === "image" && tok.text && tok.text.indexOf("IMG:scribe-img-") === 0) {
+          runs.push({
+            text: "",
+            bold: false, italic: false, strikethrough: false, code: false,
+            link: null,
+            imageMarker: tok.text.replace("IMG:", "")
+          });
         } else if (tok.tokens) {
           runs = runs.concat(flattenInline(tok.tokens, parentBold, parentItalic, parentStrikethrough, parentCode, parentLink));
         } else if (tok.text) {
@@ -150,7 +157,25 @@
     for (var i = 0; i < markedTokens.length; i++) {
       var block = markedTokens[i];
       if (block.type === "paragraph") {
-        blocks.push({ type: "paragraph", runs: flattenInline(block.tokens || [], false, false, false, false, null) });
+        var pRuns = flattenInline(block.tokens || [], false, false, false, false, null);
+        // Check if this paragraph is purely image markers (no text content)
+        var hasTextContent = false;
+        var imgMarkers = [];
+        for (var pi = 0; pi < pRuns.length; pi++) {
+          if (pRuns[pi].imageMarker) {
+            imgMarkers.push(pRuns[pi].imageMarker);
+          } else if (pRuns[pi].text && pRuns[pi].text.replace(/^\s+|\s+$/g, "").length > 0) {
+            hasTextContent = true;
+          }
+        }
+        if (!hasTextContent && imgMarkers.length > 0) {
+          // Pure image paragraph -> promote to image_placeholder block(s)
+          for (var ip = 0; ip < imgMarkers.length; ip++) {
+            blocks.push({ type: "image_placeholder", name: imgMarkers[ip] });
+          }
+        } else {
+          blocks.push({ type: "paragraph", runs: pRuns });
+        }
       } else if (block.type === "heading") {
         blocks.push({
           type: "heading",
@@ -222,6 +247,9 @@
   // a single callCommand (single undo point). Falls back to PasteHtml
   // if callCommand fails or times out.
   function buildAndInject(md, mode, fallbackHtml) {
+    // Convert inline image markers to standard markdown image syntax
+    // so marked.lexer() produces image tokens for both block and inline markers
+    md = md.replace(/\{\{IMG:(scribe-img-\d+)\}\}/g, "![IMG:$1](placeholder)");
     var tokens = window.marked.lexer(md);
     var flat = flattenTokens(tokens);
 
