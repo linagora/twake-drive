@@ -1,5 +1,35 @@
 # Milestones
 
+## v2.4 Document Builder Injection (Shipped: 2026-03-20)
+
+**Phases completed:** 3 phases, 6 plans
+**Timeline:** 4 days (2026-03-17 → 2026-03-20)
+
+**Key accomplishments:**
+- Pipeline Markdown → Document Builder API : marked tokenizer dans le plugin, flattenTokens, buildAndInject
+- Inline formatting via Builder : bold, italic, strikethrough, code spans (Courier New), hyperlinks (CreateHyperlink)
+- Block elements : headings H1-H6 (SetStyle), bullet/numbered lists (CreateNumbering avec niveaux)
+- Smart spacing : space runs via Builder API aux bornes de l'injection (replace et insert)
+- Insert mode : paragraphe séparateur + consommation d'espace trailing
+- Post-injection selection : deux stratégies (selectByRefs pour block, selectByPositions pour inline)
+- Font style preservation : lecture font/size du paragraphe source, application aux runs injectés
+- PasteHtml fallback préservé tout au long de la migration
+- Vendored marked UMD (42KB) dans le plugin pour fiabilité offline
+
+---
+
+## v2.3 Menu Responsive (Shipped: 2026-03-15)
+
+**Phases completed:** 2 phases, 3 plans
+**Timeline:** 3 days (2026-03-12 → 2026-03-15)
+
+**Key accomplishments:**
+- MUI Drawer bottom pour mobile (auto-height, drag handle, swipe-to-close)
+- Push navigation sous-menus (remplace la liste, bouton retour)
+- Prompt input pleine largeur dans le drawer
+
+---
+
 ## v2.2 Ameliorations UX (Shipped: 2026-03-11)
 
 **Phases completed:** 2 phases, 3 plans, 6 tasks

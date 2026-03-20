@@ -41,13 +41,13 @@ La chaîne de communication complète — depuis la sélection de texte dans Onl
 
 ### Active
 
-- [ ] Parser Markdown → Document Builder API dans le plugin OO (ES5, callCommand)
-- [ ] Injection inline formaté (gras, italique, listes) via Builder API
-- [ ] Injection d'images préservées depuis le document d'origine
-- [ ] Injection de tableaux avec restauration des largeurs de colonnes
-- [ ] Sélection post-injection couvrant exactement le contenu injecté
-- [ ] Smart spacing : espaces/retours à la ligne en début et fin du texte injecté
-- [ ] Stratégie de préservation du formatage d'origine perdu par l'aller-retour Markdown
+- [ ] Pré-scan sélection OO : callCommand produit du markdown enrichi avec marqueurs (images, tableaux)
+- [ ] Images round-trip : marqueurs dans le md, image ne quitte jamais OO, réinjection via Copy/AddDrawing
+- [ ] Tableaux round-trip : extraction cellule par cellule [CELL:r,c], réinjection in-place (structure préservée)
+- [ ] Contrat Scribe : syntaxe markdown pour marqueurs images (bloc/inline) et cellules tableau
+- [ ] Tableaux markdown classiques : support dans flattenTokens + buildAndInject (token table de marked)
+- [ ] Code blocks fenced : paragraphes monospace via Builder API
+- [ ] Blockquotes : paragraphes indentés via Builder API
 
 ### Out of Scope
 
@@ -58,16 +58,21 @@ La chaîne de communication complète — depuis la sélection de texte dans Onl
 - Correction grammaticale passive en temps réel (style Grammarly) — performance prohibitive
 - Streaming LLM responses — déféré à v3.x, non-streaming suffisant
 
-## Current Milestone: v2.4 Document Builder Injection
+## Current Milestone: v2.5 Objets Complexes et Blocs Étendus
 
-**Goal:** Remplacer PasteHtml par l'API Document Builder OO pour injecter le résultat Scribe avec un contrôle fin sur chaque élément, préserver le formatage d'origine, et sélectionner le contenu injecté.
+**Goal:** Préserver les objets complexes du document (images, tableaux) lors du round-trip LLM via un système de marqueurs, et compléter le support des blocs markdown (code blocks, blockquotes).
 
 **Target features:**
-- Parser Markdown → Document Builder API (ES5, dans callCommand, un seul undo point)
-- Injection progressive : inline formaté → images → tableaux → styles custom
-- Sélection post-injection du bloc injecté
-- Smart spacing (espaces/retours à la ligne en début/fin)
-- Stratégie de préservation du formatage d'origine perdu par le round-trip Markdown
+- Pré-scan de la sélection OO via callCommand → production de markdown enrichi avec marqueurs
+- Images round-trip : marqueurs ID → LLM → réinjection via Copy/AddDrawing (l'image ne quitte jamais OO)
+- Tableaux round-trip : extraction cellule par cellule [CELL:r,c] → LLM → réinjection in-place (structure préservée)
+- Contrat Scribe : syntaxe markdown imposée aux éditeurs pour marqueurs images et cellules tableau
+- Tableaux markdown classiques dans le pipeline Builder API
+- Code blocks fenced et blockquotes via Builder API
+
+## Shipped: v2.4 Document Builder Injection (2026-03-20)
+
+Pipeline Markdown → Document Builder API : tokenisation marked dans le plugin, interprétation via callCommand (single undo), inline formatting (bold/italic/strikethrough/code/links), blocs (headings, lists), smart spacing, sélection post-injection (ref-based + position-based). 3 phases, 6 plans. Voir `.planning/MILESTONES.md`.
 
 ## Shipped: v2.3 Menu Responsive (2026-03-15)
 
@@ -143,7 +148,12 @@ v1.0 : 4 jours, 10 plans. v2.0 : 3 jours, 5 plans. v2.1 : 3 jours, 6 plans. v2.2
 | Regex class stripping (ES5) | Plugin sandbox interdit DOMParser | ✓ Good — compatible ES5 |
 | PasteHtml avec smart nbsp spacing | Préserve formatage, simple à implémenter | ✓ Good — suffisant pour v2.1 |
 | react-markdown + remark-gfm pour preview | Rendu MD natif React, support tables GFM | ✓ Good — thème MUI intégré |
-| Document Builder API pour v2.4 | PasteHtml insuffisant pour images, tableaux, styles custom — Builder API donne le contrôle élément par élément | ◆ In progress |
+| Document Builder API pour v2.4 | PasteHtml insuffisant pour images, tableaux, styles custom — Builder API donne le contrôle élément par élément | ✓ Good — pipeline Builder complet |
+| Two selection strategies (v2.4) | InsertContent inline détruit les refs, positions fragiles pour blocs complexes — deux méthodes nécessaires | ✓ Good — selectByRefs + selectByPositions |
+| Plugin produit le markdown (v2.5) | Plugin OO mieux placé qu'htmlToMarkdown pour produire du md fidèle avec marqueurs OO-spécifiques | — Pending |
+| Contrat marqueurs Scribe (v2.5) | Scribe impose aux éditeurs la syntaxe pour images et cellules tableau — découplage éditeur/Scribe | — Pending |
+| Tableaux : extraction cellule par cellule (v2.5) | Envoyer un tableau md au LLM risque de casser la structure — marqueurs [CELL:r,c] plus fiables | — Pending |
+| Tableaux : format formatage = md + font/size du 1er paragraphe (v2.5) | On accepte de perdre couleurs et propriétés exotiques, on conserve bold/italic/etc. via md + police source | — Pending |
 | Ctrl+Shift+I pour raccourci Scribe | Évite conflit avec Ctrl+I (italique natif OO) | ✓ Good — aucun conflit OO |
 | mousemove gating pour hover menu | Détecte mouvement physique vs ouverture sous curseur | ✓ Good — zéro faux highlight |
 | showTooltip séparé de hovered | Opacité instantanée, tooltip retardé indépendamment | ✓ Good — UX naturelle |
@@ -151,4 +161,4 @@ v1.0 : 4 jours, 10 plans. v2.0 : 3 jours, 5 plans. v2.1 : 3 jours, 6 plans. v2.2
 | Resize via inline width/height + flex | Meilleur contrôle et clamping que CSS resize | ✓ Good — reflow contenu fiable |
 
 ---
-*Last updated: 2026-03-15 after v2.4 milestone start*
+*Last updated: 2026-03-20 after v2.5 milestone start*

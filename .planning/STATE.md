@@ -1,49 +1,41 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.4
-milestone_name: Document Builder Injection
-status: executing
-stopped_at: Completed 20-01-PLAN.md
-last_updated: "2026-03-19T17:53:49.669Z"
-last_activity: 2026-03-19 -- Completed 20-01 (Smart Spacing)
+milestone: v2.5
+milestone_name: Objets Complexes et Blocs Etendus
+status: defining_requirements
+stopped_at: Milestone started
+last_updated: "2026-03-20T00:00:00.000Z"
+last_activity: 2026-03-20 -- Milestone v2.5 started
 progress:
-  total_phases: 3
-  completed_phases: 1
-  total_plans: 6
-  completed_plans: 5
-  percent: 85
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-15)
+See: .planning/PROJECT.md (updated 2026-03-20)
 
 **Core value:** La chaine de communication complete -- depuis la selection de texte dans OnlyOffice jusqu'a la reinjection du texte modifie par l'IA -- de bout en bout, transparente pour l'utilisateur.
-**Current focus:** Phase 20 -- Injection Polish
+**Current focus:** Defining requirements for v2.5 — Objets Complexes et Blocs Etendus
 
 ## Current Position
 
-Phase: 20 of 20 (Injection Polish)
-Plan: 1 of 2 in current phase
-Status: Executing
-Last activity: 2026-03-19 -- Completed 20-01 (Smart Spacing)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-20 — Milestone v2.5 started
 
-Progress: [█████████░] 85%
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 25 (v1.0: 10, v2.0: 5, v2.1: 6, v2.2: 3, v2.3: 1)
-- v2.4 plans completed: 5/6
-
-| Phase | Plan | Duration | Tasks | Files |
-|-------|------|----------|-------|-------|
-| 18    | 01   | 3min     | 2     | 4     |
-| 19    | 01   | 1min     | 2     | 1     |
-| 19    | 02   | 2min     | 2     | 1     |
-| 20    | 01   | 4min     | 2     | 1     |
+- Total plans completed: 31 (v1.0: 10, v2.0: 5, v2.1: 6, v2.2: 3, v2.3: 1, v2.4: 6)
 
 ## Accumulated Context
 
@@ -55,16 +47,13 @@ Recent decisions affecting current work:
 - [v2.4]: "Parse outside, build inside" -- tokenize MD in plugin iframe, interpret tokens via Asc.scope in callCommand
 - [v2.4]: marked bundled in plugin code.js for tokenization
 - [v2.4]: Single undo point via single callCommand for all Builder API calls
-- [v2.4]: Post-injection selection deferred to Phase 20 (sentinel marker strategy needs spike)
 - [v2.4]: PasteHtml fallback preserved throughout migration
-- [Phase 18]: Vendored marked UMD (42KB) in plugin iframe for offline reliability
-- [Phase 19]: Heading runs skip srcFont to preserve OO built-in heading style sizing
-- [Phase 19]: Single numbering object per type (bullet/numbered) pre-scanned and reused
-- [Phase 19]: Hyperlinks use CreateHyperlink API (not styled text) for native OO Ctrl+click
-- [Phase 19]: Code spans use Courier New with srcFontSize but no srcFontFamily override
-- [Phase 20]: Space runs via Builder API for boundary spacing (not HTML entities)
-- [Phase 20]: Insert mode uses leading paragraph separator + trailing space consumption
-- [Phase 20]: Undo restores content but not selection state -- OO API limitation, deferred
+- [v2.4]: Two selection strategies (selectByRefs / selectByPositions) for inline vs block mode
+- [v2.5]: Plugin OO produces markdown (not htmlToMarkdown in Scribe) -- plugin knows OO structure best
+- [v2.5]: Scribe defines marker contract for images and table cells -- editors must comply
+- [v2.5]: Tables: cell-by-cell extraction with [CELL:r,c] markers, not raw md table to LLM
+- [v2.5]: Table cell formatting: md formatting + font/size from 1st paragraph of source cell (accept losing colors)
+- [v2.5]: Images: ID markers only, image data never sent to LLM, Copy/AddDrawing for reinsertion
 
 ### Pending Todos (carried from v2.3)
 
@@ -76,9 +65,11 @@ Recent decisions affecting current work:
 
 - Plugin code must use ES5 syntax (no const/let, no arrow functions)
 - callCommand sandbox has no DOM APIs -- parse outside, pass tokens via Asc.scope
-- Asc.scope payload size limit unknown -- test with realistic payloads in Phase 18
-- Post-insertion selection unreliable -- InsertContent does not return element refs
+- Post-insertion selection unreliable -- InsertContent does not return element refs (workaround: two strategies)
 - Redo broken after callCommand (confirmed OO bug, no fix)
+- No CloneFormatting API in OO -- must read/reapply run properties manually
+- ApiImage has no public GetSrc() -- use ToJSON/FromJSON for serialization
+- Drawing objects (images) must be wrapped in paragraph via AddDrawing, not directly in InsertContent
 
 ### Blockers/Concerns
 
@@ -86,7 +77,7 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-19
-Stopped at: Completed 20-01-PLAN.md
+Last session: 2026-03-20
+Stopped at: Milestone v2.5 started, defining requirements
 Resume file: None
-Resume command: /gsd:execute-phase 20
+Resume command: Continue with requirements definition
