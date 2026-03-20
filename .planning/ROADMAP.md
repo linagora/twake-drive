@@ -181,5 +181,5 @@ Phases execute in numeric order: 21 -> 22 -> 23 -> 24
 | 20. Injection Polish | v2.4 | 2/2 | Complete | 2026-03-20 |
 | 21. Blocs Etendus | 1/2 | Complete    | 2026-03-20 | - |
 | 22. Extraction Pipeline et Contrat Marqueurs | 2/2 | Complete    | 2026-03-20 | - |
-| 23. Image Round-Trip | 2/2 | Complete   | 2026-03-20 | - |
+| 23. Image Round-Trip | 2/2 | Complete    | 2026-03-20 | - |
 | 24. Table Round-Trip | v2.5 | 0/2 | Not started | - |
