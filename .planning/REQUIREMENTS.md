@@ -16,8 +16,8 @@ Requirements for Objets Complexes et Blocs Étendus. Each maps to roadmap phases
 
 ### Contrat Marqueurs
 
-- [ ] **MARK-01**: Scribe définit une syntaxe pour les images bloc (![IMG:id](placeholder)) et inline ({{IMG:id}})
-- [ ] **MARK-02**: Scribe définit une syntaxe pour les cellules tableau ([CELL:r,c]texte[/CELL])
+- [x] **MARK-01**: Scribe définit une syntaxe pour les images bloc (![IMG:id](placeholder)) et inline ({{IMG:id}})
+- [x] **MARK-02**: Scribe définit une syntaxe pour les cellules tableau ([CELL:r,c]texte[/CELL])
 - [ ] **MARK-03**: Scribe parse les marqueurs cellule dans la réponse LLM et valide la cohérence (nombre de cellules)
 - [ ] **MARK-04**: Scribe reconstitue un tableau markdown pour l'affichage utilisateur à partir des cellules traduites
 - [ ] **MARK-05**: Scribe affiche un placeholder visuel dans le markdown pour indiquer l'emplacement d'une image
@@ -96,8 +96,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BLK-03 | Phase 21 | Pending |
 | EXTR-01 | Phase 22 | Complete |
 | EXTR-04 | Phase 22 | Complete |
-| MARK-01 | Phase 22 | Pending |
-| MARK-02 | Phase 22 | Pending |
+| MARK-01 | Phase 22 | Complete |
+| MARK-02 | Phase 22 | Complete |
 | EXTR-02 | Phase 23 | Pending |
 | MARK-05 | Phase 23 | Pending |
 | REINJ-01 | Phase 23 | Pending |

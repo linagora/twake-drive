@@ -85,7 +85,7 @@ Full details: `.planning/milestones/v2.4-ROADMAP.md`
 **Milestone Goal:** Preserver les objets complexes du document (images, tableaux) lors du round-trip LLM via un systeme de marqueurs, et completer le support des blocs markdown (code blocks, blockquotes, tableaux markdown).
 
 - [x] **Phase 21: Blocs Etendus** - Code blocks, blockquotes et tableaux markdown dans le pipeline Builder API existant (completed 2026-03-20)
-- [ ] **Phase 22: Extraction Pipeline et Contrat Marqueurs** - Pre-scan OO produit du markdown enrichi avec marqueurs; Scribe definit la syntaxe des marqueurs
+- [x] **Phase 22: Extraction Pipeline et Contrat Marqueurs** - Pre-scan OO produit du markdown enrichi avec marqueurs; Scribe definit la syntaxe des marqueurs (completed 2026-03-20)
 - [ ] **Phase 23: Image Round-Trip** - Marqueurs image traversent le LLM; images originales reinjectees via Copy/AddDrawing
 - [ ] **Phase 24: Table Round-Trip** - Cellules extraites individuellement, traduites par le LLM, reinjectees in-place dans le tableau OO
 
@@ -180,6 +180,6 @@ Phases execute in numeric order: 21 -> 22 -> 23 -> 24
 | 19. Extended Markdown Support | v2.4 | 2/2 | Complete | 2026-03-18 |
 | 20. Injection Polish | v2.4 | 2/2 | Complete | 2026-03-20 |
 | 21. Blocs Etendus | 1/2 | Complete    | 2026-03-20 | - |
-| 22. Extraction Pipeline et Contrat Marqueurs | 1/2 | In Progress|  | - |
+| 22. Extraction Pipeline et Contrat Marqueurs | 2/2 | Complete   | 2026-03-20 | - |
 | 23. Image Round-Trip | v2.5 | 0/2 | Not started | - |
 | 24. Table Round-Trip | v2.5 | 0/2 | Not started | - |
