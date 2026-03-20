@@ -101,8 +101,43 @@ const MarkdownPreview = ({ children }) => {
     ),
     ol: ({ node, children: olChildren }) => (
       <ol style={{ margin: '4px 0', paddingLeft: '2em' }}>{olChildren}</ol>
-    )
+    ),
+    img: ({ node, alt, src, ...props }) => {
+      const isPlaceholder =
+        alt && /^IMG:scribe-img-\d+$/.test(alt) && src === 'placeholder'
+      if (isPlaceholder) {
+        return (
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 4,
+              padding: '2px 8px',
+              borderRadius: 4,
+              backgroundColor: isDark
+                ? 'rgba(255,255,255,0.1)'
+                : 'rgba(0,0,0,0.08)',
+              fontSize: '0.85em',
+              verticalAlign: 'middle'
+            }}
+          >
+            <span style={{ opacity: 0.6 }}>&#128444;</span>
+            <span style={{ opacity: 0.7 }}>{alt.replace('IMG:', '')}</span>
+          </span>
+        )
+      }
+      return <img alt={alt} src={src} {...props} />
+    }
   }
+
+  // Pre-process inline image markers to standard markdown image syntax
+  const preprocessed =
+    typeof children === 'string'
+      ? children.replace(
+          /\{\{IMG:(scribe-img-\d+)\}\}/g,
+          '![IMG:$1](placeholder)'
+        )
+      : children
 
   return (
     <div
@@ -118,7 +153,7 @@ const MarkdownPreview = ({ children }) => {
       }}
     >
       <Markdown remarkPlugins={[remarkGfm]} components={components}>
-        {children}
+        {preprocessed}
       </Markdown>
     </div>
   )
