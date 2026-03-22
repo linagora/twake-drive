@@ -49,12 +49,29 @@ Step 2 is currently impossible — we can detect that a paragraph contains drawi
 
 | Approach | Result |
 |----------|--------|
-| `GetElement(i)` checking `classType === "drawing"` | Never returned — drawings are inside runs |
-| `para.GetElements()` (plural) | Does not exist |
-| `drawing.GetParentRun()` | Does not exist |
+| `GetElement(i)` checking `classType === "drawing"` | Never returned — drawings are inside runs, not at paragraph level |
+| `para.GetElements()` (plural, as suggested by OO community) | Method does not exist in 9.3.0 |
+| `drawing.GetParentRun()` | Method does not exist |
+| `drawing.GetParentParagraph()` | Exists but gives no position info within the paragraph |
 | `drawing.GetRange()` / `drawing.GetPosition()` | Do not exist |
-| Accessing `this.Paragraph` from plugin | Property name is minified, inaccessible |
-| Empty-run heuristic | Unreliable — anchor run merges with adjacent whitespace |
+| `para.private.Content` (internal CParagraph) | `.private` property does not exist on ApiParagraph wrapper in 9.3.0 |
+| `para.Content` directly | Does not exist — wrapper is not the internal object |
+| `para.Paragraph` (known internal property name from source) | Property name is minified in production builds, inaccessible from plugins |
+| `Object.keys(para)` to discover minified property names | Crashes callCommand silently (likely due to prototype chain depth) |
+| Direct property probing (`para.ya`, `para.ab`, etc.) | Properties exist but none has a `.Content` array — the internal object is deeper |
+| `AscBuilder.ApiRun` / `AscBuilder.ApiDrawing` | `AscBuilder` exists but constructor names are minified — `ApiRun` key not found |
+| Empty-run heuristic (drawings create empty anchor runs) | Works when no whitespace is adjacent to the drawing. **Fails** when a space follows the image — the anchor run merges with the space and becomes a regular space-only run, indistinguishable from non-anchor runs |
+| Rebuilding SDK from source (non-minified concatenation) | Two chunks (min + all) share scope via Closure Compiler's `--chunk` option. Concatenating source files without the compiler breaks cross-chunk references. Both minified builds and non-minified wrapped builds fail with `ReferenceError` or `TypeError` |
+
+### Key lessons learned during exploration
+
+1. **OO's production builds use Google Closure Compiler with `--chunk`** — the SDK is split into `sdk-all-min.js` (37 core files) and `sdk-all.js` (354 common files). These are NOT independent: they share a compilation scope. Replacing one without the other, or replacing either with non-compiled sources, causes runtime errors.
+
+2. **The only reliable way to test a SDK patch is to compile from the exact source tag** (`v9.3.0.138` from `github.com/ONLYOFFICE/sdkjs`) using the same Closure Compiler pipeline. We built this via a `Dockerfile.build` that installs Java + runs `grunt compile-word`.
+
+3. **`new ApiDrawing(graphicObj)` is wrong in v9.3.0** — the codebase switched to `GetApiDrawing(graphicObj)` factory which dispatches to `ApiImage`, `ApiShape`, `ApiGroup`, etc. based on `getObjectType()`. Using the base `ApiDrawing` constructor directly produces objects where `GetName()` returns `undefined` because the type-specific wiring is missing.
+
+4. **Inline images in OO are typically in their own run** (not mixed with text in the same run). OO splits runs around drawings. So `GetInlineDrawings()` on a drawing's run typically returns `[{drawing, position: 0}]` with the surrounding text in adjacent runs. The method still correctly handles the mixed case (text + drawing in same run).
 
 ## Proposed API
 
@@ -126,17 +143,17 @@ ApiRun.prototype.GetInlineDrawings = function()
         if (para_Drawing === item.Type)
         {
             result.push({
-                drawing: new ApiDrawing(item.GraphicObj),
-                position: charIndex
+                "drawing"  : GetApiDrawing(item.GraphicObj) || new ApiDrawing(item.GraphicObj),
+                "position" : charIndex
             });
         }
-        else if (para_Text === item.Type)
+        else if (para_Text === item.Type
+              || para_Space === item.Type
+              || para_Tab === item.Type
+              || para_NewLine === item.Type)
         {
             charIndex++;
         }
-        // Other content types (para_Space, para_Tab, etc.) may also
-        // increment charIndex if they contribute to GetText() output.
-        // This needs verification against ParaRun.prototype.GetText().
     }
 
     return result;
@@ -174,11 +191,39 @@ ApiRun.prototype.GetInlineDrawings = function()
 |------|----------|-------|------|
 | `ParaDrawing` | `para_Drawing` | 0x0016 | `word/Editor/Paragraph/RunContent/Types.js:47` |
 | `CRunText` | `para_Text` | 0x0001 | `word/Editor/Paragraph/RunContent/Types.js:37` |
+| `CRunSpace` | `para_Space` | 0x0002 | `word/Editor/Paragraph/RunContent/Types.js:38` |
+| `CRunTab` | `para_Tab` | 0x0015 | `word/Editor/Paragraph/RunContent/Types.js:46` |
+| `CRunNewLine` | `para_NewLine` | 0x0010 | `word/Editor/Paragraph/RunContent/Types.js:41` |
 | `ParaRun` | `para_Run` | 0x0027 | `word/Editor/Paragraph/RunContent/Types.js:58` |
+
+### Drawing wrapping
+
+In v9.3.0, drawings must be wrapped using the `GetApiDrawing()` factory (`word/apiBuilder.js:31071`), NOT `new ApiDrawing()` directly. The factory dispatches to the correct subclass:
+
+| Object type | Wrapper class |
+|-------------|---------------|
+| `historyitem_type_ImageShape` | `ApiImage` |
+| `historyitem_type_Shape` | `ApiShape` |
+| `historyitem_type_GroupShape` | `ApiGroup` |
+| `historyitem_type_SmartArt` | `ApiSmartArt` |
+| `historyitem_type_OleObject` | `ApiOleObject` |
+| `historyitem_type_GraphicFrame` | `ApiTable` |
+| `historyitem_type_ChartSpace` | `ApiChart` |
+
+Using `new ApiDrawing()` directly produces an object where type-specific methods like `GetName()` return `undefined`.
 
 ### Character position calculation
 
-The `position` value must match the character index in the string returned by `ApiRun.GetText()`. The implementation counts `para_Text` elements before each drawing. Other content types that contribute to `GetText()` output (spaces, tabs) must also be counted — this should be verified against `ParaRun.prototype.GetText()` to ensure consistency.
+The `position` value matches the character index in the string returned by `ApiRun.GetText()`. Verified against `ParaRun.prototype.Get_Text()` (`word/Editor/Run.js:444`), the following content types contribute one character each to the text output:
+
+| Type | Constant | Character produced |
+|------|----------|--------------------|
+| `para_Text` | 0x0001 | `String.fromCharCode(item.Value)` |
+| `para_Space` | 0x0002 | `" "` |
+| `para_Tab` | 0x0015 | `" "` (or `TabSymbol` option) |
+| `para_NewLine` | 0x0010 | `" "` (or `NewLineSeparator` option) |
+
+`para_Drawing` (0x0016) produces **no character** in `GetText()` output — it is silently skipped. This is why position tracking is needed: drawings are invisible in the text string.
 
 ### Edge cases
 
