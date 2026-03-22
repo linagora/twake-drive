@@ -148,13 +148,13 @@ Plans:
 
 ### Phase 23.2: Image round-trip cleanup (INSERTED)
 
-**Goal:** [Urgent work - to be planned]
-**Requirements**: TBD
+**Goal:** Nettoyer le code plugin apres l'implementation du round-trip image -- supprimer les logs de debug, le wrapper getInlineDrawings, et verifier la coherence du code
+**Requirements**: None (inserted cleanup phase)
 **Depends on:** Phase 23
-**Plans:** 0 plans
+**Plans:** 1 plan
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 23.2 to break down)
+- [ ] 23.2-01-PLAN.md — Remove debug logs, inline getInlineDrawings wrapper, clean up oo-dev-setup.sh
 
 ### Phase 24: Table Round-Trip
 **Goal**: Les tableaux dans la selection survivent au round-trip LLM -- chaque cellule est traduite/modifiee individuellement et reinjectee dans le tableau OO original avec sa structure preservee
@@ -203,4 +203,5 @@ Phases execute in numeric order: 21 -> 22 -> 23 -> 24
 | 22. Extraction Pipeline et Contrat Marqueurs | 2/2 | Complete    | 2026-03-20 | - |
 | 23. Image Round-Trip | 2/2 | Complete    | 2026-03-20 | - |
 | 23.1 OO SDK Patch | v2.5 | 0/1 | Not started | - |
+| 23.2 Image round-trip cleanup | v2.5 | 0/1 | Not started | - |
 | 24. Table Round-Trip | v2.5 | 0/2 | Not started | - |
