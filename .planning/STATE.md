@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.5
 milestone_name: Objets Complexes et Blocs Etendus
 status: unknown
-stopped_at: Completed 23-02-PLAN.md (image reinjection)
-last_updated: "2026-03-20T19:48:52.022Z"
+stopped_at: Completed 23.2-01-PLAN.md
+last_updated: "2026-03-22T21:53:23.331Z"
 progress:
-  total_phases: 4
-  completed_phases: 3
-  total_plans: 6
-  completed_plans: 6
+  total_phases: 6
+  completed_phases: 4
+  total_plans: 8
+  completed_plans: 7
 ---
 
 # Project State
@@ -19,18 +19,18 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-20)
 
 **Core value:** La chaine de communication complete -- depuis la selection de texte dans OnlyOffice jusqu'a la reinjection du texte modifie par l'IA -- de bout en bout, transparente pour l'utilisateur.
-**Current focus:** Phase 23 — image-round-trip
+**Current focus:** Phase 23.2 — image-round-trip-cleanup
 
 ## Current Position
 
-Phase: 23 (image-round-trip) — EXECUTING
-Plan: 2 of 2
+Phase: 23.2 (image-round-trip-cleanup) — COMPLETE
+Plan: 1 of 1 (done)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 33 (v1.0: 10, v2.0: 5, v2.1: 6, v2.2: 3, v2.3: 1, v2.4: 6, v2.5: 2)
+- Total plans completed: 34 (v1.0: 10, v2.0: 5, v2.1: 6, v2.2: 3, v2.3: 1, v2.4: 6, v2.5: 3)
 
 ## Accumulated Context
 
@@ -52,6 +52,7 @@ Recent decisions affecting current work:
 - [Phase 23]: ToJSON/FromJSON as primary image serialization strategy over Copy() -- self-contained JSON survives document mutations
 - [Phase 23]: Copy() replaces ToJSON/FromJSON as primary strategy -- ToJSON loses bitmap data, Copy() preserves it
 - [Phase 23]: OO API lacks inline drawing position info -- patched sdkjs with ApiRun.GetInlineDrawings() (PR pending upstream)
+- [Phase 23.2]: Inline getInlineDrawings with ternary fallback; oo-dev-setup.sh already clean
 
 ### Roadmap Evolution
 
@@ -78,7 +79,7 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-20T19:45:10.714Z
-Stopped at: Completed 23-02-PLAN.md (image reinjection)
+Last session: 2026-03-22T21:53:23.329Z
+Stopped at: Completed 23.2-01-PLAN.md
 Resume file: None
 Resume command: /gsd:execute-phase 22-02
