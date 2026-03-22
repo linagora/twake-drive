@@ -508,6 +508,103 @@
         return cached;
       }
 
+      // --- Table round-trip: in-place cell reinjection ---
+      var tableCellsJson = Asc.scope.tableCells;
+      var tableRoundTripDone = false;
+      if (tableCellsJson) {
+        var tableCells = JSON.parse(tableCellsJson);
+        // Find the table in the current selection
+        var allTables = doc.GetAllTables();
+        var targetTable = null;
+        var tSelRange = doc.GetRangeBySelect();
+        if (tSelRange) {
+          var tSelStart = tSelRange.GetStartPos();
+          var tSelEnd = tSelRange.GetEndPos();
+          for (var t = 0; t < allTables.length; t++) {
+            var tblRange = allTables[t].GetRange();
+            if (tblRange) {
+              var ts = tblRange.GetStartPos();
+              var te = tblRange.GetEndPos();
+              if (te >= tSelStart && ts <= tSelEnd) {
+                targetTable = allTables[t];
+                break;
+              }
+            }
+          }
+        }
+
+        if (targetTable) {
+          // Read source font from first run of first paragraph in each cell
+          var cellFonts = {};  // "r,c" -> { family, size }
+          for (var ci = 0; ci < tableCells.length; ci++) {
+            var tc = tableCells[ci];
+            var fKey = tc.r + "," + tc.c;
+            var srcCell = targetTable.GetCell(tc.r, tc.c);
+            if (srcCell) {
+              var srcCellContent = srcCell.GetContent();
+              if (srcCellContent && srcCellContent.GetElementsCount() > 0) {
+                var fp = srcCellContent.GetElement(0);
+                if (fp && fp.GetElementsCount) {
+                  for (var fe = 0; fe < fp.GetElementsCount(); fe++) {
+                    var fElem = fp.GetElement(fe);
+                    if (fElem.GetClassType && fElem.GetClassType() === "run") {
+                      var fTp = fElem.GetTextPr ? fElem.GetTextPr() : null;
+                      if (fTp) {
+                        cellFonts[fKey] = {
+                          family: fTp.GetFontFamily() || null,
+                          size: fTp.GetFontSize() || null
+                        };
+                      }
+                      break;
+                    }
+                  }
+                }
+              }
+            }
+            if (!cellFonts[fKey]) {
+              cellFonts[fKey] = { family: srcFontFamily, size: srcFontSize };
+            }
+          }
+
+          // Clear and rebuild each cell with formatted runs
+          for (var ci2 = 0; ci2 < tableCells.length; ci2++) {
+            var tc2 = tableCells[ci2];
+            var cell = targetTable.GetCell(tc2.r, tc2.c);
+            if (!cell) continue;
+            cell.Clear();
+            var cc = cell.GetContent();
+            if (!cc || cc.GetElementsCount() === 0) continue;
+            var cp = cc.GetElement(0);
+            if (!cp) continue;
+
+            var cf = cellFonts[tc2.r + "," + tc2.c] || {};
+            var runs = tc2.runs || [];
+            for (var rr = 0; rr < runs.length; rr++) {
+              var run = runs[rr];
+              if (run.link) {
+                var link = Api.CreateHyperlink(run.link, run.text, "");
+                cp.AddElement(link);
+              } else {
+                var r = Api.CreateRun();
+                r.AddText(run.text);
+                if (run.bold) r.SetBold(true);
+                if (run.italic) r.SetItalic(true);
+                if (run.strikethrough) r.SetStrikeout(true);
+                if (run.code) {
+                  r.SetFontFamily("Courier New");
+                  if (cf.size) r.SetFontSize(cf.size);
+                } else {
+                  if (cf.family) r.SetFontFamily(cf.family);
+                  if (cf.size) r.SetFontSize(cf.size);
+                }
+                cp.AddElement(r);
+              }
+            }
+          }
+          tableRoundTripDone = true;
+        } // end if (targetTable)
+      } // end if (tableCellsJson)
+
       // Helper: create a space run matching surrounding font
       function makeSpaceRun() {
         var sr = Api.CreateRun();
@@ -752,6 +849,11 @@
       }
 
       if (content.length > 0) {
+        if (tableRoundTripDone) {
+          // v2.5 limitation: table cells updated in-place; skip text
+          // replacement to preserve table structure. Mixed text+table
+          // round-trip will be addressed in a future version.
+        } else {
         // Save selection start position before InsertContent (for replace mode selection)
         var preSelStart = 0;
         try {
@@ -908,6 +1010,7 @@
         } catch (e) {
           // Selection failed — content is still injected, graceful degradation
         }
+        } // end else (not tableRoundTripDone)
       }
     }, false, false, function() {
       callbackFired = true;
