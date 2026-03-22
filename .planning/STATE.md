@@ -50,6 +50,13 @@ Recent decisions affecting current work:
 - [Phase 22]: callCommand switched to read-write for SetName on images; imageCounter via Asc.scope for stable naming
 - [Phase 23]: Inline markers normalized to standard image syntax before both preview and lexer paths
 - [Phase 23]: ToJSON/FromJSON as primary image serialization strategy over Copy() -- self-contained JSON survives document mutations
+- [Phase 23]: Copy() replaces ToJSON/FromJSON as primary strategy -- ToJSON loses bitmap data, Copy() preserves it
+- [Phase 23]: OO API lacks inline drawing position info -- patched sdkjs with ApiRun.GetInlineDrawings() (PR pending upstream)
+
+### Roadmap Evolution
+
+- Phase 23.1 inserted after Phase 23: OO SDK Patch — ApiRun.GetInlineDrawings (URGENT)
+- Phase 23.2 inserted after Phase 23: Image round-trip cleanup (URGENT)
 
 ### Pending Todos (carried from v2.3)
 
