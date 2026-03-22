@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.5
 milestone_name: Objets Complexes et Blocs Etendus
 status: unknown
-stopped_at: Completed 23.2-01-PLAN.md
-last_updated: "2026-03-22T21:57:28.816Z"
+stopped_at: Completed 24-01-PLAN.md
+last_updated: "2026-03-22T22:20:54.873Z"
 progress:
   total_phases: 6
   completed_phases: 4
-  total_plans: 8
-  completed_plans: 7
+  total_plans: 10
+  completed_plans: 8
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-20)
 
 **Core value:** La chaine de communication complete -- depuis la selection de texte dans OnlyOffice jusqu'a la reinjection du texte modifie par l'IA -- de bout en bout, transparente pour l'utilisateur.
-**Current focus:** Phase 23.2 — image-round-trip-cleanup
+**Current focus:** Phase 24 — table-round-trip
 
 ## Current Position
 
-Phase: 23.2 (image-round-trip-cleanup) — COMPLETE
-Plan: 1 of 1 (done)
+Phase: 24 (table-round-trip) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -53,6 +53,7 @@ Recent decisions affecting current work:
 - [Phase 23]: Copy() replaces ToJSON/FromJSON as primary strategy -- ToJSON loses bitmap data, Copy() preserves it
 - [Phase 23]: OO API lacks inline drawing position info -- patched sdkjs with ApiRun.GetInlineDrawings() (PR pending upstream)
 - [Phase 23.2]: Inline getInlineDrawings with ternary fallback; oo-dev-setup.sh already clean
+- [Phase 24]: Dual storage: rawResult preserves cell markers for reinjection while result.text gets display-friendly pipe-table
 
 ### Roadmap Evolution
 
@@ -79,7 +80,7 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-22T21:53:23.329Z
-Stopped at: Completed 23.2-01-PLAN.md
+Last session: 2026-03-22T22:20:54.871Z
+Stopped at: Completed 24-01-PLAN.md
 Resume file: None
 Resume command: /gsd:execute-phase 22-02

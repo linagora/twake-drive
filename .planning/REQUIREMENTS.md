@@ -11,15 +11,15 @@ Requirements for Objets Complexes et Blocs Étendus. Each maps to roadmap phases
 
 - [x] **EXTR-01**: Le plugin OO scanne la sélection via callCommand et produit du markdown enrichi avec marqueurs (au lieu de htmlToMarkdown)
 - [ ] **EXTR-02**: Les images dans la sélection sont détectées, nommées (SetName), et remplacées par des marqueurs dans le markdown
-- [ ] **EXTR-03**: Les tableaux dans la sélection sont détectés, leur texte est extrait cellule par cellule au format [CELL:r,c]...[/CELL]
+- [x] **EXTR-03**: Les tableaux dans la sélection sont détectés, leur texte est extrait cellule par cellule au format [CELL:r,c]...[/CELL]
 - [x] **EXTR-04**: Le pré-scan s'exécute à chaque sélection (proactivement) et envoie le markdown enrichi à Scribe
 
 ### Contrat Marqueurs
 
 - [x] **MARK-01**: Scribe définit une syntaxe pour les images bloc (![IMG:id](placeholder)) et inline ({{IMG:id}})
 - [x] **MARK-02**: Scribe définit une syntaxe pour les cellules tableau ([CELL:r,c]texte[/CELL])
-- [ ] **MARK-03**: Scribe parse les marqueurs cellule dans la réponse LLM et valide la cohérence (nombre de cellules)
-- [ ] **MARK-04**: Scribe reconstitue un tableau markdown pour l'affichage utilisateur à partir des cellules traduites
+- [x] **MARK-03**: Scribe parse les marqueurs cellule dans la réponse LLM et valide la cohérence (nombre de cellules)
+- [x] **MARK-04**: Scribe reconstitue un tableau markdown pour l'affichage utilisateur à partir des cellules traduites
 - [x] **MARK-05**: Scribe affiche un placeholder visuel dans le markdown pour indiquer l'emplacement d'une image
 
 ### Réinjection
@@ -101,9 +101,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EXTR-02 | Phase 23 | Pending |
 | MARK-05 | Phase 23 | Complete |
 | REINJ-01 | Phase 23 | Complete |
-| EXTR-03 | Phase 24 | Pending |
-| MARK-03 | Phase 24 | Pending |
-| MARK-04 | Phase 24 | Pending |
+| EXTR-03 | Phase 24 | Complete |
+| MARK-03 | Phase 24 | Complete |
+| MARK-04 | Phase 24 | Complete |
 | REINJ-02 | Phase 24 | Pending |
 | REINJ-03 | Phase 24 | Pending |
 
