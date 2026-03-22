@@ -11,6 +11,7 @@ import { ScribeContainer } from '@/modules/views/OnlyOffice/Scribe/ScribeContain
 import { ScribeActionMenu } from '@/modules/views/OnlyOffice/Scribe/ScribeActionMenu'
 import { callScribeAI, buildMessages, deriveLoadingMessage, classifyScribeError } from '@/modules/views/OnlyOffice/Scribe/scribeAI'
 import { htmlToMarkdown, normalizeHtml } from '@/modules/views/OnlyOffice/Scribe/scribeConversion'
+import { transformCellMarkersForPreview } from '@/modules/views/OnlyOffice/Scribe/tableCellMarkers'
 import { ScribeResultPanel } from '@/modules/views/OnlyOffice/Scribe/ScribeResultPanel'
 import { isScribeDevMd } from '@/modules/views/OnlyOffice/Scribe/scribeDevMode'
 import styles from '@/modules/views/OnlyOffice/Scribe/scribe.styl'
@@ -35,6 +36,10 @@ const ScribePopover = ({ open, selectedText, selectedHtml, enrichedMd, onReplace
   const [lastAction, setLastAction] = useState(null)
   // Dev mode: store source HTML and intermediate MD for debug panels
   const [devData, setDevData] = useState({ html: '', md: '' })
+  // Raw LLM response (with cell markers) for reinjection; display version goes in result.text
+  const [rawResult, setRawResult] = useState('')
+  // Warning when cell marker count mismatches between extraction and LLM response
+  const [cellWarning, setCellWarning] = useState(null)
 
   // Drag offset for result panel repositioning
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
@@ -49,6 +54,8 @@ const ScribePopover = ({ open, selectedText, selectedHtml, enrichedMd, onReplace
       setLoadingMessage('')
       setLastAction(null)
       setDevData({ html: '', md: '' })
+      setRawResult('')
+      setCellWarning(null)
       setDragOffset({ x: 0, y: 0 })
       setPanelSize(null)
       if (abortRef.current) {
@@ -114,8 +121,11 @@ const ScribePopover = ({ open, selectedText, selectedHtml, enrichedMd, onReplace
         const messages = buildMessages(actionId, selectedText, label, Object.keys(extra).length > 0 ? extra : undefined)
         const text = await callScribeAI(client, messages, { signal: controller.signal })
 
-        // 4. Show result
-        setResult({ text, breadcrumb, error: '', canRetry: false })
+        // 4. Pre-process cell markers for preview display, keep raw for reinjection
+        const { displayMd, warning } = transformCellMarkersForPreview(text, enrichedMd)
+        setRawResult(text)
+        setCellWarning(warning)
+        setResult({ text: displayMd, breadcrumb, error: '', canRetry: false })
         setStep('result')
       } catch (err) {
         if (err.name === 'AbortError') {
@@ -142,12 +152,12 @@ const ScribePopover = ({ open, selectedText, selectedHtml, enrichedMd, onReplace
   }, [onCancel])
 
   const handleReplace = useCallback(() => {
-    onReplace(result.text)
-  }, [result.text, onReplace])
+    onReplace(rawResult || result.text)
+  }, [rawResult, result.text, onReplace])
 
   const handleInsert = useCallback(() => {
-    onInsert(result.text)
-  }, [result.text, onInsert])
+    onInsert(rawResult || result.text)
+  }, [rawResult, result.text, onInsert])
 
   const handleRetry = useCallback(() => {
     if (lastAction) {
@@ -209,6 +219,7 @@ const ScribePopover = ({ open, selectedText, selectedHtml, enrichedMd, onReplace
           resultText={result.text}
           error={result.error}
           canRetry={result.canRetry}
+          cellWarning={cellWarning}
           onRetry={handleRetry}
           onReplace={handleReplace}
           onInsert={handleInsert}

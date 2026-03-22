@@ -183,6 +183,7 @@ const ScribeResultPanel = ({
   resultText,
   error,
   canRetry,
+  cellWarning,
   onRetry,
   onReplace,
   onInsert,
@@ -427,7 +428,23 @@ const ScribeResultPanel = ({
         ...(panelSize && !devData ? { flex: 1, minHeight: 0 } : {})
       }}
     >
-      {error ? error : <MarkdownPreview>{resultText}</MarkdownPreview>}
+      {error ? error : (
+        <>
+          {cellWarning && (
+            <div style={{
+              padding: '4px 8px',
+              backgroundColor: isDark ? '#5c3a00' : '#fff3cd',
+              color: isDark ? '#ffc107' : '#856404',
+              borderRadius: 4,
+              fontSize: '0.8em',
+              marginBottom: 4
+            }}>
+              {cellWarning}
+            </div>
+          )}
+          <MarkdownPreview>{resultText}</MarkdownPreview>
+        </>
+      )}
     </div>
   )
 
@@ -572,6 +589,7 @@ ScribeResultPanel.propTypes = {
   resultText: PropTypes.string.isRequired,
   error: PropTypes.string,
   canRetry: PropTypes.bool,
+  cellWarning: PropTypes.string,
   onRetry: PropTypes.func,
   onReplace: PropTypes.func.isRequired,
   onInsert: PropTypes.func.isRequired,
@@ -596,6 +614,7 @@ ScribeResultPanel.propTypes = {
 ScribeResultPanel.defaultProps = {
   error: '',
   canRetry: false,
+  cellWarning: null,
   onRetry: undefined,
   devData: null,
   dragOffset: { x: 0, y: 0 },

@@ -76,7 +76,11 @@ function findActionConfig(actionId) {
 export function buildMessages(actionId, selectedText, label, extra) {
   // Prepend system instructions to user message (single user role)
   // to avoid issues with RAG backends that may not support the system role
-  const systemPrefix = SYSTEM_PROMPT + '\n\n'
+  let systemBase = SYSTEM_PROMPT
+  if (extra?.enrichedMd && extra.enrichedMd.includes('[CELL:')) {
+    systemBase += ' Preserve all [CELL:r,c]...[/CELL] markers exactly as-is. Only modify the text content between the opening [CELL:r,c] and closing [/CELL] tags.'
+  }
+  const systemPrefix = systemBase + '\n\n'
 
   // Prefer enrichedMd (plugin-side extraction) > htmlToMarkdown(html) > plain text
   const textForPrompt = extra?.enrichedMd || (extra?.html ? htmlToMarkdown(extra.html) : selectedText)
