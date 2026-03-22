@@ -136,6 +136,26 @@ Plans:
 - [ ] 23-01: Placeholder visuel dans le preview markdown + parsing marqueurs image
 - [ ] 23-02: Reinsertion image via Copy/AddDrawing dans buildAndInject
 
+### Phase 23.1: OO SDK Patch — ApiRun.GetInlineDrawings (INSERTED)
+
+**Goal:** Polir le patch ApiRun.GetInlineDrawings(), ajouter des tests QUnit, builder le SDK, et soumettre le PR upstream a ONLYOFFICE/sdkjs
+**Requirements**: None (inserted phase, no formal requirements)
+**Depends on:** Phase 23
+**Plans:** 1 plan
+
+Plans:
+- [ ] 23.1-01-PLAN.md — Polish implementation, add QUnit tests, build SDK, open GitHub issue + PR
+
+### Phase 23.2: Image round-trip cleanup (INSERTED)
+
+**Goal:** [Urgent work - to be planned]
+**Requirements**: TBD
+**Depends on:** Phase 23
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 23.2 to break down)
+
 ### Phase 24: Table Round-Trip
 **Goal**: Les tableaux dans la selection survivent au round-trip LLM -- chaque cellule est traduite/modifiee individuellement et reinjectee dans le tableau OO original avec sa structure preservee
 **Depends on**: Phase 22 (extraction avec marqueurs cellule), Phase 21 (ApiTable dans Builder API)
@@ -182,4 +202,5 @@ Phases execute in numeric order: 21 -> 22 -> 23 -> 24
 | 21. Blocs Etendus | 1/2 | Complete    | 2026-03-20 | - |
 | 22. Extraction Pipeline et Contrat Marqueurs | 2/2 | Complete    | 2026-03-20 | - |
 | 23. Image Round-Trip | 2/2 | Complete    | 2026-03-20 | - |
+| 23.1 OO SDK Patch | v2.5 | 0/1 | Not started | - |
 | 24. Table Round-Trip | v2.5 | 0/2 | Not started | - |
