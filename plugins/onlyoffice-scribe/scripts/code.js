@@ -422,9 +422,9 @@
         }
       }
 
-      // Pre-cache all referenced images via ToJSON BEFORE InsertContent destroys
-      // the selection. ToJSON produces self-contained JSON that survives document
-      // mutations (safer than Copy() whose internal refs may become invalid).
+      // Pre-cache all referenced images via Copy() BEFORE InsertContent destroys
+      // the selection. Copy() preserves the full image bitmap data, unlike
+      // ToJSON which only serializes structure (dimensions) but loses the fill.
       //
       // Build a name->drawing index by scanning all paragraphs in the document,
       // since ApiDocument has no GetDrawingsByName method.

@@ -45,6 +45,16 @@ else
   # This way ALL *.localhost subdomains (alice.localhost, alice2.localhost, etc.)
   # resolve correctly without needing --add-host entries for each one.
 
+  # Patched SDK: mount non-minified sdkjs word bundles with GetInlineDrawings patch
+  # (see plugins/onlyoffice-scribe/oo-api-proposal.md)
+  SDKJS_PATCHED_DIR="$(cd "$(dirname "$0")/.." && pwd)/../onlyoffice-sdkjs/word"
+  SDKJS_CONTAINER_DIR="/var/www/onlyoffice/documentserver/sdkjs/word"
+  SDKJS_VOLUMES=""
+  if [ -f "${SDKJS_PATCHED_DIR}/sdk-all-patched.js" ] && [ -f "${SDKJS_PATCHED_DIR}/sdk-all-min-patched.js" ]; then
+    echo "  Patched SDK: mounting non-minified word bundles"
+    SDKJS_VOLUMES="-v ${SDKJS_PATCHED_DIR}/sdk-all-patched.js:${SDKJS_CONTAINER_DIR}/sdk-all.js -v ${SDKJS_PATCHED_DIR}/sdk-all-min-patched.js:${SDKJS_CONTAINER_DIR}/sdk-all-min.js"
+  fi
+
   docker run -itd \
     --network=host \
     --name "${CONTAINER_NAME}" \
@@ -52,6 +62,7 @@ else
     -e DS_EXAMPLE_ENABLE=true \
     -e ALLOW_PRIVATE_IP_ADDRESS=true \
     -v "${PLUGIN_HOST_PATH}:${PLUGIN_CONTAINER_PATH}" \
+    ${SDKJS_VOLUMES} \
     "${OO_IMAGE}"
 
   echo "Container started."
