@@ -250,10 +250,42 @@
     // Convert inline image markers to standard markdown image syntax
     // so marked.lexer() produces image tokens for both block and inline markers
     md = md.replace(/\{\{IMG:(scribe-img-\d+)\}\}/g, "![IMG:$1](placeholder)");
+
+    // --- Table round-trip: extract cell markers before marked.lexer ---
+    var parsedTableCells = null;
+    var cellRegex = /\[CELL:(\d+),(\d+)\]([\s\S]*?)\[\/CELL\]/g;
+    var cellTestRegex = /\[CELL:\d+,\d+\]/;
+    if (cellTestRegex.test(md)) {
+      parsedTableCells = [];
+      var cellMatch;
+      while ((cellMatch = cellRegex.exec(md)) !== null) {
+        var cellText = cellMatch[3];
+        // Pre-flatten cell text via marked.lexer + flattenTokens (plugin scope)
+        var cellTokens = window.marked.lexer(cellText);
+        var cellBlocks = flattenTokens(cellTokens);
+        // Collect all runs from all blocks in this cell
+        var cellRuns = [];
+        for (var cb = 0; cb < cellBlocks.length; cb++) {
+          if (cellBlocks[cb].runs) {
+            for (var cr = 0; cr < cellBlocks[cb].runs.length; cr++) {
+              cellRuns.push(cellBlocks[cb].runs[cr]);
+            }
+          }
+        }
+        parsedTableCells.push({
+          r: parseInt(cellMatch[1]),
+          c: parseInt(cellMatch[2]),
+          runs: cellRuns
+        });
+      }
+      // Remove cell markers from md so marked.lexer processes only regular text
+      md = md.replace(/\[CELL:\d+,\d+\][\s\S]*?\[\/CELL\]\n?/g, "");
+    }
+
     var tokens = window.marked.lexer(md);
     var flat = flattenTokens(tokens);
 
-    if (flat.length === 0) {
+    if (flat.length === 0 && !parsedTableCells) {
       log("No blocks parsed -- falling back to PasteHtml");
       if (fallbackHtml) { pasteHtml(fallbackHtml, mode); }
       return;
@@ -263,6 +295,11 @@
     stopHidePolling();
     Asc.scope.tokens = JSON.stringify(flat);
     Asc.scope._mode = mode || "replace";
+    if (parsedTableCells) {
+      Asc.scope.tableCells = JSON.stringify(parsedTableCells);
+    } else {
+      Asc.scope.tableCells = null;
+    }
 
     var callbackFired = false;
     var fallbackTimer = setTimeout(function() {
