@@ -425,60 +425,50 @@
       // Pre-cache all referenced images via ToJSON BEFORE InsertContent destroys
       // the selection. ToJSON produces self-contained JSON that survives document
       // mutations (safer than Copy() whose internal refs may become invalid).
-      var imageCache = {};  // name -> { json: obj, copy: ApiDrawing|null }
+      //
+      // Build a name->drawing index by scanning all paragraphs in the document,
+      // since ApiDocument has no GetDrawingsByName method.
+      var drawingIndex = {};  // name -> ApiDrawing
+      var allParas = doc.GetAllParagraphs();
+      for (var dp = 0; dp < allParas.length; dp++) {
+        var dpDrawings = allParas[dp].GetAllDrawingObjects();
+        if (!dpDrawings) continue;
+        for (var dd = 0; dd < dpDrawings.length; dd++) {
+          var dpName = dpDrawings[dd].GetName();
+          if (dpName && dpName.indexOf("scribe-img-") === 0) {
+            drawingIndex[dpName] = dpDrawings[dd];
+          }
+        }
+      }
+
+      // Now Copy() only the drawings referenced by the LLM response tokens.
+      // Copy() is a deep copy that preserves image bitmap data, unlike ToJSON
+      // which only serializes structure (dimensions, position) but not the fill.
+      var imageCache = {};  // name -> ApiDrawing (copy)
       for (var ic = 0; ic < blocks.length; ic++) {
         var icBlock = blocks[ic];
         if (icBlock.type === "image_placeholder" && icBlock.name) {
-          if (!imageCache[icBlock.name]) {
-            var icFound = doc.GetDrawingsByName([icBlock.name]);
-            if (icFound && icFound.length > 0) {
-              var icJson = null;
-              try { icJson = icFound[0].ToJSON(false, false); } catch (e) {}
-              imageCache[icBlock.name] = {
-                json: icJson,
-                copy: icJson ? null : icFound[0].Copy()  // fallback to Copy if ToJSON fails
-              };
-            }
+          if (!imageCache[icBlock.name] && drawingIndex[icBlock.name]) {
+            try { imageCache[icBlock.name] = drawingIndex[icBlock.name].Copy(); } catch (e) {}
           }
         }
         // Also scan runs for inline imageMarkers
         if (icBlock.runs) {
           for (var ir = 0; ir < icBlock.runs.length; ir++) {
             var irMarker = icBlock.runs[ir].imageMarker;
-            if (irMarker && !imageCache[irMarker]) {
-              var irFound = doc.GetDrawingsByName([irMarker]);
-              if (irFound && irFound.length > 0) {
-                var irJson = null;
-                try { irJson = irFound[0].ToJSON(false, false); } catch (e) {}
-                imageCache[irMarker] = {
-                  json: irJson,
-                  copy: irJson ? null : irFound[0].Copy()
-                };
-              }
+            if (irMarker && !imageCache[irMarker] && drawingIndex[irMarker]) {
+              try { imageCache[irMarker] = drawingIndex[irMarker].Copy(); } catch (e) {}
             }
           }
         }
       }
 
       function restoreImage(name) {
-        var entry = imageCache[name];
-        if (!entry) return null;
-        if (entry.json) {
-          try { return Api.FromJSON(entry.json); } catch (e) {}
-        }
-        // Fallback: Copy() was stored (ToJSON failed), or FromJSON failed
-        if (entry.copy) {
-          var fallback = entry.copy;
-          // After first use, try to re-lookup (Copy is consumed by AddDrawing)
-          var reLookup = doc.GetDrawingsByName([name]);
-          if (reLookup && reLookup.length > 0) {
-            entry.copy = reLookup[0].Copy();
-          } else {
-            entry.copy = null;  // no more copies available
-          }
-          return fallback;
-        }
-        return null;
+        var cached = imageCache[name];
+        if (!cached) return null;
+        // Copy() is consumed by AddDrawing — make a fresh copy for next use
+        try { imageCache[name] = cached.Copy(); } catch (e) { imageCache[name] = null; }
+        return cached;
       }
 
       // Helper: create a space run matching surrounding font
@@ -1158,14 +1148,27 @@
       }
 
       function paragraphToMarkdown(para) {
-        var count = para.GetElementsCount();
         var parts = [];
+
+        // Check if paragraph has any scribe drawings (fast path)
+        var paraDrawings = para.GetAllDrawingObjects();
+        var hasScribeDrawings = false;
+        if (paraDrawings) {
+          for (var pd = 0; pd < paraDrawings.length; pd++) {
+            var pdName = paraDrawings[pd].GetName();
+            if (pdName && pdName.indexOf("scribe-img-") === 0) {
+              hasScribeDrawings = true;
+              break;
+            }
+          }
+        }
+
+        var count = para.GetElementsCount();
         for (var i = 0; i < count; i++) {
           var el = para.GetElement(i);
           var classType = el.GetClassType ? el.GetClassType() : "";
 
           if (classType === "hyperlink") {
-            // OO ApiHyperlink: GetLinkedText() = URL, child runs = display text
             var hUrl = el.GetLinkedText ? el.GetLinkedText() : "";
             var hParts = [];
             var hCount = el.GetElementsCount ? el.GetElementsCount() : 0;
@@ -1173,7 +1176,7 @@
               var hChild = el.GetElement(hi);
               hParts.push(formatRun(hChild.GetText(), hChild.GetTextPr ? hChild.GetTextPr() : null));
             }
-            var hText = hParts.length > 0 ? hParts.join("") : (el.GetDisplayedText ? el.GetDisplayedText() : "");
+            var hText = hParts.length > 0 ? hParts.join("") : "";
             if (hUrl) {
               parts.push("[" + hText + "](" + hUrl + ")");
             } else {
@@ -1181,16 +1184,58 @@
             }
           } else if (classType === "run") {
             var runText = el.GetText();
-            if (!runText || runText.length === 0) continue;
-            var tp = el.GetTextPr ? el.GetTextPr() : null;
-            parts.push(formatRun(runText, tp));
+            if (!runText || runText.length === 0) {
+              // Check for drawing-only run
+              if (hasScribeDrawings) {
+                var emptyRunDrawings = el.GetInlineDrawings ? el.GetInlineDrawings() : [];
+                for (var ed = 0; ed < emptyRunDrawings.length; ed++) {
+                  var edDrawing = emptyRunDrawings[ed].drawing;
+                  var edName = edDrawing && edDrawing.GetName ? edDrawing.GetName() : "";
+                  if (edName && edName.indexOf("scribe-img-") === 0) {
+                    parts.push("{{IMG:" + edName + "}}");
+                  }
+                }
+              }
+              continue;
+            }
+
+            // Run has text — check for inline drawings interleaved with text
+            if (hasScribeDrawings) {
+              var inlineDrawings = el.GetInlineDrawings ? el.GetInlineDrawings() : [];
+              if (inlineDrawings.length > 0) {
+                // Split text at drawing positions and interleave markers
+                var tp = el.GetTextPr ? el.GetTextPr() : null;
+                var lastPos = 0;
+                for (var id = 0; id < inlineDrawings.length; id++) {
+                  var dPos = inlineDrawings[id].position;
+                  var idDrawing = inlineDrawings[id].drawing;
+                  var dName = idDrawing && idDrawing.GetName ? idDrawing.GetName() : "";
+                  if (dPos > lastPos) {
+                    parts.push(formatRun(runText.substring(lastPos, dPos), tp));
+                  }
+                  if (dName && dName.indexOf("scribe-img-") === 0) {
+                    parts.push("{{IMG:" + dName + "}}");
+                  }
+                  lastPos = dPos;
+                }
+                if (lastPos < runText.length) {
+                  parts.push(formatRun(runText.substring(lastPos), tp));
+                }
+                continue;
+              }
+            }
+
+            // Normal text run (no drawings)
+            var tp2 = el.GetTextPr ? el.GetTextPr() : null;
+            parts.push(formatRun(runText, tp2));
           } else {
-            // Unknown element type — fallback to text
             var fallbackText = el.GetText ? el.GetText() : "";
             if (fallbackText) parts.push(escapeMarkdown(fallbackText));
           }
         }
-        return parts.join("");
+
+        var result = parts.join("");
+        return result;
       }
 
       // Detect heading level from paragraph style name
@@ -1232,7 +1277,7 @@
         for (var d = 0; d < drawings.length; d++) {
           var drawing = drawings[d];
           var name = drawing.GetName();
-          if (!name || name === "") {
+          if (!name || name.indexOf("scribe-img-") !== 0) {
             name = "scribe-img-" + Asc.scope.imgCounter;
             Asc.scope.imgCounter = Asc.scope.imgCounter + 1;
             drawing.SetName(name);
@@ -1385,11 +1430,8 @@
           listInfo = { type: listType.type, level: indentToLevel(paraIndent) };
         }
 
-        // Regular paragraph with possible inline images
+        // Regular paragraph — inline images are now handled inside paragraphToMarkdown
         var paraMarkdown = paragraphToMarkdown(para);
-        if (imgMarker && !imgMarker.isBlock) {
-          paraMarkdown = paraMarkdown + " " + imgMarker.md;
-        }
 
         // Apply heading prefix
         if (headingLvl > 0 && headingLvl <= 6) {
