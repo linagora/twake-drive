@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.5
 milestone_name: Objets Complexes et Blocs Etendus
 status: unknown
-stopped_at: Completed 24-01-PLAN.md
-last_updated: "2026-03-22T22:20:54.873Z"
+stopped_at: Completed 24-02-PLAN.md
+last_updated: "2026-03-22T22:25:04.442Z"
 progress:
   total_phases: 6
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 10
-  completed_plans: 8
+  completed_plans: 9
 ---
 
 # Project State
@@ -23,8 +23,8 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 
 ## Current Position
 
-Phase: 24 (table-round-trip) — EXECUTING
-Plan: 2 of 2
+Phase: 24 (table-round-trip) — COMPLETE
+Plan: 2 of 2 (done)
 
 ## Performance Metrics
 
@@ -54,6 +54,7 @@ Recent decisions affecting current work:
 - [Phase 23]: OO API lacks inline drawing position info -- patched sdkjs with ApiRun.GetInlineDrawings() (PR pending upstream)
 - [Phase 23.2]: Inline getInlineDrawings with ternary fallback; oo-dev-setup.sh already clean
 - [Phase 24]: Dual storage: rawResult preserves cell markers for reinjection while result.text gets display-friendly pipe-table
+- [Phase 24]: Cell text pre-flattened in plugin scope; source font per cell before Clear(); mixed content skips text replacement to preserve table (v2.5)
 
 ### Roadmap Evolution
 
@@ -80,7 +81,7 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-22T22:20:54.871Z
-Stopped at: Completed 24-01-PLAN.md
+Last session: 2026-03-22T22:25:04.439Z
+Stopped at: Completed 24-02-PLAN.md
 Resume file: None
 Resume command: /gsd:execute-phase 22-02

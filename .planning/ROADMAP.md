@@ -87,7 +87,7 @@ Full details: `.planning/milestones/v2.4-ROADMAP.md`
 - [x] **Phase 21: Blocs Etendus** - Code blocks, blockquotes et tableaux markdown dans le pipeline Builder API existant (completed 2026-03-20)
 - [x] **Phase 22: Extraction Pipeline et Contrat Marqueurs** - Pre-scan OO produit du markdown enrichi avec marqueurs; Scribe definit la syntaxe des marqueurs (completed 2026-03-20)
 - [x] **Phase 23: Image Round-Trip** - Marqueurs image traversent le LLM; images originales reinjectees via Copy/AddDrawing (completed 2026-03-20)
-- [ ] **Phase 24: Table Round-Trip** - Cellules extraites individuellement, traduites par le LLM, reinjectees in-place dans le tableau OO
+- [x] **Phase 24: Table Round-Trip** - Cellules extraites individuellement, traduites par le LLM, reinjectees in-place dans le tableau OO (completed 2026-03-22)
 
 ## Phase Details
 
@@ -204,4 +204,4 @@ Phases execute in numeric order: 21 -> 22 -> 23 -> 24
 | 23. Image Round-Trip | 2/2 | Complete    | 2026-03-20 | - |
 | 23.1 OO SDK Patch | v2.5 | 0/1 | Not started | - |
 | 23.2 Image round-trip cleanup | 1/1 | Complete    | 2026-03-22 | - |
-| 24. Table Round-Trip | 1/2 | In Progress|  | - |
+| 24. Table Round-Trip | 2/2 | Complete   | 2026-03-22 | - |
