@@ -77,8 +77,8 @@ export function buildMessages(actionId, selectedText, label, extra) {
   // Prepend system instructions to user message (single user role)
   // to avoid issues with RAG backends that may not support the system role
   let systemBase = SYSTEM_PROMPT
-  if (extra?.enrichedMd && extra.enrichedMd.includes('[CELL:')) {
-    systemBase += ' Preserve all [CELL:r,c]...[/CELL] markers exactly as-is. Only modify the text content between the opening [CELL:r,c] and closing [/CELL] tags.'
+  if (extra?.enrichedMd && (extra.enrichedMd.includes('[TABLE:') || extra.enrichedMd.includes('[CELL:'))) {
+    systemBase += ' Preserve all [TABLE:N]...[/TABLE] and [CELL:r,c]...[/CELL] markers exactly as-is. Only modify the text content between the opening [CELL:r,c] and closing [/CELL] tags. Do not add, remove, or reorder [TABLE:N] or [CELL:r,c] markers.'
   }
   const systemPrefix = systemBase + '\n\n'
 
