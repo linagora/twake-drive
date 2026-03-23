@@ -1312,7 +1312,23 @@
           }
         }
 
-        function transitionTo(wantBold, wantItalic, wantStrike, wantCode, wantUnderline) {
+        // Look ahead from index `from` to see which formats have non-empty text remaining.
+        // Returns object with bold/italic/strikethrough/code booleans.
+        function futureFormats(from) {
+          var fb = false, fi = false, fs = false, fc = false;
+          for (var k = from; k < parts.length; k++) {
+            var pk = parts[k];
+            if (pk.raw || !pk.text || pk.text.length === 0) continue;
+            if (pk.bold) fb = true;
+            if (pk.italic) fi = true;
+            if (pk.strikethrough) fs = true;
+            if (pk.code) fc = true;
+            if (fb && fi && fs && fc) break;
+          }
+          return { bold: fb, italic: fi, strikethrough: fs, code: fc };
+        }
+
+        function transitionTo(wantBold, wantItalic, wantStrike, wantCode, wantUnderline, reopenHints) {
           // Detect underline boundary crossing: underline opening or closing while
           // inner markdown formatting (bold/italic/strike/code) should persist across
           // the boundary. Since <u> is HTML and must wrap around markdown syntax,
@@ -1353,10 +1369,13 @@
             if (trailingSpace) { result += trailingSpace; trailingSpace = ""; }
             if (underlineOpening) { result += "<u>"; curUnderline = true; }
             // Reopen inner formatting that should persist (outermost to innermost)
-            if (wantItalic) { result += "*"; curItalic = true; }
-            if (wantBold) { result += "**"; curBold = true; }
-            if (wantStrike) { result += "~~"; curStrike = true; }
-            if (wantCode) { result += "`"; curCode = true; }
+            // Use reopenHints (if provided) to avoid reopening formats that have no
+            // remaining content — prevents empty markers like "****" after </u>.
+            var rh = reopenHints || { bold: wantBold, italic: wantItalic, strikethrough: wantStrike, code: wantCode };
+            if (wantItalic && rh.italic) { result += "*"; curItalic = true; }
+            if (wantBold && rh.bold) { result += "**"; curBold = true; }
+            if (wantStrike && rh.strikethrough) { result += "~~"; curStrike = true; }
+            if (wantCode && rh.code) { result += "`"; curCode = true; }
           } else {
             // No cross-boundary: simple close/open as before
             // Close markers that are ending (innermost first, underline outermost = last to close)
@@ -1418,7 +1437,21 @@
             }
           }
 
-          transitionTo(wantBold, wantItalic, wantStrike, wantCode, wantUnderline);
+          // When underline boundary is crossed with formatting that persists, compute
+          // look-ahead hints so we only reopen formats that have future content.
+          // Prevents empty markers like "****" after </u> or before <u>.
+          var hints = null;
+          if (crossBoundary) {
+            hints = futureFormats(i + 1);
+            // Current part counts too — if it has non-empty text, its formats matter
+            if (partText && partText.length > 0) {
+              if (wantBold) hints.bold = true;
+              if (wantItalic) hints.italic = true;
+              if (wantStrike) hints.strikethrough = true;
+              if (wantCode) hints.code = true;
+            }
+          }
+          transitionTo(wantBold, wantItalic, wantStrike, wantCode, wantUnderline, hints);
 
           // Emit text — with link wrapping if present
           if (part.link) {
@@ -1433,6 +1466,17 @@
 
         // Close any remaining open markers
         closeAll();
+
+        // Safety net: strip empty formatting marker pairs (no content between open/close).
+        // Can arise from boundary-crossing logic when a format has no visible text.
+        // Repeat until stable since removing one pair may expose another.
+        var prev;
+        do {
+          prev = result;
+          result = result.replace(/\*\*\*\*/g, "");   // empty bold: ****
+          result = result.replace(/~~~~/g, "");          // empty strike: ~~~~
+          result = result.replace(/``/g, "");           // empty code: ``
+        } while (result !== prev);
 
         return result;
       }
