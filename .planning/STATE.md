@@ -56,10 +56,13 @@ Recent decisions affecting current work:
 - [Phase 24]: Dual storage: rawResult preserves cell markers for reinjection while result.text gets display-friendly pipe-table
 - [Phase 24]: Cell text pre-flattened in plugin scope; source font per cell before Clear(); mixed content skips text replacement to preserve table (v2.5)
 
+- [Phase 24.1]: Rearchitecture table round-trip: clone table via ApiTable.Copy() + insert via InsertContent (supports both Replace and Insert modes). Add [TABLE:N] markers to extraction. In-place modification removed.
+
 ### Roadmap Evolution
 
 - Phase 23.1 inserted after Phase 23: OO SDK Patch — ApiRun.GetInlineDrawings (URGENT)
 - Phase 23.2 inserted after Phase 23: Image round-trip cleanup (URGENT)
+- Phase 24.1 inserted after Phase 24: Table round-trip rearchitecture — clone + InsertContent (URGENT)
 
 ### Pending Todos (carried from v2.3)
 
