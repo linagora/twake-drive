@@ -11,6 +11,7 @@ export const DOCTYPE_PHOTOS_SETTINGS = 'io.cozy.photos.settings'
 export const DOCTYPE_APPS = 'io.cozy.apps'
 export const DOCTYPE_CONTACTS = 'io.cozy.contacts'
 export const DOCTYPE_KONNECTORS = 'io.cozy.konnectors'
+export const DOCTYPE_AI_CHAT_CONVERSATIONS = 'io.cozy.ai.chat.conversations'
 export const DOCTYPE_CONTACTS_VERSION = 2
 
 export const schema = {
@@ -33,5 +34,15 @@ export const schema = {
   },
   groups: { doctype: Group.doctype },
   versions: { doctype: 'io.cozy.files.versions' },
+  conversations: {
+    doctype: DOCTYPE_AI_CHAT_CONVERSATIONS,
+    attributes: {},
+    relationships: {
+      assistant: {
+        type: 'has-one',
+        doctype: 'io.cozy.ai.chat.assistants'
+      }
+    }
+  },
   ...extraDoctypes
 }
