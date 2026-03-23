@@ -5,6 +5,7 @@
   var lastSelectedText = "";
   var lastSelectedHtml = "";
   var lastEnrichedMd = "";
+  var lastTableDocIndices = [];
   var imageCounter = 0;
   var pendingIntents = {};
   var cozyOrigin = "*"; // TODO: restrict to actual Cozy origin in production
@@ -281,9 +282,12 @@
             }
           }
         }
+        var cellR = parseInt(cellMatch[1]);
+        var cellC = parseInt(cellMatch[2]);
+        console.log("[Scribe] pre-flatten cell[" + cellR + "," + cellC + "] blocks=" + cellBlocks.length + " runs=" + cellRuns.length + " texts=" + cellRuns.map(function(r) { return JSON.stringify(r.text || "").substring(0, 30); }).join("|"));
         tableCells.push({
-          r: parseInt(cellMatch[1]),
-          c: parseInt(cellMatch[2]),
+          r: cellR,
+          c: cellC,
           runs: cellRuns
         });
       }
@@ -294,7 +298,7 @@
     md = md.replace(/\[TABLE:\d+\][\s\S]*?\[\/TABLE\]\n?/g, function(match) {
       var indexMatch = match.match(/\[TABLE:(\d+)\]/);
       var idx = indexMatch ? indexMatch[1] : "0";
-      return "__SCRIBE_TABLE_" + idx + "__\n";
+      return "SCRIBE-TABLE-" + idx + "\n";
     });
 
     var tokens = window.marked.lexer(md);
@@ -312,8 +316,10 @@
     Asc.scope._mode = mode || "replace";
     if (parsedTables.length > 0) {
       Asc.scope.parsedTables = JSON.stringify(parsedTables);
+      Asc.scope.tableDocIndices = JSON.stringify(lastTableDocIndices);
     } else {
       Asc.scope.parsedTables = null;
+      Asc.scope.tableDocIndices = null;
     }
 
     var callbackFired = false;
@@ -531,34 +537,24 @@
       var tableClones = {};  // index -> ApiTable (cloned + modified)
 
       if (parsedTables.length > 0) {
-        // Collect tables from selection in document order
+        // Find original tables by their document-level index (saved during extraction).
+        // We cannot rely on selection range here — it may have collapsed since extraction.
         var allTables = doc.GetAllTables();
-        var selRange2 = doc.GetRangeBySelect();
-        var selTables = [];  // ordered list of tables overlapping selection
-        if (selRange2) {
-          var ss2 = selRange2.GetStartPos();
-          var se2 = selRange2.GetEndPos();
-          for (var st = 0; st < allTables.length; st++) {
-            var stRange = allTables[st].GetRange();
-            if (stRange) {
-              var stStart = stRange.GetStartPos();
-              var stEnd = stRange.GetEndPos();
-              if (stEnd >= ss2 && stStart <= se2) {
-                selTables.push(allTables[st]);
-              }
-            }
-          }
-        }
+        var tableDocIndicesJson = Asc.scope.tableDocIndices;
+        var tableDocIndices = tableDocIndicesJson ? JSON.parse(tableDocIndicesJson) : [];
 
         // Clone each table, read source fonts, and modify clone cells
         for (var tci = 0; tci < parsedTables.length; tci++) {
           var ptEntry = parsedTables[tci];
           var ptIndex = ptEntry.index;
           var ptCells = ptEntry.cells;
-          var origTable = selTables[ptIndex];  // match by order
+          // Map TABLE:N index to document-level table index
+          var docIdx = tableDocIndices[ptIndex];
+          var origTable = (docIdx !== undefined && docIdx < allTables.length) ? allTables[docIdx] : null;
           if (!origTable) continue;
 
           var clone = origTable.Copy();
+          console.log("[Scribe] clone created for table " + ptIndex);
 
           // Read source font from first run of first paragraph in each cell of ORIGINAL
           var cFonts = {};
@@ -596,36 +592,24 @@
           for (var mci = 0; mci < ptCells.length; mci++) {
             var mc = ptCells[mci];
             var cloneCell = clone.GetCell(mc.r, mc.c);
+            console.log("[Scribe] cell[" + mc.r + "," + mc.c + "] cloneCell=" + !!cloneCell + " runs=" + (mc.runs ? mc.runs.length : 0));
             if (!cloneCell) continue;
-            cloneCell.Clear();
             var cloneCc = cloneCell.GetContent();
             if (!cloneCc || cloneCc.GetElementsCount() === 0) continue;
             var cloneCp = cloneCc.GetElement(0);
             if (!cloneCp) continue;
+            // Remove existing content from the paragraph instead of Clear() on the cell
+            if (cloneCp.RemoveAllElements) {
+              cloneCp.RemoveAllElements();
+            }
+            console.log("[Scribe] cell[" + mc.r + "," + mc.c + "] after RemoveAllElements: elements=" + cloneCp.GetElementsCount());
 
             var mcf = cFonts[mc.r + "," + mc.c] || {};
-            var mcRuns = mc.runs || [];
-            for (var mrr = 0; mrr < mcRuns.length; mrr++) {
-              var mRun = mcRuns[mrr];
-              if (mRun.link) {
-                var mLink = Api.CreateHyperlink(mRun.link, mRun.text, "");
-                cloneCp.AddElement(mLink);
-              } else {
-                var mr = Api.CreateRun();
-                mr.AddText(mRun.text);
-                if (mRun.bold) mr.SetBold(true);
-                if (mRun.italic) mr.SetItalic(true);
-                if (mRun.strikethrough) mr.SetStrikeout(true);
-                if (mRun.code) {
-                  mr.SetFontFamily("Courier New");
-                  if (mcf.size) mr.SetFontSize(mcf.size);
-                } else {
-                  if (mcf.family) mr.SetFontFamily(mcf.family);
-                  if (mcf.size) mr.SetFontSize(mcf.size);
-                }
-                cloneCp.AddElement(mr);
-              }
-            }
+            addRunsToParagraph(cloneCp, mc.runs || [], mcf.family, mcf.size);
+            // Verify what's in the paragraph after rebuild
+            var finalText = cloneCp.GetText ? cloneCp.GetText() : "no-GetText";
+            var finalElems = cloneCp.GetElementsCount ? cloneCp.GetElementsCount() : "?";
+            console.log("[Scribe] cell[" + mc.r + "," + mc.c + "] after rebuild: text=" + JSON.stringify(finalText).substring(0, 50) + " elements=" + finalElems);
           }
 
           tableClones[ptIndex] = clone;
@@ -633,6 +617,25 @@
       }
 
       // Helper: create a space run matching surrounding font
+      // Create a formatted hyperlink — applies bold/italic/strikethrough to child runs
+      function makeHyperlink(run) {
+        var link = Api.CreateHyperlink(run.link, run.text, "");
+        // Apply formatting to the hyperlink's child runs
+        if (run.bold || run.italic || run.strikethrough || run.code) {
+          var linkCount = link.GetElementsCount ? link.GetElementsCount() : 0;
+          for (var li = 0; li < linkCount; li++) {
+            var linkRun = link.GetElement(li);
+            if (linkRun && linkRun.GetClassType && linkRun.GetClassType() === "run") {
+              if (run.bold) linkRun.SetBold(true);
+              if (run.italic) linkRun.SetItalic(true);
+              if (run.strikethrough) linkRun.SetStrikeout(true);
+              if (run.code) linkRun.SetFontFamily("Courier New");
+            }
+          }
+        }
+        return link;
+      }
+
       function makeSpaceRun() {
         var sr = Api.CreateRun();
         sr.AddText(" ");
@@ -641,23 +644,62 @@
         return sr;
       }
 
+      // Shared function: add runs to a paragraph (used for both document paragraphs
+      // and table cells). Handles text, bold/italic/strikethrough/code, hyperlinks,
+      // and image markers (via restoreImage from image cache).
+      function addRunsToParagraph(para, runs, fontFamily, fontSize) {
+        for (var ri = 0; ri < runs.length; ri++) {
+          var run = runs[ri];
+          if (run.imageMarker) {
+            var imDrawing = restoreImage(run.imageMarker);
+            if (imDrawing) {
+              para.AddDrawing(imDrawing);
+            }
+          } else if (run.link) {
+            para.AddElement(makeHyperlink(run));
+          } else {
+            var r = Api.CreateRun();
+            r.AddText(run.text);
+            if (run.bold) r.SetBold(true);
+            if (run.italic) r.SetItalic(true);
+            if (run.strikethrough) r.SetStrikeout(true);
+            if (run.code) {
+              r.SetFontFamily("Courier New");
+              if (fontSize) r.SetFontSize(fontSize);
+            } else {
+              if (fontFamily) r.SetFontFamily(fontFamily);
+              if (fontSize) r.SetFontSize(fontSize);
+            }
+            para.AddElement(r);
+          }
+        }
+      }
+
       var content = [];
       for (var i = 0; i < blocks.length; i++) {
         var block = blocks[i];
         var isFirst = (i === 0);
         var isLast = (i === blocks.length - 1);
 
-        // Table placeholder detection: substitute cloned table for __SCRIBE_TABLE_N__
+        // Table placeholder detection: substitute cloned table for SCRIBE-TABLE-N
         if (block.type === "paragraph" && block.runs && block.runs.length === 1) {
           var plText = block.runs[0].text || "";
-          var plMatch = plText.match(/^__SCRIBE_TABLE_(\d+)__$/);
+          var plMatch = plText.match(/^SCRIBE-TABLE-(\d+)$/);
           if (plMatch) {
             var plIdx = parseInt(plMatch[1]);
+            console.log("[Scribe] TABLE placeholder detected: idx=" + plIdx + " clone exists=" + !!tableClones[plIdx] + " tableClones keys=" + (typeof tableClones === "object" ? Object.keys(tableClones).join(",") : "not-obj"));
             if (tableClones[plIdx]) {
               content.push(tableClones[plIdx]);
+              console.log("[Scribe] TABLE clone pushed to content, content.length=" + content.length);
+            } else {
+              console.log("[Scribe] TABLE clone NOT found for idx=" + plIdx);
             }
             continue;  // skip normal paragraph processing
           }
+        }
+        // DEBUG: log block types to see what we're processing
+        if (block.runs && block.runs.length === 1 && block.runs[0].text && block.runs[0].text.indexOf("SCRIBE") !== -1) {
+          console.log("[Scribe] Block with SCRIBE in text: type=" + block.type + " runs=" + block.runs.length + " text=" + JSON.stringify(block.runs[0].text));
         }
 
         if (block.type === "heading") {
@@ -665,34 +707,8 @@
           var styleName = "Heading " + block.depth;
           var headingStyle = doc.GetStyle(styleName);
           if (headingStyle) p.SetStyle(headingStyle);
-          // Prepend space run if this is the first block and needs spacing
           if (isFirst && needSpaceBefore) p.AddElement(makeSpaceRun());
-          var runs = block.runs || [];
-          for (var j = 0; j < runs.length; j++) {
-            var run = runs[j];
-            if (run.imageMarker) {
-              var imDrawing = restoreImage(run.imageMarker);
-              if (imDrawing) {
-                p.AddDrawing(imDrawing);
-              }
-            } else if (run.link) {
-              var link = Api.CreateHyperlink(run.link, run.text, "");
-              p.AddElement(link);
-            } else {
-              var r = Api.CreateRun();
-              r.AddText(run.text);
-              if (run.bold) r.SetBold(true);
-              if (run.italic) r.SetItalic(true);
-              if (run.strikethrough) r.SetStrikeout(true);
-              if (run.code) {
-                r.SetFontFamily("Courier New");
-                if (srcFontSize) r.SetFontSize(srcFontSize);
-              }
-              // Heading runs: no srcFont applied (heading style defines sizing)
-              p.AddElement(r);
-            }
-          }
-          // Append space run if this is the last block and needs spacing
+          addRunsToParagraph(p, block.runs || [], null, null);
           if (isLast && needSpaceAfter) p.AddElement(makeSpaceRun());
           content.push(p);
         } else if (block.type === "list_item") {
@@ -701,33 +717,7 @@
           var numLvl = numbering.GetLevel(block.level);
           p.SetNumbering(numLvl);
           if (isFirst && needSpaceBefore) p.AddElement(makeSpaceRun());
-          var runs = block.runs || [];
-          for (var j = 0; j < runs.length; j++) {
-            var run = runs[j];
-            if (run.imageMarker) {
-              var imDrawing = restoreImage(run.imageMarker);
-              if (imDrawing) {
-                p.AddDrawing(imDrawing);
-              }
-            } else if (run.link) {
-              var link = Api.CreateHyperlink(run.link, run.text, "");
-              p.AddElement(link);
-            } else {
-              var r = Api.CreateRun();
-              r.AddText(run.text);
-              if (run.bold) r.SetBold(true);
-              if (run.italic) r.SetItalic(true);
-              if (run.strikethrough) r.SetStrikeout(true);
-              if (run.code) {
-                r.SetFontFamily("Courier New");
-                if (srcFontSize) r.SetFontSize(srcFontSize);
-              } else if (block.type !== "heading") {
-                if (srcFontFamily) r.SetFontFamily(srcFontFamily);
-                if (srcFontSize) r.SetFontSize(srcFontSize);
-              }
-              p.AddElement(r);
-            }
-          }
+          addRunsToParagraph(p, block.runs || [], srcFontFamily, srcFontSize);
           if (isLast && needSpaceAfter) p.AddElement(makeSpaceRun());
           content.push(p);
         } else if (block.type === "code_block") {
@@ -781,27 +771,7 @@
             if (!cellContent) return;
             var cellPara = cellContent.GetElement(0);
             if (!cellPara) return;
-            for (var rr = 0; rr < runs.length; rr++) {
-              var run = runs[rr];
-              if (run.link) {
-                var link = Api.CreateHyperlink(run.link, run.text, "");
-                cellPara.AddElement(link);
-              } else {
-                var r = Api.CreateRun();
-                r.AddText(run.text);
-                if (run.bold) r.SetBold(true);
-                if (run.italic) r.SetItalic(true);
-                if (run.strikethrough) r.SetStrikeout(true);
-                if (run.code) {
-                  r.SetFontFamily("Courier New");
-                  if (srcFontSize) r.SetFontSize(srcFontSize);
-                } else {
-                  if (srcFontFamily) r.SetFontFamily(srcFontFamily);
-                  if (srcFontSize) r.SetFontSize(srcFontSize);
-                }
-                cellPara.AddElement(r);
-              }
-            }
+            addRunsToParagraph(cellPara, runs, srcFontFamily, srcFontSize);
           }
 
           // Fill header row (row 0) — bold by default
@@ -834,33 +804,7 @@
         } else if (block.type === "paragraph") {
           var p = Api.CreateParagraph();
           if (isFirst && needSpaceBefore) p.AddElement(makeSpaceRun());
-          var runs = block.runs || [];
-          for (var j = 0; j < runs.length; j++) {
-            var run = runs[j];
-            if (run.imageMarker) {
-              var imDrawing = restoreImage(run.imageMarker);
-              if (imDrawing) {
-                p.AddDrawing(imDrawing);
-              }
-            } else if (run.link) {
-              var link = Api.CreateHyperlink(run.link, run.text, "");
-              p.AddElement(link);
-            } else {
-              var r = Api.CreateRun();
-              r.AddText(run.text);
-              if (run.bold) r.SetBold(true);
-              if (run.italic) r.SetItalic(true);
-              if (run.strikethrough) r.SetStrikeout(true);
-              if (run.code) {
-                r.SetFontFamily("Courier New");
-                if (srcFontSize) r.SetFontSize(srcFontSize);
-              } else if (block.type !== "heading") {
-                if (srcFontFamily) r.SetFontFamily(srcFontFamily);
-                if (srcFontSize) r.SetFontSize(srcFontSize);
-              }
-              p.AddElement(r);
-            }
-          }
+          addRunsToParagraph(p, block.runs || [], srcFontFamily, srcFontSize);
           if (isLast && needSpaceAfter) p.AddElement(makeSpaceRun());
           content.push(p);
         } else if (block.type === "image_placeholder") {
@@ -1297,6 +1241,8 @@
       }
 
       // Format a single run element to markdown (inline styles only, no link)
+      // Used for isolated runs (headings, list items with a single run).
+      // For sequences of runs in a paragraph, use buildMarkdownFromParts().
       function formatRun(runText, tp) {
         if (!runText || runText.length === 0) return "";
         var isBold = tp ? tp.GetBold() : false;
@@ -1321,8 +1267,98 @@
         return escaped;
       }
 
+      // Build markdown from an array of annotated parts, emitting formatting
+      // markers at transitions instead of wrapping each part independently.
+      // Each part: { text, bold, italic, strikethrough, code, raw, link }
+      // - raw: text emitted as-is, closes all formatting (for image markers)
+      // - link: URL string — text is wrapped in [text](url), formatting flows through
+      function buildMarkdownFromParts(parts) {
+        var result = "";
+        var curBold = false, curItalic = false, curStrike = false, curCode = false;
+
+        function closeAll() {
+          if (curCode || curStrike || curBold || curItalic) {
+            // Move trailing whitespace after closing markers (CommonMark rule)
+            var wsMatch = result.match(/(\s+)$/);
+            var trailingSpace = "";
+            if (wsMatch) {
+              trailingSpace = wsMatch[1];
+              result = result.substring(0, result.length - trailingSpace.length);
+            }
+            if (curCode) { result += "`"; curCode = false; }
+            if (curStrike) { result += "~~"; curStrike = false; }
+            if (curBold) { result += "**"; curBold = false; }
+            if (curItalic) { result += "*"; curItalic = false; }
+            if (trailingSpace) result += trailingSpace;
+          }
+        }
+
+        function transitionTo(wantBold, wantItalic, wantStrike, wantCode) {
+          var needsClose = (curCode && !wantCode) || (curStrike && !wantStrike) ||
+                           (curBold && !wantBold) || (curItalic && !wantItalic);
+          // Before closing markers, move trailing whitespace after the closing marker
+          // (CommonMark requires no space before closing emphasis delimiter)
+          var trailingSpace = "";
+          if (needsClose) {
+            var wsMatch = result.match(/(\s+)$/);
+            if (wsMatch) {
+              trailingSpace = wsMatch[1];
+              result = result.substring(0, result.length - trailingSpace.length);
+            }
+          }
+          // Close markers that are ending (innermost first)
+          if (curCode && !wantCode) { result += "`"; curCode = false; }
+          if (curStrike && !wantStrike) { result += "~~"; curStrike = false; }
+          if (curBold && !wantBold) { result += "**"; curBold = false; }
+          if (curItalic && !wantItalic) { result += "*"; curItalic = false; }
+          // Re-add trailing whitespace after closing markers
+          if (trailingSpace) result += trailingSpace;
+          // Open markers that are starting
+          if (wantItalic && !curItalic) { result += "*"; curItalic = true; }
+          if (wantBold && !curBold) { result += "**"; curBold = true; }
+          if (wantStrike && !curStrike) { result += "~~"; curStrike = true; }
+          if (wantCode && !curCode) { result += "`"; curCode = true; }
+        }
+
+        for (var i = 0; i < parts.length; i++) {
+          var part = parts[i];
+
+          // Raw parts (image markers) — close all formatting, emit raw, continue
+          if (part.raw) {
+            closeAll();
+            result += part.text;
+            continue;
+          }
+
+          if (!part.text || part.text.length === 0) continue;
+
+          var wantBold = !!part.bold;
+          var wantItalic = !!part.italic;
+          var wantStrike = !!part.strikethrough;
+          var wantCode = !!part.code;
+
+          transitionTo(wantBold, wantItalic, wantStrike, wantCode);
+
+          // Emit text — with link wrapping if present
+          if (part.link) {
+            var linkText = wantCode ? part.text : escapeMarkdown(part.text);
+            result += "[" + linkText + "](" + part.link + ")";
+          } else if (wantCode) {
+            result += part.text;
+          } else {
+            result += escapeMarkdown(part.text);
+          }
+        }
+
+        // Close any remaining open markers
+        closeAll();
+
+        return result;
+      }
+
       function paragraphToMarkdown(para) {
-        var parts = [];
+        // Build an array of annotated parts for buildMarkdownFromParts()
+        var annotatedParts = [];
 
         // Check if paragraph has any scribe drawings (fast path)
         var paraDrawings = para.GetAllDrawingObjects();
@@ -1337,6 +1373,22 @@
           }
         }
 
+        // Helper to extract formatting flags from a text properties object
+        function getRunFlags(tp) {
+          var isBold = tp ? tp.GetBold() : false;
+          var isItalic = tp ? tp.GetItalic() : false;
+          var isStrike = tp ? tp.GetStrikeout() : false;
+          var fontFamily = tp ? tp.GetFontFamily() : null;
+          var isCode = false;
+          if (fontFamily) {
+            var ff = fontFamily.toLowerCase();
+            if (ff.indexOf("courier") !== -1 || ff.indexOf("consolas") !== -1 || ff.indexOf("mono") !== -1) {
+              isCode = true;
+            }
+          }
+          return { bold: !!isBold, italic: !!isItalic, strikethrough: !!isStrike, code: isCode };
+        }
+
         var count = para.GetElementsCount();
         for (var i = 0; i < count; i++) {
           var el = para.GetElement(i);
@@ -1344,17 +1396,27 @@
 
           if (classType === "hyperlink") {
             var hUrl = el.GetLinkedText ? el.GetLinkedText() : "";
-            var hParts = [];
+            // Collect link display text and formatting from child runs
+            var hText = "";
+            var hFlags = { bold: false, italic: false, strikethrough: false, code: false };
             var hCount = el.GetElementsCount ? el.GetElementsCount() : 0;
             for (var hi = 0; hi < hCount; hi++) {
               var hChild = el.GetElement(hi);
-              hParts.push(formatRun(hChild.GetText(), hChild.GetTextPr ? hChild.GetTextPr() : null));
+              var hChildText = hChild.GetText ? hChild.GetText() : "";
+              if (hChildText) hText += hChildText;
+              // Use formatting of first non-empty child run
+              if (hChildText && !hFlags._set) {
+                var hTp = hChild.GetTextPr ? hChild.GetTextPr() : null;
+                if (hTp) {
+                  hFlags = getRunFlags(hTp);
+                  hFlags._set = true;
+                }
+              }
             }
-            var hText = hParts.length > 0 ? hParts.join("") : "";
-            if (hUrl) {
-              parts.push("[" + hText + "](" + hUrl + ")");
-            } else {
-              parts.push(hText);
+            if (hUrl && hText) {
+              annotatedParts.push({ text: hText, link: hUrl, bold: hFlags.bold, italic: hFlags.italic, strikethrough: hFlags.strikethrough, code: hFlags.code });
+            } else if (hText) {
+              annotatedParts.push({ text: hText, bold: hFlags.bold, italic: hFlags.italic, strikethrough: hFlags.strikethrough, code: hFlags.code });
             }
           } else if (classType === "run") {
             var runText = el.GetText();
@@ -1366,50 +1428,50 @@
                   var edDrawing = emptyRunDrawings[ed].drawing;
                   var edName = edDrawing && edDrawing.GetName ? edDrawing.GetName() : "";
                   if (edName && edName.indexOf("scribe-img-") === 0) {
-                    parts.push("{{IMG:" + edName + "}}");
+                    annotatedParts.push({ text: "{{IMG:" + edName + "}}", raw: true });
                   }
                 }
               }
               continue;
             }
 
+            var flags = getRunFlags(el.GetTextPr ? el.GetTextPr() : null);
+
             // Run has text — check for inline drawings interleaved with text
             if (hasScribeDrawings) {
               var inlineDrawings = el.GetInlineDrawings ? el.GetInlineDrawings() : [];
               if (inlineDrawings.length > 0) {
-                // Split text at drawing positions and interleave markers
-                var tp = el.GetTextPr ? el.GetTextPr() : null;
                 var lastPos = 0;
                 for (var id = 0; id < inlineDrawings.length; id++) {
                   var dPos = inlineDrawings[id].position;
                   var idDrawing = inlineDrawings[id].drawing;
                   var dName = idDrawing && idDrawing.GetName ? idDrawing.GetName() : "";
                   if (dPos > lastPos) {
-                    parts.push(formatRun(runText.substring(lastPos, dPos), tp));
+                    annotatedParts.push({ text: runText.substring(lastPos, dPos), bold: flags.bold, italic: flags.italic, strikethrough: flags.strikethrough, code: flags.code });
                   }
                   if (dName && dName.indexOf("scribe-img-") === 0) {
-                    parts.push("{{IMG:" + dName + "}}");
+                    annotatedParts.push({ text: "{{IMG:" + dName + "}}", raw: true });
                   }
                   lastPos = dPos;
                 }
                 if (lastPos < runText.length) {
-                  parts.push(formatRun(runText.substring(lastPos), tp));
+                  annotatedParts.push({ text: runText.substring(lastPos), bold: flags.bold, italic: flags.italic, strikethrough: flags.strikethrough, code: flags.code });
                 }
                 continue;
               }
             }
 
             // Normal text run (no drawings)
-            var tp2 = el.GetTextPr ? el.GetTextPr() : null;
-            parts.push(formatRun(runText, tp2));
+            annotatedParts.push({ text: runText, bold: flags.bold, italic: flags.italic, strikethrough: flags.strikethrough, code: flags.code });
           } else {
             var fallbackText = el.GetText ? el.GetText() : "";
-            if (fallbackText) parts.push(escapeMarkdown(fallbackText));
+            if (fallbackText) {
+              annotatedParts.push({ text: escapeMarkdown(fallbackText), raw: true });
+            }
           }
         }
 
-        var result = parts.join("");
-        return result;
+        return buildMarkdownFromParts(annotatedParts);
       }
 
       // Detect heading level from paragraph style name
@@ -1527,6 +1589,8 @@
       var selEnd = range.GetEndPos ? range.GetEndPos() : 999999;
 
       // Build set of table ranges that overlap the selection
+      // Also record the document-level table index for each, so injection
+      // can find the same table later (selection may be lost by then).
       var tableRanges = [];
       for (var t = 0; t < allTables.length; t++) {
         var tbl = allTables[t];
@@ -1535,7 +1599,7 @@
         var tStart = tblRange.GetStartPos();
         var tEnd = tblRange.GetEndPos();
         if (tEnd >= selStart && tStart <= selEnd) {
-          tableRanges.push({ table: tbl, start: tStart, end: tEnd, emitted: false });
+          tableRanges.push({ table: tbl, start: tStart, end: tEnd, emitted: false, docIndex: t });
         }
       }
 
@@ -1565,6 +1629,7 @@
       }
 
       var tableIndex = 0;
+      var tableDocIndices = [];  // tableDocIndices[tableIndex] = doc-level index in GetAllTables()
       for (var p = 0; p < paragraphs.length; p++) {
         var para = paragraphs[p];
         var paraRange = para.GetRange();
@@ -1580,6 +1645,7 @@
               tableRanges[ti].emitted = true;
               var tableCellsMd = extractTableCells(tableRanges[ti].table);
               mdParts.push({ md: "[TABLE:" + tableIndex + "]\n" + tableCellsMd + "\n[/TABLE]", isList: false });
+              tableDocIndices.push(tableRanges[ti].docIndex);
               tableIndex = tableIndex + 1;
             }
             break;
@@ -1655,7 +1721,8 @@
 
       return JSON.stringify({
         text: plainParts.join("\n"),
-        md: mdLines.join("")
+        md: mdLines.join(""),
+        tableDocIndices: tableDocIndices
       });
     }, false, false, function(resultJson) {
       // false = read-write (allows SetName on images for stable naming)
@@ -1671,6 +1738,7 @@
 
       lastSelectedText = plainText;
       lastEnrichedMd = result.md || "";
+      lastTableDocIndices = result.tableDocIndices || [];
       lastSelectedHtml = ""; // No longer used for primary extraction
 
       if (selectionDebounceTimer) clearTimeout(selectionDebounceTimer);
