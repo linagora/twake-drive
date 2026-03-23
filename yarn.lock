@@ -11747,7 +11747,7 @@ __metadata:
     cozy-minilog: "npm:3.9.1"
     cozy-pouch-link: "npm:^60.19.0"
     cozy-realtime: "npm:^5.8.0"
-    cozy-search: "npm:^0.25.3"
+    cozy-search: "npm:^2.0.2"
     cozy-sharing: "npm:^36.3.0"
     cozy-stack-client: "npm:^60.28.0"
     cozy-tsconfig: "npm:^1.8.1"
@@ -11796,6 +11796,7 @@ __metadata:
     stylus-config-cozy-app: "npm:^0.1.0"
     twake-i18n: "npm:^0.3.4"
     typescript: "npm:4.9.5"
+    undici: "npm:^6.27.0"
     whatwg-fetch: "npm:3.0.0"
     worker-loader: "npm:2.0.0"
   languageName: unknown
@@ -12094,9 +12095,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cozy-search@npm:^0.25.3":
-  version: 0.25.3
-  resolution: "cozy-search@npm:0.25.3"
+"cozy-search@npm:^2.0.2":
+  version: 2.0.2
+  resolution: "cozy-search@npm:2.0.2"
   dependencies:
     "@assistant-ui/react": "npm:^0.12.5"
     classnames: "npm:^2.5.1"
@@ -12105,7 +12106,8 @@ __metadata:
     react-type-animation: "npm:3.2.0"
     rooks: "npm:7.14.1"
   peerDependencies:
-    cozy-client: ">=60.21.0"
+    "@linagora/twake-icons": ">=2.6.6"
+    cozy-client: ">=60.26.0"
     cozy-device-helper: ">=3.7.1"
     cozy-flags: ">=4.6.1"
     cozy-intent: ">=2.26.0"
@@ -12113,13 +12115,13 @@ __metadata:
     cozy-minilog: ">=3.3.1"
     cozy-pouch-link: 54.0.0
     cozy-realtime: ">=5.6.4"
-    cozy-ui: ">=138.1.0"
+    cozy-ui: ">=138.4.0"
     cozy-ui-plus: ">=6.0.0"
     react: ">=18.0.0"
     react-dom: ">=18.0.0"
     react-router-dom: ^6.28.0
     twake-i18n: ">=0.3.0"
-  checksum: 10/868142e32e40d19355ac89177045b6fdf3ce002f66ca50a5598daa9baa6d4f5e652ced0518e3aa87a2a931f081629ffc9415208bec50ffea55203c46158081cf
+  checksum: 10/7c29884fb346007297a6f9ff5ab086a6ff064bf6a35aee35e58ab57554c8380f247e5826fc2697a2493a9c4c8cdf4d4082fa7dd56215da4ad54ddd0b9c5cb481
   languageName: node
   linkType: hard
 
@@ -25885,7 +25887,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"undici@npm:^6.25.0":
+"undici@npm:^6.25.0, undici@npm:^6.27.0":
   version: 6.27.0
   resolution: "undici@npm:6.27.0"
   checksum: 10/30c18cdb235edf4dd36f8aa3ace1ffaf44060289a7d62ad44c33180d2d74a224015d25574812f62ce9c625b5beb1b0b766495b650fedf356aca11eed7ce2c816
