@@ -93,9 +93,7 @@ const MoreMenu = ({
               displayedFolder={displayedFolder}
               folderId={folderId}
             >
-              {!isSharedDriveRecipient && (
-                <DownloadButtonItem files={[displayedFolder]} />
-              )}
+              <DownloadButtonItem files={[displayedFolder]} />
               <MoveItem
                 displayedFolder={displayedFolder}
                 hasWriteAccess={hasWriteAccess}
