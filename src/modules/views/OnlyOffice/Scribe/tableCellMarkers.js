@@ -2,11 +2,13 @@
  * tableCellMarkers.js — Utility functions for parsing, validating, and
  * transforming [CELL:r,c]...[/CELL] markers in LLM responses.
  *
- * The OO plugin extracts table cells as markers embedded in enrichedMd.
+ * The OO plugin extracts table cells as markers embedded in enrichedMd,
+ * wrapped in [TABLE:N]...[/TABLE] blocks (0-based index per table).
  * The LLM returns text with these markers preserved. This module converts
  * them into GFM pipe-tables for preview and validates cell count coherence.
  *
- * Exports: parseCellMarkers, validateCellCount, cellsToMarkdownTable, transformCellMarkersForPreview
+ * Exports: parseCellMarkers, parseTableBlocks, validateCellCount,
+ *   validateTableCounts, cellsToMarkdownTable, transformCellMarkersForPreview
  */
 
 /**
@@ -30,7 +32,27 @@ export function parseCellMarkers(text) {
 }
 
 /**
+ * Parse [TABLE:N]...[/TABLE] blocks from a string.
+ * Each block contains [CELL:r,c]...[/CELL] markers parsed via parseCellMarkers.
+ *
+ * @param {string} text - String potentially containing TABLE blocks
+ * @returns {Array<{index: number, cells: Array<{row: number, col: number, text: string}>}>}
+ */
+export function parseTableBlocks(text) {
+  const regex = /\[TABLE:(\d+)\]([\s\S]*?)\[\/TABLE\]/g
+  const tables = []
+  let match
+  while ((match = regex.exec(text)) !== null) {
+    const index = parseInt(match[1], 10)
+    const cells = parseCellMarkers(match[2])
+    tables.push({ index, cells })
+  }
+  return tables
+}
+
+/**
  * Compare cell counts between the extraction (enrichedMd) and LLM response.
+ * Global count across all tables (backward compat).
  *
  * @param {string} extractedMd - The original enrichedMd sent to the LLM
  * @param {string} responseMd - The LLM response text
@@ -48,6 +70,48 @@ export function validateCellCount(extractedMd, responseMd) {
     valid: actualCells.length >= expectedCells.length,
     expected: expectedCells.length,
     actual: actualCells.length
+  }
+}
+
+/**
+ * Compare cell counts per table between extraction and LLM response.
+ *
+ * @param {string} extractedMd - The original enrichedMd sent to the LLM
+ * @param {string} responseMd - The LLM response text
+ * @returns {{valid: boolean, details: Array<{tableIndex: number, expected: number, actual: number}>, warning: string|null}}
+ */
+export function validateTableCounts(extractedMd, responseMd) {
+  const expectedTables = parseTableBlocks(extractedMd)
+  const actualTables = parseTableBlocks(responseMd)
+
+  if (expectedTables.length === 0) {
+    return { valid: true, details: [], warning: null }
+  }
+
+  // Build map of actual tables by index
+  const actualMap = {}
+  for (const t of actualTables) {
+    actualMap[t.index] = t.cells.length
+  }
+
+  const details = []
+  let valid = true
+  const warnings = []
+
+  for (const t of expectedTables) {
+    const actual = actualMap[t.index] !== undefined ? actualMap[t.index] : 0
+    const expected = t.cells.length
+    details.push({ tableIndex: t.index, expected, actual })
+    if (actual < expected) {
+      valid = false
+      warnings.push(`Table ${t.index}: expected ${expected} cells, got ${actual}`)
+    }
+  }
+
+  return {
+    valid,
+    details,
+    warning: warnings.length > 0 ? warnings.join('; ') : null
   }
 }
 
@@ -93,15 +157,46 @@ export function cellsToMarkdownTable(cells) {
 /**
  * Pre-process an LLM response for MarkdownPreview display.
  *
- * Replaces contiguous [CELL:r,c]...[/CELL] marker blocks with a GFM
- * pipe-table. Non-cell-marker text surrounding the block is preserved.
+ * If the text contains [TABLE:N] wrappers, each table block is replaced
+ * with its own GFM pipe-table. If it contains bare [CELL:] markers
+ * (backward compat), falls back to single-table behavior.
  *
  * @param {string} md - The LLM response text
  * @param {string} enrichedMd - The original enrichedMd (for cell count validation)
  * @returns {{displayMd: string, warning: string|null}}
  */
 export function transformCellMarkersForPreview(md, enrichedMd) {
-  if (!md || !md.includes('[CELL:')) {
+  if (!md) {
+    return { displayMd: md, warning: null }
+  }
+
+  // Multi-table path: [TABLE:N] wrappers present
+  if (md.includes('[TABLE:')) {
+    const tables = parseTableBlocks(md)
+    if (tables.length === 0) {
+      return { displayMd: md, warning: null }
+    }
+
+    // Validate per-table cell counts
+    const validation = enrichedMd
+      ? validateTableCounts(enrichedMd, md)
+      : { valid: true, details: [], warning: null }
+
+    // Replace each [TABLE:N]...[/TABLE] block with its pipe-table
+    const displayMd = md.replace(
+      /\[TABLE:\d+\]([\s\S]*?)\[\/TABLE\]/g,
+      (fullMatch, inner) => {
+        const cells = parseCellMarkers(inner)
+        if (cells.length === 0) return ''
+        return cellsToMarkdownTable(cells)
+      }
+    )
+
+    return { displayMd, warning: validation.warning }
+  }
+
+  // Backward compat: bare [CELL:] markers without [TABLE:] wrappers
+  if (!md.includes('[CELL:')) {
     return { displayMd: md, warning: null }
   }
 
@@ -123,10 +218,8 @@ export function transformCellMarkersForPreview(md, enrichedMd) {
   const table = cellsToMarkdownTable(cells)
 
   // Replace the contiguous block of cell markers with the table.
-  // Match from first [CELL: to last [/CELL], including surrounding whitespace.
   const blockRegex = /(?:\s*\[CELL:\d+,\d+\][\s\S]*?\[\/CELL\]\s*)+/g
   const displayMd = md.replace(blockRegex, match => {
-    // Preserve leading/trailing newlines for separation from surrounding text
     const leadingNewline = match.startsWith('\n') ? '\n' : ''
     const trailingNewline = match.endsWith('\n') ? '\n' : ''
     return leadingNewline + table + trailingNewline

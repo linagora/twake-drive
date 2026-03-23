@@ -1530,6 +1530,7 @@
         return 0;
       }
 
+      var tableIndex = 0;
       for (var p = 0; p < paragraphs.length; p++) {
         var para = paragraphs[p];
         var paraRange = para.GetRange();
@@ -1543,7 +1544,9 @@
             // Emit table cells once (when first cell paragraph is encountered)
             if (!tableRanges[ti].emitted) {
               tableRanges[ti].emitted = true;
-              mdParts.push({ md: extractTableCells(tableRanges[ti].table), isList: false });
+              var tableCellsMd = extractTableCells(tableRanges[ti].table);
+              mdParts.push({ md: "[TABLE:" + tableIndex + "]\n" + tableCellsMd + "\n[/TABLE]", isList: false });
+              tableIndex = tableIndex + 1;
             }
             break;
           }
