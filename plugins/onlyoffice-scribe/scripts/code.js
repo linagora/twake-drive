@@ -1394,6 +1394,30 @@
           var wantCode = !!part.code;
           var wantUnderline = !!part.underline;
 
+          // CommonMark: opening emphasis delimiters must not be followed by whitespace.
+          // If the text has leading whitespace and we're about to open markers, move
+          // the whitespace before the markers so "** text**" becomes " **text**".
+          // Also detect cross-boundary reopening: when underline opens/closes while
+          // inner formatting persists, markers close and reopen — that's also an "open".
+          var partText = part.text;
+          var leadingSpace = "";
+          var uClosing = curUnderline && !wantUnderline;
+          var uOpening = wantUnderline && !curUnderline;
+          var crossBoundary = (uClosing || uOpening) &&
+            ((curBold && wantBold) || (curItalic && wantItalic) ||
+             (curStrike && wantStrike) || (curCode && wantCode));
+          var needsOpen = (wantBold && !curBold) || (wantItalic && !curItalic) ||
+                          (wantStrike && !curStrike) || (wantCode && !curCode) ||
+                          (wantUnderline && !curUnderline) || crossBoundary;
+          if (needsOpen && !part.link) {
+            var lsMatch = partText.match(/^(\s+)/);
+            if (lsMatch && lsMatch[1].length < partText.length) {
+              leadingSpace = lsMatch[1];
+              partText = partText.substring(leadingSpace.length);
+              result += leadingSpace;
+            }
+          }
+
           transitionTo(wantBold, wantItalic, wantStrike, wantCode, wantUnderline);
 
           // Emit text — with link wrapping if present
@@ -1401,9 +1425,9 @@
             var linkText = wantCode ? part.text : escapeMarkdown(part.text);
             result += "[" + linkText + "](" + part.link + ")";
           } else if (wantCode) {
-            result += part.text;
+            result += partText;
           } else {
-            result += escapeMarkdown(part.text);
+            result += escapeMarkdown(partText);
           }
         }
 
