@@ -51,8 +51,9 @@ PasteHtml                    ← executeMethod — single undo point
 
 **Current limitations:**
 - Post-paste selection of inserted content is not implemented (OO returns inconsistent cursor positions after PasteHtml)
-- Complex objects (tables, images, colored text) are not preserved through the markdown round-trip
-- These will require building content programmatically via the Document Builder API (`Api.CreateParagraph()`, `Api.CreateRun()`, etc.) inside `callCommand`
+- Colored text is not preserved through the round-trip (bold, italic, strikethrough, code, links are preserved)
+- Nested tables (table inside a table cell) are not supported
+- Multiple tables in a single selection: supported but limited testing
 
 ### Key technical details
 

@@ -42,12 +42,12 @@ La chaîne de communication complète — depuis la sélection de texte dans Onl
 ### Active
 
 - ✓ Pré-scan sélection OO : callCommand produit du markdown enrichi avec marqueurs (images, tableaux) — v2.5 Phase 22
-- ✓ Images round-trip : marqueurs dans le md, image ne quitte jamais OO, réinjection via ToJSON/FromJSON+AddDrawing — v2.5 Phase 23
-- [ ] Tableaux round-trip : extraction cellule par cellule [CELL:r,c], réinjection in-place (structure préservée)
+- ✓ Images round-trip : marqueurs dans le md, image ne quitte jamais OO, réinjection via Copy/AddDrawing — v2.5 Phase 23
+- ✓ Tableaux round-trip : extraction cellule par cellule [TABLE:N][CELL:r,c], clone via ApiTable.Copy() + InsertContent — v2.5 Phase 24/24.1
 - ✓ Contrat Scribe : syntaxe markdown pour marqueurs images (bloc/inline) et cellules tableau — v2.5 Phase 22
-- [ ] Tableaux markdown classiques : support dans flattenTokens + buildAndInject (token table de marked)
-- [ ] Code blocks fenced : paragraphes monospace via Builder API
-- [ ] Blockquotes : paragraphes indentés via Builder API
+- ✓ Tableaux markdown classiques : support dans flattenTokens + buildAndInject (token table de marked) — v2.5 Phase 21
+- ✓ Code blocks fenced : paragraphes monospace via Builder API — v2.5 Phase 21
+- ✓ Blockquotes : paragraphes indentés via Builder API — v2.5 Phase 21
 
 ### Out of Scope
 
@@ -150,10 +150,14 @@ v1.0 : 4 jours, 10 plans. v2.0 : 3 jours, 5 plans. v2.1 : 3 jours, 6 plans. v2.2
 | react-markdown + remark-gfm pour preview | Rendu MD natif React, support tables GFM | ✓ Good — thème MUI intégré |
 | Document Builder API pour v2.4 | PasteHtml insuffisant pour images, tableaux, styles custom — Builder API donne le contrôle élément par élément | ✓ Good — pipeline Builder complet |
 | Two selection strategies (v2.4) | InsertContent inline détruit les refs, positions fragiles pour blocs complexes — deux méthodes nécessaires | ✓ Good — selectByRefs + selectByPositions |
-| Plugin produit le markdown (v2.5) | Plugin OO mieux placé qu'htmlToMarkdown pour produire du md fidèle avec marqueurs OO-spécifiques | — Pending |
-| Contrat marqueurs Scribe (v2.5) | Scribe impose aux éditeurs la syntaxe pour images et cellules tableau — découplage éditeur/Scribe | — Pending |
-| Tableaux : extraction cellule par cellule (v2.5) | Envoyer un tableau md au LLM risque de casser la structure — marqueurs [CELL:r,c] plus fiables | — Pending |
-| Tableaux : format formatage = md + font/size du 1er paragraphe (v2.5) | On accepte de perdre couleurs et propriétés exotiques, on conserve bold/italic/etc. via md + police source | — Pending |
+| Plugin produit le markdown (v2.5) | Plugin OO mieux placé qu'htmlToMarkdown pour produire du md fidèle avec marqueurs OO-spécifiques | ✓ Good — extraction enrichie fiable |
+| Contrat marqueurs Scribe (v2.5) | Scribe impose aux éditeurs la syntaxe pour images et cellules tableau — découplage éditeur/Scribe | ✓ Good — [TABLE:N][CELL:r,c] + [IMG:scribe-img-N] |
+| Tableaux : extraction cellule par cellule (v2.5) | Envoyer un tableau md au LLM risque de casser la structure — marqueurs [CELL:r,c] plus fiables | ✓ Good — LLM préserve les marqueurs |
+| Tableaux : format formatage = md + font/size du 1er paragraphe (v2.5) | On accepte de perdre couleurs et propriétés exotiques, on conserve bold/italic/etc. via md + police source | ✓ Good — formatage fidèle |
+| Tableaux : clone + InsertContent (v2.5) | La modification in-place casse le mode Insert et empêche le texte mixte — clone via ApiTable.Copy() inséré dans content[] | ✓ Good — Replace et Insert fonctionnels |
+| Images : Copy() au lieu de ToJSON (v2.5) | ToJSON perd le bitmap (image blanche), Copy() préserve le contenu | ✓ Good — images fidèles |
+| OO SDK patch GetInlineDrawings (v2.5) | L'API plugin n'expose pas la position des drawings inline — PR upstream #4868 | ⚠ Pending upstream — polyfill via SDK patché |
+| buildMarkdownFromParts (v2.5) | formatRun wrappait chaque run indépendamment → md invalide. State machine pour transitions de formatage + trailing whitespace fix (CommonMark) | ✓ Good — md valide, liens formatés |
 | Ctrl+Shift+I pour raccourci Scribe | Évite conflit avec Ctrl+I (italique natif OO) | ✓ Good — aucun conflit OO |
 | mousemove gating pour hover menu | Détecte mouvement physique vs ouverture sous curseur | ✓ Good — zéro faux highlight |
 | showTooltip séparé de hovered | Opacité instantanée, tooltip retardé indépendamment | ✓ Good — UX naturelle |
@@ -161,4 +165,4 @@ v1.0 : 4 jours, 10 plans. v2.0 : 3 jours, 5 plans. v2.1 : 3 jours, 6 plans. v2.2
 | Resize via inline width/height + flex | Meilleur contrôle et clamping que CSS resize | ✓ Good — reflow contenu fiable |
 
 ---
-*Last updated: 2026-03-20 after Phase 23 (image-round-trip) complete*
+*Last updated: 2026-03-23 after v2.5 milestone completion (Phase 24.1 — table clone+InsertContent)*
