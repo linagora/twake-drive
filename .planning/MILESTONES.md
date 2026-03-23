@@ -1,11 +1,29 @@
 # Milestones
 
+## v2.5 Objets Complexes et Blocs Etendus (Shipped: 2026-03-23)
+
+**Phases completed:** 7 phases, 12 plans
+**Timeline:** 2026-03-20 → 2026-03-23 (4 days)
+**Commits:** 49 | **LOC:** ~2,100 (code.js + tableCellMarkers.js)
+
+**Key accomplishments:**
+
+- Blocs étendus : code blocks (monospace + dark bg), blockquotes (quote style), tables markdown (ApiTable native)
+- Extraction enrichie : plugin OO scanne la sélection et produit du markdown avec marqueurs normalisés [TABLE:N][CELL:r,c] et [IMG:scribe-img-N]
+- Image round-trip : images survivent le cycle LLM via Copy() pre-cache + AddDrawing, avec badges dans le preview
+- Table round-trip : clone via ApiTable.Copy() + InsertContent mixte [paragraphes + tables], support Replace et Insert
+- OO SDK patch : ApiRun.GetInlineDrawings() — PR #4868 upstream sur ONLYOFFICE/sdkjs
+- Formatage markdown : state machine buildMarkdownFromParts pour transitions correctes + trailing whitespace CommonMark fix
+
+---
+
 ## v2.4 Document Builder Injection (Shipped: 2026-03-20)
 
 **Phases completed:** 3 phases, 6 plans
 **Timeline:** 4 days (2026-03-17 → 2026-03-20)
 
 **Key accomplishments:**
+
 - Pipeline Markdown → Document Builder API : marked tokenizer dans le plugin, flattenTokens, buildAndInject
 - Inline formatting via Builder : bold, italic, strikethrough, code spans (Courier New), hyperlinks (CreateHyperlink)
 - Block elements : headings H1-H6 (SetStyle), bullet/numbered lists (CreateNumbering avec niveaux)
@@ -24,6 +42,7 @@
 **Timeline:** 3 days (2026-03-12 → 2026-03-15)
 
 **Key accomplishments:**
+
 - MUI Drawer bottom pour mobile (auto-height, drag handle, swipe-to-close)
 - Push navigation sous-menus (remplace la liste, bouton retour)
 - Prompt input pleine largeur dans le drawer
@@ -37,6 +56,7 @@
 **Commits:** 5 | **Files modified:** 13 (+782 / -70 lines)
 
 **Key accomplishments:**
+
 - Raccourci Ctrl+Shift+I — évite le conflit avec l'italique natif OO
 - Ordre des boutons résultat corrigé — Insert à gauche, Replace à droite, Tab naturel
 - Suppression du highlight menu à l'ouverture — mousemove gating empêche les faux survols
@@ -53,6 +73,7 @@
 **Commits:** 33 | **Files modified:** 44 (+5,943 / -187 lines)
 
 **Key accomplishments:**
+
 - Extraction HTML depuis OO — GetSelectedContent avec class stripping et fallback texte brut
 - Pipeline de conversion bidirectionnelle — Turndown (HTML→MD) + marked (MD→HTML) avec nettoyage OO
 - Rendu Markdown dans le panneau de résultat — react-markdown + remark-gfm, thème MUI (dark/light)
@@ -69,6 +90,7 @@
 **Commits:** 24 | **Files modified:** 39 (+3,392 / -131 lines)
 
 **Key accomplishments:**
+
 - Intégration LLM réelle — module scribeAI avec appels API via cozy-stack POST /ai/v1/chat/completions
 - Loading UX — machine d'état 3 étapes (menu/loading/result) avec spinner et annulation AbortController
 - Gestion d'erreurs — classifyScribeError avec retry pour erreurs transitoires, messages clairs pour erreurs permanentes
@@ -84,6 +106,7 @@
 **LOC:** ~1,610 (1,207 React/Stylus + 403 OO plugin)
 
 **Key accomplishments:**
+
 - Plugin OO fonctionnel — chargé dans Docker, détection de sélection, lecture/remplacement/insertion de texte
 - Protocole postMessage cross-iframe — communication bidirectionnelle plugin ↔ Cozy Drive via cozy-bridge
 - Interface Scribe complète — menu d'actions, sous-menus, prompt libre, panneau de résultat, Replace/Insert/Cancel
@@ -92,8 +115,8 @@
 - Panneau de résultat adaptatif — dimensionnement dynamique avec transitions CSS
 
 **Known Gaps:**
+
 - Phase 4 requirements (UI-05/06/07) covered by Phases 2-3 but not formally planned/executed as phase 4
 - REQUIREMENTS.md traceability was not kept up to date during execution
 
 ---
-

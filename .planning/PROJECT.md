@@ -38,16 +38,19 @@ La chaîne de communication complète — depuis la sélection de texte dans Onl
 - ✓ Menu Scribe responsive : bottom drawer sur mobile (breakpoint isMobile cozy-ui) — v2.3
 - ✓ Navigation push pour sous-menus dans le drawer (remplace la liste, bouton retour) — v2.3
 - ✓ Prompt input adaptatif à la largeur du drawer — v2.3
+- ✓ Pré-scan sélection OO : callCommand produit du markdown enrichi avec marqueurs — v2.5
+- ✓ Images round-trip : marqueurs + Copy/AddDrawing (image ne quitte jamais OO) — v2.5
+- ✓ Tableaux round-trip : [TABLE:N][CELL:r,c] + clone ApiTable.Copy() + InsertContent — v2.5
+- ✓ Contrat marqueurs Scribe : syntaxe normalisée pour images et cellules tableau — v2.5
+- ✓ Blocs étendus : code blocks, blockquotes, tables markdown via Builder API — v2.5
+- ✓ Formatage markdown : state machine buildMarkdownFromParts pour transitions correctes — v2.5
 
 ### Active
 
-- ✓ Pré-scan sélection OO : callCommand produit du markdown enrichi avec marqueurs (images, tableaux) — v2.5 Phase 22
-- ✓ Images round-trip : marqueurs dans le md, image ne quitte jamais OO, réinjection via Copy/AddDrawing — v2.5 Phase 23
-- ✓ Tableaux round-trip : extraction cellule par cellule [TABLE:N][CELL:r,c], clone via ApiTable.Copy() + InsertContent — v2.5 Phase 24/24.1
-- ✓ Contrat Scribe : syntaxe markdown pour marqueurs images (bloc/inline) et cellules tableau — v2.5 Phase 22
-- ✓ Tableaux markdown classiques : support dans flattenTokens + buildAndInject (token table de marked) — v2.5 Phase 21
-- ✓ Code blocks fenced : paragraphes monospace via Builder API — v2.5 Phase 21
-- ✓ Blockquotes : paragraphes indentés via Builder API — v2.5 Phase 21
+- [ ] Souligné (underline) : formatage inline à supporter dans le round-trip
+- [ ] Sélections partielles de tableaux : gestion des cas où le tableau n'est pas entièrement sélectionné
+- [ ] Notes de bas de page : détection et préservation des renvois vers des notes
+- [ ] Renvois vers des parties du document : détection et préservation des cross-références
 
 ### Out of Scope
 
@@ -58,17 +61,19 @@ La chaîne de communication complète — depuis la sélection de texte dans Onl
 - Correction grammaticale passive en temps réel (style Grammarly) — performance prohibitive
 - Streaming LLM responses — déféré à v3.x, non-streaming suffisant
 
-## Current Milestone: v2.5 Objets Complexes et Blocs Étendus
+## Shipped: v2.5 Objets Complexes et Blocs Étendus (2026-03-23)
 
-**Goal:** Préserver les objets complexes du document (images, tableaux) lors du round-trip LLM via un système de marqueurs, et compléter le support des blocs markdown (code blocks, blockquotes).
+Pipeline objets complexes complet : images round-trip (Copy/AddDrawing), tableaux round-trip (clone + InsertContent), blocs étendus (code blocks, blockquotes, tables markdown). Extraction enrichie via callCommand avec marqueurs normalisés. PR upstream OO SDK #4868 (GetInlineDrawings). 7 phases, 12 plans, 49 commits. Voir `.planning/MILESTONES.md`.
+
+## Current Milestone: v2.6 Formatage Complet et Références Documentaires
+
+**Goal:** Compléter le support des formatages inline (souligné) et gérer les objets documentaires avancés (sélections partielles de tableaux, notes de bas de page, renvois vers des parties du document).
 
 **Target features:**
-- Pré-scan de la sélection OO via callCommand → production de markdown enrichi avec marqueurs
-- Images round-trip : marqueurs ID → LLM → réinjection via Copy/AddDrawing (l'image ne quitte jamais OO)
-- Tableaux round-trip : extraction cellule par cellule [CELL:r,c] → LLM → réinjection in-place (structure préservée)
-- Contrat Scribe : syntaxe markdown imposée aux éditeurs pour marqueurs images et cellules tableau
-- Tableaux markdown classiques dans le pipeline Builder API
-- Code blocks fenced et blockquotes via Builder API
+- Souligné (underline) dans le pipeline d'extraction et de réinjection
+- Sélections partielles de tableaux
+- Notes de bas de page (détection et préservation)
+- Renvois vers des parties du document (cross-références)
 
 ## Shipped: v2.4 Document Builder Injection (2026-03-20)
 
@@ -165,4 +170,4 @@ v1.0 : 4 jours, 10 plans. v2.0 : 3 jours, 5 plans. v2.1 : 3 jours, 6 plans. v2.2
 | Resize via inline width/height + flex | Meilleur contrôle et clamping que CSS resize | ✓ Good — reflow contenu fiable |
 
 ---
-*Last updated: 2026-03-23 after v2.5 milestone completion (Phase 24.1 — table clone+InsertContent)*
+*Last updated: 2026-03-23 after v2.5 milestone shipped*

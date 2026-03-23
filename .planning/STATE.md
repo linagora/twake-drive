@@ -4,7 +4,7 @@ milestone: v2.5
 milestone_name: Objets Complexes et Blocs Etendus
 status: unknown
 stopped_at: Completed 24.1-02-PLAN.md
-last_updated: "2026-03-23T14:08:02.159Z"
+last_updated: "2026-03-23T18:49:02.176Z"
 progress:
   total_phases: 7
   completed_phases: 6
