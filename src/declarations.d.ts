@@ -72,11 +72,6 @@ declare module 'cozy-client/dist/models/file' {
     extension: string
   }
   export const isFile: (file: IOCozyFile) => boolean
-  export const copy: (
-    client: import('cozy-client/types/CozyClient').CozyClient,
-    file: Partial<import('components/FolderPicker/types').File>,
-    destination: import('components/FolderPicker/types').File
-  ) => Promise<void>
   export const isDirectory: (
     file: import('components/FolderPicker/types').File
   ) => boolean

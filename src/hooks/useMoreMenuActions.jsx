@@ -52,7 +52,6 @@ export const useMoreMenuActions = file => {
   const isPDFDoc = file.mime === 'application/pdf'
   const showPrintAction = isPDFDoc && isPrintAvailable
   const isCozySharing = window.location.pathname === '/preview'
-  const isSharedDrive = window.location.href.includes('/shareddrive/')
 
   const actions = makeActions(
     [
@@ -65,7 +64,7 @@ export const useMoreMenuActions = file => {
       details,
       hr,
       moveTo,
-      !isSharedDrive && duplicateTo, // TO DO: Remove condition when duplicating is available in shared drive
+      duplicateTo,
       addToFavorites,
       removeFromFavorites,
       hr,
