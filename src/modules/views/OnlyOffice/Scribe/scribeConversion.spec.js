@@ -1,4 +1,4 @@
-import { htmlToMarkdown, markdownToHtml } from './scribeConversion'
+import { htmlToMarkdown, markdownToHtml, normalizeHtml } from './scribeConversion'
 
 describe('scribeConversion', () => {
   describe('htmlToMarkdown', () => {
@@ -68,12 +68,33 @@ describe('scribeConversion', () => {
       expect(md.split('\n').filter(l => l.trim().startsWith('-'))).toHaveLength(2)
     })
 
+    it('preserves underline tags through htmlToMarkdown', () => {
+      const html = '<u>underlined</u>'
+      expect(htmlToMarkdown(html)).toBe('<u>underlined</u>')
+    })
+
+    it('preserves bold inside underline through htmlToMarkdown', () => {
+      const html = '<u><strong>bold underlined</strong></u>'
+      const md = htmlToMarkdown(html)
+      expect(md).toContain('<u>')
+      expect(md).toContain('</u>')
+      expect(md).toContain('**bold underlined**')
+    })
+
     it('converts GFM tables', () => {
       const html =
         '<table><thead><tr><th>A</th><th>B</th></tr></thead><tbody><tr><td>1</td><td>2</td></tr></tbody></table>'
       const md = htmlToMarkdown(html)
       expect(md).toContain('| A | B |')
       expect(md).toContain('| 1 | 2 |')
+    })
+  })
+
+  describe('normalizeHtml', () => {
+    it('merges adjacent underline tags', () => {
+      const html = '<u>hello</u><u> world</u>'
+      const result = normalizeHtml(html)
+      expect(result).toBe('<u>hello world</u>')
     })
   })
 

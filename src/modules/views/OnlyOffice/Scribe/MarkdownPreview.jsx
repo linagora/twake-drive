@@ -1,6 +1,7 @@
 import React from 'react'
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import rehypeRaw from 'rehype-raw'
 import { useTheme } from 'cozy-ui/transpiled/react/styles'
 
 import styles from '@/modules/views/OnlyOffice/Scribe/scribe.styl'
@@ -152,7 +153,7 @@ const MarkdownPreview = ({ children }) => {
         fontFamily: 'inherit'
       }}
     >
-      <Markdown remarkPlugins={[remarkGfm]} components={components}>
+      <Markdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]} components={components}>
         {preprocessed}
       </Markdown>
     </div>

@@ -216,6 +216,14 @@ function createTurndownService() {
     }
   })
 
+  // Preserve <u> tags through Turndown conversion (Turndown strips unknown HTML by default)
+  td.addRule('underline', {
+    filter: 'u',
+    replacement(content) {
+      return '<u>' + content + '</u>'
+    }
+  })
+
   // Blank paragraph rule: Office-style editors use <p>&nbsp;</p> for empty lines
   td.addRule('blankParagraph', {
     filter(node) {
