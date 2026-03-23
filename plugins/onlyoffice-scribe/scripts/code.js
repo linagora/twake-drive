@@ -101,12 +101,14 @@
         tokenizer: function(src) {
           var match = src.match(/^<u>([\s\S]*?)<\/u>/);
           if (match) {
-            return {
+            var token = {
               type: "underline",
               raw: match[0],
               text: match[1],
               tokens: []
             };
+            this.lexer.inlineTokens(match[1], token.tokens);
+            return token;
           }
         },
         childTokens: ["tokens"],
