@@ -1313,9 +1313,23 @@
         }
 
         function transitionTo(wantBold, wantItalic, wantStrike, wantCode, wantUnderline) {
+          // Detect underline boundary crossing: underline opening or closing while
+          // inner markdown formatting (bold/italic/strike/code) should persist across
+          // the boundary. Since <u> is HTML and must wrap around markdown syntax,
+          // we must close inner formatting at the boundary and reopen it after.
+          var underlineClosing = curUnderline && !wantUnderline;
+          var underlineOpening = wantUnderline && !curUnderline;
+          // Inner formats that are currently open and should stay open across underline boundary
+          var saveBold = curBold && wantBold;
+          var saveItalic = curItalic && wantItalic;
+          var saveStrike = curStrike && wantStrike;
+          var saveCode = curCode && wantCode;
+          var hasCrossBoundary = (underlineClosing || underlineOpening) &&
+                                (saveBold || saveItalic || saveStrike || saveCode);
+
           var needsClose = (curCode && !wantCode) || (curStrike && !wantStrike) ||
                            (curBold && !wantBold) || (curItalic && !wantItalic) ||
-                           (curUnderline && !wantUnderline);
+                           (curUnderline && !wantUnderline) || hasCrossBoundary;
           // Before closing markers, move trailing whitespace after the closing marker
           // (CommonMark requires no space before closing emphasis delimiter)
           var trailingSpace = "";
@@ -1326,20 +1340,40 @@
               result = result.substring(0, result.length - trailingSpace.length);
             }
           }
-          // Close markers that are ending (innermost first, underline outermost = last to close)
-          if (curCode && !wantCode) { result += "`"; curCode = false; }
-          if (curStrike && !wantStrike) { result += "~~"; curStrike = false; }
-          if (curBold && !wantBold) { result += "**"; curBold = false; }
-          if (curItalic && !wantItalic) { result += "*"; curItalic = false; }
-          if (curUnderline && !wantUnderline) { result += "</u>"; curUnderline = false; }
-          // Re-add trailing whitespace after closing markers
-          if (trailingSpace) result += trailingSpace;
-          // Open markers that are starting (underline outermost = first to open)
-          if (wantUnderline && !curUnderline) { result += "<u>"; curUnderline = true; }
-          if (wantItalic && !curItalic) { result += "*"; curItalic = true; }
-          if (wantBold && !curBold) { result += "**"; curBold = true; }
-          if (wantStrike && !curStrike) { result += "~~"; curStrike = true; }
-          if (wantCode && !curCode) { result += "`"; curCode = true; }
+
+          if (hasCrossBoundary) {
+            // Close ALL inner markdown formatting first (innermost to outermost)
+            if (curCode) { result += "`"; curCode = false; }
+            if (curStrike) { result += "~~"; curStrike = false; }
+            if (curBold) { result += "**"; curBold = false; }
+            if (curItalic) { result += "*"; curItalic = false; }
+            // Now close/open the underline boundary
+            if (underlineClosing) { result += "</u>"; curUnderline = false; }
+            // Re-add trailing whitespace after closing markers
+            if (trailingSpace) { result += trailingSpace; trailingSpace = ""; }
+            if (underlineOpening) { result += "<u>"; curUnderline = true; }
+            // Reopen inner formatting that should persist (outermost to innermost)
+            if (wantItalic) { result += "*"; curItalic = true; }
+            if (wantBold) { result += "**"; curBold = true; }
+            if (wantStrike) { result += "~~"; curStrike = true; }
+            if (wantCode) { result += "`"; curCode = true; }
+          } else {
+            // No cross-boundary: simple close/open as before
+            // Close markers that are ending (innermost first, underline outermost = last to close)
+            if (curCode && !wantCode) { result += "`"; curCode = false; }
+            if (curStrike && !wantStrike) { result += "~~"; curStrike = false; }
+            if (curBold && !wantBold) { result += "**"; curBold = false; }
+            if (curItalic && !wantItalic) { result += "*"; curItalic = false; }
+            if (curUnderline && !wantUnderline) { result += "</u>"; curUnderline = false; }
+            // Re-add trailing whitespace after closing markers
+            if (trailingSpace) result += trailingSpace;
+            // Open markers that are starting (underline outermost = first to open)
+            if (wantUnderline && !curUnderline) { result += "<u>"; curUnderline = true; }
+            if (wantItalic && !curItalic) { result += "*"; curItalic = true; }
+            if (wantBold && !curBold) { result += "**"; curBold = true; }
+            if (wantStrike && !curStrike) { result += "~~"; curStrike = true; }
+            if (wantCode && !curCode) { result += "`"; curCode = true; }
+          }
         }
 
         for (var i = 0; i < parts.length; i++) {
