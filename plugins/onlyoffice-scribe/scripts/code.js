@@ -251,14 +251,23 @@
     // so marked.lexer() produces image tokens for both block and inline markers
     md = md.replace(/\{\{IMG:(scribe-img-\d+)\}\}/g, "![IMG:$1](placeholder)");
 
-    // --- Table round-trip: extract cell markers before marked.lexer ---
-    var parsedTableCells = null;
-    var cellRegex = /\[CELL:(\d+),(\d+)\]([\s\S]*?)\[\/CELL\]/g;
-    var cellTestRegex = /\[CELL:\d+,\d+\]/;
-    if (cellTestRegex.test(md)) {
-      parsedTableCells = [];
+    // --- Table round-trip: parse TABLE:N blocks before marked.lexer ---
+    // Backward compat: if md has bare CELL markers without TABLE wrappers,
+    // wrap them in a single [TABLE:0]...[/TABLE] block first.
+    if (/\[CELL:\d+,\d+\]/.test(md) && !/\[TABLE:\d+\]/.test(md)) {
+      md = '[TABLE:0]\n' + md + '\n[/TABLE]';
+    }
+
+    var parsedTables = [];
+    var tableBlockRegex = /\[TABLE:(\d+)\]([\s\S]*?)\[\/TABLE\]/g;
+    var tableBlockMatch;
+    while ((tableBlockMatch = tableBlockRegex.exec(md)) !== null) {
+      var tableIndex = parseInt(tableBlockMatch[1]);
+      var tableBody = tableBlockMatch[2];
+      var cellRegex = /\[CELL:(\d+),(\d+)\]([\s\S]*?)\[\/CELL\]/g;
       var cellMatch;
-      while ((cellMatch = cellRegex.exec(md)) !== null) {
+      var tableCells = [];
+      while ((cellMatch = cellRegex.exec(tableBody)) !== null) {
         var cellText = cellMatch[3];
         // Pre-flatten cell text via marked.lexer + flattenTokens (plugin scope)
         var cellTokens = window.marked.lexer(cellText);
@@ -272,20 +281,26 @@
             }
           }
         }
-        parsedTableCells.push({
+        tableCells.push({
           r: parseInt(cellMatch[1]),
           c: parseInt(cellMatch[2]),
           runs: cellRuns
         });
       }
-      // Remove cell markers from md so marked.lexer processes only regular text
-      md = md.replace(/\[CELL:\d+,\d+\][\s\S]*?\[\/CELL\]\n?/g, "");
+      parsedTables.push({ index: tableIndex, cells: tableCells });
     }
+
+    // Replace TABLE blocks in md with placeholder tokens that survive marked.lexer
+    md = md.replace(/\[TABLE:\d+\][\s\S]*?\[\/TABLE\]\n?/g, function(match) {
+      var indexMatch = match.match(/\[TABLE:(\d+)\]/);
+      var idx = indexMatch ? indexMatch[1] : "0";
+      return "__SCRIBE_TABLE_" + idx + "__\n";
+    });
 
     var tokens = window.marked.lexer(md);
     var flat = flattenTokens(tokens);
 
-    if (flat.length === 0 && !parsedTableCells) {
+    if (flat.length === 0 && parsedTables.length === 0) {
       log("No blocks parsed -- falling back to PasteHtml");
       if (fallbackHtml) { pasteHtml(fallbackHtml, mode); }
       return;
@@ -295,10 +310,10 @@
     stopHidePolling();
     Asc.scope.tokens = JSON.stringify(flat);
     Asc.scope._mode = mode || "replace";
-    if (parsedTableCells) {
-      Asc.scope.tableCells = JSON.stringify(parsedTableCells);
+    if (parsedTables.length > 0) {
+      Asc.scope.parsedTables = JSON.stringify(parsedTables);
     } else {
-      Asc.scope.tableCells = null;
+      Asc.scope.parsedTables = null;
     }
 
     var callbackFired = false;
