@@ -30,9 +30,9 @@ Requirements for Objets Complexes et Blocs Étendus. Each maps to roadmap phases
 
 ### Blocs Étendus
 
-- [ ] **BLK-01**: Les code blocks fenced dans le markdown sont injectés comme paragraphes monospace via Builder API
-- [ ] **BLK-02**: Les blockquotes dans le markdown sont injectés comme paragraphes indentés via Builder API
-- [ ] **BLK-03**: Les tableaux markdown classiques (non marqués) dans le markdown sont injectés comme ApiTable via Builder API
+- [x] **BLK-01**: Les code blocks fenced dans le markdown sont injectés comme paragraphes monospace via Builder API
+- [x] **BLK-02**: Les blockquotes dans le markdown sont injectés comme paragraphes indentés via Builder API
+- [x] **BLK-03**: Les tableaux markdown classiques (non marqués) dans le markdown sont injectés comme ApiTable via Builder API
 
 ## v2.4 Requirements (Complete)
 
@@ -91,9 +91,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BLK-01 | Phase 21 | Pending |
-| BLK-02 | Phase 21 | Pending |
-| BLK-03 | Phase 21 | Pending |
+| BLK-01 | Phase 21 | Complete |
+| BLK-02 | Phase 21 | Complete |
+| BLK-03 | Phase 21 | Complete |
 | EXTR-01 | Phase 22 | Complete |
 | EXTR-04 | Phase 22 | Complete |
 | MARK-01 | Phase 22 | Complete |
