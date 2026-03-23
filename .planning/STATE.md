@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.5
 milestone_name: Objets Complexes et Blocs Etendus
 status: unknown
-stopped_at: Completed 24-02-PLAN.md
-last_updated: "2026-03-22T22:29:32.680Z"
+stopped_at: Completed 24.1-01-PLAN.md
+last_updated: "2026-03-23T13:25:15.210Z"
 progress:
-  total_phases: 6
+  total_phases: 7
   completed_phases: 5
-  total_plans: 10
-  completed_plans: 9
+  total_plans: 12
+  completed_plans: 10
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-20)
 
 **Core value:** La chaine de communication complete -- depuis la selection de texte dans OnlyOffice jusqu'a la reinjection du texte modifie par l'IA -- de bout en bout, transparente pour l'utilisateur.
-**Current focus:** Phase 24 — table-round-trip
+**Current focus:** Phase 24.1 — table-round-trip-rearchitecture-clone-insertcontent
 
 ## Current Position
 
-Phase: 24 (table-round-trip) — COMPLETE
-Plan: 2 of 2 (done)
+Phase: 24.1 (table-round-trip-rearchitecture-clone-insertcontent) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -57,6 +57,7 @@ Recent decisions affecting current work:
 - [Phase 24]: Cell text pre-flattened in plugin scope; source font per cell before Clear(); mixed content skips text replacement to preserve table (v2.5)
 
 - [Phase 24.1]: Rearchitecture table round-trip: clone table via ApiTable.Copy() + insert via InsertContent (supports both Replace and Insert modes). Add [TABLE:N] markers to extraction. In-place modification removed.
+- [Phase 24.1]: TABLE:N wrappers at emission site (not inside extractTableCells) for reusability; backward compat for bare CELL markers
 
 ### Roadmap Evolution
 
@@ -84,7 +85,7 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-22T22:25:04.439Z
-Stopped at: Completed 24-02-PLAN.md
+Last session: 2026-03-23T13:25:15.208Z
+Stopped at: Completed 24.1-01-PLAN.md
 Resume file: None
 Resume command: /gsd:execute-phase 22-02
