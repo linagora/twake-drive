@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.5
 milestone_name: Objets Complexes et Blocs Etendus
 status: unknown
-stopped_at: Completed 24.1-01-PLAN.md
-last_updated: "2026-03-23T13:25:15.210Z"
+stopped_at: Completed 24.1-02-PLAN.md
+last_updated: "2026-03-23T13:35:19.188Z"
 progress:
   total_phases: 7
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 12
-  completed_plans: 10
+  completed_plans: 11
 ---
 
 # Project State
@@ -23,8 +23,8 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 
 ## Current Position
 
-Phase: 24.1 (table-round-trip-rearchitecture-clone-insertcontent) — EXECUTING
-Plan: 2 of 2
+Phase: 24.1 (table-round-trip-rearchitecture-clone-insertcontent) — COMPLETE
+Plan: 2 of 2 (all complete)
 
 ## Performance Metrics
 
@@ -58,6 +58,7 @@ Recent decisions affecting current work:
 
 - [Phase 24.1]: Rearchitecture table round-trip: clone table via ApiTable.Copy() + insert via InsertContent (supports both Replace and Insert modes). Add [TABLE:N] markers to extraction. In-place modification removed.
 - [Phase 24.1]: TABLE:N wrappers at emission site (not inside extractTableCells) for reusability; backward compat for bare CELL markers
+- [Phase 24.1]: Placeholder tokens (__SCRIBE_TABLE_N__) survive marked.lexer as paragraph text for content loop detection; table clones in object keyed by index for sparse access
 
 ### Roadmap Evolution
 
@@ -85,7 +86,7 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-23T13:25:15.208Z
-Stopped at: Completed 24.1-01-PLAN.md
+Last session: 2026-03-23T13:35:19.186Z
+Stopped at: Completed 24.1-02-PLAN.md
 Resume file: None
 Resume command: /gsd:execute-phase 22-02

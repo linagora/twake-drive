@@ -177,7 +177,7 @@ Plans:
 **Goal:** Rearchitecter le round-trip table pour utiliser clone (ApiTable.Copy()) + InsertContent au lieu de la modification in-place, permettant le mode Insert et le traitement mixte texte+tableau
 **Requirements**: None (inserted rearchitecture phase)
 **Depends on:** Phase 24
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] 24.1-01-PLAN.md — Add [TABLE:N] wrappers to extraction + update tableCellMarkers.js + system prompt
@@ -216,4 +216,4 @@ Phases execute in numeric order: 21 -> 22 -> 23 -> 24
 | 23.1 OO SDK Patch | v2.5 | 0/1 | Not started | - |
 | 23.2 Image round-trip cleanup | 1/1 | Complete    | 2026-03-22 | - |
 | 24. Table Round-Trip | 2/2 | Complete    | 2026-03-22 | - |
-| 24.1. Table rearchitecture | 1/2 | In Progress|  | - |
+| 24.1. Table rearchitecture | 2/2 | Complete   | 2026-03-23 | - |
