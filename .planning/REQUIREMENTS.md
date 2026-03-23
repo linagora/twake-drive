@@ -36,17 +36,17 @@ Aucun pour le moment.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FMT-01 | TBD | Pending |
-| TBL-01 | TBD | Pending |
-| TBL-02 | TBD | Pending |
-| REF-01 | TBD | Pending |
-| REF-02 | TBD | Pending |
+| FMT-01 | Phase 25 | Pending |
+| TBL-01 | Phase 26 | Pending |
+| TBL-02 | Phase 26 | Pending |
+| REF-01 | Phase 27 | Pending |
+| REF-02 | Phase 27 | Pending |
 
 **Coverage:**
 - v2.6 requirements: 5 total
-- Mapped to phases: 0
-- Unmapped: 5 ⚠️
+- Mapped to phases: 5
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-23*
-*Last updated: 2026-03-23 after milestone v2.6 initialization*
+*Last updated: 2026-03-23 after roadmap creation*
