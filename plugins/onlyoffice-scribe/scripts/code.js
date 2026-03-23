@@ -87,6 +87,34 @@
   // Prevents init() and polling from interfering during paste.
   var pasteInProgress = false;
 
+  // ---- Register <u> underline extension for marked.lexer ----
+  // Custom inline extension so marked tokenizes <u>...</u> into underline tokens
+  // with recursive child token parsing for nested formatting (e.g. <u>**bold**</u>).
+  if (window.marked && window.marked.use) {
+    window.marked.use({
+      extensions: [{
+        name: "underline",
+        level: "inline",
+        start: function(src) {
+          return src.indexOf("<u>");
+        },
+        tokenizer: function(src) {
+          var match = src.match(/^<u>([\s\S]*?)<\/u>/);
+          if (match) {
+            return {
+              type: "underline",
+              raw: match[0],
+              text: match[1],
+              tokens: []
+            };
+          }
+        },
+        childTokens: ["tokens"],
+        renderer: function(token) { return "<u>" + token.text + "</u>"; }
+      }]
+    });
+  }
+
   // ---- flattenTokens: convert marked lexer output to flat paragraph+runs ----
   // Takes the array returned by marked.lexer(md) and produces:
   //   [{ type: "paragraph", runs: [{ text, bold, italic }] }]
@@ -94,33 +122,35 @@
   function flattenTokens(markedTokens) {
     var blocks = [];
 
-    function flattenInline(tokens, parentBold, parentItalic, parentStrikethrough, parentCode, parentLink) {
+    function flattenInline(tokens, parentBold, parentItalic, parentStrikethrough, parentCode, parentLink, parentUnderline) {
       var runs = [];
       for (var i = 0; i < tokens.length; i++) {
         var tok = tokens[i];
         if (tok.type === "text") {
-          runs.push({ text: tok.text, bold: !!parentBold, italic: !!parentItalic, strikethrough: !!parentStrikethrough, code: !!parentCode, link: parentLink || null });
+          runs.push({ text: tok.text, bold: !!parentBold, italic: !!parentItalic, strikethrough: !!parentStrikethrough, underline: !!parentUnderline, code: !!parentCode, link: parentLink || null });
         } else if (tok.type === "strong") {
-          runs = runs.concat(flattenInline(tok.tokens, true, parentItalic, parentStrikethrough, parentCode, parentLink));
+          runs = runs.concat(flattenInline(tok.tokens, true, parentItalic, parentStrikethrough, parentCode, parentLink, parentUnderline));
         } else if (tok.type === "em") {
-          runs = runs.concat(flattenInline(tok.tokens, parentBold, true, parentStrikethrough, parentCode, parentLink));
+          runs = runs.concat(flattenInline(tok.tokens, parentBold, true, parentStrikethrough, parentCode, parentLink, parentUnderline));
         } else if (tok.type === "del") {
-          runs = runs.concat(flattenInline(tok.tokens, parentBold, parentItalic, true, parentCode, parentLink));
+          runs = runs.concat(flattenInline(tok.tokens, parentBold, parentItalic, true, parentCode, parentLink, parentUnderline));
+        } else if (tok.type === "underline") {
+          runs = runs.concat(flattenInline(tok.tokens, parentBold, parentItalic, parentStrikethrough, parentCode, parentLink, true));
         } else if (tok.type === "codespan") {
-          runs.push({ text: tok.text, bold: !!parentBold, italic: !!parentItalic, strikethrough: !!parentStrikethrough, code: true, link: parentLink || null });
+          runs.push({ text: tok.text, bold: !!parentBold, italic: !!parentItalic, strikethrough: !!parentStrikethrough, underline: !!parentUnderline, code: true, link: parentLink || null });
         } else if (tok.type === "link") {
-          runs = runs.concat(flattenInline(tok.tokens || [], parentBold, parentItalic, parentStrikethrough, parentCode, tok.href));
+          runs = runs.concat(flattenInline(tok.tokens || [], parentBold, parentItalic, parentStrikethrough, parentCode, tok.href, parentUnderline));
         } else if (tok.type === "image" && tok.text && tok.text.indexOf("IMG:scribe-img-") === 0) {
           runs.push({
             text: "",
-            bold: false, italic: false, strikethrough: false, code: false,
+            bold: false, italic: false, strikethrough: false, underline: false, code: false,
             link: null,
             imageMarker: tok.text.replace("IMG:", "")
           });
         } else if (tok.tokens) {
-          runs = runs.concat(flattenInline(tok.tokens, parentBold, parentItalic, parentStrikethrough, parentCode, parentLink));
+          runs = runs.concat(flattenInline(tok.tokens, parentBold, parentItalic, parentStrikethrough, parentCode, parentLink, parentUnderline));
         } else if (tok.text) {
-          runs.push({ text: tok.text, bold: !!parentBold, italic: !!parentItalic, strikethrough: !!parentStrikethrough, code: !!parentCode, link: parentLink || null });
+          runs.push({ text: tok.text, bold: !!parentBold, italic: !!parentItalic, strikethrough: !!parentStrikethrough, underline: !!parentUnderline, code: !!parentCode, link: parentLink || null });
         }
       }
       return runs;
@@ -146,7 +176,7 @@
             type: "list_item",
             ordered: !!listToken.ordered,
             level: depth,
-            runs: flattenInline(inlineTokens, false, false, false, false, null)
+            runs: flattenInline(inlineTokens, false, false, false, false, null, false)
           });
         }
         for (var n = 0; n < nestedLists.length; n++) {
@@ -158,7 +188,7 @@
     for (var i = 0; i < markedTokens.length; i++) {
       var block = markedTokens[i];
       if (block.type === "paragraph") {
-        var pRuns = flattenInline(block.tokens || [], false, false, false, false, null);
+        var pRuns = flattenInline(block.tokens || [], false, false, false, false, null, false);
         // Check if this paragraph is purely image markers (no text content)
         var hasTextContent = false;
         var imgMarkers = [];
@@ -181,7 +211,7 @@
         blocks.push({
           type: "heading",
           depth: block.depth,
-          runs: flattenInline(block.tokens || [], false, false, false, false, null)
+          runs: flattenInline(block.tokens || [], false, false, false, false, null, false)
         });
       } else if (block.type === "list") {
         flattenList(block, 0);
@@ -210,7 +240,7 @@
         var headerTokens = block.header || [];
         for (var hi = 0; hi < headerTokens.length; hi++) {
           headerCells.push({
-            runs: flattenInline(headerTokens[hi].tokens || [], false, false, false, false, null)
+            runs: flattenInline(headerTokens[hi].tokens || [], false, false, false, false, null, false)
           });
         }
         var bodyRows = [];
@@ -219,7 +249,7 @@
           var rowCells = [];
           for (var ci = 0; ci < rowsArr[ri].length; ci++) {
             rowCells.push({
-              runs: flattenInline(rowsArr[ri][ci].tokens || [], false, false, false, false, null)
+              runs: flattenInline(rowsArr[ri][ci].tokens || [], false, false, false, false, null, false)
             });
           }
           bodyRows.push(rowCells);
@@ -232,7 +262,7 @@
         });
       } else if (block.tokens) {
         // Unknown block type with tokens: treat as paragraph fallback
-        blocks.push({ type: "paragraph", runs: flattenInline(block.tokens || [], false, false, false, false, null) });
+        blocks.push({ type: "paragraph", runs: flattenInline(block.tokens || [], false, false, false, false, null, false) });
       } else if (block.text) {
         // Unknown block type with text only: treat as plain paragraph
         blocks.push({ type: "paragraph", runs: [{ text: block.text, bold: false, italic: false }] });
@@ -611,7 +641,7 @@
       function makeHyperlink(run) {
         var link = Api.CreateHyperlink(run.link, run.text, "");
         // Apply formatting to the hyperlink's child runs
-        if (run.bold || run.italic || run.strikethrough || run.code) {
+        if (run.bold || run.italic || run.strikethrough || run.underline || run.code) {
           var linkCount = link.GetElementsCount ? link.GetElementsCount() : 0;
           for (var li = 0; li < linkCount; li++) {
             var linkRun = link.GetElement(li);
@@ -619,6 +649,7 @@
               if (run.bold) linkRun.SetBold(true);
               if (run.italic) linkRun.SetItalic(true);
               if (run.strikethrough) linkRun.SetStrikeout(true);
+              if (run.underline) linkRun.SetUnderline(true);
               if (run.code) linkRun.SetFontFamily("Courier New");
             }
           }
@@ -653,6 +684,7 @@
             if (run.bold) r.SetBold(true);
             if (run.italic) r.SetItalic(true);
             if (run.strikethrough) r.SetStrikeout(true);
+            if (run.underline) r.SetUnderline(true);
             if (run.code) {
               r.SetFontFamily("Courier New");
               if (fontSize) r.SetFontSize(fontSize);
@@ -1230,6 +1262,7 @@
         var isBold = tp ? tp.GetBold() : false;
         var isItalic = tp ? tp.GetItalic() : false;
         var isStrike = tp ? tp.GetStrikeout() : false;
+        var isUnderline = tp ? tp.GetUnderline() : false;
         var fontFamily = tp ? tp.GetFontFamily() : null;
         var isCode = false;
         if (fontFamily) {
@@ -1246,6 +1279,7 @@
         else if (isBold) escaped = "**" + escaped + "**";
         else if (isItalic) escaped = "*" + escaped + "*";
         if (isStrike) escaped = "~~" + escaped + "~~";
+        if (isUnderline) escaped = "<u>" + escaped + "</u>";
         return escaped;
       }
 
@@ -1256,10 +1290,10 @@
       // - link: URL string — text is wrapped in [text](url), formatting flows through
       function buildMarkdownFromParts(parts) {
         var result = "";
-        var curBold = false, curItalic = false, curStrike = false, curCode = false;
+        var curBold = false, curItalic = false, curStrike = false, curCode = false, curUnderline = false;
 
         function closeAll() {
-          if (curCode || curStrike || curBold || curItalic) {
+          if (curCode || curStrike || curBold || curItalic || curUnderline) {
             // Move trailing whitespace after closing markers (CommonMark rule)
             var wsMatch = result.match(/(\s+)$/);
             var trailingSpace = "";
@@ -1271,13 +1305,15 @@
             if (curStrike) { result += "~~"; curStrike = false; }
             if (curBold) { result += "**"; curBold = false; }
             if (curItalic) { result += "*"; curItalic = false; }
+            if (curUnderline) { result += "</u>"; curUnderline = false; }
             if (trailingSpace) result += trailingSpace;
           }
         }
 
-        function transitionTo(wantBold, wantItalic, wantStrike, wantCode) {
+        function transitionTo(wantBold, wantItalic, wantStrike, wantCode, wantUnderline) {
           var needsClose = (curCode && !wantCode) || (curStrike && !wantStrike) ||
-                           (curBold && !wantBold) || (curItalic && !wantItalic);
+                           (curBold && !wantBold) || (curItalic && !wantItalic) ||
+                           (curUnderline && !wantUnderline);
           // Before closing markers, move trailing whitespace after the closing marker
           // (CommonMark requires no space before closing emphasis delimiter)
           var trailingSpace = "";
@@ -1288,14 +1324,16 @@
               result = result.substring(0, result.length - trailingSpace.length);
             }
           }
-          // Close markers that are ending (innermost first)
+          // Close markers that are ending (innermost first, underline outermost = last to close)
           if (curCode && !wantCode) { result += "`"; curCode = false; }
           if (curStrike && !wantStrike) { result += "~~"; curStrike = false; }
           if (curBold && !wantBold) { result += "**"; curBold = false; }
           if (curItalic && !wantItalic) { result += "*"; curItalic = false; }
+          if (curUnderline && !wantUnderline) { result += "</u>"; curUnderline = false; }
           // Re-add trailing whitespace after closing markers
           if (trailingSpace) result += trailingSpace;
-          // Open markers that are starting
+          // Open markers that are starting (underline outermost = first to open)
+          if (wantUnderline && !curUnderline) { result += "<u>"; curUnderline = true; }
           if (wantItalic && !curItalic) { result += "*"; curItalic = true; }
           if (wantBold && !curBold) { result += "**"; curBold = true; }
           if (wantStrike && !curStrike) { result += "~~"; curStrike = true; }
@@ -1318,8 +1356,9 @@
           var wantItalic = !!part.italic;
           var wantStrike = !!part.strikethrough;
           var wantCode = !!part.code;
+          var wantUnderline = !!part.underline;
 
-          transitionTo(wantBold, wantItalic, wantStrike, wantCode);
+          transitionTo(wantBold, wantItalic, wantStrike, wantCode, wantUnderline);
 
           // Emit text — with link wrapping if present
           if (part.link) {
@@ -1360,6 +1399,7 @@
           var isBold = tp ? tp.GetBold() : false;
           var isItalic = tp ? tp.GetItalic() : false;
           var isStrike = tp ? tp.GetStrikeout() : false;
+          var isUnderline = tp ? tp.GetUnderline() : false;
           var fontFamily = tp ? tp.GetFontFamily() : null;
           var isCode = false;
           if (fontFamily) {
@@ -1368,7 +1408,7 @@
               isCode = true;
             }
           }
-          return { bold: !!isBold, italic: !!isItalic, strikethrough: !!isStrike, code: isCode };
+          return { bold: !!isBold, italic: !!isItalic, strikethrough: !!isStrike, underline: !!isUnderline, code: isCode };
         }
 
         var count = para.GetElementsCount();
@@ -1396,9 +1436,9 @@
               }
             }
             if (hUrl && hText) {
-              annotatedParts.push({ text: hText, link: hUrl, bold: hFlags.bold, italic: hFlags.italic, strikethrough: hFlags.strikethrough, code: hFlags.code });
+              annotatedParts.push({ text: hText, link: hUrl, bold: hFlags.bold, italic: hFlags.italic, strikethrough: hFlags.strikethrough, underline: hFlags.underline, code: hFlags.code });
             } else if (hText) {
-              annotatedParts.push({ text: hText, bold: hFlags.bold, italic: hFlags.italic, strikethrough: hFlags.strikethrough, code: hFlags.code });
+              annotatedParts.push({ text: hText, bold: hFlags.bold, italic: hFlags.italic, strikethrough: hFlags.strikethrough, underline: hFlags.underline, code: hFlags.code });
             }
           } else if (classType === "run") {
             var runText = el.GetText();
@@ -1429,7 +1469,7 @@
                   var idDrawing = inlineDrawings[id].drawing;
                   var dName = idDrawing && idDrawing.GetName ? idDrawing.GetName() : "";
                   if (dPos > lastPos) {
-                    annotatedParts.push({ text: runText.substring(lastPos, dPos), bold: flags.bold, italic: flags.italic, strikethrough: flags.strikethrough, code: flags.code });
+                    annotatedParts.push({ text: runText.substring(lastPos, dPos), bold: flags.bold, italic: flags.italic, strikethrough: flags.strikethrough, underline: flags.underline, code: flags.code });
                   }
                   if (dName && dName.indexOf("scribe-img-") === 0) {
                     annotatedParts.push({ text: "{{IMG:" + dName + "}}", raw: true });
@@ -1437,14 +1477,14 @@
                   lastPos = dPos;
                 }
                 if (lastPos < runText.length) {
-                  annotatedParts.push({ text: runText.substring(lastPos), bold: flags.bold, italic: flags.italic, strikethrough: flags.strikethrough, code: flags.code });
+                  annotatedParts.push({ text: runText.substring(lastPos), bold: flags.bold, italic: flags.italic, strikethrough: flags.strikethrough, underline: flags.underline, code: flags.code });
                 }
                 continue;
               }
             }
 
             // Normal text run (no drawings)
-            annotatedParts.push({ text: runText, bold: flags.bold, italic: flags.italic, strikethrough: flags.strikethrough, code: flags.code });
+            annotatedParts.push({ text: runText, bold: flags.bold, italic: flags.italic, strikethrough: flags.strikethrough, underline: flags.underline, code: flags.code });
           } else {
             var fallbackText = el.GetText ? el.GetText() : "";
             if (fallbackText) {
