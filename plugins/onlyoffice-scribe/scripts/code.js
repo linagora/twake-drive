@@ -523,51 +523,62 @@
         return cached;
       }
 
-      // --- Table round-trip: in-place cell reinjection ---
-      var tableCellsJson = Asc.scope.tableCells;
-      var tableRoundTripDone = false;
-      if (tableCellsJson) {
-        var tableCells = JSON.parse(tableCellsJson);
-        // Find the table in the current selection
+      // --- Table round-trip: clone tables via Copy() BEFORE InsertContent ---
+      // Pre-cache table clones so they survive InsertContent destroying the selection.
+      // Same pattern as image pre-cache: collect originals first, then Copy().
+      var parsedTablesJson = Asc.scope.parsedTables;
+      var parsedTables = parsedTablesJson ? JSON.parse(parsedTablesJson) : [];
+      var tableClones = {};  // index -> ApiTable (cloned + modified)
+
+      if (parsedTables.length > 0) {
+        // Collect tables from selection in document order
         var allTables = doc.GetAllTables();
-        var targetTable = null;
-        var tSelRange = doc.GetRangeBySelect();
-        if (tSelRange) {
-          var tSelStart = tSelRange.GetStartPos();
-          var tSelEnd = tSelRange.GetEndPos();
-          for (var t = 0; t < allTables.length; t++) {
-            var tblRange = allTables[t].GetRange();
-            if (tblRange) {
-              var ts = tblRange.GetStartPos();
-              var te = tblRange.GetEndPos();
-              if (te >= tSelStart && ts <= tSelEnd) {
-                targetTable = allTables[t];
-                break;
+        var selRange2 = doc.GetRangeBySelect();
+        var selTables = [];  // ordered list of tables overlapping selection
+        if (selRange2) {
+          var ss2 = selRange2.GetStartPos();
+          var se2 = selRange2.GetEndPos();
+          for (var st = 0; st < allTables.length; st++) {
+            var stRange = allTables[st].GetRange();
+            if (stRange) {
+              var stStart = stRange.GetStartPos();
+              var stEnd = stRange.GetEndPos();
+              if (stEnd >= ss2 && stStart <= se2) {
+                selTables.push(allTables[st]);
               }
             }
           }
         }
 
-        if (targetTable) {
-          // Read source font from first run of first paragraph in each cell
-          var cellFonts = {};  // "r,c" -> { family, size }
-          for (var ci = 0; ci < tableCells.length; ci++) {
-            var tc = tableCells[ci];
-            var fKey = tc.r + "," + tc.c;
-            var srcCell = targetTable.GetCell(tc.r, tc.c);
-            if (srcCell) {
-              var srcCellContent = srcCell.GetContent();
-              if (srcCellContent && srcCellContent.GetElementsCount() > 0) {
-                var fp = srcCellContent.GetElement(0);
-                if (fp && fp.GetElementsCount) {
-                  for (var fe = 0; fe < fp.GetElementsCount(); fe++) {
-                    var fElem = fp.GetElement(fe);
-                    if (fElem.GetClassType && fElem.GetClassType() === "run") {
-                      var fTp = fElem.GetTextPr ? fElem.GetTextPr() : null;
-                      if (fTp) {
-                        cellFonts[fKey] = {
-                          family: fTp.GetFontFamily() || null,
-                          size: fTp.GetFontSize() || null
+        // Clone each table, read source fonts, and modify clone cells
+        for (var tci = 0; tci < parsedTables.length; tci++) {
+          var ptEntry = parsedTables[tci];
+          var ptIndex = ptEntry.index;
+          var ptCells = ptEntry.cells;
+          var origTable = selTables[ptIndex];  // match by order
+          if (!origTable) continue;
+
+          var clone = origTable.Copy();
+
+          // Read source font from first run of first paragraph in each cell of ORIGINAL
+          var cFonts = {};
+          for (var cfi = 0; cfi < ptCells.length; cfi++) {
+            var ptc = ptCells[cfi];
+            var cfKey = ptc.r + "," + ptc.c;
+            var origCell = origTable.GetCell(ptc.r, ptc.c);
+            if (origCell) {
+              var origContent = origCell.GetContent();
+              if (origContent && origContent.GetElementsCount() > 0) {
+                var origPara = origContent.GetElement(0);
+                if (origPara && origPara.GetElementsCount) {
+                  for (var ofe = 0; ofe < origPara.GetElementsCount(); ofe++) {
+                    var oElem = origPara.GetElement(ofe);
+                    if (oElem.GetClassType && oElem.GetClassType() === "run") {
+                      var oTp = oElem.GetTextPr ? oElem.GetTextPr() : null;
+                      if (oTp) {
+                        cFonts[cfKey] = {
+                          family: oTp.GetFontFamily() || null,
+                          size: oTp.GetFontSize() || null
                         };
                       }
                       break;
@@ -576,49 +587,50 @@
                 }
               }
             }
-            if (!cellFonts[fKey]) {
-              cellFonts[fKey] = { family: srcFontFamily, size: srcFontSize };
+            if (!cFonts[cfKey]) {
+              cFonts[cfKey] = { family: srcFontFamily, size: srcFontSize };
             }
           }
 
-          // Clear and rebuild each cell with formatted runs
-          for (var ci2 = 0; ci2 < tableCells.length; ci2++) {
-            var tc2 = tableCells[ci2];
-            var cell = targetTable.GetCell(tc2.r, tc2.c);
-            if (!cell) continue;
-            cell.Clear();
-            var cc = cell.GetContent();
-            if (!cc || cc.GetElementsCount() === 0) continue;
-            var cp = cc.GetElement(0);
-            if (!cp) continue;
+          // Modify the CLONE's cells (not the original)
+          for (var mci = 0; mci < ptCells.length; mci++) {
+            var mc = ptCells[mci];
+            var cloneCell = clone.GetCell(mc.r, mc.c);
+            if (!cloneCell) continue;
+            cloneCell.Clear();
+            var cloneCc = cloneCell.GetContent();
+            if (!cloneCc || cloneCc.GetElementsCount() === 0) continue;
+            var cloneCp = cloneCc.GetElement(0);
+            if (!cloneCp) continue;
 
-            var cf = cellFonts[tc2.r + "," + tc2.c] || {};
-            var runs = tc2.runs || [];
-            for (var rr = 0; rr < runs.length; rr++) {
-              var run = runs[rr];
-              if (run.link) {
-                var link = Api.CreateHyperlink(run.link, run.text, "");
-                cp.AddElement(link);
+            var mcf = cFonts[mc.r + "," + mc.c] || {};
+            var mcRuns = mc.runs || [];
+            for (var mrr = 0; mrr < mcRuns.length; mrr++) {
+              var mRun = mcRuns[mrr];
+              if (mRun.link) {
+                var mLink = Api.CreateHyperlink(mRun.link, mRun.text, "");
+                cloneCp.AddElement(mLink);
               } else {
-                var r = Api.CreateRun();
-                r.AddText(run.text);
-                if (run.bold) r.SetBold(true);
-                if (run.italic) r.SetItalic(true);
-                if (run.strikethrough) r.SetStrikeout(true);
-                if (run.code) {
-                  r.SetFontFamily("Courier New");
-                  if (cf.size) r.SetFontSize(cf.size);
+                var mr = Api.CreateRun();
+                mr.AddText(mRun.text);
+                if (mRun.bold) mr.SetBold(true);
+                if (mRun.italic) mr.SetItalic(true);
+                if (mRun.strikethrough) mr.SetStrikeout(true);
+                if (mRun.code) {
+                  mr.SetFontFamily("Courier New");
+                  if (mcf.size) mr.SetFontSize(mcf.size);
                 } else {
-                  if (cf.family) r.SetFontFamily(cf.family);
-                  if (cf.size) r.SetFontSize(cf.size);
+                  if (mcf.family) mr.SetFontFamily(mcf.family);
+                  if (mcf.size) mr.SetFontSize(mcf.size);
                 }
-                cp.AddElement(r);
+                cloneCp.AddElement(mr);
               }
             }
           }
-          tableRoundTripDone = true;
-        } // end if (targetTable)
-      } // end if (tableCellsJson)
+
+          tableClones[ptIndex] = clone;
+        }
+      }
 
       // Helper: create a space run matching surrounding font
       function makeSpaceRun() {
@@ -634,6 +646,19 @@
         var block = blocks[i];
         var isFirst = (i === 0);
         var isLast = (i === blocks.length - 1);
+
+        // Table placeholder detection: substitute cloned table for __SCRIBE_TABLE_N__
+        if (block.type === "paragraph" && block.runs && block.runs.length === 1) {
+          var plText = block.runs[0].text || "";
+          var plMatch = plText.match(/^__SCRIBE_TABLE_(\d+)__$/);
+          if (plMatch) {
+            var plIdx = parseInt(plMatch[1]);
+            if (tableClones[plIdx]) {
+              content.push(tableClones[plIdx]);
+            }
+            continue;  // skip normal paragraph processing
+          }
+        }
 
         if (block.type === "heading") {
           var p = Api.CreateParagraph();
@@ -864,11 +889,6 @@
       }
 
       if (content.length > 0) {
-        if (tableRoundTripDone) {
-          // v2.5 limitation: table cells updated in-place; skip text
-          // replacement to preserve table structure. Mixed text+table
-          // round-trip will be addressed in a future version.
-        } else {
         // Save selection start position before InsertContent (for replace mode selection)
         var preSelStart = 0;
         try {
@@ -1025,7 +1045,6 @@
         } catch (e) {
           // Selection failed — content is still injected, graceful degradation
         }
-        } // end else (not tableRoundTripDone)
       }
     }, false, false, function() {
       callbackFired = true;
