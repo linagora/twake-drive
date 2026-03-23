@@ -1,4 +1,10 @@
 import React from 'react'
+import { TransformStream, ReadableStream } from 'node:stream/web'
+
+// jsdom doesn't expose Web Streams/Fetch APIs needed by assistant-stream
+if (!global.TransformStream) global.TransformStream = TransformStream
+if (!global.ReadableStream) global.ReadableStream = ReadableStream
+if (!global.Response) global.Response = class Response {}
 
 global.cozy = {}
 
