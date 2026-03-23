@@ -215,12 +215,17 @@
       "description": "Remote-doctype required to send anonymized measures to the DACC shared among mycozy.eu's Cozy."
     },
     "chatConversations": {
-      "description": "Required by the cozy Assistant",
+      "description": "Required by the AI Assistant to show conversations",
       "type": "io.cozy.ai.chat.conversations",
-      "verbs": ["GET", "POST"]
+      "verbs": ["ALL"]
+    },
+    "assistants": {
+      "type": "io.cozy.ai.chat.assistants",
+      "verbs": ["ALL"],
+      "description": "Required to fetch, create and update AI assistants"
     },
     "chatEvents": {
-      "description": "Required by the cozy Assistant",
+      "description": "Required by the AI Assistant to receive realtime events",
       "type": "io.cozy.ai.chat.events",
       "verbs": ["GET"]
     },

@@ -12,6 +12,7 @@ export const DOCTYPE_APPS = 'io.cozy.apps'
 export const DOCTYPE_CONTACTS = 'io.cozy.contacts'
 export const DOCTYPE_KONNECTORS = 'io.cozy.konnectors'
 export const DOCTYPE_AI_CHAT_CONVERSATIONS = 'io.cozy.ai.chat.conversations'
+export const DOCTYPE_AI_CHAT_ASSISTANTS = 'io.cozy.ai.chat.assistants'
 export const DOCTYPE_CONTACTS_VERSION = 2
 
 export const schema = {
