@@ -1,30 +1,30 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.5
-milestone_name: Objets Complexes et Blocs Etendus
-status: unknown
-stopped_at: Completed 24.1-02-PLAN.md
-last_updated: "2026-03-23T18:49:02.176Z"
+milestone: v2.6
+milestone_name: Formatage Complet et References Documentaires
+status: planning
+stopped_at: Milestone v2.6 started
+last_updated: "2026-03-23"
 progress:
-  total_phases: 7
-  completed_phases: 6
-  total_plans: 12
-  completed_plans: 11
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-20)
+See: .planning/PROJECT.md (updated 2026-03-23)
 
 **Core value:** La chaine de communication complete -- depuis la selection de texte dans OnlyOffice jusqu'a la reinjection du texte modifie par l'IA -- de bout en bout, transparente pour l'utilisateur.
-**Current focus:** Phase 24.1 — table-round-trip-rearchitecture-clone-insertcontent
+**Current focus:** Defining requirements for v2.6
 
 ## Current Position
 
-Phase: 24.1 (table-round-trip-rearchitecture-clone-insertcontent) — COMPLETE
-Plan: 2 of 2 (all complete)
+Phase: Not started (defining requirements)
+Plan: —
 
 ## Performance Metrics
 
