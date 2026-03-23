@@ -1,8 +1,18 @@
 import React from 'react'
-import { TransformStream } from 'stream/web'
+import { ReadableStream, TransformStream } from 'stream/web'
+import { TextDecoder, TextEncoder } from 'util'
 
 global.cozy = {}
 global.TransformStream = TransformStream
+// jsdom doesn't expose Web Streams/Fetch/encoding APIs needed by
+// assistant-stream and undici
+global.ReadableStream = ReadableStream
+global.TextEncoder = TextEncoder
+global.TextDecoder = TextDecoder
+// undici reads TextEncoder at load time, so it must come after the polyfills
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { Response } = require('undici')
+global.Response = Response
 
 jest.mock('cozy-search', () => ({
   AssistantDesktop: () => null,
