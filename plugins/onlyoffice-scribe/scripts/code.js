@@ -282,12 +282,9 @@
             }
           }
         }
-        var cellR = parseInt(cellMatch[1]);
-        var cellC = parseInt(cellMatch[2]);
-        console.log("[Scribe] pre-flatten cell[" + cellR + "," + cellC + "] blocks=" + cellBlocks.length + " runs=" + cellRuns.length + " texts=" + cellRuns.map(function(r) { return JSON.stringify(r.text || "").substring(0, 30); }).join("|"));
         tableCells.push({
-          r: cellR,
-          c: cellC,
+          r: parseInt(cellMatch[1]),
+          c: parseInt(cellMatch[2]),
           runs: cellRuns
         });
       }
@@ -554,7 +551,6 @@
           if (!origTable) continue;
 
           var clone = origTable.Copy();
-          console.log("[Scribe] clone created for table " + ptIndex);
 
           // Read source font from first run of first paragraph in each cell of ORIGINAL
           var cFonts = {};
@@ -592,24 +588,18 @@
           for (var mci = 0; mci < ptCells.length; mci++) {
             var mc = ptCells[mci];
             var cloneCell = clone.GetCell(mc.r, mc.c);
-            console.log("[Scribe] cell[" + mc.r + "," + mc.c + "] cloneCell=" + !!cloneCell + " runs=" + (mc.runs ? mc.runs.length : 0));
             if (!cloneCell) continue;
             var cloneCc = cloneCell.GetContent();
             if (!cloneCc || cloneCc.GetElementsCount() === 0) continue;
             var cloneCp = cloneCc.GetElement(0);
             if (!cloneCp) continue;
-            // Remove existing content from the paragraph instead of Clear() on the cell
+            // RemoveAllElements instead of cell.Clear() — Clear() causes empty cells
+            // when only 1 run is added (the replacement replaces the wrong element)
             if (cloneCp.RemoveAllElements) {
               cloneCp.RemoveAllElements();
             }
-            console.log("[Scribe] cell[" + mc.r + "," + mc.c + "] after RemoveAllElements: elements=" + cloneCp.GetElementsCount());
-
             var mcf = cFonts[mc.r + "," + mc.c] || {};
             addRunsToParagraph(cloneCp, mc.runs || [], mcf.family, mcf.size);
-            // Verify what's in the paragraph after rebuild
-            var finalText = cloneCp.GetText ? cloneCp.GetText() : "no-GetText";
-            var finalElems = cloneCp.GetElementsCount ? cloneCp.GetElementsCount() : "?";
-            console.log("[Scribe] cell[" + mc.r + "," + mc.c + "] after rebuild: text=" + JSON.stringify(finalText).substring(0, 50) + " elements=" + finalElems);
           }
 
           tableClones[ptIndex] = clone;
@@ -687,19 +677,11 @@
           var plMatch = plText.match(/^SCRIBE-TABLE-(\d+)$/);
           if (plMatch) {
             var plIdx = parseInt(plMatch[1]);
-            console.log("[Scribe] TABLE placeholder detected: idx=" + plIdx + " clone exists=" + !!tableClones[plIdx] + " tableClones keys=" + (typeof tableClones === "object" ? Object.keys(tableClones).join(",") : "not-obj"));
             if (tableClones[plIdx]) {
               content.push(tableClones[plIdx]);
-              console.log("[Scribe] TABLE clone pushed to content, content.length=" + content.length);
-            } else {
-              console.log("[Scribe] TABLE clone NOT found for idx=" + plIdx);
             }
-            continue;  // skip normal paragraph processing
+            continue;
           }
-        }
-        // DEBUG: log block types to see what we're processing
-        if (block.runs && block.runs.length === 1 && block.runs[0].text && block.runs[0].text.indexOf("SCRIBE") !== -1) {
-          console.log("[Scribe] Block with SCRIBE in text: type=" + block.type + " runs=" + block.runs.length + " text=" + JSON.stringify(block.runs[0].text));
         }
 
         if (block.type === "heading") {
