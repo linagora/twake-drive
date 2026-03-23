@@ -27,6 +27,7 @@ import {
   hr,
   share
 } from '@/modules/actions'
+import { duplicateTo } from '@/modules/actions/components/duplicateTo'
 import { moveTo } from '@/modules/actions/components/moveTo'
 import { personalizeFolder } from '@/modules/actions/components/personalizeFolder'
 import AddMenuProvider from '@/modules/drive/AddMenu/AddMenuProvider'
@@ -110,6 +111,7 @@ const SharedDriveFolderView = () => {
       byDocId,
       dispatch,
       canMove: canWriteToCurrentFolder,
+      canDuplicate: canWriteToCurrentFolder,
       navigate,
       showAlert,
       pushModal,
@@ -146,6 +148,7 @@ const SharedDriveFolderView = () => {
           hr,
           rename,
           moveTo,
+          duplicateTo,
           personalizeFolder,
           infos,
           hr,

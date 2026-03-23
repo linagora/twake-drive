@@ -20,6 +20,7 @@ import {
   hr,
   summariseByAI
 } from '@/modules/actions'
+import { duplicateTo } from '@/modules/actions/components/duplicateTo'
 import { moveTo } from '@/modules/actions/components/moveTo'
 import { FolderBody } from '@/modules/folder/components/FolderBody'
 
@@ -54,6 +55,7 @@ const SharedDriveFolderBody = ({
     byDocId,
     dispatch,
     canMove: canWriteToCurrentFolder,
+    canDuplicate: canWriteToCurrentFolder,
     navigate,
     showAlert,
     pushModal,
@@ -68,6 +70,7 @@ const SharedDriveFolderBody = ({
       hr,
       rename,
       moveTo,
+      duplicateTo,
       infos,
       hr,
       versions,
