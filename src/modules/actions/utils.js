@@ -30,13 +30,13 @@ const downloadFileError = error => {
 export const downloadFiles = async (
   client,
   files,
-  { vaultClient, showAlert, t } = {},
-  driveId
+  { vaultClient, showAlert, t } = {}
 ) => {
   const encryptionKey = await getEncryptionKeyFromDirId(client, files[0].dir_id)
 
   if (files.length === 1 && !isDirectory(files[0])) {
     const file = files[0]
+    const driveId = file.driveId
     try {
       const filename = file.name
       if (encryptionKey) {
@@ -71,7 +71,8 @@ export const downloadFiles = async (
       })
     }
     const ids = files.map(f => f.id)
-    return client.collection(DOCTYPE_FILES).downloadArchive(ids)
+    const driveId = files[0].driveId
+    return client.collection(DOCTYPE_FILES, { driveId }).downloadArchive(ids)
   }
 }
 

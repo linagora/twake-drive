@@ -1,6 +1,5 @@
 import React, { forwardRef } from 'react'
 
-import { isDirectory } from 'cozy-client/dist/models/file'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import DownloadIcon from 'cozy-ui/transpiled/react/Icons/Download'
@@ -33,7 +32,7 @@ export const download = ({
   t,
   vaultClient,
   showAlert,
-  driveId,
+  shouldHideIfSharedDriveRecipient,
   isSelectAll,
   displayedFolder
 }) => {
@@ -46,26 +45,13 @@ export const download = ({
     icon,
     allowInfectedFiles: false,
     displayCondition: files => {
-      // # We cannot download folders or multiple files in shared drives
-
-      // ## For sharing tab
+      // ## For sharing tab where we can see multiple shared folders as recipient,
+      // we disable it because we can not download different shared folders at same time
       if (
-        driveId &&
-        (files.length > 1 || (files.length === 1 && isDirectory(files[0])))
+        shouldHideIfSharedDriveRecipient &&
+        files.length > 1 &&
+        files.some(file => isFromSharedDriveRecipient(file))
       ) {
-        return false
-      }
-
-      // ## For shared drive view
-      const isSingleSharedDriveFolder =
-        files.length === 1 &&
-        isFromSharedDriveRecipient(files[0]) &&
-        isDirectory(files[0])
-
-      const hasMultipleFilesIncludeShareDriveFiles =
-        files.length > 1 && files.some(file => isFromSharedDriveRecipient(file))
-
-      if (isSingleSharedDriveFolder || hasMultipleFilesIncludeShareDriveFiles) {
         return false
       }
 
@@ -83,12 +69,7 @@ export const download = ({
       if (isSelectAll) {
         selectedFiles = [displayedFolder]
       }
-      return downloadFiles(
-        client,
-        selectedFiles,
-        { vaultClient, showAlert, t },
-        driveId
-      )
+      return downloadFiles(client, selectedFiles, { vaultClient, showAlert, t })
     },
     Component: makeComponent(label, icon)
   }
