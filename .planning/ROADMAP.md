@@ -174,6 +174,6 @@ Phases execute in numeric order: 25 -> 26 -> 27
 | 23.2 Image round-trip cleanup | v2.5 | 1/1 | Complete | 2026-03-22 |
 | 24. Table Round-Trip | v2.5 | 2/2 | Complete | 2026-03-22 |
 | 24.1. Table rearchitecture | v2.5 | 2/2 | Complete | 2026-03-23 |
-| 25. Souligne (Underline) | 1/1 | Complete   | 2026-03-24 | - |
+| 25. Souligne (Underline) | 1/1 | Complete    | 2026-03-24 | - |
 | 26. Selections Partielles de Tableaux | v2.6 | 0/TBD | Not started | - |
 | 27. References Documentaires | v2.6 | 0/TBD | Not started | - |

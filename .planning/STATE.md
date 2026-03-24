@@ -4,12 +4,12 @@ milestone: v2.6
 milestone_name: Formatage Complet et References Documentaires
 status: unknown
 stopped_at: Roadmap created for v2.6 milestone
-last_updated: "2026-03-23T21:26:29.100Z"
+last_updated: "2026-03-24T16:19:25.208Z"
 progress:
   total_phases: 3
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 1
-  completed_plans: 0
+  completed_plans: 1
 ---
 
 # Project State
