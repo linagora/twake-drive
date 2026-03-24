@@ -7,6 +7,7 @@ import flag from 'cozy-flags'
 import ExternalRedirect from './ExternalRedirect'
 import Index from './Index'
 import AIAssistantPaywallView from '../views/AI/AIAssistantPaywallView'
+import AssistantLayout from '../views/Assistant/AssistantLayout'
 import { DriveFolderView } from '../views/Drive/DriveFolderView'
 import FilesViewerDrive from '../views/Drive/FilesViewerDrive'
 import OnlyOfficeView from '../views/OnlyOffice'
@@ -54,6 +55,10 @@ import { SharedDriveFolderView } from '@/modules/views/SharedDrive/SharedDriveFo
 import { TrashDestroyView } from '@/modules/views/Trash/TrashDestroyView'
 import { TrashEmptyView } from '@/modules/views/Trash/TrashEmptyView'
 
+const filteredBarRoutes = BarRoutes.filter(
+  r => r.props?.path !== 'assistant/:conversationId'
+)
+
 const FilesRedirect = () => {
   const { folderId } = useParams()
   return <Navigate to={`/folder/${folderId}`} replace={true} />
@@ -75,6 +80,8 @@ const AppRoute = () => (
     <Route path="external/:fileId" element={<ExternalRedirect />} />
     <Route path="note/:fileId" element={<PublicNoteRedirect />} />
     <Route path="note/:driveId/:fileId" element={<PublicNoteRedirect />} />
+
+    <Route path="assistant/:conversationId" element={<AssistantLayout />} />
 
     <Route element={<Layout />}>
       <Route path="upload" element={<UploaderComponent />} />
@@ -244,7 +251,7 @@ const AppRoute = () => (
         <Route path="move" element={<MoveFilesView />} />
       </Route>
 
-      {BarRoutes.map(BarRoute => BarRoute)}
+      {filteredBarRoutes}
     </Route>
   </SentryRoutes>
 )
