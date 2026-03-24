@@ -127,7 +127,10 @@ Plans:
   2. Apres injection, seules les cellules selectionnees sont modifiees -- les cellules non selectionnees conservent leur contenu original intact
   3. Quand la selection coupe un tableau de maniere ambigue (ex: selection commence au milieu d'une cellule, ou ne couvre qu'une partie d'une ligne fusionnee), Scribe affiche un message clair a l'utilisateur expliquant le probleme
   4. La detection d'ambiguite ne bloque pas les cas non ambigus -- les selections partielles valides sont traitees normalement
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 26-01-PLAN.md — Partial table detection and extraction (analyzeTableSelection + extractPartialTableCells)
+- [ ] 26-02-PLAN.md — Injection, ambiguity UX, preview fix, and Insert-mode gating
 
 ### Phase 27: References Documentaires
 **Goal**: Les notes de bas de page et les renvois vers des parties du document dans la selection sont detectes et preserves lors du round-trip LLM -- le LLM peut modifier le texte, mais les liens de reference restent intacts
@@ -175,5 +178,5 @@ Phases execute in numeric order: 25 -> 26 -> 27
 | 24. Table Round-Trip | v2.5 | 2/2 | Complete | 2026-03-22 |
 | 24.1. Table rearchitecture | v2.5 | 2/2 | Complete | 2026-03-23 |
 | 25. Souligne (Underline) | 1/1 | Complete    | 2026-03-24 | - |
-| 26. Selections Partielles de Tableaux | v2.6 | 0/TBD | Not started | - |
+| 26. Selections Partielles de Tableaux | v2.6 | 0/2 | Not started | - |
 | 27. References Documentaires | v2.6 | 0/TBD | Not started | - |
