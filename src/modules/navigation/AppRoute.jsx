@@ -3,10 +3,12 @@ import { Route, useParams, Outlet, Navigate } from 'react-router-dom'
 
 import { BarRoutes } from 'cozy-bar'
 import flag from 'cozy-flags'
+import { AssistantView } from 'cozy-search'
 
 import ExternalRedirect from './ExternalRedirect'
 import Index from './Index'
 import AIAssistantPaywallView from '../views/AI/AIAssistantPaywallView'
+import AssistantLayout from '../views/Assistant/AssistantLayout'
 import { DriveFolderView } from '../views/Drive/DriveFolderView'
 import FilesViewerDrive from '../views/Drive/FilesViewerDrive'
 import { getExcalidrawRoutes } from '../views/Excalidraw/routes'
@@ -56,6 +58,12 @@ import SearchView from '@/modules/views/Search/SearchView'
 import { SharedDriveFolderView } from '@/modules/views/SharedDrive/SharedDriveFolderView'
 import { TrashDestroyView } from '@/modules/views/Trash/TrashDestroyView'
 import { TrashEmptyView } from '@/modules/views/Trash/TrashEmptyView'
+
+// Avoid conflict with legacy Bar routes
+export const ASSISTANT_ROUTE_PATH = 'assistant/:conversationId'
+const filteredBarRoutes = BarRoutes.filter(
+  r => r.props?.path !== 'assistant/:conversationId'
+)
 
 const FilesRedirect = () => {
   const { folderId } = useParams()
@@ -135,6 +143,10 @@ const AppRoute = () => (
     <Route path="external/:fileId" element={<ExternalRedirect />} />
     <Route path="note/:fileId" element={<PublicNoteRedirect />} />
     <Route path="note/:driveId/:fileId" element={<PublicNoteRedirect />} />
+
+    <Route element={<AssistantLayout />}>
+      <Route path={ASSISTANT_ROUTE_PATH} element={<AssistantView />} />
+    </Route>
 
     <Route element={<Layout />}>
       <Route path="upload" element={<UploaderComponent />} />
@@ -283,7 +295,7 @@ const AppRoute = () => (
         <Route path="move" element={<MoveFilesView />} />
       </Route>
 
-      {BarRoutes.map(BarRoute => BarRoute)}
+      {filteredBarRoutes}
     </Route>
   </SentryRoutes>
 )
