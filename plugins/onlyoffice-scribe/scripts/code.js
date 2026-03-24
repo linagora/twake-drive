@@ -1285,198 +1285,113 @@
         return escaped;
       }
 
-      // Build markdown from an array of annotated parts, emitting formatting
-      // markers at transitions instead of wrapping each part independently.
-      // Each part: { text, bold, italic, strikethrough, code, raw, link }
-      // - raw: text emitted as-is, closes all formatting (for image markers)
-      // - link: URL string — text is wrapped in [text](url), formatting flows through
+      // ── Self-contained segment strategy for markdown emission ──
+      //
+      // OO documents have overlapping formatting spans (e.g. bold crossing an
+      // underline boundary). Markdown requires strict nesting. The previous
+      // approach tried to track open/close state across segment boundaries,
+      // which led to ambiguous marker sequences like "***" or stray "*".
+      //
+      // New approach: each segment (= run with a constant format set) is
+      // **fully self-contained** — all markers are opened and closed within
+      // the segment. No marker ever crosses a segment boundary.
+      //
+      // Nesting order (outermost → innermost):
+      //   <u> → [link](url) → ~~ → ** → * → `
+      //
+      // Trade-offs accepted:
+      //   - Adjacent </u><u> — renders identically in OO (contiguous underline)
+      //   - Adjacent [a](url)[b](url) — same-URL links merge visually in OO
+      //   - Slightly more verbose markdown — but unambiguous and LLM-friendly
+      //
+      // CommonMark whitespace rule: opening ** / * must not be followed by
+      // whitespace. We move leading/trailing whitespace outside the markers
+      // but keep it inside <u> and [...] so spacing is preserved.
       function buildMarkdownFromParts(parts) {
         var result = "";
-        var curBold = false, curItalic = false, curStrike = false, curCode = false, curUnderline = false;
-
-        function closeAll() {
-          if (curCode || curStrike || curBold || curItalic || curUnderline) {
-            // Move trailing whitespace after closing markers (CommonMark rule)
-            var wsMatch = result.match(/(\s+)$/);
-            var trailingSpace = "";
-            if (wsMatch) {
-              trailingSpace = wsMatch[1];
-              result = result.substring(0, result.length - trailingSpace.length);
-            }
-            if (curCode) { result += "`"; curCode = false; }
-            if (curStrike) { result += "~~"; curStrike = false; }
-            if (curBold) { result += "**"; curBold = false; }
-            if (curItalic) { result += "*"; curItalic = false; }
-            if (curUnderline) { result += "</u>"; curUnderline = false; }
-            if (trailingSpace) result += trailingSpace;
-          }
-        }
-
-        // Look ahead from index `from` to see which formats have non-empty text remaining.
-        // Returns object with bold/italic/strikethrough/code booleans.
-        function futureFormats(from) {
-          var fb = false, fi = false, fs = false, fc = false;
-          for (var k = from; k < parts.length; k++) {
-            var pk = parts[k];
-            if (pk.raw || !pk.text || pk.text.length === 0) continue;
-            if (pk.bold) fb = true;
-            if (pk.italic) fi = true;
-            if (pk.strikethrough) fs = true;
-            if (pk.code) fc = true;
-            if (fb && fi && fs && fc) break;
-          }
-          return { bold: fb, italic: fi, strikethrough: fs, code: fc };
-        }
-
-        function transitionTo(wantBold, wantItalic, wantStrike, wantCode, wantUnderline, reopenHints) {
-          // Detect underline boundary crossing: underline opening or closing while
-          // inner markdown formatting (bold/italic/strike/code) should persist across
-          // the boundary. Since <u> is HTML and must wrap around markdown syntax,
-          // we must close inner formatting at the boundary and reopen it after.
-          var underlineClosing = curUnderline && !wantUnderline;
-          var underlineOpening = wantUnderline && !curUnderline;
-          // Inner formats that are currently open and should stay open across underline boundary
-          var saveBold = curBold && wantBold;
-          var saveItalic = curItalic && wantItalic;
-          var saveStrike = curStrike && wantStrike;
-          var saveCode = curCode && wantCode;
-          var hasCrossBoundary = (underlineClosing || underlineOpening) &&
-                                (saveBold || saveItalic || saveStrike || saveCode);
-
-          var needsClose = (curCode && !wantCode) || (curStrike && !wantStrike) ||
-                           (curBold && !wantBold) || (curItalic && !wantItalic) ||
-                           (curUnderline && !wantUnderline) || hasCrossBoundary;
-          // Before closing markers, move trailing whitespace after the closing marker
-          // (CommonMark requires no space before closing emphasis delimiter)
-          var trailingSpace = "";
-          if (needsClose) {
-            var wsMatch = result.match(/(\s+)$/);
-            if (wsMatch) {
-              trailingSpace = wsMatch[1];
-              result = result.substring(0, result.length - trailingSpace.length);
-            }
-          }
-
-          if (hasCrossBoundary) {
-            // Close ALL inner markdown formatting first (innermost to outermost)
-            if (curCode) { result += "`"; curCode = false; }
-            if (curStrike) { result += "~~"; curStrike = false; }
-            if (curBold) { result += "**"; curBold = false; }
-            if (curItalic) { result += "*"; curItalic = false; }
-            // Now close/open the underline boundary
-            if (underlineClosing) { result += "</u>"; curUnderline = false; }
-            // Re-add trailing whitespace after closing markers
-            if (trailingSpace) { result += trailingSpace; trailingSpace = ""; }
-            if (underlineOpening) { result += "<u>"; curUnderline = true; }
-            // Reopen inner formatting that should persist (outermost to innermost)
-            // Use reopenHints (if provided) to avoid reopening formats that have no
-            // remaining content — prevents empty markers like "****" after </u>.
-            var rh = reopenHints || { bold: wantBold, italic: wantItalic, strikethrough: wantStrike, code: wantCode };
-            if (wantItalic && rh.italic) { result += "*"; curItalic = true; }
-            if (wantBold && rh.bold) { result += "**"; curBold = true; }
-            if (wantStrike && rh.strikethrough) { result += "~~"; curStrike = true; }
-            if (wantCode && rh.code) { result += "`"; curCode = true; }
-          } else {
-            // No cross-boundary: simple close/open as before
-            // Close markers that are ending (innermost first, underline outermost = last to close)
-            if (curCode && !wantCode) { result += "`"; curCode = false; }
-            if (curStrike && !wantStrike) { result += "~~"; curStrike = false; }
-            if (curBold && !wantBold) { result += "**"; curBold = false; }
-            if (curItalic && !wantItalic) { result += "*"; curItalic = false; }
-            if (curUnderline && !wantUnderline) { result += "</u>"; curUnderline = false; }
-            // Re-add trailing whitespace after closing markers
-            if (trailingSpace) result += trailingSpace;
-            // Open markers that are starting (underline outermost = first to open)
-            if (wantUnderline && !curUnderline) { result += "<u>"; curUnderline = true; }
-            if (wantItalic && !curItalic) { result += "*"; curItalic = true; }
-            if (wantBold && !curBold) { result += "**"; curBold = true; }
-            if (wantStrike && !curStrike) { result += "~~"; curStrike = true; }
-            if (wantCode && !curCode) { result += "`"; curCode = true; }
-          }
-        }
 
         for (var i = 0; i < parts.length; i++) {
           var part = parts[i];
 
-          // Raw parts (image markers) — close all formatting, emit raw, continue
+          // Raw parts (image markers) — emit as-is
           if (part.raw) {
-            closeAll();
             result += part.text;
             continue;
           }
 
           if (!part.text || part.text.length === 0) continue;
 
+          var text = part.text;
           var wantBold = !!part.bold;
           var wantItalic = !!part.italic;
           var wantStrike = !!part.strikethrough;
           var wantCode = !!part.code;
           var wantUnderline = !!part.underline;
+          var link = part.link || null;
+          var hasEmphasis = wantBold || wantItalic || wantStrike || wantCode;
 
-          // CommonMark: opening emphasis delimiters must not be followed by whitespace.
-          // If the text has leading whitespace and we're about to open markers, move
-          // the whitespace before the markers so "** text**" becomes " **text**".
-          // Also detect cross-boundary reopening: when underline opens/closes while
-          // inner formatting persists, markers close and reopen — that's also an "open".
-          var partText = part.text;
-          var leadingSpace = "";
-          var uClosing = curUnderline && !wantUnderline;
-          var uOpening = wantUnderline && !curUnderline;
-          var crossBoundary = (uClosing || uOpening) &&
-            ((curBold && wantBold) || (curItalic && wantItalic) ||
-             (curStrike && wantStrike) || (curCode && wantCode));
-          var needsOpen = (wantBold && !curBold) || (wantItalic && !curItalic) ||
-                          (wantStrike && !curStrike) || (wantCode && !curCode) ||
-                          (wantUnderline && !curUnderline) || crossBoundary;
-          if (needsOpen && !part.link) {
-            var lsMatch = partText.match(/^(\s+)/);
-            if (lsMatch && lsMatch[1].length < partText.length) {
-              leadingSpace = lsMatch[1];
-              partText = partText.substring(leadingSpace.length);
-              result += leadingSpace;
+          // ── Whitespace extraction ──
+          // Move leading/trailing whitespace outside emphasis markers (** * ~~ `)
+          // but keep it inside <u> and [link] so underline/link span is preserved.
+          var leadingWS = "";
+          var trailingWS = "";
+          if (hasEmphasis && !wantCode) {
+            var lm = text.match(/^(\s+)/);
+            if (lm && lm[1].length < text.length) {
+              leadingWS = lm[1];
+              text = text.substring(leadingWS.length);
+            }
+            var tm = text.match(/(\s+)$/);
+            if (tm && tm[1].length < text.length) {
+              trailingWS = tm[1];
+              text = text.substring(0, text.length - trailingWS.length);
             }
           }
 
-          // When underline boundary is crossed with formatting that persists, compute
-          // look-ahead hints so we only reopen formats that have future content.
-          // Prevents empty markers like "****" after </u> or before <u>.
-          var hints = null;
-          if (crossBoundary) {
-            hints = futureFormats(i + 1);
-            // Current part counts too — if it has non-empty text, its formats matter
-            if (partText && partText.length > 0) {
-              if (wantBold) hints.bold = true;
-              if (wantItalic) hints.italic = true;
-              if (wantStrike) hints.strikethrough = true;
-              if (wantCode) hints.code = true;
-            }
+          // If text is all whitespace, emit directly (no markers needed)
+          if (text.length === 0) {
+            result += part.text;
+            continue;
           }
-          transitionTo(wantBold, wantItalic, wantStrike, wantCode, wantUnderline, hints);
 
-          // Emit text — with link wrapping if present
-          if (part.link) {
-            var linkText = wantCode ? part.text : escapeMarkdown(part.text);
-            result += "[" + linkText + "](" + part.link + ")";
-          } else if (wantCode) {
-            result += partText;
+          // ── Build segment string ──
+          var seg = "";
+
+          // Open outer markers
+          if (wantUnderline) seg += "<u>";
+          if (link) seg += "[";
+
+          // Leading whitespace (inside <u>/link, outside emphasis)
+          seg += leadingWS;
+
+          // Open emphasis markers (outermost → innermost)
+          if (wantStrike) seg += "~~";
+          if (wantBold) seg += "**";
+          if (wantItalic) seg += "*";
+          if (wantCode) seg += "`";
+
+          // Emit text content
+          if (wantCode || link) {
+            seg += link ? escapeMarkdown(text) : text;
           } else {
-            result += escapeMarkdown(partText);
+            seg += escapeMarkdown(text);
           }
+
+          // Close emphasis markers (innermost → outermost)
+          if (wantCode) seg += "`";
+          if (wantItalic) seg += "*";
+          if (wantBold) seg += "**";
+          if (wantStrike) seg += "~~";
+
+          // Trailing whitespace (inside <u>/link, outside emphasis)
+          seg += trailingWS;
+
+          // Close outer markers
+          if (link) seg += "](" + link + ")";
+          if (wantUnderline) seg += "</u>";
+
+          result += seg;
         }
-
-        // Close any remaining open markers
-        closeAll();
-
-        // Safety net: strip empty formatting marker pairs (no content between open/close).
-        // Can arise from boundary-crossing logic when a format has no visible text.
-        // Repeat until stable since removing one pair may expose another.
-        var prev;
-        do {
-          prev = result;
-          result = result.replace(/\*\*\*\*/g, "");   // empty bold: ****
-          result = result.replace(/~~~~/g, "");          // empty strike: ~~~~
-          result = result.replace(/``/g, "");           // empty code: ``
-        } while (result !== prev);
 
         return result;
       }

@@ -22,7 +22,15 @@ import { htmlToMarkdown } from '@/modules/views/OnlyOffice/Scribe/scribeConversi
  * Prompt templates stay in English; output language handled by system prompt.
  */
 export const SYSTEM_PROMPT =
-  'You are a writing assistant. Return only the transformed text, no explanations or commentary. Preserve any Markdown formatting (bold, italic, lists, headings) and HTML tags like <u>...</u> present in the input. Respond in the same language as the input text.'
+  'You are a writing assistant. Return only the transformed text, no explanations or commentary. ' +
+  'Preserve all Markdown formatting and HTML tags exactly as structured in the input. ' +
+  'Key rules for formatting markers: ' +
+  '(1) Each formatted segment is self-contained — markers open and close within the same segment (e.g. <u>**bold underlined**</u>, never **<u>bold underlined</u>**). ' +
+  '(2) Adjacent <u> tags are intentional — do NOT merge </u><u> into a single <u>...</u>. ' +
+  '(3) Adjacent links to the same URL are intentional — do NOT merge [a](url)[b](url) into [ab](url). ' +
+  '(4) Nesting order is always: <u> outermost, then [link], then ~~, then **, then *, then ` innermost. ' +
+  '(5) If you add or rewrite text that should carry formatting from adjacent segments, replicate the same marker structure. ' +
+  'Respond in the same language as the input text.'
 
 /**
  * Search SCRIBE_ACTIONS (including children and dynamic translate children)
