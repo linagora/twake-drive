@@ -49,6 +49,41 @@ PasteHtml                    ← executeMethod — single undo point
 
 **Fallback:** If no HTML is available, plain text is used via `PasteText` (replace) or `InsertContent` with `Api.CreateParagraph()` (insert).
 
+### Enriched Markdown Format Contract
+
+The enriched markdown (`enrichedMd`) sent to the LLM follows a **self-contained segment** strategy. This is a contract that editors must conform to when producing markdown for Scribe.
+
+**Problem:** Document editors (OO, etc.) support overlapping formatting spans (e.g. bold crossing an underline boundary). Markdown requires strict nesting. Adjacent `*` and `**` markers create ambiguous sequences like `***` that parsers resolve inconsistently.
+
+**Solution:** Each text segment (= run with a constant set of formatting flags) is fully self-contained. All markers open and close within the segment. No marker ever crosses a segment boundary.
+
+**Nesting order** (outermost → innermost):
+```
+<u> → [link](url) → ~~ → ** → * → `
+```
+
+**Whitespace rule:** Leading/trailing whitespace is placed outside emphasis markers (`**`, `*`, `~~`, `` ` ``) but inside `<u>` and `[link]`. This satisfies CommonMark's flanking rules (opening `**` must not be followed by whitespace).
+
+**Example** — text with overlapping underline, bold, italic, and hyperlink:
+
+| Segment | Text | Formats | Markdown |
+|---------|------|---------|----------|
+| 1 | `Texte ` | — | `Texte ` |
+| 2 | `souli` | u | `<u>souli</u>` |
+| 3 | `gné` | u, b | `<u>**gné**</u>` |
+| 4 | ` avec du ` | u, b, link | `<u>[ **avec du**](url)</u>` |
+| 5 | `gras` | u, b, i, link | `<u>[***gras***](url)</u>` |
+| 6 | `, un lien ` | u, i, link | `<u>[*, un lien*](url)</u>` |
+| 7 | `et du non` | i | `*et du non*` |
+| 8 | ` souligné` | — | ` souligné` |
+
+**Accepted trade-offs:**
+- **Adjacent `</u><u>`** — two separate underline tokens, but OO renders them as contiguous underline
+- **Adjacent same-URL links** — `[a](url)[b](url)` produces separate hyperlink tokens, merged back into single hyperlink runs during reinjection (`mergeAdjacentRuns`)
+- **More verbose** — but unambiguous and preserves round-trip fidelity
+
+**LLM preservation:** The system prompt instructs the LLM to preserve this structure (don't merge adjacent `<u>` tags, don't merge adjacent same-URL links, replicate marker structure when rewriting text).
+
 **Current limitations:**
 - Post-paste selection of inserted content is not implemented (OO returns inconsistent cursor positions after PasteHtml)
 - Colored text is not preserved through the round-trip (bold, italic, strikethrough, code, links are preserved)

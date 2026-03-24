@@ -124,6 +124,37 @@
   function flattenTokens(markedTokens) {
     var blocks = [];
 
+    // Merge adjacent runs that share identical formatting into a single run.
+    // The self-contained segment strategy produces one run per OO segment,
+    // which can create adjacent runs with the same link URL or code style.
+    // Merging here ensures the Builder API creates a single hyperlink/run
+    // instead of multiple contiguous ones.
+    function mergeAdjacentRuns(runs) {
+      if (runs.length <= 1) return runs;
+      var merged = [runs[0]];
+      for (var i = 1; i < runs.length; i++) {
+        var prev = merged[merged.length - 1];
+        var cur = runs[i];
+        // Skip image markers — never merge
+        if (prev.imageMarker || cur.imageMarker) {
+          merged.push(cur);
+          continue;
+        }
+        // Merge if all formatting flags match
+        if (prev.bold === cur.bold &&
+            prev.italic === cur.italic &&
+            prev.strikethrough === cur.strikethrough &&
+            prev.underline === cur.underline &&
+            prev.code === cur.code &&
+            prev.link === cur.link) {
+          prev.text += cur.text;
+        } else {
+          merged.push(cur);
+        }
+      }
+      return merged;
+    }
+
     function flattenInline(tokens, parentBold, parentItalic, parentStrikethrough, parentCode, parentLink, parentUnderline) {
       var runs = [];
       for (var i = 0; i < tokens.length; i++) {
@@ -155,7 +186,7 @@
           runs.push({ text: tok.text, bold: !!parentBold, italic: !!parentItalic, strikethrough: !!parentStrikethrough, underline: !!parentUnderline, code: !!parentCode, link: parentLink || null });
         }
       }
-      return runs;
+      return mergeAdjacentRuns(runs);
     }
 
     function flattenList(listToken, depth) {
