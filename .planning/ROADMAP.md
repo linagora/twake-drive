@@ -100,7 +100,7 @@ Full details: `.planning/milestones/v2.5-ROADMAP.md`
 
 **Milestone Goal:** Completer le support des formatages inline (souligne) et gerer les objets documentaires avances (selections partielles de tableaux, notes de bas de page, renvois vers des parties du document).
 
-- [ ] **Phase 25: Souligne (Underline)** - Support underline dans le pipeline extraction/reinjection existant
+- [x] **Phase 25: Souligne (Underline)** - Support underline dans le pipeline extraction/reinjection existant (completed 2026-03-24)
 - [ ] **Phase 26: Selections Partielles de Tableaux** - Gestion des cas ou le tableau n'est pas entierement selectionne, avec detection d'ambiguite
 - [ ] **Phase 27: References Documentaires** - Detection et preservation des notes de bas de page et renvois internes dans le round-trip
 
@@ -114,7 +114,7 @@ Full details: `.planning/milestones/v2.5-ROADMAP.md`
   1. Du texte souligne dans la selection OO apparait dans le markdown extrait avec un marqueur reconnaissable (ex: `<u>texte</u>` ou convention markdown)
   2. Apres traitement LLM, le texte souligne dans le resultat IA est reinjecte dans OO avec la propriete underline appliquee via Builder API
   3. Le souligne coexiste avec les autres formatages inline (bold, italic, strikethrough) sans regression -- un texte gras+souligne reste gras+souligne apres round-trip
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 Plans:
 - [ ] 25-01-PLAN.md — Underline round-trip: extraction, markdown emission, injection, preview, and system prompt
 
@@ -174,6 +174,6 @@ Phases execute in numeric order: 25 -> 26 -> 27
 | 23.2 Image round-trip cleanup | v2.5 | 1/1 | Complete | 2026-03-22 |
 | 24. Table Round-Trip | v2.5 | 2/2 | Complete | 2026-03-22 |
 | 24.1. Table rearchitecture | v2.5 | 2/2 | Complete | 2026-03-23 |
-| 25. Souligne (Underline) | v2.6 | 0/1 | Planning | - |
+| 25. Souligne (Underline) | 1/1 | Complete   | 2026-03-24 | - |
 | 26. Selections Partielles de Tableaux | v2.6 | 0/TBD | Not started | - |
 | 27. References Documentaires | v2.6 | 0/TBD | Not started | - |

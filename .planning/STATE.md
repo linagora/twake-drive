@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v2.6
 milestone_name: Formatage Complet et References Documentaires
-status: planning
-stopped_at: Roadmap created for v2.6
-last_updated: "2026-03-23"
+status: unknown
+stopped_at: Roadmap created for v2.6 milestone
+last_updated: "2026-03-23T21:26:29.100Z"
 progress:
   total_phases: 3
   completed_phases: 0
-  total_plans: 0
+  total_plans: 1
   completed_plans: 0
 ---
 
@@ -19,16 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-23)
 
 **Core value:** La chaine de communication complete -- depuis la selection de texte dans OnlyOffice jusqu'a la reinjection du texte modifie par l'IA -- de bout en bout, transparente pour l'utilisateur.
-**Current focus:** Phase 25 — Souligne (Underline)
+**Current focus:** Phase 25 — souligne-underline
 
 ## Current Position
 
-Phase: 25 (1 of 3 in v2.6) — Souligne (Underline)
-Plan: —
-Status: Ready to plan
-Last activity: 2026-03-23 — Roadmap created for v2.6
-
-Progress: [░░░░░░░░░░] 0%
+Phase: 25 (souligne-underline) — EXECUTING
+Plan: 1 of 1
 
 ## Performance Metrics
 
