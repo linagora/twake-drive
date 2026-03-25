@@ -6,6 +6,8 @@
   var lastSelectedHtml = "";
   var lastEnrichedMd = "";
   var lastTableDocIndices = [];
+  var lastTableAmbiguity = null;
+  var lastPartialTableInfo = null;
   var imageCounter = 0;
   var pendingIntents = {};
   var cozyOrigin = "*"; // TODO: restrict to actual Cozy origin in production
@@ -79,6 +81,12 @@
     var data = { text: lastSelectedText };
     if (lastEnrichedMd && lastEnrichedMd.length > 0) {
       data.enrichedMd = lastEnrichedMd;
+    }
+    if (lastTableAmbiguity) {
+      data.tableAmbiguity = lastTableAmbiguity;
+    }
+    if (lastPartialTableInfo) {
+      data.partialTableInfo = lastPartialTableInfo;
     }
     return data;
   }
@@ -1613,6 +1621,126 @@
         }
       }
 
+      // --- Partial table selection analysis (TBL-01) ---
+      // Returns: { full, selectedCells, ambiguous, reason, intraCell }
+      function analyzeTableSelection(table, selStart, selEnd) {
+        var tblRange = table.GetRange();
+        if (!tblRange) return { full: false, selectedCells: [], ambiguous: true, reason: "no_range" };
+        var tblStart = tblRange.GetStartPos();
+        var tblEnd = tblRange.GetEndPos();
+        // Full table inside selection?
+        if (tblStart >= selStart && tblEnd <= selEnd) {
+          return { full: true, selectedCells: [], ambiguous: false, reason: null };
+        }
+        var rowCount = table.GetRowsCount();
+        var selectedCells = [];
+        var ambiguousCells = [];
+        for (var r = 0; r < rowCount; r++) {
+          var row = table.GetRow(r);
+          var cellCount = row.GetCellsCount();
+          for (var c = 0; c < cellCount; c++) {
+            var cell = table.GetCell(r, c);
+            if (!cell) continue;
+            var content = cell.GetContent();
+            if (!content || content.GetElementsCount() === 0) {
+              // Empty cell — handled after loop (include if row has other selected cells)
+              continue;
+            }
+            var firstPara = content.GetElement(0);
+            var lastPara = content.GetElement(content.GetElementsCount() - 1);
+            var firstRange = firstPara ? firstPara.GetRange() : null;
+            var lastRange = lastPara ? lastPara.GetRange() : null;
+            if (!firstRange || !lastRange) continue;
+            var cStart = firstRange.GetStartPos();
+            var cEnd = lastRange.GetEndPos();
+            var fullyInside = (cStart >= selStart && cEnd <= selEnd);
+            var overlaps = (cEnd >= selStart && cStart <= selEnd);
+            var partialOverlap = overlaps && !fullyInside;
+            if (fullyInside) {
+              selectedCells.push({ r: r, c: c });
+            } else if (partialOverlap) {
+              ambiguousCells.push({ r: r, c: c });
+            }
+          }
+        }
+        // Check for intra-cell case: 0 fully-selected cells but 1 ambiguous cell,
+        // and the selection is entirely within that one cell → Case 1 (intra-cell).
+        if (selectedCells.length === 0 && ambiguousCells.length === 1) {
+          var ac = ambiguousCells[0];
+          var acCell = table.GetCell(ac.r, ac.c);
+          if (acCell) {
+            var acContent = acCell.GetContent();
+            if (acContent && acContent.GetElementsCount() > 0) {
+              var acFirst = acContent.GetElement(0);
+              var acLast = acContent.GetElement(acContent.GetElementsCount() - 1);
+              var acFR = acFirst ? acFirst.GetRange() : null;
+              var acLR = acLast ? acLast.GetRange() : null;
+              if (acFR && acLR) {
+                var acStart = acFR.GetStartPos();
+                var acEnd = acLR.GetEndPos();
+                // Selection is within this single cell
+                if (selStart >= acStart && selEnd <= acEnd) {
+                  return { full: false, selectedCells: [], ambiguous: false, reason: "intra_cell", intraCell: true };
+                }
+              }
+            }
+          }
+        }
+        if (ambiguousCells.length > 0) {
+          return { full: false, selectedCells: [], ambiguous: true, reason: "selection_cuts_cell" };
+        }
+        // Handle empty cells: include empty cells whose row has at least one selected cell
+        var selectedRowSet = {};
+        for (var si = 0; si < selectedCells.length; si++) {
+          selectedRowSet[selectedCells[si].r] = true;
+        }
+        for (var r2 = 0; r2 < rowCount; r2++) {
+          if (!selectedRowSet[r2]) continue;
+          var row2 = table.GetRow(r2);
+          var cellCount2 = row2.GetCellsCount();
+          for (var c2 = 0; c2 < cellCount2; c2++) {
+            var alreadySelected = false;
+            for (var as2 = 0; as2 < selectedCells.length; as2++) {
+              if (selectedCells[as2].r === r2 && selectedCells[as2].c === c2) { alreadySelected = true; break; }
+            }
+            if (!alreadySelected) {
+              var emptyCell = table.GetCell(r2, c2);
+              if (emptyCell) {
+                var ec = emptyCell.GetContent();
+                if (!ec || ec.GetElementsCount() === 0) {
+                  selectedCells.push({ r: r2, c: c2 });
+                }
+              }
+            }
+          }
+        }
+        // Sort selectedCells by row then column for consistent ordering
+        selectedCells.sort(function(a, b) { return a.r !== b.r ? a.r - b.r : a.c - b.c; });
+        return { full: false, selectedCells: selectedCells, ambiguous: false, reason: null };
+      }
+
+      // --- Partial table cell extraction (TBL-01) ---
+      function extractPartialTableCells(table, selectedCells) {
+        var cellMd = [];
+        for (var i = 0; i < selectedCells.length; i++) {
+          var sc = selectedCells[i];
+          var cell = table.GetCell(sc.r, sc.c);
+          if (!cell) continue;
+          var content = cell.GetContent();
+          var cellText = "";
+          var elemCount = content ? content.GetElementsCount() : 0;
+          for (var e = 0; e < elemCount; e++) {
+            var elem = content.GetElement(e);
+            if (elem.GetClassType && elem.GetClassType() === "paragraph") {
+              if (cellText.length > 0) cellText = cellText + " ";
+              cellText = cellText + paragraphToMarkdown(elem);
+            }
+          }
+          cellMd.push("[CELL:" + sc.r + "," + sc.c + "]" + cellText + "[/CELL]");
+        }
+        return cellMd.join("\n");
+      }
+
       // --- Table cell extraction helper (MARK-02) ---
       function extractTableCells(table) {
         var cellMd = [];
@@ -1702,6 +1830,8 @@
 
       var tableIndex = 0;
       var tableDocIndices = [];  // tableDocIndices[tableIndex] = doc-level index in GetAllTables()
+      var tableAmbiguity = null;
+      var partialTableInfo = null;
       for (var p = 0; p < paragraphs.length; p++) {
         var para = paragraphs[p];
         var paraRange = para.GetRange();
@@ -1711,14 +1841,54 @@
         var insideTable = false;
         for (var ti = 0; ti < tableRanges.length; ti++) {
           if (pStart >= tableRanges[ti].start && pStart <= tableRanges[ti].end) {
-            insideTable = true;
-            // Emit table cells once (when first cell paragraph is encountered)
+            // Analyze the table selection on first encounter
             if (!tableRanges[ti].emitted) {
               tableRanges[ti].emitted = true;
-              var tableCellsMd = extractTableCells(tableRanges[ti].table);
-              mdParts.push({ md: "[TABLE:" + tableIndex + "]\n" + tableCellsMd + "\n[/TABLE]", isList: false });
-              tableDocIndices.push(tableRanges[ti].docIndex);
-              tableIndex = tableIndex + 1;
+              if (!tableRanges[ti].analysis) {
+                tableRanges[ti].analysis = analyzeTableSelection(tableRanges[ti].table, selStart, selEnd);
+              }
+              var analysis = tableRanges[ti].analysis;
+              if (analysis.intraCell) {
+                // Case 1: intra-cell — skip table handling, let paragraphs fall through
+                tableRanges[ti].isIntraCell = true;
+              } else if (analysis.ambiguous) {
+                // Store ambiguity info for the result
+                insideTable = true;
+                if (!tableAmbiguity) {
+                  tableAmbiguity = {
+                    type: analysis.reason,
+                    message: "La selection coupe un tableau de maniere ambigue. Selectionnez des lignes completes du tableau."
+                  };
+                }
+              } else if (analysis.full) {
+                // Full table — existing behavior
+                insideTable = true;
+                var tableCellsMd = extractTableCells(tableRanges[ti].table);
+                mdParts.push({ md: "[TABLE:" + tableIndex + "]\n" + tableCellsMd + "\n[/TABLE]", isList: false });
+                tableDocIndices.push(tableRanges[ti].docIndex);
+                tableIndex = tableIndex + 1;
+              } else {
+                // Partial table — extract only selected cells
+                insideTable = true;
+                var partialCellsMd = extractPartialTableCells(tableRanges[ti].table, analysis.selectedCells);
+                mdParts.push({ md: "[TABLE:" + tableIndex + "]\n" + partialCellsMd + "\n[/TABLE]", isList: false });
+                tableDocIndices.push(tableRanges[ti].docIndex);
+                if (!partialTableInfo) partialTableInfo = {};
+                partialTableInfo[tableIndex] = analysis.selectedCells;
+                tableIndex = tableIndex + 1;
+              }
+            } else {
+              // Already emitted — check if intra-cell (paragraphs within selection fall through)
+              if (tableRanges[ti].isIntraCell) {
+                // For intra-cell: paragraphs within the selection range fall through to normal handling
+                // Paragraphs outside the selection range are skipped (they belong to other cells)
+                if (pStart < selStart || pStart > selEnd) {
+                  insideTable = true;
+                }
+                // else: insideTable stays false, paragraph falls through to normal extraction
+              } else {
+                insideTable = true;
+              }
             }
             break;
           }
@@ -1794,7 +1964,9 @@
       return JSON.stringify({
         text: plainParts.join("\n"),
         md: mdLines.join(""),
-        tableDocIndices: tableDocIndices
+        tableDocIndices: tableDocIndices,
+        tableAmbiguity: tableAmbiguity,
+        partialTableInfo: partialTableInfo
       });
     }, false, false, function(resultJson) {
       // false = read-write (allows SetName on images for stable naming)
@@ -1811,6 +1983,8 @@
       lastSelectedText = plainText;
       lastEnrichedMd = result.md || "";
       lastTableDocIndices = result.tableDocIndices || [];
+      lastTableAmbiguity = result.tableAmbiguity || null;
+      lastPartialTableInfo = result.partialTableInfo || null;
       lastSelectedHtml = ""; // No longer used for primary extraction
 
       if (selectionDebounceTimer) clearTimeout(selectionDebounceTimer);
