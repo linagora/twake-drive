@@ -7,6 +7,12 @@ import { useSelectionContext } from './SelectionProvider'
 const INTERACTIVE_ELEMENTS_SELECTOR =
   'button,a,input,select,textarea,label,[role="button"],[role="menuitem"],[role="option"]'
 const SCROLL_STEP_IN_PIXELS = 10
+/**
+ * Hit rate for the Selecto library.
+ * Controls how frequently the selection rectangle checks for elements to select.
+ * A value of 1 means it checks every pixel, ensuring precise selection.
+ */
+const HIT_RATE = 1
 
 /**
  * Component that enables rectangular selection of files in a grid view.
@@ -281,7 +287,7 @@ const RectangularSelection = ({
           selectableTargets={['[data-file-id]']}
           selectByClick={false}
           selectFromInside={false}
-          hitRate={10}
+          hitRate={HIT_RATE}
           ratio={0}
           toggleContinueSelect="ctrl" // special key to extend the current selection
           continueSelect={false} // do not allow to extend the current selection without special key
