@@ -10,6 +10,7 @@ import { translate } from 'twake-i18n'
 import styles from '@/styles/filenameinput.styl'
 
 import { CozyFile } from '@/models'
+import { getCaretPositionFromPoint } from '@/modules/filelist/getCaretPositionFromPoint'
 
 const ENTER_KEY = 13
 const ESC_KEY = 27
@@ -152,6 +153,17 @@ const FilenameInput = ({
     shouldSetSelection.current = false
   }, [initialName, file])
 
+  // Firefox does not natively reposition the cursor on click in this DOM context.
+  // Workaround: manually compute and apply the caret position on mouseup.
+  const handleMouseUp = useCallback(e => {
+    const input = textInput.current
+    if (!input || e.target !== input) return
+    const offset = getCaretPositionFromPoint(e.clientX, e.clientY)
+    if (offset !== null) {
+      input.setSelectionRange(offset, offset)
+    }
+  }, [])
+
   return (
     <div
       data-testid="name-input"
@@ -167,6 +179,7 @@ const FilenameInput = ({
         onFocus={handleFocus}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
+        onMouseUp={handleMouseUp}
         className={error ? styles['error'] : null}
         autoFocus
       />
