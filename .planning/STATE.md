@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.6
 milestone_name: Formatage Complet et References Documentaires
 status: unknown
-stopped_at: Completed 26-01-PLAN.md
-last_updated: "2026-03-25T16:19:12.053Z"
+stopped_at: Completed 26-02-PLAN.md
+last_updated: "2026-03-25T16:27:07.399Z"
 progress:
   total_phases: 3
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 3
-  completed_plans: 2
+  completed_plans: 3
 ---
 
 # Project State
@@ -45,6 +45,8 @@ Recent decisions affecting current work:
 - [v2.5]: buildMarkdownFromParts state machine handles inline formatting transitions
 - [Phase 24.1]: Clone tables via ApiTable.Copy() + InsertContent (supports Replace and Insert)
 - [Phase 26]: Intra-cell selections bypass table handling entirely — same code path as paragraph
+- [Phase 26]: Partial table Replace uses in-place modification (not clone+InsertContent) to preserve table structure
+- [Phase 26]: Insert button disabled for pure partial-table selections; enabled for mixed content
 
 ### Pending Todos (carried from v2.3)
 
@@ -64,6 +66,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-25T16:19:12.050Z
-Stopped at: Completed 26-01-PLAN.md
+Last session: 2026-03-25T16:27:07.397Z
+Stopped at: Completed 26-02-PLAN.md
 Resume file: None

@@ -101,7 +101,7 @@ Full details: `.planning/milestones/v2.5-ROADMAP.md`
 **Milestone Goal:** Completer le support des formatages inline (souligne) et gerer les objets documentaires avances (selections partielles de tableaux, notes de bas de page, renvois vers des parties du document).
 
 - [x] **Phase 25: Souligne (Underline)** - Support underline dans le pipeline extraction/reinjection existant (completed 2026-03-24)
-- [ ] **Phase 26: Selections Partielles de Tableaux** - Gestion des cas ou le tableau n'est pas entierement selectionne, avec detection d'ambiguite
+- [x] **Phase 26: Selections Partielles de Tableaux** - Gestion des cas ou le tableau n'est pas entierement selectionne, avec detection d'ambiguite (completed 2026-03-25)
 - [ ] **Phase 27: References Documentaires** - Detection et preservation des notes de bas de page et renvois internes dans le round-trip
 
 ## Phase Details
@@ -127,7 +127,7 @@ Plans:
   2. Apres injection, seules les cellules selectionnees sont modifiees -- les cellules non selectionnees conservent leur contenu original intact
   3. Quand la selection coupe un tableau de maniere ambigue (ex: selection commence au milieu d'une cellule, ou ne couvre qu'une partie d'une ligne fusionnee), Scribe affiche un message clair a l'utilisateur expliquant le probleme
   4. La detection d'ambiguite ne bloque pas les cas non ambigus -- les selections partielles valides sont traitees normalement
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
 - [ ] 26-01-PLAN.md — Partial table detection and extraction (analyzeTableSelection + extractPartialTableCells)
 - [ ] 26-02-PLAN.md — Injection, ambiguity UX, preview fix, and Insert-mode gating
@@ -178,5 +178,5 @@ Phases execute in numeric order: 25 -> 26 -> 27
 | 24. Table Round-Trip | v2.5 | 2/2 | Complete | 2026-03-22 |
 | 24.1. Table rearchitecture | v2.5 | 2/2 | Complete | 2026-03-23 |
 | 25. Souligne (Underline) | 1/1 | Complete    | 2026-03-24 | - |
-| 26. Selections Partielles de Tableaux | 1/2 | In Progress|  | - |
+| 26. Selections Partielles de Tableaux | 2/2 | Complete   | 2026-03-25 | - |
 | 27. References Documentaires | v2.6 | 0/TBD | Not started | - |
