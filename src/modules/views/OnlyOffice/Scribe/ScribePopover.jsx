@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react'
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import PropTypes from 'prop-types'
 
 import Alert from '@mui/material/Alert'
@@ -49,6 +49,14 @@ const ScribePopover = ({ open, selectedText, selectedHtml, enrichedMd, tableAmbi
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   // Panel size for result panel resizing (null = use default CSS sizing)
   const [panelSize, setPanelSize] = useState(null)
+
+  // Disable Insert when selection is purely a partial table (no surrounding text)
+  const insertDisabled = useMemo(() => {
+    if (!partialTableInfo || !enrichedMd) return false
+    // Check if enrichedMd is ONLY table blocks (no text outside)
+    const stripped = enrichedMd.replace(/\[TABLE:\d+\][\s\S]*?\[\/TABLE\]/g, '').trim()
+    return stripped.length === 0
+  }, [partialTableInfo, enrichedMd])
 
   // Reset to menu state when popover opens with new intent
   useEffect(() => {
@@ -242,6 +250,7 @@ const ScribePopover = ({ open, selectedText, selectedHtml, enrichedMd, tableAmbi
           error={result.error}
           canRetry={result.canRetry}
           cellWarning={cellWarning}
+          insertDisabled={insertDisabled}
           onRetry={handleRetry}
           onReplace={handleReplace}
           onInsert={handleInsert}

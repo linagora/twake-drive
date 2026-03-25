@@ -184,6 +184,7 @@ const ScribeResultPanel = ({
   error,
   canRetry,
   cellWarning,
+  insertDisabled,
   onRetry,
   onReplace,
   onInsert,
@@ -565,6 +566,8 @@ const ScribeResultPanel = ({
               ref={insertRef}
               label={t('Scribe.button.insert')}
               onClick={onInsert}
+              disabled={insertDisabled}
+              title={insertDisabled ? 'Insertion non disponible pour une selection partielle de tableau' : undefined}
             />
             <Buttons
               ref={replaceRef}
@@ -590,6 +593,7 @@ ScribeResultPanel.propTypes = {
   error: PropTypes.string,
   canRetry: PropTypes.bool,
   cellWarning: PropTypes.string,
+  insertDisabled: PropTypes.bool,
   onRetry: PropTypes.func,
   onReplace: PropTypes.func.isRequired,
   onInsert: PropTypes.func.isRequired,
@@ -615,6 +619,7 @@ ScribeResultPanel.defaultProps = {
   error: '',
   canRetry: false,
   cellWarning: null,
+  insertDisabled: false,
   onRetry: undefined,
   devData: null,
   dragOffset: { x: 0, y: 0 },
