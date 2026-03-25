@@ -389,6 +389,7 @@
       Asc.scope.parsedTables = null;
       Asc.scope.tableDocIndices = null;
     }
+    Asc.scope.partialTableInfo = lastPartialTableInfo ? JSON.stringify(lastPartialTableInfo) : null;
 
     var callbackFired = false;
     var fallbackTimer = setTimeout(function() {
@@ -602,16 +603,94 @@
       // Same pattern as image pre-cache: collect originals first, then Copy().
       var parsedTablesJson = Asc.scope.parsedTables;
       var parsedTables = parsedTablesJson ? JSON.parse(parsedTablesJson) : [];
-      var tableClones = {};  // index -> ApiTable (cloned + modified)
+      var tableClones = {};  // index -> ApiTable (cloned + modified), null = in-place partial
+
+      // Read partialTableInfo for partial table routing
+      var partialTableInfoJson = Asc.scope.partialTableInfo;
+      var partialTableInfo = partialTableInfoJson ? JSON.parse(partialTableInfoJson) : null;
+
+      // In-place modification for partial table selections (Replace mode, Case 2a).
+      // Modifies cells directly in the ORIGINAL table — does not clone.
+      function modifyOriginalTableCells(origTable, parsedCells, cFonts) {
+        for (var i = 0; i < parsedCells.length; i++) {
+          var pc = parsedCells[i];
+          var cell = origTable.GetCell(pc.r, pc.c);
+          if (!cell) continue;
+          var cc = cell.GetContent();
+          if (!cc || cc.GetElementsCount() === 0) continue;
+          var cp = cc.GetElement(0);
+          if (!cp) continue;
+          if (cp.RemoveAllElements) {
+            cp.RemoveAllElements();
+          }
+          var cf = cFonts[pc.r + "," + pc.c] || {};
+          addRunsToParagraph(cp, pc.runs || [], cf.family, cf.size);
+        }
+      }
+
+      // Build a reduced table clone for Insert mode with partial selections.
+      // Clones the full table, injects LLM content into selected cells,
+      // then removes rows and columns that have no selected cells.
+      function buildReducedTableClone(origTable, parsedCells, selectedCellCoords, cFonts) {
+        var clone = origTable.Copy();
+
+        // Modify the selected cells in the clone
+        for (var i = 0; i < parsedCells.length; i++) {
+          var pc = parsedCells[i];
+          var cloneCell = clone.GetCell(pc.r, pc.c);
+          if (!cloneCell) continue;
+          var cloneCc = cloneCell.GetContent();
+          if (!cloneCc || cloneCc.GetElementsCount() === 0) continue;
+          var cloneCp = cloneCc.GetElement(0);
+          if (!cloneCp) continue;
+          if (cloneCp.RemoveAllElements) {
+            cloneCp.RemoveAllElements();
+          }
+          var cf = cFonts[pc.r + "," + pc.c] || {};
+          addRunsToParagraph(cloneCp, pc.runs || [], cf.family, cf.size);
+        }
+
+        // Determine which rows and columns are selected
+        var selectedRows = {};
+        var selectedCols = {};
+        for (var s = 0; s < selectedCellCoords.length; s++) {
+          selectedRows[selectedCellCoords[s].r] = true;
+          selectedCols[selectedCellCoords[s].c] = true;
+        }
+
+        // Remove unselected rows (iterate in reverse to preserve indices)
+        var totalRows = clone.GetRowsCount();
+        for (var rr = totalRows - 1; rr >= 0; rr--) {
+          if (!selectedRows[rr]) {
+            clone.RemoveRow(rr);
+          }
+        }
+
+        // Remove unselected columns (iterate in reverse to preserve indices)
+        var firstRow = clone.GetRow(0);
+        if (firstRow) {
+          var totalCols = firstRow.GetCellsCount();
+          for (var rcc = totalCols - 1; rcc >= 0; rcc--) {
+            if (!selectedCols[rcc]) {
+              clone.RemoveColumn(rcc);
+            }
+          }
+        }
+
+        return clone;
+      }
+
+      var allTables = null;
+      var tableDocIndices = [];
 
       if (parsedTables.length > 0) {
         // Find original tables by their document-level index (saved during extraction).
         // We cannot rely on selection range here — it may have collapsed since extraction.
-        var allTables = doc.GetAllTables();
+        allTables = doc.GetAllTables();
         var tableDocIndicesJson = Asc.scope.tableDocIndices;
-        var tableDocIndices = tableDocIndicesJson ? JSON.parse(tableDocIndicesJson) : [];
+        tableDocIndices = tableDocIndicesJson ? JSON.parse(tableDocIndicesJson) : [];
 
-        // Clone each table, read source fonts, and modify clone cells
+        // Process each table: clone/modify or in-place depending on partial flag
         for (var tci = 0; tci < parsedTables.length; tci++) {
           var ptEntry = parsedTables[tci];
           var ptIndex = ptEntry.index;
@@ -621,7 +700,9 @@
           var origTable = (docIdx !== undefined && docIdx < allTables.length) ? allTables[docIdx] : null;
           if (!origTable) continue;
 
-          var clone = origTable.Copy();
+          // Check if this is a partial table
+          var isPartialTable = (partialTableInfo && partialTableInfo[ptIndex]);
+          var selectedCellCoords = isPartialTable ? partialTableInfo[ptIndex] : null;
 
           // Read source font from first run of first paragraph in each cell of ORIGINAL
           var cFonts = {};
@@ -655,25 +736,35 @@
             }
           }
 
-          // Modify the CLONE's cells (not the original)
-          for (var mci = 0; mci < ptCells.length; mci++) {
-            var mc = ptCells[mci];
-            var cloneCell = clone.GetCell(mc.r, mc.c);
-            if (!cloneCell) continue;
-            var cloneCc = cloneCell.GetContent();
-            if (!cloneCc || cloneCc.GetElementsCount() === 0) continue;
-            var cloneCp = cloneCc.GetElement(0);
-            if (!cloneCp) continue;
-            // RemoveAllElements instead of cell.Clear() — Clear() causes empty cells
-            // when only 1 run is added (the replacement replaces the wrong element)
-            if (cloneCp.RemoveAllElements) {
-              cloneCp.RemoveAllElements();
+          if (isPartialTable && mode === "replace") {
+            // Case 2a: Replace — modify cells in-place in the ORIGINAL table
+            modifyOriginalTableCells(origTable, ptCells, cFonts);
+            // null marker = already handled in-place, SCRIBE-TABLE placeholder will be skipped
+            tableClones[ptIndex] = null;
+          } else if (isPartialTable && mode === "insert") {
+            // Cases 2b/2c/2d: Insert — build a reduced clone with only selected rows/columns
+            var reducedClone = buildReducedTableClone(origTable, ptCells, selectedCellCoords, cFonts);
+            tableClones[ptIndex] = reducedClone;
+          } else {
+            // Full table — existing clone+modify behavior
+            var clone = origTable.Copy();
+            for (var mci = 0; mci < ptCells.length; mci++) {
+              var mc = ptCells[mci];
+              var cloneCell = clone.GetCell(mc.r, mc.c);
+              if (!cloneCell) continue;
+              var cloneCc = cloneCell.GetContent();
+              if (!cloneCc || cloneCc.GetElementsCount() === 0) continue;
+              var cloneCp = cloneCc.GetElement(0);
+              if (!cloneCp) continue;
+              // RemoveAllElements instead of cell.Clear() — Clear() causes empty cells
+              if (cloneCp.RemoveAllElements) {
+                cloneCp.RemoveAllElements();
+              }
+              var mcf = cFonts[mc.r + "," + mc.c] || {};
+              addRunsToParagraph(cloneCp, mc.runs || [], mcf.family, mcf.size);
             }
-            var mcf = cFonts[mc.r + "," + mc.c] || {};
-            addRunsToParagraph(cloneCp, mc.runs || [], mcf.family, mcf.size);
+            tableClones[ptIndex] = clone;
           }
-
-          tableClones[ptIndex] = clone;
         }
       }
 
@@ -750,6 +841,10 @@
           var plMatch = plText.match(/^SCRIBE-TABLE-(\d+)$/);
           if (plMatch) {
             var plIdx = parseInt(plMatch[1]);
+            if (tableClones[plIdx] === null) {
+              // Partial table in Replace mode — already modified in-place, skip placeholder
+              continue;
+            }
             if (tableClones[plIdx]) {
               content.push(tableClones[plIdx]);
             }
@@ -1045,6 +1140,52 @@
           // Selection failed — content is still injected, graceful degradation
         }
       }
+
+      // Post-operation: select modified cells for partial table Replace
+      // When partial tables were modified in-place (tableClones[idx] === null),
+      // content may be empty (pure partial table) or non-empty (mixed content).
+      // In either case, highlight the modified cell range.
+      if (mode === "replace" && partialTableInfo && allTables) {
+        try {
+          for (var ptSelIdx in partialTableInfo) {
+            if (!partialTableInfo.hasOwnProperty(ptSelIdx)) continue;
+            var ptSelCells = partialTableInfo[ptSelIdx];
+            if (ptSelCells.length === 0) continue;
+            var ptSelDocIdx = tableDocIndices[parseInt(ptSelIdx)];
+            var ptSelTable = (ptSelDocIdx !== undefined && ptSelDocIdx < allTables.length) ? allTables[ptSelDocIdx] : null;
+            if (!ptSelTable) continue;
+            // Find min/max row and column
+            var minR = ptSelCells[0].r, maxR = ptSelCells[0].r;
+            var minC = ptSelCells[0].c, maxC = ptSelCells[0].c;
+            for (var psi = 1; psi < ptSelCells.length; psi++) {
+              if (ptSelCells[psi].r < minR) minR = ptSelCells[psi].r;
+              if (ptSelCells[psi].r > maxR) maxR = ptSelCells[psi].r;
+              if (ptSelCells[psi].c < minC) minC = ptSelCells[psi].c;
+              if (ptSelCells[psi].c > maxC) maxC = ptSelCells[psi].c;
+            }
+            // Select the cell range: from top-left to bottom-right
+            var topLeftCell = ptSelTable.GetCell(minR, minC);
+            var botRightCell = ptSelTable.GetCell(maxR, maxC);
+            if (topLeftCell && botRightCell) {
+              var tlContent = topLeftCell.GetContent();
+              var brContent = botRightCell.GetContent();
+              if (tlContent && tlContent.GetElementsCount() > 0 && brContent && brContent.GetElementsCount() > 0) {
+                var tlPara = tlContent.GetElement(0);
+                var brPara = brContent.GetElement(brContent.GetElementsCount() - 1);
+                var tlRange = tlPara ? tlPara.GetRange() : null;
+                var brRange = brPara ? brPara.GetRange() : null;
+                if (tlRange && brRange) {
+                  var selectRange = doc.GetRange(tlRange.GetStartPos(), brRange.GetEndPos());
+                  if (selectRange) selectRange.Select();
+                }
+              }
+            }
+            break; // Only select the first partial table (most common case)
+          }
+        } catch (e) {
+          // Selection failed — not critical, document content is correct
+        }
+      }
     }, false, false, function() {
       callbackFired = true;
       clearTimeout(fallbackTimer);
@@ -1126,6 +1267,10 @@
   // Routes: md field -> Builder API path, html field -> PasteHtml, text -> plain fallback
   function handleIntentResponse(msg) {
     if (msg.action === "replace" || msg.action === "insert") {
+      // Store partialTableInfo from React respond() — authoritative copy
+      if (msg.data && msg.data.partialTableInfo) {
+        lastPartialTableInfo = msg.data.partialTableInfo;
+      }
       if (msg.data && msg.data.md) {
         // Builder API path (primary) with PasteHtml fallback
         log(msg.action + " (Builder API)");
