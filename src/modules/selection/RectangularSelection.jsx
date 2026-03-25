@@ -14,6 +14,19 @@ const SCROLL_STEP_IN_PIXELS = 10
  */
 const HIT_RATE = 1
 
+const buildSelectionFromItems = (fileIds, itemsMap) => {
+  const newSelection = {}
+  let lastSelectedId = null
+  for (const fileId of fileIds) {
+    const file = itemsMap.get(fileId)
+    if (file) {
+      newSelection[fileId] = file
+      lastSelectedId = fileId
+    }
+  }
+  return { newSelection, lastSelectedId }
+}
+
 /**
  * Component that enables rectangular selection of files in a grid view.
  * Wraps children with a selection area that allows users to drag-select
@@ -99,16 +112,10 @@ const RectangularSelection = ({
         }
       }
 
-      // Build newSelection from accumulated items
-      const newSelection = {}
-      let lastSelectedId = null
-      for (const fileId of selectedDuringDragRef.current) {
-        const file = itemsMap.get(fileId)
-        if (file) {
-          newSelection[fileId] = file
-          lastSelectedId = fileId
-        }
-      }
+      const { newSelection, lastSelectedId } = buildSelectionFromItems(
+        selectedDuringDragRef.current,
+        itemsMap
+      )
 
       setSelectedItems(newSelection)
       setIsSelectAll(Object.keys(newSelection).length === items.length)
