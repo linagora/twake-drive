@@ -8,12 +8,12 @@ import { isQualificationNote } from 'cozy-client/dist/models/document/documentTy
 import { getBoundT } from 'cozy-client/dist/models/document/locales'
 import flag from 'cozy-flags'
 import Icon from 'cozy-ui/transpiled/react/Icon'
-import IconStack from 'cozy-ui/transpiled/react/IconStack'
 import FileDuotoneIcon from 'cozy-ui/transpiled/react/Icons/FileDuotone'
 import FileTypeNoteIcon from 'cozy-ui/transpiled/react/Icons/FileTypeNote'
 import NestedSelectResponsive from 'cozy-ui/transpiled/react/NestedSelect/NestedSelectResponsive'
 import { useI18n } from 'twake-i18n'
 
+import IconStack from '@/components/IconStack'
 import { LoaderModal } from '@/components/LoaderModal'
 import { buildFileOrFolderByIdQuery } from '@/queries'
 
