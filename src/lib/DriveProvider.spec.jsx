@@ -29,17 +29,37 @@ jest.mock('cozy-sharing', () => {
   }
 })
 
-jest.mock('cozy-ui/transpiled/react/providers/Alert', () => ({ children }) => children)
+jest.mock(
+  'cozy-ui/transpiled/react/providers/Alert',
+  () =>
+    ({ children }) =>
+      children
+)
 jest.mock('cozy-ui/transpiled/react/providers/Breakpoints', () => ({
   BreakpointsProvider: ({ children }) => children
 }))
-jest.mock('cozy-ui-plus/dist/providers/CozyTheme', () => ({ children }) => children)
+jest.mock(
+  'cozy-ui-plus/dist/providers/CozyTheme',
+  () =>
+    ({ children }) =>
+      children
+)
 jest.mock('twake-i18n', () => ({
   I18n: ({ children }) => children
 }))
 
-jest.mock('@/components/RightClick/RightClickProvider', () => ({ children }) => children)
-jest.mock('@/lib/FabProvider', () => ({ children }) => children)
+jest.mock(
+  '@/components/RightClick/RightClickProvider',
+  () =>
+    ({ children }) =>
+      children
+)
+jest.mock(
+  '@/lib/FabProvider',
+  () =>
+    ({ children }) =>
+      children
+)
 
 jest.mock('@/modules/public/PublicProvider', () => ({
   usePublicContext: jest.fn()
@@ -59,33 +79,21 @@ describe('DriveProvider', () => {
     jest.clearAllMocks()
   })
 
-  it('should pass isPublic=true to SharingProvider when in public context', () => {
-    usePublicContext.mockReturnValue({ isPublic: true })
+  it.each([true, false])(
+    'should pass isPublic=%s to SharingProvider',
+    isPublic => {
+      usePublicContext.mockReturnValue({ isPublic })
 
-    render(
-      <DriveProvider {...defaultProps}>
-        <div>test</div>
-      </DriveProvider>
-    )
+      render(
+        <DriveProvider {...defaultProps}>
+          <div>test</div>
+        </DriveProvider>
+      )
 
-    expect(SharingProvider).toHaveBeenCalledWith(
-      expect.objectContaining({ isPublic: true }),
-      expect.anything()
-    )
-  })
-
-  it('should pass isPublic=false to SharingProvider when not in public context', () => {
-    usePublicContext.mockReturnValue({ isPublic: false })
-
-    render(
-      <DriveProvider {...defaultProps}>
-        <div>test</div>
-      </DriveProvider>
-    )
-
-    expect(SharingProvider).toHaveBeenCalledWith(
-      expect.objectContaining({ isPublic: false }),
-      expect.anything()
-    )
-  })
+      expect(SharingProvider).toHaveBeenCalledWith(
+        expect.objectContaining({ isPublic }),
+        expect.anything()
+      )
+    }
+  )
 })
