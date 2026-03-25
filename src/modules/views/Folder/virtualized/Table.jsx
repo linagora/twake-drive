@@ -6,6 +6,7 @@ import React, {
   useRef,
   useState
 } from 'react'
+import { useSelector } from 'react-redux'
 
 import flag from 'cozy-flags'
 import VirtualizedTable from 'cozy-ui/transpiled/react/Table/Virtualized'
@@ -19,6 +20,7 @@ import styles from '@/styles/filelist.styl'
 
 import RightClickFileMenu from '@/components/RightClick/RightClickFileMenu'
 import { useClipboardContext } from '@/contexts/ClipboardProvider'
+import { isRenaming as isRenamingSelector } from '@/modules/drive/rename'
 import Cell from '@/modules/filelist/virtualized/cells/Cell'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 import { useNewItemHighlightContext } from '@/modules/upload/NewItemHighlightProvider'
@@ -80,6 +82,7 @@ const Table = forwardRef(
   ) => {
     const { toggleSelectedItem, setSelectedItems } = useSelectionContext()
     const { isNew } = useNewItemHighlightContext()
+    const isRenamingActive = useSelector(isRenamingSelector)
     const internalVirtuosoRef = useRef(null)
     const virtuosoRef = parentVirtuosoRef || internalVirtuosoRef
     const [itemsInDropProcess, setItemsInDropProcess] = useState([])
@@ -89,6 +92,7 @@ const Table = forwardRef(
     const selectedItemsCount = Object.keys(selectedItems || {}).length
     const handleRowSelect = useCallback(
       (row, event) => {
+        if (isRenamingActive) return
         event?.stopPropagation?.()
         if (
           flag('drive.dynamic-selection.enabled') &&
@@ -105,7 +109,8 @@ const Table = forwardRef(
         toggleSelectedItem,
         onInteractWithFile,
         selectedItemsCount,
-        setSelectedItems
+        setSelectedItems,
+        isRenamingActive
       ]
     )
 
