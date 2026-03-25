@@ -1,11 +1,11 @@
 import React from 'react'
 
 import Icon from 'cozy-ui/transpiled/react/Icon'
-import IconStack from 'cozy-ui/transpiled/react/IconStack'
 
 import ColoredFolder from './ColoredFolder'
 
 import { getIcon } from '@/components/IconPicker/IconIndex'
+import IconStack from '@/components/IconStack'
 
 export const CustomizedIcon = ({
   selectedColor = '#46a2ff',
