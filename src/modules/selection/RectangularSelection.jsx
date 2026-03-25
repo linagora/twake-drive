@@ -41,6 +41,7 @@ const RectangularSelection = ({
   const isDraggingRef = useRef(false)
   const dragStartPosRef = useRef(null)
   const mutationObserverRef = useRef(null)
+  const selectedDuringDragRef = useRef(new Set())
 
   useEffect(() => {
     if (containerRef.current) {
@@ -90,15 +91,22 @@ const RectangularSelection = ({
    */
   const handleSelect = useCallback(
     e => {
-      const isMultiSelect = e.inputEvent?.ctrlKey || e.inputEvent?.metaKey
-      const newSelection = isMultiSelect ? { ...selectedItems } : {}
-
-      let lastSelectedId = null
+      // Add newly selected items to the accumulated Set
       for (const el of e.selected) {
         const file = getFileFromElement(el)
-        if (file && !newSelection[file._id]) {
-          newSelection[file._id] = file
-          lastSelectedId = file._id
+        if (file) {
+          selectedDuringDragRef.current.add(file._id)
+        }
+      }
+
+      // Build newSelection from accumulated items
+      const newSelection = {}
+      let lastSelectedId = null
+      for (const fileId of selectedDuringDragRef.current) {
+        const file = itemsMap.get(fileId)
+        if (file) {
+          newSelection[fileId] = file
+          lastSelectedId = fileId
         }
       }
 
@@ -111,7 +119,7 @@ const RectangularSelection = ({
     },
     [
       items.length,
-      selectedItems,
+      itemsMap,
       getFileFromElement,
       setSelectedItems,
       setIsSelectAll,
@@ -147,10 +155,21 @@ const RectangularSelection = ({
    * @param {number} e.clientX - X coordinate of the drag start
    * @param {number} e.clientY - Y coordinate of the drag start
    */
-  const handleDragStart = useCallback(e => {
-    dragStartPosRef.current = { x: e.clientX, y: e.clientY }
-    isDraggingRef.current = false
-  }, [])
+  const handleDragStart = useCallback(
+    e => {
+      dragStartPosRef.current = { x: e.clientX, y: e.clientY }
+      isDraggingRef.current = false
+      selectedDuringDragRef.current.clear()
+
+      // If Ctrl/Cmd is pressed, start with current selection
+      if (e.inputEvent?.ctrlKey || e.inputEvent?.metaKey) {
+        for (const item of Object.values(selectedItems)) {
+          selectedDuringDragRef.current.add(item._id)
+        }
+      }
+    },
+    [selectedItems]
+  )
 
   /**
    * Handles drag movement during the selection.
@@ -178,6 +197,7 @@ const RectangularSelection = ({
    */
   const handleDragEnd = useCallback(() => {
     dragStartPosRef.current = null
+    selectedDuringDragRef.current.clear()
   }, [])
 
   /**
@@ -239,24 +259,23 @@ const RectangularSelection = ({
    */
   const handleContainerClick = useCallback(
     e => {
-      // Skip if this click was part of a drag operation (rectangular selection)
+      // Early return if this click was part of a drag operation (rectangular selection)
       if (isDraggingRef.current) {
         e.stopPropagation()
         e.preventDefault()
         return
       }
 
-      // Don't clear if Ctrl/Cmd is pressed (user wants to add to selection)
+      // Early return if Ctrl/Cmd is pressed (user wants to add to selection)
       if (e.ctrlKey || e.metaKey) return
 
       const target = e.target
 
-      // Check if clicked on a file or interactive element
-      const isOnFile = target.closest('[data-file-id]')
-      if (isOnFile) return
+      // Early return if clicked on a file
+      if (target.closest('[data-file-id]')) return
 
-      const isInteractive = target.closest(INTERACTIVE_ELEMENTS_SELECTOR)
-      if (isInteractive) return
+      // Early return if clicked on interactive element
+      if (target.closest(INTERACTIVE_ELEMENTS_SELECTOR)) return
 
       // If clicked in empty space, clear selection
       setSelectedItems({})
