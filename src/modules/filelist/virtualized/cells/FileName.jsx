@@ -17,6 +17,26 @@ import {
 import FileThumbnail from '@/modules/filelist/icons/FileThumbnail'
 import FileNamePath from '@/modules/filelist/virtualized/cells/FileNamePath'
 
+const FileThumbnailComponent = ({ file, isInSyncFromSharing, isMobile }) => {
+  const { isBigThumbnail } = useThumbnailSizeContext()
+
+  return (
+    <div className="u-pl-half">
+      <FileThumbnail
+        file={file}
+        size={isBigThumbnail ? 96 : 32}
+        isInSyncFromSharing={isInSyncFromSharing}
+        showSharedBadge={isMobile}
+        componentsProps={{
+          sharedBadge: {
+            className: styles['fil-content-shared-vz']
+          }
+        }}
+      />
+    </div>
+  )
+}
+
 const FileName = ({
   attributes,
   isRenaming,
@@ -28,7 +48,6 @@ const FileName = ({
 }) => {
   const { t } = useI18n()
   const { title, filename, extension } = getFileNameAndExtension(attributes, t)
-  const { isBigThumbnail } = useThumbnailSizeContext()
   const { isMobile } = useBreakpoints()
 
   const parentFolderPath = makeParentFolderPath(attributes)
@@ -42,16 +61,10 @@ const FileName = ({
     return (
       <div className="u-flex">
         <div className="u-mr-half">
-          <FileThumbnail
+          <FileThumbnailComponent
             file={attributes}
-            size={isBigThumbnail ? 96 : 32}
             isInSyncFromSharing={isInSyncFromSharing}
-            showSharedBadge={isMobile}
-            componentsProps={{
-              sharedBadge: {
-                className: styles['fil-content-shared-vz']
-              }
-            }}
+            isMobile={isMobile}
           />
         </div>
         <RenameInput
@@ -68,16 +81,10 @@ const FileName = ({
     <span title={infected ? t('antivirus.infectedFile') : title}>
       <Filename
         icon={
-          <FileThumbnail
+          <FileThumbnailComponent
             file={attributes}
-            size={isBigThumbnail ? 96 : 32}
             isInSyncFromSharing={isInSyncFromSharing}
-            showSharedBadge={isMobile}
-            componentsProps={{
-              sharedBadge: {
-                className: styles['fil-content-shared-vz']
-              }
-            }}
+            isMobile={isMobile}
           />
         }
         variant="body1"
