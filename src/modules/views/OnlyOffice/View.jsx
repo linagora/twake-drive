@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types'
-import React, { useEffect, useCallback, useMemo, useState } from 'react'
+import React, { useEffect, useCallback, useMemo, useRef, useState } from 'react'
 
 import flag from 'cozy-flags'
 import Spinner from 'cozy-ui/transpiled/react/Spinner'
@@ -43,6 +43,16 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
   const { pendingIntent, showScribeButton, respond } =
     useCozyBridge(allowedOrigins)
 
+  // Store partialTableInfo in a ref (doesn't need to trigger re-renders)
+  const partialTableInfoRef = useRef(null)
+  useEffect(() => {
+    if (pendingIntent?.data?.partialTableInfo) {
+      partialTableInfoRef.current = pendingIntent.data.partialTableInfo
+    } else {
+      partialTableInfoRef.current = null
+    }
+  }, [pendingIntent])
+
   // Send trigger-intent to plugin iframe (nested inside OO editor iframe).
   // We broadcast to all descendant iframes so the message reaches the plugin.
   const triggerScribe = useCallback(() => {
@@ -72,7 +82,11 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
   const handleReplace = useCallback(
     text => {
       const html = unwrapSingleParagraph(markdownToHtml(text).trim())
-      respond({ status: 'ok', action: 'replace', data: { text, html, md: text } })
+      const data = { text, html, md: text }
+      if (partialTableInfoRef.current) {
+        data.partialTableInfo = partialTableInfoRef.current
+      }
+      respond({ status: 'ok', action: 'replace', data })
       setTimeout(focusEditor, 100)
     },
     [respond, focusEditor]
@@ -81,7 +95,11 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
   const handleInsert = useCallback(
     text => {
       const html = unwrapSingleParagraph(markdownToHtml(text).trim())
-      respond({ status: 'ok', action: 'insert', data: { text, html, md: text } })
+      const data = { text, html, md: text }
+      if (partialTableInfoRef.current) {
+        data.partialTableInfo = partialTableInfoRef.current
+      }
+      respond({ status: 'ok', action: 'insert', data })
       setTimeout(focusEditor, 100)
     },
     [respond, focusEditor]
@@ -154,6 +172,8 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
             selectedText={pendingIntent?.data?.text || ''}
             selectedHtml={pendingIntent?.data?.html || ''}
             enrichedMd={pendingIntent?.data?.enrichedMd || ''}
+            tableAmbiguity={pendingIntent?.data?.tableAmbiguity || null}
+            partialTableInfo={pendingIntent?.data?.partialTableInfo || null}
             onReplace={handleReplace}
             onInsert={handleInsert}
             onCancel={handleCancel}

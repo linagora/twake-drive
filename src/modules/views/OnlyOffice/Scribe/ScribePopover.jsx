@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react'
 import PropTypes from 'prop-types'
 
+import Alert from '@mui/material/Alert'
 import Paper from 'cozy-ui/transpiled/react/Paper'
 import Spinner from 'cozy-ui/transpiled/react/Spinner'
 import Typography from 'cozy-ui/transpiled/react/Typography'
@@ -25,7 +26,7 @@ import styles from '@/modules/views/OnlyOffice/Scribe/scribe.styl'
  *
  * Closing the popover during loading aborts the in-flight API request via AbortController.
  */
-const ScribePopover = ({ open, selectedText, selectedHtml, enrichedMd, onReplace, onInsert, onCancel }) => {
+const ScribePopover = ({ open, selectedText, selectedHtml, enrichedMd, tableAmbiguity, partialTableInfo, onReplace, onInsert, onCancel }) => {
   const { t } = useI18n()
   const client = useClient()
   const abortRef = useRef(null)
@@ -40,6 +41,9 @@ const ScribePopover = ({ open, selectedText, selectedHtml, enrichedMd, onReplace
   const [rawResult, setRawResult] = useState('')
   // Warning when cell marker count mismatches between extraction and LLM response
   const [cellWarning, setCellWarning] = useState(null)
+
+  // Ambiguity message for partial table selections (TBL-02)
+  const [ambiguityMessage, setAmbiguityMessage] = useState(null)
 
   // Drag offset for result panel repositioning
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
@@ -56,6 +60,7 @@ const ScribePopover = ({ open, selectedText, selectedHtml, enrichedMd, onReplace
       setDevData({ html: '', md: '' })
       setRawResult('')
       setCellWarning(null)
+      setAmbiguityMessage(null)
       setDragOffset({ x: 0, y: 0 })
       setPanelSize(null)
       if (abortRef.current) {
@@ -64,6 +69,15 @@ const ScribePopover = ({ open, selectedText, selectedHtml, enrichedMd, onReplace
       }
     }
   }, [open])
+
+  // Detect ambiguous table selection and show warning instead of menu
+  useEffect(() => {
+    if (tableAmbiguity) {
+      setAmbiguityMessage(tableAmbiguity.message)
+    } else {
+      setAmbiguityMessage(null)
+    }
+  }, [tableAmbiguity])
 
   // Focus the loading panel when step transitions to 'loading'
   useEffect(() => {
@@ -74,6 +88,9 @@ const ScribePopover = ({ open, selectedText, selectedHtml, enrichedMd, onReplace
 
   const handleActionSelect = useCallback(
     async (actionId, label, breadcrumb) => {
+      // Don't send ambiguous selections to LLM
+      if (tableAmbiguity) return
+
       // Compute intermediate MD for dev panels (enrichedMd preferred over htmlToMarkdown)
       const inputMd = enrichedMd || (selectedHtml ? htmlToMarkdown(selectedHtml) : selectedText)
 
@@ -140,7 +157,7 @@ const ScribePopover = ({ open, selectedText, selectedHtml, enrichedMd, onReplace
         }
       }
     },
-    [selectedText, selectedHtml, enrichedMd, client, t]
+    [selectedText, selectedHtml, enrichedMd, tableAmbiguity, client, t]
   )
 
   const handleClose = useCallback(() => {
@@ -202,7 +219,12 @@ const ScribePopover = ({ open, selectedText, selectedHtml, enrichedMd, onReplace
         }
       }}
     >
-      {step === 'menu' && (
+      {ambiguityMessage && step === 'menu' && (
+        <Alert severity="warning" sx={{ m: 1, maxWidth: 400, borderRadius: 2 }}>
+          {ambiguityMessage}
+        </Alert>
+      )}
+      {step === 'menu' && !ambiguityMessage && (
         <ScribeActionMenu ref={menuRef} onSelect={handleActionSelect} onClose={handleClose} selectedText={selectedText} />
       )}
       {step === 'loading' && (
@@ -240,6 +262,11 @@ ScribePopover.propTypes = {
   selectedText: PropTypes.string.isRequired,
   selectedHtml: PropTypes.string,
   enrichedMd: PropTypes.string,
+  tableAmbiguity: PropTypes.shape({
+    type: PropTypes.string,
+    message: PropTypes.string
+  }),
+  partialTableInfo: PropTypes.object,
   onReplace: PropTypes.func.isRequired,
   onInsert: PropTypes.func.isRequired,
   onCancel: PropTypes.func.isRequired
