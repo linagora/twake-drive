@@ -25,6 +25,10 @@ const FileOpener = ({
     onInteractWithFile
   })
 
+  if (isRenaming) {
+    return children
+  }
+
   return (
     <FileLink
       ref={rowRef}
