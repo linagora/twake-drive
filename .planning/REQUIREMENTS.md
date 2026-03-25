@@ -11,8 +11,8 @@
 
 ### Sélections Partielles de Tableaux
 
-- [ ] **TBL-01**: Quand la sélection ne couvre qu'une partie d'un tableau (lignes/colonnes partielles), Scribe traite correctement les cellules sélectionnées sans casser la structure du tableau
-- [ ] **TBL-02**: Scribe détecte et signale à l'utilisateur quand la sélection coupe un tableau de manière ambiguë
+- [x] **TBL-01**: Quand la sélection ne couvre qu'une partie d'un tableau (lignes/colonnes partielles), Scribe traite correctement les cellules sélectionnées sans casser la structure du tableau
+- [x] **TBL-02**: Scribe détecte et signale à l'utilisateur quand la sélection coupe un tableau de manière ambiguë
 
 ### Références Documentaires
 
@@ -37,8 +37,8 @@ Aucun pour le moment.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | FMT-01 | Phase 25 | Pending |
-| TBL-01 | Phase 26 | Pending |
-| TBL-02 | Phase 26 | Pending |
+| TBL-01 | Phase 26 | Complete |
+| TBL-02 | Phase 26 | Complete |
 | REF-01 | Phase 27 | Pending |
 | REF-02 | Phase 27 | Pending |
 

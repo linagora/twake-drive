@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.6
 milestone_name: Formatage Complet et References Documentaires
 status: unknown
-stopped_at: Roadmap created for v2.6 milestone
-last_updated: "2026-03-24T16:19:25.208Z"
+stopped_at: Completed 26-01-PLAN.md
+last_updated: "2026-03-25T16:19:12.053Z"
 progress:
   total_phases: 3
   completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
+  total_plans: 3
+  completed_plans: 2
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-23)
 
 **Core value:** La chaine de communication complete -- depuis la selection de texte dans OnlyOffice jusqu'a la reinjection du texte modifie par l'IA -- de bout en bout, transparente pour l'utilisateur.
-**Current focus:** Phase 25 — souligne-underline
+**Current focus:** Phase 26 — selections-partielles-de-tableaux
 
 ## Current Position
 
-Phase: 25 (souligne-underline) — EXECUTING
-Plan: 1 of 1
+Phase: 26 (selections-partielles-de-tableaux) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -44,6 +44,7 @@ Recent decisions affecting current work:
 - [v2.5]: Tables: cell-by-cell extraction with [CELL:r,c] markers, not raw md table to LLM
 - [v2.5]: buildMarkdownFromParts state machine handles inline formatting transitions
 - [Phase 24.1]: Clone tables via ApiTable.Copy() + InsertContent (supports Replace and Insert)
+- [Phase 26]: Intra-cell selections bypass table handling entirely — same code path as paragraph
 
 ### Pending Todos (carried from v2.3)
 
@@ -63,6 +64,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-23
-Stopped at: Roadmap created for v2.6 milestone
+Last session: 2026-03-25T16:19:12.050Z
+Stopped at: Completed 26-01-PLAN.md
 Resume file: None
