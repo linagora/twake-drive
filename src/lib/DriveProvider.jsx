@@ -28,7 +28,11 @@ const DriveProvider = ({ client, lang, polyglot, dictRequire, children }) => {
         <DataProxyWrapper isPublic={isPublic}>
           <VaultProvider cozyClient={client}>
             <VaultUnlockProvider>
-              <SharingProvider doctype="io.cozy.files" documentType="Files" isPublic={isPublic}>
+              <SharingProvider
+                doctype="io.cozy.files"
+                documentType="Files"
+                isPublic={isPublic}
+              >
                 <NativeFileSharingProvider>
                   <CozyTheme ignoreCozySettings={isPublic} className="u-w-100">
                     <BreakpointsProvider>
