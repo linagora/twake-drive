@@ -4,6 +4,8 @@ import { Outlet } from 'react-router-dom'
 
 import { BarComponent } from 'cozy-bar'
 import { RealTimeQueries } from 'cozy-client'
+import { AiText } from 'cozy-search'
+import TwakeWorkplace from 'cozy-ui/transpiled/react/Icons/TwakeWorkplace'
 import { Layout as LayoutUI } from 'cozy-ui/transpiled/react/Layout'
 
 import styles from './assistant.styl'
@@ -20,7 +22,9 @@ const AssistantLayout = () => {
       <RealTimeQueries doctype={DOCTYPE_AI_CHAT_ASSISTANTS} />
       <BarComponent
         searchOptions={{ enabled: true }}
-        appSlug="assistant"
+        appSlug="home" // hack to hide the first Twake Workplace icon
+        appIcon={TwakeWorkplace}
+        appTextIcon={AiText}
         disableInternalStore
         componentsProps={{
           Wrapper: {
