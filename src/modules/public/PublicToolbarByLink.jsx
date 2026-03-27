@@ -69,13 +69,13 @@ const PublicToolbarByLink = ({
           <>
             {hasWriteAccess && (
               <>
+                <AddButton className="u-mr-half" isPublic />
                 <UploadButton
                   className="u-mr-half"
                   label={t('upload.label')}
                   displayedFolder={displayedFolder}
                   onUploaded={refreshFolderContent}
                 />
-                <AddButton className="u-mr-half" isPublic />
               </>
             )}
             {files.length > 0 && <DownloadFilesButton files={files} />}

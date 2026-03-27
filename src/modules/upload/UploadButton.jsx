@@ -13,6 +13,7 @@ import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import { useI18n } from 'twake-i18n'
 
 import { uploadFiles } from '@/modules/navigation/duck'
+import { usePublicContext } from '@/modules/public/PublicProvider'
 import { useNewItemHighlightContext } from '@/modules/upload/NewItemHighlightProvider'
 
 const UploadButton = ({
@@ -50,6 +51,8 @@ const UploadButton = ({
     )
   }
 
+  const { isPublic } = usePublicContext()
+
   return (
     <FileInput
       className={className}
@@ -62,6 +65,15 @@ const UploadButton = ({
     >
       <Button
         {...componentsProps?.button}
+        variant={isPublic ? 'secondary' : 'primary'}
+        style={
+          isPublic
+            ? undefined
+            : {
+                color: 'var(--primaryTextColor)',
+                backgroundColor: 'var(--paperBackgroundColor)'
+              }
+        }
         component="span"
         startIcon={<Icon icon={UploadIcon} />}
         label={label}

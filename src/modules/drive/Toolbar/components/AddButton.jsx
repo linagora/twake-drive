@@ -7,7 +7,7 @@ import { useI18n } from 'twake-i18n'
 
 import { AddMenuContext } from '@/modules/drive/AddMenu/AddMenuProvider'
 
-export const AddButton = ({ className, isPublic }) => {
+export const AddButton = ({ className }) => {
   const { t } = useI18n()
   const {
     anchorRef,
@@ -22,15 +22,7 @@ export const AddButton = ({ className, isPublic }) => {
     <div ref={anchorRef} onClick={isOffline ? handleOfflineClick : undefined}>
       <Button
         className={className}
-        variant={isPublic ? 'secondary' : 'primary'}
-        style={
-          isPublic
-            ? undefined
-            : {
-                color: 'var(--primaryTextColor)',
-                backgroundColor: 'var(--paperBackgroundColor)'
-              }
-        }
+        variant="primary"
         disabled={isDisabled || isOffline}
         startIcon={<Icon icon={PlusIcon} />}
         label={t('toolbar.menu_create')}
