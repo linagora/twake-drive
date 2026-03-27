@@ -104,16 +104,16 @@ const RectangularSelection = ({
    */
   const handleSelect = useCallback(
     e => {
-      // Add newly selected items to the accumulated Set
+      const currentSelection = new Set(selectedDuringDragRef.current)
       for (const el of e.selected) {
         const file = getFileFromElement(el)
         if (file) {
-          selectedDuringDragRef.current.add(file._id)
+          currentSelection.add(file._id)
         }
       }
 
       const { newSelection, lastSelectedId } = buildSelectionFromItems(
-        selectedDuringDragRef.current,
+        currentSelection,
         itemsMap
       )
 
