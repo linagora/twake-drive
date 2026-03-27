@@ -321,9 +321,7 @@ const getFileFromEntry = entry =>
   new Promise((resolve, reject) => entry.file(resolve, reject))
 
 const readNextBatch = dirReader =>
-  new Promise((resolve, reject) =>
-    dirReader.readEntries(resolve, reject)
-  )
+  new Promise((resolve, reject) => dirReader.readEntries(resolve, reject))
 
 const uploadDirectory = async (
   client,
