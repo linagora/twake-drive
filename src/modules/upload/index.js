@@ -317,7 +317,13 @@ export const processNextFile =
     )
   }
 
-const getFileFromEntry = entry => new Promise(resolve => entry.file(resolve))
+const getFileFromEntry = entry =>
+  new Promise((resolve, reject) => entry.file(resolve, reject))
+
+const readNextBatch = dirReader =>
+  new Promise((resolve, reject) =>
+    dirReader.readEntries(resolve, reject)
+  )
 
 const uploadDirectory = async (
   client,
@@ -328,39 +334,22 @@ const uploadDirectory = async (
 ) => {
   const newDir = await createFolder(client, directory.name, dirID, driveId)
   const dirReader = directory.createReader()
-  return new Promise(resolve => {
-    const entriesReader = async entries => {
-      for (let i = 0; i < entries.length; i += 1) {
-        const entry = entries[i]
-        if (entry.isFile) {
-          const file = await getFileFromEntry(entry)
-          await uploadFile(
-            client,
-            file,
-            newDir.id,
-            {
-              vaultClient,
-              encryptionKey
-            },
-            driveId
-          )
-        } else if (entry.isDirectory) {
-          await uploadDirectory(
-            client,
-            entry,
-            newDir.id,
-            {
-              vaultClient,
-              encryptionKey
-            },
-            driveId
-          )
-        }
+  const options = { vaultClient, encryptionKey }
+
+  // readEntries returns batches (typically ≤100 entries); loop until empty
+  let batch
+  while ((batch = await readNextBatch(dirReader)).length > 0) {
+    for (const entry of batch) {
+      if (entry.isFile) {
+        const file = await getFileFromEntry(entry)
+        await uploadFile(client, file, newDir.id, options, driveId)
+      } else if (entry.isDirectory) {
+        await uploadDirectory(client, entry, newDir.id, options, driveId)
       }
-      resolve(newDir)
     }
-    dirReader.readEntries(entriesReader)
-  })
+  }
+
+  return newDir
 }
 
 const createFolder = async (client, name, dirID, driveId) => {
