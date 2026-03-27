@@ -79,14 +79,6 @@ const LayoutContent = () => {
           <div>
             {isDesktop ? (
               <div className="u-mh-1-half u-mt-1-half">
-                <UploadButton
-                  componentsProps={{
-                    button: { className: 'u-w-100 u-bdrs-6' }
-                  }}
-                  label={t('upload.label')}
-                  displayedFolder={displayedFolder}
-                  disabled={isFolderReadOnly}
-                />
                 <AddMenuProvider
                   canCreateFolder={true}
                   canUpload={!isFolderReadOnly}
@@ -96,8 +88,16 @@ const LayoutContent = () => {
                   isReadOnly={isFolderReadOnly}
                   componentsProps={{ AddMenu: { isUploadDisabled: true } }}
                 >
-                  <AddButton className="u-w-100 u-bdrs-6 u-mt-half" />
+                  <AddButton className="u-w-100 u-bdrs-6 u-mt-half u-mb-half" />
                 </AddMenuProvider>
+                <UploadButton
+                  componentsProps={{
+                    button: { className: 'u-w-100 u-bdrs-6' }
+                  }}
+                  label={t('upload.label')}
+                  displayedFolder={displayedFolder}
+                  disabled={isFolderReadOnly}
+                />
               </div>
             ) : null}
             <Nav />
