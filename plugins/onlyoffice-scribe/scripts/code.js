@@ -1580,7 +1580,9 @@
         return result;
       }
 
-      function paragraphToMarkdown(para) {
+      function paragraphToMarkdown(para, clipStartChars, clipEndChars) {
+        clipStartChars = clipStartChars || 0;
+        clipEndChars = clipEndChars || 0;
         // Build an array of annotated parts for buildMarkdownFromParts()
         var annotatedParts = [];
 
@@ -1693,6 +1695,40 @@
             if (fallbackText) {
               annotatedParts.push({ text: escapeMarkdown(fallbackText), raw: true });
             }
+          }
+        }
+
+        // Clip annotated parts to selection bounds if needed
+        if (clipStartChars > 0 || clipEndChars > 0) {
+          var totalLen = 0;
+          for (var cl = 0; cl < annotatedParts.length; cl++) {
+            totalLen += (annotatedParts[cl].text || "").length;
+          }
+          var keepFrom = clipStartChars;
+          var keepTo = totalLen - clipEndChars;
+          if (keepFrom > 0 || keepTo < totalLen) {
+            var clipped = [];
+            var cPos = 0;
+            for (var ci = 0; ci < annotatedParts.length; ci++) {
+              var cText = annotatedParts[ci].text || "";
+              var cPartStart = cPos;
+              var cPartEnd = cPos + cText.length;
+              cPos = cPartEnd;
+              if (cPartEnd <= keepFrom) continue;
+              if (cPartStart >= keepTo) continue;
+              var cFrom = keepFrom > cPartStart ? keepFrom - cPartStart : 0;
+              var cTo = keepTo < cPartEnd ? keepTo - cPartStart : cText.length;
+              var cClipped = cText.substring(cFrom, cTo);
+              if (cClipped.length > 0) {
+                var cPart = {};
+                for (var ck in annotatedParts[ci]) {
+                  if (annotatedParts[ci].hasOwnProperty(ck)) cPart[ck] = annotatedParts[ci][ck];
+                }
+                cPart.text = cClipped;
+                clipped.push(cPart);
+              }
+            }
+            annotatedParts = clipped;
           }
         }
 
@@ -1994,8 +2030,10 @@
               }
               var analysis = tableRanges[ti].analysis;
               if (analysis.intraCell) {
-                // Case 1: intra-cell — skip table handling, let paragraphs fall through
+                // Case 1: intra-cell — let paragraphs fall through to normal
+                // paragraph extraction (same code path as non-table text)
                 tableRanges[ti].isIntraCell = true;
+                // insideTable stays false → this paragraph goes through paragraphToMarkdown
               } else if (analysis.ambiguous) {
                 // Store ambiguity info for the result
                 insideTable = true;
@@ -2025,12 +2063,12 @@
             } else {
               // Already emitted — check if intra-cell (paragraphs within selection fall through)
               if (tableRanges[ti].isIntraCell) {
-                // For intra-cell: paragraphs within the selection range fall through to normal handling
-                // Paragraphs outside the selection range are skipped (they belong to other cells)
+                // Intra-cell: paragraphs within the selection fall through to normal handling
+                // Paragraphs outside the selection are skipped (they belong to other cells)
                 if (pStart < selStart || pStart > selEnd) {
                   insideTable = true;
                 }
-                // else: insideTable stays false, paragraph falls through to normal extraction
+                // else: insideTable stays false → paragraph goes through paragraphToMarkdown
               } else {
                 insideTable = true;
               }
@@ -2060,8 +2098,52 @@
           listInfo = { type: listType.type, level: indentToLevel(paraIndent) };
         }
 
+        // Compute clip bounds using text matching (not position arithmetic,
+        // because OO positions don't map 1:1 to text characters).
+        // range.GetText() is the ground truth of what's actually selected.
+        var clipStart = 0;
+        var clipEnd = 0;
+        // Strip trailing \r\n paragraph mark — para.GetText() includes it
+        // but the runs (annotatedParts) do not, causing a clip mismatch
+        var paraText = (para.GetText ? para.GetText() : "").replace(/\r?\n$/, "");
+        if ((p === 0 || p === paragraphs.length - 1) && paraText.length > 0) {
+          var rangeText = range.GetText ? range.GetText() : "";
+          if (rangeText.length > 0) {
+            if (p === 0 && paragraphs.length === 1 && rangeText.length < paraText.length) {
+              // Single paragraph selection: find rangeText within paraText
+              var idx = paraText.indexOf(rangeText);
+              if (idx >= 0) {
+                clipStart = idx;
+                clipEnd = paraText.length - idx - rangeText.length;
+              }
+            } else if (p === 0 && paragraphs.length > 1) {
+              // First paragraph of multi-paragraph: selected text is a suffix of paraText
+              // rangeText starts with this suffix
+              for (var sfx = paraText.length; sfx > 0; sfx--) {
+                var suffix = paraText.substring(paraText.length - sfx);
+                if (rangeText.substring(0, sfx) === suffix) {
+                  clipStart = paraText.length - sfx;
+                  break;
+                }
+              }
+            } else if (p === paragraphs.length - 1 && paragraphs.length > 1) {
+              // Last paragraph of multi-paragraph: selected text is a prefix of paraText
+              // rangeText ends with this prefix
+              for (var pfx = paraText.length; pfx > 0; pfx--) {
+                var prefix = paraText.substring(0, pfx);
+                if (rangeText.substring(rangeText.length - pfx) === prefix) {
+                  clipEnd = paraText.length - pfx;
+                  break;
+                }
+              }
+            }
+          }
+        }
+
+
+
         // Regular paragraph — inline images are now handled inside paragraphToMarkdown
-        var paraMarkdown = paragraphToMarkdown(para);
+        var paraMarkdown = paragraphToMarkdown(para, clipStart, clipEnd);
 
         // Apply heading prefix
         if (headingLvl > 0 && headingLvl <= 6) {
@@ -2092,7 +2174,12 @@
         }
 
         mdParts.push({ md: paraMarkdown, isList: !!listInfo });
-        plainParts.push(para.GetText());
+        // Clip plain text to match selection bounds
+        var paraPlain = paraText;
+        if (clipStart > 0 || clipEnd > 0) {
+          paraPlain = paraPlain.substring(clipStart, paraPlain.length - clipEnd);
+        }
+        plainParts.push(paraPlain);
       }
 
       // Join with \n between consecutive list items, \n\n between other blocks
@@ -2131,6 +2218,7 @@
       lastTableAmbiguity = result.tableAmbiguity || null;
       lastPartialTableInfo = result.partialTableInfo || null;
       lastSelectedHtml = ""; // No longer used for primary extraction
+
 
       if (selectionDebounceTimer) clearTimeout(selectionDebounceTimer);
 
