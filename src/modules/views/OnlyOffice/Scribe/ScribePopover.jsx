@@ -255,6 +255,7 @@ const ScribePopover = ({ open, selectedText, selectedHtml, enrichedMd, tableAmbi
           onReplace={handleReplace}
           onInsert={handleInsert}
           onClose={handleClose}
+          rawLlmResult={rawResult}
           devData={devMode ? devData : null}
           dragOffset={dragOffset}
           onDragMove={setDragOffset}

@@ -341,11 +341,25 @@
       var tableCells = [];
       while ((cellMatch = cellRegex.exec(tableBody)) !== null) {
         var cellText = cellMatch[3];
-        // Pre-flatten cell text via marked.lexer + flattenTokens (plugin scope)
-        var cellTokens = window.marked.lexer(cellText);
-        var cellBlocks = flattenTokens(cellTokens);
-        // Collect all runs from all blocks in this cell
+        // Split cell text on \n\n boundaries to preserve empty paragraphs.
+        // marked.lexer treats blank lines as separators (drops empty paragraphs),
+        // so we split first and parse each segment individually.
+        var cellSegments = cellText.split(/\n\n/);
+        var cellBlocks = [];
         var cellRuns = [];
+        for (var cs = 0; cs < cellSegments.length; cs++) {
+          var seg = cellSegments[cs];
+          if (seg.replace(/^\s+|\s+$/g, "").length === 0) {
+            // Empty segment = empty paragraph
+            cellBlocks.push({ type: "paragraph", runs: [] });
+          } else {
+            var segTokens = window.marked.lexer(seg);
+            var segBlocks = flattenTokens(segTokens);
+            for (var sb = 0; sb < segBlocks.length; sb++) {
+              cellBlocks.push(segBlocks[sb]);
+            }
+          }
+        }
         for (var cb = 0; cb < cellBlocks.length; cb++) {
           if (cellBlocks[cb].runs) {
             for (var cr = 0; cr < cellBlocks[cb].runs.length; cr++) {
@@ -356,7 +370,8 @@
         tableCells.push({
           r: parseInt(cellMatch[1]),
           c: parseInt(cellMatch[2]),
-          runs: cellRuns
+          runs: cellRuns,
+          blocks: cellBlocks
         });
       }
       parsedTables.push({ index: tableIndex, cells: tableCells });
@@ -390,6 +405,28 @@
       Asc.scope.tableDocIndices = null;
     }
     Asc.scope.partialTableInfo = lastPartialTableInfo ? JSON.stringify(lastPartialTableInfo) : null;
+    // Detect mixed content: partial table + non-table blocks (paragraphs)
+    // In Replace mode with mixed content, partial tables must use clone (not in-place)
+    // because InsertContent replaces the entire selection including the table cells.
+    var hasMixedContent = false;
+    if (lastPartialTableInfo && parsedTables.length > 0) {
+      for (var mi = 0; mi < flat.length; mi++) {
+        // Check if this block is a SCRIBE-TABLE placeholder
+        var miRuns = flat[mi].runs || [];
+        var miText = "";
+        for (var mj = 0; mj < miRuns.length; mj++) { miText += miRuns[mj].text || ""; }
+        if (miText.indexOf("SCRIBE-TABLE-") === -1) { hasMixedContent = true; break; }
+      }
+    }
+    var _flatDebug = [];
+    for (var _fi = 0; _fi < flat.length; _fi++) {
+      var _fRuns = flat[_fi].runs || [];
+      var _fText = "";
+      for (var _fj = 0; _fj < _fRuns.length; _fj++) { _fText += _fRuns[_fj].text || ""; }
+      _flatDebug.push({ type: flat[_fi].type, text: _fText.substring(0, 50) });
+    }
+    log("[DEBUG mixed] partialTableInfo=" + !!lastPartialTableInfo + " parsedTables=" + parsedTables.length + " hasMixedContent=" + hasMixedContent + " blocks=" + JSON.stringify(_flatDebug));
+    Asc.scope.hasMixedContent = hasMixedContent;
 
     var callbackFired = false;
     var fallbackTimer = setTimeout(function() {
@@ -608,9 +645,37 @@
       // Read partialTableInfo for partial table routing
       var partialTableInfoJson = Asc.scope.partialTableInfo;
       var partialTableInfo = partialTableInfoJson ? JSON.parse(partialTableInfoJson) : null;
+      var hasMixedContent = Asc.scope.hasMixedContent;
 
-      // In-place modification for partial table selections (Replace mode, Case 2a).
-      // Modifies cells directly in the ORIGINAL table — does not clone.
+      // Replace the content of a single cell: clear all paragraphs, rebuild from blocks.
+      // Used by all injection paths (in-place, reduced clone, full clone).
+      function replaceCellContent(cellContent, parsedCell, fontFamily, fontSize) {
+        var cellBlocks = parsedCell.blocks || [{ runs: parsedCell.runs || [] }];
+
+        // Remove all paragraphs except the first (need at least one to modify)
+        var elemCount = cellContent.GetElementsCount();
+        for (var re = elemCount - 1; re > 0; re--) {
+          cellContent.RemoveElement(re);
+        }
+
+        // First block → first paragraph (clear + rebuild)
+        var firstPara = cellContent.GetElement(0);
+        if (firstPara && firstPara.RemoveAllElements) {
+          firstPara.RemoveAllElements();
+        }
+        if (cellBlocks.length > 0 && firstPara) {
+          addRunsToParagraph(firstPara, cellBlocks[0].runs || [], fontFamily, fontSize);
+        }
+
+        // Additional blocks → new paragraphs added to cell
+        for (var bi = 1; bi < cellBlocks.length; bi++) {
+          var newPara = Api.CreateParagraph();
+          addRunsToParagraph(newPara, cellBlocks[bi].runs || [], fontFamily, fontSize);
+          cellContent.AddElement(bi, newPara);
+        }
+      }
+
+      // In-place modification for partial table selections (Replace mode).
       function modifyOriginalTableCells(origTable, parsedCells, cFonts) {
         for (var i = 0; i < parsedCells.length; i++) {
           var pc = parsedCells[i];
@@ -618,13 +683,8 @@
           if (!cell) continue;
           var cc = cell.GetContent();
           if (!cc || cc.GetElementsCount() === 0) continue;
-          var cp = cc.GetElement(0);
-          if (!cp) continue;
-          if (cp.RemoveAllElements) {
-            cp.RemoveAllElements();
-          }
           var cf = cFonts[pc.r + "," + pc.c] || {};
-          addRunsToParagraph(cp, pc.runs || [], cf.family, cf.size);
+          replaceCellContent(cc, pc, cf.family, cf.size);
         }
       }
 
@@ -641,13 +701,8 @@
           if (!cloneCell) continue;
           var cloneCc = cloneCell.GetContent();
           if (!cloneCc || cloneCc.GetElementsCount() === 0) continue;
-          var cloneCp = cloneCc.GetElement(0);
-          if (!cloneCp) continue;
-          if (cloneCp.RemoveAllElements) {
-            cloneCp.RemoveAllElements();
-          }
           var cf = cFonts[pc.r + "," + pc.c] || {};
-          addRunsToParagraph(cloneCp, pc.runs || [], cf.family, cf.size);
+          replaceCellContent(cloneCc, pc, cf.family, cf.size);
         }
 
         // Determine which rows and columns are selected
@@ -737,16 +792,15 @@
           }
 
           if (isPartialTable && mode === "replace") {
-            // Case 2a: Replace — modify cells in-place in the ORIGINAL table
+            // Replace with partial table — modify cells in-place
             modifyOriginalTableCells(origTable, ptCells, cFonts);
-            // null marker = already handled in-place, SCRIBE-TABLE placeholder will be skipped
-            tableClones[ptIndex] = null;
+            tableClones[ptIndex] = null; // skip in content[]
           } else if (isPartialTable && mode === "insert") {
             // Cases 2b/2c/2d: Insert — build a reduced clone with only selected rows/columns
             var reducedClone = buildReducedTableClone(origTable, ptCells, selectedCellCoords, cFonts);
             tableClones[ptIndex] = reducedClone;
           } else {
-            // Full table — existing clone+modify behavior
+            // Full table — clone + modify cells
             var clone = origTable.Copy();
             for (var mci = 0; mci < ptCells.length; mci++) {
               var mc = ptCells[mci];
@@ -754,14 +808,8 @@
               if (!cloneCell) continue;
               var cloneCc = cloneCell.GetContent();
               if (!cloneCc || cloneCc.GetElementsCount() === 0) continue;
-              var cloneCp = cloneCc.GetElement(0);
-              if (!cloneCp) continue;
-              // RemoveAllElements instead of cell.Clear() — Clear() causes empty cells
-              if (cloneCp.RemoveAllElements) {
-                cloneCp.RemoveAllElements();
-              }
               var mcf = cFonts[mc.r + "," + mc.c] || {};
-              addRunsToParagraph(cloneCp, mc.runs || [], mcf.family, mcf.size);
+              replaceCellContent(cloneCc, mc, mcf.family, mcf.size);
             }
             tableClones[ptIndex] = clone;
           }
@@ -829,7 +877,55 @@
         }
       }
 
+      // For mixed Replace with partial table: modify non-table paragraphs in-place
+      // BEFORE building content[], to avoid creating Api.CreateParagraph() objects
+      // that OO might roll back (causing cell modifications to be lost).
+      var skipContentAndInsert = false;
+      if (mode === "replace" && hasMixedContent && partialTableInfo) {
+        try {
+          var mixSelRange = doc.GetRangeBySelect();
+          if (mixSelRange) {
+            var mixParas = mixSelRange.GetAllParagraphs();
+            var mixBlockIdx = 0;
+            for (var mpi = 0; mpi < mixParas.length; mpi++) {
+              var mPara = mixParas[mpi];
+              // Skip paragraphs inside table cells (use position-based detection)
+              var mParaRange = mPara.GetRange ? mPara.GetRange() : null;
+              var mParaStart = mParaRange ? mParaRange.GetStartPos() : -1;
+              var mIsInTable = false;
+              for (var mti = 0; mti < allTables.length; mti++) {
+                var mtRange = allTables[mti].GetRange();
+                if (mtRange && mParaStart >= mtRange.GetStartPos() && mParaStart <= mtRange.GetEndPos()) {
+                  mIsInTable = true;
+                  break;
+                }
+              }
+              if (mIsInTable) continue;
+              // Find the next non-table-placeholder block
+              while (mixBlockIdx < blocks.length) {
+                var mbRuns = blocks[mixBlockIdx].runs || [];
+                var mbText = "";
+                for (var mbj = 0; mbj < mbRuns.length; mbj++) { mbText += mbRuns[mbj].text || ""; }
+                if (mbText.indexOf("SCRIBE-TABLE-") === -1) break;
+                mixBlockIdx++;
+              }
+              if (mixBlockIdx >= blocks.length) break;
+              // Clear and rebuild this paragraph in-place
+              if (mPara.RemoveAllElements) {
+                mPara.RemoveAllElements();
+              }
+              addRunsToParagraph(mPara, blocks[mixBlockIdx].runs || [], srcFontFamily, srcFontSize);
+              mixBlockIdx++;
+            }
+          }
+        } catch (e) {
+          // In-place failed — will fall through to normal content building
+        }
+        skipContentAndInsert = true;
+      }
+
       var content = [];
+      if (!skipContentAndInsert)
       for (var i = 0; i < blocks.length; i++) {
         var block = blocks[i];
         var isFirst = (i === 0);
@@ -983,6 +1079,13 @@
       }
 
       if (content.length > 0) {
+        // For Replace with mixed content + partial table modified in-place:
+        // modify non-table paragraphs in-place too (no InsertContent at all).
+        // This avoids InsertContent destroying the table rows.
+        if (skipContentAndInsert) {
+          content = [];
+        }
+
         // Save selection start position before InsertContent (for replace mode selection)
         var preSelStart = 0;
         try {
@@ -1804,73 +1907,73 @@
 
       // --- Partial table selection analysis (TBL-01) ---
       // Returns: { full, selectedCells, ambiguous, reason, intraCell }
-      function analyzeTableSelection(table, selStart, selEnd) {
+      // Uses paragraph-to-cell mapping via GetParentTableCell() instead of
+      // position-based overlap, because positions are sequential in the document
+      // and can't distinguish column selections from row selections.
+      function analyzeTableSelection(table, selStart, selEnd, paragraphs) {
         var tblRange = table.GetRange();
         if (!tblRange) return { full: false, selectedCells: [], ambiguous: true, reason: "no_range" };
         var tblStart = tblRange.GetStartPos();
         var tblEnd = tblRange.GetEndPos();
-        // Full table inside selection?
-        if (tblStart >= selStart && tblEnd <= selEnd) {
-          return { full: true, selectedCells: [], ambiguous: false, reason: null };
-        }
         var rowCount = table.GetRowsCount();
-        var selectedCells = [];
-        var ambiguousCells = [];
+
+        // Count total non-empty cells in the table
+        var totalNonEmptyCells = 0;
         for (var r = 0; r < rowCount; r++) {
           var row = table.GetRow(r);
-          var cellCount = row.GetCellsCount();
-          for (var c = 0; c < cellCount; c++) {
+          for (var c = 0; c < row.GetCellsCount(); c++) {
             var cell = table.GetCell(r, c);
             if (!cell) continue;
             var content = cell.GetContent();
-            if (!content || content.GetElementsCount() === 0) {
-              // Empty cell — handled after loop (include if row has other selected cells)
-              continue;
-            }
-            var firstPara = content.GetElement(0);
-            var lastPara = content.GetElement(content.GetElementsCount() - 1);
-            var firstRange = firstPara ? firstPara.GetRange() : null;
-            var lastRange = lastPara ? lastPara.GetRange() : null;
-            if (!firstRange || !lastRange) continue;
-            var cStart = firstRange.GetStartPos();
-            var cEnd = lastRange.GetEndPos();
-            var fullyInside = (cStart >= selStart && cEnd <= selEnd);
-            var overlaps = (cEnd >= selStart && cStart <= selEnd);
-            var partialOverlap = overlaps && !fullyInside;
-            if (fullyInside) {
-              selectedCells.push({ r: r, c: c });
-            } else if (partialOverlap) {
-              ambiguousCells.push({ r: r, c: c });
+            if (content && content.GetElementsCount() > 0) totalNonEmptyCells++;
+          }
+        }
+
+        // Build set of cells that have paragraphs in the selection
+        // using GetParentTableCell() — this is the ground truth of what's selected
+        var hitCells = {}; // "r,c" → {r, c}
+        var hitCount = 0;
+        for (var pi = 0; pi < paragraphs.length; pi++) {
+          var pRange = paragraphs[pi].GetRange ? paragraphs[pi].GetRange() : null;
+          if (!pRange) continue;
+          var pPos = pRange.GetStartPos();
+          // Only consider paragraphs within this table's range
+          if (pPos < tblStart || pPos > tblEnd) continue;
+          var parentCell = paragraphs[pi].GetParentTableCell ? paragraphs[pi].GetParentTableCell() : null;
+          if (!parentCell) continue;
+          var cellR = parentCell.GetRowIndex ? parentCell.GetRowIndex() : -1;
+          var cellC = parentCell.GetIndex ? parentCell.GetIndex() : -1;
+          if (cellR >= 0 && cellC >= 0) {
+            var key = cellR + "," + cellC;
+            if (!hitCells[key]) {
+              hitCells[key] = { r: cellR, c: cellC };
+              hitCount++;
             }
           }
         }
-        // Check for intra-cell case: 0 fully-selected cells but 1 ambiguous cell,
-        // and the selection is entirely within that one cell → Case 1 (intra-cell).
-        if (selectedCells.length === 0 && ambiguousCells.length === 1) {
-          var ac = ambiguousCells[0];
-          var acCell = table.GetCell(ac.r, ac.c);
-          if (acCell) {
-            var acContent = acCell.GetContent();
-            if (acContent && acContent.GetElementsCount() > 0) {
-              var acFirst = acContent.GetElement(0);
-              var acLast = acContent.GetElement(acContent.GetElementsCount() - 1);
-              var acFR = acFirst ? acFirst.GetRange() : null;
-              var acLR = acLast ? acLast.GetRange() : null;
-              if (acFR && acLR) {
-                var acStart = acFR.GetStartPos();
-                var acEnd = acLR.GetEndPos();
-                // Selection is within this single cell
-                if (selStart >= acStart && selEnd <= acEnd) {
-                  return { full: false, selectedCells: [], ambiguous: false, reason: "intra_cell", intraCell: true };
-                }
-              }
-            }
+
+        // Intra-cell: only 1 cell has paragraphs in the selection
+        if (hitCount <= 1) {
+          if (hitCount === 0) {
+            return { full: false, selectedCells: [], ambiguous: true, reason: "no_cell_match" };
+          }
+          return { full: false, selectedCells: [], ambiguous: false, reason: "intra_cell", intraCell: true };
+        }
+
+        // Full table: all non-empty cells have paragraphs in the selection
+        if (hitCount >= totalNonEmptyCells) {
+          return { full: true, selectedCells: [], ambiguous: false, reason: null };
+        }
+
+        // Partial table: some cells selected
+        var selectedCells = [];
+        for (var hk in hitCells) {
+          if (hitCells.hasOwnProperty(hk)) {
+            selectedCells.push(hitCells[hk]);
           }
         }
-        if (ambiguousCells.length > 0) {
-          return { full: false, selectedCells: [], ambiguous: true, reason: "selection_cuts_cell" };
-        }
-        // Handle empty cells: include empty cells whose row has at least one selected cell
+
+        // Include empty cells whose row has at least one selected cell
         var selectedRowSet = {};
         for (var si = 0; si < selectedCells.length; si++) {
           selectedRowSet[selectedCells[si].r] = true;
@@ -1880,44 +1983,46 @@
           var row2 = table.GetRow(r2);
           var cellCount2 = row2.GetCellsCount();
           for (var c2 = 0; c2 < cellCount2; c2++) {
-            var alreadySelected = false;
-            for (var as2 = 0; as2 < selectedCells.length; as2++) {
-              if (selectedCells[as2].r === r2 && selectedCells[as2].c === c2) { alreadySelected = true; break; }
-            }
-            if (!alreadySelected) {
-              var emptyCell = table.GetCell(r2, c2);
-              if (emptyCell) {
-                var ec = emptyCell.GetContent();
-                if (!ec || ec.GetElementsCount() === 0) {
-                  selectedCells.push({ r: r2, c: c2 });
-                }
+            var key2 = r2 + "," + c2;
+            if (hitCells[key2]) continue; // already counted
+            var emptyCell = table.GetCell(r2, c2);
+            if (emptyCell) {
+              var ec = emptyCell.GetContent();
+              if (!ec || ec.GetElementsCount() === 0) {
+                selectedCells.push({ r: r2, c: c2 });
               }
             }
           }
         }
+
         // Sort selectedCells by row then column for consistent ordering
         selectedCells.sort(function(a, b) { return a.r !== b.r ? a.r - b.r : a.c - b.c; });
         return { full: false, selectedCells: selectedCells, ambiguous: false, reason: null };
       }
 
       // --- Partial table cell extraction (TBL-01) ---
+      // Extract the markdown content of a single cell (all paragraphs joined by \n\n).
+      function extractCellContent(cell) {
+        var content = cell.GetContent();
+        var cellText = "";
+        var elemCount = content ? content.GetElementsCount() : 0;
+        for (var e = 0; e < elemCount; e++) {
+          var elem = content.GetElement(e);
+          if (elem.GetClassType && elem.GetClassType() === "paragraph") {
+            if (cellText.length > 0) cellText = cellText + "\n\n";
+            cellText = cellText + paragraphToMarkdown(elem);
+          }
+        }
+        return cellText;
+      }
+
       function extractPartialTableCells(table, selectedCells) {
         var cellMd = [];
         for (var i = 0; i < selectedCells.length; i++) {
           var sc = selectedCells[i];
           var cell = table.GetCell(sc.r, sc.c);
           if (!cell) continue;
-          var content = cell.GetContent();
-          var cellText = "";
-          var elemCount = content ? content.GetElementsCount() : 0;
-          for (var e = 0; e < elemCount; e++) {
-            var elem = content.GetElement(e);
-            if (elem.GetClassType && elem.GetClassType() === "paragraph") {
-              if (cellText.length > 0) cellText = cellText + " ";
-              cellText = cellText + paragraphToMarkdown(elem);
-            }
-          }
-          cellMd.push("[CELL:" + sc.r + "," + sc.c + "]" + cellText + "[/CELL]");
+          cellMd.push("[CELL:" + sc.r + "," + sc.c + "]" + extractCellContent(cell) + "[/CELL]");
         }
         return cellMd.join("\n");
       }
@@ -1931,18 +2036,7 @@
           var cellCount = row.GetCellsCount();
           for (var c = 0; c < cellCount; c++) {
             var cell = table.GetCell(r, c);
-            var content = cell.GetContent();
-            // Extract text from all paragraphs in the cell
-            var cellText = "";
-            var elemCount = content.GetElementsCount();
-            for (var e = 0; e < elemCount; e++) {
-              var elem = content.GetElement(e);
-              if (elem.GetClassType && elem.GetClassType() === "paragraph") {
-                if (cellText.length > 0) cellText = cellText + " ";
-                cellText = cellText + paragraphToMarkdown(elem);
-              }
-            }
-            cellMd.push("[CELL:" + r + "," + c + "]" + cellText + "[/CELL]");
+            cellMd.push("[CELL:" + r + "," + c + "]" + extractCellContent(cell) + "[/CELL]");
           }
         }
         return cellMd.join("\n");
@@ -2026,7 +2120,7 @@
             if (!tableRanges[ti].emitted) {
               tableRanges[ti].emitted = true;
               if (!tableRanges[ti].analysis) {
-                tableRanges[ti].analysis = analyzeTableSelection(tableRanges[ti].table, selStart, selEnd);
+                tableRanges[ti].analysis = analyzeTableSelection(tableRanges[ti].table, selStart, selEnd, paragraphs);
               }
               var analysis = tableRanges[ti].analysis;
               if (analysis.intraCell) {

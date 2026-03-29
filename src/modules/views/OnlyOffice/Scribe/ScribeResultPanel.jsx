@@ -17,18 +17,19 @@ import { loadBeautify, loadHighlightJs } from '@/modules/views/OnlyOffice/Scribe
 import styles from '@/modules/views/OnlyOffice/Scribe/scribe.styl'
 
 const DEV_PANELS_STORAGE_KEY = 'SCRIBE_DEV_MD_PANELS'
-const DEV_PANEL_KEYS = ['htmlSource', 'htmlNorm', 'mdConverted', 'llmRaw', 'rendered']
+const DEV_PANEL_KEYS = ['htmlSource', 'htmlNorm', 'mdConverted', 'llmRaw', 'llmDisplay', 'rendered']
 function getDevPanelLabels(source) {
   const fromPlugin = source === 'plugin'
   return {
     htmlSource: fromPlugin ? 'HTML brut (sélection OO) — non utilisé' : 'HTML brut (sélection OO)',
     htmlNorm: fromPlugin ? 'HTML normalisé — non utilisé' : 'HTML normalisé',
     mdConverted: fromPlugin ? 'MD enrichi (plugin OO → marqueurs)' : 'MD converti (HTML → Turndown)',
-    llmRaw: 'MD brut LLM (réponse IA)',
+    llmRaw: 'MD brut LLM (réponse IA — marqueurs)',
+    llmDisplay: 'MD pour affichage (tableaux en md)',
     rendered: 'Rendu final (aperçu)'
   }
 }
-const DEV_PANEL_DEFAULTS = { htmlSource: true, htmlNorm: true, mdConverted: true, llmRaw: true, rendered: true }
+const DEV_PANEL_DEFAULTS = { htmlSource: true, htmlNorm: true, mdConverted: true, llmRaw: true, llmDisplay: true, rendered: true }
 
 function loadDevPanelPrefs() {
   try {
@@ -52,12 +53,13 @@ function saveDevPanelPrefs(prefs) {
  * ScribeResultPanel - Step 2 of the Scribe two-step flow.
  *
  * Displays either the AI-transformed text (success) or an error message.
- * In dev mode (devData prop), shows up to 5 panels in a dynamic grid:
+ * In dev mode (devData prop), shows up to 6 panels in a dynamic grid:
  *   1. HTML brut (sélection OO) — raw HTML from OO (prettified + syntax colored)
  *   2. HTML normalisé — after normalizeHtml (prettified + syntax colored)
  *   3. MD converti (sélection → markdown) — converted markdown (syntax colored)
- *   4. MD brut LLM (réponse IA) — raw markdown returned by the LLM
- *   5. Rendu final (aperçu) — rendered markdown preview
+ *   4. MD brut LLM (réponse IA — marqueurs) — raw markdown returned by the LLM with TABLE/CELL markers
+ *   5. MD pour affichage (tableaux formatés) — markers transformed to readable markdown tables
+ *   6. Rendu final (aperçu) — rendered markdown preview
  *
  * Each panel can be toggled via checkboxes in the title bar.
  * Visibility preferences are persisted in localStorage.
@@ -81,6 +83,8 @@ const DevPanelGrid = ({
   highlightedNormalized,
   highlightedMd,
   highlightedLlmMd,
+  highlightedLlmDisplay,
+  rawLlmResult,
   devData,
   resultText,
   resultContent
@@ -141,7 +145,22 @@ const DevPanelGrid = ({
           className="hljs"
           style={devPreStyle}
           dangerouslySetInnerHTML={{
-            __html: highlightedLlmMd || escapeHtml(resultText)
+            __html: highlightedLlmMd || escapeHtml(rawLlmResult || resultText)
+          }}
+        />
+      </div>
+    )
+  }
+
+  if (devPanelPrefs.llmDisplay !== false) {
+    panels.push(
+      <div key="llmDisplay" style={devColumnStyle}>
+        <div style={devLabelStyle}>{labels.llmDisplay}</div>
+        <pre
+          className="hljs"
+          style={devPreStyle}
+          dangerouslySetInnerHTML={{
+            __html: highlightedLlmDisplay || escapeHtml(resultText)
           }}
         />
       </div>
@@ -189,6 +208,7 @@ const ScribeResultPanel = ({
   onReplace,
   onInsert,
   onClose,
+  rawLlmResult,
   devData,
   dragOffset,
   onDragMove,
@@ -302,6 +322,7 @@ const ScribeResultPanel = ({
   const [highlightedNormalized, setHighlightedNormalized] = useState('')
   const [highlightedMd, setHighlightedMd] = useState('')
   const [highlightedLlmMd, setHighlightedLlmMd] = useState('')
+  const [highlightedLlmDisplay, setHighlightedLlmDisplay] = useState('')
 
   useEffect(() => {
     if (!devData) return
@@ -328,13 +349,18 @@ const ScribeResultPanel = ({
           hljs.highlight(devData.md, { language: 'markdown' }).value
         )
       }
-      if (resultText) {
+      if (rawLlmResult) {
         setHighlightedLlmMd(
+          hljs.highlight(rawLlmResult, { language: 'markdown' }).value
+        )
+      }
+      if (resultText) {
+        setHighlightedLlmDisplay(
           hljs.highlight(resultText, { language: 'markdown' }).value
         )
       }
     })
-  }, [devData, resultText])
+  }, [devData, rawLlmResult, resultText])
 
   const getFocusables = useCallback(() => {
     if (error && canRetry) {
@@ -536,6 +562,8 @@ const ScribeResultPanel = ({
           highlightedNormalized={highlightedNormalized}
           highlightedMd={highlightedMd}
           highlightedLlmMd={highlightedLlmMd}
+          highlightedLlmDisplay={highlightedLlmDisplay}
+          rawLlmResult={rawLlmResult}
           devData={devData}
           resultText={resultText}
           resultContent={resultContent}
@@ -590,6 +618,7 @@ const ScribeResultPanel = ({
 ScribeResultPanel.propTypes = {
   breadcrumb: PropTypes.string.isRequired,
   resultText: PropTypes.string.isRequired,
+  rawLlmResult: PropTypes.string,
   error: PropTypes.string,
   canRetry: PropTypes.bool,
   cellWarning: PropTypes.string,
@@ -618,6 +647,7 @@ ScribeResultPanel.propTypes = {
 ScribeResultPanel.defaultProps = {
   error: '',
   canRetry: false,
+  rawLlmResult: '',
   cellWarning: null,
   insertDisabled: false,
   onRetry: undefined,
