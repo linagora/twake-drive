@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react'
 
 import { IOCozyFile } from 'cozy-client/types/types'
-import flag from 'cozy-flags'
 
 import { updateFavicon } from './helpers'
 
@@ -15,8 +14,6 @@ const useUpdateFavicon = (
   const originalFaviconUrlRef = useRef<string>()
 
   useEffect(() => {
-    if (!flag('drive.update-favicon.enabled')) return
-
     const originalFavicon =
       document.querySelector<HTMLLinkElement>("link[rel~='icon']")
 
@@ -34,11 +31,7 @@ const useUpdateFavicon = (
   }, [])
 
   useEffect(() => {
-    if (
-      fetchStatus !== 'loaded' ||
-      !file ||
-      !flag('drive.update-favicon.enabled')
-    ) {
+    if (fetchStatus !== 'loaded' || !file) {
       return
     }
 

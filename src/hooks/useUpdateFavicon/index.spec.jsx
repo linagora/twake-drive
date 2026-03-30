@@ -149,26 +149,6 @@ describe('useUpdateFavicon', () => {
     expect(mockLink.href).toBe('/original/favicon.ico')
   })
 
-  it('should not update favicon when flag is disabled', () => {
-    mockFlag.mockReturnValue(false)
-
-    const file = {
-      _id: '1',
-      name: 'document.docx',
-      mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    }
-
-    const { getFileMimetype } = require('@/lib/getFileMimetype')
-    getFileMimetype.mockReturnValue(() => 'text')
-
-    const mockLink = createMockLinkElement('/assets/favicon.ico')
-    mockQuerySelectorAll.mockReturnValue([mockLink])
-
-    renderHook(() => useUpdateFavicon(file, 'loaded'))
-
-    expect(mockLink.href).toBe('/assets/favicon.ico')
-  })
-
   it('should not update favicon when fetchStatus is not loaded', () => {
     const file = {
       _id: '1',
