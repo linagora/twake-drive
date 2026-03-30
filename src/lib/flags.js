@@ -27,5 +27,4 @@ const flagsList = () => {
   flag('drive.dacc-files-size-by-slug')
   flag('drive.breadcrumb.showCompleteBreadcrumbOnPublicPage') // flagName should use kebab case
   flag('drive.hide-nextcloud-dev')
-  flag('drive.keyboard-shortcuts.enabled', true)
 }
