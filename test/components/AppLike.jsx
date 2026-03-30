@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react'
+import React from 'react'
 import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 import { Provider } from 'react-redux'
@@ -6,7 +6,6 @@ import { HashRouter } from 'react-router-dom'
 import { createStore } from 'redux'
 
 import { CozyProvider } from 'cozy-client'
-import flag from 'cozy-flags'
 import { SharingContext, NativeFileSharingProvider } from 'cozy-sharing'
 import { Layout } from 'cozy-ui/transpiled/react/Layout'
 import AlertProvider from 'cozy-ui/transpiled/react/providers/Alert'
@@ -55,12 +54,6 @@ const mockModalContextValue = {
   modalStack: []
 }
 
-const NewItemHighlightProviderWrapper = flag(
-  'drive.highlight-new-items.enabled'
-)
-  ? NewItemHighlightProvider
-  : Fragment
-
 const AppLike = ({
   children,
   store,
@@ -78,7 +71,7 @@ const AppLike = ({
             <AcceptingSharingProvider>
               <NativeFileSharingProvider>
                 <HashRouter>
-                  <NewItemHighlightProviderWrapper>
+                  <NewItemHighlightProvider>
                     <SelectionProvider>
                       <ViewSwitcherContextProvider>
                         <BreakpointsProvider>
@@ -104,7 +97,7 @@ const AppLike = ({
                         </BreakpointsProvider>
                       </ViewSwitcherContextProvider>
                     </SelectionProvider>
-                  </NewItemHighlightProviderWrapper>
+                  </NewItemHighlightProvider>
                 </HashRouter>
               </NativeFileSharingProvider>
             </AcceptingSharingProvider>

@@ -54,14 +54,4 @@ describe('useScrollToHighlightedItem', () => {
       })
     )
   })
-
-  it('does nothing when the highlight feature flag is disabled', async () => {
-    flag.mockReturnValue(false)
-    setHighlightedItems([{ _id: 'match' }])
-    const items = [{ _id: 'match' }]
-
-    renderHook(() => useScrollToHighlightedItem(virtuosoRef, items))
-
-    expect(virtuosoRef.current.scrollToIndex).not.toHaveBeenCalled()
-  })
 })

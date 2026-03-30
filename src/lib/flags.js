@@ -28,5 +28,4 @@ const flagsList = () => {
   flag('drive.breadcrumb.showCompleteBreadcrumbOnPublicPage') // flagName should use kebab case
   flag('drive.hide-nextcloud-dev')
   flag('drive.keyboard-shortcuts.enabled', true)
-  flag('drive.highlight-new-items.enabled', true)
 }

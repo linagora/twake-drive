@@ -1,8 +1,7 @@
-import React, { Fragment } from 'react'
+import React from 'react'
 import { Outlet } from 'react-router-dom'
 
 import { BarComponent } from 'cozy-bar'
-import flag from 'cozy-flags'
 import FlagSwitcher from 'cozy-flags/dist/FlagSwitcher'
 import Sprite from 'cozy-ui/transpiled/react/Icon/Sprite'
 import { Layout } from 'cozy-ui/transpiled/react/Layout'
@@ -14,12 +13,6 @@ import { NewItemHighlightProvider } from '@/modules/upload/NewItemHighlightProvi
 import UploadQueue from '@/modules/upload/UploadQueue'
 
 const PublicLayout = () => {
-  const NewItemHighlightProviderWrapper = flag(
-    'drive.highlight-new-items.enabled'
-  )
-    ? NewItemHighlightProvider
-    : Fragment
-
   return (
     <Layout>
       <BarComponent
@@ -31,11 +24,11 @@ const PublicLayout = () => {
       />
       <FlagSwitcher />
       <UploadQueue />
-      <NewItemHighlightProviderWrapper>
+      <NewItemHighlightProvider>
         <SelectionProvider>
           <Outlet />
         </SelectionProvider>
-      </NewItemHighlightProviderWrapper>
+      </NewItemHighlightProvider>
       <Sprite />
     </Layout>
   )
