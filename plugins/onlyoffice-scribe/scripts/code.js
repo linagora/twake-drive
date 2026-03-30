@@ -418,14 +418,6 @@
         if (miText.indexOf("SCRIBE-TABLE-") === -1) { hasMixedContent = true; break; }
       }
     }
-    var _flatDebug = [];
-    for (var _fi = 0; _fi < flat.length; _fi++) {
-      var _fRuns = flat[_fi].runs || [];
-      var _fText = "";
-      for (var _fj = 0; _fj < _fRuns.length; _fj++) { _fText += _fRuns[_fj].text || ""; }
-      _flatDebug.push({ type: flat[_fi].type, text: _fText.substring(0, 50) });
-    }
-    log("[DEBUG mixed] partialTableInfo=" + !!lastPartialTableInfo + " parsedTables=" + parsedTables.length + " hasMixedContent=" + hasMixedContent + " blocks=" + JSON.stringify(_flatDebug));
     Asc.scope.hasMixedContent = hasMixedContent;
 
     var callbackFired = false;
