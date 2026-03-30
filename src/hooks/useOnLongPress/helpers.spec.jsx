@@ -1,6 +1,10 @@
 import MockDate from 'mockdate'
 
+import flag from 'cozy-flags'
+
 import { handlePress, handleClick } from './helpers'
+
+jest.mock('cozy-flags', () => jest.fn())
 
 const mockToggle = jest.fn()
 const mockOpenLink = jest.fn()
@@ -124,6 +128,147 @@ describe('handleClick', () => {
 
       expect(mockToggle).not.toHaveBeenCalledWith()
       expect(mockOpenLink).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('with dynamic-selection enabled and selectionModeActive', () => {
+    const file = { _id: 'file-1' }
+    const mockSetSelectedItems = jest.fn()
+    const mockOnInteractWithFile = jest.fn()
+
+    const setupDynamic = (eventOverrides = {}) => {
+      flag.mockImplementation(name => {
+        if (name === 'drive.dynamic-selection.enabled') return true
+        if (name === 'drive.doubleclick.enabled') return false
+        return false
+      })
+
+      const event = {
+        preventDefault: jest.fn(),
+        stopPropagation: jest.fn(),
+        shiftKey: false,
+        ctrlKey: false,
+        metaKey: false,
+        ...eventOverrides
+      }
+
+      return {
+        params: {
+          event,
+          file,
+          disabled: false,
+          isRenaming: false,
+          openLink: mockOpenLink,
+          toggle: mockToggle,
+          selectionModeActive: true,
+          lastClickTime: 0,
+          setLastClickTime: jest.fn(),
+          setSelectedItems: mockSetSelectedItems,
+          onInteractWithFile: mockOnInteractWithFile,
+          clearHighlightedItems: jest.fn()
+        },
+        event
+      }
+    }
+
+    afterEach(() => {
+      flag.mockReset()
+    })
+
+    it('should replace selection on simple click', () => {
+      const { params } = setupDynamic()
+      handleClick(params)
+
+      expect(mockSetSelectedItems).toHaveBeenCalledWith({
+        [file._id]: file
+      })
+      expect(mockToggle).not.toHaveBeenCalled()
+    })
+
+    it('should toggle item on Ctrl+Click', () => {
+      const { params, event } = setupDynamic({ ctrlKey: true })
+      handleClick(params)
+
+      expect(mockToggle).toHaveBeenCalledWith(event)
+      expect(mockSetSelectedItems).not.toHaveBeenCalled()
+    })
+
+    it('should toggle item on Cmd+Click (metaKey)', () => {
+      const { params, event } = setupDynamic({ metaKey: true })
+      handleClick(params)
+
+      expect(mockToggle).toHaveBeenCalledWith(event)
+      expect(mockSetSelectedItems).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('with doubleclick enabled', () => {
+    const file = { _id: 'file-1' }
+    const mockSetSelectedItems = jest.fn()
+    const mockOnInteractWithFile = jest.fn()
+
+    const setupDoubleClick = (eventOverrides = {}) => {
+      flag.mockImplementation(name => {
+        if (name === 'drive.doubleclick.enabled') return true
+        return false
+      })
+
+      const event = {
+        preventDefault: jest.fn(),
+        stopPropagation: jest.fn(),
+        shiftKey: false,
+        ctrlKey: false,
+        metaKey: false,
+        ...eventOverrides
+      }
+
+      return {
+        params: {
+          event,
+          file,
+          disabled: false,
+          isRenaming: false,
+          openLink: mockOpenLink,
+          toggle: mockToggle,
+          selectionModeActive: true,
+          lastClickTime: 0,
+          setLastClickTime: jest.fn(),
+          setSelectedItems: mockSetSelectedItems,
+          onInteractWithFile: mockOnInteractWithFile,
+          clearHighlightedItems: jest.fn()
+        },
+        event
+      }
+    }
+
+    afterEach(() => {
+      flag.mockReset()
+    })
+
+    it('should replace selection on simple click', () => {
+      const { params } = setupDoubleClick()
+      handleClick(params)
+
+      expect(mockSetSelectedItems).toHaveBeenCalledWith({
+        [file._id]: file
+      })
+      expect(mockToggle).not.toHaveBeenCalled()
+    })
+
+    it('should toggle item on Ctrl+Click', () => {
+      const { params, event } = setupDoubleClick({ ctrlKey: true })
+      handleClick(params)
+
+      expect(mockToggle).toHaveBeenCalledWith(event)
+      expect(mockSetSelectedItems).not.toHaveBeenCalled()
+    })
+
+    it('should toggle item on Cmd+Click (metaKey)', () => {
+      const { params, event } = setupDoubleClick({ metaKey: true })
+      handleClick(params)
+
+      expect(mockToggle).toHaveBeenCalledWith(event)
+      expect(mockSetSelectedItems).not.toHaveBeenCalled()
     })
   })
 

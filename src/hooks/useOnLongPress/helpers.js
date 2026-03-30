@@ -26,7 +26,12 @@ export const handleClick = ({
   // simply remove this "if" the flag is not necessary anymore
   if (!flag('drive.doubleclick.enabled')) {
     if (selectionModeActive) {
-      if (flag('drive.dynamic-selection.enabled') && !event.shiftKey) {
+      if (
+        flag('drive.dynamic-selection.enabled') &&
+        !event.shiftKey &&
+        !event.ctrlKey &&
+        !event.metaKey
+      ) {
         event.stopPropagation()
         setSelectedItems({ [file._id]: file })
         onInteractWithFile?.(file._id, event)
@@ -43,6 +48,8 @@ export const handleClick = ({
 
   if (isDoubleClick) {
     openLink(event)
+  } else if (event.ctrlKey || event.metaKey) {
+    toggle(event)
   } else {
     // we should not use file.index
     // we should probablt not use index - 1
