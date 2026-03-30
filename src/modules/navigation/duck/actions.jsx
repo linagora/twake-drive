@@ -4,13 +4,19 @@ import { isDirectory } from 'cozy-client/dist/models/file'
 import flag from 'cozy-flags'
 import { QuotaPaywall } from 'cozy-ui-plus/dist/Paywall'
 
-import { ROOT_DIR_ID, TRASH_DIR_ID } from '@/constants/config'
-import { MAX_PAYLOAD_SIZE_IN_GB } from '@/constants/config'
+import { resetQuery as resetQueryAction } from 'cozy-client/dist/store'
+
+import {
+  ROOT_DIR_ID,
+  TRASH_DIR_ID,
+  FILES_FETCH_LIMIT,
+  MAX_PAYLOAD_SIZE_IN_GB
+} from '@/constants/config'
 import { createEncryptedDir } from '@/lib/encryption'
 import { getEntriesTypeTranslated } from '@/lib/entries'
 import logger from '@/lib/logger'
 import { showModal } from '@/lib/react-cozy-helpers'
-import { getFolderContent } from '@/modules/selectors'
+import { getFolderContent, getFolderContentQueries } from '@/modules/selectors'
 import { addToUploadQueue } from '@/modules/upload'
 
 export const SORT_FOLDER = 'SORT_FOLDER'
@@ -26,6 +32,30 @@ export const sortFolder = (folderId, sortAttribute, sortOrder = 'asc') => {
     folderId,
     sortAttribute,
     sortOrder
+  }
+}
+
+/**
+ * Reset folder queries so the server re-sends proper paginated data.
+ * Works around cozy-client's sortAndLimitDocsIds capping realtime-added
+ * documents to `limit * fetchedPagesCount`, which hides files beyond
+ * the first page and leaves hasMore stale.
+ */
+const refetchFolderQueries = async (client, folderId) => {
+  try {
+    const storeState = client.store.getState()
+    const matchingQueries = getFolderContentQueries(storeState, folderId)
+
+    await Promise.all(
+      matchingQueries.map(async queryState => {
+        if (!queryState?.definition) return
+        // Clear stale pagination state then fetch every page
+        client.dispatch(resetQueryAction(queryState.id))
+        await client.queryAll(queryState.definition, { as: queryState.id })
+      })
+    )
+  } catch (error) {
+    logger.error('Failed to refetch folder queries after upload:', error)
   }
 }
 
@@ -76,7 +106,7 @@ export const uploadFiles =
           errors,
           updatedItems,
           fileTooLargeErrors
-        }) =>
+        }) => {
           dispatch(
             uploadQueueProcessed(
               createdItems,
@@ -91,7 +121,11 @@ export const uploadFiles =
               navigateAfterUpload,
               addItems
             )
-          ),
+          )
+          if (createdItems.length + updatedItems.length >= FILES_FETCH_LIMIT) {
+            refetchFolderQueries(client, targetDirId)
+          }
+        },
         { client, vaultClient },
         driveId,
         addItems
