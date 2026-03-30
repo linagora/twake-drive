@@ -1,4 +1,4 @@
-import React, { Fragment, useEffect } from 'react'
+import React, { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { Outlet, useNavigate } from 'react-router-dom'
 
@@ -59,15 +59,9 @@ const LayoutContent = () => {
     ? !hasWriteAccess(displayedFolder._id, displayedFolder.driveId)
     : false
 
-  const NewItemHighlightProviderWrapper = flag(
-    'drive.highlight-new-items.enabled'
-  )
-    ? NewItemHighlightProvider
-    : Fragment
-
   return (
     <LayoutUI onContextMenu={ev => ev.preventDefault()}>
-      <NewItemHighlightProviderWrapper>
+      <NewItemHighlightProvider>
         <BarComponent
           searchOptions={{ enabled: !isMobile }}
           disableInternalStore
@@ -117,7 +111,7 @@ const LayoutContent = () => {
         </SelectionProvider>
         <Sprite />
         {flag('debug') && <CozyDevtools />}
-      </NewItemHighlightProviderWrapper>
+      </NewItemHighlightProvider>
     </LayoutUI>
   )
 }
