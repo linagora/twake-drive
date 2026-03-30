@@ -27,6 +27,46 @@ const buildSelectionFromItems = (fileIds, itemsMap) => {
   return { newSelection, lastSelectedId }
 }
 
+const getVisibleFileIdsFromSelecto = selectoRef => {
+  const selectableElements = selectoRef.current?.getSelectableElements() || []
+  const visibleFileIds = new Set()
+  for (const el of selectableElements) {
+    const fileId = el.getAttribute('data-file-id')
+    if (fileId) {
+      visibleFileIds.add(fileId)
+    }
+  }
+  return visibleFileIds
+}
+
+const getSelectedFileIdsFromSelectoEvent = (e, getFileFromElement) => {
+  const selectedFileIds = new Set()
+  for (const el of e.selected) {
+    const file = getFileFromElement(el)
+    if (file) {
+      selectedFileIds.add(file._id)
+    }
+  }
+  return selectedFileIds
+}
+
+const accumulateSelectedItemsDuringDrag = (
+  selectedDuringDragRef,
+  selectedFileIds,
+  visibleFileIds
+) => {
+  const newAccumulated = new Set()
+  for (const fileId of selectedDuringDragRef.current) {
+    if (!visibleFileIds.has(fileId) || selectedFileIds.has(fileId)) {
+      newAccumulated.add(fileId)
+    }
+  }
+  for (const fileId of selectedFileIds) {
+    newAccumulated.add(fileId)
+  }
+  return newAccumulated
+}
+
 /**
  * Component that enables rectangular selection of files in a grid view.
  * Wraps children with a selection area that allows users to drag-select
@@ -104,16 +144,20 @@ const RectangularSelection = ({
    */
   const handleSelect = useCallback(
     e => {
-      const currentSelection = new Set(selectedDuringDragRef.current)
-      for (const el of e.selected) {
-        const file = getFileFromElement(el)
-        if (file) {
-          currentSelection.add(file._id)
-        }
-      }
+      const visibleFileIds = getVisibleFileIdsFromSelecto(selectoRef)
+      const selectedFileIds = getSelectedFileIdsFromSelectoEvent(
+        e,
+        getFileFromElement
+      )
+      const newAccumulated = accumulateSelectedItemsDuringDrag(
+        selectedDuringDragRef,
+        selectedFileIds,
+        visibleFileIds
+      )
+      selectedDuringDragRef.current = newAccumulated
 
       const { newSelection, lastSelectedId } = buildSelectionFromItems(
-        currentSelection,
+        newAccumulated,
         itemsMap
       )
 
