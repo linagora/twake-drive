@@ -79,6 +79,7 @@ describe('handleClick', () => {
     event = ev,
     disabled = false,
     isRenaming = false,
+    file = { _id: 'file-id' },
     lastClickTime = new Date('2025-01-01T12:00:00.000Z').getTime() // date of the first click
   }) => {
     return {
@@ -86,10 +87,12 @@ describe('handleClick', () => {
         event,
         disabled,
         isRenaming,
+        file,
         openLink: mockOpenLink,
         toggle: mockToggle,
         lastClickTime,
         setLastClickTime: jest.fn(),
+        setSelectedItems: jest.fn(),
         onInteractWithFile: jest.fn()
       }
     }

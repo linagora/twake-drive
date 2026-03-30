@@ -1,5 +1,3 @@
-import flag from 'cozy-flags'
-
 const DOUBLECLICKDELAY = 400
 
 export const handleClick = ({
@@ -8,8 +6,6 @@ export const handleClick = ({
   disabled,
   isRenaming,
   openLink,
-  toggle,
-  selectionModeActive,
   lastClickTime,
   setLastClickTime,
   setSelectedItems,
@@ -22,21 +18,6 @@ export const handleClick = ({
   if (disabled || isRenaming) return
 
   clearHighlightedItems?.()
-
-  // simply remove this "if" the flag is not necessary anymore
-  if (!flag('drive.doubleclick.enabled')) {
-    if (selectionModeActive) {
-      if (flag('drive.dynamic-selection.enabled') && !event.shiftKey) {
-        event.stopPropagation()
-        setSelectedItems({ [file._id]: file })
-        onInteractWithFile?.(file._id, event)
-        return
-      }
-      return toggle(event)
-    } else {
-      return openLink(event)
-    }
-  }
 
   const currentTime = Date.now()
   const isDoubleClick = currentTime - lastClickTime < DOUBLECLICKDELAY
