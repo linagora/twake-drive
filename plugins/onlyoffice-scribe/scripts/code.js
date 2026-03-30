@@ -708,76 +708,6 @@
       // Splice a paragraph's content: keep keepStartChars from the beginning,
       // keep keepEndChars from the end, replace the middle with new block content.
       // Used for partially-selected paragraphs in mixed Replace mode.
-      function spliceParaContent(para, keepStartChars, keepEndChars, block, fontFamily, fontSize) {
-        // Save original elements with their text and formatting
-        var origElems = [];
-        var origCount = para.GetElementsCount ? para.GetElementsCount() : 0;
-        for (var oe = 0; oe < origCount; oe++) {
-          var el = para.GetElement(oe);
-          var elText = el.GetText ? el.GetText() : "";
-          origElems.push({ element: el, text: elText, len: elText.length });
-        }
-        // Clear the paragraph
-        if (para.RemoveAllElements) para.RemoveAllElements();
-        // Re-add prefix elements (first keepStartChars characters)
-        var charsAdded = 0;
-        for (var pe = 0; pe < origElems.length && charsAdded < keepStartChars; pe++) {
-          var oel = origElems[pe];
-          var needed = keepStartChars - charsAdded;
-          if (oel.len <= needed) {
-            para.AddElement(oel.element);
-            charsAdded += oel.len;
-          } else {
-            // Split run: keep only first 'needed' chars with original formatting
-            var prefixRun = Api.CreateRun();
-            prefixRun.AddText(oel.text.substring(0, needed));
-            var oTp = oel.element.GetTextPr ? oel.element.GetTextPr() : null;
-            if (oTp) {
-              if (oTp.GetBold()) prefixRun.SetBold(true);
-              if (oTp.GetItalic()) prefixRun.SetItalic(true);
-              if (oTp.GetStrikeout()) prefixRun.SetStrikeout(true);
-              if (oTp.GetUnderline()) prefixRun.SetUnderline(true);
-              var oFF = oTp.GetFontFamily(); if (oFF) prefixRun.SetFontFamily(oFF);
-              var oFS = oTp.GetFontSize(); if (oFS) prefixRun.SetFontSize(oFS);
-            }
-            para.AddElement(prefixRun);
-            charsAdded += needed;
-          }
-        }
-        // Add new (LLM) content in the middle
-        addBlockToParagraph(para, block, fontFamily, fontSize);
-        // Re-add suffix elements (last keepEndChars characters)
-        if (keepEndChars > 0) {
-          var totalOrigLen = 0;
-          for (var tl = 0; tl < origElems.length; tl++) totalOrigLen += origElems[tl].len;
-          var suffixStart = totalOrigLen - keepEndChars;
-          var charsSeen = 0;
-          for (var se = 0; se < origElems.length; se++) {
-            var sel = origElems[se];
-            var selEnd = charsSeen + sel.len;
-            if (selEnd <= suffixStart) { charsSeen = selEnd; continue; }
-            if (charsSeen >= suffixStart) {
-              para.AddElement(sel.element);
-            } else {
-              // Split run: keep only the tail portion with original formatting
-              var skipChars = suffixStart - charsSeen;
-              var suffixRun = Api.CreateRun();
-              suffixRun.AddText(sel.text.substring(skipChars));
-              var sTp = sel.element.GetTextPr ? sel.element.GetTextPr() : null;
-              if (sTp) {
-                if (sTp.GetBold()) suffixRun.SetBold(true);
-                if (sTp.GetItalic()) suffixRun.SetItalic(true);
-                if (sTp.GetStrikeout()) suffixRun.SetStrikeout(true);
-                if (sTp.GetUnderline()) suffixRun.SetUnderline(true);
-                var sFF = sTp.GetFontFamily(); if (sFF) suffixRun.SetFontFamily(sFF);
-                var sFS = sTp.GetFontSize(); if (sFS) suffixRun.SetFontSize(sFS);
-              }
-              para.AddElement(suffixRun);
-            }
-            charsSeen = selEnd;
-          }
-        }
-      }
 
       function replaceCellContent(cellContent, parsedCell, fontFamily, fontSize) {
         var cellBlocks = parsedCell.blocks || [{ runs: parsedCell.runs || [] }];
@@ -1046,9 +976,10 @@
               if (!mpInTable) nonTableParas.push(mixParas[mpi]);
             }
             if (nonTableParas.length > 0) {
+              // Match non-table paragraphs to non-table-placeholder blocks (forward)
+              var paraBlockPairs = [];
               var mixBlockIdx = 0;
               for (var ntpi = 0; ntpi < nonTableParas.length; ntpi++) {
-                // Skip SCRIBE-TABLE placeholder blocks
                 while (mixBlockIdx < blocks.length) {
                   var mbRuns = blocks[mixBlockIdx].runs || [];
                   var mbText = "";
@@ -1057,61 +988,35 @@
                   mixBlockIdx++;
                 }
                 if (mixBlockIdx >= blocks.length) break;
-                var ntPara = nonTableParas[ntpi];
-                var ntParaText = (ntPara.GetText ? ntPara.GetText() : "").replace(/\r?\n$/, "");
-                var isFirstNT = (ntpi === 0);
-                var isLastNT = (ntpi === nonTableParas.length - 1);
-
-                // Detect partial selection using text matching (same as extraction clipping).
-                // For single non-table paragraph, detect if it's before or after the table
-                // (mixRangeText includes table cell text, so indexOf won't work directly).
-                var keepStart = 0;
-                var keepEnd = 0;
-                if (ntParaText.length > 0) {
-                  // Determine if this paragraph is before or after the table
-                  var ntParaPos = ntPara.GetRange ? ntPara.GetRange().GetStartPos() : 0;
-                  var isBeforeTable = false;
-                  var isAfterTable = false;
-                  for (var tpci = 0; tpci < allTables.length; tpci++) {
-                    var tpcRange = allTables[tpci].GetRange();
-                    if (tpcRange) {
-                      if (ntParaPos < tpcRange.GetStartPos()) isBeforeTable = true;
-                      if (ntParaPos > tpcRange.GetEndPos()) isAfterTable = true;
-                    }
-                  }
-
-                  if (isFirstNT && (isBeforeTable || nonTableParas.length > 1)) {
-                    // First paragraph (before table): selected part is a suffix of paraText
-                    // mixRangeText starts with this suffix
-                    for (var sfx = ntParaText.length; sfx > 0; sfx--) {
-                      if (mixRangeText.substring(0, sfx) === ntParaText.substring(ntParaText.length - sfx)) {
-                        keepStart = ntParaText.length - sfx;
-                        break;
-                      }
-                    }
-                  }
-                  if (isLastNT && (isAfterTable || nonTableParas.length > 1)) {
-                    // Last paragraph (after table): selected part is a prefix of paraText
-                    // mixRangeText ends with this prefix
-                    for (var pfx = ntParaText.length; pfx > 0; pfx--) {
-                      if (mixRangeText.substring(mixRangeText.length - pfx) === ntParaText.substring(0, pfx)) {
-                        keepEnd = ntParaText.length - pfx;
-                        break;
-                      }
-                    }
-                  }
-                }
-
-                if (keepStart > 0 || keepEnd > 0) {
-                  // Partially selected: splice — keep prefix/suffix, replace middle
-                  spliceParaContent(ntPara, keepStart, keepEnd, blocks[mixBlockIdx], srcFontFamily, srcFontSize);
-                } else {
-                  // Fully selected: clear and rebuild entirely
-                  if (ntPara.RemoveAllElements) { ntPara.RemoveAllElements(); }
-                  addBlockToParagraph(ntPara, blocks[mixBlockIdx], srcFontFamily, srcFontSize);
-                }
-                mixedModifiedParas.push(ntPara);
+                paraBlockPairs.push({ para: nonTableParas[ntpi], block: blocks[mixBlockIdx] });
                 mixBlockIdx++;
+              }
+
+              // Process in REVERSE order to avoid position shifts
+              var origStart = mixSelRange.GetStartPos();
+              var origEnd = mixSelRange.GetEndPos();
+              for (var pbpi = paraBlockPairs.length - 1; pbpi >= 0; pbpi--) {
+                var pbPara = paraBlockPairs[pbpi].para;
+                var pbBlock = paraBlockPairs[pbpi].block;
+                var pbRange = pbPara.GetRange ? pbPara.GetRange() : null;
+                if (!pbRange) continue;
+                var pbStart = pbRange.GetStartPos();
+                var pbEnd = pbRange.GetEndPos();
+
+                // Clip selection to this paragraph's range
+                var selPStart = (origStart > pbStart) ? origStart : pbStart;
+                var selPEnd = (origEnd < pbEnd) ? origEnd : pbEnd;
+
+                // Select the paragraph's selected portion
+                var selPRange = doc.GetRange(selPStart, selPEnd);
+                if (selPRange) selPRange.Select();
+
+                // Build content and InsertContent (same mechanism as non-table case)
+                var pbParagraph = Api.CreateParagraph();
+                addBlockToParagraph(pbParagraph, pbBlock, srcFontFamily, srcFontSize);
+                doc.InsertContent([pbParagraph], true); // inline mode: preserves suffix
+
+                mixedModifiedParas.push(pbPara);
               }
               skipContentAndInsert = true;
             }
