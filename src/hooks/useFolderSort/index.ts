@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 
 import { useClient, Q } from 'cozy-client'
-import flag from 'cozy-flags'
 
 import { DEFAULT_SORT, SORT_BY_UPDATE_DATE } from '@/config/sort'
 import { RECENT_FOLDER_ID, TRASH_DIR_ID } from '@/constants/config'
@@ -40,7 +39,7 @@ const useFolderSort = (
 
   useEffect(() => {
     const load = async (): Promise<void> => {
-      if (!client || !flag('drive.save-sort-choice.enabled') || isPublic) {
+      if (!client || isPublic) {
         setIsSettingsLoaded(true)
         return
       }
@@ -66,13 +65,6 @@ const useFolderSort = (
   const setSortOrder = useCallback(
     async ({ attribute, order }: Sort) => {
       setCurrentSort({ attribute, order })
-
-      if (!flag('drive.save-sort-choice.enabled')) {
-        logger.warn(
-          'Cannot persist sort: flag drive.save-sort-choice.enabled is not enabled'
-        )
-        return
-      }
 
       if (!client) {
         logger.warn('Cannot persist sort: client unavailable')

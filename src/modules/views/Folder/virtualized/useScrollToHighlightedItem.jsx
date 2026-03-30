@@ -1,6 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
-
-import flag from 'cozy-flags'
+import { useEffect, useRef } from 'react'
 
 import { useNewItemHighlightContext } from '@/modules/upload/NewItemHighlightProvider'
 
@@ -15,17 +13,8 @@ import { useNewItemHighlightContext } from '@/modules/upload/NewItemHighlightPro
 const useScrollToHighlightedItem = (virtuosoRef, items) => {
   const { highlightedItems } = useNewItemHighlightContext()
   const lastScrolledIdRef = useRef(null)
-  const isHighlightEnabled = useMemo(
-    () => flag('drive.highlight-new-items.enabled'),
-    []
-  )
 
   useEffect(() => {
-    if (!isHighlightEnabled) {
-      lastScrolledIdRef.current = null
-      return
-    }
-
     if (!highlightedItems?.length) {
       lastScrolledIdRef.current = null
       return
@@ -65,7 +54,7 @@ const useScrollToHighlightedItem = (virtuosoRef, items) => {
     })
 
     lastScrolledIdRef.current = targetItem._id
-  }, [highlightedItems, items, virtuosoRef, isHighlightEnabled])
+  }, [highlightedItems, items, virtuosoRef])
 }
 
 export default useScrollToHighlightedItem

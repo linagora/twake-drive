@@ -4,7 +4,6 @@ import { useDispatch } from 'react-redux'
 import { isFile } from 'cozy-client/dist/models/file'
 import CozyClient from 'cozy-client/types/CozyClient'
 import { IOCozyFile } from 'cozy-client/types/types'
-import flag from 'cozy-flags'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import { useI18n } from 'twake-i18n'
 
@@ -324,10 +323,6 @@ export const useKeyboardShortcuts = ({
   }, [selectedItems, pushModal, popModal, refresh, allowDelete, showAlert, t])
 
   useEffect(() => {
-    if (!flag('drive.keyboard-shortcuts.enabled')) {
-      return
-    }
-
     const shortcuts: Record<string, (() => void | Promise<void>) | undefined> =
       {
         'Ctrl+c': handleCopy,
