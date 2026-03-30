@@ -667,6 +667,7 @@
       var parsedTables = parsedTablesJson ? JSON.parse(parsedTablesJson) : [];
       var tableClones = {};  // index -> ApiTable (cloned + modified), null = in-place
       var tablesModifiedInPlace = false;
+      var pendingTableReductions = []; // [{selectedCellCoords}] for post-InsertContent row/col removal
 
       // Read partialTableInfo for partial table routing
       var partialTableInfoJson = Asc.scope.partialTableInfo;
@@ -842,33 +843,9 @@
           replaceCellContent(cloneCc, pc, cf.family, cf.size);
         }
 
-        // Determine which rows and columns are selected
-        var selectedRows = {};
-        var selectedCols = {};
-        for (var s = 0; s < selectedCellCoords.length; s++) {
-          selectedRows[selectedCellCoords[s].r] = true;
-          selectedCols[selectedCellCoords[s].c] = true;
-        }
-
-        // Remove unselected rows (iterate in reverse to preserve indices)
-        var totalRows = clone.GetRowsCount();
-        for (var rr = totalRows - 1; rr >= 0; rr--) {
-          if (!selectedRows[rr]) {
-            clone.RemoveRow(rr);
-          }
-        }
-
-        // Remove unselected columns (iterate in reverse to preserve indices)
-        var firstRow = clone.GetRow(0);
-        if (firstRow) {
-          var totalCols = firstRow.GetCellsCount();
-          for (var rcc = totalCols - 1; rcc >= 0; rcc--) {
-            if (!selectedCols[rcc]) {
-              clone.RemoveColumn(rcc);
-            }
-          }
-        }
-
+        // Note: row/column removal is deferred to post-InsertContent
+        // because RemoveRow/RemoveColumn may not work on clones not yet in the document.
+        // The reduction info is stored in pendingTableReductions.
         return clone;
       }
 
@@ -963,6 +940,7 @@
             // Partial Insert — build a reduced clone with only selected rows/columns
             var reducedClone = buildReducedTableClone(origTable, ptCells, selectedCellCoords, cFonts);
             tableClones[ptIndex] = reducedClone;
+            pendingTableReductions.push({ clone: reducedClone, selectedCellCoords: selectedCellCoords });
           } else {
             // Full Insert — clone + modify all cells
             var clone = origTable.Copy();
@@ -1338,10 +1316,68 @@
         var useRefSelection = false; // true = use paragraph refs, false = use position-based
 
         if (mode === "insert") {
+          // For table selections: move cursor after the table so InsertContent
+          // places content after the table, not inside the last cell.
+          if (parsedTables.length > 0) {
+            try {
+              for (var itp = parsedTables.length - 1; itp >= 0; itp--) {
+                var itpDocIdx = tableDocIndices[parsedTables[itp].index];
+                var itpTable = (itpDocIdx !== undefined && itpDocIdx < allTables.length) ? allTables[itpDocIdx] : null;
+                if (itpTable) {
+                  var itpRange = itpTable.GetRange();
+                  if (itpRange) {
+                    var afterPos = itpRange.GetEndPos() + 1;
+                    var afterRange = doc.GetRange(afterPos, afterPos);
+                    if (afterRange) afterRange.Select();
+                    break;
+                  }
+                }
+              }
+            } catch (e) {
+              // Cursor repositioning failed — InsertContent will use current position
+            }
+          }
           // Insert mode: leading empty paragraph creates a line break before content.
           content.unshift(Api.CreateParagraph());
           doc.InsertContent(content);
           useRefSelection = true;
+
+          // Post-InsertContent: remove unselected rows/columns from inserted tables.
+          // Uses the clone reference directly (now in the document after InsertContent).
+          for (var ptr = 0; ptr < pendingTableReductions.length; ptr++) {
+            try {
+              var reduction = pendingTableReductions[ptr];
+              var redTable = reduction.clone;
+              var redSelRows = {};
+              var redSelCols = {};
+              for (var rsc = 0; rsc < reduction.selectedCellCoords.length; rsc++) {
+                redSelRows[reduction.selectedCellCoords[rsc].r] = true;
+                redSelCols[reduction.selectedCellCoords[rsc].c] = true;
+              }
+              // Remove unselected rows (reverse order to preserve indices)
+              // OO API: RemoveRow(oCell) takes a cell reference, not an index
+              var redRowCount = redTable.GetRowsCount();
+              for (var rrr = redRowCount - 1; rrr >= 0; rrr--) {
+                if (!redSelRows[rrr]) {
+                  var rrCell = redTable.GetCell(rrr, 0);
+                  if (rrCell) redTable.RemoveRow(rrCell);
+                }
+              }
+              // Remove unselected columns (reverse order)
+              var redFirstRow = redTable.GetRow(0);
+              if (redFirstRow) {
+                var redColCount = redFirstRow.GetCellsCount();
+                for (var rccc = redColCount - 1; rccc >= 0; rccc--) {
+                  if (!redSelCols[rccc]) {
+                    var rcCell = redTable.GetCell(0, rccc);
+                    if (rcCell) redTable.RemoveColumn(rcCell);
+                  }
+                }
+              }
+            } catch (e) {
+              // Table reduction failed — table keeps all rows/columns
+            }
+          }
         } else {
           // Replace mode
           var isSimpleInline = (content.length === 1 && blocks.length === 1 && blocks[0].type === "paragraph");

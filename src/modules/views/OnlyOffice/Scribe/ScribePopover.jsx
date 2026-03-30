@@ -50,13 +50,9 @@ const ScribePopover = ({ open, selectedText, selectedHtml, enrichedMd, tableAmbi
   // Panel size for result panel resizing (null = use default CSS sizing)
   const [panelSize, setPanelSize] = useState(null)
 
-  // Disable Insert when selection is purely a partial table (no surrounding text)
-  const insertDisabled = useMemo(() => {
-    if (!partialTableInfo || !enrichedMd) return false
-    // Check if enrichedMd is ONLY table blocks (no text outside)
-    const stripped = enrichedMd.replace(/\[TABLE:\d+\][\s\S]*?\[\/TABLE\]/g, '').trim()
-    return stripped.length === 0
-  }, [partialTableInfo, enrichedMd])
+  // Insert is always available — for partial table selections, a reduced clone
+  // (only selected rows/columns) is inserted after the table
+  var insertDisabled = false
 
   // Reset to menu state when popover opens with new intent
   useEffect(() => {
