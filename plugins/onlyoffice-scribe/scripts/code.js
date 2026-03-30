@@ -593,6 +593,7 @@
       // Build a name->drawing index by scanning all paragraphs in the document,
       // since ApiDocument has no GetDrawingsByName method.
       var drawingIndex = {};  // name -> ApiDrawing
+      // Scan document-level paragraphs
       var allParas = doc.GetAllParagraphs();
       for (var dp = 0; dp < allParas.length; dp++) {
         var dpDrawings = allParas[dp].GetAllDrawingObjects();
@@ -601,6 +602,31 @@
           var dpName = dpDrawings[dd].GetName();
           if (dpName && dpName.indexOf("scribe-img-") === 0) {
             drawingIndex[dpName] = dpDrawings[dd];
+          }
+        }
+      }
+      // Also scan paragraphs inside table cells (GetAllParagraphs doesn't include them)
+      var allDocTables = doc.GetAllTables();
+      for (var dit = 0; dit < allDocTables.length; dit++) {
+        var ditRows = allDocTables[dit].GetRowsCount();
+        for (var ditr = 0; ditr < ditRows; ditr++) {
+          var ditRow = allDocTables[dit].GetRow(ditr);
+          for (var ditc = 0; ditc < ditRow.GetCellsCount(); ditc++) {
+            var ditCell = allDocTables[dit].GetCell(ditr, ditc);
+            if (!ditCell) continue;
+            var ditContent = ditCell.GetContent();
+            if (!ditContent) continue;
+            for (var dite = 0; dite < ditContent.GetElementsCount(); dite++) {
+              var ditElem = ditContent.GetElement(dite);
+              var ditDrawings = ditElem.GetAllDrawingObjects ? ditElem.GetAllDrawingObjects() : null;
+              if (!ditDrawings) continue;
+              for (var ditd = 0; ditd < ditDrawings.length; ditd++) {
+                var ditName = ditDrawings[ditd].GetName();
+                if (ditName && ditName.indexOf("scribe-img-") === 0) {
+                  drawingIndex[ditName] = ditDrawings[ditd];
+                }
+              }
+            }
           }
         }
       }
@@ -626,7 +652,6 @@
           }
         }
       }
-
       function restoreImage(name) {
         var cached = imageCache[name];
         if (!cached) return null;
@@ -640,15 +665,53 @@
       // Same pattern as image pre-cache: collect originals first, then Copy().
       var parsedTablesJson = Asc.scope.parsedTables;
       var parsedTables = parsedTablesJson ? JSON.parse(parsedTablesJson) : [];
-      var tableClones = {};  // index -> ApiTable (cloned + modified), null = in-place partial
+      var tableClones = {};  // index -> ApiTable (cloned + modified), null = in-place
+      var tablesModifiedInPlace = false;
 
       // Read partialTableInfo for partial table routing
       var partialTableInfoJson = Asc.scope.partialTableInfo;
       var partialTableInfo = partialTableInfoJson ? JSON.parse(partialTableInfoJson) : null;
       var hasMixedContent = Asc.scope.hasMixedContent;
 
+      // Pre-cache images from table cell blocks/runs (in addition to the block scan above)
+      for (var itc = 0; itc < parsedTables.length; itc++) {
+        var itCells = parsedTables[itc].cells || [];
+        for (var itci = 0; itci < itCells.length; itci++) {
+          var itBlocks = itCells[itci].blocks || [{ runs: itCells[itci].runs || [] }];
+          for (var itbi = 0; itbi < itBlocks.length; itbi++) {
+            var itBlock = itBlocks[itbi];
+            // Block-level image (image_placeholder)
+            if (itBlock.type === "image_placeholder" && itBlock.name) {
+              if (!imageCache[itBlock.name] && drawingIndex[itBlock.name]) {
+                try { imageCache[itBlock.name] = drawingIndex[itBlock.name].Copy(); } catch (e) {}
+              }
+            }
+            // Inline images in runs
+            var itRuns = itBlock.runs || [];
+            for (var itri = 0; itri < itRuns.length; itri++) {
+              var itMarker = itRuns[itri].imageMarker;
+              if (itMarker && !imageCache[itMarker] && drawingIndex[itMarker]) {
+                try { imageCache[itMarker] = drawingIndex[itMarker].Copy(); } catch (e) {}
+              }
+            }
+          }
+        }
+      }
+
       // Replace the content of a single cell: clear all paragraphs, rebuild from blocks.
       // Used by all injection paths (in-place, reduced clone, full clone).
+      // Add block content to a paragraph: handles runs and image_placeholder blocks.
+      function addBlockToParagraph(para, block, fontFamily, fontSize) {
+        if (block.type === "image_placeholder" && block.name) {
+          var imgDrawing = restoreImage(block.name);
+          if (imgDrawing) {
+            para.AddDrawing(imgDrawing);
+          }
+        } else {
+          addRunsToParagraph(para, block.runs || [], fontFamily, fontSize);
+        }
+      }
+
       function replaceCellContent(cellContent, parsedCell, fontFamily, fontSize) {
         var cellBlocks = parsedCell.blocks || [{ runs: parsedCell.runs || [] }];
 
@@ -664,13 +727,13 @@
           firstPara.RemoveAllElements();
         }
         if (cellBlocks.length > 0 && firstPara) {
-          addRunsToParagraph(firstPara, cellBlocks[0].runs || [], fontFamily, fontSize);
+          addBlockToParagraph(firstPara, cellBlocks[0], fontFamily, fontSize);
         }
 
         // Additional blocks → new paragraphs added to cell
         for (var bi = 1; bi < cellBlocks.length; bi++) {
           var newPara = Api.CreateParagraph();
-          addRunsToParagraph(newPara, cellBlocks[bi].runs || [], fontFamily, fontSize);
+          addBlockToParagraph(newPara, cellBlocks[bi], fontFamily, fontSize);
           cellContent.AddElement(bi, newPara);
         }
       }
@@ -791,16 +854,43 @@
             }
           }
 
-          if (isPartialTable && mode === "replace") {
-            // Replace with partial table — modify cells in-place
-            modifyOriginalTableCells(origTable, ptCells, cFonts);
-            tableClones[ptIndex] = null; // skip in content[]
-          } else if (isPartialTable && mode === "insert") {
-            // Cases 2b/2c/2d: Insert — build a reduced clone with only selected rows/columns
+          if (mode === "replace") {
+            // Check if selection structurally encompasses the table
+            // (not just content within cells). Clone+InsertContent only works
+            // when the table structure is in the selection.
+            var repTblRange = origTable.GetRange();
+            var repSelRange = doc.GetRangeBySelect();
+            var isStructuralFull = false;
+            if (repTblRange && repSelRange && !isPartialTable) {
+              isStructuralFull = repTblRange.GetStartPos() >= repSelRange.GetStartPos()
+                && repTblRange.GetEndPos() <= repSelRange.GetEndPos();
+            }
+
+            if (isStructuralFull) {
+              // Full table structurally selected — clone + InsertContent (existing flow)
+              var repClone = origTable.Copy();
+              for (var rci = 0; rci < ptCells.length; rci++) {
+                var rc = ptCells[rci];
+                var rcCell = repClone.GetCell(rc.r, rc.c);
+                if (!rcCell) continue;
+                var rcCc = rcCell.GetContent();
+                if (!rcCc || rcCc.GetElementsCount() === 0) continue;
+                var rcf = cFonts[rc.r + "," + rc.c] || {};
+                replaceCellContent(rcCc, rc, rcf.family, rcf.size);
+              }
+              tableClones[ptIndex] = repClone;
+            } else {
+              // In-place modification (partial, content-only full, or mixed)
+              modifyOriginalTableCells(origTable, ptCells, cFonts);
+              tableClones[ptIndex] = null;
+              tablesModifiedInPlace = true;
+            }
+          } else if (isPartialTable) {
+            // Partial Insert — build a reduced clone with only selected rows/columns
             var reducedClone = buildReducedTableClone(origTable, ptCells, selectedCellCoords, cFonts);
             tableClones[ptIndex] = reducedClone;
           } else {
-            // Full table — clone + modify cells
+            // Full Insert — clone + modify all cells
             var clone = origTable.Copy();
             for (var mci = 0; mci < ptCells.length; mci++) {
               var mc = ptCells[mci];
@@ -877,55 +967,9 @@
         }
       }
 
-      // For mixed Replace with partial table: modify non-table paragraphs in-place
-      // BEFORE building content[], to avoid creating Api.CreateParagraph() objects
-      // that OO might roll back (causing cell modifications to be lost).
-      var skipContentAndInsert = false;
-      if (mode === "replace" && hasMixedContent && partialTableInfo) {
-        try {
-          var mixSelRange = doc.GetRangeBySelect();
-          if (mixSelRange) {
-            var mixParas = mixSelRange.GetAllParagraphs();
-            var mixBlockIdx = 0;
-            for (var mpi = 0; mpi < mixParas.length; mpi++) {
-              var mPara = mixParas[mpi];
-              // Skip paragraphs inside table cells (use position-based detection)
-              var mParaRange = mPara.GetRange ? mPara.GetRange() : null;
-              var mParaStart = mParaRange ? mParaRange.GetStartPos() : -1;
-              var mIsInTable = false;
-              for (var mti = 0; mti < allTables.length; mti++) {
-                var mtRange = allTables[mti].GetRange();
-                if (mtRange && mParaStart >= mtRange.GetStartPos() && mParaStart <= mtRange.GetEndPos()) {
-                  mIsInTable = true;
-                  break;
-                }
-              }
-              if (mIsInTable) continue;
-              // Find the next non-table-placeholder block
-              while (mixBlockIdx < blocks.length) {
-                var mbRuns = blocks[mixBlockIdx].runs || [];
-                var mbText = "";
-                for (var mbj = 0; mbj < mbRuns.length; mbj++) { mbText += mbRuns[mbj].text || ""; }
-                if (mbText.indexOf("SCRIBE-TABLE-") === -1) break;
-                mixBlockIdx++;
-              }
-              if (mixBlockIdx >= blocks.length) break;
-              // Clear and rebuild this paragraph in-place
-              if (mPara.RemoveAllElements) {
-                mPara.RemoveAllElements();
-              }
-              addRunsToParagraph(mPara, blocks[mixBlockIdx].runs || [], srcFontFamily, srcFontSize);
-              mixBlockIdx++;
-            }
-          }
-        } catch (e) {
-          // In-place failed — will fall through to normal content building
-        }
-        skipContentAndInsert = true;
-      }
+      var mixedModifiedParas = [];
 
       var content = [];
-      if (!skipContentAndInsert)
       for (var i = 0; i < blocks.length; i++) {
         var block = blocks[i];
         var isFirst = (i === 0);
@@ -1082,9 +1126,6 @@
         // For Replace with mixed content + partial table modified in-place:
         // modify non-table paragraphs in-place too (no InsertContent at all).
         // This avoids InsertContent destroying the table rows.
-        if (skipContentAndInsert) {
-          content = [];
-        }
 
         // Save selection start position before InsertContent (for replace mode selection)
         var preSelStart = 0;
@@ -1113,6 +1154,52 @@
 
         var useRefSelection = false; // true = use paragraph refs, false = use position-based
 
+        // For mixed Replace with partial table: narrow selection to text-only portion.
+        // Table cells were already modified in-place by modifyOriginalTableCells.
+        // InsertContent must only replace the text part, not the table cells.
+        if (mode === "replace" && tablesModifiedInPlace && content.length > 0) {
+          try {
+            var nrSelRange = doc.GetRangeBySelect();
+            if (nrSelRange) {
+              var nrParas = nrSelRange.GetAllParagraphs();
+              var nrFirstText = null;
+              var nrLastText = null;
+              for (var nri = 0; nri < nrParas.length; nri++) {
+                var nrPRange = nrParas[nri].GetRange ? nrParas[nri].GetRange() : null;
+                var nrPStart = nrPRange ? nrPRange.GetStartPos() : -1;
+                var nrInTable = false;
+                for (var nrti = 0; nrti < allTables.length; nrti++) {
+                  var nrtRange = allTables[nrti].GetRange();
+                  if (nrtRange && nrPStart >= nrtRange.GetStartPos() && nrPStart <= nrtRange.GetEndPos()) {
+                    nrInTable = true;
+                    break;
+                  }
+                }
+                if (!nrInTable) {
+                  if (!nrFirstText) nrFirstText = nrParas[nri];
+                  nrLastText = nrParas[nri];
+                  mixedModifiedParas.push(nrParas[nri]);
+                }
+              }
+              if (nrFirstText && nrLastText) {
+                // Use original selection bounds clipped to text paragraph range
+                var origStart = nrSelRange.GetStartPos();
+                var origEnd = nrSelRange.GetEndPos();
+                var ftRange = nrFirstText.GetRange();
+                var ltRange = nrLastText.GetRange();
+                // Start: preserve partial paragraph (use original selection start if within first text para)
+                var narrowStart = (origStart > ftRange.GetStartPos()) ? origStart : ftRange.GetStartPos();
+                // End: preserve partial paragraph (use original selection end if within last text para)
+                var narrowEnd = (origEnd < ltRange.GetEndPos()) ? origEnd : ltRange.GetEndPos();
+                var narrowRange = doc.GetRange(narrowStart, narrowEnd);
+                if (narrowRange) narrowRange.Select();
+              }
+            }
+          } catch (e) {
+            // Narrowing failed — InsertContent will use full selection
+          }
+        }
+
         if (mode === "insert") {
           // Insert mode: leading empty paragraph creates a line break before content.
           content.unshift(Api.CreateParagraph());
@@ -1120,7 +1207,30 @@
           useRefSelection = true;
         } else {
           // Replace mode
-          var isSimpleInline = (content.length === 1 && blocks.length === 1 && blocks[0].type === "paragraph");
+          // When tables were modified in-place, only count non-table blocks
+          // so that a single text paragraph uses inline mode (preserves suffix styles)
+          var effectiveBlockCount = blocks.length;
+          if (tablesModifiedInPlace) {
+            effectiveBlockCount = 0;
+            for (var ebi = 0; ebi < blocks.length; ebi++) {
+              var ebRuns = blocks[ebi].runs || [];
+              var ebText = "";
+              for (var ebj = 0; ebj < ebRuns.length; ebj++) { ebText += ebRuns[ebj].text || ""; }
+              if (ebText.indexOf("SCRIBE-TABLE-") === -1) effectiveBlockCount++;
+            }
+          }
+          var firstContentType = "paragraph";
+          if (tablesModifiedInPlace) {
+            for (var fci = 0; fci < blocks.length; fci++) {
+              var fcRuns = blocks[fci].runs || [];
+              var fcText = "";
+              for (var fcj = 0; fcj < fcRuns.length; fcj++) { fcText += fcRuns[fcj].text || ""; }
+              if (fcText.indexOf("SCRIBE-TABLE-") === -1) { firstContentType = blocks[fci].type; break; }
+            }
+          } else {
+            firstContentType = blocks.length > 0 ? blocks[0].type : "paragraph";
+          }
+          var isSimpleInline = (content.length === 1 && effectiveBlockCount === 1 && firstContentType === "paragraph");
           if (isSimpleInline) {
             // Single paragraph: inline mode merges into existing paragraph
             doc.InsertContent(content, true);
@@ -1244,12 +1354,14 @@
         }
       }
 
-      // Post-operation: select modified cells for partial table Replace
-      // When partial tables were modified in-place (tableClones[idx] === null),
-      // content may be empty (pure partial table) or non-empty (mixed content).
-      // In either case, highlight the modified cell range.
+      // Post-operation: select all modified content for partial table Replace.
+      // Covers both table cells (modified in-place) and text paragraphs (mixed content).
       if (mode === "replace" && partialTableInfo && allTables) {
         try {
+          var postSelStart = -1;
+          var postSelEnd = -1;
+
+          // Get cell range bounds
           for (var ptSelIdx in partialTableInfo) {
             if (!partialTableInfo.hasOwnProperty(ptSelIdx)) continue;
             var ptSelCells = partialTableInfo[ptSelIdx];
@@ -1257,7 +1369,6 @@
             var ptSelDocIdx = tableDocIndices[parseInt(ptSelIdx)];
             var ptSelTable = (ptSelDocIdx !== undefined && ptSelDocIdx < allTables.length) ? allTables[ptSelDocIdx] : null;
             if (!ptSelTable) continue;
-            // Find min/max row and column
             var minR = ptSelCells[0].r, maxR = ptSelCells[0].r;
             var minC = ptSelCells[0].c, maxC = ptSelCells[0].c;
             for (var psi = 1; psi < ptSelCells.length; psi++) {
@@ -1266,7 +1377,6 @@
               if (ptSelCells[psi].c < minC) minC = ptSelCells[psi].c;
               if (ptSelCells[psi].c > maxC) maxC = ptSelCells[psi].c;
             }
-            // Select the cell range: from top-left to bottom-right
             var topLeftCell = ptSelTable.GetCell(minR, minC);
             var botRightCell = ptSelTable.GetCell(maxR, maxC);
             if (topLeftCell && botRightCell) {
@@ -1277,13 +1387,34 @@
                 var brPara = brContent.GetElement(brContent.GetElementsCount() - 1);
                 var tlRange = tlPara ? tlPara.GetRange() : null;
                 var brRange = brPara ? brPara.GetRange() : null;
-                if (tlRange && brRange) {
-                  var selectRange = doc.GetRange(tlRange.GetStartPos(), brRange.GetEndPos());
-                  if (selectRange) selectRange.Select();
+                if (tlRange) {
+                  var tlPos = tlRange.GetStartPos();
+                  if (postSelStart === -1 || tlPos < postSelStart) postSelStart = tlPos;
+                }
+                if (brRange) {
+                  var brPos = brRange.GetEndPos();
+                  if (brPos > postSelEnd) postSelEnd = brPos;
                 }
               }
             }
-            break; // Only select the first partial table (most common case)
+            break;
+          }
+
+          // Extend bounds with modified paragraphs (mixed content)
+          for (var mpsi = 0; mpsi < mixedModifiedParas.length; mpsi++) {
+            var mpRange = mixedModifiedParas[mpsi].GetRange ? mixedModifiedParas[mpsi].GetRange() : null;
+            if (mpRange) {
+              var mpStart = mpRange.GetStartPos();
+              var mpEnd = mpRange.GetEndPos();
+              if (postSelStart === -1 || mpStart < postSelStart) postSelStart = mpStart;
+              if (mpEnd > postSelEnd) postSelEnd = mpEnd;
+            }
+          }
+
+          // Select the combined range
+          if (postSelStart >= 0 && postSelEnd > postSelStart) {
+            var postRange = doc.GetRange(postSelStart, postSelEnd);
+            if (postRange) postRange.Select();
           }
         } catch (e) {
           // Selection failed — not critical, document content is correct
@@ -1960,7 +2091,10 @@
           return { full: false, selectedCells: [], ambiguous: false, reason: "intra_cell", intraCell: true };
         }
 
-        // Full table: all non-empty cells have paragraphs in the selection
+        // Full table: all non-empty cells have paragraphs in the selection.
+        // For Replace: in-place modification works regardless (full or partial).
+        // For Insert: clone+InsertContent needs the table structure in the selection,
+        // but we return full:true here and let the Insert path handle it.
         if (hitCount >= totalNonEmptyCells) {
           return { full: true, selectedCells: [], ambiguous: false, reason: null };
         }
@@ -2009,8 +2143,17 @@
         for (var e = 0; e < elemCount; e++) {
           var elem = content.GetElement(e);
           if (elem.GetClassType && elem.GetClassType() === "paragraph") {
+            // Use getDrawingMarker to assign scribe-img-* names to unnamed drawings
+            // and detect block images (paragraph with only drawings, no text)
+            var imgMarker = getDrawingMarker(elem);
+            var paraMd;
+            if (imgMarker && imgMarker.isBlock) {
+              paraMd = imgMarker.md;
+            } else {
+              paraMd = paragraphToMarkdown(elem);
+            }
             if (cellText.length > 0) cellText = cellText + "\n\n";
-            cellText = cellText + paragraphToMarkdown(elem);
+            cellText = cellText + paraMd;
           }
         }
         return cellText;
