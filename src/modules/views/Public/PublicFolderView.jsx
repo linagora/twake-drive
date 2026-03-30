@@ -137,17 +137,13 @@ const PublicFolderView = ({ sharedDocumentId }) => {
 
   useKeyboardShortcuts({
     onPaste: refreshAfterChange,
-    canPaste:
-      hasWritePermissions &&
-      hasClipboardData &&
-      flag('drive.keyboard-shortcuts.enabled'),
+    canPaste: hasWritePermissions && hasClipboardData,
     client,
     items: filesResult.data,
     sharingContext: null,
-    allowCopy: hasWritePermissions && flag('drive.keyboard-shortcuts.enabled'),
-    allowCut: hasWritePermissions && flag('drive.keyboard-shortcuts.enabled'),
-    allowDelete:
-      hasWritePermissions && flag('drive.keyboard-shortcuts.enabled'),
+    allowCopy: hasWritePermissions,
+    allowCut: hasWritePermissions,
+    allowDelete: hasWritePermissions,
     isPublic: true,
     pushModal,
     popModal,
@@ -174,9 +170,8 @@ const PublicFolderView = ({ sharedDocumentId }) => {
     showAlert,
     pathname,
     hasWriteAccess: hasWritePermissions,
-    canMove: hasWritePermissions && flag('drive.keyboard-shortcuts.enabled'),
-    canDuplicate:
-      hasWritePermissions && flag('drive.keyboard-shortcuts.enabled'),
+    canMove: hasWritePermissions,
+    canDuplicate: hasWritePermissions,
     isPublic: true,
     isOwner,
     byDocId,

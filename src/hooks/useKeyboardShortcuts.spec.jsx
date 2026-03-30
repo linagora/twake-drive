@@ -65,8 +65,11 @@ jest.mock('cozy-sharing', () => ({
   withLocales: component => component
 }))
 
+jest.mock('@/modules/upload/NewItemHighlightProvider', () => ({
+  useNewItemHighlightContext: jest.fn(() => ({ addItems: jest.fn() }))
+}))
+
 import { isFile } from 'cozy-client/dist/models/file'
-import flag from 'cozy-flags'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import { useI18n } from 'twake-i18n'
 
@@ -206,11 +209,6 @@ describe('useKeyboardShortcuts', () => {
     handlePasteOperation.mockResolvedValue([
       { success: true, file: { _id: 'pasted-file' }, operation: OPERATION_COPY }
     ])
-
-    flag.mockImplementation(flagName => {
-      if (flagName === 'drive.keyboard-shortcuts.enabled') return true
-      return false
-    })
 
     mockCopyFiles.mockClear()
     mockCutFiles.mockClear()
