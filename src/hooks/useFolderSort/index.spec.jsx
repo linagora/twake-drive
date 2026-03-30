@@ -1,7 +1,6 @@
 import { renderHook, act, waitFor } from '@testing-library/react'
 
 import { useClient } from 'cozy-client'
-import flag from 'cozy-flags'
 
 import { useFolderSort } from './index'
 
@@ -30,7 +29,6 @@ jest.mock('@/modules/public/PublicProvider', () => ({
 }))
 
 const mockUseClient = useClient
-const mockFlag = flag
 const mockUsePublicContext = usePublicContext
 
 describe('useFolderSort', () => {
@@ -47,13 +45,6 @@ describe('useFolderSort', () => {
       query: jest.fn().mockResolvedValue({ data: [] })
     }
     mockUseClient.mockReturnValue(mockClient)
-
-    mockFlag.mockImplementation(flagName => {
-      if (flagName === 'drive.save-sort-choice.enabled') {
-        return true
-      }
-      return false
-    })
 
     mockUsePublicContext.mockReturnValue({
       isPublic: false
