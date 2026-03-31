@@ -323,6 +323,21 @@ const getFileFromEntry = entry =>
 const readNextBatch = dirReader =>
   new Promise((resolve, reject) => dirReader.readEntries(resolve, reject))
 
+/**
+ * Read all entries from a directory upfront so file entries can be
+ * converted to File objects before uploads start. This prevents
+ * NotFoundError when the browser discards stale FileSystemEntry
+ * references during long sequential uploads of large directories.
+ */
+const readAllEntries = async dirReader => {
+  const entries = []
+  let batch
+  while ((batch = await readNextBatch(dirReader)).length > 0) {
+    entries.push(...batch)
+  }
+  return entries
+}
+
 const uploadDirectory = async (
   client,
   directory,
@@ -334,16 +349,18 @@ const uploadDirectory = async (
   const dirReader = directory.createReader()
   const options = { vaultClient, encryptionKey }
 
-  // readEntries returns batches (typically ≤100 entries); loop until empty
-  let batch
-  while ((batch = await readNextBatch(dirReader)).length > 0) {
-    for (const entry of batch) {
-      if (entry.isFile) {
-        const file = await getFileFromEntry(entry)
-        await uploadFile(client, file, newDir.id, options, driveId)
-      } else if (entry.isDirectory) {
-        await uploadDirectory(client, entry, newDir.id, options, driveId)
-      }
+  const entries = await readAllEntries(dirReader)
+
+  const files = await Promise.all(
+    entries.filter(e => e.isFile).map(e => getFileFromEntry(e))
+  )
+
+  let fileIndex = 0
+  for (const entry of entries) {
+    if (entry.isFile) {
+      await uploadFile(client, files[fileIndex++], newDir.id, options, driveId)
+    } else if (entry.isDirectory) {
+      await uploadDirectory(client, entry, newDir.id, options, driveId)
     }
   }
 
