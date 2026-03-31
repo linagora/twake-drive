@@ -1,0 +1,30 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-03-31T16:49:50.960Z",
+  "phase": "v3.0-04",
+  "phase_name": "Panel Resize",
+  "phase_dir": "v3.0-04-panel-resize",
+  "plan": 1,
+  "task": 2,
+  "total_tasks": 2,
+  "status": "paused",
+  "completed_tasks": [
+    {"id": 1, "name": "v3.0-04-01 Panel Resize", "status": "done", "commit": "9922f4b30"}
+  ],
+  "remaining_tasks": [],
+  "blockers": [],
+  "human_actions_pending": [],
+  "decisions": [
+    {"decision": "v3.0 milestone all 4 phases complete", "rationale": "All plans executed and verified", "phase": "v3.0-04"}
+  ],
+  "uncommitted_files": [
+    "plugins/onlyoffice-scribe/scripts/code.js",
+    "src/modules/views/OnlyOffice/Scribe/ChatInput.jsx",
+    "src/modules/views/OnlyOffice/Scribe/ScribeFloatingButton.jsx",
+    "src/modules/views/OnlyOffice/View.jsx",
+    "src/modules/views/OnlyOffice/useCozyBridge.js",
+    ".planning/phases/v3.0-02-chat-core/v3.0-02-02-SUMMARY.md"
+  ],
+  "next_action": "Review and commit the 5 uncommitted source files (78 additions, 119 deletions). Then decide: complete v3.0 milestone or start next milestone. Branch is 29 commits ahead of remote — consider pushing.",
+  "context_notes": "v3.0 Scribe Chat Panel milestone is functionally complete (4/4 phases done). However, 5 source files have uncommitted changes that appear to be part of the completed work. An untracked v3.0-02-02-SUMMARY.md also needs to be committed. The branch feat/scribe-in-right-panel is 29 commits ahead of remote."
+}
