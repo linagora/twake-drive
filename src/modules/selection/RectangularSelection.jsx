@@ -53,11 +53,16 @@ const getSelectedFileIdsFromSelectoEvent = (e, getFileFromElement) => {
 const accumulateSelectedItemsDuringDrag = (
   selectedDuringDragRef,
   selectedFileIds,
-  visibleFileIds
+  visibleFileIds,
+  preserveAll
 ) => {
   const newAccumulated = new Set()
   for (const fileId of selectedDuringDragRef.current) {
-    if (!visibleFileIds.has(fileId) || selectedFileIds.has(fileId)) {
+    if (
+      preserveAll ||
+      !visibleFileIds.has(fileId) ||
+      selectedFileIds.has(fileId)
+    ) {
       newAccumulated.add(fileId)
     }
   }
@@ -91,8 +96,10 @@ const RectangularSelection = ({
   const [isContainerReady, setIsContainerReady] = useState(false)
   const { setSelectedItems, selectedItems, setIsSelectAll } =
     useSelectionContext()
+  const [resolvedScrollContainer, setResolvedScrollContainer] = useState(null)
   const isDraggingRef = useRef(false)
   const dragStartPosRef = useRef(null)
+  const wheelScrolledDuringDragRef = useRef(false)
   const mutationObserverRef = useRef(null)
   const selectedDuringDragRef = useRef(new Set())
 
@@ -107,6 +114,12 @@ const RectangularSelection = ({
       }
     }
   }, [])
+
+  useEffect(() => {
+    setResolvedScrollContainer(
+      scrollElement || scrollContainerRef?.current || null
+    )
+  }, [scrollElement, scrollContainerRef, isContainerReady])
 
   /**
    * Extracts file data from a DOM element using the data-file-id attribute.
@@ -149,10 +162,14 @@ const RectangularSelection = ({
         e,
         getFileFromElement
       )
+      // After a wheel scroll, items may still be in the DOM but outside
+      // the selection rectangle (content shifted, not rectangle shrunk).
+      // In that case, preserve all accumulated items to avoid losing them.
       const newAccumulated = accumulateSelectedItemsDuringDrag(
         selectedDuringDragRef,
         selectedFileIds,
-        visibleFileIds
+        visibleFileIds,
+        wheelScrolledDuringDragRef.current
       )
       selectedDuringDragRef.current = newAccumulated
 
@@ -248,6 +265,7 @@ const RectangularSelection = ({
    */
   const handleDragEnd = useCallback(() => {
     dragStartPosRef.current = null
+    wheelScrolledDuringDragRef.current = false
     selectedDuringDragRef.current.clear()
   }, [])
 
@@ -258,8 +276,7 @@ const RectangularSelection = ({
    * re-discover selectable targets so newly rendered elements can be selected.
    */
   useEffect(() => {
-    const container = scrollElement || scrollContainerRef?.current
-    if (!container) return
+    if (!resolvedScrollContainer) return
 
     if (mutationObserverRef.current) {
       mutationObserverRef.current.disconnect()
@@ -271,11 +288,36 @@ const RectangularSelection = ({
       }
     })
 
-    observer.observe(container, { childList: true, subtree: true })
+    observer.observe(resolvedScrollContainer, {
+      childList: true,
+      subtree: true
+    })
     mutationObserverRef.current = observer
 
     return () => observer.disconnect()
-  }, [scrollElement, scrollContainerRef])
+  }, [resolvedScrollContainer])
+
+  /**
+   * Listens for mouse wheel scroll during a drag selection.
+   * Marks that a wheel scroll occurred so the accumulator preserves
+   * all previously selected items instead of dropping those that
+   * are still in the DOM but scrolled out of the selection rectangle.
+   */
+  useEffect(() => {
+    if (!resolvedScrollContainer) return
+
+    const handleWheel = () => {
+      if (!isDraggingRef.current) return
+      wheelScrolledDuringDragRef.current = true
+    }
+
+    resolvedScrollContainer.addEventListener('wheel', handleWheel, {
+      passive: true
+    })
+
+    return () =>
+      resolvedScrollContainer.removeEventListener('wheel', handleWheel)
+  }, [resolvedScrollContainer])
 
   /**
    * Handles scroll events from react-selecto during drag selection.
@@ -290,15 +332,14 @@ const RectangularSelection = ({
    */
   const handleScroll = useCallback(
     e => {
-      const container = scrollElement || scrollContainerRef?.current
-      if (!container) return
+      if (!resolvedScrollContainer) return
 
-      container.scrollBy(
+      resolvedScrollContainer.scrollBy(
         e.direction[0] * SCROLL_STEP_IN_PIXELS,
         e.direction[1] * SCROLL_STEP_IN_PIXELS
       )
     },
-    [scrollElement, scrollContainerRef]
+    [resolvedScrollContainer]
   )
 
   /**
@@ -335,11 +376,6 @@ const RectangularSelection = ({
     [setSelectedItems, setIsSelectAll]
   )
 
-  // Use the directly provided scrollElement (from virtuoso's scrollerRef),
-  // or fall back to scrollContainerRef.current for non-virtualized containers
-  // eslint-disable-next-line react-hooks/refs
-  const scrollContainer = scrollElement || scrollContainerRef?.current
-
   return (
     <div
       ref={containerRef}
@@ -368,9 +404,9 @@ const RectangularSelection = ({
           onSelect={handleSelect}
           onScroll={handleScroll}
           scrollOptions={
-            scrollContainer
+            resolvedScrollContainer
               ? {
-                  container: scrollContainer,
+                  container: resolvedScrollContainer,
                   throttleTime: 30,
                   threshold: 30
                 }
