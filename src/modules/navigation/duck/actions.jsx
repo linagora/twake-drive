@@ -1,10 +1,9 @@
 import React from 'react'
 
 import { isDirectory } from 'cozy-client/dist/models/file'
+import { resetQuery as resetQueryAction } from 'cozy-client/dist/store'
 import flag from 'cozy-flags'
 import { QuotaPaywall } from 'cozy-ui-plus/dist/Paywall'
-
-import { resetQuery as resetQueryAction } from 'cozy-client/dist/store'
 
 import {
   ROOT_DIR_ID,
