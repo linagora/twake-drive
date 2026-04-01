@@ -751,7 +751,7 @@
       // Build a reduced table clone for Insert mode with partial selections.
       // Clones the full table, injects LLM content into selected cells,
       // then removes rows and columns that have no selected cells.
-      function buildReducedTableClone(origTable, parsedCells, selectedCellCoords, cFonts) {
+      function buildReducedTableClone(origTable, parsedCells, cFonts) {
         var clone = origTable.Copy();
 
         // Modify the selected cells in the clone
@@ -860,7 +860,7 @@
             }
           } else if (isPartialTable) {
             // Partial Insert — build a reduced clone with only selected rows/columns
-            var reducedClone = buildReducedTableClone(origTable, ptCells, selectedCellCoords, cFonts);
+            var reducedClone = buildReducedTableClone(origTable, ptCells, cFonts);
             tableClones[ptIndex] = reducedClone;
             pendingTableReductions.push({ clone: reducedClone, selectedCellCoords: selectedCellCoords });
           } else {
@@ -944,19 +944,18 @@
       // For mixed Replace with in-place table modification:
       // modify text paragraphs in-place too (BEFORE content building to avoid
       // Api.CreateParagraph() triggering OO undo rollback of cell modifications).
-      // Narrowing approach fails when text is on both sides of the table.
-      // For mixed Replace: modify text paragraphs in-place (BEFORE content building).
-      // This is necessary because:
-      //   1. InsertContent can't exclude a table in the middle of the selection
+      // For mixed Replace (text + table): use per-paragraph InsertContent
+      // BEFORE content building. This is necessary because:
+      //   1. A single InsertContent can't exclude a table in the middle of the selection
       //   2. Api.CreateParagraph() in content building causes OO to rollback in-place cell mods
-      // For partially-selected paragraphs (first/last), spliceParaContent preserves
-      // the non-selected prefix/suffix with original formatting.
+      // Each non-table paragraph gets its own narrowed InsertContent (inline mode),
+      // which handles partial paragraphs natively (preserves prefix/suffix).
+      // Processed in reverse order to avoid position shifts.
       var skipContentAndInsert = false;
       if (mode === "replace" && tablesModifiedInPlace && hasMixedContent) {
         try {
           var mixSelRange = doc.GetRangeBySelect();
           if (mixSelRange) {
-            var mixRangeText = mixSelRange.GetText ? mixSelRange.GetText() : "";
             var mixParas = mixSelRange.GetAllParagraphs();
             // Collect non-table paragraphs
             var nonTableParas = [];
@@ -2213,18 +2212,17 @@
       }
 
       // --- Table cell extraction helper (MARK-02) ---
+      // Extracts all cells — delegates to extractPartialTableCells with full cell list.
       function extractTableCells(table) {
-        var cellMd = [];
+        var allCells = [];
         var rowCount = table.GetRowsCount();
         for (var r = 0; r < rowCount; r++) {
           var row = table.GetRow(r);
-          var cellCount = row.GetCellsCount();
-          for (var c = 0; c < cellCount; c++) {
-            var cell = table.GetCell(r, c);
-            cellMd.push("[CELL:" + r + "," + c + "]" + extractCellContent(cell) + "[/CELL]");
+          for (var c = 0; c < row.GetCellsCount(); c++) {
+            allCells.push({ r: r, c: c });
           }
         }
-        return cellMd.join("\n");
+        return extractPartialTableCells(table, allCells);
       }
 
       // --- Main extraction logic ---

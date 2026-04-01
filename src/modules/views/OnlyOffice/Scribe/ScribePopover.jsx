@@ -50,10 +50,6 @@ const ScribePopover = ({ open, selectedText, selectedHtml, enrichedMd, tableAmbi
   // Panel size for result panel resizing (null = use default CSS sizing)
   const [panelSize, setPanelSize] = useState(null)
 
-  // Insert is always available — for partial table selections, a reduced clone
-  // (only selected rows/columns) is inserted after the table
-  var insertDisabled = false
-
   // Reset to menu state when popover opens with new intent
   useEffect(() => {
     if (open) {
@@ -246,7 +242,6 @@ const ScribePopover = ({ open, selectedText, selectedHtml, enrichedMd, tableAmbi
           error={result.error}
           canRetry={result.canRetry}
           cellWarning={cellWarning}
-          insertDisabled={insertDisabled}
           onRetry={handleRetry}
           onReplace={handleReplace}
           onInsert={handleInsert}
