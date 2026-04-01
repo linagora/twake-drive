@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.6
 milestone_name: Formatage Complet et References Documentaires
 status: unknown
-stopped_at: Completed 26-02-PLAN.md
-last_updated: "2026-03-25T16:27:07.399Z"
+stopped_at: Phase 27 context gathered
+last_updated: "2026-04-01T13:09:42.716Z"
 progress:
   total_phases: 3
   completed_phases: 2
@@ -66,6 +66,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-25T16:27:07.397Z
-Stopped at: Completed 26-02-PLAN.md
-Resume file: None
+Last session: 2026-04-01T13:09:42.713Z
+Stopped at: Phase 27 context gathered
+Resume file: .planning/phases/27-references-documentaires/27-CONTEXT.md
