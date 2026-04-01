@@ -64,13 +64,20 @@ const SharedDriveFolderView = () => {
   const { isFabDisplayed, setIsFabDisplayed } = useContext(FabContext)
   const { isSelectionBarVisible } = useSelectionContext()
 
-  const { sharedDriveResult } = useSharedDriveFolder({
+  const { sharedDriveResult, hasMore, fetchMore } = useSharedDriveFolder({
     driveId,
     folderId
   })
 
   const queryResults = sharedDriveResult
-    ? [{ fetchStatus: 'loaded', data: sharedDriveResult.included }]
+    ? [
+        {
+          fetchStatus: 'loaded',
+          data: sharedDriveResult.included,
+          hasMore,
+          fetchMore
+        }
+      ]
     : []
 
   const canWriteToCurrentFolder = hasWriteAccess(folderId, driveId)
