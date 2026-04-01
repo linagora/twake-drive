@@ -1,7 +1,7 @@
 # Phase 26: Selections Partielles de Tableaux - Context
 
 **Gathered:** 2026-03-24
-**Status:** Ready for planning
+**Status:** Implemented (see 26-IMPLEMENTATION.md for full details)
 **Source:** Discussion with user
 
 <domain>
@@ -26,7 +26,7 @@ This phase adds support for partial table selections in Scribe. Currently, when 
 ### Case 1: Intra-cell selection
 - The selection is entirely within a single cell (partial or complete text of that cell).
 - **No special table treatment.** The content is handled via exactly the same code path as a normal paragraph — same insertion, replacement, spacing, and post-operation selection logic.
-- **Investigation needed:** verify whether the current code already handles this correctly or mistakenly triggers the table extraction path.
+- **Implemented:** `analyzeTableSelection` returns `intraCell: true` when only 1 cell has paragraphs in the selection (via `GetParentTableCell`). Both partial text and full cell content are detected.
 
 ### Case 2: Selection covering complete cells
 
@@ -37,11 +37,10 @@ This phase adds support for partial table selections in Scribe. Currently, when 
   - Partial tables: only selected cells as `[CELL:r,c]`
 
 #### Case 2a: Replacement
-- For each element in the selection, in document order:
-  1. **Partial paragraph (start/end):** replace selected text via the standard paragraph code path (same code as normal paragraph replacement)
-  2. **Complete paragraph:** replace entirely
-  3. **Complete table:** replace via clone + InsertContent (existing behavior)
-  4. **Partial table:** modify cells in-place: clear selected cells, inject LLM content, then select the modified cells (rectangle from top-left to bottom-right cell)
+- **Implemented approach (differs from initial plan):**
+  1. **Table cells (partial or full):** always modified in-place via `modifyOriginalTableCells` + `replaceCellContent`, except when the selection structurally encompasses the table (clone + InsertContent).
+  2. **Text paragraphs in mixed selections:** each gets its own narrowed `InsertContent` call (inline mode), processed in reverse order to avoid position shifts. This is done BEFORE content building to avoid `Api.CreateParagraph()` rollback.
+  3. **Post-selection:** works for pure table Replace and when text is on both sides of the table. Does NOT work for one-side mixed cases (OO API limitation: cannot select partial table cross-boundary).
 - Unselected cells and elements outside the selection remain intact.
 
 #### Case 2b: Insertion — selection ending inside a table
@@ -66,12 +65,13 @@ This phase adds support for partial table selections in Scribe. Currently, when 
   3. Reduced copy of the ending table (same logic as 2b)
 - All original tables remain intact.
 
-### Claude's Discretion
-- Technical approach for detecting intra-cell vs multi-cell selection
-- OO API calls for cell range detection
-- How to duplicate and reduce a table (RemoveRow/RemoveColumn vs rebuild)
-- Post-replacement cell selection API
-- Error handling for edge cases (empty cells, merged cells)
+### Implementation Notes (post-implementation)
+- **Cell detection:** uses `GetParentTableCell()` on selection paragraphs, not position-based overlap (which fails for column selections)
+- **Table reduction:** `RemoveRow(oCell)` / `RemoveColumn(oCell)` — takes cell reference, not index. Deferred to post-InsertContent (APIs require table in document).
+- **Post-selection:** OO API cannot select partial table cells. `doc.GetRange().Select()` fails when range starts outside and ends inside a table.
+- **Extraction clipping:** uses text matching (`range.GetText()` vs `para.GetText()`) instead of position arithmetic (OO positions don't map 1:1 to characters due to `\r\n` paragraph marks)
+- **Multi-paragraph cells:** cell content split on `\n\n` before `marked.lexer` to preserve empty paragraphs
+- **Cell images:** `drawingIndex` scans table cell paragraphs (not included in `doc.GetAllParagraphs()`)
 
 </decisions>
 
@@ -95,9 +95,10 @@ This phase adds support for partial table selections in Scribe. Currently, when 
 <specifics>
 ## Specific Ideas
 
-- For reduced table copies (insertion cases 2b/2c/2d): duplicate the full table via Copy(), inject LLM content into the relevant cells, then remove rows and columns that have no selected cells.
-- For intra-cell case: must use the exact same code path as paragraph replacement/insertion — no special-casing.
-- Post-replacement selection for partial tables: the modified cells form a rectangle, so select from min(r,c) to max(r,c).
+- For reduced table copies (Insert mode): duplicate the full table via Copy(), inject cell content via `replaceCellContent`, then RemoveRow/RemoveColumn post-InsertContent (deferred because APIs require table in document). Uses cell references not indices.
+- For intra-cell case: uses the exact same code path as paragraph replacement/insertion — no special-casing.
+- Post-replacement selection: limited by OO API — works for pure table and both-sides mixed, not for one-side mixed.
+- Insert button: always enabled — partial table Insert produces a reduced clone after the table.
 
 </specifics>
 
