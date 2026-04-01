@@ -141,7 +141,11 @@ Plans:
   2. Apres injection, l'appel de note pointe toujours vers la bonne note de bas de page dans le document OO -- le lien n'est pas rompu
   3. Quand la selection contient un renvoi vers une autre partie du document (cross-reference), le renvoi est detecte et preserve dans le round-trip -- le texte autour peut changer mais le lien de reference reste fonctionnel
   4. Les references documentaires coexistent avec les autres elements du pipeline (images, tableaux, inline formatting) sans regression
-**Plans**: TBD
+**Plans:** 3 plans
+Plans:
+- [ ] 27-01-PLAN.md — Empirical diagnostic of footnote/cross-reference element visibility in OO API
+- [ ] 27-02-PLAN.md — Footnote round-trip: extraction, caching, injection, system prompt
+- [ ] 27-03-PLAN.md — Cross-reference round-trip: extraction, caching/recreation, injection
 
 ## Progress
 
@@ -179,4 +183,4 @@ Phases execute in numeric order: 25 -> 26 -> 27
 | 24.1. Table rearchitecture | v2.5 | 2/2 | Complete | 2026-03-23 |
 | 25. Souligne (Underline) | 1/1 | Complete    | 2026-03-24 | - |
 | 26. Selections Partielles de Tableaux | 2/2 | Complete   | 2026-03-25 | - |
-| 27. References Documentaires | v2.6 | 0/TBD | Not started | - |
+| 27. References Documentaires | v2.6 | 0/3 | Not started | - |
