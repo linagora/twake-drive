@@ -941,8 +941,6 @@
         }
       }
 
-      var mixedModifiedParas = [];
-
       // For mixed Replace with in-place table modification:
       // modify text paragraphs in-place too (BEFORE content building to avoid
       // Api.CreateParagraph() triggering OO undo rollback of cell modifications).
@@ -1016,7 +1014,10 @@
                 addBlockToParagraph(pbParagraph, pbBlock, srcFontFamily, srcFontSize);
                 doc.InsertContent([pbParagraph], true); // inline mode: preserves suffix
 
-                mixedModifiedParas.push(pbPara);
+                // Save the narrowed selection bounds for post-selection.
+                // selPStart is still valid (within the just-modified paragraph).
+                // For the combined range, the cell bounds (computed in post-selection)
+                // provide the table portion — min/max naturally picks the right bounds.
               }
               skipContentAndInsert = true;
             }
@@ -1403,18 +1404,20 @@
 
       // Post-operation: select all modified content for partial table Replace.
       // Covers both table cells (modified in-place) and text paragraphs (mixed content).
-      if (mode === "replace" && partialTableInfo && allTables) {
+      if (mode === "replace" && partialTableInfo) {
         try {
           var postSelStart = -1;
           var postSelEnd = -1;
 
-          // Get cell range bounds
+          // Only compute cell bounds for non-mixed (pure table) Replace.
+          if (!skipContentAndInsert) {
+          var postAllTables = doc.GetAllTables();
           for (var ptSelIdx in partialTableInfo) {
             if (!partialTableInfo.hasOwnProperty(ptSelIdx)) continue;
             var ptSelCells = partialTableInfo[ptSelIdx];
             if (ptSelCells.length === 0) continue;
             var ptSelDocIdx = tableDocIndices[parseInt(ptSelIdx)];
-            var ptSelTable = (ptSelDocIdx !== undefined && ptSelDocIdx < allTables.length) ? allTables[ptSelDocIdx] : null;
+            var ptSelTable = (ptSelDocIdx !== undefined && ptSelDocIdx < postAllTables.length) ? postAllTables[ptSelDocIdx] : null;
             if (!ptSelTable) continue;
             var minR = ptSelCells[0].r, maxR = ptSelCells[0].r;
             var minC = ptSelCells[0].c, maxC = ptSelCells[0].c;
@@ -1446,20 +1449,12 @@
             }
             break;
           }
+          } // end if (!skipContentAndInsert)
 
-          // Extend bounds with modified paragraphs (mixed content)
-          for (var mpsi = 0; mpsi < mixedModifiedParas.length; mpsi++) {
-            var mpRange = mixedModifiedParas[mpsi].GetRange ? mixedModifiedParas[mpsi].GetRange() : null;
-            if (mpRange) {
-              var mpStart = mpRange.GetStartPos();
-              var mpEnd = mpRange.GetEndPos();
-              if (postSelStart === -1 || mpStart < postSelStart) postSelStart = mpStart;
-              if (mpEnd > postSelEnd) postSelEnd = mpEnd;
-            }
-          }
-
-          // Select the combined range
-          if (postSelStart >= 0 && postSelEnd > postSelStart) {
+          // Select the modified cell range (pure table Replace only).
+          // For mixed content Replace (skipContentAndInsert), post-selection is skipped
+          // because OO's selection API can't select partial table + text cross-boundary.
+          if (!skipContentAndInsert && postSelStart >= 0 && postSelEnd > postSelStart) {
             var postRange = doc.GetRange(postSelStart, postSelEnd);
             if (postRange) postRange.Select();
           }
