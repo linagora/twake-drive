@@ -358,6 +358,12 @@
       "errors": "Errors occurred during the %{type} upload.",
       "network": "You are currenly offline. Please try again once you're connected.",
       "fileTooLargeErrors": "File too large. Maximum file size: %{max_size_value} GB"
+    },
+    "limit": {
+      "title": "You cannot upload more than %{limit} files at a time.",
+      "content": "Need to upload more? Consider downloading the synchronization tool to your computer",
+      "cancel": "Cancel",
+      "download_desktop": "Download on Desktop"
     }
   },
   "intents": {

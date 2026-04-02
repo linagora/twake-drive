@@ -3,7 +3,9 @@ import {
   selectors,
   queue,
   overwriteFile,
-  uploadProgress
+  uploadProgress,
+  extractFilesEntries,
+  exceedsFileLimit
 } from './index'
 
 import { getEncryptionKeyFromDirId } from '@/lib/encryption'
@@ -566,6 +568,174 @@ describe('queue reducer', () => {
       const result3 = queue(result2, { type: 'RECEIVE_UPLOAD_ERROR', file })
       expect(result3[0].progress).toEqual(null)
     })
+  })
+})
+
+// Helpers to mock browser FileSystem API objects
+const createMockFileEntry = name => ({
+  isFile: true,
+  isDirectory: false,
+  name
+})
+
+const createMockDirEntry = (name, children) => ({
+  isFile: false,
+  isDirectory: true,
+  name,
+  createReader: () => {
+    let read = false
+    return {
+      readEntries: resolve => {
+        if (!read) {
+          read = true
+          resolve(children)
+        } else {
+          resolve([])
+        }
+      }
+    }
+  }
+})
+
+describe('extractFilesEntries', () => {
+  it('should extract plain File objects', () => {
+    const files = [new File(['a'], 'a.txt'), new File(['b'], 'b.txt')]
+    const result = extractFilesEntries(files)
+    expect(result).toHaveLength(2)
+    expect(result[0]).toEqual({
+      file: files[0],
+      isDirectory: false,
+      entry: null
+    })
+  })
+
+  it('should extract DataTransferItem with file entry', () => {
+    const file = new File(['a'], 'a.txt')
+    const fileEntry = { isFile: true, isDirectory: false }
+    const items = [
+      {
+        webkitGetAsEntry: () => fileEntry,
+        getAsFile: () => file
+      }
+    ]
+    const result = extractFilesEntries(items)
+    expect(result).toHaveLength(1)
+    expect(result[0]).toEqual({
+      file,
+      isDirectory: false,
+      entry: fileEntry
+    })
+  })
+
+  it('should extract DataTransferItem with directory entry', () => {
+    const dirEntry = { isFile: false, isDirectory: true }
+    const items = [
+      {
+        webkitGetAsEntry: () => dirEntry,
+        getAsFile: () => null
+      }
+    ]
+    const result = extractFilesEntries(items)
+    expect(result).toHaveLength(1)
+    expect(result[0]).toEqual({
+      file: null,
+      isDirectory: true,
+      entry: dirEntry
+    })
+  })
+
+  it('should handle empty items', () => {
+    const result = extractFilesEntries([])
+    expect(result).toHaveLength(0)
+  })
+})
+
+describe('exceedsFileLimit', () => {
+  it('should return false when flat files are under the limit', async () => {
+    const entries = [
+      { file: new File(['a'], 'a.txt'), isDirectory: false, entry: null },
+      { file: new File(['b'], 'b.txt'), isDirectory: false, entry: null },
+      { file: new File(['c'], 'c.txt'), isDirectory: false, entry: null }
+    ]
+    expect(await exceedsFileLimit(entries, 500)).toBe(false)
+  })
+
+  it('should return false when total including directories is under the limit', async () => {
+    const dirEntry = createMockDirEntry('photos', [
+      createMockFileEntry('img1.jpg'),
+      createMockFileEntry('img2.jpg')
+    ])
+    const entries = [
+      { file: null, isDirectory: true, entry: dirEntry },
+      { file: new File(['a'], 'doc.txt'), isDirectory: false, entry: null }
+    ]
+    expect(await exceedsFileLimit(entries, 500)).toBe(false)
+  })
+
+  it('should count files in nested directories', async () => {
+    const subDir = createMockDirEntry('sub', [createMockFileEntry('deep.txt')])
+    const topDir = createMockDirEntry('top', [
+      createMockFileEntry('shallow.txt'),
+      subDir
+    ])
+    const entries = [{ file: null, isDirectory: true, entry: topDir }]
+    expect(await exceedsFileLimit(entries, 1)).toBe(true)
+    expect(await exceedsFileLimit(entries, 2)).toBe(false)
+  })
+
+  it('should return false for empty directories', async () => {
+    const emptyDir = createMockDirEntry('empty', [])
+    const entries = [
+      { file: null, isDirectory: true, entry: emptyDir },
+      { file: new File(['a'], 'a.txt'), isDirectory: false, entry: null }
+    ]
+    expect(await exceedsFileLimit(entries, 500)).toBe(false)
+  })
+
+  it('should return false for empty entries', async () => {
+    expect(await exceedsFileLimit([], 500)).toBe(false)
+  })
+
+  it('should return true when flat files alone exceed the limit', async () => {
+    const entries = Array.from({ length: 600 }, (_, i) => ({
+      file: new File([''], `file${i}.txt`),
+      isDirectory: false,
+      entry: null
+    }))
+    expect(await exceedsFileLimit(entries, 500)).toBe(true)
+  })
+
+  it('should return false when files across multiple directories are under the limit', async () => {
+    const dir1 = createMockDirEntry(
+      'dir1',
+      Array.from({ length: 10 }, (_, i) => createMockFileEntry(`a${i}.txt`))
+    )
+    const dir2 = createMockDirEntry(
+      'dir2',
+      Array.from({ length: 15 }, (_, i) => createMockFileEntry(`b${i}.txt`))
+    )
+    const entries = [
+      { file: null, isDirectory: true, entry: dir1 },
+      { file: null, isDirectory: true, entry: dir2 },
+      { file: new File([''], 'root.txt'), isDirectory: false, entry: null }
+    ]
+    expect(await exceedsFileLimit(entries, 500)).toBe(false)
+  })
+
+  it('should return true when cumulative count across directories exceeds the limit', async () => {
+    const dir1 = createMockDirEntry(
+      'dir1',
+      Array.from({ length: 300 }, (_, i) => createMockFileEntry(`a${i}.txt`))
+    )
+    const dir2 = createMockDirEntry(
+      'dir2',
+      Array.from({ length: 300 }, (_, i) => createMockFileEntry(`b${i}.txt`))
+    )
+    const entries = [
+      { file: null, isDirectory: true, entry: dir1 },
+      { file: null, isDirectory: true, entry: dir2 }
+    ]
+    expect(await exceedsFileLimit(entries, 500)).toBe(true)
   })
 })
 
