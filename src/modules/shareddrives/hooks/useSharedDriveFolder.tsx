@@ -2,24 +2,13 @@ import debounce from 'lodash/debounce'
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 
 import { useClient } from 'cozy-client'
-import { IOCozyFile } from 'cozy-client/types/types'
+import type { IOCozyFile } from 'cozy-client/types/types'
 import CozyRealtime from 'cozy-realtime'
 
 import logger from '@/lib/logger'
-import { buildSharedDriveFolderQuery, QueryConfig } from '@/queries'
-
-const PAGE_LIMIT = 100
-
-const parseCursorFromLink = (link: string): string | null => {
-  try {
-    const queryString = link.split('?')[1]
-    if (!queryString) return null
-    const params = new URLSearchParams(queryString)
-    return params.get('page[cursor]')
-  } catch {
-    return null
-  }
-}
+import { paginatedStatById } from '@/modules/shareddrives/hooks/useSharedDriveFolderHelpers'
+import { buildSharedDriveFolderQuery } from '@/queries'
+import type { QueryConfig } from '@/queries'
 
 interface SharedDriveFolderProps {
   driveId: string
@@ -27,6 +16,8 @@ interface SharedDriveFolderProps {
 }
 
 interface SharedDriveFolderReturn {
+  // FIXME: We should use useQuery hook here but it doesn't allow to get included data
+  // See https://github.com/cozy/cozy-client/issues/1620
   sharedDriveQuery: QueryConfig
   sharedDriveResult: {
     data?: IOCozyFile[] | null
@@ -40,9 +31,6 @@ const useSharedDriveFolder = ({
   driveId,
   folderId
 }: SharedDriveFolderProps): SharedDriveFolderReturn => {
-  // FIXME: We should use useQuery hook here but it doesn't allow to get included data
-  // See https://github.com/cozy/cozy-client/issues/1620
-
   const client = useClient()
   const [sharedDriveResult, setSharedDriveResult] = useState<
     SharedDriveFolderReturn['sharedDriveResult']
@@ -60,34 +48,35 @@ const useSharedDriveFolder = ({
     [driveId, folderId]
   )
 
-  const getCollection = useCallback(() => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-    return client?.getStackClient().collection('io.cozy.files', { driveId })
-  }, [client, driveId])
+  const statById = useMemo(
+    () => paginatedStatById(client, driveId),
+    [client, driveId]
+  )
 
   useEffect(() => {
     const fetchSharedDriveFolder = async (): Promise<void> => {
       fetchGeneration.current += 1
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const collection = getCollection()
-      if (!collection) return
+      const currentGeneration = fetchGeneration.current
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      const result = await collection.statById(folderId, {
-        'page[limit]': PAGE_LIMIT
-      })
+      setSharedDriveResult({ data: undefined, included: undefined })
+      setNextCursor(null)
 
-      const typedResult =
-        result as SharedDriveFolderReturn['sharedDriveResult'] & {
-          links?: { next?: string }
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const { included, nextCursor: cursor } = await statById(folderId)
+
+        if (fetchGeneration.current === currentGeneration) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          setSharedDriveResult({ included })
+          setNextCursor(cursor)
         }
-
-      setSharedDriveResult(typedResult)
-      setNextCursor(
-        typedResult.links?.next
-          ? parseCursorFromLink(typedResult.links.next)
-          : null
-      )
+      } catch (error) {
+        logger.error('Error fetching shared drive folder:', error)
+        if (fetchGeneration.current === currentGeneration) {
+          setSharedDriveResult({ data: undefined, included: undefined })
+          setNextCursor(null)
+        }
+      }
     }
 
     if (client && driveId && folderId) {
@@ -112,7 +101,7 @@ const useSharedDriveFolder = ({
       }
       debouncedFetch.cancel()
     }
-  }, [client, driveId, folderId, sharedDriveQuery, getCollection])
+  }, [client, driveId, folderId, sharedDriveQuery, statById])
 
   const fetchMore = useCallback(async (): Promise<void> => {
     if (isFetchingMore.current || !nextCursor || !client) return
@@ -122,38 +111,25 @@ const useSharedDriveFolder = ({
 
     try {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const collection = getCollection()
-      if (!collection) return
+      const { included, nextCursor: cursor } = await statById(
+        folderId,
+        nextCursor
+      )
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      const result = await collection.statById(folderId, {
-        'page[cursor]': nextCursor,
-        'page[limit]': PAGE_LIMIT
-      })
-
-      // If a realtime refetch happened while we were fetching, discard this result
       if (fetchGeneration.current !== currentGeneration) return
-
-      const typedResult =
-        result as SharedDriveFolderReturn['sharedDriveResult'] & {
-          links?: { next?: string }
-        }
 
       setSharedDriveResult(prev => ({
         ...prev,
-        included: [...(prev.included ?? []), ...(typedResult.included ?? [])]
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        included: [...(prev.included ?? []), ...(included ?? [])]
       }))
-      setNextCursor(
-        typedResult.links?.next
-          ? parseCursorFromLink(typedResult.links.next)
-          : null
-      )
+      setNextCursor(cursor)
     } catch (error) {
       logger.error('Error fetching more shared drive files:', error)
     } finally {
       isFetchingMore.current = false
     }
-  }, [nextCursor, client, folderId, getCollection])
+  }, [nextCursor, client, folderId, statById])
 
   const hasMore = !!nextCursor
 
