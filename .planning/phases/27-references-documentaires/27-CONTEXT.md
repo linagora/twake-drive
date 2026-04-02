@@ -35,9 +35,28 @@ This phase adds detection and preservation of footnotes (notes de bas de page) a
 - Footnotes in table cells: same treatment as outside tables — marker is inline in the cell text. Uses `extractCellContent` which already handles inline elements via `paragraphToMarkdown`.
 - Footnotes in partially-selected paragraphs: the marker is part of the paragraph text; clipping preserves or drops it based on the selection bounds.
 
+### Empirical API Findings (from V1+V2 diagnostics — 2026-04-02)
+
+**Cross-references** appear as `type=hyperlink` with `GetLinkedText() === ""`:
+- Heading ref: `GetScreenTipText()` starts with `#_` (e.g. `"#_Un_titre"`)
+- Bookmark ref: `GetScreenTipText()` = bookmark name (e.g. `"un_signet"`)
+- `GetDisplayedText()` = visible text in document
+- **Copy() NOT available** on hyperlinks → must recreate via API
+
+**Footnote calls** appear as `type=run` with `GetStyle().GetName() === "footnote reference"`:
+- `GetText()` returns empty string (number is auto-generated)
+- **Copy() IS available** on these runs
+
+**Unsupported elements** (bookmark/field markers) are opaque — ignore them.
+
+**API recreation signatures** (from source inspection):
+- `para.AddHeadingCrossRef(refType, headingPara, asHyperlink, separator)` — refType: "text", "pageNum", etc.
+- `para.AddBookmarkCrossRef(refType, bookmarkName, asHyperlink, separator, ?)` — refType: "text", "pageNum", etc.
+- `para.AddFootnoteCrossRef(refType, footnotePara, asHyperlink, separator)` — refType: "footnoteNum", "pageNum", etc.
+
+See `27-DIAGNOSTIC-RESULTS.md` for full details.
+
 ### Claude's Discretion
-- Exact OO API calls for footnote/cross-reference detection (GetClassType values, property access)
-- Whether `Copy()` works on footnote/cross-reference elements (needs empirical testing)
 - Cache key naming convention (e.g., `scribe-fn-N`, `scribe-ref-N`)
 - System prompt additions to instruct LLM to preserve `[^N]` and `{{REF:...}}` markers
 

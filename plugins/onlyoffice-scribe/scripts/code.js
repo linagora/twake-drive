@@ -9,6 +9,9 @@
   var lastTableAmbiguity = null;
   var lastPartialTableInfo = null;
   var imageCounter = 0;
+  var footnoteCounter = 0;
+  var crossRefCounter = 0;
+  var lastCrossRefMeta = {};  // scribe-ref-N -> { type, screenTip, displayedText }
   var pendingIntents = {};
   var cozyOrigin = "*"; // TODO: restrict to actual Cozy origin in production
 
@@ -143,8 +146,8 @@
       for (var i = 1; i < runs.length; i++) {
         var prev = merged[merged.length - 1];
         var cur = runs[i];
-        // Skip image markers — never merge
-        if (prev.imageMarker || cur.imageMarker) {
+        // Skip special markers — never merge
+        if (prev.imageMarker || cur.imageMarker || prev.footnoteMarker || cur.footnoteMarker || prev.crossRefMarker || cur.crossRefMarker) {
           merged.push(cur);
           continue;
         }
@@ -168,7 +171,33 @@
       for (var i = 0; i < tokens.length; i++) {
         var tok = tokens[i];
         if (tok.type === "text") {
-          runs.push({ text: tok.text, bold: !!parentBold, italic: !!parentItalic, strikethrough: !!parentStrikethrough, underline: !!parentUnderline, code: !!parentCode, link: parentLink || null });
+          // Check for footnote [^scribe-fn-N] or cross-ref {{REF:scribe-ref-N:text}} markers
+          var markerRegex = /\[\^(scribe-fn-\d+)\]|\{\{REF:(scribe-ref-\d+):([^}]*)\}\}/g;
+          if (tok.text && markerRegex.test(tok.text)) {
+            markerRegex.lastIndex = 0;  // reset after test()
+            var mMatch;
+            var mLastIdx = 0;
+            while ((mMatch = markerRegex.exec(tok.text)) !== null) {
+              // Text before the marker
+              if (mMatch.index > mLastIdx) {
+                runs.push({ text: tok.text.substring(mLastIdx, mMatch.index), bold: !!parentBold, italic: !!parentItalic, strikethrough: !!parentStrikethrough, underline: !!parentUnderline, code: !!parentCode, link: parentLink || null });
+              }
+              // The marker run
+              if (mMatch[1]) {
+                runs.push({ text: "", footnoteMarker: mMatch[1], bold: false, italic: false, strikethrough: false, underline: false, code: false, link: null });
+              } else if (mMatch[2]) {
+                // mMatch[3] = visible text from LLM (may differ from original)
+                runs.push({ text: "", crossRefMarker: mMatch[2], crossRefText: mMatch[3] || "", bold: false, italic: false, strikethrough: false, underline: false, code: false, link: null });
+              }
+              mLastIdx = markerRegex.lastIndex;
+            }
+            // Text after last marker
+            if (mLastIdx < tok.text.length) {
+              runs.push({ text: tok.text.substring(mLastIdx), bold: !!parentBold, italic: !!parentItalic, strikethrough: !!parentStrikethrough, underline: !!parentUnderline, code: !!parentCode, link: parentLink || null });
+            }
+          } else {
+            runs.push({ text: tok.text, bold: !!parentBold, italic: !!parentItalic, strikethrough: !!parentStrikethrough, underline: !!parentUnderline, code: !!parentCode, link: parentLink || null });
+          }
         } else if (tok.type === "strong") {
           runs = runs.concat(flattenInline(tok.tokens, true, parentItalic, parentStrikethrough, parentCode, parentLink, parentUnderline));
         } else if (tok.type === "em") {
@@ -322,6 +351,8 @@
     // Convert inline image markers to standard markdown image syntax
     // so marked.lexer() produces image tokens for both block and inline markers
     md = md.replace(/\{\{IMG:(scribe-img-\d+)\}\}/g, "![IMG:$1](placeholder)");
+    // Keep visible text in cross-ref markers — the LLM may modify it (e.g. translation).
+    // flattenInline will parse both the ref name and the visible text.
 
     // --- Table round-trip: parse TABLE:N blocks before marked.lexer ---
     // Backward compat: if md has bare CELL markers without TABLE wrappers,
@@ -405,6 +436,8 @@
       Asc.scope.tableDocIndices = null;
     }
     Asc.scope.partialTableInfo = lastPartialTableInfo ? JSON.stringify(lastPartialTableInfo) : null;
+    // Pass cross-ref metadata for API recreation during injection
+    Asc.scope.crossRefMeta = JSON.stringify(lastCrossRefMeta);
     // Detect mixed content: partial table + non-table blocks (paragraphs)
     // In Replace mode with mixed content, partial tables must use clone (not in-place)
     // because InsertContent replaces the entire selection including the table cells.
@@ -650,6 +683,93 @@
         // Copy() is consumed by AddDrawing — make a fresh copy for next use
         try { imageCache[name] = cached.Copy(); } catch (e) { imageCache[name] = null; }
         return cached;
+      }
+
+      // --- Footnote round-trip: save content text, recreate after InsertContent ---
+      // Footnote calls appear as runs with style "footnote reference" and empty text.
+      // Copy() on these runs does NOT preserve the internal footnote link.
+      // Strategy: save footnote content text before InsertContent destroys it,
+      // then use doc.AddFootnote() post-InsertContent to recreate.
+      // Save all footnote content texts (indexed by document order).
+      var footnoteContentTexts = [];
+      try {
+        var fnParas = doc.GetFootnotesFirstParagraphs();
+        if (fnParas) {
+          for (var fpi = 0; fpi < fnParas.length; fpi++) {
+            var fnText = fnParas[fpi].GetText ? fnParas[fpi].GetText() : "";
+            footnoteContentTexts.push(fnText.replace(/[\r\n]+$/, ""));
+          }
+        }
+      } catch (e) {}
+      var pendingFootnotes = [];  // [{para, markerName, markerText}] — processed post-InsertContent
+
+      // --- Cross-reference round-trip: recreate via API ---
+      // Cross-refs cannot be Copy()-ed (hyperlinks lack Copy method).
+      // Instead, use AddHeadingCrossRef/AddBookmarkCrossRef AFTER InsertContent
+      // (these API methods require the paragraph to be in the document).
+      var crossRefMeta = {};
+      try { crossRefMeta = JSON.parse(Asc.scope.crossRefMeta || "{}"); } catch (e) {}
+
+      // Helper: find a bookmark name matching a screenTip (handles space/underscore mismatch).
+      // OO screenTip uses spaces ("un signet") but bookmark names use underscores ("un_signet").
+      function findBookmarkName(screenTip) {
+        var bmNames = doc.GetAllBookmarksNames();
+        if (!bmNames) return null;
+        for (var bi = 0; bi < bmNames.length; bi++) {
+          if (bmNames[bi] === screenTip) return bmNames[bi];
+        }
+        var normalized = screenTip.replace(/\s+/g, "_");
+        for (var bi2 = 0; bi2 < bmNames.length; bi2++) {
+          if (bmNames[bi2] === normalized) return bmNames[bi2];
+          if (bmNames[bi2].replace(/_/g, " ") === screenTip) return bmNames[bi2];
+        }
+        return null;
+      }
+
+      // Post-InsertContent: recreate footnotes at placeholder positions.
+      // Uses doc.AddFootnote() which inserts a footnote at the current selection,
+      // then fills it with the saved footnote content text.
+      function processPendingFootnotes() {
+        for (var pfi = 0; pfi < pendingFootnotes.length; pfi++) {
+          var pfr = pendingFootnotes[pfi];
+          var para = pfr.para;
+          try {
+            // Find the placeholder run and select its range
+            var pfCount = para.GetElementsCount();
+            for (var pfe = 0; pfe < pfCount; pfe++) {
+              var pfEl = para.GetElement(pfe);
+              var pfText = pfEl.GetText ? pfEl.GetText() : "";
+              if (pfText !== pfr.markerText) continue;
+
+              // Select the placeholder run's range so AddFootnote inserts here
+              var pfRange = pfEl.GetRange();
+              if (pfRange) pfRange.Select();
+
+              // Delete the placeholder text
+              pfEl.Delete();
+
+              // AddFootnote() creates a footnote at the current cursor position
+              var fnContent = doc.AddFootnote();
+              if (fnContent) {
+                // Fill footnote with saved content text
+                var fnIdx = parseInt(pfr.markerName.replace("scribe-fn-", ""), 10);
+                var fnSavedText = (fnIdx < footnoteContentTexts.length) ? footnoteContentTexts[fnIdx] : "";
+                if (fnSavedText) {
+                  // Get the first paragraph of the footnote and add text
+                  var fnPara = fnContent.GetElement(0);
+                  if (fnPara) {
+                    var fnRun = Api.CreateRun();
+                    fnRun.AddText(fnSavedText);
+                    fnPara.AddElement(fnRun);
+                  }
+                }
+              }
+              break;
+            }
+          } catch (e) {
+            // Footnote recreation failed — the marker is already deleted
+          }
+        }
       }
 
       // --- Table round-trip: clone tables via Copy() BEFORE InsertContent ---
@@ -919,6 +1039,90 @@
             var imDrawing = restoreImage(run.imageMarker);
             if (imDrawing) {
               para.AddDrawing(imDrawing);
+            }
+          } else if (run.footnoteMarker) {
+            // Footnote placeholder: defer actual footnote creation to post-InsertContent.
+            // AddFootnote requires the cursor to be in the document.
+            var fnPlaceholder = Api.CreateRun();
+            var fnMarkerText = "\u0000FN:" + run.footnoteMarker + "\u0000";
+            fnPlaceholder.AddText(fnMarkerText);
+            if (fontFamily) fnPlaceholder.SetFontFamily(fontFamily);
+            if (fontSize) fnPlaceholder.SetFontSize(fontSize);
+            para.AddElement(fnPlaceholder);
+            pendingFootnotes.push({ para: para, markerName: run.footnoteMarker, markerText: fnMarkerText });
+          } else if (run.crossRefMarker) {
+            // Recreate cross-reference as a hyperlink with internal anchor.
+            // OO cross-refs use "anchor" (internal bookmark link, prop Us on internal obj),
+            // NOT "link" (external URL, prop ma). Api.CreateHyperlink sets ma (URL),
+            // so we create one then swap: clear ma, set Us to the anchor value.
+            var crMeta = crossRefMeta[run.crossRefMarker];
+            // Use LLM's text if available, fall back to original extraction text
+            var crDisplayText = run.crossRefText || (crMeta ? crMeta.displayedText : "") || "";
+            if (crMeta && crDisplayText) {
+              var crInserted = false;
+              // Extract anchor from cached JSON
+              var crAnchor = "";
+              var crTooltip = crMeta.screenTip || "";
+              if (crMeta.json) {
+                try {
+                  crAnchor = (crMeta.json.anchor || "").replace(/[\r\n]+$/, "");
+                  crTooltip = (crMeta.json.tooltip || crMeta.screenTip || "").replace(/[\r\n]+$/, "");
+                } catch (e) {}
+              }
+              // For bookmarks: find the actual bookmark name
+              if (crMeta.type === "bookmark" && !crAnchor) {
+                var bm = findBookmarkName(crMeta.screenTip);
+                if (bm) crAnchor = bm;
+              }
+              // For headings: the anchor (e.g. "_Un_titre") is NOT a real bookmark.
+              // Create a real bookmark on the heading paragraph so the hyperlink can target it.
+              if (crMeta.type === "heading") {
+                try {
+                  // Match heading by screenTip text (more reliable than anchor name)
+                  var headingText = (crMeta.screenTip || "").replace(/^#_/, "").replace(/_/g, " ");
+                  var hParas = doc.GetAllHeadingParagraphs();
+                  for (var hpi = 0; hpi < hParas.length; hpi++) {
+                    var hpText = hParas[hpi].GetText ? hParas[hpi].GetText() : "";
+                    hpText = hpText.replace(/[\s\n\r]+$/, "");
+                    if (hpText === headingText) {
+                      // Use a clean bookmark name (no leading underscore — may be reserved)
+                      var bmName = "scribe_heading_" + run.crossRefMarker.replace("scribe-ref-", "");
+                      var hRange = hParas[hpi].GetRange();
+                      if (hRange && hRange.AddBookmark) {
+                        hRange.AddBookmark(bmName);
+                        crAnchor = bmName;  // override anchor to point to our new bookmark
+                      }
+                      break;
+                    }
+                  }
+                } catch (e) { /* bookmark creation failed */ }
+              }
+              if (crAnchor) {
+                try {
+                  // Create hyperlink with placeholder URL, correct text and tooltip
+                  var crLink = Api.CreateHyperlink("http://tmp", crDisplayText, crTooltip);
+                  if (crLink) {
+                    // Patch internal object: swap URL → anchor
+                    // Internal props (from diagnostic): ma=URL, Us=anchor, YD=tooltip
+                    var crInternal = crLink.u0;
+                    if (crInternal) {
+                      crInternal.ma = "";        // clear external URL
+                      crInternal.Us = crAnchor;  // set internal anchor
+                      crInternal.YD = crTooltip; // set tooltip
+                    }
+                    para.AddElement(crLink);
+                    crInserted = true;
+                  }
+                } catch (e) { /* internal patching failed */ }
+              }
+              if (!crInserted) {
+                // Fallback: plain text
+                var crFb = Api.CreateRun();
+                crFb.AddText(crDisplayText);
+                if (fontFamily) crFb.SetFontFamily(fontFamily);
+                if (fontSize) crFb.SetFontSize(fontSize);
+                para.AddElement(crFb);
+              }
             }
           } else if (run.link) {
             para.AddElement(makeHyperlink(run));
@@ -1399,6 +1603,13 @@
         } catch (e) {
           // Selection failed — content is still injected, graceful degradation
         }
+
+        // ── Post-selection: recreate footnotes ──
+        // Done AFTER selection to avoid disrupting cursor/selection state.
+        // processPendingFootnotes uses Select() + AddFootnote() which move the cursor.
+        if (pendingFootnotes.length > 0) {
+          processPendingFootnotes();
+        }
       }
 
       // Post-operation: select all modified content for partial table Replace.
@@ -1706,8 +1917,11 @@
 
     // Run callCommand pre-scan to extract enriched markdown from selection
     // initDataType:"html" is kept for trigger mechanism; data parameter is ignored
-    // Pass imageCounter via Asc.scope for stable image naming across selections
+    // Pass counters via Asc.scope for stable naming across selections
     window.Asc.scope.imgCounter = imageCounter;
+    window.Asc.scope._fnCounter = footnoteCounter;
+    window.Asc.scope._crCounter = crossRefCounter;
+    window.Asc.scope._crMeta = {};
     window.Asc.plugin.callCommand(function() {
       // --- All helpers defined inside callCommand (ES5 sandbox) ---
 
@@ -1898,7 +2112,36 @@
 
           if (classType === "hyperlink") {
             var hUrl = el.GetLinkedText ? el.GetLinkedText() : "";
-            // Collect link display text and formatting from child runs
+            // Cross-reference detection: hyperlinks with empty GetLinkedText are cross-refs
+            if (!hUrl || hUrl.length === 0) {
+              var crDisplayed = el.GetDisplayedText ? el.GetDisplayedText() : "";
+              var crScreenTip = el.GetScreenTipText ? el.GetScreenTipText() : "";
+              // Trim trailing whitespace/newlines from screenTip (OO sometimes appends \n)
+              crScreenTip = crScreenTip.replace(/[\s\n\r]+$/, "");
+              if (crDisplayed) {
+                var crName = "scribe-ref-" + Asc.scope._crCounter;
+                Asc.scope._crCounter = (Asc.scope._crCounter || 0) + 1;
+                // Determine cross-ref type from screenTip
+                var crType = "unknown";
+                if (crScreenTip.indexOf("#_") === 0) {
+                  crType = "heading";
+                } else if (crScreenTip.length > 0) {
+                  crType = "bookmark";
+                }
+                // Capture ToJSON for full cross-ref recreation (includes anchor field)
+                var crJson = null;
+                try { crJson = el.ToJSON(); } catch (e) {}
+                // Store metadata for injection
+                if (!Asc.scope._crMeta) Asc.scope._crMeta = {};
+                Asc.scope._crMeta[crName] = {
+                  type: crType, screenTip: crScreenTip, displayedText: crDisplayed,
+                  json: crJson
+                };
+                annotatedParts.push({ text: "{{REF:" + crName + ":" + crDisplayed + "}}", raw: true });
+              }
+              continue;
+            }
+            // Regular hyperlink — collect display text and formatting from child runs
             var hText = "";
             var hFlags = { bold: false, italic: false, strikethrough: false, code: false };
             var hCount = el.GetElementsCount ? el.GetElementsCount() : 0;
@@ -1923,6 +2166,19 @@
           } else if (classType === "run") {
             var runText = el.GetText();
             if (!runText || runText.length === 0) {
+              // Check for footnote reference mark (style "footnote reference", empty text)
+              try {
+                var fnStyle = el.GetStyle ? el.GetStyle() : null;
+                if (fnStyle && typeof fnStyle === "object" && fnStyle.GetName) {
+                  var fnStyleName = fnStyle.GetName();
+                  if (fnStyleName === "footnote reference") {
+                    var fnName = "scribe-fn-" + (Asc.scope._fnCounter || 0);
+                    Asc.scope._fnCounter = (Asc.scope._fnCounter || 0) + 1;
+                    annotatedParts.push({ text: "[^" + fnName + "]", raw: true });
+                    continue;
+                  }
+                }
+              } catch (eFn) { /* style check failed — not a footnote ref */ }
               // Check for drawing-only run
               if (hasScribeDrawings) {
                 var emptyRunDrawings = el.GetInlineDrawings ? el.GetInlineDrawings() : [];
@@ -2475,18 +2731,23 @@
         md: mdLines.join(""),
         tableDocIndices: tableDocIndices,
         tableAmbiguity: tableAmbiguity,
-        partialTableInfo: partialTableInfo
+        partialTableInfo: partialTableInfo,
+        crossRefMeta: Asc.scope._crMeta || {}
       });
     }, false, false, function(resultJson) {
       // false = read-write (allows SetName on images for stable naming)
-      // Update module-level imageCounter from Asc.scope
+      // Update module-level counters from Asc.scope
       imageCounter = window.Asc.scope.imgCounter || imageCounter;
+      footnoteCounter = window.Asc.scope._fnCounter || footnoteCounter;
+      crossRefCounter = window.Asc.scope._crCounter || crossRefCounter;
       var result;
       try {
         result = JSON.parse(resultJson);
       } catch (e) {
         result = { text: "", md: "" };
       }
+      // Read crossRefMeta from JSON return (Asc.scope objects set inside callCommand may not persist)
+      lastCrossRefMeta = result.crossRefMeta || {};
       var plainText = (result.text || "").replace(/^\s+|\s+$/g, "");
 
       lastSelectedText = plainText;
