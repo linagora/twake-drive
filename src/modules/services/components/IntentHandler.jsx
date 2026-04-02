@@ -5,6 +5,7 @@ import Intents from 'cozy-interapp'
 import logger from 'cozy-logger'
 
 import Embeder from './Embeder'
+import Picker from './Picker'
 
 const IntentHandler = ({ intentId }) => {
   const client = useClient()
@@ -32,6 +33,11 @@ const IntentHandler = ({ intentId }) => {
           intent.attributes.type === 'io.cozy.files'
         ) {
           component = Embeder
+        } else if (
+          intent.attributes.action === 'PICK' &&
+          intent.attributes.type === 'io.cozy.files'
+        ) {
+          component = Picker
         }
 
         setState({
