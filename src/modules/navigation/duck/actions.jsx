@@ -10,14 +10,20 @@ import {
   ROOT_DIR_ID,
   TRASH_DIR_ID,
   FILES_FETCH_LIMIT,
-  MAX_PAYLOAD_SIZE_IN_GB
+  MAX_PAYLOAD_SIZE_IN_GB,
+  MAX_UPLOAD_FILE_COUNT
 } from '@/constants/config'
 import { createEncryptedDir } from '@/lib/encryption'
 import { getEntriesTypeTranslated } from '@/lib/entries'
 import logger from '@/lib/logger'
 import { showModal } from '@/lib/react-cozy-helpers'
 import { getFolderContent, getFolderContentQueries } from '@/modules/selectors'
-import { addToUploadQueue } from '@/modules/upload'
+import {
+  addToUploadQueue,
+  extractFilesEntries,
+  exceedsFileLimit
+} from '@/modules/upload'
+import UploadLimitDialog from '@/modules/upload/UploadLimitDialog'
 
 export const SORT_FOLDER = 'SORT_FOLDER'
 export const OPERATION_REDIRECTED = 'navigation/OPERATION_REDIRECTED'
@@ -83,7 +89,7 @@ export const uploadFiles =
     driveId,
     addItems
   ) =>
-  dispatch => {
+  async dispatch => {
     let targetDirId = dirId
     let navigateAfterUpload = false
 
@@ -92,9 +98,20 @@ export const uploadFiles =
       navigateAfterUpload = true
     }
 
+    const maxFileCount =
+      flag('drive.max-upload-file-count') ?? MAX_UPLOAD_FILE_COUNT
+
+    // Extract entries synchronously before browser clears dataTransfer
+    const entries = extractFilesEntries(files)
+
+    if (await exceedsFileLimit(entries, maxFileCount)) {
+      dispatch(showModal(<UploadLimitDialog maxFileCount={maxFileCount} />))
+      return
+    }
+
     dispatch(
       addToUploadQueue(
-        files,
+        entries,
         targetDirId,
         sharingState,
         fileUploadedCallback,

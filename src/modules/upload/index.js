@@ -484,7 +484,7 @@ export const removeFileToUploadQueue = file => async dispatch => {
 
 export const addToUploadQueue =
   (
-    files,
+    entries,
     dirID,
     sharingState,
     fileUploadedCallback,
@@ -496,7 +496,7 @@ export const addToUploadQueue =
   async dispatch => {
     dispatch({
       type: ADD_TO_UPLOAD_QUEUE,
-      files: extractFilesEntries(files)
+      files: entries
     })
     dispatch(
       processNextFile(
@@ -575,7 +575,7 @@ export const selectors = {
 }
 
 // DOM helpers
-const extractFilesEntries = items => {
+export const extractFilesEntries = items => {
   let results = []
   for (let i = 0; i < items.length; i += 1) {
     const item = items[i]
@@ -596,4 +596,52 @@ const extractFilesEntries = items => {
   }
 
   return results
+}
+
+/**
+ * Recursively count all files inside a directory entry.
+ *
+ * @param {FileSystemDirectoryEntry} directoryEntry - A directory obtained from the drag-and-drop FileSystem API
+ * @returns {Promise<number>} Total number of files (excluding sub-directories themselves)
+ */
+const countDirectoryFiles = async directoryEntry => {
+  const reader = directoryEntry.createReader()
+  const childEntries = await readAllEntries(reader)
+  let count = 0
+  for (const entry of childEntries) {
+    if (entry.isFile) {
+      count += 1
+    } else if (entry.isDirectory) {
+      count += await countDirectoryFiles(entry)
+    }
+  }
+  return count
+}
+
+/**
+ * Check whether the total number of files in the given entries exceeds
+ * the provided limit. Directories are counted in parallel for speed.
+ * Flat files are checked first to avoid directory traversal when possible.
+ *
+ * @param {Array<{file: File, isDirectory: boolean, entry: FileSystemEntry|null}>} entries - Extracted entries from {@link extractFilesEntries}
+ * @param {number} limit - Maximum number of files allowed
+ * @returns {Promise<boolean>} `true` if the file count exceeds the limit
+ */
+export const exceedsFileLimit = async (entries, limit) => {
+  const fileCount = entries.filter(e => !e.isDirectory || !e.entry).length
+  const directories = entries.filter(e => e.isDirectory && e.entry)
+
+  if (fileCount > limit) return true
+
+  const dirCounts = await Promise.all(
+    directories.map(e => countDirectoryFiles(e.entry))
+  )
+
+  let count = fileCount
+  for (const dirCount of dirCounts) {
+    count += dirCount
+    if (count > limit) return true
+  }
+
+  return false
 }
