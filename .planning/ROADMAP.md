@@ -102,7 +102,7 @@ Full details: `.planning/milestones/v2.5-ROADMAP.md`
 
 - [x] **Phase 25: Souligne (Underline)** - Support underline dans le pipeline extraction/reinjection existant (completed 2026-03-24)
 - [x] **Phase 26: Selections Partielles de Tableaux** - Gestion des cas ou le tableau n'est pas entierement selectionne, avec detection d'ambiguite (completed 2026-03-25)
-- [ ] **Phase 27: References Documentaires** - Detection et preservation des notes de bas de page et renvois internes dans le round-trip
+- [x] **Phase 27: References Documentaires** - Detection et preservation des notes de bas de page et renvois internes dans le round-trip (completed 2026-04-02)
 
 ## Phase Details
 
@@ -141,11 +141,11 @@ Plans:
   2. Apres injection, l'appel de note pointe toujours vers la bonne note de bas de page dans le document OO -- le lien n'est pas rompu
   3. Quand la selection contient un renvoi vers une autre partie du document (cross-reference), le renvoi est detecte et preserve dans le round-trip -- le texte autour peut changer mais le lien de reference reste fonctionnel
   4. Les references documentaires coexistent avec les autres elements du pipeline (images, tableaux, inline formatting) sans regression
-**Plans:** 3 plans
+**Plans:** 3/3 plans complete
 Plans:
-- [ ] 27-01-PLAN.md — Empirical diagnostic of footnote/cross-reference element visibility in OO API
-- [ ] 27-02-PLAN.md — Footnote round-trip: extraction, caching, injection, system prompt
-- [ ] 27-03-PLAN.md — Cross-reference round-trip: extraction, caching/recreation, injection
+- [x] 27-01-PLAN.md — Empirical diagnostic of footnote/cross-reference element visibility in OO API
+- [x] 27-02-PLAN.md — Footnote round-trip: extraction, caching, injection, system prompt
+- [x] 27-03-PLAN.md — Cross-reference round-trip: extraction, caching/recreation, injection
 
 ## Progress
 
@@ -183,4 +183,4 @@ Phases execute in numeric order: 25 -> 26 -> 27
 | 24.1. Table rearchitecture | v2.5 | 2/2 | Complete | 2026-03-23 |
 | 25. Souligne (Underline) | 1/1 | Complete    | 2026-03-24 | - |
 | 26. Selections Partielles de Tableaux | 2/2 | Complete   | 2026-03-25 | - |
-| 27. References Documentaires | v2.6 | 0/3 | Not started | - |
+| 27. References Documentaires | v2.6 | 3/3 | Complete | 2026-04-02 |

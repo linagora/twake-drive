@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.6
 milestone_name: Formatage Complet et References Documentaires
-status: unknown
-stopped_at: Phase 27 context gathered
-last_updated: "2026-04-01T13:09:42.716Z"
+status: complete
+stopped_at: Milestone v2.6 complete
+last_updated: "2026-04-02T22:00:00.000Z"
 progress:
   total_phases: 3
-  completed_phases: 2
-  total_plans: 3
-  completed_plans: 3
+  completed_phases: 3
+  total_plans: 6
+  completed_plans: 6
 ---
 
 # Project State
@@ -19,18 +19,18 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-23)
 
 **Core value:** La chaine de communication complete -- depuis la selection de texte dans OnlyOffice jusqu'a la reinjection du texte modifie par l'IA -- de bout en bout, transparente pour l'utilisateur.
-**Current focus:** Phase 26 — selections-partielles-de-tableaux
+**Current focus:** Milestone v2.6 complete — all phases shipped
 
 ## Current Position
 
-Phase: 26 (selections-partielles-de-tableaux) — EXECUTING
-Plan: 2 of 2
+Phase: 27 (references-documentaires) — COMPLETE
+Milestone v2.6 — ALL 3 PHASES COMPLETE (25, 26, 27)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 34 (v1.0: 10, v2.0: 5, v2.1: 6, v2.2: 3, v2.3: 1, v2.4: 6, v2.5: 3)
+- Total plans completed: 37 (v1.0: 10, v2.0: 5, v2.1: 6, v2.2: 3, v2.3: 1, v2.4: 6, v2.5: 3, v2.6: 3)
 
 ## Accumulated Context
 
@@ -47,6 +47,10 @@ Recent decisions affecting current work:
 - [Phase 26]: Intra-cell selections bypass table handling entirely — same code path as paragraph
 - [Phase 26]: Partial table Replace uses in-place modification (not clone+InsertContent) to preserve table structure
 - [Phase 26]: Insert button disabled for pure partial-table selections; enabled for mixed content
+- [Phase 27]: Cross-refs recreated as hyperlinks with patched internal anchor (u0.ma="", u0.Us=anchor)
+- [Phase 27]: Heading cross-refs require auto-created bookmark on target paragraph
+- [Phase 27]: Footnotes recreated post-InsertContent via AddFootnote() with saved content text
+- [Phase 27]: Bookmark name fuzzy matching (space/underscore normalization) for cross-ref targets
 
 ### Pending Todos (carried from v2.3)
 
@@ -59,6 +63,7 @@ Recent decisions affecting current work:
 - Plugin code must use ES5 syntax (no const/let, no arrow functions)
 - callCommand sandbox has no DOM APIs -- parse outside, pass tokens via Asc.scope
 - No CloneFormatting API in OO -- must read/reapply run properties manually
+- OO hyperlink internal props: u0.ma (URL), u0.Us (anchor), u0.YD (tooltip) — minified, version-dependent
 
 ### Blockers/Concerns
 
@@ -66,6 +71,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-04-01T13:09:42.713Z
-Stopped at: Phase 27 context gathered
-Resume file: .planning/phases/27-references-documentaires/27-CONTEXT.md
+Last session: 2026-04-02T22:00:00.000Z
+Stopped at: Milestone v2.6 complete
+Resume file: .planning/ROADMAP.md
