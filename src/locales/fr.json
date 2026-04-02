@@ -355,6 +355,12 @@
       "errors": "Une erreur est survenue lors de l’import du %{type}, merci de réessayer plus tard.",
       "network": "Vous ne disposez pas d'une connexion internet. Merci de réessayer quand ce sera le cas.",
       "fileTooLargeErrors": "Fichier trop volumineux. Taille maximale autorisée par fichier : %{max_size_value} Go"
+    },
+    "limit": {
+      "title": "Vous ne pouvez pas importer plus de %{limit} fichiers à la fois.",
+      "content": "Besoin d'en importer davantage\u00a0? Téléchargez l'outil de synchronisation sur votre ordinateur",
+      "cancel": "Annuler",
+      "download_desktop": "Télécharger sur ordinateur"
     }
   },
   "intents": {
