@@ -91,15 +91,13 @@ const PanelIcon = () => (
 
 /**
  * Floating zone with two buttons rendered in bottom-right of the viewport.
- * - Top button (inline Scribe): only visible when text is selected
- * - Bottom button (panel toggle): always visible
- * Both are translucent by default, opaque on hover. Rendered via portal on document.body.
+ * Both are always visible (translucent by default, opaque on hover).
+ * Rendered via portal on document.body.
  *
- * @param {{ visible: boolean, showInlineButton: boolean, onTriggerScribe: () => void, onTogglePanel: () => void }} props
+ * @param {{ visible: boolean, onTriggerScribe: () => void, onTogglePanel: () => void }} props
  */
 export const ScribeFloatingZone = ({
   visible,
-  showInlineButton,
   onTriggerScribe,
   onTogglePanel
 }) => {
@@ -133,30 +131,28 @@ export const ScribeFloatingZone = ({
         gap: 8
       }}
     >
-      {showInlineButton && (
-        <button
-          style={{
-            ...buttonStyle,
-            opacity: hoveredInline ? 1 : 0.4,
-            position: 'relative'
-          }}
-          onClick={onTriggerScribe}
-          onMouseEnter={() => setHoveredInline(true)}
-          onMouseLeave={() => setHoveredInline(false)}
-          type="button"
-        >
-          {hoveredInline && (
-            <span style={tooltipStyle}>
-              <span style={{ color: 'white' }}>
-                {t('Scribe.button.text_ai')}
-              </span>
-              <span style={{ color: '#999' }}>(Ctrl+Shift+I)</span>
+      <button
+        style={{
+          ...buttonStyle,
+          opacity: hoveredInline ? 1 : 0.4,
+          position: 'relative'
+        }}
+        onClick={onTriggerScribe}
+        onMouseEnter={() => setHoveredInline(true)}
+        onMouseLeave={() => setHoveredInline(false)}
+        type="button"
+      >
+        {hoveredInline && (
+          <span style={tooltipStyle}>
+            <span style={{ color: 'white' }}>
+              {t('Scribe.button.text_ai')}
             </span>
-          )}
-          <SparkleIcon />
-          Scribe
-        </button>
-      )}
+            <span style={{ color: '#999' }}>(Ctrl+Shift+I)</span>
+          </span>
+        )}
+        <SparkleIcon />
+        Scribe
+      </button>
       <button
         style={{
           ...buttonStyle,

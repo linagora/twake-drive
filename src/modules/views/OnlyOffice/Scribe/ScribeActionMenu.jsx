@@ -75,6 +75,7 @@ const ScribeActionMenu = forwardRef(({ onSelect, onClose, onOpenPanel, selectedT
   }, [lang])
 
   const PROMPT_INDEX = actions.length
+  const activeParent = isMobile && activeSubmenu ? actions.find(a => a.id === activeSubmenu) : null
 
   // Expose focus() to parent via ref
   useImperativeHandle(ref, () => ({
@@ -686,7 +687,7 @@ const ScribeActionMenu = forwardRef(({ onSelect, onClose, onOpenPanel, selectedT
           borderRadius: isMobile ? 0 : 8,
           boxShadow: isMobile ? 'none' : '0 4px 20px rgba(0,0,0,0.15)',
           transition: 'background-color 150ms',
-          backgroundColor: isPromptHighlighted
+          backgroundColor: (focusIndex === PROMPT_INDEX)
             ? ((theme.palette.type || theme.palette.mode) === 'dark' ? theme.palette.grey[700] : theme.palette.grey[200])
             : undefined
         }}

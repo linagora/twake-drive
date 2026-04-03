@@ -48,9 +48,16 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
   // cozy-bridge: listen for Scribe intents from OO plugin
   // In dev, allow all origins. In production, derive from serverUrl/instance.
   const allowedOrigins = useMemo(() => ['*'], []) // TODO: restrict in production
-  const { pendingIntent, showScribeButton, respond } = useCozyBridge(
+  // Update selection in ScribeContext whenever the plugin reports a change
+  const handleSelectionChanged = useCallback(data => {
+    if (setCurrentSelection) {
+      setCurrentSelection(data.text || null, data.html || null)
+    }
+  }, [setCurrentSelection])
+
+  const { pendingIntent, respond } = useCozyBridge(
     allowedOrigins,
-    { onTogglePanel: togglePanel, isPanelOpen }
+    { onTogglePanel: togglePanel, isPanelOpen, onSelectionChanged: handleSelectionChanged }
   )
 
   const showFloatingZone = isScribeEnabled && !isPanelOpen
@@ -59,12 +66,13 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
   // without a popover flash. If the panel opens during the delay, popover is skipped.
   const [popoverReady, setPopoverReady] = useState(false)
   const popoverTimerRef = useRef(null)
+  const partialTableInfoRef = useRef(null)
 
   useEffect(() => {
     if (pendingIntent && !isPanelOpen) {
       popoverTimerRef.current = setTimeout(() => {
         setPopoverReady(true)
-      }, 200)
+      }, 1)
       return () => {
         clearTimeout(popoverTimerRef.current)
         popoverTimerRef.current = null
@@ -78,34 +86,24 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
     }
   }, [pendingIntent, isPanelOpen])
 
-  // Feed selection data from useCozyBridge into ScribeContext
-  useEffect(() => {
-    if (!setCurrentSelection) return
-    if (showScribeButton && showScribeButton.text) {
-      setCurrentSelection(showScribeButton.text, null)
-    } else if (!showScribeButton) {
-      setCurrentSelection(null, null)
-    }
-  }, [showScribeButton, setCurrentSelection])
-
+  // Feed selection data from pendingIntent into ScribeContext
   useEffect(() => {
     if (!setCurrentSelection || !pendingIntent?.data) return
     setCurrentSelection(
       pendingIntent.data.text || null,
       pendingIntent.data.html || null
     )
+    partialTableInfoRef.current = pendingIntent.data.partialTableInfo || null
   }, [pendingIntent, setCurrentSelection])
 
-  // Send trigger-intent to plugin iframe (nested inside OO editor iframe).
-  // We broadcast to all descendant iframes so the message reaches the plugin.
-  const triggerScribe = useCallback(() => {
-    const msg = { type: 'cozy-bridge:trigger-intent', action: 'AI_TEXT_ASSISTANT' }
-    const broadcastToFrames = win => {
+  // Broadcast a message to all descendant iframes (reaches plugin inside OO editor iframe)
+  const broadcastToFrames = useCallback(msg => {
+    const walk = win => {
       try {
         for (let i = 0; i < win.frames.length; i++) {
           try {
             win.frames[i].postMessage(msg, '*')
-            broadcastToFrames(win.frames[i])
+            walk(win.frames[i])
           } catch (e) {
             // cross-origin frame, skip
           }
@@ -114,8 +112,13 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
         // access denied
       }
     }
-    broadcastToFrames(window)
+    walk(window)
   }, [])
+
+  // Send trigger-intent to plugin iframe
+  const triggerScribe = useCallback(() => {
+    broadcastToFrames({ type: 'cozy-bridge:trigger-intent', action: 'AI_TEXT_ASSISTANT' })
+  }, [broadcastToFrames])
 
   const focusEditor = useCallback(() => {
     const iframe = document.getElementsByName(FRAME_EDITOR_NAME)[0]
@@ -265,7 +268,6 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
         <>
           <ScribeFloatingZone
             visible={showFloatingZone}
-            showInlineButton={!!showScribeButton && !pendingIntent}
             onTriggerScribe={triggerScribe}
             onTogglePanel={togglePanel}
           />

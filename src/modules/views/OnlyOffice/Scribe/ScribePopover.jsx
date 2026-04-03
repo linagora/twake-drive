@@ -27,7 +27,7 @@ import styles from '@/modules/views/OnlyOffice/Scribe/scribe.styl'
  *
  * Closing the popover during loading aborts the in-flight API request via AbortController.
  */
-const ScribePopover = ({ open, selectedText, selectedHtml, onReplace, onInsert, onCancel, onOpenPanel }) => {
+const ScribePopover = ({ open, selectedText, selectedHtml, enrichedMd, onReplace, onInsert, onCancel, onOpenPanel, tableAmbiguity }) => {
   const { t } = useI18n()
   const client = useClient()
   const scribe = useScribe()
@@ -217,6 +217,7 @@ const ScribePopover = ({ open, selectedText, selectedHtml, onReplace, onInsert, 
     <ScribeContainer
       open={open}
       onClose={handleClose}
+      transitionDuration={0}
       TransitionProps={{ onEntered: handleEntered }}
       disableAutoFocus
       disableEnforceFocus

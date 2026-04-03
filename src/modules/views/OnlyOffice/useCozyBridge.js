@@ -7,7 +7,6 @@ import { CozyBridge } from '@/lib/cozy-bridge'
  *
  * Creates a CozyBridge instance on mount, registers handlers for:
  * - AI_TEXT_ASSISTANT: opens Scribe popover (or closes panel if panel is open)
- * - SHOW/HIDE_SCRIBE_BUTTON: controls the floating button visibility
  * - TOGGLE_SCRIBE_PANEL: toggles the side panel open/closed
  *
  * @param {string[]} allowedOrigins - Stable array of allowed origins.
@@ -17,15 +16,16 @@ import { CozyBridge } from '@/lib/cozy-bridge'
  * @param {Function} [options.onTogglePanel] - Callback to toggle the panel (from ScribeContext)
  * @param {boolean} [options.isPanelOpen] - Current panel state; when true, AI_TEXT_ASSISTANT
  *   closes the panel instead of opening the popover (single Ctrl+Shift+I close)
- * @returns {{ pendingIntent: object|null, showScribeButton: object|null, respond: Function }}
+ * @param {Function} [options.onSelectionChanged] - Called when plugin reports selection change
+ * @returns {{ pendingIntent: object|null, respond: Function }}
  */
-export function useCozyBridge(allowedOrigins, { onTogglePanel, isPanelOpen } = {}) {
+export function useCozyBridge(allowedOrigins, { onTogglePanel, isPanelOpen, onSelectionChanged } = {}) {
   const [pendingIntent, setPendingIntent] = useState(null)
-  const [showScribeButton, setShowScribeButton] = useState(null)
   const bridgeRef = useRef(null)
   const respondRef = useRef(null)
   const togglePanelRef = useRef(onTogglePanel)
   const isPanelOpenRef = useRef(isPanelOpen)
+  const onSelectionChangedRef = useRef(onSelectionChanged)
 
   // Keep refs current to avoid stale closures in bridge handlers
   useEffect(() => {
@@ -34,6 +34,9 @@ export function useCozyBridge(allowedOrigins, { onTogglePanel, isPanelOpen } = {
   useEffect(() => {
     isPanelOpenRef.current = isPanelOpen
   }, [isPanelOpen])
+  useEffect(() => {
+    onSelectionChangedRef.current = onSelectionChanged
+  }, [onSelectionChanged])
 
   useEffect(() => {
     const bridge = new CozyBridge(allowedOrigins)
@@ -51,16 +54,14 @@ export function useCozyBridge(allowedOrigins, { onTogglePanel, isPanelOpen } = {
       respondRef.current = respondFn
     })
 
-    bridge.onIntent('SHOW_SCRIBE_BUTTON', intentMessage => {
-      setShowScribeButton({ text: intentMessage.data.text })
-    })
-
-    bridge.onIntent('HIDE_SCRIBE_BUTTON', () => {
-      setShowScribeButton(null)
-    })
-
     bridge.onIntent('TOGGLE_SCRIBE_PANEL', () => {
       if (togglePanelRef.current) togglePanelRef.current()
+    })
+
+    bridge.onIntent('SELECTION_CHANGED', intentMessage => {
+      if (onSelectionChangedRef.current) {
+        onSelectionChangedRef.current(intentMessage.data)
+      }
     })
 
     return () => {
@@ -78,8 +79,7 @@ export function useCozyBridge(allowedOrigins, { onTogglePanel, isPanelOpen } = {
     respondRef.current(responsePayload)
     respondRef.current = null
     setPendingIntent(null)
-    setShowScribeButton(null)
   }, [])
 
-  return { pendingIntent, showScribeButton, respond }
+  return { pendingIntent, respond }
 }
