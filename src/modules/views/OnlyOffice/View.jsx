@@ -62,29 +62,7 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
 
   const showFloatingZone = isScribeEnabled && !isPanelOpen
 
-  // Delay popover display by 200ms to allow double Ctrl+Shift+I to open panel
-  // without a popover flash. If the panel opens during the delay, popover is skipped.
-  const [popoverReady, setPopoverReady] = useState(false)
-  const popoverTimerRef = useRef(null)
   const partialTableInfoRef = useRef(null)
-
-  useEffect(() => {
-    if (pendingIntent && !isPanelOpen) {
-      popoverTimerRef.current = setTimeout(() => {
-        setPopoverReady(true)
-      }, 1)
-      return () => {
-        clearTimeout(popoverTimerRef.current)
-        popoverTimerRef.current = null
-      }
-    } else {
-      setPopoverReady(false)
-      if (popoverTimerRef.current) {
-        clearTimeout(popoverTimerRef.current)
-        popoverTimerRef.current = null
-      }
-    }
-  }, [pendingIntent, isPanelOpen])
 
   // Feed selection data from pendingIntent into ScribeContext
   useEffect(() => {
@@ -114,6 +92,14 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
     }
     walk(window)
   }, [])
+
+  // Tell plugin to start/stop sending SELECTION_CHANGED based on panel state
+  useEffect(() => {
+    broadcastToFrames({
+      type: 'cozy-bridge:selection-subscribe',
+      subscribe: isPanelOpen
+    })
+  }, [isPanelOpen, broadcastToFrames])
 
   // Send trigger-intent to plugin iframe
   const triggerScribe = useCallback(() => {
@@ -272,7 +258,7 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
             onTogglePanel={togglePanel}
           />
           <ScribePopover
-            open={popoverReady && !!pendingIntent && !isPanelOpen}
+            open={!!pendingIntent && !isPanelOpen}
             selectedText={pendingIntent?.data?.text || ''}
             selectedHtml={pendingIntent?.data?.html || ''}
             enrichedMd={pendingIntent?.data?.enrichedMd || ''}
