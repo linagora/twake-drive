@@ -3,34 +3,42 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Scribe Chat Panel
 status: completed
-stopped_at: Completed v3.0-04-01-PLAN.md
-last_updated: "2026-03-19T17:29:45.077Z"
-last_activity: 2026-03-19 -- Completed v3.0-04-01 Panel Resize
+stopped_at: Milestone complete + post-milestone refinements
+last_updated: "2026-04-04"
+last_activity: 2026-04-04 -- SDK patch documentation added to README
 progress:
-  total_phases: 8
-  completed_phases: 7
-  total_plans: 13
-  completed_plans: 12
-  percent: 92
+  total_phases: 4
+  completed_phases: 4
+  total_plans: 7
+  completed_plans: 7
+  percent: 100
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-10)
+See: .planning/PROJECT.md (updated 2026-04-04)
 
 **Core value:** L'utilisateur peut interagir avec l'IA de maniere fluide -- actions rapides inline ou chat conversationnel dans un panneau lateral -- pour transformer et manipuler le contenu de son document OnlyOffice.
-**Current focus:** Phase v3.0-04 - Panel Resize
+**Current focus:** v3.0 complete -- post-milestone refinements shipped
 
 ## Current Position
 
 Phase: v3.0-04 of v3.0-04 (Panel Resize)
 Plan: 1 of 1 complete
-Status: Phase v3.0-04 complete
-Last activity: 2026-03-19 -- Completed v3.0-04-01 Panel Resize
+Status: Milestone v3.0 complete (all 4 phases + post-milestone refinements)
+Last activity: 2026-04-04 -- SDK patch documentation added to README
 
-Progress: [█████████░] 92%
+Progress: [██████████] 100%
+
+## Post-Milestone Refinements (2026-04-03 to 2026-04-04)
+
+After v3.0-04 completion, three commits refined the plugin protocol and documentation:
+
+1. **89ac98a9c** -- Simplify plugin protocol: remove SHOW/HIDE_SCRIBE_BUTTON polling, replace with SELECTION_CHANGED one-way intent. Remove keyboard shortcut delay. Add focus guard on ChatInput textarea. Instant Popover open (transitionDuration=0). Both floating buttons always visible.
+2. **12a48b109** -- Restore full plugin code.js (2800+ lines with v2.5/v2.6 features). Add selection-subscribe protocol (plugin only sends SELECTION_CHANGED when panel is open). Remove popover timer delay.
+3. **318a751fc** -- Document patched OO SDK setup and upstream PR dependency in plugin README.
 
 ## Performance Metrics
 
@@ -98,6 +106,6 @@ Recent decisions affecting v3.0:
 
 ## Session Continuity
 
-Last session: 2026-03-19T17:24:39Z
-Stopped at: Completed v3.0-04-01-PLAN.md
+Last session: 2026-04-04
+Stopped at: Post-milestone refinements complete
 Resume file: N/A (milestone complete)

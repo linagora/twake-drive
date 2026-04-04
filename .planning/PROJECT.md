@@ -60,7 +60,7 @@ L'utilisateur peut interagir avec l'IA de manière fluide — que ce soit via de
 - Édition collaborative simultanée avec Scribe — complexité excessive
 - Correction grammaticale passive en temps réel (style Grammarly) — performance prohibitive
 
-## Current Milestone: v3.0 Scribe Chat Panel
+## Shipped: v3.0 Scribe Chat Panel (2026-04-04)
 
 **Goal:** Ajouter un panneau latéral conversationnel dans Cozy Drive pour interagir avec l'IA via un chat, en complément du mode inline existant.
 
@@ -159,9 +159,11 @@ v1.0 : 4 jours, 10 plans. v2.0 : 3 jours, 5 plans. v2.1 : 3 jours, 6 plans. v2.2
 | DOM walk exclusion pour drag | Exclut boutons/input/texte sans drag handle séparé | ✓ Good — zones interactives préservées |
 | Resize via inline width/height + flex | Meilleur contrôle et clamping que CSS resize | ✓ Good — reflow contenu fiable |
 
-| Side panel dans Cozy Drive (pas plugin OO natif) | Plus de contrôle UI, composants cozy-ui, redimensionnement iframe OO | — Pending |
-| Mode complémentaire inline + panel | Conserver les quick actions, ajouter le chat pour échanges longs | — Pending |
-| Composants cozy-ui sans modification | Cohérence écosystème Cozy, maintenabilité | — Pending |
+| Side panel dans Cozy Drive (pas plugin OO natif) | Plus de contrôle UI, composants cozy-ui, redimensionnement iframe OO | ✓ Good -- flex sibling layout, OO iframe resizes correctly |
+| Mode complémentaire inline + panel | Conserver les quick actions, ajouter le chat pour échanges longs | ✓ Good -- both modes coexist, shared conversation history |
+| Composants cozy-ui sans modification | Cohérence écosystème Cozy, maintenabilité | ✓ Good -- cozy-ui used throughout v3.0 |
+| SELECTION_CHANGED remplace SHOW/HIDE polling (v3.0) | Polling causait latence et complexité inutile -- intent one-way plus simple | ✓ Good -- sélection live, zéro polling |
+| Selection-subscribe protocol (v3.0) | Plugin n'envoie SELECTION_CHANGED que quand le panel est ouvert -- réduit le bruit | ✓ Good -- performant, pas de messages inutiles |
 
 ---
-*Last updated: 2026-03-10 after v3.0 milestone start*
+*Last updated: 2026-04-04 after v3.0 milestone complete + post-milestone refinements*

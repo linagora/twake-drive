@@ -5,7 +5,7 @@
 - ✅ **v1.0 Scribe Interface Mock AI** -- Phases 1-6 (shipped 2026-03-03)
 - ✅ **v2.0 Scribe Live AI** -- Phases 7-9 (shipped 2026-03-06)
 - ✅ **v2.1 Formatage Riche** -- Phases 10-13 (shipped 2026-03-09)
-- **v3.0 Scribe Chat Panel** -- Phases v3.0-01 to v3.0-04 (in progress)
+- ✅ **v3.0 Scribe Chat Panel** -- Phases v3.0-01 to v3.0-04 (shipped 2026-04-04)
 
 ## Phases
 
@@ -46,7 +46,7 @@ Full details: `.planning/milestones/v2.1-ROADMAP.md`
 
 </details>
 
-### v3.0 Scribe Chat Panel (In Progress)
+### v3.0 Scribe Chat Panel (Shipped 2026-04-04)
 
 **Milestone Goal:** Add a conversational chat side panel alongside the existing inline popover mode, letting the user have multi-turn AI conversations while working in OnlyOffice.
 

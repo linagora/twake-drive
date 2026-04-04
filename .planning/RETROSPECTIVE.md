@@ -2,6 +2,49 @@
 
 *A living document updated after each milestone. Lessons feed forward into future planning.*
 
+## Milestone: v3.0 — Scribe Chat Panel
+
+**Shipped:** 2026-04-04
+**Phases:** 4 | **Plans:** 7
+
+### What Was Built
+- Conversational chat side panel in Cozy Drive (flex sibling layout alongside OO iframe)
+- Multi-turn AI chat with Markdown rendering, error handling, loading states
+- Selection context integration: chip in input, composite AI prompt with selection markers
+- Message actions (Copy/Replace/Insert) bridged to OO plugin via panelActions
+- Drag-resizable panel width (ResizeHandle + ScribeContext state)
+- Inline popover + panel coexistence with shared conversation history
+- Post-milestone: protocol simplification (SHOW/HIDE polling → SELECTION_CHANGED), selection-subscribe, delay removal
+
+### What Worked
+- Flex sibling layout pattern: OO iframe resizes naturally with CSS flex — no JS resize dispatch needed
+- ScribeContext centralized state cleanly — popover and panel share conversation without prop drilling
+- panelActions bridge pattern: View.jsx passes respond handlers into context, MessageActions consumes them
+- Post-milestone refinement cycle: shipping v3.0 first, then simplifying the protocol, was the right sequencing
+
+### What Was Inefficient
+- v3.0-MILESTONE-AUDIT was run before v3.0-04 completion and never re-audited — caused stale "gaps_found" status for weeks
+- SHOW/HIDE polling was carried into v3.0 from v1.0 and only simplified after milestone — should have been cleaned up earlier
+- OO cross-origin focus steal from ChatInput textarea required workaround (focus guard) — not documented until post-milestone
+
+### Patterns Established
+- SELECTION_CHANGED one-way intent: plugin sends selection updates only when panel is open (selection-subscribe)
+- messagesRef pattern: stable sendMessage callback that reads latest messages without re-renders
+- addMessage() callback for external message injection (popover → shared chat)
+- selectionDismissedRef: tracks dismissed selection text to prevent chip re-showing until new selection
+
+### Key Lessons
+1. Protocol simplification should happen as part of the milestone, not after — carry-forward complexity from v1.0 added unnecessary latency and polling
+2. Flex sibling layout is the right pattern for side panels in iframe-heavy apps — avoids cross-origin resize issues entirely
+3. Focus management in cross-origin iframe setups needs explicit guards — OO steals focus unpredictably
+4. Milestone audits should be re-run after the last phase completes, not before
+
+### Cost Observations
+- Sessions: ~6-8 (including post-milestone refinements)
+- Notable: v3.0 was the largest milestone — 4 phases spanning 3 weeks, but post-milestone refinements were fast (1 day)
+
+---
+
 ## Milestone: v2.1 — Formatage Riche
 
 **Shipped:** 2026-03-09
@@ -90,6 +133,7 @@
 | v2.0 | 3 | 5 | Faster execution, real API integration |
 | v2.1 | 4 | 6 | TDD pattern, UAT verification, research-first approach |
 | v2.2 | 2 | 3 | Fastest milestone, zero deviations, clean UX focus |
+| v3.0 | 4 | 7 | Largest milestone, side panel architecture, post-milestone refinement cycle |
 
 ### Top Lessons (Verified Across Milestones)
 

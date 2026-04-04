@@ -1,5 +1,24 @@
 # Milestones
 
+## v3.0 Scribe Chat Panel (Shipped: 2026-04-04)
+
+**Phases completed:** 4 phases, 7 plans
+**Timeline:** 2026-03-15 → 2026-04-04 (includes post-milestone refinements)
+**Requirements:** 16/16 satisfied
+
+**Key accomplishments:**
+
+- Panneau latéral conversationnel dans Cozy Drive (flex sibling layout, OO iframe resizes)
+- Chat multi-turn avec historique, rendu Markdown, gestion d'erreurs
+- Sélection OO intégrée au chat (chip + contexte dans le prompt AI)
+- Actions sur les réponses AI : Copy, Replace, Insert (via panelActions bridge)
+- Panel drag-resizable (ResizeHandle component + dynamic width in ScribeContext)
+- Coexistence inline popover + side panel avec historique de conversation partagé
+- Post-milestone: simplification protocole plugin (SHOW/HIDE polling → SELECTION_CHANGED), selection-subscribe protocol, suppression des délais (shortcut + popover)
+- Documentation SDK patch (upstream PR #4868 GetInlineDrawings)
+
+---
+
 ## v2.5 Objets Complexes et Blocs Etendus (Shipped: 2026-03-23)
 
 **Phases completed:** 7 phases, 12 plans
