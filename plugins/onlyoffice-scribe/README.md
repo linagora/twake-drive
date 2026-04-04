@@ -243,6 +243,47 @@ OO 9.x introduced client-side JWT validation: the OO JS API checks that the JWT 
 
 The setup script disables **browser-side** JWT validation only. Server-to-server JWT (inbox/outbox) remains enabled — the Cozy stack and OO container must share the same secret (configured in `~/.cozy/cozy.yml` and auto-generated in OO's `local.json`).
 
+## Patched OnlyOffice SDK (temporary)
+
+Scribe's markdown extraction needs to know where inline images sit within a text run. The OO plugin API doesn't expose this — we submitted an upstream PR to add `ApiRun.GetInlineDrawings()`:
+
+**PR:** https://github.com/ONLYOFFICE/sdkjs/pull/4868
+
+Until the PR is merged and shipped in an OO release, we use a locally-built patched SDK. The `oo-dev-setup.sh` script auto-detects the patched files and mounts them into the container.
+
+### Building the patched SDK
+
+1. Clone the fork (already done if you have `~/Dev-local/onlyoffice-sdkjs/`):
+
+```bash
+cd ~/Dev-local
+git clone -b feature/api-run-get-inline-drawings https://github.com/Benibur/sdkjs.git onlyoffice-sdkjs
+```
+
+2. Build via Docker (compiles the Word SDK with the patch):
+
+```bash
+cd ~/Dev-local/onlyoffice-sdkjs
+docker build -f Dockerfile.build -t sdkjs-build .
+docker run --rm -v "$(pwd)/word:/output" sdkjs-build sh -c "cp build/word/sdk-all.js /output/sdk-all-patched.js && cp build/word/sdk-all-min.js /output/sdk-all-min-patched.js"
+```
+
+This produces two files in `~/Dev-local/onlyoffice-sdkjs/word/`:
+- `sdk-all-patched.js`
+- `sdk-all-min-patched.js`
+
+3. Restart OO — the setup script detects these files and volume-mounts them automatically:
+
+```bash
+./scripts/oo-dev-setup.sh
+```
+
+### Retirement plan
+
+When the upstream PR is merged and we deploy an OO version that includes `GetInlineDrawings`, remove:
+- The patched SDK files and `~/Dev-local/onlyoffice-sdkjs/` directory
+- The `SDKJS_VOLUMES` mount logic in `oo-dev-setup.sh`
+
 ## Known Constraints
 
 ### postMessage and Iframe Nesting
