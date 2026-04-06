@@ -687,25 +687,47 @@ export const overwriteFile = async (
 
 /**
  * Build preliminary queue items from raw entries for immediate display.
- * Extracts relativePath from file.path when available.
+ * Extracts relativePath from file.path when available and creates
+ * placeholder items for dropped directories while their contents are resolved.
  */
 const buildPreliminaryItems = (entries, dirID) =>
   entries
-    .filter(e => e.file)
     .map(e => {
-      const filePath = e.file.path || ''
-      const cleanPath = filePath.startsWith('/') ? filePath.slice(1) : filePath
-      const hasPath = cleanPath && cleanPath.includes('/')
-      return {
-        fileId: hasPath ? cleanPath : e.file.name,
-        file: e.file,
-        relativePath: hasPath ? cleanPath : null,
-        folderId: dirID,
-        folderName: hasPath ? cleanPath.split('/')[0] : null,
-        isDirectory: false,
-        entry: null
+      if (e.file) {
+        const filePath = e.file.path || ''
+        const cleanPath = filePath.startsWith('/') ? filePath.slice(1) : filePath
+        const hasPath = cleanPath && cleanPath.includes('/')
+        return {
+          fileId: hasPath ? cleanPath : e.file.name,
+          file: e.file,
+          relativePath: hasPath ? cleanPath : null,
+          folderId: dirID,
+          folderName: hasPath ? cleanPath.split('/')[0] : null,
+          isDirectory: false,
+          entry: null
+        }
       }
+
+      if (e.entry?.isDirectory) {
+        const entryPath = e.entry.fullPath || e.entry.name || ''
+        const cleanPath = entryPath.startsWith('/')
+          ? entryPath.slice(1)
+          : entryPath
+
+        return {
+          fileId: cleanPath || e.entry.name,
+          file: null,
+          relativePath: cleanPath || null,
+          folderId: dirID,
+          folderName: cleanPath ? cleanPath.split('/')[0] : e.entry.name || null,
+          isDirectory: true,
+          entry: e.entry
+        }
+      }
+
+      return null
     })
+    .filter(Boolean)
 
 /**
  * Resolve folder structure server-side and return updated queue items.
