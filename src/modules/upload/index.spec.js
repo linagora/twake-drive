@@ -368,6 +368,39 @@ describe('queue reducer', () => {
     expect(result).toEqual([])
   })
 
+  it('should update existing items and append new ones on RESOLVE_FOLDER_ITEMS', () => {
+    const initialState = [
+      {
+        fileId: 'report.pdf',
+        status: 'pending',
+        file: { name: 'report.pdf' },
+        progress: null
+      }
+    ]
+    const action = {
+      type: 'RESOLVE_FOLDER_ITEMS',
+      resolvedItems: [
+        {
+          fileId: 'report.pdf',
+          file: { name: 'report.pdf' },
+          folderId: 'resolved-dir',
+          relativePath: null
+        },
+        {
+          fileId: 'photos/img.jpg',
+          file: { name: 'img.jpg' },
+          folderId: 'photos-dir',
+          relativePath: 'photos/img.jpg'
+        }
+      ]
+    }
+    const result = queue(initialState, action)
+    expect(result).toHaveLength(2)
+    expect(result[0].folderId).toBe('resolved-dir')
+    expect(result[1].fileId).toBe('photos/img.jpg')
+    expect(result[1].status).toBe('pending')
+  })
+
   it('should handle PURGE_UPLOAD_QUEUE action type', () => {
     const action = {
       type: 'PURGE_UPLOAD_QUEUE'

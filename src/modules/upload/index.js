@@ -145,6 +145,23 @@ const item = (state, action = { isUpdate: false }) => {
   }
 }
 
+/**
+ * Merge resolved folder items into the queue: update existing items
+ * by fileId, and append new ones discovered by flattenEntries
+ * (DropzoneDnD drops where directory entries have file=null).
+ */
+const mergeResolvedItems = (state, resolvedItems) => {
+  const existingIds = new Set(state.map(i => i.fileId))
+  const updated = state.map(i => {
+    const update = resolvedItems.find(r => r.fileId === i.fileId)
+    return update ? { ...i, ...update } : i
+  })
+  const newItems = resolvedItems
+    .filter(r => !existingIds.has(r.fileId))
+    .map(r => itemInitialState(r))
+  return [...updated, ...newItems]
+}
+
 export const queue = (state = [], action) => {
   switch (action.type) {
     case ADD_TO_UPLOAD_QUEUE:
@@ -154,13 +171,8 @@ export const queue = (state = [], action) => {
       ]
     case PURGE_UPLOAD_QUEUE:
       return []
-    case RESOLVE_FOLDER_ITEMS: {
-      const resolved = action.resolvedItems
-      return state.map(i => {
-        const update = resolved.find(r => r.fileId === i.fileId)
-        return update ? { ...i, ...update } : i
-      })
-    }
+    case RESOLVE_FOLDER_ITEMS:
+      return mergeResolvedItems(state, action.resolvedItems)
     case UPLOAD_FILE:
     case RECEIVE_UPLOAD_SUCCESS:
     case RECEIVE_UPLOAD_ERROR:
