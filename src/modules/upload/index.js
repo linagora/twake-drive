@@ -156,8 +156,10 @@ export const queue = (state = [], action) => {
     case UPLOAD_FILE:
     case RECEIVE_UPLOAD_SUCCESS:
     case RECEIVE_UPLOAD_ERROR:
-    case UPLOAD_PROGRESS:
-      return state.map(i => (i.fileId !== action.fileId ? i : item(i, action)))
+    case UPLOAD_PROGRESS: {
+      const matchId = action.fileId ?? action.file?.name
+      return state.map(i => (i.fileId !== matchId ? i : item(i, action)))
+    }
     default:
       return state
   }

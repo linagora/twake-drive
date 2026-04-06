@@ -610,6 +610,23 @@ describe('queue reducer', () => {
     expect(result[1].status).toBe('loading')
   })
 
+  it('should fall back to file.name when action has no fileId (Flagship compat)', () => {
+    const stateWithItems = [
+      {
+        fileId: 'my-doc.odt',
+        status: 'loading',
+        file: { name: 'my-doc.odt' },
+        progress: null
+      }
+    ]
+    const action = {
+      type: 'RECEIVE_UPLOAD_SUCCESS',
+      file: { name: 'my-doc.odt' }
+    }
+    const result = queue(stateWithItems, action)
+    expect(result[0].status).toBe('created')
+  })
+
   describe('progress action', () => {
     const file = {
       name: 'doc1.odt'
