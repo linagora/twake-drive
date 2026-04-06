@@ -16,6 +16,21 @@ export const MSG_TYPE_INTENT = 'cozy-bridge:intent'
 /** @type {string} Message type for responses (host -> plugin) */
 export const MSG_TYPE_RESPONSE = 'cozy-bridge:response'
 
+/**
+ * Known intent action verbs.
+ * PANEL_ACTION is a one-way command sent from Cozy Drive (host) down to the
+ * plugin iframe, carrying a direct Replace/Insert instruction that does NOT
+ * require a pending-intent/respond round-trip. Used by panel AI messages
+ * where no prior AI_TEXT_ASSISTANT intent was ever emitted.
+ * @type {Object<string,string>}
+ */
+export const INTENT_ACTIONS = {
+  AI_TEXT_ASSISTANT: 'AI_TEXT_ASSISTANT',
+  TOGGLE_SCRIBE_PANEL: 'TOGGLE_SCRIBE_PANEL',
+  SELECTION_CHANGED: 'SELECTION_CHANGED',
+  PANEL_ACTION: 'PANEL_ACTION'
+}
+
 /** @type {number} Maximum allowed size for message data payload (1MB) */
 const MAX_DATA_SIZE = 1_000_000
 
@@ -56,6 +71,22 @@ export function createResponseMessage(intentId, status, action, data) {
     action,
     data: data || {}
   }
+}
+
+/**
+ * Create a PANEL_ACTION intent message — a one-way command from Cozy Drive
+ * (host) down to the plugin iframe. Unlike AI_TEXT_ASSISTANT, this carries
+ * a direct Replace/Insert instruction and does not expect a response.
+ *
+ * @param {{action: 'replace'|'insert', text: string, html?: string, md?: string}} payload
+ * @returns {import('./types').IntentMessage}
+ */
+export function createPanelActionIntent({ action, text, html, md }) {
+  return createIntentMessage(
+    INTENT_ACTIONS.PANEL_ACTION,
+    { action: action, text: text, html: html, md: md },
+    'cozy-drive-panel'
+  )
 }
 
 /**

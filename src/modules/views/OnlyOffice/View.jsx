@@ -51,11 +51,12 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
   // Update selection in ScribeContext whenever the plugin reports a change
   const handleSelectionChanged = useCallback(data => {
     if (setCurrentSelection) {
-      setCurrentSelection(data.text || null, data.html || null)
+      setCurrentSelection(data.text || null, data.html || null, data.enrichedMd || null)
     }
+    partialTableInfoRef.current = data.partialTableInfo || null
   }, [setCurrentSelection])
 
-  const { pendingIntent, respond } = useCozyBridge(
+  const { pendingIntent, respond, castPanelAction } = useCozyBridge(
     allowedOrigins,
     { onTogglePanel: togglePanel, isPanelOpen, onSelectionChanged: handleSelectionChanged }
   )
@@ -69,7 +70,8 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
     if (!setCurrentSelection || !pendingIntent?.data) return
     setCurrentSelection(
       pendingIntent.data.text || null,
-      pendingIntent.data.html || null
+      pendingIntent.data.html || null,
+      pendingIntent.data.enrichedMd || null
     )
     partialTableInfoRef.current = pendingIntent.data.partialTableInfo || null
   }, [pendingIntent, setCurrentSelection])
@@ -111,6 +113,16 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
     if (iframe) iframe.focus()
   }, [])
 
+  // Track pendingIntent in a ref so handleReplace/handleInsert can decide
+  // at call time whether to respond() to an inline popover intent or cast
+  // a one-way PANEL_ACTION for a pure panel chat flow — without causing
+  // MessageActions (which uses panelActions) to rebuild its handlers on
+  // every selection change.
+  const pendingIntentRef = useRef(pendingIntent)
+  useEffect(() => {
+    pendingIntentRef.current = pendingIntent
+  }, [pendingIntent])
+
   const handleReplace = useCallback(
     text => {
       const html = unwrapSingleParagraph(markdownToHtml(text).trim())
@@ -118,10 +130,23 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
       if (partialTableInfoRef.current) {
         data.partialTableInfo = partialTableInfoRef.current
       }
-      respond({ status: 'ok', action: 'replace', data })
+      if (pendingIntentRef.current) {
+        // Inline popover flow: answer the pending AI_TEXT_ASSISTANT intent.
+        respond({ status: 'ok', action: 'replace', data })
+      } else {
+        // Pure panel chat flow: no pending intent exists, so cast a one-way
+        // PANEL_ACTION directly to the plugin.
+        castPanelAction({
+          action: 'replace',
+          text,
+          html,
+          md: text,
+          partialTableInfo: partialTableInfoRef.current || undefined
+        })
+      }
       setTimeout(focusEditor, 100)
     },
-    [respond, focusEditor]
+    [respond, castPanelAction, focusEditor]
   )
 
   const handleInsert = useCallback(
@@ -131,10 +156,20 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
       if (partialTableInfoRef.current) {
         data.partialTableInfo = partialTableInfoRef.current
       }
-      respond({ status: 'ok', action: 'insert', data })
+      if (pendingIntentRef.current) {
+        respond({ status: 'ok', action: 'insert', data })
+      } else {
+        castPanelAction({
+          action: 'insert',
+          text,
+          html,
+          md: text,
+          partialTableInfo: partialTableInfoRef.current || undefined
+        })
+      }
       setTimeout(focusEditor, 100)
     },
-    [respond, focusEditor]
+    [respond, castPanelAction, focusEditor]
   )
 
   // Wire respond-based handlers into ScribeContext so MessageActions can call them

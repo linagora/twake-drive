@@ -59,7 +59,7 @@ export const ScribeProvider = ({ children }) => {
     setMessages(prev => [...prev, msg])
   }, [])
 
-  const setCurrentSelection = useCallback((text, html) => {
+  const setCurrentSelection = useCallback((text, html, enrichedMd) => {
     if (!text) {
       setCurrentSelectionState(null)
       return
@@ -68,7 +68,7 @@ export const ScribeProvider = ({ children }) => {
     if (selectionDismissedRef.current === text) return
     // New different selection resets the dismissed state
     selectionDismissedRef.current = null
-    const markdown = html ? htmlToMarkdown(html) : text
+    const markdown = enrichedMd || (html ? htmlToMarkdown(html) : text)
     setCurrentSelectionState({ text, html, markdown })
   }, [])
 

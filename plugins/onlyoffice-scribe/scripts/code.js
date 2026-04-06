@@ -1840,6 +1840,41 @@
     }
   });
 
+  // ---- PANEL_ACTION listener (host -> plugin, one-way) ----
+  // The Scribe side panel sends PANEL_ACTION cozy-bridge:intent messages when
+  // the user clicks Replace/Insert on an AI chat message. Unlike the response
+  // path, there is no pending intent to look up — the payload carries the
+  // action and text directly, and we route it through the same
+  // handleIntentResponse function used by the inline popover flow so both
+  // paths produce identical document modifications (smart spacing, Builder
+  // API, PasteHtml fallback, etc.).
+  window.addEventListener("message", function(event) {
+    var msg = event.data;
+    if (!msg || msg.type !== "cozy-bridge:intent" || msg.version !== 1) return;
+    if (msg.action !== "PANEL_ACTION") return;
+
+    var panelData = msg.data || {};
+    var subAction = panelData.action;
+    if (subAction !== "replace" && subAction !== "insert") {
+      log("PANEL_ACTION ignored -- unknown sub-action: " + subAction);
+      return;
+    }
+
+    log("PANEL_ACTION received: " + subAction);
+    // Synthesize a response-shaped msg for handleIntentResponse. It only
+    // reads .action and .data, so this is a faithful reuse with zero
+    // behavioral drift from the inline popover path.
+    handleIntentResponse({
+      action: subAction,
+      data: {
+        text: panelData.text || "",
+        html: panelData.html || null,
+        md: panelData.md || null,
+        partialTableInfo: panelData.partialTableInfo || null
+      }
+    });
+  });
+
   // ---- Trigger-intent listener (host -> plugin) ----
   // Cozy Drive sends trigger-intent to ask the plugin to cast an AI_TEXT_ASSISTANT intent
   window.addEventListener("message", function(event) {
@@ -2734,10 +2769,9 @@
 
       // Push selection to React only when panel is listening
       if (selectionSubscribed) {
-        castIntent("SELECTION_CHANGED", {
-          text: lastSelectedText || null,
-          html: lastSelectedHtml || null
-        }, true);
+        var selData = buildEditIntentData();
+        selData.html = lastSelectedHtml || null;
+        castIntent("SELECTION_CHANGED", selData, true);
       }
     });
   };
