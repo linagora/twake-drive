@@ -151,9 +151,10 @@ const item = (state, action = { isUpdate: false }) => {
  * (DropzoneDnD drops where directory entries have file=null).
  */
 const mergeResolvedItems = (state, resolvedItems) => {
+  const resolvedMap = new Map(resolvedItems.map(r => [r.fileId, r]))
   const existingIds = new Set(state.map(i => i.fileId))
   const updated = state.map(i => {
-    const update = resolvedItems.find(r => r.fileId === i.fileId)
+    const update = resolvedMap.get(i.fileId)
     return update ? { ...i, ...update } : i
   })
   const newItems = resolvedItems
