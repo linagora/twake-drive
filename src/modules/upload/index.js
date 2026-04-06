@@ -525,15 +525,6 @@ export const overwriteFile = async (
   return resp.data
 }
 
-export const removeFileToUploadQueue = (file, fileId) => async dispatch => {
-  dispatch({
-    type: RECEIVE_UPLOAD_SUCCESS,
-    fileId: fileId ?? file.name,
-    file,
-    isUpdate: true
-  })
-}
-
 export const addToUploadQueue =
   (
     entries,
@@ -631,8 +622,8 @@ export const extractFilesEntries = items => {
   let results = []
   for (let i = 0; i < items.length; i += 1) {
     const item = items[i]
-    if (item.webkitGetAsEntry != null && item.webkitGetAsEntry()) {
-      const entry = item.webkitGetAsEntry()
+    const entry = item.webkitGetAsEntry?.()
+    if (entry) {
       results.push({
         file: item.getAsFile(),
         fileId: entry.fullPath,
