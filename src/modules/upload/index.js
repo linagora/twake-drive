@@ -15,6 +15,7 @@ import { CozyFile } from '@/models'
 const SLUG = 'upload'
 
 export const ADD_TO_UPLOAD_QUEUE = 'ADD_TO_UPLOAD_QUEUE'
+const RESOLVE_FOLDER_ITEMS = 'RESOLVE_FOLDER_ITEMS'
 const UPLOAD_FILE = 'UPLOAD_FILE'
 const UPLOAD_PROGRESS = 'UPLOAD_PROGRESS'
 export const RECEIVE_UPLOAD_SUCCESS = 'RECEIVE_UPLOAD_SUCCESS'
@@ -153,6 +154,13 @@ export const queue = (state = [], action) => {
       ]
     case PURGE_UPLOAD_QUEUE:
       return []
+    case RESOLVE_FOLDER_ITEMS: {
+      const resolved = action.resolvedItems
+      return state.map(i => {
+        const update = resolved.find(r => r.fileId === i.fileId)
+        return update ? { ...i, ...update } : i
+      })
+    }
     case UPLOAD_FILE:
     case RECEIVE_UPLOAD_SUCCESS:
     case RECEIVE_UPLOAD_ERROR:
@@ -678,65 +686,58 @@ export const addToUploadQueue =
       e => e.file?.path && e.file.path.includes('/')
     )
     const hasDirectories = entries.some(e => e.isDirectory && e.entry)
+    const needsFolderResolution = hasFilePaths || hasDirectories
 
-    let flatItems
-    if (hasFilePaths) {
-      try {
-        flatItems = await flattenEntriesFromPaths(
-          entries,
-          dirID,
-          client,
-          driveId
-        )
-      } catch (error) {
-        logger.error(`Upload module: flattenEntriesFromPaths failed: ${error}`)
-        flatItems = entries
-          .filter(e => e.file)
-          .map(e => ({
-            fileId: e.file.name,
-            file: e.file,
-            relativePath: null,
-            folderId: dirID,
-            folderName: null,
-            isDirectory: false,
-            entry: null
-          }))
-      }
-    } else if (hasDirectories) {
-      try {
-        flatItems = await flattenEntries(entries, dirID, client, driveId)
-      } catch (error) {
-        logger.error(`Upload module: flattenEntries failed: ${error}`)
-        flatItems = entries
-          .filter(e => !e.isDirectory && e.file)
-          .map(e => ({
-            fileId: e.file.name,
-            file: e.file,
-            relativePath: null,
-            folderId: dirID,
-            folderName: null,
-            isDirectory: false,
-            entry: null
-          }))
-      }
-    } else {
-      flatItems = entries
-        .filter(e => e.file)
-        .map(e => ({
-          fileId: e.file.name,
+    // Step 1: dispatch queue immediately so the UI shows up right away
+    const preliminaryItems = entries
+      .filter(e => e.file)
+      .map(e => {
+        const filePath = e.file.path || ''
+        const cleanPath = filePath.startsWith('/')
+          ? filePath.slice(1)
+          : filePath
+        const hasPath = cleanPath && cleanPath.includes('/')
+        return {
+          fileId: hasPath ? cleanPath : e.file.name,
           file: e.file,
-          relativePath: null,
+          relativePath: hasPath ? cleanPath : null,
           folderId: dirID,
-          folderName: null,
+          folderName: hasPath ? cleanPath.split('/')[0] : null,
           isDirectory: false,
           entry: null
-        }))
-    }
+        }
+      })
 
     dispatch({
       type: ADD_TO_UPLOAD_QUEUE,
-      files: flatItems
+      files: preliminaryItems
     })
+
+    // Step 2: resolve folders server-side, then update items with folderId
+    if (needsFolderResolution) {
+      try {
+        let resolvedItems
+        if (hasFilePaths) {
+          resolvedItems = await flattenEntriesFromPaths(
+            entries,
+            dirID,
+            client,
+            driveId
+          )
+        } else {
+          resolvedItems = await flattenEntries(entries, dirID, client, driveId)
+        }
+        dispatch({
+          type: RESOLVE_FOLDER_ITEMS,
+          resolvedItems
+        })
+      } catch (error) {
+        logger.error(`Upload module: folder resolution failed: ${error}`)
+        // Items stay with folderId=dirID, files will upload to root
+      }
+    }
+
+    // Step 3: start processing
     dispatch(
       processNextFile(
         fileUploadedCallback,
