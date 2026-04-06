@@ -55,6 +55,7 @@ const CONFLICT_ERROR = 409
 
 const itemInitialState = item => ({
   ...item,
+  fileId: item.fileId ?? item.file.name,
   status: PENDING,
   progress: null
 })
@@ -157,7 +158,7 @@ export const queue = (state = [], action) => {
     case RECEIVE_UPLOAD_ERROR:
     case UPLOAD_PROGRESS:
       return state.map(i =>
-        i.file.name !== action.file.name ? i : item(i, action)
+        i.fileId !== action.fileId ? i : item(i, action)
       )
     default:
       return state
@@ -168,8 +169,9 @@ export default combineReducers({
   queue
 })
 
-export const uploadProgress = (file, event, date) => ({
+export const uploadProgress = (fileId, file, event, date) => ({
   type: UPLOAD_PROGRESS,
+  fileId,
   file,
   loaded: event.loaded,
   total: event.total,
@@ -202,12 +204,12 @@ export const processNextFile =
       return dispatch(onQueueEmpty(queueCompletedCallback))
     }
 
-    const { file, entry, isDirectory } = item
+    const { file, fileId, entry, isDirectory } = item
     const encryptionKey = flag('drive.enable-encryption')
       ? await getEncryptionKeyFromDirId(client, dirID)
       : null
     try {
-      dispatch({ type: UPLOAD_FILE, file })
+      dispatch({ type: UPLOAD_FILE, fileId, file })
       if (entry && isDirectory) {
         const newDir = await uploadDirectory(
           client,
@@ -220,11 +222,11 @@ export const processNextFile =
           driveId
         )
         safeCallback(newDir)
-        dispatch({ type: RECEIVE_UPLOAD_SUCCESS, file, uploadedItem: newDir })
+        dispatch({ type: RECEIVE_UPLOAD_SUCCESS, fileId, file, uploadedItem: newDir })
       } else {
         const withProgress = {
           onUploadProgress: event => {
-            dispatch(uploadProgress(file, event))
+            dispatch(uploadProgress(fileId, file, event))
           }
         }
 
@@ -242,6 +244,7 @@ export const processNextFile =
         safeCallback(uploadedFile)
         dispatch({
           type: RECEIVE_UPLOAD_SUCCESS,
+          fileId,
           file,
           uploadedItem: uploadedFile
         })
@@ -260,7 +263,7 @@ export const processNextFile =
             path,
             {
               onUploadProgress: event => {
-                dispatch(uploadProgress(file, event))
+                dispatch(uploadProgress(fileId, file, event))
               }
             },
             driveId
@@ -268,6 +271,7 @@ export const processNextFile =
           safeCallback(uploadedFile)
           dispatch({
             type: RECEIVE_UPLOAD_SUCCESS,
+            fileId,
             file,
             isUpdate: true,
             uploadedItem: uploadedFile
@@ -301,7 +305,7 @@ export const processNextFile =
         }
 
         // Dispatch an action to handle the upload error with the determined status
-        dispatch({ type: RECEIVE_UPLOAD_ERROR, file, status })
+        dispatch({ type: RECEIVE_UPLOAD_ERROR, fileId, file, status })
       }
     }
     dispatch(
@@ -478,8 +482,8 @@ export const overwriteFile = async (
   return resp.data
 }
 
-export const removeFileToUploadQueue = file => async dispatch => {
-  dispatch({ type: RECEIVE_UPLOAD_SUCCESS, file, isUpdate: true })
+export const removeFileToUploadQueue = (file, fileId) => async dispatch => {
+  dispatch({ type: RECEIVE_UPLOAD_SUCCESS, fileId: fileId ?? file.name, file, isUpdate: true })
 }
 
 export const addToUploadQueue =
