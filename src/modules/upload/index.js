@@ -320,32 +320,40 @@ export const processNextFile =
       return dispatch(onQueueEmpty(queueCompletedCallback))
     }
 
-    const { file, fileId } = item
+    const { file, fileId, folderId } = item
+    const targetDirId = folderId ?? dirID
     const encryptionKey = flag('drive.enable-encryption')
-      ? await getEncryptionKeyFromDirId(client, dirID)
+      ? await getEncryptionKeyFromDirId(client, targetDirId)
       : null
     try {
-      const uploaded = await performUpload(
+      dispatch({ type: UPLOAD_FILE, fileId, file })
+
+      const uploadedFile = await uploadFile(
         client,
-        item,
-        dirID,
-        { vaultClient, encryptionKey },
-        driveId,
-        dispatch
+        file,
+        targetDirId,
+        {
+          vaultClient,
+          encryptionKey,
+          onUploadProgress: event => {
+            dispatch(uploadProgress(fileId, file, event))
+          }
+        },
+        driveId
       )
-      safeCallback(uploaded)
+      safeCallback(uploadedFile)
       dispatch({
         type: RECEIVE_UPLOAD_SUCCESS,
         fileId,
         file,
-        uploadedItem: uploaded
+        uploadedItem: uploadedFile
       })
     } catch (uploadError) {
       await handleUploadError(uploadError, {
         client,
         file,
         fileId,
-        dirID,
+        dirID: targetDirId,
         driveId,
         dispatch,
         safeCallback
@@ -385,40 +393,169 @@ const readAllEntries = async dirReader => {
   return entries
 }
 
-const uploadDirectory = async (
+/**
+ * Recursively flatten FileSystemEntry-based directory entries into
+ * individual file items. Used by DropzoneDnD where webkitGetAsEntry()
+ * is still valid (react-dnd calls drop() synchronously).
+ */
+export const flattenEntries = async (
+  entries,
+  rootDirId,
   client,
-  directory,
-  dirID,
-  { vaultClient, encryptionKey },
-  driveId
+  driveId,
+  pathPrefix = '',
+  folderName = null
 ) => {
-  const newDir = await createFolder(client, directory.name, dirID, driveId)
-  const dirReader = directory.createReader()
-  const options = { vaultClient, encryptionKey }
+  const result = []
 
-  const entries = await readAllEntries(dirReader)
+  for (const item of entries) {
+    if (item.isDirectory && item.entry) {
+      const dirEntry = item.entry
+      const dirName = dirEntry.name
+      const newDir = await createFolder(client, dirName, rootDirId, driveId)
+      const topFolderName = folderName ?? dirName
+      const newPrefix = pathPrefix ? `${pathPrefix}/${dirName}` : dirName
 
-  const files = await Promise.all(
-    entries.filter(e => e.isFile).map(e => getFileFromEntry(e))
-  )
+      const dirReader = dirEntry.createReader()
+      const childEntries = await readAllEntries(dirReader)
+      const fileEntries = childEntries.filter(e => e.isFile)
+      const dirEntries = childEntries.filter(e => e.isDirectory)
 
-  let fileIndex = 0
-  for (const entry of entries) {
-    if (entry.isFile) {
-      await uploadFile(client, files[fileIndex++], newDir.id, options, driveId)
-    } else if (entry.isDirectory) {
-      await uploadDirectory(client, entry, newDir.id, options, driveId)
+      const files = await Promise.all(fileEntries.map(e => getFileFromEntry(e)))
+
+      for (const file of files) {
+        const relativePath = `${newPrefix}/${file.name}`
+        result.push({
+          fileId: relativePath,
+          file,
+          relativePath,
+          folderId: newDir.id,
+          folderName: topFolderName,
+          isDirectory: false,
+          entry: null
+        })
+      }
+
+      const subEntries = dirEntries.map(e => ({
+        file: null,
+        isDirectory: true,
+        entry: e
+      }))
+      if (subEntries.length > 0) {
+        const subItems = await flattenEntries(
+          subEntries,
+          newDir.id,
+          client,
+          driveId,
+          newPrefix,
+          topFolderName
+        )
+        result.push(...subItems)
+      }
+    } else if (!item.isDirectory) {
+      result.push({
+        fileId: item.file.name,
+        file: item.file,
+        relativePath: null,
+        folderId: rootDirId,
+        folderName: null,
+        isDirectory: false,
+        entry: null
+      })
     }
   }
 
-  return newDir
+  return result
+}
+
+/**
+ * Flatten file entries using file.path (set by react-dropzone/file-selector).
+ * Creates server-side folders based on the path structure.
+ * file.path looks like "/fichiers/dossier 1/103.txt".
+ */
+export const flattenEntriesFromPaths = async (
+  entries,
+  rootDirId,
+  client,
+  driveId
+) => {
+  const folderCache = { '': rootDirId }
+
+  const ensureFolder = async folderPath => {
+    if (folderCache[folderPath] != null) {
+      return folderCache[folderPath]
+    }
+    const lastSlash = folderPath.lastIndexOf('/')
+    const parentPath = lastSlash > 0 ? folderPath.slice(0, lastSlash) : ''
+    const name = lastSlash > 0 ? folderPath.slice(lastSlash + 1) : folderPath
+    const parentId = await ensureFolder(parentPath)
+
+    const folder = await createFolder(client, name, parentId, driveId)
+    folderCache[folderPath] = folder.id
+    return folder.id
+  }
+
+  const result = []
+  for (const entry of entries) {
+    const file = entry.file
+    if (!file) continue
+
+    const filePath = file.path || ''
+    const cleanPath = filePath.startsWith('/') ? filePath.slice(1) : filePath
+
+    if (!cleanPath || !cleanPath.includes('/')) {
+      result.push({
+        fileId: file.name,
+        file,
+        relativePath: null,
+        folderId: rootDirId,
+        folderName: null,
+        isDirectory: false,
+        entry: null
+      })
+    } else {
+      const lastSlash = cleanPath.lastIndexOf('/')
+      const folderPath = cleanPath.slice(0, lastSlash)
+      const topFolderName = cleanPath.split('/')[0]
+
+      const folderId = await ensureFolder(folderPath)
+
+      result.push({
+        fileId: cleanPath,
+        file,
+        relativePath: cleanPath,
+        folderId,
+        folderName: topFolderName,
+        isDirectory: false,
+        entry: null
+      })
+    }
+  }
+
+  return result
 }
 
 const createFolder = async (client, name, dirID, driveId) => {
-  const resp = await client
-    .collection(DOCTYPE_FILES, { driveId })
-    .createDirectory({ name, dirId: dirID })
-  return resp.data
+  try {
+    const resp = await client
+      .collection(DOCTYPE_FILES, { driveId })
+      .createDirectory({ name, dirId: dirID })
+    return resp.data
+  } catch (error) {
+    if (error.status === 409) {
+      const parentResp = await client
+        .collection(DOCTYPE_FILES, { driveId })
+        .statById(dirID)
+      const parentPath =
+        parentResp.data.path || parentResp.data.attributes?.path
+      const folderPath = `${parentPath}/${name}`
+      const existingResp = await client
+        .collection(DOCTYPE_FILES, { driveId })
+        .statByPath(folderPath)
+      return existingResp.data
+    }
+    throw error
+  }
 }
 
 const uploadFile = async (client, file, dirID, options = {}, driveId) => {
@@ -537,9 +674,68 @@ export const addToUploadQueue =
     addItems
   ) =>
   async dispatch => {
+    const hasFilePaths = entries.some(
+      e => e.file?.path && e.file.path.includes('/')
+    )
+    const hasDirectories = entries.some(e => e.isDirectory && e.entry)
+
+    let flatItems
+    if (hasFilePaths) {
+      try {
+        flatItems = await flattenEntriesFromPaths(
+          entries,
+          dirID,
+          client,
+          driveId
+        )
+      } catch (error) {
+        logger.error(`Upload module: flattenEntriesFromPaths failed: ${error}`)
+        flatItems = entries
+          .filter(e => e.file)
+          .map(e => ({
+            fileId: e.file.name,
+            file: e.file,
+            relativePath: null,
+            folderId: dirID,
+            folderName: null,
+            isDirectory: false,
+            entry: null
+          }))
+      }
+    } else if (hasDirectories) {
+      try {
+        flatItems = await flattenEntries(entries, dirID, client, driveId)
+      } catch (error) {
+        logger.error(`Upload module: flattenEntries failed: ${error}`)
+        flatItems = entries
+          .filter(e => !e.isDirectory && e.file)
+          .map(e => ({
+            fileId: e.file.name,
+            file: e.file,
+            relativePath: null,
+            folderId: dirID,
+            folderName: null,
+            isDirectory: false,
+            entry: null
+          }))
+      }
+    } else {
+      flatItems = entries
+        .filter(e => e.file)
+        .map(e => ({
+          fileId: e.file.name,
+          file: e.file,
+          relativePath: null,
+          folderId: dirID,
+          folderName: null,
+          isDirectory: false,
+          entry: null
+        }))
+    }
+
     dispatch({
       type: ADD_TO_UPLOAD_QUEUE,
-      files: entries
+      files: flatItems
     })
     dispatch(
       processNextFile(
