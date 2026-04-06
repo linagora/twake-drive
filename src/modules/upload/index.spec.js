@@ -503,6 +503,80 @@ describe('queue reducer', () => {
     expect(result).toEqual(expected)
   })
 
+  it('should only update the targeted item when files share the same name', () => {
+    const stateWithDuplicateNames = [
+      {
+        status: 'pending',
+        file: { name: 'photo.jpg' },
+        progress: null
+      },
+      {
+        status: 'pending',
+        file: { name: 'photo.jpg' },
+        progress: null
+      }
+    ]
+    const action = {
+      type: 'UPLOAD_FILE',
+      file: { name: 'photo.jpg' }
+    }
+    const result = queue(stateWithDuplicateNames, action)
+
+    // Bug: both items get updated because the reducer matches on file.name
+    // Only the first should transition to 'loading'
+    expect(result[0].status).toBe('loading')
+    expect(result[1].status).toBe('pending')
+  })
+
+  it('should correctly track success for files with duplicate names', () => {
+    const stateWithDuplicateNames = [
+      {
+        status: 'loading',
+        file: { name: 'photo.jpg' },
+        progress: null
+      },
+      {
+        status: 'pending',
+        file: { name: 'photo.jpg' },
+        progress: null
+      }
+    ]
+    const action = {
+      type: 'RECEIVE_UPLOAD_SUCCESS',
+      file: { name: 'photo.jpg' }
+    }
+    const result = queue(stateWithDuplicateNames, action)
+
+    // Bug: both items get updated because the reducer matches on file.name
+    expect(result[0].status).toBe('created')
+    expect(result[1].status).toBe('pending')
+  })
+
+  it('should correctly track errors for files with duplicate names', () => {
+    const stateWithDuplicateNames = [
+      {
+        status: 'loading',
+        file: { name: 'photo.jpg' },
+        progress: null
+      },
+      {
+        status: 'loading',
+        file: { name: 'photo.jpg' },
+        progress: null
+      }
+    ]
+    const action = {
+      type: 'RECEIVE_UPLOAD_ERROR',
+      file: { name: 'photo.jpg' },
+      status: 'failed'
+    }
+    const result = queue(stateWithDuplicateNames, action)
+
+    // Bug: both items get updated because the reducer matches on file.name
+    expect(result[0].status).toBe('failed')
+    expect(result[1].status).toBe('loading')
+  })
+
   describe('progress action', () => {
     const file = {
       name: 'doc1.odt'
