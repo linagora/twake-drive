@@ -676,7 +676,11 @@ describe('queue reducer', () => {
     it('should handle upload error', () => {
       const result = queue(state, uploadProgress(fileId, file, event1, date1))
       const result2 = queue(result, uploadProgress(fileId, file, event2, date2))
-      const result3 = queue(result2, { type: 'RECEIVE_UPLOAD_ERROR', fileId, file })
+      const result3 = queue(result2, {
+        type: 'RECEIVE_UPLOAD_ERROR',
+        fileId,
+        file
+      })
       expect(result3[0].progress).toEqual(null)
     })
   })

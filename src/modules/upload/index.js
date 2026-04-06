@@ -55,7 +55,7 @@ const CONFLICT_ERROR = 409
 
 const itemInitialState = item => ({
   ...item,
-  fileId: item.fileId ?? item.file.name,
+  fileId: item.fileId ?? item.file?.name ?? item.entry?.name,
   status: PENDING,
   progress: null
 })
@@ -157,9 +157,7 @@ export const queue = (state = [], action) => {
     case RECEIVE_UPLOAD_SUCCESS:
     case RECEIVE_UPLOAD_ERROR:
     case UPLOAD_PROGRESS:
-      return state.map(i =>
-        i.fileId !== action.fileId ? i : item(i, action)
-      )
+      return state.map(i => (i.fileId !== action.fileId ? i : item(i, action)))
     default:
       return state
   }
@@ -222,7 +220,12 @@ export const processNextFile =
           driveId
         )
         safeCallback(newDir)
-        dispatch({ type: RECEIVE_UPLOAD_SUCCESS, fileId, file, uploadedItem: newDir })
+        dispatch({
+          type: RECEIVE_UPLOAD_SUCCESS,
+          fileId,
+          file,
+          uploadedItem: newDir
+        })
       } else {
         const withProgress = {
           onUploadProgress: event => {
@@ -483,7 +486,12 @@ export const overwriteFile = async (
 }
 
 export const removeFileToUploadQueue = (file, fileId) => async dispatch => {
-  dispatch({ type: RECEIVE_UPLOAD_SUCCESS, fileId: fileId ?? file.name, file, isUpdate: true })
+  dispatch({
+    type: RECEIVE_UPLOAD_SUCCESS,
+    fileId: fileId ?? file.name,
+    file,
+    isUpdate: true
+  })
 }
 
 export const addToUploadQueue =
