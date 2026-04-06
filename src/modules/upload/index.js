@@ -476,6 +476,32 @@ export const flattenEntries = async (
   return result
 }
 
+const cleanFilePath = filePath => {
+  if (!filePath) return null
+  const cleaned = filePath.startsWith('/') ? filePath.slice(1) : filePath
+  return cleaned && cleaned.includes('/') ? cleaned : null
+}
+
+const makeFlatItem = (file, folderId) => ({
+  fileId: file.name,
+  file,
+  relativePath: null,
+  folderId,
+  folderName: null,
+  isDirectory: false,
+  entry: null
+})
+
+const makeFolderItem = (file, cleanPath, folderId) => ({
+  fileId: cleanPath,
+  file,
+  relativePath: cleanPath,
+  folderId,
+  folderName: cleanPath.split('/')[0],
+  isDirectory: false,
+  entry: null
+})
+
 /**
  * Flatten file entries using file.path (set by react-dropzone/file-selector).
  * Creates server-side folders based on the path structure.
@@ -505,38 +531,15 @@ export const flattenEntriesFromPaths = async (
 
   const result = []
   for (const entry of entries) {
-    const file = entry.file
-    if (!file) continue
+    if (!entry.file) continue
 
-    const filePath = file.path || ''
-    const cleanPath = filePath.startsWith('/') ? filePath.slice(1) : filePath
-
-    if (!cleanPath || !cleanPath.includes('/')) {
-      result.push({
-        fileId: file.name,
-        file,
-        relativePath: null,
-        folderId: rootDirId,
-        folderName: null,
-        isDirectory: false,
-        entry: null
-      })
+    const cleanPath = cleanFilePath(entry.file.path)
+    if (!cleanPath) {
+      result.push(makeFlatItem(entry.file, rootDirId))
     } else {
-      const lastSlash = cleanPath.lastIndexOf('/')
-      const folderPath = cleanPath.slice(0, lastSlash)
-      const topFolderName = cleanPath.split('/')[0]
-
+      const folderPath = cleanPath.slice(0, cleanPath.lastIndexOf('/'))
       const folderId = await ensureFolder(folderPath)
-
-      result.push({
-        fileId: cleanPath,
-        file,
-        relativePath: cleanPath,
-        folderId,
-        folderName: topFolderName,
-        isDirectory: false,
-        entry: null
-      })
+      result.push(makeFolderItem(entry.file, cleanPath, folderId))
     }
   }
 
@@ -670,6 +673,42 @@ export const overwriteFile = async (
   return resp.data
 }
 
+/**
+ * Build preliminary queue items from raw entries for immediate display.
+ * Extracts relativePath from file.path when available.
+ */
+const buildPreliminaryItems = (entries, dirID) =>
+  entries
+    .filter(e => e.file)
+    .map(e => {
+      const filePath = e.file.path || ''
+      const cleanPath = filePath.startsWith('/') ? filePath.slice(1) : filePath
+      const hasPath = cleanPath && cleanPath.includes('/')
+      return {
+        fileId: hasPath ? cleanPath : e.file.name,
+        file: e.file,
+        relativePath: hasPath ? cleanPath : null,
+        folderId: dirID,
+        folderName: hasPath ? cleanPath.split('/')[0] : null,
+        isDirectory: false,
+        entry: null
+      }
+    })
+
+/**
+ * Resolve folder structure server-side and return updated queue items.
+ * Uses file.path (react-dropzone) or FileSystemEntry (react-dnd).
+ */
+const resolveServerFolders = async (entries, dirID, client, driveId) => {
+  const hasFilePaths = entries.some(
+    e => e.file?.path && e.file.path.includes('/')
+  )
+  if (hasFilePaths) {
+    return flattenEntriesFromPaths(entries, dirID, client, driveId)
+  }
+  return flattenEntries(entries, dirID, client, driveId)
+}
+
 export const addToUploadQueue =
   (
     entries,
@@ -682,62 +721,29 @@ export const addToUploadQueue =
     addItems
   ) =>
   async dispatch => {
-    const hasFilePaths = entries.some(
-      e => e.file?.path && e.file.path.includes('/')
-    )
-    const hasDirectories = entries.some(e => e.isDirectory && e.entry)
-    const needsFolderResolution = hasFilePaths || hasDirectories
-
-    // Step 1: dispatch queue immediately so the UI shows up right away
-    const preliminaryItems = entries
-      .filter(e => e.file)
-      .map(e => {
-        const filePath = e.file.path || ''
-        const cleanPath = filePath.startsWith('/')
-          ? filePath.slice(1)
-          : filePath
-        const hasPath = cleanPath && cleanPath.includes('/')
-        return {
-          fileId: hasPath ? cleanPath : e.file.name,
-          file: e.file,
-          relativePath: hasPath ? cleanPath : null,
-          folderId: dirID,
-          folderName: hasPath ? cleanPath.split('/')[0] : null,
-          isDirectory: false,
-          entry: null
-        }
-      })
+    const needsFolderResolution =
+      entries.some(e => e.file?.path && e.file.path.includes('/')) ||
+      entries.some(e => e.isDirectory && e.entry)
 
     dispatch({
       type: ADD_TO_UPLOAD_QUEUE,
-      files: preliminaryItems
+      files: buildPreliminaryItems(entries, dirID)
     })
 
-    // Step 2: resolve folders server-side, then update items with folderId
     if (needsFolderResolution) {
       try {
-        let resolvedItems
-        if (hasFilePaths) {
-          resolvedItems = await flattenEntriesFromPaths(
-            entries,
-            dirID,
-            client,
-            driveId
-          )
-        } else {
-          resolvedItems = await flattenEntries(entries, dirID, client, driveId)
-        }
-        dispatch({
-          type: RESOLVE_FOLDER_ITEMS,
-          resolvedItems
-        })
+        const resolvedItems = await resolveServerFolders(
+          entries,
+          dirID,
+          client,
+          driveId
+        )
+        dispatch({ type: RESOLVE_FOLDER_ITEMS, resolvedItems })
       } catch (error) {
         logger.error(`Upload module: folder resolution failed: ${error}`)
-        // Items stay with folderId=dirID, files will upload to root
       }
     }
 
-    // Step 3: start processing
     dispatch(
       processNextFile(
         fileUploadedCallback,
