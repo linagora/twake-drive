@@ -6,6 +6,7 @@
   var lastSelectedHtml = "";
   var lastEnrichedMd = "";
   var lastTableDocIndices = [];
+  var lastTableSnapshots = null;
   var lastTableAmbiguity = null;
   var lastPartialTableInfo = null;
   var imageCounter = 0;
@@ -90,6 +91,9 @@
     }
     if (lastPartialTableInfo) {
       data.partialTableInfo = lastPartialTableInfo;
+    }
+    if (lastTableSnapshots) {
+      data.tableSnapshots = lastTableSnapshots;
     }
     return data;
   }
@@ -430,9 +434,11 @@
     if (parsedTables.length > 0) {
       Asc.scope.parsedTables = JSON.stringify(parsedTables);
       Asc.scope.tableDocIndices = JSON.stringify(lastTableDocIndices);
+      Asc.scope.tableSnapshots = lastTableSnapshots || null;
     } else {
       Asc.scope.parsedTables = null;
       Asc.scope.tableDocIndices = null;
+      Asc.scope.tableSnapshots = null;
     }
     Asc.scope.partialTableInfo = lastPartialTableInfo ? JSON.stringify(lastPartialTableInfo) : null;
     // Pass cross-ref metadata for API recreation during injection
@@ -867,31 +873,56 @@
         }
       }
 
-      // Build a reduced table clone for Insert mode with partial selections.
-      // Clones the full table, injects LLM content into selected cells,
-      // then removes rows and columns that have no selected cells.
-      function buildReducedTableClone(origTable, parsedCells, cFonts) {
-        var clone = origTable.Copy();
-
-        // Modify the selected cells in the clone
-        for (var i = 0; i < parsedCells.length; i++) {
-          var pc = parsedCells[i];
-          var cloneCell = clone.GetCell(pc.r, pc.c);
-          if (!cloneCell) continue;
-          var cloneCc = cloneCell.GetContent();
-          if (!cloneCc || cloneCc.GetElementsCount() === 0) continue;
-          var cf = cFonts[pc.r + "," + pc.c] || {};
-          replaceCellContent(cloneCc, pc, cf.family, cf.size);
-        }
-
-        // Note: row/column removal is deferred to post-InsertContent
-        // because RemoveRow/RemoveColumn may not work on clones not yet in the document.
-        // The reduction info is stored in pendingTableReductions.
-        return clone;
-      }
+      // Note: buildReducedTableClone was removed — its logic is now handled inline
+      // using reconstructTable() (FromJSON with Clone fallback) + cell modification.
 
       var allTables = null;
       var tableDocIndices = [];
+      var tableSnapshots = Asc.scope.tableSnapshots || null;
+
+      // Read font from first run of first paragraph in a table cell.
+      // Works on both FromJSON-reconstructed and original/cloned tables.
+      function readCellFont(table, r, c, fallbackFamily, fallbackSize) {
+        var cell = table.GetCell(r, c);
+        if (cell) {
+          var content = cell.GetContent();
+          if (content && content.GetElementsCount() > 0) {
+            var para = content.GetElement(0);
+            if (para && para.GetElementsCount) {
+              for (var ei = 0; ei < para.GetElementsCount(); ei++) {
+                var elem = para.GetElement(ei);
+                if (elem.GetClassType && elem.GetClassType() === "run") {
+                  var tp = elem.GetTextPr ? elem.GetTextPr() : null;
+                  if (tp) {
+                    return {
+                      family: tp.GetFontFamily() || fallbackFamily,
+                      size: tp.GetFontSize() || fallbackSize
+                    };
+                  }
+                  break;
+                }
+              }
+            }
+          }
+        }
+        return { family: fallbackFamily, size: fallbackSize };
+      }
+
+      // Reconstruct a table from ToJSON snapshot, with fallback to Clone from document.
+      // Returns an ApiTable (either from snapshot or from Copy()).
+      function reconstructTable(ptIndex, origTable) {
+        if (tableSnapshots && tableSnapshots[ptIndex]) {
+          try {
+            var fromJsonTable = Api.FromJSON(tableSnapshots[ptIndex]);
+            if (fromJsonTable) return fromJsonTable;
+          } catch (fjErr) {
+            log("[Scribe] FromJSON failed for TABLE:" + ptIndex + ", falling back to clone");
+          }
+        }
+        // FALLBACK: legacy clone path — remove once ToJSON snapshots are proven stable
+        if (origTable) return origTable.Copy();
+        return null;
+      }
 
       if (parsedTables.length > 0) {
         // Find original tables by their document-level index (saved during extraction).
@@ -900,49 +931,41 @@
         var tableDocIndicesJson = Asc.scope.tableDocIndices;
         tableDocIndices = tableDocIndicesJson ? JSON.parse(tableDocIndicesJson) : [];
 
-        // Process each table: clone/modify or in-place depending on partial flag
+        // Process each table: reconstruct via FromJSON (or clone) + modify cells
         for (var tci = 0; tci < parsedTables.length; tci++) {
           var ptEntry = parsedTables[tci];
           var ptIndex = ptEntry.index;
           var ptCells = ptEntry.cells;
           // Map TABLE:N index to document-level table index
           var docIdx = tableDocIndices[ptIndex];
-          var origTable = (docIdx !== undefined && docIdx < allTables.length) ? allTables[docIdx] : null;
-          if (!origTable) continue;
+          var origTable = (docIdx !== undefined && allTables && docIdx < allTables.length) ? allTables[docIdx] : null;
 
           // Check if this is a partial table
           var isPartialTable = (partialTableInfo && partialTableInfo[ptIndex]);
           var selectedCellCoords = isPartialTable ? partialTableInfo[ptIndex] : null;
 
-          // Read source font from first run of first paragraph in each cell of ORIGINAL
-          var cFonts = {};
-          for (var cfi = 0; cfi < ptCells.length; cfi++) {
-            var ptc = ptCells[cfi];
-            var cfKey = ptc.r + "," + ptc.c;
-            var origCell = origTable.GetCell(ptc.r, ptc.c);
-            if (origCell) {
-              var origContent = origCell.GetContent();
-              if (origContent && origContent.GetElementsCount() > 0) {
-                var origPara = origContent.GetElement(0);
-                if (origPara && origPara.GetElementsCount) {
-                  for (var ofe = 0; ofe < origPara.GetElementsCount(); ofe++) {
-                    var oElem = origPara.GetElement(ofe);
-                    if (oElem.GetClassType && oElem.GetClassType() === "run") {
-                      var oTp = oElem.GetTextPr ? oElem.GetTextPr() : null;
-                      if (oTp) {
-                        cFonts[cfKey] = {
-                          family: oTp.GetFontFamily() || null,
-                          size: oTp.GetFontSize() || null
-                        };
-                      }
-                      break;
-                    }
-                  }
-                }
-              }
+          // Read source font from the reconstructed (or original) table for each cell
+          // Use the snapshot table if available, otherwise fall back to original
+          var fontSourceTable = null;
+          if (tableSnapshots && tableSnapshots[ptIndex]) {
+            try {
+              fontSourceTable = Api.FromJSON(tableSnapshots[ptIndex]);
+            } catch (fse) {
+              fontSourceTable = null;
             }
-            if (!cFonts[cfKey]) {
-              cFonts[cfKey] = { family: srcFontFamily, size: srcFontSize };
+          }
+          if (!fontSourceTable) fontSourceTable = origTable;
+
+          var cFonts = {};
+          if (fontSourceTable) {
+            for (var cfi = 0; cfi < ptCells.length; cfi++) {
+              var ptc = ptCells[cfi];
+              var cfKey = ptc.r + "," + ptc.c;
+              cFonts[cfKey] = readCellFont(fontSourceTable, ptc.r, ptc.c, srcFontFamily, srcFontSize);
+            }
+          } else {
+            for (var cfi2 = 0; cfi2 < ptCells.length; cfi2++) {
+              cFonts[ptCells[cfi2].r + "," + ptCells[cfi2].c] = { family: srcFontFamily, size: srcFontSize };
             }
           }
 
@@ -950,7 +973,7 @@
             // Check if selection structurally encompasses the table
             // (not just content within cells). Clone+InsertContent only works
             // when the table structure is in the selection.
-            var repTblRange = origTable.GetRange();
+            var repTblRange = origTable ? origTable.GetRange() : null;
             var repSelRange = doc.GetRangeBySelect();
             var isStructuralFull = false;
             if (repTblRange && repSelRange && !isPartialTable) {
@@ -959,8 +982,9 @@
             }
 
             if (isStructuralFull) {
-              // Full table structurally selected — clone + InsertContent (existing flow)
-              var repClone = origTable.Copy();
+              // Full table structurally selected — reconstruct via FromJSON + InsertContent
+              var repClone = reconstructTable(ptIndex, origTable);
+              if (!repClone) continue;
               for (var rci = 0; rci < ptCells.length; rci++) {
                 var rc = ptCells[rci];
                 var rcCell = repClone.GetCell(rc.r, rc.c);
@@ -973,18 +997,32 @@
               tableClones[ptIndex] = repClone;
             } else {
               // In-place modification (partial, content-only full, or mixed)
-              modifyOriginalTableCells(origTable, ptCells, cFonts);
+              // Note: in-place modifies the document table directly — no snapshot needed
+              if (origTable) {
+                modifyOriginalTableCells(origTable, ptCells, cFonts);
+              }
               tableClones[ptIndex] = null;
               tablesModifiedInPlace = true;
             }
           } else if (isPartialTable) {
-            // Partial Insert — build a reduced clone with only selected rows/columns
-            var reducedClone = buildReducedTableClone(origTable, ptCells, cFonts);
+            // Partial Insert — reconstruct via FromJSON, modify selected cells
+            var reducedClone = reconstructTable(ptIndex, origTable);
+            if (!reducedClone) continue;
+            for (var rdi = 0; rdi < ptCells.length; rdi++) {
+              var rdc = ptCells[rdi];
+              var rdCell = reducedClone.GetCell(rdc.r, rdc.c);
+              if (!rdCell) continue;
+              var rdCc = rdCell.GetContent();
+              if (!rdCc || rdCc.GetElementsCount() === 0) continue;
+              var rdf = cFonts[rdc.r + "," + rdc.c] || {};
+              replaceCellContent(rdCc, rdc, rdf.family, rdf.size);
+            }
             tableClones[ptIndex] = reducedClone;
             pendingTableReductions.push({ clone: reducedClone, selectedCellCoords: selectedCellCoords });
           } else {
-            // Full Insert — clone + modify all cells
-            var clone = origTable.Copy();
+            // Full Insert — reconstruct via FromJSON + modify all cells
+            var clone = reconstructTable(ptIndex, origTable);
+            if (!clone) continue;
             for (var mci = 0; mci < ptCells.length; mci++) {
               var mc = ptCells[mci];
               var cloneCell = clone.GetCell(mc.r, mc.c);
@@ -1751,9 +1789,12 @@
   // Routes: md field -> Builder API path, html field -> PasteHtml, text -> plain fallback
   function handleIntentResponse(msg) {
     if (msg.action === "replace" || msg.action === "insert") {
-      // Store partialTableInfo from React respond() — authoritative copy
+      // Store partialTableInfo and tableSnapshots from React respond() — authoritative copy
       if (msg.data && msg.data.partialTableInfo) {
         lastPartialTableInfo = msg.data.partialTableInfo;
+      }
+      if (msg.data && msg.data.tableSnapshots) {
+        lastTableSnapshots = msg.data.tableSnapshots;
       }
       if (msg.data && msg.data.md) {
         // Builder API path (primary) with PasteHtml fallback
@@ -1870,7 +1911,8 @@
         text: panelData.text || "",
         html: panelData.html || null,
         md: panelData.md || null,
-        partialTableInfo: panelData.partialTableInfo || null
+        partialTableInfo: panelData.partialTableInfo || null,
+        tableSnapshots: panelData.tableSnapshots || null
       }
     });
   });
@@ -2549,6 +2591,7 @@
 
       var tableIndex = 0;
       var tableDocIndices = [];  // tableDocIndices[tableIndex] = doc-level index in GetAllTables()
+      var tableSnapshots = [];   // tableSnapshots[tableIndex] = ToJSON(true,true) lossless snapshot
       var tableAmbiguity = null;
       var partialTableInfo = null;
       for (var p = 0; p < paragraphs.length; p++) {
@@ -2587,6 +2630,12 @@
                 var tableCellsMd = extractTableCells(tableRanges[ti].table);
                 mdParts.push({ md: "[TABLE:" + tableIndex + "]\n" + tableCellsMd + "\n[/TABLE]", isList: false });
                 tableDocIndices.push(tableRanges[ti].docIndex);
+                // Capture lossless table snapshot via ToJSON (borders, bg, merges, fonts, images)
+                try {
+                  tableSnapshots.push(tableRanges[ti].table.ToJSON(true, true));
+                } catch (snapErr) {
+                  tableSnapshots.push(null);
+                }
                 tableIndex = tableIndex + 1;
               } else {
                 // Partial table — extract only selected cells
@@ -2594,6 +2643,13 @@
                 var partialCellsMd = extractPartialTableCells(tableRanges[ti].table, analysis.selectedCells);
                 mdParts.push({ md: "[TABLE:" + tableIndex + "]\n" + partialCellsMd + "\n[/TABLE]", isList: false });
                 tableDocIndices.push(tableRanges[ti].docIndex);
+                // Capture FULL table snapshot even for partial selection —
+                // unmodified cells retain original content from the snapshot
+                try {
+                  tableSnapshots.push(tableRanges[ti].table.ToJSON(true, true));
+                } catch (snapErr) {
+                  tableSnapshots.push(null);
+                }
                 if (!partialTableInfo) partialTableInfo = {};
                 partialTableInfo[tableIndex] = analysis.selectedCells;
                 tableIndex = tableIndex + 1;
@@ -2731,6 +2787,9 @@
         mdLines.push(mdParts[j].md);
       }
 
+      // Store table snapshots via Asc.scope (may be large, avoids JSON return size limits)
+      Asc.scope.tableSnapshots = tableSnapshots.length > 0 ? tableSnapshots : null;
+
       return JSON.stringify({
         text: plainParts.join("\n"),
         md: mdLines.join(""),
@@ -2758,6 +2817,7 @@
       lastSelectedText = plainText;
       lastEnrichedMd = result.md || "";
       lastTableDocIndices = result.tableDocIndices || [];
+      lastTableSnapshots = window.Asc.scope.tableSnapshots || null;
       lastTableAmbiguity = result.tableAmbiguity || null;
       lastPartialTableInfo = result.partialTableInfo || null;
       lastSelectedHtml = ""; // No longer used for primary extraction

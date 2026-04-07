@@ -1,30 +1,35 @@
 {
   "version": "1.0",
-  "timestamp": "2026-03-31T16:49:50.960Z",
-  "phase": "v3.0-04",
-  "phase_name": "Panel Resize",
-  "phase_dir": "v3.0-04-panel-resize",
-  "plan": 1,
-  "task": 2,
-  "total_tasks": 2,
+  "timestamp": "2026-04-07T19:40:19.281Z",
+  "phase": "v3.0-03",
+  "phase_name": "selection-context-document-actions",
+  "phase_dir": ".planning/phases/v3.0-03-selection-context-document-actions",
+  "plan": 4,
+  "task": 4,
+  "total_tasks": 4,
   "status": "paused",
   "completed_tasks": [
-    {"id": 1, "name": "v3.0-04-01 Panel Resize", "status": "done", "commit": "9922f4b30"}
+    {"id": 1, "name": "Research ToJSON/FromJSON feasibility", "status": "done", "commit": "f9b7d0ea4"},
+    {"id": 2, "name": "Capture table snapshot via ToJSON during extraction", "status": "done", "commit": null},
+    {"id": 3, "name": "Transport tableSnapshots through intents and ScribeContext", "status": "done", "commit": null},
+    {"id": 4, "name": "Rewrite table injection with FromJSON + cell modification", "status": "done", "commit": null}
   ],
   "remaining_tasks": [],
   "blockers": [],
-  "human_actions_pending": [],
+  "human_actions_pending": [
+    {"action": "Manual testing of v3.0-03-04 (5 test scenarios)", "context": "Code implemented but not tested in browser. OO restarted, needs Ctrl+Shift+R.", "blocking": true}
+  ],
   "decisions": [
-    {"decision": "v3.0 milestone all 4 phases complete", "rationale": "All plans executed and verified", "phase": "v3.0-04"}
+    {"decision": "ToJSON/FromJSON over PasteHtml", "rationale": "PasteHtml is async, can't run in callCommand. ToJSON is synchronous and lossless.", "phase": "v3.0-03-04"},
+    {"decision": "ToJSON/FromJSON over structured JSON", "rationale": "Manual property enumeration misses images and requires maintenance on OO updates.", "phase": "v3.0-03-04"},
+    {"decision": "Fallback to Clone path when no snapshot", "rationale": "Graceful degradation, marked as legacy to remove later.", "phase": "v3.0-03-04"}
   ],
   "uncommitted_files": [
     "plugins/onlyoffice-scribe/scripts/code.js",
-    "src/modules/views/OnlyOffice/Scribe/ChatInput.jsx",
-    "src/modules/views/OnlyOffice/Scribe/ScribeFloatingButton.jsx",
-    "src/modules/views/OnlyOffice/View.jsx",
-    "src/modules/views/OnlyOffice/useCozyBridge.js",
-    ".planning/phases/v3.0-02-chat-core/v3.0-02-02-SUMMARY.md"
+    "src/lib/cozy-bridge/protocol.js",
+    "src/modules/views/OnlyOffice/Scribe/ScribeContext.jsx",
+    "src/modules/views/OnlyOffice/View.jsx"
   ],
-  "next_action": "Review and commit the 5 uncommitted source files (78 additions, 119 deletions). Then decide: complete v3.0 milestone or start next milestone. Branch is 29 commits ahead of remote — consider pushing.",
-  "context_notes": "v3.0 Scribe Chat Panel milestone is functionally complete (4/4 phases done). However, 5 source files have uncommitted changes that appear to be part of the completed work. An untracked v3.0-02-02-SUMMARY.md also needs to be committed. The branch feat/scribe-in-right-panel is 29 commits ahead of remote."
+  "next_action": "Manual test: Ctrl+Shift+R in browser, run 5 test scenarios (formatted table, modified table, insert, inline regression, plain text)",
+  "context_notes": "Plan v3.0-03-04 went through 3 approach iterations (structured JSON → HTML/PasteHtml → ToJSON/FromJSON). Double Api.FromJSON per table is a known minor concern. Research in table-snapshot-research.md."
 }

@@ -51,9 +51,10 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
   // Update selection in ScribeContext whenever the plugin reports a change
   const handleSelectionChanged = useCallback(data => {
     if (setCurrentSelection) {
-      setCurrentSelection(data.text || null, data.html || null, data.enrichedMd || null)
+      setCurrentSelection(data.text || null, data.html || null, data.enrichedMd || null, data.tableSnapshots || null)
     }
     partialTableInfoRef.current = data.partialTableInfo || null
+    tableSnapshotsRef.current = data.tableSnapshots || null
   }, [setCurrentSelection])
 
   const { pendingIntent, respond, castPanelAction } = useCozyBridge(
@@ -64,6 +65,7 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
   const showFloatingZone = isScribeEnabled && !isPanelOpen
 
   const partialTableInfoRef = useRef(null)
+  const tableSnapshotsRef = useRef(null)
 
   // Feed selection data from pendingIntent into ScribeContext
   useEffect(() => {
@@ -71,9 +73,11 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
     setCurrentSelection(
       pendingIntent.data.text || null,
       pendingIntent.data.html || null,
-      pendingIntent.data.enrichedMd || null
+      pendingIntent.data.enrichedMd || null,
+      pendingIntent.data.tableSnapshots || null
     )
     partialTableInfoRef.current = pendingIntent.data.partialTableInfo || null
+    tableSnapshotsRef.current = pendingIntent.data.tableSnapshots || null
   }, [pendingIntent, setCurrentSelection])
 
   // Broadcast a message to all descendant iframes (reaches plugin inside OO editor iframe)
@@ -130,6 +134,9 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
       if (partialTableInfoRef.current) {
         data.partialTableInfo = partialTableInfoRef.current
       }
+      if (tableSnapshotsRef.current) {
+        data.tableSnapshots = tableSnapshotsRef.current
+      }
       if (pendingIntentRef.current) {
         // Inline popover flow: answer the pending AI_TEXT_ASSISTANT intent.
         respond({ status: 'ok', action: 'replace', data })
@@ -141,7 +148,8 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
           text,
           html,
           md: text,
-          partialTableInfo: partialTableInfoRef.current || undefined
+          partialTableInfo: partialTableInfoRef.current || undefined,
+          tableSnapshots: tableSnapshotsRef.current || undefined
         })
       }
       setTimeout(focusEditor, 100)
@@ -156,6 +164,9 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
       if (partialTableInfoRef.current) {
         data.partialTableInfo = partialTableInfoRef.current
       }
+      if (tableSnapshotsRef.current) {
+        data.tableSnapshots = tableSnapshotsRef.current
+      }
       if (pendingIntentRef.current) {
         respond({ status: 'ok', action: 'insert', data })
       } else {
@@ -164,7 +175,8 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
           text,
           html,
           md: text,
-          partialTableInfo: partialTableInfoRef.current || undefined
+          partialTableInfo: partialTableInfoRef.current || undefined,
+          tableSnapshots: tableSnapshotsRef.current || undefined
         })
       }
       setTimeout(focusEditor, 100)

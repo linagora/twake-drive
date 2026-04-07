@@ -81,10 +81,10 @@ export function createResponseMessage(intentId, status, action, data) {
  * @param {{action: 'replace'|'insert', text: string, html?: string, md?: string}} payload
  * @returns {import('./types').IntentMessage}
  */
-export function createPanelActionIntent({ action, text, html, md }) {
+export function createPanelActionIntent({ action, text, html, md, partialTableInfo, tableSnapshots }) {
   return createIntentMessage(
     INTENT_ACTIONS.PANEL_ACTION,
-    { action: action, text: text, html: html, md: md },
+    { action: action, text: text, html: html, md: md, partialTableInfo: partialTableInfo, tableSnapshots: tableSnapshots },
     'cozy-drive-panel'
   )
 }
