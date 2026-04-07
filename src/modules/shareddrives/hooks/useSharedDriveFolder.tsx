@@ -36,6 +36,7 @@ const useSharedDriveFolder = ({
     SharedDriveFolderReturn['sharedDriveResult']
   >({ data: undefined })
   const [nextCursor, setNextCursor] = useState<string | null>(null)
+  const nextCursorRef = useRef<string | null>(null)
   const isFetchingMore = useRef(false)
   const fetchGeneration = useRef(0)
 
@@ -59,6 +60,7 @@ const useSharedDriveFolder = ({
       const currentGeneration = fetchGeneration.current
 
       setSharedDriveResult({ data: undefined, included: undefined })
+      nextCursorRef.current = null
       setNextCursor(null)
 
       try {
@@ -68,12 +70,14 @@ const useSharedDriveFolder = ({
         if (fetchGeneration.current === currentGeneration) {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           setSharedDriveResult({ included })
+          nextCursorRef.current = cursor
           setNextCursor(cursor)
         }
       } catch (error) {
         logger.error('Error fetching shared drive folder:', error)
         if (fetchGeneration.current === currentGeneration) {
           setSharedDriveResult({ data: undefined, included: undefined })
+          nextCursorRef.current = null
           setNextCursor(null)
         }
       }
@@ -104,7 +108,7 @@ const useSharedDriveFolder = ({
   }, [client, driveId, folderId, sharedDriveQuery, statById])
 
   const fetchMore = useCallback(async (): Promise<void> => {
-    if (isFetchingMore.current || !nextCursor || !client) return
+    if (isFetchingMore.current || !nextCursorRef.current || !client) return
 
     isFetchingMore.current = true
     const currentGeneration = fetchGeneration.current
@@ -113,7 +117,7 @@ const useSharedDriveFolder = ({
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const { included, nextCursor: cursor } = await statById(
         folderId,
-        nextCursor
+        nextCursorRef.current
       )
 
       if (fetchGeneration.current !== currentGeneration) return
@@ -123,13 +127,14 @@ const useSharedDriveFolder = ({
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         included: [...(prev.included ?? []), ...(included ?? [])]
       }))
+      nextCursorRef.current = cursor
       setNextCursor(cursor)
     } catch (error) {
       logger.error('Error fetching more shared drive files:', error)
     } finally {
       isFetchingMore.current = false
     }
-  }, [nextCursor, client, folderId, statById])
+  }, [client, folderId, statById])
 
   const hasMore = !!nextCursor
 
