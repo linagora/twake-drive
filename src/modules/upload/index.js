@@ -248,42 +248,6 @@ const handleConflictOverwrite = async (
   return uploadedFile
 }
 
-const performUpload = async (
-  client,
-  item,
-  dirID,
-  { vaultClient, encryptionKey },
-  driveId,
-  dispatch
-) => {
-  const { file, fileId, entry, isDirectory } = item
-  dispatch({ type: UPLOAD_FILE, fileId, file })
-
-  if (entry && isDirectory) {
-    return uploadDirectory(
-      client,
-      entry,
-      dirID,
-      { vaultClient, encryptionKey },
-      driveId
-    )
-  }
-
-  return uploadFile(
-    client,
-    file,
-    dirID,
-    {
-      vaultClient,
-      encryptionKey,
-      onUploadProgress: event => {
-        dispatch(uploadProgress(fileId, file, event))
-      }
-    },
-    driveId
-  )
-}
-
 const handleUploadError = async (
   uploadError,
   { client, file, fileId, dirID, driveId, dispatch, safeCallback }
@@ -696,7 +660,9 @@ const buildPreliminaryItems = (entries, dirID) =>
     .map(e => {
       if (e.file) {
         const filePath = e.file.path || ''
-        const cleanPath = filePath.startsWith('/') ? filePath.slice(1) : filePath
+        const cleanPath = filePath.startsWith('/')
+          ? filePath.slice(1)
+          : filePath
         const hasPath = cleanPath && cleanPath.includes('/')
         return {
           fileId: hasPath ? cleanPath : e.file.name,
@@ -720,7 +686,9 @@ const buildPreliminaryItems = (entries, dirID) =>
           file: null,
           relativePath: cleanPath || null,
           folderId: dirID,
-          folderName: cleanPath ? cleanPath.split('/')[0] : e.entry.name || null,
+          folderName: cleanPath
+            ? cleanPath.split('/')[0]
+            : e.entry.name || null,
           isDirectory: true,
           entry: e.entry
         }
@@ -776,7 +744,10 @@ export const addToUploadQueue =
         dispatch({ type: RESOLVE_FOLDER_ITEMS, resolvedItems })
       } catch (error) {
         logger.error(`Upload module: folder resolution failed: ${error}`)
-        if (typeof window !== 'undefined' && typeof window.alert === 'function') {
+        if (
+          typeof window !== 'undefined' &&
+          typeof window.alert === 'function'
+        ) {
           window.alert(
             'The folder upload could not be prepared. Please try again.'
           )
