@@ -163,6 +163,11 @@ const mergeResolvedItems = (state, resolvedItems) => {
   return [...updated, ...newItems]
 }
 
+const updateQueueItem = (state, action) => {
+  const matchId = action.fileId ?? action.file?.name
+  return state.map(i => (i.fileId !== matchId ? i : item(i, action)))
+}
+
 export const queue = (state = [], action) => {
   switch (action.type) {
     case ADD_TO_UPLOAD_QUEUE:
@@ -177,10 +182,8 @@ export const queue = (state = [], action) => {
     case UPLOAD_FILE:
     case RECEIVE_UPLOAD_SUCCESS:
     case RECEIVE_UPLOAD_ERROR:
-    case UPLOAD_PROGRESS: {
-      const matchId = action.fileId ?? action.file?.name
-      return state.map(i => (i.fileId !== matchId ? i : item(i, action)))
-    }
+    case UPLOAD_PROGRESS:
+      return updateQueueItem(state, action)
     default:
       return state
   }
@@ -280,6 +283,52 @@ const handleUploadError = async (
   })
 }
 
+const ensureCallback = fn => (typeof fn === 'function' ? fn : () => {})
+
+const uploadSingleFile = async (
+  { file, fileId, folderId },
+  { client, vaultClient, dirID, driveId, dispatch, safeCallback }
+) => {
+  const targetDirId = folderId ?? dirID
+  const encryptionKey = flag('drive.enable-encryption')
+    ? await getEncryptionKeyFromDirId(client, targetDirId)
+    : null
+
+  try {
+    dispatch({ type: UPLOAD_FILE, fileId, file })
+    const uploadedFile = await uploadFile(
+      client,
+      file,
+      targetDirId,
+      {
+        vaultClient,
+        encryptionKey,
+        onUploadProgress: event => {
+          dispatch(uploadProgress(fileId, file, event))
+        }
+      },
+      driveId
+    )
+    safeCallback(uploadedFile)
+    dispatch({
+      type: RECEIVE_UPLOAD_SUCCESS,
+      fileId,
+      file,
+      uploadedItem: uploadedFile
+    })
+  } catch (uploadError) {
+    await handleUploadError(uploadError, {
+      client,
+      file,
+      fileId,
+      dirID: targetDirId,
+      driveId,
+      dispatch,
+      safeCallback
+    })
+  }
+}
+
 export const processNextFile =
   (
     fileUploadedCallback,
@@ -291,10 +340,7 @@ export const processNextFile =
     addItems
   ) =>
   async (dispatch, getState) => {
-    const safeCallback =
-      typeof fileUploadedCallback === 'function'
-        ? fileUploadedCallback
-        : () => {}
+    const safeCallback = ensureCallback(fileUploadedCallback)
     if (!client) {
       throw new Error(
         'Upload module needs a cozy-client instance to work. This instance should be made available by using the extraArgument function of redux-thunk'
@@ -305,45 +351,14 @@ export const processNextFile =
       return dispatch(onQueueEmpty(queueCompletedCallback))
     }
 
-    const { file, fileId, folderId } = item
-    const targetDirId = folderId ?? dirID
-    const encryptionKey = flag('drive.enable-encryption')
-      ? await getEncryptionKeyFromDirId(client, targetDirId)
-      : null
-    try {
-      dispatch({ type: UPLOAD_FILE, fileId, file })
-
-      const uploadedFile = await uploadFile(
-        client,
-        file,
-        targetDirId,
-        {
-          vaultClient,
-          encryptionKey,
-          onUploadProgress: event => {
-            dispatch(uploadProgress(fileId, file, event))
-          }
-        },
-        driveId
-      )
-      safeCallback(uploadedFile)
-      dispatch({
-        type: RECEIVE_UPLOAD_SUCCESS,
-        fileId,
-        file,
-        uploadedItem: uploadedFile
-      })
-    } catch (uploadError) {
-      await handleUploadError(uploadError, {
-        client,
-        file,
-        fileId,
-        dirID: targetDirId,
-        driveId,
-        dispatch,
-        safeCallback
-      })
-    }
+    await uploadSingleFile(item, {
+      client,
+      vaultClient,
+      dirID,
+      driveId,
+      dispatch,
+      safeCallback
+    })
     dispatch(
       processNextFile(
         fileUploadedCallback,
@@ -712,6 +727,16 @@ const resolveServerFolders = async (entries, dirID, client, driveId) => {
   return flattenEntries(entries, dirID, client, driveId)
 }
 
+const hasFolderEntries = entries =>
+  entries.some(e => e.file?.path && e.file.path.includes('/')) ||
+  entries.some(e => e.isDirectory && e.entry)
+
+const notifyFolderError = () => {
+  if (typeof window !== 'undefined' && typeof window.alert === 'function') {
+    window.alert('The folder upload could not be prepared. Please try again.')
+  }
+}
+
 export const addToUploadQueue =
   (
     entries,
@@ -724,16 +749,12 @@ export const addToUploadQueue =
     addItems
   ) =>
   async dispatch => {
-    const needsFolderResolution =
-      entries.some(e => e.file?.path && e.file.path.includes('/')) ||
-      entries.some(e => e.isDirectory && e.entry)
-
     dispatch({
       type: ADD_TO_UPLOAD_QUEUE,
       files: buildPreliminaryItems(entries, dirID)
     })
 
-    if (needsFolderResolution) {
+    if (hasFolderEntries(entries)) {
       try {
         const resolvedItems = await resolveServerFolders(
           entries,
@@ -744,14 +765,7 @@ export const addToUploadQueue =
         dispatch({ type: RESOLVE_FOLDER_ITEMS, resolvedItems })
       } catch (error) {
         logger.error(`Upload module: folder resolution failed: ${error}`)
-        if (
-          typeof window !== 'undefined' &&
-          typeof window.alert === 'function'
-        ) {
-          window.alert(
-            'The folder upload could not be prepared. Please try again.'
-          )
-        }
+        notifyFolderError()
         dispatch({ type: PURGE_UPLOAD_QUEUE })
         return
       }
@@ -773,7 +787,7 @@ export const addToUploadQueue =
 export const purgeUploadQueue = () => ({ type: PURGE_UPLOAD_QUEUE })
 
 export const onQueueEmpty = callback => (dispatch, getState) => {
-  const safeCallback = typeof callback === 'function' ? callback : () => {}
+  const safeCallback = ensureCallback(callback)
   const queue = getUploadQueue(getState())
   const quotas = getQuotaErrors(queue)
   const conflicts = getConflicts(queue)
