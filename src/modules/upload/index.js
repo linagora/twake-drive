@@ -776,6 +776,13 @@ export const addToUploadQueue =
         dispatch({ type: RESOLVE_FOLDER_ITEMS, resolvedItems })
       } catch (error) {
         logger.error(`Upload module: folder resolution failed: ${error}`)
+        if (typeof window !== 'undefined' && typeof window.alert === 'function') {
+          window.alert(
+            'The folder upload could not be prepared. Please try again.'
+          )
+        }
+        dispatch({ type: PURGE_UPLOAD_QUEUE })
+        return
       }
     }
 
