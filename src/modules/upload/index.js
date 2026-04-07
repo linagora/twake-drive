@@ -178,6 +178,123 @@ export const uploadProgress = (fileId, file, event, date) => ({
   date: date || Date.now()
 })
 
+const getUploadErrorStatus = error => {
+  const statusError = {
+    409: CONFLICT,
+    413: QUOTA
+  }
+
+  if (error.message?.includes(ERR_MAX_FILE_SIZE)) {
+    return ERR_MAX_FILE_SIZE
+  } else if (error.status in statusError) {
+    return statusError[error.status]
+  } else if (/Failed to fetch$/.exec(error.toString())) {
+    return NETWORK
+  }
+  return FAILED
+}
+
+const handleConflictOverwrite = async (
+  client,
+  file,
+  fileId,
+  dirID,
+  driveId,
+  dispatch
+) => {
+  const path = driveId
+    ? await getFullpath(client, dirID, file.name, driveId)
+    : await CozyFile.getFullpath(dirID, file.name)
+
+  const uploadedFile = await overwriteFile(
+    client,
+    file,
+    path,
+    {
+      onUploadProgress: event => {
+        dispatch(uploadProgress(fileId, file, event))
+      }
+    },
+    driveId
+  )
+  dispatch({
+    type: RECEIVE_UPLOAD_SUCCESS,
+    fileId,
+    file,
+    isUpdate: true,
+    uploadedItem: uploadedFile
+  })
+  return uploadedFile
+}
+
+const performUpload = async (
+  client,
+  item,
+  dirID,
+  { vaultClient, encryptionKey },
+  driveId,
+  dispatch
+) => {
+  const { file, fileId, entry, isDirectory } = item
+  dispatch({ type: UPLOAD_FILE, fileId, file })
+
+  if (entry && isDirectory) {
+    return uploadDirectory(
+      client,
+      entry,
+      dirID,
+      { vaultClient, encryptionKey },
+      driveId
+    )
+  }
+
+  return uploadFile(
+    client,
+    file,
+    dirID,
+    {
+      vaultClient,
+      encryptionKey,
+      onUploadProgress: event => {
+        dispatch(uploadProgress(fileId, file, event))
+      }
+    },
+    driveId
+  )
+}
+
+const handleUploadError = async (
+  uploadError,
+  { client, file, fileId, dirID, driveId, dispatch, safeCallback }
+) => {
+  let error = uploadError
+  if (uploadError.status === CONFLICT_ERROR) {
+    try {
+      const uploaded = await handleConflictOverwrite(
+        client,
+        file,
+        fileId,
+        dirID,
+        driveId,
+        dispatch
+      )
+      safeCallback(uploaded)
+      return
+    } catch (updateError) {
+      error = updateError
+    }
+  }
+  logger.error(
+    `Upload module catches an error when executing processNextFile(): ${error}`
+  )
+  dispatch({
+    type: RECEIVE_UPLOAD_ERROR,
+    fileId,
+    file,
+    status: getUploadErrorStatus(error)
+  })
+}
+
 export const processNextFile =
   (
     fileUploadedCallback,
@@ -193,7 +310,6 @@ export const processNextFile =
       typeof fileUploadedCallback === 'function'
         ? fileUploadedCallback
         : () => {}
-    let error
     if (!client) {
       throw new Error(
         'Upload module needs a cozy-client instance to work. This instance should be made available by using the extraArgument function of redux-thunk'
@@ -204,114 +320,36 @@ export const processNextFile =
       return dispatch(onQueueEmpty(queueCompletedCallback))
     }
 
-    const { file, fileId, entry, isDirectory } = item
+    const { file, fileId } = item
     const encryptionKey = flag('drive.enable-encryption')
       ? await getEncryptionKeyFromDirId(client, dirID)
       : null
     try {
-      dispatch({ type: UPLOAD_FILE, fileId, file })
-      if (entry && isDirectory) {
-        const newDir = await uploadDirectory(
-          client,
-          entry,
-          dirID,
-          {
-            vaultClient,
-            encryptionKey
-          },
-          driveId
-        )
-        safeCallback(newDir)
-        dispatch({
-          type: RECEIVE_UPLOAD_SUCCESS,
-          fileId,
-          file,
-          uploadedItem: newDir
-        })
-      } else {
-        const withProgress = {
-          onUploadProgress: event => {
-            dispatch(uploadProgress(fileId, file, event))
-          }
-        }
-
-        const uploadedFile = await uploadFile(
-          client,
-          file,
-          dirID,
-          {
-            vaultClient,
-            encryptionKey,
-            ...withProgress
-          },
-          driveId
-        )
-        safeCallback(uploadedFile)
-        dispatch({
-          type: RECEIVE_UPLOAD_SUCCESS,
-          fileId,
-          file,
-          uploadedItem: uploadedFile
-        })
-      }
+      const uploaded = await performUpload(
+        client,
+        item,
+        dirID,
+        { vaultClient, encryptionKey },
+        driveId,
+        dispatch
+      )
+      safeCallback(uploaded)
+      dispatch({
+        type: RECEIVE_UPLOAD_SUCCESS,
+        fileId,
+        file,
+        uploadedItem: uploaded
+      })
     } catch (uploadError) {
-      error = uploadError
-      if (uploadError.status === CONFLICT_ERROR) {
-        try {
-          const path = driveId
-            ? await getFullpath(client, dirID, file.name, driveId)
-            : await CozyFile.getFullpath(dirID, file.name)
-
-          const uploadedFile = await overwriteFile(
-            client,
-            file,
-            path,
-            {
-              onUploadProgress: event => {
-                dispatch(uploadProgress(fileId, file, event))
-              }
-            },
-            driveId
-          )
-          safeCallback(uploadedFile)
-          dispatch({
-            type: RECEIVE_UPLOAD_SUCCESS,
-            fileId,
-            file,
-            isUpdate: true,
-            uploadedItem: uploadedFile
-          })
-          error = null
-        } catch (updateError) {
-          error = updateError
-        }
-      }
-      if (error) {
-        logger.error(
-          `Upload module catches an error when executing processNextFile(): ${error}`
-        )
-
-        // Define mapping for specific status codes to our constants
-        const statusError = {
-          409: CONFLICT,
-          413: QUOTA
-        }
-
-        // Determine the status based on the error details
-        let status
-        if (error.message?.includes(ERR_MAX_FILE_SIZE)) {
-          status = ERR_MAX_FILE_SIZE // File size exceeded maximum size allowed by the server
-        } else if (error.status in statusError) {
-          status = statusError[error.status]
-        } else if (/Failed to fetch$/.exec(error.toString())) {
-          status = NETWORK
-        } else {
-          status = FAILED
-        }
-
-        // Dispatch an action to handle the upload error with the determined status
-        dispatch({ type: RECEIVE_UPLOAD_ERROR, fileId, file, status })
-      }
+      await handleUploadError(uploadError, {
+        client,
+        file,
+        fileId,
+        dirID,
+        driveId,
+        dispatch,
+        safeCallback
+      })
     }
     dispatch(
       processNextFile(
