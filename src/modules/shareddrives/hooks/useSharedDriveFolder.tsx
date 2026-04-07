@@ -64,11 +64,9 @@ const useSharedDriveFolder = ({
       setNextCursor(null)
 
       try {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const { included, nextCursor: cursor } = await statById(folderId)
 
         if (fetchGeneration.current === currentGeneration) {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           setSharedDriveResult({ included })
           nextCursorRef.current = cursor
           setNextCursor(cursor)
@@ -105,7 +103,7 @@ const useSharedDriveFolder = ({
       }
       debouncedFetch.cancel()
     }
-  }, [client, driveId, folderId, sharedDriveQuery, statById])
+  }, [client, driveId, folderId, statById])
 
   const fetchMore = useCallback(async (): Promise<void> => {
     if (isFetchingMore.current || !nextCursorRef.current || !client) return
@@ -114,7 +112,6 @@ const useSharedDriveFolder = ({
     const currentGeneration = fetchGeneration.current
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const { included, nextCursor: cursor } = await statById(
         folderId,
         nextCursorRef.current
@@ -124,7 +121,7 @@ const useSharedDriveFolder = ({
 
       setSharedDriveResult(prev => ({
         ...prev,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
         included: [...(prev.included ?? []), ...(included ?? [])]
       }))
       nextCursorRef.current = cursor
