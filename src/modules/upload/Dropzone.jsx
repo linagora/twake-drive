@@ -18,13 +18,6 @@ import { uploadFiles } from '@/modules/navigation/duck'
 import DropzoneTeaser from '@/modules/upload/DropzoneTeaser'
 import { useNewItemHighlightContext } from '@/modules/upload/NewItemHighlightProvider'
 
-// DnD helpers for folder upload
-const canHandleFolders = evt => {
-  if (!evt.dataTransfer) return false
-  const dt = evt.dataTransfer
-  return dt.items && dt.items.length && dt.items[0].webkitGetAsEntry != null
-}
-
 const canDrop = evt => {
   const items = evt.dataTransfer.items
   for (let i = 0; i < items.length; i += 1) {
@@ -55,7 +48,9 @@ export const Dropzone = ({
   const onDrop = async (files, _, evt) => {
     if (!canDrop(evt)) return
 
-    const filesToUpload = canHandleFolders(evt) ? evt.dataTransfer.items : files
+    // react-dropzone sets file.path on each File with the relative path.
+    // addToUploadQueue uses file.path to detect and handle folder uploads.
+    const filesToUpload = files
     dispatch(
       uploadFiles(
         filesToUpload,

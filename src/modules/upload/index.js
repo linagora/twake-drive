@@ -15,6 +15,7 @@ import { CozyFile } from '@/models'
 const SLUG = 'upload'
 
 export const ADD_TO_UPLOAD_QUEUE = 'ADD_TO_UPLOAD_QUEUE'
+const RESOLVE_FOLDER_ITEMS = 'RESOLVE_FOLDER_ITEMS'
 const UPLOAD_FILE = 'UPLOAD_FILE'
 const UPLOAD_PROGRESS = 'UPLOAD_PROGRESS'
 export const RECEIVE_UPLOAD_SUCCESS = 'RECEIVE_UPLOAD_SUCCESS'
@@ -144,6 +145,29 @@ const item = (state, action = { isUpdate: false }) => {
   }
 }
 
+/**
+ * Merge resolved folder items into the queue: update existing items
+ * by fileId, and append new ones discovered by flattenEntries
+ * (DropzoneDnD drops where directory entries have file=null).
+ */
+const mergeResolvedItems = (state, resolvedItems) => {
+  const resolvedMap = new Map(resolvedItems.map(r => [r.fileId, r]))
+  const existingIds = new Set(state.map(i => i.fileId))
+  const updated = state.map(i => {
+    const update = resolvedMap.get(i.fileId)
+    return update ? { ...i, ...update } : i
+  })
+  const newItems = resolvedItems
+    .filter(r => !existingIds.has(r.fileId))
+    .map(r => itemInitialState(r))
+  return [...updated, ...newItems]
+}
+
+const updateQueueItem = (state, action) => {
+  const matchId = action.fileId ?? action.file?.name
+  return state.map(i => (i.fileId !== matchId ? i : item(i, action)))
+}
+
 export const queue = (state = [], action) => {
   switch (action.type) {
     case ADD_TO_UPLOAD_QUEUE:
@@ -153,13 +177,13 @@ export const queue = (state = [], action) => {
       ]
     case PURGE_UPLOAD_QUEUE:
       return []
+    case RESOLVE_FOLDER_ITEMS:
+      return mergeResolvedItems(state, action.resolvedItems)
     case UPLOAD_FILE:
     case RECEIVE_UPLOAD_SUCCESS:
     case RECEIVE_UPLOAD_ERROR:
-    case UPLOAD_PROGRESS: {
-      const matchId = action.fileId ?? action.file?.name
-      return state.map(i => (i.fileId !== matchId ? i : item(i, action)))
-    }
+    case UPLOAD_PROGRESS:
+      return updateQueueItem(state, action)
     default:
       return state
   }
@@ -227,42 +251,6 @@ const handleConflictOverwrite = async (
   return uploadedFile
 }
 
-const performUpload = async (
-  client,
-  item,
-  dirID,
-  { vaultClient, encryptionKey },
-  driveId,
-  dispatch
-) => {
-  const { file, fileId, entry, isDirectory } = item
-  dispatch({ type: UPLOAD_FILE, fileId, file })
-
-  if (entry && isDirectory) {
-    return uploadDirectory(
-      client,
-      entry,
-      dirID,
-      { vaultClient, encryptionKey },
-      driveId
-    )
-  }
-
-  return uploadFile(
-    client,
-    file,
-    dirID,
-    {
-      vaultClient,
-      encryptionKey,
-      onUploadProgress: event => {
-        dispatch(uploadProgress(fileId, file, event))
-      }
-    },
-    driveId
-  )
-}
-
 const handleUploadError = async (
   uploadError,
   { client, file, fileId, dirID, driveId, dispatch, safeCallback }
@@ -295,6 +283,52 @@ const handleUploadError = async (
   })
 }
 
+const ensureCallback = fn => (typeof fn === 'function' ? fn : () => {})
+
+const uploadSingleFile = async (
+  { file, fileId, folderId },
+  { client, vaultClient, dirID, driveId, dispatch, safeCallback }
+) => {
+  const targetDirId = folderId ?? dirID
+  const encryptionKey = flag('drive.enable-encryption')
+    ? await getEncryptionKeyFromDirId(client, targetDirId)
+    : null
+
+  try {
+    dispatch({ type: UPLOAD_FILE, fileId, file })
+    const uploadedFile = await uploadFile(
+      client,
+      file,
+      targetDirId,
+      {
+        vaultClient,
+        encryptionKey,
+        onUploadProgress: event => {
+          dispatch(uploadProgress(fileId, file, event))
+        }
+      },
+      driveId
+    )
+    safeCallback(uploadedFile)
+    dispatch({
+      type: RECEIVE_UPLOAD_SUCCESS,
+      fileId,
+      file,
+      uploadedItem: uploadedFile
+    })
+  } catch (uploadError) {
+    await handleUploadError(uploadError, {
+      client,
+      file,
+      fileId,
+      dirID: targetDirId,
+      driveId,
+      dispatch,
+      safeCallback
+    })
+  }
+}
+
 export const processNextFile =
   (
     fileUploadedCallback,
@@ -306,10 +340,7 @@ export const processNextFile =
     addItems
   ) =>
   async (dispatch, getState) => {
-    const safeCallback =
-      typeof fileUploadedCallback === 'function'
-        ? fileUploadedCallback
-        : () => {}
+    const safeCallback = ensureCallback(fileUploadedCallback)
     if (!client) {
       throw new Error(
         'Upload module needs a cozy-client instance to work. This instance should be made available by using the extraArgument function of redux-thunk'
@@ -320,37 +351,14 @@ export const processNextFile =
       return dispatch(onQueueEmpty(queueCompletedCallback))
     }
 
-    const { file, fileId } = item
-    const encryptionKey = flag('drive.enable-encryption')
-      ? await getEncryptionKeyFromDirId(client, dirID)
-      : null
-    try {
-      const uploaded = await performUpload(
-        client,
-        item,
-        dirID,
-        { vaultClient, encryptionKey },
-        driveId,
-        dispatch
-      )
-      safeCallback(uploaded)
-      dispatch({
-        type: RECEIVE_UPLOAD_SUCCESS,
-        fileId,
-        file,
-        uploadedItem: uploaded
-      })
-    } catch (uploadError) {
-      await handleUploadError(uploadError, {
-        client,
-        file,
-        fileId,
-        dirID,
-        driveId,
-        dispatch,
-        safeCallback
-      })
-    }
+    await uploadSingleFile(item, {
+      client,
+      vaultClient,
+      dirID,
+      driveId,
+      dispatch,
+      safeCallback
+    })
     dispatch(
       processNextFile(
         fileUploadedCallback,
@@ -385,40 +393,172 @@ const readAllEntries = async dirReader => {
   return entries
 }
 
-const uploadDirectory = async (
+/**
+ * Recursively flatten FileSystemEntry-based directory entries into
+ * individual file items. Used by DropzoneDnD where webkitGetAsEntry()
+ * is still valid (react-dnd calls drop() synchronously).
+ */
+export const flattenEntries = async (
+  entries,
+  rootDirId,
   client,
-  directory,
-  dirID,
-  { vaultClient, encryptionKey },
-  driveId
+  driveId,
+  pathPrefix = '',
+  folderName = null
 ) => {
-  const newDir = await createFolder(client, directory.name, dirID, driveId)
-  const dirReader = directory.createReader()
-  const options = { vaultClient, encryptionKey }
+  const result = []
 
-  const entries = await readAllEntries(dirReader)
+  for (const item of entries) {
+    if (item.isDirectory && item.entry) {
+      const dirEntry = item.entry
+      const dirName = dirEntry.name
+      const newDir = await createFolder(client, dirName, rootDirId, driveId)
+      const topFolderName = folderName ?? dirName
+      const newPrefix = pathPrefix ? `${pathPrefix}/${dirName}` : dirName
 
-  const files = await Promise.all(
-    entries.filter(e => e.isFile).map(e => getFileFromEntry(e))
-  )
+      const dirReader = dirEntry.createReader()
+      const childEntries = await readAllEntries(dirReader)
+      const fileEntries = childEntries.filter(e => e.isFile)
+      const dirEntries = childEntries.filter(e => e.isDirectory)
 
-  let fileIndex = 0
-  for (const entry of entries) {
-    if (entry.isFile) {
-      await uploadFile(client, files[fileIndex++], newDir.id, options, driveId)
-    } else if (entry.isDirectory) {
-      await uploadDirectory(client, entry, newDir.id, options, driveId)
+      const files = await Promise.all(fileEntries.map(e => getFileFromEntry(e)))
+
+      for (const file of files) {
+        const relativePath = `${newPrefix}/${file.name}`
+        result.push({
+          fileId: relativePath,
+          file,
+          relativePath,
+          folderId: newDir.id,
+          folderName: topFolderName,
+          isDirectory: false,
+          entry: null
+        })
+      }
+
+      const subEntries = dirEntries.map(e => ({
+        file: null,
+        isDirectory: true,
+        entry: e
+      }))
+      if (subEntries.length > 0) {
+        const subItems = await flattenEntries(
+          subEntries,
+          newDir.id,
+          client,
+          driveId,
+          newPrefix,
+          topFolderName
+        )
+        result.push(...subItems)
+      }
+    } else if (!item.isDirectory) {
+      result.push({
+        fileId: item.file.name,
+        file: item.file,
+        relativePath: null,
+        folderId: rootDirId,
+        folderName: null,
+        isDirectory: false,
+        entry: null
+      })
     }
   }
 
-  return newDir
+  return result
+}
+
+const cleanFilePath = filePath => {
+  if (!filePath) return null
+  const cleaned = filePath.startsWith('/') ? filePath.slice(1) : filePath
+  return cleaned && cleaned.includes('/') ? cleaned : null
+}
+
+const makeFlatItem = (file, folderId) => ({
+  fileId: file.name,
+  file,
+  relativePath: null,
+  folderId,
+  folderName: null,
+  isDirectory: false,
+  entry: null
+})
+
+const makeFolderItem = (file, cleanPath, folderId) => ({
+  fileId: cleanPath,
+  file,
+  relativePath: cleanPath,
+  folderId,
+  folderName: cleanPath.split('/')[0],
+  isDirectory: false,
+  entry: null
+})
+
+/**
+ * Flatten file entries using file.path (set by react-dropzone/file-selector).
+ * Creates server-side folders based on the path structure.
+ * file.path looks like "/fichiers/dossier 1/103.txt".
+ */
+export const flattenEntriesFromPaths = async (
+  entries,
+  rootDirId,
+  client,
+  driveId
+) => {
+  const folderCache = { '': rootDirId }
+
+  const ensureFolder = async folderPath => {
+    if (folderCache[folderPath] != null) {
+      return folderCache[folderPath]
+    }
+    const lastSlash = folderPath.lastIndexOf('/')
+    const parentPath = lastSlash > 0 ? folderPath.slice(0, lastSlash) : ''
+    const name = lastSlash > 0 ? folderPath.slice(lastSlash + 1) : folderPath
+    const parentId = await ensureFolder(parentPath)
+
+    const folder = await createFolder(client, name, parentId, driveId)
+    folderCache[folderPath] = folder.id
+    return folder.id
+  }
+
+  const result = []
+  for (const entry of entries) {
+    if (!entry.file) continue
+
+    const cleanPath = cleanFilePath(entry.file.path)
+    if (!cleanPath) {
+      result.push(makeFlatItem(entry.file, rootDirId))
+    } else {
+      const folderPath = cleanPath.slice(0, cleanPath.lastIndexOf('/'))
+      const folderId = await ensureFolder(folderPath)
+      result.push(makeFolderItem(entry.file, cleanPath, folderId))
+    }
+  }
+
+  return result
 }
 
 const createFolder = async (client, name, dirID, driveId) => {
-  const resp = await client
-    .collection(DOCTYPE_FILES, { driveId })
-    .createDirectory({ name, dirId: dirID })
-  return resp.data
+  try {
+    const resp = await client
+      .collection(DOCTYPE_FILES, { driveId })
+      .createDirectory({ name, dirId: dirID })
+    return resp.data
+  } catch (error) {
+    if (error.status === 409) {
+      const parentResp = await client
+        .collection(DOCTYPE_FILES, { driveId })
+        .statById(dirID)
+      const parentPath =
+        parentResp.data.path || parentResp.data.attributes?.path
+      const folderPath = `${parentPath}/${name}`
+      const existingResp = await client
+        .collection(DOCTYPE_FILES, { driveId })
+        .statByPath(folderPath)
+      return existingResp.data
+    }
+    throw error
+  }
 }
 
 const uploadFile = async (client, file, dirID, options = {}, driveId) => {
@@ -525,13 +665,76 @@ export const overwriteFile = async (
   return resp.data
 }
 
-export const removeFileToUploadQueue = (file, fileId) => async dispatch => {
-  dispatch({
-    type: RECEIVE_UPLOAD_SUCCESS,
-    fileId: fileId ?? file.name,
-    file,
-    isUpdate: true
-  })
+/**
+ * Build preliminary queue items from raw entries for immediate display.
+ * Extracts relativePath from file.path when available and creates
+ * placeholder items for dropped directories while their contents are resolved.
+ */
+const buildPreliminaryItems = (entries, dirID) =>
+  entries
+    .map(e => {
+      if (e.file) {
+        const filePath = e.file.path || ''
+        const cleanPath = filePath.startsWith('/')
+          ? filePath.slice(1)
+          : filePath
+        const hasPath = cleanPath && cleanPath.includes('/')
+        return {
+          fileId: hasPath ? cleanPath : e.file.name,
+          file: e.file,
+          relativePath: hasPath ? cleanPath : null,
+          folderId: dirID,
+          folderName: hasPath ? cleanPath.split('/')[0] : null,
+          isDirectory: false,
+          entry: null
+        }
+      }
+
+      if (e.entry?.isDirectory) {
+        const entryPath = e.entry.fullPath || e.entry.name || ''
+        const cleanPath = entryPath.startsWith('/')
+          ? entryPath.slice(1)
+          : entryPath
+
+        return {
+          fileId: cleanPath || e.entry.name,
+          file: null,
+          relativePath: cleanPath || null,
+          folderId: dirID,
+          folderName: cleanPath
+            ? cleanPath.split('/')[0]
+            : e.entry.name || null,
+          isDirectory: true,
+          entry: e.entry
+        }
+      }
+
+      return null
+    })
+    .filter(Boolean)
+
+/**
+ * Resolve folder structure server-side and return updated queue items.
+ * Uses file.path (react-dropzone) or FileSystemEntry (react-dnd).
+ */
+const resolveServerFolders = async (entries, dirID, client, driveId) => {
+  const hasFilePaths = entries.some(
+    e => e.file?.path && e.file.path.includes('/')
+  )
+  if (hasFilePaths) {
+    return flattenEntriesFromPaths(entries, dirID, client, driveId)
+  }
+  return flattenEntries(entries, dirID, client, driveId)
+}
+
+const hasFolderEntries = entries =>
+  entries.some(e => e.file?.path && e.file.path.includes('/')) ||
+  entries.some(e => e.isDirectory && e.entry)
+
+const notifyFolderError = () => {
+  if (typeof window !== 'undefined' && typeof window.alert === 'function') {
+    window.alert('The folder upload could not be prepared. Please try again.')
+  }
 }
 
 export const addToUploadQueue =
@@ -548,8 +751,26 @@ export const addToUploadQueue =
   async dispatch => {
     dispatch({
       type: ADD_TO_UPLOAD_QUEUE,
-      files: entries
+      files: buildPreliminaryItems(entries, dirID)
     })
+
+    if (hasFolderEntries(entries)) {
+      try {
+        const resolvedItems = await resolveServerFolders(
+          entries,
+          dirID,
+          client,
+          driveId
+        )
+        dispatch({ type: RESOLVE_FOLDER_ITEMS, resolvedItems })
+      } catch (error) {
+        logger.error(`Upload module: folder resolution failed: ${error}`)
+        notifyFolderError()
+        dispatch({ type: PURGE_UPLOAD_QUEUE })
+        return
+      }
+    }
+
     dispatch(
       processNextFile(
         fileUploadedCallback,
@@ -566,7 +787,7 @@ export const addToUploadQueue =
 export const purgeUploadQueue = () => ({ type: PURGE_UPLOAD_QUEUE })
 
 export const onQueueEmpty = callback => (dispatch, getState) => {
-  const safeCallback = typeof callback === 'function' ? callback : () => {}
+  const safeCallback = ensureCallback(callback)
   const queue = getUploadQueue(getState())
   const quotas = getQuotaErrors(queue)
   const conflicts = getConflicts(queue)
@@ -631,8 +852,8 @@ export const extractFilesEntries = items => {
   let results = []
   for (let i = 0; i < items.length; i += 1) {
     const item = items[i]
-    if (item.webkitGetAsEntry != null && item.webkitGetAsEntry()) {
-      const entry = item.webkitGetAsEntry()
+    const entry = item.webkitGetAsEntry?.()
+    if (entry) {
       results.push({
         file: item.getAsFile(),
         fileId: entry.fullPath,

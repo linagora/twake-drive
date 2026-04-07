@@ -40,11 +40,28 @@ export const DumbUploadQueue = translate()(props => {
   )
 })
 
-const mapStateToProps = state => ({
-  queue: getUploadQueue(state),
-  doneCount: getProcessed(state).length,
-  successCount: getSuccessful(state).length
-})
+const mapStateToProps = state => {
+  const rawQueue = getUploadQueue(state)
+
+  // Replace file.name with relativePath for display when available
+  const queue = rawQueue.map(item => {
+    if (!item.relativePath) return item
+    return {
+      ...item,
+      file: {
+        name: item.relativePath,
+        type: item.file?.type,
+        size: item.file?.size
+      }
+    }
+  })
+
+  return {
+    queue,
+    doneCount: getProcessed(state).length,
+    successCount: getSuccessful(state).length
+  }
+}
 const mapDispatchToProps = dispatch => ({
   purgeQueue: () => dispatch(purgeUploadQueue())
 })

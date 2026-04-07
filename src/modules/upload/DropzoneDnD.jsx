@@ -59,6 +59,9 @@ export const Dropzone = ({
       canDrop: item => !disabled && canDropHelper(item),
       drop(item) {
         if (disabled) return
+        // react-dnd calls drop() synchronously during the native drop event,
+        // so DataTransferItemList and webkitGetAsEntry() are still valid here
+        // (unlike react-dropzone which processes files asynchronously).
         const filesToUpload = canHandleFolders(item)
           ? item.dataTransfer.items
           : item.files

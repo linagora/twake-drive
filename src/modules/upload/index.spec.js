@@ -5,7 +5,9 @@ import {
   overwriteFile,
   uploadProgress,
   extractFilesEntries,
-  exceedsFileLimit
+  exceedsFileLimit,
+  flattenEntries,
+  flattenEntriesFromPaths
 } from './index'
 
 import { getEncryptionKeyFromDirId } from '@/lib/encryption'
@@ -366,6 +368,39 @@ describe('queue reducer', () => {
     expect(result).toEqual([])
   })
 
+  it('should update existing items and append new ones on RESOLVE_FOLDER_ITEMS', () => {
+    const initialState = [
+      {
+        fileId: 'report.pdf',
+        status: 'pending',
+        file: { name: 'report.pdf' },
+        progress: null
+      }
+    ]
+    const action = {
+      type: 'RESOLVE_FOLDER_ITEMS',
+      resolvedItems: [
+        {
+          fileId: 'report.pdf',
+          file: { name: 'report.pdf' },
+          folderId: 'resolved-dir',
+          relativePath: null
+        },
+        {
+          fileId: 'photos/img.jpg',
+          file: { name: 'img.jpg' },
+          folderId: 'photos-dir',
+          relativePath: 'photos/img.jpg'
+        }
+      ]
+    }
+    const result = queue(initialState, action)
+    expect(result).toHaveLength(2)
+    expect(result[0].folderId).toBe('resolved-dir')
+    expect(result[1].fileId).toBe('photos/img.jpg')
+    expect(result[1].status).toBe('pending')
+  })
+
   it('should handle PURGE_UPLOAD_QUEUE action type', () => {
     const action = {
       type: 'PURGE_UPLOAD_QUEUE'
@@ -704,10 +739,11 @@ describe('queue reducer', () => {
 })
 
 // Helpers to mock browser FileSystem API objects
-const createMockFileEntry = name => ({
+const createMockFileEntry = (name, content = '') => ({
   isFile: true,
   isDirectory: false,
-  name
+  name,
+  file: resolve => resolve(new File([content], name))
 })
 
 const createMockDirEntry = (name, children) => ({
@@ -870,6 +906,265 @@ describe('exceedsFileLimit', () => {
       { file: null, isDirectory: true, entry: dir2 }
     ]
     expect(await exceedsFileLimit(entries, 500)).toBe(true)
+  })
+})
+
+describe('flattenEntries (FileSystemEntry-based)', () => {
+  const createDirSpy = jest.fn().mockName('createDirectory')
+  const flattenClient = {
+    collection: () => ({
+      createDirectory: createDirSpy
+    })
+  }
+
+  beforeEach(() => {
+    createDirSpy.mockReset()
+    createDirSpy.mockImplementation(({ name }) => ({
+      data: { id: `dir-id-${name}`, name }
+    }))
+  })
+
+  it('should flatten a single-level directory', async () => {
+    const dirEntry = createMockDirEntry('photos', [
+      createMockFileEntry('img1.jpg'),
+      createMockFileEntry('img2.jpg')
+    ])
+    const entries = [{ file: null, isDirectory: true, entry: dirEntry }]
+
+    const result = await flattenEntries(
+      entries,
+      'root-dir',
+      flattenClient,
+      null
+    )
+
+    expect(createDirSpy).toHaveBeenCalledWith({
+      name: 'photos',
+      dirId: 'root-dir'
+    })
+    expect(result).toHaveLength(2)
+    expect(result[0]).toMatchObject({
+      fileId: 'photos/img1.jpg',
+      relativePath: 'photos/img1.jpg',
+      folderId: 'dir-id-photos',
+      folderName: 'photos'
+    })
+  })
+
+  it('should flatten nested directories', async () => {
+    const subDir = createMockDirEntry('2024', [createMockFileEntry('ski.jpg')])
+    const topDir = createMockDirEntry('photos', [
+      createMockFileEntry('beach.jpg'),
+      subDir
+    ])
+    const entries = [{ file: null, isDirectory: true, entry: topDir }]
+
+    const result = await flattenEntries(
+      entries,
+      'root-dir',
+      flattenClient,
+      null
+    )
+
+    expect(result).toHaveLength(2)
+    expect(result[0]).toMatchObject({
+      fileId: 'photos/beach.jpg',
+      relativePath: 'photos/beach.jpg',
+      folderId: 'dir-id-photos',
+      folderName: 'photos'
+    })
+    expect(result[1]).toMatchObject({
+      fileId: 'photos/2024/ski.jpg',
+      relativePath: 'photos/2024/ski.jpg',
+      folderId: 'dir-id-2024',
+      folderName: 'photos'
+    })
+  })
+
+  it('should handle empty directories', async () => {
+    const emptyDir = createMockDirEntry('empty', [])
+    const entries = [{ file: null, isDirectory: true, entry: emptyDir }]
+
+    const result = await flattenEntries(
+      entries,
+      'root-dir',
+      flattenClient,
+      null
+    )
+
+    expect(createDirSpy).toHaveBeenCalledWith({
+      name: 'empty',
+      dirId: 'root-dir'
+    })
+    expect(result).toHaveLength(0)
+  })
+})
+
+describe('flattenEntriesFromPaths (file.path-based)', () => {
+  const createDirSpy = jest.fn().mockName('createDirectory')
+  const pathClient = {
+    collection: () => ({
+      createDirectory: createDirSpy,
+      statById: jest.fn().mockResolvedValue({ data: { path: '/root' } }),
+      statByPath: jest.fn().mockImplementation(path => {
+        const name = path.split('/').pop()
+        return Promise.resolve({ data: { id: `existing-${name}` } })
+      })
+    })
+  }
+
+  beforeEach(() => {
+    createDirSpy.mockReset()
+    createDirSpy.mockImplementation(({ name }) => ({
+      data: { id: `dir-id-${name}`, name }
+    }))
+  })
+
+  it('should pass through flat files without creating folders', async () => {
+    const file = new File(['a'], 'report.pdf')
+    const entries = [{ file, isDirectory: false, entry: null }]
+
+    const result = await flattenEntriesFromPaths(
+      entries,
+      'root-dir',
+      pathClient,
+      null
+    )
+
+    expect(result).toHaveLength(1)
+    expect(result[0]).toMatchObject({
+      fileId: 'report.pdf',
+      relativePath: null,
+      folderId: 'root-dir',
+      folderName: null
+    })
+    expect(createDirSpy).not.toHaveBeenCalled()
+  })
+
+  it('should create folders from file.path and set relativePath', async () => {
+    const file1 = new File(['a'], '10.txt')
+    Object.defineProperty(file1, 'path', { value: '/fichiers/10.txt' })
+    const file2 = new File(['b'], '103.txt')
+    Object.defineProperty(file2, 'path', {
+      value: '/fichiers/dossier 1/103.txt'
+    })
+    const file3 = new File(['c'], '88.txt')
+    Object.defineProperty(file3, 'path', {
+      value: '/fichiers/dossier 1/sous dossier 1/88.txt'
+    })
+
+    const entries = [
+      { file: file1, isDirectory: false, entry: null },
+      { file: file2, isDirectory: false, entry: null },
+      { file: file3, isDirectory: false, entry: null }
+    ]
+
+    const result = await flattenEntriesFromPaths(
+      entries,
+      'root-dir',
+      pathClient,
+      null
+    )
+
+    expect(createDirSpy).toHaveBeenCalledTimes(3)
+    expect(createDirSpy).toHaveBeenCalledWith({
+      name: 'fichiers',
+      dirId: 'root-dir'
+    })
+    expect(createDirSpy).toHaveBeenCalledWith({
+      name: 'dossier 1',
+      dirId: 'dir-id-fichiers'
+    })
+    expect(createDirSpy).toHaveBeenCalledWith({
+      name: 'sous dossier 1',
+      dirId: 'dir-id-dossier 1'
+    })
+
+    expect(result).toHaveLength(3)
+    expect(result[0]).toMatchObject({
+      fileId: 'fichiers/10.txt',
+      relativePath: 'fichiers/10.txt',
+      folderId: 'dir-id-fichiers',
+      folderName: 'fichiers'
+    })
+    expect(result[1]).toMatchObject({
+      fileId: 'fichiers/dossier 1/103.txt',
+      relativePath: 'fichiers/dossier 1/103.txt',
+      folderId: 'dir-id-dossier 1',
+      folderName: 'fichiers'
+    })
+    expect(result[2]).toMatchObject({
+      fileId: 'fichiers/dossier 1/sous dossier 1/88.txt',
+      relativePath: 'fichiers/dossier 1/sous dossier 1/88.txt',
+      folderId: 'dir-id-sous dossier 1',
+      folderName: 'fichiers'
+    })
+  })
+
+  it('should not create the same folder twice', async () => {
+    const file1 = new File(['a'], 'a.txt')
+    Object.defineProperty(file1, 'path', { value: '/photos/a.txt' })
+    const file2 = new File(['b'], 'b.txt')
+    Object.defineProperty(file2, 'path', { value: '/photos/b.txt' })
+
+    const entries = [
+      { file: file1, isDirectory: false, entry: null },
+      { file: file2, isDirectory: false, entry: null }
+    ]
+
+    const result = await flattenEntriesFromPaths(
+      entries,
+      'root-dir',
+      pathClient,
+      null
+    )
+
+    expect(createDirSpy).toHaveBeenCalledTimes(1)
+    expect(result).toHaveLength(2)
+    expect(result[0].folderId).toBe('dir-id-photos')
+    expect(result[1].folderId).toBe('dir-id-photos')
+  })
+
+  it('should handle 409 conflict when folder already exists', async () => {
+    const conflictError = new Error('Conflict')
+    conflictError.status = 409
+    createDirSpy.mockRejectedValueOnce(conflictError)
+
+    const file = new File(['a'], 'doc.txt')
+    Object.defineProperty(file, 'path', {
+      value: '/existing-folder/doc.txt'
+    })
+
+    const entries = [{ file, isDirectory: false, entry: null }]
+    const result = await flattenEntriesFromPaths(
+      entries,
+      'root-dir',
+      pathClient,
+      null
+    )
+
+    expect(result).toHaveLength(1)
+    expect(result[0].folderId).toBe('existing-existing-folder')
+  })
+
+  it('should handle file.path without leading slash', async () => {
+    const file = new File(['a'], 'img.jpg')
+    Object.defineProperty(file, 'path', { value: 'photos/img.jpg' })
+
+    const entries = [{ file, isDirectory: false, entry: null }]
+    const result = await flattenEntriesFromPaths(
+      entries,
+      'root-dir',
+      pathClient,
+      null
+    )
+
+    expect(result).toHaveLength(1)
+    expect(result[0]).toMatchObject({
+      fileId: 'photos/img.jpg',
+      relativePath: 'photos/img.jpg',
+      folderId: 'dir-id-photos'
+    })
   })
 })
 
