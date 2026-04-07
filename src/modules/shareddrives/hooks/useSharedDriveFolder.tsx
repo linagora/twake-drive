@@ -6,7 +6,10 @@ import type { IOCozyFile } from 'cozy-client/types/types'
 import CozyRealtime from 'cozy-realtime'
 
 import logger from '@/lib/logger'
-import { paginatedStatById } from '@/modules/shareddrives/hooks/useSharedDriveFolderHelpers'
+import {
+  paginatedStatById,
+  type PaginatedStatByIdResult
+} from '@/modules/shareddrives/hooks/useSharedDriveFolderHelpers'
 import { buildSharedDriveFolderQuery } from '@/queries'
 import type { QueryConfig } from '@/queries'
 
@@ -36,13 +39,13 @@ const useSharedDriveFolder = ({
   const [sharedDriveResult, setSharedDriveResult] = useState<
     SharedDriveFolderReturn['sharedDriveResult']
   >({ data: undefined })
-  const [fetchStatus, setFetchStatus] = useState<
-    SharedDriveFolderReturn['fetchStatus']
-  >('loading')
+  const [fetchStatus, setFetchStatus] =
+    useState<SharedDriveFolderReturn['fetchStatus']>('loading')
   const [nextCursor, setNextCursor] = useState<string | null>(null)
   const nextCursorRef = useRef<string | null>(null)
   const isFetchingMore = useRef(false)
   const fetchGeneration = useRef(0)
+  const loadedPagesCount = useRef(0)
 
   const sharedDriveQuery = useMemo(
     () =>
@@ -59,7 +62,7 @@ const useSharedDriveFolder = ({
   )
 
   useEffect(() => {
-    const fetchSharedDriveFolder = async (): Promise<void> => {
+    const fetchSharedDriveFolder = async (pagesToLoad = 1): Promise<void> => {
       fetchGeneration.current += 1
       const currentGeneration = fetchGeneration.current
 
@@ -67,15 +70,28 @@ const useSharedDriveFolder = ({
       setFetchStatus('loading')
       nextCursorRef.current = null
       setNextCursor(null)
+      loadedPagesCount.current = 0
 
       try {
-        const { included, nextCursor: cursor } = await statById(folderId)
+        let allIncluded: IOCozyFile[] = []
+        let cursor: string | null = null
+
+        for (let page = 0; page < pagesToLoad; page++) {
+          const result: PaginatedStatByIdResult = await statById(
+            folderId,
+            cursor
+          )
+          allIncluded = [...allIncluded, ...(result.included ?? [])]
+          cursor = result.nextCursor
+          if (!result.nextCursor) break
+        }
 
         if (fetchGeneration.current === currentGeneration) {
-          setSharedDriveResult({ included })
+          setSharedDriveResult({ included: allIncluded })
           setFetchStatus('loaded')
           nextCursorRef.current = cursor
           setNextCursor(cursor)
+          loadedPagesCount.current = pagesToLoad
         }
       } catch (error) {
         logger.error('Error fetching shared drive folder:', error)
@@ -93,7 +109,7 @@ const useSharedDriveFolder = ({
     }
 
     const debouncedFetch = debounce(() => {
-      void fetchSharedDriveFolder()
+      void fetchSharedDriveFolder(Math.max(1, loadedPagesCount.current))
     }, 500)
 
     let realtime: CozyRealtime | undefined
@@ -133,6 +149,7 @@ const useSharedDriveFolder = ({
       }))
       nextCursorRef.current = cursor
       setNextCursor(cursor)
+      loadedPagesCount.current += 1
     } catch (error) {
       logger.error('Error fetching more shared drive files:', error)
     } finally {
