@@ -2,6 +2,7 @@ import { renderHook, act, waitFor } from '@testing-library/react'
 import React from 'react'
 
 import { createMockClient } from 'cozy-client'
+import CozyRealtime from 'cozy-realtime'
 
 import { useSharedDriveFolder } from './useSharedDriveFolder'
 import AppLike from 'test/components/AppLike'
@@ -14,6 +15,14 @@ jest.mock('cozy-realtime', () => {
     stop: jest.fn()
   }))
 })
+
+jest.mock('lodash/debounce', () =>
+  jest.fn(fn => {
+    const immediate = (...args) => fn(...args)
+    immediate.cancel = jest.fn()
+    return immediate
+  })
+)
 
 jest.mock('@/lib/logger', () => ({
   __esModule: true,
@@ -191,5 +200,128 @@ describe('useSharedDriveFolder', () => {
     })
 
     expect(statByIdMock).toHaveBeenCalledTimes(2)
+  })
+
+  describe('realtime re-fetch', () => {
+    let triggerRealtimeEvent
+
+    beforeEach(() => {
+      CozyRealtime.mockImplementation(() => ({
+        subscribe: jest.fn((_event, _doctype, callback) => {
+          triggerRealtimeEvent = callback
+        }),
+        stop: jest.fn()
+      }))
+    })
+
+    it('should re-fetch only page 1 when realtime fires before any fetchMore', async () => {
+      const cursor = 'cursor-page-2'
+      const page1 = [{ _id: '1', name: 'file-1.txt', type: 'file' }]
+      const refreshedPage1 = [
+        { _id: '1', name: 'file-1-renamed.txt', type: 'file' }
+      ]
+
+      const statByIdMock = jest
+        .fn()
+        .mockResolvedValueOnce({
+          included: page1,
+          links: { next: `/link?page[cursor]=${cursor}` }
+        })
+        .mockResolvedValueOnce({
+          included: refreshedPage1,
+          links: { next: `/link?page[cursor]=${cursor}` }
+        })
+      const mockClient = makeMockClient(statByIdMock)
+      const { result } = setup(mockClient)
+
+      await waitFor(() =>
+        expect(result.current.sharedDriveResult.included).toEqual(page1)
+      )
+      expect(statByIdMock).toHaveBeenCalledTimes(1)
+
+      await act(async () => {
+        triggerRealtimeEvent()
+      })
+
+      await waitFor(() =>
+        expect(result.current.sharedDriveResult.included).toEqual(
+          refreshedPage1
+        )
+      )
+      // 1 initial + 1 re-fetch (page 1 only)
+      expect(statByIdMock).toHaveBeenCalledTimes(2)
+    })
+
+    it('should re-fetch all loaded pages when realtime fires after fetchMore', async () => {
+      const cursor1 = 'cursor-page-2'
+      const cursor2 = 'cursor-page-3'
+
+      const page1 = [{ _id: '1', name: 'file-1.txt', type: 'file' }]
+      const page2 = [{ _id: '2', name: 'file-2.txt', type: 'file' }]
+      const page3 = [{ _id: '3', name: 'file-3.txt', type: 'file' }]
+      const refreshedPage1 = [
+        { _id: '1', name: 'file-1-renamed.txt', type: 'file' }
+      ]
+      const refreshedPage2 = [{ _id: '2', name: 'file-2.txt', type: 'file' }]
+      const refreshedPage3 = [{ _id: '3', name: 'file-3.txt', type: 'file' }]
+
+      const statByIdMock = jest
+        .fn()
+        // Initial fetch: page 1
+        .mockResolvedValueOnce({
+          included: page1,
+          links: { next: `/link?page[cursor]=${cursor1}` }
+        })
+        // fetchMore: page 2
+        .mockResolvedValueOnce({
+          included: page2,
+          links: { next: `/link?page[cursor]=${cursor2}` }
+        })
+        // fetchMore: page 3
+        .mockResolvedValueOnce({ included: page3, links: {} })
+        // Realtime re-fetch: page 1
+        .mockResolvedValueOnce({
+          included: refreshedPage1,
+          links: { next: `/link?page[cursor]=${cursor1}` }
+        })
+        // Realtime re-fetch: page 2
+        .mockResolvedValueOnce({
+          included: refreshedPage2,
+          links: { next: `/link?page[cursor]=${cursor2}` }
+        })
+        // Realtime re-fetch: page 3
+        .mockResolvedValueOnce({ included: refreshedPage3, links: {} })
+
+      const mockClient = makeMockClient(statByIdMock)
+      const { result } = setup(mockClient)
+
+      await waitFor(() => expect(result.current.hasMore).toBe(true))
+
+      await act(() => result.current.fetchMore())
+      await act(() => result.current.fetchMore())
+
+      await waitFor(() =>
+        expect(result.current.sharedDriveResult.included).toEqual([
+          ...page1,
+          ...page2,
+          ...page3
+        ])
+      )
+      expect(statByIdMock).toHaveBeenCalledTimes(3)
+
+      await act(async () => {
+        triggerRealtimeEvent()
+      })
+
+      await waitFor(() =>
+        expect(result.current.sharedDriveResult.included).toEqual([
+          ...refreshedPage1,
+          ...refreshedPage2,
+          ...refreshedPage3
+        ])
+      )
+      // 3 initial + 3 re-fetch (all pages)
+      expect(statByIdMock).toHaveBeenCalledTimes(6)
+    })
   })
 })
