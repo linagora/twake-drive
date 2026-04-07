@@ -635,6 +635,7 @@ export const extractFilesEntries = items => {
       const entry = item.webkitGetAsEntry()
       results.push({
         file: item.getAsFile(),
+        fileId: entry.fullPath,
         isDirectory: entry.isDirectory === true,
         entry
       })

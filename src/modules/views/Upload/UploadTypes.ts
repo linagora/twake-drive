@@ -1,6 +1,7 @@
 export interface FileForQueue {
   name: string
   file?: { name: string }
+  fileId?: string
   isDirectory?: false
 }
 

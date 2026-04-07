@@ -743,7 +743,7 @@ describe('extractFilesEntries', () => {
 
   it('should extract DataTransferItem with file entry', () => {
     const file = new File(['a'], 'a.txt')
-    const fileEntry = { isFile: true, isDirectory: false }
+    const fileEntry = { isFile: true, isDirectory: false, fullPath: '/a.txt' }
     const items = [
       {
         webkitGetAsEntry: () => fileEntry,
@@ -754,13 +754,14 @@ describe('extractFilesEntries', () => {
     expect(result).toHaveLength(1)
     expect(result[0]).toEqual({
       file,
+      fileId: '/a.txt',
       isDirectory: false,
       entry: fileEntry
     })
   })
 
   it('should extract DataTransferItem with directory entry', () => {
-    const dirEntry = { isFile: false, isDirectory: true }
+    const dirEntry = { isFile: false, isDirectory: true, fullPath: '/photos' }
     const items = [
       {
         webkitGetAsEntry: () => dirEntry,
@@ -771,6 +772,7 @@ describe('extractFilesEntries', () => {
     expect(result).toHaveLength(1)
     expect(result[0]).toEqual({
       file: null,
+      fileId: '/photos',
       isDirectory: true,
       entry: dirEntry
     })

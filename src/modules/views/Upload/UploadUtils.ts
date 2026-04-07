@@ -11,7 +11,11 @@ export const generateForQueue = (
   files: FileFromNative['file'][]
 ): FileForQueue[] => {
   // @ts-expect-error fix file types mismatch
-  return files.map(file => ({ file: file, isDirectory: false }))
+  return files.map(file => ({
+    file: file,
+    fileId: String(file.filePath || file.name),
+    isDirectory: false
+  }))
 }
 
 export const onFileUploaded = (
