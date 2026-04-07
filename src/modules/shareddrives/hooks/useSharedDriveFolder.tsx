@@ -23,6 +23,7 @@ interface SharedDriveFolderReturn {
     data?: IOCozyFile[] | null
     included?: IOCozyFile[] | null
   }
+  fetchStatus: 'loading' | 'loaded' | 'failed'
   hasMore: boolean
   fetchMore: () => Promise<void>
 }
@@ -35,6 +36,9 @@ const useSharedDriveFolder = ({
   const [sharedDriveResult, setSharedDriveResult] = useState<
     SharedDriveFolderReturn['sharedDriveResult']
   >({ data: undefined })
+  const [fetchStatus, setFetchStatus] = useState<
+    SharedDriveFolderReturn['fetchStatus']
+  >('loading')
   const [nextCursor, setNextCursor] = useState<string | null>(null)
   const nextCursorRef = useRef<string | null>(null)
   const isFetchingMore = useRef(false)
@@ -60,6 +64,7 @@ const useSharedDriveFolder = ({
       const currentGeneration = fetchGeneration.current
 
       setSharedDriveResult({ data: undefined, included: undefined })
+      setFetchStatus('loading')
       nextCursorRef.current = null
       setNextCursor(null)
 
@@ -68,6 +73,7 @@ const useSharedDriveFolder = ({
 
         if (fetchGeneration.current === currentGeneration) {
           setSharedDriveResult({ included })
+          setFetchStatus('loaded')
           nextCursorRef.current = cursor
           setNextCursor(cursor)
         }
@@ -75,6 +81,7 @@ const useSharedDriveFolder = ({
         logger.error('Error fetching shared drive folder:', error)
         if (fetchGeneration.current === currentGeneration) {
           setSharedDriveResult({ data: undefined, included: undefined })
+          setFetchStatus('failed')
           nextCursorRef.current = null
           setNextCursor(null)
         }
@@ -138,6 +145,7 @@ const useSharedDriveFolder = ({
   return {
     sharedDriveQuery,
     sharedDriveResult,
+    fetchStatus,
     hasMore,
     fetchMore
   }
