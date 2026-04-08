@@ -362,7 +362,9 @@
     "limit": {
       "title": "You cannot upload more than %{limit} files at a time.",
       "content": "Need to upload more? Consider downloading the synchronization tool to your computer",
+      "content_public": "Please reduce the number of files and try again.",
       "cancel": "Cancel",
+      "close": "Close",
       "download_desktop": "Download on Desktop"
     }
   },
