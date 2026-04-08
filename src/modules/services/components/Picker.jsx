@@ -2,7 +2,8 @@ import React from 'react'
 
 import { useClient } from 'cozy-client'
 import { makeSharingLink } from 'cozy-client/dist/models/sharing'
-import FilePicker from 'cozy-ui-plus/dist/FilePicker'
+
+import FilePicker from './FilePicker'
 
 const Picker = ({ service }) => {
   const client = useClient()
