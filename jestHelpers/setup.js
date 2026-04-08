@@ -4,7 +4,11 @@ import { TransformStream } from 'stream/web'
 global.cozy = {}
 global.TransformStream = TransformStream
 
-jest.mock('cozy-search', () => ({}))
+jest.mock('cozy-search', () => ({
+  AssistantDesktop: () => null,
+  AssistantDialog: () => null,
+  SearchDialog: () => null
+}))
 
 jest.mock('cozy-bar', () => ({
   ...jest.requireActual('cozy-bar'),
