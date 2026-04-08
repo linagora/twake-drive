@@ -56,7 +56,7 @@ const QuotaBanner = () => {
       <Alert
         icon={<Icon icon={CloudSyncIcon} />}
         color="var(--defaultBackgroundColor)"
-        actions={
+        action={
           <>
             <Button
               label={t('PushBanner.quota.actions.first')}
