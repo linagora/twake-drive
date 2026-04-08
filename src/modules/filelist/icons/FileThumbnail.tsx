@@ -5,12 +5,10 @@ import { isDirectory } from 'cozy-client/dist/models/file'
 import { SharedBadge, SharingOwnerAvatar } from 'cozy-sharing'
 import Badge from 'cozy-ui/transpiled/react/Badge'
 import Box from 'cozy-ui/transpiled/react/Box'
-import GhostFileBadge from 'cozy-ui/transpiled/react/GhostFileBadge'
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import FileTypeServerIcon from 'cozy-ui/transpiled/react/Icons/FileTypeServer'
 import LinkIcon from 'cozy-ui/transpiled/react/Icons/Link'
 import TrashDuotoneIcon from 'cozy-ui/transpiled/react/Icons/TrashDuotone'
-import InfosBadge from 'cozy-ui/transpiled/react/InfosBadge'
 import Spinner from 'cozy-ui/transpiled/react/Spinner'
 
 import styles from '@/styles/filelist.styl'
@@ -169,20 +167,48 @@ const FileThumbnail: React.FC<FileThumbnailProps> = ({
       {isRegularShortcut && (
         <>
           {viewType !== 'grid' ? (
-            <InfosBadge badgeContent={<Icon icon={LinkIcon} size={10} />}>
+            <Badge
+              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+              badgeContent={
+                <div
+                  className="u-h-1-half u-miw-1-half u-bdrs-circle u-flex u-flex-items-center u-flex-justify-center"
+                  style={{
+                    backgroundColor: 'var(--paperBackgroundColor)',
+                    color: 'var(--iconTextColor)',
+                    boxShadow: 'var(--shadow3)'
+                  }}
+                >
+                  <Icon icon={LinkIcon} size="10" />
+                </div>
+              }
+            >
               {fileIcon}
-            </InfosBadge>
+            </Badge>
           ) : (
             fileIcon
           )}
         </>
       )}
       {isSharingShortcut && (
-        <GhostFileBadge
-          badgeContent={<SharingShortcutIcon file={file} size={16} />}
+        <Badge
+          badgeContent={
+            <div
+              className="u-h-auto u-miw-auto"
+              style={{
+                padding: '3px',
+                backgroundColor: 'white',
+                color: 'var(--coolGrey)',
+                border: '1px solid var(--silver)',
+                borderRadius: '6px'
+              }}
+            >
+              <SharingShortcutIcon file={file} size={16} />
+            </div>
+          }
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         >
           <SharingOwnerAvatar docId={file._id} size="small" />
-        </GhostFileBadge>
+        </Badge>
       )}
       {isInSyncFromSharing && (
         <span data-testid="fil-file-thumbnail--spinner">

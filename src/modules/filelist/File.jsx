@@ -6,7 +6,7 @@ import React, { useState, useRef } from 'react'
 import { useSelector } from 'react-redux'
 
 import { isDirectory } from 'cozy-client/dist/models/file'
-import Card from 'cozy-ui/transpiled/react/Card'
+import Box from 'cozy-ui/transpiled/react/Box'
 import { TableRow, TableCell } from 'cozy-ui/transpiled/react/deprecated/Table'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import { useI18n } from 'twake-i18n'
@@ -42,9 +42,17 @@ const FileWrapper = ({ children, viewType, className, onContextMenu }) =>
       {children}
     </TableRow>
   ) : (
-    <Card className={className} onContextMenu={onContextMenu}>
+    <Box
+      display="block"
+      border={1}
+      borderColor="var(--dividerColor)"
+      borderRadius={8}
+      padding={2}
+      className={className}
+      onContextMenu={onContextMenu}
+    >
       {children}
-    </Card>
+    </Box>
   )
 
 const ThumbnailWrapper = ({ children, viewType, className }) =>

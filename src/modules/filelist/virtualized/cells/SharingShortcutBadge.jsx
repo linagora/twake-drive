@@ -2,7 +2,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import { isSharingShortcutNew } from 'cozy-client/dist/models/file'
-import Circle from 'cozy-ui/transpiled/react/Circle'
+import Avatar from 'cozy-ui/transpiled/react/Avatar'
 import { useI18n } from 'twake-i18n'
 
 const SharingShortcutBadge = ({ file }) => {
@@ -10,14 +10,14 @@ const SharingShortcutBadge = ({ file }) => {
 
   if (isSharingShortcutNew(file)) {
     return (
-      <Circle size="xsmall" backgroundColor="var(--errorColor)">
+      <Avatar color="var(--errorColor)" textColor="var(--white)" size="xs">
         <span
           style={{ fontSize: '11px', lineHeight: '1rem' }}
           aria-label={t('table.row_sharing_shortcut_aria_label')}
         >
           1
         </span>
-      </Circle>
+      </Avatar>
     )
   }
 
