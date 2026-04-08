@@ -1,8 +1,8 @@
 import React from 'react'
 
 import Icon from 'cozy-ui/transpiled/react/Icon'
-import ClockIcon from 'cozy-ui/transpiled/react/Icons/Clock'
-import FolderIcon from 'cozy-ui/transpiled/react/Icons/Folder'
+import ClockIcon from 'cozy-ui/transpiled/react/Icons/ClockOutline'
+import CloudIcon from 'cozy-ui/transpiled/react/Icons/Cloud2'
 import StarIcon from 'cozy-ui/transpiled/react/Icons/Star'
 import TrashIcon from 'cozy-ui/transpiled/react/Icons/Trash'
 import UINav from 'cozy-ui/transpiled/react/Nav'
@@ -22,7 +22,7 @@ export const Nav = () => {
     <UINav>
       <NavItem
         to="/folder"
-        icon={<Icon icon={FolderIcon} />}
+        icon={<Icon icon={CloudIcon} />}
         label="drive"
         rx={/\/(folder|nextcloud)(\/.*)?/}
         clickState={clickState}

@@ -50,7 +50,12 @@ const FavoriteListItem: FC<FavoriteListItemProps> = ({
         onClick={(): void => setLastClicked(undefined)}
       >
         <NavIcon icon={ItemIcon} />
-        <Typography variant="inherit" color="inherit" noWrap>
+        <Typography
+          className="u-fz-small"
+          variant="inherit"
+          color="inherit"
+          noWrap
+        >
           {filename}
         </Typography>
       </FileLink>

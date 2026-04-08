@@ -50,13 +50,13 @@ describe('makeTitle', () => {
           'Cozy Drive',
           t
         )
-      ).toBe('file.docx (Trash/folder) - Cozy Drive')
+      ).toBe('file.docx (Bin/folder) - Cozy Drive')
     })
 
     it('should show trash folder with human frendly name even if no subdirectory', () => {
       expect(
         makeTitle({ name: 'file.docx', path: TRASH_DIR_PATH }, 'Cozy Drive', t)
-      ).toBe('file.docx (Trash) - Cozy Drive')
+      ).toBe('file.docx (Bin) - Cozy Drive')
     })
   })
 
@@ -68,7 +68,7 @@ describe('makeTitle', () => {
           'Cozy Drive',
           t
         )
-      ).toBe('Trash - Cozy Drive')
+      ).toBe('Bin - Cozy Drive')
     })
 
     it('should show trash folder with human frendly name', () => {
@@ -82,7 +82,7 @@ describe('makeTitle', () => {
           'Cozy Drive',
           t
         )
-      ).toBe('folder (Trash/folder) - Cozy Drive')
+      ).toBe('folder (Bin/folder) - Cozy Drive')
     })
 
     it('should show folder path and app name', () => {
