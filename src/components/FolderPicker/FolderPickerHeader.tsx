@@ -1,6 +1,6 @@
 import React from 'react'
 
-import Card from 'cozy-ui/transpiled/react/Card'
+import Box from 'cozy-ui/transpiled/react/Box'
 import Typography from 'cozy-ui/transpiled/react/Typography'
 import { useI18n } from 'twake-i18n'
 
@@ -36,7 +36,15 @@ const FolderPickerHeader: React.FC<FolderPickerHeaderProps> = ({
   const subTitleToUse = subTitle ? subTitle : t('Move.to')
 
   return (
-    <Card inset style={specificCardStyle}>
+    <Box
+      display="block"
+      border={1}
+      borderColor="var(--dividerColor)"
+      borderRadius={8}
+      padding={2}
+      className="u-m-half-s u-mv-1 u-mh-2"
+      style={specificCardStyle}
+    >
       <FolderPickerHeaderIllustration entries={entries} />
       <div className="u-ellipsis">
         <Typography variant="h6" noWrap>
@@ -46,7 +54,7 @@ const FolderPickerHeader: React.FC<FolderPickerHeaderProps> = ({
           {subTitleToUse}
         </Typography>
       </div>
-    </Card>
+    </Box>
   )
 }
 

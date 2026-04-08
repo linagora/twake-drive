@@ -6,7 +6,7 @@ import flow from 'lodash/flow'
 import React, { Component } from 'react'
 
 import { withClient } from 'cozy-client'
-import Banner from 'cozy-ui/transpiled/react/Banner'
+import Alert from 'cozy-ui/transpiled/react/Alert'
 import Button from 'cozy-ui/transpiled/react/Buttons'
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import DesktopDownloadIcon from 'cozy-ui/transpiled/react/Icons/DesktopDownload'
@@ -66,9 +66,8 @@ class BannerClient extends Component {
 
     return (
       <div className="u-pos-relative">
-        <Banner
-          inline
-          disableIconStyles
+        <Alert
+          square
           icon={
             <Icon
               className="u-mt-1 u-ml-1"
@@ -77,32 +76,33 @@ class BannerClient extends Component {
               size={isMobile ? 24 : 20}
             />
           }
-          text={t(text, {
+          color="var(--defaultBackgroundColor)"
+          action={
+            <>
+              <Button
+                component="a"
+                variant="text"
+                label={t('Nav.banner-btn-client')}
+                size="small"
+                onClick={() => this.markAsSeen('banner')}
+                startIcon={<Icon icon={DownloadIcon} />}
+                target="_blank"
+                rel="noopener noreferrer"
+                href={link}
+              />
+              <Button
+                variant="text"
+                label={t('SelectionBar.close')}
+                size="small"
+                onClick={() => this.markAsSeen('close')}
+              />
+            </>
+          }
+        >
+          {t(text, {
             name: 'Twake Drive'
           })}
-          bgcolor="var(--defaultBackgroundColor)"
-          buttonOne={
-            <Button
-              component="a"
-              variant="text"
-              label={t('Nav.banner-btn-client')}
-              size="small"
-              onClick={() => this.markAsSeen('banner')}
-              startIcon={<Icon icon={DownloadIcon} />}
-              target="_blank"
-              href={link}
-            />
-          }
-          buttonTwo={
-            <Button
-              variant="text"
-              label={t('SelectionBar.close')}
-              size="small"
-              onClick={() => this.markAsSeen('close')}
-            />
-          }
-          noDivider
-        />
+        </Alert>
       </div>
     )
   }
