@@ -1,11 +1,11 @@
 {
   "Nav": {
-    "item_drive": "Files",
-    "item_recent": "Recent",
+    "item_drive": "My Drive",
+    "item_recent": "Recents",
     "item_sharings": "Sharings",
     "item_shared": "Shared by me",
     "item_activity": "Activity",
-    "item_trash": "Trash",
+    "item_trash": "Bin",
     "item_settings": "Settings",
     "item_collect": "Administrative",
     "item_shared_drives": "Shared drives",
