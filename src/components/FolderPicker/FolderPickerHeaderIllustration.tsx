@@ -1,7 +1,6 @@
 import React from 'react'
 
-import Circle from 'cozy-ui/transpiled/react/Circle'
-import Counter from 'cozy-ui/transpiled/react/Counter'
+import Avatar from 'cozy-ui/transpiled/react/Avatar'
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import DriveIcon from 'cozy-ui/transpiled/react/Icons/FileTypeFolder'
 
@@ -44,9 +43,9 @@ const FolderPickerHeaderIllustration: React.FC<
   }
   if (entries.length > 1) {
     return (
-      <Circle>
-        <Counter count={entries.length} />
-      </Circle>
+      <Avatar color="var(--dodgerBlue)" textColor="var(--white)">
+        <span>{entries.length > 99 ? '99+' : entries.length}</span>
+      </Avatar>
     )
   }
   return null
