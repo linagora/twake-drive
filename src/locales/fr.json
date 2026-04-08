@@ -359,7 +359,9 @@
     "limit": {
       "title": "Importation impossible : Ce dossier contient plus de %{limit} fichiers",
       "content": "Pour une importation de cette taille, nous vous recommandons d'utiliser l'application de synchronisation sur ordinateur.",
+      "content_public": "Veuillez réduire le nombre de fichiers et réessayer.",
       "cancel": "Annuler",
+      "close": "Fermer",
       "download_desktop": "Installer l'application"
     }
   },

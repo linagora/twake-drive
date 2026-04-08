@@ -25,22 +25,28 @@ const UploadLimitDialog = ({ onClose, maxFileCount }) => {
       open
       onClose={onClose}
       title={t('upload.limit.title', { limit: maxFileCount })}
-      content={<Typography>{t('upload.limit.content')}</Typography>}
+      content={
+        <Typography>
+          {t(isPublic ? 'upload.limit.content_public' : 'upload.limit.content')}
+        </Typography>
+      }
       actions={
-        <>
-          <Button
-            variant="secondary"
-            onClick={onClose}
-            label={t('upload.limit.cancel')}
-          />
-          {!isPublic && (
+        isPublic ? (
+          <Button onClick={onClose} label={t('upload.limit.close')} />
+        ) : (
+          <>
+            <Button
+              variant="secondary"
+              onClick={onClose}
+              label={t('upload.limit.cancel')}
+            />
             <Button
               onClick={handleDownloadDesktop}
               label={t('upload.limit.download_desktop')}
               startIcon={<Icon icon={DesktopDownloadIcon} />}
             />
-          )}
-        </>
+          </>
+        )
       }
     />
   )
