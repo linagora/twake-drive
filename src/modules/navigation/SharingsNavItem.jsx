@@ -19,7 +19,7 @@ const SharingsNavItem = ({ clickState }) => {
       to="/sharings"
       icon={<Icon icon={ShareIcon} />}
       label="sharings"
-      rx={/\/sharings(\/.*)?/}
+      rx={/\/sharings(\/.*)?|\/shareddrive(\/.*)?/}
       clickState={clickState}
       badgeContent={newSharingShortcutResult.data?.length}
     />
