@@ -1,6 +1,6 @@
 import cx from 'classnames'
 import PropTypes from 'prop-types'
-import React, { useEffect } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 
 import { NavLink as UINavLink } from 'cozy-ui/transpiled/react/Nav'
@@ -19,12 +19,18 @@ const NavLink = ({
   clickState: [lastClicked, setLastClicked]
 }) => {
   const location = useLocation()
+  const prevPathnameRef = useRef(location.pathname)
 
   useEffect(() => {
+    const prevPathname = prevPathnameRef.current
+    prevPathnameRef.current = location.pathname
+
     if (!lastClicked) return
 
     if (navLinkMatch(rx, lastClicked, location.pathname)) {
-      setLastClicked(null)
+      setLastClicked(null) // route arrived at destination
+    } else if (location.pathname !== prevPathname) {
+      setLastClicked(null) // route changed but went elsewhere (e.g. back button)
     }
   }, [location.pathname, rx, lastClicked, setLastClicked])
 

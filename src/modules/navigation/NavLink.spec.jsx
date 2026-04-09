@@ -130,7 +130,7 @@ describe('NavLink', () => {
       expect(setLastClicked).toHaveBeenCalledWith(null)
     })
 
-    it('does not reset lastClicked when route changes to a different destination', async () => {
+    it('resets lastClicked when route changes to a different destination (e.g. back button)', async () => {
       const setLastClicked = jest.fn()
       useLocation.mockReturnValue({ pathname: '/recent' })
       const rx = /\/(folder|nextcloud)(\/.*)?/
@@ -141,7 +141,7 @@ describe('NavLink', () => {
         </NavLink>
       )
 
-      // Route changed but to /trash, not /folder
+      // Route changed but to /trash, not /folder (e.g. back button or unexpected navigation)
       useLocation.mockReturnValue({ pathname: '/trash' })
       await act(async () => {
         rerender(
@@ -155,7 +155,7 @@ describe('NavLink', () => {
         )
       })
 
-      expect(setLastClicked).not.toHaveBeenCalledWith(null)
+      expect(setLastClicked).toHaveBeenCalledWith(null)
     })
   })
 })
