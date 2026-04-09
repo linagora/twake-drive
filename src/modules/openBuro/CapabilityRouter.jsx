@@ -30,9 +30,7 @@ const CapabilityRouter = ({ action, params }) => {
 
   if (missingParams) {
     return (
-      <div role="alert">
-        Missing required OpenBuro params (clientUrl, id).
-      </div>
+      <div role="alert">Missing required OpenBuro params (clientUrl, id).</div>
     )
   }
 

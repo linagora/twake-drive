@@ -15,15 +15,15 @@ describe('parseParams', () => {
   })
 
   it('defaults `type` to ["sharingUrl"] when absent', () => {
-    expect(parseParams('?clientUrl=https%3A%2F%2Fa.example&id=x').type).toEqual([
-      'sharingUrl'
-    ])
+    expect(parseParams('?clientUrl=https%3A%2F%2Fa.example&id=x').type).toEqual(
+      ['sharingUrl']
+    )
   })
 
   it('defaults `multiple` to false when absent', () => {
-    expect(parseParams('?clientUrl=https%3A%2F%2Fa.example&id=x').multiple).toBe(
-      false
-    )
+    expect(
+      parseParams('?clientUrl=https%3A%2F%2Fa.example&id=x').multiple
+    ).toBe(false)
   })
 
   it('treats only the literal string "true" as `multiple` truthy', () => {

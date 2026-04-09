@@ -3,8 +3,7 @@ import React, { useEffect } from 'react'
 
 import { useClient } from 'cozy-client'
 
-import FilePicker from '@/modules/services/components/FilePicker'
-
+import { buildPickResult } from './buildPickResult'
 import { ERROR_RESOLUTION_FAILED } from '../../constants'
 import {
   postCancelled,
@@ -12,7 +11,8 @@ import {
   postError,
   postReady
 } from '../../protocol/postResultToParent'
-import { buildPickResult } from './buildPickResult'
+
+import FilePicker from '@/modules/services/components/FilePicker'
 
 const PickHandler = ({ params }) => {
   const client = useClient()
@@ -27,7 +27,7 @@ const PickHandler = ({ params }) => {
     try {
       const results = await buildPickResult(client, ids, type)
       postDone({ clientUrl, id, results })
-    } catch (err) {
+    } catch (_err) {
       postError({ clientUrl, id, message: ERROR_RESOLUTION_FAILED })
     }
   }

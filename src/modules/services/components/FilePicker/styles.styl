@@ -4,13 +4,13 @@
 
 .filePickerBreadcrumb-icon
     color var(--actionColorActive)
-    margin 0 0.25rem
+    margin 0 .25rem
 
-@supports (display: contents)
+@supports (display: contents) // @stylint ignore
     .filePickerBreadcrumb-wrapper
         display contents
 
-@supports not (display: contents)
+@supports not (display: contents) // @stylint ignore
     .filePickerBreadcrumb-wrapper
         display flex
         flex 1 1 auto
