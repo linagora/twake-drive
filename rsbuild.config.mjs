@@ -23,6 +23,26 @@ const mergedConfig = mergeRsbuildConfig(config, {
           }
         ]
       }
+    },
+    capabilities: {
+      dev: {
+        assetPrefix: '/capabilities'
+      },
+      html: {
+        template: './src/targets/capabilities/index.ejs'
+      },
+      source: {
+        entry: {
+          capabilities: './src/targets/capabilities/index.jsx'
+        }
+      },
+      output: {
+        target: 'web',
+        distPath: {
+          root: 'build/capabilities'
+        },
+        assetPrefix: '/capabilities'
+      }
     }
   },
   resolve: {

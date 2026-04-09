@@ -53,6 +53,11 @@
       "index": "index.html",
       "public": false
     },
+    "/capabilities": {
+      "folder": "/capabilities",
+      "index": "index.html",
+      "public": false
+    },
     "/public": {
       "folder": "/public",
       "index": "index.html",

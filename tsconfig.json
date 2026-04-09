@@ -1,5 +1,5 @@
 {
-  "extends": "cozy-tsconfig",
+  "extends": "./node_modules/cozy-tsconfig/tsconfig.json",
   "exclude": ["node_modules", "build"],
   "compilerOptions": {
     "emitDeclarationOnly": false,
