@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types'
 import React, { useEffect } from 'react'
 
-import { ERROR_UNKNOWN_ACTION } from './constants'
+import { ERROR_MISSING_PARAMS, ERROR_UNKNOWN_ACTION } from './constants'
 import { capabilityHandlers } from './handlers'
 import { postError } from './protocol/postResultToParent'
 
@@ -14,7 +14,7 @@ import { postError } from './protocol/postResultToParent'
  * where to send anything.
  */
 const CapabilityRouter = ({ action, params }) => {
-  const missingParams = params && params.error === 'missing-params'
+  const missingParams = params && params.error === ERROR_MISSING_PARAMS
   const Handler = capabilityHandlers[action]
 
   useEffect(() => {

@@ -13,8 +13,8 @@ const FILES_DOCTYPE = 'io.cozy.files'
  * WARNING — `payload` has no hard size limit. The OpenBuro spec lets the
  * client request inline base64 content via `type=payload`. Encoding a large
  * file synchronously here will allocate several copies of the bytes in
- * memory (fetch response → ArrayBuffer → base64 string → postMessage clone)
- * and can easily exhaust an iframe's memory for files of a few hundred MB.
+ * memory (response → ArrayBuffer → base64 string → postMessage clone) and
+ * can easily exhaust an iframe's memory for files of a few hundred MB.
  *
  * We intentionally do NOT cap this in code. The client is responsible for
  * only requesting `payload` when it knows the file is small enough to
@@ -31,14 +31,12 @@ const arrayBufferToBase64 = buffer => {
   return btoa(binary)
 }
 
-const fetchPayload = async (downloadUrl, mimeType) => {
-  const response = await fetch(downloadUrl)
-  if (!response.ok) {
-    throw new Error(`payload fetch failed: ${response.status}`)
-  }
+const fetchPayloadDataUrl = async (client, id, mimeType) => {
+  const response = await client
+    .collection(FILES_DOCTYPE)
+    .fetchFileContentById(id)
   const buffer = await response.arrayBuffer()
-  const base64 = arrayBufferToBase64(buffer)
-  return `data:${mimeType};base64,${base64}`
+  return `data:${mimeType};base64,${arrayBufferToBase64(buffer)}`
 }
 
 /**
@@ -63,29 +61,23 @@ export const buildPickResult = async (client, ids, types) => {
     ids.map(async id => {
       const { data: file } = await client.query(Q(FILES_DOCTYPE).getById(id))
       const mimeType = file.mime
+
+      const [sharingUrl, downloadUrl, payload] = await Promise.all([
+        wantSharingUrl ? makeSharingLink(client, [id]) : null,
+        wantDownloadUrl
+          ? client.collection(FILES_DOCTYPE).getDownloadLinkById(id, file.name)
+          : null,
+        wantPayload ? fetchPayloadDataUrl(client, id, mimeType) : null
+      ])
+
       const result = {
         name: file.name,
         mimeType,
         size: Number(file.size)
       }
-
-      if (wantSharingUrl) {
-        result.sharingUrl = await makeSharingLink(client, [id])
-      }
-
-      let downloadUrl
-      if (wantDownloadUrl || wantPayload) {
-        downloadUrl = await client
-          .collection(FILES_DOCTYPE)
-          .getDownloadLinkById(id, file.name)
-      }
-      if (wantDownloadUrl) {
-        result.downloadUrl = downloadUrl
-      }
-      if (wantPayload) {
-        result.payload = await fetchPayload(downloadUrl, mimeType)
-      }
-
+      if (wantSharingUrl) result.sharingUrl = sharingUrl
+      if (wantDownloadUrl) result.downloadUrl = downloadUrl
+      if (wantPayload) result.payload = payload
       return result
     })
   )

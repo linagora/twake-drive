@@ -16,7 +16,10 @@ const makeFakeFile = ({ _id, name, mime, size }) => ({
 
 const makeClient = (
   filesById,
-  { downloadLink = 'https://d.example/file' } = {}
+  {
+    downloadLink = 'https://d.example/file',
+    fileContent = new Uint8Array([0]).buffer
+  } = {}
 ) => {
   const query = jest.fn(async id => {
     // cozy-client's Q(...).getById returns a definition whose `id` matches
@@ -26,14 +29,16 @@ const makeClient = (
     return { data: filesById[docId] }
   })
   const collection = jest.fn(() => ({
-    getDownloadLinkById: jest.fn(async () => downloadLink)
+    getDownloadLinkById: jest.fn(async () => downloadLink),
+    fetchFileContentById: jest.fn(async () => ({
+      arrayBuffer: async () => fileContent
+    }))
   }))
   return { query, collection }
 }
 
 beforeEach(() => {
   makeSharingLink.mockReset()
-  global.fetch = jest.fn()
 })
 
 describe('buildPickResult', () => {
@@ -83,28 +88,20 @@ describe('buildPickResult', () => {
 
   it('includes payload as data URL when requested', async () => {
     const client = makeClient(filesById, {
-      downloadLink: 'https://d.example/photo.jpg'
-    })
-    global.fetch.mockResolvedValueOnce({
-      ok: true,
-      arrayBuffer: async () => new Uint8Array([72, 105]).buffer // 'Hi'
+      fileContent: new Uint8Array([72, 105]).buffer // 'Hi'
     })
     const results = await buildPickResult(client, ['file-1'], ['payload'])
     expect(results[0].payload).toBe('data:image/jpeg;base64,SGk=')
-    expect(global.fetch).toHaveBeenCalledWith('https://d.example/photo.jpg')
   })
 
   it('includes all three representations when requested together', async () => {
     const client = makeClient(filesById, {
-      downloadLink: 'https://d.example/photo.jpg'
+      downloadLink: 'https://d.example/photo.jpg',
+      fileContent: new Uint8Array([72, 105]).buffer
     })
     makeSharingLink.mockResolvedValueOnce(
       'https://drive.example/public?sharecode=abc'
     )
-    global.fetch.mockResolvedValueOnce({
-      ok: true,
-      arrayBuffer: async () => new Uint8Array([72, 105]).buffer
-    })
     const [result] = await buildPickResult(
       client,
       ['file-1'],
