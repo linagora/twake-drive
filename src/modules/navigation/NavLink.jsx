@@ -1,6 +1,6 @@
 import cx from 'classnames'
 import PropTypes from 'prop-types'
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 
 import { NavLink as UINavLink } from 'cozy-ui/transpiled/react/Nav'
@@ -19,6 +19,15 @@ const NavLink = ({
   clickState: [lastClicked, setLastClicked]
 }) => {
   const location = useLocation()
+
+  useEffect(() => {
+    if (!lastClicked) return
+
+    if (navLinkMatch(rx, lastClicked, location.pathname)) {
+      setLastClicked(null)
+    }
+  }, [location.pathname, rx, lastClicked, setLastClicked])
+
   const pathname = lastClicked ? lastClicked : location.pathname
   const isActive = navLinkMatch(rx, to, pathname)
   return (
