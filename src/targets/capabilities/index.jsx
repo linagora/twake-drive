@@ -18,11 +18,6 @@ import { CapabilityRouter, parseParams } from '@/modules/openBuro'
 // ambient styles
 import styles from '@/styles/main.styl' // eslint-disable-line no-unused-vars
 
-const extractAction = pathname => {
-  const match = pathname.match(/\/capabilities\/([^/?#]+)/)
-  return match ? match[1] : null
-}
-
 document.addEventListener('DOMContentLoaded', () => {
   const root = document.getElementById('main')
   const data = JSON.parse(root.dataset.cozy)
@@ -30,7 +25,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const protocol = window.location ? window.location.protocol : 'https:'
   const cozyUrl = `${protocol}//${data.domain}`
 
-  const action = extractAction(window.location.pathname)
+  // The action is the last path segment (e.g. `/capabilities/PICK` → `PICK`).
+  // Each supported action is declared as its own route in manifest.webapp so
+  // cozy-stack serves index.html for the exact URL; anything else would fall
+  // through to an asset lookup and 401/404.
+  const action = window.location.pathname.split('/').filter(Boolean).pop()
   const params = parseParams(window.location.search)
 
   const client = new CozyClient({

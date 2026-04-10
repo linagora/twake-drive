@@ -53,7 +53,7 @@
       "index": "index.html",
       "public": false
     },
-    "/capabilities": {
+    "/capabilities/PICK": {
       "folder": "/capabilities",
       "index": "index.html",
       "public": false
