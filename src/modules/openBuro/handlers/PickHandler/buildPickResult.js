@@ -20,6 +20,10 @@ const FILES_DOCTYPE = 'io.cozy.files'
  * only requesting `payload` when it knows the file is small enough to
  * handle inline. If this ever becomes a UX problem, enforce a limit here
  * and return `message: 'payload-too-large'`.
+ *
+ * The payload is returned as the raw base64 string (no `data:…;base64,`
+ * prefix). Clients that need a data URL can reconstruct one from the
+ * result's `mimeType` and `payload` fields.
  */
 
 const arrayBufferToBase64 = buffer => {
@@ -31,12 +35,12 @@ const arrayBufferToBase64 = buffer => {
   return btoa(binary)
 }
 
-const fetchPayloadDataUrl = async (client, id, mimeType) => {
+const fetchPayloadBase64 = async (client, id) => {
   const response = await client
     .collection(FILES_DOCTYPE)
     .fetchFileContentById(id)
   const buffer = await response.arrayBuffer()
-  return `data:${mimeType};base64,${arrayBufferToBase64(buffer)}`
+  return arrayBufferToBase64(buffer)
 }
 
 /**
@@ -67,7 +71,7 @@ export const buildPickResult = async (client, ids, types) => {
         wantDownloadUrl
           ? client.collection(FILES_DOCTYPE).getDownloadLinkById(id, file.name)
           : null,
-        wantPayload ? fetchPayloadDataUrl(client, id, mimeType) : null
+        wantPayload ? fetchPayloadBase64(client, id) : null
       ])
 
       const result = {

@@ -37,6 +37,7 @@ jest.mock('cozy-client', () => ({
   useClient: () => ({ __isMockClient: true })
 }))
 
+let consoleErrorSpy
 beforeEach(() => {
   filePickerProps = undefined
   buildPickResult.mockReset()
@@ -44,6 +45,14 @@ beforeEach(() => {
   postDone.mockReset()
   postError.mockReset()
   postCancelled.mockReset()
+  // PickHandler logs to console.error on pick failures to surface the
+  // real cause in the popup devtools — stub it out so the project-wide
+  // no-console reporter stays happy.
+  consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+})
+
+afterEach(() => {
+  consoleErrorSpy.mockRestore()
 })
 
 describe('PickHandler', () => {

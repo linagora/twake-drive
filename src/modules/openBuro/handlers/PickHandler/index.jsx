@@ -36,7 +36,12 @@ const PickHandler = ({ params }) => {
     try {
       const results = await buildPickResult(client, ids, type)
       postDone({ clientUrl, id, results })
-    } catch (_err) {
+    } catch (err) {
+      // Surface the real cause in the popup console so integrators can see
+      // what went wrong (network, payload encoding, postMessage size...).
+      // The embedder only ever gets the canonical resolution-failed string.
+      // eslint-disable-next-line no-console
+      console.error('[openBuro] pick failed:', err)
       postError({ clientUrl, id, message: ERROR_RESOLUTION_FAILED })
     }
   }

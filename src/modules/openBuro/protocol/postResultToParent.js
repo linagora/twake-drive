@@ -13,9 +13,16 @@ const getRecipientWindow = () => window.opener || window.parent
  * Closes the current window if it was opened as a popup. No-op in iframe mode.
  * Called after terminal messages (done / error / cancelled) so the picker
  * dismisses itself.
+ *
+ * Close is deferred to the next task via setTimeout(0) so any in-flight
+ * postMessage serialization (potentially multi-MB for `type=payload`
+ * results) has fully committed to the opener's event queue before we tear
+ * the popup down. Without this defer, large payload messages can be
+ * dropped on some browsers when close() runs synchronously after
+ * postMessage().
  */
 const closeIfPopup = () => {
-  if (window.opener) window.close()
+  if (window.opener) setTimeout(() => window.close(), 0)
 }
 
 /**

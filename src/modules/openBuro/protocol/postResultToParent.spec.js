@@ -74,6 +74,9 @@ describe('postResultToParent', () => {
     let closeSpy
 
     beforeEach(() => {
+      // Fake timers because closeIfPopup defers window.close via setTimeout(0)
+      // to avoid racing postMessage serialization on large payloads.
+      jest.useFakeTimers()
       openerPostMessage = jest.fn()
       Object.defineProperty(window, 'opener', {
         configurable: true,
@@ -90,6 +93,7 @@ describe('postResultToParent', () => {
       parentPostMessageSpy.mockRestore()
       closeSpy.mockRestore()
       delete window.opener
+      jest.useRealTimers()
     })
 
     it('routes postDone to window.opener and closes the popup', () => {
@@ -100,6 +104,9 @@ describe('postResultToParent', () => {
         clientUrl
       )
       expect(parentPostMessageSpy).not.toHaveBeenCalled()
+      // postMessage happens synchronously, window.close is deferred.
+      expect(closeSpy).not.toHaveBeenCalled()
+      jest.runAllTimers()
       expect(closeSpy).toHaveBeenCalled()
     })
 
@@ -109,6 +116,7 @@ describe('postResultToParent', () => {
         { status: 'error', id, message: 'resolution-failed' },
         clientUrl
       )
+      jest.runAllTimers()
       expect(closeSpy).toHaveBeenCalled()
     })
 
@@ -118,6 +126,7 @@ describe('postResultToParent', () => {
         { status: 'error', id, message: 'cancelled' },
         clientUrl
       )
+      jest.runAllTimers()
       expect(closeSpy).toHaveBeenCalled()
     })
 
@@ -127,6 +136,7 @@ describe('postResultToParent', () => {
         { type: 'READY', id },
         clientUrl
       )
+      jest.runAllTimers()
       expect(closeSpy).not.toHaveBeenCalled()
     })
   })

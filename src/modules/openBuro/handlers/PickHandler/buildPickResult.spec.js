@@ -86,12 +86,12 @@ describe('buildPickResult', () => {
     expect(client.collection).toHaveBeenCalledWith('io.cozy.files')
   })
 
-  it('includes payload as data URL when requested', async () => {
+  it('includes payload as raw base64 (no data: prefix) when requested', async () => {
     const client = makeClient(filesById, {
       fileContent: new Uint8Array([72, 105]).buffer // 'Hi'
     })
     const results = await buildPickResult(client, ['file-1'], ['payload'])
-    expect(results[0].payload).toBe('data:image/jpeg;base64,SGk=')
+    expect(results[0].payload).toBe('SGk=')
   })
 
   it('includes all three representations when requested together', async () => {

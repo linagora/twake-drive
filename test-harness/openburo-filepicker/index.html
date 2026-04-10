@@ -235,14 +235,20 @@
         return `${value.toFixed(decimals)} ${units[unit]}`
       }
 
-      const pickSrcForEmbed = result =>
-        result.payload || result.downloadUrl || null
+      // `result.payload` is now raw base64 (no data: prefix). Rebuild a
+      // data URL on the fly for previews that need one, falling back to
+      // downloadUrl if payload wasn't requested.
+      const pickSrcForEmbed = result => {
+        if (result.payload) {
+          const mime = result.mimeType || 'application/octet-stream'
+          return `data:${mime};base64,${result.payload}`
+        }
+        return result.downloadUrl || null
+      }
 
-      const decodeTextFromDataUrl = dataUrl => {
-        const match = /^data:[^,]*;base64,(.*)$/.exec(dataUrl)
-        if (!match) return null
+      const decodeBase64Text = base64 => {
         try {
-          return atob(match[1])
+          return atob(base64)
         } catch (_err) {
           return null
         }
@@ -266,7 +272,7 @@
           return iframe
         }
         if (isTextMime(mime) && result.payload) {
-          const text = decodeTextFromDataUrl(result.payload)
+          const text = decodeBase64Text(result.payload)
           if (text !== null) {
             const pre = document.createElement('pre')
             pre.textContent = text
