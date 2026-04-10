@@ -133,4 +133,47 @@ describe('PickHandler', () => {
       id: params.id
     })
   })
+
+  it('does NOT post cancelled when onClose fires after a pick is in flight', async () => {
+    // FilePicker.handleConfirm calls onChange() then onClose() synchronously,
+    // back-to-back. handleChange is async, so without guarding, postCancelled
+    // would race postDone — and in popup mode the early postCancelled closes
+    // the window before the pick resolves, dropping the real result.
+    const results = [{ name: 'photo.jpg', mimeType: 'image/jpeg', size: 1 }]
+    buildPickResult.mockResolvedValueOnce(results)
+
+    render(<PickHandler params={params} />)
+
+    // Simulate FilePicker firing both callbacks in the same tick.
+    filePickerProps.onChange('file-1')
+    filePickerProps.onClose()
+
+    await waitFor(() => {
+      expect(postDone).toHaveBeenCalledWith({
+        clientUrl: params.clientUrl,
+        id: params.id,
+        results
+      })
+    })
+    expect(postCancelled).not.toHaveBeenCalled()
+  })
+
+  it('does NOT post cancelled when onClose fires after a failed pick', async () => {
+    // Same guard should hold when the async pick rejects — we've already
+    // reported an error, a trailing cancelled would just be noise.
+    buildPickResult.mockRejectedValueOnce(new Error('boom'))
+
+    render(<PickHandler params={params} />)
+    filePickerProps.onChange('file-1')
+    filePickerProps.onClose()
+
+    await waitFor(() => {
+      expect(postError).toHaveBeenCalledWith({
+        clientUrl: params.clientUrl,
+        id: params.id,
+        message: 'resolution-failed'
+      })
+    })
+    expect(postCancelled).not.toHaveBeenCalled()
+  })
 })

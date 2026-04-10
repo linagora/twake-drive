@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types'
-import React, { useEffect } from 'react'
+import React, { useEffect, useRef } from 'react'
 
 import { useClient } from 'cozy-client'
 
@@ -18,11 +18,20 @@ const PickHandler = ({ params }) => {
   const client = useClient()
   const { clientUrl, id, type, allowedMimeType, multiple } = params
 
+  // FilePicker.handleConfirm fires onChange() and then onClose() synchronously
+  // back-to-back. Without tracking the pick-in-progress state we'd always race
+  // a postCancelled from handleClose against postDone from handleChange. In
+  // popup mode that's not just noise: postCancelled closes the popup, which
+  // terminates the async buildPickResult before postDone can fire, so the
+  // embedder only ever sees "cancelled".
+  const pickingRef = useRef(false)
+
   useEffect(() => {
     postReady({ clientUrl, id })
   }, [clientUrl, id])
 
   const handleChange = async selection => {
+    pickingRef.current = true
     const ids = Array.isArray(selection) ? selection : [selection]
     try {
       const results = await buildPickResult(client, ids, type)
@@ -33,6 +42,7 @@ const PickHandler = ({ params }) => {
   }
 
   const handleClose = () => {
+    if (pickingRef.current) return
     postCancelled({ clientUrl, id })
   }
 
