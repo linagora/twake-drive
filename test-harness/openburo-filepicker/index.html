@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>OpenBuro FilePicker test harness</title>
+    <style>
+      body {
+        font-family: -apple-system, system-ui, sans-serif;
+        max-width: 900px;
+        margin: 24px auto;
+        padding: 0 16px;
+        color: #222;
+      }
+      h1 {
+        font-size: 20px;
+        margin-bottom: 8px;
+      }
+      .hint {
+        color: #666;
+        font-size: 13px;
+        margin-bottom: 16px;
+      }
+      fieldset {
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        padding: 12px 16px;
+        margin-bottom: 16px;
+      }
+      legend {
+        font-weight: 600;
+        font-size: 13px;
+        padding: 0 6px;
+      }
+      label {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-right: 14px;
+        font-size: 14px;
+      }
+      input[type='text'] {
+        padding: 4px 8px;
+        font-size: 14px;
+        width: 220px;
+      }
+      button {
+        background: #297ef2;
+        color: #fff;
+        border: 0;
+        border-radius: 4px;
+        padding: 8px 16px;
+        font-size: 14px;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #1f6fd9;
+      }
+      .url {
+        font-family: ui-monospace, Menlo, monospace;
+        font-size: 12px;
+        color: #444;
+        background: #f5f5f5;
+        padding: 6px 8px;
+        border-radius: 4px;
+        word-break: break-all;
+        margin: 8px 0 16px;
+      }
+      #iframe-container {
+        margin-top: 16px;
+      }
+      iframe {
+        width: 100%;
+        max-width: 600px;
+        height: 800px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+      #log {
+        background: #111;
+        color: #9fe89f;
+        padding: 12px;
+        border-radius: 4px;
+        font-family: ui-monospace, Menlo, monospace;
+        font-size: 12px;
+        max-height: 400px;
+        overflow: auto;
+        white-space: pre-wrap;
+        margin-top: 16px;
+      }
+      #selected-panel {
+        margin-top: 16px;
+      }
+      #selected-panel:empty {
+        display: none;
+      }
+      .file-card {
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        padding: 12px 16px;
+        margin-bottom: 12px;
+      }
+      .file-card-header {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        margin-bottom: 8px;
+      }
+      .file-card-name {
+        font-weight: 600;
+        font-size: 14px;
+      }
+      .file-card-mime {
+        font-family: ui-monospace, Menlo, monospace;
+        font-size: 12px;
+        color: #666;
+      }
+      .file-card-size {
+        font-size: 12px;
+        color: #666;
+        margin-left: auto;
+      }
+      .file-card-preview {
+        margin: 8px 0;
+      }
+      .file-card-preview img {
+        max-width: 100%;
+        max-height: 400px;
+        display: block;
+        border: 1px solid #eee;
+        border-radius: 4px;
+      }
+      .file-card-preview iframe {
+        width: 100%;
+        height: 400px;
+        border: 1px solid #eee;
+        border-radius: 4px;
+      }
+      .file-card-preview pre {
+        background: #f5f5f5;
+        padding: 8px;
+        border-radius: 4px;
+        font-family: ui-monospace, Menlo, monospace;
+        font-size: 12px;
+        max-height: 300px;
+        overflow: auto;
+        white-space: pre-wrap;
+        margin: 0;
+      }
+      .file-card-links {
+        font-size: 12px;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .file-card-links a {
+        color: #297ef2;
+        word-break: break-all;
+      }
+      .status-line {
+        padding: 12px 16px;
+        border-radius: 6px;
+        font-size: 14px;
+      }
+      .status-line.cancelled {
+        background: #f5f5f5;
+        color: #666;
+      }
+      .status-line.error {
+        background: #fde7e7;
+        color: #b00020;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>OpenBuro FilePicker test harness</h1>
+    <p class="hint">
+      Assumes Twake Drive dev server is reachable at
+      <code>http://drive.cozy.localhost:8080</code> and you're logged in.
+    </p>
+
+    <form id="config">
+      <fieldset>
+        <legend>Result representations (<code>type</code>)</legend>
+        <label
+          ><input type="checkbox" name="type" value="sharingUrl" checked />
+          sharingUrl</label
+        >
+        <label
+          ><input type="checkbox" name="type" value="downloadUrl" />
+          downloadUrl</label
+        >
+        <label
+          ><input type="checkbox" name="type" value="payload" /> payload</label
+        >
+      </fieldset>
+      <fieldset>
+        <legend>Filters</legend>
+        <label>
+          allowedMimeType:
+          <input type="text" name="allowedMimeType" placeholder="(none)" />
+        </label>
+        <label
+          ><input type="checkbox" name="multiple" /> multiple</label
+        >
+      </fieldset>
+      <button type="button" id="open">Open FilePicker</button>
+    </form>
+
+    <div class="url" id="current-url">(no request yet)</div>
+    <div id="iframe-container"></div>
+    <div id="selected-panel"></div>
+    <pre id="log"></pre>
+
+    <script>
+      const DRIVE_ORIGIN = 'http://drive.cozy.localhost:8080'
+      const CLIENT_URL = 'http://harness.cozy.localhost:8089'
+
+      const log = document.getElementById('log')
+      const urlEl = document.getElementById('current-url')
+      const container = document.getElementById('iframe-container')
+      const panel = document.getElementById('selected-panel')
+      const form = document.getElementById('config')
+
+      const append = entry => {
+        const line = {
+          t: new Date().toISOString().slice(11, 23),
+          ...entry
+        }
+        log.textContent += JSON.stringify(line, null, 2) + '\n'
+        log.scrollTop = log.scrollHeight
+      }
+
+      const formatBytes = n => {
+        if (!Number.isFinite(n)) return ''
+        const units = ['B', 'KB', 'MB', 'GB']
+        let value = n
+        let unit = 0
+        while (value >= 1024 && unit < units.length - 1) {
+          value /= 1024
+          unit++
+        }
+        const decimals = value >= 10 || unit === 0 ? 0 : 1
+        return `${value.toFixed(decimals)} ${units[unit]}`
+      }
+
+      const pickSrcForEmbed = result =>
+        result.payload || result.downloadUrl || null
+
+      const decodeTextFromDataUrl = dataUrl => {
+        const match = /^data:[^,]*;base64,(.*)$/.exec(dataUrl)
+        if (!match) return null
+        try {
+          return atob(match[1])
+        } catch (_err) {
+          return null
+        }
+      }
+
+      const isTextMime = mime =>
+        /^text\//.test(mime) || mime === 'application/json'
+
+      const renderPreview = result => {
+        const mime = result.mimeType || ''
+        const src = pickSrcForEmbed(result)
+        if (mime.startsWith('image/') && src) {
+          const img = document.createElement('img')
+          img.src = src
+          img.alt = result.name || ''
+          return img
+        }
+        if (mime === 'application/pdf' && src) {
+          const iframe = document.createElement('iframe')
+          iframe.src = src
+          return iframe
+        }
+        if (isTextMime(mime) && result.payload) {
+          const text = decodeTextFromDataUrl(result.payload)
+          if (text !== null) {
+            const pre = document.createElement('pre')
+            pre.textContent = text
+            return pre
+          }
+        }
+        return null
+      }
+
+      const renderLinks = result => {
+        const links = []
+        if (result.sharingUrl) {
+          links.push({ label: 'sharingUrl', url: result.sharingUrl })
+        }
+        if (result.downloadUrl) {
+          links.push({ label: 'downloadUrl', url: result.downloadUrl })
+        }
+        if (links.length === 0) return null
+
+        const wrapper = document.createElement('div')
+        wrapper.className = 'file-card-links'
+        for (const { label, url } of links) {
+          const a = document.createElement('a')
+          a.href = url
+          a.target = '_blank'
+          a.rel = 'noopener noreferrer'
+          a.textContent = label
+          wrapper.appendChild(a)
+        }
+        return wrapper
+      }
+
+      const renderResult = result => {
+        const card = document.createElement('div')
+        card.className = 'file-card'
+
+        const header = document.createElement('div')
+        header.className = 'file-card-header'
+        const name = document.createElement('span')
+        name.className = 'file-card-name'
+        name.textContent = result.name || '(unnamed)'
+        const mime = document.createElement('span')
+        mime.className = 'file-card-mime'
+        mime.textContent = result.mimeType || ''
+        const size = document.createElement('span')
+        size.className = 'file-card-size'
+        size.textContent = formatBytes(result.size)
+        header.append(name, mime, size)
+        card.appendChild(header)
+
+        const preview = renderPreview(result)
+        if (preview) {
+          const previewWrapper = document.createElement('div')
+          previewWrapper.className = 'file-card-preview'
+          previewWrapper.appendChild(preview)
+          card.appendChild(previewWrapper)
+        }
+
+        const links = renderLinks(result)
+        if (links) card.appendChild(links)
+
+        return card
+      }
+
+      const renderStatusLine = (kind, text) => {
+        const line = document.createElement('div')
+        line.className = `status-line ${kind}`
+        line.textContent = text
+        return line
+      }
+
+      const clearPanel = () => {
+        panel.innerHTML = ''
+      }
+
+      window.addEventListener('message', evt => {
+        if (evt.origin !== DRIVE_ORIGIN) return
+        append({ from: 'iframe', data: evt.data })
+
+        const data = evt.data
+        if (!data || typeof data !== 'object') return
+
+        if (data.status === 'done' && Array.isArray(data.results)) {
+          clearPanel()
+          for (const result of data.results) {
+            panel.appendChild(renderResult(result))
+          }
+          return
+        }
+        if (data.status === 'error') {
+          clearPanel()
+          if (data.message === 'cancelled') {
+            panel.appendChild(
+              renderStatusLine('cancelled', 'Cancelled by user.')
+            )
+          } else {
+            panel.appendChild(
+              renderStatusLine('error', `Error: ${data.message || 'unknown'}`)
+            )
+          }
+        }
+      })
+
+      const buildUrl = () => {
+        const fd = new FormData(form)
+        const types = fd.getAll('type').join(',')
+        const allowedMimeType = fd.get('allowedMimeType') || ''
+        const multiple = fd.get('multiple') ? 'true' : 'false'
+        const id = crypto.randomUUID()
+
+        const params = new URLSearchParams({
+          clientUrl: CLIENT_URL,
+          id,
+          type: types,
+          allowedMimeType,
+          multiple
+        })
+        return `${DRIVE_ORIGIN}/capabilities/PICK?${params.toString()}`
+      }
+
+      document.getElementById('open').addEventListener('click', () => {
+        const url = buildUrl()
+        urlEl.textContent = url
+        log.textContent = ''
+        clearPanel()
+        append({ from: 'harness', event: 'opened', url })
+
+        container.innerHTML = ''
+        const iframe = document.createElement('iframe')
+        iframe.src = url
+        container.appendChild(iframe)
+      })
+    </script>
+  </body>
+</html>
