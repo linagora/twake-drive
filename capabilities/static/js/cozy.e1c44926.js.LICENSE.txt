@@ -1,0 +1,1 @@
+//! Since we introduced the concept of strategy we can use

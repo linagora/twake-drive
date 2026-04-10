@@ -1,0 +1,17 @@
+[
+  {
+    "id": "twake-drive",
+    "name": "Twake Drive",
+    "url": "",
+    "version": "1.97.0",
+    "capabilities": [
+      {
+        "action": "PICK",
+        "path": "/capabilities/PICK",
+        "properties": {
+          "mimeTypes": ["*/*"]
+        }
+      }
+    ]
+  }
+]
