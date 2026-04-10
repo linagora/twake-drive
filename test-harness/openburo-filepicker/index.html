@@ -65,16 +65,6 @@
         word-break: break-all;
         margin: 8px 0 16px;
       }
-      #iframe-container {
-        margin-top: 16px;
-      }
-      iframe {
-        width: 100%;
-        max-width: 600px;
-        height: 800px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-      }
       #log {
         background: #111;
         color: #9fe89f;
@@ -207,19 +197,20 @@
     </form>
 
     <div class="url" id="current-url">(no request yet)</div>
-    <div id="iframe-container"></div>
     <div id="selected-panel"></div>
     <pre id="log"></pre>
 
     <script>
       const DRIVE_ORIGIN = 'http://drive.cozy.localhost:8080'
-      const CLIENT_URL = 'http://harness.cozy.localhost:8089'
+      const CLIENT_URL = window.location.origin
 
       const log = document.getElementById('log')
       const urlEl = document.getElementById('current-url')
-      const container = document.getElementById('iframe-container')
       const panel = document.getElementById('selected-panel')
       const form = document.getElementById('config')
+
+      let currentPopup = null
+      let closedPollId = null
 
       const append = entry => {
         const line = {
@@ -350,9 +341,21 @@
         panel.innerHTML = ''
       }
 
+      const stopClosedPoll = () => {
+        if (closedPollId !== null) {
+          clearInterval(closedPollId)
+          closedPollId = null
+        }
+      }
+
+      const markFinished = () => {
+        stopClosedPoll()
+        currentPopup = null
+      }
+
       window.addEventListener('message', evt => {
         if (evt.origin !== DRIVE_ORIGIN) return
-        append({ from: 'iframe', data: evt.data })
+        append({ from: 'popup', data: evt.data })
 
         const data = evt.data
         if (!data || typeof data !== 'object') return
@@ -362,6 +365,7 @@
           for (const result of data.results) {
             panel.appendChild(renderResult(result))
           }
+          markFinished()
           return
         }
         if (data.status === 'error') {
@@ -375,6 +379,7 @@
               renderStatusLine('error', `Error: ${data.message || 'unknown'}`)
             )
           }
+          markFinished()
         }
       })
 
@@ -402,10 +407,45 @@
         clearPanel()
         append({ from: 'harness', event: 'opened', url })
 
-        container.innerHTML = ''
-        const iframe = document.createElement('iframe')
-        iframe.src = url
-        container.appendChild(iframe)
+        // Dismiss any previous picker before opening a new one.
+        if (currentPopup && !currentPopup.closed) {
+          currentPopup.close()
+        }
+        stopClosedPoll()
+
+        const features = 'popup=1,width=900,height=800'
+        currentPopup = window.open(url, 'cozy-openburo-picker', features)
+        if (!currentPopup) {
+          append({
+            from: 'harness',
+            event: 'popup-blocked',
+            hint: 'Allow popups for this origin and try again.'
+          })
+          clearPanel()
+          panel.appendChild(
+            renderStatusLine('error', 'Popup blocked by the browser.')
+          )
+          return
+        }
+
+        // Poll for user-initiated close without a terminal message so we can
+        // log/display a "cancelled" state (the capability target normally
+        // sends postCancelled on close, but we can't rely on it if the tab is
+        // killed hard).
+        closedPollId = setInterval(() => {
+          if (!currentPopup || currentPopup.closed) {
+            stopClosedPoll()
+            if (currentPopup) {
+              currentPopup = null
+              append({ from: 'harness', event: 'popup-closed-without-result' })
+              if (!panel.querySelector('.file-card, .status-line')) {
+                panel.appendChild(
+                  renderStatusLine('cancelled', 'Cancelled by user.')
+                )
+              }
+            }
+          }
+        }, 400)
       })
     </script>
   </body>
