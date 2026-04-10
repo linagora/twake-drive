@@ -16,5 +16,13 @@ export const ERROR_UNKNOWN_ACTION = 'unknown-action'
 export const ERROR_MISSING_PARAMS = 'missing-params'
 export const ERROR_RESOLUTION_FAILED = 'resolution-failed'
 
-// Default for the `type` query-string param when absent.
-export const DEFAULT_RESULT_TYPES = [RESULT_SHARING_URL]
+// Default for the `type` query-string param when absent. We return every
+// supported representation so a client that didn't specify anything still
+// gets a fully-populated result entry and can pick whichever field fits its
+// use case. Callers that care about payload size MUST request types
+// explicitly (payload is potentially large — see buildPickResult.js).
+export const DEFAULT_RESULT_TYPES = [
+  RESULT_SHARING_URL,
+  RESULT_DOWNLOAD_URL,
+  RESULT_PAYLOAD
+]

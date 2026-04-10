@@ -14,9 +14,9 @@ describe('parseParams', () => {
     })
   })
 
-  it('defaults `type` to ["sharingUrl"] when absent', () => {
+  it('defaults `type` to every supported representation when absent', () => {
     expect(parseParams('?clientUrl=https%3A%2F%2Fa.example&id=x').type).toEqual(
-      ['sharingUrl']
+      ['sharingUrl', 'downloadUrl', 'payload']
     )
   })
 
