@@ -84,6 +84,7 @@ describe('processNextFile function', () => {
       upload: {
         queue: [
           {
+            fileId: 'my-doc.odt',
             status: 'pending',
             file,
             entry: '',
@@ -107,6 +108,7 @@ describe('processNextFile function', () => {
     await asyncProcess(dispatchSpy, getState)
     expect(dispatchSpy).toHaveBeenCalledWith({
       type: 'UPLOAD_FILE',
+      fileId: 'my-doc.odt',
       file
     })
     expect(createFileSpy).toHaveBeenCalledWith(file, {
@@ -120,6 +122,7 @@ describe('processNextFile function', () => {
       upload: {
         queue: [
           {
+            fileId: 'my-doc.odt',
             status: 'pending',
             file,
             entry: '',
@@ -155,6 +158,7 @@ describe('processNextFile function', () => {
 
     expect(dispatchSpy).toHaveBeenNthCalledWith(1, {
       type: 'UPLOAD_FILE',
+      fileId: 'my-doc.odt',
       file
     })
     expect(createFileSpy).toHaveBeenCalledWith(file, {
@@ -174,6 +178,7 @@ describe('processNextFile function', () => {
 
     expect(dispatchSpy).toHaveBeenNthCalledWith(2, {
       type: 'RECEIVE_UPLOAD_SUCCESS',
+      fileId: 'my-doc.odt',
       file,
       isUpdate: true,
       uploadedItem: file
@@ -186,6 +191,7 @@ describe('processNextFile function', () => {
       upload: {
         queue: [
           {
+            fileId: 'my-doc.odt',
             status: 'pending',
             file,
             entry: '',
@@ -221,6 +227,7 @@ describe('processNextFile function', () => {
     expect(fileUploadedCallbackSpy).not.toHaveBeenCalled()
 
     expect(dispatchSpy).toHaveBeenNthCalledWith(2, {
+      fileId: 'my-doc.odt',
       file,
       status: 'quota',
       type: 'RECEIVE_UPLOAD_ERROR'
@@ -233,6 +240,7 @@ describe('processNextFile function', () => {
       upload: {
         queue: [
           {
+            fileId: 'my-doc.odt',
             status: 'pending',
             file,
             entry: '',
@@ -260,6 +268,7 @@ describe('processNextFile function', () => {
     expect(fileUploadedCallbackSpy).not.toHaveBeenCalled()
 
     expect(dispatchSpy).toHaveBeenNthCalledWith(2, {
+      fileId: 'my-doc.odt',
       file,
       status: 'quota',
       type: 'RECEIVE_UPLOAD_ERROR'
@@ -328,6 +337,7 @@ describe('selectors', () => {
 describe('queue reducer', () => {
   const state = [
     {
+      fileId: 'doc1.odt',
       status: 'pending',
       file: {
         name: 'doc1.odt'
@@ -335,6 +345,7 @@ describe('queue reducer', () => {
       progress: null
     },
     {
+      fileId: 'doc2.odt',
       status: 'pending',
       file: {
         name: 'doc2.odt'
@@ -342,6 +353,7 @@ describe('queue reducer', () => {
       progress: null
     },
     {
+      fileId: 'doc3.odt',
       status: 'pending',
       file: {
         name: 'doc3.odt'
@@ -366,12 +378,14 @@ describe('queue reducer', () => {
   it('should handle UPLOAD_FILE action type', () => {
     const action = {
       type: 'UPLOAD_FILE',
+      fileId: 'doc1.odt',
       file: {
         name: 'doc1.odt'
       }
     }
     const expected = [
       {
+        fileId: 'doc1.odt',
         status: 'loading',
         file: {
           name: 'doc1.odt'
@@ -379,6 +393,7 @@ describe('queue reducer', () => {
         progress: null
       },
       {
+        fileId: 'doc2.odt',
         status: 'pending',
         file: {
           name: 'doc2.odt'
@@ -386,6 +401,7 @@ describe('queue reducer', () => {
         progress: null
       },
       {
+        fileId: 'doc3.odt',
         status: 'pending',
         file: {
           name: 'doc3.odt'
@@ -400,6 +416,7 @@ describe('queue reducer', () => {
   it('should handle RECEIVE_UPLOAD_SUCCESS action type', () => {
     const action = {
       type: 'RECEIVE_UPLOAD_SUCCESS',
+      fileId: 'doc3.odt',
       file: {
         name: 'doc3.odt'
       },
@@ -407,6 +424,7 @@ describe('queue reducer', () => {
     }
     const expected = [
       {
+        fileId: 'doc1.odt',
         status: 'pending',
         file: {
           name: 'doc1.odt'
@@ -414,6 +432,7 @@ describe('queue reducer', () => {
         progress: null
       },
       {
+        fileId: 'doc2.odt',
         status: 'pending',
         file: {
           name: 'doc2.odt'
@@ -421,6 +440,7 @@ describe('queue reducer', () => {
         progress: null
       },
       {
+        fileId: 'doc3.odt',
         status: 'created',
         file: {
           name: 'doc3.odt'
@@ -435,6 +455,7 @@ describe('queue reducer', () => {
   it('should handle RECEIVE_UPLOAD_SUCCESS action type (update)', () => {
     const action = {
       type: 'RECEIVE_UPLOAD_SUCCESS',
+      fileId: 'doc3.odt',
       file: {
         name: 'doc3.odt'
       },
@@ -442,6 +463,7 @@ describe('queue reducer', () => {
     }
     const expected = [
       {
+        fileId: 'doc1.odt',
         status: 'pending',
         file: {
           name: 'doc1.odt'
@@ -449,6 +471,7 @@ describe('queue reducer', () => {
         progress: null
       },
       {
+        fileId: 'doc2.odt',
         status: 'pending',
         file: {
           name: 'doc2.odt'
@@ -456,6 +479,7 @@ describe('queue reducer', () => {
         progress: null
       },
       {
+        fileId: 'doc3.odt',
         status: 'updated',
         file: {
           name: 'doc3.odt'
@@ -470,6 +494,7 @@ describe('queue reducer', () => {
   it('should handle RECEIVE_UPLOAD_ERROR action type', () => {
     const action = {
       type: 'RECEIVE_UPLOAD_ERROR',
+      fileId: 'doc2.odt',
       file: {
         name: 'doc2.odt'
       },
@@ -478,6 +503,7 @@ describe('queue reducer', () => {
     }
     const expected = [
       {
+        fileId: 'doc1.odt',
         status: 'pending',
         file: {
           name: 'doc1.odt'
@@ -485,6 +511,7 @@ describe('queue reducer', () => {
         progress: null
       },
       {
+        fileId: 'doc2.odt',
         status: 'conflict',
         file: {
           name: 'doc2.odt'
@@ -492,6 +519,7 @@ describe('queue reducer', () => {
         progress: null
       },
       {
+        fileId: 'doc3.odt',
         status: 'pending',
         file: {
           name: 'doc3.odt'
@@ -503,10 +531,107 @@ describe('queue reducer', () => {
     expect(result).toEqual(expected)
   })
 
+  it('should only update the targeted item when files share the same name', () => {
+    const stateWithDuplicateNames = [
+      {
+        fileId: 'summer/photo.jpg',
+        status: 'pending',
+        file: { name: 'photo.jpg' },
+        progress: null
+      },
+      {
+        fileId: 'winter/photo.jpg',
+        status: 'pending',
+        file: { name: 'photo.jpg' },
+        progress: null
+      }
+    ]
+    const action = {
+      type: 'UPLOAD_FILE',
+      fileId: 'summer/photo.jpg',
+      file: { name: 'photo.jpg' }
+    }
+    const result = queue(stateWithDuplicateNames, action)
+
+    expect(result[0].status).toBe('loading')
+    expect(result[1].status).toBe('pending')
+  })
+
+  it('should correctly track success for files with duplicate names', () => {
+    const stateWithDuplicateNames = [
+      {
+        fileId: 'summer/photo.jpg',
+        status: 'loading',
+        file: { name: 'photo.jpg' },
+        progress: null
+      },
+      {
+        fileId: 'winter/photo.jpg',
+        status: 'pending',
+        file: { name: 'photo.jpg' },
+        progress: null
+      }
+    ]
+    const action = {
+      type: 'RECEIVE_UPLOAD_SUCCESS',
+      fileId: 'summer/photo.jpg',
+      file: { name: 'photo.jpg' }
+    }
+    const result = queue(stateWithDuplicateNames, action)
+
+    expect(result[0].status).toBe('created')
+    expect(result[1].status).toBe('pending')
+  })
+
+  it('should correctly track errors for files with duplicate names', () => {
+    const stateWithDuplicateNames = [
+      {
+        fileId: 'summer/photo.jpg',
+        status: 'loading',
+        file: { name: 'photo.jpg' },
+        progress: null
+      },
+      {
+        fileId: 'winter/photo.jpg',
+        status: 'loading',
+        file: { name: 'photo.jpg' },
+        progress: null
+      }
+    ]
+    const action = {
+      type: 'RECEIVE_UPLOAD_ERROR',
+      fileId: 'summer/photo.jpg',
+      file: { name: 'photo.jpg' },
+      status: 'failed'
+    }
+    const result = queue(stateWithDuplicateNames, action)
+
+    expect(result[0].status).toBe('failed')
+    expect(result[1].status).toBe('loading')
+  })
+
+  it('should fall back to file.name when action has no fileId (Flagship compat)', () => {
+    const stateWithItems = [
+      {
+        fileId: 'my-doc.odt',
+        status: 'loading',
+        file: { name: 'my-doc.odt' },
+        progress: null
+      }
+    ]
+    const action = {
+      type: 'RECEIVE_UPLOAD_SUCCESS',
+      file: { name: 'my-doc.odt' }
+    }
+    const result = queue(stateWithItems, action)
+    expect(result[0].status).toBe('created')
+  })
+
   describe('progress action', () => {
     const file = {
       name: 'doc1.odt'
     }
+    const fileId = 'doc1.odt'
 
     const date1 = 1000
     const date2 = 2000
@@ -515,6 +640,7 @@ describe('queue reducer', () => {
 
     const expected = [
       {
+        fileId: 'doc1.odt',
         status: 'pending',
         file: {
           name: 'doc1.odt'
@@ -528,6 +654,7 @@ describe('queue reducer', () => {
         }
       },
       {
+        fileId: 'doc2.odt',
         status: 'pending',
         file: {
           name: 'doc2.odt'
@@ -535,6 +662,7 @@ describe('queue reducer', () => {
         progress: null
       },
       {
+        fileId: 'doc3.odt',
         status: 'pending',
         file: {
           name: 'doc3.odt'
@@ -544,15 +672,15 @@ describe('queue reducer', () => {
     ]
 
     it('should handle UPLOAD_PROGRESS', () => {
-      const action = uploadProgress(file, event1, date1)
+      const action = uploadProgress(fileId, file, event1, date1)
       const result = queue(state, action)
       expect(result).toEqual(expected)
     })
 
     it('should compute speed and remaining time', () => {
-      const result = queue(state, uploadProgress(file, event1, date1))
+      const result = queue(state, uploadProgress(fileId, file, event1, date1))
       expect(result[0].progress.remainingTime).toBe(null)
-      const result2 = queue(result, uploadProgress(file, event2, date2))
+      const result2 = queue(result, uploadProgress(fileId, file, event2, date2))
       expect(result2[0].progress).toEqual({
         lastUpdated: expect.any(Number),
         loaded: 200,
@@ -563,9 +691,13 @@ describe('queue reducer', () => {
     })
 
     it('should handle upload error', () => {
-      const result = queue(state, uploadProgress(file, event1, date1))
-      const result2 = queue(result, uploadProgress(file, event2, date2))
-      const result3 = queue(result2, { type: 'RECEIVE_UPLOAD_ERROR', file })
+      const result = queue(state, uploadProgress(fileId, file, event1, date1))
+      const result2 = queue(result, uploadProgress(fileId, file, event2, date2))
+      const result3 = queue(result2, {
+        type: 'RECEIVE_UPLOAD_ERROR',
+        fileId,
+        file
+      })
       expect(result3[0].progress).toEqual(null)
     })
   })
@@ -611,7 +743,7 @@ describe('extractFilesEntries', () => {
 
   it('should extract DataTransferItem with file entry', () => {
     const file = new File(['a'], 'a.txt')
-    const fileEntry = { isFile: true, isDirectory: false }
+    const fileEntry = { isFile: true, isDirectory: false, fullPath: '/a.txt' }
     const items = [
       {
         webkitGetAsEntry: () => fileEntry,
@@ -622,13 +754,14 @@ describe('extractFilesEntries', () => {
     expect(result).toHaveLength(1)
     expect(result[0]).toEqual({
       file,
+      fileId: '/a.txt',
       isDirectory: false,
       entry: fileEntry
     })
   })
 
   it('should extract DataTransferItem with directory entry', () => {
-    const dirEntry = { isFile: false, isDirectory: true }
+    const dirEntry = { isFile: false, isDirectory: true, fullPath: '/photos' }
     const items = [
       {
         webkitGetAsEntry: () => dirEntry,
@@ -639,6 +772,7 @@ describe('extractFilesEntries', () => {
     expect(result).toHaveLength(1)
     expect(result[0]).toEqual({
       file: null,
+      fileId: '/photos',
       isDirectory: true,
       entry: dirEntry
     })
