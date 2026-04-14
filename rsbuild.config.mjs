@@ -20,6 +20,17 @@ const mergedConfig = mergeRsbuildConfig(config, {
           {
             from: 'src/assets/favicons',
             to: 'favicons'
+          },
+          {
+            // OpenBuro capability manifest — lives at the project root
+            // (alongside manifest.webapp), copied verbatim to the build
+            // output root so it can be served publicly at /openburo.json
+            // (route declared in manifest.webapp). The same JSON is also
+            // imported directly by src/modules/openBuro/manifest.js for
+            // runtime CapabilityRouter enforcement, so the copied file
+            // and the runtime enforcement cannot drift.
+            from: 'openburo.json',
+            to: 'openburo.json'
           }
         ]
       }

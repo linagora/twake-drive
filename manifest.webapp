@@ -58,6 +58,11 @@
       "index": "index.html",
       "public": false
     },
+    "/openburo.json": {
+      "folder": "/",
+      "index": "openburo.json",
+      "public": true
+    },
     "/public": {
       "folder": "/public",
       "index": "index.html",
