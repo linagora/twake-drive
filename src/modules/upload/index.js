@@ -347,9 +347,7 @@ const getExistingDirectory = async (client, dirID, name, driveId) => {
     .collection(DOCTYPE_FILES, { driveId })
     .statByPath(path)
   if (statResp.data.type !== 'directory') {
-    const err = new Error(`"${path}" already exists and is not a directory`)
-    err.status = CONFLICT_ERROR
-    throw err
+    throw new Error(`"${path}" already exists and is not a directory`)
   }
   return statResp.data
 }
