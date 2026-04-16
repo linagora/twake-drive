@@ -358,7 +358,8 @@
       "updated_conflicts": "%{smart_count} %{type} updated with %{conflictCount} conflict(s). |||| %{smart_count} %{type} updated with %{conflictCount} conflict(s).",
       "errors": "Errors occurred during the %{type} upload.",
       "network": "You are currenly offline. Please try again once you're connected.",
-      "fileTooLargeErrors": "File too large. Maximum file size: %{max_size_value} GB"
+      "fileTooLargeErrors": "File too large. Maximum file size: %{max_size_value} GB",
+      "unreadable_files": "Some files could not be read. The file path is probably too long."
     },
     "limit": {
       "title": "You cannot upload more than %{limit} files at a time.",
