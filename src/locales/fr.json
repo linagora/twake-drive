@@ -356,7 +356,7 @@
       "errors": "Une erreur est survenue lors de l’import du %{type}, merci de réessayer plus tard.",
       "network": "Vous ne disposez pas d'une connexion internet. Merci de réessayer quand ce sera le cas.",
       "fileTooLargeErrors": "Fichier trop volumineux. Taille maximale autorisée par fichier : %{max_size_value} Go",
-      "unreadable_files": "Certains fichiers n'ont pas pu être lus. Le chemin de vos fichiers est probablement trop long."
+      "unreadable_files": "Certains fichiers n'ont pas pu être lus. Le chemin est peut-être trop long ou le dossier a été modifié pendant le transfert."
     },
     "limit": {
       "title": "Importation impossible : Ce dossier contient plus de %{limit} fichiers",

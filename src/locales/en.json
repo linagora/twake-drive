@@ -359,7 +359,7 @@
       "errors": "Errors occurred during the %{type} upload.",
       "network": "You are currenly offline. Please try again once you're connected.",
       "fileTooLargeErrors": "File too large. Maximum file size: %{max_size_value} GB",
-      "unreadable_files": "Some files could not be read. The file path is probably too long."
+      "unreadable_files": "Some files could not be read. The file path may be too long or the folder was modified during the transfer."
     },
     "limit": {
       "title": "You cannot upload more than %{limit} files at a time.",
