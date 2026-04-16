@@ -250,9 +250,7 @@ export const processNextFile =
       error = uploadError
       if (uploadError.status === CONFLICT_ERROR) {
         try {
-          const path = driveId
-            ? await getFullpath(client, dirID, file.name, driveId)
-            : await CozyFile.getFullpath(dirID, file.name)
+          const path = await resolveFullpath(client, dirID, file.name, driveId)
 
           const uploadedFile = await overwriteFile(
             client,
@@ -338,6 +336,19 @@ const readAllEntries = async dirReader => {
   return entries
 }
 
+const resolveFullpath = (client, dirID, name, driveId) =>
+  driveId
+    ? getFullpath(client, dirID, name, driveId)
+    : CozyFile.getFullpath(dirID, name)
+
+const getExistingDirectory = async (client, dirID, name, driveId) => {
+  const path = await resolveFullpath(client, dirID, name, driveId)
+  const statResp = await client
+    .collection(DOCTYPE_FILES, { driveId })
+    .statByPath(path)
+  return statResp.data
+}
+
 const uploadDirectory = async (
   client,
   directory,
@@ -345,7 +356,21 @@ const uploadDirectory = async (
   { vaultClient, encryptionKey },
   driveId
 ) => {
-  const newDir = await createFolder(client, directory.name, dirID, driveId)
+  let newDir
+  try {
+    newDir = await createFolder(client, directory.name, dirID, driveId)
+  } catch (err) {
+    if (err.status === CONFLICT_ERROR) {
+      newDir = await getExistingDirectory(
+        client,
+        dirID,
+        directory.name,
+        driveId
+      )
+    } else {
+      throw err
+    }
+  }
   const dirReader = directory.createReader()
   const options = { vaultClient, encryptionKey }
 
