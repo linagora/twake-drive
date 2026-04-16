@@ -103,8 +103,16 @@ export const uploadFiles =
     // Extract entries synchronously before browser clears dataTransfer
     const entries = extractFilesEntries(files)
 
-    if (await exceedsFileLimit(entries, maxFileCount)) {
-      dispatch(showModal(<UploadLimitDialog maxFileCount={maxFileCount} />))
+    try {
+      if (await exceedsFileLimit(entries, maxFileCount)) {
+        dispatch(showModal(<UploadLimitDialog maxFileCount={maxFileCount} />))
+        return
+      }
+    } catch {
+      showAlert({
+        message: t('upload.alert.unreadable_files'),
+        severity: 'secondary'
+      })
       return
     }
 
