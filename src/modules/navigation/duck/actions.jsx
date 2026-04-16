@@ -108,9 +108,19 @@ export const uploadFiles =
         dispatch(showModal(<UploadLimitDialog maxFileCount={maxFileCount} />))
         return
       }
-    } catch {
+    } catch (error) {
+      if (error?.name === 'NotFoundError') {
+        showAlert({
+          message: t('upload.alert.unreadable_files'),
+          severity: 'secondary'
+        })
+        return
+      }
+      logger.error('Unexpected error while checking upload file limit', error)
       showAlert({
-        message: t('upload.alert.unreadable_files'),
+        message: t('upload.alert.errors', {
+          type: t('upload.documentType.file')
+        }),
         severity: 'secondary'
       })
       return
