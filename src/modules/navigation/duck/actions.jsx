@@ -209,16 +209,8 @@ const uploadQueueProcessed =
       })
     } else if (errors.length > 0) {
       logger.error(`Upload module triggers an error: ${errors}`)
-      // Show more detailed error message
-      const errorMessages = errors
-        .map(err => err.message || JSON.stringify(err))
-        .join(', ')
       showAlert({
-        message: t('upload.alert.errors_detailed', {
-          type,
-          count: errors.length,
-          details: errorMessages
-        }),
+        message: t('upload.alert.errors', { type }),
         severity: 'secondary'
       })
     } else if (updatedCount > 0 && createdCount > 0 && conflictCount > 0) {
