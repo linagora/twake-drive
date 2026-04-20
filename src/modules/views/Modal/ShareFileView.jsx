@@ -2,6 +2,7 @@ import React from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import { hasQueryBeenLoaded, useQuery } from 'cozy-client'
+import flag from 'cozy-flags'
 import { ShareModal } from 'cozy-sharing'
 
 import { LoaderModal } from '@/components/LoaderModal'
@@ -31,6 +32,8 @@ const ShareFileView = () => {
         documentType="Files"
         sharingDesc={fileResult.data.name}
         onClose={handleExit}
+        autoOpenShareRestriction={flag('sharing.auto-open-settings.enabled')}
+        showGenerateLinkButton={flag('sharing.generate-link-button.enabled')}
       />
     )
   }
