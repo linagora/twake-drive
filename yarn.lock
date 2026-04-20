@@ -6738,10 +6738,10 @@ cozy-app-publish@^0.40.1:
     tar "^6.1.11"
     verror "^1.10.1"
 
-cozy-bar@^33.1.3:
-  version "33.1.3"
-  resolved "https://registry.yarnpkg.com/cozy-bar/-/cozy-bar-33.1.3.tgz#9e9daa45e2c6aa8d62e625f14ebb1c1ef60aec86"
-  integrity sha512-bBuD+PAyxQGmI2j1fAMi79vrLL7mddal5TqjNlKnCxumfY7mQ+Cbtc92R6WOKMSAICic5e6cVarl3uncZvb67A==
+cozy-bar@^33.3.0:
+  version "33.3.0"
+  resolved "https://registry.yarnpkg.com/cozy-bar/-/cozy-bar-33.3.0.tgz#822ffb179a330bb895502a60ff38ef9d63f1eb5d"
+  integrity sha512-4nezHLXHoOAjA70BhQjoDLY9/S8Dw44ySHxkU3wc+b9MCcTssyNXh99nxgKIsN19q/ReSq1FDFjl6+TUv8E6ZA==
   dependencies:
     classnames "^2.5.1"
     lodash.set "^4.3.2"
@@ -7201,10 +7201,10 @@ cozy-ui-plus@^7.0.0:
     react-international-phone "4.7.0"
     rooks "7.14.1"
 
-cozy-ui@^138.5.0:
-  version "138.5.0"
-  resolved "https://registry.yarnpkg.com/cozy-ui/-/cozy-ui-138.5.0.tgz#80e12877b0cedcbc62b5395c4c12611f4fdf8354"
-  integrity sha512-0B/+xRV/+0tExMdD9QmVPl936WXX59HoDy2LWWmzzk5eOcP8DVJyoTucjI9HQipBB6lmLGcatsDQXYEu/axCUQ==
+cozy-ui@^138.6.0:
+  version "138.6.0"
+  resolved "https://registry.yarnpkg.com/cozy-ui/-/cozy-ui-138.6.0.tgz#e5584a64da8702e18853bb755db5290f75306a74"
+  integrity sha512-pTc5f1yarsnJwed9tQ+IrCwkppQkamufbfRv9lp5Vt8OUbRF5eD73/vEffnSBxQSx6ylOQ1rt9k2VO4tJIqTnQ==
   dependencies:
     "@babel/runtime" "^7.3.4"
     "@date-io/date-fns" "1"
