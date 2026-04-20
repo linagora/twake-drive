@@ -29,4 +29,6 @@ const flagsList = () => {
   flag('drive.hide-nextcloud-dev')
   flag('drive.keyboard-shortcuts.enabled', true)
   flag('drive.highlight-new-items.enabled', true)
+  flag('sharing.auto-open-settings.enabled')
+  flag('sharing.generate-link-button.enabled')
 }

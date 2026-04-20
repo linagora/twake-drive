@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react'
 
+import flag from 'cozy-flags'
 import { ShareButton, ShareModal, SharedRecipients } from 'cozy-sharing'
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
@@ -45,6 +46,8 @@ const Sharing = ({ file }) => {
           documentType="Files"
           sharingDesc={file.name}
           onClose={toggleShareModal}
+          autoOpenShareRestriction={flag('sharing.auto-open-settings.enabled')}
+          showGenerateLinkButton={flag('sharing.generate-link-button.enabled')}
         />
       )}
     </>
