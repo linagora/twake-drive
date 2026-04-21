@@ -7201,10 +7201,10 @@ cozy-ui-plus@^7.0.0:
     react-international-phone "4.7.0"
     rooks "7.14.1"
 
-cozy-ui@^138.6.0:
-  version "138.6.0"
-  resolved "https://registry.yarnpkg.com/cozy-ui/-/cozy-ui-138.6.0.tgz#e5584a64da8702e18853bb755db5290f75306a74"
-  integrity sha512-pTc5f1yarsnJwed9tQ+IrCwkppQkamufbfRv9lp5Vt8OUbRF5eD73/vEffnSBxQSx6ylOQ1rt9k2VO4tJIqTnQ==
+cozy-ui@^138.6.2:
+  version "138.6.2"
+  resolved "https://registry.yarnpkg.com/cozy-ui/-/cozy-ui-138.6.2.tgz#40ce17aa2405d83369f6b5cf795285c9465b0b6b"
+  integrity sha512-dMsJceDLNnGrQ2tiYWK6n6DXEFYzA67P7AUgMD/KCrO9/qNQoEVcVYK4wC6kCeTDf7Wabpywr79Zp8+BYP2AFg==
   dependencies:
     "@babel/runtime" "^7.3.4"
     "@date-io/date-fns" "1"
@@ -12551,9 +12551,9 @@ msgpack5@^4.0.2:
     readable-stream "^2.3.6"
     safe-buffer "^5.1.2"
 
-"mui-bottom-sheet@https://github.com/cozy/mui-bottom-sheet.git#v1.0.9":
+"mui-bottom-sheet@git+https://github.com/cozy/mui-bottom-sheet.git#v1.0.9":
   version "1.0.8"
-  resolved "https://github.com/cozy/mui-bottom-sheet.git#3dc4c2a245ab39079bc2f73546bccf80847be14c"
+  resolved "git+https://github.com/cozy/mui-bottom-sheet.git#3dc4c2a245ab39079bc2f73546bccf80847be14c"
   dependencies:
     "@juggle/resize-observer" "^3.1.3"
     jest-environment-jsdom-sixteen "^1.0.3"
