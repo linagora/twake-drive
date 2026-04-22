@@ -30,11 +30,12 @@ const FAILED = 'failed'
 const CONFLICT = 'conflict'
 const QUOTA = 'quota'
 const NETWORK = 'network'
+const UNREADABLE = 'unreadable'
 const ERR_MAX_FILE_SIZE =
   'The file is too big and exceeds the filesystem maximum file size' // ErrMaxFileSize is used when a file is larger than the filesystem's maximum file size
 
 const DONE_STATUSES = [CREATED, UPDATED]
-const ERROR_STATUSES = [CONFLICT, NETWORK, QUOTA]
+const ERROR_STATUSES = [CONFLICT, NETWORK, QUOTA, UNREADABLE]
 
 export const status = {
   CANCEL,
@@ -46,6 +47,7 @@ export const status = {
   CONFLICT,
   QUOTA,
   NETWORK,
+  UNREADABLE,
   DONE_STATUSES,
   ERROR_STATUSES,
   ERR_MAX_FILE_SIZE
@@ -288,7 +290,10 @@ export const processNextFile =
 
         // Determine the status based on the error details
         let status
-        if (error.message?.includes(ERR_MAX_FILE_SIZE)) {
+        if (error.name === 'NotFoundError') {
+          // Browser FileSystem API couldn't resolve the entry — typically path exceeds OS limit (Windows MAX_PATH=260) or folder was modified mid-transfer.
+          status = UNREADABLE
+        } else if (error.message?.includes(ERR_MAX_FILE_SIZE)) {
           status = ERR_MAX_FILE_SIZE // File size exceeded maximum size allowed by the server
         } else if (error.status in statusError) {
           status = statusError[error.status]
@@ -550,6 +555,7 @@ export const onQueueEmpty = callback => (dispatch, getState) => {
   const updated = getUpdated(queue)
   const networkErrors = getNetworkErrors(queue)
   const errors = getErrors(queue)
+  const unreadableErrors = getUnreadableErrors(queue)
   const fileTooLargeErrors = getfileTooLargeErrors(queue)
 
   // Extract complete uploaded items (with _id) from the queue
@@ -566,6 +572,7 @@ export const onQueueEmpty = callback => (dispatch, getState) => {
     conflicts,
     networkErrors,
     errors,
+    unreadableErrors,
     updatedItems,
     fileTooLargeErrors
   })
@@ -577,6 +584,7 @@ const getConflicts = queue => filterByStatus(queue, CONFLICT)
 const getErrors = queue => filterByStatus(queue, FAILED)
 const getQuotaErrors = queue => filterByStatus(queue, QUOTA)
 const getNetworkErrors = queue => filterByStatus(queue, NETWORK)
+const getUnreadableErrors = queue => filterByStatus(queue, UNREADABLE)
 const getCreated = queue => filterByStatus(queue, CREATED)
 const getUpdated = queue => filterByStatus(queue, UPDATED)
 const getfileTooLargeErrors = queue => filterByStatus(queue, ERR_MAX_FILE_SIZE)
@@ -596,6 +604,7 @@ export const selectors = {
   getErrors,
   getQuotaErrors,
   getNetworkErrors,
+  getUnreadableErrors,
   getCreated,
   getUpdated,
   getProcessed,
