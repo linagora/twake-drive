@@ -74,6 +74,7 @@ describe('processNextFile function', () => {
       conflicts: [],
       networkErrors: [],
       errors: [],
+      unreadableErrors: [],
       updatedItems: [],
       fileTooLargeErrors: []
     })
@@ -262,6 +263,43 @@ describe('processNextFile function', () => {
     expect(dispatchSpy).toHaveBeenNthCalledWith(2, {
       file,
       status: 'quota',
+      type: 'RECEIVE_UPLOAD_ERROR'
+    })
+  })
+
+  it('should classify NotFoundError (browser FileSystem API) as unreadable', async () => {
+    logger.warn = jest.fn()
+    const getState = () => ({
+      upload: {
+        queue: [
+          {
+            status: 'pending',
+            file,
+            entry: '',
+            isDirectory: false
+          }
+        ]
+      }
+    })
+    const notFoundError = new Error(
+      'A requested file or directory could not be found at the time an operation was processed.'
+    )
+    notFoundError.name = 'NotFoundError'
+    createFileSpy.mockRejectedValue(notFoundError)
+
+    const asyncProcess = processNextFile(
+      fileUploadedCallbackSpy,
+      queueCompletedCallbackSpy,
+      dirId,
+      sharingState,
+      { client: fakeClient, vaultClient: fakeVaultClient }
+    )
+    await asyncProcess(dispatchSpy, getState, { client: fakeClient })
+
+    expect(fileUploadedCallbackSpy).not.toHaveBeenCalled()
+    expect(dispatchSpy).toHaveBeenNthCalledWith(2, {
+      file,
+      status: 'unreadable',
       type: 'RECEIVE_UPLOAD_ERROR'
     })
   })

@@ -138,6 +138,7 @@ export const uploadFiles =
           conflicts,
           networkErrors,
           errors,
+          unreadableErrors,
           updatedItems,
           fileTooLargeErrors
         }) => {
@@ -148,6 +149,7 @@ export const uploadFiles =
               conflicts,
               networkErrors,
               errors,
+              unreadableErrors,
               updatedItems,
               showAlert,
               t,
@@ -174,6 +176,7 @@ const uploadQueueProcessed =
     conflicts,
     networkErrors,
     errors,
+    unreadableErrors,
     updated,
     showAlert,
     t,
@@ -210,6 +213,7 @@ const uploadQueueProcessed =
         status: f.status,
         message: f.message
       })),
+      unreadableErrors: unreadableErrors.map(f => f.name),
       fileTooLargeErrors: fileTooLargeErrors.map(f => f.name),
       navigateAfterUpload
     })
@@ -223,6 +227,14 @@ const uploadQueueProcessed =
       logger.warn(`Upload module triggers a network error: ${networkErrors}`)
       showAlert({
         message: t('upload.alert.network'),
+        severity: 'secondary'
+      })
+    } else if (unreadableErrors.length > 0) {
+      logger.warn(
+        `Upload module triggers an unreadable files error: ${unreadableErrors}`
+      )
+      showAlert({
+        message: t('upload.alert.unreadable_files'),
         severity: 'secondary'
       })
     } else if (errors.length > 0) {
