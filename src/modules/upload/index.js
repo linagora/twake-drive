@@ -35,7 +35,7 @@ const ERR_MAX_FILE_SIZE =
   'The file is too big and exceeds the filesystem maximum file size' // ErrMaxFileSize is used when a file is larger than the filesystem's maximum file size
 
 const DONE_STATUSES = [CREATED, UPDATED]
-const ERROR_STATUSES = [CONFLICT, NETWORK, QUOTA, UNREADABLE]
+const ERROR_STATUSES = [CONFLICT, NETWORK, QUOTA, FAILED, UNREADABLE]
 
 export const status = {
   CANCEL,
@@ -291,7 +291,7 @@ export const processNextFile =
         // Determine the status based on the error details
         let status
         if (error.name === 'NotFoundError') {
-          // Browser FileSystem API couldn't resolve the entry — typically path exceeds OS limit (Windows MAX_PATH=260) or folder was modified mid-transfer.
+          // Browser FileSystem API couldn't resolve the entry — path too long or folder modified mid-transfer.
           status = UNREADABLE
         } else if (error.message?.includes(ERR_MAX_FILE_SIZE)) {
           status = ERR_MAX_FILE_SIZE // File size exceeded maximum size allowed by the server
