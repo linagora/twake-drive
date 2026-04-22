@@ -112,7 +112,7 @@ export const uploadFiles =
       if (error?.name === 'NotFoundError') {
         showAlert({
           message: t('upload.alert.unreadable_files'),
-          severity: 'secondary'
+          severity: 'error'
         })
         return
       }
@@ -235,7 +235,7 @@ const uploadQueueProcessed =
       )
       showAlert({
         message: t('upload.alert.unreadable_files'),
-        severity: 'secondary'
+        severity: 'error'
       })
     } else if (errors.length > 0) {
       logger.error(`Upload module triggers an error: ${errors}`)
