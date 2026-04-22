@@ -55,6 +55,24 @@ export const status = {
 
 const CONFLICT_ERROR = 409
 
+const HTTP_ERROR_STATUS_MAP = {
+  409: CONFLICT,
+  413: QUOTA
+}
+
+export const classifyUploadError = error => {
+  if (error.name === 'NotFoundError') {
+    // Browser FileSystem API couldn't resolve the entry — typically path exceeds OS limit (Windows MAX_PATH=260) or folder was modified mid-transfer.
+    return UNREADABLE
+  }
+  if (error.message?.includes(ERR_MAX_FILE_SIZE)) return ERR_MAX_FILE_SIZE
+  if (error.status in HTTP_ERROR_STATUS_MAP) {
+    return HTTP_ERROR_STATUS_MAP[error.status]
+  }
+  if (/Failed to fetch$/.exec(error.toString())) return NETWORK
+  return FAILED
+}
+
 const itemInitialState = item => ({
   ...item,
   status: PENDING,
@@ -281,30 +299,11 @@ export const processNextFile =
         logger.error(
           `Upload module catches an error when executing processNextFile(): ${error}`
         )
-
-        // Define mapping for specific status codes to our constants
-        const statusError = {
-          409: CONFLICT,
-          413: QUOTA
-        }
-
-        // Determine the status based on the error details
-        let status
-        if (error.name === 'NotFoundError') {
-          // Browser FileSystem API couldn't resolve the entry — typically path exceeds OS limit (Windows MAX_PATH=260) or folder was modified mid-transfer.
-          status = UNREADABLE
-        } else if (error.message?.includes(ERR_MAX_FILE_SIZE)) {
-          status = ERR_MAX_FILE_SIZE // File size exceeded maximum size allowed by the server
-        } else if (error.status in statusError) {
-          status = statusError[error.status]
-        } else if (/Failed to fetch$/.exec(error.toString())) {
-          status = NETWORK
-        } else {
-          status = FAILED
-        }
-
-        // Dispatch an action to handle the upload error with the determined status
-        dispatch({ type: RECEIVE_UPLOAD_ERROR, file, status })
+        dispatch({
+          type: RECEIVE_UPLOAD_ERROR,
+          file,
+          status: classifyUploadError(error)
+        })
       }
     }
     dispatch(

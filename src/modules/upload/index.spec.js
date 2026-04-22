@@ -5,7 +5,8 @@ import {
   overwriteFile,
   uploadProgress,
   extractFilesEntries,
-  exceedsFileLimit
+  exceedsFileLimit,
+  classifyUploadError
 } from './index'
 
 import { getEncryptionKeyFromDirId } from '@/lib/encryption'
@@ -302,6 +303,42 @@ describe('processNextFile function', () => {
       status: 'unreadable',
       type: 'RECEIVE_UPLOAD_ERROR'
     })
+  })
+})
+
+describe('classifyUploadError', () => {
+  it('returns UNREADABLE for a browser NotFoundError', () => {
+    const error = new Error('A requested file or directory could not be found.')
+    error.name = 'NotFoundError'
+    expect(classifyUploadError(error)).toBe('unreadable')
+  })
+
+  it('returns the ERR_MAX_FILE_SIZE status when the message matches', () => {
+    const error = new Error(
+      'The file is too big and exceeds the filesystem maximum file size'
+    )
+    expect(classifyUploadError(error)).toBe(
+      'The file is too big and exceeds the filesystem maximum file size'
+    )
+  })
+
+  it('maps HTTP 409 to CONFLICT', () => {
+    expect(classifyUploadError({ status: 409 })).toBe('conflict')
+  })
+
+  it('maps HTTP 413 to QUOTA', () => {
+    expect(classifyUploadError({ status: 413 })).toBe('quota')
+  })
+
+  it('returns NETWORK when the error ends with "Failed to fetch"', () => {
+    expect(classifyUploadError(new TypeError('Failed to fetch'))).toBe(
+      'network'
+    )
+  })
+
+  it('falls back to FAILED for unrecognized errors', () => {
+    expect(classifyUploadError(new Error('something else'))).toBe('failed')
+    expect(classifyUploadError({ status: 500 })).toBe('failed')
   })
 })
 
