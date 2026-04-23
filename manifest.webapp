@@ -2,7 +2,7 @@
   "name": "Drive",
   "name_prefix": "Twake",
   "slug": "drive",
-  "version": "1.83.0",
+  "version": "1.97.0",
   "type": "webapp",
   "licence": "AGPL-3.0",
   "icon": "assets/app-icon.svg",
@@ -78,6 +78,44 @@
       "action": "OPEN",
       "type": ["io.cozy.suggestions"],
       "href": "/intents"
+    }
+  ],
+  "entrypoints": [
+    {
+      "name": "new-file-type-text",
+      "title": {
+        "en": "Doc",
+        "fr": "Doc",
+        "ru": "документ",
+        "vi": "Doc"
+      },
+      "hash": "/onlyoffice/create/io.cozy.files.root-dir/text",
+      "icon": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgZmlsbD0ibm9uZSI+PHBhdGggZmlsbD0iIzAwNzZFRCIgZD0iTTguNCAwQTYuNCA2LjQgMCAwIDAgMiA2LjR2MTkuMkE2LjQgNi40IDAgMCAwIDguNCAzMmgxNmE2LjQgNi40IDAgMCAwIDYuNC02LjRWMTAuNEwyMC40IDBjLTQuMDEzIDAtNCAwIDAgMGgtMTJaIi8+PHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjIuOTA5IiB4PSI4IiB5PSIxMCIgZmlsbD0iI2ZmZiIgcng9IjEuNDU1Ii8+PHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjIuOTA5IiB4PSI4IiB5PSIxNS45MDkiIGZpbGw9IiNmZmYiIHJ4PSIxLjQ1NSIvPjxyZWN0IHdpZHRoPSIxNiIgaGVpZ2h0PSIyLjkwOSIgeD0iOCIgeT0iMjEuODE4IiBmaWxsPSIjZmZmIiByeD0iMS40NTUiLz48cGF0aCBmaWxsPSIjMDA2OEQyIiBkPSJNMzAuOCAxMC44IDIwIDB2NS41ODZjMCAyLjg4IDIuMjU3IDUuMjE0IDUuMDQgNS4yMTRoNS43NloiLz48L3N2Zz4=",
+      "conditions": [{ "type": "flag", "name": "drive.office.enabled", "value": true }, { "type": "flag", "name": "drive.office.write", "value": true }, { "type": "flag", "name": "bar.onlyoffice.enabled", "value": true }]
+    },
+    {
+      "name": "new-file-type-sheet",
+      "title": {
+        "en": "Spreadsheet",
+        "fr": "Tableur",
+        "ru": "Электронная таблица",
+        "vi": "Bảng tính"
+      },
+      "hash": "/onlyoffice/create/io.cozy.files.root-dir/spreadsheet",
+      "icon": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgZmlsbD0ibm9uZSI+PHBhdGggZmlsbD0iIzBEOUUzMCIgZD0iTTguNCAwQTYuNCA2LjQgMCAwIDAgMiA2LjR2MTkuMkE2LjQgNi40IDAgMCAwIDguNCAzMmgxNmE2LjQgNi40IDAgMCAwIDYuNC02LjRWMTAuNEwyMC40IDBjLTQuMDEzIDAtNCAwIDAgMGgtMTJaIi8+PHJlY3Qgd2lkdGg9IjYuODU3IiBoZWlnaHQ9IjYuODU3IiB4PSI4IiB5PSIxMCIgZmlsbD0iI2ZmZiIgcng9Ii40NTciLz48cmVjdCB3aWR0aD0iNi44NTciIGhlaWdodD0iNi44NTciIHg9IjgiIHk9IjE5LjE0MyIgZmlsbD0iI2ZmZiIgcng9Ii40NTciLz48cmVjdCB3aWR0aD0iNi44NTciIGhlaWdodD0iNi44NTciIHg9IjE3LjE0MyIgeT0iMTkuMTQzIiBmaWxsPSIjZmZmIiByeD0iLjQ1NyIvPjxyZWN0IHdpZHRoPSI2Ljg1NyIgaGVpZ2h0PSI2Ljg1NyIgeD0iMTcuMTQzIiB5PSIxMCIgZmlsbD0iI2ZmZiIgcng9Ii40NTciLz48cGF0aCBmaWxsPSIjMDA4NDIwIiBkPSJNMzAuOCAxMC44IDIwIDB2NS41ODZjMCAyLjg4IDIuMjU3IDUuMjE0IDUuMDQgNS4yMTRoNS43NloiLz48L3N2Zz4=",
+      "conditions": [{ "type": "flag", "name": "drive.office.enabled", "value": true }, { "type": "flag", "name": "drive.office.write", "value": true }, { "type": "flag", "name": "bar.onlyoffice.enabled", "value": true }]
+    },
+    {
+      "name": "new-file-type-slide",
+      "title": {
+        "fr": "Présentation",
+        "en": "Presentation",
+        "ru": "Презентация",
+        "vi": "Giới thiệu"
+      },
+      "hash": "/onlyoffice/create/io.cozy.files.root-dir/slide",
+      "icon": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgZmlsbD0ibm9uZSI+PHBhdGggZmlsbD0iI0ZGOTUwMCIgZD0iTTguNCAwQTYuNCA2LjQgMCAwIDAgMiA2LjR2MTkuMkE2LjQgNi40IDAgMCAwIDguNCAzMmgxNmE2LjQgNi40IDAgMCAwIDYuNC02LjRWMTAuNEwyMC40IDBjLTQuMDEzIDAtNCAwIDAgMGgtMTJaIi8+PHBhdGggZmlsbD0iI0RGNjMxMCIgZD0iTTMwLjggMTAuOCAyMCAwdjUuNTg2YzAgMi44OCAyLjI1NyA1LjIxNCA1LjA0IDUuMjE0aDUuNzZaIi8+PHBhdGggZmlsbD0iI2ZmZiIgZD0iTTE1LjQyMiAxMS4xNTdhNy40MjIgNy40MjIgMCAxIDAgNy40MjEgNy40MjFoLTcuNDIxdi03LjQyMVoiLz48cGF0aCBmaWxsPSIjZmZmIiBkPSJNMTYuNTc4IDEwdjcuNDIySDI0QTcuNDIyIDcuNDIyIDAgMCAwIDE2LjU3OCAxMFoiLz48L3N2Zz4=",
+      "conditions": [{ "type": "flag", "name": "drive.office.enabled", "value": true }, { "type": "flag", "name": "drive.office.write", "value": true }, { "type": "flag", "name": "bar.onlyoffice.enabled", "value": true }]
     }
   ],
   "services": {
@@ -185,6 +223,11 @@
       "description": "Required by the cozy Assistant",
       "type": "io.cozy.ai.chat.events",
       "verbs": ["GET"]
+    },
+    "driveSettings": {
+      "description": "Required to access the drive settings",
+      "type": "io.cozy.drive.settings",
+      "verbs": ["ALL"]
     }
   },
   "accept_from_flagship": true,
