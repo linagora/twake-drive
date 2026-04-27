@@ -4,17 +4,15 @@ import React, { useCallback } from 'react'
 import { useClient, generateWebLink } from 'cozy-client'
 import { isFlagshipApp } from 'cozy-device-helper'
 import { useWebviewIntent } from 'cozy-intent'
-import {
-  NavLink as UINavLink,
-  NavItem as UINavItem
-} from 'cozy-ui/transpiled/react/Nav'
 import { useI18n } from 'twake-i18n'
 
 import { NavContent } from '@/modules/navigation/NavContent'
+import { getNavComponents } from '@/modules/navigation/navComponents'
 
 const ExternalNavItem = ({ slug, icon, label, path, clickState }) => {
   const { t } = useI18n()
   const client = useClient()
+  const { NavLink: UINavLink, NavItem: UINavItem } = getNavComponents()
   const webviewIntent = useWebviewIntent()
 
   const href = generateWebLink({

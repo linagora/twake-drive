@@ -1,11 +1,11 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
-import { NavItem as UINavItem } from 'cozy-ui/transpiled/react/Nav'
 import { useI18n } from 'twake-i18n'
 
 import { NavContent } from '@/modules/navigation/NavContent'
 import { NavLink } from '@/modules/navigation/NavLink'
+import { getNavComponents } from '@/modules/navigation/navComponents'
 
 /**
  * Renders a navigation item with optional badge content and support for shared links.
@@ -33,6 +33,7 @@ const NavItem = ({
   forcedLabel
 }) => {
   const { t } = useI18n()
+  const { NavItem: UINavItem } = getNavComponents()
 
   return (
     <UINavItem secondary={secondary}>

@@ -3,12 +3,12 @@ import React, { FC } from 'react'
 import { splitFilename } from 'cozy-client/dist/models/file'
 import type { IOCozyFile } from 'cozy-client/types/types'
 import FileTypeServerIcon from 'cozy-ui/transpiled/react/Icons/FileTypeServer'
-import { NavIcon, NavLink, NavItem } from 'cozy-ui/transpiled/react/Nav'
 import Typography from 'cozy-ui/transpiled/react/Typography'
 
 import { FileLink } from './FileLink'
 
 import { useFileLink } from '@/modules/navigation/hooks/useFileLink'
+import { getNavComponents } from '@/modules/navigation/navComponents'
 
 interface ExternalDriveListItemProps {
   file: IOCozyFile
@@ -19,6 +19,7 @@ const ExternalDriveListItem: FC<ExternalDriveListItemProps> = ({
   file,
   setLastClicked
 }) => {
+  const { NavIcon, NavLink, NavItem } = getNavComponents()
   const { link } = useFileLink(file, { forceFolderPath: false })
   const { filename } = splitFilename(file)
 

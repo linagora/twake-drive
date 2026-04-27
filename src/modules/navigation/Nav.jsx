@@ -7,7 +7,6 @@ import CloudIcon from 'cozy-ui/transpiled/react/Icons/Cloud2'
 import CloudSyncIcon from 'cozy-ui/transpiled/react/Icons/CloudSync'
 import StarIcon from 'cozy-ui/transpiled/react/Icons/Star'
 import TrashIcon from 'cozy-ui/transpiled/react/Icons/Trash'
-import UINav from 'cozy-ui/transpiled/react/Nav'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import { ExternalNavItem } from '@/modules/navigation/ExternalNavItem'
@@ -16,13 +15,15 @@ import { useNavContext } from '@/modules/navigation/NavContext'
 import { NavItem } from '@/modules/navigation/NavItem'
 import { SharingsNavItem } from '@/modules/navigation/SharingsNavItem'
 import { ExternalDrives } from '@/modules/navigation/components/ExternalDrivesList'
+import { getNavComponents } from '@/modules/navigation/navComponents'
 
 export const Nav = () => {
   const clickState = useNavContext()
   const { isDesktop } = useBreakpoints()
+  const { Nav: NavComponent } = getNavComponents()
 
   return (
-    <UINav>
+    <NavComponent>
       <NavItem
         to="/folder"
         icon={<Icon icon={CloudIcon} />}
@@ -67,7 +68,7 @@ export const Nav = () => {
       {isDesktop ? (
         <ExternalDrives clickState={clickState} className="u-mt-half" />
       ) : null}
-    </UINav>
+    </NavComponent>
   )
 }
 

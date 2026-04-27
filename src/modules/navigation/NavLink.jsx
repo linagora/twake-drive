@@ -3,9 +3,8 @@ import PropTypes from 'prop-types'
 import React from 'react'
 import { useLocation } from 'react-router-dom'
 
-import { NavLink as UINavLink } from 'cozy-ui/transpiled/react/Nav'
-
 import { navLinkMatch } from '@/modules/navigation/helpers'
+import { getNavComponents } from '@/modules/navigation/navComponents'
 
 /**
  * Like react-router NavLink but sets the lastClicked state (passed in props)
@@ -21,6 +20,7 @@ const NavLink = ({
   const location = useLocation()
   const pathname = lastClicked ? lastClicked : location.pathname
   const isActive = navLinkMatch(rx, to, pathname)
+  const { NavLink: UINavLink } = getNavComponents()
   return (
     <a
       style={{ outline: 'none' }}

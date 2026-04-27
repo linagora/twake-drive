@@ -10,12 +10,12 @@ import type { IOCozyFile } from 'cozy-client/types/types'
 import FileIcon from 'cozy-ui/transpiled/react/Icons/File'
 import FileTypeServerIcon from 'cozy-ui/transpiled/react/Icons/FileTypeServer'
 import FolderIcon from 'cozy-ui/transpiled/react/Icons/Folder'
-import { NavIcon, NavLink, NavItem } from 'cozy-ui/transpiled/react/Nav'
 import Typography from 'cozy-ui/transpiled/react/Typography'
 
 import { FileLink } from './components/FileLink'
 
 import { useFileLink } from '@/modules/navigation/hooks/useFileLink'
+import { getNavComponents } from '@/modules/navigation/navComponents'
 import { isNextcloudShortcut } from '@/modules/nextcloud/helpers'
 
 interface FavoriteListItemProps {
@@ -35,6 +35,7 @@ const FavoriteListItem: FC<FavoriteListItemProps> = ({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   clickState: [lastClicked, setLastClicked]
 }) => {
+  const { NavIcon, NavLink, NavItem } = getNavComponents()
   const { link } = useFileLink(file, {
     forceFolderPath: isNote(file) || isOnlyOfficeFile(file) ? false : true
   })

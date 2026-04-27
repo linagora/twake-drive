@@ -2,8 +2,9 @@ import React from 'react'
 
 import Avatar from 'cozy-ui/transpiled/react/Avatar'
 import Badge from 'cozy-ui/transpiled/react/Badge'
-import { NavIcon, NavText } from 'cozy-ui/transpiled/react/Nav'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
+
+import { getNavComponents } from '@/modules/navigation/navComponents'
 
 interface NavContentProps {
   icon?: string
@@ -17,6 +18,7 @@ const NavContent: React.FC<NavContentProps> = ({
   label
 }) => {
   const { isDesktop } = useBreakpoints()
+  const { NavIcon, NavText } = getNavComponents()
 
   if (badgeContent) {
     if (isDesktop) {

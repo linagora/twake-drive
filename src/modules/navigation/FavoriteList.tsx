@@ -2,10 +2,10 @@ import React, { FC } from 'react'
 
 import { useQuery } from 'cozy-client'
 import { IOCozyFile } from 'cozy-client/types/types'
-import { NavDesktopDropdown } from 'cozy-ui/transpiled/react/Nav'
 import { useI18n } from 'twake-i18n'
 
 import { FavoriteListItem } from '@/modules/navigation/FavoriteListItem'
+import { getNavComponents } from '@/modules/navigation/navComponents'
 import { buildFavoritesQuery } from '@/queries'
 
 interface FavoriteListProps {
@@ -14,6 +14,7 @@ interface FavoriteListProps {
 
 const FavoriteList: FC<FavoriteListProps> = ({ clickState }) => {
   const { t } = useI18n()
+  const { NavDesktopDropdown } = getNavComponents()
   const favoritesQuery = buildFavoritesQuery({
     sortAttribute: 'name',
     sortOrder: 'desc'
