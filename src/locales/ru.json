@@ -25,7 +25,8 @@
     "link-client-ios": "https://apps.apple.com/app/cloud-personnel-cozy/id1600636174",
     "link-client-web": "https://cozy.io/try-it",
     "view_more": "Показать больше",
-    "view_less": "Показать меньше"
+    "view_less": "Показать меньше",
+    "item_nextcloud": "Nextcloud"
   },
   "breadcrumb": {
     "title_drive": "Файлы",
