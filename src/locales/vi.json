@@ -25,7 +25,8 @@
     "link-client-ios": "https://apps.apple.com/app/cloud-personnel-cozy/id1600636174",
     "link-client-web": "https://cozy.io/try-it",
     "view_more": "Hiển thị thêm",
-    "view_less": "Hiển thị ít hơn"
+    "view_less": "Hiển thị ít hơn",
+    "item_nextcloud": "Nextcloud"
   },
   "breadcrumb": {
     "title_drive": "Tệp",
