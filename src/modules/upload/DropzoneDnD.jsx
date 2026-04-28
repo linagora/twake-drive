@@ -5,7 +5,6 @@ import { NativeTypes } from 'react-dnd-html5-backend'
 import { useDispatch } from 'react-redux'
 
 import { useClient } from 'cozy-client'
-import { useVaultClient } from 'cozy-keys-lib'
 import { useSharingContext } from 'cozy-sharing'
 import { Content } from 'cozy-ui/transpiled/react/Layout'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
@@ -45,7 +44,6 @@ export const Dropzone = ({
   const { isMobile } = useBreakpoints()
   const { showAlert } = useAlert()
   const sharingState = useSharingContext()
-  const vaultClient = useVaultClient()
   const dispatch = useDispatch()
   const { addItems } = useNewItemHighlightContext()
 
@@ -68,12 +66,7 @@ export const Dropzone = ({
             displayedFolder._id,
             sharingState,
             fileUploadCallback,
-            {
-              client,
-              vaultClient,
-              showAlert,
-              t
-            },
+            { client, showAlert, t },
             displayedFolder.driveId,
             addItems
           )

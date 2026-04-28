@@ -34,7 +34,6 @@
     "menu_upload": "Dateien hochladen",
     "item_more": "Mehr",
     "menu_new_folder": "Ordner",
-    "menu_new_encrypted_folder": "Verschlüsselter Ordner",
     "menu_select": "Elemente auswählen",
     "menu_share_folder": "Ordner freigeben",
     "menu_download": "Herunterladen",
@@ -258,8 +257,7 @@
     },
     "download_file": {
       "offline": "Du solltest verbunden sein, um diese Datei herunterzuladen.",
-      "missing": "Diese Datei fehlt",
-      "encryption_many": "Sie können nicht mehrere verschlüsselte Dateien auf einmal herunterladen"
+      "missing": "Diese Datei fehlt"
     }
   },
   "Error": {

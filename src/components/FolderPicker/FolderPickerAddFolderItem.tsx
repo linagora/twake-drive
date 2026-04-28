@@ -2,7 +2,6 @@ import React, { FC } from 'react'
 import { useDispatch } from 'react-redux'
 
 import { useClient } from 'cozy-client'
-import { useVaultClient } from 'cozy-keys-lib'
 import Divider from 'cozy-ui/transpiled/react/Divider'
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import IconFolder from 'cozy-ui/transpiled/react/Icons/FileTypeFolder'
@@ -14,10 +13,8 @@ import { useI18n } from 'twake-i18n'
 
 import FilenameInput from '@/modules/filelist/FilenameInput'
 import { createFolder } from '@/modules/navigation/duck'
-import IconEncryptedFolder from '@/modules/views/Folder/EncryptedFolderIcon'
 
 interface FolderPickerAddFolderItemProps {
-  isEncrypted: boolean
   currentFolderId: string
   visible: boolean
   afterSubmit: () => void
@@ -26,7 +23,6 @@ interface FolderPickerAddFolderItemProps {
 }
 
 const FolderPickerAddFolderItem: FC<FolderPickerAddFolderItemProps> = ({
-  isEncrypted,
   currentFolderId,
   visible,
   afterSubmit,
@@ -38,23 +34,11 @@ const FolderPickerAddFolderItem: FC<FolderPickerAddFolderItemProps> = ({
   const dispatch = useDispatch()
   const { showAlert } = useAlert()
   const { t } = useI18n()
-  const vaultClient = useVaultClient()
   const client = useClient()
 
   const handleSubmit = (name: string): void => {
     dispatch(
-      createFolder(
-        client,
-        vaultClient,
-        name,
-        currentFolderId,
-        {
-          isEncryptedFolder: isEncrypted,
-          showAlert,
-          t
-        },
-        driveId
-      )
+      createFolder(client, name, currentFolderId, { showAlert, t }, driveId)
     )
     if (typeof afterSubmit === 'function') {
       afterSubmit()
@@ -64,7 +48,7 @@ const FolderPickerAddFolderItem: FC<FolderPickerAddFolderItemProps> = ({
   const handleAbort = (accidental: boolean): void => {
     if (accidental) {
       showAlert({
-        message: t('alert.folder_abort'), //
+        message: t('alert.folder_abort'),
         severity: 'secondary'
       })
     }
@@ -78,10 +62,7 @@ const FolderPickerAddFolderItem: FC<FolderPickerAddFolderItemProps> = ({
       <>
         <ListItem gutters={gutters}>
           <ListItemIcon>
-            <Icon
-              icon={isEncrypted ? IconEncryptedFolder : IconFolder}
-              size={32}
-            />
+            <Icon icon={IconFolder} size={32} />
           </ListItemIcon>
           <FilenameInput onSubmit={handleSubmit} onAbort={handleAbort} />
         </ListItem>

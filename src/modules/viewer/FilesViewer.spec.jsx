@@ -8,7 +8,6 @@ import AppLike from 'test/components/AppLike'
 import { generateFile } from 'test/generate'
 
 import { useCurrentFileId } from '@/hooks'
-import { getEncryptionKeyFromDirId } from '@/lib/encryption'
 
 jest.mock('cozy-client/dist/hooks/useQuery', () => jest.fn())
 jest.mock('cozy-keys-lib', () => ({
@@ -17,12 +16,6 @@ jest.mock('cozy-keys-lib', () => ({
 
 jest.mock('lib/logger', () => ({
   error: jest.fn()
-}))
-
-jest.mock('lib/encryption', () => ({
-  ...jest.requireActual('lib/encryption'),
-  getEncryptionKeyFromDirId: jest.fn(),
-  getDecryptedFileURL: jest.fn()
 }))
 
 jest.mock('hooks')
@@ -50,13 +43,11 @@ describe('FilesViewer', () => {
     nbFiles = 3,
     totalCount,
     client = new CozyClient({}),
-    vaultClient = {},
-    useQueryResultAttributes,
-    isEncrypted = false
+    useQueryResultAttributes
   } = {}) => {
     const filesFixture = Array(nbFiles)
       .fill(null)
-      .map((x, i) => generateFile({ i, type: 'file', encrypted: isEncrypted }))
+      .map((x, i) => generateFile({ i, type: 'file' }))
     const mockedUseQueryReturnedValues = {
       data: filesFixture,
       count: totalCount || filesFixture.length,
@@ -70,7 +61,7 @@ describe('FilesViewer', () => {
     useCurrentFileId.mockReturnValue(fileId)
 
     return render(
-      <AppLike client={client} vaultClient={vaultClient}>
+      <AppLike client={client}>
         <FilesViewer
           files={filesFixture}
           filesQuery={mockedUseQueryReturnedValues}
@@ -164,28 +155,5 @@ describe('FilesViewer', () => {
     const viewer = await screen.findByText('Viewer')
     expect(viewer).toBeInTheDocument()
     expect(fetchMore).toHaveBeenCalledTimes(1)
-  })
-
-  it('should get decryption key when file is encrypted', async () => {
-    // useEffect calling fetchMoreIfNecessary leaks with encrypted file
-    // these prevent CI to break until we resolve the problem
-    jest.spyOn(console, 'error').mockImplementation()
-
-    const client = new CozyClient({})
-    client.query = jest.fn().mockResolvedValue({
-      data: generateFile({ i: '0', encrypted: true })
-    })
-
-    setup({
-      client,
-      nbFiles: 1,
-      totalCount: 1,
-      fileId: 'file-foobar0',
-      isEncrypted: true
-    })
-
-    const viewer = await screen.findByText('Viewer')
-    expect(viewer).toBeInTheDocument()
-    expect(getEncryptionKeyFromDirId).toHaveBeenCalled()
   })
 })

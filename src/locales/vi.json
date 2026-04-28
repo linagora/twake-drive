@@ -46,7 +46,6 @@
     "menu_upload": "Tải lên tệp tin",
     "item_more": "Thêm",
     "menu_new_folder": "Thư mục",
-    "menu_new_encrypted_folder": "Thư mục được mã hoá",
     "menu_select": "Chọn mục",
     "menu_share_folder": "Chia sẻ thư mục",
     "menu_download": "Tải xuống",
@@ -287,8 +286,7 @@
     },
     "download_file": {
       "offline": "Bạn cần kết nối mạng để tải tệp này",
-      "missing": "Tệp này không tồn tại",
-      "encryption_many": "Không thể tải nhiều tệp được mã hóa cùng lúc"
+      "missing": "Tệp này không tồn tại"
     }
   },
   "Error": {

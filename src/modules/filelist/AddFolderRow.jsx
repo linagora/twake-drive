@@ -10,7 +10,7 @@ import FilenameInput from '@/modules/filelist/FilenameInput'
 import { Empty as EmptyCell, LastUpdate } from '@/modules/filelist/cells'
 import FileThumbnail from '@/modules/filelist/icons/FileThumbnail'
 
-const AddFolderRow = ({ isEncrypted, onSubmit, onAbort, extraColumns }) => {
+const AddFolderRow = ({ onSubmit, onAbort, extraColumns }) => {
   const { isMobile } = useBreakpoints()
 
   return (
@@ -30,7 +30,7 @@ const AddFolderRow = ({ isEncrypted, onSubmit, onAbort, extraColumns }) => {
           }
         )}
       >
-        <FileThumbnail file={{ type: 'directory' }} isEncrypted={isEncrypted} />
+        <FileThumbnail file={{ type: 'directory' }} />
       </TableCell>
       <TableCell
         className={cx(styles['fil-content-cell'], styles['fil-content-file'])}

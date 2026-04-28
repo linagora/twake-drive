@@ -41,7 +41,6 @@ const useSearch = (searchTerm, { limit = 10 } = {}) => {
         openOn: result.openOn,
         type: result.type,
         mime: result.mime,
-        isEncrypted: result.isEncrypted,
         class: result.class
       }))
 

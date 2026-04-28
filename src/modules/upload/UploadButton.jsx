@@ -3,7 +3,6 @@ import React from 'react'
 import { useDispatch } from 'react-redux'
 
 import { useClient } from 'cozy-client'
-import { useVaultClient } from 'cozy-keys-lib'
 import withSharingState from 'cozy-sharing/dist/hoc/withSharingState'
 import Button from 'cozy-ui/transpiled/react/Buttons'
 import FileInput from 'cozy-ui/transpiled/react/FileInput'
@@ -30,7 +29,6 @@ const UploadButton = ({
   const { t } = useI18n()
   const dispatch = useDispatch()
   const client = useClient()
-  const vaultClient = useVaultClient()
 
   const onUpload = files => {
     dispatch(
@@ -39,12 +37,7 @@ const UploadButton = ({
         displayedFolder.id,
         sharingState,
         onUploaded,
-        {
-          client,
-          vaultClient,
-          showAlert,
-          t
-        },
+        { client, showAlert, t },
         displayedFolder.driveId,
         addItems
       )

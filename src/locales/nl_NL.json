@@ -35,7 +35,6 @@
     "menu_upload": "Bestanden uploaden",
     "item_more": "Meer",
     "menu_new_folder": "Map",
-    "menu_new_encrypted_folder": "Beveiligde map",
     "menu_select": "Items selecteren",
     "menu_share_folder": "Map delen",
     "menu_download": "Downloaden",
@@ -260,8 +259,7 @@
     },
     "download_file": {
       "offline": "Je moet verbonden zijn om dit bestand te kunnen downloaden",
-      "missing": "Dit bestand ontbreekt",
-      "encryption_many": "Je kunt niet meerdere beveiligde bestanden tegelijkertijd downloaden"
+      "missing": "Dit bestand ontbreekt"
     }
   },
   "Error": {

@@ -1,14 +1,9 @@
 import { combineReducers } from 'redux'
 
 import { getFullpath } from 'cozy-client/dist/models/file'
-import flag from 'cozy-flags'
 
 import { MAX_PAYLOAD_SIZE } from '@/constants/config'
 import { DOCTYPE_FILES } from '@/lib/doctypes'
-import {
-  encryptAndUploadNewFile,
-  getEncryptionKeyFromDirId
-} from '@/lib/encryption'
 import logger from '@/lib/logger'
 import { CozyFile } from '@/models'
 
@@ -20,6 +15,7 @@ const UPLOAD_PROGRESS = 'UPLOAD_PROGRESS'
 export const RECEIVE_UPLOAD_SUCCESS = 'RECEIVE_UPLOAD_SUCCESS'
 export const RECEIVE_UPLOAD_ERROR = 'RECEIVE_UPLOAD_ERROR'
 const PURGE_UPLOAD_QUEUE = 'PURGE_UPLOAD_QUEUE'
+const RESOLVE_FOLDER_ITEMS = 'RESOLVE_FOLDER_ITEMS'
 
 const CANCEL = 'cancel'
 const PENDING = 'pending'
@@ -31,11 +27,19 @@ const CONFLICT = 'conflict'
 const QUOTA = 'quota'
 const NETWORK = 'network'
 const UNREADABLE = 'unreadable'
+// Placeholder status for a top-level folder drop while its tree is
+// being walked and folders are being created server-side. Replaced by
+// real PENDING items once flattenEntries completes.
+const RESOLVING = 'resolving'
+// Mirrors cozy-stack's ErrMaxFileSize message so client-side pre-flight
+// rejections look identical to server-side ones and funnel through the
+// same classifier branch.
 const ERR_MAX_FILE_SIZE =
-  'The file is too big and exceeds the filesystem maximum file size' // ErrMaxFileSize is used when a file is larger than the filesystem's maximum file size
+  'The file is too big and exceeds the filesystem maximum file size'
 
 const DONE_STATUSES = [CREATED, UPDATED]
 const ERROR_STATUSES = [CONFLICT, NETWORK, QUOTA, FAILED, UNREADABLE]
+const IN_PROGRESS_STATUSES = [PENDING, RESOLVING]
 
 export const status = {
   CANCEL,
@@ -48,16 +52,21 @@ export const status = {
   QUOTA,
   NETWORK,
   UNREADABLE,
+  RESOLVING,
   DONE_STATUSES,
   ERROR_STATUSES,
   ERR_MAX_FILE_SIZE
 }
 
 const CONFLICT_ERROR = 409
+const PAYLOAD_TOO_LARGE = 413
 
+// `status` is preserved when set on the input (folder placeholder rows
+// arrive with status: RESOLVING); real file items have no status and
+// default to PENDING so processNextFile picks them up.
 const itemInitialState = item => ({
   ...item,
-  status: PENDING,
+  status: item.status || PENDING,
   progress: null
 })
 
@@ -152,15 +161,27 @@ export const queue = (state = [], action) => {
         ...state.filter(i => i.status !== CREATED),
         ...action.files.map(f => itemInitialState(f))
       ]
+    case RESOLVE_FOLDER_ITEMS: {
+      const placeholderIds = new Set(action.placeholderIds)
+      const filtered = state.filter(i => !placeholderIds.has(i.fileId))
+      // If purgeUploadQueue ran while flattenEntries was in flight, the
+      // placeholders are gone — drop the resolved files too so a cancelled
+      // drop doesn't silently re-fill the queue and resume uploading.
+      if (filtered.length === state.length) return state
+      return [...filtered, ...action.files.map(f => itemInitialState(f))]
+    }
     case PURGE_UPLOAD_QUEUE:
       return []
     case UPLOAD_FILE:
     case RECEIVE_UPLOAD_SUCCESS:
     case RECEIVE_UPLOAD_ERROR:
-    case UPLOAD_PROGRESS:
-      return state.map(i =>
-        i.file.name !== action.file.name ? i : item(i, action)
-      )
+    case UPLOAD_PROGRESS: {
+      // No matching row (e.g. the queue was purged before a stale
+      // dispatch landed): return the same reference so connected
+      // consumers don't re-render needlessly.
+      if (!state.some(i => i.fileId === action.fileId)) return state
+      return state.map(i => (i.fileId !== action.fileId ? i : item(i, action)))
+    }
     default:
       return state
   }
@@ -170,13 +191,68 @@ export default combineReducers({
   queue
 })
 
-export const uploadProgress = (file, event, date) => ({
+export const uploadProgress = (fileId, event, date) => ({
   type: UPLOAD_PROGRESS,
-  file,
+  fileId,
   loaded: event.loaded,
   total: event.total,
   date: date || Date.now()
 })
+
+/**
+ * Upload a single pending queue item: resolve its target directory
+ * (server-side folder id if the item came from a flattened folder drop,
+ * otherwise the caller-supplied `dirID`) and dispatch the upload
+ * lifecycle actions.
+ *
+ * Kept separate from {@link processNextFile} so the outer thunk only
+ * has the queue-draining loop and error funnel.
+ *
+ * @param {{file: File, fileId: string, folderId?: string}} pendingItem
+ * @param {object} client - cozy-client instance
+ * @param {string} dirID - Fallback directory when the item has no folderId
+ * @param {string} [driveId]
+ * @param {{dispatch: Function, safeCallback: Function}} io
+ */
+const uploadPendingItem = async (
+  pendingItem,
+  client,
+  dirID,
+  driveId,
+  { dispatch, safeCallback }
+) => {
+  const { file, fileId, folderId } = pendingItem
+  const targetDirId = folderId ?? dirID
+  try {
+    dispatch({ type: UPLOAD_FILE, fileId, file })
+    const onUploadProgress = event => dispatch(uploadProgress(fileId, event))
+    const { data: uploadedFile, isUpdate } = await uploadOrOverwriteFile(
+      client,
+      file,
+      targetDirId,
+      { onUploadProgress },
+      driveId
+    )
+    safeCallback(uploadedFile)
+    dispatch({
+      type: RECEIVE_UPLOAD_SUCCESS,
+      fileId,
+      file,
+      isUpdate,
+      uploadedItem: uploadedFile
+    })
+  } catch (error) {
+    logger.error(
+      `Upload module catches an error when executing processNextFile(): ${error}`
+    )
+    dispatch({
+      type: RECEIVE_UPLOAD_ERROR,
+      fileId,
+      file,
+      status: classifyUploadError(error)
+    })
+  }
+}
 
 export const processNextFile =
   (
@@ -184,7 +260,7 @@ export const processNextFile =
     queueCompletedCallback,
     dirID,
     sharingState,
-    { client, vaultClient },
+    { client },
     driveId,
     addItems
   ) =>
@@ -193,127 +269,28 @@ export const processNextFile =
       typeof fileUploadedCallback === 'function'
         ? fileUploadedCallback
         : () => {}
-    let error
     if (!client) {
       throw new Error(
         'Upload module needs a cozy-client instance to work. This instance should be made available by using the extraArgument function of redux-thunk'
       )
     }
-    const item = getUploadQueue(getState()).find(i => i.status === PENDING)
-    if (!item) {
+    const pendingItem = getUploadQueue(getState()).find(
+      i => i.status === PENDING
+    )
+    if (!pendingItem) {
       return dispatch(onQueueEmpty(queueCompletedCallback))
     }
-
-    const { file, entry, isDirectory } = item
-    const encryptionKey = flag('drive.enable-encryption')
-      ? await getEncryptionKeyFromDirId(client, dirID)
-      : null
-    try {
-      dispatch({ type: UPLOAD_FILE, file })
-      if (entry && isDirectory) {
-        const newDir = await uploadDirectory(
-          client,
-          entry,
-          dirID,
-          {
-            vaultClient,
-            encryptionKey
-          },
-          driveId
-        )
-        safeCallback(newDir)
-        dispatch({ type: RECEIVE_UPLOAD_SUCCESS, file, uploadedItem: newDir })
-      } else {
-        const withProgress = {
-          onUploadProgress: event => {
-            dispatch(uploadProgress(file, event))
-          }
-        }
-
-        const uploadedFile = await uploadFile(
-          client,
-          file,
-          dirID,
-          {
-            vaultClient,
-            encryptionKey,
-            ...withProgress
-          },
-          driveId
-        )
-        safeCallback(uploadedFile)
-        dispatch({
-          type: RECEIVE_UPLOAD_SUCCESS,
-          file,
-          uploadedItem: uploadedFile
-        })
-      }
-    } catch (uploadError) {
-      error = uploadError
-      if (uploadError.status === CONFLICT_ERROR) {
-        try {
-          const path = await resolveFullpath(client, dirID, file.name, driveId)
-
-          const uploadedFile = await overwriteFile(
-            client,
-            file,
-            path,
-            {
-              onUploadProgress: event => {
-                dispatch(uploadProgress(file, event))
-              }
-            },
-            driveId
-          )
-          safeCallback(uploadedFile)
-          dispatch({
-            type: RECEIVE_UPLOAD_SUCCESS,
-            file,
-            isUpdate: true,
-            uploadedItem: uploadedFile
-          })
-          error = null
-        } catch (updateError) {
-          error = updateError
-        }
-      }
-      if (error) {
-        logger.error(
-          `Upload module catches an error when executing processNextFile(): ${error}`
-        )
-
-        // Define mapping for specific status codes to our constants
-        const statusError = {
-          409: CONFLICT,
-          413: QUOTA
-        }
-
-        // Determine the status based on the error details
-        let status
-        if (error.name === 'NotFoundError') {
-          // Browser FileSystem API couldn't resolve the entry — path too long or folder modified mid-transfer.
-          status = UNREADABLE
-        } else if (error.message?.includes(ERR_MAX_FILE_SIZE)) {
-          status = ERR_MAX_FILE_SIZE // File size exceeded maximum size allowed by the server
-        } else if (error.status in statusError) {
-          status = statusError[error.status]
-        } else if (/Failed to fetch$/.exec(error.toString())) {
-          status = NETWORK
-        } else {
-          status = FAILED
-        }
-
-        // Dispatch an action to handle the upload error with the determined status
-        dispatch({ type: RECEIVE_UPLOAD_ERROR, file, status })
-      }
-    }
+    await uploadPendingItem(pendingItem, client, dirID, driveId, {
+      dispatch,
+      safeCallback
+    })
     dispatch(
       processNextFile(
         fileUploadedCallback,
         queueCompletedCallback,
         dirID,
         sharingState,
-        { client, vaultClient },
+        { client },
         driveId,
         addItems
       )
@@ -357,47 +334,74 @@ const getExistingDirectory = async (client, dirID, name, driveId) => {
   return statResp.data
 }
 
-const uploadDirectory = async (
-  client,
-  directory,
-  dirID,
-  { vaultClient, encryptionKey },
-  driveId
-) => {
-  let newDir
+/**
+ * Map an upload failure to one of the queue item error statuses.
+ *
+ * Precedence matters: the Chrome pre-flight in `uploadFile` throws an
+ * `Error` whose message is a JSON blob carrying `status: 413` (no such
+ * property on the error itself), so the `ERR_MAX_FILE_SIZE` message
+ * match has to run before the `PAYLOAD_TOO_LARGE` status check. The
+ * plain disk-usage guard in the same function throws with
+ * `error.status = PAYLOAD_TOO_LARGE`, which the later branch catches.
+ *
+ * @param {Error} error
+ * @returns {string} One of the values exported in `status`.
+ */
+const classifyUploadError = error => {
+  if (error.name === 'NotFoundError') return UNREADABLE
+  if (error.message?.includes(ERR_MAX_FILE_SIZE)) return ERR_MAX_FILE_SIZE
+  if (error.status === CONFLICT_ERROR) return CONFLICT
+  if (error.status === PAYLOAD_TOO_LARGE) return QUOTA
+  if (/Failed to fetch$/.test(error.toString())) return NETWORK
+  return FAILED
+}
+
+/**
+ * Upload a file, or silently overwrite the existing version on 409.
+ *
+ * @param {object} client - cozy-client instance
+ * @param {File} file
+ * @param {string} dirID
+ * @param {{onUploadProgress?: Function}} options
+ * @param {string} [driveId]
+ * @returns {Promise<{data: object, isUpdate: boolean}>} The created
+ *   (`isUpdate: false`) or overwritten (`isUpdate: true`) file document.
+ */
+const uploadOrOverwriteFile = async (client, file, dirID, options, driveId) => {
   try {
-    newDir = await createFolder(client, directory.name, dirID, driveId)
+    const data = await uploadFile(client, file, dirID, options, driveId)
+    return { data, isUpdate: false }
   } catch (err) {
-    if (err.status === CONFLICT_ERROR) {
-      newDir = await getExistingDirectory(
-        client,
-        dirID,
-        directory.name,
-        driveId
-      )
-    } else {
-      throw err
-    }
+    if (err.status !== CONFLICT_ERROR) throw err
+    const path = await resolveFullpath(client, dirID, file.name, driveId)
+    const data = await overwriteFile(client, file, path, options, driveId)
+    return { data, isUpdate: true }
   }
-  const dirReader = directory.createReader()
-  const options = { vaultClient, encryptionKey }
+}
 
-  const entries = await readAllEntries(dirReader)
-
-  const files = await Promise.all(
-    entries.filter(e => e.isFile).map(e => getFileFromEntry(e))
-  )
-
-  let fileIndex = 0
-  for (const entry of entries) {
-    if (entry.isFile) {
-      await uploadFile(client, files[fileIndex++], newDir.id, options, driveId)
-    } else if (entry.isDirectory) {
-      await uploadDirectory(client, entry, newDir.id, options, driveId)
-    }
+/**
+ * Create a folder, or return the existing one on 409.
+ *
+ * Used by the flatten helpers when walking a dropped folder tree: we
+ * reuse an existing same-name directory instead of failing.
+ * `getExistingDirectory` throws a plain `Error` (no `status`) if a
+ * non-directory sits at that name, which bubbles up as a normal upload
+ * failure rather than being silently overwritten.
+ *
+ * @param {object} client - cozy-client instance
+ * @param {string} name
+ * @param {string} dirID - Parent directory id
+ * @param {string} [driveId]
+ * @returns {Promise<object>} The `io.cozy.files` document of the created
+ *   or existing directory.
+ */
+const createFolderOrGetExisting = async (client, name, dirID, driveId) => {
+  try {
+    return await createFolder(client, name, dirID, driveId)
+  } catch (err) {
+    if (err.status !== CONFLICT_ERROR) throw err
+    return getExistingDirectory(client, dirID, name, driveId)
   }
-
-  return newDir
 }
 
 const createFolder = async (client, name, dirID, driveId) => {
@@ -421,26 +425,20 @@ const uploadFile = async (client, file, dirID, options = {}, driveId) => {
    * We don't need to do that work on other browser (window.chrome
    * should be available on new Edge, Chrome, Chromium, Brave, Opera...)
    */
-
-  // Check if running in a Chrome browser
   if (window.chrome) {
-    // Convert file size to integer for comparison
     const fileSize = parseInt(file.size, 10)
 
-    // Check if the file size exceeds the server's maximum payload size
     if (fileSize > MAX_PAYLOAD_SIZE) {
-      // Create a new error for exceeding the maximum payload size
       // Match cozy-stack error format
       throw new Error(
         JSON.stringify({
-          status: 413,
+          status: PAYLOAD_TOO_LARGE,
           title: 'Request Entity Too Large',
           detail: ERR_MAX_FILE_SIZE
         })
       )
     }
 
-    // Proceed to check disk usage
     const { data: diskUsage } = await client
       .getStackClient()
       .fetchJSON('GET', '/settings/disk-usage')
@@ -451,47 +449,28 @@ const uploadFile = async (client, file, dirID, options = {}, driveId) => {
 
       if (fileSize > availableSpace) {
         const error = new Error('Insufficient Disk Space')
-        error.status = 413
+        error.status = PAYLOAD_TOO_LARGE
         throw error
       }
     }
   }
 
-  const { onUploadProgress, encryptionKey, vaultClient } = options
+  const { onUploadProgress } = options
 
-  if (encryptionKey && vaultClient) {
-    // TODO: use web worker
-    const fr = new FileReader()
-    fr.onloadend = async () => {
-      return encryptAndUploadNewFile(client, vaultClient, {
-        file: fr.result,
-        encryptionKey,
-        fileOptions: {
-          name: file.name,
-          dirID,
-          onUploadProgress,
-          driveId
-        }
-      })
-    }
-    fr.readAsArrayBuffer(file)
-  } else {
-    const resp = await client
-      .collection(DOCTYPE_FILES, { driveId })
-      .createFile(file, { dirId: dirID, onUploadProgress })
+  const resp = await client
+    .collection(DOCTYPE_FILES, { driveId })
+    .createFile(file, { dirId: dirID, onUploadProgress })
 
-    return resp.data
-  }
+  return resp.data
 }
 
-/*
- * @function
- * @param {Object} client - A CozyClient instance
- * @param {Object} file - The uploaded javascript File object
- * @param {string} path - The file's path in the cozy
- * @param {{onUploadProgress}} options
- * @param {string} driveId - The drive ID for shared drives
- * @return {Object} - The updated io.cozy.files
+/**
+ * @param {object} client - A CozyClient instance
+ * @param {File} file - The javascript File object to upload
+ * @param {string} path - The target file's path in the cozy
+ * @param {{onUploadProgress: Function}} [options]
+ * @param {string} [driveId] - Shared drive id
+ * @returns {Promise<object>} The updated io.cozy.files document
  */
 export const overwriteFile = async (
   client,
@@ -503,17 +482,249 @@ export const overwriteFile = async (
   const statResp = await client
     .collection(DOCTYPE_FILES, { driveId })
     .statByPath(path)
-  const { id: fileId, dir_id: dirId } = statResp.data
+  const { id: fileId } = statResp.data
+  // updateFile destructures known param keys (fileId, name, …) and
+  // treats the rest as upload options (onUploadProgress, etc.) — so
+  // they must sit at the top level of the second argument, not nested
+  // under an `options` key.
   const resp = await client
     .collection(DOCTYPE_FILES, { driveId })
-    .updateFile(file, { dirId, fileId, options })
+    .updateFile(file, { fileId, ...options })
 
   return resp.data
 }
 
-export const removeFileToUploadQueue = file => async dispatch => {
-  dispatch({ type: RECEIVE_UPLOAD_SUCCESS, file, isUpdate: true })
+/**
+ * Build a flat queue item.
+ *
+ * `fileId` is the identity the reducer uses for progress/success/error
+ * updates, so it must be unique per item. The relative path (or bare
+ * filename for loose files) makes two `img.jpg`s in different folders
+ * distinct, but the same drop can be made twice in a row — the nonce
+ * scopes the id to one drop so two `photos/img.jpg` items from two
+ * drops don't collide and have a single dispatch flip both rows.
+ *
+ * @param {File} file
+ * @param {string} folderId - Server id of the folder the file goes into
+ * @param {string|null} relativePath - `"photos/2024/img.jpg"` when the
+ *   file came from a dropped folder, `null` for loose files
+ * @param {string} nonce - Per-drop nonce; `''` keeps the legacy id
+ *   shape for callers that don't care about cross-drop uniqueness.
+ * @returns {{fileId: string, file: File, relativePath: string|null, folderId: string}}
+ */
+const makeFlatItem = (file, folderId, relativePath = null, nonce = '') => {
+  const base = relativePath ?? file.name
+  return {
+    fileId: nonce ? `${nonce}_${base}` : base,
+    file,
+    relativePath,
+    folderId
+  }
 }
+
+/**
+ * Recursively walk a `FileSystemDirectoryEntry`, creating (or reusing)
+ * folders on the server as it goes, and return one flat queue item per
+ * contained file.
+ *
+ * @param {FileSystemDirectoryEntry} dirEntry
+ * @param {string} parentDirId - Server id of the enclosing directory
+ * @param {object} client - cozy-client instance
+ * @param {string} [driveId]
+ * @param {string} [pathPrefix] - Relative path accumulated so far
+ * @returns {Promise<Array<{fileId: string, file: File, relativePath: string, folderId: string}>>}
+ */
+const flattenDirectoryEntry = async (
+  dirEntry,
+  parentDirId,
+  client,
+  driveId,
+  pathPrefix = '',
+  nonce = ''
+) => {
+  const newDir = await createFolderOrGetExisting(
+    client,
+    dirEntry.name,
+    parentDirId,
+    driveId
+  )
+  const newPrefix = pathPrefix
+    ? `${pathPrefix}/${dirEntry.name}`
+    : dirEntry.name
+  const childEntries = await readAllEntries(dirEntry.createReader())
+  const fileEntries = childEntries.filter(e => e.isFile)
+  const subdirEntries = childEntries.filter(e => e.isDirectory)
+  const files = await Promise.all(fileEntries.map(getFileFromEntry))
+
+  const result = files.map(file =>
+    makeFlatItem(file, newDir.id, `${newPrefix}/${file.name}`, nonce)
+  )
+  for (const sub of subdirEntries) {
+    const subItems = await flattenDirectoryEntry(
+      sub,
+      newDir.id,
+      client,
+      driveId,
+      newPrefix,
+      nonce
+    )
+    result.push(...subItems)
+  }
+  return result
+}
+
+/**
+ * Build a memoised `ensureFolder(path)` function that creates (or
+ * reuses) nested folders under `rootDirId`, one server call per unique
+ * path segment.
+ *
+ * @param {string} rootDirId
+ * @param {object} client - cozy-client instance
+ * @param {string} [driveId]
+ * @returns {(folderPath: string) => Promise<string>} Resolves to the
+ *   server id of the folder at `folderPath` (relative to root).
+ */
+const makeFolderResolver = (rootDirId, client, driveId) => {
+  const cache = new Map([['', rootDirId]])
+  const ensure = async folderPath => {
+    if (cache.has(folderPath)) return cache.get(folderPath)
+    const lastSlash = folderPath.lastIndexOf('/')
+    const parentPath = lastSlash > 0 ? folderPath.slice(0, lastSlash) : ''
+    const name = lastSlash > 0 ? folderPath.slice(lastSlash + 1) : folderPath
+    const parentId = await ensure(parentPath)
+    const folder = await createFolderOrGetExisting(
+      client,
+      name,
+      parentId,
+      driveId
+    )
+    cache.set(folderPath, folder.id)
+    return folder.id
+  }
+  return ensure
+}
+
+/**
+ * Flatten a mixed list of dropped entries into per-file queue items.
+ *
+ * Three entry shapes are handled in a single pass:
+ * - `{isDirectory: true, entry}` — a `FileSystemEntry` from drag-and-drop;
+ *   walked recursively via {@link flattenDirectoryEntry}.
+ * - `{file}` whose `file.path` contains a `/` — a react-dropzone /
+ *   file-selector File with a relative path; folders are created on the
+ *   fly via the path-based resolver.
+ * - `{file}` with no folder structure — placed directly under `rootDirId`.
+ *
+ * Intermediate folders are created (or reused on 409) server-side
+ * before any file upload starts, so `processNextFile` only ever handles
+ * single-file items and there is exactly one place in the module that
+ * resolves folder conflicts.
+ *
+ * @param {Array<{file: File|null, isDirectory?: boolean, entry?: FileSystemEntry|null}>} entries
+ * @param {string} rootDirId - Directory id where the drop happened
+ * @param {object} client - cozy-client instance
+ * @param {string} [driveId]
+ * @returns {Promise<Array<{fileId: string, file: File, relativePath: string|null, folderId: string}>>}
+ */
+export const flattenEntries = async (
+  entries,
+  rootDirId,
+  client,
+  driveId,
+  nonce = ''
+) => {
+  const ensureFolder = makeFolderResolver(rootDirId, client, driveId)
+  const result = []
+  for (const entry of entries) {
+    if (entry.isDirectory && entry.entry) {
+      const subItems = await flattenDirectoryEntry(
+        entry.entry,
+        rootDirId,
+        client,
+        driveId,
+        '',
+        nonce
+      )
+      result.push(...subItems)
+      continue
+    }
+    const file = entry.file
+    if (!file) continue
+    const raw = file.path || ''
+    const cleanPath = raw.startsWith('/') ? raw.slice(1) : raw
+    if (!cleanPath.includes('/')) {
+      result.push(makeFlatItem(file, rootDirId, null, nonce))
+    } else {
+      const folderPath = cleanPath.slice(0, cleanPath.lastIndexOf('/'))
+      const folderId = await ensureFolder(folderPath)
+      result.push(makeFlatItem(file, folderId, cleanPath, nonce))
+    }
+  }
+  return result
+}
+
+export const removeFileToUploadQueue = file => async dispatch => {
+  dispatch({
+    type: RECEIVE_UPLOAD_SUCCESS,
+    fileId: file.name,
+    file,
+    isUpdate: true
+  })
+}
+
+/**
+ * An entry is "deferred" if it needs flattening — either a directory
+ * drag-drop or a react-dropzone file with a folder structure encoded
+ * in its `path`. Loose top-level files are NOT deferred and can be
+ * queued immediately as PENDING items.
+ */
+const isDeferredEntry = entry => {
+  if (entry.isDirectory && entry.entry) return true
+  const path = entry.file?.path
+  if (!path) return false
+  const cleanPath = path.startsWith('/') ? path.slice(1) : path
+  return cleanPath.includes('/')
+}
+
+/**
+ * Identify the top-level folder names a drop will create. Used to seed
+ * "resolving" placeholder rows so the upload tray appears immediately,
+ * before the (potentially slow) tree walk creates folders server-side.
+ *
+ * @param {Array<{file: File|null, isDirectory?: boolean, entry?: object|null}>} entries
+ * @returns {string[]} Unique top-level folder names
+ */
+const collectFolderRoots = entries => {
+  const roots = new Set()
+  for (const e of entries) {
+    if (e.isDirectory && e.entry) {
+      roots.add(e.entry.name)
+      continue
+    }
+    const path = e.file?.path
+    if (!path) continue
+    const cleanPath = path.startsWith('/') ? path.slice(1) : path
+    if (cleanPath.includes('/')) {
+      roots.add(cleanPath.split('/')[0])
+    }
+  }
+  return [...roots]
+}
+
+// Placeholder ids include a per-drop nonce so two `photos` folders
+// dropped back-to-back can't collide on the same queue identity, and
+// an index so two same-named folders inside one drop stay distinct.
+const placeholderId = (name, index, nonce) =>
+  `__pending_${nonce}_${index}_${name}__`
+
+const buildFolderPlaceholder = (name, index, nonce) => ({
+  fileId: placeholderId(name, index, nonce),
+  file: { name, type: '' },
+  relativePath: null,
+  folderId: null,
+  isDirectory: true,
+  status: RESOLVING
+})
 
 export const addToUploadQueue =
   (
@@ -522,26 +733,94 @@ export const addToUploadQueue =
     sharingState,
     fileUploadedCallback,
     queueCompletedCallback,
-    { client, vaultClient },
+    { client, maxFileCount, onLimitExceeded },
     driveId,
     addItems
   ) =>
   async dispatch => {
-    dispatch({
-      type: ADD_TO_UPLOAD_QUEUE,
-      files: entries
-    })
-    dispatch(
-      processNextFile(
-        fileUploadedCallback,
-        queueCompletedCallback,
-        dirID,
-        sharingState,
-        { client, vaultClient },
-        driveId,
-        addItems
-      )
+    const folderRoots = collectFolderRoots(entries)
+    const dropNonce = `${Date.now().toString(36)}_${Math.random()
+      .toString(36)
+      .slice(2, 8)}`
+    const placeholders = folderRoots.map((name, i) =>
+      buildFolderPlaceholder(name, i, dropNonce)
     )
+    const placeholderIds = placeholders.map(p => p.fileId)
+
+    const deferredEntries = entries.filter(isDeferredEntry)
+    const looseItems = entries
+      .filter(e => !isDeferredEntry(e) && e.file)
+      .map(e => makeFlatItem(e.file, dirID, null, dropNonce))
+    const allDropIds = [...placeholderIds, ...looseItems.map(i => i.fileId)]
+
+    const kickProcessing = () =>
+      dispatch(
+        processNextFile(
+          fileUploadedCallback,
+          queueCompletedCallback,
+          dirID,
+          sharingState,
+          { client },
+          driveId,
+          addItems
+        )
+      )
+
+    const failDrop = errStatus => {
+      for (const fileId of allDropIds) {
+        dispatch({ type: RECEIVE_UPLOAD_ERROR, fileId, status: errStatus })
+      }
+    }
+
+    // Mark every row for this drop failed and kick so processNextFile
+    // hits an empty PENDING set and runs onQueueEmpty → the upstream
+    // queueCompletedCallback surfaces the right toast.
+    const failAndKick = error => {
+      failDrop(classifyUploadError(error))
+      kickProcessing()
+    }
+
+    const initialItems = [...placeholders, ...looseItems]
+    if (initialItems.length > 0) {
+      dispatch({ type: ADD_TO_UPLOAD_QUEUE, files: initialItems })
+    }
+
+    try {
+      if (
+        typeof maxFileCount === 'number' &&
+        (await exceedsFileLimit(entries, maxFileCount))
+      ) {
+        // Modal is the user-facing feedback; the dropped rows stay in
+        // the tray as FAILED so the user sees what was rejected. We
+        // run the limit check before kicking processing, so loose
+        // files don't quietly get uploaded behind the modal. No
+        // kickProcessing here keeps queueCompletedCallback silent and
+        // avoids a redundant toast over the modal.
+        failDrop(FAILED)
+        if (typeof onLimitExceeded === 'function') onLimitExceeded()
+        return
+      }
+    } catch (error) {
+      failAndKick(error)
+      return
+    }
+
+    if (looseItems.length > 0) kickProcessing()
+    if (deferredEntries.length === 0) return
+
+    try {
+      const flatItems = await flattenEntries(
+        deferredEntries,
+        dirID,
+        client,
+        driveId,
+        dropNonce
+      )
+      dispatch({ type: RESOLVE_FOLDER_ITEMS, placeholderIds, files: flatItems })
+      kickProcessing()
+    } catch (error) {
+      failAndKick(error)
+    }
   }
 
 export const purgeUploadQueue = () => ({ type: PURGE_UPLOAD_QUEUE })
@@ -549,6 +828,12 @@ export const purgeUploadQueue = () => ({ type: PURGE_UPLOAD_QUEUE })
 export const onQueueEmpty = callback => (dispatch, getState) => {
   const safeCallback = typeof callback === 'function' ? callback : () => {}
   const queue = getUploadQueue(getState())
+  // While folder placeholders are still being resolved, the queue isn't
+  // really empty; suppress the completion callback so the per-drop alert
+  // doesn't fire mid-flatten. The chain ends silently here; the
+  // addToUploadQueue thunk re-kicks processNextFile after the matching
+  // RESOLVE_FOLDER_ITEMS dispatch.
+  if (queue.some(i => i.status === RESOLVING)) return
   const quotas = getQuotaErrors(queue)
   const conflicts = getConflicts(queue)
   const created = getCreated(queue)
@@ -558,7 +843,6 @@ export const onQueueEmpty = callback => (dispatch, getState) => {
   const unreadableErrors = getUnreadableErrors(queue)
   const fileTooLargeErrors = getfileTooLargeErrors(queue)
 
-  // Extract complete uploaded items (with _id) from the queue
   const createdItems = created
     .map(item => item.uploadedItem)
     .filter(item => item && item._id)
@@ -592,7 +876,7 @@ const getfileTooLargeErrors = queue => filterByStatus(queue, ERR_MAX_FILE_SIZE)
 export const getUploadQueue = state => state[SLUG].queue
 
 export const getProcessed = state =>
-  getUploadQueue(state).filter(f => f.status !== PENDING)
+  getUploadQueue(state).filter(f => !IN_PROGRESS_STATUSES.includes(f.status))
 
 export const getSuccessful = state => {
   const queue = getUploadQueue(state)

@@ -2,7 +2,6 @@ import { models } from 'cozy-client'
 
 import { ROOT_DIR_ID, SHARED_DRIVES_DIR_ID } from '@/constants/config'
 import FuzzyPathSearch from '@/lib/FuzzyPathSearch.js'
-import { isEncryptedFolder } from '@/lib/encryption'
 import { makeOnlyOfficeFileRoute } from '@/modules/views/OnlyOffice/helpers'
 
 export const TYPE_DIRECTORY = 'directory'
@@ -62,8 +61,7 @@ export const makeNormalizedFile = (client, folders, file) => {
     path,
     url,
     parentUrl,
-    openOn,
-    isEncrypted: isEncryptedFolder(file)
+    openOn
   }
 }
 

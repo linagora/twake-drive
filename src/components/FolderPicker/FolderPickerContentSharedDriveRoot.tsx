@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react'
 
-import { useQuery, useClient } from 'cozy-client'
+import { useQuery } from 'cozy-client'
 import { isDirectory } from 'cozy-client/dist/models/file'
 import { IOCozyFile } from 'cozy-client/types/types'
 import { useSharingContext } from 'cozy-sharing'
@@ -15,9 +15,7 @@ import { isInvalidMoveTarget } from '@/components/FolderPicker/helpers'
 import { computeNextcloudRootFolder } from '@/components/FolderPicker/helpers'
 import type { File, FolderPickerEntry } from '@/components/FolderPicker/types'
 import { useTransformFolderListHasSharedDriveShortcuts } from '@/hooks/useTransformFolderListHasSharedDriveShortcuts'
-import { isEncryptedFolder } from '@/lib/encryption'
-import { FolderUnlocker } from '@/modules/folder/components/FolderUnlocker'
-import { buildMoveOrImportQuery, buildFileOrFolderByIdQuery } from '@/queries'
+import { buildMoveOrImportQuery } from '@/queries'
 
 interface FolderPickerContentSharedDriveRootProps {
   folder: IOCozyFile
@@ -41,7 +39,6 @@ const FolderPickerContentSharedDriveRoot: React.FC<
   const { hasWriteAccess } = useSharingContext() as unknown as {
     hasWriteAccess: (folderId: string, driveId?: string) => boolean
   }
-  const client = useClient()
   const contentQuery = buildMoveOrImportQuery(folder._id)
   const {
     fetchStatus,
@@ -64,26 +61,9 @@ const FolderPickerContentSharedDriveRoot: React.FC<
       nonSharedDriveList: IOCozyFile[]
     }
 
-  const isEncrypted = isEncryptedFolder(folder)
-
   const files: IOCozyFile[] = useMemo(() => {
     return [...sharedDrives, ...nonSharedDriveList]
   }, [sharedDrives, nonSharedDriveList])
-
-  const handleFolderUnlockerDismiss = async (): Promise<void> => {
-    const parentFolderQuery = buildFileOrFolderByIdQuery(folder.dir_id)
-    const parentFolder = (await client?.fetchQueryAndGetFromState({
-      definition: parentFolderQuery.definition(),
-      options: parentFolderQuery.options
-    })) as {
-      data?: IOCozyFile
-    }
-    if (!parentFolder.data) {
-      throw new Error('Parent folder not found')
-    }
-
-    navigateTo(parentFolder.data)
-  }
 
   const handleClick = (file: File): void => {
     if (isDirectory(file)) {
@@ -106,7 +86,6 @@ const FolderPickerContentSharedDriveRoot: React.FC<
   return (
     <List>
       <FolderPickerAddFolderItem
-        isEncrypted={isEncrypted}
         currentFolderId={folder._id}
         visible={isFolderCreationDisplayed}
         afterSubmit={hideFolderCreation}
@@ -116,20 +95,18 @@ const FolderPickerContentSharedDriveRoot: React.FC<
         fetchStatus={fetchStatus}
         hasNoData={files.length === 0}
       >
-        <FolderUnlocker folder={folder} onDismiss={handleFolderUnlockerDismiss}>
-          {files.map((file, index) => (
-            <FolderPickerListItem
-              key={file._id}
-              file={file}
-              disabled={
-                isInvalidMoveTarget(entries, file) ||
-                !hasWriteAccess(file._id, file.driveId)
-              }
-              onClick={handleClick}
-              showDivider={index !== files.length - 1}
-            />
-          ))}
-        </FolderUnlocker>
+        {files.map((file, index) => (
+          <FolderPickerListItem
+            key={file._id}
+            file={file}
+            disabled={
+              isInvalidMoveTarget(entries, file) ||
+              !hasWriteAccess(file._id, file.driveId)
+            }
+            onClick={handleClick}
+            showDivider={index !== files.length - 1}
+          />
+        ))}
         <FolderPickerContentLoadMore hasMore={hasMore} fetchMore={fetchMore} />
       </FolderPickerContentLoader>
     </List>

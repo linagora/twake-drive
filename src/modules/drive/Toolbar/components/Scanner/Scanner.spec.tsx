@@ -124,7 +124,6 @@ describe('Scanner', () => {
     // Dependencies
     expect(calls[0][4]).toMatchObject({
       client: expect.anything() as Record<string, unknown>,
-      vaultClient: {},
       t: expect.anything() as (key: string) => string
     })
   })

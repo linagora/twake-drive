@@ -8,7 +8,6 @@ import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
-import { isEncryptedFileOrFolder } from '@/lib/encryption'
 import { navigateToModal } from '@/modules/actions/helpers'
 import { isFromSharedDriveRecipient } from '@/modules/shareddrives/helpers'
 
@@ -39,8 +38,7 @@ const share = ({
       return (
         allLoaded && // We need to wait for the sharing context to be completely loaded to avoid race conditions
         hasWriteAccess &&
-        files?.length === 1 &&
-        !isEncryptedFileOrFolder(files[0])
+        files?.length === 1
       )
     },
     action: files =>

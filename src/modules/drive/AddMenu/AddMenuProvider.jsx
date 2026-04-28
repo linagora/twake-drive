@@ -10,7 +10,6 @@ import useBrowserOffline from 'cozy-ui/transpiled/react/hooks/useBrowserOffline'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import { useI18n } from 'twake-i18n'
 
-import { isEncryptedFolder } from '@/lib/encryption'
 import logger from '@/lib/logger'
 import AddMenu from '@/modules/drive/AddMenu/AddMenu'
 import {
@@ -54,11 +53,6 @@ const AddMenuProvider = ({
     [disabled, isSelectionBarVisible]
   )
 
-  const isEncryptedDir = useMemo(
-    () => isEncryptedFolder(displayedFolder),
-    [displayedFolder]
-  )
-
   const handleOfflineClick = useCallback(
     e => {
       e.stopPropagation()
@@ -97,7 +91,6 @@ const AddMenuProvider = ({
             canUpload={canUpload}
             refreshFolderContent={refreshFolderContent}
             isPublic={isPublic}
-            isEncryptedFolder={isEncryptedDir}
             displayedFolder={displayedFolder}
             isReadOnly={isReadOnly}
             {...componentsProps?.AddMenu}
