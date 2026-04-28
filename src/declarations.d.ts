@@ -42,6 +42,7 @@ declare module 'cozy-ui/transpiled/react/providers/Alert' {
       | 'info'
     action?: React.ReactNode
     duration?: number | null
+    noClickAway?: boolean
   }
 
   export type showAlertFunction = (props: showAlertProps) => void
