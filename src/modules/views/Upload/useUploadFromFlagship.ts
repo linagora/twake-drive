@@ -34,7 +34,8 @@ export const useUploadFromFlagship = (): UploadFromFlagship => {
     showAlert({
       message: t('ImportToDrive.error'),
       severity: 'error',
-      duration: null
+      duration: null,
+      noClickAway: true
     })
   }, [showAlert, t])
 
