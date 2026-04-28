@@ -2,7 +2,6 @@ import React from 'react'
 import { useDispatch } from 'react-redux'
 
 import { useClient } from 'cozy-client'
-import { useVaultClient } from 'cozy-keys-lib'
 import withSharingState from 'cozy-sharing/dist/hoc/withSharingState'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
 import FileInput from 'cozy-ui/transpiled/react/FileInput'
@@ -25,7 +24,6 @@ const UploadItem = ({
   onUploaded
 }) => {
   const client = useClient()
-  const vaultClient = useVaultClient()
   const { showAlert } = useAlert()
   const { initialDirId } = useDisplayedFolder()
   const { addItems } = useNewItemHighlightContext()
@@ -34,7 +32,6 @@ const UploadItem = ({
 
   const onUpload = (
     client,
-    vaultClient,
     files,
     initialDirId,
     showAlert,
@@ -47,12 +44,7 @@ const UploadItem = ({
         initialDirId,
         sharingState,
         onUploaded,
-        {
-          client,
-          vaultClient,
-          showAlert,
-          t
-        },
+        { client, showAlert, t },
         driveId,
         addItems
       )
@@ -81,7 +73,6 @@ const UploadItem = ({
 
     onUpload(
       client,
-      vaultClient,
       files,
       initialDirId,
       showAlert,

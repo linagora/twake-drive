@@ -46,7 +46,6 @@
     "item_more": "More",
     "menu_new_folder": "Folder",
     "menu_new_shared_drive": "Shared drive",
-    "menu_new_encrypted_folder": "Encrypted folder",
     "menu_select": "Select items",
     "menu_share_folder": "Share folder",
     "menu_download": "Download",
@@ -294,8 +293,7 @@
     },
     "download_file": {
       "offline": "You should be connected to download this file",
-      "missing": "This file is missing",
-      "encryption_many": "You cannot download several encrypted files at once"
+      "missing": "This file is missing"
     },
     "paste_failed": "Failed to paste files. Please try again."
   },

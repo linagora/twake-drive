@@ -8,7 +8,6 @@ import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 
 import { downloadFiles } from './utils'
 
-import { isEncryptedFolder, isEncryptedFile } from '@/lib/encryption'
 import { isFromSharedDriveRecipient } from '@/modules/shareddrives/helpers'
 
 const makeComponent = (label, icon) => {
@@ -30,7 +29,6 @@ const makeComponent = (label, icon) => {
 export const download = ({
   client,
   t,
-  vaultClient,
   showAlert,
   shouldHideIfSharedDriveRecipient,
   isSelectAll,
@@ -45,8 +43,9 @@ export const download = ({
     icon,
     allowInfectedFiles: false,
     displayCondition: files => {
-      // ## For sharing tab where we can see multiple shared folders as recipient,
-      // we disable it because we can not download different shared folders at same time
+      // For sharing tab where we can see multiple shared folders as
+      // recipient, disable download because we cannot download different
+      // shared folders at the same time.
       if (
         shouldHideIfSharedDriveRecipient &&
         files.length > 1 &&
@@ -54,22 +53,14 @@ export const download = ({
       ) {
         return false
       }
-
-      // We cannot generate archive for encrypted files, for now.
-      // Then, we do not display the download button when the selection
-      // includes an encrypted folder or several encrypted files
-      return (
-        files.length > 0 &&
-        !files.some(file => isEncryptedFolder(file)) &&
-        !(files.length > 1 && files.some(file => isEncryptedFile(file)))
-      )
+      return files.length > 0
     },
     action: files => {
       let selectedFiles = files
       if (isSelectAll) {
         selectedFiles = [displayedFolder]
       }
-      return downloadFiles(client, selectedFiles, { vaultClient, showAlert, t })
+      return downloadFiles(client, selectedFiles, { showAlert, t })
     },
     Component: makeComponent(label, icon)
   }

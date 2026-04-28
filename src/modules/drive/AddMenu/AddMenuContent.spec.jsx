@@ -23,7 +23,6 @@ const setup = async (
     canUpload = true,
     refreshFolderContent = true,
     isPublic = false,
-    isEncryptedFolder = false,
     isReadOnly = false
   } = {}
 ) => {
@@ -44,7 +43,6 @@ const setup = async (
           canUpload={canUpload}
           refreshFolderContent={refreshFolderContent}
           isPublic={isPublic}
-          isEncryptedFolder={isEncryptedFolder}
           displayedFolder={displayedFolder}
           onClick={() => {}}
           isReadOnly={isReadOnly}
@@ -83,22 +81,6 @@ describe('AddMenuContent', () => {
         )
         const { queryByText } = root
         expect(queryByText('Note')).toBeTruthy()
-      })
-    })
-
-    it('does not display non-supported items inside an encrypted directory', async () => {
-      await waitFor(async () => {
-        const { root } = await setup(
-          { folderId: 'directory-foobar0' },
-          { isEncryptedFolder: true }
-        )
-        const { queryByText } = root
-        expect(queryByText('Note')).toBeNull()
-        expect(queryByText('Shortcut')).toBeNull()
-        expect(queryByText('Folder')).toBeNull()
-        expect(queryByText('Text document')).toBeNull()
-        expect(queryByText('Spreadsheet')).toBeNull()
-        expect(queryByText('Presentation')).toBeNull()
       })
     })
   })

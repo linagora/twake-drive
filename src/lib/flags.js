@@ -23,7 +23,6 @@ const flagsList = () => {
   flag('debug')
   flag('drive.onlyoffice.editorToolbarHeight') // flagName should use kebab case
   flag('drive.logger')
-  flag('drive.enable-encryption')
   flag('drive.dacc-files-size-by-slug')
   flag('drive.breadcrumb.showCompleteBreadcrumbOnPublicPage') // flagName should use kebab case
   flag('drive.hide-nextcloud-dev')

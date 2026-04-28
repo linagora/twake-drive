@@ -12,16 +12,11 @@ import {
   MAX_PAYLOAD_SIZE_IN_GB,
   MAX_UPLOAD_FILE_COUNT
 } from '@/constants/config'
-import { createEncryptedDir } from '@/lib/encryption'
 import { getEntriesTypeTranslated } from '@/lib/entries'
 import logger from '@/lib/logger'
 import { showModal } from '@/lib/react-cozy-helpers'
 import { getFolderContent, getFolderContentQueries } from '@/modules/selectors'
-import {
-  addToUploadQueue,
-  extractFilesEntries,
-  exceedsFileLimit
-} from '@/modules/upload'
+import { addToUploadQueue, extractFilesEntries } from '@/modules/upload'
 import UploadLimitDialog from '@/modules/upload/UploadLimitDialog'
 
 export const SORT_FOLDER = 'SORT_FOLDER'
@@ -72,7 +67,6 @@ const refetchFolderQueries = async (client, folderId) => {
  * @param {function} fileUploadedCallback - A callback called when a file is uploaded
  * @param {Object} options - An object containing the following properties:
  *   - client - The cozy-client instance
- *   - vaultClient - The vault client
  *   - showAlert - A function to show an alert
  *   - t - A translation function
  * @param {string|undefined} driveId - The id of the drive in which we upload the files
@@ -84,7 +78,7 @@ export const uploadFiles =
     dirId,
     sharingState,
     fileUploadedCallback = () => null,
-    { client, vaultClient, showAlert, t },
+    { client, showAlert, t },
     driveId,
     addItems
   ) =>
@@ -102,29 +96,6 @@ export const uploadFiles =
 
     // Extract entries synchronously before browser clears dataTransfer
     const entries = extractFilesEntries(files)
-
-    try {
-      if (await exceedsFileLimit(entries, maxFileCount)) {
-        dispatch(showModal(<UploadLimitDialog maxFileCount={maxFileCount} />))
-        return
-      }
-    } catch (error) {
-      if (error?.name === 'NotFoundError') {
-        showAlert({
-          message: t('upload.alert.unreadable_files'),
-          severity: 'error'
-        })
-        return
-      }
-      logger.error('Unexpected error while checking upload file limit', error)
-      showAlert({
-        message: t('upload.alert.errors', {
-          type: t('upload.documentType.file')
-        }),
-        severity: 'secondary'
-      })
-      return
-    }
 
     dispatch(
       addToUploadQueue(
@@ -162,7 +133,14 @@ export const uploadFiles =
             refetchFolderQueries(client, targetDirId)
           }
         },
-        { client, vaultClient },
+        {
+          client,
+          maxFileCount,
+          onLimitExceeded: () =>
+            dispatch(
+              showModal(<UploadLimitDialog maxFileCount={maxFileCount} />)
+            )
+        },
         driveId,
         addItems
       )
@@ -340,10 +318,9 @@ const doesFolderExistByName = (state, parentFolderId, name) => {
  */
 export const createFolder = (
   client,
-  vaultClient,
   name,
   currentFolderId,
-  { isEncryptedFolder = false, showAlert, t } = {},
+  { showAlert, t } = {},
   driveId,
   addItems = () => {}
 ) => {
@@ -351,7 +328,6 @@ export const createFolder = (
   return async (dispatch, getState) => {
     const state = getState()
     let targetFolderId = currentFolderId
-    let isTargetEncrypted = isEncryptedFolder
     let navigateAfterCreate = false
 
     if (
@@ -360,7 +336,6 @@ export const createFolder = (
       currentFolderId === TRASH_DIR_ID
     ) {
       targetFolderId = ROOT_DIR_ID
-      isTargetEncrypted = false
       navigateAfterCreate = true
     }
 
@@ -376,32 +351,14 @@ export const createFolder = (
 
     let createdFolder
     try {
-      if (!isTargetEncrypted) {
-        createdFolder = await client
-          .collection('io.cozy.files', { driveId })
-          .create({
-            name: name,
-            dirId: targetFolderId,
-            type: 'directory'
-          })
-      } else {
-        if (targetFolderId === currentFolderId) {
-          createdFolder = await createEncryptedDir(client, vaultClient, {
-            name,
-            dirID: targetFolderId,
-            driveId
-          })
-        } else {
-          logger.error(
-            'Attempted to create encrypted folder in non-original/root target.'
-          )
-          throw new Error(
-            'Cannot create encrypted folder in root via redirection.'
-          )
-        }
-      }
+      createdFolder = await client
+        .collection('io.cozy.files', { driveId })
+        .create({
+          name: name,
+          dirId: targetFolderId,
+          type: 'directory'
+        })
 
-      // Add newly created folder to new items
       if (createdFolder) {
         safeAddItems([createdFolder.data])
       }

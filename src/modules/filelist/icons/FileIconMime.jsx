@@ -5,13 +5,11 @@ import { isDirectory } from 'cozy-client/dist/models/file'
 import flag from 'cozy-flags'
 import Icon from 'cozy-ui/transpiled/react/Icon'
 
-import { isEncryptedFolder } from '@/lib/encryption'
 import getMimeTypeIcon from '@/lib/getMimeTypeIcon'
 import { CustomizedIcon } from '@/modules/views/Folder/CustomizedIcon'
 
-const FileIconMime = ({ file, size = 32, isEncrypted = false }) => {
+const FileIconMime = ({ file, size = 32 }) => {
   const isDir = isDirectory(file)
-  const isDirEncrypted = isEncrypted || (isDirectory && isEncryptedFolder(file)) // use file.ref + file.type
 
   if (
     isDir &&
@@ -28,12 +26,7 @@ const FileIconMime = ({ file, size = 32, isEncrypted = false }) => {
     )
   } else {
     return (
-      <Icon
-        icon={getMimeTypeIcon(isDir, file.name, file.mime, {
-          isEncrypted: isDirEncrypted
-        })}
-        size={size}
-      />
+      <Icon icon={getMimeTypeIcon(isDir, file.name, file.mime)} size={size} />
     )
   }
 }

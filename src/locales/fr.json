@@ -46,7 +46,6 @@
     "item_more": "Plus",
     "menu_new_folder": "Dossier",
     "menu_new_shared_drive": "Drive partagé",
-    "menu_new_encrypted_folder": "Dossier chiffré",
     "menu_select": "Sélectionner les éléments",
     "menu_share_folder": "Partager le dossier",
     "menu_download": "Télécharger",
@@ -292,8 +291,7 @@
     },
     "download_file": {
       "offline": "Vous devez être connecté pour pouvoir ouvrir ce fichier",
-      "missing": "Le fichier n'existe pas",
-      "encryption_many": "Vous ne pouvez pas télécharger plusieurs fichiers chiffrés en même temps"
+      "missing": "Le fichier n'existe pas"
     }
   },
   "Error": {

@@ -47,7 +47,6 @@
     "trash": "Suprimir",
     "delete_shared_drive": "Eliminar unidad compartida",
     "leave": "Salir de la carpeta compartida & borrarla",
-    "menu_onlyOffice": {},
     "select_all": "Seleccionar todo",
     "select_all_mobile": "todos",
     "clear_selection": "Borrar selección",
@@ -293,7 +292,6 @@
   },
   "upload": {
     "label": "Subir",
-    "documentType": {},
     "alert": {
       "network": "Usted no dispone de una conexión internet. Vuelva a ensayar cuando disponga de una."
     }
@@ -355,9 +353,7 @@
     "error": "Ha ocurrido un error al desplazar este elemento, por favor vuelva a ensayar. |||| Ha ocurrido un error al desplazar estos elementos, por favor vuelva a ensayar.",
     "cancelled": "%{subject} ha sido devuelto a su carpeta de origen. |||| %{smart_count} elementos han sido devueltos a sus carpetas de origen.",
     "cancelledWithRestoreErrors": "%{subject} ha sido desplazado a su ubicación original pero hubo un error al restaurar el archivo de la papelera. |||| %{smart_count} elementos han sido desplazados a su ubicación original pero hubo  %{restoreErrorsCount} error(es) al  restaurar los archivos de la papelera.",
-    "cancelled_error": "Lo sentimos, ha ocurrido un error al anular el desplazamiento. |||| Lo sentimos, un error ha ocurrido al anular los desplazamientos.",
-    "outsideSharedFolder": {},
-    "sharedFolderInsideAnother": {}
+    "cancelled_error": "Lo sentimos, ha ocurrido un error al anular el desplazamiento. |||| Lo sentimos, un error ha ocurrido al anular los desplazamientos."
   },
   "ImportToDrive": {
     "title": "%{smart_count} elemento |||| %{smart_count} elementos",

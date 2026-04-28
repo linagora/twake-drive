@@ -78,7 +78,7 @@ export const useScannerService = (displayedFolder: {
         displayedFolder.id,
         { isScanned: true },
         () => logger('info', `File uploaded successfully`),
-        { client, vaultClient: {}, showAlert, t },
+        { client, showAlert, t },
         displayedFolder.driveId,
         undefined
       )

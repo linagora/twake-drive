@@ -14,7 +14,6 @@ import FolderEmptyIllu from '@/assets/icons/illu-folder-empty.svg'
 import TrashIllustration from '@/assets/icons/illu-trash-empty.svg'
 import { TRASH_DIR_ID } from '@/constants/config'
 import { useCurrentFolderId, useDisplayedFolder } from '@/hooks'
-import { isEncryptedFolder } from '@/lib/encryption'
 import { useSharedDriveFolder } from '@/modules/shareddrives/hooks/useSharedDriveFolder'
 import UploadButton from '@/modules/upload/UploadButton'
 import CreateSharedDriveButton from '@/modules/views/SharedDrive/CreateSharedDriveButton'
@@ -38,9 +37,7 @@ const EmptyCanvas = ({
   const IconToShow = type === 'trash' ? TrashIllustration : FolderEmptyIllu
   const showSharedDriveLayout = type === 'sharing' && isSharedDriveEnabled
   const showUploadLayout =
-    type === 'drive' ||
-    (type === 'encrypted' && canUpload) ||
-    (type === 'sharing' && !isSharedDriveEnabled)
+    type === 'drive' || (type === 'sharing' && !isSharedDriveEnabled)
   const title = localeKey ? t(`empty.${type}_title`) : undefined
   const text =
     (hasTextMobileVersion && !isDesktop && t(`empty.mobile_text`)) ||
@@ -93,10 +90,6 @@ const EmptyCanvas = ({
 export default EmptyCanvas
 
 export const EmptyDrive = props => {
-  const { isEncrypted } = props
-  if (isEncrypted) {
-    return <EmptyCanvas type="encrypted" hasTextMobileVersion {...props} />
-  }
   return <EmptyCanvas type="drive" hasTextMobileVersion {...props} />
 }
 
@@ -106,7 +99,6 @@ export const EmptyTrash = props => (
 
 export const EmptyWrapper = ({
   currentFolderId,
-  displayedFolder,
   canUpload,
   refreshFolderContent,
   driveId
@@ -119,7 +111,6 @@ export const EmptyWrapper = ({
   if (currentFolderId !== TRASH_DIR_ID) {
     return (
       <EmptyDrive
-        isEncrypted={isEncryptedFolder(displayedFolder)}
         canUpload={canUpload}
         onUploaded={refreshFolderContent}
         driveId={driveId}

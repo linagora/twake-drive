@@ -1,23 +1,17 @@
 import CozyClient from 'cozy-client'
 import flag from 'cozy-flags'
-import { WebVaultClient } from 'cozy-keys-lib'
 
 import { createFolder, uploadFiles } from './actions'
 import { generateFile } from 'test/generate'
 import { setupFolderContent } from 'test/setup'
 
-import {
-  addToUploadQueue,
-  extractFilesEntries,
-  exceedsFileLimit
-} from '@/modules/upload'
+import { addToUploadQueue, extractFilesEntries } from '@/modules/upload'
 
 jest.mock('cozy-flags', () => jest.fn(() => null))
 
 jest.mock('@/modules/upload', () => ({
   addToUploadQueue: jest.fn(() => () => {}),
-  extractFilesEntries: jest.fn(),
-  exceedsFileLimit: jest.fn()
+  extractFilesEntries: jest.fn()
 }))
 
 jest.mock('@/modules/upload/UploadLimitDialog', () => {
@@ -30,13 +24,6 @@ jest.mock('@/modules/upload/UploadLimitDialog', () => {
   }
 })
 
-jest.mock('cozy-keys-lib', () => ({
-  withVaultClient: jest.fn().mockReturnValue({}),
-  useVaultClient: jest.fn(),
-  WebVaultClient: jest.fn().mockReturnValue({})
-}))
-
-const vaultClient = new WebVaultClient('http://alice.cozy.cloud')
 const showAlert = jest.fn()
 const t = x => x
 
@@ -76,7 +63,7 @@ describe('createFolder', () => {
     })
     await expect(
       store.dispatch(
-        createFolder(client, vaultClient, 'foobar2', folderId, { showAlert, t })
+        createFolder(client, 'foobar2', folderId, { showAlert, t })
       )
     ).rejects.toEqual(new Error('alert.folder_name'))
   })
@@ -88,7 +75,7 @@ describe('createFolder', () => {
     })
 
     await store.dispatch(
-      createFolder(client, vaultClient, 'foobar5', folderId, { showAlert, t })
+      createFolder(client, 'foobar5', folderId, { showAlert, t })
     )
 
     expect(client.collection).toHaveBeenCalledWith('io.cozy.files', {
@@ -108,7 +95,6 @@ describe('uploadFiles', () => {
   const mockEntries = [{ file: mockFiles[0], isDirectory: false, entry: null }]
   const deps = {
     client: {},
-    vaultClient: {},
     showAlert: jest.fn(),
     t: x => x
   }
@@ -119,66 +105,43 @@ describe('uploadFiles', () => {
     flag.mockReturnValue(null)
   })
 
-  it('should block upload and show limit dialog when limit is exceeded', async () => {
-    exceedsFileLimit.mockResolvedValue(true)
+  const getAddToUploadQueueOptions = () => addToUploadQueue.mock.calls[0][5]
+
+  it('passes the flag-driven limit and a modal-opening onLimitExceeded callback', async () => {
+    flag.mockReturnValue(100)
 
     const dispatch = jest.fn()
     await uploadFiles(mockFiles, 'dir-id', {}, () => null, deps)(dispatch)
 
+    const options = getAddToUploadQueueOptions()
+    expect(options).toMatchObject({ client: deps.client, maxFileCount: 100 })
+    expect(typeof options.onLimitExceeded).toBe('function')
+
+    options.onLimitExceeded()
     expect(dispatch).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'SHOW_MODAL' })
     )
-    expect(addToUploadQueue).not.toHaveBeenCalled()
   })
 
-  it('should proceed with upload when limit is not exceeded', async () => {
-    exceedsFileLimit.mockResolvedValue(false)
+  it('falls back to the default limit when no flag is set', async () => {
+    flag.mockReturnValue(null)
 
     const dispatch = jest.fn()
     await uploadFiles(mockFiles, 'dir-id', {}, () => null, deps)(dispatch)
 
-    expect(addToUploadQueue).toHaveBeenCalledWith(
-      mockEntries,
-      'dir-id',
-      expect.anything(),
-      expect.anything(),
-      expect.anything(),
-      expect.objectContaining({ client: deps.client }),
-      undefined,
-      undefined
-    )
+    expect(getAddToUploadQueueOptions()).toMatchObject({ maxFileCount: 500 })
+  })
+
+  it('does not show the modal eagerly', async () => {
+    const dispatch = jest.fn()
+    await uploadFiles(mockFiles, 'dir-id', {}, () => null, deps)(dispatch)
+
     expect(dispatch).not.toHaveBeenCalledWith(
       expect.objectContaining({ type: 'SHOW_MODAL' })
     )
   })
 
-  it('should use flag value as limit when set', async () => {
-    flag.mockReturnValue(100)
-    exceedsFileLimit.mockResolvedValue(true)
-
-    const dispatch = jest.fn()
-    await uploadFiles(mockFiles, 'dir-id', {}, () => null, deps)(dispatch)
-
-    expect(exceedsFileLimit).toHaveBeenCalledWith(mockEntries, 100)
-    expect(dispatch).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'SHOW_MODAL' })
-    )
-  })
-
-  it('should fall back to default limit when flag is not set', async () => {
-    flag.mockReturnValue(null)
-    exceedsFileLimit.mockResolvedValue(false)
-
-    const dispatch = jest.fn()
-    await uploadFiles(mockFiles, 'dir-id', {}, () => null, deps)(dispatch)
-
-    expect(exceedsFileLimit).toHaveBeenCalledWith(mockEntries, 500)
-    expect(addToUploadQueue).toHaveBeenCalled()
-  })
-
-  it('should pass pre-extracted entries to addToUploadQueue', async () => {
-    exceedsFileLimit.mockResolvedValue(false)
-
+  it('passes pre-extracted entries to addToUploadQueue', async () => {
     const dispatch = jest.fn()
     await uploadFiles(mockFiles, 'dir-id', {}, () => null, deps)(dispatch)
 
