@@ -381,13 +381,15 @@
     }
   },
   "UploadQueue": {
-    "header": "Uploading %{smart_count} photo to Twake Drive |||| Uploading %{smart_count} photos to Twake Drive",
+    "header": "Uploading %{smart_count} item to Twake Drive |||| Uploading %{smart_count} items to Twake Drive",
+    "header_preparing": "Preparing %{smart_count} item for upload |||| Preparing %{smart_count} items for upload",
     "header_mobile": "Uploading %{done} of %{total}",
     "header_done": "Uploaded %{done} out of %{total} successfully",
     "success_flagship": "%{smart_count} file uploaded with success. |||| %{smart_count} files uploaded with success.",
     "close": "close",
     "item": {
-      "pending": "Pending"
+      "pending": "Pending",
+      "preparing": "Preparing"
     }
   },
   "Viewer": {

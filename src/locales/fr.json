@@ -378,13 +378,15 @@
     }
   },
   "UploadQueue": {
-    "header": "Import de %{smart_count} fichier dans votre Twake |||| Import de %{smart_count} fichiers dans votre Twake",
+    "header": "Import de %{smart_count} élément dans votre Twake |||| Import de %{smart_count} éléments dans votre Twake",
+    "header_preparing": "Préparation de %{smart_count} élément |||| Préparation de %{smart_count} éléments",
     "header_mobile": "Import de %{done} sur %{total}",
     "header_done": "%{done} sur %{total} élément(s) importé(s)",
     "success_flagship": "%{smart_count} fichier importé avec succès. |||| %{smart_count} fichiers importés avec succès.",
     "close": "Fermer",
     "item": {
-      "pending": "En attente"
+      "pending": "En attente",
+      "preparing": "En préparation"
     }
   },
   "Viewer": {
