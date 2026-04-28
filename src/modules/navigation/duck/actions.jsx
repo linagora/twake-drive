@@ -206,7 +206,8 @@ const uploadQueueProcessed =
       showAlert({
         message: t('upload.alert.network'),
         severity: 'error',
-        duration: null
+        duration: null,
+        noClickAway: true
       })
     } else if (unreadableErrors.length > 0) {
       logger.warn(
@@ -215,14 +216,16 @@ const uploadQueueProcessed =
       showAlert({
         message: t('upload.alert.unreadable_files'),
         severity: 'error',
-        duration: null
+        duration: null,
+        noClickAway: true
       })
     } else if (errors.length > 0) {
       logger.error(`Upload module triggers an error: ${errors}`)
       showAlert({
         message: t('upload.alert.errors', { type }),
         severity: 'error',
-        duration: null
+        duration: null,
+        noClickAway: true
       })
     } else if (updatedCount > 0 && createdCount > 0 && conflictCount > 0) {
       showAlert({
@@ -275,7 +278,8 @@ const uploadQueueProcessed =
           max_size_value: MAX_PAYLOAD_SIZE_IN_GB
         }),
         severity: 'error',
-        duration: null
+        duration: null,
+        noClickAway: true
       })
     } else {
       showAlert({
