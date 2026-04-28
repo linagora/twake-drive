@@ -13,6 +13,7 @@ import ListItem from 'cozy-ui/transpiled/react/ListItem'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import Paper from 'cozy-ui/transpiled/react/Paper'
+import Tooltip from 'cozy-ui/transpiled/react/Tooltip'
 import Typography from 'cozy-ui/transpiled/react/Typography'
 import Button from 'cozy-ui/transpiled/react/deprecated/Button'
 import { useI18n } from 'twake-i18n'
@@ -150,13 +151,28 @@ const UploadItem = ({ item, t }) => {
       <ListItemText
         disableTypography
         primary={
-          <Typography
-            variant="body1"
-            className="u-ellipsis"
-            data-testid="upload-queue-item-name"
-          >
-            {displayName}
-          </Typography>
+          // Tooltip only when the row carries a relative path — for
+          // loose top-level files `displayName` is just the bare
+          // filename and the tooltip would duplicate the visible label.
+          relativePath ? (
+            <Tooltip title={displayName} placement="top">
+              <Typography
+                variant="body1"
+                className="u-ellipsis"
+                data-testid="upload-queue-item-name"
+              >
+                {displayName}
+              </Typography>
+            </Tooltip>
+          ) : (
+            <Typography
+              variant="body1"
+              className="u-ellipsis"
+              data-testid="upload-queue-item-name"
+            >
+              {displayName}
+            </Typography>
+          )
         }
         secondary={
           isLoading && item.progress ? (
