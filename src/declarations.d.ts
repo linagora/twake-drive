@@ -41,6 +41,7 @@ declare module 'cozy-ui/transpiled/react/providers/Alert' {
       | 'warning'
       | 'info'
     action?: React.ReactNode
+    duration?: number | null
   }
 
   export type showAlertFunction = (props: showAlertProps) => void
