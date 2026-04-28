@@ -523,54 +523,160 @@ const makeFlatItem = (file, folderId, relativePath = null, nonce = '') => {
 }
 
 /**
- * Recursively walk a `FileSystemDirectoryEntry`, creating (or reusing)
- * folders on the server as it goes, and return one flat queue item per
- * contained file.
+ * Build a queue item representing an entry we couldn't read locally.
+ *
+ * The status is preset (via {@link classifyUploadError}) so the reducer
+ * keeps it instead of promoting the row to PENDING. A `NotFoundError`
+ * lands on UNREADABLE (firing the unreadable-files alert downstream);
+ * permission / generic I/O errors land on FAILED rather than being
+ * silently mislabelled. The synthetic `file` shim carries the entry's
+ * display name so the upload tray can render the row even though we
+ * never obtained a real `File` object. `isDirectory` is propagated so
+ * the queue UI renders the folder glyph for unreadable directories,
+ * making them visually distinct from unreadable files.
+ *
+ * @param {string} name - Local entry name (file or folder)
+ * @param {string|null} relativePath - Path of the failed entry relative
+ *   to the drop root (e.g. `"a/b/c/d/e"`), or `null` for top-level
+ *   loose entries
+ * @param {string} nonce - Per-drop nonce, same shape as in {@link makeFlatItem}
+ * @param {Error} error - The rejection from `readEntries` or `entry.file()`
+ * @param {boolean} [isDirectory=false] - `true` when the failed entry
+ *   was a directory (its `readEntries` rejected); `false` for a file
+ *   whose `entry.file()` rejected
+ * @returns {{fileId: string, file: {name: string, type: string},
+ *   relativePath: string|null, folderId: null, status: string,
+ *   isDirectory: boolean}}
+ */
+const makeFailedItem = (
+  name,
+  relativePath,
+  nonce,
+  error,
+  isDirectory = false
+) => {
+  const base = relativePath ?? name
+  return {
+    fileId: nonce ? `${nonce}_${base}` : base,
+    file: { name, type: '' },
+    relativePath,
+    folderId: null,
+    isDirectory,
+    status: classifyUploadError(error)
+  }
+}
+
+/**
+ * @typedef {object} WalkedNode
+ * @property {string} name - Local entry name
+ * @property {true} [readFailed] - Set when `readEntries` rejected; the
+ *   node has no children and `error` carries the rejection
+ * @property {Error} [error] - Present iff `readFailed` is true
+ * @property {File[]} [files] - Successfully extracted `File` objects
+ * @property {Array<{name: string, error: Error}>} [failedFiles] -
+ *   Child file entries whose `entry.file()` rejected
+ * @property {WalkedNode[]} [subdirs] - Recursively-walked subdirectories
+ */
+
+/**
+ * Walk a `FileSystemDirectoryEntry` locally without touching the
+ * server. Read failures (long-path `NotFoundError` on Windows, vanished
+ * entries) are captured per-node instead of thrown, so the materialize
+ * step can finish creating the surrounding tree and surface failed
+ * reads as queue rows.
+ *
+ * Files within a directory are extracted via `Promise.all` (parallel),
+ * matching the original code's concurrency. Subdirs are recursed into
+ * sequentially to keep the parallelism bounded on wide trees.
  *
  * @param {FileSystemDirectoryEntry} dirEntry
- * @param {string} parentDirId - Server id of the enclosing directory
- * @param {object} client - cozy-client instance
- * @param {string} [driveId]
- * @param {string} [pathPrefix] - Relative path accumulated so far
- * @returns {Promise<Array<{fileId: string, file: File, relativePath: string, folderId: string}>>}
+ * @returns {Promise<WalkedNode>}
  */
-const flattenDirectoryEntry = async (
-  dirEntry,
-  parentDirId,
-  client,
-  driveId,
-  pathPrefix = '',
-  nonce = ''
-) => {
-  const newDir = await createFolderOrGetExisting(
-    client,
-    dirEntry.name,
-    parentDirId,
-    driveId
-  )
-  const newPrefix = pathPrefix
-    ? `${pathPrefix}/${dirEntry.name}`
-    : dirEntry.name
-  const childEntries = await readAllEntries(dirEntry.createReader())
-  const fileEntries = childEntries.filter(e => e.isFile)
-  const subdirEntries = childEntries.filter(e => e.isDirectory)
-  const files = await Promise.all(fileEntries.map(getFileFromEntry))
-
-  const result = files.map(file =>
-    makeFlatItem(file, newDir.id, `${newPrefix}/${file.name}`, nonce)
-  )
-  for (const sub of subdirEntries) {
-    const subItems = await flattenDirectoryEntry(
-      sub,
-      newDir.id,
-      client,
-      driveId,
-      newPrefix,
-      nonce
-    )
-    result.push(...subItems)
+const walkDirectoryEntry = async dirEntry => {
+  let childEntries
+  try {
+    childEntries = await readAllEntries(dirEntry.createReader())
+  } catch (error) {
+    return { name: dirEntry.name, readFailed: true, error }
   }
-  return result
+  const fileEntries = childEntries.filter(c => c.isFile)
+  const subdirEntries = childEntries.filter(c => c.isDirectory)
+  const files = []
+  const failedFiles = []
+  const filePromises = fileEntries.map(c =>
+    getFileFromEntry(c).then(
+      f => files.push(f),
+      error => failedFiles.push({ name: c.name, error })
+    )
+  )
+  await Promise.all(filePromises)
+  const subdirs = []
+  for (const sub of subdirEntries) {
+    subdirs.push(await walkDirectoryEntry(sub))
+  }
+  return { name: dirEntry.name, files, failedFiles, subdirs }
+}
+
+/**
+ * @typedef {{fileId: string, file: File, relativePath: string|null, folderId: string}} ReadableFlatItem
+ * @typedef {{fileId: string, file: {name: string, type: string},
+ *   relativePath: string|null, folderId: null, status: string,
+ *   isDirectory: boolean}} FailedFlatItem
+ */
+
+/**
+ * Materialize a walked tree: create the server folder for every node
+ * we visited (including empty ones and ones whose `readEntries` failed
+ * locally), emit a flat queue item per readable file, and emit one
+ * error row per failed read (folder or file).
+ *
+ * Folders are created unconditionally so the resulting tree in Drive
+ * matches the shape that was dropped. Empty folders survive the round
+ * trip; folders whose contents couldn't be read appear empty AND carry
+ * a queue row pointing at the missing subtree so the user can drop the
+ * files back in by hand.
+ *
+ * @param {WalkedNode} node - A node returned by {@link walkDirectoryEntry}
+ * @param {string} parentDirId - Server id of the enclosing directory
+ *   (i.e. the dir into which this node will be created)
+ * @param {string} pathPrefix - Relative path accumulated so far,
+ *   without a trailing slash; `''` at the drop root
+ * @param {{client: object, driveId?: string, nonce: string}} ctx -
+ *   Drop-invariant deps grouped to keep the recursion-changing args
+ *   (`node`, `parentDirId`, `pathPrefix`) positional and short
+ * @returns {Promise<Array<ReadableFlatItem|FailedFlatItem>>}
+ */
+const materializeNode = async (node, parentDirId, pathPrefix, ctx) => {
+  const newPrefix = pathPrefix ? `${pathPrefix}/${node.name}` : node.name
+  const newDir = await createFolderOrGetExisting(
+    ctx.client,
+    node.name,
+    parentDirId,
+    ctx.driveId
+  )
+  if (node.readFailed) {
+    return [makeFailedItem(node.name, newPrefix, ctx.nonce, node.error, true)]
+  }
+
+  const items = node.failedFiles.map(ff =>
+    makeFailedItem(
+      ff.name,
+      `${newPrefix}/${ff.name}`,
+      ctx.nonce,
+      ff.error,
+      false
+    )
+  )
+  for (const file of node.files) {
+    items.push(
+      makeFlatItem(file, newDir.id, `${newPrefix}/${file.name}`, ctx.nonce)
+    )
+  }
+  for (const sub of node.subdirs) {
+    const subItems = await materializeNode(sub, newDir.id, newPrefix, ctx)
+    items.push(...subItems)
+  }
+  return items
 }
 
 /**
@@ -609,7 +715,11 @@ const makeFolderResolver = (rootDirId, client, driveId) => {
  *
  * Three entry shapes are handled in a single pass:
  * - `{isDirectory: true, entry}` — a `FileSystemEntry` from drag-and-drop;
- *   walked recursively via {@link flattenDirectoryEntry}.
+ *   walked locally first via {@link walkDirectoryEntry}, then realized
+ *   server-side via {@link materializeNode}. Read failures along the
+ *   walk become per-entry UNREADABLE rows instead of throwing, so a
+ *   long-path NotFoundError on Windows doesn't leave orphan folders
+ *   server-side.
  * - `{file}` whose `file.path` contains a `/` — a react-dropzone /
  *   file-selector File with a relative path; folders are created on the
  *   fly via the path-based resolver.
@@ -637,14 +747,12 @@ export const flattenEntries = async (
   const result = []
   for (const entry of entries) {
     if (entry.isDirectory && entry.entry) {
-      const subItems = await flattenDirectoryEntry(
-        entry.entry,
-        rootDirId,
+      const tree = await walkDirectoryEntry(entry.entry)
+      const subItems = await materializeNode(tree, rootDirId, '', {
         client,
         driveId,
-        '',
         nonce
-      )
+      })
       result.push(...subItems)
       continue
     }

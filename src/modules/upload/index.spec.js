@@ -504,6 +504,19 @@ const createMockFileEntry = (name, content = '') => ({
   file: resolve => resolve(new File([content], name))
 })
 
+// A file entry whose file() rejects, simulating Windows long-path
+// NotFoundError surfacing during File extraction.
+const createUnreadableFileEntry = name => ({
+  isFile: true,
+  isDirectory: false,
+  name,
+  file: (_resolve, reject) => {
+    const err = new Error('vanished')
+    err.name = 'NotFoundError'
+    reject(err)
+  }
+})
+
 const createMockDirEntry = (name, children) => ({
   isFile: false,
   isDirectory: true,
@@ -521,6 +534,30 @@ const createMockDirEntry = (name, children) => ({
       }
     }
   }
+})
+
+// A directory entry whose readEntries rejects, simulating Windows
+// long-path NotFoundError when enumerating a deep folder.
+const createUnreadableDirEntry = name => ({
+  isFile: false,
+  isDirectory: true,
+  name,
+  createReader: () => ({
+    readEntries: (_resolve, reject) => {
+      const err = new Error('path too long')
+      err.name = 'NotFoundError'
+      reject(err)
+    }
+  })
+})
+
+const createBrokenDirEntry = name => ({
+  isFile: false,
+  isDirectory: true,
+  name,
+  createReader: () => ({
+    readEntries: (_resolve, reject) => reject(new Error('permission denied'))
+  })
 })
 
 describe('extractFilesEntries', () => {
@@ -795,6 +832,108 @@ describe('flattenEntries', () => {
     })
   })
 
+  it('still creates the ancestor folders when the deepest one is unreadable', async () => {
+    // We can't enumerate `e`, but every ancestor (and `e` itself)
+    // should still be created server-side so the user can drop the
+    // missing files into the right place by hand. A single UNREADABLE
+    // row flags the folder whose contents we couldn't read.
+    const e = createUnreadableDirEntry('e')
+    const d = createMockDirEntry('d', [e])
+    const c = createMockDirEntry('c', [d])
+    const b = createMockDirEntry('b', [c])
+    const a = createMockDirEntry('a', [b])
+    const entries = [{ file: null, isDirectory: true, entry: a }]
+
+    const result = await flattenEntries(entries, 'root', fakeClient, null)
+
+    const createdNames = createDirectorySpy.mock.calls.map(c => c[0].name)
+    expect(createdNames).toEqual(['a', 'b', 'c', 'd', 'e'])
+    expect(result).toHaveLength(1)
+    expect(result[0]).toMatchObject({
+      relativePath: 'a/b/c/d/e',
+      folderId: null,
+      status: 'unreadable',
+      isDirectory: true
+    })
+  })
+
+  it('creates empty folders even when they contain no files', async () => {
+    // Empty subfolders are part of the dropped structure; they should
+    // land in Drive verbatim so the tree matches what was dropped.
+    const empty = createMockDirEntry('empty', [])
+    const top = createMockDirEntry('top', [empty])
+    const entries = [{ file: null, isDirectory: true, entry: top }]
+
+    const result = await flattenEntries(entries, 'root', fakeClient, null)
+
+    const createdNames = createDirectorySpy.mock.calls.map(c => c[0].name)
+    expect(createdNames).toEqual(['top', 'empty'])
+    expect(result).toEqual([])
+  })
+
+  it('classifies non-NotFoundError read failures as failed, not unreadable', async () => {
+    const broken = createBrokenDirEntry('broken')
+    const top = createMockDirEntry('top', [broken])
+    const entries = [{ file: null, isDirectory: true, entry: top }]
+
+    const result = await flattenEntries(entries, 'root', fakeClient, null)
+
+    const createdNames = createDirectorySpy.mock.calls.map(c => c[0].name)
+    expect(createdNames).toEqual(['top', 'broken'])
+    expect(result).toHaveLength(1)
+    expect(result[0]).toMatchObject({
+      relativePath: 'top/broken',
+      status: 'failed'
+    })
+  })
+
+  it('uploads readable siblings and surfaces one row per unreadable subtree', async () => {
+    // top/
+    //   ok.txt              <- readable, should upload
+    //   broken/             <- readEntries fails, one unreadable row
+    //   nested/
+    //     deep.txt          <- readable, should upload
+    //     ghost.bin         <- entry.file() fails, one unreadable row
+    const broken = createUnreadableDirEntry('broken')
+    const nested = createMockDirEntry('nested', [
+      createMockFileEntry('deep.txt'),
+      createUnreadableFileEntry('ghost.bin')
+    ])
+    const top = createMockDirEntry('top', [
+      createMockFileEntry('ok.txt'),
+      broken,
+      nested
+    ])
+    const entries = [{ file: null, isDirectory: true, entry: top }]
+
+    const result = await flattenEntries(entries, 'root', fakeClient, null)
+
+    const createdNames = createDirectorySpy.mock.calls.map(c => c[0].name)
+    expect(createdNames).toEqual(['top', 'broken', 'nested'])
+
+    const readable = result.filter(r => r.status !== 'unreadable')
+    const unreadable = result.filter(r => r.status === 'unreadable')
+
+    expect(readable).toHaveLength(2)
+    expect(readable.map(r => r.relativePath).sort()).toEqual([
+      'top/nested/deep.txt',
+      'top/ok.txt'
+    ])
+
+    expect(unreadable).toHaveLength(2)
+    expect(unreadable.map(r => r.relativePath).sort()).toEqual([
+      'top/broken',
+      'top/nested/ghost.bin'
+    ])
+
+    const brokenRow = unreadable.find(r => r.relativePath === 'top/broken')
+    const ghostRow = unreadable.find(
+      r => r.relativePath === 'top/nested/ghost.bin'
+    )
+    expect(brokenRow.isDirectory).toBe(true)
+    expect(ghostRow.isDirectory).toBe(false)
+  })
+
   it('should route react-dropzone File.path entries through the folder cache', async () => {
     const nested = new File(['a'], 'a.txt')
     nested.path = '/album/2024/a.txt'
@@ -922,6 +1061,44 @@ describe('addToUploadQueue placeholder flow', () => {
     const types = actions.map(a => a.type)
     expect(types).toContain('ADD_TO_UPLOAD_QUEUE')
     expect(types).not.toContain('RESOLVE_FOLDER_ITEMS')
+  })
+
+  it('replaces the placeholder with one unreadable row when an inner folder cannot be read', async () => {
+    // Asserts the placeholder is resolved (not stuck on RESOLVING) by
+    // an UNREADABLE row — otherwise the queue would silently swallow
+    // the drop and the alert pipeline never fires.
+    const e = createUnreadableDirEntry('e')
+    const d = createMockDirEntry('d', [e])
+    const c = createMockDirEntry('c', [d])
+    const b = createMockDirEntry('b', [c])
+    const a = createMockDirEntry('a', [b])
+    const entries = [{ file: null, isDirectory: true, entry: a }]
+
+    const actions = await runThunk(
+      addToUploadQueue(
+        entries,
+        'root',
+        {},
+        () => null,
+        () => null,
+        { client: fakeClient },
+        null,
+        () => null
+      )
+    )
+
+    const createdNames = createDirectorySpy.mock.calls.map(c => c[0].name)
+    expect(createdNames).toEqual(['a', 'b', 'c', 'd', 'e'])
+    const resolves = actions.filter(a => a.type === 'RESOLVE_FOLDER_ITEMS')
+    expect(resolves).toHaveLength(1)
+    expect(resolves[0].placeholderIds).toEqual([
+      expect.stringMatching(/^__pending_.+_0_a__$/)
+    ])
+    expect(resolves[0].files).toHaveLength(1)
+    expect(resolves[0].files[0]).toMatchObject({
+      relativePath: 'a/b/c/d/e',
+      status: 'unreadable'
+    })
   })
 
   it('marks placeholders as failed if flatten throws', async () => {
