@@ -30,6 +30,14 @@ export const useUploadFromFlagship = (): UploadFromFlagship => {
   const { t } = useI18n()
   const { showAlert } = useAlert()
 
+  const showImportError = useCallback(() => {
+    showAlert({
+      message: t('ImportToDrive.error'),
+      severity: 'error',
+      duration: null
+    })
+  }, [showAlert, t])
+
   useEffect(() => {
     const asyncGetFilesToHandle = async (): Promise<void> => {
       if (fromFlagshipUpload && webviewIntent) {
@@ -44,14 +52,14 @@ export const useUploadFromFlagship = (): UploadFromFlagship => {
               error
             )}`
           )
-          showAlert({ message: t('ImportToDrive.error'), severity: 'error' })
+          showImportError()
           navigate('/')
         }
       }
     }
 
     void asyncGetFilesToHandle()
-  }, [fromFlagshipUpload, webviewIntent, navigate, showAlert, t])
+  }, [fromFlagshipUpload, webviewIntent, navigate, showImportError])
 
   const uploadFilesFromFlagship = useCallback(
     (folderId: string) => {
@@ -68,12 +76,12 @@ export const useUploadFromFlagship = (): UploadFromFlagship => {
         sendFilesToHandle(filesForQueue, webviewIntent, folderId)
         navigate(`/folder/${folderId}`)
       } catch (error) {
-        showAlert({ message: t('ImportToDrive.error'), severity: 'error' })
+        showImportError()
         logger('info', `uploadFilesFromNative error, ${getErrorMessage(error)}`)
         navigate('/')
       }
     },
-    [dispatch, items, navigate, t, webviewIntent, showAlert]
+    [dispatch, items, navigate, webviewIntent, showImportError]
   )
 
   const onClose = useCallback(async () => {
