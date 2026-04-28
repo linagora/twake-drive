@@ -183,6 +183,7 @@ const PublicFolderView = ({ sharedDocumentId }) => {
     selectAll: () => toggleSelectAllItems(filesResult.data),
     isSelectAll,
     isMobile,
+    displayedFolder,
     onClose: () => {
       refreshAfterChange()
     }
