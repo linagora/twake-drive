@@ -8,7 +8,7 @@ import { isDriveBackedFile } from '@/modules/filelist/helpers'
 import FileIconMime from '@/modules/filelist/icons/FileIconMime'
 import FileIconShortcut from '@/modules/filelist/icons/FileIconShortcut'
 
-const FileIcon = ({ file, size, isEncrypted, viewType = 'list' }) => {
+const FileIcon = ({ file, size, viewType = 'list' }) => {
   const isImage = file.class === 'image'
   const isShortcut = file.class === 'shortcut' && !isDriveBackedFile(file)
   if (isImage || file.class === 'pdf')
@@ -29,7 +29,7 @@ const FileIcon = ({ file, size, isEncrypted, viewType = 'list' }) => {
       />
     )
   else if (isShortcut) return <FileIconShortcut file={file} size={size} />
-  else return <FileIconMime file={file} size={size} isEncrypted={isEncrypted} />
+  else return <FileIconMime file={file} size={size} />
 }
 
 export default FileIcon

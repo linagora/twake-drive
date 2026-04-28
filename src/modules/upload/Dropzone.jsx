@@ -4,7 +4,6 @@ import { useDropzone } from 'react-dropzone'
 import { useDispatch } from 'react-redux'
 
 import { useClient } from 'cozy-client'
-import { useVaultClient } from 'cozy-keys-lib'
 import { useSharingContext } from 'cozy-sharing'
 import { Content } from 'cozy-ui/transpiled/react/Layout'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
@@ -17,13 +16,6 @@ import RightClickAddMenu from '@/components/RightClick/RightClickAddMenu'
 import { uploadFiles } from '@/modules/navigation/duck'
 import DropzoneTeaser from '@/modules/upload/DropzoneTeaser'
 import { useNewItemHighlightContext } from '@/modules/upload/NewItemHighlightProvider'
-
-// DnD helpers for folder upload
-const canHandleFolders = evt => {
-  if (!evt.dataTransfer) return false
-  const dt = evt.dataTransfer
-  return dt.items && dt.items.length && dt.items[0].webkitGetAsEntry != null
-}
 
 const canDrop = evt => {
   const items = evt.dataTransfer.items
@@ -44,7 +36,6 @@ export const Dropzone = ({
   const { isMobile } = useBreakpoints()
   const { showAlert } = useAlert()
   const sharingState = useSharingContext()
-  const vaultClient = useVaultClient()
   const dispatch = useDispatch()
   const { addItems } = useNewItemHighlightContext()
 
@@ -55,19 +46,18 @@ export const Dropzone = ({
   const onDrop = async (files, _, evt) => {
     if (!canDrop(evt)) return
 
-    const filesToUpload = canHandleFolders(evt) ? evt.dataTransfer.items : files
+    // react-dropzone v14 (default `getFilesFromEvent: fromEvent` from
+    // file-selector) walks dropped folders and gives us individual File
+    // objects with `.path` set to the relative path inside the dropped
+    // folder. addToUploadQueue uses those paths to flatten into per-file
+    // queue items at enqueue time.
     dispatch(
       uploadFiles(
-        filesToUpload,
+        files,
         displayedFolder.id,
         sharingState,
         fileUploadCallback,
-        {
-          client,
-          vaultClient,
-          showAlert,
-          t
-        },
+        { client, showAlert, t },
         displayedFolder.driveId,
         addItems
       )

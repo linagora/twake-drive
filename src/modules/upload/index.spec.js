@@ -5,33 +5,29 @@ import {
   overwriteFile,
   uploadProgress,
   extractFilesEntries,
-  exceedsFileLimit
+  exceedsFileLimit,
+  flattenEntries,
+  addToUploadQueue,
+  onQueueEmpty
 } from './index'
 
-import { getEncryptionKeyFromDirId } from '@/lib/encryption'
 import logger from '@/lib/logger'
 import { CozyFile } from '@/models'
 
 jest.mock('cozy-doctypes')
 
-jest.mock('lib/encryption', () => ({
-  ...jest.requireActual('lib/encryption'),
-  getEncryptionKeyFromDirId: jest.fn()
-}))
-
 const createFileSpy = jest.fn().mockName('createFile')
+const createDirectorySpy = jest.fn().mockName('createDirectory')
 const statByPathSpy = jest.fn().mockName('statByPath')
 const updateFileSpy = jest.fn().mockName('updateFile')
 const fakeClient = {
   collection: () => ({
     createFile: createFileSpy,
+    createDirectory: createDirectorySpy,
     statByPath: statByPathSpy,
     updateFile: updateFileSpy
   }),
   query: jest.fn()
-}
-const fakeVaultClient = {
-  encryptFile: jest.fn()
 }
 
 CozyFile.getFullpath.mockResolvedValue('/my-dir/mydoc.odt')
@@ -47,10 +43,6 @@ describe('processNextFile function', () => {
   }
   fakeClient.query.mockResolvedValueOnce(null)
 
-  beforeEach(() => {
-    getEncryptionKeyFromDirId.mockResolvedValue(null)
-  })
-
   it('should handle an empty queue', async () => {
     const getState = () => ({
       upload: {
@@ -62,7 +54,7 @@ describe('processNextFile function', () => {
       queueCompletedCallbackSpy,
       dirId,
       sharingState,
-      { client: fakeClient, vaultClient: fakeVaultClient }
+      { client: fakeClient }
     )
     const result = await asyncProcess(dispatchSpy, getState, {
       client: fakeClient
@@ -103,7 +95,7 @@ describe('processNextFile function', () => {
       queueCompletedCallbackSpy,
       dirId,
       sharingState,
-      { client: fakeClient, vaultClient: fakeVaultClient }
+      { client: fakeClient }
     )
     await asyncProcess(dispatchSpy, getState)
     expect(dispatchSpy).toHaveBeenCalledWith({
@@ -150,7 +142,7 @@ describe('processNextFile function', () => {
       queueCompletedCallbackSpy,
       dirId,
       sharingState,
-      { client: fakeClient, vaultClient: fakeVaultClient }
+      { client: fakeClient }
     )
     await asyncProcess(dispatchSpy, getState)
 
@@ -164,11 +156,8 @@ describe('processNextFile function', () => {
     })
 
     expect(updateFileSpy).toHaveBeenCalledWith(file, {
-      dirId: 'my-dir',
       fileId: 'b552a167-1aa4',
-      options: {
-        onUploadProgress: expect.any(Function)
-      }
+      onUploadProgress: expect.any(Function)
     })
 
     expect(fileUploadedCallbackSpy).toHaveBeenCalledWith(file)
@@ -215,7 +204,7 @@ describe('processNextFile function', () => {
       queueCompletedCallbackSpy,
       dirId,
       sharingState,
-      { client: fakeClient, vaultClient: fakeVaultClient }
+      { client: fakeClient }
     )
     await asyncProcess(dispatchSpy, getState, { client: fakeClient })
 
@@ -254,7 +243,7 @@ describe('processNextFile function', () => {
       queueCompletedCallbackSpy,
       dirId,
       sharingState,
-      { client: fakeClient, vaultClient: fakeVaultClient }
+      { client: fakeClient }
     )
     await asyncProcess(dispatchSpy, getState, { client: fakeClient })
 
@@ -292,7 +281,7 @@ describe('processNextFile function', () => {
       queueCompletedCallbackSpy,
       dirId,
       sharingState,
-      { client: fakeClient, vaultClient: fakeVaultClient }
+      { client: fakeClient }
     )
     await asyncProcess(dispatchSpy, getState, { client: fakeClient })
 
@@ -364,28 +353,16 @@ describe('selectors', () => {
 })
 
 describe('queue reducer', () => {
+  const buildItem = name => ({
+    fileId: name,
+    status: 'pending',
+    file: { name },
+    progress: null
+  })
   const state = [
-    {
-      status: 'pending',
-      file: {
-        name: 'doc1.odt'
-      },
-      progress: null
-    },
-    {
-      status: 'pending',
-      file: {
-        name: 'doc2.odt'
-      },
-      progress: null
-    },
-    {
-      status: 'pending',
-      file: {
-        name: 'doc3.odt'
-      },
-      progress: null
-    }
+    buildItem('doc1.odt'),
+    buildItem('doc2.odt'),
+    buildItem('doc3.odt')
   ]
   it('should be empty (initial state)', () => {
     const result = queue(undefined, {})
@@ -401,196 +378,103 @@ describe('queue reducer', () => {
     expect(result).toEqual([])
   })
 
+  it('drops RESOLVE_FOLDER_ITEMS files when no placeholder remains in state', () => {
+    const stateIn = [buildItem('unrelated.odt')]
+    const result = queue(stateIn, {
+      type: 'RESOLVE_FOLDER_ITEMS',
+      placeholderIds: ['__pending_abc_0_photos__'],
+      files: [
+        { fileId: 'photos/a.jpg', file: { name: 'a.jpg' }, folderId: 'dir-1' }
+      ]
+    })
+    // Same-reference return so connected components don't re-render.
+    expect(result).toBe(stateIn)
+  })
+
+  it('replaces matched placeholders with files on RESOLVE_FOLDER_ITEMS', () => {
+    const placeholder = {
+      fileId: '__pending_abc_0_photos__',
+      status: 'resolving',
+      file: { name: 'photos' },
+      progress: null
+    }
+    const result = queue([placeholder], {
+      type: 'RESOLVE_FOLDER_ITEMS',
+      placeholderIds: ['__pending_abc_0_photos__'],
+      files: [
+        { fileId: 'photos/a.jpg', file: { name: 'a.jpg' }, folderId: 'dir-1' }
+      ]
+    })
+    expect(result).toHaveLength(1)
+    expect(result[0]).toMatchObject({
+      fileId: 'photos/a.jpg',
+      status: 'pending'
+    })
+  })
+
   it('should handle UPLOAD_FILE action type', () => {
     const action = {
       type: 'UPLOAD_FILE',
-      file: {
-        name: 'doc1.odt'
-      }
+      fileId: 'doc1.odt'
     }
-    const expected = [
-      {
-        status: 'loading',
-        file: {
-          name: 'doc1.odt'
-        },
-        progress: null
-      },
-      {
-        status: 'pending',
-        file: {
-          name: 'doc2.odt'
-        },
-        progress: null
-      },
-      {
-        status: 'pending',
-        file: {
-          name: 'doc3.odt'
-        },
-        progress: null
-      }
-    ]
     const result = queue(state, action)
-    expect(result).toEqual(expected)
+    expect(result[0]).toMatchObject({ fileId: 'doc1.odt', status: 'loading' })
+    expect(result[1]).toMatchObject({ fileId: 'doc2.odt', status: 'pending' })
+    expect(result[2]).toMatchObject({ fileId: 'doc3.odt', status: 'pending' })
   })
 
   it('should handle RECEIVE_UPLOAD_SUCCESS action type', () => {
     const action = {
       type: 'RECEIVE_UPLOAD_SUCCESS',
-      file: {
-        name: 'doc3.odt'
-      },
-      progress: null
+      fileId: 'doc3.odt'
     }
-    const expected = [
-      {
-        status: 'pending',
-        file: {
-          name: 'doc1.odt'
-        },
-        progress: null
-      },
-      {
-        status: 'pending',
-        file: {
-          name: 'doc2.odt'
-        },
-        progress: null
-      },
-      {
-        status: 'created',
-        file: {
-          name: 'doc3.odt'
-        },
-        progress: null
-      }
-    ]
     const result = queue(state, action)
-    expect(result).toEqual(expected)
+    expect(result[2]).toMatchObject({ fileId: 'doc3.odt', status: 'created' })
   })
 
   it('should handle RECEIVE_UPLOAD_SUCCESS action type (update)', () => {
     const action = {
       type: 'RECEIVE_UPLOAD_SUCCESS',
-      file: {
-        name: 'doc3.odt'
-      },
+      fileId: 'doc3.odt',
       isUpdate: true
     }
-    const expected = [
-      {
-        status: 'pending',
-        file: {
-          name: 'doc1.odt'
-        },
-        progress: null
-      },
-      {
-        status: 'pending',
-        file: {
-          name: 'doc2.odt'
-        },
-        progress: null
-      },
-      {
-        status: 'updated',
-        file: {
-          name: 'doc3.odt'
-        },
-        progress: null
-      }
-    ]
     const result = queue(state, action)
-    expect(result).toEqual(expected)
+    expect(result[2]).toMatchObject({ fileId: 'doc3.odt', status: 'updated' })
   })
 
   it('should handle RECEIVE_UPLOAD_ERROR action type', () => {
     const action = {
       type: 'RECEIVE_UPLOAD_ERROR',
-      file: {
-        name: 'doc2.odt'
-      },
-      status: 'conflict',
-      progress: null
+      fileId: 'doc2.odt',
+      status: 'conflict'
     }
-    const expected = [
-      {
-        status: 'pending',
-        file: {
-          name: 'doc1.odt'
-        },
-        progress: null
-      },
-      {
-        status: 'conflict',
-        file: {
-          name: 'doc2.odt'
-        },
-        progress: null
-      },
-      {
-        status: 'pending',
-        file: {
-          name: 'doc3.odt'
-        },
-        progress: null
-      }
-    ]
     const result = queue(state, action)
-    expect(result).toEqual(expected)
+    expect(result[1]).toMatchObject({ fileId: 'doc2.odt', status: 'conflict' })
   })
 
   describe('progress action', () => {
-    const file = {
-      name: 'doc1.odt'
-    }
-
+    const fileId = 'doc1.odt'
     const date1 = 1000
     const date2 = 2000
     const event1 = { loaded: 100, total: 400 }
     const event2 = { loaded: 200, total: 400 }
 
-    const expected = [
-      {
-        status: 'pending',
-        file: {
-          name: 'doc1.odt'
-        },
-        progress: {
-          lastUpdated: date1,
-          remainingTime: null,
-          speed: null,
-          loaded: event1.loaded,
-          total: event1.total
-        }
-      },
-      {
-        status: 'pending',
-        file: {
-          name: 'doc2.odt'
-        },
-        progress: null
-      },
-      {
-        status: 'pending',
-        file: {
-          name: 'doc3.odt'
-        },
-        progress: null
-      }
-    ]
-
     it('should handle UPLOAD_PROGRESS', () => {
-      const action = uploadProgress(file, event1, date1)
-      const result = queue(state, action)
-      expect(result).toEqual(expected)
+      const result = queue(state, uploadProgress(fileId, event1, date1))
+      expect(result[0].progress).toEqual({
+        lastUpdated: date1,
+        remainingTime: null,
+        speed: null,
+        loaded: event1.loaded,
+        total: event1.total
+      })
+      expect(result[1].progress).toBe(null)
     })
 
     it('should compute speed and remaining time', () => {
-      const result = queue(state, uploadProgress(file, event1, date1))
+      const result = queue(state, uploadProgress(fileId, event1, date1))
       expect(result[0].progress.remainingTime).toBe(null)
-      const result2 = queue(result, uploadProgress(file, event2, date2))
+      const result2 = queue(result, uploadProgress(fileId, event2, date2))
       expect(result2[0].progress).toEqual({
         lastUpdated: expect.any(Number),
         loaded: 200,
@@ -601,19 +485,23 @@ describe('queue reducer', () => {
     })
 
     it('should handle upload error', () => {
-      const result = queue(state, uploadProgress(file, event1, date1))
-      const result2 = queue(result, uploadProgress(file, event2, date2))
-      const result3 = queue(result2, { type: 'RECEIVE_UPLOAD_ERROR', file })
+      const result = queue(state, uploadProgress(fileId, event1, date1))
+      const result2 = queue(result, uploadProgress(fileId, event2, date2))
+      const result3 = queue(result2, {
+        type: 'RECEIVE_UPLOAD_ERROR',
+        fileId
+      })
       expect(result3[0].progress).toEqual(null)
     })
   })
 })
 
 // Helpers to mock browser FileSystem API objects
-const createMockFileEntry = name => ({
+const createMockFileEntry = (name, content = '') => ({
   isFile: true,
   isDirectory: false,
-  name
+  name,
+  file: resolve => resolve(new File([content], name))
 })
 
 const createMockDirEntry = (name, children) => ({
@@ -778,6 +666,10 @@ describe('exceedsFileLimit', () => {
 })
 
 describe('overwriteFile function', () => {
+  beforeEach(() => {
+    statByPathSpy.mockReset()
+    updateFileSpy.mockReset()
+  })
   it('should update the io.cozy.files', async () => {
     updateFileSpy.mockResolvedValue({
       data: {
@@ -796,11 +688,13 @@ describe('overwriteFile function', () => {
       }
     })
     const file = new File([''], 'mydoc.odt')
-    const result = await overwriteFile(fakeClient, file, '/parent/mydoc.odt')
+    const onUploadProgress = jest.fn()
+    const result = await overwriteFile(fakeClient, file, '/parent/mydoc.odt', {
+      onUploadProgress
+    })
     expect(updateFileSpy).toHaveBeenCalledWith(file, {
-      dirId: '972bc693-f015',
       fileId: 'b7cb22be72d2',
-      options: {}
+      onUploadProgress
     })
     expect(result).toEqual({
       id: 'b7cb22be72d2',
@@ -810,5 +704,376 @@ describe('overwriteFile function', () => {
         name: 'mydoc.odt'
       }
     })
+  })
+})
+
+describe('flattenEntries', () => {
+  beforeEach(() => {
+    createDirectorySpy.mockReset()
+    createFileSpy.mockReset()
+    statByPathSpy.mockReset()
+    updateFileSpy.mockReset()
+    CozyFile.getFullpath.mockReset()
+    createDirectorySpy.mockImplementation(async ({ name }) => ({
+      data: { id: `dir-${name}`, name, type: 'directory' }
+    }))
+  })
+
+  it('should flatten a dropped directory entry into per-file items with relative paths', async () => {
+    const directoryEntry = createMockDirEntry('photos', [
+      createMockFileEntry('img1.jpg'),
+      createMockFileEntry('img2.jpg')
+    ])
+    const entries = [{ file: null, isDirectory: true, entry: directoryEntry }]
+
+    const result = await flattenEntries(entries, 'root', fakeClient, null)
+
+    expect(createDirectorySpy).toHaveBeenCalledWith({
+      name: 'photos',
+      dirId: 'root'
+    })
+    expect(result).toHaveLength(2)
+    expect(result[0]).toMatchObject({
+      fileId: 'photos/img1.jpg',
+      relativePath: 'photos/img1.jpg',
+      folderId: 'dir-photos'
+    })
+  })
+
+  it('should reuse an existing folder when createDirectory returns 409', async () => {
+    createDirectorySpy.mockReset()
+    createDirectorySpy.mockRejectedValueOnce({ status: 409 })
+    CozyFile.getFullpath.mockResolvedValueOnce('/root/photos')
+    statByPathSpy.mockResolvedValueOnce({
+      data: { type: 'directory', id: 'existing-photos' }
+    })
+
+    const directoryEntry = createMockDirEntry('photos', [
+      createMockFileEntry('img.jpg')
+    ])
+    const entries = [{ file: null, isDirectory: true, entry: directoryEntry }]
+
+    const result = await flattenEntries(entries, 'root', fakeClient, null)
+
+    expect(result).toHaveLength(1)
+    expect(result[0]).toMatchObject({
+      fileId: 'photos/img.jpg',
+      relativePath: 'photos/img.jpg',
+      folderId: 'existing-photos'
+    })
+  })
+
+  it('should recurse into nested directories and carry the relative path', async () => {
+    const innerDir = createMockDirEntry('2024', [
+      createMockFileEntry('ski.jpg')
+    ])
+    const directoryEntry = createMockDirEntry('photos', [innerDir])
+    const entries = [{ file: null, isDirectory: true, entry: directoryEntry }]
+
+    const result = await flattenEntries(entries, 'root', fakeClient, null)
+
+    expect(result).toHaveLength(1)
+    expect(result[0]).toMatchObject({
+      fileId: 'photos/2024/ski.jpg',
+      relativePath: 'photos/2024/ski.jpg',
+      folderId: 'dir-2024'
+    })
+  })
+
+  it('should place loose files under the root directory without a relative path', async () => {
+    const plainFile = new File(['a'], 'note.txt')
+    const entries = [{ file: plainFile, isDirectory: false, entry: null }]
+
+    const result = await flattenEntries(entries, 'root', fakeClient, null)
+
+    expect(createDirectorySpy).not.toHaveBeenCalled()
+    expect(result).toHaveLength(1)
+    expect(result[0]).toMatchObject({
+      fileId: 'note.txt',
+      relativePath: null,
+      folderId: 'root'
+    })
+  })
+
+  it('should route react-dropzone File.path entries through the folder cache', async () => {
+    const nested = new File(['a'], 'a.txt')
+    nested.path = '/album/2024/a.txt'
+    const loose = new File(['b'], 'b.txt')
+    loose.path = '/b.txt'
+    const entries = [
+      { file: nested, isDirectory: false, entry: null },
+      { file: loose, isDirectory: false, entry: null }
+    ]
+
+    const result = await flattenEntries(entries, 'root', fakeClient, null)
+
+    expect(createDirectorySpy).toHaveBeenCalledTimes(2)
+    expect(createDirectorySpy).toHaveBeenNthCalledWith(1, {
+      name: 'album',
+      dirId: 'root'
+    })
+    expect(createDirectorySpy).toHaveBeenNthCalledWith(2, {
+      name: '2024',
+      dirId: 'dir-album'
+    })
+    expect(result).toHaveLength(2)
+    expect(result[0]).toMatchObject({
+      fileId: 'album/2024/a.txt',
+      relativePath: 'album/2024/a.txt',
+      folderId: 'dir-2024'
+    })
+    expect(result[1]).toMatchObject({
+      fileId: 'b.txt',
+      relativePath: null,
+      folderId: 'root'
+    })
+  })
+})
+
+describe('addToUploadQueue placeholder flow', () => {
+  beforeEach(() => {
+    createDirectorySpy.mockReset()
+    createFileSpy.mockReset()
+    statByPathSpy.mockReset()
+    updateFileSpy.mockReset()
+    CozyFile.getFullpath.mockReset()
+    createDirectorySpy.mockImplementation(async ({ name }) => ({
+      data: { id: `dir-${name}`, name, type: 'directory' }
+    }))
+  })
+
+  const runThunk = async (
+    thunk,
+    getState = () => ({ upload: { queue: [] } })
+  ) => {
+    const dispatched = []
+    const pending = []
+    const dispatch = jest.fn(action => {
+      dispatched.push(action)
+      if (typeof action !== 'function') return undefined
+      const result = action(dispatch, getState)
+      if (result && typeof result.then === 'function') pending.push(result)
+      return result
+    })
+    await thunk(dispatch, getState)
+    // Awaited thunks may dispatch further thunks, so drain in a loop
+    // until no new promises are queued.
+    while (pending.length) await Promise.all(pending.splice(0))
+    return dispatched.filter(a => typeof a !== 'function')
+  }
+
+  it('emits a placeholder for each top-level folder and replaces it after flatten', async () => {
+    const directoryEntry = createMockDirEntry('photos', [
+      createMockFileEntry('img1.jpg'),
+      createMockFileEntry('img2.jpg')
+    ])
+    const entries = [{ file: null, isDirectory: true, entry: directoryEntry }]
+
+    const actions = await runThunk(
+      addToUploadQueue(
+        entries,
+        'root',
+        {},
+        () => null,
+        () => null,
+        { client: fakeClient },
+        null,
+        () => null
+      )
+    )
+
+    const adds = actions.filter(a => a.type === 'ADD_TO_UPLOAD_QUEUE')
+    const resolves = actions.filter(a => a.type === 'RESOLVE_FOLDER_ITEMS')
+    expect(adds).toHaveLength(1)
+    expect(adds[0].files).toEqual([
+      expect.objectContaining({
+        fileId: expect.stringMatching(/^__pending_.+_0_photos__$/),
+        status: 'resolving'
+      })
+    ])
+    expect(resolves).toHaveLength(1)
+    expect(resolves[0].placeholderIds).toEqual([
+      expect.stringMatching(/^__pending_.+_0_photos__$/)
+    ])
+    expect(resolves[0].files).toHaveLength(2)
+    expect(resolves[0].files[0]).toMatchObject({
+      fileId: expect.stringMatching(/^.+_photos\/img1\.jpg$/),
+      relativePath: 'photos/img1.jpg'
+    })
+  })
+
+  it('skips placeholders for plain file drops', async () => {
+    const plainFile = new File(['a'], 'note.txt')
+    const entries = [{ file: plainFile, isDirectory: false, entry: null }]
+
+    const actions = await runThunk(
+      addToUploadQueue(
+        entries,
+        'root',
+        {},
+        () => null,
+        () => null,
+        { client: fakeClient },
+        null,
+        () => null
+      )
+    )
+
+    const types = actions.map(a => a.type)
+    expect(types).toContain('ADD_TO_UPLOAD_QUEUE')
+    expect(types).not.toContain('RESOLVE_FOLDER_ITEMS')
+  })
+
+  it('marks placeholders as failed if flatten throws', async () => {
+    const directoryEntry = createMockDirEntry('photos', [
+      createMockFileEntry('img.jpg')
+    ])
+    createDirectorySpy.mockReset()
+    createDirectorySpy.mockRejectedValue(new Error('server down'))
+    const entries = [{ file: null, isDirectory: true, entry: directoryEntry }]
+
+    const actions = await runThunk(
+      addToUploadQueue(
+        entries,
+        'root',
+        {},
+        () => null,
+        () => null,
+        { client: fakeClient },
+        null,
+        () => null
+      )
+    )
+
+    const errors = actions.filter(a => a.type === 'RECEIVE_UPLOAD_ERROR')
+    expect(errors).toHaveLength(1)
+    expect(errors[0]).toMatchObject({
+      fileId: expect.stringMatching(/^__pending_.+_0_photos__$/),
+      status: 'failed'
+    })
+    expect(actions.some(a => a.type === 'RESOLVE_FOLDER_ITEMS')).toBe(false)
+  })
+
+  it('marks placeholders as unreadable if flatten throws NotFoundError', async () => {
+    const directoryEntry = createMockDirEntry('photos', [
+      createMockFileEntry('img.jpg')
+    ])
+    createDirectorySpy.mockReset()
+    const notFound = new Error('vanished')
+    notFound.name = 'NotFoundError'
+    createDirectorySpy.mockRejectedValue(notFound)
+    const entries = [{ file: null, isDirectory: true, entry: directoryEntry }]
+
+    const actions = await runThunk(
+      addToUploadQueue(
+        entries,
+        'root',
+        {},
+        () => null,
+        () => null,
+        { client: fakeClient },
+        null,
+        () => null
+      )
+    )
+
+    const errors = actions.filter(a => a.type === 'RECEIVE_UPLOAD_ERROR')
+    expect(errors[0]).toMatchObject({
+      fileId: expect.stringMatching(/^__pending_.+_0_photos__$/),
+      status: 'unreadable'
+    })
+  })
+
+  it('fails placeholders and invokes onLimitExceeded when limit hit', async () => {
+    const directoryEntry = createMockDirEntry('photos', [
+      createMockFileEntry('a.jpg'),
+      createMockFileEntry('b.jpg'),
+      createMockFileEntry('c.jpg')
+    ])
+    const entries = [{ file: null, isDirectory: true, entry: directoryEntry }]
+    const onLimitExceeded = jest.fn()
+
+    const actions = await runThunk(
+      addToUploadQueue(
+        entries,
+        'root',
+        {},
+        () => null,
+        () => null,
+        { client: fakeClient, maxFileCount: 2, onLimitExceeded },
+        null,
+        () => null
+      )
+    )
+
+    expect(onLimitExceeded).toHaveBeenCalledTimes(1)
+    const errors = actions.filter(a => a.type === 'RECEIVE_UPLOAD_ERROR')
+    expect(errors).toHaveLength(1)
+    expect(errors[0]).toMatchObject({
+      fileId: expect.stringMatching(/^__pending_.+_0_photos__$/),
+      status: 'failed'
+    })
+    // No flatten happened: no folders should have been created
+    expect(createDirectorySpy).not.toHaveBeenCalled()
+    expect(actions.some(a => a.type === 'RESOLVE_FOLDER_ITEMS')).toBe(false)
+  })
+
+  it('does not invoke onLimitExceeded when count is under the limit', async () => {
+    const directoryEntry = createMockDirEntry('photos', [
+      createMockFileEntry('a.jpg')
+    ])
+    const entries = [{ file: null, isDirectory: true, entry: directoryEntry }]
+    const onLimitExceeded = jest.fn()
+
+    const actions = await runThunk(
+      addToUploadQueue(
+        entries,
+        'root',
+        {},
+        () => null,
+        () => null,
+        { client: fakeClient, maxFileCount: 100, onLimitExceeded },
+        null,
+        () => null
+      )
+    )
+
+    expect(onLimitExceeded).not.toHaveBeenCalled()
+    // Make sure the under-limit path actually proceeded with flatten
+    // and didn't silently no-op.
+    expect(createDirectorySpy).toHaveBeenCalled()
+    expect(actions.some(a => a.type === 'RESOLVE_FOLDER_ITEMS')).toBe(true)
+  })
+})
+
+describe('onQueueEmpty', () => {
+  it('does not fire the callback while resolving placeholders are present', () => {
+    const callback = jest.fn()
+    const dispatch = jest.fn()
+    const getState = () => ({
+      upload: {
+        queue: [{ fileId: '__pending_0_photos__', status: 'resolving' }]
+      }
+    })
+    onQueueEmpty(callback)(dispatch, getState)
+    expect(callback).not.toHaveBeenCalled()
+  })
+
+  it('fires the callback when no resolving placeholders remain', () => {
+    const callback = jest.fn()
+    const dispatch = jest.fn()
+    const getState = () => ({
+      upload: {
+        queue: [
+          { fileId: 'a.txt', status: 'created', uploadedItem: { _id: 'a' } }
+        ]
+      }
+    })
+    onQueueEmpty(callback)(dispatch, getState)
+    expect(callback).toHaveBeenCalledWith(
+      expect.objectContaining({
+        createdItems: [{ _id: 'a' }]
+      })
+    )
   })
 })

@@ -1,6 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
-import { useNavigate } from 'react-router-dom'
 
 import { useClient } from 'cozy-client'
 import flag from 'cozy-flags'
@@ -20,7 +19,6 @@ import { SHARED_DRIVES_DIR_ID } from '@/constants/config'
 import { useShiftSelection } from '@/hooks/useShiftSelection'
 import { useViewSwitcherContext } from '@/lib/ViewSwitcherContext'
 import { isTypingNewFolderName } from '@/modules/filelist/duck'
-import { FolderUnlocker } from '@/modules/folder/components/FolderUnlocker'
 import { useCancelable } from '@/modules/move/hooks/useCancelable'
 import RectangularSelection from '@/modules/selection/RectangularSelection'
 import SelectionBar from '@/modules/selection/SelectionBar'
@@ -56,8 +54,6 @@ const FolderViewBodyContent = ({
   const virtuosoRef = useRef(null)
 
   const client = useClient()
-
-  const navigate = useNavigate()
 
   const { selectAll, selectedItems, setSelectedItems, setIsSelectAll } =
     useSelectionContext()
@@ -103,10 +99,6 @@ const FolderViewBodyContent = ({
     setLastInteractedItem(itemId)
     onShiftClick(itemId, event)
   }
-
-  const handleFolderUnlockerDismiss = useCallback(() => {
-    navigate('/folder')
-  }, [navigate])
 
   const isDynamicSelectionEnabled = flag('drive.dynamic-selection.enabled')
 
@@ -194,28 +186,23 @@ const FolderViewBodyContent = ({
   const viewContent = viewType === 'list' ? tableComponent : gridComponent
 
   return (
-    <FolderUnlocker
-      folder={displayedFolder}
-      onDismiss={handleFolderUnlockerDismiss}
-    >
-      <div className="u-h-100 u-w-100">
-        <SelectionBar actions={actions} />
-        {isDynamicSelectionEnabled ? (
-          <RectangularSelection
-            items={sortedRows}
-            scrollContainerRef={folderViewRef}
-            scrollElement={scrollElement}
-            onSelectEnd={setLastInteractedItem}
-          >
-            {viewContent}
-          </RectangularSelection>
-        ) : (
-          <div onClick={handleContainerClick} className="u-h-100">
-            {viewContent}
-          </div>
-        )}
-      </div>
-    </FolderUnlocker>
+    <div className="u-h-100 u-w-100">
+      <SelectionBar actions={actions} />
+      {isDynamicSelectionEnabled ? (
+        <RectangularSelection
+          items={sortedRows}
+          scrollContainerRef={folderViewRef}
+          scrollElement={scrollElement}
+          onSelectEnd={setLastInteractedItem}
+        >
+          {viewContent}
+        </RectangularSelection>
+      ) : (
+        <div onClick={handleContainerClick} className="u-h-100">
+          {viewContent}
+        </div>
+      )}
+    </div>
   )
 }
 

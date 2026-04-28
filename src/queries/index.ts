@@ -7,11 +7,7 @@ import {
   TRASH_DIR_ID,
   SETTINGS_DIR_PATH
 } from '@/constants/config'
-import {
-  DOCTYPE_FILES_ENCRYPTION,
-  DOCTYPE_ALBUMS,
-  DOCTYPE_FILES_SETTINGS
-} from '@/lib/doctypes'
+import { DOCTYPE_ALBUMS, DOCTYPE_FILES_SETTINGS } from '@/lib/doctypes'
 import { formatFolderQueryId } from '@/lib/queries'
 
 export interface QueryConfig {
@@ -396,14 +392,6 @@ export const buildSettingsByIdQuery: QueryBuilder<string> = id => ({
     as: `io.cozy.settings/${id}`,
     fetchPolicy: defaultFetchPolicy,
     singleDocData: true
-  }
-})
-
-export const buildEncryptionByIdQuery: QueryBuilder<string> = id => ({
-  definition: () => Q(DOCTYPE_FILES_ENCRYPTION).getById(id),
-  options: {
-    as: id,
-    fetchPolicy: defaultFetchPolicy
   }
 })
 

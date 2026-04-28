@@ -6,7 +6,7 @@ import styles from '@/styles/filelist.styl'
 import FilenameInput from '@/modules/filelist/FilenameInput'
 import FileThumbnail from '@/modules/filelist/icons/FileThumbnail'
 
-const AddFolderCard = ({ isEncrypted, onSubmit, onAbort }) => {
+const AddFolderCard = ({ onSubmit, onAbort }) => {
   return (
     <div className={cx(styles['fil-content-column'])}>
       <div
@@ -16,11 +16,7 @@ const AddFolderCard = ({ isEncrypted, onSubmit, onAbort }) => {
           styles['fil-content-grid-view']
         )}
       >
-        <FileThumbnail
-          file={{ type: 'directory' }}
-          isEncrypted={isEncrypted}
-          size={96}
-        />
+        <FileThumbnail file={{ type: 'directory' }} size={96} />
       </div>
       <FilenameInput onSubmit={onSubmit} onAbort={onAbort} />
     </div>

@@ -8,7 +8,6 @@ import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import { useI18n } from 'twake-i18n'
 
-import AddEncryptedFolderItem from '@/modules/drive/Toolbar/components/AddEncryptedFolderItem'
 import AddFolderItem from '@/modules/drive/Toolbar/components/AddFolderItem'
 import CreateDocsItem from '@/modules/drive/Toolbar/components/CreateDocsItem'
 import CreateNoteItem from '@/modules/drive/Toolbar/components/CreateNoteItem'
@@ -29,7 +28,6 @@ const AddMenuContent = forwardRef(
       canUpload,
       refreshFolderContent,
       isPublic,
-      isEncryptedFolder,
       displayedFolder,
       onClick,
       isReadOnly
@@ -65,50 +63,43 @@ const AddMenuContent = forwardRef(
           />
         </ActionsMenuMobileHeader>
 
-        {canCreateFolder && !isEncryptedFolder && (
+        {canCreateFolder && (
           <AddFolderItem onClick={onClick} isReadOnly={isReadOnly} />
         )}
-        {canCreateFolder && !isPublic && flag('drive.enable-encryption') && (
-          <AddEncryptedFolderItem onClick={onClick} isReadOnly={isReadOnly} />
-        )}
-        {!isPublic && !isEncryptedFolder && (
+        {!isPublic && (
           <CreateNoteItem
             displayedFolder={displayedFolder}
             isReadOnly={isReadOnly}
             onClick={onClick}
           />
         )}
-        {!isPublic &&
-          !isEncryptedFolder &&
-          flag('drive.lasuitedocs.enabled') && (
-            <CreateDocsItem
-              displayedFolder={displayedFolder}
+        {!isPublic && flag('drive.lasuitedocs.enabled') && (
+          <CreateDocsItem
+            displayedFolder={displayedFolder}
+            isReadOnly={isReadOnly}
+            onClick={onClick}
+          />
+        )}
+        {canUpload && isOfficeEditingEnabled(isDesktop) && (
+          <>
+            <CreateOnlyOfficeItem
+              fileClass="text"
               isReadOnly={isReadOnly}
               onClick={onClick}
             />
-          )}
-        {canUpload &&
-          isOfficeEditingEnabled(isDesktop) &&
-          !isEncryptedFolder && (
-            <>
-              <CreateOnlyOfficeItem
-                fileClass="text"
-                isReadOnly={isReadOnly}
-                onClick={onClick}
-              />
-              <CreateOnlyOfficeItem
-                fileClass="spreadsheet"
-                isReadOnly={isReadOnly}
-                onClick={onClick}
-              />
-              <CreateOnlyOfficeItem
-                fileClass="slide"
-                isReadOnly={isReadOnly}
-                onClick={onClick}
-              />
-            </>
-          )}
-        {!isEncryptedFolder && !isFromSharedDriveRecipient(displayedFolder) && (
+            <CreateOnlyOfficeItem
+              fileClass="spreadsheet"
+              isReadOnly={isReadOnly}
+              onClick={onClick}
+            />
+            <CreateOnlyOfficeItem
+              fileClass="slide"
+              isReadOnly={isReadOnly}
+              onClick={onClick}
+            />
+          </>
+        )}
+        {!isFromSharedDriveRecipient(displayedFolder) && (
           <CreateShortcut
             onCreated={refreshFolderContent}
             onClick={onClick}

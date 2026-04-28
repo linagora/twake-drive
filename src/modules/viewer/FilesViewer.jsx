@@ -4,7 +4,6 @@ import { useNavigate, useParams } from 'react-router-dom'
 
 import { Q, useClient } from 'cozy-client'
 import flag from 'cozy-flags'
-import { useVaultClient } from 'cozy-keys-lib'
 import Button from 'cozy-ui/transpiled/react/Buttons'
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import ShareIcon from 'cozy-ui/transpiled/react/Icons/Share'
@@ -22,11 +21,6 @@ import { FilesViewerLoading } from '@/components/FilesViewerLoading'
 import RightClickFileMenu from '@/components/RightClick/RightClickFileMenu'
 import { useCurrentFileId } from '@/hooks'
 import { useMoreMenuActions } from '@/hooks/useMoreMenuActions'
-import {
-  isEncryptedFile,
-  getEncryptionKeyFromDirId,
-  getDecryptedFileURL
-} from '@/lib/encryption'
 import logger from '@/lib/logger'
 import { navigateToModal } from '@/modules/actions/helpers'
 import Fallback from '@/modules/viewer/Fallback'
@@ -46,13 +40,11 @@ import {
  */
 const FilesViewer = ({ filesQuery, files, onClose, onChange, viewerProps }) => {
   const [currentFile, setCurrentFile] = useState(null)
-  const [currentDecryptedFileURL, setCurrentDecryptedFileURL] = useState(null)
   const [fetchingMore, setFetchingMore] = useState(false)
   const { isDesktop } = useBreakpoints()
   const fileId = useCurrentFileId()
   const client = useClient()
   const { t } = useI18n()
-  const vaultClient = useVaultClient()
   const navigate = useNavigate()
   const { driveId } = useParams()
 
@@ -111,25 +103,6 @@ const FilesViewer = ({ filesQuery, files, onClose, onChange, viewerProps }) => {
       isMounted = false
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    const getDecryptedURLIfNecessary = async () => {
-      const file = files[currentIndex]
-      if (file && isEncryptedFile(file)) {
-        const encryptionKey = await getEncryptionKeyFromDirId(
-          client,
-          file.dir_id
-        )
-        const url = await getDecryptedFileURL(client, vaultClient, {
-          file,
-          encryptionKey
-        })
-        setCurrentDecryptedFileURL(url)
-      }
-    }
-    getDecryptedURLIfNecessary()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentIndex])
 
   useEffect(() => {
     let isMounted = true
@@ -191,7 +164,6 @@ const FilesViewer = ({ filesQuery, files, onClose, onChange, viewerProps }) => {
       <RemoveScroll>
         <Viewer
           files={viewerFiles}
-          currentURL={currentDecryptedFileURL}
           currentIndex={viewerIndex}
           onChangeRequest={handleOnChange}
           onCloseRequest={handleOnClose}

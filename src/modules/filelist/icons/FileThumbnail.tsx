@@ -30,7 +30,6 @@ interface FileThumbnailProps {
   file: File | FolderPickerEntry
   size?: number
   isInSyncFromSharing?: boolean
-  isEncrypted?: boolean
   showSharedBadge?: boolean
   componentsProps?: {
     sharedBadge?: object
@@ -41,7 +40,6 @@ const FileThumbnail: React.FC<FileThumbnailProps> = ({
   file,
   size,
   isInSyncFromSharing,
-  isEncrypted,
   showSharedBadge = false,
   componentsProps = {
     sharedBadge: {}
@@ -49,14 +47,7 @@ const FileThumbnail: React.FC<FileThumbnailProps> = ({
 }) => {
   const { viewType } = useViewSwitcherContext()
 
-  const fileIcon = (
-    <FileIcon
-      file={file}
-      size={size}
-      isEncrypted={isEncrypted}
-      viewType={viewType}
-    />
-  )
+  const fileIcon = <FileIcon file={file} size={size} viewType={viewType} />
 
   if (isNextcloudFile(file)) {
     return <FileIconMime file={file} size={size} />

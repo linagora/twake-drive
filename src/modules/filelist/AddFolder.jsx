@@ -12,20 +12,13 @@ import { AddFolderCard } from '@/modules/filelist/AddFolderCard'
 import { AddFolderRow } from '@/modules/filelist/AddFolderRow'
 import {
   isTypingNewFolderName,
-  hideNewFolderInput,
-  isEncryptedFolder
+  hideNewFolderInput
 } from '@/modules/filelist/duck'
 import AddFolderRowVz from '@/modules/filelist/virtualized/AddFolderRow'
 import { createFolder } from '@/modules/navigation/duck'
 import { useNewItemHighlightContext } from '@/modules/upload/NewItemHighlightProvider'
 
-export const AddFolder = ({
-  visible,
-  isEncrypted,
-  onSubmit,
-  onAbort,
-  extraColumns
-}) => {
+export const AddFolder = ({ visible, onSubmit, onAbort, extraColumns }) => {
   const { t } = useI18n()
   const { showAlert } = useAlert()
   const { isMobile } = useBreakpoints()
@@ -44,7 +37,6 @@ export const AddFolder = ({
 
   return (
     <Comp
-      isEncrypted={isEncrypted}
       onSubmit={name => onSubmit(name, showAlert, t)}
       onAbort={accidental => onAbort(accidental, showAlert, t)}
       extraColumns={extraColumns}
@@ -53,7 +45,6 @@ export const AddFolder = ({
 }
 
 const AddFolderWithState = ({
-  vaultClient,
   currentFolderId,
   driveId,
   extraColumns,
@@ -64,21 +55,15 @@ const AddFolderWithState = ({
   const client = useClient()
   const dispatch = useDispatch()
   const visible = useSelector(isTypingNewFolderName)
-  const isEncrypted = useSelector(isEncryptedFolder)
 
   const onSubmit = (name, showAlert, t) =>
     dispatch(async dispatch =>
       dispatch(
         createFolder(
           client,
-          vaultClient,
           name,
           currentFolderId,
-          {
-            isEncryptedFolder: isEncrypted,
-            showAlert,
-            t
-          },
+          { showAlert, t },
           driveId,
           addItems
         )
@@ -101,7 +86,6 @@ const AddFolderWithState = ({
   return (
     <AddFolder
       visible={visible}
-      isEncrypted={isEncrypted}
       extraColumns={extraColumns}
       onSubmit={onSubmit}
       onAbort={onAbort}

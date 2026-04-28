@@ -101,7 +101,6 @@
     "message": "تحميل"
   },
   "error": {
-    "button": {},
     "download_file": {
       "offline": "يتوجب أن تكون متصلا لتنزيل هذا الملف",
       "missing": "إنّ الملف مفقود"

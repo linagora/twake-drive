@@ -35,7 +35,6 @@ describe('makeNormalizedFile', () => {
       url: '/folder/fileId',
       parentUrl: '/folder/fileId',
       openOn: 'drive',
-      isEncrypted: false,
       mime: undefined,
       type: 'directory'
     })
@@ -59,7 +58,6 @@ describe('makeNormalizedFile', () => {
       url: '/folder/folderId/file/fileId',
       parentUrl: '/folder/folderId',
       openOn: 'drive',
-      isEncrypted: false,
       mime: undefined,
       type: 'file'
     })
@@ -85,7 +83,6 @@ describe('makeNormalizedFile', () => {
       url: '/n/noteId',
       parentUrl: '/folder/folderId',
       openOn: 'notes',
-      isEncrypted: false,
       mime: undefined,
       type: 'file'
     })
@@ -110,7 +107,6 @@ describe('makeNormalizedFile', () => {
       url: '/folder/folderId/file/fileId',
       parentUrl: '/folder/folderId',
       openOn: 'drive',
-      isEncrypted: false,
       mime: undefined,
       type: 'file'
     })

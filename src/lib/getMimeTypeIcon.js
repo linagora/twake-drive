@@ -16,27 +16,16 @@ import IconZip from 'cozy-ui/transpiled/react/Icons/FileTypeZip'
 
 import IconDocs from '@/assets/icons/icon-docs.svg'
 import { getFileMimetype } from '@/lib/getFileMimetype'
-import IconEncryptedFolder from '@/modules/views/Folder/EncryptedFolderIcon'
 
 /**
- * Returns the appropriate icon for a given file based on its mime type and other properties.
+ * Returns the appropriate icon for a given file based on its mime type.
  *
- * @param {boolean} isDirectory - Indicates whether the file is a directory.
- * @param {string} name - The name of the file.
- * @param {string} mime - The mime type of the file.
- * @param {Object} [options] - Additional options.
- * @param {boolean} [options.isEncrypted] - Indicates whether the file is encrypted. Default is false.
- * @returns {import('react').ReactNode} - The icon corresponding to the file's mime type.
+ * @param {boolean} isDirectory
+ * @param {string} name
+ * @param {string} mime
+ * @returns {import('react').ReactNode}
  */
-const getMimeTypeIcon = (
-  isDirectory,
-  name,
-  mime,
-  { isEncrypted = false } = {}
-) => {
-  if (isEncrypted) {
-    return IconEncryptedFolder
-  }
+const getMimeTypeIcon = (isDirectory, name, mime) => {
   if (isDirectory) {
     return IconFolder
   } else if (/\.cozy-note$/.test(name)) {

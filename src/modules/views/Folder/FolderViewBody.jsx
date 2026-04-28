@@ -1,16 +1,8 @@
 import cx from 'classnames'
-import React, {
-  useCallback,
-  useContext,
-  useState,
-  useEffect,
-  useRef
-} from 'react'
+import React, { useContext, useState, useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
-import { useNavigate } from 'react-router-dom'
 
 import { isSharingShortcut } from 'cozy-client/dist/models/file'
-import { useVaultClient } from 'cozy-keys-lib'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import { useFileSorting } from './hooks/useFileSorting'
@@ -33,7 +25,6 @@ import { FileListHeader } from '@/modules/filelist/FileListHeader'
 import FileListRowsPlaceholder from '@/modules/filelist/FileListRowsPlaceholder'
 import LoadMore from '@/modules/filelist/LoadMoreV2'
 import { isTypingNewFolderName } from '@/modules/filelist/duck'
-import { FolderUnlocker } from '@/modules/folder/components/FolderUnlocker'
 import SelectionBar from '@/modules/selection/SelectionBar'
 import { isReferencedByShareInSharingContext } from '@/modules/views/Folder/syncHelpers'
 
@@ -65,7 +56,6 @@ const FolderViewBody = ({
   driveId
 }) => {
   const { isDesktop } = useBreakpoints()
-  const navigate = useNavigate()
   const { viewType, switchView } = useViewSwitcherContext()
   const folderViewRef = useRef()
   const IsAddingFolder = useSelector(isTypingNewFolderName)
@@ -104,7 +94,6 @@ const FolderViewBody = ({
 
   const { isBigThumbnail } = useThumbnailSizeContext()
   const { sharingsValue } = useContext(AcceptingSharingContext)
-  const vaultClient = useVaultClient()
 
   const isInError = queryResults.some(query => query.fetchStatus === 'failed')
   const hasDataToShow =
@@ -151,15 +140,8 @@ const FolderViewBody = ({
     return () => clearTimeout(timeout)
   }, [isLoading])
 
-  const handleFolderUnlockerDismiss = useCallback(() => {
-    navigate('/folder')
-  }, [navigate])
-
   return (
-    <FolderUnlocker
-      folder={displayedFolder}
-      onDismiss={handleFolderUnlockerDismiss}
-    >
+    <>
       <SelectionBar actions={actions} />
       <FileList ref={folderViewRef}>
         {hasDataToShow && (
@@ -177,7 +159,6 @@ const FolderViewBody = ({
           {!hasDataToShow && !needsToWait && (
             <FileListBodyWrapper viewType={viewType} isDesktop={isDesktop}>
               <AddFolder
-                vaultClient={vaultClient}
                 refreshFolderContent={refreshFolderContent}
                 extraColumns={extraColumns}
                 currentFolderId={currentFolderId}
@@ -193,7 +174,6 @@ const FolderViewBody = ({
           {showEmpty && (
             <EmptyWrapper
               currentFolderId={currentFolderId}
-              displayedFolder={displayedFolder}
               canUpload={canUpload}
               driveId={driveId}
             />
@@ -212,7 +192,6 @@ const FolderViewBody = ({
                   />
                 )}
                 <AddFolder
-                  vaultClient={vaultClient}
                   refreshFolderContent={refreshFolderContent}
                   extraColumns={extraColumns}
                   currentFolderId={currentFolderId}
@@ -264,7 +243,7 @@ const FolderViewBody = ({
           )}
         </FileListBody>
       </FileList>
-    </FolderUnlocker>
+    </>
   )
 }
 

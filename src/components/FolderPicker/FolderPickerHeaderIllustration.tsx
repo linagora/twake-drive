@@ -20,13 +20,7 @@ const FolderPickerHeaderIllustration: React.FC<
 
     // this is a cozy files
     if (firstItem.class) {
-      return (
-        <FileThumbnail
-          file={firstItem}
-          isEncrypted={false}
-          isInSyncFromSharing={false}
-        />
-      )
+      return <FileThumbnail file={firstItem} isInSyncFromSharing={false} />
     }
 
     // this is a cozy-flagship file, doesn't have a class yet
