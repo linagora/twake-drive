@@ -78,6 +78,11 @@
       "action": "OPEN",
       "type": ["io.cozy.suggestions"],
       "href": "/intents"
+    },
+    {
+      "action": "PICK",
+      "type": ["io.cozy.files"],
+      "href": "/intents"
     }
   ],
   "entrypoints": [
