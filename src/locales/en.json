@@ -634,6 +634,16 @@
     "restoreError": "An error has occurred, please try again.",
     "destroySuccess": "The item has been deleted"
   },
+  "MigrationProgressBanner": {
+    "title": "Migration from Nextcloud in progress",
+    "percent": "%{percent}% complete",
+    "importing": "Importing %{count} files from Nextcloud...",
+    "cancel": "Cancel",
+    "done": {
+      "title": "Migration Complete!",
+      "body": "Successfully imported %{count} files from Nextcloud"
+    }
+  },
   "EntriesType": {
     "file": "file |||| files",
     "directory": "folder |||| folders",

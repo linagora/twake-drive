@@ -610,6 +610,16 @@
     "restoreError": "Đã xảy ra lỗi, vui lòng thử lại.",
     "destroySuccess": "Mục đã được xóa vĩnh viễn"
   },
+  "MigrationProgressBanner": {
+    "title": "Đang di chuyển dữ liệu từ Nextcloud",
+    "percent": "Hoàn tất %{percent}%",
+    "importing": "Đang nhập %{count} tệp từ Nextcloud...",
+    "cancel": "Hủy",
+    "done": {
+      "title": "Di chuyển hoàn tất !",
+      "body": "Đã nhập thành công %{count} tệp từ Nextcloud"
+    }
+  },
   "EntriesType": {
     "file": "tệp |||| các tệp",
     "directory": "thư mục |||| các thư mục",

@@ -611,6 +611,16 @@
     "restoreError": "Произошла ошибка, попробуйте ещё раз.",
     "destroySuccess": "Элемент удалён"
   },
+  "MigrationProgressBanner": {
+    "title": "Миграция с Nextcloud в процессе",
+    "percent": "%{percent}% завершено",
+    "importing": "Импорт %{count} файлов из Nextcloud...",
+    "cancel": "Отменить",
+    "done": {
+      "title": "Миграция завершена!",
+      "body": "Успешно импортировано %{count} файлов из Nextcloud"
+    }
+  },
   "EntriesType": {
     "file": "файл |||| файлы",
     "directory": "папка |||| папки",

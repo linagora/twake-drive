@@ -631,6 +631,16 @@
     "restoreError": "Une erreur est survenue, merci de réessayer.",
     "destroySuccess": "L’élément a bien été supprimé"
   },
+  "MigrationProgressBanner": {
+    "title": "Migration depuis Nextcloud en cours",
+    "percent": "%{percent}% terminé",
+    "importing": "Importation de %{count} fichiers depuis Nextcloud ...",
+    "cancel": "Annuler",
+    "done": {
+      "title": "Migration terminée !",
+      "body": "%{count} fichiers importés avec succès depuis Nextcloud"
+    }
+  },
   "EntriesType": {
     "file": "fichier |||| fichiers",
     "directory": "dossier |||| dossiers",

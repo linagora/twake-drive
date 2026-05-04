@@ -228,6 +228,11 @@
       "description": "Required to access the drive settings",
       "type": "io.cozy.drive.settings",
       "verbs": ["ALL"]
+    },
+    "nextcloud_migrations": {
+      "description": "Read Nextcloud migration documents and subscribe to updates",
+      "type": "io.cozy.nextcloud.migrations",
+      "verbs": ["GET"]
     }
   },
   "accept_from_flagship": true,

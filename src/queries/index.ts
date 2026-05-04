@@ -7,7 +7,11 @@ import {
   TRASH_DIR_ID,
   SETTINGS_DIR_PATH
 } from '@/constants/config'
-import { DOCTYPE_ALBUMS, DOCTYPE_FILES_SETTINGS } from '@/lib/doctypes'
+import {
+  DOCTYPE_ALBUMS,
+  DOCTYPE_FILES_SETTINGS,
+  NEXTCLOUD_MIGRATIONS_DOCTYPE
+} from '@/lib/doctypes'
 import { formatFolderQueryId } from '@/lib/queries'
 
 export interface QueryConfig {
@@ -658,4 +662,14 @@ export const buildSharedDriveIdQuery: QueryBuilder<
     singleDocData: true,
     enabled: !!driveId
   }
+})
+
+export const buildRunningMigrationQuery: QueryBuilder = () => ({
+  definition: () =>
+    Q(NEXTCLOUD_MIGRATIONS_DOCTYPE)
+      .where({ status: 'running' })
+      .indexFields(['status', 'cozyMetadata.createdAt'])
+      .sortBy([{ status: 'desc' }, { 'cozyMetadata.createdAt': 'desc' }])
+      .limitBy(1),
+  options: { as: `${NEXTCLOUD_MIGRATIONS_DOCTYPE}/running` }
 })
