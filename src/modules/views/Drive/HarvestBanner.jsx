@@ -7,6 +7,7 @@ import Divider from 'cozy-ui/transpiled/react/Divider'
 import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import useDocument from '@/components/useDocument'
+import { getKonnectorSlugFromFile } from '@/lib/konnectors'
 import {
   buildTriggersQueryByAccountId,
   buildFileOrFolderByIdQuery
@@ -26,7 +27,7 @@ const HarvestBanner = ({ folderId }) => {
     enabled: Boolean(fileId)
   })
   if (file.data) {
-    konnectorSlug = file.data.cozyMetadata?.createdByApp
+    konnectorSlug = getKonnectorSlugFromFile(file.data)
     accountId = file.data.cozyMetadata?.sourceAccount
   }
   const queryTriggers = buildTriggersQueryByAccountId(accountId)
