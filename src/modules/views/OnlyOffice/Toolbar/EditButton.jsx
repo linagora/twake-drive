@@ -126,10 +126,10 @@ const EditButtonWrapper = () => {
   const { isPublic } = useOnlyOfficeContext()
 
   if (isPublic) {
-    return <EditButtonWithQuery />
+    return <EditButton openTooltip={false} />
   }
 
-  return <EditButton openTooltip={false} />
+  return <EditButtonWithQuery />
 }
 
 export default EditButtonWrapper
