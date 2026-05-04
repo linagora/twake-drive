@@ -78,7 +78,7 @@ const LayoutContent = () => {
         <Sidebar className="u-flex-justify-between">
           <div>
             {isDesktop ? (
-              <div className="u-mh-1-half u-mt-1-half">
+              <div className="u-mh-1 u-mt-half">
                 <AddMenuProvider
                   canCreateFolder={true}
                   canUpload={!isFolderReadOnly}
