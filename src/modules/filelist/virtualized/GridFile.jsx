@@ -30,12 +30,12 @@ import {
 } from '@/modules/drive/rename'
 import FileOpener from '@/modules/filelist/FileOpener'
 import FileThumbnail from '@/modules/filelist/icons/FileThumbnail'
+import { useFormattedUpdatedAt } from '@/modules/filelist/useFormattedUpdatedAt'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 import { useNewItemHighlightContext } from '@/modules/upload/NewItemHighlightProvider'
 
 const GridFile = ({
   t,
-  f,
   attributes,
   actions,
   isRenaming,
@@ -44,7 +44,7 @@ const GridFile = ({
   disabled,
   refreshFolderContent,
   isInSyncFromSharing,
-  breakpoints: { isExtraLarge, isMobile },
+  breakpoints: { isMobile },
   disableSelection = false,
   canInteractWith,
   onContextMenu,
@@ -86,12 +86,7 @@ const GridFile = ({
       : undefined
 
   const updatedAt = attributes.updated_at || attributes.created_at
-  const formattedUpdatedAt = f(
-    updatedAt,
-    isExtraLarge
-      ? t('table.row_update_format_full')
-      : t('table.row_update_format')
-  )
+  const formattedUpdatedAt = useFormattedUpdatedAt(updatedAt)
 
   // We don't allow any action on shared drives and trash
   // because they are magic folder created by the stack
@@ -213,7 +208,6 @@ const GridFile = ({
 
 GridFile.propTypes = {
   t: PropTypes.func,
-  f: PropTypes.func,
   attributes: PropTypes.object.isRequired,
   actions: PropTypes.array,
   isRenaming: PropTypes.bool,
@@ -233,10 +227,10 @@ GridFile.propTypes = {
 }
 
 export const DumbGridFile = props => {
-  const { t, f } = useI18n()
+  const { t } = useI18n()
   const breakpoints = useBreakpoints()
 
-  return <GridFile t={t} f={f} breakpoints={breakpoints} {...props} />
+  return <GridFile t={t} breakpoints={breakpoints} {...props} />
 }
 
 export const GridFileWithSelection = props => {

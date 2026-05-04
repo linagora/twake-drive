@@ -7,8 +7,6 @@ import { isDirectory } from 'cozy-client/dist/models/file'
 import { isSharingShortcut } from 'cozy-client/dist/models/file'
 import { useVaultClient } from 'cozy-keys-lib'
 import { useSharingContext } from 'cozy-sharing'
-import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'
-import { useI18n } from 'twake-i18n'
 
 import AcceptingSharingContext from '@/lib/AcceptingSharingContext'
 import { ActionMenuWithHeader } from '@/modules/actionmenu/ActionMenuWithHeader'
@@ -20,6 +18,7 @@ import {
 } from '@/modules/drive/rename'
 import AddFolder from '@/modules/filelist/AddFolder'
 import FileOpener from '@/modules/filelist/FileOpener'
+import { useFormattedUpdatedAt } from '@/modules/filelist/useFormattedUpdatedAt'
 import FileAction from '@/modules/filelist/virtualized/cells/FileAction'
 import FileName from '@/modules/filelist/virtualized/cells/FileName'
 import LastUpdate from '@/modules/filelist/virtualized/cells/LastUpdate'
@@ -39,10 +38,8 @@ const Cell = ({
   refreshFolderContent,
   driveId
 }) => {
-  const { f, t } = useI18n()
   const vaultClient = useVaultClient()
 
-  const { isExtraLarge } = useBreakpoints()
   const { sharingsValue } = useContext(AcceptingSharingContext)
   const { byDocId } = useSharingContext()
   const filerowMenuToggleRef = useRef()
@@ -56,6 +53,9 @@ const Cell = ({
     state =>
       isRenamingSelector(state) && get(getRenamingFile(state), 'id') === row.id
   )
+
+  const updatedAt = row.updated_at || row.created_at
+  const formattedUpdatedAt = useFormattedUpdatedAt(updatedAt)
 
   if (row.type === 'tempDirectory') {
     if (column.id === 'name') {
@@ -78,13 +78,6 @@ const Cell = ({
 
   const formattedSize =
     !isDirectory(row) && row.size ? filesize(row.size, { base: 10 }) : undefined
-  const updatedAt = row.updated_at || row.created_at
-  const formattedUpdatedAt = f(
-    updatedAt,
-    isExtraLarge
-      ? t('table.row_update_format_full')
-      : t('table.row_update_format')
-  )
   const isSharingContextEmpty = Object.keys(sharingsValue).length <= 0
   const isInSyncFromSharing =
     !isSharingContextEmpty &&

@@ -7,7 +7,10 @@ const LastUpdate = ({ date, formatted }) => {
   const { f, t } = useI18n()
 
   return (
-    <time dateTime={date} title={f(date, t('LastUpdate.titleFormat'))}>
+    <time
+      dateTime={date}
+      {...(formatted && { title: f(date, t('LastUpdate.titleFormat')) })}
+    >
       {formatted}
     </time>
   )

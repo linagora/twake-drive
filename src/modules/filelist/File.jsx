@@ -34,6 +34,7 @@ import {
 } from '@/modules/drive/rename'
 import FileOpener from '@/modules/filelist/FileOpener'
 import FileThumbnail from '@/modules/filelist/icons/FileThumbnail'
+import { useFormattedUpdatedAt } from '@/modules/filelist/useFormattedUpdatedAt'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 
 const FileWrapper = ({ children, viewType, className, onContextMenu }) =>
@@ -64,7 +65,6 @@ const ThumbnailWrapper = ({ children, viewType, className }) =>
 
 const File = ({
   t,
-  f,
   attributes,
   actions,
   isRenaming,
@@ -75,7 +75,7 @@ const File = ({
   refreshFolderContent,
   isInSyncFromSharing,
   extraColumns,
-  breakpoints: { isExtraLarge, isMobile },
+  breakpoints: { isMobile },
   disableSelection = false,
   canInteractWith,
   onContextMenu,
@@ -129,12 +129,7 @@ const File = ({
       : undefined
 
   const updatedAt = attributes.updated_at || attributes.created_at
-  const formattedUpdatedAt = f(
-    updatedAt,
-    isExtraLarge
-      ? t('table.row_update_format_full')
-      : t('table.row_update_format')
-  )
+  const formattedUpdatedAt = useFormattedUpdatedAt(updatedAt)
 
   // We don't allow any action on shared drives and trash
   // because they are magic folder created by the stack
@@ -274,7 +269,6 @@ const File = ({
 
 File.propTypes = {
   t: PropTypes.func,
-  f: PropTypes.func,
   attributes: PropTypes.object.isRequired,
   actions: PropTypes.array,
   isRenaming: PropTypes.bool,
@@ -294,10 +288,10 @@ File.propTypes = {
 }
 
 export const DumbFile = props => {
-  const { t, f } = useI18n()
+  const { t } = useI18n()
   const breakpoints = useBreakpoints()
 
-  return <File t={t} f={f} breakpoints={breakpoints} {...props} />
+  return <File t={t} breakpoints={breakpoints} {...props} />
 }
 
 export const FileWithSelection = props => {
