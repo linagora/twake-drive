@@ -88,11 +88,11 @@ const LayoutContent = () => {
                   isReadOnly={isFolderReadOnly}
                   componentsProps={{ AddMenu: { isUploadDisabled: true } }}
                 >
-                  <AddButton className="u-w-100 u-bdrs-6 u-mt-half u-mb-half" />
+                  <AddButton className="u-w-100 u-bdrs-6 u-mt-half u-mb-half u-fz-small" />
                 </AddMenuProvider>
                 <UploadButton
                   componentsProps={{
-                    button: { className: 'u-w-100 u-bdrs-6' }
+                    button: { className: 'u-w-100 u-bdrs-6 u-fz-small' }
                   }}
                   label={t('upload.label')}
                   displayedFolder={displayedFolder}

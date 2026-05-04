@@ -24,7 +24,7 @@ export const AddButton = ({ className }) => {
         className={className}
         variant="primary"
         disabled={isDisabled || isOffline}
-        startIcon={<Icon icon={PlusIcon} />}
+        startIcon={<Icon icon={PlusIcon} size={12} />}
         label={t('toolbar.menu_create')}
         onClick={handleToggle}
         {...a11y}

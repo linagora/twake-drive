@@ -68,7 +68,7 @@ const UploadButton = ({
               }
         }
         component="span"
-        startIcon={<Icon icon={UploadIcon} />}
+        startIcon={<Icon icon={UploadIcon} size={12} />}
         label={label}
       />
     </FileInput>
