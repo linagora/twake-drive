@@ -103,7 +103,6 @@ const GridFile = ({
   return (
     <Box
       display="block"
-      border={1}
       borderColor="var(--dividerColor)"
       borderRadius={8}
       padding={2}
