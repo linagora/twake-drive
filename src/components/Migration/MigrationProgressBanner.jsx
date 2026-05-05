@@ -15,50 +15,64 @@ import { buildRunningMigrationQuery } from '@/queries'
 
 const SNACKBAR_AUTO_HIDE_MS = 6000
 
-const DumbMigrationProgressBanner = ({ migrationDoc }) => {
-  const { t } = useI18n()
+const computeMigrationPercent = progress => {
+  if (!progress?.bytes_total) return 0
+
+  return Math.round((progress.bytes_imported / progress.bytes_total) * 100)
+}
+
+const showCompletedMigrationAlert = ({ doc, showAlert, t }) => {
+  if (doc.status !== 'completed') return
+
+  showAlert({
+    title: t('MigrationProgressBanner.done.title'),
+    message: t('MigrationProgressBanner.done.body', {
+      count: doc.progress?.files_total ?? 0
+    }),
+    severity: 'success',
+    duration: SNACKBAR_AUTO_HIDE_MS
+  })
+}
+
+const useMigrationCompletionAlert = ({ migrationId }) => {
   const client = useClient()
   const { showAlert } = useAlert()
-
-  const migrationId = migrationDoc?._id
-
-  const [isCanceling, setIsCanceling] = useState(false)
+  const { t } = useI18n()
 
   useEffect(() => {
     if (!migrationId) return
 
-    const handleUpdate = doc => {
-      if (doc.status === 'completed') {
-        showAlert({
-          title: t('MigrationProgressBanner.done.title'),
-          message: t('MigrationProgressBanner.done.body', {
-            count: doc.progress?.files_total ?? 0
-          }),
-          severity: 'success',
-          duration: SNACKBAR_AUTO_HIDE_MS
-        })
-      }
+    const handleMigrationUpdate = doc => {
+      showCompletedMigrationAlert({ doc, showAlert, t })
     }
 
     client.plugins.realtime.subscribe(
       'updated',
       NEXTCLOUD_MIGRATIONS_DOCTYPE,
       migrationId,
-      handleUpdate
+      handleMigrationUpdate
     )
+
     return () => {
       client.plugins.realtime.unsubscribe(
         'updated',
         NEXTCLOUD_MIGRATIONS_DOCTYPE,
         migrationId,
-        handleUpdate
+        handleMigrationUpdate
       )
     }
   }, [client, migrationId, showAlert, t])
+}
+
+const useMigrationCancel = ({ migrationId }) => {
+  const client = useClient()
+  const [isCanceling, setIsCanceling] = useState(false)
 
   const handleCancel = useCallback(async () => {
     if (!migrationId || isCanceling) return
+
     setIsCanceling(true)
+
     try {
       await client
         .getStackClient()
@@ -68,13 +82,23 @@ const DumbMigrationProgressBanner = ({ migrationDoc }) => {
     } finally {
       setIsCanceling(false)
     }
-  }, [client, migrationId, isCanceling])
+  }, [client, isCanceling, migrationId])
 
+  return { isCanceling, handleCancel }
+}
+
+const DumbMigrationProgressBanner = ({ migrationDoc }) => {
+  const { t } = useI18n()
+
+  const migrationId = migrationDoc?._id
   const progress = migrationDoc?.progress
-  const percent =
-    progress?.bytes_total > 0
-      ? Math.round((progress.bytes_imported / progress.bytes_total) * 100)
-      : 0
+  const percent = computeMigrationPercent(progress)
+
+  useMigrationCompletionAlert({ migrationId })
+
+  const { isCanceling, handleCancel } = useMigrationCancel({
+    migrationId
+  })
 
   return (
     <ProgressionBanner
