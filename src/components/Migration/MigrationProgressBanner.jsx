@@ -16,9 +16,13 @@ import { buildRunningMigrationQuery } from '@/queries'
 const SNACKBAR_AUTO_HIDE_MS = 6000
 
 const computeMigrationPercent = progress => {
-  if (!progress?.bytes_total) return 0
+  const imported = Number(progress?.bytes_imported) || 0
+  const total = Number(progress?.bytes_total) || 0
 
-  return Math.round((progress.bytes_imported / progress.bytes_total) * 100)
+  if (total <= 0) return 0
+
+  const percent = Math.round((imported / total) * 100)
+  return Number.isFinite(percent) ? Math.min(100, Math.max(0, percent)) : 0
 }
 
 const showCompletedMigrationAlert = ({ doc, showAlert, t }) => {
