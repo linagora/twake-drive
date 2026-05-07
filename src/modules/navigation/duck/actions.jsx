@@ -163,6 +163,10 @@ const uploadQueueProcessed =
     addItems
   ) =>
   dispatch => {
+    const namesOf = arr => arr.map(f => f.name)
+    const errorDetailsOf = arr =>
+      arr.map(f => ({ name: f.name, status: f.status, message: f.message }))
+
     const safeAddItems = typeof addItems === 'function' ? addItems : () => {}
     const conflictCount = conflicts.length
     const createdCount = created.length
@@ -173,36 +177,33 @@ const uploadQueueProcessed =
       ...conflicts
     ])
 
-    // Add new items to the NewContext
     const successfulUploads = [...created, ...updated]
     if (successfulUploads.length > 0) {
       safeAddItems(successfulUploads)
     }
 
-    // Add logging to debug upload completion
     logger.debug('uploadQueueProcessed called with:', {
-      created: created.map(f => f.name),
-      updated: updated.map(f => f.name),
-      quotas: quotas.map(f => f.name),
-      conflicts: conflicts.map(f => f.name),
-      networkErrors: networkErrors.map(f => f.name),
-      errors: errors.map(f => ({
-        name: f.name,
-        status: f.status,
-        message: f.message
-      })),
-      unreadableErrors: unreadableErrors.map(f => f.name),
-      fileTooLargeErrors: fileTooLargeErrors.map(f => f.name),
+      created: namesOf(created),
+      updated: namesOf(updated),
+      quotas: namesOf(quotas),
+      conflicts: namesOf(conflicts),
+      networkErrors: namesOf(networkErrors),
+      errors: errorDetailsOf(errors),
+      unreadableErrors: namesOf(unreadableErrors),
+      fileTooLargeErrors: namesOf(fileTooLargeErrors),
       navigateAfterUpload
     })
 
     if (quotas.length > 0) {
-      logger.warn(`Upload module triggers a quota alert: ${quotas}`)
+      logger.warn('Upload module triggers a quota alert:', namesOf(quotas))
       dispatch(
         showModal(<QuotaPaywall isIapEnabled={flag('flagship.iap.enabled')} />)
       )
     } else if (networkErrors.length > 0) {
-      logger.warn(`Upload module triggers a network error: ${networkErrors}`)
+      logger.warn(
+        'Upload module triggers a network error:',
+        namesOf(networkErrors)
+      )
       showAlert({
         message: t('upload.alert.network'),
         severity: 'error',
@@ -211,7 +212,8 @@ const uploadQueueProcessed =
       })
     } else if (unreadableErrors.length > 0) {
       logger.warn(
-        `Upload module triggers an unreadable files error: ${unreadableErrors}`
+        'Upload module triggers an unreadable files error:',
+        namesOf(unreadableErrors)
       )
       showAlert({
         message: t('upload.alert.unreadable_files'),
@@ -220,7 +222,7 @@ const uploadQueueProcessed =
         noClickAway: true
       })
     } else if (errors.length > 0) {
-      logger.error(`Upload module triggers an error: ${errors}`)
+      logger.error('Upload module triggers an error:', errorDetailsOf(errors))
       showAlert({
         message: t('upload.alert.errors', { type }),
         severity: 'error',
