@@ -63,13 +63,16 @@ const MoveModal = ({
   const handleConfirm = async folder => {
     setFolderSelected(folder)
 
-    const sharedParentPath = getSharedParentPath(entries[0].path)
+    const sharedParentPath = entries[0].path
+      ? getSharedParentPath(entries[0].path)
+      : ''
     const targetPath = joinPath(folder.path, entries[0].name)
 
     const areMovedFilesShared = hasOneOfEntriesShared(entries, byDocId)
-    const isOriginParentShared = hasSharedParent(entries[0].path) || !!driveId
+    const isOriginParentShared =
+      hasSharedParent(entries[0].path || '') || !!driveId
     const isTargetShared =
-      hasSharedParent(targetPath) ||
+      hasSharedParent(targetPath || '') ||
       (!!folder.driveId && folder.driveId !== driveId)
     const isInsideSameSharedFolder =
       (sharedParentPath && targetPath.startsWith(sharedParentPath)) ||
