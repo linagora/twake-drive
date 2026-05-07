@@ -2,8 +2,7 @@ import React, { FC } from 'react'
 
 import { useQuery } from 'cozy-client'
 import { IOCozyFile } from 'cozy-client/types/types'
-import List from 'cozy-ui/transpiled/react/List'
-import ListSubheader from 'cozy-ui/transpiled/react/ListSubheader'
+import { NavDesktopDropdown } from 'cozy-ui/transpiled/react/Nav'
 import { useI18n } from 'twake-i18n'
 
 import { ExternalDriveListItem } from './ExternalDriveListItem'
@@ -33,10 +32,8 @@ const ExternalDrives: FC<ExternalDriveListProps> = ({
 
   if (externalDrivesResult.data && externalDrivesResult.data.length > 0) {
     return (
-      <List
-        subheader={
-          <ListSubheader>{t('Nav.item_external_drives')}</ListSubheader>
-        }
+      <NavDesktopDropdown
+        label={t('Nav.item_external_drives')}
         className={className}
       >
         {externalDrivesResult.data.map(file => (
@@ -46,7 +43,7 @@ const ExternalDrives: FC<ExternalDriveListProps> = ({
             setLastClicked={clickState[1]}
           />
         ))}
-      </List>
+      </NavDesktopDropdown>
     )
   }
 

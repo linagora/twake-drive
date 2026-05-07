@@ -30,7 +30,12 @@ const ExternalDriveListItem: FC<ExternalDriveListItemProps> = ({
         onClick={(): void => setLastClicked(undefined)}
       >
         <NavIcon icon={FileTypeServerIcon} />
-        <Typography variant="inherit" color="inherit" noWrap>
+        <Typography
+          className="u-fz-small"
+          variant="inherit"
+          color="inherit"
+          noWrap
+        >
           {filename}
         </Typography>
       </FileLink>
