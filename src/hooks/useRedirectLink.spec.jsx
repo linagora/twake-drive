@@ -44,6 +44,7 @@ describe('useRedirectLink', () => {
 
   afterEach(() => {
     window.history = originalHistory
+    window.history.replaceState({}, '', '/')
     jest.clearAllMocks()
   })
 
@@ -164,5 +165,28 @@ describe('useRedirectLink', () => {
     expect(mockNavigate).toHaveBeenCalledTimes(0)
     expect(render.result.current.redirectLink).toBe('drive#/folder/id123')
     expect(render.result.current.canRedirect).toBe(false)
+  })
+
+  it('should not fetch permissions when no redirectLink is present', async () => {
+    useSearchParams.mockReturnValue([new URLSearchParams('')])
+    await act(async () => {
+      renderHook(() => useRedirectLink({ isPublic: true }))
+    })
+
+    expect(mockClient.collection().fetchOwnPermissions).not.toHaveBeenCalled()
+  })
+
+  it('should not fetch permissions on a public folder url shaped /?searchParam#hash', async () => {
+    useSearchParams.mockReturnValue([new URLSearchParams('')])
+    window.history.replaceState(
+      {},
+      '',
+      '/?redirectLink=drive%23%2Ffolder%2Fid123&fromPublicFolder=true'
+    )
+    await act(async () => {
+      renderHook(() => useRedirectLink({ isPublic: true }))
+    })
+
+    expect(mockClient.collection().fetchOwnPermissions).not.toHaveBeenCalled()
   })
 })
