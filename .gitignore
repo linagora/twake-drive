@@ -35,6 +35,7 @@ desktop.ini
 .flooignore
 .brackets.json
 .vscode
+.opencode
 
 # cozy-jobs-cli
 .token.json
@@ -42,4 +43,6 @@ konnector-dev-config.json
 
 # SWC
 .swc
-.opencode
+
+# eslint
+.eslintcache

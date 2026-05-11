@@ -11,7 +11,7 @@
     "tx": "tx pull --all || true",
     "lint": "npm-run-all --parallel 'lint:*'",
     "lint:styles": "stylint src --config ./node_modules/stylus-config-cozy-app/.stylintrc",
-    "lint:js": "eslint '{src,test}/**/*.{js,jsx,ts,tsx}'",
+    "lint:js": "eslint --concurrency 4 --cache --cache-strategy=content '{src,test}/**/*.{js,jsx,ts,tsx}'",
     "test": "env NODE_ENV='test' jest",
     "service": "yarn cozy-konnector-dev -m ./manifest.webapp"
   },
