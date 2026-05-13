@@ -107,6 +107,7 @@ const DumbMigrationProgressBanner = ({ migrationDoc }) => {
   return (
     <ProgressionBanner
       icon={<Icon icon={Upload} size={16} />}
+      color="transparent"
       text={
         <>
           {t('MigrationProgressBanner.title')}
