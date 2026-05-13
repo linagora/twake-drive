@@ -7201,10 +7201,10 @@ cozy-ui-plus@^7.1.0:
     react-international-phone "4.7.0"
     rooks "7.14.1"
 
-cozy-ui@^138.10.0:
-  version "138.10.0"
-  resolved "https://registry.yarnpkg.com/cozy-ui/-/cozy-ui-138.10.0.tgz#808ec445223fe4e21cb502cd21273f8b6e201838"
-  integrity sha512-8+ufmosr66Ndc19G8Y4r5EVnnhTr4qFvhlsNAQOOnQyuAhBzLPhlZLVJzwlVkM8ZZD010EO0/AFwkm+6iBvpPw==
+cozy-ui@^138.12.0:
+  version "138.12.0"
+  resolved "https://registry.yarnpkg.com/cozy-ui/-/cozy-ui-138.12.0.tgz#3e7650a6776be3dbaf0a5431508e53d976b3f0f7"
+  integrity sha512-QR3K2wEpjQgWZk4u9S0KHFg27j7Uip1apgwDD3vrIKXuoIFoQ7B1SZd+1wjQRZPLmjmNtf4exDl3ryvFy2V1CQ==
   dependencies:
     "@babel/runtime" "^7.3.4"
     "@date-io/date-fns" "1"
