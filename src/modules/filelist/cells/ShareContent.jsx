@@ -8,6 +8,7 @@ import styles from '@/styles/filelist.styl'
 
 import { useViewSwitcherContext } from '@/lib/ViewSwitcherContext'
 import { joinPath } from '@/lib/path'
+import { isFromSharedDriveRecipient } from '@/modules/shareddrives/helpers'
 
 const ShareContent = ({ file, disabled, isInSyncFromSharing }) => {
   const navigate = useNavigate()
@@ -21,8 +22,11 @@ const ShareContent = ({ file, disabled, isInSyncFromSharing }) => {
     e.stopPropagation()
 
     if (!disabled) {
-      // should be only disabled
-      navigate(joinPath(pathname, `file/${file._id}/share`))
+      const sharePath = isFromSharedDriveRecipient(file)
+        ? `/shareddrive/${file.driveId}/${file._id}/file/${file.id}/share`
+        : joinPath(pathname, `file/${file.id}/share`)
+
+      navigate(sharePath)
     }
   }
 
