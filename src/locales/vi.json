@@ -233,7 +233,7 @@
     "title": "Xóa %{filename}? |||| Xóa %{smart_count} %{type}?",
     "trash": "Tệp sẽ được chuyển vào Thùng rác. |||| Các tệp sẽ được chuyển vào Thùng rác.",
     "restore": "Bạn có thể khôi phục bất cứ lúc nào. |||| Bạn có thể khôi phục chúng bất cứ lúc nào.",
-    "share_accepted": "Chia sẻ sẽ bị dừng. Những liên hệ sau sẽ giữ một bản sao, nhưng thay đổi của bạn sẽ không còn được đồng bộ:",
+    "share_accepted": "Chia sẻ sẽ bị dừng.",
     "share_waiting": "Chia sẻ sẽ bị dừng. Những liên hệ sau sẽ không còn có thể chấp nhận chia sẻ và truy cập nội dung nữa:",
     "share_both": "Chia sẻ sẽ bị dừng. Một số liên hệ đã lưu tệp vào Twake sẽ giữ bản sao, còn những người khác sẽ mất quyền truy cập:",
     "link": "Liên kết chia sẻ sẽ bị vô hiệu hóa",
