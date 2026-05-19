@@ -239,7 +239,7 @@
     "title": "Supprimer %{filename} ? |||| Supprimer %{smart_count} %{type} ?",
     "trash": "Cet élément sera déplacé dans la corbeille. |||| Ces éléments seront déplacés dans la corbeille.",
     "restore": "Vous pouvez toujours le restaurer quand vous voulez.",
-    "share_accepted": "Le partage sera arrêté. Ainsi, les contacts suivant conserveront une copie mais vos changements ne seront plus synchronisés :",
+    "share_accepted": "Le partage sera arrêté.",
     "share_waiting": "Le partage sera arrêté. Ainsi, les contacts suivant ne pourront donc plus accepter le partage et ne pourront plus accéder aux contenus partagés :",
     "share_both": "Le partage sera arrêté. Ainsi, les contacts ayant stocké les fichiers dans leur Twake conserveront une copie, les autres contacts ne pourront plus accéder aux contenus partagés :",
     "link": "Le partage par lien ne sera plus actif.",

@@ -241,7 +241,7 @@
     "title": "Delete %{filename}? |||| Delete %{smart_count} %{type}?",
     "trash": "It will be moved to the Trash. |||| They will be moved to the Trash.",
     "restore": "You can still restore it whenever you want. |||| You can still restore them whenever you want.",
-    "share_accepted": "Sharing will be stopped. The following contacts will keep a copy, but your changes will no longer be synchronised:",
+    "share_accepted": "Sharing will be stopped",
     "share_waiting": "Sharing will be stopped. The following contacts will no longer be able to accept sharing and will no longer be able to access shared content:",
     "share_both": "Sharing will be stopped. This means that contacts who have stored files in their Twake will keep a copy, while other contacts will no longer be able to access shared content:",
     "link": "Link sharing will no longer be active",
