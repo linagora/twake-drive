@@ -3,6 +3,7 @@ import { createMockClient, models } from 'cozy-client'
 import { makeNormalizedFile, TYPE_DIRECTORY } from './helpers'
 
 models.note.fetchURL = jest.fn(() => 'noteUrl')
+models.file.shouldBeOpenedByOnlyOffice = jest.fn(() => false)
 
 const client = createMockClient({})
 
@@ -110,5 +111,24 @@ describe('makeNormalizedFile', () => {
       mime: undefined,
       type: 'file'
     })
+  })
+
+  it('should include driveId when file is OnlyOffice document', () => {
+    models.file.shouldBeOpenedByOnlyOffice = jest.fn(() => true)
+    const folders = [{ _id: 'folderId', path: 'folderPath' }]
+    const file = {
+      _id: 'fileId',
+      id: 'onlyofficeId',
+      dir_id: 'folderId',
+      type: 'file',
+      name: 'document.docx',
+      mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      class: 'document',
+      driveId: 'drive123'
+    }
+
+    const normalizedFile = makeNormalizedFile(client, folders, file)
+
+    expect(normalizedFile.url).toContain('/onlyoffice/drive123/')
   })
 })

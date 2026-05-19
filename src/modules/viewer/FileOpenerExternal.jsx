@@ -92,7 +92,10 @@ const FileOpener = props => {
             componentsProps={{
               OnlyOfficeViewer: {
                 isEnabled: isOfficeEnabled(isDesktop),
-                opener: file => navigate(makeOnlyOfficeFileRoute(file.id))
+                opener: file =>
+                  navigate(
+                    makeOnlyOfficeFileRoute(file.id, { driveId: file.driveId })
+                  )
               }
             }}
           >

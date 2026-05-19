@@ -36,6 +36,7 @@ const LightFileViewer = ({ files, isPublic }) => {
   const onlyOfficeOpener = useCallback(
     file => {
       const route = makeOnlyOfficeFileRoute(file.id, {
+        driveId: file.driveId,
         fromPathname: pathname
       })
       navigate(route)
