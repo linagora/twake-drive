@@ -99,7 +99,7 @@ const EditButton = ({ openTooltip }) => {
       <Buttons
         className="u-ml-half"
         onClick={handleClick}
-        disabled={editorMode === 'edit'}
+        disabled={editorMode !== 'view'}
         startIcon={<Icon icon={RenameIcon} />}
         label={t('OnlyOffice.actions.edit')}
       />
