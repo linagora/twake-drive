@@ -36,6 +36,10 @@ export const usePublicFilesQuery = currentFolderId => {
     const initialFetch = async () => {
       try {
         setFetchStatus('loading')
+        setData([])
+        setHasMore(false)
+        nextCursor.current = null
+
         const { included, cursor } = await statById(client, currentFolderId)
         nextCursor.current = cursor
         setData(included || [])
