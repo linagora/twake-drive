@@ -70,10 +70,14 @@ const SharedDriveFolderView = () => {
       folderId
     })
 
-  const queryResults =
-    sharedDriveResult.included !== undefined
-      ? [{ fetchStatus, data: sharedDriveResult.included, hasMore, fetchMore }]
-      : []
+  const queryResults = [
+    {
+      fetchStatus,
+      data: sharedDriveResult.included ?? [],
+      hasMore,
+      fetchMore
+    }
+  ]
 
   const canWriteToCurrentFolder = hasWriteAccess(folderId, driveId)
 
