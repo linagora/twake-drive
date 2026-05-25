@@ -10,9 +10,9 @@ import { NEXTCLOUD_MIGRATIONS_DOCTYPE } from '@/lib/doctypes'
 
 const Main = ({ children, isPublic = false }) => (
   <MainUI>
-    <PushBanner isPublic={isPublic} />
     {!isPublic && (
       <>
+        <PushBanner />
         <RealTimeQueries doctype={NEXTCLOUD_MIGRATIONS_DOCTYPE} />
         <MigrationProgressBanner />
       </>

@@ -3,6 +3,7 @@ import { IOCozyFile } from 'cozy-client/types/types'
 
 import { ROOT_DIR_ID } from '@/constants/config'
 import useCurrentFolderId from '@/hooks/useCurrentFolderId'
+import { usePublicContext } from '@/modules/public/PublicProvider'
 import { buildFileOrFolderByIdQuery } from '@/queries'
 
 interface DisplayedFolderResult {
@@ -12,13 +13,19 @@ interface DisplayedFolderResult {
 }
 
 const useDisplayedFolder = (): DisplayedFolderResult => {
+  const { isPublic } = usePublicContext()
   const folderId = useCurrentFolderId() ?? ROOT_DIR_ID
 
+  // Public-share tokens cannot read the instance root directory, so the query
+  // would 403. cozy-client's useQuery does not catch that rejection, so it
+  // surfaces as an unhandled promise rejection. Skip it.
+  const isForbiddenRootOnPublic = isPublic && folderId === ROOT_DIR_ID
+
   const folderQuery = buildFileOrFolderByIdQuery(folderId)
-  const folderResult = useQuery(
-    folderQuery.definition,
-    folderQuery.options
-  ) as unknown as {
+  const folderResult = useQuery(folderQuery.definition, {
+    ...folderQuery.options,
+    enabled: folderQuery.options.enabled !== false && !isForbiddenRootOnPublic
+  }) as unknown as {
     data?: IOCozyFile | null
     fetchStatus: string
     lastError: { status: number }
