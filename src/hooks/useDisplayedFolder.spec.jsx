@@ -4,6 +4,7 @@ import useCurrentFolderId from './useCurrentFolderId'
 import useDisplayedFolder from './useDisplayedFolder'
 
 import { ROOT_DIR_ID } from '@/constants/config'
+import { usePublicContext } from '@/modules/public/PublicProvider'
 
 jest.mock('cozy-client', () => ({
   ...jest.requireActual('cozy-client'),
@@ -11,8 +12,14 @@ jest.mock('cozy-client', () => ({
 }))
 
 jest.mock('./useCurrentFolderId')
+jest.mock('@/modules/public/PublicProvider')
 
 describe('useDisplayedFolder', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    usePublicContext.mockReturnValue({ isPublic: false })
+  })
+
   it('should return file folder if current folder exists', () => {
     const FOLDER = {
       id: 'folder-id',
@@ -38,5 +45,34 @@ describe('useDisplayedFolder', () => {
     const { displayedFolder } = useDisplayedFolder()
 
     expect(displayedFolder).toBe(FOLDER)
+  })
+
+  it('does not query the instance root directory on the public route', () => {
+    // Public-share tokens cannot read the instance root directory, so the query
+    // would 403. cozy-client's useQuery does not catch that rejection, so it
+    // surfaces as an unhandled promise rejection.
+    useQuery.mockReturnValue({ data: null, fetchStatus: 'pending' })
+    useCurrentFolderId.mockReturnValue(null) // falls back to ROOT_DIR_ID
+    usePublicContext.mockReturnValue({ isPublic: true })
+
+    useDisplayedFolder()
+
+    expect(useQuery).toHaveBeenCalledWith(
+      expect.any(Function),
+      expect.objectContaining({ enabled: false })
+    )
+  })
+
+  it('still queries the root directory on the authenticated route', () => {
+    useQuery.mockReturnValue({ data: null, fetchStatus: 'pending' })
+    useCurrentFolderId.mockReturnValue(null) // falls back to ROOT_DIR_ID
+    usePublicContext.mockReturnValue({ isPublic: false })
+
+    useDisplayedFolder()
+
+    expect(useQuery).toHaveBeenCalledWith(
+      expect.any(Function),
+      expect.objectContaining({ enabled: true })
+    )
   })
 })
