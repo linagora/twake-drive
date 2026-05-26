@@ -1,0 +1,30 @@
+host: 0.0.0.0
+port: 80
+
+admin:
+  host: 0.0.0.0
+  port: 6060
+
+subdomains: flat
+
+fs:
+  url: file:///var/lib/cozy/storage
+
+couchdb:
+  url: http://admin:password@couchdb:5984/
+
+mail:
+  disable_tls: true
+  skip_certificate_validation: true
+  host: localhost
+  port: 25
+  noreply_address: noreply@cozy.localhost
+  noreply_name: Cozy Test
+
+contexts:
+  default:
+    sharing:
+      auto_accept_trusted: true
+      auto_accept_trusted_contacts: true
+      trusted_domains:
+        - cozy.localhost
