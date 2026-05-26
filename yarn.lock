@@ -2783,6 +2783,13 @@
   resolved "https://registry.yarnpkg.com/@pkgr/core/-/core-0.2.9.tgz#d229a7b7f9dac167a156992ef23c7f023653f53b"
   integrity sha512-QNqXyfVS2wm9hweSYD2O7F0G06uurj9kZ96TRQE5Y9hU7+tgdZwIkbAKc5Ocy1HxEY2kuDQa6cQ1WRs/O5LFKA==
 
+"@playwright/test@^1.58.2":
+  version "1.58.2"
+  resolved "https://registry.yarnpkg.com/@playwright/test/-/test-1.58.2.tgz#b0ad585d2e950d690ef52424967a42f40c6d2cbd"
+  integrity sha512-akea+6bHYBBfA9uQqSYmlJXn61cTa+jbO87xVLCWbTqbWadRVmhxlXATaOjOgcBaWU4ePo0wB41KMFv3o35IXA==
+  dependencies:
+    playwright "1.58.2"
+
 "@polka/url@^1.0.0-next.24":
   version "1.0.0-next.28"
   resolved "https://registry.yarnpkg.com/@polka/url/-/url-1.0.0-next.28.tgz#d45e01c4a56f143ee69c54dd6b12eade9e270a73"
@@ -6834,17 +6841,17 @@ cozy-client@^60.20.0:
     sift "^6.0.0"
     url-search-params-polyfill "^8.0.0"
 
-cozy-client@^60.23.1:
-  version "60.23.1"
-  resolved "https://registry.yarnpkg.com/cozy-client/-/cozy-client-60.23.1.tgz#009d056973769af69c0e9fe7386cda6c3d0aea3c"
-  integrity sha512-6Kw3exQxvfKCgmemdh8NqX9IZECj/W+QP+DYF8E4lniadXGWsY3drg2oNhyKwHHea+lRU2fEt776Pr0de6ZjTg==
+cozy-client@^60.24.0:
+  version "60.24.0"
+  resolved "https://registry.yarnpkg.com/cozy-client/-/cozy-client-60.24.0.tgz#2de0b8e61bf14e555527292d4bddb20319c0f05d"
+  integrity sha512-rVcgOvgjYrczG9zfm4Mi+LQ9rO5kTpnqS5hXRqBQkDJKpEPOvbsYFGgN2r51RuKtDtnIVSDxAUNZoPjZoYCdBA==
   dependencies:
     "@cozy/minilog" "1.0.0"
     "@fastify/deepmerge" "^2.0.2"
     "@types/jest" "^26.0.20"
     "@types/lodash" "^4.14.170"
     btoa "^1.2.1"
-    cozy-stack-client "^60.23.0"
+    cozy-stack-client "^60.24.0"
     date-fns "^2.30.0"
     fast-deep-equal "^3.1.3"
     json-stable-stringify "^1.0.1"
@@ -7171,10 +7178,10 @@ cozy-stack-client@^60.19.0:
     mime "^2.4.0"
     qs "^6.7.0"
 
-cozy-stack-client@^60.23.0:
-  version "60.23.0"
-  resolved "https://registry.yarnpkg.com/cozy-stack-client/-/cozy-stack-client-60.23.0.tgz#14741377fdc407f1f65db37b24dccf4372afd148"
-  integrity sha512-KUo3JzLP1V2FGpoDehhsWsrFWWcJTsev+1PXQIHhZ4alfdw7Rdup6czHxUU6mx/SmCAwO27axN6jGHIYGZyYhQ==
+cozy-stack-client@^60.24.0:
+  version "60.24.0"
+  resolved "https://registry.yarnpkg.com/cozy-stack-client/-/cozy-stack-client-60.24.0.tgz#3fa7d419b894565f82848db5a11a486f50ae7946"
+  integrity sha512-p+Vv59BJbtcBeXHc6JXm6mZzp2L7k97pFx6AsnOl8KmvnVE82dnYV6tmRHOHJe/bQn0nrrexhqNAyQ9BO92V4Q==
   dependencies:
     detect-node "^2.0.4"
     mime "^2.4.0"
@@ -9351,6 +9358,11 @@ fs.realpath@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/fs.realpath/-/fs.realpath-1.0.0.tgz#1504ad2523158caa40db4a2787cb01411994ea4f"
   integrity sha1-FQStJSMVjKpA20onh8sBQRmU6k8=
+
+fsevents@2.3.2:
+  version "2.3.2"
+  resolved "https://registry.yarnpkg.com/fsevents/-/fsevents-2.3.2.tgz#8a526f78b8fdf4623b709e0b975c52c24c02fd1a"
+  integrity sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==
 
 fsevents@^1.0.0:
   version "1.2.13"
@@ -13494,6 +13506,20 @@ pkg-dir@^4.2.0:
   integrity sha512-HRDzbaKjC+AOWVXxAU/x54COGeIv9eb+6CkDSQoNTt4XyWoIJvuPsXizxu/Fr23EiekbtZwmh1IcIG/l/a10GQ==
   dependencies:
     find-up "^4.0.0"
+
+playwright-core@1.58.2:
+  version "1.58.2"
+  resolved "https://registry.yarnpkg.com/playwright-core/-/playwright-core-1.58.2.tgz#ac5f5b4b10d29bcf934415f0b8d133b34b0dcb13"
+  integrity sha512-yZkEtftgwS8CsfYo7nm0KE8jsvm6i/PTgVtB8DL726wNf6H2IMsDuxCpJj59KDaxCtSnrWan2AeDqM7JBaultg==
+
+playwright@1.58.2:
+  version "1.58.2"
+  resolved "https://registry.yarnpkg.com/playwright/-/playwright-1.58.2.tgz#afe547164539b0bcfcb79957394a7a3fa8683cfd"
+  integrity sha512-vA30H8Nvkq/cPBnNw4Q8TWz1EJyqgpuinBcHET0YVJVFldr8JDNiU9LaWAE1KqSkRYazuaBhTpB5ZzShOezQ6A==
+  dependencies:
+    playwright-core "1.58.2"
+  optionalDependencies:
+    fsevents "2.3.2"
 
 popper.js@1.16.1-lts:
   version "1.16.1-lts"
