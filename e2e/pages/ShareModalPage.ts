@@ -35,7 +35,7 @@ export class ShareModalPage {
   /** Submits the share form and waits for the modal to close (success). */
   async share(): Promise<void> {
     await this.dialog
-      .getByRole('button', { name: /share|send|confirm|ok/i })
+      .getByRole('button', { name: /share|send|confirm|ok|done/i })
       .click()
     await this.dialog.waitFor({ state: 'hidden', timeout: 15_000 })
   }
