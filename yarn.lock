@@ -6745,10 +6745,10 @@ cozy-app-publish@^0.40.1:
     tar "^6.1.11"
     verror "^1.10.1"
 
-cozy-bar@^33.3.0:
-  version "33.3.0"
-  resolved "https://registry.yarnpkg.com/cozy-bar/-/cozy-bar-33.3.0.tgz#822ffb179a330bb895502a60ff38ef9d63f1eb5d"
-  integrity sha512-4nezHLXHoOAjA70BhQjoDLY9/S8Dw44ySHxkU3wc+b9MCcTssyNXh99nxgKIsN19q/ReSq1FDFjl6+TUv8E6ZA==
+cozy-bar@^33.3.4:
+  version "33.3.4"
+  resolved "https://registry.yarnpkg.com/cozy-bar/-/cozy-bar-33.3.4.tgz#c879ce6a0efa24d22fda727af19bf9170edfe643"
+  integrity sha512-kaClwY3hLXPp92wdaYVY+vUpKzvWzWr6saze5qlbf6TxHbWVFsh8W4Md47QdwvrGS9Cue+kM53cjFEu7ZTdQvg==
   dependencies:
     classnames "^2.5.1"
     lodash.set "^4.3.2"
@@ -7140,10 +7140,10 @@ cozy-search@^0.25.3:
     react-type-animation "3.2.0"
     rooks "7.14.1"
 
-cozy-sharing@^32.3.1:
-  version "32.3.1"
-  resolved "https://registry.yarnpkg.com/cozy-sharing/-/cozy-sharing-32.3.1.tgz#da74e1c139f0a45eeb433264b30139c757c8ab94"
-  integrity sha512-1S5SO7QaFY3LRYj4LgpW+kB4J+6oY8Rw9tgCa0vc2sBRTbUKvYv1Nop0nbH/nEEoLDdXqbcWJKsRPHB/wgAj/g==
+cozy-sharing@^32.3.2:
+  version "32.3.2"
+  resolved "https://registry.yarnpkg.com/cozy-sharing/-/cozy-sharing-32.3.2.tgz#ed3819b8cb9a8e3454f2867652a10089a67943e7"
+  integrity sha512-BMsCCGYs/1Zk4O6Oor+bXCjm+jh5/e7g51t/fAllDeZ4TtfqdoWuRD07XkzVDwmkW+jhoU5ZGsWhOETt0d5XZg==
   dependencies:
     "@cozy/minilog" "^1.0.0"
     classnames "^2.5.1"
