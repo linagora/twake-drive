@@ -117,7 +117,7 @@ const DriveFolderView = () => {
     isOwner,
     byDocId,
     selectAll: () =>
-      base.toggleSelectAllItems(allResults.map(query => query.data).flat()),
+      base.toggleSelectAllItems(allResults.flatMap(query => query.data || [])),
     displayedFolder
   }
   const actions = makeActions(
