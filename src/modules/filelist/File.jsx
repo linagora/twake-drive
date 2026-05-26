@@ -27,7 +27,6 @@ import { useClipboardContext } from '@/contexts/ClipboardProvider'
 import { useViewSwitcherContext } from '@/lib/ViewSwitcherContext'
 import { ActionMenuWithHeader } from '@/modules/actionmenu/ActionMenuWithHeader'
 import { getContextMenuActions } from '@/modules/actions/helpers'
-import { extraColumnsPropTypes } from '@/modules/certifications'
 import {
   isRenaming as isRenamingReducer,
   getRenamingFile
@@ -74,7 +73,6 @@ const File = ({
   styleDisabled,
   refreshFolderContent,
   isInSyncFromSharing,
-  extraColumns,
   breakpoints: { isMobile },
   disableSelection = false,
   canInteractWith,
@@ -231,10 +229,6 @@ const File = ({
               }
             />
             <Size filesize={formattedSize} />
-            {extraColumns &&
-              extraColumns.map(column => (
-                <column.CellComponent key={column.label} file={attributes} />
-              ))}
             <Status
               file={attributes}
               disabled={isRowDisabledOrInSyncFromSharing}
@@ -281,7 +275,6 @@ File.propTypes = {
   breakpoints: PropTypes.object.isRequired,
   refreshFolderContent: PropTypes.func,
   isInSyncFromSharing: PropTypes.bool,
-  extraColumns: extraColumnsPropTypes,
   /** Disables the ability to select a file */
   disableSelection: PropTypes.bool,
   onToggleSelect: PropTypes.func

@@ -23,7 +23,6 @@ import styles from '@/styles/filelist.styl'
 import { useClipboardContext } from '@/contexts/ClipboardProvider'
 import { ActionMenuWithHeader } from '@/modules/actionmenu/ActionMenuWithHeader'
 import { getContextMenuActions } from '@/modules/actions/helpers'
-import { extraColumnsPropTypes } from '@/modules/certifications'
 import {
   isRenaming as isRenamingReducer,
   getRenamingFile
@@ -219,7 +218,6 @@ GridFile.propTypes = {
   breakpoints: PropTypes.object.isRequired,
   refreshFolderContent: PropTypes.func,
   isInSyncFromSharing: PropTypes.bool,
-  extraColumns: extraColumnsPropTypes,
   /** Disables the ability to select a file */
   disableSelection: PropTypes.bool,
   isOver: PropTypes.bool

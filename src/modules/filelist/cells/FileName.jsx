@@ -11,7 +11,6 @@ import styles from '@/styles/filelist.styl'
 
 import { useViewSwitcherContext } from '@/lib/ViewSwitcherContext'
 import RenameInput from '@/modules/drive/RenameInput'
-import CertificationsIcons from '@/modules/filelist/cells/CertificationsIcons'
 import {
   getFileNameAndExtension,
   makeParentFolderPath
@@ -75,7 +74,6 @@ const FileName = ({
                   className={styles['fil-file-description--path']}
                   text={parentFolderPath}
                 />
-                <CertificationsIcons attributes={attributes} />
               </div>
             ) : (
               <Link
@@ -92,7 +90,6 @@ const FileName = ({
                 {`${formattedUpdatedAt}${
                   formattedSize ? ` - ${formattedSize}` : ''
                 }`}
-                {isMobile && <CertificationsIcons attributes={attributes} />}
               </div>
             ))}
         </div>

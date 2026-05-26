@@ -167,16 +167,6 @@
       "head_updated_at_desc": "El más reciente primero",
       "head_size_asc": "El más liviano primero",
       "head_size_desc": "El más pesado primero"
-    },
-    "tooltip": {
-      "carbonCopy": {
-        "title": "Copia Carbón",
-        "caption": "Indica si Twake Workplace, su sitio de hospedaje,  define el documento como \"auténtico y original\", ya que puede afirmar que proviene directamente de un servicio de terceros, sin haber sufrido ninguna modificación."
-      },
-      "electronicSafe": {
-        "title": "Seguridad electrónica",
-        "caption": "Indica si el documento original está protegido por su seguridad digital personal con las certificaciones que le dan valor probatorio y una garantía de retención de 50 años más allá de su depósito si el documento es definido como \"auténtico y original\" por Twake Workplace, donde se hospeda su Twake, ya que puede afirmar que proviene directamente de un servicio de terceros, sin haber sufrido ninguna modificación.\n\n"
-      }
     }
   },
   "Storage": {

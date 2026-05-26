@@ -42,7 +42,6 @@ const NextcloudTrashFolderBody: FC<NextcloudTrashFolderBodyProps> = ({
       queryResults={queryResults}
       actions={fileActions}
       withFilePath={false}
-      extraColumns={[]}
     />
   )
 }

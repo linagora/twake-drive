@@ -8,7 +8,6 @@ import { useI18n } from 'twake-i18n'
 import styles from '@/styles/filelist.styl'
 
 import { SHARINGS_VIEW_ROUTE } from '@/constants/config'
-import CertificationsIcons from '@/modules/filelist/cells/CertificationsIcons.jsx'
 import { getFileNameAndExtension } from '@/modules/filelist/helpers'
 import { getFolderPath } from '@/modules/routeUtils'
 
@@ -27,7 +26,6 @@ const FileNamePath = ({
     return (
       <div className={styles['fil-file-infos']}>
         {`${formattedUpdatedAt}${formattedSize ? ` - ${formattedSize}` : ''}`}
-        <CertificationsIcons attributes={attributes} />
       </div>
     )
   }
@@ -42,7 +40,6 @@ const FileNamePath = ({
           className={styles['fil-file-description--path']}
           text={parentFolderPath}
         />
-        <CertificationsIcons attributes={attributes} />
       </div>
     )
   }

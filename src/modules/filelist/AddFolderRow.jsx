@@ -10,7 +10,7 @@ import FilenameInput from '@/modules/filelist/FilenameInput'
 import { Empty as EmptyCell, LastUpdate } from '@/modules/filelist/cells'
 import FileThumbnail from '@/modules/filelist/icons/FileThumbnail'
 
-const AddFolderRow = ({ onSubmit, onAbort, extraColumns }) => {
+const AddFolderRow = ({ onSubmit, onAbort }) => {
   const { isMobile } = useBreakpoints()
 
   return (
@@ -41,13 +41,6 @@ const AddFolderRow = ({ onSubmit, onAbort, extraColumns }) => {
         <>
           <LastUpdate />
           <EmptyCell className={styles['fil-content-size']} />
-          {extraColumns &&
-            extraColumns.map(column => (
-              <EmptyCell
-                key={column.label}
-                className={styles['fil-content-narrow']}
-              />
-            ))}
           <EmptyCell className={styles['fil-content-status']} />
         </>
       )}

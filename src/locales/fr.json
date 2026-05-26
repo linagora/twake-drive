@@ -195,16 +195,6 @@
       "head_updated_at_desc": "Plus récents en premier",
       "head_size_asc": "Plus légers en premier",
       "head_size_desc": "Plus lourds en premier"
-    },
-    "tooltip": {
-      "carbonCopy": {
-        "title": "Copie conforme",
-        "caption": "Le document est défini \"authentique et original\" par Twake Workplace, l'hébergeur de votre Twake, car il peut affirmer qu'il provient directement des services de son émetteur sans avoir subi aucune modification."
-      },
-      "electronicSafe": {
-        "title": "Coffre-fort numérique",
-        "caption": "Indique si le document original est sécurisé par votre coffre-fort numérique personnel avec les certifications qui lui confèrent une valeur probante et une garantie de conservation de 50 ans au-delà de son dépôt."
-      }
     }
   },
   "Storage": {
