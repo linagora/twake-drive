@@ -1,8 +1,7 @@
 import React, { useMemo } from 'react'
-import { useDispatch } from 'react-redux'
-import { useNavigate, useLocation, Outlet } from 'react-router-dom'
+import { Outlet } from 'react-router-dom'
 
-import { useClient, hasQueryBeenLoaded, useQuery } from 'cozy-client'
+import { hasQueryBeenLoaded, useQuery } from 'cozy-client'
 import flag from 'cozy-flags'
 import {
   useSharingContext,
@@ -11,26 +10,18 @@ import {
 } from 'cozy-sharing'
 import { makeActions } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
 import { Content } from 'cozy-ui/transpiled/react/Layout'
-import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
-import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
-import { useI18n } from 'twake-i18n'
 
+import { useFilteredSharings } from './useFilteredSharings'
 import withSharedDocumentIds from './withSharedDocumentIds'
 import FolderView from '../Folder/FolderView'
 import FolderViewBody from '../Folder/FolderViewBody'
 import FolderViewHeader from '../Folder/FolderViewHeader'
+import { useFolderViewBase } from '../Folder/hooks/useFolderViewBase'
 import FolderViewBodyVz from '../Folder/virtualized/FolderViewBody'
 
 import useHead from '@/components/useHead'
-import {
-  SHARED_DRIVES_DIR_ID,
-  SHARING_TAB_ALL,
-  SHARING_TAB_DRIVES
-} from '@/constants/config'
 import { useFolderSort } from '@/hooks'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
-import { useTransformFolderListHasSharedDriveShortcuts } from '@/hooks/useTransformFolderListHasSharedDriveShortcuts'
-import { useModalContext } from '@/lib/ModalContext'
 import {
   download,
   rename,
@@ -51,48 +42,30 @@ import AddMenuProvider from '@/modules/drive/AddMenu/AddMenuProvider'
 import FabWithAddMenuContext from '@/modules/drive/FabWithAddMenuContext'
 import Toolbar from '@/modules/drive/Toolbar'
 import FileListRowsPlaceholder from '@/modules/filelist/FileListRowsPlaceholder'
-import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 import { leaveSharedDrive } from '@/modules/shareddrives/components/actions/leaveSharedDrive'
 import { shareSharedDrive } from '@/modules/shareddrives/components/actions/shareSharedDrive'
 import {
   buildSharingsQuery,
   buildSharingsWithMetadataAttributeQuery
 } from '@/queries'
+
 const desktopExtraColumnsNames = ['carbonCopy', 'electronicSafe']
 const mobileExtraColumnsNames = []
 
 export const SharingsView = ({ sharedDocumentIds = [] }) => {
-  const navigate = useNavigate()
-  const { pathname } = useLocation()
-  const tab = SHARING_TAB_ALL
-  const { t, lang } = useI18n()
-  const { isMobile } = useBreakpoints()
-  const client = useClient()
-  const { pushModal, popModal } = useModalContext()
-  const { isSelectionBarVisible, toggleSelectAllItems, isSelectAll } =
-    useSelectionContext()
+  const base = useFolderViewBase()
   const sharingContext = useSharingContext()
   const { allLoaded, refresh } = sharingContext
-  const { isNativeFileSharingAvailable, shareFilesNative } =
-    useNativeFileSharing()
-  const dispatch = useDispatch()
-  useHead({ title: t('breadcrumb.title_sharings') })
-  const { showAlert } = useAlert()
+  const nativeSharing = useNativeFileSharing()
+  useHead({ title: base.t('breadcrumb.title_sharings') })
   const [sortOrder, setSortOrder, isSettingsLoaded] = useFolderSort('sharings')
 
-  const isEnabledSharedDrive = flag('drive.shared-drive.enabled')
-  const isEnabledFederatedSharedFolder = flag(
-    'drive.federated-shared-folder.enabled'
-  )
-
-  const extraColumnsNames = makeExtraColumnsNamesFromMedia({
-    isMobile,
-    desktopExtraColumnsNames,
-    mobileExtraColumnsNames
-  })
-
   const extraColumns = useExtraColumns({
-    columnsNames: extraColumnsNames,
+    columnsNames: makeExtraColumnsNamesFromMedia({
+      isMobile: base.isMobile,
+      desktopExtraColumnsNames,
+      mobileExtraColumnsNames
+    }),
     queryBuilder: buildSharingsWithMetadataAttributeQuery,
     sharedDocumentIds
   })
@@ -107,101 +80,35 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
   )
   const result = useQuery(query.definition, query.options)
 
-  /**
-   * Problem:
-   * - In the recipient's Sharing section, shared drives appear only as shortcuts
-   *   and don’t contain a root folder id (the folder id in the owner's shared drive).
-   *
-   * Why:
-   * - To open a shared drive, we need a URL like `shareddrive/:driveId/:rootFolderId`.
-   * - This information exists in `io.cozy.sharings`, which includes root folder id,
-   *   but the structure is not compatible with the directory format expected
-   *   in the Sharing UI.
-   *
-   * Solution:
-   * - Transform `sharedDrives` into directory-like objects with the required
-   *   properties (`id`, `path`, `attributes`,...) so they can be displayed
-   *   and opened consistently.
-   */
-  const {
-    sharedDrives: transformedSharedDrives,
-    nonSharedDriveList,
-    sharedDrivesLoaded
-  } = useTransformFolderListHasSharedDriveShortcuts(result.data)
-
-  const filteredResult = useMemo(() => {
-    if (!isEnabledSharedDrive && !isEnabledFederatedSharedFolder) {
-      const filteredResultData =
-        result.data?.filter(item => !(item.dir_id === SHARED_DRIVES_DIR_ID)) ||
-        []
-      return {
-        ...result,
-        // If there are no shared documents, we consider the data is loaded by setting fetchStatus to 'loaded' and lastFetch to now.
-        fetchStatus:
-          sharedDocumentIds?.length > 0 ? result.fetchStatus : 'loaded',
-        lastFetch:
-          // eslint-disable-next-line react-hooks/purity
-          sharedDocumentIds?.length > 0 ? result.lastFetch : Date.now(),
-        data: filteredResultData,
-        count: filteredResultData.length
-      }
-    }
-    const combinedData =
-      tab === SHARING_TAB_DRIVES
-        ? transformedSharedDrives
-        : [...transformedSharedDrives, ...nonSharedDriveList]
-
-    return {
-      ...result,
-      fetchStatus:
-        sharedDocumentIds?.length > 0 ? result.fetchStatus : 'loaded',
-      // eslint-disable-next-line react-hooks/purity
-      lastFetch: sharedDocumentIds?.length > 0 ? result.lastFetch : Date.now(),
-      data: combinedData,
-      count: combinedData.length
-    }
-  }, [
-    isEnabledSharedDrive,
-    isEnabledFederatedSharedFolder,
-    tab,
-    transformedSharedDrives,
-    nonSharedDriveList,
+  const { filteredResult, sharedDrivesLoaded } = useFilteredSharings({
     result,
-    sharedDocumentIds?.length
-  ])
+    sharedDocumentIds
+  })
 
   useKeyboardShortcuts({
     onPaste: () => refresh(),
-    client,
+    client: base.client,
     items: filteredResult?.data || [],
     sharingContext,
     allowCopy: false,
-    pushModal,
-    popModal,
+    pushModal: base.pushModal,
+    popModal: base.popModal,
     refresh
   })
 
   const actionsOptions = {
-    client,
-    t,
-    lang,
-    pushModal,
-    popModal,
+    ...base,
+    ...nativeSharing,
     refresh,
-    dispatch,
-    navigate,
-    pathname,
     hasWriteAccess: true,
     canMove: true,
     isPublic: false,
     shouldHideIfSharedDriveRecipient: true,
     allLoaded,
-    showAlert,
-    isMobile,
-    isNativeFileSharingAvailable,
-    shareFilesNative,
-    selectAll: () => toggleSelectAllItems(result.data),
-    isSelectAll
+    // Select All has to match the rendered list, not the raw query: the
+    // rendered list excludes the magic shared-drives dir when the feature
+    // flags are off and substitutes transformed shortcut entries when on.
+    selectAll: () => base.toggleSelectAllItems(filteredResult.data)
   }
 
   const actions = makeActions(
@@ -228,9 +135,9 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
 
   return (
     <FolderView>
-      <Content className={isMobile ? '' : 'u-pt-1'}>
+      <Content className={base.isMobile ? '' : 'u-pt-1'}>
         <FolderViewHeader>
-          <Breadcrumb path={[{ name: t('breadcrumb.title_sharings') }]} />
+          <Breadcrumb path={[{ name: base.t('breadcrumb.title_sharings') }]} />
           <Toolbar canUpload={false} canCreateFolder={false} />
         </FolderViewHeader>
         {!allLoaded ||
@@ -239,7 +146,7 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
           <FileListRowsPlaceholder />
         ) : (
           <>
-            {flag('drive.virtualization.enabled') && !isMobile ? (
+            {flag('drive.virtualization.enabled') && !base.isMobile ? (
               <FolderViewBodyVz
                 actions={actions}
                 queryResults={[filteredResult]}
@@ -267,13 +174,13 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
             <Outlet />
           </>
         )}
-        {isMobile && (
+        {base.isMobile && (
           <AddMenuProvider
             canCreateFolder={true}
             canUpload={true}
             disabled={false}
             displayedFolder={null}
-            isSelectionBarVisible={isSelectionBarVisible}
+            isSelectionBarVisible={base.isSelectionBarVisible}
             isPublic={false}
             refreshFolderContent={() => {}}
           >
