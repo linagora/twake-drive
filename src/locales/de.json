@@ -173,16 +173,6 @@
       "head_updated_at_desc": "Neueste zuerst",
       "head_size_asc": "Kleinste zuerst",
       "head_size_desc": "Größte zuerst"
-    },
-    "tooltip": {
-      "carbonCopy": {
-        "title": "Durchschlag",
-        "caption": "Zeigt an, ob das Dokument von Twake Workplace, dem Host Ihrer Twake, als \"authentisch und original\" definiert wird, da es behaupten kann, dass es direkt von einem Drittanbieterdienst stammt, ohne dass es verändert wurde."
-      },
-      "electronicSafe": {
-        "title": "Elektronischer Tresor",
-        "caption": "Gibt an, ob das Originaldokument in Ihrem persönlichen digitalen Tresor mit den Zertifizierungen, die ihm Beweiskraft verleihen, und einer 50-jährigen Aufbewahrungsgarantie über die Hinterlegung hinaus gesichert ist."
-      }
     }
   },
   "Storage": {

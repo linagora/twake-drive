@@ -38,10 +38,6 @@ const FileListBodyWrapper = ({ viewType, children }) => {
   )
 }
 
-// TODO: extraColumns is then passed to 'FileListHeader', 'AddFolder',
-// and 'File' (this one from a 'syncingFakeFile' and a normal file).
-// It is easy to forget to update one of these components to pass 'extraColumns'.
-// It would be ideal to centralize it somewhere.
 const FolderViewBody = ({
   currentFolderId,
   displayedFolder,
@@ -51,7 +47,6 @@ const FolderViewBody = ({
   canUpload = true,
   withFilePath = false,
   refreshFolderContent = null,
-  extraColumns,
   orderProps,
   driveId
 }) => {
@@ -152,7 +147,6 @@ const FolderViewBody = ({
             onFolderSort={changeSortOrder}
             viewType={viewType}
             switchViewType={switchView}
-            extraColumns={extraColumns}
           />
         )}
         <FileListBody selectionModeActive={false}>
@@ -160,7 +154,6 @@ const FolderViewBody = ({
             <FileListBodyWrapper viewType={viewType} isDesktop={isDesktop}>
               <AddFolder
                 refreshFolderContent={refreshFolderContent}
-                extraColumns={extraColumns}
                 currentFolderId={currentFolderId}
               />
             </FileListBodyWrapper>
@@ -187,13 +180,11 @@ const FolderViewBody = ({
                     withSelectionCheckbox={false}
                     actions={[]}
                     isInSyncFromSharing={true}
-                    extraColumns={extraColumns}
                     disableSelection={true}
                   />
                 )}
                 <AddFolder
                   refreshFolderContent={refreshFolderContent}
-                  extraColumns={extraColumns}
                   currentFolderId={currentFolderId}
                 />
                 {sortedFiles.map(file => {
@@ -219,7 +210,6 @@ const FolderViewBody = ({
                             sharingsValue
                           )
                         }
-                        extraColumns={extraColumns}
                         onToggleSelect={e => {
                           onToggleSelect(file?._id, e)
                         }}

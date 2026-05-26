@@ -31,21 +31,13 @@ import {
 } from '@/modules/actions'
 import { moveTo } from '@/modules/actions/components/moveTo'
 import { personalizeFolder } from '@/modules/actions/components/personalizeFolder'
-import { makeExtraColumnsNamesFromMedia } from '@/modules/certifications'
-import { useExtraColumns } from '@/modules/certifications/useExtraColumns'
 import AddMenuProvider from '@/modules/drive/AddMenu/AddMenuProvider'
 import FabWithAddMenuContext from '@/modules/drive/FabWithAddMenuContext'
 import Toolbar from '@/modules/drive/Toolbar'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 import Dropzone from '@/modules/upload/Dropzone'
 import FolderViewBodyVz from '@/modules/views/Folder/virtualized/FolderViewBody'
-import {
-  buildDriveQuery,
-  buildFileWithSpecificMetadataAttributeQuery
-} from '@/queries'
-
-const desktopExtraColumnsNames = ['carbonCopy', 'electronicSafe']
-const mobileExtraColumnsNames = []
+import { buildDriveQuery } from '@/queries'
 
 const SharingsFolderView = ({ sharedDocumentIds }) => {
   const navigate = useNavigate()
@@ -64,18 +56,6 @@ const SharingsFolderView = ({ sharedDocumentIds }) => {
     useSelectionContext()
   const { isFabDisplayed, setIsFabDisplayed } = useContext(FabContext)
   useHead()
-
-  const extraColumnsNames = makeExtraColumnsNamesFromMedia({
-    isMobile,
-    desktopExtraColumnsNames,
-    mobileExtraColumnsNames
-  })
-
-  const extraColumns = useExtraColumns({
-    columnsNames: extraColumnsNames,
-    queryBuilder: buildFileWithSpecificMetadataAttributeQuery,
-    currentFolderId
-  })
 
   const [sortOrder, setSortOrder, isSettingsLoaded] =
     useFolderSort(currentFolderId)
@@ -181,7 +161,6 @@ const SharingsFolderView = ({ sharedDocumentIds }) => {
             actions={actions}
             queryResults={allResults}
             canSort
-            extraColumns={extraColumns}
             currentFolderId={currentFolderId}
           />
         )}

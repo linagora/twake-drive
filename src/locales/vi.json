@@ -191,16 +191,6 @@
       "head_updated_at_desc": "Mới nhất trước",
       "head_size_asc": "Nhẹ nhất trước",
       "head_size_desc": "Nặng nhất trước"
-    },
-    "tooltip": {
-      "carbonCopy": {
-        "title": "Bản sao gốc",
-        "caption": "Chỉ ra rằng tài liệu này được xác định là \\“xác thực và nguyên bản\\” bởi Twake Workplace, đơn vị lưu trữ Twake của bạn, vì nó có thể chứng minh rằng tài liệu đến trực tiếp từ dịch vụ bên thứ ba mà không bị chỉnh sửa."
-      },
-      "electronicSafe": {
-        "title": "Két điện tử",
-        "caption": "Chỉ ra rằng tài liệu gốc được bảo vệ trong két điện tử cá nhân của bạn, kèm theo các chứng nhận mang lại giá trị pháp lý và đảm bảo lưu trữ trong 50 năm kể từ thời điểm nộp."
-      }
     }
   },
   "Storage": {

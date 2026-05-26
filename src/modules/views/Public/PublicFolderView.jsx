@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 
-import { models } from 'cozy-client'
 import flag from 'cozy-flags'
 import {
   useSharingContext,
@@ -44,8 +43,6 @@ import { duplicateTo } from '@/modules/actions/components/duplicateTo'
 import { moveTo } from '@/modules/actions/components/moveTo'
 import { personalizeFolder } from '@/modules/actions/components/personalizeFolder'
 import { fetchFolder } from '@/modules/breadcrumb/utils/fetchFolder'
-import { makeExtraColumnsNamesFromMedia } from '@/modules/certifications'
-import { useExtraColumns } from '@/modules/certifications/useExtraColumns'
 import AddMenuProvider from '@/modules/drive/AddMenu/AddMenuProvider'
 import FabWithAddMenuContext from '@/modules/drive/FabWithAddMenuContext'
 import Main from '@/modules/layout/Main'
@@ -78,9 +75,6 @@ const getBreadcrumbPath = async ({
   return returnPath
 }
 
-const desktopExtraColumnsNames = ['carbonCopy', 'electronicSafe']
-const mobileExtraColumnsNames = []
-
 const PublicFolderView = ({ sharedDocumentId }) => {
   const base = useFolderViewBase()
   const { navigate, pathname } = base
@@ -101,17 +95,6 @@ const PublicFolderView = ({ sharedDocumentId }) => {
 
   const filesResult = usePublicFilesQuery(currentFolderId)
   const files = filesResult.data
-
-  const extraColumns = useExtraColumns({
-    columnsNames: makeExtraColumnsNamesFromMedia({
-      isMobile: base.isMobile,
-      desktopExtraColumnsNames,
-      mobileExtraColumnsNames
-    }),
-    conditionBuilder: ({ files, attribute }) =>
-      files.some(file => models.file.hasMetadataAttribute({ file, attribute })),
-    files
-  })
 
   // The public token can't rely on realtime notifications, so refresh manually.
   const { refreshFolderContent, refreshAfterChange } = usePublicRefresh({
@@ -251,7 +234,6 @@ const PublicFolderView = ({ sharedDocumentId }) => {
               currentFolderId={currentFolderId}
               refreshFolderContent={refreshFolderContent}
               canUpload={hasWritePermissions}
-              extraColumns={extraColumns}
               isPublic={true}
             />
           )}

@@ -18,21 +18,13 @@ import useHead from '@/components/useHead'
 import { SORT_BY_UPDATE_DATE } from '@/config/sort'
 import { useCurrentFolderId, useDisplayedFolder, useFolderSort } from '@/hooks'
 import { restore, selectAllItems } from '@/modules/actions'
-import { makeExtraColumnsNamesFromMedia } from '@/modules/certifications'
-import { useExtraColumns } from '@/modules/certifications/useExtraColumns'
 import AddMenuProvider from '@/modules/drive/AddMenu/AddMenuProvider'
 import FabWithAddMenuContext from '@/modules/drive/FabWithAddMenuContext'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 import { TrashBreadcrumb } from '@/modules/trash/components/TrashBreadcrumb'
 import { TrashToolbar } from '@/modules/trash/components/TrashToolbar'
 import { destroy } from '@/modules/trash/components/actions/destroy'
-import {
-  buildTrashQuery,
-  buildFileWithSpecificMetadataAttributeQuery
-} from '@/queries'
-
-const desktopExtraColumnsNames = ['carbonCopy', 'electronicSafe']
-const mobileExtraColumnsNames = []
+import { buildTrashQuery } from '@/queries'
 
 export const TrashFolderView = () => {
   const { isMobile } = useBreakpoints()
@@ -47,18 +39,6 @@ export const TrashFolderView = () => {
   useHead()
 
   const { displayedFolder, isNotFound } = useDisplayedFolder()
-
-  const extraColumnsNames = makeExtraColumnsNamesFromMedia({
-    isMobile,
-    desktopExtraColumnsNames,
-    mobileExtraColumnsNames
-  })
-
-  const extraColumns = useExtraColumns({
-    columnsNames: extraColumnsNames,
-    queryBuilder: buildFileWithSpecificMetadataAttributeQuery,
-    currentFolderId
-  })
 
   const [sortOrder, setSortOrder, isSettingsLoaded] =
     useFolderSort(currentFolderId)
@@ -128,7 +108,6 @@ export const TrashFolderView = () => {
             queryResults={[foldersResult, filesResult]}
             withFilePath={false}
             canSort
-            extraColumns={extraColumns}
             canUpload={false}
             orderProps={{
               sortOrder,

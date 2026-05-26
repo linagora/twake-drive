@@ -18,7 +18,7 @@ import AddFolderRowVz from '@/modules/filelist/virtualized/AddFolderRow'
 import { createFolder } from '@/modules/navigation/duck'
 import { useNewItemHighlightContext } from '@/modules/upload/NewItemHighlightProvider'
 
-export const AddFolder = ({ visible, onSubmit, onAbort, extraColumns }) => {
+export const AddFolder = ({ visible, onSubmit, onAbort }) => {
   const { t } = useI18n()
   const { showAlert } = useAlert()
   const { isMobile } = useBreakpoints()
@@ -39,7 +39,6 @@ export const AddFolder = ({ visible, onSubmit, onAbort, extraColumns }) => {
     <Comp
       onSubmit={name => onSubmit(name, showAlert, t)}
       onAbort={accidental => onAbort(accidental, showAlert, t)}
-      extraColumns={extraColumns}
     />
   )
 }
@@ -47,7 +46,6 @@ export const AddFolder = ({ visible, onSubmit, onAbort, extraColumns }) => {
 const AddFolderWithState = ({
   currentFolderId,
   driveId,
-  extraColumns,
   afterSubmit,
   afterAbort,
   addItems
@@ -83,14 +81,7 @@ const AddFolderWithState = ({
     afterAbort?.()
   }
 
-  return (
-    <AddFolder
-      visible={visible}
-      extraColumns={extraColumns}
-      onSubmit={onSubmit}
-      onAbort={onAbort}
-    />
-  )
+  return <AddFolder visible={visible} onSubmit={onSubmit} onAbort={onAbort} />
 }
 
 const AddFolderWithAfter = ({ refreshFolderContent, ...props }) => {

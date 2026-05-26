@@ -35,8 +35,6 @@ import { duplicateTo } from '@/modules/actions/components/duplicateTo'
 import { moveTo } from '@/modules/actions/components/moveTo'
 import { personalizeFolder } from '@/modules/actions/components/personalizeFolder'
 import { removeFromFavorites } from '@/modules/actions/components/removeFromFavorites'
-import { makeExtraColumnsNamesFromMedia } from '@/modules/certifications'
-import { useExtraColumns } from '@/modules/certifications/useExtraColumns'
 import AddMenuProvider from '@/modules/drive/AddMenu/AddMenuProvider'
 import FabWithAddMenuContext from '@/modules/drive/FabWithAddMenuContext'
 import Toolbar from '@/modules/drive/Toolbar'
@@ -51,11 +49,6 @@ import { useFabOnMobile } from '@/modules/views/Folder/hooks/useFabOnMobile'
 import { useFolderViewBase } from '@/modules/views/Folder/hooks/useFolderViewBase'
 import FolderViewBodyVz from '@/modules/views/Folder/virtualized/FolderViewBody'
 import { useResumeUploadFromFlagship } from '@/modules/views/Upload/useResumeFromFlagship'
-import { buildFileWithSpecificMetadataAttributeQuery } from '@/queries'
-
-// Those extra columns names must match a metadata attribute name, e.g. carbonCopy or electronicSafe
-const desktopExtraColumnsNames = []
-const mobileExtraColumnsNames = []
 
 const DriveFolderView = () => {
   const base = useFolderViewBase()
@@ -70,16 +63,6 @@ const DriveFolderView = () => {
   const nativeSharing = useNativeFileSharing()
   const vaultClient = useVaultClient()
   const { hasClipboardData } = useClipboardContext()
-
-  const extraColumns = useExtraColumns({
-    columnsNames: makeExtraColumnsNamesFromMedia({
-      isMobile: base.isMobile,
-      desktopExtraColumnsNames,
-      mobileExtraColumnsNames
-    }),
-    queryBuilder: buildFileWithSpecificMetadataAttributeQuery,
-    currentFolderId
-  })
 
   const { displayedFolder, isNotFound } = useDisplayedFolder()
 
@@ -206,7 +189,6 @@ const DriveFolderView = () => {
             canSort
             currentFolderId={currentFolderId}
             displayedFolder={displayedFolder}
-            extraColumns={extraColumns}
             canUpload={canWriteToCurrentFolder}
             orderProps={{
               sortOrder,

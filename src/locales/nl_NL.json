@@ -174,16 +174,6 @@
       "head_updated_at_desc": "Recentste eerst",
       "head_size_asc": "Kleinste eerst",
       "head_size_desc": "Grootste eerst"
-    },
-    "tooltip": {
-      "carbonCopy": {
-        "title": "Carbon Copy",
-        "caption": "Toont aan of het document ‘authentiek en origineel’ is verklaard door Twake Workplace, de hoster van je Twake. Het kan namelijk zo zijn dat de claim is gedaan door een externe partij zonder enige aanpassing."
-      },
-      "electronicSafe": {
-        "title": "Elektronische kluis",
-        "caption": "Toont aan of het oorspronkelijke document veilig is opgeslagen in je persoonlijke digitale kluis, voorzien van alle bijbehorende certificeringen en 50 jaar garantie."
-      }
     }
   },
   "Storage": {

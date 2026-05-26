@@ -195,16 +195,6 @@
       "head_updated_at_desc": "Most recent first",
       "head_size_asc": "Lightest first",
       "head_size_desc": "Heavier first"
-    },
-    "tooltip": {
-      "carbonCopy": {
-        "title": "Carbon Copy",
-        "caption": "Indicates whether the document is defined as \"authentic and original\" by Twake Workplace, the host of your Twake, as it can claim that it comes directly from a third-party service, without having undergone any modification."
-      },
-      "electronicSafe": {
-        "title": "Electronic Safe",
-        "caption": "Indicates whether the original document is secured by your personal digital safe with the certifications that give it probative value and a 50-year retention guarantee beyond its deposit."
-      }
     }
   },
   "Storage": {
