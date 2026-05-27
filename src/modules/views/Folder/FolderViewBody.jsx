@@ -1,11 +1,12 @@
 import cx from 'classnames'
-import React, { useContext, useState, useEffect, useRef } from 'react'
+import React, { useContext, useRef } from 'react'
 import { useSelector } from 'react-redux'
 
 import { isSharingShortcut } from 'cozy-client/dist/models/file'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import { useFileSorting } from './hooks/useFileSorting'
+import { getFolderViewState } from './hooks/getFolderViewState'
 import { useSyncingFakeFile } from './useSyncingFakeFile'
 
 import styles from '@/styles/folder-view.styl'
@@ -25,6 +26,8 @@ import { FileListHeader } from '@/modules/filelist/FileListHeader'
 import FileListRowsPlaceholder from '@/modules/filelist/FileListRowsPlaceholder'
 import LoadMore from '@/modules/filelist/LoadMoreV2'
 import { isTypingNewFolderName } from '@/modules/filelist/duck'
+import { useNeedsToWait } from '@/modules/folder/hooks/useNeedsToWait'
+import { useScrollToTop } from '@/modules/folder/hooks/useScrollToTop'
 import SelectionBar from '@/modules/selection/SelectionBar'
 import { isReferencedByShareInSharingContext } from '@/modules/views/Folder/syncHelpers'
 
@@ -68,44 +71,15 @@ const FolderViewBody = ({
     folderViewRef
   )
 
-  /**
-   *  Since we are not able to restore the scroll correctly,
-   * and force the scroll to top every time we change the
-   * current folder. This is to avoid this kind of weird
-   * behavior:
-   * - If I go to a sub-folder, if this subfolder has a lot
-   * of data and I scrolled down until the bottom. If I go
-   * back, then my folder will also be scrolled down.
-   *
-   * This is an ugly hack, yeah.
-   * */
-  useEffect(() => {
-    if (isDesktop) {
-      const scrollable = document.querySelectorAll(
-        '[data-testid=fil-content-body]'
-      )[0]
-      if (scrollable) {
-        scrollable.scroll({ top: 0 })
-      }
-    } else {
-      window.scroll({ top: 0 })
-    }
-  }, [currentFolderId, isDesktop])
+  useScrollToTop(currentFolderId)
 
   const { isBigThumbnail } = useThumbnailSizeContext()
   const { sharingsValue } = useContext(AcceptingSharingContext)
 
-  const isInError = queryResults.some(query => query.fetchStatus === 'failed')
-  const hasDataToShow =
-    !isInError &&
-    queryResults.some(query => query.data && query.data.length > 0)
-  const isLoading =
-    !hasDataToShow &&
-    queryResults.some(
-      query => query.fetchStatus === 'loading' && !query.lastUpdate
-    ) &&
-    !isSettingsLoaded
-  const isEmpty = !isInError && !isLoading && !hasDataToShow
+  const { isInError, isLoading, isEmpty, hasDataToShow } = getFolderViewState({
+    queryResults,
+    isSettingsLoaded
+  })
   const showEmpty = displayedFolder !== null && !IsAddingFolder && isEmpty
   const isSharingContextEmpty = Object.keys(sharingsValue).length <= 0
 
@@ -116,29 +90,7 @@ const FolderViewBody = ({
     onShiftClick(fileId, e)
   }
 
-  /**
-   * When we mount the component when we already have data in cache,
-   * the mount is time consuming since we'll render at least 100 lines
-   * of File.
-   *
-   * React seems to batch together the fact that :
-   * - we change a route
-   * - we want to render 100 files
-   * resulting in a non smooth transition between views (Drive / Recent / ...)
-   *
-   * In order to bypass this batch, we use a state to first display a much
-   * more simpler component and then the files
-   */
-  const [needsToWait, setNeedsToWait] = useState(true)
-  useEffect(() => {
-    let timeout = null
-    if (!isLoading) {
-      timeout = setTimeout(() => {
-        setNeedsToWait(false)
-      }, 50)
-    }
-    return () => clearTimeout(timeout)
-  }, [isLoading])
+  const needsToWait = useNeedsToWait({ isLoading })
 
   return (
     <>
