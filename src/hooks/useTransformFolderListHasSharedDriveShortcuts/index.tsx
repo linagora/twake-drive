@@ -6,18 +6,24 @@ import { useSharingContext } from 'cozy-sharing'
 import { SHARED_DRIVES_DIR_ID, TRASH_DIR_PATH } from '@/constants/config'
 import { isNextcloudShortcut } from '@/modules/nextcloud/helpers'
 import { useSharedDrives } from '@/modules/shareddrives/hooks/useSharedDrives'
-
-interface SharingRule {
-  values?: string[]
-  title?: string
-}
+import {
+  getSharedDriveRootFileMetadata,
+  getSharedDriveRootRule
+} from '@/modules/shareddrives/rootFile'
+import { DRIVE_ROOT_TYPE } from '@/modules/shareddrives/types'
+import type {
+  DriveRootType,
+  SharedDriveFile,
+  SharingRule
+} from '@/modules/shareddrives/types'
 
 interface SharedDrive {
   id: string
+  drive_root_type?: DriveRootType
   rules: SharingRule[]
 }
 
-interface TransformedSharedDrive extends IOCozyFile {
+interface TransformedSharedDrive extends SharedDriveFile {
   driveId: string
 }
 
@@ -56,11 +62,33 @@ const useTransformFolderListHasSharedDriveShortcuts = (
    */
   const transformedSharedDrives = useMemo(
     () =>
-      filteredSharedDrives.map((sharing: SharedDrive) => {
-        const [rootFolderId, driveName] = [
-          sharing.rules[0]?.values?.[0],
-          sharing.rules[0]?.title ?? ''
-        ]
+      filteredSharedDrives.flatMap((sharing: SharedDrive) => {
+        const rootId = sharing.rules[0]?.values?.[0]
+        // A sharing rule without a root id cannot resolve to a file/folder doc,
+        // so skip it rather than emit an entry with _id/id = undefined that
+        // would later build broken routes like shareddrive/<driveId>/undefined.
+        if (!rootId) return []
+
+        const driveName = sharing.rules[0]?.title ?? ''
+        const rootRule = getSharedDriveRootRule(sharing)
+        const isFileDriveRoot = sharing.drive_root_type === DRIVE_ROOT_TYPE.FILE
+        const fileMetadata = getSharedDriveRootFileMetadata({
+          rootRule,
+          fallbackName: driveName
+        })
+
+        const sharedDriveData = {
+          type: isFileDriveRoot ? ('file' as const) : ('directory' as const),
+          name: driveName,
+          dir_id: SHARED_DRIVES_DIR_ID,
+          driveId: sharing.id,
+          ...(isFileDriveRoot
+            ? {
+                ...fileMetadata,
+                drive_root_type: DRIVE_ROOT_TYPE.FILE
+              }
+            : {})
+        }
 
         const fileInSharingSection = folderList?.find(item =>
           item.relationships?.referenced_by?.data?.some(
@@ -68,25 +96,34 @@ const useTransformFolderListHasSharedDriveShortcuts = (
           )
         )
 
-        if (fileInSharingSection && isOwner(fileInSharingSection.id ?? ''))
-          return fileInSharingSection as TransformedSharedDrive
+        if (
+          fileInSharingSection &&
+          isOwner(fileInSharingSection._id ?? fileInSharingSection.id ?? '')
+        )
+          return [
+            {
+              ...fileInSharingSection,
+              driveId: sharing.id,
+              ...(isFileDriveRoot
+                ? {
+                    ...fileMetadata,
+                    drive_root_type: DRIVE_ROOT_TYPE.FILE
+                  }
+                : {})
+            } as TransformedSharedDrive
+          ]
 
-        const directoryData = {
-          type: 'directory' as const,
-          name: driveName,
-          dir_id: SHARED_DRIVES_DIR_ID,
-          driveId: sharing.id
-        }
-
-        return {
-          ...fileInSharingSection,
-          _id: rootFolderId,
-          id: rootFolderId,
-          _type: 'io.cozy.files' as const,
-          path: `/Drives/${driveName}`,
-          ...directoryData,
-          attributes: directoryData
-        } as TransformedSharedDrive
+        return [
+          {
+            ...fileInSharingSection,
+            _id: rootId,
+            id: rootId,
+            _type: 'io.cozy.files' as const,
+            path: `/Drives/${driveName}`,
+            ...sharedDriveData,
+            attributes: sharedDriveData
+          } as TransformedSharedDrive
+        ]
       }),
     [filteredSharedDrives, folderList, isOwner]
   )

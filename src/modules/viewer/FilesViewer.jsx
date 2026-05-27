@@ -16,6 +16,8 @@ import Viewer, {
 } from 'cozy-viewer'
 import { useI18n } from 'twake-i18n'
 
+import styles from '@/modules/viewer/styles.styl'
+
 import { ensureFileHasPath } from '@/components/FilesRealTimeQueries'
 import { FilesViewerLoading } from '@/components/FilesViewerLoading'
 import RightClickFileMenu from '@/components/RightClick/RightClickFileMenu'
@@ -142,7 +144,18 @@ const FilesViewer = ({ filesQuery, files, onClose, onChange, viewerProps }) => {
     [hasCurrentIndex, currentIndex]
   )
 
-  const actions = useMoreMenuActions(currentFile ?? {})
+  const viewerComponentProps = viewerProps || {}
+  // panel.sharing.disabled is the cozy-viewer contract for read-only sharing.
+  // The local wrapper also uses it to keep Drive's own actions and the viewer
+  // toolbar consistent for shared-drive recipients.
+  const isSharingPanelDisabled = viewerComponentProps?.panel?.sharing?.disabled
+  const shouldHideSharingActions = Boolean(isSharingPanelDisabled)
+  const viewerClassName = shouldHideSharingActions
+    ? styles['viewer-sharing-actions-disabled']
+    : undefined
+  const actions = useMoreMenuActions(currentFile ?? {}, {
+    shouldHideIfSharedDriveRecipient: shouldHideSharingActions
+  })
 
   // If we can't find the file, we fallback to the (potentially loading)
   // direct stat made by the viewer
@@ -163,6 +176,7 @@ const FilesViewer = ({ filesQuery, files, onClose, onChange, viewerProps }) => {
     >
       <RemoveScroll>
         <Viewer
+          className={viewerClassName}
           files={viewerFiles}
           currentIndex={viewerIndex}
           onChangeRequest={handleOnChange}
@@ -180,31 +194,35 @@ const FilesViewer = ({ filesQuery, files, onClose, onChange, viewerProps }) => {
               showFilePath: true,
               onPaywallRedirect: redirectToPaywall
             },
-            ...(viewerProps || {})
+            ...(viewerComponentProps || {})
           }}
         >
           <ToolbarButtons>
-            <MoreMenu file={viewerFiles[viewerIndex]} />
+            <MoreMenu
+              file={viewerFiles[viewerIndex]}
+              shouldHideSharingActions={shouldHideSharingActions}
+            />
 
-            {flag('drive.new-file-viewer-ui.enabled') && (
-              <Button
-                variant="secondary"
-                aria-label={t('Viewer.share_btn')}
-                label={t('Viewer.share_btn')}
-                startIcon={<Icon icon={ShareIcon} />}
-                onClick={() =>
-                  navigateToModal({
-                    navigate,
-                    pathname: '',
-                    files,
-                    path: 'share'
-                  })
-                }
-              />
-            )}
+            {flag('drive.new-file-viewer-ui.enabled') &&
+              !shouldHideSharingActions && (
+                <Button
+                  variant="secondary"
+                  aria-label={t('Viewer.share_btn')}
+                  label={t('Viewer.share_btn')}
+                  startIcon={<Icon icon={ShareIcon} />}
+                  onClick={() =>
+                    navigateToModal({
+                      navigate,
+                      pathname: '',
+                      files,
+                      path: 'share'
+                    })
+                  }
+                />
+              )}
           </ToolbarButtons>
           <FooterActionButtons>
-            <SharingButton />
+            {!shouldHideSharingActions && <SharingButton />}
             <ForwardOrDownloadButton variant="buttonIcon" />
           </FooterActionButtons>
         </Viewer>

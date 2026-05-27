@@ -15,6 +15,7 @@ import { getOnlyOfficeRoutes } from '../views/OnlyOffice/routes'
 import RecentView from '../views/Recent'
 import FilesViewerRecent from '../views/Recent/FilesViewerRecent'
 import FilesViewerSharedDrive from '../views/SharedDrive/FilesViewerSharedDrive'
+import FilesViewerSharedDriveRootFile from '../views/SharedDrive/FilesViewerSharedDriveRootFile'
 import SharingsView from '../views/Sharings'
 import SharingsFilesViewer from '../views/Sharings/FilesViewerSharings'
 import SharingsFolderView from '../views/Sharings/SharingsFolderView'
@@ -32,6 +33,7 @@ import { SentryRoutes } from '@/lib/sentry'
 import { UploaderComponent } from '@/modules//views/Upload/UploaderComponent'
 import Layout from '@/modules/layout/Layout'
 import { PublicNoteRedirect } from '@/modules/navigation/PublicNoteRedirect'
+import { SHARED_DRIVE_ROOT_FILE_ROUTE } from '@/modules/routeUtils'
 import FileOpenerExternal from '@/modules/viewer/FileOpenerExternal'
 import { KonnectorRoutes } from '@/modules/views/Drive/KonnectorRoutes'
 import { FavoritesView } from '@/modules/views/Favorites/FavoritesView'
@@ -69,6 +71,49 @@ const OutletWrapper = ({ Component }) => (
     <Outlet />
   </>
 )
+
+const sharedDriveRootFileViewerRoutes = () => (
+  <>
+    <Route path="v/revision" element={<FileHistory />} />
+    <Route path="v/share" element={<ShareFileView />} />
+    <Route path="revision" element={<FileHistory />} />
+    <Route path="share" element={<ShareFileView />} />
+  </>
+)
+
+const sharedDriveRootFileRoute = () => (
+  <Route
+    path={SHARED_DRIVE_ROOT_FILE_ROUTE}
+    element={<OutletWrapper Component={FilesViewerSharedDriveRootFile} />}
+  >
+    {sharedDriveRootFileViewerRoutes()}
+  </Route>
+)
+
+const sharedDriveRoutes = () => (
+  <>
+    {sharedDriveRootFileRoute()}
+    <Route
+      path="shareddrive/:driveId/:folderId"
+      element={<SharedDriveFolderView />}
+    >
+      <Route
+        path="file/:fileId"
+        element={<OutletWrapper Component={FilesViewerSharedDrive} />}
+      />
+      <Route path="file/:fileId/revision" element={<FileHistory />} />
+      <Route path="file/:fileId/v/revision" element={<FileHistory />} />
+      <Route path="file/:fileId/share" element={<ShareFileView />} />
+      <Route path="share" element={<ShareDisplayedFolderView />} />
+      <Route path="move" element={<MoveSharedDriveFilesView />} />
+      <Route path="duplicate" element={<DuplicateSharedDriveFilesView />} />
+    </Route>
+  </>
+)
+
+const hasSharedDriveRoutes = () =>
+  flag('drive.shared-drive.enabled') ||
+  flag('drive.federated-shared-folder.enabled')
 
 const AppRoute = () => (
   <SentryRoutes>
@@ -133,29 +178,7 @@ const AppRoute = () => (
         </>
       ) : null}
 
-      {flag('drive.shared-drive.enabled') ||
-      flag('drive.federated-shared-folder.enabled') ? (
-        <>
-          <Route
-            path="shareddrive/:driveId/:folderId"
-            element={<SharedDriveFolderView />}
-          >
-            <Route
-              path="file/:fileId"
-              element={<OutletWrapper Component={FilesViewerSharedDrive} />}
-            />
-            <Route path="file/:fileId/revision" element={<FileHistory />} />
-            <Route path="file/:fileId/v/revision" element={<FileHistory />} />
-            <Route path="file/:fileId/share" element={<ShareFileView />} />
-            <Route path="share" element={<ShareDisplayedFolderView />} />
-            <Route path="move" element={<MoveSharedDriveFilesView />} />
-            <Route
-              path="duplicate"
-              element={<DuplicateSharedDriveFilesView />}
-            />
-          </Route>
-        </>
-      ) : null}
+      {hasSharedDriveRoutes() ? sharedDriveRoutes() : null}
 
       <Route path="recent" element={<RecentView />}>
         <Route
@@ -202,6 +225,7 @@ const AppRoute = () => (
           <Route path="file/:fileId/revision" element={<FileHistory />} />
           <Route path="file/:fileId/share" element={<ShareFileView />} />
           <Route path="file/:fileId/qualify" element={<QualifyFileView />} />
+          {hasSharedDriveRoutes() ? sharedDriveRootFileRoute() : null}
         </Route>
         {/* This route must be inside the /sharing path for the nav to have an activate state */}
         <Route path=":folderId" element={<SharingsFolderView />}>

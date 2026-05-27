@@ -7,10 +7,15 @@ import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 
 import { navigateToModal } from '@/modules/actions/helpers'
+import {
+  getSharedDriveRootFileSharePath,
+  SHARED_DRIVE_ROOT_FILE_PATH_SCOPE
+} from '@/modules/routeUtils'
 import { isFromSharedDriveRecipient } from '@/modules/shareddrives/helpers'
+import { DRIVE_ROOT_TYPE } from '@/modules/shareddrives/types'
 
 // Only for sharing tabs
-export const shareSharedDrive = ({ navigate, t }) => {
+export const shareSharedDrive = ({ navigate, t, isOwner }) => {
   const label = t('Files.share.cta')
   const icon = ShareIcon
 
@@ -19,16 +24,34 @@ export const shareSharedDrive = ({ navigate, t }) => {
     label: label,
     icon,
     displayCondition: docs => {
-      return docs.length === 1 && isFromSharedDriveRecipient(docs[0])
+      const [doc] = docs
+
+      return (
+        docs.length === 1 &&
+        isFromSharedDriveRecipient(doc) &&
+        isOwner?.(doc._id)
+      )
     },
     action: docs => {
-      const folderId = docs[0]._id
-      const driveId = docs[0].driveId
+      const [doc] = docs
+      const fileOrFolderId = doc._id
+      const driveId = doc.driveId
+
+      if (doc.drive_root_type === DRIVE_ROOT_TYPE.FILE) {
+        navigate(
+          getSharedDriveRootFileSharePath({
+            driveId,
+            fileId: fileOrFolderId,
+            scope: SHARED_DRIVE_ROOT_FILE_PATH_SCOPE.SHARINGS
+          })
+        )
+        return
+      }
 
       navigateToModal({
         navigate,
-        pathname: `/shareddrive/${driveId}/${folderId}`,
-        files: docs,
+        pathname: `/shareddrive/${driveId}/${fileOrFolderId}`,
+        files: [{ ...doc, id: doc.id ?? doc._id }],
         path: 'share'
       })
     },

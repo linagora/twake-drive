@@ -1,5 +1,26 @@
 @require 'settings/breakpoints.styl'
 
+.viewer-sharing-actions-disabled
+    // cozy-viewer honors panel.sharing.disabled for the details panel but not
+    // for toolbar/footer sharing buttons. Keep those controls consistent with
+    // the disabled panel until cozy-viewer exposes a first-class prop.
+    // Selectors:
+    //  - data-test-id: stable hooks on ShareButton and SharedByMeButton
+    //    (cozy-sharing/src/components/ShareButton.jsx).
+    //  - class*='coz-btn-shared': matches the CSS-modules-hashed
+    //    `coz-btn-shared` / `coz-btn-sharedWithMe` classes on the same file,
+    //    needed because SharedWithMeButton has no data-test-id.
+    // Tripwire: the FilesViewerSharedDriveRootFile spec asserts the wrapper
+    // className is applied so a rename here is caught.
+    [data-test-id='share-button']
+        display none
+
+    [data-test-id='share-by-me-button']
+        display none
+
+    [class*='coz-btn-shared']
+        display none
+
 .pho-viewer-noviewer-cta
     position         relative
     border-radius    .5rem
