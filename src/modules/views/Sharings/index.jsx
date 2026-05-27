@@ -11,6 +11,7 @@ import {
 import { makeActions } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
 import { Content } from 'cozy-ui/transpiled/react/Layout'
 
+import { buildSharingsActionsOptions } from './helpers'
 import { useFilteredSharings } from './useFilteredSharings'
 import withSharedDocumentIds from './withSharedDocumentIds'
 import FolderView from '../Folder/FolderView'
@@ -78,20 +79,12 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
     refresh
   })
 
-  const actionsOptions = {
-    ...base,
-    ...nativeSharing,
-    refresh,
-    hasWriteAccess: true,
-    canMove: true,
-    isPublic: false,
-    shouldHideIfSharedDriveRecipient: true,
-    allLoaded,
-    // Select All has to match the rendered list, not the raw query: the
-    // rendered list excludes the magic shared-drives dir when the feature
-    // flags are off and substitutes transformed shortcut entries when on.
-    selectAll: () => base.toggleSelectAllItems(filteredResult.data)
-  }
+  const actionsOptions = buildSharingsActionsOptions({
+    base,
+    nativeSharing,
+    sharingContext,
+    filteredResult
+  })
 
   const actions = makeActions(
     [

@@ -62,7 +62,10 @@ const FolderPickerContentSharedDriveRoot: React.FC<
     }
 
   const files: IOCozyFile[] = useMemo(() => {
-    return [...sharedDrives, ...nonSharedDriveList]
+    return [
+      ...sharedDrives.filter(file => isDirectory(file)),
+      ...nonSharedDriveList
+    ]
   }, [sharedDrives, nonSharedDriveList])
 
   const handleClick = (file: File): void => {

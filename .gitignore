@@ -36,6 +36,7 @@ desktop.ini
 .brackets.json
 .vscode
 .opencode
+.idea
 
 # cozy-jobs-cli
 .token.json

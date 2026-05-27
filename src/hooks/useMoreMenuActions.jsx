@@ -31,7 +31,10 @@ import { removeFromFavorites } from '@/modules/actions/components/removeFromFavo
 import { details } from '@/modules/actions/details'
 import { filterActionsByPolicy } from '@/modules/actions/policies'
 
-export const useMoreMenuActions = file => {
+export const useMoreMenuActions = (
+  file,
+  { shouldHideIfSharedDriveRecipient = false } = {}
+) => {
   const [isPrintAvailable, setIsPrintAvailable] = useState(false)
   const client = useClient()
   const vaultClient = useVaultClient()
@@ -82,6 +85,7 @@ export const useMoreMenuActions = file => {
       refresh: () => navigate('..'),
       navigate,
       hasWriteAccess: canWriteToCurrentFolder,
+      shouldHideIfSharedDriveRecipient,
       canMove: canWriteToCurrentFolder,
       isPublic: false,
       allLoaded,

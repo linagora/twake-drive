@@ -1,6 +1,7 @@
 import { computeFileType, computeApp, computePath } from './helpers'
 
 import { TRASH_DIR_ID, SHARED_DRIVES_DIR_ID } from '@/constants/config'
+import { DRIVE_ROOT_TYPE } from '@/modules/shareddrives/types'
 import { makeExcalidrawFileRoute } from '@/modules/views/Excalidraw/helpers'
 import { makeOnlyOfficeFileRoute } from '@/modules/views/OnlyOffice/helpers'
 
@@ -35,6 +36,41 @@ describe('computeFileType', () => {
       type: 'file'
     }
     expect(computeFileType(file)).toBe('shared-drive')
+  })
+
+  it('should return "shared-drive-root-file" for file-root shared drives', () => {
+    const file = {
+      dir_id: SHARED_DRIVES_DIR_ID,
+      _type: 'io.cozy.files',
+      type: 'file',
+      driveId: 'drive456',
+      drive_root_type: DRIVE_ROOT_TYPE.FILE
+    }
+    expect(computeFileType(file)).toBe('shared-drive-root-file')
+  })
+
+  it('should return "shared-drive" for directory-root shared drives in shared drives directory', () => {
+    const file = {
+      dir_id: SHARED_DRIVES_DIR_ID,
+      _type: 'io.cozy.files',
+      type: 'file',
+      driveId: 'drive456',
+      drive_root_type: DRIVE_ROOT_TYPE.DIRECTORY
+    }
+    expect(computeFileType(file)).toBe('shared-drive')
+  })
+
+  it('should return "onlyoffice" for file-root shared drives opened by OnlyOffice when Office is enabled', () => {
+    const file = {
+      dir_id: SHARED_DRIVES_DIR_ID,
+      _type: 'io.cozy.files',
+      type: 'file',
+      class: 'text',
+      name: 'CIR.docx',
+      driveId: 'drive456',
+      drive_root_type: DRIVE_ROOT_TYPE.FILE
+    }
+    expect(computeFileType(file, { isOfficeEnabled: true })).toBe('onlyoffice')
   })
 
   it('should return "nextcloud-directory" for Nextcloud directories', () => {
@@ -341,6 +377,34 @@ describe('computePath', () => {
     expect(computePath(file, { type: 'shared-drive', pathname: '/any' })).toBe(
       '/shareddrive/drive456/file123'
     )
+  })
+
+  it('should return correct path for shared-drive-root-file', () => {
+    const file = {
+      _id: 'file123',
+      driveId: 'drive456',
+      _type: 'io.cozy.files'
+    }
+    expect(
+      computePath(file, {
+        type: 'shared-drive-root-file',
+        pathname: '/any'
+      })
+    ).toBe('/shareddrive/drive456/file/file123')
+  })
+
+  it('should return sharings-scoped path for shared-drive-root-file from sharings', () => {
+    const file = {
+      _id: 'file123',
+      driveId: 'drive456',
+      _type: 'io.cozy.files'
+    }
+    expect(
+      computePath(file, {
+        type: 'shared-drive-root-file',
+        pathname: '/sharings'
+      })
+    ).toBe('/sharings/shareddrive/drive456/file/file123')
   })
 
   it('should return correct for shared-drive in case user is owner', () => {

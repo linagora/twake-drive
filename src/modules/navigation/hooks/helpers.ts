@@ -15,7 +15,13 @@ import {
   isNextcloudShortcut,
   isNextcloudFile
 } from '@/modules/nextcloud/helpers'
+import {
+  getSharedDriveRootFilePath,
+  getSharedDriveRootFilePathScope
+} from '@/modules/routeUtils'
 import { makeSharedDriveNoteReturnUrl } from '@/modules/shareddrives/helpers'
+import { DRIVE_ROOT_TYPE } from '@/modules/shareddrives/types'
+import type { SharedDriveFile } from '@/modules/shareddrives/types'
 import {
   isExcalidraw,
   makeExcalidrawFileRoute
@@ -36,6 +42,16 @@ interface ComputePathOptions {
   client: CozyClient | null
 }
 
+const isFileRootSharedDrive = (file: File): file is SharedDriveFile => {
+  if (!('driveId' in file) || !('drive_root_type' in file)) return false
+
+  const candidate = file as SharedDriveFile
+  return (
+    Boolean(candidate.driveId) &&
+    candidate.drive_root_type === DRIVE_ROOT_TYPE.FILE
+  )
+}
+
 export const computeFileType = (
   file: File,
   {
@@ -51,6 +67,7 @@ export const computeFileType = (
     return 'nextcloud-trash'
   } else if (
     file.dir_id === SHARED_DRIVES_DIR_ID &&
+    !isFileRootSharedDrive(file) &&
     !isNextcloudShortcut(file)
   ) {
     return 'shared-drive'
@@ -73,6 +90,10 @@ export const computeFileType = (
   } else if (isExcalidraw(file) && isExcalidrawEnabled) {
     return 'excalidraw'
   } else if (shouldBeOpenedByOnlyOffice(file) && isOfficeEnabled) {
+    // Load-bearing: this branch runs before `isFileRootSharedDrive` below, so
+    // an Office file shared as a drive root routes through OnlyOffice (its own
+    // viewer) rather than the generic shared-drive-root-file viewer. See the
+    // `'onlyoffice' for file-root shared drives` spec.
     return 'onlyoffice'
   } else if (isNextcloudShortcut(file)) {
     return 'nextcloud'
@@ -80,6 +101,8 @@ export const computeFileType = (
     return 'shortcut'
   } else if (isDirectory(file)) {
     return 'directory'
+  } else if (isFileRootSharedDrive(file)) {
+    return 'shared-drive-root-file'
   } else if (file.driveId) {
     return 'shared-drive-file'
   } else {
@@ -181,6 +204,17 @@ export const computePath = (
       }
 
       return `/shareddrive/${driveId}/${file._id}`
+    case 'shared-drive-root-file':
+      if (!driveId || isNextcloudFile(file)) {
+        throw new Error(
+          'Missing driveId or invalid file type in shared drive root file'
+        )
+      }
+      return getSharedDriveRootFilePath({
+        driveId,
+        fileId: file._id,
+        scope: getSharedDriveRootFilePathScope(pathname)
+      })
     case 'shared-drive-file':
       if (!driveId || isNextcloudFile(file)) {
         throw new Error(
