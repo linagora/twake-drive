@@ -16,8 +16,6 @@ import Viewer, {
 } from 'cozy-viewer'
 import { useI18n } from 'twake-i18n'
 
-import styles from '@/modules/viewer/styles.styl'
-
 import { ensureFileHasPath } from '@/components/FilesRealTimeQueries'
 import { FilesViewerLoading } from '@/components/FilesViewerLoading'
 import RightClickFileMenu from '@/components/RightClick/RightClickFileMenu'
@@ -149,10 +147,9 @@ const FilesViewer = ({ filesQuery, files, onClose, onChange, viewerProps }) => {
   // The local wrapper also uses it to keep Drive's own actions and the viewer
   // toolbar consistent for shared-drive recipients.
   const isSharingPanelDisabled = viewerComponentProps?.panel?.sharing?.disabled
-  const shouldHideSharingActions = Boolean(isSharingPanelDisabled)
-  const viewerClassName = shouldHideSharingActions
-    ? styles['viewer-sharing-actions-disabled']
-    : undefined
+  const shouldHideSharingActions =
+    viewerComponentProps?.sharingActions?.disabled ??
+    Boolean(isSharingPanelDisabled)
   const actions = useMoreMenuActions(currentFile ?? {}, {
     shouldHideIfSharedDriveRecipient: shouldHideSharingActions
   })
@@ -176,7 +173,6 @@ const FilesViewer = ({ filesQuery, files, onClose, onChange, viewerProps }) => {
     >
       <RemoveScroll>
         <Viewer
-          className={viewerClassName}
           files={viewerFiles}
           currentIndex={viewerIndex}
           onChangeRequest={handleOnChange}
@@ -194,7 +190,11 @@ const FilesViewer = ({ filesQuery, files, onClose, onChange, viewerProps }) => {
               showFilePath: true,
               onPaywallRedirect: redirectToPaywall
             },
-            ...(viewerComponentProps || {})
+            ...(viewerComponentProps || {}),
+            sharingActions: {
+              ...(viewerComponentProps?.sharingActions || {}),
+              disabled: shouldHideSharingActions
+            }
           }}
         >
           <ToolbarButtons>
