@@ -197,7 +197,6 @@ const PublicFolderView = ({ sharedDocumentId }) => {
               <>
                 {isOldBreadcrumb ? (
                   <OldFolderViewBreadcrumb
-                    displayedFolder={displayedFolder}
                     sharedDocumentId={sharedDocumentId}
                     getBreadcrumbPath={getBreadcrumbPath}
                   />

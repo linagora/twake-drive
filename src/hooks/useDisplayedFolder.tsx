@@ -10,7 +10,12 @@ interface DisplayedFolderResult {
   isNotFound: boolean
   displayedFolder: IOCozyFile | null
   initialDirId: string | null
+  isLoading: boolean
 }
+
+// The folder request is still resolving until it settles (loaded or failed).
+// Using a lookup instead of two comparisons keeps callers branch-free.
+const SETTLED_STATUSES = ['loaded', 'failed']
 
 const useDisplayedFolder = (): DisplayedFolderResult => {
   const { isPublic } = usePublicContext()
@@ -33,6 +38,7 @@ const useDisplayedFolder = (): DisplayedFolderResult => {
 
   const displayedFolder = folderResult.data ?? null
   const initialDirId = displayedFolder?.id ?? null
+  const isLoading = !SETTLED_STATUSES.includes(folderResult.fetchStatus)
 
   if (folderId) {
     const isNotFound =
@@ -42,14 +48,16 @@ const useDisplayedFolder = (): DisplayedFolderResult => {
     return {
       isNotFound,
       displayedFolder,
-      initialDirId
+      initialDirId,
+      isLoading
     }
   }
 
   return {
     isNotFound: true,
     displayedFolder: null,
-    initialDirId: null
+    initialDirId: null,
+    isLoading
   }
 }
 
