@@ -25,10 +25,12 @@ jest.mock('@/components/FilesRealTimeQueries', () => ({
   ensureFileHasPath: jest.fn().mockImplementation(file => Promise.resolve(file))
 }))
 
+const mockViewer = jest.fn(() => <div>Viewer</div>)
+
 jest.mock('cozy-viewer', () => ({
   ...jest.requireActual('cozy-viewer'),
   __esModule: true,
-  default: () => <div>Viewer</div>
+  default: props => mockViewer(props)
 }))
 
 const sleep = duration => new Promise(resolve => setTimeout(resolve, duration))
@@ -43,7 +45,8 @@ describe('FilesViewer', () => {
     nbFiles = 3,
     totalCount,
     client = new CozyClient({}),
-    useQueryResultAttributes
+    useQueryResultAttributes,
+    viewerProps
   } = {}) => {
     const filesFixture = Array(nbFiles)
       .fill(null)
@@ -65,6 +68,7 @@ describe('FilesViewer', () => {
         <FilesViewer
           files={filesFixture}
           filesQuery={mockedUseQueryReturnedValues}
+          viewerProps={viewerProps}
         />
       </AppLike>
     )
@@ -75,6 +79,31 @@ describe('FilesViewer', () => {
 
     const viewer = await screen.findByText('Viewer')
     expect(viewer).toBeInTheDocument()
+  })
+
+  it('forwards disabled sharing actions to the viewer', async () => {
+    setup({
+      viewerProps: {
+        panel: {
+          sharing: { disabled: true }
+        }
+      }
+    })
+
+    await screen.findByText('Viewer')
+
+    expect(mockViewer).toHaveBeenCalledWith(
+      expect.objectContaining({
+        componentsProps: expect.objectContaining({
+          panel: {
+            sharing: { disabled: true }
+          },
+          sharingActions: {
+            disabled: true
+          }
+        })
+      })
+    )
   })
 
   it('should fetch the file if necessary', async () => {
