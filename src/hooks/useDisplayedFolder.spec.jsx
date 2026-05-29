@@ -63,6 +63,24 @@ describe('useDisplayedFolder', () => {
     )
   })
 
+  it('reports isLoading while the folder query has not settled', () => {
+    useQuery.mockReturnValue({ data: null, fetchStatus: 'loading' })
+    useCurrentFolderId.mockReturnValue('folder-id')
+
+    expect(useDisplayedFolder().isLoading).toBe(true)
+  })
+
+  it('reports not loading once the folder query has settled', () => {
+    useQuery.mockReturnValue({
+      data: null,
+      fetchStatus: 'failed',
+      lastError: { status: 403 }
+    })
+    useCurrentFolderId.mockReturnValue('folder-id')
+
+    expect(useDisplayedFolder().isLoading).toBe(false)
+  })
+
   it('still queries the root directory on the authenticated route', () => {
     useQuery.mockReturnValue({ data: null, fetchStatus: 'pending' })
     useCurrentFolderId.mockReturnValue(null) // falls back to ROOT_DIR_ID

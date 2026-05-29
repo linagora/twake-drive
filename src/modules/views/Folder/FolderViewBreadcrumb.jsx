@@ -2,6 +2,7 @@ import PropTypes from 'prop-types'
 import React, { useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import BreadcrumbSkeleton from '@/modules/breadcrumb/components/BreadcrumbSkeleton'
 import { MobileAwareBreadcrumb as Breadcrumb } from '@/modules/breadcrumb/components/MobileAwareBreadcrumb'
 import { useBreadcrumbPath } from '@/modules/breadcrumb/hooks/useBreadcrumbPath.jsx'
 
@@ -32,7 +33,9 @@ const FolderViewBreadcrumb = ({
       onBreadcrumbClick={onBreadcrumbClick}
       opening={false}
     />
-  ) : null
+  ) : (
+    <BreadcrumbSkeleton />
+  )
 }
 
 FolderViewBreadcrumb.propTypes = {
