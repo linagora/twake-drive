@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { useClient } from 'cozy-client'
+import { Q, useClient } from 'cozy-client'
 import { makeSharingLink } from 'cozy-client/dist/models/sharing'
 
 import FilePicker from './FilePicker'
@@ -9,6 +9,10 @@ const Picker = ({ service }) => {
   const client = useClient()
 
   const handleClick = async fileId => {
+    const { data: file } = await client.query(
+      Q('io.cozy.files').getById(fileId)
+    )
+
     // TODO: check multiple sharing link issues
     // const [shareLinkTTL, shareLinkPermanent] = await Promise.all([
     //   makeSharingLink(client, [fileId], { ttl: '5m' }),
@@ -21,6 +25,10 @@ const Picker = ({ service }) => {
     // GET "http://alice.cozy.localhost:8080/files/downloads/bd5db658030a6bd3/La%20Suite%20documentation%20technique.pdf?Dl=1"
 
     const sharingLink = await makeSharingLink(client, [fileId])
+
+    const downloadLink = await client
+      .collection('io.cozy.files')
+      .getDownloadLinkById(fileId, 'test.pdf')
 
     // const url = new URL(sharingLink)
     // const searchParams = new URLSearchParams(url.search)
@@ -36,7 +44,16 @@ const Picker = ({ service }) => {
     //   .collection('io.cozy.files')
     //   .getDownloadLinkById(fileId, 'test.pdf')
 
-    service.terminate({ id: fileId, sharingLink })
+    service.terminate([
+      {
+        id: fileId,
+        name: file.name,
+        size: parseInt(file.size),
+        mimeType: file.mime,
+        sharingLink,
+        downloadLink
+      }
+    ])
   }
 
   return <FilePicker onChange={handleClick} />
