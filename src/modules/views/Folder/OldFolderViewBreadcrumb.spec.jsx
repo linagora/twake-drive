@@ -83,6 +83,40 @@ describe('OldFolderViewBreadcrumb', () => {
     expect(queryByTestId('breadcrumb-skeleton')).toBeNull()
   })
 
+  it('does not refetch the breadcrumb path when only the folder object reference changes', async () => {
+    // A store write gives a fresh displayedFolder object with the same identity;
+    // the path must still be fetched only once.
+    mockDisplayedFolder({
+      displayedFolder: { id: 'a', name: 'A', dir_id: 'root' },
+      isLoading: false
+    })
+    const getBreadcrumbPath = jest
+      .fn()
+      .mockResolvedValue([{ id: 'a', name: 'A' }])
+
+    const { rerender, findByTestId } = render(
+      <OldFolderViewBreadcrumb
+        sharedDocumentId="shared"
+        getBreadcrumbPath={getBreadcrumbPath}
+      />
+    )
+    await findByTestId('MobileAwareBreadcrumb')
+    expect(getBreadcrumbPath).toHaveBeenCalledTimes(1)
+
+    mockDisplayedFolder({
+      displayedFolder: { id: 'a', name: 'A', dir_id: 'root' },
+      isLoading: false
+    })
+    rerender(
+      <OldFolderViewBreadcrumb
+        sharedDocumentId="shared"
+        getBreadcrumbPath={getBreadcrumbPath}
+      />
+    )
+    await Promise.resolve()
+    expect(getBreadcrumbPath).toHaveBeenCalledTimes(1)
+  })
+
   it('should render nothing once a breadcrumb fetch error settles', async () => {
     // Given a resolved folder but a path fetch that rejects
     mockDisplayedFolder({ displayedFolder: { id: 'a' }, isLoading: false })
