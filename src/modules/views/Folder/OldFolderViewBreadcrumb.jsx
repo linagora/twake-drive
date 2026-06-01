@@ -17,19 +17,30 @@ const FolderViewBreadcrumb = ({ sharedDocumentId, getBreadcrumbPath }) => {
   const [path, setPath] = useState(null)
   const [hasError, setHasError] = useState(false)
 
+  // Depend on the folder identity, not the object: getBreadcrumbPath writes to
+  // the cozy-client store, which churns the displayedFolder reference and would
+  // re-run this effect forever.
+  const folderId = displayedFolder?.id
+  const folderName = displayedFolder?.name
+  const folderDirId = displayedFolder?.dir_id
+
   useEffect(() => {
     let isMounted = true
 
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setPath(null)
     setHasError(false)
-    if (!displayedFolder || !sharedDocumentId) return
+    if (!folderId || !sharedDocumentId) return
 
     const asyncGetPaths = async () => {
       try {
         const paths = await getBreadcrumbPath({
           client,
-          displayedFolder,
+          displayedFolder: {
+            id: folderId,
+            name: folderName,
+            dir_id: folderDirId
+          },
           sharedDocumentId
         })
         if (isMounted) {
@@ -48,7 +59,14 @@ const FolderViewBreadcrumb = ({ sharedDocumentId, getBreadcrumbPath }) => {
     return () => {
       isMounted = false
     }
-  }, [displayedFolder, sharedDocumentId, client, getBreadcrumbPath])
+  }, [
+    folderId,
+    folderName,
+    folderDirId,
+    sharedDocumentId,
+    client,
+    getBreadcrumbPath
+  ])
 
   const onBreadcrumbClick = useCallback(
     ({ id }) => {
@@ -74,7 +92,7 @@ const FolderViewBreadcrumb = ({ sharedDocumentId, getBreadcrumbPath }) => {
   // and we're fetching its breadcrumb path. Once the folder request settles
   // without a result (inaccessible / trashed / revoked) or the path fetch
   // fails, render nothing instead of a skeleton that would animate forever.
-  const isResolving = isFolderLoading || (Boolean(displayedFolder) && !hasError)
+  const isResolving = isFolderLoading || (Boolean(folderId) && !hasError)
   return isResolving ? <BreadcrumbSkeleton /> : null
 }
 
