@@ -40,6 +40,7 @@ describe('shareSharedDrive', () => {
     makeAction().action([
       {
         _id: 'folder-id',
+        id: 'folder-id',
         driveId: 'drive-id',
         drive_root_type: DRIVE_ROOT_TYPE.DIRECTORY
       }

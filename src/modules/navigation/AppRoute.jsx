@@ -111,10 +111,6 @@ const sharedDriveRoutes = () => (
   </>
 )
 
-const hasSharedDriveRoutes = () =>
-  flag('drive.shared-drive.enabled') ||
-  flag('drive.federated-shared-folder.enabled')
-
 const AppRoute = () => (
   <SentryRoutes>
     <Route path="external/:fileId" element={<ExternalRedirect />} />
@@ -178,7 +174,10 @@ const AppRoute = () => (
         </>
       ) : null}
 
-      {hasSharedDriveRoutes() ? sharedDriveRoutes() : null}
+      {flag('drive.shared-drive.enabled') ||
+      flag('drive.federated-shared-folder.enabled')
+        ? sharedDriveRoutes()
+        : null}
 
       <Route path="recent" element={<RecentView />}>
         <Route
@@ -225,7 +224,10 @@ const AppRoute = () => (
           <Route path="file/:fileId/revision" element={<FileHistory />} />
           <Route path="file/:fileId/share" element={<ShareFileView />} />
           <Route path="file/:fileId/qualify" element={<QualifyFileView />} />
-          {hasSharedDriveRoutes() ? sharedDriveRootFileRoute() : null}
+          {flag('drive.shared-drive.enabled') ||
+          flag('drive.federated-shared-folder.enabled')
+            ? sharedDriveRootFileRoute()
+            : null}
         </Route>
         {/* This route must be inside the /sharing path for the nav to have an activate state */}
         <Route path=":folderId" element={<SharingsFolderView />}>

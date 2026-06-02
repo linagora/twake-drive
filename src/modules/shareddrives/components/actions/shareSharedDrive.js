@@ -51,7 +51,7 @@ export const shareSharedDrive = ({ navigate, t, isOwner }) => {
       navigateToModal({
         navigate,
         pathname: `/shareddrive/${driveId}/${fileOrFolderId}`,
-        files: [{ ...doc, id: doc.id ?? doc._id }],
+        files: docs,
         path: 'share'
       })
     },
