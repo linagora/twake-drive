@@ -20,6 +20,24 @@ test.describe('Folder CRUD', () => {
     await expect(aliceDrive.row(name).cell).toBeVisible()
   })
 
+  test('creates a folder via the right-click context menu', async ({
+    alicePage,
+    aliceDrive
+  }) => {
+    await alicePage.goto(ALICE_ROOT)
+
+    // Enter a fresh, empty folder so the right-click opens the AddMenu on blank
+    // space instead of a file row's context menu.
+    const parent = `CtxParent ${stamp()}`
+    await aliceDrive.createFolder(parent)
+    await aliceDrive.row(parent).open()
+    await alicePage.waitForURL(/\/folder\/[^/]+$/)
+
+    const child = `CtxFolder ${stamp()}`
+    await aliceDrive.createFolderViaContextMenu(child)
+    await expect(aliceDrive.row(child).cell).toBeVisible()
+  })
+
   test('renames a folder via the row action menu', async ({
     alicePage,
     aliceDrive
@@ -31,6 +49,26 @@ test.describe('Folder CRUD', () => {
     await aliceDrive.createFolder(original)
     await aliceDrive.row(original).rename(renamed)
     await expect(aliceDrive.row(renamed).cell).toBeVisible()
+  })
+
+  test('renames a file via the row action menu', async ({
+    alicePage,
+    aliceDrive
+  }) => {
+    await alicePage.goto(ALICE_ROOT)
+
+    const original = `file-${stamp()}.txt`
+    const renamed = `renamed-${stamp()}.txt`
+    const filePath = path.join(path.dirname(FIXTURE), original)
+    await copyFile(FIXTURE, filePath)
+    try {
+      await aliceDrive.uploadFiles(filePath)
+      await aliceDrive.row(original).waitVisible()
+      await aliceDrive.row(original).rename(renamed)
+      await expect(aliceDrive.row(renamed).cell).toBeVisible()
+    } finally {
+      await safeUnlink(filePath)
+    }
   })
 
   test('moves a folder into a sibling folder', async ({

@@ -48,4 +48,67 @@ export class DrivePage {
       .first()
       .setInputFiles(filePaths)
   }
+
+  /** Right-click the empty file-list area to open RightClickAddMenu (menu id
+   * `AddMenu`). Both the toolbar and the context menu render the same
+   * `add-folder-link` testid, so the click is scoped to the open menu. */
+  async createFolderViaContextMenu(name: string): Promise<void> {
+    await this.openAddContextMenu()
+    await this.page
+      .getByRole('menu')
+      .locator('[data-testid="add-folder-link"]')
+      .click()
+    const input = this.page.getByTestId('name-input').locator('input')
+    await input.waitFor({ state: 'visible' })
+    await input.fill(name)
+    await input.press('Enter')
+    await this.row(name).waitVisible()
+  }
+
+  /** Same context menu as createFolderViaContextMenu, driving the upload
+   * input the menu renders. setInputFiles works on the hidden input, so this
+   * asserts the menu path opens and feeds the same upload pipeline. */
+  async uploadFilesViaContextMenu(filePaths: string | string[]): Promise<void> {
+    await this.openAddContextMenu()
+    await this.page
+      .getByRole('menu')
+      .locator('input[data-testid="upload-btn"]')
+      .setInputFiles(filePaths)
+  }
+
+  /** Synthesise an OS drag-and-drop: Playwright can't drag real files, so we
+   * build a DataTransfer in-page and dispatch the drop on the file list, which
+   * bubbles to the react-dropzone root wrapping it.
+   *
+   * react-dropzone's file-selector defaults a dropped file's path to
+   * `./<name>` when `webkitGetAsEntry` is null (always, for a scripted
+   * DataTransfer). Drive reads that `./` as a folder structure and tries to
+   * create a "." folder, which fails. Pinning `webkitRelativePath` to the bare
+   * name yields a slash-free path so Drive treats it as a loose top-level file. */
+  async dropFiles(
+    files: { name: string; mime: string; content: string }[]
+  ): Promise<void> {
+    const dataTransfer = await this.page.evaluateHandle(items => {
+      const dt = new DataTransfer()
+      for (const item of items) {
+        const file = new File([item.content], item.name, { type: item.mime })
+        Object.defineProperty(file, 'webkitRelativePath', {
+          value: item.name,
+          configurable: true
+        })
+        dt.items.add(file)
+      }
+      return dt
+    }, files)
+
+    await this.fileList.dispatchEvent('drop', { dataTransfer })
+  }
+
+  /** Right-click the empty content area; the dropzone wrapper's onContextMenu
+   * opens the AddMenu. Callers must be in an empty folder so the click lands
+   * on blank space and not on a file row (which opens the file menu instead). */
+  private async openAddContextMenu(): Promise<void> {
+    await this.fileList.click({ button: 'right' })
+    await this.page.getByRole('menu').waitFor({ state: 'visible' })
+  }
 }
