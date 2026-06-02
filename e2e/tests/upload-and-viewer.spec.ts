@@ -52,6 +52,48 @@ test.describe('Upload & file viewer', () => {
     }
   })
 
+  test('uploads a file via the right-click context menu', async ({
+    alicePage,
+    aliceDrive
+  }) => {
+    await alicePage.goto(ALICE_ROOT)
+
+    // Operate inside a fresh, empty folder so the right-click lands on blank
+    // space (the AddMenu) rather than a file row (the file menu).
+    const folder = `CtxUpload ${stamp()}`
+    await aliceDrive.createFolder(folder)
+    await aliceDrive.row(folder).open()
+    await alicePage.waitForURL(/\/folder\/[^/]+$/)
+
+    const uniqueName = `ctx-${stamp()}.txt`
+    const fixturePath = path.join(FIXTURE_DIR, uniqueName)
+    await copyFile(SAMPLE, fixturePath)
+    try {
+      await aliceDrive.uploadFilesViaContextMenu(fixturePath)
+      await aliceDrive.row(uniqueName).waitVisible()
+    } finally {
+      await safeUnlink(fixturePath)
+    }
+  })
+
+  test('uploads a file by dragging it onto the dropzone', async ({
+    alicePage,
+    aliceDrive
+  }) => {
+    await alicePage.goto(ALICE_ROOT)
+
+    const folder = `DragDrop ${stamp()}`
+    await aliceDrive.createFolder(folder)
+    await aliceDrive.row(folder).open()
+    await alicePage.waitForURL(/\/folder\/[^/]+$/)
+
+    const fileName = `dropped-${stamp()}.txt`
+    await aliceDrive.dropFiles([
+      { name: fileName, mime: 'text/plain', content: 'dropped via DnD' }
+    ])
+    await aliceDrive.row(fileName).waitVisible()
+  })
+
   test('opens an uploaded file in the viewer and closes it', async ({
     alicePage,
     aliceDrive
