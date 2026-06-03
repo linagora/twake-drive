@@ -7,6 +7,7 @@ export interface SharedDrive {
   description: string
   rules: Rule[]
   owner?: boolean
+  org_drive?: boolean
 }
 
 export interface Rule {

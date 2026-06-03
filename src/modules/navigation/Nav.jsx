@@ -16,6 +16,7 @@ import { ExternalNavItem } from '@/modules/navigation/ExternalNavItem'
 import { FavoriteList } from '@/modules/navigation/FavoriteList'
 import { useNavContext } from '@/modules/navigation/NavContext'
 import { NavItem } from '@/modules/navigation/NavItem'
+import { SharedDriveList } from '@/modules/navigation/SharedDriveList'
 import { SharingsNavItem } from '@/modules/navigation/SharingsNavItem'
 import { ExternalDrives } from '@/modules/navigation/components/ExternalDrivesList'
 
@@ -69,6 +70,9 @@ export const Nav = () => {
         </NavDesktopDropdown>
       )}
       {isDesktop ? <FavoriteList clickState={clickState} /> : null}
+      {isDesktop && flag('drive.shared-drive.enabled') ? (
+        <SharedDriveList clickState={clickState} />
+      ) : null}
       {isDesktop ? (
         <ExternalDrives clickState={clickState} className="u-mt-half" />
       ) : null}
