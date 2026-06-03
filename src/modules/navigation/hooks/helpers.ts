@@ -101,9 +101,12 @@ export const computeFileType = (
     return 'shortcut'
   } else if (isDirectory(file)) {
     return 'directory'
-  } else if (isFileRootSharedDrive(file)) {
+  } else if (
+    isFileRootSharedDrive(file) &&
+    file.dir_id === SHARED_DRIVES_DIR_ID
+  ) {
     return 'shared-drive-root-file'
-  } else if (file.driveId) {
+  } else if (file.driveId && file.dir_id === SHARED_DRIVES_DIR_ID) {
     return 'shared-drive-file'
   } else {
     return 'file'

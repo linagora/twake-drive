@@ -241,9 +241,49 @@ describe('computeFileType', () => {
     expect(computeFileType(file)).toBe('directory')
   })
 
-  it('should return "file" for other files', () => {
-    const file = { _type: 'io.cozy.files', type: 'file' }
+  it('should return "file" for files with driveId but not in shared drives directory', () => {
+    const file = {
+      dir_id: 'regular-folder',
+      _type: 'io.cozy.files',
+      type: 'file',
+      driveId: 'drive789'
+    }
     expect(computeFileType(file)).toBe('file')
+  })
+
+  it('should return "file" for shared-drive root files (file-root sharings) owned by the user', () => {
+    // When the user is the owner of a federated sharing whose root is a
+    // file, the file lives on the user's instance in a regular folder
+    // (typically `io.cozy.files.root-dir`), not in the shared-drives
+    // directory. It should therefore be opened as a normal file, not
+    // routed through `/sharings/shareddrive/...`.
+    const file = {
+      _id: '3d8083154feb44bb1abef401040173d5',
+      _type: 'io.cozy.files',
+      type: 'file',
+      mime: 'text/markdown',
+      class: 'text',
+      name: 'test.md',
+      dir_id: 'io.cozy.files.root-dir',
+      driveId: '3d8083154feb44bb1abef40104018386',
+      drive_root_type: DRIVE_ROOT_TYPE.FILE
+    }
+    expect(computeFileType(file)).toBe('file')
+  })
+
+  it('should return "shared-drive-root-file" for shared-drive root files in the shared-drives directory', () => {
+    // Counterpart of the owner case: when a recipient views a file-root
+    // sharing from `/sharings`, the synthetic root file lives in
+    // `SHARED_DRIVES_DIR_ID` and must keep its `shared-drive-root-file`
+    // classification so the path stays scoped to the shared drive.
+    const file = {
+      _type: 'io.cozy.files',
+      type: 'file',
+      dir_id: SHARED_DRIVES_DIR_ID,
+      driveId: '3d8083154feb44bb1abef40104018386',
+      drive_root_type: DRIVE_ROOT_TYPE.FILE
+    }
+    expect(computeFileType(file)).toBe('shared-drive-root-file')
   })
 })
 
@@ -417,13 +457,13 @@ describe('computePath', () => {
   it('should return correct path for shared-drive-file', () => {
     const file = {
       _id: 'file123',
-      dir_id: 'dir456',
+      dir_id: SHARED_DRIVES_DIR_ID,
       driveId: 'drive789',
       _type: 'io.cozy.files'
     }
     expect(
       computePath(file, { type: 'shared-drive-file', pathname: '/any' })
-    ).toBe('/shareddrive/drive789/dir456/file/file123')
+    ).toBe('/shareddrive/drive789/io.cozy.files.shared-drives-dir/file/file123')
   })
 
   it('should throw error for shared-drive-file without driveId', () => {
