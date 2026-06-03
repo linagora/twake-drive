@@ -43,6 +43,7 @@
     "more": "Ещё"
   },
   "toolbar": {
+    "menu_leave_shared_drive": "Покинуть общий доступ",
     "menu_upload": "Загрузить файлы",
     "item_more": "Ещё",
     "menu_new_folder": "Папка",
