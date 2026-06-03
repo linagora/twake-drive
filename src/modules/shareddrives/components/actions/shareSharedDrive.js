@@ -7,21 +7,20 @@ import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 
 import { navigateToModal } from '@/modules/actions/helpers'
-import {
-  getSharedDriveRootFileSharePath,
-  SHARED_DRIVE_ROOT_FILE_PATH_SCOPE
-} from '@/modules/routeUtils'
 import { isFromSharedDriveRecipient } from '@/modules/shareddrives/helpers'
-import { DRIVE_ROOT_TYPE } from '@/modules/shareddrives/types'
+import { isFileRootSharedDrive } from '@/modules/shareddrives/rootFileNavigation'
 
-// Only for sharing tabs
+// Only for sharing tabs. Handles folder-root shared drives; file-root shared
+// drives are handled by `shareFileRootSharedDrive`. The two are mutually
+// exclusive: this one hides itself when the doc is a file-root, and the
+// file-root one only shows for file-roots.
 export const shareSharedDrive = ({ navigate, t, isOwner }) => {
   const label = t('Files.share.cta')
   const icon = ShareIcon
 
   return {
     name: 'shareSharedDrive',
-    label: label,
+    label,
     icon,
     displayCondition: docs => {
       const [doc] = docs
@@ -29,28 +28,17 @@ export const shareSharedDrive = ({ navigate, t, isOwner }) => {
       return (
         docs.length === 1 &&
         isFromSharedDriveRecipient(doc) &&
+        !isFileRootSharedDrive(doc) &&
         isOwner?.(doc._id)
       )
     },
     action: docs => {
-      const [doc] = docs
-      const fileOrFolderId = doc._id
-      const driveId = doc.driveId
-
-      if (doc.drive_root_type === DRIVE_ROOT_TYPE.FILE) {
-        navigate(
-          getSharedDriveRootFileSharePath({
-            driveId,
-            fileId: fileOrFolderId,
-            scope: SHARED_DRIVE_ROOT_FILE_PATH_SCOPE.SHARINGS
-          })
-        )
-        return
-      }
+      const folderId = docs[0]._id
+      const driveId = docs[0].driveId
 
       navigateToModal({
         navigate,
-        pathname: `/shareddrive/${driveId}/${fileOrFolderId}`,
+        pathname: `/shareddrive/${driveId}/${folderId}`,
         files: docs,
         path: 'share'
       })
