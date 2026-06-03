@@ -14,7 +14,6 @@ import filelistStyles from '@/styles/filelist.styl'
 
 import { RenameInput } from '@/modules/drive/RenameInput'
 import { makeParentFolderPath } from '@/modules/filelist/helpers'
-import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
 
 const useStyles = makeStyles(theme => ({
   name: {
@@ -30,10 +29,9 @@ const useStyles = makeStyles(theme => ({
   }
 }))
 
-const FileName = ({ file, isPublic }) => {
+const FileName = ({ file, isPublic, isReadOnly }) => {
   const muiStyles = useStyles()
   const { isMobile } = useBreakpoints()
-  const { isReadOnly } = useOnlyOfficeContext()
   const [isRenaming, setIsRenaming] = useState(false)
 
   const parentFolderPath = makeParentFolderPath(file)
@@ -87,7 +85,8 @@ const FileName = ({ file, isPublic }) => {
 
 FileName.propTypes = {
   file: PropTypes.object.isRequired,
-  isPublic: PropTypes.bool
+  isPublic: PropTypes.bool,
+  isReadOnly: PropTypes.bool
 }
 
 export default React.memo(FileName)
