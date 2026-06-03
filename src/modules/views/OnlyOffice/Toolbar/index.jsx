@@ -18,7 +18,6 @@ import HomeIcon from '@/components/EditorToolbar/HomeIcon'
 import HomeLinker from '@/components/EditorToolbar/HomeLinker'
 import Separator from '@/components/EditorToolbar/Separator'
 import Sharing from '@/components/EditorToolbar/Sharing'
-import FilesRealTimeQueries from '@/components/FilesRealTimeQueries'
 import { useRedirectLink } from '@/hooks/useRedirectLink'
 import PublicToolbarMoreMenu from '@/modules/public/PublicToolbarMoreMenu'
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
@@ -95,7 +94,6 @@ const Toolbar = ({ sharingInfos }) => {
 
   return (
     <>
-      <FilesRealTimeQueries />
       <div className="u-flex u-flex-items-center u-flex-grow-1 u-ellipsis">
         {!isMobile && (
           <>
