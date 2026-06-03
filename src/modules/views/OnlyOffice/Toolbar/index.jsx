@@ -12,18 +12,18 @@ import { makeActions } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import { useI18n } from 'twake-i18n'
 
+import BackButton from '@/components/EditorToolbar/BackButton'
+import FileName from '@/components/EditorToolbar/FileName'
+import HomeIcon from '@/components/EditorToolbar/HomeIcon'
+import HomeLinker from '@/components/EditorToolbar/HomeLinker'
+import Separator from '@/components/EditorToolbar/Separator'
+import Sharing from '@/components/EditorToolbar/Sharing'
 import FilesRealTimeQueries from '@/components/FilesRealTimeQueries'
 import { useRedirectLink } from '@/hooks/useRedirectLink'
 import PublicToolbarMoreMenu from '@/modules/public/PublicToolbarMoreMenu'
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
-import BackButton from '@/modules/views/OnlyOffice/Toolbar/BackButton'
 import EditButton from '@/modules/views/OnlyOffice/Toolbar/EditButton'
 import FileIcon from '@/modules/views/OnlyOffice/Toolbar/FileIcon'
-import FileName from '@/modules/views/OnlyOffice/Toolbar/FileName'
-import HomeIcon from '@/modules/views/OnlyOffice/Toolbar/HomeIcon'
-import HomeLinker from '@/modules/views/OnlyOffice/Toolbar/HomeLinker'
-import Separator from '@/modules/views/OnlyOffice/Toolbar/Separator'
-import Sharing from '@/modules/views/OnlyOffice/Toolbar/Sharing'
 import SummarizeByAIButtonWrapper from '@/modules/views/OnlyOffice/Toolbar/SummarizeByAIButtonWrapper'
 import { isOfficeEditingEnabled } from '@/modules/views/OnlyOffice/helpers'
 import { buildFileOrFolderByIdQuery, buildFileWhereByIdQuery } from '@/queries'
@@ -111,7 +111,7 @@ const Toolbar = ({ sharingInfos }) => {
         )}
         {showBackButton && <BackButton onClick={handleOnClick} />}
         {!isMobile && file.class && <FileIcon fileClass={file.class} />}
-        <FileName file={file} isPublic={isPublic} />
+        <FileName file={file} isPublic={isPublic} isReadOnly={isReadOnly} />
       </div>
       {showSharingLinkButton && (
         <OpenSharingLinkButton

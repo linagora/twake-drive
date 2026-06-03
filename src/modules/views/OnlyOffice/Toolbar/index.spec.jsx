@@ -17,11 +17,9 @@ jest.mock('cozy-sharing', () => ({
   OpenSharingLinkButton: () => <div data-testid="open-external-link-button" />
 }))
 
-jest.mock(
-  '@/modules/views/OnlyOffice/Toolbar/HomeLinker',
-  () =>
-    ({ children }) => <div data-testid="HomeLinker">{children}</div>
-)
+jest.mock('@/components/EditorToolbar/HomeLinker', () => ({ children }) => (
+  <div data-testid="HomeLinker">{children}</div>
+))
 
 jest.mock('cozy-ui/transpiled/react/providers/Breakpoints', () => ({
   ...jest.requireActual('cozy-ui/transpiled/react/providers/Breakpoints'),
@@ -30,8 +28,8 @@ jest.mock('cozy-ui/transpiled/react/providers/Breakpoints', () => ({
   useBreakpoints: jest.fn()
 }))
 jest.mock('cozy-client/dist/hooks/useQuery', () => jest.fn())
-jest.mock('modules/views/OnlyOffice/Toolbar/helpers', () => ({
-  ...jest.requireActual('modules/views/OnlyOffice/Toolbar/helpers'),
+jest.mock('components/EditorToolbar/helpers', () => ({
+  ...jest.requireActual('components/EditorToolbar/helpers'),
   computeHomeApp: jest.fn(() => ({ slug: 'slug' }))
 }))
 
