@@ -1,24 +1,12 @@
 import { useState, useEffect } from 'react'
 
-import { useClient, useQuery } from 'cozy-client'
-
-import { DEFAULT_SORT } from '@/config/sort'
-import { SHARED_DRIVES_DIR_ID } from '@/constants/config'
-import { buildDriveQuery } from '@/queries'
+import { useClient } from 'cozy-client'
 
 export const useSharedDrives = () => {
   const client = useClient()
   const [isLoading, setIsLoading] = useState(false)
   const [isLoaded, setIsLoaded] = useState(false)
   const [sharedDrives, setSharedDrives] = useState([])
-
-  const folderQuery = buildDriveQuery({
-    currentFolderId: SHARED_DRIVES_DIR_ID,
-    type: 'directory',
-    sortAttribute: DEFAULT_SORT.attribute,
-    sortOrder: DEFAULT_SORT.order
-  })
-  const { lastUpdate } = useQuery(folderQuery.definition, folderQuery.options)
 
   useEffect(() => {
     let isCancelled = false
@@ -41,12 +29,43 @@ export const useSharedDrives = () => {
       }
     }
 
+    const handleRealtimeChange = doc => {
+      if (doc.drive) {
+        void fetchSharedDrives()
+      }
+    }
+
     void fetchSharedDrives()
+
+    const { realtime } = client.plugins || {}
+
+    if (realtime) {
+      realtime.subscribe('created', 'io.cozy.sharings', handleRealtimeChange)
+      realtime.subscribe('updated', 'io.cozy.sharings', handleRealtimeChange)
+      realtime.subscribe('deleted', 'io.cozy.sharings', handleRealtimeChange)
+    }
 
     return () => {
       isCancelled = true
+      if (realtime) {
+        realtime.unsubscribe(
+          'created',
+          'io.cozy.sharings',
+          handleRealtimeChange
+        )
+        realtime.unsubscribe(
+          'updated',
+          'io.cozy.sharings',
+          handleRealtimeChange
+        )
+        realtime.unsubscribe(
+          'deleted',
+          'io.cozy.sharings',
+          handleRealtimeChange
+        )
+      }
     }
-  }, [client, lastUpdate])
+  }, [client])
 
   return { isLoading, isLoaded, sharedDrives }
 }
