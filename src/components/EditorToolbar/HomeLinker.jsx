@@ -9,7 +9,7 @@ import {
 import AppLinker from 'cozy-ui-plus/dist/AppLinker'
 import { useI18n } from 'twake-i18n'
 
-import { computeHomeApp } from '@/modules/views/OnlyOffice/Toolbar/helpers'
+import { computeHomeApp } from '@/components/EditorToolbar/helpers'
 import { buildAppsQuery, buildSettingsByIdQuery } from '@/queries'
 
 const HomeLinker = ({ children }) => {
