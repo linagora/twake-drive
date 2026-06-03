@@ -36,13 +36,13 @@ const viewerFileCases = [
       id: 'file-1',
       name: 'smoke-root.txt',
       mime: 'text/plain',
-      class: 'text',
+      class: 'file',
       path: '/Drives/smoke-root.txt',
       driveId: 'drive-1'
     }
   },
   {
-    label: 'uses media MIME class',
+    label: 'forwards media MIME without inferring class',
     file: { name: 'Photo' },
     sharedDrive: makeSharedDrive({
       title: 'Photo.jpg',
@@ -51,11 +51,11 @@ const viewerFileCases = [
     expected: {
       name: 'Photo.jpg',
       mime: 'image/jpeg',
-      class: 'image'
+      class: 'file'
     }
   },
   {
-    label: 'prefers specific class',
+    label: 'keeps the fetched class when present',
     file: { mime: 'text/plain', class: 'file' },
     sharedDrive: makeSharedDrive({
       title: 'smoke-root.txt',
@@ -64,7 +64,7 @@ const viewerFileCases = [
     expected: {
       name: 'smoke-root.txt',
       mime: 'text/plain',
-      class: 'text'
+      class: 'file'
     }
   },
   {
@@ -83,10 +83,10 @@ const viewerFileCases = [
       attributes: {
         type: 'file',
         name: 'smoke-root.txt',
-        class: 'text'
+        class: 'file'
       },
       name: 'smoke-root.txt',
-      class: 'text'
+      class: 'file'
     }
   },
   {
@@ -98,7 +98,7 @@ const viewerFileCases = [
     sharedDrive: makeSharedDrive({ title: 'Stale.docx' }),
     expected: {
       name: 'CIR.docx',
-      class: 'text'
+      class: 'file'
     }
   },
   {
@@ -116,7 +116,7 @@ const viewerFileCases = [
       id: 'route-file-1',
       name: 'Photo.jpg',
       mime: 'image/jpeg',
-      class: 'image'
+      class: 'file'
     }
   },
   {

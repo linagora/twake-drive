@@ -1,5 +1,6 @@
 import {
   isFileRootSharedDrive,
+  isFileRootSharedDriveShortcut,
   getFileRootViewerPath,
   getFileRootSharePath,
   navigateToFileRootViewer,
@@ -22,6 +23,25 @@ describe('isFileRootSharedDrive', () => {
 
   it.each([null, undefined])('returns false for %p', value => {
     expect(isFileRootSharedDrive(value)).toBe(false)
+  })
+})
+
+describe('isFileRootSharedDriveShortcut', () => {
+  it.each`
+    label                                                | file                                                                                                                         | expected
+    ${'file-root shortcut on the recipient'}             | ${{ class: 'shortcut', metadata: { target: { drive_root_type: DRIVE_ROOT_TYPE.FILE, mime: 'text/plain' } } }}                | ${true}
+    ${'file-root shortcut with extra target fields'}     | ${{ class: 'shortcut', metadata: { target: { drive_root_type: DRIVE_ROOT_TYPE.FILE, class: 'text', mime: 'text/plain' } } }} | ${true}
+    ${'directory-root shortcut'}                         | ${{ class: 'shortcut', metadata: { target: { drive_root_type: DRIVE_ROOT_TYPE.DIRECTORY, mime: '' } } }}                     | ${false}
+    ${'regular shortcut without target'}                 | ${{ class: 'shortcut' }}                                                                                                     | ${false}
+    ${'file-root type without shortcut class'}           | ${{ metadata: { target: { drive_root_type: DRIVE_ROOT_TYPE.FILE, mime: 'text/plain' } } }}                                   | ${false}
+    ${'file without metadata'}                           | ${{ class: 'shortcut' }}                                                                                                     | ${false}
+    ${'file-root shortcut without target.mime (legacy)'} | ${{ class: 'shortcut', metadata: { target: { drive_root_type: DRIVE_ROOT_TYPE.FILE } } }}                                    | ${false}
+  `('returns $expected for $label', ({ file, expected }) => {
+    expect(isFileRootSharedDriveShortcut(file)).toBe(expected)
+  })
+
+  it.each([null, undefined])('returns false for %p', value => {
+    expect(isFileRootSharedDriveShortcut(value)).toBe(false)
   })
 })
 
