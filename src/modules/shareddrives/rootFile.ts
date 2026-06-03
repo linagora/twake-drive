@@ -1,7 +1,6 @@
 import { IOCozyFile } from 'cozy-client/types/types'
 
 import type { SharingRule } from '@/modules/shareddrives/types'
-import { getFileClassFromMimeOrName } from '@/modules/views/OnlyOffice/fileClass'
 
 type FileWithAttributes = Partial<IOCozyFile> & {
   class?: string
@@ -56,10 +55,7 @@ export const getSharedDriveRootFileMetadata = ({
     fallbackName
   })
   const mime = file.mime || file.attributes?.mime || rootRule?.mime
-  const fileClass =
-    getFileClassFromMimeOrName({ mime, name }) ||
-    file.class ||
-    file.attributes?.class
+  const fileClass = file.class || file.attributes?.class
 
   return {
     ...(name ? { name } : {}),
