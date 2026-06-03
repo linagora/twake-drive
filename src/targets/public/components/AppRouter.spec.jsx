@@ -19,6 +19,11 @@ jest.mock('modules/views/OnlyOffice/helpers', () => ({
 
 jest.mock('modules/upload/UploadQueue')
 
+jest.mock('@/components/FilesRealTimeQueries', () => ({
+  __esModule: true,
+  default: () => null
+}))
+
 jest.mock('modules/views/Public/PublicFolderView', () => ({
   PublicFolderView: jest.fn().mockImplementation(() => {
     return <div>PublicFolderView</div>
