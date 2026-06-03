@@ -14,6 +14,7 @@ import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import Storage from 'cozy-ui-plus/dist/Storage'
 import { useI18n } from 'twake-i18n'
 
+import FilesRealTimeQueries from '@/components/FilesRealTimeQueries'
 import Drive from '@/components/Icons/Drive'
 import DriveText from '@/components/Icons/DriveText'
 import ButtonClient from '@/components/pushClient/Button'
@@ -106,6 +107,9 @@ const LayoutContent = () => {
           )}
         </Sidebar>
         <UploadQueue />
+        {/* Mounted once here so every route (folders and editors) keeps the
+            io.cozy.files store in sync with server-side changes. */}
+        <FilesRealTimeQueries />
         <SelectionProvider>
           <Outlet />
         </SelectionProvider>

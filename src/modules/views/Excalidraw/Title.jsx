@@ -14,7 +14,6 @@ import HomeIcon from '@/components/EditorToolbar/HomeIcon'
 import HomeLinker from '@/components/EditorToolbar/HomeLinker'
 import Separator from '@/components/EditorToolbar/Separator'
 import Sharing from '@/components/EditorToolbar/Sharing'
-import FilesRealTimeQueries from '@/components/FilesRealTimeQueries'
 import { useRedirectLink } from '@/hooks/useRedirectLink'
 
 const useStyles = makeStyles(theme => ({
@@ -38,8 +37,6 @@ const Title = ({ file, flushRef, isPublic = false, isReadOnly = false }) => {
 
   return (
     <div style={{ zIndex: 'var(--zIndex-nav)' }}>
-      {/* Keeps the store in sync with server-side changes (e.g. rename). */}
-      <FilesRealTimeQueries />
       <DialogTitle
         data-testid="excalidraw-title"
         disableTypography

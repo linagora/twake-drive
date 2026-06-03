@@ -3,7 +3,6 @@ import React from 'react'
 import { RealTimeQueries } from 'cozy-client'
 
 import { NotFound } from '@/components/Error/NotFound'
-import FilesRealTimeQueries from '@/components/FilesRealTimeQueries'
 import { ModalStack } from '@/lib/ModalContext'
 import { ModalManager } from '@/lib/react-cozy-helpers'
 import Main from '@/modules/layout/Main'
@@ -19,7 +18,6 @@ import Main from '@/modules/layout/Main'
  */
 const FolderView = ({ children, isNotFound }) => (
   <Main>
-    <FilesRealTimeQueries />
     <RealTimeQueries doctype="io.cozy.settings" />
     <ModalStack />
     <ModalManager />
