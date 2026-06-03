@@ -20,8 +20,7 @@ import {
   getSharedDriveRootFilePathScope
 } from '@/modules/routeUtils'
 import { makeSharedDriveNoteReturnUrl } from '@/modules/shareddrives/helpers'
-import { DRIVE_ROOT_TYPE } from '@/modules/shareddrives/types'
-import type { SharedDriveFile } from '@/modules/shareddrives/types'
+import { isFileRootSharedDrive } from '@/modules/shareddrives/rootFileNavigation'
 import {
   isExcalidraw,
   makeExcalidrawFileRoute
@@ -40,16 +39,6 @@ interface ComputePathOptions {
   pathname: string
   isPublic: boolean
   client: CozyClient | null
-}
-
-const isFileRootSharedDrive = (file: File): file is SharedDriveFile => {
-  if (!('driveId' in file) || !('drive_root_type' in file)) return false
-
-  const candidate = file as SharedDriveFile
-  return (
-    Boolean(candidate.driveId) &&
-    candidate.drive_root_type === DRIVE_ROOT_TYPE.FILE
-  )
 }
 
 export const computeFileType = (

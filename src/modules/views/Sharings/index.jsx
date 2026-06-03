@@ -42,6 +42,7 @@ import FabWithAddMenuContext from '@/modules/drive/FabWithAddMenuContext'
 import Toolbar from '@/modules/drive/Toolbar'
 import FileListRowsPlaceholder from '@/modules/filelist/FileListRowsPlaceholder'
 import { leaveSharedDrive } from '@/modules/shareddrives/components/actions/leaveSharedDrive'
+import { shareFileRootSharedDrive } from '@/modules/shareddrives/components/actions/shareFileRootSharedDrive'
 import { shareSharedDrive } from '@/modules/shareddrives/components/actions/shareSharedDrive'
 import { buildSharingsQuery } from '@/queries'
 
@@ -92,6 +93,7 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
       share,
       shareNative,
       shareSharedDrive,
+      shareFileRootSharedDrive,
       download,
       hr,
       summariseByAI,

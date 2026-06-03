@@ -25,6 +25,7 @@ import logger from '@/lib/logger'
 import { navigateToModal } from '@/modules/actions/helpers'
 import Fallback from '@/modules/viewer/Fallback'
 import MoreMenu from '@/modules/viewer/MoreMenu'
+import { resolveShouldHideSharingActions } from '@/modules/viewer/shouldHideSharingActions'
 import {
   isOfficeEnabled,
   makeOnlyOfficeFileRoute
@@ -143,13 +144,8 @@ const FilesViewer = ({ filesQuery, files, onClose, onChange, viewerProps }) => {
   )
 
   const viewerComponentProps = viewerProps || {}
-  // panel.sharing.disabled is the cozy-viewer contract for read-only sharing.
-  // The local wrapper also uses it to keep Drive's own actions and the viewer
-  // toolbar consistent for shared-drive recipients.
-  const isSharingPanelDisabled = viewerComponentProps?.panel?.sharing?.disabled
   const shouldHideSharingActions =
-    viewerComponentProps?.sharingActions?.disabled ??
-    Boolean(isSharingPanelDisabled)
+    resolveShouldHideSharingActions(viewerComponentProps)
   const actions = useMoreMenuActions(currentFile ?? {}, {
     shouldHideIfSharedDriveRecipient: shouldHideSharingActions
   })

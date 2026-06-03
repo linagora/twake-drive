@@ -1,10 +1,9 @@
 import { joinPath } from '@/lib/path'
-import {
-  getSharedDriveRootFilePathScope,
-  getSharedDriveRootFileSharePath
-} from '@/modules/routeUtils'
 import { isFromSharedDriveRecipient } from '@/modules/shareddrives/helpers'
-import { DRIVE_ROOT_TYPE } from '@/modules/shareddrives/types'
+import {
+  getFileRootSharePath,
+  isFileRootSharedDrive
+} from '@/modules/shareddrives/rootFileNavigation'
 
 export const makeFileSharePath = ({ file, pathname }) => {
   const fileId = file._id ?? file.id
@@ -13,12 +12,8 @@ export const makeFileSharePath = ({ file, pathname }) => {
     return joinPath(pathname, `file/${fileId}/share`)
   }
 
-  if (file.drive_root_type === DRIVE_ROOT_TYPE.FILE) {
-    return getSharedDriveRootFileSharePath({
-      driveId: file.driveId,
-      fileId,
-      scope: getSharedDriveRootFilePathScope(pathname)
-    })
+  if (isFileRootSharedDrive(file)) {
+    return getFileRootSharePath({ file, pathname })
   }
 
   // For a folder-root shared drive recipient, the drive root IS the folder
