@@ -107,7 +107,6 @@ describe('useTransformFolderListHasSharedDriveShortcuts', () => {
         type: 'file',
         name: 'CIR.docx',
         mime: docxMime,
-        class: 'text',
         dir_id: SHARED_DRIVES_DIR_ID,
         driveId: 'sharing-1',
         drive_root_type: DRIVE_ROOT_TYPE.FILE,
@@ -183,16 +182,25 @@ describe('useTransformFolderListHasSharedDriveShortcuts', () => {
 
       expect(result.current.sharedDrives).toEqual(
         expect.arrayContaining([
-          expect.objectContaining({ _id: 'text-file', class: 'text' }),
+          expect.objectContaining({
+            _id: 'text-file',
+            mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+          }),
           expect.objectContaining({
             _id: 'sheet-file',
-            class: 'spreadsheet'
+            mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
           }),
-          expect.objectContaining({ _id: 'slide-file', class: 'slide' }),
-          expect.objectContaining({ _id: 'image-file', class: 'image' }),
+          expect.objectContaining({
+            _id: 'slide-file',
+            mime: 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+          }),
+          expect.objectContaining({
+            _id: 'image-file',
+            mime: 'image/jpeg'
+          }),
           expect.objectContaining({
             _id: 'text-without-mime-file',
-            class: 'text'
+            name: 'Notes.txt'
           })
         ])
       )
