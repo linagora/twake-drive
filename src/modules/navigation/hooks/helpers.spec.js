@@ -73,6 +73,126 @@ describe('computeFileType', () => {
     expect(computeFileType(file, { isOfficeEnabled: true })).toBe('onlyoffice')
   })
 
+  it('should return "onlyoffice" for file-root shared drive .url shortcuts on the recipient when Office is enabled', () => {
+    // The recipient sees the file-root sharing as a `.url` shortcut
+    // (class: 'shortcut', mime: application/internet-shortcut). The stack
+    // exposes the shared file's real class in metadata.target.class so we
+    // can route to OnlyOffice without re-deriving the class.
+    const file = {
+      _id: 'shortcut-1',
+      name: 'CIR.docx',
+      mime: 'application/internet-shortcut',
+      class: 'shortcut',
+      dir_id: SHARED_DRIVES_DIR_ID,
+      _type: 'io.cozy.files',
+      type: 'file',
+      metadata: {
+        target: {
+          _type: 'io.cozy.files',
+          drive_root_type: DRIVE_ROOT_TYPE.FILE,
+          class: 'text',
+          mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        }
+      }
+    }
+    expect(computeFileType(file, { isOfficeEnabled: true })).toBe('onlyoffice')
+  })
+
+  it('should return "onlyoffice" for spreadsheet file-root shared drive .url shortcuts on the recipient', () => {
+    const file = {
+      _id: 'shortcut-1',
+      name: 'Budget.xlsx',
+      mime: 'application/internet-shortcut',
+      class: 'shortcut',
+      dir_id: SHARED_DRIVES_DIR_ID,
+      _type: 'io.cozy.files',
+      type: 'file',
+      metadata: {
+        target: {
+          _type: 'io.cozy.files',
+          drive_root_type: DRIVE_ROOT_TYPE.FILE,
+          class: 'spreadsheet',
+          mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        }
+      }
+    }
+    expect(computeFileType(file, { isOfficeEnabled: true })).toBe('onlyoffice')
+  })
+
+  it('should return "shared-drive-root-file" for file-root .url shortcuts when Office is disabled', () => {
+    const file = {
+      _id: 'shortcut-1',
+      name: 'CIR.docx',
+      mime: 'application/internet-shortcut',
+      class: 'shortcut',
+      dir_id: SHARED_DRIVES_DIR_ID,
+      _type: 'io.cozy.files',
+      type: 'file',
+      metadata: {
+        target: {
+          _type: 'io.cozy.files',
+          drive_root_type: DRIVE_ROOT_TYPE.FILE,
+          class: 'text',
+          mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        }
+      }
+    }
+    expect(computeFileType(file, { isOfficeEnabled: false })).toBe(
+      'shared-drive-root-file'
+    )
+  })
+
+  it('should return "shared-drive" for legacy file-root .url shortcuts without metadata.target.mime', () => {
+    // Legacy file-root shortcuts created before the stack started
+    // exposing metadata.target.mime (and metadata.target.class) keep
+    // their pre-existing behaviour: they fall into the `shared-drive`
+    // branch because isFileRootSharedDriveShortcut requires the new
+    // target.mime field to recognise them. They do not get the
+    // OnlyOffice dispatch.
+    const file = {
+      _id: 'shortcut-1',
+      name: 'CIR.docx',
+      mime: 'application/internet-shortcut',
+      class: 'shortcut',
+      dir_id: SHARED_DRIVES_DIR_ID,
+      _type: 'io.cozy.files',
+      type: 'file',
+      metadata: {
+        target: {
+          _type: 'io.cozy.files',
+          drive_root_type: DRIVE_ROOT_TYPE.FILE
+        }
+      }
+    }
+    expect(computeFileType(file, { isOfficeEnabled: true })).toBe(
+      'shared-drive'
+    )
+  })
+
+  it('should return "shared-drive" for directory-root .url shortcuts in shared drives directory', () => {
+    // Directory-root sharings (drive_root_type: directory) keep the
+    // existing `shared-drive` branch behaviour; only the file-root
+    // shortcut gets the OnlyOffice dispatch.
+    const file = {
+      _id: 'shortcut-1',
+      name: 'My Drive',
+      mime: 'application/internet-shortcut',
+      class: 'shortcut',
+      dir_id: SHARED_DRIVES_DIR_ID,
+      _type: 'io.cozy.files',
+      type: 'file',
+      metadata: {
+        target: {
+          _type: 'io.cozy.files',
+          drive_root_type: DRIVE_ROOT_TYPE.DIRECTORY
+        }
+      }
+    }
+    expect(computeFileType(file, { isOfficeEnabled: true })).toBe(
+      'shared-drive'
+    )
+  })
+
   it('should return "nextcloud-directory" for Nextcloud directories', () => {
     const file = { _type: 'io.cozy.remote.nextcloud.files', type: 'directory' }
     expect(computeFileType(file)).toBe('nextcloud-directory')

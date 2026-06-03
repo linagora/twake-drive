@@ -20,7 +20,10 @@ import {
   getSharedDriveRootFilePathScope
 } from '@/modules/routeUtils'
 import { makeSharedDriveNoteReturnUrl } from '@/modules/shareddrives/helpers'
-import { isFileRootSharedDrive } from '@/modules/shareddrives/rootFileNavigation'
+import {
+  isFileRootSharedDrive,
+  isFileRootSharedDriveShortcut
+} from '@/modules/shareddrives/rootFileNavigation'
 import {
   isExcalidraw,
   makeExcalidrawFileRoute
@@ -57,6 +60,7 @@ export const computeFileType = (
   } else if (
     file.dir_id === SHARED_DRIVES_DIR_ID &&
     !isFileRootSharedDrive(file) &&
+    !isFileRootSharedDriveShortcut(file) &&
     !isNextcloudShortcut(file)
   ) {
     return 'shared-drive'
@@ -78,6 +82,27 @@ export const computeFileType = (
     return 'docs'
   } else if (isExcalidraw(file) && isExcalidrawEnabled) {
     return 'excalidraw'
+  } else if (isFileRootSharedDriveShortcut(file)) {
+    // File-root shared drives are materialized on the recipient as `.url`
+    // shortcuts (`class: 'shortcut'`, mime `application/internet-shortcut`),
+    // so the regular `isShortcut` / `shouldBeOpenedByOnlyOffice` branches
+    // below cannot dispatch them to the OnlyOffice viewer. The stack
+    // exposes the shared file's real class in `metadata.target.class`
+    // (computed from the rule mime in `CreateDriveShortcut`); use it to
+    // route to `'onlyoffice'` or fall back to `'shared-drive-root-file'`.
+    // `target` is typed as `{ title; category }` by cozy-client, so the
+    // extra `class` field is `unknown`; widen to `unknown` explicitly to
+    // avoid the `no-unsafe-assignment` lint on the access below.
+    const targetClass: unknown = file.metadata?.target?.['class']
+    if (
+      (targetClass === 'text' ||
+        targetClass === 'spreadsheet' ||
+        targetClass === 'slide') &&
+      isOfficeEnabled
+    ) {
+      return 'onlyoffice'
+    }
+    return 'shared-drive-root-file'
   } else if (shouldBeOpenedByOnlyOffice(file) && isOfficeEnabled) {
     // Load-bearing: this branch runs before `isFileRootSharedDrive` below, so
     // an Office file shared as a drive root routes through OnlyOffice (its own
