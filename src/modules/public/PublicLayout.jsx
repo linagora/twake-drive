@@ -6,6 +6,7 @@ import FlagSwitcher from 'cozy-flags/dist/FlagSwitcher'
 import Sprite from 'cozy-ui/transpiled/react/Icon/Sprite'
 import { Layout } from 'cozy-ui/transpiled/react/Layout'
 
+import FilesRealTimeQueries from '@/components/FilesRealTimeQueries'
 import Drive from '@/components/Icons/Drive'
 import DriveText from '@/components/Icons/DriveText'
 import { SelectionProvider } from '@/modules/selection/SelectionProvider'
@@ -24,6 +25,9 @@ const PublicLayout = () => {
       />
       <FlagSwitcher />
       <UploadQueue />
+      {/* Mounted once here so every public route (folders and editors) keeps
+          the io.cozy.files store in sync with server-side changes. */}
+      <FilesRealTimeQueries />
       <NewItemHighlightProvider>
         <SelectionProvider>
           <Outlet />
