@@ -5,8 +5,8 @@ import { useSelector } from 'react-redux'
 import { isSharingShortcut } from 'cozy-client/dist/models/file'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
-import { useFileSorting } from './hooks/useFileSorting'
 import { getFolderViewState } from './hooks/getFolderViewState'
+import { useFileSorting } from './hooks/useFileSorting'
 import { useSyncingFakeFile } from './useSyncingFakeFile'
 
 import styles from '@/styles/folder-view.styl'
