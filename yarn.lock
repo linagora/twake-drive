@@ -7140,10 +7140,10 @@ cozy-search@^0.25.3:
     react-type-animation "3.2.0"
     rooks "7.14.1"
 
-cozy-sharing@^32.3.2:
-  version "32.3.2"
-  resolved "https://registry.yarnpkg.com/cozy-sharing/-/cozy-sharing-32.3.2.tgz#ed3819b8cb9a8e3454f2867652a10089a67943e7"
-  integrity sha512-BMsCCGYs/1Zk4O6Oor+bXCjm+jh5/e7g51t/fAllDeZ4TtfqdoWuRD07XkzVDwmkW+jhoU5ZGsWhOETt0d5XZg==
+cozy-sharing@^33.1.1:
+  version "33.1.1"
+  resolved "https://registry.yarnpkg.com/cozy-sharing/-/cozy-sharing-33.1.1.tgz#6d5cc9d7fcb13d150ab35b22654c47b5931047b5"
+  integrity sha512-a+P5/3+c3/uzO+wwUHuQh3ywZXnLMG5RXtxo+1tDg01kwOhGyX5e7uZ3rPSs3dm6b5vhv71c9cfYFC765uYEcQ==
   dependencies:
     "@cozy/minilog" "^1.0.0"
     classnames "^2.5.1"
@@ -7202,10 +7202,10 @@ cozy-ui-plus@^7.1.0:
     react-international-phone "4.7.0"
     rooks "7.14.1"
 
-cozy-ui@^138.12.0:
-  version "138.12.0"
-  resolved "https://registry.yarnpkg.com/cozy-ui/-/cozy-ui-138.12.0.tgz#3e7650a6776be3dbaf0a5431508e53d976b3f0f7"
-  integrity sha512-QR3K2wEpjQgWZk4u9S0KHFg27j7Uip1apgwDD3vrIKXuoIFoQ7B1SZd+1wjQRZPLmjmNtf4exDl3ryvFy2V1CQ==
+cozy-ui@^139.1.0:
+  version "139.1.0"
+  resolved "https://registry.yarnpkg.com/cozy-ui/-/cozy-ui-139.1.0.tgz#daf7e00eb8b96c69990149d9f747504c43a71bd1"
+  integrity sha512-FrVddEYQKsieh2keW0oChR22GStlmqBykHr2FgUTj8YOQUhhdQTa2QA9eC1Z5byJJPkqvru45GCkuyiVGgD+Ig==
   dependencies:
     "@babel/runtime" "^7.3.4"
     "@date-io/date-fns" "1"
@@ -12557,9 +12557,9 @@ msgpack5@^4.0.2:
     readable-stream "^2.3.6"
     safe-buffer "^5.1.2"
 
-"mui-bottom-sheet@https://github.com/cozy/mui-bottom-sheet.git#v1.0.9":
+"mui-bottom-sheet@git+https://github.com/cozy/mui-bottom-sheet.git#v1.0.9":
   version "1.0.8"
-  resolved "https://github.com/cozy/mui-bottom-sheet.git#3dc4c2a245ab39079bc2f73546bccf80847be14c"
+  resolved "git+https://github.com/cozy/mui-bottom-sheet.git#3dc4c2a245ab39079bc2f73546bccf80847be14c"
   dependencies:
     "@juggle/resize-observer" "^3.1.3"
     jest-environment-jsdom-sixteen "^1.0.3"
