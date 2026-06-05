@@ -57,6 +57,7 @@
     "menu_download_file": "Download this file",
     "menu_create_note": "Note",
     "menu_create_docs": "Docs",
+    "menu_create_excalidraw": "Excalidraw",
     "menu_create_shortcut": "Shortcut",
     "share": "Share",
     "trash": "Remove",
@@ -529,6 +530,9 @@
     "filename_error_ends": "The name should end with .url",
     "needs_info": "Shorcut needs at least an url and a filename",
     "url_badformat": "Your url is not in the right format"
+  },
+  "Excalidraw": {
+    "createFileName": "New drawing"
   },
   "OnlyOffice": {
     "Error": {

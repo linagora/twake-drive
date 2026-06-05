@@ -1,4 +1,7 @@
 {
+  "Excalidraw": {
+    "createFileName": "新しい描画"
+  },
   "Nav": {
     "item_drive": "ドライブ",
     "item_recent": "最近使用したファイル",
@@ -31,6 +34,7 @@
     "more": "さらに"
   },
   "toolbar": {
+    "menu_create_excalidraw": "Excalidraw",
     "item_more": "さらに",
     "menu_select": "アイテムを選択",
     "menu_share_folder": "フォルダーを共有",

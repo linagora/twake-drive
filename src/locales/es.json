@@ -1,4 +1,7 @@
 {
+  "Excalidraw": {
+    "createFileName": "Nuevo dibujo"
+  },
   "Nav": {
     "item_drive": "Drive",
     "item_recent": "Recientes",
@@ -42,6 +45,7 @@
     "menu_download_folder": "Descargar carpeta",
     "menu_download_file": "Descargar este archivo",
     "menu_create_note": "Nota",
+    "menu_create_excalidraw": "Excalidraw",
     "empty_trash": "Vaciar la papelera",
     "share": "Compartir",
     "trash": "Suprimir",

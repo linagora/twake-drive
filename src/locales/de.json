@@ -42,6 +42,7 @@
     "menu_download_folder": "Ordner herunterladen",
     "menu_download_file": "Diese Datei herunterladen",
     "menu_create_note": "Notizen",
+    "menu_create_excalidraw": "Excalidraw",
     "menu_create_shortcut": "Abkürzung",
     "empty_trash": "Papierkorb leeren",
     "share": "Freigeben",
@@ -440,6 +441,9 @@
     "filename_error_ends": "Der Name sollte mit .url enden",
     "needs_info": "Die Verknüpfung benötigt mindestens eine URL und einen Dateinamen",
     "url_badformat": "Deine URL hat nicht das richtige Format"
+  },
+  "Excalidraw": {
+    "createFileName": "Neue Zeichnung"
   },
   "OnlyOffice": {
     "Error": {

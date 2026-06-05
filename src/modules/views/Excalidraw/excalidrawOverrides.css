@@ -1,0 +1,12 @@
+/*
+ * The shape-library panel installs libraries from libraries.excalidraw.com through
+ * a cross-origin redirect back to `libraryReturnUrl`. Our editor lives behind a
+ * hash route, so the redirect lands on the app root with an `#addLibrary=` hash the
+ * router cannot handle and the import is silently dropped. Until the round-trip can
+ * be supported, hide the library entry points (the top-right trigger and the docked
+ * panel) so users are not offered a broken feature.
+ */
+.excalidraw-editor .default-sidebar-trigger,
+.excalidraw-editor .sidebar.default-sidebar {
+  display: none;
+}

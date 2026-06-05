@@ -1,10 +1,15 @@
 import { computeFileType, computeApp, computePath } from './helpers'
 
 import { TRASH_DIR_ID, SHARED_DRIVES_DIR_ID } from '@/constants/config'
+import { makeExcalidrawFileRoute } from '@/modules/views/Excalidraw/helpers'
 import { makeOnlyOfficeFileRoute } from '@/modules/views/OnlyOffice/helpers'
 
 jest.mock('modules/views/OnlyOffice/helpers', () => ({
   makeOnlyOfficeFileRoute: jest.fn()
+}))
+jest.mock('modules/views/Excalidraw/helpers', () => ({
+  ...jest.requireActual('modules/views/Excalidraw/helpers'),
+  makeExcalidrawFileRoute: jest.fn()
 }))
 jest.mock('cozy-flags', () => jest.fn())
 
@@ -122,6 +127,41 @@ describe('computeFileType', () => {
       type: 'file'
     }
     expect(computeFileType(file, { isOfficeEnabled: true })).toBe('onlyoffice')
+  })
+
+  it('should return "excalidraw" for .excalidraw files when Excalidraw is enabled', () => {
+    const file = {
+      _type: 'io.cozy.files',
+      name: 'My drawing.excalidraw',
+      type: 'file'
+    }
+    expect(computeFileType(file, { isExcalidrawEnabled: true })).toBe(
+      'excalidraw'
+    )
+  })
+
+  it('should return "file" for .excalidraw files when Excalidraw is disabled', () => {
+    const file = {
+      _type: 'io.cozy.files',
+      name: 'My drawing.excalidraw',
+      type: 'file'
+    }
+    expect(computeFileType(file, { isExcalidrawEnabled: false })).toBe('file')
+  })
+
+  it('should prefer "excalidraw" over "onlyoffice" for a text-class .excalidraw file', () => {
+    const file = {
+      _type: 'io.cozy.files',
+      class: 'text',
+      name: 'My drawing.excalidraw',
+      type: 'file'
+    }
+    expect(
+      computeFileType(file, {
+        isExcalidrawEnabled: true,
+        isOfficeEnabled: true
+      })
+    ).toBe('excalidraw')
   })
 
   it('should return "file" for files opened by OnlyOffice when Office is disabled', () => {
@@ -283,6 +323,23 @@ describe('computePath', () => {
       })
     ).toBe('/onlyoffice/route')
     expect(makeOnlyOfficeFileRoute).toHaveBeenCalledWith('file123', {
+      fromPathname: '/some/path',
+      fromPublicFolder: true
+    })
+  })
+
+  it('should return correct path for excalidraw', () => {
+    const file = { _id: 'file123' }
+    makeExcalidrawFileRoute.mockReturnValue('/excalidraw/route')
+    expect(
+      computePath(file, {
+        type: 'excalidraw',
+        pathname: '/some/path',
+        isPublic: true
+      })
+    ).toBe('/excalidraw/route')
+    expect(makeExcalidrawFileRoute).toHaveBeenCalledWith('file123', {
+      driveId: undefined,
       fromPathname: '/some/path',
       fromPublicFolder: true
     })
