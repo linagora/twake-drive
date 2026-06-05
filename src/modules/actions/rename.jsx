@@ -7,7 +7,7 @@ import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 
 import { startRenamingAsync } from '@/modules/drive/rename'
-import { isFromSharedDriveRecipient } from '@/modules/shareddrives/helpers'
+import { isSharedDriveDoc } from '@/modules/shareddrives/helpers'
 
 const makeComponent = (label, icon) => {
   const Component = forwardRef((props, ref) => {
@@ -41,7 +41,7 @@ export const rename = ({
     displayCondition: selection => {
       // special case for rename in sharings tab
       const isAllowedForSharedDrive = shouldHideIfSharedDriveRecipient
-        ? !isFromSharedDriveRecipient(selection[0])
+        ? !isSharedDriveDoc(selection[0])
         : true
       return selection.length === 1 && hasWriteAccess && isAllowedForSharedDrive
     },

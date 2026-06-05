@@ -7,7 +7,7 @@ import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 
 import { navigateToModal } from '@/modules/actions/helpers'
-import { isFromSharedDriveRecipient } from '@/modules/shareddrives/helpers'
+import { isSharedDriveDoc } from '@/modules/shareddrives/helpers'
 import { isFileRootSharedDrive } from '@/modules/shareddrives/rootFileNavigation'
 
 // Only for sharing tabs. Handles folder-root shared drives; file-root shared
@@ -27,7 +27,7 @@ export const shareSharedDrive = ({ navigate, t, isOwner }) => {
 
       return (
         docs.length === 1 &&
-        isFromSharedDriveRecipient(doc) &&
+        isSharedDriveDoc(doc) &&
         !isFileRootSharedDrive(doc) &&
         isOwner?.(doc._id)
       )

@@ -38,7 +38,17 @@ export const getFolderIdFromSharing = (
   }
 }
 
-export const isFromSharedDriveRecipient = (folder: IOCozyFile): boolean =>
+/**
+ * True when the document carries a shared drive `driveId`. This is the
+ * case for the shared drive root itself (folder or file) and, on the
+ * recipient side, for any doc exposed inside the shared drive.
+ *
+ * The previous name `isFromSharedDriveRecipient` was misleading: this
+ * check is shared-drive-shape-only, not recipient-specific. To assert
+ * recipient intent, combine with `isOwner(doc._id)` from the sharing
+ * context.
+ */
+export const isSharedDriveDoc = (folder: IOCozyFile): boolean =>
   folder && Boolean(folder.driveId)
 
 export const makeSharedDriveNoteReturnUrl = (

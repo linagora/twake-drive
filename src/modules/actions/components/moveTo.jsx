@@ -7,7 +7,7 @@ import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 
 import { navigateToModalWithMultipleFile } from '@/modules/actions/helpers'
-import { isFromSharedDriveRecipient } from '@/modules/shareddrives/helpers'
+import { isSharedDriveDoc } from '@/modules/shareddrives/helpers'
 
 const moveTo = ({
   t,
@@ -31,7 +31,7 @@ const moveTo = ({
     displayCondition: docs => {
       // special case for rename in sharings tab
       const isAllowedForSharedDrive = shouldHideIfSharedDriveRecipient
-        ? docs.every(doc => !isFromSharedDriveRecipient(doc))
+        ? docs.every(doc => !isSharedDriveDoc(doc))
         : true
       return docs.length > 0 && canMove && isAllowedForSharedDrive
     },

@@ -9,7 +9,7 @@ import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import { navigateToModal } from '@/modules/actions/helpers'
-import { isFromSharedDriveRecipient } from '@/modules/shareddrives/helpers'
+import { isSharedDriveDoc } from '@/modules/shareddrives/helpers'
 
 const share = ({
   t,
@@ -31,7 +31,7 @@ const share = ({
       // If shared drive recipient:
       // - in sharing view, we hide it because it works differently
       // - in shared drive view, we show it
-      if (files?.length === 1 && isFromSharedDriveRecipient(files[0])) {
+      if (files?.length === 1 && isSharedDriveDoc(files[0])) {
         return !shouldHideIfSharedDriveRecipient
       }
 
