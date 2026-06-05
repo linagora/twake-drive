@@ -15,6 +15,7 @@ import IconVideo from 'cozy-ui/transpiled/react/Icons/FileTypeVideo'
 import IconZip from 'cozy-ui/transpiled/react/Icons/FileTypeZip'
 
 import IconDocs from '@/assets/icons/icon-docs.svg'
+import IconExcalidraw from '@/assets/icons/icon-excalidraw.svg'
 import { getFileMimetype } from '@/lib/getFileMimetype'
 
 /**
@@ -32,6 +33,8 @@ const getMimeTypeIcon = (isDirectory, name, mime) => {
     return IconNote
   } else if (/\.docs-note$/.test(name)) {
     return IconDocs
+  } else if (/\.excalidraw$/.test(name)) {
+    return IconExcalidraw
   } else {
     const iconsByMimeType = {
       audio: IconAudio,

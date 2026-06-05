@@ -10,6 +10,12 @@ import ExternalRedirect from '@/modules/navigation/ExternalRedirect'
 import { PublicNoteRedirect } from '@/modules/navigation/PublicNoteRedirect'
 import LightFileViewer from '@/modules/public/LightFileViewer'
 import PublicLayout from '@/modules/public/PublicLayout'
+import ExcalidrawView from '@/modules/views/Excalidraw'
+import ExcalidrawCreateView from '@/modules/views/Excalidraw/Create'
+import {
+  isExcalidraw,
+  isExcalidrawEnabled
+} from '@/modules/views/Excalidraw/helpers'
 import { PublicFolderDuplicateView } from '@/modules/views/Folder/PublicFolderDuplicateView'
 import { MovePublicFilesView } from '@/modules/views/Modal/MovePublicFilesView'
 import OnlyOfficeView from '@/modules/views/OnlyOffice'
@@ -28,6 +34,7 @@ const AppRouter = ({
 }) => {
   const { isDesktop } = useBreakpoints()
   const isFile = data && data.type === 'file'
+  const isExcalidrawShared = isExcalidrawEnabled() && isExcalidraw(data)
 
   return (
     <SentryRoutes>
@@ -55,15 +62,37 @@ const AppRouter = ({
               path="onlyoffice/create/:folderId/:fileClass"
               element={<OnlyOfficeCreateView isPublic={true} />}
             />
-            {models.file.shouldBeOpenedByOnlyOffice(data) && (
-              <Route
-                path="/"
-                element={<Navigate to={`onlyoffice/${data.id}`} replace />}
-              />
-            )}
+            {models.file.shouldBeOpenedByOnlyOffice(data) &&
+              !isExcalidrawShared && (
+                <Route
+                  path="/"
+                  element={<Navigate to={`onlyoffice/${data.id}`} replace />}
+                />
+              )}
           </>
         ) : (
           <Route path="onlyoffice/*" element={<Navigate to="/" />} />
+        )}
+
+        {isExcalidrawEnabled() && (
+          <>
+            <Route
+              path="excalidraw/:fileId"
+              element={
+                <ExcalidrawView isPublic={true} isReadOnly={isReadOnly} />
+              }
+            />
+            <Route
+              path="excalidraw/create/:folderId"
+              element={<ExcalidrawCreateView isPublic={true} />}
+            />
+            {isExcalidrawShared && (
+              <Route
+                path="/"
+                element={<Navigate to={`excalidraw/${data.id}`} replace />}
+              />
+            )}
+          </>
         )}
 
         {isFile && (

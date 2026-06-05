@@ -9,6 +9,8 @@ import Index from './Index'
 import AIAssistantPaywallView from '../views/AI/AIAssistantPaywallView'
 import { DriveFolderView } from '../views/Drive/DriveFolderView'
 import FilesViewerDrive from '../views/Drive/FilesViewerDrive'
+import ExcalidrawView from '../views/Excalidraw'
+import ExcalidrawCreateView from '../views/Excalidraw/Create'
 import OnlyOfficeView from '../views/OnlyOffice'
 import OnlyOfficeCreateView from '../views/OnlyOffice/Create'
 import OnlyOfficePaywallView from '../views/OnlyOffice/OnlyOfficePaywallView'
@@ -231,6 +233,24 @@ const AppRoute = () => (
         path="onlyoffice/create/:driveId/:folderId/:fileClass"
         element={<OnlyOfficeCreateView />}
       />
+
+      {flag('drive.excalidraw.enabled') && (
+        <>
+          <Route path="excalidraw/:fileId" element={<ExcalidrawView />} />
+          <Route
+            path="excalidraw/:driveId/:fileId"
+            element={<ExcalidrawView />}
+          />
+          <Route
+            path="excalidraw/create/:folderId"
+            element={<ExcalidrawCreateView />}
+          />
+          <Route
+            path="excalidraw/create/:driveId/:folderId"
+            element={<ExcalidrawCreateView />}
+          />
+        </>
+      )}
 
       <Route path="file/:fileId" element={<FileOpenerExternal />} />
 

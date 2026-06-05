@@ -54,6 +54,7 @@
     "menu_download_folder": "Tải thư mục xuống",
     "menu_download_file": "Tải tệp này xuống",
     "menu_create_note": "Ghi chú",
+    "menu_create_excalidraw": "Excalidraw",
     "menu_create_shortcut": "Lối tắt",
     "share": "Chia sẻ",
     "trash": "Xoá",
@@ -515,6 +516,9 @@
     "filename_error_ends": "Tên tệp phải kết thúc bằng .url",
     "needs_info": "Phím tắt cần ít nhất một URL và tên tệp",
     "url_badformat": "URL của bạn không đúng định dạng"
+  },
+  "Excalidraw": {
+    "createFileName": "Bản vẽ mới"
   },
   "OnlyOffice": {
     "Error": {

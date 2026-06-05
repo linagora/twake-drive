@@ -2,6 +2,7 @@ import { render, waitFor } from '@testing-library/react'
 import React from 'react'
 
 import { useAppLinkWithStoreFallback } from 'cozy-client'
+import flag from 'cozy-flags'
 
 import AddMenuContent from './AddMenuContent'
 import AppLike from 'test/components/AppLike'
@@ -13,6 +14,7 @@ jest.mock('cozy-client/dist/hooks/useAppLinkWithStoreFallback', () => jest.fn())
 jest.mock('cozy-keys-lib', () => ({
   useVaultClient: jest.fn()
 }))
+jest.mock('cozy-flags')
 mockCozyClientRequestQuery()
 
 const setup = async (
@@ -81,6 +83,45 @@ describe('AddMenuContent', () => {
         )
         const { queryByText } = root
         expect(queryByText('Note')).toBeTruthy()
+      })
+    })
+
+    describe('createExcalidraw', () => {
+      beforeEach(() => {
+        flag.mockImplementation(name => name === 'drive.excalidraw.enabled')
+      })
+      afterEach(() => {
+        flag.mockReset()
+      })
+
+      it('displays createExcalidraw on private Page', async () => {
+        await waitFor(async () => {
+          const { root } = await setup(
+            { folderId: 'directory-foobar0' },
+            { isPublic: false }
+          )
+          expect(root.queryByText('Excalidraw')).toBeTruthy()
+        })
+      })
+
+      it('displays createExcalidraw on a read-write public Page', async () => {
+        await waitFor(async () => {
+          const { root } = await setup(
+            { folderId: 'directory-foobar0' },
+            { isPublic: true, canUpload: true }
+          )
+          expect(root.queryByText('Excalidraw')).toBeTruthy()
+        })
+      })
+
+      it('does not display createExcalidraw on a read-only public Page', async () => {
+        await waitFor(async () => {
+          const { root } = await setup(
+            { folderId: 'directory-foobar0' },
+            { isPublic: true, canUpload: false }
+          )
+          expect(root.queryByText('Excalidraw')).toBeNull()
+        })
       })
     })
   })

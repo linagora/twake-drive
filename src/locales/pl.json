@@ -1,4 +1,7 @@
 {
+  "Excalidraw": {
+    "createFileName": "Nowy rysunek"
+  },
   "Nav": {
     "item_drive": "Dysk",
     "item_recent": "Bieżące",
@@ -24,6 +27,7 @@
     "more": "Więcej"
   },
   "toolbar": {
+    "menu_create_excalidraw": "Excalidraw",
     "item_more": "Więcej",
     "menu_select": "Wybierz elementy",
     "menu_download_folder": "Pobierz folder",

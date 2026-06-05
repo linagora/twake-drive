@@ -1,4 +1,7 @@
 {
+  "Excalidraw": {
+    "createFileName": "新增繪圖"
+  },
   "Nav": {
     "item_drive": "硬碟",
     "item_recent": "最近更改",
@@ -26,6 +29,7 @@
     "more": "更多"
   },
   "toolbar": {
+    "menu_create_excalidraw": "Excalidraw",
     "item_more": "更多",
     "menu_select": "選擇項目",
     "menu_download_folder": "下載資料夾",

@@ -43,6 +43,7 @@
     "menu_download_folder": "Map downloaden",
     "menu_download_file": "Download dit bestand",
     "menu_create_note": "Notitie",
+    "menu_create_excalidraw": "Excalidraw",
     "menu_create_shortcut": "Snelkoppeling",
     "empty_trash": "Prullenbak legen",
     "share": "Delen",
@@ -458,6 +459,9 @@
     "filename_error_ends": "De naam moet eindigen op .url",
     "needs_info": "De snelkoppeling moet op zijn minst voorzien zijn van een url en bestandsnaam",
     "url_badformat": "De url is onjuist opgemaakt"
+  },
+  "Excalidraw": {
+    "createFileName": "Nieuwe tekening"
   },
   "OnlyOffice": {
     "Error": {
