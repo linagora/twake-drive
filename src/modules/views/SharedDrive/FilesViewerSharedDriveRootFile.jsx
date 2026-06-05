@@ -10,18 +10,11 @@ import {
   getSharedDriveRootFilePath,
   getSharedDriveRootFilePathScope
 } from '@/modules/routeUtils'
-import { useSharedDrives } from '@/modules/shareddrives/hooks/useSharedDrives'
 import FilesViewer from '@/modules/viewer/FilesViewer'
-import {
-  findSharedDriveById,
-  makeSharedDriveRootFileViewerFile
-} from '@/modules/views/SharedDrive/rootFileViewer'
 import { buildSharedDriveFileOrFolderByIdQuery } from '@/queries'
 
-const isViewerReady = ({ allLoaded, sharedDrivesLoaded, fileResult, file }) =>
-  [allLoaded, sharedDrivesLoaded, hasQueryBeenLoaded(fileResult), file].every(
-    Boolean
-  )
+const isViewerReady = ({ allLoaded, fileResult, file }) =>
+  [allLoaded, hasQueryBeenLoaded(fileResult), file].every(Boolean)
 
 const FilesViewerSharedDriveRootFile = () => {
   const navigate = useNavigate()
@@ -32,26 +25,10 @@ const FilesViewerSharedDriveRootFile = () => {
 
   const pathScope = getSharedDriveRootFilePathScope(location.pathname)
   const closePath = location.state?.fromPathname || '/sharings'
-  const { sharedDrives, isLoaded: sharedDrivesLoaded } = useSharedDrives()
 
   const fileQuery = buildSharedDriveFileOrFolderByIdQuery({ fileId, driveId })
   const fileResult = useQuery(fileQuery.definition, fileQuery.options)
-  const sharedDrive = useMemo(
-    () => findSharedDriveById({ sharedDrives, driveId }),
-    [sharedDrives, driveId]
-  )
-  const file = useMemo(
-    () =>
-      fileResult.data
-        ? makeSharedDriveRootFileViewerFile({
-            file: fileResult.data,
-            driveId,
-            fileId,
-            sharedDrive
-          })
-        : null,
-    [driveId, fileId, fileResult.data, sharedDrive]
-  )
+  const file = fileResult.data ?? null
 
   useEffect(() => {
     if (fileResult.fetchStatus === 'failed') {
@@ -70,7 +47,7 @@ const FilesViewerSharedDriveRootFile = () => {
     [fileResult, files]
   )
 
-  if (isViewerReady({ allLoaded, sharedDrivesLoaded, fileResult, file })) {
+  if (isViewerReady({ allLoaded, fileResult, file })) {
     return (
       <FilesViewer
         files={files}
@@ -90,9 +67,8 @@ const FilesViewerSharedDriveRootFile = () => {
           panel: {
             sharing: {
               // Federated/transformed sharing docs may carry a canonical `_id`
-              // that differs from the route `fileId` — `makeSharedDriveRootFileViewerFile`
-              // normalises both to the route id, so ask the underlying fetched
-              // doc for the id that the sharing context actually knows about.
+              // that differs from the route `fileId`; fall back to the route id
+              // when asking the sharing context.
               disabled: !isOwner(fileResult.data?._id ?? fileId)
             }
           }

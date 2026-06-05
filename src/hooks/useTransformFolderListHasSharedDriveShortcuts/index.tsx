@@ -6,10 +6,6 @@ import { useSharingContext } from 'cozy-sharing'
 import { SHARED_DRIVES_DIR_ID, TRASH_DIR_PATH } from '@/constants/config'
 import { isNextcloudShortcut } from '@/modules/nextcloud/helpers'
 import { useSharedDrives } from '@/modules/shareddrives/hooks/useSharedDrives'
-import {
-  getSharedDriveRootFileMetadata,
-  getSharedDriveRootRule
-} from '@/modules/shareddrives/rootFile'
 import { DRIVE_ROOT_TYPE } from '@/modules/shareddrives/types'
 import type {
   DriveRootType,
@@ -70,12 +66,11 @@ const useTransformFolderListHasSharedDriveShortcuts = (
         if (!rootId) return []
 
         const driveName = sharing.rules[0]?.title ?? ''
-        const rootRule = getSharedDriveRootRule(sharing)
         const isFileDriveRoot = sharing.drive_root_type === DRIVE_ROOT_TYPE.FILE
-        const fileMetadata = getSharedDriveRootFileMetadata({
-          rootRule,
-          fallbackName: driveName
-        })
+        const fileMetadata = {
+          name: driveName,
+          ...(sharing.rules[0]?.mime ? { mime: sharing.rules[0].mime } : {})
+        }
 
         const sharedDriveData = {
           type: isFileDriveRoot ? ('file' as const) : ('directory' as const),

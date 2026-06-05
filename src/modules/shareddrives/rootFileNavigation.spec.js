@@ -1,7 +1,6 @@
 import {
   isFileRootSharedDrive,
   isFileRootSharedDriveShortcut,
-  getFileRootViewerPath,
   getFileRootSharePath,
   navigateToFileRootViewer,
   navigateToFileRootShare
@@ -42,28 +41,6 @@ describe('isFileRootSharedDriveShortcut', () => {
 
   it.each([null, undefined])('returns false for %p', value => {
     expect(isFileRootSharedDriveShortcut(value)).toBe(false)
-  })
-})
-
-describe('getFileRootViewerPath', () => {
-  it.each`
-    label                         | pathname                | expectedPath
-    ${'outside sharings'}         | ${'/recent'}            | ${'/shareddrive/drive-1/file/file-1'}
-    ${'inside /sharings'}         | ${'/sharings'}          | ${'/sharings/shareddrive/drive-1/file/file-1'}
-    ${'inside a nested sharings'} | ${'/sharings/folder-1'} | ${'/sharings/shareddrive/drive-1/file/file-1'}
-  `('builds viewer path $label', ({ pathname, expectedPath }) => {
-    expect(
-      getFileRootViewerPath({
-        file: { _id: 'file-1', driveId: 'drive-1' },
-        pathname
-      })
-    ).toBe(expectedPath)
-  })
-
-  it('defaults pathname to direct scope', () => {
-    expect(
-      getFileRootViewerPath({ file: { _id: 'file-1', driveId: 'drive-1' } })
-    ).toBe('/shareddrive/drive-1/file/file-1')
   })
 })
 
