@@ -10,26 +10,31 @@
   "status": "paused",
   "completed_tasks": [
     {"id": 1, "name": "Research ToJSON/FromJSON feasibility", "status": "done", "commit": "f9b7d0ea4"},
-    {"id": 2, "name": "Capture table snapshot via ToJSON during extraction", "status": "done", "commit": null},
-    {"id": 3, "name": "Transport tableSnapshots through intents and ScribeContext", "status": "done", "commit": null},
-    {"id": 4, "name": "Rewrite table injection with FromJSON + cell modification", "status": "done", "commit": null}
+    {"id": 2, "name": "Capture table snapshot via ToJSON during extraction", "status": "done", "commit": "9c156c1ca"},
+    {"id": 3, "name": "Transport tableSnapshots through intents and ScribeContext", "status": "done", "commit": "9c156c1ca"},
+    {"id": 4, "name": "Rewrite table injection with FromJSON + cell modification", "status": "done", "commit": "9c156c1ca"}
   ],
   "remaining_tasks": [],
   "blockers": [],
   "human_actions_pending": [
-    {"action": "Manual testing of v3.0-03-04 (5 test scenarios)", "context": "Code implemented but not tested in browser. OO restarted, needs Ctrl+Shift+R.", "blocking": true}
+    {"action": "Manual testing of v3.0-03-04 (5 test scenarios)", "context": "Code implemented AND committed (WIP 9c156c1ca). Git tree clean. After PC restart: ./scripts/oo-dev-setup.sh, then Ctrl+Shift+R, then run 5 tests.", "blocking": true}
   ],
   "decisions": [
     {"decision": "ToJSON/FromJSON over PasteHtml", "rationale": "PasteHtml is async, can't run in callCommand. ToJSON is synchronous and lossless.", "phase": "v3.0-03-04"},
     {"decision": "ToJSON/FromJSON over structured JSON", "rationale": "Manual property enumeration misses images and requires maintenance on OO updates.", "phase": "v3.0-03-04"},
     {"decision": "Fallback to Clone path when no snapshot", "rationale": "Graceful degradation, marked as legacy to remove later.", "phase": "v3.0-03-04"}
   ],
-  "uncommitted_files": [
-    "plugins/onlyoffice-scribe/scripts/code.js",
-    "src/lib/cozy-bridge/protocol.js",
-    "src/modules/views/OnlyOffice/Scribe/ScribeContext.jsx",
-    "src/modules/views/OnlyOffice/View.jsx"
-  ],
-  "next_action": "Manual test: Ctrl+Shift+R in browser, run 5 test scenarios (formatted table, modified table, insert, inline regression, plain text)",
-  "context_notes": "Plan v3.0-03-04 went through 3 approach iterations (structured JSON → HTML/PasteHtml → ToJSON/FromJSON). Double Api.FromJSON per table is a known minor concern. Research in table-snapshot-research.md."
+  "uncommitted_files": [],
+  "committed_in_wip": {
+    "commit": "9c156c1ca",
+    "files": [
+      "plugins/onlyoffice-scribe/scripts/code.js",
+      "src/lib/cozy-bridge/protocol.js",
+      "src/modules/views/OnlyOffice/Scribe/ScribeContext.jsx",
+      "src/modules/views/OnlyOffice/View.jsx"
+    ],
+    "note": "Squash/amend into a clean feat(v3.0-03-04) commit once manual tests pass."
+  },
+  "next_action": "After PC restart: ./scripts/oo-dev-setup.sh, then Ctrl+Shift+R in browser, run 5 test scenarios (formatted table, modified table, insert, inline regression, plain text). Then finalize WIP commit + write SUMMARY.",
+  "context_notes": "Plan v3.0-03-04 went through 3 approach iterations (structured JSON → HTML/PasteHtml → ToJSON/FromJSON). Double Api.FromJSON per table is a known minor concern. Research in table-snapshot-research.md. NOTE: OO container oo-dev mounts the plugin from THIS worktree (cozy-drive-scribe-in-right-panel), not from /home/ben/Dev-local/cozy-drive."
 }
