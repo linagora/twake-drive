@@ -129,24 +129,24 @@ describe('computeFileType', () => {
     expect(computeFileType(file, { isOfficeEnabled: true })).toBe('onlyoffice')
   })
 
-  it('should return "excalidraw" for .excalidraw files when Excalidraw is enabled', () => {
+  it.each([
+    {
+      desc: 'should return "excalidraw" for .excalidraw files when Excalidraw is enabled',
+      isExcalidrawEnabled: true,
+      expected: 'excalidraw'
+    },
+    {
+      desc: 'should return "file" for .excalidraw files when Excalidraw is disabled',
+      isExcalidrawEnabled: false,
+      expected: 'file'
+    }
+  ])('$desc', ({ isExcalidrawEnabled, expected }) => {
     const file = {
       _type: 'io.cozy.files',
       name: 'My drawing.excalidraw',
       type: 'file'
     }
-    expect(computeFileType(file, { isExcalidrawEnabled: true })).toBe(
-      'excalidraw'
-    )
-  })
-
-  it('should return "file" for .excalidraw files when Excalidraw is disabled', () => {
-    const file = {
-      _type: 'io.cozy.files',
-      name: 'My drawing.excalidraw',
-      type: 'file'
-    }
-    expect(computeFileType(file, { isExcalidrawEnabled: false })).toBe('file')
+    expect(computeFileType(file, { isExcalidrawEnabled })).toBe(expected)
   })
 
   it('should prefer "excalidraw" over "onlyoffice" for a text-class .excalidraw file', () => {
@@ -312,33 +312,24 @@ describe('computePath', () => {
     ).toBe('../dir123')
   })
 
-  it('should return correct path for onlyoffice', () => {
+  it.each([
+    {
+      type: 'onlyoffice',
+      builder: makeOnlyOfficeFileRoute,
+      route: '/onlyoffice/route'
+    },
+    {
+      type: 'excalidraw',
+      builder: makeExcalidrawFileRoute,
+      route: '/excalidraw/route'
+    }
+  ])('should return correct path for $type', ({ type, builder, route }) => {
     const file = { _id: 'file123' }
-    makeOnlyOfficeFileRoute.mockReturnValue('/onlyoffice/route')
+    builder.mockReturnValue(route)
     expect(
-      computePath(file, {
-        type: 'onlyoffice',
-        pathname: '/some/path',
-        isPublic: true
-      })
-    ).toBe('/onlyoffice/route')
-    expect(makeOnlyOfficeFileRoute).toHaveBeenCalledWith('file123', {
-      fromPathname: '/some/path',
-      fromPublicFolder: true
-    })
-  })
-
-  it('should return correct path for excalidraw', () => {
-    const file = { _id: 'file123' }
-    makeExcalidrawFileRoute.mockReturnValue('/excalidraw/route')
-    expect(
-      computePath(file, {
-        type: 'excalidraw',
-        pathname: '/some/path',
-        isPublic: true
-      })
-    ).toBe('/excalidraw/route')
-    expect(makeExcalidrawFileRoute).toHaveBeenCalledWith('file123', {
+      computePath(file, { type, pathname: '/some/path', isPublic: true })
+    ).toBe(route)
+    expect(builder).toHaveBeenCalledWith('file123', {
       driveId: undefined,
       fromPathname: '/some/path',
       fromPublicFolder: true
