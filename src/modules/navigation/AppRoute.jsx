@@ -9,11 +9,9 @@ import Index from './Index'
 import AIAssistantPaywallView from '../views/AI/AIAssistantPaywallView'
 import { DriveFolderView } from '../views/Drive/DriveFolderView'
 import FilesViewerDrive from '../views/Drive/FilesViewerDrive'
-import ExcalidrawView from '../views/Excalidraw'
-import ExcalidrawCreateView from '../views/Excalidraw/Create'
-import OnlyOfficeView from '../views/OnlyOffice'
-import OnlyOfficeCreateView from '../views/OnlyOffice/Create'
+import { getExcalidrawRoutes } from '../views/Excalidraw/routes'
 import OnlyOfficePaywallView from '../views/OnlyOffice/OnlyOfficePaywallView'
+import { getOnlyOfficeRoutes } from '../views/OnlyOffice/routes'
 import RecentView from '../views/Recent'
 import FilesViewerRecent from '../views/Recent/FilesViewerRecent'
 import FilesViewerSharedDrive from '../views/SharedDrive/FilesViewerSharedDrive'
@@ -217,40 +215,9 @@ const AppRoute = () => (
         <Route path="move" element={<MoveFilesView />} />
       </Route>
 
-      <Route path="onlyoffice/:fileId" element={<OnlyOfficeView />}>
-        <Route path="paywall" element={<OnlyOfficePaywallView />} />
-      </Route>
-      <Route path="onlyoffice/:driveId/:fileId" element={<OnlyOfficeView />}>
-        <Route path="paywall" element={<OnlyOfficePaywallView />} />
-      </Route>
+      {getOnlyOfficeRoutes()}
 
-      <Route
-        path="onlyoffice/create/:folderId/:fileClass"
-        element={<OnlyOfficeCreateView />}
-      />
-
-      <Route
-        path="onlyoffice/create/:driveId/:folderId/:fileClass"
-        element={<OnlyOfficeCreateView />}
-      />
-
-      {flag('drive.excalidraw.enabled') && (
-        <>
-          <Route path="excalidraw/:fileId" element={<ExcalidrawView />} />
-          <Route
-            path="excalidraw/:driveId/:fileId"
-            element={<ExcalidrawView />}
-          />
-          <Route
-            path="excalidraw/create/:folderId"
-            element={<ExcalidrawCreateView />}
-          />
-          <Route
-            path="excalidraw/create/:driveId/:folderId"
-            element={<ExcalidrawCreateView />}
-          />
-        </>
-      )}
+      {flag('drive.excalidraw.enabled') && getExcalidrawRoutes()}
 
       <Route path="file/:fileId" element={<FileOpenerExternal />} />
 
