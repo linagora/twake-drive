@@ -46,13 +46,6 @@ export const isFileRootSharedDriveShortcut = file =>
     file.metadata.target.mime.length > 0
   )
 
-export const getFileRootViewerPath = ({ file, pathname = '' }) =>
-  getSharedDriveRootFilePath({
-    driveId: file.driveId,
-    fileId: file._id,
-    scope: getSharedDriveRootFilePathScope(pathname)
-  })
-
 export const getFileRootSharePath = ({ file, pathname = '' }) =>
   getSharedDriveRootFileSharePath({
     driveId: file.driveId,
@@ -61,9 +54,14 @@ export const getFileRootSharePath = ({ file, pathname = '' }) =>
   })
 
 export const navigateToFileRootViewer = ({ navigate, file, pathname = '' }) => {
-  navigate(getFileRootViewerPath({ file, pathname }), {
-    state: { fromPathname: pathname }
-  })
+  navigate(
+    getSharedDriveRootFilePath({
+      driveId: file.driveId,
+      fileId: file._id,
+      scope: getSharedDriveRootFilePathScope(pathname)
+    }),
+    { state: { fromPathname: pathname } }
+  )
 }
 
 export const navigateToFileRootShare = ({ navigate, file, pathname = '' }) => {

@@ -6,7 +6,6 @@ const mockUseParams = jest.fn()
 const mockUseLocation = jest.fn()
 const mockUseQuery = jest.fn()
 const mockUseSharingContext = jest.fn()
-const mockUseSharedDrives = jest.fn()
 const mockHasQueryBeenLoaded = jest.fn()
 const mockIsOwner = jest.fn()
 const mockFilesViewer = jest.fn(() => <div>files-viewer</div>)
@@ -35,10 +34,6 @@ jest.mock('@/components/FilesViewerLoading', () => ({
   FilesViewerLoading: () => <div>files-viewer-loading</div>
 }))
 
-jest.mock('@/modules/shareddrives/hooks/useSharedDrives', () => ({
-  useSharedDrives: () => mockUseSharedDrives()
-}))
-
 jest.mock('@/modules/viewer/FilesViewer', () => ({
   __esModule: true,
   default: props => mockFilesViewer(props)
@@ -58,8 +53,6 @@ const renderRootFileViewer = ({
   queryStatus = 'loaded',
   queryLoaded = true,
   sharingLoaded = true,
-  sharedDrives = [{ id: 'drive-1', rules: [{ title: 'Doc.txt' }] }],
-  sharedDrivesLoaded = true,
   location = {
     pathname: '/sharings/shareddrive/drive-1/file/route-id',
     state: undefined
@@ -75,10 +68,6 @@ const renderRootFileViewer = ({
   mockUseSharingContext.mockReturnValue({
     allLoaded: sharingLoaded,
     isOwner: mockIsOwner
-  })
-  mockUseSharedDrives.mockReturnValue({
-    sharedDrives,
-    isLoaded: sharedDrivesLoaded
   })
   render(<FilesViewerSharedDriveRootFile />)
 }
@@ -126,7 +115,6 @@ describe('FilesViewerSharedDriveRootFile', () => {
       fetchedFile: null,
       queryStatus: 'failed',
       queryLoaded: false,
-      sharedDrives: [],
       location: {
         pathname: '/sharings',
         state: undefined
@@ -142,8 +130,6 @@ describe('FilesViewerSharedDriveRootFile', () => {
       queryStatus: 'loading',
       queryLoaded: false,
       sharingLoaded: false,
-      sharedDrives: [],
-      sharedDrivesLoaded: false,
       location: {
         pathname: '/sharings',
         state: undefined
