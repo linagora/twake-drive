@@ -101,6 +101,24 @@ export const computeApp = (type: string): string => {
   }
 }
 
+const computeNextcloudPath = (
+  type: string,
+  file: File,
+  pathname: string
+): string => {
+  switch (type) {
+    case 'nextcloud-trash':
+      return `${pathname}/trash`
+    case 'nextcloud':
+      return `/nextcloud/${file.cozyMetadata?.sourceAccount ?? 'unknown'}`
+    case 'nextcloud-directory':
+      return `${pathname}?path=${file.path ?? '/'}`
+    default:
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+      return file.links?.self ?? ''
+  }
+}
+
 export const computePath = (
   file: File,
   { type, pathname, isPublic, client }: ComputePathOptions
@@ -108,18 +126,13 @@ export const computePath = (
   const paths = pathname.split('/').slice(1)
   const driveId = file.driveId as string | undefined
 
+  if (type.startsWith('nextcloud')) {
+    return computeNextcloudPath(type, file, pathname)
+  }
+
   switch (type) {
     case 'trash':
       return '/trash'
-    case 'nextcloud-trash':
-      return `${pathname}/trash`
-    case 'nextcloud':
-      return `/nextcloud/${file.cozyMetadata?.sourceAccount ?? 'unknown'}`
-    case 'nextcloud-directory':
-      return `${pathname}?path=${file.path ?? '/'}`
-    case 'nextcloud-file':
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
-      return file.links?.self ?? ''
     case 'note':
       return `/n/${file._id}`
     case 'public-note-same-instance':
