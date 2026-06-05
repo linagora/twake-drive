@@ -14,6 +14,7 @@ import {
 } from '@/modules/navigation/hooks/helpers'
 import { usePublicContext } from '@/modules/public/PublicProvider'
 import { getFolderPath } from '@/modules/routeUtils'
+import { isExcalidrawEnabled as computeExcalidrawEnabled } from '@/modules/views/Excalidraw/helpers'
 import { isOfficeEnabled as computeOfficeEnabled } from '@/modules/views/OnlyOffice/helpers'
 
 export interface LinkResult {
@@ -54,6 +55,7 @@ const useFileLink = (
   const client = useClient()
   const { isDesktop } = useBreakpoints()
   const isOfficeEnabled = computeOfficeEnabled(isDesktop)
+  const isExcalidrawEnabled = computeExcalidrawEnabled()
   const { isPublic } = usePublicContext()
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -61,6 +63,7 @@ const useFileLink = (
 
   const type = computeFileType(file, {
     isOfficeEnabled,
+    isExcalidrawEnabled,
     isPublic,
     cozyUrl
   })

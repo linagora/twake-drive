@@ -26,6 +26,7 @@ const flagsList = () => {
   flag('drive.dacc-files-size-by-slug')
   flag('drive.breadcrumb.showCompleteBreadcrumbOnPublicPage') // flagName should use kebab case
   flag('drive.hide-nextcloud-dev')
+  flag('drive.excalidraw.enabled')
   flag('sharing.auto-open-settings.enabled')
   flag('sharing.generate-link-button.enabled')
 }

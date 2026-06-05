@@ -16,10 +16,15 @@ import {
   isNextcloudFile
 } from '@/modules/nextcloud/helpers'
 import { makeSharedDriveNoteReturnUrl } from '@/modules/shareddrives/helpers'
+import {
+  isExcalidraw,
+  makeExcalidrawFileRoute
+} from '@/modules/views/Excalidraw/helpers'
 import { makeOnlyOfficeFileRoute } from '@/modules/views/OnlyOffice/helpers'
 
 interface ComputeFileTypeOptions {
   isOfficeEnabled?: boolean
+  isExcalidrawEnabled?: boolean
   isPublic?: boolean
   cozyUrl?: string
 }
@@ -35,6 +40,7 @@ export const computeFileType = (
   file: File,
   {
     isOfficeEnabled = false,
+    isExcalidrawEnabled = false,
     isPublic = false,
     cozyUrl = ''
   }: ComputeFileTypeOptions = {}
@@ -64,6 +70,8 @@ export const computeFileType = (
     }
   } else if (isDocs(file)) {
     return 'docs'
+  } else if (isExcalidraw(file) && isExcalidrawEnabled) {
+    return 'excalidraw'
   } else if (shouldBeOpenedByOnlyOffice(file) && isOfficeEnabled) {
     return 'onlyoffice'
   } else if (isNextcloudShortcut(file)) {
@@ -143,6 +151,12 @@ export const computePath = (
       return paths.length === 1 ? file._id : `../${file._id}`
     case 'onlyoffice':
       return makeOnlyOfficeFileRoute(file._id, {
+        driveId,
+        fromPathname: pathname,
+        fromPublicFolder: isPublic
+      })
+    case 'excalidraw':
+      return makeExcalidrawFileRoute(file._id, {
         driveId,
         fromPathname: pathname,
         fromPublicFolder: isPublic
