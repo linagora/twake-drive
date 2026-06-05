@@ -64,27 +64,29 @@ describe('AddMenuContent', () => {
       })
     })
 
-    it('does not display createNote on public Page', async () => {
+    const expectMenuItem = async (label, present, options) => {
       await waitFor(async () => {
-        const { root } = await setup(
-          { folderId: 'directory-foobar0' },
-          { isPublic: true }
-        )
-        const { queryByText } = root
-        expect(queryByText('Note')).toBeNull()
+        const { root } = await setup({ folderId: 'directory-foobar0' }, options)
+        const node = root.queryByText(label)
+        if (present) expect(node).toBeTruthy()
+        else expect(node).toBeNull()
       })
-    })
+    }
 
-    it('displays createNote on private Page', async () => {
-      await waitFor(async () => {
-        const { root } = await setup(
-          { folderId: 'directory-foobar0' },
-          { isPublic: false }
-        )
-        const { queryByText } = root
-        expect(queryByText('Note')).toBeTruthy()
-      })
-    })
+    it.each([
+      {
+        desc: 'does not display createNote on public Page',
+        present: false,
+        options: { isPublic: true }
+      },
+      {
+        desc: 'displays createNote on private Page',
+        present: true,
+        options: { isPublic: false }
+      }
+    ])('$desc', ({ present, options }) =>
+      expectMenuItem('Note', present, options)
+    )
 
     describe('createExcalidraw', () => {
       beforeEach(() => {
@@ -94,35 +96,25 @@ describe('AddMenuContent', () => {
         flag.mockReset()
       })
 
-      it('displays createExcalidraw on private Page', async () => {
-        await waitFor(async () => {
-          const { root } = await setup(
-            { folderId: 'directory-foobar0' },
-            { isPublic: false }
-          )
-          expect(root.queryByText('Excalidraw')).toBeTruthy()
-        })
-      })
-
-      it('displays createExcalidraw on a read-write public Page', async () => {
-        await waitFor(async () => {
-          const { root } = await setup(
-            { folderId: 'directory-foobar0' },
-            { isPublic: true, canUpload: true }
-          )
-          expect(root.queryByText('Excalidraw')).toBeTruthy()
-        })
-      })
-
-      it('does not display createExcalidraw on a read-only public Page', async () => {
-        await waitFor(async () => {
-          const { root } = await setup(
-            { folderId: 'directory-foobar0' },
-            { isPublic: true, canUpload: false }
-          )
-          expect(root.queryByText('Excalidraw')).toBeNull()
-        })
-      })
+      it.each([
+        {
+          desc: 'displays createExcalidraw on private Page',
+          present: true,
+          options: { isPublic: false }
+        },
+        {
+          desc: 'displays createExcalidraw on a read-write public Page',
+          present: true,
+          options: { isPublic: true, canUpload: true }
+        },
+        {
+          desc: 'does not display createExcalidraw on a read-only public Page',
+          present: false,
+          options: { isPublic: true, canUpload: false }
+        }
+      ])('$desc', ({ present, options }) =>
+        expectMenuItem('Excalidraw', present, options)
+      )
     })
   })
 })
