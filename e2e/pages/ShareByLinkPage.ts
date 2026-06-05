@@ -36,15 +36,25 @@ export class ShareByLinkPage {
    * waitForLinkRow) before opening restrictions. The caller's browser context
    * must have clipboard permissions granted. */
   async createLink(): Promise<string> {
-    await this.page.getByRole('button', { name: 'Copy link' }).click()
-    // The link is generated asynchronously and only then copied, so poll the
-    // clipboard until the URL lands rather than reading it immediately.
-    await this.page.waitForFunction(
-      async () => /^https?:\/\//.test(await navigator.clipboard.readText()),
-      null,
-      { timeout: 10_000 }
+    // The browser context is reused across tests, so the clipboard may
+    // already hold the previous test's link URL. Capture it so the poll
+    // below only resolves on a freshly generated URL — not just any URL.
+    const previousUrl = await this.page.evaluate(() =>
+      navigator.clipboard.readText().catch(() => '')
     )
-    return this.page.evaluate(() => navigator.clipboard.readText())
+    await this.page.getByRole('button', { name: 'Copy link' }).click()
+    // The link is generated asynchronously and only then copied, so poll
+    // until the clipboard holds a URL different from the previous one.
+    let text = ''
+    const start = Date.now()
+    while (Date.now() - start < 15_000) {
+      text = await this.page.evaluate(() =>
+        navigator.clipboard.readText().catch(() => '')
+      )
+      if (/^https?:\/\//.test(text) && text !== previousUrl) break
+      await this.page.waitForTimeout(100)
+    }
+    return text
   }
 
   /** Wait for the link recipient row to be present (after a modal reopen). */
