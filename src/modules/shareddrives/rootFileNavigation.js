@@ -3,7 +3,7 @@ import {
   getSharedDriveRootFilePathScope,
   getSharedDriveRootFileSharePath
 } from '@/modules/routeUtils'
-import { isFromSharedDriveRecipient } from '@/modules/shareddrives/helpers'
+import { isSharedDriveDoc } from '@/modules/shareddrives/helpers'
 import { DRIVE_ROOT_TYPE } from '@/modules/shareddrives/types'
 
 /**
@@ -15,7 +15,7 @@ import { DRIVE_ROOT_TYPE } from '@/modules/shareddrives/types'
 export const isFileRootSharedDrive = file =>
   Boolean(
     file &&
-    isFromSharedDriveRecipient(file) &&
+    isSharedDriveDoc(file) &&
     file.drive_root_type === DRIVE_ROOT_TYPE.FILE
   )
 

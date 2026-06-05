@@ -12,7 +12,7 @@ import CreateShortcut from '@/modules/drive/Toolbar/components/CreateShortcut'
 import { ScannerMenuItem } from '@/modules/drive/Toolbar/components/Scanner/ScannerMenuItem'
 import { useScannerContext } from '@/modules/drive/Toolbar/components/Scanner/ScannerProvider'
 import UploadItem from '@/modules/drive/Toolbar/components/UploadItem'
-import { isFromSharedDriveRecipient } from '@/modules/shareddrives/helpers'
+import { isSharedDriveDoc } from '@/modules/shareddrives/helpers'
 import { NewItemHighlightProvider } from '@/modules/upload/NewItemHighlightProvider'
 
 const AddMenuContent = forwardRef(
@@ -67,7 +67,7 @@ const AddMenuContent = forwardRef(
           isReadOnly={isReadOnly}
           onClick={onClick}
         />
-        {!isFromSharedDriveRecipient(displayedFolder) && (
+        {!isSharedDriveDoc(displayedFolder) && (
           <CreateShortcut
             onCreated={refreshFolderContent}
             onClick={onClick}

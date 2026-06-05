@@ -1,5 +1,5 @@
 import { joinPath } from '@/lib/path'
-import { isFromSharedDriveRecipient } from '@/modules/shareddrives/helpers'
+import { isSharedDriveDoc } from '@/modules/shareddrives/helpers'
 import {
   getFileRootSharePath,
   isFileRootSharedDrive
@@ -8,7 +8,7 @@ import {
 export const makeFileSharePath = ({ file, pathname }) => {
   const fileId = file._id ?? file.id
 
-  if (!isFromSharedDriveRecipient(file)) {
+  if (!isSharedDriveDoc(file)) {
     return joinPath(pathname, `file/${fileId}/share`)
   }
 

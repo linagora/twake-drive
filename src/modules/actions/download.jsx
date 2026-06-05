@@ -8,7 +8,7 @@ import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 
 import { downloadFiles } from './utils'
 
-import { isFromSharedDriveRecipient } from '@/modules/shareddrives/helpers'
+import { isSharedDriveDoc } from '@/modules/shareddrives/helpers'
 
 const makeComponent = (label, icon) => {
   const Component = forwardRef((props, ref) => {
@@ -49,7 +49,7 @@ export const download = ({
       if (
         shouldHideIfSharedDriveRecipient &&
         files.length > 1 &&
-        files.some(file => isFromSharedDriveRecipient(file))
+        files.some(file => isSharedDriveDoc(file))
       ) {
         return false
       }
