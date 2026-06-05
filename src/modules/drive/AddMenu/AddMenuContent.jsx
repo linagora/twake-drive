@@ -1,25 +1,19 @@
 import React, { forwardRef } from 'react'
 
-import flag from 'cozy-flags'
 import ActionsMenuMobileHeader from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuMobileHeader'
 import Divider from 'cozy-ui/transpiled/react/Divider'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
-import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import { useI18n } from 'twake-i18n'
 
 import AddFolderItem from '@/modules/drive/Toolbar/components/AddFolderItem'
-import CreateDocsItem from '@/modules/drive/Toolbar/components/CreateDocsItem'
-import CreateExcalidrawItem from '@/modules/drive/Toolbar/components/CreateExcalidrawItem'
-import CreateNoteItem from '@/modules/drive/Toolbar/components/CreateNoteItem'
-import CreateOnlyOfficeItem from '@/modules/drive/Toolbar/components/CreateOnlyOfficeItem'
+import CreateDocumentItems from '@/modules/drive/Toolbar/components/CreateDocumentItems'
 import CreateShortcut from '@/modules/drive/Toolbar/components/CreateShortcut'
 import { ScannerMenuItem } from '@/modules/drive/Toolbar/components/Scanner/ScannerMenuItem'
 import { useScannerContext } from '@/modules/drive/Toolbar/components/Scanner/ScannerProvider'
 import UploadItem from '@/modules/drive/Toolbar/components/UploadItem'
 import { isFromSharedDriveRecipient } from '@/modules/shareddrives/helpers'
 import { NewItemHighlightProvider } from '@/modules/upload/NewItemHighlightProvider'
-import { isOfficeEditingEnabled } from '@/modules/views/OnlyOffice/helpers'
 
 const AddMenuContent = forwardRef(
   (
@@ -36,7 +30,6 @@ const AddMenuContent = forwardRef(
     ref // eslint-disable-line no-unused-vars
   ) => {
     const { t } = useI18n()
-    const { isDesktop } = useBreakpoints()
     const { hasScanner } = useScannerContext()
     const { showAlert } = useAlert()
 
@@ -67,42 +60,13 @@ const AddMenuContent = forwardRef(
         {canCreateFolder && (
           <AddFolderItem onClick={onClick} isReadOnly={isReadOnly} />
         )}
-        {!isPublic && (
-          <CreateNoteItem
-            displayedFolder={displayedFolder}
-            isReadOnly={isReadOnly}
-            onClick={onClick}
-          />
-        )}
-        {!isPublic && flag('drive.lasuitedocs.enabled') && (
-          <CreateDocsItem
-            displayedFolder={displayedFolder}
-            isReadOnly={isReadOnly}
-            onClick={onClick}
-          />
-        )}
-        {flag('drive.excalidraw.enabled') && (!isPublic || canUpload) && (
-          <CreateExcalidrawItem isReadOnly={isReadOnly} onClick={onClick} />
-        )}
-        {canUpload && isOfficeEditingEnabled(isDesktop) && (
-          <>
-            <CreateOnlyOfficeItem
-              fileClass="text"
-              isReadOnly={isReadOnly}
-              onClick={onClick}
-            />
-            <CreateOnlyOfficeItem
-              fileClass="spreadsheet"
-              isReadOnly={isReadOnly}
-              onClick={onClick}
-            />
-            <CreateOnlyOfficeItem
-              fileClass="slide"
-              isReadOnly={isReadOnly}
-              onClick={onClick}
-            />
-          </>
-        )}
+        <CreateDocumentItems
+          isPublic={isPublic}
+          canUpload={canUpload}
+          displayedFolder={displayedFolder}
+          isReadOnly={isReadOnly}
+          onClick={onClick}
+        />
         {!isFromSharedDriveRecipient(displayedFolder) && (
           <CreateShortcut
             onCreated={refreshFolderContent}
