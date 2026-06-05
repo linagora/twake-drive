@@ -54,6 +54,7 @@
     "menu_download_folder": "Скачать папку",
     "menu_download_file": "Скачать этот файл",
     "menu_create_note": "Заметка",
+    "menu_create_excalidraw": "Excalidraw",
     "menu_create_shortcut": "Ярлык",
     "share": "Поделиться",
     "trash": "Удалить",
@@ -506,6 +507,9 @@
     "filename_error_ends": "Имя должно заканчиваться на .url",
     "needs_info": "Для создания ярлыка необходимы URL и имя файла",
     "url_badformat": "URL имеет неверный формат"
+  },
+  "Excalidraw": {
+    "createFileName": "Новый рисунок"
   },
   "OnlyOffice": {
     "Error": {

@@ -1,4 +1,7 @@
 {
+  "Excalidraw": {
+    "createFileName": "رسم جديد"
+  },
   "Nav": {
     "item_drive": "القرص",
     "item_recent": "الحديثة",
@@ -21,6 +24,7 @@
     "more": "المزيد"
   },
   "toolbar": {
+    "menu_create_excalidraw": "Excalidraw",
     "item_more": "المزيد",
     "menu_select": "تحديد العناصر",
     "menu_download_folder": "مُجلّد التنزيل",

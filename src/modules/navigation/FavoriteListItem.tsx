@@ -17,6 +17,10 @@ import { FileLink } from './components/FileLink'
 
 import { useFileLink } from '@/modules/navigation/hooks/useFileLink'
 import { isNextcloudShortcut } from '@/modules/nextcloud/helpers'
+import {
+  isExcalidraw,
+  isExcalidrawEnabled
+} from '@/modules/views/Excalidraw/helpers'
 
 interface FavoriteListItemProps {
   file: IOCozyFile
@@ -35,9 +39,14 @@ const FavoriteListItem: FC<FavoriteListItemProps> = ({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   clickState: [lastClicked, setLastClicked]
 }) => {
-  const { link } = useFileLink(file, {
-    forceFolderPath: isNote(file) || isOnlyOfficeFile(file) ? false : true
-  })
+  // Files that open in their own top-level route (notes, OnlyOffice, Excalidraw)
+  // must not get the in-folder path prefix, or they resolve to a nested route
+  // that matches nothing and renders a blank screen.
+  const opensInOwnRoute =
+    isNote(file) ||
+    isOnlyOfficeFile(file) ||
+    (isExcalidrawEnabled() && isExcalidraw(file))
+  const { link } = useFileLink(file, { forceFolderPath: !opensInOwnRoute })
   const { filename } = splitFilename(file)
 
   const ItemIcon = makeIcon(file)
