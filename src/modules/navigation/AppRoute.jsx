@@ -2,7 +2,9 @@ import React from 'react'
 import { Route, useParams, Outlet, Navigate } from 'react-router-dom'
 
 import { BarRoutes } from 'cozy-bar'
+import { RealTimeQueries } from 'cozy-client'
 import flag from 'cozy-flags'
+import { AssistantView } from 'cozy-search'
 
 import ExternalRedirect from './ExternalRedirect'
 import Index from './Index'
@@ -244,7 +246,21 @@ const AppRoute = () => (
         <Route path="move" element={<MoveFilesView />} />
       </Route>
 
-      {BarRoutes.map(BarRoute => BarRoute)}
+      {/* Render the AI assistant as an inline view (like cozy-home) instead of
+          cozy-bar's full-screen AssistantDialog, so the cozy-bar stays visible.
+          The other BarRoutes (e.g. search) are kept as-is. */}
+      {BarRoutes.filter(
+        route => route.props.path !== 'assistant/:conversationId'
+      ).map(BarRoute => BarRoute)}
+      <Route
+        path="assistant/:conversationId"
+        element={
+          <>
+            <RealTimeQueries doctype="io.cozy.ai.chat.conversations" />
+            <AssistantView />
+          </>
+        }
+      />
     </Route>
   </SentryRoutes>
 )
