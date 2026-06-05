@@ -15,10 +15,15 @@ const config = getRsbuildConfig({
 // font sets are byte-identical, so we copy only the prod one (both build modes
 // resolve the same `fonts/...` filenames at runtime). `info.minimized` stops
 // rspack from re-minifying the prebuilt assets.
+//
+// Xiaolai is excluded: it is Excalidraw's CJK fallback font, ~12 MB of woff2
+// subsets (every other font set is <1 MB total), and we do not ship CJK glyph
+// rendering for drawings. Drop it to keep the build under the registry limit.
 const excalidrawAssets = [
   {
     from: 'node_modules/@excalidraw/excalidraw/dist/prod/fonts',
     to: 'fonts',
+    globOptions: { ignore: ['**/Xiaolai/**'] },
     info: { minimized: true }
   }
 ]
