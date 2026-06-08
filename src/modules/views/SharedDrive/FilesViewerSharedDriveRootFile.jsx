@@ -20,7 +20,7 @@ const FilesViewerSharedDriveRootFile = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const { driveId, fileId } = useParams()
-  const { allLoaded, isOwner } = useSharingContext()
+  const { allLoaded } = useSharingContext()
   useHead()
 
   const pathScope = getSharedDriveRootFilePathScope(location.pathname)
@@ -65,12 +65,7 @@ const FilesViewerSharedDriveRootFile = () => {
         }
         viewerProps={{
           panel: {
-            sharing: {
-              // Federated/transformed sharing docs may carry a canonical `_id`
-              // that differs from the route `fileId`; fall back to the route id
-              // when asking the sharing context.
-              disabled: !isOwner(fileResult.data?._id ?? fileId)
-            }
+            sharing: { disabled: true }
           }
         }}
       />
