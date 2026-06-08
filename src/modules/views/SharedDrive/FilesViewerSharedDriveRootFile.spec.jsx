@@ -7,7 +7,6 @@ const mockUseLocation = jest.fn()
 const mockUseQuery = jest.fn()
 const mockUseSharingContext = jest.fn()
 const mockHasQueryBeenLoaded = jest.fn()
-const mockIsOwner = jest.fn()
 const mockFilesViewer = jest.fn(() => <div>files-viewer</div>)
 
 jest.mock('react-router-dom', () => ({
@@ -66,8 +65,7 @@ const renderRootFileViewer = ({
   })
   mockHasQueryBeenLoaded.mockReturnValue(queryLoaded)
   mockUseSharingContext.mockReturnValue({
-    allLoaded: sharingLoaded,
-    isOwner: mockIsOwner
+    allLoaded: sharingLoaded
   })
   render(<FilesViewerSharedDriveRootFile />)
 }
@@ -75,40 +73,20 @@ const renderRootFileViewer = ({
 describe('FilesViewerSharedDriveRootFile', () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    mockIsOwner.mockReturnValue(false)
   })
 
-  it.each`
-    label                     | fetchedFile                                                 | expectedOwnerId
-    ${'canonical fetched id'} | ${{ _id: 'canonical-id', id: 'canonical-id', name: 'Doc' }} | ${'canonical-id'}
-    ${'route fallback id'}    | ${{ id: 'partial', name: 'Doc' }}                           | ${'route-id'}
-  `('asks isOwner about the $label', ({ fetchedFile, expectedOwnerId }) => {
-    renderRootFileViewer({ fetchedFile })
+  it('disables the sharing panel', () => {
+    renderRootFileViewer()
 
-    expect(mockIsOwner).toHaveBeenCalledWith(expectedOwnerId)
+    expect(screen.getByText('files-viewer')).toBeInTheDocument()
+    expect(mockFilesViewer).toHaveBeenCalledWith(
+      expect.objectContaining({
+        viewerProps: {
+          panel: { sharing: { disabled: true } }
+        }
+      })
+    )
   })
-
-  it.each`
-    owner    | sharingDisabled
-    ${false} | ${true}
-    ${true}  | ${false}
-  `(
-    'forwards panel.sharing.disabled=$sharingDisabled when owner=$owner',
-    ({ owner, sharingDisabled }) => {
-      mockIsOwner.mockReturnValue(owner)
-
-      renderRootFileViewer()
-
-      expect(screen.getByText('files-viewer')).toBeInTheDocument()
-      expect(mockFilesViewer).toHaveBeenCalledWith(
-        expect.objectContaining({
-          viewerProps: {
-            panel: { sharing: { disabled: sharingDisabled } }
-          }
-        })
-      )
-    }
-  )
 
   it('redirects to /sharings when the file query fails', () => {
     renderRootFileViewer({
