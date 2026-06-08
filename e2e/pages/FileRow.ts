@@ -1,5 +1,6 @@
 import type { Page, Locator } from '@playwright/test'
 
+import { ShareModalPage } from './ShareModalPage'
 import { escapeRegExp } from '../helpers/fixtures'
 
 interface ConfirmDialog {
@@ -145,6 +146,17 @@ export class FileRow {
 
   async addToFavorites(): Promise<void> {
     await this.runAction(/add to favorites/i)
+  }
+
+  /** Open the row's action menu and click "Share", then return a ready-to-use
+   *  ShareModalPage. Use this when the toolbar's Share button is unavailable
+   *  (e.g. when acting on a file, which has no folder-scoped toolbar). */
+  async share(): Promise<ShareModalPage> {
+    const menu = await this.openMenu()
+    await menu.getByRole('menuitem', { name: /^share$/i }).click()
+    const modal = new ShareModalPage(this.page)
+    await modal.waitForOpen()
+    return modal
   }
 
   async restore(): Promise<void> {
