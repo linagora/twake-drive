@@ -61,7 +61,6 @@ const Table = forwardRef(
       rows,
       columns,
       dragProps,
-      selectAll,
       fetchMore,
       isSelectedItem,
       selectedItems,
@@ -179,15 +178,12 @@ const Table = forwardRef(
           components={components}
           rows={rows}
           columns={columns}
-          withCheckbox={!flag('drive.dynamic-selection.enabled')}
           endReached={fetchMore}
           defaultOrder={{
             direction: sortOrder.order,
             by: sortOrder.attribute
           }}
           secondarySort={secondarySort}
-          onSelectAll={selectAll}
-          onSelect={handleRowSelect}
           isSelectedItem={isSelectedItem}
           isNewItem={isNew}
           selectedItems={selectedItems}

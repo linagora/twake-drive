@@ -148,7 +148,6 @@ const FolderViewBodyContent = ({
       columns={columns}
       dragProps={dragProps}
       fetchMore={fetchMore}
-      selectAll={selectAll}
       isSelectedItem={isSelectedItem}
       selectedItems={selectedItems}
       currentFolderId={currentFolderId}
