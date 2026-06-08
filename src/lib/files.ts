@@ -1,14 +1,18 @@
-import CozyClient from 'cozy-client'
+import type CozyClient from 'cozy-client/types/CozyClient'
 import type { IOCozyFile } from 'cozy-client/types/types'
 
+import { DOCTYPE_FILES } from '@/lib/doctypes'
+
 const PAGE_LIMIT = 100
+
+type DriveId = string | null | undefined
 
 interface StatByIdLinks {
   next?: string
 }
 
 interface StatByIdResult {
-  included: IOCozyFile[]
+  included?: IOCozyFile[]
   links?: StatByIdLinks
 }
 
@@ -24,13 +28,21 @@ export interface PaginatedStatByIdResult {
   nextCursor: string | null
 }
 
+const getNextCursor = (links?: StatByIdLinks): string | null => {
+  const next = links?.next
+  if (!next) return null
+  const queryString = next.split('?')[1]
+  if (!queryString) return null
+  return new URLSearchParams(queryString).get('page[cursor]')
+}
+
 export const paginatedStatById =
-  (client: CozyClient, driveId: string) =>
+  (client: CozyClient, driveId?: DriveId) =>
   async (
     folderId: string,
     cursor: string | null = null
   ): Promise<PaginatedStatByIdResult> => {
-    const collection = client.collection('io.cozy.files', {
+    const collection = client.collection(DOCTYPE_FILES, {
       driveId
     }) as unknown as TypedFileCollection
 
@@ -39,18 +51,8 @@ export const paginatedStatById =
       'page[limit]': PAGE_LIMIT
     })
 
-    let nextCursor: string | null = null
-    if (links?.next) {
-      try {
-        const queryString = links.next.split('?')[1]
-        if (queryString) {
-          const params = new URLSearchParams(queryString)
-          nextCursor = params.get('page[cursor]')
-        }
-      } catch {
-        nextCursor = null
-      }
+    return {
+      included,
+      nextCursor: getNextCursor(links)
     }
-
-    return { included, nextCursor }
   }

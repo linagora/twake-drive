@@ -5,11 +5,8 @@ import { useClient } from 'cozy-client'
 import type { IOCozyFile } from 'cozy-client/types/types'
 import CozyRealtime from 'cozy-realtime'
 
+import { paginatedStatById, type PaginatedStatByIdResult } from '@/lib/files'
 import logger from '@/lib/logger'
-import {
-  paginatedStatById,
-  type PaginatedStatByIdResult
-} from '@/modules/shareddrives/hooks/useSharedDriveFolderHelpers'
 import { buildSharedDriveFolderQuery } from '@/queries'
 import type { QueryConfig } from '@/queries'
 
