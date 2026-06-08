@@ -28,13 +28,14 @@ const {
   PENDING,
   RESOLVING,
   CANCEL,
+  CONFLICT,
   CREATED,
   UPDATED,
   ERROR_STATUSES,
   DONE_STATUSES
 } = uploadStatus
 
-const IN_PROGRESS = new Set([PENDING, RESOLVING])
+const IN_PROGRESS = new Set([PENDING, RESOLVING, CONFLICT])
 
 // For the determinate progress bar, weight each row by how far it's
 // progressed: PENDING/RESOLVING contribute 0, LOADING contributes its
@@ -106,10 +107,11 @@ const FileUploadProgress = ({ progress }) => {
 
 const UploadItem = ({ item, t }) => {
   const { file, status, isDirectory, relativePath } = item
-  const displayName = relativePath || file?.name || ''
+  const displayName = relativePath || item.finalName || file?.name || ''
   const isResolving = status === RESOLVING
   const isLoading = status === LOADING
-  const isError = ERROR_STATUSES.includes(status)
+  const isConflict = status === CONFLICT
+  const isError = ERROR_STATUSES.includes(status) && !isConflict
   const isDone = DONE_STATUSES.includes(status)
   const isPending = status === PENDING
 
@@ -123,6 +125,8 @@ const UploadItem = ({ item, t }) => {
     )
   } else if (status === CANCEL) {
     statusIcon = <Icon icon={CrossCircleIcon} color="var(--errorColor)" />
+  } else if (isConflict) {
+    statusIcon = <Icon icon={WarningIcon} color="var(--primaryColor)" />
   } else if (isError) {
     statusIcon = <Icon icon={WarningIcon} color="var(--errorColor)" />
   } else if (isDone) {
@@ -132,6 +136,7 @@ const UploadItem = ({ item, t }) => {
   let label = null
   if (isResolving) label = t('UploadQueue.item.preparing')
   else if (isPending) label = t('UploadQueue.item.pending')
+  else if (isConflict) label = t('UploadQueue.item.conflict')
 
   return (
     <ListItem
