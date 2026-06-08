@@ -2,13 +2,16 @@ import {
   processNextFile,
   selectors,
   queue,
+  conflictStrategies as conflictStrategiesReducer,
   overwriteFile,
   uploadProgress,
   extractFilesEntries,
   exceedsFileLimit,
   flattenEntries,
   addToUploadQueue,
-  onQueueEmpty
+  onQueueEmpty,
+  retryUploadConflicts,
+  uploadConflictStrategies
 } from './index'
 
 import logger from '@/lib/logger'
@@ -41,14 +44,128 @@ describe('processNextFile function', () => {
   const sharingState = {
     sharedPaths: []
   }
-  fakeClient.query.mockResolvedValueOnce(null)
+  const getUploadState = (queueState, conflictStrategies = {}) => ({
+    upload: {
+      queue: queueState,
+      conflictStrategies
+    }
+  })
+
+  beforeEach(() => {
+    createFileSpy.mockReset()
+    createDirectorySpy.mockReset()
+    statByPathSpy.mockReset()
+    updateFileSpy.mockReset()
+    dispatchSpy.mockClear()
+    fileUploadedCallbackSpy.mockClear()
+    queueCompletedCallbackSpy.mockClear()
+    CozyFile.getFullpath.mockReset()
+    CozyFile.getFullpath.mockResolvedValue('/my-dir/my-doc.odt')
+  })
+
+  const startProcessQueue = (
+    initialQueue,
+    conflictStrategies = {},
+    callbacks = {}
+  ) => {
+    let state = getUploadState(initialQueue, conflictStrategies)
+    const actions = []
+    const pending = []
+    const dispatch = jest.fn(action => {
+      actions.push(action)
+      if (typeof action === 'function') {
+        const result = action(dispatch, () => state)
+        if (result && typeof result.then === 'function') pending.push(result)
+        return result
+      }
+      state = {
+        upload: {
+          queue: queue(state.upload.queue, action),
+          conflictStrategies: conflictStrategiesReducer(
+            state.upload.conflictStrategies,
+            action
+          )
+        }
+      }
+      return action
+    })
+    const start = () =>
+      processNextFile(
+        callbacks.fileUploadedCallback || fileUploadedCallbackSpy,
+        callbacks.queueCompletedCallback || queueCompletedCallbackSpy,
+        dirId,
+        sharingState,
+        { client: fakeClient },
+        callbacks.driveId,
+        callbacks.addItems,
+        callbacks.onUploadConflict
+      )(dispatch, () => state)
+    const drainPending = async () => {
+      while (pending.length) await Promise.all(pending.splice(0))
+    }
+    return {
+      actions,
+      dispatch,
+      drainPending,
+      getState: () => state,
+      start
+    }
+  }
+
+  const runProcessQueue = async (
+    initialQueue,
+    conflictStrategies = {},
+    callbacks = {}
+  ) => {
+    const runner = startProcessQueue(
+      initialQueue,
+      conflictStrategies,
+      callbacks
+    )
+    await runner.start()
+    await runner.drainPending()
+    return {
+      actions: runner.actions.filter(a => typeof a !== 'function'),
+      state: runner.getState()
+    }
+  }
+
+  const waitForCreateFileCall = async expectedCallCount => {
+    for (let i = 0; i < 20; i += 1) {
+      if (createFileSpy.mock.calls.length >= expectedCallCount) return
+      await Promise.resolve()
+    }
+    throw new Error(
+      `Expected createFile to be called ${expectedCallCount} times`
+    )
+  }
+
+  const makeDeferredRejection = () => {
+    let rejectUpload
+    const promise = new Promise((_resolve, reject) => {
+      rejectUpload = reject
+    })
+    return { promise, reject: rejectUpload }
+  }
+
+  const makeQueueItem = ({
+    fileId,
+    uploadBatchId = 'batch-1',
+    status = 'pending',
+    file: itemFile = file,
+    ...rest
+  }) => ({
+    fileId,
+    uploadBatchId,
+    status,
+    file: itemFile,
+    entry: '',
+    isDirectory: false,
+    ...rest
+  })
 
   it('should handle an empty queue', async () => {
-    const getState = () => ({
-      upload: {
-        queue: []
-      }
-    })
+    const getState = () => getUploadState([])
     const asyncProcess = processNextFile(
       fileUploadedCallbackSpy,
       queueCompletedCallbackSpy,
@@ -73,18 +190,8 @@ describe('processNextFile function', () => {
   })
 
   it('should process files in the queue', async () => {
-    const getState = () => ({
-      upload: {
-        queue: [
-          {
-            status: 'pending',
-            file,
-            entry: '',
-            isDirectory: false
-          }
-        ]
-      }
-    })
+    const getState = () =>
+      getUploadState([makeQueueItem({ fileId: 'my-doc.odt' })])
     createFileSpy.mockResolvedValue({
       data: {
         file
@@ -100,6 +207,7 @@ describe('processNextFile function', () => {
     await asyncProcess(dispatchSpy, getState)
     expect(dispatchSpy).toHaveBeenCalledWith({
       type: 'UPLOAD_FILE',
+      fileId: 'my-doc.odt',
       file
     })
     expect(createFileSpy).toHaveBeenCalledWith(file, {
@@ -108,129 +216,393 @@ describe('processNextFile function', () => {
     })
   })
 
-  it('should process a file in conflict', async () => {
-    const getState = () => ({
-      upload: {
-        queue: [
-          {
-            status: 'pending',
-            file,
-            entry: '',
-            isDirectory: false
-          }
-        ]
-      }
-    })
-    createFileSpy.mockRejectedValue({
-      status: 409,
-      title: 'Conflict',
-      detail: 'file already exists',
-      source: {}
-    })
-
-    statByPathSpy.mockResolvedValue({
+  it('should collect a file conflict and continue the queue', async () => {
+    const secondFile = new File(['bar'], 'second-doc.odt')
+    createFileSpy
+      .mockRejectedValueOnce({
+        status: 409,
+        title: 'Conflict',
+        detail: 'file already exists',
+        source: {}
+      })
+      .mockResolvedValueOnce({
+        data: { _id: 'second-file-id', name: 'second-doc.odt' }
+      })
+    statByPathSpy.mockResolvedValueOnce({
       data: {
-        dir_id: 'my-dir',
-        id: 'b552a167-1aa4'
+        type: 'file',
+        id: 'existing-file-id',
+        name: 'my-doc.odt'
       }
     })
 
-    updateFileSpy.mockResolvedValue({ data: file })
-
-    const asyncProcess = processNextFile(
-      fileUploadedCallbackSpy,
-      queueCompletedCallbackSpy,
-      dirId,
-      sharingState,
-      { client: fakeClient }
+    const onUploadConflict = jest.fn()
+    const { actions, state } = await runProcessQueue(
+      [
+        makeQueueItem({ fileId: 'batch-1_my-doc.odt' }),
+        makeQueueItem({
+          fileId: 'batch-1_second-doc.odt',
+          file: secondFile
+        })
+      ],
+      {},
+      { onUploadConflict }
     )
-    await asyncProcess(dispatchSpy, getState)
 
-    expect(dispatchSpy).toHaveBeenNthCalledWith(1, {
-      type: 'UPLOAD_FILE',
-      file
+    expect(updateFileSpy).not.toHaveBeenCalled()
+    expect(actions.filter(a => a.type === 'RECEIVE_UPLOAD_CONFLICT')).toEqual([
+      expect.objectContaining({
+        fileId: 'batch-1_my-doc.odt',
+        uploadBatchId: 'batch-1'
+      })
+    ])
+    expect(onUploadConflict).toHaveBeenCalledWith({
+      fileId: 'batch-1_my-doc.odt',
+      uploadBatchId: 'batch-1'
     })
-    expect(createFileSpy).toHaveBeenCalledWith(file, {
-      dirId: 'my-dir',
-      onUploadProgress: expect.any(Function)
-    })
-
-    expect(updateFileSpy).toHaveBeenCalledWith(file, {
-      fileId: 'b552a167-1aa4',
-      onUploadProgress: expect.any(Function)
-    })
-
-    expect(fileUploadedCallbackSpy).toHaveBeenCalledWith(file)
-
-    expect(dispatchSpy).toHaveBeenNthCalledWith(2, {
-      type: 'RECEIVE_UPLOAD_SUCCESS',
-      file,
-      isUpdate: true,
-      uploadedItem: file
+    expect(state.upload.queue).toEqual([
+      expect.objectContaining({
+        fileId: 'batch-1_my-doc.odt',
+        status: 'conflict'
+      }),
+      expect.objectContaining({
+        fileId: 'batch-1_second-doc.odt',
+        status: 'created'
+      })
+    ])
+    expect(fileUploadedCallbackSpy).toHaveBeenCalledWith({
+      _id: 'second-file-id',
+      name: 'second-doc.odt'
     })
   })
 
-  it('should handle an error during overwrite', async () => {
+  it('should fail instead of waiting for a modal when conflict stat fails', async () => {
     logger.error = jest.fn()
-    const getState = () => ({
-      upload: {
-        queue: [
-          {
-            status: 'pending',
-            file,
-            entry: '',
-            isDirectory: false
-          }
+    createFileSpy.mockRejectedValueOnce({ status: 409 })
+    statByPathSpy.mockRejectedValueOnce({ status: 500 })
+
+    const onUploadConflict = jest.fn()
+    const { actions, state } = await runProcessQueue(
+      [makeQueueItem({ fileId: 'batch-1_my-doc.odt' })],
+      {},
+      { onUploadConflict }
+    )
+
+    expect(
+      actions.filter(a => a.type === 'RECEIVE_UPLOAD_CONFLICT')
+    ).toHaveLength(0)
+    expect(onUploadConflict).not.toHaveBeenCalled()
+    expect(state.upload.queue[0]).toMatchObject({
+      fileId: 'batch-1_my-doc.odt',
+      status: 'failed'
+    })
+    expect(queueCompletedCallbackSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        errors: [
+          expect.objectContaining({
+            fileId: 'batch-1_my-doc.odt',
+            status: 'failed'
+          })
         ]
-      }
-    })
-    createFileSpy.mockRejectedValue({
-      status: 409,
-      title: 'Conflict',
-      detail: 'file already exists',
-      source: {}
-    })
+      })
+    )
+  })
 
-    statByPathSpy.mockResolvedValue({
-      data: {
-        id: 'b552a167-1aa4'
-      }
-    })
+  it('should collect multiple file conflicts in one upload pass', async () => {
+    const secondFile = new File(['bar'], 'second-doc.odt')
+    createFileSpy
+      .mockRejectedValueOnce({ status: 409 })
+      .mockRejectedValueOnce({ status: 409 })
+    statByPathSpy
+      .mockResolvedValueOnce({
+        data: { type: 'file', id: 'existing-1', name: 'my-doc.odt' }
+      })
+      .mockResolvedValueOnce({
+        data: { type: 'file', id: 'existing-2', name: 'second-doc.odt' }
+      })
 
-    updateFileSpy.mockRejectedValue({ status: 413 })
+    const { actions, state } = await runProcessQueue([
+      makeQueueItem({ fileId: 'batch-1_my-doc.odt' }),
+      makeQueueItem({
+        fileId: 'batch-1_second-doc.odt',
+        file: secondFile
+      })
+    ])
 
-    const asyncProcess = processNextFile(
+    expect(
+      actions.filter(a => a.type === 'RECEIVE_UPLOAD_CONFLICT')
+    ).toHaveLength(2)
+    expect(state.upload.queue).toEqual([
+      expect.objectContaining({
+        fileId: 'batch-1_my-doc.odt',
+        status: 'conflict'
+      }),
+      expect.objectContaining({
+        fileId: 'batch-1_second-doc.odt',
+        status: 'conflict'
+      })
+    ])
+    expect(fileUploadedCallbackSpy).not.toHaveBeenCalled()
+  })
+
+  it('should apply keep-both to a later 409 after the modal answer', async () => {
+    const secondFile = new File(['bar'], 'second-doc.odt')
+    const secondUpload = makeDeferredRejection()
+    createFileSpy
+      .mockRejectedValueOnce({ status: 409 })
+      .mockImplementationOnce(() => secondUpload.promise)
+      .mockResolvedValueOnce({
+        data: { _id: 'second-renamed-id', name: 'second-doc_1.odt' }
+      })
+      .mockRejectedValueOnce({ status: 409 })
+      .mockResolvedValueOnce({
+        data: { _id: 'first-renamed-id', name: 'my-doc_1.odt' }
+      })
+    statByPathSpy
+      .mockResolvedValueOnce({
+        data: { type: 'file', id: 'existing-1', name: 'my-doc.odt' }
+      })
+      .mockResolvedValueOnce({
+        data: { type: 'file', id: 'existing-2', name: 'second-doc.odt' }
+      })
+      .mockResolvedValueOnce({
+        data: { type: 'file', id: 'existing-1', name: 'my-doc.odt' }
+      })
+
+    const onUploadConflict = jest.fn()
+    const runner = startProcessQueue(
+      [
+        makeQueueItem({ fileId: 'batch-1_my-doc.odt' }),
+        makeQueueItem({
+          fileId: 'batch-1_second-doc.odt',
+          file: secondFile
+        })
+      ],
+      {},
+      { onUploadConflict }
+    )
+
+    await runner.start()
+    await waitForCreateFileCall(2)
+    retryUploadConflicts(
+      'batch-1',
+      uploadConflictStrategies.KEEP_BOTH,
       fileUploadedCallbackSpy,
       queueCompletedCallbackSpy,
       dirId,
       sharingState,
       { client: fakeClient }
+    )(runner.dispatch, runner.getState)
+    secondUpload.reject({ status: 409 })
+    await runner.drainPending()
+
+    const actions = runner.actions.filter(a => typeof a !== 'function')
+    expect(
+      actions.filter(a => a.type === 'RECEIVE_UPLOAD_CONFLICT')
+    ).toHaveLength(1)
+    expect(onUploadConflict).toHaveBeenCalledTimes(1)
+    expect(createFileSpy).toHaveBeenNthCalledWith(3, secondFile, {
+      dirId: 'my-dir',
+      name: 'second-doc_1.odt',
+      onUploadProgress: expect.any(Function)
+    })
+    expect(runner.getState().upload.queue).toEqual([
+      expect.objectContaining({
+        fileId: 'batch-1_my-doc.odt',
+        finalName: 'my-doc_1.odt',
+        status: 'created'
+      }),
+      expect.objectContaining({
+        fileId: 'batch-1_second-doc.odt',
+        finalName: 'second-doc_1.odt',
+        status: 'created'
+      })
+    ])
+  })
+
+  it('should apply cancel to a later 409 after the modal answer', async () => {
+    const secondFile = new File(['bar'], 'second-doc.odt')
+    const secondUpload = makeDeferredRejection()
+    createFileSpy
+      .mockRejectedValueOnce({ status: 409 })
+      .mockImplementationOnce(() => secondUpload.promise)
+    statByPathSpy
+      .mockResolvedValueOnce({
+        data: { type: 'file', id: 'existing-1', name: 'my-doc.odt' }
+      })
+      .mockResolvedValueOnce({
+        data: { type: 'file', id: 'existing-2', name: 'second-doc.odt' }
+      })
+
+    const onUploadConflict = jest.fn()
+    const runner = startProcessQueue(
+      [
+        makeQueueItem({ fileId: 'batch-1_my-doc.odt' }),
+        makeQueueItem({
+          fileId: 'batch-1_second-doc.odt',
+          file: secondFile
+        })
+      ],
+      {},
+      { onUploadConflict }
     )
-    await asyncProcess(dispatchSpy, getState, { client: fakeClient })
 
-    expect(fileUploadedCallbackSpy).not.toHaveBeenCalled()
+    await runner.start()
+    await waitForCreateFileCall(2)
+    retryUploadConflicts(
+      'batch-1',
+      uploadConflictStrategies.CANCEL,
+      fileUploadedCallbackSpy,
+      queueCompletedCallbackSpy,
+      dirId,
+      sharingState,
+      { client: fakeClient }
+    )(runner.dispatch, runner.getState)
+    secondUpload.reject({ status: 409 })
+    await runner.drainPending()
 
-    expect(dispatchSpy).toHaveBeenNthCalledWith(2, {
-      file,
-      status: 'quota',
-      type: 'RECEIVE_UPLOAD_ERROR'
+    const actions = runner.actions.filter(a => typeof a !== 'function')
+    expect(
+      actions.filter(a => a.type === 'RECEIVE_UPLOAD_CONFLICT')
+    ).toHaveLength(1)
+    expect(onUploadConflict).toHaveBeenCalledTimes(1)
+    expect(createFileSpy).toHaveBeenCalledTimes(2)
+    expect(runner.getState().upload.queue).toEqual([
+      expect.objectContaining({
+        fileId: 'batch-1_my-doc.odt',
+        status: 'cancel'
+      }),
+      expect.objectContaining({
+        fileId: 'batch-1_second-doc.odt',
+        status: 'cancel'
+      })
+    ])
+  })
+
+  it('should fail instead of waiting for a modal when replace returns a raw 409', async () => {
+    logger.error = jest.fn()
+    createFileSpy.mockRejectedValueOnce({ status: 409 })
+    statByPathSpy.mockResolvedValueOnce({
+      data: { type: 'file', id: 'existing-file-id', name: 'my-doc.odt' }
+    })
+    updateFileSpy.mockRejectedValueOnce({ status: 409 })
+
+    const onUploadConflict = jest.fn()
+    const { actions, state } = await runProcessQueue(
+      [makeQueueItem({ fileId: 'batch-1_my-doc.odt' })],
+      { 'batch-1': uploadConflictStrategies.REPLACE },
+      { onUploadConflict }
+    )
+
+    expect(statByPathSpy).toHaveBeenCalledTimes(1)
+    expect(
+      actions.filter(a => a.type === 'RECEIVE_UPLOAD_CONFLICT')
+    ).toHaveLength(0)
+    expect(onUploadConflict).not.toHaveBeenCalled()
+    expect(state.upload.queue[0]).toMatchObject({
+      fileId: 'batch-1_my-doc.odt',
+      status: 'failed'
+    })
+    expect(queueCompletedCallbackSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        errors: [
+          expect.objectContaining({
+            fileId: 'batch-1_my-doc.odt',
+            status: 'failed'
+          })
+        ]
+      })
+    )
+  })
+
+  it('should fail instead of waiting for a modal when the existing item type is unsupported', async () => {
+    logger.error = jest.fn()
+    createFileSpy.mockRejectedValueOnce({ status: 409 })
+    statByPathSpy.mockResolvedValueOnce({
+      data: {
+        type: 'shortcut',
+        id: 'existing-shortcut-id',
+        name: 'my-doc.odt'
+      }
+    })
+
+    const onUploadConflict = jest.fn()
+    const { actions, state } = await runProcessQueue(
+      [makeQueueItem({ fileId: 'batch-1_my-doc.odt' })],
+      {},
+      { onUploadConflict }
+    )
+
+    expect(
+      actions.filter(a => a.type === 'RECEIVE_UPLOAD_CONFLICT')
+    ).toHaveLength(0)
+    expect(onUploadConflict).not.toHaveBeenCalled()
+    expect(state.upload.queue[0]).toMatchObject({
+      fileId: 'batch-1_my-doc.odt',
+      status: 'failed'
+    })
+    expect(queueCompletedCallbackSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        errors: [
+          expect.objectContaining({
+            fileId: 'batch-1_my-doc.odt',
+            status: 'failed'
+          })
+        ]
+      })
+    )
+  })
+
+  it('should update the displayed generated name on keep-both retries', async () => {
+    createFileSpy
+      .mockRejectedValueOnce({ status: 409 })
+      .mockRejectedValueOnce({ status: 409 })
+      .mockResolvedValueOnce({
+        data: { _id: 'renamed-file-id', name: 'my-doc_2.odt' }
+      })
+    statByPathSpy.mockResolvedValueOnce({
+      data: { type: 'file', id: 'existing-file-id', name: 'my-doc.odt' }
+    })
+
+    const { actions, state } = await runProcessQueue(
+      [
+        makeQueueItem({
+          fileId: 'batch-1_docs/my-doc.odt',
+          relativePath: 'docs/my-doc.odt',
+          folderId: 'docs-dir-id'
+        })
+      ],
+      { 'batch-1': uploadConflictStrategies.KEEP_BOTH }
+    )
+
+    expect(actions.filter(a => a.type === 'RECEIVE_UPLOAD_RENAMED')).toEqual([
+      {
+        type: 'RECEIVE_UPLOAD_RENAMED',
+        fileId: 'batch-1_docs/my-doc.odt',
+        relativePath: 'docs/my-doc_1.odt'
+      },
+      {
+        type: 'RECEIVE_UPLOAD_RENAMED',
+        fileId: 'batch-1_docs/my-doc.odt',
+        relativePath: 'docs/my-doc_2.odt'
+      }
+    ])
+    expect(createFileSpy).toHaveBeenNthCalledWith(3, file, {
+      dirId: 'docs-dir-id',
+      name: 'my-doc_2.odt',
+      onUploadProgress: expect.any(Function)
+    })
+    expect(state.upload.queue[0]).toMatchObject({
+      status: 'created',
+      relativePath: 'docs/my-doc_2.odt',
+      finalName: 'my-doc_2.odt'
     })
   })
 
   it('should handle an error during upload', async () => {
     logger.warn = jest.fn()
-    const getState = () => ({
-      upload: {
-        queue: [
-          {
-            status: 'pending',
-            file,
-            entry: '',
-            isDirectory: false
-          }
-        ]
-      }
-    })
+    const getState = () =>
+      getUploadState([makeQueueItem({ fileId: 'my-doc.odt' })])
     createFileSpy.mockRejectedValue({
       status: 413,
       title: 'QUOTA',
@@ -250,6 +622,7 @@ describe('processNextFile function', () => {
     expect(fileUploadedCallbackSpy).not.toHaveBeenCalled()
 
     expect(dispatchSpy).toHaveBeenNthCalledWith(2, {
+      fileId: 'my-doc.odt',
       file,
       status: 'quota',
       type: 'RECEIVE_UPLOAD_ERROR'
@@ -258,18 +631,8 @@ describe('processNextFile function', () => {
 
   it('should classify NotFoundError (browser FileSystem API) as unreadable', async () => {
     logger.warn = jest.fn()
-    const getState = () => ({
-      upload: {
-        queue: [
-          {
-            status: 'pending',
-            file,
-            entry: '',
-            isDirectory: false
-          }
-        ]
-      }
-    })
+    const getState = () =>
+      getUploadState([makeQueueItem({ fileId: 'my-doc.odt' })])
     const notFoundError = new Error(
       'A requested file or directory could not be found at the time an operation was processed.'
     )
@@ -287,9 +650,96 @@ describe('processNextFile function', () => {
 
     expect(fileUploadedCallbackSpy).not.toHaveBeenCalled()
     expect(dispatchSpy).toHaveBeenNthCalledWith(2, {
+      fileId: 'my-doc.odt',
       file,
       status: 'unreadable',
       type: 'RECEIVE_UPLOAD_ERROR'
+    })
+  })
+
+  it('should retry conflicts only when the current upload pass is idle', () => {
+    const dispatch = jest.fn(action => action)
+
+    retryUploadConflicts(
+      'batch-1',
+      uploadConflictStrategies.KEEP_BOTH,
+      fileUploadedCallbackSpy,
+      queueCompletedCallbackSpy,
+      dirId,
+      sharingState,
+      { client: fakeClient }
+    )(dispatch, () =>
+      getUploadState([
+        {
+          fileId: 'batch-1_my-doc.odt',
+          uploadBatchId: 'batch-1',
+          status: 'conflict',
+          file
+        }
+      ])
+    )
+
+    expect(dispatch).toHaveBeenNthCalledWith(1, {
+      type: 'SET_UPLOAD_CONFLICT_STRATEGY',
+      uploadBatchId: 'batch-1',
+      strategy: 'keep-both'
+    })
+    expect(dispatch).toHaveBeenNthCalledWith(2, {
+      type: 'RETRY_UPLOAD_CONFLICTS',
+      uploadBatchId: 'batch-1'
+    })
+    expect(dispatch).toHaveBeenNthCalledWith(3, expect.any(Function))
+
+    dispatch.mockClear()
+
+    retryUploadConflicts(
+      'batch-1',
+      uploadConflictStrategies.CANCEL,
+      fileUploadedCallbackSpy,
+      queueCompletedCallbackSpy,
+      dirId,
+      sharingState,
+      { client: fakeClient }
+    )(dispatch, () =>
+      getUploadState([
+        {
+          fileId: 'batch-1_my-doc.odt',
+          uploadBatchId: 'batch-1',
+          status: 'conflict',
+          file
+        },
+        {
+          fileId: 'batch-1_next.odt',
+          uploadBatchId: 'batch-1',
+          status: 'pending',
+          file: new File(['next'], 'next.odt')
+        }
+      ])
+    )
+
+    expect(dispatch).toHaveBeenCalledTimes(2)
+    expect(dispatch).toHaveBeenNthCalledWith(2, {
+      type: 'CANCEL_UPLOAD_CONFLICTS',
+      uploadBatchId: 'batch-1'
+    })
+  })
+})
+
+describe('conflictStrategies reducer', () => {
+  it('clears strategies for completed upload batches', () => {
+    const state = {
+      'batch-1': uploadConflictStrategies.REPLACE,
+      'batch-2': uploadConflictStrategies.KEEP_BOTH,
+      'batch-3': uploadConflictStrategies.CANCEL
+    }
+
+    const result = conflictStrategiesReducer(state, {
+      type: 'CLEAR_UPLOAD_CONFLICT_STRATEGIES',
+      uploadBatchIds: ['batch-1', 'batch-3']
+    })
+
+    expect(result).toEqual({
+      'batch-2': uploadConflictStrategies.KEEP_BOTH
     })
   })
 })
@@ -449,7 +899,106 @@ describe('queue reducer', () => {
       status: 'conflict'
     }
     const result = queue(state, action)
-    expect(result[1]).toMatchObject({ fileId: 'doc2.odt', status: 'conflict' })
+    expect(result[1]).toMatchObject({ fileId: 'doc2.odt', status: 'failed' })
+  })
+
+  it('should handle RECEIVE_UPLOAD_CONFLICT action type', () => {
+    const action = {
+      type: 'RECEIVE_UPLOAD_CONFLICT',
+      fileId: 'doc2.odt',
+      uploadBatchId: 'batch-1'
+    }
+    const result = queue(state, action)
+    expect(result[1]).toMatchObject({
+      fileId: 'doc2.odt',
+      status: 'conflict'
+    })
+    expect(result[1]).not.toHaveProperty('existingItem')
+  })
+
+  it('should store an early generated name for a loose file', () => {
+    const result = queue(state, {
+      type: 'RECEIVE_UPLOAD_RENAMED',
+      fileId: 'doc2.odt',
+      finalName: 'doc2_1.odt'
+    })
+    expect(result[1]).toMatchObject({
+      fileId: 'doc2.odt',
+      finalName: 'doc2_1.odt'
+    })
+    expect(result[1]).not.toHaveProperty('relativePath')
+  })
+
+  it('should update the relative path for an early generated folder-upload name', () => {
+    const folderState = [
+      {
+        ...buildItem('batch-1_docs/doc2.odt'),
+        relativePath: 'docs/doc2.odt'
+      }
+    ]
+    const result = queue(folderState, {
+      type: 'RECEIVE_UPLOAD_RENAMED',
+      fileId: 'batch-1_docs/doc2.odt',
+      relativePath: 'docs/doc2_1.odt'
+    })
+    expect(result[0]).toMatchObject({
+      fileId: 'batch-1_docs/doc2.odt',
+      relativePath: 'docs/doc2_1.odt'
+    })
+  })
+
+  it('should reset accumulated conflicts for retry', () => {
+    const conflictState = [
+      {
+        ...buildItem('doc1.odt'),
+        status: 'conflict',
+        uploadBatchId: 'batch-1'
+      },
+      {
+        ...buildItem('doc2.odt'),
+        status: 'conflict',
+        uploadBatchId: 'batch-1'
+      },
+      {
+        ...buildItem('doc3.odt'),
+        status: 'conflict',
+        uploadBatchId: 'batch-2'
+      }
+    ]
+    const result = queue(conflictState, {
+      type: 'RETRY_UPLOAD_CONFLICTS',
+      uploadBatchId: 'batch-1'
+    })
+    expect(result[0]).toMatchObject({
+      status: 'pending'
+    })
+    expect(result[1]).toMatchObject({
+      status: 'pending'
+    })
+    expect(result[0]).not.toHaveProperty('conflictStrategy')
+    expect(result[1]).not.toHaveProperty('conflictStrategy')
+    expect(result[2]).toMatchObject({ status: 'conflict' })
+  })
+
+  it('should cancel accumulated conflicts', () => {
+    const conflictState = [
+      {
+        ...buildItem('doc1.odt'),
+        status: 'conflict',
+        uploadBatchId: 'batch-1'
+      },
+      {
+        ...buildItem('doc2.odt'),
+        status: 'conflict',
+        uploadBatchId: 'batch-2'
+      }
+    ]
+    const result = queue(conflictState, {
+      type: 'CANCEL_UPLOAD_CONFLICTS',
+      uploadBatchId: 'batch-1'
+    })
+    expect(result[0]).toMatchObject({ status: 'cancel' })
+    expect(result[1]).toMatchObject({ status: 'conflict' })
   })
 
   describe('progress action', () => {
@@ -568,7 +1117,8 @@ describe('extractFilesEntries', () => {
     expect(result[0]).toEqual({
       file: files[0],
       isDirectory: false,
-      entry: null
+      entry: null,
+      root: true
     })
   })
 
@@ -586,12 +1136,13 @@ describe('extractFilesEntries', () => {
     expect(result[0]).toEqual({
       file,
       isDirectory: false,
-      entry: fileEntry
+      entry: fileEntry,
+      root: true
     })
   })
 
   it('should extract DataTransferItem with directory entry', () => {
-    const dirEntry = { isFile: false, isDirectory: true }
+    const dirEntry = { isFile: false, isDirectory: true, name: 'Photos' }
     const items = [
       {
         webkitGetAsEntry: () => dirEntry,
@@ -603,7 +1154,22 @@ describe('extractFilesEntries', () => {
     expect(result[0]).toEqual({
       file: null,
       isDirectory: true,
-      entry: dirEntry
+      entry: dirEntry,
+      root: true
+    })
+  })
+
+  it('should mark plain File.path entries as root without parsing the path', () => {
+    const file = new File(['a'], 'img.jpg')
+    file.path = './Photos/2026/img.jpg'
+
+    const result = extractFilesEntries([file])
+
+    expect(result[0]).toEqual({
+      file,
+      isDirectory: false,
+      entry: null,
+      root: true
     })
   })
 
@@ -772,6 +1338,7 @@ describe('flattenEntries', () => {
     expect(result).toHaveLength(2)
     expect(result[0]).toMatchObject({
       fileId: 'photos/img1.jpg',
+      uploadBatchId: 'photos/img1.jpg',
       relativePath: 'photos/img1.jpg',
       folderId: 'dir-photos'
     })
@@ -827,6 +1394,7 @@ describe('flattenEntries', () => {
     expect(result).toHaveLength(1)
     expect(result[0]).toMatchObject({
       fileId: 'note.txt',
+      uploadBatchId: 'note.txt',
       relativePath: null,
       folderId: 'root'
     })
@@ -851,6 +1419,7 @@ describe('flattenEntries', () => {
     expect(result).toHaveLength(1)
     expect(result[0]).toMatchObject({
       relativePath: 'a/b/c/d/e',
+      uploadBatchId: 'a/b/c/d/e',
       folderId: null,
       status: 'unreadable',
       isDirectory: true
@@ -967,6 +1536,29 @@ describe('flattenEntries', () => {
       folderId: 'root'
     })
   })
+
+  it('should ignore ./ prefixes in react-dropzone File.path entries', async () => {
+    const nested = new File(['a'], 'a.txt')
+    nested.path = './album/2024/a.txt'
+    const entries = [{ file: nested, isDirectory: false, entry: null }]
+
+    const result = await flattenEntries(entries, 'root', fakeClient, null)
+
+    expect(createDirectorySpy).toHaveBeenCalledTimes(2)
+    expect(createDirectorySpy).toHaveBeenNthCalledWith(1, {
+      name: 'album',
+      dirId: 'root'
+    })
+    expect(createDirectorySpy).toHaveBeenNthCalledWith(2, {
+      name: '2024',
+      dirId: 'dir-album'
+    })
+    expect(result[0]).toMatchObject({
+      fileId: 'album/2024/a.txt',
+      relativePath: 'album/2024/a.txt',
+      folderId: 'dir-2024'
+    })
+  })
 })
 
 describe('addToUploadQueue placeholder flow', () => {
@@ -1027,9 +1619,11 @@ describe('addToUploadQueue placeholder flow', () => {
     expect(adds[0].files).toEqual([
       expect.objectContaining({
         fileId: expect.stringMatching(/^__pending_.+_0_photos__$/),
+        uploadBatchId: expect.stringMatching(/^.+_.+$/),
         status: 'resolving'
       })
     ])
+    const uploadBatchId = adds[0].files[0].uploadBatchId
     expect(resolves).toHaveLength(1)
     expect(resolves[0].placeholderIds).toEqual([
       expect.stringMatching(/^__pending_.+_0_photos__$/)
@@ -1037,6 +1631,39 @@ describe('addToUploadQueue placeholder flow', () => {
     expect(resolves[0].files).toHaveLength(2)
     expect(resolves[0].files[0]).toMatchObject({
       fileId: expect.stringMatching(/^.+_photos\/img1\.jpg$/),
+      uploadBatchId,
+      relativePath: 'photos/img1.jpg'
+    })
+  })
+
+  it('does not create a dot placeholder when a folder file path starts with ./', async () => {
+    const file = new File(['a'], 'img1.jpg')
+    file.path = './photos/img1.jpg'
+    const entries = [{ file, isDirectory: false, entry: null }]
+
+    const actions = await runThunk(
+      addToUploadQueue(
+        entries,
+        'root',
+        {},
+        () => null,
+        () => null,
+        { client: fakeClient },
+        null,
+        () => null
+      )
+    )
+
+    const adds = actions.filter(a => a.type === 'ADD_TO_UPLOAD_QUEUE')
+    const resolves = actions.filter(a => a.type === 'RESOLVE_FOLDER_ITEMS')
+    expect(adds[0].files).toEqual([
+      expect.objectContaining({
+        file: expect.objectContaining({ name: 'photos' }),
+        status: 'resolving'
+      })
+    ])
+    expect(adds[0].files[0].file.name).not.toBe('.')
+    expect(resolves[0].files[0]).toMatchObject({
       relativePath: 'photos/img1.jpg'
     })
   })
@@ -1061,6 +1688,37 @@ describe('addToUploadQueue placeholder flow', () => {
     const types = actions.map(a => a.type)
     expect(types).toContain('ADD_TO_UPLOAD_QUEUE')
     expect(types).not.toContain('RESOLVE_FOLDER_ITEMS')
+  })
+
+  it('uses a provided upload batch id for preflight uploads', async () => {
+    const plainFile = new File(['a'], 'note.txt')
+    const entries = [{ file: plainFile, isDirectory: false, entry: null }]
+
+    const actions = await runThunk(
+      addToUploadQueue(
+        entries,
+        'root',
+        {},
+        () => null,
+        () => null,
+        {
+          client: fakeClient,
+          uploadBatchId: 'preflight-batch-id'
+        },
+        null,
+        () => null
+      )
+    )
+
+    const addAction = actions.find(a => a.type === 'ADD_TO_UPLOAD_QUEUE')
+    expect(addAction.files[0]).toMatchObject({
+      fileId: 'preflight-batch-id_note.txt',
+      uploadBatchId: 'preflight-batch-id'
+    })
+    expect(addAction.files[0]).not.toHaveProperty('preflightConflict')
+    expect(actions.some(a => a.type === 'SET_UPLOAD_CONFLICT_STRATEGY')).toBe(
+      false
+    )
   })
 
   it('replaces the placeholder with one unreadable row when an inner folder cannot be read', async () => {
@@ -1236,17 +1894,59 @@ describe('onQueueEmpty', () => {
     expect(callback).not.toHaveBeenCalled()
   })
 
+  it('does not fire the callback while upload conflicts wait for a modal choice', () => {
+    const callback = jest.fn()
+    const dispatch = jest.fn()
+    const getState = () => ({
+      upload: {
+        queue: [
+          { fileId: 'doc.odt', status: 'conflict', uploadBatchId: 'batch-1' }
+        ]
+      }
+    })
+    onQueueEmpty(callback)(dispatch, getState)
+    expect(callback).not.toHaveBeenCalled()
+    expect(dispatch).not.toHaveBeenCalled()
+  })
+
+  it('does not fire the callback for a cancel-only conflict choice', () => {
+    const callback = jest.fn()
+    const dispatch = jest.fn()
+    const getState = () => ({
+      upload: {
+        queue: [
+          { fileId: 'doc.odt', status: 'cancel', uploadBatchId: 'batch-1' }
+        ]
+      }
+    })
+    onQueueEmpty(callback)(dispatch, getState)
+    expect(callback).not.toHaveBeenCalled()
+    expect(dispatch).toHaveBeenCalledWith({
+      type: 'CLEAR_UPLOAD_CONFLICT_STRATEGIES',
+      uploadBatchIds: ['batch-1']
+    })
+  })
+
   it('fires the callback when no resolving placeholders remain', () => {
     const callback = jest.fn()
     const dispatch = jest.fn()
     const getState = () => ({
       upload: {
         queue: [
-          { fileId: 'a.txt', status: 'created', uploadedItem: { _id: 'a' } }
+          {
+            fileId: 'a.txt',
+            status: 'created',
+            uploadBatchId: 'batch-1',
+            uploadedItem: { _id: 'a' }
+          }
         ]
       }
     })
     onQueueEmpty(callback)(dispatch, getState)
+    expect(dispatch).toHaveBeenCalledWith({
+      type: 'CLEAR_UPLOAD_CONFLICT_STRATEGIES',
+      uploadBatchIds: ['batch-1']
+    })
     expect(callback).toHaveBeenCalledWith(
       expect.objectContaining({
         createdItems: [{ _id: 'a' }]

@@ -1,11 +1,15 @@
 import { combineReducers } from 'redux'
 
-import { getFullpath } from 'cozy-client/dist/models/file'
-
 import { MAX_PAYLOAD_SIZE } from '@/constants/config'
 import { DOCTYPE_FILES } from '@/lib/doctypes'
 import logger from '@/lib/logger'
-import { CozyFile } from '@/models'
+import {
+  createFolderWithRenameOnFileCollision,
+  resolveFileConflict
+} from '@/modules/upload/conflictResolution'
+import { uploadConflictStrategies } from '@/modules/upload/constants'
+
+export { uploadConflictStrategies }
 
 const SLUG = 'upload'
 
@@ -14,8 +18,14 @@ const UPLOAD_FILE = 'UPLOAD_FILE'
 const UPLOAD_PROGRESS = 'UPLOAD_PROGRESS'
 export const RECEIVE_UPLOAD_SUCCESS = 'RECEIVE_UPLOAD_SUCCESS'
 export const RECEIVE_UPLOAD_ERROR = 'RECEIVE_UPLOAD_ERROR'
+export const RECEIVE_UPLOAD_CONFLICT = 'RECEIVE_UPLOAD_CONFLICT'
+const RECEIVE_UPLOAD_RENAMED = 'RECEIVE_UPLOAD_RENAMED'
+export const SET_UPLOAD_CONFLICT_STRATEGY = 'SET_UPLOAD_CONFLICT_STRATEGY'
+const CLEAR_UPLOAD_CONFLICT_STRATEGIES = 'CLEAR_UPLOAD_CONFLICT_STRATEGIES'
 const PURGE_UPLOAD_QUEUE = 'PURGE_UPLOAD_QUEUE'
 const RESOLVE_FOLDER_ITEMS = 'RESOLVE_FOLDER_ITEMS'
+const RETRY_UPLOAD_CONFLICTS = 'RETRY_UPLOAD_CONFLICTS'
+const CANCEL_UPLOAD_CONFLICTS = 'CANCEL_UPLOAD_CONFLICTS'
 
 const CANCEL = 'cancel'
 const PENDING = 'pending'
@@ -39,7 +49,7 @@ const ERR_MAX_FILE_SIZE =
 
 const DONE_STATUSES = [CREATED, UPDATED]
 const ERROR_STATUSES = [CONFLICT, NETWORK, QUOTA, FAILED, UNREADABLE]
-const IN_PROGRESS_STATUSES = [PENDING, RESOLVING]
+const IN_PROGRESS_STATUSES = [PENDING, RESOLVING, CONFLICT]
 
 export const status = {
   CANCEL,
@@ -60,6 +70,10 @@ export const status = {
 
 const CONFLICT_ERROR = 409
 const PAYLOAD_TOO_LARGE = 413
+const noop = () => {}
+
+export const createUploadBatchId = () =>
+  `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`
 
 // `status` is preserved when set on the input (folder placeholder rows
 // arrive with status: RESOLVING); real file items have no status and
@@ -76,11 +90,28 @@ const getStatus = (state, action) => {
       return LOADING
     case RECEIVE_UPLOAD_SUCCESS:
       return action.isUpdate ? UPDATED : CREATED
+    case RECEIVE_UPLOAD_CONFLICT:
+      return CONFLICT
     case RECEIVE_UPLOAD_ERROR:
-      return action.status
+      // Modal-waiting conflicts must only be created by RECEIVE_UPLOAD_CONFLICT.
+      return action.status === CONFLICT ? FAILED : action.status
     default:
       return state
   }
+}
+
+const updateRelativePathName = (relativePath, name) => {
+  const lastSlash = relativePath.lastIndexOf('/')
+  if (lastSlash === -1) return name
+  return `${relativePath.slice(0, lastSlash + 1)}${name}`
+}
+
+// Browser folder uploads can prefix relative paths with ./; it is not a real Drive folder.
+const normalizeRelativeUploadPath = path => {
+  let cleanPath = path || ''
+  while (cleanPath.startsWith('/')) cleanPath = cleanPath.slice(1)
+  while (cleanPath.startsWith('./')) cleanPath = cleanPath.slice(2)
+  return cleanPath
 }
 
 const getSpeed = (state, action) => {
@@ -131,7 +162,10 @@ const getProgress = (state, action) => {
       speed,
       remainingTime: averageRemainingTime
     }
-  } else if (action.type === RECEIVE_UPLOAD_ERROR) {
+  } else if (
+    action.type === RECEIVE_UPLOAD_ERROR ||
+    action.type === RECEIVE_UPLOAD_CONFLICT
+  ) {
     return null
   } else {
     return state
@@ -143,6 +177,12 @@ const item = (state, action = { isUpdate: false }) => {
     action.uploadedItem !== undefined
       ? action.uploadedItem
       : state?.uploadedItem
+  const resolvedFinalName =
+    action.finalName !== undefined ? action.finalName : state?.finalName
+  const resolvedRelativePath =
+    action.relativePath !== undefined
+      ? action.relativePath
+      : state?.relativePath
 
   return {
     ...state,
@@ -150,9 +190,22 @@ const item = (state, action = { isUpdate: false }) => {
     progress: getProgress(state.progress, action),
     ...(resolvedUploadedItem !== undefined
       ? { uploadedItem: resolvedUploadedItem }
+      : {}),
+    ...(resolvedFinalName !== undefined
+      ? { finalName: resolvedFinalName }
+      : {}),
+    ...(resolvedRelativePath !== undefined
+      ? { relativePath: resolvedRelativePath }
       : {})
   }
 }
+
+const updateUploadConflictRows = (state, uploadBatchId, status) =>
+  state.map(item => {
+    if (item.status !== CONFLICT || item.uploadBatchId !== uploadBatchId)
+      return item
+    return { ...item, status, progress: null }
+  })
 
 export const queue = (state = [], action) => {
   switch (action.type) {
@@ -172,9 +225,15 @@ export const queue = (state = [], action) => {
     }
     case PURGE_UPLOAD_QUEUE:
       return []
+    case RETRY_UPLOAD_CONFLICTS:
+      return updateUploadConflictRows(state, action.uploadBatchId, PENDING)
+    case CANCEL_UPLOAD_CONFLICTS:
+      return updateUploadConflictRows(state, action.uploadBatchId, CANCEL)
     case UPLOAD_FILE:
     case RECEIVE_UPLOAD_SUCCESS:
     case RECEIVE_UPLOAD_ERROR:
+    case RECEIVE_UPLOAD_CONFLICT:
+    case RECEIVE_UPLOAD_RENAMED:
     case UPLOAD_PROGRESS: {
       // No matching row (e.g. the queue was purged before a stale
       // dispatch landed): return the same reference so connected
@@ -187,8 +246,29 @@ export const queue = (state = [], action) => {
   }
 }
 
+export const conflictStrategies = (state = {}, action) => {
+  switch (action.type) {
+    case SET_UPLOAD_CONFLICT_STRATEGY:
+      if (!action.uploadBatchId) return state
+      return { ...state, [action.uploadBatchId]: action.strategy }
+    case CLEAR_UPLOAD_CONFLICT_STRATEGIES: {
+      if (!action.uploadBatchIds?.length) return state
+      const nextState = { ...state }
+      for (const uploadBatchId of action.uploadBatchIds) {
+        delete nextState[uploadBatchId]
+      }
+      return nextState
+    }
+    case PURGE_UPLOAD_QUEUE:
+      return {}
+    default:
+      return state
+  }
+}
+
 export default combineReducers({
-  queue
+  queue,
+  conflictStrategies
 })
 
 export const uploadProgress = (fileId, event, date) => ({
@@ -197,6 +277,76 @@ export const uploadProgress = (fileId, event, date) => ({
   loaded: event.loaded,
   total: event.total,
   date: date || Date.now()
+})
+
+export const setUploadConflictStrategy = (uploadBatchId, strategy) => ({
+  type: SET_UPLOAD_CONFLICT_STRATEGY,
+  uploadBatchId,
+  strategy
+})
+
+const clearUploadConflictStrategies = uploadBatchIds => ({
+  type: CLEAR_UPLOAD_CONFLICT_STRATEGIES,
+  uploadBatchIds
+})
+
+export const retryUploadConflicts =
+  (
+    uploadBatchId,
+    strategy,
+    onFileUploaded,
+    onQueueCompleted,
+    dirID,
+    sharingState,
+    extra,
+    driveId,
+    addItems
+  ) =>
+  (dispatch, getState) => {
+    const { client } = extra
+    // If the queue is still draining, the retry rows will be picked up naturally.
+    const uploadPassIsActive = getUploadQueue(getState()).some(i =>
+      [PENDING, LOADING, RESOLVING].includes(i.status)
+    )
+
+    // Store the modal choice once so every conflict in this batch can reuse it.
+    dispatch(setUploadConflictStrategy(uploadBatchId, strategy))
+
+    if (strategy === uploadConflictStrategies.CANCEL) {
+      // Cancel only affects the already collected conflict rows.
+      dispatch({ type: CANCEL_UPLOAD_CONFLICTS, uploadBatchId })
+    } else {
+      // Replace and keep-both put conflict rows back in the pending queue.
+      dispatch({ type: RETRY_UPLOAD_CONFLICTS, uploadBatchId })
+    }
+
+    if (!uploadPassIsActive) {
+      const nextUploadPass = processNextFile(
+        onFileUploaded,
+        onQueueCompleted,
+        dirID,
+        sharingState,
+        { client },
+        driveId,
+        addItems
+      )
+      dispatch(nextUploadPass)
+    }
+  }
+
+const receiveUploadConflict = (fileId, file, uploadBatchId) => ({
+  type: RECEIVE_UPLOAD_CONFLICT,
+  fileId,
+  file,
+  uploadBatchId
+})
+
+const receiveUploadRenamed = (fileId, name, relativePath) => ({
+  type: RECEIVE_UPLOAD_RENAMED,
+  fileId,
+  ...(relativePath
+    ? { relativePath: updateRelativePathName(relativePath, name) }
+    : { finalName: name })
 })
 
 /**
@@ -212,34 +362,55 @@ export const uploadProgress = (fileId, event, date) => ({
  * @param {object} client - cozy-client instance
  * @param {string} dirID - Fallback directory when the item has no folderId
  * @param {string} [driveId]
- * @param {{dispatch: Function, safeCallback: Function}} io
+ * @param {{dispatch: Function, safeCallback: Function, getConflictStrategy: Function,
+ *   onUploadConflict: Function}} io
  */
 const uploadPendingItem = async (
   pendingItem,
   client,
   dirID,
   driveId,
-  { dispatch, safeCallback }
+  { dispatch, safeCallback, getConflictStrategy, onUploadConflict }
 ) => {
-  const { file, fileId, folderId } = pendingItem
+  const { file, fileId, folderId, uploadBatchId } = pendingItem
+  const { relativePath } = pendingItem
   const targetDirId = folderId ?? dirID
   try {
     dispatch({ type: UPLOAD_FILE, fileId, file })
     const onUploadProgress = event => dispatch(uploadProgress(fileId, event))
-    const { data: uploadedFile, isUpdate } = await uploadOrOverwriteFile(
+    const onNameResolved = name =>
+      dispatch(receiveUploadRenamed(fileId, name, relativePath))
+    const result = await uploadOrResolveFileConflict(
       client,
       file,
       targetDirId,
-      { onUploadProgress },
-      driveId
+      {
+        onUploadProgress,
+        driveId,
+        getConflictStrategy,
+        onNameResolved
+      }
     )
+    if (result.isConflict) {
+      // Keep this row waiting for the modal while processNextFile moves on.
+      dispatch(receiveUploadConflict(fileId, file, uploadBatchId))
+      onUploadConflict({ fileId, uploadBatchId })
+      return
+    }
+    if (result.isCancel) {
+      // A cancel choice finishes only this conflicted row.
+      dispatch({ type: RECEIVE_UPLOAD_ERROR, fileId, file, status: CANCEL })
+      return
+    }
+    const { data: uploadedFile, isUpdate, finalName } = result
     safeCallback(uploadedFile)
     dispatch({
       type: RECEIVE_UPLOAD_SUCCESS,
       fileId,
       file,
       isUpdate,
-      uploadedItem: uploadedFile
+      uploadedItem: uploadedFile,
+      ...(finalName !== undefined ? { finalName } : {})
     })
   } catch (error) {
     logger.error(
@@ -262,7 +433,8 @@ export const processNextFile =
     sharingState,
     { client },
     driveId,
-    addItems
+    addItems,
+    onUploadConflict = noop
   ) =>
   async (dispatch, getState) => {
     const safeCallback =
@@ -280,9 +452,14 @@ export const processNextFile =
     if (!pendingItem) {
       return dispatch(onQueueEmpty(queueCompletedCallback))
     }
+    // Read strategy through a callback so in-flight 409s can see a modal answer.
+    const getConflictStrategy = () =>
+      getUploadConflictStrategy(getState(), pendingItem.uploadBatchId)
     await uploadPendingItem(pendingItem, client, dirID, driveId, {
       dispatch,
-      safeCallback
+      safeCallback,
+      getConflictStrategy,
+      onUploadConflict
     })
     dispatch(
       processNextFile(
@@ -292,7 +469,8 @@ export const processNextFile =
         sharingState,
         { client },
         driveId,
-        addItems
+        addItems,
+        onUploadConflict
       )
     )
   }
@@ -318,22 +496,6 @@ const readAllEntries = async dirReader => {
   return entries
 }
 
-const resolveFullpath = (client, dirID, name, driveId) =>
-  driveId
-    ? getFullpath(client, dirID, name, driveId)
-    : CozyFile.getFullpath(dirID, name)
-
-const getExistingDirectory = async (client, dirID, name, driveId) => {
-  const path = await resolveFullpath(client, dirID, name, driveId)
-  const statResp = await client
-    .collection(DOCTYPE_FILES, { driveId })
-    .statByPath(path)
-  if (statResp.data.type !== 'directory') {
-    throw new Error(`"${path}" already exists and is not a directory`)
-  }
-  return statResp.data
-}
-
 /**
  * Map an upload failure to one of the queue item error statuses.
  *
@@ -350,65 +512,74 @@ const getExistingDirectory = async (client, dirID, name, driveId) => {
 const classifyUploadError = error => {
   if (error.name === 'NotFoundError') return UNREADABLE
   if (error.message?.includes(ERR_MAX_FILE_SIZE)) return ERR_MAX_FILE_SIZE
-  if (error.status === CONFLICT_ERROR) return CONFLICT
+  // Raw 409 errors are not modal-waiting conflicts.
+  if (error.status === CONFLICT_ERROR) return FAILED
   if (error.status === PAYLOAD_TOO_LARGE) return QUOTA
   if (/Failed to fetch$/.test(error.toString())) return NETWORK
   return FAILED
 }
 
 /**
- * Upload a file, or silently overwrite the existing version on 409.
+ * Upload a file, or defer same-file 409 handling until the modal choice exists.
  *
  * @param {object} client - cozy-client instance
  * @param {File} file
  * @param {string} dirID
- * @param {{onUploadProgress?: Function}} options
- * @param {string} [driveId]
- * @returns {Promise<{data: object, isUpdate: boolean}>} The created
- *   (`isUpdate: false`) or overwritten (`isUpdate: true`) file document.
+ * @param {{onUploadProgress?: Function, driveId?: string, getConflictStrategy?: Function,
+ *   onNameResolved?: Function}} options
+ * @returns {Promise<{data?: object, isUpdate?: boolean, isConflict?: boolean, isCancel?: boolean}>}
  */
-const uploadOrOverwriteFile = async (client, file, dirID, options, driveId) => {
+const uploadOrResolveFileConflict = async (
+  client,
+  file,
+  dirID,
+  { onUploadProgress, driveId, getConflictStrategy, onNameResolved } = {}
+) => {
   try {
-    const data = await uploadFile(client, file, dirID, options, driveId)
+    const data = await uploadFile(
+      client,
+      file,
+      dirID,
+      { onUploadProgress },
+      driveId
+    )
     return { data, isUpdate: false }
   } catch (err) {
     if (err.status !== CONFLICT_ERROR) throw err
-    const path = await resolveFullpath(client, dirID, file.name, driveId)
-    const data = await overwriteFile(client, file, path, options, driveId)
-    return { data, isUpdate: true }
+    // Only 409 errors enter the conflict service; other upload errors stay unchanged.
+    return resolveFileConflict({
+      client,
+      file,
+      dirID,
+      uploadOptions: { onUploadProgress },
+      driveId,
+      getConflictStrategy,
+      onNameResolved
+    })
   }
 }
 
 /**
- * Create a folder, or return the existing one on 409.
+ * Create a folder, reuse an existing folder, or rename on file collision.
  *
  * Used by the flatten helpers when walking a dropped folder tree: we
- * reuse an existing same-name directory instead of failing.
- * `getExistingDirectory` throws a plain `Error` (no `status`) if a
- * non-directory sits at that name, which bubbles up as a normal upload
- * failure rather than being silently overwritten.
+ * keep folder-v-folder reuse and let folder-v-file collisions take a
+ * generated dash suffix.
  *
  * @param {object} client - cozy-client instance
  * @param {string} name
  * @param {string} dirID - Parent directory id
  * @param {string} [driveId]
- * @returns {Promise<object>} The `io.cozy.files` document of the created
- *   or existing directory.
+ * @returns {Promise<object>} Resolved directory document.
  */
 const createFolderOrGetExisting = async (client, name, dirID, driveId) => {
-  try {
-    return await createFolder(client, name, dirID, driveId)
-  } catch (err) {
-    if (err.status !== CONFLICT_ERROR) throw err
-    return getExistingDirectory(client, dirID, name, driveId)
-  }
-}
-
-const createFolder = async (client, name, dirID, driveId) => {
-  const resp = await client
-    .collection(DOCTYPE_FILES, { driveId })
-    .createDirectory({ name, dirId: dirID })
-  return resp.data
+  const { data } = await createFolderWithRenameOnFileCollision({
+    client,
+    name,
+    dirID,
+    driveId
+  })
+  return data
 }
 
 const uploadFile = async (client, file, dirID, options = {}, driveId) => {
@@ -510,15 +681,17 @@ export const overwriteFile = async (
  *   file came from a dropped folder, `null` for loose files
  * @param {string} nonce - Per-drop nonce; `''` keeps the legacy id
  *   shape for callers that don't care about cross-drop uniqueness.
- * @returns {{fileId: string, file: File, relativePath: string|null, folderId: string}}
+ * @returns {{fileId: string, file: File, relativePath: string|null, folderId: string, uploadBatchId: string}}
  */
 const makeFlatItem = (file, folderId, relativePath = null, nonce = '') => {
   const base = relativePath ?? file.name
+  const fileId = nonce ? `${nonce}_${base}` : base
   return {
-    fileId: nonce ? `${nonce}_${base}` : base,
+    fileId,
     file,
     relativePath,
-    folderId
+    folderId,
+    uploadBatchId: nonce || fileId
   }
 }
 
@@ -545,7 +718,7 @@ const makeFlatItem = (file, folderId, relativePath = null, nonce = '') => {
  *   was a directory (its `readEntries` rejected); `false` for a file
  *   whose `entry.file()` rejected
  * @returns {{fileId: string, file: {name: string, type: string},
- *   relativePath: string|null, folderId: null, status: string,
+ *   relativePath: string|null, folderId: null, uploadBatchId: string, status: string,
  *   isDirectory: boolean}}
  */
 const makeFailedItem = (
@@ -556,11 +729,13 @@ const makeFailedItem = (
   isDirectory = false
 ) => {
   const base = relativePath ?? name
+  const fileId = nonce ? `${nonce}_${base}` : base
   return {
-    fileId: nonce ? `${nonce}_${base}` : base,
+    fileId,
     file: { name, type: '' },
     relativePath,
     folderId: null,
+    uploadBatchId: nonce || fileId,
     isDirectory,
     status: classifyUploadError(error)
   }
@@ -647,13 +822,14 @@ const walkDirectoryEntry = async dirEntry => {
  * @returns {Promise<Array<ReadableFlatItem|FailedFlatItem>>}
  */
 const materializeNode = async (node, parentDirId, pathPrefix, ctx) => {
-  const newPrefix = pathPrefix ? `${pathPrefix}/${node.name}` : node.name
   const newDir = await createFolderOrGetExisting(
     ctx.client,
     node.name,
     parentDirId,
     ctx.driveId
   )
+  const newPrefix = pathPrefix ? `${pathPrefix}/${node.name}` : node.name
+
   if (node.readFailed) {
     return [makeFailedItem(node.name, newPrefix, ctx.nonce, node.error, true)]
   }
@@ -687,8 +863,7 @@ const materializeNode = async (node, parentDirId, pathPrefix, ctx) => {
  * @param {string} rootDirId
  * @param {object} client - cozy-client instance
  * @param {string} [driveId]
- * @returns {(folderPath: string) => Promise<string>} Resolves to the
- *   server id of the folder at `folderPath` (relative to root).
+ * @returns {(folderPath: string) => Promise<string>} Resolved folder id.
  */
 const makeFolderResolver = (rootDirId, client, driveId) => {
   const cache = new Map([['', rootDirId]])
@@ -758,8 +933,7 @@ export const flattenEntries = async (
     }
     const file = entry.file
     if (!file) continue
-    const raw = file.path || ''
-    const cleanPath = raw.startsWith('/') ? raw.slice(1) : raw
+    const cleanPath = normalizeRelativeUploadPath(file.path)
     if (!cleanPath.includes('/')) {
       result.push(makeFlatItem(file, rootDirId, null, nonce))
     } else {
@@ -790,7 +964,7 @@ const isDeferredEntry = entry => {
   if (entry.isDirectory && entry.entry) return true
   const path = entry.file?.path
   if (!path) return false
-  const cleanPath = path.startsWith('/') ? path.slice(1) : path
+  const cleanPath = normalizeRelativeUploadPath(path)
   return cleanPath.includes('/')
 }
 
@@ -811,7 +985,7 @@ const collectFolderRoots = entries => {
     }
     const path = e.file?.path
     if (!path) continue
-    const cleanPath = path.startsWith('/') ? path.slice(1) : path
+    const cleanPath = normalizeRelativeUploadPath(path)
     if (cleanPath.includes('/')) {
       roots.add(cleanPath.split('/')[0])
     }
@@ -825,14 +999,18 @@ const collectFolderRoots = entries => {
 const placeholderId = (name, index, nonce) =>
   `__pending_${nonce}_${index}_${name}__`
 
-const buildFolderPlaceholder = (name, index, nonce) => ({
-  fileId: placeholderId(name, index, nonce),
-  file: { name, type: '' },
-  relativePath: null,
-  folderId: null,
-  isDirectory: true,
-  status: RESOLVING
-})
+const buildFolderPlaceholder = (name, index, nonce) => {
+  const fileId = placeholderId(name, index, nonce)
+  return {
+    fileId,
+    file: { name, type: '' },
+    relativePath: null,
+    folderId: null,
+    uploadBatchId: nonce || fileId,
+    isDirectory: true,
+    status: RESOLVING
+  }
+}
 
 export const addToUploadQueue =
   (
@@ -841,15 +1019,13 @@ export const addToUploadQueue =
     sharingState,
     fileUploadedCallback,
     queueCompletedCallback,
-    { client, maxFileCount, onLimitExceeded },
+    { client, maxFileCount, onLimitExceeded, onUploadConflict, uploadBatchId },
     driveId,
     addItems
   ) =>
   async dispatch => {
     const folderRoots = collectFolderRoots(entries)
-    const dropNonce = `${Date.now().toString(36)}_${Math.random()
-      .toString(36)
-      .slice(2, 8)}`
+    const dropNonce = uploadBatchId || createUploadBatchId()
     const placeholders = folderRoots.map((name, i) =>
       buildFolderPlaceholder(name, i, dropNonce)
     )
@@ -870,7 +1046,8 @@ export const addToUploadQueue =
           sharingState,
           { client },
           driveId,
-          addItems
+          addItems,
+          onUploadConflict
         )
       )
 
@@ -924,7 +1101,11 @@ export const addToUploadQueue =
         driveId,
         dropNonce
       )
-      dispatch({ type: RESOLVE_FOLDER_ITEMS, placeholderIds, files: flatItems })
+      dispatch({
+        type: RESOLVE_FOLDER_ITEMS,
+        placeholderIds,
+        files: flatItems
+      })
       kickProcessing()
     } catch (error) {
       failAndKick(error)
@@ -941,7 +1122,15 @@ export const onQueueEmpty = callback => (dispatch, getState) => {
   // doesn't fire mid-flatten. The chain ends silently here; the
   // addToUploadQueue thunk re-kicks processNextFile after the matching
   // RESOLVE_FOLDER_ITEMS dispatch.
-  if (queue.some(i => i.status === RESOLVING)) return
+  // Conflict rows also wait for the modal choice.
+  if (queue.some(i => [RESOLVING, CONFLICT].includes(i.status))) return
+  // Once the queue is done, saved modal choices for these batches are stale.
+  const uploadBatchIds = [
+    ...new Set(queue.map(i => i.uploadBatchId).filter(Boolean))
+  ]
+  if (uploadBatchIds.length > 0) {
+    dispatch(clearUploadConflictStrategies(uploadBatchIds))
+  }
   const quotas = getQuotaErrors(queue)
   const conflicts = getConflicts(queue)
   const created = getCreated(queue)
@@ -957,6 +1146,11 @@ export const onQueueEmpty = callback => (dispatch, getState) => {
   const updatedItems = updated
     .map(item => item.uploadedItem)
     .filter(item => item && item._id)
+
+  // Do not show an empty success alert after canceling conflicts.
+  const hasOnlyCanceledItems =
+    queue.length > 0 && queue.every(i => i.status === CANCEL)
+  if (hasOnlyCanceledItems) return
 
   return safeCallback({
     createdItems,
@@ -982,6 +1176,8 @@ const getUpdated = queue => filterByStatus(queue, UPDATED)
 const getfileTooLargeErrors = queue => filterByStatus(queue, ERR_MAX_FILE_SIZE)
 
 export const getUploadQueue = state => state[SLUG].queue
+export const getUploadConflictStrategy = (state, uploadBatchId) =>
+  uploadBatchId ? state[SLUG].conflictStrategies?.[uploadBatchId] : undefined
 
 export const getProcessed = state =>
   getUploadQueue(state).filter(f => !IN_PROGRESS_STATUSES.includes(f.status))
@@ -1013,10 +1209,11 @@ export const extractFilesEntries = items => {
       results.push({
         file: item.getAsFile(),
         isDirectory: entry.isDirectory === true,
-        entry
+        entry,
+        root: true
       })
     } else {
-      results.push({ file: item, isDirectory: false, entry: null })
+      results.push({ file: item, isDirectory: false, entry: null, root: true })
     }
   }
 
