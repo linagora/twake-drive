@@ -92,6 +92,10 @@ declare module 'cozy-client/dist/models/file' {
   export const shouldBeOpenedByOnlyOffice: (
     file: import('components/FolderPicker/types').File
   ) => boolean
+  export const generateNewFileNameOnConflict: (
+    filenameWithoutExtension: string,
+    conflictOptions?: { delimiter?: string }
+  ) => string
   export const getFullpath: (
     client: import('cozy-client/types/CozyClient').CozyClient,
     dirID: string,
