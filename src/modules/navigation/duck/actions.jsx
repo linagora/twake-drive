@@ -16,8 +16,17 @@ import { getEntriesTypeTranslated } from '@/lib/entries'
 import logger from '@/lib/logger'
 import { showModal } from '@/lib/react-cozy-helpers'
 import { getFolderContent, getFolderContentQueries } from '@/modules/selectors'
-import { addToUploadQueue, extractFilesEntries } from '@/modules/upload'
+import {
+  addToUploadQueue,
+  createUploadBatchId,
+  extractFilesEntries,
+  retryUploadConflicts,
+  setUploadConflictStrategy,
+  uploadConflictStrategies
+} from '@/modules/upload'
+import UploadConflictDialog from '@/modules/upload/UploadConflictDialog'
 import UploadLimitDialog from '@/modules/upload/UploadLimitDialog'
+import { hasPreflightUploadConflicts } from '@/modules/upload/preflightConflicts'
 
 export const SORT_FOLDER = 'SORT_FOLDER'
 export const OPERATION_REDIRECTED = 'navigation/OPERATION_REDIRECTED'
@@ -96,14 +105,79 @@ export const uploadFiles =
 
     // Extract entries synchronously before browser clears dataTransfer
     const entries = extractFilesEntries(files)
+    const openedUploadConflictBatchIds = new Set()
 
-    dispatch(
-      addToUploadQueue(
+    const enqueueUpload = preflightConflictStrategy => {
+      const uploadBatchId = preflightConflictStrategy
+        ? createUploadBatchId()
+        : undefined
+
+      if (preflightConflictStrategy) {
+        dispatch(
+          setUploadConflictStrategy(uploadBatchId, preflightConflictStrategy)
+        )
+      }
+
+      return dispatch(
+        addToUploadQueue(
+          entries,
+          targetDirId,
+          sharingState,
+          fileUploadedCallback,
+          queueCompletedCallback,
+          {
+            client,
+            maxFileCount,
+            onLimitExceeded: () =>
+              dispatch(
+                showModal(<UploadLimitDialog maxFileCount={maxFileCount} />)
+              ),
+            onUploadConflict,
+            uploadBatchId
+          },
+          driveId,
+          addItems
+        )
+      )
+    }
+
+    try {
+      const shouldOpenUploadConflictModal = await hasPreflightUploadConflicts({
+        client,
         entries,
-        targetDirId,
-        sharingState,
-        fileUploadedCallback,
-        ({
+        folderId: targetDirId,
+        driveId
+      })
+
+      if (shouldOpenUploadConflictModal) {
+        dispatch(
+          showModal(
+            <UploadConflictDialog
+              onCancel={() => {}}
+              onConfirm={enqueueUpload}
+            />
+          )
+        )
+        return
+      }
+    } catch (error) {
+      logger.error('Upload preflight conflict scan failed', error)
+    }
+
+    enqueueUpload()
+
+    function queueCompletedCallback({
+      createdItems,
+      quotas,
+      conflicts,
+      networkErrors,
+      errors,
+      unreadableErrors,
+      updatedItems,
+      fileTooLargeErrors
+    }) {
+      dispatch(
+        uploadQueueProcessed(
           createdItems,
           quotas,
           conflicts,
@@ -111,40 +185,55 @@ export const uploadFiles =
           errors,
           unreadableErrors,
           updatedItems,
-          fileTooLargeErrors
-        }) => {
-          dispatch(
-            uploadQueueProcessed(
-              createdItems,
-              quotas,
-              conflicts,
-              networkErrors,
-              errors,
-              unreadableErrors,
-              updatedItems,
-              showAlert,
-              t,
-              fileTooLargeErrors,
-              navigateAfterUpload,
-              addItems
-            )
-          )
-          if (createdItems.length + updatedItems.length >= FILES_FETCH_LIMIT) {
-            refetchFolderQueries(client, targetDirId)
-          }
-        },
-        {
-          client,
-          maxFileCount,
-          onLimitExceeded: () =>
-            dispatch(
-              showModal(<UploadLimitDialog maxFileCount={maxFileCount} />)
-            )
-        },
-        driveId,
-        addItems
+          showAlert,
+          t,
+          fileTooLargeErrors,
+          navigateAfterUpload,
+          addItems
+        )
       )
-    )
+      if (createdItems.length + updatedItems.length >= FILES_FETCH_LIMIT) {
+        refetchFolderQueries(client, targetDirId)
+      }
+    }
+
+    function applyUploadConflictStrategy(uploadBatchId, strategy) {
+      dispatch(
+        retryUploadConflicts(
+          uploadBatchId,
+          strategy,
+          fileUploadedCallback,
+          queueCompletedCallback,
+          targetDirId,
+          sharingState,
+          { client },
+          driveId,
+          addItems
+        )
+      )
+    }
+
+    function onUploadConflict({ uploadBatchId }) {
+      if (!uploadBatchId || openedUploadConflictBatchIds.has(uploadBatchId))
+        return
+      openedUploadConflictBatchIds.add(uploadBatchId)
+
+      dispatch(
+        showModal(
+          <UploadConflictDialog
+            onCancel={() =>
+              applyUploadConflictStrategy(
+                uploadBatchId,
+                uploadConflictStrategies.CANCEL
+              )
+            }
+            onConfirm={strategy =>
+              applyUploadConflictStrategy(uploadBatchId, strategy)
+            }
+          />
+        )
+      )
+    }
   }
 
 const uploadQueueProcessed =

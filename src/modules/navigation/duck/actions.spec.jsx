@@ -5,14 +5,48 @@ import { createFolder, uploadFiles } from './actions'
 import { generateFile } from 'test/generate'
 import { setupFolderContent } from 'test/setup'
 
-import { addToUploadQueue, extractFilesEntries } from '@/modules/upload'
+import {
+  addToUploadQueue,
+  createUploadBatchId,
+  extractFilesEntries,
+  retryUploadConflicts,
+  setUploadConflictStrategy,
+  uploadConflictStrategies
+} from '@/modules/upload'
+import { hasPreflightUploadConflicts } from '@/modules/upload/preflightConflicts'
 
 jest.mock('cozy-flags', () => jest.fn(() => null))
 
 jest.mock('@/modules/upload', () => ({
   addToUploadQueue: jest.fn(() => () => {}),
-  extractFilesEntries: jest.fn()
+  createUploadBatchId: jest.fn(() => 'preflight-batch-id'),
+  extractFilesEntries: jest.fn(),
+  retryUploadConflicts: jest.fn(() => () => {}),
+  setUploadConflictStrategy: jest.fn((uploadBatchId, strategy) => ({
+    type: 'SET_UPLOAD_CONFLICT_STRATEGY',
+    uploadBatchId,
+    strategy
+  })),
+  uploadConflictStrategies: {
+    REPLACE: 'replace',
+    KEEP_BOTH: 'keep-both',
+    CANCEL: 'cancel'
+  }
 }))
+
+jest.mock('@/modules/upload/preflightConflicts', () => ({
+  hasPreflightUploadConflicts: jest.fn()
+}))
+
+jest.mock('@/modules/upload/UploadConflictDialog', () => {
+  const React = require('react')
+  return function MockUploadConflictDialog(props) {
+    return React.createElement('div', {
+      'data-testid': 'upload-conflict-dialog',
+      ...props
+    })
+  }
+})
 
 jest.mock('@/modules/upload/UploadLimitDialog', () => {
   const React = require('react')
@@ -102,6 +136,7 @@ describe('uploadFiles', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     extractFilesEntries.mockReturnValue(mockEntries)
+    hasPreflightUploadConflicts.mockResolvedValue(false)
     flag.mockReturnValue(null)
   })
 
@@ -138,6 +173,127 @@ describe('uploadFiles', () => {
 
     expect(dispatch).not.toHaveBeenCalledWith(
       expect.objectContaining({ type: 'SHOW_MODAL' })
+    )
+  })
+
+  it('opens the upload conflict modal before enqueueing when first-level conflicts exist', async () => {
+    hasPreflightUploadConflicts.mockResolvedValueOnce(true)
+
+    const dispatch = jest.fn(action => action)
+    await uploadFiles(mockFiles, 'dir-id', {}, () => null, deps)(dispatch)
+
+    expect(hasPreflightUploadConflicts).toHaveBeenCalledWith({
+      client: deps.client,
+      entries: mockEntries,
+      folderId: 'dir-id',
+      driveId: undefined
+    })
+    expect(addToUploadQueue).not.toHaveBeenCalled()
+    const modalAction = dispatch.mock.calls
+      .map(([action]) => action)
+      .find(action => action.type === 'SHOW_MODAL')
+    modalAction.component.props.onConfirm(uploadConflictStrategies.KEEP_BOTH)
+
+    expect(createUploadBatchId).toHaveBeenCalled()
+    expect(setUploadConflictStrategy).toHaveBeenCalledWith(
+      'preflight-batch-id',
+      uploadConflictStrategies.KEEP_BOTH
+    )
+    expect(dispatch).toHaveBeenCalledWith({
+      type: 'SET_UPLOAD_CONFLICT_STRATEGY',
+      uploadBatchId: 'preflight-batch-id',
+      strategy: uploadConflictStrategies.KEEP_BOTH
+    })
+    expect(addToUploadQueue).toHaveBeenCalledWith(
+      mockEntries,
+      'dir-id',
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      expect.objectContaining({
+        uploadBatchId: 'preflight-batch-id'
+      }),
+      undefined,
+      undefined
+    )
+  })
+
+  it('does not enqueue the upload when the preflight conflict modal is cancelled', async () => {
+    hasPreflightUploadConflicts.mockResolvedValueOnce(true)
+
+    const dispatch = jest.fn(action => action)
+    await uploadFiles(mockFiles, 'dir-id', {}, () => null, deps)(dispatch)
+
+    const modalAction = dispatch.mock.calls
+      .map(([action]) => action)
+      .find(action => action.type === 'SHOW_MODAL')
+    modalAction.component.props.onCancel()
+
+    expect(addToUploadQueue).not.toHaveBeenCalled()
+  })
+
+  it('opens one upload conflict modal per batch', async () => {
+    const dispatch = jest.fn()
+    await uploadFiles(mockFiles, 'dir-id', {}, () => null, deps)(dispatch)
+
+    const options = getAddToUploadQueueOptions()
+    options.onUploadConflict({ uploadBatchId: 'batch-1' })
+    options.onUploadConflict({ uploadBatchId: 'batch-1' })
+    options.onUploadConflict({ uploadBatchId: 'batch-2' })
+
+    const modalActions = dispatch.mock.calls
+      .map(([action]) => action)
+      .filter(action => action.type === 'SHOW_MODAL')
+    expect(modalActions).toHaveLength(2)
+    expect(modalActions[0].component.props.file).toBeUndefined()
+  })
+
+  it('applies the selected upload conflict strategy to the batch', async () => {
+    const dispatch = jest.fn(action => action)
+    const addItems = jest.fn()
+    const fileUploadedCallback = jest.fn()
+    const sharingState = { sharedPaths: [] }
+    await uploadFiles(
+      mockFiles,
+      'dir-id',
+      sharingState,
+      fileUploadedCallback,
+      deps,
+      'drive-id',
+      addItems
+    )(dispatch)
+
+    const options = getAddToUploadQueueOptions()
+    options.onUploadConflict({ uploadBatchId: 'batch-1' })
+    const modalAction = dispatch.mock.calls
+      .map(([action]) => action)
+      .find(action => action.type === 'SHOW_MODAL')
+
+    modalAction.component.props.onConfirm(uploadConflictStrategies.KEEP_BOTH)
+    expect(retryUploadConflicts).toHaveBeenCalledWith(
+      'batch-1',
+      uploadConflictStrategies.KEEP_BOTH,
+      fileUploadedCallback,
+      expect.any(Function),
+      'dir-id',
+      sharingState,
+      { client: deps.client },
+      'drive-id',
+      addItems
+    )
+
+    retryUploadConflicts.mockClear()
+    modalAction.component.props.onCancel()
+    expect(retryUploadConflicts).toHaveBeenCalledWith(
+      'batch-1',
+      uploadConflictStrategies.CANCEL,
+      fileUploadedCallback,
+      expect.any(Function),
+      'dir-id',
+      sharingState,
+      { client: deps.client },
+      'drive-id',
+      addItems
     )
   })
 
