@@ -288,6 +288,15 @@
     "label": "Subir",
     "alert": {
       "network": "Usted no dispone de una conexión internet. Vuelva a ensayar cuando disponga de una."
+    },
+    "conflict": {
+      "title": "Opciones de subida",
+      "content": "Uno o varios archivos ya existen en esta carpeta. ¿Quieres reemplazar el archivo existente o conservar ambas versiones?",
+      "apply_all": "La configuración de uso compartido no cambiará si reemplazas el archivo",
+      "replace": "Reemplazar el archivo existente",
+      "keep_both": "Conservar ambos archivos",
+      "cancel": "Anular",
+      "confirm": "Subir"
     }
   },
   "intents": {
@@ -307,7 +316,8 @@
     "header_done": "Subidos %{done} de %{total} con éxito",
     "close": "cerrar",
     "item": {
-      "pending": "Pendiente"
+      "pending": "Pendiente",
+      "conflict": "Esperando elección"
     }
   },
   "Viewer": {
