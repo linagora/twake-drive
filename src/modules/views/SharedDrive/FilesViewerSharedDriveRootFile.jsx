@@ -36,16 +36,16 @@ const FilesViewerSharedDriveRootFile = () => {
     }
   }, [fileResult.fetchStatus, navigate])
 
-  const files = useMemo(() => (file ? [file] : []), [file])
-
   const filesQuery = useMemo(
     () => ({
       ...fileResult,
-      data: files,
+      data: file ? [file] : [],
       hasMore: false
     }),
-    [fileResult, files]
+    [fileResult, file]
   )
+
+  const files = filesQuery.data
 
   if (isViewerReady({ allLoaded, fileResult, file })) {
     return (
