@@ -1,6 +1,7 @@
 import {
   isFileRootSharedDrive,
   isFileRootSharedDriveShortcut,
+  isResolvableFileRootSharedDriveShortcut,
   getFileRootSharePath,
   navigateToFileRootViewer,
   navigateToFileRootShare
@@ -34,13 +35,25 @@ describe('isFileRootSharedDriveShortcut', () => {
     ${'regular shortcut without target'}                 | ${{ class: 'shortcut' }}                                                                                                     | ${false}
     ${'file-root type without shortcut class'}           | ${{ metadata: { target: { drive_root_type: DRIVE_ROOT_TYPE.FILE, mime: 'text/plain' } } }}                                   | ${false}
     ${'file without metadata'}                           | ${{ class: 'shortcut' }}                                                                                                     | ${false}
-    ${'file-root shortcut without target.mime (legacy)'} | ${{ class: 'shortcut', metadata: { target: { drive_root_type: DRIVE_ROOT_TYPE.FILE } } }}                                    | ${false}
+    ${'file-root shortcut without target.mime (legacy)'} | ${{ class: 'shortcut', metadata: { target: { drive_root_type: DRIVE_ROOT_TYPE.FILE } } }}                                    | ${true}
   `('returns $expected for $label', ({ file, expected }) => {
     expect(isFileRootSharedDriveShortcut(file)).toBe(expected)
   })
 
   it.each([null, undefined])('returns false for %p', value => {
     expect(isFileRootSharedDriveShortcut(value)).toBe(false)
+  })
+})
+
+describe('isResolvableFileRootSharedDriveShortcut', () => {
+  it.each`
+    label                                                | file                                                                                                               | expected
+    ${'file-root shortcut with target mime'}             | ${{ class: 'shortcut', metadata: { target: { drive_root_type: DRIVE_ROOT_TYPE.FILE, mime: 'text/plain' } } }}      | ${true}
+    ${'file-root shortcut without target.mime (legacy)'} | ${{ class: 'shortcut', metadata: { target: { drive_root_type: DRIVE_ROOT_TYPE.FILE } } }}                          | ${false}
+    ${'file-root shortcut with empty target.mime'}       | ${{ class: 'shortcut', metadata: { target: { drive_root_type: DRIVE_ROOT_TYPE.FILE, mime: '' } } }}                | ${false}
+    ${'directory-root shortcut with target mime'}        | ${{ class: 'shortcut', metadata: { target: { drive_root_type: DRIVE_ROOT_TYPE.DIRECTORY, mime: 'text/plain' } } }} | ${false}
+  `('returns $expected for $label', ({ file, expected }) => {
+    expect(isResolvableFileRootSharedDriveShortcut(file)).toBe(expected)
   })
 })
 

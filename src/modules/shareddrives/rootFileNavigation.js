@@ -22,26 +22,26 @@ export const isFileRootSharedDrive = file =>
 /**
  * Detect a file-root shared drive as seen on the recipient, where the
  * file has been materialized as a `.url` shortcut (`class: 'shortcut'`,
- * mime `application/internet-shortcut`) with the real class of the
- * shared file exposed under `metadata.target.class` by the stack.
- *
- * This is the shape that `computeFileType` needs to dispatch before the
- * generic `isShortcut` branch (which would otherwise route the click to
- * `/external/<id>`). It accepts the file with or without a top-level
- * `driveId`, since the recipient shortcut does not carry it before
- * `useTransformFolderListHasSharedDriveShortcuts` injects it.
- *
- * Requires `metadata.target.mime` as a proxy for "the stack that created
- * this shortcut knows the real class": legacy shortcuts created before
- * the stack started populating `metadata.target.mime` (and
- * `metadata.target.class`) are intentionally left to fall through to the
- * regular `isShortcut` branch.
+ * mime `application/internet-shortcut`). It accepts the file with or
+ * without a top-level `driveId`, since the recipient shortcut does not
+ * carry it before `useTransformFolderListHasSharedDriveShortcuts` injects
+ * it.
  */
 export const isFileRootSharedDriveShortcut = file =>
   Boolean(
     file &&
     file.class === 'shortcut' &&
-    file.metadata?.target?.drive_root_type === DRIVE_ROOT_TYPE.FILE &&
+    file.metadata?.target?.drive_root_type === DRIVE_ROOT_TYPE.FILE
+  )
+
+/**
+ * Only stack-enriched file-root shortcuts expose enough target metadata to
+ * route to the dedicated file-root viewer. Legacy shortcuts deliberately fall
+ * through to the regular `isShortcut` branch.
+ */
+export const isResolvableFileRootSharedDriveShortcut = file =>
+  Boolean(
+    isFileRootSharedDriveShortcut(file) &&
     typeof file.metadata?.target?.mime === 'string' &&
     file.metadata.target.mime.length > 0
   )

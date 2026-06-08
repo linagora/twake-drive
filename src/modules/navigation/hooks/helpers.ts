@@ -22,7 +22,8 @@ import {
 import { makeSharedDriveNoteReturnUrl } from '@/modules/shareddrives/helpers'
 import {
   isFileRootSharedDrive,
-  isFileRootSharedDriveShortcut
+  isFileRootSharedDriveShortcut,
+  isResolvableFileRootSharedDriveShortcut
 } from '@/modules/shareddrives/rootFileNavigation'
 import {
   isExcalidraw,
@@ -82,7 +83,7 @@ export const computeFileType = (
     return 'docs'
   } else if (isExcalidraw(file) && isExcalidrawEnabled) {
     return 'excalidraw'
-  } else if (isFileRootSharedDriveShortcut(file)) {
+  } else if (isResolvableFileRootSharedDriveShortcut(file)) {
     // File-root shared drives are materialized on the recipient as `.url`
     // shortcuts (`class: 'shortcut'`, mime `application/internet-shortcut`),
     // so the regular `isShortcut` / `shouldBeOpenedByOnlyOffice` branches
