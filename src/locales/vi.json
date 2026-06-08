@@ -336,6 +336,15 @@
       "errors": "Đã xảy ra lỗi trong quá trình tải lên %{type}.",
       "network": "Bạn hiện đang ngoại tuyến. Vui lòng thử lại khi có kết nối mạng.",
       "fileTooLargeErrors": "Tệp quá lớn. Kích thước tệp tối đa: %{max_size_value} GB"
+    },
+    "conflict": {
+      "title": "Tùy chọn tải lên",
+      "content": "Một hoặc nhiều tệp đã tồn tại trong thư mục này. Bạn muốn thay thế tệp hiện có hay giữ cả hai phiên bản?",
+      "apply_all": "Cài đặt chia sẻ sẽ không thay đổi nếu bạn thay thế tệp",
+      "replace": "Thay thế tệp hiện có",
+      "keep_both": "Giữ cả hai tệp",
+      "cancel": "Huỷ",
+      "confirm": "Tải lên"
     }
   },
   "intents": {
@@ -356,7 +365,8 @@
     "success_flagship": "Đã tải lên %{smart_count} tệp thành công. |||| Đã tải lên %{smart_count} tệp thành công.",
     "close": "đóng",
     "item": {
-      "pending": "Đang chờ"
+      "pending": "Đang chờ",
+      "conflict": "Đang chờ lựa chọn"
     }
   },
   "Viewer": {

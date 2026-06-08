@@ -358,6 +358,15 @@
       "cancel": "Cancel",
       "close": "Close",
       "download_desktop": "Download on Desktop"
+    },
+    "conflict": {
+      "title": "Upload options",
+      "content": "One or several files already exist in this folder. Would you like to replace the existing file or keep both versions?",
+      "apply_all": "Sharing setting will remain unchanged if you replace the file",
+      "replace": "Replace existing file",
+      "keep_both": "Keep both files",
+      "cancel": "Cancel",
+      "confirm": "Upload"
     }
   },
   "intents": {
@@ -380,7 +389,8 @@
     "close": "close",
     "item": {
       "pending": "Pending",
-      "preparing": "Preparing"
+      "preparing": "Preparing",
+      "conflict": "Waiting for choice"
     }
   },
   "Viewer": {

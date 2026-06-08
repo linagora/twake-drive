@@ -355,6 +355,15 @@
       "cancel": "Annuler",
       "close": "Fermer",
       "download_desktop": "Installer l'application"
+    },
+    "conflict": {
+      "title": "Options d'import",
+      "content": "Un ou plusieurs fichiers existent déjà dans ce dossier. Voulez-vous remplacer le fichier existant ou conserver les deux versions ?",
+      "apply_all": "Les paramètres de partage resteront inchangés si vous remplacez le fichier",
+      "replace": "Remplacer le fichier existant",
+      "keep_both": "Conserver les deux fichiers",
+      "cancel": "Annuler",
+      "confirm": "Importer"
     }
   },
   "intents": {
@@ -377,7 +386,8 @@
     "close": "Fermer",
     "item": {
       "pending": "En attente",
-      "preparing": "En préparation"
+      "preparing": "En préparation",
+      "conflict": "En attente d'un choix"
     }
   },
   "Viewer": {
