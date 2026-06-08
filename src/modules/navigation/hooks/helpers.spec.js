@@ -142,13 +142,7 @@ describe('computeFileType', () => {
     )
   })
 
-  it('should return "shared-drive" for legacy file-root .url shortcuts without metadata.target.mime', () => {
-    // Legacy file-root shortcuts created before the stack started
-    // exposing metadata.target.mime (and metadata.target.class) keep
-    // their pre-existing behaviour: they fall into the `shared-drive`
-    // branch because isFileRootSharedDriveShortcut requires the new
-    // target.mime field to recognise them. They do not get the
-    // OnlyOffice dispatch.
+  it('should return "shortcut" for legacy file-root .url shortcuts without metadata.target.mime', () => {
     const file = {
       _id: 'shortcut-1',
       name: 'CIR.docx',
@@ -164,9 +158,7 @@ describe('computeFileType', () => {
         }
       }
     }
-    expect(computeFileType(file, { isOfficeEnabled: true })).toBe(
-      'shared-drive'
-    )
+    expect(computeFileType(file, { isOfficeEnabled: true })).toBe('shortcut')
   })
 
   it('should return "shared-drive" for directory-root .url shortcuts in shared drives directory', () => {
