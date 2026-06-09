@@ -87,6 +87,7 @@ export const useMoreMenuActions = (
       hasWriteAccess: canWriteToCurrentFolder,
       shouldHideIfSharedDriveRecipient,
       canMove: canWriteToCurrentFolder,
+      canDuplicate: canWriteToCurrentFolder,
       isPublic: false,
       allLoaded,
       showAlert,
