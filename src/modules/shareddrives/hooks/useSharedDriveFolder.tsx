@@ -59,15 +59,25 @@ const useSharedDriveFolder = ({
   )
 
   useEffect(() => {
-    const fetchSharedDriveFolder = async (pagesToLoad = 1): Promise<void> => {
+    const fetchSharedDriveFolder = async (
+      pagesToLoad = 1,
+      { isRefresh = false }: { isRefresh?: boolean } = {}
+    ): Promise<void> => {
       fetchGeneration.current += 1
       const currentGeneration = fetchGeneration.current
 
-      setSharedDriveResult({ data: undefined, included: undefined })
-      setFetchStatus('loading')
-      nextCursorRef.current = null
-      setNextCursor(null)
-      loadedPagesCount.current = 0
+      // On a realtime-triggered refresh, keep the current list and cursor on
+      // screen and refetch in the background; only swap once the new data
+      // arrives. Wiping to a loading state here would replace the list with the
+      // loading skeleton on every realtime event and make the view blink while
+      // files are being added.
+      if (!isRefresh) {
+        setSharedDriveResult({ data: undefined, included: undefined })
+        setFetchStatus('loading')
+        nextCursorRef.current = null
+        setNextCursor(null)
+        loadedPagesCount.current = 0
+      }
 
       try {
         let allIncluded: IOCozyFile[] = []
@@ -92,7 +102,15 @@ const useSharedDriveFolder = ({
         }
       } catch (error) {
         logger.error('Error fetching shared drive folder:', error)
-        if (fetchGeneration.current === currentGeneration) {
+        // A failed background refresh keeps the data already on screen rather
+        // than dropping the user into an error state. But if nothing has loaded
+        // yet (a refresh racing the very first load), surface the error instead
+        // of leaving the view stuck on the loading skeleton.
+        const hasLoadedData = loadedPagesCount.current > 0
+        if (
+          fetchGeneration.current === currentGeneration &&
+          (!isRefresh || !hasLoadedData)
+        ) {
           setSharedDriveResult({ data: undefined, included: undefined })
           setFetchStatus('failed')
           nextCursorRef.current = null
@@ -106,7 +124,9 @@ const useSharedDriveFolder = ({
     }
 
     const debouncedFetch = debounce(() => {
-      void fetchSharedDriveFolder(Math.max(1, loadedPagesCount.current))
+      void fetchSharedDriveFolder(Math.max(1, loadedPagesCount.current), {
+        isRefresh: true
+      })
     }, 500)
 
     let realtime: CozyRealtime | undefined
