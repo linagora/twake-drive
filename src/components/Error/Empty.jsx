@@ -60,10 +60,9 @@ const EmptyCanvas = ({
       text={
         <>
           {text}
-          {showUploadLayout && (
+          {showUploadLayout && canUpload !== false && (
             <span className="u-db u-mt-1">
               <UploadButton
-                disabled={!canUpload}
                 componentsProps={{
                   button: { variant: 'secondary' }
                 }}
