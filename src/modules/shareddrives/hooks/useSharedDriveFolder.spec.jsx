@@ -214,6 +214,81 @@ describe('useSharedDriveFolder', () => {
       }))
     })
 
+    it('should keep the current list visible while a realtime re-fetch is in flight', async () => {
+      const page1 = [{ _id: '1', name: 'file-1.txt', type: 'file' }]
+      const refreshedPage1 = [
+        { _id: '1', name: 'file-1.txt', type: 'file' },
+        { _id: '2', name: 'file-2.txt', type: 'file' }
+      ]
+
+      let resolveRefetch
+      const refetchPromise = new Promise(resolve => {
+        resolveRefetch = resolve
+      })
+
+      const statByIdMock = jest
+        .fn()
+        .mockResolvedValueOnce({ included: page1, links: {} })
+        .mockReturnValueOnce(refetchPromise)
+      const mockClient = makeMockClient(statByIdMock)
+      const { result } = setup(mockClient)
+
+      await waitFor(() =>
+        expect(result.current.sharedDriveResult.included).toEqual(page1)
+      )
+      expect(result.current.fetchStatus).toBe('loaded')
+
+      // A realtime event triggers a background re-fetch.
+      await act(async () => {
+        triggerRealtimeEvent()
+      })
+
+      // While the re-fetch is in flight the existing list must stay on screen:
+      // no data wipe and no flip back to 'loading' (otherwise the file list is
+      // replaced by the loading skeleton and the screen blinks).
+      expect(result.current.sharedDriveResult.included).toEqual(page1)
+      expect(result.current.fetchStatus).toBe('loaded')
+
+      await act(async () => {
+        resolveRefetch({ included: refreshedPage1, links: {} })
+      })
+
+      await waitFor(() =>
+        expect(result.current.sharedDriveResult.included).toEqual(
+          refreshedPage1
+        )
+      )
+      expect(result.current.fetchStatus).toBe('loaded')
+    })
+
+    it('should keep the current list when a realtime re-fetch fails', async () => {
+      const page1 = [{ _id: '1', name: 'file-1.txt', type: 'file' }]
+
+      const statByIdMock = jest
+        .fn()
+        .mockResolvedValueOnce({ included: page1, links: {} })
+        .mockRejectedValueOnce(new Error('Network error'))
+      const mockClient = makeMockClient(statByIdMock)
+      const { result } = setup(mockClient)
+
+      await waitFor(() =>
+        expect(result.current.sharedDriveResult.included).toEqual(page1)
+      )
+
+      await act(async () => {
+        triggerRealtimeEvent()
+      })
+
+      // A failed background refresh must not wipe the list or flip to an error
+      // state once data is already on screen.
+      expect(result.current.sharedDriveResult.included).toEqual(page1)
+      expect(result.current.fetchStatus).toBe('loaded')
+      expect(logger.error).toHaveBeenCalledWith(
+        'Error fetching shared drive folder:',
+        expect.any(Error)
+      )
+    })
+
     it('should re-fetch only page 1 when realtime fires before any fetchMore', async () => {
       const cursor = 'cursor-page-2'
       const page1 = [{ _id: '1', name: 'file-1.txt', type: 'file' }]
