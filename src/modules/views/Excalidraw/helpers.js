@@ -23,6 +23,15 @@ export const isExcalidrawEnabled = () =>
   flag('drive.excalidraw.enabled') === true
 
 /**
+ * Checks whether real-time collaboration is enabled through its own flag, so it
+ * can be rolled out independently of the editor itself.
+ *
+ * @returns {boolean}
+ */
+export const isExcalidrawCollabEnabled = () =>
+  flag('drive.excalidraw.collab') === true
+
+/**
  * Builds the in-app route to open an Excalidraw file.
  *
  * @param {string} fileId - Id of the Excalidraw file
