@@ -119,6 +119,35 @@ export const prunePeers = (peers, now, ttlMs) => {
 }
 
 /**
+ * Builds the presence-map entry for a peer from any message it sent, preserving
+ * its known username and color while refreshing last-seen. A first sighting with
+ * no username yet falls back to an empty label and a color derived from the id.
+ *
+ * @param {object|undefined} existing - The current entry, if the peer is known
+ * @param {object} message - The message just received from the peer
+ * @param {number} now - Current epoch in ms
+ * @returns {object} The merged peer entry
+ */
+export const makePeerEntry = (existing, message, now) => ({
+  ...existing,
+  username: message.username || existing?.username || '',
+  color: existing?.color || colorFromSessionId(message.senderId),
+  lastSeen: now
+})
+
+/**
+ * Reads the cursor fields out of a pointer source (a raw payload or a message
+ * payload), tolerating a missing source so callers stay branch-free.
+ *
+ * @param {object|undefined} source
+ * @returns {{ pointer: object|undefined, button: string|undefined }}
+ */
+export const readPointer = source => ({
+  pointer: source?.pointer,
+  button: source?.button
+})
+
+/**
  * Projects the internal presence map onto the Map<id, Collaborator> shape the
  * Excalidraw `updateScene({ collaborators })` API expects.
  *
