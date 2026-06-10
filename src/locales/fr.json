@@ -539,7 +539,10 @@
     "url_badformat": "L'URL saisie n'est pas dans le bon format"
   },
   "Excalidraw": {
-    "createFileName": "Nouveau dessin"
+    "createFileName": "Nouveau dessin",
+    "collaboration": {
+      "guest": "Invité"
+    }
   },
   "Pdf": {
     "save": "Enregistrer"
