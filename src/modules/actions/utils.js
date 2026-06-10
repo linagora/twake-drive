@@ -31,7 +31,11 @@ export const downloadFiles = async (client, files, { showAlert, t } = {}) => {
         .collection(DOCTYPE_FILES, { driveId })
         .download(file, null, file.name)
     } catch (error) {
-      showAlert({ message: t(downloadFileError(error)), severity: 'error' })
+      showAlert({
+        message: t(downloadFileError(error)),
+        severity: 'error',
+        duration: 4000
+      })
     }
   } else {
     const ids = files.map(f => f.id)
@@ -78,7 +82,11 @@ export const trashFiles = async (client, files, { showAlert, t, driveId }) => {
     showAlert({ message: t('alert.trash_file_success'), severity: 'success' })
   } catch (err) {
     if (!isAlreadyInTrash(err)) {
-      showAlert({ message: t('alert.try_again'), severity: 'error' })
+      showAlert({
+        message: t('alert.try_again'),
+        severity: 'error',
+        duration: 4000
+      })
     }
   }
 }

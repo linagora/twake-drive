@@ -47,7 +47,11 @@ export const RenameInput = ({
         const newName = withoutExtension ? newValue + extension : newValue
         try {
           if (isOffline) {
-            showAlert({ message: t('alert.offline'), severity: 'error' })
+            showAlert({
+              message: t('alert.offline'),
+              severity: 'error',
+              duration: 4000
+            })
           } else {
             await updateFileNameQuery(client, file, newName)
             if (refreshFolderContent) refreshFolderContent()
@@ -58,7 +62,11 @@ export const RenameInput = ({
               'NetworkError when attempting to fetch resource.'
             )
           ) {
-            showAlert({ message: t('upload.alert.network'), severity: 'error' })
+            showAlert({
+              message: t('upload.alert.network'),
+              severity: 'error',
+              duration: 4000
+            })
           } else if (
             error.message.includes(
               'Invalid filename containing illegal character(s):'
@@ -72,22 +80,25 @@ export const RenameInput = ({
                 )[1]
               }),
               severity: 'error',
-              duration: 2000
+              duration: 4000
             })
           } else if (error.message.includes('Invalid filename:')) {
             showAlert({
               message: t('alert.file_name_illegal_name', { fileName: newName }),
-              severity: 'error'
+              severity: 'error',
+              duration: 4000
             })
           } else if (error.message.includes('Missing name argument')) {
             showAlert({
               message: t('alert.file_name_missing'),
-              severity: 'error'
+              severity: 'error',
+              duration: 4000
             })
           } else {
             showAlert({
               message: t('alert.file_name', { fileName: newName }),
-              severity: 'error'
+              severity: 'error',
+              duration: 4000
             })
           }
         } finally {

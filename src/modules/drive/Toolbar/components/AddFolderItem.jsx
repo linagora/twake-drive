@@ -22,7 +22,8 @@ const AddFolderItem = ({ addFolder, onClick, isReadOnly }) => {
           'AddMenu.readOnlyFolder',
           'This is a read-only folder. You cannot perform this action.'
         ),
-        severity: 'warning'
+        severity: 'warning',
+        duration: 4000
       })
       onClick()
       return

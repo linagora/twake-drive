@@ -145,7 +145,8 @@ const MoveModal = ({
       logger.warn(e)
       showAlert({
         message: t('Move.error', { smart_count: entries.length }),
-        severity: 'error'
+        severity: 'error',
+        duration: 4000
       })
     } finally {
       setMoveInProgress(false)

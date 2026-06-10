@@ -167,7 +167,7 @@ describe('ShortcutCreationModal', () => {
     await waitFor(() => {
       expect(showAlert).toHaveBeenCalledTimes(1)
       expect(showAlert).toHaveBeenCalledWith(
-        expect.objectContaining({ severity: 'error', duration: 2000 })
+        expect.objectContaining({ severity: 'error', duration: 4000 })
       )
     })
   })
