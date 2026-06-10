@@ -37,6 +37,7 @@ const Editor = ({ fileId, driveId, isPublic = false, isReadOnly = false }) => {
         file={file}
         flushRef={flushRef}
         isReadOnly={isReadOnly}
+        isPublic={isPublic}
       />
     </>
   )
