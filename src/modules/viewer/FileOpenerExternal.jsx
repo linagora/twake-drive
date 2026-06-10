@@ -7,9 +7,9 @@
 
 import React, { useCallback, useEffect, useState } from 'react'
 import { RemoveScroll } from 'react-remove-scroll'
-import { useNavigate, useParams } from 'react-router-dom'
+import { Navigate, useNavigate, useParams } from 'react-router-dom'
 
-import { useClient } from 'cozy-client'
+import { useClient, models } from 'cozy-client'
 import Spinner from 'cozy-ui/transpiled/react/Spinner'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
@@ -76,6 +76,24 @@ const FileOpener = props => {
       loadFileInfo(requestedFileId)
     }
   }, [fileId, props.fileId, loadFileInfo])
+
+  // An Office document does not need the intermediate viewer with its
+  // "Open with Only Office" button: go straight to the editor, like the
+  // folder views and the public preview already do.
+  if (
+    !loading &&
+    !fileNotFound &&
+    file &&
+    models.file.shouldBeOpenedByOnlyOffice(file) &&
+    isOfficeEnabled(isDesktop)
+  ) {
+    return (
+      <Navigate
+        to={makeOnlyOfficeFileRoute(file.id, { driveId: file.driveId })}
+        replace
+      />
+    )
+  }
 
   return (
     <div className="u-pos-absolute u-w-100 u-h-100 u-bg-charcoalGrey">
