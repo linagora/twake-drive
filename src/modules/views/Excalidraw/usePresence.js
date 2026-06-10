@@ -1,16 +1,14 @@
 import { CaptureUpdateAction } from '@excalidraw/excalidraw'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 
 import {
   CURSOR_THROTTLE_MS,
   MESSAGE_TYPES,
-  PEER_TTL_MS,
-  PING_INTERVAL_MS,
-  PRESENCE_SWEEP_MS,
   collaboratorsFromPeers,
-  colorFromSessionId,
-  prunePeers
+  makePeerEntry,
+  readPointer
 } from '@/modules/views/Excalidraw/collabProtocol'
+import { usePresenceHeartbeat } from '@/modules/views/Excalidraw/usePresenceHeartbeat'
 
 /**
  * Tracks who else is in the room and mirrors them onto the Excalidraw canvas.
@@ -46,12 +44,10 @@ export const usePresence = ({ apiRef, active, sendMessage }) => {
   // Refresh a peer's identity and last-seen on any message from it.
   const touchPeer = useCallback(message => {
     const existing = peersRef.current.get(message.senderId)
-    peersRef.current.set(message.senderId, {
-      ...existing,
-      username: message.username || existing?.username || '',
-      color: existing?.color || colorFromSessionId(message.senderId),
-      lastSeen: Date.now()
-    })
+    peersRef.current.set(
+      message.senderId,
+      makePeerEntry(existing, message, Date.now())
+    )
   }, [])
 
   const removePeer = useCallback(senderId => {
@@ -61,8 +57,7 @@ export const usePresence = ({ apiRef, active, sendMessage }) => {
   const updatePeerPointer = useCallback(message => {
     const peer = peersRef.current.get(message.senderId)
     if (!peer) return
-    peer.pointer = message.payload?.pointer
-    peer.button = message.payload?.button
+    Object.assign(peer, readPointer(message.payload))
   }, [])
 
   const getPeerIds = useCallback(() => [...peersRef.current.keys()], [])
@@ -75,38 +70,18 @@ export const usePresence = ({ apiRef, active, sendMessage }) => {
       const now = Date.now()
       if (now - lastPointerSentRef.current < CURSOR_THROTTLE_MS) return
       lastPointerSentRef.current = now
-      sendMessage(MESSAGE_TYPES.MOUSE_LOCATION, {
-        pointer: payload?.pointer,
-        button: payload?.button
-      })
+      sendMessage(MESSAGE_TYPES.MOUSE_LOCATION, readPointer(payload))
     },
     [active, sendMessage]
   )
 
-  useEffect(() => {
-    if (!active) return undefined
-    const pingId = setInterval(
-      () => sendMessage(MESSAGE_TYPES.PRESENCE_PING),
-      PING_INTERVAL_MS
-    )
-    const sweepId = setInterval(() => {
-      const { peers, changed } = prunePeers(
-        peersRef.current,
-        Date.now(),
-        PEER_TTL_MS
-      )
-      if (changed) {
-        peersRef.current = peers
-        refresh()
-      }
-    }, PRESENCE_SWEEP_MS)
-    return () => {
-      clearInterval(pingId)
-      clearInterval(sweepId)
-      peersRef.current = new Map()
-      setIsCollaborating(false)
-    }
-  }, [active, sendMessage, refresh])
+  usePresenceHeartbeat({
+    active,
+    sendMessage,
+    peersRef,
+    refresh,
+    setIsCollaborating
+  })
 
   return {
     touchPeer,

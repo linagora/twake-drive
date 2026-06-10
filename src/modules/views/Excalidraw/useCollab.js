@@ -2,25 +2,30 @@ import { useCallback, useEffect, useRef } from 'react'
 
 import { useClient } from 'cozy-client'
 
-import logger from '@/lib/logger'
 import {
   COLLAB_DOCTYPE,
   MESSAGE_TYPES,
-  makeSessionId,
-  shouldRespondToHello,
-  unwrapMessage
+  makeSessionId
 } from '@/modules/views/Excalidraw/collabProtocol'
+import { useCollabRouter } from '@/modules/views/Excalidraw/useCollabRouter'
+import { useCollabSender } from '@/modules/views/Excalidraw/useCollabSender'
 import { usePresence } from '@/modules/views/Excalidraw/usePresence'
 import { useSceneRelay } from '@/modules/views/Excalidraw/useSceneRelay'
 
 const REALTIME_EVENT = 'notified'
 
+// Collaboration only goes live once the flag is on, the canvas API is mounted,
+// we have a file to key the room on, and the realtime plugin exists.
+const isCollabReady = (enabled, excalidrawAPI, fileId, realtime) =>
+  Boolean(enabled && excalidrawAPI && fileId && realtime)
+
 /**
  * Real-time Excalidraw collaboration over the cozy-stack realtime hub. The hub
  * is a blind relay (no merge, no storage), so this hook reconstructs the three
  * sub-protocols Socket.IO gave Excalidraw for free: presence ({@link usePresence}),
- * the new-arrival resync handshake, and auto-echo dedup. Element merging stays
- * last-write-wins in {@link useSceneRelay}.
+ * the new-arrival resync handshake ({@link useCollabRouter}), and auto-echo
+ * dedup. Element merging stays last-write-wins in {@link useSceneRelay}, and
+ * every broadcast goes through the gated {@link useCollabSender}.
  *
  * @param {object} params
  * @param {object} params.file - The io.cozy.files document being edited
@@ -40,22 +45,17 @@ export const useCollab = ({
   const client = useClient()
   const fileId = file?._id
   const realtime = client?.plugins?.realtime
-  // A read-only viewer (read share, public link) subscribes to receive, but its
-  // sharecode has no POST on the file, so it never broadcasts — that keeps the
-  // realtime endpoint from 403-ing on every cursor move.
-  const active = Boolean(enabled && excalidrawAPI && fileId && realtime)
-  const canSend = active && !isReadOnly
+  const active = isCollabReady(enabled, excalidrawAPI, fileId, realtime)
 
   // Unique per tab: the client-side substitute for Socket.IO's socket.id, used
-  // as the presence key and the auto-echo filter.
+  // as the presence key and the auto-echo filter. Kept in a ref (read only from
+  // deferred callbacks) so it survives re-renders without a new identity.
   const sessionIdRef = useRef(null)
   if (sessionIdRef.current === null) sessionIdRef.current = makeSessionId()
-  const sessionId = sessionIdRef.current
 
-  // Kept in refs so the latest value is read without re-subscribing the socket.
+  // Kept in a ref so the latest name is read without re-subscribing the socket.
   const apiRef = useRef(null)
   const usernameRef = useRef('')
-
   useEffect(() => {
     apiRef.current = excalidrawAPI
   }, [excalidrawAPI])
@@ -63,28 +63,14 @@ export const useCollab = ({
     usernameRef.current = username || ''
   }, [username])
 
-  const sendMessage = useCallback(
-    (type, payload, targetId) => {
-      // Gate every send on `canSend`, so with collaboration off (no flag, API
-      // not ready) or as a read-only viewer, editing never POSTs to /realtime.
-      if (!canSend || !realtime || !fileId) return
-      const message = {
-        senderId: sessionId,
-        username: usernameRef.current,
-        type
-      }
-      if (payload !== undefined) message.payload = payload
-      if (targetId !== undefined) message.targetId = targetId
-      // RealtimePlugin.sendNotification returns undefined (not a promise), so
-      // guard the call itself instead of chaining .catch on its result.
-      try {
-        realtime.sendNotification(COLLAB_DOCTYPE, fileId, message)
-      } catch (error) {
-        logger.warn(`Excalidraw collab send failed: ${error}`)
-      }
-    },
-    [canSend, realtime, fileId, sessionId]
-  )
+  const sendMessage = useCollabSender({
+    active,
+    isReadOnly,
+    realtime,
+    fileId,
+    sessionIdRef,
+    usernameRef
+  })
 
   const {
     touchPeer,
@@ -102,55 +88,16 @@ export const useCollab = ({
   const { applyRemoteScene, broadcastScene, broadcastInitTo, reset } =
     useSceneRelay({ apiRef, isReadOnly, sendMessage, hasPeers })
 
-  // Only the elected existing peer answers a newcomer, so a HELLO is resynced
-  // once instead of once per peer.
-  const respondToHello = useCallback(
-    senderId => {
-      if (shouldRespondToHello(sessionId, getPeerIds(), senderId)) {
-        broadcastInitTo(senderId)
-      }
-    },
-    [sessionId, getPeerIds, broadcastInitTo]
-  )
-
-  const handleMessage = useCallback(
-    doc => {
-      const message = unwrapMessage(doc)
-      if (!message || message.senderId === sessionId) return // drop auto-echo
-      // A leaving peer should not be resurrected by its own goodbye.
-      if (message.type !== MESSAGE_TYPES.PRESENCE_BYE) touchPeer(message)
-
-      switch (message.type) {
-        case MESSAGE_TYPES.SCENE_UPDATE:
-          applyRemoteScene(message.payload)
-          break
-        case MESSAGE_TYPES.SCENE_INIT:
-          if (message.targetId === sessionId) applyRemoteScene(message.payload)
-          break
-        case MESSAGE_TYPES.MOUSE_LOCATION:
-          updatePeerPointer(message)
-          break
-        case MESSAGE_TYPES.PRESENCE_HELLO:
-          respondToHello(message.senderId)
-          break
-        case MESSAGE_TYPES.PRESENCE_BYE:
-          removePeer(message.senderId)
-          break
-        default:
-          break // PRESENCE_PING: touchPeer already refreshed last-seen
-      }
-      refresh()
-    },
-    [
-      sessionId,
-      touchPeer,
-      removePeer,
-      updatePeerPointer,
-      applyRemoteScene,
-      respondToHello,
-      refresh
-    ]
-  )
+  const handleMessage = useCollabRouter({
+    sessionIdRef,
+    touchPeer,
+    removePeer,
+    updatePeerPointer,
+    getPeerIds,
+    applyRemoteScene,
+    broadcastInitTo,
+    refresh
+  })
 
   useEffect(() => {
     if (!active) return undefined

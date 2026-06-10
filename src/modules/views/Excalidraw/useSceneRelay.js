@@ -8,6 +8,49 @@ import { useCallback, useRef } from 'react'
 
 import { MESSAGE_TYPES } from '@/modules/views/Excalidraw/collabProtocol'
 
+// Merge a remote scene (live update or initial handshake) onto the canvas and
+// return the version the canvas settled on, or null when there is nothing to
+// apply. Kept out of the hook so its branching does not weigh on useSceneRelay.
+const applyRemoteSceneToApi = (api, payload, knownFileIds) => {
+  if (!api || !payload) return null
+  const remote = restoreElements(payload.elements || [], null)
+  const reconciled = reconcileElements(
+    api.getSceneElements(),
+    remote,
+    api.getAppState()
+  )
+  const fileEntries = payload.files ? Object.entries(payload.files) : []
+  if (fileEntries.length) {
+    // Add the images first so the elements referencing them resolve, and mark
+    // them known only once addFiles accepted them — otherwise a throw on
+    // malformed data would suppress them forever.
+    api.addFiles(fileEntries.map(([, fileData]) => fileData))
+    fileEntries.forEach(([id]) => knownFileIds.add(id))
+  }
+  api.updateScene({
+    elements: reconciled,
+    captureUpdate: CaptureUpdateAction.NEVER
+  })
+  return getSceneVersion(api.getSceneElements())
+}
+
+// Embedded images added since the last broadcast, so steady-state element
+// updates stay light while new images still propagate as they appear.
+const pickNewFiles = (api, knownFileIds) => {
+  if (!api) return undefined
+  const files = api.getFiles() || {}
+  const added = {}
+  let hasNew = false
+  for (const [id, fileData] of Object.entries(files)) {
+    if (!knownFileIds.has(id)) {
+      knownFileIds.add(id)
+      added[id] = fileData
+      hasNew = true
+    }
+  }
+  return hasNew ? added : undefined
+}
+
 /**
  * Relays scene edits to and from the room. Element merging is last-write-wins
  * via reconcileElements (no OT, no CRDT, no server merge), and a version
@@ -32,53 +75,25 @@ export const useSceneRelay = ({
   const lastBroadcastVersionRef = useRef(-1)
   const knownFileIdsRef = useRef(new Set())
 
-  // Merge a remote scene (live update or initial handshake) into the canvas.
+  // Merge a remote scene (live update or initial handshake) into the canvas and
+  // watermark from the version the canvas settled on, so the onChange this
+  // triggers is recognised as remote and not echoed back.
   const applyRemoteScene = useCallback(
     payload => {
-      const api = apiRef.current
-      if (!api || !payload) return
-      const remote = restoreElements(payload.elements || [], null)
-      const reconciled = reconcileElements(
-        api.getSceneElements(),
-        remote,
-        api.getAppState()
+      const version = applyRemoteSceneToApi(
+        apiRef.current,
+        payload,
+        knownFileIdsRef.current
       )
-      const fileEntries = payload.files ? Object.entries(payload.files) : []
-      if (fileEntries.length) {
-        // Add the images first so the elements referencing them resolve, and
-        // mark them known only once addFiles accepted them — otherwise a throw
-        // on malformed data would suppress them forever.
-        api.addFiles(fileEntries.map(([, fileData]) => fileData))
-        fileEntries.forEach(([id]) => knownFileIdsRef.current.add(id))
-      }
-      api.updateScene({
-        elements: reconciled,
-        captureUpdate: CaptureUpdateAction.NEVER
-      })
-      // Watermark from the version the canvas actually settled on, so the
-      // onChange this triggers is recognised as remote and not echoed back.
-      lastBroadcastVersionRef.current = getSceneVersion(api.getSceneElements())
+      if (version !== null) lastBroadcastVersionRef.current = version
     },
     [apiRef]
   )
 
-  // Embedded images added since the last broadcast, so steady-state element
-  // updates stay light while new images still propagate as they appear.
-  const collectNewFiles = useCallback(() => {
-    const api = apiRef.current
-    if (!api) return undefined
-    const files = api.getFiles() || {}
-    const added = {}
-    let hasNew = false
-    for (const [id, fileData] of Object.entries(files)) {
-      if (!knownFileIdsRef.current.has(id)) {
-        knownFileIdsRef.current.add(id)
-        added[id] = fileData
-        hasNew = true
-      }
-    }
-    return hasNew ? added : undefined
-  }, [apiRef])
+  const collectNewFiles = useCallback(
+    () => pickNewFiles(apiRef.current, knownFileIdsRef.current),
+    [apiRef]
+  )
 
   const broadcastScene = useCallback(
     elements => {
