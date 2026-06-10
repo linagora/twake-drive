@@ -72,7 +72,8 @@ const DuplicateModal: FC<DuplicateModalProps> = ({
     } catch (_e) {
       showAlert({
         message: t('DuplicateModal.error'),
-        severity: 'error'
+        severity: 'error',
+        duration: 4000
       })
     } finally {
       setBusy(false)

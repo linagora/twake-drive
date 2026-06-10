@@ -46,17 +46,29 @@ const ShortcutCreationModal = ({ onClose, onCreated }) => {
 
   const createShortcut = useCallback(async () => {
     if (!fileName || !url) {
-      showAlert({ message: t('Shortcut.needs_info'), severity: 'error' })
+      showAlert({
+        message: t('Shortcut.needs_info'),
+        severity: 'error',
+        duration: 4000
+      })
       return
     }
     const makedURL = makeURLValid(url)
     if (!makedURL) {
-      showAlert({ message: t('Shortcut.url_badformat'), severity: 'error' })
+      showAlert({
+        message: t('Shortcut.url_badformat'),
+        severity: 'error',
+        duration: 4000
+      })
       return
     }
     try {
       if (isOffline) {
-        showAlert({ message: t('alert.offline'), severity: 'error' })
+        showAlert({
+          message: t('alert.offline'),
+          severity: 'error',
+          duration: 4000
+        })
       } else {
         const response = await client.save({
           _type: DOCTYPE_FILES_SHORTCUT,
@@ -78,7 +90,11 @@ const ShortcutCreationModal = ({ onClose, onCreated }) => {
           'NetworkError when attempting to fetch resource.'
         )
       ) {
-        showAlert({ message: t('upload.alert.network'), severity: 'error' })
+        showAlert({
+          message: t('upload.alert.network'),
+          severity: 'error',
+          duration: 4000
+        })
       } else if (
         error.message.includes(
           'Invalid filename containing illegal character(s):'
@@ -92,17 +108,26 @@ const ShortcutCreationModal = ({ onClose, onCreated }) => {
             )[1]
           }),
           severity: 'error',
-          duration: 2000
+          duration: 4000
         })
       } else if (error.message.includes('Invalid filename:')) {
         showAlert({
           message: t('alert.file_name_illegal_name', { fileName }),
-          severity: 'error'
+          severity: 'error',
+          duration: 4000
         })
       } else if (error.message.includes('Missing name argument')) {
-        showAlert({ message: t('alert.file_name_missing'), severity: 'error' })
+        showAlert({
+          message: t('alert.file_name_missing'),
+          severity: 'error',
+          duration: 4000
+        })
       } else {
-        showAlert({ message: t('Shortcut.errored'), severity: 'error' })
+        showAlert({
+          message: t('Shortcut.errored'),
+          severity: 'error',
+          duration: 4000
+        })
       }
     }
   }, [
