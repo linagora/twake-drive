@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React from 'react'
 
 import { useQuery } from 'cozy-client'
 import { isDirectory } from 'cozy-client/dist/models/file'
@@ -13,8 +13,7 @@ import { FolderPickerContentLoader } from '@/components/FolderPicker/FolderPicke
 import { isInvalidMoveTarget } from '@/components/FolderPicker/helpers'
 import { computeNextcloudRootFolder } from '@/components/FolderPicker/helpers'
 import type { File, FolderPickerEntry } from '@/components/FolderPicker/types'
-import { ROOT_DIR_ID } from '@/constants/config'
-import { buildMoveOrImportQuery, buildMagicFolderQuery } from '@/queries'
+import { buildMoveOrImportQuery } from '@/queries'
 
 interface FolderPickerContentCozyProps {
   folder: IOCozyFile
@@ -31,9 +30,7 @@ const FolderPickerContentCozy: React.FC<FolderPickerContentCozyProps> = ({
   isFolderCreationDisplayed,
   hideFolderCreation,
   entries,
-  navigateTo,
-  showNextcloudFolder,
-  showSharedDriveFolder
+  navigateTo
 }) => {
   const contentQuery = buildMoveOrImportQuery(folder._id)
   const {
@@ -48,39 +45,11 @@ const FolderPickerContentCozy: React.FC<FolderPickerContentCozyProps> = ({
     fetchMore: () => void
   }
 
-  const sharedFolderQuery = buildMagicFolderQuery({
-    id: 'io.cozy.files.shared-drives-dir',
-    enabled: folder._id === ROOT_DIR_ID
-  })
-  const sharedFolderResult = useQuery(
-    sharedFolderQuery.definition,
-    sharedFolderQuery.options
-  ) as unknown as {
-    fetchStatus: string
-    data?: IOCozyFile[]
-  }
-
-  const files: IOCozyFile[] = useMemo(() => {
-    if (
-      folder._id === ROOT_DIR_ID &&
-      (showNextcloudFolder || showSharedDriveFolder)
-    ) {
-      return [
-        ...(sharedFolderResult.fetchStatus === 'loaded'
-          ? (sharedFolderResult.data ?? [])
-          : []),
-        ...(filesData ?? [])
-      ]
-    }
-    return [...(filesData ?? [])]
-  }, [
-    folder._id,
-    showNextcloudFolder,
-    showSharedDriveFolder,
-    filesData,
-    sharedFolderResult.fetchStatus,
-    sharedFolderResult.data
-  ])
+  // The "Drives" folder (shared-drives-dir) is hidden from the normal file
+  // list, so it must not appear as a destination in the move/copy picker.
+  // buildMoveOrImportQuery already excludes it via partialIndex, so the list
+  // is used as-is with no manual injection.
+  const files: IOCozyFile[] = filesData ?? []
 
   const handleClick = (file: File): void => {
     if (isDirectory(file)) {
