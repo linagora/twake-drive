@@ -6,7 +6,7 @@ import useDisplayedFolder from '@/hooks/useDisplayedFolder'
 import MoveModal from '@/modules/move/MoveModal'
 import { useQueryMultipleSharedDriveFolders } from '@/modules/shareddrives/hooks/useQueryMultipleSharedDriveFolders'
 
-const MoveSharedDriveFilesView = () => {
+const MoveSharedDriveFilesView = ({ isOpenInViewer }) => {
   const navigate = useNavigate()
   const { state } = useLocation()
   const { displayedFolder } = useDisplayedFolder()
@@ -17,8 +17,10 @@ const MoveSharedDriveFilesView = () => {
   })
 
   if (sharedDriveResults && displayedFolder) {
+    // Moved files leave the current folder, so closing from the viewer returns
+    // to the folder rather than the now-stale file viewer.
     const onClose = () => {
-      navigate('..', { replace: true })
+      navigate(isOpenInViewer ? '../..' : '..', { replace: true })
     }
 
     const showNextcloudFolder = !sharedDriveResults.some(

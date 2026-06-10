@@ -100,7 +100,13 @@ const sharedDriveRoutes = () => (
       <Route
         path="file/:fileId"
         element={<OutletWrapper Component={FilesViewerSharedDrive} />}
-      />
+      >
+        <Route
+          path="v/move"
+          element={<MoveSharedDriveFilesView isOpenInViewer />}
+        />
+        <Route path="v/duplicate" element={<DuplicateSharedDriveFilesView />} />
+      </Route>
       <Route path="file/:fileId/revision" element={<FileHistory />} />
       <Route path="file/:fileId/v/revision" element={<FileHistory />} />
       <Route path="file/:fileId/share" element={<ShareFileView />} />
