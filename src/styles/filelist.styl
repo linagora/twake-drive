@@ -431,7 +431,18 @@ column-width-thumbnail-bigger = 7rem
 .fil-content-status .fil-content-file-placeholder
     animation-delay 1.1s
 
+.fil-content-share
+    display flex
+    align-items center
+    justify-content flex-end
+    gap 0.25rem
+
 .fil-content-sharestatus
+    // Center the share-status avatar in its box: as a plain block its inline
+    // avatar baseline-aligns to the top of a tall line box, which leaves it
+    // sitting a few pixels above center.
+    display inline-flex
+    align-items center
     cursor pointer
     &--disabled
         cursor default
