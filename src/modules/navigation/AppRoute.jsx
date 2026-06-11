@@ -237,6 +237,13 @@ const AppRoute = () => (
           {/* This route must be a child of SharingsView so the modal opens on top of the sharing view */}
           <Route path="file/:fileId/revision" element={<FileHistory />} />
           <Route path="file/:fileId/share" element={<ShareFileView />} />
+          {/* Shared-drive entries open their share modal layered over the
+              sharings list (driveId in the path resolves a proxied recipient
+              document) instead of navigating into the shared-drive view */}
+          <Route
+            path="shareddrive/:driveId/:fileId/share"
+            element={<ShareFileView />}
+          />
           <Route path="file/:fileId/qualify" element={<QualifyFileView />} />
           {flag('drive.shared-drive.enabled') ||
           flag('drive.federated-shared-folder.enabled')

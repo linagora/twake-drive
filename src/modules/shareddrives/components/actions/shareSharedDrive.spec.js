@@ -2,20 +2,12 @@ import { shareSharedDrive } from './shareSharedDrive'
 
 import { DRIVE_ROOT_TYPE } from '@/modules/shareddrives/types'
 
-jest.mock('@/modules/actions/helpers', () => ({
-  navigateToModal: jest.fn(({ navigate, pathname, files, path }) =>
-    navigate(`MOCKED_MODAL?pathname=${pathname}&path=${path}`, { files })
-  )
-}))
-
-const { navigateToModal } = require('@/modules/actions/helpers')
-
 describe('shareSharedDrive', () => {
   const t = key => key
   const navigate = jest.fn()
 
-  const makeAction = ({ isOwner = () => true } = {}) =>
-    shareSharedDrive({ navigate, t, isOwner })
+  const makeAction = ({ isOwner = () => true, pathname = '/sharings' } = {}) =>
+    shareSharedDrive({ navigate, t, isOwner, pathname })
 
   beforeEach(() => {
     jest.clearAllMocks()
@@ -31,8 +23,8 @@ describe('shareSharedDrive', () => {
     expect(makeAction({ isOwner }).displayCondition([doc])).toBe(expected)
   })
 
-  it('opens the folder-root shared drive share modal', () => {
-    makeAction().action([
+  it('layers the share modal over the sharings list', () => {
+    makeAction({ pathname: '/sharings' }).action([
       {
         _id: 'folder-id',
         id: 'folder-id',
@@ -40,11 +32,22 @@ describe('shareSharedDrive', () => {
       }
     ])
 
-    expect(navigateToModal).toHaveBeenCalledWith({
-      navigate,
-      pathname: '/shareddrive/drive-id/folder-id',
-      files: [{ _id: 'folder-id', id: 'folder-id', driveId: 'drive-id' }],
-      path: 'share'
-    })
+    expect(navigate).toHaveBeenCalledWith(
+      '/sharings/shareddrive/drive-id/folder-id/share'
+    )
+  })
+
+  it('opens the folder view share modal when outside /sharings', () => {
+    makeAction({ pathname: '/shareddrive/drive-id/folder-id' }).action([
+      {
+        _id: 'folder-id',
+        id: 'folder-id',
+        driveId: 'drive-id'
+      }
+    ])
+
+    expect(navigate).toHaveBeenCalledWith(
+      '/shareddrive/drive-id/folder-id/file/folder-id/share'
+    )
   })
 })

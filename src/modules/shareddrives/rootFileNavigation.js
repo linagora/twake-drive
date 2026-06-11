@@ -63,7 +63,3 @@ export const navigateToFileRootViewer = ({ navigate, file, pathname = '' }) => {
     { state: { fromPathname: pathname } }
   )
 }
-
-export const navigateToFileRootShare = ({ navigate, file, pathname = '' }) => {
-  navigate(getFileRootSharePath({ file, pathname }))
-}
