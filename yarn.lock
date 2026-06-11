@@ -8285,10 +8285,10 @@ cozy-ui@^139.2.0:
     react-virtuoso "^4.13.0"
     rooks "7.14.1"
 
-cozy-viewer@^28.0.7:
-  version "28.0.7"
-  resolved "https://registry.yarnpkg.com/cozy-viewer/-/cozy-viewer-28.0.7.tgz#30e6a6e44f16f6a40bb8b6bad1db3973d1965c9e"
-  integrity sha512-HWm9Q1q+SNKSH12n6bz1VKzzUEBgUnVBfyEkcEKmDqC4G1I7WBitJdiKhBrviULA4rXklzOkOORPE1ytccaGLQ==
+cozy-viewer@^28.1.0:
+  version "28.1.0"
+  resolved "https://registry.yarnpkg.com/cozy-viewer/-/cozy-viewer-28.1.0.tgz#54ad1019fca42f60b62fe7ace453e94510381fe5"
+  integrity sha512-HIzGvaSvqDB5iaLnhZEoRA3wMV764Diwy2turm6ZvwaZfaHHYcAltFgraAhadgiiGphOmxdOWsG5SkL199GElw==
   dependencies:
     classnames "^2.5.1"
     hammerjs "^2.0.8"
