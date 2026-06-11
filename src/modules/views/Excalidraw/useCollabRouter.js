@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 
 import {
   MESSAGE_TYPES,
+  isCollabMessage,
   shouldRespondToHello,
   unwrapMessage
 } from '@/modules/views/Excalidraw/collabProtocol'
@@ -81,8 +82,13 @@ export const useCollabRouter = ({
   return useCallback(
     doc => {
       const message = unwrapMessage(doc)
-      // Drop auto-echo: the cozy hub relays our own POST back to us.
-      if (!message || message.senderId === sessionIdRef.current) return
+      // Ignore foreign or malformed payloads on the shared channel, then drop
+      // auto-echo: the cozy hub relays our own POST back to us.
+      if (
+        !isCollabMessage(message) ||
+        message.senderId === sessionIdRef.current
+      )
+        return
       // A leaving peer should not be resurrected by its own goodbye.
       if (message.type !== MESSAGE_TYPES.PRESENCE_BYE) touchPeer(message)
       routeByType(message, {

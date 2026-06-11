@@ -1,6 +1,7 @@
 import {
   collaboratorsFromPeers,
   colorFromSessionId,
+  isCollabMessage,
   makeSessionId,
   prunePeers,
   shouldRespondToHello,
@@ -39,6 +40,32 @@ describe('collabProtocol', () => {
 
     it('returns null for an empty doc', () => {
       expect(unwrapMessage(null)).toBe(null)
+    })
+  })
+
+  describe('isCollabMessage', () => {
+    it('accepts a well-formed message', () => {
+      expect(
+        isCollabMessage({ senderId: 'peer-1', type: 'SCENE_UPDATE' })
+      ).toBe(true)
+    })
+
+    it('rejects a null or non-object payload', () => {
+      expect(isCollabMessage(null)).toBe(false)
+    })
+
+    it('rejects a message without a string sender id', () => {
+      expect(isCollabMessage({ type: 'PRESENCE_PING' })).toBe(false)
+      expect(isCollabMessage({ senderId: 42, type: 'PRESENCE_PING' })).toBe(
+        false
+      )
+    })
+
+    it('rejects an unknown message type', () => {
+      expect(isCollabMessage({ senderId: 'peer-1', type: 'SOMETHING' })).toBe(
+        false
+      )
+      expect(isCollabMessage({ senderId: 'peer-1' })).toBe(false)
     })
   })
 

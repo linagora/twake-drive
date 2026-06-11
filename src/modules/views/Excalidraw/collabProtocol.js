@@ -32,6 +32,23 @@ export const MESSAGE_TYPES = {
   PRESENCE_BYE: 'PRESENCE_BYE' // clean departure (best effort)
 }
 
+const KNOWN_MESSAGE_TYPES = new Set(Object.values(MESSAGE_TYPES))
+
+/**
+ * Tells a well-formed collaboration message from any other payload. The room
+ * rides the shared io.cozy.files `notified` channel, a blind relay, so a foreign
+ * or malformed notification could otherwise reach the handler and, lacking a
+ * real sender id, spawn a phantom collaborator. Require a string sender id and a
+ * known message type before trusting it.
+ *
+ * @param {object|null} message - The unwrapped realtime payload
+ * @returns {boolean}
+ */
+export const isCollabMessage = message =>
+  Boolean(message) &&
+  typeof message.senderId === 'string' &&
+  KNOWN_MESSAGE_TYPES.has(message.type)
+
 const hashString = string => {
   let hash = 0
   for (let i = 0; i < string.length; i++) {
