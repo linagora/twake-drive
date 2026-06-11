@@ -100,7 +100,7 @@
     "cozy-stack-client": "^60.24.0",
     "cozy-ui": "^139.2.0",
     "cozy-ui-plus": "^7.1.0",
-    "cozy-viewer": "^28.0.7",
+    "cozy-viewer": "^28.1.0",
     "date-fns": "2.30.0",
     "diacritics": "1.3.0",
     "filesize": "10.1.6",
