@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState, useMemo } from 'react'
 import { RemoveScroll } from 'react-remove-scroll'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 
 import { Q, useClient } from 'cozy-client'
 import flag from 'cozy-flags'
@@ -30,6 +30,7 @@ import {
   isOfficeEnabled,
   makeOnlyOfficeFileRoute
 } from '@/modules/views/OnlyOffice/helpers'
+import { isPdfEditorEnabled, makePdfRoute } from '@/modules/views/Pdf/helpers'
 
 /**
  * Shows a set of files through cozy-ui's Viewer
@@ -47,6 +48,7 @@ const FilesViewer = ({ filesQuery, files, onClose, onChange, viewerProps }) => {
   const client = useClient()
   const { t } = useI18n()
   const navigate = useNavigate()
+  const location = useLocation()
   const { driveId } = useParams()
 
   const handleOnClose = useCallback(() => {
@@ -180,6 +182,16 @@ const FilesViewer = ({ filesQuery, files, onClose, onChange, viewerProps }) => {
               opener: file =>
                 navigate(
                   makeOnlyOfficeFileRoute(file.id, { driveId: file.driveId })
+                )
+            },
+            PdfViewer: {
+              isPdfEditorEnabled: isPdfEditorEnabled(),
+              opener: file =>
+                navigate(
+                  makePdfRoute(file.id, {
+                    driveId: file.driveId,
+                    fromPathname: location.pathname
+                  })
                 )
             },
             toolbarProps: {

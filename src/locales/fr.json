@@ -541,6 +541,9 @@
   "Excalidraw": {
     "createFileName": "Nouveau dessin"
   },
+  "Pdf": {
+    "save": "Enregistrer"
+  },
   "OnlyOffice": {
     "Error": {
       "title": "Quelque chose n'a pas fonctionné",

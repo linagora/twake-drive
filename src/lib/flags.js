@@ -27,6 +27,7 @@ const flagsList = () => {
   flag('drive.breadcrumb.showCompleteBreadcrumbOnPublicPage') // flagName should use kebab case
   flag('drive.hide-nextcloud-dev')
   flag('drive.excalidraw.enabled')
+  flag('drive.pdf-editor.enabled')
   flag('sharing.auto-open-settings.enabled')
   flag('sharing.generate-link-button.enabled')
 }

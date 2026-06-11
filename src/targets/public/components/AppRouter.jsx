@@ -21,6 +21,8 @@ import OnlyOfficeView from '@/modules/views/OnlyOffice'
 import OnlyOfficeCreateView from '@/modules/views/OnlyOffice/Create'
 import OnlyOfficePaywallView from '@/modules/views/OnlyOffice/OnlyOfficePaywallView'
 import { isOfficeEnabled } from '@/modules/views/OnlyOffice/helpers'
+import { isPdfEditorEnabled } from '@/modules/views/Pdf/helpers'
+import { getPublicPdfRoutes } from '@/modules/views/Pdf/routes'
 import { PublicFileViewer } from '@/modules/views/Public/PublicFileViewer'
 import { PublicFolderView } from '@/modules/views/Public/PublicFolderView'
 
@@ -79,6 +81,8 @@ const AppRouter = ({
             isShared: isExcalidrawShared,
             data
           })}
+
+        {isPdfEditorEnabled() && getPublicPdfRoutes({ isReadOnly })}
 
         {isFile && (
           <Route
