@@ -24,6 +24,10 @@ interface SharedDriveFolderReturn {
     included?: IOCozyFile[] | null
   }
   fetchStatus: 'loading' | 'loaded' | 'failed'
+  // Timestamp of the last successful load, kept across in-folder refreshes.
+  // The folder view uses it (like cozy-client's query lastUpdate) to avoid
+  // dropping an already-loaded folder back to the loading skeleton on refetch.
+  lastUpdate: number | null
   hasMore: boolean
   fetchMore: () => Promise<void>
 }
@@ -38,6 +42,7 @@ const useSharedDriveFolder = ({
   >({ data: undefined })
   const [fetchStatus, setFetchStatus] =
     useState<SharedDriveFolderReturn['fetchStatus']>('loading')
+  const [lastUpdate, setLastUpdate] = useState<number | null>(null)
   const [nextCursor, setNextCursor] = useState<string | null>(null)
   const nextCursorRef = useRef<string | null>(null)
   const isFetchingMore = useRef(false)
@@ -57,6 +62,14 @@ const useSharedDriveFolder = ({
     () => paginatedStatById(client, driveId),
     [client, driveId]
   )
+
+  // Forget the previous folder's load when navigating to a different folder so
+  // its first load shows the skeleton. Within the same folder lastUpdate is
+  // kept, so an in-folder refetch (realtime, or a re-run of the effect below)
+  // never drops the view back to the skeleton.
+  useEffect(() => {
+    setLastUpdate(null)
+  }, [driveId, folderId])
 
   useEffect(() => {
     const fetchSharedDriveFolder = async (
@@ -96,6 +109,7 @@ const useSharedDriveFolder = ({
         if (fetchGeneration.current === currentGeneration) {
           setSharedDriveResult({ included: allIncluded })
           setFetchStatus('loaded')
+          setLastUpdate(Date.now())
           nextCursorRef.current = cursor
           setNextCursor(cursor)
           loadedPagesCount.current = pagesToLoad
@@ -180,6 +194,7 @@ const useSharedDriveFolder = ({
     sharedDriveQuery,
     sharedDriveResult,
     fetchStatus,
+    lastUpdate,
     hasMore,
     fetchMore
   }

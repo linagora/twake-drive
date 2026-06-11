@@ -64,7 +64,7 @@ const SharedDriveFolderView = () => {
   const { isFabDisplayed, setIsFabDisplayed } = useContext(FabContext)
   const { isSelectionBarVisible } = useSelectionContext()
 
-  const { sharedDriveResult, fetchStatus, hasMore, fetchMore } =
+  const { sharedDriveResult, fetchStatus, lastUpdate, hasMore, fetchMore } =
     useSharedDriveFolder({
       driveId,
       folderId
@@ -73,6 +73,7 @@ const SharedDriveFolderView = () => {
   const queryResults = [
     {
       fetchStatus,
+      lastUpdate,
       data: sharedDriveResult.included ?? [],
       hasMore,
       fetchMore
