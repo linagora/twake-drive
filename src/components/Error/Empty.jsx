@@ -2,7 +2,6 @@ import cx from 'classnames'
 import React from 'react'
 import { useLocation } from 'react-router-dom'
 
-import flag from 'cozy-flags'
 import Empty from 'cozy-ui/transpiled/react/Empty'
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
@@ -16,7 +15,6 @@ import { TRASH_DIR_ID } from '@/constants/config'
 import { useCurrentFolderId, useDisplayedFolder } from '@/hooks'
 import { useSharedDriveFolder } from '@/modules/shareddrives/hooks/useSharedDriveFolder'
 import UploadButton from '@/modules/upload/UploadButton'
-import CreateSharedDriveButton from '@/modules/views/SharedDrive/CreateSharedDriveButton'
 
 const EmptyCanvas = ({
   type,
@@ -31,19 +29,16 @@ const EmptyCanvas = ({
   const folderId = useCurrentFolderId()
   const { displayedFolder } = useDisplayedFolder()
   const { sharedDriveResult } = useSharedDriveFolder({ driveId, folderId })
-  const isSharedDriveEnabled = flag('drive.shared-drive.enabled')
   const displayedSharedFolder = sharedDriveResult?.data
 
   const IconToShow = type === 'trash' ? TrashIllustration : FolderEmptyIllu
-  const showSharedDriveLayout = type === 'sharing' && isSharedDriveEnabled
-  const showUploadLayout =
-    type === 'drive' || (type === 'sharing' && !isSharedDriveEnabled)
+  const showUploadLayout = type === 'drive'
   const title = localeKey ? t(`empty.${type}_title`) : undefined
   const text =
     (hasTextMobileVersion && !isDesktop && t(`empty.mobile_text`)) ||
     (localeKey && t(`empty.${localeKey}_text`)) ||
     (showUploadLayout && t('empty.text')) ||
-    (type === 'sharing' && isSharedDriveEnabled && t('empty.shared-drive_text'))
+    (type === 'sharing' && t('empty.sharing_text'))
 
   return (
     <Empty
@@ -69,14 +64,6 @@ const EmptyCanvas = ({
                 label={t('toolbar.menu_upload')}
                 displayedFolder={displayedSharedFolder || displayedFolder}
                 onUploaded={onUploaded}
-              />
-            </span>
-          )}
-          {showSharedDriveLayout && (
-            <span className="u-db u-mt-1">
-              <CreateSharedDriveButton
-                variant="secondary"
-                label={t('button.create')}
               />
             </span>
           )}
