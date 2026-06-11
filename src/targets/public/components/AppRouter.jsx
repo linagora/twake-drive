@@ -21,14 +21,12 @@ import OnlyOfficeView from '@/modules/views/OnlyOffice'
 import OnlyOfficeCreateView from '@/modules/views/OnlyOffice/Create'
 import OnlyOfficePaywallView from '@/modules/views/OnlyOffice/OnlyOfficePaywallView'
 import { isOfficeEnabled } from '@/modules/views/OnlyOffice/helpers'
+import { isPdfEditorEnabled } from '@/modules/views/Pdf/helpers'
+import { getPublicPdfRoutes } from '@/modules/views/Pdf/routes'
 import { PublicFileViewer } from '@/modules/views/Public/PublicFileViewer'
 import { PublicFolderView } from '@/modules/views/Public/PublicFolderView'
 
 // Group the flag-gated editor routes so the AppRouter switch stays small.
-// The PDF editor (EmbedPDF + its Pdfium wasm) is intentionally left out of the
-// public build: shared links only need to view PDFs, which cozy-viewer already
-// does, and bundling the editor pushed the public target over the registry's
-// 20 MB limit. PDF editing stays available in the logged-in app.
 const getPublicEditorRoutes = ({ isReadOnly, isExcalidrawShared, data }) => (
   <>
     {isExcalidrawEnabled() &&
@@ -37,6 +35,7 @@ const getPublicEditorRoutes = ({ isReadOnly, isExcalidrawShared, data }) => (
         isShared: isExcalidrawShared,
         data
       })}
+    {isPdfEditorEnabled() && getPublicPdfRoutes({ isReadOnly })}
   </>
 )
 

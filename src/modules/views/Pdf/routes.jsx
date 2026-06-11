@@ -1,7 +1,18 @@
-import React from 'react'
+import React, { Suspense, lazy } from 'react'
 import { Navigate, Route } from 'react-router-dom'
 
-import PdfView from '@/modules/views/Pdf'
+import Loader from '@/components/Loader'
+
+// The editor pulls in @embedpdf/react-pdf-viewer (several MB of JS plus the
+// Pdfium wasm), so it must stay out of the entry chunks: only visitors who
+// actually open a /pdf route should download it.
+const PdfView = lazy(() => import('@/modules/views/Pdf'))
+
+const LazyPdfView = props => (
+  <Suspense fallback={<Loader />}>
+    <PdfView {...props} />
+  </Suspense>
+)
 
 // The route fragments are returned from plain functions (not components) so that
 // React Router's createRoutesFromChildren still sees the <Route> elements
@@ -14,8 +25,8 @@ import PdfView from '@/modules/views/Pdf'
  */
 export const getPdfRoutes = () => (
   <>
-    <Route path="pdf/:fileId" element={<PdfView />} />
-    <Route path="pdf/:driveId/:fileId" element={<PdfView />} />
+    <Route path="pdf/:fileId" element={<LazyPdfView />} />
+    <Route path="pdf/:driveId/:fileId" element={<LazyPdfView />} />
   </>
 )
 
@@ -33,7 +44,7 @@ export const getPublicPdfRoutes = ({ isReadOnly = false } = {}) => (
       // The editor is for editing only: a read-only share must not reach it,
       // even by typing the URL. Send those visitors back to the public viewer.
       element={
-        isReadOnly ? <Navigate to="/" replace /> : <PdfView isPublic={true} />
+        isReadOnly ? <Navigate to="/" replace /> : <LazyPdfView isPublic />
       }
     />
   </>

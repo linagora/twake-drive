@@ -25,6 +25,7 @@ import {
   isOfficeEnabled,
   makeOnlyOfficeFileRoute
 } from '@/modules/views/OnlyOffice/helpers'
+import { isPdfEditorEnabled, makePdfRoute } from '@/modules/views/Pdf/helpers'
 
 const LightFileViewer = ({ files, isPublic }) => {
   const sharingInfos = useSharingInfos()
@@ -40,6 +41,18 @@ const LightFileViewer = ({ files, isPublic }) => {
         fromPathname: pathname
       })
       navigate(route)
+    },
+    [navigate, pathname]
+  )
+
+  const pdfOpener = useCallback(
+    file => {
+      navigate(
+        makePdfRoute(file.id, {
+          fromPathname: pathname,
+          fromPublicFolder: true
+        })
+      )
     },
     [navigate, pathname]
   )
@@ -79,10 +92,9 @@ const LightFileViewer = ({ files, isPublic }) => {
               isEnabled: isOfficeEnabled(isDesktop),
               opener: onlyOfficeOpener
             },
-            // The PDF editor is not shipped in the public build (see
-            // targets/public AppRouter), so shared links only ever view PDFs.
             PdfViewer: {
-              isPdfEditorEnabled: false
+              isPdfEditorEnabled: isPdfEditorEnabled(),
+              opener: pdfOpener
             },
             toolbarProps: {
               showToolbar: isDesktop,
