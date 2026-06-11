@@ -29,6 +29,16 @@ const excalidrawAssets = [
 ]
 
 const mergedConfig = mergeRsbuildConfig(config, {
+  // Rsbuild enables dev.lazyCompilation by default, which defers compiling async
+  // chunks until the browser requests them from the dev server's on-demand
+  // compile endpoint. That endpoint lives on the rsbuild dev server, but the app
+  // is served by cozy-stack on a different origin, so the request hits cozy-stack
+  // and 404s. The EmbedPDF (Pdfium) engine the PDF editor loads as an async chunk
+  // then never finishes initializing and the editor hangs. Disable it so chunks
+  // compile eagerly; HMR is unaffected.
+  dev: {
+    lazyCompilation: false
+  },
   environments: {
     main: {
       output: {

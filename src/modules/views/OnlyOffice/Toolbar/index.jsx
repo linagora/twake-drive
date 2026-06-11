@@ -12,11 +12,6 @@ import { makeActions } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import { useI18n } from 'twake-i18n'
 
-import BackButton from '@/components/EditorToolbar/BackButton'
-import FileName from '@/components/EditorToolbar/FileName'
-import HomeIcon from '@/components/EditorToolbar/HomeIcon'
-import HomeLinker from '@/components/EditorToolbar/HomeLinker'
-import Separator from '@/components/EditorToolbar/Separator'
 import Sharing from '@/components/EditorToolbar/Sharing'
 import { useRedirectLink } from '@/hooks/useRedirectLink'
 import PublicToolbarMoreMenu from '@/modules/public/PublicToolbarMoreMenu'
@@ -25,6 +20,7 @@ import EditButton from '@/modules/views/OnlyOffice/Toolbar/EditButton'
 import FileIcon from '@/modules/views/OnlyOffice/Toolbar/FileIcon'
 import SummarizeByAIButtonWrapper from '@/modules/views/OnlyOffice/Toolbar/SummarizeByAIButtonWrapper'
 import { isOfficeEditingEnabled } from '@/modules/views/OnlyOffice/helpers'
+import EditorTitleStart from '@/modules/views/editor/EditorTitleStart'
 import { buildFileOrFolderByIdQuery, buildFileWhereByIdQuery } from '@/queries'
 
 const Toolbar = ({ sharingInfos }) => {
@@ -94,23 +90,14 @@ const Toolbar = ({ sharingInfos }) => {
 
   return (
     <>
-      <div className="u-flex u-flex-items-center u-flex-grow-1 u-ellipsis">
-        {!isMobile && (
-          <>
-            {isPublic ? (
-              <HomeIcon />
-            ) : (
-              <HomeLinker>
-                <HomeIcon />
-              </HomeLinker>
-            )}
-            <Separator />
-          </>
-        )}
-        {showBackButton && <BackButton onClick={handleOnClick} />}
-        {!isMobile && file.class && <FileIcon fileClass={file.class} />}
-        <FileName file={file} isPublic={isPublic} isReadOnly={isReadOnly} />
-      </div>
+      <EditorTitleStart
+        file={file}
+        icon={file.class && <FileIcon fileClass={file.class} />}
+        isPublic={isPublic}
+        isReadOnly={isReadOnly}
+        canRedirect={showBackButton}
+        onBack={handleOnClick}
+      />
       {showSharingLinkButton && (
         <OpenSharingLinkButton
           link={link}

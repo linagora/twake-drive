@@ -7,7 +7,7 @@ import React, { useEffect } from 'react'
 
 import { useCozyTheme } from 'cozy-ui-plus/dist/providers/CozyTheme'
 
-import Loader from '@/modules/views/Excalidraw/Loader'
+import Loader from '@/components/Loader'
 // Imported after Excalidraw's stylesheet so our overrides win the cascade.
 import '@/modules/views/Excalidraw/excalidrawOverrides.css'
 import { useSceneSync } from '@/modules/views/Excalidraw/useSceneSync'

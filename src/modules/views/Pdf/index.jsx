@@ -4,9 +4,9 @@ import { Navigate, useParams } from 'react-router-dom'
 import { useSharingContext } from 'cozy-sharing'
 import Dialog from 'cozy-ui/transpiled/react/Dialog'
 
+import Loader from '@/components/Loader'
 import useHead from '@/components/useHead'
 import Editor from '@/modules/views/Pdf/Editor'
-import Loader from '@/modules/views/Pdf/Loader'
 
 const Pdf = ({ isPublic = false, isReadOnly = false }) => {
   const { fileId, driveId } = useParams()

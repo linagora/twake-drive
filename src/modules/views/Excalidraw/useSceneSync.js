@@ -9,6 +9,8 @@ import {
   isExcalidrawScene,
   makeEmptyScene
 } from '@/modules/views/Excalidraw/helpers'
+import { updateFileBinary } from '@/modules/views/editor/helpers'
+import { useSaveOnHideAndUnmount } from '@/modules/views/editor/useSaveOnHideAndUnmount'
 
 const DEFAULT_INTERVAL_MS = 10000
 
@@ -26,15 +28,6 @@ const readSceneFromBinary = async (client, fileId, driveId) => {
   const scene = text ? JSON.parse(text) : makeEmptyScene()
   return isExcalidrawScene(scene) ? scene : makeEmptyScene()
 }
-
-const writeSceneToBinary = (client, file, content) =>
-  client
-    .collection('io.cozy.files', file.driveId ? { driveId: file.driveId } : {})
-    .updateFile(content, {
-      fileId: file._id,
-      name: file.name,
-      contentType: EXCALIDRAW_MIME
-    })
 
 // Cheap change signal: element version + persisted appState + the set of embedded
 // file ids (so adding/removing an image is detected) — without serializing the
@@ -79,17 +72,11 @@ const useAutosave = (save, intervalMs) => {
     }
   }, [save])
 
+  useSaveOnHideAndUnmount(flush)
+
   useEffect(() => {
     const intervalId = setInterval(flush, intervalMs)
-    const handleHide = () => {
-      if (document.visibilityState === 'hidden') flush()
-    }
-    document.addEventListener('visibilitychange', handleHide)
-    return () => {
-      clearInterval(intervalId)
-      document.removeEventListener('visibilitychange', handleHide)
-      flush()
-    }
+    return () => clearInterval(intervalId)
   }, [flush, intervalMs])
 
   return { onChange, flush }
@@ -141,7 +128,7 @@ export const useSceneSync = (
   const state = useLoadedScene(client, file?._id, file?.driveId)
 
   const save = useCallback(
-    content => writeSceneToBinary(client, file, content),
+    content => updateFileBinary(client, file, content, EXCALIDRAW_MIME),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [client, file?._id, file?.name, file?.driveId]
   )
