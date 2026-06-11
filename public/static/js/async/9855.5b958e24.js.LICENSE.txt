@@ -1,0 +1,65 @@
+/**
+* The following wasm module is generated with `scripts/buildWasm.js` and encoded as base64.
+*
+* The source of this content is taken from the package "fonteditor-core", which contains the following metadata:
+* 
+* @author [{"name":"kekee000","email":"kekee000@gmail.com"},{"name":"junmer","email":"junmer@foxmail.com"}] 
+* @license [{"type":"MIT","url":"https://github.com/kekee000/fonteditor-core/raw/master/LICENSE"}]
+* @version 2.4.0
+
+The MIT License (MIT)
+
+Copyright (c) 2014 ecomfe
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
+/**
+* The following wasm module is generated with `scripts/buildWasm.js` and encoded as base64.
+*
+* The source of this content is taken from the package "harfbuzzjs", which contains the following metadata:
+* 
+* @author Ebrahim Byagowi <ebrahim@gnu.org> 
+* @license MIT
+* @version 0.3.6
+
+Apache license for Zephyr libc implementations (zephyr-string.c),
+emmalloc.cpp (from emscripten project) and MIT for rest of the project
+
+Copyright (c) 2019 Ebrahim Byagowi
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
