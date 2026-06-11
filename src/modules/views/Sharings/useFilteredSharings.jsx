@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 
 import flag from 'cozy-flags'
+import { useSharingContext } from 'cozy-sharing'
 
 import { SHARED_DRIVES_DIR_ID } from '@/constants/config'
 import { useTransformFolderListHasSharedDriveShortcuts } from '@/hooks/useTransformFolderListHasSharedDriveShortcuts'
@@ -11,18 +12,35 @@ const buildBaseShape = (result, hasIds) => ({
   lastFetch: hasIds ? result.lastFetch : Date.now()
 })
 
+// The Sharings section is an inbox: it lists only what was shared with the
+// current user. Anything the user owns (files, folders, shared drives) is
+// already reachable from My Drive and the shared-drive views, so it is dropped
+// here. The view gates rendering on the sharing context being loaded, and the
+// filtered ids are byDocId keys, so isOwner is authoritative when this runs;
+// the `?.` is purely defensive. A drive without an owner flag is kept, so a
+// recipient never loses a drive link to a missing signal.
+const isReceivedFile = isOwner => item => !isOwner?.(item._id ?? item.id ?? '')
+const isReceivedDrive = drive => drive.owner !== true
+
 const computeData = ({
   result,
+  isOwner,
   withoutSharedDrives,
   transformedSharedDrives,
   nonSharedDriveList
 }) => {
   if (withoutSharedDrives) {
     return (
-      result.data?.filter(item => item.dir_id !== SHARED_DRIVES_DIR_ID) || []
+      result.data?.filter(
+        item =>
+          item.dir_id !== SHARED_DRIVES_DIR_ID && isReceivedFile(isOwner)(item)
+      ) || []
     )
   }
-  return [...transformedSharedDrives, ...nonSharedDriveList]
+  return [
+    ...transformedSharedDrives.filter(isReceivedDrive),
+    ...nonSharedDriveList.filter(isReceivedFile(isOwner))
+  ]
 }
 
 /**
@@ -41,6 +59,8 @@ export const useFilteredSharings = ({ result, sharedDocumentIds }) => {
   const withoutSharedDrives =
     !isEnabledSharedDrive && !isEnabledFederatedSharedFolder
 
+  const { isOwner } = useSharingContext()
+
   const {
     sharedDrives: transformedSharedDrives,
     nonSharedDriveList,
@@ -51,12 +71,14 @@ export const useFilteredSharings = ({ result, sharedDocumentIds }) => {
     const hasIds = sharedDocumentIds?.length > 0
     const data = computeData({
       result,
+      isOwner,
       withoutSharedDrives,
       transformedSharedDrives,
       nonSharedDriveList
     })
     return { ...buildBaseShape(result, hasIds), data, count: data.length }
   }, [
+    isOwner,
     withoutSharedDrives,
     transformedSharedDrives,
     nonSharedDriveList,

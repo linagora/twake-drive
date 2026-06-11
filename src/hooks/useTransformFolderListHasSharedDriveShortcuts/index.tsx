@@ -16,11 +16,13 @@ import type {
 interface SharedDrive {
   id: string
   drive_root_type?: DriveRootType
+  owner?: boolean
   rules: SharingRule[]
 }
 
 interface TransformedSharedDrive extends SharedDriveFile {
   driveId: string
+  owner?: boolean
 }
 
 interface UseTransformFolderListReturn {
@@ -99,6 +101,7 @@ const useTransformFolderListHasSharedDriveShortcuts = (
             {
               ...fileInSharingSection,
               driveId: sharing.id,
+              owner: sharing.owner,
               ...(isFileDriveRoot
                 ? {
                     ...fileMetadata,
@@ -114,6 +117,7 @@ const useTransformFolderListHasSharedDriveShortcuts = (
             _id: rootId,
             id: rootId,
             _type: 'io.cozy.files' as const,
+            owner: sharing.owner,
             path: `/Drives/${driveName}`,
             ...sharedDriveData,
             attributes: sharedDriveData
