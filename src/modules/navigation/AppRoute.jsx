@@ -12,6 +12,7 @@ import FilesViewerDrive from '../views/Drive/FilesViewerDrive'
 import { getExcalidrawRoutes } from '../views/Excalidraw/routes'
 import OnlyOfficePaywallView from '../views/OnlyOffice/OnlyOfficePaywallView'
 import { getOnlyOfficeRoutes } from '../views/OnlyOffice/routes'
+import { getPdfRoutes } from '../views/Pdf/routes'
 import RecentView from '../views/Recent'
 import FilesViewerRecent from '../views/Recent/FilesViewerRecent'
 import FilesViewerSharedDrive from '../views/SharedDrive/FilesViewerSharedDrive'
@@ -250,6 +251,8 @@ const AppRoute = () => (
       {getOnlyOfficeRoutes()}
 
       {flag('drive.excalidraw.enabled') && getExcalidrawRoutes()}
+
+      {flag('drive.pdf-editor.enabled') && getPdfRoutes()}
 
       <Route path="file/:fileId" element={<FileOpenerExternal />} />
 
