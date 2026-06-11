@@ -1,5 +1,5 @@
-import React, { useMemo, useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import React, { useMemo, useEffect, useState, useCallback } from 'react'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 
 import Viewer, {
   FooterActionButtons,
@@ -9,12 +9,26 @@ import Viewer, {
 import { FilesViewerLoading } from '@/components/FilesViewerLoading'
 import useHead from '@/components/useHead'
 import { useCurrentFolderId } from '@/hooks'
+import { isPdfEditorEnabled, makePdfRoute } from '@/modules/views/Pdf/helpers'
 import usePublicFilesQuery from '@/modules/views/Public/usePublicFilesQuery'
 
 const PublicFileViewer = () => {
   const { fileId } = useParams()
   const navigate = useNavigate()
+  const { pathname } = useLocation()
   useHead()
+
+  const pdfOpener = useCallback(
+    file => {
+      navigate(
+        makePdfRoute(file.id, {
+          fromPathname: pathname,
+          fromPublicFolder: true
+        })
+      )
+    },
+    [navigate, pathname]
+  )
 
   const [fetchingMore, setFetchingMore] = useState(false)
 
@@ -89,10 +103,9 @@ const PublicFileViewer = () => {
       onChangeRequest={handleChange}
       onCloseRequest={handleClose}
       componentsProps={{
-        // The PDF editor is not shipped in the public build (see
-        // targets/public AppRouter), so shared links only ever view PDFs.
         PdfViewer: {
-          isPdfEditorEnabled: false
+          isPdfEditorEnabled: isPdfEditorEnabled(),
+          opener: pdfOpener
         },
         toolbarProps: {
           hideSummarizeBtn: true

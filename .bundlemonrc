@@ -8,10 +8,19 @@
       "path": "static/js/<chunkId>.<hash>.js"
     },
     {
+      "path": "static/js/async/<chunkId>.<hash>.js"
+    },
+    {
       "path": "static/js/cozy.<hash>.js"
     },
     {
       "path": "static/js/main.<hash>.js"
+    },
+    {
+      "path": "static/js/public.<hash>.js"
+    },
+    {
+      "path": "static/js/intents.<hash>.js"
     },
     {
       "path": "static/js/lib-react.<hash>.js"
@@ -20,34 +29,19 @@
       "path": "static/js/lib-router.<hash>.js"
     },
     {
+      "path": "static/js/lib-polyfill.<hash>.js"
+    },
+    {
       "path": "static/css/cozy.<hash>.css"
     },
     {
       "path": "static/css/main.<hash>.css"
     },
     {
-      "path": "public/<hash>.js"
+      "path": "static/css/public.<hash>.css"
     },
     {
-      "path": "public/static/js/<chunkId>.<hash>.js"
-    },
-    {
-      "path": "public/static/js/public.<hash>.js"
-    },
-    {
-      "path": "public/static/js/cozy.<hash>.js"
-    },
-    {
-      "path": "public/static/js/lib-react.<hash>.js"
-    },
-    {
-      "path": "public/static/js/lib-router.<hash>.js"
-    },
-    {
-      "path": "public/static/css/cozy.<hash>.css"
-    },
-    {
-      "path": "public/static/css/public.<hash>.css"
+      "path": "static/resource/<hash>.js"
     },
     {
       "path": "services/dacc.js"
@@ -56,10 +50,13 @@
       "path": "services/qualificationMigration.js"
     },
     {
-      "path": "<hash>.js"
+      "path": "main/index.html"
     },
     {
-      "path": "index.html"
+      "path": "public/index.html"
+    },
+    {
+      "path": "intents/index.html"
     },
     {
       "path": "assets/manifest.json"
