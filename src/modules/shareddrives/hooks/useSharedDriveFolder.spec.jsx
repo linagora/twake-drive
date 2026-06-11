@@ -83,6 +83,22 @@ describe('useSharedDriveFolder', () => {
     expect(result.current.hasMore).toBe(false)
   })
 
+  it('exposes a lastUpdate timestamp once data has loaded', async () => {
+    const statByIdMock = jest.fn().mockResolvedValue({
+      included: mockData,
+      links: {}
+    })
+    const mockClient = makeMockClient(statByIdMock)
+
+    const { result } = setup(mockClient)
+
+    expect(result.current.lastUpdate).toBeNull()
+
+    await waitFor(() => {
+      expect(result.current.lastUpdate).toEqual(expect.any(Number))
+    })
+  })
+
   it('should indicate when there is more data to fetch', async () => {
     const cursor = 'next-page-cursor'
     const statByIdMock = jest.fn().mockResolvedValue({
