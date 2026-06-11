@@ -61,6 +61,7 @@ describe('processNextFile function', () => {
     queueCompletedCallbackSpy.mockClear()
     CozyFile.getFullpath.mockReset()
     CozyFile.getFullpath.mockResolvedValue('/my-dir/my-doc.odt')
+    logger.error = jest.fn()
   })
 
   const startProcessQueue = (
@@ -277,7 +278,6 @@ describe('processNextFile function', () => {
   })
 
   it('should fail instead of waiting for a modal when conflict stat fails', async () => {
-    logger.error = jest.fn()
     createFileSpy.mockRejectedValueOnce({ status: 409 })
     statByPathSpy.mockRejectedValueOnce({ status: 500 })
 
@@ -352,11 +352,11 @@ describe('processNextFile function', () => {
       .mockRejectedValueOnce({ status: 409 })
       .mockImplementationOnce(() => secondUpload.promise)
       .mockResolvedValueOnce({
-        data: { _id: 'second-renamed-id', name: 'second-doc_1.odt' }
+        data: { _id: 'second-renamed-id', name: 'second-doc (1).odt' }
       })
       .mockRejectedValueOnce({ status: 409 })
       .mockResolvedValueOnce({
-        data: { _id: 'first-renamed-id', name: 'my-doc_1.odt' }
+        data: { _id: 'first-renamed-id', name: 'my-doc (1).odt' }
       })
     statByPathSpy
       .mockResolvedValueOnce({
@@ -403,18 +403,18 @@ describe('processNextFile function', () => {
     expect(onUploadConflict).toHaveBeenCalledTimes(1)
     expect(createFileSpy).toHaveBeenNthCalledWith(3, secondFile, {
       dirId: 'my-dir',
-      name: 'second-doc_1.odt',
+      name: 'second-doc (1).odt',
       onUploadProgress: expect.any(Function)
     })
     expect(runner.getState().upload.queue).toEqual([
       expect.objectContaining({
         fileId: 'batch-1_my-doc.odt',
-        finalName: 'my-doc_1.odt',
+        finalName: 'my-doc (1).odt',
         status: 'created'
       }),
       expect.objectContaining({
         fileId: 'batch-1_second-doc.odt',
-        finalName: 'second-doc_1.odt',
+        finalName: 'second-doc (1).odt',
         status: 'created'
       })
     ])
@@ -480,7 +480,6 @@ describe('processNextFile function', () => {
   })
 
   it('should fail instead of waiting for a modal when replace returns a raw 409', async () => {
-    logger.error = jest.fn()
     createFileSpy.mockRejectedValueOnce({ status: 409 })
     statByPathSpy.mockResolvedValueOnce({
       data: { type: 'file', id: 'existing-file-id', name: 'my-doc.odt' }
@@ -516,7 +515,6 @@ describe('processNextFile function', () => {
   })
 
   it('should fail instead of waiting for a modal when the existing item type is unsupported', async () => {
-    logger.error = jest.fn()
     createFileSpy.mockRejectedValueOnce({ status: 409 })
     statByPathSpy.mockResolvedValueOnce({
       data: {
@@ -558,7 +556,7 @@ describe('processNextFile function', () => {
       .mockRejectedValueOnce({ status: 409 })
       .mockRejectedValueOnce({ status: 409 })
       .mockResolvedValueOnce({
-        data: { _id: 'renamed-file-id', name: 'my-doc_2.odt' }
+        data: { _id: 'renamed-file-id', name: 'my-doc (2).odt' }
       })
     statByPathSpy.mockResolvedValueOnce({
       data: { type: 'file', id: 'existing-file-id', name: 'my-doc.odt' }
@@ -579,23 +577,23 @@ describe('processNextFile function', () => {
       {
         type: 'RECEIVE_UPLOAD_RENAMED',
         fileId: 'batch-1_docs/my-doc.odt',
-        relativePath: 'docs/my-doc_1.odt'
+        relativePath: 'docs/my-doc (1).odt'
       },
       {
         type: 'RECEIVE_UPLOAD_RENAMED',
         fileId: 'batch-1_docs/my-doc.odt',
-        relativePath: 'docs/my-doc_2.odt'
+        relativePath: 'docs/my-doc (2).odt'
       }
     ])
     expect(createFileSpy).toHaveBeenNthCalledWith(3, file, {
       dirId: 'docs-dir-id',
-      name: 'my-doc_2.odt',
+      name: 'my-doc (2).odt',
       onUploadProgress: expect.any(Function)
     })
     expect(state.upload.queue[0]).toMatchObject({
       status: 'created',
-      relativePath: 'docs/my-doc_2.odt',
-      finalName: 'my-doc_2.odt'
+      relativePath: 'docs/my-doc (2).odt',
+      finalName: 'my-doc (2).odt'
     })
   })
 
@@ -920,11 +918,11 @@ describe('queue reducer', () => {
     const result = queue(state, {
       type: 'RECEIVE_UPLOAD_RENAMED',
       fileId: 'doc2.odt',
-      finalName: 'doc2_1.odt'
+      finalName: 'doc2 (1).odt'
     })
     expect(result[1]).toMatchObject({
       fileId: 'doc2.odt',
-      finalName: 'doc2_1.odt'
+      finalName: 'doc2 (1).odt'
     })
     expect(result[1]).not.toHaveProperty('relativePath')
   })
@@ -939,11 +937,11 @@ describe('queue reducer', () => {
     const result = queue(folderState, {
       type: 'RECEIVE_UPLOAD_RENAMED',
       fileId: 'batch-1_docs/doc2.odt',
-      relativePath: 'docs/doc2_1.odt'
+      relativePath: 'docs/doc2 (1).odt'
     })
     expect(result[0]).toMatchObject({
       fileId: 'batch-1_docs/doc2.odt',
-      relativePath: 'docs/doc2_1.odt'
+      relativePath: 'docs/doc2 (1).odt'
     })
   })
 

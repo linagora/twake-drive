@@ -1,6 +1,5 @@
 import {
   createFolderWithRenameOnFileCollision,
-  generateUploadConflictName,
   MAX_UPLOAD_CONFLICT_RENAME_ATTEMPTS,
   replaceConflictingFile,
   resolveFileConflict,
@@ -38,49 +37,6 @@ describe('conflict resolution service', () => {
     logger.error = jest.fn()
   })
 
-  describe('generateUploadConflictName', () => {
-    it('adds the suffix before a file extension', () => {
-      expect(generateUploadConflictName('hello.docx')).toBe('hello_1.docx')
-    })
-
-    it('keeps only the last extension segment at the end', () => {
-      expect(generateUploadConflictName('archive.tar.gz')).toBe(
-        'archive.tar_1.gz'
-      )
-    })
-
-    it('supports files without extensions', () => {
-      expect(generateUploadConflictName('README')).toBe('README_1')
-    })
-
-    it('supports hidden files without creating an empty basename', () => {
-      expect(generateUploadConflictName('.env')).toBe('.env_1')
-    })
-
-    it('increments an existing Cozy client conflict suffix', () => {
-      expect(generateUploadConflictName('myfile_1.txt')).toBe('myfile_2.txt')
-    })
-
-    it('increments only trailing numeric Cozy client suffixes', () => {
-      expect(generateUploadConflictName('report_2024.txt')).toBe(
-        'report_2025.txt'
-      )
-      expect(generateUploadConflictName('report-2024-final.txt')).toBe(
-        'report-2024-final_1.txt'
-      )
-    })
-
-    it('supports directory names', () => {
-      expect(generateUploadConflictName('Photos', 'directory')).toBe('Photos_1')
-    })
-
-    it('increments an existing directory suffix', () => {
-      expect(generateUploadConflictName('Photos_1', 'directory')).toBe(
-        'Photos_2'
-      )
-    })
-  })
-
   describe('replaceConflictingFile', () => {
     it('updates the existing file and keeps versioning semantics', async () => {
       const file = new File(['content'], 'hello.docx')
@@ -115,7 +71,7 @@ describe('conflict resolution service', () => {
       const file = new File(['content'], 'hello.docx')
       const onNameResolved = jest.fn()
       createFileSpy.mockResolvedValueOnce({
-        data: { id: 'new-file-id', name: 'hello_1.docx' }
+        data: { id: 'new-file-id', name: 'hello (1).docx' }
       })
 
       const result = await uploadWithRenamedFile({
@@ -127,16 +83,16 @@ describe('conflict resolution service', () => {
         onNameResolved
       })
 
-      expect(onNameResolved).toHaveBeenCalledWith('hello_1.docx')
+      expect(onNameResolved).toHaveBeenCalledWith('hello (1).docx')
       expect(createFileSpy).toHaveBeenCalledWith(file, {
         dirId: 'parent-dir-id',
-        name: 'hello_1.docx',
+        name: 'hello (1).docx',
         onUploadProgress: expect.any(Function)
       })
       expect(result).toEqual({
-        data: { id: 'new-file-id', name: 'hello_1.docx' },
+        data: { id: 'new-file-id', name: 'hello (1).docx' },
         isUpdate: false,
-        finalName: 'hello_1.docx'
+        finalName: 'hello (1).docx'
       })
     })
 
@@ -146,7 +102,7 @@ describe('conflict resolution service', () => {
       createFileSpy
         .mockRejectedValueOnce({ status: 409 })
         .mockResolvedValueOnce({
-          data: { id: 'new-file-id', name: 'hello_2.docx' }
+          data: { id: 'new-file-id', name: 'hello (2).docx' }
         })
 
       const result = await uploadWithRenamedFile({
@@ -158,17 +114,17 @@ describe('conflict resolution service', () => {
         onNameResolved
       })
 
-      expect(onNameResolved).toHaveBeenNthCalledWith(1, 'hello_1.docx')
-      expect(onNameResolved).toHaveBeenNthCalledWith(2, 'hello_2.docx')
+      expect(onNameResolved).toHaveBeenNthCalledWith(1, 'hello (1).docx')
+      expect(onNameResolved).toHaveBeenNthCalledWith(2, 'hello (2).docx')
       expect(createFileSpy).toHaveBeenNthCalledWith(1, file, {
         dirId: 'parent-dir-id',
-        name: 'hello_1.docx'
+        name: 'hello (1).docx'
       })
       expect(createFileSpy).toHaveBeenNthCalledWith(2, file, {
         dirId: 'parent-dir-id',
-        name: 'hello_2.docx'
+        name: 'hello (2).docx'
       })
-      expect(result.finalName).toBe('hello_2.docx')
+      expect(result.finalName).toBe('hello (2).docx')
     })
 
     it('fails instead of retrying forever when every generated file name conflicts', async () => {
@@ -190,7 +146,7 @@ describe('conflict resolution service', () => {
       )
       expect(createFileSpy).toHaveBeenLastCalledWith(file, {
         dirId: 'parent-dir-id',
-        name: 'hello_1000.docx'
+        name: 'hello (1000).docx'
       })
       expect(logger.warn).toHaveBeenLastCalledWith(
         'Upload conflict rename for file still retrying after 1000 attempts'
@@ -296,7 +252,7 @@ describe('conflict resolution service', () => {
         data: { id: 'existing-file-id', type: 'file', name: 'hello.docx' }
       })
       createFileSpy.mockResolvedValueOnce({
-        data: { id: 'new-file-id', name: 'hello_1.docx' }
+        data: { id: 'new-file-id', name: 'hello (1).docx' }
       })
 
       const result = await resolveFileConflict({
@@ -310,12 +266,12 @@ describe('conflict resolution service', () => {
 
       expect(createFileSpy).toHaveBeenCalledWith(file, {
         dirId: 'parent-dir-id',
-        name: 'hello_1.docx'
+        name: 'hello (1).docx'
       })
       expect(result).toEqual({
-        data: { id: 'new-file-id', name: 'hello_1.docx' },
+        data: { id: 'new-file-id', name: 'hello (1).docx' },
         isUpdate: false,
-        finalName: 'hello_1.docx'
+        finalName: 'hello (1).docx'
       })
     })
 
@@ -352,7 +308,7 @@ describe('conflict resolution service', () => {
         }
       })
       createFileSpy.mockResolvedValueOnce({
-        data: { id: 'new-file-id', name: 'hello_1.docx' }
+        data: { id: 'new-file-id', name: 'hello (1).docx' }
       })
 
       const result = await resolveFileConflict({
@@ -363,12 +319,12 @@ describe('conflict resolution service', () => {
 
       expect(createFileSpy).toHaveBeenCalledWith(file, {
         dirId: 'parent-dir-id',
-        name: 'hello_1.docx'
+        name: 'hello (1).docx'
       })
       expect(result).toEqual({
-        data: { id: 'new-file-id', name: 'hello_1.docx' },
+        data: { id: 'new-file-id', name: 'hello (1).docx' },
         isUpdate: false,
-        finalName: 'hello_1.docx'
+        finalName: 'hello (1).docx'
       })
     })
   })
@@ -401,7 +357,7 @@ describe('conflict resolution service', () => {
           data: {
             id: 'created-folder-id',
             type: 'directory',
-            name: 'Photos_1'
+            name: 'Photos (1)'
           }
         })
       CozyFile.getFullpath.mockResolvedValueOnce('/parent/Photos')
@@ -416,12 +372,16 @@ describe('conflict resolution service', () => {
       })
 
       expect(createDirectorySpy).toHaveBeenNthCalledWith(2, {
-        name: 'Photos_1',
+        name: 'Photos (1)',
         dirId: 'parent-dir-id'
       })
       expect(result).toEqual({
-        data: { id: 'created-folder-id', type: 'directory', name: 'Photos_1' },
-        finalName: 'Photos_1',
+        data: {
+          id: 'created-folder-id',
+          type: 'directory',
+          name: 'Photos (1)'
+        },
+        finalName: 'Photos (1)',
         reusedExisting: false
       })
     })
@@ -449,7 +409,7 @@ describe('conflict resolution service', () => {
         MAX_UPLOAD_CONFLICT_RENAME_ATTEMPTS + 1
       )
       expect(createDirectorySpy).toHaveBeenLastCalledWith({
-        name: 'Photos_1000',
+        name: 'Photos (1000)',
         dirId: 'parent-dir-id'
       })
       expect(logger.warn).toHaveBeenLastCalledWith(
