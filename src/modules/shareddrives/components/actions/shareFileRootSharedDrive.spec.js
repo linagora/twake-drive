@@ -24,7 +24,7 @@ describe('shareFileRootSharedDrive', () => {
     expect(makeAction({ isOwner }).displayCondition(docs)).toBe(expected)
   })
 
-  it('navigates to the file-root shared drive share route', () => {
+  it('layers the share modal over the sharings list', () => {
     makeAction({ pathname: '/sharings' }).action([
       {
         _id: 'file-id',
@@ -34,7 +34,7 @@ describe('shareFileRootSharedDrive', () => {
     ])
 
     expect(navigate).toHaveBeenCalledWith(
-      '/sharings/shareddrive/drive-id/file/file-id/share'
+      '/sharings/shareddrive/drive-id/file-id/share'
     )
   })
 

@@ -3,8 +3,7 @@ import {
   isFileRootSharedDriveShortcut,
   isResolvableFileRootSharedDriveShortcut,
   getFileRootSharePath,
-  navigateToFileRootViewer,
-  navigateToFileRootShare
+  navigateToFileRootViewer
 } from './rootFileNavigation'
 
 import { DRIVE_ROOT_TYPE } from '@/modules/shareddrives/types'
@@ -91,31 +90,5 @@ describe('navigateToFileRootViewer', () => {
     expect(navigate).toHaveBeenCalledWith('/shareddrive/drive-1/file/file-1', {
       state: { fromPathname: '' }
     })
-  })
-})
-
-describe('navigateToFileRootShare', () => {
-  it('navigates to the sharings share path when pathname is inside /sharings', () => {
-    const navigate = jest.fn()
-    navigateToFileRootShare({
-      navigate,
-      file: { _id: 'file-1', driveId: 'drive-1' },
-      pathname: '/sharings'
-    })
-    expect(navigate).toHaveBeenCalledWith(
-      '/sharings/shareddrive/drive-1/file/file-1/share'
-    )
-  })
-
-  it('navigates to the direct share path when pathname is outside /sharings', () => {
-    const navigate = jest.fn()
-    navigateToFileRootShare({
-      navigate,
-      file: { _id: 'file-1', driveId: 'drive-1' },
-      pathname: '/recent'
-    })
-    expect(navigate).toHaveBeenCalledWith(
-      '/shareddrive/drive-1/file/file-1/share'
-    )
   })
 })
