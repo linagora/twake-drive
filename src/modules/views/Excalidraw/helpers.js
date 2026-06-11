@@ -1,5 +1,7 @@
 import flag from 'cozy-flags'
 
+import { makeEditorFileRoute } from '@/modules/views/editor/helpers'
+
 export const EXCALIDRAW_EXTENSION = 'excalidraw'
 export const EXCALIDRAW_MIME = 'application/vnd.excalidraw+json'
 
@@ -21,39 +23,14 @@ export const isExcalidrawEnabled = () =>
   flag('drive.excalidraw.enabled') === true
 
 /**
- * @typedef {Object} ExcalidrawFileRouteOptions
- * @property {string} [driveId] Id of the shared drive the file belongs to
- * @property {string} [fromPathname] Hash to redirect the user when he comes back
- * @property {boolean} [fromPublicFolder] The document is opened from a public folder
- */
-
-/**
  * Builds the in-app route to open an Excalidraw file.
  *
  * @param {string} fileId - Id of the Excalidraw file
- * @param {ExcalidrawFileRouteOptions} [options] - Options
+ * @param {import('@/modules/views/editor/helpers').EditorRouteOptions} [options]
  * @returns {string} Path to the Excalidraw editor
  */
-export const makeExcalidrawFileRoute = (
-  fileId,
-  { driveId, fromPathname, fromPublicFolder = false } = {}
-) => {
-  const params = new URLSearchParams()
-  if (fromPathname) {
-    params.append('redirectLink', `drive#${fromPathname}`)
-  }
-  if (fromPublicFolder) {
-    params.append('fromPublicFolder', fromPublicFolder)
-  }
-
-  const searchParam = params.size > 0 ? `?${params.toString()}` : ''
-
-  if (driveId) {
-    return `/excalidraw/${driveId}/${fileId}${searchParam}`
-  }
-
-  return `/excalidraw/${fileId}${searchParam}`
-}
+export const makeExcalidrawFileRoute = (fileId, options) =>
+  makeEditorFileRoute('excalidraw', fileId, options)
 
 /**
  * Builds an empty, valid Excalidraw scene used as the initial content of a new

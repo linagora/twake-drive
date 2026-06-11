@@ -3,9 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useClient } from 'cozy-client'
 
 import logger from '@/lib/logger'
-import { PDF_MIME } from '@/modules/views/Pdf/helpers'
-
-const AUTOSAVE_DEBOUNCE_MS = 3000
+import { usePdfSave } from '@/modules/views/Pdf/usePdfSave'
 
 const readPdfBlobUrl = async (client, fileId, driveId) => {
   const response = await client
@@ -15,37 +13,32 @@ const readPdfBlobUrl = async (client, fileId, driveId) => {
   return URL.createObjectURL(blob)
 }
 
-const writePdfToBinary = (client, file, arrayBuffer) =>
-  client
-    .collection('io.cozy.files', file.driveId ? { driveId: file.driveId } : {})
-    .updateFile(new Blob([arrayBuffer], { type: PDF_MIME }), {
-      fileId: file._id,
-      name: file.name,
-      contentType: PDF_MIME
-    })
+// Loads the PDF binary as a blob URL for the EmbedPDF viewer, revoked on unmount.
+const usePdfBlobUrl = (client, fileId, driveId) => {
+  const [state, setState] = useState({ status: 'loading', url: null })
 
-// Pulls the current document bytes out of the EmbedPDF engine (annotations and
-// edits baked in), ready to persist.
-const exportPdf = async registry => {
-  const engine = registry.getEngine()
-  const document = registry
-    .getPlugin('document-manager')
-    ?.provides()
-    ?.getActiveDocument()
-  if (!engine || !document) return null
+  useEffect(() => {
+    let cancelled = false
+    let createdUrl = null
+    const load = async () => {
+      try {
+        const url = await readPdfBlobUrl(client, fileId, driveId)
+        createdUrl = url
+        if (cancelled) URL.revokeObjectURL(url)
+        else setState({ status: 'loaded', url })
+      } catch (error) {
+        logger.error(`Reading PDF failed: ${error}`)
+        if (!cancelled) setState({ status: 'error', url: null })
+      }
+    }
+    load()
+    return () => {
+      cancelled = true
+      if (createdUrl) URL.revokeObjectURL(createdUrl)
+    }
+  }, [client, fileId, driveId])
 
-  // Finalize pending annotation work before serializing. Deselecting flushes
-  // the annotation the user is still editing (e.g. the text of a FreeText lives
-  // in a contenteditable overlay until it loses focus) and commit() bakes all
-  // pending annotations into the PDF document. Without this, hitting Save while
-  // an annotation is still being edited exports it empty and the edit is lost.
-  const annotation = registry.getPlugin('annotation')?.provides()
-  annotation?.deselectAnnotation?.()
-  if (annotation?.commit) {
-    await annotation.commit().toPromise()
-  }
-
-  return engine.saveAsCopy(document).toPromise()
+  return state
 }
 
 /**
@@ -60,67 +53,15 @@ const exportPdf = async registry => {
  */
 export const usePdfDocument = (file, { isReadOnly = false } = {}) => {
   const client = useClient()
-  const fileId = file?._id
-  const driveId = file?.driveId
-
-  const [state, setState] = useState({ status: 'loading', url: null })
-  const [isSaving, setIsSaving] = useState(false)
-
   const registryRef = useRef(null)
-  const isDirty = useRef(false)
-  const debounceRef = useRef(null)
 
-  // Load the binary as a blob URL, revoked on unmount.
-  useEffect(() => {
-    let cancelled = false
-    let createdUrl = null
-    const load = async () => {
-      try {
-        const url = await readPdfBlobUrl(client, fileId, driveId)
-        createdUrl = url
-        if (cancelled) {
-          URL.revokeObjectURL(url)
-          return
-        }
-        setState({ status: 'loaded', url })
-      } catch (error) {
-        logger.error(`Reading PDF failed: ${error}`)
-        if (!cancelled) setState({ status: 'error', url: null })
-      }
-    }
-    load()
-    return () => {
-      cancelled = true
-      if (createdUrl) URL.revokeObjectURL(createdUrl)
-    }
-  }, [client, fileId, driveId])
-
-  const save = useCallback(async () => {
-    const registry = registryRef.current
-    if (isReadOnly || !registry || !isDirty.current) return
-    isDirty.current = false
-    setIsSaving(true)
-    try {
-      const bytes = await exportPdf(registry)
-      if (bytes) await writePdfToBinary(client, file, bytes)
-    } catch (error) {
-      isDirty.current = true
-      logger.error(`Saving PDF failed: ${error}`)
-    } finally {
-      setIsSaving(false)
-    }
-  }, [client, file, isReadOnly])
-
-  const flush = useCallback(async () => {
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-    await save()
-  }, [save])
-
-  const scheduleAutosave = useCallback(() => {
-    isDirty.current = true
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => save(), AUTOSAVE_DEBOUNCE_MS)
-  }, [save])
+  const { status, url } = usePdfBlobUrl(client, file?._id, file?.driveId)
+  const { save, flush, scheduleAutosave, isSaving } = usePdfSave({
+    client,
+    file,
+    isReadOnly,
+    registryRef
+  })
 
   // Wire the EmbedPDF registry: subscribe to annotation edits to drive autosave.
   const onReady = useCallback(
@@ -133,25 +74,5 @@ export const usePdfDocument = (file, { isReadOnly = false } = {}) => {
     [isReadOnly, scheduleAutosave]
   )
 
-  // Save on tab hide and on unmount.
-  useEffect(() => {
-    if (isReadOnly) return undefined
-    const handleHide = () => {
-      if (document.visibilityState === 'hidden') flush()
-    }
-    document.addEventListener('visibilitychange', handleHide)
-    return () => {
-      document.removeEventListener('visibilitychange', handleHide)
-      flush()
-    }
-  }, [flush, isReadOnly])
-
-  return {
-    status: state.status,
-    url: state.url,
-    onReady,
-    save,
-    flush,
-    isSaving
-  }
+  return { status, url, onReady, save, flush, isSaving }
 }

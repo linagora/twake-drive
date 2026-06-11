@@ -2,7 +2,7 @@ import { PDFViewer } from '@embedpdf/react-pdf-viewer'
 import React, { useEffect } from 'react'
 
 import Oops from '@/components/Error/Oops'
-import Loader from '@/modules/views/Pdf/Loader'
+import Loader from '@/components/Loader'
 import { usePdfDocument } from '@/modules/views/Pdf/usePdfDocument'
 
 const PdfEditor = ({ file, flushRef, isReadOnly = false, author }) => {
@@ -35,6 +35,11 @@ const PdfEditor = ({ file, flushRef, isReadOnly = false, author }) => {
       <PDFViewer
         config={{
           src: url,
+          // The file lifecycle is owned by Twake Drive (the Save button and back
+          // navigation), so opening or closing another document from inside the
+          // editor makes no sense. Disable only those two entries of EmbedPDF's
+          // document menu and keep the rest (print, export, fullscreen, etc.).
+          disabledCategories: ['document-open', 'document-close'],
           theme: { preference: 'system' },
           // Fit the whole page on open. The default 'automatic' mode scales
           // small pages up to fit the width, which looks like an auto-zoom.

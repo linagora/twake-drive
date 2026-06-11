@@ -19,8 +19,11 @@ export const makeParentFolderPath = (file: File): string => {
 
   if (!file.path) return ''
 
+  // A file at the root always lives directly under "/". Deriving the parent
+  // from file.path instead would yield "//" when the path already carries a
+  // leading slash (e.g. after a save updates it to "//name").
   return file.dir_id === ROOT_DIR_ID
-    ? file.path.replace(file.name, '')
+    ? '/'
     : file.path.replace(`/${file.name}`, '')
 }
 

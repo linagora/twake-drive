@@ -118,6 +118,14 @@ const sharedDriveRoutes = () => (
   </>
 )
 
+// Group the flag-gated editor routes so the AppRoute switch stays small.
+const getEditorRoutes = () => (
+  <>
+    {flag('drive.excalidraw.enabled') && getExcalidrawRoutes()}
+    {flag('drive.pdf-editor.enabled') && getPdfRoutes()}
+  </>
+)
+
 const AppRoute = () => (
   <SentryRoutes>
     <Route path="external/:fileId" element={<ExternalRedirect />} />
@@ -250,9 +258,7 @@ const AppRoute = () => (
 
       {getOnlyOfficeRoutes()}
 
-      {flag('drive.excalidraw.enabled') && getExcalidrawRoutes()}
-
-      {flag('drive.pdf-editor.enabled') && getPdfRoutes()}
+      {getEditorRoutes()}
 
       <Route path="file/:fileId" element={<FileOpenerExternal />} />
 

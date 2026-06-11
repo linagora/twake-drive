@@ -26,6 +26,19 @@ import { getPublicPdfRoutes } from '@/modules/views/Pdf/routes'
 import { PublicFileViewer } from '@/modules/views/Public/PublicFileViewer'
 import { PublicFolderView } from '@/modules/views/Public/PublicFolderView'
 
+// Group the flag-gated editor routes so the AppRouter switch stays small.
+const getPublicEditorRoutes = ({ isReadOnly, isExcalidrawShared, data }) => (
+  <>
+    {isExcalidrawEnabled() &&
+      getPublicExcalidrawRoutes({
+        isReadOnly,
+        isShared: isExcalidrawShared,
+        data
+      })}
+    {isPdfEditorEnabled() && getPublicPdfRoutes({ isReadOnly })}
+  </>
+)
+
 const AppRouter = ({
   isReadOnly,
   username,
@@ -75,14 +88,7 @@ const AppRouter = ({
           <Route path="onlyoffice/*" element={<Navigate to="/" />} />
         )}
 
-        {isExcalidrawEnabled() &&
-          getPublicExcalidrawRoutes({
-            isReadOnly,
-            isShared: isExcalidrawShared,
-            data
-          })}
-
-        {isPdfEditorEnabled() && getPublicPdfRoutes({ isReadOnly })}
+        {getPublicEditorRoutes({ isReadOnly, isExcalidrawShared, data })}
 
         {isFile && (
           <Route
