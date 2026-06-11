@@ -118,7 +118,6 @@ const sharedDriveRoutes = () => (
   </>
 )
 
-// Group the flag-gated editor routes so the AppRoute switch stays small.
 const getEditorRoutes = () => (
   <>
     {flag('drive.excalidraw.enabled') && getExcalidrawRoutes()}

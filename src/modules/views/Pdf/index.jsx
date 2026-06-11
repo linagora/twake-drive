@@ -8,7 +8,7 @@ import Loader from '@/components/Loader'
 import useHead from '@/components/useHead'
 import Editor from '@/modules/views/Pdf/Editor'
 
-const Pdf = ({ isPublic = false, isReadOnly = false }) => {
+const Pdf = ({ isPublic = false }) => {
   const { fileId, driveId } = useParams()
   const { hasWriteAccess, allLoaded } = useSharingContext()
   useHead()
@@ -26,9 +26,10 @@ const Pdf = ({ isPublic = false, isReadOnly = false }) => {
     }
   }
 
-  // In public the share code already determines read-only (passed in as
-  // isReadOnly). In private, the user always has write access at this point.
-  const readOnly = isPublic ? isReadOnly : !hasWriteAccess(fileId, driveId)
+  // Public read-only shares never reach this component (the route redirects
+  // them), so a public mount is always editable. In private the user has write
+  // access at this point.
+  const readOnly = isPublic ? false : !hasWriteAccess(fileId, driveId)
 
   return (
     <Dialog open={true} fullScreen transitionDuration={0}>

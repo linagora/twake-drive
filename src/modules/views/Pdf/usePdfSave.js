@@ -32,6 +32,14 @@ const exportPdf = async registry => {
   return engine.saveAsCopy(document).toPromise()
 }
 
+// Exports the current document and writes it back to the file binary.
+const persistPdf = async (registry, client, file) => {
+  const bytes = await exportPdf(registry)
+  if (!bytes) return
+  const blob = new Blob([bytes], { type: PDF_MIME })
+  await updateFileBinary(client, file, blob, PDF_MIME)
+}
+
 /**
  * Persists the edited document back to the binary. Exposes an explicit save, a
  * flush (cancels the pending autosave then saves) and a scheduleAutosave used to
@@ -43,32 +51,46 @@ export const usePdfSave = ({ client, file, isReadOnly, registryRef }) => {
   const [isSaving, setIsSaving] = useState(false)
   const isDirty = useRef(false)
   const debounceRef = useRef(null)
+  const isSavingRef = useRef(false)
+  // Saves are chained on this promise so a slow export/upload can never be
+  // overwritten by a faster one that started later.
+  const saveQueueRef = useRef(Promise.resolve())
 
-  const save = useCallback(async () => {
+  const runSave = useCallback(async () => {
     const registry = registryRef.current
     if (isReadOnly || !registry || !isDirty.current) return
     isDirty.current = false
+    isSavingRef.current = true
     setIsSaving(true)
     try {
-      const bytes = await exportPdf(registry)
-      if (bytes) {
-        const blob = new Blob([bytes], { type: PDF_MIME })
-        await updateFileBinary(client, file, blob, PDF_MIME)
-      }
+      await persistPdf(registry, client, file)
     } catch (error) {
       isDirty.current = true
       logger.error(`Saving PDF failed: ${error}`)
     } finally {
+      isSavingRef.current = false
       setIsSaving(false)
     }
+    // file is depended on whole so a rename is always saved under the fresh name.
   }, [client, file, isReadOnly, registryRef])
 
-  const flush = useCallback(async () => {
+  // Serialize every save behind the previous one so concurrent triggers
+  // (autosave timer + explicit Save/flush) run one at a time and in order.
+  const save = useCallback(() => {
+    saveQueueRef.current = saveQueueRef.current.then(runSave)
+    return saveQueueRef.current
+  }, [runSave])
+
+  const flush = useCallback(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    await save()
+    return save()
   }, [save])
 
   const scheduleAutosave = useCallback(() => {
+    // Finalizing a save deselects and commits annotations, which the annotation
+    // plugin reports as edits; ignore those self-induced events so a save does
+    // not schedule another save in a loop.
+    if (isSavingRef.current) return
     isDirty.current = true
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(save, AUTOSAVE_DEBOUNCE_MS)

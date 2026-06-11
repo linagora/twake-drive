@@ -63,15 +63,23 @@ export const usePdfDocument = (file, { isReadOnly = false } = {}) => {
     registryRef
   })
 
+  // The annotation listener is attached once at onReady, but scheduleAutosave is
+  // recreated when the file changes (e.g. a rename). Read it through a ref so
+  // autosave always runs the current one and persists under the fresh name.
+  const scheduleAutosaveRef = useRef(scheduleAutosave)
+  useEffect(() => {
+    scheduleAutosaveRef.current = scheduleAutosave
+  }, [scheduleAutosave])
+
   // Wire the EmbedPDF registry: subscribe to annotation edits to drive autosave.
   const onReady = useCallback(
     registry => {
       registryRef.current = registry
       if (isReadOnly) return
       const annotation = registry.getPlugin('annotation')?.provides()
-      annotation?.onAnnotationEvent?.(() => scheduleAutosave())
+      annotation?.onAnnotationEvent?.(() => scheduleAutosaveRef.current())
     },
-    [isReadOnly, scheduleAutosave]
+    [isReadOnly]
   )
 
   return { status, url, onReady, save, flush, isSaving }
