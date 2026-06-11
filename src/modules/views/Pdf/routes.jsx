@@ -33,11 +33,7 @@ export const getPublicPdfRoutes = ({ isReadOnly = false } = {}) => (
       // The editor is for editing only: a read-only share must not reach it,
       // even by typing the URL. Send those visitors back to the public viewer.
       element={
-        isReadOnly ? (
-          <Navigate to="/" replace />
-        ) : (
-          <PdfView isPublic={true} isReadOnly={isReadOnly} />
-        )
+        isReadOnly ? <Navigate to="/" replace /> : <PdfView isPublic={true} />
       }
     />
   </>
