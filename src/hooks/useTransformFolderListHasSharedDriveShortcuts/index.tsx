@@ -66,7 +66,13 @@ const useTransformFolderListHasSharedDriveShortcuts = (
         if (!rootId) return []
 
         const driveName = sharing.rules[0]?.title ?? ''
-        const isFileDriveRoot = sharing.drive_root_type === DRIVE_ROOT_TYPE.FILE
+        // The stack sets `drive_root_type` and the rule `mime` together for a
+        // single-file root. `drive_root_type` is a recent stack field, so fall
+        // back to the rule mime (only a file root carries one) to keep a shared
+        // file from rendering as a folder against stacks that don't send it.
+        const isFileDriveRoot =
+          sharing.drive_root_type === DRIVE_ROOT_TYPE.FILE ||
+          (!sharing.drive_root_type && Boolean(sharing.rules[0]?.mime))
         const fileMetadata = {
           name: driveName,
           ...(sharing.rules[0]?.mime ? { mime: sharing.rules[0].mime } : {})

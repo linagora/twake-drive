@@ -114,6 +114,41 @@ describe('useTransformFolderListHasSharedDriveShortcuts', () => {
       })
     })
 
+    it('should treat a rule carrying a mime as file-root when the stack omits drive_root_type', () => {
+      const docxMime =
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      const mockSharedDrives = [
+        {
+          id: 'sharing-1',
+          // Stack predating the drive_root_type field: only the rule mime
+          // distinguishes a single shared file from a shared folder.
+          rules: [
+            {
+              values: ['file-1'],
+              title: 'New text document.docx',
+              mime: docxMime
+            }
+          ]
+        }
+      ]
+
+      mockUseSharedDrives.mockReturnValue({
+        sharedDrives: mockSharedDrives
+      })
+
+      const { result } = renderHook(() =>
+        useTransformFolderListHasSharedDriveShortcuts([])
+      )
+
+      expect(result.current.sharedDrives[0]).toMatchObject({
+        _id: 'file-1',
+        type: 'file',
+        name: 'New text document.docx',
+        mime: docxMime,
+        drive_root_type: DRIVE_ROOT_TYPE.FILE
+      })
+    })
+
     it('should derive OnlyOffice classes for file-root shared drives', () => {
       const mockSharedDrives = [
         {
