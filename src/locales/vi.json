@@ -268,7 +268,7 @@
     "mobile_text": "Chọn tệp trên thiết bị của bạn.",
     "trash_title": "Bạn chưa có tệp nào trong Thùng rác.",
     "trash_text": "Chuyển các tệp không cần thiết vào Thùng rác và xóa vĩnh viễn để giải phóng dung lượng.",
-    "shared-drive_text": "Tạo và chia sẻ ổ đĩa đầu tiên của bạn."
+    "sharing_text": "Bạn chưa có tệp hoặc ổ đĩa được chia sẻ nào."
   },
   "error": {
     "open_folder": "Đã xảy ra lỗi khi mở thư mục.",

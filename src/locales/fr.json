@@ -274,7 +274,7 @@
     "mobile_text": "Sélectionnez les fichiers sur votre appareil.",
     "trash_title": "Vous n'avez aucun fichier supprimé.",
     "trash_text": "Déplacez les fichiers dont vous n'avez plus besoin dans la corbeille et supprimez-les définitivement pour récupérer de l'espace de stockage.",
-    "shared-drive_text": "Créez et partagez votre premier drive."
+    "sharing_text": "Vous n’avez aucun fichier ni drive partagé pour le moment."
   },
   "error": {
     "open_folder": "Une erreur est survenue pendant l'ouverture du dossier.",
