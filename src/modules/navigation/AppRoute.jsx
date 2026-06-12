@@ -107,6 +107,11 @@ const sharedDriveRoutes = () => (
           element={<MoveSharedDriveFilesView isOpenInViewer />}
         />
         <Route path="v/duplicate" element={<DuplicateSharedDriveFilesView />} />
+        {/* The viewer's Share action navigates to a relative `v/share`; without
+            this child route the URL matches nothing and the page goes blank.
+            driveId is in the path so the modal resolves a proxied recipient
+            document. */}
+        <Route path="v/share" element={<ShareFileView />} />
       </Route>
       <Route path="file/:fileId/revision" element={<FileHistory />} />
       <Route path="file/:fileId/v/revision" element={<FileHistory />} />
