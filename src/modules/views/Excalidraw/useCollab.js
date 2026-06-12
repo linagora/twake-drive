@@ -96,6 +96,14 @@ export const useCollab = ({
     refresh
   })
 
+  // Re-baseline the relay only when the document itself changes — not on every
+  // re-subscribe. Tying reset to the subscription's teardown meant any unrelated
+  // effect rerun re-armed the watermark sentinel, so the next edit was taken for
+  // the loaded-scene baseline and silently never broadcast.
+  useEffect(() => {
+    reset()
+  }, [reset, fileId])
+
   useEffect(() => {
     if (!active) return undefined
     const handler = doc => handleMessage(doc)
@@ -104,9 +112,8 @@ export const useCollab = ({
     return () => {
       sendMessage(MESSAGE_TYPES.PRESENCE_BYE)
       realtime.unsubscribe(REALTIME_EVENT, COLLAB_DOCTYPE, fileId, handler)
-      reset()
     }
-  }, [active, realtime, fileId, handleMessage, sendMessage, reset])
+  }, [active, realtime, fileId, handleMessage, sendMessage])
 
   return {
     broadcastScene,
