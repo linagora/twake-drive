@@ -64,9 +64,11 @@ export const usePresence = ({ apiRef, active, sendMessage }) => {
 
   const broadcastPointer = useCallback(
     payload => {
-      // Nobody to show the cursor to → don't POST it. This silences cursor
-      // traffic entirely while editing alone, the common case.
-      if (!active || peersRef.current.size === 0) return
+      // Broadcast even with no detected peer: a read-only viewer is invisible to
+      // presence (it cannot POST a heartbeat) yet still renders our cursor. The
+      // CURSOR_THROTTLE_MS cap keeps this bounded; the cost is a lone editor
+      // streaming cursor moves that may have no receiver.
+      if (!active) return
       const now = Date.now()
       if (now - lastPointerSentRef.current < CURSOR_THROTTLE_MS) return
       lastPointerSentRef.current = now
