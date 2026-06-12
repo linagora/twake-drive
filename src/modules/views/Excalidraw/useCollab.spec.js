@@ -196,14 +196,24 @@ describe('useCollab', () => {
     )
   })
 
-  it('does not broadcast scene edits while alone in the room', () => {
+  it('broadcasts edits with no detected peer, so invisible read-only viewers stay in sync', () => {
+    // A read-only viewer (read share, public link) has no POST on /realtime, so
+    // it never announces itself and is invisible to presence. Gating on detected
+    // peers would freeze its canvas, so editors broadcast unconditionally.
     const { realtime, result } = setup()
     baseline(result)
     realtime.sendNotification.mockClear()
 
     act(() => result.current.broadcastScene([{ id: 'a' }]))
 
-    expect(realtime.sendNotification).not.toHaveBeenCalled()
+    expect(realtime.sendNotification).toHaveBeenCalledWith(
+      DOCTYPE,
+      'file-1',
+      expect.objectContaining({
+        type: 'SCENE_UPDATE',
+        payload: { elements: [{ id: 'a' }] }
+      })
+    )
   })
 
   it('does not throw when sendNotification returns no promise', () => {
