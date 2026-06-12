@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 
 import { useClient } from 'cozy-client'
 
@@ -82,11 +82,8 @@ export const useCollab = ({
     isCollaborating
   } = usePresence({ apiRef, active, sendMessage })
 
-  // No peers in the room → skip broadcasting edits entirely; a newcomer gets the
-  // current scene through the SCENE_INIT handshake, not a steady stream.
-  const hasPeers = useCallback(() => getPeerIds().length > 0, [getPeerIds])
   const { applyRemoteScene, broadcastScene, broadcastInitTo, reset } =
-    useSceneRelay({ apiRef, isReadOnly, sendMessage, hasPeers })
+    useSceneRelay({ apiRef, isReadOnly, sendMessage })
 
   const handleMessage = useCollabRouter({
     sessionIdRef,

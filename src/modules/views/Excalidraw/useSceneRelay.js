@@ -66,18 +66,12 @@ const pickNewFiles = (api, knownFileIds) => {
  * @param {{ current: object|null }} params.apiRef - Ref to the Excalidraw imperative API
  * @param {boolean} params.isReadOnly - A viewer never broadcasts its edits
  * @param {Function} params.sendMessage - (type, payload, targetId) => void
- * @param {() => boolean} params.hasPeers - Whether anyone else is in the room
  * @returns {{
  *   applyRemoteScene: Function, broadcastScene: Function,
  *   broadcastInitTo: Function, reset: Function
  * }}
  */
-export const useSceneRelay = ({
-  apiRef,
-  isReadOnly,
-  sendMessage,
-  hasPeers
-}) => {
+export const useSceneRelay = ({ apiRef, isReadOnly, sendMessage }) => {
   const lastBroadcastVersionRef = useRef(-1)
   const knownFileIdsRef = useRef(new Set())
 
@@ -118,15 +112,17 @@ export const useSceneRelay = ({
       // must never be rebroadcast, or two tabs ping-pong at network speed.
       if (version <= lastBroadcastVersionRef.current) return
       lastBroadcastVersionRef.current = version
-      // Keep file-tracking in step with the version watermark even while alone,
-      // so once peers arrive only genuinely new images are sent.
+      // Always broadcast a genuine edit. A read-only viewer (read share, public
+      // link) has no POST on /realtime, so it can never announce itself and is
+      // invisible to presence; gating on detected peers would freeze its canvas.
+      // Broadcasting unconditionally keeps every subscriber, visible or not, in
+      // sync (the cost is a lone editor posting updates nobody receives).
       const newFiles = collectNewFiles()
-      if (!hasPeers()) return
       const payload = { elements }
       if (newFiles) payload.files = newFiles
       sendMessage(MESSAGE_TYPES.SCENE_UPDATE, payload)
     },
-    [isReadOnly, hasPeers, sendMessage, collectNewFiles]
+    [isReadOnly, sendMessage, collectNewFiles]
   )
 
   // Hand the full current scene to a single newcomer.
