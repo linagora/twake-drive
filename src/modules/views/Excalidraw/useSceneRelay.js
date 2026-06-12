@@ -31,7 +31,13 @@ const applyRemoteSceneToApi = (api, payload, knownFileIds) => {
     elements: reconciled,
     captureUpdate: CaptureUpdateAction.NEVER
   })
-  return getSceneVersion(api.getSceneElements())
+  // Watermark over the elements *including* deleted ones, the same basis as the
+  // onChange that broadcastScene reads. getSceneVersion sums per-element
+  // versions, and a deletion keeps the tombstone (bumping the sum) while
+  // getSceneElements() drops it — so watermarking from the non-deleted set would
+  // sit permanently below the onChange version and every applied update would be
+  // rebroadcast forever once anything is deleted.
+  return getSceneVersion(api.getSceneElementsIncludingDeleted())
 }
 
 // Embedded images added since the last broadcast, so steady-state element
