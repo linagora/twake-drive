@@ -39,12 +39,19 @@ const setup = ({ enabled = true, isReadOnly = false, withApi = true } = {}) => {
     sendNotification: jest.fn().mockResolvedValue(undefined),
     handler: null
   }
+  // Stateful enough to tell deleted from non-deleted elements, so the version
+  // watermark (taken over all elements) and getSceneElements() (non-deleted)
+  // can legitimately diverge once a shape is deleted.
+  let applied = []
   const api = {
-    getSceneElements: jest.fn(() => []),
+    getSceneElements: jest.fn(() => applied.filter(el => !el.isDeleted)),
+    getSceneElementsIncludingDeleted: jest.fn(() => applied),
     getAppState: jest.fn(() => ({})),
     getFiles: jest.fn(() => ({})),
     addFiles: jest.fn(),
-    updateScene: jest.fn()
+    updateScene: jest.fn(scene => {
+      if (scene.elements) applied = scene.elements
+    })
   }
   useClient.mockReturnValue({ plugins: { realtime } })
 
@@ -230,6 +237,30 @@ describe('useCollab', () => {
 
     // same version (one element) → echo of our own update, must not resend
     act(() => result.current.broadcastScene([{ id: 'b' }]))
+
+    expect(realtime.sendNotification).not.toHaveBeenCalled()
+  })
+
+  it('does not rebroadcast a remote update that deleted an element', () => {
+    // Deleting keeps a tombstone, so onChange (which includes deleted elements)
+    // reports a higher version than the non-deleted set. The watermark must be
+    // taken over all elements, or every applied update floods back forever.
+    const { realtime, result } = setup()
+    baseline(result)
+    joinPeer(realtime)
+
+    receive(realtime, {
+      senderId: 'peer-2',
+      type: 'SCENE_UPDATE',
+      payload: { elements: [{ id: 'a' }, { id: 'b', isDeleted: true }] }
+    })
+    realtime.sendNotification.mockClear()
+
+    // The canvas echoes the merged scene back through onChange, tombstone and
+    // all; this is our own applied update and must not be rebroadcast.
+    act(() =>
+      result.current.broadcastScene([{ id: 'a' }, { id: 'b', isDeleted: true }])
+    )
 
     expect(realtime.sendNotification).not.toHaveBeenCalled()
   })
