@@ -67,6 +67,36 @@ export const ChatInput = () => {
     })
   }, [])
 
+  // Focus the input when the panel opens (this component mounts on open). The
+  // OO editor lives in a cross-origin iframe that aggressively reclaims focus,
+  // so a single focus() loses the race. We blur whatever holds focus (usually
+  // the OO iframe) and focus the textarea in a short burst of retries, stopping
+  // as soon as the textarea actually holds focus. This wins the initial battle
+  // without blocking later clicks into the editor.
+  useEffect(() => {
+    let cancelled = false
+    let attempts = 0
+    const tryFocus = () => {
+      if (cancelled) return
+      const el = textareaRef.current
+      if (!el || document.activeElement === el) return
+      if (document.activeElement && document.activeElement !== el) {
+        try { document.activeElement.blur() } catch (e) { /* cross-origin */ }
+      }
+      userFocusedRef.current = true
+      el.focus()
+      attempts += 1
+      if (attempts < 6 && document.activeElement !== el) {
+        timer = setTimeout(tryFocus, 90)
+      }
+    }
+    let timer = setTimeout(tryFocus, 80)
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
+  }, [])
+
   // Clear the guard when the component unmounts or user clicks elsewhere intentionally
   useEffect(() => {
     const handlePointerDown = e => {

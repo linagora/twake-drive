@@ -27,6 +27,12 @@ const unwrapSingleParagraph = html => {
   return html
 }
 
+// Delay before the inline Scribe popover is revealed on a keyboard open. The
+// popover is mounted hidden (prepared) immediately and revealed after this
+// delay. Tune here. Lives host-side because the plugin's background iframe
+// throttles setTimeout to hundreds of ms (see handleCtrlShiftI in code.js).
+const SCRIBE_REVEAL_DELAY_MS = 150
+
 const forceIframeHeight = value => {
   const iframe = document.getElementsByName(FRAME_EDITOR_NAME)[0]
   if (iframe) iframe.style.height = value
@@ -139,6 +145,32 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
     if (iframe) iframe.focus()
   }, [])
 
+  // #1: inline Scribe reveal gating. Keyboard opens cast AI_TEXT_ASSISTANT with
+  // data.deferReveal=true, so the popover mounts hidden (prepared) and is only
+  // revealed when the plugin's 200ms timer fires 'cozy-bridge:reveal-scribe'.
+  // Button/context-menu opens cast without the flag and reveal immediately.
+  // #1: inline Scribe prepare-then-reveal. Keyboard opens cast AI_TEXT_ASSISTANT
+  // with data.deferReveal=true: mount the popover hidden (prepared), then reveal
+  // after SCRIBE_REVEAL_DELAY_MS so it appears in one clean step. The timer is
+  // host-side (see the constant) because the plugin's background iframe throttles
+  // its own timers. Re-running on each new intent clears the prior timer, so a
+  // rapid re-press can't flash the still-preparing popover. Button/context-menu
+  // opens cast without the flag and reveal immediately.
+  const [scribeVisible, setScribeVisible] = useState(false)
+  useEffect(() => {
+    if (!pendingIntent) {
+      setScribeVisible(false)
+      return
+    }
+    if (!pendingIntent.data?.deferReveal) {
+      setScribeVisible(true)
+      return
+    }
+    setScribeVisible(false)
+    const id = setTimeout(() => setScribeVisible(true), SCRIBE_REVEAL_DELAY_MS)
+    return () => clearTimeout(id)
+  }, [pendingIntent])
+
   // Track pendingIntent in a ref so handleReplace/handleInsert can decide
   // at call time whether to respond() to an inline popover intent or cast
   // a one-way PANEL_ACTION for a pure panel chat flow — without causing
@@ -218,12 +250,6 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
     setTimeout(focusEditor, 100)
   }, [respond, focusEditor])
 
-  // Use a ref for handleCancel so the keydown listener never goes stale
-  const handleCancelRef = useRef(handleCancel)
-  useEffect(() => {
-    handleCancelRef.current = handleCancel
-  }, [handleCancel])
-
   // Close popover when panel opens while popover is active.
   // Use respond() directly instead of handleCancel to avoid focusEditor
   // stealing focus from the panel.
@@ -255,17 +281,34 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
       if (!isCtrlShiftI) return
       e.preventDefault()
       if (openPanel) openPanel()
-      handleCancelRef.current()
+      // Dismiss the popover intent WITHOUT handleCancel: handleCancel refocuses
+      // the editor (setTimeout focusEditor), which would steal focus from the
+      // panel input we're opening. respond() just clears the pending intent.
+      respond({ status: 'ok', action: 'cancel', data: {} })
     }
 
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
-  }, [pendingIntent, isPanelOpen, openPanel])
+  }, [pendingIntent, isPanelOpen, openPanel, respond])
 
-  // Ctrl+Shift+I when panel is open is handled by useCozyBridge:
-  // the plugin casts AI_TEXT_ASSISTANT or TOGGLE_SCRIBE_PANEL, and the bridge
-  // handler closes the panel. No document keydown listener needed here
-  // since OO keeps focus in its cross-origin iframe.
+  // Ctrl+Shift+I when focus is inside the Drive app (e.g. the side panel input)
+  // never reaches the plugin's keydown listener — that one is registered on the
+  // OO editor iframe document. Without a handler here the browser's default
+  // devtools shortcut fires. Catch it at the Drive level, preventDefault, and
+  // toggle the panel. The popover-open case is handled by the effect above, so
+  // we skip it here to avoid double handling.
+  useEffect(() => {
+    const handler = e => {
+      const isCtrlShiftI =
+        (e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'I' || e.key === 'i')
+      if (!isCtrlShiftI) return
+      if (pendingIntent && !isPanelOpen) return
+      e.preventDefault()
+      if (togglePanel) togglePanel()
+    }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [togglePanel, pendingIntent, isPanelOpen])
 
   const initEditor = useCallback(() => {
     new window.DocsAPI.DocEditor('onlyOfficeEditor', docEditorConfig)
@@ -328,6 +371,7 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
           />
           <ScribePopover
             open={!!pendingIntent && !isPanelOpen}
+            visible={scribeVisible}
             selectedText={pendingIntent?.data?.text || ''}
             selectedHtml={pendingIntent?.data?.html || ''}
             enrichedMd={pendingIntent?.data?.enrichedMd || ''}

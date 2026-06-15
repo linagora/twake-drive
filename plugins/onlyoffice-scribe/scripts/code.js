@@ -2000,10 +2000,20 @@
     log("Selection subscribe: " + selectionSubscribed);
     if (selectionSubscribed) {
       // #2: push the current selection now — init() won't re-fire just because
-      // we subscribed. init() reads the live selection and casts it (empty or
-      // not, since selectionSubscribed is already true here).
+      // we subscribed. Guard with GetSelectedText first: init()'s extraction
+      // returns the WHOLE paragraph when the selection is empty (a bare
+      // cursor), so for an empty selection we send an explicit clear instead.
       lastPolledNonEmpty = false;
-      try { window.Asc.plugin.init({}); } catch (e) { /* API not ready */ }
+      try {
+        window.Asc.plugin.executeMethod("GetSelectedText", [], function(txt) {
+          if (txt && txt.length > 0) {
+            lastPolledNonEmpty = true;
+            window.Asc.plugin.init({});
+          } else {
+            castEmptySelection();
+          }
+        });
+      } catch (e) { /* API not ready */ }
       startSelectionPoll();
     } else {
       stopSelectionPoll();
@@ -2961,13 +2971,31 @@
     if (!isCtrlShiftI) return;
     e.preventDefault();
 
-    if (lastSelectedText.length > 0) {
-      log("Ctrl+Shift+I triggered Scribe");
-      castIntent("AI_TEXT_ASSISTANT", buildEditIntentData());
-    } else {
-      log("Ctrl+Shift+I: toggle panel");
-      castIntent("TOGGLE_SCRIBE_PANEL", {}, true);
-    }
+    // Decide from the LIVE selection, not the cached lastSelectedText. When the
+    // panel is closed and the user collapses a selection to a bare cursor, OO
+    // does not fire init() (initOnSelectionChanged is non-empty only) and the
+    // poll is stopped, so lastSelectedText would be stale and we'd wrongly open
+    // the inline popover. GetSelectedText is always current.
+    window.Asc.plugin.executeMethod("GetSelectedText", [], function(txt) {
+      if (txt && txt.length > 0) {
+        log("Ctrl+Shift+I triggered Scribe");
+        // #1: keyboard opens inline Scribe with a prepare-then-reveal window.
+        // Cast with deferReveal so React mounts the popover hidden (prepared)
+        // and reveals it after a short delay. The reveal timer lives on the
+        // HOST (foreground document), NOT here: this plugin runs in a hidden
+        // background iframe whose setTimeout is heavily throttled (a 20ms timer
+        // fired after 250-440ms in practice), so addon-side timing is unusable.
+        // The toolbar/context-menu paths cast without deferReveal -> open now.
+        lastSelectedText = txt;
+        var data = buildEditIntentData();
+        data.deferReveal = true;
+        castIntent("AI_TEXT_ASSISTANT", data);
+      } else {
+        log("Ctrl+Shift+I: toggle panel");
+        lastSelectedText = "";
+        castIntent("TOGGLE_SCRIBE_PANEL", {}, true);
+      }
+    });
   }
 
   try {

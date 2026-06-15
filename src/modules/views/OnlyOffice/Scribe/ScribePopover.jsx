@@ -27,7 +27,7 @@ import styles from '@/modules/views/OnlyOffice/Scribe/scribe.styl'
  *
  * Closing the popover during loading aborts the in-flight API request via AbortController.
  */
-const ScribePopover = ({ open, selectedText, selectedHtml, enrichedMd, onReplace, onInsert, onCancel, onOpenPanel, tableAmbiguity }) => {
+const ScribePopover = ({ open, visible = true, selectedText, selectedHtml, enrichedMd, onReplace, onInsert, onCancel, onOpenPanel, tableAmbiguity }) => {
   const { t } = useI18n()
   const client = useClient()
   const scribe = useScribe()
@@ -224,13 +224,23 @@ const ScribePopover = ({ open, selectedText, selectedHtml, enrichedMd, onReplace
       anchorReference="anchorPosition"
       anchorPosition={{ top: (typeof window !== 'undefined' ? window.innerHeight / 2 : 400) + dragOffset.y, left: (typeof window !== 'undefined' ? window.innerWidth / 2 : 500) + dragOffset.x }}
       transformOrigin={{ vertical: 'center', horizontal: 'center' }}
-      BackdropProps={{ style: { backgroundColor: 'rgba(0, 0, 0, 0.5)' } }}
+      BackdropProps={{
+        style: {
+          // Keep the backdrop transparent and click-through while the popover
+          // is being prepared (deferred keyboard open); dim it once revealed.
+          backgroundColor: visible ? 'rgba(0, 0, 0, 0.5)' : 'transparent',
+          pointerEvents: visible ? 'auto' : 'none'
+        }
+      }}
       PaperProps={{
         style: {
           borderRadius: 8,
           boxShadow: 'none',
           backgroundColor: 'transparent',
           overflow: 'visible',
+          // Mounted but invisible during the prepare window, then revealed.
+          opacity: visible ? 1 : 0,
+          pointerEvents: visible ? 'auto' : 'none',
           ...(devMode && step === 'result' ? { maxWidth: '95vw' } : {})
         }
       }}
@@ -271,6 +281,7 @@ const ScribePopover = ({ open, selectedText, selectedHtml, enrichedMd, onReplace
 
 ScribePopover.propTypes = {
   open: PropTypes.bool.isRequired,
+  visible: PropTypes.bool,
   selectedText: PropTypes.string.isRequired,
   selectedHtml: PropTypes.string,
   enrichedMd: PropTypes.string,
