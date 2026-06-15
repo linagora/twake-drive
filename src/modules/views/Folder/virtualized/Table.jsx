@@ -8,7 +8,6 @@ import React, {
 } from 'react'
 import { useSelector } from 'react-redux'
 
-import flag from 'cozy-flags'
 import VirtualizedTable from 'cozy-ui/transpiled/react/Table/Virtualized'
 import TableRowDnD from 'cozy-ui/transpiled/react/Table/Virtualized/Dnd/TableRow'
 import virtuosoComponentsDnd from 'cozy-ui/transpiled/react/Table/Virtualized/Dnd/virtuosoComponents'
@@ -79,7 +78,7 @@ const Table = forwardRef(
     },
     ref
   ) => {
-    const { toggleSelectedItem, setSelectedItems } = useSelectionContext()
+    const { setSelectedItems } = useSelectionContext()
     const { isNew } = useNewItemHighlightContext()
     const isRenamingActive = useSelector(isRenamingSelector)
     const internalVirtuosoRef = useRef(null)
@@ -88,29 +87,17 @@ const Table = forwardRef(
 
     const { sortOrder, setOrder } = orderProps
 
-    const selectedItemsCount = Object.keys(selectedItems || {}).length
+    // cozy-ui invokes this with (row, column) and no DOM event, so modifier
+    // keys aren't available here: clicking the row body always selects just
+    // that row. Multi-select (ctrl/cmd-click, shift-range) goes through the
+    // name cell's FileOpener, which does receive the real event.
     const handleRowSelect = useCallback(
-      (row, event) => {
+      (row, column) => {
         if (isRenamingActive) return
-        event?.stopPropagation?.()
-        if (
-          flag('drive.dynamic-selection.enabled') &&
-          selectedItemsCount > 0 &&
-          !event?.shiftKey
-        ) {
-          setSelectedItems({ [row._id]: row })
-        } else {
-          toggleSelectedItem(row)
-        }
-        onInteractWithFile?.(row?._id, event)
+        setSelectedItems({ [row._id]: row })
+        onInteractWithFile?.(row?._id, column)
       },
-      [
-        toggleSelectedItem,
-        onInteractWithFile,
-        selectedItemsCount,
-        setSelectedItems,
-        isRenamingActive
-      ]
+      [onInteractWithFile, setSelectedItems, isRenamingActive]
     )
 
     const handleSort = ({ order, orderBy }) => {
