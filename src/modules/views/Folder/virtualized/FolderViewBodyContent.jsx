@@ -90,7 +90,8 @@ const FolderViewBodyContent = ({
   const { setLastInteractedItem, onShiftClick } = useShiftSelection(
     {
       items: sortedRows,
-      viewType
+      viewType,
+      scrollElement
     },
     folderViewRef
   )
