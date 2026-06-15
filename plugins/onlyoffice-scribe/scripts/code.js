@@ -1937,14 +1937,87 @@
   }
 
   // ---- Selection subscription (host tells plugin when to send SELECTION_CHANGED) ----
+  // initOnSelectionChanged (config.json) makes OO call init() only when a
+  // NON-EMPTY selection changes. That leaves two gaps the side panel must cover:
+  //   #2 When the panel opens, OO won't re-fire init() for an already-present
+  //      selection — so on subscribe we call init() once to extract+push it.
+  //   #3 When the selection collapses to a bare cursor (empty), OO never fires
+  //      init() — so a light read-only poll detects the non-empty -> empty
+  //      transition and pushes an empty SELECTION_CHANGED to clear the panel.
+  // A previous GetSelectedText poll was ruled out as the cause of the panel
+  // focus-steal bug (removing it didn't fix it), so this read-only poll is
+  // considered focus-safe; it never writes to the document.
   var selectionSubscribed = false;
+  var selectionPollTimer = null;
+  var lastPolledNonEmpty = false;
+
+  function castEmptySelection() {
+    lastSelectedText = "";
+    lastEnrichedMd = "";
+    lastTableSnapshots = null;
+    lastTableAmbiguity = null;
+    lastPartialTableInfo = null;
+    lastSelectedHtml = "";
+    castIntent("SELECTION_CHANGED", { text: "", html: null }, true);
+  }
+
+  function pollSelectionForClear() {
+    try {
+      window.Asc.plugin.executeMethod("GetSelectedText", [], function(txt) {
+        var isEmpty = !txt || txt.length === 0;
+        if (isEmpty) {
+          // Only act on the non-empty -> empty transition; init() handles
+          // non-empty selection changes (with full enriched extraction).
+          if (lastPolledNonEmpty) {
+            lastPolledNonEmpty = false;
+            castEmptySelection();
+          }
+        } else {
+          lastPolledNonEmpty = true;
+        }
+      });
+    } catch (e) {
+      // ignore transient API errors
+    }
+  }
+
+  function startSelectionPoll() {
+    if (selectionPollTimer) return;
+    selectionPollTimer = setInterval(pollSelectionForClear, 400);
+  }
+
+  function stopSelectionPoll() {
+    if (selectionPollTimer) {
+      clearInterval(selectionPollTimer);
+      selectionPollTimer = null;
+    }
+  }
 
   window.addEventListener("message", function(event) {
     var msg = event.data;
     if (!msg || msg.type !== "cozy-bridge:selection-subscribe") return;
     selectionSubscribed = !!msg.subscribe;
     log("Selection subscribe: " + selectionSubscribed);
+    if (selectionSubscribed) {
+      // #2: push the current selection now — init() won't re-fire just because
+      // we subscribed. init() reads the live selection and casts it (empty or
+      // not, since selectionSubscribed is already true here).
+      lastPolledNonEmpty = false;
+      try { window.Asc.plugin.init({}); } catch (e) { /* API not ready */ }
+      startSelectionPoll();
+    } else {
+      stopSelectionPoll();
+    }
   });
+
+  // Tell the host we're ready to receive the subscribe state. If the panel was
+  // already open at page load, the host's initial selection-subscribe broadcast
+  // may have fired before this plugin iframe existed (message lost). Announcing
+  // readiness lets the host re-send it so selections sync from the start.
+  function announceReady() {
+    postToAncestors({ type: "cozy-bridge:plugin-ready" });
+  }
+  announceReady();
 
   // ---- Selection detection (via init) ----
   // OO calls init with the selected text/HTML when a selection changes.
@@ -1960,6 +2033,9 @@
     if (!toolbarButtonAdded) {
       addToolbarButton();
       toolbarButtonAdded = true;
+      // Re-announce readiness now that OO has fully initialized the plugin, in
+      // case the module-load announce raced ahead of the host's listener.
+      announceReady();
     }
 
     // Run callCommand pre-scan to extract enriched markdown from selection

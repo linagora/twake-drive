@@ -107,6 +107,28 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
     })
   }, [isPanelOpen, broadcastToFrames])
 
+  // Re-send the subscribe state when the plugin announces it's ready. If the
+  // panel was already open at page load, the broadcast above fired before the
+  // plugin iframe existed (message lost), so selections never synced. The
+  // plugin posts 'cozy-bridge:plugin-ready' on load; we answer with the
+  // current state. A ref avoids re-registering the listener on every toggle.
+  const isPanelOpenRef = useRef(isPanelOpen)
+  useEffect(() => {
+    isPanelOpenRef.current = isPanelOpen
+  }, [isPanelOpen])
+  useEffect(() => {
+    const handler = e => {
+      if (e.data && e.data.type === 'cozy-bridge:plugin-ready') {
+        broadcastToFrames({
+          type: 'cozy-bridge:selection-subscribe',
+          subscribe: isPanelOpenRef.current
+        })
+      }
+    }
+    window.addEventListener('message', handler)
+    return () => window.removeEventListener('message', handler)
+  }, [broadcastToFrames])
+
   // Send trigger-intent to plugin iframe
   const triggerScribe = useCallback(() => {
     broadcastToFrames({ type: 'cozy-bridge:trigger-intent', action: 'AI_TEXT_ASSISTANT' })
