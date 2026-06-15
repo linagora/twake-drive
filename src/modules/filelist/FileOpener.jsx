@@ -1,3 +1,4 @@
+import cx from 'classnames'
 import React, { useRef } from 'react'
 
 import styles from './fileopener.styl'
@@ -12,6 +13,7 @@ const FileOpener = ({
   disabled,
   isRenaming,
   onInteractWithFile,
+  fillHeight,
   children
 }) => {
   const rowRef = useRef()
@@ -33,7 +35,9 @@ const FileOpener = ({
     <FileLink
       ref={rowRef}
       link={link}
-      className={`${styles['file-opener']} ${styles['file-opener__a']}`}
+      className={cx(styles['file-opener'], styles['file-opener__a'], {
+        [styles['file-opener--fill-height']]: fillHeight
+      })}
       {...handlers}
     >
       {children}
