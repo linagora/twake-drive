@@ -368,6 +368,13 @@ column-width-thumbnail-bigger = 7rem
     &:focus
         text-decoration underline
 
+// Shrink the path link to its text. Its MidEllipsis child is a block-level
+// flex box that otherwise fills the whole name cell, turning the entire row
+// into a parent-folder link instead of the small path label.
+.fil-file-path
+    display inline-flex
+    max-width 100%
+
 .fil-file-infos
     display none
 
