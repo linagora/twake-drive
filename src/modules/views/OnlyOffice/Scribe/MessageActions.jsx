@@ -1,5 +1,7 @@
 import React, { useState, useRef, useCallback } from 'react'
+import { useI18n } from 'twake-i18n'
 
+import Tooltip from 'cozy-ui/transpiled/react/Tooltip'
 import { useTheme } from 'cozy-ui/transpiled/react/styles'
 
 import { useScribe } from '@/modules/views/OnlyOffice/Scribe/ScribeContext'
@@ -40,6 +42,7 @@ const stripParagraphWrapper = html => {
 
 const MessageActions = ({ content, hasSelection }) => {
   const theme = useTheme()
+  const { t } = useI18n()
   const { panelActions } = useScribe()
   const [confirmedAction, setConfirmedAction] = useState(null)
   const timeoutRef = useRef(null)
@@ -107,34 +110,37 @@ const MessageActions = ({ content, hasSelection }) => {
 
   return (
     <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
-      <button
-        style={btnStyle}
-        onClick={handleCopy}
-        title="Copy"
-        aria-label="Copy"
-        {...hoverProps}
-      >
-        {confirmedAction === 'copy' ? <CheckIcon /> : <CopyIcon />}
-      </button>
-      <button
-        style={btnStyle}
-        onClick={handleInsert}
-        title="Insert"
-        aria-label="Insert"
-        {...hoverProps}
-      >
-        {confirmedAction === 'insert' ? <CheckIcon /> : <InsertIcon />}
-      </button>
-      {hasSelection && (
+      <Tooltip title={t('Scribe.button.copy')} enterDelay={600} enterNextDelay={600}>
         <button
           style={btnStyle}
-          onClick={handleReplace}
-          title="Replace"
-          aria-label="Replace"
+          onClick={handleCopy}
+          aria-label={t('Scribe.button.copy')}
           {...hoverProps}
         >
-          {confirmedAction === 'replace' ? <CheckIcon /> : <ReplaceIcon />}
+          {confirmedAction === 'copy' ? <CheckIcon /> : <CopyIcon />}
         </button>
+      </Tooltip>
+      <Tooltip title={t('Scribe.button.insert')} enterDelay={600} enterNextDelay={600}>
+        <button
+          style={btnStyle}
+          onClick={handleInsert}
+          aria-label={t('Scribe.button.insert')}
+          {...hoverProps}
+        >
+          {confirmedAction === 'insert' ? <CheckIcon /> : <InsertIcon />}
+        </button>
+      </Tooltip>
+      {hasSelection && (
+        <Tooltip title={t('Scribe.button.replace')} enterDelay={600} enterNextDelay={600}>
+          <button
+            style={btnStyle}
+            onClick={handleReplace}
+            aria-label={t('Scribe.button.replace')}
+            {...hoverProps}
+          >
+            {confirmedAction === 'replace' ? <CheckIcon /> : <ReplaceIcon />}
+          </button>
+        </Tooltip>
       )}
     </div>
   )
