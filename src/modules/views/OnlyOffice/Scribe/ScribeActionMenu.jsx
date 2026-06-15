@@ -427,6 +427,9 @@ const ScribeActionMenu = forwardRef(({ onSelect, onClose, onOpenPanel, selectedT
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+      {/* Group panel-button + menu so the button right-aligns to the menu's
+          edge, not to the wider prompt input below. */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignSelf: 'flex-start' }}>
       {onOpenPanel && (
         <div style={{ alignSelf: 'flex-end', position: 'relative' }}>
           <button
@@ -681,6 +684,7 @@ const ScribeActionMenu = forwardRef(({ onSelect, onClose, onOpenPanel, selectedT
           ))
         )}
       </Paper>
+      </div>
       <Paper
         style={{
           width: isMobile ? '100%' : 500,
