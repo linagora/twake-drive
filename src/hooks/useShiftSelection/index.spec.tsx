@@ -53,15 +53,29 @@ describe('useShiftSelection', () => {
   let mockIsItemSelected: jest.Mock
   let mockRef: RefObject<HTMLElement>
   let mockElement: HTMLElement
+  let mockAddEventListener: jest.Mock
+  let mockQuerySelector: jest.Mock
+  let mockQuerySelectorAll: jest.Mock
+  let mockGetBoundingClientRect: jest.Mock
+  let mockScrollBy: jest.Mock
 
   beforeEach(() => {
     mockSetSelectedItems = jest.fn()
     mockIsItemSelected = jest.fn()
+    mockAddEventListener = jest.fn()
+    mockQuerySelector = jest.fn().mockReturnValue(null)
+    mockQuerySelectorAll = jest.fn().mockReturnValue([])
+    mockGetBoundingClientRect = jest.fn()
+    mockScrollBy = jest.fn()
 
     mockElement = {
       focus: jest.fn(),
-      addEventListener: jest.fn(),
-      removeEventListener: jest.fn()
+      addEventListener: mockAddEventListener,
+      removeEventListener: jest.fn(),
+      querySelector: mockQuerySelector,
+      querySelectorAll: mockQuerySelectorAll,
+      getBoundingClientRect: mockGetBoundingClientRect,
+      scrollBy: mockScrollBy
     } as unknown as HTMLElement
 
     mockRef = { current: mockElement }
@@ -227,6 +241,102 @@ describe('useShiftSelection', () => {
       })
 
       expect(mockHandleShiftClick).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('auto-scroll current item into view', () => {
+    const getKeydownHandler = (): ((event: KeyboardEvent) => void) => {
+      const calls = mockAddEventListener.mock.calls[0] as unknown[]
+      return calls[1] as (event: KeyboardEvent) => void
+    }
+
+    const makeFileElement = (fileId: string, rect: Partial<DOMRect>): Element =>
+      ({
+        getBoundingClientRect: jest.fn(() => rect)
+      }) as unknown as Element
+
+    it('scrolls down when the current item is below the scroll container', () => {
+      mockGetBoundingClientRect.mockReturnValue({
+        top: 0,
+        bottom: 100
+      })
+      mockQuerySelector.mockReturnValue(
+        makeFileElement('1', { top: 110, bottom: 140 })
+      )
+
+      renderHook(() =>
+        useShiftSelection({ items: mockFiles, viewType: 'list' }, mockRef)
+      )
+
+      const mockEvent = {
+        shiftKey: true,
+        key: 'ArrowDown',
+        preventDefault: jest.fn()
+      } as unknown as KeyboardEvent
+
+      act(() => {
+        getKeydownHandler()(mockEvent)
+      })
+
+      expect(mockScrollBy).toHaveBeenCalledWith({
+        top: 40,
+        behavior: 'auto'
+      })
+    })
+
+    it('scrolls up when the current item is above the scroll container', () => {
+      mockGetBoundingClientRect.mockReturnValue({
+        top: 50,
+        bottom: 150
+      })
+      mockQuerySelector.mockReturnValue(
+        makeFileElement('1', { top: 20, bottom: 40 })
+      )
+
+      renderHook(() =>
+        useShiftSelection({ items: mockFiles, viewType: 'list' }, mockRef)
+      )
+
+      const mockEvent = {
+        shiftKey: true,
+        key: 'ArrowUp',
+        preventDefault: jest.fn()
+      } as unknown as KeyboardEvent
+
+      act(() => {
+        getKeydownHandler()(mockEvent)
+      })
+
+      expect(mockScrollBy).toHaveBeenCalledWith({
+        top: -30,
+        behavior: 'auto'
+      })
+    })
+
+    it('does not scroll when the current item is already visible', () => {
+      mockGetBoundingClientRect.mockReturnValue({
+        top: 0,
+        bottom: 100
+      })
+      mockQuerySelector.mockReturnValue(
+        makeFileElement('1', { top: 20, bottom: 40 })
+      )
+
+      renderHook(() =>
+        useShiftSelection({ items: mockFiles, viewType: 'list' }, mockRef)
+      )
+
+      const mockEvent = {
+        shiftKey: true,
+        key: 'ArrowDown',
+        preventDefault: jest.fn()
+      } as unknown as KeyboardEvent
+
+      act(() => {
+        getKeydownHandler()(mockEvent)
+      })
+
+      expect(mockScrollBy).not.toHaveBeenCalled()
     })
   })
 })

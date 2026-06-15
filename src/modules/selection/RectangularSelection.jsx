@@ -3,10 +3,10 @@ import Selecto from 'react-selecto'
 
 import styles from './RectangularSelection.styl'
 import { useSelectionContext } from './SelectionProvider'
+import { scrollContainerByDirection } from './scrollHelpers'
 
 const INTERACTIVE_ELEMENTS_SELECTOR =
   'button,a,input,select,textarea,label,[role="button"],[role="menuitem"],[role="option"]'
-const SCROLL_STEP_IN_PIXELS = 10
 /**
  * Hit rate for the Selecto library.
  * Controls how frequently the selection rectangle checks for elements to select.
@@ -334,10 +334,7 @@ const RectangularSelection = ({
     e => {
       if (!resolvedScrollContainer) return
 
-      resolvedScrollContainer.scrollBy(
-        e.direction[0] * SCROLL_STEP_IN_PIXELS,
-        e.direction[1] * SCROLL_STEP_IN_PIXELS
-      )
+      scrollContainerByDirection(resolvedScrollContainer, e.direction)
     },
     [resolvedScrollContainer]
   )
