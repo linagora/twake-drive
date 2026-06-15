@@ -50,6 +50,7 @@ const NameCell = ({
       toggle={toggle}
       isRenaming={isRenaming}
       onInteractWithFile={onInteractWithFile}
+      fillHeight
     >
       <FileName
         attributes={row}
