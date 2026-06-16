@@ -1,265 +1,193 @@
 # Technology Stack
 
-**Project:** Scribe Chat Side Panel (v3.0)
-**Researched:** 2026-03-10
+**Project:** Scribe — Structured LLM Response Contract (v3.1)
+**Researched:** 2026-06-16
+**Confidence:** HIGH (recommendation) / MEDIUM (cozy-stack server-side passthrough of `response_format` — undocumented, must be probed at runtime)
 
-## Principle: Zero New Dependencies
+## TL;DR for the roadmap
 
-The existing dependency tree already contains everything needed for the chat side panel. No new npm packages required. This is both a constraint (cozy-ui components preferred) and an advantage (no bundle size increase, no version conflicts).
+The provider/model behind `POST /ai/v1/chat/completions` is **unknown and abstracted by cozy-stack**, and both the cozy-stack docs and the `cozy-client` typedef only acknowledge `messages` + `temperature`/`model`/`top_p`/`max_tokens`/penalties (no `response_format`, no `tools`). Therefore:
+
+1. **Primary mechanism = prompt-only JSON contract** (system/user instruction + one worked example). The only mechanism guaranteed to work regardless of what model cozy-stack proxies to. Aligns with your locked decisions ("prompt côté client", "validation maison", "zéro dépendance").
+2. **`response_format: { type: "json_object" }` = optional, opt-in, behind a dev probe + feature flag** — NOT the baseline. Sending it optimistically to an unknown proxy is moderately risky (can hard-400; see safety section).
+3. **Tool/function-calling = do NOT pursue.** Heavier protocol, even less likely to survive the proxy, complicates response extraction, zero benefit for a 2-field object.
+4. **Validation = hand-rolled** (your locked choice) is correct. The contract is 2 fields; ajv/zod add 1-4.5 MB unpacked and buy nothing.
+5. **Tolerant parsing = roll your own ~30-LOC helper** (fence-strip + first-balanced-object + trailing-comma fix). A dep (`jsonrepair`) is justified only if the probe shows genuinely malformed JSON the helper can't recover. Default: **zero new runtime deps.**
+
+## Principle: Zero New Dependencies (default)
+
+Like v3.0, this milestone should ship with no new npm packages on the default path. Everything needed — prompt templating, JSON.parse, a hand-rolled validator, and a small tolerant parser — already exists in plain JS. A dependency is added only if a runtime probe proves the model emits JSON our helper can't cheaply recover.
 
 ## Recommended Stack
 
-### Side Panel Layout
+### Core Mechanism (NEW for v3.1)
 
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| cozy-ui `Panel` (Group/Main/Side) | 135.8.0 | Main + side panel flexbox layout | **Already in cozy-ui.** `Panel.Group` = flex row, `Panel.Main` = flex 65%, `Panel.Side` = flex 35%. Responsive: collapses to block on mobile (<48rem). Import from `cozy-ui/transpiled/react/Panel`. |
-| CSS flex overrides | - | Customize panel width | Panel.Side defaults to `flex: 0 0 35%`. Override to `flex: 0 0 380px` (or similar fixed width) for chat panel consistency. Use inline styles or stylus. |
-| cozy-ui `Drawer` | 135.8.0 | **NOT recommended** for desktop | Drawer is a thin wrapper around MUI Drawer (slide-in overlay). Overlays the OO editor instead of resizing it. Only suitable for mobile fallback. |
+| Technology | Version | Purpose | Why Recommended |
+|------------|---------|---------|-----------------|
+| **Prompt-only JSON contract** (no lib) | n/a | Instruct the model to emit `{discussion, fragments?}` JSON via system/user prompt + 1 worked example | Only mechanism that works against an unknown proxied model. You already build prompts client-side, so this is a string-template change in `scribeAI.js`, zero deps. Keep `temperature: 0.3` (already set) — low temp improves JSON adherence. |
+| **Hand-rolled validator** (no lib, ~15 LOC) | n/a | Confirm parsed object matches the contract: `typeof discussion === 'string'`; `fragments` absent OR array of strings | Shape is 2 fields. A small guard ships faster, is ES-portable, debuggable, drives the context-aware fallback directly, and adds 0 bytes. The JSON Schema stays a committed **documentation artifact** (and the literal text you can paste into a future `json_schema` request). |
+| **Tolerant parse helper** (no lib, ~30 LOC) | n/a | Strip ```` ```json ```` fences, extract first balanced `{...}`, retry `JSON.parse`, strip trailing commas | LLM JSON failures are dominated by code fences + prose-wrapping + trailing commas, all trivially handled. Preserves the zero-dep posture. |
 
-**Layout architecture decision:** Use simple flex siblings inside the existing `u-flex u-flex-grow-1` div in `View.jsx`. The OO iframe + a chat panel div as siblings. This matches the proven pattern from `OnlyOfficeAIAssistantPanel` which already takes 30% width as a sibling div.
+### Optional / opt-in (behind dev probe + feature flag, NOT default)
 
-Alternatively, use `Panel.Group` wrapping `Panel.Main` (OO editor) + `Panel.Side` (chat) inside `Editor.jsx`. Both approaches work; the sibling-div approach requires less structural refactoring.
+| Technology | Mechanism | Purpose | When to Use |
+|------------|-----------|---------|-------------|
+| **`response_format: { type: "json_object" }`** | OpenAI Chat Completions body field | Ask the endpoint for guaranteed-parseable JSON (JSON mode) | ONLY after a dev probe confirms cozy-stack forwards it AND the backend accepts it without 400. Keep the word "json" in the prompt (OpenAI JSON mode 400s otherwise). Always keep the prompt contract + tolerant parser as fallback. |
+| **`response_format: { type: "json_schema", json_schema, strict: true }`** | OpenAI Structured Outputs | Schema-enforced output (strongest guarantee) | Only if probe shows a recent OpenAI/Azure model (gpt-4o-2024-08-06+, gpt-4.1, o-series) or vLLM/llama.cpp with guided decoding. Unknown proxy makes this non-portable — treat as a bonus, never a requirement. |
 
-**Confidence:** HIGH -- verified Panel component source at `node_modules/cozy-ui/transpiled/react/Panel/index.js` and CSS (flex row, 65%/35% split, responsive collapse at 48rem).
+### Supporting Libraries — candidate deps (evaluate ONLY if the probe proves need)
 
-### Iframe Resize
+| Library | Version | Unpacked size | Verdict |
+|---------|---------|---------------|---------|
+| `jsonrepair` | 3.14.0 | ~508 KB unpacked | **Hold.** Best general repairer (trailing commas, single quotes, missing brackets, fences). Add only if probe shows malformed JSON the ~30-LOC helper can't recover. Well maintained (josdejong), ESM+CJS, no peer deps. |
+| `best-effort-json-parser` | 1.4.1 | ~61 KB unpacked | **Hold.** Lighter; parses *incomplete* JSON (truncation). Non-streamed responses rarely truncate → low value. |
+| `untruncate-json` | 0.0.1 | ~38 KB unpacked | **Avoid.** 0.0.1, narrow scope (completes truncated prefixes only); non-streamed responses don't truncate. |
+| `zod` / `zod/mini` | 4.4.3 | ~4.56 MB unpacked (mini ~1.9 KB gzip runtime) | **Avoid for this.** Overkill for a 2-field object; great DX for large evolving schemas only. |
+| `ajv` | 8.20.0 | ~1.03 MB unpacked | **Avoid for this.** JSON-Schema-native (could consume your documented schema verbatim) but pulls a real compiler with codegen/`eval`-style concerns; heavy for one object. Reconsider only if a future milestone has many evolving contract variants. |
 
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| CSS flexbox (natural) | - | OO iframe auto-shrinks when panel opens | OO editor is in a `u-flex u-flex-grow-1` div. Adding a sibling panel reduces available width. No JavaScript iframe resize needed. |
-| `forceIframeHeight()` (existing) | - | Already in `View.jsx` for height control | Pattern exists; can extend to width if needed, but flex should handle it. |
+## Installation
 
-**Key insight:** The existing `View.jsx` renders OO inside `<div className="u-flex u-flex-grow-1">`. When the chat panel is added as a sibling, the flex container automatically splits space. The OO iframe resizes because it is inside a flex child.
+```bash
+# RECOMMENDED PATH: nothing to install.
+# Contract, validator, and tolerant parser are hand-rolled in the Scribe module.
 
-**Precedent:** `OnlyOfficeAIAssistantPanel.tsx` already does exactly this. It renders as a sibling div with `width: 30%` inside the same flex container. OO handles the resize event internally.
-
-**Confidence:** HIGH -- existing AI assistant panel uses this exact pattern and works.
-
-### Chat UI Components
-
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| cozy-ui `Paper` | 135.8.0 | Message bubbles, panel container | Already used extensively in Scribe. Theme-aware background + elevation. |
-| cozy-ui `Typography` | 135.8.0 | Message text, timestamps, headers | Already used. Consistent typography scale. |
-| cozy-ui `TextField` | 135.8.0 | Chat input field | MUI TextField wrapper. Already used in codebase (`ShortcutCreationModal.jsx`). Supports `multiline` + `maxRows` for auto-expanding input. |
-| cozy-ui `IconButton` | 135.8.0 | Send button, close, copy, insert actions | Already used. |
-| cozy-ui `Buttons` | 135.8.0 | Action buttons (Insert/Replace) on AI messages | Already used in AIAssistantPanel. |
-| cozy-ui `Spinner` | 135.8.0 | Loading indicator during AI response | Already used. |
-| cozy-ui `Divider` | 135.8.0 | Separator between conversation sections | Available in cozy-ui. |
-| cozy-ui `Stack` | 135.8.0 | Vertical spacing in message list | Already used in AIAssistantPanel. |
-| cozy-ui Icons | 135.8.0 | Chat UI icons | `Send`, `CrossMedium`, `Copy`, `Refresh`, `Assistant` -- all available. |
-| `react-markdown` + `remark-gfm` | 10.1.0 / 4.0.1 | Render AI responses as formatted markdown | Already installed and used in `ScribeResultPanel`. |
-
-**Chat message component:** Build a custom `ChatMessage` component. Each message = `Paper` with `Typography` + optional action buttons. User messages right-aligned (or full-width with distinct background), AI messages left-aligned. This is 50 lines of JSX -- simpler and lighter than any chat UI library.
-
-**Confidence:** HIGH -- all components verified present in `node_modules/cozy-ui/transpiled/react/`.
-
-### Conversation Persistence
-
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| `localforage` | 1.10.0 | Persist chat history locally | **Already installed.** Used by `persistedState.js` and push client. IndexedDB-backed with localStorage fallback. Async API. |
-
-**Storage schema:**
-
-```javascript
-// Key: `scribe-conversations-${fileId}`
-// Value:
-{
-  conversations: [{
-    id: string,              // crypto.randomUUID() or Date.now().toString(36)
-    title: string,           // first user message, truncated
-    createdAt: string,       // ISO 8601
-    updatedAt: string,       // ISO 8601
-    messages: [{
-      role: 'user' | 'assistant',
-      content: string,       // markdown text
-      timestamp: string,     // ISO 8601
-      metadata: {            // optional
-        selectedText: string,  // OO selection context (if any)
-        action: string         // 'replace' | 'insert' | null
-      }
-    }]
-  }]
-}
+# ONLY IF the dev probe proves malformed JSON the hand-rolled parser can't fix:
+# npm install jsonrepair@3.14.0
 ```
 
-**Why NOT cozy-client doctypes for v3.0:**
-1. New `io.cozy.scribe.conversations` doctype requires cozy-stack changes (permissions in manifest.webapp, server-side registration) -- heavy process.
-2. Chat history is ephemeral data -- losing it is not catastrophic.
-3. localforage is already battle-tested in this codebase.
-4. Can migrate to doctypes in v4.0 if cross-device sync is wanted.
+## The `response_format` safety question — clear recommendation
 
-**Why NOT sessionStorage or raw localStorage:**
-- localforage uses IndexedDB by default (much larger storage quota, async, non-blocking).
-- Already imported and configured in the project.
+**Question:** Is it safe to send `response_format` optimistically to the unknown cozy-stack proxy?
 
-**Confidence:** HIGH -- localforage verified at 1.10.0, already used in `src/store/persistedState.js`.
+**Answer: No — do not send it by default. Make it opt-in behind a dev probe + feature flag.**
 
-### Streaming Responses
+What is verified vs not:
 
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| `client.stackClient.fetch()` (raw) | 60.19.0 | Get raw Response object for SSE streaming | `fetchJSON()` parses response as JSON (unusable for streaming). `fetch()` returns raw Response with `.body` ReadableStream. Handles auth headers automatically. |
-| `ReadableStream` + `TextDecoder` | Browser native | Parse SSE chunks from streaming response | Standard Web API. No polyfill needed (React 18 targets modern browsers). |
-| `{ stream: true }` in request body | - | Enable streaming in cozy-stack AI proxy | Verified in `cozy-client/dist/models/ai.js` -- `ChatCompletionOptions` typedef includes `stream` boolean. |
+- **Client side is NOT the gatekeeper.** You call `fetchJSON('POST', '/ai/v1/chat/completions', { messages, temperature })` directly. `cozy-client`'s own `chatCompletion()` builds the body with `_objectSpread({ messages }, options)` (verified `node_modules/cozy-client/dist/models/ai.js:171`) — i.e. it does **not strip unknown fields**. So whatever you put in the body reaches cozy-stack. The only gatekeeper is cozy-stack/openRAG and the downstream provider.
+- **cozy-stack passthrough is undocumented.** The official `/ai` docs only show `messages` + `temperature`; the `cozy-client` `ChatCompletionOptions` typedef (verified ai.js:73-81) lists only `stream`, `model`, `temperature`, `top_p`, `max_tokens`, `presence_penalty`, `frequency_penalty` — **no `response_format`, no `tools`, no `json_schema`**. Whether cozy-stack forwards, ignores, or rejects an unknown field is **unverified** (MEDIUM confidence it may be ignored; not safe to assume).
+- **Failure mode if it IS forwarded is asymmetric — can be a hard 400, not a silent ignore:**
+  - OpenAI **JSON mode** (`json_object`) returns **400** if no message contains the substring "json" — documented footgun (mitigated only if we keep "json" in the prompt).
+  - OpenAI **Structured Outputs** (`json_schema`, strict) supported only on recent models (gpt-4o-2024-08-06+, gpt-4.1, o-series) → "unsupported model" 400s elsewhere.
+  - Non-OpenAI OpenAI-compatible backends (vLLM, llama.cpp, Ollama, TGI) have **inconsistent** support and an unknown server may 400/422 on an unexpected field.
+- **Conclusion:** Downside of optimistic-send = hard request failure on an unknown backend; upside (marginally more reliable JSON) is already covered by prompt contract + tolerant parser. **Default OFF.**
+- **Recommended approach:** ship a **dev probe** (your planned "Sonde dev") that issues a trial request with `response_format: { type: 'json_object' }` and records (a) HTTP status, (b) whether output is valid JSON, (c) fragment-count behavior (0/1/N). If 200 + clean JSON, you may flip `flag__scribe.json_response_format` to send it; otherwise leave off and rely on the prompt contract. The UI must never depend on it.
 
-**Streaming implementation pattern:**
+## Tool/function-calling path — recommendation
 
-```javascript
-async function callScribeAIStream(client, messages, { signal, onChunk }) {
-  const response = await client.stackClient.fetch(
-    'POST',
-    '/ai/v1/chat/completions',
-    JSON.stringify({ messages, stream: true, temperature: 0.3 }),
-    {
-      signal,
-      headers: { 'Content-Type': 'application/json' }
-    }
-  )
+**Do not use.** You *can* force a JSON shape via a single tool with `{discussion, fragments}` params + forced `tool_choice`, but:
 
-  const reader = response.body.getReader()
-  const decoder = new TextDecoder()
-  let buffer = ''
-  let accumulated = ''
+- Requires the proxy to forward `tools` + `tool_choice` AND return `tool_calls` — even less likely to survive an unknown proxy than `response_format` (the cozy-client typedef doesn't even mention them).
+- Moves the response from `choices[0].message.content` (your current line 165 extraction) to `choices[0].message.tool_calls[0].function.arguments`, complicating extraction and the fallback story.
+- Zero benefit over `json_object` + prompt for a 2-field object.
 
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
-    buffer += decoder.decode(value, { stream: true })
+Keep it on the "what NOT to add" list.
 
-    // Parse SSE lines: "data: {...}\n\n"
-    const lines = buffer.split('\n')
-    buffer = lines.pop() // keep incomplete line
+## Prompt-only JSON reliability (the baseline)
 
-    for (const line of lines) {
-      if (!line.startsWith('data: ')) continue
-      const data = line.slice(6)
-      if (data === '[DONE]') return accumulated
+Without a JSON mode, prompt-only JSON is **good but not perfect** — the documented failure modes are exactly the ones a tiny tolerant parser handles:
 
-      const parsed = JSON.parse(data)
-      const delta = parsed.choices?.[0]?.delta?.content || ''
-      accumulated += delta
-      onChunk(accumulated) // update UI with accumulated text
-    }
-  }
-  return accumulated
-}
+| Failure mode | Frequency | Cheap fix (no dep) |
+|--------------|-----------|--------------------|
+| Wrapped in ```` ```json ... ``` ```` fence | Common | Strip leading/trailing fence before parse |
+| Leading/trailing prose ("Here is the JSON: {...}") | Common | Extract first balanced `{...}` (brace counter, string/escape aware) |
+| Trailing comma before `}`/`]` | Occasional | Regex `,(\s*[}\]])` → `$1`, re-parse |
+| Single quotes / unquoted keys | Rare on instruct models | Punt to `jsonrepair` *only if probe shows it* |
+| Truncation | Rare (non-streamed) | Out of scope; context-aware fallback catches it |
+
+Free boosters: low `temperature` (already 0.3), a **single concrete worked example** in the system prompt (one-shot >> zero-shot for JSON adherence), explicit "respond with ONLY a JSON object, no markdown fences".
+
+## Hand-rolled vs ajv vs zod — concrete trade-off
+
+Your locked choice (hand-rolled) is correct. Numbers verified 2026-06-16:
+
+| Approach | Version | Size | Fit for `{discussion: string, fragments?: string[]}` |
+|----------|---------|------|------------------------------------------------------|
+| **Hand-rolled guard** | n/a | ~15 LOC, 0 bytes | Perfect. `typeof obj.discussion === 'string'` + array-of-strings check. Debuggable, ES-portable, drives context-aware fallback. |
+| `zod` (standard) | 4.4.3 | ~4.56 MB unpacked / ~5.9 KB gzip per simple schema | Overkill. |
+| `zod/mini` | 4.4.3 | ~1.9 KB gzip | Smaller, still a dep + tree-shake concern for 2 fields. Not worth it. |
+| `ajv` | 8.20.0 | ~1.03 MB unpacked | JSON-Schema-native but heavy compiler, codegen/`eval` concerns. |
+
+**Verdict:** Hand-rolled validator; keep the JSON Schema as a committed documentation artifact (and reusable as the literal `json_schema` payload later). Reach for `ajv` only if a future milestone introduces many evolving contract variants where the schema should be the single executable source of truth.
+
+## Tolerant parsing — roll your own vs a helper
+
+**Roll your own** (~30 LOC). Realistic failure set (fences, prose-wrap, trailing comma) is small and cheap. Skeleton:
+
+```
+parseScribeResponse(raw):
+  1. text = strip ```json / ``` fences (regex)
+  2. try JSON.parse(text)                         // happy path
+  3. extract first balanced { ... }               // brace counter, string/escape aware
+  4. try JSON.parse(extracted)
+  5. extracted = extracted.replace(/,(\s*[}\]])/g, '$1')   // trailing commas
+  6. try JSON.parse(extracted)
+  7. on total failure -> context-aware fallback (caller: popover vs chat)
 ```
 
-**Key finding:** `cozy-stack-client`'s `fetch()` method (CozyStackClient.js line 217) returns the raw Response object with automatic auth header injection. Supports `{ signal }` for AbortController. This is exactly what is needed -- no need to bypass cozy-stack-client or use raw `window.fetch`.
+Add `jsonrepair@3.14.0` **only if** the dev probe demonstrates malformed JSON (single quotes, unbalanced brackets) steps 1-6 can't recover. 508 KB unpacked for an edge case the fallback already handles is not justified up front.
 
-**Phased approach:** Start v3.0 with non-streaming (reuse existing `callScribeAI` with multi-turn messages array). Add streaming in a later phase. Chat UX benefits more from streaming than inline mode because responses are longer.
+## Integration points in `scribeAI.js`
 
-**Confidence:** MEDIUM -- `stream: true` is typed in cozy-client and follows OpenAI convention. However, actual cozy-stack server-side SSE support has not been tested in this project. Runtime verification needed.
+File-specific guidance (current: `src/modules/views/OnlyOffice/Scribe/scribeAI.js`):
 
-### Mode Toggle (Inline vs Panel)
+1. **`SYSTEM_PROMPT` (lines 24-33)** — append the JSON contract instruction. Keep the literal word **"json"** in it (required if `response_format: json_object` is ever enabled; harmless otherwise). Add one short worked example: `{"discussion": "...{{fragment:1}}...", "fragments": ["..."]}`. The existing marker rules (TABLE/CELL/footnote/REF) now apply *inside* `fragments[]` strings, never in `discussion`.
+2. **`buildMessages` (lines 84-138)** — structure unchanged; new contract inlines via `systemPrefix`. Marker-conditional additions (lines 88-96) stay; clarify markers live inside fragment strings.
+3. **`callScribeAI` (lines 155-172)** — currently sends `{ messages, temperature: 0.3 }`. Add an OPTIONAL flag-gated `response_format: { type: 'json_object' }`. Default OFF. After getting `content` (line 164-165), route it through the NEW `parseScribeResponse(content)` instead of returning raw string.
+4. **NEW: `parseScribeResponse(content)`** — tolerant parse → hand-rolled validate → on failure, **context-aware fallback** (popover: whole text as a single fragment; chat: whole text as `discussion`, no fragments). This is your locked "repli contextuel".
+5. **`classifyScribeError` (lines 227-264)** — add a branch for "valid HTTP 200 but unparseable/invalid contract" so the UI distinguishes a transport error from a contract miss (drives the re-ask hardening step). Note `chatCompletion` is bypassed (you use `fetchJSON` directly), so any new body field is sent verbatim — no cozy-client typedef change blocks you.
 
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| React state in `View.jsx` | - | Runtime panel open/close | Simple `useState(false)` for `isScribePanelOpen`. |
-| `cozy-flags` | 4.6.1 | Feature flag | `flag('drive.scribe.panel')` to gate panel feature during development. Already used for `drive.scribe.enabled`. |
+## Alternatives Considered
 
-No new dependencies needed. Toggle is pure UI state.
+| Recommended | Alternative | When to Use Alternative |
+|-------------|-------------|-------------------------|
+| Prompt-only contract (default) | `response_format: json_object` | Only after dev probe confirms proxy forwards it + backend accepts; gate behind flag |
+| Prompt-only contract | `response_format: json_schema` strict | Only if probe shows recent OpenAI/Azure or vLLM/llama.cpp guided decoding; never a requirement |
+| JSON object via prompt | Tool/function-calling | Never for this milestone — heavier, less portable, no benefit |
+| Hand-rolled validator | `ajv` | Future milestone with many evolving schema variants needing executable schema as source of truth |
+| Hand-rolled tolerant parser | `jsonrepair@3.14.0` | Only if probe shows persistent malformed JSON (single quotes, broken brackets) the helper can't fix |
 
-## Post-Insertion Selection: Sentinel Marker Strategy
+## What NOT to Use
 
-| Library | Why Not |
-|---------|---------|
-| Chat UI library (`@chatscope/chat-ui-kit-react`, `stream-chat-react`) | Overkill. Chat messages are Paper + Typography. These libraries add 50-200KB for features we don't need (presence, typing indicators, threads, avatar groups). |
-| MUI Drawer (directly) | cozy-ui wraps it as `Drawer`. But wrong for this use case -- overlays content instead of resizing editor. Use `Panel` or flex sibling instead. |
-| WebSocket library | SSE via fetch ReadableStream is sufficient. The AI proxy speaks HTTP. |
-| State management (`zustand`, `jotai`, `recoil`) | Existing React state + context is sufficient. Chat state is local to the panel component tree. Not shared across the app. |
-| `uuid` | Use `crypto.randomUUID()` (native in all modern browsers) or `Date.now().toString(36)` for conversation IDs. |
-| New cozy-client doctype | Defer server-side persistence to v4.0. localforage is sufficient. |
-| `@mui/material` Drawer/Panel directly | Must go through cozy-ui wrappers for ecosystem consistency. |
-| Virtualized list (`react-window`, `react-virtualized`) | Chat message lists won't have thousands of items. Simple `overflow-y: auto` with native scrolling is fine for < 200 messages per conversation. |
+| Avoid | Why | Use Instead |
+|-------|-----|-------------|
+| Sending `response_format` by default | Unknown backend may hard-400 (JSON mode needs "json" in prompt; non-OpenAI servers may 422 on unknown field); benefit covered by prompt + parser | Prompt-only by default; `response_format` opt-in behind dev probe + flag |
+| `json_schema` strict as a *requirement* | Only recent OpenAI/Azure + some self-hosted engines support it; unknown proxy → non-portable | Optional bonus only |
+| Tool/function-calling to force JSON | Heavier protocol, even less proxy-portable, complicates extraction, zero benefit for 2 fields | Plain JSON object via prompt |
+| `zod` / `ajv` for validation | 1-4.5 MB deps to validate 2 fields; ajv codegen/`eval` concerns | Hand-rolled guard; JSON Schema as docs |
+| `jsonrepair` / `untruncate-json` up front | Adds deps for failure modes the ~30-LOC parser + context fallback already cover; non-streamed → no truncation | Hand-rolled tolerant parser; add `jsonrepair` only if probe proves need |
+| Streaming/partial-JSON parsers | Responses non-streamed (locked) — no truncation to recover | n/a |
+| Modifying cozy-client `chatCompletion()` typedef | You bypass it with `fetchJSON`; body fields pass through verbatim | Send fields directly in the `fetchJSON` body |
 
-## Integration Points
+## Stack Patterns by Variant
 
-### Where the Panel Attaches (View.jsx, line 142)
+**If the dev probe shows the proxy forwards `response_format` AND returns clean JSON:**
+- Enable `response_format: { type: 'json_object' }` behind `flag__scribe.json_response_format`.
+- Keep the prompt contract (must contain "json") and the tolerant parser as belt-and-suspenders.
 
-Current structure:
-```jsx
-<div className="u-flex u-flex-grow-1">
-  <div id="onlyOfficeEditor" />
-  <OnlyOfficeAIAssistantPanel />
-</div>
-```
+**If the probe shows the proxy ignores or 400s on `response_format` (expected default):**
+- Ship prompt-only contract + tolerant parser + context-aware fallback. Zero deps.
 
-Becomes:
-```jsx
-<div className="u-flex u-flex-grow-1">
-  <div id="onlyOfficeEditor" style={{ flex: '1 1 auto' }} />
-  {isScribePanelOpen && (
-    <div style={{ flex: '0 0 380px', overflow: 'hidden' }}>
-      <ScribeChatPanel
-        onClose={() => setIsScribePanelOpen(false)}
-        fileId={file._id}
-        /* selection context from useCozyBridge */
-      />
-    </div>
-  )}
-</div>
-```
+**If a later milestone shows persistent malformed JSON:**
+- Add `jsonrepair@3.14.0` as the last parse step before the context-aware fallback.
 
-Note: The existing `OnlyOfficeAIAssistantPanel` may need to be hidden or integrated when Scribe panel is open to avoid two side panels competing for space.
+## Version Compatibility
 
-### Chat to Plugin Communication
-
-Reuse `useCozyBridge` hook and `respond()` callback from `View.jsx`. When user clicks "Insert" or "Replace" on a chat AI message, call `respond()` exactly as `ScribePopover` does. The plugin already handles these response actions.
-
-Potential new intent: `CHAT_INSERT` for inserting text without requiring prior selection (e.g., user generates new content in chat and wants to insert at cursor). This is a postMessage protocol extension, not a library dependency.
-
-### Extending scribeAI.js for Conversation
-
-Add `callScribeAIChat()` function that accepts the full messages array (multi-turn) instead of building it from a single action. Keep `callScribeAI()` and `buildMessages()` intact for inline mode.
-
-```javascript
-export async function callScribeAIChat(client, messages, { signal } = {}) {
-  // messages = [{ role: 'system', content: '...' }, { role: 'user', ... }, { role: 'assistant', ... }, ...]
-  const response = await client.stackClient.fetchJSON(
-    'POST',
-    '/ai/v1/chat/completions',
-    { messages, temperature: 0.3 },
-    { signal }
-  )
-  const content = response?.content || response?.choices?.[0]?.message?.content
-  if (!content) throw new Error('Empty response from AI')
-  return content
-}
-```
-
-## Versions Summary
-
-| Package | Installed | Used For | New? |
-|---------|-----------|----------|------|
-| cozy-ui | 135.8.0 | Panel, Paper, Typography, TextField, IconButton, Buttons, Stack, Divider, Icons | No |
-| cozy-client | 60.20.0 | AI model types (stream option) | No |
-| cozy-stack-client | 60.19.0 | Raw fetch for streaming, fetchJSON for non-streaming | No |
-| react-markdown | 10.1.0 | Render AI markdown in chat bubbles | No |
-| remark-gfm | 4.0.1 | GFM support (tables, strikethrough) in chat | No |
-| localforage | 1.10.0 | Conversation persistence (IndexedDB) | No |
-| turndown | 7.2.2 | HTML-to-MD for OO selection context in chat | No |
-| marked | 17.0.4 | MD-to-HTML for reinsertion from chat | No |
-| date-fns | 2.30.0 | Timestamp formatting in chat messages | No |
-| cozy-flags | 4.6.1 | Feature flag for panel mode | No |
-
-**Total new npm packages: 0**
+| Package | Note |
+|---------|------|
+| (none added by default) | Recommended path adds zero runtime deps; nothing to reconcile with React 18 / cozy-client 60 / marked 17 / react-markdown 10. |
+| `jsonrepair@3.14.0` | ESM+CJS, no peer deps, framework-agnostic — safe with the existing cozy-scripts/webpack build if ever added. |
 
 ## Sources
 
-- cozy-ui Panel component: verified at `node_modules/cozy-ui/transpiled/react/Panel/index.js` -- Group (flex row), Main (65%), Side (35% + paleGrey background)
-- cozy-ui Panel CSS: verified at `node_modules/cozy-ui/transpiled/react/stylesheet.css` -- responsive collapse at 48rem breakpoint
-- cozy-ui Drawer: verified at `node_modules/cozy-ui/transpiled/react/Drawer/index.js` -- thin MUI Drawer re-export (overlay, not layout)
-- cozy-stack-client fetch: verified at `node_modules/cozy-stack-client/dist/CozyStackClient.js` lines 206-328 -- raw Response return, auto auth headers, signal support
-- cozy-client AI model: verified at `node_modules/cozy-client/dist/models/ai.js` line 74 -- `stream` option in ChatCompletionOptions typedef
-- Existing AI panel pattern: verified at `src/modules/views/OnlyOffice/OnlyOfficeAIAssistantPanel.tsx` + `styles.styl` -- sibling div, width 30%, inside flex container
-- Existing flex layout: verified at `src/modules/views/OnlyOffice/View.jsx` line 142 -- `u-flex u-flex-grow-1` container
-- localforage usage: verified at `src/store/persistedState.js` (setItem/getItem), `src/components/pushClient/Banner.jsx`
-- cozy-ui component list: verified via `ls node_modules/cozy-ui/transpiled/react/` -- TextField, Divider, Stack, all Icons present
+- `node_modules/cozy-client/dist/models/ai.js` (verified 2026-06-16) — `ChatCompletionOptions` typedef lists only stream/model/temperature/top_p/max_tokens/penalties (NO response_format/tools); `chatCompletion()` builds body via `_objectSpread({messages}, options)` (line 171) so unknown fields are NOT stripped client-side (HIGH)
+- https://docs.cozy.io/en/cozy-stack/ai/ — official `/ai/v1/chat/completions` docs; only `messages` + `temperature` documented, no `response_format`/`tools` passthrough (MEDIUM — absence of docs, not proof of rejection)
+- https://community.openai.com/t/is-the-gpt4-o-model-compatible-with-json-mode/760533 and https://portkey.ai/error-library/response-format-error-10006 — JSON mode model support + "must include json" 400 (HIGH)
+- https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/json-mode — Azure JSON mode requirements mirror OpenAI (HIGH)
+- https://docs.anyscale.com/llm/serving/structured-output and https://gigagpu.com/vllm-structured-output-guided-decoding/ — vLLM/llama.cpp/Ollama/TGI structured-output support varies (guided decoding, grammars, `format`) (MEDIUM)
+- npm registry (verified 2026-06-16): jsonrepair@3.14.0 (~508KB unpacked), best-effort-json-parser@1.4.1 (~61KB), untruncate-json@0.0.1 (~38KB), zod@4.4.3 (~4.56MB unpacked), ajv@8.20.0 (~1.03MB) (HIGH)
+- https://zod.dev/v4 and https://www.speakeasy.com/blog/release-zod-v4 — zod v4 / zod-mini sizes (~1.9KB gzip mini) (HIGH)
+- https://github.com/josdejong/jsonrepair — maintenance/scope of jsonrepair (HIGH)
 
 ---
-*Stack research for: v3.0 Scribe Chat Side Panel*
-*Researched: 2026-03-10*
+*Stack research for: v3.1 structured LLM JSON response contract over an unknown OpenAI-compatible proxy*
+*Researched: 2026-06-16*

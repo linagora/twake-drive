@@ -1,247 +1,167 @@
-# Feature Landscape: v3.0 Scribe Chat Panel
+# Feature Research
 
-**Domain:** Conversational AI chat side panel for document writing assistant (Scribe) in OnlyOffice / Cozy Drive
-**Researched:** 2026-03-10
-**Milestone context:** v3.0 -- adding a chat panel alongside the existing inline mode, with conversational UI, selection awareness, action buttons in responses, and conversation history
-**Confidence:** MEDIUM-HIGH -- patterns are well-established (Copilot in Word, Gemini in Docs both ship these features); the Scribe-specific integration (iframe resizing, postMessage protocol, cozy-ui constraints) needs validation but builds on proven v2.1 architecture.
+**Domain:** AI writing assistant — separating conversational/meta text from insertable artifacts (fragments) across two surfaces (conversational chat panel + inline popover), inside OnlyOffice / Cozy Drive
+**Researched:** 2026-06-16
+**Milestone context:** v3.1 — structured LLM response contract `{ discussion, fragments?: string[] }` with `{{fragment:N}}` position markers, rendered as per-fragment insertion cards in BOTH chat and popover
+**Confidence:** MEDIUM-HIGH (product UX patterns verified across 4+ real products; the structured-output-for-UI rendering pattern is less publicly documented — flagged where relevant)
 
----
+> Supersedes the prior v3.0 chat-panel feature research previously stored here. This document covers ONLY the v3.1 discussion-vs-fragment separation feature.
 
-## Existing v2.1 Foundation (Already Shipped)
+## Context: Our Two Surfaces Today
 
-These features are built and working. v3.0 builds on top of them.
+Established from reading the existing code (not assumptions):
 
-| Feature | Status | Location |
-|---------|--------|----------|
-| Rich text extraction via `GetSelectedContent` + HTML->MD | Shipped | `code.js`, `scribeConversion.js` |
-| LLM call via cozy-stack `/ai/v1/chat/completions` | Shipped | `scribeAI.js` |
-| Result preview with Markdown rendering (react-markdown) | Shipped | `ScribeResultPanel.jsx` |
-| Replace/Insert actions via PasteHtml | Shipped | `View.jsx`, `code.js` |
-| Floating button + Ctrl+I trigger | Shipped | `ScribeFloatingButton.jsx` |
-| Action menu (correct, tone, translate, free prompt) | Shipped | `ScribeActionMenu.jsx` |
-| Error handling with retry, i18n (5 locales) | Shipped | `ScribePopover.jsx` |
-| Existing AI panel (cozy-viewer AIAssistantPanel) for doc summary | Shipped (separate) | `OnlyOfficeAIAssistantPanel.tsx` |
+- **Chat panel** (`ChatMessageList.jsx` + `MessageActions.jsx`): each assistant reply renders as a single `<Markdown>{content}</Markdown>` blob inside one `AssistantBubble`, with ONE shared `MessageActions` toolbar (copy / insert / replace) acting on the **entire message string**. There is no notion of "this part is talk, that part is insertable."
+- **Inline popover** (`ScribeResultPanel.jsx`): one `MarkdownPreview` of the whole `resultText`, with global **Insert** / **Replace** / **Retry** buttons acting on the whole blob. Quick actions (correct/translate/tone/improve/free prompt) feed it. It already carries rich-content concerns (cell markers, `insertDisabled` for partial tables, `cellWarning`).
 
-### Existing OO iframe resize pattern
+The v3.1 contract `{ discussion, fragments?: string[] }` with `{{fragment:N}}` markers is the data model. **This research is about the UX that contract should enable** — what to render, what actions per fragment, and what NOT to build.
 
-The cozy-viewer `AIAssistantPanel` already demonstrates the side panel pattern: it renders alongside the OO editor `div` in a flex container (`u-flex u-flex-grow-1`), with the panel taking `width: 30%`. This proves the layout pattern works. The Scribe chat panel can follow the same approach.
+The core problem this milestone solves is a recognized industry anti-pattern: the **"blob copy"** — meta-discussion ("Here is the translation:") gets copied/inserted into the document along with the actual content. Every mature product surveyed below solves exactly this by separating "the conversation" from "the produced artifact."
 
----
+## Feature Landscape
 
-## Industry Reference: How Document Editor Chat Panels Work
+### Table Stakes (Users Expect These)
 
-Analysis of Google Docs Gemini, Microsoft Copilot in Word, Notion AI, and CKEditor AI, distilled into patterns relevant to Scribe.
+Missing these = the feature feels half-done. Each is tied to our chat and/or popover surface.
 
-### Common Pattern: Side Panel Chat
+| Feature | Why Expected | Complexity | Notes (surface + dependency) |
+|---------|--------------|------------|------------------------------|
+| **Visually distinct fragment block** (card/box), not styled like prose | Canvas, Artifacts, Gemini, Notion AI all give produced content its own container so users know "this is the deliverable" | LOW-MEDIUM | **Both.** Chat: render `{{fragment:N}}` markers as a bordered/tinted card in the markdown stream. Popover: result body becomes a card with discussion above it. Reuse `MarkdownPreview` inside the card. |
+| **Per-fragment Insert** (+ Replace when a selection exists) | Users expect to insert THE CONTENT, not the explanation (Gemini "Insert", Canvas section apply, Notion "Insert below") | MEDIUM | **Both.** Move the action toolbar from message-level to fragment-level. Insert payload = the fragment string only, never the discussion. Replace shown only when `currentSelection` exists (logic already in `MessageActions`). |
+| **Per-fragment Copy** of clean content | Copy of clean content (no "Here is…") is the most-used escape hatch. Already exists at message level | LOW | **Both.** Already implemented in `MessageActions` (HTML+text clipboard). Rebind to fragment content. |
+| **Discussion renders as normal prose** (no action buttons) | When the model explains *why* or asks a clarifying question, that text must read as conversation, not as something to paste | LOW | **Both.** Discussion = existing markdown bubble minus the action toolbar. Buttons attach only to fragments. |
+| **Graceful pure-discussion case** (0 fragments → no insert UI at all) | The model often answers with only talk ("Your text is already correct", a question, an explanation). Showing Insert/Replace on pure talk re-creates the blob problem | LOW-MEDIUM | **Both.** Chat: plain bubble, **no** cards, **no** insert/replace. Popover: per PROJECT.md fallback, collapse to "1 fragment = whole reply" so the existing single-Insert quick-action UX still works. **The single most important correctness behavior.** |
+| **Preview before apply** (nothing mutates OO until clicked) | Universal: "Never overwrite the original without confirmation" (Shape of AI) | LOW | **Both.** Already the model in both surfaces. Preserve it; just make the preview per-fragment. |
+| **Marker fidelity preserved per fragment** | Existing rich reinjection (`[TABLE:N][CELL:r,c]`, `[IMG:scribe-img-N]`, footnotes) must keep working when content is split | MEDIUM-HIGH | **Both.** Each fragment string must carry its own intact markers; fragments must split on safe boundaries so a marker is never cut across fragments. v2.5 reinjection pipeline unchanged per PROJECT.md. Dependency risk — flag for the parser phase. |
 
-All major implementations use a **right-side panel** that coexists with the document. The document area shrinks (not overlapped) when the panel opens. Key shared traits:
+### Differentiators (Competitive Advantage)
 
-1. **Toggle open/close** via button in toolbar or keyboard shortcut
-2. **Text input at bottom** with send button
-3. **Message history** scrolling upward (newest at bottom)
-4. **Action buttons on AI responses** (Copy, Insert/Add to doc)
-5. **Selection awareness** -- the AI knows what text is selected
-6. **Suggested prompts** -- contextual quick-action chips
+Aligned with Core Value (fluid manipulation of OO content). Not required for a working v1, but valuable.
 
-### Key Divergences
+| Feature | Value Proposition | Complexity | Notes (surface + dependency) |
+|---------|-------------------|------------|------------------------------|
+| **Interleaved fragments inside one reply** (discussion → card → more discussion → card) | The `{{fragment:N}}` position-marker design is *more* granular than Canvas/Artifacts (which keep all artifact on a separate pane). Lets the model say "I split this into two parts:" then show both in context | MEDIUM | **Chat (headline feature).** Split the discussion string on `{{fragment:N}}` tokens; render text segments as markdown and fragment tokens as cards in document order. Popover usually has 1 fragment, so this mostly benefits chat. |
+| **Multiple alternative fragments as "pick-one" cards** | When the model returns several phrasings/translations, present comparable cards each with its own Insert (the documented "Variations" pattern: 3–5 well-differentiated options) | MEDIUM | **Both.** Falls out almost for free from per-fragment cards: N fragments → N cards. Must decide alternatives (pick one) vs sequential pieces (insert all) — contract is ambiguous; resolve in requirements. |
+| **Insert-all / Replace-with-all** when fragments are sequential pieces | Saves N clicks for "intro / body / conclusion" assembled into the doc (Gemini "Accept all" precedent) | LOW-MEDIUM | **Both.** Only meaningful if fragments are ordered pieces, NOT alternatives. Defer until alternatives-vs-pieces semantics resolved. |
+| **Subtle "AI produced" affordance on cards** (sparkle / accent border reusing `SCRIBE_PURPLE`) | Reinforces provenance; codebase already has the purple sparkle motif | LOW | **Both.** Reuse `SparkleSvg` / `SCRIBE_PURPLE` from `ChatMessageList.jsx`. Cheap polish. |
+| **Confirmation flash per fragment** (existing check-icon swap) | Immediate "this fragment was inserted" feedback without closing the panel — supports inserting several fragments in sequence | LOW | **Both.** `MessageActions` already has `showConfirmation` (1.5s check). Reuse per card. |
 
-| Aspect | Copilot (Word) | Gemini (Docs) | Scribe Target |
-|--------|---------------|---------------|---------------|
-| Panel width | ~30% fixed | ~30% fixed | ~30%, user not expected to resize for v3.0 |
-| Insert mechanism | "Add to doc" button | Arrow icon + Preview | Replace/Insert (existing Scribe pattern) |
-| Selection context | Auto-detected, "Chat with Copilot" on selection | Auto-summary on open | Show selection chip in input area |
-| Conversation history | Persisted cross-device | Added March 2026 | In-memory for v3.0, persist later |
-| Suggested prompts | Follow-up chips after response | Contextual on open | Quick action chips (reuse SCRIBE_ACTIONS) |
+### Anti-Features (Commonly Requested, Often Problematic)
 
----
-
-## Table Stakes
-
-Features users expect in a v1 chat panel. Missing any of these means the panel feels broken or incomplete.
-
-| # | Feature | Category | Why Expected | Complexity | Dependencies | Notes |
-|---|---------|----------|-------------|------------|--------------|-------|
-| 1 | **Side panel container** | Layout | Users expect a panel beside the document, not a floating dialog. Both Copilot and Gemini use this pattern. | Medium | Flex layout in View.jsx, OO iframe resizes via `forceIframeHeight` or flex. Existing `AIAssistantPanel` pattern proves this works (30% width, Paper elevation). | Must coexist with existing `OnlyOfficeAIAssistantPanel` (or replace it). Panel opens/closes without page reload. Use cozy-ui Paper, Stack, Typography. |
-| 2 | **Chat message list** | UI | Conversational UI requires visible history of user messages and AI responses. Every chat interface has this. | Medium | React state array of `{ role, content, timestamp }` messages. Scroll container with `overflow-y: auto`. | Render user messages right-aligned or distinguished, AI messages with Markdown rendering (reuse existing react-markdown + remark-gfm from v2.1). Auto-scroll to bottom on new message. |
-| 3 | **Text input with send** | UI | Users need a way to type prompts. The input area is the primary interaction point. | Low | Controlled textarea/input, send button, Enter to send (Shift+Enter for newline). | Use cozy-ui TextField or MUI OutlinedInput. Disable send when empty or loading. Show loading indicator while AI responds. |
-| 4 | **Selection awareness in chat** | Context | When user selects text in OO and switches to chat, the chat should know about the selection. Both Copilot and Gemini auto-detect selection context. | Medium | Extend existing plugin polling (`GetSelectedText` every 500ms) to broadcast selection to chat panel. Reuse `SHOW_SCRIBE_BUTTON` / `HIDE_SCRIBE_BUTTON` intent data. | Display a "selection chip" in the input area showing truncated selected text (e.g., "Working with: 'Lorem ipsum dolor...'"). Include selection as context in LLM prompt. If no selection, chat operates on full document context (or no context). |
-| 5 | **Action buttons on AI responses** | Interaction | Users need to act on AI-generated content. "Copy" is universal. "Replace" and "Insert" are Scribe-specific and already proven in inline mode. | Medium | Each AI response bubble includes conditional action buttons. Replace/Insert only shown when there is an active selection in the editor. Copy always available. | Reuse existing `handleReplace` / `handleInsert` logic from View.jsx. The LLM response is already Markdown; convert via `markdownToHtml()` for PasteHtml. Buttons: Copy (always), Replace (if selection), Insert After (if selection). |
-| 6 | **Toggle between inline and panel** | Navigation | Users should choose their preferred interaction mode. The inline popover is better for quick actions; the panel is better for iterative work. | Low | A toggle button/icon in the floating button area or toolbar. State: `mode: 'inline' | 'panel'`. When panel is open, floating button still triggers inline flow; panel button opens panel. | Could be a split: floating button = inline (existing), toolbar/menu button = panel. Or: floating button opens whichever mode was last used. Simplest for v3.0: separate triggers. Keyboard: Ctrl+I = inline (existing), Ctrl+Shift+I = panel. |
-| 7 | **Panel open/close toggle** | Layout | Users need to dismiss the panel to reclaim document space, and re-open it without losing context. | Low | Toggle state in View.jsx. Close button (X) in panel header. OO iframe resizes back to 100% on close. | Preserve chat history in state when panel closes (not unmount). Re-opening shows previous conversation. |
-| 8 | **Loading state for AI responses** | UX | Users need feedback that the AI is processing. Chat without a loading indicator feels broken. | Low | Typing indicator or skeleton message while waiting. Reuse AbortController pattern from v2.1. | Show a pulsing "..." or skeleton bubble in the message list. Allow cancellation (X button or Escape). Reuse `classifyScribeError` for error display in chat. |
-| 9 | **Conversational message format** | API | Chat requires multi-turn messages (not single-shot). The current `buildMessages` sends one user message. | Medium | Accumulate conversation history: `[{role:'user', content:'...'}, {role:'assistant', content:'...'}, ...]`. Send full history to `/ai/v1/chat/completions`. | The cozy-stack endpoint accepts the OpenAI format which supports multi-turn. System prompt goes first, then alternating user/assistant messages. Must manage token limits -- truncate early messages if conversation gets long. |
-| 10 | **Error handling in chat** | Resilience | Errors should appear as messages in the chat flow, not break the UI. | Low | Reuse `classifyScribeError`. Render error as a special message type with retry button. | Error message in chat: "Something went wrong. [Retry]". Rate limit: "Too many requests. Try again in a moment." Auth error: "Session expired." Network: "Check your connection." |
-
----
-
-## Differentiators
-
-Features that add polish and set Scribe apart. Not required for a working v1 panel but significantly improve the experience.
-
-| # | Feature | Category | Value Proposition | Complexity | Dependencies | Notes |
-|---|---------|----------|-------------------|------------|--------------|-------|
-| D1 | **Selection chip with preview** | Context UX | Show the selected text as a removable chip above the input, so users see what context the AI will use. CKEditor AI does this ("push selection into chat"). | Low-Medium | Selection data from plugin. Chip component (cozy-ui Chip or custom). | Truncate to ~50 chars with ellipsis. Click to expand/collapse. "X" to remove (chat without selection context). Visual: light background chip with document icon. |
-| D2 | **Quick action chips** | Efficiency | Suggested actions below the input (Correct, Summarize, Translate) that auto-fill the prompt. Both Gemini and Copilot show contextual suggestions. | Low | Reuse `SCRIBE_ACTIONS` config. Render as horizontal scrollable chip row. | Click a chip = send that action as a prompt with the current selection. Chips change based on whether text is selected (with selection: Correct, Improve, Translate; without: Summarize document, Continue writing). |
-| D3 | **Streaming responses** | Perceived speed | Token-by-token display makes AI feel faster. Copilot and Gemini both stream. The v2.1 FEATURES.md explicitly deferred this to v3.0. | Medium-High | Backend must support streaming (SSE or chunked response). `react-markdown` can render partial Markdown but needs buffering for incomplete syntax (`**bol` mid-stream). | Buffer tokens until a complete Markdown block is detected. Use `EventSource` or `fetch` with `ReadableStream`. Significantly improves perceived latency for long responses. Flag: investigate if cozy-stack AI endpoint supports streaming. |
-| D4 | **Conversation persistence** | Continuity | Restore previous chat when re-opening the panel or returning to the document. Google just added this to Gemini in March 2026 -- it is now table stakes for premium products. | Medium | Store conversation in localStorage keyed by document ID, or in cozy-client (io.cozy.files metadata or separate doctype). | For v3.0 MVP: localStorage keyed by file ID. Later: persist via cozy-client for cross-device. Clear/new conversation button. |
-| D5 | **Markdown rendering in AI responses** | Quality | AI responses in chat should render formatted (bold, lists, code blocks) not raw Markdown. Already built for inline mode (react-markdown). | Low | Reuse existing react-markdown + remark-gfm setup from ScribeResultPanel. | Direct reuse -- the same `<ReactMarkdown remarkPlugins={[remarkGfm]}>` component. Style with theme-aware overrides matching the panel background. |
-| D6 | **Context indicator** | Transparency | Show users what context the AI is using: "Using selected text (142 words)" or "Using full document". Builds trust. | Low | Word count from selection or document. Small caption text below input. | Notion and Gemini both show source attribution. Simple implementation: `{selectionWordCount} words selected` or `No selection -- general assistant mode`. |
-| D7 | **New conversation button** | Session management | Allow users to start fresh without closing and reopening the panel. Standard in all chat interfaces. | Low | Reset message array. Clear button in panel header next to close. | Icon: plus or refresh. Confirm if conversation has >2 messages (prevent accidental clear). |
-
----
-
-## Anti-Features
-
-Features to explicitly NOT build for v3.0. These are scope traps.
-
-| Anti-Feature | Why Avoid | What to Do Instead |
-|--------------|-----------|-------------------|
-| **Rich text input in chat** | Adding formatting toolbar, markdown shortcuts, or WYSIWYG editing to the chat input is massive complexity for minimal value. Users type short prompts, not formatted documents. | Plain text textarea. Users can reference formatting in natural language ("make the heading bold"). |
-| **File/URL/image attachment in chat input** | The PROJECT.md mentions "ajout de contexte (fichiers, URLs, images)" but this requires file picker integration, URL fetching, image processing, and multi-modal LLM support. Each is a separate feature. | Defer to v3.1+. For v3.0, context comes from: (a) selected text, (b) conversation history. Add a research flag for file attachment feasibility. |
-| **Model/agent selection in chat** | PROJECT.md mentions "choix modele/agent" but this requires backend changes to expose available models, UI for model picker, and handling different model capabilities. | Defer to v3.1+. Use the default model via existing cozy-stack endpoint. Add model selection when backend supports it. |
-| **Past conversation history browser** | PROJECT.md mentions "Historique des discussions passees avec reprise" but building a conversation list, search, delete, and resume UI is a full feature. | Defer to v3.1+. For v3.0: single conversation per document, persisted in localStorage. New conversation clears the old one. |
-| **Resizable panel** | Drag-to-resize the panel width adds complexity (drag handles, min/max widths, persistence of width preference). | Fixed 30% width (matching existing AIAssistantPanel). Revisit if user feedback demands it. |
-| **LLM-decided action buttons** | PROJECT.md mentions "boutons d'action conditionnels (replace/insert decides par le LLM)" -- having the LLM decide which buttons to show requires structured output parsing, prompt engineering, and fallback handling. | For v3.0: show Replace/Insert buttons on ALL responses when there is an active selection. The user decides which action to take. LLM-driven button logic is a v3.1+ refinement. |
-| **Document-wide context (full doc as input)** | Sending the entire document to the LLM for every chat message is expensive (token cost), slow, and may exceed context limits. | For v3.0: context = selected text + conversation history. "Summarize document" action can use the existing cozy-viewer AIAssistantPanel pattern (fetch blob, extract text) but is a separate concern. |
-| **Collaborative chat** | Multiple users seeing the same chat in real-time collaborative editing. Massive complexity, unclear value. | Single-user chat only. Each user has their own conversation state. |
-| **Voice input** | Speech-to-text for chat input. Niche, browser support varies. | Text input only. Defer indefinitely. |
-
----
+| Feature | Why Requested | Why Problematic | Alternative |
+|---------|---------------|-----------------|-------------|
+| **Editable artifact pane** (type into the fragment, Canvas-style live editing) | Canvas/Artifacts envy; "tweak before inserting" | Huge scope: needs a second editor + sync + conflicts — and we *already have* OnlyOffice as the editor. Explicitly conflicts with "édition collaborative — complexité excessive" (Out of Scope) | Insert into OO, then edit in OO. The document IS the canvas. Keep fragments read-only preview cards. |
+| **Auto-insert / auto-apply** (skip preview) | "Faster" | Violates the universal "never overwrite without confirmation" rule; OO mutations + fragile undo (known issues). Re-introduces the blob problem if discussion leaks in | Always require an explicit click. Preview is the validated UX (Key Decisions). |
+| **Diff / tracked-changes per fragment** (Gemini accept/reject gutter, JetBrains) | Looks professional for "edit my selection" | Reinjection goes through PasteHtml/Builder API, not a diff engine; inline diff against live OO content is high-effort and brittle with tables/images; post-paste selection is already known-broken | Replace = clean overwrite of selection (current behavior). Skip diff for v3.1. |
+| **Forcing every reply to contain a fragment** (always show Insert) | Simpler contract; "consistent UI" | This is literally the bug being fixed | Honor the 0-fragment case as first-class (table stakes). |
+| **Streaming the fragment cards token-by-token** | Modern chat feel | Endpoint is non-streaming (Key Decisions); parsing partial `{ discussion, fragments }` mid-stream is fragile, markers may be incomplete | Keep non-streaming for v3.1; existing "typing" spinner; render cards once parsed. |
+| **More than ~5 alternative cards** | "Give me lots of options" | Research: 3–5 differentiated options beat 10 that blur; long card lists overwhelm and slow the panel | Cap/scroll if over-produced; prompt for few, distinct fragments. |
+| **Separate full-screen artifact workspace** (Artifacts/Canvas dual-pane) | Flagship parity | We already have Drive → OO → plugin panes plus a side panel; a fourth surface is layout chaos and conflicts with the v4.0 separate-app deferral | Inline cards within chat + popover. The OO document is the workspace. |
 
 ## Feature Dependencies
 
-### Data Flow for Chat Panel
-
 ```
-Plugin (ES5, OO iframe)                    React (Cozy Drive iframe)
-========================                    ==========================
+[Contract parser: parseScribeResponse -> { discussion, fragments[] }]
+    └──requires──> [JSON contract + tolerant parsing + contextual fallback]   (v3.1 data layer)
 
-GetSelectedText (polling)
-        |
-        v
-  castIntent("SHOW_SCRIBE_BUTTON",
-    { text: selectedText })
-        |                    postMessage
-        +-------------------------------------->  useCozyBridge receives selection
-                                                        |
-                                                        v
-                                                  Chat panel shows selection chip
-                                                  User types prompt + sends
-                                                        |
-                                                        v
-                                                  buildChatMessages():
-                                                    system prompt +
-                                                    conversation history +
-                                                    [optional: selected text context] +
-                                                    user message
-                                                        |
-                                                        v
-                                                  callScribeAI(client, messages)
-                                                        |
-                                                        v
-                                                  AI response appended to chat
-                                                  Action buttons shown
-                                                        |
-                                                  User clicks [Replace] or [Insert]
-                                                        |
-                                                        v
-                                                  markdownToHtml(response)
-                                                  respond({ action: 'replace',
-                                                    data: { html } })
-                                                        |
-        +<--------------------------------------+
-        |                    postMessage
-        v
-  handleIntentResponse
-  executeMethod("PasteHtml", [html])
+[Fragment cards in chat]
+    └──requires──> [Contract parser]
+    └──requires──> [{{fragment:N}} marker splitter for the discussion string]
+    └──reuses────> [MessageActions]  (rebind from message-level to fragment-level)
+    └──reuses────> [react-markdown / MarkdownPreview]
+
+[Fragment cards in popover]
+    └──requires──> [Contract parser]
+    └──reuses────> [ScribeResultPanel body + global Insert/Replace -> per-fragment]
+    └──requires──> [popover fallback: 0/absent fragments => treat whole reply as 1 fragment]
+
+[Per-fragment Insert/Replace]
+    └──requires──> [marker fidelity preserved per fragment]
+    └──reuses────> [existing v2.5 rich reinjection (tables/images/footnotes)] — UNCHANGED
+
+[Insert-all]
+    └──requires──> [decision: fragments = alternatives (pick one) vs pieces (assemble)]
+    └──conflicts──> [alternatives semantics]  (don't ship insert-all if fragments are alternatives)
+
+[Pure-discussion handling] ──enhances──> [all surfaces]  (suppresses fragment UI entirely)
 ```
 
-### Feature Dependency Graph
+### Dependency Notes
 
-```
-Feature 1 (Panel container)  ----required by---->  All other features
-Feature 2 (Message list)     ----required by---->  Feature 8 (Loading), Feature 10 (Errors)
-Feature 3 (Text input)       ----required by---->  Feature 9 (Conversational format)
-Feature 4 (Selection awareness) --required by--->  Feature 5 (Action buttons conditions)
-Feature 5 (Action buttons)   ----depends on---->   Feature 4 (Selection) + existing replace/insert
-Feature 6 (Toggle inline/panel) --independent-->   Can be built in parallel
-Feature 7 (Open/close)       ----required by---->  Feature 1 (Panel container)
-Feature 9 (Multi-turn)       ----required by---->  Meaningful chat experience
-```
+- **All UI depends on the parser:** the cards are a pure render of `{ discussion, fragments }`. Parser + tolerant fallback (already in PROJECT.md target features) must land before/with the rendering phases. The PROJECT.md "Sonde dev" probe (confirm the model actually emits 1/N/0 fragments) should gate the UI work.
+- **Marker fidelity is the cross-cutting risk:** splitting one reply into fragment strings must not cut a `[TABLE:N]…[CELL:r,c]` or `[IMG:scribe-img-N]` marker across fragments, or the v2.5 reinjection breaks. Flag for the contract/parser phase.
+- **Alternatives vs pieces is unresolved:** `fragments: string[]` doesn't say whether they are competing options or sequential parts. This drives whether "Insert all" exists and whether cards read "Option 1 / Option 2" vs "Part 1 / Part 2". Resolve in requirements before building Insert-all.
+- **Share one component across surfaces:** chat reuses `MessageActions`; popover reuses `ScribeResultPanel`. Minimize new code by extracting a single `<FragmentCard>` used by both, to avoid chat/popover divergence.
 
-### Key Integration Points
+## MVP Definition
 
-1. **View.jsx** -- must orchestrate panel state alongside existing popover/floating button
-2. **useCozyBridge** -- selection data already available, needs to be shared with panel
-3. **scribeAI.js** -- `buildMessages` needs a multi-turn variant (`buildChatMessages`)
-4. **scribeConversion.js** -- `markdownToHtml` reused as-is for action buttons
-5. **Plugin code.js** -- no changes needed for v3.0 (selection polling + intent response already work)
+### Launch With (v3.1)
 
----
+Minimum to fix the blob problem on both surfaces.
 
-## MVP Recommendation
+- [ ] **Contract parser + tolerant fallback** — without it nothing renders; pure-discussion fallback lives here — *essential*
+- [ ] **Pure-discussion (0 fragments) correctness** — no insert/replace UI; chat = plain bubble, popover = collapse to whole-reply-as-1-fragment — *the most important behavior*
+- [ ] **`<FragmentCard>` shared component** — visually distinct, read-only `MarkdownPreview`, per-fragment Copy + Insert + (conditional) Replace, reusing `MessageActions` logic + confirmation flash
+- [ ] **Chat: interleave discussion + `{{fragment:N}}` cards** in document order
+- [ ] **Popover: discussion above, fragment card(s) below**, per-fragment actions; quick actions still work via fallback
+- [ ] **Per-fragment marker fidelity** through the unchanged v2.5 reinjection pipeline
 
-### Phase 1: Panel Shell + Basic Chat (Features 1, 2, 3, 7, 8, 10)
+### Add After Validation (v3.1.x)
 
-Build the container and basic send/receive flow first. This validates the layout, iframe resizing, and chat rendering.
+- [ ] **Multiple alternative fragments as "pick-one" cards** — once N-fragment replies are observed in the dev probe and alternatives-vs-pieces is decided
+- [ ] **Insert-all / Replace-with-all** — only if fragments are confirmed to be sequential pieces
+- [ ] **Provenance polish** (sparkle/accent on cards)
 
-1. **Feature 1** -- Panel container (Paper, flex layout alongside OO editor div)
-2. **Feature 7** -- Open/close toggle (button in existing UI, X in panel header)
-3. **Feature 2** -- Message list (scrollable, user/AI message styling)
-4. **Feature 3** -- Text input with send button
-5. **Feature 8** -- Loading indicator while AI processes
-6. **Feature 10** -- Error messages in chat flow
+### Future Consideration (v3.2+)
 
-At this point: panel opens, user types, AI responds, user sees formatted response. No selection awareness, no action buttons, no multi-turn yet.
+- [ ] **Editor-action evolution** (PROJECT.md long-term vision: fragments → editor actions) — defer
+- [ ] **Diff / tracked-changes per fragment** — only if a strong "edit my selection" need emerges; high effort, brittle with OO
+- [ ] **Streaming rendering of cards** — gated on backend streaming support (not in v3.1)
 
-### Phase 2: Selection + Actions + Multi-turn (Features 4, 5, 9, D1, D5)
+## Feature Prioritization Matrix
 
-Wire up document context and make the chat actually useful for editing.
+| Feature | User Value | Implementation Cost | Priority |
+|---------|------------|---------------------|----------|
+| Contract parser + tolerant fallback | HIGH | MEDIUM | P1 |
+| Pure-discussion (0-fragment) handling | HIGH | LOW | P1 |
+| Per-fragment Insert/Replace/Copy (`<FragmentCard>`) | HIGH | MEDIUM | P1 |
+| Distinct fragment card styling | HIGH | LOW | P1 |
+| Chat interleaving via `{{fragment:N}}` | HIGH | MEDIUM | P1 |
+| Popover discussion + fragment card | HIGH | MEDIUM | P1 |
+| Per-fragment marker fidelity | HIGH | MEDIUM-HIGH | P1 |
+| Multiple-alternatives "pick one" cards | MEDIUM | MEDIUM | P2 |
+| Insert-all (sequential pieces) | MEDIUM | LOW-MEDIUM | P2 |
+| Provenance polish (sparkle/accent) | LOW | LOW | P2 |
+| Editable artifact pane | LOW (have OO) | HIGH | P3 (anti) |
+| Diff / tracked-changes | MEDIUM | HIGH | P3 (defer) |
+| Streaming cards | LOW | MEDIUM | P3 (blocked) |
 
-7. **Feature 4** -- Selection awareness (chip showing selected text)
-8. **Feature 5** -- Action buttons on responses (Copy/Replace/Insert)
-9. **Feature 9** -- Multi-turn conversation (accumulate history in API calls)
-10. **D1** -- Selection chip with preview
-11. **D5** -- Markdown rendering in responses (direct reuse)
+## Competitor Feature Analysis
 
-### Phase 3: Polish + Toggle (Features 6, D2, D4, D6, D7)
+| Feature | Claude Artifacts | ChatGPT Canvas | Google Docs Gemini | Notion AI | **Our Approach (v3.1)** |
+|---------|------------------|----------------|--------------------|-----------|--------------------------|
+| Separate talk vs artifact | Separate side pane, isolated from chat | Side-by-side doc pane | Floating card, generated text below prompt | Inline AI block separate from page text | **Inline fragment cards within the reply** (chat) / card below discussion (popover) — no extra pane |
+| Insert into document | Manual (artifact is the doc) | Edit in pane / apply | Explicit **Insert** button | **Insert below / Replace** | Per-fragment **Insert / Replace / Copy** |
+| Edit before insert | Ask AI in chat (not typeable) | Direct in-pane editing | Refine then insert | Refine then insert | **Read-only preview**; edit in OO after insert |
+| Multiple alternatives | Re-prompt | Regenerate | Refine/regenerate | Regenerate | **N fragments → N cards** (P2: pick-one) |
+| Pure discussion (no artifact) | Stays in chat, no pane | No canvas opened | Plain answer | Plain answer | **0 fragments → no insert UI** (first-class) |
+| Apply granularity | Whole artifact | Section-level edits | Accept / Accept all / Reject all (diff) | Per block | **Per-fragment**; Insert-all later, **no diff** |
+| Position markers in explanation | No (pane is monolithic) | No | No | No | **`{{fragment:N}}` interleaving — our differentiator** |
 
-12. **Feature 6** -- Toggle between inline and panel modes
-13. **D2** -- Quick action chips
-14. **D4** -- Conversation persistence (localStorage)
-15. **D6** -- Context indicator
-16. **D7** -- New conversation button
-
-### Defer to v3.1+:
-
-- **Streaming responses (D3)** -- needs backend investigation, buffering strategy
-- **File/URL attachment** -- requires file picker, multi-modal support
-- **Model/agent selection** -- requires backend API for model listing
-- **Past conversation browser** -- requires persistence and list UI
-- **LLM-decided action buttons** -- requires structured output parsing
-
----
+**Takeaway:** the big products separate by a **dedicated pane**; Scribe can't add a fourth pane and doesn't need to. The `{{fragment:N}}` interleave is genuinely more granular than Canvas/Artifacts and is the right bet — but the universal, non-negotiable lesson across all of them is the **pure-discussion / never-auto-apply** discipline.
 
 ## Sources
 
-### Industry References (MEDIUM confidence -- WebSearch based, patterns verified across multiple products)
-- [Google Workspace: Gemini side panel](https://support.google.com/a/users/answer/15146419?hl=en) -- panel layout, suggested prompts, insert/copy buttons
-- [Gemini conversation history announcement (Feb 2026)](https://workspaceupdates.googleblog.com/2026/02/gemini-conversation-history-is-coming-to-side-panel-in-google-workspace.html) -- confirms history was NOT table stakes until 2026
-- [Copilot Chat in Word practical guide](https://office-watch.com/2025/copilot-chat-microsoft-365-apps/) -- "Add to doc" button, follow-up suggestions, panel width issues
-- [Microsoft Copilot Word chat](https://support.microsoft.com/en-us/office/chat-with-copilot-about-your-word-document-4482c688-a495-4571-bfcd-4a9fc6608090) -- selection-based "Chat with Copilot", image input, references
-- [Computerworld: Gemini AI sidebar guide](https://www.computerworld.com/article/3845447/google-workspace-how-to-use-gemini-ai-side-panel.html) -- action buttons (Insert, Copy, Preview, Retry), sources link, thumbs up/down
-- [CKEditor AI Quick Actions](https://docs.typo3.org/p/t3planet/rte-ckeditor-pack/main/en-us/CKEditorAI/AIQuickActions/Index.html) -- push selection into chat panel pattern
-- [Capacities AI Assistant](https://docs.capacities.io/reference/ai-assistant) -- copy/replace/append action pattern in responses
-- [Smashing Magazine: Design Patterns for AI Interfaces](https://www.smashingmagazine.com/2025/07/design-patterns-ai-interfaces/) -- side panel vs inline patterns
-- [NN/g: Prompt Controls in GenAI Chatbots](https://www.nngroup.com/articles/prompt-controls-genai/) -- suggested prompt UX best practices
-
-### Existing Codebase (HIGH confidence)
-- `OnlyOfficeAIAssistantPanel.tsx` -- proves side panel layout works with 30% width
-- `styles.styl` -- `.ai-assistant-panel { width: 30% }` existing pattern
-- `View.jsx` -- flex container `u-flex u-flex-grow-1` already wraps editor + panel
-- `scribeAI.js` -- `callScribeAI` and `buildMessages` ready for multi-turn extension
-- `useCozyBridge.js` -- selection data already flows via `showScribeButton.text`
+- [Altar.io — Claude Artifacts, ChatGPT Canvas, Perplexity Spaces](https://altar.io/next-gen-of-human-ai-collaboration/) (dual-pane context vs workspace separation) — MEDIUM
+- [XsOne — ChatGPT Canvas vs Claude Artifacts technical deep-dive](https://xsoneconsultants.com/blog/chatgpt-canvas-vs-claude-artifacts/) (artifact isolation, section editing) — MEDIUM
+- [Shape of AI — Variations pattern](https://www.shapeof.ai/patterns/variations) (3–5 options, "never overwrite without confirmation", branched/convergent/preset) — HIGH (canonical UX pattern reference)
+- [MindStudio — Multi-variation generation](https://www.mindstudio.ai/blog/multi-variation-generation-ai-agent) (3–5 differentiated variants) — MEDIUM
+- [Google Docs Help — Write & edit with Gemini](https://support.google.com/docs/answer/13951448?hl=en) and [Computerworld — Help me write](https://www.computerworld.com/article/1627842/how-to-use-help-me-write-ai-writing-tool-google-docs-gmail.html) (Insert button, Refine, Accept/Accept all/Reject all) — MEDIUM-HIGH
+- [Notion — Everything you can do with Notion AI](https://www.notion.com/help/guides/everything-you-can-do-with-notion-ai) (Insert below, inline AI block) — MEDIUM
+- [JetBrains AI Assistant — In-editor generation](https://www.jetbrains.com/help/ai-assistant/in-editor-code-generation.html) (accept/reject per change, gutter revert — informs why we skip diff) — MEDIUM
+- [Orwellix — AI writing assistants tested](https://orwellix.com/blog/posts/writing-with-ai/best-ai-writing-assistant-for-editing-documents) (tracked-changes per-edit accept/reject) — LOW-MEDIUM
+- Existing codebase: `ChatMessageList.jsx`, `MessageActions.jsx`, `ScribeResultPanel.jsx`, `.planning/PROJECT.md` (current surfaces, v2.5 reinjection, v3.1 target features) — HIGH
 
 ---
-*Feature research for: v3.0 Scribe Chat Panel*
-*Researched: 2026-03-10*
+*Feature research for: AI writing assistant — discussion/fragment separation across chat panel + inline popover*
+*Researched: 2026-06-16*

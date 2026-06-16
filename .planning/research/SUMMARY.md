@@ -1,185 +1,191 @@
 # Project Research Summary
 
-**Project:** Scribe Chat Side Panel (v3.0)
-**Domain:** Conversational AI chat panel integrated into OnlyOffice document editor
-**Researched:** 2026-03-10
-**Confidence:** MEDIUM-HIGH
+**Project:** Scribe v3.1 — Contrat de réponse structurée LLM (MCP-ready)
+**Domain:** Structured JSON response contract over an unknown OpenAI-compatible proxy, rendered as discussion + fragment cards across two surfaces (chat panel + inline popover) inside OnlyOffice / Cozy Drive
+**Researched:** 2026-06-16
+**Confidence:** HIGH (architecture derived from codebase; stack based on verified cozy-client source; pitfall risk levels corroborated by arxiv + production reports)
 
 ## Executive Summary
 
-Scribe v3.0 adds a persistent chat side panel alongside the existing inline popover mode in Cozy Drive's OnlyOffice editor. This is a well-established pattern -- Google Docs Gemini, Microsoft Copilot in Word, and CKEditor AI all ship right-side panels that coexist with the document editor via flex layout. The existing codebase already proves this works: `OnlyOfficeAIAssistantPanel` renders at 30% width as a flex sibling to the OO editor iframe, and the iframe resizes naturally. Zero new npm dependencies are needed -- cozy-ui, localforage, react-markdown, and cozy-stack-client already provide everything required.
+V3.1 solves the "blob copy" problem: today, every LLM reply — including meta-discussion ("Here is the translation:") — is inserted verbatim into the document. The contract `{ discussion: string, fragments?: string[] }` with `{{fragment:N}}` position markers cleanly separates conversation from deliverable. The recommended path is prompt-only JSON (no new runtime deps), a ~45-LOC hand-rolled parse + validate module (`scribeResponse.js`), and a context-aware fallback. `response_format` and tool-calling are explicitly rejected as defaults because the cozy-stack proxy is unknown and neither mechanism is documented in cozy-client — they become opt-in behind a dev probe + feature flag only after runtime confirmation.
 
-The recommended approach is to introduce a `ScribeContext` provider that centralizes all Scribe state (currently scattered across View.jsx, useCozyBridge, and ScribePopover), then build the chat panel as a flex sibling in the existing layout container. The chat uses the cozy-stack `/ai/chat/conversations` API for server-side persistence and streaming via cozy-realtime websockets, while the inline mode continues using the synchronous `/ai/v1/chat/completions` endpoint. This dual-API approach avoids rearchitecting the working inline mode.
+The single greatest execution risk is not JSON syntax (mechanically recoverable) but **semantic separation failure**: the model produces valid JSON while duplicating fragment text into `discussion`, or leaking meta-discussion ("Voici la traduction :") into a fragment. The dev probe must gate on a duplication check + locale-aware preamble detection across all 5 locales — not merely "valid JSON" — before any card UI is built. A secondary structural landmine is the marker collision between the new `{{fragment:N}}` grammar and the existing `{{REF:scribe-ref-N:…}}` cross-ref markers in `scribeAI.js`, which requires a strict non-overlapping regex and an explicit preservation test. There is also a documented ~10–15% prose-quality degradation when forcing JSON output, mitigated by keeping `discussion` free-form (CoT channel) and constraining only `fragments[]`.
 
-The primary risk is OO iframe resize behavior. While the existing AI panel proves the flex sibling pattern works, OO has no documented resize callback, and the cross-origin iframe prevents direct DOM manipulation. This must be validated in Phase 1 as a go/no-go gate. The second major risk is state desynchronization between inline and panel modes -- a single "active mode" state with lifted selection context prevents both modes from competing for the plugin communication channel.
+The build order is de-risked and shippable behind a feature flag at every phase: contract module (pure/testable, no UI) → prompt + plumbing (proves no regression, render still uses plain `content`) → dev probe (empirical conformance gate BEFORE any cards) → chat render (multi-turn coherence first, the harder surface) → popover render → hardening (re-ask, i18n, edge corpus). One open semantic question must be resolved in requirements before the render phases: whether `fragments: string[]` represents **alternatives** (pick one) or **sequential pieces** (insert all), as this gates "Insert-all" and card labelling ("Option N" vs "Part N").
 
 ## Key Findings
 
 ### Recommended Stack
 
-Zero new dependencies. The entire stack is already installed.
+The only guaranteed-to-work mechanism against an unknown proxied model is **prompt-only JSON**: a system prompt instruction with one worked example telling the model to emit `{ discussion, fragments? }`. Verification of `node_modules/cozy-client/dist/models/ai.js` (line 171) confirms that unknown body fields are NOT stripped client-side (`_objectSpread({messages}, options)`), so `response_format` reaches cozy-stack — but cozy-stack passthrough is undocumented and the failure mode (hard 400 on some backends if "json" is absent from prompt, or "unsupported model" on non-recent OpenAI) is asymmetric. Default is therefore prompt-only.
 
 **Core technologies:**
-- **cozy-ui Panel/Paper/Typography/TextField/IconButton** (135.8.0): All chat UI components, already available and verified
-- **localforage** (1.10.0): Conversation persistence via IndexedDB, already used in `persistedState.js`
-- **cozy-stack-client `fetch()`** (60.19.0): Raw Response for SSE streaming with automatic auth headers
-- **cozy-realtime** (5.8.0): Websocket subscriptions for conversation API streaming events
-- **react-markdown + remark-gfm** (10.1.0 / 4.0.1): Markdown rendering in AI response bubbles, already used in ScribeResultPanel
-- **cozy-flags** (4.6.1): Feature flag `drive.scribe.panel` to gate panel during development
+- **Prompt-only JSON contract** (no lib): system/user instruction + one-shot worked example in `SYSTEM_PROMPT` / `CHAT_SYSTEM_PROMPT` — the only mechanism portable across any proxied model
+- **Hand-rolled validator** (~15 LOC, no dep): `typeof discussion === 'string'` + array-of-strings check — correct for a 2-field object; JSON Schema kept as a committed documentation artifact for future `json_schema` use
+- **Tolerant parse helper** (~30 LOC, no dep): fence-strip → first balanced `{...}` (string-aware brace counter) → trailing-comma repair → `JSON.parse` → context-aware fallback; covers all realistic failure modes without adding bytes
 
-**What NOT to add:** No chat UI libraries (overkill), no MUI Drawer (overlays instead of resizing), no state management libraries (React context sufficient), no WebSocket libraries (cozy-realtime handles it).
+**Optional/probe-gated only:**
+- `response_format: { type: 'json_object' }` — behind `flag__scribe.json_response_format`, only if dev probe confirms 200 + clean JSON from the proxy
+- `jsonrepair@3.14.0` (~508 KB unpacked) — only if probe shows single-quote / broken-bracket JSON the ~30-LOC helper cannot recover
+
+**Never use:** `response_format` by default; tool/function-calling (`tools` + `tool_choice`); `zod`/`ajv` for this 2-field contract; streaming parsers (endpoint is non-streamed).
 
 ### Expected Features
 
+The core value is fixing the "blob copy" anti-pattern. Every major AI writing product (Canvas, Artifacts, Gemini, Notion AI) solves this by separating talk from deliverable — Scribe does it inline via `{{fragment:N}}` cards rather than a separate pane, which is more granular and avoids adding a fourth UI surface.
+
 **Must have (table stakes):**
-- Side panel container (flex sibling, 380px fixed width)
-- Chat message list with auto-scroll
-- Text input with send button (Enter to send, Shift+Enter for newline)
-- Selection awareness (chip showing selected text context)
-- Action buttons on AI responses (Copy, Replace, Insert)
-- Panel open/close toggle preserving conversation state
-- Loading state with cancel support
-- Multi-turn conversational messages (full history sent to API)
-- Error handling rendered as chat messages with retry
-- Toggle between inline and panel modes
+- **Contract parser + contextual fallback** — without it nothing else works; popover always yields ≥1 insertable fragment, chat degrades to discussion + message-level safety action
+- **Pure-discussion (0-fragment) case** — no Insert/Replace UI; chat = plain bubble, popover = fallback to whole-reply-as-1-fragment; this is the single most important correctness behavior
+- **`<FragmentCard>` shared component** — visually distinct, read-only `MarkdownPreview`, per-fragment Copy + Insert + (conditional) Replace, reusing `MessageActions` confirmation flash
+- **Chat: interleaved discussion + `{{fragment:N}}` cards** in document order
+- **Popover: discussion above, fragment card(s) below**, per-fragment actions; quick actions still work via fallback
+- **Per-fragment marker fidelity** through the unchanged v2.5 reinjection pipeline (cell markers, images, footnotes, cross-refs must not be split across fragments)
 
-**Should have (differentiators):**
-- Selection chip with preview and dismiss
-- Quick action chips (reuse SCRIBE_ACTIONS)
-- Markdown rendering in AI responses (direct reuse from v2.1)
-- Context indicator ("142 words selected")
-- New conversation button
+**Should have (differentiators, P2):**
+- Multiple alternative fragments as "pick-one" cards (falls out from per-fragment card infrastructure once semantics are settled)
+- Insert-all / Replace-with-all (only if fragments confirmed to be sequential pieces)
+- Provenance polish: sparkle / accent border reusing `SCRIBE_PURPLE` / `SparkleSvg` (cheap, distinctive)
 
-**Defer (v3.1+):**
-- Streaming responses (needs backend SSE verification)
-- File/URL/image attachment
-- Model/agent selection
-- Past conversation history browser with search
-- LLM-decided action buttons
-- Resizable panel
-- Document-wide context (full doc as input)
+**Defer (v3.2+):**
+- Editable artifact pane (Canvas-style) — the OO document IS the canvas; fragments are read-only preview
+- Diff / tracked-changes per fragment — high-effort, brittle with tables/images, post-paste selection already known-broken
+- Streaming card rendering — gated on non-streamed endpoint changing
+
+**Unresolved (must settle in requirements):** `fragments: string[]` is semantically ambiguous — ALTERNATIVES (pick-one) vs SEQUENTIAL PIECES (assemble-all). This gates "Insert-all" and card labelling. Do not build Insert-all until resolved.
 
 ### Architecture Approach
 
-The architecture centers on a new `ScribeContext` provider that wraps View.jsx and absorbs the existing `useCozyBridge` logic, centralizing panel state, selection tracking, conversation management, and plugin communication. The chat panel renders as a conditional flex sibling to `div#onlyOfficeEditor` in the existing `u-flex u-flex-grow-1` container. Inline mode (ScribePopover) and panel mode (ScribeChatPanel) share the context but enforce mutual exclusion via an `activeMode` state.
+The contract integrates at **one seam** with minimal blast radius: `callScribeAI` keeps returning a raw string; a new pure module `scribeResponse.js` is called at each surface's call site after transport. Both surfaces already converge on the same `callScribeAI` transport and the same `handleReplace`/`handleInsert` reinjection path in `View.jsx` — which accepts a markdown string and is wholly unaffected by the contract (each fragment is just a string passed through the same existing path). The feature flag is also the kill-switch: when OFF, the parsed result is `{ discussion: raw, fragments: [], valid: true, fellBack: false }`, identical to today's behavior.
 
 **Major components:**
-1. **ScribeContext** (new provider) -- shared state: panel open/close, current selection, active conversation, mode toggle, plugin communication
-2. **ScribeChatPanel** (new) -- panel container, renders in flex layout, 380px width
-3. **ScribeChatMessages + ScribeChatMessage** (new) -- message list with markdown rendering and action buttons
-4. **ScribeChatInput** (new) -- text input, selection chip, quick actions, send
-5. **scribeAI.js** (modified) -- new `callScribeChatAI` for multi-turn alongside existing `callScribeAI`
+1. **`scribeResponse.js` (NEW — pure module)** — `parseScribeResponse(raw, { surface })`, `serializeAssistantTurnForHistory(parsed)`, `extractChannelMarkers(text, channel)` helper, `SCRIBE_OUTPUT_SCHEMA` (documented artifact); fully unit-testable with no React/network deps; single home for all validation + fallback logic; MCP-forward-compat by defaulting unknown channels to `[]`
+2. **Prompt variants in `scribeAI.js` + `ScribeContext.jsx`** — flag-gated contract variants; `buildMessages` marker rules (TABLE/CELL/footnote/REF) apply inside `fragments[]` strings, never in `discussion`
+3. **Message model extension in `ScribeContext`** — additive `{ discussion, fragments[], fellBack }` alongside kept `content === discussion` so existing render path keeps working while fragment-card UI layers on top
+4. **Multi-turn serialization** — `serializeAssistantTurnForHistory`: `discussion` + compact bracketed fragment-preview note; markers turn-local; history stays plain `{role, content}` strings
+5. **`<FragmentCard>` component** — shared between chat and popover; holds `rawFragment` (for reinjection) + `displayFragment` (for preview); per-fragment copy/insert/replace + confirmation flash
+6. **`View.jsx` reinjection handlers** — UNTOUCHED; called once per fragment with `rawFragment`; `tableSnapshots` attach automatically
 
-**Key architectural decisions:**
-- Fixed 380px panel width (not percentage) for consistent chat UX
-- In-memory conversation state for MVP, localforage persistence added in a later phase
-- Plugin code.js unchanged -- existing selection polling and intent response protocol is sufficient
-- When Scribe panel opens, hide the existing AI summary panel (mutual exclusion)
+**Key integration seams (file:line):**
+- Popover parse: `ScribePopover.jsx:142-148`
+- Chat parse: `ScribeContext.jsx:122`
+- Multi-turn serialize: `ScribeContext.jsx:104-120` history `.map`
+- Flag decision point: call site for BOTH prompt variant and parse (transport stays dumb)
+- Untouched: `View.jsx:184-239`, `tableCellMarkers.js`, plugin (ES5), postMessage protocol, cozy-stack endpoint
 
 ### Critical Pitfalls
 
-1. **OO iframe resize has no callback** -- The editor may not detect container size changes via flex. Must validate with existing AIAssistantPanel as first task. Prevention: CSS flex layout (not JS), test instant toggle before animation, have fallback plan (overlay instead of resize). Phase 1 go/no-go gate.
+1. **Separation collapse: fragment text duplicated into `discussion`** — valid JSON, contract defeated. Dev probe must gate on duplication check (normalize + substring match), not merely parse success. `parseScribeResponse` flags `warnings: ['fragment-echoed-in-discussion']`; render treats `discussion` as commentary only, never actionable.
 
-2. **Cross-origin iframe blocks resize dispatch** -- Cannot dispatch events into or access DOM of the OO iframe. Prevention: rely exclusively on CSS flex sizing, use plugin as resize coordinator if needed (it runs inside OO's context).
+2. **`{{fragment:N}}` marker grammar collides with `{{REF:scribe-ref-N:…}}`** — a naive `\{\{.+?\}\}` regex corrupts cross-ref markers. Strict regex required: `\{\{fragment:\d+\}\}`. Mandatory explicit test: a fragment containing `{{REF:scribe-ref-3:…}}` survives parsing intact.
 
-3. **State desync between inline and panel modes** -- Both modes competing for plugin communication causes intent routing conflicts and stale selection. Prevention: single `activeMode` state, lifted selection context in ScribeContext, only one mode receives intents at a time.
+3. **JSON forcing degrades prose quality ~10–15%** (arxiv 2408.02442; aider production report) — the probe must run a side-by-side prose quality A/B (JSON path vs old plain-text path). Mitigation: keep `discussion` fully free-form (CoT channel), constrain only `fragments[]`. Never drop temperature to 0 for JSON reliability — use parse tolerance + re-ask.
 
-4. **Conversations API is async + websocket-based** -- `POST /ai/chat/conversations/:id` returns 202, AI response arrives via websocket on `io.cozy.ai.chat.events`. Prevention: use cozy-realtime subscriptions, subscribe before first POST, handle delta/done streaming protocol, keep inline mode on synchronous API.
+4. **Meta-discussion leaks INTO a fragment** (inverse of pitfall 1) — "Here is the translation:" / "Voici :" / "Hier ist:" prefixes the fragment. Probe must include locale-aware preamble detector across all 5 locales. Response: flag + re-ask rather than aggressive regex-strip (stripping risks eating real document content).
 
-5. **Selection lost during panel interaction** -- User changes selection while chatting, Replace/Insert acts on wrong text. Prevention: pin selection when attaching context to a message, separate "conversation context" from "modification target", require explicit re-select for document modifications.
+5. **Multi-turn history causes contract decay and stale-fragment re-emission** — `{{fragment:N}}` indices are turn-local; contract adherence drops ~39% by turn 5. Mitigation: store discussion-only in history (+ compact fragment note); re-assert contract each turn; scope marker validation to current response only.
+
+6. **JSON syntax fragility across 5 locales** — primary failure modes: code fences, prose preamble, trailing commas, unescaped newlines inside multi-line fragment strings, smart/curly quotes from French/German fine-tuning. Tolerant parser bracket-extractor must be string-aware. Probe tracks repair-class metrics per locale separately.
+
+7. **Context-blind fallback** — a single fallback for both surfaces is wrong. Popover must always yield ≥1 insertable fragment. Chat degrades to discussion + message-level safety action. Parameterized by `surface` arg in `parseScribeResponse`.
 
 ## Implications for Roadmap
 
-Based on research, suggested phase structure:
+Based on research, the recommended structure is 6 phases, each independently shippable behind `flag('drive.office.scribe.structuredResponse')`. The flag's OFF state equals today's behavior exactly — a true kill-switch at any point.
 
-### Phase 1: ScribeContext + Panel Layout Validation
+### Phase 1: Contract Module
+**Rationale:** Pure module, no UI, no network — everything downstream depends on it. Zero risk. Unblocks all subsequent phases.
+**Delivers:** `scribeResponse.js` with `parseScribeResponse(raw, { surface })`, `serializeAssistantTurnForHistory`, `extractChannelMarkers(text, channel)` helper, `SCRIBE_OUTPUT_SCHEMA` artifact; full unit test suite covering valid JSON, fenced JSON, malformed variants, marker/fragment-count mismatch, split-table guard, `{{REF:…}}` preservation, per-surface fallback, per-locale smart-quote repair.
+**Addresses:** Contract parser + tolerant fallback (P1 FEATURES); contextual fallback (P1)
+**Avoids:** Pitfall 5 (JSON fragility), Pitfall 7 (context-blind fallback), Pitfall 9 (validator blind spots + marker collision)
+**MCP note:** `extractChannelMarkers(text, channel)` is generic — a future `{{action:N}}` channel reuses it without touching discussion/fragments consumers.
 
-**Rationale:** OO iframe resize is a go/no-go gate. Must prove the flex sibling layout works before investing in chat UI. ScribeContext is prerequisite for all subsequent work.
-**Delivers:** ScribeContext provider wrapping View.jsx with existing inline mode still working; empty panel shell toggling open/close; verified OO resize behavior; mutual exclusion with AIAssistantPanel.
-**Addresses:** Features 1 (panel container), 7 (open/close toggle)
-**Avoids:** Pitfall 1 (resize corruption), Pitfall 2 (cross-origin), Pitfall 7 (z-index), Pitfall 8 (toggle animation), Pitfall 15 (mobile)
+### Phase 2: Prompt + Plumbing (no new render)
+**Rationale:** Wires the contract into both call sites and the message model. With flag ON, render still uses `content`/discussion — behavior is ~identical to today. Proves no regression before any UI is built.
+**Delivers:** Flag-gated `SYSTEM_PROMPT` / `CHAT_SYSTEM_PROMPT` contract variants; parse seam after `callScribeAI` in `ScribePopover.jsx` + `ScribeContext.sendMessage`; message model extended (`{ discussion, fragments, fellBack }`, `content === discussion` kept); multi-turn serialization via `serializeAssistantTurnForHistory` in history `.map`; popover-originated assistant entries mirrored as structured fields.
+**Avoids:** Pitfall 8 (history serialization / re-emission), Pitfall 3 (keep discussion free-form via prompt design), Pitfall 4 (base pinned in prompt)
 
-### Phase 2: Chat Messages + Input + AI Integration
+### Phase 3: Dev Probe (conformance gate — BLOCKS phases 4-5)
+**Rationale:** The only empirical unknown is whether the model honors the contract. Building card UI on a non-conformant contract means rework. Probe answers this with zero UI sunk cost. Hard gate.
+**Delivers:** Dev panel showing `{ discussion, fragments[], valid, fellBack, warnings[] }` + repair-class metrics per locale. Manual exercise matrix: 0/1/N-fragment / table selection / footnote / cross-ref / long input / all 5 locales / free-prompt with contract-hostile instructions. **Pass criteria (all required):** valid JSON rate; duplication rate ≈ 0; preamble-detection rate ≈ 0 per locale; prose-quality A/B shows no regression; tables never split across fragments; `{{REF:…}}` markers preserved. If any criterion fails, tune prompt before proceeding.
+**Avoids:** Pitfall 1 (duplication check), Pitfall 2 (locale-aware preamble), Pitfall 3 (prose-quality A/B), Pitfall 7 (bucketed conformance per action × locale × length)
 
-**Rationale:** Core chat functionality builds on the validated panel shell. Multi-turn API integration is the feature that makes the panel useful.
-**Delivers:** Working chat with send/receive, markdown-rendered AI responses, loading states, error handling, auto-scroll.
-**Addresses:** Features 2 (message list), 3 (text input), 8 (loading), 9 (multi-turn), 10 (errors), D5 (markdown rendering)
-**Avoids:** Pitfall 5 (render performance -- design memoization from start), Pitfall 10 (cozy-ui width audit), Pitfall 11 (keyboard shortcuts)
+### Phase 4: Chat Render (fragment cards in panel)
+**Rationale:** Chat first because multi-turn message model + serialization are the harder coherence problem. Built on confirmed conformance from Phase 3.
+**Delivers:** `ChatMessageList`/`AssistantBubble`: split `discussion` on `{{fragment:N}}` markers; render text segments as markdown + fragment tokens as `<FragmentCard>` in document order; chat fallback (when `fellBack=true`: message-level safety action on whole text); per-fragment copy/insert/replace calling `castPanelAction` with `rawFragment`; `<FragmentCard>` shared component (MarkdownPreview + actions + confirmation flash).
+**Addresses:** Chat interleaving (P1 FEATURES), `<FragmentCard>` shared component (P1), pure-discussion 0-fragment handling (P1)
+**Avoids:** Pitfall 6 (1-fragment fast path), Pitfall 4 (bounds-safe card binding + orphan policy)
 
-### Phase 3: Selection Context + Document Actions
+### Phase 5: Popover Render (fragment cards in result panel)
+**Rationale:** Popover is simpler (typically 1 fragment, no multi-turn). Inherits `<FragmentCard>` from Phase 4. The dual-representation pattern (`rawFragment`/`displayFragment`) maps onto the existing `rawResult`/`result.text` split already in `ScribePopover.jsx`.
+**Delivers:** `ScribeResultPanel` renders `fragments[]`; each card holds `rawFragment` + `displayFragment` (per-fragment `transformCellMarkersForPreview`); popover fallback enforced (0/absent fragments → whole raw as 1 fragment, always); quick actions continue to work via single-fragment fallback.
+**Addresses:** Popover discussion + fragment card (P1 FEATURES), marker fidelity per fragment (P1)
+**Avoids:** Pitfall 7 (popover always ≥1 fragment), Pitfall 6 (1-fragment fast path is the normal popover case)
 
-**Rationale:** Connecting chat to the document is what differentiates this from a generic chatbot. Depends on working chat from Phase 2 and ScribeContext selection tracking from Phase 1.
-**Delivers:** Selection chip in input, Replace/Insert buttons on AI responses, context indicator, pinned selection management.
-**Addresses:** Features 4 (selection awareness), 5 (action buttons), D1 (selection chip), D6 (context indicator)
-**Avoids:** Pitfall 3 (state desync -- activeMode enforcement), Pitfall 6 (selection pinning)
-
-### Phase 4: Mode Toggle + Quick Actions
-
-**Rationale:** Polish phase. Both modes are individually functional; this phase connects them and adds efficiency features.
-**Delivers:** Inline/panel mode toggle (Ctrl+I vs Ctrl+Shift+I), quick action chips, floating button behavior update.
-**Addresses:** Features 6 (mode toggle), D2 (quick actions)
-**Avoids:** Pitfall 12 (floating button position)
-
-### Phase 5: Conversation Persistence + History
-
-**Rationale:** Persistence is valuable but not required for a functional chat. Can use in-memory state through Phase 1-4, add persistence as final polish.
-**Delivers:** Conversation saved to localforage keyed by fileId, restore on re-open, new conversation button, basic conversation management.
-**Addresses:** D4 (persistence), D7 (new conversation button)
-**Avoids:** Pitfall 9 (conversation ID races), Pitfall 13 (document-scoped history), Pitfall 14 (websocket cleanup)
+### Phase 6: Hardening
+**Rationale:** Re-ask, flag promotion, i18n, and edge corpus. Builds the regression net. Last, because it tests behavior that Phases 1-5 must have already built correctly.
+**Delivers:** Re-ask on validation failure (one retry with stricter instruction, including preamble-detected fragments); i18n for card labels and fallback messages; action-menu migration (old `rawResult` references → `rawFragment`); malformed-response fixture corpus (all Pitfall 5/9 variants) as regression suite; edge tests (empty fragments, giant fragments, marker mismatch warnings, abort mid-parse, popover→chat history consistency); decision on `response_format` flag default; temperature decision confirmed.
+**Addresses:** Multiple alternatives / Insert-all (P2 FEATURES) — only after alternatives-vs-pieces semantics settled
+**Avoids:** Pitfall 2 (re-ask for preamble leaks), Pitfall 3 (temperature), Pitfall 8 (multi-turn probe at turn 5), Pitfall 9 (fixture corpus regression suite)
 
 ### Phase Ordering Rationale
 
-- Phase 1 must come first because iframe resize is a hard blocker -- if OO cannot handle it, the entire architecture changes
-- Phase 2 before Phase 3 because chat must work standalone before adding document integration
-- Phase 3 before Phase 4 because document actions are the core value proposition, while mode toggle is navigation polish
-- Phase 5 last because in-memory conversations are sufficient for MVP; persistence adds complexity with limited immediate impact
-- Each phase delivers a testable, demonstrable increment
+- Contract module before everything: both call sites, both render surfaces, and all tests depend on `scribeResponse.js`. Zero deps, cheapest to build, most expensive to get wrong.
+- Prompt + plumbing before probe: the probe needs the contract instructions in the prompt to measure conformance. Flag keeps rendering identical to today — no observable regression window.
+- Probe before any card UI (PROJECT.md mandate + PITFALLS research): prose-quality regression found after render is built costs 2-3x to fix; found at the probe it is a prompt-tuning task.
+- Chat before popover: multi-turn serialization is the harder coherence problem. Popover is single-shot and inherits `<FragmentCard>` from the chat phase.
+- Hardening last: tests the full system and finalizes the flag default — decisions that require observed behavior from Phases 3-5.
 
 ### Research Flags
 
-Phases likely needing deeper research during planning:
-- **Phase 1:** OO iframe resize behavior must be empirically validated -- no documentation exists. 5-minute test with existing AIAssistantPanel may resolve this immediately.
-- **Phase 2:** cozy-stack conversations API (async + websocket) needs end-to-end validation before building the UI. May discover the synchronous `/ai/v1/chat/completions` endpoint is simpler for MVP.
-- **Phase 3:** Selection pinning strategy needs prototyping -- "conversation context" vs "modification target" distinction is novel to this codebase.
+Phases needing empirical validation during planning:
+- **Phase 3 (Dev Probe):** The entire feature's viability gates on this. Plan for 1-2 days of prompt iteration if duplication or preamble rates are high. The pass criteria are multi-dimensional — "valid JSON" alone is not sufficient.
+- **Phase 6 (Hardening — alternatives vs pieces decision):** `fragments: string[]` ambiguity must be resolved in requirements before Phase 6 can finalize Insert-all and card labelling. Product decision, not a technical one.
 
-Phases with standard patterns (skip research-phase):
-- **Phase 4:** Mode toggle is straightforward React state + keyboard shortcut registration. Well-understood patterns.
-- **Phase 5:** localforage persistence is a known pattern already used in the codebase (`persistedState.js`).
+Phases with standard patterns (no research phase needed):
+- **Phase 1 (Contract Module):** Pure JS module, well-defined API, full unit test suite. Standard engineering.
+- **Phase 2 (Prompt + Plumbing):** Mechanical wiring at documented seams. All integration points identified to file:line in ARCHITECTURE.md.
+- **Phase 4 (Chat Render) + Phase 5 (Popover Render):** React component work over a validated data model. Standard UI engineering once Phase 3 confirms conformance.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | All dependencies verified present at exact versions. Zero new packages. Integration points confirmed in source code. |
-| Features | MEDIUM-HIGH | Industry patterns well-established (Copilot, Gemini, CKEditor). Scribe-specific integration (iframe, postMessage) builds on proven v2.1 architecture. |
-| Architecture | HIGH | ScribeContext + flex sibling pattern directly follows existing AIAssistantPanel. Component boundaries are clear. ~550 LOC of new code estimated. |
-| Pitfalls | MEDIUM-HIGH | OO iframe resize and conversations API behavior are the two areas of genuine uncertainty. All other pitfalls have clear prevention strategies. |
+| Stack | HIGH | `cozy-client/dist/models/ai.js` verified directly; npm package sizes verified; `response_format` passthrough undocumented but client-side passthrough behavior confirmed |
+| Features | HIGH | Derived from reading actual component code; UX patterns corroborated by 4+ real products |
+| Architecture | HIGH | All integration seams identified to file:line from codebase; reinjection path verified as string-in and untouched; single open empirical unknown (model conformance) deliberately gated by probe |
+| Pitfalls | HIGH (risk identification) / MEDIUM (severity estimates) | JSON fragility + quality degradation backed by arxiv study + aider production report; duplication/preamble rates reasoned from contract design |
 
-**Overall confidence:** MEDIUM-HIGH
+**Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **OO iframe resize behavior:** Undocumented. Must be tested empirically in Phase 1 before committing to flex sibling layout. Fallback: overlay panel.
-- **cozy-stack streaming support:** `stream: true` is typed in cozy-client but not tested in this project. The conversations API uses websockets, not SSE. Need to determine which API path to use for chat (synchronous completions vs async conversations).
-- **Conversations API availability:** The `io.cozy.ai.chat.conversations` doctype and API may require specific cozy-stack version or permissions. Need to verify availability in the target deployment.
-- **Plugin as resize coordinator:** If CSS flex alone does not trigger OO relayout, the plugin could potentially force it via `executeMethod`. No known method for this exists -- would need exploration.
+- **`response_format` passthrough:** Whether cozy-stack forwards or rejects unknown body fields is empirically unknown. Handle during Phase 3 probe (measures HTTP status when flag enabled). Does not block any other phase.
+- **Alternatives vs sequential pieces semantics:** Must be settled in requirements before Phase 6. Phases 1-5 are unaffected by this decision.
+- **Prose quality under JSON contract:** The ~10-15% degradation is a documented aggregate; actual degradation on Scribe's action set and locales is unknown until Phase 3 A/B. If unacceptable, the contract design itself must change — the highest-stakes unknown and the reason the probe is a hard gate.
+- **Fragment marker base (0-indexed vs 1-indexed):** Must be pinned in Phase 1 and documented. 0-based recommended (consistent with array access). Not a risk once pinned.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- Codebase analysis: `View.jsx`, `Editor.jsx`, `useCozyBridge.js`, `ScribePopover.jsx`, `OnlyOfficeAIAssistantPanel.tsx`, `styles.styl`, `scribeAI.js`, plugin `code.js`
-- cozy-ui components: verified at `node_modules/cozy-ui/transpiled/react/` (Panel, Paper, Typography, TextField, etc.)
-- cozy-stack-client: verified `fetch()` returns raw Response with auth headers (CozyStackClient.js line 217)
-- localforage: verified at 1.10.0, used in `src/store/persistedState.js`
-- [Cozy-Stack AI Documentation](https://docs.cozy.io/en/cozy-stack/ai/) -- conversations API, websocket protocol
-- [io.cozy.ai.chat.conversations Doctype](https://docs.cozy.io/en/cozy-doctypes/docs/io.cozy.ai.chat.conversations/)
-- [ONLYOFFICE Events API](https://api.onlyoffice.com/docs/docs-api/usage-api/config/events/)
+- `node_modules/cozy-client/dist/models/ai.js` — `ChatCompletionOptions` typedef; `chatCompletion()` body-build via `_objectSpread` (unknown fields not stripped client-side)
+- Codebase: `scribeAI.js`, `ScribeContext.jsx`, `ScribePopover.jsx`, `tableCellMarkers.js`, `ChatMessageList.jsx`, `MessageActions.jsx`, `ScribeResultPanel.jsx`, `View.jsx`, `helpers.js` — all integration seams verified to file:line
+- `.planning/PROJECT.md` — v3.1 locked decisions, phase vocabulary, context-aware fallback mandate, marker grammar contracts
+- "Let Me Speak Freely?" — arxiv.org/pdf/2408.02442 — format constraints degrade reasoning ~10-15%
+- aider.chat/2024/08/14/code-in-json.html — wrapping deliverable in JSON lowers output quality (production report)
+- blogs.oracle.com/ai-and-datascience/multiturn-ocistm — ~39% multi-turn performance drop (Microsoft/Salesforce study)
 
 ### Secondary (MEDIUM confidence)
-- Industry patterns: Google Gemini side panel, Microsoft Copilot in Word, CKEditor AI Quick Actions
-- cozy-client AI model types: `stream` option in ChatCompletionOptions typedef (not runtime-tested)
-- Community patterns: React context for editor state, CSS flex iframe resize
+- https://docs.cozy.io/en/cozy-stack/ai/ — official `/ai/v1/chat/completions` docs; only `messages` + `temperature` documented
+- OpenAI JSON mode requirements (community.openai.com, portkey.ai, learn.microsoft.com/azure) — "must include json" 400, model support matrix
+- npm registry (2026-06-16) — verified package sizes for jsonrepair, zod, ajv, best-effort-json-parser
+- Shape of AI — shapeof.ai/patterns/variations — Variations UX pattern (3-5 options, never-auto-apply)
+- Google Docs / Gemini, Notion AI, Canvas/Artifacts product research — competitor feature matrix
+
+### Tertiary (LOW confidence)
+- vLLM/llama.cpp/Ollama structured-output support docs — consistency of `response_format` across self-hosted engines; cannot verify against actual cozy-stack backend
+- tensoria.fr, dev.to, medium.com JSON parsing failure-rate articles — framing and failure taxonomy; high variance in claimed rates
 
 ---
-*Research completed: 2026-03-10*
+*Research completed: 2026-06-16*
 *Ready for roadmap: yes*

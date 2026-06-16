@@ -1,425 +1,299 @@
-# Architecture Patterns
+# Architecture Research
 
-**Domain:** Chat side panel integration into existing OnlyOffice Scribe writing assistant
-**Researched:** 2026-03-10
+**Domain:** Structured JSON response contract for an in-editor AI writing assistant (Scribe / OnlyOffice / Cozy Drive)
+**Researched:** 2026-06-16
+**Confidence:** HIGH (all conclusions derived from reading the actual codebase; the LLM-conformance question is the only empirical unknown, deliberately de-risked by the dev probe phase)
 
-## Current Architecture (Before Changes)
+## Executive Answer
 
-```
-Dialog (fullScreen)
-  OnlyOfficeProvider (context: fileId, editorMode, isEditorReady, ...)
-    Editor
-      Title (toolbar)
-      DialogContent (u-flex u-flex-column)
-        View
-          Spinner (while loading)
-          div.u-flex.u-flex-grow-1
-            div#onlyOfficeEditor  -->  OO creates iframe[name="frameEditor"] inside
-            OnlyOfficeAIAssistantPanel  -->  existing cozy-viewer summary panel (30% width)
-          ScribeFloatingButton (portal on body, z-index 100000)
-          ScribePopover (Popover, centered modal overlay)
-          ReadOnlyFab
-```
+The contract `{ discussion: string (with {{fragment:N}} markers), fragments?: string[] }` integrates with **minimal risk** by inserting **one new pure module** (`parseScribeResponse`) at exactly one seam — immediately after `callScribeAI` returns its string — and changing nothing upstream of that seam. Both render surfaces already converge on a single transport function (`callScribeAI`) and a single rich-reinjection path (`handleReplace`/`handleInsert` in `View.jsx`, which take a markdown **string** and apply `markdownToHtml` + `tableSnapshots`). Because fragments are just per-fragment markdown strings fed through that **same** existing string path, the rich reinjection (cell-markers, tables, footnotes, cross-refs) is preserved **per fragment with zero changes to the reinjection code** — provided each fragment is reinjected as its own call.
 
-### Key Observations
+The one genuinely new design decision is **multi-turn serialization**: when replaying history to the LLM, send `discussion` as the assistant turn and append a compact, non-content note that fragments were emitted (recommendation below). Everything else is plumbing.
 
-1. **`div#onlyOfficeEditor`** is a mount point. OO's `DocsAPI.DocEditor()` constructor replaces its content with an iframe named `frameEditor`. The iframe height is forced to `100%` via `forceIframeHeight()`.
+## Current Architecture (as-built)
 
-2. **The flex container** `div.u-flex.u-flex-grow-1` already hosts the editor div and `OnlyOfficeAIAssistantPanel` side by side. The AI panel uses `width: 30%` (from `styles.styl`), and the editor div fills the rest. This is the exact pattern the chat panel should follow.
-
-3. **`OnlyOfficeAIAssistantPanel`** is a thin wrapper that imports `AIAssistantPanel` from `cozy-viewer`. It only shows when `isOpenAiAssistant` is true (from ViewerProvider). This is a file-summarization panel, NOT the Scribe chat. The Scribe chat panel will be a separate component.
-
-4. **ScribePopover** is a modal overlay (MUI Popover) centered on screen. It manages a 3-step state machine: menu -> loading -> result. It receives selectedText/selectedHtml from the pending intent.
-
-5. **useCozyBridge** manages the bridge lifecycle and exposes `{ pendingIntent, showScribeButton, respond }`. All Scribe state is currently transient -- no conversation history, no persistent messages.
-
-6. **Intent flow**: Plugin detects selection -> casts `SHOW_SCRIBE_BUTTON` (one-way) -> user clicks button -> `triggerScribe()` broadcasts `cozy-bridge:trigger-intent` -> plugin casts `AI_TEXT_EDIT` with text/html -> `useCozyBridge` sets `pendingIntent` -> ScribePopover opens.
-
-## Recommended Architecture
-
-### Layout Strategy: Sibling Flex Panel
-
-The Scribe chat panel renders as a sibling to `#onlyOfficeEditor` inside the existing flex container, identical to how `OnlyOfficeAIAssistantPanel` already works. The OO editor naturally shrinks because it is a flex child.
+### System Overview
 
 ```
-div.u-flex.u-flex-grow-1
-  div#onlyOfficeEditor  (flex: 1, OO iframe fills it)
-  ScribeChatPanel       (width: 380px, conditional render)
+┌──────────────────────────────────────────────────────────────────────┐
+│                       Cozy Drive (React)                               │
+│                                                                        │
+│  ┌─────────────────┐         ┌──────────────────────────────────┐    │
+│  │  POPOVER surface │         │       CHAT surface                │    │
+│  │  ScribePopover   │         │  ScribePanel                      │    │
+│  │   → ResultPanel  │         │   → ChatMessageList               │    │
+│  │   (MarkdownPrev) │         │      → AssistantBubble (Markdown) │    │
+│  │                  │         │      → MessageActions             │    │
+│  └────────┬─────────┘         └───────────────┬──────────────────┘    │
+│           │                                    │                       │
+│           │  handleActionSelect                │  sendMessage          │
+│           │  buildMessages(...)                │  (rebuilds history)   │
+│           └──────────────┬─────────────────────┘                      │
+│                          ▼                                             │
+│              ┌──────────────────────────┐                             │
+│              │  callScribeAI (scribeAI) │  ◄── THE SINGLE SEAM        │
+│              │  fetchJSON → /ai/v1/...   │      (returns string today) │
+│              └──────────────────────────┘                             │
+│                          │                                            │
+│           reinjection (both surfaces converge here):                  │
+│              ┌──────────────────────────────────────┐                │
+│              │  View.jsx handleReplace / handleInsert │               │
+│              │  markdownToHtml(text) + tableSnapshots │               │
+│              │  → respond() (popover) | castPanelAction() (chat)      │
+│              └──────────────────────────────────────┘                │
+└──────────────────────────────────────────────────────────────────────┘
+                          │ postMessage / cozy-bridge intents
+                          ▼
+        OO Editor iframe → Plugin iframe (PasteHtml / InsertContent / table clone)
 ```
 
-**Why this approach:**
-- Already proven by `OnlyOfficeAIAssistantPanel` (same flex parent, `width: 30%`)
-- No DOM manipulation needed -- CSS flexbox handles the resize
-- OO iframe auto-adjusts to its container width (confirmed by existing AI panel behavior)
-- No need to call OO resize API -- the iframe adapts to its parent div
+### Component Responsibilities (relevant subset)
 
-**Why NOT a Drawer/overlay:**
-- A MUI Drawer would overlay the editor, not resize it
-- The existing `OnlyOfficeAIAssistantPanel` proves the sibling pattern works
-- Side-by-side layout lets users see their document while chatting
+| Component | Owns today | Changes for v3.1 |
+|-----------|-----------|------------------|
+| `scribeAI.js` | Prompt building (`SYSTEM_PROMPT`, `buildMessages`), transport (`callScribeAI` → string), error classify | Prompts emit contract; parse inserted at call sites (not in transport) |
+| **`scribeResponse.js` (NEW)** | — | `parseScribeResponse(raw, { surface })`, the JSON-Schema artifact, validation, contextual fallback, `serializeAssistantTurnForHistory()` |
+| `ScribeContext.jsx` | Chat state, `sendMessage` (rebuilds history each call), message model | Store `{ discussion, fragments }` on assistant messages; serialize prior turns via new helper |
+| `ScribePopover.jsx` | Popover state machine (menu/loading/result), holds `rawResult` for reinjection | Holds `fragments[]`; result panel renders fragment cards |
+| `ChatMessageList` / `AssistantBubble` / `MessageActions` | Render assistant markdown + copy/insert/replace on full content | Render `discussion` + fragment cards; actions operate per-fragment |
+| `View.jsx` `handleReplace/handleInsert` | Markdown string → HTML + tableSnapshots → plugin | **No change** — already string-in; called once per fragment |
+| `tableCellMarkers.js` | Cell/table marker parse + preview transform | **No change**; called per-fragment instead of per-response |
 
-### Component Boundaries
+### Key existing facts that shape the design
 
-| Component | Responsibility | Communicates With | New/Modified |
-|-----------|---------------|-------------------|-------------|
-| `ScribeChatPanel` | Chat panel container, conversation display, input area | ScribeContext, scribeAI | **NEW** |
-| `ScribeChatMessages` | Renders message history (user + AI bubbles) | ScribeChatPanel (props) | **NEW** |
-| `ScribeChatInput` | Text input, selection chip, action suggestions, send button | ScribeChatPanel (callbacks) | **NEW** |
-| `ScribeChatMessage` | Single message bubble (markdown rendering, action buttons) | ScribeChatMessages (props) | **NEW** |
-| `ScribeContext` (provider) | Shared state: panel open/closed, chat messages, current selection, mode | View.jsx, all Scribe components | **NEW** |
-| `View.jsx` | Renders ScribeChatPanel in flex container, manages toggle | ScribeContext | **MODIFIED** |
-| `useCozyBridge.js` | Add selection state sharing (not just intent) | ScribeContext | **MODIFIED** |
-| `ScribePopover` | Keep as-is for inline quick actions | ScribeContext (for selection) | **MINOR MODIFY** |
-| `ScribeFloatingButton` | Add panel toggle, not just trigger inline | ScribeContext | **MODIFIED** |
-| `scribeAI.js` | Add conversational mode (multi-turn messages) | ScribeChatPanel | **MODIFIED** |
+1. **Single transport seam.** Both surfaces call `callScribeAI(client, messages, opts)` and receive a raw string. This is the only place a parse must be inserted. (scribeAI.js:155)
+2. **Reinjection is string-in.** `handleReplace(text)` / `handleInsert(text)` in `View.jsx:184-239` accept a markdown string, run `markdownToHtml`, and attach `tableSnapshots`/`partialTableInfo` from refs. They do **not** care whether the string is a whole response or one fragment.
+3. **Popover already separates display vs raw.** `ScribePopover` keeps `rawResult` (markers intact, used for reinjection) separate from `result.text` (display, markers→GFM via `transformCellMarkersForPreview`). Fragments slot directly into this existing dual-representation pattern. (ScribePopover.jsx:44, 144-148, 186-192)
+4. **Chat history is rebuilt every send.** `sendMessage` maps `messagesRef.current` into `{role, content}` each call (ScribeContext.jsx:104-120). This is the exact serialization point for prior structured turns.
+5. **Popover mirrors into chat history.** `handleActionSelect` already pushes `{role:'user'/'assistant', content}` into the shared message list (ScribePopover.jsx:152-155) — so the message model change must accommodate popover-originated entries too.
+6. **cozy-flags is synchronous and already in use.** `flag('drive.office.write')` etc. (helpers.js); dev-toggle via `localStorage` `flag__` prefix. A new flag fits the established pattern with zero new dependency.
+7. **Markdown rendering is `react-markdown`** in both `AssistantBubble` (plain) and `MarkdownPreview` (full GFM + rehype-raw + image markers). Fragment cards should reuse `MarkdownPreview` for parity with the popover.
 
-### New Component: ScribeContext
+## Recommended Design
 
-The biggest architectural addition. Currently, Scribe state is scattered across `View.jsx` (intent handling), `ScribePopover` (action state machine), and `useCozyBridge` (bridge lifecycle). The chat panel needs shared state.
+### 1. Single shared parse/validate module — `scribeResponse.js`
 
-```jsx
-// ScribeContext provides:
+**Decision: ONE shared module, not per-call parsing.** Per-call parsing would duplicate validation + fallback logic across two surfaces and drift. A single pure module is trivially unit-testable (no React, no network) and is the natural home for the JSON-Schema artifact.
+
+**Where it sits:** logically wraps `callScribeAI`. Two equally valid wirings; **recommend (b)** for the smallest blast radius:
+
+- **(a)** Change `callScribeAI` to return the parsed object. Cleaner long-term, but touches every caller's return-type expectation and the existing `addMessage` mirroring in one commit.
+- **(b) Keep `callScribeAI` returning the raw string; add `parseScribeResponse(raw, { surface })` that callers invoke on the result.** Recommended. The transport stays dumb and stable; parsing is opt-in per surface, so the feature flag can choose old-path (use raw string directly) vs new-path (parse) **without touching transport at all**. This is the lowest-risk rollout lever.
+
+**Module surface:**
+
+```js
+// scribeResponse.js  (pure, zero deps, fully unit-testable)
+
+export const SCRIBE_OUTPUT_SCHEMA = { /* JSON Schema, documented artifact only */ }
+
+/**
+ * @returns {{
+ *   discussion: string,            // markdown, may contain {{fragment:N}} markers
+ *   fragments: string[],           // [] when none; index N matches marker {{fragment:N}}
+ *   valid: boolean,                // passed hand-rolled validation
+ *   fellBack: boolean,             // true if raw was treated as fallback
+ *   raw: string                    // always preserved for reinjection / re-ask
+ * }}
+ */
+export function parseScribeResponse(raw, { surface }) { /* tolerant parse + validate + fallback */ }
+
+export function serializeAssistantTurnForHistory(parsed) { /* see §2 */ }
+```
+
+**Tolerant parse order (hand-rolled, no dep):**
+1. Try `JSON.parse(raw)`.
+2. If that fails, strip a ```json fenced block and retry (models often wrap).
+3. If still failing → fallback (below).
+4. On success, validate shape: `discussion` is string; `fragments` absent → `[]`, present → array of strings; coerce nulls.
+5. Cross-check `{{fragment:N}}` markers referenced in `discussion` against `fragments.length`; record mismatch as a non-fatal validation warning (do not throw — let the surface decide).
+
+**Contextual fallback (LOCKED decisions, implemented in the module, parameterized by `surface`):**
+- `surface === 'popover'` → treat the entire raw string as **one fragment**: `{ discussion: '', fragments: [raw], valid:false, fellBack:true }`. The popover's job is to produce insertable content, so a fragment is the correct default.
+- `surface === 'chat'` → treat raw as **discussion** with **no fragments**, and let the chat surface attach a message-level safety insert/replace action over the whole text: `{ discussion: raw, fragments: [], valid:false, fellBack:true }`.
+
+This keeps the two LOCKED fallback behaviors as data (the `surface` arg), not as branching logic scattered in components.
+
+### 2. Multi-turn serialization — RECOMMENDATION
+
+This is the one decision with real coherence stakes. When `sendMessage` replays history, each prior **assistant** turn was a structured object `{ discussion, fragments }`. Options:
+
+- **Option A — discussion only.** Send just `discussion`. Simple, but the model loses the fact that it previously produced insertable content; a follow-up like "make that shorter" has no referent because the fragment text is gone from context.
+- **Option B — discussion + compact fragment note (RECOMMENDED).** Send `discussion`, then append a compact, clearly-delimited note listing the fragments the assistant previously produced, so follow-ups can reference them. Example serialized assistant content:
+
+  ```
+  <discussion text>
+
+  [Previously produced 2 insertable fragments:
+  1) <fragment 0 text, truncated to ~N chars>
+  2) <fragment 1 text, truncated>]
+  ```
+
+- **Option C — re-emit full contract JSON as the assistant turn.** Round-trips faithfully but bloats context, risks the model echoing stale JSON, and couples history format to wire format.
+
+**Recommendation: Option B.** Rationale:
+- Coherence: the model can answer "shorten the second paragraph you wrote" because the fragment text is present.
+- Cost control: truncate long fragments (the user can re-select source text if precise editing is needed — the selection-context mechanism already exists).
+- Format isolation: history stays plain `{role, content}` strings, so nothing downstream of `callScribeAI` (which sends `messages` verbatim) needs to understand the contract.
+- Implement as `serializeAssistantTurnForHistory(parsed)` in `scribeResponse.js`, called from `sendMessage`'s history `.map`. Keep the note text **English and stable** (it is an instruction-channel string the model reads, not UI — matches the existing English-prompt convention in `SYSTEM_PROMPT`), not in i18n.
+
+Note: popover-originated assistant entries currently mirror the **whole** AI text into history (ScribePopover.jsx:154). After v3.1 they should mirror the parsed `{discussion, fragments}` so a later chat follow-up sees them consistently — store the structured fields (see §3), and let `serializeAssistantTurnForHistory` handle both origins uniformly.
+
+### 3. Message model in `ScribeContext`
+
+Extend the assistant message object (additive, backward-compatible):
+
+```js
 {
-  // Panel state
-  isPanelOpen: boolean,
-  openPanel: () => void,
-  closePanel: () => void,
-  togglePanel: () => void,
-
-  // Selection state (shared between inline and panel modes)
-  currentSelection: { text: string, html: string } | null,
-
-  // Chat state
-  conversations: Conversation[],         // all conversations
-  activeConversation: Conversation|null,  // current one
-  createConversation: () => void,
-  sendMessage: (text: string) => Promise<void>,
-
-  // Inline mode bridge (existing, relocated)
-  pendingIntent: object | null,
-  showScribeButton: object | null,
-  respond: (payload) => void,
+  id, role: 'assistant', timestamp,
+  content: string,            // KEEP: = discussion (so existing AssistantBubble/MarkdownPreview still works unchanged)
+  discussion: string,         // NEW: same as content; explicit name for clarity
+  fragments: string[],        // NEW: [] when none
+  fellBack: boolean           // NEW: drives the message-level safety action on chat fallback
 }
 ```
 
-**Why a context, not Redux or cozy-client store:**
-- Scribe state is UI-local, not persisted server-side (yet)
-- Scope is narrow: only OnlyOffice editor view uses it
-- Existing patterns in codebase use React context (OnlyOfficeContext, ViewerProvider)
-- If conversation persistence is added later, the context can delegate to cozy-client queries without API change
+Why keep `content === discussion`: `ChatMessageList`/`AssistantBubble`/`MessageActions` already read `content`; leaving it populated means the **old render path keeps working** while the new fragment-card UI is layered on top reading `fragments`. This is the seam that lets render work ship incrementally behind the flag.
 
-### Data Flow
+`user` and `error` messages are unchanged.
 
-#### Panel Open Flow
+### 4. Per-fragment rich reinjection — impact assessment
+
+**Verdict: nothing breaks, provided each fragment is reinjected as its own `handleReplace`/`handleInsert` call.** Detailed reasoning:
+
+- **Cell/table markers (`[TABLE:N]`/`[CELL:r,c]`, `tableCellMarkers.js`).** These operate on a string. If the model keeps a whole table inside a single fragment (which the prompt must instruct — see risk below), `transformCellMarkersForPreview` and `validateTableCounts` work on that fragment string exactly as they do today on the whole response. The popover's `rawResult`-vs-`displayMd` split becomes per-fragment: each card holds `rawFragment` (markers intact, for reinjection) and `displayFragment` (markers→GFM, for preview).
+- **`tableSnapshots` / `partialTableInfo`.** These are carried in refs in `View.jsx` and attached to **every** reinjection call regardless of payload (View.jsx:191, 221). Reinjecting fragment-by-fragment still attaches them — no change. The plugin matches `[TABLE:N]` markers in the incoming text against snapshots, so as long as a given fragment contains the markers for the snapshot it references, it works.
+- **Footnotes (`[^scribe-fn-N]`) and cross-refs (`{{REF:...}}`).** Pure inline string markers preserved through `markdownToHtml`; fragment splitting is transparent to them.
+
+**The real risk is splitting an atomic structure across fragments.** If the model puts `[TABLE:0]` in fragment 0 and `[CELL:1,2]...[/CELL]` of that same table in fragment 1, validation will see incomplete tables and reinjection will produce a broken table. **Mitigation (prompt-level, belongs in the prompt phase):** instruct the model that each fragment must be independently insertable and must never split a table/footnote/code-block/image across fragments. The dev probe (phase 3) must specifically exercise a table selection to confirm the model honors this. Add a validation guard in `parseScribeResponse`: if any fragment contains an unmatched `[TABLE:`/`[CELL:`/`[/TABLE]` marker, mark `valid:false` and surface the existing cell-mismatch warning UI.
+
+### 5. Feature-flag / rollout strategy (cozy-flags)
+
+Use the established synchronous `flag()` API (helpers.js pattern), dev-toggleable via `localStorage` `flag__` prefix.
+
+- **Flag:** `flag('drive.office.scribe.structuredResponse')` (boolean).
+- **Single decision point:** in each surface's call site, after `callScribeAI` returns:
+  ```js
+  const raw = await callScribeAI(client, messages, opts)
+  const parsed = flag('drive.office.scribe.structuredResponse')
+    ? parseScribeResponse(raw, { surface })
+    : { discussion: raw, fragments: [], valid: true, fellBack: false, raw }
+  ```
+  When OFF, the response is shaped as "all discussion, no fragments, raw available" — which is **identical to today's behavior** because the chat renders `content`/discussion and the popover uses `raw` for reinjection. This makes the flag a true no-op kill-switch.
+- **Prompt selection also gated by the same flag:** `buildMessages`/`CHAT_SYSTEM_PROMPT` emit contract instructions only when the flag is on (pass the flag value into the prompt builder, or read it at the call site and choose the prompt variant). Critical: never ask for the contract while parsing in plain mode, or vice-versa.
+- **Rollout sequence:** dev-only via localStorage → cozy-stack flag for internal accounts → general enable. Because OFF == today, rollback is instant and safe.
+
+### 6. Forward-compat: "MCP-ready" without a server
+
+Goal: adding an `actions` channel (editor commands the model can request) later must be **non-breaking**. Shape now so that later is purely additive:
+
+- **Reuse JSON-Schema formalism, no runtime dep.** `SCRIBE_OUTPUT_SCHEMA` is a documented JS object mirroring MCP's `outputSchema` / `structuredContent` convention. The parsed object is the `structuredContent`. Validation is hand-rolled against this schema's intent (not a validator library).
+- **Top-level object is open for extension.** Contract today: `{ discussion, fragments? }`. Tomorrow: `{ discussion, fragments?, actions? }` where `actions: [{ name, arguments }]`. Because `parseScribeResponse` already (a) parses the whole object, (b) ignores unknown keys, and (c) returns a normalized struct, adding `actions` means: extend the returned struct with `actions: []` default, add a `parseActions` branch, and add a new consumer. Existing consumers reading `discussion`/`fragments` are untouched.
+- **Make `parseScribeResponse` return shape additive-friendly now:** always include `fragments: []` and reserve the convention that future channels default to empty arrays/objects. Document in the module header that consumers must tolerate unknown keys and absent channels.
+- **Keep the marker convention generic.** `{{fragment:N}}` is one instance of a `{{channel:ref}}` placeholder family. When `actions` arrive, an analogous `{{action:N}}` placeholder in `discussion` can render an inline "Apply" affordance — same parsing machinery (regex over discussion, index into a channel array). Implement the fragment marker scan as a small reusable helper (`extractChannelMarkers(text, channel)`), not a one-off regex, so the action channel reuses it.
+- **No server, no transport change.** This stays a client-side prompt+parse contract over the existing OpenAI-compat endpoint. "MCP-ready" = the **schema and parsed-struct shape** are MCP-compatible, so a future migration to real tool-calling/MCP is a swap of the producer, not a redesign of consumers.
+
+## Build Order (de-risked: probe before UI)
+
+Respects the LOCKED "dev probe before UI" decision. Each phase is independently shippable behind the flag.
+
 ```
-User clicks panel toggle (FloatingButton or keyboard shortcut)
-  -> ScribeContext.togglePanel()
-  -> isPanelOpen = true
-  -> View.jsx renders ScribeChatPanel in flex container
-  -> OO iframe shrinks via flexbox
-```
+Phase 1: Contract module (no UI, no network)
+  - scribeResponse.js: SCRIBE_OUTPUT_SCHEMA, parseScribeResponse(raw,{surface}),
+    serializeAssistantTurnForHistory, extractChannelMarkers helper
+  - Full unit test suite: valid JSON, fenced JSON, malformed, missing fragments,
+    marker/fragment-count mismatch, split-table guard, popover-fallback, chat-fallback
+  - Rationale: pure + testable; everything downstream depends on it; zero risk
 
-#### Selection Sharing (Inline <-> Panel)
-```
-Plugin detects selection
-  -> casts SHOW_SCRIBE_BUTTON (one-way intent)
-  -> useCozyBridge receives it
-  -> ScribeContext.currentSelection updated
+Phase 2: Prompt + plumbing (flag wired, NO new render)
+  - SYSTEM_PROMPT / CHAT_SYSTEM_PROMPT contract variants, gated by flag
+  - Insert parse seam after callScribeAI in BOTH call sites (ScribePopover, ScribeContext.sendMessage)
+  - Message model extended ({discussion, fragments, fellBack}); content=discussion kept
+  - Multi-turn serialization via serializeAssistantTurnForHistory in sendMessage
+  - With flag ON, render still uses content/discussion → behavior ~ today (proves no regression)
 
-If panel is open:
-  -> ScribeChatInput shows selection chip ("Using: first 50 chars...")
-  -> User can send message referencing selection
+Phase 3: Dev probe (empirical conformance gate)
+  - Reuse scribeDevMode pattern: a dev panel / console log showing parsed
+    {discussion, fragments[], valid, fellBack} for the last call
+  - Manually exercise: 0-fragment, 1-fragment, N-fragment, table selection,
+    footnote/cross-ref selection
+  - GATE: confirm the model honors the contract AND never splits tables across
+    fragments BEFORE building card UI. If conformance is poor, tune prompt here.
 
-If panel is closed and user clicks FloatingButton:
-  -> EITHER opens inline popover (current behavior)
-  -> OR opens panel (configurable, or long-press/right-click)
+Phase 4: Chat render (fragment cards in panel)
+  - ChatMessageList/AssistantBubble: render discussion (existing) + fragment cards
+  - Each card: MarkdownPreview(displayFragment) + per-fragment copy/insert/replace
+    calling panelActions with rawFragment
+  - Chat fallback: message-level safety action when fellBack (whole-text insert/replace)
 
-Plugin deselects:
-  -> casts HIDE_SCRIBE_BUTTON
-  -> ScribeContext.currentSelection = null
-  -> Panel input chip disappears, but conversation continues
-```
+Phase 5: Popover render (fragment cards in result panel)
+  - ScribeResultPanel: replace single rawResult/result.text with fragments[]
+  - Each fragment keeps {rawFragment, displayFragment}; reuse transformCellMarkersForPreview per fragment
+  - Popover fallback: single fragment = whole raw (already the default)
 
-#### Chat Message Flow
-```
-User types message in ScribeChatInput
-  -> ScribeContext.sendMessage(text)
-  -> Appends user message to activeConversation.messages
-  -> Calls scribeAI with full conversation history (multi-turn)
-  -> Appends AI response to activeConversation.messages
-  -> AI response may include action buttons (replace/insert)
-    -> These trigger the same respond() flow as inline mode
-```
-
-### Chat State Model
-
-```typescript
-interface Conversation {
-  id: string            // crypto.randomUUID()
-  title: string         // auto-generated from first message
-  messages: Message[]
-  createdAt: number
-  updatedAt: number
-}
-
-interface Message {
-  id: string
-  role: 'user' | 'assistant'
-  content: string       // markdown
-  timestamp: number
-  // For user messages that included a selection:
-  selection?: { text: string, html: string }
-  // For AI responses with document actions:
-  actions?: Array<{
-    type: 'replace' | 'insert'
-    text: string         // the content to apply
-    applied: boolean     // tracks if user already applied it
-  }>
-}
-```
-
-**Storage strategy for v3.0:** In-memory only (React state). Conversations lost on page reload. This is intentional for MVP -- persistence adds complexity (localStorage serialization, cozy-client doctype, sync) with limited immediate value. Can be added in a later phase.
-
-### Modified View.jsx Layout
-
-```jsx
-// View.jsx render (simplified)
-<ScribeProvider allowedOrigins={allowedOrigins}>
-  {!isEditorReady && <Spinner />}
-  <div className="u-flex u-flex-grow-1">
-    <div id="onlyOfficeEditor" style={{ flex: 1 }} />
-    {isScribeEnabled && <ScribeChatPanel />}   {/* renders only when isPanelOpen */}
-    <OnlyOfficeAIAssistantPanel />              {/* existing, unmodified */}
-  </div>
-  {isScribeEnabled && (
-    <>
-      <ScribeFloatingButton />    {/* now reads from ScribeContext */}
-      <ScribePopover />            {/* now reads from ScribeContext */}
-    </>
-  )}
-  {showReadOnlyFab && <ReadOnlyFab />}
-</ScribeProvider>
+Phase 6: Hardening
+  - Re-ask LLM on invalid parse (one retry with a stricter "return valid JSON" nudge)
+  - Migrate menu actions / finalize flag default; i18n for new card labels
+  - Edge tests: empty fragments, giant fragments, marker mismatch warnings,
+    abort mid-parse, popover→chat history consistency
 ```
 
-The `ScribeProvider` wraps everything and absorbs the `useCozyBridge` logic currently in `View.jsx`. This removes ~40 lines from View.jsx and centralizes all Scribe state.
+**Why this order de-risks:** Phases 1-2 change behavior to ~identical-to-today (parse exists, render doesn't use it), so any regression is plumbing, not UX. Phase 3 answers the only empirical unknown (model conformance) with zero UI sunk cost. Cards (4-5) are built only after conformance is proven. Chat-before-popover because the chat surface's message model and serialization are the harder coherence problem and benefit from being exercised first.
 
-### OO Iframe Resize Behavior
+## Integration Points (precise seams)
 
-**Critical finding:** The OO iframe is created by `DocsAPI.DocEditor('onlyOfficeEditor', config)` inside the `div#onlyOfficeEditor` container. The iframe gets `width: 100%` from OO's own styles. When the flex container allocates less space to the editor div (because the panel sibling takes some), the iframe automatically adapts.
+| Seam | File:line (as-built) | Change |
+|------|---------------------|--------|
+| Transport return | `scribeAI.js:155` `callScribeAI` | Keep returning raw string (recommended); add parse at call sites |
+| Popover parse | `ScribePopover.jsx:142-148` (after `callScribeAI`, where `rawResult`/`transformCellMarkersForPreview` already live) | `parseScribeResponse(text,{surface:'popover'})`; fan out to fragments |
+| Chat parse | `ScribeContext.jsx:122` (`responseText = await callScribeAI`) | `parseScribeResponse(responseText,{surface:'chat'})`; store structured fields |
+| Multi-turn serialize | `ScribeContext.jsx:104-120` (history `.map`) | Replace assistant-turn mapping with `serializeAssistantTurnForHistory` |
+| Prompt emit | `scribeAI.js:24` `SYSTEM_PROMPT`, `buildMessages`; `ScribeContext.jsx:13` `CHAT_SYSTEM_PROMPT` | Flag-gated contract variants |
+| Message model | `ScribeContext.jsx:124-132` (assistant push), `ScribePopover.jsx:152-155` (mirror) | Add `{discussion, fragments, fellBack}` |
+| Chat render | `ChatMessageList.jsx:178-183` (assistant branch) + `MessageActions.jsx` | Fragment cards + per-fragment actions |
+| Popover render | `ScribeResultPanel` (consumed at `ScribePopover.jsx:259-277`) | Fragment list |
+| Reinjection | `View.jsx:184-239` `handleReplace/handleInsert` | **NO CHANGE** — call once per fragment with `rawFragment` |
+| Flag | new `drive.office.scribe.structuredResponse` (pattern: `helpers.js`) | Gate parse + prompt |
 
-This is confirmed by the existing `OnlyOfficeAIAssistantPanel` which uses `width: 30%` and successfully coexists with the editor.
+### New vs Modified components
 
-**No OO API calls needed for resize.** The CSS flexbox approach is sufficient.
-
-**Panel width:** Use fixed 380px (not percentage) for the chat panel. A fixed width provides consistent chat UX regardless of viewport size. The editor gets `flex: 1` and absorbs the remaining space.
-
-**Transition animation:** Apply `transition: width 200ms ease` on the panel and `transition: flex 200ms ease` on the editor container for smooth open/close.
-
-### Handling Both Panels (AI Summary + Scribe Chat)
-
-Both `OnlyOfficeAIAssistantPanel` (existing file summary) and `ScribeChatPanel` (new chat) can theoretically be open simultaneously. However, this would squeeze the editor too much.
-
-**Recommendation:** When Scribe chat panel opens, hide the AI summary panel (and vice versa). Implement via ScribeContext: `openPanel()` also calls `setIsOpenAiAssistant(false)` via ViewerProvider. This requires ScribeContext to have access to ViewerProvider -- achievable because both are within the OnlyOffice component tree.
-
-### scribeAI.js Changes for Conversational Mode
-
-Current `callScribeAI` sends a single user message. For chat, it needs multi-turn support:
-
-```javascript
-// New function alongside existing callScribeAI
-export async function callScribeChatAI(client, messages, { signal } = {}) {
-  // messages is the full conversation history: [{role, content}, ...]
-  // System prompt is prepended
-  const fullMessages = [
-    { role: 'system', content: CHAT_SYSTEM_PROMPT },
-    ...messages
-  ]
-  const response = await client.stackClient.fetchJSON(
-    'POST',
-    '/ai/v1/chat/completions',
-    { messages: fullMessages, temperature: 0.7 },
-    { signal }
-  )
-  // ... same response extraction
-}
-```
-captureFormatSnapshot() → callCommand(function() {
-  var doc = Api.GetDocument();
-  var range = doc.GetRangeBySelect();
-  var paragraphs = range.GetAllParagraphs();
-  var snapshot = { paragraphs: [] };
-
-The existing `callScribeAI` stays untouched for inline mode. A new `CHAT_SYSTEM_PROMPT` instructs the LLM to be conversational and optionally suggest document actions.
-
-## Patterns to Follow
-
-### Pattern 1: Context Provider Wrapping View
-**What:** ScribeContext provider wraps the View component, absorbing bridge lifecycle
-**When:** Always -- this is the primary architectural change
-**Example:**
-```jsx
-// In View.jsx
-const View = ({ id, apiUrl, docEditorConfig }) => {
-  return (
-    <ScribeProvider>
-      <ViewInner id={id} apiUrl={apiUrl} docEditorConfig={docEditorConfig} />
-    </ScribeProvider>
-  )
-}
-```
-
-### Pattern 2: Conditional Flex Sibling for Panel
-**What:** Panel renders conditionally in the flex container, editor auto-resizes
-**When:** Panel open/close toggle
-**Example:**
-```jsx
-<div className="u-flex u-flex-grow-1">
-  <div id="onlyOfficeEditor" style={{ flex: 1, minWidth: 0 }} />
-  {isPanelOpen && (
-    <div style={{ width: 380, flexShrink: 0, borderLeft: '1px solid divider' }}>
-      <ScribeChatPanel />
-    </div>
-  )}
-</div>
-```
-
-### Pattern 3: Selection Passthrough Without Refactoring Bridge
-**What:** Current SHOW_SCRIBE_BUTTON intent already carries `text`. Extend it to also carry `html` (the plugin already sends HTML in AI_TEXT_EDIT). The ScribeContext stores this as `currentSelection`.
-**When:** Any time the user selects text in OO
-**Why important:** The chat panel needs to reference the current selection WITHOUT triggering the full AI_TEXT_EDIT intent flow.
-
-### Pattern 4: Message-Level Action Buttons
-**What:** AI responses in chat can include actionable suggestions (replace selection, insert at cursor). These are rendered as buttons on the message bubble.
-**When:** The LLM response includes document-modifiable content
-**Example:** The LLM returns "Here's a revised version: ..." and the UI adds Replace/Insert buttons below that message. Clicking triggers the same `respond()` flow back to the plugin.
+- **New:** `scribeResponse.js` (+ spec), fragment-card sub-component (can live inside `ScribeResultPanel` and `ChatMessageList` or be shared `FragmentCard.jsx`).
+- **Modified:** `scribeAI.js` (prompts), `ScribeContext.jsx` (model + serialize + parse), `ScribePopover.jsx` (fragments state), `ScribeResultPanel`, `ChatMessageList.jsx`, `MessageActions.jsx`.
+- **Untouched (important):** `View.jsx` reinjection handlers, `tableCellMarkers.js`, `scribeConversion.js`, the plugin (ES5), the postMessage protocol, the cozy-stack endpoint.
 
 ## Anti-Patterns to Avoid
 
-### Anti-Pattern 1: DOM Manipulation for Resize
-**What:** Directly setting iframe width/height via JavaScript to resize OO editor
-**Why bad:** The existing flex layout already handles this. Direct DOM manipulation fights React's rendering model and creates race conditions with OO's own resize handlers.
-**Instead:** Use CSS flexbox siblings. The iframe auto-adapts to its container.
+### Parsing in the render components
+**What people do:** `JSON.parse` inside `ChatMessageList`/`ResultPanel`.
+**Why wrong:** duplicates fallback logic across two surfaces, untestable, drifts.
+**Instead:** all parse/validate/fallback in `scribeResponse.js`; components consume the struct.
 
-### Anti-Pattern 2: Duplicating Bridge Logic in Chat Panel
-**What:** Creating a second CozyBridge instance or second postMessage listener for the chat panel
-**Why bad:** Message routing conflicts, duplicate handlers, race conditions on intent resolution
-**Instead:** Single CozyBridge in ScribeContext, shared between inline and panel modes.
+### Reinjecting concatenated fragments
+**What people do:** join fragments into one string and call `handleReplace` once.
+**Why wrong:** defeats the per-fragment selection/action UX and re-introduces the ambiguity the contract exists to remove; also risks gluing markers across fragment boundaries.
+**Instead:** reinject one fragment per `handleReplace`/`handleInsert` call (the handlers are already idempotent and string-in).
 
-### Anti-Pattern 3: Storing Full Conversation in URL/Query Params
-**What:** Persisting chat state in URL for "shareable conversations"
-**Why bad:** URLs have length limits, conversation data is large, security concerns with AI prompts in URLs
-**Instead:** In-memory state for v3.0. Future: cozy-client doctype for server-side persistence.
+### Changing the wire/history format to carry JSON
+**What people do:** store/replay full contract JSON as the assistant message content.
+**Why wrong:** context bloat, model echoes stale JSON, couples history to wire format.
+**Instead:** history is plain strings; `serializeAssistantTurnForHistory` produces a compact discussion+note (Option B).
 
-### Anti-Pattern 4: Using MUI Drawer for Side Panel
-**What:** MUI Drawer overlays content with a backdrop
-**Why bad:** User cannot see/interact with document while panel is open. The existing `OnlyOfficeAIAssistantPanel` already demonstrates the correct sibling approach.
-**Instead:** Flex sibling with fixed width, no backdrop.
+### Coupling the flag to transport
+**What people do:** branch inside `callScribeAI`.
+**Why wrong:** makes the kill-switch touch the network layer and the prompt builder inconsistently.
+**Instead:** flag chosen at the call site for BOTH prompt variant and parse; transport stays dumb.
 
-### Anti-Pattern 5: Refactoring ScribePopover for Chat
-**What:** Trying to make ScribePopover work as both inline modal AND chat panel
-**Why bad:** Completely different UX paradigms. Popover is transient (open-act-close). Chat is persistent (stays open across interactions). Merging them creates a confused component.
-**Instead:** Keep ScribePopover for inline quick actions. Build ScribeChatPanel as a separate component. They share ScribeContext for selection state.
-
-## Build Order (Dependency-Driven)
-
-**Alternative: Marker approach**
-1. Insert a unique zero-width character (e.g., `\u200B`) at start and end of content
-2. After InsertContent, search for markers
-3. Select range between markers
-4. Delete markers
-
-**Recommendation:** Defer post-injection selection to a sub-phase. Build content injection first, add selection after. The marker approach is more robust than position calculation but adds complexity.
-
-## Format Preservation Strategy
-
-### The Problem
-
-Markdown is a lossy format. When original text goes through the LLM:
-```
-Phase 1: ScribeContext + Provider
-  - Extract useCozyBridge logic from View.jsx into ScribeContext
-  - Add isPanelOpen state
-  - Add currentSelection tracking (from SHOW_SCRIBE_BUTTON intent data)
-  - Refactor View.jsx to use ScribeProvider
-  - Existing inline mode must keep working identically
-
-Phase 2: Panel Shell + Layout
-  - ScribeChatPanel renders in flex container (empty shell)
-  - Toggle button to open/close (modify ScribeFloatingButton or add toolbar button)
-  - Verify OO iframe resizes correctly
-  - Handle mutual exclusion with OnlyOfficeAIAssistantPanel
-
-Phase 3: Chat Messages + Input
-  - ScribeChatMessages component (message list with auto-scroll)
-  - ScribeChatInput component (text area + selection chip + send button)
-  - Conversation state model in ScribeContext
-  - Wire to scribeAI.js with multi-turn support
-
-Phase 4: Action Buttons on AI Messages
-  - AI messages get Replace/Insert buttons
-  - Wire to existing respond() flow to apply changes to OO document
-  - Handle edge cases (selection changed since AI response, no selection)
-
-Phase 5: Conversation History
-  - List of past conversations in panel header/sidebar
-  - Create new conversation
-  - Switch between conversations
-  - Auto-title from first message
-```
-
-**Phase ordering rationale:**
-- Phase 1 is prerequisite for everything -- centralizes state without visible changes
-- Phase 2 proves the layout works before investing in chat UI
-- Phase 3 is the core feature
-- Phase 4 connects chat to document (the differentiator vs generic chat)
-- Phase 5 is polish, can be deferred
-
-## New vs Modified Files Summary
-
-### New Files (5+)
-
-| File | Purpose | Size Estimate |
-|------|---------|---------------|
-| `src/.../OnlyOffice/Scribe/ScribeContext.jsx` | Context provider, shared state, bridge integration | ~150 LOC |
-| `src/.../OnlyOffice/Scribe/ScribeChatPanel.jsx` | Panel container, layout, header | ~100 LOC |
-| `src/.../OnlyOffice/Scribe/ScribeChatMessages.jsx` | Message list with auto-scroll | ~80 LOC |
-| `src/.../OnlyOffice/Scribe/ScribeChatMessage.jsx` | Single message bubble, action buttons | ~100 LOC |
-| `src/.../OnlyOffice/Scribe/ScribeChatInput.jsx` | Text input, selection chip, send | ~120 LOC |
-
-### Modified Files (4)
-
-| File | Changes |
-|------|---------|
-| `View.jsx` | Wrap with ScribeProvider, remove inline bridge logic, add ScribeChatPanel to flex container |
-| `useCozyBridge.js` | Extract into ScribeContext (may become internal to ScribeContext) |
-| `ScribeFloatingButton.jsx` | Read from ScribeContext, add panel toggle behavior |
-| `scribeAI.js` | Add `callScribeChatAI` and `CHAT_SYSTEM_PROMPT` for multi-turn |
-
-### Unchanged Files
-
-| File | Why Unchanged |
-|------|---------------|
-| `ScribePopover.jsx` | Inline mode works the same, just reads from context instead of props |
-| `ScribeActionMenu.jsx` | Menu UI unchanged |
-| `ScribeResultPanel.jsx` | Result display unchanged |
-| `scribeActions.js` | Action config unchanged |
-| `cozy-bridge/index.js` | Bridge routing unchanged |
-| `cozy-bridge/protocol.js` | No protocol changes needed |
-| `OnlyOfficeProvider.jsx` | Not modified, ScribeContext wraps inside it |
-
-## Scalability Considerations
-
-| Concern | At launch | At 100 conversations | At 1000+ messages/conv |
-|---------|-----------|---------------------|----------------------|
-| Memory | In-memory state, ~KB | ~100KB, fine | Risk: 10MB+. Add pagination or auto-archive old conversations |
-| API token limit | ~4K context window | Same per conversation | Truncate old messages, keep system prompt + last N |
-| Panel render perf | Fine | Fine | Virtualize message list (react-window) if needed |
-| State persistence | None (lost on reload) | Users will want persistence | Add cozy-client doctype io.cozy.ai.conversations |
+### Letting fragments split atomic structures silently
+**What people do:** trust the model to keep tables whole.
+**Why wrong:** broken tables on reinjection, hard-to-debug.
+**Instead:** prompt constraint + `parseScribeResponse` guard that flags unmatched table/cell markers; verified in the dev probe.
 
 ## Sources
 
-- Codebase analysis: `View.jsx`, `Editor.jsx`, `useCozyBridge.js`, `ScribePopover.jsx`, `OnlyOfficeAIAssistantPanel.tsx` (HIGH confidence)
-- `styles.styl`: existing `ai-assistant-panel { width: 30% }` confirms flex sibling pattern (HIGH confidence)
-- `OnlyOfficeProvider.jsx`: context pattern to follow (HIGH confidence)
-- cozy-ui Panel component: exports `Group`, `Main`, `Side` -- could use `Panel.Side` for semantic markup, but inline styles are simpler and match existing Scribe patterns (MEDIUM confidence)
-- cozy-ui Drawer: re-exports MUI Drawer -- confirmed NOT suitable for persistent side panel (HIGH confidence)
+- Codebase (HIGH): `scribeAI.js`, `ScribeContext.jsx`, `ScribePopover.jsx`, `tableCellMarkers.js`, `ChatMessageList.jsx`, `MessageActions.jsx`, `MarkdownPreview.jsx`, `ScribePanel.jsx`, `View.jsx`, `helpers.js`, `.planning/PROJECT.md`
+- MCP `outputSchema` / `structuredContent` convention (formalism reuse only; no server) — Model Context Protocol tool-result structured-content spec
+- Project memory: v2.5 marker contract, cozy-flags `flag__` localStorage dev-toggle, ES5 plugin constraint
+
+---
+*Architecture research for: structured LLM response contract integration (Scribe v3.1)*
+*Researched: 2026-06-16*
