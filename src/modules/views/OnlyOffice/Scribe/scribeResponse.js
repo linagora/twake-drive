@@ -40,6 +40,45 @@
 export const MAX_RAW_LENGTH = 512 * 1024
 
 /**
+ * Strict position-marker grammar for the `fragment` channel: `{{fragment:<digits>}}`.
+ * Anchored on the literal channel name + `:` + `\d+` + `}}`, so it can NEVER match,
+ * capture, or alter `{{REF:scribe-ref-N:visible text}}` cross-ref markers (CONTRACT-04).
+ * Linear-time (fixed literal + `\d+`), never a greedy `\{\{.+?\}\}`.
+ *
+ * Source of truth for the grammar; `extractChannelMarkers` builds an equivalent
+ * per-call regex so it never depends on this global regex's stateful lastIndex.
+ *
+ * @type {RegExp}
+ */
+export const FRAGMENT_MARKER_RE = /\{\{fragment:(\d+)\}\}/g
+
+/**
+ * Scan `text` for `{{<channel>:<digits>}}` markers and return ordered hits.
+ * Generic across channels (a future `{{action:N}}` channel reuses this) and
+ * read-only — it never mutates `text`. Returns [] for non-string input.
+ *
+ * Fragments (and every channel) are 0-indexed: `{{fragment:0}}` is the first
+ * fragment, i.e. index 0 resolves to `fragments[0]`.
+ *
+ * @param {string} text
+ * @param {string} channel - channel name, e.g. 'fragment'
+ * @returns {Array<{ index: number, position: number }>} hits in document order
+ */
+export function extractChannelMarkers(text, channel) {
+  if (typeof text !== 'string' || typeof channel !== 'string') return []
+  // Escape regex metacharacters in the channel name (defensive — channels are
+  // fixed literals today, but this keeps the helper safe for any caller).
+  const safeChannel = channel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const re = new RegExp('\\{\\{' + safeChannel + ':(\\d+)\\}\\}', 'g')
+  const hits = []
+  let m
+  while ((m = re.exec(text)) !== null) {
+    hits.push({ index: parseInt(m[1], 10), position: m.index })
+  }
+  return hits
+}
+
+/**
  * Strip a single leading ```/```json fence and matching trailing ``` fence.
  * Linear-time, anchored regexes (no nested quantifiers).
  *
@@ -238,6 +277,23 @@ export function parseScribeResponse(raw, { surface } = {}) {
       valid = false
       warnings.push('split-table')
     }
+
+    // Marker / fragment cross-check (non-fatal): never flips a parsed success to
+    // throw and does not change `fellBack`. Out-of-range markers and unreferenced
+    // fragments are surfaced as warnings only.
+    const markerHits = extractChannelMarkers(discussion, 'fragment')
+    const referenced = new Set()
+    let outOfRange = false
+    for (const hit of markerHits) {
+      if (hit.index < 0 || hit.index >= fragments.length) {
+        outOfRange = true
+      } else {
+        referenced.add(hit.index)
+      }
+    }
+    if (outOfRange) warnings.push('fragment-marker-out-of-range')
+    const hasOrphan = fragments.some((_, i) => !referenced.has(i))
+    if (fragments.length > 0 && hasOrphan) warnings.push('fragment-not-referenced')
 
     // Prototype-pollution guard: stage only the allow-listed channels on a
     // null-prototype object. We never assign attacker-controlled keys
