@@ -136,6 +136,43 @@ export const computeSyncingFakeFile = ({
 }
 
 /**
+ * Whether the file is the root of a sharing the current instance received
+ * (i.e. is referenced by an io.cozy.sharings the user does not own).
+ *
+ * The stack tags both the owner's shared folder and the recipient's copy with
+ * an io.cozy.sharings reference, so ownership is what tells them apart: the
+ * recipient must not see the received share among their own files (it belongs
+ * in the Sharings section), while the owner keeps their folder in place.
+ * @param {object} file - An io.cozy.files doc
+ * @param {function} isOwner - cozy-sharing predicate, true when the instance owns the sharing of the given file id
+ * @returns {bool}
+ */
+export const isReceivedShare = (file, isOwner) => {
+  const fileReferences = get(file, 'relationships.referenced_by.data') || []
+  const isSharingReferenced = fileReferences.some(
+    reference => reference.type === 'io.cozy.sharings'
+  )
+  if (!isSharingReferenced) return false
+
+  return !isOwner(file._id ?? file.id ?? '')
+}
+
+/**
+ * Drops received shares from folder/file query results so they don't surface
+ * among the user's own files. Returns new result objects with a filtered
+ * `data` (and matching `count`), preserving the rest of each query result.
+ * @param {array} queryResults - cozy-client query results (folders, files)
+ * @param {function} isOwner - cozy-sharing ownership predicate
+ * @returns {array} query results without received shares
+ */
+export const filterOutReceivedShares = (queryResults, isOwner) =>
+  queryResults.map(result => {
+    if (!result?.data) return result
+    const data = result.data.filter(file => !isReceivedShare(file, isOwner))
+    return { ...result, data, count: data.length }
+  })
+
+/**
  * Whether the file is referenced by a share in the sharing context
  * @param {object} file - An io.cozy.files doc
  * @param {object} sharingsValue - Sharing Context value
