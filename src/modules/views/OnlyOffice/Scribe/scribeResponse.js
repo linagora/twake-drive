@@ -315,3 +315,83 @@ export function parseScribeResponse(raw, { surface } = {}) {
     return buildFallback(rawStr, surface, [])
   }
 }
+
+/**
+ * Max characters of any single fragment body included in the history note.
+ * Long fragments are truncated so prior insertable content is referenceable in
+ * follow-ups without bloating context (ARCHITECTURE §2 Option B).
+ *
+ * @type {number}
+ */
+export const HISTORY_FRAGMENT_TRUNCATE = 160
+
+/**
+ * Serialize a parsed assistant turn for multi-turn LLM history.
+ *
+ * Returns a plain string: the `discussion` text plus, when fragments exist, a
+ * compact English note listing how many fragments were produced (each truncated
+ * to HISTORY_FRAGMENT_TRUNCATE). It never emits full fragment bodies verbatim
+ * and never re-emits the raw contract JSON. The note is a stable, English,
+ * instruction-channel string (read by the model) — intentionally NOT i18n, to
+ * match the existing English SYSTEM_PROMPT convention.
+ *
+ * @param {{ discussion?: string, fragments?: string[] }} parsed
+ * @returns {string}
+ */
+export function serializeAssistantTurnForHistory(parsed) {
+  const discussion =
+    parsed && typeof parsed.discussion === 'string' ? parsed.discussion : ''
+  const fragments =
+    parsed && Array.isArray(parsed.fragments) ? parsed.fragments : []
+
+  if (fragments.length === 0) return discussion
+
+  const lines = fragments.map((frag, i) => {
+    const body = typeof frag === 'string' ? frag : String(frag)
+    const shown =
+      body.length > HISTORY_FRAGMENT_TRUNCATE
+        ? body.slice(0, HISTORY_FRAGMENT_TRUNCATE) + '…'
+        : body
+    return `${i + 1}) ${shown}`
+  })
+
+  const count = fragments.length
+  const note =
+    `\n\n[Previously produced ${count} insertable ` +
+    `fragment${count === 1 ? '' : 's'} (truncated):\n${lines.join('\n')}]`
+
+  return discussion + note
+}
+
+/**
+ * Documented JSON-Schema artifact for the Scribe response contract.
+ *
+ * This mirrors an MCP/OpenAI `outputSchema` and is a DOCUMENTATION artifact only
+ * — runtime validation is the hand-rolled logic in parseScribeResponse, not this
+ * object. It is also the literal payload to paste into a future `json_schema`
+ * structured-output request. See SCRIBE_OUTPUT_SCHEMA.md.
+ *
+ * @type {object}
+ */
+export const SCRIBE_OUTPUT_SCHEMA = {
+  $schema: 'http://json-schema.org/draft-07/schema#',
+  title: 'ScribeResponse',
+  type: 'object',
+  properties: {
+    discussion: {
+      type: 'string',
+      description:
+        'Conversational markdown shown to the user. May contain {{fragment:N}} ' +
+        'position markers (0-indexed) referencing entries in fragments[].'
+    },
+    fragments: {
+      type: 'array',
+      items: { type: 'string' },
+      description:
+        'Insertable markdown fragments. Element N corresponds to marker ' +
+        '{{fragment:N}}. Omit or use [] when there is nothing to insert.'
+    }
+  },
+  required: ['discussion'],
+  additionalProperties: false
+}

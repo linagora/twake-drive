@@ -1,7 +1,9 @@
 import {
   parseScribeResponse,
   MAX_RAW_LENGTH,
-  extractChannelMarkers
+  extractChannelMarkers,
+  serializeAssistantTurnForHistory,
+  SCRIBE_OUTPUT_SCHEMA
 } from './scribeResponse'
 
 describe('scribeResponse', () => {
@@ -272,6 +274,61 @@ describe('scribeResponse', () => {
       const r = parseScribeResponse(raw, { surface: 'chat' })
       expect(r.warnings).not.toContain('fragment-marker-out-of-range')
       expect(r.warnings).not.toContain('fragment-not-referenced')
+    })
+  })
+
+  describe('serializeAssistantTurnForHistory', () => {
+    it('returns a string containing discussion + a compact fragment note', () => {
+      const out = serializeAssistantTurnForHistory({
+        discussion: 'See {{fragment:0}}',
+        fragments: ['Le chat dort.']
+      })
+      expect(typeof out).toBe('string')
+      expect(out).toContain('See {{fragment:0}}')
+      expect(out).toContain('fragment')
+    })
+
+    it('truncates long fragment bodies (does not emit the full body)', () => {
+      const longBody = 'X'.repeat(5000)
+      const out = serializeAssistantTurnForHistory({
+        discussion: 'd',
+        fragments: [longBody]
+      })
+      expect(out).not.toContain(longBody)
+      expect(out.length).toBeLessThan('d'.length + longBody.length)
+    })
+
+    it('returns just the discussion when there are no fragments', () => {
+      expect(
+        serializeAssistantTurnForHistory({ discussion: 'hello', fragments: [] })
+      ).toBe('hello')
+    })
+
+    it('uses a stable English note label (not i18n)', () => {
+      const out = serializeAssistantTurnForHistory({
+        discussion: 'd',
+        fragments: ['a']
+      })
+      expect(out.toLowerCase()).toContain('fragment')
+      // no French/German localized label leaks
+      expect(out).not.toMatch(/produit|fragmente|abschnitt/i)
+    })
+
+    it('always returns a plain string, never an object', () => {
+      expect(typeof serializeAssistantTurnForHistory({ discussion: 'd', fragments: ['a'] })).toBe(
+        'string'
+      )
+      expect(typeof serializeAssistantTurnForHistory({})).toBe('string')
+    })
+  })
+
+  describe('SCRIBE_OUTPUT_SCHEMA', () => {
+    it('declares discussion (string) and fragments (array of strings)', () => {
+      expect(SCRIBE_OUTPUT_SCHEMA).toBeDefined()
+      expect(SCRIBE_OUTPUT_SCHEMA.properties.discussion.type).toBe('string')
+      expect(SCRIBE_OUTPUT_SCHEMA.properties.fragments.type).toBe('array')
+      expect(SCRIBE_OUTPUT_SCHEMA.properties.fragments.items.type).toBe('string')
+      expect(SCRIBE_OUTPUT_SCHEMA.required).toContain('discussion')
     })
   })
 })
