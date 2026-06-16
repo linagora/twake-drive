@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v3.1
 milestone_name: Contrat de réponse structurée LLM
 status: executing
-stopped_at: Roadmap v3.1 created and written (ROADMAP.md, REQUIREMENTS.md traceability, STATE.md)
-last_updated: "2026-06-16T17:47:59.996Z"
-last_activity: 2026-06-16 -- Phase v3.1-01 planning complete
+stopped_at: Phase v3.1-01 (Module contrat) complete and verified -- ready for v3.1-02
+last_updated: "2026-06-16T20:30:00.000Z"
+last_activity: 2026-06-16 -- Phase v3.1-01 complete (2/2 plans, verification passed)
 progress:
   total_phases: 5
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  completed_phases: 1
+  total_plans: 2
+  completed_plans: 2
+  percent: 20
 ---
 
 # Project State
@@ -21,17 +21,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-16)
 
 **Core value:** L'utilisateur peut interagir avec l'IA de maniere fluide -- actions rapides inline ou chat conversationnel dans un panneau lateral -- pour transformer et manipuler le contenu de son document OnlyOffice.
-**Current focus:** v3.1 -- Contrat de réponse structurée LLM (MCP-ready) : séparer discussion / fragments insérables. Construit sur la branche feat, mergé en fin de milestone (pas de feature-flag).
+**Current focus:** Phase v3.1-02 — Prompt + plumbing (next)
 
 ## Current Position
 
-Phase: v3.1-01 — Module contrat
-Plan: — (not yet planned)
-Status: Ready to execute
-Progress: [          ] 0% (0/5 phases)
-Last activity: 2026-06-16 -- Phase v3.1-01 planning complete
+Phase: v3.1-01 (Module contrat) — COMPLETE ✓ (verified 2026-06-16)
+Plan: 2 of 2 complete
+Status: Phase v3.1-01 complete; scribeResponse.js shipped (parse/validate/fallback + markers + MCP helpers + schema), 38 tests green, zero deps
+Progress: [██        ] 20% (1/5 phases)
+Last activity: 2026-06-16 -- Phase v3.1-01 complete (2/2 plans, verification passed)
 
-Next: `/gsd:plan-phase v3.1-01`
+Next: `/gsd:discuss-phase v3.1-02` (or `/gsd:plan-phase v3.1-02`)
 
 ## v3.1 Roadmap Summary
 

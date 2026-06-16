@@ -63,7 +63,7 @@ Full v3.0 phase details are preserved in `.planning/milestones/v3.0-ROADMAP.md`.
 
 **Milestone Goal:** Séparer sans ambiguïté la méta-discussion (`discussion`) du contenu insérable (`fragments`) dans les réponses du LLM, via un contrat JSON (formalisme JSON Schema, MCP-ready, sans serveur), exploité dans le chat et le popover. Construit sur la branche feat puis mergé en fin de milestone (états intermédiaires confinés à la branche, jamais exposés en prod).
 
-- [ ] **Phase v3.1-01: Module contrat** - `scribeResponse.js` pur (parse tolérant + validation maison + repli contextuel + schéma), entièrement testé, zéro UI
+- [x] **Phase v3.1-01: Module contrat** (2/2 plans) -- completed 2026-06-16 - `scribeResponse.js` pur (parse tolérant + validation maison + repli contextuel + schéma), entièrement testé, zéro UI
 - [ ] **Phase v3.1-02: Prompt + plumbing** - Prompts contractuels sur les deux surfaces, seam de parse aux deux call sites, modèle de message étendu, sérialisation multi-tour, miroir inline → historique chat
 - [ ] **Phase v3.1-03: Sonde dev (HARD GATE)** - Panneau dev exposant la réponse parsée + métriques de conformité ; ses critères de passage conditionnent les phases 04-05
 - [ ] **Phase v3.1-04: Rendu chat (cartes + clavier)** - Cartes de fragment encadrées aux positions `{{fragment:N}}`, boutons Copier/Insérer/Remplacer, réinjection riche par fragment, navigation clavier complète
@@ -82,8 +82,8 @@ Full v3.0 phase details are preserved in `.planning/milestones/v3.0-ROADMAP.md`.
   4. `serializeAssistantTurnForHistory` et `extractChannelMarkers(text, channel)` (MCP-ready) produisent les sorties attendues, et `SCRIBE_OUTPUT_SCHEMA` est commité comme artefact documenté
   5. Le module est pur (aucun import React/réseau) et n'a aucun effet de bord tant qu'il n'est pas câblé en v3.1-02
 **Plans**: 2 plans
-- [ ] v3.1-01-01-PLAN.md — parseScribeResponse tolerant parse + home-grown validation + context-aware fallback + security hardening
-- [ ] v3.1-01-02-PLAN.md — {{fragment:N}} marker grammar (REF-safe), extractChannelMarkers, serializeAssistantTurnForHistory, SCRIBE_OUTPUT_SCHEMA
+- [x] v3.1-01-01-PLAN.md — parseScribeResponse tolerant parse + home-grown validation + context-aware fallback + security hardening
+- [x] v3.1-01-02-PLAN.md — {{fragment:N}} marker grammar (REF-safe), extractChannelMarkers, serializeAssistantTurnForHistory, SCRIBE_OUTPUT_SCHEMA
 
 ### Phase v3.1-02: Prompt + plumbing
 **Goal**: Les deux surfaces (chat + inline) émettent le contrat et le parsent à la réception, sans nouveau rendu : la `discussion` sert de contenu affiché, le comportement reste fonctionnellement équivalent à aujourd'hui, prouvant l'absence de régression

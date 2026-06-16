@@ -9,10 +9,10 @@ Le contrat `{ discussion: string, fragments?: string[] }` (formalisme JSON Schem
 
 ### Contrat de réponse
 
-- [ ] **CONTRACT-01**: La réponse du LLM sépare la `discussion` (affichée, jamais insérée) des `fragments` insérables, via un contrat JSON parsé et validé (validation maison, zéro dépendance)
+- [x] **CONTRACT-01**: La réponse du LLM sépare la `discussion` (affichée, jamais insérée) des `fragments` insérables, via un contrat JSON parsé et validé (validation maison, zéro dépendance)
 - [ ] **CONTRACT-02**: Dans le chat, une réponse de pure discussion (0 fragment) n'affiche aucune UI d'insertion
-- [ ] **CONTRACT-03**: Une réponse non conforme ne bloque jamais l'utilisateur — repli contextuel : chat → message de discussion + action copier/insérer au niveau du message ; inline → le brut devient l'unique fragment insérable
-- [ ] **CONTRACT-04**: Les marqueurs de position `{{fragment:N}}` n'altèrent jamais les marqueurs cross-ref existants `{{REF:scribe-ref-N:…}}` (regex stricte + test de préservation)
+- [x] **CONTRACT-03**: Une réponse non conforme ne bloque jamais l'utilisateur — repli contextuel : chat → message de discussion + action copier/insérer au niveau du message ; inline → le brut devient l'unique fragment insérable
+- [x] **CONTRACT-04**: Les marqueurs de position `{{fragment:N}}` n'altèrent jamais les marqueurs cross-ref existants `{{REF:scribe-ref-N:…}}` (regex stricte + test de préservation)
 
 ### Inline (popover)
 
@@ -68,9 +68,9 @@ Reporté à v3.2+. Suivi mais hors roadmap v3.1.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CONTRACT-01 | v3.1-01 | Pending |
-| CONTRACT-03 | v3.1-01 | Pending |
-| CONTRACT-04 | v3.1-01 | Pending |
+| CONTRACT-01 | v3.1-01 | Complete |
+| CONTRACT-03 | v3.1-01 | Complete |
+| CONTRACT-04 | v3.1-01 | Complete |
 | INLINE-01 | v3.1-02 | Pending |
 | INLINE-02 | v3.1-02 | Pending |
 | PROBE-01 | v3.1-03 | Pending |
