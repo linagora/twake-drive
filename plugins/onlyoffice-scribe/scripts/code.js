@@ -2032,6 +2032,12 @@
   // ---- Selection detection (via init) ----
   // OO calls init with the selected text/HTML when a selection changes.
   var toolbarButtonAdded = false;
+  // Timestamp until which init()'s extraction is suppressed. Set when an
+  // undo/redo is invoked (keyboard or toolbar button — see suppressExtraction):
+  // the selection change that an undo/redo causes re-triggers init(), and ANY
+  // callCommand("command") below — even one that makes no document change —
+  // truncates OO's redo stack, breaking redo.
+  var suppressExtractionUntil = 0;
 
   window.Asc.plugin.init = function(data) {
     // Ignore init calls triggered by our own paste operations
@@ -2046,6 +2052,14 @@
       // Re-announce readiness now that OO has fully initialized the plugin, in
       // case the module-load announce raced ahead of the host's listener.
       announceReady();
+    }
+
+    // Skip the heavy extraction right after an undo/redo so its callCommand
+    // doesn't wipe the redo stack (which would make redo impossible). The cache
+    // stays as-is and self-refreshes on the next real selection change.
+    if (Date.now() < suppressExtractionUntil) {
+      log("init() extraction suppressed (undo/redo in progress)");
+      return;
     }
 
     // Run callCommand pre-scan to extract enriched markdown from selection
@@ -2998,12 +3012,44 @@
     });
   }
 
+  // Undo/redo trigger the passive init() extraction (via the resulting
+  // selection change), whose callCommand truncates the redo stack and breaks
+  // redo. We suppress that extraction briefly whenever an undo/redo is invoked.
+  function suppressExtraction() {
+    suppressExtractionUntil = Date.now() + 500;
+  }
+
+  // Keyboard: Ctrl/Cmd+Z = undo, Ctrl/Cmd+Y or Ctrl/Cmd+Shift+Z = redo.
+  function handleUndoRedoKey(e) {
+    var mod = e.ctrlKey || e.metaKey;
+    if (!mod) return;
+    var key = e.key;
+    var isUndo = !e.shiftKey && (key === "z" || key === "Z");
+    var isRedo = (key === "y" || key === "Y") || (e.shiftKey && (key === "z" || key === "Z"));
+    if (isUndo || isRedo) suppressExtraction();
+  }
+
+  // Toolbar Undo/Redo buttons live in the OO editor document (window.parent,
+  // same origin), so we can catch their clicks too — keyboard detection alone
+  // misses mouse users, which broke undo/redo round-trips via the buttons.
+  // OO button ids: id-toolbar-btn-undo / id-toolbar-btn-redo (slot-btn-*).
+  function handleUndoRedoClick(e) {
+    var t = e.target;
+    if (t && t.closest && t.closest('[id*="btn-undo"],[id*="btn-redo"]')) {
+      suppressExtraction();
+    }
+  }
+
   try {
     window.parent.document.addEventListener("keydown", handleCtrlShiftI);
+    window.parent.document.addEventListener("keydown", handleUndoRedoKey);
+    window.parent.document.addEventListener("click", handleUndoRedoClick, true);
     log("Ctrl+Shift+I shortcut registered on parent document");
   } catch (e) {
     log("Cannot register Ctrl+Shift+I on parent document: " + e.message);
     document.addEventListener("keydown", handleCtrlShiftI);
+    document.addEventListener("keydown", handleUndoRedoKey);
+    document.addEventListener("click", handleUndoRedoClick, true);
   }
 
   // ---- Toolbar button ----
