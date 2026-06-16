@@ -1,4 +1,4 @@
-import { parseScribeResponse } from './scribeResponse'
+import { parseScribeResponse, MAX_RAW_LENGTH } from './scribeResponse'
 
 describe('scribeResponse', () => {
   describe('parseScribeResponse', () => {
@@ -147,6 +147,53 @@ describe('scribeResponse', () => {
         expect(Object.prototype.hasOwnProperty.call(ok, k)).toBe(true)
         expect(Object.prototype.hasOwnProperty.call(bad, k)).toBe(true)
       }
+    })
+  })
+
+  describe('parseScribeResponse — security hardening', () => {
+    it('does not pollute Object.prototype via a __proto__ key', () => {
+      const raw =
+        '{"discussion":"x","fragments":["a"],"__proto__":{"polluted":true}}'
+      const r = parseScribeResponse(raw, { surface: 'chat' })
+      expect(r.discussion).toBe('x')
+      expect(r.fragments).toEqual(['a'])
+      expect({}.polluted).toBeUndefined()
+    })
+
+    it('does not pollute Object.prototype via a constructor.prototype key', () => {
+      const raw =
+        '{"constructor":{"prototype":{"polluted":true}},"discussion":"x"}'
+      const r = parseScribeResponse(raw, { surface: 'chat' })
+      expect(r.discussion).toBe('x')
+      expect({}.polluted).toBeUndefined()
+    })
+
+    it('result object exposes only documented own keys (no inherited pollution)', () => {
+      const raw = '{"discussion":"x","__proto__":{"polluted":true}}'
+      const r = parseScribeResponse(raw, { surface: 'chat' })
+      expect(r.polluted).toBeUndefined()
+      expect(Object.keys(r).sort()).toEqual(
+        ['discussion', 'fellBack', 'fragments', 'raw', 'valid', 'warnings'].sort()
+      )
+    })
+
+    it('short-circuits to a fallback when raw exceeds MAX_RAW_LENGTH', () => {
+      const raw = 'x'.repeat(MAX_RAW_LENGTH + 1)
+      let r
+      expect(() => {
+        r = parseScribeResponse(raw, { surface: 'chat' })
+      }).not.toThrow()
+      expect(r.fellBack).toBe(true)
+      expect(r.warnings).toContain('input-too-large')
+    })
+
+    it('is ReDoS-safe: ~50k adversarial input completes well under 1s', () => {
+      const adversarial = '`'.repeat(25000) + '{'.repeat(25000)
+      const start = Date.now()
+      expect(() =>
+        parseScribeResponse(adversarial, { surface: 'chat' })
+      ).not.toThrow()
+      expect(Date.now() - start).toBeLessThan(1000)
     })
   })
 })

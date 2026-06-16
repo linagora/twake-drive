@@ -18,7 +18,26 @@
  * effects. It is the single home for all contract validation + fallback logic.
  * Marker grammar, MCP helpers, and the JSON-Schema artifact live alongside this
  * core (added in plan 02).
+ *
+ * Security guarantees (raw input is untrusted, attacker-influenceable LLM text):
+ * - Prototype-pollution safe: the validated result is staged on an
+ *   Object.create(null) object and only the allow-listed channels (`discussion`,
+ *   `fragments`) are copied; attacker-controlled `__proto__`/`constructor`/
+ *   `prototype` keys are never assigned, so Object.prototype is never mutated.
+ * - DoS-bounded: input longer than MAX_RAW_LENGTH short-circuits to the surface
+ *   fallback ('input-too-large') before any parse work.
+ * - ReDoS-safe: fence-strip and trailing-comma regexes are linear (no nested
+ *   quantifiers) and brace matching is a single-pass character loop.
  */
+
+/**
+ * Maximum raw input length (bytes/chars) accepted before short-circuiting to a
+ * fallback. A few hundred KB comfortably exceeds any legitimate contract reply
+ * while bounding parse/regex work on adversarial input.
+ *
+ * @type {number}
+ */
+export const MAX_RAW_LENGTH = 512 * 1024
 
 /**
  * Strip a single leading ```/```json fence and matching trailing ``` fence.
@@ -176,6 +195,11 @@ function buildFallback(rawStr, surface, warnings) {
 export function parseScribeResponse(raw, { surface } = {}) {
   const rawStr = typeof raw === 'string' ? raw : String(raw)
 
+  // DoS guard: bound work before any parse/regex on oversized input.
+  if (rawStr.length > MAX_RAW_LENGTH) {
+    return buildFallback(rawStr, surface, ['input-too-large'])
+  }
+
   try {
     const parsed = tolerantParse(rawStr)
 
@@ -215,9 +239,17 @@ export function parseScribeResponse(raw, { surface } = {}) {
       warnings.push('split-table')
     }
 
+    // Prototype-pollution guard: stage only the allow-listed channels on a
+    // null-prototype object. We never assign attacker-controlled keys
+    // (__proto__/constructor/prototype) from `parsed` — only the validated,
+    // freshly-rebuilt `discussion` (string) and `fragments` (string[]).
+    const safe = Object.create(null)
+    safe.discussion = discussion
+    safe.fragments = fragments
+
     return {
-      discussion,
-      fragments,
+      discussion: safe.discussion,
+      fragments: safe.fragments,
       valid,
       fellBack: false,
       warnings,
