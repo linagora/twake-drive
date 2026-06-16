@@ -95,7 +95,10 @@ Full v3.0 phase details are preserved in `.planning/milestones/v3.0-ROADMAP.md`.
   3. Le modèle de message est étendu (`{discussion, fragments, fellBack}`) tout en conservant `content == discussion`, et l'UI existante continue de fonctionner inchangée
   4. La sérialisation multi-tour n'envoie au LLM que la `discussion` (+ note compacte sur les fragments), sans réinjecter le contenu brut des fragments
   5. Chaque échange inline (prompt + discussion + fragment) est répercuté dans l'historique de conversation partagé et apparaît dans le chat à l'ouverture du side panel
-**Plans**: TBD
+**Plans**: 3 plans
+- [ ] v3.1-02-01-PLAN.md — inline contract prompt (shared contract block + "exactly ONE" cardinality + reworded conditional marker rules) in scribeAI.js
+- [ ] v3.1-02-02-PLAN.md — chat contract prompt + parse seam (surface:'chat') + extended message model + history serialization + throwaway render-time compose helper
+- [ ] v3.1-02-03-PLAN.md — inline parse seam (surface:'popover') + single-fragment normalization + normalized-fragment display/insert + full-turn mirroring into chat history
 
 ### Phase v3.1-03: Sonde dev (HARD GATE before render)
 **Goal**: Confirmer empiriquement que le modèle réel produit une séparation discussion/fragments de qualité suffisante (1 / N / 0) AVANT de construire la moindre carte — ce phase est un go/no-go gate pour les phases 04-05
@@ -157,10 +160,8 @@ v3.1 phases execute in order: v3.1-01 -> v3.1-02 -> v3.1-03 (HARD GATE) -> v3.1-
 | v3.0-02. Chat Core | v3.0 | 2/2 | Complete | 2026-03-18 |
 | v3.0-03. Selection Context + Document Actions | v3.0 | 2/2 | Complete | 2026-03-18 |
 | v3.0-04. Panel Resize | v3.0 | 1/1 | Complete | 2026-03-19 |
-| v3.1-01. Module contrat | v3.1 | 0/2 | Planned | - |
-| v3.1-02. Prompt + plumbing | v3.1 | 0/0 | Not started | - |
+| v3.1-01. Module contrat | v3.1 | 2/2 | Complete | 2026-06-16 |
+| v3.1-02. Prompt + plumbing | v3.1 | 0/3 | Planned | - |
 | v3.1-03. Sonde dev (HARD GATE) | v3.1 | 0/0 | Not started | - |
 | v3.1-04. Rendu chat (cartes + clavier) | v3.1 | 0/0 | Not started | - |
 | v3.1-05. Rendu popover + durcissement | v3.1 | 0/0 | Not started | - |
-</content>
-</invoke>
