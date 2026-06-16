@@ -7992,10 +7992,10 @@ cozy-flags@^2.8.7:
   dependencies:
     microee "^0.0.6"
 
-cozy-flags@^4.6.1:
-  version "4.6.1"
-  resolved "https://registry.yarnpkg.com/cozy-flags/-/cozy-flags-4.6.1.tgz#81eb05c8a77f4cd8f67be404248bed6d2853f2be"
-  integrity sha512-UW0+I78wUnPyDaP/bWEVSQTPh4nSJBFFeFOl8nm79PW76xriN5GncJVvUKRFQTL1FzHo65mOrn/ltFzeaLOlhg==
+cozy-flags@^4.9.1:
+  version "4.9.1"
+  resolved "https://registry.yarnpkg.com/cozy-flags/-/cozy-flags-4.9.1.tgz#b8d1afec48cf5aab641da5e2382d877213ce146d"
+  integrity sha512-f6Lk8X28jByiRD2smi6NJ+iBnLrlkcYDnyCl0ZpkYxQBLpHGhu+VmdANRQOLpAYIP2/zXHm8s+C2uEfipu/irw==
   dependencies:
     microee "^0.0.6"
 
@@ -8222,15 +8222,6 @@ cozy-stack-client@^60.19.0:
   version "60.19.0"
   resolved "https://registry.yarnpkg.com/cozy-stack-client/-/cozy-stack-client-60.19.0.tgz#83cbd91c014c21decb8d828e3271113567ef2f99"
   integrity sha512-W0jBV6yBt1RnzQp5mDL1EL5vYahcIUe26+v5bG9fbDMABqC15BQAO12uD2OmQr4e4qjPSCxNvo4MPLrKRQxCIg==
-  dependencies:
-    detect-node "^2.0.4"
-    mime "^2.4.0"
-    qs "^6.7.0"
-
-cozy-stack-client@^60.27.0:
-  version "60.27.0"
-  resolved "https://registry.yarnpkg.com/cozy-stack-client/-/cozy-stack-client-60.27.0.tgz#e25696c447532a568c26ec72b092d8a279b3be1c"
-  integrity sha512-WEQXMPRCEjJ2TxCynxPW/A8LP0pGqaEYW8/hmK3JoiTHq0K93BzDAVgfL7uz27e6YxzlE+sSSiu7NsOOwf0I8A==
   dependencies:
     detect-node "^2.0.4"
     mime "^2.4.0"
