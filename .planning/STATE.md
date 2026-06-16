@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v3.1
 milestone_name: Contrat de réponse structurée LLM
-status: planning
-last_updated: "2026-06-16T15:11:24.472Z"
+status: ready
+last_updated: "2026-06-16T15:30:00.000Z"
 last_activity: 2026-06-16
 progress:
-  total_phases: 0
+  total_phases: 5
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -17,17 +17,32 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-04)
+See: .planning/PROJECT.md (updated 2026-06-16)
 
 **Core value:** L'utilisateur peut interagir avec l'IA de maniere fluide -- actions rapides inline ou chat conversationnel dans un panneau lateral -- pour transformer et manipuler le contenu de son document OnlyOffice.
-**Current focus:** v3.0 complete -- post-milestone refinements shipped
+**Current focus:** v3.1 -- Contrat de réponse structurée LLM (MCP-ready) : séparer discussion / fragments insérables. Construit sur la branche feat, mergé en fin de milestone (pas de feature-flag).
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-06-16 — Milestone v3.1 started
+Phase: v3.1-01 — Module contrat
+Plan: — (not yet planned)
+Status: Ready to plan
+Progress: [          ] 0% (0/5 phases)
+Last activity: 2026-06-16 — Roadmap v3.1 created (5 phases, 16 requirements mapped)
+
+Next: `/gsd:plan-phase v3.1-01`
+
+## v3.1 Roadmap Summary
+
+Execution order (HARD GATE at v3.1-03): v3.1-01 -> v3.1-02 -> v3.1-03 -> v3.1-04 -> v3.1-05
+
+| Phase | Goal | Requirements |
+|-------|------|--------------|
+| v3.1-01 Module contrat | `scribeResponse.js` pur + testé (parse tolérant, validation maison, repli contextuel, schéma) | CONTRACT-01, CONTRACT-03, CONTRACT-04 |
+| v3.1-02 Prompt + plumbing | Prompts contractuels + seam de parse sur les deux surfaces, modèle de message étendu, miroir inline → chat | INLINE-01, INLINE-02 |
+| v3.1-03 Sonde dev (HARD GATE) | Panneau dev + métriques de conformité ; gate go/no-go avant tout rendu de cartes | PROBE-01 |
+| v3.1-04 Rendu chat (cartes + clavier) | Cartes de fragment, Copier/Insérer/Remplacer, réinjection riche, navigation clavier | CONTRACT-02, FRAG-01..04, KBD-01..04 |
+| v3.1-05 Rendu popover + durcissement | Fragment unique dans le popover, re-ask, i18n, corpus de régression, décision flag `response_format` | I18N-01 |
 
 ## Post-Milestone Refinements (2026-04-03 to 2026-04-04)
 
@@ -41,7 +56,7 @@ After v3.0-04 completion, three commits refined the plugin protocol and document
 
 **Velocity:**
 
-- Total plans completed: 24 (v1.0: 10, v2.0: 5, v2.1: 6, v2.2: 3)
+- Total plans completed: 24+ (v1.0: 10, v2.0: 5, v2.1: 6, v2.2: 3, v3.0: 7)
 - v2.1 average duration: ~5 min/plan
 - v2.1 total execution time: ~32 min
 
@@ -53,57 +68,44 @@ After v3.0-04 completion, three commits refined the plugin protocol and document
 | 11 Pipeline de Conversion | 2 | 9min | 4.5min |
 | 12 Preview Markdown | 1 | 2min | 2min |
 | 13 Reinjection Pipeline | 1 | 15min | 15min |
-| Phase v3.0-01 P01 | 2min | 2 tasks | 6 files |
-| Phase v3.0-02 P01 | 3min | 2 tasks | 6 files |
-| Phase v3.0-03 P01 | 3min | 2 tasks | 7 files |
-| Phase v3.0-03 P02 | 2min | 1 task | 6 files |
-| Phase v3.0-04 P01 | 2min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
-### Decisions
+### Decisions (v3.1 locked, from PROJECT.md + research/SUMMARY.md)
 
-All decisions logged in PROJECT.md Key Decisions table.
-Recent decisions affecting v3.0:
+- Prompt-only JSON contract (zéro nouvelle dépendance) ; le JSON Schema reste un artefact documenté pour un futur `json_schema`
+- Validation maison (~15 LOC) suffit pour un objet à 2 champs ; pas de zod/ajv
+- `response_format` et tool/function-calling rejetés par défaut (proxy cozy-stack inconnu) — opt-in derrière flag uniquement après confirmation par la sonde
+- Repli contextuel : popover → 1 fragment ; chat → discussion + filet de sécurité
+- `discussion` reste free-form (canal CoT) pour éviter la dégradation de prose (~10-15% sous contrainte JSON) ; seuls les `fragments[]` sont contraints
+- Marqueurs `{{fragment:N}}` strictement non-chevauchants avec `{{REF:scribe-ref-N:…}}` (test de préservation obligatoire)
+- Le risque principal n'est PAS la syntaxe JSON mais la séparation sémantique (duplication / fuite de préambule) — la sonde v3.1-03 gate là-dessus, pas sur « JSON valide »
+- Sémantique des fragments : morceaux séquentiels indépendants (insert all à venir en v3.2), pas des alternatives concurrentes
+- Réinjection riche existante (tables/footnotes/cell-markers) inchangée, appliquée par fragment
+
+### Recent decisions affecting v3.0 (historique)
 
 - Side panel in Cozy Drive (not OO native plugin) for more UI control and cozy-ui components
 - Complementary inline + panel modes (keep quick actions, add chat for longer exchanges)
-- cozy-ui components without modification for ecosystem consistency
-- ScribeContext provider to centralize state (currently scattered across View.jsx, useCozyBridge, ScribePopover)
-- Existing OnlyOfficeAIAssistantPanel proves flex sibling layout pattern (30% width side panel)
-- Zero new npm dependencies needed
-- Plugin code.js needs zero changes -- all selection data already flows via existing intents
-- [Phase v3.0-01]: Null-safe useScribe access in View.jsx for graceful fallback
-- [Phase v3.0-02]: Chat system prompt separate from inline SYSTEM_PROMPT (conversational vs transform-only)
-- [Phase v3.0-02]: messagesRef pattern for stable sendMessage callback
-- [Phase v3.0-02]: addMessage() callback for external message injection from popover
-- [Phase v3.0-03]: selectionDismissedRef tracks dismissed text to prevent chip re-showing until new selection
-- [Phase v3.0-03]: Selection persists after sending for follow-up questions
-- [Phase v3.0-03]: Composite AI prompt uses delimited markers for selection context
-- [Phase v3.0-03]: panelActions bridge pattern -- View.jsx passes respond handlers into ScribeContext for MessageActions
-- [Phase v3.0-03]: Rich HTML clipboard copy via ClipboardItem API with text/plain fallback
-- [Phase v3.0-04]: Horizontal flex layout in ScribePanel for resize handle placement
-- [Phase v3.0-04]: Removed width transition to avoid laggy feel during real-time drag
-
-### Pending Todos (carried from v2.3)
-
-- ✓ Fix "Selected Text" white-on-white in OO dark theme — resolved
-- ✓ Button disable on deselection — resolved
-- ✓ Context menu integration — resolved
+- ScribeContext provider to centralize state
+- [v3.0-02]: Chat system prompt separate from inline SYSTEM_PROMPT
+- [v3.0-03]: panelActions bridge pattern -- View.jsx passes respond handlers into ScribeContext for MessageActions
+- [v3.0-03]: Rich HTML clipboard copy via ClipboardItem API with text/plain fallback
 
 ### Known Technical Constraints
 
-- Plugin code must use ES5 syntax
-- OO iframe resize has no callback -- must validate empirically in Phase v3.0-01
-- Cross-origin iframe blocks resize dispatch -- rely on CSS flex sizing
-- No cozy-stack modifications -- frontend only
+- Plugin code must use ES5 syntax (no arrow functions, no const/let)
+- Endpoint OpenAI-compat non streamé ; pas de modification cozy-stack (frontend only)
+- Réponses LLM via cozy-stack POST /ai/v1/chat/completions (format OpenAI)
+- Prompt côté client : on contrôle l'instruction qui émet le contrat
 
 ### Blockers/Concerns
 
-- OO iframe resize behavior is undocumented -- Phase v3.0-01 is a go/no-go gate
+- **Risque sémantique (v3.1-03 gate)** : le modèle peut produire du JSON valide tout en dupliquant le fragment dans `discussion` ou en y laissant fuir un préambule localisé — la sonde doit valider la séparation réelle avant tout rendu de cartes
+- Proxy cozy-stack inconnu : ne pas dépendre de `response_format` avant confirmation empirique par la sonde
 
 ## Session Continuity
 
-Last session: 2026-04-04
-Stopped at: Post-milestone refinements complete
-Resume file: N/A (milestone complete)
+Last session: 2026-06-16
+Stopped at: Roadmap v3.1 created and written (ROADMAP.md, REQUIREMENTS.md traceability, STATE.md)
+Resume file: N/A — next step is `/gsd:plan-phase v3.1-01`

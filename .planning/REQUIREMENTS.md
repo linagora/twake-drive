@@ -33,10 +33,9 @@ Le contrat `{ discussion: string, fragments?: string[] }` (formalisme JSON Schem
 - [ ] **KBD-03**: ↑ déplace vers le fragment précédent (même réponse, sinon réponse au-dessus) à travers le fil ; ↓ déplace vers le fragment suivant, puis revient à l'input au-delà du plus récent
 - [ ] **KBD-04**: Échap ramène le focus à l'input ; Entrée/Espace active le bouton focalisé
 
-### Conformité & déploiement
+### Conformité & i18n
 
 - [ ] **PROBE-01**: Une sonde de dev expose la réponse parsée `{discussion, fragments, valid, fellBack, warnings}` et des métriques de conformité (duplication discussion↔fragment, détection de préambule par locale, A/B qualité de prose, table non scindée, REF préservés) — gate de validation avant tout rendu de cartes
-- [ ] **FLAG-01**: La fonctionnalité est derrière un feature-flag ; à OFF, le comportement est strictement identique à aujourd'hui (kill-switch)
 - [ ] **I18N-01**: Les libellés des cartes et les messages de repli sont traduits (fr, en, de, es, it)
 
 ## Future Requirements
@@ -69,12 +68,29 @@ Reporté à v3.2+. Suivi mais hors roadmap v3.1.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| _(rempli par le roadmap)_ | | |
+| CONTRACT-01 | v3.1-01 | Pending |
+| CONTRACT-03 | v3.1-01 | Pending |
+| CONTRACT-04 | v3.1-01 | Pending |
+| INLINE-01 | v3.1-02 | Pending |
+| INLINE-02 | v3.1-02 | Pending |
+| PROBE-01 | v3.1-03 | Pending |
+| CONTRACT-02 | v3.1-04 | Pending |
+| FRAG-01 | v3.1-04 | Pending |
+| FRAG-02 | v3.1-04 | Pending |
+| FRAG-03 | v3.1-04 | Pending |
+| FRAG-04 | v3.1-04 | Pending |
+| KBD-01 | v3.1-04 | Pending |
+| KBD-02 | v3.1-04 | Pending |
+| KBD-03 | v3.1-04 | Pending |
+| KBD-04 | v3.1-04 | Pending |
+| I18N-01 | v3.1-05 | Pending |
 
 **Coverage:**
-- v3.1 requirements: 17 total
-- Mapped to phases: 0 (roadmap pending)
-- Unmapped: 17
+- v3.1 requirements: 16 total
+- Mapped to phases: 16 ✓
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-06-16*
+*Roadmap mapped: 2026-06-16 (v3.1-01 to v3.1-05)*
+</content>
