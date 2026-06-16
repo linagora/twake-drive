@@ -1,17 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v3.0
-milestone_name: Scribe Chat Panel
-status: completed
-stopped_at: Milestone complete + post-milestone refinements
-last_updated: "2026-04-04"
-last_activity: 2026-04-04 -- SDK patch documentation added to README
+milestone: v3.1
+milestone_name: Contrat de réponse structurée LLM
+status: planning
+last_updated: "2026-06-16T15:11:24.472Z"
+last_activity: 2026-06-16
 progress:
-  total_phases: 4
-  completed_phases: 4
-  total_plans: 7
-  completed_plans: 7
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -25,12 +24,10 @@ See: .planning/PROJECT.md (updated 2026-04-04)
 
 ## Current Position
 
-Phase: v3.0-04 of v3.0-04 (Panel Resize)
-Plan: 1 of 1 complete
-Status: Milestone v3.0 complete (all 4 phases + post-milestone refinements)
-Last activity: 2026-04-04 -- SDK patch documentation added to README
-
-Progress: [██████████] 100%
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-06-16 — Milestone v3.1 started
 
 ## Post-Milestone Refinements (2026-04-03 to 2026-04-04)
 
@@ -43,6 +40,7 @@ After v3.0-04 completion, three commits refined the plugin protocol and document
 ## Performance Metrics
 
 **Velocity:**
+
 - Total plans completed: 24 (v1.0: 10, v2.0: 5, v2.1: 6, v2.2: 3)
 - v2.1 average duration: ~5 min/plan
 - v2.1 total execution time: ~32 min

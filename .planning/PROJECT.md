@@ -60,6 +60,20 @@ L'utilisateur peut interagir avec l'IA de manière fluide — que ce soit via de
 - Édition collaborative simultanée avec Scribe — complexité excessive
 - Correction grammaticale passive en temps réel (style Grammarly) — performance prohibitive
 
+## Current Milestone: v3.1 Contrat de réponse structurée LLM (MCP-ready)
+
+**Goal:** Séparer sans ambiguïté la méta-discussion du contenu insérable dans les réponses du LLM, via un contrat JSON (formalisme JSON Schema, MCP-ready), exploité dans le chat et le popover.
+
+**Target features:**
+- Module contrat : JSON Schema + `parseScribeResponse` tolérant + validation maison + repli contextuel
+- Intégration prompt : les system prompts (popover + chat) émettent le contrat
+- Sonde dev : confirmer la conformité réelle du modèle (1 / N / 0 fragments) avant l'UI
+- Rendu panel chat : `discussion` + marqueurs `{{fragment:N}}` → cartes de fragment (copier/insérer/remplacer)
+- Rendu popover inline : idem, cell-markers préservés par fragment
+- Durcissement : re-ask LLM, feature-flag, migration des actions menu, tests
+
+**Key context:** prompt côté client (on contrôle l'instruction) ; endpoint OpenAI-compat non streamé ; validation maison (zéro dépendance, le JSON Schema reste un artefact documenté) ; repli « selon le contexte » (popover → 1 fragment ; chat → discussion + filet de sécurité) ; réinjection riche existante (tables/footnotes/cell-markers) inchangée. Vision long terme : évoluer vers des actions éditeur (futurs milestones).
+
 ## Shipped: v3.0 Scribe Chat Panel (2026-04-04)
 
 **Goal:** Ajouter un panneau latéral conversationnel dans Cozy Drive pour interagir avec l'IA via un chat, en complément du mode inline existant.
@@ -165,5 +179,22 @@ v1.0 : 4 jours, 10 plans. v2.0 : 3 jours, 5 plans. v2.1 : 3 jours, 6 plans. v2.2
 | SELECTION_CHANGED remplace SHOW/HIDE polling (v3.0) | Polling causait latence et complexité inutile -- intent one-way plus simple | ✓ Good -- sélection live, zéro polling |
 | Selection-subscribe protocol (v3.0) | Plugin n'envoie SELECTION_CHANGED que quand le panel est ouvert -- réduit le bruit | ✓ Good -- performant, pas de messages inutiles |
 
+## Evolution
+
+This document evolves at phase transitions and milestone boundaries.
+
+**After each phase transition** (via `/gsd-transition`):
+1. Requirements invalidated? → Move to Out of Scope with reason
+2. Requirements validated? → Move to Validated with phase reference
+3. New requirements emerged? → Add to Active
+4. Decisions to log? → Add to Key Decisions
+5. "What This Is" still accurate? → Update if drifted
+
+**After each milestone** (via `/gsd:complete-milestone`):
+1. Full review of all sections
+2. Core Value check — still the right priority?
+3. Audit Out of Scope — reasons still valid?
+4. Update Context with current state
+
 ---
-*Last updated: 2026-04-04 after v3.0 milestone complete + post-milestone refinements*
+*Last updated: 2026-06-16 — v3.1 milestone started (structured LLM response contract)*
