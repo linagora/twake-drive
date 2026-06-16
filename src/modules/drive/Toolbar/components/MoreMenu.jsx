@@ -46,7 +46,7 @@ const MoreMenu = ({
   const [menuIsVisible, setMenuVisible] = useState(false)
   const anchorRef = useRef()
   const { isMobile } = useBreakpoints()
-  const { allLoaded } = useSharingContext() // We need to wait for the sharing context to be completely loaded to avoid race conditions
+  const { allLoaded, canLeave } = useSharingContext() // We need to wait for the sharing context to be completely loaded to avoid race conditions
 
   const handleToggle = useCallback(
     () => toggleMenu(menuIsVisible, setMenuVisible),
@@ -127,9 +127,11 @@ const MoreMenu = ({
                 />
               </InsideRegularFolder>
             )}
-            {isSharedDriveRecipient && isSharedWithMe && (
-              <LeaveSharedDriveButtonItem files={[displayedFolder]} />
-            )}
+            {isSharedDriveRecipient &&
+              isSharedWithMe &&
+              canLeave(displayedFolder._id) && (
+                <LeaveSharedDriveButtonItem files={[displayedFolder]} />
+              )}
           </ActionsMenu>
         )}
       </AddMenuProvider>

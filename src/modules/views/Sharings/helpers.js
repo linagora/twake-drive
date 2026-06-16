@@ -4,13 +4,14 @@ export const buildSharingsActionsOptions = ({
   sharingContext,
   filteredResult
 }) => {
-  const { allLoaded, refresh, isOwner } = sharingContext
+  const { allLoaded, refresh, isOwner, canLeave } = sharingContext
 
   return {
     ...base,
     ...nativeSharing,
     refresh,
     isOwner,
+    canLeave,
     hasWriteAccess: true,
     canMove: true,
     isPublic: false,
