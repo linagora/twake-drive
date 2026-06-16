@@ -1,4 +1,8 @@
-import { parseScribeResponse, MAX_RAW_LENGTH } from './scribeResponse'
+import {
+  parseScribeResponse,
+  MAX_RAW_LENGTH,
+  extractChannelMarkers
+} from './scribeResponse'
 
 describe('scribeResponse', () => {
   describe('parseScribeResponse', () => {
@@ -194,6 +198,80 @@ describe('scribeResponse', () => {
         parseScribeResponse(adversarial, { surface: 'chat' })
       ).not.toThrow()
       expect(Date.now() - start).toBeLessThan(1000)
+    })
+  })
+
+  describe('extractChannelMarkers', () => {
+    it('returns ordered fragment hits with index and position', () => {
+      const text = 'a {{fragment:0}} b {{fragment:2}} c'
+      const hits = extractChannelMarkers(text, 'fragment')
+      expect(hits.map(h => h.index)).toEqual([0, 2])
+      expect(hits[0].position).toBeLessThan(hits[1].position)
+      expect(hits[0].position).toBe(text.indexOf('{{fragment:0}}'))
+    })
+
+    it('returns [] when the channel does not appear', () => {
+      expect(extractChannelMarkers('no markers here', 'fragment')).toEqual([])
+    })
+
+    it('returns [] for non-string text', () => {
+      expect(extractChannelMarkers(null, 'fragment')).toEqual([])
+      expect(extractChannelMarkers(42, 'fragment')).toEqual([])
+    })
+
+    it('never matches {{REF:scribe-ref-N:...}} cross-ref markers (CONTRACT-04)', () => {
+      const text = 'before {{REF:scribe-ref-3:Voici la section}} after'
+      const hits = extractChannelMarkers(text, 'fragment')
+      expect(hits).toEqual([])
+      // read-only: the REF substring is unaffected
+      expect(text).toContain('{{REF:scribe-ref-3:Voici la section}}')
+    })
+
+    it('picks only fragment indices in mixed REF/fragment text', () => {
+      const text =
+        '{{fragment:0}} then {{REF:scribe-ref-1:x}} then {{fragment:1}}'
+      const hits = extractChannelMarkers(text, 'fragment')
+      expect(hits.map(h => h.index)).toEqual([0, 1])
+    })
+
+    it('is 0-indexed: {{fragment:0}} is the first fragment', () => {
+      const hits = extractChannelMarkers('{{fragment:0}}', 'fragment')
+      expect(hits[0].index).toBe(0)
+    })
+  })
+
+  describe('parseScribeResponse — marker cross-check', () => {
+    it('preserves a {{REF:scribe-ref-7:link}} inside a fragment body verbatim', () => {
+      const raw =
+        '{"discussion":"d","fragments":["see {{REF:scribe-ref-7:link}} here"]}'
+      const r = parseScribeResponse(raw, { surface: 'chat' })
+      expect(r.fragments[0]).toContain('{{REF:scribe-ref-7:link}}')
+    })
+
+    it('warns fragment-marker-out-of-range when a marker exceeds fragments.length', () => {
+      const raw =
+        '{"discussion":"see {{fragment:5}}","fragments":["a","b"]}'
+      let r
+      expect(() => {
+        r = parseScribeResponse(raw, { surface: 'chat' })
+      }).not.toThrow()
+      expect(r.fellBack).toBe(false)
+      expect(r.warnings).toContain('fragment-marker-out-of-range')
+    })
+
+    it('warns fragment-not-referenced when a fragment has no marker', () => {
+      const raw =
+        '{"discussion":"only {{fragment:0}}","fragments":["a","b"]}'
+      const r = parseScribeResponse(raw, { surface: 'chat' })
+      expect(r.warnings).toContain('fragment-not-referenced')
+    })
+
+    it('does not warn when every fragment is referenced in range', () => {
+      const raw =
+        '{"discussion":"{{fragment:0}} and {{fragment:1}}","fragments":["a","b"]}'
+      const r = parseScribeResponse(raw, { surface: 'chat' })
+      expect(r.warnings).not.toContain('fragment-marker-out-of-range')
+      expect(r.warnings).not.toContain('fragment-not-referenced')
     })
   })
 })
