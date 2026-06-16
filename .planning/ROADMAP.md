@@ -81,7 +81,9 @@ Full v3.0 phase details are preserved in `.planning/milestones/v3.0-ROADMAP.md`.
   3. La regex `{{fragment:\d+}}` repère les marqueurs de position sans jamais altérer les marqueurs cross-ref `{{REF:scribe-ref-N:…}}` (test de préservation dédié au vert)
   4. `serializeAssistantTurnForHistory` et `extractChannelMarkers(text, channel)` (MCP-ready) produisent les sorties attendues, et `SCRIBE_OUTPUT_SCHEMA` est commité comme artefact documenté
   5. Le module est pur (aucun import React/réseau) et n'a aucun effet de bord tant qu'il n'est pas câblé en v3.1-02
-**Plans**: TBD
+**Plans**: 2 plans
+- [ ] v3.1-01-01-PLAN.md — parseScribeResponse tolerant parse + home-grown validation + context-aware fallback + security hardening
+- [ ] v3.1-01-02-PLAN.md — {{fragment:N}} marker grammar (REF-safe), extractChannelMarkers, serializeAssistantTurnForHistory, SCRIBE_OUTPUT_SCHEMA
 
 ### Phase v3.1-02: Prompt + plumbing
 **Goal**: Les deux surfaces (chat + inline) émettent le contrat et le parsent à la réception, sans nouveau rendu : la `discussion` sert de contenu affiché, le comportement reste fonctionnellement équivalent à aujourd'hui, prouvant l'absence de régression
@@ -155,7 +157,7 @@ v3.1 phases execute in order: v3.1-01 -> v3.1-02 -> v3.1-03 (HARD GATE) -> v3.1-
 | v3.0-02. Chat Core | v3.0 | 2/2 | Complete | 2026-03-18 |
 | v3.0-03. Selection Context + Document Actions | v3.0 | 2/2 | Complete | 2026-03-18 |
 | v3.0-04. Panel Resize | v3.0 | 1/1 | Complete | 2026-03-19 |
-| v3.1-01. Module contrat | v3.1 | 0/0 | Not started | - |
+| v3.1-01. Module contrat | v3.1 | 0/2 | Planned | - |
 | v3.1-02. Prompt + plumbing | v3.1 | 0/0 | Not started | - |
 | v3.1-03. Sonde dev (HARD GATE) | v3.1 | 0/0 | Not started | - |
 | v3.1-04. Rendu chat (cartes + clavier) | v3.1 | 0/0 | Not started | - |
