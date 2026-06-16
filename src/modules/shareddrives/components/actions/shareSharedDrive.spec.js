@@ -6,7 +6,7 @@ describe('shareSharedDrive', () => {
   const t = key => key
   const navigate = jest.fn()
 
-  const makeAction = ({ isOwner = () => true, pathname = '/sharings' } = {}) =>
+  const makeAction = ({ isOwner, pathname = '/sharings' } = {}) =>
     shareSharedDrive({ navigate, t, isOwner, pathname })
 
   beforeEach(() => {
@@ -14,13 +14,32 @@ describe('shareSharedDrive', () => {
   })
 
   it.each`
-    label                                       | doc                                                                               | isOwner                     | expected
-    ${'folder-root shared drive owned by user'} | ${{ _id: 'folder-id', driveId: 'drive-id' }}                                      | ${id => id === 'folder-id'} | ${true}
-    ${'folder-root shared drive not owned'}     | ${{ _id: 'folder-id', driveId: 'drive-id' }}                                      | ${() => false}              | ${false}
-    ${'file-root shared drive'}                 | ${{ _id: 'file-id', driveId: 'drive-id', drive_root_type: DRIVE_ROOT_TYPE.FILE }} | ${() => true}               | ${false}
-    ${'document outside shared drive'}          | ${{ _id: 'file-id' }}                                                             | ${() => true}               | ${false}
-  `('returns $expected for $label', ({ doc, isOwner, expected }) => {
-    expect(makeAction({ isOwner }).displayCondition([doc])).toBe(expected)
+    label                                             | doc                                                                               | expected
+    ${'folder-root shared drive owned by user'}       | ${{ _id: 'folder-id', driveId: 'drive-id' }}                                      | ${true}
+    ${'folder-root shared drive received from owner'} | ${{ _id: 'folder-id', driveId: 'drive-id' }}                                      | ${true}
+    ${'file-root shared drive'}                       | ${{ _id: 'file-id', driveId: 'drive-id', drive_root_type: DRIVE_ROOT_TYPE.FILE }} | ${false}
+    ${'document outside shared drive'}                | ${{ _id: 'file-id' }}                                                             | ${false}
+  `('returns $expected for $label', ({ doc, expected }) => {
+    expect(makeAction().displayCondition([doc])).toBe(expected)
+  })
+
+  it('shows the action for received folder-root shared drives', () => {
+    const action = makeAction({ isOwner: () => false })
+
+    expect(
+      action.displayCondition([{ _id: 'folder-id', driveId: 'drive-id' }])
+    ).toBe(true)
+  })
+
+  it('hides the action when multiple documents are selected', () => {
+    const action = makeAction()
+
+    expect(
+      action.displayCondition([
+        { _id: 'folder-id', driveId: 'drive-id' },
+        { _id: 'other-folder-id', driveId: 'drive-id' }
+      ])
+    ).toBe(false)
   })
 
   it('layers the share modal over the sharings list', () => {

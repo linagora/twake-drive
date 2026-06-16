@@ -14,7 +14,7 @@ import { isFileRootSharedDrive } from '@/modules/shareddrives/rootFileNavigation
 // drives are handled by `shareFileRootSharedDrive`. The two are mutually
 // exclusive: this one hides itself when the doc is a file-root, and the
 // file-root one only shows for file-roots.
-export const shareSharedDrive = ({ navigate, t, isOwner, pathname }) => {
+export const shareSharedDrive = ({ navigate, t, pathname }) => {
   const label = t('Files.share.cta')
   const icon = ShareIcon
 
@@ -28,8 +28,7 @@ export const shareSharedDrive = ({ navigate, t, isOwner, pathname }) => {
       return (
         docs.length === 1 &&
         isSharedDriveDoc(doc) &&
-        !isFileRootSharedDrive(doc) &&
-        isOwner?.(doc._id)
+        !isFileRootSharedDrive(doc)
       )
     },
     // Same route the avatars build, so the share button layers the modal over
