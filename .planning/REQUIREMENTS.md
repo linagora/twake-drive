@@ -1,102 +1,80 @@
-# Requirements: Scribe v3.0 Chat Panel
+# Requirements: Scribe v3.1 Contrat de réponse structurée LLM (MCP-ready)
 
-**Defined:** 2026-03-11
-**Core Value:** L'utilisateur peut interagir avec l'IA de maniere fluide -- actions rapides inline ou chat conversationnel dans un panneau lateral -- pour transformer et manipuler le contenu de son document OnlyOffice.
+**Defined:** 2026-06-16
+**Core Value:** L'utilisateur distingue sans ambiguïté ce que le LLM lui *dit* (discussion) de ce qu'il *produit* à insérer dans le document (fragments), et agit fragment par fragment — au clavier comme à la souris.
 
-## v3.0 Requirements
+## v3.1 Requirements
 
-Requirements for the Scribe Chat Panel milestone. Each maps to roadmap phases.
+Le contrat `{ discussion: string, fragments?: string[] }` (formalisme JSON Schema, MCP-ready, sans serveur) est **partagé par les deux surfaces**. Différence de cardinalité : le **chat** accepte 0..N fragments ; l'**inline** impose exactement 1 fragment.
 
-### Panel Layout
+### Contrat de réponse
 
-- [x] **PANEL-01**: User can open a side panel to the right of the OO editor
-- [x] **PANEL-02**: OO editor iframe resizes when panel opens/closes
-- [x] **PANEL-03**: User can resize the panel width by dragging
-- [x] **PANEL-04**: User can close the panel via a close button
-- [x] **PANEL-05**: User can toggle between inline mode and panel mode
+- [ ] **CONTRACT-01**: La réponse du LLM sépare la `discussion` (affichée, jamais insérée) des `fragments` insérables, via un contrat JSON parsé et validé (validation maison, zéro dépendance)
+- [ ] **CONTRACT-02**: Dans le chat, une réponse de pure discussion (0 fragment) n'affiche aucune UI d'insertion
+- [ ] **CONTRACT-03**: Une réponse non conforme ne bloque jamais l'utilisateur — repli contextuel : chat → message de discussion + action copier/insérer au niveau du message ; inline → le brut devient l'unique fragment insérable
+- [ ] **CONTRACT-04**: Les marqueurs de position `{{fragment:N}}` n'altèrent jamais les marqueurs cross-ref existants `{{REF:scribe-ref-N:…}}` (regex stricte + test de préservation)
 
-### Chat
+### Inline (popover)
 
-- [x] **CHAT-01**: User can type a message and send it to the AI
-- [x] **CHAT-02**: User sees AI responses rendered in Markdown
-- [x] **CHAT-03**: Conversation history is displayed as a scrollable message list
-- [x] **CHAT-04**: AI receives full conversation history (multi-turn)
-- [x] **CHAT-05**: User sees a loading indicator while AI responds
-- [x] **CHAT-06**: Errors appear as messages in the chat with retry option
+- [ ] **INLINE-01**: Le popover inline utilise le contrat en imposant **exactement un fragment**, et affiche uniquement ce fragment pour Insérer/Remplacer (la `discussion` n'est pas montrée dans le popover)
+- [ ] **INLINE-02**: Chaque échange inline (prompt + discussion + fragment) est répercuté dans l'historique de conversation partagé, et apparaît donc dans le chat à l'ouverture du side panel
 
-### Selection Context
+### Fragments & cartes (chat)
 
-- [x] **SEL-01**: Selected text from OO is shown as a chip in the chat input area
-- [x] **SEL-02**: Selected text is included as context in the AI prompt
+- [ ] **FRAG-01**: Chaque fragment est rendu dans une carte encadrée, visuellement distincte de la discussion, à l'emplacement de son marqueur `{{fragment:N}}` (fragments non référencés rendus en fin de message)
+- [ ] **FRAG-02**: Chaque carte de fragment porte trois boutons : Copier, Insérer, Remplacer
+- [ ] **FRAG-03**: Un fragment inséré/remplacé conserve le formatage riche (tables, images, footnotes, cross-refs) via le pipeline de réinjection existant, par fragment
+- [ ] **FRAG-04**: Le bouton « Remplacer » n'apparaît que lorsqu'une sélection est active dans le document
 
-### Actions
+### Navigation clavier (chat)
 
-- [x] **ACT-01**: User can copy an AI response to clipboard
-- [x] **ACT-02**: User can replace selected text with AI response
-- [x] **ACT-03**: User can insert AI response after selected text
+- [ ] **KBD-01**: Depuis l'input du prompt, ↑ déplace le focus vers la carte de fragment la plus récente (la plus proche de l'input), sur le bouton Insérer
+- [ ] **KBD-02**: ←/→ font basculer le focus entre les boutons Copier/Insérer/Remplacer de la carte focalisée
+- [ ] **KBD-03**: ↑ déplace vers le fragment précédent (même réponse, sinon réponse au-dessus) à travers le fil ; ↓ déplace vers le fragment suivant, puis revient à l'input au-delà du plus récent
+- [ ] **KBD-04**: Échap ramène le focus à l'input ; Entrée/Espace active le bouton focalisé
+
+### Conformité & déploiement
+
+- [ ] **PROBE-01**: Une sonde de dev expose la réponse parsée `{discussion, fragments, valid, fellBack, warnings}` et des métriques de conformité (duplication discussion↔fragment, détection de préambule par locale, A/B qualité de prose, table non scindée, REF préservés) — gate de validation avant tout rendu de cartes
+- [ ] **FLAG-01**: La fonctionnalité est derrière un feature-flag ; à OFF, le comportement est strictement identique à aujourd'hui (kill-switch)
+- [ ] **I18N-01**: Les libellés des cartes et les messages de repli sont traduits (fr, en, de, es, it)
 
 ## Future Requirements
 
-Deferred to v3.1+. Tracked but not in current roadmap.
+Reporté à v3.2+. Suivi mais hors roadmap v3.1.
 
-### Streaming
+### Actions groupées
 
-- **STRM-01**: AI responses stream token by token
-- **STRM-02**: User sees partial response while AI generates
+- **BULK-01**: Bouton « Tout insérer / Tout remplacer » pour appliquer tous les fragments séquentiels d'un coup
 
-### Persistence
+### Sortie structurée native
 
-- **PERS-01**: Conversations are saved and survive page reload
-- **PERS-02**: User can browse past conversations
-- **PERS-03**: User can resume a past conversation
+- **NATIVE-01**: Mode `response_format: json_object` activé derrière flag, après confirmation par la sonde que le proxy cozy-stack le transmet
 
-### Context Attachments
+### Polish
 
-- **CTX-01**: User can attach files as context
-- **CTX-02**: User can attach URLs as context
-- **CTX-03**: User can attach images as context
-
-### Model Selection
-
-- **MOD-01**: User can choose AI model/agent for the conversation
+- **POLISH-01**: Habillage de provenance avancé des cartes (sparkle/accent SCRIBE_PURPLE)
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Rich text input in chat | Users type short prompts, not formatted documents -- plain textarea sufficient |
-| LLM-decided action buttons | Requires structured output parsing -- v3.0 shows buttons on all responses when selection active |
-| Collaborative chat | Multiple users seeing same chat -- massive complexity, unclear value |
-| Voice input | Niche, browser support varies |
-| Document-wide context | Sending full doc expensive -- v3.0 uses selected text + conversation history |
-| Plugin OO natif pour le panel | Moins de controle UI, pas de composants cozy-ui |
+| Cartes multi-alternatives (pick-one) | La sémantique retenue est « morceaux séquentiels indépendants », pas des alternatives concurrentes |
+| Pane d'artefact éditable (style Canvas) | Le document OO EST l'éditeur ; les fragments sont un aperçu en lecture seule |
+| Diff / suivi de modifications par fragment | Coûteux et fragile avec PasteHtml/Builder ; la post-sélection est déjà cassée |
+| Rendu streaming des cartes | L'endpoint est non streamé |
+| Tool/function-calling pour forcer le JSON | Moins portable via le proxy, aucun gain pour un objet à 2 champs |
 
 ## Traceability
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PANEL-01 | Phase v3.0-01 | Complete |
-| PANEL-02 | Phase v3.0-01 | Complete |
-| PANEL-03 | Phase v3.0-04 | Complete |
-| PANEL-04 | Phase v3.0-01 | Complete |
-| PANEL-05 | Phase v3.0-01 | Complete |
-| CHAT-01 | Phase v3.0-02 | Complete |
-| CHAT-02 | Phase v3.0-02 | Complete |
-| CHAT-03 | Phase v3.0-02 | Complete |
-| CHAT-04 | Phase v3.0-02 | Complete |
-| CHAT-05 | Phase v3.0-02 | Complete |
-| CHAT-06 | Phase v3.0-02 | Complete |
-| SEL-01 | Phase v3.0-03 | Complete |
-| SEL-02 | Phase v3.0-03 | Complete |
-| ACT-01 | Phase v3.0-03 | Complete |
-| ACT-02 | Phase v3.0-03 | Complete |
-| ACT-03 | Phase v3.0-03 | Complete |
+| _(rempli par le roadmap)_ | | |
 
 **Coverage:**
-- v3.0 requirements: 16 total
-- Mapped to phases: 16
-- Unmapped: 0
+- v3.1 requirements: 17 total
+- Mapped to phases: 0 (roadmap pending)
+- Unmapped: 17
 
 ---
-*Requirements defined: 2026-03-11*
-*Last updated: 2026-03-11 after roadmap creation*
+*Requirements defined: 2026-06-16*
