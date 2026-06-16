@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v3.1
 milestone_name: Contrat de réponse structurée LLM
-status: executing
-stopped_at: Phase v3.1-01 (Module contrat) complete and verified -- ready for v3.1-02
-last_updated: "2026-06-16T20:30:00.000Z"
+status: completed
+stopped_at: Phase v3.1-02 context gathered
+last_updated: "2026-06-16T20:52:37.468Z"
 last_activity: 2026-06-16 -- Phase v3.1-01 complete (2/2 plans, verification passed)
 progress:
   total_phases: 5
@@ -107,6 +107,6 @@ After v3.0-04 completion, three commits refined the plugin protocol and document
 
 ## Session Continuity
 
-Last session: 2026-06-16
-Stopped at: Roadmap v3.1 created and written (ROADMAP.md, REQUIREMENTS.md traceability, STATE.md)
-Resume file: N/A — next step is `/gsd:plan-phase v3.1-01`
+Last session: 2026-06-16T20:52:37.455Z
+Stopped at: Phase v3.1-02 context gathered
+Resume file: .planning/phases/v3.1-02-prompt-plumbing/v3.1-02-CONTEXT.md
