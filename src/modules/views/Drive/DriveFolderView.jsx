@@ -47,6 +47,7 @@ import FolderViewBreadcrumb from '@/modules/views/Folder/FolderViewBreadcrumb'
 import FolderViewHeader from '@/modules/views/Folder/FolderViewHeader'
 import { useFabOnMobile } from '@/modules/views/Folder/hooks/useFabOnMobile'
 import { useFolderViewBase } from '@/modules/views/Folder/hooks/useFolderViewBase'
+import { filterOutReceivedShares } from '@/modules/views/Folder/syncHelpers'
 import FolderViewBodyVz from '@/modules/views/Folder/virtualized/FolderViewBody'
 import { useResumeUploadFromFlagship } from '@/modules/views/Upload/useResumeFromFlagship'
 
@@ -71,9 +72,21 @@ const DriveFolderView = () => {
   const [sortOrder, setSortOrder, isSettingsLoaded] =
     useFolderSort(currentFolderId)
 
-  const { allResults, isInError, isLoading, isPending } = useDriveQueries(
-    currentFolderId,
-    sortOrder
+  const {
+    allResults: rawResults,
+    isInError,
+    isLoading,
+    isPending
+  } = useDriveQueries(currentFolderId, sortOrder)
+  // Received shares are tagged with an io.cozy.sharings reference by the stack
+  // and may be materialised among the recipient's own files; they belong in the
+  // Sharings section, not My Drive. Wait until the sharing context is fully
+  // loaded so isOwner can tell a received share from the user's own folders;
+  // filtering earlier sees an incomplete picture and would show-then-hide them.
+  const allResults = useMemo(
+    () =>
+      allLoaded ? filterOutReceivedShares(rawResults, isOwner) : rawResults,
+    [allLoaded, rawResults, isOwner]
   )
   const [foldersResult, filesResult] = allResults
   const canWriteToCurrentFolder = hasWriteAccess(currentFolderId)

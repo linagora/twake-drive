@@ -3,7 +3,9 @@ import {
   createSyncingFakeFile,
   computeSyncingFakeFile,
   checkSyncingFakeFileObsolescence,
-  isReferencedByShareInSharingContext
+  isReferencedByShareInSharingContext,
+  isReceivedShare,
+  filterOutReceivedShares
 } from './syncHelpers'
 
 const queryResults = [
@@ -198,6 +200,98 @@ describe('syncHelpers', () => {
         id: 'id1',
         type: 'directory'
       })
+    })
+  })
+
+  describe('isReceivedShare', () => {
+    const sharingRoot = {
+      _id: 'shared-folder-id',
+      relationships: {
+        referenced_by: {
+          data: [{ id: 'sharing-id', type: 'io.cozy.sharings' }]
+        }
+      }
+    }
+    const ownFile = {
+      _id: 'own-file-id',
+      relationships: {
+        referenced_by: {
+          data: [{ id: 'album-id', type: 'io.cozy.photos.albums' }]
+        }
+      }
+    }
+
+    it('returns true when referenced by a sharing the user does not own', () => {
+      expect(isReceivedShare(sharingRoot, () => false)).toBe(true)
+    })
+
+    it('returns false for the owner of the sharing', () => {
+      expect(isReceivedShare(sharingRoot, () => true)).toBe(false)
+    })
+
+    it('returns false when not referenced by any sharing', () => {
+      expect(isReceivedShare(ownFile, () => false)).toBe(false)
+    })
+
+    it('returns false when there is no referenced_by relationship', () => {
+      expect(isReceivedShare({ _id: 'x' }, () => false)).toBe(false)
+    })
+
+    it('returns false when referenced_by.data is null', () => {
+      const file = {
+        _id: 'x',
+        relationships: { referenced_by: { data: null } }
+      }
+      expect(isReceivedShare(file, () => false)).toBe(false)
+    })
+  })
+
+  describe('filterOutReceivedShares', () => {
+    const isOwner = id => id === 'own-shared-folder'
+    const results = [
+      {
+        data: [
+          { _id: 'own-folder' },
+          {
+            _id: 'own-shared-folder',
+            relationships: {
+              referenced_by: {
+                data: [{ id: 's1', type: 'io.cozy.sharings' }]
+              }
+            }
+          },
+          {
+            _id: 'received-share',
+            relationships: {
+              referenced_by: {
+                data: [{ id: 's2', type: 'io.cozy.sharings' }]
+              }
+            }
+          }
+        ],
+        hasMore: true,
+        fetchMore: jest.fn()
+      }
+    ]
+
+    it('drops received shares but keeps own and own-shared files', () => {
+      const [filtered] = filterOutReceivedShares(results, isOwner)
+      expect(filtered.data.map(f => f._id)).toEqual([
+        'own-folder',
+        'own-shared-folder'
+      ])
+      expect(filtered.count).toBe(2)
+    })
+
+    it('preserves the other result properties', () => {
+      const [filtered] = filterOutReceivedShares(results, isOwner)
+      expect(filtered.hasMore).toBe(true)
+      expect(filtered.fetchMore).toBe(results[0].fetchMore)
+    })
+
+    it('passes through results without data untouched', () => {
+      const noData = [{ fetchStatus: 'loading' }]
+      expect(filterOutReceivedShares(noData, isOwner)).toEqual(noData)
     })
   })
 
