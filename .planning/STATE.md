@@ -2,9 +2,10 @@
 gsd_state_version: 1.0
 milestone: v3.1
 milestone_name: Contrat de réponse structurée LLM
-status: ready
-last_updated: "2026-06-16T15:30:00.000Z"
-last_activity: 2026-06-16
+status: executing
+stopped_at: Roadmap v3.1 created and written (ROADMAP.md, REQUIREMENTS.md traceability, STATE.md)
+last_updated: "2026-06-16T17:47:59.996Z"
+last_activity: 2026-06-16 -- Phase v3.1-01 planning complete
 progress:
   total_phases: 5
   completed_phases: 0
@@ -26,9 +27,9 @@ See: .planning/PROJECT.md (updated 2026-06-16)
 
 Phase: v3.1-01 — Module contrat
 Plan: — (not yet planned)
-Status: Ready to plan
+Status: Ready to execute
 Progress: [          ] 0% (0/5 phases)
-Last activity: 2026-06-16 — Roadmap v3.1 created (5 phases, 16 requirements mapped)
+Last activity: 2026-06-16 -- Phase v3.1-01 planning complete
 
 Next: `/gsd:plan-phase v3.1-01`
 
