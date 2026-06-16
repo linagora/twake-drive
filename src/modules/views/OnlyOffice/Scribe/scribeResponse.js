@@ -243,7 +243,11 @@ export function parseScribeResponse(raw, { surface } = {}) {
     const parsed = tolerantParse(rawStr)
 
     // Shape gate: must be a plain (non-array) object.
-    if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    if (
+      parsed === null ||
+      typeof parsed !== 'object' ||
+      Array.isArray(parsed)
+    ) {
       return buildFallback(rawStr, surface, [])
     }
 
@@ -293,7 +297,8 @@ export function parseScribeResponse(raw, { surface } = {}) {
     }
     if (outOfRange) warnings.push('fragment-marker-out-of-range')
     const hasOrphan = fragments.some((_, i) => !referenced.has(i))
-    if (fragments.length > 0 && hasOrphan) warnings.push('fragment-not-referenced')
+    if (fragments.length > 0 && hasOrphan)
+      warnings.push('fragment-not-referenced')
 
     // Prototype-pollution guard: stage only the allow-listed channels on a
     // null-prototype object. We never assign attacker-controlled keys

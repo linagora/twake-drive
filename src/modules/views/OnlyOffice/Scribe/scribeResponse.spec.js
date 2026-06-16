@@ -27,7 +27,8 @@ describe('scribeResponse', () => {
     })
 
     it('extracts the first balanced object from prose-wrapped text', () => {
-      const raw = 'Sure, here is the JSON: {"discussion":"hi","fragments":[]} Let me know!'
+      const raw =
+        'Sure, here is the JSON: {"discussion":"hi","fragments":[]} Let me know!'
       const r = parseScribeResponse(raw, { surface: 'chat' })
       expect(r.discussion).toBe('hi')
       expect(r.fragments).toEqual([])
@@ -131,7 +132,9 @@ describe('scribeResponse', () => {
         '{"discussion":"x'
       ]
       for (const input of inputs) {
-        expect(() => parseScribeResponse(input, { surface: 'chat' })).not.toThrow()
+        expect(() =>
+          parseScribeResponse(input, { surface: 'chat' })
+        ).not.toThrow()
         const r = parseScribeResponse(input, { surface: 'chat' })
         expect(typeof r).toBe('object')
         expect(r).not.toBeNull()
@@ -146,7 +149,14 @@ describe('scribeResponse', () => {
     })
 
     it('returns all documented keys on every path', () => {
-      const keys = ['discussion', 'fragments', 'valid', 'fellBack', 'warnings', 'raw']
+      const keys = [
+        'discussion',
+        'fragments',
+        'valid',
+        'fellBack',
+        'warnings',
+        'raw'
+      ]
       const ok = parseScribeResponse('{"discussion":"hi"}', { surface: 'chat' })
       const bad = parseScribeResponse('nope', { surface: 'popover' })
       for (const k of keys) {
@@ -179,7 +189,14 @@ describe('scribeResponse', () => {
       const r = parseScribeResponse(raw, { surface: 'chat' })
       expect(r.polluted).toBeUndefined()
       expect(Object.keys(r).sort()).toEqual(
-        ['discussion', 'fellBack', 'fragments', 'raw', 'valid', 'warnings'].sort()
+        [
+          'discussion',
+          'fellBack',
+          'fragments',
+          'raw',
+          'valid',
+          'warnings'
+        ].sort()
       )
     })
 
@@ -251,8 +268,7 @@ describe('scribeResponse', () => {
     })
 
     it('warns fragment-marker-out-of-range when a marker exceeds fragments.length', () => {
-      const raw =
-        '{"discussion":"see {{fragment:5}}","fragments":["a","b"]}'
+      const raw = '{"discussion":"see {{fragment:5}}","fragments":["a","b"]}'
       let r
       expect(() => {
         r = parseScribeResponse(raw, { surface: 'chat' })
@@ -262,8 +278,7 @@ describe('scribeResponse', () => {
     })
 
     it('warns fragment-not-referenced when a fragment has no marker', () => {
-      const raw =
-        '{"discussion":"only {{fragment:0}}","fragments":["a","b"]}'
+      const raw = '{"discussion":"only {{fragment:0}}","fragments":["a","b"]}'
       const r = parseScribeResponse(raw, { surface: 'chat' })
       expect(r.warnings).toContain('fragment-not-referenced')
     })
@@ -315,9 +330,12 @@ describe('scribeResponse', () => {
     })
 
     it('always returns a plain string, never an object', () => {
-      expect(typeof serializeAssistantTurnForHistory({ discussion: 'd', fragments: ['a'] })).toBe(
-        'string'
-      )
+      expect(
+        typeof serializeAssistantTurnForHistory({
+          discussion: 'd',
+          fragments: ['a']
+        })
+      ).toBe('string')
       expect(typeof serializeAssistantTurnForHistory({})).toBe('string')
     })
   })
@@ -327,7 +345,9 @@ describe('scribeResponse', () => {
       expect(SCRIBE_OUTPUT_SCHEMA).toBeDefined()
       expect(SCRIBE_OUTPUT_SCHEMA.properties.discussion.type).toBe('string')
       expect(SCRIBE_OUTPUT_SCHEMA.properties.fragments.type).toBe('array')
-      expect(SCRIBE_OUTPUT_SCHEMA.properties.fragments.items.type).toBe('string')
+      expect(SCRIBE_OUTPUT_SCHEMA.properties.fragments.items.type).toBe(
+        'string'
+      )
       expect(SCRIBE_OUTPUT_SCHEMA.required).toContain('discussion')
     })
   })
