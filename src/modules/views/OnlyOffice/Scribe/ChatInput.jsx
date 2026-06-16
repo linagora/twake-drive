@@ -47,32 +47,12 @@ export const ChatInput = () => {
     el.style.height = Math.min(el.scrollHeight, maxHeight) + 'px'
   }, [])
 
-  // Focus guard: OO editor aggressively reclaims focus to its iframe.
-  // When the textarea is focused and loses focus unexpectedly (relatedTarget is
-  // null/iframe = cross-origin steal), refocus it on the next frame.
-  const userFocusedRef = useRef(false)
-  const handleFocus = useCallback(() => { userFocusedRef.current = true }, [])
-  const handleBlur = useCallback(e => {
-    // If focus moved to another element inside our panel, that's intentional
-    if (e.relatedTarget) {
-      userFocusedRef.current = false
-      return
-    }
-    // relatedTarget is null → focus went to an iframe or outside the document.
-    // OO stole it. Reclaim on next frame so the browser settles first.
-    requestAnimationFrame(() => {
-      if (userFocusedRef.current && textareaRef.current) {
-        textareaRef.current.focus()
-      }
-    })
-  }, [])
-
   // Focus the input when the panel opens (this component mounts on open). The
-  // OO editor lives in a cross-origin iframe that aggressively reclaims focus,
-  // so a single focus() loses the race. We blur whatever holds focus (usually
-  // the OO iframe) and focus the textarea in a short burst of retries, stopping
-  // as soon as the textarea actually holds focus. This wins the initial battle
-  // without blocking later clicks into the editor.
+  // OO editor lives in a cross-origin iframe that holds focus, so a single
+  // focus() can lose the race: we blur whatever holds focus and focus the
+  // textarea in a short burst, stopping as soon as it sticks. This is a
+  // one-shot grab on open only — we deliberately do NOT keep reclaiming focus
+  // afterwards, so clicking into the document to make a selection works.
   useEffect(() => {
     let cancelled = false
     let attempts = 0
@@ -83,7 +63,6 @@ export const ChatInput = () => {
       if (document.activeElement && document.activeElement !== el) {
         try { document.activeElement.blur() } catch (e) { /* cross-origin */ }
       }
-      userFocusedRef.current = true
       el.focus()
       attempts += 1
       if (attempts < 6 && document.activeElement !== el) {
@@ -95,18 +74,6 @@ export const ChatInput = () => {
       cancelled = true
       clearTimeout(timer)
     }
-  }, [])
-
-  // Clear the guard when the component unmounts or user clicks elsewhere intentionally
-  useEffect(() => {
-    const handlePointerDown = e => {
-      // If the click is outside the panel, let focus go naturally
-      if (textareaRef.current && !e.target.closest('[data-scribe-panel]')) {
-        userFocusedRef.current = false
-      }
-    }
-    document.addEventListener('pointerdown', handlePointerDown, true)
-    return () => document.removeEventListener('pointerdown', handlePointerDown, true)
   }, [])
 
   const canSend = text.trim().length > 0 && !isLoading
@@ -130,8 +97,6 @@ export const ChatInput = () => {
         value={text}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
         placeholder={t('Scribe.prompt.placeholder')}
         disabled={isLoading}
         rows={1}
