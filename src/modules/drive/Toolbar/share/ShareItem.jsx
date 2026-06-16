@@ -35,7 +35,7 @@ const ShareItem = ({ displayedFolder }) => {
                 : 'toolbar.menu_share_folder'
             )}
           />
-          <AvatarList recipients={recipients} link={link} size="small" />
+          <AvatarList recipients={recipients} link={link} size="s" />
         </ActionsMenuItem>
       )}
     </SharedDocument>
