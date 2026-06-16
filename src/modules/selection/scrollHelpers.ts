@@ -5,6 +5,8 @@ const scrollContainerByDirection = (
   direction: number[],
   step = SCROLL_STEP_IN_PIXELS
 ): void => {
+  if (direction.length < 2) return
+
   container.scrollBy(direction[0] * step, direction[1] * step)
 }
 
