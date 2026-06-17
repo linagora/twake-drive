@@ -119,6 +119,56 @@ describe('computeFileType', () => {
     expect(computeFileType(file, { isOfficeEnabled: true })).toBe('onlyoffice')
   })
 
+  it('should return "excalidraw" for Excalidraw file-root shared drive .url shortcuts on the recipient', () => {
+    // The recipient sees the shared Excalidraw drawing as a `.url` shortcut,
+    // so its own name ends in `.url`; the real document is exposed in
+    // metadata.target. With Excalidraw enabled it must open in its editor
+    // rather than the generic shared-drive root-file viewer.
+    const file = {
+      _id: 'shortcut-1',
+      name: 'Diagram.url',
+      mime: 'application/internet-shortcut',
+      class: 'shortcut',
+      dir_id: SHARED_DRIVES_DIR_ID,
+      _type: 'io.cozy.files',
+      type: 'file',
+      metadata: {
+        target: {
+          _type: 'io.cozy.files',
+          drive_root_type: DRIVE_ROOT_TYPE.FILE,
+          class: 'text',
+          mime: 'application/vnd.excalidraw+json'
+        }
+      }
+    }
+    expect(computeFileType(file, { isExcalidrawEnabled: true })).toBe(
+      'excalidraw'
+    )
+  })
+
+  it('should return "shared-drive-root-file" for Excalidraw file-root .url shortcuts when Excalidraw is disabled', () => {
+    const file = {
+      _id: 'shortcut-1',
+      name: 'Diagram.url',
+      mime: 'application/internet-shortcut',
+      class: 'shortcut',
+      dir_id: SHARED_DRIVES_DIR_ID,
+      _type: 'io.cozy.files',
+      type: 'file',
+      metadata: {
+        target: {
+          _type: 'io.cozy.files',
+          drive_root_type: DRIVE_ROOT_TYPE.FILE,
+          class: 'graphics',
+          mime: 'application/vnd.excalidraw+json'
+        }
+      }
+    }
+    expect(computeFileType(file, { isExcalidrawEnabled: false })).toBe(
+      'shared-drive-root-file'
+    )
+  })
+
   it('should return "shared-drive-root-file" for file-root .url shortcuts when Office is disabled', () => {
     const file = {
       _id: 'shortcut-1',
