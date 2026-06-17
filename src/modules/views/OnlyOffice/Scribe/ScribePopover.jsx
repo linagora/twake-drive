@@ -14,6 +14,7 @@ import { useScribe } from '@/modules/views/OnlyOffice/Scribe/ScribeContext'
 import { callScribeAI, buildMessages, deriveLoadingMessage, classifyScribeError } from '@/modules/views/OnlyOffice/Scribe/scribeAI'
 import { htmlToMarkdown, normalizeHtml } from '@/modules/views/OnlyOffice/Scribe/scribeConversion'
 import { transformCellMarkersForPreview } from '@/modules/views/OnlyOffice/Scribe/tableCellMarkers'
+import { parseScribeResponse } from '@/modules/views/OnlyOffice/Scribe/scribeResponse'
 import { ScribeResultPanel } from '@/modules/views/OnlyOffice/Scribe/ScribeResultPanel'
 import { isScribeDevMd } from '@/modules/views/OnlyOffice/Scribe/scribeDevMode'
 import styles from '@/modules/views/OnlyOffice/Scribe/scribe.styl'
@@ -141,9 +142,29 @@ const ScribePopover = ({ open, visible = true, selectedText, selectedHtml, enric
         const messages = buildMessages(actionId, selectedText, label, Object.keys(extra).length > 0 ? extra : undefined)
         const text = await callScribeAI(client, messages, { signal: controller.signal })
 
-        // 4. Pre-process cell markers for preview display, keep raw for reinjection
-        const { displayMd, warning } = transformCellMarkersForPreview(text, enrichedMd)
-        setRawResult(text)
+        // 4. D-13: route the raw LLM response through the shared contract layer with
+        // popover surface BEFORE any display/storage. On parse failure the popover
+        // fallback yields { discussion: '', fragments: [raw], fellBack: true } so the
+        // normalized fragment below is byte-identical to today's raw response.
+        const parsed = parseScribeResponse(text, { surface: 'popover' })
+
+        // D-08: normalize the parsed result to exactly one insertable fragment:
+        //   2+ fragments -> join with \n\n; 0 fragments -> promote discussion;
+        //   1 fragment -> use directly. (Re-ask on invalid parse is deferred to v3.1-05.)
+        let normalizedFragment
+        if (parsed.fragments.length >= 2) {
+          normalizedFragment = parsed.fragments.join('\n\n')
+        } else if (parsed.fragments.length === 0) {
+          normalizedFragment = parsed.discussion
+        } else {
+          normalizedFragment = parsed.fragments[0]
+        }
+
+        // 5. D-09: the popover shows/inserts ONLY the normalized fragment; discussion is
+        // NOT rendered. The cell-marker preview transform and rawResult/reinjection path
+        // now operate on the normalized fragment (replacing today's raw response).
+        const { displayMd, warning } = transformCellMarkersForPreview(normalizedFragment, enrichedMd)
+        setRawResult(normalizedFragment)
         setCellWarning(warning)
         setResult({ text: displayMd, breadcrumb, error: '', canRetry: false })
         setStep('result')
