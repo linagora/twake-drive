@@ -59,17 +59,19 @@ Deux axes orthogonaux se croisent avec chaque cas :
 **Convention :** *Insérer* = ajoute le contenu **au point d'insertion (fin de la sélection)**, sans détruire la sélection. *Remplacer* = **détruit la sélection** et la remplace par le contenu.
 *Règle Insert transversale :* si une espace suit immédiatement le point d'insertion, l'étendre pour la **consommer** (sinon espace de tête sur la ligne insérée) — `code.js:518-535`.
 
+<!-- cases:table:paragraph:start -->
 | # | Sélection *(description)* | Insérer | Remplacer | État / limite |
-|---|---------------------------|---------|-----------|---------------|
-| A0 | `[P1@x,P1@x]` ∅ *(curseur seul)* | insère au curseur ; pas de chip ; ne pas utiliser `init()` (renverrait tout le ¶) | par défaut **absent** (FRAG-04, pas de sélection) ; s'il est exposé, se comporte comme *Insérer* (curseur) pour éviter un visuel qui varie | ✅ |
-| A1 | `[P1@start,P1@end]` *(¶ entier)* | nouveau ¶ après le ¶ courant ; pas de `&nbsp;` | remplace **tout le ¶** | ✅ |
-| A2 | `[P1@mid,P1@mid]` *(milieu d'un mot)* | insère au point ; `&nbsp;` des deux côtés | remplace le fragment ; `&nbsp;` des deux côtés | ⚠️ **L#1** (Replace) : le suffixe non sélectionné perd ses styles inline |
-| A3 | `[P1@space,P1@end]` *(après espace → fin)* | insère en fin de ¶ ; pas de `&nbsp;` après | remplace ; espace de tête déplacée (CommonMark) ; pas de `&nbsp;` après | ✅ · ⚠️ **L#6** post-sél. inline fragile |
-| A4 | `[P1@start,P1@space]` *(début → mot, espace finale)* | insère au point ; pas de `&nbsp;` avant | remplace ; espace finale déplacée **après** le marqueur md | ✅ |
-| A5 | `[P1@start,P3@end]` *(plusieurs ¶ entiers)* | blocs insérés après P3 | remplace P1..P3 ; injection ¶ par ¶ en **ordre inverse** + fusion ¶ de queue | ✅ |
-| A6 | `[P1@mid,P3@mid]` *(partiel → entiers → partiel)* | insère au point ; clipping **text-matching** à l'extraction | remplace la plage ; clipping text-matching (pas d'arithmétique de positions, les `\r\n` faussent) | ⚠️ **L#1** (Replace) sur tête/queue |
-| A7 | *(¶ vides en bord de sélection)* | préserver les ¶ vides (split `\n\n` **avant** `marked.lexer`) | idem | ✅ |
-| A8 | sélection **> 100 ¶** *(très grande)* | **garde de perf** : repli extraction texte brut → perte du riche | idem | ✅ (assumé) |
+|---|---|---|---|---|
+| A0 | `[P1@x,P1@x]` *(curseur seul (sélection vide))* | insère au curseur; pas de chip | — absent par défaut (FRAG-04); si exposé se comporte comme Insérer | ✅ · ne pas utiliser init() qui renverrait tout le ¶ |
+| A1 | `[P1@start,P1@end]` *(paragraphe entier)* | nouveau ¶ après le ¶ courant; pas de &nbsp; | remplace tout le ¶ | ✅ |
+| A2 | `[P1@mid,P1@mid]` *(milieu d'un mot)* | insère au point; &nbsp; des deux côtés | ⚠️ remplace le fragment; &nbsp; des deux côtés | ⚠️ · **L#1** · L1: le suffixe non sélectionné perd ses styles inline (Replace) |
+| A3 | `[P1@space,P1@end]` *(après espace -> fin)* | insère en fin de ¶; pas de &nbsp; après | remplace; espace de tête déplacée (CommonMark); pas de &nbsp; après | ✅ · **L#6** · L6: post-sélection inline fragile (+2) |
+| A4 | `[P1@start,P1@space]` *(début -> mot, espace finale)* | insère au point; pas de &nbsp; avant | remplace; espace finale déplacée après le marqueur md | ✅ |
+| A5 | `[P1@start,P3@end]` *(plusieurs ¶ entiers)* | blocs insérés après P3 | remplace P1..P3; injection ¶ par ¶ en ordre inverse | ✅ |
+| A6 | `[P1@mid,P3@mid]` *(partiel -> entiers -> partiel)* | insère au point; clipping text-matching | ⚠️ remplace la plage; clipping text-matching | ⚠️ · **L#1** · L1 sur tête/queue (Replace) |
+| A7 | `[P1@start,P2@end] avec ¶ vides` *(¶ vides en bord de sélection)* | préserver les ¶ vides (split sur double-newline avant lexer) | idem | ✅ |
+| A8 | `>100 ¶` *(sélection très grande)* | garde de perf: repli extraction texte brut (perte du riche) | idem | ✅ · dégradé par conception (assumé) |
+<!-- cases:table:paragraph:end -->
 
 ---
 
@@ -77,21 +79,23 @@ Deux axes orthogonaux se croisent avec chaque cas :
 
 Mêmes conventions Insérer / Remplacer. Rappel : pour un tableau, *Insérer* produit toujours une **copie** (réduite si partielle) placée **après** le tableau / la sélection — l'**original reste intact** ; *Remplacer* modifie **in-place** (ou clone si englobement structurel).
 
+<!-- cases:table:table:start -->
 | # | Sélection *(description)* | Insérer | Remplacer | État / limite |
-|---|---------------------------|---------|-----------|---------------|
-| T1 | `[T1.intra(r,c),…]` *(dans **une** cellule)* | **chemin paragraphe** (insère dans la cellule au point) | **chemin paragraphe** (remplace le texte de la cellule) | ✅ |
-| T2 | `[T1.cells,T1.cells]` *(lignes/cols partielles)* | **copie réduite** du tableau (lignes/cols non concernées supprimées) insérée après le tableau | **in-place** `modifyOriginalTableCells` ; cellules non sélectionnées **et vides** intactes | ✅ |
-| T3 | `[T1.full,T1.full]` *(tableau entier englobant)* | clone complet inséré après le tableau | **clone + `InsertContent`** ; post-sélection OK | ✅ |
-| T4 | `[P1@x,T2.cells]` *(¶ → finit dans un tableau)* | après le tableau : 1) ¶/tableaux entiers du début, 2) **copie réduite** du tableau de fin *(cas 2b)* | cellules in-place + `InsertContent` par ¶ (ordre inverse) | ⚠️ **L#2** (Replace) : pas de post-sél. (texte d'un seul côté) |
-| T5 | `[T1.cells,P3@x]` *(tableau → finit après)* | après la fin de sélection : 1) copie réduite du tableau de tête, 2) ¶/tableaux suivants *(cas 2c)* | cellules in-place + `InsertContent` par ¶ | ⚠️ **L#2** (Replace) |
-| T6 | `[T1.cells,T3.cells]` *(deux tableaux partiels, milieu entier)* | après la fin : 1) copie réduite tête, 2) milieu entier, 3) copie réduite queue *(cas 2d)* | in-place les deux tableaux + `InsertContent` par ¶ du milieu | ⚠️ **L#2** (Replace) |
-| T8 | *(cellule multi-¶, dont vides)* | split `\n\n` ; `replaceCellContent` + `AddElement(pos,para)` | idem | ⚠️ **L#3** : block mode peut déborder hors cellule |
-| T9 | *(cellule avec image)* | `drawingIndex` scanne **aussi** les ¶ de cellules (absents de `GetAllParagraphs()`) | idem | ✅ |
-| T10 | **garde défensive** — *pas un cas de sélection utilisateur* : `table.GetRange()===null` (`no_range`) **ou** aucun ¶ sélectionné ne tombe dans une cellule alors que le test de positions amont jugeait le tableau « chevauchant » (`no_cell_match`, sélection qui frôle la plage du tableau sans contenu de cellule dedans) | **bandeau** câblé (lignes 2718-2726) : « …coupe un tableau de manière ambiguë. Sélectionnez des lignes complètes. » — **message trompeur** (le vrai déclencheur est une incohérence de détection, pas une coupe) | idem | ⚠️ ne devrait pas se déclencher en usage normal (OO interdit l'ambiguïté géométrique, phase 26 impl #4) ; message à revoir |
-| T11 | *(mismatch nb de cellules réponse ≠ sélection)* | **bandeau d'avertissement** | idem | ✅ |
-| T12a | *(fusion **horizontale** dans la sélection)* | **clone complet** (jamais de `RemoveColumn` — corruption confirmée Q4) | **in-place** ✅ (round-trip `(r,c)` auto-cohérent — *confirmé sonde S2*) | ⚠️ aperçu GFM désaligné (cosmétique) — cf §4bis |
-| T12b | *(fusion **verticale** dans la sélection)* | **clone complet** (jamais de `RemoveRow`) | **in-place** ✅ (maître à sa ligne, continuation = cellule vide distincte jamais touchée — *confirmé sonde S3/S4*) | ⚠️ S3 : sélection continuation seule n'édite pas la cellule fusionnée (UX) ; trou détection `full` (S5) — cf §4bis |
-| T13 | *(tableaux imbriqués)* | **non supporté** | **non supporté** | ❌ hors scope |
+|---|---|---|---|---|
+| T1 | `[T1.intra(r,c),T1.intra(r,c)]` *(dans une seule cellule)* | chemin paragraphe (insère dans la cellule au point) | chemin paragraphe (remplace le texte de la cellule) | ✅ |
+| T2 | `[T1.cells,T1.cells]` *(lignes/cols partielles)* | copie réduite du tableau insérée après le tableau | in-place modifyOriginalTableCells; cellules non sél. et vides intactes | ✅ |
+| T3 | `[T1.full,T1.full]` *(tableau entier englobant)* | clone complet inséré après le tableau | clone + InsertContent; post-sélection OK | ✅ |
+| T4 | `[P1@x,T2.cells]` *(¶ -> finit dans un tableau)* | après le tableau: ¶/tableaux entiers du début + copie réduite du tableau de fin (cas 2b) | ⚠️ cellules in-place + InsertContent par ¶ (ordre inverse) | ⚠️ · **L#2** · L2: pas de post-sélection (texte d'un seul côté); sélection manuelle (cross-boundary) |
+| T5 | `[T1.cells,P3@x]` *(tableau -> finit après)* | après la fin de sélection: copie réduite tête + ¶/tableaux suivants (cas 2c) | ⚠️ cellules in-place + InsertContent par ¶ | ⚠️ · **L#2** · sélection manuelle (cross-boundary) |
+| T6 | `[T1.cells,T3.cells]` *(deux tableaux partiels, milieu entier)* | copie réduite tête + milieu entier + copie réduite queue (cas 2d) | ⚠️ in-place les deux tableaux + InsertContent par ¶ du milieu | ⚠️ · **L#2** · sélection manuelle (cross-boundary) |
+| T8 | `[T1.intra multi-¶]` *(cellule multi-¶ (dont vides))* | ⚠️ split sur double-newline; replaceCellContent + AddElement(pos,para) | ⚠️ idem | ⚠️ · **L#3** · L3: block mode peut déborder hors cellule |
+| T9 | `[T1.intra avec image]` *(cellule avec image)* | drawingIndex scanne aussi les ¶ de cellules | idem | ✅ |
+| T10 | `(garde défensive)` *(no_range / no_cell_match — pas un cas utilisateur)* | — bandeau câblé (message trompeur) | — idem | ✅ · ne devrait pas se déclencher; à tester au niveau garde/unitaire, pas en golden |
+| T11 | `(mismatch nb cellules)` *(réponse ≠ nb cellules de la sélection)* | bandeau d'avertissement | idem | ✅ |
+| T12a | `[T.cells avec fusion H]` *(fusion horizontale dans la sélection)* | ⚠️ DÉSIRÉ: clone complet (jamais RemoveColumn) | in-place (round-trip (r,c) cohérent — confirmé S2) | ⚠️ · Insert xfail: code actuel corrompt via RemoveColumn (Q4); aperçu GFM désaligné (cosmétique) |
+| T12b | `[T.cells avec fusion V]` *(fusion verticale dans la sélection)* | ⚠️ DÉSIRÉ: clone complet (jamais RemoveRow) | in-place (maître à sa ligne, continuation vide jamais touchée — S3/S4) | ⚠️ · Insert xfail jusqu'à règle clone-complet; S3 mismatch UX; trou détection full (S5) |
+| T13 | `[T.intra tableau imbriqué]` *(tableaux imbriqués)* | ❌ non supporté | ❌ non supporté | ❌ hors scope · hors scope |
+<!-- cases:table:table:end -->
 
 ---
 
@@ -132,14 +136,16 @@ Aucun repli sur table complète n'est nécessaire pour Replace : l'index logique
 
 Ces limites dépendent du **type de contenu**, pas de la géométrie de sélection — elles s'appliquent par-dessus n'importe quelle ligne A/T.
 
+<!-- cases:table:content:start -->
 | Contenu | Insérer | Remplacer | État / limite |
-|---------|---------|-----------|---------------|
-| texte simple | OK | OK | ✅ |
-| riche inline (gras, italique, souligné, barré, code, liens) | OK | OK | ✅ |
-| **texte coloré** | non préservé | non préservé | ⚠️ **L#5** |
+|---|---|---|---|
+| text-simple | OK | OK | ✅ |
+| rich-inline | OK (formatage préservé) | OK | ✅ · gras/italique/barré/code/liens/souligné |
+| color | ⚠️ non préservé | ⚠️ non préservé | ⚠️ · **L#5** · L5: couleur non préservée |
 | image | OK (round-trip) | OK | ✅ |
 | footnote | OK (recréée post-InsertContent) | OK | ✅ |
-| **cross-ref** (réf. titre / bookmark) | liens parfois perdus selon le document | idem | ⚠️ **L#4** (pré-existant v2.6) |
+| crossref | ⚠️ liens parfois perdus selon le document | ⚠️ idem | ⚠️ · **L#4** · L4: cross-refs perdus selon le document (pré-existant v2.6) |
+<!-- cases:table:content:end -->
 
 ---
 
