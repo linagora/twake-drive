@@ -110,13 +110,13 @@ export function buildMessages(actionId, selectedText, label, extra) {
     RESPONSE_CONTRACT_BLOCK +
     ' Return **exactly ONE** fragment.'
   if (extra?.enrichedMd && (extra.enrichedMd.includes('[TABLE:') || extra.enrichedMd.includes('[CELL:'))) {
-    systemBase += ' Preserve all [TABLE:N]...[/TABLE] and [CELL:r,c]...[/CELL] markers exactly as-is. Only modify the text content between the opening [CELL:r,c] and closing [/CELL] tags. Do not add, remove, or reorder [TABLE:N] or [CELL:r,c] markers.'
+    systemBase += ' Inside the fragment string(s) (never in `discussion`), preserve all [TABLE:N]...[/TABLE] and [CELL:r,c]...[/CELL] markers exactly as-is. Only modify the text content between the opening [CELL:r,c] and closing [/CELL] tags. Do not add, remove, or reorder [TABLE:N] or [CELL:r,c] markers.'
   }
   if (extra?.enrichedMd && extra.enrichedMd.includes('[^scribe-fn-')) {
-    systemBase += ' Preserve all [^scribe-fn-N] footnote reference markers exactly as-is. Do NOT add footnote definitions ([^N]: text). The footnote content is managed separately — only preserve the inline reference markers.'
+    systemBase += ' Inside the fragment string(s) (never in `discussion`), preserve all [^scribe-fn-N] footnote reference markers exactly as-is. Do NOT add footnote definitions ([^N]: text). The footnote content is managed separately — only preserve the inline reference markers.'
   }
   if (extra?.enrichedMd && extra.enrichedMd.includes('{{REF:')) {
-    systemBase += ' Preserve all {{REF:scribe-ref-N:visible text}} cross-reference markers. Keep the {{REF:scribe-ref-N: and closing }} delimiters intact. You may modify the visible text inside the marker to match your changes (e.g. translation), but never remove or alter the scribe-ref-N identifier.'
+    systemBase += ' Inside the fragment string(s) (never in `discussion`), preserve all {{REF:scribe-ref-N:visible text}} cross-reference markers. Keep the {{REF:scribe-ref-N: and closing }} delimiters intact. You may modify the visible text inside the marker to match your changes (e.g. translation), but never remove or alter the scribe-ref-N identifier.'
   }
   const systemPrefix = systemBase + '\n\n'
 
