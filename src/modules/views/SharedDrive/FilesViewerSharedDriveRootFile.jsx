@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo } from 'react'
-import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
 
 import { hasQueryBeenLoaded, useQuery } from 'cozy-client'
 import { useSharingContext } from 'cozy-sharing'
+import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import { FilesViewerLoading } from '@/components/FilesViewerLoading'
 import useHead from '@/components/useHead'
@@ -11,6 +12,9 @@ import {
   getSharedDriveRootFilePathScope
 } from '@/modules/routeUtils'
 import FilesViewer from '@/modules/viewer/FilesViewer'
+import { isExcalidrawEnabled as computeExcalidrawEnabled } from '@/modules/views/Excalidraw/helpers'
+import { isOfficeEnabled as computeOfficeEnabled } from '@/modules/views/OnlyOffice/helpers'
+import { findEditorForFile } from '@/modules/views/editor/registry'
 import { buildSharedDriveFileOrFolderByIdQuery } from '@/queries'
 
 const isViewerReady = ({ allLoaded, fileResult, file }) =>
@@ -19,6 +23,7 @@ const isViewerReady = ({ allLoaded, fileResult, file }) =>
 const FilesViewerSharedDriveRootFile = () => {
   const navigate = useNavigate()
   const location = useLocation()
+  const { isDesktop } = useBreakpoints()
   const { driveId, fileId } = useParams()
   const { allLoaded } = useSharingContext()
   useHead()
@@ -48,6 +53,27 @@ const FilesViewerSharedDriveRootFile = () => {
   const files = filesQuery.data
 
   if (isViewerReady({ allLoaded, fileResult, file })) {
+    // A file shared as a shared-drive root is materialized on the recipient as
+    // a `.url` shortcut, so list-level dispatch can't recognize the document
+    // (and direct links/reloads land here without going through it). Now that
+    // the real file is resolved, send editor documents to their editor; an
+    // Excalidraw drawing has no inline viewer, so this is the only way it opens.
+    const editor = findEditorForFile(file, {
+      isOfficeEnabled: computeOfficeEnabled(isDesktop),
+      isExcalidrawEnabled: computeExcalidrawEnabled()
+    })
+    if (editor) {
+      return (
+        <Navigate
+          replace
+          to={editor.makeRoute(file._id, {
+            driveId,
+            fromPathname: closePath
+          })}
+        />
+      )
+    }
+
     return (
       <FilesViewer
         files={files}
