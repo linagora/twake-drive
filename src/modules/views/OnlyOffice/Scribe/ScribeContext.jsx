@@ -5,13 +5,30 @@ import { useI18n } from 'twake-i18n'
 
 import { callScribeAI, classifyScribeError } from '@/modules/views/OnlyOffice/Scribe/scribeAI'
 import { htmlToMarkdown } from '@/modules/views/OnlyOffice/Scribe/scribeConversion'
+import {
+  parseScribeResponse,
+  serializeAssistantTurnForHistory
+} from '@/modules/views/OnlyOffice/Scribe/scribeResponse'
 
 const STORAGE_KEY = 'scribe-panel-open'
 
 const ScribeContext = createContext(null)
 
+// Chat system prompt. Emits the shared { discussion, fragments[] } JSON contract
+// (D-01: terse rules + one worked example; D-02 chat side: 0..N fragments,
+// discussion may be free-form). Parsing of the response happens at reception in
+// sendMessage via parseScribeResponse(raw, { surface: 'chat' }).
 const CHAT_SYSTEM_PROMPT =
-  'You are a helpful writing assistant. Help the user with their writing tasks. Respond in the same language as the user\'s message. Use Markdown formatting when appropriate.'
+  'You are a helpful writing assistant. Help the user with their writing tasks. ' +
+  'Respond in the same language as the user\'s message. Use Markdown formatting when appropriate.\n\n' +
+  'Return ONLY a JSON object with two keys:\n' +
+  '- "discussion": conversational markdown shown to the user. It may embed ' +
+  '{{fragment:N}} position markers (0-indexed) where an insertable fragment belongs.\n' +
+  '- "fragments": an array of insertable markdown strings. Element N corresponds to ' +
+  'marker {{fragment:N}}. For chat you may return 0..N fragments, and "discussion" may ' +
+  'be entirely free-form (no fragments at all) when nothing is meant to be inserted.\n\n' +
+  'Example:\n' +
+  '{"discussion":"Sure — here is a tighter intro:\\n\\n{{fragment:0}}\\n\\nLet me know if you want it shorter.","fragments":["Our platform helps teams ship faster."]}'
 
 const readStorage = () => {
   try {
@@ -115,18 +132,41 @@ export const ScribeProvider = ({ children }) => {
                 content: `[Selected text from document]\n${selectionMd}\n[End of selected text]\n\n${m.content}`
               }
             }
+            // D-12: serialize prior assistant turns as discussion + a compact,
+            // truncated fragment note (never raw fragment bodies, never the raw
+            // contract JSON). Older messages predating the extended model lack
+            // m.discussion/m.fragments, so fall back to m.content.
+            if (m.role === 'assistant') {
+              return {
+                role: m.role,
+                content: serializeAssistantTurnForHistory({
+                  discussion: m.discussion ?? m.content,
+                  fragments: m.fragments
+                })
+              }
+            }
             return { role: m.role, content: m.content }
           })
       ]
 
       const responseText = await callScribeAI(client, aiMessages)
 
+      // D-13: parse the raw LLM response through the shared contract layer with
+      // chat surface BEFORE storing/displaying. On parse failure the chat fallback
+      // yields { discussion: raw, fragments: [] } so nothing is lost.
+      const parsed = parseScribeResponse(responseText, { surface: 'chat' })
+
+      // D-10: extended message model — keep content == discussion (existing UI
+      // reads content unchanged) plus structured discussion/fragments/fellBack.
       setMessages(prev => [
         ...prev,
         {
           id: Date.now() + 1,
           role: 'assistant',
-          content: responseText,
+          content: parsed.discussion,
+          discussion: parsed.discussion,
+          fragments: parsed.fragments,
+          fellBack: parsed.fellBack,
           timestamp: new Date()
         }
       ])
