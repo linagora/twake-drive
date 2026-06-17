@@ -52,6 +52,14 @@ const composeAssistantDisplay = (discussion, fragments) => {
       composed.slice(position + marker.length)
   }
 
+  // Strip any dangling out-of-range {{fragment:N}} markers that were skipped by
+  // the substitution loop (index < 0 || index >= frags.length). Leaving them in
+  // place would render the raw marker text in the bubble.
+  composed = composed.replace(/\{\{fragment:(\d+)\}\}/g, (m, d) => {
+    const idx = parseInt(d, 10)
+    return idx < 0 || idx >= frags.length ? '' : m
+  })
+
   // Append unreferenced fragments at the end, blank-line separated.
   const orphans = frags.filter((_, i) => !referenced.has(i))
   const orphanText = orphans.join('\n\n')
@@ -233,7 +241,7 @@ export const ChatMessageList = () => {
         // discussion/fragments, so fall back to msg.content. Stored content is
         // never mutated; MessageActions keeps reading msg.content (pure discussion, D-05).
         const hasContractFields =
-          msg.discussion !== undefined || msg.fragments !== undefined
+          msg.discussion !== undefined && msg.fragments !== undefined
         const displayContent = hasContractFields
           ? composeAssistantDisplay(msg.discussion ?? msg.content, msg.fragments)
           : msg.content
