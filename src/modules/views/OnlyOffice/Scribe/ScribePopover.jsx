@@ -169,10 +169,23 @@ const ScribePopover = ({ open, visible = true, selectedText, selectedHtml, enric
         setResult({ text: displayMd, breadcrumb, error: '', canRetry: false })
         setStep('result')
 
-        // 5. Mirror action into shared conversation history
+        // 6. D-11: mirror the FULL parsed turn into shared chat history. The user
+        // breadcrumb turn plus an assistant turn shaped like plan 02's extended model
+        // (content == discussion, plus discussion/fragments/fellBack) — NOT the
+        // normalized single-fragment blob — so the chat render-time compose helper
+        // renders inline turns identically to chat-native turns (and v3.1-04 cards
+        // light up for inline turns too). Reuses `parsed` from above.
         if (addMessage) {
           addMessage({ id: Date.now(), role: 'user', content: breadcrumb, timestamp: new Date() })
-          addMessage({ id: Date.now() + 1, role: 'assistant', content: text, timestamp: new Date() })
+          addMessage({
+            id: Date.now() + 1,
+            role: 'assistant',
+            content: parsed.discussion,
+            discussion: parsed.discussion,
+            fragments: parsed.fragments,
+            fellBack: parsed.fellBack,
+            timestamp: new Date()
+          })
         }
       } catch (err) {
         if (err.name === 'AbortError') {
