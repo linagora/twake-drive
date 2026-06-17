@@ -1,0 +1,23 @@
+id,group,selection,description,driving,fixture,expected_insert,status_insert,expected_replace,status_replace,limits,notes
+A0,paragraph,"[P1@x,P1@x]","curseur seul (sélection vide)",auto,XXX,"insère au curseur; pas de chip",pass,"absent par défaut (FRAG-04); si exposé se comporte comme Insérer",na,,"ne pas utiliser init() qui renverrait tout le ¶"
+A1,paragraph,"[P1@start,P1@end]","paragraphe entier",auto,XXX,"nouveau ¶ après le ¶ courant; pas de &nbsp;",pass,"remplace tout le ¶",pass,,
+A2,paragraph,"[P1@mid,P1@mid]","milieu d'un mot",auto,XXX,"insère au point; &nbsp; des deux côtés",pass,"remplace le fragment; &nbsp; des deux côtés",xfail,L1,"L1: le suffixe non sélectionné perd ses styles inline (Replace)"
+A3,paragraph,"[P1@space,P1@end]","après espace -> fin",auto,XXX,"insère en fin de ¶; pas de &nbsp; après",pass,"remplace; espace de tête déplacée (CommonMark); pas de &nbsp; après",pass,L6,"L6: post-sélection inline fragile (+2)"
+A4,paragraph,"[P1@start,P1@space]","début -> mot, espace finale",auto,XXX,"insère au point; pas de &nbsp; avant",pass,"remplace; espace finale déplacée après le marqueur md",pass,,
+A5,paragraph,"[P1@start,P3@end]","plusieurs ¶ entiers",auto,XXX,"blocs insérés après P3",pass,"remplace P1..P3; injection ¶ par ¶ en ordre inverse",pass,,
+A6,paragraph,"[P1@mid,P3@mid]","partiel -> entiers -> partiel",auto,XXX,"insère au point; clipping text-matching",pass,"remplace la plage; clipping text-matching",xfail,L1,"L1 sur tête/queue (Replace)"
+A7,paragraph,"[P1@start,P2@end] avec ¶ vides","¶ vides en bord de sélection",auto,XXX,"préserver les ¶ vides (split sur double-newline avant lexer)",pass,"idem",pass,,
+A8,paragraph,">100 ¶","sélection très grande",auto,XXX,"garde de perf: repli extraction texte brut (perte du riche)",pass,"idem",pass,,"dégradé par conception (assumé)"
+T1,table,"[T1.intra(r,c),T1.intra(r,c)]","dans une seule cellule",auto,XXX,"chemin paragraphe (insère dans la cellule au point)",pass,"chemin paragraphe (remplace le texte de la cellule)",pass,,
+T2,table,"[T1.cells,T1.cells]","lignes/cols partielles",auto,XXX,"copie réduite du tableau insérée après le tableau",pass,"in-place modifyOriginalTableCells; cellules non sél. et vides intactes",pass,,
+T3,table,"[T1.full,T1.full]","tableau entier englobant",auto,XXX,"clone complet inséré après le tableau",pass,"clone + InsertContent; post-sélection OK",pass,,
+T4,table,"[P1@x,T2.cells]","¶ -> finit dans un tableau",manual,XXX,"après le tableau: ¶/tableaux entiers du début + copie réduite du tableau de fin (cas 2b)",pass,"cellules in-place + InsertContent par ¶ (ordre inverse)",xfail,L2,"L2: pas de post-sélection (texte d'un seul côté); sélection manuelle (cross-boundary)"
+T5,table,"[T1.cells,P3@x]","tableau -> finit après",manual,XXX,"après la fin de sélection: copie réduite tête + ¶/tableaux suivants (cas 2c)",pass,"cellules in-place + InsertContent par ¶",xfail,L2,"sélection manuelle (cross-boundary)"
+T6,table,"[T1.cells,T3.cells]","deux tableaux partiels, milieu entier",manual,XXX,"copie réduite tête + milieu entier + copie réduite queue (cas 2d)",pass,"in-place les deux tableaux + InsertContent par ¶ du milieu",xfail,L2,"sélection manuelle (cross-boundary)"
+T8,table,"[T1.intra multi-¶]","cellule multi-¶ (dont vides)",auto,multi-para,"split sur double-newline; replaceCellContent + AddElement(pos,para)",xfail,"idem",xfail,L3,"L3: block mode peut déborder hors cellule"
+T9,table,"[T1.intra avec image]","cellule avec image",auto,image,"drawingIndex scanne aussi les ¶ de cellules",pass,"idem",pass,,
+T10,guard,"(garde défensive)","no_range / no_cell_match — pas un cas utilisateur",na,,"bandeau câblé (message trompeur)",na,"idem",na,,"ne devrait pas se déclencher; à tester au niveau garde/unitaire, pas en golden"
+T11,table,"(mismatch nb cellules)","réponse ≠ nb cellules de la sélection",auto,XXX,"bandeau d'avertissement",pass,"idem",pass,,
+T12a,table,"[T.cells avec fusion H]","fusion horizontale dans la sélection",auto,XXX,"DÉSIRÉ: clone complet (jamais RemoveColumn)",xfail,"in-place (round-trip (r,c) cohérent — confirmé S2)",pass,,"Insert xfail: code actuel corrompt via RemoveColumn (Q4); aperçu GFM désaligné (cosmétique)"
+T12b,table,"[T.cells avec fusion V]","fusion verticale dans la sélection",auto,XXX,"DÉSIRÉ: clone complet (jamais RemoveRow)",xfail,"in-place (maître à sa ligne, continuation vide jamais touchée — S3/S4)",pass,,"Insert xfail jusqu'à règle clone-complet; S3 mismatch UX; trou détection full (S5)"
+T13,table,"[T.intra tableau imbriqué]","tableaux imbriqués",na,XXX,"non supporté",unsupported,"non supporté",unsupported,,"hors scope"
