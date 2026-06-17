@@ -4,8 +4,8 @@ milestone: v3.1
 milestone_name: Contrat de réponse structurée LLM
 status: executing
 stopped_at: Phase v3.1-03 context gathered
-last_updated: "2026-06-17T10:32:38.767Z"
-last_activity: 2026-06-17 -- Phase v3.1-02 complete
+last_updated: "2026-06-17T11:48:20.144Z"
+last_activity: 2026-06-17 -- Phase v3.1-03-sonde-dev-hard-gate-before-render planning complete
 progress:
   total_phases: 5
   completed_phases: 2
@@ -27,9 +27,9 @@ See: .planning/PROJECT.md (updated 2026-06-16)
 
 Phase: v3.1-03 (Sonde dev — HARD GATE) — CONTEXT gathered ✓ (2026-06-17)
 Plan: not yet planned
-Status: Ready for planning
+Status: Ready to execute
 Progress: [████      ] 40% (2/5 phases)
-Last activity: 2026-06-17 -- Phase v3.1-03 context gathered
+Last activity: 2026-06-17 -- Phase v3.1-03-sonde-dev-hard-gate-before-render planning complete
 
 Next: `/gsd:plan-phase v3.1-03-sonde-dev-hard-gate-before-render` (use FULL slug — abbreviated `v3.1-03` fails SDK dir lookup)
 
