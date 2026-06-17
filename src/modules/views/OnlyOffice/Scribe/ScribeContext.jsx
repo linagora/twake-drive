@@ -123,6 +123,10 @@ export const ScribeProvider = ({ children }) => {
         { role: 'system', content: CHAT_SYSTEM_PROMPT },
         ...currentMessages
           .filter(m => m.role !== 'error')
+          // WR-01: self-contained guard so only user/assistant turns are ever
+          // serialized for the LLM, independent of the outer error filter above.
+          // UI-only roles (e.g. 'error') would be rejected by the AI endpoint.
+          .filter(m => m.role === 'user' || m.role === 'assistant')
           .map(m => {
             // For user messages with selection, build composite content for AI
             if (m.role === 'user' && m.selection) {
