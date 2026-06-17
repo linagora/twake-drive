@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react'
+import React, { useState, useCallback, useEffect, useRef } from 'react'
 import PropTypes from 'prop-types'
 
 import Alert from 'cozy-ui/transpiled/react/Alert'
@@ -180,7 +180,12 @@ const ScribePopover = ({ open, visible = true, selectedText, selectedHtml, enric
           addMessage({
             id: Date.now() + 1,
             role: 'assistant',
-            content: parsed.discussion,
+            // WR-03: mirror the insertable blob as `content` so MessageActions
+            // Copy/Insert forwards real text (not "" for empty-discussion turns).
+            // discussion/fragments/fellBack are preserved so ChatMessageList's
+            // compose helper (which renders from discussion+fragments, not content)
+            // still produces the identical bubble.
+            content: normalizedFragment,
             discussion: parsed.discussion,
             fragments: parsed.fragments,
             fellBack: parsed.fellBack,
@@ -206,7 +211,7 @@ const ScribePopover = ({ open, visible = true, selectedText, selectedHtml, enric
         }
       }
     },
-    [selectedText, selectedHtml, client, t, addMessage]
+    [selectedText, selectedHtml, enrichedMd, tableAmbiguity, client, t, addMessage]
   )
 
   const handleClose = useCallback(() => {
