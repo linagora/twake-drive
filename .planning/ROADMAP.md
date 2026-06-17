@@ -110,7 +110,7 @@ Full v3.0 phase details are preserved in `.planning/milestones/v3.0-ROADMAP.md`.
   3. Les critères de passage de la sonde sont explicitement documentés et leur résultat (pass/no-go) est enregistré comme gate des phases v3.1-04 et v3.1-05
   4. La sonde est un outil de dev (panneau/console) qui n'affecte pas l'utilisateur final
 **Plans**: 3 plans
-- [ ] v3.1-03-01-PLAN.md — pure scribeProbe.js metrics (duplication/preamble/split-table/REF) + localStorage corpus (export/import/replay/aggregate) + Jest spec
+- [x] v3.1-03-01-PLAN.md — pure scribeProbe.js metrics (duplication/preamble/split-table/REF) + localStorage corpus (export/import/replay/aggregate) + Jest spec
 - [ ] v3.1-03-02-PLAN.md — capture both surfaces (popover+chat) dev-gated + DevPanelGrid parsed-response & metrics/coverage panels
 - [ ] v3.1-03-03-PLAN.md — GATE.md scaffold ([ASSUMED] thresholds) + curated probe-corpus.json + ROADMAP criterion-2 A/B retirement
 **UI hint**: yes
@@ -165,6 +165,6 @@ v3.1 phases execute in order: v3.1-01 -> v3.1-02 -> v3.1-03 (HARD GATE) -> v3.1-
 | v3.0-04. Panel Resize | v3.0 | 1/1 | Complete | 2026-03-19 |
 | v3.1-01. Module contrat | v3.1 | 2/2 | Complete | 2026-06-16 |
 | v3.1-02. Prompt + plumbing | v3.1 | 3/3 | Complete | 2026-06-17 |
-| v3.1-03. Sonde dev (HARD GATE) | v3.1 | 0/3 | Planned | - |
+| v3.1-03. Sonde dev (HARD GATE) | v3.1 | 1/3 | Executing | - |
 | v3.1-04. Rendu chat (cartes + clavier) | v3.1 | 0/0 | Not started | - |
 | v3.1-05. Rendu popover + durcissement | v3.1 | 0/0 | Not started | - |

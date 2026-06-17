@@ -35,7 +35,7 @@ Le contrat `{ discussion: string, fragments?: string[] }` (formalisme JSON Schem
 
 ### Conformité & i18n
 
-- [ ] **PROBE-01**: Une sonde de dev expose la réponse parsée `{discussion, fragments, valid, fellBack, warnings}` et des métriques de conformité (duplication discussion↔fragment, détection de préambule par locale, A/B qualité de prose, table non scindée, REF préservés) — gate de validation avant tout rendu de cartes
+- [x] **PROBE-01**: Une sonde de dev expose la réponse parsée `{discussion, fragments, valid, fellBack, warnings}` et des métriques de conformité (duplication discussion↔fragment, détection de préambule par locale, A/B qualité de prose, table non scindée, REF préservés) — gate de validation avant tout rendu de cartes
 - [ ] **I18N-01**: Les libellés des cartes et les messages de repli sont traduits (fr, en, de, es, it)
 
 ## Future Requirements
@@ -73,7 +73,7 @@ Reporté à v3.2+. Suivi mais hors roadmap v3.1.
 | CONTRACT-04 | v3.1-01 | Complete |
 | INLINE-01 | v3.1-02 | Pending |
 | INLINE-02 | v3.1-02 | Pending |
-| PROBE-01 | v3.1-03 | Pending |
+| PROBE-01 | v3.1-03 | Complete |
 | CONTRACT-02 | v3.1-04 | Pending |
 | FRAG-01 | v3.1-04 | Pending |
 | FRAG-02 | v3.1-04 | Pending |

@@ -4,8 +4,8 @@ milestone: v3.1
 milestone_name: Contrat de réponse structurée LLM
 status: executing
 stopped_at: Phase v3.1-03 context gathered
-last_updated: "2026-06-17T11:48:20.144Z"
-last_activity: 2026-06-17 -- Phase v3.1-03-sonde-dev-hard-gate-before-render planning complete
+last_updated: "2026-06-17T11:58:58.938Z"
+last_activity: 2026-06-17 -- Completed v3.1-03-01-PLAN.md (pure conformance probe)
 progress:
   total_phases: 5
   completed_phases: 2
@@ -21,17 +21,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-16)
 
 **Core value:** L'utilisateur peut interagir avec l'IA de maniere fluide -- actions rapides inline ou chat conversationnel dans un panneau lateral -- pour transformer et manipuler le contenu de son document OnlyOffice.
-**Current focus:** Phase v3.1-03 — Sonde dev (HARD GATE) — context gathered, ready for planning
+**Current focus:** Phase v3.1-03 — Sonde dev — HARD GATE
 
 ## Current Position
 
-Phase: v3.1-03 (Sonde dev — HARD GATE) — CONTEXT gathered ✓ (2026-06-17)
-Plan: not yet planned
-Status: Ready to execute
+Phase: v3.1-03 (Sonde dev — HARD GATE) — EXECUTING
+Plan: 2 of 3
+Status: Executing Phase v3.1-03 — Plan 01 complete (scribeProbe metrics + corpus)
 Progress: [████      ] 40% (2/5 phases)
-Last activity: 2026-06-17 -- Phase v3.1-03-sonde-dev-hard-gate-before-render planning complete
+Last activity: 2026-06-17 -- Completed v3.1-03-01-PLAN.md (pure conformance probe)
 
-Next: `/gsd:plan-phase v3.1-03-sonde-dev-hard-gate-before-render` (use FULL slug — abbreviated `v3.1-03` fails SDK dir lookup)
+Next: execute `/gsd:execute-phase v3.1-03-sonde-dev-hard-gate-before-render` Plan 02 (DevPanelGrid panels + both-surface capture wiring)
 
 ## v3.1 Roadmap Summary
 
@@ -70,6 +70,12 @@ After v3.0-04 completion, three commits refined the plugin protocol and document
 | 12 Preview Markdown | 1 | 2min | 2min |
 | 13 Reinjection Pipeline | 1 | 15min | 15min |
 
+**By Phase (v3.1):**
+
+| Phase | Plan | Duration | Tasks | Files |
+|-------|------|----------|-------|-------|
+| v3.1-03 Sonde dev | 01 | ~12min | 2 (TDD) | 2 |
+
 ## Accumulated Context
 
 ### Decisions (v3.1 locked, from PROJECT.md + research/SUMMARY.md)
@@ -83,6 +89,10 @@ After v3.0-04 completion, three commits refined the plugin protocol and document
 - Le risque principal n'est PAS la syntaxe JSON mais la séparation sémantique (duplication / fuite de préambule) — la sonde v3.1-03 gate là-dessus, pas sur « JSON valide »
 - Sémantique des fragments : morceaux séquentiels indépendants (insert all à venir en v3.2), pas des alternatives concurrentes
 - Réinjection riche existante (tables/footnotes/cell-markers) inchangée, appliquée par fragment
+- [v3.1-03-01] scribeProbe.js = module pur zéro-dépendance (5 métriques + corpus localStorage versionné) ; Dice word-bigram fait main, pas de string-similarity npm
+- [v3.1-03-01] DUP_THRESHOLD=0.6 et MAX_SAMPLES=200 tagués [ASSUMED] — figés contre données réelles dans GATE.md (gate hybride D-01)
+- [v3.1-03-01] footnotes [^scribe-fn-N] incluses dans le même set-diff d'identifiants que scribe-ref-N (Open Question 3 résolue)
+- [v3.1-03-01] replay LLM-free et idempotent vs record-time ; corpus corrompu/version-stale se réinitialise à vide sans crasher la session dev
 
 ### Recent decisions affecting v3.0 (historique)
 
@@ -107,6 +117,6 @@ After v3.0-04 completion, three commits refined the plugin protocol and document
 
 ## Session Continuity
 
-Last session: 2026-06-17T10:32:38.760Z
+Last session: 2026-06-17T11:58:58.933Z
 Stopped at: Phase v3.1-03 context gathered
-Resume file: .planning/phases/v3.1-03-sonde-dev-hard-gate-before-render/v3.1-03-CONTEXT.md
+Resume file: None
