@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v3.1
 milestone_name: Contrat de réponse structurée LLM
-status: completed
+status: executing
 stopped_at: Phase v3.1-02 context gathered
-last_updated: "2026-06-16T20:52:37.468Z"
-last_activity: 2026-06-16 -- Phase v3.1-01 complete (2/2 plans, verification passed)
+last_updated: "2026-06-17T05:20:13.650Z"
+last_activity: 2026-06-17 -- Phase v3.1-02 planning complete
 progress:
   total_phases: 5
   completed_phases: 1
@@ -27,9 +27,9 @@ See: .planning/PROJECT.md (updated 2026-06-16)
 
 Phase: v3.1-01 (Module contrat) — COMPLETE ✓ (verified 2026-06-16)
 Plan: 2 of 2 complete
-Status: Phase v3.1-01 complete; scribeResponse.js shipped (parse/validate/fallback + markers + MCP helpers + schema), 38 tests green, zero deps
+Status: Ready to execute
 Progress: [██        ] 20% (1/5 phases)
-Last activity: 2026-06-16 -- Phase v3.1-01 complete (2/2 plans, verification passed)
+Last activity: 2026-06-17 -- Phase v3.1-02 planning complete
 
 Next: `/gsd:discuss-phase v3.1-02` (or `/gsd:plan-phase v3.1-02`)
 
