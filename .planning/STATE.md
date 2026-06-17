@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v3.1
 milestone_name: Contrat de réponse structurée LLM
 status: executing
-stopped_at: "v3.1-03-02 Task 3 (checkpoint:human-verify, gate=blocking) — awaiting user verification of the probe on the live OO/Drive runtime"
-last_updated: "2026-06-17T13:22:12.315Z"
+stopped_at: Phase v3.1-03 complete (verified 10/10); GATE verdict pending real-data freeze
+last_updated: "2026-06-17T13:27:33.081Z"
 last_activity: 2026-06-17
 progress:
   total_phases: 5
@@ -124,6 +124,6 @@ After v3.0-04 completion, three commits refined the plugin protocol and document
 
 ## Session Continuity
 
-Last session: 2026-06-17 -- v3.1-03-02 Tasks 1-2 executed & committed
-Stopped at: v3.1-03-02 Task 3 (checkpoint:human-verify, gate=blocking) — awaiting user verification of the probe on the live OO/Drive runtime
-Resume file: .planning/phases/v3.1-03-sonde-dev-hard-gate-before-render/v3.1-03-02-SUMMARY.md
+Last session: 2026-06-17T13:27:33.074Z
+Stopped at: Phase v3.1-03 complete (verified 10/10); GATE verdict pending real-data freeze
+Resume file: None
