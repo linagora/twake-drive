@@ -4,8 +4,8 @@ milestone: v3.1
 milestone_name: Contrat de réponse structurée LLM
 status: executing
 stopped_at: Phase v3.1-03 context gathered
-last_updated: "2026-06-17T11:58:58.938Z"
-last_activity: 2026-06-17 -- Completed v3.1-03-01-PLAN.md (pure conformance probe)
+last_updated: "2026-06-17T12:04:32.150Z"
+last_activity: 2026-06-17 -- Completed v3.1-03-03-PLAN.md (GATE.md scaffold + curated probe-corpus.json + ROADMAP criterion-2 A/B retirement)
 progress:
   total_phases: 5
   completed_phases: 2
@@ -26,12 +26,12 @@ See: .planning/PROJECT.md (updated 2026-06-16)
 ## Current Position
 
 Phase: v3.1-03 (Sonde dev — HARD GATE) — EXECUTING
-Plan: 2 of 3
-Status: Executing Phase v3.1-03 — Plan 01 complete (scribeProbe metrics + corpus)
+Plan: 3 of 3
+Status: Executing Phase v3.1-03 — Plans 01 + 03 complete (probe module + durable gate artifacts); Plan 02 remaining
 Progress: [████      ] 40% (2/5 phases)
-Last activity: 2026-06-17 -- Completed v3.1-03-01-PLAN.md (pure conformance probe)
+Last activity: 2026-06-17 -- Completed v3.1-03-03-PLAN.md (GATE.md scaffold + curated probe-corpus.json + ROADMAP criterion-2 A/B retirement)
 
-Next: execute `/gsd:execute-phase v3.1-03-sonde-dev-hard-gate-before-render` Plan 02 (DevPanelGrid panels + both-surface capture wiring)
+Next: execute `/gsd:execute-phase v3.1-03-sonde-dev-hard-gate-before-render` Plan 02 (DevPanelGrid parsed-response & metrics/coverage panels + both-surface capture wiring)
 
 ## v3.1 Roadmap Summary
 
@@ -75,6 +75,7 @@ After v3.0-04 completion, three commits refined the plugin protocol and document
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
 | v3.1-03 Sonde dev | 01 | ~12min | 2 (TDD) | 2 |
+| Phase v3.1-03 P03 | ~14min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -93,6 +94,9 @@ After v3.0-04 completion, three commits refined the plugin protocol and document
 - [v3.1-03-01] DUP_THRESHOLD=0.6 et MAX_SAMPLES=200 tagués [ASSUMED] — figés contre données réelles dans GATE.md (gate hybride D-01)
 - [v3.1-03-01] footnotes [^scribe-fn-N] incluses dans le même set-diff d'identifiants que scribe-ref-N (Open Question 3 résolue)
 - [v3.1-03-01] replay LLM-free et idempotent vs record-time ; corpus corrompu/version-stale se réinitialise à vide sans crasher la session dev
+- [v3.1-03-03] GATE.md (D-02) = doc source-of-truth go/no-go durable ; tous les seuils numériques tagués [ASSUMED] avec colonne « frozen value » vide à figer par l'utilisateur (gate hybride D-01)
+- [v3.1-03-03] probe-corpus.json curaté stocké sous .planning/phases/v3.1-03-.../ (Open Question 1 : la preuve du gate vit avec GATE.md) ; enveloppe versionnée {v:1,samples} alignée sur scribeProbe.importCorpus/replay
+- [v3.1-03-03] métrique A/B qualité de prose du critère 2 ROADMAP retirée (D-06) ; métriques survivantes = duplication, préambule par locale, table non scindée, REF préservés, répartition 0/1/N
 
 ### Recent decisions affecting v3.0 (historique)
 
@@ -117,6 +121,6 @@ After v3.0-04 completion, three commits refined the plugin protocol and document
 
 ## Session Continuity
 
-Last session: 2026-06-17T11:58:58.933Z
+Last session: 2026-06-17T12:04:22.509Z
 Stopped at: Phase v3.1-03 context gathered
 Resume file: None

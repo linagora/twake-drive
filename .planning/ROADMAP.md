@@ -112,7 +112,7 @@ Full v3.0 phase details are preserved in `.planning/milestones/v3.0-ROADMAP.md`.
 **Plans**: 3 plans
 - [x] v3.1-03-01-PLAN.md — pure scribeProbe.js metrics (duplication/preamble/split-table/REF) + localStorage corpus (export/import/replay/aggregate) + Jest spec
 - [ ] v3.1-03-02-PLAN.md — capture both surfaces (popover+chat) dev-gated + DevPanelGrid parsed-response & metrics/coverage panels
-- [ ] v3.1-03-03-PLAN.md — GATE.md scaffold ([ASSUMED] thresholds) + curated probe-corpus.json + ROADMAP criterion-2 A/B retirement
+- [x] v3.1-03-03-PLAN.md — GATE.md scaffold ([ASSUMED] thresholds) + curated probe-corpus.json + ROADMAP criterion-2 A/B retirement
 **UI hint**: yes
 
 ### Phase v3.1-04: Rendu chat (cartes + clavier)
