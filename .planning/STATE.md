@@ -4,7 +4,7 @@ milestone: v3.1
 milestone_name: Contrat de réponse structurée LLM
 status: executing
 stopped_at: Phase v3.1-03 context gathered
-last_updated: "2026-06-17T12:04:32.150Z"
+last_updated: "2026-06-17T12:14:45.176Z"
 last_activity: 2026-06-17 -- Completed v3.1-03-03-PLAN.md (GATE.md scaffold + curated probe-corpus.json + ROADMAP criterion-2 A/B retirement)
 progress:
   total_phases: 5
@@ -25,13 +25,13 @@ See: .planning/PROJECT.md (updated 2026-06-16)
 
 ## Current Position
 
-Phase: v3.1-03 (Sonde dev — HARD GATE) — EXECUTING
-Plan: 3 of 3
-Status: Executing Phase v3.1-03 — Plans 01 + 03 complete (probe module + durable gate artifacts); Plan 02 remaining
+Phase: v3.1-03 (Sonde dev — HARD GATE) — EXECUTING (Plan 02 paused at blocking checkpoint)
+Plan: 02 of 3 — Tasks 1-2 done & committed; Task 3 = blocking human-verify checkpoint PENDING
+Status: Plan 02 wired the probe into both surfaces + DevPanelGrid (Tasks 1-2, committed c53b03ca4 + 5088ba765). Task 3 (checkpoint:human-verify, gate=blocking) awaits the user's live OO/Drive verification before Plan 02 can be marked complete. Plans 01 + 03 already complete.
 Progress: [████      ] 40% (2/5 phases)
-Last activity: 2026-06-17 -- Completed v3.1-03-03-PLAN.md (GATE.md scaffold + curated probe-corpus.json + ROADMAP criterion-2 A/B retirement)
+Last activity: 2026-06-17 -- v3.1-03-02 Tasks 1-2 (both-surface dev-gated probe capture + parsedResponse/probeMetrics DevPanelGrid panels); awaiting Task 3 human verification
 
-Next: execute `/gsd:execute-phase v3.1-03-sonde-dev-hard-gate-before-render` Plan 02 (DevPanelGrid parsed-response & metrics/coverage panels + both-surface capture wiring)
+Next: USER runs the Task 3 how-to-verify steps (see v3.1-03-02-SUMMARY.md / PLAN.md) in the live OO/Drive runtime, then replies "approved" (or describes issues) to complete Plan 02.
 
 ## v3.1 Roadmap Summary
 
@@ -97,6 +97,9 @@ After v3.0-04 completion, three commits refined the plugin protocol and document
 - [v3.1-03-03] GATE.md (D-02) = doc source-of-truth go/no-go durable ; tous les seuils numériques tagués [ASSUMED] avec colonne « frozen value » vide à figer par l'utilisateur (gate hybride D-01)
 - [v3.1-03-03] probe-corpus.json curaté stocké sous .planning/phases/v3.1-03-.../ (Open Question 1 : la preuve du gate vit avec GATE.md) ; enveloppe versionnée {v:1,samples} alignée sur scribeProbe.importCorpus/replay
 - [v3.1-03-03] métrique A/B qualité de prose du critère 2 ROADMAP retirée (D-06) ; métriques survivantes = duplication, préambule par locale, table non scindée, REF préservés, répartition 0/1/N
+- [v3.1-03-02] les DEUX surfaces Scribe (popover + chat) alimentent le corpus post-parse via recordProbeSample gardé par isScribeDevMd() (D-11) ; coût production nul
+- [v3.1-03-02] DevPanelGrid étendu de façon additive (D-10) : panneau « Réponse parsée » (JSON contrat surligné) + panneau « Métriques + couverture » (aggregate(replay()) : taux/comptes/répartition/couverture + export/import) ; tout le calcul métrique reste dans scribeProbe.js
+- [v3.1-03-02] réponse parsée injectée dans le panneau via une prop `parsedResponse` (état popover, dev-gated) plutôt que re-parsée dans le composant
 
 ### Recent decisions affecting v3.0 (historique)
 
@@ -121,6 +124,6 @@ After v3.0-04 completion, three commits refined the plugin protocol and document
 
 ## Session Continuity
 
-Last session: 2026-06-17T12:04:22.509Z
-Stopped at: Phase v3.1-03 context gathered
-Resume file: None
+Last session: 2026-06-17 -- v3.1-03-02 Tasks 1-2 executed & committed
+Stopped at: v3.1-03-02 Task 3 (checkpoint:human-verify, gate=blocking) — awaiting user verification of the probe on the live OO/Drive runtime
+Resume file: .planning/phases/v3.1-03-sonde-dev-hard-gate-before-render/v3.1-03-02-SUMMARY.md

@@ -111,7 +111,7 @@ Full v3.0 phase details are preserved in `.planning/milestones/v3.0-ROADMAP.md`.
   4. La sonde est un outil de dev (panneau/console) qui n'affecte pas l'utilisateur final
 **Plans**: 3 plans
 - [x] v3.1-03-01-PLAN.md — pure scribeProbe.js metrics (duplication/preamble/split-table/REF) + localStorage corpus (export/import/replay/aggregate) + Jest spec
-- [ ] v3.1-03-02-PLAN.md — capture both surfaces (popover+chat) dev-gated + DevPanelGrid parsed-response & metrics/coverage panels
+- [~] v3.1-03-02-PLAN.md — capture both surfaces (popover+chat) dev-gated + DevPanelGrid parsed-response & metrics/coverage panels — code DONE (Tasks 1-2 committed c53b03ca4 + 5088ba765); Task 3 blocking human-verify PENDING on live OO/Drive runtime
 - [x] v3.1-03-03-PLAN.md — GATE.md scaffold ([ASSUMED] thresholds) + curated probe-corpus.json + ROADMAP criterion-2 A/B retirement
 **UI hint**: yes
 
