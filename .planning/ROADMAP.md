@@ -106,7 +106,7 @@ Full v3.0 phase details are preserved in `.planning/milestones/v3.0-ROADMAP.md`.
 **Requirements**: PROBE-01
 **Success Criteria** (what must be TRUE):
   1. Un panneau dev expose, pour chaque réponse, `{discussion, fragments, valid, fellBack, warnings}` lisible en direct
-  2. La sonde calcule des métriques de conformité : duplication discussion↔fragment, détection de préambule par locale (fr/en/de/es/it), comparaison A/B qualité de prose vs ancien chemin plain, table non scindée, REF préservés, répartition 0/1/N
+  2. La sonde calcule des métriques de conformité : duplication discussion↔fragment, détection de préambule par locale (fr/en/de/es/it), table non scindée, REF préservés, répartition 0/1/N
   3. Les critères de passage de la sonde sont explicitement documentés et leur résultat (pass/no-go) est enregistré comme gate des phases v3.1-04 et v3.1-05
   4. La sonde est un outil de dev (panneau/console) qui n'affecte pas l'utilisateur final
 **Plans**: 3 plans

@@ -1,0 +1,126 @@
+{
+  "v": 1,
+  "samples": [
+    {
+      "ts": 1718600000001,
+      "surface": "popover",
+      "inputMd": "Notre équipe livrera le rapport vendredi.",
+      "discussion": "Réécriture plus formelle : {{fragment:0}}",
+      "fragments": ["Notre équipe remettra le rapport final le vendredi 14 juin."],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": { "locale": "fr", "hasTable": false, "hasRef": false, "curated": true }
+    },
+    {
+      "ts": 1718600000002,
+      "surface": "chat",
+      "inputMd": "Please tighten the opening paragraph.",
+      "discussion": "I tightened the opening for clarity. {{fragment:0}}",
+      "fragments": ["The product cuts onboarding time in half by removing three manual steps."],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": { "locale": "en", "hasTable": false, "hasRef": false, "curated": true }
+    },
+    {
+      "ts": 1718600000003,
+      "surface": "popover",
+      "inputMd": "Bitte den Satz höflicher formulieren.",
+      "discussion": "Höflichere Formulierung: {{fragment:0}}",
+      "fragments": ["Könnten Sie uns die Unterlagen bitte bis Freitag zukommen lassen?"],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": { "locale": "de", "hasTable": false, "hasRef": false, "curated": true }
+    },
+    {
+      "ts": 1718600000004,
+      "surface": "chat",
+      "inputMd": "Resume el siguiente texto en una frase.",
+      "discussion": "Aquí va el resumen solicitado. {{fragment:0}}",
+      "fragments": ["El informe muestra un crecimiento del 12% impulsado por las ventas en línea."],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": { "locale": "es", "hasTable": false, "hasRef": false, "curated": true }
+    },
+    {
+      "ts": 1718600000005,
+      "surface": "popover",
+      "inputMd": "Traduci in modo conciso.",
+      "discussion": "Traduzione concisa: {{fragment:0}}",
+      "fragments": ["La riunione è stata spostata a martedì alle ore 10."],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": { "locale": "it", "hasTable": false, "hasRef": false, "curated": true }
+    },
+    {
+      "ts": 1718600000006,
+      "surface": "chat",
+      "inputMd": "Voici un tableau des résultats trimestriels :\n[TABLE:0][CELL:0,0]Trimestre[/CELL][CELL:0,1]Revenu[/CELL][CELL:1,0]T1[/CELL][CELL:1,1]120 k€[/CELL][/TABLE]\nMets à jour le revenu du T1 à 135 k€.",
+      "discussion": "J'ai mis à jour le revenu du premier trimestre. {{fragment:0}}",
+      "fragments": ["[TABLE:0][CELL:0,0]Trimestre[/CELL][CELL:0,1]Revenu[/CELL][CELL:1,0]T1[/CELL][CELL:1,1]135 k€[/CELL][/TABLE]"],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": { "locale": "fr", "hasTable": true, "hasRef": false, "curated": true }
+    },
+    {
+      "ts": 1718600000007,
+      "surface": "chat",
+      "inputMd": "Here is a small schedule table:\n[TABLE:0][CELL:0,0]Day[/CELL][CELL:0,1]Task[/CELL][CELL:1,0]Mon[/CELL][CELL:1,1]Draft[/CELL][/TABLE]\nAdd a row for Tuesday: Review.",
+      "discussion": "I added the Tuesday row. {{fragment:0}}",
+      "fragments": ["[TABLE:0][CELL:0,0]Day[/CELL][CELL:0,1]Task[/CELL][CELL:1,0]Mon[/CELL][CELL:1,1]Draft[/CELL][CELL:2,0]Tue[/CELL][CELL:2,1]Review[/CELL][/TABLE]"],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": { "locale": "en", "hasTable": true, "hasRef": false, "curated": true }
+    },
+    {
+      "ts": 1718600000008,
+      "surface": "popover",
+      "inputMd": "Traduis ce passage en anglais en conservant le renvoi : Le détail figure en {{REF:scribe-ref-1:Section 2}} du document.",
+      "discussion": "Traduction avec renvoi préservé : {{fragment:0}}",
+      "fragments": ["The details are provided in {{REF:scribe-ref-1:Section 2}} of the document."],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": { "locale": "en", "hasTable": false, "hasRef": true, "curated": true }
+    },
+    {
+      "ts": 1718600000009,
+      "surface": "chat",
+      "inputMd": "Übersetze ins Deutsche und behalte den Verweis: Weitere Angaben siehe {{REF:scribe-ref-3:Abschnitt 4}}.",
+      "discussion": "Hier die Übersetzung mit erhaltenem Verweis. {{fragment:0}}",
+      "fragments": ["Weitere Angaben finden Sie in {{REF:scribe-ref-3:Abschnitt 4}}."],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": { "locale": "de", "hasTable": false, "hasRef": true, "curated": true }
+    },
+    {
+      "ts": 1718600000010,
+      "surface": "chat",
+      "inputMd": "Reformula conservando la referencia: consulta los datos en {{REF:scribe-ref-7:Anexo A}}.",
+      "discussion": "Aquí está la reformulación. {{fragment:0}}",
+      "fragments": ["Puedes consultar los datos completos en el anexo correspondiente."],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": { "locale": "es", "hasTable": false, "hasRef": true, "curated": true }
+    },
+    {
+      "ts": 1718600000011,
+      "surface": "popover",
+      "inputMd": "Riscrivi questa frase in modo più formale.",
+      "discussion": "Ecco la versione più formale. {{fragment:0}}",
+      "fragments": ["Voici le texte réécrit : La preghiamo di confermare la Sua presenza entro venerdì."],
+      "valid": true,
+      "fellBack": false,
+      "warnings": ["preamble-suspected"],
+      "tags": { "locale": "it", "hasTable": false, "hasRef": false, "curated": true }
+    }
+  ]
+}
