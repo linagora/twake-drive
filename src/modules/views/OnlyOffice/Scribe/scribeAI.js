@@ -33,6 +33,23 @@ export const SYSTEM_PROMPT =
   'Respond in the same language as the input text.'
 
 /**
+ * Shared response-contract block (D-01).
+ *
+ * Instructs the model to return the `{ discussion, fragments[] }` JSON contract
+ * (see SCRIBE_OUTPUT_SCHEMA.md / scribeResponse.js). Terse plain-language rules
+ * anchored by ONE tiny worked example showing a `{{fragment:N}}` marker resolving
+ * to `fragments[N]` (no few-shot). The surface-specific cardinality sentence
+ * (D-02) is appended separately by each call site.
+ */
+export const RESPONSE_CONTRACT_BLOCK =
+  'Return ONLY a JSON object with two keys: `discussion` (a string, conversational ' +
+  'markdown shown to the user) and `fragments` (an array of strings, each an ' +
+  'insertable piece of markdown). No prose, no code fences, no text outside the JSON. ' +
+  'Inside `discussion` you may place `{{fragment:N}}` position markers (0-indexed) to ' +
+  'show where each fragment belongs; marker `{{fragment:N}}` resolves to `fragments[N]`. ' +
+  'Example: {"discussion":"Here is the rewrite: {{fragment:0}}","fragments":["the rewritten text"]}.'
+
+/**
  * Search SCRIBE_ACTIONS (including children and dynamic translate children)
  * for an action matching the given id.
  *
@@ -84,7 +101,14 @@ function findActionConfig(actionId) {
 export function buildMessages(actionId, selectedText, label, extra) {
   // Prepend system instructions to user message (single user role)
   // to avoid issues with RAG backends that may not support the system role
-  let systemBase = SYSTEM_PROMPT
+  // Emit the shared response contract (D-01) plus the inline cardinality
+  // sentence (D-02, inline side). The whole thing stays in the single user-role
+  // prefix below — no system role is introduced.
+  let systemBase =
+    SYSTEM_PROMPT +
+    ' ' +
+    RESPONSE_CONTRACT_BLOCK +
+    ' Return **exactly ONE** fragment.'
   if (extra?.enrichedMd && (extra.enrichedMd.includes('[TABLE:') || extra.enrichedMd.includes('[CELL:'))) {
     systemBase += ' Preserve all [TABLE:N]...[/TABLE] and [CELL:r,c]...[/CELL] markers exactly as-is. Only modify the text content between the opening [CELL:r,c] and closing [/CELL] tags. Do not add, remove, or reorder [TABLE:N] or [CELL:r,c] markers.'
   }
