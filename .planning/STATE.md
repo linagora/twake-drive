@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v3.1
 milestone_name: Contrat de réponse structurée LLM
 status: executing
-stopped_at: Phase v3.1-02 executed (3/3 plans), verification pending
-last_updated: "2026-06-17T07:40:00.000Z"
-last_activity: 2026-06-17 -- Phase v3.1-02 execution complete (3 plans, build+tests green)
+stopped_at: Phase v3.1-02 complete (verified + review fixes applied)
+last_updated: "2026-06-17T07:55:00.000Z"
+last_activity: 2026-06-17 -- Phase v3.1-02 complete (verified 5/5, code review 6/6 findings fixed)
 progress:
   total_phases: 5
   completed_phases: 2
@@ -21,17 +21,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-16)
 
 **Core value:** L'utilisateur peut interagir avec l'IA de maniere fluide -- actions rapides inline ou chat conversationnel dans un panneau lateral -- pour transformer et manipuler le contenu de son document OnlyOffice.
-**Current focus:** Phase v3.1-02 — Prompt + plumbing (executed, verification pending)
+**Current focus:** Phase v3.1-02 — Prompt + plumbing (COMPLETE ✓)
 
 ## Current Position
 
-Phase: v3.1-02 (Prompt + plumbing) — EXECUTED ✓ (3/3 plans, build + Scribe tests green 2026-06-17)
+Phase: v3.1-02 (Prompt + plumbing) — COMPLETE ✓ (verified 5/5; code review 6/6 findings fixed; 2026-06-17)
 Plan: 3 of 3 complete
-Status: Verification pending
+Status: Ready to execute next phase
 Progress: [████      ] 40% (2/5 phases)
-Last activity: 2026-06-17 -- Phase v3.1-02 execution complete
+Last activity: 2026-06-17 -- Phase v3.1-02 complete
 
-Next: phase verification, then `/gsd:execute-phase v3.1-03` (HARD GATE — dev probe)
+Next: `/gsd:execute-phase v3.1-03` (HARD GATE — dev conformance probe before any card rendering)
 
 ## v3.1 Roadmap Summary
 
