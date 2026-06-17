@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
 import Icon from 'cozy-ui/transpiled/react/Icon'
@@ -10,6 +10,8 @@ import { useScribe } from '@/modules/views/OnlyOffice/Scribe/ScribeContext'
 import { ResizeHandle } from '@/modules/views/OnlyOffice/Scribe/ResizeHandle'
 import { ChatMessageList } from '@/modules/views/OnlyOffice/Scribe/ChatMessageList'
 import { ChatInput } from '@/modules/views/OnlyOffice/Scribe/ChatInput'
+import { isScribeDevMd } from '@/modules/views/OnlyOffice/Scribe/scribeDevMode'
+import { ProbeMetricsPanel } from '@/modules/views/OnlyOffice/Scribe/ScribeResultPanel'
 
 export const PANEL_WIDTH = 400
 
@@ -41,6 +43,11 @@ const SparkleSvg = ({ size = 20 }) => (
 export const ScribePanel = () => {
   const theme = useTheme()
   const { closePanel, panelWidth } = useScribe()
+  // Dev-only: lets a dev open the conformance probe (corpus metrics) from the
+  // chat side panel — the inline ScribeResultPanel is only reachable from the
+  // popover flow, so chat-side usage had no way to see the gate metrics.
+  const devMode = isScribeDevMd()
+  const [showProbe, setShowProbe] = useState(false)
 
   const isDark = (theme.palette.type || theme.palette.mode) === 'dark'
 
@@ -79,14 +86,59 @@ export const ScribePanel = () => {
           >
             Scribe
           </Typography>
+          {devMode && (
+            <button
+              type="button"
+              onClick={() => setShowProbe(v => !v)}
+              title="Sonde de conformité (dev)"
+              style={{
+                marginRight: 8,
+                fontSize: 11,
+                cursor: 'pointer',
+                padding: '2px 8px',
+                borderRadius: 4,
+                border: `1px solid ${theme.palette.divider}`,
+                background: showProbe ? theme.palette.action.selected : 'transparent',
+                color: theme.palette.text.secondary
+              }}
+            >
+              Sonde
+            </button>
+          )}
           <IconButton size="small" onClick={closePanel}>
             <Icon icon={CrossIcon} size={16} />
           </IconButton>
         </div>
 
-        {/* Chat body */}
-        <ChatMessageList />
-        <ChatInput />
+        {/* Chat body (kept mounted; probe view overlays it so chat state is preserved) */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0, position: 'relative' }}>
+          <ChatMessageList />
+          <ChatInput />
+          {devMode && showProbe && (
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                zIndex: 5,
+                background: theme.palette.background.paper,
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'auto',
+                padding: 12
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
+                <Typography variant="subtitle2" style={{ flex: 1 }}>
+                  Sonde de conformité
+                </Typography>
+                <IconButton size="small" onClick={() => setShowProbe(false)}>
+                  <Icon icon={CrossIcon} size={14} />
+                </IconButton>
+              </div>
+              <ProbeMetricsPanel />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

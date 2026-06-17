@@ -82,6 +82,29 @@ const escapeHtml = str =>
 // these; the gate go/no-go decision lives in GATE.md, not in this component.
 const COVERAGE_MIN = { perLocale: 1, tableCases: 1, refCases: 1 }
 
+// Standalone fallback styles so ProbeMetricsPanel can be mounted outside the
+// inline DevPanelGrid (e.g. from the chat side panel) without the result-panel
+// style props. When rendered inside DevPanelGrid the real styles are passed in.
+const PROBE_LABEL_STYLE_DEFAULT = {
+  fontSize: 10,
+  fontWeight: 'bold',
+  textTransform: 'uppercase',
+  marginBottom: 4,
+  letterSpacing: '0.5px',
+  flexShrink: 0,
+  opacity: 0.7
+}
+const PROBE_PRE_STYLE_DEFAULT = {
+  flex: 1,
+  overflowY: 'auto',
+  padding: 12,
+  borderRadius: 4,
+  fontFamily: '"Fira Code", "Consolas", "Monaco", monospace',
+  fontSize: 11,
+  lineHeight: 1.4,
+  margin: 0
+}
+
 /**
  * ProbeMetricsPanel — renders the conformance metrics + coverage produced by
  * scribeProbe.aggregate(replay()). ALL metric math lives in scribeProbe.js; this
@@ -89,8 +112,15 @@ const COVERAGE_MIN = { perLocale: 1, tableCases: 1, refCases: 1 }
  * no metric computation here). Provides Export (exportCorpus) and Import
  * (importCorpus, wrapped in try/catch) controls for GATE.md evidence + offline
  * replay. Import never crashes the panel on a bad shape — it surfaces an error.
+ *
+ * Self-contained: reads the corpus from localStorage, so it can be mounted both
+ * inside the inline DevPanelGrid and standalone from the chat side panel.
  */
-const ProbeMetricsPanel = ({ devPreStyle, devLabelStyle, label, colorText }) => {
+export const ProbeMetricsPanel = ({
+  devPreStyle = PROBE_PRE_STYLE_DEFAULT,
+  devLabelStyle = PROBE_LABEL_STYLE_DEFAULT,
+  label = 'Métriques + couverture (sonde)'
+}) => {
   const [version, setVersion] = useState(0) // bump to re-aggregate after import
   const [importError, setImportError] = useState('')
   const fileInputRef = useRef(null)
@@ -145,28 +175,31 @@ const ProbeMetricsPanel = ({ devPreStyle, devLabelStyle, label, colorText }) => 
       <div style={{ ...devPreStyle, whiteSpace: 'normal', fontSize: 11 }}>
         {/* hidden version dependency so re-aggregation re-renders after import */}
         <span style={{ display: 'none' }}>{version}</span>
-        <div><strong>Total:</strong> {stats.total} échantillons</div>
+        <div><strong>Total :</strong> {stats.total} réponses analysées</div>
         <div style={{ marginTop: 6 }}>
-          <strong>Taux (vs seuils, D-04):</strong>
-          <div>· duplication ≥ {DUP_THRESHOLD}: <span>{pct(stats.dupRate)}</span></div>
-          <div>· préambule: <span>{pct(stats.preambleRate)}</span></div>
+          <strong>Anomalies de séparation (% des réponses)</strong>
+          <div>· contenu dupliqué fragment ↔ discussion (≥ {DUP_THRESHOLD}) : <span>{pct(stats.dupRate)}</span></div>
+          <div>· préambule parasite en tête de fragment : <span>{pct(stats.preambleRate)}</span></div>
         </div>
         <div style={{ marginTop: 6 }}>
-          <strong>Comptes zéro-tolérance (D-03):</strong>
-          <div>· table scindée: <span style={flagNonZero(stats.splitTableCount)}>{stats.splitTableCount}</span></div>
-          <div>· REF cassés: <span style={flagNonZero(stats.refBrokenCount)}>{stats.refBrokenCount}</span></div>
+          <strong>Erreurs bloquantes (0 toléré)</strong>
+          <div>· tableau scindé (entre fragments / discussion) : <span style={flagNonZero(stats.splitTableCount)}>{stats.splitTableCount}</span></div>
+          <div>· références (REF) perdues ou inventées : <span style={flagNonZero(stats.refBrokenCount)}>{stats.refBrokenCount}</span></div>
         </div>
         <div style={{ marginTop: 6 }}>
-          <strong>Répartition fragments (0/1/N, D-05):</strong>
-          <div>· 0: {stats.fragDist[0]} · 1: {stats.fragDist[1]} · N: {stats.fragDist.N}</div>
+          <strong>Fragments renvoyés (nb de réponses)</strong>
+          <div>· 0 : {stats.fragDist[0]} · 1 : {stats.fragDist[1]} · ≥2 : {stats.fragDist.N}</div>
+          <div style={{ opacity: 0.6, fontSize: 10, marginTop: 2 }}>
+            compte les réponses selon le nombre de fragments réellement renvoyés (attendu : popover = 1, chat = 0..N)
+          </div>
         </div>
         <div style={{ marginTop: 6 }}>
-          <strong>Couverture (D-09):</strong>
-          <div>· locales: <span style={warn(localeEntries.length, COVERAGE_MIN.perLocale)}>
+          <strong>Couverture du corpus (cas testés)</strong>
+          <div>· locales : <span style={warn(localeEntries.length, COVERAGE_MIN.perLocale)}>
             {localeEntries.length ? localeEntries.map(l => `${l}:${stats.coverage.perLocale[l]}`).join(', ') : '—'}
           </span></div>
-          <div>· cas table: <span style={warn(stats.coverage.tableCases, COVERAGE_MIN.tableCases)}>{stats.coverage.tableCases}</span></div>
-          <div>· cas REF: <span style={warn(stats.coverage.refCases, COVERAGE_MIN.refCases)}>{stats.coverage.refCases}</span></div>
+          <div>· cas avec tableau : <span style={warn(stats.coverage.tableCases, COVERAGE_MIN.tableCases)}>{stats.coverage.tableCases}</span></div>
+          <div>· cas avec référence (REF) : <span style={warn(stats.coverage.refCases, COVERAGE_MIN.refCases)}>{stats.coverage.refCases}</span></div>
         </div>
         {importError && (
           <div style={{ marginTop: 6, color: '#f44336' }}>{importError}</div>
