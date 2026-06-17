@@ -2,7 +2,6 @@ import React, { useMemo } from 'react'
 import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
 
 import { hasQueryBeenLoaded, useQuery } from 'cozy-client'
-import { shouldBeOpenedByOnlyOffice } from 'cozy-client/dist/models/file'
 import { useSharingContext } from 'cozy-sharing'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
@@ -13,15 +12,14 @@ import {
   getSharedDriveRootFilePathScope
 } from '@/modules/routeUtils'
 import FilesViewer from '@/modules/viewer/FilesViewer'
-import {
-  isOfficeEnabled,
-  makeOnlyOfficeFileRoute
-} from '@/modules/views/OnlyOffice/helpers'
+import { isExcalidrawEnabled as computeExcalidrawEnabled } from '@/modules/views/Excalidraw/helpers'
+import { isOfficeEnabled as computeOfficeEnabled } from '@/modules/views/OnlyOffice/helpers'
 import {
   getSharingsRootRoute,
   getSharingsSharedDriveRootFilePath,
   getSharingsTabFromPath
 } from '@/modules/views/Sharings/routes'
+import { findEditorForFile } from '@/modules/views/editor/registry'
 import { buildSharedDriveFileOrFolderByIdQuery } from '@/queries'
 
 const FilesViewerSharedDriveRootFile = ({ file, fileResult, driveId }) => {
@@ -93,10 +91,19 @@ const FilesViewerSharedDriveRootFileWrapper = () => {
     return <FilesViewerLoading />
   }
 
-  if (isOfficeEnabled(isDesktop) && shouldBeOpenedByOnlyOffice(file)) {
+  // A file shared as a shared-drive root is materialized on the recipient as
+  // a `.url` shortcut, so list-level dispatch can't recognize the document
+  // (and direct links/reloads land here without going through it). Now that
+  // the real file is resolved, send editor documents to their editor; an
+  // Excalidraw drawing has no inline viewer, so this is the only way it opens.
+  const editor = findEditorForFile(file, {
+    isOfficeEnabled: computeOfficeEnabled(isDesktop),
+    isExcalidrawEnabled: computeExcalidrawEnabled()
+  })
+  if (editor) {
     return (
       <Navigate
-        to={makeOnlyOfficeFileRoute(file._id, {
+        to={editor.makeRoute(file._id, {
           driveId,
           fromPathname: sharingsRootRoute
         })}
