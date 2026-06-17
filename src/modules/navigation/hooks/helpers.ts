@@ -3,7 +3,6 @@ import {
   isShortcut,
   isNote,
   isDocs,
-  shouldBeOpenedByOnlyOffice,
   isDirectory
 } from 'cozy-client/dist/models/file'
 import { IOCozyFile } from 'cozy-client/types/types'
@@ -27,10 +26,10 @@ import {
   isResolvableFileRootSharedDriveShortcut
 } from '@/modules/shareddrives/rootFileNavigation'
 import {
-  isExcalidraw,
-  makeExcalidrawFileRoute
-} from '@/modules/views/Excalidraw/helpers'
-import { makeOnlyOfficeFileRoute } from '@/modules/views/OnlyOffice/helpers'
+  findEditorBySlug,
+  findEditorForFile,
+  findEditorForShortcutTarget
+} from '@/modules/views/editor/registry'
 
 interface ComputeFileTypeOptions {
   isOfficeEnabled?: boolean
@@ -56,6 +55,14 @@ export const computeFileType = (
     cozyUrl = ''
   }: ComputeFileTypeOptions = {}
 ): string => {
+  // Editors (Excalidraw, OnlyOffice, …) are dispatched from a single registry
+  // so a new document type is wired in one place. Computed up front, but only
+  // consulted below after the higher-priority types (trash, notes, docs).
+  const editorForFile = findEditorForFile(file, {
+    isOfficeEnabled,
+    isExcalidrawEnabled
+  })
+
   if (file._id === TRASH_DIR_ID) {
     return 'trash'
   } else if (file._id === 'io.cozy.remote.nextcloud.files.trash-dir') {
@@ -85,35 +92,26 @@ export const computeFileType = (
     return 'docs'
   } else if (isGrist(file)) {
     return 'grist'
-  } else if (isExcalidraw(file) && isExcalidrawEnabled) {
-    return 'excalidraw'
+  } else if (editorForFile) {
+    // A `.excalidraw`/Office file opens in its editor. Runs before the
+    // shared-drive and shortcut branches so an Office file shared as a drive
+    // root still routes through its editor rather than the generic viewer.
+    return editorForFile.slug
   } else if (isResolvableFileRootSharedDriveShortcut(file)) {
     // File-root shared drives are materialized on the recipient as `.url`
     // shortcuts (`class: 'shortcut'`, mime `application/internet-shortcut`),
-    // so the regular `isShortcut` / `shouldBeOpenedByOnlyOffice` branches
-    // below cannot dispatch them to the OnlyOffice viewer. The stack
-    // exposes the shared file's real class in `metadata.target.class`
-    // (computed from the rule mime in `CreateDriveShortcut`); use it to
-    // route to `'onlyoffice'` or fall back to `'shared-drive-root-file'`.
-    // `target` is typed as `{ title; category }` by cozy-client, so the
-    // extra `class` field is `unknown`; widen to `unknown` explicitly to
-    // avoid the `no-unsafe-assignment` lint on the access below.
-    const targetClass: unknown = file.metadata?.target?.['class']
-    if (
-      (targetClass === 'text' ||
-        targetClass === 'spreadsheet' ||
-        targetClass === 'slide') &&
-      isOfficeEnabled
-    ) {
-      return 'onlyoffice'
+    // so the file's own name hides the real document. The stack exposes it in
+    // `metadata.target`; route it to the matching editor (so a shared
+    // Excalidraw drawing or Office file opens in its editor), otherwise fall
+    // back to the generic shared-drive root-file viewer.
+    const editorForTarget = findEditorForShortcutTarget(
+      file.metadata?.target,
+      { isOfficeEnabled, isExcalidrawEnabled }
+    )
+    if (editorForTarget) {
+      return editorForTarget.slug
     }
     return 'shared-drive-root-file'
-  } else if (shouldBeOpenedByOnlyOffice(file) && isOfficeEnabled) {
-    // Load-bearing: this branch runs before `isFileRootSharedDrive` below, so
-    // an Office file shared as a drive root routes through OnlyOffice (its own
-    // viewer) rather than the generic shared-drive-root-file viewer. See the
-    // `'onlyoffice' for file-root shared drives` spec.
-    return 'onlyoffice'
   } else if (isNextcloudShortcut(file)) {
     return 'nextcloud'
   } else if (isShortcut(file)) {
@@ -184,6 +182,15 @@ export const computePath = (
     return computeNextcloudPath(type, file, pathname)
   }
 
+  const editor = findEditorBySlug(type)
+  if (editor) {
+    return editor.makeRoute(file._id, {
+      driveId,
+      fromPathname: pathname,
+      fromPublicFolder: isPublic
+    })
+  }
+
   switch (type) {
     case 'trash':
       return '/trash'
@@ -225,18 +232,6 @@ export const computePath = (
       // paths with only one element correspond to the root of a page like /sharings
       // when we add id we want to keep the path before to make /sharings/id
       return paths.length === 1 ? file._id : `../${file._id}`
-    case 'onlyoffice':
-      return makeOnlyOfficeFileRoute(file._id, {
-        driveId,
-        fromPathname: pathname,
-        fromPublicFolder: isPublic
-      })
-    case 'excalidraw':
-      return makeExcalidrawFileRoute(file._id, {
-        driveId,
-        fromPathname: pathname,
-        fromPublicFolder: isPublic
-      })
     case 'shared-drive':
       // Without driveId, we should use path `/folder/:folderId` because it's shared drive folder of owner
       if (!driveId) {
