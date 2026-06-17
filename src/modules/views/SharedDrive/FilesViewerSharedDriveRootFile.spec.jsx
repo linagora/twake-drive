@@ -12,6 +12,8 @@ const mockHasQueryBeenLoaded = jest.fn()
 const mockFilesViewer = jest.fn(() => <div>files-viewer</div>)
 const mockNavigateElement = jest.fn(() => <div>navigate</div>)
 const mockIsOfficeEnabled = jest.fn(() => false)
+const mockIsExcalidrawEnabled = jest.fn(() => false)
+const mockFindEditorForFile = jest.fn()
 
 jest.mock('react-router-dom', () => ({
   Navigate: props => mockNavigateElement(props),
@@ -32,6 +34,15 @@ jest.mock('cozy-sharing', () => ({
 jest.mock('cozy-ui/transpiled/react/providers/Breakpoints', () => ({
   __esModule: true,
   default: () => ({ isDesktop: true })
+}))
+
+jest.mock('@/modules/views/editor/registry', () => ({
+  findEditorForFile: (...args) => mockFindEditorForFile(...args)
+}))
+
+jest.mock('@/modules/views/Excalidraw/helpers', () => ({
+  ...jest.requireActual('@/modules/views/Excalidraw/helpers'),
+  isExcalidrawEnabled: () => mockIsExcalidrawEnabled()
 }))
 
 jest.mock('@/modules/views/OnlyOffice/helpers', () => ({
@@ -62,6 +73,8 @@ jest.mock('@/queries', () => ({
 
 import FilesViewerSharedDriveRootFile from './FilesViewerSharedDriveRootFile'
 
+import { makeOnlyOfficeFileRoute } from '@/modules/views/OnlyOffice/helpers'
+
 const renderRootFileViewer = ({
   fetchedFile = { _id: 'canonical-id', id: 'canonical-id', name: 'Doc' },
   queryStatus = 'loaded',
@@ -88,6 +101,35 @@ const renderRootFileViewer = ({
 describe('FilesViewerSharedDriveRootFile', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    mockFindEditorForFile.mockImplementation(
+      jest.requireActual('@/modules/views/editor/registry').findEditorForFile
+    )
+  })
+
+  it('redirects an editor document to its editor', () => {
+    mockFindEditorForFile.mockReturnValue({
+      slug: 'excalidraw',
+      makeRoute: fileId => `/excalidraw/drive-1/${fileId}`
+    })
+    renderRootFileViewer({
+      fetchedFile: {
+        _id: 'canonical-id',
+        id: 'canonical-id',
+        name: 'Drawing.excalidraw'
+      }
+    })
+
+    expect(mockNavigateElement).toHaveBeenCalledWith({
+      to: '/excalidraw/drive-1/canonical-id',
+      replace: true
+    })
+    expect(mockFilesViewer).not.toHaveBeenCalled()
+  })
+
+  it('renders the viewer when the file is not an editor document', () => {
+    renderRootFileViewer()
+
+    expect(screen.getByText('files-viewer')).toBeInTheDocument()
   })
 
   it('disables the sharing panel', () => {
@@ -174,9 +216,17 @@ describe('FilesViewerSharedDriveRootFile', () => {
 
     it('opens the editor instead of the viewer when office is enabled', () => {
       mockIsOfficeEnabled.mockReturnValue(true)
+      mockFindEditorForFile.mockReturnValue({
+        slug: 'onlyoffice',
+        makeRoute: makeOnlyOfficeFileRoute
+      })
 
       renderRootFileViewer({ fetchedFile: deck })
 
+      expect(mockFindEditorForFile).toHaveBeenCalledWith(deck, {
+        isOfficeEnabled: true,
+        isExcalidrawEnabled: false
+      })
       expect(mockNavigateElement).toHaveBeenCalledWith({
         to: '/onlyoffice/drive-1/canonical-id?redirectLink=drive%23%2Fsharings%2Fdrives',
         replace: true
@@ -189,6 +239,10 @@ describe('FilesViewerSharedDriveRootFile', () => {
 
       renderRootFileViewer({ fetchedFile: deck })
 
+      expect(mockFindEditorForFile).toHaveBeenCalledWith(deck, {
+        isOfficeEnabled: false,
+        isExcalidrawEnabled: false
+      })
       expect(mockNavigateElement).not.toHaveBeenCalled()
       expect(screen.getByText('files-viewer')).toBeInTheDocument()
     })
