@@ -9,7 +9,13 @@ import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import { isSharedDriveDoc } from '@/modules/shareddrives/helpers'
 
 // Only for sharing tabs
-export const leaveSharedDrive = ({ client, showAlert, t, canLeave }) => {
+export const leaveSharedDrive = ({
+  client,
+  showAlert,
+  t,
+  canLeave,
+  isOwner
+}) => {
   const label = t('toolbar.menu_leave_shared_drive')
   const icon = LogoutIcon
 
@@ -19,7 +25,10 @@ export const leaveSharedDrive = ({ client, showAlert, t, canLeave }) => {
     icon,
     displayCondition: docs => {
       return (
-        docs.length === 1 && isSharedDriveDoc(docs[0]) && canLeave(docs[0]._id)
+        docs.length === 1 &&
+        isSharedDriveDoc(docs[0]) &&
+        canLeave(docs[0]._id) &&
+        !isOwner(docs[0]._id)
       )
     },
     action: async docs => {
