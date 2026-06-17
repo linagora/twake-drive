@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v3.1
 milestone_name: Contrat de réponse structurée LLM
 status: executing
-stopped_at: Phase v3.1-02 complete (verified + review fixes applied)
-last_updated: "2026-06-17T07:55:00.000Z"
-last_activity: 2026-06-17 -- Phase v3.1-02 complete (verified 5/5, code review 6/6 findings fixed)
+stopped_at: Phase v3.1-03 context gathered
+last_updated: "2026-06-17T10:32:38.767Z"
+last_activity: 2026-06-17 -- Phase v3.1-02 complete
 progress:
   total_phases: 5
   completed_phases: 2
@@ -21,17 +21,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-16)
 
 **Core value:** L'utilisateur peut interagir avec l'IA de maniere fluide -- actions rapides inline ou chat conversationnel dans un panneau lateral -- pour transformer et manipuler le contenu de son document OnlyOffice.
-**Current focus:** Phase v3.1-02 — Prompt + plumbing (COMPLETE ✓)
+**Current focus:** Phase v3.1-03 — Sonde dev (HARD GATE) — context gathered, ready for planning
 
 ## Current Position
 
-Phase: v3.1-02 (Prompt + plumbing) — COMPLETE ✓ (verified 5/5; code review 6/6 findings fixed; 2026-06-17)
-Plan: 3 of 3 complete
-Status: Ready to execute next phase
+Phase: v3.1-03 (Sonde dev — HARD GATE) — CONTEXT gathered ✓ (2026-06-17)
+Plan: not yet planned
+Status: Ready for planning
 Progress: [████      ] 40% (2/5 phases)
-Last activity: 2026-06-17 -- Phase v3.1-02 complete
+Last activity: 2026-06-17 -- Phase v3.1-03 context gathered
 
-Next: `/gsd:execute-phase v3.1-03` (HARD GATE — dev conformance probe before any card rendering)
+Next: `/gsd:plan-phase v3.1-03-sonde-dev-hard-gate-before-render` (use FULL slug — abbreviated `v3.1-03` fails SDK dir lookup)
 
 ## v3.1 Roadmap Summary
 
@@ -107,6 +107,6 @@ After v3.0-04 completion, three commits refined the plugin protocol and document
 
 ## Session Continuity
 
-Last session: 2026-06-16T20:52:37.455Z
-Stopped at: Phase v3.1-02 context gathered
-Resume file: .planning/phases/v3.1-02-prompt-plumbing/v3.1-02-CONTEXT.md
+Last session: 2026-06-17T10:32:38.760Z
+Stopped at: Phase v3.1-03 context gathered
+Resume file: .planning/phases/v3.1-03-sonde-dev-hard-gate-before-render/v3.1-03-CONTEXT.md
