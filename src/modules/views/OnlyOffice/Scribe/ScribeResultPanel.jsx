@@ -14,10 +14,17 @@ import Checkbox from 'cozy-ui/transpiled/react/Checkbox'
 
 import { MarkdownPreview } from '@/modules/views/OnlyOffice/Scribe/MarkdownPreview'
 import { loadBeautify, loadHighlightJs } from '@/modules/views/OnlyOffice/Scribe/scribeDevMode'
+import {
+  aggregate,
+  replay,
+  exportCorpus,
+  importCorpus,
+  DUP_THRESHOLD
+} from '@/modules/views/OnlyOffice/Scribe/scribeProbe'
 import styles from '@/modules/views/OnlyOffice/Scribe/scribe.styl'
 
 const DEV_PANELS_STORAGE_KEY = 'SCRIBE_DEV_MD_PANELS'
-const DEV_PANEL_KEYS = ['htmlSource', 'htmlNorm', 'mdConverted', 'llmRaw', 'llmDisplay', 'rendered']
+const DEV_PANEL_KEYS = ['htmlSource', 'htmlNorm', 'mdConverted', 'llmRaw', 'llmDisplay', 'rendered', 'parsedResponse', 'probeMetrics']
 function getDevPanelLabels(source) {
   const fromPlugin = source === 'plugin'
   return {
@@ -26,10 +33,12 @@ function getDevPanelLabels(source) {
     mdConverted: fromPlugin ? 'MD enrichi (plugin OO → marqueurs)' : 'MD converti (HTML → Turndown)',
     llmRaw: 'MD brut LLM (réponse IA — marqueurs)',
     llmDisplay: 'MD pour affichage (tableaux en md)',
-    rendered: 'Rendu final (aperçu)'
+    rendered: 'Rendu final (aperçu)',
+    parsedResponse: 'Réponse parsée (contrat)',
+    probeMetrics: 'Métriques + couverture (sonde)'
   }
 }
-const DEV_PANEL_DEFAULTS = { htmlSource: true, htmlNorm: true, mdConverted: true, llmRaw: true, llmDisplay: true, rendered: true }
+const DEV_PANEL_DEFAULTS = { htmlSource: true, htmlNorm: true, mdConverted: true, llmRaw: true, llmDisplay: true, rendered: true, parsedResponse: true, probeMetrics: true }
 
 function loadDevPanelPrefs() {
   try {
@@ -69,6 +78,119 @@ function saveDevPanelPrefs(prefs) {
 const escapeHtml = str =>
   (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
+// [ASSUMED] coverage minimums (documented in GATE.md). The panel only WARNS below
+// these; the gate go/no-go decision lives in GATE.md, not in this component.
+const COVERAGE_MIN = { perLocale: 1, tableCases: 1, refCases: 1 }
+
+/**
+ * ProbeMetricsPanel — renders the conformance metrics + coverage produced by
+ * scribeProbe.aggregate(replay()). ALL metric math lives in scribeProbe.js; this
+ * component only renders the already-computed aggregate output (anti-pattern:
+ * no metric computation here). Provides Export (exportCorpus) and Import
+ * (importCorpus, wrapped in try/catch) controls for GATE.md evidence + offline
+ * replay. Import never crashes the panel on a bad shape — it surfaces an error.
+ */
+const ProbeMetricsPanel = ({ devPreStyle, devLabelStyle, label, colorText }) => {
+  const [version, setVersion] = useState(0) // bump to re-aggregate after import
+  const [importError, setImportError] = useState('')
+  const fileInputRef = useRef(null)
+
+  // replay() + aggregate() are pure scribeProbe exports; component renders only.
+  const stats = aggregate(replay())
+
+  const handleExport = useCallback(() => {
+    try {
+      const json = exportCorpus()
+      const blob = new Blob([json], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'scribe-probe-corpus.json'
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch (e) {
+      setImportError('Export échoué: ' + (e && e.message ? e.message : 'erreur'))
+    }
+  }, [])
+
+  const handleImportFile = useCallback(e => {
+    const file = e.target.files && e.target.files[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      try {
+        // importCorpus validates shape/version and throws WITHOUT mutating storage
+        // on a bad import (T-v3.1-03-06). try/catch surfaces the error, never crashes.
+        importCorpus(String(reader.result))
+        setImportError('')
+        setVersion(v => v + 1) // re-aggregate from the freshly imported corpus
+      } catch (err) {
+        setImportError('Import rejeté: ' + (err && err.message ? err.message : 'forme/version invalide'))
+      }
+    }
+    reader.onerror = () => setImportError('Lecture du fichier échouée')
+    reader.readAsText(file)
+    e.target.value = '' // allow re-importing the same file
+  }, [])
+
+  const warn = (value, min) => (value < min ? { color: '#ff9800', fontWeight: 'bold' } : undefined)
+  const flagNonZero = value => (value > 0 ? { color: '#f44336', fontWeight: 'bold' } : undefined)
+  const pct = r => (r * 100).toFixed(1) + '%'
+
+  const localeEntries = Object.keys(stats.coverage.perLocale)
+
+  return (
+    <div key="probeMetrics" style={{ minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div style={devLabelStyle}>{label}</div>
+      <div style={{ ...devPreStyle, whiteSpace: 'normal', fontSize: 11 }}>
+        {/* hidden version dependency so re-aggregation re-renders after import */}
+        <span style={{ display: 'none' }}>{version}</span>
+        <div><strong>Total:</strong> {stats.total} échantillons</div>
+        <div style={{ marginTop: 6 }}>
+          <strong>Taux (vs seuils, D-04):</strong>
+          <div>· duplication ≥ {DUP_THRESHOLD}: <span>{pct(stats.dupRate)}</span></div>
+          <div>· préambule: <span>{pct(stats.preambleRate)}</span></div>
+        </div>
+        <div style={{ marginTop: 6 }}>
+          <strong>Comptes zéro-tolérance (D-03):</strong>
+          <div>· table scindée: <span style={flagNonZero(stats.splitTableCount)}>{stats.splitTableCount}</span></div>
+          <div>· REF cassés: <span style={flagNonZero(stats.refBrokenCount)}>{stats.refBrokenCount}</span></div>
+        </div>
+        <div style={{ marginTop: 6 }}>
+          <strong>Répartition fragments (0/1/N, D-05):</strong>
+          <div>· 0: {stats.fragDist[0]} · 1: {stats.fragDist[1]} · N: {stats.fragDist.N}</div>
+        </div>
+        <div style={{ marginTop: 6 }}>
+          <strong>Couverture (D-09):</strong>
+          <div>· locales: <span style={warn(localeEntries.length, COVERAGE_MIN.perLocale)}>
+            {localeEntries.length ? localeEntries.map(l => `${l}:${stats.coverage.perLocale[l]}`).join(', ') : '—'}
+          </span></div>
+          <div>· cas table: <span style={warn(stats.coverage.tableCases, COVERAGE_MIN.tableCases)}>{stats.coverage.tableCases}</span></div>
+          <div>· cas REF: <span style={warn(stats.coverage.refCases, COVERAGE_MIN.refCases)}>{stats.coverage.refCases}</span></div>
+        </div>
+        {importError && (
+          <div style={{ marginTop: 6, color: '#f44336' }}>{importError}</div>
+        )}
+        <div style={{ marginTop: 8, display: 'flex', gap: 6 }}>
+          <button type="button" onClick={handleExport} style={{ fontSize: 11, cursor: 'pointer' }}>
+            Export
+          </button>
+          <button type="button" onClick={() => fileInputRef.current && fileInputRef.current.click()} style={{ fontSize: 11, cursor: 'pointer' }}>
+            Import
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/json,.json"
+            onChange={handleImportFile}
+            style={{ display: 'none' }}
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 /**
  * DevPanelGrid — renders up to 5 dev panels in a dynamic grid.
  * Only visible panels (from devPanelPrefs) are rendered.
@@ -84,8 +206,10 @@ const DevPanelGrid = ({
   highlightedMd,
   highlightedLlmMd,
   highlightedLlmDisplay,
+  highlightedParsedJson,
   rawLlmResult,
   devData,
+  parsedResponse,
   resultText,
   resultContent
 }) => {
@@ -176,6 +300,51 @@ const DevPanelGrid = ({
     )
   }
 
+  // PROBE-01: live parsed-response viewer. Renders the structured contract
+  // { discussion, fragments, valid, fellBack, warnings } as syntax-highlighted
+  // JSON through the SAME escapeHtml + highlight.js pipeline used by sibling
+  // panels (never inject raw model text as HTML — T-v3.1-03-07).
+  if (devPanelPrefs.parsedResponse !== false) {
+    const parsedJsonRaw = parsedResponse
+      ? JSON.stringify(
+          {
+            discussion: parsedResponse.discussion,
+            fragments: parsedResponse.fragments,
+            valid: parsedResponse.valid,
+            fellBack: parsedResponse.fellBack,
+            warnings: parsedResponse.warnings
+          },
+          null,
+          2
+        )
+      : ''
+    panels.push(
+      <div key="parsedResponse" style={devColumnStyle}>
+        <div style={devLabelStyle}>{labels.parsedResponse}</div>
+        <pre
+          className="hljs"
+          style={devPreStyle}
+          dangerouslySetInnerHTML={{
+            __html: highlightedParsedJson || escapeHtml(parsedJsonRaw)
+          }}
+        />
+      </div>
+    )
+  }
+
+  // PROBE-01: conformance metrics + coverage with export/import. All metric math
+  // lives in scribeProbe.js (aggregate/replay) — this panel only renders output.
+  if (devPanelPrefs.probeMetrics !== false) {
+    panels.push(
+      <ProbeMetricsPanel
+        key="probeMetrics"
+        devPreStyle={devPreStyle}
+        devLabelStyle={devLabelStyle}
+        label={labels.probeMetrics}
+      />
+    )
+  }
+
   if (panels.length === 0) return null
 
   const cols = panels.length <= 2 ? panels.length : panels.length <= 4 ? 2 : 3
@@ -210,6 +379,7 @@ const ScribeResultPanel = ({
   onClose,
   rawLlmResult,
   devData,
+  parsedResponse,
   dragOffset,
   onDragMove,
   panelSize,
@@ -323,6 +493,7 @@ const ScribeResultPanel = ({
   const [highlightedMd, setHighlightedMd] = useState('')
   const [highlightedLlmMd, setHighlightedLlmMd] = useState('')
   const [highlightedLlmDisplay, setHighlightedLlmDisplay] = useState('')
+  const [highlightedParsedJson, setHighlightedParsedJson] = useState('')
 
   useEffect(() => {
     if (!devData) return
@@ -359,8 +530,26 @@ const ScribeResultPanel = ({
           hljs.highlight(resultText, { language: 'markdown' }).value
         )
       }
+      if (parsedResponse) {
+        // Reuse the vetted highlight path for the parsed-response JSON viewer
+        // (T-v3.1-03-07: no raw model text injected as HTML).
+        const parsedJson = JSON.stringify(
+          {
+            discussion: parsedResponse.discussion,
+            fragments: parsedResponse.fragments,
+            valid: parsedResponse.valid,
+            fellBack: parsedResponse.fellBack,
+            warnings: parsedResponse.warnings
+          },
+          null,
+          2
+        )
+        setHighlightedParsedJson(
+          hljs.highlight(parsedJson, { language: 'json' }).value
+        )
+      }
     })
-  }, [devData, rawLlmResult, resultText])
+  }, [devData, rawLlmResult, resultText, parsedResponse])
 
   const getFocusables = useCallback(() => {
     if (error && canRetry) {
@@ -563,8 +752,10 @@ const ScribeResultPanel = ({
           highlightedMd={highlightedMd}
           highlightedLlmMd={highlightedLlmMd}
           highlightedLlmDisplay={highlightedLlmDisplay}
+          highlightedParsedJson={highlightedParsedJson}
           rawLlmResult={rawLlmResult}
           devData={devData}
+          parsedResponse={parsedResponse}
           resultText={resultText}
           resultContent={resultContent}
         />
@@ -632,6 +823,13 @@ ScribeResultPanel.propTypes = {
     normalizedHtml: PropTypes.string,
     md: PropTypes.string
   }),
+  parsedResponse: PropTypes.shape({
+    discussion: PropTypes.string,
+    fragments: PropTypes.array,
+    valid: PropTypes.bool,
+    fellBack: PropTypes.bool,
+    warnings: PropTypes.array
+  }),
   dragOffset: PropTypes.shape({
     x: PropTypes.number,
     y: PropTypes.number
@@ -652,6 +850,7 @@ ScribeResultPanel.defaultProps = {
   insertDisabled: false,
   onRetry: undefined,
   devData: null,
+  parsedResponse: null,
   dragOffset: { x: 0, y: 0 },
   onDragMove: undefined,
   panelSize: null,

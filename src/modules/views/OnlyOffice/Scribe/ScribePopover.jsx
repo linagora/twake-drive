@@ -42,6 +42,8 @@ const ScribePopover = ({ open, visible = true, selectedText, selectedHtml, enric
   const [lastAction, setLastAction] = useState(null)
   // Dev mode: store source HTML and intermediate MD for debug panels
   const [devData, setDevData] = useState({ html: '', md: '' })
+  // Dev mode (PROBE-01): the full parsed response for the "Réponse parsée" panel
+  const [parsedResponse, setParsedResponse] = useState(null)
   // Raw LLM response (with cell markers) for reinjection; display version goes in result.text
   const [rawResult, setRawResult] = useState('')
   // Warning when cell marker count mismatches between extraction and LLM response
@@ -63,6 +65,7 @@ const ScribePopover = ({ open, visible = true, selectedText, selectedHtml, enric
       setLoadingMessage('')
       setLastAction(null)
       setDevData({ html: '', md: '' })
+      setParsedResponse(null)
       setRawResult('')
       setCellWarning(null)
       setAmbiguityMessage(null)
@@ -155,6 +158,8 @@ const ScribePopover = ({ open, visible = true, selectedText, selectedHtml, enric
         // REF/duplication comparison. Additive observation only — no behavior change.
         if (isScribeDevMd()) {
           recordProbeSample(parsed, { surface: 'popover', inputMd, ts: Date.now() })
+          // Surface the structured payload in the DevPanelGrid "Réponse parsée" panel.
+          setParsedResponse(parsed)
         }
 
         // D-08: normalize the parsed result to exactly one insertable fragment:
@@ -317,6 +322,7 @@ const ScribePopover = ({ open, visible = true, selectedText, selectedHtml, enric
           onClose={handleClose}
           rawLlmResult={rawResult}
           devData={devMode ? devData : null}
+          parsedResponse={devMode ? parsedResponse : null}
           dragOffset={dragOffset}
           onDragMove={setDragOffset}
           panelSize={panelSize}
