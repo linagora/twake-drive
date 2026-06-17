@@ -3,6 +3,7 @@ import { useLocation, useResolvedPath, useNavigate } from 'react-router-dom'
 import type { Path } from 'react-router-dom'
 
 import { useClient, generateWebLink } from 'cozy-client'
+import { useSharingContext } from 'cozy-sharing'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import type { File } from '@/components/FolderPicker/types'
@@ -28,6 +29,37 @@ export interface LinkResult {
 interface UseFileLinkResult {
   link: LinkResult
   openLink: (evt: React.MouseEvent<HTMLElement>) => void
+}
+
+interface SharingContextForFileLink {
+  isOwner?: (docId: string) => boolean
+  allLoaded?: boolean
+  byDocId?: Record<string, unknown>
+}
+
+const computeIsSharingsOwner = ({
+  file,
+  pathname,
+  isPublic,
+  sharingContext
+}: {
+  file: File
+  pathname: string
+  isPublic: boolean
+  sharingContext?: SharingContextForFileLink
+}): boolean => {
+  const isInSharings = pathname.startsWith('/sharings')
+  const isKnownSharedDoc = Boolean(
+    file._id && sharingContext?.byDocId?.[file._id]
+  )
+
+  return (
+    !isPublic &&
+    isInSharings &&
+    isKnownSharedDoc &&
+    Boolean(sharingContext?.allLoaded) &&
+    Boolean(sharingContext?.isOwner?.(file._id))
+  )
 }
 
 /**
@@ -57,6 +89,15 @@ const useFileLink = (
   const isOfficeEnabled = computeOfficeEnabled(isDesktop)
   const isExcalidrawEnabled = computeExcalidrawEnabled()
   const { isPublic } = usePublicContext()
+  const sharingContext = useSharingContext() as
+    | SharingContextForFileLink
+    | undefined
+  const isSharingsOwner = computeIsSharingsOwner({
+    file,
+    pathname,
+    isPublic,
+    sharingContext
+  })
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   const cozyUrl = client?.getStackClient().uri as string
@@ -72,7 +113,8 @@ const useFileLink = (
     type,
     pathname,
     isPublic,
-    client
+    client,
+    isOwner: isSharingsOwner
   })
 
   const shouldBeOpenedInNewTab =
@@ -152,4 +194,4 @@ const useFileLink = (
   }
 }
 
-export { useFileLink }
+export { computeIsSharingsOwner, useFileLink }

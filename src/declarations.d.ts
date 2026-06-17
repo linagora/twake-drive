@@ -158,6 +158,8 @@ declare module 'cozy-sharing' {
     allLoaded: boolean
     refresh: () => void
     hasWriteAccess: (id: string, driveId?: string) => boolean
+    isOwner: (docId: string) => boolean
+    byDocId: Record<string, unknown>
   }
 
   export const useNativeFileSharing: () => {
