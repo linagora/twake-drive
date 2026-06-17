@@ -165,6 +165,6 @@ v3.1 phases execute in order: v3.1-01 -> v3.1-02 -> v3.1-03 (HARD GATE) -> v3.1-
 | v3.0-04. Panel Resize | v3.0 | 1/1 | Complete | 2026-03-19 |
 | v3.1-01. Module contrat | v3.1 | 2/2 | Complete | 2026-06-16 |
 | v3.1-02. Prompt + plumbing | v3.1 | 3/3 | Complete | 2026-06-17 |
-| v3.1-03. Sonde dev (HARD GATE) | v3.1 | 1/3 | Executing | - |
+| v3.1-03. Sonde dev (HARD GATE) | v3.1 | 2/3 | Executing | - |
 | v3.1-04. Rendu chat (cartes + clavier) | v3.1 | 0/0 | Not started | - |
 | v3.1-05. Rendu popover + durcissement | v3.1 | 0/0 | Not started | - |
