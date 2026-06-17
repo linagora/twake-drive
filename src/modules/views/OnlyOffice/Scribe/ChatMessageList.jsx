@@ -8,8 +8,61 @@ import Markdown from 'react-markdown'
 
 import MessageActions from '@/modules/views/OnlyOffice/Scribe/MessageActions'
 import { useScribe } from '@/modules/views/OnlyOffice/Scribe/ScribeContext'
+import { extractChannelMarkers } from '@/modules/views/OnlyOffice/Scribe/scribeResponse'
 
 const SCRIBE_PURPLE = '#7C3AED'
+
+/**
+ * THROWAWAY render-time compose helper (v3.1-02). Reproduces today's single-blob
+ * look from the extended { discussion, fragments } model without mutating stored
+ * content. Replaced by real fragment cards in v3.1-04 — delete then.
+ *
+ * - Replaces each {{fragment:N}} marker in `discussion` with `fragments[N]`
+ *   (0-indexed; uses the REF-safe extractChannelMarkers, never a hand-rolled regex).
+ * - Appends any UNREFERENCED fragments at the end, separated by blank lines (D-04).
+ * - D-06: with no fragments (chat fallback { discussion: raw, fragments: [] }),
+ *   returns `discussion` unchanged so raw renders byte-identically to today.
+ * - D-07: empty discussion + fragments returns just the joined fragment(s), so no
+ *   empty/broken bubble appears. No synthesized labels.
+ *
+ * @param {string} discussion
+ * @param {string[]} fragments
+ * @returns {string} display markdown
+ */
+const composeAssistantDisplay = (discussion, fragments) => {
+  const disc = typeof discussion === 'string' ? discussion : ''
+  const frags = Array.isArray(fragments) ? fragments : []
+
+  // D-06: nothing to compose — return discussion byte-identically.
+  if (frags.length === 0) return disc
+
+  // Locate ordered {{fragment:N}} hits and substitute back-to-front so earlier
+  // positions stay valid. Track which fragments got referenced.
+  const hits = extractChannelMarkers(disc, 'fragment')
+  const referenced = new Set()
+  let composed = disc
+  for (let i = hits.length - 1; i >= 0; i--) {
+    const { index, position } = hits[i]
+    if (index < 0 || index >= frags.length) continue
+    referenced.add(index)
+    const marker = `{{fragment:${index}}}`
+    composed =
+      composed.slice(0, position) +
+      frags[index] +
+      composed.slice(position + marker.length)
+  }
+
+  // Append unreferenced fragments at the end, blank-line separated.
+  const orphans = frags.filter((_, i) => !referenced.has(i))
+  const orphanText = orphans.join('\n\n')
+
+  if (composed.length === 0) {
+    // D-07: empty discussion — render just the fragment(s), no empty bubble.
+    return orphanText
+  }
+  if (orphanText.length === 0) return composed
+  return `${composed}\n\n${orphanText}`
+}
 
 const SparkleSvg = ({ size = 20 }) => (
   <svg
@@ -175,9 +228,18 @@ export const ChatMessageList = () => {
         if (msg.role === 'error') {
           return <ErrorBubble key={msg.id} content={msg.content} theme={theme} t={t} />
         }
+        // THROWAWAY (v3.1-04): compose discussion + fragments for display only.
+        // Backward-compatible — messages predating the extended model have no
+        // discussion/fragments, so fall back to msg.content. Stored content is
+        // never mutated; MessageActions keeps reading msg.content (pure discussion, D-05).
+        const hasContractFields =
+          msg.discussion !== undefined || msg.fragments !== undefined
+        const displayContent = hasContractFields
+          ? composeAssistantDisplay(msg.discussion ?? msg.content, msg.fragments)
+          : msg.content
         return (
           <div key={msg.id} style={{ alignSelf: 'flex-start', maxWidth: '85%' }}>
-            <AssistantBubble content={msg.content} theme={theme} />
+            <AssistantBubble content={displayContent} theme={theme} />
             <MessageActions content={msg.content} hasSelection={!!currentSelection} />
           </div>
         )
