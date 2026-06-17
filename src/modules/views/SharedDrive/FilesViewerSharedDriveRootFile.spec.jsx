@@ -9,10 +9,30 @@ const mockUseSharingContext = jest.fn()
 const mockHasQueryBeenLoaded = jest.fn()
 const mockFilesViewer = jest.fn(() => <div>files-viewer</div>)
 
+const mockFindEditorForFile = jest.fn()
+
 jest.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
   useLocation: () => mockUseLocation(),
-  useParams: () => mockUseParams()
+  useParams: () => mockUseParams(),
+  Navigate: ({ to }) => <div>{`navigate:${to}`}</div>
+}))
+
+jest.mock('cozy-ui/transpiled/react/providers/Breakpoints', () => ({
+  __esModule: true,
+  default: () => ({ isDesktop: true })
+}))
+
+jest.mock('@/modules/views/editor/registry', () => ({
+  findEditorForFile: (...args) => mockFindEditorForFile(...args)
+}))
+
+jest.mock('@/modules/views/Excalidraw/helpers', () => ({
+  isExcalidrawEnabled: () => true
+}))
+
+jest.mock('@/modules/views/OnlyOffice/helpers', () => ({
+  isOfficeEnabled: () => true
 }))
 
 jest.mock('cozy-client', () => ({
@@ -73,6 +93,32 @@ const renderRootFileViewer = ({
 describe('FilesViewerSharedDriveRootFile', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    mockFindEditorForFile.mockReturnValue(undefined)
+  })
+
+  it('redirects an editor document to its editor', () => {
+    mockFindEditorForFile.mockReturnValue({
+      slug: 'excalidraw',
+      makeRoute: fileId => `/excalidraw/drive-1/${fileId}`
+    })
+    renderRootFileViewer({
+      fetchedFile: {
+        _id: 'canonical-id',
+        id: 'canonical-id',
+        name: 'Drawing.excalidraw'
+      }
+    })
+
+    expect(
+      screen.getByText('navigate:/excalidraw/drive-1/canonical-id')
+    ).toBeInTheDocument()
+    expect(mockFilesViewer).not.toHaveBeenCalled()
+  })
+
+  it('renders the viewer when the file is not an editor document', () => {
+    renderRootFileViewer()
+
+    expect(screen.getByText('files-viewer')).toBeInTheDocument()
   })
 
   it('disables the sharing panel', () => {
