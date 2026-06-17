@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v3.1
 milestone_name: Contrat de réponse structurée LLM
 status: executing
-stopped_at: Phase v3.1-03 context gathered
-last_updated: "2026-06-17T12:14:45.176Z"
-last_activity: 2026-06-17 -- Completed v3.1-03-03-PLAN.md (GATE.md scaffold + curated probe-corpus.json + ROADMAP criterion-2 A/B retirement)
+stopped_at: "v3.1-03-02 Task 3 (checkpoint:human-verify, gate=blocking) — awaiting user verification of the probe on the live OO/Drive runtime"
+last_updated: "2026-06-17T13:22:12.315Z"
+last_activity: 2026-06-17
 progress:
   total_phases: 5
   completed_phases: 2
@@ -26,10 +26,10 @@ See: .planning/PROJECT.md (updated 2026-06-16)
 ## Current Position
 
 Phase: v3.1-03 (Sonde dev — HARD GATE) — EXECUTING (Plan 02 paused at blocking checkpoint)
-Plan: 02 of 3 — Tasks 1-2 done & committed; Task 3 = blocking human-verify checkpoint PENDING
-Status: Plan 02 wired the probe into both surfaces + DevPanelGrid (Tasks 1-2, committed c53b03ca4 + 5088ba765). Task 3 (checkpoint:human-verify, gate=blocking) awaits the user's live OO/Drive verification before Plan 02 can be marked complete. Plans 01 + 03 already complete.
+Plan: 3 of 3 — Tasks 1-2 done & committed; Task 3 = blocking human-verify checkpoint PENDING
+Status: Ready to execute
 Progress: [████      ] 40% (2/5 phases)
-Last activity: 2026-06-17 -- v3.1-03-02 Tasks 1-2 (both-surface dev-gated probe capture + parsedResponse/probeMetrics DevPanelGrid panels); awaiting Task 3 human verification
+Last activity: 2026-06-17
 
 Next: USER runs the Task 3 how-to-verify steps (see v3.1-03-02-SUMMARY.md / PLAN.md) in the live OO/Drive runtime, then replies "approved" (or describes issues) to complete Plan 02.
 

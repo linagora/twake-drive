@@ -65,7 +65,7 @@ Full v3.0 phase details are preserved in `.planning/milestones/v3.0-ROADMAP.md`.
 
 - [x] **Phase v3.1-01: Module contrat** (2/2 plans) -- completed 2026-06-16 - `scribeResponse.js` pur (parse tolérant + validation maison + repli contextuel + schéma), entièrement testé, zéro UI
 - [x] **Phase v3.1-02: Prompt + plumbing** (3/3 plans) -- completed 2026-06-17 - Prompts contractuels sur les deux surfaces, seam de parse aux deux call sites, modèle de message étendu, sérialisation multi-tour, miroir inline → historique chat
-- [ ] **Phase v3.1-03: Sonde dev (HARD GATE)** - Panneau dev exposant la réponse parsée + métriques de conformité ; ses critères de passage conditionnent les phases 04-05
+- [x] **Phase v3.1-03: Sonde dev (HARD GATE)** (3/3 plans) -- completed 2026-06-17 - Panneau dev exposant la réponse parsée + métriques de conformité ; ses critères de passage conditionnent les phases 04-05
 - [ ] **Phase v3.1-04: Rendu chat (cartes + clavier)** - Cartes de fragment encadrées aux positions `{{fragment:N}}`, boutons Copier/Insérer/Remplacer, réinjection riche par fragment, navigation clavier complète
 - [ ] **Phase v3.1-05: Rendu popover + durcissement** - Rendu du fragment unique dans le popover, re-ask sur parse invalide, i18n des libellés, corpus de régression, décision du défaut `response_format`
 
@@ -111,7 +111,7 @@ Full v3.0 phase details are preserved in `.planning/milestones/v3.0-ROADMAP.md`.
   4. La sonde est un outil de dev (panneau/console) qui n'affecte pas l'utilisateur final
 **Plans**: 3 plans
 - [x] v3.1-03-01-PLAN.md — pure scribeProbe.js metrics (duplication/preamble/split-table/REF) + localStorage corpus (export/import/replay/aggregate) + Jest spec
-- [~] v3.1-03-02-PLAN.md — capture both surfaces (popover+chat) dev-gated + DevPanelGrid parsed-response & metrics/coverage panels — code DONE (Tasks 1-2 committed c53b03ca4 + 5088ba765); Task 3 blocking human-verify PENDING on live OO/Drive runtime
+- [x] v3.1-03-02-PLAN.md — capture both surfaces (popover+chat) dev-gated + DevPanelGrid parsed-response & metrics/coverage panels; human-verify approved (7/7) + refinements: side-panel probe button + clearer metric labels (a96206f4d)
 - [x] v3.1-03-03-PLAN.md — GATE.md scaffold ([ASSUMED] thresholds) + curated probe-corpus.json + ROADMAP criterion-2 A/B retirement
 **UI hint**: yes
 
@@ -165,6 +165,6 @@ v3.1 phases execute in order: v3.1-01 -> v3.1-02 -> v3.1-03 (HARD GATE) -> v3.1-
 | v3.0-04. Panel Resize | v3.0 | 1/1 | Complete | 2026-03-19 |
 | v3.1-01. Module contrat | v3.1 | 2/2 | Complete | 2026-06-16 |
 | v3.1-02. Prompt + plumbing | v3.1 | 3/3 | Complete | 2026-06-17 |
-| v3.1-03. Sonde dev (HARD GATE) | v3.1 | 2/3 | Executing | - |
+| v3.1-03. Sonde dev (HARD GATE) | v3.1 | 3/3 | Complete | 2026-06-17 |
 | v3.1-04. Rendu chat (cartes + clavier) | v3.1 | 0/0 | Not started | - |
 | v3.1-05. Rendu popover + durcissement | v3.1 | 0/0 | Not started | - |
