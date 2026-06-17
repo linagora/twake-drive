@@ -17,6 +17,7 @@ import { transformCellMarkersForPreview } from '@/modules/views/OnlyOffice/Scrib
 import { parseScribeResponse } from '@/modules/views/OnlyOffice/Scribe/scribeResponse'
 import { ScribeResultPanel } from '@/modules/views/OnlyOffice/Scribe/ScribeResultPanel'
 import { isScribeDevMd } from '@/modules/views/OnlyOffice/Scribe/scribeDevMode'
+import { recordProbeSample } from '@/modules/views/OnlyOffice/Scribe/scribeProbe'
 import styles from '@/modules/views/OnlyOffice/Scribe/scribe.styl'
 
 /**
@@ -147,6 +148,14 @@ const ScribePopover = ({ open, visible = true, selectedText, selectedHtml, enric
         // fallback yields { discussion: '', fragments: [raw], fellBack: true } so the
         // normalized fragment below is byte-identical to today's raw response.
         const parsed = parseScribeResponse(text, { surface: 'popover' })
+
+        // PROBE-01 (D-11): feed the conformance probe the parsed popover response.
+        // Dev-mode only (isScribeDevMd guard) => zero production cost. `inputMd`
+        // (line ~99) is the same markdown sent to the LLM, used by the probe for
+        // REF/duplication comparison. Additive observation only — no behavior change.
+        if (isScribeDevMd()) {
+          recordProbeSample(parsed, { surface: 'popover', inputMd, ts: Date.now() })
+        }
 
         // D-08: normalize the parsed result to exactly one insertable fragment:
         //   2+ fragments -> join with \n\n; 0 fragments -> promote discussion;

@@ -9,6 +9,8 @@ import {
   parseScribeResponse,
   serializeAssistantTurnForHistory
 } from '@/modules/views/OnlyOffice/Scribe/scribeResponse'
+import { isScribeDevMd } from '@/modules/views/OnlyOffice/Scribe/scribeDevMode'
+import { recordProbeSample } from '@/modules/views/OnlyOffice/Scribe/scribeProbe'
 
 const STORAGE_KEY = 'scribe-panel-open'
 
@@ -159,6 +161,22 @@ export const ScribeProvider = ({ children }) => {
       // chat surface BEFORE storing/displaying. On parse failure the chat fallback
       // yields { discussion: raw, fragments: [] } so nothing is lost.
       const parsed = parseScribeResponse(responseText, { surface: 'chat' })
+
+      // PROBE-01 (D-11): feed the conformance probe the parsed chat response.
+      // Dev-mode only (isScribeDevMd guard) => zero production cost. The per-turn
+      // selection markdown (same `markdown || text` accessor used in the history
+      // mapping above) is the probe `inputMd`; absent => '' (RESEARCH A4: REF
+      // missing-detection degrades to N/A for that sample — acceptable). Additive
+      // observation only — no behavior change to the message model or rendering.
+      if (isScribeDevMd()) {
+        recordProbeSample(parsed, {
+          surface: 'chat',
+          inputMd: selectionContext
+            ? selectionContext.markdown || selectionContext.text || ''
+            : '',
+          ts: Date.now()
+        })
+      }
 
       // D-10: extended message model — keep content == discussion (existing UI
       // reads content unchanged) plus structured discussion/fragments/fellBack.
