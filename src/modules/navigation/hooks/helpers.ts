@@ -43,6 +43,7 @@ interface ComputePathOptions {
   pathname: string
   isPublic: boolean
   client: CozyClient | null
+  isOwner?: boolean
 }
 
 export const computeFileType = (
@@ -162,7 +163,7 @@ const computeNextcloudPath = (
 
 export const computePath = (
   file: File,
-  { type, pathname, isPublic, client }: ComputePathOptions
+  { type, pathname, isPublic, client, isOwner = false }: ComputePathOptions
 ): string => {
   const paths = pathname.split('/').slice(1)
   const driveId = file.driveId as string | undefined
@@ -195,6 +196,13 @@ export const computePath = (
     case 'shortcut':
       return `/external/${file._id}`
     case 'directory':
+      // When the user is the owner of a sharing displayed in /sharings, the
+      // file/folder is the real io.cozy.files document living in their Drive,
+      // so we must drop the /sharings prefix and open it in the normal Drive
+      // folder view instead of the sharings folder view.
+      if (isOwner && pathname.startsWith('/sharings')) {
+        return `/folder/${file._id}`
+      }
       // On mobile, if we are in /favorites tab, we do not want it to appears in computed path
       // so we redirect to root route for folders
       if (pathname.startsWith('/favorites')) {
@@ -244,6 +252,14 @@ export const computePath = (
       }
       return `/shareddrive/${driveId}/${file.dir_id}/file/${file._id}`
     default:
+      // Owner of a file shown in /sharings owns the real io.cozy.files
+      // document on their instance, so the file should open in the normal
+      // Drive viewer (`/folder/:dirId/file/:fileId`) and leave the sharings
+      // section. Recipients (and the rest of the file cases) keep the
+      // existing relative /sharings/file/:fileId path.
+      if (isOwner && pathname.startsWith('/sharings')) {
+        return `/folder/${file.dir_id}/file/${file._id}`
+      }
       // On mobile, if we are in /favorites tab, we do not want it to appears in computed path
       // so we redirect to root route for files
       if (pathname.startsWith('/favorites')) {
