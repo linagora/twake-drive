@@ -1,8 +1,20 @@
 const mockShouldBeOpenedByOnlyOffice = jest.fn()
+const mockIsExcalidrawEnabled = jest.fn()
+const mockIsOfficeEnabled = jest.fn()
 
 jest.mock('cozy-client/dist/models/file', () => ({
   shouldBeOpenedByOnlyOffice: (...args) =>
     mockShouldBeOpenedByOnlyOffice(...args)
+}))
+
+jest.mock('@/modules/views/Excalidraw/helpers', () => ({
+  ...jest.requireActual('@/modules/views/Excalidraw/helpers'),
+  isExcalidrawEnabled: (...args) => mockIsExcalidrawEnabled(...args)
+}))
+
+jest.mock('@/modules/views/OnlyOffice/helpers', () => ({
+  ...jest.requireActual('@/modules/views/OnlyOffice/helpers'),
+  isOfficeEnabled: (...args) => mockIsOfficeEnabled(...args)
 }))
 
 import {
@@ -11,42 +23,51 @@ import {
   findEditorForShortcutTarget
 } from './registry'
 
-const allEnabled = { isOfficeEnabled: true, isExcalidrawEnabled: true }
-
 describe('editor registry', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockShouldBeOpenedByOnlyOffice.mockReturnValue(false)
+    mockIsExcalidrawEnabled.mockReturnValue(false)
+    mockIsOfficeEnabled.mockReturnValue(false)
   })
 
   describe('findEditorForFile', () => {
-    it('matches an Excalidraw file by name', () => {
-      const file = { name: 'Drawing.excalidraw' }
-      expect(findEditorForFile(file, allEnabled)?.slug).toBe('excalidraw')
+    it('matches an Excalidraw file by name when the flag is on', () => {
+      mockIsExcalidrawEnabled.mockReturnValue(true)
+      expect(findEditorForFile({ name: 'Drawing.excalidraw' })?.slug).toBe(
+        'excalidraw'
+      )
     })
 
-    it('matches an Office file by class', () => {
+    it('matches an Office file by class when Office is enabled', () => {
       mockShouldBeOpenedByOnlyOffice.mockReturnValue(true)
-      const file = { name: 'Sheet.xlsx' }
-      expect(findEditorForFile(file, allEnabled)?.slug).toBe('onlyoffice')
+      mockIsOfficeEnabled.mockReturnValue(true)
+      expect(findEditorForFile({ name: 'Sheet.xlsx' })?.slug).toBe('onlyoffice')
     })
 
     it('prefers Excalidraw over OnlyOffice for a text-class .excalidraw file', () => {
       mockShouldBeOpenedByOnlyOffice.mockReturnValue(true)
-      const file = { name: 'Drawing.excalidraw' }
-      expect(findEditorForFile(file, allEnabled)?.slug).toBe('excalidraw')
+      mockIsOfficeEnabled.mockReturnValue(true)
+      mockIsExcalidrawEnabled.mockReturnValue(true)
+      expect(findEditorForFile({ name: 'Drawing.excalidraw' })?.slug).toBe(
+        'excalidraw'
+      )
     })
 
     it('returns undefined when the matching editor is disabled', () => {
-      const file = { name: 'Drawing.excalidraw' }
-      expect(
-        findEditorForFile(file, { isExcalidrawEnabled: false })
-      ).toBeUndefined()
+      expect(findEditorForFile({ name: 'Drawing.excalidraw' })).toBeUndefined()
     })
 
-    it('returns undefined for a plain file', () => {
+    it('forwards the device context to device-aware editors', () => {
+      mockShouldBeOpenedByOnlyOffice.mockReturnValue(true)
+      mockIsOfficeEnabled.mockReturnValue(true)
+      findEditorForFile({ name: 'Sheet.xlsx' }, { isDesktop: true })
+      expect(mockIsOfficeEnabled).toHaveBeenCalledWith(true)
+    })
+
+    it('never claims a PDF (it opens from the viewer)', () => {
       expect(
-        findEditorForFile({ name: 'notes.txt' }, allEnabled)
+        findEditorForFile({ name: 'doc.pdf', class: 'pdf' })
       ).toBeUndefined()
     })
   })
@@ -55,18 +76,16 @@ describe('editor registry', () => {
     const shortcutTo = target => ({ name: 'Shared.url', metadata: { target } })
 
     it('matches an Excalidraw shortcut target by mime', () => {
+      mockIsExcalidrawEnabled.mockReturnValue(true)
       const shortcut = shortcutTo({ mime: 'application/vnd.excalidraw+json' })
-      expect(findEditorForShortcutTarget(shortcut, allEnabled)?.slug).toBe(
-        'excalidraw'
-      )
+      expect(findEditorForShortcutTarget(shortcut)?.slug).toBe('excalidraw')
     })
 
     it('matches an Office shortcut target by class and mime, keeping the shortcut name', () => {
+      mockIsOfficeEnabled.mockReturnValue(true)
       mockShouldBeOpenedByOnlyOffice.mockReturnValue(true)
       const shortcut = shortcutTo({ class: 'spreadsheet', mime: 'text/csv' })
-      expect(findEditorForShortcutTarget(shortcut, allEnabled)?.slug).toBe(
-        'onlyoffice'
-      )
+      expect(findEditorForShortcutTarget(shortcut)?.slug).toBe('onlyoffice')
       expect(mockShouldBeOpenedByOnlyOffice).toHaveBeenCalledWith(
         expect.objectContaining({
           name: 'Shared.url',
@@ -77,15 +96,18 @@ describe('editor registry', () => {
     })
 
     it('respects enablement', () => {
-      const shortcut = shortcutTo({ mime: 'application/vnd.excalidraw+json' })
       expect(
-        findEditorForShortcutTarget(shortcut, { isExcalidrawEnabled: false })
+        findEditorForShortcutTarget(
+          shortcutTo({ mime: 'application/vnd.excalidraw+json' })
+        )
       ).toBeUndefined()
     })
 
     it('returns undefined for an unknown target', () => {
+      mockIsOfficeEnabled.mockReturnValue(true)
+      mockIsExcalidrawEnabled.mockReturnValue(true)
       expect(
-        findEditorForShortcutTarget(shortcutTo({ class: 'image' }), allEnabled)
+        findEditorForShortcutTarget(shortcutTo({ class: 'image' }))
       ).toBeUndefined()
     })
   })
@@ -93,6 +115,7 @@ describe('editor registry', () => {
   describe('findEditorBySlug', () => {
     it('finds a descriptor by slug', () => {
       expect(findEditorBySlug('onlyoffice')?.slug).toBe('onlyoffice')
+      expect(findEditorBySlug('pdf')?.slug).toBe('pdf')
     })
 
     it('returns undefined for an unknown slug', () => {

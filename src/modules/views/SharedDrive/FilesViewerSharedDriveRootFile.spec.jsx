@@ -11,8 +11,6 @@ const mockUseSharingContext = jest.fn()
 const mockHasQueryBeenLoaded = jest.fn()
 const mockFilesViewer = jest.fn(() => <div>files-viewer</div>)
 const mockNavigateElement = jest.fn(() => <div>navigate</div>)
-const mockIsOfficeEnabled = jest.fn(() => false)
-const mockIsExcalidrawEnabled = jest.fn(() => false)
 const mockFindEditorForFile = jest.fn()
 
 jest.mock('react-router-dom', () => ({
@@ -38,16 +36,6 @@ jest.mock('cozy-ui/transpiled/react/providers/Breakpoints', () => ({
 
 jest.mock('@/modules/views/editor/registry', () => ({
   findEditorForFile: (...args) => mockFindEditorForFile(...args)
-}))
-
-jest.mock('@/modules/views/Excalidraw/helpers', () => ({
-  ...jest.requireActual('@/modules/views/Excalidraw/helpers'),
-  isExcalidrawEnabled: () => mockIsExcalidrawEnabled()
-}))
-
-jest.mock('@/modules/views/OnlyOffice/helpers', () => ({
-  ...jest.requireActual('@/modules/views/OnlyOffice/helpers'),
-  isOfficeEnabled: () => mockIsOfficeEnabled()
 }))
 
 jest.mock('@/components/useHead', () => ({
@@ -214,8 +202,7 @@ describe('FilesViewerSharedDriveRootFile', () => {
       name: 'deck.pptx'
     }
 
-    it('opens the editor instead of the viewer when office is enabled', () => {
-      mockIsOfficeEnabled.mockReturnValue(true)
+    it('opens the editor instead of the viewer when the registry claims it', () => {
       mockFindEditorForFile.mockReturnValue({
         slug: 'onlyoffice',
         makeRoute: makeOnlyOfficeFileRoute
@@ -224,8 +211,7 @@ describe('FilesViewerSharedDriveRootFile', () => {
       renderRootFileViewer({ fetchedFile: deck })
 
       expect(mockFindEditorForFile).toHaveBeenCalledWith(deck, {
-        isOfficeEnabled: true,
-        isExcalidrawEnabled: false
+        isDesktop: true
       })
       expect(mockNavigateElement).toHaveBeenCalledWith({
         to: '/onlyoffice/drive-1/canonical-id?redirectLink=drive%23%2Fsharings%2Fdrives',
@@ -234,23 +220,21 @@ describe('FilesViewerSharedDriveRootFile', () => {
       expect(mockFilesViewer).not.toHaveBeenCalled()
     })
 
-    it('keeps the viewer when office is disabled', () => {
-      mockIsOfficeEnabled.mockReturnValue(false)
-
+    it('keeps the viewer when the registry does not claim it', () => {
       renderRootFileViewer({ fetchedFile: deck })
 
       expect(mockFindEditorForFile).toHaveBeenCalledWith(deck, {
-        isOfficeEnabled: false,
-        isExcalidrawEnabled: false
+        isDesktop: true
       })
       expect(mockNavigateElement).not.toHaveBeenCalled()
       expect(screen.getByText('files-viewer')).toBeInTheDocument()
     })
 
     it('opens a deep-linked PDF in OnlyOffice when office and PDF editing are enabled', () => {
-      mockIsOfficeEnabled.mockReturnValue(true)
       flag.mockImplementation(
-        name => name === 'drive.onlyoffice.pdf-editing.enabled'
+        name =>
+          name === 'drive.office.enabled' ||
+          name === 'drive.onlyoffice.pdf-editing.enabled'
       )
 
       renderRootFileViewer({ fetchedFile: pdf })
@@ -264,8 +248,7 @@ describe('FilesViewerSharedDriveRootFile', () => {
     })
 
     it('keeps the PDF viewer when PDF editing is disabled even with office enabled', () => {
-      mockIsOfficeEnabled.mockReturnValue(true)
-      flag.mockReturnValue(false)
+      flag.mockImplementation(name => name === 'drive.office.enabled')
 
       renderRootFileViewer({ fetchedFile: pdf })
 
@@ -274,8 +257,7 @@ describe('FilesViewerSharedDriveRootFile', () => {
     })
 
     it('opens non-PDF office files in OnlyOffice even when PDF editing is disabled', () => {
-      mockIsOfficeEnabled.mockReturnValue(true)
-      flag.mockReturnValue(false)
+      flag.mockImplementation(name => name === 'drive.office.enabled')
 
       renderRootFileViewer({ fetchedFile: deck })
 
@@ -288,7 +270,6 @@ describe('FilesViewerSharedDriveRootFile', () => {
     })
 
     it('keeps the PDF viewer when office is disabled', () => {
-      mockIsOfficeEnabled.mockReturnValue(false)
       flag.mockReturnValue(false)
 
       renderRootFileViewer({ fetchedFile: pdf })
