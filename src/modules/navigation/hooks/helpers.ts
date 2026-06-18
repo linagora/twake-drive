@@ -32,8 +32,7 @@ import {
 } from '@/modules/views/editor/registry'
 
 interface ComputeFileTypeOptions {
-  isOfficeEnabled?: boolean
-  isExcalidrawEnabled?: boolean
+  isDesktop?: boolean
   isPublic?: boolean
   cozyUrl?: string
 }
@@ -49,8 +48,7 @@ interface ComputePathOptions {
 export const computeFileType = (
   file: File,
   {
-    isOfficeEnabled = false,
-    isExcalidrawEnabled = false,
+    isDesktop = false,
     isPublic = false,
     cozyUrl = ''
   }: ComputeFileTypeOptions = {}
@@ -58,10 +56,7 @@ export const computeFileType = (
   // Editors (Excalidraw, OnlyOffice, …) are dispatched from a single registry
   // so a new document type is wired in one place. Computed up front, but only
   // consulted below after the higher-priority types (trash, notes, docs).
-  const editorForFile = findEditorForFile(file, {
-    isOfficeEnabled,
-    isExcalidrawEnabled
-  })
+  const editorForFile = findEditorForFile(file, { isDesktop })
 
   if (file._id === TRASH_DIR_ID) {
     return 'trash'
@@ -105,8 +100,7 @@ export const computeFileType = (
     // Excalidraw drawing or Office file opens in its editor), otherwise fall
     // back to the generic shared-drive root-file viewer.
     const editorForTarget = findEditorForShortcutTarget(file.metadata?.target, {
-      isOfficeEnabled,
-      isExcalidrawEnabled
+      isDesktop
     })
     if (editorForTarget) {
       return editorForTarget.slug

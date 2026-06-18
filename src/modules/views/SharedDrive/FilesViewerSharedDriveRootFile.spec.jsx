@@ -27,14 +27,6 @@ jest.mock('@/modules/views/editor/registry', () => ({
   findEditorForFile: (...args) => mockFindEditorForFile(...args)
 }))
 
-jest.mock('@/modules/views/Excalidraw/helpers', () => ({
-  isExcalidrawEnabled: () => true
-}))
-
-jest.mock('@/modules/views/OnlyOffice/helpers', () => ({
-  isOfficeEnabled: () => true
-}))
-
 jest.mock('cozy-client', () => ({
   useQuery: (...args) => mockUseQuery(...args),
   hasQueryBeenLoaded: (...args) => mockHasQueryBeenLoaded(...args)
