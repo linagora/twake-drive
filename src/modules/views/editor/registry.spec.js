@@ -1,7 +1,8 @@
 const mockShouldBeOpenedByOnlyOffice = jest.fn()
 
 jest.mock('cozy-client/dist/models/file', () => ({
-  shouldBeOpenedByOnlyOffice: (...args) => mockShouldBeOpenedByOnlyOffice(...args)
+  shouldBeOpenedByOnlyOffice: (...args) =>
+    mockShouldBeOpenedByOnlyOffice(...args)
 }))
 
 import {
@@ -44,7 +45,9 @@ describe('editor registry', () => {
     })
 
     it('returns undefined for a plain file', () => {
-      expect(findEditorForFile({ name: 'notes.txt' }, allEnabled)).toBeUndefined()
+      expect(
+        findEditorForFile({ name: 'notes.txt' }, allEnabled)
+      ).toBeUndefined()
     })
   })
 
