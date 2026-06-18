@@ -415,7 +415,7 @@
     "outsideSharedFolder": {
       "title": "Di chuyển ra khỏi thư mục chia sẻ %{sharedFolder}",
       "content_1": "Cảnh báo, bạn đang muốn di chuyển %{name} ra khỏi thư mục chia sẻ %{sharedFolder}. |||| Cảnh báo, bạn đang muốn di chuyển %{smart_count} %{type} ra khỏi thư mục chia sẻ %{sharedFolder}.",
-      "content_2": "Thao tác này sẽ xóa %{type} %{name} khỏi mục chia sẻ. %{type} này sẽ bị đưa vào thùng rác đối với tất cả thành viên được chia sẻ. |||| Thao tác này sẽ xóa %{smart_count} %{type} khỏi mục chia sẻ. Các %{type} này sẽ bị đưa vào thùng rác đối với tất cả thành viên được chia sẻ.",
+      "content_2": "Thao tác này sẽ xóa %{type} %{name} khỏi mục chia sẻ. |||| Thao tác này sẽ xóa %{smart_count} %{type} khỏi mục chia sẻ.",
       "cancel": "Hủy",
       "confirm": "Tôi hiểu"
     },
