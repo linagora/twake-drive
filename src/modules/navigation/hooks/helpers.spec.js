@@ -2,21 +2,31 @@ import { computeFileType, computeApp, computePath } from './helpers'
 
 import { TRASH_DIR_ID, SHARED_DRIVES_DIR_ID } from '@/constants/config'
 import { DRIVE_ROOT_TYPE } from '@/modules/shareddrives/types'
-import { makeExcalidrawFileRoute } from '@/modules/views/Excalidraw/helpers'
-import { makeOnlyOfficeFileRoute } from '@/modules/views/OnlyOffice/helpers'
+import {
+  makeExcalidrawFileRoute,
+  isExcalidrawEnabled
+} from '@/modules/views/Excalidraw/helpers'
+import {
+  makeOnlyOfficeFileRoute,
+  isOfficeEnabled
+} from '@/modules/views/OnlyOffice/helpers'
 
 jest.mock('modules/views/OnlyOffice/helpers', () => ({
-  makeOnlyOfficeFileRoute: jest.fn()
+  makeOnlyOfficeFileRoute: jest.fn(),
+  isOfficeEnabled: jest.fn()
 }))
 jest.mock('modules/views/Excalidraw/helpers', () => ({
   ...jest.requireActual('modules/views/Excalidraw/helpers'),
-  makeExcalidrawFileRoute: jest.fn()
+  makeExcalidrawFileRoute: jest.fn(),
+  isExcalidrawEnabled: jest.fn()
 }))
 jest.mock('cozy-flags', () => jest.fn())
 
 describe('computeFileType', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    isOfficeEnabled.mockReturnValue(false)
+    isExcalidrawEnabled.mockReturnValue(false)
   })
 
   it('should return "trash" for the trash directory', () => {
@@ -70,7 +80,8 @@ describe('computeFileType', () => {
       driveId: 'drive456',
       drive_root_type: DRIVE_ROOT_TYPE.FILE
     }
-    expect(computeFileType(file, { isOfficeEnabled: true })).toBe('onlyoffice')
+    isOfficeEnabled.mockReturnValue(true)
+    expect(computeFileType(file)).toBe('onlyoffice')
   })
 
   it('should return "onlyoffice" for file-root shared drive .url shortcuts on the recipient when Office is enabled', () => {
@@ -95,7 +106,8 @@ describe('computeFileType', () => {
         }
       }
     }
-    expect(computeFileType(file, { isOfficeEnabled: true })).toBe('onlyoffice')
+    isOfficeEnabled.mockReturnValue(true)
+    expect(computeFileType(file)).toBe('onlyoffice')
   })
 
   it('should return "onlyoffice" for spreadsheet file-root shared drive .url shortcuts on the recipient', () => {
@@ -116,7 +128,8 @@ describe('computeFileType', () => {
         }
       }
     }
-    expect(computeFileType(file, { isOfficeEnabled: true })).toBe('onlyoffice')
+    isOfficeEnabled.mockReturnValue(true)
+    expect(computeFileType(file)).toBe('onlyoffice')
   })
 
   it('should return "excalidraw" for Excalidraw file-root shared drive .url shortcuts on the recipient', () => {
@@ -141,9 +154,8 @@ describe('computeFileType', () => {
         }
       }
     }
-    expect(computeFileType(file, { isExcalidrawEnabled: true })).toBe(
-      'excalidraw'
-    )
+    isExcalidrawEnabled.mockReturnValue(true)
+    expect(computeFileType(file)).toBe('excalidraw')
   })
 
   it('should return "shared-drive-root-file" for Excalidraw file-root .url shortcuts when Excalidraw is disabled', () => {
@@ -164,9 +176,7 @@ describe('computeFileType', () => {
         }
       }
     }
-    expect(computeFileType(file, { isExcalidrawEnabled: false })).toBe(
-      'shared-drive-root-file'
-    )
+    expect(computeFileType(file)).toBe('shared-drive-root-file')
   })
 
   it('should return "shared-drive-root-file" for file-root .url shortcuts when Office is disabled', () => {
@@ -187,9 +197,7 @@ describe('computeFileType', () => {
         }
       }
     }
-    expect(computeFileType(file, { isOfficeEnabled: false })).toBe(
-      'shared-drive-root-file'
-    )
+    expect(computeFileType(file)).toBe('shared-drive-root-file')
   })
 
   it('should return "shortcut" for legacy file-root .url shortcuts without metadata.target.mime', () => {
@@ -208,7 +216,7 @@ describe('computeFileType', () => {
         }
       }
     }
-    expect(computeFileType(file, { isOfficeEnabled: true })).toBe('shortcut')
+    expect(computeFileType(file)).toBe('shortcut')
   })
 
   it('should return "shared-drive" for directory-root .url shortcuts in shared drives directory', () => {
@@ -230,9 +238,7 @@ describe('computeFileType', () => {
         }
       }
     }
-    expect(computeFileType(file, { isOfficeEnabled: true })).toBe(
-      'shared-drive'
-    )
+    expect(computeFileType(file)).toBe('shared-drive')
   })
 
   it('should return "nextcloud-directory" for Nextcloud directories', () => {
@@ -324,7 +330,8 @@ describe('computeFileType', () => {
       name: 'My document.docx',
       type: 'file'
     }
-    expect(computeFileType(file, { isOfficeEnabled: true })).toBe('onlyoffice')
+    isOfficeEnabled.mockReturnValue(true)
+    expect(computeFileType(file)).toBe('onlyoffice')
   })
 
   it.each([
@@ -338,13 +345,14 @@ describe('computeFileType', () => {
       isExcalidrawEnabled: false,
       expected: 'file'
     }
-  ])('$desc', ({ isExcalidrawEnabled, expected }) => {
+  ])('$desc', ({ isExcalidrawEnabled: enabled, expected }) => {
+    isExcalidrawEnabled.mockReturnValue(enabled)
     const file = {
       _type: 'io.cozy.files',
       name: 'My drawing.excalidraw',
       type: 'file'
     }
-    expect(computeFileType(file, { isExcalidrawEnabled })).toBe(expected)
+    expect(computeFileType(file)).toBe(expected)
   })
 
   it('should prefer "excalidraw" over "onlyoffice" for a text-class .excalidraw file', () => {
@@ -354,12 +362,9 @@ describe('computeFileType', () => {
       name: 'My drawing.excalidraw',
       type: 'file'
     }
-    expect(
-      computeFileType(file, {
-        isExcalidrawEnabled: true,
-        isOfficeEnabled: true
-      })
-    ).toBe('excalidraw')
+    isExcalidrawEnabled.mockReturnValue(true)
+    isOfficeEnabled.mockReturnValue(true)
+    expect(computeFileType(file)).toBe('excalidraw')
   })
 
   it('should return "file" for files opened by OnlyOffice when Office is disabled', () => {
@@ -369,7 +374,7 @@ describe('computeFileType', () => {
       name: 'My document.docx',
       type: 'file'
     }
-    expect(computeFileType(file, { isOfficeEnabled: false })).toBe('file')
+    expect(computeFileType(file)).toBe('file')
   })
 
   it('should return "file" for files that OnlyOffice can\'t open (.txt, .md)', () => {
@@ -379,7 +384,8 @@ describe('computeFileType', () => {
       name: 'My markdown.md',
       type: 'file'
     }
-    expect(computeFileType(file, { isOfficeEnabled: true })).toBe('file')
+    isOfficeEnabled.mockReturnValue(true)
+    expect(computeFileType(file)).toBe('file')
   })
 
   it('should return "nextcloud" for Nextcloud shortcuts', () => {
