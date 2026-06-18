@@ -3,60 +3,78 @@ import { shouldBeOpenedByOnlyOffice } from 'cozy-client/dist/models/file'
 import {
   EXCALIDRAW_MIME,
   isExcalidraw,
+  isExcalidrawEnabled,
   makeExcalidrawFileRoute
 } from '@/modules/views/Excalidraw/helpers'
-import { makeOnlyOfficeFileRoute } from '@/modules/views/OnlyOffice/helpers'
+import {
+  isOfficeEnabled,
+  makeOnlyOfficeFileRoute
+} from '@/modules/views/OnlyOffice/helpers'
+import { makePdfRoute } from '@/modules/views/Pdf/helpers'
 
 /**
- * @typedef {Object} EditorEnablement
- * @property {boolean} [isOfficeEnabled]
- * @property {boolean} [isExcalidrawEnabled]
+ * @typedef {Object} EditorContext
+ * @property {boolean} [isDesktop] - Some editors gate themselves on the device:
+ *   OnlyOffice has a touch-screen flag variant.
  */
 
 /**
  * @typedef {Object} EditorDescriptor
  * @property {string} slug - Route prefix and `computeFileType` return value.
- * @property {(enablement: EditorEnablement) => boolean} isEnabled - Whether the
- *   editor is active for the current instance.
+ * @property {string|null} flag - cozy-flag that gates mounting the editor's
+ *   routes; `null` mounts them unconditionally (the editor gates access
+ *   internally). This is the coarse, render-free gate read by the route layer.
+ * @property {(context: EditorContext) => boolean} [isEnabled] - Whether the
+ *   editor claims files seen in listings. Reads cozy-flags directly. Richer
+ *   than `flag` (e.g. OnlyOffice is device-aware), and absent for editors that
+ *   never claim list items (e.g. PDF, which opens from the viewer).
  * @property {(file: object) => boolean} [matchesFile] - Recognizes the editor's
- *   files when seen in a listing (the file's own name/class/mime). Absent for
- *   editors that are only reachable from the viewer (e.g. PDF), so they keep
- *   opening in the viewer rather than from lists.
+ *   files in a listing. Absent for editors only reachable from the viewer.
  * @property {(target: object) => boolean} [matchesShortcutTarget] - Recognizes
  *   the editor from the `metadata.target` of a file-root shared-drive `.url`
  *   shortcut, whose own name (`.url`) hides the real document.
- * @property {(fileId: string, options?: object) => string} makeRoute - Builds
- *   the in-app route to the full-screen editor.
+ * @property {(fileId: string, options?: object) => string} makeRoute
  */
 
 const OFFICE_TARGET_CLASSES = ['text', 'spreadsheet', 'slide']
 
 /**
  * The single source of truth for the document editors mounted in Drive. Adding
- * a new editor type means adding one entry here; the consumers (`computeFileType`,
- * route generation and the viewer openers) all read from this list.
+ * an editor means adding one entry here; the consumers (`computeFileType`, the
+ * route layer) all read from this list.
  *
- * Order matters: editors are matched top to bottom, so the more specific editor
- * wins. Excalidraw precedes OnlyOffice because a `.excalidraw` file is a
- * text-class document that OnlyOffice would otherwise claim.
+ * Order matters for dispatch: editors are matched top to bottom, so the more
+ * specific editor wins. Excalidraw precedes OnlyOffice because a `.excalidraw`
+ * file is a text-class document that OnlyOffice would otherwise claim.
  *
  * @type {EditorDescriptor[]}
  */
 export const EDITORS = [
   {
     slug: 'excalidraw',
-    isEnabled: ({ isExcalidrawEnabled }) => Boolean(isExcalidrawEnabled),
+    flag: 'drive.excalidraw.enabled',
+    isEnabled: () => isExcalidrawEnabled(),
     matchesFile: file => isExcalidraw(file),
     matchesShortcutTarget: target => target?.mime === EXCALIDRAW_MIME,
     makeRoute: makeExcalidrawFileRoute
   },
   {
     slug: 'onlyoffice',
-    isEnabled: ({ isOfficeEnabled }) => Boolean(isOfficeEnabled),
+    // No single flag: Office enablement is device-aware (see isOfficeEnabled)
+    // and its routes mount unconditionally so deep links keep working.
+    flag: null,
+    isEnabled: ({ isDesktop } = {}) => isOfficeEnabled(isDesktop),
     matchesFile: file => shouldBeOpenedByOnlyOffice(file),
     matchesShortcutTarget: target =>
       OFFICE_TARGET_CLASSES.includes(target?.class),
     makeRoute: makeOnlyOfficeFileRoute
+  },
+  {
+    slug: 'pdf',
+    flag: 'drive.pdf-editor.enabled',
+    // No matchesFile: PDFs open in the viewer (with an edit button), never from
+    // a listing, so the dispatcher must not claim them.
+    makeRoute: makePdfRoute
   }
 ]
 
@@ -64,13 +82,15 @@ export const EDITORS = [
  * Finds the editor that should open a file seen in a listing.
  *
  * @param {object} file - An io.cozy.files document
- * @param {EditorEnablement} enablement
+ * @param {EditorContext} [context]
  * @returns {EditorDescriptor|undefined}
  */
-export const findEditorForFile = (file, enablement) =>
+export const findEditorForFile = (file, context = {}) =>
   EDITORS.find(
     editor =>
-      editor.isEnabled(enablement) && Boolean(editor.matchesFile?.(file))
+      Boolean(editor.matchesFile) &&
+      editor.isEnabled(context) &&
+      editor.matchesFile(file)
   )
 
 /**
@@ -78,14 +98,15 @@ export const findEditorForFile = (file, enablement) =>
  * `.url` shortcut, using its resolved `metadata.target`.
  *
  * @param {object} target - The shortcut's `metadata.target`
- * @param {EditorEnablement} enablement
+ * @param {EditorContext} [context]
  * @returns {EditorDescriptor|undefined}
  */
-export const findEditorForShortcutTarget = (target, enablement) =>
+export const findEditorForShortcutTarget = (target, context = {}) =>
   EDITORS.find(
     editor =>
-      editor.isEnabled(enablement) &&
-      Boolean(editor.matchesShortcutTarget?.(target))
+      Boolean(editor.matchesShortcutTarget) &&
+      editor.isEnabled(context) &&
+      editor.matchesShortcutTarget(target)
   )
 
 /**

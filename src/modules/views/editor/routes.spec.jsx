@@ -9,6 +9,14 @@ jest.mock('cozy-flags', () => ({
   default: (...args) => mockFlag(...args)
 }))
 
+jest.mock('@/modules/views/editor/registry', () => ({
+  EDITORS: [
+    { slug: 'onlyoffice', flag: null },
+    { slug: 'excalidraw', flag: 'drive.excalidraw.enabled' },
+    { slug: 'pdf', flag: 'drive.pdf-editor.enabled' }
+  ]
+}))
+
 jest.mock('@/modules/views/Excalidraw/routes', () => ({
   getExcalidrawRoutes: () => (
     <Route path="excalidraw/:fileId" element={<div>excalidraw-view</div>} />

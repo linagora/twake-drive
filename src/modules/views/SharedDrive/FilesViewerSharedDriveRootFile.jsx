@@ -12,8 +12,6 @@ import {
   getSharedDriveRootFilePathScope
 } from '@/modules/routeUtils'
 import FilesViewer from '@/modules/viewer/FilesViewer'
-import { isExcalidrawEnabled as computeExcalidrawEnabled } from '@/modules/views/Excalidraw/helpers'
-import { isOfficeEnabled as computeOfficeEnabled } from '@/modules/views/OnlyOffice/helpers'
 import {
   getSharingsRootRoute,
   getSharingsSharedDriveRootFilePath,
@@ -65,10 +63,7 @@ const FilesViewerSharedDriveRootFile = () => {
     // (and direct links/reloads land here without going through it). Now that
     // the real file is resolved, send editor documents to their editor; an
     // Excalidraw drawing has no inline viewer, so this is the only way it opens.
-    const editor = findEditorForFile(file, {
-      isOfficeEnabled: computeOfficeEnabled(isDesktop),
-      isExcalidrawEnabled: computeExcalidrawEnabled()
-    })
+    const editor = findEditorForFile(file, { isDesktop })
     if (editor) {
       return (
         <Navigate
