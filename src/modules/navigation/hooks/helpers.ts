@@ -104,10 +104,10 @@ export const computeFileType = (
     // `metadata.target`; route it to the matching editor (so a shared
     // Excalidraw drawing or Office file opens in its editor), otherwise fall
     // back to the generic shared-drive root-file viewer.
-    const editorForTarget = findEditorForShortcutTarget(
-      file.metadata?.target,
-      { isOfficeEnabled, isExcalidrawEnabled }
-    )
+    const editorForTarget = findEditorForShortcutTarget(file.metadata?.target, {
+      isOfficeEnabled,
+      isExcalidrawEnabled
+    })
     if (editorForTarget) {
       return editorForTarget.slug
     }
