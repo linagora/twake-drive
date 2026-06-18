@@ -435,7 +435,7 @@
     "outsideSharedFolder": {
       "title": "Déplacement en dehors du dossier %{sharedFolder}",
       "content_1": "Attention, vous souhaitez déplacer %{name} en dehors du dossier partagé %{sharedFolder}. |||| Attention, vous souhaitez déplacer %{smart_count} %{type} en dehors du dossier partagé %{sharedFolder}.",
-      "content_2": "Ce déplacement, va retirer le %{type} %{name} du partage. Ce %{type} va donc être mis à la corbeille pour l'ensemble des membres du partage. |||| Ce déplacement, va retirer les %{smart_count} %{type} du partage. Ces %{type} vont donc être mis à la corbeille pour l'ensemble des membres du partage.",
+      "content_2": "Ce déplacement, va retirer le %{type} %{name} du partage. |||| Ce déplacement, va retirer les %{smart_count} %{type} du partage.",
       "cancel": "Annuler",
       "confirm": "J'ai compris"
     },
