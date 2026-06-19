@@ -213,6 +213,9 @@ export const ChatMessageList = forwardRef(({ returnFocusToInput } = {}, ref) => 
       if (groups.length === 0) return
       const pos = locateFocus(groups)
       if (!pos) return
+      // ArrowUp on the oldest card is a no-op: do NOT preventDefault (leave native
+      // scroll intact) and do NOT move focus — no wrap upward past the oldest card.
+      if (key === 'ArrowUp' && pos.cardPos === 0) return
       e.preventDefault()
 
       const { cardPos, buttonPos } = pos
@@ -241,8 +244,7 @@ export const ChatMessageList = forwardRef(({ returnFocusToInput } = {}, ref) => 
         nextGroup[clamped].focus()
         return
       }
-      // ArrowUp
-      if (cardPos === 0) return // no wrap upward past the oldest card
+      // ArrowUp (oldest-card no-op already handled above, before preventDefault)
       const prevGroup = groups[cardPos - 1]
       const clampedUp = Math.min(buttonPos, prevGroup.length - 1)
       prevGroup[clampedUp].focus()
