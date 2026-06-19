@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v3.1
 milestone_name: Contrat de réponse structurée LLM
-status: executing
-stopped_at: Phase v3.1-03 complete + HARD GATE = PASS (2026-06-19, v2 prompt); next = v3.1-04
-last_updated: "2026-06-19T12:10:00.000Z"
+status: completed
+stopped_at: Phase v3.1-04 context gathered
+last_updated: "2026-06-19T14:35:47.733Z"
 last_activity: 2026-06-19
 progress:
   total_phases: 5
@@ -140,6 +140,6 @@ After v3.0-04 completion, three commits refined the plugin protocol and document
 
 ## Session Continuity
 
-Last session: 2026-06-17T13:27:33.074Z
-Stopped at: Phase v3.1-03 complete (verified 10/10); GATE verdict pending real-data freeze
-Resume file: None
+Last session: 2026-06-19T14:35:47.728Z
+Stopped at: Phase v3.1-04 context gathered
+Resume file: .planning/phases/v3.1-04-rendu-chat-cartes-clavier/v3.1-04-CONTEXT.md
