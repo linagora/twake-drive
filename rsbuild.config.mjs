@@ -17,8 +17,10 @@ const config = getRsbuildConfig({
 //
 // All hashed assets stay in build/static and are served by the `/static`
 // route, declared `public: true` in manifest.webapp so the public (shared
-// link) pages can load them without auth. Each entry keeps its own HTML file
-// ([name]/index.html); the `/` route points to the /main folder.
+// link) pages can load them without auth. The main entry's HTML stays at the
+// bundle root (build/index.html, see tools.htmlPlugin) so the `/` route serves
+// it and the native app can load it directly; public/intents keep their own
+// [name]/index.html.
 const { main, public: publicEnv, intents, services } = config.environments
 
 const templates = {
@@ -78,6 +80,14 @@ config.environments = {
       ]
     },
     tools: {
+      // One environment emits every entry's HTML as `[name]/index.html`, which
+      // would put the main app at /main/index.html. The native (flagship) app
+      // loads the bundle's root index.html directly, so the main entry must stay
+      // at build/index.html; the other entries keep their per-name folder.
+      htmlPlugin(htmlConfig, { entryName }) {
+        htmlConfig.filename =
+          entryName === 'main' ? 'index.html' : `${entryName}/index.html`
+      },
       rspack: {
         output: {
           // Asset modules without a dedicated rsbuild rule (e.g. the pdf.js

@@ -44,7 +44,7 @@
   "langs": ["en", "fr"],
   "routes": {
     "/": {
-      "folder": "/main",
+      "folder": "/",
       "index": "index.html",
       "public": false
     },
