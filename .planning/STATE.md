@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v3.1
 milestone_name: Contrat de réponse structurée LLM
 status: executing
-stopped_at: Phase v3.1-04 context gathered
-last_updated: "2026-06-19T15:04:37.406Z"
-last_activity: 2026-06-19 -- Phase v3.1-04 planning complete
+stopped_at: Phase v3.1-04 executed + verified in code; holding for live OO FRAG-03 UAT
+last_updated: "2026-06-19T16:30:00.000Z"
+last_activity: 2026-06-19 -- Phase v3.1-04 all 5 plans executed; verification human_needed (FRAG-03 live test)
 progress:
   total_phases: 5
   completed_phases: 3
@@ -21,15 +21,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-16)
 
 **Core value:** L'utilisateur peut interagir avec l'IA de maniere fluide -- actions rapides inline ou chat conversationnel dans un panneau lateral -- pour transformer et manipuler le contenu de son document OnlyOffice.
-**Current focus:** Phase v3.1-04 — Rendu chat (cartes + clavier) — gate cleared
+**Current focus:** Phase v3.1-04 — Rendu chat (cartes + clavier) — EXECUTED, awaiting live OO FRAG-03 UAT before completion
 
 ## Current Position
 
-Phase: v3.1-03 (Sonde dev — HARD GATE) — COMPLETE; **GATE = PASS** (2026-06-19, see v3.1-03-GATE.md §6)
-Plan: 3 of 3 — all executed; gate evidence captured (gate-evidence-v2.json) + thresholds frozen
-Status: Ready to execute
-Progress: [██████    ] 60% (3/5 phases)
-Last activity: 2026-06-19 -- Phase v3.1-04 planning complete
+Phase: v3.1-04 (Rendu chat — cartes + clavier) — ALL 5 PLANS EXECUTED & verified in code; **NOT yet marked complete** (held for live OnlyOffice human verification per user)
+Plan: 5 of 5 — committed (18 TDD commits a93963ca9..HEAD) + WR-01 keyboard fix; targeted + Scribe-dir suites green (166 pass; lone failure = pre-existing ScribeContainer mobile-Drawer test)
+Status: Verification = human_needed — 1 item open: FRAG-03 rich reinjection in the live OO editor (see v3.1-04-HUMAN-UAT.md)
+Progress: [██████    ] 60% (3/5 phases complete; v3.1-04 pending live UAT)
+Last activity: 2026-06-19 -- Phase v3.1-04 executed; verification human_needed (FRAG-03 live test)
+
+⚠️ TOOLING: gsd-sdk v1.42.3 cannot resolve `vX.Y-NN` phases (find-phase/phase-plan-index return "Phase not found" for ALL v3.0/v3.1 phases — regex only matches numeric-prefixed dirs). v3.1-04 was orchestrated manually with explicit paths; ROADMAP/STATE/REQUIREMENTS completion writes must be done by hand (gsd-sdk phase.complete will fail). To finish v3.1-04 after live UAT passes: hand-mark ROADMAP plan checkboxes + phase line [x], flip the 9 REQUIREMENTS rows to Validated, advance this block.
 
 GATE outcome: v2 contract block (RESPONSE_CONTRACT_BLOCK_V2) PASSES all 4 blockers (dup 0% / preamble
 0% / splitTable 0 / refBroken 0) on N=46 incl. real IHM-captured table/REF; deployed v1 is a measured
