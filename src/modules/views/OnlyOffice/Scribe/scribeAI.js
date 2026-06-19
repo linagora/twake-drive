@@ -33,21 +33,95 @@ export const SYSTEM_PROMPT =
   'Respond in the same language as the input text.'
 
 /**
- * Shared response-contract block (D-01).
+ * Shared, surface-agnostic response-contract CORE (D-01, hardened "v2" after the
+ * v3.1-03 HARD GATE — see v3.1-03-GATE.md). BOTH surfaces (inline popover + chat)
+ * compose this SAME core, then append exactly one surface-specific clause
+ * (CARDINALITY_INLINE or CARDINALITY_CHAT) plus the shared marker-preservation
+ * clauses. This unification makes the gate-validated separation rules apply to
+ * both surfaces by construction — previously the two surfaces hand-maintained two
+ * divergent copies, so the hardening only landed on inline.
  *
- * Instructs the model to return the `{ discussion, fragments[] }` JSON contract
- * (see SCRIBE_OUTPUT_SCHEMA.md / scribeResponse.js). Terse plain-language rules
- * anchored by ONE tiny worked example showing a `{{fragment:N}}` marker resolving
- * to `fragments[N]` (no few-shot). The surface-specific cardinality sentence
- * (D-02) is appended separately by each call site.
+ * The core asserts the SEPARATION imperatively (insertable text lives ONLY in
+ * `fragments`, never duplicated in `discussion`). The pre-gate v1 wording only
+ * *implied* it, which let Mistral-Small duplicate / dump-into-discussion (gate
+ * evidence: v1 dup 34%, preamble 21.4%, 1 split table).
  */
-export const RESPONSE_CONTRACT_BLOCK =
-  'Return ONLY a JSON object with two keys: `discussion` (a string, conversational ' +
-  'markdown shown to the user) and `fragments` (an array of strings, each an ' +
-  'insertable piece of markdown). No prose, no code fences, no text outside the JSON. ' +
-  'Inside `discussion` you may place `{{fragment:N}}` position markers (0-indexed) to ' +
-  'show where each fragment belongs; marker `{{fragment:N}}` resolves to `fragments[N]`. ' +
-  'Example: {"discussion":"Here is the rewrite: {{fragment:0}}","fragments":["the rewritten text"]}.'
+export const RESPONSE_CONTRACT_CORE =
+  'Return ONLY a JSON object with exactly two keys: `discussion` (a string) and ' +
+  '`fragments` (an array of strings). No prose, no code fences, no text outside the JSON. ' +
+  'Insertable/transformed text goes inside `fragments` and ONLY there — `discussion` ' +
+  'MUST NOT contain or repeat it. Inside `discussion` you may place `{{fragment:N}}` ' +
+  'position markers (0-indexed); marker `{{fragment:N}}` resolves to `fragments[N]`.'
+
+/**
+ * Inline (popover) cardinality clause: a one-shot transform yields exactly one
+ * fragment and a terse note. Appended to RESPONSE_CONTRACT_CORE by buildMessages.
+ * Leading space — concatenated directly after the core.
+ */
+export const CARDINALITY_INLINE =
+  ' `discussion` is a SHORT one-sentence note to the user. Return EXACTLY ONE ' +
+  'fragment holding the complete transformed text. Never leave `fragments` empty, ' +
+  'and never put the transformed text in `discussion`. ' +
+  'Example: {"discussion":"Here is the result: {{fragment:0}}","fragments":["the transformed text"]}.'
+
+/**
+ * Chat cardinality clause: a conversation yields 0..N fragments and a free-form
+ * discussion. Appended to RESPONSE_CONTRACT_CORE by buildChatSystemPrompt.
+ */
+export const CARDINALITY_CHAT =
+  ' `discussion` is conversational markdown and may be free-form. You may return ' +
+  '0..N fragments: put any insertable content in `fragments` (never duplicated in ' +
+  '`discussion`); when nothing is meant to be inserted, return an empty `fragments` ' +
+  'array and answer entirely in `discussion`. ' +
+  'Example: {"discussion":"Sure — here is a tighter intro:\\n\\n{{fragment:0}}\\n\\nLet me know if you want it shorter.","fragments":["Our platform helps teams ship faster."]}'
+
+/**
+ * Chat persona (conversational variant of the inline SYSTEM_PROMPT role line).
+ */
+export const CHAT_PERSONA =
+  'You are a helpful writing assistant. Help the user with their writing tasks. ' +
+  "Respond in the same language as the user's message. Use Markdown formatting when appropriate."
+
+/**
+ * Surface-agnostic marker-preservation clauses, appended when the input markdown
+ * carries the OO plugin's structural markers. SHARED by both surfaces — the chat
+ * path previously had NONE, a latent table/REF corruption risk. Marker tests
+ * mirror scribeProbe.deriveContentTags and the gate-harness prompt guard.
+ *
+ * @param {string} md - markdown the model will transform (enrichedMd inline; selection md chat)
+ * @returns {string} concatenated clauses (each leading-space-prefixed), or ''
+ */
+export function markerPreservationClauses(md) {
+  const s = typeof md === 'string' ? md : ''
+  let out = ''
+  if (s.includes('[TABLE:') || s.includes('[CELL:')) {
+    out += ' Inside the fragment string(s) (never in `discussion`), preserve all [TABLE:N]...[/TABLE] and [CELL:r,c]...[/CELL] markers exactly as-is. Only modify the text content between the opening [CELL:r,c] and closing [/CELL] tags. Do not add, remove, or reorder [TABLE:N] or [CELL:r,c] markers.'
+  }
+  if (s.includes('[^scribe-fn-')) {
+    out += ' Inside the fragment string(s) (never in `discussion`), preserve all [^scribe-fn-N] footnote reference markers exactly as-is. Do NOT add footnote definitions ([^N]: text). The footnote content is managed separately — only preserve the inline reference markers.'
+  }
+  if (s.includes('{{REF:')) {
+    out += ' Inside the fragment string(s) (never in `discussion`), preserve all {{REF:scribe-ref-N:visible text}} cross-reference markers. Keep the {{REF:scribe-ref-N: and closing }} delimiters intact. You may modify the visible text inside the marker to match your changes (e.g. translation), but never remove or alter the scribe-ref-N identifier.'
+  }
+  return out
+}
+
+/**
+ * Build the chat system prompt: persona + shared hardened contract core + chat
+ * cardinality + (conditional) marker-preservation for the current selection.
+ *
+ * @param {string} [selectionMd] - current turn's selection markdown (for marker clauses)
+ * @returns {string}
+ */
+export function buildChatSystemPrompt(selectionMd) {
+  return (
+    CHAT_PERSONA +
+    '\n\n' +
+    RESPONSE_CONTRACT_CORE +
+    CARDINALITY_CHAT +
+    markerPreservationClauses(selectionMd)
+  )
+}
 
 /**
  * Search SCRIBE_ACTIONS (including children and dynamic translate children)
@@ -104,20 +178,15 @@ export function buildMessages(actionId, selectedText, label, extra) {
   // Emit the shared response contract (D-01) plus the inline cardinality
   // sentence (D-02, inline side). The whole thing stays in the single user-role
   // prefix below — no system role is introduced.
-  let systemBase =
+  // Inline assembly: shared hardened contract CORE + inline cardinality + (when
+  // the enriched selection carries them) the shared marker-preservation clauses.
+  // Same single user-role prefix as before — no system role introduced.
+  const systemBase =
     SYSTEM_PROMPT +
     ' ' +
-    RESPONSE_CONTRACT_BLOCK +
-    ' Return **exactly ONE** fragment.'
-  if (extra?.enrichedMd && (extra.enrichedMd.includes('[TABLE:') || extra.enrichedMd.includes('[CELL:'))) {
-    systemBase += ' Inside the fragment string(s) (never in `discussion`), preserve all [TABLE:N]...[/TABLE] and [CELL:r,c]...[/CELL] markers exactly as-is. Only modify the text content between the opening [CELL:r,c] and closing [/CELL] tags. Do not add, remove, or reorder [TABLE:N] or [CELL:r,c] markers.'
-  }
-  if (extra?.enrichedMd && extra.enrichedMd.includes('[^scribe-fn-')) {
-    systemBase += ' Inside the fragment string(s) (never in `discussion`), preserve all [^scribe-fn-N] footnote reference markers exactly as-is. Do NOT add footnote definitions ([^N]: text). The footnote content is managed separately — only preserve the inline reference markers.'
-  }
-  if (extra?.enrichedMd && extra.enrichedMd.includes('{{REF:')) {
-    systemBase += ' Inside the fragment string(s) (never in `discussion`), preserve all {{REF:scribe-ref-N:visible text}} cross-reference markers. Keep the {{REF:scribe-ref-N: and closing }} delimiters intact. You may modify the visible text inside the marker to match your changes (e.g. translation), but never remove or alter the scribe-ref-N identifier.'
-  }
+    RESPONSE_CONTRACT_CORE +
+    CARDINALITY_INLINE +
+    markerPreservationClauses(extra?.enrichedMd)
   const systemPrefix = systemBase + '\n\n'
 
   // Prefer enrichedMd (plugin-side extraction) > htmlToMarkdown(html) > plain text

@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { useClient } from 'cozy-client'
 import { useI18n } from 'twake-i18n'
 
-import { callScribeAI, classifyScribeError } from '@/modules/views/OnlyOffice/Scribe/scribeAI'
+import { callScribeAI, classifyScribeError, buildChatSystemPrompt } from '@/modules/views/OnlyOffice/Scribe/scribeAI'
 import { htmlToMarkdown } from '@/modules/views/OnlyOffice/Scribe/scribeConversion'
 import {
   parseScribeResponse,
@@ -16,21 +16,12 @@ const STORAGE_KEY = 'scribe-panel-open'
 
 const ScribeContext = createContext(null)
 
-// Chat system prompt. Emits the shared { discussion, fragments[] } JSON contract
-// (D-01: terse rules + one worked example; D-02 chat side: 0..N fragments,
-// discussion may be free-form). Parsing of the response happens at reception in
-// sendMessage via parseScribeResponse(raw, { surface: 'chat' }).
-const CHAT_SYSTEM_PROMPT =
-  'You are a helpful writing assistant. Help the user with their writing tasks. ' +
-  'Respond in the same language as the user\'s message. Use Markdown formatting when appropriate.\n\n' +
-  'Return ONLY a JSON object with two keys:\n' +
-  '- "discussion": conversational markdown shown to the user. It may embed ' +
-  '{{fragment:N}} position markers (0-indexed) where an insertable fragment belongs.\n' +
-  '- "fragments": an array of insertable markdown strings. Element N corresponds to ' +
-  'marker {{fragment:N}}. For chat you may return 0..N fragments, and "discussion" may ' +
-  'be entirely free-form (no fragments at all) when nothing is meant to be inserted.\n\n' +
-  'Example:\n' +
-  '{"discussion":"Sure — here is a tighter intro:\\n\\n{{fragment:0}}\\n\\nLet me know if you want it shorter.","fragments":["Our platform helps teams ship faster."]}'
+// Chat system prompt is now built from the SHARED hardened contract
+// (scribeAI.buildChatSystemPrompt): persona + RESPONSE_CONTRACT_CORE +
+// CARDINALITY_CHAT + per-selection marker-preservation clauses. This unifies the
+// chat contract with the gate-validated inline one (v3.1-03-GATE.md) so the
+// separation rules — and table/REF marker preservation — apply to both surfaces.
+// Parsing happens at reception via parseScribeResponse(raw, { surface: 'chat' }).
 
 const readStorage = () => {
   try {
@@ -121,8 +112,11 @@ export const ScribeProvider = ({ children }) => {
     try {
       // Build AI messages: system prompt + conversation history (skip error messages)
       const currentMessages = [...messagesRef.current, userMessage]
+      // Marker-preservation clauses key off the CURRENT turn's selection markdown.
+      const currentSelectionMd =
+        selectionContext?.markdown || selectionContext?.text || ''
       const aiMessages = [
-        { role: 'system', content: CHAT_SYSTEM_PROMPT },
+        { role: 'system', content: buildChatSystemPrompt(currentSelectionMd) },
         ...currentMessages
           .filter(m => m.role !== 'error')
           // WR-01: self-contained guard so only user/assistant turns are ever

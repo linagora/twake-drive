@@ -37,7 +37,6 @@ const DOMAIN = arg('domain', 'alice.localhost:8080')
 const CONCURRENCY = Number(arg('concurrency', '4'))
 const LIMIT = Number(arg('limit', '0')) // 0 = all
 const TEMPERATURE = Number(arg('temperature', '0.3'))
-const VARIANT = arg('variant', 'v1') // 'v1' = verbatim prod baseline, 'v2' = experimental
 const SCOPE = 'io.cozy.ai.chat.conversations'
 
 // ── Drift tripwire: verbatim prompt strings must still exist in live source ──
@@ -46,8 +45,11 @@ function assertPromptInSync() {
   const actions = readFileSync(join(SRC, 'scribeActions.js'), 'utf8')
   const checks = [
     [ai, 'You are a writing assistant. Return only the transformed text'],
-    [ai, 'Return ONLY a JSON object with two keys'],
-    [ai, 'Return **exactly ONE** fragment'],
+    [ai, 'Return ONLY a JSON object with exactly two keys'],
+    [ai, 'Insertable/transformed text goes inside'],
+    [ai, 'fragment holding the complete transformed text'],
+    [ai, '0..N fragments: put any insertable content'],
+    [ai, 'You are a helpful writing assistant. Help the user with their writing tasks.'],
     [ai, 'preserve all [TABLE:N]...[/TABLE] and [CELL:r,c]...[/CELL] markers'],
     [ai, 'preserve all [^scribe-fn-N] footnote reference markers'],
     [ai, 'preserve all {{REF:scribe-ref-N:visible text}} cross-reference markers'],
@@ -115,14 +117,15 @@ async function main() {
   const { replay, aggregate, PROBE_SCHEMA_VERSION } = probe
 
   const fixtures = LIMIT > 0 ? FIXTURES.slice(0, LIMIT) : FIXTURES
-  console.log(`▶ gate-harness — ${fixtures.length} fixtures → ${DOMAIN} (concurrency ${CONCURRENCY}, prompt ${VARIANT})`)
+  const nChat = fixtures.filter(f => f.surface === 'chat').length
+  console.log(`▶ gate-harness — ${fixtures.length} fixtures (${nChat} chat) → ${DOMAIN} (concurrency ${CONCURRENCY}, unified prompt)`)
   const token = mintToken(DOMAIN)
 
   let modelSeen = null
   const failures = []
   const results = await pool(fixtures, CONCURRENCY, async fx => {
     try {
-      const messages = buildMessages(fx.action, fx.input, VARIANT)
+      const messages = buildMessages(fx)
       const { content, model } = await callAI(DOMAIN, token, messages)
       if (model) modelSeen = model
       const parsed = parseScribeResponse(content, { surface: fx.surface })

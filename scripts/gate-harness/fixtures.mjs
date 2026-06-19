@@ -86,6 +86,49 @@ const nativeFixtures = [
     input: 'Mandami subito il preventivo, non ho tutto il giorno da aspettare.' }
 ]
 
+// Chat-surface fixtures (surface:'chat'). The instruction is a free-form
+// `chatPrompt`; `input` is the optional selection markdown (carries markers).
+// Exercises the chat side of the UNIFIED contract: separation + marker
+// preservation (previously absent from the chat prompt) + 0..N cardinality.
+const chatFixtures = [
+  {
+    id: 'chat-table-en-1', surface: 'chat', locale: 'en',
+    tags: { locale: 'en', hasTable: true, hasRef: false },
+    chatPrompt: 'Translate this table to English, keep the structure.',
+    input: 'Résultats :\n[TABLE:0][CELL:0,0]Trimestre[/CELL][CELL:0,1]Revenu[/CELL][CELL:1,0]T1[/CELL][CELL:1,1]120 k€[/CELL][/TABLE]'
+  },
+  {
+    id: 'chat-ref-fr-1', surface: 'chat', locale: 'fr',
+    tags: { locale: 'fr', hasTable: false, hasRef: true },
+    chatPrompt: 'Reformule cette phrase de façon plus formelle, en gardant le renvoi.',
+    input: 'Le détail figure en {{REF:scribe-ref-1:Section 2}} du document, regarde.'
+  },
+  {
+    id: 'chat-fn-fr-1', surface: 'chat', locale: 'fr',
+    tags: { locale: 'fr', hasTable: false, hasRef: true },
+    chatPrompt: 'Corrige les fautes de cette phrase.',
+    input: 'La methode a ete valider dans trois essai[^scribe-fn-1] avant la sortie.'
+  },
+  {
+    id: 'chat-rewrite-fr-1', surface: 'chat', locale: 'fr',
+    tags: { locale: 'fr', hasTable: false, hasRef: false },
+    chatPrompt: 'Rends ce paragraphe plus court et percutant.',
+    input: 'Nous avons consacré les trois derniers mois à repenser entièrement le parcours d’intégration afin que les nouveaux utilisateurs atteignent leur premier succès beaucoup plus rapidement qu’auparavant.'
+  },
+  {
+    id: 'chat-pure-fr-1', surface: 'chat', locale: 'fr',
+    tags: { locale: 'fr', hasTable: false, hasRef: false },
+    chatPrompt: 'Donne-moi trois idées de titres pour un article sur le télétravail.',
+    input: ''
+  },
+  {
+    id: 'chat-pure-en-1', surface: 'chat', locale: 'en',
+    tags: { locale: 'en', hasTable: false, hasRef: false },
+    chatPrompt: 'Briefly explain the difference between "affect" and "effect".',
+    input: ''
+  }
+]
+
 /**
  * Load every captured/*.json case file and normalize it into a fixture.
  *
@@ -136,4 +179,9 @@ function loadCaptured() {
   return out
 }
 
-export const FIXTURES = [...translateFixtures, ...nativeFixtures, ...loadCaptured()]
+export const FIXTURES = [
+  ...translateFixtures,
+  ...nativeFixtures,
+  ...chatFixtures,
+  ...loadCaptured()
+]
