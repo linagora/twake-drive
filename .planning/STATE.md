@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v3.1
 milestone_name: Contrat de réponse structurée LLM
-status: completed
+status: executing
 stopped_at: Phase v3.1-04 context gathered
-last_updated: "2026-06-19T14:35:47.733Z"
-last_activity: 2026-06-19
+last_updated: "2026-06-19T15:04:37.406Z"
+last_activity: 2026-06-19 -- Phase v3.1-04 planning complete
 progress:
   total_phases: 5
   completed_phases: 3
@@ -27,9 +27,9 @@ See: .planning/PROJECT.md (updated 2026-06-16)
 
 Phase: v3.1-03 (Sonde dev — HARD GATE) — COMPLETE; **GATE = PASS** (2026-06-19, see v3.1-03-GATE.md §6)
 Plan: 3 of 3 — all executed; gate evidence captured (gate-evidence-v2.json) + thresholds frozen
-Status: Phase done — ready to start v3.1-04
+Status: Ready to execute
 Progress: [██████    ] 60% (3/5 phases)
-Last activity: 2026-06-19
+Last activity: 2026-06-19 -- Phase v3.1-04 planning complete
 
 GATE outcome: v2 contract block (RESPONSE_CONTRACT_BLOCK_V2) PASSES all 4 blockers (dup 0% / preamble
 0% / splitTable 0 / refBroken 0) on N=46 incl. real IHM-captured table/REF; deployed v1 is a measured
