@@ -35,9 +35,16 @@ GATE outcome: v2 contract block (RESPONSE_CONTRACT_BLOCK_V2) PASSES all 4 blocke
 0% / splitTable 0 / refBroken 0) on N=46 incl. real IHM-captured table/REF; deployed v1 is a measured
 NO-GO (preamble 21.4%, splitTable 1) on the same data.
 
-⚠️ REQUIRED FOLLOW-UP before card rendering ships: **adopt v2 as the production prompt** (swap
-RESPONSE_CONTRACT_BLOCK → _V2 in scribeAI.js). Minor non-blocking residual: ~2% fellBack (model
-occasionally wraps JSON in a ```json fence) — candidate for v3.1-05 re-ask / contract hardening.
+✅ FOLLOW-UP DONE (2026-06-19): v2 adopted in prod via UNIFICATION refactor — shared
+RESPONSE_CONTRACT_CORE + per-surface cardinality (CARDINALITY_INLINE/_CHAT) + shared
+markerPreservationClauses() in scribeAI.js; ScribeContext uses buildChatSystemPrompt(). Both surfaces
+now share the gate-validated contract; chat gained marker preservation it never had. Harness extended
+to chat (N=52 re-validation, GATE.md §8): dup/preamble/splitTable all 0; refBroken 1/52 = flaky chat
+footnote drop (determinism probe 1/6) → accepted as the motivating case for the v3.1-05 re-ask.
+
+Open for v3.1-05: (a) re-ask on refIntegrity breach (closes the flaky REF/footnote tail); (b) ~2%
+fellBack (model wraps JSON in a ```json fence). Pre-existing unrelated red test: ScribeContainer
+"Drawer PaperProps fullscreen on mobile" (layout, untouched by this work).
 
 Next: start v3.1-04 (Rendu chat — fragment cards, Copy/Insert/Replace, keyboard nav). `/clear` then
 `/gsd-discuss-phase v3.1-04`.

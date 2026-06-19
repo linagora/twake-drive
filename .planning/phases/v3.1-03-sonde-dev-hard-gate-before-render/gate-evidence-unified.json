@@ -1,0 +1,918 @@
+{
+  "v": 1,
+  "samples": [
+    {
+      "ts": 1781874532435,
+      "surface": "popover",
+      "inputMd": "Le rapport doit être remis avant la fin du mois afin que la direction puisse le présenter au conseil.",
+      "discussion": "Here is the result: {{fragment:0}}",
+      "fragments": [
+        "The report must be submitted by the end of the month so that management can present it to the board."
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "en",
+        "hasTable": false,
+        "hasRef": false,
+        "curated": true
+      }
+    },
+    {
+      "ts": 1781874532138,
+      "surface": "popover",
+      "inputMd": "La nouvelle politique de télétravail entrera en vigueur dès le premier lundi de septembre.",
+      "discussion": "Here is the result: {{fragment:0}}",
+      "fragments": [
+        "The new remote work policy will come into effect starting the first Monday of September."
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "en",
+        "hasTable": false,
+        "hasRef": false,
+        "curated": true
+      }
+    },
+    {
+      "ts": 1781874532140,
+      "surface": "popover",
+      "inputMd": "Nous avons constaté une amélioration nette de la satisfaction client depuis le déploiement de la mise à jour.",
+      "discussion": "Here is the result: {{fragment:0}}",
+      "fragments": [
+        "We have observed a significant improvement in customer satisfaction since the deployment of the update."
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "en",
+        "hasTable": false,
+        "hasRef": false,
+        "curated": true
+      }
+    },
+    {
+      "ts": 1781874532439,
+      "surface": "popover",
+      "inputMd": "Le jardin derrière la maison était rempli de lavande et de romarin, et les abeilles butinaient sans relâche.",
+      "discussion": "Here is the result: {{fragment:0}}",
+      "fragments": [
+        "The garden behind the house was filled with lavender and rosemary, and the bees buzzed tirelessly."
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "en",
+        "hasTable": false,
+        "hasRef": false,
+        "curated": true
+      }
+    },
+    {
+      "ts": 1781874534066,
+      "surface": "popover",
+      "inputMd": "Bien que les résultats soient encourageants, les auteurs rappellent que l’échantillon reste limité.",
+      "discussion": "Here is the result: {{fragment:0}}",
+      "fragments": [
+        "While the results are encouraging, the authors remind that the sample remains limited."
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "en",
+        "hasTable": false,
+        "hasRef": false,
+        "curated": true
+      }
+    },
+    {
+      "ts": 1781874534472,
+      "surface": "popover",
+      "inputMd": "The committee will meet on Thursday afternoon to review the quarterly budget and approve the new hiring plan.",
+      "discussion": "Voici le résultat : {{fragment:0}}",
+      "fragments": [
+        "Le comité se réunira jeudi après-midi pour examiner le budget trimestriel et approuver le nouveau plan de recrutement."
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "fr",
+        "hasTable": false,
+        "hasRef": false,
+        "curated": true
+      }
+    },
+    {
+      "ts": 1781874534977,
+      "surface": "popover",
+      "inputMd": "Our team has spent the last three months redesigning the onboarding flow so that new users reach their first success faster.",
+      "discussion": "Here is the result: {{fragment:0}}",
+      "fragments": [
+        "Notre équipe a passé les trois derniers mois à repenser le processus d'intégration afin que les nouveaux utilisateurs atteignent plus rapidement leur premier succès."
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "fr",
+        "hasTable": false,
+        "hasRef": false,
+        "curated": true
+      }
+    },
+    {
+      "ts": 1781874534866,
+      "surface": "popover",
+      "inputMd": "Please remember to back up your files before the migration, as the old server will be decommissioned next week.",
+      "discussion": "Here is the result: {{fragment:0}}",
+      "fragments": [
+        "N'oubliez pas de sauvegarder vos fichiers avant la migration, car l'ancien serveur sera décommissionné la semaine prochaine."
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "fr",
+        "hasTable": false,
+        "hasRef": false,
+        "curated": true
+      }
+    },
+    {
+      "ts": 1781874536633,
+      "surface": "popover",
+      "inputMd": "The garden behind the house was full of lavender and rosemary, and the bees worked steadily through the warm morning.",
+      "discussion": "Here is the result: {{fragment:0}}",
+      "fragments": [
+        "Le jardin derrière la maison était rempli de lavande et de romarin, et les abeilles travaillaient sans relâche pendant la matinée chaude."
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "fr",
+        "hasTable": false,
+        "hasRef": false,
+        "curated": true
+      }
+    },
+    {
+      "ts": 1781874536973,
+      "surface": "popover",
+      "inputMd": "Although the results were promising, the authors caution that the sample size was small and further studies are needed.",
+      "discussion": "Here is the result: {{fragment:0}}",
+      "fragments": [
+        "Bien que les résultats aient été prometteurs, les auteurs mettent en garde que la taille de l'échantillon était petite et que des études supplémentaires sont nécessaires."
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "fr",
+        "hasTable": false,
+        "hasRef": false,
+        "curated": true
+      }
+    },
+    {
+      "ts": 1781874537545,
+      "surface": "popover",
+      "inputMd": "The committee will meet on Thursday afternoon to review the quarterly budget and approve the new hiring plan.",
+      "discussion": "Here is the translation: {{fragment:0}}",
+      "fragments": [
+        "Der Ausschuss wird sich am Donnerstagnachmittag treffen, um den Quartalshaushalt zu überprüfen und den neuen Einstellungsplan zu genehmigen."
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "de",
+        "hasTable": false,
+        "hasRef": false,
+        "curated": true
+      }
+    },
+    {
+      "ts": 1781874537509,
+      "surface": "popover",
+      "inputMd": "Our team has spent the last three months redesigning the onboarding flow so that new users reach their first success faster.",
+      "discussion": "Here is the result: {{fragment:0}}",
+      "fragments": [
+        "Unser Team hat die letzten drei Monate damit verbracht, den Onboarding-Prozess neu zu gestalten, damit neue Nutzer schneller ihren ersten Erfolg erreichen."
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "de",
+        "hasTable": false,
+        "hasRef": false,
+        "curated": true
+      }
+    },
+    {
+      "ts": 1781874539009,
+      "surface": "popover",
+      "inputMd": "Please remember to back up your files before the migration, as the old server will be decommissioned next week.",
+      "discussion": "Here is the result: {{fragment:0}}",
+      "fragments": [
+        "Bitte denken Sie daran, Ihre Dateien vor der Migration zu sichern, da der alte Server nächste Woche stillgelegt wird."
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "de",
+        "hasTable": false,
+        "hasRef": false,
+        "curated": true
+      }
+    },
+    {
+      "ts": 1781874539500,
+      "surface": "popover",
+      "inputMd": "The garden behind the house was full of lavender and rosemary, and the bees worked steadily through the warm morning.",
+      "discussion": "Here is the result: {{fragment:0}}",
+      "fragments": [
+        "Der Garten hinter dem Haus war voller Lavendel und Rosmarin, und die Bienen arbeiteten fleißig durch den warmen Morgen."
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "de",
+        "hasTable": false,
+        "hasRef": false,
+        "curated": true
+      }
+    },
+    {
+      "ts": 1781874540034,
+      "surface": "popover",
+      "inputMd": "Although the results were promising, the authors caution that the sample size was small and further studies are needed.",
+      "discussion": "Here is the result: {{fragment:0}}",
+      "fragments": [
+        "Obwohl die Ergebnisse vielversprechend waren, warnen die Autoren, dass die Stichprobengröße klein war und weitere Studien notwendig sind."
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "de",
+        "hasTable": false,
+        "hasRef": false,
+        "curated": true
+      }
+    },
+    {
+      "ts": 1781874540033,
+      "surface": "popover",
+      "inputMd": "The committee will meet on Thursday afternoon to review the quarterly budget and approve the new hiring plan.",
+      "discussion": "Here is the result: {{fragment:0}}",
+      "fragments": [
+        "El comité se reunirá el jueves por la tarde para revisar el presupuesto trimestral y aprobar el nuevo plan de contratación."
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "es",
+        "hasTable": false,
+        "hasRef": false,
+        "curated": true
+      }
+    },
+    {
+      "ts": 1781874541650,
+      "surface": "popover",
+      "inputMd": "Our team has spent the last three months redesigning the onboarding flow so that new users reach their first success faster.",
+      "discussion": "Here is the result: {{fragment:0}}",
+      "fragments": [
+        "Nuestro equipo ha dedicado los últimos tres meses a rediseñar el flujo de incorporación para que los nuevos usuarios alcancen su primer éxito más rápido."
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "es",
+        "hasTable": false,
+        "hasRef": false,
+        "curated": true
+      }
+    },
+    {
+      "ts": 1781874542047,
+      "surface": "popover",
+      "inputMd": "Please remember to back up your files before the migration, as the old server will be decommissioned next week.",
+      "discussion": "Here is the result: {{fragment:0}}",
+      "fragments": [
+        "Por favor, recuerde hacer una copia de seguridad de sus archivos antes de la migración, ya que el servidor antiguo será descomisionado la próxima semana."
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "es",
+        "hasTable": false,
+        "hasRef": false,
+        "curated": true
+      }
+    },
+    {
+      "ts": 1781874542363,
+      "surface": "popover",
+      "inputMd": "The garden behind the house was full of lavender and rosemary, and the bees worked steadily through the warm morning.",
+      "discussion": "Here is the result: {{fragment:0}}",
+      "fragments": [
+        "El jardín detrás de la casa estaba lleno de lavanda y romero, y las abejas trabajaban sin cesar durante la mañana cálida."
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "es",
+        "hasTable": false,
+        "hasRef": false,
+        "curated": true
+      }
+    },
+    {
+      "ts": 1781874542402,
+      "surface": "popover",
+      "inputMd": "Although the results were promising, the authors caution that the sample size was small and further studies are needed.",
+      "discussion": "Here is the result: {{fragment:0}}",
+      "fragments": [
+        "Aunque los resultados fueron prometedores, los autores advierten que el tamaño de la muestra fue pequeño y se necesitan más estudios."
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "es",
+        "hasTable": false,
+        "hasRef": false,
+        "curated": true
+      }
+    },
+    {
+      "ts": 1781874544414,
+      "surface": "popover",
+      "inputMd": "The committee will meet on Thursday afternoon to review the quarterly budget and approve the new hiring plan.",
+      "discussion": "Ecco il testo tradotto in italiano: {{fragment:0}}",
+      "fragments": [
+        "Il comitato si riunirà nel pomeriggio di giovedì per rivedere il budget trimestrale e approvare il nuovo piano di assunzioni."
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "it",
+        "hasTable": false,
+        "hasRef": false,
+        "curated": true
+      }
+    },
+    {
+      "ts": 1781874544865,
+      "surface": "popover",
+      "inputMd": "Our team has spent the last three months redesigning the onboarding flow so that new users reach their first success faster.",
+      "discussion": "Here is the result: {{fragment:0}}",
+      "fragments": [
+        "Il nostro team ha trascorso gli ultimi tre mesi a ridisegnare il flusso di onboarding in modo che i nuovi utenti raggiungano il loro primo successo più velocemente."
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "it",
+        "hasTable": false,
+        "hasRef": false,
+        "curated": true
+      }
+    },
+    {
+      "ts": 1781874544866,
+      "surface": "popover",
+      "inputMd": "Please remember to back up your files before the migration, as the old server will be decommissioned next week.",
+      "discussion": "Ecco la traduzione in italiano: {{fragment:0}}",
+      "fragments": [
+        "Ricorda di fare il backup dei tuoi file prima della migrazione, poiché il vecchio server sarà dismesso la prossima settimana."
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "it",
+        "hasTable": false,
+        "hasRef": false,
+        "curated": true
+      }
+    },
+    {
+      "ts": 1781874545165,
+      "surface": "popover",
+      "inputMd": "The garden behind the house was full of lavender and rosemary, and the bees worked steadily through the warm morning.",
+      "discussion": "Ecco il testo tradotto in italiano: {{fragment:0}}",
+      "fragments": [
+        "Il giardino dietro la casa era pieno di lavanda e rosmarino, e le api lavoravano instancabilmente durante la calda mattinata."
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "it",
+        "hasTable": false,
+        "hasRef": false,
+        "curated": true
+      }
+    },
+    {
+      "ts": 1781874547047,
+      "surface": "popover",
+      "inputMd": "Although the results were promising, the authors caution that the sample size was small and further studies are needed.",
+      "discussion": "Here is the result: {{fragment:0}}",
+      "fragments": [
+        "Sebbene i risultati siano stati promettenti, gli autori mettono in guardia sul fatto che la dimensione del campione era piccola e sono necessari ulteriori studi."
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "it",
+        "hasTable": false,
+        "hasRef": false,
+        "curated": true
+      }
+    },
+    {
+      "ts": 1781874547794,
+      "surface": "popover",
+      "inputMd": "Salut, j’ai vu ton mail. Bon, en gros on peut pas livrer mardi, faut décaler.",
+      "discussion": "Here is the revised message: {{fragment:0}}",
+      "fragments": [
+        "Bonjour, j’ai pris connaissance de votre message. Malheureusement, la livraison prévue pour mardi ne pourra pas avoir lieu. Nous devrons reporter la date."
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "fr"
+      }
+    },
+    {
+      "ts": 1781874546937,
+      "surface": "popover",
+      "inputMd": "Les equipe on travailler tres dur ce trimestre et il on atteint tout leur objectif.",
+      "discussion": "Here is the corrected text: {{fragment:0}}",
+      "fragments": [
+        "Les équipes ont travaillé très dur ce trimestre et elles ont atteint tous leurs objectifs."
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "fr"
+      }
+    },
+    {
+      "ts": 1781874547163,
+      "surface": "popover",
+      "inputMd": "Send me the numbers now, I can’t wait any longer for this.",
+      "discussion": "Here is the rewritten text: {{fragment:0}}",
+      "fragments": [
+        "Could you please send me the numbers at your earliest convenience? I would greatly appreciate it."
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "en"
+      }
+    },
+    {
+      "ts": 1781874549223,
+      "surface": "popover",
+      "inputMd": "Their is alot of reasons why the project was delay, but we is back on track now.",
+      "discussion": "Here is the corrected text: {{fragment:0}}",
+      "fragments": [
+        "There are a lot of reasons why the project was delayed, but we are back on track now."
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "en"
+      }
+    },
+    {
+      "ts": 1781874548784,
+      "surface": "popover",
+      "inputMd": "Sehr geehrte Damen und Herren, hiermit teile ich Ihnen die Verschiebung des Termins mit.",
+      "discussion": "Here is the result: {{fragment:0}}",
+      "fragments": [
+        "Hey Leute, nur kurz: Der Termin wird verschoben!"
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "de"
+      }
+    },
+    {
+      "ts": 1781874549627,
+      "surface": "popover",
+      "inputMd": "Oye, al final no llego a la reunión, tengo lío. Lo vemos otro día, ¿vale?",
+      "discussion": "Here is the result: {{fragment:0}}",
+      "fragments": [
+        "Lamentablemente, no podré asistir a la reunión. Quedo a su disposición para coordinar una nueva fecha, si le parece bien."
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "es"
+      }
+    },
+    {
+      "ts": 1781874550252,
+      "surface": "popover",
+      "inputMd": "Mandami subito il preventivo, non ho tutto il giorno da aspettare.",
+      "discussion": "Here is the result: {{fragment:0}}",
+      "fragments": [
+        "Potresti gentilmente inviarmi il preventivo al più presto? Ti sarei molto grato per la tua tempestività."
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "it"
+      }
+    },
+    {
+      "ts": 1781874553324,
+      "surface": "chat",
+      "inputMd": "Résultats :\n[TABLE:0][CELL:0,0]Trimestre[/CELL][CELL:0,1]Revenu[/CELL][CELL:1,0]T1[/CELL][CELL:1,1]120 k€[/CELL][/TABLE]",
+      "discussion": "Here is the table translated to English, keeping the same structure:",
+      "fragments": [
+        "[TABLE:0][CELL:0,0]Quarter[/CELL][CELL:0,1]Revenue[/CELL][CELL:1,0]Q1[/CELL][CELL:1,1]120 k€[/CELL][/TABLE]"
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [
+        "fragment-not-referenced"
+      ],
+      "tags": {
+        "locale": "en",
+        "hasTable": true,
+        "hasRef": false
+      }
+    },
+    {
+      "ts": 1781874552710,
+      "surface": "chat",
+      "inputMd": "Le détail figure en {{REF:scribe-ref-1:Section 2}} du document, regarde.",
+      "discussion": "Voici une version plus formelle de votre phrase:\n\n{{fragment:0}}\n\nCela conserve le renvoi tout en étant plus formel.",
+      "fragments": [
+        "Le détail est fourni en {{REF:scribe-ref-1:Section 2}} du document, comme indiqué."
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "fr",
+        "hasTable": false,
+        "hasRef": true
+      }
+    },
+    {
+      "ts": 1781874552712,
+      "surface": "chat",
+      "inputMd": "La methode a ete valider dans trois essai[^scribe-fn-1] avant la sortie.",
+      "discussion": "Voici la phrase corrigée:\n\n{{fragment:0}}\n\nJ'ai corrigé les fautes d'orthographe et de grammaire.",
+      "fragments": [
+        "La méthode a été validée dans trois essais avant la sortie."
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "fr",
+        "hasTable": false,
+        "hasRef": true
+      }
+    },
+    {
+      "ts": 1781874554246,
+      "surface": "chat",
+      "inputMd": "Nous avons consacré les trois derniers mois à repenser entièrement le parcours d’intégration afin que les nouveaux utilisateurs atteignent leur premier succès beaucoup plus rapidement qu’auparavant.",
+      "discussion": "Voici une version plus concise et dynamique:\n\n{{fragment:0}}\n\nCela met l'accent sur le résultat tout en gardant un ton engageant.",
+      "fragments": [
+        "Nous avons repensé le parcours d’intégration pour que les nouveaux utilisateurs atteignent leur premier succès plus rapidement."
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "fr",
+        "hasTable": false,
+        "hasRef": false
+      }
+    },
+    {
+      "ts": 1781874557627,
+      "surface": "chat",
+      "inputMd": "",
+      "discussion": "Voici trois idées de titres pour votre article sur le télétravail:\n\n1. {{fragment:0}}\n2. {{fragment:1}}\n3. {{fragment:2}}",
+      "fragments": [
+        "Télétravail : comment concilier productivité et bien-être ?",
+        "Les défis du télétravail et comment les surmonter",
+        "Télétravail : les meilleures pratiques pour une collaboration efficace"
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "fr",
+        "hasTable": false,
+        "hasRef": false
+      }
+    },
+    {
+      "ts": 1781874557630,
+      "surface": "chat",
+      "inputMd": "",
+      "discussion": "Sure, here's a brief explanation of the difference between \"affect\" and \"effect\":\n\n{{fragment:0}}\n\nLet me know if you need further clarification.",
+      "fragments": [
+        "\"Affect\" is typically a verb meaning to influence or produce a change, while \"effect\" is usually a noun referring to the result of such an influence. For example, 'The weather will affect our plans' and 'The effect of the weather was significant.'"
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "en",
+        "hasTable": false,
+        "hasRef": false
+      }
+    },
+    {
+      "ts": 1781874562739,
+      "surface": "popover",
+      "inputMd": "## Tableaux\n\n[TABLE:0]\n[CELL:0,0]**Colonne 1**[/CELL]\n[CELL:0,1]**Colonne 2**[/CELL]\n[CELL:0,2]**Colonne 3**[/CELL]\n[CELL:1,0]Cellule normale[/CELL]\n[CELL:1,1]**Gras**[/CELL]\n[CELL:1,2]*Italique*[/CELL]\n[CELL:2,0]Valeur A[/CELL]\n[CELL:2,1]Valeur B[/CELL]\n[CELL:2,2]Valeur C[/CELL]\n[CELL:3,0]Valeur D[/CELL]\n[CELL:3,1]Valeur E[/CELL]\n[CELL:3,2]Valeur F[/CELL]\n[/TABLE]",
+      "discussion": "Here is the translated table: {{fragment:0}}",
+      "fragments": [
+        "## Tables\n\n[TABLE:0]\n[CELL:0,0]**Column 1**[/CELL]\n[CELL:0,1]**Column 2**[/CELL]\n[CELL:0,2]**Column 3**[/CELL]\n[CELL:1,0]Normal cell[/CELL]\n[CELL:1,1]**Bold**[/CELL]\n[CELL:1,2]*Italic*[/CELL]\n[CELL:2,0]Value A[/CELL]\n[CELL:2,1]Value B[/CELL]\n[CELL:2,2]Value C[/CELL]\n[CELL:3,0]Value D[/CELL]\n[CELL:3,1]Value E[/CELL]\n[CELL:3,2]Value F[/CELL]\n[/TABLE]"
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "en",
+        "hasTable": true,
+        "hasRef": false,
+        "curated": false
+      }
+    },
+    {
+      "ts": 1781874569004,
+      "surface": "popover",
+      "inputMd": "\n\n[TABLE:0]\n[CELL:0,0]**Français : du texte en** ***gras*** **et** **`inline`**[/CELL]\n[CELL:0,1]<u>[English: a link and code](https://example.com/)</u>[/CELL]\n[CELL:0,2]**Deutsch:** ~~**durchgestrichen**~~ **und fett**[/CELL]\n[CELL:1,0]<u>[Español: cursiva y enlace](https://ejemplo.es/)</u>[/CELL]\n[CELL:1,1]**Italiano**: `comando` e **grassetto**[/CELL]\n[CELL:1,2]**Português**: **negrito**, *itálico*, ~~erro~~\n\n<u>[Svenska: kod och länk](https://exempel.se/)</u>[/CELL]\n[CELL:2,0]<u>[Nederlands: een link](https://voorbeeld.nl/)</u>[/CELL]\n[CELL:2,1]**Polski**: **pogrubienie**, *kursywa* i `kod`[/CELL]\n[CELL:3,0]**Ελληνικά**: **έντονα** και *πλάγια*\n\n<u>[Русский: код, жирный, ссылка](https://xn--e1afmkfd.xn--p1ai/)</u>[/CELL]\n[CELL:3,1]**日本語**: **太字**と*斜体*、`コード`[/CELL]\n[/TABLE]\n\n",
+      "discussion": "Here is the translated table: {{fragment:0}}",
+      "fragments": [
+        "[TABLE:0]\n[CELL:0,0]**French: text in** ***bold*** **and** **`inline`**[/CELL]\n[CELL:0,1]<u>[English: a link and code](https://example.com/)</u>[/CELL]\n[CELL:0,2]**German:** ~~**strikethrough**~~ **and bold**[/CELL]\n[CELL:1,0]<u>[Spanish: italic and link](https://ejemplo.es/)</u>[/CELL]\n[CELL:1,1]**Italian**: `command` and **bold**[/CELL]\n[CELL:1,2]**Portuguese**: **bold**, *italic*, ~~error~~\n\n<u>[Swedish: code and link](https://exempel.se/)</u>[/CELL]\n[CELL:2,0]<u>[Dutch: a link](https://voorbeeld.nl/)</u>[/CELL]\n[CELL:2,1]**Polish**: **bold**, *italic* and `code`[/CELL]\n[CELL:3,0]**Greek**: **bold** and *italic*\n\n<u>[Russian: code, bold, link](https://xn--e1afmkfd.xn--p1ai/)</u>[/CELL]\n[CELL:3,1]**Japanese**: **bold** and *italic*, `code`[/CELL]\n[/TABLE]"
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "en",
+        "hasTable": true,
+        "hasRef": false,
+        "curated": false
+      }
+    },
+    {
+      "ts": 1781874562621,
+      "surface": "popover",
+      "inputMd": "[TABLE:0]\n[CELL:0,2]**Deutsch:** ~~**durchgestrichen**~~ **und fett**[/CELL]\n[CELL:1,2]**Português**: **negrito**, *itálico*, ~~erro~~\n\n<u>[Svenska: kod och länk](https://exempel.se/)</u>[/CELL]\n[/TABLE]",
+      "discussion": "Here is the result: {{fragment:0}}",
+      "fragments": [
+        "[TABLE:0]\n[CELL:0,2]**German:** ~~**strikethrough**~~ **and bold**[/CELL]\n[CELL:1,2]**Portuguese**: **bold**, *italic*, ~~mistake~~\n<u>[Swedish: code and link](https://exempel.se/)</u>[/CELL]\n[/TABLE]"
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "en",
+        "hasTable": true,
+        "hasRef": false,
+        "curated": false
+      }
+    },
+    {
+      "ts": 1781874568070,
+      "surface": "popover",
+      "inputMd": "[TABLE:0]\n[CELL:0,0]**Français : du texte en** ***gras*** **et** **`inline`**[/CELL]\n[CELL:0,1]<u>[English: a link and code](https://example.com/)</u>[/CELL]\n[CELL:1,0]<u>[Español: cursiva y enlace](https://ejemplo.es/)</u>[/CELL]\n[CELL:1,1]**Italiano**: `comando` e **grassetto**[/CELL]\n[CELL:2,0]<u>[Nederlands: een link](https://voorbeeld.nl/)</u>[/CELL]\n[CELL:2,1]**Polski**: **pogrubienie**, *kursywa* i `kod`[/CELL]\n[CELL:3,0]**Ελληνικά**: **έντονα** και *πλάγια*\n\n<u>[Русский: код, жирный, ссылка](https://xn--e1afmkfd.xn--p1ai/)</u>[/CELL]\n[/TABLE]",
+      "discussion": "Here is the translated table: {{fragment:0}}",
+      "fragments": [
+        "[TABLE:0]\n[CELL:0,0]**French: text in** ***bold*** **and** **`inline`**[/CELL]\n[CELL:0,1]<u>[English: a link and code](https://example.com/)</u>[/CELL]\n[CELL:1,0]<u>[Spanish: italic and link](https://ejemplo.es/)</u>[/CELL]\n[CELL:1,1]**Italian**: `command` and **bold**[/CELL]\n[CELL:2,0]<u>[Dutch: a link](https://voorbeeld.nl/)</u>[/CELL]\n[CELL:2,1]**Polish**: **bold**, *italic* and `code`[/CELL]\n[CELL:3,0]**Greek**: **bold** and *italic*\n\n<u>[Russian: code, bold, link](https://xn--e1afmkfd.xn--p1ai/)</u>[/CELL]\n[/TABLE]"
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "en",
+        "hasTable": true,
+        "hasRef": false,
+        "curated": false
+      }
+    },
+    {
+      "ts": 1781874569003,
+      "surface": "popover",
+      "inputMd": "[TABLE:0]\n[CELL:1,0]<u>[Español: cursiva y enlace](https://ejemplo.es/)</u>[/CELL]\n[CELL:1,1]**Italiano**: `comando` e **grassetto**[/CELL]\n[CELL:1,2]**Português**: **negrito**, *itálico*, ~~erro~~\n\n<u>[Svenska: kod och länk](https://exempel.se/)</u>[/CELL]\n[/TABLE]",
+      "discussion": "Here is the translated table: {{fragment:0}}",
+      "fragments": [
+        "[TABLE:0]\n[CELL:1,0]<u>[Spanish: *italic* and link](https://ejemplo.es/)</u>[/CELL]\n[CELL:1,1]**Italian**: `command` and **bold**[/CELL]\n[CELL:1,2]**Portuguese**: **bold**, *italic*, ~~error~~\n\n<u>[Swedish: code and link](https://exempel.se/)</u>[/CELL]\n[/TABLE]"
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "en",
+        "hasTable": true,
+        "hasRef": false,
+        "curated": false
+      }
+    },
+    {
+      "ts": 1781874565919,
+      "surface": "popover",
+      "inputMd": "\n\n## Références de liens \\(Link references\\)\n\nVoici un lien via {{REF:scribe-ref-0:référence vers le chapitre suivant}} et un autre {{REF:scribe-ref-1:lien nommé vers le chapitre HTML inline}}.\n\n",
+      "discussion": "",
+      "fragments": [
+        "```json\n{\"discussion\":\"Here is the result: {{fragment:0}}\",\"fragments\":[\"## Link references \\(Link references\\)\\n\\nHere is a link via {{REF:scribe-ref-0:reference to the next chapter}} and another {{REF:scribe-ref-1:named link to the HTML chapter inline}}.\"]}\n```"
+      ],
+      "valid": false,
+      "fellBack": true,
+      "warnings": [],
+      "tags": {
+        "locale": "en",
+        "hasTable": false,
+        "hasRef": true,
+        "curated": false
+      }
+    },
+    {
+      "ts": 1781874568889,
+      "surface": "popover",
+      "inputMd": "\n\n## Footnotes\n\n- Ceci est la première note de bas de page. [^scribe-fn-0]\n- Ceci est une note plus détaillée. Elle peut contenir plusieurs lignes. [^scribe-fn-1]\n\n",
+      "discussion": "Here is the result: {{fragment:0}}",
+      "fragments": [
+        "## Footnotes\n- This is the first footnote. [^scribe-fn-0]\n- This is a more detailed note. It can contain multiple lines. [^scribe-fn-1]"
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "en",
+        "hasTable": false,
+        "hasRef": true,
+        "curated": false
+      }
+    },
+    {
+      "ts": 1781874573259,
+      "surface": "popover",
+      "inputMd": "Résultats trimestriels :\n[TABLE:0][CELL:0,0]Trimestre[/CELL][CELL:0,1]Revenu[/CELL][CELL:1,0]T1[/CELL][CELL:1,1]120 k€[/CELL][CELL:2,0]T2[/CELL][CELL:2,1]148 k€[/CELL][/TABLE]",
+      "discussion": "Here is the result: {{fragment:0}}",
+      "fragments": [
+        "Quarterly results: [TABLE:0][CELL:0,0]Quarter[/CELL][CELL:0,1]Revenue[/CELL][CELL:1,0]Q1[/CELL][CELL:1,1]120 k€[/CELL][CELL:2,0]Q2[/CELL][CELL:2,1]148 k€[/CELL][/TABLE]"
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "en",
+        "hasTable": true,
+        "hasRef": false,
+        "curated": true
+      }
+    },
+    {
+      "ts": 1781874574522,
+      "surface": "popover",
+      "inputMd": "Weekly schedule:\n[TABLE:0][CELL:0,0]Day[/CELL][CELL:0,1]Task[/CELL][CELL:1,0]Mon[/CELL][CELL:1,1]Draft report[/CELL][CELL:2,0]Tue[/CELL][CELL:2,1]Review draft[/CELL][/TABLE]",
+      "discussion": "Here is the result: {{fragment:0}}",
+      "fragments": [
+        "Emploi du temps hebdomadaire:\n[TABLE:0][CELL:0,0]Jour[/CELL][CELL:0,1]Tâche[/CELL][CELL:1,0]Lun[/CELL][CELL:1,1]Rédiger le rapport[/CELL][CELL:2,0]Mar[/CELL][CELL:2,1]Revoir le brouillon[/CELL][/TABLE]"
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "fr",
+        "hasTable": true,
+        "hasRef": false,
+        "curated": true
+      }
+    },
+    {
+      "ts": 1781874571396,
+      "surface": "popover",
+      "inputMd": "Le détail figure en {{REF:scribe-ref-1:Section 2}} du document, juste après l'introduction.",
+      "discussion": "Here is the result: {{fragment:0}}",
+      "fragments": [
+        "The detail is shown in {{REF:scribe-ref-1:Section 2}} of the document, right after the introduction."
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "en",
+        "hasTable": false,
+        "hasRef": true,
+        "curated": true
+      }
+    },
+    {
+      "ts": 1781874571278,
+      "surface": "popover",
+      "inputMd": "Further details are given in {{REF:scribe-ref-3:Section 4}} of the appendix.",
+      "discussion": "Here is the result: {{fragment:0}}",
+      "fragments": [
+        "Weitere Details finden Sie in {{REF:scribe-ref-3:Abschnitt 4}} des Anhangs."
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "de",
+        "hasTable": false,
+        "hasRef": true,
+        "curated": true
+      }
+    },
+    {
+      "ts": 1781874573888,
+      "surface": "popover",
+      "inputMd": "Puedes ver los datos completos en {{REF:scribe-ref-7:Anexo A}}, está todo ahí.",
+      "discussion": "Here is the result: {{fragment:0}}",
+      "fragments": [
+        "Puede consultar los datos completos en {{REF:scribe-ref-7:Anexo A}}, donde se encuentra toda la información."
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "es",
+        "hasTable": false,
+        "hasRef": true,
+        "curated": true
+      }
+    },
+    {
+      "ts": 1781874575935,
+      "surface": "popover",
+      "inputMd": "Comme indiqué dans {{REF:scribe-ref-2:Annexe B}}, voici les chiffres du mois :\n[TABLE:0][CELL:0,0]Mois[/CELL][CELL:0,1]Ventes[/CELL][CELL:1,0]Janvier[/CELL][CELL:1,1]42[/CELL][/TABLE]",
+      "discussion": "Here is the result: {{fragment:0}}",
+      "fragments": [
+        "As indicated in {{REF:scribe-ref-2:Appendix B}}, here are this month's figures:[TABLE:0][CELL:0,0]Month[/CELL][CELL:0,1]Sales[/CELL][CELL:1,0]January[/CELL][CELL:1,1]42[/CELL][/TABLE]"
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "en",
+        "hasTable": true,
+        "hasRef": true,
+        "curated": true
+      }
+    },
+    {
+      "ts": 1781874575653,
+      "surface": "popover",
+      "inputMd": "The method was validated in three independent trials[^scribe-fn-1] before the public release.",
+      "discussion": "Here is the result: {{fragment:0}}",
+      "fragments": [
+        "La méthode a été validée dans trois essais indépendants[^scribe-fn-1] avant la publication publique."
+      ],
+      "valid": true,
+      "fellBack": false,
+      "warnings": [],
+      "tags": {
+        "locale": "fr",
+        "hasTable": false,
+        "hasRef": true,
+        "curated": true
+      }
+    }
+  ]
+}
