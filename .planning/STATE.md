@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v3.1
 milestone_name: Contrat de réponse structurée LLM
 status: executing
-stopped_at: Phase v3.1-03 complete (verified 10/10); GATE verdict pending real-data freeze
-last_updated: "2026-06-17T13:27:33.081Z"
-last_activity: 2026-06-17
+stopped_at: Phase v3.1-03 complete + HARD GATE = PASS (2026-06-19, v2 prompt); next = v3.1-04
+last_updated: "2026-06-19T12:10:00.000Z"
+last_activity: 2026-06-19
 progress:
   total_phases: 5
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 5
   completed_plans: 5
-  percent: 40
+  percent: 60
 ---
 
 # Project State
@@ -21,17 +21,26 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-16)
 
 **Core value:** L'utilisateur peut interagir avec l'IA de maniere fluide -- actions rapides inline ou chat conversationnel dans un panneau lateral -- pour transformer et manipuler le contenu de son document OnlyOffice.
-**Current focus:** Phase v3.1-03 — Sonde dev — HARD GATE
+**Current focus:** Phase v3.1-04 — Rendu chat (cartes + clavier) — gate cleared
 
 ## Current Position
 
-Phase: v3.1-03 (Sonde dev — HARD GATE) — EXECUTING (Plan 02 paused at blocking checkpoint)
-Plan: 3 of 3 — Tasks 1-2 done & committed; Task 3 = blocking human-verify checkpoint PENDING
-Status: Ready to execute
-Progress: [████      ] 40% (2/5 phases)
-Last activity: 2026-06-17
+Phase: v3.1-03 (Sonde dev — HARD GATE) — COMPLETE; **GATE = PASS** (2026-06-19, see v3.1-03-GATE.md §6)
+Plan: 3 of 3 — all executed; gate evidence captured (gate-evidence-v2.json) + thresholds frozen
+Status: Phase done — ready to start v3.1-04
+Progress: [██████    ] 60% (3/5 phases)
+Last activity: 2026-06-19
 
-Next: USER runs the Task 3 how-to-verify steps (see v3.1-03-02-SUMMARY.md / PLAN.md) in the live OO/Drive runtime, then replies "approved" (or describes issues) to complete Plan 02.
+GATE outcome: v2 contract block (RESPONSE_CONTRACT_BLOCK_V2) PASSES all 4 blockers (dup 0% / preamble
+0% / splitTable 0 / refBroken 0) on N=46 incl. real IHM-captured table/REF; deployed v1 is a measured
+NO-GO (preamble 21.4%, splitTable 1) on the same data.
+
+⚠️ REQUIRED FOLLOW-UP before card rendering ships: **adopt v2 as the production prompt** (swap
+RESPONSE_CONTRACT_BLOCK → _V2 in scribeAI.js). Minor non-blocking residual: ~2% fellBack (model
+occasionally wraps JSON in a ```json fence) — candidate for v3.1-05 re-ask / contract hardening.
+
+Next: start v3.1-04 (Rendu chat — fragment cards, Copy/Insert/Replace, keyboard nav). `/clear` then
+`/gsd-discuss-phase v3.1-04`.
 
 ## v3.1 Roadmap Summary
 
