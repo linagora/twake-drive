@@ -50,7 +50,7 @@
       "path": "services/qualificationMigration.js"
     },
     {
-      "path": "main/index.html"
+      "path": "index.html"
     },
     {
       "path": "public/index.html"
