@@ -109,6 +109,28 @@ const REF_ID_RE = /\{\{REF:(scribe-ref-\d+):[^}]*\}\}/g
  */
 const FOOTNOTE_ID_RE = /\[\^(scribe-fn-\d+)\]/g
 
+/**
+ * Derive coverage tags (`hasTable` / `hasRef`) from the input markdown by the
+ * SAME marker-presence test production uses to inject the conditional prompt
+ * clauses (scribeAI.js buildMessages / gate-harness prompt.mjs): table iff a
+ * `[TABLE:` or `[CELL:` marker is present; ref iff a `{{REF:scribe-ref-` or
+ * `[^scribe-fn-` marker is present (footnotes share the REF-integrity set-diff).
+ *
+ * Used by recordProbeSample so live IHM captures self-tag for the GATE coverage
+ * preconditions (#8/#9) instead of always landing at 0. String `.includes` (not
+ * regex) — order-independent and mirrors the production clause guard exactly.
+ *
+ * @param {string} inputMd
+ * @returns {{ hasTable: boolean, hasRef: boolean }}
+ */
+export function deriveContentTags(inputMd) {
+  const s = typeof inputMd === 'string' ? inputMd : ''
+  return {
+    hasTable: s.includes('[TABLE:') || s.includes('[CELL:'),
+    hasRef: s.includes('{{REF:scribe-ref-') || s.includes('[^scribe-fn-')
+  }
+}
+
 /* ------------------------------------------------------------------------- *
  * Metric 1 — preamble detection.
  * ------------------------------------------------------------------------- */
@@ -421,6 +443,10 @@ export function recordProbeSample(parsed, meta) {
   const p = parsed || {}
   const m = meta || {}
   const corpus = readCorpus()
+  // D-07/D-09 coverage tags. hasTable/hasRef are auto-derived from inputMd so
+  // live IHM captures populate the GATE coverage preconditions (#8/#9); any
+  // explicit tag (e.g. locale, or a deliberate override) wins via spread order.
+  const tags = { ...deriveContentTags(m.inputMd), ...(m.tags || {}) }
   corpus.samples.push({
     ts: m.ts || Date.now(),
     surface: m.surface, // 'popover' | 'chat'
@@ -430,7 +456,7 @@ export function recordProbeSample(parsed, meta) {
     valid: p.valid,
     fellBack: p.fellBack,
     warnings: Array.isArray(p.warnings) ? p.warnings : [],
-    tags: m.tags || {} // D-07/D-09 coverage: locale, hasTable, hasRef, curated
+    tags
   })
   if (corpus.samples.length > MAX_SAMPLES) {
     corpus.samples.splice(0, corpus.samples.length - MAX_SAMPLES)

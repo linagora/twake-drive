@@ -5,6 +5,7 @@ import {
   hasSplitTable,
   refIntegrity,
   recordProbeSample,
+  deriveContentTags,
   exportCorpus,
   importCorpus,
   replay,
@@ -236,6 +237,21 @@ describe('scribeProbe', () => {
     })
   })
 
+  describe('deriveContentTags', () => {
+    it('flags hasTable on [TABLE:/[CELL: markers', () => {
+      expect(deriveContentTags('a [TABLE:0]x[/TABLE]').hasTable).toBe(true)
+      expect(deriveContentTags('a [CELL:1,2]x[/CELL]').hasTable).toBe(true)
+    })
+    it('flags hasRef on cross-ref and footnote markers', () => {
+      expect(deriveContentTags('see {{REF:scribe-ref-1:S2}}').hasRef).toBe(true)
+      expect(deriveContentTags('trial[^scribe-fn-1] done').hasRef).toBe(true)
+    })
+    it('is false on plain prose and tolerates non-strings', () => {
+      expect(deriveContentTags('just text')).toEqual({ hasTable: false, hasRef: false })
+      expect(deriveContentTags(undefined)).toEqual({ hasTable: false, hasRef: false })
+    })
+  })
+
   describe('corpus persistence (record/export/import/replay/aggregate)', () => {
     beforeEach(() => {
       try {
@@ -257,6 +273,27 @@ describe('scribeProbe', () => {
     it('records a sample and returns the new count', () => {
       expect(recordProbeSample(sample(), { surface: 'chat', inputMd: '' })).toBe(1)
       expect(recordProbeSample(sample(), { surface: 'popover', inputMd: '' })).toBe(2)
+    })
+
+    it('auto-derives hasTable/hasRef tags from inputMd (live IHM capture coverage)', () => {
+      recordProbeSample(sample(), {
+        surface: 'popover',
+        inputMd: 'x [TABLE:0][CELL:0,0]a[/CELL][/TABLE] {{REF:scribe-ref-1:s}}'
+      })
+      const stored = JSON.parse(exportCorpus()).samples[0]
+      expect(stored.tags.hasTable).toBe(true)
+      expect(stored.tags.hasRef).toBe(true)
+    })
+
+    it('explicit tags override the auto-derived ones', () => {
+      recordProbeSample(sample(), {
+        surface: 'popover',
+        inputMd: '[TABLE:0][/TABLE]',
+        tags: { locale: 'fr', hasTable: false }
+      })
+      const stored = JSON.parse(exportCorpus()).samples[0]
+      expect(stored.tags.locale).toBe('fr')
+      expect(stored.tags.hasTable).toBe(false) // explicit wins over derived true
     })
 
     it('export then import round-trips the corpus', () => {
