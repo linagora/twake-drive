@@ -27,7 +27,7 @@ const useDataProxyRecents = () => {
           setFetchStatus('loaded')
           return
         } catch (err) {
-          logger.warn('Error fetching recents from dataproxy', err)
+          logger.error('Error fetching recents from dataproxy', err)
         }
       }
 

@@ -17,7 +17,8 @@ jest.mock('cozy-dataproxy-lib', () => ({
 }))
 
 jest.mock('@/lib/logger', () => ({
-  warn: jest.fn()
+  warn: jest.fn(),
+  error: jest.fn()
 }))
 
 jest.mock('@/queries', () => ({
@@ -66,7 +67,7 @@ describe('useDataProxyRecents', () => {
       expect(result.current.error).toBe(null)
       expect(mockDataProxy.recents).toHaveBeenCalledTimes(1)
       expect(mockClient.fetchQueryAndGetFromState).not.toHaveBeenCalled()
-      expect(logger.warn).not.toHaveBeenCalled()
+      expect(logger.error).not.toHaveBeenCalled()
     })
   })
 
@@ -96,7 +97,7 @@ describe('useDataProxyRecents', () => {
       await waitFor(() => expect(result.current.fetchStatus).toBe('loaded'))
       expect(result.current.data).toEqual(fallbackData)
       expect(result.current.error).toBe(null)
-      expect(logger.warn).toHaveBeenCalledWith(
+      expect(logger.error).toHaveBeenCalledWith(
         'Error fetching recents from dataproxy',
         mockError
       )
@@ -123,7 +124,7 @@ describe('useDataProxyRecents', () => {
       // Wait for fallback query error to be processed
       await waitFor(() => expect(result.current.fetchStatus).toBe('error'))
       expect(result.current.error).toEqual(fallbackError)
-      expect(logger.warn).toHaveBeenCalledWith(
+      expect(logger.error).toHaveBeenCalledWith(
         'Error fetching recents from dataproxy',
         mockError
       )
