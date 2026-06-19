@@ -8,89 +8,25 @@ const config = getRsbuildConfig({
   hasIntents: true
 })
 
-// rsbuild-config-cozy-app declares one environment (= one rspack compilation)
-// per web target, so the three targets each re-bundle React, cozy-* and the
-// editors into their own static/ tree and the registry tarball pays for every
-// module up to three times. We replace those three environments with a single
-// `web` environment holding the three entries: one chunk graph means shared
-// modules are emitted exactly once, under one static/ tree.
+// Self-host the Excalidraw fonts (the default unpkg CDN is blocked by our CSP).
+// Since 0.18 the library fetches them at runtime from `${EXCALIDRAW_ASSET_PATH}
+// fonts/...`, so we copy them to a top-level `fonts` directory. The asset path
+// is set in src/modules/views/Excalidraw/setupAssetPath.js. The prod and dev
+// font sets are byte-identical, so we copy only the prod one (both build modes
+// resolve the same `fonts/...` filenames at runtime). `info.minimized` stops
+// rspack from re-minifying the prebuilt assets.
 //
-// All hashed assets stay in build/static and are served by the `/static`
-// route, declared `public: true` in manifest.webapp so the public (shared
-// link) pages can load them without auth. Each entry keeps its own HTML file
-// ([name]/index.html); the `/` route points to the /main folder.
-const { main, public: publicEnv, intents, services } = config.environments
-
-const templates = {
-  main: main.html.template,
-  public: publicEnv.html.template,
-  intents: intents.html.template
-}
-
-config.environments = {
-  web: {
-    html: {
-      template: ({ entryName }) => templates[entryName]
-    },
-    source: {
-      entry: {
-        main: main.source.entry.main,
-        public: publicEnv.source.entry.public,
-        intents: intents.source.entry.intents
-      }
-    },
-    output: {
-      target: 'web',
-      filename: {
-        html: '[name]/index.html'
-      },
-      distPath: {
-        root: 'build'
-      },
-      copy: [
-        // manifest.webapp, README, LICENSE and public/ -> assets, as the
-        // generated main environment declared them.
-        ...main.output.copy,
-        {
-          from: 'src/assets/onlyOffice',
-          to: 'onlyOffice'
-        },
-        {
-          from: 'src/assets/favicons',
-          to: 'favicons'
-        },
-        // Self-host the Excalidraw fonts (the default unpkg CDN is blocked by
-        // our CSP). Since 0.18 the library fetches them at runtime from
-        // `${EXCALIDRAW_ASSET_PATH}fonts/...`; the asset path is set to
-        // /static/ in src/modules/views/Excalidraw/setupAssetPath.js. The prod
-        // and dev font sets are byte-identical, so we copy only the prod one.
-        // `info.minimized` stops rspack from re-minifying the prebuilt assets.
-        //
-        // Xiaolai is excluded: it is Excalidraw's CJK fallback font, ~12 MB of
-        // woff2 subsets (every other font set is <1 MB total), and we do not
-        // ship CJK glyph rendering for drawings.
-        {
-          from: 'node_modules/@excalidraw/excalidraw/dist/prod/fonts',
-          to: 'static/fonts',
-          globOptions: { ignore: ['**/Xiaolai/**'] },
-          info: { minimized: true }
-        }
-      ]
-    },
-    tools: {
-      rspack: {
-        output: {
-          // Asset modules without a dedicated rsbuild rule (e.g. the pdf.js
-          // worker react-pdf imports as a resource) default to `[hash][ext]`
-          // at the build root, which only the private `/` route serves. Keep
-          // them under static/ so the public route covers them too.
-          assetModuleFilename: 'static/resource/[hash][ext][query]'
-        }
-      }
-    }
-  },
-  services
-}
+// Xiaolai is excluded: it is Excalidraw's CJK fallback font, ~12 MB of woff2
+// subsets (every other font set is <1 MB total), and we do not ship CJK glyph
+// rendering for drawings. Drop it to keep the build under the registry limit.
+const excalidrawAssets = [
+  {
+    from: 'node_modules/@excalidraw/excalidraw/dist/prod/fonts',
+    to: 'fonts',
+    globOptions: { ignore: ['**/Xiaolai/**'] },
+    info: { minimized: true }
+  }
+]
 
 const mergedConfig = mergeRsbuildConfig(config, {
   // Rsbuild enables dev.lazyCompilation by default, which defers compiling async
@@ -103,13 +39,33 @@ const mergedConfig = mergeRsbuildConfig(config, {
   dev: {
     lazyCompilation: false
   },
+  environments: {
+    main: {
+      output: {
+        copy: [
+          {
+            from: 'src/assets/onlyOffice',
+            to: 'onlyOffice'
+          },
+          {
+            from: 'src/assets/favicons',
+            to: 'favicons'
+          },
+          ...excalidrawAssets
+        ]
+      }
+    },
+    // The public (shared link) target is a separate build, so it needs its own
+    // copy of the Excalidraw assets to serve them under its /public prefix.
+    public: {
+      output: {
+        copy: [...excalidrawAssets]
+      }
+    }
+  },
   resolve: {
     alias: {
-      // The webpack5 entry wires the pdf.js worker through a `new URL(...)`
-      // asset module, so it honors assetModuleFilename and lands under
-      // static/ (the webpack4 entry inlines file-loader, which emits the
-      // worker at the build root where only the private `/` route serves it).
-      'react-pdf$': 'react-pdf/dist/esm/entry.webpack5'
+      'react-pdf$': 'react-pdf/dist/esm/entry.webpack'
     }
   }
 })
