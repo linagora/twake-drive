@@ -98,7 +98,11 @@ describe('Sharings View', () => {
   })
 
   it('should display placeholder when all files are not loaded', async () => {
-    mockSharingContext.mockReturnValue({ byDocId: [], allLoaded: false })
+    mockSharingContext.mockReturnValue({
+      byDocId: [],
+      allLoaded: false,
+      isOwner: jest.fn(() => false)
+    })
     const { container } = setup()
 
     await waitFor(() => {
@@ -109,7 +113,11 @@ describe('Sharings View', () => {
   })
 
   it('should not display placeholder when all files are loaded', async () => {
-    mockSharingContext.mockReturnValue({ byDocId: [], allLoaded: true })
+    mockSharingContext.mockReturnValue({
+      byDocId: [],
+      allLoaded: true,
+      isOwner: jest.fn(() => false)
+    })
     useQuery.mockReturnValue(filesFixtureWithPath)
 
     const { container } = setup()

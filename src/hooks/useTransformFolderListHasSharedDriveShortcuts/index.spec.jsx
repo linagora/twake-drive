@@ -288,6 +288,32 @@ describe('useTransformFolderListHasSharedDriveShortcuts', () => {
       })
     })
 
+    it('should expose the drive owner flag on transformed entries', () => {
+      mockUseSharedDrives.mockReturnValue({
+        sharedDrives: [
+          {
+            id: 'sharing-owned',
+            owner: true,
+            rules: [{ values: ['folder-owned'], title: 'Owned Drive' }]
+          },
+          {
+            id: 'sharing-received',
+            owner: false,
+            rules: [{ values: ['folder-received'], title: 'Received Drive' }]
+          }
+        ]
+      })
+
+      const { result } = renderHook(() =>
+        useTransformFolderListHasSharedDriveShortcuts([])
+      )
+
+      expect(result.current.sharedDrives).toEqual([
+        expect.objectContaining({ driveId: 'sharing-owned', owner: true }),
+        expect.objectContaining({ driveId: 'sharing-received', owner: false })
+      ])
+    })
+
     it('should filter out nextcloud shortcuts', () => {
       const mockSharedDrives = [
         {
