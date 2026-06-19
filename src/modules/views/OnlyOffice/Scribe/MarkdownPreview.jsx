@@ -4,6 +4,7 @@ import remarkGfm from 'remark-gfm'
 import rehypeRaw from 'rehype-raw'
 import { useTheme } from 'cozy-ui/transpiled/react/styles'
 
+import { transformCellMarkersForPreview } from '@/modules/views/OnlyOffice/Scribe/tableCellMarkers'
 import styles from '@/modules/views/OnlyOffice/Scribe/scribe.styl'
 
 /**
@@ -131,14 +132,40 @@ const MarkdownPreview = ({ children }) => {
     }
   }
 
-  // Pre-process inline image markers to standard markdown image syntax
-  const preprocessed =
-    typeof children === 'string'
-      ? children.replace(
-          /\{\{IMG:(scribe-img-\d+)\}\}/g,
-          '![IMG:$1](placeholder)'
-        )
-      : children
+  // Cosmetic, render-time-only preprocessing of plugin markers (D-02).
+  // This is a DERIVED transform: it produces a NEW display string and never
+  // mutates the caller's source `children` (D-03 invariant — the raw fragment
+  // with markers intact is what the insert/replace/clipboard pipeline uses).
+  let preprocessed = children
+  if (typeof children === 'string') {
+    let out = children
+
+    // 1. Tables first (they wrap multiline blocks). Idempotency gate: only run
+    //    when raw TABLE/CELL markers are present, so an already-converted GFM
+    //    pipe-table (e.g. from the popover path) is left untouched.
+    if (out.includes('[TABLE:') || out.includes('[CELL:')) {
+      out = transformCellMarkersForPreview(out, '').displayMd
+    }
+
+    // 2. REF marker → visible text only. Bounded payload class `[^}]*` (linear,
+    //    no nested quantifiers — ReDoS-safe). The captured text is placed as
+    //    plain markdown text, not interpolated into any HTML tag/attribute.
+    out = out.replace(/\{\{REF:scribe-ref-\d+:([^}]*)\}\}/g, '$1')
+
+    // 3. Image marker → standard markdown image syntax (existing step; the `img`
+    //    component override renders the placeholder chip).
+    out = out.replace(/\{\{IMG:(scribe-img-\d+)\}\}/g, '![IMG:$1](placeholder)')
+
+    // 4. Footnote marker → discreet superscript. Emitted raw HTML is a FIXED
+    //    `<sup>` shell around a captured `\d+` only — no model-controlled
+    //    substring reaches the tag/attribute (security V5). rehypeRaw renders it.
+    out = out.replace(
+      /\[\^scribe-fn-(\d+)\]/g,
+      '<sup style="opacity:0.5">$1</sup>'
+    )
+
+    preprocessed = out
+  }
 
   return (
     <div
