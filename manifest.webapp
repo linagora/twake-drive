@@ -44,7 +44,7 @@
   "langs": ["en", "fr"],
   "routes": {
     "/": {
-      "folder": "/main",
+      "folder": "/",
       "index": "index.html",
       "public": false
     },
@@ -65,10 +65,6 @@
     },
     "/assets": {
       "folder": "/assets",
-      "public": true
-    },
-    "/static": {
-      "folder": "/static",
       "public": true
     }
   },
