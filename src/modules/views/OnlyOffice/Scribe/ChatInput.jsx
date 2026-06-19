@@ -1,4 +1,11 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react'
+import React, {
+  useState,
+  useRef,
+  useCallback,
+  useEffect,
+  forwardRef,
+  useImperativeHandle
+} from 'react'
 
 import { useTheme } from 'cozy-ui/transpiled/react/styles'
 import { useI18n } from 'twake-i18n'
@@ -10,12 +17,26 @@ const SCRIBE_PURPLE = '#7C3AED'
 const MAX_ROWS = 4
 const LINE_HEIGHT = 20
 
-export const ChatInput = () => {
+export const ChatInput = forwardRef(({ onArrowUp } = {}, ref) => {
   const [text, setText] = useState('')
   const { sendMessage, isLoading, currentSelection, dismissSelection } = useScribe()
   const { t } = useI18n()
   const theme = useTheme()
   const textareaRef = useRef(null)
+
+  // Imperative focus() exposed to the thread keyboard controller so it can
+  // return focus to the input on Escape / Down-past-newest. This is a SINGLE
+  // focus() call — NOT the open-time reclaim burst below (Pitfall 4: a reclaim
+  // loop fights the cross-origin OO editor iframe). See T-v3.1-04-13.
+  useImperativeHandle(
+    ref,
+    () => ({
+      focus: () => {
+        if (textareaRef.current) textareaRef.current.focus()
+      }
+    }),
+    []
+  )
 
   const handleSend = useCallback(() => {
     const trimmed = text.trim()
@@ -35,8 +56,16 @@ export const ChatInput = () => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       handleSend()
+      return
     }
-  }, [handleSend])
+    // KBD-01: ArrowUp from an EMPTY draft leaves the input and hands focus to
+    // the thread controller (most-recent card). The text.length === 0 guard
+    // keeps ArrowUp editing a multi-line draft when text is present.
+    if (e.key === 'ArrowUp' && text.length === 0 && onArrowUp) {
+      e.preventDefault()
+      onArrowUp()
+    }
+  }, [handleSend, text, onArrowUp])
 
   const handleChange = useCallback(e => {
     setText(e.target.value)
@@ -147,4 +176,6 @@ export const ChatInput = () => {
       </div>
     </div>
   )
-}
+})
+
+ChatInput.displayName = 'ChatInput'
