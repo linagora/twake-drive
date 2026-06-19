@@ -64,6 +64,12 @@ const setScribe = ({ messages, isLoading = false, currentSelection = null }) => 
 
 const assistant = (over = {}) => ({ id: 'a1', role: 'assistant', ...over })
 
+// jsdom does not implement Element.prototype.scrollTo; the auto-scroll effect
+// calls it on the container ref. Stub it so the effect is a harmless no-op.
+beforeAll(() => {
+  Element.prototype.scrollTo = () => {}
+})
+
 describe('ChatMessageList — segment-based assistant render', () => {
   beforeEach(() => {
     jest.clearAllMocks()
