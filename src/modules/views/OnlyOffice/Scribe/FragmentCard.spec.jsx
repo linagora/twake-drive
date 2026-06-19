@@ -35,7 +35,9 @@ const insertSpy = jest.fn()
 const replaceSpy = jest.fn()
 jest.mock('@/modules/views/OnlyOffice/Scribe/ScribeContext', () => ({
   __esModule: true,
-  useScribe: () => ({ panelActions: { insert: insertSpy, replace: replaceSpy } })
+  useScribe: () => ({
+    panelActions: { insert: insertSpy, replace: replaceSpy }
+  })
 }))
 
 import { FragmentCard } from '@/modules/views/OnlyOffice/Scribe/FragmentCard'
@@ -105,9 +107,9 @@ describe('FragmentCard', () => {
       const root = container.firstChild
       const border = (root.getAttribute('style') || '').toLowerCase()
       // Accept hex or rgb form of #7C3AED.
-      expect(
-        border.includes('7c3aed') || border.includes('124, 58, 237')
-      ).toBe(true)
+      expect(border.includes('7c3aed') || border.includes('124, 58, 237')).toBe(
+        true
+      )
     })
   })
 })
