@@ -18,40 +18,40 @@ jest.mock('cozy-ui/transpiled/react/styles', () => ({
         hover: 'rgba(0,0,0,0.04)',
         selected: 'rgba(0,0,0,0.08)',
         disabled: '#999',
-        disabledBackground: '#eee'
+        disabledBackground: '#eee',
       },
-      background: { paper: '#fff' }
-    }
-  })
+      background: { paper: '#fff' },
+    },
+  }),
 }))
 
 // Tooltip passthrough so the inner <button> stays focusable/queryable.
 jest.mock('cozy-ui/transpiled/react/Tooltip', () => ({
   __esModule: true,
-  default: ({ children }) => children
+  default: ({ children }) => children,
 }))
 
 // Spinner / Typography passthroughs (loading + welcome chrome).
 jest.mock('cozy-ui/transpiled/react/Spinner', () => ({
   __esModule: true,
-  default: () => null
+  default: () => null,
 }))
 jest.mock('cozy-ui/transpiled/react/Typography', () => ({
   __esModule: true,
-  default: ({ children }) => <div>{children}</div>
+  default: ({ children }) => <div>{children}</div>,
 }))
 
 // i18n: echo the key so aria-labels are 'Scribe.button.copy' etc. and the input
 // placeholder is a known string.
 jest.mock('twake-i18n', () => ({
   __esModule: true,
-  useI18n: () => ({ t: key => key })
+  useI18n: () => ({ t: (key) => key }),
 }))
 
 // SelectionChip is irrelevant to keyboard traversal — stub it out.
 jest.mock('@/modules/views/OnlyOffice/Scribe/SelectionChip', () => ({
   __esModule: true,
-  SelectionChip: () => null
+  SelectionChip: () => null,
 }))
 
 // Controllable useScribe — each test sets `scribeState` before render.
@@ -60,20 +60,24 @@ const insertSpy = jest.fn()
 const replaceSpy = jest.fn()
 jest.mock('@/modules/views/OnlyOffice/Scribe/ScribeContext', () => ({
   __esModule: true,
-  useScribe: () => scribeState
+  useScribe: () => scribeState,
 }))
 
 import { ChatMessageList } from '@/modules/views/OnlyOffice/Scribe/ChatMessageList'
 import { ChatInput } from '@/modules/views/OnlyOffice/Scribe/ChatInput'
 
-const setScribe = ({ messages, isLoading = false, currentSelection = null }) => {
+const setScribe = ({
+  messages,
+  isLoading = false,
+  currentSelection = null,
+}) => {
   scribeState = {
     messages,
     isLoading,
     currentSelection,
     sendMessage: jest.fn(),
     dismissSelection: jest.fn(),
-    panelActions: { insert: insertSpy, replace: replaceSpy }
+    panelActions: { insert: insertSpy, replace: replaceSpy },
   }
 }
 
@@ -95,9 +99,7 @@ const Harness = () => {
     <div>
       <ChatMessageList
         ref={listRef}
-        returnFocusToInput={() =>
-          inputRef.current && inputRef.current.focus()
-        }
+        returnFocusToInput={() => inputRef.current && inputRef.current.focus()}
       />
       <ChatInput
         ref={inputRef}
@@ -121,9 +123,19 @@ describe('ChatMessageList — keyboard navigation (KBD-01..04)', () => {
     it('lands on the newest card Insert button when both messages carry cards', () => {
       setScribe({
         messages: [
-          { id: 'a1', role: 'assistant', discussion: '{{fragment:0}}', fragments: ['OLD'] },
-          { id: 'a2', role: 'assistant', discussion: '{{fragment:0}}', fragments: ['NEW'] }
-        ]
+          {
+            id: 'a1',
+            role: 'assistant',
+            discussion: '{{fragment:0}}',
+            fragments: ['OLD'],
+          },
+          {
+            id: 'a2',
+            role: 'assistant',
+            discussion: '{{fragment:0}}',
+            fragments: ['NEW'],
+          },
+        ],
       })
       render(<Harness />)
       const input = getInput()
@@ -138,9 +150,19 @@ describe('ChatMessageList — keyboard navigation (KBD-01..04)', () => {
     it('D-10 — skips a most-recent pure-discussion (0-card) message back to the last carded one', () => {
       setScribe({
         messages: [
-          { id: 'a1', role: 'assistant', discussion: '{{fragment:0}}', fragments: ['CARDED'] },
-          { id: 'a2', role: 'assistant', discussion: 'pure discussion', fragments: [] }
-        ]
+          {
+            id: 'a1',
+            role: 'assistant',
+            discussion: '{{fragment:0}}',
+            fragments: ['CARDED'],
+          },
+          {
+            id: 'a2',
+            role: 'assistant',
+            discussion: 'pure discussion',
+            fragments: [],
+          },
+        ],
       })
       render(<Harness />)
       const input = getInput()
@@ -156,8 +178,13 @@ describe('ChatMessageList — keyboard navigation (KBD-01..04)', () => {
     it('empty-draft guard — ArrowUp with non-empty text stays in the input', () => {
       setScribe({
         messages: [
-          { id: 'a1', role: 'assistant', discussion: '{{fragment:0}}', fragments: ['C'] }
-        ]
+          {
+            id: 'a1',
+            role: 'assistant',
+            discussion: '{{fragment:0}}',
+            fragments: ['C'],
+          },
+        ],
       })
       render(<Harness />)
       const input = getInput()
@@ -172,9 +199,14 @@ describe('ChatMessageList — keyboard navigation (KBD-01..04)', () => {
     it('with a selection, Right from Insert goes to Replace, Left goes to Copy', () => {
       setScribe({
         messages: [
-          { id: 'a1', role: 'assistant', discussion: '{{fragment:0}}', fragments: ['C'] }
+          {
+            id: 'a1',
+            role: 'assistant',
+            discussion: '{{fragment:0}}',
+            fragments: ['C'],
+          },
         ],
-        currentSelection: { text: 'sel' }
+        currentSelection: { text: 'sel' },
       })
       render(<Harness />)
       const copy = screen.getByLabelText('Scribe.button.copy')
@@ -195,9 +227,14 @@ describe('ChatMessageList — keyboard navigation (KBD-01..04)', () => {
     it('gating — with no selection the group is length 2 (Copy, Insert); Left/Right cycle only those', () => {
       setScribe({
         messages: [
-          { id: 'a1', role: 'assistant', discussion: '{{fragment:0}}', fragments: ['C'] }
+          {
+            id: 'a1',
+            role: 'assistant',
+            discussion: '{{fragment:0}}',
+            fragments: ['C'],
+          },
         ],
-        currentSelection: null
+        currentSelection: null,
       })
       render(<Harness />)
       expect(screen.queryByLabelText('Scribe.button.replace')).toBeNull()
@@ -217,9 +254,19 @@ describe('ChatMessageList — keyboard navigation (KBD-01..04)', () => {
     const twoCardThread = () =>
       setScribe({
         messages: [
-          { id: 'a1', role: 'assistant', discussion: '{{fragment:0}}', fragments: ['OLD'] },
-          { id: 'a2', role: 'assistant', discussion: '{{fragment:0}}', fragments: ['NEW'] }
-        ]
+          {
+            id: 'a1',
+            role: 'assistant',
+            discussion: '{{fragment:0}}',
+            fragments: ['OLD'],
+          },
+          {
+            id: 'a2',
+            role: 'assistant',
+            discussion: '{{fragment:0}}',
+            fragments: ['NEW'],
+          },
+        ],
       })
 
     it('Down from the older card moves to the newer card; Up moves back', () => {
@@ -265,8 +312,13 @@ describe('ChatMessageList — keyboard navigation (KBD-01..04)', () => {
     it('Escape from a card button returns focus to the input', () => {
       setScribe({
         messages: [
-          { id: 'a1', role: 'assistant', discussion: '{{fragment:0}}', fragments: ['C'] }
-        ]
+          {
+            id: 'a1',
+            role: 'assistant',
+            discussion: '{{fragment:0}}',
+            fragments: ['C'],
+          },
+        ],
       })
       render(<Harness />)
       const insert = screen.getByLabelText('Scribe.button.insert')
@@ -279,8 +331,13 @@ describe('ChatMessageList — keyboard navigation (KBD-01..04)', () => {
       const RAW = 'raw fragment {{REF:scribe-ref-1:x}}'
       setScribe({
         messages: [
-          { id: 'a1', role: 'assistant', discussion: '{{fragment:0}}', fragments: [RAW] }
-        ]
+          {
+            id: 'a1',
+            role: 'assistant',
+            discussion: '{{fragment:0}}',
+            fragments: [RAW],
+          },
+        ],
       })
       render(<Harness />)
       const insert = screen.getByLabelText('Scribe.button.insert')

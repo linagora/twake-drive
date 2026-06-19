@@ -35,6 +35,7 @@ const FragmentCard = ({ raw, hasSelection }) => {
 
   return (
     <div
+      data-fragment-card
       style={{
         border: `1px solid ${SCRIBE_PURPLE}`,
         background: isDark ? 'rgba(124, 58, 237, 0.12)' : SCRIBE_PURPLE_08,

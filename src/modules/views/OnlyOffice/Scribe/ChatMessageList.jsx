@@ -1,4 +1,10 @@
-import React, { useRef, useEffect } from 'react'
+import React, {
+  useRef,
+  useEffect,
+  useCallback,
+  forwardRef,
+  useImperativeHandle
+} from 'react'
 
 import Spinner from 'cozy-ui/transpiled/react/Spinner'
 import Typography from 'cozy-ui/transpiled/react/Typography'
@@ -138,7 +144,11 @@ const WelcomeMessage = ({ t }) => (
   </div>
 )
 
-export const ChatMessageList = () => {
+// Index of the Insert button within a card's button group. Card buttons render
+// in this order: [Copy, Insert, (Replace when hasSelection)] — so Insert is 1.
+const INSERT_BUTTON_INDEX = 1
+
+export const ChatMessageList = forwardRef(({ returnFocusToInput } = {}, ref) => {
   const { messages, isLoading, currentSelection } = useScribe()
   const { t } = useI18n()
   const theme = useTheme()
@@ -153,6 +163,113 @@ export const ChatMessageList = () => {
     }
   }, [messages.length, isLoading])
 
+  // Thread-level keyboard focus controller (manual index + .focus(), no
+  // roving-tabindex library — mirrors ScribeResultPanel / ScribeActionMenu).
+  //
+  // The flat, thread-ordered list of card button groups is computed ON DEMAND
+  // from the DOM (cards change as messages arrive), so it is never stale and
+  // never holds a dangling index (T-v3.1-04-14). Each "group" is the array of
+  // present <button>s inside one FragmentCard (length 2 or 3).
+  const getCardGroups = useCallback(() => {
+    const root = containerRef.current
+    if (!root) return []
+    const cards = Array.from(root.querySelectorAll('[data-fragment-card]'))
+    return cards.map(card => Array.from(card.querySelectorAll('button')))
+  }, [])
+
+  // Locate the focused element within the flat card-group list. Returns
+  // { cardPos, buttonPos } or null when focus is not on a card button.
+  const locateFocus = useCallback(groups => {
+    const active = document.activeElement
+    for (let c = 0; c < groups.length; c += 1) {
+      const b = groups[c].indexOf(active)
+      if (b !== -1) return { cardPos: c, buttonPos: b }
+    }
+    return null
+  }, [])
+
+  const returnToInput = useCallback(() => {
+    if (returnFocusToInput) returnFocusToInput()
+  }, [returnFocusToInput])
+
+  const handleKeyDown = useCallback(
+    e => {
+      const key = e.key
+      const isArrow =
+        key === 'ArrowLeft' ||
+        key === 'ArrowRight' ||
+        key === 'ArrowUp' ||
+        key === 'ArrowDown'
+      // Enter/Space activate the focused <button> natively (KBD-04) — do NOT
+      // intercept them. Escape returns focus to the input.
+      if (key === 'Escape') {
+        e.preventDefault()
+        returnToInput()
+        return
+      }
+      if (!isArrow) return
+
+      const groups = getCardGroups()
+      if (groups.length === 0) return
+      const pos = locateFocus(groups)
+      if (!pos) return
+      e.preventDefault()
+
+      const { cardPos, buttonPos } = pos
+      const group = groups[cardPos]
+
+      if (key === 'ArrowLeft' || key === 'ArrowRight') {
+        // KBD-02: cycle within the focused card's button group (wrap allowed).
+        const len = group.length
+        const next =
+          key === 'ArrowRight'
+            ? (buttonPos + 1) % len
+            : (buttonPos - 1 + len) % len
+        group[next].focus()
+        return
+      }
+
+      // KBD-03: ArrowUp/ArrowDown move across cards in thread order.
+      if (key === 'ArrowDown') {
+        if (cardPos === groups.length - 1) {
+          // Past the most-recent card -> back to the input.
+          returnToInput()
+          return
+        }
+        const nextGroup = groups[cardPos + 1]
+        const clamped = Math.min(buttonPos, nextGroup.length - 1)
+        nextGroup[clamped].focus()
+        return
+      }
+      // ArrowUp
+      if (cardPos === 0) return // no wrap upward past the oldest card
+      const prevGroup = groups[cardPos - 1]
+      const clampedUp = Math.min(buttonPos, prevGroup.length - 1)
+      prevGroup[clampedUp].focus()
+    },
+    [getCardGroups, locateFocus, returnToInput]
+  )
+
+  // KBD-01 + D-10: focus the most-recent card's Insert button. "Most recent" =
+  // last card in thread order; if the newest message is pure discussion (0
+  // cards), this naturally resolves to the last card that exists anywhere
+  // (getCardGroups already skips card-less messages). No-op when no cards
+  // exist (T-v3.1-04-14: never crash on missing fragments).
+  useImperativeHandle(
+    ref,
+    () => ({
+      focusMostRecentCardInsert: () => {
+        const groups = getCardGroups()
+        if (groups.length === 0) return
+        const lastGroup = groups[groups.length - 1]
+        if (lastGroup.length === 0) return
+        const idx = Math.min(INSERT_BUTTON_INDEX, lastGroup.length - 1)
+        lastGroup[idx].focus()
+      }
+    }),
+    [getCardGroups]
+  )
+
   if (messages.length === 0 && !isLoading) {
     return <WelcomeMessage t={t} />
   }
@@ -160,6 +277,7 @@ export const ChatMessageList = () => {
   return (
     <div
       ref={containerRef}
+      onKeyDown={handleKeyDown}
       style={{
         flex: 1,
         overflowY: 'auto',
@@ -258,4 +376,6 @@ export const ChatMessageList = () => {
       )}
     </div>
   )
-}
+})
+
+ChatMessageList.displayName = 'ChatMessageList'

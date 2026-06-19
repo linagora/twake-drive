@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
 import Icon from 'cozy-ui/transpiled/react/Icon'
@@ -48,6 +48,13 @@ export const ScribePanel = () => {
   // popover flow, so chat-side usage had no way to see the gate metrics.
   const devMode = isScribeDevMd()
   const [showProbe, setShowProbe] = useState(false)
+
+  // Cross-component keyboard wiring (Plan 05): the input's Up-from-empty hands
+  // focus to the thread controller's most-recent card; the controller returns
+  // focus to the input on Escape / Down-past-newest. ScribePanel owns both refs
+  // because it renders the two as siblings.
+  const inputRef = useRef(null)
+  const listRef = useRef(null)
 
   const isDark = (theme.palette.type || theme.palette.mode) === 'dark'
 
@@ -112,8 +119,14 @@ export const ScribePanel = () => {
 
         {/* Chat body (kept mounted; probe view overlays it so chat state is preserved) */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0, position: 'relative' }}>
-          <ChatMessageList />
-          <ChatInput />
+          <ChatMessageList
+            ref={listRef}
+            returnFocusToInput={() => inputRef.current && inputRef.current.focus()}
+          />
+          <ChatInput
+            ref={inputRef}
+            onArrowUp={() => listRef.current && listRef.current.focusMostRecentCardInsert()}
+          />
           {devMode && showProbe && (
             <div
               style={{
