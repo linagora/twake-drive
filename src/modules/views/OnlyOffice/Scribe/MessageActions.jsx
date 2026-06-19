@@ -7,6 +7,11 @@ import { useTheme } from 'cozy-ui/transpiled/react/styles'
 import { useScribe } from '@/modules/views/OnlyOffice/Scribe/ScribeContext'
 import { markdownToHtml } from '@/modules/views/OnlyOffice/Scribe/scribeConversion'
 
+// Scribe accent (matches ChatMessageList SCRIBE_PURPLE) — used for the
+// keyboard focus ring (D-09) so the FragmentCard keyboard controller (Plan 05)
+// can show a visible accent outline on the focused action button.
+const SCRIBE_PURPLE = '#7C3AED'
+
 // Inline SVG icons (small, 16x16)
 const CopyIcon = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -105,6 +110,16 @@ const MessageActions = ({ content, hasSelection }) => {
     },
     onMouseLeave: e => {
       e.currentTarget.style.background = 'transparent'
+    },
+    // Focus ring (D-09): a visible accent outline on the focused button so the
+    // keyboard controller's focus target is unmistakable. Inline-style handlers
+    // keep this consistent with the file's inline-style convention.
+    onFocus: e => {
+      e.currentTarget.style.outline = `2px solid ${SCRIBE_PURPLE}`
+      e.currentTarget.style.outlineOffset = '1px'
+    },
+    onBlur: e => {
+      e.currentTarget.style.outline = 'none'
     }
   }
 
