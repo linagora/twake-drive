@@ -2,6 +2,7 @@ import {
   buildMessages,
   buildChatSystemPrompt,
   markerPreservationClauses,
+  encodeSelectionForPrompt,
   RESPONSE_CONTRACT_CORE,
   CARDINALITY_INLINE,
   CARDINALITY_CHAT,
@@ -66,6 +67,55 @@ describe('scribeAI — unified response contract', () => {
 
     it('chat without a marker selection carries no marker clauses', () => {
       expect(buildChatSystemPrompt('just a question')).not.toMatch(/\[TABLE:N\]/)
+    })
+
+    it('the table clause mandates a WHOLE table in a SINGLE fragment (anti-split) on BOTH surfaces', () => {
+      // This is the chat-table-destructuring fix: CARDINALITY_CHAT otherwise lets
+      // the model split a table across fragments / dump cells into `discussion`.
+      const clause = markerPreservationClauses('[TABLE:0][CELL:0,0]a[/CELL][/TABLE]')
+      expect(clause).toMatch(/WHOLE/)
+      expect(clause).toMatch(/SINGLE fragment/)
+      expect(clause).toMatch(/never split/i)
+
+      const inline = buildMessages('free-prompt', 'sel', 'do X', {
+        enrichedMd: '[TABLE:0][CELL:0,0]a[/CELL][/TABLE]'
+      })[0].content
+      const chat = buildChatSystemPrompt('[TABLE:0][CELL:0,0]a[/CELL][/TABLE]')
+      expect(inline).toMatch(/SINGLE fragment/)
+      expect(chat).toMatch(/SINGLE fragment/)
+    })
+  })
+
+  describe('encodeSelectionForPrompt (shared selection encoder — single source of truth)', () => {
+    it('prefers structured enrichedMd over html and plain text', () => {
+      const { selectionMd } = encodeSelectionForPrompt({
+        enrichedMd: '[TABLE:0]x[/TABLE]',
+        html: '<p>ignored</p>',
+        text: 'ignored too'
+      })
+      expect(selectionMd).toBe('[TABLE:0]x[/TABLE]')
+    })
+
+    it('falls back to plain text when no enrichedMd/html', () => {
+      expect(encodeSelectionForPrompt({ text: 'just text' }).selectionMd).toBe('just text')
+      expect(encodeSelectionForPrompt({}).selectionMd).toBe('')
+      expect(encodeSelectionForPrompt(null).selectionMd).toBe('')
+    })
+
+    it('returns marker clauses keyed off the SAME md it encodes', () => {
+      const { selectionMd, markerClauses } = encodeSelectionForPrompt({
+        enrichedMd: '[TABLE:0]x[/TABLE]'
+      })
+      expect(markerClauses).toBe(markerPreservationClauses(selectionMd))
+      expect(markerClauses).toMatch(/\[TABLE:N\]/)
+    })
+
+    it('produces the SAME selection md the popover sends (parity with buildMessages)', () => {
+      const sel = { enrichedMd: '[TABLE:0][CELL:0,0]a[/CELL][/TABLE]' }
+      const { selectionMd } = encodeSelectionForPrompt(sel)
+      const inline = buildMessages('free-prompt', 'sel', 'do X', { enrichedMd: sel.enrichedMd })[0].content
+      // The encoded selection md is what the inline path embeds verbatim as "Text:".
+      expect(inline).toContain(selectionMd)
     })
   })
 })

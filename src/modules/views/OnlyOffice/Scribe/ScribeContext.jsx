@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { useClient } from 'cozy-client'
 import { useI18n } from 'twake-i18n'
 
-import { callScribeAI, classifyScribeError, buildChatSystemPrompt } from '@/modules/views/OnlyOffice/Scribe/scribeAI'
+import { callScribeAI, classifyScribeError, buildChatSystemPrompt, encodeSelectionForPrompt } from '@/modules/views/OnlyOffice/Scribe/scribeAI'
 import { htmlToMarkdown } from '@/modules/views/OnlyOffice/Scribe/scribeConversion'
 import {
   parseScribeResponse,
@@ -112,9 +112,12 @@ export const ScribeProvider = ({ children }) => {
     try {
       // Build AI messages: system prompt + conversation history (skip error messages)
       const currentMessages = [...messagesRef.current, userMessage]
-      // Marker-preservation clauses key off the CURRENT turn's selection markdown.
-      const currentSelectionMd =
-        selectionContext?.markdown || selectionContext?.text || ''
+      // Marker-preservation clauses key off the CURRENT turn's selection markdown,
+      // encoded by the SAME shared helper the popover uses (single source of truth).
+      const { selectionMd: currentSelectionMd } = encodeSelectionForPrompt({
+        enrichedMd: selectionContext?.markdown,
+        text: selectionContext?.text
+      })
       const aiMessages = [
         { role: 'system', content: buildChatSystemPrompt(currentSelectionMd) },
         ...currentMessages
@@ -126,7 +129,10 @@ export const ScribeProvider = ({ children }) => {
           .map(m => {
             // For user messages with selection, build composite content for AI
             if (m.role === 'user' && m.selection) {
-              const selectionMd = m.selection.markdown || m.selection.text
+              const { selectionMd } = encodeSelectionForPrompt({
+                enrichedMd: m.selection.markdown,
+                text: m.selection.text
+              })
               return {
                 role: m.role,
                 content: `[Selected text from document]\n${selectionMd}\n[End of selected text]\n\n${m.content}`

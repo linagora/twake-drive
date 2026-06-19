@@ -95,7 +95,7 @@ export function markerPreservationClauses(md) {
   const s = typeof md === 'string' ? md : ''
   let out = ''
   if (s.includes('[TABLE:') || s.includes('[CELL:')) {
-    out += ' Inside the fragment string(s) (never in `discussion`), preserve all [TABLE:N]...[/TABLE] and [CELL:r,c]...[/CELL] markers exactly as-is. Only modify the text content between the opening [CELL:r,c] and closing [/CELL] tags. Do not add, remove, or reorder [TABLE:N] or [CELL:r,c] markers.'
+    out += ' Inside the fragment string(s) (never in `discussion`), preserve all [TABLE:N]...[/TABLE] and [CELL:r,c]...[/CELL] markers exactly as-is. Only modify the text content between the opening [CELL:r,c] and closing [/CELL] tags. Do not add, remove, or reorder [TABLE:N] or [CELL:r,c] markers. Keep each [TABLE:N]...[/TABLE] block WHOLE inside a SINGLE fragment — never split one table across several fragments, and never place any table or cell content in `discussion`.'
   }
   if (s.includes('[^scribe-fn-')) {
     out += ' Inside the fragment string(s) (never in `discussion`), preserve all [^scribe-fn-N] footnote reference markers exactly as-is. Do NOT add footnote definitions ([^N]: text). The footnote content is managed separately — only preserve the inline reference markers.'
@@ -104,6 +104,26 @@ export function markerPreservationClauses(md) {
     out += ' Inside the fragment string(s) (never in `discussion`), preserve all {{REF:scribe-ref-N:visible text}} cross-reference markers. Keep the {{REF:scribe-ref-N: and closing }} delimiters intact. You may modify the visible text inside the marker to match your changes (e.g. translation), but never remove or alter the scribe-ref-N identifier.'
   }
   return out
+}
+
+/**
+ * Single source of truth for turning a document selection into the markdown the
+ * model receives — shared by BOTH surfaces (inline popover + side-panel chat) so a
+ * table/REF/footnote selection is encoded, and protected, identically wherever it
+ * is triggered. Preference order: structured plugin `enrichedMd` (carries the
+ * [TABLE:N]/[CELL:r,c] markers) > `htmlToMarkdown(html)` > plain `text`. The
+ * marker-preservation clauses key off the SAME md it returns, so the two can never
+ * drift apart per surface.
+ *
+ * @param {{enrichedMd?: string, html?: string, text?: string}} sel
+ * @returns {{selectionMd: string, markerClauses: string}}
+ */
+export function encodeSelectionForPrompt(sel) {
+  const enrichedMd = (sel && sel.enrichedMd) || ''
+  const html = (sel && sel.html) || ''
+  const text = (sel && sel.text) || ''
+  const selectionMd = enrichedMd || (html ? htmlToMarkdown(html) : text)
+  return { selectionMd, markerClauses: markerPreservationClauses(selectionMd) }
 }
 
 /**
@@ -181,16 +201,23 @@ export function buildMessages(actionId, selectedText, label, extra) {
   // Inline assembly: shared hardened contract CORE + inline cardinality + (when
   // the enriched selection carries them) the shared marker-preservation clauses.
   // Same single user-role prefix as before — no system role introduced.
+  // Shared selection encoding + marker-preservation (same code the chat surface
+  // uses via encodeSelectionForPrompt) — single source of truth so a structured
+  // selection (e.g. a table) is framed identically on both surfaces.
+  const { selectionMd, markerClauses } = encodeSelectionForPrompt({
+    enrichedMd: extra?.enrichedMd,
+    html: extra?.html,
+    text: selectedText
+  })
   const systemBase =
     SYSTEM_PROMPT +
     ' ' +
     RESPONSE_CONTRACT_CORE +
     CARDINALITY_INLINE +
-    markerPreservationClauses(extra?.enrichedMd)
+    markerClauses
   const systemPrefix = systemBase + '\n\n'
 
-  // Prefer enrichedMd (plugin-side extraction) > htmlToMarkdown(html) > plain text
-  const textForPrompt = extra?.enrichedMd || (extra?.html ? htmlToMarkdown(extra.html) : selectedText)
+  const textForPrompt = selectionMd
 
   // Free-prompt: wrap user instruction with guardrail template
   if (actionId === 'free-prompt') {
