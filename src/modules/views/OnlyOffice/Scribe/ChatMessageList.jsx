@@ -4,73 +4,13 @@ import Spinner from 'cozy-ui/transpiled/react/Spinner'
 import Typography from 'cozy-ui/transpiled/react/Typography'
 import { useTheme } from 'cozy-ui/transpiled/react/styles'
 import { useI18n } from 'twake-i18n'
-import Markdown from 'react-markdown'
 
-import MessageActions from '@/modules/views/OnlyOffice/Scribe/MessageActions'
+import { FragmentCard } from '@/modules/views/OnlyOffice/Scribe/FragmentCard'
+import { MarkdownPreview } from '@/modules/views/OnlyOffice/Scribe/MarkdownPreview'
 import { useScribe } from '@/modules/views/OnlyOffice/Scribe/ScribeContext'
-import { extractChannelMarkers } from '@/modules/views/OnlyOffice/Scribe/scribeResponse'
+import { buildAssistantSegments } from '@/modules/views/OnlyOffice/Scribe/assistantSegments'
 
 const SCRIBE_PURPLE = '#7C3AED'
-
-/**
- * THROWAWAY render-time compose helper (v3.1-02). Reproduces today's single-blob
- * look from the extended { discussion, fragments } model without mutating stored
- * content. Replaced by real fragment cards in v3.1-04 — delete then.
- *
- * - Replaces each {{fragment:N}} marker in `discussion` with `fragments[N]`
- *   (0-indexed; uses the REF-safe extractChannelMarkers, never a hand-rolled regex).
- * - Appends any UNREFERENCED fragments at the end, separated by blank lines (D-04).
- * - D-06: with no fragments (chat fallback { discussion: raw, fragments: [] }),
- *   returns `discussion` unchanged so raw renders byte-identically to today.
- * - D-07: empty discussion + fragments returns just the joined fragment(s), so no
- *   empty/broken bubble appears. No synthesized labels.
- *
- * @param {string} discussion
- * @param {string[]} fragments
- * @returns {string} display markdown
- */
-const composeAssistantDisplay = (discussion, fragments) => {
-  const disc = typeof discussion === 'string' ? discussion : ''
-  const frags = Array.isArray(fragments) ? fragments : []
-
-  // D-06: nothing to compose — return discussion byte-identically.
-  if (frags.length === 0) return disc
-
-  // Locate ordered {{fragment:N}} hits and substitute back-to-front so earlier
-  // positions stay valid. Track which fragments got referenced.
-  const hits = extractChannelMarkers(disc, 'fragment')
-  const referenced = new Set()
-  let composed = disc
-  for (let i = hits.length - 1; i >= 0; i--) {
-    const { index, position } = hits[i]
-    if (index < 0 || index >= frags.length) continue
-    referenced.add(index)
-    const marker = `{{fragment:${index}}}`
-    composed =
-      composed.slice(0, position) +
-      frags[index] +
-      composed.slice(position + marker.length)
-  }
-
-  // Strip any dangling out-of-range {{fragment:N}} markers that were skipped by
-  // the substitution loop (index < 0 || index >= frags.length). Leaving them in
-  // place would render the raw marker text in the bubble.
-  composed = composed.replace(/\{\{fragment:(\d+)\}\}/g, (m, d) => {
-    const idx = parseInt(d, 10)
-    return idx < 0 || idx >= frags.length ? '' : m
-  })
-
-  // Append unreferenced fragments at the end, blank-line separated.
-  const orphans = frags.filter((_, i) => !referenced.has(i))
-  const orphanText = orphans.join('\n\n')
-
-  if (composed.length === 0) {
-    // D-07: empty discussion — render just the fragment(s), no empty bubble.
-    return orphanText
-  }
-  if (orphanText.length === 0) return composed
-  return `${composed}\n\n${orphanText}`
-}
 
 const SparkleSvg = ({ size = 20 }) => (
   <svg
@@ -153,7 +93,7 @@ const AssistantBubble = ({ content, theme }) => {
         wordBreak: 'break-word'
       }}
     >
-      <Markdown>{content}</Markdown>
+      <MarkdownPreview>{content}</MarkdownPreview>
     </div>
   )
 }
@@ -236,19 +176,66 @@ export const ChatMessageList = () => {
         if (msg.role === 'error') {
           return <ErrorBubble key={msg.id} content={msg.content} theme={theme} t={t} />
         }
-        // THROWAWAY (v3.1-04): compose discussion + fragments for display only.
-        // Backward-compatible — messages predating the extended model have no
-        // discussion/fragments, so fall back to msg.content. Stored content is
-        // never mutated; MessageActions keeps reading msg.content (pure discussion, D-05).
+        // Assistant render (v3.1-04). Backward-compat: messages predating the
+        // extended { discussion, fragments } model have no discussion/fragments,
+        // so render a single prose bubble from msg.content — no cards, and (D-08)
+        // no message-level actions.
         const hasContractFields =
           msg.discussion !== undefined && msg.fragments !== undefined
-        const displayContent = hasContractFields
-          ? composeAssistantDisplay(msg.discussion ?? msg.content, msg.fragments)
-          : msg.content
+
+        if (!hasContractFields) {
+          return (
+            <div key={msg.id} style={{ alignSelf: 'flex-start', maxWidth: '85%' }}>
+              <AssistantBubble content={msg.content} theme={theme} />
+            </div>
+          )
+        }
+
+        // Contract message: build ordered segments (prose + fragment cards) at
+        // {{fragment:N}} positions, orphans appended (D-04). Each card carries the
+        // RAW fragment (D-03) to the reinjection pipeline (FRAG-03).
+        const segments = buildAssistantSegments(
+          msg.discussion ?? msg.content,
+          msg.fragments
+        )
+
+        // D-05 / CONTRACT-02 no-empty-bubble: a 0-fragment response collapses to a
+        // single prose segment; if that prose is empty/whitespace-only, render
+        // nothing for this message (no empty bubble).
+        const isEmpty =
+          segments.length === 1 &&
+          segments[0].type === 'prose' &&
+          (segments[0].md == null || segments[0].md.trim() === '')
+        if (isEmpty) return null
+
+        const isDark = (theme.palette.type || theme.palette.mode) === 'dark'
         return (
-          <div key={msg.id} style={{ alignSelf: 'flex-start', maxWidth: '85%' }}>
-            <AssistantBubble content={displayContent} theme={theme} />
-            <MessageActions content={msg.content} hasSelection={!!currentSelection} />
+          <div
+            key={msg.id}
+            style={{
+              alignSelf: 'flex-start',
+              maxWidth: '85%',
+              background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)',
+              padding: '8px 12px',
+              borderRadius: '4px 12px 12px 12px',
+              fontSize: 14,
+              lineHeight: 1.5,
+              wordBreak: 'break-word'
+            }}
+          >
+            {segments.map((seg, i) =>
+              seg.type === 'card' ? (
+                <FragmentCard
+                  key={`${msg.id}-card-${seg.index}-${i}`}
+                  raw={seg.raw}
+                  hasSelection={!!currentSelection}
+                />
+              ) : (
+                <MarkdownPreview key={`${msg.id}-prose-${i}`}>
+                  {seg.md}
+                </MarkdownPreview>
+              )
+            )}
           </div>
         )
       })}

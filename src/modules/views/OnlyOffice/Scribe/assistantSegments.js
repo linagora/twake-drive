@@ -6,10 +6,10 @@
  *   - `{ type: 'prose', md: string }`           → rendered through MarkdownPreview
  *   - `{ type: 'card', index: number, raw: string }` → rendered as a <FragmentCard>
  *
- * This replaces the throwaway `composeAssistantDisplay` text-substitution helper
- * (ChatMessageList.jsx): a <Card> is a React element, not text, so it cannot be
- * produced by string substitution. The exact placement semantics of the old helper
- * are preserved:
+ * This replaces the throwaway render-time text-substitution helper that used to
+ * live in ChatMessageList.jsx: a <Card> is a React element, not text, so it cannot
+ * be produced by string substitution. The exact placement semantics of the old
+ * helper are preserved:
  *   - CONTRACT-02 / D-05: a 0-fragment response yields a single prose segment and
  *     NO card segment (no insertion UI).
  *   - FRAG-01: each in-document `{{fragment:N}}` marker produces a card at that
@@ -65,7 +65,7 @@ export function buildAssistantSegments(discussion, fragments) {
 
   // Tail prose after the last marker: strip any dangling out-of-range
   // {{fragment:N}} markers (the only place a literal fragment regex is used —
-  // matching the existing composeAssistantDisplay tail-strip behavior). This is a
+  // matching the prior tail-strip behavior). This is a
   // strip-only operation; it can never consume {{REF:...}} markers because the
   // pattern is anchored on the literal `fragment` channel name.
   const cleanTail = disc.slice(cursor).replace(/\{\{fragment:(\d+)\}\}/g, (m, d) => {
