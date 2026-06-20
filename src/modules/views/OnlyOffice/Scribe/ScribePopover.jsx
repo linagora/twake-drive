@@ -1,24 +1,37 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react'
 import PropTypes from 'prop-types'
+import React, { useState, useCallback, useEffect, useRef } from 'react'
+import { useI18n } from 'twake-i18n'
 
+import { useClient } from 'cozy-client'
 import Alert from 'cozy-ui/transpiled/react/Alert'
 import Paper from 'cozy-ui/transpiled/react/Paper'
 import Spinner from 'cozy-ui/transpiled/react/Spinner'
 import Typography from 'cozy-ui/transpiled/react/Typography'
-import { useI18n } from 'twake-i18n'
-import { useClient } from 'cozy-client'
 
-import { ScribeContainer } from '@/modules/views/OnlyOffice/Scribe/ScribeContainer'
-import { ScribeActionMenu } from '@/modules/views/OnlyOffice/Scribe/ScribeActionMenu'
-import { useScribe } from '@/modules/views/OnlyOffice/Scribe/ScribeContext'
-import { callScribeAI, buildMessages, deriveLoadingMessage, classifyScribeError } from '@/modules/views/OnlyOffice/Scribe/scribeAI'
-import { htmlToMarkdown, normalizeHtml } from '@/modules/views/OnlyOffice/Scribe/scribeConversion'
-import { transformCellMarkersForPreview } from '@/modules/views/OnlyOffice/Scribe/tableCellMarkers'
-import { parseScribeResponse } from '@/modules/views/OnlyOffice/Scribe/scribeResponse'
-import { ScribeResultPanel } from '@/modules/views/OnlyOffice/Scribe/ScribeResultPanel'
-import { isScribeDevMd } from '@/modules/views/OnlyOffice/Scribe/scribeDevMode'
-import { recordProbeSample } from '@/modules/views/OnlyOffice/Scribe/scribeProbe'
 import styles from '@/modules/views/OnlyOffice/Scribe/scribe.styl'
+
+import { ScribeActionMenu } from '@/modules/views/OnlyOffice/Scribe/ScribeActionMenu'
+import { ScribeContainer } from '@/modules/views/OnlyOffice/Scribe/ScribeContainer'
+import { useScribe } from '@/modules/views/OnlyOffice/Scribe/ScribeContext'
+import { ScribeResultPanel } from '@/modules/views/OnlyOffice/Scribe/ScribeResultPanel'
+import {
+  callScribeAI,
+  buildMessages,
+  deriveLoadingMessage,
+  classifyScribeError
+} from '@/modules/views/OnlyOffice/Scribe/scribeAI'
+import {
+  htmlToMarkdown,
+  normalizeHtml
+} from '@/modules/views/OnlyOffice/Scribe/scribeConversion'
+import {
+  isScribeDevMd,
+  logScribeExchange,
+  formatMessagesForDisplay
+} from '@/modules/views/OnlyOffice/Scribe/scribeDevMode'
+import { recordProbeSample } from '@/modules/views/OnlyOffice/Scribe/scribeProbe'
+import { parseScribeResponse } from '@/modules/views/OnlyOffice/Scribe/scribeResponse'
+import { transformCellMarkersForPreview } from '@/modules/views/OnlyOffice/Scribe/tableCellMarkers'
 
 /**
  * ScribePopover - Main popover container managing the three-step state machine.
@@ -29,7 +42,18 @@ import styles from '@/modules/views/OnlyOffice/Scribe/scribe.styl'
  *
  * Closing the popover during loading aborts the in-flight API request via AbortController.
  */
-const ScribePopover = ({ open, visible = true, selectedText, selectedHtml, enrichedMd, onReplace, onInsert, onCancel, onOpenPanel, tableAmbiguity }) => {
+const ScribePopover = ({
+  open,
+  visible = true,
+  selectedText,
+  selectedHtml,
+  enrichedMd,
+  onReplace,
+  onInsert,
+  onCancel,
+  onOpenPanel,
+  tableAmbiguity
+}) => {
   const { t } = useI18n()
   const client = useClient()
   const scribe = useScribe()
@@ -37,7 +61,12 @@ const ScribePopover = ({ open, visible = true, selectedText, selectedHtml, enric
   const abortRef = useRef(null)
 
   const [step, setStep] = useState('menu') // 'menu' | 'loading' | 'result'
-  const [result, setResult] = useState({ text: '', breadcrumb: '', error: '', canRetry: false })
+  const [result, setResult] = useState({
+    text: '',
+    breadcrumb: '',
+    error: '',
+    canRetry: false
+  })
   const [loadingMessage, setLoadingMessage] = useState('')
   const [lastAction, setLastAction] = useState(null)
   // Dev mode: store source HTML and intermediate MD for debug panels
@@ -46,6 +75,10 @@ const ScribePopover = ({ open, visible = true, selectedText, selectedHtml, enric
   const [parsedResponse, setParsedResponse] = useState(null)
   // Raw LLM response (with cell markers) for reinjection; display version goes in result.text
   const [rawResult, setRawResult] = useState('')
+  // Dev mode: the exact prompt (formatted messages) sent to the LLM, for the debug panel
+  const [promptSent, setPromptSent] = useState('')
+  // Dev mode: the literal raw LLM response (before parsing), for the debug panel
+  const [rawResponse, setRawResponse] = useState('')
   // Warning when cell marker count mismatches between extraction and LLM response
   const [cellWarning, setCellWarning] = useState(null)
 
@@ -67,6 +100,8 @@ const ScribePopover = ({ open, visible = true, selectedText, selectedHtml, enric
       setDevData({ html: '', md: '' })
       setParsedResponse(null)
       setRawResult('')
+      setPromptSent('')
+      setRawResponse('')
       setCellWarning(null)
       setAmbiguityMessage(null)
       setDragOffset({ x: 0, y: 0 })
@@ -100,15 +135,28 @@ const ScribePopover = ({ open, visible = true, selectedText, selectedHtml, enric
       if (tableAmbiguity) return
 
       // Compute intermediate MD for dev panels (enrichedMd preferred over htmlToMarkdown)
-      const inputMd = enrichedMd || (selectedHtml ? htmlToMarkdown(selectedHtml) : selectedText)
+      const inputMd =
+        enrichedMd ||
+        (selectedHtml ? htmlToMarkdown(selectedHtml) : selectedText)
 
       // Compute normalized HTML for dev panels
       const normalized = selectedHtml ? normalizeHtml(selectedHtml) : ''
 
       // Dev mode: test-markdown bypasses LLM entirely
       if (actionId === 'test-markdown') {
-        setDevData({ html: selectedHtml || '', normalizedHtml: normalized, md: inputMd, source: enrichedMd ? 'plugin' : 'turndown' })
-        setResult({ text: inputMd, breadcrumb: 'Test MD', error: '', canRetry: false })
+        setDevData({
+          html: selectedHtml || '',
+          normalizedHtml: normalized,
+          enrichedMd: enrichedMd || '',
+          md: inputMd,
+          source: enrichedMd ? 'plugin' : 'turndown'
+        })
+        setResult({
+          text: inputMd,
+          breadcrumb: 'Test MD',
+          error: '',
+          canRetry: false
+        })
         setStep('result')
         return
       }
@@ -118,13 +166,23 @@ const ScribePopover = ({ open, visible = true, selectedText, selectedHtml, enric
 
       // Capture dev data for normal flow too
       if (isScribeDevMd()) {
-        setDevData({ html: selectedHtml || '', normalizedHtml: normalized, md: inputMd, source: enrichedMd ? 'plugin' : 'turndown' })
+        setDevData({
+          html: selectedHtml || '',
+          normalizedHtml: normalized,
+          enrichedMd: enrichedMd || '',
+          md: inputMd,
+          source: enrichedMd ? 'plugin' : 'turndown'
+        })
       }
 
       // 1. Transition to loading
       setStep('loading')
       const loadingInfo = deriveLoadingMessage(actionId, label)
-      setLoadingMessage(loadingInfo.params ? t(loadingInfo.key, loadingInfo.params) : t(loadingInfo.key))
+      setLoadingMessage(
+        loadingInfo.params
+          ? t(loadingInfo.key, loadingInfo.params)
+          : t(loadingInfo.key)
+      )
       setResult({ text: '', breadcrumb, error: '', canRetry: false })
 
       // 2. Create AbortController
@@ -143,8 +201,17 @@ const ScribePopover = ({ open, visible = true, selectedText, selectedHtml, enric
         if (enrichedMd) {
           extra.enrichedMd = enrichedMd
         }
-        const messages = buildMessages(actionId, selectedText, label, Object.keys(extra).length > 0 ? extra : undefined)
-        const text = await callScribeAI(client, messages, { signal: controller.signal })
+        const messages = buildMessages(
+          actionId,
+          selectedText,
+          label,
+          Object.keys(extra).length > 0 ? extra : undefined
+        )
+        if (isScribeDevMd()) setPromptSent(formatMessagesForDisplay(messages))
+        const text = await callScribeAI(client, messages, {
+          signal: controller.signal
+        })
+        if (isScribeDevMd()) setRawResponse(text)
 
         // 4. D-13: route the raw LLM response through the shared contract layer with
         // popover surface BEFORE any display/storage. On parse failure the popover
@@ -152,12 +219,20 @@ const ScribePopover = ({ open, visible = true, selectedText, selectedHtml, enric
         // normalized fragment below is byte-identical to today's raw response.
         const parsed = parseScribeResponse(text, { surface: 'popover' })
 
+        // Dev diagnostic: dump the exact prompt + raw response + parsed contract so
+        // the popover path can be compared against the chat (surface-divergence).
+        logScribeExchange('popover', { messages, rawResponse: text, parsed })
+
         // PROBE-01 (D-11): feed the conformance probe the parsed popover response.
         // Dev-mode only (isScribeDevMd guard) => zero production cost. `inputMd`
         // (line ~99) is the same markdown sent to the LLM, used by the probe for
         // REF/duplication comparison. Additive observation only — no behavior change.
         if (isScribeDevMd()) {
-          recordProbeSample(parsed, { surface: 'popover', inputMd, ts: Date.now() })
+          recordProbeSample(parsed, {
+            surface: 'popover',
+            inputMd,
+            ts: Date.now()
+          })
           // Surface the structured payload in the DevPanelGrid "Réponse parsée" panel.
           setParsedResponse(parsed)
         }
@@ -177,7 +252,10 @@ const ScribePopover = ({ open, visible = true, selectedText, selectedHtml, enric
         // 5. D-09: the popover shows/inserts ONLY the normalized fragment; discussion is
         // NOT rendered. The cell-marker preview transform and rawResult/reinjection path
         // now operate on the normalized fragment (replacing today's raw response).
-        const { displayMd, warning } = transformCellMarkersForPreview(normalizedFragment, enrichedMd)
+        const { displayMd, warning } = transformCellMarkersForPreview(
+          normalizedFragment,
+          enrichedMd
+        )
         setRawResult(normalizedFragment)
         setCellWarning(warning)
         setResult({ text: displayMd, breadcrumb, error: '', canRetry: false })
@@ -190,7 +268,12 @@ const ScribePopover = ({ open, visible = true, selectedText, selectedHtml, enric
         // renders inline turns identically to chat-native turns (and v3.1-04 cards
         // light up for inline turns too). Reuses `parsed` from above.
         if (addMessage) {
-          addMessage({ id: Date.now(), role: 'user', content: breadcrumb, timestamp: new Date() })
+          addMessage({
+            id: Date.now(),
+            role: 'user',
+            content: breadcrumb,
+            timestamp: new Date()
+          })
           addMessage({
             id: Date.now() + 1,
             role: 'assistant',
@@ -211,13 +294,28 @@ const ScribePopover = ({ open, visible = true, selectedText, selectedHtml, enric
           return
         }
         const classified = classifyScribeError(err)
-        setResult({ text: '', breadcrumb, error: classified.messageKey ? t(classified.messageKey) : '', canRetry: classified.canRetry })
+        setResult({
+          text: '',
+          breadcrumb,
+          error: classified.messageKey ? t(classified.messageKey) : '',
+          canRetry: classified.canRetry
+        })
         setStep('result')
 
         // Mirror error into shared conversation history
         if (addMessage) {
-          addMessage({ id: Date.now(), role: 'user', content: breadcrumb, timestamp: new Date() })
-          addMessage({ id: Date.now() + 1, role: 'error', content: classified.messageKey ? t(classified.messageKey) : 'Error', timestamp: new Date() })
+          addMessage({
+            id: Date.now(),
+            role: 'user',
+            content: breadcrumb,
+            timestamp: new Date()
+          })
+          addMessage({
+            id: Date.now() + 1,
+            role: 'error',
+            content: classified.messageKey ? t(classified.messageKey) : 'Error',
+            timestamp: new Date()
+          })
         }
       } finally {
         if (abortRef.current === controller) {
@@ -225,7 +323,15 @@ const ScribePopover = ({ open, visible = true, selectedText, selectedHtml, enric
         }
       }
     },
-    [selectedText, selectedHtml, enrichedMd, tableAmbiguity, client, t, addMessage]
+    [
+      selectedText,
+      selectedHtml,
+      enrichedMd,
+      tableAmbiguity,
+      client,
+      t,
+      addMessage
+    ]
   )
 
   const handleClose = useCallback(() => {
@@ -246,7 +352,11 @@ const ScribePopover = ({ open, visible = true, selectedText, selectedHtml, enric
 
   const handleRetry = useCallback(() => {
     if (lastAction) {
-      handleActionSelect(lastAction.actionId, lastAction.label, lastAction.breadcrumb)
+      handleActionSelect(
+        lastAction.actionId,
+        lastAction.label,
+        lastAction.breadcrumb
+      )
     }
   }, [lastAction, handleActionSelect])
 
@@ -275,7 +385,14 @@ const ScribePopover = ({ open, visible = true, selectedText, selectedHtml, enric
       disableAutoFocus
       disableEnforceFocus
       anchorReference="anchorPosition"
-      anchorPosition={{ top: (typeof window !== 'undefined' ? window.innerHeight / 2 : 400) + dragOffset.y, left: (typeof window !== 'undefined' ? window.innerWidth / 2 : 500) + dragOffset.x }}
+      anchorPosition={{
+        top:
+          (typeof window !== 'undefined' ? window.innerHeight / 2 : 400) +
+          dragOffset.y,
+        left:
+          (typeof window !== 'undefined' ? window.innerWidth / 2 : 500) +
+          dragOffset.x
+      }}
       transformOrigin={{ vertical: 'center', horizontal: 'center' }}
       BackdropProps={{
         style: {
@@ -299,12 +416,28 @@ const ScribePopover = ({ open, visible = true, selectedText, selectedHtml, enric
       }}
     >
       {step === 'menu' && (
-        <ScribeActionMenu ref={menuRef} onSelect={handleActionSelect} onClose={handleClose} onOpenPanel={onOpenPanel} selectedText={selectedText} />
+        <ScribeActionMenu
+          ref={menuRef}
+          onSelect={handleActionSelect}
+          onClose={handleClose}
+          onOpenPanel={onOpenPanel}
+          selectedText={selectedText}
+        />
       )}
       {step === 'loading' && (
-        <Paper ref={loadingRef} tabIndex={-1} className={styles['scribe-loading-panel']} elevation={0} style={{ outline: 'none' }}>
+        <Paper
+          ref={loadingRef}
+          tabIndex={-1}
+          className={styles['scribe-loading-panel']}
+          elevation={0}
+          style={{ outline: 'none' }}
+        >
           <Spinner size="large" />
-          <Typography variant="body2" color="textSecondary" className={styles['scribe-loading-message']}>
+          <Typography
+            variant="body2"
+            color="textSecondary"
+            className={styles['scribe-loading-message']}
+          >
             {loadingMessage}
           </Typography>
         </Paper>
@@ -320,7 +453,8 @@ const ScribePopover = ({ open, visible = true, selectedText, selectedHtml, enric
           onReplace={handleReplace}
           onInsert={handleInsert}
           onClose={handleClose}
-          rawLlmResult={rawResult}
+          promptSent={devMode ? promptSent : ''}
+          rawResponse={devMode ? rawResponse : ''}
           devData={devMode ? devData : null}
           parsedResponse={devMode ? parsedResponse : null}
           dragOffset={dragOffset}

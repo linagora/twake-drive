@@ -24,6 +24,66 @@ export function isScribeDevMd() {
   }
 }
 
+/**
+ * Format an LLM `messages` array into a human-readable, role-annotated string for
+ * the dev panels (popover result panel + chat per-turn debug block). Shared so the
+ * "prompt sent" view is identical on both surfaces. Pure — no DOM, no flag check.
+ *
+ * @param {Array<{role: string, content: string}>} messages
+ * @returns {string}
+ */
+export function formatMessagesForDisplay(messages) {
+  if (!Array.isArray(messages)) return ''
+  return messages
+    .map(
+      (m, i) => `━━ [${i}] role=${m && m.role} ━━\n${(m && m.content) || ''}`
+    )
+    .join('\n\n')
+}
+
+/**
+ * Dev-only diagnostic logger for one LLM round-trip. Dumps the EXACT prompt
+ * (full messages array, role by role) + the raw model response + the parsed
+ * contract, grouped per turn. Gated by isScribeDevMd() so it is a no-op in prod.
+ *
+ * Shared by BOTH surfaces (inline popover via ScribePopover, side-panel chat via
+ * ScribeContext) so the two prompts can be compared side by side in the console —
+ * this is the primary tool for diagnosing surface-divergence (e.g. a table that
+ * survives via the popover but gets destructured via the chat path).
+ *
+ * @param {string} surface - 'popover' | 'chat'
+ * @param {{messages?: Array<{role,content}>, rawResponse?: string, parsed?: object}} data
+ */
+export function logScribeExchange(surface, data) {
+  if (!isScribeDevMd()) return
+  const { messages, rawResponse, parsed } = data || {}
+  try {
+    /* eslint-disable no-console */
+    const tag = `[Scribe] LLM exchange — ${surface}`
+    if (console.groupCollapsed) console.groupCollapsed(tag)
+    else console.log(tag)
+    if (Array.isArray(messages)) {
+      console.log(`prompt: ${messages.length} message(s)`)
+      messages.forEach((m, i) => {
+        console.log(`── [${i}] role=${m.role} ──\n${m.content}`)
+      })
+    }
+    if (rawResponse !== undefined) console.log('raw response:\n', rawResponse)
+    if (parsed !== undefined) {
+      console.log('parsed:', {
+        discussion: parsed.discussion,
+        fragments: parsed.fragments,
+        fellBack: parsed.fellBack,
+        valid: parsed.valid
+      })
+    }
+    if (console.groupEnd) console.groupEnd()
+    /* eslint-enable no-console */
+  } catch {
+    /* never let logging break the flow */
+  }
+}
+
 // Cache for lazy-loaded js-beautify
 var _beautifyPromise = null
 
@@ -35,13 +95,18 @@ export function loadBeautify() {
   if (_beautifyPromise) return _beautifyPromise
 
   // eslint-disable-next-line camelcase, no-undef
-  var saved = typeof __webpack_public_path__ !== 'undefined' ? __webpack_public_path__ : undefined
+  var saved =
+    typeof __webpack_public_path__ !== 'undefined'
+      ? __webpack_public_path__
+      : undefined
   if (saved) {
     // eslint-disable-next-line camelcase, no-undef
     __webpack_public_path__ = '/'
   }
 
-  _beautifyPromise = import(/* webpackChunkName: "beautify-dev" */ 'js-beautify/js/lib/beautify-html')
+  _beautifyPromise = import(
+    /* webpackChunkName: "beautify-dev" */ 'js-beautify/js/lib/beautify-html'
+  )
     .then(function (mod) {
       if (saved) {
         // eslint-disable-next-line camelcase, no-undef
@@ -75,7 +140,10 @@ export function loadHighlightJs() {
   if (_hljsPromise) return _hljsPromise
 
   // eslint-disable-next-line camelcase, no-undef
-  var savedPublicPath = typeof __webpack_public_path__ !== 'undefined' ? __webpack_public_path__ : undefined
+  var savedPublicPath =
+    typeof __webpack_public_path__ !== 'undefined'
+      ? __webpack_public_path__
+      : undefined
 
   // Point chunk loading at the actual page origin
   if (typeof window !== 'undefined' && savedPublicPath) {
@@ -86,52 +154,56 @@ export function loadHighlightJs() {
   _hljsPromise = Promise.all([
     import(/* webpackChunkName: "hljs-dev" */ 'highlight.js/lib/core'),
     import(/* webpackChunkName: "hljs-dev" */ 'highlight.js/lib/languages/xml'),
-    import(/* webpackChunkName: "hljs-dev" */ 'highlight.js/lib/languages/markdown')
-  ]).then(function (modules) {
-    // Restore original public path for HMR
-    if (savedPublicPath) {
-      // eslint-disable-next-line camelcase, no-undef
-      __webpack_public_path__ = savedPublicPath
-    }
+    import(
+      /* webpackChunkName: "hljs-dev" */ 'highlight.js/lib/languages/markdown'
+    )
+  ])
+    .then(function (modules) {
+      // Restore original public path for HMR
+      if (savedPublicPath) {
+        // eslint-disable-next-line camelcase, no-undef
+        __webpack_public_path__ = savedPublicPath
+      }
 
-    var hljs = modules[0].default || modules[0]
-    hljs.registerLanguage('xml', modules[1].default || modules[1])
-    hljs.registerLanguage('markdown', modules[2].default || modules[2])
+      var hljs = modules[0].default || modules[0]
+      hljs.registerLanguage('xml', modules[1].default || modules[1])
+      hljs.registerLanguage('markdown', modules[2].default || modules[2])
 
-    // Inject VS2015-inspired theme CSS
-    if (!document.getElementById('hljs-dev-css')) {
-      var style = document.createElement('style')
-      style.id = 'hljs-dev-css'
-      style.textContent = [
-        '.hljs{background:#1e1e1e;color:#dcdcdc}',
-        '.hljs-tag{color:#569cd6}',
-        '.hljs-name{color:#569cd6}',
-        '.hljs-attr{color:#9cdcfe}',
-        '.hljs-string{color:#ce9178}',
-        '.hljs-number{color:#b5cea8}',
-        '.hljs-keyword{color:#569cd6}',
-        '.hljs-comment{color:#6a9955;font-style:italic}',
-        '.hljs-attribute{color:#9cdcfe}',
-        '.hljs-section{color:#569cd6;font-weight:bold}',
-        '.hljs-bullet{color:#6a9955}',
-        '.hljs-emphasis{font-style:italic;color:#ce9178}',
-        '.hljs-strong{font-weight:bold;color:#ce9178}',
-        '.hljs-link{color:#4ec9b0}',
-        '.hljs-title{color:#dcdcaa}',
-        '.hljs-symbol{color:#6a9955}'
-      ].join('\n')
-      document.head.appendChild(style)
-    }
+      // Inject VS2015-inspired theme CSS
+      if (!document.getElementById('hljs-dev-css')) {
+        var style = document.createElement('style')
+        style.id = 'hljs-dev-css'
+        style.textContent = [
+          '.hljs{background:#1e1e1e;color:#dcdcdc}',
+          '.hljs-tag{color:#569cd6}',
+          '.hljs-name{color:#569cd6}',
+          '.hljs-attr{color:#9cdcfe}',
+          '.hljs-string{color:#ce9178}',
+          '.hljs-number{color:#b5cea8}',
+          '.hljs-keyword{color:#569cd6}',
+          '.hljs-comment{color:#6a9955;font-style:italic}',
+          '.hljs-attribute{color:#9cdcfe}',
+          '.hljs-section{color:#569cd6;font-weight:bold}',
+          '.hljs-bullet{color:#6a9955}',
+          '.hljs-emphasis{font-style:italic;color:#ce9178}',
+          '.hljs-strong{font-weight:bold;color:#ce9178}',
+          '.hljs-link{color:#4ec9b0}',
+          '.hljs-title{color:#dcdcaa}',
+          '.hljs-symbol{color:#6a9955}'
+        ].join('\n')
+        document.head.appendChild(style)
+      }
 
-    return hljs
-  }).catch(function (err) {
-    // Restore on error too
-    if (savedPublicPath) {
-      // eslint-disable-next-line camelcase, no-undef
-      __webpack_public_path__ = savedPublicPath
-    }
-    throw err
-  })
+      return hljs
+    })
+    .catch(function (err) {
+      // Restore on error too
+      if (savedPublicPath) {
+        // eslint-disable-next-line camelcase, no-undef
+        __webpack_public_path__ = savedPublicPath
+      }
+      throw err
+    })
 
   return _hljsPromise
 }
