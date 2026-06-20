@@ -2,14 +2,11 @@ import PropTypes from 'prop-types'
 import React, { useEffect, useCallback, useState } from 'react'
 
 import Spinner from 'cozy-ui/transpiled/react/Spinner'
-import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import Error from '@/modules/views/OnlyOffice/Error'
 import OnlyOfficeAIAssistantPanel from '@/modules/views/OnlyOffice/OnlyOfficeAIAssistantPanel'
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
-import ReadOnlyFab from '@/modules/views/OnlyOffice/ReadOnlyFab'
 import { FRAME_EDITOR_NAME } from '@/modules/views/OnlyOffice/config'
-import { isOfficeEditingEnabled } from '@/modules/views/OnlyOffice/helpers'
 
 const forceIframeHeight = value => {
   const iframe = document.getElementsByName(FRAME_EDITOR_NAME)[0]
@@ -19,8 +16,7 @@ const forceIframeHeight = value => {
 const View = ({ id, apiUrl, docEditorConfig }) => {
   const [isError, setIsError] = useState(false)
 
-  const { isEditorReady, isReadOnly, isTrashed } = useOnlyOfficeContext()
-  const { isMobile, isDesktop } = useBreakpoints()
+  const { isEditorReady } = useOnlyOfficeContext()
 
   const initEditor = useCallback(() => {
     new window.DocsAPI.DocEditor('onlyOfficeEditor', docEditorConfig)
@@ -53,13 +49,6 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
     }
   }, [isEditorReady])
 
-  const showReadOnlyFab =
-    isMobile &&
-    isEditorReady &&
-    !isReadOnly &&
-    !isTrashed &&
-    isOfficeEditingEnabled(isDesktop)
-
   if (isError) return <Error />
 
   return (
@@ -73,7 +62,6 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
         <div id="onlyOfficeEditor" />
         <OnlyOfficeAIAssistantPanel />
       </div>
-      {showReadOnlyFab && <ReadOnlyFab />}
     </>
   )
 }

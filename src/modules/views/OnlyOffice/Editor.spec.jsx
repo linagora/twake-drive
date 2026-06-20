@@ -10,10 +10,7 @@ import { officeDocParam } from 'test/data'
 
 import Editor from '@/modules/views/OnlyOffice/Editor'
 import { OnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
-import {
-  isOfficeEnabled,
-  isOfficeEditingEnabled
-} from '@/modules/views/OnlyOffice/helpers'
+import { isOfficeEnabled } from '@/modules/views/OnlyOffice/helpers'
 
 jest.mock('cozy-client/dist/hooks/useFetchJSON', () => ({
   __esModule: true,
@@ -23,8 +20,7 @@ jest.mock('cozy-client/dist/hooks/useFetchJSON', () => ({
 
 jest.mock('modules/views/OnlyOffice/helpers', () => ({
   ...jest.requireActual('modules/views/OnlyOffice/helpers'),
-  isOfficeEnabled: jest.fn(),
-  isOfficeEditingEnabled: jest.fn()
+  isOfficeEnabled: jest.fn()
 }))
 
 jest.mock('cozy-ui/transpiled/react/providers/Breakpoints', () => ({
@@ -166,7 +162,7 @@ describe('Editor', () => {
 
   describe('Title', () => {
     describe('on mobile', () => {
-      it('should hide title when when the editor is in edit mode', () => {
+      it('should show title when the editor is in edit mode', () => {
         useFetchJSON.mockReturnValue({
           fetchStatus: 'loaded',
           data: officeDocParam
@@ -180,7 +176,7 @@ describe('Editor', () => {
         })
         const { queryByTestId } = root
 
-        expect(queryByTestId('onlyoffice-title')).toBeFalsy()
+        expect(queryByTestId('onlyoffice-title')).toBeTruthy()
       })
 
       it('should show title when when the editor is in view mode', () => {
@@ -228,93 +224,6 @@ describe('Editor', () => {
         const { queryByTestId } = root
 
         expect(queryByTestId('onlyoffice-title')).toBeTruthy()
-      })
-    })
-  })
-
-  describe('ReadOnlyFab', () => {
-    describe('on mobile', () => {
-      it('should show the readOnlyFab', () => {
-        useFetchJSON.mockReturnValue({
-          fetchStatus: 'loaded',
-          data: officeDocParam
-        })
-        useQuery.mockReturnValue(officeDocParam)
-        isOfficeEditingEnabled.mockReturnValue(true)
-
-        setup({ isMobile: true })
-
-        expect(screen.queryByLabelText('Edit')).toBeTruthy()
-      })
-
-      it('should show the readOnlyFab', () => {
-        useFetchJSON.mockReturnValue({
-          fetchStatus: 'loaded',
-          data: officeDocParam
-        })
-        useQuery.mockReturnValue(officeDocParam)
-        isOfficeEditingEnabled.mockReturnValue(true)
-
-        setup({ isMobile: true })
-
-        expect(screen.queryByLabelText('Edit')).toBeTruthy()
-      })
-    })
-
-    describe('on desktop', () => {
-      it('should show the readOnlyFab when the editor is in view mode', () => {
-        useFetchJSON.mockReturnValue({
-          fetchStatus: 'loaded',
-          data: officeDocParam
-        })
-        useQuery.mockReturnValue(officeDocParam)
-        isOfficeEditingEnabled.mockReturnValue(true)
-
-        setup({ isMobile: false })
-
-        expect(screen.queryByText('Edit')).toBeNull()
-      })
-
-      it('should hide the readOnlyFab when the editor is in edit mode', () => {
-        useFetchJSON.mockReturnValue({
-          fetchStatus: 'loaded',
-          data: officeDocParam
-        })
-        useQuery.mockReturnValue(officeDocParam)
-        isOfficeEditingEnabled.mockReturnValue(true)
-
-        setup({ isMobile: false, isEditorModeView: false })
-
-        expect(screen.queryByText('Edit')).toBeFalsy()
-      })
-
-      it('should hide the readOnlyFab when the document is in read only', () => {
-        useFetchJSON.mockReturnValue({
-          fetchStatus: 'loaded',
-          data: officeDocParam
-        })
-        useQuery.mockReturnValue(officeDocParam)
-        isOfficeEditingEnabled.mockReturnValue(true)
-
-        setup({
-          isMobile: false,
-          isReadOnly: true
-        })
-
-        expect(screen.queryByLabelText('Edit')).toBeFalsy()
-      })
-
-      it('should hide the readOnlyFab when the document is trashed', () => {
-        useFetchJSON.mockReturnValue({
-          fetchStatus: 'loaded',
-          data: officeDocParam
-        })
-        useQuery.mockReturnValue(officeDocParam)
-        isOfficeEditingEnabled.mockReturnValue(true)
-
-        setup({ isMobile: false, isTrashed: true })
-
-        expect(screen.queryByText('Edit')).toBeFalsy()
       })
     })
   })
