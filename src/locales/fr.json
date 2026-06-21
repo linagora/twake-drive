@@ -707,7 +707,9 @@
     "personalizeFolder": {
       "label": "Personnaliser le dossier"
     },
-    "summariseByAI": "Résumer"
+    "summariseByAI": "Résumer",
+    "signWithEuDss": "Signer",
+    "verifyWithEuDss": "Vérifier la signature"
   },
   "FolderCustomizer": {
     "title": "Personnaliser le dossier",

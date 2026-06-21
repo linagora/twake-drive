@@ -28,7 +28,9 @@ import {
   versions,
   hr,
   selectAllItems,
-  summariseByAI
+  summariseByAI,
+  signWithEuDss,
+  verifyWithEuDss
 } from '@/modules/actions'
 import { addToFavorites } from '@/modules/actions/components/addToFavorites'
 import { duplicateTo } from '@/modules/actions/components/duplicateTo'
@@ -124,6 +126,8 @@ const DriveFolderView = () => {
       download,
       hr,
       summariseByAI,
+      signWithEuDss,
+      verifyWithEuDss,
       hr,
       rename,
       moveTo,

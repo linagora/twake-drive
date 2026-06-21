@@ -710,7 +710,9 @@
     "personalizeFolder": {
       "label": "Personalize folder"
     },
-    "summariseByAI": "Summarise"
+    "summariseByAI": "Summarise",
+    "signWithEuDss": "Sign",
+    "verifyWithEuDss": "Verify signature"
   },
   "DuplicateModal": {
     "subTitle": "Duplicate to:",
