@@ -76,6 +76,53 @@ config.environments = {
           to: 'static/fonts',
           globOptions: { ignore: ['**/Xiaolai/**'] },
           info: { minimized: true }
+        },
+        // Self-host the EmbedPDF (PDF editor) runtime assets. The library
+        // otherwise fetches them from jsDelivr, which our CSP blocks. Everything
+        // lands under static/ (the public route) and is wired up in
+        // src/modules/views/Pdf/pdfAssets.js. `info.minimized` stops rspack from
+        // re-processing these prebuilt binaries.
+        //
+        // 1. The Pdfium wasm engine.
+        {
+          from: 'node_modules/@embedpdf/pdfium/dist/pdfium.wasm',
+          to: 'static/pdfium.wasm',
+          info: { minimized: true }
+        },
+        // 2. The default stamp library (manifest.json + stamps.pdf per locale).
+        {
+          from: 'node_modules/@embedpdf/default-stamps',
+          to: 'static/embedpdf-stamps',
+          globOptions: { ignore: ['**/package.json', '**/LICENSE'] },
+          info: { minimized: true }
+        },
+        // 3. Glyph-fallback fonts. Only Latin (covers Cyrillic/Greek/Vietnamese),
+        // Arabic and Hebrew are shipped; the ~140 MB CJK packages are omitted
+        // (see pdfAssets.js). Fonts are fetched lazily, only when a PDF needs them.
+        //
+        // For Latin we ship only Regular (400) and Bold (700): the full Noto Sans
+        // family is 18 files / ~5 MB gzipped, which would blow the 20 MB registry
+        // budget, and fallback rendering does not need the extra weights/italics.
+        // pdfAssets.js maps exactly these two files.
+        {
+          from: 'node_modules/@embedpdf/fonts-latin/fonts/NotoSans-Regular.ttf',
+          to: 'static/embedpdf-fonts/latin/NotoSans-Regular.ttf',
+          info: { minimized: true }
+        },
+        {
+          from: 'node_modules/@embedpdf/fonts-latin/fonts/NotoSans-Bold.ttf',
+          to: 'static/embedpdf-fonts/latin/NotoSans-Bold.ttf',
+          info: { minimized: true }
+        },
+        {
+          from: 'node_modules/@embedpdf/fonts-arabic/fonts',
+          to: 'static/embedpdf-fonts/arabic',
+          info: { minimized: true }
+        },
+        {
+          from: 'node_modules/@embedpdf/fonts-hebrew/fonts',
+          to: 'static/embedpdf-fonts/hebrew',
+          info: { minimized: true }
         }
       ]
     },
@@ -95,7 +142,31 @@ config.environments = {
           // at the build root, which only the private `/` route serves. Keep
           // them under static/ so the public route covers them too.
           assetModuleFilename: 'static/resource/[hash][ext][query]'
-        }
+        },
+        plugins: [
+          {
+            // @embedpdf/pdfium references its wasm with
+            // `new URL('pdfium.wasm', import.meta.url)`, which rspack bundles as
+            // a second ~4.6 MB (2 MB gzipped) copy under static/wasm/*.module.wasm
+            // (an asyncWebAssembly asset a module rule can't override). We serve
+            // the wasm ourselves (config.wasmUrl -> /static/pdfium.wasm, see
+            // pdfAssets.js) and the engine never falls back to the bundled copy,
+            // so it is dead weight. Drop it before emit to stay under the 20 MB
+            // registry size limit.
+            apply(compiler) {
+              compiler.hooks.emit.tap(
+                'drop-bundled-pdfium-wasm',
+                compilation => {
+                  for (const name of Object.keys(compilation.assets)) {
+                    if (/static[\\/]wasm[\\/].*\.module\.wasm$/.test(name)) {
+                      delete compilation.assets[name]
+                    }
+                  }
+                }
+              )
+            }
+          }
+        ]
       }
     }
   },

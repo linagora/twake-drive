@@ -76,6 +76,12 @@
     "worker-loader": "2.0.0"
   },
   "dependencies": {
+    "@embedpdf/default-stamps": "0.0.1",
+    "@embedpdf/fonts-arabic": "1.0.0",
+    "@embedpdf/fonts-hebrew": "1.0.0",
+    "@embedpdf/fonts-latin": "1.0.0",
+    "@embedpdf/models": "2.14.3",
+    "@embedpdf/pdfium": "2.14.3",
     "@embedpdf/react-pdf-viewer": "2.14.3",
     "@excalidraw/excalidraw": "0.18.1",
     "@sentry/react": "7.119.0",
