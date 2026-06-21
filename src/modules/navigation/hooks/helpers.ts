@@ -11,6 +11,7 @@ import { IOCozyFile } from 'cozy-client/types/types'
 import type { File } from '@/components/FolderPicker/types'
 import { TRASH_DIR_ID, SHARED_DRIVES_DIR_ID } from '@/constants/config'
 import { joinPath } from '@/lib/path'
+import { isGrist } from '@/modules/grist/helpers'
 import {
   isNextcloudShortcut,
   isNextcloudFile
@@ -82,6 +83,8 @@ export const computeFileType = (
     }
   } else if (isDocs(file)) {
     return 'docs'
+  } else if (isGrist(file)) {
+    return 'grist'
   } else if (isExcalidraw(file) && isExcalidrawEnabled) {
     return 'excalidraw'
   } else if (isResolvableFileRootSharedDriveShortcut(file)) {
@@ -138,6 +141,8 @@ export const computeApp = (type: string): string => {
       return 'notes'
     case 'docs':
       return 'docs'
+    case 'grist':
+      return 'grist'
     default:
       return 'drive'
   }
@@ -193,6 +198,8 @@ export const computePath = (
       }
     case 'docs':
       return `/bridge/docs/${(file as IOCozyFile).metadata.externalId}`
+    case 'grist':
+      return `/bridge/grist/${(file as IOCozyFile).metadata.externalId}`
     case 'shortcut':
       return `/external/${file._id}`
     case 'directory':

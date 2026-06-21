@@ -5,6 +5,7 @@ import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import CreateDocsItem from '@/modules/drive/Toolbar/components/CreateDocsItem'
 import CreateExcalidrawItem from '@/modules/drive/Toolbar/components/CreateExcalidrawItem'
+import CreateGristItem from '@/modules/drive/Toolbar/components/CreateGristItem'
 import CreateNoteItem from '@/modules/drive/Toolbar/components/CreateNoteItem'
 import CreateOnlyOfficeItem from '@/modules/drive/Toolbar/components/CreateOnlyOfficeItem'
 import { isOfficeEditingEnabled } from '@/modules/views/OnlyOffice/helpers'
@@ -38,6 +39,13 @@ const CreateDocumentItems = ({
       )}
       {flag('drive.excalidraw.enabled') && (!isPublic || canUpload) && (
         <CreateExcalidrawItem isReadOnly={isReadOnly} onClick={onClick} />
+      )}
+      {!isPublic && flag('drive.grist.enabled') && (
+        <CreateGristItem
+          displayedFolder={displayedFolder}
+          isReadOnly={isReadOnly}
+          onClick={onClick}
+        />
       )}
       {canUpload && isOfficeEditingEnabled(isDesktop) && (
         <>
