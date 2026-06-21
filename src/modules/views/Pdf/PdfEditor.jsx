@@ -3,6 +3,12 @@ import React, { useEffect } from 'react'
 
 import Oops from '@/components/Error/Oops'
 import Loader from '@/components/Loader'
+import {
+  PDFIUM_WASM_URL,
+  STAMP_MANIFESTS,
+  FONT_FALLBACK,
+  SNIPPET_FONTS
+} from '@/modules/views/Pdf/pdfAssets'
 import { usePdfDocument } from '@/modules/views/Pdf/usePdfDocument'
 
 const PdfEditor = ({ file, flushRef, isReadOnly = false, author }) => {
@@ -35,6 +41,12 @@ const PdfEditor = ({ file, flushRef, isReadOnly = false, author }) => {
       <PDFViewer
         config={{
           src: url,
+          // Serve every EmbedPDF runtime asset from our own origin instead of
+          // jsDelivr (blocked by the production CSP). See pdfAssets.js.
+          wasmUrl: PDFIUM_WASM_URL,
+          stamp: { manifests: STAMP_MANIFESTS },
+          fontFallback: FONT_FALLBACK,
+          fonts: SNIPPET_FONTS,
           // The file lifecycle is owned by Twake Drive (the Save button and back
           // navigation), so opening or closing another document from inside the
           // editor makes no sense. Disable only those two entries of EmbedPDF's
