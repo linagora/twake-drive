@@ -37,6 +37,12 @@ const fetchCallbackToken = async (client, file) => {
   return permission.attributes?.shortcodes?.code ?? null
 }
 
+// Files inside a shared drive live behind the /sharings/drives/<driveId>
+// proxy, so writing the result back must target that route instead of the
+// member's own VFS (which does not hold the document).
+const getFilesApiPrefix = file =>
+  file.driveId ? `/sharings/drives/${file.driveId}/files` : '/files'
+
 // cozy-stack only authenticates via the Authorization header, never a query
 // param. The token is passed in the URL by convention: the eu-dss desktop app
 // reads it and replays it as a Bearer header on its POST to the callback.
@@ -47,7 +53,7 @@ const buildCallbackUrl = (client, file, operation, token) => {
     Name: getCallbackFileName(file, operation),
     token
   })
-  return `${stackUri}/files/${file.dir_id}?${params}`
+  return `${stackUri}${getFilesApiPrefix(file)}/${file.dir_id}?${params}`
 }
 
 export const buildEuDssDeeplink = async (client, file, operation) => {

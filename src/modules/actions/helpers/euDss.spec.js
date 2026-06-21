@@ -96,3 +96,37 @@ describe('buildEuDssDeeplink', () => {
     expect(getQueryParams(deeplink).get('state')).toBe('file-123')
   })
 })
+
+describe('buildEuDssDeeplink in a shared drive', () => {
+  const sharedDriveFile = {
+    _id: 'file-123',
+    name: 'contract.pdf',
+    dir_id: 'dir-456',
+    driveId: 'drive-789'
+  }
+
+  it('reads the document through the shared drive collection', async () => {
+    const { client } = setupClient()
+
+    await buildEuDssDeeplink(client, sharedDriveFile, EU_DSS_SIGN)
+
+    expect(client.collection).toHaveBeenCalledWith('io.cozy.files', {
+      driveId: 'drive-789'
+    })
+  })
+
+  it('writes the result back through the shared drive route', async () => {
+    const { client } = setupClient()
+
+    const deeplink = await buildEuDssDeeplink(
+      client,
+      sharedDriveFile,
+      EU_DSS_SIGN
+    )
+
+    const callbackUrl = new URL(getQueryParams(deeplink).get('callback_url'))
+    expect(callbackUrl.origin + callbackUrl.pathname).toBe(
+      'http://cozy.tools/sharings/drives/drive-789/files/dir-456'
+    )
+  })
+})
