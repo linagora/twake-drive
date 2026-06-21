@@ -12,7 +12,14 @@ import { fonts as hebrewFonts } from '@embedpdf/fonts-hebrew'
 import { fonts as latinFonts } from '@embedpdf/fonts-latin'
 import { FontCharset } from '@embedpdf/models'
 
-const STATIC_BASE = '/static'
+// Absolute base URL for the self-hosted assets. The Pdfium engine and the glyph
+// fallback run inside a `blob:` Web Worker whose base URL is the blob itself, so
+// a root-relative path like `/static/...` cannot be resolved there ("Failed to
+// parse URL"). Anchoring to `window.location.origin` keeps the URLs valid in the
+// worker as well as on the main thread. The /static route lives on the app's own
+// origin in both the logged-in and public (shared link) cases.
+const ORIGIN = typeof window !== 'undefined' ? window.location.origin : ''
+const STATIC_BASE = `${ORIGIN}/static`
 
 // Custom URL for the Pdfium wasm (default: jsDelivr). Passed as config.wasmUrl.
 export const PDFIUM_WASM_URL = `${STATIC_BASE}/pdfium.wasm`
