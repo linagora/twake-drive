@@ -30,6 +30,18 @@ const PILL_RADIUS = PILL_HEIGHT / 2 // 20
 const COMPACT_WIDTH = 240
 const MAX_WIDTH = 420
 const SEND_BUTTON = 30
+
+// Gradient liseré: softened (pastel) while idle, vivid only when the input is
+// focused. The four stops are driven by registered @property colors so the
+// change fades smoothly.
+const GRAD_VIVID = ['#4d8dff', '#8b5cf6', '#ff5fa2', '#ff9d4d']
+const GRAD_MUTED = ['#93b4ee', '#b29ae6', '#f0a3c4', '#f0c197']
+const GRAD_TRANSITION =
+  '--scribe-g1 220ms ease, --scribe-g2 220ms ease, --scribe-g3 220ms ease, --scribe-g4 220ms ease'
+const gradVars = focused => {
+  const [g1, g2, g3, g4] = focused ? GRAD_VIVID : GRAD_MUTED
+  return { '--scribe-g1': g1, '--scribe-g2': g2, '--scribe-g3': g3, '--scribe-g4': g4 }
+}
 const VIEWPORT_MARGIN = 24 // keep the popover off the very edge of the screen
 
 // Pill width = the cap, but never wider than the viewport allows (smaller
@@ -58,13 +70,17 @@ const injectStyles = () => {
   initial-value: 0deg;
   inherits: false;
 }
+@property --scribe-g1 { syntax: '<color>'; initial-value: #93b4ee; inherits: false; }
+@property --scribe-g2 { syntax: '<color>'; initial-value: #b29ae6; inherits: false; }
+@property --scribe-g3 { syntax: '<color>'; initial-value: #f0a3c4; inherits: false; }
+@property --scribe-g4 { syntax: '<color>'; initial-value: #f0c197; inherits: false; }
 @keyframes scribe-grad-spin { to { --scribe-grad-angle: 360deg; } }
 .scribe-prompt-pill, .scribe-prompt-send {
   background:
     linear-gradient(var(--scribe-inner), var(--scribe-inner)) padding-box,
     conic-gradient(
       from var(--scribe-grad-angle),
-      #4d8dff, #8b5cf6, #ff5fa2, #ff9d4d, #4d8dff
+      var(--scribe-g1), var(--scribe-g2), var(--scribe-g3), var(--scribe-g4), var(--scribe-g1)
     ) border-box;
   border: var(--scribe-bw, 2px) solid transparent;
 }
@@ -225,6 +241,7 @@ const ScribePromptInput = forwardRef(({ onSubmit, onArrow, onEscape }, ref) => {
         style={{
           '--scribe-bw': '2px',
           '--scribe-inner': innerBg,
+          ...gradVars(focused),
           position: 'relative',
           width: effectiveWidth,
           maxWidth: '100%',
@@ -233,7 +250,7 @@ const ScribePromptInput = forwardRef(({ onSubmit, onArrow, onEscape }, ref) => {
           boxShadow: focused ? '0 0 0 3px rgba(139, 92, 246, 0.18)' : 'none',
           // Width only ever toggles compact<->max (max always fits the content),
           // so animating it cannot cause a wrap-flicker.
-          transition: 'width 140ms ease, box-shadow 150ms ease'
+          transition: `width 140ms ease, box-shadow 150ms ease, ${GRAD_TRANSITION}`
         }}
       >
         <div
@@ -285,6 +302,7 @@ const ScribePromptInput = forwardRef(({ onSubmit, onArrow, onEscape }, ref) => {
             style={{
               '--scribe-bw': '2px',
               '--scribe-inner': innerBg,
+              ...gradVars(focused),
               width: SEND_BUTTON,
               height: SEND_BUTTON,
               borderRadius: '50%',
@@ -297,7 +315,7 @@ const ScribePromptInput = forwardRef(({ onSubmit, onArrow, onEscape }, ref) => {
               cursor: canSend ? 'pointer' : 'default',
               opacity: canSend ? 1 : 0.55,
               marginBottom: 1,
-              transition: 'opacity 150ms ease'
+              transition: `opacity 150ms ease, ${GRAD_TRANSITION}`
             }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
