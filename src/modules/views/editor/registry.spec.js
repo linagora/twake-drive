@@ -2,11 +2,18 @@ const mockShouldBeOpenedByOnlyOffice = jest.fn()
 const mockIsDocs = jest.fn()
 const mockIsExcalidrawEnabled = jest.fn()
 const mockIsOfficeEnabled = jest.fn()
+const mockIsOfficeEditingEnabled = jest.fn()
+const mockFlag = jest.fn()
 
 jest.mock('cozy-client/dist/models/file', () => ({
   isDocs: (...args) => mockIsDocs(...args),
   shouldBeOpenedByOnlyOffice: (...args) =>
     mockShouldBeOpenedByOnlyOffice(...args)
+}))
+
+jest.mock('cozy-flags', () => ({
+  __esModule: true,
+  default: (...args) => mockFlag(...args)
 }))
 
 jest.mock('@/modules/views/Excalidraw/helpers', () => ({
@@ -16,7 +23,8 @@ jest.mock('@/modules/views/Excalidraw/helpers', () => ({
 
 jest.mock('@/modules/views/OnlyOffice/helpers', () => ({
   ...jest.requireActual('@/modules/views/OnlyOffice/helpers'),
-  isOfficeEnabled: (...args) => mockIsOfficeEnabled(...args)
+  isOfficeEnabled: (...args) => mockIsOfficeEnabled(...args),
+  isOfficeEditingEnabled: (...args) => mockIsOfficeEditingEnabled(...args)
 }))
 
 import {
@@ -32,6 +40,8 @@ describe('editor registry', () => {
     mockIsDocs.mockReturnValue(false)
     mockIsExcalidrawEnabled.mockReturnValue(false)
     mockIsOfficeEnabled.mockReturnValue(false)
+    mockIsOfficeEditingEnabled.mockReturnValue(false)
+    mockFlag.mockReturnValue(false)
   })
 
   describe('findEditorForFile', () => {
@@ -156,6 +166,60 @@ describe('editor registry', () => {
       expect(findEditorBySlug('docs').makeRoute(file)).toBe(
         '/bridge/docs/doc-42'
       )
+    })
+  })
+
+  describe('create.isAvailable', () => {
+    const canCreate = (slug, context) =>
+      findEditorBySlug(slug).create.isAvailable(context)
+
+    it('has no create entry for the PDF editor', () => {
+      expect(findEditorBySlug('pdf').create).toBeUndefined()
+    })
+
+    it('offers Docs only privately and behind its flag', () => {
+      mockFlag.mockReturnValue(true)
+      expect(canCreate('docs', { isPublic: false })).toBe(true)
+      expect(canCreate('docs', { isPublic: true })).toBe(false)
+      mockFlag.mockReturnValue(false)
+      expect(canCreate('docs', { isPublic: false })).toBe(false)
+    })
+
+    it('offers Grist only privately and behind its flag', () => {
+      mockFlag.mockReturnValue(true)
+      expect(canCreate('grist', { isPublic: false })).toBe(true)
+      expect(canCreate('grist', { isPublic: true })).toBe(false)
+      mockFlag.mockReturnValue(false)
+      expect(canCreate('grist', { isPublic: false })).toBe(false)
+    })
+
+    it('offers Excalidraw publicly only when the visitor can upload', () => {
+      mockIsExcalidrawEnabled.mockReturnValue(true)
+      expect(canCreate('excalidraw', { isPublic: false })).toBe(true)
+      expect(canCreate('excalidraw', { isPublic: true, canUpload: true })).toBe(
+        true
+      )
+      expect(
+        canCreate('excalidraw', { isPublic: true, canUpload: false })
+      ).toBe(false)
+      mockIsExcalidrawEnabled.mockReturnValue(false)
+      expect(canCreate('excalidraw', { isPublic: false })).toBe(false)
+    })
+
+    it('offers OnlyOffice when upload is allowed and office editing is enabled', () => {
+      mockIsOfficeEditingEnabled.mockReturnValue(true)
+      expect(
+        canCreate('onlyoffice', { canUpload: true, isDesktop: true })
+      ).toBe(true)
+      expect(canCreate('onlyoffice', { canUpload: false })).toBe(false)
+      mockIsOfficeEditingEnabled.mockReturnValue(false)
+      expect(canCreate('onlyoffice', { canUpload: true })).toBe(false)
+    })
+
+    it('forwards the device to OnlyOffice office-editing enablement', () => {
+      mockIsOfficeEditingEnabled.mockReturnValue(true)
+      canCreate('onlyoffice', { canUpload: true, isDesktop: true })
+      expect(mockIsOfficeEditingEnabled).toHaveBeenCalledWith(true)
     })
   })
 })
