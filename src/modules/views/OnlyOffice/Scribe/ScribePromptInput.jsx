@@ -23,16 +23,21 @@ const PILL_HEIGHT = SINGLE_LINE + INNER_VPAD + BORDER * 2 // 40
 // a rounded RECTANGLE (constant corner radius) once it grows taller. A 9999px
 // radius would instead keep rounding the left/right edges into half-circles.
 const PILL_RADIUS = PILL_HEIGHT / 2 // 20
-// Pill width-growth bounds (per UI decision): start compact, grow with content
-// up to a hard cap, then the textarea wraps to multiple lines instead.
-const MIN_WIDTH = 240
+// The pill takes its full (viewport-capped) width immediately rather than
+// growing with content. Growing per-keystroke made the text wrap for a frame
+// before the width caught up — a visible flicker — so we lock the width up
+// front and let only the HEIGHT change as lines wrap.
 const MAX_WIDTH = 420
 const SEND_BUTTON = 30
-// Horizontal chrome around the measured text: left pad + gap + send button +
-// right pad + the two 2px gradient borders. Used to convert measured text
-// width into an outer pill width.
-const CHROME_WIDTH = 14 + 8 + SEND_BUTTON + 8 + BORDER * 2
 const VIEWPORT_MARGIN = 24 // keep the popover off the very edge of the screen
+
+// Pill width = the cap, but never wider than the viewport allows (smaller
+// screens get a smaller pill, and `maxWidth:100%` still clamps inside a narrow
+// mobile drawer).
+const computePillWidth = () => {
+  if (typeof window === 'undefined') return MAX_WIDTH
+  return Math.min(MAX_WIDTH, window.innerWidth - VIEWPORT_MARGIN * 2)
+}
 
 // The animated gradient liseré can't be expressed with inline styles: it needs
 // @property (so the conic-gradient angle interpolates smoothly) and @keyframes.
@@ -79,11 +84,10 @@ const ScribePromptInput = forwardRef(({ onSubmit, onArrow, onEscape }, ref) => {
   const theme = useTheme()
   const [value, setValue] = useState('')
   const [focused, setFocused] = useState(false)
-  const [width, setWidth] = useState(MIN_WIDTH)
+  const [pillWidth, setPillWidth] = useState(computePillWidth)
   const [maxHeight, setMaxHeight] = useState(LINE_HEIGHT * 6 + TEXTAREA_VPAD)
   const inputRef = useRef(null)
   const wrapperRef = useRef(null)
-  const mirrorRef = useRef(null)
   // Pending caret position to restore after a controlled-value newline insert.
   const pendingCaretRef = useRef(null)
 
@@ -115,19 +119,11 @@ const ScribePromptInput = forwardRef(({ onSubmit, onArrow, onEscape }, ref) => {
     return Math.max(LINE_HEIGHT + TEXTAREA_VPAD, Math.min(avail, ceil))
   }, [])
 
-  // Recompute pill width (from the hidden mirror) and textarea height whenever
-  // the value changes. Width grows with content up to MAX_WIDTH; past that the
-  // textarea wraps and height takes over.
+  // Width is fixed (set on mount/resize), so the value only drives HEIGHT:
+  // auto-grow the textarea up to the available popover space, then it scrolls.
   useLayoutEffect(() => {
     const mh = computeMaxHeight()
     setMaxHeight(mh)
-
-    const measured = mirrorRef.current ? mirrorRef.current.scrollWidth : 0
-    const next = Math.min(
-      MAX_WIDTH,
-      Math.max(MIN_WIDTH, Math.ceil(measured) + CHROME_WIDTH + 6)
-    )
-    setWidth(next)
 
     const ta = inputRef.current
     if (ta) {
@@ -147,7 +143,10 @@ const ScribePromptInput = forwardRef(({ onSubmit, onArrow, onEscape }, ref) => {
   }, [value])
 
   useEffect(() => {
-    const onResize = () => setMaxHeight(computeMaxHeight())
+    const onResize = () => {
+      setPillWidth(computePillWidth())
+      setMaxHeight(computeMaxHeight())
+    }
     window.addEventListener('resize', onResize)
     return () => window.removeEventListener('resize', onResize)
   }, [computeMaxHeight])
@@ -181,6 +180,8 @@ const ScribePromptInput = forwardRef(({ onSubmit, onArrow, onEscape }, ref) => {
           handleSubmit()
         }
       } else if (e.key === 'ArrowUp') {
+        // Shift+Arrow extends the text selection — leave that to the browser.
+        if (e.shiftKey) return
         // Hand off to the menu only at the first line; otherwise let the caret
         // move up within a multi-line draft.
         const el = inputRef.current
@@ -192,6 +193,7 @@ const ScribePromptInput = forwardRef(({ onSubmit, onArrow, onEscape }, ref) => {
           if (onArrow) onArrow('up')
         }
       } else if (e.key === 'ArrowDown') {
+        if (e.shiftKey) return
         const el = inputRef.current
         const atLastLine = !el || value.indexOf('\n', el.selectionStart) === -1
         if (atLastLine) {
@@ -219,12 +221,12 @@ const ScribePromptInput = forwardRef(({ onSubmit, onArrow, onEscape }, ref) => {
           '--scribe-bw': '2px',
           '--scribe-inner': innerBg,
           position: 'relative',
-          width,
+          width: pillWidth,
           maxWidth: '100%',
           borderRadius: PILL_RADIUS,
           boxSizing: 'border-box',
           boxShadow: focused ? '0 0 0 3px rgba(139, 92, 246, 0.18)' : 'none',
-          transition: 'width 120ms ease, box-shadow 150ms ease'
+          transition: 'box-shadow 150ms ease'
         }}
       >
         <div
@@ -314,25 +316,6 @@ const ScribePromptInput = forwardRef(({ onSubmit, onArrow, onEscape }, ref) => {
             </svg>
           </button>
         </div>
-        {/* Hidden mirror used to measure the single-line text width so the pill
-            can grow horizontally with content up to MAX_WIDTH. */}
-        <span
-          ref={mirrorRef}
-          aria-hidden="true"
-          style={{
-            position: 'absolute',
-            visibility: 'hidden',
-            whiteSpace: 'pre',
-            pointerEvents: 'none',
-            left: -9999,
-            top: 0,
-            fontFamily: 'inherit',
-            fontSize: 14,
-            lineHeight: `${LINE_HEIGHT}px`
-          }}
-        >
-          {value || t('Scribe.prompt.placeholder')}
-        </span>
       </div>
     </div>
   )
