@@ -28,6 +28,11 @@ import {
 } from '@/modules/views/OnlyOffice/Scribe/scribeProbe'
 import { transformCellMarkersForPreview } from '@/modules/views/OnlyOffice/Scribe/tableCellMarkers'
 
+// Scribe accent (matches FragmentCard / ChatMessageList SCRIBE_PURPLE so the
+// popover result card frame is byte-for-byte aligned with the chat card — D-01).
+const SCRIBE_PURPLE = '#7C3AED'
+const SCRIBE_PURPLE_08 = 'rgba(124, 58, 237, 0.08)'
+
 const DEV_PANELS_STORAGE_KEY = 'SCRIBE_DEV_MD_PANELS'
 
 // Dev panel metadata: ordered keys + fixed (editor-agnostic) label and a longer
@@ -983,6 +988,7 @@ ScribeDevPanels.defaultProps = {
 const ScribeResultPanel = ({
   breadcrumb,
   resultText,
+  rawFragment,
   error,
   canRetry,
   cellWarning,
@@ -1204,7 +1210,28 @@ const ScribeResultPanel = ({
               {cellWarning}
             </div>
           )}
-          <MarkdownPreview>{resultText}</MarkdownPreview>
+          {/* D-01/D-02: render the single normalized fragment inside a
+              Scribe-violet card frame aligned with the chat FragmentCard.
+              MarkdownPreview is fed the RAW fragment (markers intact) — it is
+              the ONLY cosmetic cleanup step, never mutating the raw value the
+              footer Insert/Replace route on (D-02 / T-v3.1-05-03). We reuse a
+              thin local card wrapper (not FragmentCard) so the popover keeps its
+              own Insert/Replace/Retry footer and does not render FragmentCard's
+              redundant inline MessageActions. No new HTML-injection sink is
+              introduced — MarkdownPreview is the single content sink (reused
+              v3.1-04 sanitization path, T-v3.1-05-01). */}
+          <div
+            data-scribe-result-card
+            style={{
+              border: `1px solid ${SCRIBE_PURPLE}`,
+              background: isDark ? 'rgba(124, 58, 237, 0.12)' : SCRIBE_PURPLE_08,
+              borderRadius: 8,
+              padding: '8px 10px',
+              margin: '4px 0'
+            }}
+          >
+            <MarkdownPreview>{rawFragment}</MarkdownPreview>
+          </div>
         </>
       )}
     </div>
@@ -1326,6 +1353,9 @@ const ScribeResultPanel = ({
 ScribeResultPanel.propTypes = {
   breadcrumb: PropTypes.string.isRequired,
   resultText: PropTypes.string.isRequired,
+  // RAW normalized fragment (markers intact) for the cosmetic card render. The
+  // card body renders THIS through MarkdownPreview, not `resultText` (D-02).
+  rawFragment: PropTypes.string,
   promptSent: PropTypes.string,
   rawResponse: PropTypes.string,
   error: PropTypes.string,
@@ -1362,6 +1392,7 @@ ScribeResultPanel.propTypes = {
 }
 
 ScribeResultPanel.defaultProps = {
+  rawFragment: '',
   error: '',
   canRetry: false,
   promptSent: '',

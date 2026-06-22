@@ -446,6 +446,7 @@ const ScribePopover = ({
         <ScribeResultPanel
           breadcrumb={result.breadcrumb}
           resultText={result.text}
+          rawFragment={rawResult}
           error={result.error}
           canRetry={result.canRetry}
           cellWarning={cellWarning}
