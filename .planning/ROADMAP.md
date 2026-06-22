@@ -66,7 +66,7 @@ Full v3.0 phase details are preserved in `.planning/milestones/v3.0-ROADMAP.md`.
 - [x] **Phase v3.1-01: Module contrat** (2/2 plans) -- completed 2026-06-16 - `scribeResponse.js` pur (parse tolérant + validation maison + repli contextuel + schéma), entièrement testé, zéro UI
 - [x] **Phase v3.1-02: Prompt + plumbing** (3/3 plans) -- completed 2026-06-17 - Prompts contractuels sur les deux surfaces, seam de parse aux deux call sites, modèle de message étendu, sérialisation multi-tour, miroir inline → historique chat
 - [x] **Phase v3.1-03: Sonde dev (HARD GATE)** (3/3 plans) -- completed 2026-06-17 - Panneau dev exposant la réponse parsée + métriques de conformité ; ses critères de passage conditionnent les phases 04-05
-- [ ] **Phase v3.1-04: Rendu chat (cartes + clavier)** - Cartes de fragment encadrées aux positions `{{fragment:N}}`, boutons Copier/Insérer/Remplacer, réinjection riche par fragment, navigation clavier complète
+- [x] **Phase v3.1-04: Rendu chat (cartes + clavier)** (5/5 plans) -- completed 2026-06-22 - Cartes de fragment encadrées aux positions `{{fragment:N}}`, boutons Copier/Insérer/Remplacer, réinjection riche par fragment, navigation clavier complète
 - [ ] **Phase v3.1-05: Rendu popover + durcissement** - Rendu du fragment unique dans le popover, re-ask sur parse invalide, i18n des libellés, corpus de régression, décision du défaut `response_format`
 
 ## Phase Details
@@ -125,11 +125,11 @@ Full v3.0 phase details are preserved in `.planning/milestones/v3.0-ROADMAP.md`.
   3. Insérer/Remplacer un fragment conserve le formatage riche (tables, images, footnotes, cross-refs) via le pipeline de réinjection existant, appliqué par fragment
   4. Au clavier : ↑ depuis l'input va sur Insérer de la carte la plus récente ; ←/→ cyclent Copier/Insérer/Remplacer ; ↑/↓ parcourent les fragments à travers le fil puis reviennent à l'input ; Échap revient à l'input ; Entrée/Espace activent le bouton focalisé
 **Plans**: 5 plans
-- [ ] v3.1-04-01-PLAN.md — pure buildAssistantSegments helper (segment placement: cards at {{fragment:N}}, orphans at end, REF-safe) + spec [CONTRACT-02, FRAG-01]
-- [ ] v3.1-04-02-PLAN.md — extend MarkdownPreview cosmetic preprocessor (REF→text, TABLE→table, footnote→sup, idempotent) + spec; rehype-raw XSS surfaced for v3.1-05 [D-02]
-- [ ] v3.1-04-03-PLAN.md — FragmentCard (bordered Scribe-purple card, MarkdownPreview(raw) + 3 raw-driven gated actions) + MessageActions focus ring + spec [FRAG-02, FRAG-03, FRAG-04]
-- [ ] v3.1-04-04-PLAN.md — ChatMessageList segment render (prose+cards), delete composeAssistantDisplay, remove message-level actions (D-08) + spec [CONTRACT-02, FRAG-01, FRAG-03]
-- [ ] v3.1-04-05-PLAN.md — thread-level keyboard controller + ChatInput hooks + ScribePanel wiring (manual-index, no new dep) + spec [KBD-01, KBD-02, KBD-03, KBD-04]
+- [x] v3.1-04-01-PLAN.md — pure buildAssistantSegments helper (segment placement: cards at {{fragment:N}}, orphans at end, REF-safe) + spec [CONTRACT-02, FRAG-01]
+- [x] v3.1-04-02-PLAN.md — extend MarkdownPreview cosmetic preprocessor (REF→text, TABLE→table, footnote→sup, idempotent) + spec; rehype-raw XSS surfaced for v3.1-05 [D-02]
+- [x] v3.1-04-03-PLAN.md — FragmentCard (bordered Scribe-purple card, MarkdownPreview(raw) + 3 raw-driven gated actions) + MessageActions focus ring + spec [FRAG-02, FRAG-03, FRAG-04]
+- [x] v3.1-04-04-PLAN.md — ChatMessageList segment render (prose+cards), delete composeAssistantDisplay, remove message-level actions (D-08) + spec [CONTRACT-02, FRAG-01, FRAG-03]
+- [x] v3.1-04-05-PLAN.md — thread-level keyboard controller + ChatInput hooks + ScribePanel wiring (manual-index, no new dep) + spec [KBD-01, KBD-02, KBD-03, KBD-04]
 **UI hint**: yes
 
 ### Phase v3.1-05: Rendu popover + durcissement
@@ -171,5 +171,5 @@ v3.1 phases execute in order: v3.1-01 -> v3.1-02 -> v3.1-03 (HARD GATE) -> v3.1-
 | v3.1-01. Module contrat | v3.1 | 2/2 | Complete | 2026-06-16 |
 | v3.1-02. Prompt + plumbing | v3.1 | 3/3 | Complete | 2026-06-17 |
 | v3.1-03. Sonde dev (HARD GATE) | v3.1 | 3/3 | Complete | 2026-06-17 |
-| v3.1-04. Rendu chat (cartes + clavier) | v3.1 | 0/5 | Planned | - |
+| v3.1-04. Rendu chat (cartes + clavier) | v3.1 | 5/5 | Complete | 2026-06-22 |
 | v3.1-05. Rendu popover + durcissement | v3.1 | 0/0 | Not started | - |

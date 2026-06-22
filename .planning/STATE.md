@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v3.1
 milestone_name: Contrat de réponse structurée LLM
 status: executing
-stopped_at: Phase v3.1-04 executed + verified in code; holding for live OO FRAG-03 UAT
-last_updated: "2026-06-19T16:30:00.000Z"
-last_activity: 2026-06-19 -- Phase v3.1-04 all 5 plans executed; verification human_needed (FRAG-03 live test)
+stopped_at: Phase v3.1-04 COMPLETE (live OO FRAG-03 UAT passed 2026-06-22); next = v3.1-05
+last_updated: "2026-06-22T00:00:00.000Z"
+last_activity: 2026-06-22 -- Phase v3.1-04 live UAT (FRAG-03) PASSED; phase marked complete
 progress:
   total_phases: 5
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 5
   completed_plans: 5
-  percent: 60
+  percent: 80
 ---
 
 # Project State
@@ -21,17 +21,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-16)
 
 **Core value:** L'utilisateur peut interagir avec l'IA de maniere fluide -- actions rapides inline ou chat conversationnel dans un panneau lateral -- pour transformer et manipuler le contenu de son document OnlyOffice.
-**Current focus:** Phase v3.1-04 — Rendu chat (cartes + clavier) — EXECUTED, awaiting live OO FRAG-03 UAT before completion
+**Current focus:** Phase v3.1-04 — COMPLETE (live OO FRAG-03 UAT passed 2026-06-22). Next: v3.1-05 (Rendu popover + durcissement) — last phase of the milestone.
 
 ## Current Position
 
-Phase: v3.1-04 (Rendu chat — cartes + clavier) — ALL 5 PLANS EXECUTED & verified in code; **NOT yet marked complete** (held for live OnlyOffice human verification per user)
+Phase: v3.1-04 (Rendu chat — cartes + clavier) — **COMPLETE** (5/5 plans; live OO FRAG-03 UAT passed 2026-06-22)
 Plan: 5 of 5 — committed (18 TDD commits a93963ca9..HEAD) + WR-01 keyboard fix; targeted + Scribe-dir suites green (166 pass; lone failure = pre-existing ScribeContainer mobile-Drawer test)
-Status: Verification = human_needed — 1 item open: FRAG-03 rich reinjection in the live OO editor (see v3.1-04-HUMAN-UAT.md)
-Progress: [██████    ] 60% (3/5 phases complete; v3.1-04 pending live UAT)
-Last activity: 2026-06-19 -- Phase v3.1-04 executed; verification human_needed (FRAG-03 live test)
+Status: Verification = verified. FRAG-03 rich reinjection confirmed live in the OO editor (v3.1-04-HUMAN-UAT.md: 1/1 pass). All 9 v3.1-04 requirements Validated.
+Progress: [████████  ] 80% (4/5 phases complete)
+Last activity: 2026-06-22 -- Phase v3.1-04 live UAT (FRAG-03) PASSED; phase marked complete
 
-⚠️ TOOLING: gsd-sdk v1.42.3 cannot resolve `vX.Y-NN` phases (find-phase/phase-plan-index return "Phase not found" for ALL v3.0/v3.1 phases — regex only matches numeric-prefixed dirs). v3.1-04 was orchestrated manually with explicit paths; ROADMAP/STATE/REQUIREMENTS completion writes must be done by hand (gsd-sdk phase.complete will fail). To finish v3.1-04 after live UAT passes: hand-mark ROADMAP plan checkboxes + phase line [x], flip the 9 REQUIREMENTS rows to Validated, advance this block.
+⚠️ TOOLING: gsd-sdk v1.42.3 cannot resolve `vX.Y-NN` phases (find-phase/phase-plan-index return "Phase not found" for ALL v3.0/v3.1 phases — regex only matches numeric-prefixed dirs). All phases orchestrated manually with explicit paths; ROADMAP/STATE/REQUIREMENTS completion writes done by hand (gsd-sdk phase.complete fails). v3.1-04 completion writes applied 2026-06-22. Same will apply when finishing v3.1-05.
 
 GATE outcome: v2 contract block (RESPONSE_CONTRACT_BLOCK_V2) PASSES all 4 blockers (dup 0% / preamble
 0% / splitTable 0 / refBroken 0) on N=46 incl. real IHM-captured table/REF; deployed v1 is a measured
@@ -48,8 +48,9 @@ Open for v3.1-05: (a) re-ask on refIntegrity breach (closes the flaky REF/footno
 fellBack (model wraps JSON in a ```json fence). Pre-existing unrelated red test: ScribeContainer
 "Drawer PaperProps fullscreen on mobile" (layout, untouched by this work).
 
-Next: start v3.1-04 (Rendu chat — fragment cards, Copy/Insert/Replace, keyboard nav). `/clear` then
-`/gsd-discuss-phase v3.1-04`.
+Next: start v3.1-05 (Rendu popover + durcissement — single fragment in popover, re-ask on invalid
+parse, i18n, regression corpus, `response_format` default decision). `/clear` then
+`/gsd-discuss-phase v3.1-05`. This is the LAST phase of milestone v3.1.
 
 ## v3.1 Roadmap Summary
 

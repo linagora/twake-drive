@@ -10,7 +10,7 @@ Le contrat `{ discussion: string, fragments?: string[] }` (formalisme JSON Schem
 ### Contrat de réponse
 
 - [x] **CONTRACT-01**: La réponse du LLM sépare la `discussion` (affichée, jamais insérée) des `fragments` insérables, via un contrat JSON parsé et validé (validation maison, zéro dépendance)
-- [ ] **CONTRACT-02**: Dans le chat, une réponse de pure discussion (0 fragment) n'affiche aucune UI d'insertion
+- [x] **CONTRACT-02**: Dans le chat, une réponse de pure discussion (0 fragment) n'affiche aucune UI d'insertion
 - [x] **CONTRACT-03**: Une réponse non conforme ne bloque jamais l'utilisateur — repli contextuel : chat → message de discussion + action copier/insérer au niveau du message ; inline → le brut devient l'unique fragment insérable
 - [x] **CONTRACT-04**: Les marqueurs de position `{{fragment:N}}` n'altèrent jamais les marqueurs cross-ref existants `{{REF:scribe-ref-N:…}}` (regex stricte + test de préservation)
 
@@ -21,17 +21,17 @@ Le contrat `{ discussion: string, fragments?: string[] }` (formalisme JSON Schem
 
 ### Fragments & cartes (chat)
 
-- [ ] **FRAG-01**: Chaque fragment est rendu dans une carte encadrée, visuellement distincte de la discussion, à l'emplacement de son marqueur `{{fragment:N}}` (fragments non référencés rendus en fin de message)
-- [ ] **FRAG-02**: Chaque carte de fragment porte trois boutons : Copier, Insérer, Remplacer
-- [ ] **FRAG-03**: Un fragment inséré/remplacé conserve le formatage riche (tables, images, footnotes, cross-refs) via le pipeline de réinjection existant, par fragment
-- [ ] **FRAG-04**: Le bouton « Remplacer » n'apparaît que lorsqu'une sélection est active dans le document
+- [x] **FRAG-01**: Chaque fragment est rendu dans une carte encadrée, visuellement distincte de la discussion, à l'emplacement de son marqueur `{{fragment:N}}` (fragments non référencés rendus en fin de message)
+- [x] **FRAG-02**: Chaque carte de fragment porte trois boutons : Copier, Insérer, Remplacer
+- [x] **FRAG-03**: Un fragment inséré/remplacé conserve le formatage riche (tables, images, footnotes, cross-refs) via le pipeline de réinjection existant, par fragment
+- [x] **FRAG-04**: Le bouton « Remplacer » n'apparaît que lorsqu'une sélection est active dans le document
 
 ### Navigation clavier (chat)
 
-- [ ] **KBD-01**: Depuis l'input du prompt, ↑ déplace le focus vers la carte de fragment la plus récente (la plus proche de l'input), sur le bouton Insérer
-- [ ] **KBD-02**: ←/→ font basculer le focus entre les boutons Copier/Insérer/Remplacer de la carte focalisée
-- [ ] **KBD-03**: ↑ déplace vers le fragment précédent (même réponse, sinon réponse au-dessus) à travers le fil ; ↓ déplace vers le fragment suivant, puis revient à l'input au-delà du plus récent
-- [ ] **KBD-04**: Échap ramène le focus à l'input ; Entrée/Espace active le bouton focalisé
+- [x] **KBD-01**: Depuis l'input du prompt, ↑ déplace le focus vers la carte de fragment la plus récente (la plus proche de l'input), sur le bouton Insérer
+- [x] **KBD-02**: ←/→ font basculer le focus entre les boutons Copier/Insérer/Remplacer de la carte focalisée
+- [x] **KBD-03**: ↑ déplace vers le fragment précédent (même réponse, sinon réponse au-dessus) à travers le fil ; ↓ déplace vers le fragment suivant, puis revient à l'input au-delà du plus récent
+- [x] **KBD-04**: Échap ramène le focus à l'input ; Entrée/Espace active le bouton focalisé
 
 ### Conformité & i18n
 
@@ -74,15 +74,15 @@ Reporté à v3.2+. Suivi mais hors roadmap v3.1.
 | INLINE-01 | v3.1-02 | Pending |
 | INLINE-02 | v3.1-02 | Pending |
 | PROBE-01 | v3.1-03 | Complete |
-| CONTRACT-02 | v3.1-04 | Pending |
-| FRAG-01 | v3.1-04 | Pending |
-| FRAG-02 | v3.1-04 | Pending |
-| FRAG-03 | v3.1-04 | Pending |
-| FRAG-04 | v3.1-04 | Pending |
-| KBD-01 | v3.1-04 | Pending |
-| KBD-02 | v3.1-04 | Pending |
-| KBD-03 | v3.1-04 | Pending |
-| KBD-04 | v3.1-04 | Pending |
+| CONTRACT-02 | v3.1-04 | Validated |
+| FRAG-01 | v3.1-04 | Validated |
+| FRAG-02 | v3.1-04 | Validated |
+| FRAG-03 | v3.1-04 | Validated |
+| FRAG-04 | v3.1-04 | Validated |
+| KBD-01 | v3.1-04 | Validated |
+| KBD-02 | v3.1-04 | Validated |
+| KBD-03 | v3.1-04 | Validated |
+| KBD-04 | v3.1-04 | Validated |
 | I18N-01 | v3.1-05 | Pending |
 
 **Coverage:**
