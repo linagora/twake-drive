@@ -32,4 +32,5 @@ const flagsList = () => {
   flag('sharing.auto-open-settings.enabled')
   flag('sharing.generate-link-button.enabled')
   flag('drive.sign.enabled')
+  flag('drive.verify.enabled')
 }

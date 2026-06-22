@@ -42,7 +42,7 @@ export const verifyWithEuDss = ({
     allowMultiple: false,
     allowFolders: false,
     displayCondition: files =>
-      flag('drive.sign.enabled') &&
+      flag('drive.verify.enabled') &&
       files.length === 1 &&
       hasWriteAccess &&
       !isPublic,
