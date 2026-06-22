@@ -227,3 +227,20 @@ export const FREE_PROMPT_CONFIG = {
   promptPrefix: '',
   mockResult: 'wrap:[Custom: applied]:[/Custom]'
 }
+
+/**
+ * Non-LLM menu entry that opens the side panel (MENU-01 / D-06).
+ *
+ * IMPORTANT: this entry is deliberately NOT a member of SCRIBE_ACTIONS. The
+ * SCRIBE_ACTIONS entries all feed the LLM pipeline (buildMessages → scribeAI).
+ * The open-panel entry only triggers the host `onOpenPanel` callback — it must
+ * never reach onSelect/buildMessages (threat T-v3.1-05-04, pipeline-leak guard).
+ * It is injected at render time in ScribeActionMenu, mirroring the DEV_MD_ACTION
+ * injection precedent.
+ *
+ * `labelKey` reuses the existing i18n key (no new key required, see v3.1-07).
+ */
+export const OPEN_PANEL_ENTRY = {
+  id: 'open-panel',
+  labelKey: 'Scribe.button.open_panel'
+}
