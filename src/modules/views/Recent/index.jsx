@@ -9,6 +9,7 @@ import {
 } from 'cozy-sharing'
 import { makeActions } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
 import { Content } from 'cozy-ui/transpiled/react/Layout'
+import LinearProgress from 'cozy-ui/transpiled/react/LinearProgress'
 
 import FolderView from '../Folder/FolderView'
 import FolderViewBody from '../Folder/FolderViewBody'
@@ -50,6 +51,11 @@ export const RecentView = () => {
     useFolderSort(RECENT_FOLDER_ID)
 
   const recentsResult = useRecentFiles()
+
+  // Shared-drive and federated files arrive from the dataproxy seconds after
+  // the local files; surface that background fetch once a list is on screen.
+  const isFetchingMore =
+    recentsResult?.fetchStatus === 'loading' && recentsResult?.data?.length > 0
 
   useKeyboardShortcuts({
     client: base.client,
@@ -103,6 +109,7 @@ export const RecentView = () => {
           <Breadcrumb path={[{ name: base.t('breadcrumb.title_recent') }]} />
           <Toolbar canUpload={false} canCreateFolder={false} />
         </FolderViewHeader>
+        {isFetchingMore && <LinearProgress />}
         {flag('drive.virtualization.enabled') && !base.isMobile ? (
           <FolderViewBodyVz
             actions={actions}
