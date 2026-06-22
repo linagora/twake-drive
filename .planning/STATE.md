@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v3.1
 milestone_name: Contrat de réponse structurée LLM
 status: executing
-stopped_at: Phase v3.1-04 COMPLETE (live OO FRAG-03 UAT passed 2026-06-22); next = v3.1-05
-last_updated: "2026-06-22T00:00:00.000Z"
-last_activity: 2026-06-22 -- Phase v3.1-04 live UAT (FRAG-03) PASSED; phase marked complete
+stopped_at: Phase v3.1-05 context gathered (popover UI); ex-v3.1-05 split into 05/06/07; ready to plan v3.1-05
+last_updated: "2026-06-22T01:00:00.000Z"
+last_activity: 2026-06-22 -- discuss v3.1-05: split phase into 05/06/07, captured popover UI CONTEXT
 progress:
   total_phases: 7
   completed_phases: 4
@@ -48,9 +48,9 @@ Open for v3.1-05: (a) re-ask on refIntegrity breach (closes the flaky REF/footno
 fellBack (model wraps JSON in a ```json fence). Pre-existing unrelated red test: ScribeContainer
 "Drawer PaperProps fullscreen on mobile" (layout, untouched by this work).
 
-Next: start v3.1-05 (Rendu popover + durcissement — single fragment in popover, re-ask on invalid
-parse, i18n, regression corpus, `response_format` default decision). `/clear` then
-`/gsd-discuss-phase v3.1-05`. This is the LAST phase of milestone v3.1.
+Next: plan v3.1-05 (Rendu popover UI — popover result as card + action-menu rework). Context gathered
+2026-06-22 (.planning/phases/v3.1-05-rendu-popover-ui/v3.1-05-CONTEXT.md). `/clear` then
+`/gsd-plan-phase v3.1-05`. Milestone v3.1 now has 7 phases (05 UI / 06 durcissement / 07 i18n).
 
 ## v3.1 Roadmap Summary
 
