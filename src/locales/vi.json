@@ -539,16 +539,7 @@
       "goToHome": "Về trang chính"
     },
     "actions": {
-      "edit": "Chỉnh sửa",
       "validate": "Xác nhận"
-    },
-    "tooltip": {
-      "title": "Chỉnh sửa tài liệu",
-      "text": "Tài liệu hiện đang ở chế độ chỉ đọc. Bạn có thể chỉnh sửa bằng cách nhấp vào đây.",
-      "actions": {
-        "ok": "Đồng ý",
-        "hide": "Không hiển thị nữa"
-      }
     }
   },
   "Migration": {

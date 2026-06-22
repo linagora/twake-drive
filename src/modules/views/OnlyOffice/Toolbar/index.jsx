@@ -16,18 +16,15 @@ import Sharing from '@/components/EditorToolbar/Sharing'
 import { useRedirectLink } from '@/hooks/useRedirectLink'
 import PublicToolbarMoreMenu from '@/modules/public/PublicToolbarMoreMenu'
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
-import EditButton from '@/modules/views/OnlyOffice/Toolbar/EditButton'
 import FileIcon from '@/modules/views/OnlyOffice/Toolbar/FileIcon'
 import SummarizeByAIButtonWrapper from '@/modules/views/OnlyOffice/Toolbar/SummarizeByAIButtonWrapper'
-import { isOfficeEditingEnabled } from '@/modules/views/OnlyOffice/helpers'
 import EditorTitleStart from '@/modules/views/editor/EditorTitleStart'
 import { buildFileOrFolderByIdQuery, buildFileWhereByIdQuery } from '@/queries'
 
 const Toolbar = ({ sharingInfos }) => {
-  const { isMobile, isDesktop } = useBreakpoints()
+  const { isMobile } = useBreakpoints()
   const [searchParams] = useSearchParams(window.location.search)
-  const { isEditorReady, isReadOnly, isTrashed, fileId, isPublic } =
-    useOnlyOfficeContext()
+  const { isEditorReady, isReadOnly, fileId, isPublic } = useOnlyOfficeContext()
   const { t } = useI18n()
   const { redirectBack, canRedirect } = useRedirectLink({ isPublic })
 
@@ -77,14 +74,6 @@ const Toolbar = ({ sharingInfos }) => {
       isSharingShortcutCreated
     }
   )
-  const canEdit =
-    isEditorReady &&
-    !isReadOnly &&
-    !isTrashed &&
-    isOfficeEditingEnabled(isDesktop)
-
-  const showPublicEditButton = isPublic && !isMobile && canEdit
-
   const showSharingLinkButton =
     isPublic && !isMobile && isShareNotAdded && !isCozyToCozySharingSynced
 
@@ -102,10 +91,9 @@ const Toolbar = ({ sharingInfos }) => {
         <OpenSharingLinkButton
           link={link}
           isSharingShortcutCreated={isSharingShortcutCreated}
-          variant={showPublicEditButton ? 'secondary' : 'primary'}
+          variant="primary"
         />
       )}
-      {showPublicEditButton && <EditButton />}
 
       {isPublic && !isCozyToCozySharingSynced && (
         <PublicToolbarMoreMenu files={[file]} actions={actions} />
@@ -113,12 +101,7 @@ const Toolbar = ({ sharingInfos }) => {
 
       <SummarizeByAIButtonWrapper isLoaded={isEditorReady} />
 
-      {!isPublic && isEditorReady && (
-        <>
-          <Sharing file={file} />
-          {canEdit && <EditButton />}
-        </>
-      )}
+      {!isPublic && isEditorReady && <Sharing file={file} />}
     </>
   )
 }

@@ -569,16 +569,7 @@
       "goToHome": "Go to home"
     },
     "actions": {
-      "edit": "Edit",
       "validate": "Validate"
-    },
-    "tooltip": {
-      "title": "Edit document",
-      "text": "The document is currently read-only. You can modify it by clicking here.",
-      "actions": {
-        "ok": "Ok",
-        "hide": "Do not display"
-      }
     }
   },
   "Migration": {
