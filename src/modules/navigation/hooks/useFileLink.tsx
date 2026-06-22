@@ -130,7 +130,11 @@ const useFileLink = (
   let to = useResolvedPath(path, {
     relative: forceFolderPath ? 'route' : 'path'
   })
-  if (forceFolderPath && !shouldBeOpenedInNewTab) {
+  // The folder prefix only makes sense for a relative in-folder path. Types
+  // that already resolve to an absolute route (e.g. shared-drive-file ->
+  // /shareddrive/...) must be left untouched, otherwise the prefix produces a
+  // malformed /folder/<dir_id>/shareddrive/... link.
+  if (forceFolderPath && !shouldBeOpenedInNewTab && !path.startsWith('/')) {
     to = {
       ...to,
       pathname:

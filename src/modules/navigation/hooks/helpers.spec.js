@@ -353,9 +353,28 @@ describe('computeFileType', () => {
     expect(computeFileType(file)).toBe('directory')
   })
 
-  it('should return "file" for files with driveId but not in shared drives directory', () => {
+  it('should return "shared-drive-file" for a recipient shared-drive file nested in a folder', () => {
+    // A file a recipient sees inside a shared drive (e.g. from Recents or
+    // Search, fed by the dataproxy) carries a `driveId` but lives in a regular
+    // folder, so its `dir_id` is its real parent, not SHARED_DRIVES_DIR_ID. It
+    // must still route through the proxied /shareddrive viewer, otherwise it
+    // opens via the local /files/:id route which 404s (the file only exists on
+    // the owner's instance).
     const file = {
       dir_id: 'regular-folder',
+      _type: 'io.cozy.files',
+      type: 'file',
+      driveId: 'drive789'
+    }
+    expect(computeFileType(file)).toBe('shared-drive-file')
+  })
+
+  it('should return "file" for a driveId file missing dir_id (avoids a computePath throw)', () => {
+    // Without dir_id the /shareddrive route can't be built; degrade to the
+    // local file route instead of classifying it shared-drive-file and letting
+    // computePath throw during render.
+    const file = {
+      _id: 'file123',
       _type: 'io.cozy.files',
       type: 'file',
       driveId: 'drive789'
@@ -576,6 +595,20 @@ describe('computePath', () => {
     expect(
       computePath(file, { type: 'shared-drive-file', pathname: '/any' })
     ).toBe('/shareddrive/drive789/io.cozy.files.shared-drives-dir/file/file123')
+  })
+
+  it('should return a /shareddrive path for a recipient shared-drive file nested in a folder', () => {
+    // Recents/Search hand a shared-drive file with its real parent folder as
+    // dir_id; the path must scope it to the proxied shared drive.
+    const file = {
+      _id: 'file123',
+      dir_id: 'parent-folder',
+      driveId: 'drive789',
+      _type: 'io.cozy.files'
+    }
+    expect(
+      computePath(file, { type: 'shared-drive-file', pathname: '/recent' })
+    ).toBe('/shareddrive/drive789/parent-folder/file/file123')
   })
 
   it('should throw error for shared-drive-file without driveId', () => {
