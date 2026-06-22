@@ -77,7 +77,6 @@ const setup = ({
   isPublic = false,
   isFromSharing = false,
   isMobile = false,
-  isEditorModeView = false,
   sharingInfos = {}
 } = {}) => {
   const sharingInfosProps = {
@@ -98,7 +97,6 @@ const setup = ({
         value={{
           fileId: officeDoc.id,
           isPublic,
-          isEditorModeView,
           isFromSharing,
           isReadOnly,
           isEditorReady: true
