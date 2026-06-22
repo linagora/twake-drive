@@ -1,22 +1,147 @@
-import React, { useState, useCallback, useRef, forwardRef, useImperativeHandle } from 'react'
+import React, {
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+  useLayoutEffect,
+  forwardRef,
+  useImperativeHandle
+} from 'react'
 import PropTypes from 'prop-types'
 
+import { useTheme } from 'cozy-ui/transpiled/react/styles'
 import { useI18n } from 'twake-i18n'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import IconButton from 'cozy-ui/transpiled/react/IconButton'
-import PaperplaneIcon from 'cozy-ui/transpiled/react/Icons/Paperplane'
-import InputBase from 'cozy-ui/transpiled/react/InputBase'
+
+const LINE_HEIGHT = 20
+const TEXTAREA_VPAD = 16 // 8px top + 8px bottom
+// Pill width-growth bounds (per UI decision): start compact, grow with content
+// up to a hard cap, then the textarea wraps to multiple lines instead.
+const MIN_WIDTH = 240
+const MAX_WIDTH = 420
+// Horizontal chrome around the measured text: left pad + gap + send button +
+// right pad + the two 2px gradient borders. Used to convert measured text
+// width into an outer pill width.
+const CHROME_WIDTH = 16 + 8 + 34 + 6 + 4
+const SEND_BUTTON = 34
+const VIEWPORT_MARGIN = 24 // keep the popover off the very edge of the screen
+
+// The animated gradient liseré can't be expressed with inline styles: it needs
+// @property (so the conic-gradient angle interpolates smoothly) and @keyframes.
+// Inject a single global stylesheet once, rather than relying on scribe.styl —
+// CSS-modules scoping would mangle the @keyframes/@property names and the
+// placeholder color has to read a per-instance CSS var. prefers-reduced-motion
+// disables the spin. If @property is unsupported the gradient simply renders
+// static — still a multicolor border, graceful degradation.
+const STYLE_ID = 'scribe-prompt-input-styles'
+const injectStyles = () => {
+  if (typeof document === 'undefined' || document.getElementById(STYLE_ID)) return
+  const el = document.createElement('style')
+  el.id = STYLE_ID
+  el.textContent = `
+@property --scribe-grad-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+@keyframes scribe-grad-spin { to { --scribe-grad-angle: 360deg; } }
+.scribe-prompt-pill, .scribe-prompt-send {
+  background:
+    linear-gradient(var(--scribe-inner), var(--scribe-inner)) padding-box,
+    conic-gradient(
+      from var(--scribe-grad-angle),
+      #4d8dff, #8b5cf6, #ff5fa2, #ff9d4d, #4d8dff
+    ) border-box;
+  border: var(--scribe-bw, 2px) solid transparent;
+}
+.scribe-prompt-pill { animation: scribe-grad-spin 6s linear infinite; }
+.scribe-prompt-send { animation: scribe-grad-spin 6s linear infinite; }
+.scribe-prompt-pill textarea::placeholder {
+  color: var(--scribe-ph, #9aa0a6);
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .scribe-prompt-pill, .scribe-prompt-send { animation: none; }
+}`
+  document.head.appendChild(el)
+}
 
 const ScribePromptInput = forwardRef(({ onSubmit, onArrow, onEscape }, ref) => {
   const { t } = useI18n()
+  const theme = useTheme()
   const [value, setValue] = useState('')
+  const [focused, setFocused] = useState(false)
+  const [width, setWidth] = useState(MIN_WIDTH)
+  const [maxHeight, setMaxHeight] = useState(LINE_HEIGHT * 6 + TEXTAREA_VPAD)
   const inputRef = useRef(null)
+  const wrapperRef = useRef(null)
+  const mirrorRef = useRef(null)
+  // Pending caret position to restore after a controlled-value newline insert.
+  const pendingCaretRef = useRef(null)
+
+  const palette = theme.palette || {}
+  const isDark = (palette.type || palette.mode) === 'dark'
+  const innerBg = (palette.background && palette.background.paper) || (isDark ? '#1e1e1e' : '#fff')
+  const textColor = (palette.text && palette.text.primary) || (isDark ? '#fff' : '#000')
+  const placeholderColor = '#9aa0a6'
+
+  useEffect(() => { injectStyles() }, [])
 
   useImperativeHandle(ref, () => ({
     focus: () => {
       if (inputRef.current) inputRef.current.focus()
     }
   }))
+
+  // Max textarea height = space the popover actually has below the input, with
+  // a viewport-fraction ceiling. Measured from the pill's own position so it is
+  // a function of the available modal height, not a fixed line count.
+  const computeMaxHeight = useCallback(() => {
+    if (typeof window === 'undefined') return LINE_HEIGHT * 6 + TEXTAREA_VPAD
+    const rect = wrapperRef.current
+      ? wrapperRef.current.getBoundingClientRect()
+      : null
+    const top = rect ? rect.top : 0
+    const avail = window.innerHeight - top - VIEWPORT_MARGIN
+    const ceil = window.innerHeight * 0.6
+    return Math.max(LINE_HEIGHT + TEXTAREA_VPAD, Math.min(avail, ceil))
+  }, [])
+
+  // Recompute pill width (from the hidden mirror) and textarea height whenever
+  // the value changes. Width grows with content up to MAX_WIDTH; past that the
+  // textarea wraps and height takes over.
+  useLayoutEffect(() => {
+    const mh = computeMaxHeight()
+    setMaxHeight(mh)
+
+    const measured = mirrorRef.current ? mirrorRef.current.scrollWidth : 0
+    const next = Math.min(
+      MAX_WIDTH,
+      Math.max(MIN_WIDTH, Math.ceil(measured) + CHROME_WIDTH + 6)
+    )
+    setWidth(next)
+
+    const ta = inputRef.current
+    if (ta) {
+      ta.style.height = 'auto'
+      ta.style.height = Math.min(ta.scrollHeight, mh) + 'px'
+    }
+  }, [value, computeMaxHeight])
+
+  // Restore the caret after a controlled newline insertion (Ctrl/Shift+Enter).
+  useLayoutEffect(() => {
+    if (pendingCaretRef.current != null && inputRef.current) {
+      const pos = pendingCaretRef.current
+      pendingCaretRef.current = null
+      inputRef.current.selectionStart = pos
+      inputRef.current.selectionEnd = pos
+    }
+  }, [value])
+
+  useEffect(() => {
+    const onResize = () => setMaxHeight(computeMaxHeight())
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [computeMaxHeight])
 
   const handleSubmit = useCallback(() => {
     const trimmed = value.trim()
@@ -26,59 +151,176 @@ const ScribePromptInput = forwardRef(({ onSubmit, onArrow, onEscape }, ref) => {
     }
   }, [value, onSubmit])
 
+  const insertNewline = useCallback(() => {
+    const el = inputRef.current
+    const start = el ? el.selectionStart : value.length
+    const end = el ? el.selectionEnd : value.length
+    const next = value.slice(0, start) + '\n' + value.slice(end)
+    pendingCaretRef.current = start + 1
+    setValue(next)
+  }, [value])
+
   const handleKeyDown = useCallback(
     e => {
       if (e.key === 'Enter') {
-        e.stopPropagation()
         e.preventDefault()
-        handleSubmit()
+        e.stopPropagation()
+        // Ctrl/Cmd/Shift+Enter inserts a line break; plain Enter submits.
+        if (e.ctrlKey || e.metaKey || e.shiftKey) {
+          insertNewline()
+        } else {
+          handleSubmit()
+        }
       } else if (e.key === 'ArrowUp') {
-        e.preventDefault()
-        e.stopPropagation()
-        if (onArrow) onArrow('up')
+        // Hand off to the menu only at the first line; otherwise let the caret
+        // move up within a multi-line draft.
+        const el = inputRef.current
+        const atFirstLine =
+          !el || value.lastIndexOf('\n', el.selectionStart - 1) === -1
+        if (atFirstLine) {
+          e.preventDefault()
+          e.stopPropagation()
+          if (onArrow) onArrow('up')
+        }
       } else if (e.key === 'ArrowDown') {
-        e.preventDefault()
-        e.stopPropagation()
-        if (onArrow) onArrow('down')
+        const el = inputRef.current
+        const atLastLine = !el || value.indexOf('\n', el.selectionStart) === -1
+        if (atLastLine) {
+          e.preventDefault()
+          e.stopPropagation()
+          if (onArrow) onArrow('down')
+        }
       } else if (e.key === 'Escape') {
         e.preventDefault()
         e.stopPropagation()
         if (onEscape) onEscape()
       }
     },
-    [handleSubmit, onArrow, onEscape]
+    [handleSubmit, insertNewline, onArrow, onEscape, value]
   )
 
+  const canSend = value.trim().length > 0
+
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        padding: '0 8px 0 16px',
-        height: 48
-      }}
-    >
-      <InputBase
-        inputRef={inputRef}
-        placeholder={t('Scribe.prompt.placeholder')}
-        value={value}
-        onChange={e => setValue(e.target.value)}
-        onKeyDown={handleKeyDown}
-        style={{ flexGrow: 1 }}
-        fullWidth
-      />
-      <IconButton
-        size="small"
-        onClick={handleSubmit}
+    <div style={{ padding: '4px 8px 4px 12px', display: 'flex' }}>
+      <div
+        ref={wrapperRef}
+        className="scribe-prompt-pill"
         style={{
-          backgroundColor: '#D6DEFF',
-          color: '#5B6FC0',
-          width: 32,
-          height: 32
+          '--scribe-bw': '2px',
+          '--scribe-inner': innerBg,
+          width,
+          maxWidth: '100%',
+          borderRadius: 9999,
+          boxSizing: 'border-box',
+          boxShadow: focused ? '0 0 0 3px rgba(139, 92, 246, 0.18)' : 'none',
+          transition: 'width 120ms ease, box-shadow 150ms ease'
         }}
       >
-        <Icon icon={PaperplaneIcon} size={16} />
-      </IconButton>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-end',
+            gap: 8,
+            padding: '2px 6px 2px 16px'
+          }}
+        >
+          <textarea
+            ref={inputRef}
+            rows={1}
+            placeholder={t('Scribe.prompt.placeholder')}
+            value={value}
+            onChange={e => setValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            style={{
+              '--scribe-ph': placeholderColor,
+              flex: 1,
+              minWidth: 0,
+              border: 'none',
+              background: 'transparent',
+              color: textColor,
+              fontFamily: 'inherit',
+              fontSize: 14,
+              lineHeight: `${LINE_HEIGHT}px`,
+              resize: 'none',
+              outline: 'none',
+              margin: 0,
+              padding: '8px 0',
+              minHeight: LINE_HEIGHT + TEXTAREA_VPAD,
+              maxHeight,
+              overflowY: 'auto',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word'
+            }}
+          />
+          <button
+            type="button"
+            className="scribe-prompt-send"
+            onClick={handleSubmit}
+            aria-label="Send"
+            style={{
+              '--scribe-bw': '2px',
+              '--scribe-inner': innerBg,
+              width: SEND_BUTTON,
+              height: SEND_BUTTON,
+              borderRadius: '50%',
+              boxSizing: 'border-box',
+              flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 0,
+              cursor: canSend ? 'pointer' : 'default',
+              opacity: canSend ? 1 : 0.55,
+              marginBottom: 3,
+              transition: 'opacity 150ms ease'
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <defs>
+                <linearGradient
+                  id="scribe-send-grad"
+                  x1="0"
+                  y1="0"
+                  x2="1"
+                  y2="1"
+                >
+                  <stop offset="0" stopColor="#ff5fa2" />
+                  <stop offset="1" stopColor="#ff9d4d" />
+                </linearGradient>
+              </defs>
+              <path
+                d="M4 12h13M12 6l6 6-6 6"
+                stroke="url(#scribe-send-grad)"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+        </div>
+        {/* Hidden mirror used to measure the single-line text width so the pill
+            can grow horizontally with content up to MAX_WIDTH. */}
+        <span
+          ref={mirrorRef}
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            visibility: 'hidden',
+            whiteSpace: 'pre',
+            pointerEvents: 'none',
+            left: -9999,
+            top: 0,
+            fontFamily: 'inherit',
+            fontSize: 14,
+            lineHeight: `${LINE_HEIGHT}px`
+          }}
+        >
+          {value || t('Scribe.prompt.placeholder')}
+        </span>
+      </div>
     </div>
   )
 })
