@@ -16,8 +16,9 @@ Le contrat `{ discussion: string, fragments?: string[] }` (formalisme JSON Schem
 
 ### Inline (popover)
 
-- [ ] **INLINE-01**: Le popover inline utilise le contrat en imposant **exactement un fragment**, et affiche uniquement ce fragment pour Insérer/Remplacer (la `discussion` n'est pas montrée dans le popover)
+- [ ] **INLINE-01**: Le popover inline utilise le contrat en imposant **exactement un fragment**, et affiche uniquement ce fragment pour Insérer/Remplacer (la `discussion` n'est pas montrée dans le popover) — rendu en carte (markdown riche + marqueurs propres) réutilisant FragmentCard/MarkdownPreview de v3.1-04
 - [ ] **INLINE-02**: Chaque échange inline (prompt + discussion + fragment) est répercuté dans l'historique de conversation partagé, et apparaît donc dans le chat à l'ouverture du side panel
+- [ ] **MENU-01**: Le menu d'actions du popover est refondu — le prompt libre est une entrée intégrée en bas de la liste, suivie d'une entrée « Ouvrir le panneau latéral » qui remplace l'icône open-panel retirée du popover (le bouton flottant sur le document est conservé)
 
 ### Fragments & cartes (chat)
 
@@ -37,6 +38,11 @@ Le contrat `{ discussion: string, fragments?: string[] }` (formalisme JSON Schem
 
 - [x] **PROBE-01**: Une sonde de dev expose la réponse parsée `{discussion, fragments, valid, fellBack, warnings}` et des métriques de conformité (duplication discussion↔fragment, détection de préambule par locale, A/B qualité de prose, table non scindée, REF préservés) — gate de validation avant tout rendu de cartes
 - [ ] **I18N-01**: Les libellés des cartes et les messages de repli sont traduits (fr, en, de, es, it)
+
+### Durcissement contrat
+
+- [ ] **HARDEN-01**: Sur une réponse au parse invalide, le système re-sollicite le LLM une seule fois avant d'appliquer le repli contextuel
+- [ ] **HARDEN-02**: Un corpus de régression de réponses malformées + tests de cas limites passe au vert ; le taux de `fellBack` code-fence est re-mesuré, et le défaut du flag `response_format` (prompt-based vs structured-output) est décidé et documenté
 
 ## Future Requirements
 
@@ -71,8 +77,9 @@ Reporté à v3.2+. Suivi mais hors roadmap v3.1.
 | CONTRACT-01 | v3.1-01 | Complete |
 | CONTRACT-03 | v3.1-01 | Complete |
 | CONTRACT-04 | v3.1-01 | Complete |
-| INLINE-01 | v3.1-02 | Pending |
-| INLINE-02 | v3.1-02 | Pending |
+| INLINE-01 | v3.1-05 | Pending |
+| INLINE-02 | v3.1-05 | Pending |
+| MENU-01 | v3.1-05 | Pending |
 | PROBE-01 | v3.1-03 | Complete |
 | CONTRACT-02 | v3.1-04 | Validated |
 | FRAG-01 | v3.1-04 | Validated |
@@ -83,11 +90,13 @@ Reporté à v3.2+. Suivi mais hors roadmap v3.1.
 | KBD-02 | v3.1-04 | Validated |
 | KBD-03 | v3.1-04 | Validated |
 | KBD-04 | v3.1-04 | Validated |
-| I18N-01 | v3.1-05 | Pending |
+| HARDEN-01 | v3.1-06 | Pending |
+| HARDEN-02 | v3.1-06 | Pending |
+| I18N-01 | v3.1-07 | Pending |
 
 **Coverage:**
-- v3.1 requirements: 16 total
-- Mapped to phases: 16 ✓
+- v3.1 requirements: 19 total
+- Mapped to phases: 19 ✓
 - Unmapped: 0
 
 ---

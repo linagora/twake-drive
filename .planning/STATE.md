@@ -7,11 +7,11 @@ stopped_at: Phase v3.1-04 COMPLETE (live OO FRAG-03 UAT passed 2026-06-22); next
 last_updated: "2026-06-22T00:00:00.000Z"
 last_activity: 2026-06-22 -- Phase v3.1-04 live UAT (FRAG-03) PASSED; phase marked complete
 progress:
-  total_phases: 5
+  total_phases: 7
   completed_phases: 4
   total_plans: 5
   completed_plans: 5
-  percent: 80
+  percent: 57
 ---
 
 # Project State
@@ -54,15 +54,19 @@ parse, i18n, regression corpus, `response_format` default decision). `/clear` th
 
 ## v3.1 Roadmap Summary
 
-Execution order (HARD GATE at v3.1-03): v3.1-01 -> v3.1-02 -> v3.1-03 -> v3.1-04 -> v3.1-05
+Execution order (HARD GATE at v3.1-03): v3.1-01 -> v3.1-02 -> v3.1-03 -> v3.1-04 -> v3.1-05 -> v3.1-06 -> v3.1-07
+
+⚠️ 2026-06-22: ex-phase v3.1-05 « Rendu popover + durcissement » **découpée en 3 phases** (05 UI / 06 durcissement / 07 i18n) en discussion. Le scope UI de 05 a été élargi (refonte du menu d'actions du popover). INLINE-01/02 re-mappées v3.1-02 → v3.1-05 ; I18N-01 → v3.1-07 ; nouveaux req MENU-01 (05), HARDEN-01/02 (06).
 
 | Phase | Goal | Requirements |
 |-------|------|--------------|
 | v3.1-01 Module contrat | `scribeResponse.js` pur + testé (parse tolérant, validation maison, repli contextuel, schéma) | CONTRACT-01, CONTRACT-03, CONTRACT-04 |
-| v3.1-02 Prompt + plumbing | Prompts contractuels + seam de parse sur les deux surfaces, modèle de message étendu, miroir inline → chat | INLINE-01, INLINE-02 |
+| v3.1-02 Prompt + plumbing | Prompts contractuels + seam de parse sur les deux surfaces, modèle de message étendu, miroir inline → chat | (seam ; INLINE-01/02 validés en v3.1-05) |
 | v3.1-03 Sonde dev (HARD GATE) | Panneau dev + métriques de conformité ; gate go/no-go avant tout rendu de cartes | PROBE-01 |
 | v3.1-04 Rendu chat (cartes + clavier) | Cartes de fragment, Copier/Insérer/Remplacer, réinjection riche, navigation clavier | CONTRACT-02, FRAG-01..04, KBD-01..04 |
-| v3.1-05 Rendu popover + durcissement | Fragment unique dans le popover, re-ask, i18n, corpus de régression, décision flag `response_format` | I18N-01 |
+| v3.1-05 Rendu popover (UI) | Fragment unique en carte (réutilise FragmentCard/MarkdownPreview), sans discussion + refonte menu (prompt intégré, entrée « ouvrir panneau ») | INLINE-01, INLINE-02, MENU-01 |
+| v3.1-06 Durcissement contrat | Re-ask sur parse invalide, corpus de régression, décision flag `response_format` (sans UI OO) | HARDEN-01, HARDEN-02 |
+| v3.1-07 i18n 5 locales | Libellés carte + repli traduits/vérifiés fr/en/de/es/it ; zéro chaîne en dur | I18N-01 |
 
 ## Post-Milestone Refinements (2026-04-03 to 2026-04-04)
 

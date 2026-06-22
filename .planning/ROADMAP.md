@@ -67,7 +67,9 @@ Full v3.0 phase details are preserved in `.planning/milestones/v3.0-ROADMAP.md`.
 - [x] **Phase v3.1-02: Prompt + plumbing** (3/3 plans) -- completed 2026-06-17 - Prompts contractuels sur les deux surfaces, seam de parse aux deux call sites, modèle de message étendu, sérialisation multi-tour, miroir inline → historique chat
 - [x] **Phase v3.1-03: Sonde dev (HARD GATE)** (3/3 plans) -- completed 2026-06-17 - Panneau dev exposant la réponse parsée + métriques de conformité ; ses critères de passage conditionnent les phases 04-05
 - [x] **Phase v3.1-04: Rendu chat (cartes + clavier)** (5/5 plans) -- completed 2026-06-22 - Cartes de fragment encadrées aux positions `{{fragment:N}}`, boutons Copier/Insérer/Remplacer, réinjection riche par fragment, navigation clavier complète
-- [ ] **Phase v3.1-05: Rendu popover + durcissement** - Rendu du fragment unique dans le popover, re-ask sur parse invalide, i18n des libellés, corpus de régression, décision du défaut `response_format`
+- [ ] **Phase v3.1-05: Rendu popover (UI)** - Popover rend le fragment unique en carte (réutilise FragmentCard/MarkdownPreview de v3.1-04, marqueurs propres), sans afficher la `discussion` ; refonte du menu d'actions (prompt libre intégré comme entrée, entrée « Ouvrir le panneau latéral » remplaçant l'icône)
+- [ ] **Phase v3.1-06: Durcissement contrat** - Re-ask sur parse invalide (1× avant repli), corpus de régression des réponses malformées, décision documentée du défaut `response_format` (sans UI OO)
+- [ ] **Phase v3.1-07: i18n 5 locales** - Libellés de carte + messages de repli traduits et vérifiés sur fr/en/de/es/it ; aucune chaîne Scribe en dur dans les surfaces popover/chat
 
 ## Phase Details
 
@@ -132,22 +134,42 @@ Full v3.0 phase details are preserved in `.planning/milestones/v3.0-ROADMAP.md`.
 - [x] v3.1-04-05-PLAN.md — thread-level keyboard controller + ChatInput hooks + ScribePanel wiring (manual-index, no new dep) + spec [KBD-01, KBD-02, KBD-03, KBD-04]
 **UI hint**: yes
 
-### Phase v3.1-05: Rendu popover + durcissement
-**Goal**: Le popover inline rend proprement le fragment unique pour Insérer/Remplacer, et le contrat est durci (re-ask, i18n, corpus de régression) pour être déployable de façon fiable
+### Phase v3.1-05: Rendu popover (UI)
+**Goal**: Le popover inline rend le fragment unique pour Insérer/Remplacer en réutilisant le rendu carte de v3.1-04 (MarkdownPreview + marqueurs propres), sans afficher la `discussion` ; le menu d'actions est refondu (prompt libre intégré comme entrée de liste, accès au panneau latéral déplacé dans le menu)
+**Depends on**: Phase v3.1-04
+**Requirements**: INLINE-01, INLINE-02, MENU-01
+**Success Criteria** (what must be TRUE):
+  1. Le popover rend le fragment unique pour Insérer/Remplacer en carte (markdown riche + marqueurs REF/TABLE/footnote rendus proprement), sans afficher la `discussion`
+  2. L'échange inline (prompt + discussion + fragment) est miroité dans l'historique chat (INLINE-02 ; câblage v3.1-02 à valider de bout en bout)
+  3. Le prompt libre est une entrée intégrée en bas de la liste du menu ; une entrée « Ouvrir le panneau latéral » la suit, remplaçant l'icône open-panel retirée du popover (le bouton flottant sur le document est conservé)
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase v3.1-06: Durcissement contrat
+**Goal**: Le contrat est durci pour un déploiement fiable : re-ask sur parse invalide, corpus de régression des réponses malformées, et décision documentée du défaut du flag `response_format` — purement logique, sans UI OO
 **Depends on**: Phase v3.1-03 (gate sonde passé), Phase v3.1-04
+**Requirements**: HARDEN-01, HARDEN-02
+**Success Criteria** (what must be TRUE):
+  1. Sur une réponse au parse invalide, le système re-sollicite le LLM une seule fois avant d'appliquer le repli contextuel
+  2. Un corpus de régression de réponses malformées + tests de cas limites passe au vert ; le taux de `fellBack` code-fence est re-mesuré (stripFence existant confirmé ou complété)
+  3. Le défaut du flag `response_format` (prompt-based vs structured-output json_schema) est décidé et documenté, contrainte proxy cozy-stack prise en compte
+**Plans**: TBD
+**UI hint**: no
+
+### Phase v3.1-07: i18n 5 locales
+**Goal**: Les libellés de carte et les messages de repli sont traduits et vérifiés sur les 5 locales cibles (fr, en, de, es, it), sans aucune chaîne Scribe en dur
+**Depends on**: Phase v3.1-05, Phase v3.1-04
 **Requirements**: I18N-01
 **Success Criteria** (what must be TRUE):
-  1. Le popover rend le fragment unique pour Insérer/Remplacer sans afficher la `discussion` (l'échange est déjà miroité dans l'historique chat via v3.1-02)
-  2. Sur une réponse au parse invalide, le système re-sollicite le LLM une seule fois avant d'appliquer le repli contextuel
-  3. Les libellés des cartes et les messages de repli sont traduits dans les 5 locales (fr, en, de, es, it)
-  4. Un corpus de régression de réponses malformées + tests de cas limites passe au vert, et le défaut du flag `response_format` est décidé et documenté
+  1. Les libellés des cartes et les messages de repli sont traduits dans les 5 locales (fr, en, de, es, it)
+  2. Aucune chaîne Scribe en dur ne subsiste dans les surfaces popover et chat (audit des littéraux)
 **Plans**: TBD
 **UI hint**: yes
 
 ## Progress
 
 **Execution Order:**
-v3.1 phases execute in order: v3.1-01 -> v3.1-02 -> v3.1-03 (HARD GATE) -> v3.1-04 -> v3.1-05
+v3.1 phases execute in order: v3.1-01 -> v3.1-02 -> v3.1-03 (HARD GATE) -> v3.1-04 -> v3.1-05 -> v3.1-06 -> v3.1-07
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -172,4 +194,6 @@ v3.1 phases execute in order: v3.1-01 -> v3.1-02 -> v3.1-03 (HARD GATE) -> v3.1-
 | v3.1-02. Prompt + plumbing | v3.1 | 3/3 | Complete | 2026-06-17 |
 | v3.1-03. Sonde dev (HARD GATE) | v3.1 | 3/3 | Complete | 2026-06-17 |
 | v3.1-04. Rendu chat (cartes + clavier) | v3.1 | 5/5 | Complete | 2026-06-22 |
-| v3.1-05. Rendu popover + durcissement | v3.1 | 0/0 | Not started | - |
+| v3.1-05. Rendu popover (UI) | v3.1 | 0/0 | Not started | - |
+| v3.1-06. Durcissement contrat | v3.1 | 0/0 | Not started | - |
+| v3.1-07. i18n 5 locales | v3.1 | 0/0 | Not started | - |
