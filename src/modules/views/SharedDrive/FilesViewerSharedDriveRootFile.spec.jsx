@@ -93,7 +93,8 @@ describe('FilesViewerSharedDriveRootFile', () => {
   it('redirects an editor document to its editor', () => {
     mockFindEditorForFile.mockReturnValue({
       slug: 'excalidraw',
-      makeRoute: fileId => `/excalidraw/drive-1/${fileId}`
+      kind: 'editor',
+      makeRoute: file => `/excalidraw/drive-1/${file._id}`
     })
     renderRootFileViewer({
       fetchedFile: {
@@ -108,6 +109,23 @@ describe('FilesViewerSharedDriveRootFile', () => {
       replace: true
     })
     expect(mockFilesViewer).not.toHaveBeenCalled()
+  })
+
+  it('does not redirect a bridge document (it has no in-app route)', () => {
+    mockFindEditorForFile.mockReturnValue({
+      slug: 'grist',
+      kind: 'bridge',
+      makeRoute: file => `/bridge/grist/${file.metadata.externalId}`
+    })
+    renderRootFileViewer({
+      fetchedFile: {
+        _id: 'canonical-id',
+        id: 'canonical-id',
+        name: 'Budget.grist'
+      }
+    })
+
+    expect(screen.getByText('files-viewer')).toBeInTheDocument()
   })
 
   it('renders the viewer when the file is not an editor document', () => {
@@ -194,7 +212,8 @@ describe('FilesViewerSharedDriveRootFile', () => {
     it('opens the editor instead of the viewer when the registry claims it', () => {
       mockFindEditorForFile.mockReturnValue({
         slug: 'onlyoffice',
-        makeRoute: makeOnlyOfficeFileRoute
+        kind: 'editor',
+        makeRoute: (file, options) => makeOnlyOfficeFileRoute(file._id, options)
       })
 
       renderRootFileViewer({ fetchedFile: deck })
