@@ -17,19 +17,22 @@ const ROUTE_FACTORIES = {
 }
 
 /**
- * Mounts every editor's in-app routes, gated by the editor's `flag` from the
- * registry (`null` mounts unconditionally). The route fragments are spread
- * directly (not wrapped in a component) so React Router's
- * createRoutesFromChildren still sees the `<Route>` elements.
+ * Mounts each in-app editor's routes, gated by the editor's `flag` from the
+ * registry (`null` mounts unconditionally). Only `'editor'` documents have a
+ * route factory; bridge documents (Docs, Grist) open in another app and mount
+ * nothing here. The route fragments are spread directly (not wrapped in a
+ * component) so React Router's createRoutesFromChildren still sees the
+ * `<Route>` elements.
  *
  * @returns {React.ReactElement}
  */
 export const getEditorRoutes = () => (
   <>
-    {EDITORS.map(({ slug, flag: editorFlag }) =>
-      editorFlag === null || flag(editorFlag) ? (
-        <React.Fragment key={slug}>{ROUTE_FACTORIES[slug]()}</React.Fragment>
-      ) : null
+    {EDITORS.filter(({ slug }) => ROUTE_FACTORIES[slug]).map(
+      ({ slug, flag: editorFlag }) =>
+        editorFlag === null || flag(editorFlag) ? (
+          <React.Fragment key={slug}>{ROUTE_FACTORIES[slug]()}</React.Fragment>
+        ) : null
     )}
   </>
 )
