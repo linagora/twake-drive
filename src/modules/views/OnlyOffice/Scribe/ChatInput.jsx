@@ -31,6 +31,8 @@ export const ChatInput = forwardRef(({ onArrowUp } = {}, ref) => {
   const { t } = useI18n()
   const theme = useTheme()
   const textareaRef = useRef(null)
+  // True until the carried-over draft's caret has been placed at the end.
+  const seededRef = useRef(false)
 
   // Imperative focus() exposed to the thread keyboard controller so it can
   // return focus to the input on Escape / Down-past-newest. This is a SINGLE
@@ -89,11 +91,16 @@ export const ChatInput = forwardRef(({ onArrowUp } = {}, ref) => {
   useEffect(() => {
     if (!pendingDraft) return
     clearPendingDraft()
+    seededRef.current = true
     const el = textareaRef.current
     if (el) {
       el.style.height = 'auto'
       const maxHeight = LINE_HEIGHT * MAX_ROWS + 16
       el.style.height = Math.min(el.scrollHeight, maxHeight) + 'px'
+      // Drop the caret at the end so the user can keep typing immediately.
+      const len = el.value.length
+      el.selectionStart = len
+      el.selectionEnd = len
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -110,11 +117,21 @@ export const ChatInput = forwardRef(({ onArrowUp } = {}, ref) => {
     const tryFocus = () => {
       if (cancelled) return
       const el = textareaRef.current
-      if (!el || document.activeElement === el) return
-      if (document.activeElement && document.activeElement !== el) {
-        try { document.activeElement.blur() } catch (e) { /* cross-origin */ }
+      if (!el) return
+      if (document.activeElement !== el) {
+        if (document.activeElement) {
+          try { document.activeElement.blur() } catch (e) { /* cross-origin */ }
+        }
+        el.focus()
       }
-      el.focus()
+      // Re-assert end-of-text caret for a carried-over draft, since focus()
+      // can reset the caret to the start.
+      if (seededRef.current && document.activeElement === el) {
+        const len = el.value.length
+        el.selectionStart = len
+        el.selectionEnd = len
+        seededRef.current = false
+      }
       attempts += 1
       if (attempts < 6 && document.activeElement !== el) {
         timer = setTimeout(tryFocus, 90)
