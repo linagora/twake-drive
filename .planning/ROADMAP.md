@@ -142,7 +142,10 @@ Full v3.0 phase details are preserved in `.planning/milestones/v3.0-ROADMAP.md`.
   1. Le popover rend le fragment unique pour Insérer/Remplacer en carte (markdown riche + marqueurs REF/TABLE/footnote rendus proprement), sans afficher la `discussion`
   2. L'échange inline (prompt + discussion + fragment) est miroité dans l'historique chat (INLINE-02 ; câblage v3.1-02 à valider de bout en bout)
   3. Le prompt libre est une entrée intégrée en bas de la liste du menu ; une entrée « Ouvrir le panneau latéral » la suit, remplaçant l'icône open-panel retirée du popover (le bouton flottant sur le document est conservé)
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] v3.1-05-01-PLAN.md — Popover result rendered as a Scribe-violet card (RAW fragment via MarkdownPreview, no discussion); validate inline→chat mirror (INLINE-01/02)
+- [ ] v3.1-05-02-PLAN.md — Action-menu rework: free-prompt as integrated list entry + bottom "Ouvrir le panneau latéral" entry replacing the in-popover icon (MENU-01)
 **UI hint**: yes
 
 ### Phase v3.1-06: Durcissement contrat
