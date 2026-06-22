@@ -125,7 +125,14 @@ export const computeFileType = (
     file.dir_id === SHARED_DRIVES_DIR_ID
   ) {
     return 'shared-drive-root-file'
-  } else if (file.driveId && file.dir_id === SHARED_DRIVES_DIR_ID) {
+  } else if (file.driveId && file.dir_id && !isFileRootSharedDrive(file)) {
+    // Any file carrying a driveId is a proxied shared-drive file, except the
+    // owner's own file-root sharing root (which lives locally and is caught
+    // by isFileRootSharedDrive). Keying on dir_id === SHARED_DRIVES_DIR_ID
+    // here used to drop every recipient file nested in a shared-drive folder
+    // back to the local /files/:id route, which 404s. dir_id is required
+    // because the shared-drive route is built from it; without it, fall back
+    // to 'file' rather than letting computePath throw.
     return 'shared-drive-file'
   } else {
     return 'file'
