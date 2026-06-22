@@ -10,7 +10,7 @@ import { EDITORS } from '@/modules/views/editor/registry'
 // Each editor's route fragment is keyed by slug. The components stay out of the
 // registry (which is imported by the pure dispatch helpers) so they aren't
 // pulled into that module's dependency graph and its import-time side effects.
-const ROUTE_FACTORIES = {
+const ROUTE_FACTORIES: Record<string, () => React.ReactElement> = {
   excalidraw: getExcalidrawRoutes,
   onlyoffice: getOnlyOfficeRoutes,
   pdf: getPdfRoutes
@@ -23,16 +23,15 @@ const ROUTE_FACTORIES = {
  * nothing here. The route fragments are spread directly (not wrapped in a
  * component) so React Router's createRoutesFromChildren still sees the
  * `<Route>` elements.
- *
- * @returns {React.ReactElement}
  */
-export const getEditorRoutes = () => (
+export const getEditorRoutes = (): React.ReactElement => (
   <>
-    {EDITORS.filter(({ slug }) => ROUTE_FACTORIES[slug]).map(
-      ({ slug, flag: editorFlag }) =>
-        editorFlag === null || flag(editorFlag) ? (
-          <React.Fragment key={slug}>{ROUTE_FACTORIES[slug]()}</React.Fragment>
-        ) : null
-    )}
+    {EDITORS.map(({ slug, flag: editorFlag }) => {
+      const routeFactory = ROUTE_FACTORIES[slug]
+      if (!routeFactory) return null
+      if (editorFlag !== null && !flag(editorFlag)) return null
+
+      return <React.Fragment key={slug}>{routeFactory()}</React.Fragment>
+    })}
   </>
 )
