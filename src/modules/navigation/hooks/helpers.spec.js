@@ -483,6 +483,17 @@ describe('computeApp', () => {
     expect(computeApp('note')).toBe('notes')
   })
 
+  it('should return the bridge app for bridge document types', () => {
+    expect(computeApp('docs')).toBe('docs')
+    expect(computeApp('grist')).toBe('grist')
+  })
+
+  it('should return "drive" for in-app editor types', () => {
+    expect(computeApp('excalidraw')).toBe('drive')
+    expect(computeApp('onlyoffice')).toBe('drive')
+    expect(computeApp('pdf')).toBe('drive')
+  })
+
   it('should return "drive" for any other types', () => {
     expect(computeApp('unknown-type')).toBe('drive')
     expect(computeApp('file')).toBe('drive')
@@ -527,6 +538,20 @@ describe('computePath', () => {
     const file = { _id: 'note123' }
     expect(computePath(file, { type: 'note', pathname: '/any' })).toBe(
       '/n/note123'
+    )
+  })
+
+  it('should return the bridge path for docs', () => {
+    const file = { _id: 'f1', metadata: { externalId: 'docs-1' } }
+    expect(computePath(file, { type: 'docs', pathname: '/any' })).toBe(
+      '/bridge/docs/docs-1'
+    )
+  })
+
+  it('should return the bridge path for grist', () => {
+    const file = { _id: 'f1', metadata: { externalId: 'grist-1' } }
+    expect(computePath(file, { type: 'grist', pathname: '/any' })).toBe(
+      '/bridge/grist/grist-1'
     )
   })
 

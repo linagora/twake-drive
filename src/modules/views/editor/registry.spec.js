@@ -1,8 +1,10 @@
 const mockShouldBeOpenedByOnlyOffice = jest.fn()
+const mockIsDocs = jest.fn()
 const mockIsExcalidrawEnabled = jest.fn()
 const mockIsOfficeEnabled = jest.fn()
 
 jest.mock('cozy-client/dist/models/file', () => ({
+  isDocs: (...args) => mockIsDocs(...args),
   shouldBeOpenedByOnlyOffice: (...args) =>
     mockShouldBeOpenedByOnlyOffice(...args)
 }))
@@ -27,6 +29,7 @@ describe('editor registry', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockShouldBeOpenedByOnlyOffice.mockReturnValue(false)
+    mockIsDocs.mockReturnValue(false)
     mockIsExcalidrawEnabled.mockReturnValue(false)
     mockIsOfficeEnabled.mockReturnValue(false)
   })
@@ -70,6 +73,24 @@ describe('editor registry', () => {
         findEditorForFile({ name: 'doc.pdf', class: 'pdf' })
       ).toBeUndefined()
     })
+
+    it('matches a Docs handle as a bridge document', () => {
+      mockIsDocs.mockReturnValue(true)
+      expect(findEditorForFile({ name: 'Memo' })?.slug).toBe('docs')
+    })
+
+    it('matches a Grist handle by extension and external id', () => {
+      expect(
+        findEditorForFile({
+          name: 'Budget.grist',
+          metadata: { externalId: 'doc-1' }
+        })?.slug
+      ).toBe('grist')
+    })
+
+    it('does not claim a .grist file without an external id', () => {
+      expect(findEditorForFile({ name: 'Budget.grist' })).toBeUndefined()
+    })
   })
 
   describe('findEditorForShortcutTarget', () => {
@@ -110,6 +131,31 @@ describe('editor registry', () => {
 
     it('returns undefined for an unknown slug', () => {
       expect(findEditorBySlug('nope')).toBeUndefined()
+    })
+  })
+
+  describe('document kinds and bridge routes', () => {
+    it('marks in-app editors as kind "editor" and bridge apps as kind "bridge"', () => {
+      expect(findEditorBySlug('excalidraw')?.kind).toBe('editor')
+      expect(findEditorBySlug('onlyoffice')?.kind).toBe('editor')
+      expect(findEditorBySlug('pdf')?.kind).toBe('editor')
+      expect(findEditorBySlug('docs')?.kind).toBe('bridge')
+      expect(findEditorBySlug('grist')?.kind).toBe('bridge')
+    })
+
+    it('names the bridge app that opens each bridge document', () => {
+      expect(findEditorBySlug('docs')?.app).toBe('docs')
+      expect(findEditorBySlug('grist')?.app).toBe('grist')
+    })
+
+    it('builds a bridge route from the document external id', () => {
+      const file = { _id: 'f1', metadata: { externalId: 'doc-42' } }
+      expect(findEditorBySlug('grist').makeRoute(file)).toBe(
+        '/bridge/grist/doc-42'
+      )
+      expect(findEditorBySlug('docs').makeRoute(file)).toBe(
+        '/bridge/docs/doc-42'
+      )
     })
   })
 })

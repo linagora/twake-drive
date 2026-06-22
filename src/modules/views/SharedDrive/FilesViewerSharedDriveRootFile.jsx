@@ -56,12 +56,14 @@ const FilesViewerSharedDriveRootFile = () => {
     // (and direct links/reloads land here without going through it). Now that
     // the real file is resolved, send editor documents to their editor; an
     // Excalidraw drawing has no inline viewer, so this is the only way it opens.
+    // Only in-app `'editor'` documents are redirected here: bridge documents
+    // (Docs, Grist) resolve to a `/bridge/...` link that is not an in-app route.
     const editor = findEditorForFile(file, { isDesktop })
-    if (editor) {
+    if (editor?.kind === 'editor') {
       return (
         <Navigate
           replace
-          to={editor.makeRoute(file._id, {
+          to={editor.makeRoute(file, {
             driveId,
             fromPathname: closePath
           })}
