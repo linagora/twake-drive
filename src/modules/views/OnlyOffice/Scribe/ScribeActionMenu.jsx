@@ -14,7 +14,7 @@ import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import Paper from 'cozy-ui/transpiled/react/Paper'
 
-import { SCRIBE_ACTIONS, buildTranslateChildren } from '@/modules/views/OnlyOffice/Scribe/scribeActions'
+import { SCRIBE_ACTIONS, buildTranslateChildren, OPEN_PANEL_ENTRY } from '@/modules/views/OnlyOffice/Scribe/scribeActions'
 import { ScribePromptInput } from '@/modules/views/OnlyOffice/Scribe/ScribePromptInput'
 import { isScribeDevMd } from '@/modules/views/OnlyOffice/Scribe/scribeDevMode'
 
@@ -74,7 +74,14 @@ const ScribeActionMenu = forwardRef(({ onSelect, onClose, onOpenPanel, selectedT
     return isScribeDevMd() ? [DEV_MD_ACTION, ...base] : base
   }, [lang])
 
+  // Roving indices after the LLM actions: the free-prompt sits at PROMPT_INDEX,
+  // and the optional "open panel" entry (D-06) sits right after it. The open-panel
+  // entry only exists when `onOpenPanel` is wired (mirror of the old icon guard).
   const PROMPT_INDEX = actions.length
+  const hasOpenPanel = Boolean(onOpenPanel)
+  const OPEN_PANEL_INDEX = hasOpenPanel ? PROMPT_INDEX + 1 : -1
+  // Number of roving slots in the desktop main list: actions + prompt (+ open-panel)
+  const rovingCount = actions.length + 1 + (hasOpenPanel ? 1 : 0)
   const activeParent = isMobile && activeSubmenu ? actions.find(a => a.id === activeSubmenu) : null
 
   // Expose focus() to parent via ref
@@ -155,19 +162,19 @@ const ScribeActionMenu = forwardRef(({ onSelect, onClose, onOpenPanel, selectedT
         if (direction === 'up') {
           updateFocus(actions.length - 1)
         } else {
-          updateFocus(0)
+          // 'down' from the prompt moves to the open-panel entry when present,
+          // otherwise wraps to the first action (D-05 roving).
+          updateFocus(hasOpenPanel ? OPEN_PANEL_INDEX : 0)
         }
       }
     },
-    [updateFocus, actions, isMobile, activeSubmenu, focusMenu]
+    [updateFocus, actions, isMobile, activeSubmenu, focusMenu, hasOpenPanel, OPEN_PANEL_INDEX]
   )
 
   const handleKeyDown = useCallback(
     e => {
       // Ignore keydown events from the prompt input (it handles its own arrows)
       if (focusIndex === PROMPT_INDEX) return
-
-      const actionCount = actions.length
 
       if (activeSubmenu) {
         const parent = actions.find(a => a.id === activeSubmenu)
@@ -380,14 +387,16 @@ const ScribeActionMenu = forwardRef(({ onSelect, onClose, onOpenPanel, selectedT
           }
         }
       } else {
+        // Main-list roving spans the actions (0..actionCount-1), the prompt
+        // (PROMPT_INDEX) and the optional open-panel entry (OPEN_PANEL_INDEX).
         switch (e.key) {
           case 'ArrowDown':
             e.preventDefault()
-            updateFocus((focusIndex + 1) % (actionCount + 1))
+            updateFocus((focusIndex + 1) % rovingCount)
             break
           case 'ArrowUp':
             e.preventDefault()
-            updateFocus((focusIndex - 1 + actionCount + 1) % (actionCount + 1))
+            updateFocus((focusIndex - 1 + rovingCount) % rovingCount)
             break
           case 'ArrowRight': {
             e.preventDefault()
@@ -398,8 +407,13 @@ const ScribeActionMenu = forwardRef(({ onSelect, onClose, onOpenPanel, selectedT
             }
             break
           }
-          case 'Enter': {
+          case 'Enter':
+          case ' ': {
             e.preventDefault()
+            if (focusIndex === OPEN_PANEL_INDEX) {
+              if (onOpenPanel) onOpenPanel()
+              break
+            }
             const action = actions[focusIndex]
             if (action) {
               if (action.children) {
@@ -420,68 +434,20 @@ const ScribeActionMenu = forwardRef(({ onSelect, onClose, onOpenPanel, selectedT
         }
       }
     },
-    [activeSubmenu, focusIndex, submenuFocusIndex, selectAction, onClose, updateFocus, actions, handleCustomLangSubmit, focusMenu, focusPrompt, isMobile]
+    [activeSubmenu, focusIndex, submenuFocusIndex, selectAction, onClose, updateFocus, actions, handleCustomLangSubmit, focusMenu, focusPrompt, isMobile, rovingCount, OPEN_PANEL_INDEX, onOpenPanel]
   )
 
-  const [hoveredPanelBtn, setHoveredPanelBtn] = useState(false)
+  // Background highlight for a roving target (prompt / open-panel) when focused.
+  const focusedBg = (theme.palette.type || theme.palette.mode) === 'dark'
+    ? theme.palette.grey[700]
+    : theme.palette.grey[200]
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
-      {/* Group panel-button + menu so the button right-aligns to the menu's
-          edge, not to the wider prompt input below. */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignSelf: 'flex-start' }}>
-      {onOpenPanel && (
-        <div style={{ alignSelf: 'flex-end', position: 'relative' }}>
-          <button
-            type="button"
-            onClick={onOpenPanel}
-            onMouseEnter={() => setHoveredPanelBtn(true)}
-            onMouseLeave={() => setHoveredPanelBtn(false)}
-            style={{
-              cursor: 'pointer',
-              borderRadius: 8,
-              padding: '6px 10px',
-              background: (theme.palette.type || theme.palette.mode) === 'dark' ? '#2d2d2d' : 'white',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-              border: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-              fontSize: 13,
-              fontFamily: 'inherit',
-              color: (theme.palette.type || theme.palette.mode) === 'dark' ? '#e0e0e0' : '#333',
-              opacity: hoveredPanelBtn ? 1 : 0.7,
-              transition: 'opacity 200ms ease'
-            }}
-          >
-            <PanelIcon />
-            {hoveredPanelBtn && (
-              <span style={{
-                position: 'absolute',
-                bottom: '100%',
-                right: 0,
-                marginBottom: 6,
-                padding: '5px 8px',
-                background: (theme.palette.type || theme.palette.mode) === 'dark' ? '#555' : '#333',
-                borderRadius: 6,
-                fontSize: 12,
-                whiteSpace: 'nowrap',
-                pointerEvents: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4
-              }}>
-                <span style={{ color: 'white' }}>{t('Scribe.button.open_panel')}</span>
-                <span style={{ color: '#999' }}>(Ctrl+Shift+I)</span>
-              </span>
-            )}
-          </button>
-        </div>
-      )}
       <Paper
         ref={paperRef}
         tabIndex={-1}
-        style={{ minWidth: isMobile ? undefined : 220, outline: 'none', borderRadius: isMobile ? 0 : 8, boxShadow: isMobile ? 'none' : '0 4px 20px rgba(0,0,0,0.15)' }}
+        style={{ minWidth: isMobile ? undefined : 220, width: isMobile ? '100%' : undefined, outline: 'none', borderRadius: isMobile ? 0 : 8, boxShadow: isMobile ? 'none' : '0 4px 20px rgba(0,0,0,0.15)' }}
         elevation={0}
         onKeyDown={handleKeyDown}
       >
@@ -580,8 +546,10 @@ const ScribeActionMenu = forwardRef(({ onSelect, onClose, onOpenPanel, selectedT
                 button
                 selected={(focusIndex === index && !activeSubmenu) || activeSubmenu === action.id}
                 style={{
-                  ...(index === 0 ? { borderRadius: '8px 8px 0 0' } : {}),
-                  ...(index === actions.length - 1 ? { borderRadius: '0 0 8px 8px' } : {})
+                  // First action keeps the top corners; the bottom corners now
+                  // belong to the open-panel entry (or the prompt) at the end of
+                  // the list, so actions never take the last-item radius.
+                  ...(index === 0 ? { borderRadius: '8px 8px 0 0' } : {})
                 }}
                 onClick={
                   !action.children
@@ -683,27 +651,48 @@ const ScribeActionMenu = forwardRef(({ onSelect, onClose, onOpenPanel, selectedT
             </div>
           ))
         )}
-      </Paper>
-      </div>
-      <Paper
-        style={{
-          width: isMobile ? '100%' : 500,
-          borderRadius: isMobile ? 0 : 8,
-          boxShadow: isMobile ? 'none' : '0 4px 20px rgba(0,0,0,0.15)',
-          transition: 'background-color 150ms',
-          backgroundColor: (focusIndex === PROMPT_INDEX)
-            ? ((theme.palette.type || theme.palette.mode) === 'dark' ? theme.palette.grey[700] : theme.palette.grey[200])
-            : undefined
-        }}
-        elevation={0}
-        onMouseEnter={() => { if (!mouseMoveEnabledRef.current) return; updateFocus(PROMPT_INDEX) }}
-      >
-        <ScribePromptInput
-          ref={promptRef}
-          onSubmit={handlePromptSubmit}
-          onArrow={handlePromptArrow}
-          onEscape={onClose}
-        />
+
+        {/* The free-prompt and the open-panel entry are integrated list rows
+            (D-04/D-05/D-06). They show on the main list only — never while a
+            mobile submenu has replaced the main menu. */}
+        {!(isMobile && activeParent) && (
+          <>
+            <div
+              data-scribe-prompt-entry
+              style={{
+                transition: 'background-color 150ms',
+                backgroundColor: focusIndex === PROMPT_INDEX ? focusedBg : undefined,
+                // When the prompt is the last item (no open-panel entry), it
+                // takes the bottom corners.
+                ...(hasOpenPanel ? {} : { borderRadius: '0 0 8px 8px' })
+              }}
+              onMouseEnter={() => { if (!mouseMoveEnabledRef.current) return; updateFocus(PROMPT_INDEX) }}
+            >
+              <ScribePromptInput
+                ref={promptRef}
+                onSubmit={handlePromptSubmit}
+                onArrow={handlePromptArrow}
+                onEscape={onClose}
+              />
+            </div>
+
+            {hasOpenPanel && (
+              <ListItem
+                button
+                data-scribe-open-panel
+                selected={focusIndex === OPEN_PANEL_INDEX && !activeSubmenu}
+                style={{ borderRadius: '0 0 8px 8px' }}
+                onClick={onOpenPanel}
+                onMouseEnter={() => { if (!mouseMoveEnabledRef.current) return; setFocusIndex(OPEN_PANEL_INDEX); focusMenu() }}
+              >
+                <ListItemIcon>
+                  <PanelIcon />
+                </ListItemIcon>
+                <ListItemText primary={t('Scribe.button.open_panel')} />
+              </ListItem>
+            )}
+          </>
+        )}
       </Paper>
     </div>
   )
