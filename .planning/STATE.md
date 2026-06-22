@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v3.1
 milestone_name: Contrat de réponse structurée LLM
 status: executing
-stopped_at: Phase v3.1-05 context gathered (popover UI); ex-v3.1-05 split into 05/06/07; ready to plan v3.1-05
-last_updated: "2026-06-22T01:00:00.000Z"
-last_activity: 2026-06-22 -- discuss v3.1-05: split phase into 05/06/07, captured popover UI CONTEXT
+stopped_at: Phase v3.1-04 context gathered
+last_updated: "2026-06-22T10:17:09.991Z"
+last_activity: 2026-06-22 -- Phase v3.1-05 planning complete
 progress:
   total_phases: 7
   completed_phases: 4
@@ -27,9 +27,9 @@ See: .planning/PROJECT.md (updated 2026-06-16)
 
 Phase: v3.1-04 (Rendu chat — cartes + clavier) — **COMPLETE** (5/5 plans; live OO FRAG-03 UAT passed 2026-06-22)
 Plan: 5 of 5 — committed (18 TDD commits a93963ca9..HEAD) + WR-01 keyboard fix; targeted + Scribe-dir suites green (166 pass; lone failure = pre-existing ScribeContainer mobile-Drawer test)
-Status: Verification = verified. FRAG-03 rich reinjection confirmed live in the OO editor (v3.1-04-HUMAN-UAT.md: 1/1 pass). All 9 v3.1-04 requirements Validated.
+Status: Ready to execute
 Progress: [████████  ] 80% (4/5 phases complete)
-Last activity: 2026-06-22 -- Phase v3.1-04 live UAT (FRAG-03) PASSED; phase marked complete
+Last activity: 2026-06-22 -- Phase v3.1-05 planning complete
 
 ⚠️ TOOLING: gsd-sdk v1.42.3 cannot resolve `vX.Y-NN` phases (find-phase/phase-plan-index return "Phase not found" for ALL v3.0/v3.1 phases — regex only matches numeric-prefixed dirs). All phases orchestrated manually with explicit paths; ROADMAP/STATE/REQUIREMENTS completion writes done by hand (gsd-sdk phase.complete fails). v3.1-04 completion writes applied 2026-06-22. Same will apply when finishing v3.1-05.
 
