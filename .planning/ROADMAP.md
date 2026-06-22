@@ -67,7 +67,7 @@ Full v3.0 phase details are preserved in `.planning/milestones/v3.0-ROADMAP.md`.
 - [x] **Phase v3.1-02: Prompt + plumbing** (3/3 plans) -- completed 2026-06-17 - Prompts contractuels sur les deux surfaces, seam de parse aux deux call sites, modèle de message étendu, sérialisation multi-tour, miroir inline → historique chat
 - [x] **Phase v3.1-03: Sonde dev (HARD GATE)** (3/3 plans) -- completed 2026-06-17 - Panneau dev exposant la réponse parsée + métriques de conformité ; ses critères de passage conditionnent les phases 04-05
 - [x] **Phase v3.1-04: Rendu chat (cartes + clavier)** (5/5 plans) -- completed 2026-06-22 - Cartes de fragment encadrées aux positions `{{fragment:N}}`, boutons Copier/Insérer/Remplacer, réinjection riche par fragment, navigation clavier complète
-- [ ] **Phase v3.1-05: Rendu popover (UI)** - Popover rend le fragment unique en carte (réutilise FragmentCard/MarkdownPreview de v3.1-04, marqueurs propres), sans afficher la `discussion` ; refonte du menu d'actions (prompt libre intégré comme entrée, entrée « Ouvrir le panneau latéral » remplaçant l'icône)
+- [x] **Phase v3.1-05: Rendu popover (UI)** - Popover rend le fragment unique en carte (réutilise FragmentCard/MarkdownPreview de v3.1-04, marqueurs propres), sans afficher la `discussion` ; refonte du menu d'actions (prompt libre intégré comme entrée, entrée « Ouvrir le panneau latéral » remplaçant l'icône)
 - [ ] **Phase v3.1-06: Durcissement contrat** - Re-ask sur parse invalide (1× avant repli), corpus de régression des réponses malformées, décision documentée du défaut `response_format` (sans UI OO)
 - [ ] **Phase v3.1-07: i18n 5 locales** - Libellés de carte + messages de repli traduits et vérifiés sur fr/en/de/es/it ; aucune chaîne Scribe en dur dans les surfaces popover/chat
 
@@ -197,6 +197,6 @@ v3.1 phases execute in order: v3.1-01 -> v3.1-02 -> v3.1-03 (HARD GATE) -> v3.1-
 | v3.1-02. Prompt + plumbing | v3.1 | 3/3 | Complete | 2026-06-17 |
 | v3.1-03. Sonde dev (HARD GATE) | v3.1 | 3/3 | Complete | 2026-06-17 |
 | v3.1-04. Rendu chat (cartes + clavier) | v3.1 | 5/5 | Complete | 2026-06-22 |
-| v3.1-05. Rendu popover (UI) | v3.1 | 2/2 | Built — awaiting UAT | 2026-06-22 |
+| v3.1-05. Rendu popover (UI) | v3.1 | 2/2 | Complete | 2026-06-22 |
 | v3.1-06. Durcissement contrat | v3.1 | 0/0 | Not started | - |
 | v3.1-07. i18n 5 locales | v3.1 | 0/0 | Not started | - |

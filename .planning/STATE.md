@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v3.1
 milestone_name: Contrat de réponse structurée LLM
 status: executing
-stopped_at: Phase v3.1-04 context gathered
+stopped_at: Phase v3.1-05 complete (live UAT passed)
 last_updated: "2026-06-22T10:23:57.467Z"
 last_activity: 2026-06-22 -- Phase v3.1-05 both plans built (jest 15/15), awaiting live UAT
 progress:
   total_phases: 7
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 7
   completed_plans: 7
   percent: 57
@@ -21,15 +21,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-16)
 
 **Core value:** L'utilisateur peut interagir avec l'IA de maniere fluide -- actions rapides inline ou chat conversationnel dans un panneau lateral -- pour transformer et manipuler le contenu de son document OnlyOffice.
-**Current focus:** Phase v3.1-05 — Rendu popover (UI)
+**Current focus:** Phase v3.1-06 — Durcissement contrat (next)
 
 ## Current Position
 
-Phase: v3.1-05 (Rendu popover (UI)) — BUILT, AWAITING LIVE UAT
-Plan: 2 of 2 implemented (both SUMMARY.md committed; jest 15/15)
-Status: Phase v3.1-05 implementation complete — blocking human-verify UAT pending (INLINE-02 mirror + reworked menu in live OO)
-Progress: [████████  ] 80% (4/5 phases complete)
-Last activity: 2026-06-22 -- Phase v3.1-05 both plans built (jest 15/15), awaiting live UAT
+Phase: v3.1-05 (Rendu popover (UI)) — COMPLETE (live UAT passed 2026-06-22)
+Plan: 2 of 2 complete + UAT-driven prompt-input rework (gradient pill, adaptive multiline, draft handoff to panel)
+Status: Phase v3.1-05 done. Next: Phase v3.1-06 — Durcissement contrat
+Progress: [█████████ ] 83% (5/6 of v3.1 build phases complete; 5/7 incl. i18n)
+Last activity: 2026-06-22 -- v3.1-05 complete: violet result card + INLINE-02 mirror + reworked menu/roving + gradient prompt input (focus-vivid liseré, compact→max width, Ctrl+Enter multiline, Scribe-Panel draft carry-over)
 
 ⚠️ TOOLING: gsd-sdk v1.42.3 cannot resolve `vX.Y-NN` phases (find-phase/phase-plan-index return "Phase not found" for ALL v3.0/v3.1 phases — regex only matches numeric-prefixed dirs). All phases orchestrated manually with explicit paths; ROADMAP/STATE/REQUIREMENTS completion writes done by hand (gsd-sdk phase.complete fails). v3.1-04 completion writes applied 2026-06-22. Same will apply when finishing v3.1-05.
 
