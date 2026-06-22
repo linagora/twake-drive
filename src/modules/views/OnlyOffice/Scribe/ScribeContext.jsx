@@ -62,6 +62,9 @@ export const ScribeProvider = ({ children }) => {
   const [currentSelection, setCurrentSelectionState] = useState(null)
   const [panelActions, setPanelActionsState] = useState(null)
   const [panelWidth, setPanelWidthState] = useState(400)
+  // Draft prompt handed over from the inline popover when the user opens the
+  // side panel mid-typing; consumed once by the chat input on mount.
+  const [pendingDraft, setPendingDraft] = useState('')
 
   const client = useClient()
   const { t } = useI18n()
@@ -78,8 +81,12 @@ export const ScribeProvider = ({ children }) => {
   }, [isPanelOpen])
 
   const togglePanel = useCallback(() => setIsPanelOpen(prev => !prev), [])
-  const openPanel = useCallback(() => setIsPanelOpen(true), [])
+  const openPanel = useCallback(draft => {
+    if (typeof draft === 'string' && draft) setPendingDraft(draft)
+    setIsPanelOpen(true)
+  }, [])
   const closePanel = useCallback(() => setIsPanelOpen(false), [])
+  const clearPendingDraft = useCallback(() => setPendingDraft(''), [])
 
   const addMessage = useCallback(msg => {
     setMessages(prev => [...prev, msg])
@@ -287,7 +294,9 @@ export const ScribeProvider = ({ children }) => {
       panelActions,
       setPanelActions,
       panelWidth,
-      setPanelWidth
+      setPanelWidth,
+      pendingDraft,
+      clearPendingDraft
     }),
     [
       isPanelOpen,
@@ -304,7 +313,9 @@ export const ScribeProvider = ({ children }) => {
       panelActions,
       setPanelActions,
       panelWidth,
-      setPanelWidth
+      setPanelWidth,
+      pendingDraft,
+      clearPendingDraft
     ]
   )
 

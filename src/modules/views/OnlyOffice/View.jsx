@@ -380,8 +380,8 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
             onReplace={handleReplace}
             onInsert={handleInsert}
             onCancel={handleCancel}
-            onOpenPanel={openPanel ? () => {
-              openPanel()
+            onOpenPanel={openPanel ? draft => {
+              openPanel(draft)
               respond({ status: 'ok', action: 'cancel', data: {} })
             } : undefined}
           />

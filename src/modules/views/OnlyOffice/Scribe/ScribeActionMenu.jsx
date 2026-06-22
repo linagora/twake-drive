@@ -99,6 +99,17 @@ const ScribeActionMenu = forwardRef(({ onSelect, onClose, onOpenPanel, selectedT
     if (promptRef.current) promptRef.current.focus()
   }, [])
 
+  // Open the side panel, carrying over whatever the user already typed in the
+  // popover's prompt input so it pre-fills the panel's chat input.
+  const openPanelWithDraft = useCallback(() => {
+    if (!onOpenPanel) return
+    const draft =
+      promptRef.current && promptRef.current.getValue
+        ? promptRef.current.getValue()
+        : ''
+    onOpenPanel(draft)
+  }, [onOpenPanel])
+
   // When focusIndex changes, move DOM focus accordingly
   const updateFocus = useCallback((newIndex) => {
     setFocusIndex(newIndex)
@@ -411,7 +422,7 @@ const ScribeActionMenu = forwardRef(({ onSelect, onClose, onOpenPanel, selectedT
           case ' ': {
             e.preventDefault()
             if (focusIndex === OPEN_PANEL_INDEX) {
-              if (onOpenPanel) onOpenPanel()
+              openPanelWithDraft()
               break
             }
             const action = actions[focusIndex]
@@ -434,7 +445,7 @@ const ScribeActionMenu = forwardRef(({ onSelect, onClose, onOpenPanel, selectedT
         }
       }
     },
-    [activeSubmenu, focusIndex, submenuFocusIndex, selectAction, onClose, updateFocus, actions, handleCustomLangSubmit, focusMenu, focusPrompt, isMobile, rovingCount, OPEN_PANEL_INDEX, onOpenPanel]
+    [activeSubmenu, focusIndex, submenuFocusIndex, selectAction, onClose, updateFocus, actions, handleCustomLangSubmit, focusMenu, focusPrompt, isMobile, rovingCount, OPEN_PANEL_INDEX, openPanelWithDraft]
   )
 
   // Background highlight for a roving target (prompt / open-panel) when focused.
@@ -682,7 +693,7 @@ const ScribeActionMenu = forwardRef(({ onSelect, onClose, onOpenPanel, selectedT
                 data-scribe-open-panel
                 selected={focusIndex === OPEN_PANEL_INDEX && !activeSubmenu}
                 style={{ borderRadius: '0 0 8px 8px' }}
-                onClick={onOpenPanel}
+                onClick={openPanelWithDraft}
                 onMouseEnter={() => { if (!mouseMoveEnabledRef.current) return; setFocusIndex(OPEN_PANEL_INDEX); focusMenu() }}
               >
                 <ListItemIcon>

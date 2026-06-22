@@ -18,8 +18,16 @@ const MAX_ROWS = 4
 const LINE_HEIGHT = 20
 
 export const ChatInput = forwardRef(({ onArrowUp } = {}, ref) => {
-  const [text, setText] = useState('')
-  const { sendMessage, isLoading, currentSelection, dismissSelection } = useScribe()
+  const {
+    sendMessage,
+    isLoading,
+    currentSelection,
+    dismissSelection,
+    pendingDraft,
+    clearPendingDraft
+  } = useScribe()
+  // Seed from a draft handed over by the inline popover (empty otherwise).
+  const [text, setText] = useState(() => pendingDraft || '')
   const { t } = useI18n()
   const theme = useTheme()
   const textareaRef = useRef(null)
@@ -74,6 +82,20 @@ export const ChatInput = forwardRef(({ onArrowUp } = {}, ref) => {
     el.style.height = 'auto'
     const maxHeight = LINE_HEIGHT * MAX_ROWS + 16 // padding
     el.style.height = Math.min(el.scrollHeight, maxHeight) + 'px'
+  }, [])
+
+  // Consume the carried-over popover draft once: clear it from context (so it
+  // doesn't reseed) and size the textarea to fit the seeded text.
+  useEffect(() => {
+    if (!pendingDraft) return
+    clearPendingDraft()
+    const el = textareaRef.current
+    if (el) {
+      el.style.height = 'auto'
+      const maxHeight = LINE_HEIGHT * MAX_ROWS + 16
+      el.style.height = Math.min(el.scrollHeight, maxHeight) + 'px'
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Focus the input when the panel opens (this component mounts on open). The

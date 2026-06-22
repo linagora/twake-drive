@@ -23,10 +23,11 @@ const PILL_HEIGHT = SINGLE_LINE + INNER_VPAD + BORDER * 2 // 40
 // a rounded RECTANGLE (constant corner radius) once it grows taller. A 9999px
 // radius would instead keep rounding the left/right edges into half-circles.
 const PILL_RADIUS = PILL_HEIGHT / 2 // 20
-// The pill takes its full (viewport-capped) width immediately rather than
-// growing with content. Growing per-keystroke made the text wrap for a frame
-// before the width caught up — a visible flicker — so we lock the width up
-// front and let only the HEIGHT change as lines wrap.
+// The pill stays compact while empty and jumps straight to its full
+// (viewport-capped) width the instant the first character is typed. Going
+// directly to the max — rather than growing per-keystroke — means the text
+// never wraps at an intermediate width, so there is no flicker.
+const COMPACT_WIDTH = 240
 const MAX_WIDTH = 420
 const SEND_BUTTON = 30
 const VIEWPORT_MARGIN = 24 // keep the popover off the very edge of the screen
@@ -84,8 +85,10 @@ const ScribePromptInput = forwardRef(({ onSubmit, onArrow, onEscape }, ref) => {
   const theme = useTheme()
   const [value, setValue] = useState('')
   const [focused, setFocused] = useState(false)
-  const [pillWidth, setPillWidth] = useState(computePillWidth)
+  const [maxPillWidth, setMaxPillWidth] = useState(computePillWidth)
   const [maxHeight, setMaxHeight] = useState(LINE_HEIGHT * 6 + TEXTAREA_VPAD)
+  // Compact until something is typed, then snap to the full width.
+  const effectiveWidth = value.length > 0 ? maxPillWidth : COMPACT_WIDTH
   const inputRef = useRef(null)
   const wrapperRef = useRef(null)
   // Pending caret position to restore after a controlled-value newline insert.
@@ -102,7 +105,9 @@ const ScribePromptInput = forwardRef(({ onSubmit, onArrow, onEscape }, ref) => {
   useImperativeHandle(ref, () => ({
     focus: () => {
       if (inputRef.current) inputRef.current.focus()
-    }
+    },
+    // Lets the menu carry the in-progress prompt over to the side panel.
+    getValue: () => value
   }))
 
   // Max textarea height = space the popover actually has below the input, with
@@ -144,7 +149,7 @@ const ScribePromptInput = forwardRef(({ onSubmit, onArrow, onEscape }, ref) => {
 
   useEffect(() => {
     const onResize = () => {
-      setPillWidth(computePillWidth())
+      setMaxPillWidth(computePillWidth())
       setMaxHeight(computeMaxHeight())
     }
     window.addEventListener('resize', onResize)
@@ -221,12 +226,14 @@ const ScribePromptInput = forwardRef(({ onSubmit, onArrow, onEscape }, ref) => {
           '--scribe-bw': '2px',
           '--scribe-inner': innerBg,
           position: 'relative',
-          width: pillWidth,
+          width: effectiveWidth,
           maxWidth: '100%',
           borderRadius: PILL_RADIUS,
           boxSizing: 'border-box',
           boxShadow: focused ? '0 0 0 3px rgba(139, 92, 246, 0.18)' : 'none',
-          transition: 'box-shadow 150ms ease'
+          // Width only ever toggles compact<->max (max always fits the content),
+          // so animating it cannot cause a wrap-flicker.
+          transition: 'width 140ms ease, box-shadow 150ms ease'
         }}
       >
         <div
