@@ -78,7 +78,10 @@ const FileName = ({
   }
 
   return (
-    <span title={infected ? t('antivirus.infectedFile') : title}>
+    <span
+      className={hidePath ? undefined : styles['fil-file-name-with-path']}
+      title={infected ? t('antivirus.infectedFile') : title}
+    >
       <Filename
         icon={
           <FileThumbnailComponent
