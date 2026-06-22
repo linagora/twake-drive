@@ -276,7 +276,7 @@ export async function callScribeAI(client, messages, { signal } = {}) {
   const response = await client.stackClient.fetchJSON(
     'POST',
     '/ai/v1/chat/completions',
-    { messages, temperature: 0.3 },
+    { messages, temperature: 0.3, response_format: { type: 'json_object' } },
     { signal }
   )
 
