@@ -88,7 +88,7 @@
     "classnames": "2.3.1",
     "cozy-bar": "^33.3.4",
     "cozy-client": "^60.28.0",
-    "cozy-dataproxy-lib": "^4.13.0",
+    "cozy-dataproxy-lib": "^4.15.3",
     "cozy-device-helper": "^4.0.1",
     "cozy-devtools": "^1.2.1",
     "cozy-doctypes": "1.85.4",
