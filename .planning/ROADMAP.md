@@ -144,8 +144,8 @@ Full v3.0 phase details are preserved in `.planning/milestones/v3.0-ROADMAP.md`.
   3. Le prompt libre est une entrée intégrée en bas de la liste du menu ; une entrée « Ouvrir le panneau latéral » la suit, remplaçant l'icône open-panel retirée du popover (le bouton flottant sur le document est conservé)
 **Plans**: 2 plans
 Plans:
-- [ ] v3.1-05-01-PLAN.md — Popover result rendered as a Scribe-violet card (RAW fragment via MarkdownPreview, no discussion); validate inline→chat mirror (INLINE-01/02)
-- [ ] v3.1-05-02-PLAN.md — Action-menu rework: free-prompt as integrated list entry + bottom "Ouvrir le panneau latéral" entry replacing the in-popover icon (MENU-01)
+- [x] v3.1-05-01-PLAN.md — Popover result rendered as a Scribe-violet card (RAW fragment via MarkdownPreview, no discussion); validate inline→chat mirror (INLINE-01/02) — implemented 2026-06-22, jest 6/6; live UAT pending
+- [x] v3.1-05-02-PLAN.md — Action-menu rework: free-prompt as integrated list entry + bottom "Ouvrir le panneau latéral" entry replacing the in-popover icon (MENU-01) — implemented 2026-06-22, jest 9/9; live UAT pending
 **UI hint**: yes
 
 ### Phase v3.1-06: Durcissement contrat
@@ -197,6 +197,6 @@ v3.1 phases execute in order: v3.1-01 -> v3.1-02 -> v3.1-03 (HARD GATE) -> v3.1-
 | v3.1-02. Prompt + plumbing | v3.1 | 3/3 | Complete | 2026-06-17 |
 | v3.1-03. Sonde dev (HARD GATE) | v3.1 | 3/3 | Complete | 2026-06-17 |
 | v3.1-04. Rendu chat (cartes + clavier) | v3.1 | 5/5 | Complete | 2026-06-22 |
-| v3.1-05. Rendu popover (UI) | v3.1 | 0/0 | Not started | - |
+| v3.1-05. Rendu popover (UI) | v3.1 | 2/2 | Built — awaiting UAT | 2026-06-22 |
 | v3.1-06. Durcissement contrat | v3.1 | 0/0 | Not started | - |
 | v3.1-07. i18n 5 locales | v3.1 | 0/0 | Not started | - |

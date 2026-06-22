@@ -4,13 +4,13 @@ milestone: v3.1
 milestone_name: Contrat de réponse structurée LLM
 status: executing
 stopped_at: Phase v3.1-04 context gathered
-last_updated: "2026-06-22T10:17:09.991Z"
-last_activity: 2026-06-22 -- Phase v3.1-05 planning complete
+last_updated: "2026-06-22T10:23:57.467Z"
+last_activity: 2026-06-22 -- Phase v3.1-05 both plans built (jest 15/15), awaiting live UAT
 progress:
   total_phases: 7
   completed_phases: 4
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 7
+  completed_plans: 7
   percent: 57
 ---
 
@@ -21,15 +21,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-16)
 
 **Core value:** L'utilisateur peut interagir avec l'IA de maniere fluide -- actions rapides inline ou chat conversationnel dans un panneau lateral -- pour transformer et manipuler le contenu de son document OnlyOffice.
-**Current focus:** Phase v3.1-04 — COMPLETE (live OO FRAG-03 UAT passed 2026-06-22). Next: v3.1-05 (Rendu popover + durcissement) — last phase of the milestone.
+**Current focus:** Phase v3.1-05 — Rendu popover (UI)
 
 ## Current Position
 
-Phase: v3.1-04 (Rendu chat — cartes + clavier) — **COMPLETE** (5/5 plans; live OO FRAG-03 UAT passed 2026-06-22)
-Plan: 5 of 5 — committed (18 TDD commits a93963ca9..HEAD) + WR-01 keyboard fix; targeted + Scribe-dir suites green (166 pass; lone failure = pre-existing ScribeContainer mobile-Drawer test)
-Status: Ready to execute
+Phase: v3.1-05 (Rendu popover (UI)) — BUILT, AWAITING LIVE UAT
+Plan: 2 of 2 implemented (both SUMMARY.md committed; jest 15/15)
+Status: Phase v3.1-05 implementation complete — blocking human-verify UAT pending (INLINE-02 mirror + reworked menu in live OO)
 Progress: [████████  ] 80% (4/5 phases complete)
-Last activity: 2026-06-22 -- Phase v3.1-05 planning complete
+Last activity: 2026-06-22 -- Phase v3.1-05 both plans built (jest 15/15), awaiting live UAT
 
 ⚠️ TOOLING: gsd-sdk v1.42.3 cannot resolve `vX.Y-NN` phases (find-phase/phase-plan-index return "Phase not found" for ALL v3.0/v3.1 phases — regex only matches numeric-prefixed dirs). All phases orchestrated manually with explicit paths; ROADMAP/STATE/REQUIREMENTS completion writes done by hand (gsd-sdk phase.complete fails). v3.1-04 completion writes applied 2026-06-22. Same will apply when finishing v3.1-05.
 
