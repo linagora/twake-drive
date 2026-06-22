@@ -13,16 +13,25 @@ import { useTheme } from 'cozy-ui/transpiled/react/styles'
 import { useI18n } from 'twake-i18n'
 
 const LINE_HEIGHT = 20
-const TEXTAREA_VPAD = 16 // 8px top + 8px bottom
+const TEXTAREA_VPAD = 12 // 6px top + 6px bottom
+const INNER_VPAD = 4 // 2px top + 2px bottom on the content row
+const BORDER = 2
+// Single-line content height (one text line) and the resulting pill height.
+const SINGLE_LINE = LINE_HEIGHT + TEXTAREA_VPAD // 32
+const PILL_HEIGHT = SINGLE_LINE + INNER_VPAD + BORDER * 2 // 40
+// Fixed corner radius = half the single-line height → a pill when one line,
+// a rounded RECTANGLE (constant corner radius) once it grows taller. A 9999px
+// radius would instead keep rounding the left/right edges into half-circles.
+const PILL_RADIUS = PILL_HEIGHT / 2 // 20
 // Pill width-growth bounds (per UI decision): start compact, grow with content
 // up to a hard cap, then the textarea wraps to multiple lines instead.
 const MIN_WIDTH = 240
 const MAX_WIDTH = 420
+const SEND_BUTTON = 30
 // Horizontal chrome around the measured text: left pad + gap + send button +
 // right pad + the two 2px gradient borders. Used to convert measured text
 // width into an outer pill width.
-const CHROME_WIDTH = 16 + 8 + 34 + 6 + 4
-const SEND_BUTTON = 34
+const CHROME_WIDTH = 14 + 8 + SEND_BUTTON + 8 + BORDER * 2
 const VIEWPORT_MARGIN = 24 // keep the popover off the very edge of the screen
 
 // The animated gradient liseré can't be expressed with inline styles: it needs
@@ -209,9 +218,10 @@ const ScribePromptInput = forwardRef(({ onSubmit, onArrow, onEscape }, ref) => {
         style={{
           '--scribe-bw': '2px',
           '--scribe-inner': innerBg,
+          position: 'relative',
           width,
           maxWidth: '100%',
-          borderRadius: 9999,
+          borderRadius: PILL_RADIUS,
           boxSizing: 'border-box',
           boxShadow: focused ? '0 0 0 3px rgba(139, 92, 246, 0.18)' : 'none',
           transition: 'width 120ms ease, box-shadow 150ms ease'
@@ -222,7 +232,7 @@ const ScribePromptInput = forwardRef(({ onSubmit, onArrow, onEscape }, ref) => {
             display: 'flex',
             alignItems: 'flex-end',
             gap: 8,
-            padding: '2px 6px 2px 16px'
+            padding: '2px 8px 2px 14px'
           }}
         >
           <textarea
@@ -238,6 +248,9 @@ const ScribePromptInput = forwardRef(({ onSubmit, onArrow, onEscape }, ref) => {
               '--scribe-ph': placeholderColor,
               flex: 1,
               minWidth: 0,
+              display: 'block',
+              boxSizing: 'border-box',
+              verticalAlign: 'bottom',
               border: 'none',
               background: 'transparent',
               color: textColor,
@@ -247,8 +260,8 @@ const ScribePromptInput = forwardRef(({ onSubmit, onArrow, onEscape }, ref) => {
               resize: 'none',
               outline: 'none',
               margin: 0,
-              padding: '8px 0',
-              minHeight: LINE_HEIGHT + TEXTAREA_VPAD,
+              padding: '6px 0',
+              minHeight: SINGLE_LINE,
               maxHeight,
               overflowY: 'auto',
               whiteSpace: 'pre-wrap',
@@ -274,7 +287,7 @@ const ScribePromptInput = forwardRef(({ onSubmit, onArrow, onEscape }, ref) => {
               padding: 0,
               cursor: canSend ? 'pointer' : 'default',
               opacity: canSend ? 1 : 0.55,
-              marginBottom: 3,
+              marginBottom: 1,
               transition: 'opacity 150ms ease'
             }}
           >
