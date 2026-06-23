@@ -88,6 +88,25 @@ Invariants v2 :
 
 Statut recapture : **À FAIRE** (nécessite OO + cozy-stack relancés + pilotage Chrome MCP).
 
+### Mécaniques v2 — candidates (à confirmer live en sondant l'éditeur)
+
+Capture sur `http://localhost/example/` (OO nu, plugin Scribe avec hooks). Les 3 contrôles sont
+**au niveau éditeur OO**, pas plugin → pilotés par Chrome MCP `evaluate_script` / clic UI.
+
+1. **Marques de formatage (¶)** — candidat API : `Asc.editor.asc_setShowParaMarks(true)` (api éditeur
+   Word, depuis l'iframe éditeur, same-origin). Fallback robuste : **clic sur le bouton ¶** de la barre
+   (« Nonprinting characters », visible dans les captures v1). Toggle une fois par session.
+2. **Sélection visible (`before.png`)** — `setSelection` fait `range.Select()` ; capturer `before.png`
+   **juste après** la résolution du hook, **sans clic** dans le canvas (un clic collapse la sélection).
+   À vérifier live : OO rend-il le surlignage d'une sélection posée par API sans focus canvas ? Si non,
+   focus du canvas via API éditeur (pas via clic).
+3. **Export `.docx`** — candidat : `Asc.editor.asc_DownloadAs(new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.DOCX))`
+   ou `docEditor.downloadAs()` (wrapper de la page exemple). Le fichier tombe dans le dossier de
+   téléchargement Chrome → le copier dans `corpus/<CAS>/<mode>/<bundle>.docx`. À confirmer : chemin de
+   download du Chrome piloté par MCP.
+
+→ Étape 0 de la recapture : **prouver les 3 mécaniques sur UN bundle** (ex. A0/insert) avant le batch.
+
 ## Découvertes / décisions de revue (chronologique)
 
 - **2026-06-23 — A0/insert ⇒ xfail.** Bug ¶ vide parasite confirmé live par Ben. Deux règles spec
