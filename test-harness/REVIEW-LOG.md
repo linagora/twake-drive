@@ -33,6 +33,10 @@ Fixture source `a-family.docx` (identique pour tous) : `P1="The quick brown fox"
 
 ## Checklist (9 bundles)
 
+> ⚠️ **2026-06-23 : capture v1 obsolète — tous les bundles à RECAPTURER en v2** (sélection visible,
+> marques de formatage, `.docx` joint). Voir « Procédure de capture v2 » plus bas. Les verdicts
+> déjà posés (colonne ci-dessous) restent acquis et seront re-confirmés sur les bundles v2.
+
 | Bundle | statut revue | verdict | ¶/espace ajouté (constat) |
 |---|---|---|---|
 | A0/insert  | ✅ REVU | **xfail** | ¶ vide en TÊTE = **FAIL** (confirmé live Ben). Bug `code.js:1479`. Règle L#7. Désiré: `[XXX][P1][P2][P3]` |
@@ -59,6 +63,30 @@ Fixture source `a-family.docx` (identique pour tous) : `P1="The quick brown fox"
 - **A2** : `@mid`=9 tombe sur l'espace « quick‿brown » → la fixture ne teste pas le vrai
   *milieu de mot*. Fixture à corriger ou cas à dédoubler.
 - **A0/replace** : non capturé (`na` — replace sur sélection vide non applicable, FRAG-04).
+
+## Procédure de capture v2 (décidée 2026-06-23, Ben)
+
+La capture v1 (commits T-04 initiaux) est jugée insuffisante pour trancher sans ambiguïté.
+**Tous les bundles A0–A4 sont à RECAPTURER** avec la procédure v2 ci-dessous, puis la revue
+reprend sur les bundles propres. Conclusions de revue déjà acquises (A0/insert xfail, A1/insert
+fail) restent valides — fondées sur test live + `code.js:1479`, indépendamment de la preuve.
+
+Améliorations v2 (vs v1) :
+1. **Sélection visible dans `before.png`** — capturer `before.png` **après** `setSelection`, en
+   gardant le focus dans l'iframe éditeur pour que OO **rende le surlignage** de la sélection.
+2. **Marques de formatage activées** — afficher les caractères invisibles (¶, espaces, sauts) sur
+   `before.png` ET `after.png`. C'est le cœur de la revue (¶ vides, espaces traînants).
+   *(à câbler : bouton ¶ de la barre OO via MCP, ou API `asc_setShowParaMarks(true)` — à confirmer.)*
+3. **`.docx` dans le dossier du bundle** — exporter le `.docx` résultat dans `corpus/<CAS>/<mode>/`
+   (vérité-terrain ré-ouvrable + backstop OOXML de `TEST-STRATEGY.md §4`).
+
+Invariants v2 :
+- **`meta.json` (verdict + comment) est humain → JAMAIS écrasé** par une recapture. La recapture
+  régénère seulement `before.png` / `after.png` / `capture.json` / `model.json` / `<bundle>.docx`.
+- Reste fidèle au vrai chemin de prod : injection via le hook `injectFixture` → `buildAndInject`
+  (prouvé identique à la prod, court-circuite seulement le LLM).
+
+Statut recapture : **À FAIRE** (nécessite OO + cozy-stack relancés + pilotage Chrome MCP).
 
 ## Découvertes / décisions de revue (chronologique)
 
