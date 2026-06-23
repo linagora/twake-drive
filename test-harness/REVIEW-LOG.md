@@ -87,7 +87,7 @@ Invariants v2 :
 - Reste fidèle au vrai chemin de prod : injection via le hook `injectFixture` → `buildAndInject`
   (prouvé identique à la prod, court-circuite seulement le LLM).
 
-Statut recapture : **À FAIRE** (nécessite OO + cozy-stack relancés + pilotage Chrome MCP).
+Statut recapture : **✅ FAIT** (A0–A4, 9 bundles, 2026-06-23 — voir bandeau checklist).
 
 ### Mécaniques v2 — CONFIRMÉES LIVE (2026-06-23, OO 9.3.0, sur `http://localhost/example/`)
 
