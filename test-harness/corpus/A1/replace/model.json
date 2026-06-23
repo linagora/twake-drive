@@ -1,0 +1,26 @@
+{
+  "blocks": [
+    {
+      "type": "p",
+      "runs": [
+        {
+          "t": "XXX"
+        },
+        {
+          "t": " "
+        }
+      ]
+    }
+  ],
+  "selection": {
+    "start": {
+      "block": 0,
+      "offset": 0
+    },
+    "end": {
+      "block": 0,
+      "offset": 6
+    }
+  },
+  "_note": "A1-relevant slice; source=sample.docx (noisy) -> minimal fixtures needed for full-doc goldens"
+}

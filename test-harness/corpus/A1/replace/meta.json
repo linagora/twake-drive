@@ -1,0 +1,14 @@
+{
+  "caseId": "A1",
+  "mode": "replace",
+  "spec": "P1@start..P1@end",
+  "fixture": "XXX",
+  "statusFromCsv": "pass",
+  "csvRowHash": "f714785c9f72",
+  "source": "OO example sample.docx, P1 reset to 'Text Editors'",
+  "capturedVia": "Chrome DevTools MCP, frame-eval, OO example (no Cozy/LLM)",
+  "capturedAt": "2026-06-23",
+  "stable": true,
+  "verdict": null,
+  "comment": ""
+}
