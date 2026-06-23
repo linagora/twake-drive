@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useContext } from 'react'
 import { connect } from 'react-redux'
 
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
@@ -9,11 +9,13 @@ import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import { useI18n } from 'twake-i18n'
 
+import { AddMenuContext } from '@/modules/drive/AddMenu/AddMenuProvider'
 import { showNewFolderInput } from '@/modules/filelist/duck'
 
 const AddFolderItem = ({ addFolder, onClick, isReadOnly }) => {
   const { t } = useI18n()
   const { showAlert } = useAlert()
+  const { onAddFolder } = useContext(AddMenuContext)
 
   const handleClick = () => {
     if (isReadOnly) {
@@ -28,7 +30,11 @@ const AddFolderItem = ({ addFolder, onClick, isReadOnly }) => {
       onClick()
       return
     }
-    addFolder()
+    if (onAddFolder) {
+      onAddFolder()
+    } else {
+      addFolder()
+    }
     onClick()
   }
 

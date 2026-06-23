@@ -20,9 +20,11 @@ const UploadButton = ({
   disabled,
   className,
   displayedFolder,
+  folderId,
   sharingState,
   componentsProps,
-  onUploaded
+  onUploaded,
+  onUploadStart
 }) => {
   const { showAlert } = useAlert()
   const { addItems } = useNewItemHighlightContext()
@@ -30,15 +32,19 @@ const UploadButton = ({
   const dispatch = useDispatch()
   const client = useClient()
 
+  // Explicit folderId (e.g. null on no-folder sections) overrides displayedFolder.id.
+  const dirId = folderId !== undefined ? folderId : displayedFolder?.id
+
   const onUpload = files => {
+    onUploadStart?.()
     dispatch(
       uploadFiles(
         files,
-        displayedFolder.id,
+        dirId,
         sharingState,
         onUploaded,
         { client, showAlert, t },
-        displayedFolder.driveId,
+        displayedFolder?.driveId,
         addItems
       )
     )
@@ -91,6 +97,8 @@ UploadButton.propTypes = {
   componentsProps: PropTypes.object,
   onUploaded: PropTypes.func,
   displayedFolder: PropTypes.object, // io.cozy.files
+  folderId: PropTypes.string,
+  onUploadStart: PropTypes.func,
   // in case of upload conflicts, shared files are not overridden
   sharingState: PropTypes.object.isRequired
 }

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { useClient } from 'cozy-client'
@@ -12,9 +12,11 @@ import { AddFolderCard } from '@/modules/filelist/AddFolderCard'
 import { AddFolderRow } from '@/modules/filelist/AddFolderRow'
 import {
   isTypingNewFolderName,
-  hideNewFolderInput
+  hideNewFolderInput,
+  showNewFolderInput
 } from '@/modules/filelist/duck'
 import AddFolderRowVz from '@/modules/filelist/virtualized/AddFolderRow'
+import { consumeCreateOnRoot } from '@/modules/layout/Layout'
 import { createFolder } from '@/modules/navigation/duck'
 import { useNewItemHighlightContext } from '@/modules/upload/NewItemHighlightProvider'
 
@@ -53,6 +55,13 @@ const AddFolderWithState = ({
   const client = useClient()
   const dispatch = useDispatch()
   const visible = useSelector(isTypingNewFolderName)
+
+  // When arriving at root from a no-folder section, auto-open the folder input.
+  useEffect(() => {
+    if (consumeCreateOnRoot()) {
+      dispatch(showNewFolderInput())
+    }
+  }, [dispatch])
 
   const onSubmit = (name, showAlert, t) =>
     dispatch(async dispatch =>
