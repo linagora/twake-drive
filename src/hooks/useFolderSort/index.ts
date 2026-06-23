@@ -28,7 +28,9 @@ const useFolderSort = (
   folderId: string
 ): [Sort, (props: Sort) => void, boolean] => {
   const defaultSort: Sort =
-    folderId === TRASH_DIR_ID || folderId === RECENT_FOLDER_ID
+    folderId === TRASH_DIR_ID ||
+    folderId === RECENT_FOLDER_ID ||
+    flag('drive.default-updated-at-sort.enabled')
       ? SORT_BY_UPDATE_DATE
       : DEFAULT_SORT
 
