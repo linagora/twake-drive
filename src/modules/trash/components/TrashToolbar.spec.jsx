@@ -39,7 +39,7 @@ describe('TrashToolbar', () => {
       fireEvent.click(emptyTrashButton)
     })
 
-    expect(navigateMock).toBeCalledTimes(1)
-    expect(navigateMock).toBeCalledWith('empty')
+    expect(navigateMock).toHaveBeenCalledTimes(1)
+    expect(navigateMock).toHaveBeenCalledWith('empty')
   })
 })

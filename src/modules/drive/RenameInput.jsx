@@ -1,13 +1,12 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import { useI18n } from 'twake-i18n'
 
 import { useClient } from 'cozy-client'
 import useBrowserOffline from 'cozy-ui/transpiled/react/hooks/useBrowserOffline'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
+import { useI18n } from 'twake-i18n'
 
 import { abortRenaming } from './rename'
-import { isFolderFromSharedDriveOwner } from '../shareddrives/helpers'
 
 import { CozyFile } from '@/models'
 import FilenameInput from '@/modules/filelist/FilenameInput'
@@ -15,22 +14,6 @@ import FilenameInput from '@/modules/filelist/FilenameInput'
 // If we set the _rev then CozyClient tries to update. Else
 // it tries to create
 export const updateFileNameQuery = async (client, file, newName) => {
-  if (isFolderFromSharedDriveOwner(file)) {
-    const referencedBy = file.relationships?.referenced_by?.data?.[0]
-    if (!referencedBy?.id) {
-      throw new Error('Shared drive folder is missing required relationships')
-    }
-    if (!file.id) {
-      throw new Error('Shared drive folder is missing required id')
-    }
-    const sharing = {
-      _id: referencedBy.id,
-      rules: [{ values: [file.id] }]
-    }
-    return client
-      .collection('io.cozy.sharings')
-      .renameSharedDrive(sharing, newName)
-  }
   return client.collection('io.cozy.files', { driveId: file.driveId }).update({
     ...file,
     name: newName,
@@ -64,7 +47,11 @@ export const RenameInput = ({
         const newName = withoutExtension ? newValue + extension : newValue
         try {
           if (isOffline) {
-            showAlert({ message: t('alert.offline'), severity: 'error' })
+            showAlert({
+              message: t('alert.offline'),
+              severity: 'error',
+              duration: 4000
+            })
           } else {
             await updateFileNameQuery(client, file, newName)
             if (refreshFolderContent) refreshFolderContent()
@@ -75,7 +62,11 @@ export const RenameInput = ({
               'NetworkError when attempting to fetch resource.'
             )
           ) {
-            showAlert({ message: t('upload.alert.network'), severity: 'error' })
+            showAlert({
+              message: t('upload.alert.network'),
+              severity: 'error',
+              duration: 4000
+            })
           } else if (
             error.message.includes(
               'Invalid filename containing illegal character(s):'
@@ -89,22 +80,25 @@ export const RenameInput = ({
                 )[1]
               }),
               severity: 'error',
-              duration: 2000
+              duration: 4000
             })
           } else if (error.message.includes('Invalid filename:')) {
             showAlert({
               message: t('alert.file_name_illegal_name', { fileName: newName }),
-              severity: 'error'
+              severity: 'error',
+              duration: 4000
             })
           } else if (error.message.includes('Missing name argument')) {
             showAlert({
               message: t('alert.file_name_missing'),
-              severity: 'error'
+              severity: 'error',
+              duration: 4000
             })
           } else {
             showAlert({
               message: t('alert.file_name', { fileName: newName }),
-              severity: 'error'
+              severity: 'error',
+              duration: 4000
             })
           }
         } finally {

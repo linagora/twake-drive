@@ -37,7 +37,7 @@ const SuggestionItem = ({
         {file.class === 'shortcut' ? (
           <FileIconShortcut file={file} />
         ) : (
-          <FileIconMime file={file} isEncrypted={suggestion.isEncrypted} />
+          <FileIconMime file={file} />
         )}
       </ListItemIcon>
       <ListItemText

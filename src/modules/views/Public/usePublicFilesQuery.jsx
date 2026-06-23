@@ -36,12 +36,16 @@ export const usePublicFilesQuery = currentFolderId => {
     const initialFetch = async () => {
       try {
         setFetchStatus('loading')
+        setData([])
+        setHasMore(false)
+        nextCursor.current = null
+
         const { included, cursor } = await statById(client, currentFolderId)
         nextCursor.current = cursor
         setData(included || [])
         setHasMore(!!cursor)
         setFetchStatus('loaded')
-      } catch (error) {
+      } catch (_error) {
         setFetchStatus('error')
       }
     }
@@ -62,7 +66,7 @@ export const usePublicFilesQuery = currentFolderId => {
       setHasMore(!!cursor)
       nextCursor.current = cursor
       setFetchStatus('loaded')
-    } catch (error) {
+    } catch (_error) {
       setFetchStatus('error')
     } finally {
       isFetching.current = false

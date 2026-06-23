@@ -3,19 +3,16 @@ import React, { useEffect, useCallback, useMemo, useRef, useState } from 'react'
 
 import flag from 'cozy-flags'
 import Spinner from 'cozy-ui/transpiled/react/Spinner'
-import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import Error from '@/modules/views/OnlyOffice/Error'
 import OnlyOfficeAIAssistantPanel from '@/modules/views/OnlyOffice/OnlyOfficeAIAssistantPanel'
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
-import ReadOnlyFab from '@/modules/views/OnlyOffice/ReadOnlyFab'
 import { useScribe } from '@/modules/views/OnlyOffice/Scribe/ScribeContext'
 import { ScribePanel } from '@/modules/views/OnlyOffice/Scribe/ScribePanel'
 import { markdownToHtml } from '@/modules/views/OnlyOffice/Scribe/scribeConversion'
 import { ScribeFloatingZone } from '@/modules/views/OnlyOffice/Scribe/ScribeFloatingButton'
 import { ScribePopover } from '@/modules/views/OnlyOffice/Scribe/ScribePopover'
 import { FRAME_EDITOR_NAME } from '@/modules/views/OnlyOffice/config'
-import { isOfficeEditingEnabled } from '@/modules/views/OnlyOffice/helpers'
 import { useCozyBridge } from '@/modules/views/OnlyOffice/useCozyBridge'
 
 // Strip <p>...</p> wrapper when HTML is a single paragraph,
@@ -41,8 +38,7 @@ const forceIframeHeight = value => {
 const View = ({ id, apiUrl, docEditorConfig }) => {
   const [isError, setIsError] = useState(false)
 
-  const { isEditorReady, isReadOnly, isTrashed } = useOnlyOfficeContext()
-  const { isMobile, isDesktop } = useBreakpoints()
+  const { isEditorReady } = useOnlyOfficeContext()
   const isScribeEnabled = flag('drive.scribe.enabled')
   const scribe = useScribe()
   const isPanelOpen = scribe ? scribe.isPanelOpen : false
@@ -341,13 +337,6 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
     }
   }, [isEditorReady])
 
-  const showReadOnlyFab =
-    isMobile &&
-    isEditorReady &&
-    !isReadOnly &&
-    !isTrashed &&
-    isOfficeEditingEnabled(isDesktop)
-
   if (isError) return <Error />
 
   return (
@@ -387,7 +376,6 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
           />
         </>
       )}
-      {showReadOnlyFab && <ReadOnlyFab />}
     </>
   )
 }

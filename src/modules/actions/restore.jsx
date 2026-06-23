@@ -32,6 +32,7 @@ export const restore = ({ t, refresh, client }) => {
     name: 'restore',
     label,
     icon,
+    allowTrashed: true,
     action: async files => {
       await restoreFiles(client, files)
       refresh()

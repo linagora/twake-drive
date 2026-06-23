@@ -28,7 +28,7 @@ class CallToAction extends Component {
         if (mustSee) {
           this.setState({ mustShow: true })
         }
-      } catch (e) {
+      } catch (_e) {
         this.setState({ mustShow: false })
       }
     }
@@ -58,12 +58,7 @@ class CallToAction extends Component {
         <h3>{t('Viewer.noviewer.cta.saveTime')}</h3>
         <ul>
           <li>
-            <a
-              // eslint-disable-next-line react/jsx-no-target-blank
-              target="_blank"
-              href={link}
-              rel="noreferrer"
-            >
+            <a target="_blank" href={link} rel="noreferrer">
               {t('Viewer.noviewer.cta.installDesktop')}
             </a>
           </li>

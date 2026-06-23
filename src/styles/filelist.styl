@@ -73,7 +73,7 @@
         align-items center
 
 .fil-content-grid-item
-    margin .2rem
+    margin .4rem
 
 .fil-content-column-selected
     @extend $table-row-selected
@@ -349,17 +349,6 @@ column-width-thumbnail-bigger = 7rem
     &--path
         display contents !important // to take content width
 
-.fil-file-certifications
-    flex-shrink 0
-    color var(--actionColorActive)
-
-    &--separator
-        margin-left .25rem
-
-    &--icon
-        width rem(10)
-        height rem(10)
-
 .fil-file-path
 .fil-file-infos
 .fil-file-description--path
@@ -379,8 +368,19 @@ column-width-thumbnail-bigger = 7rem
     &:focus
         text-decoration underline
 
+// Shrink the path link to its text. Its MidEllipsis child is a block-level
+// flex box that otherwise fills the whole name cell, turning the entire row
+// into a parent-folder link instead of the small path label.
+.fil-file-path
+    display inline-flex
+    max-width 100%
+
 .fil-file-infos
     display none
+
+// Fill the name cell so the path label is not clipped under a short name.
+.fil-file-name-with-path
+    width 100%
 
 .fil-file-shared
     color var(--actionColorActive)
@@ -442,7 +442,18 @@ column-width-thumbnail-bigger = 7rem
 .fil-content-status .fil-content-file-placeholder
     animation-delay 1.1s
 
+.fil-content-share
+    display flex
+    align-items center
+    justify-content flex-end
+    gap 0.25rem
+
 .fil-content-sharestatus
+    // Center the share-status avatar in its box: as a plain block its inline
+    // avatar baseline-aligns to the top of a tall line box, which leaves it
+    // sitting a few pixels above center.
+    display inline-flex
+    align-items center
     cursor pointer
     &--disabled
         cursor default

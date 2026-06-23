@@ -12,3 +12,11 @@
 .file-opener__a
     text-decoration none
     color var(--secondaryTextColor)
+
+// Make the link fill its cell so the whole row height (not just the
+// vertically-centered text) opens the file on double-click.
+.file-opener--fill-height
+    display flex
+    align-items center
+    width 100%
+    height 100%

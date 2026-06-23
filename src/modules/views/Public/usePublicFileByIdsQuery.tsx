@@ -46,7 +46,7 @@ export const usePublicFileByIdsQuery = (
         const parsedData = response.flatMap(item => item)
         setData(parsedData)
         setFetchStatus('loaded')
-      } catch (error) {
+      } catch (_error) {
         setFetchStatus('error')
       }
     }

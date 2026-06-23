@@ -3,6 +3,7 @@ import { useLocation, useResolvedPath, useNavigate } from 'react-router-dom'
 import type { Path } from 'react-router-dom'
 
 import { useClient, generateWebLink } from 'cozy-client'
+import { useSharingContext } from 'cozy-sharing'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import type { File } from '@/components/FolderPicker/types'
@@ -14,6 +15,7 @@ import {
 } from '@/modules/navigation/hooks/helpers'
 import { usePublicContext } from '@/modules/public/PublicProvider'
 import { getFolderPath } from '@/modules/routeUtils'
+import { isExcalidrawEnabled as computeExcalidrawEnabled } from '@/modules/views/Excalidraw/helpers'
 import { isOfficeEnabled as computeOfficeEnabled } from '@/modules/views/OnlyOffice/helpers'
 
 export interface LinkResult {
@@ -27,6 +29,37 @@ export interface LinkResult {
 interface UseFileLinkResult {
   link: LinkResult
   openLink: (evt: React.MouseEvent<HTMLElement>) => void
+}
+
+interface SharingContextForFileLink {
+  isOwner?: (docId: string) => boolean
+  allLoaded?: boolean
+  byDocId?: Record<string, unknown>
+}
+
+const computeIsSharingsOwner = ({
+  file,
+  pathname,
+  isPublic,
+  sharingContext
+}: {
+  file: File
+  pathname: string
+  isPublic: boolean
+  sharingContext?: SharingContextForFileLink
+}): boolean => {
+  const isInSharings = pathname.startsWith('/sharings')
+  const isKnownSharedDoc = Boolean(
+    file._id && sharingContext?.byDocId?.[file._id]
+  )
+
+  return (
+    !isPublic &&
+    isInSharings &&
+    isKnownSharedDoc &&
+    Boolean(sharingContext?.allLoaded) &&
+    Boolean(sharingContext?.isOwner?.(file._id))
+  )
 }
 
 /**
@@ -54,13 +87,24 @@ const useFileLink = (
   const client = useClient()
   const { isDesktop } = useBreakpoints()
   const isOfficeEnabled = computeOfficeEnabled(isDesktop)
+  const isExcalidrawEnabled = computeExcalidrawEnabled()
   const { isPublic } = usePublicContext()
+  const sharingContext = useSharingContext() as
+    | SharingContextForFileLink
+    | undefined
+  const isSharingsOwner = computeIsSharingsOwner({
+    file,
+    pathname,
+    isPublic,
+    sharingContext
+  })
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   const cozyUrl = client?.getStackClient().uri as string
 
   const type = computeFileType(file, {
     isOfficeEnabled,
+    isExcalidrawEnabled,
     isPublic,
     cozyUrl
   })
@@ -68,7 +112,9 @@ const useFileLink = (
   const path = computePath(file, {
     type,
     pathname,
-    isPublic
+    isPublic,
+    client,
+    isOwner: isSharingsOwner
   })
 
   const shouldBeOpenedInNewTab =
@@ -84,7 +130,11 @@ const useFileLink = (
   let to = useResolvedPath(path, {
     relative: forceFolderPath ? 'route' : 'path'
   })
-  if (forceFolderPath && !shouldBeOpenedInNewTab) {
+  // The folder prefix only makes sense for a relative in-folder path. Types
+  // that already resolve to an absolute route (e.g. shared-drive-file ->
+  // /shareddrive/...) must be left untouched, otherwise the prefix produces a
+  // malformed /folder/<dir_id>/shareddrive/... link.
+  if (forceFolderPath && !shouldBeOpenedInNewTab && !path.startsWith('/')) {
     to = {
       ...to,
       pathname:
@@ -148,4 +198,4 @@ const useFileLink = (
   }
 }
 
-export { useFileLink }
+export { computeIsSharingsOwner, useFileLink }

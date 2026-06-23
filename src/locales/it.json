@@ -35,7 +35,6 @@
     "menu_upload": "Carica files",
     "item_more": "Altro",
     "menu_new_folder": "Cartella",
-    "menu_new_encrypted_folder": "Cartella criptata",
     "menu_select": "Seleziona oggetti",
     "menu_share_folder": "Condividi cartella",
     "menu_download": "Scarica",
@@ -44,6 +43,7 @@
     "menu_download_folder": "Cartella download",
     "menu_download_file": "Scarica questo file",
     "menu_create_note": "Nota",
+    "menu_create_excalidraw": "Excalidraw",
     "menu_create_shortcut": "Collegamento",
     "empty_trash": "Svuota cestino",
     "share": "Condividi",
@@ -281,6 +281,9 @@
   "Shortcut": {
     "url": "URL",
     "errored": "Si è verificato un errore"
+  },
+  "Excalidraw": {
+    "createFileName": "Nuovo disegno"
   },
   "OnlyOffice": {
     "readOnly": {

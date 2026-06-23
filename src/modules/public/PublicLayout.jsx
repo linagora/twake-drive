@@ -1,33 +1,38 @@
-import React, { Fragment } from 'react'
+import React from 'react'
 import { Outlet } from 'react-router-dom'
 
 import { BarComponent } from 'cozy-bar'
-import flag from 'cozy-flags'
 import FlagSwitcher from 'cozy-flags/dist/FlagSwitcher'
 import Sprite from 'cozy-ui/transpiled/react/Icon/Sprite'
 import { Layout } from 'cozy-ui/transpiled/react/Layout'
 
+import FilesRealTimeQueries from '@/components/FilesRealTimeQueries'
+import Drive from '@/components/Icons/Drive'
+import DriveText from '@/components/Icons/DriveText'
 import { SelectionProvider } from '@/modules/selection/SelectionProvider'
 import { NewItemHighlightProvider } from '@/modules/upload/NewItemHighlightProvider'
 import UploadQueue from '@/modules/upload/UploadQueue'
 
 const PublicLayout = () => {
-  const NewItemHighlightProviderWrapper = flag(
-    'drive.highlight-new-items.enabled'
-  )
-    ? NewItemHighlightProvider
-    : Fragment
-
   return (
     <Layout>
-      <BarComponent replaceTitleOnMobile isPublic disableInternalStore />
+      <BarComponent
+        replaceTitleOnMobile
+        isPublic
+        disableInternalStore
+        appIcon={Drive}
+        appTextIcon={DriveText}
+      />
       <FlagSwitcher />
       <UploadQueue />
-      <NewItemHighlightProviderWrapper>
+      {/* Mounted once here so every public route (folders and editors) keeps
+          the io.cozy.files store in sync with server-side changes. */}
+      <FilesRealTimeQueries />
+      <NewItemHighlightProvider>
         <SelectionProvider>
           <Outlet />
         </SelectionProvider>
-      </NewItemHighlightProviderWrapper>
+      </NewItemHighlightProvider>
       <Sprite />
     </Layout>
   )

@@ -5,11 +5,6 @@ import { trashFiles, downloadFiles } from './utils'
 import { generateFile } from 'test/generate'
 
 import { TRASH_DIR_ID } from '@/constants/config'
-import { DOCTYPE_FILES_ENCRYPTION } from '@/lib/doctypes'
-import {
-  getEncryptionKeyFromDirId,
-  downloadEncryptedFile
-} from '@/lib/encryption'
 
 jest.mock('modules/navigation/AppRoute', () => ({
   routes: []
@@ -17,13 +12,6 @@ jest.mock('modules/navigation/AppRoute', () => ({
 
 jest.mock('cozy-stack-client/dist/utils', () => ({
   forceFileDownload: jest.fn()
-}))
-
-jest.mock('lib/encryption', () => ({
-  ...jest.requireActual('lib/encryption'),
-  getEncryptionKeyFromDirId: jest.fn(),
-  downloadEncryptedFile: jest.fn(),
-  decryptFile: jest.fn()
 }))
 
 const showAlert = jest.fn()
@@ -64,7 +52,6 @@ describe('trashFiles', () => {
     })
     const state = store.getState()
 
-    // Make sure that the state is OK
     expect(state.cozy.documents['io.cozy.files'][file._id]._id).toEqual(
       file._id
     )
@@ -81,15 +68,11 @@ describe('trashFiles', () => {
 describe('downloadFiles', () => {
   const mockClient = createMockClient({})
   mockClient.stackClient.uri = 'http://cozy.tools'
-  const mockGetDownloadLinkById = jest.fn()
-  const mockGetArchiveLinkByIds = jest.fn()
   const mockDownload = jest.fn()
   const mockDownloadArchive = jest.fn()
 
   beforeEach(() => {
     mockClient.collection = () => ({
-      getDownloadLinkById: mockGetDownloadLinkById,
-      getArchiveLinkByIds: mockGetArchiveLinkByIds,
       download: mockDownload,
       downloadArchive: mockDownloadArchive
     })
@@ -105,22 +88,6 @@ describe('downloadFiles', () => {
     expect(mockDownload).toHaveBeenCalledWith(file, null, file.name)
   })
 
-  it('downloads a single encrypted file', async () => {
-    const file = {
-      id: 'file-id-1',
-      name: 'my-file.pdf',
-      type: 'file',
-      encrypted: true
-    }
-    getEncryptionKeyFromDirId.mockResolvedValueOnce('encryption-key')
-    await downloadFiles(mockClient, [file], { vaultClient: {} })
-    expect(downloadEncryptedFile).toHaveBeenCalledWith(
-      mockClient,
-      {},
-      { file, encryptionKey: 'encryption-key' }
-    )
-  })
-
   it('downloads a folder', async () => {
     const folder = {
       id: 'folder-id-1',
@@ -133,64 +100,10 @@ describe('downloadFiles', () => {
 
   it('downloads multiple files', async () => {
     const files = [
-      {
-        id: 'file-id-1',
-        name: 'my-file-1.pdf',
-        type: 'file'
-      },
-      {
-        id: 'file-id-2',
-        name: 'my-file-2.pdf',
-        type: 'file'
-      }
+      { id: 'file-id-1', name: 'my-file-1.pdf', type: 'file' },
+      { id: 'file-id-2', name: 'my-file-2.pdf', type: 'file' }
     ]
     await downloadFiles(mockClient, files)
     expect(mockDownloadArchive).toHaveBeenCalledWith(['file-id-1', 'file-id-2'])
-  })
-
-  it('cannot download multiple encrypted files', async () => {
-    const files = [
-      {
-        id: 'file-id-1',
-        name: 'my-encrypted-file-1.pdf',
-        type: 'file'
-      },
-      {
-        id: 'file-id-2',
-        name: 'my-encrypted-file-2.pdf',
-        type: 'file'
-      }
-    ]
-    getEncryptionKeyFromDirId.mockResolvedValueOnce('encryption-key')
-    await downloadFiles(mockClient, files, { vaultClient: {}, showAlert, t })
-    expect(showAlert).toHaveBeenCalledWith(
-      expect.objectContaining({ severity: 'error' })
-    )
-  })
-
-  it('cannot download an encrypted folder', async () => {
-    const files = [
-      {
-        id: 'file-id-1',
-        name: 'my-file-1.pdf',
-        type: 'file'
-      },
-      {
-        id: 'folder-id-1',
-        name: 'encrypted-folder',
-        type: 'directory',
-        referenced_by: [
-          {
-            id: 'encryption-key-id',
-            type: DOCTYPE_FILES_ENCRYPTION
-          }
-        ]
-      }
-    ]
-    getEncryptionKeyFromDirId.mockResolvedValueOnce(null)
-    await downloadFiles(mockClient, files, { vaultClient: {}, showAlert, t })
-    expect(showAlert).toHaveBeenCalledWith(
-      expect.objectContaining({ severity: 'error' })
-    )
   })
 })

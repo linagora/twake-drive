@@ -1,7 +1,5 @@
 import { combineReducers } from 'redux'
 
-import { barReducers } from 'cozy-bar'
-
 import { default as ui } from '@/lib/react-cozy-helpers'
 import { default as rename } from '@/modules/drive/rename'
 import { default as filelist } from '@/modules/filelist/duck'
@@ -21,7 +19,6 @@ const createRootReducer = client => {
 
   const reducers = {
     ...baseReducers,
-    ...barReducers,
     cozy: client.reducer()
   }
 

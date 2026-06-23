@@ -1,31 +1,24 @@
 import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { useI18n } from 'twake-i18n'
 
 import { useClient } from 'cozy-client'
 import flag from 'cozy-flags'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'
+import { useI18n } from 'twake-i18n'
 
 import { useViewSwitcherContext } from '@/lib/ViewSwitcherContext'
 import { AddFolderCard } from '@/modules/filelist/AddFolderCard'
 import { AddFolderRow } from '@/modules/filelist/AddFolderRow'
 import {
   isTypingNewFolderName,
-  hideNewFolderInput,
-  isEncryptedFolder
+  hideNewFolderInput
 } from '@/modules/filelist/duck'
 import AddFolderRowVz from '@/modules/filelist/virtualized/AddFolderRow'
 import { createFolder } from '@/modules/navigation/duck'
 import { useNewItemHighlightContext } from '@/modules/upload/NewItemHighlightProvider'
 
-export const AddFolder = ({
-  visible,
-  isEncrypted,
-  onSubmit,
-  onAbort,
-  extraColumns
-}) => {
+export const AddFolder = ({ visible, onSubmit, onAbort }) => {
   const { t } = useI18n()
   const { showAlert } = useAlert()
   const { isMobile } = useBreakpoints()
@@ -39,24 +32,20 @@ export const AddFolder = ({
     viewType === 'grid'
       ? AddFolderCard
       : flag('drive.virtualization.enabled') && !isMobile
-      ? AddFolderRowVz
-      : AddFolderRow
+        ? AddFolderRowVz
+        : AddFolderRow
 
   return (
     <Comp
-      isEncrypted={isEncrypted}
       onSubmit={name => onSubmit(name, showAlert, t)}
       onAbort={accidental => onAbort(accidental, showAlert, t)}
-      extraColumns={extraColumns}
     />
   )
 }
 
 const AddFolderWithState = ({
-  vaultClient,
   currentFolderId,
   driveId,
-  extraColumns,
   afterSubmit,
   afterAbort,
   addItems
@@ -64,21 +53,15 @@ const AddFolderWithState = ({
   const client = useClient()
   const dispatch = useDispatch()
   const visible = useSelector(isTypingNewFolderName)
-  const isEncrypted = useSelector(isEncryptedFolder)
 
   const onSubmit = (name, showAlert, t) =>
     dispatch(async dispatch =>
       dispatch(
         createFolder(
           client,
-          vaultClient,
           name,
           currentFolderId,
-          {
-            isEncryptedFolder: isEncrypted,
-            showAlert,
-            t
-          },
+          { showAlert, t },
           driveId,
           addItems
         )
@@ -98,15 +81,7 @@ const AddFolderWithState = ({
     afterAbort?.()
   }
 
-  return (
-    <AddFolder
-      visible={visible}
-      isEncrypted={isEncrypted}
-      extraColumns={extraColumns}
-      onSubmit={onSubmit}
-      onAbort={onAbort}
-    />
-  )
+  return <AddFolder visible={visible} onSubmit={onSubmit} onAbort={onAbort} />
 }
 
 const AddFolderWithAfter = ({ refreshFolderContent, ...props }) => {

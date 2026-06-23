@@ -1,5 +1,3 @@
-import flag from 'cozy-flags'
-
 const DOUBLECLICKDELAY = 400
 
 export const handleClick = ({
@@ -9,7 +7,6 @@ export const handleClick = ({
   isRenaming,
   openLink,
   toggle,
-  selectionModeActive,
   lastClickTime,
   setLastClickTime,
   setSelectedItems,
@@ -23,20 +20,13 @@ export const handleClick = ({
 
   clearHighlightedItems?.()
 
-  // simply remove this "if" the flag is not necessary anymore
-  if (!flag('drive.doubleclick.enabled')) {
-    if (selectionModeActive) {
-      return toggle(event)
-    } else {
-      return openLink(event)
-    }
-  }
-
   const currentTime = Date.now()
   const isDoubleClick = currentTime - lastClickTime < DOUBLECLICKDELAY
 
   if (isDoubleClick) {
     openLink(event)
+  } else if (event.ctrlKey || event.metaKey) {
+    toggle(event)
   } else {
     // we should not use file.index
     // we should probablt not use index - 1

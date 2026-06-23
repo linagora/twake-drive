@@ -80,7 +80,7 @@ describe('QuotaBanner', () => {
     setup()
 
     fireEvent.click(screen.getByRole('button', { name: 'I understand' }))
-    expect(dismissSpy).toBeCalledTimes(1)
+    expect(dismissSpy).toHaveBeenCalledTimes(1)
 
     const premiumButton = screen.queryByText('Check our plans')
     expect(premiumButton).toBeNull()
@@ -102,7 +102,7 @@ describe('QuotaBanner', () => {
     })
 
     fireEvent.click(screen.getByText('Check our plans'))
-    expect(openSpy).toBeCalledWith(
+    expect(openSpy).toHaveBeenCalledWith(
       'http://mycozy.cloud/cozy/instances/123/premium?lang=en',
       '_self'
     )
@@ -157,7 +157,7 @@ describe('QuotaBanner', () => {
     const actionButton = await screen.findByText('Check our plans')
 
     fireEvent.click(actionButton)
-    expect(openSpy).toBeCalledWith(
+    expect(openSpy).toHaveBeenCalledWith(
       'http://mycozy.cloud/cozy/instances/123/premium?lang=en',
       '_self'
     )

@@ -14,7 +14,7 @@ export const fetchFolder = async ({ client, folderId, driveId }) => {
     definition: definition(),
     options
   })
-  return driveId ? folderQueryResults.data?.[0] : folderQueryResults.data
+  return folderQueryResults.data
 }
 
 /**
@@ -23,7 +23,7 @@ export const fetchFolder = async ({ client, folderId, driveId }) => {
  * @param {Object} params - The parameters for the function.
  * @param {string} params.folderId - The ID of the folder to fetch.
  * @param {string} [params.driveId] - The ID of the shared drive to fetch the folder from.
- * @returns {import('cozy-client/types/types').IOCozyFolder} The folder data.
+ * @returns {{ folder: import('cozy-client/types/types').IOCozyFolder, fetchStatus: string }} The folder data and the query fetch status.
  */
 export const useFolder = ({ folderId, driveId }) => {
   const folderQuery = driveId
@@ -31,5 +31,8 @@ export const useFolder = ({ folderId, driveId }) => {
     : buildFileOrFolderByIdQuery(folderId)
   const { options, definition } = folderQuery
   const folderQueryResults = useQuery(definition, options)
-  return driveId ? folderQueryResults.data?.[0] : folderQueryResults.data
+  return {
+    folder: folderQueryResults.data,
+    fetchStatus: folderQueryResults.fetchStatus
+  }
 }

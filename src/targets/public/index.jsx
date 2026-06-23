@@ -33,6 +33,8 @@ import registerClientPlugins from '@/lib/registerClientPlugins'
 import configureStore from '@/store/configureStore'
 import styles from '@/styles/main.styl'
 
+import { getPublicPageLocale } from './localeHelper'
+
 const renderError = (lang, root) =>
   createRoot(root).render(
     <I18n lang={lang} dictRequire={lang => require(`@/locales/${lang}`)}>
@@ -45,9 +47,9 @@ const renderError = (lang, root) =>
   )
 
 const init = async () => {
-  const lang = document.documentElement.getAttribute('lang') || 'en'
   const root = document.querySelector('[role=application]')
   const dataset = JSON.parse(root.dataset.cozy)
+  const lang = getPublicPageLocale(dataset)
   const { sharecode, isOnlyOfficeDocShared, onlyOfficeDocId, username } =
     getQueryParameter()
 
@@ -67,8 +69,8 @@ const init = async () => {
     Document.registerClient(client)
   }
 
-  const polyglot = initTranslation(dataset.locale, lang =>
-    require(`@/locales/${lang}`)
+  const polyglot = initTranslation(lang, locale =>
+    require(`@/locales/${locale}`)
   )
 
   const store = configureStore({

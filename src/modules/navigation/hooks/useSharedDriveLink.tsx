@@ -25,7 +25,7 @@ const useSharedDriveLink = (sharing: SharedDrive): UseFileLinkResult => {
   const navigate = useNavigate()
   const client = useClient()
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   const cozyUrl = client?.getStackClient().uri as string
 
   const app = 'drive'

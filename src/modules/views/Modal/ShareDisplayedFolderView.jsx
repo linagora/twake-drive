@@ -1,6 +1,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import flag from 'cozy-flags'
 import { ShareModal } from 'cozy-sharing'
 
 import { SHARING_TAB_DRIVES } from '@/constants/config'
@@ -28,6 +29,8 @@ const ShareDisplayedFolderView = () => {
         sharingDesc={displayedFolder.name}
         onClose={onClose}
         onRevokeSuccess={onRevokeSuccess}
+        autoOpenShareRestriction={flag('sharing.auto-open-settings.enabled')}
+        showGenerateLinkButton={flag('sharing.generate-link-button.enabled')}
       />
     )
   }

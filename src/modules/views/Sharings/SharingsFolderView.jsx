@@ -1,7 +1,6 @@
 import React, { useMemo, useContext, useEffect } from 'react'
 import { useDispatch } from 'react-redux'
 import { useNavigate, Outlet, useLocation } from 'react-router-dom'
-import { useI18n } from 'twake-i18n'
 
 import { useQuery, useClient } from 'cozy-client'
 import flag from 'cozy-flags'
@@ -10,6 +9,7 @@ import SharedDocuments from 'cozy-sharing/dist/components/SharedDocuments'
 import { makeActions } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
+import { useI18n } from 'twake-i18n'
 
 import FolderView from '../Folder/FolderView'
 import FolderViewBody from '../Folder/FolderViewBody'
@@ -31,21 +31,13 @@ import {
 } from '@/modules/actions'
 import { moveTo } from '@/modules/actions/components/moveTo'
 import { personalizeFolder } from '@/modules/actions/components/personalizeFolder'
-import { makeExtraColumnsNamesFromMedia } from '@/modules/certifications'
-import { useExtraColumns } from '@/modules/certifications/useExtraColumns'
 import AddMenuProvider from '@/modules/drive/AddMenu/AddMenuProvider'
 import FabWithAddMenuContext from '@/modules/drive/FabWithAddMenuContext'
 import Toolbar from '@/modules/drive/Toolbar'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 import Dropzone from '@/modules/upload/Dropzone'
 import FolderViewBodyVz from '@/modules/views/Folder/virtualized/FolderViewBody'
-import {
-  buildDriveQuery,
-  buildFileWithSpecificMetadataAttributeQuery
-} from '@/queries'
-
-const desktopExtraColumnsNames = ['carbonCopy', 'electronicSafe']
-const mobileExtraColumnsNames = []
+import { buildDriveQuery } from '@/queries'
 
 const SharingsFolderView = ({ sharedDocumentIds }) => {
   const navigate = useNavigate()
@@ -64,18 +56,6 @@ const SharingsFolderView = ({ sharedDocumentIds }) => {
     useSelectionContext()
   const { isFabDisplayed, setIsFabDisplayed } = useContext(FabContext)
   useHead()
-
-  const extraColumnsNames = makeExtraColumnsNamesFromMedia({
-    isMobile,
-    desktopExtraColumnsNames,
-    mobileExtraColumnsNames
-  })
-
-  const extraColumns = useExtraColumns({
-    columnsNames: extraColumnsNames,
-    queryBuilder: buildFileWithSpecificMetadataAttributeQuery,
-    currentFolderId
-  })
 
   const [sortOrder, setSortOrder, isSettingsLoaded] =
     useFolderSort(currentFolderId)
@@ -181,7 +161,6 @@ const SharingsFolderView = ({ sharedDocumentIds }) => {
             actions={actions}
             queryResults={allResults}
             canSort
-            extraColumns={extraColumns}
             currentFolderId={currentFolderId}
           />
         )}

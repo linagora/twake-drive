@@ -1,11 +1,12 @@
 {
   "Nav": {
-    "item_drive": "Fichiers",
+    "item_drive": "Mon Drive",
     "item_recent": "Récents",
     "item_sharings": "Partages",
     "item_shared": "Partagés",
     "item_activity": "Activité",
     "item_trash": "Corbeille",
+    "item_migration": "Migration",
     "item_settings": "Paramètres",
     "item_collect": "Administratif",
     "item_shared_drives": "Drives partagés",
@@ -23,7 +24,8 @@
     "link-client-ios": "https://apps.apple.com/app/cloud-personnel-cozy/id1600636174",
     "link-client-web": "https://cozy.io/try-it",
     "view_more": "Voir plus",
-    "view_less": "Voir moins"
+    "view_less": "Voir moins",
+    "item_nextcloud": "Nextcloud"
   },
   "breadcrumb": {
     "title_drive": "Fichiers",
@@ -41,12 +43,11 @@
   },
   "toolbar": {
     "menu_manage_access": "Gérer les accès",
-    "menu_leave_shared_drive": "Sortir drive",
+    "menu_leave_shared_drive": "Quitter le partage",
     "menu_upload": "Importer des fichiers",
     "item_more": "Plus",
     "menu_new_folder": "Dossier",
     "menu_new_shared_drive": "Drive partagé",
-    "menu_new_encrypted_folder": "Dossier chiffré",
     "menu_select": "Sélectionner les éléments",
     "menu_share_folder": "Partager le dossier",
     "menu_download": "Télécharger",
@@ -56,6 +57,8 @@
     "menu_download_file": "Télécharger ce fichier",
     "menu_create_note": "Note",
     "menu_create_docs": "Docs",
+    "menu_create_excalidraw": "Excalidraw",
+    "menu_create_grist": "Grist",
     "menu_create_shortcut": "Raccourci",
     "share": "Partager",
     "trash": "Supprimer",
@@ -194,16 +197,6 @@
       "head_updated_at_desc": "Plus récents en premier",
       "head_size_asc": "Plus légers en premier",
       "head_size_desc": "Plus lourds en premier"
-    },
-    "tooltip": {
-      "carbonCopy": {
-        "title": "Copie conforme",
-        "caption": "Le document est défini \"authentique et original\" par Twake Workplace, l'hébergeur de votre Twake, car il peut affirmer qu'il provient directement des services de son émetteur sans avoir subi aucune modification."
-      },
-      "electronicSafe": {
-        "title": "Coffre-fort numérique",
-        "caption": "Indique si le document original est sécurisé par votre coffre-fort numérique personnel avec les certifications qui lui confèrent une valeur probante et une garantie de conservation de 50 ans au-delà de son dépôt."
-      }
     }
   },
   "Storage": {
@@ -238,7 +231,7 @@
     "title": "Supprimer %{filename} ? |||| Supprimer %{smart_count} %{type} ?",
     "trash": "Cet élément sera déplacé dans la corbeille. |||| Ces éléments seront déplacés dans la corbeille.",
     "restore": "Vous pouvez toujours le restaurer quand vous voulez.",
-    "share_accepted": "Le partage sera arrêté. Ainsi, les contacts suivant conserveront une copie mais vos changements ne seront plus synchronisés :",
+    "share_accepted": "Le partage sera arrêté.",
     "share_waiting": "Le partage sera arrêté. Ainsi, les contacts suivant ne pourront donc plus accepter le partage et ne pourront plus accéder aux contenus partagés :",
     "share_both": "Le partage sera arrêté. Ainsi, les contacts ayant stocké les fichiers dans leur Twake conserveront une copie, les autres contacts ne pourront plus accéder aux contenus partagés :",
     "link": "Le partage par lien ne sera plus actif.",
@@ -282,7 +275,7 @@
     "mobile_text": "Sélectionnez les fichiers sur votre appareil.",
     "trash_title": "Vous n'avez aucun fichier supprimé.",
     "trash_text": "Déplacez les fichiers dont vous n'avez plus besoin dans la corbeille et supprimez-les définitivement pour récupérer de l'espace de stockage.",
-    "shared-drive_text": "Créez et partagez votre premier drive."
+    "sharing_text": "Vous n’avez aucun fichier ni drive partagé pour le moment."
   },
   "error": {
     "open_folder": "Une erreur est survenue pendant l'ouverture du dossier.",
@@ -292,8 +285,7 @@
     },
     "download_file": {
       "offline": "Vous devez être connecté pour pouvoir ouvrir ce fichier",
-      "missing": "Le fichier n'existe pas",
-      "encryption_many": "Vous ne pouvez pas télécharger plusieurs fichiers chiffrés en même temps"
+      "missing": "Le fichier n'existe pas"
     }
   },
   "Error": {
@@ -346,15 +338,33 @@
       "element": "élément"
     },
     "alert": {
-      "success": "%{smart_count} %{type} importé. |||| %{smart_count} %{type}s importés.",
-      "success_conflicts": "%{smart_count} %{type} importé avec %{conflictNumber} conflit(s). |||| %{smart_count} %{type}s importés avec %{conflictNumber} conflit(s).",
-      "success_updated": "%{smart_count} %{type} importé et %{updatedCount} mis à jour. |||| %{smart_count} %{type}s importés et %{updatedCount} mis à jour.",
-      "success_updated_conflicts": "%{smart_count} %{type} importé, %{updatedCount} mis à jour et %{conflictCount} conflit(s). |||| %{smart_count} %{type}s importés, %{updatedCount} mis à jour et %{conflictCount} conflit(s).",
+      "success": "%{smart_count} %{type} importé. |||| %{smart_count} %{type} importés.",
+      "success_conflicts": "%{smart_count} %{type} importé avec %{conflictNumber} conflit(s). |||| %{smart_count} %{type} importés avec %{conflictNumber} conflit(s).",
+      "success_updated": "%{smart_count} %{type} importé et %{updatedCount} mis à jour. |||| %{smart_count} %{type} importés et %{updatedCount} mis à jour.",
+      "success_updated_conflicts": "%{smart_count} %{type} importé, %{updatedCount} mis à jour et %{conflictCount} conflit(s). |||| %{smart_count} %{type} importés, %{updatedCount} mis à jour et %{conflictCount} conflit(s).",
       "updated": "%{smart_count} %{type} mis à jour. |||| %{smart_count} %{type} mis à jour.",
-      "updated_conflicts": "%{smart_count} %{type} mis à jour avec %{conflictCount} conflit(s). |||| %{smart_count} %{type}s mis à jour avec %{conflictCount} conflit(s).",
+      "updated_conflicts": "%{smart_count} %{type} mis à jour avec %{conflictCount} conflit(s). |||| %{smart_count} %{type} mis à jour avec %{conflictCount} conflit(s).",
       "errors": "Une erreur est survenue lors de l’import du %{type}, merci de réessayer plus tard.",
       "network": "Vous ne disposez pas d'une connexion internet. Merci de réessayer quand ce sera le cas.",
-      "fileTooLargeErrors": "Fichier trop volumineux. Taille maximale autorisée par fichier : %{max_size_value} Go"
+      "fileTooLargeErrors": "Fichier trop volumineux. Taille maximale autorisée par fichier : %{max_size_value} Go",
+      "unreadable_files": "Certains fichiers n'ont pas pu être lus. Le chemin est peut-être trop long ou le dossier a été modifié pendant le transfert."
+    },
+    "limit": {
+      "title": "Importation impossible : Ce dossier contient plus de %{limit} fichiers",
+      "content": "Pour une importation de cette taille, nous vous recommandons d'utiliser l'application de synchronisation sur ordinateur.",
+      "content_public": "Veuillez réduire le nombre de fichiers et réessayer.",
+      "cancel": "Annuler",
+      "close": "Fermer",
+      "download_desktop": "Installer l'application"
+    },
+    "conflict": {
+      "title": "Options d'import",
+      "content": "Un ou plusieurs fichiers existent déjà dans ce dossier. Voulez-vous remplacer le fichier existant ou conserver les deux versions ?",
+      "apply_all": "Les paramètres de partage resteront inchangés si vous remplacez le fichier",
+      "replace": "Remplacer le fichier existant",
+      "keep_both": "Conserver les deux fichiers",
+      "cancel": "Annuler",
+      "confirm": "Importer"
     }
   },
   "intents": {
@@ -369,13 +379,16 @@
     }
   },
   "UploadQueue": {
-    "header": "Import de %{smart_count} fichier dans votre Twake |||| Import de %{smart_count} fichiers dans votre Twake",
+    "header": "Import de %{smart_count} élément dans votre Twake |||| Import de %{smart_count} éléments dans votre Twake",
+    "header_preparing": "Préparation de %{smart_count} élément |||| Préparation de %{smart_count} éléments",
     "header_mobile": "Import de %{done} sur %{total}",
     "header_done": "%{done} sur %{total} élément(s) importé(s)",
     "success_flagship": "%{smart_count} fichier importé avec succès. |||| %{smart_count} fichiers importés avec succès.",
     "close": "Fermer",
     "item": {
-      "pending": "En attente"
+      "pending": "En attente",
+      "preparing": "En préparation",
+      "conflict": "En attente d'un choix"
     }
   },
   "Viewer": {
@@ -422,8 +435,8 @@
     "addFolder": "Ajouter un dossier",
     "outsideSharedFolder": {
       "title": "Déplacement en dehors du dossier %{sharedFolder}",
-      "content_1": "Attention, vous souhaitez déplacer %{name} en dehors du dossier partagé %{sharedFolder}. |||| Attention, vous souhaitez déplacer %{smart_count} %{type}s en dehors du dossier partagé %{sharedFolder}.",
-      "content_2": "Ce déplacement, va retirer le %{type} %{name} du partage. Ce %{type} va donc être mis à la corbeille pour l'ensemble des membres du partage. |||| Ce déplacement, va retirer les %{smart_count} %{type}s du partage. Ces %{type}s vont donc être mis à la corbeille pour l'ensemble des membres du partage.",
+      "content_1": "Attention, vous souhaitez déplacer %{name} en dehors du dossier partagé %{sharedFolder}. |||| Attention, vous souhaitez déplacer %{smart_count} %{type} en dehors du dossier partagé %{sharedFolder}.",
+      "content_2": "Ce déplacement, va retirer le %{type} %{name} du partage. |||| Ce déplacement, va retirer les %{smart_count} %{type} du partage.",
       "cancel": "Annuler",
       "confirm": "J'ai compris"
     },
@@ -526,6 +539,15 @@
     "needs_info": "Un raccourci a besoin d'un nom et d'une URL",
     "url_badformat": "L'URL saisie n'est pas dans le bon format"
   },
+  "Excalidraw": {
+    "createFileName": "Nouveau dessin",
+    "collaboration": {
+      "guest": "Invité"
+    }
+  },
+  "Pdf": {
+    "save": "Enregistrer"
+  },
   "OnlyOffice": {
     "Error": {
       "title": "Quelque chose n'a pas fonctionné",
@@ -544,16 +566,7 @@
       "goToHome": "Aller à l'accueil"
     },
     "actions": {
-      "edit": "Modifier",
       "validate": "Valider"
-    },
-    "tooltip": {
-      "title": "Modifier le document",
-      "text": "Le document est actuellement en lecture seule, Vous pouvez le modifier en cliquant ici.",
-      "actions": {
-        "ok": "Ok",
-        "hide": "Ne plus afficher"
-      }
     }
   },
   "Migration": {
@@ -620,6 +633,16 @@
     "restoreError": "Une erreur est survenue, merci de réessayer.",
     "destroySuccess": "L’élément a bien été supprimé"
   },
+  "MigrationProgressBanner": {
+    "title": "Migration depuis Nextcloud en cours",
+    "percent": "%{percent}% terminé",
+    "importing": "Importation de %{count} fichiers depuis Nextcloud ...",
+    "cancel": "Annuler",
+    "done": {
+      "title": "Migration terminée !",
+      "body": "%{count} fichiers importés avec succès depuis Nextcloud"
+    }
+  },
   "EntriesType": {
     "file": "fichier |||| fichiers",
     "directory": "dossier |||| dossiers",
@@ -684,7 +707,9 @@
     "personalizeFolder": {
       "label": "Personnaliser le dossier"
     },
-    "summariseByAI": "Résumer"
+    "summariseByAI": "Résumer",
+    "signWithEuDss": "Signer",
+    "verifyWithEuDss": "Vérifier la signature"
   },
   "FolderCustomizer": {
     "title": "Personnaliser le dossier",

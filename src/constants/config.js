@@ -17,6 +17,7 @@ export const KONNECTORS_DIR_PATH = '/.cozy_konnectors'
 export const FILES_FETCH_LIMIT = 100
 export const MAX_PAYLOAD_SIZE_IN_GB = 5
 export const MAX_PAYLOAD_SIZE = MAX_PAYLOAD_SIZE_IN_GB * 1024 * 1024 * 1024
+export const MAX_UPLOAD_FILE_COUNT = 500
 export const SHARING_TAB_ALL = 0
 export const SHARING_TAB_DRIVES = 1
 export const DEFAULT_UPLOAD_PROGRESS_HIDE_DELAY = 5000

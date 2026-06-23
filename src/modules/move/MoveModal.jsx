@@ -1,10 +1,10 @@
 import PropTypes from 'prop-types'
 import React, { useState } from 'react'
-import { useI18n } from 'twake-i18n'
 
 import { useClient } from 'cozy-client'
 import { useSharingContext } from 'cozy-sharing'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
+import { useI18n } from 'twake-i18n'
 
 import { useMove } from './hooks/useMove'
 
@@ -63,13 +63,16 @@ const MoveModal = ({
   const handleConfirm = async folder => {
     setFolderSelected(folder)
 
-    const sharedParentPath = getSharedParentPath(entries[0].path)
+    const sharedParentPath = entries[0].path
+      ? getSharedParentPath(entries[0].path)
+      : ''
     const targetPath = joinPath(folder.path, entries[0].name)
 
     const areMovedFilesShared = hasOneOfEntriesShared(entries, byDocId)
-    const isOriginParentShared = hasSharedParent(entries[0].path) || !!driveId
+    const isOriginParentShared =
+      hasSharedParent(entries[0].path || '') || !!driveId
     const isTargetShared =
-      hasSharedParent(targetPath) ||
+      hasSharedParent(targetPath || '') ||
       (!!folder.driveId && folder.driveId !== driveId)
     const isInsideSameSharedFolder =
       (sharedParentPath && targetPath.startsWith(sharedParentPath)) ||
@@ -142,7 +145,8 @@ const MoveModal = ({
       logger.warn(e)
       showAlert({
         message: t('Move.error', { smart_count: entries.length }),
-        severity: 'error'
+        severity: 'error',
+        duration: 4000
       })
     } finally {
       setMoveInProgress(false)

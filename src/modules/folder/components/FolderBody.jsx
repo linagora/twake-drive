@@ -31,7 +31,6 @@ import SelectionBar from '@/modules/selection/SelectionBar'
  * @param {string} props.folderId - The ID of the folder.
  * @param {Array} props.queryResults - The results of the queries for the folder content.
  * @param {Object} [props.actions] - The actions available for the folder.
- * @param {import('modules/certifications/useExtraColumns').ExtraColumn[]} props.extraColumns - The extra columns to display in the file list.
  * @param {boolean} [props.canSort] - Indicates whether sorting is enabled for the file list.
  * @param {Function} [props.refreshFolderContent] - The function to refresh the folder content.
  * @param {boolean} [props.withFilePath] - Indicates whether to display the file path.
@@ -43,7 +42,6 @@ const FolderBody = ({
   folderId,
   queryResults,
   actions,
-  extraColumns,
   canSort,
   refreshFolderContent,
   withFilePath,
@@ -108,7 +106,6 @@ const FolderBody = ({
               <AddFolder
                 vaultClient={vaultClient}
                 refreshFolderContent={refreshFolderContent}
-                extraColumns={extraColumns}
                 currentFolderId={folderId}
                 driveId={driveId}
               />
@@ -129,7 +126,6 @@ const FolderBody = ({
               <AddFolder
                 vaultClient={vaultClient}
                 refreshFolderContent={refreshFolderContent}
-                extraColumns={extraColumns}
                 currentFolderId={folderId}
                 driveId={driveId}
               />
@@ -150,7 +146,6 @@ const FolderBody = ({
                           actions={actions}
                           refreshFolderContent={refreshFolderContent}
                           isInSyncFromSharing={isInSyncFromSharing}
-                          extraColumns={extraColumns}
                           withSelectionCheckbox
                           canInteractWith={canInteractWith}
                         />

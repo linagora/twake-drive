@@ -200,6 +200,7 @@ const FilesRealTimeQueries = ({
     }
 
     subscribeToEvents().catch(err =>
+      // eslint-disable-next-line no-console
       console.error('Failed to subscribe to realtime events:', err)
     )
 

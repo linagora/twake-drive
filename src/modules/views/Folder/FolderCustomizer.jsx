@@ -1,5 +1,4 @@
 import React, { useState, useRef } from 'react'
-import { useI18n } from 'twake-i18n'
 
 import { useClient, useQuery } from 'cozy-client'
 import Backdrop from 'cozy-ui/transpiled/react/Backdrop'
@@ -11,6 +10,7 @@ import Tab from 'cozy-ui/transpiled/react/Tab'
 import Tabs from 'cozy-ui/transpiled/react/Tabs'
 import Typography from 'cozy-ui/transpiled/react/Typography'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
+import { useI18n } from 'twake-i18n'
 
 import { CustomizedIcon } from './CustomizedIcon'
 

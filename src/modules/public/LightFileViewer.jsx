@@ -25,6 +25,7 @@ import {
   isOfficeEnabled,
   makeOnlyOfficeFileRoute
 } from '@/modules/views/OnlyOffice/helpers'
+import { isPdfEditorEnabled, makePdfRoute } from '@/modules/views/Pdf/helpers'
 
 const LightFileViewer = ({ files, isPublic }) => {
   const sharingInfos = useSharingInfos()
@@ -36,9 +37,22 @@ const LightFileViewer = ({ files, isPublic }) => {
   const onlyOfficeOpener = useCallback(
     file => {
       const route = makeOnlyOfficeFileRoute(file.id, {
+        driveId: file.driveId,
         fromPathname: pathname
       })
       navigate(route)
+    },
+    [navigate, pathname]
+  )
+
+  const pdfOpener = useCallback(
+    file => {
+      navigate(
+        makePdfRoute(file.id, {
+          fromPathname: pathname,
+          fromPublicFolder: true
+        })
+      )
     },
     [navigate, pathname]
   )
@@ -77,6 +91,10 @@ const LightFileViewer = ({ files, isPublic }) => {
             OnlyOfficeViewer: {
               isEnabled: isOfficeEnabled(isDesktop),
               opener: onlyOfficeOpener
+            },
+            PdfViewer: {
+              isPdfEditorEnabled: isPdfEditorEnabled(),
+              opener: pdfOpener
             },
             toolbarProps: {
               showToolbar: isDesktop,

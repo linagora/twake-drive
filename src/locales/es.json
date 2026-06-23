@@ -1,4 +1,7 @@
 {
+  "Excalidraw": {
+    "createFileName": "Nuevo dibujo"
+  },
   "Nav": {
     "item_drive": "Drive",
     "item_recent": "Recientes",
@@ -42,12 +45,12 @@
     "menu_download_folder": "Descargar carpeta",
     "menu_download_file": "Descargar este archivo",
     "menu_create_note": "Nota",
+    "menu_create_excalidraw": "Excalidraw",
     "empty_trash": "Vaciar la papelera",
     "share": "Compartir",
     "trash": "Suprimir",
     "delete_shared_drive": "Eliminar unidad compartida",
     "leave": "Salir de la carpeta compartida & borrarla",
-    "menu_onlyOffice": {},
     "select_all": "Seleccionar todo",
     "select_all_mobile": "todos",
     "clear_selection": "Borrar selección",
@@ -168,16 +171,6 @@
       "head_updated_at_desc": "El más reciente primero",
       "head_size_asc": "El más liviano primero",
       "head_size_desc": "El más pesado primero"
-    },
-    "tooltip": {
-      "carbonCopy": {
-        "title": "Copia Carbón",
-        "caption": "Indica si Twake Workplace, su sitio de hospedaje,  define el documento como \"auténtico y original\", ya que puede afirmar que proviene directamente de un servicio de terceros, sin haber sufrido ninguna modificación."
-      },
-      "electronicSafe": {
-        "title": "Seguridad electrónica",
-        "caption": "Indica si el documento original está protegido por su seguridad digital personal con las certificaciones que le dan valor probatorio y una garantía de retención de 50 años más allá de su depósito si el documento es definido como \"auténtico y original\" por Twake Workplace, donde se hospeda su Twake, ya que puede afirmar que proviene directamente de un servicio de terceros, sin haber sufrido ninguna modificación.\n\n"
-      }
     }
   },
   "Storage": {
@@ -293,9 +286,17 @@
   },
   "upload": {
     "label": "Subir",
-    "documentType": {},
     "alert": {
       "network": "Usted no dispone de una conexión internet. Vuelva a ensayar cuando disponga de una."
+    },
+    "conflict": {
+      "title": "Opciones de subida",
+      "content": "Uno o varios archivos ya existen en esta carpeta. ¿Quieres reemplazar el archivo existente o conservar ambas versiones?",
+      "apply_all": "La configuración de uso compartido no cambiará si reemplazas el archivo",
+      "replace": "Reemplazar el archivo existente",
+      "keep_both": "Conservar ambos archivos",
+      "cancel": "Anular",
+      "confirm": "Subir"
     }
   },
   "intents": {
@@ -315,7 +316,8 @@
     "header_done": "Subidos %{done} de %{total} con éxito",
     "close": "cerrar",
     "item": {
-      "pending": "Pendiente"
+      "pending": "Pendiente",
+      "conflict": "Esperando elección"
     }
   },
   "Viewer": {
@@ -355,9 +357,7 @@
     "error": "Ha ocurrido un error al desplazar este elemento, por favor vuelva a ensayar. |||| Ha ocurrido un error al desplazar estos elementos, por favor vuelva a ensayar.",
     "cancelled": "%{subject} ha sido devuelto a su carpeta de origen. |||| %{smart_count} elementos han sido devueltos a sus carpetas de origen.",
     "cancelledWithRestoreErrors": "%{subject} ha sido desplazado a su ubicación original pero hubo un error al restaurar el archivo de la papelera. |||| %{smart_count} elementos han sido desplazados a su ubicación original pero hubo  %{restoreErrorsCount} error(es) al  restaurar los archivos de la papelera.",
-    "cancelled_error": "Lo sentimos, ha ocurrido un error al anular el desplazamiento. |||| Lo sentimos, un error ha ocurrido al anular los desplazamientos.",
-    "outsideSharedFolder": {},
-    "sharedFolderInsideAnother": {}
+    "cancelled_error": "Lo sentimos, ha ocurrido un error al anular el desplazamiento. |||| Lo sentimos, un error ha ocurrido al anular los desplazamientos."
   },
   "ImportToDrive": {
     "title": "%{smart_count} elemento |||| %{smart_count} elementos",

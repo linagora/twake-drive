@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom'
-import { renderHook, act } from '@testing-library/react-hooks'
+import { renderHook, act } from '@testing-library/react'
 import React from 'react'
 import { Provider } from 'react-redux'
 import { createStore } from 'redux'
@@ -65,11 +65,13 @@ jest.mock('cozy-sharing', () => ({
   withLocales: component => component
 }))
 
-import { useI18n } from 'twake-i18n'
+jest.mock('@/modules/upload/NewItemHighlightProvider', () => ({
+  useNewItemHighlightContext: jest.fn(() => ({ addItems: jest.fn() }))
+}))
 
 import { isFile } from 'cozy-client/dist/models/file'
-import flag from 'cozy-flags'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
+import { useI18n } from 'twake-i18n'
 
 import { shouldBlockKeyboardShortcuts, normalizeKey } from './helpers'
 import { useKeyboardShortcuts } from './useKeyboardShortcuts.tsx'
@@ -207,11 +209,6 @@ describe('useKeyboardShortcuts', () => {
     handlePasteOperation.mockResolvedValue([
       { success: true, file: { _id: 'pasted-file' }, operation: OPERATION_COPY }
     ])
-
-    flag.mockImplementation(flagName => {
-      if (flagName === 'drive.keyboard-shortcuts.enabled') return true
-      return false
-    })
 
     mockCopyFiles.mockClear()
     mockCutFiles.mockClear()

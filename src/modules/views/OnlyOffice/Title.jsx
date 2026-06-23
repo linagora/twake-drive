@@ -23,8 +23,7 @@ const useStyles = makeStyles(theme => ({
 const Title = () => {
   const [searchParams] = useSearchParams(window.location.search)
   const { isMobile } = useBreakpoints()
-  const { fileId, isPublic, isEditorModeView, isTrashed } =
-    useOnlyOfficeContext()
+  const { fileId, isPublic, isTrashed } = useOnlyOfficeContext()
   const sharingInfos = useSharingInfos()
   const { loading, isSharingShortcutCreated } = sharingInfos
   const styles = useStyles()
@@ -41,26 +40,20 @@ const Title = () => {
     (!isShareAlreadyAdded || !isCozyToCozySharing) &&
     !isCozyToCozySharingSynced
 
-  const showDialogToolbar = isEditorModeView || !isMobile
-
   const isAddToMyCozyFabDisplayed =
     isMobile && isCozyToCozySharing && !isShareAlreadyAdded
 
   return (
     <div style={{ zIndex: 'var(--zIndex-nav)' }}>
-      {showDialogToolbar && (
-        <>
-          <DialogTitle
-            data-testid="onlyoffice-title"
-            disableTypography
-            className="u-ellipsis u-flex u-flex-items-center u-p-0 u-pr-1"
-            classes={styles}
-          >
-            <Toolbar sharingInfos={sharingInfos} />
-          </DialogTitle>
-          <Divider />
-        </>
-      )}
+      <DialogTitle
+        data-testid="onlyoffice-title"
+        disableTypography
+        className="u-ellipsis u-flex u-flex-items-center u-p-0 u-pr-1"
+        classes={styles}
+      >
+        <Toolbar sharingInfos={sharingInfos} />
+      </DialogTitle>
+      <Divider />
       {isTrashed ? (
         <div style={{ backgroundColor: 'var(--paperBackgroundColor)' }}>
           <TrashedBanner fileId={fileId} isPublic={isPublic} />

@@ -1,5 +1,4 @@
 import React from 'react'
-import { useI18n } from 'twake-i18n'
 
 import { useClient } from 'cozy-client'
 import { splitFilename } from 'cozy-client/dist/models/file'
@@ -10,6 +9,7 @@ import StarOutlineIcon from 'cozy-ui/transpiled/react/Icons/StarOutline'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
+import { useI18n } from 'twake-i18n'
 
 const FavoritesItem = ({ displayedFolder }) => {
   const { showAlert } = useAlert()
@@ -39,7 +39,7 @@ const FavoritesItem = ({ displayedFolder }) => {
         }),
         severity: 'success'
       })
-    } catch (error) {
+    } catch (_error) {
       showAlert({ message: t('favorites.error'), severity: 'error' })
     }
   }

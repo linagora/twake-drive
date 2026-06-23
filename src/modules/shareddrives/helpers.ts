@@ -1,7 +1,5 @@
+import CozyClient, { generateWebLink } from 'cozy-client'
 import { IOCozyFile } from 'cozy-client/types/types'
-
-import type { File, FolderPickerEntry } from '@/components/FolderPicker/types'
-import { SHARED_DRIVES_DIR_ID } from '@/constants/config'
 
 // Temporary type, need to be completed and then put in cozy-client
 export interface SharedDrive {
@@ -9,6 +7,7 @@ export interface SharedDrive {
   description: string
   rules: Rule[]
   owner?: boolean
+  org_drive?: boolean
 }
 
 export interface Rule {
@@ -39,21 +38,31 @@ export const getFolderIdFromSharing = (
   }
 }
 
-export const isFolderFromSharedDriveRecipient = (folder: IOCozyFile): boolean =>
+/**
+ * True when the document carries a shared drive `driveId`. This is the
+ * case for the shared drive root itself (folder or file) and, on the
+ * recipient side, for any doc exposed inside the shared drive.
+ *
+ * The previous name `isFromSharedDriveRecipient` was misleading: this
+ * check is shared-drive-shape-only, not recipient-specific. To assert
+ * recipient intent, combine with `isOwner(doc._id)` from the sharing
+ * context.
+ */
+export const isSharedDriveDoc = (folder: IOCozyFile): boolean =>
   folder && Boolean(folder.driveId)
 
-export const isFolderFromSharedDriveOwner = (folder: IOCozyFile): boolean =>
-  folder &&
-  folder._type == 'io.cozy.files' &&
-  folder.dir_id === SHARED_DRIVES_DIR_ID &&
-  !isFolderFromSharedDriveRecipient(folder)
-
-export const isSharedDriveFolder = (
-  file: File | FolderPickerEntry
-): boolean => {
-  return (
-    file._type === 'io.cozy.files' &&
-    file.dir_id === 'io.cozy.files.shared-drives-dir' &&
-    file.type === 'directory'
-  )
+export const makeSharedDriveNoteReturnUrl = (
+  client: CozyClient,
+  file: IOCozyFile
+): string => {
+  return generateWebLink({
+    slug: 'drive',
+    searchParams: [],
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    cozyUrl: client.getStackClient().uri as string,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    subDomainType: client.getInstanceOptions().subdomain,
+    pathname: '',
+    hash: `/shareddrive/${file.driveId!}/${file.dir_id}`
+  })
 }

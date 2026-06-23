@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { useI18n } from 'twake-i18n'
 
 import { useClient } from 'cozy-client'
 import { fetchBlobFileById, isFile } from 'cozy-client/dist/models/file'
@@ -20,6 +19,7 @@ import {
 } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'
+import { useI18n } from 'twake-i18n'
 
 import { useCurrentFolderId } from '@/hooks'
 import { useModalContext } from '@/lib/ModalContext'
@@ -31,7 +31,10 @@ import { removeFromFavorites } from '@/modules/actions/components/removeFromFavo
 import { details } from '@/modules/actions/details'
 import { filterActionsByPolicy } from '@/modules/actions/policies'
 
-export const useMoreMenuActions = file => {
+export const useMoreMenuActions = (
+  file,
+  { shouldHideIfSharedDriveRecipient = false } = {}
+) => {
   const [isPrintAvailable, setIsPrintAvailable] = useState(false)
   const client = useClient()
   const vaultClient = useVaultClient()
@@ -52,7 +55,6 @@ export const useMoreMenuActions = file => {
   const isPDFDoc = file.mime === 'application/pdf'
   const showPrintAction = isPDFDoc && isPrintAvailable
   const isCozySharing = window.location.pathname === '/preview'
-  const isSharedDrive = window.location.href.includes('/shareddrive/')
 
   const actions = makeActions(
     [
@@ -65,7 +67,7 @@ export const useMoreMenuActions = file => {
       details,
       hr,
       moveTo,
-      !isSharedDrive && duplicateTo, // TO DO: Remove condition when duplicating is available in shared drive
+      duplicateTo,
       addToFavorites,
       removeFromFavorites,
       hr,
@@ -83,7 +85,9 @@ export const useMoreMenuActions = file => {
       refresh: () => navigate('..'),
       navigate,
       hasWriteAccess: canWriteToCurrentFolder,
+      shouldHideIfSharedDriveRecipient,
       canMove: canWriteToCurrentFolder,
+      canDuplicate: canWriteToCurrentFolder,
       isPublic: false,
       allLoaded,
       showAlert,

@@ -195,6 +195,26 @@ describe('MoveModal component', () => {
       expect(moveButton).toBeDisabled()
     })
 
+    it('should not crash when entries have no path attribute', async () => {
+      const entriesWithoutPath = [
+        {
+          _id: 'no_path_file',
+          dir_id: 'bills',
+          name: 'no_path_file.pdf'
+        }
+      ]
+
+      setup({ entries: entriesWithoutPath })
+
+      const moveButton = await screen.findByText('Move')
+      fireEvent.click(moveButton)
+
+      await waitFor(() => {
+        expect(move).toHaveBeenCalled()
+        expect(onCloseSpy).toHaveBeenCalled()
+      })
+    })
+
     it('should move entries to destination', async () => {
       CozyFile.getFullpath.mockImplementation((destinationFolder, name) =>
         Promise.resolve(
@@ -337,8 +357,8 @@ describe('MoveModal component', () => {
           path.includes('/bills')
             ? '/bills'
             : path.includes('/Destination Folder')
-            ? '/Destination Folder'
-            : null
+              ? '/Destination Folder'
+              : null
       })
 
       const moveButton = await screen.findByText('Move')
@@ -368,8 +388,8 @@ describe('MoveModal component', () => {
           path.includes('/bills')
             ? '/bills'
             : path.includes('/Destination Folder')
-            ? '/Destination Folder'
-            : null,
+              ? '/Destination Folder'
+              : null,
         sharingContext: {
           isOwner: () => true,
           revokeAllRecipients: revokeAllSpy,
@@ -413,8 +433,8 @@ describe('MoveModal component', () => {
           path.includes('/bills')
             ? '/bills'
             : path.includes('/Destination Folder')
-            ? '/Destination Folder'
-            : null,
+              ? '/Destination Folder'
+              : null,
         sharingContext: {
           isOwner: () => false,
           revokeAllRecipients: revokeAllSpy,

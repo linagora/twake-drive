@@ -7,6 +7,15 @@ import AppLike from 'test/components/AppLike'
 
 import { FolderPickerTopbar } from '@/components/FolderPicker/FolderPickerTopbar'
 
+jest.mock('@/modules/nextcloud/hooks/useNextcloudInfos', () => ({
+  useNextcloudInfos: () => ({
+    isLoading: false,
+    instanceName: 'Cozycloud',
+    instanceUrl: 'https://cozycloud.example.com',
+    rootFolderName: 'Cozycloud (Nextcloud)'
+  })
+}))
+
 describe('FolderPickerTopbar', () => {
   const navigateTo = jest.fn()
   const showFolderCreation = jest.fn()
@@ -20,12 +29,14 @@ describe('FolderPickerTopbar', () => {
   }
 
   const rootCozyFolder = {
+    id: 'io.cozy.files.root-dir',
     _id: 'io.cozy.files.root-dir',
     _type: 'io.cozy.files',
     type: 'directory'
   }
 
   const sharedDrivesFolder = {
+    id: 'io.cozy.files.shared-drives-dir',
     _id: 'io.cozy.files.shared-drives-dir',
     _type: 'io.cozy.files',
     type: 'directory',
@@ -33,6 +44,7 @@ describe('FolderPickerTopbar', () => {
   }
 
   const nextcloudFolder = {
+    id: '123',
     _id: '123',
     _type: 'io.cozy.remote.nextcloud.files',
     path: '/Documents',
@@ -40,21 +52,38 @@ describe('FolderPickerTopbar', () => {
     name: 'Documents',
     cozyMetadata: {
       sourceAccount: '123'
-    }
+    },
+    links: {
+      self: 'unknown'
+    },
+    size: 0,
+    type: 'directory',
+    updated_at: expect.any(String)
   }
 
   const rootNextcloudFolder = {
-    _id: '123',
+    id: 'io.cozy.remote.nextcloud.files.root-dir',
+    _id: 'io.cozy.remote.nextcloud.files.root-dir',
     _type: 'io.cozy.remote.nextcloud.files',
     path: '/',
     parentPath: '',
     name: 'Cozycloud (Nextcloud)',
     cozyMetadata: {
       sourceAccount: '123'
-    }
+    },
+    links: {
+      self: 'unknown'
+    },
+    size: 0,
+    type: 'directory',
+    updated_at: expect.any(String)
   }
 
-  const setup = ({ canCreateFolder = false, folder } = {}) => {
+  const setup = ({
+    canCreateFolder = false,
+    folder,
+    showFolderCreation: showFolderCreationProp
+  } = {}) => {
     const mockClient = createMockClient({
       queries: {
         'io.cozy.files/io.cozy.files.root-dir': {
@@ -86,6 +115,7 @@ describe('FolderPickerTopbar', () => {
           navigateTo={navigateTo}
           folder={folder}
           canCreateFolder={canCreateFolder}
+          showFolderCreation={showFolderCreationProp}
         />
       </AppLike>
     )
@@ -102,7 +132,7 @@ describe('FolderPickerTopbar', () => {
     expect(backButton).toBeNull()
   })
 
-  it('should show back button for a cozy folder', () => {
+  it('should show back button for a cozy folder', async () => {
     setup({ folder: cozyFolder })
 
     expect(screen.getByText('Photos')).toBeInTheDocument()
@@ -111,12 +141,12 @@ describe('FolderPickerTopbar', () => {
       name: 'Back'
     })
     fireEvent.click(backButton)
-    waitFor(() => {
+    await waitFor(() => {
       expect(navigateTo).toHaveBeenCalledWith(rootCozyFolder)
     })
   })
 
-  it('should show back button for a nextcloud folder', () => {
+  it('should show back button for a nextcloud folder', async () => {
     setup({ folder: nextcloudFolder })
 
     expect(screen.getByText('Documents')).toBeInTheDocument()
@@ -125,12 +155,12 @@ describe('FolderPickerTopbar', () => {
       name: 'Back'
     })
     fireEvent.click(backButton)
-    waitFor(() => {
+    await waitFor(() => {
       expect(navigateTo).toHaveBeenCalledWith(rootNextcloudFolder)
     })
   })
 
-  it('should show back button inside a deep nextcloud folder', () => {
+  it('should show back button inside a deep nextcloud folder', async () => {
     setup({
       folder: {
         _id: '123',
@@ -150,12 +180,24 @@ describe('FolderPickerTopbar', () => {
       name: 'Back'
     })
     fireEvent.click(backButton)
-    waitFor(() => {
-      expect(navigateTo).toHaveBeenCalledWith(nextcloudFolder)
+    await waitFor(() => {
+      expect(navigateTo).toHaveBeenCalledWith(
+        expect.objectContaining({
+          _id: '123',
+          _type: 'io.cozy.remote.nextcloud.files',
+          path: '/Documents',
+          parentPath: '/',
+          name: 'Documents',
+          cozyMetadata: {
+            sourceAccount: '123'
+          },
+          id: '123'
+        })
+      )
     })
   })
 
-  it('should show back button for a root nextcloud folder', () => {
+  it('should show back button for a root nextcloud folder', async () => {
     setup({ folder: rootNextcloudFolder })
 
     expect(screen.getByText('Cozycloud (Nextcloud)')).toBeInTheDocument()
@@ -164,20 +206,20 @@ describe('FolderPickerTopbar', () => {
       name: 'Back'
     })
     fireEvent.click(backButton)
-    waitFor(() => {
-      expect(navigateTo).toHaveBeenCalledWith()
+    await waitFor(() => {
+      expect(navigateTo).toHaveBeenCalledWith(sharedDrivesFolder)
     })
   })
 
-  it('should show create folder button when canCreateFolder and inside cozy folder', () => {
-    setup({ canCreateFolder: true, folder: cozyFolder })
+  it('should show create folder button when canCreateFolder and inside cozy folder', async () => {
+    setup({ canCreateFolder: true, folder: cozyFolder, showFolderCreation })
 
     const addFolderButton = screen.getByRole('button', {
       name: 'Add a folder'
     })
     fireEvent.click(addFolderButton)
-    waitFor(() => {
-      expect(showFolderCreation).toBeCalled()
+    await waitFor(() => {
+      expect(showFolderCreation).toHaveBeenCalled()
     })
   })
 

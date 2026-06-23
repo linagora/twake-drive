@@ -1,16 +1,15 @@
 import React, { useMemo, useContext, useEffect } from 'react'
 import { useDispatch } from 'react-redux'
 import { Outlet, useParams, useNavigate, useLocation } from 'react-router-dom'
-import { useI18n } from 'twake-i18n'
 
 import { useClient } from 'cozy-client'
 import flag from 'cozy-flags'
 import { useVaultClient } from 'cozy-keys-lib'
 import { useSharingContext } from 'cozy-sharing'
 import { makeActions } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
-import { Content } from 'cozy-ui/transpiled/react/Layout'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
+import { useI18n } from 'twake-i18n'
 
 import useHead from '@/components/useHead'
 import { SHARED_DRIVES_DIR_ID } from '@/constants/config'
@@ -19,7 +18,16 @@ import { useDisplayedFolder, useFolderSort } from '@/hooks'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { FabContext } from '@/lib/FabProvider'
 import { useModalContext } from '@/lib/ModalContext'
-import { download, infos, versions, rename, trash, hr } from '@/modules/actions'
+import {
+  download,
+  infos,
+  versions,
+  rename,
+  trash,
+  hr,
+  share
+} from '@/modules/actions'
+import { duplicateTo } from '@/modules/actions/components/duplicateTo'
 import { moveTo } from '@/modules/actions/components/moveTo'
 import { personalizeFolder } from '@/modules/actions/components/personalizeFolder'
 import AddMenuProvider from '@/modules/drive/AddMenu/AddMenuProvider'
@@ -44,7 +52,8 @@ const SharedDriveFolderView = () => {
   useHead()
   const { driveId, folderId } = params
   const sharingContext = useSharingContext()
-  const { isOwner, byDocId, hasWriteAccess, refresh } = sharingContext
+  const { isOwner, byDocId, hasWriteAccess, refresh, allLoaded } =
+    sharingContext
   const { displayedFolder } = useDisplayedFolder()
   const { pushModal, popModal } = useModalContext()
   const { t } = useI18n()
@@ -55,14 +64,21 @@ const SharedDriveFolderView = () => {
   const { isFabDisplayed, setIsFabDisplayed } = useContext(FabContext)
   const { isSelectionBarVisible } = useSelectionContext()
 
-  const { sharedDriveResult } = useSharedDriveFolder({
-    driveId,
-    folderId
-  })
+  const { sharedDriveResult, fetchStatus, lastUpdate, hasMore, fetchMore } =
+    useSharedDriveFolder({
+      driveId,
+      folderId
+    })
 
-  const queryResults = sharedDriveResult
-    ? [{ fetchStatus: 'loaded', data: sharedDriveResult.included }]
-    : []
+  const queryResults = [
+    {
+      fetchStatus,
+      lastUpdate,
+      data: sharedDriveResult.included ?? [],
+      hasMore,
+      fetchMore
+    }
+  ]
 
   const canWriteToCurrentFolder = hasWriteAccess(folderId, driveId)
 
@@ -89,7 +105,6 @@ const SharedDriveFolderView = () => {
     popModal,
     refresh
   })
-
   const actionsOptions = useMemo(
     () => ({
       client,
@@ -102,12 +117,14 @@ const SharedDriveFolderView = () => {
       hasWriteAccess: canWriteToCurrentFolder,
       byDocId,
       dispatch,
-      canMove: true,
+      canMove: canWriteToCurrentFolder,
+      canDuplicate: canWriteToCurrentFolder,
       navigate,
       showAlert,
       pushModal,
       popModal,
-      refresh
+      refresh,
+      allLoaded
     }),
     [
       client,
@@ -124,7 +141,8 @@ const SharedDriveFolderView = () => {
       showAlert,
       pushModal,
       popModal,
-      refresh
+      refresh,
+      allLoaded
     ]
   )
 
@@ -132,10 +150,12 @@ const SharedDriveFolderView = () => {
     () =>
       makeActions(
         [
+          share,
           download,
           hr,
           rename,
           moveTo,
+          duplicateTo,
           personalizeFolder,
           infos,
           hr,
@@ -157,61 +177,59 @@ const SharedDriveFolderView = () => {
         disabled={!canWriteToCurrentFolder}
         displayedFolder={displayedFolder}
       >
-        <Content className={isMobile ? '' : 'u-pt-1'}>
-          <FolderViewHeader>
-            <SharedDriveBreadcrumb driveId={driveId} folderId={folderId} />
-            <Toolbar
-              canUpload={false}
-              canCreateFolder={canWriteToCurrentFolder}
-              driveId={driveId}
-              showShareButton={isInRootOfSharedDrive}
-            />
-          </FolderViewHeader>
+        <FolderViewHeader>
+          <SharedDriveBreadcrumb driveId={driveId} folderId={folderId} />
+          <Toolbar
+            canUpload={false}
+            canCreateFolder={canWriteToCurrentFolder}
+            driveId={driveId}
+            showShareButton={isInRootOfSharedDrive}
+          />
+        </FolderViewHeader>
 
-          {flag('drive.virtualization.enabled') && !isMobile ? (
-            <FolderViewBodyVz
-              actions={actions}
-              queryResults={queryResults}
-              currentFolderId={folderId}
-              displayedFolder={displayedFolder}
-              canDrag
-              canUpload={canWriteToCurrentFolder}
-              withFilePath={false}
-              driveId={driveId}
-              orderProps={{
-                sortOrder,
-                setOrder: setSortOrder,
-                isSettingsLoaded
-              }}
-            />
-          ) : (
-            <SharedDriveFolderBody
-              folderId={folderId}
-              queryResults={queryResults}
-            />
-          )}
-          <Outlet />
-          {isFabDisplayed && (
-            <AddMenuProvider
-              componentsProps={{
-                AddMenu: {
-                  anchorOrigin: {
-                    vertical: 'top',
-                    horizontal: 'left'
-                  }
+        {flag('drive.virtualization.enabled') && !isMobile ? (
+          <FolderViewBodyVz
+            actions={actions}
+            queryResults={queryResults}
+            currentFolderId={folderId}
+            displayedFolder={displayedFolder}
+            canDrag
+            canUpload={canWriteToCurrentFolder}
+            withFilePath={false}
+            driveId={driveId}
+            orderProps={{
+              sortOrder,
+              setOrder: setSortOrder,
+              isSettingsLoaded
+            }}
+          />
+        ) : (
+          <SharedDriveFolderBody
+            folderId={folderId}
+            queryResults={queryResults}
+          />
+        )}
+        <Outlet />
+        {isFabDisplayed && (
+          <AddMenuProvider
+            componentsProps={{
+              AddMenu: {
+                anchorOrigin: {
+                  vertical: 'top',
+                  horizontal: 'left'
                 }
-              }}
-              canCreateFolder={true}
-              canUpload={true}
-              disabled={false}
-              refreshFolderContent={refresh}
-              displayedFolder={displayedFolder}
-              isSelectionBarVisible={isSelectionBarVisible}
-            >
-              <FabWithAddMenuContext />
-            </AddMenuProvider>
-          )}
-        </Content>
+              }
+            }}
+            canCreateFolder={true}
+            canUpload={true}
+            disabled={false}
+            refreshFolderContent={refresh}
+            displayedFolder={displayedFolder}
+            isSelectionBarVisible={isSelectionBarVisible}
+          >
+            <FabWithAddMenuContext />
+          </AddMenuProvider>
+        )}
       </DropzoneComp>
     </FolderView>
   )

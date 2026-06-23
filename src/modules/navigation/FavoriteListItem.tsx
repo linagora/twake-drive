@@ -17,7 +17,10 @@ import { FileLink } from './components/FileLink'
 
 import { useFileLink } from '@/modules/navigation/hooks/useFileLink'
 import { isNextcloudShortcut } from '@/modules/nextcloud/helpers'
-import { isSharedDriveFolder } from '@/modules/shareddrives/helpers'
+import {
+  isExcalidraw,
+  isExcalidrawEnabled
+} from '@/modules/views/Excalidraw/helpers'
 
 interface FavoriteListItemProps {
   file: IOCozyFile
@@ -25,23 +28,25 @@ interface FavoriteListItemProps {
 }
 
 const makeIcon = (file: IOCozyFile): string | React.ComponentType =>
-  isNextcloudShortcut(file) || isSharedDriveFolder(file)
+  isNextcloudShortcut(file)
     ? FileTypeServerIcon
     : isDirectory(file)
-    ? FolderIcon
-    : FileIcon
+      ? FolderIcon
+      : FileIcon
 
 const FavoriteListItem: FC<FavoriteListItemProps> = ({
   file,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   clickState: [lastClicked, setLastClicked]
 }) => {
-  const { link } = useFileLink(file, {
-    forceFolderPath:
-      isSharedDriveFolder(file) || isNote(file) || isOnlyOfficeFile(file)
-        ? false
-        : true
-  })
+  // Files that open in their own top-level route (notes, OnlyOffice, Excalidraw)
+  // must not get the in-folder path prefix, or they resolve to a nested route
+  // that matches nothing and renders a blank screen.
+  const opensInOwnRoute =
+    isNote(file) ||
+    isOnlyOfficeFile(file) ||
+    (isExcalidrawEnabled() && isExcalidraw(file))
+  const { link } = useFileLink(file, { forceFolderPath: !opensInOwnRoute })
   const { filename } = splitFilename(file)
 
   const ItemIcon = makeIcon(file)
@@ -54,7 +59,12 @@ const FavoriteListItem: FC<FavoriteListItemProps> = ({
         onClick={(): void => setLastClicked(undefined)}
       >
         <NavIcon icon={ItemIcon} />
-        <Typography variant="inherit" color="inherit" noWrap>
+        <Typography
+          className="u-fz-small"
+          variant="inherit"
+          color="inherit"
+          noWrap
+        >
           {filename}
         </Typography>
       </FileLink>

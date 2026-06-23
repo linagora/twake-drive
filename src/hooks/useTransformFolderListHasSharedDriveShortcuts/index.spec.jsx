@@ -1,8 +1,9 @@
-import { renderHook } from '@testing-library/react-hooks'
+import { renderHook } from '@testing-library/react'
 
 import { useTransformFolderListHasSharedDriveShortcuts } from './index'
 
 import { SHARED_DRIVES_DIR_ID } from '@/constants/config'
+import { DRIVE_ROOT_TYPE } from '@/modules/shareddrives/types'
 
 jest.mock('cozy-sharing', () => ({
   useSharingContext: jest.fn()
@@ -73,6 +74,173 @@ describe('useTransformFolderListHasSharedDriveShortcuts', () => {
       })
     })
 
+    it('should transform file-root shared drives into file-like objects', () => {
+      const docxMime =
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      const mockSharedDrives = [
+        {
+          id: 'sharing-1',
+          drive_root_type: DRIVE_ROOT_TYPE.FILE,
+          rules: [
+            {
+              values: ['file-1'],
+              title: 'CIR.docx',
+              mime: docxMime
+            }
+          ]
+        }
+      ]
+
+      mockUseSharedDrives.mockReturnValue({
+        sharedDrives: mockSharedDrives
+      })
+
+      const { result } = renderHook(() =>
+        useTransformFolderListHasSharedDriveShortcuts([])
+      )
+
+      expect(result.current.sharedDrives).toHaveLength(1)
+      expect(result.current.sharedDrives[0]).toMatchObject({
+        _id: 'file-1',
+        id: 'file-1',
+        _type: 'io.cozy.files',
+        type: 'file',
+        name: 'CIR.docx',
+        mime: docxMime,
+        dir_id: SHARED_DRIVES_DIR_ID,
+        driveId: 'sharing-1',
+        drive_root_type: DRIVE_ROOT_TYPE.FILE,
+        path: '/Drives/CIR.docx'
+      })
+    })
+
+    it('should treat a rule carrying a mime as file-root when the stack omits drive_root_type', () => {
+      const docxMime =
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      const mockSharedDrives = [
+        {
+          id: 'sharing-1',
+          // Stack predating the drive_root_type field: only the rule mime
+          // distinguishes a single shared file from a shared folder.
+          rules: [
+            {
+              values: ['file-1'],
+              title: 'New text document.docx',
+              mime: docxMime
+            }
+          ]
+        }
+      ]
+
+      mockUseSharedDrives.mockReturnValue({
+        sharedDrives: mockSharedDrives
+      })
+
+      const { result } = renderHook(() =>
+        useTransformFolderListHasSharedDriveShortcuts([])
+      )
+
+      expect(result.current.sharedDrives[0]).toMatchObject({
+        _id: 'file-1',
+        type: 'file',
+        name: 'New text document.docx',
+        mime: docxMime,
+        drive_root_type: DRIVE_ROOT_TYPE.FILE
+      })
+    })
+
+    it('should derive OnlyOffice classes for file-root shared drives', () => {
+      const mockSharedDrives = [
+        {
+          id: 'sharing-text',
+          drive_root_type: DRIVE_ROOT_TYPE.FILE,
+          rules: [
+            {
+              values: ['text-file'],
+              title: 'Document.docx',
+              mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            }
+          ]
+        },
+        {
+          id: 'sharing-sheet',
+          drive_root_type: DRIVE_ROOT_TYPE.FILE,
+          rules: [
+            {
+              values: ['sheet-file'],
+              title: 'Sheet.xlsx',
+              mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            }
+          ]
+        },
+        {
+          id: 'sharing-slide',
+          drive_root_type: DRIVE_ROOT_TYPE.FILE,
+          rules: [
+            {
+              values: ['slide-file'],
+              title: 'Slides.pptx',
+              mime: 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+            }
+          ]
+        },
+        {
+          id: 'sharing-image',
+          drive_root_type: DRIVE_ROOT_TYPE.FILE,
+          rules: [
+            {
+              values: ['image-file'],
+              title: 'Photo.jpg',
+              mime: 'image/jpeg'
+            }
+          ]
+        },
+        {
+          id: 'sharing-text-without-mime',
+          drive_root_type: DRIVE_ROOT_TYPE.FILE,
+          rules: [
+            {
+              values: ['text-without-mime-file'],
+              title: 'Notes.txt'
+            }
+          ]
+        }
+      ]
+
+      mockUseSharedDrives.mockReturnValue({
+        sharedDrives: mockSharedDrives
+      })
+
+      const { result } = renderHook(() =>
+        useTransformFolderListHasSharedDriveShortcuts([])
+      )
+
+      expect(result.current.sharedDrives).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            _id: 'text-file',
+            mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+          }),
+          expect.objectContaining({
+            _id: 'sheet-file',
+            mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+          }),
+          expect.objectContaining({
+            _id: 'slide-file',
+            mime: 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+          }),
+          expect.objectContaining({
+            _id: 'image-file',
+            mime: 'image/jpeg'
+          }),
+          expect.objectContaining({
+            _id: 'text-without-mime-file',
+            name: 'Notes.txt'
+          })
+        ])
+      )
+    })
+
     it('should return existing file when user is owner', () => {
       const mockSharedDrives = [
         {
@@ -115,7 +283,8 @@ describe('useTransformFolderListHasSharedDriveShortcuts', () => {
       expect(result.current.sharedDrives[0]).toMatchObject({
         _id: 'file-1',
         id: 'file-1',
-        name: 'Existing File'
+        name: 'Existing File',
+        driveId: 'sharing-1'
       })
     })
 

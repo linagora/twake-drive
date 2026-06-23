@@ -2,16 +2,22 @@ import React from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import { hasQueryBeenLoaded, useQuery } from 'cozy-client'
+import flag from 'cozy-flags'
 import { ShareModal } from 'cozy-sharing'
 
 import { LoaderModal } from '@/components/LoaderModal'
-import { buildFileOrFolderByIdQuery } from '@/queries'
+import {
+  buildFileOrFolderByIdQuery,
+  buildSharedDriveFileOrFolderByIdQuery
+} from '@/queries'
 
 const ShareFileView = () => {
   const navigate = useNavigate()
-  const { fileId } = useParams()
+  const { fileId, driveId } = useParams()
 
-  const fileQuery = buildFileOrFolderByIdQuery(fileId)
+  const fileQuery = driveId
+    ? buildSharedDriveFileOrFolderByIdQuery({ fileId, driveId })
+    : buildFileOrFolderByIdQuery(fileId)
   const fileResult = useQuery(fileQuery.definition, fileQuery.options)
 
   const handleExit = () => {
@@ -22,9 +28,12 @@ const ShareFileView = () => {
     return (
       <ShareModal
         document={fileResult.data}
+        driveId={driveId}
         documentType="Files"
         sharingDesc={fileResult.data.name}
         onClose={handleExit}
+        autoOpenShareRestriction={flag('sharing.auto-open-settings.enabled')}
+        showGenerateLinkButton={flag('sharing.generate-link-button.enabled')}
       />
     )
   }

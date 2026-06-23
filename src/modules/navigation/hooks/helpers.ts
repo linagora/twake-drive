@@ -1,3 +1,4 @@
+import CozyClient from 'cozy-client'
 import {
   isShortcut,
   isNote,
@@ -10,14 +11,30 @@ import { IOCozyFile } from 'cozy-client/types/types'
 import type { File } from '@/components/FolderPicker/types'
 import { TRASH_DIR_ID, SHARED_DRIVES_DIR_ID } from '@/constants/config'
 import { joinPath } from '@/lib/path'
+import { isGrist } from '@/modules/grist/helpers'
 import {
   isNextcloudShortcut,
   isNextcloudFile
 } from '@/modules/nextcloud/helpers'
+import {
+  getSharedDriveRootFilePath,
+  getSharedDriveRootFilePathScope
+} from '@/modules/routeUtils'
+import { makeSharedDriveNoteReturnUrl } from '@/modules/shareddrives/helpers'
+import {
+  isFileRootSharedDrive,
+  isFileRootSharedDriveShortcut,
+  isResolvableFileRootSharedDriveShortcut
+} from '@/modules/shareddrives/rootFileNavigation'
+import {
+  isExcalidraw,
+  makeExcalidrawFileRoute
+} from '@/modules/views/Excalidraw/helpers'
 import { makeOnlyOfficeFileRoute } from '@/modules/views/OnlyOffice/helpers'
 
 interface ComputeFileTypeOptions {
   isOfficeEnabled?: boolean
+  isExcalidrawEnabled?: boolean
   isPublic?: boolean
   cozyUrl?: string
 }
@@ -26,12 +43,15 @@ interface ComputePathOptions {
   type: string
   pathname: string
   isPublic: boolean
+  client: CozyClient | null
+  isOwner?: boolean
 }
 
 export const computeFileType = (
   file: File,
   {
     isOfficeEnabled = false,
+    isExcalidrawEnabled = false,
     isPublic = false,
     cozyUrl = ''
   }: ComputeFileTypeOptions = {}
@@ -42,6 +62,8 @@ export const computeFileType = (
     return 'nextcloud-trash'
   } else if (
     file.dir_id === SHARED_DRIVES_DIR_ID &&
+    !isFileRootSharedDrive(file) &&
+    !isFileRootSharedDriveShortcut(file) &&
     !isNextcloudShortcut(file)
   ) {
     return 'shared-drive'
@@ -61,7 +83,36 @@ export const computeFileType = (
     }
   } else if (isDocs(file)) {
     return 'docs'
+  } else if (isGrist(file)) {
+    return 'grist'
+  } else if (isExcalidraw(file) && isExcalidrawEnabled) {
+    return 'excalidraw'
+  } else if (isResolvableFileRootSharedDriveShortcut(file)) {
+    // File-root shared drives are materialized on the recipient as `.url`
+    // shortcuts (`class: 'shortcut'`, mime `application/internet-shortcut`),
+    // so the regular `isShortcut` / `shouldBeOpenedByOnlyOffice` branches
+    // below cannot dispatch them to the OnlyOffice viewer. The stack
+    // exposes the shared file's real class in `metadata.target.class`
+    // (computed from the rule mime in `CreateDriveShortcut`); use it to
+    // route to `'onlyoffice'` or fall back to `'shared-drive-root-file'`.
+    // `target` is typed as `{ title; category }` by cozy-client, so the
+    // extra `class` field is `unknown`; widen to `unknown` explicitly to
+    // avoid the `no-unsafe-assignment` lint on the access below.
+    const targetClass: unknown = file.metadata?.target?.['class']
+    if (
+      (targetClass === 'text' ||
+        targetClass === 'spreadsheet' ||
+        targetClass === 'slide') &&
+      isOfficeEnabled
+    ) {
+      return 'onlyoffice'
+    }
+    return 'shared-drive-root-file'
   } else if (shouldBeOpenedByOnlyOffice(file) && isOfficeEnabled) {
+    // Load-bearing: this branch runs before `isFileRootSharedDrive` below, so
+    // an Office file shared as a drive root routes through OnlyOffice (its own
+    // viewer) rather than the generic shared-drive-root-file viewer. See the
+    // `'onlyoffice' for file-root shared drives` spec.
     return 'onlyoffice'
   } else if (isNextcloudShortcut(file)) {
     return 'nextcloud'
@@ -69,7 +120,19 @@ export const computeFileType = (
     return 'shortcut'
   } else if (isDirectory(file)) {
     return 'directory'
-  } else if (file.driveId) {
+  } else if (
+    isFileRootSharedDrive(file) &&
+    file.dir_id === SHARED_DRIVES_DIR_ID
+  ) {
+    return 'shared-drive-root-file'
+  } else if (file.driveId && file.dir_id && !isFileRootSharedDrive(file)) {
+    // Any file carrying a driveId is a proxied shared-drive file, except the
+    // owner's own file-root sharing root (which lives locally and is caught
+    // by isFileRootSharedDrive). Keying on dir_id === SHARED_DRIVES_DIR_ID
+    // here used to drop every recipient file nested in a shared-drive folder
+    // back to the local /files/:id route, which 404s. dir_id is required
+    // because the shared-drive route is built from it; without it, fall back
+    // to 'file' rather than letting computePath throw.
     return 'shared-drive-file'
   } else {
     return 'file'
@@ -85,42 +148,75 @@ export const computeApp = (type: string): string => {
       return 'notes'
     case 'docs':
       return 'docs'
+    case 'grist':
+      return 'grist'
     default:
       return 'drive'
   }
 }
 
-export const computePath = (
+const computeNextcloudPath = (
+  type: string,
   file: File,
-  { type, pathname, isPublic }: ComputePathOptions
+  pathname: string
 ): string => {
-  const paths = pathname.split('/').slice(1)
-  const driveId = file.driveId as string | undefined
-
   switch (type) {
-    case 'trash':
-      return '/trash'
     case 'nextcloud-trash':
       return `${pathname}/trash`
     case 'nextcloud':
       return `/nextcloud/${file.cozyMetadata?.sourceAccount ?? 'unknown'}`
     case 'nextcloud-directory':
       return `${pathname}?path=${file.path ?? '/'}`
-    case 'nextcloud-file':
+    default:
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
       return file.links?.self ?? ''
+  }
+}
+
+export const computePath = (
+  file: File,
+  { type, pathname, isPublic, client, isOwner = false }: ComputePathOptions
+): string => {
+  const paths = pathname.split('/').slice(1)
+  const driveId = file.driveId as string | undefined
+
+  if (type.startsWith('nextcloud')) {
+    return computeNextcloudPath(type, file, pathname)
+  }
+
+  switch (type) {
+    case 'trash':
+      return '/trash'
     case 'note':
       return `/n/${file._id}`
     case 'public-note-same-instance':
       return `/?id=${file._id}`
     case 'public-note':
-      return driveId ? `/note/${driveId}/${file._id}` : `/note/${file._id}`
+      if (driveId) {
+        const returnUrl = client
+          ? makeSharedDriveNoteReturnUrl(client, file as IOCozyFile)
+          : ''
+
+        return `/note/${driveId}/${file._id}?returnUrl=${encodeURIComponent(
+          returnUrl
+        )}`
+      } else {
+        return `/note/${file._id}`
+      }
     case 'docs':
-      // eslint-disable-next-line no-case-declarations, @typescript-eslint/restrict-template-expressions
       return `/bridge/docs/${(file as IOCozyFile).metadata.externalId}`
+    case 'grist':
+      return `/bridge/grist/${(file as IOCozyFile).metadata.externalId}`
     case 'shortcut':
       return `/external/${file._id}`
     case 'directory':
+      // When the user is the owner of a sharing displayed in /sharings, the
+      // file/folder is the real io.cozy.files document living in their Drive,
+      // so we must drop the /sharings prefix and open it in the normal Drive
+      // folder view instead of the sharings folder view.
+      if (isOwner && pathname.startsWith('/sharings')) {
+        return `/folder/${file._id}`
+      }
       // On mobile, if we are in /favorites tab, we do not want it to appears in computed path
       // so we redirect to root route for folders
       if (pathname.startsWith('/favorites')) {
@@ -135,6 +231,12 @@ export const computePath = (
         fromPathname: pathname,
         fromPublicFolder: isPublic
       })
+    case 'excalidraw':
+      return makeExcalidrawFileRoute(file._id, {
+        driveId,
+        fromPathname: pathname,
+        fromPublicFolder: isPublic
+      })
     case 'shared-drive':
       // Without driveId, we should use path `/folder/:folderId` because it's shared drive folder of owner
       if (!driveId) {
@@ -142,6 +244,17 @@ export const computePath = (
       }
 
       return `/shareddrive/${driveId}/${file._id}`
+    case 'shared-drive-root-file':
+      if (!driveId || isNextcloudFile(file)) {
+        throw new Error(
+          'Missing driveId or invalid file type in shared drive root file'
+        )
+      }
+      return getSharedDriveRootFilePath({
+        driveId,
+        fileId: file._id,
+        scope: getSharedDriveRootFilePathScope(pathname)
+      })
     case 'shared-drive-file':
       if (!driveId || isNextcloudFile(file)) {
         throw new Error(
@@ -153,10 +266,17 @@ export const computePath = (
       }
       return `/shareddrive/${driveId}/${file.dir_id}/file/${file._id}`
     default:
+      // Owner of a file shown in /sharings owns the real io.cozy.files
+      // document on their instance, so the file should open in the normal
+      // Drive viewer (`/folder/:dirId/file/:fileId`) and leave the sharings
+      // section. Recipients (and the rest of the file cases) keep the
+      // existing relative /sharings/file/:fileId path.
+      if (isOwner && pathname.startsWith('/sharings')) {
+        return `/folder/${file.dir_id}/file/${file._id}`
+      }
       // On mobile, if we are in /favorites tab, we do not want it to appears in computed path
       // so we redirect to root route for files
       if (pathname.startsWith('/favorites')) {
-        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
         return `/folder/${file.dir_id}/file/${file._id}`
       }
 

@@ -1,6 +1,5 @@
 import PropTypes from 'prop-types'
 import React from 'react'
-import { I18n } from 'twake-i18n'
 
 import { CozyProvider } from 'cozy-client'
 import { DataProxyProvider } from 'cozy-dataproxy-lib'
@@ -13,6 +12,7 @@ import SharingProvider, { NativeFileSharingProvider } from 'cozy-sharing'
 import AlertProvider from 'cozy-ui/transpiled/react/providers/Alert'
 import { BreakpointsProvider } from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import CozyTheme from 'cozy-ui-plus/dist/providers/CozyTheme'
+import { I18n } from 'twake-i18n'
 
 import RightClickProvider from '@/components/RightClick/RightClickProvider'
 import FabProvider from '@/lib/FabProvider'
@@ -28,7 +28,11 @@ const DriveProvider = ({ client, lang, polyglot, dictRequire, children }) => {
         <DataProxyWrapper isPublic={isPublic}>
           <VaultProvider cozyClient={client}>
             <VaultUnlockProvider>
-              <SharingProvider doctype="io.cozy.files" documentType="Files">
+              <SharingProvider
+                doctype="io.cozy.files"
+                documentType="Files"
+                isPublic={isPublic}
+              >
                 <NativeFileSharingProvider>
                   <CozyTheme ignoreCozySettings={isPublic} className="u-w-100">
                     <BreakpointsProvider>

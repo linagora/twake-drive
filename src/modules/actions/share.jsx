@@ -8,11 +8,17 @@ import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
-import { isEncryptedFileOrFolder } from '@/lib/encryption'
 import { navigateToModal } from '@/modules/actions/helpers'
-import { isSharedDriveFolder } from '@/modules/shareddrives/helpers'
+import { isSharedDriveDoc } from '@/modules/shareddrives/helpers'
 
-const share = ({ t, hasWriteAccess, navigate, pathname, allLoaded }) => {
+const share = ({
+  t,
+  shouldHideIfSharedDriveRecipient,
+  hasWriteAccess,
+  navigate,
+  pathname,
+  allLoaded
+}) => {
   const label = t('Files.share.cta')
   const icon = ShareIcon
 
@@ -22,13 +28,17 @@ const share = ({ t, hasWriteAccess, navigate, pathname, allLoaded }) => {
     icon,
     allowInfectedFiles: false,
     displayCondition: files => {
+      // If shared drive recipient:
+      // - in sharing view, we hide it because it works differently
+      // - in shared drive view, we show it
+      if (files?.length === 1 && isSharedDriveDoc(files[0])) {
+        return !shouldHideIfSharedDriveRecipient
+      }
+
       return (
         allLoaded && // We need to wait for the sharing context to be completely loaded to avoid race conditions
         hasWriteAccess &&
-        files?.length === 1 &&
-        !isEncryptedFileOrFolder(files[0]) &&
-        !isSharedDriveFolder(files[0]) &&
-        !files[0]?.driveId
+        files?.length === 1
       )
     },
     action: files =>

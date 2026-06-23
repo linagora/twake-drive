@@ -1,9 +1,6 @@
-import React, { useCallback, useContext, useEffect } from 'react'
-import { useDispatch } from 'react-redux'
-import { useNavigate, useLocation, Outlet } from 'react-router-dom'
-import { useI18n } from 'twake-i18n'
+import React, { useEffect } from 'react'
+import { Outlet, useLocation } from 'react-router-dom'
 
-import { useClient, models } from 'cozy-client'
 import flag from 'cozy-flags'
 import {
   useSharingContext,
@@ -13,15 +10,17 @@ import {
 } from 'cozy-sharing'
 import { makeActions } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
 import { Content } from 'cozy-ui/transpiled/react/Layout'
-import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
-import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
+import { usePublicDisplayFlags } from './usePublicDisplayFlags'
 import usePublicFilesQuery from './usePublicFilesQuery'
+import { usePublicRefresh } from './usePublicRefresh'
 import usePublicWritePermissions from './usePublicWritePermissions'
 import FolderViewBody from '../Folder/FolderViewBody'
 import FolderViewBreadcrumb from '../Folder/FolderViewBreadcrumb'
 import FolderViewHeader from '../Folder/FolderViewHeader'
 import OldFolderViewBreadcrumb from '../Folder/OldFolderViewBreadcrumb'
+import { useFabOnMobile } from '../Folder/hooks/useFabOnMobile'
+import { useFolderViewBase } from '../Folder/hooks/useFolderViewBase'
 import FolderViewBodyVz from '../Folder/virtualized/FolderViewBody'
 
 import useHead from '@/components/useHead'
@@ -29,8 +28,7 @@ import { ROOT_DIR_ID } from '@/constants/config'
 import { useClipboardContext } from '@/contexts/ClipboardProvider'
 import { useCurrentFolderId, useDisplayedFolder } from '@/hooks'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
-import { FabContext } from '@/lib/FabProvider'
-import { ModalStack, useModalContext } from '@/lib/ModalContext'
+import { ModalStack } from '@/lib/ModalContext'
 import { ModalManager } from '@/lib/react-cozy-helpers'
 import {
   download,
@@ -45,13 +43,10 @@ import { duplicateTo } from '@/modules/actions/components/duplicateTo'
 import { moveTo } from '@/modules/actions/components/moveTo'
 import { personalizeFolder } from '@/modules/actions/components/personalizeFolder'
 import { fetchFolder } from '@/modules/breadcrumb/utils/fetchFolder'
-import { makeExtraColumnsNamesFromMedia } from '@/modules/certifications'
-import { useExtraColumns } from '@/modules/certifications/useExtraColumns'
 import AddMenuProvider from '@/modules/drive/AddMenu/AddMenuProvider'
 import FabWithAddMenuContext from '@/modules/drive/FabWithAddMenuContext'
 import Main from '@/modules/layout/Main'
 import PublicToolbar from '@/modules/public/PublicToolbar'
-import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 import Dropzone from '@/modules/upload/Dropzone'
 import DropzoneDnD from '@/modules/upload/DropzoneDnD'
 
@@ -80,26 +75,16 @@ const getBreadcrumbPath = async ({
   return returnPath
 }
 
-const desktopExtraColumnsNames = ['carbonCopy', 'electronicSafe']
-const mobileExtraColumnsNames = []
-
 const PublicFolderView = ({ sharedDocumentId }) => {
-  const navigate = useNavigate()
-  const { pathname, state } = useLocation()
-  const client = useClient()
-  const { t, lang } = useI18n()
-  const { isMobile, isDesktop } = useBreakpoints()
-  const { isFabDisplayed, setIsFabDisplayed } = useContext(FabContext)
+  const base = useFolderViewBase()
+  const { navigate, pathname } = base
+  // `state` is on useLocation; useFolderViewBase only forwards pathname.
+  const { state } = useLocation()
   const currentFolderId = useCurrentFolderId()
   const { displayedFolder } = useDisplayedFolder()
-  const { isSelectionBarVisible, toggleSelectAllItems, isSelectAll } =
-    useSelectionContext()
   const { hasWritePermissions } = usePublicWritePermissions()
-  const { pushModal, popModal } = useModalContext()
   const { refresh, isOwner, byDocId } = useSharingContext()
-  const dispatch = useDispatch()
   const sharingInfos = useSharingInfos()
-  const { showAlert } = useAlert()
   const isOnSharedFolder =
     !sharingInfos.loading &&
     sharingInfos.sharing?.rules?.some(rule =>
@@ -111,46 +96,24 @@ const PublicFolderView = ({ sharedDocumentId }) => {
   const filesResult = usePublicFilesQuery(currentFolderId)
   const files = filesResult.data
 
-  const extraColumnsNames = makeExtraColumnsNamesFromMedia({
-    isMobile,
-    desktopExtraColumnsNames,
-    mobileExtraColumnsNames
+  // The public token can't rely on realtime notifications, so refresh manually.
+  const { refreshFolderContent, refreshAfterChange } = usePublicRefresh({
+    filesResult,
+    sharingRefresh: refresh
   })
-
-  const extraColumns = useExtraColumns({
-    columnsNames: extraColumnsNames,
-    conditionBuilder: ({ files, attribute }) =>
-      files.some(file => models.file.hasMetadataAttribute({ file, attribute })),
-    files
-  })
-
-  // We don't have enough permissions to rely on the realtime notifications or on a cozy-client query to update the view when something changes, so we relaod the view instead
-  const refreshFolderContent = useCallback(
-    () => filesResult.forceRefetch(),
-    [filesResult]
-  )
-
-  const refreshAfterChange = () => {
-    refresh()
-    refreshFolderContent()
-  }
 
   useKeyboardShortcuts({
     onPaste: refreshAfterChange,
-    canPaste:
-      hasWritePermissions &&
-      hasClipboardData &&
-      flag('drive.keyboard-shortcuts.enabled'),
-    client,
+    canPaste: hasWritePermissions && hasClipboardData,
+    client: base.client,
     items: filesResult.data,
     sharingContext: null,
-    allowCopy: hasWritePermissions && flag('drive.keyboard-shortcuts.enabled'),
-    allowCut: hasWritePermissions && flag('drive.keyboard-shortcuts.enabled'),
-    allowDelete:
-      hasWritePermissions && flag('drive.keyboard-shortcuts.enabled'),
+    allowCopy: hasWritePermissions,
+    allowCut: hasWritePermissions,
+    allowDelete: hasWritePermissions,
     isPublic: true,
-    pushModal,
-    popModal,
+    pushModal: base.pushModal,
+    popModal: base.popModal,
     refresh: refreshAfterChange
   })
 
@@ -163,26 +126,16 @@ const PublicFolderView = ({ sharedDocumentId }) => {
   }, [state, refreshFolderContent, navigate, pathname])
 
   const actionOptions = {
-    client,
-    t,
-    lang,
-    pushModal,
-    popModal,
+    ...base,
     refresh: refreshAfterChange,
-    dispatch,
-    navigate,
-    showAlert,
-    pathname,
     hasWriteAccess: hasWritePermissions,
-    canMove: hasWritePermissions && flag('drive.keyboard-shortcuts.enabled'),
-    canDuplicate:
-      hasWritePermissions && flag('drive.keyboard-shortcuts.enabled'),
+    canMove: hasWritePermissions,
+    canDuplicate: hasWritePermissions,
     isPublic: true,
     isOwner,
     byDocId,
-    selectAll: () => toggleSelectAllItems(filesResult.data),
-    isSelectAll,
-    isMobile,
+    selectAll: () => base.toggleSelectAllItems(filesResult.data),
+    displayedFolder,
     onClose: () => {
       refreshAfterChange()
     }
@@ -211,42 +164,29 @@ const PublicFolderView = ({ sharedDocumentId }) => {
     name: 'Public'
   }
 
-  useEffect(() => {
-    if (hasWritePermissions) {
-      setIsFabDisplayed(!isDesktop)
-      return () => {
-        // to not have this set to false on other views after using this view
-        setIsFabDisplayed(false)
-      }
-    }
-  }, [setIsFabDisplayed, isDesktop, hasWritePermissions])
+  const isFabDisplayed = useFabOnMobile(hasWritePermissions)
 
-  const showNewBreadcrumbFlag = flag(
-    'drive.breadcrumb.showCompleteBreadcrumbOnPublicPage'
-  )
-  const isOldBreadcrumb =
-    !showNewBreadcrumbFlag || showNewBreadcrumbFlag !== true
-
-  // Check if the sharing shortcut has already been created (but not synced)
-  const isShareNotAdded =
-    !sharingInfos.loading && !sharingInfos.isSharingShortcutCreated
-  // Check if you are sharing Cozy to Cozy (Link sharing is on the `/public` route)
-  const isPreview = window.location.pathname === '/preview'
-  // Show the sharing banner plugin only on shared links view and cozy to cozy sharing view(not added)
-  const isSharingBannerPluginDisplayed =
-    isShareNotAdded || (isOnSharedFolder && !isPreview)
-
-  const isAddToMyCozyFabDisplayed = isMobile && isPreview && isShareNotAdded
+  const {
+    isOldBreadcrumb,
+    isSharingBannerPluginDisplayed,
+    isAddToMyCozyFabDisplayed
+  } = usePublicDisplayFlags({
+    sharingInfos,
+    isOnSharedFolder,
+    isMobile: base.isMobile
+  })
 
   const DropzoneComp =
-    flag('drive.virtualization.enabled') && !isMobile ? DropzoneDnD : Dropzone
+    flag('drive.virtualization.enabled') && !base.isMobile
+      ? DropzoneDnD
+      : Dropzone
 
   return (
     <Main isPublic={true}>
       <ModalStack />
       <ModalManager />
       {isSharingBannerPluginDisplayed && <SharingBannerPlugin />}
-      <Content className={isMobile ? '' : 'u-ml-1 u-pt-1'}>
+      <Content className={base.isMobile ? '' : 'u-ml-1 u-pt-1'}>
         <DropzoneComp
           disabled={!hasWritePermissions}
           displayedFolder={displayedFolder}
@@ -257,7 +197,6 @@ const PublicFolderView = ({ sharedDocumentId }) => {
               <>
                 {isOldBreadcrumb ? (
                   <OldFolderViewBreadcrumb
-                    displayedFolder={displayedFolder}
                     sharedDocumentId={sharedDocumentId}
                     getBreadcrumbPath={getBreadcrumbPath}
                   />
@@ -276,7 +215,7 @@ const PublicFolderView = ({ sharedDocumentId }) => {
               </>
             )}
           </FolderViewHeader>
-          {flag('drive.virtualization.enabled') && !isMobile ? (
+          {flag('drive.virtualization.enabled') && !base.isMobile ? (
             <FolderViewBodyVz
               actions={actions}
               queryResults={[filesResult]}
@@ -294,7 +233,6 @@ const PublicFolderView = ({ sharedDocumentId }) => {
               currentFolderId={currentFolderId}
               refreshFolderContent={refreshFolderContent}
               canUpload={hasWritePermissions}
-              extraColumns={extraColumns}
               isPublic={true}
             />
           )}
@@ -313,7 +251,7 @@ const PublicFolderView = ({ sharedDocumentId }) => {
               refreshFolderContent={refreshFolderContent}
               isPublic={true}
               displayedFolder={displayedFolder}
-              isSelectionBarVisible={isSelectionBarVisible}
+              isSelectionBarVisible={base.isSelectionBarVisible}
             >
               <FabWithAddMenuContext noSidebar={true} />
             </AddMenuProvider>

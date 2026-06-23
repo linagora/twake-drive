@@ -1,10 +1,9 @@
 import React, { FC, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useI18n } from 'twake-i18n'
 
-import { useClient } from 'cozy-client'
-import { copy } from 'cozy-client/dist/models/file'
+import { useClient, models } from 'cozy-client'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
+import { useI18n } from 'twake-i18n'
 
 import { OpenFolderButton } from '@/components/Button/OpenFolderButton'
 import { FolderPicker } from '@/components/FolderPicker/FolderPicker'
@@ -18,6 +17,7 @@ interface DuplicateModalProps {
   currentFolder: File
   onClose: () => void | Promise<void>
   showNextcloudFolder?: boolean
+  showSharedDriveFolder?: boolean
   isPublic?: boolean
 }
 
@@ -26,6 +26,7 @@ const DuplicateModal: FC<DuplicateModalProps> = ({
   currentFolder,
   onClose,
   showNextcloudFolder,
+  showSharedDriveFolder,
   isPublic
 }) => {
   const { t } = useI18n()
@@ -41,7 +42,11 @@ const DuplicateModal: FC<DuplicateModalProps> = ({
       setBusy(true)
       await Promise.all(
         entries.map(async entry => {
-          await registerCancelable(copy(client, entry as Partial<File>, folder))
+          await registerCancelable(
+            models.file.copy(client, entry as Partial<File>, folder, {
+              driveId: entry.driveId
+            })
+          )
         })
       )
 
@@ -64,10 +69,11 @@ const DuplicateModal: FC<DuplicateModalProps> = ({
         severity: 'success',
         action: <OpenFolderButton folder={folder} navigate={navigate} />
       })
-    } catch (e) {
+    } catch (_e) {
       showAlert({
         message: t('DuplicateModal.error'),
-        severity: 'error'
+        severity: 'error',
+        duration: 4000
       })
     } finally {
       setBusy(false)
@@ -90,6 +96,7 @@ const DuplicateModal: FC<DuplicateModalProps> = ({
   return (
     <FolderPicker
       showNextcloudFolder={showNextcloudFolder}
+      showSharedDriveFolder={showSharedDriveFolder}
       currentFolder={currentFolder}
       entries={entries}
       // eslint-disable-next-line @typescript-eslint/no-misused-promises

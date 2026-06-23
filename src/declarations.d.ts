@@ -41,6 +41,8 @@ declare module 'cozy-ui/transpiled/react/providers/Alert' {
       | 'warning'
       | 'info'
     action?: React.ReactNode
+    duration?: number | null
+    noClickAway?: boolean
   }
 
   export type showAlertFunction = (props: showAlertProps) => void
@@ -72,11 +74,6 @@ declare module 'cozy-client/dist/models/file' {
     extension: string
   }
   export const isFile: (file: IOCozyFile) => boolean
-  export const copy: (
-    client: import('cozy-client/types/CozyClient').CozyClient,
-    file: Partial<import('components/FolderPicker/types').File>,
-    destination: import('components/FolderPicker/types').File
-  ) => Promise<void>
   export const isDirectory: (
     file: import('components/FolderPicker/types').File
   ) => boolean
@@ -95,6 +92,10 @@ declare module 'cozy-client/dist/models/file' {
   export const shouldBeOpenedByOnlyOffice: (
     file: import('components/FolderPicker/types').File
   ) => boolean
+  export const generateNewFileNameOnConflict: (
+    filenameWithoutExtension: string,
+    conflictOptions?: { delimiter?: string }
+  ) => string
   export const getFullpath: (
     client: import('cozy-client/types/CozyClient').CozyClient,
     dirID: string,
@@ -156,6 +157,9 @@ declare module 'cozy-sharing' {
   export const useSharingContext: () => {
     allLoaded: boolean
     refresh: () => void
+    hasWriteAccess: (id: string, driveId?: string) => boolean
+    isOwner: (docId: string) => boolean
+    byDocId: Record<string, unknown>
   }
 
   export const useNativeFileSharing: () => {

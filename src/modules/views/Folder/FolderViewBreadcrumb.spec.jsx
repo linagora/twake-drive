@@ -11,7 +11,6 @@ import { useBreadcrumbPath } from '@/modules/breadcrumb/hooks/useBreadcrumbPath'
 
 jest.mock('modules/breadcrumb/hooks/useBreadcrumbPath')
 jest.mock('modules/breadcrumb/components/MobileAwareBreadcrumb', () => ({
-  // eslint-disable-next-line react/display-name
   MobileAwareBreadcrumb: ({ path, opening }) => (
     <div
       data-testid="MobileAwareBreadcrumb"
@@ -71,12 +70,12 @@ describe('FolderViewBreadcrumb', () => {
     ).toEqual('false')
   })
 
-  it('should be null when path empty', () => {
+  it('should render skeleton when path empty', () => {
     // Given
     useBreadcrumbPath.mockReturnValue([])
 
     // When
-    const { container } = render(
+    const { getByTestId, queryByTestId } = render(
       <FolderViewBreadcrumb
         currentFolderId="1234"
         rootBreadcrumbPath={rootBreadcrumbPath}
@@ -84,15 +83,16 @@ describe('FolderViewBreadcrumb', () => {
     )
 
     // Then
-    expect(container).toMatchInlineSnapshot(`<div />`)
+    expect(getByTestId('breadcrumb-skeleton')).toBeTruthy()
+    expect(queryByTestId('MobileAwareBreadcrumb')).toBeNull()
   })
 
-  it('should be null when path undefined', () => {
+  it('should render skeleton when path undefined', () => {
     // Given
     useBreadcrumbPath.mockReturnValue()
 
     // When
-    const { container } = render(
+    const { getByTestId, queryByTestId } = render(
       <FolderViewBreadcrumb
         currentFolderId="1234"
         rootBreadcrumbPath={rootBreadcrumbPath}
@@ -100,6 +100,7 @@ describe('FolderViewBreadcrumb', () => {
     )
 
     // Then
-    expect(container).toMatchInlineSnapshot(`<div />`)
+    expect(getByTestId('breadcrumb-skeleton')).toBeTruthy()
+    expect(queryByTestId('MobileAwareBreadcrumb')).toBeNull()
   })
 })

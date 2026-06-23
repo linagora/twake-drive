@@ -1,12 +1,12 @@
 import PropTypes from 'prop-types'
 import React from 'react'
-import { useI18n } from 'twake-i18n'
 
 import { useQuery } from 'cozy-client'
 import { useSharingContext } from 'cozy-sharing'
 import Buttons from 'cozy-ui/transpiled/react/Buttons'
 import { ConfirmDialog } from 'cozy-ui/transpiled/react/CozyDialogs'
 import Typography from 'cozy-ui/transpiled/react/Typography'
+import { useI18n } from 'twake-i18n'
 
 import { LoaderModal } from '@/components/LoaderModal'
 import { getEntriesTypeTranslated } from '@/lib/entries'
@@ -36,7 +36,7 @@ const MoveOutsideSharedFolderModal = ({
 
     const sharedFolderName = !driveId
       ? data[0]?.name
-      : entries[0]?.path?.split('/')?.[2] ?? ''
+      : (entries[0]?.path?.split('/')?.[2] ?? '')
 
     return (
       <ConfirmDialog

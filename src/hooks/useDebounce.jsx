@@ -4,6 +4,7 @@ const useDebounce = (value, { delay, ignore }) => {
   const [debouncedValue, setDebouncedValue] = useState(value)
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (ignore) return setDebouncedValue(value)
 
     const handler = setTimeout(() => {

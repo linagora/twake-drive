@@ -23,10 +23,14 @@ const flagsList = () => {
   flag('debug')
   flag('drive.onlyoffice.editorToolbarHeight') // flagName should use kebab case
   flag('drive.logger')
-  flag('drive.enable-encryption')
   flag('drive.dacc-files-size-by-slug')
   flag('drive.breadcrumb.showCompleteBreadcrumbOnPublicPage') // flagName should use kebab case
   flag('drive.hide-nextcloud-dev')
-  flag('drive.keyboard-shortcuts.enabled', true)
-  flag('drive.highlight-new-items.enabled', true)
+  flag('drive.excalidraw.enabled')
+  flag('drive.excalidraw.collab')
+  flag('drive.pdf-editor.enabled')
+  flag('sharing.auto-open-settings.enabled')
+  flag('sharing.generate-link-button.enabled')
+  flag('drive.sign.enabled')
+  flag('drive.verify.enabled')
 }

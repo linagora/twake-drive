@@ -2,7 +2,7 @@
   "name": "Drive",
   "name_prefix": "Twake",
   "slug": "drive",
-  "version": "1.91.0",
+  "version": "1.104.0",
   "type": "webapp",
   "licence": "AGPL-3.0",
   "icon": "assets/app-icon.svg",
@@ -65,6 +65,10 @@
     },
     "/assets": {
       "folder": "/assets",
+      "public": true
+    },
+    "/static": {
+      "folder": "/static",
       "public": true
     }
   },
@@ -228,6 +232,11 @@
       "description": "Required to access the drive settings",
       "type": "io.cozy.drive.settings",
       "verbs": ["ALL"]
+    },
+    "nextcloud_migrations": {
+      "description": "Read Nextcloud migration documents and subscribe to updates",
+      "type": "io.cozy.nextcloud.migrations",
+      "verbs": ["GET"]
     }
   },
   "accept_from_flagship": true,

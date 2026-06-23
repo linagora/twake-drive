@@ -1,5 +1,4 @@
 import React from 'react'
-import { useI18n } from 'twake-i18n'
 
 import logger from 'cozy-logger'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
@@ -7,6 +6,7 @@ import Icon from 'cozy-ui/transpiled/react/Icon'
 import CameraIcon from 'cozy-ui/transpiled/react/Icons/Camera'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
+import { useI18n } from 'twake-i18n'
 
 import { useScannerContext } from '@/modules/drive/Toolbar/components/Scanner/ScannerProvider'
 

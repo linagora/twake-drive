@@ -76,11 +76,6 @@ describe('PushBanner', () => {
     })
   })
 
-  it('should hide banner when is public', () => {
-    const { container } = render(<PushBanner isPublic={true} />)
-    expect(container).toBeEmptyDOMElement()
-  })
-
   it('should hide banner when the instance information is not loaded', () => {
     useInstanceInfo.mockReturnValue({
       isLoaded: false

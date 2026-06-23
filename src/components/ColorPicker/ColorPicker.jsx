@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
-import Circle from 'cozy-ui/transpiled/react/Circle'
+import Avatar from 'cozy-ui/transpiled/react/Avatar'
 import GridList from 'cozy-ui/transpiled/react/GridList'
 import GridListTile from 'cozy-ui/transpiled/react/GridListTile'
 import Icon from 'cozy-ui/transpiled/react/Icon'
@@ -39,9 +39,10 @@ export const ColorPicker = ({ selectedColor, onColorSelect }) => {
         cellHeight={isMobile ? CELL_HEIGHT_MOBILE : CELL_HEIGHT_DESKTOP}
       >
         <GridListTile className="u-ta-center">
-          <Circle
+          <Avatar
+            color="var(--papeBackgroundColor)"
+            textColor="var(--white)"
             size={isMobile ? CIRCLE_SIZE_MOBILE : CIRCLE_SIZE_DESKTOP}
-            backgroundColor="var(--papeBackgroundColor)"
             className={styles.noneIconFrame}
           >
             <IconButton onClick={() => onColorSelect()}>
@@ -51,13 +52,14 @@ export const ColorPicker = ({ selectedColor, onColorSelect }) => {
                 color="textSecondary"
               />
             </IconButton>
-          </Circle>
+          </Avatar>
         </GridListTile>
         {COLORS.map(color => (
           <GridListTile key={color} className="u-ta-center">
-            <Circle
+            <Avatar
+              color={color}
+              textColor="var(--white)"
               size={isMobile ? CIRCLE_SIZE_MOBILE : CIRCLE_SIZE_DESKTOP}
-              backgroundColor={color}
             >
               <IconButton onClick={() => onColorSelect(color)}>
                 {selectedColor === color && (
@@ -68,7 +70,7 @@ export const ColorPicker = ({ selectedColor, onColorSelect }) => {
                   />
                 )}
               </IconButton>
-            </Circle>
+            </Avatar>
           </GridListTile>
         ))}
       </GridList>

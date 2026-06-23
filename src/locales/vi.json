@@ -1,11 +1,12 @@
 {
   "Nav": {
-    "item_drive": "Tệp",
+    "item_drive": "Ổ đĩa của tôi",
     "item_recent": "Gần đây",
     "item_sharings": "Chia sẻ",
     "item_shared": "Chia sẻ bởi tôi",
     "item_activity": "Hoạt động",
     "item_trash": "Thùng rác",
+    "item_migration": "Di chuyển",
     "item_settings": "Cài đặt",
     "item_collect": "Quản trị",
     "item_shared_drives": "Ổ đĩa dùng chung",
@@ -24,7 +25,8 @@
     "link-client-ios": "https://apps.apple.com/app/cloud-personnel-cozy/id1600636174",
     "link-client-web": "https://cozy.io/try-it",
     "view_more": "Hiển thị thêm",
-    "view_less": "Hiển thị ít hơn"
+    "view_less": "Hiển thị ít hơn",
+    "item_nextcloud": "Nextcloud"
   },
   "breadcrumb": {
     "title_drive": "Tệp",
@@ -41,10 +43,10 @@
     "more": "Thêm"
   },
   "toolbar": {
+    "menu_leave_shared_drive": "Rời khỏi chia sẻ",
     "menu_upload": "Tải lên tệp tin",
     "item_more": "Thêm",
     "menu_new_folder": "Thư mục",
-    "menu_new_encrypted_folder": "Thư mục được mã hoá",
     "menu_select": "Chọn mục",
     "menu_share_folder": "Chia sẻ thư mục",
     "menu_download": "Tải xuống",
@@ -53,6 +55,7 @@
     "menu_download_folder": "Tải thư mục xuống",
     "menu_download_file": "Tải tệp này xuống",
     "menu_create_note": "Ghi chú",
+    "menu_create_excalidraw": "Excalidraw",
     "menu_create_shortcut": "Lối tắt",
     "share": "Chia sẻ",
     "trash": "Xoá",
@@ -190,16 +193,6 @@
       "head_updated_at_desc": "Mới nhất trước",
       "head_size_asc": "Nhẹ nhất trước",
       "head_size_desc": "Nặng nhất trước"
-    },
-    "tooltip": {
-      "carbonCopy": {
-        "title": "Bản sao gốc",
-        "caption": "Chỉ ra rằng tài liệu này được xác định là \\“xác thực và nguyên bản\\” bởi Twake Workplace, đơn vị lưu trữ Twake của bạn, vì nó có thể chứng minh rằng tài liệu đến trực tiếp từ dịch vụ bên thứ ba mà không bị chỉnh sửa."
-      },
-      "electronicSafe": {
-        "title": "Két điện tử",
-        "caption": "Chỉ ra rằng tài liệu gốc được bảo vệ trong két điện tử cá nhân của bạn, kèm theo các chứng nhận mang lại giá trị pháp lý và đảm bảo lưu trữ trong 50 năm kể từ thời điểm nộp."
-      }
     }
   },
   "Storage": {
@@ -232,7 +225,7 @@
     "title": "Xóa %{filename}? |||| Xóa %{smart_count} %{type}?",
     "trash": "Tệp sẽ được chuyển vào Thùng rác. |||| Các tệp sẽ được chuyển vào Thùng rác.",
     "restore": "Bạn có thể khôi phục bất cứ lúc nào. |||| Bạn có thể khôi phục chúng bất cứ lúc nào.",
-    "share_accepted": "Chia sẻ sẽ bị dừng. Những liên hệ sau sẽ giữ một bản sao, nhưng thay đổi của bạn sẽ không còn được đồng bộ:",
+    "share_accepted": "Chia sẻ sẽ bị dừng.",
     "share_waiting": "Chia sẻ sẽ bị dừng. Những liên hệ sau sẽ không còn có thể chấp nhận chia sẻ và truy cập nội dung nữa:",
     "share_both": "Chia sẻ sẽ bị dừng. Một số liên hệ đã lưu tệp vào Twake sẽ giữ bản sao, còn những người khác sẽ mất quyền truy cập:",
     "link": "Liên kết chia sẻ sẽ bị vô hiệu hóa",
@@ -275,7 +268,7 @@
     "mobile_text": "Chọn tệp trên thiết bị của bạn.",
     "trash_title": "Bạn chưa có tệp nào trong Thùng rác.",
     "trash_text": "Chuyển các tệp không cần thiết vào Thùng rác và xóa vĩnh viễn để giải phóng dung lượng.",
-    "shared-drive_text": "Tạo và chia sẻ ổ đĩa đầu tiên của bạn."
+    "sharing_text": "Bạn chưa có tệp hoặc ổ đĩa được chia sẻ nào."
   },
   "error": {
     "open_folder": "Đã xảy ra lỗi khi mở thư mục.",
@@ -285,8 +278,7 @@
     },
     "download_file": {
       "offline": "Bạn cần kết nối mạng để tải tệp này",
-      "missing": "Tệp này không tồn tại",
-      "encryption_many": "Không thể tải nhiều tệp được mã hóa cùng lúc"
+      "missing": "Tệp này không tồn tại"
     }
   },
   "Error": {
@@ -345,6 +337,15 @@
       "errors": "Đã xảy ra lỗi trong quá trình tải lên %{type}.",
       "network": "Bạn hiện đang ngoại tuyến. Vui lòng thử lại khi có kết nối mạng.",
       "fileTooLargeErrors": "Tệp quá lớn. Kích thước tệp tối đa: %{max_size_value} GB"
+    },
+    "conflict": {
+      "title": "Tùy chọn tải lên",
+      "content": "Một hoặc nhiều tệp đã tồn tại trong thư mục này. Bạn muốn thay thế tệp hiện có hay giữ cả hai phiên bản?",
+      "apply_all": "Cài đặt chia sẻ sẽ không thay đổi nếu bạn thay thế tệp",
+      "replace": "Thay thế tệp hiện có",
+      "keep_both": "Giữ cả hai tệp",
+      "cancel": "Huỷ",
+      "confirm": "Tải lên"
     }
   },
   "intents": {
@@ -365,7 +366,8 @@
     "success_flagship": "Đã tải lên %{smart_count} tệp thành công. |||| Đã tải lên %{smart_count} tệp thành công.",
     "close": "đóng",
     "item": {
-      "pending": "Đang chờ"
+      "pending": "Đang chờ",
+      "conflict": "Đang chờ lựa chọn"
     }
   },
   "Viewer": {
@@ -413,7 +415,7 @@
     "outsideSharedFolder": {
       "title": "Di chuyển ra khỏi thư mục chia sẻ %{sharedFolder}",
       "content_1": "Cảnh báo, bạn đang muốn di chuyển %{name} ra khỏi thư mục chia sẻ %{sharedFolder}. |||| Cảnh báo, bạn đang muốn di chuyển %{smart_count} %{type} ra khỏi thư mục chia sẻ %{sharedFolder}.",
-      "content_2": "Thao tác này sẽ xóa %{type} %{name} khỏi mục chia sẻ. %{type} này sẽ bị đưa vào thùng rác đối với tất cả thành viên được chia sẻ. |||| Thao tác này sẽ xóa %{smart_count} %{type} khỏi mục chia sẻ. Các %{type} này sẽ bị đưa vào thùng rác đối với tất cả thành viên được chia sẻ.",
+      "content_2": "Thao tác này sẽ xóa %{type} %{name} khỏi mục chia sẻ. |||| Thao tác này sẽ xóa %{smart_count} %{type} khỏi mục chia sẻ.",
       "cancel": "Hủy",
       "confirm": "Tôi hiểu"
     },
@@ -516,6 +518,9 @@
     "needs_info": "Phím tắt cần ít nhất một URL và tên tệp",
     "url_badformat": "URL của bạn không đúng định dạng"
   },
+  "Excalidraw": {
+    "createFileName": "Bản vẽ mới"
+  },
   "OnlyOffice": {
     "Error": {
       "title": "Đã xảy ra sự cố",
@@ -534,16 +539,7 @@
       "goToHome": "Về trang chính"
     },
     "actions": {
-      "edit": "Chỉnh sửa",
       "validate": "Xác nhận"
-    },
-    "tooltip": {
-      "title": "Chỉnh sửa tài liệu",
-      "text": "Tài liệu hiện đang ở chế độ chỉ đọc. Bạn có thể chỉnh sửa bằng cách nhấp vào đây.",
-      "actions": {
-        "ok": "Đồng ý",
-        "hide": "Không hiển thị nữa"
-      }
     }
   },
   "Migration": {
@@ -609,6 +605,16 @@
     "restoreSuccess": "Mục đã được khôi phục",
     "restoreError": "Đã xảy ra lỗi, vui lòng thử lại.",
     "destroySuccess": "Mục đã được xóa vĩnh viễn"
+  },
+  "MigrationProgressBanner": {
+    "title": "Đang di chuyển dữ liệu từ Nextcloud",
+    "percent": "Hoàn tất %{percent}%",
+    "importing": "Đang nhập %{count} tệp từ Nextcloud...",
+    "cancel": "Hủy",
+    "done": {
+      "title": "Di chuyển hoàn tất !",
+      "body": "Đã nhập thành công %{count} tệp từ Nextcloud"
+    }
   },
   "EntriesType": {
     "file": "tệp |||| các tệp",

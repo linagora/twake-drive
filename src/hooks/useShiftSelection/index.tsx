@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/refs */
 import {
   useCallback,
   useEffect,
@@ -17,7 +18,9 @@ import {
   FORWARD_DIRECTION
 } from './helpers'
 
+import { isEditableTarget } from '@/hooks/helpers'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
+import { scrollElementIntoViewInContainer } from '@/modules/selection/scrollHelpers'
 import { SelectedItems } from '@/modules/selection/types'
 
 type ViewType = 'list' | 'grid'
@@ -25,6 +28,7 @@ type ViewType = 'list' | 'grid'
 interface UseShiftSelectionParams {
   items: IOCozyFile[]
   viewType?: ViewType
+  scrollElement?: HTMLElement | null
 }
 
 interface UseShiftSelectionReturn {
@@ -39,21 +43,46 @@ interface UseShiftSelectionReturn {
  * - Select ranges of items using Shift+Click (from last interacted item to clicked item)
  * - Navigate and extend selection using Shift+Arrow keys (direction depends on viewType)
  *
+ * After each navigation the hook scrolls the rendered `[data-file-id]`
+ * element of the new lastInteractedItem into view. It uses the same kind
+ * of DOM scroll container as rectangular selection: compare item and
+ * scroll container bounds, then call `scrollBy` only for the missing
+ * distance.
+ *
  * @param {UseShiftSelectionParams} params - Configuration object containing items and view type
  * @param {IOCozyFile[]} params.items - Array of IOCozyFile objects to enable selection on
  * @param {ViewType} params.viewType - View type ('list' or 'grid') that determines keyboard navigation behavior
+ * @param {HTMLElement|null} params.scrollElement - Optional scrollable DOM container
  * @param ref - React ref to the container element that should receive keyboard events
  *
  * @returns {UseShiftSelectionReturn}
  */
 const useShiftSelection = (
-  { items, viewType = 'list' }: UseShiftSelectionParams,
+  { items, viewType = 'list', scrollElement = null }: UseShiftSelectionParams,
   ref: RefObject<HTMLElement>
 ): UseShiftSelectionReturn => {
   const { isMobile } = useBreakpoints()
 
   const itemsRef = useRef<IOCozyFile[]>([])
   itemsRef.current = useMemo(() => items, [items])
+
+  /**
+   * Scrolls the lastInteractedItem into view inside the scroll container.
+   * This mirrors rectangular selection: use the actual scrollable element
+   * and scroll only by the amount needed to reveal the current item.
+   */
+  const scrollToItem = useCallback(
+    (id: string) => {
+      const container = scrollElement || ref.current
+      if (!container) return
+
+      const element = container.querySelector(`[data-file-id="${id}"]`)
+      if (!element) return
+
+      scrollElementIntoViewInContainer(container, element)
+    },
+    [ref, scrollElement]
+  )
 
   const { selectedItems, setSelectedItems, isItemSelected, setIsSelectAll } =
     useSelectionContext()
@@ -69,13 +98,10 @@ const useShiftSelection = (
   }, [lastInteractedItem])
 
   const selectedItemMap: SelectedItems = useMemo(() => {
-    return selectedItems.reduce<SelectedItems>(
-      (prev: SelectedItems, cur: IOCozyFile) => ({
-        ...prev,
-        [cur._id]: cur
-      }),
-      {}
-    )
+    return selectedItems.reduce<SelectedItems>((acc, item) => {
+      acc[item._id] = item
+      return acc
+    }, {})
   }, [selectedItems])
 
   /**
@@ -106,6 +132,7 @@ const useShiftSelection = (
       setIsSelectAll(
         Object.keys(newSelectedItems).length === itemsRef.current.length
       )
+      scrollToItem(lastInteractedItemId)
     },
     [
       items,
@@ -113,7 +140,8 @@ const useShiftSelection = (
       selectedItemMap,
       setSelectedItems,
       setIsSelectAll,
-      setLastInteractedItem
+      setLastInteractedItem,
+      scrollToItem
     ]
   )
 
@@ -156,7 +184,10 @@ const useShiftSelection = (
 
       setSelectedItems(newSelectedItems)
       setLastInteractedItem(lastInteractedItemId)
-      setIsSelectAll(selectedItems.length === itemsRef.current.length)
+      setIsSelectAll(
+        Object.keys(newSelectedItems).length === itemsRef.current.length
+      )
+      scrollToItem(lastInteractedItemId)
     },
     [
       viewType,
@@ -166,7 +197,8 @@ const useShiftSelection = (
       setSelectedItems,
       isItemSelected,
       setIsSelectAll,
-      setLastInteractedItem
+      setLastInteractedItem,
+      scrollToItem
     ]
   )
 
@@ -181,10 +213,12 @@ const useShiftSelection = (
     if (isMobile || !itemsRef.current.length || !ref.current) return
 
     const container = ref.current
-    container.focus()
+    if (!isEditableTarget(document.activeElement)) {
+      container.focus()
+    }
 
     container.addEventListener('keydown', handleKeyDown)
-    return () => {
+    return (): void => {
       container.removeEventListener('keydown', handleKeyDown)
     }
   }, [isMobile, ref, handleKeyDown])

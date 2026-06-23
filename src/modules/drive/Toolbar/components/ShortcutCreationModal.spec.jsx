@@ -1,4 +1,3 @@
-/* eslint-env jest */
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import mediaQuery from 'css-mediaquery'
 import React from 'react'
@@ -96,7 +95,7 @@ describe('ShortcutCreationModal', () => {
     // Then
     expect(client.save).not.toHaveBeenCalled()
     expect(showAlert).toHaveBeenCalledTimes(1)
-    expect(showAlert).toBeCalledWith(
+    expect(showAlert).toHaveBeenCalledWith(
       expect.objectContaining({ severity: 'error' })
     )
   })
@@ -121,7 +120,7 @@ describe('ShortcutCreationModal', () => {
 
     await waitFor(() => {
       expect(showAlert).toHaveBeenCalledTimes(1)
-      expect(showAlert).toBeCalledWith(
+      expect(showAlert).toHaveBeenCalledWith(
         expect.objectContaining({ severity: 'success' })
       )
     })
@@ -144,7 +143,7 @@ describe('ShortcutCreationModal', () => {
 
     await waitFor(() => {
       expect(showAlert).toHaveBeenCalledTimes(1)
-      expect(showAlert).toBeCalledWith(
+      expect(showAlert).toHaveBeenCalledWith(
         expect.objectContaining({ severity: 'success' })
       )
     })
@@ -167,8 +166,8 @@ describe('ShortcutCreationModal', () => {
 
     await waitFor(() => {
       expect(showAlert).toHaveBeenCalledTimes(1)
-      expect(showAlert).toBeCalledWith(
-        expect.objectContaining({ severity: 'error', duration: 2000 })
+      expect(showAlert).toHaveBeenCalledWith(
+        expect.objectContaining({ severity: 'error', duration: 4000 })
       )
     })
   })
@@ -189,7 +188,7 @@ describe('ShortcutCreationModal', () => {
 
     await waitFor(() => {
       expect(showAlert).toHaveBeenCalledTimes(1)
-      expect(showAlert).toBeCalledWith(
+      expect(showAlert).toHaveBeenCalledWith(
         expect.objectContaining({ severity: 'error' })
       )
     })
@@ -211,7 +210,7 @@ describe('ShortcutCreationModal', () => {
 
     await waitFor(() => {
       expect(showAlert).toHaveBeenCalledTimes(1)
-      expect(showAlert).toBeCalledWith(
+      expect(showAlert).toHaveBeenCalledWith(
         expect.objectContaining({ severity: 'error' })
       )
     })
@@ -230,7 +229,7 @@ describe('ShortcutCreationModal', () => {
 
     await waitFor(() => {
       expect(showAlert).toHaveBeenCalledTimes(1)
-      expect(showAlert).toBeCalledWith(
+      expect(showAlert).toHaveBeenCalledWith(
         expect.objectContaining({ severity: 'error' })
       )
     })
@@ -252,7 +251,7 @@ describe('ShortcutCreationModal', () => {
 
     await waitFor(() => {
       expect(showAlert).toHaveBeenCalledTimes(1)
-      expect(showAlert).toBeCalledWith(
+      expect(showAlert).toHaveBeenCalledWith(
         expect.objectContaining({ severity: 'error' })
       )
     })

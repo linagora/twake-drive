@@ -1,21 +1,15 @@
-import classNames from 'classnames'
 import React from 'react'
 
 import { isReferencedBy, models } from 'cozy-client'
 import { isDirectory } from 'cozy-client/dist/models/file'
-import flag from 'cozy-flags'
 import { SharedBadge, SharingOwnerAvatar } from 'cozy-sharing'
 import Badge from 'cozy-ui/transpiled/react/Badge'
 import Box from 'cozy-ui/transpiled/react/Box'
-import GhostFileBadge from 'cozy-ui/transpiled/react/GhostFileBadge'
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import FileTypeServerIcon from 'cozy-ui/transpiled/react/Icons/FileTypeServer'
-import FileTypeSharedDriveIcon from 'cozy-ui/transpiled/react/Icons/FileTypeSharedDrive'
 import LinkIcon from 'cozy-ui/transpiled/react/Icons/Link'
 import TrashDuotoneIcon from 'cozy-ui/transpiled/react/Icons/TrashDuotone'
-import InfosBadge from 'cozy-ui/transpiled/react/InfosBadge'
 import Spinner from 'cozy-ui/transpiled/react/Spinner'
-import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import styles from '@/styles/filelist.styl'
 
@@ -31,13 +25,11 @@ import {
   isNextcloudShortcut,
   isNextcloudFile
 } from '@/modules/nextcloud/helpers'
-import { isSharedDriveFolder } from '@/modules/shareddrives/helpers'
 
 interface FileThumbnailProps {
   file: File | FolderPickerEntry
   size?: number
   isInSyncFromSharing?: boolean
-  isEncrypted?: boolean
   showSharedBadge?: boolean
   componentsProps?: {
     sharedBadge?: object
@@ -48,23 +40,14 @@ const FileThumbnail: React.FC<FileThumbnailProps> = ({
   file,
   size,
   isInSyncFromSharing,
-  isEncrypted,
   showSharedBadge = false,
   componentsProps = {
     sharedBadge: {}
   }
 }) => {
   const { viewType } = useViewSwitcherContext()
-  const { isMobile } = useBreakpoints()
 
-  const fileIcon = (
-    <FileIcon
-      file={file}
-      size={size}
-      isEncrypted={isEncrypted}
-      viewType={viewType}
-    />
-  )
+  const fileIcon = <FileIcon file={file} size={size} viewType={viewType} />
 
   if (isNextcloudFile(file)) {
     return <FileIconMime file={file} size={size} />
@@ -82,31 +65,6 @@ const FileThumbnail: React.FC<FileThumbnailProps> = ({
       </Box>
     ) : (
       <Icon icon={TrashDuotoneIcon} size={size ?? 32} />
-    )
-  }
-
-  if (
-    flag('drive.shared-drive.enabled') &&
-    (file._id === 'io.cozy.files.shared-drives-dir' ||
-      isSharedDriveFolder(file))
-  ) {
-    return (
-      <>
-        <Icon icon={FileTypeSharedDriveIcon} size={size ?? 32} />
-        <div
-          className={classNames('u-pos-absolute', {
-            'u-bottom-xs u-right-xs': viewType === 'list',
-            'u-bottom-0 u-right-0': viewType === 'grid'
-          })}
-        >
-          {isMobile && (
-            <SharingOwnerAvatar
-              docId={file._id}
-              size={viewType === 'list' ? 'xs' : 's'}
-            />
-          )}
-        </div>
-      </>
     )
   }
 
@@ -200,20 +158,48 @@ const FileThumbnail: React.FC<FileThumbnailProps> = ({
       {isRegularShortcut && (
         <>
           {viewType !== 'grid' ? (
-            <InfosBadge badgeContent={<Icon icon={LinkIcon} size={10} />}>
+            <Badge
+              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+              badgeContent={
+                <div
+                  className="u-h-1-half u-miw-1-half u-bdrs-circle u-flex u-flex-items-center u-flex-justify-center"
+                  style={{
+                    backgroundColor: 'var(--paperBackgroundColor)',
+                    color: 'var(--iconTextColor)',
+                    boxShadow: 'var(--shadow3)'
+                  }}
+                >
+                  <Icon icon={LinkIcon} size="10" />
+                </div>
+              }
+            >
               {fileIcon}
-            </InfosBadge>
+            </Badge>
           ) : (
             fileIcon
           )}
         </>
       )}
       {isSharingShortcut && (
-        <GhostFileBadge
-          badgeContent={<SharingShortcutIcon file={file} size={16} />}
+        <Badge
+          badgeContent={
+            <div
+              className="u-h-auto u-miw-auto"
+              style={{
+                padding: '3px',
+                backgroundColor: 'white',
+                color: 'var(--coolGrey)',
+                border: '1px solid var(--silver)',
+                borderRadius: '6px'
+              }}
+            >
+              <SharingShortcutIcon file={file} size={16} />
+            </div>
+          }
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         >
           <SharingOwnerAvatar docId={file._id} size="small" />
-        </GhostFileBadge>
+        </Badge>
       )}
       {isInSyncFromSharing && (
         <span data-testid="fil-file-thumbnail--spinner">

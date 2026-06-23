@@ -1,5 +1,4 @@
 import React, { useRef, useState } from 'react'
-import { useI18n } from 'twake-i18n'
 
 import ActionsBar from 'cozy-ui/transpiled/react/ActionsBar'
 import Icon from 'cozy-ui/transpiled/react/Icon'
@@ -11,6 +10,7 @@ import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import Paper from 'cozy-ui/transpiled/react/Paper'
 import Popover from 'cozy-ui/transpiled/react/Popover'
+import { useI18n } from 'twake-i18n'
 
 import {
   filterActionsByPolicy,

@@ -1,4 +1,3 @@
-import PropTypes from 'prop-types'
 import React from 'react'
 
 import { useInstanceInfo } from 'cozy-client'
@@ -12,11 +11,11 @@ import BannerClient from '../../components/pushClient/Banner'
 /**
  * Component to manage all banner display logic
  */
-const PushBanner = ({ isPublic }) => {
+const PushBanner = () => {
   const { bannerDismissed } = usePushBannerContext()
   const { isLoaded, diskUsage } = useInstanceInfo()
 
-  if (isPublic || !isLoaded) return null
+  if (!isLoaded) return null
 
   const diskInfos = makeDiskInfos(
     diskUsage?.data?.attributes?.used,
@@ -32,15 +31,6 @@ const PushBanner = ({ isPublic }) => {
   }
 
   return null
-}
-
-PushBanner.defaultProps = {
-  isPublic: false
-}
-
-PushBanner.propTypes = {
-  /** Whether public context */
-  isPublic: PropTypes.bool
 }
 
 export default PushBanner

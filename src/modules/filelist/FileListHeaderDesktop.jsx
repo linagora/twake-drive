@@ -1,12 +1,12 @@
 import cx from 'classnames'
 import React from 'react'
-import { useI18n } from 'twake-i18n'
 
 import {
   TableHead,
   TableHeader,
   TableRow
 } from 'cozy-ui/transpiled/react/deprecated/Table'
+import { useI18n } from 'twake-i18n'
 
 import HeaderCell from './HeaderCell'
 
@@ -19,7 +19,6 @@ const FileListHeaderDesktop = ({
   canSort,
   sort,
   onFolderSort,
-  extraColumns,
   viewType
 }) => {
   const { t } = useI18n()
@@ -74,10 +73,6 @@ const FileListHeaderDesktop = ({
         >
           {t('table.head_size')}
         </TableHeader>
-        {extraColumns &&
-          extraColumns.map(column => (
-            <column.HeaderComponent key={column.label} />
-          ))}
         <TableHeader
           className={cx(
             styles['fil-content-header'],

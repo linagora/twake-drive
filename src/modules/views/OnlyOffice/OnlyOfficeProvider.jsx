@@ -48,6 +48,7 @@ const OnlyOfficeProvider = ({
   const fileResult = useQuery(fileQuery.definition, fileQuery.options)
 
   const handleFileUpdated = useCallback(
+    // eslint-disable-next-line react-hooks/preserve-manual-memoization
     data => {
       /**
        * To determine whether a file has diverged between its version on the cozy-stack and its version on the onlyoffice server, we use 2 criteria:
@@ -89,12 +90,14 @@ const OnlyOfficeProvider = ({
       searchParam.get('fromCreate') === 'true' ||
       searchParam.get('fromEdit') === 'true'
     ) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setEditorMode('edit')
     }
   }, [searchParam, fileId, driveId, hasWriteAccess, isEditorModeView])
 
   useEffect(() => {
     if (fileResult.data?.trashed) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTrashed(true)
       setEditorMode('view')
     } else {
@@ -104,6 +107,7 @@ const OnlyOfficeProvider = ({
 
   useEffect(() => {
     if (editorMode === 'edit') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setHasBeenEdited(true)
     }
   }, [editorMode])

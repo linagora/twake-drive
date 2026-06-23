@@ -30,7 +30,10 @@ export const useBreadcrumbPath = ({
   const client = useClient()
   const [paths, setPaths] = useState([])
 
-  const folder = useFolder({ folderId: currentFolderId, driveId })
+  const { folder, fetchStatus } = useFolder({
+    folderId: currentFolderId,
+    driveId
+  })
   const folderAttributes = {
     id: folder?.id,
     name: folder?.name,
@@ -39,13 +42,18 @@ export const useBreadcrumbPath = ({
 
   useEffect(() => {
     if (rootBreadcrumbPath && currentFolderId === rootBreadcrumbPath.id) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPaths([rootBreadcrumbPath])
       return
     }
 
     if (!folderAttributes.id || !folderAttributes.name) {
-      // Optionally set loading state or clear paths
-      setPaths([])
+      // While the folder query is in flight we keep the path empty so the
+      // breadcrumb can show its loading skeleton. Once the query has settled
+      // without a usable folder (inaccessible or deleted target), fall back to
+      // the root so the skeleton doesn't spin forever.
+      const isSettled = fetchStatus === 'loaded' || fetchStatus === 'failed'
+      setPaths(isSettled && rootBreadcrumbPath ? [rootBreadcrumbPath] : [])
       return
     }
 
@@ -120,6 +128,7 @@ export const useBreadcrumbPath = ({
     sharedDocumentIds,
     rootBreadcrumbPath,
     driveId,
+    fetchStatus,
     folderAttributes.id,
     folderAttributes.name,
     folderAttributes.dirId,

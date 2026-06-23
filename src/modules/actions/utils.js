@@ -2,11 +2,6 @@ import { isDirectory } from 'cozy-client/dist/models/file'
 import { receiveQueryResult } from 'cozy-client/dist/store'
 
 import { DOCTYPE_FILES } from '@/lib/doctypes'
-import {
-  getEncryptionKeyFromDirId,
-  downloadEncryptedFile,
-  isEncryptedFolder
-} from '@/lib/encryption'
 
 const isMissingFileError = error => error.status === 404
 
@@ -27,51 +22,25 @@ const downloadFileError = error => {
  * @param {CozyClient} client
  * @param {array} files  One or more files to download
  */
-export const downloadFiles = async (
-  client,
-  files,
-  { vaultClient, showAlert, t } = {},
-  driveId
-) => {
-  const encryptionKey = await getEncryptionKeyFromDirId(client, files[0].dir_id)
-
+export const downloadFiles = async (client, files, { showAlert, t } = {}) => {
   if (files.length === 1 && !isDirectory(files[0])) {
     const file = files[0]
+    const driveId = file.driveId
     try {
-      const filename = file.name
-      if (encryptionKey) {
-        return downloadEncryptedFile(client, vaultClient, {
-          file,
-          encryptionKey
-        })
-      } else {
-        return client
-          .collection(DOCTYPE_FILES, { driveId })
-          .download(file, null, filename)
-      }
+      return await client
+        .collection(DOCTYPE_FILES, { driveId })
+        .download(file, null, file.name)
     } catch (error) {
-      showAlert({ message: t(downloadFileError(error)), severity: 'error' })
+      showAlert({
+        message: t(downloadFileError(error)),
+        severity: 'error',
+        duration: 4000
+      })
     }
   } else {
-    if (encryptionKey) {
-      // Multiple download is forbidden for encrypted files because we cannot generate client archive for now.
-      return showAlert({
-        message: t('error.download_file.encryption_many'),
-        severity: 'error'
-      })
-    }
-    const hasEncryptedDirs = files.find(
-      file => isDirectory(file) && isEncryptedFolder(file)
-    )
-    if (hasEncryptedDirs) {
-      // We cannot download encrypted folder because we cannot generate client archive for now.
-      return showAlert({
-        message: t('error.download_file.encryption_many'),
-        severity: 'error'
-      })
-    }
     const ids = files.map(f => f.id)
-    return client.collection(DOCTYPE_FILES).downloadArchive(ids)
+    const driveId = files[0].driveId
+    return client.collection(DOCTYPE_FILES, { driveId }).downloadArchive(ids)
   }
 }
 
@@ -113,7 +82,11 @@ export const trashFiles = async (client, files, { showAlert, t, driveId }) => {
     showAlert({ message: t('alert.trash_file_success'), severity: 'success' })
   } catch (err) {
     if (!isAlreadyInTrash(err)) {
-      showAlert({ message: t('alert.try_again'), severity: 'error' })
+      showAlert({
+        message: t('alert.try_again'),
+        severity: 'error',
+        duration: 4000
+      })
     }
   }
 }

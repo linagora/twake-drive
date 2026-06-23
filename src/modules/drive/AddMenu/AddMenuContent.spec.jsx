@@ -2,6 +2,7 @@ import { render, waitFor } from '@testing-library/react'
 import React from 'react'
 
 import { useAppLinkWithStoreFallback } from 'cozy-client'
+import flag from 'cozy-flags'
 
 import AddMenuContent from './AddMenuContent'
 import AppLike from 'test/components/AppLike'
@@ -13,6 +14,7 @@ jest.mock('cozy-client/dist/hooks/useAppLinkWithStoreFallback', () => jest.fn())
 jest.mock('cozy-keys-lib', () => ({
   useVaultClient: jest.fn()
 }))
+jest.mock('cozy-flags')
 mockCozyClientRequestQuery()
 
 const setup = async (
@@ -23,7 +25,6 @@ const setup = async (
     canUpload = true,
     refreshFolderContent = true,
     isPublic = false,
-    isEncryptedFolder = false,
     isReadOnly = false
   } = {}
 ) => {
@@ -44,7 +45,6 @@ const setup = async (
           canUpload={canUpload}
           refreshFolderContent={refreshFolderContent}
           isPublic={isPublic}
-          isEncryptedFolder={isEncryptedFolder}
           displayedFolder={displayedFolder}
           onClick={() => {}}
           isReadOnly={isReadOnly}
@@ -64,42 +64,57 @@ describe('AddMenuContent', () => {
       })
     })
 
-    it('does not display createNote on public Page', async () => {
+    const expectMenuItem = async (label, present, options) => {
       await waitFor(async () => {
-        const { root } = await setup(
-          { folderId: 'directory-foobar0' },
-          { isPublic: true }
-        )
-        const { queryByText } = root
-        expect(queryByText('Note')).toBeNull()
+        const { root } = await setup({ folderId: 'directory-foobar0' }, options)
+        const node = root.queryByText(label)
+        if (present) expect(node).toBeTruthy()
+        else expect(node).toBeNull()
       })
-    })
+    }
 
-    it('displays createNote on private Page', async () => {
-      await waitFor(async () => {
-        const { root } = await setup(
-          { folderId: 'directory-foobar0' },
-          { isPublic: false }
-        )
-        const { queryByText } = root
-        expect(queryByText('Note')).toBeTruthy()
-      })
-    })
+    it.each([
+      {
+        desc: 'does not display createNote on public Page',
+        present: false,
+        options: { isPublic: true }
+      },
+      {
+        desc: 'displays createNote on private Page',
+        present: true,
+        options: { isPublic: false }
+      }
+    ])('$desc', ({ present, options }) =>
+      expectMenuItem('Note', present, options)
+    )
 
-    it('does not display non-supported items inside an encrypted directory', async () => {
-      await waitFor(async () => {
-        const { root } = await setup(
-          { folderId: 'directory-foobar0' },
-          { isEncryptedFolder: true }
-        )
-        const { queryByText } = root
-        expect(queryByText('Note')).toBeNull()
-        expect(queryByText('Shortcut')).toBeNull()
-        expect(queryByText('Folder')).toBeNull()
-        expect(queryByText('Text document')).toBeNull()
-        expect(queryByText('Spreadsheet')).toBeNull()
-        expect(queryByText('Presentation')).toBeNull()
+    describe('createExcalidraw', () => {
+      beforeEach(() => {
+        flag.mockImplementation(name => name === 'drive.excalidraw.enabled')
       })
+      afterEach(() => {
+        flag.mockReset()
+      })
+
+      it.each([
+        {
+          desc: 'displays createExcalidraw on private Page',
+          present: true,
+          options: { isPublic: false }
+        },
+        {
+          desc: 'displays createExcalidraw on a read-write public Page',
+          present: true,
+          options: { isPublic: true, canUpload: true }
+        },
+        {
+          desc: 'does not display createExcalidraw on a read-only public Page',
+          present: false,
+          options: { isPublic: true, canUpload: false }
+        }
+      ])('$desc', ({ present, options }) =>
+        expectMenuItem('Excalidraw', present, options)
+      )
     })
   })
 })

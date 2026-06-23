@@ -6,11 +6,11 @@ import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import MobileAwareBreadcrumb from './MobileAwareBreadcrumb'
 
 jest.mock('cozy-ui/transpiled/react/providers/Breakpoints')
-// eslint-disable-next-line react/display-name
+
 jest.mock('modules/breadcrumb/components/DesktopBreadcrumb', () => () => (
   <div data-testid="desktop-breadcrumb" />
 ))
-// eslint-disable-next-line react/display-name
+
 jest.mock('modules/breadcrumb/components/MobileBreadcrumb', () => () => (
   <div data-testid="mobile-breadcrumb" />
 ))

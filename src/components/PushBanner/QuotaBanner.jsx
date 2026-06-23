@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react'
-import { useI18n } from 'twake-i18n'
 
 import { useInstanceInfo } from 'cozy-client'
 import {
@@ -9,10 +8,11 @@ import {
 import { isFlagshipApp } from 'cozy-device-helper'
 import flag from 'cozy-flags'
 import { useWebviewIntent } from 'cozy-intent'
-import Banner from 'cozy-ui/transpiled/react/Banner'
+import Alert from 'cozy-ui/transpiled/react/Alert'
 import Button from 'cozy-ui/transpiled/react/Buttons'
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import CloudSyncIcon from 'cozy-ui/transpiled/react/Icons/CloudSync'
+import { useI18n } from 'twake-i18n'
 
 import { usePushBannerContext } from './PushBannerProvider'
 
@@ -53,28 +53,29 @@ const QuotaBanner = () => {
 
   return (
     <div className="u-pos-relative">
-      <Banner
-        inline
+      <Alert
         icon={<Icon icon={CloudSyncIcon} />}
-        bgcolor="var(--defaultBackgroundColor)"
-        text={t('PushBanner.quota.text')}
-        buttonOne={
-          <Button
-            label={t('PushBanner.quota.actions.first')}
-            variant="text"
-            onClick={onDismiss}
-          />
-        }
-        buttonTwo={
-          canOpenPremiumLink ? (
+        color="var(--defaultBackgroundColor)"
+        action={
+          <>
             <Button
-              label={t('PushBanner.quota.actions.second')}
+              label={t('PushBanner.quota.actions.first')}
               variant="text"
-              onClick={onAction}
+              onClick={onDismiss}
             />
-          ) : null
+
+            {canOpenPremiumLink ? (
+              <Button
+                label={t('PushBanner.quota.actions.second')}
+                variant="text"
+                onClick={onAction}
+              />
+            ) : null}
+          </>
         }
-      />
+      >
+        {t('PushBanner.quota.text')}
+      </Alert>
     </div>
   )
 }

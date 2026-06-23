@@ -1,16 +1,16 @@
 import React, { useContext } from 'react'
 import { useLocation } from 'react-router-dom'
 
-import { useSharingContext } from 'cozy-sharing'
 import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import { useRightClick } from '@/components/RightClick/RightClickProvider'
 import { useDisplayedFolder } from '@/hooks'
+import useCurrentFolderWriteAccess from '@/hooks/useCurrentFolderWriteAccess'
 import AddMenuProvider, {
   AddMenuContext
 } from '@/modules/drive/AddMenu/AddMenuProvider'
 
-const AddMenu = ({ children, ...props }) => {
+const AddMenu = ({ children, isFolderReadOnly, ...props }) => {
   const { isDesktop } = useBreakpoints()
   const { onOpen } = useRightClick()
   const { handleToggle, handleOfflineClick, isOffline } =
@@ -20,7 +20,7 @@ const AddMenu = ({ children, ...props }) => {
   const isInViewerMode = location.pathname.includes('/file/')
 
   if (!children) return null
-  if (!isDesktop || isInViewerMode)
+  if (!isDesktop || isInViewerMode || isFolderReadOnly)
     return React.Children.map(children, child =>
       React.isValidElement(child)
         ? React.cloneElement(child, {
@@ -49,12 +49,9 @@ const AddMenu = ({ children, ...props }) => {
 const RightClickAddMenu = ({ children, ...props }) => {
   const { isOpen, position } = useRightClick()
   const { displayedFolder } = useDisplayedFolder()
-  const { hasWriteAccess } = useSharingContext()
   const location = useLocation()
 
-  const isFolderReadOnly = displayedFolder
-    ? !hasWriteAccess(displayedFolder._id, displayedFolder.driveId)
-    : false
+  const isFolderReadOnly = !useCurrentFolderWriteAccess()
 
   const isInViewerMode = location.pathname.includes('/file/')
   const shouldShowAddMenu = isOpen('AddMenu') && !isInViewerMode
@@ -76,7 +73,9 @@ const RightClickAddMenu = ({ children, ...props }) => {
         }
       }}
     >
-      <AddMenu {...props}>{children}</AddMenu>
+      <AddMenu {...props} isFolderReadOnly={isFolderReadOnly}>
+        {children}
+      </AddMenu>
     </AddMenuProvider>
   )
 }

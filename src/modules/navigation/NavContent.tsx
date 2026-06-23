@@ -1,7 +1,7 @@
 import React from 'react'
 
+import Avatar from 'cozy-ui/transpiled/react/Avatar'
 import Badge from 'cozy-ui/transpiled/react/Badge'
-import Circle from 'cozy-ui/transpiled/react/Circle'
 import { NavIcon, NavText } from 'cozy-ui/transpiled/react/Nav'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
@@ -24,15 +24,16 @@ const NavContent: React.FC<NavContentProps> = ({
         <>
           {icon && <NavIcon icon={icon} />}
           <NavText>{label}</NavText>
-          <Circle
-            size="xsmall"
+          <Avatar
+            color="var(--errorColor)"
+            textColor="var(--white)"
+            size="xs"
             className="u-ml-auto u-mr-1"
-            backgroundColor="var(--errorColor)"
           >
             <span style={{ fontSize: '11px', lineHeight: '1rem' }}>
               {badgeContent > 99 ? '99+' : badgeContent}
             </span>
-          </Circle>
+          </Avatar>
         </>
       )
     } else {

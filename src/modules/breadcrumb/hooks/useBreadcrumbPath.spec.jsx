@@ -1,4 +1,4 @@
-import { act, renderHook } from '@testing-library/react-hooks'
+import { act, renderHook } from '@testing-library/react'
 
 import { useClient } from 'cozy-client'
 import log from 'cozy-logger'
@@ -25,7 +25,7 @@ describe('useBreadcrumbPath', () => {
 
   beforeEach(() => {
     jest.resetAllMocks()
-    useFolder.mockReturnValue(null)
+    useFolder.mockReturnValue({ folder: null, fetchStatus: 'loading' })
   })
 
   it('should get useClient from cozy-client', () => {
@@ -37,13 +37,14 @@ describe('useBreadcrumbPath', () => {
   })
 
   it('should return only Drive link when id undefined', async () => {
-    useFolder.mockReturnValue(
-      createFolder({
+    useFolder.mockReturnValue({
+      folder: createFolder({
         id: rootBreadcrumbPath.id,
         name: rootBreadcrumbPath.name,
         dirId: undefined
-      })
-    )
+      }),
+      fetchStatus: 'loaded'
+    })
     // When
     const { result } = await renderHook(() =>
       useBreadcrumbPath({ rootBreadcrumbPath })
@@ -54,13 +55,14 @@ describe('useBreadcrumbPath', () => {
   })
 
   it('should return only Drive link when id is root_breadcrumb_path id', async () => {
-    useFolder.mockReturnValue(
-      createFolder({
+    useFolder.mockReturnValue({
+      folder: createFolder({
         id: rootBreadcrumbPath.id,
         name: rootBreadcrumbPath.name,
         dirId: undefined
-      })
-    )
+      }),
+      fetchStatus: 'loaded'
+    })
     // When
     let render
     await act(async () => {
@@ -78,13 +80,14 @@ describe('useBreadcrumbPath', () => {
 
   it('should return only rootBreadcrumbPath when currentFolderId equals rootBreadcrumbPath.id (early return)', async () => {
     const someFolderId = 'some-folder-id'
-    useFolder.mockReturnValue(
-      createFolder({
+    useFolder.mockReturnValue({
+      folder: createFolder({
         id: someFolderId,
         name: 'Some Folder',
         dirId: rootBreadcrumbPath.id
-      })
-    )
+      }),
+      fetchStatus: 'loaded'
+    })
 
     let render
     await act(async () => {
@@ -100,18 +103,70 @@ describe('useBreadcrumbPath', () => {
     expect(fetchFolder).not.toHaveBeenCalled()
   })
 
+  it('should fall back to rootBreadcrumbPath when the folder query fails (e.g. inaccessible target)', async () => {
+    // Given a folder query that settled in error (403 / forbidden share)
+    useClient.mockReturnValue('cozy-client')
+    useFolder.mockReturnValue({ folder: null, fetchStatus: 'failed' })
+
+    // When
+    let render
+    await act(async () => {
+      render = await renderHook(() =>
+        useBreadcrumbPath({ rootBreadcrumbPath, currentFolderId: '1234' })
+      )
+    })
+
+    // Then
+    expect(render.result.current).toEqual([rootBreadcrumbPath])
+  })
+
+  it('should fall back to rootBreadcrumbPath when the folder query loads without a folder (e.g. 404)', async () => {
+    // Given a folder query that settled as loaded but returned no document
+    useClient.mockReturnValue('cozy-client')
+    useFolder.mockReturnValue({ folder: null, fetchStatus: 'loaded' })
+
+    // When
+    let render
+    await act(async () => {
+      render = await renderHook(() =>
+        useBreadcrumbPath({ rootBreadcrumbPath, currentFolderId: '1234' })
+      )
+    })
+
+    // Then
+    expect(render.result.current).toEqual([rootBreadcrumbPath])
+  })
+
+  it('should keep the path empty while the folder query is loading', async () => {
+    // Given a folder query still in flight
+    useClient.mockReturnValue('cozy-client')
+    useFolder.mockReturnValue({ folder: null, fetchStatus: 'loading' })
+
+    // When
+    let render
+    await act(async () => {
+      render = await renderHook(() =>
+        useBreadcrumbPath({ rootBreadcrumbPath, currentFolderId: '1234' })
+      )
+    })
+
+    // Then: the empty path drives the loading skeleton, no premature fallback
+    expect(render.result.current).toEqual([])
+  })
+
   it('should call fetch folder', async () => {
     // Given
     const currentFolderId = '1234'
     useClient.mockReturnValue('cozy-client')
     const parentFolderId = 'parentFolderId'
-    useFolder.mockReturnValue(
-      createFolder({
+    useFolder.mockReturnValue({
+      folder: createFolder({
         id: currentFolderId,
         name: 'current',
         dirId: parentFolderId
-      })
-    )
+      }),
+      fetchStatus: 'loaded'
+    })
     fetchFolder.mockReturnValueOnce({ dir_id: rootBreadcrumbPath.id })
 
     // When
@@ -134,13 +189,14 @@ describe('useBreadcrumbPath', () => {
     useClient.mockReturnValue('cozy-client')
     fetchFolder.mockRejectedValue('error')
     const parentFolderId = 'parentFolderId'
-    useFolder.mockReturnValue(
-      createFolder({
+    useFolder.mockReturnValue({
+      folder: createFolder({
         id: currentFolderId,
         name: 'current',
         dirId: parentFolderId
-      })
-    )
+      }),
+      fetchStatus: 'loaded'
+    })
 
     // When
     let render
@@ -164,13 +220,14 @@ describe('useBreadcrumbPath', () => {
     useClient.mockReturnValue('cozy-client')
     fetchFolder.mockReturnValueOnce(undefined)
     const parentFolderId = 'parentFolderId'
-    useFolder.mockReturnValue(
-      createFolder({
+    useFolder.mockReturnValue({
+      folder: createFolder({
         id: currentFolderId,
         name: 'current',
         dirId: parentFolderId
-      })
-    )
+      }),
+      fetchStatus: 'loaded'
+    })
 
     // When
     await act(async () => {
@@ -189,13 +246,14 @@ describe('useBreadcrumbPath', () => {
     const parentFolderId = 'parentFolderId'
     const grandParentFolderId = 'grandParentFolderId'
     useClient.mockReturnValue('cozy-client')
-    useFolder.mockReturnValue(
-      createFolder({
+    useFolder.mockReturnValue({
+      folder: createFolder({
         id: currentFolderId,
         name: 'current',
         dirId: parentFolderId
-      })
-    )
+      }),
+      fetchStatus: 'loaded'
+    })
     fetchFolder.mockReturnValueOnce({
       id: parentFolderId,
       name: 'parent',
@@ -234,13 +292,14 @@ describe('useBreadcrumbPath', () => {
     useClient.mockReturnValue('cozy-client')
     fetchFolder.mockReturnValueOnce({ dir_id: rootBreadcrumbPath.id })
     const parentFolderId = 'parentFolderId'
-    useFolder.mockReturnValue(
-      createFolder({
+    useFolder.mockReturnValue({
+      folder: createFolder({
         id: currentFolderId,
         name: 'current',
         dirId: parentFolderId
-      })
-    )
+      }),
+      fetchStatus: 'loaded'
+    })
 
     // When
     let render
@@ -265,13 +324,14 @@ describe('useBreadcrumbPath', () => {
     }
     const currentFolderId = 'currentFolderId'
     useClient.mockReturnValue('cozy-client')
-    useFolder.mockReturnValue(
-      createFolder({
+    useFolder.mockReturnValue({
+      folder: createFolder({
         id: currentFolderId,
         name: 'current',
         dirId: publicViewRootBreadcrumbPath.id
-      })
-    )
+      }),
+      fetchStatus: 'loaded'
+    })
 
     // When
     let render
@@ -297,13 +357,14 @@ describe('useBreadcrumbPath', () => {
     const notSharedFolderId = 'notSharedFolderId'
     const sharedDocumentIds = [parentFolderId, 'another-id']
     useClient.mockReturnValue('cozy-client')
-    useFolder.mockReturnValue(
-      createFolder({
+    useFolder.mockReturnValue({
+      folder: createFolder({
         id: currentFolderId,
         name: 'current',
         dirId: parentFolderId
-      })
-    )
+      }),
+      fetchStatus: 'loaded'
+    })
     fetchFolder.mockReturnValueOnce({
       id: parentFolderId,
       name: 'parent',
@@ -346,13 +407,14 @@ describe('useBreadcrumbPath', () => {
     const notSharedFolderId = 'notSharedFolderId'
     const sharedDocumentIds = [parentFolderId, currentFolderId, 'another-id']
     useClient.mockReturnValue('cozy-client')
-    useFolder.mockReturnValue(
-      createFolder({
+    useFolder.mockReturnValue({
+      folder: createFolder({
         id: currentFolderId,
         name: 'current',
         dirId: parentFolderId
-      })
-    )
+      }),
+      fetchStatus: 'loaded'
+    })
     fetchFolder.mockReturnValueOnce({
       id: parentFolderId,
       name: 'parent',

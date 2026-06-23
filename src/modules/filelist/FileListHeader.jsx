@@ -10,7 +10,6 @@ import { FileListHeaderMobile } from '@/modules/filelist/FileListHeaderMobile'
  * @property {Sort} [props.sort] - The current sorting option.
  * @property {Function} [props.onFolderSort] - The function to handle folder sorting.
  * @property {Function} [props.toggleViewType] - The function to toggle the view to list or grid.
- * @property {Array} [props.extraColumns] - An array of extra columns.
  */
 
 /**

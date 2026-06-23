@@ -20,7 +20,6 @@ import { computeNextcloudFolderQueryId } from '@/modules/nextcloud/helpers'
  *
  * @param {CozyClient} client - The cozy client instance
  * @param {import('@/components/FolderPicker/types').File} entry - The file or folder to move/copy
- * @param {import('@/components/FolderPicker/types').File} sourceDirectory - The source directory containing the entry
  * @param {import('@/components/FolderPicker/types').File} destDirectory - The destination directory
  * @param {string} operation - The operation type ('move' or 'copy')
  * @returns {Promise<Object>} The result of the shared drive operation
@@ -28,16 +27,16 @@ import { computeNextcloudFolderQueryId } from '@/modules/nextcloud/helpers'
 const executeSharedDriveMoveOrCopy = async (
   client,
   entry,
-  sourceDirectory,
   destDirectory,
   operation
 ) => {
   return await moveRelateToSharedDrive(
     client,
     {
-      instance: entry.driveId
-        ? sourceDirectory.attributes?.cozyMetadata?.createdOn
-        : '',
+      // The hosting instance is read from the entry itself: a shared-drive
+      // folder (e.g. the drive root used as source directory) does not always
+      // carry cozyMetadata.createdOn, while the moved file/folder always does.
+      instance: entry.driveId ? entry.cozyMetadata?.createdOn : '',
       file_id: isFile(entry) ? entry._id : '',
       dir_id: !isFile(entry) ? entry._id : '',
       sharing_id: entry.driveId
@@ -73,12 +72,7 @@ export const executeMove = async (
 ) => {
   const isSharedDriveOperation = entry.driveId || destDirectory.driveId
   if (isSharedDriveOperation) {
-    return await executeSharedDriveMoveOrCopy(
-      client,
-      entry,
-      sourceDirectory,
-      destDirectory
-    )
+    return await executeSharedDriveMoveOrCopy(client, entry, destDirectory)
   }
   return await move(client, entry, destDirectory, {
     force

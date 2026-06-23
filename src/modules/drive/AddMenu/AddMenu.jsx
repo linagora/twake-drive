@@ -12,7 +12,6 @@ const AddMenu = ({
   canUpload,
   refreshFolderContent,
   isPublic,
-  isEncryptedFolder,
   displayedFolder,
   isReadOnly,
   ...actionMenuProps
@@ -32,7 +31,6 @@ const AddMenu = ({
         canUpload={canUpload}
         refreshFolderContent={refreshFolderContent}
         isPublic={isPublic}
-        isEncryptedFolder={isEncryptedFolder}
         displayedFolder={displayedFolder}
         onClick={handleClose}
         isReadOnly={isReadOnly}

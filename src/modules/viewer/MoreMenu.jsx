@@ -9,11 +9,13 @@ import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import { useMoreMenuActions } from '@/hooks/useMoreMenuActions'
 
-const MoreMenu = ({ file }) => {
+const MoreMenu = ({ file, shouldHideSharingActions = false }) => {
   const [showMenu, setShowMenu] = useState(false)
   const { isDesktop } = useBreakpoints()
   const anchorRef = useRef()
-  const actions = useMoreMenuActions(file)
+  const actions = useMoreMenuActions(file, {
+    shouldHideIfSharedDriveRecipient: shouldHideSharingActions
+  })
 
   if (file.trashed) return null
 

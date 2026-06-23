@@ -6,9 +6,16 @@ import LogoutIcon from 'cozy-ui/transpiled/react/Icons/Logout'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 
-import { isFolderFromSharedDriveRecipient } from '@/modules/shareddrives/helpers'
+import { isSharedDriveDoc } from '@/modules/shareddrives/helpers'
 
-export const leaveSharedDrive = ({ sharedDrive, client, showAlert, t }) => {
+// Only for sharing tabs
+export const leaveSharedDrive = ({
+  client,
+  showAlert,
+  t,
+  canLeave,
+  isOwner
+}) => {
   const label = t('toolbar.menu_leave_shared_drive')
   const icon = LogoutIcon
 
@@ -16,16 +23,16 @@ export const leaveSharedDrive = ({ sharedDrive, client, showAlert, t }) => {
     name: 'leaveSharedDrive',
     label: label,
     icon,
-    // This action can be triggered with an io.cozy.sharing when called from sidebar
-    // or with an io.cozy.files when called from the sharing tab that's why we need to
-    // manage two kind of data
     displayCondition: docs => {
-      return sharedDrive
-        ? !sharedDrive.owner
-        : isFolderFromSharedDriveRecipient(docs[0])
+      return (
+        docs.length === 1 &&
+        isSharedDriveDoc(docs[0]) &&
+        canLeave(docs[0]._id) &&
+        !isOwner(docs[0]._id)
+      )
     },
     action: async docs => {
-      const sharedDriveId = sharedDrive ? sharedDrive.id : docs[0].driveId
+      const sharedDriveId = docs[0].driveId
 
       await client
         .collection('io.cozy.sharings')

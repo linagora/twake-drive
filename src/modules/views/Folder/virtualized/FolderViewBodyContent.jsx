@@ -1,7 +1,5 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
-import { useNavigate } from 'react-router-dom'
-import { useI18n } from 'twake-i18n'
 
 import { useClient } from 'cozy-client'
 import flag from 'cozy-flags'
@@ -11,6 +9,7 @@ import {
   getComparator
 } from 'cozy-ui/transpiled/react/Table/Virtualized/helpers'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
+import { useI18n } from 'twake-i18n'
 
 import Grid from './Grid'
 import { secondarySort } from '../helpers'
@@ -20,7 +19,6 @@ import { SHARED_DRIVES_DIR_ID } from '@/constants/config'
 import { useShiftSelection } from '@/hooks/useShiftSelection'
 import { useViewSwitcherContext } from '@/lib/ViewSwitcherContext'
 import { isTypingNewFolderName } from '@/modules/filelist/duck'
-import { FolderUnlocker } from '@/modules/folder/components/FolderUnlocker'
 import { useCancelable } from '@/modules/move/hooks/useCancelable'
 import RectangularSelection from '@/modules/selection/RectangularSelection'
 import SelectionBar from '@/modules/selection/SelectionBar'
@@ -57,9 +55,8 @@ const FolderViewBodyContent = ({
 
   const client = useClient()
 
-  const navigate = useNavigate()
-
-  const { selectAll, selectedItems } = useSelectionContext()
+  const { selectAll, selectedItems, setSelectedItems, setIsSelectAll } =
+    useSelectionContext()
   const { sharedPaths } = useSharingContext()
   const { registerCancelable } = useCancelable()
   const { showAlert } = useAlert()
@@ -93,7 +90,8 @@ const FolderViewBodyContent = ({
   const { setLastInteractedItem, onShiftClick } = useShiftSelection(
     {
       items: sortedRows,
-      viewType
+      viewType,
+      scrollElement
     },
     folderViewRef
   )
@@ -103,11 +101,19 @@ const FolderViewBodyContent = ({
     onShiftClick(itemId, event)
   }
 
-  const handleFolderUnlockerDismiss = useCallback(() => {
-    navigate('/folder')
-  }, [navigate])
-
   const isDynamicSelectionEnabled = flag('drive.dynamic-selection.enabled')
+
+  const handleContainerClick = useCallback(
+    e => {
+      const target = e.target
+      const isOnFile = target.closest('[data-file-id]')
+      if (isOnFile) return
+
+      setSelectedItems({})
+      setIsSelectAll(false)
+    },
+    [setSelectedItems, setIsSelectAll]
+  )
 
   const dragProps = useMemo(
     () => ({
@@ -143,7 +149,6 @@ const FolderViewBodyContent = ({
       columns={columns}
       dragProps={dragProps}
       fetchMore={fetchMore}
-      selectAll={selectAll}
       isSelectedItem={isSelectedItem}
       selectedItems={selectedItems}
       currentFolderId={currentFolderId}
@@ -181,25 +186,23 @@ const FolderViewBodyContent = ({
   const viewContent = viewType === 'list' ? tableComponent : gridComponent
 
   return (
-    <FolderUnlocker
-      folder={displayedFolder}
-      onDismiss={handleFolderUnlockerDismiss}
-    >
-      <div className="u-h-100 u-w-100">
-        <SelectionBar actions={actions} />
-        {isDynamicSelectionEnabled ? (
-          <RectangularSelection
-            items={sortedRows}
-            scrollContainerRef={folderViewRef}
-            scrollElement={scrollElement}
-          >
-            {viewContent}
-          </RectangularSelection>
-        ) : (
-          viewContent
-        )}
-      </div>
-    </FolderUnlocker>
+    <div className="u-h-100 u-w-100">
+      <SelectionBar actions={actions} />
+      {isDynamicSelectionEnabled ? (
+        <RectangularSelection
+          items={sortedRows}
+          scrollContainerRef={folderViewRef}
+          scrollElement={scrollElement}
+          onSelectEnd={setLastInteractedItem}
+        >
+          {viewContent}
+        </RectangularSelection>
+      ) : (
+        <div onClick={handleContainerClick} className="u-h-100">
+          {viewContent}
+        </div>
+      )}
+    </div>
   )
 }
 

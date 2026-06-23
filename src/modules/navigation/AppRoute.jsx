@@ -9,12 +9,14 @@ import Index from './Index'
 import AIAssistantPaywallView from '../views/AI/AIAssistantPaywallView'
 import { DriveFolderView } from '../views/Drive/DriveFolderView'
 import FilesViewerDrive from '../views/Drive/FilesViewerDrive'
-import OnlyOfficeView from '../views/OnlyOffice'
-import OnlyOfficeCreateView from '../views/OnlyOffice/Create'
+import { getExcalidrawRoutes } from '../views/Excalidraw/routes'
 import OnlyOfficePaywallView from '../views/OnlyOffice/OnlyOfficePaywallView'
+import { getOnlyOfficeRoutes } from '../views/OnlyOffice/routes'
+import { getPdfRoutes } from '../views/Pdf/routes'
 import RecentView from '../views/Recent'
 import FilesViewerRecent from '../views/Recent/FilesViewerRecent'
 import FilesViewerSharedDrive from '../views/SharedDrive/FilesViewerSharedDrive'
+import FilesViewerSharedDriveRootFile from '../views/SharedDrive/FilesViewerSharedDriveRootFile'
 import SharingsView from '../views/Sharings'
 import SharingsFilesViewer from '../views/Sharings/FilesViewerSharings'
 import SharingsFolderView from '../views/Sharings/SharingsFolderView'
@@ -32,10 +34,12 @@ import { SentryRoutes } from '@/lib/sentry'
 import { UploaderComponent } from '@/modules//views/Upload/UploaderComponent'
 import Layout from '@/modules/layout/Layout'
 import { PublicNoteRedirect } from '@/modules/navigation/PublicNoteRedirect'
+import { SHARED_DRIVE_ROOT_FILE_ROUTE } from '@/modules/routeUtils'
 import FileOpenerExternal from '@/modules/viewer/FileOpenerExternal'
 import { KonnectorRoutes } from '@/modules/views/Drive/KonnectorRoutes'
 import { FavoritesView } from '@/modules/views/Favorites/FavoritesView'
 import { FolderDuplicateView } from '@/modules/views/Folder/FolderDuplicateView'
+import { DuplicateSharedDriveFilesView } from '@/modules/views/Modal/DuplicateSharedDriveFilesView'
 import { MoveFilesView } from '@/modules/views/Modal/MoveFilesView'
 import { MoveSharedDriveFilesView } from '@/modules/views/Modal/MoveSharedDriveFilesView'
 import { QualifyFileView } from '@/modules/views/Modal/QualifyFileView'
@@ -66,6 +70,63 @@ const OutletWrapper = ({ Component }) => (
   <>
     <Component />
     <Outlet />
+  </>
+)
+
+const sharedDriveRootFileViewerRoutes = () => (
+  <>
+    <Route path="v/revision" element={<FileHistory />} />
+    <Route path="v/share" element={<ShareFileView />} />
+    <Route path="revision" element={<FileHistory />} />
+    <Route path="share" element={<ShareFileView />} />
+  </>
+)
+
+const sharedDriveRootFileRoute = () => (
+  <Route
+    path={SHARED_DRIVE_ROOT_FILE_ROUTE}
+    element={<OutletWrapper Component={FilesViewerSharedDriveRootFile} />}
+  >
+    {sharedDriveRootFileViewerRoutes()}
+  </Route>
+)
+
+const sharedDriveRoutes = () => (
+  <>
+    {sharedDriveRootFileRoute()}
+    <Route
+      path="shareddrive/:driveId/:folderId"
+      element={<SharedDriveFolderView />}
+    >
+      <Route
+        path="file/:fileId"
+        element={<OutletWrapper Component={FilesViewerSharedDrive} />}
+      >
+        <Route
+          path="v/move"
+          element={<MoveSharedDriveFilesView isOpenInViewer />}
+        />
+        <Route path="v/duplicate" element={<DuplicateSharedDriveFilesView />} />
+        {/* The viewer's Share action navigates to a relative `v/share`; without
+            this child route the URL matches nothing and the page goes blank.
+            driveId is in the path so the modal resolves a proxied recipient
+            document. */}
+        <Route path="v/share" element={<ShareFileView />} />
+      </Route>
+      <Route path="file/:fileId/revision" element={<FileHistory />} />
+      <Route path="file/:fileId/v/revision" element={<FileHistory />} />
+      <Route path="file/:fileId/share" element={<ShareFileView />} />
+      <Route path="share" element={<ShareDisplayedFolderView />} />
+      <Route path="move" element={<MoveSharedDriveFilesView />} />
+      <Route path="duplicate" element={<DuplicateSharedDriveFilesView />} />
+    </Route>
+  </>
+)
+
+const getEditorRoutes = () => (
+  <>
+    {flag('drive.excalidraw.enabled') && getExcalidrawRoutes()}
+    {flag('drive.pdf-editor.enabled') && getPdfRoutes()}
   </>
 )
 
@@ -133,23 +194,9 @@ const AppRoute = () => (
       ) : null}
 
       {flag('drive.shared-drive.enabled') ||
-      flag('drive.federated-shared-folder.enabled') ? (
-        <>
-          <Route
-            path="shareddrive/:driveId/:folderId"
-            element={<SharedDriveFolderView />}
-          >
-            <Route
-              path="file/:fileId"
-              element={<OutletWrapper Component={FilesViewerSharedDrive} />}
-            />
-            <Route path="file/:fileId/revision" element={<FileHistory />} />
-            <Route path="file/:fileId/v/revision" element={<FileHistory />} />
-            <Route path="share" element={<ShareDisplayedFolderView />} />
-            <Route path="move" element={<MoveSharedDriveFilesView />} />
-          </Route>
-        </>
-      ) : null}
+      flag('drive.federated-shared-folder.enabled')
+        ? sharedDriveRoutes()
+        : null}
 
       <Route path="recent" element={<RecentView />}>
         <Route
@@ -195,7 +242,18 @@ const AppRoute = () => (
           {/* This route must be a child of SharingsView so the modal opens on top of the sharing view */}
           <Route path="file/:fileId/revision" element={<FileHistory />} />
           <Route path="file/:fileId/share" element={<ShareFileView />} />
+          {/* Shared-drive entries open their share modal layered over the
+              sharings list (driveId in the path resolves a proxied recipient
+              document) instead of navigating into the shared-drive view */}
+          <Route
+            path="shareddrive/:driveId/:fileId/share"
+            element={<ShareFileView />}
+          />
           <Route path="file/:fileId/qualify" element={<QualifyFileView />} />
+          {flag('drive.shared-drive.enabled') ||
+          flag('drive.federated-shared-folder.enabled')
+            ? sharedDriveRootFileRoute()
+            : null}
         </Route>
         {/* This route must be inside the /sharing path for the nav to have an activate state */}
         <Route path=":folderId" element={<SharingsFolderView />}>
@@ -209,22 +267,9 @@ const AppRoute = () => (
         <Route path="move" element={<MoveFilesView />} />
       </Route>
 
-      <Route path="onlyoffice/:fileId" element={<OnlyOfficeView />}>
-        <Route path="paywall" element={<OnlyOfficePaywallView />} />
-      </Route>
-      <Route path="onlyoffice/:driveId/:fileId" element={<OnlyOfficeView />}>
-        <Route path="paywall" element={<OnlyOfficePaywallView />} />
-      </Route>
+      {getOnlyOfficeRoutes()}
 
-      <Route
-        path="onlyoffice/create/:folderId/:fileClass"
-        element={<OnlyOfficeCreateView />}
-      />
-
-      <Route
-        path="onlyoffice/create/:driveId/:folderId/:fileClass"
-        element={<OnlyOfficeCreateView />}
-      />
+      {getEditorRoutes()}
 
       <Route path="file/:fileId" element={<FileOpenerExternal />} />
 

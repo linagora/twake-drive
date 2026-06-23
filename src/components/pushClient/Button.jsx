@@ -1,6 +1,5 @@
 import localforage from 'localforage'
 import React, { useState, useEffect } from 'react'
-import { translate } from 'twake-i18n'
 
 import { withClient } from 'cozy-client'
 import { isFlagshipApp } from 'cozy-device-helper'
@@ -12,6 +11,7 @@ import ListItem from 'cozy-ui/transpiled/react/ListItem'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import Paper from 'cozy-ui/transpiled/react/Paper'
+import { translate } from 'twake-i18n'
 
 import {
   getDesktopAppDownloadLink,

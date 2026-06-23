@@ -1,4 +1,7 @@
 {
+  "Excalidraw": {
+    "createFileName": "新建绘图"
+  },
   "Nav": {
     "item_drive": "硬盘",
     "item_recent": "最近更改",
@@ -31,7 +34,6 @@
     "menu_upload": "上传文件",
     "item_more": "更多",
     "menu_new_folder": "文件夹",
-    "menu_new_encrypted_folder": "已加密的文件夹",
     "menu_select": "选择项目",
     "menu_share_folder": "分析文件夹",
     "menu_download": "下载",
@@ -40,6 +42,7 @@
     "menu_download_folder": "下载文件夹",
     "menu_download_file": "下载这个文件",
     "menu_create_note": "便签",
+    "menu_create_excalidraw": "Excalidraw",
     "empty_trash": "清空垃圾桶",
     "share": "分享",
     "trash": "移除",

@@ -1,11 +1,12 @@
 {
   "Nav": {
-    "item_drive": "Files",
-    "item_recent": "Recent",
+    "item_drive": "My Drive",
+    "item_recent": "Recents",
     "item_sharings": "Sharings",
     "item_shared": "Shared by me",
     "item_activity": "Activity",
-    "item_trash": "Trash",
+    "item_trash": "Bin",
+    "item_migration": "Migration",
     "item_settings": "Settings",
     "item_collect": "Administrative",
     "item_shared_drives": "Shared drives",
@@ -23,7 +24,8 @@
     "link-client-ios": "https://apps.apple.com/app/cloud-personnel-cozy/id1600636174",
     "link-client-web": "https://cozy.io/try-it",
     "view_more": "View more",
-    "view_less": "View less"
+    "view_less": "View less",
+    "item_nextcloud": "Nextcloud"
   },
   "breadcrumb": {
     "title_drive": "Files",
@@ -41,12 +43,11 @@
   },
   "toolbar": {
     "menu_manage_access": "Manage access",
-    "menu_leave_shared_drive": "Leave drive",
+    "menu_leave_shared_drive": "Leave sharing",
     "menu_upload": "Upload files",
     "item_more": "More",
     "menu_new_folder": "Folder",
     "menu_new_shared_drive": "Shared drive",
-    "menu_new_encrypted_folder": "Encrypted folder",
     "menu_select": "Select items",
     "menu_share_folder": "Share folder",
     "menu_download": "Download",
@@ -56,6 +57,8 @@
     "menu_download_file": "Download this file",
     "menu_create_note": "Note",
     "menu_create_docs": "Docs",
+    "menu_create_excalidraw": "Excalidraw",
+    "menu_create_grist": "Grist",
     "menu_create_shortcut": "Shortcut",
     "share": "Share",
     "trash": "Remove",
@@ -194,16 +197,6 @@
       "head_updated_at_desc": "Most recent first",
       "head_size_asc": "Lightest first",
       "head_size_desc": "Heavier first"
-    },
-    "tooltip": {
-      "carbonCopy": {
-        "title": "Carbon Copy",
-        "caption": "Indicates whether the document is defined as \"authentic and original\" by Twake Workplace, the host of your Twake, as it can claim that it comes directly from a third-party service, without having undergone any modification."
-      },
-      "electronicSafe": {
-        "title": "Electronic Safe",
-        "caption": "Indicates whether the original document is secured by your personal digital safe with the certifications that give it probative value and a 50-year retention guarantee beyond its deposit."
-      }
     }
   },
   "Storage": {
@@ -240,7 +233,7 @@
     "title": "Delete %{filename}? |||| Delete %{smart_count} %{type}?",
     "trash": "It will be moved to the Trash. |||| They will be moved to the Trash.",
     "restore": "You can still restore it whenever you want. |||| You can still restore them whenever you want.",
-    "share_accepted": "Sharing will be stopped. The following contacts will keep a copy, but your changes will no longer be synchronised:",
+    "share_accepted": "Sharing will be stopped",
     "share_waiting": "Sharing will be stopped. The following contacts will no longer be able to accept sharing and will no longer be able to access shared content:",
     "share_both": "Sharing will be stopped. This means that contacts who have stored files in their Twake will keep a copy, while other contacts will no longer be able to access shared content:",
     "link": "Link sharing will no longer be active",
@@ -284,7 +277,7 @@
     "mobile_text": "Select files on your device.",
     "trash_title": "You don’t have any deleted files.",
     "trash_text": "Move files you don't need anymore to the Trash and permanently delete items to free up storage page.",
-    "shared-drive_text": "Create and share your first drive."
+    "sharing_text": "You don’t have any shared files or drives yet."
   },
   "error": {
     "open_folder": "Something went wrong when opening the folder.",
@@ -294,8 +287,7 @@
     },
     "download_file": {
       "offline": "You should be connected to download this file",
-      "missing": "This file is missing",
-      "encryption_many": "You cannot download several encrypted files at once"
+      "missing": "This file is missing"
     },
     "paste_failed": "Failed to paste files. Please try again."
   },
@@ -349,15 +341,33 @@
       "element": "element"
     },
     "alert": {
-      "success": "%{smart_count} %{type} uploaded with success. |||| %{smart_count} %{type}s uploaded with success.",
-      "success_conflicts": "%{smart_count} %{type} uploaded with %{conflictNumber} conflict(s). |||| %{smart_count} %{type}s uploaded with %{conflictNumber} conflict(s).",
-      "success_updated": "%{smart_count} %{type} uploaded and %{updatedCount} updated. |||| %{smart_count} %{type}s uploaded and %{updatedCount} updated.",
-      "success_updated_conflicts": "%{smart_count} %{type} uploaded, %{updatedCount} updated and %{conflictCount} conflict(s). |||| %{smart_count} %{type}s uploaded, %{updatedCount} updated and %{conflictCount} conflict(s).",
+      "success": "%{smart_count} %{type} uploaded with success. |||| %{smart_count} %{type} uploaded with success.",
+      "success_conflicts": "%{smart_count} %{type} uploaded with %{conflictNumber} conflict(s). |||| %{smart_count} %{type} uploaded with %{conflictNumber} conflict(s).",
+      "success_updated": "%{smart_count} %{type} uploaded and %{updatedCount} updated. |||| %{smart_count} %{type} uploaded and %{updatedCount} updated.",
+      "success_updated_conflicts": "%{smart_count} %{type} uploaded, %{updatedCount} updated and %{conflictCount} conflict(s). |||| %{smart_count} %{type} uploaded, %{updatedCount} updated and %{conflictCount} conflict(s).",
       "updated": "%{smart_count} %{type} updated. |||| %{smart_count} %{type} updated.",
-      "updated_conflicts": "%{smart_count} %{type} updated with %{conflictCount} conflict(s). |||| %{smart_count} %{type}s updated with %{conflictCount} conflict(s).",
+      "updated_conflicts": "%{smart_count} %{type} updated with %{conflictCount} conflict(s). |||| %{smart_count} %{type} updated with %{conflictCount} conflict(s).",
       "errors": "Errors occurred during the %{type} upload.",
       "network": "You are currenly offline. Please try again once you're connected.",
-      "fileTooLargeErrors": "File too large. Maximum file size: %{max_size_value} GB"
+      "fileTooLargeErrors": "File too large. Maximum file size: %{max_size_value} GB",
+      "unreadable_files": "Some files could not be read. The file path may be too long or the folder was modified during the transfer."
+    },
+    "limit": {
+      "title": "You cannot upload more than %{limit} files at a time.",
+      "content": "Need to upload more? Consider downloading the synchronization tool to your computer",
+      "content_public": "Please reduce the number of files and try again.",
+      "cancel": "Cancel",
+      "close": "Close",
+      "download_desktop": "Download on Desktop"
+    },
+    "conflict": {
+      "title": "Upload options",
+      "content": "One or several files already exist in this folder. Would you like to replace the existing file or keep both versions?",
+      "apply_all": "Sharing setting will remain unchanged if you replace the file",
+      "replace": "Replace existing file",
+      "keep_both": "Keep both files",
+      "cancel": "Cancel",
+      "confirm": "Upload"
     }
   },
   "intents": {
@@ -372,13 +382,16 @@
     }
   },
   "UploadQueue": {
-    "header": "Uploading %{smart_count} photo to Twake Drive |||| Uploading %{smart_count} photos to Twake Drive",
+    "header": "Uploading %{smart_count} item to Twake Drive |||| Uploading %{smart_count} items to Twake Drive",
+    "header_preparing": "Preparing %{smart_count} item for upload |||| Preparing %{smart_count} items for upload",
     "header_mobile": "Uploading %{done} of %{total}",
     "header_done": "Uploaded %{done} out of %{total} successfully",
     "success_flagship": "%{smart_count} file uploaded with success. |||| %{smart_count} files uploaded with success.",
     "close": "close",
     "item": {
-      "pending": "Pending"
+      "pending": "Pending",
+      "preparing": "Preparing",
+      "conflict": "Waiting for choice"
     }
   },
   "Viewer": {
@@ -425,8 +438,8 @@
     "addFolder": "Add a folder",
     "outsideSharedFolder": {
       "title": "Moving outside the %{sharedFolder} folder",
-      "content_1": "Warning, you want to move %{name} out of the shared %{sharedFolder} folder. |||| Warning, you want to move %{smart_count} %{type}s out of the shared %{sharedFolder} folder.",
-      "content_2": "This move, will remove the %{type} %{name} from the share. This %{type} will therefore be trashed for all members of the share. |||| This move, will remove %{smart_count} %{type}s from the share. These %{type}s will therefore be trashed for all members of the share.",
+      "content_1": "Warning, you want to move %{name} out of the shared %{sharedFolder} folder. |||| Warning, you want to move %{smart_count} %{type} out of the shared %{sharedFolder} folder.",
+      "content_2": "This move, will remove the %{type} %{name} from the share. |||| This move, will remove %{smart_count} %{type} from the share.",
       "cancel": "Cancel",
       "confirm": "I understand"
     },
@@ -529,6 +542,15 @@
     "needs_info": "Shorcut needs at least an url and a filename",
     "url_badformat": "Your url is not in the right format"
   },
+  "Excalidraw": {
+    "createFileName": "New drawing",
+    "collaboration": {
+      "guest": "Guest"
+    }
+  },
+  "Pdf": {
+    "save": "Save"
+  },
   "OnlyOffice": {
     "Error": {
       "title": "Something goes wrong",
@@ -547,16 +569,7 @@
       "goToHome": "Go to home"
     },
     "actions": {
-      "edit": "Edit",
       "validate": "Validate"
-    },
-    "tooltip": {
-      "title": "Edit document",
-      "text": "The document is currently read-only. You can modify it by clicking here.",
-      "actions": {
-        "ok": "Ok",
-        "hide": "Do not display"
-      }
     }
   },
   "Migration": {
@@ -623,6 +636,16 @@
     "restoreError": "An error has occurred, please try again.",
     "destroySuccess": "The item has been deleted"
   },
+  "MigrationProgressBanner": {
+    "title": "Migration from Nextcloud in progress",
+    "percent": "%{percent}% complete",
+    "importing": "Importing %{count} files from Nextcloud...",
+    "cancel": "Cancel",
+    "done": {
+      "title": "Migration Complete!",
+      "body": "Successfully imported %{count} files from Nextcloud"
+    }
+  },
   "EntriesType": {
     "file": "file |||| files",
     "directory": "folder |||| folders",
@@ -687,7 +710,9 @@
     "personalizeFolder": {
       "label": "Personalize folder"
     },
-    "summariseByAI": "Summarise"
+    "summariseByAI": "Summarise",
+    "signWithEuDss": "Sign",
+    "verifyWithEuDss": "Verify signature"
   },
   "DuplicateModal": {
     "subTitle": "Duplicate to:",

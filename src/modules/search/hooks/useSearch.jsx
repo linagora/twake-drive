@@ -41,7 +41,6 @@ const useSearch = (searchTerm, { limit = 10 } = {}) => {
         openOn: result.openOn,
         type: result.type,
         mime: result.mime,
-        isEncrypted: result.isEncrypted,
         class: result.class
       }))
 
@@ -54,6 +53,7 @@ const useSearch = (searchTerm, { limit = 10 } = {}) => {
     if (debouncedSearchTerm !== '') {
       fetchSuggestions(debouncedSearchTerm)
     } else {
+      // eslint-disable-next-line react-hooks/immutability
       clearSuggestions()
     }
   }, [client, debouncedSearchTerm, fuzzy, limit])

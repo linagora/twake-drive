@@ -2,7 +2,6 @@ import { models } from 'cozy-client'
 
 import { ROOT_DIR_ID, SHARED_DRIVES_DIR_ID } from '@/constants/config'
 import FuzzyPathSearch from '@/lib/FuzzyPathSearch.js'
-import { isEncryptedFolder } from '@/lib/encryption'
 import { makeOnlyOfficeFileRoute } from '@/modules/views/OnlyOffice/helpers'
 
 export const TYPE_DIRECTORY = 'directory'
@@ -47,7 +46,10 @@ export const makeNormalizedFile = (client, folders, file) => {
       url = `/n/${file.id}`
       openOn = 'notes'
     } else if (models.file.shouldBeOpenedByOnlyOffice(file)) {
-      url = makeOnlyOfficeFileRoute(file.id, { fromPathname: urlToFolder })
+      url = makeOnlyOfficeFileRoute(file.id, {
+        driveId: file.driveId,
+        fromPathname: urlToFolder
+      })
     } else {
       url = `${urlToFolder}/file/${file._id}`
     }
@@ -62,8 +64,7 @@ export const makeNormalizedFile = (client, folders, file) => {
     path,
     url,
     parentUrl,
-    openOn,
-    isEncrypted: isEncryptedFolder(file)
+    openOn
   }
 }
 
@@ -85,7 +86,7 @@ export const indexFiles = async client => {
     .getStackClient()
     .fetchJSON(
       'GET',
-      '/data/io.cozy.files/_all_docs?Fields=_id,trashed,dir_id,name,path,type,mime,class,metadata.title,metadata.version&DesignDocs=false&include_docs=true'
+      '/data/io.cozy.files/_all_docs?Fields=_id,trashed,dir_id,name,path,type,mime,class,driveId,metadata.title,metadata.version&DesignDocs=false&include_docs=true'
     )
   const files = resp.rows.map(row => ({ id: row.id, ...row.doc }))
   const folders = files.filter(file => file.type === TYPE_DIRECTORY)

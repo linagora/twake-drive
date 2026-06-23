@@ -1,43 +1,30 @@
 import getQueryParameter from './QueryParameter'
 
 describe('getQueryParameter', () => {
-  it('should decode URI string', () => {
-    const params = {
-      username: 'N%C3%B6%C3%A9'
-    }
+  afterEach(() => {
+    window.history.replaceState({}, '', '/')
+  })
 
-    delete window.location
-    window.location = {
-      search: `?username=${params.username}`
-    }
+  it('should decode URI string', () => {
+    window.history.replaceState({}, '', '?username=N%C3%B6%C3%A9')
     const { username } = getQueryParameter()
 
     expect(username).toBe('Nöé')
   })
 
   it('should keep string with accent unchanged', () => {
-    const params = {
-      username: 'Nöé'
-    }
-
-    delete window.location
-    window.location = {
-      search: `?username=${params.username}`
-    }
+    window.history.replaceState({}, '', '?username=N%C3%B6%C3%A9')
     const { username } = getQueryParameter()
 
     expect(username).toBe('Nöé')
   })
 
   it('should not modify string with special characters', () => {
-    const params = {
-      sharecode: 'eyJ_hbGc/iOiJ.S3mJz-B90iu.8D0#JwCK'
-    }
-
-    delete window.location
-    window.location = {
-      search: `?sharecode=${params.sharecode}`
-    }
+    window.history.replaceState(
+      {},
+      '',
+      '?sharecode=eyJ_hbGc%2FiOiJ.S3mJz-B90iu.8D0%23JwCK'
+    )
     const { sharecode } = getQueryParameter()
 
     expect(sharecode).toBe('eyJ_hbGc/iOiJ.S3mJz-B90iu.8D0#JwCK')

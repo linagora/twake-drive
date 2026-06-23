@@ -1,30 +1,17 @@
 import cx from 'classnames'
 import React from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
 
 import { SharedStatus, useSharingContext } from 'cozy-sharing'
 
 import styles from '@/styles/filelist.styl'
 
 import { useViewSwitcherContext } from '@/lib/ViewSwitcherContext'
-import { joinPath } from '@/lib/path'
+import { useFileShareNavigate } from '@/modules/filelist/useFileShareNavigate'
 
 const ShareContent = ({ file, disabled, isInSyncFromSharing }) => {
-  const navigate = useNavigate()
-  const { pathname } = useLocation()
   const { byDocId } = useSharingContext()
   const { viewType } = useViewSwitcherContext()
-
-  const handleClick = e => {
-    // Avoid to trigger row click from FileOpener
-    e.preventDefault()
-    e.stopPropagation()
-
-    if (!disabled) {
-      // should be only disabled
-      navigate(joinPath(pathname, `file/${file._id}/share`))
-    }
-  }
+  const handleClick = useFileShareNavigate({ file, disabled })
 
   const isShared = byDocId[file.id] !== undefined
 

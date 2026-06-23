@@ -20,6 +20,7 @@
     "more": "더보기"
   },
   "toolbar": {
+    "menu_create_excalidraw": "Excalidraw",
     "item_more": "더보기",
     "menu_new_folder": "폴더",
     "menu_download": "다운로드",
@@ -79,7 +80,9 @@
   "History": {
     "loading": "불러오는 중..."
   },
-  "Shortcut": {},
+  "Excalidraw": {
+    "createFileName": "새 그림"
+  },
   "OnlyOffice": {
     "createFileName": {
       "text": "새 문서 만들기",

@@ -3,14 +3,13 @@ import React from 'react'
 import { useDrop } from 'react-dnd'
 import { NativeTypes } from 'react-dnd-html5-backend'
 import { useDispatch } from 'react-redux'
-import { useI18n } from 'twake-i18n'
 
 import { useClient } from 'cozy-client'
-import { useVaultClient } from 'cozy-keys-lib'
 import { useSharingContext } from 'cozy-sharing'
 import { Content } from 'cozy-ui/transpiled/react/Layout'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
+import { useI18n } from 'twake-i18n'
 
 import styles from '@/styles/dropzone.styl'
 
@@ -45,7 +44,6 @@ export const Dropzone = ({
   const { isMobile } = useBreakpoints()
   const { showAlert } = useAlert()
   const sharingState = useSharingContext()
-  const vaultClient = useVaultClient()
   const dispatch = useDispatch()
   const { addItems } = useNewItemHighlightContext()
 
@@ -68,12 +66,7 @@ export const Dropzone = ({
             displayedFolder._id,
             sharingState,
             fileUploadCallback,
-            {
-              client,
-              vaultClient,
-              showAlert,
-              t
-            },
+            { client, showAlert, t },
             displayedFolder.driveId,
             addItems
           )

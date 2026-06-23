@@ -1,6 +1,6 @@
-import React, { useMemo } from 'react'
+import React from 'react'
 
-import { useQuery, useClient } from 'cozy-client'
+import { useQuery } from 'cozy-client'
 import { isDirectory } from 'cozy-client/dist/models/file'
 import { IOCozyFile } from 'cozy-client/types/types'
 import List from 'cozy-ui/transpiled/react/List'
@@ -13,14 +13,7 @@ import { FolderPickerContentLoader } from '@/components/FolderPicker/FolderPicke
 import { isInvalidMoveTarget } from '@/components/FolderPicker/helpers'
 import { computeNextcloudRootFolder } from '@/components/FolderPicker/helpers'
 import type { File, FolderPickerEntry } from '@/components/FolderPicker/types'
-import { ROOT_DIR_ID } from '@/constants/config'
-import { isEncryptedFolder } from '@/lib/encryption'
-import { FolderUnlocker } from '@/modules/folder/components/FolderUnlocker'
-import {
-  buildMoveOrImportQuery,
-  buildFileOrFolderByIdQuery,
-  buildMagicFolderQuery
-} from '@/queries'
+import { buildMoveOrImportQuery } from '@/queries'
 
 interface FolderPickerContentCozyProps {
   folder: IOCozyFile
@@ -37,11 +30,8 @@ const FolderPickerContentCozy: React.FC<FolderPickerContentCozyProps> = ({
   isFolderCreationDisplayed,
   hideFolderCreation,
   entries,
-  navigateTo,
-  showNextcloudFolder,
-  showSharedDriveFolder
+  navigateTo
 }) => {
-  const client = useClient()
   const contentQuery = buildMoveOrImportQuery(folder._id)
   const {
     fetchStatus,
@@ -55,56 +45,11 @@ const FolderPickerContentCozy: React.FC<FolderPickerContentCozyProps> = ({
     fetchMore: () => void
   }
 
-  const sharedFolderQuery = buildMagicFolderQuery({
-    id: 'io.cozy.files.shared-drives-dir',
-    enabled: folder._id === ROOT_DIR_ID
-  })
-  const sharedFolderResult = useQuery(
-    sharedFolderQuery.definition,
-    sharedFolderQuery.options
-  ) as unknown as {
-    fetchStatus: string
-    data?: IOCozyFile[]
-  }
-
-  const isEncrypted = isEncryptedFolder(folder)
-
-  const files: IOCozyFile[] = useMemo(() => {
-    if (
-      folder._id === ROOT_DIR_ID &&
-      (showNextcloudFolder || showSharedDriveFolder)
-    ) {
-      return [
-        ...(sharedFolderResult.fetchStatus === 'loaded'
-          ? sharedFolderResult.data ?? []
-          : []),
-        ...(filesData ?? [])
-      ]
-    }
-    return [...(filesData ?? [])]
-  }, [
-    folder._id,
-    showNextcloudFolder,
-    showSharedDriveFolder,
-    filesData,
-    sharedFolderResult.fetchStatus,
-    sharedFolderResult.data
-  ])
-
-  const handleFolderUnlockerDismiss = async (): Promise<void> => {
-    const parentFolderQuery = buildFileOrFolderByIdQuery(folder.dir_id)
-    const parentFolder = (await client?.fetchQueryAndGetFromState({
-      definition: parentFolderQuery.definition(),
-      options: parentFolderQuery.options
-    })) as {
-      data?: IOCozyFile
-    }
-    if (!parentFolder.data) {
-      throw new Error('Parent folder not found')
-    }
-
-    navigateTo(parentFolder.data)
-  }
+  // The "Drives" folder (shared-drives-dir) is hidden from the normal file
+  // list, so it must not appear as a destination in the move/copy picker.
+  // buildMoveOrImportQuery already excludes it via partialIndex, so the list
+  // is used as-is with no manual injection.
+  const files: IOCozyFile[] = filesData ?? []
 
   const handleClick = (file: File): void => {
     if (isDirectory(file)) {
@@ -127,7 +72,6 @@ const FolderPickerContentCozy: React.FC<FolderPickerContentCozyProps> = ({
   return (
     <List>
       <FolderPickerAddFolderItem
-        isEncrypted={isEncrypted}
         currentFolderId={folder._id}
         visible={isFolderCreationDisplayed}
         afterSubmit={hideFolderCreation}
@@ -137,17 +81,15 @@ const FolderPickerContentCozy: React.FC<FolderPickerContentCozyProps> = ({
         fetchStatus={fetchStatus}
         hasNoData={files.length === 0}
       >
-        <FolderUnlocker folder={folder} onDismiss={handleFolderUnlockerDismiss}>
-          {files.map((file, index) => (
-            <FolderPickerListItem
-              key={file._id}
-              file={file}
-              disabled={isInvalidMoveTarget(entries, file)}
-              onClick={handleClick}
-              showDivider={index !== files.length - 1}
-            />
-          ))}
-        </FolderUnlocker>
+        {files.map((file, index) => (
+          <FolderPickerListItem
+            key={file._id}
+            file={file}
+            disabled={isInvalidMoveTarget(entries, file)}
+            onClick={handleClick}
+            showDivider={index !== files.length - 1}
+          />
+        ))}
         <FolderPickerContentLoadMore hasMore={hasMore} fetchMore={fetchMore} />
       </FolderPickerContentLoader>
     </List>

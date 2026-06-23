@@ -7,10 +7,9 @@
 
 import React, { useCallback, useEffect, useState } from 'react'
 import { RemoveScroll } from 'react-remove-scroll'
-import { useNavigate, useParams } from 'react-router-dom'
-import { translate, useI18n } from 'twake-i18n'
+import { Navigate, useNavigate, useParams } from 'react-router-dom'
 
-import { useClient } from 'cozy-client'
+import { useClient, models } from 'cozy-client'
 import Spinner from 'cozy-ui/transpiled/react/Spinner'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
@@ -20,6 +19,7 @@ import Viewer, {
   ToolbarButtons,
   SharingButton
 } from 'cozy-viewer'
+import { translate, useI18n } from 'twake-i18n'
 
 import { ensureFileHasPath } from '@/components/FilesRealTimeQueries'
 import Fallback from '@/modules/viewer/Fallback'
@@ -59,7 +59,7 @@ const FileOpener = props => {
         const file = await ensureFileHasPath(result.data, client)
 
         setState({ file, loading: false })
-      } catch (e) {
+      } catch (_e) {
         setState({ fileNotFound: true, loading: false })
         showAlert({
           message: t('alert.could_not_open_file')
@@ -72,9 +72,28 @@ const FileOpener = props => {
   useEffect(() => {
     const requestedFileId = fileId ?? props.fileId
     if (requestedFileId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       loadFileInfo(requestedFileId)
     }
   }, [fileId, props.fileId, loadFileInfo])
+
+  // An Office document does not need the intermediate viewer with its
+  // "Open with Only Office" button: go straight to the editor, like the
+  // folder views and the public preview already do.
+  if (
+    !loading &&
+    !fileNotFound &&
+    file &&
+    models.file.shouldBeOpenedByOnlyOffice(file) &&
+    isOfficeEnabled(isDesktop)
+  ) {
+    return (
+      <Navigate
+        to={makeOnlyOfficeFileRoute(file.id, { driveId: file.driveId })}
+        replace
+      />
+    )
+  }
 
   return (
     <div className="u-pos-absolute u-w-100 u-h-100 u-bg-charcoalGrey">
@@ -91,7 +110,10 @@ const FileOpener = props => {
             componentsProps={{
               OnlyOfficeViewer: {
                 isEnabled: isOfficeEnabled(isDesktop),
-                opener: file => navigate(makeOnlyOfficeFileRoute(file.id))
+                opener: file =>
+                  navigate(
+                    makeOnlyOfficeFileRoute(file.id, { driveId: file.driveId })
+                  )
               }
             }}
           >

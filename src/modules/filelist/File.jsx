@@ -4,12 +4,12 @@ import get from 'lodash/get'
 import PropTypes from 'prop-types'
 import React, { useState, useRef } from 'react'
 import { useSelector } from 'react-redux'
-import { useI18n } from 'twake-i18n'
 
 import { isDirectory } from 'cozy-client/dist/models/file'
-import Card from 'cozy-ui/transpiled/react/Card'
+import Box from 'cozy-ui/transpiled/react/Box'
 import { TableRow, TableCell } from 'cozy-ui/transpiled/react/deprecated/Table'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
+import { useI18n } from 'twake-i18n'
 
 import {
   SelectBox,
@@ -27,13 +27,13 @@ import { useClipboardContext } from '@/contexts/ClipboardProvider'
 import { useViewSwitcherContext } from '@/lib/ViewSwitcherContext'
 import { ActionMenuWithHeader } from '@/modules/actionmenu/ActionMenuWithHeader'
 import { getContextMenuActions } from '@/modules/actions/helpers'
-import { extraColumnsPropTypes } from '@/modules/certifications'
 import {
   isRenaming as isRenamingReducer,
   getRenamingFile
 } from '@/modules/drive/rename'
 import FileOpener from '@/modules/filelist/FileOpener'
 import FileThumbnail from '@/modules/filelist/icons/FileThumbnail'
+import { useFormattedUpdatedAt } from '@/modules/filelist/useFormattedUpdatedAt'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 
 const FileWrapper = ({ children, viewType, className, onContextMenu }) =>
@@ -42,9 +42,17 @@ const FileWrapper = ({ children, viewType, className, onContextMenu }) =>
       {children}
     </TableRow>
   ) : (
-    <Card className={className} onContextMenu={onContextMenu}>
+    <Box
+      display="block"
+      border={1}
+      borderColor="var(--dividerColor)"
+      borderRadius={8}
+      padding={2}
+      className={className}
+      onContextMenu={onContextMenu}
+    >
       {children}
-    </Card>
+    </Box>
   )
 
 const ThumbnailWrapper = ({ children, viewType, className }) =>
@@ -56,7 +64,6 @@ const ThumbnailWrapper = ({ children, viewType, className }) =>
 
 const File = ({
   t,
-  f,
   attributes,
   actions,
   isRenaming,
@@ -66,8 +73,7 @@ const File = ({
   styleDisabled,
   refreshFolderContent,
   isInSyncFromSharing,
-  extraColumns,
-  breakpoints: { isExtraLarge, isMobile },
+  breakpoints: { isMobile },
   disableSelection = false,
   canInteractWith,
   onContextMenu,
@@ -121,12 +127,7 @@ const File = ({
       : undefined
 
   const updatedAt = attributes.updated_at || attributes.created_at
-  const formattedUpdatedAt = f(
-    updatedAt,
-    isExtraLarge
-      ? t('table.row_update_format_full')
-      : t('table.row_update_format')
-  )
+  const formattedUpdatedAt = useFormattedUpdatedAt(updatedAt)
 
   // We don't allow any action on shared drives and trash
   // because they are magic folder created by the stack
@@ -228,10 +229,6 @@ const File = ({
               }
             />
             <Size filesize={formattedSize} />
-            {extraColumns &&
-              extraColumns.map(column => (
-                <column.CellComponent key={column.label} file={attributes} />
-              ))}
             <Status
               file={attributes}
               disabled={isRowDisabledOrInSyncFromSharing}
@@ -266,7 +263,6 @@ const File = ({
 
 File.propTypes = {
   t: PropTypes.func,
-  f: PropTypes.func,
   attributes: PropTypes.object.isRequired,
   actions: PropTypes.array,
   isRenaming: PropTypes.bool,
@@ -279,17 +275,16 @@ File.propTypes = {
   breakpoints: PropTypes.object.isRequired,
   refreshFolderContent: PropTypes.func,
   isInSyncFromSharing: PropTypes.bool,
-  extraColumns: extraColumnsPropTypes,
   /** Disables the ability to select a file */
   disableSelection: PropTypes.bool,
   onToggleSelect: PropTypes.func
 }
 
 export const DumbFile = props => {
-  const { t, f } = useI18n()
+  const { t } = useI18n()
   const breakpoints = useBreakpoints()
 
-  return <File t={t} f={f} breakpoints={breakpoints} {...props} />
+  return <File t={t} breakpoints={breakpoints} {...props} />
 }
 
 export const FileWithSelection = props => {

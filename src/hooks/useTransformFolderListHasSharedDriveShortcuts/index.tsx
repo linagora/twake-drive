@@ -3,21 +3,23 @@ import { useMemo } from 'react'
 import { IOCozyFile } from 'cozy-client/types/types'
 import { useSharingContext } from 'cozy-sharing'
 
-import { SHARED_DRIVES_DIR_ID } from '@/constants/config'
+import { SHARED_DRIVES_DIR_ID, TRASH_DIR_PATH } from '@/constants/config'
 import { isNextcloudShortcut } from '@/modules/nextcloud/helpers'
 import { useSharedDrives } from '@/modules/shareddrives/hooks/useSharedDrives'
-
-interface SharingRule {
-  values?: string[]
-  title?: string
-}
+import { DRIVE_ROOT_TYPE } from '@/modules/shareddrives/types'
+import type {
+  DriveRootType,
+  SharedDriveFile,
+  SharingRule
+} from '@/modules/shareddrives/types'
 
 interface SharedDrive {
   id: string
+  drive_root_type?: DriveRootType
   rules: SharingRule[]
 }
 
-interface TransformedSharedDrive extends IOCozyFile {
+interface TransformedSharedDrive extends SharedDriveFile {
   driveId: string
 }
 
@@ -56,11 +58,38 @@ const useTransformFolderListHasSharedDriveShortcuts = (
    */
   const transformedSharedDrives = useMemo(
     () =>
-      filteredSharedDrives.map((sharing: SharedDrive) => {
-        const [rootFolderId, driveName] = [
-          sharing.rules[0]?.values?.[0],
-          sharing.rules[0]?.title ?? ''
-        ]
+      filteredSharedDrives.flatMap((sharing: SharedDrive) => {
+        const rootId = sharing.rules[0]?.values?.[0]
+        // A sharing rule without a root id cannot resolve to a file/folder doc,
+        // so skip it rather than emit an entry with _id/id = undefined that
+        // would later build broken routes like shareddrive/<driveId>/undefined.
+        if (!rootId) return []
+
+        const driveName = sharing.rules[0]?.title ?? ''
+        // The stack sets `drive_root_type` and the rule `mime` together for a
+        // single-file root. `drive_root_type` is a recent stack field, so fall
+        // back to the rule mime (only a file root carries one) to keep a shared
+        // file from rendering as a folder against stacks that don't send it.
+        const isFileDriveRoot =
+          sharing.drive_root_type === DRIVE_ROOT_TYPE.FILE ||
+          (!sharing.drive_root_type && Boolean(sharing.rules[0]?.mime))
+        const fileMetadata = {
+          name: driveName,
+          ...(sharing.rules[0]?.mime ? { mime: sharing.rules[0].mime } : {})
+        }
+
+        const sharedDriveData = {
+          type: isFileDriveRoot ? ('file' as const) : ('directory' as const),
+          name: driveName,
+          dir_id: SHARED_DRIVES_DIR_ID,
+          driveId: sharing.id,
+          ...(isFileDriveRoot
+            ? {
+                ...fileMetadata,
+                drive_root_type: DRIVE_ROOT_TYPE.FILE
+              }
+            : {})
+        }
 
         const fileInSharingSection = folderList?.find(item =>
           item.relationships?.referenced_by?.data?.some(
@@ -68,25 +97,34 @@ const useTransformFolderListHasSharedDriveShortcuts = (
           )
         )
 
-        if (fileInSharingSection && isOwner(fileInSharingSection.id ?? ''))
-          return fileInSharingSection as TransformedSharedDrive
+        if (
+          fileInSharingSection &&
+          isOwner(fileInSharingSection._id ?? fileInSharingSection.id ?? '')
+        )
+          return [
+            {
+              ...fileInSharingSection,
+              driveId: sharing.id,
+              ...(isFileDriveRoot
+                ? {
+                    ...fileMetadata,
+                    drive_root_type: DRIVE_ROOT_TYPE.FILE
+                  }
+                : {})
+            } as TransformedSharedDrive
+          ]
 
-        const directoryData = {
-          type: 'directory' as const,
-          name: driveName,
-          dir_id: SHARED_DRIVES_DIR_ID,
-          driveId: sharing.id
-        }
-
-        return {
-          ...fileInSharingSection,
-          _id: rootFolderId,
-          id: rootFolderId,
-          _type: 'io.cozy.files' as const,
-          path: `/Drives/${driveName}`,
-          ...directoryData,
-          attributes: directoryData
-        } as TransformedSharedDrive
+        return [
+          {
+            ...fileInSharingSection,
+            _id: rootId,
+            id: rootId,
+            _type: 'io.cozy.files' as const,
+            path: `/Drives/${driveName}`,
+            ...sharedDriveData,
+            attributes: sharedDriveData
+          } as TransformedSharedDrive
+        ]
       }),
     [filteredSharedDrives, folderList, isOwner]
   )
@@ -113,6 +151,7 @@ const useTransformFolderListHasSharedDriveShortcuts = (
         )
         return (
           item.dir_id !== SHARED_DRIVES_DIR_ID &&
+          !item.path?.startsWith(TRASH_DIR_PATH) &&
           !isReferencedBySharedDrive &&
           (!showNextcloudFolder ? !isNextcloudShortcut(item) : true)
         )

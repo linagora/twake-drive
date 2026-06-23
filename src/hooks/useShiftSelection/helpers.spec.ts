@@ -24,7 +24,7 @@ const createMockFile = (id: string, name = `file-${id}`): IOCozyFile =>
     mime: 'text/plain',
     class: 'text',
     executable: false
-  } as IOCozyFile)
+  }) as IOCozyFile
 
 const mockFiles: IOCozyFile[] = [
   createMockFile('1', 'file1.txt'),

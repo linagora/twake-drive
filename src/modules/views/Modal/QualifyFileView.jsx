@@ -1,26 +1,20 @@
 import React from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { useI18n } from 'twake-i18n'
 
 import { isQueryLoading, useClient, useQuery } from 'cozy-client'
 import { getQualification } from 'cozy-client/dist/models/document'
 import { themesList } from 'cozy-client/dist/models/document/documentTypeData'
 import { isQualificationNote } from 'cozy-client/dist/models/document/documentTypeDataHelpers'
 import { getBoundT } from 'cozy-client/dist/models/document/locales'
-import flag from 'cozy-flags'
 import Icon from 'cozy-ui/transpiled/react/Icon'
-import IconStack from 'cozy-ui/transpiled/react/IconStack'
 import FileDuotoneIcon from 'cozy-ui/transpiled/react/Icons/FileDuotone'
 import FileTypeNoteIcon from 'cozy-ui/transpiled/react/Icons/FileTypeNote'
 import NestedSelectResponsive from 'cozy-ui/transpiled/react/NestedSelect/NestedSelectResponsive'
+import { useI18n } from 'twake-i18n'
 
+import IconStack from '@/components/IconStack'
 import { LoaderModal } from '@/components/LoaderModal'
 import { buildFileOrFolderByIdQuery } from '@/queries'
-
-const getThemesList = () =>
-  flag('hide.healthTheme.enabled')
-    ? themesList.filter(theme => theme.label !== 'health')
-    : themesList
 
 const OptionIconStack = ({ icon }) => {
   return (
@@ -40,7 +34,7 @@ const makeOptions = ({ t, scannerT, focusedId }) => {
       items: [],
       label: t('Scan.none')
     },
-    ...getThemesList()
+    themesList
   ]
   return {
     focusedId,

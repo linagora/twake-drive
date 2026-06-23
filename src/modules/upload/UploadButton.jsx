@@ -1,18 +1,18 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 import { useDispatch } from 'react-redux'
-import { useI18n } from 'twake-i18n'
 
 import { useClient } from 'cozy-client'
-import { useVaultClient } from 'cozy-keys-lib'
 import withSharingState from 'cozy-sharing/dist/hoc/withSharingState'
 import Button from 'cozy-ui/transpiled/react/Buttons'
 import FileInput from 'cozy-ui/transpiled/react/FileInput'
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import UploadIcon from 'cozy-ui/transpiled/react/Icons/Upload'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
+import { useI18n } from 'twake-i18n'
 
 import { uploadFiles } from '@/modules/navigation/duck'
+import { usePublicContext } from '@/modules/public/PublicProvider'
 import { useNewItemHighlightContext } from '@/modules/upload/NewItemHighlightProvider'
 
 const UploadButton = ({
@@ -29,7 +29,6 @@ const UploadButton = ({
   const { t } = useI18n()
   const dispatch = useDispatch()
   const client = useClient()
-  const vaultClient = useVaultClient()
 
   const onUpload = files => {
     dispatch(
@@ -38,17 +37,14 @@ const UploadButton = ({
         displayedFolder.id,
         sharingState,
         onUploaded,
-        {
-          client,
-          vaultClient,
-          showAlert,
-          t
-        },
+        { client, showAlert, t },
         displayedFolder.driveId,
         addItems
       )
     )
   }
+
+  const { isPublic } = usePublicContext()
 
   return (
     <FileInput
@@ -62,8 +58,17 @@ const UploadButton = ({
     >
       <Button
         {...componentsProps?.button}
+        variant={isPublic ? 'secondary' : 'primary'}
+        style={
+          isPublic
+            ? undefined
+            : {
+                color: 'var(--primaryTextColor)',
+                backgroundColor: 'var(--paperBackgroundColor)'
+              }
+        }
         component="span"
-        startIcon={<Icon icon={UploadIcon} />}
+        startIcon={<Icon icon={UploadIcon} size={12} />}
         label={label}
       />
     </FileInput>

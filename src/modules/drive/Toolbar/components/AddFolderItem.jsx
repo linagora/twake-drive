@@ -1,6 +1,5 @@
 import React from 'react'
 import { connect } from 'react-redux'
-import { useI18n } from 'twake-i18n'
 
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
 import Icon from 'cozy-ui/transpiled/react/Icon'
@@ -8,6 +7,7 @@ import IconFolder from 'cozy-ui/transpiled/react/Icons/FileTypeFolder'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
+import { useI18n } from 'twake-i18n'
 
 import { showNewFolderInput } from '@/modules/filelist/duck'
 
@@ -22,7 +22,8 @@ const AddFolderItem = ({ addFolder, onClick, isReadOnly }) => {
           'AddMenu.readOnlyFolder',
           'This is a read-only folder. You cannot perform this action.'
         ),
-        severity: 'warning'
+        severity: 'warning',
+        duration: 4000
       })
       onClick()
       return
@@ -42,7 +43,10 @@ const AddFolderItem = ({ addFolder, onClick, isReadOnly }) => {
 }
 
 const mapDispatchToProps = dispatch => ({
-  addFolder: () => dispatch(showNewFolderInput())
+  addFolder: () =>
+    setTimeout(() => {
+      dispatch(showNewFolderInput())
+    }, 0)
 })
 
 export default connect(null, mapDispatchToProps)(AddFolderItem)

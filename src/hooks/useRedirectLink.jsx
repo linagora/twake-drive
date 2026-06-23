@@ -28,7 +28,17 @@ const useRedirectLink = ({ isPublic = false } = {}) => {
   const client = useClient()
   const navigate = useNavigate()
 
-  const isFromPublicFolder = searchParams.get('fromPublicFolder') === 'true'
+  /**
+   * We read query params from two sources because their position in the url
+   * changes how they are exposed :
+   * - for /#hash?searchParam, you need useSearchParams
+   * - for /?searchParam#hash, you need location.search
+   */
+  const getParam = key => searchParams.get(key) || params.get(key)
+
+  const isFromPublicFolder = getParam('fromPublicFolder') === 'true'
+
+  const redirectLink = getParam('redirectLink')
 
   const [currentMemberInstance, setCurrentMemberInstance] = useState(undefined)
 
@@ -49,19 +59,13 @@ const useRedirectLink = ({ isPublic = false } = {}) => {
       }
     }
 
-    if (isPublic && !isFromPublicFolder) {
+    // Only resolve the share owner's instance when we actually have a redirect
+    // target. Public-share tokens don't always have permission to read
+    // /permissions/self, so skipping unnecessary calls avoids 403 noise.
+    if (isPublic && !isFromPublicFolder && redirectLink) {
       fetch()
     }
-  }, [client, isPublic, isFromPublicFolder])
-
-  /**
-   * We search for redirectLink using two methods because
-   * the searchParam differs depending on the position in the url :
-   * - for /#hash?searchParam, you need useSearchParams
-   * - for /?searchParam#hash, you need location.search
-   */
-  const redirectLink =
-    searchParams.get('redirectLink') || params.get('redirectLink')
+  }, [client, isPublic, isFromPublicFolder, redirectLink])
 
   const redirectBack = () => {
     if (!redirectLink) {

@@ -1,24 +1,20 @@
 import cx from 'classnames'
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { useI18n } from 'twake-i18n'
 
 import { isDirectory } from 'cozy-client/dist/models/file'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import ShareIcon from 'cozy-ui/transpiled/react/Icons/Share'
 import MidEllipsis from 'cozy-ui/transpiled/react/MidEllipsis'
 import { TableCell } from 'cozy-ui/transpiled/react/deprecated/Table'
+import { useI18n } from 'twake-i18n'
 
 import styles from '@/styles/filelist.styl'
 
 import { useViewSwitcherContext } from '@/lib/ViewSwitcherContext'
 import RenameInput from '@/modules/drive/RenameInput'
-import CertificationsIcons from '@/modules/filelist/cells/CertificationsIcons'
 import {
   getFileNameAndExtension,
   makeParentFolderPath
 } from '@/modules/filelist/helpers'
-import { isSharedDriveFolder } from '@/modules/shareddrives/helpers'
 
 const FileName = ({
   attributes,
@@ -78,7 +74,6 @@ const FileName = ({
                   className={styles['fil-file-description--path']}
                   text={parentFolderPath}
                 />
-                <CertificationsIcons attributes={attributes} />
               </div>
             ) : (
               <Link
@@ -95,19 +90,8 @@ const FileName = ({
                 {`${formattedUpdatedAt}${
                   formattedSize ? ` - ${formattedSize}` : ''
                 }`}
-                {isMobile && <CertificationsIcons attributes={attributes} />}
               </div>
             ))}
-          {!withFilePath && isSharedDriveFolder(attributes) && (
-            <div className={styles['fil-file-shared']}>
-              <Icon
-                icon={ShareIcon}
-                size="10"
-                className={styles['fil-file-shared-icon']}
-              />
-              {t('Files.share.shared')}
-            </div>
-          )}
         </div>
       )}
     </TableCell>

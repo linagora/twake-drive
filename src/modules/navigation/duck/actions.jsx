@@ -1,17 +1,32 @@
 import React from 'react'
 
 import { isDirectory } from 'cozy-client/dist/models/file'
+import { resetQuery as resetQueryAction } from 'cozy-client/dist/store'
 import flag from 'cozy-flags'
 import { QuotaPaywall } from 'cozy-ui-plus/dist/Paywall'
 
-import { ROOT_DIR_ID, TRASH_DIR_ID } from '@/constants/config'
-import { MAX_PAYLOAD_SIZE_IN_GB } from '@/constants/config'
-import { createEncryptedDir } from '@/lib/encryption'
+import {
+  ROOT_DIR_ID,
+  TRASH_DIR_ID,
+  FILES_FETCH_LIMIT,
+  MAX_PAYLOAD_SIZE_IN_GB,
+  MAX_UPLOAD_FILE_COUNT
+} from '@/constants/config'
 import { getEntriesTypeTranslated } from '@/lib/entries'
 import logger from '@/lib/logger'
 import { showModal } from '@/lib/react-cozy-helpers'
-import { getFolderContent } from '@/modules/selectors'
-import { addToUploadQueue } from '@/modules/upload'
+import { getFolderContent, getFolderContentQueries } from '@/modules/selectors'
+import {
+  addToUploadQueue,
+  createUploadBatchId,
+  extractFilesEntries,
+  retryUploadConflicts,
+  setUploadConflictStrategy,
+  uploadConflictStrategies
+} from '@/modules/upload'
+import UploadConflictDialog from '@/modules/upload/UploadConflictDialog'
+import UploadLimitDialog from '@/modules/upload/UploadLimitDialog'
+import { hasPreflightUploadConflicts } from '@/modules/upload/preflightConflicts'
 
 export const SORT_FOLDER = 'SORT_FOLDER'
 export const OPERATION_REDIRECTED = 'navigation/OPERATION_REDIRECTED'
@@ -30,6 +45,30 @@ export const sortFolder = (folderId, sortAttribute, sortOrder = 'asc') => {
 }
 
 /**
+ * Reset folder queries so the server re-sends proper paginated data.
+ * Works around cozy-client's sortAndLimitDocsIds capping realtime-added
+ * documents to `limit * fetchedPagesCount`, which hides files beyond
+ * the first page and leaves hasMore stale.
+ */
+const refetchFolderQueries = async (client, folderId) => {
+  try {
+    const storeState = client.store.getState()
+    const matchingQueries = getFolderContentQueries(storeState, folderId)
+
+    await Promise.all(
+      matchingQueries.map(async queryState => {
+        if (!queryState?.definition) return
+        // Clear stale pagination state then fetch every page
+        client.dispatch(resetQueryAction(queryState.id))
+        await client.queryAll(queryState.definition, { as: queryState.id })
+      })
+    )
+  } catch (error) {
+    logger.error('Failed to refetch folder queries after upload:', error)
+  }
+}
+
+/**
  * Upload files to the given directory
  * @param {Array} files - The list of File objects to upload
  * @param {string} dirId - The id of the directory in which we upload the files
@@ -37,7 +76,6 @@ export const sortFolder = (folderId, sortAttribute, sortOrder = 'asc') => {
  * @param {function} fileUploadedCallback - A callback called when a file is uploaded
  * @param {Object} options - An object containing the following properties:
  *   - client - The cozy-client instance
- *   - vaultClient - The vault client
  *   - showAlert - A function to show an alert
  *   - t - A translation function
  * @param {string|undefined} driveId - The id of the drive in which we upload the files
@@ -49,11 +87,11 @@ export const uploadFiles =
     dirId,
     sharingState,
     fileUploadedCallback = () => null,
-    { client, vaultClient, showAlert, t },
+    { client, showAlert, t },
     driveId,
     addItems
   ) =>
-  dispatch => {
+  async dispatch => {
     let targetDirId = dirId
     let navigateAfterUpload = false
 
@@ -62,41 +100,140 @@ export const uploadFiles =
       navigateAfterUpload = true
     }
 
-    dispatch(
-      addToUploadQueue(
-        files,
-        targetDirId,
-        sharingState,
-        fileUploadedCallback,
-        ({
+    const maxFileCount =
+      flag('drive.max-upload-file-count') ?? MAX_UPLOAD_FILE_COUNT
+
+    // Extract entries synchronously before browser clears dataTransfer
+    const entries = extractFilesEntries(files)
+    const openedUploadConflictBatchIds = new Set()
+
+    const enqueueUpload = preflightConflictStrategy => {
+      const uploadBatchId = preflightConflictStrategy
+        ? createUploadBatchId()
+        : undefined
+
+      if (preflightConflictStrategy) {
+        dispatch(
+          setUploadConflictStrategy(uploadBatchId, preflightConflictStrategy)
+        )
+      }
+
+      return dispatch(
+        addToUploadQueue(
+          entries,
+          targetDirId,
+          sharingState,
+          fileUploadedCallback,
+          queueCompletedCallback,
+          {
+            client,
+            maxFileCount,
+            onLimitExceeded: () =>
+              dispatch(
+                showModal(<UploadLimitDialog maxFileCount={maxFileCount} />)
+              ),
+            onUploadConflict,
+            uploadBatchId
+          },
+          driveId,
+          addItems
+        )
+      )
+    }
+
+    try {
+      const shouldOpenUploadConflictModal = await hasPreflightUploadConflicts({
+        client,
+        entries,
+        folderId: targetDirId,
+        driveId
+      })
+
+      if (shouldOpenUploadConflictModal) {
+        dispatch(
+          showModal(
+            <UploadConflictDialog
+              onCancel={() => {}}
+              onConfirm={enqueueUpload}
+            />
+          )
+        )
+        return
+      }
+    } catch (error) {
+      logger.error('Upload preflight conflict scan failed', error)
+    }
+
+    enqueueUpload()
+
+    function queueCompletedCallback({
+      createdItems,
+      quotas,
+      conflicts,
+      networkErrors,
+      errors,
+      unreadableErrors,
+      updatedItems,
+      fileTooLargeErrors
+    }) {
+      dispatch(
+        uploadQueueProcessed(
           createdItems,
           quotas,
           conflicts,
           networkErrors,
           errors,
+          unreadableErrors,
           updatedItems,
-          fileTooLargeErrors
-        }) =>
-          dispatch(
-            uploadQueueProcessed(
-              createdItems,
-              quotas,
-              conflicts,
-              networkErrors,
-              errors,
-              updatedItems,
-              showAlert,
-              t,
-              fileTooLargeErrors,
-              navigateAfterUpload,
-              addItems
-            )
-          ),
-        { client, vaultClient },
-        driveId,
-        addItems
+          showAlert,
+          t,
+          fileTooLargeErrors,
+          navigateAfterUpload,
+          addItems
+        )
       )
-    )
+      if (createdItems.length + updatedItems.length >= FILES_FETCH_LIMIT) {
+        refetchFolderQueries(client, targetDirId)
+      }
+    }
+
+    function applyUploadConflictStrategy(uploadBatchId, strategy) {
+      dispatch(
+        retryUploadConflicts(
+          uploadBatchId,
+          strategy,
+          fileUploadedCallback,
+          queueCompletedCallback,
+          targetDirId,
+          sharingState,
+          { client },
+          driveId,
+          addItems
+        )
+      )
+    }
+
+    function onUploadConflict({ uploadBatchId }) {
+      if (!uploadBatchId || openedUploadConflictBatchIds.has(uploadBatchId))
+        return
+      openedUploadConflictBatchIds.add(uploadBatchId)
+
+      dispatch(
+        showModal(
+          <UploadConflictDialog
+            onCancel={() =>
+              applyUploadConflictStrategy(
+                uploadBatchId,
+                uploadConflictStrategies.CANCEL
+              )
+            }
+            onConfirm={strategy =>
+              applyUploadConflictStrategy(uploadBatchId, strategy)
+            }
+          />
+        )
+      )
+    }
   }
 
 const uploadQueueProcessed =
@@ -106,6 +243,7 @@ const uploadQueueProcessed =
     conflicts,
     networkErrors,
     errors,
+    unreadableErrors,
     updated,
     showAlert,
     t,
@@ -114,6 +252,10 @@ const uploadQueueProcessed =
     addItems
   ) =>
   dispatch => {
+    const namesOf = arr => arr.map(f => f.name)
+    const errorDetailsOf = arr =>
+      arr.map(f => ({ name: f.name, status: f.status, message: f.message }))
+
     const safeAddItems = typeof addItems === 'function' ? addItems : () => {}
     const conflictCount = conflicts.length
     const createdCount = created.length
@@ -124,52 +266,57 @@ const uploadQueueProcessed =
       ...conflicts
     ])
 
-    // Add new items to the NewContext
     const successfulUploads = [...created, ...updated]
     if (successfulUploads.length > 0) {
       safeAddItems(successfulUploads)
     }
 
-    // Add logging to debug upload completion
     logger.debug('uploadQueueProcessed called with:', {
-      created: created.map(f => f.name),
-      updated: updated.map(f => f.name),
-      quotas: quotas.map(f => f.name),
-      conflicts: conflicts.map(f => f.name),
-      networkErrors: networkErrors.map(f => f.name),
-      errors: errors.map(f => ({
-        name: f.name,
-        status: f.status,
-        message: f.message
-      })),
-      fileTooLargeErrors: fileTooLargeErrors.map(f => f.name),
+      created: namesOf(created),
+      updated: namesOf(updated),
+      quotas: namesOf(quotas),
+      conflicts: namesOf(conflicts),
+      networkErrors: namesOf(networkErrors),
+      errors: errorDetailsOf(errors),
+      unreadableErrors: namesOf(unreadableErrors),
+      fileTooLargeErrors: namesOf(fileTooLargeErrors),
       navigateAfterUpload
     })
 
     if (quotas.length > 0) {
-      logger.warn(`Upload module triggers a quota alert: ${quotas}`)
+      logger.warn('Upload module triggers a quota alert:', namesOf(quotas))
       dispatch(
         showModal(<QuotaPaywall isIapEnabled={flag('flagship.iap.enabled')} />)
       )
     } else if (networkErrors.length > 0) {
-      logger.warn(`Upload module triggers a network error: ${networkErrors}`)
+      logger.warn(
+        'Upload module triggers a network error:',
+        namesOf(networkErrors)
+      )
       showAlert({
         message: t('upload.alert.network'),
-        severity: 'secondary'
+        severity: 'error',
+        duration: null,
+        noClickAway: true
+      })
+    } else if (unreadableErrors.length > 0) {
+      logger.warn(
+        'Upload module triggers an unreadable files error:',
+        namesOf(unreadableErrors)
+      )
+      showAlert({
+        message: t('upload.alert.unreadable_files'),
+        severity: 'error',
+        duration: null,
+        noClickAway: true
       })
     } else if (errors.length > 0) {
-      logger.error(`Upload module triggers an error: ${errors}`)
-      // Show more detailed error message
-      const errorMessages = errors
-        .map(err => err.message || JSON.stringify(err))
-        .join(', ')
+      logger.error('Upload module triggers an error:', errorDetailsOf(errors))
       showAlert({
-        message: t('upload.alert.errors_detailed', {
-          type,
-          count: errors.length,
-          details: errorMessages
-        }),
-        severity: 'secondary'
+        message: t('upload.alert.errors', { type }),
+        severity: 'error',
+        duration: null,
+        noClickAway: true
       })
     } else if (updatedCount > 0 && createdCount > 0 && conflictCount > 0) {
       showAlert({
@@ -221,7 +368,9 @@ const uploadQueueProcessed =
         message: t('upload.alert.fileTooLargeErrors', {
           max_size_value: MAX_PAYLOAD_SIZE_IN_GB
         }),
-        severity: 'error'
+        severity: 'error',
+        duration: null,
+        noClickAway: true
       })
     } else {
       showAlert({
@@ -268,10 +417,9 @@ const doesFolderExistByName = (state, parentFolderId, name) => {
  */
 export const createFolder = (
   client,
-  vaultClient,
   name,
   currentFolderId,
-  { isEncryptedFolder = false, showAlert, t } = {},
+  { showAlert, t } = {},
   driveId,
   addItems = () => {}
 ) => {
@@ -279,7 +427,6 @@ export const createFolder = (
   return async (dispatch, getState) => {
     const state = getState()
     let targetFolderId = currentFolderId
-    let isTargetEncrypted = isEncryptedFolder
     let navigateAfterCreate = false
 
     if (
@@ -288,7 +435,6 @@ export const createFolder = (
       currentFolderId === TRASH_DIR_ID
     ) {
       targetFolderId = ROOT_DIR_ID
-      isTargetEncrypted = false
       navigateAfterCreate = true
     }
 
@@ -302,34 +448,16 @@ export const createFolder = (
       throw new Error('alert.folder_name')
     }
 
-    let createdFolder = null
+    let createdFolder
     try {
-      if (!isTargetEncrypted) {
-        createdFolder = await client
-          .collection('io.cozy.files', { driveId })
-          .create({
-            name: name,
-            dirId: targetFolderId,
-            type: 'directory'
-          })
-      } else {
-        if (targetFolderId === currentFolderId) {
-          createdFolder = await createEncryptedDir(client, vaultClient, {
-            name,
-            dirID: targetFolderId,
-            driveId
-          })
-        } else {
-          logger.error(
-            'Attempted to create encrypted folder in non-original/root target.'
-          )
-          throw new Error(
-            'Cannot create encrypted folder in root via redirection.'
-          )
-        }
-      }
+      createdFolder = await client
+        .collection('io.cozy.files', { driveId })
+        .create({
+          name: name,
+          dirId: targetFolderId,
+          type: 'directory'
+        })
 
-      // Add newly created folder to new items
       if (createdFolder) {
         safeAddItems([createdFolder.data])
       }

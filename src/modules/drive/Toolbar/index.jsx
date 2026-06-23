@@ -16,10 +16,7 @@ import ViewSwitcher from '@/modules/drive/Toolbar/components/ViewSwitcher'
 import ShareButton from '@/modules/drive/Toolbar/share/ShareButton'
 import SharedRecipients from '@/modules/drive/Toolbar/share/SharedRecipients'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
-import {
-  isFolderFromSharedDriveRecipient,
-  isFolderFromSharedDriveOwner
-} from '@/modules/shareddrives/helpers'
+import { isSharedDriveDoc } from '@/modules/shareddrives/helpers'
 
 const Toolbar = ({
   folderId,
@@ -37,9 +34,7 @@ const Toolbar = ({
 
   const isDisabled = disabled || isSelectionBarVisible
   const isSharingDisabled = isDisabled || !allLoaded
-  const isSharedDriveRecipient =
-    isFolderFromSharedDriveRecipient(displayedFolder)
-  const isSharedDriveOwner = isFolderFromSharedDriveOwner(displayedFolder)
+  const isSharedDriveRecipient = isSharedDriveDoc(displayedFolder)
 
   const moreMenuProps = {
     isDisabled,
@@ -51,8 +46,7 @@ const Toolbar = ({
     displayedFolder,
     showSelectionBar,
     isSelectionBarVisible,
-    isSharedDriveRecipient,
-    isSharedDriveOwner
+    isSharedDriveRecipient
   }
 
   if (disabled) {
@@ -122,9 +116,15 @@ const ToolbarWithSharingContext = props => {
     <SharedDocument docId={folderId} driveId={driveId}>
       {sharingProps => {
         const { hasWriteAccess, isSharedWithMe } = sharingProps
+        // We do not want to enable write access actions for recipient for shared drive root folder.
+        // To check if it is shared drive root folder, we check if the document is shared because
+        // in a shared drive only the share drive root folder has a sharing
+        const hasWriteAccessExceptSharedDriveRootFolder = driveId
+          ? hasWriteAccess && !isSharedWithMe
+          : hasWriteAccess
         return (
           <Toolbar
-            hasWriteAccess={hasWriteAccess}
+            hasWriteAccess={hasWriteAccessExceptSharedDriveRootFolder}
             isSharedWithMe={isSharedWithMe}
             folderId={folderId}
             {...props}

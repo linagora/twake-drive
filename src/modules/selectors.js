@@ -5,7 +5,7 @@ import { getDocumentFromState } from 'cozy-client/dist/store'
 import { DOCTYPE_FILES } from '@/lib/doctypes'
 import { getMirrorQueryId, parseFolderQueryId } from '@/lib/queries'
 
-const getFolderContentQueries = (rootState, folderId) => {
+export const getFolderContentQueries = (rootState, folderId) => {
   const queries = rootState.cozy.queries
   const folderContentQueries = Object.entries(queries)
     .filter(([queryId]) => {

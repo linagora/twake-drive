@@ -7,6 +7,11 @@ import InfoIcon from 'cozy-ui/transpiled/react/Icons/Info'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 
+import {
+  isFileRootSharedDrive,
+  navigateToFileRootViewer
+} from '@/modules/shareddrives/rootFileNavigation'
+
 const makeComponent = (label, icon) => {
   const Component = forwardRef((props, ref) => {
     return (
@@ -24,7 +29,7 @@ const makeComponent = (label, icon) => {
   return Component
 }
 
-export const infos = ({ t, isMobile, navigate }) => {
+export const infos = ({ t, isMobile, navigate, pathname = '' }) => {
   const icon = InfoIcon
   const label = isMobile ? t('actions.infosMobile') : t('actions.infos')
 
@@ -35,6 +40,11 @@ export const infos = ({ t, isMobile, navigate }) => {
     displayCondition: docs => docs.length <= 1 && isFile(docs[0]),
     Component: makeComponent(label, icon),
     action: docs => {
+      if (isFileRootSharedDrive(docs[0])) {
+        navigateToFileRootViewer({ navigate, file: docs[0], pathname })
+        return
+      }
+
       navigate(`file/${docs[0]._id}`)
     }
   }

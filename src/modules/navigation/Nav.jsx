@@ -2,32 +2,34 @@ import React from 'react'
 
 import flag from 'cozy-flags'
 import Icon from 'cozy-ui/transpiled/react/Icon'
-import ClockIcon from 'cozy-ui/transpiled/react/Icons/Clock'
-import FolderIcon from 'cozy-ui/transpiled/react/Icons/Folder'
+import ClockIcon from 'cozy-ui/transpiled/react/Icons/ClockOutline'
+import CloudIcon from 'cozy-ui/transpiled/react/Icons/Cloud2'
 import StarIcon from 'cozy-ui/transpiled/react/Icons/Star'
 import TrashIcon from 'cozy-ui/transpiled/react/Icons/Trash'
+import { NavDesktopDropdown } from 'cozy-ui/transpiled/react/Nav'
 import UINav from 'cozy-ui/transpiled/react/Nav'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
+import { useI18n } from 'twake-i18n'
 
+import NextcloudIcon from '@/assets/icons/icon-nextcloud.svg'
+import { ExternalNavItem } from '@/modules/navigation/ExternalNavItem'
 import { FavoriteList } from '@/modules/navigation/FavoriteList'
 import { useNavContext } from '@/modules/navigation/NavContext'
 import { NavItem } from '@/modules/navigation/NavItem'
+import { SharedDriveList } from '@/modules/navigation/SharedDriveList'
 import { SharingsNavItem } from '@/modules/navigation/SharingsNavItem'
 import { ExternalDrives } from '@/modules/navigation/components/ExternalDrivesList'
-import { SharedDriveList } from '@/modules/navigation/components/SharedDriveList'
-import { useSharedDrives } from '@/modules/shareddrives/hooks/useSharedDrives'
 
 export const Nav = () => {
   const clickState = useNavContext()
   const { isDesktop } = useBreakpoints()
-  const { isLoaded: isSharedDriveLoaded, sharedDrives } = useSharedDrives()
-  const isEnabledSharedDrive = flag('drive.shared-drive.enabled')
+  const { t } = useI18n()
 
   return (
     <UINav>
       <NavItem
         to="/folder"
-        icon={<Icon icon={FolderIcon} />}
+        icon={<Icon icon={CloudIcon} />}
         label="drive"
         rx={/\/(folder|nextcloud)(\/.*)?/}
         clickState={clickState}
@@ -56,9 +58,20 @@ export const Nav = () => {
         rx={/\/trash(\/.*)?/}
         clickState={clickState}
       />
+      {flag('settings.migration.enabled') && (
+        <NavDesktopDropdown label={t('Nav.item_migration')} limit={0}>
+          <ExternalNavItem
+            slug="settings"
+            icon={<Icon icon={NextcloudIcon} />}
+            label="nextcloud"
+            path="/migration"
+            clickState={clickState}
+          />
+        </NavDesktopDropdown>
+      )}
       {isDesktop ? <FavoriteList clickState={clickState} /> : null}
-      {isDesktop && isSharedDriveLoaded && isEnabledSharedDrive ? (
-        <SharedDriveList clickState={clickState} sharedDrives={sharedDrives} />
+      {isDesktop && flag('drive.shared-drive.enabled') ? (
+        <SharedDriveList clickState={clickState} />
       ) : null}
       {isDesktop ? (
         <ExternalDrives clickState={clickState} className="u-mt-half" />

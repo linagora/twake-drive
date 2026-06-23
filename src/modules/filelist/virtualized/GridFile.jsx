@@ -4,11 +4,11 @@ import get from 'lodash/get'
 import PropTypes from 'prop-types'
 import React, { useState, useRef } from 'react'
 import { useSelector } from 'react-redux'
-import { useI18n } from 'twake-i18n'
 
 import { isDirectory } from 'cozy-client/dist/models/file'
-import Card from 'cozy-ui/transpiled/react/Card'
+import Box from 'cozy-ui/transpiled/react/Box'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
+import { useI18n } from 'twake-i18n'
 
 import {
   SelectBox,
@@ -23,19 +23,18 @@ import styles from '@/styles/filelist.styl'
 import { useClipboardContext } from '@/contexts/ClipboardProvider'
 import { ActionMenuWithHeader } from '@/modules/actionmenu/ActionMenuWithHeader'
 import { getContextMenuActions } from '@/modules/actions/helpers'
-import { extraColumnsPropTypes } from '@/modules/certifications'
 import {
   isRenaming as isRenamingReducer,
   getRenamingFile
 } from '@/modules/drive/rename'
 import FileOpener from '@/modules/filelist/FileOpener'
 import FileThumbnail from '@/modules/filelist/icons/FileThumbnail'
+import { useFormattedUpdatedAt } from '@/modules/filelist/useFormattedUpdatedAt'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 import { useNewItemHighlightContext } from '@/modules/upload/NewItemHighlightProvider'
 
 const GridFile = ({
   t,
-  f,
   attributes,
   actions,
   isRenaming,
@@ -44,7 +43,7 @@ const GridFile = ({
   disabled,
   refreshFolderContent,
   isInSyncFromSharing,
-  breakpoints: { isExtraLarge, isMobile },
+  breakpoints: { isMobile },
   disableSelection = false,
   canInteractWith,
   onContextMenu,
@@ -86,12 +85,7 @@ const GridFile = ({
       : undefined
 
   const updatedAt = attributes.updated_at || attributes.created_at
-  const formattedUpdatedAt = f(
-    updatedAt,
-    isExtraLarge
-      ? t('table.row_update_format_full')
-      : t('table.row_update_format')
-  )
+  const formattedUpdatedAt = useFormattedUpdatedAt(updatedAt)
 
   // We don't allow any action on shared drives and trash
   // because they are magic folder created by the stack
@@ -106,7 +100,11 @@ const GridFile = ({
   const contextMenuActions = getContextMenuActions(actions)
 
   return (
-    <Card
+    <Box
+      display="block"
+      borderColor="var(--dividerColor)"
+      borderRadius={8}
+      padding={2}
       data-file-id={attributes._id}
       className={cx(
         styles['fil-content-column'],
@@ -202,13 +200,12 @@ const GridFile = ({
           onClose={hideActionMenu}
         />
       )}
-    </Card>
+    </Box>
   )
 }
 
 GridFile.propTypes = {
   t: PropTypes.func,
-  f: PropTypes.func,
   attributes: PropTypes.object.isRequired,
   actions: PropTypes.array,
   isRenaming: PropTypes.bool,
@@ -221,17 +218,16 @@ GridFile.propTypes = {
   breakpoints: PropTypes.object.isRequired,
   refreshFolderContent: PropTypes.func,
   isInSyncFromSharing: PropTypes.bool,
-  extraColumns: extraColumnsPropTypes,
   /** Disables the ability to select a file */
   disableSelection: PropTypes.bool,
   isOver: PropTypes.bool
 }
 
 export const DumbGridFile = props => {
-  const { t, f } = useI18n()
+  const { t } = useI18n()
   const breakpoints = useBreakpoints()
 
-  return <GridFile t={t} f={f} breakpoints={breakpoints} {...props} />
+  return <GridFile t={t} breakpoints={breakpoints} {...props} />
 }
 
 export const GridFileWithSelection = props => {

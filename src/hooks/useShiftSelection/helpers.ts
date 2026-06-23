@@ -119,8 +119,8 @@ const toggleSelection = ({
   const targetItem = isMovingToSelect
     ? items[currentIdx]
     : isItemSelected(items[lastInteractedIdx]._id)
-    ? items[lastInteractedIdx]
-    : items[currentIdx]
+      ? items[lastInteractedIdx]
+      : items[currentIdx]
 
   return Object.entries(selectedItems).reduce<SelectedItems>(
     (acc, [key, value]) => {

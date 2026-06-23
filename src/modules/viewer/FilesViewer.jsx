@@ -1,11 +1,9 @@
 import React, { useCallback, useEffect, useState, useMemo } from 'react'
 import { RemoveScroll } from 'react-remove-scroll'
-import { useNavigate, useParams } from 'react-router-dom'
-import { useI18n } from 'twake-i18n'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 
 import { Q, useClient } from 'cozy-client'
 import flag from 'cozy-flags'
-import { useVaultClient } from 'cozy-keys-lib'
 import Button from 'cozy-ui/transpiled/react/Buttons'
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import ShareIcon from 'cozy-ui/transpiled/react/Icons/Share'
@@ -16,25 +14,23 @@ import Viewer, {
   ToolbarButtons,
   SharingButton
 } from 'cozy-viewer'
+import { useI18n } from 'twake-i18n'
 
 import { ensureFileHasPath } from '@/components/FilesRealTimeQueries'
 import { FilesViewerLoading } from '@/components/FilesViewerLoading'
 import RightClickFileMenu from '@/components/RightClick/RightClickFileMenu'
 import { useCurrentFileId } from '@/hooks'
 import { useMoreMenuActions } from '@/hooks/useMoreMenuActions'
-import {
-  isEncryptedFile,
-  getEncryptionKeyFromDirId,
-  getDecryptedFileURL
-} from '@/lib/encryption'
 import logger from '@/lib/logger'
 import { navigateToModal } from '@/modules/actions/helpers'
 import Fallback from '@/modules/viewer/Fallback'
 import MoreMenu from '@/modules/viewer/MoreMenu'
+import { resolveShouldHideSharingActions } from '@/modules/viewer/shouldHideSharingActions'
 import {
   isOfficeEnabled,
   makeOnlyOfficeFileRoute
 } from '@/modules/views/OnlyOffice/helpers'
+import { isPdfEditorEnabled, makePdfRoute } from '@/modules/views/Pdf/helpers'
 
 /**
  * Shows a set of files through cozy-ui's Viewer
@@ -46,14 +42,13 @@ import {
  */
 const FilesViewer = ({ filesQuery, files, onClose, onChange, viewerProps }) => {
   const [currentFile, setCurrentFile] = useState(null)
-  const [currentDecryptedFileURL, setCurrentDecryptedFileURL] = useState(null)
   const [fetchingMore, setFetchingMore] = useState(false)
   const { isDesktop } = useBreakpoints()
   const fileId = useCurrentFileId()
   const client = useClient()
   const { t } = useI18n()
-  const vaultClient = useVaultClient()
   const navigate = useNavigate()
+  const location = useLocation()
   const { driveId } = useParams()
 
   const handleOnClose = useCallback(() => {
@@ -99,7 +94,7 @@ const FilesViewer = ({ filesQuery, files, onClose, onChange, viewerProps }) => {
         )
         const fileWithPath = await ensureFileHasPath(data, client)
         isMounted && setCurrentFile(fileWithPath)
-      } catch (e) {
+      } catch (_e) {
         logger.warn("can't find the file")
         handleOnClose()
       }
@@ -111,25 +106,6 @@ const FilesViewer = ({ filesQuery, files, onClose, onChange, viewerProps }) => {
       isMounted = false
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    const getDecryptedURLIfNecessary = async () => {
-      const file = files[currentIndex]
-      if (file && isEncryptedFile(file)) {
-        const encryptionKey = await getEncryptionKeyFromDirId(
-          client,
-          file.dir_id
-        )
-        const url = await getDecryptedFileURL(client, vaultClient, {
-          file,
-          encryptionKey
-        })
-        setCurrentDecryptedFileURL(url)
-      }
-    }
-    getDecryptedURLIfNecessary()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentIndex])
 
   useEffect(() => {
     let isMounted = true
@@ -169,7 +145,12 @@ const FilesViewer = ({ filesQuery, files, onClose, onChange, viewerProps }) => {
     [hasCurrentIndex, currentIndex]
   )
 
-  const actions = useMoreMenuActions(currentFile ?? {})
+  const viewerComponentProps = viewerProps || {}
+  const shouldHideSharingActions =
+    resolveShouldHideSharingActions(viewerComponentProps)
+  const actions = useMoreMenuActions(currentFile ?? {}, {
+    shouldHideIfSharedDriveRecipient: shouldHideSharingActions
+  })
 
   // If we can't find the file, we fallback to the (potentially loading)
   // direct stat made by the viewer
@@ -191,7 +172,6 @@ const FilesViewer = ({ filesQuery, files, onClose, onChange, viewerProps }) => {
       <RemoveScroll>
         <Viewer
           files={viewerFiles}
-          currentURL={currentDecryptedFileURL}
           currentIndex={viewerIndex}
           onChangeRequest={handleOnChange}
           onCloseRequest={handleOnClose}
@@ -199,37 +179,58 @@ const FilesViewer = ({ filesQuery, files, onClose, onChange, viewerProps }) => {
           componentsProps={{
             OnlyOfficeViewer: {
               isEnabled: isOfficeEnabled(isDesktop),
-              opener: file => navigate(makeOnlyOfficeFileRoute(file.id))
+              opener: file =>
+                navigate(
+                  makeOnlyOfficeFileRoute(file.id, { driveId: file.driveId })
+                )
+            },
+            PdfViewer: {
+              isPdfEditorEnabled: isPdfEditorEnabled(),
+              opener: file =>
+                navigate(
+                  makePdfRoute(file.id, {
+                    driveId: file.driveId,
+                    fromPathname: location.pathname
+                  })
+                )
             },
             toolbarProps: {
               showFilePath: true,
               onPaywallRedirect: redirectToPaywall
             },
-            ...(viewerProps || {})
+            ...(viewerComponentProps || {}),
+            sharingActions: {
+              ...(viewerComponentProps?.sharingActions || {}),
+              disabled: shouldHideSharingActions
+            }
           }}
         >
           <ToolbarButtons>
-            <MoreMenu file={viewerFiles[viewerIndex]} />
+            <MoreMenu
+              file={viewerFiles[viewerIndex]}
+              shouldHideSharingActions={shouldHideSharingActions}
+            />
 
-            {flag('drive.new-file-viewer-ui.enabled') && (
-              <Button
-                variant="secondary"
-                aria-label={t('Viewer.share_btn')}
-                label={t('Viewer.share_btn')}
-                startIcon={<Icon icon={ShareIcon} />}
-                onClick={() =>
-                  navigateToModal({
-                    navigate,
-                    pathname: '',
-                    files,
-                    path: 'share'
-                  })
-                }
-              />
-            )}
+            {flag('drive.new-file-viewer-ui.enabled') &&
+              !shouldHideSharingActions && (
+                <Button
+                  variant="secondary"
+                  aria-label={t('Viewer.share_btn')}
+                  label={t('Viewer.share_btn')}
+                  startIcon={<Icon icon={ShareIcon} />}
+                  onClick={() =>
+                    navigateToModal({
+                      navigate,
+                      pathname: '',
+                      files,
+                      path: 'share'
+                    })
+                  }
+                />
+              )}
           </ToolbarButtons>
           <FooterActionButtons>
-            <SharingButton />
+            {!shouldHideSharingActions && <SharingButton />}
             <ForwardOrDownloadButton variant="buttonIcon" />
           </FooterActionButtons>
         </Viewer>

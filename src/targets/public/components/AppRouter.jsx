@@ -10,14 +10,34 @@ import ExternalRedirect from '@/modules/navigation/ExternalRedirect'
 import { PublicNoteRedirect } from '@/modules/navigation/PublicNoteRedirect'
 import LightFileViewer from '@/modules/public/LightFileViewer'
 import PublicLayout from '@/modules/public/PublicLayout'
+import {
+  isExcalidraw,
+  isExcalidrawEnabled
+} from '@/modules/views/Excalidraw/helpers'
+import { getPublicExcalidrawRoutes } from '@/modules/views/Excalidraw/routes'
 import { PublicFolderDuplicateView } from '@/modules/views/Folder/PublicFolderDuplicateView'
 import { MovePublicFilesView } from '@/modules/views/Modal/MovePublicFilesView'
 import OnlyOfficeView from '@/modules/views/OnlyOffice'
 import OnlyOfficeCreateView from '@/modules/views/OnlyOffice/Create'
 import OnlyOfficePaywallView from '@/modules/views/OnlyOffice/OnlyOfficePaywallView'
 import { isOfficeEnabled } from '@/modules/views/OnlyOffice/helpers'
+import { isPdfEditorEnabled } from '@/modules/views/Pdf/helpers'
+import { getPublicPdfRoutes } from '@/modules/views/Pdf/routes'
 import { PublicFileViewer } from '@/modules/views/Public/PublicFileViewer'
 import { PublicFolderView } from '@/modules/views/Public/PublicFolderView'
+
+// Group the flag-gated editor routes so the AppRouter switch stays small.
+const getPublicEditorRoutes = ({ isReadOnly, isExcalidrawShared, data }) => (
+  <>
+    {isExcalidrawEnabled() &&
+      getPublicExcalidrawRoutes({
+        isReadOnly,
+        isShared: isExcalidrawShared,
+        data
+      })}
+    {isPdfEditorEnabled() && getPublicPdfRoutes({ isReadOnly })}
+  </>
+)
 
 const AppRouter = ({
   isReadOnly,
@@ -28,6 +48,7 @@ const AppRouter = ({
 }) => {
   const { isDesktop } = useBreakpoints()
   const isFile = data && data.type === 'file'
+  const isExcalidrawShared = isExcalidrawEnabled() && isExcalidraw(data)
 
   return (
     <SentryRoutes>
@@ -55,16 +76,19 @@ const AppRouter = ({
               path="onlyoffice/create/:folderId/:fileClass"
               element={<OnlyOfficeCreateView isPublic={true} />}
             />
-            {models.file.shouldBeOpenedByOnlyOffice(data) && (
-              <Route
-                path="/"
-                element={<Navigate to={`onlyoffice/${data.id}`} replace />}
-              />
-            )}
+            {models.file.shouldBeOpenedByOnlyOffice(data) &&
+              !isExcalidrawShared && (
+                <Route
+                  path="/"
+                  element={<Navigate to={`onlyoffice/${data.id}`} replace />}
+                />
+              )}
           </>
         ) : (
           <Route path="onlyoffice/*" element={<Navigate to="/" />} />
         )}
+
+        {getPublicEditorRoutes({ isReadOnly, isExcalidrawShared, data })}
 
         {isFile && (
           <Route

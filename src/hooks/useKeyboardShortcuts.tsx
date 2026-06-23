@@ -1,12 +1,11 @@
 import React, { useEffect, useCallback } from 'react'
 import { useDispatch } from 'react-redux'
-import { useI18n } from 'twake-i18n'
 
 import { isFile } from 'cozy-client/dist/models/file'
 import CozyClient from 'cozy-client/types/CozyClient'
 import { IOCozyFile } from 'cozy-client/types/types'
-import flag from 'cozy-flags'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
+import { useI18n } from 'twake-i18n'
 
 import { shouldBlockKeyboardShortcuts, normalizeKey } from './helpers'
 
@@ -256,7 +255,7 @@ export const useKeyboardShortcuts = ({
       }
 
       onPaste?.()
-    } catch (error) {
+    } catch (_error) {
       showAlert({
         message: t('alert.paste_error'),
         severity: 'error'
@@ -282,7 +281,11 @@ export const useKeyboardShortcuts = ({
   ])
 
   const handleSelectAll = useCallback(() => {
-    isSelectAll ? clearSelection() : selectAll(items)
+    if (isSelectAll) {
+      clearSelection()
+    } else {
+      selectAll(items)
+    }
   }, [isSelectAll, clearSelection, selectAll, items])
 
   const handleRename = useCallback(() => {
@@ -320,10 +323,6 @@ export const useKeyboardShortcuts = ({
   }, [selectedItems, pushModal, popModal, refresh, allowDelete, showAlert, t])
 
   useEffect(() => {
-    if (!flag('drive.keyboard-shortcuts.enabled')) {
-      return
-    }
-
     const shortcuts: Record<string, (() => void | Promise<void>) | undefined> =
       {
         'Ctrl+c': handleCopy,
@@ -349,7 +348,7 @@ export const useKeyboardShortcuts = ({
 
     document.addEventListener('keydown', handleKeyDown)
 
-    return () => document.removeEventListener('keydown', handleKeyDown)
+    return (): void => document.removeEventListener('keydown', handleKeyDown)
   }, [
     isApple,
     handleCopy,

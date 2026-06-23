@@ -1,7 +1,6 @@
 import React, { FC } from 'react'
 import { useDispatch } from 'react-redux'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { useI18n } from 'twake-i18n'
 
 import { useClient, useQuery } from 'cozy-client'
 import { IOCozyFile } from 'cozy-client/types/types'
@@ -14,6 +13,7 @@ import { makeActions } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
 import { Content } from 'cozy-ui/transpiled/react/Layout'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
+import { useI18n } from 'twake-i18n'
 
 import { useFolderSort } from '@/hooks'
 import { useModalContext } from '@/lib/ModalContext'
@@ -31,11 +31,6 @@ import { addToFavorites } from '@/modules/actions/components/addToFavorites'
 import { moveTo } from '@/modules/actions/components/moveTo'
 import { removeFromFavorites } from '@/modules/actions/components/removeFromFavorites'
 import { MobileAwareBreadcrumb as Breadcrumb } from '@/modules/breadcrumb/components/MobileAwareBreadcrumb'
-import { makeExtraColumnsNamesFromMedia } from '@/modules/certifications'
-import {
-  useExtraColumns,
-  ExtraColumn
-} from '@/modules/certifications/useExtraColumns'
 import AddMenuProvider from '@/modules/drive/AddMenu/AddMenuProvider'
 import FabWithAddMenuContext from '@/modules/drive/FabWithAddMenuContext'
 import Toolbar from '@/modules/drive/Toolbar'
@@ -44,13 +39,7 @@ import { isNextcloudShortcut } from '@/modules/nextcloud/helpers'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 import FolderView from '@/modules/views/Folder/FolderView'
 import FolderViewHeader from '@/modules/views/Folder/FolderViewHeader'
-import {
-  buildFavoritesQuery,
-  buildFileWithSpecificMetadataAttributeQuery
-} from '@/queries'
-
-const desktopExtraColumnsNames = ['carbonCopy', 'electronicSafe']
-const mobileExtraColumnsNames: string[] = []
+import { buildFavoritesQuery } from '@/queries'
 
 const FavoritesView: FC = () => {
   const navigate = useNavigate()
@@ -66,18 +55,6 @@ const FavoritesView: FC = () => {
   const dispatch = useDispatch()
   const { showAlert } = useAlert()
   const [sortOrder] = useFolderSort('favorites')
-
-  const extraColumnsNames = makeExtraColumnsNamesFromMedia({
-    isMobile,
-    desktopExtraColumnsNames,
-    mobileExtraColumnsNames
-  })
-
-  const extraColumns = useExtraColumns({
-    columnsNames: extraColumnsNames,
-    queryBuilder: buildFileWithSpecificMetadataAttributeQuery,
-    currentFolderId: 'io.cozy.files.shared-drives-dir'
-  }) as ExtraColumn[]
 
   const favoritesQuery = buildFavoritesQuery({
     sortAttribute: sortOrder.attribute,
@@ -114,7 +91,6 @@ const FavoritesView: FC = () => {
   }
 
   const actions = makeActions(
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     [
       share,
       shareNative,
@@ -144,7 +120,6 @@ const FavoritesView: FC = () => {
         <FolderBody
           folderId="io.cozy.files.shared-drives-dir"
           queryResults={[favoritesResult]}
-          extraColumns={extraColumns}
           actions={actions}
           canSort={true}
           canInteractWith={handleInteractWith}

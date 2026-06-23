@@ -12,7 +12,6 @@ import DownloadButtonItem from '@/modules/drive/Toolbar/components/DownloadButto
 import FavoritesItem from '@/modules/drive/Toolbar/components/FavoritesItem'
 import InsideRegularFolder from '@/modules/drive/Toolbar/components/InsideRegularFolder'
 import LeaveSharedDriveButtonItem from '@/modules/drive/Toolbar/components/LeaveSharedDriveButtonItem'
-import ManageAccessItem from '@/modules/drive/Toolbar/components/ManageAccessItem'
 import DeleteItem from '@/modules/drive/Toolbar/delete/DeleteItem'
 import MoveItem from '@/modules/drive/Toolbar/move/MoveItem'
 import PersonalizeFolderItem from '@/modules/drive/Toolbar/personalizeFolder/PersonalizeFolderItem'
@@ -42,13 +41,12 @@ const MoreMenu = ({
   showSelectionBar,
   isSelectionBarVisible,
   isSharedWithMe,
-  isSharedDriveRecipient,
-  isSharedDriveOwner
+  isSharedDriveRecipient
 }) => {
   const [menuIsVisible, setMenuVisible] = useState(false)
   const anchorRef = useRef()
   const { isMobile } = useBreakpoints()
-  const { allLoaded } = useSharingContext() // We need to wait for the sharing context to be completely loaded to avoid race conditions
+  const { allLoaded, canLeave } = useSharingContext() // We need to wait for the sharing context to be completely loaded to avoid race conditions
 
   const handleToggle = useCallback(
     () => toggleMenu(menuIsVisible, setMenuVisible),
@@ -95,22 +93,21 @@ const MoreMenu = ({
               displayedFolder={displayedFolder}
               folderId={folderId}
             >
-              {!isSharedDriveRecipient && (
-                <DownloadButtonItem files={[displayedFolder]} />
-              )}
+              <DownloadButtonItem files={[displayedFolder]} />
               <MoveItem
                 displayedFolder={displayedFolder}
                 hasWriteAccess={hasWriteAccess}
               />
-              <PersonalizeFolderItem
-                displayedFolder={displayedFolder}
-                hasWriteAccess={hasWriteAccess}
-              />
+              {!isSharedDriveRecipient && (
+                <PersonalizeFolderItem
+                  displayedFolder={displayedFolder}
+                  hasWriteAccess={hasWriteAccess}
+                />
+              )}
             </InsideRegularFolder>
             {isMobile && hasWriteAccess && <AddMenuItem />}
             <SelectableItem onClick={showSelectionBar} />
-            {isSharedDriveOwner && <ManageAccessItem />}
-            {hasWriteAccess && (
+            {hasWriteAccess && !isSharedDriveRecipient && (
               <InsideRegularFolder
                 displayedFolder={displayedFolder}
                 folderId={folderId}
@@ -126,14 +123,15 @@ const MoreMenu = ({
                 <Divider className="u-mv-half" />
                 <DeleteItem
                   displayedFolder={displayedFolder}
-                  isSharedDriveOwner={isSharedDriveOwner}
                   isSharedWithMe={isSharedWithMe}
                 />
               </InsideRegularFolder>
             )}
-            {isSharedDriveRecipient && isSharedWithMe && (
-              <LeaveSharedDriveButtonItem files={[displayedFolder]} />
-            )}
+            {isSharedDriveRecipient &&
+              isSharedWithMe &&
+              canLeave(displayedFolder._id) && (
+                <LeaveSharedDriveButtonItem files={[displayedFolder]} />
+              )}
           </ActionsMenu>
         )}
       </AddMenuProvider>

@@ -1,5 +1,4 @@
 import React, { useState, useCallback } from 'react'
-import { useI18n } from 'twake-i18n'
 
 import { useClient } from 'cozy-client'
 import { splitFilename } from 'cozy-client/dist/models/file'
@@ -13,6 +12,7 @@ import ListItem from 'cozy-ui/transpiled/react/ListItem'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
+import { useI18n } from 'twake-i18n'
 
 import { getEntriesTypeTranslated } from '@/lib/entries'
 import { computeNextcloudFolderQueryId } from '@/modules/nextcloud/helpers'
@@ -42,7 +42,7 @@ const NextcloudDeleteConfirm = ({ files, onClose }) => {
           path: '/trash/'
         }) + '/trashed'
       )
-    } catch (e) {
+    } catch (_e) {
       showAlert({
         message: t('NextcloudDeleteConfirm.error'),
         severity: 'error'

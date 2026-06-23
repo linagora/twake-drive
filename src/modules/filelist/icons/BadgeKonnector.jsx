@@ -1,26 +1,14 @@
 import PropTypes from 'prop-types'
 import React from 'react'
 
-import {
-  getReferencedBy,
-  isQueryLoading,
-  isReferencedBy,
-  useQuery
-} from 'cozy-client'
+import { isQueryLoading, isReferencedBy, useQuery } from 'cozy-client'
 import Badge from 'cozy-ui/transpiled/react/Badge'
 import { makeStyles } from 'cozy-ui/transpiled/react/styles'
 import AppIcon from 'cozy-ui-plus/dist/AppIcon'
 
 import { DOCTYPE_KONNECTORS } from '@/lib/doctypes'
+import { getKonnectorSlugFromFile } from '@/lib/konnectors'
 import { buildFileOrFolderByIdQuery } from '@/queries'
-
-const getKonnectorSlugFromFile = file => {
-  const konnector = getReferencedBy(file, DOCTYPE_KONNECTORS)[0]
-  if (konnector) {
-    return konnector.id.split('/')[1]
-  }
-  return null
-}
 
 const useStyle = makeStyles({
   badge: {

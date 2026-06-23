@@ -4,7 +4,7 @@ import React from 'react'
 import FileIcon from './FileIcon'
 
 jest.mock('cozy-flags', () => () => true)
-// eslint-disable-next-line react/display-name
+
 jest.mock('cozy-ui-plus/dist/FileImageLoader', () => () => (
   <div data-testid="FileImageLoader" />
 ))

@@ -8,6 +8,11 @@ import {
 } from 'react-router-dom'
 
 import { useClient } from 'cozy-client'
+import { NextcloudFile } from 'cozy-client/types/types'
+
+interface NextcloudFilesCollection {
+  deletePermanently: (file: NextcloudFile) => Promise<void>
+}
 
 import { LoaderModal } from '@/components/LoaderModal'
 import { getParentPath } from '@/lib/path'
@@ -38,10 +43,10 @@ const NextcloudDestroyView: FC = () => {
   const handleConfirm = useCallback(async (): Promise<void> => {
     if (entries) {
       for (const file of entries) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-        await client
-          ?.collection('io.cozy.remote.nextcloud.files')
-          .deletePermanently(file)
+        const collection = client?.collection(
+          'io.cozy.remote.nextcloud.files'
+        ) as unknown as NextcloudFilesCollection
+        await collection.deletePermanently(file)
       }
       const queryId =
         computeNextcloudFolderQueryId({

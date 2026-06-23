@@ -1,18 +1,11 @@
 import cx from 'classnames'
-import React, {
-  useCallback,
-  useContext,
-  useState,
-  useEffect,
-  useRef
-} from 'react'
+import React, { useContext, useRef } from 'react'
 import { useSelector } from 'react-redux'
-import { useNavigate } from 'react-router-dom'
 
 import { isSharingShortcut } from 'cozy-client/dist/models/file'
-import { useVaultClient } from 'cozy-keys-lib'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
+import { getFolderViewState } from './hooks/getFolderViewState'
 import { useFileSorting } from './hooks/useFileSorting'
 import { useSyncingFakeFile } from './useSyncingFakeFile'
 
@@ -33,7 +26,8 @@ import { FileListHeader } from '@/modules/filelist/FileListHeader'
 import FileListRowsPlaceholder from '@/modules/filelist/FileListRowsPlaceholder'
 import LoadMore from '@/modules/filelist/LoadMoreV2'
 import { isTypingNewFolderName } from '@/modules/filelist/duck'
-import { FolderUnlocker } from '@/modules/folder/components/FolderUnlocker'
+import { useNeedsToWait } from '@/modules/folder/hooks/useNeedsToWait'
+import { useScrollToTop } from '@/modules/folder/hooks/useScrollToTop'
 import SelectionBar from '@/modules/selection/SelectionBar'
 import { isReferencedByShareInSharingContext } from '@/modules/views/Folder/syncHelpers'
 
@@ -47,10 +41,6 @@ const FileListBodyWrapper = ({ viewType, children }) => {
   )
 }
 
-// TODO: extraColumns is then passed to 'FileListHeader', 'AddFolder',
-// and 'File' (this one from a 'syncingFakeFile' and a normal file).
-// It is easy to forget to update one of these components to pass 'extraColumns'.
-// It would be ideal to centralize it somewhere.
 const FolderViewBody = ({
   currentFolderId,
   displayedFolder,
@@ -60,11 +50,10 @@ const FolderViewBody = ({
   canUpload = true,
   withFilePath = false,
   refreshFolderContent = null,
-  extraColumns,
-  orderProps
+  orderProps,
+  driveId
 }) => {
   const { isDesktop } = useBreakpoints()
-  const navigate = useNavigate()
   const { viewType, switchView } = useViewSwitcherContext()
   const folderViewRef = useRef()
   const IsAddingFolder = useSelector(isTypingNewFolderName)
@@ -77,45 +66,15 @@ const FolderViewBody = ({
     folderViewRef
   )
 
-  /**
-   *  Since we are not able to restore the scroll correctly,
-   * and force the scroll to top every time we change the
-   * current folder. This is to avoid this kind of weird
-   * behavior:
-   * - If I go to a sub-folder, if this subfolder has a lot
-   * of data and I scrolled down until the bottom. If I go
-   * back, then my folder will also be scrolled down.
-   *
-   * This is an ugly hack, yeah.
-   * */
-  useEffect(() => {
-    if (isDesktop) {
-      const scrollable = document.querySelectorAll(
-        '[data-testid=fil-content-body]'
-      )[0]
-      if (scrollable) {
-        scrollable.scroll({ top: 0 })
-      }
-    } else {
-      window.scroll({ top: 0 })
-    }
-  }, [currentFolderId, isDesktop])
+  useScrollToTop(currentFolderId)
 
   const { isBigThumbnail } = useThumbnailSizeContext()
   const { sharingsValue } = useContext(AcceptingSharingContext)
-  const vaultClient = useVaultClient()
 
-  const isInError = queryResults.some(query => query.fetchStatus === 'failed')
-  const hasDataToShow =
-    !isInError &&
-    queryResults.some(query => query.data && query.data.length > 0)
-  const isLoading =
-    !hasDataToShow &&
-    queryResults.some(
-      query => query.fetchStatus === 'loading' && !query.lastUpdate
-    ) &&
-    !isSettingsLoaded
-  const isEmpty = !isInError && !isLoading && !hasDataToShow
+  const { isInError, isLoading, isEmpty, hasDataToShow } = getFolderViewState({
+    queryResults,
+    isSettingsLoaded
+  })
   const showEmpty = displayedFolder !== null && !IsAddingFolder && isEmpty
   const isSharingContextEmpty = Object.keys(sharingsValue).length <= 0
 
@@ -126,39 +85,10 @@ const FolderViewBody = ({
     onShiftClick(fileId, e)
   }
 
-  /**
-   * When we mount the component when we already have data in cache,
-   * the mount is time consuming since we'll render at least 100 lines
-   * of File.
-   *
-   * React seems to batch together the fact that :
-   * - we change a route
-   * - we want to render 100 files
-   * resulting in a non smooth transition between views (Drive / Recent / ...)
-   *
-   * In order to bypass this batch, we use a state to first display a much
-   * more simpler component and then the files
-   */
-  const [needsToWait, setNeedsToWait] = useState(true)
-  useEffect(() => {
-    let timeout = null
-    if (!isLoading) {
-      timeout = setTimeout(() => {
-        setNeedsToWait(false)
-      }, 50)
-    }
-    return () => clearTimeout(timeout)
-  }, [isLoading])
-
-  const handleFolderUnlockerDismiss = useCallback(() => {
-    navigate('/folder')
-  }, [navigate])
+  const needsToWait = useNeedsToWait({ isLoading })
 
   return (
-    <FolderUnlocker
-      folder={displayedFolder}
-      onDismiss={handleFolderUnlockerDismiss}
-    >
+    <>
       <SelectionBar actions={actions} />
       <FileList ref={folderViewRef}>
         {hasDataToShow && (
@@ -169,16 +99,13 @@ const FolderViewBody = ({
             onFolderSort={changeSortOrder}
             viewType={viewType}
             switchViewType={switchView}
-            extraColumns={extraColumns}
           />
         )}
         <FileListBody selectionModeActive={false}>
           {!hasDataToShow && !needsToWait && (
             <FileListBodyWrapper viewType={viewType} isDesktop={isDesktop}>
               <AddFolder
-                vaultClient={vaultClient}
                 refreshFolderContent={refreshFolderContent}
-                extraColumns={extraColumns}
                 currentFolderId={currentFolderId}
               />
             </FileListBodyWrapper>
@@ -192,8 +119,8 @@ const FolderViewBody = ({
           {showEmpty && (
             <EmptyWrapper
               currentFolderId={currentFolderId}
-              displayedFolder={displayedFolder}
               canUpload={canUpload}
+              driveId={driveId}
             />
           )}
           {hasDataToShow && !needsToWait && (
@@ -205,14 +132,11 @@ const FolderViewBody = ({
                     withSelectionCheckbox={false}
                     actions={[]}
                     isInSyncFromSharing={true}
-                    extraColumns={extraColumns}
                     disableSelection={true}
                   />
                 )}
                 <AddFolder
-                  vaultClient={vaultClient}
                   refreshFolderContent={refreshFolderContent}
-                  extraColumns={extraColumns}
                   currentFolderId={currentFolderId}
                 />
                 {sortedFiles.map(file => {
@@ -238,7 +162,6 @@ const FolderViewBody = ({
                             sharingsValue
                           )
                         }
-                        extraColumns={extraColumns}
                         onToggleSelect={e => {
                           onToggleSelect(file?._id, e)
                         }}
@@ -262,7 +185,7 @@ const FolderViewBody = ({
           )}
         </FileListBody>
       </FileList>
-    </FolderUnlocker>
+    </>
   )
 }
 

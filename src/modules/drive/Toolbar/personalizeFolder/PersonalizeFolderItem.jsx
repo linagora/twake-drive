@@ -1,12 +1,11 @@
 import React from 'react'
-import { useI18n } from 'twake-i18n'
 
-import flag from 'cozy-flags'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import PaletteIcon from 'cozy-ui/transpiled/react/Icons/Palette'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
+import { useI18n } from 'twake-i18n'
 
 import { useModalContext } from '@/lib/ModalContext'
 import { FolderCustomizerModal } from '@/modules/views/Folder/FolderCustomizer'
@@ -20,7 +19,6 @@ const PersonalizeFolderItem = ({
   const { pushModal, popModal } = useModalContext()
 
   if (
-    !flag('drive.folder-personalization.enabled') ||
     !hasWriteAccess ||
     !displayedFolder ||
     displayedFolder.type !== 'directory'

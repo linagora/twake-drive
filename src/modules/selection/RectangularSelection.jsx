@@ -3,9 +3,74 @@ import Selecto from 'react-selecto'
 
 import styles from './RectangularSelection.styl'
 import { useSelectionContext } from './SelectionProvider'
+import { scrollContainerByDirection } from './scrollHelpers'
 
 const INTERACTIVE_ELEMENTS_SELECTOR =
   'button,a,input,select,textarea,label,[role="button"],[role="menuitem"],[role="option"]'
+/**
+ * Hit rate for the Selecto library.
+ * Controls how frequently the selection rectangle checks for elements to select.
+ * A value of 1 means it checks every pixel, ensuring precise selection.
+ */
+const HIT_RATE = 1
+
+const buildSelectionFromItems = (fileIds, itemsMap) => {
+  const newSelection = {}
+  let lastSelectedId = null
+  for (const fileId of fileIds) {
+    const file = itemsMap.get(fileId)
+    if (file) {
+      newSelection[fileId] = file
+      lastSelectedId = fileId
+    }
+  }
+  return { newSelection, lastSelectedId }
+}
+
+const getVisibleFileIdsFromSelecto = selectoRef => {
+  const selectableElements = selectoRef.current?.getSelectableElements() || []
+  const visibleFileIds = new Set()
+  for (const el of selectableElements) {
+    const fileId = el.getAttribute('data-file-id')
+    if (fileId) {
+      visibleFileIds.add(fileId)
+    }
+  }
+  return visibleFileIds
+}
+
+const getSelectedFileIdsFromSelectoEvent = (e, getFileFromElement) => {
+  const selectedFileIds = new Set()
+  for (const el of e.selected) {
+    const file = getFileFromElement(el)
+    if (file) {
+      selectedFileIds.add(file._id)
+    }
+  }
+  return selectedFileIds
+}
+
+const accumulateSelectedItemsDuringDrag = (
+  selectedDuringDragRef,
+  selectedFileIds,
+  visibleFileIds,
+  preserveAll
+) => {
+  const newAccumulated = new Set()
+  for (const fileId of selectedDuringDragRef.current) {
+    if (
+      preserveAll ||
+      !visibleFileIds.has(fileId) ||
+      selectedFileIds.has(fileId)
+    ) {
+      newAccumulated.add(fileId)
+    }
+  }
+  for (const fileId of selectedFileIds) {
+    newAccumulated.add(fileId)
+  }
+  return newAccumulated
+}
 
 /**
  * Component that enables rectangular selection of files in a grid view.
@@ -23,20 +88,38 @@ const RectangularSelection = ({
   children,
   items,
   scrollContainerRef,
-  scrollElement
+  scrollElement,
+  onSelectEnd
 }) => {
   const containerRef = useRef(null)
+  const selectoRef = useRef(null)
   const [isContainerReady, setIsContainerReady] = useState(false)
   const { setSelectedItems, selectedItems, setIsSelectAll } =
     useSelectionContext()
+  const [resolvedScrollContainer, setResolvedScrollContainer] = useState(null)
   const isDraggingRef = useRef(false)
   const dragStartPosRef = useRef(null)
+  const wheelScrolledDuringDragRef = useRef(false)
+  const mutationObserverRef = useRef(null)
+  const selectedDuringDragRef = useRef(new Set())
 
   useEffect(() => {
     if (containerRef.current) {
       setIsContainerReady(true)
     }
+
+    return () => {
+      if (mutationObserverRef.current) {
+        mutationObserverRef.current.disconnect()
+      }
+    }
   }, [])
+
+  useEffect(() => {
+    setResolvedScrollContainer(
+      scrollElement || scrollContainerRef?.current || null
+    )
+  }, [scrollElement, scrollContainerRef, isContainerReady])
 
   /**
    * Extracts file data from a DOM element using the data-file-id attribute.
@@ -74,25 +157,41 @@ const RectangularSelection = ({
    */
   const handleSelect = useCallback(
     e => {
-      const isMultiSelect = e.inputEvent?.ctrlKey || e.inputEvent?.metaKey
-      const newSelection = isMultiSelect ? { ...selectedItems } : {}
+      const visibleFileIds = getVisibleFileIdsFromSelecto(selectoRef)
+      const selectedFileIds = getSelectedFileIdsFromSelectoEvent(
+        e,
+        getFileFromElement
+      )
+      // After a wheel scroll, items may still be in the DOM but outside
+      // the selection rectangle (content shifted, not rectangle shrunk).
+      // In that case, preserve all accumulated items to avoid losing them.
+      const newAccumulated = accumulateSelectedItemsDuringDrag(
+        selectedDuringDragRef,
+        selectedFileIds,
+        visibleFileIds,
+        wheelScrolledDuringDragRef.current
+      )
+      selectedDuringDragRef.current = newAccumulated
 
-      for (const el of e.selected) {
-        const file = getFileFromElement(el)
-        if (file && !newSelection[file._id]) {
-          newSelection[file._id] = file
-        }
-      }
+      const { newSelection, lastSelectedId } = buildSelectionFromItems(
+        newAccumulated,
+        itemsMap
+      )
 
       setSelectedItems(newSelection)
       setIsSelectAll(Object.keys(newSelection).length === items.length)
+
+      if (lastSelectedId) {
+        onSelectEnd?.(lastSelectedId)
+      }
     },
     [
       items.length,
-      selectedItems,
+      itemsMap,
       getFileFromElement,
       setSelectedItems,
-      setIsSelectAll
+      setIsSelectAll,
+      onSelectEnd
     ]
   )
 
@@ -124,10 +223,21 @@ const RectangularSelection = ({
    * @param {number} e.clientX - X coordinate of the drag start
    * @param {number} e.clientY - Y coordinate of the drag start
    */
-  const handleDragStart = useCallback(e => {
-    dragStartPosRef.current = { x: e.clientX, y: e.clientY }
-    isDraggingRef.current = false
-  }, [])
+  const handleDragStart = useCallback(
+    e => {
+      dragStartPosRef.current = { x: e.clientX, y: e.clientY }
+      isDraggingRef.current = false
+      selectedDuringDragRef.current.clear()
+
+      // If Ctrl/Cmd is pressed, start with current selection
+      if (e.inputEvent?.ctrlKey || e.inputEvent?.metaKey) {
+        for (const item of Object.values(selectedItems)) {
+          selectedDuringDragRef.current.add(item._id)
+        }
+      }
+    },
+    [selectedItems]
+  )
 
   /**
    * Handles drag movement during the selection.
@@ -155,7 +265,79 @@ const RectangularSelection = ({
    */
   const handleDragEnd = useCallback(() => {
     dragStartPosRef.current = null
+    wheelScrolledDuringDragRef.current = false
+    selectedDuringDragRef.current.clear()
   }, [])
+
+  /**
+   * Sets up a MutationObserver on the scroll container to detect when
+   * virtuoso adds or removes DOM elements (e.g. after scrolling).
+   * When mutations are detected during a drag, we force selecto to
+   * re-discover selectable targets so newly rendered elements can be selected.
+   */
+  useEffect(() => {
+    if (!resolvedScrollContainer) return
+
+    if (mutationObserverRef.current) {
+      mutationObserverRef.current.disconnect()
+    }
+
+    const observer = new MutationObserver(() => {
+      if (isDraggingRef.current && selectoRef.current) {
+        selectoRef.current.findSelectableTargets()
+      }
+    })
+
+    observer.observe(resolvedScrollContainer, {
+      childList: true,
+      subtree: true
+    })
+    mutationObserverRef.current = observer
+
+    return () => observer.disconnect()
+  }, [resolvedScrollContainer])
+
+  /**
+   * Listens for mouse wheel scroll during a drag selection.
+   * Marks that a wheel scroll occurred so the accumulator preserves
+   * all previously selected items instead of dropping those that
+   * are still in the DOM but scrolled out of the selection rectangle.
+   */
+  useEffect(() => {
+    if (!resolvedScrollContainer) return
+
+    const handleWheel = () => {
+      if (!isDraggingRef.current) return
+      wheelScrolledDuringDragRef.current = true
+    }
+
+    resolvedScrollContainer.addEventListener('wheel', handleWheel, {
+      passive: true
+    })
+
+    return () =>
+      resolvedScrollContainer.removeEventListener('wheel', handleWheel)
+  }, [resolvedScrollContainer])
+
+  /**
+   * Handles scroll events from react-selecto during drag selection.
+   * When the selection rectangle reaches the edge of the scrollable container,
+   * Selecto fires this event and we must manually scroll the container.
+   *
+   * New elements rendered by virtuoso after scrolling are detected by the
+   * MutationObserver which triggers selecto to re-check selectable targets.
+   *
+   * @param {Object} e - Selecto scroll event
+   * @param {number[]} e.direction - Scroll direction [x, y], each -1, 0, or 1
+   */
+  const handleScroll = useCallback(
+    e => {
+      if (!resolvedScrollContainer) return
+
+      scrollContainerByDirection(resolvedScrollContainer, e.direction)
+    },
+    [resolvedScrollContainer]
+  )
 
   /**
    * Handles clicks on the container to clear selection when clicking empty space.
@@ -166,24 +348,23 @@ const RectangularSelection = ({
    */
   const handleContainerClick = useCallback(
     e => {
-      // Skip if this click was part of a drag operation (rectangular selection)
+      // Early return if this click was part of a drag operation (rectangular selection)
       if (isDraggingRef.current) {
         e.stopPropagation()
         e.preventDefault()
         return
       }
 
-      // Don't clear if Ctrl/Cmd is pressed (user wants to add to selection)
+      // Early return if Ctrl/Cmd is pressed (user wants to add to selection)
       if (e.ctrlKey || e.metaKey) return
 
       const target = e.target
 
-      // Check if clicked on a file or interactive element
-      const isOnFile = target.closest('[data-file-id]')
-      if (isOnFile) return
+      // Early return if clicked on a file
+      if (target.closest('[data-file-id]')) return
 
-      const isInteractive = target.closest(INTERACTIVE_ELEMENTS_SELECTOR)
-      if (isInteractive) return
+      // Early return if clicked on interactive element
+      if (target.closest(INTERACTIVE_ELEMENTS_SELECTOR)) return
 
       // If clicked in empty space, clear selection
       setSelectedItems({})
@@ -191,10 +372,6 @@ const RectangularSelection = ({
     },
     [setSelectedItems, setIsSelectAll]
   )
-
-  // Use the directly provided scrollElement (from virtuoso's scrollerRef),
-  // or fall back to scrollContainerRef.current for non-virtualized containers
-  const scrollContainer = scrollElement || scrollContainerRef?.current
 
   return (
     <div
@@ -205,13 +382,15 @@ const RectangularSelection = ({
       {children}
       {isContainerReady && (
         <Selecto
+          ref={selectoRef}
           className={styles['cozy-selecto-box']}
+          // eslint-disable-next-line react-hooks/refs
           container={containerRef.current}
           dragContainer={window}
           selectableTargets={['[data-file-id]']}
           selectByClick={false}
           selectFromInside={false}
-          hitRate={10}
+          hitRate={HIT_RATE}
           ratio={0}
           toggleContinueSelect="ctrl" // special key to extend the current selection
           continueSelect={false} // do not allow to extend the current selection without special key
@@ -220,10 +399,11 @@ const RectangularSelection = ({
           onDrag={handleDrag}
           onDragEnd={handleDragEnd}
           onSelect={handleSelect}
+          onScroll={handleScroll}
           scrollOptions={
-            scrollContainer
+            resolvedScrollContainer
               ? {
-                  container: scrollContainer,
+                  container: resolvedScrollContainer,
                   throttleTime: 30,
                   threshold: 30
                 }

@@ -1,6 +1,5 @@
 import React from 'react'
 
-import flag from 'cozy-flags'
 import { makeAction } from 'cozy-ui/transpiled/react/ActionsMenu/Actions/makeAction'
 import PaletteIcon from 'cozy-ui/transpiled/react/Icons/Palette'
 
@@ -22,10 +21,10 @@ const personalizeFolder = ({
     label,
     icon,
     displayCondition: docs =>
-      flag('drive.folder-personalization.enabled') &&
       hasWriteAccess &&
       docs.length === 1 &&
-      docs[0].type === 'directory',
+      docs[0].type === 'directory' &&
+      !driveId,
     action: docs => {
       if (docs.length === 1 && docs[0].type === 'directory') {
         const folderId = docs[0]._id

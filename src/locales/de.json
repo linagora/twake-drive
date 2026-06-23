@@ -34,7 +34,6 @@
     "menu_upload": "Dateien hochladen",
     "item_more": "Mehr",
     "menu_new_folder": "Ordner",
-    "menu_new_encrypted_folder": "Verschlüsselter Ordner",
     "menu_select": "Elemente auswählen",
     "menu_share_folder": "Ordner freigeben",
     "menu_download": "Herunterladen",
@@ -43,6 +42,7 @@
     "menu_download_folder": "Ordner herunterladen",
     "menu_download_file": "Diese Datei herunterladen",
     "menu_create_note": "Notizen",
+    "menu_create_excalidraw": "Excalidraw",
     "menu_create_shortcut": "Abkürzung",
     "empty_trash": "Papierkorb leeren",
     "share": "Freigeben",
@@ -174,16 +174,6 @@
       "head_updated_at_desc": "Neueste zuerst",
       "head_size_asc": "Kleinste zuerst",
       "head_size_desc": "Größte zuerst"
-    },
-    "tooltip": {
-      "carbonCopy": {
-        "title": "Durchschlag",
-        "caption": "Zeigt an, ob das Dokument von Twake Workplace, dem Host Ihrer Twake, als \"authentisch und original\" definiert wird, da es behaupten kann, dass es direkt von einem Drittanbieterdienst stammt, ohne dass es verändert wurde."
-      },
-      "electronicSafe": {
-        "title": "Elektronischer Tresor",
-        "caption": "Gibt an, ob das Originaldokument in Ihrem persönlichen digitalen Tresor mit den Zertifizierungen, die ihm Beweiskraft verleihen, und einer 50-jährigen Aufbewahrungsgarantie über die Hinterlegung hinaus gesichert ist."
-      }
     }
   },
   "Storage": {
@@ -258,8 +248,7 @@
     },
     "download_file": {
       "offline": "Du solltest verbunden sein, um diese Datei herunterzuladen.",
-      "missing": "Diese Datei fehlt",
-      "encryption_many": "Sie können nicht mehrere verschlüsselte Dateien auf einmal herunterladen"
+      "missing": "Diese Datei fehlt"
     }
   },
   "Error": {
@@ -307,6 +296,15 @@
     "label": "Hochladen",
     "alert": {
       "network": "Du bist zurzeit offline. Bitte versuche es erneut, sobald du wieder verbunden bist."
+    },
+    "conflict": {
+      "title": "Upload-Optionen",
+      "content": "Eine oder mehrere Dateien sind in diesem Ordner bereits vorhanden. Möchtest du die vorhandene Datei ersetzen oder beide Versionen behalten?",
+      "apply_all": "Die Freigabeeinstellungen bleiben unverändert, wenn du die Datei ersetzt",
+      "replace": "Vorhandene Datei ersetzen",
+      "keep_both": "Beide Dateien behalten",
+      "cancel": "Abbrechen",
+      "confirm": "Hochladen"
     }
   },
   "intents": {
@@ -326,7 +324,8 @@
     "header_done": "Hochladen %{done} aus %{total} erfolgreich",
     "close": "Schließen",
     "item": {
-      "pending": "Ausstehend"
+      "pending": "Ausstehend",
+      "conflict": "Wartet auf Auswahl"
     }
   },
   "Viewer": {
@@ -452,6 +451,9 @@
     "filename_error_ends": "Der Name sollte mit .url enden",
     "needs_info": "Die Verknüpfung benötigt mindestens eine URL und einen Dateinamen",
     "url_badformat": "Deine URL hat nicht das richtige Format"
+  },
+  "Excalidraw": {
+    "createFileName": "Neue Zeichnung"
   },
   "OnlyOffice": {
     "Error": {

@@ -6,8 +6,8 @@ import React, {
   useRef,
   useState
 } from 'react'
+import { useSelector } from 'react-redux'
 
-import flag from 'cozy-flags'
 import VirtualizedTable from 'cozy-ui/transpiled/react/Table/Virtualized'
 import TableRowDnD from 'cozy-ui/transpiled/react/Table/Virtualized/Dnd/TableRow'
 import virtuosoComponentsDnd from 'cozy-ui/transpiled/react/Table/Virtualized/Dnd/virtuosoComponents'
@@ -19,6 +19,7 @@ import styles from '@/styles/filelist.styl'
 
 import RightClickFileMenu from '@/components/RightClick/RightClickFileMenu'
 import { useClipboardContext } from '@/contexts/ClipboardProvider'
+import { isRenaming as isRenamingSelector } from '@/modules/drive/rename'
 import Cell from '@/modules/filelist/virtualized/cells/Cell'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 import { useNewItemHighlightContext } from '@/modules/upload/NewItemHighlightProvider'
@@ -59,7 +60,6 @@ const Table = forwardRef(
       rows,
       columns,
       dragProps,
-      selectAll,
       fetchMore,
       isSelectedItem,
       selectedItems,
@@ -78,21 +78,26 @@ const Table = forwardRef(
     },
     ref
   ) => {
-    const { toggleSelectedItem } = useSelectionContext()
+    const { setSelectedItems } = useSelectionContext()
     const { isNew } = useNewItemHighlightContext()
+    const isRenamingActive = useSelector(isRenamingSelector)
     const internalVirtuosoRef = useRef(null)
     const virtuosoRef = parentVirtuosoRef || internalVirtuosoRef
     const [itemsInDropProcess, setItemsInDropProcess] = useState([])
 
     const { sortOrder, setOrder } = orderProps
 
+    // cozy-ui invokes this with (row, column) and no DOM event, so modifier
+    // keys aren't available here: clicking the row body always selects just
+    // that row. Multi-select (ctrl/cmd-click, shift-range) goes through the
+    // name cell's FileOpener, which does receive the real event.
     const handleRowSelect = useCallback(
-      (row, event) => {
-        event?.stopPropagation?.()
-        toggleSelectedItem(row)
-        onInteractWithFile?.(row?._id, event)
+      (row, column) => {
+        if (isRenamingActive) return
+        setSelectedItems({ [row._id]: row })
+        onInteractWithFile?.(row?._id, column)
       },
-      [toggleSelectedItem, onInteractWithFile]
+      [onInteractWithFile, setSelectedItems, isRenamingActive]
     )
 
     const handleSort = ({ order, orderBy }) => {
@@ -160,15 +165,12 @@ const Table = forwardRef(
           components={components}
           rows={rows}
           columns={columns}
-          withCheckbox={!flag('drive.dynamic-selection.enabled')}
           endReached={fetchMore}
           defaultOrder={{
             direction: sortOrder.order,
             by: sortOrder.attribute
           }}
           secondarySort={secondarySort}
-          onSelectAll={selectAll}
-          onSelect={handleRowSelect}
           isSelectedItem={isSelectedItem}
           isNewItem={isNew}
           selectedItems={selectedItems}

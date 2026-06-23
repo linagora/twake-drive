@@ -17,12 +17,9 @@ jest.mock('cozy-sharing', () => ({
   OpenSharingLinkButton: () => <div data-testid="open-external-link-button" />
 }))
 
-jest.mock(
-  '@/modules/views/OnlyOffice/Toolbar/HomeLinker',
-  () =>
-    ({ children }) =>
-      <div data-testid="HomeLinker">{children}</div>
-)
+jest.mock('@/components/EditorToolbar/HomeLinker', () => ({ children }) => (
+  <div data-testid="HomeLinker">{children}</div>
+))
 
 jest.mock('cozy-ui/transpiled/react/providers/Breakpoints', () => ({
   ...jest.requireActual('cozy-ui/transpiled/react/providers/Breakpoints'),
@@ -31,8 +28,8 @@ jest.mock('cozy-ui/transpiled/react/providers/Breakpoints', () => ({
   useBreakpoints: jest.fn()
 }))
 jest.mock('cozy-client/dist/hooks/useQuery', () => jest.fn())
-jest.mock('modules/views/OnlyOffice/Toolbar/helpers', () => ({
-  ...jest.requireActual('modules/views/OnlyOffice/Toolbar/helpers'),
+jest.mock('components/EditorToolbar/helpers', () => ({
+  ...jest.requireActual('components/EditorToolbar/helpers'),
   computeHomeApp: jest.fn(() => ({ slug: 'slug' }))
 }))
 
@@ -80,7 +77,6 @@ const setup = ({
   isPublic = false,
   isFromSharing = false,
   isMobile = false,
-  isEditorModeView = false,
   sharingInfos = {}
 } = {}) => {
   const sharingInfosProps = {
@@ -101,7 +97,6 @@ const setup = ({
         value={{
           fileId: officeDoc.id,
           isPublic,
-          isEditorModeView,
           isFromSharing,
           isReadOnly,
           isEditorReady: true
@@ -363,18 +358,13 @@ describe('Toolbar', () => {
     })
   })
 
-  const savedLocation = window.location
   const makeNewLocation = (path = '') => {
-    window.location = new URL(`http://cozy-test.tools/${path}`)
+    window.history.replaceState({}, '', path)
   }
 
   describe('Back Button', () => {
-    beforeEach(() => {
-      delete window.location
-    })
-
     afterEach(() => {
-      window.location = savedLocation
+      window.history.replaceState({}, '', '/')
     })
 
     it('should hide without redirect link into searchParam', () => {

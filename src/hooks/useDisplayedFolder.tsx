@@ -3,22 +3,34 @@ import { IOCozyFile } from 'cozy-client/types/types'
 
 import { ROOT_DIR_ID } from '@/constants/config'
 import useCurrentFolderId from '@/hooks/useCurrentFolderId'
+import { usePublicContext } from '@/modules/public/PublicProvider'
 import { buildFileOrFolderByIdQuery } from '@/queries'
 
 interface DisplayedFolderResult {
   isNotFound: boolean
   displayedFolder: IOCozyFile | null
   initialDirId: string | null
+  isLoading: boolean
 }
 
+// The folder request is still resolving until it settles (loaded or failed).
+// Using a lookup instead of two comparisons keeps callers branch-free.
+const SETTLED_STATUSES = ['loaded', 'failed']
+
 const useDisplayedFolder = (): DisplayedFolderResult => {
+  const { isPublic } = usePublicContext()
   const folderId = useCurrentFolderId() ?? ROOT_DIR_ID
 
+  // Public-share tokens cannot read the instance root directory, so the query
+  // would 403. cozy-client's useQuery does not catch that rejection, so it
+  // surfaces as an unhandled promise rejection. Skip it.
+  const isForbiddenRootOnPublic = isPublic && folderId === ROOT_DIR_ID
+
   const folderQuery = buildFileOrFolderByIdQuery(folderId)
-  const folderResult = useQuery(
-    folderQuery.definition,
-    folderQuery.options
-  ) as unknown as {
+  const folderResult = useQuery(folderQuery.definition, {
+    ...folderQuery.options,
+    enabled: folderQuery.options.enabled !== false && !isForbiddenRootOnPublic
+  }) as unknown as {
     data?: IOCozyFile | null
     fetchStatus: string
     lastError: { status: number }
@@ -26,6 +38,7 @@ const useDisplayedFolder = (): DisplayedFolderResult => {
 
   const displayedFolder = folderResult.data ?? null
   const initialDirId = displayedFolder?.id ?? null
+  const isLoading = !SETTLED_STATUSES.includes(folderResult.fetchStatus)
 
   if (folderId) {
     const isNotFound =
@@ -35,14 +48,16 @@ const useDisplayedFolder = (): DisplayedFolderResult => {
     return {
       isNotFound,
       displayedFolder,
-      initialDirId
+      initialDirId,
+      isLoading
     }
   }
 
   return {
     isNotFound: true,
     displayedFolder: null,
-    initialDirId: null
+    initialDirId: null,
+    isLoading
   }
 }
 

@@ -1,26 +1,19 @@
 import React, { forwardRef } from 'react'
-import { useI18n } from 'twake-i18n'
 
-import flag from 'cozy-flags'
 import ActionsMenuMobileHeader from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuMobileHeader'
 import Divider from 'cozy-ui/transpiled/react/Divider'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
-import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
+import { useI18n } from 'twake-i18n'
 
-import AddEncryptedFolderItem from '@/modules/drive/Toolbar/components/AddEncryptedFolderItem'
 import AddFolderItem from '@/modules/drive/Toolbar/components/AddFolderItem'
-import AddSharedDriveItem from '@/modules/drive/Toolbar/components/AddSharedDriveItem'
-import CreateDocsItem from '@/modules/drive/Toolbar/components/CreateDocsItem'
-import CreateNoteItem from '@/modules/drive/Toolbar/components/CreateNoteItem'
-import CreateOnlyOfficeItem from '@/modules/drive/Toolbar/components/CreateOnlyOfficeItem'
+import CreateDocumentItems from '@/modules/drive/Toolbar/components/CreateDocumentItems'
 import CreateShortcut from '@/modules/drive/Toolbar/components/CreateShortcut'
 import { ScannerMenuItem } from '@/modules/drive/Toolbar/components/Scanner/ScannerMenuItem'
 import { useScannerContext } from '@/modules/drive/Toolbar/components/Scanner/ScannerProvider'
 import UploadItem from '@/modules/drive/Toolbar/components/UploadItem'
-import { isFolderFromSharedDriveRecipient } from '@/modules/shareddrives/helpers'
+import { isSharedDriveDoc } from '@/modules/shareddrives/helpers'
 import { NewItemHighlightProvider } from '@/modules/upload/NewItemHighlightProvider'
-import { isOfficeEditingEnabled } from '@/modules/views/OnlyOffice/helpers'
 
 const AddMenuContent = forwardRef(
   (
@@ -30,7 +23,6 @@ const AddMenuContent = forwardRef(
       canUpload,
       refreshFolderContent,
       isPublic,
-      isEncryptedFolder,
       displayedFolder,
       onClick,
       isReadOnly
@@ -38,7 +30,6 @@ const AddMenuContent = forwardRef(
     ref // eslint-disable-line no-unused-vars
   ) => {
     const { t } = useI18n()
-    const { isDesktop } = useBreakpoints()
     const { hasScanner } = useScannerContext()
     const { showAlert } = useAlert()
 
@@ -66,60 +57,23 @@ const AddMenuContent = forwardRef(
           />
         </ActionsMenuMobileHeader>
 
-        {canCreateFolder && !isEncryptedFolder && (
+        {canCreateFolder && (
           <AddFolderItem onClick={onClick} isReadOnly={isReadOnly} />
         )}
-        {canCreateFolder && !isPublic && flag('drive.shared-drive.enabled') && (
-          <AddSharedDriveItem onClick={onClick} isReadOnly={isReadOnly} />
-        )}
-        {canCreateFolder && !isPublic && flag('drive.enable-encryption') && (
-          <AddEncryptedFolderItem onClick={onClick} isReadOnly={isReadOnly} />
-        )}
-        {!isPublic && !isEncryptedFolder && (
-          <CreateNoteItem
-            displayedFolder={displayedFolder}
-            isReadOnly={isReadOnly}
+        <CreateDocumentItems
+          isPublic={isPublic}
+          canUpload={canUpload}
+          displayedFolder={displayedFolder}
+          isReadOnly={isReadOnly}
+          onClick={onClick}
+        />
+        {!isSharedDriveDoc(displayedFolder) && (
+          <CreateShortcut
+            onCreated={refreshFolderContent}
             onClick={onClick}
+            isReadOnly={isReadOnly}
           />
         )}
-        {!isPublic &&
-          !isEncryptedFolder &&
-          flag('drive.lasuitedocs.enabled') && (
-            <CreateDocsItem
-              displayedFolder={displayedFolder}
-              isReadOnly={isReadOnly}
-              onClick={onClick}
-            />
-          )}
-        {canUpload &&
-          isOfficeEditingEnabled(isDesktop) &&
-          !isEncryptedFolder && (
-            <>
-              <CreateOnlyOfficeItem
-                fileClass="text"
-                isReadOnly={isReadOnly}
-                onClick={onClick}
-              />
-              <CreateOnlyOfficeItem
-                fileClass="spreadsheet"
-                isReadOnly={isReadOnly}
-                onClick={onClick}
-              />
-              <CreateOnlyOfficeItem
-                fileClass="slide"
-                isReadOnly={isReadOnly}
-                onClick={onClick}
-              />
-            </>
-          )}
-        {!isEncryptedFolder &&
-          !isFolderFromSharedDriveRecipient(displayedFolder) && (
-            <CreateShortcut
-              onCreated={refreshFolderContent}
-              onClick={onClick}
-              isReadOnly={isReadOnly}
-            />
-          )}
         {canUpload && !isUploadDisabled && (
           <NewItemHighlightProvider>
             <Divider className="u-mv-half" />

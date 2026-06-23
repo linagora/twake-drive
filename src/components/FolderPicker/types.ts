@@ -11,4 +11,5 @@ export interface FolderPickerEntry {
   dir_id?: string
   class?: string
   path?: string
+  driveId?: string
 }
