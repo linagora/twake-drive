@@ -239,9 +239,14 @@ The protocol is defined in `src/lib/cozy-bridge/`:
 
 ## JWT Notes
 
-OO 9.x introduced client-side JWT validation: the OO JS API checks that the JWT payload matches the config passed to `DocsAPI.DocEditor()`. Cozy Drive modifies the editor config after the Cozy stack generates the token (customization override, user name), causing a payload mismatch.
+OO 9.x introduced client-side JWT validation: the OO JS API checks that the JWT payload matches the config passed to `DocsAPI.DocEditor()`. The Cozy stack signs the **editor config itself** as the token payload (`model/sharing/open_office.go`), then OO re-signs the config it receives and compares. Cozy Drive modifies the config after the stack signed it (`mode`, `user`, `customization.reviewDisplay` in `src/modules/views/OnlyOffice/useConfig.jsx`), so the two no longer match → OO rejects it with *"The document security token is not correctly formed"*.
 
-The setup script disables **browser-side** JWT validation only. Server-to-server JWT (inbox/outbox) remains enabled — the Cozy stack and OO container must share the same secret (configured in `~/.cozy/cozy.yml` and auto-generated in OO's `local.json`).
+Disabling JWT for dev takes **two** coordinated parts — the setup script alone is **not** enough, because OO 9.x runs `checkJwt` even when the `token.enable.*` flags are `false`:
+
+1. **Server side — `scripts/oo-dev-setup.sh`** disables browser/inbox validation flags and aligns the secret. Server-to-server JWT (outbox, i.e. OO → stack save callbacks) stays **enabled** — the stack and OO must share the same secret (`~/.cozy/cozy.yml` ↔ OO's `local.json`).
+2. **Client side — `useConfig.jsx`** omits `token` from the editor config **only on `*.localhost` dev instances**. In production the token is always sent (the server-side protection against forged configs). This client gate is required because the breaking factor (a token OO can't reconcile with the augmented config) is client-side, and the server flags can't suppress it.
+
+> **Security:** the localhost gate is fail-closed. In production OO requires a valid token, so a missing/invalid one makes the editor fail to open — it can never let a forged config through. The rationale is detailed in the comment above the `token` field in `src/modules/views/OnlyOffice/useConfig.jsx`.
 
 ## Patched OnlyOffice SDK (temporary)
 

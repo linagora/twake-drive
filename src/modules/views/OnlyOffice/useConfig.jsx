@@ -110,11 +110,19 @@ const useConfig = () => {
               reviewDisplay: 'markup'
             }
           },
-          // JWT signing the editor config. MUST stay in production: it is the
-          // server-side protection against forged editor configs. JWT is only
-          // relaxed for local dev, and exclusively via scripts/oo-dev-setup.sh
-          // (token.enable.browser/inbox = false + secret alignment).
-          token: onlyoffice.token,
+          // JWT signing the editor config — server-side protection against
+          // forged editor configs. cozy-stack signs the config itself as the
+          // token payload; OO re-signs the received config and compares.
+          //
+          // Sent in production. Omitted ONLY on local dev instances: the dev
+          // OnlyOffice container (browser JWT disabled, see oo-dev-setup.sh)
+          // rejects the token because we augment the config client-side above
+          // (mode/user/customization), so it no longer matches what the stack
+          // signed — a mismatch the dev container can't reconcile. Gating on
+          // the localhost instance keeps production fully protected.
+          ...(/(^|\.)localhost(:|$)/.test(instanceUri)
+            ? {}
+            : { token: onlyoffice.token }),
           documentType: onlyoffice.documentType,
           events: {
             onAppReady: () => setIsEditorReady(true)
