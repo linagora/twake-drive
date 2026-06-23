@@ -88,24 +88,31 @@ Invariants v2 :
 
 Statut recapture : **À FAIRE** (nécessite OO + cozy-stack relancés + pilotage Chrome MCP).
 
-### Mécaniques v2 — candidates (à confirmer live en sondant l'éditeur)
+### Mécaniques v2 — CONFIRMÉES LIVE (2026-06-23, OO 9.3.0, sur `http://localhost/example/`)
 
-Capture sur `http://localhost/example/` (OO nu, plugin Scribe avec hooks). Les 3 contrôles sont
-**au niveau éditeur OO**, pas plugin → pilotés par Chrome MCP `evaluate_script` / clic UI.
+Sondage Chrome MCP `evaluate_script`. Structure : page top a `window.docEditor` (DocsAPI) ;
+l'éditeur est dans `iframe[name=frameEditor]` → `frameEditor.contentWindow.Asc.editor` ; le plugin
+Scribe (avec hooks) est dans `top>frameEditor>iframe_asc.{…}` (`__scribeTest` présent ⇒ remount OK).
 
-1. **Marques de formatage (¶)** — candidat API : `Asc.editor.asc_setShowParaMarks(true)` (api éditeur
-   Word, depuis l'iframe éditeur, same-origin). Fallback robuste : **clic sur le bouton ¶** de la barre
-   (« Nonprinting characters », visible dans les captures v1). Toggle une fois par session.
-2. **Sélection visible (`before.png`)** — `setSelection` fait `range.Select()` ; capturer `before.png`
-   **juste après** la résolution du hook, **sans clic** dans le canvas (un clic collapse la sélection).
-   À vérifier live : OO rend-il le surlignage d'une sélection posée par API sans focus canvas ? Si non,
-   focus du canvas via API éditeur (pas via clic).
-3. **Export `.docx`** — candidat : `Asc.editor.asc_DownloadAs(new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.DOCX))`
-   ou `docEditor.downloadAs()` (wrapper de la page exemple). Le fichier tombe dans le dossier de
-   téléchargement Chrome → le copier dans `corpus/<CAS>/<mode>/<bundle>.docx`. À confirmer : chemin de
-   download du Chrome piloté par MCP.
+1. **Marques de formatage (¶)** — ✅ `frameEditor.contentWindow.Asc.editor.put_ShowParaMarks(true)`
+   (lecture : `get_ShowParaMarks()`). *(`asc_setShowParaMarks` N'EXISTE PAS en 9.3.0.)* Confirmé
+   visuellement : ¶ fins de ¶, `·` espaces, `→` tabs s'affichent.
+2. **Sélection visible (`before.png`)** — ✅ `window.docEditor.grabFocus()` (top page) : focus l'éditeur
+   **sans clic** (donc sans collapse). Séquence : `setSelection` → `grabFocus()` → `before.png`.
+3. **Export `.docx`** — ✅ `window.docEditor.downloadAs(...)` (public DocsAPI) **ou**
+   `Asc.editor.asc_DownloadAs(new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.DOCX))`. ⏳ reste à
+   confirmer pendant la capture : où atterrit le fichier (dossier download du Chrome MCP) pour le
+   copier dans `corpus/<CAS>/<mode>/<bundle>.docx`.
 
-→ Étape 0 de la recapture : **prouver les 3 mécaniques sur UN bundle** (ex. A0/insert) avant le batch.
+**À câbler aussi pour la recapture (flux existant, déjà prouvé T-03) :**
+- **Activer les hooks** : poser `__scribeTestForce=true` dans l'iframe plugin (ou
+  `localStorage scribe.testHooks='1'`) — sinon `runTestCmd` répond « test hooks disabled ».
+- **Charger `a-family.docx`** (upload via la page exemple) au lieu de `sample.docx`.
+- **Séquence/bundle** : charger a-family → `put_ShowParaMarks(true)` → activer hooks → `setSelection` →
+  `grabFocus` → `before.png` → `injectFixture` → `dumpState` (modèle+sélection) → `after.png` →
+  `downloadAs(docx)` → ranger le bundle (préserver `meta.json`).
+
+→ Étape 0 recapture : **prouver le flux complet sur UN bundle** (A0/insert) avant le batch A0–A4.
 
 ## Découvertes / décisions de revue (chronologique)
 
