@@ -46,6 +46,29 @@ const UploadButton = ({
 
   const { isPublic } = usePublicContext()
 
+  const button = (
+    <Button
+      {...componentsProps?.button}
+      variant={isPublic ? 'secondary' : 'primary'}
+      disabled={disabled}
+      style={
+        isPublic
+          ? undefined
+          : {
+              color: 'var(--primaryTextColor)',
+              backgroundColor: 'var(--paperBackgroundColor)'
+            }
+      }
+      component="span"
+      startIcon={<Icon icon={UploadIcon} size={12} />}
+      label={label}
+    />
+  )
+
+  if (disabled) {
+    return <div className={className}>{button}</div>
+  }
+
   return (
     <FileInput
       className={className}
@@ -56,21 +79,7 @@ const UploadButton = ({
       data-testid="upload-btn"
       value={[]} // always erase the value to be able to re-upload the same file
     >
-      <Button
-        {...componentsProps?.button}
-        variant={isPublic ? 'secondary' : 'primary'}
-        style={
-          isPublic
-            ? undefined
-            : {
-                color: 'var(--primaryTextColor)',
-                backgroundColor: 'var(--paperBackgroundColor)'
-              }
-        }
-        component="span"
-        startIcon={<Icon icon={UploadIcon} size={12} />}
-        label={label}
-      />
+      {button}
     </FileInput>
   )
 }
