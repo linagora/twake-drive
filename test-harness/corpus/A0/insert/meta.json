@@ -7,8 +7,9 @@
   "statusFromCsv": "pass",
   "stable": true,
   "setSelectionOk": true,
-  "capturedVia": "Chrome DevTools MCP, OO example (no Cozy/LLM)",
+  "capturedVia": "Chrome DevTools MCP v2 (paraMarks+grabFocus+forcesave docx)",
   "capturedAt": "2026-06-23",
   "verdict": "xfail",
-  "comment": "FAIL live-confirme par Ben (2026-06-23): un paragraphe vide parasite est insere EN TETE. Cause: code.js:1479 fait content.unshift(Api.CreateParagraph()) de facon INCONDITIONNELLE. Regle desiree (L#7): n'ajouter un retour a la ligne QUE si l'insertion est au MILIEU d'un paragraphe, jamais au DEBUT (ni en fin). Au @start le desire est [XXX][P1][P2][P3] sans ligne vide. Golden capture = sortie buggy actuelle (a remplacer par le golden desire hand-written quand on cablera la compare T-05). Voir aussi L#8 (heritage de style)."
+  "comment": "FAIL live-confirme par Ben (2026-06-23): un paragraphe vide parasite est insere EN TETE. Cause: code.js:1479 fait content.unshift(Api.CreateParagraph()) de facon INCONDITIONNELLE. Regle desiree (L#7): n'ajouter un retour a la ligne QUE si l'insertion est au MILIEU d'un paragraphe, jamais au DEBUT (ni en fin). Au @start le desire est [XXX][P1][P2][P3] sans ligne vide. Golden capture = sortie buggy actuelle (a remplacer par le golden desire hand-written quand on cablera la compare T-05). Voir aussi L#8 (heritage de style).",
+  "captureVersion": "v2"
 }

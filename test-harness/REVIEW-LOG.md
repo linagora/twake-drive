@@ -39,7 +39,7 @@ Fixture source `a-family.docx` (identique pour tous) : `P1="The quick brown fox"
 
 | Bundle | statut revue | verdict | ¶/espace ajouté (constat) |
 |---|---|---|---|
-| A0/insert  | ✅ REVU | **xfail** | ¶ vide en TÊTE = **FAIL** (confirmé live Ben). Bug `code.js:1479`. Règle L#7. Désiré: `[XXX][P1][P2][P3]` |
+| A0/insert  | ✅ REVU + **recapturé v2** | **xfail** | ¶ vide en TÊTE = **FAIL** (confirmé live + `after.png` v2 avec ¶). Bug `code.js:1479`. Règle L#7. Désiré: `[XXX][P1][P2][P3]` |
 | A1/insert  | à revoir | — | ¶ vide en QUEUE (entre XXX et P2) — **probable FAIL** via L#7 (insert @end ⇒ pas de ¶ vide) |
 | A1/replace | à revoir | — | run `" "` traînant après XXX |
 | A2/insert  | à revoir | — | ¶ vide en TÊTE + anomalie (P1 resté intact) — L#7 + fixture @mid sur espace |
@@ -99,20 +99,34 @@ Scribe (avec hooks) est dans `top>frameEditor>iframe_asc.{…}` (`__scribeTest` 
    visuellement : ¶ fins de ¶, `·` espaces, `→` tabs s'affichent.
 2. **Sélection visible (`before.png`)** — ✅ `window.docEditor.grabFocus()` (top page) : focus l'éditeur
    **sans clic** (donc sans collapse). Séquence : `setSelection` → `grabFocus()` → `before.png`.
-3. **Export `.docx`** — ✅ `window.docEditor.downloadAs(...)` (public DocsAPI) **ou**
-   `Asc.editor.asc_DownloadAs(new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.DOCX))`. ⏳ reste à
-   confirmer pendant la capture : où atterrit le fichier (dossier download du Chrome MCP) pour le
-   copier dans `corpus/<CAS>/<mode>/<bundle>.docx`.
+3. **Export `.docx`** — ✅ **via forcesave côté serveur** (le `downloadAs()` DocsAPI ne dépose AUCUN
+   fichier dans le Chrome piloté par MCP — téléchargements auto supprimés). Méthode prouvée :
+   1. lire la clé du doc : `window.docEditor.config.document.key` ;
+   2. `POST http://localhost/command/` `{"c":"forcesave","key":"<key>"}` (JWT off en dev → `error:0`) ;
+   3. `GET http://localhost/example/download?fileName=<file>` → `.docx` **édité** (sans forcesave,
+      l'endpoint renvoie l'ORIGINAL, la sauvegarde callback ne se déclenche pas en session).
 
-**À câbler aussi pour la recapture (flux existant, déjà prouvé T-03) :**
-- **Activer les hooks** : poser `__scribeTestForce=true` dans l'iframe plugin (ou
-  `localStorage scribe.testHooks='1'`) — sinon `runTestCmd` répond « test hooks disabled ».
-- **Charger `a-family.docx`** (upload via la page exemple) au lieu de `sample.docx`.
-- **Séquence/bundle** : charger a-family → `put_ShowParaMarks(true)` → activer hooks → `setSelection` →
-  `grabFocus` → `before.png` → `injectFixture` → `dumpState` (modèle+sélection) → `after.png` →
-  `downloadAs(docx)` → ranger le bundle (préserver `meta.json`).
+### Procédure v2 PROUVÉE de bout en bout (A0/insert, 2026-06-23) — séquence par bundle
 
-→ Étape 0 recapture : **prouver le flux complet sur UN bundle** (A0/insert) avant le batch A0–A4.
+0. Upload `a-family.docx` sur `http://localhost/example/` → **EDIT** (page éditeur).
+1. `frameEditor.contentWindow.Asc.editor.put_ShowParaMarks(true)`.
+2. Localiser l'iframe plugin (walk frames pour `__scribeTest`) et poser `pw.__scribeTestForce=true`.
+3. `await pw.__scribeTest({action:'setSelection', spec})`.
+4. `window.docEditor.grabFocus()` → `take_screenshot` → `before.png`.
+5. `await pw.__scribeTest({action:'injectFixture', md, mode})`.
+6. `await pw.__scribeTest({action:'dumpState'})` → `{blocks, selection}`.
+   ⚠️ **1ᵉʳ appel peut renvoyer `{error:"dumpState parse...undefined"}`** (dump émis trop tôt après
+   l'injection) → **réessayer** (le 2ᵉ appel réussit). À industrialiser : retry x2 sur cette erreur.
+7. `take_screenshot` → `after.png`.
+8. forcesave + download (cf. mécanique 3) → `<CAS>-<mode>.docx`.
+9. Assembler le bundle : `capture.json` (spec/mode/setRes/inj/stable/blocks/selection), `model.json`
+   (= `normalizeModel({blocks,selection})` via `oracle/normalizeModel.js`), PNG, `.docx`.
+   **Préserver `meta.json`** (verdict/comment humains) ; ne mettre à jour que `capturedVia`/`capturedAt`
+   + `captureVersion:"v2"`.
+
+→ A0/insert recapturé v2 : modèle **identique à v1** (`[∅][XXX][P1][P2][P3]`) ; `after.png` (¶ visibles)
+montre le `¶` vide seul en tête sans ambiguïté ; `.docx` édité confirmé (5 `<w:p>`, `XXX` présent).
+Flux validé → **GO pour le batch A0–A4 (puis A5–A8, T*)**.
 
 ## Découvertes / décisions de revue (chronologique)
 
@@ -120,3 +134,7 @@ Scribe (avec hooks) est dans `top>frameEditor>iframe_asc.{…}` (`__scribeTest` 
   ajoutées : **L#7** (break conditionnel à la position) et **L#8** (héritage de style). Spec
   `SELECTION-CASES.md` mise à jour (légende L#7/L#8 + ligne A0). Correctif `code.js:1479` et fixture
   stylée = chantiers de suivi, hors de cette passe de revue.
+- **2026-06-23 — Procédure capture v2 prouvée sur A0/insert.** Flux complet validé via Chrome MCP
+  (¶ marks + grabFocus + injectFixture + dumpState + forcesave .docx). Modèle v2 = v1 (le bug est
+  réel, pas un artefact). Bundle `corpus/A0/insert` régénéré v2 (PNG avec ¶, capture.json, model.json,
+  A0-insert.docx) ; `meta.json` verdict `xfail` préservé. Procédure prouvée écrite ci-dessus. **GO batch.**
