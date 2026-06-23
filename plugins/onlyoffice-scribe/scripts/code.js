@@ -3161,21 +3161,50 @@
         var txt = (target.GetText ? target.GetText() : "").replace(/[\r\n]+$/, "");
         var len = txt.length;
         var sk = p.startKind, ek = p.endKind;
+        function resolveOffset(kind) {
+          if (kind === "end") return len;
+          if (kind === "mid") return Math.floor(len / 2);
+          if (kind === "space") { var idx = txt.indexOf(" "); return idx >= 0 ? idx + 1 : 0; }
+          return 0; // "start" | "x"
+        }
+        // Build a COLLAPSED range at char offset `off` by walking runs/hyperlinks
+        // and using per-element GetRange(inOff,inOff) — char-reliable WITHIN one
+        // element. (Document-absolute positions count element boundaries, so plain
+        // char math mis-selects across runs; this avoids that.)
+        function rangeAtChar(para, off) {
+          var cnt = para.GetElementsCount ? para.GetElementsCount() : 0, acc = 0;
+          for (var i = 0; i < cnt; i++) {
+            var el = para.GetElement(i);
+            var ct = el.GetClassType ? el.GetClassType() : "";
+            if (ct !== "run" && ct !== "hyperlink") continue;
+            var t = (el.GetText ? el.GetText() : "").replace(/[\r\n]+$/, "");
+            if (off <= acc + t.length) {
+              var inOff = off - acc;
+              return el.GetRange ? el.GetRange(inOff, inOff) : null;
+            }
+            acc += t.length;
+          }
+          return null; // off past end
+        }
+        var s = resolveOffset(sk), e = resolveOffset(ek);
         var rng = null;
-        if ((sk === "start" || sk === "x") && (ek === "end")) {
-          // Whole paragraph — GetRange() with no args is reliable regardless of run count.
+        if (s === 0 && e === len) {
+          // Whole paragraph — GetRange() no-args is reliable regardless of run count.
           rng = target.GetRange ? target.GetRange() : null;
-        } else if (sk === ek && (sk === "x" || sk === "start") ) {
-          // Collapsed cursor at paragraph start (A0).
-          rng = target.GetRange ? target.GetRange(0, 0) : null;
+        } else if (s === e) {
+          // Collapsed cursor (A0 @x, A2 @mid).
+          rng = rangeAtChar(target, s) || (target.GetRange ? target.GetRange(0, 0) : null);
         } else {
-          // Partial offsets (@mid/@space): GetRange uses POSITION units (element
-          // boundaries), not char offsets, so naive char math mis-selects on
-          // fragmented runs. Needs a char->position mapper — deferred.
-          return JSON.stringify({ ok: false, error: "partial-offset selection not yet supported (needs char->position mapping): " + sk + ".." + ek });
+          // Range — collapse at both endpoints then ExpandTo (union of the two
+          // collapsed ranges, cf selectByRefs). rangeAtChar(len) lands collapsed
+          // at the end of the last run, so @end works without a special case.
+          var ra = rangeAtChar(target, s);
+          var rb = rangeAtChar(target, e);
+          if (ra && rb && ra.ExpandTo) rng = ra.ExpandTo(rb);
+          else rng = ra || rb;
         }
         if (rng && rng.Select) rng.Select();
-        return JSON.stringify({ ok: true, paraLen: len, mode: sk + ".." + ek });
+        return JSON.stringify({ ok: true, paraLen: len, mode: sk + ".." + ek, s: s, e: e });
       }, false, false, function(ret) {
         try { resolve(JSON.parse(ret)); } catch (e) { resolve({ ok: false, error: "setSelection parse: " + e }); }
       });
