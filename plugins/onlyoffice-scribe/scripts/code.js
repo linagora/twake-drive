@@ -3157,19 +3157,25 @@
           }
         }
         if (!target) return JSON.stringify({ ok: false, error: "paragraph P" + p.startN + " not found" });
-        var txt = target.GetText ? target.GetText() : "";
+        // GetText() includes the trailing paragraph mark "\r\n" — strip it for char length.
+        var txt = (target.GetText ? target.GetText() : "").replace(/[\r\n]+$/, "");
         var len = txt.length;
-        function resolveOffset(kind) {
-          if (kind === "end") return len;
-          if (kind === "mid") return Math.floor(len / 2);
-          if (kind === "space") { var idx = txt.indexOf(" "); return idx >= 0 ? idx + 1 : 0; }
-          return 0; // "start" | "x"
+        var sk = p.startKind, ek = p.endKind;
+        var rng = null;
+        if ((sk === "start" || sk === "x") && (ek === "end")) {
+          // Whole paragraph — GetRange() with no args is reliable regardless of run count.
+          rng = target.GetRange ? target.GetRange() : null;
+        } else if (sk === ek && (sk === "x" || sk === "start") ) {
+          // Collapsed cursor at paragraph start (A0).
+          rng = target.GetRange ? target.GetRange(0, 0) : null;
+        } else {
+          // Partial offsets (@mid/@space): GetRange uses POSITION units (element
+          // boundaries), not char offsets, so naive char math mis-selects on
+          // fragmented runs. Needs a char->position mapper — deferred.
+          return JSON.stringify({ ok: false, error: "partial-offset selection not yet supported (needs char->position mapping): " + sk + ".." + ek });
         }
-        var s = resolveOffset(p.startKind);
-        var e = resolveOffset(p.endKind);
-        var rng = target.GetRange ? target.GetRange(s, e) : null;
         if (rng && rng.Select) rng.Select();
-        return JSON.stringify({ ok: true, paraLen: len, start: s, end: e });
+        return JSON.stringify({ ok: true, paraLen: len, mode: sk + ".." + ek });
       }, false, false, function(ret) {
         try { resolve(JSON.parse(ret)); } catch (e) { resolve({ ok: false, error: "setSelection parse: " + e }); }
       });

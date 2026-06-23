@@ -11,7 +11,7 @@ module.exports = {
       '@swc/jest',
       {
         jsc: {
-          experimental: { plugins: [['swc_mut_cjs_exports', {}]] },
+          experimental: { plugins: [['@swc-contrib/mut-cjs-exports', {}]] },
           parser: { jsx: true }
         }
       }
