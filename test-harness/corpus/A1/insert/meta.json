@@ -7,8 +7,9 @@
   "statusFromCsv": "pass",
   "stable": true,
   "setSelectionOk": true,
-  "capturedVia": "Chrome DevTools MCP, OO example (no Cozy/LLM)",
+  "capturedVia": "Chrome DevTools MCP v2 (paraMarks+grabFocus+forcesave docx)",
   "capturedAt": "2026-06-23",
   "verdict": null,
-  "comment": ""
+  "comment": "",
+  "captureVersion": "v2"
 }

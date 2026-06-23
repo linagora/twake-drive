@@ -33,21 +33,22 @@ Fixture source `a-family.docx` (identique pour tous) : `P1="The quick brown fox"
 
 ## Checklist (9 bundles)
 
-> ⚠️ **2026-06-23 : capture v1 obsolète — tous les bundles à RECAPTURER en v2** (sélection visible,
-> marques de formatage, `.docx` joint). Voir « Procédure de capture v2 » plus bas. Les verdicts
-> déjà posés (colonne ci-dessous) restent acquis et seront re-confirmés sur les bundles v2.
+> ✅ **2026-06-23 : les 9 bundles A0–A4 sont RECAPTURÉS en v2** (sélection visible via grabFocus,
+> marques ¶ affichées, `.docx` édité joint). Tous les `model.json` v2 sont **byte-identiques** à la v1
+> ⇒ la recapture reproduit exactement l'ancienne ; les bugs constatés sont réels, pas des artefacts.
+> Reste à faire : la **revue cas par cas** (verdicts) sur les bundles v2 nets — reprendre à A1/insert.
 
 | Bundle | statut revue | verdict | ¶/espace ajouté (constat) |
 |---|---|---|---|
 | A0/insert  | ✅ REVU + **recapturé v2** | **xfail** | ¶ vide en TÊTE = **FAIL** (confirmé live + `after.png` v2 avec ¶). Bug `code.js:1479`. Règle L#7. Désiré: `[XXX][P1][P2][P3]` |
-| A1/insert  | à revoir | — | ¶ vide en QUEUE (entre XXX et P2) — **probable FAIL** via L#7 (insert @end ⇒ pas de ¶ vide) |
-| A1/replace | à revoir | — | run `" "` traînant après XXX |
-| A2/insert  | à revoir | — | ¶ vide en TÊTE + anomalie (P1 resté intact) — L#7 + fixture @mid sur espace |
-| A2/replace | à revoir | — | double espace autour de XXX (csv=xfail) |
-| A3/insert  | à revoir | — | ¶ vide en QUEUE — **probable FAIL** via L#7 (insert @end ⇒ pas de ¶ vide) |
-| A3/replace | à revoir | — | aucun (`The ` + `XXX`) |
-| A4/insert  | à revoir | — | aucun (split propre, XXX en ¶ isolé) |
-| A4/replace | à revoir | — | espace repositionnée (`XXX quick brown fox`) |
+| A1/insert  | recapturé v2 — à revoir | — | ¶ vide en QUEUE (entre XXX et P2) — **probable FAIL** via L#7 (insert @end ⇒ pas de ¶ vide) |
+| A1/replace | recapturé v2 — à revoir | — | run `" "` traînant après XXX |
+| A2/insert  | recapturé v2 — à revoir | — | ¶ vide en TÊTE + anomalie (P1 resté intact) — L#7 + fixture @mid sur espace |
+| A2/replace | recapturé v2 — à revoir | — | double espace autour de XXX (csv=xfail) |
+| A3/insert  | recapturé v2 — à revoir | — | ¶ vide en QUEUE — **probable FAIL** via L#7 (insert @end ⇒ pas de ¶ vide) |
+| A3/replace | recapturé v2 — à revoir | — | aucun (`The ` + `XXX`) |
+| A4/insert  | recapturé v2 — à revoir | — | aucun (split propre, XXX en ¶ isolé) |
+| A4/replace | recapturé v2 — à revoir | — | espace repositionnée (`XXX quick brown fox`) |
 
 ## Constats transverses ouverts (à statuer pendant la revue)
 
@@ -138,3 +139,4 @@ Flux validé → **GO pour le batch A0–A4 (puis A5–A8, T*)**.
   (¶ marks + grabFocus + injectFixture + dumpState + forcesave .docx). Modèle v2 = v1 (le bug est
   réel, pas un artefact). Bundle `corpus/A0/insert` régénéré v2 (PNG avec ¶, capture.json, model.json,
   A0-insert.docx) ; `meta.json` verdict `xfail` préservé. Procédure prouvée écrite ci-dessus. **GO batch.**
+- **2026-06-23 — Batch A1–A4 recapturé v2 (8 bundles).** Même session éditeur, `asc_undoAllChanges()` entre chaque bundle (retour aux 3 ¶ propres, vérifié), pas de re-upload. Tous les `model.json` v2 byte-identiques à v1 (fidélité prouvée). Chaque bundle : before/after.png (¶ visibles), capture.json, model.json, `<CAS>-<mode>.docx` (forcesave). `meta.json` verdicts préservés (A1–A4 encore `null` → à statuer). **Prochain : revue cas par cas sur bundles v2.**
