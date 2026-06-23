@@ -1,7 +1,7 @@
 {
-  "caseId": "A1",
-  "mode": "replace",
-  "spec": "P1@start..P1@end",
+  "caseId": "A2",
+  "mode": "insert",
+  "spec": "P1@mid..P1@mid",
   "fixture": "XXX",
   "source": "a-family.docx",
   "statusFromCsv": "pass",

@@ -4,10 +4,10 @@
       "type": "p",
       "runs": [
         {
-          "t": "XXX"
+          "t": "The "
         },
         {
-          "t": " "
+          "t": "XXX"
         }
       ]
     },
@@ -31,11 +31,11 @@
   "selection": {
     "start": {
       "block": 0,
-      "offset": 0
+      "offset": 4
     },
     "end": {
       "block": 0,
-      "offset": 6
+      "offset": 9
     }
   }
 }

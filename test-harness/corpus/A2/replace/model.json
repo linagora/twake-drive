@@ -4,10 +4,16 @@
       "type": "p",
       "runs": [
         {
+          "t": "The quick"
+        },
+        {
           "t": "XXX"
         },
         {
           "t": " "
+        },
+        {
+          "t": " brown fox"
         }
       ]
     },

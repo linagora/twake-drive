@@ -1,6 +1,6 @@
 {
   "caseId": "A1",
-  "mode": "replace",
+  "mode": "insert",
   "spec": "P1@start..P1@end",
   "fixture": "XXX",
   "source": "a-family.docx",

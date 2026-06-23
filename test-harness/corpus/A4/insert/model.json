@@ -4,10 +4,23 @@
       "type": "p",
       "runs": [
         {
-          "t": "XXX"
-        },
+          "t": "The "
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "runs": [
         {
-          "t": " "
+          "t": "XXX"
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "runs": [
+        {
+          "t": "quick brown fox"
         }
       ]
     },
@@ -30,12 +43,12 @@
   ],
   "selection": {
     "start": {
-      "block": 0,
+      "block": 1,
       "offset": 0
     },
     "end": {
-      "block": 0,
-      "offset": 6
+      "block": 1,
+      "offset": 5
     }
   }
 }

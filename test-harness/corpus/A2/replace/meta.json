@@ -1,10 +1,10 @@
 {
-  "caseId": "A1",
+  "caseId": "A2",
   "mode": "replace",
-  "spec": "P1@start..P1@end",
+  "spec": "P1@mid..P1@mid",
   "fixture": "XXX",
   "source": "a-family.docx",
-  "statusFromCsv": "pass",
+  "statusFromCsv": "xfail",
   "stable": true,
   "setSelectionOk": true,
   "capturedVia": "Chrome DevTools MCP, OO example (no Cozy/LLM)",
