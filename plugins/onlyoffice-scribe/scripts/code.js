@@ -3097,4 +3097,247 @@
     log("Plugin loaded, Scribe trigger ready");
   });
 
+  // ==========================================================================
+  // DEV TEST HOOKS (T-03 selection-case harness) — FLAG-GATED, DEV-ONLY.
+  // Never active in production: gated on localStorage "scribe.testHooks"==="1"
+  // or window.__scribeTestForce===true (set explicitly by the test driver).
+  //
+  // Contract: test-harness/ORACLE-SCHEMA.md §1-§2. Driveable two ways so the
+  // channel can be chosen at run time:
+  //   (a) global  window.__scribeTest(cmd) -> Promise   (frame-eval driving)
+  //   (b) postMessage {scribeTest, reqId, ...} -> {scribeTestResult,...}
+  //                                                      (host-relay driving)
+  // Determinism: injectFixture short-circuits the LLM and calls buildAndInject
+  // directly; OO serializes callCommands, so a dumpState issued right after
+  // injectFixture runs only once the injection callCommand has completed.
+  // ==========================================================================
+  function testHooksEnabled() {
+    try {
+      if (typeof window !== "undefined" && window.__scribeTestForce === true) return true;
+      return (typeof localStorage !== "undefined" && localStorage.getItem("scribe.testHooks") === "1");
+    } catch (e) {
+      return (typeof window !== "undefined" && window.__scribeTestForce === true);
+    }
+  }
+
+  // Parse a SELECTION-CASES spec like "P1@start..P1@end" into endpoints.
+  function parseSelSpec(spec) {
+    if (!spec) return null;
+    var parts = String(spec).split("..");
+    function one(p) {
+      var m = /^\s*P(\d+)@(\w+)\s*$/.exec(p);
+      return m ? { n: parseInt(m[1], 10), kind: m[2] } : null;
+    }
+    var a = one(parts[0]);
+    var b = parts.length > 1 ? one(parts[1]) : a;
+    if (!a || !b) return null;
+    return { startN: a.n, startKind: a.kind, endN: b.n, endKind: b.kind };
+  }
+
+  function hookSetSelection(spec) {
+    return new Promise(function(resolve) {
+      var p = parseSelSpec(spec);
+      if (!p) { resolve({ ok: false, error: "bad selection spec: " + spec }); return; }
+      if (p.startN !== p.endN) {
+        // Multi-paragraph (A5/A6) needs a cross-block range — out of spike scope.
+        resolve({ ok: false, error: "multi-paragraph selection not yet supported in spike: " + spec });
+        return;
+      }
+      Asc.scope._selspec = JSON.stringify(p);
+      window.Asc.plugin.callCommand(function() {
+        var p = JSON.parse(Asc.scope._selspec);
+        var doc = Api.GetDocument();
+        var count = doc.GetElementsCount();
+        var seen = 0, target = null;
+        for (var i = 0; i < count; i++) {
+          var el = doc.GetElement(i);
+          if (el.GetClassType && el.GetClassType() === "paragraph") {
+            seen++;
+            if (seen === p.startN) { target = el; break; }
+          }
+        }
+        if (!target) return JSON.stringify({ ok: false, error: "paragraph P" + p.startN + " not found" });
+        var txt = target.GetText ? target.GetText() : "";
+        var len = txt.length;
+        function resolveOffset(kind) {
+          if (kind === "end") return len;
+          if (kind === "mid") return Math.floor(len / 2);
+          if (kind === "space") { var idx = txt.indexOf(" "); return idx >= 0 ? idx + 1 : 0; }
+          return 0; // "start" | "x"
+        }
+        var s = resolveOffset(p.startKind);
+        var e = resolveOffset(p.endKind);
+        var rng = target.GetRange ? target.GetRange(s, e) : null;
+        if (rng && rng.Select) rng.Select();
+        return JSON.stringify({ ok: true, paraLen: len, start: s, end: e });
+      }, false, false, function(ret) {
+        try { resolve(JSON.parse(ret)); } catch (e) { resolve({ ok: false, error: "setSelection parse: " + e }); }
+      });
+    });
+  }
+
+  function hookInjectFixture(md, mode) {
+    return new Promise(function(resolve) {
+      try {
+        buildAndInject(md, mode === "insert" ? "insert" : "replace", null);
+        resolve({ ok: true }); // dumpState issued next will run after this callCommand (OO serializes)
+      } catch (e) {
+        resolve({ ok: false, error: e.message });
+      }
+    });
+  }
+
+  function hookDumpState(scope) {
+    return new Promise(function(resolve) {
+      window.Asc.plugin.callCommand(function() {
+        var doc = Api.GetDocument();
+
+        function runFlags(tp) {
+          var r = {};
+          if (!tp) return r;
+          if (tp.GetBold && tp.GetBold()) r.b = 1;
+          if (tp.GetItalic && tp.GetItalic()) r.i = 1;
+          if (tp.GetStrikeout && tp.GetStrikeout()) r.s = 1;
+          if (tp.GetUnderline && tp.GetUnderline()) r.u = 1;
+          var ff = tp.GetFontFamily ? tp.GetFontFamily() : null;
+          if (ff) {
+            var f = ff.toLowerCase();
+            if (f.indexOf("courier") !== -1 || f.indexOf("consolas") !== -1 || f.indexOf("mono") !== -1) r.code = 1;
+          }
+          return r;
+        }
+        function paraToBlock(para) {
+          var runs = [];
+          var n = para.GetElementsCount ? para.GetElementsCount() : 0;
+          for (var i = 0; i < n; i++) {
+            var el = para.GetElement(i);
+            var ct = el.GetClassType ? el.GetClassType() : "";
+            if (ct === "run") {
+              var t = el.GetText ? el.GetText() : "";
+              if (t === "") continue;
+              var fl = runFlags(el.GetTextPr ? el.GetTextPr() : null);
+              fl.t = t;
+              runs.push(fl);
+            } else if (ct === "hyperlink") {
+              var ht = "", first = null;
+              var hc = el.GetElementsCount ? el.GetElementsCount() : 0;
+              for (var h = 0; h < hc; h++) {
+                var ch = el.GetElement(h);
+                var cht = ch.GetText ? ch.GetText() : "";
+                if (cht) { ht += cht; if (!first) first = ch; }
+              }
+              if (ht) {
+                var fl2 = first ? runFlags(first.GetTextPr ? first.GetTextPr() : null) : {};
+                fl2.t = ht;
+                var url = el.GetLinkedText ? el.GetLinkedText() : "";
+                if (url) fl2.link = url;
+                runs.push(fl2);
+              }
+            }
+          }
+          return { type: "p", runs: runs };
+        }
+        function cellToBlocks(cell) {
+          var blocks = [];
+          var c = cell && cell.GetContent ? cell.GetContent() : null;
+          if (!c) return blocks;
+          var n = c.GetElementsCount();
+          for (var i = 0; i < n; i++) {
+            var el = c.GetElement(i);
+            if (el.GetClassType && el.GetClassType() === "paragraph") blocks.push(paraToBlock(el));
+            // nested tables: out of spike scope (T13)
+          }
+          return blocks;
+        }
+        function tableToBlock(tbl) {
+          var grid = [];
+          var rc = tbl.GetRowsCount();
+          for (var r = 0; r < rc; r++) {
+            var row = tbl.GetRow(r);
+            var cc = row.GetCellsCount();
+            var cells = [];
+            for (var ci = 0; ci < cc; ci++) {
+              var cell = tbl.GetCell(r, ci);
+              cells.push({ blocks: cell ? cellToBlocks(cell) : [] });
+              // vmerge/hspan: deferred (T12) — captured in a later iteration
+            }
+            grid.push(cells);
+          }
+          return { type: "table", grid: grid };
+        }
+
+        var blocks = [], blockRanges = [];
+        var bc = doc.GetElementsCount();
+        for (var i = 0; i < bc; i++) {
+          var el = doc.GetElement(i);
+          var ct = el.GetClassType ? el.GetClassType() : "";
+          if (ct === "paragraph") {
+            var idx = blocks.length;
+            blocks.push(paraToBlock(el));
+            var rg = el.GetRange ? el.GetRange() : null;
+            blockRanges.push({
+              idx: idx,
+              start: rg && rg.GetStartPos ? rg.GetStartPos() : -1,
+              end: rg && rg.GetEndPos ? rg.GetEndPos() : -1
+            });
+          } else if (ct === "table") {
+            blocks.push(tableToBlock(el));
+            // table selection-mapping deferred to T4-T6 work
+          }
+        }
+
+        var sel = null;
+        var srange = doc.GetRangeBySelect ? doc.GetRangeBySelect() : null;
+        if (srange) {
+          var ss = srange.GetStartPos ? srange.GetStartPos() : -1;
+          var se = srange.GetEndPos ? srange.GetEndPos() : -1;
+          var locate = function(pos) {
+            for (var k = 0; k < blockRanges.length; k++) {
+              var br = blockRanges[k];
+              if (pos >= br.start && pos <= br.end) return { block: br.idx, offset: pos - br.start };
+            }
+            return { block: -1, offset: -1 };
+          };
+          sel = { start: locate(ss), end: locate(se) };
+        }
+
+        return JSON.stringify({ blocks: blocks, selection: sel });
+      }, false, false, function(ret) {
+        try { resolve(JSON.parse(ret)); } catch (e) { resolve({ error: "dumpState parse: " + e }); }
+      });
+    });
+  }
+
+  function runTestCmd(action, params) {
+    if (!testHooksEnabled()) return Promise.resolve({ ok: false, error: "test hooks disabled" });
+    if (action === "setSelection") return hookSetSelection(params.spec);
+    if (action === "injectFixture") return hookInjectFixture(params.md, params.mode);
+    if (action === "dumpState") return hookDumpState(params.scope || "region");
+    return Promise.resolve({ ok: false, error: "unknown scribeTest action: " + action });
+  }
+
+  // Channel (a): direct global, for frame-eval driving (Chrome DevTools / MCP).
+  window.__scribeTest = function(cmd) {
+    cmd = cmd || {};
+    return runTestCmd(cmd.action, cmd);
+  };
+
+  // Channel (b): postMessage, for host-relay driving.
+  window.addEventListener("message", function(event) {
+    var msg = event.data;
+    if (!msg || typeof msg.scribeTest !== "string") return;
+    var action = msg.scribeTest, reqId = msg.reqId;
+    runTestCmd(action, msg).then(function(res) {
+      var reply = { scribeTestResult: action, reqId: reqId };
+      if (action === "dumpState") {
+        reply.model = { blocks: res.blocks, selection: res.selection };
+        if (res.error) reply.error = res.error;
+      } else {
+        reply.ok = res.ok !== false;
+        if (res.error) reply.error = res.error;
+      }
+      postToAncestors(reply);
+    });
+  });
+
 })(window, undefined);
