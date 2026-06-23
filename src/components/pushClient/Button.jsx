@@ -26,7 +26,7 @@ const ButtonClient = ({ client, t }) => {
 
   useEffect(() => {
     const checkShouldShowButton = async () => {
-      if (Config.promoteDesktop.isActivated !== true || isFlagshipApp()) return
+      if (Config.promoteApp.isActivated !== true || isFlagshipApp()) return
 
       const hasBannerBeenClosed =
         (await localforage.getItem(DESKTOP_BANNER)) || false
@@ -54,11 +54,7 @@ const ButtonClient = ({ client, t }) => {
     localforage.setItem(DESKTOP_SMALL_BANNER, true)
   }
 
-  if (
-    Config.promoteDesktop.isActivated !== true ||
-    !mustShow ||
-    isFlagshipApp()
-  )
+  if (Config.promoteApp.isActivated !== true || !mustShow || isFlagshipApp())
     return null
 
   const link = getDesktopAppDownloadLink({ t })
