@@ -200,3 +200,42 @@ v3.1 phases execute in order: v3.1-01 -> v3.1-02 -> v3.1-03 (HARD GATE) -> v3.1-
 | v3.1-05. Rendu popover (UI) | v3.1 | 2/2 | Complete | 2026-06-22 |
 | v3.1-06. Durcissement contrat | v3.1 | 0/0 | Not started | - |
 | v3.1-07. i18n 5 locales | v3.1 | 0/0 | Not started | - |
+
+## Backlog
+
+### Phase 999.1: Centralisation des prompts IA (Scribe → module partagé) (BACKLOG)
+
+**Goal:** [Captured for future planning]
+**Requirements:** TBD
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (promote with /gsd:review-backlog when ready)
+
+**Contexte / constat**
+
+Cozy a deux familles de prompts IA à des endroits différents :
+- **Panel IA officiel** (résumé de doc, `cozy-viewer`) → prompts dans un module dédié `cozy-viewer/src/Panel/AI/prompts.js` (`SUMMARY_SYSTEM_PROMPT`, `LONG_`, `SHORT_`, `getSummaryUserPrompt()`), appelé via le helper `chatCompletion(client, messages, {stream, model})` de cozy-client.
+- **Scribe** (branche `feat/scribe-in-right-panel`) → prompts **en dur** dans le code : `scribeAI.js` (`SYSTEM_PROMPT`, `RESPONSE_CONTRACT_CORE`, persona chat `buildChatSystemPrompt`, garde-fous free-prompt, `encodeSelectionForPrompt`) + `scribeActions.js` (~14 templates `{selectedText}`), appelé via `fetchJSON` direct sur `/ai/v1/chat/completions` (choisi pour le support `AbortController`).
+
+Les deux finissent sur le **même endpoint stack**. Critique d'un collègue : *« ça passe pas par ai prompts »* = Scribe ne réutilise pas le module ai-prompts partagé.
+
+**Inventaire des prompts Scribe à migrer**
+- `scribeAI.js` : `SYSTEM_PROMPT`, `RESPONSE_CONTRACT_CORE` (contrat JSON `discussion`/`fragments`), persona chat, template garde-fou free-prompt, `encodeSelectionForPrompt`.
+- `scribeActions.js` : ~14 templates — correction grammaire, traduction (×6 langues + custom), ton (pro/casual/poli), reformulation (raccourcir/développer/emojify/bullets).
+
+**Objectif**
+
+Extraire les prompts hors de Scribe vers un module de prompts partagé (pendant de `Panel/AI/prompts.js`) → source unique de vérité, versionnable/réutilisable, modifiable sans toucher la logique Scribe.
+
+**Décisions à trancher au démarrage**
+1. **Où héberger le module** : `cozy-viewer` (vraiment partagé mais lib externe à publier) vs Drive interne (simple mais non partagé).
+2. Le module actuel ne couvre que le **résumé** → l'étendre à des prompts **paramétrés** (ton, langue, format de réponse).
+3. **Aligner aussi le chemin d'appel ?** Scribe utilise `fetchJSON` direct exprès (`AbortController`, cf. commentaire `callScribeAI`) ; `chatCompletion` ne le permet pas → soit centraliser **juste les prompts**, soit faire évoluer `chatCompletion` pour accepter un `signal`.
+4. Le **contrat JSON `discussion`/`fragments`** (+ `response_format: json_object` de la PR #2) est spécifique Scribe → à garder comme template à part.
+
+**Coût indicatif**
+- **Petit** si centralisation interne Drive (refactor mécanique, faible risque).
+- **Moyen/gros** si vrai partage via `cozy-viewer` + alignement du chemin d'appel (`chatCompletion` + `AbortController`) → touche une lib externe, coordination/publication.
+
+**Important** : ni bug ni faille de sécurité — architecture/cohérence. Aucune urgence, indépendant de la PR #2 (JSON) et du fix JWT.
