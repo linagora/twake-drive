@@ -106,6 +106,11 @@ const useConfig = () => {
               reviewDisplay: 'markup'
             }
           },
+          // JWT signing the editor config. MUST stay in production: it is the
+          // server-side protection against forged editor configs. JWT is only
+          // relaxed for local dev, and exclusively via scripts/oo-dev-setup.sh
+          // (token.enable.browser/inbox = false + secret alignment).
+          token: onlyoffice.token,
           documentType: onlyoffice.documentType,
           events: {
             onAppReady: () => setIsEditorReady(true)
