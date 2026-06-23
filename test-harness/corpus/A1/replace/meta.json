@@ -9,6 +9,6 @@
   "capturedVia": "Chrome DevTools MCP, frame-eval, OO example (no Cozy/LLM)",
   "capturedAt": "2026-06-23",
   "stable": true,
-  "verdict": null,
-  "comment": ""
+  "verdict": "deferred",
+  "comment": "trailing-space after XXX: decide at full review pass"
 }
