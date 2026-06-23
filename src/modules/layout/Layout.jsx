@@ -17,8 +17,9 @@ import FilesRealTimeQueries from '@/components/FilesRealTimeQueries'
 import Drive from '@/components/Icons/Drive'
 import DriveText from '@/components/Icons/DriveText'
 import ButtonClient from '@/components/pushClient/Button'
-import { ROOT_DIR_ID } from '@/constants/config'
+import { ROOT_DIR_ID, TRASH_DIR_ID } from '@/constants/config'
 import { useDisplayedFolder } from '@/hooks'
+import useCurrentFolderId from '@/hooks/useCurrentFolderId'
 import useCurrentFolderWriteAccess from '@/hooks/useCurrentFolderWriteAccess'
 import { initFlags } from '@/lib/flags'
 import AddMenuProvider from '@/modules/drive/AddMenu/AddMenuProvider'
@@ -42,6 +43,7 @@ const LayoutContent = () => {
   const { isMobile, isDesktop } = useBreakpoints()
   const { displayedFolder } = useDisplayedFolder()
   const { t } = useI18n()
+  const rawFolderId = useCurrentFolderId()
 
   const shouldRedirect = useSelector(wasOperationRedirected)
   const [, setLastClicked] = useNavContext()
@@ -57,6 +59,9 @@ const LayoutContent = () => {
 
   const canWriteToCurrentFolder = useCurrentFolderWriteAccess()
 
+  const isNoFolderSection = rawFolderId === null || rawFolderId === TRASH_DIR_ID
+  const isReadOnly = !isNoFolderSection && !canWriteToCurrentFolder
+
   return (
     <LayoutUI onContextMenu={ev => ev.preventDefault()}>
       <NewItemHighlightProvider>
@@ -69,12 +74,12 @@ const LayoutContent = () => {
         <FlagSwitcher />
         <Sidebar className="u-flex-justify-between">
           <div>
-            {isDesktop && canWriteToCurrentFolder ? (
+            {isDesktop ? (
               <div className="u-mh-1 u-mt-half">
                 <AddMenuProvider
                   canCreateFolder={true}
                   canUpload={true}
-                  disabled={false}
+                  disabled={isReadOnly}
                   displayedFolder={displayedFolder}
                   isSelectionBarVisible={false}
                   componentsProps={{ AddMenu: { isUploadDisabled: true } }}
@@ -82,8 +87,12 @@ const LayoutContent = () => {
                   <AddButton className="u-w-100 u-bdrs-6 u-mt-half u-mb-half u-fz-small" />
                 </AddMenuProvider>
                 <UploadButton
+                  disabled={isReadOnly}
                   componentsProps={{
-                    button: { className: 'u-w-100 u-bdrs-6 u-fz-small' }
+                    button: {
+                      className: 'u-w-100 u-bdrs-6 u-fz-small',
+                      disabled: isReadOnly
+                    }
                   }}
                   label={t('upload.label')}
                   displayedFolder={displayedFolder}
