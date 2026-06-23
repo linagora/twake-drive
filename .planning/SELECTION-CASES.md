@@ -62,7 +62,7 @@ Deux axes orthogonaux se croisent avec chaque cas :
 <!-- cases:table:paragraph:start -->
 | # | Sélection *(description)* | Insérer | Remplacer | État / limite |
 |---|---|---|---|---|
-| A0 | `[P1@x,P1@x]` *(curseur seul (sélection vide))* | insère au curseur; pas de chip | — absent par défaut (FRAG-04); si exposé se comporte comme Insérer | ✅ · ne pas utiliser init() qui renverrait tout le ¶ |
+| A0 | `[P1@x,P1@x]` *(curseur seul (sélection vide))* | insère au curseur; pas de chip; **pas de ¶ vide ajouté au @start** | — absent par défaut (FRAG-04); si exposé se comporte comme Insérer | ⚠️ · **L#7** (¶ vide parasite, FAIL live A0/insert) · **L#8** (style) · ne pas utiliser init() qui renverrait tout le ¶ |
 | A1 | `[P1@start,P1@end]` *(paragraphe entier)* | nouveau ¶ après le ¶ courant; pas de &nbsp; | remplace tout le ¶ | ✅ |
 | A2 | `[P1@mid,P1@mid]` *(milieu d'un mot)* | insère au point; &nbsp; des deux côtés | ⚠️ remplace le fragment; &nbsp; des deux côtés | ⚠️ · **L#1** · L1: le suffixe non sélectionné perd ses styles inline (Replace) |
 | A3 | `[P1@space,P1@end]` *(après espace -> fin)* | insère en fin de ¶; pas de &nbsp; après | remplace; espace de tête déplacée (CommonMark); pas de &nbsp; après | ✅ · **L#6** · L6: post-sélection inline fragile (+2) |
@@ -157,6 +157,8 @@ Ces limites dépendent du **type de contenu**, pas de la géométrie de sélecti
 - **L#4** — Insert/Replace avec cross-refs perd parfois les liens (pré-existant v2.6, dépend du document).
 - **L#5** — Texte coloré non préservé.
 - **L#6** — Post-sélection inline : `selectByPositions` (`GetRange(start, start+len+2)`, `+2` = marqueur de début de ¶, `code.js:2627`) — fragile.
+- **L#7** — **Insert ajoute un ¶ vide parasite** (bug confirmé live A0/insert, 2026-06-23). `code.js:1479` fait `content.unshift(Api.CreateParagraph())` de façon **inconditionnelle** → une ligne blanche apparaît à chaque « Insérer ». **Règle désirée :** n'ajouter un retour à la ligne **que si l'insertion est au milieu d'un ¶** ; au `@start` (et au `@end`) **aucune** ligne vide. *(correctif : rendre le `unshift` conditionnel à la position d'insertion.)*
+- **L#8** — **Héritage de style à l'insertion** (exigence, 2026-06-23). Le ¶ recevant la fixture doit **hériter du style du ¶ hôte** (ex. *Titre niveau 1*), pas retomber en *Normal*. Non couvert par `a-family.docx` (¶ *Normal* uniquement) → nécessite une **fixture stylée** dédiée (cf. `REVIEW-LOG.md`).
 
 ---
 
