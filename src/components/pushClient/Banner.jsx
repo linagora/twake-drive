@@ -6,6 +6,7 @@ import flow from 'lodash/flow'
 import React, { Component } from 'react'
 
 import { withClient } from 'cozy-client'
+import flag from 'cozy-flags'
 import Alert from 'cozy-ui/transpiled/react/Alert'
 import Button from 'cozy-ui/transpiled/react/Buttons'
 import Icon from 'cozy-ui/transpiled/react/Icon'
@@ -53,12 +54,15 @@ class BannerClient extends Component {
   }
 
   render() {
-    if (Config.promoteDesktop.isActivated !== true || !this.state.mustShow)
+    if (Config.promoteApp.isActivated !== true || !this.state.mustShow)
       return null
 
     const { t } = this.props
 
     const isMobile = isIOS() || isAndroid()
+    if (isMobile && flag('drive.pushBanner-hide-mobile.enabled')) return null
+    if (!isMobile && flag('drive.pushBanner-hide-desktop.enabled')) return null
+
     const text = isMobile ? 'Nav.btn-client-mobile' : 'Nav.banner-txt-client'
     const link = isMobile
       ? getMobileAppDownloadLink({ t })
