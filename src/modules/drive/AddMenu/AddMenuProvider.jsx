@@ -30,7 +30,8 @@ const AddMenuProvider = ({
   displayedFolder,
   isSelectionBarVisible,
   componentsProps,
-  isReadOnly
+  isReadOnly,
+  onAddFolder
 }) => {
   const [menuIsVisible, setMenuVisible] = useState(false)
   const isOffline = useBrowserOffline()
@@ -73,6 +74,7 @@ const AddMenuProvider = ({
         isOffline,
         handleOfflineClick,
         isPublic,
+        onAddFolder,
         a11y: {
           'aria-controls': menuIsVisible ? 'add-menu' : undefined,
           'aria-haspopup': true,

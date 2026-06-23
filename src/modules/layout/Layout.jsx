@@ -37,6 +37,17 @@ import UploadQueue from '@/modules/upload/UploadQueue'
 
 initFlags()
 
+// Flag consumed by AddFolder when it mounts on root after a no-folder navigation.
+let pendingCreateOnRoot = false
+
+export const consumeCreateOnRoot = () => {
+  if (pendingCreateOnRoot) {
+    pendingCreateOnRoot = false
+    return true
+  }
+  return false
+}
+
 const LayoutContent = () => {
   const navigate = useNavigate()
   const dispatch = useDispatch()
@@ -50,7 +61,6 @@ const LayoutContent = () => {
 
   useEffect(() => {
     if (shouldRedirect) {
-      // Update lastClicked state to ensure sidebar shows the correct active item
       setLastClicked(`/folder/${ROOT_DIR_ID}`)
       navigate(`/folder/${ROOT_DIR_ID}`)
       dispatch({ type: RESET_OPERATION_REDIRECTED })
@@ -61,6 +71,12 @@ const LayoutContent = () => {
 
   const isNoFolderSection = rawFolderId === null || rawFolderId === TRASH_DIR_ID
   const isReadOnly = !isNoFolderSection && !canWriteToCurrentFolder
+
+  const goToRoot = ({ create } = {}) => {
+    if (create) pendingCreateOnRoot = true
+    setLastClicked(`/folder/${ROOT_DIR_ID}`)
+    navigate(`/folder/${ROOT_DIR_ID}`)
+  }
 
   return (
     <LayoutUI onContextMenu={ev => ev.preventDefault()}>
@@ -74,7 +90,32 @@ const LayoutContent = () => {
         <FlagSwitcher />
         <Sidebar className="u-flex-justify-between">
           <div>
-            {isDesktop ? (
+            {isDesktop && isNoFolderSection ? (
+              <div className="u-mh-1 u-mt-half">
+                <AddMenuProvider
+                  canCreateFolder={true}
+                  canUpload={true}
+                  disabled={false}
+                  displayedFolder={displayedFolder}
+                  isSelectionBarVisible={false}
+                  componentsProps={{ AddMenu: { isUploadDisabled: true } }}
+                  onAddFolder={() => goToRoot({ create: true })}
+                >
+                  <AddButton className="u-w-100 u-bdrs-6 u-mt-half u-mb-half u-fz-small" />
+                </AddMenuProvider>
+                <UploadButton
+                  folderId={null}
+                  onUploadStart={() => goToRoot()}
+                  componentsProps={{
+                    button: {
+                      className: 'u-w-100 u-bdrs-6 u-fz-small'
+                    }
+                  }}
+                  label={t('upload.label')}
+                  displayedFolder={displayedFolder}
+                />
+              </div>
+            ) : isDesktop ? (
               <div className="u-mh-1 u-mt-half">
                 <AddMenuProvider
                   canCreateFolder={true}
@@ -111,8 +152,6 @@ const LayoutContent = () => {
           )}
         </Sidebar>
         <UploadQueue />
-        {/* Mounted once here so every route (folders and editors) keeps the
-            io.cozy.files store in sync with server-side changes. */}
         <FilesRealTimeQueries />
         <SelectionProvider>
           <Outlet />
