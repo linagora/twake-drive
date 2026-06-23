@@ -8,7 +8,7 @@ import { NOVIEWER_DESKTOP_CTA } from '@/components/pushClient'
 
 jest.mock('localforage')
 jest.mock('config/config.json', () => ({
-  promoteDesktop: { isActivated: true }
+  promoteApp: { isActivated: true }
 }))
 jest.mock('components/pushClient', () => ({
   getDesktopAppDownloadLink: jest.fn().mockReturnValue('https://twake.app'),

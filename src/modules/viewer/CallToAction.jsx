@@ -20,7 +20,7 @@ class CallToAction extends Component {
   }
 
   async componentDidMount() {
-    if (Config.promoteDesktop.isActivated !== true) return
+    if (Config.promoteApp.isActivated !== true) return
     const seen = (await localforage.getItem(NOVIEWER_DESKTOP_CTA)) || false
     if (!seen) {
       try {
@@ -40,7 +40,7 @@ class CallToAction extends Component {
   }
 
   render() {
-    if (!this.state.mustShow || Config.promoteDesktop.isActivated !== true)
+    if (!this.state.mustShow || Config.promoteApp.isActivated !== true)
       return null
 
     const { t } = this.props
