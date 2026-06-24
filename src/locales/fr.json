@@ -756,7 +756,8 @@
   },
   "Scribe": {
     "panel": {
-      "tagline": "Votre assistant d'ecriture"
+      "tagline": "Votre assistant d'ecriture",
+      "description": "Description du panneau"
     },
     "chat": {
       "typing": "Scribe reflechit...",
@@ -800,6 +801,9 @@
     },
     "modal": {
       "selected_text": "Texte sélectionné :"
+    },
+    "result": {
+      "table_partial_insert_unavailable": "Insertion non disponible pour une sélection partielle de tableau"
     },
     "loading": {
       "processing": "Traitement en cours...",

@@ -503,6 +503,16 @@
     }
   },
   "Scribe": {
+    "panel": {
+      "tagline": "Ihr Schreibassistent",
+      "description": "Panel-Beschreibung"
+    },
+    "chat": {
+      "typing": "Scribe denkt nach...",
+      "error_prefix": "Fehler",
+      "welcome": "Fragen Sie mich etwas über Ihr Dokument",
+      "selection_context": "Ausgewählter Text"
+    },
     "menu": {
       "correct_grammar": "Grammatik korrigieren",
       "translate": "Übersetzen",
@@ -533,10 +543,15 @@
       "replace": "Ersetzen",
       "retry": "Erneut versuchen",
       "cancel": "Abbrechen",
-      "insert_after": "Danach einfügen"
+      "insert_after": "Danach einfügen",
+      "open_panel": "Scribe-Panel",
+      "copy": "Kopieren"
     },
     "modal": {
       "selected_text": "Ausgewählter Text:"
+    },
+    "result": {
+      "table_partial_insert_unavailable": "Einfügen für eine partielle Tabellenauswahl nicht verfügbar"
     },
     "loading": {
       "processing": "Wird verarbeitet...",

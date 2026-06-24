@@ -474,6 +474,16 @@
     }
   },
   "Scribe": {
+    "panel": {
+      "tagline": "Tu asistente de escritura",
+      "description": "Descripción del panel"
+    },
+    "chat": {
+      "typing": "Scribe está pensando...",
+      "error_prefix": "Error",
+      "welcome": "Pregúntame lo que quieras sobre tu documento",
+      "selection_context": "Texto seleccionado"
+    },
     "menu": {
       "correct_grammar": "Corregir gramática",
       "translate": "Traducir",
@@ -504,10 +514,15 @@
       "replace": "Reemplazar",
       "retry": "Reintentar",
       "cancel": "Cancelar",
-      "insert_after": "Insertar después"
+      "insert_after": "Insertar después",
+      "open_panel": "Panel de Scribe",
+      "copy": "Copiar"
     },
     "modal": {
       "selected_text": "Texto seleccionado:"
+    },
+    "result": {
+      "table_partial_insert_unavailable": "Inserción no disponible para una selección parcial de tabla"
     },
     "loading": {
       "processing": "Procesando...",

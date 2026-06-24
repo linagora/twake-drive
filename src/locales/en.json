@@ -759,7 +759,8 @@
   },
   "Scribe": {
     "panel": {
-      "tagline": "Your writing assistant"
+      "tagline": "Your writing assistant",
+      "description": "Panel description"
     },
     "chat": {
       "typing": "Scribe is thinking...",
@@ -803,6 +804,9 @@
     },
     "modal": {
       "selected_text": "Selected text:"
+    },
+    "result": {
+      "table_partial_insert_unavailable": "Insertion unavailable for a partial table selection"
     },
     "loading": {
       "processing": "Processing...",
