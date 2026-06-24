@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v3.1
 milestone_name: Contrat de réponse structurée LLM
-status: completed
-stopped_at: Phase v3.1-06 context gathered
-last_updated: "2026-06-24T05:20:32.595Z"
-last_activity: "2026-06-22 -- v3.1-05 complete: violet result card + INLINE-02 mirror + reworked menu/roving + gradient prompt input (focus-vivid liseré, compact→max width, Ctrl+Enter multiline, Scribe-Panel draft carry-over)"
+status: executing
+stopped_at: Completed v3.1-06-01-PLAN.md (re-ask shared helper)
+last_updated: "2026-06-24T08:46:00.000Z"
+last_activity: 2026-06-24 -- v3.1-06-01 done (callScribeAIWithReask wired into both surfaces)
 progress:
   total_phases: 7
   completed_phases: 5
@@ -21,15 +21,15 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-16)
 
 **Core value:** L'utilisateur peut interagir avec l'IA de maniere fluide -- actions rapides inline ou chat conversationnel dans un panneau lateral -- pour transformer et manipuler le contenu de son document OnlyOffice.
-**Current focus:** Phase v3.1-06 — Durcissement contrat (next)
+**Current focus:** Phase v3.1-06 — Durcissement contrat
 
 ## Current Position
 
-Phase: v3.1-05 (Rendu popover (UI)) — COMPLETE (live UAT passed 2026-06-22)
-Plan: 2 of 2 complete + UAT-driven prompt-input rework (gradient pill, adaptive multiline, draft handoff to panel)
-Status: Phase v3.1-05 done. Next: Phase v3.1-06 — Durcissement contrat
+Phase: v3.1-06 (Durcissement contrat) — EXECUTING
+Plan: 2 of 2 (plan 01 complete)
+Status: Executing Phase v3.1-06
 Progress: [█████████ ] 83% (5/6 of v3.1 build phases complete; 5/7 incl. i18n)
-Last activity: 2026-06-22 -- v3.1-05 complete: violet result card + INLINE-02 mirror + reworked menu/roving + gradient prompt input (focus-vivid liseré, compact→max width, Ctrl+Enter multiline, Scribe-Panel draft carry-over)
+Last activity: 2026-06-24 -- v3.1-06-01 done (callScribeAIWithReask shared re-ask helper, both surfaces wired)
 
 ⚠️ TOOLING: gsd-sdk v1.42.3 cannot resolve `vX.Y-NN` phases (find-phase/phase-plan-index return "Phase not found" for ALL v3.0/v3.1 phases — regex only matches numeric-prefixed dirs). All phases orchestrated manually with explicit paths; ROADMAP/STATE/REQUIREMENTS completion writes done by hand (gsd-sdk phase.complete fails). v3.1-04 completion writes applied 2026-06-22. Same will apply when finishing v3.1-05.
 
@@ -99,6 +99,7 @@ After v3.0-04 completion, three commits refined the plugin protocol and document
 |-------|------|----------|-------|-------|
 | v3.1-03 Sonde dev | 01 | ~12min | 2 (TDD) | 2 |
 | Phase v3.1-03 P03 | ~14min | 2 tasks | 3 files |
+| v3.1-06 Durcissement | 01 | ~15min | 2 (T1 TDD) | 4 |
 
 ## Accumulated Context
 
@@ -123,6 +124,7 @@ After v3.0-04 completion, three commits refined the plugin protocol and document
 - [v3.1-03-02] les DEUX surfaces Scribe (popover + chat) alimentent le corpus post-parse via recordProbeSample gardé par isScribeDevMd() (D-11) ; coût production nul
 - [v3.1-03-02] DevPanelGrid étendu de façon additive (D-10) : panneau « Réponse parsée » (JSON contrat surligné) + panneau « Métriques + couverture » (aggregate(replay()) : taux/comptes/répartition/couverture + export/import) ; tout le calcul métrique reste dans scribeProbe.js
 - [v3.1-03-02] réponse parsée injectée dans le panneau via une prop `parsedResponse` (état popover, dev-gated) plutôt que re-parsée dans le composant
+- [v3.1-06-01] HARDEN-01: `callScribeAIWithReask(client, messages, {signal, surface})` = helper partagé unique (Option B, standalone wrapper) qui retourne l'objet contrat PARSÉ ; les deux surfaces (chat + popover) y passent → impossible de diverger (D-04). Re-ask déclenché par `fellBack || !valid` (D-01), 1 seul retry max (D-05), nudge correctif `REASK_CORRECTION_NUDGE` ajouté à une COPIE des messages (D-03), `signal` propagé aux 2 appels, aucun effet loading/télémétrie dans le helper (caller owns counts)
 
 ### Recent decisions affecting v3.0 (historique)
 
@@ -147,6 +149,6 @@ After v3.0-04 completion, three commits refined the plugin protocol and document
 
 ## Session Continuity
 
-Last session: 2026-06-24T05:20:32.588Z
-Stopped at: Phase v3.1-06 context gathered
-Resume file: .planning/phases/v3.1-06-durcissement-contrat/v3.1-06-CONTEXT.md
+Last session: 2026-06-24T08:46:00.000Z
+Stopped at: Completed v3.1-06-01-PLAN.md (re-ask shared helper)
+Resume file: .planning/phases/v3.1-06-durcissement-contrat/v3.1-06-02-reask-regression-corpus-PLAN.md (next: plan 02 — regression corpus + response_format decision)

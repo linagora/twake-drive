@@ -158,7 +158,7 @@ Plans:
   3. Le défaut du flag `response_format` (prompt-based vs structured-output json_schema) est décidé et documenté, contrainte proxy cozy-stack prise en compte
 **Plans**: 2 plans
 Plans:
-- [ ] v3.1-06-01-PLAN.md — Shared callScribeAIWithReask helper (one corrective re-ask on fellBack||!valid, signal-respecting) wired into both chat + popover call sites [HARDEN-01]
+- [x] v3.1-06-01-PLAN.md — Shared callScribeAIWithReask helper (one corrective re-ask on fellBack||!valid, signal-respecting) wired into both chat + popover call sites [HARDEN-01]
 - [ ] v3.1-06-02-PLAN.md — Static malformed-response regression corpus (6 D-07 categories) + code-fence fellBack re-measure/stripFence confirm + RESPONSE_FORMAT_DECISION.md (json_object default, proxy forwarding confirmed) [HARDEN-02]
 **UI hint**: no
 
@@ -201,7 +201,7 @@ v3.1 phases execute in order: v3.1-01 -> v3.1-02 -> v3.1-03 (HARD GATE) -> v3.1-
 | v3.1-03. Sonde dev (HARD GATE) | v3.1 | 3/3 | Complete | 2026-06-17 |
 | v3.1-04. Rendu chat (cartes + clavier) | v3.1 | 5/5 | Complete | 2026-06-22 |
 | v3.1-05. Rendu popover (UI) | v3.1 | 2/2 | Complete | 2026-06-22 |
-| v3.1-06. Durcissement contrat | v3.1 | 0/0 | Not started | - |
+| v3.1-06. Durcissement contrat | v3.1 | 1/2 | In progress | v3.1-06-01 |
 | v3.1-07. i18n 5 locales | v3.1 | 0/0 | Not started | - |
 
 ## Backlog

@@ -41,7 +41,7 @@ Le contrat `{ discussion: string, fragments?: string[] }` (formalisme JSON Schem
 
 ### Durcissement contrat
 
-- [ ] **HARDEN-01**: Sur une réponse au parse invalide, le système re-sollicite le LLM une seule fois avant d'appliquer le repli contextuel
+- [x] **HARDEN-01**: Sur une réponse au parse invalide, le système re-sollicite le LLM une seule fois avant d'appliquer le repli contextuel
 - [ ] **HARDEN-02**: Un corpus de régression de réponses malformées + tests de cas limites passe au vert ; le taux de `fellBack` code-fence est re-mesuré, et le défaut du flag `response_format` (prompt-based vs structured-output) est décidé et documenté
 
 ## Future Requirements
@@ -90,7 +90,7 @@ Reporté à v3.2+. Suivi mais hors roadmap v3.1.
 | KBD-02 | v3.1-04 | Validated |
 | KBD-03 | v3.1-04 | Validated |
 | KBD-04 | v3.1-04 | Validated |
-| HARDEN-01 | v3.1-06 | Pending |
+| HARDEN-01 | v3.1-06 | Complete (v3.1-06-01) |
 | HARDEN-02 | v3.1-06 | Pending |
 | I18N-01 | v3.1-07 | Pending |
 
