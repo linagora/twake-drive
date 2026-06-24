@@ -16,9 +16,9 @@ Le contrat `{ discussion: string, fragments?: string[] }` (formalisme JSON Schem
 
 ### Inline (popover)
 
-- [ ] **INLINE-01**: Le popover inline utilise le contrat en imposant **exactement un fragment**, et affiche uniquement ce fragment pour Insérer/Remplacer (la `discussion` n'est pas montrée dans le popover) — rendu en carte (markdown riche + marqueurs propres) réutilisant FragmentCard/MarkdownPreview de v3.1-04
-- [ ] **INLINE-02**: Chaque échange inline (prompt + discussion + fragment) est répercuté dans l'historique de conversation partagé, et apparaît donc dans le chat à l'ouverture du side panel
-- [ ] **MENU-01**: Le menu d'actions du popover est refondu — le prompt libre est une entrée intégrée en bas de la liste, suivie d'une entrée « Ouvrir le panneau latéral » qui remplace l'icône open-panel retirée du popover (le bouton flottant sur le document est conservé)
+- [x] **INLINE-01**: Le popover inline utilise le contrat en imposant **exactement un fragment**, et affiche uniquement ce fragment pour Insérer/Remplacer (la `discussion` n'est pas montrée dans le popover) — rendu en carte (markdown riche + marqueurs propres) réutilisant FragmentCard/MarkdownPreview de v3.1-04
+- [x] **INLINE-02**: Chaque échange inline (prompt + discussion + fragment) est répercuté dans l'historique de conversation partagé, et apparaît donc dans le chat à l'ouverture du side panel
+- [x] **MENU-01**: Le menu d'actions du popover est refondu — le prompt libre est une entrée intégrée en bas de la liste, suivie d'une entrée « Ouvrir le panneau latéral » qui remplace l'icône open-panel retirée du popover (le bouton flottant sur le document est conservé)
 
 ### Fragments & cartes (chat)
 
@@ -77,9 +77,9 @@ Reporté à v3.2+. Suivi mais hors roadmap v3.1.
 | CONTRACT-01 | v3.1-01 | Complete |
 | CONTRACT-03 | v3.1-01 | Complete |
 | CONTRACT-04 | v3.1-01 | Complete |
-| INLINE-01 | v3.1-05 | Pending |
-| INLINE-02 | v3.1-05 | Pending |
-| MENU-01 | v3.1-05 | Pending |
+| INLINE-01 | v3.1-05 | Complete (live UAT 2026-06-24) |
+| INLINE-02 | v3.1-05 | Complete (live UAT 2026-06-24) |
+| MENU-01 | v3.1-05 | Complete (live UAT 2026-06-24) |
 | PROBE-01 | v3.1-03 | Complete |
 | CONTRACT-02 | v3.1-04 | Validated |
 | FRAG-01 | v3.1-04 | Validated |
