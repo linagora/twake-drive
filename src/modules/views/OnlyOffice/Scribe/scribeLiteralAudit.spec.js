@@ -35,7 +35,9 @@ const SURFACE_FILES = [
   'ScribePopover.jsx',
   'ScribeActionMenu.jsx',
   'MarkdownPreview.jsx',
-  'ChatMessageList.jsx'
+  'ChatMessageList.jsx',
+  'ScribeIncludeZone.jsx',
+  'ChatInput.jsx'
 ]
 
 const readSurface = file =>

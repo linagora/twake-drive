@@ -11,6 +11,7 @@ import { useTheme } from 'cozy-ui/transpiled/react/styles'
 import { useI18n } from 'twake-i18n'
 
 import { useScribe } from '@/modules/views/OnlyOffice/Scribe/ScribeContext'
+import { ScribeIncludeZone } from '@/modules/views/OnlyOffice/Scribe/ScribeIncludeZone'
 import { SelectionChip } from '@/modules/views/OnlyOffice/Scribe/SelectionChip'
 
 const SCRIBE_PURPLE = '#7C3AED'
@@ -22,6 +23,7 @@ export const ChatInput = forwardRef(({ onArrowUp } = {}, ref) => {
     sendMessage,
     isLoading,
     currentSelection,
+    includeSelection,
     dismissSelection,
     pendingDraft,
     clearPendingDraft
@@ -156,7 +158,8 @@ export const ChatInput = forwardRef(({ onArrowUp } = {}, ref) => {
         flexDirection: 'column'
       }}
     >
-      {currentSelection && (
+      <ScribeIncludeZone />
+      {currentSelection && includeSelection && (
         <SelectionChip selection={currentSelection} onDismiss={dismissSelection} />
       )}
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>
