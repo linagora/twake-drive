@@ -225,8 +225,28 @@ sélection (`P1@6`, `P1@17`) — `resolveOffset`/`_toff` acceptent désormais un
 start/space/mid/end). ⚠️ **Seul résidu** : le chemin **block** (replace multi-¶) reconstruit le texte
 traînant via `GetText()` plain (`code.js` ~l.1643) → formatage perdu sur ce sous-cas → à traiter avec (c).
 
-**Reste étape 4 :** (c) block « zéro ¶ vide aux bords » (fixture multi-¶/stylée — non exercé par `"XXX"`) +
-préservation du formatage du texte traînant (cf. (f) ci-dessus) ; (d) cf ci-dessus (bloqué groundwork).
+**(c) Block « zéro ¶ vide aux bords » + formatage traînant — FAIT en partie (2026-06-24).** Le mode
+**block** se déclenche pour un contenu injecté **multi-¶** (ex. `"First\n\nSecond"`) ou un 1ᵉʳ para stylé.
+OO splitte le ¶ hôte au point d'insertion ; le reste à droite devient un ¶ traînant. **Fix** (helper unique
+`cleanupTrailingBlockPara`, branché sur insert ET replace block) : on **supprime** ce ¶ traînant **seulement
+s'il est vide** (insertion au bord) ; **non vide → on le garde tel quel** (split au vrai milieu, demi-droite
+qui garde le style hôte ET son **formatage de run**). → corrige (1) le **¶ vide en @end** (insert) et
+(2) le **résidu (f)** : le texte traînant garde gras/italique, plus de `\r` (fini le rebuild `GetText()` plain).
+Validé live `format-family` : @end insert = 4 blocs (plus de ¶ vide) ; @mid = split propre ; replace partiel
+→ `[First][Second ][quick{gras} brown fox{ital}]`. **Inline simple-para inchangé** (axe A styled : `XXX`
+@mid garde `Heading 1`, pas de régression).
+
+⚠️ **OUVERT — découvert pendant (c), à statuer (besoin spec/Ben) :** sur un hôte **stylé** (Titre 1), le mode
+block fait **perdre le style de l'hôte à la demi-GAUCHE du split** (OO applique le style *Normal* du 1ᵉʳ para
+injecté à la fusion) : `@mid → "The quick First"{Normal} / "Second"{Normal} / " brown fox"{Heading 1}`
+(droite OK, **gauche cassée**) ; `@end → "The quick brown fox First"{Normal}` (l'hôte **perd Titre 1**).
+C'est lié à la sémantique **§5bis « 1ᵉʳ para sans style → INLINE »** mal définie pour le **multi-¶** : aujourd'hui
+le 1ᵉʳ para injecté n'est PAS fusionné inline au `@start` (`[First][Second][hôte]`, hôte intact) mais l'EST au
+`@mid`/`@end` — incohérent. **À trancher avec Ben** : (a) la demi-gauche/hôte doit-elle re-garder le style hôte
+après split ? (b) que signifie « 1ᵉʳ para inline » quand le contenu est multi-¶ (fusion + reste en blocs, et où) ?
+Tant que non tranché : **ne pas patcher à l'aveugle** la ré-application de style (hot-path, risque de régression).
+
+**Reste étape 4 :** (c) **volet style-sur-split** ci-dessus (ouvert, à spécifier) ; (d) cf ci-dessus (bloqué groundwork).
 **Étape de consolidation recommandée** : recapturer a-family avec le fix (les inserts passent du ¶-vide-buggy
 au correct §5bis) en UNE session (upload pristine), puis figer les verdicts pass. Enfin port vers scribe-in-right-panel.
 

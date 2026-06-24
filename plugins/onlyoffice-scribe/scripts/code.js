@@ -1544,6 +1544,32 @@
 
         var useRefSelection = false; // true = use paragraph refs, false = use position-based
 
+        // §5bis: after a BLOCK InsertContent, OO splits the host ¶ at the insertion
+        // point and the right remainder becomes a trailing paragraph. Remove it ONLY
+        // if it is EMPTY (insertion at the host's start/end) so no empty ¶ is left at
+        // the edges. If it is NON-EMPTY (insertion at a true middle), KEEP it as-is —
+        // that is the host split whose right half keeps the host ¶ style AND its own
+        // run formatting. (The previous replace path rebuilt it from plain GetText(),
+        // which dropped bold/italic and leaked a trailing \r.)
+        function cleanupTrailingBlockPara() {
+          try {
+            var lastContentPara = content[content.length - 1];
+            var lcRange = lastContentPara && lastContentPara.GetRange ? lastContentPara.GetRange() : null;
+            if (!lcRange) return;
+            var lcEndPos = lcRange.GetEndPos();
+            var total = doc.GetElementsCount();
+            for (var si = 0; si < total; si++) {
+              var scanEl = doc.GetElement(si);
+              var scanRange = scanEl && scanEl.GetRange ? scanEl.GetRange() : null;
+              if (scanRange && scanRange.GetStartPos() >= lcEndPos) {
+                var trailText = (scanRange.GetText() || "").replace(/[\r\n]+$/, "");
+                if (trailText.length === 0) doc.RemoveElement(si);
+                break;
+              }
+            }
+          } catch (e) {}
+        }
+
         if (mode === "insert") {
           // For table selections: move cursor after the table so InsertContent
           // places content after the table, not inside the last cell.
@@ -1576,6 +1602,7 @@
           } else {
             doc.InsertContent(content);
             useRefSelection = true;
+            cleanupTrailingBlockPara(); // §5bis: drop empty trailing ¶, keep a real split
           }
 
           // Post-InsertContent: remove unselected rows/columns from inserted tables.
@@ -1621,41 +1648,15 @@
             // Single paragraph: inline mode merges into existing paragraph
             doc.InsertContent(content, true);
           } else {
-            // Multi-paragraph: block mode to keep paragraph separation.
-            // Block mode splits the paragraph at selection end, creating a trailing
-            // paragraph. After InsertContent, merge that trailing paragraph into
-            // the last content paragraph to eliminate the extra line break.
+            // Multi-paragraph: block mode to keep paragraph separation. OO splits
+            // the host ¶ at the (collapsed, post-delete) selection point; the right
+            // remainder becomes a trailing ¶. §5bis: drop it only if empty (edge
+            // insertion), else KEEP it — that is the split's right half, preserving
+            // the host style AND the suffix's own run formatting (no plain-text
+            // rebuild, no leaked \r).
             doc.InsertContent(content);
             useRefSelection = true; // block mode preserves paragraph refs
-            try {
-              var lastContentPara = content[content.length - 1];
-              var lcRange = lastContentPara.GetRange();
-              if (lcRange) {
-                var lcEndPos = lcRange.GetEndPos();
-                var total = doc.GetElementsCount();
-                for (var si = 0; si < total; si++) {
-                  var scanEl = doc.GetElement(si);
-                  var scanRange = scanEl ? scanEl.GetRange() : null;
-                  if (scanRange && scanRange.GetStartPos() >= lcEndPos) {
-                    var trailText = scanRange.GetText();
-                    if (trailText.length > 0) {
-                      // Merge trailing text into last content paragraph
-                      var mRun = Api.CreateRun();
-                      mRun.AddText(trailText);
-                      if (srcFontFamily) mRun.SetFontFamily(srcFontFamily);
-                      if (srcFontSize) mRun.SetFontSize(srcFontSize);
-                      lastContentPara.AddElement(mRun);
-                      mergedTrailingLen = trailText.length;
-                    }
-                    // Remove the trailing paragraph (empty or merged)
-                    doc.RemoveElement(si);
-                    break;
-                  }
-                }
-              }
-            } catch (e) {
-              // Merge failed — trailing line break remains (minor visual issue)
-            }
+            cleanupTrailingBlockPara();
           }
         }
 
