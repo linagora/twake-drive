@@ -496,6 +496,7 @@
             var _ttxt = (_ttgt.GetText ? _ttgt.GetText() : "").replace(/[\r\n]+$/, "");
             var _tlen = _ttxt.length;
             var _toff = function(k) {
+              if (/^\d+$/.test(k)) { var _n = parseInt(k, 10); return _n > _tlen ? _tlen : _n; }
               if (k === "end") return _tlen;
               if (k === "mid") return Math.floor(_tlen / 2);
               if (k === "space") { var _ix = _ttxt.indexOf(" "); return _ix >= 0 ? _ix + 1 : 0; }
@@ -3268,6 +3269,7 @@
         var len = txt.length;
         var sk = p.startKind, ek = p.endKind;
         function resolveOffset(kind) {
+          if (/^\d+$/.test(kind)) { var n = parseInt(kind, 10); return n > len ? len : n; }
           if (kind === "end") return len;
           if (kind === "mid") return Math.floor(len / 2);
           if (kind === "space") { var idx = txt.indexOf(" "); return idx >= 0 ? idx + 1 : 0; }

@@ -151,7 +151,7 @@ Ces limites dépendent du **type de contenu**, pas de la géométrie de sélecti
 
 ### Légende des limites (inlinées ci-dessus)
 
-- **L#1** — Replace partiel d'un ¶ : le suffixe non sélectionné perd ses styles inline (bug OO `InsertContent`). *(piste : sauver/restaurer le formatage du suffixe, ou splice run-level.)*
+- **L#1** — ~~Replace partiel d'un ¶ : le suffixe non sélectionné perd ses styles inline~~ → **VÉRIFIÉ NON REPRODUCTIBLE sur le code actuel (2026-06-24)**. Le chemin inline `InsertContent(content, true)` **préserve** le formatage de caractères du **préfixe ET du suffixe** non sélectionnés, **y compris quand la sélection coupe au milieu d'un run formaté** (run-splitting). Prouvé live sur `format-family.docx` (« quick » gras, « fox » italique) : replace `0..6` → reste `ick`**gras** ; `6..12` → `qu`**gras** + `fox`*ital* conservés ; `0..17` → reste `ox`*ital*. ⚠️ Seul résidu à surveiller : le chemin **block** (replace multi-¶) reconstruit le texte traînant via `GetText()` (plain) — formatage perdu sur ce sous-cas (à traiter avec (c)).
 - **L#2** — Pas de post-sélection sur Replace mixte « texte d'un seul côté du tableau » (l'API OO ne sait pas sélectionner à cheval sur une frontière de cellule). OK pour : table pure, tout Insert, mixte texte des deux côtés.
 - **L#3** — `InsertContent` *block mode* dans une cellule peut déborder hors cellule (multi-¶ intra-cellule) → préférer la modif in-place.
 - **L#4** — Insert/Replace avec cross-refs perd parfois les liens (pré-existant v2.6, dépend du document).
@@ -192,7 +192,7 @@ Spec validée avec Ben. Concerne le plugin Scribe (`code.js`) : injection `build
 - **Tous** les paras → **BLOCK** (idem A.2) : avant / après / split selon position, **jamais de ¶ vide**, moitiés du split gardant le style hôte, chaque para gardant son style md.
 
 ### À corriger en même temps
-- **L#1** : en inline avec remplacement **partiel**, le **suffixe non sélectionné ne doit pas perdre son formatage** de caractères.
+- **L#1** : en inline avec remplacement **partiel**, le **suffixe non sélectionné ne doit pas perdre son formatage** de caractères. → **VÉRIFIÉ OK (2026-06-24)** sur le code actuel (cf. légende L#1) : aucun correctif nécessaire pour le chemin inline.
 - **Post-sélection** : couvre le contenu injecté (mécanisme existant, cf. **L#6**).
 
 ### Résultats attendus sur `a-family.docx` (fixture `"XXX"` = sans style, mono-¶ → pur inline)

@@ -146,6 +146,20 @@ FIXTURES = [
             [{'t': 'Lazy river flows'}],  # Normal (pas de style)
         ],
     },
+    {
+        # Famille A « formatée » — MIROIR de a-family (mêmes textes/offsets : "The
+        # quick brown fox" = 19 chars, @start=0 @space=4 @mid=9 @end=19), mais avec
+        # du formatage CHAR : "quick" gras, "fox" italique. Sert à tester L#1 — le
+        # suffixe NON sélectionné garde son formatage (gras/italique) après un
+        # remplacement partiel inline. Runs P1 : "The "(plain) "quick"(gras)
+        # " brown "(plain) "fox"(ital).
+        'name': 'format-family.docx',
+        'paras': [
+            [{'t': 'The '}, {'t': 'quick', 'b': 1}, {'t': ' brown '}, {'t': 'fox', 'i': 1}],
+            [{'t': 'Jumps over the dog'}],
+            [{'t': 'Lazy river flows'}],
+        ],
+    },
 ]
 
 
