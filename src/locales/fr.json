@@ -789,6 +789,12 @@
     "prompt": {
       "placeholder": "Aidez-moi à écrire"
     },
+    "include": {
+      "label": "Inclure",
+      "document": "Document",
+      "discussion": "Conversation",
+      "selection": "Sélection"
+    },
     "button": {
       "text_ai": "IA Texte",
       "insert": "Insérer",

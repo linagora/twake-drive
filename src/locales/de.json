@@ -537,6 +537,12 @@
     "prompt": {
       "placeholder": "Hilf mir beim Schreiben"
     },
+    "include": {
+      "label": "Einbeziehen",
+      "document": "Dokument",
+      "discussion": "Unterhaltung",
+      "selection": "Auswahl"
+    },
     "button": {
       "text_ai": "Text-KI",
       "insert": "Einfügen",

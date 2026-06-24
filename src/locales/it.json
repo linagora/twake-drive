@@ -361,6 +361,12 @@
     "prompt": {
       "placeholder": "Aiutami a scrivere"
     },
+    "include": {
+      "label": "Includi",
+      "document": "Documento",
+      "discussion": "Conversazione",
+      "selection": "Selezione"
+    },
     "button": {
       "text_ai": "IA Testo",
       "insert": "Inserisci",

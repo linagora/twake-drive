@@ -792,6 +792,12 @@
     "prompt": {
       "placeholder": "Help me write"
     },
+    "include": {
+      "label": "Include",
+      "document": "Document",
+      "discussion": "Conversation",
+      "selection": "Selection"
+    },
     "button": {
       "text_ai": "Text AI",
       "insert": "Insert",

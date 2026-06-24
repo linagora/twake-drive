@@ -508,6 +508,12 @@
     "prompt": {
       "placeholder": "Ayúdame a escribir"
     },
+    "include": {
+      "label": "Incluir",
+      "document": "Documento",
+      "discussion": "Conversación",
+      "selection": "Selección"
+    },
     "button": {
       "text_ai": "IA de Texto",
       "insert": "Insertar",
