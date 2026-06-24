@@ -236,7 +236,16 @@ Validé live `format-family` : @end insert = 4 blocs (plus de ¶ vide) ; @mid = 
 → `[First][Second ][quick{gras} brown fox{ital}]`. **Inline simple-para inchangé** (axe A styled : `XXX`
 @mid garde `Heading 1`, pas de régression).
 
-⚠️ **OUVERT — découvert pendant (c), à statuer (besoin spec/Ben) :** sur un hôte **stylé** (Titre 1), le mode
+✅ **VOLET STYLE-SUR-SPLIT — RÉSOLU + IMPLÉMENTÉ (2026-06-24).** Décision Ben : **(1)** les deux moitiés du
+split gardent **toujours** le style hôte (invariant §5bis, désormais normatif) ; **(2)** sémantique multi-¶ =
+**option A** (1ᵉʳ para plain fusionné inline dans la moitié gauche, paras 2..n en blocs entre les moitiés —
+*pas* d'ordre inversé, mon ancienne lecture était fausse). **Fix code** : `buildAndInject` capture `hostStyle`
+(¶ hôte par itération, robuste aux curseurs collapsed) → l'applique au 1ᵉʳ para injecté plain (Cas A, avant
+merge) + à la moitié droite (¶ traînant). **Validé live `styled-family`** : @start/@mid/@end insert + replace →
+les 2 moitiés de P1 restent `Heading 1`, `Second` Normal, zéro ¶ vide. **Zéro régression** (a-family block Normal
+OK ; single-para inline intact). Doc §5bis A.2 reformulée + invariant + sémantique tranchée.
+
+ⓘ Historique (avant fix) — le bug constaté : sur un hôte **stylé** (Titre 1), le mode
 block fait **perdre le style de l'hôte à la demi-GAUCHE du split** (OO applique le style *Normal* du 1ᵉʳ para
 injecté à la fusion) : `@mid → "The quick First"{Normal} / "Second"{Normal} / " brown fox"{Heading 1}`
 (droite OK, **gauche cassée**) ; `@end → "The quick brown fox First"{Normal}` (l'hôte **perd Titre 1**).

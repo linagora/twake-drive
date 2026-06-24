@@ -528,6 +528,8 @@
       // Falls back to document default text properties
       var srcFontFamily = null;
       var srcFontSize = null;
+      var hostStyle = null; // §5bis: ¶ style of the host at the insertion point —
+                            // both halves of a block split must keep it.
       try {
         var selRange = doc.GetRangeBySelect();
         if (selRange) {
@@ -538,6 +540,7 @@
               srcFontFamily = textPr.GetFontFamily();
               srcFontSize = textPr.GetFontSize();
             }
+            if (para.GetStyle) hostStyle = para.GetStyle();
           }
         }
       } catch (e) {
@@ -554,6 +557,25 @@
           // No default available — runs will use OO built-in default
         }
       }
+      // Robust host ¶ style: GetRangeBySelect().GetParagraph() is unreliable for a
+      // COLLAPSED cursor, so find the host paragraph by iterating to the element whose
+      // range covers the selection start position (same technique as smart spacing).
+      try {
+        var hsSel = doc.GetRangeBySelect();
+        if (hsSel) {
+          var hsStart = hsSel.GetStartPos();
+          var hsCount = doc.GetElementsCount();
+          for (var hsi = 0; hsi < hsCount; hsi++) {
+            var hsEl = doc.GetElement(hsi);
+            if (!hsEl.GetClassType || hsEl.GetClassType() !== "paragraph") continue;
+            var hsR = hsEl.GetRange ? hsEl.GetRange() : null;
+            if (hsR && hsStart >= hsR.GetStartPos() && hsStart <= hsR.GetEndPos()) {
+              if (hsEl.GetStyle) hostStyle = hsEl.GetStyle();
+              break;
+            }
+          }
+        }
+      } catch (e) {}
 
       // ---- Smart spacing detection ----
       // Mirrors the pasteHtml spacing pattern (lines 378-416) but for Builder API.
@@ -1563,9 +1585,29 @@
               var scanRange = scanEl && scanEl.GetRange ? scanEl.GetRange() : null;
               if (scanRange && scanRange.GetStartPos() >= lcEndPos) {
                 var trailText = (scanRange.GetText() || "").replace(/[\r\n]+$/, "");
-                if (trailText.length === 0) doc.RemoveElement(si);
+                if (trailText.length === 0) {
+                  doc.RemoveElement(si); // empty right half -> no ¶ vide at the edge
+                } else if (hostStyle && scanEl.SetStyle) {
+                  scanEl.SetStyle(hostStyle); // §5bis split invariant: right half keeps host ¶ style
+                }
                 break;
               }
+            }
+          } catch (e) {}
+        }
+
+        // §5bis Cas A: when the 1st injected para is PLAIN (no md style), it merges
+        // inline into the host's LEFT split half. Give that first content paragraph
+        // the HOST ¶ style up front, so after OO's merge the left half keeps the host
+        // style (OO would otherwise stamp the para's default Normal style on it).
+        // Cas B (1st para has its own md style — heading/list/quote/code) is left
+        // untouched: it stays a block with its own style.
+        function applyHostStyleToFirstParaIfPlain() {
+          try {
+            if (hostStyle && blocks[0] && blocks[0].type === "paragraph"
+                && content[0] && content[0].SetStyle && content[0].GetClassType
+                && content[0].GetClassType() === "paragraph") {
+              content[0].SetStyle(hostStyle);
             }
           } catch (e) {}
         }
@@ -1600,6 +1642,7 @@
             doc.InsertContent(content, true);
             // useRefSelection stays false -> position-based selection (like inline replace)
           } else {
+            applyHostStyleToFirstParaIfPlain(); // §5bis Cas A: left half keeps host style
             doc.InsertContent(content);
             useRefSelection = true;
             cleanupTrailingBlockPara(); // §5bis: drop empty trailing ¶, keep a real split
@@ -1654,6 +1697,7 @@
             // insertion), else KEEP it — that is the split's right half, preserving
             // the host style AND the suffix's own run formatting (no plain-text
             // rebuild, no leaked \r).
+            applyHostStyleToFirstParaIfPlain(); // §5bis Cas A: left half keeps host style
             doc.InsertContent(content);
             useRefSelection = true; // block mode preserves paragraph refs
             cleanupTrailingBlockPara();
