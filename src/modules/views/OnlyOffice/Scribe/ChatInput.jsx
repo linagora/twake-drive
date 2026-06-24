@@ -158,12 +158,12 @@ export const ChatInput = forwardRef(({ onArrowUp } = {}, ref) => {
       }}
     >
       <ScribeIncludeZone />
-      {/* Reserve the selection-chip slot height whenever a selection exists so
-          checking/unchecking « sélection » never shifts the discussion above
-          (live UX review 2026-06-24). minHeight ≈ the collapsed chip's outer
-          height; the chip grows only on deliberate expand. */}
+      {/* Fixed-height selection-chip slot: whenever a selection exists the slot
+          reserves exactly the chip's footprint (`4px 0` padding + 24px body),
+          so checking/unchecking « sélection » never shifts the discussion above
+          and the chip itself is a fixed single line (live UX review 2026-06-24). */}
       {currentSelection && (
-        <div style={{ minHeight: 37 }}>
+        <div style={{ height: 32, marginBottom: 4 }}>
           {includeSelection && <SelectionChip selection={currentSelection} />}
         </div>
       )}

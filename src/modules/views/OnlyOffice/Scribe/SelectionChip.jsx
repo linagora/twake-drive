@@ -1,17 +1,23 @@
-import React, { useState } from 'react'
+import React from 'react'
 
 import { useTheme } from 'cozy-ui/transpiled/react/styles'
 
 const SCRIBE_PURPLE = '#7C3AED'
 
+// Deterministic fixed height so the chip slot never shifts the discussion
+// (live UX review 2026-06-24). Single line, vertically centred via lineHeight;
+// full selection text is available on hover via the native `title` tooltip
+// (the old click-to-expand grew the chip and broke the fixed height).
+export const CHIP_BODY_HEIGHT = 24
+
 /**
- * Compact chip showing truncated selected text from the OO editor.
- * Click chip body to expand/collapse full text. Inclusion is controlled by the
- * « sélection » checkbox in ScribeIncludeZone (the old inline × dismiss button
- * was removed in v3.2-01 — unchecking the box hides the chip instead).
+ * Compact chip showing the truncated selected text from the OO editor.
+ * Single fixed-height line (full text on hover). Inclusion is controlled by the
+ * « sélection » checkbox in ScribeIncludeZone — unchecking the box hides the
+ * chip (the old inline × dismiss button and click-to-expand were removed in
+ * v3.2-01).
  */
 export const SelectionChip = ({ selection }) => {
-  const [expanded, setExpanded] = useState(false)
   const theme = useTheme()
 
   if (!selection) return null
@@ -20,42 +26,27 @@ export const SelectionChip = ({ selection }) => {
     <div
       style={{
         display: 'flex',
-        alignItems: 'flex-start',
-        gap: 4,
-        padding: '4px 0',
-        marginBottom: 4
+        alignItems: 'center',
+        padding: '4px 0'
       }}
     >
       <div
-        onClick={() => setExpanded(prev => !prev)}
-        role="button"
-        tabIndex={0}
-        onKeyDown={e => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault()
-            setExpanded(prev => !prev)
-          }
-        }}
+        title={selection.text}
         style={{
           flex: 1,
           minWidth: 0,
+          height: CHIP_BODY_HEIGHT,
+          lineHeight: `${CHIP_BODY_HEIGHT}px`,
           borderLeft: `3px solid ${SCRIBE_PURPLE}`,
-          paddingLeft: 8,
           background: theme.palette.action.hover,
           borderRadius: '0 4px 4px 0',
-          padding: '4px 8px 4px 8px',
-          cursor: 'pointer',
+          padding: '0 8px',
           fontSize: 12,
-          lineHeight: 1.4,
           color: theme.palette.text.secondary,
           fontStyle: 'italic',
-          ...(expanded
-            ? { whiteSpace: 'pre-wrap', wordBreak: 'break-word' }
-            : {
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap'
-              })
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap'
         }}
         aria-label="Selected text"
       >
