@@ -190,8 +190,15 @@ Spec validée avec Ben. Concerne le plugin Scribe (`code.js`) : injection `build
   - **Invariant split** (cf. ci-dessous) : les **deux moitiés** portent le **style du ¶ hôte**.
   - **Jamais de ¶ vide** : une moitié **vide** (insertion en tout début ou toute fin de l'hôte) **n'est pas matérialisée** — pas de ¶ vide au bord. (Ainsi `@start` → `[1ᵉʳpara]{styleHôte}[2..n]…[suffixe hôte]{styleHôte}` ; `@end` → `[préfixe hôte + 1ᵉʳpara]{styleHôte}[2..n]` sans ¶ vide ; ordre toujours préservé.)
 
-### Injection — Cas B : 1ᵉʳ para **avec style**
-- **Tous** les paras → **BLOCK** (idem A.2, mais **aucune** fusion inline du 1ᵉʳ para) : on scinde l'hôte au point d'insertion et on insère **tous** les paras entre les deux moitiés, **jamais de ¶ vide**, **moitiés du split gardant le style hôte**, chaque para gardant son style md.
+### Injection — Cas B : 1ᵉʳ para **avec style** (titre / liste / citation / code)
+- **Tous** les paras → **BLOCK**, **JAMAIS de fusion inline** (même pas le 1ᵉʳ) : on scinde l'hôte au point d'insertion en deux moitiés et on insère **tous** les paras de la fixture **entre les deux moitiés**, chacun comme **son propre ¶ gardant son style md**.
+- **L'hôte garde TOUJOURS son propre style** (les deux moitiés = style hôte) ; il **n'adopte JAMAIS** le style de la fixture, **même si les niveaux diffèrent** (insérer un `##` dans un hôte Titre 1 ne transforme pas l'hôte en Titre 2).
+- **Jamais de ¶ vide** ; une moitié vide (insertion en tout début/fin) n'est pas matérialisée.
+- **Exemple normatif** (hôte `« The quick brown fox »`{Titre 1} entièrement sélectionné, **Insérer** la fixture `« # Injected »`{Titre 1}) :
+  - **Attendu** = **2 ¶ séparés** : `[The quick brown fox]{Titre 1}` puis `[Injected]{Titre 1}`.
+  - **Interdit** : `[The quick brown fox Injected]` en **1 seul ¶** (fusion) ; et l'hôte qui **perd**/change son style.
+
+> ⚠️ **État code (2026-06-24) : NON conforme au Cas B.** Une fixture **stylée mono-¶** se **FUSIONNE** dans l'hôte (1 ¶ au lieu de 2) et l'**hôte adopte le style de la fixture** si le niveau diffère (`##` → hôte devient Titre 2). Cause : OO `InsertContent` (block) fusionne le 1ᵉʳ para de contenu dans l'hôte ; le correctif §5bis Cas A (2026-06-24) ne traite que le **Cas A** (1ᵉʳ para *sans* style). **À corriger** : empêcher la fusion du para stylé (bloc séparé) **et** préserver le style hôte. *(Le symptôme « hôte → Normal + ¶ séparé » observé côté Drive = `code.js` **en cache** plus ancien ; le bug actuel servi est « fusion + adoption de style ».)*
 
 ### INVARIANT « split » — style des deux moitiés (normatif, validé Ben 2026-06-24)
 **Chaque fois que l'hôte est scindé** (mode block, insert OU replace — et plus tard lors d'un split de **cellule**), les **DEUX ¶ résultants** (gauche ET droite du point de split) **doivent porter le MÊME style de ¶ que l'hôte d'origine**. Aucun ne doit retomber en *Normal*. *(✅ **CORRIGÉ 2026-06-24** : `buildAndInject` capture le `hostStyle` (¶ hôte, trouvé par itération — robuste aux curseurs collapsed), donne ce style au 1ᵉʳ para injecté plain avant le merge — Cas A — et le ré-applique à la moitié droite (¶ traînant). Validé live `styled-family` block @start/@mid/@end + replace : les deux moitiés de P1 restent `Heading 1`, `Second` reste Normal, zéro ¶ vide ; aucune régression a-family/inline.)*
