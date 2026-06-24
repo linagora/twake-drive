@@ -562,26 +562,46 @@
       var needSpaceAfter = false;
       var WS = /[\s\n\r\t\u00A0]/;
 
-      // Insert mode (\u00A75bis): collapse cursor to end of selection (= insertion
-      // point), then compute SYMMETRIC spacing \u2014 a space is added before/after
-      // the inserted runs only when the adjacent char is non-whitespace, and
-      // never when one already exists (no double space). Same flags as replace.
+      // Insert mode (\u00A75bis): SYMMETRIC spacing \u2014 add a space before/after the
+      // inserted runs only when the adjacent char is non-whitespace, never doubled.
+      // OO document positions are ELEMENT units (not chars), so reading the char
+      // before/after via doc.GetRange(pos\u00B1n) breaks at a paragraph boundary (the \u00B6
+      // mark gets mistaken for the neighbour char). Instead compute the char OFFSET
+      // inside the host paragraph from the text length of [paraStart..cursor]
+      // (GetText resolves real chars), then index the paragraph text directly.
       if (mode === "insert") {
         var insSelRange = doc.GetRangeBySelect();
         if (insSelRange) {
           var insPos = insSelRange.GetEndPos();
+          // Find the HOST paragraph by iteration (GetRangeBySelect().GetParagraph()
+          // is unreliable for collapsed cursors) — the element whose range covers
+          // insPos. Then compute the cursor's CHAR offset inside it (text length of
+          // [hostStart..cursor], GetText resolves real chars) and read the char
+          // before/after directly from the paragraph text. aChar = "" at end-of-
+          // paragraph → no trailing space (the previous range-based read leaked into
+          // the NEXT paragraph and wrongly added a space at @end).
+          var hostPara = null, hostStart = -1;
+          var ecount = doc.GetElementsCount();
+          for (var ei = 0; ei < ecount; ei++) {
+            var eel = doc.GetElement(ei);
+            if (!eel.GetClassType || eel.GetClassType() !== "paragraph") continue;
+            var er = eel.GetRange ? eel.GetRange() : null;
+            if (!er) continue;
+            if (insPos >= er.GetStartPos() && insPos <= er.GetEndPos()) { hostPara = eel; hostStart = er.GetStartPos(); break; }
+          }
+          if (hostPara) {
+            var hpText = (hostPara.GetText ? hostPara.GetText() : "").replace(/[\r\n]+$/, "");
+            var prefR = doc.GetRange(hostStart, insPos);
+            var pref = prefR ? (prefR.GetText() || "").replace(/[\r\n]+$/, "") : "";
+            var off = pref.length;
+            var bChar = off > 0 ? hpText.charAt(off - 1) : "";
+            var aChar = off < hpText.length ? hpText.charAt(off) : "";
+            if (bChar && !WS.test(bChar)) needSpaceBefore = true;
+            if (aChar && !WS.test(aChar)) needSpaceAfter = true;
+          }
+          // Collapse the cursor to the insertion point (end of the selection).
           var collapseRange = doc.GetRange(insPos, insPos);
           if (collapseRange) collapseRange.Select();
-          if (insPos > 0) {
-            var beforeR = doc.GetRange(Math.max(0, insPos - 5), insPos);
-            var beforeT = beforeR ? beforeR.GetText() : "";
-            var beforeC = beforeT.length > 0 ? beforeT.charAt(beforeT.length - 1) : "";
-            if (beforeC && !WS.test(beforeC)) needSpaceBefore = true;
-          }
-          var afterR = doc.GetRange(insPos, insPos + 5);
-          var afterT = afterR ? afterR.GetText() : "";
-          var afterC = afterT.length > 0 ? afterT.charAt(0) : "";
-          if (afterC && !WS.test(afterC)) needSpaceAfter = true;
         }
       }
 
