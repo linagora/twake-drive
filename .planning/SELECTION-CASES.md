@@ -157,8 +157,53 @@ Ces limites dépendent du **type de contenu**, pas de la géométrie de sélecti
 - **L#4** — Insert/Replace avec cross-refs perd parfois les liens (pré-existant v2.6, dépend du document).
 - **L#5** — Texte coloré non préservé.
 - **L#6** — Post-sélection inline : `selectByPositions` (`GetRange(start, start+len+2)`, `+2` = marqueur de début de ¶, `code.js:2627`) — fragile.
-- **L#7** — **Insert ajoute un ¶ vide parasite** (bug confirmé live A0/insert, 2026-06-23). `code.js:1479` fait `content.unshift(Api.CreateParagraph())` de façon **inconditionnelle** → une ligne blanche apparaît à chaque « Insérer ». **Règle désirée :** n'ajouter un retour à la ligne **que si l'insertion est au milieu d'un ¶** ; au `@start` (et au `@end`) **aucune** ligne vide. *(correctif : rendre le `unshift` conditionnel à la position d'insertion.)*
-- **L#8** — **Héritage de style à l'insertion** (exigence, 2026-06-23). Le ¶ recevant la fixture doit **hériter du style du ¶ hôte** (ex. *Titre niveau 1*), pas retomber en *Normal*. Non couvert par `a-family.docx` (¶ *Normal* uniquement) → nécessite une **fixture stylée** dédiée (cf. `REVIEW-LOG.md`).
+- **L#7** — **Insert ajoute un ¶ vide parasite** (bug confirmé live A0/insert, 2026-06-23). `code.js:1479` fait `content.unshift(Api.CreateParagraph())` de façon **inconditionnelle** → une ligne blanche à chaque « Insérer ». **Correctif = la spec §5bis** (le 1ᵉʳ para sans style est injecté *inline*, jamais via un ¶ vide ; le mode block n'insère un ¶ qu'au vrai milieu, sinon avant/après).
+- **L#8** — **Style de paragraphe à l'injection** (exigence, 2026-06-23). Couvert par la **spec §5bis** : un 1ᵉʳ para de fixture **sans style** prend le style du ¶ hôte (inline) ; **avec style** (titre/liste/citation/code), il garde son style md (block). Non testable avec `a-family.docx` (¶ *Normal* seul) → **fixture stylée** dédiée requise (cf. `REVIEW-LOG.md`).
+
+---
+
+## 5bis. Règles d'injection & d'extraction (style de ¶) — **spec normative (2026-06-24)**
+
+Spec validée avec Ben. Concerne le plugin Scribe (`code.js`) : injection `buildAndInject` + extraction sélection→md (`paragraphToMarkdown`). Rend L#7 obsolète et précise L#8.
+
+**Convention « espace » :** classe blancs complète = espace, espace insécable ` `, tabulation, saut de ligne (`WS = /[\s\n\r\t ]/`).
+
+### Unification
+**Remplacer = supprimer la sélection (OO gère la suppression/fusion comme il veut), puis insérer** au curseur réduit résultant. → une seule logique : l'**insertion**.
+
+### Extraction (sélection → markdown)
+- ¶ **entièrement** sélectionné (début→fin) → le **marqueur de style md est émis** (niveau de titre `#`, chevron de citation `>`, puce/numéro de liste…).
+- ¶ **partiellement** sélectionné → **texte simple** (styles *inline* possibles : gras/italique/…) **sans** marqueur de début de ligne.
+- ⇒ C'est l'extraction qui détermine si le 1ᵉʳ para de la fixture « a un style » → pilote inline vs block à la réinjection. Boucle cohérente.
+
+### Définition « 1ᵉʳ para de fixture **avec style** »
+= titre / liste / citation / bloc de code. **N'en est PAS** le formatage de caractères (gras/italique/souligné/barré/code inline) → un para de texte gras reste « **sans style** ».
+
+### Injection — Cas A : 1ᵉʳ para **sans style**
+- **A.1 — 1ᵉʳ para → INLINE** : runs injectés **dans le ¶ hôte** au point d'insertion ; **¶ hôte et son style conservés**. **Espacement symétrique** (1 espace de séparation, jamais double) : *avant* les runs si le caractère précédent est non-blanc (et pas en début de ¶) ; *après* les runs si le caractère suivant est non-blanc ; si une espace existe déjà de ce côté, ne rien ajouter.
+- **A.2 — paras suivants (2..n) → BLOCK** : chacun = son propre ¶ avec **son style md**, inséré au point courant. **Jamais de ¶ vide** : insertion **au début** de l'hôte → blocs **avant** l'hôte ; **à la fin** → **après** ; **au vrai milieu seulement** → split de l'hôte (les **deux moitiés gardent le style de l'hôte**).
+
+### Injection — Cas B : 1ᵉʳ para **avec style**
+- **Tous** les paras → **BLOCK** (idem A.2) : avant / après / split selon position, **jamais de ¶ vide**, moitiés du split gardant le style hôte, chaque para gardant son style md.
+
+### À corriger en même temps
+- **L#1** : en inline avec remplacement **partiel**, le **suffixe non sélectionné ne doit pas perdre son formatage** de caractères.
+- **Post-sélection** : couvre le contenu injecté (mécanisme existant, cf. **L#6**).
+
+### Résultats attendus sur `a-family.docx` (fixture `"XXX"` = sans style, mono-¶ → pur inline)
+| Cas | Point d'insertion | Attendu (1 ¶, style hôte) |
+|---|---|---|
+| A0 insert | @start | `XXX The quick brown fox` |
+| A1 insert | @end | `The quick brown fox XXX` |
+| A2 insert | @mid (off. 9) | `The quick XXX brown fox` *(pas de double espace)* |
+| A3 insert | @end | `The quick brown fox XXX` |
+| A4 insert | off. 4 | `The XXX quick brown fox` |
+| A1 replace | tout P1 suppr. | `XXX` *(aucun voisin → aucune espace)* |
+| A3 replace | « quick brown fox » suppr. | `The XXX` |
+| A4 replace | « The » suppr. | `XXX quick brown fox` |
+| A2 replace | curseur @mid | `The quick XXX brown fox` |
+
+→ vs captures actuelles : **plus aucun ¶ vide**, **plus de double espace** (A2 replace), **plus de `" "` traînant** (A1 replace). Ces bundles deviennent **xfail** jusqu'au correctif `code.js`.
 
 ---
 

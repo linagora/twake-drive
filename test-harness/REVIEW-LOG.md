@@ -50,6 +50,26 @@ Fixture source `a-family.docx` (identique pour tous) : `P1="The quick brown fox"
 | A4/insert  | recapturé v2 — à revoir | — | aucun (split propre, XXX en ¶ isolé) |
 | A4/replace | recapturé v2 — à revoir | — | espace repositionnée (`XXX quick brown fox`) |
 
+## Spec d'injection/extraction FINALISÉE (2026-06-24) → `SELECTION-CASES.md §5bis`
+
+Règles validées avec Ben (remplacent L#7, précisent L#8). Résumé :
+- **Replace = suppression (gérée par OO) + insertion** → une seule logique : l'insertion.
+- **Extraction sélection→md** : ¶ entièrement sélectionné → marqueur de style md émis ; ¶ partiel → texte simple sans marqueur. C'est ce qui décide « 1ᵉʳ para avec/sans style » à la réinjection.
+- **Injection** : 1ᵉʳ para *sans style* → **inline** dans l'hôte (style hôte conservé, espacement symétrique) ; paras suivants ou 1ᵉʳ para *avec style* (titre/liste/citation/code) → **block**, **jamais de ¶ vide** (avant/après aux bords, split au seul vrai milieu).
+- Tableau des résultats attendus sur a-family dans §5bis.
+
+**Conséquence sur les bundles** : sous cette spec, A0/A1/A2/A3 insert + A1/A2 replace ne sont plus conformes (¶ vide / double espace / `" "` traînant) → **xfail** jusqu'au correctif `code.js`. À répercuter dans les `meta.json` lors de la reprise de revue.
+
+## Impact implémentation (où coder le correctif)
+
+**Tout est dans le plugin Scribe `plugins/onlyoffice-scribe/scripts/code.js`** — *pas* d'API/SDK OO, *pas* de React Cozy Drive :
+- **Injection** `buildAndInject` : supprimer le `content.unshift(Api.CreateParagraph())` inconditionnel (l.1479) ; implémenter inline-1ᵉʳ-para + block-reste avec gestion des bords (zéro ¶ vide) ; espacement symétrique ; unifier insert/replace sur la décision inline/block selon « 1ᵉʳ para a un style ».
+- **Extraction** `paragraphToMarkdown` (~l.2840-2859) : n'émettre les marqueurs de début de ligne (`#`/`>`/`-`) **que** pour les ¶ entièrement sélectionnés ; ¶ partiel → texte + inline seulement.
+- **L#1** : préserver le formatage du suffixe en inline partiel.
+- API OO utilisées déjà dispo (SetStyle/GetStyle/InsertContent/GetRangeBySelect…) → **aucun patch SDK**.
+
+**Côté harnais (ce worktree)** : étendre l'oracle `dumpState` (`paraToBlock`, ~l.3244) pour capturer le **style de ¶** (nom + niveau) + `normalizeModel.js` ; régénérer les goldens ; poser les xfail.
+
 ## Constats transverses ouverts (à statuer pendant la revue)
 
 - **L#7 — ¶ vide parasite à l'insertion (BUG confirmé, A0/insert)** : `code.js:1479`
