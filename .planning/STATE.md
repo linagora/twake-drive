@@ -85,5 +85,6 @@ Execution order: v3.2-01 (UX statique) -> v3.2-02 (câblage discussion + sélect
 ## Session Continuity
 
 Last session: 2026-06-24T15:30:00.000Z
-Stopped at: Completed v3.2-01-01-PLAN.md (« Inclure » zone, UX statique). All 3 tasks committed; all 5 gates green; CTX-UX-01..05 marked complete.
-Resume file: next step `/gsd-plan-phase v3.2-02`. ⚠️ gsd-sdk v1.42.3 still cannot resolve vX.Y-NN phases; orchestrate manually with explicit paths (ROADMAP/STATE/REQUIREMENTS completion writes done by hand).
+Stopped at: v3.2-01 DONE — executed (5 gates green, CTX-UX-01..05 complete) AND live UAT passed (status passed) after 4 UX-polish rounds (discreet checkboxes, × removed, selection space permanently reserved so the discussion never shifts, fixed-height chip with hover tooltip).
+Resume file: next step → plan v3.2-02 (câblage discussion + sélection). v3.2-02 has NO UI hint → skip ui-phase, go straight to `/gsd-plan-phase v3.2-02-cablage-discussion-selection`. ⚠️ Use the FULL directory slug with ALL GSD commands — gsd-sdk resolves init.plan-phase / phase-plan-index / execute-phase by full slug (e.g. `v3.2-02-cablage-discussion-selection`), NOT the abbreviated `v3.2-02`; with the full slug the automated flow works end-to-end (no manual orchestration needed). See [[milestone-prefixed-numbering-convention]]. v3.2-02 reads the three include booleans from ScribeContext at the `sendMessage` prompt-assembly seam (seam comment `read by v3.2-02/03; no prompt injection in v3.2-01`).
+Env after reboot: OO container + cozy-stack must be up; Drive `src/` changes need `yarn build` then hard-reload (NOT an OO restart). The uncommitted `plugins/onlyoffice-scribe/scripts/code.js` is the selection-cases-harness chantier's dev hooks — leave it; NOT part of v3.2.
