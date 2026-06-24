@@ -148,10 +148,20 @@ inerte en prod). Validé base propre — **A0/A2/A4 insert matchent §5bis** (`X
 endroit, plus au début). ⚠️ Pollution serveur par auto-save : la recapture doit se faire en **une seule
 session** depuis un upload pristine (pas de reload mid-batch).
 
-**Reste étape 4 :** (b) **espacement @end** (A1 `foxXXX  ` : détection avant/après faussée au bord de ¶
-— positions OO = unités d'éléments ≠ chars ; à faire char-exact via les runs) ; (c) block « zéro ¶ vide
-aux bords » ; (d) font-run vs style hôte (+ éventuellement oracle run-font) ; (e) extraction
-conditionnelle des marqueurs md ; (f) L#1. Puis recapturer a-family + styled, passer les xfail au vert.
+**(b) Espacement @end — FAIT (2026-06-24).** Détection avant/après désormais char-exacte : on trouve le
+¶ hôte par itération (GetParagraph non fiable), on calcule l'offset char dans son texte, `aChar=''` en
+fin de ¶ → pas d'espace traînant. **Les 4 inserts A matchent §5bis** : A0 `XXX The quick brown fox`,
+A1 @end `The quick brown fox XXX` (espace avant, pas de traînant), A2 `The quick XXX brown fox`,
+A4 `The XXX quick brown fox`. (Validé via le hook atomique sur base propre.)
+
+**Reste étape 4 :** (c) block « zéro ¶ vide aux bords » (fixture multi-¶/stylée) ; (d) font-run vs style
+hôte (l'inline applique `srcFontSize` au run → un titre rend en corps ; + éventuellement oracle run-font) ;
+(e) extraction conditionnelle des marqueurs md (`paragraphToMarkdown`) ; (f) L#1. Puis recapturer
+a-family + styled, passer les xfail au vert.
+
+⚠️ **Hygiène recapture** : le documentserver **auto-sauvegarde** → la source serveur se pollue entre
+sessions. Pour recapturer proprement : **un upload pristine + UNE seule session** (undo-all entre bundles,
+jamais de reload mid-batch). Chaque re-upload du même nom est dédupliqué (`a-family (N).docx`).
 
 ## Constats transverses ouverts (à statuer pendant la revue)
 
