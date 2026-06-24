@@ -68,7 +68,7 @@ Full v3.0 phase details are preserved in `.planning/milestones/v3.0-ROADMAP.md`.
 - [x] **Phase v3.1-03: Sonde dev (HARD GATE)** (3/3 plans) -- completed 2026-06-17 - Panneau dev exposant la réponse parsée + métriques de conformité ; ses critères de passage conditionnent les phases 04-05
 - [x] **Phase v3.1-04: Rendu chat (cartes + clavier)** (5/5 plans) -- completed 2026-06-22 - Cartes de fragment encadrées aux positions `{{fragment:N}}`, boutons Copier/Insérer/Remplacer, réinjection riche par fragment, navigation clavier complète
 - [x] **Phase v3.1-05: Rendu popover (UI)** - Popover rend le fragment unique en carte (réutilise FragmentCard/MarkdownPreview de v3.1-04, marqueurs propres), sans afficher la `discussion` ; refonte du menu d'actions (prompt libre intégré comme entrée, entrée « Ouvrir le panneau latéral » remplaçant l'icône)
-- [ ] **Phase v3.1-06: Durcissement contrat** - Re-ask sur parse invalide (1× avant repli), corpus de régression des réponses malformées, décision documentée du défaut `response_format` (sans UI OO)
+- [x] **Phase v3.1-06: Durcissement contrat** (2/2 plans) -- completed 2026-06-24 - Re-ask sur parse invalide (1× avant repli), corpus de régression des réponses malformées (6 catégories D-07) + re-mesure fence fellBack (0%, stripFence confirmé), décision documentée du défaut `response_format` (json_object, proxy forwarding confirmé)
 - [ ] **Phase v3.1-07: i18n 5 locales** - Libellés de carte + messages de repli traduits et vérifiés sur fr/en/de/es/it ; aucune chaîne Scribe en dur dans les surfaces popover/chat
 
 ## Phase Details
@@ -159,7 +159,7 @@ Plans:
 **Plans**: 2 plans
 Plans:
 - [x] v3.1-06-01-PLAN.md — Shared callScribeAIWithReask helper (one corrective re-ask on fellBack||!valid, signal-respecting) wired into both chat + popover call sites [HARDEN-01]
-- [ ] v3.1-06-02-PLAN.md — Static malformed-response regression corpus (6 D-07 categories) + code-fence fellBack re-measure/stripFence confirm + RESPONSE_FORMAT_DECISION.md (json_object default, proxy forwarding confirmed) [HARDEN-02]
+- [x] v3.1-06-02-PLAN.md — Static malformed-response regression corpus (6 D-07 categories) + code-fence fellBack re-measure/stripFence confirm + RESPONSE_FORMAT_DECISION.md (json_object default, proxy forwarding confirmed) [HARDEN-02]
 **UI hint**: no
 
 ### Phase v3.1-07: i18n 5 locales
@@ -201,7 +201,7 @@ v3.1 phases execute in order: v3.1-01 -> v3.1-02 -> v3.1-03 (HARD GATE) -> v3.1-
 | v3.1-03. Sonde dev (HARD GATE) | v3.1 | 3/3 | Complete | 2026-06-17 |
 | v3.1-04. Rendu chat (cartes + clavier) | v3.1 | 5/5 | Complete | 2026-06-22 |
 | v3.1-05. Rendu popover (UI) | v3.1 | 2/2 | Complete | 2026-06-22 |
-| v3.1-06. Durcissement contrat | v3.1 | 1/2 | In progress | v3.1-06-01 |
+| v3.1-06. Durcissement contrat | v3.1 | 2/2 | Complete | 2026-06-24 |
 | v3.1-07. i18n 5 locales | v3.1 | 0/0 | Not started | - |
 
 ## Backlog

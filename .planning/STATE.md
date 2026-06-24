@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v3.1
 milestone_name: Contrat de réponse structurée LLM
 status: executing
-stopped_at: Completed v3.1-06-01-PLAN.md (re-ask shared helper)
-last_updated: "2026-06-24T08:46:00.000Z"
-last_activity: 2026-06-24 -- v3.1-06-01 done (callScribeAIWithReask wired into both surfaces)
+stopped_at: Completed v3.1-06-02-PLAN.md (regression corpus + response_format decision)
+last_updated: "2026-06-24T09:20:00.000Z"
+last_activity: 2026-06-24 -- v3.1-06-02 done (D-07 corpus, fence fellBack re-measured 0%, RESPONSE_FORMAT_DECISION.md)
 progress:
   total_phases: 7
-  completed_phases: 5
-  total_plans: 7
-  completed_plans: 7
-  percent: 57
+  completed_phases: 6
+  total_plans: 8
+  completed_plans: 8
+  percent: 86
 ---
 
 # Project State
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-06-16)
 
 ## Current Position
 
-Phase: v3.1-06 (Durcissement contrat) — EXECUTING
-Plan: 2 of 2 (plan 01 complete)
-Status: Executing Phase v3.1-06
-Progress: [█████████ ] 83% (5/6 of v3.1 build phases complete; 5/7 incl. i18n)
-Last activity: 2026-06-24 -- v3.1-06-01 done (callScribeAIWithReask shared re-ask helper, both surfaces wired)
+Phase: v3.1-06 (Durcissement contrat) — COMPLETE (2/2 plans)
+Plan: 2 of 2 complete
+Status: Phase v3.1-06 complete; next phase v3.1-07 (i18n 5 locales)
+Progress: [██████████] 100% (6/6 of v3.1 build phases complete; 6/7 incl. i18n)
+Last activity: 2026-06-24 -- v3.1-06-02 done (D-07 regression corpus, fence fellBack re-measured 0% with existing stripFence, RESPONSE_FORMAT_DECISION.md)
 
 ⚠️ TOOLING: gsd-sdk v1.42.3 cannot resolve `vX.Y-NN` phases (find-phase/phase-plan-index return "Phase not found" for ALL v3.0/v3.1 phases — regex only matches numeric-prefixed dirs). All phases orchestrated manually with explicit paths; ROADMAP/STATE/REQUIREMENTS completion writes done by hand (gsd-sdk phase.complete fails). v3.1-04 completion writes applied 2026-06-22. Same will apply when finishing v3.1-05.
 
@@ -44,9 +44,12 @@ now share the gate-validated contract; chat gained marker preservation it never 
 to chat (N=52 re-validation, GATE.md §8): dup/preamble/splitTable all 0; refBroken 1/52 = flaky chat
 footnote drop (determinism probe 1/6) → accepted as the motivating case for the v3.1-05 re-ask.
 
-Open for v3.1-05: (a) re-ask on refIntegrity breach (closes the flaky REF/footnote tail); (b) ~2%
-fellBack (model wraps JSON in a ```json fence). Pre-existing unrelated red test: ScribeContainer
-"Drawer PaperProps fullscreen on mobile" (layout, untouched by this work).
+Open tail items: (a) re-ask on refIntegrity breach (closes the flaky REF/footnote tail) — deferred
+per D-02, reconsider if the REF tail persists. (b) ~2% fellBack (model wraps JSON in a ```json
+fence) — ✅ RESOLVED v3.1-06-02: re-measured at 0% fallback over the static fence corpus (incl. a
+verbatim real-reliquat sample), CONFIRMED already closed by the existing stripFence (no extension,
+ReDoS contract preserved). Pre-existing unrelated red test: ScribeContainer "Drawer PaperProps
+fullscreen on mobile" (layout, untouched by this work).
 
 Next: plan v3.1-05 (Rendu popover UI — popover result as card + action-menu rework). Context gathered
 2026-06-22 (.planning/phases/v3.1-05-rendu-popover-ui/v3.1-05-CONTEXT.md). `/clear` then
@@ -125,6 +128,9 @@ After v3.0-04 completion, three commits refined the plugin protocol and document
 - [v3.1-03-02] DevPanelGrid étendu de façon additive (D-10) : panneau « Réponse parsée » (JSON contrat surligné) + panneau « Métriques + couverture » (aggregate(replay()) : taux/comptes/répartition/couverture + export/import) ; tout le calcul métrique reste dans scribeProbe.js
 - [v3.1-03-02] réponse parsée injectée dans le panneau via une prop `parsedResponse` (état popover, dev-gated) plutôt que re-parsée dans le composant
 - [v3.1-06-01] HARDEN-01: `callScribeAIWithReask(client, messages, {signal, surface})` = helper partagé unique (Option B, standalone wrapper) qui retourne l'objet contrat PARSÉ ; les deux surfaces (chat + popover) y passent → impossible de diverger (D-04). Re-ask déclenché par `fellBack || !valid` (D-01), 1 seul retry max (D-05), nudge correctif `REASK_CORRECTION_NUDGE` ajouté à une COPIE des messages (D-03), `signal` propagé aux 2 appels, aucun effet loading/télémétrie dans le helper (caller owns counts)
+- [v3.1-06-02] HARDEN-02 corpus: `SCRIBE_RESPONSE_FIXTURES` (scribeResponse.fixtures.js) = corpus statique réseau-free aux 6 catégories D-07 (fence/preamble/trailingComma/splitTable/brokenRef/nonJsonProse) ; scribeResponse.corpus.spec.js = assertions data-driven (describe.each/it.each) sur parseScribeResponse, SÉPARÉ du harness GATE live et de scribeResponse.spec.js
+- [v3.1-06-02] HARDEN-02 fence re-mesure (D-08): le reliquat ~2% fellBack code-fence est re-mesuré à 0% de repli et CONFIRMÉ fermé par le stripFence existant (aucune extension, regexes ancrées/linéaires, contrat ReDoS préservé) ; commentaire de confirmation ajouté à scribeResponse.js (sans changement de comportement). Ancrage réel : un fixture fence VERBATIM repris de la reliquat observée dans STATE.md
+- [v3.1-06-02] HARDEN-02 response_format (D-06): défaut `json_object` conservé. Fait proxy CONFIRMÉ — cozy-stack CallRAGQuery (model/rag/chat.go ~l.446-464) forwarde le body POST INCHANGÉ (bytes.NewReader(payload)) → response_format (et un futur json_schema) atteignent le modèle. Le report de json_schema est donc une question de capacité MODÈLE (Mistral-Small-3.2-24B honore-t-il le structured-output ?), pas un blocage proxy. SCRIBE_OUTPUT_SCHEMA reste le payload prêt. Doc: RESPONSE_FORMAT_DECISION.md
 
 ### Recent decisions affecting v3.0 (historique)
 
@@ -145,10 +151,10 @@ After v3.0-04 completion, three commits refined the plugin protocol and document
 ### Blockers/Concerns
 
 - **Risque sémantique (v3.1-03 gate)** : le modèle peut produire du JSON valide tout en dupliquant le fragment dans `discussion` ou en y laissant fuir un préambule localisé — la sonde doit valider la séparation réelle avant tout rendu de cartes
-- Proxy cozy-stack inconnu : ne pas dépendre de `response_format` avant confirmation empirique par la sonde
+- ~~Proxy cozy-stack inconnu : ne pas dépendre de `response_format`~~ ✅ RÉSOLU v3.1-06-02 : le proxy CallRAGQuery (chat.go ~l.446-464) forwarde le body POST INCHANGÉ — `response_format`/`json_schema` atteignent bien le modèle. Reste à confirmer empiriquement que le modèle upstream honore `json_schema` (question de capacité modèle, pas proxy)
 
 ## Session Continuity
 
-Last session: 2026-06-24T08:46:00.000Z
-Stopped at: Completed v3.1-06-01-PLAN.md (re-ask shared helper)
-Resume file: .planning/phases/v3.1-06-durcissement-contrat/v3.1-06-02-reask-regression-corpus-PLAN.md (next: plan 02 — regression corpus + response_format decision)
+Last session: 2026-06-24T09:20:00.000Z
+Stopped at: Completed v3.1-06-02-PLAN.md (regression corpus + response_format decision) — phase v3.1-06 COMPLETE (2/2)
+Resume file: next is phase v3.1-07 (i18n 5 locales) — gather context then `/gsd-plan-phase v3.1-07`. ⚠️ gsd-sdk v1.42.3 still cannot resolve vX.Y-NN phases; orchestrate manually with explicit paths.
