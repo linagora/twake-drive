@@ -1,6 +1,17 @@
 (function(window, undefined) {
   "use strict";
 
+  // ---- Build marker ----
+  // Bump SCRIBE_BUILD on every meaningful code.js change so a loaded build can be
+  // identified despite OO's immutable plugin cache. Verify which build is live:
+  //   • browser console → look for the "[Scribe] build …" line at plugin load/init;
+  //   • or evaluate `window.__scribeBuild` in the plugin iframe.
+  // If the console shows an OLDER build than expected, the editor served a CACHED
+  // code.js → reopen the editor in a fresh tab / private window (a plain F5 won't
+  // refetch the async plugin iframe).
+  var SCRIBE_BUILD = "2026-06-24.1 — §5bis split-style (Cas A) + e/f/c; Cas B styled-fixture fix PENDING";
+  try { window.__scribeBuild = SCRIBE_BUILD; } catch (e) {}
+
   // ---- State ----
   var lastSelectedText = "";
   var lastSelectedHtml = "";
@@ -39,6 +50,9 @@
   function log(msg) {
     console.log("[Scribe] " + msg);
   }
+
+  // Announce the loaded build immediately (module load = code.js fetched & executed).
+  log("build " + SCRIBE_BUILD);
 
   // ---- Helper: generateIntentId() ----
   function generateIntentId() {
@@ -2182,6 +2196,7 @@
   var suppressExtractionUntil = 0;
 
   window.Asc.plugin.init = function(data) {
+    log("init() — build " + SCRIBE_BUILD);
     // Ignore init calls triggered by our own paste operations
     if (pasteInProgress) {
       log("init() called (ignored — paste in progress)");
