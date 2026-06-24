@@ -21,6 +21,27 @@ occurrence doit être statuée *attendu* ou *pas attendu*, pas seulement constat
 4. Quand une règle ¶/espace devient **normative**, la répercuter dans `SELECTION-CASES.md` (colonne « État / limite »).
 5. Mettre à jour la **checklist** ci-dessous, puis **commit** (`test(T-04): verdict <CAS>/<mode> …`).
 
+## Format de présentation d'un bundle (à Ben, en revue) — normalisé 2026-06-24
+
+Gabarit fixe pour présenter un bundle :
+- **Titre** : `<CAS>/<mode>` + badge verdict (✅ pass · ❌ xfail · 🟠 review).
+- **Bundle** : chemin `test-harness/corpus/<CAS>/<mode>/` (pour ouvrir les fichiers).
+- **spec** · **fixture** · **mode**.
+- **Before — état initial (langage naturel)** : décrire le document de départ **et** la sélection
+  (ex. « Document `a-family` : 3 ¶ Normal. Sélection = tout le ¶1 “The quick brown fox”. »).
+  Preuves : `before.png` (sélection visible + marques ¶), `before.docx` (document initial).
+- **After — état obtenu (langage naturel)** : décrire le résultat ¶ par ¶, **expliciter** chaque
+  espace / ¶ ajouté ou manquant (ex. « ¶1 = “XXX” + un espace traînant + marque ¶ ; ¶2/¶3 inchangés ;
+  3 ¶, aucun ¶ vide. »). Preuves : `after.png`, `after.docx`, `model.json` (golden), `capture.json` (brut).
+- **Attendu (§5bis)** : le texte cible.
+- **Verdict + écart** : pass, ou xfail/review **avec l'écart précis** (chaque espace/¶ doit être *statué*).
+
+**Layout normalisé du bundle** (≥7 fichiers, before/after symétriques) :
+`before.png` · `after.png` · `before.docx` (= **document initial**, copie de la fixture pristine) ·
+`after.docx` (= **état obtenu**, forcesave) · `capture.json` (brut) · `model.json` (golden normalisé) ·
+`meta.json` (verdict humain) [+ `cases.row.snapshot.csv` selon le cas].
+*(Les anciens bundles `<CAS>-<mode>.docx` ont été renommés `after.docx` ; `before.docx` ajouté le 2026-06-24.)*
+
 ## Reprise après perte de session
 
 - **Comportement attendu** : `.planning/SELECTION-CASES.md` §3 (lignes 62-73) + légende L#1–L#6 (152-159).
@@ -241,7 +262,8 @@ Améliorations v2 (vs v1) :
 
 Invariants v2 :
 - **`meta.json` (verdict + comment) est humain → JAMAIS écrasé** par une recapture. La recapture
-  régénère seulement `before.png` / `after.png` / `capture.json` / `model.json` / `<bundle>.docx`.
+  régénère seulement `before.png` / `after.png` / `after.docx` / `capture.json` / `model.json`
+  (`before.docx` = document initial, statique = copie de la fixture).
 - Reste fidèle au vrai chemin de prod : injection via le hook `injectFixture` → `buildAndInject`
   (prouvé identique à la prod, court-circuite seulement le LLM).
 
@@ -277,9 +299,9 @@ Scribe (avec hooks) est dans `top>frameEditor>iframe_asc.{…}` (`__scribeTest` 
    ⚠️ **1ᵉʳ appel peut renvoyer `{error:"dumpState parse...undefined"}`** (dump émis trop tôt après
    l'injection) → **réessayer** (le 2ᵉ appel réussit). À industrialiser : retry x2 sur cette erreur.
 7. `take_screenshot` → `after.png`.
-8. forcesave + download (cf. mécanique 3) → `<CAS>-<mode>.docx`.
+8. forcesave + download (cf. mécanique 3) → **`after.docx`** ; copier la fixture pristine → **`before.docx`**.
 9. Assembler le bundle : `capture.json` (spec/mode/setRes/inj/stable/blocks/selection), `model.json`
-   (= `normalizeModel({blocks,selection})` via `oracle/normalizeModel.js`), PNG, `.docx`.
+   (= `normalizeModel({blocks,selection})` via `oracle/normalizeModel.js`), `before/after.png`, `before/after.docx`.
    **Préserver `meta.json`** (verdict/comment humains) ; ne mettre à jour que `capturedVia`/`capturedAt`
    + `captureVersion:"v2"`.
 

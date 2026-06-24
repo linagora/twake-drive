@@ -168,6 +168,8 @@ Spec validée avec Ben. Concerne le plugin Scribe (`code.js`) : injection `build
 
 **Convention « espace » :** classe blancs complète = espace, espace insécable ` `, tabulation, saut de ligne (`WS = /[\s\n\r\t ]/`).
 
+**Bord de ¶ = saut de ligne (précision normative 2026-06-24) :** le **début de ¶** (aucun caractère avant le point d'insertion) et la **fin de ¶** (le caractère *suivant* est la marque ¶ = retour à la ligne) comptent **comme un blanc** ⇒ **aucune espace ajoutée de ce côté**. C'est ce qui rend `A1 replace` (tout P1 supprimé puis insertion dans un ¶ vide) = **`XXX`** strict, sans espace traînant.
+
 ### Unification
 **Remplacer = supprimer la sélection (OO gère la suppression/fusion comme il veut), puis insérer** au curseur réduit résultant. → une seule logique : l'**insertion**.
 
@@ -180,7 +182,10 @@ Spec validée avec Ben. Concerne le plugin Scribe (`code.js`) : injection `build
 = titre / liste / citation / bloc de code. **N'en est PAS** le formatage de caractères (gras/italique/souligné/barré/code inline) → un para de texte gras reste « **sans style** ».
 
 ### Injection — Cas A : 1ᵉʳ para **sans style**
-- **A.1 — 1ᵉʳ para → INLINE** : runs injectés **dans le ¶ hôte** au point d'insertion ; **¶ hôte et son style conservés**. **Espacement symétrique** (1 espace de séparation, jamais double) : *avant* les runs si le caractère précédent est non-blanc (et pas en début de ¶) ; *après* les runs si le caractère suivant est non-blanc ; si une espace existe déjà de ce côté, ne rien ajouter.
+- **A.1 — 1ᵉʳ para → INLINE** : runs injectés **dans le ¶ hôte** au point d'insertion ; **¶ hôte et son style conservés**. **Espacement symétrique** (1 espace de séparation, jamais double) :
+  - *avant* les runs : ajouter une espace **ssi** il existe un caractère précédent **et** qu'il n'est **pas** un blanc (classe WS) ; **rien en début de ¶** (pas de caractère précédent).
+  - *après* les runs : ajouter une espace **ssi** il existe un caractère suivant **et** qu'il n'est **pas** un blanc ; **rien en fin de ¶** (le caractère suivant est la marque ¶ = retour à la ligne, donc compté comme blanc).
+  - si un blanc existe déjà de ce côté, ne rien ajouter (jamais de double).
 - **A.2 — paras suivants (2..n) → BLOCK** : chacun = son propre ¶ avec **son style md**, inséré au point courant. **Jamais de ¶ vide** : insertion **au début** de l'hôte → blocs **avant** l'hôte ; **à la fin** → **après** ; **au vrai milieu seulement** → split de l'hôte (les **deux moitiés gardent le style de l'hôte**).
 
 ### Injection — Cas B : 1ᵉʳ para **avec style**

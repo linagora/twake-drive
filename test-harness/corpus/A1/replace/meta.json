@@ -10,6 +10,6 @@
   "capturedVia": "Chrome DevTools MCP v3 (§5bis fix; injectAtSelection atomic; paraMarks+grabFocus+forcesave docx)",
   "capturedAt": "2026-06-24",
   "verdict": "xfail",
-  "comment": "§5bis NON atteint: resultat 'XXX ' avec un espace TRAINANT (run ' ' apres XXX). Attendu §5bis = 'XXX' (aucun voisin -> aucune espace). Le ¶ vide a disparu (bug L#7 corrige) mais le trailing-space du smart-spacing en mode REPLACE reste a corriger (le fix (b) @end ne couvrait que l'insert; le replace plein-¶ ajoute encore l'espace apres). Golden = sortie buggy actuelle. Correctif code.js: ne pas ajouter d'espace apres si le ¶ devient vide cote droit en replace.",
+  "comment": "§5bis NON atteint: resultat 'XXX ' avec un espace TRAINANT (run ' ' apres XXX). Attendu §5bis = 'XXX'. Regle desormais EXPLICITE dans §5bis (precision 2026-06-24): bord de ¶ = saut de ligne -> la fin de ¶ (caractere suivant = marque ¶) compte comme un blanc => AUCUNE espace apres ; rien avant non plus (debut de ¶). Le ¶ vide a disparu (bug L#7 corrige) mais le smart-spacing en mode REPLACE traite encore la fin-de-¶ comme un voisin non-blanc -> BUG code.js a corriger dans buildAndInject (le fix (b) @end ne couvrait que l'insert). Golden = sortie buggy actuelle, a rebenir pass apres le fix.",
   "captureVersion": "v3"
 }
