@@ -191,6 +191,12 @@ Spec validée avec Ben. Concerne le plugin Scribe (`code.js`) : injection `build
 ### Injection — Cas B : 1ᵉʳ para **avec style**
 - **Tous** les paras → **BLOCK** (idem A.2) : avant / après / split selon position, **jamais de ¶ vide**, moitiés du split gardant le style hôte, chaque para gardant son style md.
 
+### INVARIANT « split » — style des deux moitiés (normatif, validé Ben 2026-06-24)
+**Chaque fois que l'hôte est scindé** (au vrai milieu, en mode block, insert OU replace — et plus tard lors d'un split de **cellule**), les **DEUX ¶ résultants** (avant ET après le point de split) **doivent porter le MÊME style de ¶ que l'hôte d'origine**. Aucun des deux ne doit retomber en *Normal*. *(État code 2026-06-24 : la demi-DROITE garde le style hôte, la demi-GAUCHE le perd — OO applique le style du 1ᵉʳ para injecté à la fusion. Correctif à faire : ré-appliquer le style hôte aux deux moitiés après le split. Cible de test : `styled-family` block @mid/@end → les moitiés de P1 restent `Heading 1`.)*
+
+### ⚠️ OUVERT — « 1ᵉʳ para inline » pour un contenu **multi-¶** (à trancher)
+A.1 (1ᵉʳ para inline) + A.2 (paras 2..n block, placés avant/après/split) ont été pensées pour le cas **mono-¶** (`"XXX"`). Pour un contenu **multi-¶**, elles se contredisent à `@start` (le 1ᵉʳ para fusionnerait inline dans l'hôte tandis que le 2ᵉ irait en bloc *avant* l'hôte → ordre inversé `[Second][First+hôte]`). **À décider :** *(A)* le 1ᵉʳ para fusionne inline + reste en blocs (lettre de A.1/A.2) ; ou *(B)* dès qu'il y a plusieurs paras, **tout en blocs** (inline réservé au mono-¶), ordre préservé, l'hôte se scindant en 2 moitiés de même style. Le code actuel est incohérent (full-block à `@start`, fusion OO à `@mid`/`@end`).
+
 ### À corriger en même temps
 - **L#1** : en inline avec remplacement **partiel**, le **suffixe non sélectionné ne doit pas perdre son formatage** de caractères. → **VÉRIFIÉ OK (2026-06-24)** sur le code actuel (cf. légende L#1) : aucun correctif nécessaire pour le chemin inline.
 - **Post-sélection** : couvre le contenu injecté (mécanisme existant, cf. **L#6**).
