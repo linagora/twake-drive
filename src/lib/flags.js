@@ -30,6 +30,7 @@ const flagsList = () => {
   flag('drive.hide-nextcloud-dev')
   flag('drive.excalidraw.enabled')
   flag('drive.excalidraw.collab')
+  flag('drive.excalidraw.shortcut.enabled')
   flag('drive.pdf-editor.enabled')
   flag('sharing.auto-open-settings.enabled')
   flag('sharing.generate-link-button.enabled')
