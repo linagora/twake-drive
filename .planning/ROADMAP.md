@@ -69,7 +69,7 @@ Full v3.0 phase details are preserved in `.planning/milestones/v3.0-ROADMAP.md`.
 - [x] **Phase v3.1-04: Rendu chat (cartes + clavier)** (5/5 plans) -- completed 2026-06-22 - Cartes de fragment encadrées aux positions `{{fragment:N}}`, boutons Copier/Insérer/Remplacer, réinjection riche par fragment, navigation clavier complète
 - [x] **Phase v3.1-05: Rendu popover (UI)** - Popover rend le fragment unique en carte (réutilise FragmentCard/MarkdownPreview de v3.1-04, marqueurs propres), sans afficher la `discussion` ; refonte du menu d'actions (prompt libre intégré comme entrée, entrée « Ouvrir le panneau latéral » remplaçant l'icône)
 - [x] **Phase v3.1-06: Durcissement contrat** (2/2 plans) -- completed 2026-06-24 - Re-ask sur parse invalide (1× avant repli), corpus de régression des réponses malformées (6 catégories D-07) + re-mesure fence fellBack (0%, stripFence confirmé), décision documentée du défaut `response_format` (json_object, proxy forwarding confirmé)
-- [ ] **Phase v3.1-07: i18n 5 locales** - Libellés de carte + messages de repli traduits et vérifiés sur fr/en/de/es/it ; aucune chaîne Scribe en dur dans les surfaces popover/chat
+- [x] **Phase v3.1-07: i18n 5 locales** - Libellés de carte + messages de repli traduits et vérifiés sur fr/en/de/es/it ; aucune chaîne Scribe en dur dans les surfaces popover/chat
 
 ## Phase Details
 
@@ -171,7 +171,7 @@ Plans:
   2. Aucune chaîne Scribe en dur ne subsiste dans les surfaces popover et chat (audit des littéraux)
 **Plans**:
 - [x] v3.1-07-01-PLAN.md — Add 7 missing Scribe.* keys to de/es/it + 2 new extraction keys to all 5 locales; flattened key-set parity Jest gate (scribeI18nParity.spec.js) [I18N-01] (wave 1)
-- [ ] v3.1-07-02-PLAN.md — Extract 3 confirmed hard-coded FR literals in ScribeResultPanel.jsx to t() + literal-audit regression gate (scribeLiteralAudit.spec.js) [I18N-01] (wave 2, depends on 01)
+- [x] v3.1-07-02-PLAN.md — Extract 3 confirmed hard-coded FR literals in ScribeResultPanel.jsx to t() + literal-audit regression gate (scribeLiteralAudit.spec.js) [I18N-01] (wave 2, depends on 01)
 **UI hint**: yes
 
 ## Progress
@@ -204,7 +204,7 @@ v3.1 phases execute in order: v3.1-01 -> v3.1-02 -> v3.1-03 (HARD GATE) -> v3.1-
 | v3.1-04. Rendu chat (cartes + clavier) | v3.1 | 5/5 | Complete | 2026-06-22 |
 | v3.1-05. Rendu popover (UI) | v3.1 | 2/2 | Complete | 2026-06-22 |
 | v3.1-06. Durcissement contrat | v3.1 | 2/2 | Complete | 2026-06-24 |
-| v3.1-07. i18n 5 locales | v3.1 | 1/2 | In progress | - |
+| v3.1-07. i18n 5 locales | v3.1 | 2/2 | Complete | - |
 
 ## Backlog
 

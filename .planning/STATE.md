@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v3.1
 milestone_name: Contrat de réponse structurée LLM
 status: executing
-stopped_at: Completed v3.1-07-01-PLAN.md (locale-key parity I18N-01 + scribeI18nParity.spec.js gate) — phase v3.1-07 (1/2)
-last_updated: "2026-06-24T10:30:00.000Z"
-last_activity: 2026-06-24 -- Completed v3.1-07-01 (Scribe.* 5-locale parity + parity Jest gate)
+stopped_at: Completed v3.1-07-02-PLAN.md (literal-audit extraction I18N-01 + scribeLiteralAudit.spec.js gate) — phase v3.1-07 COMPLETE (2/2)
+last_updated: "2026-06-24T11:00:00.000Z"
+last_activity: 2026-06-24 -- Completed v3.1-07-02 (3 FR literals -> t() in ScribeResultPanel + literal-audit Jest gate); phase v3.1-07 done, I18N-01 complete
 progress:
   total_phases: 7
-  completed_phases: 6
-  total_plans: 9
-  completed_plans: 9
-  percent: 88
+  completed_phases: 7
+  total_plans: 10
+  completed_plans: 10
+  percent: 100
 ---
 
 # Project State
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-06-16)
 
 ## Current Position
 
-Phase: v3.1-07 (i18n 5 locales) — EXECUTING
-Plan: 2 of 2 (plan 01 complete)
-Status: Executing Phase v3.1-07
-Progress: [██████████] 100% (6/6 of v3.1 build phases complete; 6/7 incl. i18n)
-Last activity: 2026-06-24 -- Completed v3.1-07-01 (Scribe.* 5-locale parity + parity Jest gate)
+Phase: v3.1-07 (i18n 5 locales) — COMPLETE (2/2)
+Plan: 2 of 2 complete
+Status: Phase v3.1-07 complete — I18N-01 done; milestone v3.1 i18n goal reached
+Progress: [██████████] 100% (7/7 v3.1 phases complete incl. i18n)
+Last activity: 2026-06-24 -- Completed v3.1-07-02 (3 FR literals -> t() + literal-audit Jest gate)
 
 ⚠️ TOOLING: gsd-sdk v1.42.3 cannot resolve `vX.Y-NN` phases (find-phase/phase-plan-index return "Phase not found" for ALL v3.0/v3.1 phases — regex only matches numeric-prefixed dirs). All phases orchestrated manually with explicit paths; ROADMAP/STATE/REQUIREMENTS completion writes done by hand (gsd-sdk phase.complete fails). v3.1-04 completion writes applied 2026-06-22. Same will apply when finishing v3.1-05.
 
@@ -130,6 +130,7 @@ After v3.0-04 completion, three commits refined the plugin protocol and document
 - [v3.1-06-01] HARDEN-01: `callScribeAIWithReask(client, messages, {signal, surface})` = helper partagé unique (Option B, standalone wrapper) qui retourne l'objet contrat PARSÉ ; les deux surfaces (chat + popover) y passent → impossible de diverger (D-04). Re-ask déclenché par `fellBack || !valid` (D-01), 1 seul retry max (D-05), nudge correctif `REASK_CORRECTION_NUDGE` ajouté à une COPIE des messages (D-03), `signal` propagé aux 2 appels, aucun effet loading/télémétrie dans le helper (caller owns counts)
 - [v3.1-06-02] HARDEN-02 corpus: `SCRIBE_RESPONSE_FIXTURES` (scribeResponse.fixtures.js) = corpus statique réseau-free aux 6 catégories D-07 (fence/preamble/trailingComma/splitTable/brokenRef/nonJsonProse) ; scribeResponse.corpus.spec.js = assertions data-driven (describe.each/it.each) sur parseScribeResponse, SÉPARÉ du harness GATE live et de scribeResponse.spec.js
 - [v3.1-06-02] HARDEN-02 fence re-mesure (D-08): le reliquat ~2% fellBack code-fence est re-mesuré à 0% de repli et CONFIRMÉ fermé par le stripFence existant (aucune extension, regexes ancrées/linéaires, contrat ReDoS préservé) ; commentaire de confirmation ajouté à scribeResponse.js (sans changement de comportement). Ancrage réel : un fixture fence VERBATIM repris de la reliquat observée dans STATE.md
+- [v3.1-07-02] I18N-01 surface layer (criterion 2): the 3 confirmed hard-coded FR literals in ScribeResultPanel.jsx (DevPanelTitle info button → t('Scribe.panel.description'), CopyButton → t('Scribe.button.copy'), disabled-Insert tooltip → t('Scribe.result.table_partial_insert_unavailable')) wired through t(); added useI18n() to DevPanelTitle + CopyButton. Fuller audit found NO 4th user-facing literal — the other surfaces are already t()-only; the "Inspecteur dev (chat)" string is isScribeDevMd()-gated and OUT of scope per CONTEXT. Locked behind scribeLiteralAudit.spec.js: source-scans the 6 user surfaces, fails on any known FR sentence or hard-coded aria-label/title prop literal (regex scoped so dev-panel prose + t() calls do not trip it); proven red on re-injection. Full Scribe suite 239/240 (only known pre-existing Drawer-PaperProps-mobile red remains). I18N-01 COMPLETE; phase v3.1-07 done (2/2).
 - [v3.1-07-01] I18N-01 data layer: all 5 target locales (fr/en/de/es/it) now hold 46 identical Scribe.* keys. Added 7 missing keys to de/es/it (native-quality, de formal `Sie` / es+it tu-tú per existing tone) + 2 new extraction keys (panel.description, result.table_partial_insert_unavailable) to all 5. Locked behind scribeI18nParity.spec.js (flattened key-set deep-equal vs fr reference + non-empty guard, scoped to 5 target locales). Additive-only diff (no existing value mutated). Spec aliases locale imports as localeXx to avoid shadowing Jest's global `it`. Plan 02 wires the new keys into .jsx only (disjoint files, no button.copy merge race).
 - [v3.1-06-02] HARDEN-02 response_format (D-06): défaut `json_object` conservé. Fait proxy CONFIRMÉ — cozy-stack CallRAGQuery (model/rag/chat.go ~l.446-464) forwarde le body POST INCHANGÉ (bytes.NewReader(payload)) → response_format (et un futur json_schema) atteignent le modèle. Le report de json_schema est donc une question de capacité MODÈLE (Mistral-Small-3.2-24B honore-t-il le structured-output ?), pas un blocage proxy. SCRIBE_OUTPUT_SCHEMA reste le payload prêt. Doc: RESPONSE_FORMAT_DECISION.md
 
@@ -156,6 +157,6 @@ After v3.0-04 completion, three commits refined the plugin protocol and document
 
 ## Session Continuity
 
-Last session: 2026-06-24T09:20:00.000Z
-Stopped at: Completed v3.1-06-02-PLAN.md (regression corpus + response_format decision) — phase v3.1-06 COMPLETE (2/2)
-Resume file: next is phase v3.1-07 (i18n 5 locales) — gather context then `/gsd-plan-phase v3.1-07`. ⚠️ gsd-sdk v1.42.3 still cannot resolve vX.Y-NN phases; orchestrate manually with explicit paths.
+Last session: 2026-06-24T11:00:00.000Z
+Stopped at: Completed v3.1-07-02-PLAN.md (literal-audit extraction + scribeLiteralAudit.spec.js gate) — phase v3.1-07 COMPLETE (2/2); I18N-01 done
+Resume file: phase v3.1-07 is complete — milestone v3.1 i18n goal reached. All v3.1 phases (01–07) done. ⚠️ gsd-sdk v1.42.3 still cannot resolve vX.Y-NN phases; orchestrate manually with explicit paths.
