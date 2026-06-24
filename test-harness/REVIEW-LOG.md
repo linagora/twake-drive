@@ -121,6 +121,31 @@ de l'axe A (style hôte) — la preuve rouge :
 Verdicts `meta.json` laissés à `null` (revue cas par cas à venir). `.docx` joints : OO renumérote les
 styleId (663/664 = Heading1/2) — le NAME via l'oracle fait foi, le `.docx` est un backstop.
 
+## Étape 4 — Correctif `code.js` §5bis (EN COURS, 2026-06-24)
+
+`buildAndInject` insert : supprimé le `content.unshift(Api.CreateParagraph())` (bug L#7) ; 1 ¶ plain →
+**inline** dans l'hôte (garde le style) ; multi/stylé → block ; `needSpaceBefore/After` symétriques
+calculés pour l'insert ; `selectByRefs` corrigé (content[0] = 1ᵉʳ vrai ¶). Commit WIP.
+
+**Validation live (a-family propre) :**
+- A4 (plage `start..space`) → `The XXX quick brown fox` ✅ (inline, **plus de ¶ vide**).
+- A0 (@start) → `XXX The quick brown fox` ✅.
+- A1 (@end, plage) → `The quick brown foxXXX  ` ❌ — espacement en **fin de ¶** faux (pas d'espace avant,
+  double après) → à corriger.
+
+**DÉCOUVERTE MAJEURE (limitation harnais, pas un bug prod) :** un **curseur collapsed** posé par le hook
+`setSelection` **ne survit pas** jusqu'au callCommand `injectFixture` — il **retombe à l'offset 0**
+(prouvé : setSelection renvoie s=9, mais dumpState juste après lit offset 0). Les **plages** survivent.
+→ **Ça explique rétroactivement « l'anomalie A2 »** (insert au début) : ce n'était jamais un bug
+d'injection, juste le curseur collapsed réinitialisé. ⇒ Les cas **A0/A2 (curseurs)** ne sont **pas
+testables** tant que le harnais ne fait pas **setSelection + injectFixture dans le MÊME callCommand**
+(ou un hook atomique `setSelectionAndInject`). À faire avant de pouvoir valider A0/A2.
+
+**Reste étape 4 :** (a) hook atomique set+inject pour curseurs collapsed ; (b) corriger l'espacement
+@end (A1) ; (c) gestion block « zéro ¶ vide aux bords » ; (d) font-run vs style (ne pas écraser
+l'apparence du style hôte) + éventuellement oracle run-font ; (e) extraction conditionnelle des
+marqueurs md ; (f) L#1. Puis recapturer a-family + styled et passer les xfail au vert.
+
 ## Constats transverses ouverts (à statuer pendant la revue)
 
 - **L#7 — ¶ vide parasite à l'insertion (BUG confirmé, A0/insert)** : `code.js:1479`
