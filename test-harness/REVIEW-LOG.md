@@ -33,22 +33,26 @@ Fixture source `a-family.docx` (identique pour tous) : `P1="The quick brown fox"
 
 ## Checklist (9 bundles)
 
-> ✅ **2026-06-23 : les 9 bundles A0–A4 sont RECAPTURÉS en v2** (sélection visible via grabFocus,
-> marques ¶ affichées, `.docx` édité joint). Tous les `model.json` v2 sont **byte-identiques** à la v1
-> ⇒ la recapture reproduit exactement l'ancienne ; les bugs constatés sont réels, pas des artefacts.
-> Reste à faire : la **revue cas par cas** (verdicts) sur les bundles v2 nets — reprendre à A1/insert.
+> ✅ **2026-06-24 : les 9 bundles A0–A4 sont RECAPTURÉS en v3** (= post-correctif `code.js` §5bis,
+> hook atomique `injectAtSelection`, ¶ marks via `put_ShowParaMarks`, sélection visible via `grabFocus`,
+> `.docx` édité via forcesave). Upload pristine `a-family (4).docx`, **une seule session**, `asc_undoAllChanges`
+> entre chaque bundle. **8/9 = pass** (texte = §5bis exact, un seul ¶, plus AUCUN ¶ vide ; les 9 `.docx`
+> ont 3 `<w:p>`). **1 xfail restant = A1/replace** (espace traînant `XXX␣`, smart-spacing du replace plein-¶).
+>
+> ⏪ Historique v2 (2026-06-23) : capture *avant* correctif, `model.json` byte-identiques v1 (bugs réels,
+> pas artefacts). Les goldens v3 **remplacent** les v2 (sortie §5bis correcte au lieu de la sortie buggy).
 
-| Bundle | statut revue | verdict | ¶/espace ajouté (constat) |
+| Bundle | statut revue | verdict | résultat v3 (§5bis) / constat |
 |---|---|---|---|
-| A0/insert  | ✅ REVU + **recapturé v2** | **xfail** | ¶ vide en TÊTE = **FAIL** (confirmé live + `after.png` v2 avec ¶). Bug `code.js:1479`. Règle L#7. Désiré: `[XXX][P1][P2][P3]` |
-| A1/insert  | recapturé v2 — à revoir | — | ¶ vide en QUEUE (entre XXX et P2) — **probable FAIL** via L#7 (insert @end ⇒ pas de ¶ vide) |
-| A1/replace | recapturé v2 — à revoir | — | run `" "` traînant après XXX |
-| A2/insert  | recapturé v2 — à revoir | — | ¶ vide en TÊTE + anomalie (P1 resté intact) — L#7 + fixture @mid sur espace |
-| A2/replace | recapturé v2 — à revoir | — | double espace autour de XXX (csv=xfail) |
-| A3/insert  | recapturé v2 — à revoir | — | ¶ vide en QUEUE — **probable FAIL** via L#7 (insert @end ⇒ pas de ¶ vide) |
-| A3/replace | recapturé v2 — à revoir | — | aucun (`The ` + `XXX`) |
-| A4/insert  | recapturé v2 — à revoir | — | aucun (split propre, XXX en ¶ isolé) |
-| A4/replace | recapturé v2 — à revoir | — | espace repositionnée (`XXX quick brown fox`) |
+| A0/insert  | ✅ REVU + **recapturé v3** | **pass** | `XXX The quick brown fox` — INLINE, **plus de ¶ vide** (bug L#7 corrigé). 1 espace après, rien avant |
+| A1/insert  | ✅ REVU + **recapturé v3** | **pass** | `The quick brown fox XXX` — insert @end, 1 espace avant, **pas de trailing**, plus de ¶ vide |
+| A1/replace | ✅ REVU + **recapturé v3** | **xfail** | `XXX␣` — **espace traînant** restant (attendu §5bis = `XXX`). ¶ vide disparu ; trailing-space du smart-spacing en *replace* plein-¶ encore à corriger |
+| A2/insert  | ✅ REVU + **recapturé v3** | **pass** | `The quick XXX brown fox` — curseur @mid bien placé (hook atomique), pas de double espace |
+| A2/replace | ✅ REVU + **recapturé v3** | **pass** | `The quick XXX brown fox` — **double espace résolu** (ex-csv xfail) |
+| A3/insert  | ✅ REVU + **recapturé v3** | **pass** | `The quick brown fox XXX` — insert @end, plus de ¶ vide |
+| A3/replace | ✅ REVU + **recapturé v3** | **pass** | `The XXX` — hôte `The ` conservé, pas de trailing |
+| A4/insert  | ✅ REVU + **recapturé v3** | **pass** | `The XXX quick brown fox` — split inline propre |
+| A4/replace | ✅ REVU + **recapturé v3** | **pass** | `XXX quick brown fox` — pas d'espace avant (début de ¶) |
 
 ## Spec d'injection/extraction FINALISÉE (2026-06-24) → `SELECTION-CASES.md §5bis`
 
@@ -177,6 +181,32 @@ au correct §5bis) en UNE session (upload pristine), puis figer les verdicts pas
 ⚠️ **Hygiène recapture** : le documentserver **auto-sauvegarde** → la source serveur se pollue entre
 sessions. Pour recapturer proprement : **un upload pristine + UNE seule session** (undo-all entre bundles,
 jamais de reload mid-batch). Chaque re-upload du même nom est dédupliqué (`a-family (N).docx`).
+
+## Étape de consolidation — recapture a-family v3 (FAIT, 2026-06-24)
+
+Recapture des 9 bundles A0–A4 × insert/replace **avec le correctif `code.js` §5bis en place**, en
+**UNE seule session** (oo-dev monté sur CE worktree). Flux par bundle : upload pristine →
+`a-family (4).docx`, éditeur ouvert en `isolatedContext` frais (cache plugin `immutable`),
+`put_ShowParaMarks(true)`, plugin `__scribeTestForce=true` ; puis pour chaque bundle
+`asc_undoAllChanges()` → `setSelection(spec)`+`grabFocus()`→`before.png` →
+**`injectAtSelection(spec,"XXX",mode)`** (hook atomique : sélection + `buildAndInject` dans le MÊME
+callCommand) → `dumpState` ×2 (stable) → `after.png` → forcesave + download `.docx` → assemblage
+(`capture.json` brut, `model.json` via `oracle/normalizeModel.js`, `meta.json` verdict).
+
+**Résultat : 8/9 = pass, 1 xfail.** Tous les `.docx` ont **3 `<w:p>`** (le ¶ vide parasite L#7 a
+**disparu partout**). Texte = §5bis exact sur 8 bundles (cf. tableau checklist). Doc-key forcesave lu
+sur `window.config.document.key` (et non `docEditor.config` — non exposé dans ce build de l'exemple).
+
+**Seul reste rouge — `A1/replace` = `XXX␣` (espace traînant).** Attendu §5bis = `XXX` (aucun voisin
+→ aucune espace). Le correctif (b) « espacement @end » ne traitait que l'**insert** ; en **replace**
+plein-¶ le smart-spacing ajoute encore un run `" "` après XXX quand le ¶ devient vide à droite.
+→ **À corriger dans `buildAndInject`** : ne pas émettre `aChar`/espace après si le côté droit est vide
+après suppression (replace). Bundle gelé en **xfail** (golden = sortie buggy), à rebénir après ce fix.
+
+**Reste après consolidation :** (le fix replace-trailing-space ci-dessus) puis les points (c)/(d)/(e)/(f)
+de l'étape 4, et enfin le **port de `code.js` → `scribe-in-right-panel`** (sans conflit, il n'y touche pas).
+Note : l'ancien `statusFromCsv` de A2/replace = `xfail` (double espace) est désormais **résolu** (verdict
+`pass`) — à répercuter dans `cases.csv` au prochain passage CSV⇒MD.
 
 ## Constats transverses ouverts (à statuer pendant la revue)
 

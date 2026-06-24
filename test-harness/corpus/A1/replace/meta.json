@@ -7,9 +7,9 @@
   "statusFromCsv": "pass",
   "stable": true,
   "setSelectionOk": true,
-  "capturedVia": "Chrome DevTools MCP v2 (paraMarks+grabFocus+forcesave docx)",
-  "capturedAt": "2026-06-23",
-  "verdict": null,
-  "comment": "",
-  "captureVersion": "v2"
+  "capturedVia": "Chrome DevTools MCP v3 (§5bis fix; injectAtSelection atomic; paraMarks+grabFocus+forcesave docx)",
+  "capturedAt": "2026-06-24",
+  "verdict": "xfail",
+  "comment": "§5bis NON atteint: resultat 'XXX ' avec un espace TRAINANT (run ' ' apres XXX). Attendu §5bis = 'XXX' (aucun voisin -> aucune espace). Le ¶ vide a disparu (bug L#7 corrige) mais le trailing-space du smart-spacing en mode REPLACE reste a corriger (le fix (b) @end ne couvrait que l'insert; le replace plein-¶ ajoute encore l'espace apres). Golden = sortie buggy actuelle. Correctif code.js: ne pas ajouter d'espace apres si le ¶ devient vide cote droit en replace.",
+  "captureVersion": "v3"
 }
