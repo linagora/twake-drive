@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v3.2
 milestone_name: Contexte enrichi du prompt
-status: planning
-stopped_at: v3.2 milestone started — roadmap created (3 phases), next step is /gsd-plan-phase v3.2-01
-last_updated: "2026-06-24T15:00:00.000Z"
-last_activity: 2026-06-24 -- Created v3.2 roadmap (Contexte enrichi du prompt): 3 phases (v3.2-01 UX statique / v3.2-02 câblage discussion+sélection / v3.2-03 câblage document complet + taille), 10/10 requirements mapped
+status: executing
+stopped_at: Completed v3.2-01-01-PLAN.md (« Inclure » zone, UX statique). All 3 tasks committed; all 5 gates green; CTX-UX-01..05 complete.
+last_updated: "2026-06-24T15:30:00.000Z"
+last_activity: 2026-06-24 -- Completed Phase v3.2-01 Plan 01 (Zone Inclure discrète, UX statique)
 progress:
   total_phases: 3
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  completed_phases: 1
+  total_plans: 1
+  completed_plans: 1
+  percent: 33
 ---
 
 # Project State
@@ -35,19 +35,19 @@ Note: the four verification items are pre-existing human-verify gaps inherited f
 See: .planning/PROJECT.md (updated 2026-06-24)
 
 **Core value:** L'utilisateur peut interagir avec l'IA de maniere fluide -- actions rapides inline ou chat conversationnel dans un panneau lateral -- pour transformer et manipuler le contenu de son document OnlyOffice.
-**Current focus:** v3.2 Contexte enrichi du prompt — milestone démarré, planification
+**Current focus:** Phase v3.2-01 — Zone Inclure discrète (UX statique)
 
 ## Current Position
 
-Phase: v3.2-01 (Zone « Inclure » discrète — UX statique) — NOT STARTED (next: plan it)
-Plan: 0 of 0 (phase not yet planned)
-Status: Milestone v3.2 started / planning — roadmap created, no phase planned yet
-Progress: [----------] 0% (0/3 v3.2 phases)
-Last activity: 2026-06-24 -- Created v3.2 roadmap (Contexte enrichi du prompt)
+Phase: v3.2-01 (Zone Inclure discrète (UX statique)) — COMPLETE
+Plan: 1 of 1 (done)
+Status: Phase v3.2-01 complete — ready to plan v3.2-02
+Progress: [###-------] 33% (1/3 v3.2 phases)
+Last activity: 2026-06-24 -- Completed Phase v3.2-01 Plan 01 (Zone Inclure discrète, UX statique)
 
 ⚠️ TOOLING: gsd-sdk v1.42.3 cannot resolve `vX.Y-NN` phases (find-phase/phase-plan-index return "Phase not found" for ALL v3.0/v3.1 phases — regex only matches numeric-prefixed dirs). Orchestrate v3.2 phases manually with explicit paths; ROADMAP/STATE/REQUIREMENTS completion writes done by hand (gsd-sdk phase.complete fails on vX.Y-NN).
 
-Next: plan v3.2-01 (`/gsd-plan-phase v3.2-01`). Phase dir to create: `.planning/phases/v3.2-01-inclure-zone-ux/`.
+Next: plan v3.2-02 (`/gsd-plan-phase v3.2-02`) — câblage discussion + sélection. The three include booleans live in ScribeContext (seam comment `read by v3.2-02/03; no prompt injection in v3.2-01`); v3.2-02 reads them at the `sendMessage` prompt-assembly seam.
 
 ## v3.2 Roadmap Summary
 
@@ -84,6 +84,6 @@ Execution order: v3.2-01 (UX statique) -> v3.2-02 (câblage discussion + sélect
 
 ## Session Continuity
 
-Last session: 2026-06-24T15:00:00.000Z
-Stopped at: Created v3.2 roadmap (ROADMAP.md Phase Details + Progress rows, REQUIREMENTS.md traceability, PROJECT.md Next Milestone Goals, STATE.md reset). No phase planned yet.
-Resume file: milestone v3.2 is in planning — next step `/gsd-plan-phase v3.2-01`. ⚠️ gsd-sdk v1.42.3 still cannot resolve vX.Y-NN phases; orchestrate manually with explicit paths.
+Last session: 2026-06-24T15:30:00.000Z
+Stopped at: Completed v3.2-01-01-PLAN.md (« Inclure » zone, UX statique). All 3 tasks committed; all 5 gates green; CTX-UX-01..05 marked complete.
+Resume file: next step `/gsd-plan-phase v3.2-02`. ⚠️ gsd-sdk v1.42.3 still cannot resolve vX.Y-NN phases; orchestrate manually with explicit paths (ROADMAP/STATE/REQUIREMENTS completion writes done by hand).

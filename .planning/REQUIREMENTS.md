@@ -8,11 +8,11 @@
 
 ### UX — zone « Inclure » (statique d'abord)
 
-- [ ] **CTX-UX-01**: Une zone « Inclure » apparaît dans le side panel, au-dessus du prompt, contenant trois cases à cocher : « document », « discussion », « sélection ».
-- [ ] **CTX-UX-02**: Les cases « document » et « discussion » sont décochées par défaut.
-- [ ] **CTX-UX-03**: La case « sélection » n'apparaît que lorsqu'une sélection active existe dans le document ; elle est cochée par défaut dès qu'une sélection existe.
-- [ ] **CTX-UX-04**: Cocher « sélection » fait apparaître la zone d'affichage de la sélection courante (réutilise le chip/zone de sélection existant) ; la décocher la masque.
-- [ ] **CTX-UX-05**: Les cases à cocher sont visuellement **discrètes** — elles n'alourdissent pas l'UI du panel (taille réduite, intégration légère au-dessus du prompt, cohérente avec le thème clair/sombre).
+- [x] **CTX-UX-01**: Une zone « Inclure » apparaît dans le side panel, au-dessus du prompt, contenant trois cases à cocher : « document », « discussion », « sélection ».
+- [x] **CTX-UX-02**: Les cases « document » et « discussion » sont décochées par défaut.
+- [x] **CTX-UX-03**: La case « sélection » n'apparaît que lorsqu'une sélection active existe dans le document ; elle est cochée par défaut dès qu'une sélection existe.
+- [x] **CTX-UX-04**: Cocher « sélection » fait apparaître la zone d'affichage de la sélection courante (réutilise le chip/zone de sélection existant) ; la décocher la masque.
+- [x] **CTX-UX-05**: Les cases à cocher sont visuellement **discrètes** — elles n'alourdissent pas l'UI du panel (taille réduite, intégration légère au-dessus du prompt, cohérente avec le thème clair/sombre).
 
 ### Câblage LLM — injection des contextes
 
@@ -26,11 +26,11 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CTX-UX-01 | v3.2-01 | Pending |
-| CTX-UX-02 | v3.2-01 | Pending |
-| CTX-UX-03 | v3.2-01 | Pending |
-| CTX-UX-04 | v3.2-01 | Pending |
-| CTX-UX-05 | v3.2-01 | Pending |
+| CTX-UX-01 | v3.2-01 | Complete |
+| CTX-UX-02 | v3.2-01 | Complete |
+| CTX-UX-03 | v3.2-01 | Complete |
+| CTX-UX-04 | v3.2-01 | Complete |
+| CTX-UX-05 | v3.2-01 | Complete |
 | CTX-LLM-02 | v3.2-02 | Pending |
 | CTX-LLM-03 | v3.2-02 | Pending |
 | CTX-LLM-05 | v3.2-02 | Pending |

@@ -77,7 +77,7 @@ Full details: `.planning/milestones/v3.1-ROADMAP.md`
 
 ### v3.2 Contexte enrichi du prompt (Phases v3.2-01 to v3.2-03) -- IN PROGRESS
 
-- [ ] **Phase v3.2-01: Zone « Inclure » discrète (UX statique)** - Discreet include zone with 3 checkboxes above the prompt, no LLM wiring
+- [x] **Phase v3.2-01: Zone « Inclure » discrète (UX statique)** - Discreet include zone with 3 checkboxes above the prompt, no LLM wiring
 - [ ] **Phase v3.2-02: Câblage discussion + sélection** - Inject checked conversation history and current selection into the prompt
 - [ ] **Phase v3.2-03: Câblage document complet + stratégie de taille** - Inject the full docx (markdown) with a documented truncation/size strategy and user feedback
 
@@ -112,7 +112,7 @@ v3.1 phases execute in order: v3.1-01 -> v3.1-02 -> v3.1-03 (HARD GATE) -> v3.1-
 | v3.1-05. Rendu popover (UI) | v3.1 | 2/2 | Complete | 2026-06-22 |
 | v3.1-06. Durcissement contrat | v3.1 | 2/2 | Complete | 2026-06-24 |
 | v3.1-07. i18n 5 locales | v3.1 | 2/2 | Complete | 2026-06-24 |
-| v3.2-01. Zone « Inclure » discrète (UX statique) | v3.2 | 0/1 | Planned | - |
+| v3.2-01. Zone « Inclure » discrète (UX statique) | v3.2 | 1/1 | Complete | 2026-06-24 |
 | v3.2-02. Câblage discussion + sélection | v3.2 | 0/0 | Not started | - |
 | v3.2-03. Câblage document complet + stratégie de taille | v3.2 | 0/0 | Not started | - |
 
@@ -138,7 +138,7 @@ _Active milestone only. Shipped milestones keep their full phase details in `.pl
   4. Les cases sont visuellement discrètes (taille réduite, intégration légère, cohérence thème clair/sombre via useTheme) et n'alourdissent pas le panel — validé en revue UX
   5. L'état coché/décoché de chaque case vit dans un état partagé (ScribeContext ou local au panel) prêt à être lu par le câblage des phases 02-03, mais aucune valeur de contexte n'est encore ajoutée au prompt LLM (comportement d'appel inchangé vs v3.1)
 **Plans**:
-- [ ] v3.2-01-01-PLAN.md — Scribe.include.* keys (5 locales) + 3 include booleans in ScribeContext + discreet ScribeIncludeZone component wired into ChatInput + conditional/default-checked « sélection » chip coupling + behavior/i18n-parity/literal-audit/scope-guard gates [CTX-UX-01..05] (wave 1)
+- [x] v3.2-01-01-PLAN.md — Scribe.include.* keys (5 locales) + 3 include booleans in ScribeContext + discreet ScribeIncludeZone component wired into ChatInput + conditional/default-checked « sélection » chip coupling + behavior/i18n-parity/literal-audit/scope-guard gates [CTX-UX-01..05] (wave 1)
 **UI hint**: yes
 **UI-SPEC**: v3.2-01-UI-SPEC.md (ui-checker APPROVED)
 
