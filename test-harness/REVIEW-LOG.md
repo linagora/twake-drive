@@ -141,10 +141,17 @@ d'injection, juste le curseur collapsed réinitialisé. ⇒ Les cas **A0/A2 (cur
 testables** tant que le harnais ne fait pas **setSelection + injectFixture dans le MÊME callCommand**
 (ou un hook atomique `setSelectionAndInject`). À faire avant de pouvoir valider A0/A2.
 
-**Reste étape 4 :** (a) hook atomique set+inject pour curseurs collapsed ; (b) corriger l'espacement
-@end (A1) ; (c) gestion block « zéro ¶ vide aux bords » ; (d) font-run vs style (ne pas écraser
-l'apparence du style hôte) + éventuellement oracle run-font ; (e) extraction conditionnelle des
-marqueurs md ; (f) L#1. Puis recapturer a-family + styled et passer les xfail au vert.
+**(a) Hook atomique — FAIT (2026-06-24).** Nouveau hook `injectAtSelection(spec,md,mode)` : pose la
+sélection dans le MÊME callCommand que `buildAndInject` (pré-pas flag-gated `Asc.scope._testSelSpec`,
+inerte en prod). Validé base propre — **A0/A2/A4 insert matchent §5bis** (`XXX The quick brown fox` /
+`The quick XXX brown fox` / `The XXX quick brown fox`) ; **A2 corrigé** (curseur @mid placé au bon
+endroit, plus au début). ⚠️ Pollution serveur par auto-save : la recapture doit se faire en **une seule
+session** depuis un upload pristine (pas de reload mid-batch).
+
+**Reste étape 4 :** (b) **espacement @end** (A1 `foxXXX  ` : détection avant/après faussée au bord de ¶
+— positions OO = unités d'éléments ≠ chars ; à faire char-exact via les runs) ; (c) block « zéro ¶ vide
+aux bords » ; (d) font-run vs style hôte (+ éventuellement oracle run-font) ; (e) extraction
+conditionnelle des marqueurs md ; (f) L#1. Puis recapturer a-family + styled, passer les xfail au vert.
 
 ## Constats transverses ouverts (à statuer pendant la revue)
 
