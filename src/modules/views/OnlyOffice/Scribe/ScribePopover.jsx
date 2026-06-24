@@ -15,7 +15,7 @@ import { ScribeContainer } from '@/modules/views/OnlyOffice/Scribe/ScribeContain
 import { useScribe } from '@/modules/views/OnlyOffice/Scribe/ScribeContext'
 import { ScribeResultPanel } from '@/modules/views/OnlyOffice/Scribe/ScribeResultPanel'
 import {
-  callScribeAI,
+  callScribeAIWithReask,
   buildMessages,
   deriveLoadingMessage,
   classifyScribeError
@@ -30,7 +30,6 @@ import {
   formatMessagesForDisplay
 } from '@/modules/views/OnlyOffice/Scribe/scribeDevMode'
 import { recordProbeSample } from '@/modules/views/OnlyOffice/Scribe/scribeProbe'
-import { parseScribeResponse } from '@/modules/views/OnlyOffice/Scribe/scribeResponse'
 import { transformCellMarkersForPreview } from '@/modules/views/OnlyOffice/Scribe/tableCellMarkers'
 
 /**
@@ -208,16 +207,19 @@ const ScribePopover = ({
           Object.keys(extra).length > 0 ? extra : undefined
         )
         if (isScribeDevMd()) setPromptSent(formatMessagesForDisplay(messages))
-        const text = await callScribeAI(client, messages, {
-          signal: controller.signal
+        // 4. HARDEN-01: obtain the PARSED popover contract through the shared
+        // re-ask helper. On a parse-invalid first response (fellBack || !valid) it
+        // issues exactly one corrective re-ask before the popover fallback applies;
+        // a clean first response makes no second call. The caller's AbortController
+        // signal is forwarded to BOTH attempts, so closing the popover mid-flight
+        // still aborts the re-ask. The popover fallback yields
+        // { discussion: '', fragments: [raw], fellBack: true } so the normalized
+        // fragment below is byte-identical to today's raw response.
+        const parsed = await callScribeAIWithReask(client, messages, {
+          signal: controller.signal,
+          surface: 'popover'
         })
-        if (isScribeDevMd()) setRawResponse(text)
-
-        // 4. D-13: route the raw LLM response through the shared contract layer with
-        // popover surface BEFORE any display/storage. On parse failure the popover
-        // fallback yields { discussion: '', fragments: [raw], fellBack: true } so the
-        // normalized fragment below is byte-identical to today's raw response.
-        const parsed = parseScribeResponse(text, { surface: 'popover' })
+        if (isScribeDevMd()) setRawResponse(parsed.raw)
 
         // Dev diagnostic: dump the exact prompt + raw response + parsed contract so
         // the popover path can be compared against the chat (surface-divergence).
@@ -239,7 +241,8 @@ const ScribePopover = ({
 
         // D-08: normalize the parsed result to exactly one insertable fragment:
         //   2+ fragments -> join with \n\n; 0 fragments -> promote discussion;
-        //   1 fragment -> use directly. (Re-ask on invalid parse is deferred to v3.1-05.)
+        //   1 fragment -> use directly. (A single corrective re-ask on invalid parse
+        //   now happens upstream inside callScribeAIWithReask, before this fallback.)
         let normalizedFragment
         if (parsed.fragments.length >= 2) {
           normalizedFragment = parsed.fragments.join('\n\n')

@@ -12,7 +12,7 @@ import { useI18n } from 'twake-i18n'
 import { useClient } from 'cozy-client'
 
 import {
-  callScribeAI,
+  callScribeAIWithReask,
   classifyScribeError,
   buildChatSystemPrompt,
   encodeSelectionForPrompt
@@ -23,10 +23,7 @@ import {
   logScribeExchange
 } from '@/modules/views/OnlyOffice/Scribe/scribeDevMode'
 import { recordProbeSample } from '@/modules/views/OnlyOffice/Scribe/scribeProbe'
-import {
-  parseScribeResponse,
-  serializeAssistantTurnForHistory
-} from '@/modules/views/OnlyOffice/Scribe/scribeResponse'
+import { serializeAssistantTurnForHistory } from '@/modules/views/OnlyOffice/Scribe/scribeResponse'
 
 const STORAGE_KEY = 'scribe-panel-open'
 
@@ -37,7 +34,8 @@ const ScribeContext = createContext(null)
 // CARDINALITY_CHAT + per-selection marker-preservation clauses. This unifies the
 // chat contract with the gate-validated inline one (v3.1-03-GATE.md) so the
 // separation rules — and table/REF marker preservation — apply to both surfaces.
-// Parsing happens at reception via parseScribeResponse(raw, { surface: 'chat' }).
+// Parsing (and a single corrective re-ask on parse-invalid responses) happens at
+// reception via callScribeAIWithReask(client, msgs, { surface: 'chat' }).
 
 const readStorage = () => {
   try {
@@ -190,18 +188,22 @@ export const ScribeProvider = ({ children }) => {
             })
         ]
 
-        const responseText = await callScribeAI(client, aiMessages)
-
-        // D-13: parse the raw LLM response through the shared contract layer with
-        // chat surface BEFORE storing/displaying. On parse failure the chat fallback
-        // yields { discussion: raw, fragments: [] } so nothing is lost.
-        const parsed = parseScribeResponse(responseText, { surface: 'chat' })
+        // HARDEN-01: obtain the PARSED chat contract through the shared re-ask
+        // helper. On a parse-invalid first response (fellBack || !valid) it issues
+        // exactly one corrective re-ask before the chat fallback applies; a clean
+        // first response makes no second call. The chat path holds no
+        // AbortController today, so no signal is passed — behavior preserved. The
+        // chat fallback still yields { discussion: raw, fragments: [] } so nothing
+        // is lost. parsed.raw is the literal model text for dev diagnostics.
+        const parsed = await callScribeAIWithReask(client, aiMessages, {
+          surface: 'chat'
+        })
 
         // Dev diagnostic: dump the exact prompt + raw response + parsed contract so
         // the chat path can be compared against the popover (surface-divergence).
         logScribeExchange('chat', {
           messages: aiMessages,
-          rawResponse: responseText,
+          rawResponse: parsed.raw,
           parsed
         })
 
@@ -230,7 +232,7 @@ export const ScribeProvider = ({ children }) => {
         const devExchange = isScribeDevMd()
           ? {
               messages: aiMessages,
-              rawResponse: responseText,
+              rawResponse: parsed.raw,
               parsed,
               devData: {
                 html: selectionContext?.html || '',
