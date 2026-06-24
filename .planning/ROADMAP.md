@@ -170,7 +170,7 @@ Plans:
   1. Les libellés des cartes et les messages de repli sont traduits dans les 5 locales (fr, en, de, es, it)
   2. Aucune chaîne Scribe en dur ne subsiste dans les surfaces popover et chat (audit des littéraux)
 **Plans**:
-- [ ] v3.1-07-01-PLAN.md — Add 7 missing Scribe.* keys to de/es/it + 2 new extraction keys to all 5 locales; flattened key-set parity Jest gate (scribeI18nParity.spec.js) [I18N-01] (wave 1)
+- [x] v3.1-07-01-PLAN.md — Add 7 missing Scribe.* keys to de/es/it + 2 new extraction keys to all 5 locales; flattened key-set parity Jest gate (scribeI18nParity.spec.js) [I18N-01] (wave 1)
 - [ ] v3.1-07-02-PLAN.md — Extract 3 confirmed hard-coded FR literals in ScribeResultPanel.jsx to t() + literal-audit regression gate (scribeLiteralAudit.spec.js) [I18N-01] (wave 2, depends on 01)
 **UI hint**: yes
 
@@ -204,7 +204,7 @@ v3.1 phases execute in order: v3.1-01 -> v3.1-02 -> v3.1-03 (HARD GATE) -> v3.1-
 | v3.1-04. Rendu chat (cartes + clavier) | v3.1 | 5/5 | Complete | 2026-06-22 |
 | v3.1-05. Rendu popover (UI) | v3.1 | 2/2 | Complete | 2026-06-22 |
 | v3.1-06. Durcissement contrat | v3.1 | 2/2 | Complete | 2026-06-24 |
-| v3.1-07. i18n 5 locales | v3.1 | 0/2 | Planned | - |
+| v3.1-07. i18n 5 locales | v3.1 | 1/2 | In progress | - |
 
 ## Backlog
 
