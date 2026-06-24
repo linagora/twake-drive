@@ -86,11 +86,12 @@ Règles validées avec Ben (remplacent L#7, précisent L#8). Résumé :
   plugin est chargée en asynchrone). **Solution : ouvrir l'éditeur dans un contexte navigateur isolé**
   (`new_page isolatedContext`) → cache vierge → code frais. (Purger les `.gz` ne suffit pas ; le serveur
   voit bien le nouveau fichier, c'est le navigateur qui cache.)
-- **jest cassé dans ce worktree** : `node_modules` est un **symlink** vers `scribe-in-right-panel`, et
-  le plugin wasm `swc_mut_cjs_exports` ne se résout pas (« failed to get the node_modules path »).
-  **Tout** jest échoue (y compris les tests `src`), pas seulement l'oracle. → couche unitaire (T-01,
-  oracle specs) **non exécutable** tant que ce n'est pas réparé. Les tests ajoutés sont validés via
-  `node --input-type=module` en attendant. À traiter comme tâche env séparée.
+- **jest du harnais : config dédiée OBLIGATOIRE.** Lancer les tests harnais avec
+  `env NODE_ENV=test node_modules/.bin/jest -c jest.harness.config.js` (roots=test-harness + plugin swc
+  `@swc-contrib/mut-cjs-exports`). La config **par défaut** (`jest.config.js`, roots=src) a l'ancien nom
+  de plugin `swc_mut_cjs_exports` qui **ne se résout plus** dans le `node_modules` symlinké → elle
+  échoue (ce n'est PAS un blocueur harnais, juste la mauvaise config). **Oracle : 13/13 verts** via la
+  config harnais, dont les 2 nouveaux tests de style.
 
 ## Constats transverses ouverts (à statuer pendant la revue)
 
