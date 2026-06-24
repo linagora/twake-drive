@@ -7,9 +7,9 @@
   "statusFromCsv": "pass",
   "stable": true,
   "setSelectionOk": true,
-  "capturedVia": "Chrome DevTools MCP v3 (§5bis fix; injectAtSelection atomic; paraMarks+grabFocus+forcesave docx)",
+  "capturedVia": "Chrome DevTools MCP v3 (§5bis fix + replace trailing-space fix; injectAtSelection atomic)",
   "capturedAt": "2026-06-24",
-  "verdict": "xfail",
-  "comment": "§5bis NON atteint: resultat 'XXX ' avec un espace TRAINANT (run ' ' apres XXX). Attendu §5bis = 'XXX'. Regle desormais EXPLICITE dans §5bis (precision 2026-06-24): bord de ¶ = saut de ligne -> la fin de ¶ (caractere suivant = marque ¶) compte comme un blanc => AUCUNE espace apres ; rien avant non plus (debut de ¶). Le ¶ vide a disparu (bug L#7 corrige) mais le smart-spacing en mode REPLACE traite encore la fin-de-¶ comme un voisin non-blanc -> BUG code.js a corriger dans buildAndInject (le fix (b) @end ne couvrait que l'insert). Golden = sortie buggy actuelle, a rebenir pass apres le fix.",
+  "verdict": "pass",
+  "comment": "§5bis OK apres correctif trailing-space (2026-06-24). Tout P1 supprime puis insertion dans le ¶ vide -> 'XXX' strict, aucun espace traînant, un seul ¶ (.docx = 3 <w:p>, 'XXX' sans espace). Fix: la detection d'espacement en mode REPLACE lit desormais le caractere voisin CLAMPE a son ¶ hote (comme l'insert) -> un bord de ¶ compte comme un saut de ligne (blanc) => pas d'espace. Avant-fix: 'XXX ' (le doc.GetRange(repEnd, repEnd+5) fuyait dans le ¶ suivant). Conforme a la precision §5bis 'bord de ¶ = saut de ligne'.",
   "captureVersion": "v3"
 }

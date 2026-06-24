@@ -612,20 +612,40 @@
           // Replace mode: check char before selection start and after selection end
           var repRange = doc.GetRangeBySelect();
           if (repRange) {
-            var repStart = repRange.GetStartPos();
-            var repEnd = repRange.GetEndPos();
-
-            if (repStart > 0) {
-              var bRange2 = doc.GetRange(Math.max(0, repStart - 5), repStart);
-              var bText2 = bRange2 ? bRange2.GetText() : "";
-              var bChar2 = bText2.length > 0 ? bText2.charAt(bText2.length - 1) : "";
-              if (bChar2 && !WS.test(bChar2)) needSpaceBefore = true;
+            // §5bis: read the neighbour char CLAMPED to its host paragraph, so a ¶
+            // boundary counts as a newline (blank → no space), exactly like the
+            // insert branch above. The old doc.GetRange(repEnd, repEnd+5) read
+            // leaked across the ¶ mark into the NEXT paragraph and added a spurious
+            // trailing space when the whole host ¶ was selected (A1/replace: the
+            // selection end lands at the paragraph's GetEndPos, whose forward read
+            // returns the next paragraph's first word). Clamping fixes it: at
+            // end-of-¶ the within-paragraph char is "" → no space.
+            var hostAt = function(pos) {
+              var ec2 = doc.GetElementsCount();
+              for (var k = 0; k < ec2; k++) {
+                var pel = doc.GetElement(k);
+                if (!pel.GetClassType || pel.GetClassType() !== "paragraph") continue;
+                var pr = pel.GetRange ? pel.GetRange() : null;
+                if (!pr) continue;
+                if (pos >= pr.GetStartPos() && pos <= pr.GetEndPos()) {
+                  var ptext = (pel.GetText ? pel.GetText() : "").replace(/[\r\n]+$/, "");
+                  var pfR = doc.GetRange(pr.GetStartPos(), pos);
+                  var pf = pfR ? (pfR.GetText() || "").replace(/[\r\n]+$/, "") : "";
+                  return { text: ptext, off: pf.length };
+                }
+              }
+              return null;
+            };
+            var hB = hostAt(repRange.GetStartPos());
+            if (hB) {
+              var bc = hB.off > 0 ? hB.text.charAt(hB.off - 1) : "";
+              if (bc && !WS.test(bc)) needSpaceBefore = true;
             }
-
-            var aRange2 = doc.GetRange(repEnd, repEnd + 5);
-            var aText2 = aRange2 ? aRange2.GetText() : "";
-            var aChar2 = aText2.length > 0 ? aText2.charAt(0) : "";
-            if (aChar2 && !WS.test(aChar2)) needSpaceAfter = true;
+            var hA = hostAt(repRange.GetEndPos());
+            if (hA) {
+              var ac = hA.off < hA.text.length ? hA.text.charAt(hA.off) : "";
+              if (ac && !WS.test(ac)) needSpaceAfter = true;
+            }
           }
         } // end else (replace mode)
       } catch (e) {

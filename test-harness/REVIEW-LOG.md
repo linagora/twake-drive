@@ -57,8 +57,9 @@ Fixture source `a-family.docx` (identique pour tous) : `P1="The quick brown fox"
 > ✅ **2026-06-24 : les 9 bundles A0–A4 sont RECAPTURÉS en v3** (= post-correctif `code.js` §5bis,
 > hook atomique `injectAtSelection`, ¶ marks via `put_ShowParaMarks`, sélection visible via `grabFocus`,
 > `.docx` édité via forcesave). Upload pristine `a-family (4).docx`, **une seule session**, `asc_undoAllChanges`
-> entre chaque bundle. **8/9 = pass** (texte = §5bis exact, un seul ¶, plus AUCUN ¶ vide ; les 9 `.docx`
-> ont 3 `<w:p>`). **1 xfail restant = A1/replace** (espace traînant `XXX␣`, smart-spacing du replace plein-¶).
+> entre chaque bundle. **9/9 = pass** (texte = §5bis exact, un seul ¶, plus AUCUN ¶ vide ; les 9 `.docx`
+> ont 3 `<w:p>`). *(A1/replace était l'unique xfail — espace traînant `XXX␣` — corrigé le 2026-06-24,
+> cf. §Étape 4 (g) ; recapturé sur `a-family (5).docx` → `XXX` strict.)*
 >
 > ⏪ Historique v2 (2026-06-23) : capture *avant* correctif, `model.json` byte-identiques v1 (bugs réels,
 > pas artefacts). Les goldens v3 **remplacent** les v2 (sortie §5bis correcte au lieu de la sortie buggy).
@@ -67,7 +68,7 @@ Fixture source `a-family.docx` (identique pour tous) : `P1="The quick brown fox"
 |---|---|---|---|
 | A0/insert  | ✅ REVU + **recapturé v3** | **pass** | `XXX The quick brown fox` — INLINE, **plus de ¶ vide** (bug L#7 corrigé). 1 espace après, rien avant |
 | A1/insert  | ✅ REVU + **recapturé v3** | **pass** | `The quick brown fox XXX` — insert @end, 1 espace avant, **pas de trailing**, plus de ¶ vide |
-| A1/replace | ✅ REVU + **recapturé v3** | **xfail** | `XXX␣` — **espace traînant** restant (attendu §5bis = `XXX`). ¶ vide disparu ; trailing-space du smart-spacing en *replace* plein-¶ encore à corriger |
+| A1/replace | ✅ REVU + **recapturé v3 (post-fix)** | **pass** | `XXX` — **espace traînant corrigé** (§Étape 4 (g)). Tout P1 supprimé puis insertion dans ¶ vide → `XXX` strict, aucun voisin, un seul ¶ |
 | A2/insert  | ✅ REVU + **recapturé v3** | **pass** | `The quick XXX brown fox` — curseur @mid bien placé (hook atomique), pas de double espace |
 | A2/replace | ✅ REVU + **recapturé v3** | **pass** | `The quick XXX brown fox` — **double espace résolu** (ex-csv xfail) |
 | A3/insert  | ✅ REVU + **recapturé v3** | **pass** | `The quick brown fox XXX` — insert @end, plus de ¶ vide |
@@ -193,6 +194,15 @@ visuelle titre/corps **n'est pas observable via GetFontSize**. De plus `GetFontS
 ⇒ **Prérequis (d)** : (1) fixture stylée avec **tailles explicites distinctes** (pas que des styles built-in) ;
 (2) décision oracle run-font (capturer l'override explicite, pas la taille résolue). Ne PAS toucher `srcFont`
 à l'aveugle (non validable sur la fixture actuelle, et `srcFont` est sur le hot-path de toute injection).
+
+**(g) Espacement @end en mode REPLACE — FAIT (2026-06-24).** Le smart-spacing du *replace* lisait le
+caractère suivant via `doc.GetRange(repEnd, repEnd+5)` (positions absolues = unités élément) → quand tout
+le ¶ hôte est sélectionné, `repEnd` tombe sur le `GetEndPos()` du ¶ et la lecture avant **fuit dans le ¶
+suivant** (« Jumps… ») → espace traînant parasite (`A1/replace = "XXX "`). **Fix** : lire le voisin
+**clampé à son ¶ hôte** (même approche que l'insert) — un bord de ¶ compte comme un saut de ligne (blanc)
+⇒ pas d'espace. Validé live sur `a-family (5).docx` : **A1/replace → `XXX` strict**, A2/A3/A4 replace
+**inchangés** (pas de régression). Conforme à la précision §5bis « bord de ¶ = saut de ligne ». Corpus
+a-family = **9/9 pass**.
 
 **Reste étape 4 :** (c) block « zéro ¶ vide aux bords » (fixture multi-¶/stylée — non exercé par `"XXX"`) ;
 (d) cf ci-dessus (bloqué groundwork) ; (e) extraction md conditionnelle (`paragraphToMarkdown`) ; (f) L#1.
