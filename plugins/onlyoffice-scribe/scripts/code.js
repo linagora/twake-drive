@@ -475,6 +475,53 @@
       var blocks = JSON.parse(tokensJson);
       var doc = Api.GetDocument();
 
+      // [TEST HOOK — flag-gated, inert in prod] When a test selection spec is
+      // queued (Asc.scope._testSelSpec, set ONLY by the injectAtSelection dev
+      // hook), apply it HERE so it lives in the SAME callCommand that reads it —
+      // a collapsed cursor set in a separate callCommand resets to offset 0.
+      // One-shot: cleared immediately so later (real) injects never see it.
+      var _testSelSpec = Asc.scope._testSelSpec;
+      Asc.scope._testSelSpec = null;
+      if (_testSelSpec) {
+        try {
+          var _tsp = JSON.parse(_testSelSpec);
+          var _tcnt = doc.GetElementsCount(), _tseen = 0, _ttgt = null;
+          for (var _ti = 0; _ti < _tcnt; _ti++) {
+            var _tel = doc.GetElement(_ti);
+            if (_tel.GetClassType && _tel.GetClassType() === "paragraph") {
+              _tseen++; if (_tseen === _tsp.startN) { _ttgt = _tel; break; }
+            }
+          }
+          if (_ttgt) {
+            var _ttxt = (_ttgt.GetText ? _ttgt.GetText() : "").replace(/[\r\n]+$/, "");
+            var _tlen = _ttxt.length;
+            var _toff = function(k) {
+              if (k === "end") return _tlen;
+              if (k === "mid") return Math.floor(_tlen / 2);
+              if (k === "space") { var _ix = _ttxt.indexOf(" "); return _ix >= 0 ? _ix + 1 : 0; }
+              return 0;
+            };
+            var _tat = function(para, off) {
+              var _c = para.GetElementsCount ? para.GetElementsCount() : 0, _a = 0;
+              for (var _i = 0; _i < _c; _i++) {
+                var _e2 = para.GetElement(_i);
+                var _ct = _e2.GetClassType ? _e2.GetClassType() : "";
+                if (_ct !== "run" && _ct !== "hyperlink") continue;
+                var _t2 = (_e2.GetText ? _e2.GetText() : "").replace(/[\r\n]+$/, "");
+                if (off <= _a + _t2.length) return _e2.GetRange ? _e2.GetRange(off - _a, off - _a) : null;
+                _a += _t2.length;
+              }
+              return null;
+            };
+            var _ts = _toff(_tsp.startKind), _te = _toff(_tsp.endKind), _trng = null;
+            if (_ts === 0 && _te === _tlen) _trng = _ttgt.GetRange ? _ttgt.GetRange() : null;
+            else if (_ts === _te) _trng = _tat(_ttgt, _ts) || (_ttgt.GetRange ? _ttgt.GetRange(0, 0) : null);
+            else { var _ra = _tat(_ttgt, _ts), _rb = _tat(_ttgt, _te); _trng = (_ra && _rb && _ra.ExpandTo) ? _ra.ExpandTo(_rb) : (_ra || _rb); }
+            if (_trng && _trng.Select) _trng.Select();
+          }
+        } catch (e) {}
+      }
+
       // Read paragraph-level font style at insertion point
       // Uses paragraph mark text properties (base style, ignoring local run overrides)
       // Falls back to document default text properties
@@ -3223,8 +3270,31 @@
   function hookInjectFixture(md, mode) {
     return new Promise(function(resolve) {
       try {
+        Asc.scope._testSelSpec = null; // never apply a stale test selection
         buildAndInject(md, mode === "insert" ? "insert" : "replace", null);
         resolve({ ok: true }); // dumpState issued next will run after this callCommand (OO serializes)
+      } catch (e) {
+        resolve({ ok: false, error: e.message });
+      }
+    });
+  }
+
+  // Atomic set-selection + inject (one callCommand) — needed for COLLAPSED
+  // cursors (A0/A2): a cursor set by a separate setSelection callCommand resets
+  // to offset 0 before injectFixture runs. The spec is queued in Asc.scope and
+  // applied at the top of buildAndInject's own callCommand (see [TEST HOOK]).
+  function hookInjectAtSelection(spec, md, mode) {
+    return new Promise(function(resolve) {
+      var p = parseSelSpec(spec);
+      if (!p) { resolve({ ok: false, error: "bad selection spec: " + spec }); return; }
+      if (p.startN !== p.endN) {
+        resolve({ ok: false, error: "multi-paragraph selection not yet supported: " + spec });
+        return;
+      }
+      try {
+        Asc.scope._testSelSpec = JSON.stringify(p);
+        buildAndInject(md, mode === "insert" ? "insert" : "replace", null);
+        resolve({ ok: true, spec: spec });
       } catch (e) {
         resolve({ ok: false, error: e.message });
       }
@@ -3364,6 +3434,7 @@
     if (!testHooksEnabled()) return Promise.resolve({ ok: false, error: "test hooks disabled" });
     if (action === "setSelection") return hookSetSelection(params.spec);
     if (action === "injectFixture") return hookInjectFixture(params.md, params.mode);
+    if (action === "injectAtSelection") return hookInjectAtSelection(params.spec, params.md, params.mode);
     if (action === "dumpState") return hookDumpState(params.scope || "region");
     return Promise.resolve({ ok: false, error: "unknown scribeTest action: " + action });
   }
