@@ -195,6 +195,7 @@ const formatParsedForDisplay = parsed => {
 // DevPanelTitle — panel heading with a discreet "info" toggle that reveals the
 // panel's description inline. Local open/close state per title.
 const DevPanelTitle = ({ label, desc, labelStyle }) => {
+  const { t } = useI18n()
   const [showInfo, setShowInfo] = useState(false)
   return (
     <div style={{ flexShrink: 0 }}>
@@ -212,8 +213,8 @@ const DevPanelTitle = ({ label, desc, labelStyle }) => {
           <button
             type="button"
             onClick={() => setShowInfo(s => !s)}
-            aria-label="Description du panneau"
-            title="Description"
+            aria-label={t('Scribe.panel.description')}
+            title={t('Scribe.panel.description')}
             style={{
               cursor: 'pointer',
               border: 'none',
@@ -252,6 +253,7 @@ const DevPanelTitle = ({ label, desc, labelStyle }) => {
 // Copy-to-clipboard button overlaid at the top-right INSIDE a panel's content
 // area (not in the title). Brief ✓ feedback after a successful copy.
 const CopyButton = ({ text }) => {
+  const { t } = useI18n()
   const [copied, setCopied] = useState(false)
   const handleCopy = useCallback(() => {
     try {
@@ -266,8 +268,8 @@ const CopyButton = ({ text }) => {
     <button
       type="button"
       onClick={handleCopy}
-      aria-label="Copier le contenu"
-      title="Copier"
+      aria-label={t('Scribe.button.copy')}
+      title={t('Scribe.button.copy')}
       style={{
         position: 'absolute',
         top: 6,
@@ -1328,7 +1330,7 @@ const ScribeResultPanel = ({
               disabled={insertDisabled}
               title={
                 insertDisabled
-                  ? 'Insertion non disponible pour une selection partielle de tableau'
+                  ? t('Scribe.result.table_partial_insert_unavailable')
                   : undefined
               }
             />
