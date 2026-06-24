@@ -515,23 +515,26 @@
       var needSpaceAfter = false;
       var WS = /[\s\n\r\t\u00A0]/;
 
-      // For insert mode: collapse cursor to end of selection.
-      // If the next char is a space, extend cursor to consume it so it doesn't
-      // end up as a leading space on the line after the insertion.
+      // Insert mode (\u00A75bis): collapse cursor to end of selection (= insertion
+      // point), then compute SYMMETRIC spacing \u2014 a space is added before/after
+      // the inserted runs only when the adjacent char is non-whitespace, and
+      // never when one already exists (no double space). Same flags as replace.
       if (mode === "insert") {
         var insSelRange = doc.GetRangeBySelect();
         if (insSelRange) {
-          var endPos = insSelRange.GetEndPos();
-          var afterRange = doc.GetRange(endPos, endPos + 1);
-          var afterChar = afterRange ? afterRange.GetText() : "";
-          if (afterChar === " " || afterChar === "\u00A0") {
-            // Select the trailing space so InsertContent consumes it
-            var eatRange = doc.GetRange(endPos, endPos + 1);
-            if (eatRange) eatRange.Select();
-          } else {
-            var endRange = doc.GetRange(endPos, endPos);
-            if (endRange) endRange.Select();
+          var insPos = insSelRange.GetEndPos();
+          var collapseRange = doc.GetRange(insPos, insPos);
+          if (collapseRange) collapseRange.Select();
+          if (insPos > 0) {
+            var beforeR = doc.GetRange(Math.max(0, insPos - 5), insPos);
+            var beforeT = beforeR ? beforeR.GetText() : "";
+            var beforeC = beforeT.length > 0 ? beforeT.charAt(beforeT.length - 1) : "";
+            if (beforeC && !WS.test(beforeC)) needSpaceBefore = true;
           }
+          var afterR = doc.GetRange(insPos, insPos + 5);
+          var afterT = afterR ? afterR.GetText() : "";
+          var afterC = afterT.length > 0 ? afterT.charAt(0) : "";
+          if (afterC && !WS.test(afterC)) needSpaceAfter = true;
         }
       }
 
@@ -1475,10 +1478,17 @@
               // Cursor repositioning failed — InsertContent will use current position
             }
           }
-          // Insert mode: leading empty paragraph creates a line break before content.
-          content.unshift(Api.CreateParagraph());
-          doc.InsertContent(content);
-          useRefSelection = true;
+          // §5bis: single plain paragraph -> INLINE (runs spliced into the host ¶,
+          // which keeps its paragraph style); multi-¶ / styled / non-text -> BLOCK.
+          // No leading empty paragraph any more (that was the L#7 bug).
+          var insSimpleInline = (content.length === 1 && blocks.length === 1 && blocks[0].type === "paragraph");
+          if (insSimpleInline) {
+            doc.InsertContent(content, true);
+            // useRefSelection stays false -> position-based selection (like inline replace)
+          } else {
+            doc.InsertContent(content);
+            useRefSelection = true;
+          }
 
           // Post-InsertContent: remove unselected rows/columns from inserted tables.
           // Uses the clone reference directly (now in the document after InsertContent).
@@ -1587,10 +1597,9 @@
         // So we pick the right tool for each insertion mode.
 
         function selectByRefs(doc, content, mode, preSelStart, mergedTrailingLen) {
-          // In insert mode content[0] is the leading empty paragraph (line break),
-          // so the first real content paragraph is content[1].
-          // In replace mode content[0] is the first real content paragraph.
-          var selectFirst = (mode === "insert" && content.length > 1) ? content[1] : content[0];
+          // content[0] is the first real content paragraph (block mode, both insert
+          // and replace — §5bis removed the leading empty paragraph).
+          var selectFirst = content[0];
           var selectLast = content[content.length - 1];
           if (!selectFirst || !selectLast) return;
 
