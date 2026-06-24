@@ -93,6 +93,16 @@ Règles validées avec Ben (remplacent L#7, précisent L#8). Résumé :
   échoue (ce n'est PAS un blocueur harnais, juste la mauvaise config). **Oracle : 13/13 verts** via la
   config harnais, dont les 2 nouveaux tests de style.
 
+## Étape 2 — Fixture stylée (FAIT, 2026-06-24)
+
+`styled-family.docx` (générée par `gen_fixtures.py` étendu) = miroir de a-family (mêmes textes/offsets,
+specs A0–A5 réutilisables) mais **P1=Titre 1, P2=Titre 2, P3=Normal**. Validée live : oracle capture
+`style:"Heading 1"`/`"Heading 2"` sur P1/P2, rien sur P3. → support de l'**axe A (style hôte)** prêt.
+
+**Reste (étape 3)** : capturer les cas stylés (styled-family A0–A5 × insert/replace) = preuve du
+comportement **actuel** sur hôte stylé (l'injection ne propage pas le style de ¶ aujourd'hui → xfail
+attendus sur l'axe A) ; puis poser les xfail (a-family + styled) selon §5bis. **Puis étape 4** : correctif `code.js`.
+
 ## Constats transverses ouverts (à statuer pendant la revue)
 
 - **L#7 — ¶ vide parasite à l'insertion (BUG confirmé, A0/insert)** : `code.js:1479`
