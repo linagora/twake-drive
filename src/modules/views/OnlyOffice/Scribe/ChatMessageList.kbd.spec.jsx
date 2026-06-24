@@ -6,10 +6,11 @@ import React, { useRef } from 'react'
 // ChatInput) reads palette.text/action/divider/grey/primary/error/background.
 jest.mock('cozy-ui/transpiled/react/styles', () => ({
   __esModule: true,
+  makeStyles: () => () => ({}),
   useTheme: () => ({
     palette: {
       type: 'light',
-      text: { primary: '#000', secondary: '#555' },
+      text: { primary: '#000', secondary: '#555', disabled: '#999' },
       divider: '#ddd',
       grey: { 50: '#fafafa', 800: '#333' },
       primary: { main: '#7C3AED' },

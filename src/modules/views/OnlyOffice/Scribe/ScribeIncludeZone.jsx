@@ -1,10 +1,21 @@
 import React from 'react'
 
 import Checkbox from 'cozy-ui/transpiled/react/Checkbox'
-import { useTheme } from 'cozy-ui/transpiled/react/styles'
+import { makeStyles, useTheme } from 'cozy-ui/transpiled/react/styles'
 import { useI18n } from 'twake-i18n'
 
 import { useScribe } from '@/modules/views/OnlyOffice/Scribe/ScribeContext'
+
+// Lighten ONLY the unchecked box outline (the `:not(.Mui-checked)` guard leaves
+// the checked fill at the library default) — even quieter per the 2026-06-24
+// live UX review.
+const useStyles = makeStyles(theme => ({
+  checkbox: {
+    '&:not(.Mui-checked) .MuiSvgIcon-root': {
+      color: theme.palette.text.disabled
+    }
+  }
+}))
 
 /**
  * ScribeIncludeZone — the discreet « Inclure » zone above the Scribe prompt
@@ -27,6 +38,7 @@ import { useScribe } from '@/modules/views/OnlyOffice/Scribe/ScribeContext'
 export const ScribeIncludeZone = () => {
   const { t } = useI18n()
   const theme = useTheme()
+  const classes = useStyles()
   const {
     currentSelection,
     includeDocument,
@@ -90,6 +102,7 @@ export const ScribeIncludeZone = () => {
         <label style={labelStyle} onMouseDown={e => e.stopPropagation()}>
           <Checkbox
             size="small"
+            className={classes.checkbox}
             checked={includeDocument}
             onChange={() => setIncludeDocument(!includeDocument)}
             style={checkboxStyle}
@@ -101,6 +114,7 @@ export const ScribeIncludeZone = () => {
         <label style={labelStyle} onMouseDown={e => e.stopPropagation()}>
           <Checkbox
             size="small"
+            className={classes.checkbox}
             checked={includeDiscussion}
             onChange={() => setIncludeDiscussion(!includeDiscussion)}
             style={checkboxStyle}
@@ -116,6 +130,7 @@ export const ScribeIncludeZone = () => {
             <label style={labelStyle} onMouseDown={e => e.stopPropagation()}>
               <Checkbox
                 size="small"
+                className={classes.checkbox}
                 checked={includeSelection}
                 onChange={() => setIncludeSelection(!includeSelection)}
                 style={checkboxStyle}

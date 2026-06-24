@@ -24,7 +24,6 @@ export const ChatInput = forwardRef(({ onArrowUp } = {}, ref) => {
     isLoading,
     currentSelection,
     includeSelection,
-    dismissSelection,
     pendingDraft,
     clearPendingDraft
   } = useScribe()
@@ -165,12 +164,7 @@ export const ChatInput = forwardRef(({ onArrowUp } = {}, ref) => {
           height; the chip grows only on deliberate expand. */}
       {currentSelection && (
         <div style={{ minHeight: 37 }}>
-          {includeSelection && (
-            <SelectionChip
-              selection={currentSelection}
-              onDismiss={dismissSelection}
-            />
-          )}
+          {includeSelection && <SelectionChip selection={currentSelection} />}
         </div>
       )}
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>

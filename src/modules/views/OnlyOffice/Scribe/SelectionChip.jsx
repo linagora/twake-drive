@@ -6,9 +6,11 @@ const SCRIBE_PURPLE = '#7C3AED'
 
 /**
  * Compact chip showing truncated selected text from the OO editor.
- * Click chip body to expand/collapse full text. Dismiss button clears it.
+ * Click chip body to expand/collapse full text. Inclusion is controlled by the
+ * « sélection » checkbox in ScribeIncludeZone (the old inline × dismiss button
+ * was removed in v3.2-01 — unchecking the box hides the chip instead).
  */
-export const SelectionChip = ({ selection, onDismiss }) => {
+export const SelectionChip = ({ selection }) => {
   const [expanded, setExpanded] = useState(false)
   const theme = useTheme()
 
@@ -59,36 +61,6 @@ export const SelectionChip = ({ selection, onDismiss }) => {
       >
         {selection.text}
       </div>
-      <button
-        onClick={onDismiss}
-        aria-label="Dismiss selection"
-        style={{
-          flexShrink: 0,
-          width: 20,
-          height: 20,
-          border: 'none',
-          background: 'transparent',
-          color: theme.palette.text.secondary,
-          cursor: 'pointer',
-          padding: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: 14,
-          lineHeight: 1,
-          borderRadius: '50%',
-          marginTop: 2
-        }}
-      >
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-          <path
-            d="M3 3l6 6M9 3l-6 6"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-          />
-        </svg>
-      </button>
     </div>
   )
 }

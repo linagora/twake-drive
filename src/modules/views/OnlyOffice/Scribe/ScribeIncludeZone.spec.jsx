@@ -4,10 +4,11 @@ import React from 'react'
 // Light theme mock — ScribeIncludeZone reads palette.text.secondary.
 jest.mock('cozy-ui/transpiled/react/styles', () => ({
   __esModule: true,
+  makeStyles: () => () => ({}),
   useTheme: () => ({
     palette: {
       type: 'light',
-      text: { primary: '#000', secondary: '#555' },
+      text: { primary: '#000', secondary: '#555', disabled: '#999' },
       divider: '#ddd',
       primary: { main: '#7C3AED' }
     }
