@@ -1,0 +1,15 @@
+{
+  "caseId": "A2",
+  "mode": "insert",
+  "spec": "P1@mid..P1@mid",
+  "fixture": "XXX",
+  "source": "styled-family.docx",
+  "hostStyle": "Heading 1",
+  "stable": true,
+  "setSelectionOk": true,
+  "capturedVia": "Chrome DevTools MCP v2 (styled host)",
+  "capturedAt": "2026-06-24",
+  "captureVersion": "v2",
+  "verdict": null,
+  "comment": ""
+}

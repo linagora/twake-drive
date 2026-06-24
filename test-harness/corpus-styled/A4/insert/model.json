@@ -1,0 +1,56 @@
+{
+  "blocks": [
+    {
+      "type": "p",
+      "runs": [
+        {
+          "t": "The "
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "runs": [
+        {
+          "t": "XXX"
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "runs": [
+        {
+          "t": "quick brown fox"
+        }
+      ],
+      "style": "Heading 1"
+    },
+    {
+      "type": "p",
+      "runs": [
+        {
+          "t": "Jumps over the dog"
+        }
+      ],
+      "style": "Heading 2"
+    },
+    {
+      "type": "p",
+      "runs": [
+        {
+          "t": "Lazy river flows"
+        }
+      ]
+    }
+  ],
+  "selection": {
+    "start": {
+      "block": 1,
+      "offset": 0
+    },
+    "end": {
+      "block": 1,
+      "offset": 5
+    }
+  }
+}
