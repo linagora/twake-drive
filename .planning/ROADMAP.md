@@ -112,7 +112,7 @@ v3.1 phases execute in order: v3.1-01 -> v3.1-02 -> v3.1-03 (HARD GATE) -> v3.1-
 | v3.1-05. Rendu popover (UI) | v3.1 | 2/2 | Complete | 2026-06-22 |
 | v3.1-06. Durcissement contrat | v3.1 | 2/2 | Complete | 2026-06-24 |
 | v3.1-07. i18n 5 locales | v3.1 | 2/2 | Complete | 2026-06-24 |
-| v3.2-01. Zone « Inclure » discrète (UX statique) | v3.2 | 0/0 | Not started | - |
+| v3.2-01. Zone « Inclure » discrète (UX statique) | v3.2 | 0/1 | Planned | - |
 | v3.2-02. Câblage discussion + sélection | v3.2 | 0/0 | Not started | - |
 | v3.2-03. Câblage document complet + stratégie de taille | v3.2 | 0/0 | Not started | - |
 
@@ -137,8 +137,10 @@ _Active milestone only. Shipped milestones keep their full phase details in `.pl
   3. Cocher « sélection » révèle la zone d'affichage de la sélection courante en réutilisant le chip/zone existant (SelectionChip) ; la décocher masque ce chip — sans perdre la sélection sous-jacente
   4. Les cases sont visuellement discrètes (taille réduite, intégration légère, cohérence thème clair/sombre via useTheme) et n'alourdissent pas le panel — validé en revue UX
   5. L'état coché/décoché de chaque case vit dans un état partagé (ScribeContext ou local au panel) prêt à être lu par le câblage des phases 02-03, mais aucune valeur de contexte n'est encore ajoutée au prompt LLM (comportement d'appel inchangé vs v3.1)
-**Plans**: TBD
+**Plans**:
+- [ ] v3.2-01-01-PLAN.md — Scribe.include.* keys (5 locales) + 3 include booleans in ScribeContext + discreet ScribeIncludeZone component wired into ChatInput + conditional/default-checked « sélection » chip coupling + behavior/i18n-parity/literal-audit/scope-guard gates [CTX-UX-01..05] (wave 1)
 **UI hint**: yes
+**UI-SPEC**: v3.2-01-UI-SPEC.md (ui-checker APPROVED)
 
 #### Phase v3.2-02: Câblage discussion + sélection
 
