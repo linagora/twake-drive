@@ -156,7 +156,10 @@ Plans:
   1. Sur une réponse au parse invalide, le système re-sollicite le LLM une seule fois avant d'appliquer le repli contextuel
   2. Un corpus de régression de réponses malformées + tests de cas limites passe au vert ; le taux de `fellBack` code-fence est re-mesuré (stripFence existant confirmé ou complété)
   3. Le défaut du flag `response_format` (prompt-based vs structured-output json_schema) est décidé et documenté, contrainte proxy cozy-stack prise en compte
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] v3.1-06-01-PLAN.md — Shared callScribeAIWithReask helper (one corrective re-ask on fellBack||!valid, signal-respecting) wired into both chat + popover call sites [HARDEN-01]
+- [ ] v3.1-06-02-PLAN.md — Static malformed-response regression corpus (6 D-07 categories) + code-fence fellBack re-measure/stripFence confirm + RESPONSE_FORMAT_DECISION.md (json_object default, proxy forwarding confirmed) [HARDEN-02]
 **UI hint**: no
 
 ### Phase v3.1-07: i18n 5 locales
