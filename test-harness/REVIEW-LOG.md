@@ -154,10 +154,19 @@ fin de ¶ → pas d'espace traînant. **Les 4 inserts A matchent §5bis** : A0 `
 A1 @end `The quick brown fox XXX` (espace avant, pas de traînant), A2 `The quick XXX brown fox`,
 A4 `The XXX quick brown fox`. (Validé via le hook atomique sur base propre.)
 
-**Reste étape 4 :** (c) block « zéro ¶ vide aux bords » (fixture multi-¶/stylée) ; (d) font-run vs style
-hôte (l'inline applique `srcFontSize` au run → un titre rend en corps ; + éventuellement oracle run-font) ;
-(e) extraction conditionnelle des marqueurs md (`paragraphToMarkdown`) ; (f) L#1. Puis recapturer
-a-family + styled, passer les xfail au vert.
+**Axe A (style de ¶) — VALIDÉ avec le fix (2026-06-24).** Re-test live sur styled-family (hôte Titre 1) :
+le XXX inséré (fixture sans style) est désormais **inline dans le ¶ hôte → hérite de « Heading 1 »**
+(`XXX XXX quick brown fox{Heading 1}` pour A0/A2/A4), **plus aucun ¶ vide, plus de vol de style**.
+C'était l'objectif §5bis. Les bundles `corpus-styled/` (pré-fix : XXX en Normal + ¶ vide) sont donc la
+preuve « avant » ; à recapturer pour le « après ».
+
+**Reste étape 4 :** (c) block « zéro ¶ vide aux bords » (fixture multi-¶/stylée — non exercé par la
+fixture `"XXX"` mono-¶ actuelle) ; (d) **font-run vs style** : l'inline applique `srcFontSize` au run
+(via `GetParagraph()` non fiable → fallback police par défaut 10pt) → un Titre 1 rend en taille corps.
+Style de ¶ OK, police de run pas encore. **Détecter (d) = étendre l'oracle à la police/taille de run** ;
+corriger = ne pas forcer `srcFont` en inline (laisser hériter) ou lire la vraie police via le ¶ hôte
+(trouvé par itération). (e) extraction md conditionnelle (`paragraphToMarkdown`) ; (f) L#1. Puis
+recapturer a-family + styled (une session, upload pristine), passer les xfail au vert.
 
 ⚠️ **Hygiène recapture** : le documentserver **auto-sauvegarde** → la source serveur se pollue entre
 sessions. Pour recapturer proprement : **un upload pristine + UNE seule session** (undo-all entre bundles,
