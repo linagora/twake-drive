@@ -16,6 +16,7 @@ import {
   buildTranslateChildren
 } from '@/modules/views/OnlyOffice/Scribe/scribeActions'
 import { htmlToMarkdown } from '@/modules/views/OnlyOffice/Scribe/scribeConversion'
+import { parseScribeResponse } from '@/modules/views/OnlyOffice/Scribe/scribeResponse'
 
 /**
  * System prompt framing Scribe as a writing assistant.
@@ -289,6 +290,75 @@ export async function callScribeAI(client, messages, { signal } = {}) {
   }
 
   return content
+}
+
+/**
+ * Corrective re-ask nudge (HARDEN-01, D-03). Appended as ONE extra user message
+ * on the SECOND attempt when the first response failed the contract (illegible
+ * JSON or split-table). It is a terse, English instruction-channel string (same
+ * convention as SYSTEM_PROMPT / RESPONSE_CONTRACT_CORE — intentionally NOT i18n,
+ * it is read by the model, not the user). It does NOT restate the whole contract;
+ * it points the model back at the discussion/fragments JSON object it already
+ * received and insists on JSON-only output, consistent with the SEPARATION
+ * imperative of RESPONSE_CONTRACT_CORE.
+ *
+ * @type {string}
+ */
+export const REASK_CORRECTION_NUDGE =
+  'Your previous reply was not valid contract output. Reply ONLY with a single ' +
+  'JSON object with exactly the keys `discussion` (a string) and `fragments` ' +
+  '(an array of strings) — no prose, no code fences, and no text outside the ' +
+  'JSON. Put any insertable/transformed text ONLY inside `fragments`, never in ' +
+  '`discussion`, and keep any [TABLE:N]/[CELL:r,c] markers balanced within a ' +
+  'single fragment.'
+
+/**
+ * Shared re-ask wrapper (HARDEN-01). Single seam through which BOTH surfaces
+ * (inline popover + side-panel chat) obtain their PARSED contract result, so the
+ * re-ask policy can never diverge between them (D-04).
+ *
+ * Policy:
+ *  1. Call callScribeAI once and parse with the caller's surface.
+ *  2. If that first parse is clean (valid && !fellBack), return it — no 2nd call.
+ *  3. Otherwise (fellBack OR !valid, D-01) issue EXACTLY ONE corrective re-ask:
+ *     the original messages + one appended REASK_CORRECTION_NUDGE user message
+ *     (non-mutating, D-03), and return its parse UNCONDITIONALLY — even if the
+ *     second response is also invalid (hard cap of one retry, D-05; the caller's
+ *     contextual fallback then applies to the returned object).
+ *
+ * The same `signal` is forwarded to BOTH transport calls (D-05): an AbortError
+ * (or any FetchError) thrown by either callScribeAI propagates unchanged — never
+ * swallowed, never retried after an abort. No loading/telemetry side effects live
+ * here; the caller owns loading/probe/log so counts are never doubled.
+ *
+ * @param {Object} client - CozyClient instance from useClient()
+ * @param {Array<{role: string, content: string}>} messages - System + user messages
+ * @param {{ signal?: AbortSignal, surface?: string }} [options]
+ * @returns {Promise<{ discussion: string, fragments: string[], valid: boolean,
+ *                      fellBack: boolean, warnings: string[], raw: string }>}
+ * @throws {DOMException} AbortError if either request was cancelled
+ * @throws {FetchError} If either HTTP request fails
+ * @throws {Error} 'Empty response from AI' if either response is empty
+ */
+export async function callScribeAIWithReask(
+  client,
+  messages,
+  { signal, surface } = {}
+) {
+  const firstText = await callScribeAI(client, messages, { signal })
+  const first = parseScribeResponse(firstText, { surface })
+
+  if (first.valid && !first.fellBack) {
+    return first
+  }
+
+  // D-03: corrective re-ask — append ONE nudge to a COPY of the messages.
+  const retryMessages = messages.concat([
+    { role: 'user', content: REASK_CORRECTION_NUDGE }
+  ])
+  const secondText = await callScribeAI(client, retryMessages, { signal })
+  // D-05: hard cap of one retry — return the second parse unconditionally.
+  return parseScribeResponse(secondText, { surface })
 }
 
 /**
