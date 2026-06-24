@@ -19,9 +19,10 @@ import { useScribe } from '@/modules/views/OnlyOffice/Scribe/ScribeContext'
  * box only flips a context boolean (and, for « sélection », chip visibility in
  * ChatInput).
  *
- * Styling is deliberately quiet (CTX-UX-05): cozy-ui Checkbox size="small" with
- * padding:2, all text 11/12px theme.palette.text.secondary, library-default
- * (primary) checked color — NO Scribe-purple recolor on the checkboxes.
+ * Styling is deliberately quiet (CTX-UX-05): cozy-ui Checkbox size="small"
+ * scaled to 0.85, all text 10/11px theme.palette.text.disabled (lighter than
+ * text.secondary), library-default (primary) checked color — NO Scribe-purple
+ * recolor on the checkboxes. Tightened after the 2026-06-24 live UX review.
  */
 export const ScribeIncludeZone = () => {
   const { t } = useI18n()
@@ -36,18 +37,24 @@ export const ScribeIncludeZone = () => {
     setIncludeSelection
   } = useScribe()
 
-  const muted = theme.palette.text.secondary
+  // Deliberately quiet (CTX-UX-05): use the lighter `text.disabled` token (not
+  // `text.secondary`) and small type so the zone stays well below the prompt's
+  // visual weight. Live UX review (2026-06-24) asked for lighter + smaller.
+  const muted = theme.palette.text.disabled
 
   const labelStyle = {
     display: 'inline-flex',
     alignItems: 'center',
-    fontSize: 12,
+    fontSize: 11,
     cursor: 'pointer',
     whiteSpace: 'nowrap',
     userSelect: 'none'
   }
 
   const spanStyle = { color: muted }
+
+  // size="small" is MUI's smallest preset; scale down a touch more for discretion.
+  const checkboxStyle = { padding: 2, transform: 'scale(0.85)' }
 
   return (
     <div
@@ -62,7 +69,7 @@ export const ScribeIncludeZone = () => {
     >
       <span
         style={{
-          fontSize: 11,
+          fontSize: 10,
           fontWeight: 600,
           lineHeight: 1.4,
           textTransform: 'uppercase',
@@ -85,7 +92,7 @@ export const ScribeIncludeZone = () => {
             size="small"
             checked={includeDocument}
             onChange={() => setIncludeDocument(!includeDocument)}
-            style={{ padding: 2 }}
+            style={checkboxStyle}
             aria-label={t('Scribe.include.document')}
           />
           <span style={spanStyle}>{t('Scribe.include.document')}</span>
@@ -96,7 +103,7 @@ export const ScribeIncludeZone = () => {
             size="small"
             checked={includeDiscussion}
             onChange={() => setIncludeDiscussion(!includeDiscussion)}
-            style={{ padding: 2 }}
+            style={checkboxStyle}
             aria-label={t('Scribe.include.discussion')}
           />
           <span style={spanStyle}>{t('Scribe.include.discussion')}</span>
@@ -111,7 +118,7 @@ export const ScribeIncludeZone = () => {
                 size="small"
                 checked={includeSelection}
                 onChange={() => setIncludeSelection(!includeSelection)}
-                style={{ padding: 2 }}
+                style={checkboxStyle}
                 aria-label={t('Scribe.include.selection')}
               />
               <span style={spanStyle}>{t('Scribe.include.selection')}</span>
