@@ -204,8 +204,19 @@ suivant** (« Jumps… ») → espace traînant parasite (`A1/replace = "XXX "`)
 **inchangés** (pas de régression). Conforme à la précision §5bis « bord de ¶ = saut de ligne ». Corpus
 a-family = **9/9 pass**.
 
+**(e) Extraction md conditionnelle — FAIT (2026-06-24).** Les marqueurs de style de ¶ (titre `#`,
+puce/numéro de liste) ne sont émis **que** si le ¶ est **entièrement** sélectionné (`clipStart===0 &&
+clipEnd===0`) ; un ¶ partiel → texte + inline seulement, **sans** marqueur (→ réinjection inline, pas
+block). Fix dans `window.Asc.plugin.init` (extraction réelle, hot-path prod). Nouveau dev-hook
+**`extractSelection`** (lance la vraie extraction `init()`, renvoie `{text, md}`) = capture **côté
+extraction** (pendant de `injectFixture`), réutilisable pour les cellules tableau. Validé live sur
+`styled-family (1).docx` : P1 *Titre 1* entier → `# The quick brown fox`, partiel → `The` (plain) ;
+P2 *Titre 2* entier → `## …`, partiel → plain ; P3 Normal → plain. ⚠️ `extractSelection` poll le
+sentinel `__pending__` (la callback d'`init()` est asynchrone — un simple no-op callCommand courait
+plus vite qu'elle).
+
 **Reste étape 4 :** (c) block « zéro ¶ vide aux bords » (fixture multi-¶/stylée — non exercé par `"XXX"`) ;
-(d) cf ci-dessus (bloqué groundwork) ; (e) extraction md conditionnelle (`paragraphToMarkdown`) ; (f) L#1.
+(d) cf ci-dessus (bloqué groundwork) ; (f) L#1 (suffixe garde son formatage en inline partial replace).
 **Étape de consolidation recommandée** : recapturer a-family avec le fix (les inserts passent du ¶-vide-buggy
 au correct §5bis) en UNE session (upload pristine), puis figer les verdicts pass. Enfin port vers scribe-in-right-panel.
 

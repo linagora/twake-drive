@@ -2935,15 +2935,25 @@
         // Regular paragraph — inline images are now handled inside paragraphToMarkdown
         var paraMarkdown = paragraphToMarkdown(para, clipStart, clipEnd);
 
+        // §5bis extraction rule: a paragraph-level style MARKER (heading #, list
+        // bullet/number) is emitted ONLY when the paragraph is FULLY selected.
+        // A partially-selected ¶ (clipStart/clipEnd > 0 — e.g. the first/last ¶ of
+        // a cross-¶ range) extracts as plain text + inline formatting only, with no
+        // line-start marker (so re-injection treats it inline, not block). Char-level
+        // formatting (bold/italic/…) is unaffected — it's handled per-run inside
+        // paragraphToMarkdown.
+        var fullySel = (clipStart === 0 && clipEnd === 0);
+
         // Apply heading prefix
-        if (headingLvl > 0 && headingLvl <= 6) {
+        if (headingLvl > 0 && headingLvl <= 6 && fullySel) {
           var hashes = "";
           for (var h = 0; h < headingLvl; h++) hashes = hashes + "#";
           paraMarkdown = hashes + " " + paraMarkdown;
         }
 
-        // Apply list prefix with nesting indentation
-        if (listInfo) {
+        // Apply list prefix with nesting indentation (only for a fully-selected ¶)
+        var emitList = listInfo && fullySel;
+        if (emitList) {
           var indent = "";
           for (var li = 0; li < listInfo.level; li++) indent = indent + "  ";
           if (listInfo.type === "bullet") {
@@ -2959,11 +2969,11 @@
             orderedCounters[rl] = 0;
           }
         } else {
-          // Not a list item — reset all ordered counters
+          // Not a (fully-selected) list item — reset all ordered counters
           orderedCounters = {};
         }
 
-        mdParts.push({ md: paraMarkdown, isList: !!listInfo });
+        mdParts.push({ md: paraMarkdown, isList: !!emitList });
         // Clip plain text to match selection bounds
         var paraPlain = paraText;
         if (clipStart > 0 || clipEnd > 0) {
@@ -3470,12 +3480,43 @@
     });
   }
 
+  // Run the REAL selection extraction (window.Asc.plugin.init path) on the current
+  // selection and return the enriched markdown + plain text it produced. Lets the
+  // harness capture the EXTRACTION side of §5bis (conditional ¶-style markers) and,
+  // later, table-cell extraction — the round-trip counterpart of injectFixture.
+  function hookExtractSelection() {
+    return new Promise(function(resolve) {
+      // Sentinel: init()'s extraction callback overwrites these. Poll until it
+      // runs (its callCommand completes asynchronously, after this call returns).
+      lastEnrichedMd = "__pending__";
+      lastSelectedText = "__pending__";
+      try { window.Asc.plugin.init(); } catch (e) {}
+      var tries = 0;
+      function check() {
+        tries++;
+        var done = (lastSelectedText !== "__pending__") || (lastEnrichedMd !== "__pending__");
+        if (done || tries > 30) {
+          resolve({
+            ok: true,
+            text: lastSelectedText === "__pending__" ? "" : lastSelectedText,
+            md: lastEnrichedMd === "__pending__" ? "" : lastEnrichedMd,
+            tries: tries
+          });
+        } else {
+          setTimeout(check, 120);
+        }
+      }
+      setTimeout(check, 120);
+    });
+  }
+
   function runTestCmd(action, params) {
     if (!testHooksEnabled()) return Promise.resolve({ ok: false, error: "test hooks disabled" });
     if (action === "setSelection") return hookSetSelection(params.spec);
     if (action === "injectFixture") return hookInjectFixture(params.md, params.mode);
     if (action === "injectAtSelection") return hookInjectAtSelection(params.spec, params.md, params.mode);
     if (action === "dumpState") return hookDumpState(params.scope || "region");
+    if (action === "extractSelection") return hookExtractSelection();
     return Promise.resolve({ ok: false, error: "unknown scribeTest action: " + action });
   }
 
