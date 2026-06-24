@@ -78,7 +78,23 @@ L'utilisateur peut interagir avec l'IA de manière fluide — que ce soit via de
 - **Contrat durci** : parser tolérant zéro-dépendance qui ne lève jamais, repli contextuel par surface, re-ask correctif unique avant repli, corpus de régression vert, `response_format: json_object` par défaut (proxy cozy-stack confirmé forwarder le body inchangé).
 - **i18n** : parité de clés Scribe.* 46/46 sur fr/en/de/es/it, aucune chaîne en dur dans les surfaces popover/chat (gates Jest de parité + audit de littéraux).
 
-Prochain milestone : à planifier. Pistes : sortie structurée native `json_schema` (NATIVE-01), actions groupées « tout insérer » (BULK-01), centralisation des prompts IA (backlog 999.1).
+Prochain milestone en cours : **v3.2 Contexte enrichi du prompt** (démarré 2026-06-24, planification). Pistes ultérieures : sortie structurée native `json_schema` (NATIVE-01), actions groupées « tout insérer » (BULK-01), centralisation des prompts IA (backlog 999.1).
+
+## Next Milestone Goals — v3.2 Contexte enrichi du prompt (en cours)
+
+**Goal:** Permettre à l'utilisateur d'enrichir le prompt LLM avec, au choix, le document docx complet, l'historique de discussion, ou la sélection courante — d'abord via une UX discrète dans le side panel (zone « Inclure » + 3 cases à cocher au-dessus du prompt), puis par l'injection réelle des contextes cochés dans le prompt. Approche UX d'abord (statique), puis câblage LLM de bout en bout.
+
+**Scope:** UX + câblage LLM complet (capacité de bout en bout, pas seulement l'UX).
+
+**Phases (3) :**
+- **v3.2-01 — Zone « Inclure » discrète (UX statique)** : zone discrète + 3 cases (« document » / « discussion » / « sélection ») au-dessus du prompt, états par défaut, apparition conditionnelle de la sélection, réutilisation du chip de sélection ; aucun câblage LLM. _(CTX-UX-01..05)_
+- **v3.2-02 — Câblage discussion + sélection** : injection déterministe des contextes discussion et sélection (sources « bon marché » déjà en mémoire), sans casser le contrat de réponse v3.1. _(CTX-LLM-02/03/05)_
+- **v3.2-03 — Câblage document complet + stratégie de taille** : nouveau chemin d'extraction document-entier (markdown) côté plugin + stratégie de troncature documentée + retour utilisateur si tronqué. _(CTX-LLM-01/04)_
+
+**Contrainte UX dure :** les cases à cocher doivent rester visuellement discrètes — ne pas alourdir le panel.
+**Contrainte technique clé :** la composition des contextes ne doit jamais altérer le contrat de réponse structurée v3.1 (séparation discussion/fragments) ni le repli/re-ask. L'extraction du document complet est un nouveau chemin (le pipeline actuel n'extrait que la sélection) — d'où l'isolement de la phase docx et de sa stratégie de taille.
+
+Détail complet : `.planning/ROADMAP.md` (§ Phase Details → v3.2) et `.planning/REQUIREMENTS.md`.
 
 ## Shipped: v3.1 Contrat de réponse structurée LLM (MCP-ready) (2026-06-24)
 
@@ -207,4 +223,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-24 — after v3.1 milestone (structured LLM response contract shipped)*
+*Last updated: 2026-06-24 — v3.2 milestone (Contexte enrichi du prompt) started / planning*

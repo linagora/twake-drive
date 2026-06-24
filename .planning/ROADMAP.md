@@ -7,6 +7,7 @@
 - ✅ **v2.1 Formatage Riche** -- Phases 10-13 (shipped 2026-03-09)
 - ✅ **v3.0 Scribe Chat Panel** -- Phases v3.0-01 to v3.0-04 (shipped 2026-04-04)
 - ✅ **v3.1 Contrat de réponse structurée LLM (MCP-ready)** -- Phases v3.1-01 to v3.1-07 (shipped 2026-06-24)
+- 🚧 **v3.2 Contexte enrichi du prompt** -- Phases v3.2-01 to v3.2-03 (planning, started 2026-06-24)
 
 ## Phases
 
@@ -74,6 +75,12 @@ Full details: `.planning/milestones/v3.1-ROADMAP.md`
 
 </details>
 
+### v3.2 Contexte enrichi du prompt (Phases v3.2-01 to v3.2-03) -- IN PROGRESS
+
+- [ ] **Phase v3.2-01: Zone « Inclure » discrète (UX statique)** - Discreet include zone with 3 checkboxes above the prompt, no LLM wiring
+- [ ] **Phase v3.2-02: Câblage discussion + sélection** - Inject checked conversation history and current selection into the prompt
+- [ ] **Phase v3.2-03: Câblage document complet + stratégie de taille** - Inject the full docx (markdown) with a documented truncation/size strategy and user feedback
+
 ## Progress
 
 **Execution Order:**
@@ -105,6 +112,61 @@ v3.1 phases execute in order: v3.1-01 -> v3.1-02 -> v3.1-03 (HARD GATE) -> v3.1-
 | v3.1-05. Rendu popover (UI) | v3.1 | 2/2 | Complete | 2026-06-22 |
 | v3.1-06. Durcissement contrat | v3.1 | 2/2 | Complete | 2026-06-24 |
 | v3.1-07. i18n 5 locales | v3.1 | 2/2 | Complete | 2026-06-24 |
+| v3.2-01. Zone « Inclure » discrète (UX statique) | v3.2 | 0/0 | Not started | - |
+| v3.2-02. Câblage discussion + sélection | v3.2 | 0/0 | Not started | - |
+| v3.2-03. Câblage document complet + stratégie de taille | v3.2 | 0/0 | Not started | - |
+
+## Phase Details
+
+_Active milestone only. Shipped milestones keep their full phase details in `.planning/milestones/vX.Y-ROADMAP.md`._
+
+### v3.2 Contexte enrichi du prompt
+
+**Goal:** Permettre à l'utilisateur d'enrichir le prompt LLM avec, au choix, le document docx complet, l'historique de discussion, ou la sélection courante — d'abord via une UX discrète dans le side panel, puis par l'injection réelle des contextes cochés dans le prompt. UX d'abord (statique), puis câblage LLM de bout en bout.
+
+**Execution order:** v3.2-01 (UX statique) -> v3.2-02 (câblage discussion + sélection) -> v3.2-03 (câblage document complet + taille).
+
+#### Phase v3.2-01: Zone « Inclure » discrète (UX statique)
+
+**Goal**: Une zone « Inclure » discrète apparaît au-dessus du prompt du side panel avec trois cases à cocher (« document », « discussion », « sélection »), avec leurs états par défaut et l'apparition conditionnelle de la sélection — purement UI, aucun contexte n'est encore injecté dans l'appel LLM
+**Depends on**: Nothing (first phase of v3.2; builds on shipped v3.1 codebase — ChatInput.jsx, SelectionChip.jsx, ScribeContext)
+**Requirements**: CTX-UX-01, CTX-UX-02, CTX-UX-03, CTX-UX-04, CTX-UX-05
+**Success Criteria** (what must be TRUE):
+  1. Une zone « Inclure » est rendue dans le side panel, juste au-dessus de la zone de prompt (ChatInput), contenant trois cases à cocher étiquetées « document », « discussion », « sélection » (libellés i18n sur les 5 locales fr/en/de/es/it, zéro chaîne en dur)
+  2. À l'ouverture, « document » et « discussion » sont décochées ; la case « sélection » n'est présente que lorsqu'une sélection active existe (`currentSelection` non nul) et est cochée par défaut dès qu'une sélection apparaît
+  3. Cocher « sélection » révèle la zone d'affichage de la sélection courante en réutilisant le chip/zone existant (SelectionChip) ; la décocher masque ce chip — sans perdre la sélection sous-jacente
+  4. Les cases sont visuellement discrètes (taille réduite, intégration légère, cohérence thème clair/sombre via useTheme) et n'alourdissent pas le panel — validé en revue UX
+  5. L'état coché/décoché de chaque case vit dans un état partagé (ScribeContext ou local au panel) prêt à être lu par le câblage des phases 02-03, mais aucune valeur de contexte n'est encore ajoutée au prompt LLM (comportement d'appel inchangé vs v3.1)
+**Plans**: TBD
+**UI hint**: yes
+
+#### Phase v3.2-02: Câblage discussion + sélection
+
+**Goal**: Quand l'utilisateur coche « discussion » et/ou « sélection », ces contextes sont réellement injectés dans le prompt envoyé au LLM, de façon déterministe, sans altérer le contrat de réponse structurée v3.1 (séparation discussion/fragments) ni le repli/re-ask
+**Depends on**: Phase v3.2-01
+**Requirements**: CTX-LLM-02, CTX-LLM-03, CTX-LLM-05
+**Success Criteria** (what must be TRUE):
+  1. Quand « sélection » est cochée, la sélection courante est incluse dans le prompt de façon explicite et formalisée (réutilise `encodeSelectionForPrompt` / le bloc `[Selected text from document]…[End of selected text]` existant) ; décochée, la sélection n'est pas envoyée
+  2. Quand « discussion » est cochée, l'historique de conversation pertinent est inclus dans le prompt (sérialisation existante `serializeAssistantTurnForHistory`, discussion-seulement) ; décochée, l'appel n'envoie pas l'historique au-delà du tour courant
+  3. La composition des contextes inclus est déterministe : ordre et formatage stables et reproductibles pour un même état de cases, assemblés en un seul point de composition (scribeAI / ScribeContext.sendMessage)
+  4. Le contrat de réponse v3.1 reste intact : les contextes injectés ne fuient jamais dans `fragments`, la séparation discussion/fragments est préservée, et le re-ask correctif unique + repli contextuel continuent de fonctionner (corpus v3.1 toujours au vert)
+  5. La sonde dev (PROBE-01) et les gates de régression existants restent verts avec les contextes activés
+**Plans**: TBD
+**UI hint**: no
+
+#### Phase v3.2-03: Câblage document complet + stratégie de taille
+
+**Goal**: Quand l'utilisateur coche « document », le contenu du docx complet (extrait en markdown) est injecté dans le prompt, avec une stratégie de taille/troncature documentée pour le document potentiellement volumineux et un retour utilisateur explicite si le contexte est tronqué
+**Depends on**: Phase v3.2-02
+**Requirements**: CTX-LLM-01, CTX-LLM-04
+**Success Criteria** (what must be TRUE):
+  1. Quand « document » est cochée, le contenu du docx complet est extrait en markdown via un chemin d'extraction document-entier (nouveau côté plugin OO, réutilisant l'émetteur markdown par-élément existant — `GetAllParagraphs` + tables/footnotes — au-delà de la seule sélection) et injecté dans le prompt
+  2. Une stratégie de limite/troncature de la taille de contexte est décidée et **documentée** (seuil, point de coupe, priorité), spécifiquement pour le docx complet
+  3. Lorsque le contexte document est tronqué, l'utilisateur en reçoit un retour explicite (indication UI/i18n) — il n'est jamais silencieusement coupé
+  4. L'injection du document complet respecte le contrat de réponse v3.1 (séparation discussion/fragments intacte, pas de fuite dans `fragments`) et passe par le même point de composition déterministe que la phase v3.2-02
+  5. Les trois sources de contexte (document, discussion, sélection) peuvent être cochées dans n'importe quelle combinaison sans casser la composition ni le contrat
+**Plans**: TBD
+**UI hint**: yes
 
 ## Backlog
 
