@@ -82,6 +82,17 @@ export function extractChannelMarkers(text, channel) {
  * Strip a single leading ```/```json fence and matching trailing ``` fence.
  * Linear-time, anchored regexes (no nested quantifiers).
  *
+ * D-08 fence reliquat — CONFIRMED CLOSED by this existing implementation
+ * (v3.1-06-02, no behavior change). The ~2% `fellBack` tail noted in STATE.md
+ * ("model wraps JSON in a ```json fence") was re-measured at 0% fallback over
+ * the static fence corpus (scribeResponse.corpus.spec.js, `fellBack rate`
+ * describe block), including a VERBATIM real-reliquat sample. All emitted shapes
+ * — ```json + language tag, fence + trailing whitespace/newlines, fence with no
+ * trailing newline before the closing ```, and the bare ``` fence — are handled
+ * here (leading + trailing strip, then JSON.parse tolerates residual trailing
+ * whitespace). No extension was required; the regexes stay anchored/linear per
+ * the module ReDoS contract. See RESPONSE_FORMAT_DECISION.md.
+ *
  * @param {string} str
  * @returns {string}
  */
