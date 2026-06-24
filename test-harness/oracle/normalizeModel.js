@@ -37,7 +37,12 @@ function normParagraph(p) {
   const runs = (p.runs || [])
     .map(normRun)
     .filter(r => r.t !== '' || r.link) // drop le bruit (runs purement vides)
-  return { type: 'p', runs }
+  const out = { type: 'p', runs }
+  // Style de ¶ : absence ⇒ "Normal" (défaut). On n'émet `style`/`lvl` que
+  // lorsqu'ils sont significatifs → les goldens Normal restent inchangés.
+  if (p.style) out.style = p.style
+  if (p.lvl != null) out.lvl = p.lvl
+  return out
 }
 
 function normCell(c) {

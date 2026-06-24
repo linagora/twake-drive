@@ -33,6 +33,19 @@ describe('oracle/normalizeModel', () => {
       const r = normalizeModel({ blocks: [{ type: 'p', runs: [{ t: '\t' }, { t: 'ok' }] }] })
       expect(r.blocks[0].runs).toEqual([{ t: 'ok' }])
     })
+
+    it('conserve le style de ¶ + niveau outline quand présents (axe style hôte)', () => {
+      const r = normalizeModel({
+        blocks: [{ type: 'p', style: 'Heading 1', lvl: 0, runs: [{ t: 'Titre' }] }]
+      })
+      expect(r.blocks[0]).toEqual({ type: 'p', runs: [{ t: 'Titre' }], style: 'Heading 1', lvl: 0 })
+    })
+
+    it('absence de style ⇒ Normal implicite : aucun champ style/lvl émis (goldens Normal stables)', () => {
+      const r = normalizeModel({ blocks: [{ type: 'p', runs: [{ t: 'body' }] }] })
+      expect(r.blocks[0]).toEqual({ type: 'p', runs: [{ t: 'body' }] })
+      expect(r.blocks[0]).not.toHaveProperty('style')
+    })
   })
 
   describe('tables (ancré sonde)', () => {

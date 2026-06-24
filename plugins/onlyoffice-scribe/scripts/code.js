@@ -3270,7 +3270,15 @@
               }
             }
           }
-          return { type: "p", runs: runs };
+          var pblock = { type: "p", runs: runs };
+          try {
+            var pst = para.GetStyle ? para.GetStyle() : null;
+            var psn = (pst && pst.GetName) ? pst.GetName() : null;
+            if (psn && psn !== "Normal") pblock.style = psn;
+            var plvl = para.GetOutlineLvl ? para.GetOutlineLvl() : -1;
+            if (typeof plvl === "number" && plvl >= 0) pblock.lvl = plvl;
+          } catch (e) {}
+          return pblock;
         }
         function cellToBlocks(cell) {
           var blocks = [];

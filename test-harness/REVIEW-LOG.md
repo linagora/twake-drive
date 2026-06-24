@@ -70,6 +70,28 @@ Règles validées avec Ben (remplacent L#7, précisent L#8). Résumé :
 
 **Côté harnais (ce worktree)** : étendre l'oracle `dumpState` (`paraToBlock`, ~l.3244) pour capturer le **style de ¶** (nom + niveau) + `normalizeModel.js` ; régénérer les goldens ; poser les xfail.
 
+**Décision worktree (2026-06-24)** : on développe le correctif `code.js` **ici** (selection-tests, OO y est monté → boucle TDD contre le harnais), puis on le **porte** dans `scribe-in-right-panel`. Ce dernier a du dev v3.1 en cours **mais ne touche pas `code.js`** → portage de `code.js` **sans conflit**.
+
+## Étape 1 — Oracle étendu au style de ¶ (FAIT, 2026-06-24)
+
+- `code.js` `paraToBlock` (hook dumpState) capture `style` (nom de style, omis si "Normal") + `lvl`
+  (niveau outline si ≥0). API confirmée live : `para.GetStyle().GetName()`, `para.GetOutlineLvl()`.
+- `normalizeModel.js` : passe-plat `style`/`lvl` ; **absence ⇒ Normal implicite** → goldens Normal
+  **inchangés** (aucun `style` émis). + 2 tests ajoutés dans `normalizeModel.spec.js`.
+- **Validé live** : ¶ *Titre 1* → `{…,"style":"Heading 1"}` ; ¶ Normal → pas de `style`.
+
+### ⚠️ Dev-env — 2 pièges confirmés
+- **Cache plugin `immutable`** : `code.js` est servi sous `/<version>/sdkjs-plugins/scribe/` avec
+  `Cache-Control: immutable, max-age=1an`. Un edit n'est PAS pris par un simple hard reload (l'iframe
+  plugin est chargée en asynchrone). **Solution : ouvrir l'éditeur dans un contexte navigateur isolé**
+  (`new_page isolatedContext`) → cache vierge → code frais. (Purger les `.gz` ne suffit pas ; le serveur
+  voit bien le nouveau fichier, c'est le navigateur qui cache.)
+- **jest cassé dans ce worktree** : `node_modules` est un **symlink** vers `scribe-in-right-panel`, et
+  le plugin wasm `swc_mut_cjs_exports` ne se résout pas (« failed to get the node_modules path »).
+  **Tout** jest échoue (y compris les tests `src`), pas seulement l'oracle. → couche unitaire (T-01,
+  oracle specs) **non exécutable** tant que ce n'est pas réparé. Les tests ajoutés sont validés via
+  `node --input-type=module` en attendant. À traiter comme tâche env séparée.
+
 ## Constats transverses ouverts (à statuer pendant la revue)
 
 - **L#7 — ¶ vide parasite à l'insertion (BUG confirmé, A0/insert)** : `code.js:1479`
