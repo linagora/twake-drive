@@ -58,6 +58,13 @@ export const ScribeProvider = ({ children }) => {
   const [messages, setMessages] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [currentSelection, setCurrentSelectionState] = useState(null)
+  // v3.2-01 « Inclure » zone state — three context-include toggles whose state
+  // lives HERE in the provider (NOT in the leaf ScribeIncludeZone component) so
+  // the prompt-assembly seam can read them later.
+  // read by v3.2-02/03; no prompt injection in v3.2-01
+  const [includeDocument, setIncludeDocument] = useState(false)
+  const [includeDiscussion, setIncludeDiscussion] = useState(false)
+  const [includeSelection, setIncludeSelection] = useState(true)
   const [panelActions, setPanelActionsState] = useState(null)
   const [panelWidth, setPanelWidthState] = useState(400)
   // Draft prompt handed over from the inline popover when the user opens the
@@ -118,6 +125,20 @@ export const ScribeProvider = ({ children }) => {
     setCurrentSelectionState(null)
   }, [currentSelection])
 
+  // CTX-UX-03 (opt-OUT model): on a null -> non-null selection edge, auto-check
+  // « sélection » so a fresh selection is included by default. We do NOT force
+  // it back while a selection persists — once shown, the user's manual uncheck
+  // sticks until the selection itself changes. This auto-check OWNS the include
+  // flag in the provider; the leaf ScribeIncludeZone never sets it on mount.
+  const prevSelectionRef = useRef(currentSelection)
+  useEffect(() => {
+    const prev = prevSelectionRef.current
+    if (!prev && currentSelection) {
+      setIncludeSelection(true)
+    }
+    prevSelectionRef.current = currentSelection
+  }, [currentSelection])
+
   const setPanelActions = useCallback(actions => {
     setPanelActionsState(actions)
   }, [])
@@ -140,6 +161,9 @@ export const ScribeProvider = ({ children }) => {
       setIsLoading(true)
 
       try {
+        // SEAM: the include booleans (includeDocument/includeDiscussion/
+        // includeSelection) are read here by v3.2-02/03; no prompt injection in
+        // v3.2-01 — the aiMessages assembly below is byte-for-byte identical to v3.1.
         // Build AI messages: system prompt + conversation history (skip error messages)
         const currentMessages = [...messagesRef.current, userMessage]
         // Marker-preservation clauses key off the CURRENT turn's selection markdown,
@@ -293,6 +317,12 @@ export const ScribeProvider = ({ children }) => {
       currentSelection,
       setCurrentSelection,
       dismissSelection,
+      includeDocument,
+      setIncludeDocument,
+      includeDiscussion,
+      setIncludeDiscussion,
+      includeSelection,
+      setIncludeSelection,
       panelActions,
       setPanelActions,
       panelWidth,
@@ -312,6 +342,12 @@ export const ScribeProvider = ({ children }) => {
       currentSelection,
       setCurrentSelection,
       dismissSelection,
+      includeDocument,
+      setIncludeDocument,
+      includeDiscussion,
+      setIncludeDiscussion,
+      includeSelection,
+      setIncludeSelection,
       panelActions,
       setPanelActions,
       panelWidth,
