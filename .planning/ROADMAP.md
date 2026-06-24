@@ -69,7 +69,7 @@ Full v3.0 phase details are preserved in `.planning/milestones/v3.0-ROADMAP.md`.
 - [x] **Phase v3.1-04: Rendu chat (cartes + clavier)** (5/5 plans) -- completed 2026-06-22 - Cartes de fragment encadrées aux positions `{{fragment:N}}`, boutons Copier/Insérer/Remplacer, réinjection riche par fragment, navigation clavier complète
 - [x] **Phase v3.1-05: Rendu popover (UI)** - Popover rend le fragment unique en carte (réutilise FragmentCard/MarkdownPreview de v3.1-04, marqueurs propres), sans afficher la `discussion` ; refonte du menu d'actions (prompt libre intégré comme entrée, entrée « Ouvrir le panneau latéral » remplaçant l'icône)
 - [x] **Phase v3.1-06: Durcissement contrat** (2/2 plans) -- completed 2026-06-24 - Re-ask sur parse invalide (1× avant repli), corpus de régression des réponses malformées (6 catégories D-07) + re-mesure fence fellBack (0%, stripFence confirmé), décision documentée du défaut `response_format` (json_object, proxy forwarding confirmé)
-- [x] **Phase v3.1-07: i18n 5 locales** - Libellés de carte + messages de repli traduits et vérifiés sur fr/en/de/es/it ; aucune chaîne Scribe en dur dans les surfaces popover/chat
+- [x] **Phase v3.1-07: i18n 5 locales** (2/2 plans) -- completed 2026-06-24 - Libellés de carte + messages de repli traduits et vérifiés sur fr/en/de/es/it (parité de clés 46/46 sur les 5 locales) ; 3 littéraux FR en dur extraits vers `t()` + filet de régression d'audit ; aucune chaîne Scribe en dur dans les surfaces popover/chat
 
 ## Phase Details
 
@@ -204,7 +204,7 @@ v3.1 phases execute in order: v3.1-01 -> v3.1-02 -> v3.1-03 (HARD GATE) -> v3.1-
 | v3.1-04. Rendu chat (cartes + clavier) | v3.1 | 5/5 | Complete | 2026-06-22 |
 | v3.1-05. Rendu popover (UI) | v3.1 | 2/2 | Complete | 2026-06-22 |
 | v3.1-06. Durcissement contrat | v3.1 | 2/2 | Complete | 2026-06-24 |
-| v3.1-07. i18n 5 locales | v3.1 | 2/2 | Complete | - |
+| v3.1-07. i18n 5 locales | v3.1 | 2/2 | Complete | 2026-06-24 |
 
 ## Backlog
 
