@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v3.1
 milestone_name: Contrat de réponse structurée LLM
-status: executing
-stopped_at: Phase v3.1-05 complete (live UAT passed)
-last_updated: "2026-06-22T10:23:57.467Z"
-last_activity: 2026-06-22 -- Phase v3.1-05 both plans built (jest 15/15), awaiting live UAT
+status: completed
+stopped_at: Phase v3.1-06 context gathered
+last_updated: "2026-06-24T05:20:32.595Z"
+last_activity: "2026-06-22 -- v3.1-05 complete: violet result card + INLINE-02 mirror + reworked menu/roving + gradient prompt input (focus-vivid liseré, compact→max width, Ctrl+Enter multiline, Scribe-Panel draft carry-over)"
 progress:
   total_phases: 7
   completed_phases: 5
@@ -147,6 +147,6 @@ After v3.0-04 completion, three commits refined the plugin protocol and document
 
 ## Session Continuity
 
-Last session: 2026-06-19T14:35:47.728Z
-Stopped at: Phase v3.1-04 context gathered
-Resume file: .planning/phases/v3.1-04-rendu-chat-cartes-clavier/v3.1-04-CONTEXT.md
+Last session: 2026-06-24T05:20:32.588Z
+Stopped at: Phase v3.1-06 context gathered
+Resume file: .planning/phases/v3.1-06-durcissement-contrat/v3.1-06-CONTEXT.md
