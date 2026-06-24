@@ -1,5 +1,28 @@
 # Milestones
 
+## v3.1 Contrat de réponse structurée LLM (MCP-ready) (Shipped: 2026-06-24)
+
+**Phases completed:** 7 phases (v3.1-01 to v3.1-07), 19 plans
+**Timeline:** 2026-06-16 → 2026-06-24 (9 days)
+**Commits:** 123 v3.1-tagged commits (431 total on branch since the v3.1 boundary, incl. an upstream twake/master merge)
+**Requirements:** 19/19 satisfied
+
+**Delivered:** Un contrat JSON `{ discussion, fragments[] }` (MCP-ready, sans serveur) sépare sans ambiguïté ce que le LLM *dit* de ce qu'il *produit* à insérer, exploité de bout en bout dans le chat et le popover inline.
+
+**Key accomplishments:**
+
+- Module contrat pur `scribeResponse.js` — `parseScribeResponse` tolérant (fence-strip → premier `{…}` équilibré → réparation virgule traînante → JSON.parse → validation maison) qui ne lève jamais, repli contextuel par surface, grammaire de marqueurs `{{fragment:N}}` REF-safe, `SCRIBE_OUTPUT_SCHEMA` documenté, zéro dépendance
+- Plumbing dual-surface — les system prompts (chat + inline) émettent le contrat via un `RESPONSE_CONTRACT_CORE` partagé + cardinalité par surface ; seam de parse aux deux call sites ; modèle de message étendu `{discussion, fragments, fellBack}` ; sérialisation multi-tour n'envoyant que la discussion ; miroir inline → historique chat
+- Sonde dev HARD GATE — panneau dev exposant `{discussion, fragments, valid, fellBack, warnings}` + métriques de conformité (duplication, préambule par locale, table non scindée, REF préservés, répartition 0/1/N) ; gate go/no-go PASS (N=46/52) qui a conditionné tout le rendu de cartes
+- Rendu chat (cartes + clavier) — chaque fragment en carte encadrée Scribe-violet aux positions `{{fragment:N}}` avec Copier/Insérer/Remplacer (Remplacer gardé par sélection active), réinjection riche par fragment, navigation clavier complète au fil (↑/↓/←/→/Échap/Entrée)
+- Rendu popover (UI) — le fragment unique rendu en carte (réutilise FragmentCard/MarkdownPreview, marqueurs propres) sans afficher la discussion ; refonte du menu d'actions (prompt libre intégré comme entrée + entrée « Ouvrir le panneau latéral » remplaçant l'icône)
+- Durcissement contrat — helper partagé `callScribeAIWithReask` (re-ask correctif unique sur `fellBack || !valid` avant repli, signal-respecting) ; corpus de régression statique 6 catégories ; fence fellBack re-mesuré à 0% (stripFence confirmé) ; décision `response_format: json_object` documentée (proxy cozy-stack confirmé forwarder le body inchangé)
+- i18n 5 locales — parité de clés Scribe.* 46/46 sur fr/en/de/es/it ; 3 littéraux FR en dur extraits vers `t()` ; gates Jest de parité + audit de littéraux ; aucune chaîne Scribe en dur dans les surfaces popover/chat
+
+**Known deferred items at close:** 5 (see STATE.md Deferred Items) — 4 pre-existing human-verify gaps inherited from shipped milestones (phase 21/25 v2.1, v3.0-01/02) + 1 false-positive open flag (`2-feature-flag-for-scribe`, actually completed 2026-03-05).
+
+---
+
 ## v3.0 Scribe Chat Panel (Shipped: 2026-04-04)
 
 **Phases completed:** 4 phases, 7 plans

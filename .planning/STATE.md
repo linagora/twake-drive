@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v3.1
 milestone_name: Contrat de réponse structurée LLM
-status: executing
-stopped_at: Completed v3.1-07-02-PLAN.md (literal-audit extraction I18N-01 + scribeLiteralAudit.spec.js gate) — phase v3.1-07 COMPLETE (2/2)
-last_updated: "2026-06-24T11:00:00.000Z"
-last_activity: 2026-06-24 -- Completed v3.1-07-02 (3 FR literals -> t() in ScribeResultPanel + literal-audit Jest gate); phase v3.1-07 done, I18N-01 complete
+status: shipped
+stopped_at: v3.1 milestone archived (2026-06-24) — all 7 phases / 19 requirements complete
+last_updated: "2026-06-24T13:00:00.000Z"
+last_activity: 2026-06-24 -- Archived v3.1 milestone (ROADMAP + REQUIREMENTS extracted to milestones/, MILESTONES.md entry, PROJECT.md Current State); next milestone TBD
 progress:
   total_phases: 7
   completed_phases: 7
@@ -16,12 +16,26 @@ progress:
 
 # Project State
 
+## Deferred Items
+
+Items acknowledged and deferred at v3.1 milestone close on 2026-06-24. These are historical open artifacts from already-shipped milestones (verification gaps that were never formally closed) plus one false-positive open flag — none block the v3.1 close:
+
+| Category | Item | Status |
+|----------|------|--------|
+| verification | phase 21 (v2.1) | human_needed |
+| verification | phase 25 (v2.1) | human_needed |
+| verification | v3.0-01 (v3.0) | human_needed |
+| verification | v3.0-02 (v3.0) | human_needed |
+| quick_task | 2-feature-flag-for-scribe | open (false positive — actually completed 2026-03-05) |
+
+Note: the four verification items are pre-existing human-verify gaps inherited from milestones that already shipped; they were acknowledged and deferred at v3.1 milestone close on 2026-06-24. The `2-feature-flag-for-scribe` quick-task is a false-positive open flag (the work was actually completed 2026-03-05) — recorded here for traceability and likewise acknowledged and deferred at v3.1 milestone close on 2026-06-24.
+
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-06-16)
+See: .planning/PROJECT.md (updated 2026-06-24)
 
 **Core value:** L'utilisateur peut interagir avec l'IA de maniere fluide -- actions rapides inline ou chat conversationnel dans un panneau lateral -- pour transformer et manipuler le contenu de son document OnlyOffice.
-**Current focus:** Phase v3.1-07 — i18n 5 locales
+**Current focus:** v3.1 shipped — planning next milestone
 
 ## Current Position
 

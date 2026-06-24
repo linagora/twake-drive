@@ -44,6 +44,15 @@ L'utilisateur peut interagir avec l'IA de manière fluide — que ce soit via de
 - ✓ Contrat marqueurs Scribe : syntaxe normalisée pour images et cellules tableau — v2.5
 - ✓ Blocs étendus : code blocks, blockquotes, tables markdown via Builder API — v2.5
 - ✓ Formatage markdown : state machine buildMarkdownFromParts pour transitions correctes — v2.5
+- ✓ Contrat JSON `{discussion, fragments[]}` parsé/validé (validation maison, zéro dépendance) — v3.1
+- ✓ Repli contextuel sur réponse non conforme (chat → discussion + filet ; inline → brut = unique fragment) — v3.1
+- ✓ Marqueurs `{{fragment:N}}` REF-safe (préservation des cross-refs) — v3.1
+- ✓ Cartes de fragment dans le chat (Copier/Insérer/Remplacer + navigation clavier) — v3.1
+- ✓ Popover inline rend le fragment unique en carte + menu d'actions refondu — v3.1
+- ✓ Échange inline miroité dans l'historique chat partagé — v3.1
+- ✓ Sonde dev + métriques de conformité (HARD GATE avant rendu) — v3.1
+- ✓ Durcissement contrat : re-ask LLM unique, corpus de régression, décision `response_format` documentée — v3.1
+- ✓ i18n cartes + repli sur 5 locales (fr/en/de/es/it), zéro chaîne en dur — v3.1
 
 ### Active
 
@@ -60,19 +69,20 @@ L'utilisateur peut interagir avec l'IA de manière fluide — que ce soit via de
 - Édition collaborative simultanée avec Scribe — complexité excessive
 - Correction grammaticale passive en temps réel (style Grammarly) — performance prohibitive
 
-## Current Milestone: v3.1 Contrat de réponse structurée LLM (MCP-ready)
+## Current State
 
-**Goal:** Séparer sans ambiguïté la méta-discussion du contenu insérable dans les réponses du LLM, via un contrat JSON (formalisme JSON Schema, MCP-ready), exploité dans le chat et le popover.
+**v3.1 Contrat de réponse structurée LLM (MCP-ready) shipped 2026-06-24.** Un contrat JSON `{ discussion, fragments[] }` (MCP-ready, sans serveur) sépare désormais sans ambiguïté ce que le LLM *dit* (discussion) de ce qu'il *produit* à insérer (fragments), de bout en bout sur les deux surfaces :
 
-**Target features:**
-- Module contrat : JSON Schema + `parseScribeResponse` tolérant + validation maison + repli contextuel
-- Intégration prompt : les system prompts (popover + chat) émettent le contrat
-- Sonde dev : confirmer la conformité réelle du modèle (1 / N / 0 fragments) avant l'UI
-- Rendu panel chat : `discussion` + marqueurs `{{fragment:N}}` → cartes de fragment (copier/insérer/remplacer)
-- Rendu popover inline : idem, cell-markers préservés par fragment
-- Durcissement : re-ask LLM, feature-flag, migration des actions menu, tests
+- **Chat** : la discussion s'affiche en prose, chaque fragment dans une carte encadrée (positions `{{fragment:N}}`) avec Copier/Insérer/Remplacer + navigation clavier complète.
+- **Popover inline** : le fragment unique rendu en carte (sans discussion), menu d'actions refondu (prompt libre intégré + entrée « Ouvrir le panneau latéral »).
+- **Contrat durci** : parser tolérant zéro-dépendance qui ne lève jamais, repli contextuel par surface, re-ask correctif unique avant repli, corpus de régression vert, `response_format: json_object` par défaut (proxy cozy-stack confirmé forwarder le body inchangé).
+- **i18n** : parité de clés Scribe.* 46/46 sur fr/en/de/es/it, aucune chaîne en dur dans les surfaces popover/chat (gates Jest de parité + audit de littéraux).
 
-**Key context:** prompt côté client (on contrôle l'instruction) ; endpoint OpenAI-compat non streamé ; validation maison (zéro dépendance, le JSON Schema reste un artefact documenté) ; repli « selon le contexte » (popover → 1 fragment ; chat → discussion + filet de sécurité) ; réinjection riche existante (tables/footnotes/cell-markers) inchangée. Vision long terme : évoluer vers des actions éditeur (futurs milestones).
+Prochain milestone : à planifier. Pistes : sortie structurée native `json_schema` (NATIVE-01), actions groupées « tout insérer » (BULK-01), centralisation des prompts IA (backlog 999.1).
+
+## Shipped: v3.1 Contrat de réponse structurée LLM (MCP-ready) (2026-06-24)
+
+**Goal:** Séparer sans ambiguïté la méta-discussion du contenu insérable dans les réponses du LLM, via un contrat JSON (formalisme JSON Schema, MCP-ready), exploité dans le chat et le popover. 7 phases (v3.1-01 à v3.1-07), 19 plans, 19/19 requirements. Voir `.planning/MILESTONES.md` et `.planning/milestones/v3.1-ROADMAP.md`.
 
 ## Shipped: v3.0 Scribe Chat Panel (2026-04-04)
 
@@ -197,4 +207,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-16 — v3.1 milestone started (structured LLM response contract)*
+*Last updated: 2026-06-24 — after v3.1 milestone (structured LLM response contract shipped)*
