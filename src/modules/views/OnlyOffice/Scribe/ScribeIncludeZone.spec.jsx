@@ -87,9 +87,12 @@ describe('ScribeIncludeZone — static « Inclure » zone', () => {
     expect(screen.getByText('Scribe.include.discussion')).toBeInTheDocument()
   })
 
-  it('OMITS the « sélection » checkbox when there is no selection', () => {
+  it('keeps the « sélection » checkbox mounted but HIDDEN when there is no selection (reserves its slot)', () => {
     render(<ScribeIncludeZone />)
-    expect(screen.queryByLabelText('Scribe.include.selection')).toBeNull()
+    const sel = screen.getByLabelText('Scribe.include.selection')
+    expect(sel).toBeInTheDocument()
+    expect(sel).not.toBeVisible()
+    expect(sel).toBeDisabled()
   })
 
   it('mounts the aria-live wrapper in BOTH states (empty when no selection)', () => {

@@ -123,22 +123,31 @@ export const ScribeIncludeZone = () => {
           <span style={spanStyle}>{t('Scribe.include.discussion')}</span>
         </label>
 
-        {/* Always-mounted aria-live region keeps the live-region registration
-            stable; only the inner « sélection » control mounts conditionally. */}
+        {/* The « sélection » control is ALWAYS rendered but hidden via
+            `visibility` (not unmounted) when there is no selection, so it keeps
+            its slot in the wrap row — selecting/deselecting text never reflows
+            the zone (live UX review 2026-06-24). aria-live announces it on
+            appearance; aria-hidden + disabled keep it inert while hidden. */}
         <div aria-live="polite" style={{ display: 'contents' }}>
-          {currentSelection ? (
-            <label style={labelStyle} onMouseDown={e => e.stopPropagation()}>
-              <Checkbox
-                size="small"
-                className={classes.checkbox}
-                checked={includeSelection}
-                onChange={() => setIncludeSelection(!includeSelection)}
-                style={checkboxStyle}
-                aria-label={t('Scribe.include.selection')}
-              />
-              <span style={spanStyle}>{t('Scribe.include.selection')}</span>
-            </label>
-          ) : null}
+          <label
+            style={{
+              ...labelStyle,
+              visibility: currentSelection ? 'visible' : 'hidden'
+            }}
+            aria-hidden={currentSelection ? undefined : true}
+            onMouseDown={e => e.stopPropagation()}
+          >
+            <Checkbox
+              size="small"
+              className={classes.checkbox}
+              checked={includeSelection}
+              onChange={() => setIncludeSelection(!includeSelection)}
+              style={checkboxStyle}
+              disabled={!currentSelection}
+              aria-label={t('Scribe.include.selection')}
+            />
+            <span style={spanStyle}>{t('Scribe.include.selection')}</span>
+          </label>
         </div>
       </div>
     </div>

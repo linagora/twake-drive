@@ -158,15 +158,16 @@ export const ChatInput = forwardRef(({ onArrowUp } = {}, ref) => {
       }}
     >
       <ScribeIncludeZone />
-      {/* Fixed-height selection-chip slot: whenever a selection exists the slot
-          reserves exactly the chip's footprint (`4px 0` padding + 24px body),
-          so checking/unchecking « sélection » never shifts the discussion above
-          and the chip itself is a fixed single line (live UX review 2026-06-24). */}
-      {currentSelection && (
-        <div style={{ height: 32, marginBottom: 4 }}>
-          {includeSelection && <SelectionChip selection={currentSelection} />}
-        </div>
-      )}
+      {/* Permanently-reserved fixed-height selection-chip slot (always rendered,
+          even with no selection) so that selecting/deselecting text — or
+          checking/unchecking « sélection » — NEVER shifts the discussion above.
+          The user accepted the permanent reserved band (live UX review
+          2026-06-24). The chip itself is a fixed single line (32px footprint). */}
+      <div style={{ height: 32, marginBottom: 4 }}>
+        {currentSelection && includeSelection && (
+          <SelectionChip selection={currentSelection} />
+        )}
+      </div>
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>
       <textarea
         ref={textareaRef}
