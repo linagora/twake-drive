@@ -8207,10 +8207,10 @@ cozy-search@^0.25.3:
     react-type-animation "3.2.0"
     rooks "7.14.1"
 
-cozy-sharing@34.0.0:
-  version "34.0.0"
-  resolved "https://registry.yarnpkg.com/cozy-sharing/-/cozy-sharing-34.0.0.tgz#c27f25b71d2566a34c1a79b3bec96a01938dd0cb"
-  integrity sha512-vEl4P4h32RZD/kQzyJiftxT+czawdXHc9sQA6bY9MZJh9Pg966WOfV/QsOFzrASV2ML3JQLkUKEr2jvZXcxGmw==
+cozy-sharing@34.1.2:
+  version "34.1.2"
+  resolved "https://registry.yarnpkg.com/cozy-sharing/-/cozy-sharing-34.1.2.tgz#2ed2e6e9932449c1d6761b8f7916969f9f50fd03"
+  integrity sha512-jrcRxs+NfHlRIJle/jR5Bx/w065K05CPxwAasW/ef32HQVySNke/XYwLUNXZmyhtj3VSpigo6CwyOldFXEUwxw==
   dependencies:
     "@cozy/minilog" "^1.0.0"
     classnames "^2.5.1"
