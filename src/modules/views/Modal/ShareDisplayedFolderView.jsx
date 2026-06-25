@@ -4,8 +4,8 @@ import { useNavigate } from 'react-router-dom'
 import flag from 'cozy-flags'
 import { ShareModal } from 'cozy-sharing'
 
-import { SHARING_TAB_DRIVES } from '@/constants/config'
 import { useDisplayedFolder } from '@/hooks'
+import { makeRevokeSuccessRedirectPath } from '@/modules/views/Modal/revokeSuccessRedirect'
 
 const ShareDisplayedFolderView = () => {
   const { displayedFolder } = useDisplayedFolder()
@@ -17,9 +17,9 @@ const ShareDisplayedFolderView = () => {
     }
 
     const onRevokeSuccess = () => {
-      if (displayedFolder.driveId) {
-        navigate(`/sharings?tab=${SHARING_TAB_DRIVES}`)
-      }
+      navigate(makeRevokeSuccessRedirectPath({ document: displayedFolder }), {
+        replace: true
+      })
     }
 
     return (
