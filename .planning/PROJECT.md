@@ -78,7 +78,7 @@ L'utilisateur peut interagir avec l'IA de manière fluide — que ce soit via de
 - **Contrat durci** : parser tolérant zéro-dépendance qui ne lève jamais, repli contextuel par surface, re-ask correctif unique avant repli, corpus de régression vert, `response_format: json_object` par défaut (proxy cozy-stack confirmé forwarder le body inchangé).
 - **i18n** : parité de clés Scribe.* 46/46 sur fr/en/de/es/it, aucune chaîne en dur dans les surfaces popover/chat (gates Jest de parité + audit de littéraux).
 
-Prochain milestone en cours : **v3.2 Contexte enrichi du prompt** (démarré 2026-06-24, planification). Pistes ultérieures : sortie structurée native `json_schema` (NATIVE-01), actions groupées « tout insérer » (BULK-01), centralisation des prompts IA (backlog 999.1).
+Prochain milestone en cours : **v3.2 Contexte enrichi du prompt** (démarré 2026-06-24 ; 2/3 phases livrées : v3.2-01 UX statique + v3.2-02 câblage discussion/sélection — reste v3.2-03 document complet). Pistes ultérieures : sortie structurée native `json_schema` (NATIVE-01), actions groupées « tout insérer » (BULK-01), centralisation des prompts IA (backlog 999.1).
 
 ## Next Milestone Goals — v3.2 Contexte enrichi du prompt (en cours)
 
@@ -87,8 +87,8 @@ Prochain milestone en cours : **v3.2 Contexte enrichi du prompt** (démarré 202
 **Scope:** UX + câblage LLM complet (capacité de bout en bout, pas seulement l'UX).
 
 **Phases (3) :**
-- **v3.2-01 — Zone « Inclure » discrète (UX statique)** : zone discrète + 3 cases (« document » / « discussion » / « sélection ») au-dessus du prompt, états par défaut, apparition conditionnelle de la sélection, réutilisation du chip de sélection ; aucun câblage LLM. _(CTX-UX-01..05)_
-- **v3.2-02 — Câblage discussion + sélection** : injection déterministe des contextes discussion et sélection (sources « bon marché » déjà en mémoire), sans casser le contrat de réponse v3.1. _(CTX-LLM-02/03/05)_
+- ✅ **v3.2-01 — Zone « Inclure » discrète (UX statique)** : zone discrète + 3 cases (« document » / « discussion » / « sélection ») au-dessus du prompt, états par défaut, apparition conditionnelle de la sélection, réutilisation du chip de sélection ; aucun câblage LLM. _(CTX-UX-01..05 — livré 2026-06-24)_
+- ✅ **v3.2-02 — Câblage discussion + sélection** : injection déterministe des contextes discussion et sélection (sources « bon marché » déjà en mémoire), sans casser le contrat de réponse v3.1. _(CTX-LLM-02/03/05 — livré 2026-06-25, vérifié 10/10)_
 - **v3.2-03 — Câblage document complet + stratégie de taille** : nouveau chemin d'extraction document-entier (markdown) côté plugin + stratégie de troncature documentée + retour utilisateur si tronqué. _(CTX-LLM-01/04)_
 
 **Contrainte UX dure :** les cases à cocher doivent rester visuellement discrètes — ne pas alourdir le panel.
@@ -223,4 +223,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-06-24 — v3.2 milestone (Contexte enrichi du prompt) started / planning*
+*Last updated: 2026-06-25 — v3.2-02 (câblage discussion + sélection) complete & verified; 2/3 v3.2 phases done*

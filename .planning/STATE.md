@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v3.2
 milestone_name: Contexte enrichi du prompt
 status: executing
-stopped_at: v3.2-02 discuss-phase DONE — CONTEXT.md + DISCUSSION-LOG.md written & committed (commit e77dd2c6f). 5 gray areas discussed; all decisions locked (see CONTEXT.md D-00..D-05). Next step → plan v3.2-02 (NO UI hint → skip ui-phase).
-last_updated: "2026-06-25T14:44:19.614Z"
-last_activity: 2026-06-25 -- Phase v3.2-02-cablage-discussion-selection planning complete
+stopped_at: v3.2-02 EXECUTED + VERIFIED (passed, 10/10 must-haves). Gated discussion+selection at the ScribeContext.sendMessage seam (live-read refs, D-01..D-05), D-05 framing seed in buildChatSystemPrompt; deterministic compose matrix + v3.1 regression/PROBE-01 all GREEN; v3.1 contract artifacts confirmed unmodified. Code review WR-01/WR-02 (dev-only probe/panel divergence) fixed in b1b11bb5f. Next → v3.2-03 (câblage document complet + stratégie de taille).
+last_updated: "2026-06-25T17:05:00Z"
+last_activity: 2026-06-25 -- Phase v3.2-02 complete (verified passed)
 progress:
   total_phases: 3
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 1
   completed_plans: 1
-  percent: 33
+  percent: 67
 ---
 
 # Project State
@@ -35,19 +35,19 @@ Note: the four verification items are pre-existing human-verify gaps inherited f
 See: .planning/PROJECT.md (updated 2026-06-24)
 
 **Core value:** L'utilisateur peut interagir avec l'IA de maniere fluide -- actions rapides inline ou chat conversationnel dans un panneau lateral -- pour transformer et manipuler le contenu de son document OnlyOffice.
-**Current focus:** Phase v3.2-01 — Zone Inclure discrète (UX statique)
+**Current focus:** Phase v3.2-02 — Câblage discussion + sélection (✅ complete) → next v3.2-03
 
 ## Current Position
 
-Phase: v3.2-02 (Câblage discussion + sélection) — CONTEXT GATHERED (discuss-phase done)
-Plan: not yet created
-Status: Ready to execute
-Progress: [###-------] 33% (1/3 v3.2 phases complete; v3.2-02 in discuss→plan)
-Last activity: 2026-06-25 -- Phase v3.2-02-cablage-discussion-selection planning complete
+Phase: v3.2-02 (Câblage discussion + sélection) — ✅ COMPLETE (verified passed 10/10, 2026-06-25)
+Plan: v3.2-02-01 complete — SUMMARY + VERIFICATION written; 5 commits (f85d1a39b, 34768c15f, 9935423d7, 7dd025996, + fix b1b11bb5f)
+Status: Phase complete — next is v3.2-03
+Progress: [#######---] 67% (2/3 v3.2 phases complete)
+Last activity: 2026-06-25 -- Phase v3.2-02 executed + verified passed
 
 ⚠️ TOOLING: gsd-sdk v1.42.3 cannot resolve `vX.Y-NN` phases (find-phase/phase-plan-index return "Phase not found" for ALL v3.0/v3.1 phases — regex only matches numeric-prefixed dirs). Orchestrate v3.2 phases manually with explicit paths; ROADMAP/STATE/REQUIREMENTS completion writes done by hand (gsd-sdk phase.complete fails on vX.Y-NN).
 
-Next: plan v3.2-02 — câblage discussion + sélection. CONTEXT.md is ready at `.planning/phases/v3.2-02-cablage-discussion-selection/v3.2-02-CONTEXT.md`. ✅ RESUME COMMAND: `/gsd-plan-phase v3.2-02-cablage-discussion-selection` — the full slug NOW resolves (init.plan-phase phase_found=true, context_path correct) because the phase DIRECTORY now exists (it was created when CONTEXT.md was written). No UI hint → skip ui-phase. (Tooling nuance: the full slug failed at the very start of the 06-25 session ONLY because the dir didn't exist yet — chicken/egg; once the dir exists the normal automated flow works. `roadmap.get-phase` still needs the abbreviated `v3.2-02`.) The three include booleans live in ScribeContext (l.65-67); v3.2-02 reads them at the `sendMessage` prompt-assembly seam (l.164). Key locked decisions in CONTEXT.md: D-00 γ (gate v3.1 structure + seam ready for v3.2-03), D-05 light system-prompt framing, D-01 discussion-off⇒current-turn-only, D-02 selection gates current turn only, D-03 store-only-what-is-sent (no checkbox flags), D-04 selection-off removes block AND marker clauses.
+Next: phase v3.2-03 — câblage document complet + stratégie de taille (the LAST v3.2 phase). ⚠️ This phase needs a NEW plugin extraction path (full-document scan) — there is NO existing document-wide extractor; `plugins/onlyoffice-scribe/scripts/code.js` only extracts the SELECTION but has a per-element markdown emitter to reuse (l.627+). Plugin = ES5 strict. Has a UI hint → run ui-phase. RESUME COMMAND: `/gsd-discuss-phase v3.2-03-...` (or plan directly if CONTEXT exists). The composition seam v3.2-03 branches into is now clean & deterministic (built in v3.2-02): `ScribeContext.sendMessage` assembles `aiMessages` at one point; `buildChatSystemPrompt(selectionMd, { includeSelection, includeDiscussion })` already takes per-source flags — v3.2-03 adds an `includeDocument` flag + the full-doc block the same way. Locked v3.2-02 decisions honored: D-00 γ, D-01..D-05 (see v3.2-02-CONTEXT.md + VERIFICATION.md).
 
 ## v3.2 Roadmap Summary
 
@@ -85,8 +85,9 @@ Execution order: v3.2-01 (UX statique) -> v3.2-02 (câblage discussion + sélect
 ## Session Continuity
 
 Last session: 2026-06-25
-Stopped at: v3.2-02 discuss-phase DONE — CONTEXT.md + DISCUSSION-LOG.md written & committed (commit e77dd2c6f). 5 gray areas discussed; all decisions locked (see CONTEXT.md D-00..D-05). Next step → plan v3.2-02 (NO UI hint → skip ui-phase).
-Resume file: `.planning/phases/v3.2-02-cablage-discussion-selection/v3.2-02-CONTEXT.md`.
+Stopped at: v3.2-02 EXECUTED + VERIFIED passed (10/10). Discussion+selection gates wired at the sendMessage seam (live-read refs, no stale closure), D-05 framing seed added, deterministic 4-quadrant compose spec + v3.1 corpus/PROBE-01 GREEN (160/160 on the 5 gate specs), v3.1 contract frozen artifacts unmodified. Code review found 0 critical / 2 warning (dev-only probe+panel divergence when selection gated OFF) → both fixed (b1b11bb5f). Next step → v3.2-03 (last v3.2 phase; has UI hint).
+Resume file: `.planning/phases/v3.2-02-cablage-discussion-selection/v3.2-02-VERIFICATION.md`.
+⚠️ KNOWN PRE-EXISTING RED (NOT a v3.2-02 regression): `ScribeContainer.spec.jsx › configures Drawer PaperProps for fullscreen on mobile` fails (expects height '100%'; impl uses max-85vh auto-height). ScribeContainer last changed in 55768d1f6/d95e9193d — Phase-16 responsive-drawer drift, predates v3.2-02. Worth fixing in a future polish pass.
 ✅ RESUME after reboot: run `/gsd-plan-phase v3.2-02-cablage-discussion-selection`. The full slug resolves now that the phase dir exists (verified init.plan-phase phase_found=true on 06-25 after CONTEXT.md write). NO dev env (OO/cozy-stack) needed for planning — it's pure doc generation; the env is only needed later for execute/UAT.
 ℹ️ TOOLING NUANCE (refines prior note): gsd-sdk resolves phases by EXISTING directory slug. A brand-new phase whose dir doesn't exist yet returns phase_found=false on the full slug (that's why the first init.plan-phase call this session failed — dir not yet created). Once the dir exists, the full slug works end-to-end. Separately, `roadmap.get-phase` matches the ROADMAP.md heading, so IT needs the abbreviated `v3.2-02`. The abbreviated form's auto `expected_phase_dir` mangles accents (`v3.2-02-c-blage-...`) — irrelevant now since the correct dir already exists. See [[milestone-prefixed-numbering-convention]].
 v3.2-02 reads the three include booleans from ScribeContext (l.65-67) at the `sendMessage` prompt-assembly seam (l.164, comment `read by v3.2-02/03; no prompt injection in v3.2-01`). The uncommitted `plugins/onlyoffice-scribe/scripts/code.js` is the selection-cases-harness chantier's dev hooks — leave it; NOT part of v3.2.

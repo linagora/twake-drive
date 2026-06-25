@@ -17,10 +17,10 @@
 ### Câblage LLM — injection des contextes
 
 - [ ] **CTX-LLM-01**: Quand « document » est coché, le contenu du docx complet (extrait en markdown via le pipeline existant) est injecté dans le prompt envoyé au LLM.
-- [ ] **CTX-LLM-02**: Quand « discussion » est coché, l'historique de conversation pertinent est inclus dans le prompt.
-- [ ] **CTX-LLM-03**: Quand « sélection » est coché, la sélection courante est incluse dans le prompt de façon explicite et formalisée.
+- [x] **CTX-LLM-02**: Quand « discussion » est coché, l'historique de conversation pertinent est inclus dans le prompt.
+- [x] **CTX-LLM-03**: Quand « sélection » est coché, la sélection courante est incluse dans le prompt de façon explicite et formalisée.
 - [ ] **CTX-LLM-04**: La taille du contexte injecté est maîtrisée — une stratégie de limite/troncature (notamment pour le docx complet, potentiellement volumineux) est décidée et documentée, avec un retour utilisateur si le contexte est tronqué.
-- [ ] **CTX-LLM-05**: La composition des contextes inclus est déterministe et **n'altère pas le contrat de réponse structurée v3.1** (séparation discussion/fragments préservée) ni le comportement de repli/re-ask.
+- [x] **CTX-LLM-05**: La composition des contextes inclus est déterministe et **n'altère pas le contrat de réponse structurée v3.1** (séparation discussion/fragments préservée) ni le comportement de repli/re-ask.
 
 ## Traceability
 
@@ -31,9 +31,9 @@
 | CTX-UX-03 | v3.2-01 | Complete |
 | CTX-UX-04 | v3.2-01 | Complete |
 | CTX-UX-05 | v3.2-01 | Complete |
-| CTX-LLM-02 | v3.2-02 | Pending |
-| CTX-LLM-03 | v3.2-02 | Pending |
-| CTX-LLM-05 | v3.2-02 | Pending |
+| CTX-LLM-02 | v3.2-02 | Complete |
+| CTX-LLM-03 | v3.2-02 | Complete |
+| CTX-LLM-05 | v3.2-02 | Complete |
 | CTX-LLM-01 | v3.2-03 | Pending |
 | CTX-LLM-04 | v3.2-03 | Pending |
 

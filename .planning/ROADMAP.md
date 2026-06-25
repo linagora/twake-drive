@@ -78,7 +78,7 @@ Full details: `.planning/milestones/v3.1-ROADMAP.md`
 ### v3.2 Contexte enrichi du prompt (Phases v3.2-01 to v3.2-03) -- IN PROGRESS
 
 - [x] **Phase v3.2-01: Zone « Inclure » discrète (UX statique)** - Discreet include zone with 3 checkboxes above the prompt, no LLM wiring
-- [ ] **Phase v3.2-02: Câblage discussion + sélection** - Inject checked conversation history and current selection into the prompt
+- [x] **Phase v3.2-02: Câblage discussion + sélection** - Inject checked conversation history and current selection into the prompt
 - [ ] **Phase v3.2-03: Câblage document complet + stratégie de taille** - Inject the full docx (markdown) with a documented truncation/size strategy and user feedback
 
 ## Progress
@@ -113,7 +113,7 @@ v3.1 phases execute in order: v3.1-01 -> v3.1-02 -> v3.1-03 (HARD GATE) -> v3.1-
 | v3.1-06. Durcissement contrat | v3.1 | 2/2 | Complete | 2026-06-24 |
 | v3.1-07. i18n 5 locales | v3.1 | 2/2 | Complete | 2026-06-24 |
 | v3.2-01. Zone « Inclure » discrète (UX statique) | v3.2 | 1/1 | Complete | 2026-06-24 |
-| v3.2-02. Câblage discussion + sélection | v3.2 | 0/1 | Planned | - |
+| v3.2-02. Câblage discussion + sélection | v3.2 | 1/1 | Complete | 2026-06-25 |
 | v3.2-03. Câblage document complet + stratégie de taille | v3.2 | 0/0 | Not started | - |
 
 ## Phase Details
@@ -154,7 +154,7 @@ _Active milestone only. Shipped milestones keep their full phase details in `.pl
   4. Le contrat de réponse v3.1 reste intact : les contextes injectés ne fuient jamais dans `fragments`, la séparation discussion/fragments est préservée, et le re-ask correctif unique + repli contextuel continuent de fonctionner (corpus v3.1 toujours au vert)
   5. La sonde dev (PROBE-01) et les gates de régression existants restent verts avec les contextes activés
 **Plans**: 1 plan
-- [ ] v3.2-02-01-wire-discussion-selection-PLAN.md — gate selection (current turn) + discussion (history) at the ScribeContext.sendMessage seam, read checkboxes live (no stale closure), D-05 conditional framing seed in buildChatSystemPrompt, then a PROBE-01 + v3.1-regression + determinism + no-fragment-leak verification gate [CTX-LLM-02, CTX-LLM-03, CTX-LLM-05] (wave 1)
+- [x] v3.2-02-01-wire-discussion-selection-PLAN.md — gate selection (current turn) + discussion (history) at the ScribeContext.sendMessage seam, read checkboxes live (no stale closure), D-05 conditional framing seed in buildChatSystemPrompt, then a PROBE-01 + v3.1-regression + determinism + no-fragment-leak verification gate [CTX-LLM-02, CTX-LLM-03, CTX-LLM-05] (wave 1)
 **UI hint**: no
 
 #### Phase v3.2-03: Câblage document complet + stratégie de taille
