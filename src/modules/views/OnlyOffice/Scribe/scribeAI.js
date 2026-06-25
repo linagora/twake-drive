@@ -128,19 +128,55 @@ export function encodeSelectionForPrompt(sel) {
 }
 
 /**
+ * D-05 (v3.2-02) — LIGHT additive context framing. A SHORT, conditional English
+ * announcement of which context sources are actually included THIS turn, driven by
+ * explicit per-source flags. This is the SEED only: it deliberately does NOT build
+ * the full enumerated "1. history 2. selection 3. document + judge relevance" frame
+ * (that is v3.2-03), does NOT incite meta-commentary, does NOT instruct the model to
+ * mention/list the provided contexts in its reply, and MUST NOT weaken or contradict
+ * RESPONSE_CONTRACT_CORE's JSON-only / separation imperative. One short sentence per
+ * included source, each leading-space-prefixed so it appends cleanly AFTER the
+ * contiguous contract block.
+ *
+ * @param {{ includeSelection?: boolean, includeDiscussion?: boolean }} flags
+ * @returns {string} concatenated announcement (each leading-space-prefixed), or ''
+ */
+function contextSourceFraming({ includeSelection, includeDiscussion } = {}) {
+  let out = ''
+  if (includeSelection) {
+    out +=
+      ' The user may include a selection from the document in their message; ' +
+      'use what is relevant to their request and ignore the rest.'
+  }
+  if (includeDiscussion) {
+    out +=
+      ' Earlier turns of this conversation are provided above for context.'
+  }
+  return out
+}
+
+/**
  * Build the chat system prompt: persona + shared hardened contract core + chat
- * cardinality + (conditional) marker-preservation for the current selection.
+ * cardinality + (conditional) marker-preservation for the current selection + the
+ * (conditional) D-05 context-source framing.
+ *
+ * The framing is appended AFTER the contiguous RESPONSE_CONTRACT_CORE + CARDINALITY_CHAT
+ * + marker-clauses block so the hard-gated contract stays intact. With no flags (or
+ * both false) the output is BYTE-IDENTICAL to the pre-v3.2-02 prompt — existing call
+ * sites/tests that pass only selectionMd keep their exact output (regression safety).
  *
  * @param {string} [selectionMd] - current turn's selection markdown (for marker clauses)
+ * @param {{ includeSelection?: boolean, includeDiscussion?: boolean }} [flags]
  * @returns {string}
  */
-export function buildChatSystemPrompt(selectionMd) {
+export function buildChatSystemPrompt(selectionMd, flags) {
   return (
     CHAT_PERSONA +
     '\n\n' +
     RESPONSE_CONTRACT_CORE +
     CARDINALITY_CHAT +
-    markerPreservationClauses(selectionMd)
+    markerPreservationClauses(selectionMd) +
+    contextSourceFraming(flags)
   )
 }
 
