@@ -52,11 +52,11 @@ test.describe.serial('Shared drive members & permissions', () => {
     await openSharedDrive(bobPage, USERS.bob, bobDrive, VIEWER_DRIVE)
     await bobDrive.row(VIEWER_FILE).waitVisible({ timeout: 10_000 })
 
-    // Read-only recipients must not be offered write entry points — the
-    // buttons are hidden outright (cozy-ui's FileInput ignores `disabled`,
-    // so a disabled Upload would still open the file picker).
-    await expect(createButton).not.toBeVisible()
-    await expect(uploadButton).not.toBeVisible()
+    // Read-only recipients see write entry points as disabled.
+    await expect(createButton).toBeVisible()
+    await expect(createButton).toBeDisabled()
+    await expect(uploadButton).toBeVisible()
+    await expect(uploadButton).toBeDisabled()
   })
 
   test('the members panel shows Bob as Viewer', async ({
