@@ -3046,10 +3046,10 @@
   resolved "https://registry.yarnpkg.com/@juggle/resize-observer/-/resize-observer-3.3.0.tgz#2e7a2935adbfae46f9efbd1e1455254ee7ea2219"
   integrity sha512-P1v2nvK7z2gOLVM/bveIRLG9L99uEahTGgTltyF03zixZAjI9YmKLj5Z9MpS9wBIUt5WDoQORT2lXvLOIF89iA==
 
-"@linagora/twake-icons@^2.6.2":
-  version "2.6.2"
-  resolved "https://registry.yarnpkg.com/@linagora/twake-icons/-/twake-icons-2.6.2.tgz#c831bcc59d961cfae641d6bda931d33571ece6e3"
-  integrity sha512-vxlpDlIokd6rssBDdj6DqnRGwlvNsPtcpGgdF4k/pNvm1QCArrFTa+cYZINucpu6+D1UicEDI3l/Ao9toJHDVw==
+"@linagora/twake-icons@^2.6.6":
+  version "2.6.6"
+  resolved "https://registry.yarnpkg.com/@linagora/twake-icons/-/twake-icons-2.6.6.tgz#f22c4e8812b53564c0ea2f3610f0c92968cb8227"
+  integrity sha512-hm0hvaUj0g+jK/1UhXWSbNZZVVMC8Yc0kfSKU0gZzDx/PL6mv/gSto2FNdFV/laiJ4+b/E35JpD+42tmCTp83Q==
   dependencies:
     mime "4.1.0"
 
@@ -8207,10 +8207,10 @@ cozy-search@^0.25.3:
     react-type-animation "3.2.0"
     rooks "7.14.1"
 
-cozy-sharing@34.1.2:
-  version "34.1.2"
-  resolved "https://registry.yarnpkg.com/cozy-sharing/-/cozy-sharing-34.1.2.tgz#2ed2e6e9932449c1d6761b8f7916969f9f50fd03"
-  integrity sha512-jrcRxs+NfHlRIJle/jR5Bx/w065K05CPxwAasW/ef32HQVySNke/XYwLUNXZmyhtj3VSpigo6CwyOldFXEUwxw==
+cozy-sharing@^35.0.0:
+  version "35.0.0"
+  resolved "https://registry.yarnpkg.com/cozy-sharing/-/cozy-sharing-35.0.0.tgz#9b1e006a4565b28a95ad1ea30c62b35f705828e3"
+  integrity sha512-3L7M7WVVqQLw3p4IyvTDuM85PPkw9wotI63WWymCJ9LLciDA3OA9gHb5OUB2atutGpADWxaRhNODj57HPG0QUg==
   dependencies:
     "@cozy/minilog" "^1.0.0"
     classnames "^2.5.1"
