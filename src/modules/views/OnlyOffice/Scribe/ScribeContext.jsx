@@ -78,6 +78,16 @@ export const ScribeProvider = ({ children }) => {
   const messagesRef = useRef(messages)
   messagesRef.current = messages
 
+  // v3.2-02 (D-03, no stale-closure): mirror the include booleans into refs the
+  // SAME way messagesRef does, so sendMessage (deps [client, t]) reads the LIVE
+  // checkbox values at send time — a toggle between renders is honored on the very
+  // next send without re-creating the callback identity. includeDocument is out of
+  // scope this phase (v3.2-03), so it is intentionally NOT mirrored here.
+  const includeDiscussionRef = useRef(includeDiscussion)
+  includeDiscussionRef.current = includeDiscussion
+  const includeSelectionRef = useRef(includeSelection)
+  includeSelectionRef.current = includeSelection
+
   // Track dismissed selection text so chip doesn't reappear until a NEW different selection arrives
   const selectionDismissedRef = useRef(null)
 
@@ -150,34 +160,55 @@ export const ScribeProvider = ({ children }) => {
 
   const sendMessage = useCallback(
     async (text, selectionContext) => {
+      // SEAM (v3.2-02): read the LIVE checkbox values from refs (D-03) — the
+      // callback deps stay [client, t] (identity preserved) while still honoring a
+      // toggle made between renders. includeDocument is out of scope (v3.2-03).
+      const includeDiscussion = includeDiscussionRef.current
+      // D-02/D-04: « sélection » gates ONLY the current turn. It is included iff the
+      // box is live-checked AND there actually is a current selection.
+      const selectionIncluded = includeSelectionRef.current && !!selectionContext
+
       const userMessage = {
         id: Date.now(),
         role: 'user',
         content: text,
-        selection: selectionContext || null,
+        // D-03 faithful registry: store the selection AS SENT. When « sélection »
+        // is off (or there is none), no selection is attached — so a later history
+        // replay of THIS turn reflects exactly what was sent.
+        selection: selectionIncluded ? selectionContext : null,
         timestamp: new Date()
       }
       setMessages(prev => [...prev, userMessage])
       setIsLoading(true)
 
       try {
-        // SEAM: the include booleans (includeDocument/includeDiscussion/
-        // includeSelection) are read here by v3.2-02/03; no prompt injection in
-        // v3.2-01 — the aiMessages assembly below is byte-for-byte identical to v3.1.
-        // Build AI messages: system prompt + conversation history (skip error messages)
-        const currentMessages = [...messagesRef.current, userMessage]
-        // Marker-preservation clauses key off the CURRENT turn's selection markdown,
-        // encoded by the SAME shared helper the popover uses (single source of truth).
-        const { selectionMd: currentSelectionMd } = encodeSelectionForPrompt({
+        // SEAM: the include booleans gate prompt composition here (v3.2-02). The
+        // response handling below (callScribeAIWithReask + parsed handling) is
+        // byte-for-byte identical to v3.1 — only the assembled aiMessages changes.
+        // D-04: when the current selection is NOT included, buildChatSystemPrompt
+        // receives '' (no marker-preservation clauses) and the current user message
+        // carries NO [Selected text…] block. When included, behavior is exactly v3.1.
+        const { selectionMd: encodedSelectionMd } = encodeSelectionForPrompt({
           enrichedMd: selectionContext?.markdown,
           text: selectionContext?.text
         })
+        const currentSelectionMd = selectionIncluded ? encodedSelectionMd : ''
+        // D-01 discussion gate: « discussion » on ⇒ full prior history + current
+        // turn (v3.1 behavior); off ⇒ current turn ONLY. The gate only decides HOW
+        // MANY turns are mapped — it MUST NOT change how a PAST turn renders (D-02:
+        // past turns replay their stored .selection block as-is).
+        const turnsToMap = includeDiscussion
+          ? [...messagesRef.current, userMessage]
+          : [userMessage]
         const aiMessages = [
           {
             role: 'system',
-            content: buildChatSystemPrompt(currentSelectionMd)
+            content: buildChatSystemPrompt(currentSelectionMd, {
+              includeSelection: selectionIncluded,
+              includeDiscussion
+            })
           },
-          ...currentMessages
+          ...turnsToMap
             .filter(m => m.role !== 'error')
             // WR-01: self-contained guard so only user/assistant turns are ever
             // serialized for the LLM, independent of the outer error filter above.
