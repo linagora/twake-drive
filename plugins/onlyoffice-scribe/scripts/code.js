@@ -9,7 +9,7 @@
   // If the console shows an OLDER build than expected, the editor served a CACHED
   // code.js → reopen the editor in a fresh tab / private window (a plain F5 won't
   // refetch the async plugin iframe).
-  var SCRIBE_BUILD = "2026-06-24.2 — §5bis Cas B styled-fixture: host-styled spacer (no inline merge, host keeps style)";
+  var SCRIBE_BUILD = "2026-06-25.2 — §5bis Cas B: suppress smart-spacing for styled block (inline test; no parasitic space)";
   try { window.__scribeBuild = SCRIBE_BUILD; } catch (e) {}
 
   // ---- State ----
@@ -692,6 +692,26 @@
         } // end else (replace mode)
       } catch (e) {
         // Spacing detection failed -- proceed without spacing (safe fallback)
+      }
+
+      // §5bis Cas B: when the 1st injected block carries its own paragraph style
+      // (heading / list / quote / code), the whole insert goes BLOCK (separate ¶s
+      // via the host-styled spacer, see prepareFirstBlockForMerge). Every injected
+      // block is then bounded by ¶ marks on BOTH sides, and "bord de ¶ = saut de
+      // ligne" (= blank) → NO space run must be added. Suppress smart spacing so the
+      // styled block stays clean ("Injected", not " Injected"). Test inlined (the
+      // blockHasParaStyle helper is declared later, inside the content>0 block, so
+      // it isn't assigned yet here).
+      var firstInjBlock = blocks[0];
+      var firstInjBlockStyled = !!firstInjBlock && (
+        firstInjBlock.type === "heading" ||
+        firstInjBlock.type === "list_item" ||
+        firstInjBlock.type === "code_block" ||
+        (firstInjBlock.type === "paragraph" && firstInjBlock.blockquote)
+      );
+      if (firstInjBlockStyled) {
+        needSpaceBefore = false;
+        needSpaceAfter = false;
       }
 
       // Pre-scan: create numbering objects once if needed
