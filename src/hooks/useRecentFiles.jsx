@@ -1,59 +1,87 @@
 import { useEffect, useState, useMemo } from 'react'
 
-import { useClient } from 'cozy-client'
+import { useClient, useQuery } from 'cozy-client'
 import { useDataProxy } from 'cozy-dataproxy-lib'
 
 import logger from '@/lib/logger'
 import { buildRecentQuery } from '@/queries'
 
 const useDataProxyRecents = () => {
-  const [data, setData] = useState([])
-  const [fetchStatus, setFetchStatus] = useState('loading')
-  const [error, setError] = useState(null)
+  const [proxyData, setProxyData] = useState(null)
+  const [proxyFetchStatus, setProxyFetchStatus] = useState('loading')
+  const [proxyError, setProxyError] = useState(null)
+
   const dataProxy = useDataProxy()
   const client = useClient()
 
   const recentQuery = useMemo(() => buildRecentQuery(), [])
 
+  // Reactive fallback when proxy is unavailable or fails
+  const fallbackResult = useQuery(recentQuery.definition(), recentQuery.options)
+
   useEffect(() => {
-    const fetchRecents = async () => {
-      setFetchStatus('loading')
-      setError(null)
+    const fetchProxyRecents = async () => {
+      setProxyFetchStatus('loading')
+      setProxyError(null)
 
       if (dataProxy.dataProxyServicesAvailable) {
         try {
           const data = await dataProxy.recents()
-          setData(data || [])
-          setFetchStatus('loaded')
-          return
+          setProxyData(data || [])
+          setProxyFetchStatus('loaded')
         } catch (err) {
           logger.error('Error fetching recents from dataproxy', err)
+          setProxyError(err)
+          setProxyFetchStatus('error')
         }
-      }
-
-      if (client) {
-        try {
-          const result = await client.fetchQueryAndGetFromState({
-            definition: recentQuery.definition(),
-            options: recentQuery.options
-          })
-          setData(result?.data || [])
-          setFetchStatus('loaded')
-        } catch (err) {
-          logger.warn('Error fetching recents from fallback query', err)
-          setError(err)
-          setFetchStatus('error')
-        }
-      } else {
-        setError(new Error('Client not available'))
-        setFetchStatus('error')
       }
     }
 
-    fetchRecents()
-  }, [dataProxy, client, recentQuery])
+    if (dataProxy.dataProxyServicesAvailable) {
+      fetchProxyRecents()
+    }
+  }, [dataProxy])
 
-  return { data, fetchStatus, error }
+  // Proxy path: merge proxy data with real-time store state
+  if (dataProxy.dataProxyServicesAvailable && proxyFetchStatus !== 'error') {
+    let finalData = []
+    if (proxyData) {
+      finalData = proxyData.reduce((acc, file) => {
+        const docInStore = client.getDocumentFromState(
+          'io.cozy.files',
+          file._id
+        )
+        if (docInStore) {
+          if (!docInStore.trashed) {
+            acc.push({ ...file, ...docInStore })
+          }
+        } else if (!file.trashed) {
+          acc.push(file)
+        }
+        return acc
+      }, [])
+    }
+
+    return {
+      data: finalData,
+      fetchStatus: proxyFetchStatus,
+      error: proxyError
+    }
+  }
+
+  // Fallback: use cozy-client query (proxy unavailable or errored)
+  if (fallbackResult.error) {
+    logger.warn(
+      'Error fetching recents from fallback query',
+      fallbackResult.error
+    )
+  }
+
+  return {
+    data: fallbackResult.data || [],
+    fetchStatus: fallbackResult.error ? 'error' : fallbackResult.fetchStatus,
+    error: fallbackResult.error || proxyError
+  }
 }
 
 export default useDataProxyRecents

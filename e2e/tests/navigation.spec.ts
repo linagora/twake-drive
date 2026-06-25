@@ -30,6 +30,61 @@ test.describe('Navigation surfaces', () => {
     }
   })
 
+  test('Recent: a trashed file disappears without page reload', async ({
+    alicePage,
+    aliceDrive
+  }) => {
+    await alicePage.goto(ALICE_ROOT)
+    const sidebar = new SidebarPage(alicePage)
+    const file = path.join(path.dirname(FIXTURE), `recent-trash-${stamp()}.txt`)
+    await copyFile(FIXTURE, file)
+    try {
+      const fileName = path.basename(file)
+      await aliceDrive.uploadFiles(file)
+      await aliceDrive.row(fileName).waitVisible()
+
+      // The freshly uploaded file appears on /#/recent
+      await sidebar.goToRecent()
+      await alicePage.waitForURL(/\/recent/)
+      await aliceDrive.row(fileName).waitVisible()
+
+      // Trash it directly from the Recent view — sendToTrash's waitHidden
+      // validates that the row disappears live, without navigating away
+      await aliceDrive.row(fileName).sendToTrash()
+    } finally {
+      await safeUnlink(file)
+    }
+  })
+
+  test('Recent: a renamed file updates without page reload', async ({
+    alicePage,
+    aliceDrive
+  }) => {
+    await alicePage.goto(ALICE_ROOT)
+    const sidebar = new SidebarPage(alicePage)
+    const original = `recent-rename-${stamp()}.txt`
+    const renamed = `recent-renamed-${stamp()}.txt`
+    const file = path.join(path.dirname(FIXTURE), original)
+    await copyFile(FIXTURE, file)
+    try {
+      await aliceDrive.uploadFiles(file)
+      await aliceDrive.row(original).waitVisible()
+
+      // The file appears on /#/recent
+      await sidebar.goToRecent()
+      await alicePage.waitForURL(/\/recent/)
+      await aliceDrive.row(original).waitVisible()
+
+      // Rename directly from the Recent view — rename() self-validates
+      // by waiting for the new name to appear in the file list
+      await aliceDrive.row(original).rename(renamed)
+      await expect(aliceDrive.row(renamed).cell).toBeVisible()
+      await expect(aliceDrive.row(original).cell).toHaveCount(0)
+    } finally {
+      await safeUnlink(file)
+    }
+  })
+
   test('Favorites: a favourited file appears in /#/favorites', async ({
     alicePage,
     aliceDrive

@@ -1,6 +1,6 @@
 import { renderHook, waitFor } from '@testing-library/react'
 
-import { useClient } from 'cozy-client'
+import { useClient, useQuery } from 'cozy-client'
 import { useDataProxy } from 'cozy-dataproxy-lib'
 
 import useDataProxyRecents from './useRecentFiles'
@@ -9,7 +9,8 @@ import logger from '@/lib/logger'
 import { buildRecentQuery } from '@/queries'
 
 jest.mock('cozy-client', () => ({
-  useClient: jest.fn()
+  useClient: jest.fn(),
+  useQuery: jest.fn()
 }))
 
 jest.mock('cozy-dataproxy-lib', () => ({
@@ -26,8 +27,16 @@ jest.mock('@/queries', () => ({
 }))
 
 const mockUseClient = useClient
+const mockUseQuery = useQuery
 const mockUseDataProxy = useDataProxy
 const mockBuildRecentQuery = buildRecentQuery
+
+const renderRecents = ({ dataProxy, useQueryResult, client } = {}) => {
+  if (dataProxy) mockUseDataProxy.mockReturnValue(dataProxy)
+  if (useQueryResult) mockUseQuery.mockReturnValue(useQueryResult)
+  if (client !== undefined) mockUseClient.mockReturnValue(client)
+  return renderHook(() => useDataProxyRecents())
+}
 
 describe('useDataProxyRecents', () => {
   let mockClient
@@ -35,38 +44,52 @@ describe('useDataProxyRecents', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockClient = {
-      fetchQueryAndGetFromState: jest.fn()
+      getDocumentFromState: jest.fn()
     }
     mockUseClient.mockReturnValue(mockClient)
     mockBuildRecentQuery.mockReturnValue({
       definition: jest.fn(() => ({})),
       options: {}
     })
+    mockUseQuery.mockReturnValue({
+      data: null,
+      fetchStatus: 'loading',
+      error: null
+    })
   })
 
   describe('when dataProxy is available and succeeds', () => {
-    it('should return data from dataProxy', async () => {
+    it('should return data from dataProxy and filter trashed documents', async () => {
       const mockData = [
-        { id: '1', name: 'file1' },
-        { id: '2', name: 'file2' }
+        { _id: '1', name: 'file1', trashed: false },
+        { _id: '2', name: 'file2', trashed: true },
+        { _id: '3', name: 'file3', trashed: false }
       ]
       const mockDataProxy = {
         dataProxyServicesAvailable: true,
         recents: jest.fn().mockResolvedValue(mockData)
       }
 
-      mockUseDataProxy.mockReturnValue(mockDataProxy)
+      // Simulate file3 trashed in store, file1 renamed in store
+      mockClient.getDocumentFromState.mockImplementation((doctype, id) => {
+        if (id === '3') return { _id: '3', trashed: true }
+        if (id === '1')
+          return { _id: '1', name: 'file1_renamed', trashed: false }
+        return null
+      })
 
-      const { result } = renderHook(() => useDataProxyRecents())
+      const { result } = renderRecents({ dataProxy: mockDataProxy })
 
       expect(result.current.fetchStatus).toBe('loading')
       expect(result.current.data).toEqual([])
 
       await waitFor(() => expect(result.current.fetchStatus).toBe('loaded'))
-      expect(result.current.data).toEqual(mockData)
+
+      expect(result.current.data).toEqual([
+        { _id: '1', name: 'file1_renamed', trashed: false }
+      ])
       expect(result.current.error).toBe(null)
       expect(mockDataProxy.recents).toHaveBeenCalledTimes(1)
-      expect(mockClient.fetchQueryAndGetFromState).not.toHaveBeenCalled()
       expect(logger.error).not.toHaveBeenCalled()
     })
   })
@@ -78,34 +101,26 @@ describe('useDataProxyRecents', () => {
         dataProxyServicesAvailable: true,
         recents: jest.fn().mockRejectedValue(mockError)
       }
-      const fallbackData = [
-        { id: '3', name: 'file3' },
-        { id: '4', name: 'file4' }
-      ]
+      const fallbackData = [{ _id: '4', name: 'file4' }]
 
-      mockUseDataProxy.mockReturnValue(mockDataProxy)
-      mockClient.fetchQueryAndGetFromState.mockResolvedValue({
-        data: fallbackData
+      const { result } = renderRecents({
+        dataProxy: mockDataProxy,
+        useQueryResult: {
+          data: fallbackData,
+          fetchStatus: 'loaded',
+          error: null
+        }
       })
 
-      const { result } = renderHook(() => useDataProxyRecents())
-
-      expect(result.current.fetchStatus).toBe('loading')
-      expect(result.current.data).toEqual([])
-
-      // Wait for fallback query to complete
+      // Wait for proxy to fail and fallback to be used
       await waitFor(() => expect(result.current.fetchStatus).toBe('loaded'))
+
       expect(result.current.data).toEqual(fallbackData)
-      expect(result.current.error).toBe(null)
+      expect(result.current.error).toBe(mockError)
       expect(logger.error).toHaveBeenCalledWith(
         'Error fetching recents from dataproxy',
         mockError
       )
-      expect(mockClient.fetchQueryAndGetFromState).toHaveBeenCalledTimes(1)
-      expect(mockClient.fetchQueryAndGetFromState).toHaveBeenCalledWith({
-        definition: expect.any(Object),
-        options: expect.any(Object)
-      })
     })
 
     it('should handle fallback query error', async () => {
@@ -116,13 +131,18 @@ describe('useDataProxyRecents', () => {
         recents: jest.fn().mockRejectedValue(mockError)
       }
 
-      mockUseDataProxy.mockReturnValue(mockDataProxy)
-      mockClient.fetchQueryAndGetFromState.mockRejectedValue(fallbackError)
+      const { result } = renderRecents({
+        dataProxy: mockDataProxy,
+        useQueryResult: {
+          data: null,
+          fetchStatus: 'failed',
+          error: fallbackError
+        }
+      })
 
-      const { result } = renderHook(() => useDataProxyRecents())
-
-      // Wait for fallback query error to be processed
+      // Wait for proxy to fail
       await waitFor(() => expect(result.current.fetchStatus).toBe('error'))
+
       expect(result.current.error).toEqual(fallbackError)
       expect(logger.error).toHaveBeenCalledWith(
         'Error fetching recents from dataproxy',
@@ -132,78 +152,63 @@ describe('useDataProxyRecents', () => {
         'Error fetching recents from fallback query',
         fallbackError
       )
-      expect(mockClient.fetchQueryAndGetFromState).toHaveBeenCalledTimes(1)
     })
   })
 
   describe('when dataProxy is not available', () => {
-    it('should use fallback query when dataProxy is not available', async () => {
+    it('should use fallback query when dataProxy is not available', () => {
       const mockDataProxy = {
         dataProxyServicesAvailable: false
       }
-      const fallbackData = [
-        { id: '5', name: 'file5' },
-        { id: '6', name: 'file6' }
-      ]
+      const fallbackData = [{ _id: '5', name: 'file5' }]
 
-      mockUseDataProxy.mockReturnValue(mockDataProxy)
-      mockClient.fetchQueryAndGetFromState.mockResolvedValue({
-        data: fallbackData
+      const { result } = renderRecents({
+        dataProxy: mockDataProxy,
+        useQueryResult: {
+          data: fallbackData,
+          fetchStatus: 'loaded',
+          error: null
+        }
       })
 
-      const { result } = renderHook(() => useDataProxyRecents())
-
-      // When dataProxy is not available, the hook should execute fallback query
-      expect(mockClient.fetchQueryAndGetFromState).toHaveBeenCalledTimes(1)
-
-      // Wait for fallback query to complete
-      await waitFor(() => expect(result.current.fetchStatus).toBe('loaded'))
+      expect(result.current.fetchStatus).toBe('loaded')
       expect(result.current.data).toEqual(fallbackData)
-      expect(mockClient.fetchQueryAndGetFromState).toHaveBeenCalledWith({
-        definition: expect.any(Object),
-        options: expect.any(Object)
-      })
     })
 
-    it('should handle fallback query loading state', async () => {
+    it('should handle fallback query loading state', () => {
       const mockDataProxy = {
         dataProxyServicesAvailable: false
       }
 
-      mockUseDataProxy.mockReturnValue(mockDataProxy)
-      // Don't resolve the query immediately to test loading state
-      mockClient.fetchQueryAndGetFromState.mockImplementation(
-        () => new Promise(() => {}) // Never resolves
-      )
-
-      const { result } = renderHook(() => useDataProxyRecents())
+      const { result } = renderRecents({
+        dataProxy: mockDataProxy,
+        useQueryResult: {
+          data: null,
+          fetchStatus: 'loading',
+          error: null
+        }
+      })
 
       expect(result.current.fetchStatus).toBe('loading')
       expect(result.current.data).toEqual([])
       expect(result.current.error).toBe(null)
-      expect(mockClient.fetchQueryAndGetFromState).toHaveBeenCalledTimes(1)
     })
   })
 
   describe('when client is not available', () => {
-    it('should set error when client is not available', async () => {
+    it('should set error when client is not available', () => {
       const mockDataProxy = {
         dataProxyServicesAvailable: false
       }
 
-      mockUseDataProxy.mockReturnValue(mockDataProxy)
-      mockUseClient.mockReturnValue(null)
-
-      const { result } = renderHook(() => useDataProxyRecents())
-
-      // Wait for error to be set
-      await waitFor(() => {
-        expect(result.current.fetchStatus).toBe('error')
+      const { result } = renderRecents({
+        dataProxy: mockDataProxy,
+        client: null
       })
 
+      expect(result.current.fetchStatus).toBe('error')
       expect(result.current.error).toEqual(new Error('Client not available'))
       expect(result.current.data).toEqual([])
-      expect(mockClient.fetchQueryAndGetFromState).not.toHaveBeenCalled()
     })
   })
 })
