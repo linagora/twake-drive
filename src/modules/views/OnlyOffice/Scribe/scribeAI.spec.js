@@ -88,6 +88,71 @@ describe('scribeAI — unified response contract', () => {
     })
   })
 
+  describe('D-05 conditional context-source framing (v3.2-02)', () => {
+    it('no flags (or both false) => byte-identical to the marker-only prompt (regression)', () => {
+      const baseline =
+        CHAT_PERSONA +
+        '\n\n' +
+        RESPONSE_CONTRACT_CORE +
+        CARDINALITY_CHAT +
+        markerPreservationClauses('')
+      expect(buildChatSystemPrompt('')).toBe(baseline)
+      expect(buildChatSystemPrompt('', {})).toBe(baseline)
+      expect(
+        buildChatSystemPrompt('', { includeSelection: false, includeDiscussion: false })
+      ).toBe(baseline)
+    })
+
+    it('{ includeSelection: true } appends a short selection announcement, contract still contiguous', () => {
+      const out = buildChatSystemPrompt('', { includeSelection: true })
+      expect(out).toMatch(/selection from the document/i)
+      // contract block stays contiguous and unmodified
+      expect(out).toContain(RESPONSE_CONTRACT_CORE + CARDINALITY_CHAT)
+      // framing comes AFTER the contract block, not between core and cardinality
+      expect(out.indexOf('selection from the document')).toBeGreaterThan(
+        out.indexOf(CARDINALITY_CHAT)
+      )
+    })
+
+    it('{ includeDiscussion: true } appends a short discussion announcement', () => {
+      const out = buildChatSystemPrompt('', { includeDiscussion: true })
+      expect(out).toMatch(/Earlier turns of this conversation/i)
+    })
+
+    it('both flags append both announcements; selection still keyed off selectionMd markers', () => {
+      const out = buildChatSystemPrompt('[TABLE:0]x[/TABLE]', {
+        includeSelection: true,
+        includeDiscussion: true
+      })
+      expect(out).toMatch(/selection from the document/i)
+      expect(out).toMatch(/Earlier turns of this conversation/i)
+      expect(out).toMatch(/\[TABLE:N\]/) // marker clauses still present for the selection md
+    })
+
+    it('the framing carries NO enumerated multi-source frame and NO meta-comment incitement', () => {
+      const out = buildChatSystemPrompt('', {
+        includeSelection: true,
+        includeDiscussion: true
+      })
+      // no "1. ... 2. ... 3. ..." enumerated context frame (that is v3.2-03)
+      expect(out).not.toMatch(/1\.\s*(history|selection|document)/i)
+      expect(out).not.toMatch(/judge the relevance/i)
+      // no instruction to mention/list the provided contexts in the reply
+      expect(out).not.toMatch(/mention (the|these) (context|sources)/i)
+      expect(out).not.toMatch(/list the (context|sources)/i)
+    })
+
+    it('the framing does NOT weaken the contract strings (identity unchanged)', () => {
+      const out = buildChatSystemPrompt('', {
+        includeSelection: true,
+        includeDiscussion: true
+      })
+      expect(out).toContain(RESPONSE_CONTRACT_CORE)
+      expect(out).toContain(CARDINALITY_CHAT)
+      expect(out).toContain(CHAT_PERSONA)
+    })
+  })
+
   describe('encodeSelectionForPrompt (shared selection encoder — single source of truth)', () => {
     it('prefers structured enrichedMd over html and plain text', () => {
       const { selectionMd } = encodeSelectionForPrompt({
