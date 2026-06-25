@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import flag from 'cozy-flags'
 import { ShareButton, ShareModal, SharedRecipients } from 'cozy-sharing'
@@ -7,14 +8,21 @@ import IconButton from 'cozy-ui/transpiled/react/IconButton'
 import ShareIcon from 'cozy-ui/transpiled/react/Icons/Share'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
+import { makeRevokeSuccessRedirectPath } from '@/modules/views/Modal/revokeSuccessRedirect'
+
 const Sharing = ({ file }) => {
   const [showShareModal, setShowShareModal] = useState(false)
   const { isMobile } = useBreakpoints()
+  const navigate = useNavigate()
 
   const toggleShareModal = useCallback(
     () => setShowShareModal(v => !v),
     [setShowShareModal]
   )
+
+  const handleRevokeSuccess = document => {
+    navigate(makeRevokeSuccessRedirectPath({ document }), { replace: true })
+  }
 
   return (
     <>
@@ -46,6 +54,7 @@ const Sharing = ({ file }) => {
           documentType="Files"
           sharingDesc={file.name}
           onClose={toggleShareModal}
+          onRevokeSuccess={handleRevokeSuccess}
           autoOpenShareRestriction={flag('sharing.auto-open-settings.enabled')}
           showGenerateLinkButton={flag('sharing.generate-link-button.enabled')}
         />
