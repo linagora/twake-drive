@@ -9,7 +9,7 @@
   // If the console shows an OLDER build than expected, the editor served a CACHED
   // code.js → reopen the editor in a fresh tab / private window (a plain F5 won't
   // refetch the async plugin iframe).
-  var SCRIBE_BUILD = "2026-06-24.1 — §5bis split-style (Cas A) + e/f/c; Cas B styled-fixture fix PENDING";
+  var SCRIBE_BUILD = "2026-06-24.2 — §5bis Cas B styled-fixture: host-styled spacer (no inline merge, host keeps style)";
   try { window.__scribeBuild = SCRIBE_BUILD; } catch (e) {}
 
   // ---- State ----
@@ -544,6 +544,11 @@
       var srcFontSize = null;
       var hostStyle = null; // §5bis: ¶ style of the host at the insertion point —
                             // both halves of a block split must keep it.
+      var firstBlockStyled = false;  // §5bis Cas B: 1st injected block has its own
+                                     // md style (heading/list/quote/code) → must NOT
+                                     // merge inline; host keeps its own style.
+      var leadSpacerInserted = false; // §5bis Cas B: a host-styled empty spacer was
+                                      // unshifted into content[] to absorb OO's merge.
       try {
         var selRange = doc.GetRangeBySelect();
         if (selRange) {
@@ -1626,6 +1631,68 @@
           } catch (e) {}
         }
 
+        // §5bis Cas B: does the 1st injected block carry its own paragraph-level
+        // md style (heading / list / quote / fenced code)? Character formatting
+        // (bold/italic/…) does NOT count — a bold plain paragraph stays "plain".
+        // Tables / images are standalone blocks and never merge into the host, so
+        // they don't need the spacer trick.
+        function blockHasParaStyle(b) {
+          if (!b) return false;
+          if (b.type === "heading" || b.type === "list_item" || b.type === "code_block") return true;
+          if (b.type === "paragraph" && b.blockquote) return true;
+          return false;
+        }
+        firstBlockStyled = blockHasParaStyle(blocks[0]);
+
+        // §5bis Cas B: prepend a host-styled EMPTY paragraph so OO's block
+        // InsertContent merges *it* (empty) into the host's left split half — the
+        // merged half then keeps the HOST style (OO stamps content[0]'s style on the
+        // merge target), and the real styled 1st block stays a separate ¶. Mutually
+        // exclusive with the Cas A inline-style fix.
+        function prepareFirstBlockForMerge() {
+          if (firstBlockStyled) {
+            try {
+              var sp = Api.CreateParagraph();
+              if (hostStyle && sp.SetStyle) sp.SetStyle(hostStyle);
+              content.unshift(sp);
+              leadSpacerInserted = true;
+            } catch (e) {}
+          } else {
+            applyHostStyleToFirstParaIfPlain(); // §5bis Cas A
+          }
+        }
+
+        // §5bis Cas B: after the block insert, drop the leading host-styled spacer
+        // IF it ended up empty. Two shapes are possible and both resolve correctly:
+        //  - spacer merged into a non-empty host left half → element before the 1st
+        //    real block is that non-empty half → KEEP it.
+        //  - spacer left as a standalone empty ¶ (no merge), or merged into an empty
+        //    left half (@start insertion) → element before the 1st real block is
+        //    empty → REMOVE it (no ¶ vide at the edge, §5bis).
+        function cleanupLeadingSpacer() {
+          try {
+            var firstReal = content[1]; // content[0] is the spacer
+            var frRange = firstReal && firstReal.GetRange ? firstReal.GetRange() : null;
+            if (!frRange) return;
+            var frStart = frRange.GetStartPos();
+            var total = doc.GetElementsCount();
+            var prevIdx = -1;
+            for (var i = 0; i < total; i++) {
+              var el = doc.GetElement(i);
+              var r = el && el.GetRange ? el.GetRange() : null;
+              if (!r) continue;
+              if (r.GetStartPos() >= frStart) break;
+              prevIdx = i; // last element starting before the 1st real block
+            }
+            if (prevIdx >= 0) {
+              var prevEl = doc.GetElement(prevIdx);
+              var pr = prevEl && prevEl.GetRange ? prevEl.GetRange() : null;
+              var ptext = pr ? (pr.GetText() || "").replace(/[\r\n]+$/, "") : "";
+              if (ptext.length === 0) doc.RemoveElement(prevIdx);
+            }
+          } catch (e) {}
+        }
+
         if (mode === "insert") {
           // For table selections: move cursor after the table so InsertContent
           // places content after the table, not inside the last cell.
@@ -1656,10 +1723,11 @@
             doc.InsertContent(content, true);
             // useRefSelection stays false -> position-based selection (like inline replace)
           } else {
-            applyHostStyleToFirstParaIfPlain(); // §5bis Cas A: left half keeps host style
+            prepareFirstBlockForMerge(); // §5bis: Cas A inline-style OR Cas B spacer
             doc.InsertContent(content);
             useRefSelection = true;
             cleanupTrailingBlockPara(); // §5bis: drop empty trailing ¶, keep a real split
+            if (leadSpacerInserted) cleanupLeadingSpacer(); // §5bis Cas B
           }
 
           // Post-InsertContent: remove unselected rows/columns from inserted tables.
@@ -1711,10 +1779,11 @@
             // insertion), else KEEP it — that is the split's right half, preserving
             // the host style AND the suffix's own run formatting (no plain-text
             // rebuild, no leaked \r).
-            applyHostStyleToFirstParaIfPlain(); // §5bis Cas A: left half keeps host style
+            prepareFirstBlockForMerge(); // §5bis: Cas A inline-style OR Cas B spacer
             doc.InsertContent(content);
             useRefSelection = true; // block mode preserves paragraph refs
             cleanupTrailingBlockPara();
+            if (leadSpacerInserted) cleanupLeadingSpacer(); // §5bis Cas B
           }
         }
 
@@ -1744,9 +1813,10 @@
         // So we pick the right tool for each insertion mode.
 
         function selectByRefs(doc, content, mode, preSelStart, mergedTrailingLen) {
-          // content[0] is the first real content paragraph (block mode, both insert
-          // and replace — §5bis removed the leading empty paragraph).
-          var selectFirst = content[0];
+          // First real content paragraph (block mode, both insert and replace).
+          // §5bis Cas B unshifts a host-styled spacer at content[0] (absorbed into
+          // the host's left half), so the first *real* block is content[1] then.
+          var selectFirst = leadSpacerInserted ? content[1] : content[0];
           var selectLast = content[content.length - 1];
           if (!selectFirst || !selectLast) return;
 
