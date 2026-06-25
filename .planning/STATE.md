@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v3.2
 milestone_name: Contexte enrichi du prompt
 status: executing
-stopped_at: v3.2-02 context gathered (discuss-phase). CONTEXT.md + DISCUSSION-LOG.md written & committed. Ready to plan v3.2-02.
-last_updated: "2026-06-25T00:00:00.000Z"
-last_activity: 2026-06-25 -- Gathered Phase v3.2-02 context (câblage discussion + sélection): D-00 γ + D-05 framing, D-01..D-04 wiring decisions
+stopped_at: v3.2-02 discuss-phase DONE — CONTEXT.md + DISCUSSION-LOG.md written & committed (commit e77dd2c6f). 5 gray areas discussed; all decisions locked (see CONTEXT.md D-00..D-05). Next step → plan v3.2-02 (NO UI hint → skip ui-phase).
+last_updated: "2026-06-25T14:44:19.614Z"
+last_activity: 2026-06-25 -- Phase v3.2-02-cablage-discussion-selection planning complete
 progress:
   total_phases: 3
   completed_phases: 1
@@ -41,9 +41,9 @@ See: .planning/PROJECT.md (updated 2026-06-24)
 
 Phase: v3.2-02 (Câblage discussion + sélection) — CONTEXT GATHERED (discuss-phase done)
 Plan: not yet created
-Status: v3.2-02 context captured — ready to plan
+Status: Ready to execute
 Progress: [###-------] 33% (1/3 v3.2 phases complete; v3.2-02 in discuss→plan)
-Last activity: 2026-06-25 -- Gathered Phase v3.2-02 context (D-00 γ + framing, D-01..D-04)
+Last activity: 2026-06-25 -- Phase v3.2-02-cablage-discussion-selection planning complete
 
 ⚠️ TOOLING: gsd-sdk v1.42.3 cannot resolve `vX.Y-NN` phases (find-phase/phase-plan-index return "Phase not found" for ALL v3.0/v3.1 phases — regex only matches numeric-prefixed dirs). Orchestrate v3.2 phases manually with explicit paths; ROADMAP/STATE/REQUIREMENTS completion writes done by hand (gsd-sdk phase.complete fails on vX.Y-NN).
 
