@@ -59,13 +59,32 @@ DOC_RELS = (
 STYLES_XML = (
     '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
     '<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
-    '<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/></w:style>'
+    # Police de paragraphe par défaut — requise comme basedOn des styles caractère liés.
+    '<w:style w:type="character" w:default="1" w:styleId="DefaultParagraphFont">'
+    '<w:name w:val="Default Paragraph Font"/><w:uiPriority w:val="1"/>'
+    '<w:semiHidden/><w:unhideWhenUsed/></w:style>'
+    '<w:style w:type="paragraph" w:default="1" w:styleId="Normal">'
+    '<w:name w:val="Normal"/><w:qFormat/></w:style>'
+    # Titre 1 = vrai built-in : qFormat (galerie) + link style caractère + uiPriority
+    # + next + keepNext/keepLines, comme ce que produit Word/OO → OO le promeut en Titre 1.
     '<w:style w:type="paragraph" w:styleId="Heading1">'
-    '<w:name w:val="heading 1"/><w:basedOn w:val="Normal"/>'
-    '<w:pPr><w:outlineLvl w:val="0"/></w:pPr><w:rPr><w:b/><w:sz w:val="32"/></w:rPr></w:style>'
+    '<w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/>'
+    '<w:link w:val="Heading1Char"/><w:uiPriority w:val="9"/><w:qFormat/>'
+    '<w:pPr><w:keepNext/><w:keepLines/><w:spacing w:before="240" w:after="0"/>'
+    '<w:outlineLvl w:val="0"/></w:pPr><w:rPr><w:b/><w:sz w:val="32"/></w:rPr></w:style>'
+    '<w:style w:type="character" w:styleId="Heading1Char">'
+    '<w:name w:val="Heading 1 Char"/><w:basedOn w:val="DefaultParagraphFont"/>'
+    '<w:link w:val="Heading1"/><w:uiPriority w:val="9"/>'
+    '<w:rPr><w:b/><w:sz w:val="32"/></w:rPr></w:style>'
     '<w:style w:type="paragraph" w:styleId="Heading2">'
-    '<w:name w:val="heading 2"/><w:basedOn w:val="Normal"/>'
-    '<w:pPr><w:outlineLvl w:val="1"/></w:pPr><w:rPr><w:b/><w:sz w:val="28"/></w:rPr></w:style>'
+    '<w:name w:val="heading 2"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/>'
+    '<w:link w:val="Heading2Char"/><w:uiPriority w:val="9"/><w:qFormat/>'
+    '<w:pPr><w:keepNext/><w:keepLines/><w:spacing w:before="240" w:after="0"/>'
+    '<w:outlineLvl w:val="1"/></w:pPr><w:rPr><w:b/><w:sz w:val="28"/></w:rPr></w:style>'
+    '<w:style w:type="character" w:styleId="Heading2Char">'
+    '<w:name w:val="Heading 2 Char"/><w:basedOn w:val="DefaultParagraphFont"/>'
+    '<w:link w:val="Heading2"/><w:uiPriority w:val="9"/>'
+    '<w:rPr><w:b/><w:sz w:val="28"/></w:rPr></w:style>'
     '</w:styles>'
 )
 
