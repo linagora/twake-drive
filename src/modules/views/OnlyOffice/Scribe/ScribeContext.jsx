@@ -271,9 +271,10 @@ export const ScribeProvider = ({ children }) => {
         if (isScribeDevMd()) {
           recordProbeSample(parsed, {
             surface: 'chat',
-            inputMd: selectionContext
-              ? selectionContext.markdown || selectionContext.text || ''
-              : '',
+            // Faithful to what was actually sent (D-03): when « sélection » is OFF
+            // currentSelectionMd is '' so the probe never derives hasTable/hasRef
+            // (or runs refIntegrity) against a selection the model never received.
+            inputMd: currentSelectionMd,
             ts: Date.now()
           })
         }
@@ -290,11 +291,18 @@ export const ScribeProvider = ({ children }) => {
               rawResponse: parsed.raw,
               parsed,
               devData: {
-                html: selectionContext?.html || '',
+                // Gate the dev panel's selection-derived fields on selectionIncluded
+                // so they reflect what was actually sent (D-03), matching `md`.
+                html: selectionIncluded ? selectionContext?.html || '' : '',
                 normalizedHtml: '',
-                enrichedMd: selectionContext?.markdown || '',
+                enrichedMd: selectionIncluded
+                  ? selectionContext?.markdown || ''
+                  : '',
                 md: currentSelectionMd,
-                source: selectionContext?.markdown ? 'plugin' : 'turndown'
+                source:
+                  selectionIncluded && selectionContext?.markdown
+                    ? 'plugin'
+                    : 'turndown'
               }
             }
           : undefined
