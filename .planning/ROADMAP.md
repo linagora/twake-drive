@@ -113,7 +113,7 @@ v3.1 phases execute in order: v3.1-01 -> v3.1-02 -> v3.1-03 (HARD GATE) -> v3.1-
 | v3.1-06. Durcissement contrat | v3.1 | 2/2 | Complete | 2026-06-24 |
 | v3.1-07. i18n 5 locales | v3.1 | 2/2 | Complete | 2026-06-24 |
 | v3.2-01. Zone « Inclure » discrète (UX statique) | v3.2 | 1/1 | Complete | 2026-06-24 |
-| v3.2-02. Câblage discussion + sélection | v3.2 | 0/0 | Not started | - |
+| v3.2-02. Câblage discussion + sélection | v3.2 | 0/1 | Planned | - |
 | v3.2-03. Câblage document complet + stratégie de taille | v3.2 | 0/0 | Not started | - |
 
 ## Phase Details
@@ -153,7 +153,8 @@ _Active milestone only. Shipped milestones keep their full phase details in `.pl
   3. La composition des contextes inclus est déterministe : ordre et formatage stables et reproductibles pour un même état de cases, assemblés en un seul point de composition (scribeAI / ScribeContext.sendMessage)
   4. Le contrat de réponse v3.1 reste intact : les contextes injectés ne fuient jamais dans `fragments`, la séparation discussion/fragments est préservée, et le re-ask correctif unique + repli contextuel continuent de fonctionner (corpus v3.1 toujours au vert)
   5. La sonde dev (PROBE-01) et les gates de régression existants restent verts avec les contextes activés
-**Plans**: TBD
+**Plans**: 1 plan
+- [ ] v3.2-02-01-wire-discussion-selection-PLAN.md — gate selection (current turn) + discussion (history) at the ScribeContext.sendMessage seam, read checkboxes live (no stale closure), D-05 conditional framing seed in buildChatSystemPrompt, then a PROBE-01 + v3.1-regression + determinism + no-fragment-leak verification gate [CTX-LLM-02, CTX-LLM-03, CTX-LLM-05] (wave 1)
 **UI hint**: no
 
 #### Phase v3.2-03: Câblage document complet + stratégie de taille
