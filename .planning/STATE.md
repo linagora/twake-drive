@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v3.2
 milestone_name: Contexte enrichi du prompt
 status: executing
-stopped_at: Completed v3.2-01-01-PLAN.md (« Inclure » zone, UX statique). All 3 tasks committed; all 5 gates green; CTX-UX-01..05 complete.
-last_updated: "2026-06-24T15:30:00.000Z"
-last_activity: 2026-06-24 -- Completed Phase v3.2-01 Plan 01 (Zone Inclure discrète, UX statique)
+stopped_at: v3.2-02 context gathered (discuss-phase). CONTEXT.md + DISCUSSION-LOG.md written & committed. Ready to plan v3.2-02.
+last_updated: "2026-06-25T00:00:00.000Z"
+last_activity: 2026-06-25 -- Gathered Phase v3.2-02 context (câblage discussion + sélection): D-00 γ + D-05 framing, D-01..D-04 wiring decisions
 progress:
   total_phases: 3
   completed_phases: 1
@@ -39,15 +39,15 @@ See: .planning/PROJECT.md (updated 2026-06-24)
 
 ## Current Position
 
-Phase: v3.2-01 (Zone Inclure discrète (UX statique)) — COMPLETE
-Plan: 1 of 1 (done)
-Status: Phase v3.2-01 complete — ready to plan v3.2-02
-Progress: [###-------] 33% (1/3 v3.2 phases)
-Last activity: 2026-06-24 -- Completed Phase v3.2-01 Plan 01 (Zone Inclure discrète, UX statique)
+Phase: v3.2-02 (Câblage discussion + sélection) — CONTEXT GATHERED (discuss-phase done)
+Plan: not yet created
+Status: v3.2-02 context captured — ready to plan
+Progress: [###-------] 33% (1/3 v3.2 phases complete; v3.2-02 in discuss→plan)
+Last activity: 2026-06-25 -- Gathered Phase v3.2-02 context (D-00 γ + framing, D-01..D-04)
 
 ⚠️ TOOLING: gsd-sdk v1.42.3 cannot resolve `vX.Y-NN` phases (find-phase/phase-plan-index return "Phase not found" for ALL v3.0/v3.1 phases — regex only matches numeric-prefixed dirs). Orchestrate v3.2 phases manually with explicit paths; ROADMAP/STATE/REQUIREMENTS completion writes done by hand (gsd-sdk phase.complete fails on vX.Y-NN).
 
-Next: plan v3.2-02 (`/gsd-plan-phase v3.2-02`) — câblage discussion + sélection. The three include booleans live in ScribeContext (seam comment `read by v3.2-02/03; no prompt injection in v3.2-01`); v3.2-02 reads them at the `sendMessage` prompt-assembly seam.
+Next: plan v3.2-02 — câblage discussion + sélection. CONTEXT.md is ready at `.planning/phases/v3.2-02-cablage-discussion-selection/v3.2-02-CONTEXT.md`. ⚠️ gsd-sdk does NOT resolve `vX.Y-NN` slugs (confirmed: init.plan-phase / roadmap.get-phase / init.phase-op all return phase_found=false on the full slug; only the abbreviated `v3.2-02` resolves in roadmap.get-phase, and its auto-slug mangles accents → orchestrate plan-phase MANUALLY with explicit phase_dir `.planning/phases/v3.2-02-cablage-discussion-selection`). The three include booleans live in ScribeContext (l.65-67); v3.2-02 reads them at the `sendMessage` prompt-assembly seam (l.164). Key locked decisions in CONTEXT.md: D-00 γ (gate v3.1 structure + seam ready for v3.2-03), D-05 light system-prompt framing, D-01 discussion-off⇒current-turn-only, D-02 selection gates current turn only, D-03 store-only-what-is-sent (no checkbox flags), D-04 selection-off removes block AND marker clauses.
 
 ## v3.2 Roadmap Summary
 
@@ -84,7 +84,9 @@ Execution order: v3.2-01 (UX statique) -> v3.2-02 (câblage discussion + sélect
 
 ## Session Continuity
 
-Last session: 2026-06-24T15:30:00.000Z
-Stopped at: v3.2-01 DONE — executed (5 gates green, CTX-UX-01..05 complete) AND live UAT passed (status passed) after 4 UX-polish rounds (discreet checkboxes, × removed, selection space permanently reserved so the discussion never shifts, fixed-height chip with hover tooltip).
-Resume file: next step → plan v3.2-02 (câblage discussion + sélection). v3.2-02 has NO UI hint → skip ui-phase, go straight to `/gsd-plan-phase v3.2-02-cablage-discussion-selection`. ⚠️ Use the FULL directory slug with ALL GSD commands — gsd-sdk resolves init.plan-phase / phase-plan-index / execute-phase by full slug (e.g. `v3.2-02-cablage-discussion-selection`), NOT the abbreviated `v3.2-02`; with the full slug the automated flow works end-to-end (no manual orchestration needed). See [[milestone-prefixed-numbering-convention]]. v3.2-02 reads the three include booleans from ScribeContext at the `sendMessage` prompt-assembly seam (seam comment `read by v3.2-02/03; no prompt injection in v3.2-01`).
+Last session: 2026-06-25
+Stopped at: v3.2-02 discuss-phase DONE — CONTEXT.md + DISCUSSION-LOG.md written & committed (commit e77dd2c6f). 5 gray areas discussed; all decisions locked (see CONTEXT.md D-00..D-05). Next step → plan v3.2-02 (NO UI hint → skip ui-phase).
+Resume file: `.planning/phases/v3.2-02-cablage-discussion-selection/v3.2-02-CONTEXT.md`.
+⚠️ TOOLING CORRECTION (supersedes prior note): gsd-sdk does NOT resolve `vX.Y-NN` slugs end-to-end. Confirmed 2026-06-25: `init.plan-phase` / `init.phase-op` / `roadmap.get-phase` ALL return phase_found=false on the full slug `v3.2-02-cablage-discussion-selection`; only the abbreviated `v3.2-02` resolves in `roadmap.get-phase` (found=true), but its auto-generated `expected_phase_dir` mangles accents (`v3.2-02-c-blage-discussion-s-lection`). So: orchestrate plan-phase MANUALLY with explicit phase_dir = `.planning/phases/v3.2-02-cablage-discussion-selection`, pass abbreviated `v3.2-02` to `roadmap.get-phase` for goal/criteria, and write completion docs by hand. See [[milestone-prefixed-numbering-convention]].
+v3.2-02 reads the three include booleans from ScribeContext (l.65-67) at the `sendMessage` prompt-assembly seam (l.164, comment `read by v3.2-02/03; no prompt injection in v3.2-01`). The uncommitted `plugins/onlyoffice-scribe/scripts/code.js` is the selection-cases-harness chantier's dev hooks — leave it; NOT part of v3.2.
 Env after reboot: OO container + cozy-stack must be up; Drive `src/` changes need `yarn build` then hard-reload (NOT an OO restart). The uncommitted `plugins/onlyoffice-scribe/scripts/code.js` is the selection-cases-harness chantier's dev hooks — leave it; NOT part of v3.2.
