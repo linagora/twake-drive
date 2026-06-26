@@ -449,4 +449,99 @@ describe('ScribeContext.sendMessage — deterministic gated composition (v3.2-02
       expect(api.sendMessage).toBe(firstSendMessage)
     })
   })
+
+  // v3.2-03-04 — the any-combination matrix + the determinism guarantee
+  // restated for a FIXED document state. These prove that the three sources
+  // (document × selection × discussion) compose deterministically in any
+  // combination without breaking the v3.1 contract, closing the regression gate.
+  describe('Any-combination matrix + document-aware determinism (v3.2-03-04)', () => {
+    it('document + selection + discussion ALL ON: full history; current turn has doc → selection → text (in that order); prior turns carry NO doc block', async () => {
+      renderProvider()
+      seedPriorTurns()
+      setIncludes({ selection: true, discussion: true })
+      wireDocument({ md: 'WHOLE DOC BODY' })
+      await send('current question', CURRENT_SELECTION)
+
+      const ai = captured[0]
+      // system + prior user + prior assistant + current user
+      expect(ai).toHaveLength(4)
+
+      // every source-framing sentence is present in the system prompt
+      expect(ai[0].content).toMatch(/full document is provided below for reference/i)
+      expect(ai[0].content).toMatch(/selection from the document/i)
+      expect(ai[0].content).toMatch(/Earlier turns of this conversation/i)
+      // the combined doc+selection focus clause (D-04)
+      expect(ai[0].content).toMatch(/focus within that document/i)
+      // frozen v3.1 contract block stays contiguous and intact
+      expect(ai[0].content).toContain(RESPONSE_CONTRACT_CORE + CARDINALITY_CHAT)
+
+      // D-05 ephemeral: the prior user turn replays ITS selection block but NO doc block
+      expect(ai[1].role).toBe('user')
+      expect(ai[1].content).toContain(SELECTED_BLOCK)
+      expect(ai[1].content).toContain('prior sel md')
+      expect(ai[1].content).not.toContain(FULL_DOC_BLOCK)
+
+      // current turn: doc block → selection block → user text, in that order
+      const current = ai[ai.length - 1]
+      expect(current.content).toContain(FULL_DOC_BLOCK)
+      expect(current.content).toContain('WHOLE DOC BODY')
+      expect(current.content).toContain(SELECTED_BLOCK)
+      expect(current.content).toContain('current sel md')
+      const iDoc = current.content.indexOf(FULL_DOC_BLOCK)
+      const iSel = current.content.indexOf(SELECTED_BLOCK)
+      const iText = current.content.indexOf('current question')
+      expect(iDoc).toBeLessThan(iSel)
+      expect(iSel).toBeLessThan(iText)
+    })
+
+    it('document ON, selection & discussion OFF: only the doc framing + doc block on a single current turn (no history, no selection block)', async () => {
+      renderProvider()
+      seedPriorTurns()
+      setIncludes({ selection: false, discussion: false })
+      wireDocument({ md: 'SOLO DOC' })
+      await send('current question', CURRENT_SELECTION)
+
+      const ai = captured[0]
+      // discussion OFF => system + current user ONLY
+      expect(ai).toHaveLength(2)
+      expect(ai[0].content).toMatch(/full document is provided below for reference/i)
+      // selection OFF => no selection framing, no combined focus clause
+      expect(ai[0].content).not.toMatch(/selection from the document/i)
+      expect(ai[0].content).not.toMatch(/focus within that document/i)
+
+      const current = ai[1]
+      expect(current.content).toContain(FULL_DOC_BLOCK)
+      expect(current.content).toContain('SOLO DOC')
+      expect(current.content).not.toContain(SELECTED_BLOCK)
+      // doc block precedes the user text
+      expect(current.content.indexOf(FULL_DOC_BLOCK)).toBeLessThan(
+        current.content.indexOf('current question')
+      )
+    })
+
+    it('determinism for a FIXED document state: same transcript + same checkboxes + same doc state => byte-identical aiMessages across two sends', async () => {
+      // first send (all three sources ON, fixed extractor md)
+      renderProvider()
+      seedPriorTurns()
+      setIncludes({ selection: true, discussion: true })
+      wireDocument({ md: 'FIXED DOC STATE' })
+      await send('current question', CURRENT_SELECTION)
+      const first = JSON.stringify(captured[0])
+
+      // reset to the SAME seed + SAME checkboxes + SAME fixed doc state, resend identically
+      renderProvider()
+      seedPriorTurns()
+      setIncludes({ selection: true, discussion: true })
+      wireDocument({ md: 'FIXED DOC STATE' })
+      await send('current question', CURRENT_SELECTION)
+      const second = JSON.stringify(captured[0])
+
+      // The D-03 determinism guarantee, extended for v3.2-03: with the extractor
+      // returning a fixed md, the document path adds no nondeterminism — identical
+      // inputs (transcript + checkboxes + document state) ⇒ byte-identical messages.
+      expect(second).toBe(first)
+      // and the document is actually part of what was held identical
+      expect(first).toContain(FULL_DOC_BLOCK)
+    })
+  })
 })
