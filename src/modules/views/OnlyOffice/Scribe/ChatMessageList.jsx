@@ -12,6 +12,7 @@ import { useI18n } from 'twake-i18n'
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
 import CrossIcon from 'cozy-ui/transpiled/react/Icons/Cross'
+import InfoIcon from 'cozy-ui/transpiled/react/Icons/Info'
 import Spinner from 'cozy-ui/transpiled/react/Spinner'
 import Typography from 'cozy-ui/transpiled/react/Typography'
 import { useTheme } from 'cozy-ui/transpiled/react/styles'
@@ -129,6 +130,34 @@ const ErrorBubble = ({ content, theme, t }) => (
     }}
   >
     <strong>{t('Scribe.chat.error_prefix')}:</strong> {content}
+  </div>
+)
+
+// Never-silent truncation feedback (UI-SPEC DEC-UI-01). A discreet, single-line
+// system notice — NOT a chat bubble, NOT an Inclure-zone badge — rendered in
+// thread order right after the user bubble whose document context was truncated.
+// Styled as a sibling of the loading indicator (same alignSelf/display/gap/
+// padding/opacity/fontSize); informational, so the icon + text are both
+// text.secondary (no red, no accent — explicitness is carried by the words).
+// role="status" + aria-live="polite" announce it without stealing focus; the
+// icon is decorative (the text carries the meaning, so no aria-label).
+const DocumentTruncatedNotice = ({ theme, t }) => (
+  <div
+    role="status"
+    aria-live="polite"
+    style={{
+      alignSelf: 'flex-start',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 8,
+      padding: '8px 12px',
+      opacity: 0.7,
+      fontSize: 13,
+      color: theme.palette.text.secondary
+    }}
+  >
+    <Icon icon={InfoIcon} size={14} />
+    <span>{t('Scribe.include.documentTruncated')}</span>
   </div>
 )
 
@@ -427,13 +456,35 @@ export const ChatMessageList = forwardRef(
         <div style={{ marginTop: 'auto' }} />
         {messages.map(msg => {
           if (msg.role === 'user') {
+            // Render the user bubble plus, in thread order right after it, the
+            // never-silent documentNotice for this turn (set by plan 02 on the
+            // user message): 'truncated' → discreet info row (DEC-UI-01),
+            // 'unavailable' → the existing ErrorBubble (DEC-UI-03), absent →
+            // nothing (default unlimited ⇒ silent success is correct). A map
+            // callback returns a single node, so wrap them in a keyed Fragment.
             return (
-              <UserBubble
-                key={msg.id}
-                content={msg.content}
-                selection={msg.selection}
-                theme={theme}
-              />
+              <React.Fragment key={msg.id}>
+                <UserBubble
+                  content={msg.content}
+                  selection={msg.selection}
+                  theme={theme}
+                />
+                {msg.documentNotice === 'truncated' && (
+                  <DocumentTruncatedNotice
+                    key={`${msg.id}-notice`}
+                    theme={theme}
+                    t={t}
+                  />
+                )}
+                {msg.documentNotice === 'unavailable' && (
+                  <ErrorBubble
+                    key={`${msg.id}-notice`}
+                    content={t('Scribe.include.documentUnavailable')}
+                    theme={theme}
+                    t={t}
+                  />
+                )}
+              </React.Fragment>
             )
           }
           if (msg.role === 'error') {

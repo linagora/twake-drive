@@ -235,6 +235,70 @@ describe('ChatMessageList — segment-based assistant render', () => {
     })
   })
 
+  describe('documentNotice — never-silent truncation / extraction feedback (CTX-LLM-04, UI-SPEC DEC-UI-01/03)', () => {
+    it("renders a discreet role=status notice after the user bubble when documentNotice === 'truncated'", () => {
+      setScribe({
+        messages: [
+          {
+            id: 'u1',
+            role: 'user',
+            content: 'summarize this',
+            documentNotice: 'truncated'
+          }
+        ]
+      })
+      const { container } = render(<ChatMessageList />)
+
+      const status = container.querySelector('[role="status"]')
+      expect(status).not.toBeNull()
+      expect(status.getAttribute('aria-live')).toBe('polite')
+      expect(status.textContent).toContain('Scribe.include.documentTruncated')
+
+      // Thread order: the user text precedes the truncation notice.
+      const text = container.textContent
+      expect(text.indexOf('summarize this')).toBeLessThan(
+        text.indexOf('Scribe.include.documentTruncated')
+      )
+    })
+
+    it("renders an ErrorBubble (not a status row) when documentNotice === 'unavailable'", () => {
+      setScribe({
+        messages: [
+          {
+            id: 'u2',
+            role: 'user',
+            content: 'use the doc',
+            documentNotice: 'unavailable'
+          }
+        ]
+      })
+      const { container } = render(<ChatMessageList />)
+
+      expect(container.querySelector('[role="status"]')).toBeNull()
+      expect(container.textContent).toContain(
+        'Scribe.include.documentUnavailable'
+      )
+      // ErrorBubble carries the shared error prefix.
+      expect(container.textContent).toContain('Scribe.chat.error_prefix')
+    })
+
+    it('renders no notice when documentNotice is absent (default unlimited = silent success)', () => {
+      setScribe({
+        messages: [{ id: 'u3', role: 'user', content: 'plain message' }]
+      })
+      const { container } = render(<ChatMessageList />)
+
+      expect(container.querySelector('[role="status"]')).toBeNull()
+      expect(container.textContent).not.toContain(
+        'Scribe.include.documentTruncated'
+      )
+      expect(container.textContent).not.toContain(
+        'Scribe.include.documentUnavailable'
+      )
+      expect(container.textContent).toContain('plain message')
+    })
+  })
+
   describe('D-03 — card actions receive the raw fragment (markers intact)', () => {
     it('passes the verbatim raw fragment to panelActions.insert', () => {
       const RAW = 'See {{REF:scribe-ref-1:Fig 1}} done'
