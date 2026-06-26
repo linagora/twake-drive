@@ -66,13 +66,13 @@ jest.mock('cozy-flags', () => ({ __esModule: true, default: jest.fn() }))
 import flag from 'cozy-flags'
 
 import {
-  RESPONSE_CONTRACT_CORE,
-  CARDINALITY_CHAT
-} from '@/modules/views/OnlyOffice/Scribe/scribeAI'
-import {
   ScribeProvider,
   useScribe
 } from '@/modules/views/OnlyOffice/Scribe/ScribeContext'
+import {
+  RESPONSE_CONTRACT_CORE,
+  CARDINALITY_CHAT
+} from '@/modules/views/OnlyOffice/Scribe/scribeAI'
 import { serializeAssistantTurnForHistory } from '@/modules/views/OnlyOffice/Scribe/scribeResponse'
 
 const SELECTED_BLOCK = '[Selected text from document]'
@@ -91,6 +91,7 @@ const makeParsed = (discussion = 'ok', fragments = []) => ({
 // toggle the include checkboxes imperatively before sending.
 let api
 const Harness = () => {
+  // eslint-disable-next-line react-hooks/globals -- test harness intentionally captures the live context API into an outer var so tests can drive it imperatively
   api = useScribe()
   return null
 }
@@ -196,7 +197,10 @@ describe('ScribeContext.sendMessage — deterministic gated composition (v3.2-02
     it('D-04 marker clauses dropped: a TABLE selection produces no [TABLE:N] clause when « sélection » is OFF', async () => {
       renderProvider()
       setIncludes({ selection: false, discussion: false })
-      await send('q', { text: 't', markdown: '[TABLE:0][CELL:0,0]a[/CELL][/TABLE]' })
+      await send('q', {
+        text: 't',
+        markdown: '[TABLE:0][CELL:0,0]a[/CELL][/TABLE]'
+      })
       expect(captured[0][0].content).not.toMatch(/\[TABLE:N\]/)
     })
   })
@@ -410,7 +414,9 @@ describe('ScribeContext.sendMessage — deterministic gated composition (v3.2-02
       // only the CURRENT turn carries the freshly-extracted block
       await send('turn two', null)
       const ai = captured[1]
-      const priorUser = ai.find(m => m.role === 'user' && m.content === 'turn one')
+      const priorUser = ai.find(
+        m => m.role === 'user' && m.content === 'turn one'
+      )
       expect(priorUser).toBeTruthy()
       expect(priorUser.content).not.toContain(FULL_DOC_BLOCK)
       const current = ai[ai.length - 1]
@@ -422,17 +428,23 @@ describe('ScribeContext.sendMessage — deterministic gated composition (v3.2-02
       const firstSendMessage = api.sendMessage
       api &&
         act(() => {
-          api.setExtractFullDocument(jest.fn(async () => ({ md: 'DOC', error: null })))
+          api.setExtractFullDocument(
+            jest.fn(async () => ({ md: 'DOC', error: null }))
+          )
         })
 
       // document OFF on first send
       await send('q1', null)
-      expect(captured[0][captured[0].length - 1].content).not.toContain(FULL_DOC_BLOCK)
+      expect(captured[0][captured[0].length - 1].content).not.toContain(
+        FULL_DOC_BLOCK
+      )
 
       // toggle document ON between sends
       act(() => api.setIncludeDocument(true))
       await send('q2', null)
-      expect(captured[1][captured[1].length - 1].content).toContain(FULL_DOC_BLOCK)
+      expect(captured[1][captured[1].length - 1].content).toContain(
+        FULL_DOC_BLOCK
+      )
 
       expect(api.sendMessage).toBe(firstSendMessage)
     })

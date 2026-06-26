@@ -47,34 +47,47 @@ describe('scribeAI — unified response contract', () => {
   describe('marker-preservation clauses (shared by both surfaces)', () => {
     it('emits table, footnote and REF clauses only when the markers are present', () => {
       expect(markerPreservationClauses('plain text')).toBe('')
-      expect(markerPreservationClauses('[TABLE:0]x[/TABLE]')).toMatch(/\[TABLE:N\]/)
-      expect(markerPreservationClauses('a[^scribe-fn-1]')).toMatch(/\[\^scribe-fn-N\]/)
-      expect(markerPreservationClauses('{{REF:scribe-ref-1:S2}}')).toMatch(/\{\{REF:scribe-ref-N/)
+      expect(markerPreservationClauses('[TABLE:0]x[/TABLE]')).toMatch(
+        /\[TABLE:N\]/
+      )
+      expect(markerPreservationClauses('a[^scribe-fn-1]')).toMatch(
+        /\[\^scribe-fn-N\]/
+      )
+      expect(markerPreservationClauses('{{REF:scribe-ref-1:S2}}')).toMatch(
+        /\{\{REF:scribe-ref-N/
+      )
       expect(markerPreservationClauses(undefined)).toBe('')
     })
 
     it('inline injects table/REF clauses from enrichedMd', () => {
       const content = buildMessages('free-prompt', 'sel', 'do X', {
-        enrichedMd: '[TABLE:0][CELL:0,0]a[/CELL][/TABLE] {{REF:scribe-ref-1:S2}}'
+        enrichedMd:
+          '[TABLE:0][CELL:0,0]a[/CELL][/TABLE] {{REF:scribe-ref-1:S2}}'
       })[0].content
       expect(content).toMatch(/\[TABLE:N\]/)
       expect(content).toMatch(/\{\{REF:scribe-ref-N/)
     })
 
     it('chat now injects marker clauses too (previously absent — latent bug fixed)', () => {
-      const chat = buildChatSystemPrompt('see [TABLE:0]x[/TABLE] and {{REF:scribe-ref-3:S4}}')
+      const chat = buildChatSystemPrompt(
+        'see [TABLE:0]x[/TABLE] and {{REF:scribe-ref-3:S4}}'
+      )
       expect(chat).toMatch(/\[TABLE:N\]/)
       expect(chat).toMatch(/\{\{REF:scribe-ref-N/)
     })
 
     it('chat without a marker selection carries no marker clauses', () => {
-      expect(buildChatSystemPrompt('just a question')).not.toMatch(/\[TABLE:N\]/)
+      expect(buildChatSystemPrompt('just a question')).not.toMatch(
+        /\[TABLE:N\]/
+      )
     })
 
     it('the table clause mandates a WHOLE table in a SINGLE fragment (anti-split) on BOTH surfaces', () => {
       // This is the chat-table-destructuring fix: CARDINALITY_CHAT otherwise lets
       // the model split a table across fragments / dump cells into `discussion`.
-      const clause = markerPreservationClauses('[TABLE:0][CELL:0,0]a[/CELL][/TABLE]')
+      const clause = markerPreservationClauses(
+        '[TABLE:0][CELL:0,0]a[/CELL][/TABLE]'
+      )
       expect(clause).toMatch(/WHOLE/)
       expect(clause).toMatch(/SINGLE fragment/)
       expect(clause).toMatch(/never split/i)
@@ -99,7 +112,10 @@ describe('scribeAI — unified response contract', () => {
       expect(buildChatSystemPrompt('')).toBe(baseline)
       expect(buildChatSystemPrompt('', {})).toBe(baseline)
       expect(
-        buildChatSystemPrompt('', { includeSelection: false, includeDiscussion: false })
+        buildChatSystemPrompt('', {
+          includeSelection: false,
+          includeDiscussion: false
+        })
       ).toBe(baseline)
     })
 
@@ -162,7 +178,9 @@ describe('scribeAI — unified response contract', () => {
       markerPreservationClauses('')
 
     it('{ includeDocument: false } (or absent) is byte-identical to the no-flag baseline', () => {
-      expect(buildChatSystemPrompt('', { includeDocument: false })).toBe(baseline)
+      expect(buildChatSystemPrompt('', { includeDocument: false })).toBe(
+        baseline
+      )
       // absent => unchanged (regression: existing call sites stay byte-identical)
       expect(buildChatSystemPrompt('', {})).toBe(baseline)
     })
@@ -223,7 +241,9 @@ describe('scribeAI — unified response contract', () => {
     })
 
     it('falls back to plain text when no enrichedMd/html', () => {
-      expect(encodeSelectionForPrompt({ text: 'just text' }).selectionMd).toBe('just text')
+      expect(encodeSelectionForPrompt({ text: 'just text' }).selectionMd).toBe(
+        'just text'
+      )
       expect(encodeSelectionForPrompt({}).selectionMd).toBe('')
       expect(encodeSelectionForPrompt(null).selectionMd).toBe('')
     })
@@ -239,7 +259,9 @@ describe('scribeAI — unified response contract', () => {
     it('produces the SAME selection md the popover sends (parity with buildMessages)', () => {
       const sel = { enrichedMd: '[TABLE:0][CELL:0,0]a[/CELL][/TABLE]' }
       const { selectionMd } = encodeSelectionForPrompt(sel)
-      const inline = buildMessages('free-prompt', 'sel', 'do X', { enrichedMd: sel.enrichedMd })[0].content
+      const inline = buildMessages('free-prompt', 'sel', 'do X', {
+        enrichedMd: sel.enrichedMd
+      })[0].content
       // The encoded selection md is what the inline path embeds verbatim as "Text:".
       expect(inline).toContain(selectionMd)
     })
