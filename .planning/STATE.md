@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v3.2
 milestone_name: Contexte enrichi du prompt
 status: executing
-last_updated: "2026-06-26T06:19:16.049Z"
-last_activity: 2026-06-26 -- Phase v3.2-03-cablage-document-complet-strategie-taille planning complete
+last_updated: "2026-06-26T07:51:51.102Z"
+last_activity: 2026-06-26 -- Phase v3.2-03-cablage-document-complet-strategie-taille execution started
 progress:
   total_phases: 3
   completed_phases: 2
@@ -34,15 +34,15 @@ Note: the four verification items are pre-existing human-verify gaps inherited f
 See: .planning/PROJECT.md (updated 2026-06-24)
 
 **Core value:** L'utilisateur peut interagir avec l'IA de maniere fluide -- actions rapides inline ou chat conversationnel dans un panneau lateral -- pour transformer et manipuler le contenu de son document OnlyOffice.
-**Current focus:** Phase v3.2-03 — Câblage document complet + stratégie de taille (CONTEXT + UI-SPEC done → plan-phase next)
+**Current focus:** Phase v3.2-03-cablage-document-complet-strategie-taille — Câblage document complet + stratégie taille
 
 ## Current Position
 
-Phase: v3.2-02 (Câblage discussion + sélection) — ✅ COMPLETE (verified passed 10/10, 2026-06-25)
-Plan: v3.2-02-01 complete — SUMMARY + VERIFICATION written; 5 commits (f85d1a39b, 34768c15f, 9935423d7, 7dd025996, + fix b1b11bb5f)
-Status: Ready to execute
+Phase: v3.2-03-cablage-document-complet-strategie-taille (Câblage document complet + stratégie taille) — EXECUTING
+Plan: 1 of 4
+Status: Executing Phase v3.2-03-cablage-document-complet-strategie-taille
 Progress: [#######---] 67% (2/3 v3.2 phases complete)
-Last activity: 2026-06-26 -- Phase v3.2-03-cablage-document-complet-strategie-taille planning complete
+Last activity: 2026-06-26 -- Phase v3.2-03-cablage-document-complet-strategie-taille execution started
 
 ⚠️ TOOLING: gsd-sdk v1.42.3 cannot resolve `vX.Y-NN` phases (find-phase/phase-plan-index return "Phase not found" for ALL v3.0/v3.1 phases — regex only matches numeric-prefixed dirs). Orchestrate v3.2 phases manually with explicit paths; ROADMAP/STATE/REQUIREMENTS completion writes done by hand (gsd-sdk phase.complete fails on vX.Y-NN).
 
