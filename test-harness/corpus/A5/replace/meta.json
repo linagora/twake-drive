@@ -1,0 +1,15 @@
+{
+  "caseId": "A5",
+  "mode": "replace",
+  "spec": "P1@start..P3@end",
+  "fixture": "XXX",
+  "source": "a-family.docx",
+  "statusFromCsv": "pass",
+  "stable": true,
+  "setSelectionOk": true,
+  "capturedVia": "Chrome DevTools MCP v4 (build 2026-06-26.8; multi-¶ driver; extract+injectAtSelection atomic; forcesave docx; no grabFocus)",
+  "capturedAt": "2026-06-26",
+  "verdict": "pass",
+  "comment": "Replace multi-¶ entiers (A5) : la plage P1..P3 est remplacée par EXACTEMENT 3 ¶ 'Replaced one' / 'Replaced two' / 'Replaced three'. blockCount=3, aucun résidu, stable. Sélection établie via la branche cross multi-¶ (build .8).",
+  "captureVersion": "v4"
+}

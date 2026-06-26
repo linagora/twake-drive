@@ -1,0 +1,15 @@
+{
+  "caseId": "A6",
+  "mode": "replace",
+  "spec": "P1@mid..P3@mid",
+  "fixture": "format",
+  "source": "format-family.docx",
+  "statusFromCsv": "xfail",
+  "stable": true,
+  "setSelectionOk": true,
+  "capturedVia": "Chrome DevTools MCP v4 (build 2026-06-26.8; multi-¶ driver; extract+injectAtSelection atomic; forcesave docx; no grabFocus)",
+  "capturedAt": "2026-06-26",
+  "verdict": "pass",
+  "comment": "Replace multi-¶ partiel (A6) RE-CLASSÉ xfail(L1) → PASS. La plage mid(P1)..mid(P3) est remplacée et le doc collapse en 1 ¶ : tête P1 'The quick' + 'Mid replaced' + queue P3 'er flows', P2 supprimé. TEXTE CORRECT. L1 (perte styles inline tête/queue) NON REPRODUCTIBLE : la tête garde son GRAS ('quick' b:1 préservé dans model + after.docx). Sonde dédiée a6tail.docx (P3 avec 'flows' GRAS en queue, scratchpad) : la QUEUE formatée est AUSSI préservée ('flows' reste gras) → ni tête ni queue ne perdent leur formatage. Cohérent avec la re-vérification de L#1 (2026-06-24, chemin inline). Résidu cosmétique : un run gras VIDE (sans texte) subsiste dans le .docx (sans effet visible, parent L#7). Sélection multi-¶ via branche cross (build .8).",
+  "captureVersion": "v4"
+}

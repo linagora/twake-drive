@@ -1,0 +1,15 @@
+{
+  "caseId": "A5",
+  "mode": "insert",
+  "spec": "P1@start..P3@end",
+  "fixture": "XXX",
+  "source": "a-family.docx",
+  "statusFromCsv": "pass",
+  "stable": true,
+  "setSelectionOk": true,
+  "capturedVia": "Chrome DevTools MCP v4 (build 2026-06-26.8; multi-¶ driver; extract+injectAtSelection atomic; forcesave docx; no grabFocus)",
+  "capturedAt": "2026-06-26",
+  "verdict": "pass",
+  "comment": "Insert multi-¶ entiers (A5) : les 3 ¶ originaux (The quick brown fox / Jumps over the dog / Lazy river flows) restent INTACTS ; la réponse est insérée APRÈS la sélection — 1er ¶ 'Alpha edit' fusionné inline en fin de P3 (smart-spacing, comportement insert standard cf A4/T4), 'Beta edit' en nouveau ¶. blockCount=4. PREMIÈRE validation LIVE du driver multi-¶ top-level (build .8) : la sélection P1@start..P3@end est établie via la branche cross (ExpandTo de 2 ¶ collapsed) — marche du 1er coup, primitive top-level triviale.",
+  "captureVersion": "v4"
+}
