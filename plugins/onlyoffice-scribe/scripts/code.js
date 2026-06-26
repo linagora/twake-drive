@@ -9,7 +9,7 @@
   // If the console shows an OLDER build than expected, the editor served a CACHED
   // code.js → reopen the editor in a fresh tab / private window (a plain F5 won't
   // refetch the async plugin iframe).
-  var SCRIBE_BUILD = "2026-06-25.2 — §5bis Cas B: suppress smart-spacing for styled block (inline test; no parasitic space)";
+  var SCRIBE_BUILD = "2026-06-26.1 — test driver: intra-cell selection spec T<n>.C(r,c)@pos (§4ter harness, UNTESTED live)";
   try { window.__scribeBuild = SCRIBE_BUILD; } catch (e) {}
 
   // ---- State ----
@@ -499,11 +499,20 @@
       if (_testSelSpec) {
         try {
           var _tsp = JSON.parse(_testSelSpec);
-          var _tcnt = doc.GetElementsCount(), _tseen = 0, _ttgt = null;
-          for (var _ti = 0; _ti < _tcnt; _ti++) {
-            var _tel = doc.GetElement(_ti);
-            if (_tel.GetClassType && _tel.GetClassType() === "paragraph") {
-              _tseen++; if (_tseen === _tsp.startN) { _ttgt = _tel; break; }
+          var _ttgt = null;
+          if (_tsp.startCell) {
+            // §4ter intra-cell: n-th TABLE → cell (r,c) → 1st ¶.
+            var _tcc = doc.GetElementsCount(), _tsn = 0, _tbl = null;
+            for (var _ti = 0; _ti < _tcc; _ti++) {
+              var _tel = doc.GetElement(_ti);
+              if (_tel.GetClassType && _tel.GetClassType() === "table") { _tsn++; if (_tsn === _tsp.startN) { _tbl = _tel; break; } }
+            }
+            if (_tbl) { try { _ttgt = _tbl.GetCell(_tsp.startCell.r, _tsp.startCell.c).GetContent().GetElement(0); } catch (e) {} }
+          } else {
+            var _tcnt = doc.GetElementsCount(), _tseen = 0;
+            for (var _tj = 0; _tj < _tcnt; _tj++) {
+              var _tel2 = doc.GetElement(_tj);
+              if (_tel2.GetClassType && _tel2.GetClassType() === "paragraph") { _tseen++; if (_tseen === _tsp.startN) { _ttgt = _tel2; break; } }
             }
           }
           if (_ttgt) {
@@ -3377,43 +3386,65 @@
     }
   }
 
-  // Parse a SELECTION-CASES spec like "P1@start..P1@end" into endpoints.
+  // Parse a SELECTION-CASES spec into endpoints. Two endpoint forms:
+  //   "P<n>@<pos>"            → n-th TOP-LEVEL paragraph
+  //   "T<n>.C(<r>,<c>)@<pos>" → 1st ¶ of cell (r,c) of the n-th TABLE (intra-cell)
+  // <pos> = start|space|mid|end|x|<int>. A range "<a>..<b>" must stay within the
+  // SAME target (same paragraph, or same table+cell) — intra-cell only for now.
   function parseSelSpec(spec) {
     if (!spec) return null;
     var parts = String(spec).split("..");
     function one(p) {
       var m = /^\s*P(\d+)@(\w+)\s*$/.exec(p);
-      return m ? { n: parseInt(m[1], 10), kind: m[2] } : null;
+      if (m) return { n: parseInt(m[1], 10), kind: m[2], cell: null };
+      var mc = /^\s*T(\d+)\.C\((\d+),(\d+)\)@(\w+)\s*$/.exec(p);
+      if (mc) return { n: parseInt(mc[1], 10), kind: mc[4], cell: { r: parseInt(mc[2], 10), c: parseInt(mc[3], 10) } };
+      return null;
     }
     var a = one(parts[0]);
     var b = parts.length > 1 ? one(parts[1]) : a;
     if (!a || !b) return null;
-    return { startN: a.n, startKind: a.kind, endN: b.n, endKind: b.kind };
+    return { startN: a.n, startKind: a.kind, startCell: a.cell, endN: b.n, endKind: b.kind, endCell: b.cell };
+  }
+
+  // Both endpoints must target the SAME paragraph/cell (intra-target selection).
+  function selSpecSameTarget(p) {
+    if (p.startN !== p.endN) return false;
+    var sc = p.startCell, ec = p.endCell;
+    if (!sc && !ec) return true;
+    return !!(sc && ec && sc.r === ec.r && sc.c === ec.c);
   }
 
   function hookSetSelection(spec) {
     return new Promise(function(resolve) {
       var p = parseSelSpec(spec);
       if (!p) { resolve({ ok: false, error: "bad selection spec: " + spec }); return; }
-      if (p.startN !== p.endN) {
-        // Multi-paragraph (A5/A6) needs a cross-block range — out of spike scope.
-        resolve({ ok: false, error: "multi-paragraph selection not yet supported in spike: " + spec });
+      if (!selSpecSameTarget(p)) {
+        // Multi-paragraph / cross-cell range — out of scope (intra-target only).
+        resolve({ ok: false, error: "multi-target selection not yet supported: " + spec });
         return;
       }
       Asc.scope._selspec = JSON.stringify(p);
       window.Asc.plugin.callCommand(function() {
         var p = JSON.parse(Asc.scope._selspec);
         var doc = Api.GetDocument();
-        var count = doc.GetElementsCount();
-        var seen = 0, target = null;
-        for (var i = 0; i < count; i++) {
-          var el = doc.GetElement(i);
-          if (el.GetClassType && el.GetClassType() === "paragraph") {
-            seen++;
-            if (seen === p.startN) { target = el; break; }
+        var target = null;
+        if (p.startCell) {
+          // n-th TABLE → cell (r,c) → 1st ¶ of the cell (intra-cell, §4ter).
+          var tcnt = doc.GetElementsCount(), tseen = 0, tbl = null;
+          for (var ti = 0; ti < tcnt; ti++) {
+            var tel = doc.GetElement(ti);
+            if (tel.GetClassType && tel.GetClassType() === "table") { tseen++; if (tseen === p.startN) { tbl = tel; break; } }
+          }
+          if (tbl) { try { target = tbl.GetCell(p.startCell.r, p.startCell.c).GetContent().GetElement(0); } catch (e) {} }
+        } else {
+          var count = doc.GetElementsCount(), seen = 0;
+          for (var i = 0; i < count; i++) {
+            var el = doc.GetElement(i);
+            if (el.GetClassType && el.GetClassType() === "paragraph") { seen++; if (seen === p.startN) { target = el; break; } }
           }
         }
-        if (!target) return JSON.stringify({ ok: false, error: "paragraph P" + p.startN + " not found" });
+        if (!target) return JSON.stringify({ ok: false, error: "target not found (P/cell " + p.startN + ")" });
         // GetText() includes the trailing paragraph mark "\r\n" — strip it for char length.
         var txt = (target.GetText ? target.GetText() : "").replace(/[\r\n]+$/, "");
         var len = txt.length;
@@ -3489,8 +3520,8 @@
     return new Promise(function(resolve) {
       var p = parseSelSpec(spec);
       if (!p) { resolve({ ok: false, error: "bad selection spec: " + spec }); return; }
-      if (p.startN !== p.endN) {
-        resolve({ ok: false, error: "multi-paragraph selection not yet supported: " + spec });
+      if (!selSpecSameTarget(p)) {
+        resolve({ ok: false, error: "multi-target selection not yet supported: " + spec });
         return;
       }
       try {
