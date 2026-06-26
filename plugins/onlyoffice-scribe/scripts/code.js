@@ -2039,37 +2039,11 @@
   // truncates OO's redo stack, breaking redo.
   var suppressExtractionUntil = 0;
 
-  window.Asc.plugin.init = function(data) {
-    // Ignore init calls triggered by our own paste operations
-    if (pasteInProgress) {
-      log("init() called (ignored — paste in progress)");
-      return;
-    }
-    // Add toolbar button on first init (API is ready at this point)
-    if (!toolbarButtonAdded) {
-      addToolbarButton();
-      toolbarButtonAdded = true;
-      // Re-announce readiness now that OO has fully initialized the plugin, in
-      // case the module-load announce raced ahead of the host's listener.
-      announceReady();
-    }
-
-    // Skip the heavy extraction right after an undo/redo so its callCommand
-    // doesn't wipe the redo stack (which would make redo impossible). The cache
-    // stays as-is and self-refreshes on the next real selection change.
-    if (Date.now() < suppressExtractionUntil) {
-      log("init() extraction suppressed (undo/redo in progress)");
-      return;
-    }
-
-    // Run callCommand pre-scan to extract enriched markdown from selection
-    // initDataType:"html" is kept for trigger mechanism; data parameter is ignored
-    // Pass counters via Asc.scope for stable naming across selections
-    window.Asc.scope.imgCounter = imageCounter;
-    window.Asc.scope._fnCounter = footnoteCounter;
-    window.Asc.scope._crCounter = crossRefCounter;
-    window.Asc.scope._crMeta = {};
-    window.Asc.plugin.callCommand(function() {
+  // Reusable extraction entry passed to callCommand. ES5 sandbox: every leaf
+  // helper is defined INSIDE this function because callCommand re-evaluates the
+  // function body in the sdkjs context and drops outer closures. Reads
+  // Asc.scope.scribeExtractMode to pick the selection or whole-document path.
+  function buildScribeExtractionResult() {
       // --- All helpers defined inside callCommand (ES5 sandbox) ---
 
       function escapeMarkdown(text) {
@@ -2628,8 +2602,23 @@
         return extractPartialTableCells(table, allCells);
       }
 
+      // Whole-document extraction (v3.2-03). Placeholder — the document-order walk
+      // is implemented in Task 2. Defined inside the sandbox so it can reuse the
+      // leaf emitters above (paragraphToMarkdown, extractTableCells, etc.).
+      function buildDocumentExtractionResult(doc) {
+        return JSON.stringify({ md: "", blockCount: 0 });
+      }
+
       // --- Main extraction logic ---
       var doc = Api.GetDocument();
+
+      // Mode branch (v3.2-03): 'document' extracts the WHOLE document; any other
+      // value ('selection' / undefined) runs the existing selection logic below
+      // unchanged. The document path is implemented in buildDocumentExtractionResult.
+      if (Asc.scope.scribeExtractMode === "document") {
+        return buildDocumentExtractionResult(doc);
+      }
+
       var range = doc.GetRangeBySelect();
       if (!range) return JSON.stringify({ text: "", md: "" });
 
@@ -2898,7 +2887,40 @@
         partialTableInfo: partialTableInfo,
         crossRefMeta: Asc.scope._crMeta || {}
       });
-    }, false, false, function(resultJson) {
+  }
+
+  window.Asc.plugin.init = function(data) {
+    // Ignore init calls triggered by our own paste operations
+    if (pasteInProgress) {
+      log("init() called (ignored — paste in progress)");
+      return;
+    }
+    // Add toolbar button on first init (API is ready at this point)
+    if (!toolbarButtonAdded) {
+      addToolbarButton();
+      toolbarButtonAdded = true;
+      // Re-announce readiness now that OO has fully initialized the plugin, in
+      // case the module-load announce raced ahead of the host's listener.
+      announceReady();
+    }
+
+    // Skip the heavy extraction right after an undo/redo so its callCommand
+    // doesn't wipe the redo stack (which would make redo impossible). The cache
+    // stays as-is and self-refreshes on the next real selection change.
+    if (Date.now() < suppressExtractionUntil) {
+      log("init() extraction suppressed (undo/redo in progress)");
+      return;
+    }
+
+    // Run callCommand pre-scan to extract enriched markdown from selection
+    // initDataType:"html" is kept for trigger mechanism; data parameter is ignored
+    // Pass counters via Asc.scope for stable naming across selections
+    window.Asc.scope.imgCounter = imageCounter;
+    window.Asc.scope._fnCounter = footnoteCounter;
+    window.Asc.scope._crCounter = crossRefCounter;
+    window.Asc.scope._crMeta = {};
+    window.Asc.scope.scribeExtractMode = "selection";
+    window.Asc.plugin.callCommand(buildScribeExtractionResult, false, false, function(resultJson) {
       // false = read-write (allows SetName on images for stable naming)
       // Update module-level counters from Asc.scope
       imageCounter = window.Asc.scope.imgCounter || imageCounter;
