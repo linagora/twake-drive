@@ -129,15 +129,36 @@ def para_xml(p):
 COL_W = 2400  # twips par colonne
 
 
+def _norm_cell(cell):
+    """Cellule = liste de ¶ (simple) OU dict de fusion
+    { 'p': [¶...], 'gridSpan'?: int, 'vmerge'?: 'restart'|'cont' }.
+    → (paras, gridSpan|None, vmerge|None). gridSpan>1 = fusion H ; vmerge = fusion V
+    (maître = 'restart', continuation = 'cont', cellule vide distincte cf §4bis)."""
+    if isinstance(cell, dict):
+        return cell.get('p', []), cell.get('gridSpan'), cell.get('vmerge')
+    return cell, None, None
+
+
 def cell_xml(cell):
-    body = ''.join(para_xml(p) for p in cell) if cell else '<w:p/>'
-    tcpr = f'<w:tcPr><w:tcW w:w="{COL_W}" w:type="dxa"/></w:tcPr>'
-    return f'<w:tc>{tcpr}{body}</w:tc>'
+    paras, span, vmerge = _norm_cell(cell)
+    props = f'<w:tcW w:w="{COL_W * (span or 1)}" w:type="dxa"/>'
+    if span and span > 1:
+        props += f'<w:gridSpan w:val="{span}"/>'
+    if vmerge == 'restart':
+        props += '<w:vMerge w:val="restart"/>'
+    elif vmerge == 'cont':
+        props += '<w:vMerge/>'
+    body = ''.join(para_xml(p) for p in paras) if paras else '<w:p/>'
+    return f'<w:tc><w:tcPr>{props}</w:tcPr>{body}</w:tc>'
+
+
+def _row_cols(row):
+    return sum((_norm_cell(c)[1] or 1) for c in row)
 
 
 def table_xml(el):
     rows = el['table']
-    ncols = max(len(r) for r in rows)
+    ncols = max(_row_cols(r) for r in rows)
     grid = ''.join(f'<w:gridCol w:w="{COL_W}"/>' for _ in range(ncols))
     edges = ('top', 'left', 'bottom', 'right', 'insideH', 'insideV')
     borders = '<w:tblBorders>' + ''.join(
@@ -159,7 +180,7 @@ def _has_styles(elements):
         if isinstance(el, dict) and 'table' in el:
             for row in el['table']:
                 for cell in row:
-                    for p in cell:
+                    for p in _norm_cell(cell)[0]:
                         if _norm_para(p)[1]:
                             return True
         elif _norm_para(el)[1]:
@@ -242,6 +263,28 @@ FIXTURES = [
             {'table': [
                 [[[{'t': 'Alpha'}]], [[{'t': 'Beta'}]]],
                 [[[{'t': 'Gamma'}]], [[{'t': 'Delta'}], [{'t': 'Delta2'}]]],
+            ]},
+            [{'t': 'Outro paragraph'}],
+        ],
+    },
+    {
+        # Famille TABLEAU FUSIONNÉE — support T2b (fusion H) + T2c (fusion V).
+        # Géométrie calquée sur la sonde §4bis : table 4×3, fusion V sur la col 0
+        # (lignes 1-2) et fusion H sur les cols 1-2 (ligne 3). Encadrée Intro/Outro
+        # pour la détection de débordement. Indices LOGIQUES (r,c) attendus côté OO :
+        #   r0: (0,0)=H00      (0,1)=H01    (0,2)=H02
+        #   r1: (1,0)=Vmaster  (1,1)=B1     (1,2)=C1      ← maître V (vMerge restart)
+        #   r2: (2,0)=∅cont    (2,1)=B2     (2,2)=C2      ← continuation V vide (§4bis)
+        #   r3: (3,0)=M30      (3,1)=Hspan               ← Hspan = gridSpan 2 (cols 1+2)
+        # Donc r3 n'a que 2 cellules logiques (fusion H → moins de cellules, §4bis).
+        'name': 'table-merged.docx',
+        'paras': [
+            [{'t': 'Intro paragraph'}],
+            {'table': [
+                [[[{'t': 'H00'}]], [[{'t': 'H01'}]], [[{'t': 'H02'}]]],
+                [{'vmerge': 'restart', 'p': [[{'t': 'Vmaster'}]]}, [[{'t': 'B1'}]], [[{'t': 'C1'}]]],
+                [{'vmerge': 'cont'}, [[{'t': 'B2'}]], [[{'t': 'C2'}]]],
+                [[[{'t': 'M30'}]], {'gridSpan': 2, 'p': [[{'t': 'Hspan'}]]}],
             ]},
             [{'t': 'Outro paragraph'}],
         ],
