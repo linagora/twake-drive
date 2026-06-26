@@ -1,0 +1,15 @@
+{
+  "caseId": "T1",
+  "mode": "insert",
+  "spec": "T1.C(0,0)@start..T1.C(0,0)@end",
+  "fixture": "XXX",
+  "source": "table-plain.docx",
+  "statusFromCsv": "pass",
+  "stable": true,
+  "setSelectionOk": true,
+  "capturedVia": "Chrome DevTools MCP v4 (build 2026-06-26.4; injectAtSelection atomic; forcesave docx; no grabFocus)",
+  "capturedAt": "2026-06-26",
+  "verdict": "pass",
+  "comment": "Insert intra-cellule (chemin paragraphe) : XXX inséré au point d'insertion (fin de la sélection cellule (0,0)) -> cellule = 'AlphaXXX'. Zéro débordement (blockCount=3, tableau intact). NB selection post-inject non mappée (curseur en cellule -> dumpState renvoie block:-1, limite connue).",
+  "captureVersion": "v4"
+}

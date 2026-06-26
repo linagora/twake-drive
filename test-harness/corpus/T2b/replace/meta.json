@@ -1,0 +1,15 @@
+{
+  "caseId": "T2b",
+  "mode": "replace",
+  "spec": "T1.C(3,0)@start..T1.C(3,1)@end",
+  "fixture": "[CELL:3,0]Hk[/CELL][CELL:3,1]Hl[/CELL]",
+  "source": "table-merged.docx",
+  "statusFromCsv": "pass",
+  "stable": true,
+  "setSelectionOk": true,
+  "capturedVia": "Chrome DevTools MCP v4 (build 2026-06-26.4; extract+injectAtSelection atomic; snapshots cabled; forcesave docx; no grabFocus)",
+  "capturedAt": "2026-06-26",
+  "verdict": "pass",
+  "comment": "Replace cellules partielles, fusion H (ligne C(3,0)..C(3,1)) : in-place -> (3,0)='Hk' (3,1)='Hl' ; gridSpan préservé (ligne 3 = 2 cellules logiques), fusion V intacte (continuation (2,0) vide). blockCount=3, 1 tableau.",
+  "captureVersion": "v4"
+}

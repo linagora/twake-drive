@@ -1,0 +1,15 @@
+{
+  "caseId": "T2c",
+  "mode": "insert",
+  "spec": "T1.C(1,0)@start..T1.C(2,2)@end",
+  "fixture": "[CELL:1,0]Va[/CELL][CELL:1,1]Vb[/CELL][CELL:1,2]Vc[/CELL][CELL:2,1]Vd[/CELL][CELL:2,2]Ve[/CELL]",
+  "source": "table-merged.docx",
+  "statusFromCsv": "pass",
+  "stable": true,
+  "setSelectionOk": true,
+  "capturedVia": "Chrome DevTools MCP v4 (build 2026-06-26.4; extract+injectAtSelection atomic; snapshots cabled; forcesave docx; no grabFocus)",
+  "capturedAt": "2026-06-26",
+  "verdict": "pass",
+  "comment": "Insert cellules partielles, fusion V (région C(1,0)..C(2,2)) : §4bis#2 -> clone COMPLET (4 lignes) inséré APRÈS ; cellules sél. modifiées (Va/Vb/Vc/Vd/Ve), continuation (2,0) restée VIDE (jamais touchée), lignes 0/3 préservées. PAS de RemoveRow. blockCount=4, 2 tableaux.",
+  "captureVersion": "v4"
+}

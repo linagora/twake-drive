@@ -1,0 +1,15 @@
+{
+  "caseId": "T3",
+  "mode": "replace",
+  "spec": "T1.full",
+  "fixture": "[CELL:0,0]p[/CELL][CELL:0,1]q[/CELL][CELL:1,0]r[/CELL][CELL:1,1]s[/CELL]",
+  "source": "table-plain.docx",
+  "statusFromCsv": "pass",
+  "stable": true,
+  "setSelectionOk": true,
+  "capturedVia": "Chrome DevTools MCP v4 (build 2026-06-26.4; extract+injectAtSelection atomic; snapshots cabled; forcesave docx; no grabFocus)",
+  "capturedAt": "2026-06-26",
+  "verdict": "pass",
+  "comment": "Replace tableau entier (T1.full) : toutes les cellules remplacées in-place [[p,q],[r,s]] ; blockCount=3, 1 tableau. NB: nécessite build .5 (fix isSimpleInline côté replace : avant, un clone-table en mode inline ne vidait que la 1ère cellule).",
+  "captureVersion": "v4"
+}

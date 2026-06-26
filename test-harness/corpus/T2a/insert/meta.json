@@ -1,0 +1,15 @@
+{
+  "caseId": "T2a",
+  "mode": "insert",
+  "spec": "T1.C(0,0)@start..T1.C(0,1)@end",
+  "fixture": "[CELL:0,0]AA[/CELL][CELL:0,1]BB[/CELL]",
+  "source": "table-plain.docx",
+  "statusFromCsv": "pass",
+  "stable": true,
+  "setSelectionOk": true,
+  "capturedVia": "Chrome DevTools MCP v4 (build 2026-06-26.4; extract+injectAtSelection atomic; snapshots cabled; forcesave docx; no grabFocus)",
+  "capturedAt": "2026-06-26",
+  "verdict": "pass",
+  "comment": "Insert cellules partielles (top-row C(0,0)..C(0,1)) : copie RÉDUITE du tableau (1 ligne [[AA,BB]]) insérée APRÈS le tableau ; original Alpha/Beta/Gamma/Delta intact. blockCount=4, 2 tableaux. (Le no-op antérieur = bug insSimpleInline, corrigé build .3.)",
+  "captureVersion": "v4"
+}
