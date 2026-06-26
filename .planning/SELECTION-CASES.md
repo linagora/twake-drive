@@ -134,6 +134,27 @@ Aucun repli sur table complète n'est nécessaire pour Replace : l'index logique
 
 ---
 
+## 4ter. Injection §5bis **dans une cellule** (T1 / T8) — règle v1 (2026-06-26, à valider live)
+
+Injecter dans une cellule (`intraCell`) passe par le **même `buildAndInject`** que les paragraphes. **Problème** : la machinerie §5bis est **document-level** (host-finding, smart-spacing, invariant split itèrent `doc.GetElement()` = éléments **top-level** ; un ¶ de cellule n'en est pas un) **et** le `InsertContent` mode block **déborde hors cellule** (L#3). Donc en l'état, une fixture **stylée / multi-¶** injectée dans une cellule casse (débordement + split/espacement no-op).
+
+**Règle cible v1 — « la cellule reste le conteneur, jamais de débordement » :**
+- **Interdit** : le `InsertContent` block document-level dans une cellule.
+- **À la place** : insérer les paragraphes **in-place dans la cellule** via `cell.GetContent()` → `AddElement(pos, para)` (mécanisme **déjà utilisé pour T8 Replace** : `replaceCellContent` + `AddElement`).
+- **Conséquences sur le contenu injecté dans une cellule :**
+  | Contenu | Cellule v1 |
+  |---|---|
+  | texte / inline (gras, italique…) | ✅ préservé (fusion inline dans le ¶ de la cellule) |
+  | **liste** (puces / numérotée) | ✅ **préservée** (impératif) — ¶ de liste ajoutés in-place |
+  | **citation** | ✅ **préservée** (souhaité) |
+  | **titre** | ⚠️ **aplati en inline** acceptable (ou gardé si gratuit) |
+  | tableau imbriqué | ❌ hors scope (T13) |
+- **Jamais de débordement** hors de la cellule, quel que soit le contenu.
+
+**⚠️ À VALIDER LIVE** (inconnu non tranché) : est-ce que `AddElement` dans une cellule **préserve** (1) la **numérotation** des listes et (2) le **style de citation** ? Et le §5bis « 1ᵉʳ para inline / hôte garde son style » se comporte-t-il correctement en contexte cellule ? → nécessite une **fixture tableau** + fixtures **liste** et **citation**. *(Le « titre aplati » n'est figé que si garder le titre coûte trop ; à confirmer au test.)*
+
+---
+
 ## 5. Matrice — axe « contenu réinjecté » (transversal à tous les cas A/T)
 
 Ces limites dépendent du **type de contenu**, pas de la géométrie de sélection — elles s'appliquent par-dessus n'importe quelle ligne A/T.
