@@ -54,7 +54,10 @@ const useDataProxyRecents = () => {
   }, [dataProxy])
 
   // Proxy path: merge proxy data with real-time store state
-  if (dataProxy.dataProxyServicesAvailable && proxyState.fetchStatus !== 'error') {
+  if (
+    dataProxy.dataProxyServicesAvailable &&
+    proxyState.fetchStatus !== 'error'
+  ) {
     let finalData = []
     if (proxyState.data) {
       finalData = proxyState.data.reduce((acc, file) => {
@@ -63,7 +66,7 @@ const useDataProxyRecents = () => {
           file._id
         )
         if (docInStore) {
-          if (!docInStore.trashed) {
+          if (!file.trashed && !docInStore.trashed) {
             acc.push({ ...file, ...docInStore })
           }
         } else if (!file.trashed) {

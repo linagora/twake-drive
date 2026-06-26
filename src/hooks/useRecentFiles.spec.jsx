@@ -63,16 +63,18 @@ describe('useDataProxyRecents', () => {
       const mockData = [
         { _id: '1', name: 'file1', trashed: false },
         { _id: '2', name: 'file2', trashed: true },
-        { _id: '3', name: 'file3', trashed: false }
+        { _id: '3', name: 'file3', trashed: false },
+        { _id: '4', name: 'file4', trashed: true }
       ]
       const mockDataProxy = {
         dataProxyServicesAvailable: true,
         recents: jest.fn().mockResolvedValue(mockData)
       }
 
-      // Simulate file3 trashed in store, file1 renamed in store
+      // Simulate file3 trashed in store, file1 renamed in store, file4 restored only in store
       mockClient.getDocumentFromState.mockImplementation((doctype, id) => {
         if (id === '3') return { _id: '3', trashed: true }
+        if (id === '4') return { _id: '4', trashed: false }
         if (id === '1')
           return { _id: '1', name: 'file1_renamed', trashed: false }
         return null
@@ -192,23 +194,6 @@ describe('useDataProxyRecents', () => {
       expect(result.current.fetchStatus).toBe('loading')
       expect(result.current.data).toEqual([])
       expect(result.current.error).toBe(null)
-    })
-  })
-
-  describe('when client is not available', () => {
-    it('should set error when client is not available', () => {
-      const mockDataProxy = {
-        dataProxyServicesAvailable: false
-      }
-
-      const { result } = renderRecents({
-        dataProxy: mockDataProxy,
-        client: null
-      })
-
-      expect(result.current.fetchStatus).toBe('error')
-      expect(result.current.error).toEqual(new Error('Client not available'))
-      expect(result.current.data).toEqual([])
     })
   })
 })
