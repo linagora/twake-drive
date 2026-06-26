@@ -387,6 +387,29 @@ FIXTURES = [
         ],
     },
     {
+        # Famille DEUX TABLEAUX — support T6 (deux tableaux partiels, milieu entier).
+        # Doc : ¶ "Intro" + tableau A 2×2 + ¶ "Middle" + tableau B 2×2 + ¶ "Outro".
+        # Une sélection cross-frontière T1.C(1,0)..T2.C(0,1) couvre : la queue de A
+        # (A3/A4), le ¶ "Middle" ENTIER, et la tête de B (B1/B2). Sert à valider le
+        # cas 2d (copie réduite tête + milieu entier + copie réduite queue à l'Insert ;
+        # cellules in-place des deux tableaux + ¶ du milieu au Replace). Tables
+        # numérotées dans l'ordre du doc : A=T1, B=T2 ; ¶ : Intro=P1, Middle=P2, Outro=P3.
+        'name': 'table-pair.docx',
+        'paras': [
+            [{'t': 'Intro paragraph'}],
+            {'table': [
+                [[[{'t': 'A1'}]], [[{'t': 'A2'}]]],
+                [[[{'t': 'A3'}]], [[{'t': 'A4'}]]],
+            ]},
+            [{'t': 'Middle paragraph'}],
+            {'table': [
+                [[[{'t': 'B1'}]], [[{'t': 'B2'}]]],
+                [[[{'t': 'B3'}]], [[{'t': 'B4'}]]],
+            ]},
+            [{'t': 'Outro paragraph'}],
+        ],
+    },
+    {
         # Famille TABLEAU AVEC IMAGE — support T9 (image dans une cellule).
         # Table 2×2, cellule (0,0) = une image inline (PNG embarqué), reste = texte.
         # Encadrée Intro/Outro. Sert à vérifier que l'image en cellule round-trip

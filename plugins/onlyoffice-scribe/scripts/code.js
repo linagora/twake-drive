@@ -9,7 +9,7 @@
   // If the console shows an OLDER build than expected, the editor served a CACHED
   // code.js → reopen the editor in a fresh tab / private window (a plain F5 won't
   // refetch the async plugin iframe).
-  var SCRIBE_BUILD = "2026-06-26.5 — fix(prod): full-table Replace also excluded from inline (isSimpleInline, sibling of .3) + .4 (§4bis#2) + .3 (insSimpleInline)";
+  var SCRIBE_BUILD = "2026-06-26.7 — test(driver): cross-boundary selection (T4/T5/T6 ¶↔cell + cross-table via ExpandTo) on top of .5 (.6 T9-Copy fix was reverted)";
   try { window.__scribeBuild = SCRIBE_BUILD; } catch (e) {}
 
   // ---- State ----
@@ -500,8 +500,44 @@
         try {
           var _tsp = JSON.parse(_testSelSpec);
           var _ttgt = null;
+          // Cross-boundary (T4/T5/T6) — twin of hookSetSelection's cross branch.
+          var _tCross = (!!_tsp.startCell !== !!_tsp.endCell) || (_tsp.startCell && _tsp.endCell && _tsp.startN !== _tsp.endN);
           var _tIsRange = _tsp.full || (_tsp.startCell && _tsp.endCell && (_tsp.startCell.r !== _tsp.endCell.r || _tsp.startCell.c !== _tsp.endCell.c));
-          if (_tIsRange) {
+          if (_tCross) {
+            var _txNth = function(kind, nn) {
+              var c = doc.GetElementsCount(), s = 0;
+              for (var i = 0; i < c; i++) { var e = doc.GetElement(i); if (e.GetClassType && e.GetClassType() === kind) { s++; if (s === nn) return e; } }
+              return null;
+            };
+            var _txParaRange = function(para, kind) {
+              var txt = (para.GetText ? para.GetText() : "").replace(/[\r\n]+$/, ""), len = txt.length, off;
+              if (/^\d+$/.test(kind)) { off = parseInt(kind, 10); if (off > len) off = len; }
+              else if (kind === "end") off = len;
+              else if (kind === "mid") off = Math.floor(len / 2);
+              else if (kind === "space") { var ix = txt.indexOf(" "); off = ix >= 0 ? ix + 1 : 0; }
+              else off = 0;
+              var cnt = para.GetElementsCount ? para.GetElementsCount() : 0, acc = 0;
+              for (var i = 0; i < cnt; i++) {
+                var el = para.GetElement(i), ct = el.GetClassType ? el.GetClassType() : "";
+                if (ct !== "run" && ct !== "hyperlink") continue;
+                var t = (el.GetText ? el.GetText() : "").replace(/[\r\n]+$/, "");
+                if (off <= acc + t.length) return el.GetRange ? el.GetRange(off - acc, off - acc) : null;
+                acc += t.length;
+              }
+              return para.GetRange ? para.GetRange() : null;
+            };
+            var _txEndpoint = function(nn, kind, cell, isStart) {
+              if (!cell) { var pp = _txNth("paragraph", nn); return pp ? _txParaRange(pp, kind) : null; }
+              var tb = _txNth("table", nn); if (!tb) return null;
+              var cl = tb.GetCell(cell.r, cell.c); if (!cl) return null;
+              var cc = cl.GetContent(), pe = isStart ? cc.GetElement(0) : cc.GetElement(cc.GetElementsCount() - 1);
+              return pe && pe.GetRange ? pe.GetRange() : null;
+            };
+            var _txsr = _txEndpoint(_tsp.startN, _tsp.startKind, _tsp.startCell, true);
+            var _txer = _txEndpoint(_tsp.endN, _tsp.endKind, _tsp.endCell, false);
+            var _txrng = (_txsr && _txer && _txsr.ExpandTo) ? _txsr.ExpandTo(_txer) : null;
+            if (_txrng && _txrng.Select) _txrng.Select();
+          } else if (_tIsRange) {
             // Multi-cell range (T2a/b/c) or whole table (T3) — twin of hookSetSelection.
             var _rtc = doc.GetElementsCount(), _rts = 0, _rtb = null;
             for (var _rti = 0; _rti < _rtc; _rti++) {
@@ -3480,12 +3516,24 @@
   //  • P<n>@a..P<n>@b (SAME ¶)               → intra-paragraph (A0–A4)
   //  • T<n>.C(r,c)@a..T<n>.C(r,c)@b (SAME)   → intra-cell (T1/T8/T9)
   //  • T<n>.C(r1,c1)@..T<n>.C(r2,c2)@ (SAME table) → cross-cell range (T2a/b/c)
-  // Unsupported: multi-¶ (A5/A6), ¶↔cell crossings, different tables.
+  //  • P<n>@a..T<m>.C(r,c)@b  /  T<m>.C(r,c)@a..P<n>@b  → ¶↔cell crossing (T4/T5)
+  //  • T<m>.C(..)@..T<k>.C(..)@ (DIFFERENT tables)     → cross-table range (T6)
+  // Cross-boundary works because OO's Range.ExpandTo()+Select() spans a ¶↔cell
+  // boundary (probe-confirmed 2026-06-26) and snaps table-side ends to cell
+  // boundaries. Still unsupported: multi-¶ (A5/A6 — no cell on either side).
   function selSpecSupported(p) {
     if (p.full) return true;
     var sc = p.startCell, ec = p.endCell;
-    if (!sc && !ec) return p.startN === p.endN;      // intra-paragraph only
-    return !!(sc && ec && p.startN === p.endN);      // intra-cell OR cross-cell, same table
+    if (!sc && !ec) return p.startN === p.endN;      // intra-paragraph only (A0–A4)
+    if (sc && ec && p.startN === p.endN) return true; // intra-cell OR cross-cell, same table
+    return true;                                      // cross-boundary: ¶↔cell or cross-table
+  }
+  // True when the two endpoints live in DIFFERENT targets (¶↔cell, or cells of
+  // two different tables) — handled by the cross-boundary establishment branch,
+  // distinct from the same-table multi-cell "range" path (T2a/b/c).
+  function selSpecCross(p) {
+    var sc = p.startCell, ec = p.endCell;
+    return (!!sc !== !!ec) || !!(sc && ec && p.startN !== p.endN);
   }
   // Kept for the intra-target fast path (collapsed-cursor handling).
   function selSpecSameTarget(p) {
@@ -3508,6 +3556,50 @@
       window.Asc.plugin.callCommand(function() {
         var p = JSON.parse(Asc.scope._selspec);
         var doc = Api.GetDocument();
+
+        // Cross-boundary (T4/T5/T6): start & end in DIFFERENT targets (¶↔cell, or
+        // cells of two different tables). Resolve each endpoint — partial for a ¶
+        // endpoint (collapsed at offset), whole first/last ¶ for a cell endpoint —
+        // then ExpandTo their union. OO snaps table ends to cell boundaries, so
+        // every cell between is fully included (probe-confirmed).
+        var _isCross = (!!p.startCell !== !!p.endCell) || (p.startCell && p.endCell && p.startN !== p.endN);
+        if (_isCross) {
+          function _xNth(kind, nn) {
+            var c = doc.GetElementsCount(), s = 0;
+            for (var i = 0; i < c; i++) { var e = doc.GetElement(i); if (e.GetClassType && e.GetClassType() === kind) { s++; if (s === nn) return e; } }
+            return null;
+          }
+          function _xParaRange(para, kind) {
+            var txt = (para.GetText ? para.GetText() : "").replace(/[\r\n]+$/, ""), len = txt.length, off;
+            if (/^\d+$/.test(kind)) { off = parseInt(kind, 10); if (off > len) off = len; }
+            else if (kind === "end") off = len;
+            else if (kind === "mid") off = Math.floor(len / 2);
+            else if (kind === "space") { var ix = txt.indexOf(" "); off = ix >= 0 ? ix + 1 : 0; }
+            else off = 0;
+            var cnt = para.GetElementsCount ? para.GetElementsCount() : 0, acc = 0;
+            for (var i = 0; i < cnt; i++) {
+              var el = para.GetElement(i), ct = el.GetClassType ? el.GetClassType() : "";
+              if (ct !== "run" && ct !== "hyperlink") continue;
+              var t = (el.GetText ? el.GetText() : "").replace(/[\r\n]+$/, "");
+              if (off <= acc + t.length) return el.GetRange ? el.GetRange(off - acc, off - acc) : null;
+              acc += t.length;
+            }
+            return para.GetRange ? para.GetRange() : null;
+          }
+          function _xEndpoint(nn, kind, cell, isStart) {
+            if (!cell) { var pp = _xNth("paragraph", nn); return pp ? _xParaRange(pp, kind) : null; }
+            var tb = _xNth("table", nn); if (!tb) return null;
+            var cl = tb.GetCell(cell.r, cell.c); if (!cl) return null;
+            var cc = cl.GetContent(), pe = isStart ? cc.GetElement(0) : cc.GetElement(cc.GetElementsCount() - 1);
+            return pe && pe.GetRange ? pe.GetRange() : null;
+          }
+          var _xsr = _xEndpoint(p.startN, p.startKind, p.startCell, true);
+          var _xer = _xEndpoint(p.endN, p.endKind, p.endCell, false);
+          if (!_xsr || !_xer) return JSON.stringify({ ok: false, error: "cross endpoint not found" });
+          var _xrng = _xsr.ExpandTo ? _xsr.ExpandTo(_xer) : null;
+          if (_xrng && _xrng.Select) _xrng.Select();
+          return JSON.stringify({ ok: true, mode: "cross" });
+        }
 
         // Multi-cell range (T2a/b/c) or whole table (T3): select from the start
         // cell's 1st ¶ to the end cell's last ¶ and ExpandTo their union. OO snaps
