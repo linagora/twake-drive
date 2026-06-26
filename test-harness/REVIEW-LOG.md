@@ -37,6 +37,26 @@ Dans chaque root, sous-structure identique : `A0..A4/{insert,replace}/` + bundle
 > session « martelée » (dizaines d'inject/undo) le forcesave renvoie `error:4` (rien à sauver) ; capturer
 > sur un **upload frais par root** + verify-retry du download (le callback de save est asynchrone, ~1 cycle de lag).
 
+## Procédure de recapture — RÈGLES NON NÉGOCIABLES (normatif, retour Ben 2026-06-26)
+
+1. **Nettoyer AVANT de recapturer.** Supprimer d'abord **tous** les fichiers des anciens bundles ciblés,
+   y compris les résidus à l'ancien nom (`before.png` périmés, `<CAS>-<mode>.docx`, etc.). Un seul jeu de
+   fichiers par bundle, layout uniforme — jamais d'ancien mélangé au nouveau.
+
+2. **Tout produire EN UNE SEULE PASSE.** Pour chaque bundle, dans la **même** ouverture d'éditeur et la
+   **même** injection, capturer dans la foulée : `before.png` (après `setSelection`+`grabFocus`) → injecter
+   → `after.png` → `after.docx` → écrire `capture/model/meta.json`. **INTERDIT** : faire une passe « modèles »
+   puis ré-ouvrir / ré-injecter pour l'évidence. Chaque cas n'est injecté **qu'une fois** ; l'éditeur Chrome MCP
+   est déjà ouvert pendant le test, donc screenshots + docx s'y font **au même moment** (coût nul de ré-ouverture).
+
+**Jeu COMPLET attendu par bundle (7 fichiers)** : `before.png`, `after.png`, `before.docx`, `after.docx`,
+`capture.json`, `model.json`, `meta.json`. *(La passe 2026-06-26 a livré 6/7 — `before.png` omis ; à NE PAS
+reproduire : la prochaine recapture inclut `before.png` dès la même passe.)*
+
+**Fiabilité (obligatoire)** : **upload pristine par root** (jamais une session martelée → forcesave `error:4`) ;
+**verify-retry** du download (`after.docx` re-téléchargé jusqu'à ce que son texte = le résultat live, le callback
+de save OO laggant ~1 cycle). Outils prêts : `scratchpad/docxtext.py` + `verify_docx.sh` (schéma réutilisable).
+
 ## Protocole (par bundle, ordre A0→A4, `insert` puis `replace`)
 
 1. Claude présente : cas, spec de sélection, attendu (matrice), résultat (texte) + ouvre `before.png` / `after.png`.
