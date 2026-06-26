@@ -9,7 +9,7 @@
   // If the console shows an OLDER build than expected, the editor served a CACHED
   // code.js → reopen the editor in a fresh tab / private window (a plain F5 won't
   // refetch the async plugin iframe).
-  var SCRIBE_BUILD = "2026-06-26.4 — fix(prod): §4bis#2 merged-table Insert uses FULL clone (no RemoveRow/Column) + .3 (insSimpleInline) + test snapshot cabling";
+  var SCRIBE_BUILD = "2026-06-26.5 — fix(prod): full-table Replace also excluded from inline (isSimpleInline, sibling of .3) + .4 (§4bis#2) + .3 (insSimpleInline)";
   try { window.__scribeBuild = SCRIBE_BUILD; } catch (e) {}
 
   // ---- State ----
@@ -1848,7 +1848,12 @@
           }
         } else {
           // Replace mode
-          var isSimpleInline = (content.length === 1 && blocks.length === 1 && blocks[0].type === "paragraph");
+          // Same guard as insert: blocks[0] is the SCRIBE-TABLE placeholder ¶, but
+          // content[0] may be a substituted TABLE clone (full-table Replace, T3).
+          // Inline mode over a full-table selection only clears the first cell — must
+          // use block mode for a table.
+          var isSimpleInline = (content.length === 1 && blocks.length === 1 && blocks[0].type === "paragraph"
+            && !(content[0] && content[0].GetClassType && content[0].GetClassType() === "table"));
           if (isSimpleInline) {
             // Single paragraph: inline mode merges into existing paragraph
             doc.InsertContent(content, true);
