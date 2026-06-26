@@ -124,6 +124,13 @@ Aucun repli sur table complète n'est nécessaire pour Replace : l'index logique
 3. **Trou de détection `full` — CONFIRMÉ (S5, 2026-06-17)** — sélectionner *toute* la table à fusion V donne `hitCount = 10 < totalNonEmptyCells = 11` (la continuation vide `(2,0)` est comptée mais jamais sélectionnable) → **classée `partial`, jamais `full`** ; l'extraction omet `[CELL:2,0]`. **Bénin en pratique** : toutes lignes/colonnes restent représentées → le chemin partiel ne réduit rien → équivaut au clone complet. Ne mord que si une réduction est requise (→ #4). *Incohérence sous-jacente :* `totalNonEmptyCells` compte `elems>0`, la boucle d'inclusion des vides teste `elems===0`. → **fix optionnel** : exclure du compte les cellules à ¶ unique vide.
 4. **Insert + réduction de clone — CORRUPTION CONFIRMÉE (Q4, 2026-06-17)** — `RemoveColumn` (`code.js:1497-1521`) d'une colonne traversée par une fusion **horizontale** supprime **tout le span** : retirer la colonne B a effacé `B3` (qui couvrait B+C) → r3 réduite à `A3`, **perte de données**. → **Insert d'une table contenant une fusion (h ou v) ⇒ insérer le clone COMPLET, jamais de `RemoveRow/Column`.** Non négociable.
 
+### Confirmation LIVE (2026-06-26, driver `2026-06-26.2`, fixture `table-merged.docx`)
+
+Le driver étendu (range cross-cellule + `T<n>.full`) a permis de **prouver live** sur le vrai chemin prod :
+- **Replace in-place sûr H + V** (décision #1) : T2b (H-merge) → `Hspan` édité in-place, **gridSpan préservé** ; T2c (V-merge) → maître `Vmaster` édité, **continuation `(2,0)` jamais touchée**, `cellsPerRow=[3,3,3,2]` intact. Zéro corruption, zéro débordement. ✅
+- **Extraction** : V-cross omet bien `(2,0)` ; `full` = 10 cellules (trou S5 reproduit).
+- **⚠️ Insert de contenu table = NO-OP découvert** (T2a/T3/full) : curseur replié dans la dernière cellule → `InsertContent` du clone ne pose rien (doc inchangé, vérif écran). **Contredit le ✅ Insert de T2a/T3.** À trancher (sélection UI réelle vs bug). Pour T2b/c, ce no-op précède tout `RemoveColumn` → la corruption Q4 n'est pas atteinte par ce flux. Détail : `REVIEW-LOG.md` (entrée 2026-06-26).
+
 ### Décisions (verrouillées après sonde S1-S5 + Q4)
 
 1. **Replace = in-place** pour H et V (pas de repli table complète) — *confirmé sûr (S3/S4)*. ✅
