@@ -793,7 +793,9 @@
       "label": "Inclure",
       "document": "Document",
       "discussion": "Conversation",
-      "selection": "Sélection"
+      "selection": "Sélection",
+      "documentTruncated": "Document trop long — seule une partie a été envoyée à l'assistant.",
+      "documentUnavailable": "Impossible de lire le document — votre message a été envoyé sans lui."
     },
     "button": {
       "text_ai": "IA Texte",

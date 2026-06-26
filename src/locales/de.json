@@ -541,7 +541,9 @@
       "label": "Einbeziehen",
       "document": "Dokument",
       "discussion": "Unterhaltung",
-      "selection": "Auswahl"
+      "selection": "Auswahl",
+      "documentTruncated": "Dokument zu lang – nur ein Teil wurde an den Assistenten gesendet.",
+      "documentUnavailable": "Dokument konnte nicht gelesen werden – Ihre Nachricht wurde ohne es gesendet."
     },
     "button": {
       "text_ai": "Text-KI",
