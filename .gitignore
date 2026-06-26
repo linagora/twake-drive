@@ -43,3 +43,6 @@ konnector-dev-config.json
 
 # SWC
 .swc
+
+# LibreOffice lock files (accidentally captured when a .docx golden is open)
+.~lock.*#
