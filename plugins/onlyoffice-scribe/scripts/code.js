@@ -9,7 +9,7 @@
   // If the console shows an OLDER build than expected, the editor served a CACHED
   // code.js → reopen the editor in a fresh tab / private window (a plain F5 won't
   // refetch the async plugin iframe).
-  var SCRIBE_BUILD = "2026-06-26.1 — test driver: intra-cell selection spec T<n>.C(r,c)@pos (§4ter harness, UNTESTED live)";
+  var SCRIBE_BUILD = "2026-06-26.2 — test driver: + cross-cell range T<n>.C(r1,c1)..C(r2,c2) and whole-table T<n>.full (T2a/b/c/T3 harness)";
   try { window.__scribeBuild = SCRIBE_BUILD; } catch (e) {}
 
   // ---- State ----
@@ -500,6 +500,34 @@
         try {
           var _tsp = JSON.parse(_testSelSpec);
           var _ttgt = null;
+          var _tIsRange = _tsp.full || (_tsp.startCell && _tsp.endCell && (_tsp.startCell.r !== _tsp.endCell.r || _tsp.startCell.c !== _tsp.endCell.c));
+          if (_tIsRange) {
+            // Multi-cell range (T2a/b/c) or whole table (T3) — twin of hookSetSelection.
+            var _rtc = doc.GetElementsCount(), _rts = 0, _rtb = null;
+            for (var _rti = 0; _rti < _rtc; _rti++) {
+              var _rte = doc.GetElement(_rti);
+              if (_rte.GetClassType && _rte.GetClassType() === "table") { _rts++; if (_rts === _tsp.startN) { _rtb = _rte; break; } }
+            }
+            if (_rtb) {
+              var _rsc, _rec;
+              if (_tsp.full) {
+                _rsc = _rtb.GetCell(0, 0);
+                var _rlr = _rtb.GetRowsCount() - 1;
+                _rec = _rtb.GetCell(_rlr, _rtb.GetRow(_rlr).GetCellsCount() - 1);
+              } else {
+                _rsc = _rtb.GetCell(_tsp.startCell.r, _tsp.startCell.c);
+                _rec = _rtb.GetCell(_tsp.endCell.r, _tsp.endCell.c);
+              }
+              if (_rsc && _rec) {
+                var _rscC = _rsc.GetContent(), _recC = _rec.GetContent();
+                var _rsp = _rscC.GetElement(0), _rep = _recC.GetElement(_recC.GetElementsCount() - 1);
+                var _rsr = _rsp && _rsp.GetRange ? _rsp.GetRange() : null;
+                var _rer = _rep && _rep.GetRange ? _rep.GetRange() : null;
+                var _rrng = (_rsr && _rer && _rsr.ExpandTo) ? _rsr.ExpandTo(_rer) : (_rsr || _rer);
+                if (_rrng && _rrng.Select) _rrng.Select();
+              }
+            }
+          } else {
           if (_tsp.startCell) {
             // §4ter intra-cell: n-th TABLE → cell (r,c) → 1st ¶.
             var _tcc = doc.GetElementsCount(), _tsn = 0, _tbl = null;
@@ -542,6 +570,7 @@
             else if (_ts === _te) _trng = _tat(_ttgt, _ts) || (_ttgt.GetRange ? _ttgt.GetRange(0, 0) : null);
             else { var _ra = _tat(_ttgt, _ts), _rb = _tat(_ttgt, _te); _trng = (_ra && _rb && _ra.ExpandTo) ? _ra.ExpandTo(_rb) : (_ra || _rb); }
             if (_trng && _trng.Select) _trng.Select();
+          }
           }
         } catch (e) {}
       }
@@ -3399,15 +3428,30 @@
       if (m) return { n: parseInt(m[1], 10), kind: m[2], cell: null };
       var mc = /^\s*T(\d+)\.C\((\d+),(\d+)\)@(\w+)\s*$/.exec(p);
       if (mc) return { n: parseInt(mc[1], 10), kind: mc[4], cell: { r: parseInt(mc[2], 10), c: parseInt(mc[3], 10) } };
+      // Whole-table selection (T3): T<n>.full — no endpoint position.
+      var mf = /^\s*T(\d+)\.full\s*$/.exec(p);
+      if (mf) return { n: parseInt(mf[1], 10), kind: "full", cell: null, full: true };
       return null;
     }
     var a = one(parts[0]);
     var b = parts.length > 1 ? one(parts[1]) : a;
     if (!a || !b) return null;
-    return { startN: a.n, startKind: a.kind, startCell: a.cell, endN: b.n, endKind: b.kind, endCell: b.cell };
+    return { startN: a.n, startKind: a.kind, startCell: a.cell, endN: b.n, endKind: b.kind, endCell: b.cell, full: !!(a.full || b.full) };
   }
 
-  // Both endpoints must target the SAME paragraph/cell (intra-target selection).
+  // Which selection specs the driver can establish:
+  //  • T<n>.full                            → whole table (T3)
+  //  • P<n>@a..P<n>@b (SAME ¶)               → intra-paragraph (A0–A4)
+  //  • T<n>.C(r,c)@a..T<n>.C(r,c)@b (SAME)   → intra-cell (T1/T8/T9)
+  //  • T<n>.C(r1,c1)@..T<n>.C(r2,c2)@ (SAME table) → cross-cell range (T2a/b/c)
+  // Unsupported: multi-¶ (A5/A6), ¶↔cell crossings, different tables.
+  function selSpecSupported(p) {
+    if (p.full) return true;
+    var sc = p.startCell, ec = p.endCell;
+    if (!sc && !ec) return p.startN === p.endN;      // intra-paragraph only
+    return !!(sc && ec && p.startN === p.endN);      // intra-cell OR cross-cell, same table
+  }
+  // Kept for the intra-target fast path (collapsed-cursor handling).
   function selSpecSameTarget(p) {
     if (p.startN !== p.endN) return false;
     var sc = p.startCell, ec = p.endCell;
@@ -3419,15 +3463,48 @@
     return new Promise(function(resolve) {
       var p = parseSelSpec(spec);
       if (!p) { resolve({ ok: false, error: "bad selection spec: " + spec }); return; }
-      if (!selSpecSameTarget(p)) {
-        // Multi-paragraph / cross-cell range — out of scope (intra-target only).
-        resolve({ ok: false, error: "multi-target selection not yet supported: " + spec });
+      if (!selSpecSupported(p)) {
+        // Multi-paragraph (A5/A6) / ¶↔cell crossing / cross-table — out of scope.
+        resolve({ ok: false, error: "selection spec not supported: " + spec });
         return;
       }
       Asc.scope._selspec = JSON.stringify(p);
       window.Asc.plugin.callCommand(function() {
         var p = JSON.parse(Asc.scope._selspec);
         var doc = Api.GetDocument();
+
+        // Multi-cell range (T2a/b/c) or whole table (T3): select from the start
+        // cell's 1st ¶ to the end cell's last ¶ and ExpandTo their union. OO snaps
+        // both ends to cell boundaries, so GetAllParagraphs() of the resulting
+        // selection covers every cell in between — which is what the prod table
+        // path (analyzeTableSelection → GetParentTableCell) reads.
+        var _isRange = p.full || (p.startCell && p.endCell && (p.startCell.r !== p.endCell.r || p.startCell.c !== p.endCell.c));
+        if (_isRange) {
+          var _rc = doc.GetElementsCount(), _rs = 0, _rt = null;
+          for (var _ri = 0; _ri < _rc; _ri++) {
+            var _re = doc.GetElement(_ri);
+            if (_re.GetClassType && _re.GetClassType() === "table") { _rs++; if (_rs === p.startN) { _rt = _re; break; } }
+          }
+          if (!_rt) return JSON.stringify({ ok: false, error: "table " + p.startN + " not found" });
+          var _sc, _ec;
+          if (p.full) {
+            _sc = _rt.GetCell(0, 0);
+            var _lr = _rt.GetRowsCount() - 1;
+            _ec = _rt.GetCell(_lr, _rt.GetRow(_lr).GetCellsCount() - 1);
+          } else {
+            _sc = _rt.GetCell(p.startCell.r, p.startCell.c);
+            _ec = _rt.GetCell(p.endCell.r, p.endCell.c);
+          }
+          if (!_sc || !_ec) return JSON.stringify({ ok: false, error: "range cell not found" });
+          var _scC = _sc.GetContent(), _ecC = _ec.GetContent();
+          var _sp = _scC.GetElement(0), _ep = _ecC.GetElement(_ecC.GetElementsCount() - 1);
+          var _sr = _sp && _sp.GetRange ? _sp.GetRange() : null;
+          var _er = _ep && _ep.GetRange ? _ep.GetRange() : null;
+          var _rng = (_sr && _er && _sr.ExpandTo) ? _sr.ExpandTo(_er) : (_sr || _er);
+          if (_rng && _rng.Select) _rng.Select();
+          return JSON.stringify({ ok: true, mode: p.full ? "full" : "cellrange", full: !!p.full });
+        }
+
         var target = null;
         if (p.startCell) {
           // n-th TABLE → cell (r,c) → 1st ¶ of the cell (intra-cell, §4ter).
@@ -3520,8 +3597,8 @@
     return new Promise(function(resolve) {
       var p = parseSelSpec(spec);
       if (!p) { resolve({ ok: false, error: "bad selection spec: " + spec }); return; }
-      if (!selSpecSameTarget(p)) {
-        resolve({ ok: false, error: "multi-target selection not yet supported: " + spec });
+      if (!selSpecSupported(p)) {
+        resolve({ ok: false, error: "selection spec not supported: " + spec });
         return;
       }
       try {
