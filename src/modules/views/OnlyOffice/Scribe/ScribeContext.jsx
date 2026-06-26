@@ -88,6 +88,10 @@ export const ScribeProvider = ({ children }) => {
   const includeSelectionRef = useRef(includeSelection)
   includeSelectionRef.current = includeSelection
 
+  // v3.2-03: holds the full-document extractor injected by View.jsx via
+  // setExtractFullDocument. Null until injected; sendMessage reads it live.
+  const extractFullDocumentRef = useRef(null)
+
   // Track dismissed selection text so chip doesn't reappear until a NEW different selection arrives
   const selectionDismissedRef = useRef(null)
 
@@ -151,6 +155,13 @@ export const ScribeProvider = ({ children }) => {
 
   const setPanelActions = useCallback(actions => {
     setPanelActionsState(actions)
+  }, [])
+
+  // v3.2-03: full-document extractor injected by View.jsx (it owns broadcastToFrames
+  // + the postMessage listeners). Stored in a REF (not state) so sendMessage reads it
+  // LIVE without re-creating its callback. Mirrors the setPanelActions setter idiom.
+  const setExtractFullDocument = useCallback(fn => {
+    extractFullDocumentRef.current = fn
   }, [])
 
   const setPanelWidth = useCallback(newWidth => {
@@ -364,6 +375,7 @@ export const ScribeProvider = ({ children }) => {
       setIncludeSelection,
       panelActions,
       setPanelActions,
+      setExtractFullDocument,
       panelWidth,
       setPanelWidth,
       pendingDraft,
@@ -389,6 +401,7 @@ export const ScribeProvider = ({ children }) => {
       setIncludeSelection,
       panelActions,
       setPanelActions,
+      setExtractFullDocument,
       panelWidth,
       setPanelWidth,
       pendingDraft,
