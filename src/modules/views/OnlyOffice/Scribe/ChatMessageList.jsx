@@ -7,7 +7,6 @@ import React, {
   useImperativeHandle
 } from 'react'
 import { createPortal } from 'react-dom'
-import { useI18n } from 'twake-i18n'
 
 import Icon from 'cozy-ui/transpiled/react/Icon'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
@@ -16,6 +15,7 @@ import InfoIcon from 'cozy-ui/transpiled/react/Icons/Info'
 import Spinner from 'cozy-ui/transpiled/react/Spinner'
 import Typography from 'cozy-ui/transpiled/react/Typography'
 import { useTheme } from 'cozy-ui/transpiled/react/styles'
+import { useI18n } from 'twake-i18n'
 
 import { FragmentCard } from '@/modules/views/OnlyOffice/Scribe/FragmentCard'
 import { MarkdownPreview } from '@/modules/views/OnlyOffice/Scribe/MarkdownPreview'

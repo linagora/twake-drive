@@ -53,7 +53,11 @@ jest.mock('@/modules/views/OnlyOffice/Scribe/ScribeContext', () => ({
 
 import { ChatMessageList } from '@/modules/views/OnlyOffice/Scribe/ChatMessageList'
 
-const setScribe = ({ messages, isLoading = false, currentSelection = null }) => {
+const setScribe = ({
+  messages,
+  isLoading = false,
+  currentSelection = null
+}) => {
   scribeState = {
     messages,
     isLoading,
@@ -121,9 +125,7 @@ describe('ChatMessageList — segment-based assistant render', () => {
   describe('CONTRACT-02 / D-05 — 0-fragment response renders discussion only', () => {
     it('renders the discussion text and ZERO action buttons and no card', () => {
       setScribe({
-        messages: [
-          assistant({ discussion: 'pure discussion', fragments: [] })
-        ]
+        messages: [assistant({ discussion: 'pure discussion', fragments: [] })]
       })
       const { container } = render(<ChatMessageList />)
 
@@ -135,9 +137,7 @@ describe('ChatMessageList — segment-based assistant render', () => {
 
     it('shows no insertion UI even when a selection is active (D-05)', () => {
       setScribe({
-        messages: [
-          assistant({ discussion: 'pure discussion', fragments: [] })
-        ],
+        messages: [assistant({ discussion: 'pure discussion', fragments: [] })],
         currentSelection: { text: 'sel' }
       })
       render(<ChatMessageList />)
