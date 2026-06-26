@@ -3,9 +3,8 @@ gsd_state_version: 1.0
 milestone: v3.2
 milestone_name: Contexte enrichi du prompt
 status: executing
-stopped_at: v3.2-02 EXECUTED + VERIFIED (passed, 10/10 must-haves). Gated discussion+selection at the ScribeContext.sendMessage seam (live-read refs, D-01..D-05), D-05 framing seed in buildChatSystemPrompt; deterministic compose matrix + v3.1 regression/PROBE-01 all GREEN; v3.1 contract artifacts confirmed unmodified. Code review WR-01/WR-02 (dev-only probe/panel divergence) fixed in b1b11bb5f. Next → v3.2-03 (câblage document complet + stratégie de taille).
-last_updated: "2026-06-25T17:05:00Z"
-last_activity: 2026-06-25 -- Phase v3.2-02 complete (verified passed)
+last_updated: "2026-06-26T06:19:16.049Z"
+last_activity: 2026-06-26 -- Phase v3.2-03-cablage-document-complet-strategie-taille planning complete
 progress:
   total_phases: 3
   completed_phases: 2
@@ -41,9 +40,9 @@ See: .planning/PROJECT.md (updated 2026-06-24)
 
 Phase: v3.2-02 (Câblage discussion + sélection) — ✅ COMPLETE (verified passed 10/10, 2026-06-25)
 Plan: v3.2-02-01 complete — SUMMARY + VERIFICATION written; 5 commits (f85d1a39b, 34768c15f, 9935423d7, 7dd025996, + fix b1b11bb5f)
-Status: Phase complete — next is v3.2-03
+Status: Ready to execute
 Progress: [#######---] 67% (2/3 v3.2 phases complete)
-Last activity: 2026-06-25 -- Phase v3.2-02 executed + verified passed
+Last activity: 2026-06-26 -- Phase v3.2-03-cablage-document-complet-strategie-taille planning complete
 
 ⚠️ TOOLING: gsd-sdk v1.42.3 cannot resolve `vX.Y-NN` phases (find-phase/phase-plan-index return "Phase not found" for ALL v3.0/v3.1 phases — regex only matches numeric-prefixed dirs). Orchestrate v3.2 phases manually with explicit paths; ROADMAP/STATE/REQUIREMENTS completion writes done by hand (gsd-sdk phase.complete fails on vX.Y-NN).
 
