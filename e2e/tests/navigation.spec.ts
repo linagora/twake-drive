@@ -1,12 +1,37 @@
 import { copyFile } from 'fs/promises'
 import path from 'path'
 
+import type { Page } from '@playwright/test'
+
 import { USERS } from '../helpers/config'
 import { test, expect, stamp, safeUnlink } from '../helpers/fixtures'
+import type { DrivePage } from '../pages/DrivePage'
 import { SidebarPage } from '../pages/SidebarPage'
 
 const ALICE_ROOT = `${USERS.alice.appUrl}/#/folder`
 const FIXTURE = path.resolve(__dirname, '..', 'fixtures', 'sample.txt')
+
+const trashRemoteFileIfPresent = async (
+  page: Page,
+  drive: DrivePage,
+  fileName: string | null
+): Promise<void> => {
+  if (!fileName) return
+
+  await page.goto(ALICE_ROOT)
+  const row = drive.row(fileName)
+  const rowFound = await row.cell
+    .waitFor({ state: 'visible', timeout: 15_000 })
+    .then(() => true)
+    .catch((err: Error) => {
+      if (err.name === 'TimeoutError') return false
+      throw err
+    })
+
+  if (!rowFound) return
+
+  await row.sendToTrash()
+}
 
 test.describe('Navigation surfaces', () => {
   test('Recent: a freshly uploaded file shows up at /#/recent', async ({
@@ -17,8 +42,9 @@ test.describe('Navigation surfaces', () => {
     const sidebar = new SidebarPage(alicePage)
     const file = path.join(path.dirname(FIXTURE), `recent-${stamp()}.txt`)
     await copyFile(FIXTURE, file)
+    const fileName = path.basename(file)
+    const currentRemoteFileName = fileName
     try {
-      const fileName = path.basename(file)
       await aliceDrive.uploadFiles(file)
       await aliceDrive.row(fileName).waitVisible()
 
@@ -26,6 +52,11 @@ test.describe('Navigation surfaces', () => {
       await alicePage.waitForURL(/\/recent/)
       await aliceDrive.row(fileName).waitVisible()
     } finally {
+      await trashRemoteFileIfPresent(
+        alicePage,
+        aliceDrive,
+        currentRemoteFileName
+      )
       await safeUnlink(file)
     }
   })
@@ -38,8 +69,9 @@ test.describe('Navigation surfaces', () => {
     const sidebar = new SidebarPage(alicePage)
     const file = path.join(path.dirname(FIXTURE), `recent-trash-${stamp()}.txt`)
     await copyFile(FIXTURE, file)
+    const fileName = path.basename(file)
+    let currentRemoteFileName: string | null = fileName
     try {
-      const fileName = path.basename(file)
       await aliceDrive.uploadFiles(file)
       await aliceDrive.row(fileName).waitVisible()
 
@@ -51,7 +83,13 @@ test.describe('Navigation surfaces', () => {
       // Trash it directly from the Recent view — sendToTrash's waitHidden
       // validates that the row disappears live, without navigating away
       await aliceDrive.row(fileName).sendToTrash()
+      currentRemoteFileName = null
     } finally {
+      await trashRemoteFileIfPresent(
+        alicePage,
+        aliceDrive,
+        currentRemoteFileName
+      )
       await safeUnlink(file)
     }
   })
@@ -66,6 +104,7 @@ test.describe('Navigation surfaces', () => {
     const renamed = `recent-renamed-${stamp()}.txt`
     const file = path.join(path.dirname(FIXTURE), original)
     await copyFile(FIXTURE, file)
+    let currentRemoteFileName: string | null = original
     try {
       await aliceDrive.uploadFiles(file)
       await aliceDrive.row(original).waitVisible()
@@ -78,9 +117,18 @@ test.describe('Navigation surfaces', () => {
       // Rename directly from the Recent view — rename() self-validates
       // by waiting for the new name to appear in the file list
       await aliceDrive.row(original).rename(renamed)
+      currentRemoteFileName = renamed
       await expect(aliceDrive.row(renamed).cell).toBeVisible()
       await expect(aliceDrive.row(original).cell).toHaveCount(0)
     } finally {
+      await trashRemoteFileIfPresent(
+        alicePage,
+        aliceDrive,
+        currentRemoteFileName
+      )
+      if (currentRemoteFileName !== renamed) {
+        await trashRemoteFileIfPresent(alicePage, aliceDrive, renamed)
+      }
       await safeUnlink(file)
     }
   })
@@ -93,8 +141,9 @@ test.describe('Navigation surfaces', () => {
     const sidebar = new SidebarPage(alicePage)
     const file = path.join(path.dirname(FIXTURE), `fav-${stamp()}.txt`)
     await copyFile(FIXTURE, file)
+    const fileName = path.basename(file)
+    const currentRemoteFileName = fileName
     try {
-      const fileName = path.basename(file)
       await aliceDrive.uploadFiles(file)
       const row = aliceDrive.row(fileName)
       await row.waitVisible()
@@ -104,6 +153,11 @@ test.describe('Navigation surfaces', () => {
       await alicePage.waitForURL(/\/favorites/)
       await aliceDrive.row(fileName).waitVisible()
     } finally {
+      await trashRemoteFileIfPresent(
+        alicePage,
+        aliceDrive,
+        currentRemoteFileName
+      )
       await safeUnlink(file)
     }
   })
@@ -115,7 +169,9 @@ test.describe('Navigation surfaces', () => {
     // knows about it — this avoids racing the indexer for a freshly-uploaded
     // fixture.
     await alicePage.goto(`${USERS.alice.appUrl}/#/search`)
-    const searchInput = alicePage.getByRole('textbox', { name: /search/i }).first()
+    const searchInput = alicePage
+      .getByRole('textbox', { name: /search/i })
+      .first()
     await searchInput.waitFor({ state: 'visible' })
     await searchInput.fill('Photos')
     // The suggestion list shows the file path as a secondary line — using
