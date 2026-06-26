@@ -512,7 +512,9 @@
       "label": "Incluir",
       "document": "Documento",
       "discussion": "Conversación",
-      "selection": "Selección"
+      "selection": "Selección",
+      "documentTruncated": "Documento demasiado largo: solo se envió una parte al asistente.",
+      "documentUnavailable": "No se pudo leer el documento: tu mensaje se envió sin él."
     },
     "button": {
       "text_ai": "IA de Texto",

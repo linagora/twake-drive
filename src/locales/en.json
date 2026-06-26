@@ -796,7 +796,9 @@
       "label": "Include",
       "document": "Document",
       "discussion": "Conversation",
-      "selection": "Selection"
+      "selection": "Selection",
+      "documentTruncated": "Document too long — only part of it was sent to the assistant.",
+      "documentUnavailable": "Couldn't read the document — your message was sent without it."
     },
     "button": {
       "text_ai": "Text AI",
