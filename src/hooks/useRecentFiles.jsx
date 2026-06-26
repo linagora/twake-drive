@@ -7,9 +7,11 @@ import logger from '@/lib/logger'
 import { buildRecentQuery } from '@/queries'
 
 const useDataProxyRecents = () => {
-  const [proxyData, setProxyData] = useState(null)
-  const [proxyFetchStatus, setProxyFetchStatus] = useState('loading')
-  const [proxyError, setProxyError] = useState(null)
+  const [proxyState, setProxyState] = useState({
+    data: null,
+    fetchStatus: 'loading',
+    error: null
+  })
 
   const dataProxy = useDataProxy()
   const client = useClient()
@@ -21,18 +23,27 @@ const useDataProxyRecents = () => {
 
   useEffect(() => {
     const fetchProxyRecents = async () => {
-      setProxyFetchStatus('loading')
-      setProxyError(null)
+      setProxyState({
+        data: null,
+        fetchStatus: 'loading',
+        error: null
+      })
 
       if (dataProxy.dataProxyServicesAvailable) {
         try {
           const data = await dataProxy.recents()
-          setProxyData(data || [])
-          setProxyFetchStatus('loaded')
+          setProxyState({
+            data: data || [],
+            fetchStatus: 'loaded',
+            error: null
+          })
         } catch (err) {
           logger.error('Error fetching recents from dataproxy', err)
-          setProxyError(err)
-          setProxyFetchStatus('error')
+          setProxyState({
+            data: null,
+            fetchStatus: 'error',
+            error: err
+          })
         }
       }
     }
@@ -43,10 +54,10 @@ const useDataProxyRecents = () => {
   }, [dataProxy])
 
   // Proxy path: merge proxy data with real-time store state
-  if (dataProxy.dataProxyServicesAvailable && proxyFetchStatus !== 'error') {
+  if (dataProxy.dataProxyServicesAvailable && proxyState.fetchStatus !== 'error') {
     let finalData = []
-    if (proxyData) {
-      finalData = proxyData.reduce((acc, file) => {
+    if (proxyState.data) {
+      finalData = proxyState.data.reduce((acc, file) => {
         const docInStore = client.getDocumentFromState(
           'io.cozy.files',
           file._id
@@ -64,8 +75,8 @@ const useDataProxyRecents = () => {
 
     return {
       data: finalData,
-      fetchStatus: proxyFetchStatus,
-      error: proxyError
+      fetchStatus: proxyState.fetchStatus,
+      error: proxyState.error
     }
   }
 
@@ -80,7 +91,7 @@ const useDataProxyRecents = () => {
   return {
     data: fallbackResult.data || [],
     fetchStatus: fallbackResult.error ? 'error' : fallbackResult.fetchStatus,
-    error: fallbackResult.error || proxyError
+    error: fallbackResult.error || proxyState.error
   }
 }
 
