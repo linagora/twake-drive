@@ -1,0 +1,15 @@
+{
+  "caseId": "T9",
+  "mode": "replace",
+  "spec": "T1.full",
+  "fixture": "[CELL:0,0]![IMG:scribe-img-0][/CELL][CELL:0,1]BetaX[/CELL][CELL:1,0]GammaX[/CELL][CELL:1,1]DeltaX[/CELL]",
+  "source": "table-image.docx",
+  "statusFromCsv": "xfail",
+  "stable": true,
+  "setSelectionOk": true,
+  "capturedVia": "Chrome DevTools MCP v4 (build 2026-06-26.4; extract+injectAtSelection atomic; snapshots cabled; forcesave docx; no grabFocus)",
+  "capturedAt": "2026-06-26",
+  "verdict": "xfail",
+  "comment": "Replace tableau entier avec IMAGE (T1.full, chemin clone) : l'image en cellule (0,0) est PERDUE à la sauvegarde. Live l'éditeur la montre (rendu rouge, drawingsInCells=1) MAIS after.docx (forcesave x3) n'a NI a:blip NI media -> le clone reconstruit via ToJSON perd le fill de l'image (caveat Copy-vs-ToJSON documenté), et l'original détruit emporte son média. Discriminant : doc image pristine round-trip OK (a:blip=2,media), et replace partiel in-place (cellule image non touchée) préserve l'image -> bug localisé au chemin reconstructTable/ToJSON en REPLACE structurel. after.png = état live (image visible) ; after.docx = persisté (image perdue).",
+  "captureVersion": "v4"
+}

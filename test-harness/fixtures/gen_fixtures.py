@@ -12,21 +12,80 @@ Lancer :  python3 test-harness/fixtures/gen_fixtures.py
 """
 import os
 import zipfile
+import struct
+import zlib
 from xml.sax.saxutils import escape
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
-def content_types(with_styles):
+# --- Images ------------------------------------------------------------------
+# A run can be an image: {'img': N} (1-based). The generator embeds a tiny PNG as
+# word/media/imageN.png + a relationship, and emits an inline <w:drawing>. Used by
+# the T9 case (image inside a table cell). OO scales the 1×1 PNG to the extent.
+def _png_1x1():
+    def chunk(typ, data):
+        body = typ + data
+        return struct.pack(">I", len(data)) + body + struct.pack(">I", zlib.crc32(body) & 0xffffffff)
+    sig = b"\x89PNG\r\n\x1a\n"
+    ihdr = chunk(b"IHDR", struct.pack(">IIBBBBB", 1, 1, 8, 2, 0, 0, 0))  # 1×1, 8-bit RGB
+    idat = chunk(b"IDAT", zlib.compress(b"\x00" + bytes((220, 40, 40))))  # filter 0 + red pixel
+    return sig + ihdr + idat + chunk(b"IEND", b"")
+
+TINY_PNG = _png_1x1()
+
+# Set per-document in write_docx so run_xml can compute image rIds. (Single-threaded.)
+_DOC_WITH_STYLES = False
+
+def _img_rid(n):
+    # styles (si présent) = rId1 ; les images suivent.
+    return "rId%d" % ((2 if _DOC_WITH_STYLES else 1) + n - 1)
+
+def drawing_xml(n):
+    rid = _img_rid(n)
+    return (
+        '<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0">'
+        '<wp:extent cx="457200" cy="457200"/><wp:effectExtent l="0" t="0" r="0" b="0"/>'
+        '<wp:docPr id="%d" name="Picture %d"/><wp:cNvGraphicFramePr/>'
+        '<a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">'
+        '<a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">'
+        '<pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">'
+        '<pic:nvPicPr><pic:cNvPr id="%d" name="Picture %d"/><pic:cNvPicPr/></pic:nvPicPr>'
+        '<pic:blipFill><a:blip r:embed="%s"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>'
+        '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="457200" cy="457200"/></a:xfrm>'
+        '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>'
+        '</pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>'
+    ) % (n, n, n, n, rid)
+
+def _count_images(elements):
+    mx = 0
+    def scan_paras(paras):
+        nonlocal mx
+        for p in paras:
+            for r in (_norm_para(p)[0] or []):
+                if isinstance(r, dict) and r.get('img'):
+                    mx = max(mx, r['img'])
+    for el in elements:
+        if isinstance(el, dict) and 'table' in el:
+            for row in el['table']:
+                for cell in row:
+                    scan_paras(_norm_cell(cell)[0])
+        else:
+            scan_paras(_norm_para(el)[0])
+    return mx
+
+def content_types(with_styles, with_images=False):
     styles_override = (
         '<Override PartName="/word/styles.xml" '
         'ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>'
         if with_styles else ''
     )
+    png_default = '<Default Extension="png" ContentType="image/png"/>' if with_images else ''
     return (
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
         '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
         '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
         '<Default Extension="xml" ContentType="application/xml"/>'
+        f'{png_default}'
         '<Override PartName="/word/document.xml" '
         'ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>'
         f'{styles_override}'
@@ -92,6 +151,8 @@ W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
 
 
 def run_xml(run):
+    if run.get('img'):
+        return drawing_xml(run['img'])
     props = ''
     if run.get('b'):
         props += '<w:b/>'
@@ -194,22 +255,58 @@ def document_xml(elements):
     # sans un paragraphe entre les deux → garde un ¶ traînant si on finit sur un tbl.
     if isinstance(elements[-1], dict) and 'table' in elements[-1]:
         body += '<w:p/>'
+    # Les namespaces drawing ne sont ajoutés que si la fixture a une image (sinon
+    # les fixtures sans image restent byte-identiques à leur version d'origine).
+    img_ns = (
+        ' xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"'
+        ' xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"'
+        ' xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"'
+        ' xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"'
+    ) if _count_images(elements) else ''
     return (
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-        f'<w:document xmlns:w="{W}"><w:body>'
-        f'{body}<w:sectPr/></w:body></w:document>'
+        f'<w:document xmlns:w="{W}"{img_ns}>'
+        f'<w:body>{body}<w:sectPr/></w:body></w:document>'
+    )
+
+
+def doc_rels(with_styles, n_images):
+    rels = []
+    if with_styles:
+        rels.append(
+            '<Relationship Id="rId1" '
+            'Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" '
+            'Target="styles.xml"/>'
+        )
+    base = 2 if with_styles else 1
+    for i in range(n_images):
+        rels.append(
+            '<Relationship Id="rId%d" '
+            'Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" '
+            'Target="media/image%d.png"/>' % (base + i, i + 1)
+        )
+    return (
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        + ''.join(rels) + '</Relationships>'
     )
 
 
 def write_docx(path, paras):
+    global _DOC_WITH_STYLES
     with_styles = _has_styles(paras)
+    _DOC_WITH_STYLES = with_styles
+    n_images = _count_images(paras)
     with zipfile.ZipFile(path, 'w', zipfile.ZIP_DEFLATED) as z:
-        z.writestr('[Content_Types].xml', content_types(with_styles))
+        z.writestr('[Content_Types].xml', content_types(with_styles, n_images > 0))
         z.writestr('_rels/.rels', RELS)
         z.writestr('word/document.xml', document_xml(paras))
+        if with_styles or n_images:
+            z.writestr('word/_rels/document.xml.rels', doc_rels(with_styles, n_images))
         if with_styles:
-            z.writestr('word/_rels/document.xml.rels', DOC_RELS)
             z.writestr('word/styles.xml', STYLES_XML)
+        for i in range(n_images):
+            z.writestr('word/media/image%d.png' % (i + 1), TINY_PNG)
 
 
 # --- Corpus de fixtures ------------------------------------------------------
@@ -285,6 +382,21 @@ FIXTURES = [
                 [{'vmerge': 'restart', 'p': [[{'t': 'Vmaster'}]]}, [[{'t': 'B1'}]], [[{'t': 'C1'}]]],
                 [{'vmerge': 'cont'}, [[{'t': 'B2'}]], [[{'t': 'C2'}]]],
                 [[[{'t': 'M30'}]], {'gridSpan': 2, 'p': [[{'t': 'Hspan'}]]}],
+            ]},
+            [{'t': 'Outro paragraph'}],
+        ],
+    },
+    {
+        # Famille TABLEAU AVEC IMAGE — support T9 (image dans une cellule).
+        # Table 2×2, cellule (0,0) = une image inline (PNG embarqué), reste = texte.
+        # Encadrée Intro/Outro. Sert à vérifier que l'image en cellule round-trip
+        # (drawingIndex scanne les ¶ de cellules) et ne déborde pas à l'injection.
+        'name': 'table-image.docx',
+        'paras': [
+            [{'t': 'Intro paragraph'}],
+            {'table': [
+                [[[{'img': 1}]], [[{'t': 'Beta'}]]],
+                [[[{'t': 'Gamma'}]], [[{'t': 'Delta'}]]],
             ]},
             [{'t': 'Outro paragraph'}],
         ],
