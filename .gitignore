@@ -46,3 +46,6 @@ konnector-dev-config.json
 
 # LibreOffice lock files (accidentally captured when a .docx golden is open)
 .~lock.*#
+
+# OnlyOffice plugin gzip caches (regenerated at runtime; never source)
+plugins/onlyoffice-scribe/**/*.gz
