@@ -5,6 +5,7 @@ import { useClient, Q } from 'cozy-client'
 import logger from './logger'
 
 import { DOCTYPE_FILES_SETTINGS } from '@/lib/doctypes'
+import { usePublicContext } from '@/modules/public/PublicProvider'
 
 interface QueryResult {
   data: [
@@ -30,11 +31,12 @@ const ViewSwitcherContext = createContext<ViewSwitcherContextProps>({
 
 const ViewSwitcherContextProvider: React.FC = ({ children }) => {
   const client = useClient()
+  const { isPublic } = usePublicContext()
   const [viewType, setViewType] = useState(DEFAULT_VIEW_TYPE)
 
   useEffect(() => {
     const load = async (): Promise<void> => {
-      if (!client) return
+      if (!client || isPublic) return
 
       try {
         const result = (await client.query(
@@ -53,12 +55,18 @@ const ViewSwitcherContextProvider: React.FC = ({ children }) => {
     }
 
     void load()
-  }, [client])
+  }, [client, isPublic])
 
   const switchView = async (viewTypeParam: string): Promise<void> => {
     setViewType(viewTypeParam)
     if (!client) {
       logger.warn('Client not available')
+
+      return
+    }
+
+    if (isPublic) {
+      logger.warn('Cannot persist view: in public view')
 
       return
     }
