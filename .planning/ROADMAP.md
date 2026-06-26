@@ -172,7 +172,7 @@ _Active milestone only. Shipped milestones keep their full phase details in `.pl
 - [x] v3.2-03-01-plugin-fulldoc-extractor-PLAN.md — new on-demand full-document markdown extractor in code.js (document-order walk reusing the leaf emitters, never silent) + dedicated bridge channel [CTX-LLM-01] (wave 1)
 - [x] v3.2-03-02-host-compose-budget-framing-PLAN.md — extractFullDocument round-trip (View.jsx) + includeDocumentRef/budget/ephemeral doc block/documentNotice at the sendMessage seam + grow contextSourceFraming [CTX-LLM-01, CTX-LLM-04] (wave 1)
 - [x] v3.2-03-03-truncation-feedback-i18n-PLAN.md — never-silent truncation/failure notice in ChatMessageList (UI-SPEC reuse) + 5-locale i18n keys [CTX-LLM-04] (wave 2)
-- [ ] v3.2-03-04-regression-composition-gate-PLAN.md — extend compose + scribeAI specs (document path, any-combination, determinism) and run the PROBE-01 + corpus + literal-audit GREEN gate (D-07) [CTX-LLM-01, CTX-LLM-04] (wave 3)
+- [x] v3.2-03-04-regression-composition-gate-PLAN.md — extend compose + scribeAI specs (document path, any-combination, determinism) and run the PROBE-01 + corpus + literal-audit GREEN gate (D-07) [CTX-LLM-01, CTX-LLM-04] (wave 3)
 **UI hint**: yes
 
 ## Backlog
