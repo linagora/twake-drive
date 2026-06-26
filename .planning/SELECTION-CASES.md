@@ -134,24 +134,46 @@ Aucun repli sur table complète n'est nécessaire pour Replace : l'index logique
 
 ---
 
-## 4ter. Injection §5bis **dans une cellule** (T1 / T8) — règle v1 (2026-06-26, à valider live)
+## 4ter. Injection §5bis **dans une cellule** (T1 / T8) — VALIDÉ LIVE (2026-06-26, OO 9.3.0)
 
-Injecter dans une cellule (`intraCell`) passe par le **même `buildAndInject`** que les paragraphes. **Problème** : la machinerie §5bis est **document-level** (host-finding, smart-spacing, invariant split itèrent `doc.GetElement()` = éléments **top-level** ; un ¶ de cellule n'en est pas un) **et** le `InsertContent` mode block **déborde hors cellule** (L#3). Donc en l'état, une fixture **stylée / multi-¶** injectée dans une cellule casse (débordement + split/espacement no-op).
+> **Mise à jour 2026-06-26** — La règle v1 ci-dessous (réécriture « in-place cell-aware » pour
+> contourner un débordement) **n'est PAS nécessaire** : le test live infirme la prémisse. Section
+> conservée pour mémoire, mais la conclusion opérante est **« aucun débordement, on garde
+> `buildAndInject` tel quel »**. Voir « Résultats live » ci-dessous.
 
-**Règle cible v1 — « la cellule reste le conteneur, jamais de débordement » :**
-- **Interdit** : le `InsertContent` block document-level dans une cellule.
-- **À la place** : insérer les paragraphes **in-place dans la cellule** via `cell.GetContent()` → `AddElement(pos, para)` (mécanisme **déjà utilisé pour T8 Replace** : `replaceCellContent` + `AddElement`).
-- **Conséquences sur le contenu injecté dans une cellule :**
-  | Contenu | Cellule v1 |
-  |---|---|
-  | texte / inline (gras, italique…) | ✅ préservé (fusion inline dans le ¶ de la cellule) |
-  | **liste** (puces / numérotée) | ✅ **préservée** (impératif) — ¶ de liste ajoutés in-place |
-  | **citation** | ✅ **préservée** (souhaité) |
-  | **titre** | ⚠️ **aplati en inline** acceptable (ou gardé si gratuit) |
-  | tableau imbriqué | ❌ hors scope (T13) |
-- **Jamais de débordement** hors de la cellule, quel que soit le contenu.
+### Résultats live (driver `T<n>.C(r,c)@pos`, build `2026-06-26.1`, fixture `table-plain.docx`)
 
-**⚠️ À VALIDER LIVE** (inconnu non tranché) : est-ce que `AddElement` dans une cellule **préserve** (1) la **numérotation** des listes et (2) le **style de citation** ? Et le §5bis « 1ᵉʳ para inline / hôte garde son style » se comporte-t-il correctement en contexte cellule ? → nécessite une **fixture tableau** + fixtures **liste** et **citation**. *(Le « titre aplati » n'est figé que si garder le titre coûte trop ; à confirmer au test.)*
+Sondé via Chrome MCP — `injectAtSelection` sur cellule (0,0) « Alpha », `dumpState scope:doc` ×retry +
+capture d'écran (¶ marks ON). Cas couverts : inline / titre / liste / citation, en **insert** ET **replace**.
+
+- **AUCUN débordement, jamais** — `blockCount` reste **3** (Intro ¶ / table / Outro ¶ intacts ; cellules
+  sœurs Beta/Gamma/Delta intactes) dans **tous** les cas. La prémisse « `InsertContent` block
+  document-level déborde hors cellule (L#3) » est **infirmée** : le hook **`Select()` une plage DANS la
+  cellule au sein du même `callCommand`**, donc `GetRangeBySelect()` rend le ¶ de cellule comme hôte et
+  `InsertContent` reste borné à la cellule. (Le crash/débordement observé jadis venait d'une **sélection
+  non établie**, pas d'une limite d'OO.)
+- **Liste** (`- one\n- two`) → ✅ **puces préservées** (rendu `•→one` / `•→two`, confirmé **à l'écran** ;
+  `dumpState` ne lit pas `numPr` donc ne les montre pas en JSON — l'absence en JSON n'est PAS une perte).
+- **Titre** (`# Titre`) → ✅ **style `Heading 1` conservé** (pas aplati).
+- **Citation** (`> quoted text`) → ⚠️ **style aplati en `Normal`** (pas de style `Quote` ; `dumpState` lit
+  pourtant le style ¶ → conclusion fiable). « Souhaité », non bloquant ; cosmétique du pipeline md→HTML.
+- **Résidus PARTAGÉS avec le top-level** (pas spécifiques cellule, déjà tracés § « Constats transverses ») :
+  - **L#7 ¶ vide parasite** — block injecté encadré d'un ¶ vide : replace → `[∅][block][∅]` ; insert →
+    `[∅][block][host]`.
+  - **Ordre insert `@end`** — le contenu block s'insère **AVANT** le texte hôte (`[∅][one][two][Alpha]`),
+    même classe de défaut que l'insert top-level (positionnement `InsertContent` au curseur fin-de-¶).
+
+### Conséquence pour le plan
+
+Le gros chantier « réécriture in-place cell-aware de `buildAndInject` » **tombe** (overflow inexistant).
+Reste uniquement le nettoyage **L#7 / ordre-insert**, **commun au top-level** et déjà planifié hors T-04 —
+ne PAS patcher le hot-path à l'aveugle. Impératif §4ter (**listes préservées**) = **TENU**.
+
+<details><summary>Règle v1 (2026-06-26, périmée — gardée pour mémoire)</summary>
+
+Injecter dans une cellule (`intraCell`) passe par le **même `buildAndInject`** que les paragraphes. *Crainte (infirmée) :* la machinerie §5bis serait document-level et `InsertContent` block déborderait (L#3). Règle cible v1 alors envisagée : interdire `InsertContent` block et insérer in-place via `cell.GetContent().AddElement(pos, para)` (comme T8 Replace), avec listes/citations préservées, titre aplatissable, zéro débordement. → **Inutile : le test live montre zéro débordement avec le chemin existant.**
+
+</details>
 
 ---
 
