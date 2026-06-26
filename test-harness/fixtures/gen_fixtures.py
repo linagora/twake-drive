@@ -121,8 +121,58 @@ def para_xml(p):
     return f'<w:p>{ppr}{body}</w:p>'
 
 
-def document_xml(paras):
-    body = ''.join(para_xml(p) for p in paras)
+# --- Tableaux ----------------------------------------------------------------
+# Un élément « tableau » = {'table': rows} où rows = liste de lignes ; chaque
+# ligne = liste de cellules ; chaque cellule = liste de paragraphes (chaque
+# paragraphe = liste de runs, ou {'runs':..,'style':..}). Une cellule peut donc
+# être multi-¶ (cas T8). Bordures fines visibles.
+COL_W = 2400  # twips par colonne
+
+
+def cell_xml(cell):
+    body = ''.join(para_xml(p) for p in cell) if cell else '<w:p/>'
+    tcpr = f'<w:tcPr><w:tcW w:w="{COL_W}" w:type="dxa"/></w:tcPr>'
+    return f'<w:tc>{tcpr}{body}</w:tc>'
+
+
+def table_xml(el):
+    rows = el['table']
+    ncols = max(len(r) for r in rows)
+    grid = ''.join(f'<w:gridCol w:w="{COL_W}"/>' for _ in range(ncols))
+    edges = ('top', 'left', 'bottom', 'right', 'insideH', 'insideV')
+    borders = '<w:tblBorders>' + ''.join(
+        f'<w:{e} w:val="single" w:sz="4" w:space="0" w:color="000000"/>' for e in edges
+    ) + '</w:tblBorders>'
+    tblpr = f'<w:tblPr><w:tblW w:w="{COL_W * ncols}" w:type="dxa"/>{borders}</w:tblPr>'
+    trs = ''.join('<w:tr>' + ''.join(cell_xml(c) for c in row) + '</w:tr>' for row in rows)
+    return f'<w:tbl>{tblpr}<w:tblGrid>{grid}</w:tblGrid>{trs}</w:tbl>'
+
+
+def element_xml(el):
+    if isinstance(el, dict) and 'table' in el:
+        return table_xml(el)
+    return para_xml(el)
+
+
+def _has_styles(elements):
+    for el in elements:
+        if isinstance(el, dict) and 'table' in el:
+            for row in el['table']:
+                for cell in row:
+                    for p in cell:
+                        if _norm_para(p)[1]:
+                            return True
+        elif _norm_para(el)[1]:
+            return True
+    return False
+
+
+def document_xml(elements):
+    body = ''.join(element_xml(e) for e in elements)
+    # OOXML : un tableau ne peut pas être le dernier bloc ni précéder <w:sectPr>
+    # sans un paragraphe entre les deux → garde un ¶ traînant si on finit sur un tbl.
+    if isinstance(elements[-1], dict) and 'table' in elements[-1]:
+        body += '<w:p/>'
     return (
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
         f'<w:document xmlns:w="{W}"><w:body>'
@@ -131,7 +181,7 @@ def document_xml(paras):
 
 
 def write_docx(path, paras):
-    with_styles = any(_norm_para(p)[1] for p in paras)
+    with_styles = _has_styles(paras)
     with zipfile.ZipFile(path, 'w', zipfile.ZIP_DEFLATED) as z:
         z.writestr('[Content_Types].xml', content_types(with_styles))
         z.writestr('_rels/.rels', RELS)
@@ -177,6 +227,23 @@ FIXTURES = [
             [{'t': 'The '}, {'t': 'quick', 'b': 1}, {'t': ' brown '}, {'t': 'fox', 'i': 1}],
             [{'t': 'Jumps over the dog'}],
             [{'t': 'Lazy river flows'}],
+        ],
+    },
+    {
+        # Famille TABLEAU (plain, sans fusion) — support des cas T1/T2a/T3/T8/T9.
+        # Doc : ¶ "Intro" + tableau 2×2 + ¶ "Outro" (table en milieu de doc, réaliste).
+        # Cellules adressables : (0,0)="Alpha" (0,1)="Beta" (1,0)="Gamma"
+        # (1,1)= 2 ¶ "Delta"/"Delta2" (cellule MULTI-¶ pour T8). Les ¶ Intro/Outro
+        # encadrants servent à vérifier qu'une injection en cellule NE DÉBORDE PAS
+        # hors du tableau (§4ter).
+        'name': 'table-plain.docx',
+        'paras': [
+            [{'t': 'Intro paragraph'}],
+            {'table': [
+                [[[{'t': 'Alpha'}]], [[{'t': 'Beta'}]]],
+                [[[{'t': 'Gamma'}]], [[{'t': 'Delta'}], [{'t': 'Delta2'}]]],
+            ]},
+            [{'t': 'Outro paragraph'}],
         ],
     },
 ]
