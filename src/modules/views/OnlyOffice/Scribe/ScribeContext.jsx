@@ -10,6 +10,7 @@ import React, {
 import { useI18n } from 'twake-i18n'
 
 import { useClient } from 'cozy-client'
+import flag from 'cozy-flags'
 
 import {
   callScribeAIWithReask,
@@ -53,6 +54,32 @@ const writeStorage = value => {
   }
 }
 
+const CONTEXT_BUDGET_FLAG = 'drive.scribe.contextBudget'
+
+// CTX-LLM-04 — the SOLE truncation point for the full-document context. The
+// budget is a configurable number of CHARACTERS read from the cozy-flags key
+// `drive.scribe.contextBudget`. When the flag is unset (null/undefined) or not a
+// positive number, the budget is UNLIMITED: the whole document (already returned
+// uncut by the plugin) is sent untouched and nothing is ever silently cut (D-02).
+// When a budget is configured AND the document exceeds it, the head is kept and
+// the cut is made at the LAST `\n\n` block boundary at/under the budget (the
+// emitter joins blocks with `\n\n`), so a partial trailing block is never sent.
+// Head-keeping is deterministic, front-loads titles/headings/intro, and the
+// user's focus is covered separately by the selection block (D-04).
+//
+// @param {string} md - the full extracted document markdown
+// @returns {{ md: string, truncated: boolean }}
+const applyBudget = md => {
+  const budget = flag(CONTEXT_BUDGET_FLAG)
+  if (typeof budget !== 'number' || budget <= 0 || md.length <= budget) {
+    return { md, truncated: false }
+  }
+  const head = md.slice(0, budget)
+  const lastBoundary = head.lastIndexOf('\n\n')
+  const cut = lastBoundary > 0 ? head.slice(0, lastBoundary) : head
+  return { md: cut, truncated: true }
+}
+
 export const ScribeProvider = ({ children }) => {
   const [isPanelOpen, setIsPanelOpen] = useState(readStorage)
   const [messages, setMessages] = useState([])
@@ -81,12 +108,18 @@ export const ScribeProvider = ({ children }) => {
   // v3.2-02 (D-03, no stale-closure): mirror the include booleans into refs the
   // SAME way messagesRef does, so sendMessage (deps [client, t]) reads the LIVE
   // checkbox values at send time — a toggle between renders is honored on the very
-  // next send without re-creating the callback identity. includeDocument is out of
-  // scope this phase (v3.2-03), so it is intentionally NOT mirrored here.
+  // next send without re-creating the callback identity. v3.2-03 adds the
+  // includeDocument mirror so the full-document path is gated live too.
   const includeDiscussionRef = useRef(includeDiscussion)
   includeDiscussionRef.current = includeDiscussion
   const includeSelectionRef = useRef(includeSelection)
   includeSelectionRef.current = includeSelection
+  const includeDocumentRef = useRef(includeDocument)
+  includeDocumentRef.current = includeDocument
+
+  // v3.2-03: holds the full-document extractor injected by View.jsx via
+  // setExtractFullDocument. Null until injected; sendMessage reads it live.
+  const extractFullDocumentRef = useRef(null)
 
   // Track dismissed selection text so chip doesn't reappear until a NEW different selection arrives
   const selectionDismissedRef = useRef(null)
@@ -153,6 +186,13 @@ export const ScribeProvider = ({ children }) => {
     setPanelActionsState(actions)
   }, [])
 
+  // v3.2-03: full-document extractor injected by View.jsx (it owns broadcastToFrames
+  // + the postMessage listeners). Stored in a REF (not state) so sendMessage reads it
+  // LIVE without re-creating its callback. Mirrors the setPanelActions setter idiom.
+  const setExtractFullDocument = useCallback(fn => {
+    extractFullDocumentRef.current = fn
+  }, [])
+
   const setPanelWidth = useCallback(newWidth => {
     const clamped = Math.min(Math.max(newWidth, 280), window.innerWidth * 0.6)
     setPanelWidthState(clamped)
@@ -160,13 +200,20 @@ export const ScribeProvider = ({ children }) => {
 
   const sendMessage = useCallback(
     async (text, selectionContext) => {
-      // SEAM (v3.2-02): read the LIVE checkbox values from refs (D-03) — the
+      // SEAM (v3.2-02/03): read the LIVE checkbox values from refs (D-03) — the
       // callback deps stay [client, t] (identity preserved) while still honoring a
-      // toggle made between renders. includeDocument is out of scope (v3.2-03).
+      // toggle made between renders.
       const includeDiscussion = includeDiscussionRef.current
+      const includeDocument = includeDocumentRef.current
       // D-02/D-04: « sélection » gates ONLY the current turn. It is included iff the
       // box is live-checked AND there actually is a current selection.
       const selectionIncluded = includeSelectionRef.current && !!selectionContext
+
+      // Snapshot the PRIOR history NOW, before the user bubble is pushed and before
+      // the (newly async) document extraction below can let React flush a render and
+      // mutate messagesRef.current. This keeps the current turn out of the history
+      // map and avoids any duplication once an await sits between push and assembly.
+      const priorMessages = messagesRef.current
 
       const userMessage = {
         id: Date.now(),
@@ -182,6 +229,45 @@ export const ScribeProvider = ({ children }) => {
       setIsLoading(true)
 
       try {
+        // CTX-LLM-01/04 — full-document path (v3.2-03). When « document » is live-
+        // checked, (re)request a FRESH extraction each send (D-05, no cache). The
+        // user bubble + setIsLoading(true) above already render the existing
+        // "Scribe is thinking…" indicator, which covers this round-trip latency
+        // (DEC-UI-02). The plugin returns the WHOLE document uncut (plan 01, D-02);
+        // applyBudget below is the SOLE host-side truncation point. On error/timeout
+        // no document block is added and the message is still sent (DEC-UI-03). The
+        // extracted markdown is EPHEMERAL: it is prepended to the CURRENT user turn
+        // only and is NEVER stored on the message or replayed in history — only a
+        // compact `documentNotice` flag is recorded on the user message.
+        let documentMd = ''
+        let documentNotice = null
+        if (includeDocument && extractFullDocumentRef.current) {
+          const { md, error } = await extractFullDocumentRef.current()
+          if (error) {
+            documentNotice = 'unavailable'
+          } else {
+            const budgeted = applyBudget(md || '')
+            documentMd = budgeted.md
+            if (budgeted.truncated) documentNotice = 'truncated'
+          }
+          // Record the never-silent notice on the user message (the NOTICE only,
+          // never the document markdown — D-05 ephemeral). Default unlimited budget
+          // ⇒ nothing cut ⇒ documentNotice stays null ⇒ no notice (D-03).
+          if (documentNotice) {
+            setMessages(prev =>
+              prev.map(m => (m === userMessage ? { ...m, documentNotice } : m))
+            )
+          }
+        }
+        // The document is actually present in the prompt only when extraction
+        // succeeded and produced (possibly truncated) content. The system-prompt
+        // framing keys off THIS, never the raw checkbox, so we never tell the model
+        // "the full document is provided below" when it isn't.
+        const documentIncluded = !!documentMd
+        const documentBlock = documentMd
+          ? `[Full document]\n${documentMd}\n[End of full document]\n\n`
+          : ''
+
         // SEAM: the include booleans gate prompt composition here (v3.2-02). The
         // response handling below (callScribeAIWithReask + parsed handling) is
         // byte-for-byte identical to v3.1 — only the assembled aiMessages changes.
@@ -198,14 +284,15 @@ export const ScribeProvider = ({ children }) => {
         // MANY turns are mapped — it MUST NOT change how a PAST turn renders (D-02:
         // past turns replay their stored .selection block as-is).
         const turnsToMap = includeDiscussion
-          ? [...messagesRef.current, userMessage]
+          ? [...priorMessages, userMessage]
           : [userMessage]
         const aiMessages = [
           {
             role: 'system',
             content: buildChatSystemPrompt(currentSelectionMd, {
               includeSelection: selectionIncluded,
-              includeDiscussion
+              includeDiscussion,
+              includeDocument: documentIncluded
             })
           },
           ...turnsToMap
@@ -215,6 +302,11 @@ export const ScribeProvider = ({ children }) => {
             // UI-only roles (e.g. 'error') would be rejected by the AI endpoint.
             .filter(m => m.role === 'user' || m.role === 'assistant')
             .map(m => {
+              // D-05 ephemeral: the document block is prepended to the CURRENT turn
+              // ONLY (never to prior turns, never stored), so history never carries a
+              // doc block. Recommended order: document (broad) → selection (focus) →
+              // user text.
+              const docBlock = m === userMessage ? documentBlock : ''
               // For user messages with selection, build composite content for AI
               if (m.role === 'user' && m.selection) {
                 const { selectionMd } = encodeSelectionForPrompt({
@@ -223,7 +315,7 @@ export const ScribeProvider = ({ children }) => {
                 })
                 return {
                   role: m.role,
-                  content: `[Selected text from document]\n${selectionMd}\n[End of selected text]\n\n${m.content}`
+                  content: `${docBlock}[Selected text from document]\n${selectionMd}\n[End of selected text]\n\n${m.content}`
                 }
               }
               // D-12: serialize prior assistant turns as discussion + a compact,
@@ -239,7 +331,9 @@ export const ScribeProvider = ({ children }) => {
                   })
                 }
               }
-              return { role: m.role, content: m.content }
+              // Plain user turn (no selection): still prepend the doc block when this
+              // is the current turn (docBlock is '' for every other turn/role).
+              return { role: m.role, content: `${docBlock}${m.content}` }
             })
         ]
 
@@ -364,6 +458,7 @@ export const ScribeProvider = ({ children }) => {
       setIncludeSelection,
       panelActions,
       setPanelActions,
+      setExtractFullDocument,
       panelWidth,
       setPanelWidth,
       pendingDraft,
@@ -389,6 +484,7 @@ export const ScribeProvider = ({ children }) => {
       setIncludeSelection,
       panelActions,
       setPanelActions,
+      setExtractFullDocument,
       panelWidth,
       setPanelWidth,
       pendingDraft,

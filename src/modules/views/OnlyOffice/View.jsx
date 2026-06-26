@@ -30,6 +30,11 @@ const unwrapSingleParagraph = html => {
 // throttles setTimeout to hundreds of ms (see handleCtrlShiftI in code.js).
 const SCRIBE_REVEAL_DELAY_MS = 150
 
+// Max time to wait for the plugin's full-document extraction reply before giving
+// up. On timeout extractFullDocument resolves { md:'', error:'timeout' } so a
+// dead/missing plugin yields the 'unavailable' notice instead of hanging the send.
+const EXTRACT_DOCUMENT_TIMEOUT_MS = 8000
+
 const forceIframeHeight = value => {
   const iframe = document.getElementsByName(FRAME_EDITOR_NAME)[0]
   if (iframe) iframe.style.height = value
@@ -46,6 +51,7 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
   const openPanel = scribe ? scribe.openPanel : undefined
   const setCurrentSelection = scribe ? scribe.setCurrentSelection : undefined
   const setPanelActions = scribe ? scribe.setPanelActions : undefined
+  const setExtractFullDocument = scribe ? scribe.setExtractFullDocument : undefined
 
   // cozy-bridge: listen for Scribe intents from OO plugin
   // In dev, allow all origins. In production, derive from serverUrl/instance.
@@ -130,6 +136,46 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
     window.addEventListener('message', handler)
     return () => window.removeEventListener('message', handler)
   }, [broadcastToFrames])
+
+  // Request a full-document extraction from the OO plugin and resolve its markdown.
+  // Mirrors the dev-test reqId round-trip (code.js): broadcast a dedicated
+  // 'cozy-bridge:extract-document' message with a fresh reqId, register a one-shot
+  // listener that resolves on the correlated 'cozy-bridge:document-extracted' reply
+  // (matching BOTH type AND reqId), and resolve { md, error }. The listener is
+  // removed on success AND on timeout (no leak). An ~8s timeout resolves
+  // { md:'', error:'timeout' } so a dead/missing plugin yields the DEC-UI-03
+  // 'unavailable' notice instead of hanging the send. Uses a DEDICATED message type
+  // (NOT cozy-bridge:intent) so the payload bypasses the 1 MB validateIntent cap.
+  const extractFullDocument = useCallback(
+    () =>
+      new Promise(resolve => {
+        const reqId =
+          (window.crypto &&
+            window.crypto.randomUUID &&
+            window.crypto.randomUUID()) ||
+          String(Date.now())
+        let timeoutId
+        const onMsg = e => {
+          const m = e.data
+          if (
+            !m ||
+            m.type !== 'cozy-bridge:document-extracted' ||
+            m.reqId !== reqId
+          )
+            return
+          clearTimeout(timeoutId)
+          window.removeEventListener('message', onMsg)
+          resolve({ md: m.md || '', error: m.error || null })
+        }
+        window.addEventListener('message', onMsg)
+        timeoutId = setTimeout(() => {
+          window.removeEventListener('message', onMsg)
+          resolve({ md: '', error: 'timeout' })
+        }, EXTRACT_DOCUMENT_TIMEOUT_MS)
+        broadcastToFrames({ type: 'cozy-bridge:extract-document', reqId })
+      }),
+    [broadcastToFrames]
+  )
 
   // Send trigger-intent to plugin iframe
   const triggerScribe = useCallback(() => {
@@ -240,6 +286,14 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
     setPanelActions({ replace: handleReplace, insert: handleInsert })
     return () => setPanelActions(null)
   }, [setPanelActions, handleReplace, handleInsert])
+
+  // Inject the full-document extractor into ScribeContext so sendMessage can await
+  // it at send time, mirroring the setPanelActions wiring above.
+  useEffect(() => {
+    if (!setExtractFullDocument) return
+    setExtractFullDocument(extractFullDocument)
+    return () => setExtractFullDocument(null)
+  }, [setExtractFullDocument, extractFullDocument])
 
   const handleCancel = useCallback(() => {
     respond({ status: 'ok', action: 'cancel', data: {} })

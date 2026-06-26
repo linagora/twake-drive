@@ -153,6 +153,65 @@ describe('scribeAI — unified response contract', () => {
     })
   })
 
+  describe('v3.2-03 includeDocument framing (CTX-LLM-01, D-06)', () => {
+    const baseline =
+      CHAT_PERSONA +
+      '\n\n' +
+      RESPONSE_CONTRACT_CORE +
+      CARDINALITY_CHAT +
+      markerPreservationClauses('')
+
+    it('{ includeDocument: false } (or absent) is byte-identical to the no-flag baseline', () => {
+      expect(buildChatSystemPrompt('', { includeDocument: false })).toBe(baseline)
+      // absent => unchanged (regression: existing call sites stay byte-identical)
+      expect(buildChatSystemPrompt('', {})).toBe(baseline)
+    })
+
+    it('{ includeDocument: true } appends ONE short document-reference sentence after the contract block', () => {
+      const out = buildChatSystemPrompt('', { includeDocument: true })
+      expect(out).toMatch(/full document is provided below for reference/i)
+      // contract block stays contiguous and the framing comes AFTER it
+      expect(out).toContain(RESPONSE_CONTRACT_CORE + CARDINALITY_CHAT)
+      expect(out.indexOf('full document is provided')).toBeGreaterThan(
+        out.indexOf(CARDINALITY_CHAT)
+      )
+    })
+
+    it('document alone does NOT add the combined doc+selection focus clause', () => {
+      const out = buildChatSystemPrompt('', { includeDocument: true })
+      expect(out).not.toMatch(/focus within that document/i)
+    })
+
+    it('BOTH document and selection => the document sentence + ONE combined focus clause (D-04)', () => {
+      const out = buildChatSystemPrompt('', {
+        includeDocument: true,
+        includeSelection: true
+      })
+      expect(out).toMatch(/full document is provided below for reference/i)
+      expect(out).toMatch(/selection from the document/i)
+      expect(out).toMatch(/focus within that document/i)
+    })
+
+    it('the document framing carries NO enumerated list and no "mention the sources" incitement', () => {
+      const out = buildChatSystemPrompt('', {
+        includeDocument: true,
+        includeSelection: true,
+        includeDiscussion: true
+      })
+      expect(out).not.toMatch(/1\.\s*(history|selection|document)/i)
+      expect(out).not.toMatch(/judge the relevance/i)
+      expect(out).not.toMatch(/mention (the|these) (context|sources)/i)
+      expect(out).not.toMatch(/list the (context|sources)/i)
+    })
+
+    it('the document framing does NOT weaken the frozen contract strings', () => {
+      const out = buildChatSystemPrompt('', { includeDocument: true })
+      expect(out).toContain(RESPONSE_CONTRACT_CORE)
+      expect(out).toContain(CARDINALITY_CHAT)
+      expect(out).toContain(CHAT_PERSONA)
+    })
+  })
+
   describe('encodeSelectionForPrompt (shared selection encoder — single source of truth)', () => {
     it('prefers structured enrichedMd over html and plain text', () => {
       const { selectionMd } = encodeSelectionForPrompt({
