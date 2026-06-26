@@ -42,6 +42,18 @@ const useDataProxyRecents = () => {
     }
   }, [dataProxy])
 
+  const inFallbackPath =
+    !dataProxy.dataProxyServicesAvailable || proxyFetchStatus === 'error'
+
+  useEffect(() => {
+    if (inFallbackPath && fallbackResult.error) {
+      logger.warn(
+        'Error fetching recents from fallback query',
+        fallbackResult.error
+      )
+    }
+  }, [inFallbackPath, fallbackResult.error])
+
   if (!client) {
     return {
       data: [],
@@ -78,13 +90,6 @@ const useDataProxyRecents = () => {
   }
 
   // Fallback: use cozy-client query (proxy unavailable or errored)
-  if (fallbackResult.error) {
-    logger.warn(
-      'Error fetching recents from fallback query',
-      fallbackResult.error
-    )
-  }
-
   return {
     data: fallbackResult.data || [],
     fetchStatus: fallbackResult.error ? 'error' : fallbackResult.fetchStatus,
