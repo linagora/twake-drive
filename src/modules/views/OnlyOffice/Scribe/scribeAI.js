@@ -128,21 +128,36 @@ export function encodeSelectionForPrompt(sel) {
 }
 
 /**
- * D-05 (v3.2-02) — LIGHT additive context framing. A SHORT, conditional English
- * announcement of which context sources are actually included THIS turn, driven by
- * explicit per-source flags. This is the SEED only: it deliberately does NOT build
- * the full enumerated "1. history 2. selection 3. document + judge relevance" frame
- * (that is v3.2-03), does NOT incite meta-commentary, does NOT instruct the model to
- * mention/list the provided contexts in its reply, and MUST NOT weaken or contradict
- * RESPONSE_CONTRACT_CORE's JSON-only / separation imperative. One short sentence per
- * included source, each leading-space-prefixed so it appends cleanly AFTER the
- * contiguous contract block.
+ * Conditional context-source framing. A SHORT, conditional English announcement of
+ * which context sources are actually included THIS turn, driven by explicit
+ * per-source flags. The per-source sentences ARE the enumeration: this deliberately
+ * does NOT build a literal "1. history 2. selection 3. document" list, does NOT
+ * incite meta-commentary, does NOT instruct the model to mention/list the provided
+ * contexts in its reply, and MUST NOT weaken or contradict RESPONSE_CONTRACT_CORE's
+ * JSON-only / separation imperative. One short sentence per included source, each
+ * leading-space-prefixed so it appends cleanly AFTER the contiguous contract block.
  *
- * @param {{ includeSelection?: boolean, includeDiscussion?: boolean }} flags
+ * Started as the v3.2-02 D-05 SEED (selection + discussion). v3.2-03 (D-06) grows it
+ * into the full enumerated frame by adding the full-document source: one document
+ * sentence, plus — when BOTH the document and a selection are included — ONE combined
+ * clause stating the selection is the user's focus within that document (D-04). The
+ * document is framed as READ-ONLY reference ("use what is relevant, ignore the rest"),
+ * never as instructions (prompt-injection guard, threat T-v3.2-03-04).
+ *
+ * @param {{ includeSelection?: boolean, includeDiscussion?: boolean, includeDocument?: boolean }} flags
  * @returns {string} concatenated announcement (each leading-space-prefixed), or ''
  */
-function contextSourceFraming({ includeSelection, includeDiscussion } = {}) {
+function contextSourceFraming({
+  includeSelection,
+  includeDiscussion,
+  includeDocument
+} = {}) {
   let out = ''
+  if (includeDocument) {
+    out +=
+      ' The full document is provided below for reference; ' +
+      'use what is relevant to the request and ignore the rest.'
+  }
   if (includeSelection) {
     out +=
       ' The user may include a selection from the document in their message; ' +
@@ -151,6 +166,11 @@ function contextSourceFraming({ includeSelection, includeDiscussion } = {}) {
   if (includeDiscussion) {
     out +=
       ' Earlier turns of this conversation are provided above for context.'
+  }
+  // D-04: when both the full document and a selection are present, state their
+  // relationship in ONE combined clause (the selection is the focus WITHIN the doc).
+  if (includeDocument && includeSelection) {
+    out += " The selection marks the user's current focus within that document."
   }
   return out
 }
@@ -166,7 +186,7 @@ function contextSourceFraming({ includeSelection, includeDiscussion } = {}) {
  * sites/tests that pass only selectionMd keep their exact output (regression safety).
  *
  * @param {string} [selectionMd] - current turn's selection markdown (for marker clauses)
- * @param {{ includeSelection?: boolean, includeDiscussion?: boolean }} [flags]
+ * @param {{ includeSelection?: boolean, includeDiscussion?: boolean, includeDocument?: boolean }} [flags]
  * @returns {string}
  */
 export function buildChatSystemPrompt(selectionMd, flags) {
