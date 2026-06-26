@@ -58,6 +58,13 @@ jest.mock('@/modules/views/OnlyOffice/Scribe/scribeDevMode', () => ({
   logScribeExchange: jest.fn()
 }))
 
+// cozy-flags drives the v3.2-03 context budget. Default null => UNLIMITED (the
+// whole document is sent uncut, no truncation, no notice). Tests override it to a
+// number to exercise the truncation path. clearMocks resets it between tests, so
+// beforeEach re-installs the null default.
+jest.mock('cozy-flags', () => ({ __esModule: true, default: jest.fn() }))
+import flag from 'cozy-flags'
+
 import {
   RESPONSE_CONTRACT_CORE,
   CARDINALITY_CHAT
@@ -130,10 +137,24 @@ const send = (text, selectionContext) =>
 
 const CURRENT_SELECTION = { text: 'current sel', markdown: 'current sel md' }
 
+const FULL_DOC_BLOCK = '[Full document]'
+const FULL_DOC_END = '[End of full document]'
+
 beforeEach(() => {
   cannedParsed = makeParsed()
   captured.length = 0
+  // Default: no budget configured => unlimited (D-02 default path).
+  flag.mockReturnValue(null)
 })
+
+// Inject a fixed-md extractor (mirrors View.jsx's setExtractFullDocument) and
+// turn the « document » checkbox on. md is fixed so the determinism guarantee
+// holds for a fixed document state (Pitfall 6).
+const wireDocument = ({ md = 'DOC MD', error = null } = {}) =>
+  act(() => {
+    api.setExtractFullDocument(jest.fn(async () => ({ md, error })))
+    api.setIncludeDocument(true)
+  })
 
 describe('ScribeContext.sendMessage — deterministic gated composition (v3.2-02)', () => {
   describe('Quadrant A — sélection ON, discussion OFF', () => {
@@ -290,6 +311,129 @@ describe('ScribeContext.sendMessage — deterministic gated composition (v3.2-02
       expect(captured[1].length).toBeGreaterThan(2)
 
       // callback identity preserved across the toggle (deps stay [client, t])
+      expect(api.sendMessage).toBe(firstSendMessage)
+    })
+  })
+
+  describe('Full-document path (v3.2-03 — CTX-LLM-01/04)', () => {
+    it('default unlimited budget: prepends the whole [Full document] block to the current turn; no documentNotice', async () => {
+      renderProvider()
+      setIncludes({ selection: false, discussion: false })
+      wireDocument({ md: 'LINE 1\n\nLINE 2' })
+      await send('current question', null)
+
+      const ai = captured[0]
+      const current = ai[ai.length - 1]
+      expect(current.role).toBe('user')
+      expect(current.content).toContain(FULL_DOC_BLOCK)
+      expect(current.content).toContain(FULL_DOC_END)
+      // whole document, uncut
+      expect(current.content).toContain('LINE 1\n\nLINE 2')
+      // block precedes the user text
+      expect(current.content.indexOf(FULL_DOC_BLOCK)).toBeLessThan(
+        current.content.indexOf('current question')
+      )
+      // no notice when nothing was cut (never silent => silent success is correct)
+      const userMsg = api.messages.find(m => m.role === 'user')
+      expect(userMsg.documentNotice == null).toBe(true)
+      // NB: the SYSTEM-prompt « full document » framing is asserted in
+      // scribeAI.spec.js (Task 3 — contextSourceFraming); this spec covers the
+      // sendMessage composition / budget / notice wiring only.
+    })
+
+    it('document + selection compose: the doc block precedes the [Selected text] block', async () => {
+      renderProvider()
+      setIncludes({ selection: true, discussion: false })
+      wireDocument({ md: 'DOC BODY' })
+      await send('current question', CURRENT_SELECTION)
+
+      const ai = captured[0]
+      const current = ai[ai.length - 1]
+      expect(current.content).toContain(FULL_DOC_BLOCK)
+      expect(current.content).toContain(SELECTED_BLOCK)
+      // order: document → selection → user text
+      expect(current.content.indexOf(FULL_DOC_BLOCK)).toBeLessThan(
+        current.content.indexOf(SELECTED_BLOCK)
+      )
+      expect(current.content.indexOf(SELECTED_BLOCK)).toBeLessThan(
+        current.content.indexOf('current question')
+      )
+    })
+
+    it('budget configured & exceeded: truncates head-keeping at the last \\n\\n boundary; documentNotice=truncated', async () => {
+      flag.mockImplementation(key =>
+        key === 'drive.scribe.contextBudget' ? 12 : null
+      )
+      renderProvider()
+      setIncludes({ selection: false, discussion: false })
+      // 3 blocks; budget 12 chars keeps only the first block at the \n\n boundary
+      wireDocument({ md: 'AAAA\n\nBBBB\n\nCCCC' })
+      await send('q', null)
+
+      const ai = captured[0]
+      const current = ai[ai.length - 1]
+      expect(current.content).toContain('AAAA')
+      expect(current.content).not.toContain('CCCC')
+      // cut at a block boundary (no partial trailing block)
+      const userMsg = api.messages.find(m => m.role === 'user')
+      expect(userMsg.documentNotice).toBe('truncated')
+    })
+
+    it('extraction error: no doc block; documentNotice=unavailable; message still sent', async () => {
+      renderProvider()
+      setIncludes({ selection: false, discussion: false })
+      wireDocument({ md: '', error: 'timeout' })
+      await send('still send me', null)
+
+      const ai = captured[0]
+      const current = ai[ai.length - 1]
+      expect(current.content).not.toContain(FULL_DOC_BLOCK)
+      expect(current.content).toBe('still send me')
+      const userMsg = api.messages.find(m => m.role === 'user')
+      expect(userMsg.documentNotice).toBe('unavailable')
+      // system prompt must NOT claim a document is provided when it is not
+      expect(ai[0].content).not.toMatch(/full document is provided/i)
+    })
+
+    it('ephemeral (D-05): the doc block is NOT stored on userMessage.content; prior turns replay without a doc block', async () => {
+      renderProvider()
+      setIncludes({ selection: false, discussion: true })
+      wireDocument({ md: 'EPHEMERAL DOC' })
+      await send('turn one', null)
+
+      // the stored user message content is the raw text only (no doc block)
+      const storedUser = api.messages.find(m => m.content === 'turn one')
+      expect(storedUser).toBeTruthy()
+      expect(storedUser.content).not.toContain(FULL_DOC_BLOCK)
+
+      // second send: prior turn (turn one) must replay WITHOUT a doc block;
+      // only the CURRENT turn carries the freshly-extracted block
+      await send('turn two', null)
+      const ai = captured[1]
+      const priorUser = ai.find(m => m.role === 'user' && m.content === 'turn one')
+      expect(priorUser).toBeTruthy()
+      expect(priorUser.content).not.toContain(FULL_DOC_BLOCK)
+      const current = ai[ai.length - 1]
+      expect(current.content).toContain(FULL_DOC_BLOCK)
+    })
+
+    it('includeDocument is read LIVE via a ref (no stale closure); callback identity preserved', async () => {
+      renderProvider()
+      const firstSendMessage = api.sendMessage
+      api &&
+        act(() => {
+          api.setExtractFullDocument(jest.fn(async () => ({ md: 'DOC', error: null })))
+        })
+
+      // document OFF on first send
+      await send('q1', null)
+      expect(captured[0][captured[0].length - 1].content).not.toContain(FULL_DOC_BLOCK)
+
+      // toggle document ON between sends
+      act(() => api.setIncludeDocument(true))
+      await send('q2', null)
+      expect(captured[1][captured[1].length - 1].content).toContain(FULL_DOC_BLOCK)
+
       expect(api.sendMessage).toBe(firstSendMessage)
     })
   })
