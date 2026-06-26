@@ -9,7 +9,7 @@
   // If the console shows an OLDER build than expected, the editor served a CACHED
   // code.js → reopen the editor in a fresh tab / private window (a plain F5 won't
   // refetch the async plugin iframe).
-  var SCRIBE_BUILD = "2026-06-26.7 — test(driver): cross-boundary selection (T4/T5/T6 ¶↔cell + cross-table via ExpandTo) on top of .5 (.6 T9-Copy fix was reverted)";
+  var SCRIBE_BUILD = "2026-06-26.8 — test(driver): multi-¶ top-level selection (A5/A6) rides the cross branch (ExpandTo of two collapsed ¶ ranges) on top of .7";
   try { window.__scribeBuild = SCRIBE_BUILD; } catch (e) {}
 
   // ---- State ----
@@ -501,7 +501,8 @@
           var _tsp = JSON.parse(_testSelSpec);
           var _ttgt = null;
           // Cross-boundary (T4/T5/T6) — twin of hookSetSelection's cross branch.
-          var _tCross = (!!_tsp.startCell !== !!_tsp.endCell) || (_tsp.startCell && _tsp.endCell && _tsp.startN !== _tsp.endN);
+          // Multi-¶ top-level (A5/A6) also rides this branch (both ends ¶, diff ¶).
+          var _tCross = (!!_tsp.startCell !== !!_tsp.endCell) || (_tsp.startCell && _tsp.endCell && _tsp.startN !== _tsp.endN) || (!_tsp.startCell && !_tsp.endCell && _tsp.startN !== _tsp.endN);
           var _tIsRange = _tsp.full || (_tsp.startCell && _tsp.endCell && (_tsp.startCell.r !== _tsp.endCell.r || _tsp.startCell.c !== _tsp.endCell.c));
           if (_tCross) {
             var _txNth = function(kind, nn) {
@@ -3520,11 +3521,12 @@
   //  • T<m>.C(..)@..T<k>.C(..)@ (DIFFERENT tables)     → cross-table range (T6)
   // Cross-boundary works because OO's Range.ExpandTo()+Select() spans a ¶↔cell
   // boundary (probe-confirmed 2026-06-26) and snaps table-side ends to cell
-  // boundaries. Still unsupported: multi-¶ (A5/A6 — no cell on either side).
+  // boundaries. Multi-¶ top-level (A5/A6 — no cell on either side, different ¶)
+  // rides the SAME cross branch: each endpoint is a collapsed ¶ range, ExpandTo'd.
   function selSpecSupported(p) {
     if (p.full) return true;
     var sc = p.startCell, ec = p.endCell;
-    if (!sc && !ec) return p.startN === p.endN;      // intra-paragraph only (A0–A4)
+    if (!sc && !ec) return true;                      // intra-¶ (A0–A4) OR multi-¶ top-level (A5/A6)
     if (sc && ec && p.startN === p.endN) return true; // intra-cell OR cross-cell, same table
     return true;                                      // cross-boundary: ¶↔cell or cross-table
   }
@@ -3562,7 +3564,9 @@
         // endpoint (collapsed at offset), whole first/last ¶ for a cell endpoint —
         // then ExpandTo their union. OO snaps table ends to cell boundaries, so
         // every cell between is fully included (probe-confirmed).
-        var _isCross = (!!p.startCell !== !!p.endCell) || (p.startCell && p.endCell && p.startN !== p.endN);
+        // Multi-¶ top-level (A5/A6: !startCell && !endCell && startN !== endN)
+        // joins the cross branch — _xEndpoint's !cell path resolves each ¶ endpoint.
+        var _isCross = (!!p.startCell !== !!p.endCell) || (p.startCell && p.endCell && p.startN !== p.endN) || (!p.startCell && !p.endCell && p.startN !== p.endN);
         if (_isCross) {
           function _xNth(kind, nn) {
             var c = doc.GetElementsCount(), s = 0;
