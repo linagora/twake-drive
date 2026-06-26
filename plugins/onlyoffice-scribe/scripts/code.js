@@ -2020,6 +2020,57 @@
     }
   });
 
+  // ---- On-demand whole-document extraction (v3.2-03, CTX-LLM-01) ----
+  // Production channel (NOT gated by any dev/test hook): the host asks the plugin
+  // to extract the WHOLE document as markdown via a dedicated request/response
+  // message pair, correlated by reqId. This dedicated message type bypasses the
+  // 1 MB cozy-bridge:intent cap (only :intent/:response are size-validated), so a
+  // large document is neither rejected nor chunked.
+  //   Request (host -> plugin):  { type: "cozy-bridge:extract-document", reqId }
+  //   Reply   (plugin -> host):  { type: "cozy-bridge:document-extracted", reqId, md, error }
+  // The reply has NO truncation field: the document is always returned in full
+  // (D-02); all truncation/signalling is host-side (plan 02 applyBudget).
+  window.addEventListener("message", function(event) {
+    var msg = event.data;
+    if (!msg || msg.type !== "cozy-bridge:extract-document") return;
+    var reqId = msg.reqId;
+    try {
+      // Seed the marker counters used by paragraphToMarkdown so image / footnote /
+      // cross-ref names are stable within this single extraction.
+      window.Asc.scope.imgCounter = imageCounter;
+      window.Asc.scope._fnCounter = footnoteCounter;
+      window.Asc.scope._crCounter = crossRefCounter;
+      window.Asc.scope._crMeta = {};
+      window.Asc.scope.scribeExtractMode = "document";
+      // Read-only callCommand (second arg true) so the scan does NOT truncate the
+      // redo stack (Pitfall 5). The lone document write (image SetName) is guarded
+      // for this read-only path; the document is reference-only and never re-injected.
+      window.Asc.plugin.callCommand(buildScribeExtractionResult, true, false, function(resultJson) {
+        var md = "";
+        var error = null;
+        try {
+          var parsed = JSON.parse(resultJson);
+          md = (parsed && parsed.md) ? parsed.md : "";
+        } catch (eParse) {
+          error = "parse-error";
+        }
+        postToAncestors({
+          type: "cozy-bridge:document-extracted",
+          reqId: reqId,
+          md: md,
+          error: error
+        });
+      });
+    } catch (eExtract) {
+      postToAncestors({
+        type: "cozy-bridge:document-extracted",
+        reqId: reqId,
+        md: "",
+        error: "extract-error"
+      });
+    }
+  });
+
   // Tell the host we're ready to receive the subscribe state. If the panel was
   // already open at page load, the host's initial selection-subscribe broadcast
   // may have fired before this plugin iframe existed (message lost). Announcing
@@ -2429,7 +2480,11 @@
           if (!name || name.indexOf("scribe-img-") !== 0) {
             name = "scribe-img-" + Asc.scope.imgCounter;
             Asc.scope.imgCounter = Asc.scope.imgCounter + 1;
-            drawing.SetName(name);
+            // SetName persists the marker for selection re-injection (read-write path).
+            // The whole-document path runs read-only (Pitfall 5: preserve the redo
+            // stack); there SetName is a no-op or throws, so guard it. The computed
+            // name is already assigned above and is emitted into the markdown either way.
+            try { drawing.SetName(name); } catch (eSetName) {}
             hasUnnamed = true;
           }
           markers.push({ name: name });
@@ -2602,11 +2657,123 @@
         return extractPartialTableCells(table, allCells);
       }
 
-      // Whole-document extraction (v3.2-03). Placeholder — the document-order walk
-      // is implemented in Task 2. Defined inside the sandbox so it can reuse the
-      // leaf emitters above (paragraphToMarkdown, extractTableCells, etc.).
+      // Whole-document extraction (v3.2-03, D-01). Defined inside the sandbox so it
+      // reuses the leaf emitters above (paragraphToMarkdown, extractTableCells,
+      // getHeadingLevel, isListParagraph, getDrawingMarker) for full fidelity.
+      //
+      // Iterates top-level blocks in document order via GetElementsCount()/
+      // GetElement(i)/GetClassType(). It deliberately does NOT use
+      // doc.GetAllParagraphs(), which silently omits table-cell paragraphs (see the
+      // compensating comment elsewhere in this file) and would drop all table
+      // content. Tables surface as first-class blocks and are emitted via
+      // extractTableCells.
+      //
+      // NO plugin-side size guard (D-02 "send everything by default"): the WHOLE
+      // document is always returned. The selection path's silent >100-paragraph
+      // md:"" fallback is intentionally NOT inherited here — the document path must
+      // never silently drop content. All size bounding and never-silent truncation
+      // signalling happen host-side (plan 02 applyBudget).
       function buildDocumentExtractionResult(doc) {
-        return JSON.stringify({ md: "", blockCount: 0 });
+        var mdParts = [];
+        var orderedCounters = {};
+        var tableIndex = 0;
+        var blockCount = doc.GetElementsCount();
+
+        // Pre-scan list paragraphs (document order) to build the indent -> depth map,
+        // mirroring the selection path's nesting-level mapping.
+        var indentSet = {};
+        for (var pi = 0; pi < blockCount; pi++) {
+          var pel = doc.GetElement(pi);
+          var pct = (pel && pel.GetClassType) ? pel.GetClassType() : "";
+          if (pct === "paragraph" && isListParagraph(pel)) {
+            var pind = pel.GetIndLeft ? pel.GetIndLeft() : 0;
+            if (pind > 0) indentSet[pind] = true;
+          }
+        }
+        var uniqueIndents = [];
+        for (var ikey in indentSet) {
+          if (indentSet.hasOwnProperty(ikey)) uniqueIndents.push(Number(ikey));
+        }
+        uniqueIndents.sort(function(a, b) { return a - b; });
+        function docIndentToLevel(indLeft) {
+          if (!indLeft || indLeft <= 0) return 0;
+          for (var idx = 0; idx < uniqueIndents.length; idx++) {
+            if (uniqueIndents[idx] === indLeft) return idx;
+          }
+          return 0;
+        }
+
+        for (var i = 0; i < blockCount; i++) {
+          var el = doc.GetElement(i);
+          var ct = (el && el.GetClassType) ? el.GetClassType() : "";
+
+          if (ct === "table") {
+            var tableCellsMd = extractTableCells(el);
+            mdParts.push({ md: "[TABLE:" + tableIndex + "]\n" + tableCellsMd + "\n[/TABLE]", isList: false });
+            tableIndex = tableIndex + 1;
+            orderedCounters = {};
+            continue;
+          }
+          if (ct !== "paragraph") continue;
+
+          // Block-level image (paragraph holding only drawings).
+          var imgMarker = getDrawingMarker(el);
+          if (imgMarker && imgMarker.isBlock) {
+            mdParts.push({ md: imgMarker.md, isList: false });
+            orderedCounters = {};
+            continue;
+          }
+
+          var headingLvl = getHeadingLevel(el);
+          var listType = isListParagraph(el);
+          var listInfo = null;
+          if (listType) {
+            var paraIndent = el.GetIndLeft ? el.GetIndLeft() : 0;
+            listInfo = { type: listType.type, level: docIndentToLevel(paraIndent) };
+          }
+
+          // No selection clipping for the whole-document path (clip = 0, 0).
+          var paraMarkdown = paragraphToMarkdown(el, 0, 0);
+
+          if (headingLvl > 0 && headingLvl <= 6) {
+            var hashes = "";
+            for (var h = 0; h < headingLvl; h++) hashes = hashes + "#";
+            paraMarkdown = hashes + " " + paraMarkdown;
+          }
+
+          if (listInfo) {
+            var indent = "";
+            for (var lv = 0; lv < listInfo.level; lv++) indent = indent + "  ";
+            if (listInfo.type === "bullet") {
+              paraMarkdown = indent + "- " + paraMarkdown;
+            } else {
+              if (!orderedCounters[listInfo.level]) orderedCounters[listInfo.level] = 0;
+              orderedCounters[listInfo.level] = orderedCounters[listInfo.level] + 1;
+              paraMarkdown = indent + orderedCounters[listInfo.level] + ". " + paraMarkdown;
+            }
+            for (var rl = listInfo.level + 1; rl < 10; rl++) {
+              orderedCounters[rl] = 0;
+            }
+          } else {
+            orderedCounters = {};
+          }
+
+          mdParts.push({ md: paraMarkdown, isList: !!listInfo });
+        }
+
+        // Join: single \n between consecutive list items, \n\n between other blocks
+        // (identical spacing rule to the selection path).
+        var mdLines = [];
+        for (var j = 0; j < mdParts.length; j++) {
+          if (j > 0) {
+            var prevIsList = mdParts[j - 1].isList;
+            var currIsList = mdParts[j].isList;
+            mdLines.push((prevIsList && currIsList) ? "\n" : "\n\n");
+          }
+          mdLines.push(mdParts[j].md);
+        }
+
+        return JSON.stringify({ md: mdLines.join(""), blockCount: mdParts.length });
       }
 
       // --- Main extraction logic ---
