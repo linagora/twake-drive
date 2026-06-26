@@ -5,9 +5,6 @@
       "runs": [
         {
           "t": "XXX"
-        },
-        {
-          "t": " "
         }
       ],
       "style": "Heading 1"
@@ -37,7 +34,7 @@
     },
     "end": {
       "block": 0,
-      "offset": 6
+      "offset": 5
     }
   }
 }
