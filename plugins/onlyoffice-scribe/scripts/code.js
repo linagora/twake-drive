@@ -9,7 +9,7 @@
   // If the console shows an OLDER build than expected, the editor served a CACHED
   // code.js → reopen the editor in a fresh tab / private window (a plain F5 won't
   // refetch the async plugin iframe).
-  var SCRIBE_BUILD = "2026-06-26.2 — test driver: + cross-cell range T<n>.C(r1,c1)..C(r2,c2) and whole-table T<n>.full (T2a/b/c/T3 harness)";
+  var SCRIBE_BUILD = "2026-06-26.3 — fix(prod): table-only Insert no longer no-ops (insSimpleInline excludes table content) + test harness returns tableSnapshots (flag-gated)";
   try { window.__scribeBuild = SCRIBE_BUILD; } catch (e) {}
 
   // ---- State ----
@@ -1776,7 +1776,12 @@
           // §5bis: single plain paragraph -> INLINE (runs spliced into the host ¶,
           // which keeps its paragraph style); multi-¶ / styled / non-text -> BLOCK.
           // No leading empty paragraph any more (that was the L#7 bug).
-          var insSimpleInline = (content.length === 1 && blocks.length === 1 && blocks[0].type === "paragraph");
+          // blocks[0] is the SCRIBE-TABLE placeholder PARAGRAPH, but content[0] may
+          // have been substituted with a TABLE clone (table-only Insert: T2a/T3).
+          // Inserting a table in inline mode at a collapsed cursor is a silent no-op
+          // → only treat as inline when the actual content element is a paragraph.
+          var insSimpleInline = (content.length === 1 && blocks.length === 1 && blocks[0].type === "paragraph"
+            && !(content[0] && content[0].GetClassType && content[0].GetClassType() === "table"));
           if (insSimpleInline) {
             doc.InsertContent(content, true);
             // useRefSelection stays false -> position-based selection (like inline replace)
@@ -2354,6 +2359,11 @@
     window.Asc.scope._fnCounter = footnoteCounter;
     window.Asc.scope._crCounter = crossRefCounter;
     window.Asc.scope._crMeta = {};
+    // [TEST HOOK — flag-gated, inert in prod] When the test driver is active, also
+    // return tableSnapshots in the extraction JSON (reliable across the callCommand
+    // boundary) instead of only via Asc.scope (which doesn't survive callback). In
+    // prod this stays off → byte-identical return; snapshots flow via the host relay.
+    window.Asc.scope._tReturnSnaps = (window.__scribeTestForce === true);
     window.Asc.plugin.callCommand(function() {
       // --- All helpers defined inside callCommand (ES5 sandbox) ---
 
@@ -3191,7 +3201,10 @@
         tableDocIndices: tableDocIndices,
         tableAmbiguity: tableAmbiguity,
         partialTableInfo: partialTableInfo,
-        crossRefMeta: Asc.scope._crMeta || {}
+        crossRefMeta: Asc.scope._crMeta || {},
+        // [TEST HOOK] only when the driver is active (else undefined → omitted from
+        // the JSON → prod return size unchanged; snapshots still go via Asc.scope/host).
+        tableSnapshots: (Asc.scope._tReturnSnaps && tableSnapshots.length > 0) ? tableSnapshots : undefined
       });
     }, false, false, function(resultJson) {
       // false = read-write (allows SetName on images for stable naming)
@@ -3212,7 +3225,8 @@
       lastSelectedText = plainText;
       lastEnrichedMd = result.md || "";
       lastTableDocIndices = result.tableDocIndices || [];
-      lastTableSnapshots = window.Asc.scope.tableSnapshots || null;
+      // Prefer the reliable JSON return (test driver path); fall back to Asc.scope/host relay.
+      lastTableSnapshots = result.tableSnapshots || window.Asc.scope.tableSnapshots || null;
       lastTableAmbiguity = result.tableAmbiguity || null;
       lastPartialTableInfo = result.partialTableInfo || null;
       lastSelectedHtml = ""; // No longer used for primary extraction
