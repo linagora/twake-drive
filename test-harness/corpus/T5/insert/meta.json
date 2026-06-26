@@ -1,0 +1,15 @@
+{
+  "caseId": "T5",
+  "mode": "insert",
+  "spec": "T1.C(1,0)@start..P2@mid",
+  "fixture": "[TABLE:0]\n[CELL:1,0]GG[/CELL]\n[CELL:1,1]DD[/CELL]\n[/TABLE]\n\nTail edit",
+  "source": "table-plain.docx",
+  "statusFromCsv": "pass",
+  "stable": true,
+  "setSelectionOk": true,
+  "capturedVia": "Chrome DevTools MCP v4 (build 2026-06-26.7; cross-boundary driver; extract+injectAtSelection atomic; forcesave docx; no grabFocus)",
+  "capturedAt": "2026-06-26",
+  "verdict": "pass",
+  "comment": "Insert tableau->¶ (cas 2c) : sélection T1.C(1,0)..P2@mid = queue du tableau (ligne 1 = Gamma/Delta) + tête du ¶ Outro ('Outro p'). Original INTACT ; la réponse (copie réduite [[GG,DD]] + ¶ 'Tail edit') est insérée APRÈS le tableau, avant Outro. blockCount=5, 2 tableaux. Driver cross-frontière (build .7).",
+  "captureVersion": "v4"
+}
