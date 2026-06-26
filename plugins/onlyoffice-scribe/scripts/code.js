@@ -9,7 +9,7 @@
   // If the console shows an OLDER build than expected, the editor served a CACHED
   // code.js → reopen the editor in a fresh tab / private window (a plain F5 won't
   // refetch the async plugin iframe).
-  var SCRIBE_BUILD = "2026-06-26.3 — fix(prod): table-only Insert no longer no-ops (insSimpleInline excludes table content) + test harness returns tableSnapshots (flag-gated)";
+  var SCRIBE_BUILD = "2026-06-26.4 — fix(prod): §4bis#2 merged-table Insert uses FULL clone (no RemoveRow/Column) + .3 (insSimpleInline) + test snapshot cabling";
   try { window.__scribeBuild = SCRIBE_BUILD; } catch (e) {}
 
   // ---- State ----
@@ -1114,6 +1114,18 @@
         return null;
       }
 
+      // §4bis #2: a table containing ANY merge must be Inserted as a FULL clone — the
+      // RemoveRow/RemoveColumn reduction corrupts spans (Q4: RemoveColumn through an
+      // H-span deletes the whole span). Detect via the lossless ToJSON, which emits
+      // "gridSpan":N (N>=2, H-merge) and "vMerge":"restart"|"continue" (V-merge) ONLY
+      // for merged cells.
+      function tableHasMerge(table) {
+        try {
+          var s = table.ToJSON(true, true);
+          return /"vMerge":\s*"(restart|continue)"/.test(s) || /"gridSpan":\s*([2-9]|\d\d+)/.test(s);
+        } catch (e) { return false; }
+      }
+
       if (parsedTables.length > 0) {
         // Find original tables by their document-level index (saved during extraction).
         // We cannot rely on selection range here — it may have collapsed since extraction.
@@ -1208,7 +1220,12 @@
               replaceCellContent(rdCc, rdc, rdf.family, rdf.size);
             }
             tableClones[ptIndex] = reducedClone;
-            pendingTableReductions.push({ clone: reducedClone, selectedCellCoords: selectedCellCoords });
+            // §4bis #2: only reduce (RemoveRow/Column) when the table has NO merge.
+            // Merged → keep the FULL clone (selected cells already modified above);
+            // reduction would corrupt the spans.
+            if (!tableHasMerge(reducedClone)) {
+              pendingTableReductions.push({ clone: reducedClone, selectedCellCoords: selectedCellCoords });
+            }
           } else {
             // Full Insert — reconstruct via FromJSON + modify all cells
             var clone = reconstructTable(ptIndex, origTable);
