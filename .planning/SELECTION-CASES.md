@@ -62,15 +62,15 @@ Deux axes orthogonaux se croisent avec chaque cas :
 <!-- cases:table:paragraph:start -->
 | # | Sélection *(description)* | Insérer | Remplacer | État / limite |
 |---|---|---|---|---|
-| A0 | `[P1@x,P1@x]` *(curseur seul (sélection vide))* | insère au curseur; pas de chip; **pas de ¶ vide ajouté au @start** | — absent par défaut (FRAG-04); si exposé se comporte comme Insérer | ⚠️ · **L#7** (¶ vide parasite, FAIL live A0/insert) · **L#8** (style) · ne pas utiliser init() qui renverrait tout le ¶ |
-| A1 | `[P1@start,P1@end]` *(paragraphe entier)* | nouveau ¶ après le ¶ courant; pas de &nbsp; | remplace tout le ¶ | ✅ |
-| A2 | `[P1@mid,P1@mid]` *(milieu d'un mot)* | insère au point; &nbsp; des deux côtés | ⚠️ remplace le fragment; &nbsp; des deux côtés | ⚠️ · **L#1** · L1: le suffixe non sélectionné perd ses styles inline (Replace) |
-| A3 | `[P1@space,P1@end]` *(après espace -> fin)* | insère en fin de ¶; pas de &nbsp; après | remplace; espace de tête déplacée (CommonMark); pas de &nbsp; après | ✅ · **L#6** · L6: post-sélection inline fragile (+2) |
-| A4 | `[P1@start,P1@space]` *(début -> mot, espace finale)* | insère au point; pas de &nbsp; avant | remplace; espace finale déplacée après le marqueur md | ✅ |
-| A5 | `[P1@start,P3@end]` *(plusieurs ¶ entiers)* | blocs insérés après P3 | remplace P1..P3; injection ¶ par ¶ en ordre inverse | ✅ |
-| A6 | `[P1@mid,P3@mid]` *(partiel -> entiers -> partiel)* | insère au point; clipping text-matching | ⚠️ remplace la plage; clipping text-matching | ⚠️ · **L#1** · L1 sur tête/queue (Replace) |
-| A7 | `[P1@start,P2@end] avec ¶ vides` *(¶ vides en bord de sélection)* | préserver les ¶ vides (split sur double-newline avant lexer) | idem | ✅ |
-| A8 | `>100 ¶` *(sélection très grande)* | garde de perf: repli extraction texte brut (perte du riche) | idem | ✅ · dégradé par conception (assumé) |
+| A0 | `[P1@x,P1@x]` *(curseur seul (sélection vide))* | ✅ insère au curseur; pas de chip | — absent par défaut (FRAG-04); si exposé se comporte comme Insérer | ✅ · ne pas utiliser init() qui renverrait tout le ¶ |
+| A1 | `[P1@start,P1@end]` *(paragraphe entier)* | ✅ nouveau ¶ après le ¶ courant; pas de &nbsp; | ✅ remplace tout le ¶ | ✅ |
+| A2 | `[P1@mid,P1@mid]` *(milieu d'un mot)* | ✅ insère au point; &nbsp; des deux côtés | ⚠️ remplace le fragment; &nbsp; des deux côtés | ⚠️ · **L#1** · L1: le suffixe non sélectionné perd ses styles inline (Replace) |
+| A3 | `[P1@space,P1@end]` *(après espace -> fin)* | ✅ insère en fin de ¶; pas de &nbsp; après | ✅ remplace; espace de tête déplacée (CommonMark); pas de &nbsp; après | ✅ · **L#6** · L6: post-sélection inline fragile (+2) |
+| A4 | `[P1@start,P1@space]` *(début -> mot, espace finale)* | ✅ insère au point; pas de &nbsp; avant | ✅ remplace; espace finale déplacée après le marqueur md | ✅ |
+| A5 | `[P1@start,P3@end]` *(plusieurs ¶ entiers)* | ✅ blocs insérés après P3 | ✅ remplace P1..P3; injection ¶ par ¶ en ordre inverse | ✅ |
+| A6 | `[P1@mid,P3@mid]` *(partiel -> entiers -> partiel)* | ✅ insère au point; clipping text-matching | ⚠️ remplace la plage; clipping text-matching | ⚠️ · **L#1** · L1 sur tête/queue (Replace) |
+| A7 | `[P1@start,P2@end] avec ¶ vides` *(¶ vides en bord de sélection)* | ✅ préserver les ¶ vides (split sur double-newline avant lexer) | ✅ idem | ✅ |
+| A8 | `>100 ¶` *(sélection très grande)* | ✅ garde de perf: repli extraction texte brut (perte du riche) | ✅ idem | ✅ · dégradé par conception (assumé) |
 <!-- cases:table:paragraph:end -->
 
 ---
@@ -82,24 +82,26 @@ Mêmes conventions Insérer / Remplacer. Rappel : pour un tableau, *Insérer* pr
 <!-- cases:table:table:start -->
 | # | Sélection *(description)* | Insérer | Remplacer | État / limite |
 |---|---|---|---|---|
-| T1 | `[T1.intra(r,c),T1.intra(r,c)]` *(dans une seule cellule)* | chemin paragraphe (insère dans la cellule au point) | chemin paragraphe (remplace le texte de la cellule) | ✅ |
-| T2 | `[T1.cells,T1.cells]` *(lignes/cols partielles)* | copie réduite du tableau insérée après le tableau | in-place modifyOriginalTableCells; cellules non sél. et vides intactes | ✅ |
-| T3 | `[T1.full,T1.full]` *(tableau entier englobant)* | clone complet inséré après le tableau | clone + InsertContent; post-sélection OK | ✅ |
-| T4 | `[P1@x,T2.cells]` *(¶ -> finit dans un tableau)* | après le tableau: ¶/tableaux entiers du début + copie réduite du tableau de fin (cas 2b) | ⚠️ cellules in-place + InsertContent par ¶ (ordre inverse) | ⚠️ · **L#2** · L2: pas de post-sélection (texte d'un seul côté); sélection manuelle (cross-boundary) |
-| T5 | `[T1.cells,P3@x]` *(tableau -> finit après)* | après la fin de sélection: copie réduite tête + ¶/tableaux suivants (cas 2c) | ⚠️ cellules in-place + InsertContent par ¶ | ⚠️ · **L#2** · sélection manuelle (cross-boundary) |
-| T6 | `[T1.cells,T3.cells]` *(deux tableaux partiels, milieu entier)* | copie réduite tête + milieu entier + copie réduite queue (cas 2d) | ⚠️ in-place les deux tableaux + InsertContent par ¶ du milieu | ⚠️ · **L#2** · sélection manuelle (cross-boundary) |
+| T1 | `[T1.intra(r,c),T1.intra(r,c)]` *(dans une seule cellule)* | ✅ chemin paragraphe (insère dans la cellule au point) | ✅ chemin paragraphe (remplace le texte de la cellule) | ✅ |
+| T2a | `[T1.cells,T1.cells]` *(cellules partielles, sans fusion)* | ✅ copie réduite du tableau insérée après le tableau | ✅ in-place modifyOriginalTableCells; cellules non sél. et vides intactes | ✅ |
+| T2b | `[T1.cells,T1.cells]` *(cellules partielles, fusion H traversée)* | ⚠️ clone complet (jamais RemoveColumn) | ✅ in-place — identique à T2a (round-trip (r,c), S2) | ⚠️ · Insert xfail: code actuel corrompt via RemoveColumn (Q4); aperçu GFM désaligné (cosmétique) |
+| T2c | `[T1.cells,T1.cells]` *(cellules partielles, fusion V traversée)* | ⚠️ clone complet (jamais RemoveRow) | ✅ in-place — identique à T2a (maître édité, continuation vide jamais touchée, S3/S4) | ⚠️ · Insert xfail jusqu'à clone-complet; S3 mismatch UX; trou détection full (S5) |
+| T3 | `[T1.full,T1.full]` *(tableau entier englobant)* | ✅ clone complet inséré après le tableau | ✅ clone + InsertContent; post-sélection OK | ✅ |
+| T4 | `[P1@x,T2.cells]` *(¶ -> finit dans un tableau)* | ✅ après le tableau: ¶/tableaux entiers du début + copie réduite du tableau de fin (cas 2b) | ⚠️ cellules in-place + InsertContent par ¶ (ordre inverse) | ⚠️ · **L#2** · L2: pas de post-sélection (texte d'un seul côté); sélection manuelle (cross-boundary) |
+| T5 | `[T1.cells,P3@x]` *(tableau -> finit après)* | ✅ après la fin de sélection: copie réduite tête + ¶/tableaux suivants (cas 2c) | ⚠️ cellules in-place + InsertContent par ¶ | ⚠️ · **L#2** · sélection manuelle (cross-boundary) |
+| T6 | `[T1.cells,T3.cells]` *(deux tableaux partiels, milieu entier)* | ✅ copie réduite tête + milieu entier + copie réduite queue (cas 2d) | ⚠️ in-place les deux tableaux + InsertContent par ¶ du milieu | ⚠️ · **L#2** · sélection manuelle (cross-boundary) |
 | T8 | `[T1.intra multi-¶]` *(cellule multi-¶ (dont vides))* | ⚠️ split sur double-newline; replaceCellContent + AddElement(pos,para) | ⚠️ idem | ⚠️ · **L#3** · L3: block mode peut déborder hors cellule |
-| T9 | `[T1.intra avec image]` *(cellule avec image)* | drawingIndex scanne aussi les ¶ de cellules | idem | ✅ |
+| T9 | `[T1.intra avec image]` *(cellule avec image)* | ✅ drawingIndex scanne aussi les ¶ de cellules | ✅ idem | ✅ |
 | T10 | `(garde défensive)` *(no_range / no_cell_match — pas un cas utilisateur)* | — bandeau câblé (message trompeur) | — idem | ✅ · ne devrait pas se déclencher; à tester au niveau garde/unitaire, pas en golden |
-| T11 | `(mismatch nb cellules)` *(réponse ≠ nb cellules de la sélection)* | bandeau d'avertissement | idem | ✅ |
-| T12a | `[T.cells avec fusion H]` *(fusion horizontale dans la sélection)* | ⚠️ DÉSIRÉ: clone complet (jamais RemoveColumn) | in-place (round-trip (r,c) cohérent — confirmé S2) | ⚠️ · Insert xfail: code actuel corrompt via RemoveColumn (Q4); aperçu GFM désaligné (cosmétique) |
-| T12b | `[T.cells avec fusion V]` *(fusion verticale dans la sélection)* | ⚠️ DÉSIRÉ: clone complet (jamais RemoveRow) | in-place (maître à sa ligne, continuation vide jamais touchée — S3/S4) | ⚠️ · Insert xfail jusqu'à règle clone-complet; S3 mismatch UX; trou détection full (S5) |
+| T11 | `(mismatch nb cellules)` *(réponse ≠ nb cellules de la sélection)* | ✅ bandeau d'avertissement | ✅ idem | ✅ |
 | T13 | `[T.intra tableau imbriqué]` *(tableaux imbriqués)* | ❌ non supporté | ❌ non supporté | ❌ hors scope · hors scope |
 <!-- cases:table:table:end -->
 
 ---
 
-## 4bis. Cellules fusionnées (T12) — modèle OO confirmé + spécification
+## 4bis. Cellules fusionnées (T2b/c) — modèle OO confirmé + spécification
+
+> **Note taxonomie (2026-06-26)** : la fusion n'est **pas** une géométrie de sélection mais un **attribut de la table**. `T2b` (fusion H) et `T2c` (fusion V) ont **exactement** la géométrie de `T2a` (`T.cells`, cellules partielles). La fusion ne bascule **qu'un seul** chemin : **Insert** passe de « copie réduite » à « **clone complet** » (car `RemoveRow/Column` corrompt le span — Q4) ; **Replace = in-place, identique à T2a**. Partout ailleurs (T1, T3-full, Replace) la fusion est transparente. *(ex-`T12a/b`, regroupés sous T2 le 2026-06-26.)*
 
 État du code : **aucun traitement de fusion** (`grep merge|span|gridSpan|MergeCells` → rien dans `code.js`) ; phase 26 l'avait déféré. **Modèle OO 9.x confirmé empiriquement** par la sonde `.planning/probe-merged-cells.js` (4 sélections S1–S4 sur une table 4×3 avec 1 fusion V sur (r1,r2,c0) et 1 fusion H sur (r3,c1+c2), résultats archivés 2026-06-17).
 
@@ -117,8 +119,8 @@ Aucun repli sur table complète n'est nécessaire pour Replace : l'index logique
 
 ### Résidus réels (revus à la baisse)
 
-1. **Aperçu GFM désaligné (cosmétique, T12a+b)** — `cellsToMarkdownTable` indexe par `(r, cellIndex)` logique. Une ligne fusionnée H produit une cellule de moins → colonne visuelle vide en bout ; une continuation V n'émet pas de cellule col 0. Pipe-table d'aperçu désaligné vs le visuel, **sans corruption du document**. → **Accepté en v1.**
-2. **Mismatch visuel/traité (T12b, S3)** — sélectionner *seulement* une ligne de continuation surligne la cellule fusionnée à l'écran, mais son contenu (ancré au maître, non sélectionné) **n'est ni extrait ni édité**. Pas de corruption ; surprise UX possible. → option future : étendre la sélection au maître, ou afficher un indice. **Documenté, non bloquant.**
+1. **Aperçu GFM désaligné (cosmétique, T2b+c)** — `cellsToMarkdownTable` indexe par `(r, cellIndex)` logique. Une ligne fusionnée H produit une cellule de moins → colonne visuelle vide en bout ; une continuation V n'émet pas de cellule col 0. Pipe-table d'aperçu désaligné vs le visuel, **sans corruption du document**. → **Accepté en v1.**
+2. **Mismatch visuel/traité (T2c, S3)** — sélectionner *seulement* une ligne de continuation surligne la cellule fusionnée à l'écran, mais son contenu (ancré au maître, non sélectionné) **n'est ni extrait ni édité**. Pas de corruption ; surprise UX possible. → option future : étendre la sélection au maître, ou afficher un indice. **Documenté, non bloquant.**
 3. **Trou de détection `full` — CONFIRMÉ (S5, 2026-06-17)** — sélectionner *toute* la table à fusion V donne `hitCount = 10 < totalNonEmptyCells = 11` (la continuation vide `(2,0)` est comptée mais jamais sélectionnable) → **classée `partial`, jamais `full`** ; l'extraction omet `[CELL:2,0]`. **Bénin en pratique** : toutes lignes/colonnes restent représentées → le chemin partiel ne réduit rien → équivaut au clone complet. Ne mord que si une réduction est requise (→ #4). *Incohérence sous-jacente :* `totalNonEmptyCells` compte `elems>0`, la boucle d'inclusion des vides teste `elems===0`. → **fix optionnel** : exclure du compte les cellules à ¶ unique vide.
 4. **Insert + réduction de clone — CORRUPTION CONFIRMÉE (Q4, 2026-06-17)** — `RemoveColumn` (`code.js:1497-1521`) d'une colonne traversée par une fusion **horizontale** supprime **tout le span** : retirer la colonne B a effacé `B3` (qui couvrait B+C) → r3 réduite à `A3`, **perte de données**. → **Insert d'une table contenant une fusion (h ou v) ⇒ insérer le clone COMPLET, jamais de `RemoveRow/Column`.** Non négociable.
 
@@ -139,11 +141,11 @@ Ces limites dépendent du **type de contenu**, pas de la géométrie de sélecti
 <!-- cases:table:content:start -->
 | Contenu | Insérer | Remplacer | État / limite |
 |---|---|---|---|
-| text-simple | OK | OK | ✅ |
-| rich-inline | OK (formatage préservé) | OK | ✅ · gras/italique/barré/code/liens/souligné |
+| text-simple | ✅ OK | ✅ OK | ✅ |
+| rich-inline | ✅ OK (formatage préservé) | ✅ OK | ✅ · gras/italique/barré/code/liens/souligné |
 | color | ⚠️ non préservé | ⚠️ non préservé | ⚠️ · **L#5** · L5: couleur non préservée |
-| image | OK (round-trip) | OK | ✅ |
-| footnote | OK (recréée post-InsertContent) | OK | ✅ |
+| image | ✅ OK (round-trip) | ✅ OK | ✅ |
+| footnote | ✅ OK (recréée post-InsertContent) | ✅ OK | ✅ |
 | crossref | ⚠️ liens parfois perdus selon le document | ⚠️ idem | ⚠️ · **L#4** · L4: cross-refs perdus selon le document (pré-existant v2.6) |
 <!-- cases:table:content:end -->
 
@@ -231,10 +233,10 @@ Pour un contenu **multi-¶** dont le **1ᵉʳ para est sans style** : **option A
 
 ## 6. À faire / questions ouvertes
 
-- [x] **Cellules fusionnées (T12) — sonde Q1-Q3 faite (2026-06-17).** Modèle OO confirmé (§4bis) : fusion H → moins de cellules logiques ; fusion V → maître normal + continuation = cellule vide distincte, attribution stable, round-trip `(r,c)` sûr. → Replace in-place validé.
+- [x] **Cellules fusionnées (T2b/c) — sonde Q1-Q3 faite (2026-06-17).** Modèle OO confirmé (§4bis) : fusion H → moins de cellules logiques ; fusion V → maître normal + continuation = cellule vide distincte, attribution stable, round-trip `(r,c)` sûr. → Replace in-place validé.
 - [x] **S5 (2026-06-17)** — trou de détection `full` **confirmé** : table V-merge pleine → `hitCount 10 < 11` → classée `partial` (bénin, cf §4bis #3).
 - [x] **Q4 (2026-06-17)** — **corruption confirmée** : `RemoveColumn` d'une colonne à fusion H supprime tout le span (perte de `B3`). → règle « Insert = clone complet si fusion » désormais **obligatoire** (§4bis #4, décision 2).
-- [ ] **T12 — prêt à planifier.** Impl : Replace in-place (T2 existant) ; Insert ⇒ clone complet si la table contient une fusion (court-circuiter `RemoveRow/Column`) ; fix optionnel du trou `full` (~5 LOC) ; documenter mismatch S3.
+- [ ] **T2b/c (fusion) — prêt à planifier.** Impl : Replace in-place (T2a existant) ; Insert ⇒ clone complet si la table contient une fusion (court-circuiter `RemoveRow/Column`) ; fix optionnel du trou `full` (~5 LOC) ; documenter mismatch S3.
 - [ ] **T10** : la garde est défensive, mais son message utilisateur est trompeur (parle de « coupe » alors que c'est une incohérence de détection). Soit le rendre silencieux (log dev), soit reformuler. Instrumenter pour savoir s'il se déclenche réellement (notamment sur cellules fusionnées).
 - [ ] Tester systématiquement chaque ligne × {Insérer, Remplacer} × {texte, riche, tableau, image, footnote, cross-ref} — colonne « état » à passer en vert/rouge par campagne.
 

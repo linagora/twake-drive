@@ -15,7 +15,7 @@ CASES = PLANNING / "cases.csv"
 CONTENT = PLANNING / "content-fixtures.csv"
 TARGET = PLANNING / "SELECTION-CASES.md"
 
-BADGE = {"pass": "", "xfail": "⚠️ ", "na": "— ", "deferred": "🔜 ", "unsupported": "❌ "}
+BADGE = {"pass": "✅ ", "xfail": "⚠️ ", "na": "— ", "deferred": "🔜 ", "unsupported": "❌ "}
 
 
 def esc(s):
