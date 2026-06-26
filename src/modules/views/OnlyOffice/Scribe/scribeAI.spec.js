@@ -228,6 +228,33 @@ describe('scribeAI — unified response contract', () => {
       expect(out).toContain(CARDINALITY_CHAT)
       expect(out).toContain(CHAT_PERSONA)
     })
+
+    // v3.2-03-04 — D-07 frozen-contract byte-identity gate. The composition
+    // regression hinges on this: with the document path SHIPPED, an all-false /
+    // no-flag chat prompt must still START with CHAT_PERSONA and keep the
+    // RESPONSE_CONTRACT_CORE + CARDINALITY_CHAT block contiguous and unchanged —
+    // i.e. byte-identical to the pre-v3.2-03 output. This is the literal
+    // anchor the regression gate verifies for the frozen v3.1 artifacts.
+    it('D-07: all-false output still STARTS WITH CHAT_PERSONA and carries the frozen contract block unchanged', () => {
+      const out = buildChatSystemPrompt('', {
+        includeDocument: false,
+        includeSelection: false,
+        includeDiscussion: false
+      })
+      // starts with the persona (frozen) — explicit startsWith, not just contains
+      expect(out.startsWith(CHAT_PERSONA)).toBe(true)
+      // the frozen contract block is present and contiguous (core immediately
+      // followed by the chat cardinality clause)
+      expect(out).toContain(RESPONSE_CONTRACT_CORE + CARDINALITY_CHAT)
+      // and byte-identical to the documented baseline (no v3.2-03 drift)
+      expect(out).toBe(
+        CHAT_PERSONA +
+          '\n\n' +
+          RESPONSE_CONTRACT_CORE +
+          CARDINALITY_CHAT +
+          markerPreservationClauses('')
+      )
+    })
   })
 
   describe('encodeSelectionForPrompt (shared selection encoder — single source of truth)', () => {
