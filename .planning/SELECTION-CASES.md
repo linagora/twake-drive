@@ -220,6 +220,21 @@ Ces limites dépendent du **type de contenu**, pas de la géométrie de sélecti
 - **L#7** — **Insert ajoute un ¶ vide parasite** (bug confirmé live A0/insert, 2026-06-23). `code.js:1479` fait `content.unshift(Api.CreateParagraph())` de façon **inconditionnelle** → une ligne blanche à chaque « Insérer ». **Correctif = la spec §5bis** (le 1ᵉʳ para sans style est injecté *inline*, jamais via un ¶ vide ; le mode block n'insère un ¶ qu'au vrai milieu, sinon avant/après).
 - **L#8** — **Style de paragraphe à l'injection** (exigence, 2026-06-23). Couvert par la **spec §5bis** : un 1ᵉʳ para de fixture **sans style** prend le style du ¶ hôte (inline) ; **avec style** (titre/liste/citation/code), il garde son style md (block). Non testable avec `a-family.docx` (¶ *Normal* seul) → **fixture stylée** dédiée requise (cf. `REVIEW-LOG.md`).
 
+### Image au Replace — DEUX bugs distincts (investigation 2026-06-27)
+
+Le « bug image » du Replace n'est **pas** spécifique au tableau : il existe aussi pour une image **dans un paragraphe**. Mais les deux échouent par des mécanismes **différents** :
+
+| | Live après Replace | `.docx` sauvé | Cause racine |
+|---|---|---|---|
+| **Image en cellule (T9)** | ✅ ré-insérée (rendu OK, `drawingsInCells=1`) | ❌ perdue (0 `a:blip`, 0 media) | Replace structurel **détruit le tableau original** propriétaire de `word/media/imageN.png` → l'image ré-insérée pointe un **média orphelin** → OO le droppe au save (GC des relations média) |
+| **Image en paragraphe** | ❌ **perdue dès le live** (0 drawing) | ❌ perdue | L'image est `AddDrawing`'ée dans un paragraphe **détaché** (`content[]`) puis `InsertContent(content)` **ne transporte pas le drawing**. Échoue en mode inline **ET** block (≠ routage `isSimpleInline`). Le chemin tableau marche car `replaceCellContent`/`addBlockToParagraph` écrit le drawing **directement dans la cellule déjà attachée**. |
+
+- **Pas une régression v3.0-complete→HEAD** : le routage `isSimpleInline` est ~identique (HEAD ajoute seulement `&& !table`) ; le helper `restoreImage` est **identique** avant/après le strip+restore du 2026-04-03 (`89ac98a9c`/`12a48b109`). Le bug ¶-image existe déjà à v3.0-complete. Token image introduit `edbaa981b` (2026-03-20), cell images `46ab6443a` (2026-03-30). Seule fenêtre de régression non écartée = **avant v3.0-complete** (testable uniquement en faisant tourner l'ancien code live).
+- **Méthodo validée** : `SetName("scribe-img-N")` à l'extraction (`code.js:2809`, callCommand read-write) **persiste** entre callCommands (`Picture 1`→`scribe-img-0`). Pré-cache `Copy()` scanne le doc pour les drawings nommés `scribe-img-*` (`code.js:846-916`). Consommateurs : `addBlockToParagraph`/`addRunsToParagraph`→`AddDrawing` (1053/1322/1570/1648), `restoreImage` (912).
+- **Fix probable (¶)** : écrire le drawing **après** insertion dans le ¶ déjà attaché (comme le chemin tableau), pas dans le `content[]` détaché. **Fix (tableau)** : ré-enregistrer/dupliquer le média pour qu'il ne soit pas orphelin au save.
+- **Q ouverte (tableau, non liée image)** : `reconstructTable` = `FromJSON(ToJSON(true,true))` — préserve-t-il largeurs de colonnes, bordures, marges, shading ? Seule la perte du **fill image** est documentée ; le reste **non probé**.
+- **Outillage** : `gen_fixtures.py:_count_images` **ne gère pas** les images de ¶ top-level (double-normalise les runs) — ne marche que pour les images en **cellule**. Contournement utilisé pour `img-para.docx` : forcer `n_images` dans un build scratchpad.
+
 ---
 
 ## 5bis. Règles d'injection & d'extraction (style de ¶) — **spec normative (2026-06-24)**
