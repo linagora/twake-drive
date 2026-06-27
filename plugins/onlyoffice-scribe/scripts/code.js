@@ -9,7 +9,7 @@
   // If the console shows an OLDER build than expected, the editor served a CACHED
   // code.js → reopen the editor in a fresh tab / private window (a plain F5 won't
   // refetch the async plugin iframe).
-  var SCRIBE_BUILD = "2026-06-27.3 — fix(image-save via PasteHtml, .1) + fix(drag): debounce selection-extraction so init-on-selection-change no longer interrupts OO image resize/move drag";
+  var SCRIBE_BUILD = "2026-06-27.4 — fix(extract): keep image marker for image-only selection (no wipe; selection counts) so a pure-image cell/¶ round-trips";
   try { window.__scribeBuild = SCRIBE_BUILD; } catch (e) {}
 
   // ---- State ----
@@ -3406,9 +3406,17 @@
       lastPartialTableInfo = result.partialTableInfo || null;
       lastSelectedHtml = ""; // No longer used for primary extraction
 
-
+      // An image-only selection has empty plain text but a meaningful enriched md
+      // (the image marker). Don't wipe it — that lost the image (nothing reached
+      // the LLM / re-injection). Also make the selection "count" so Scribe can be
+      // triggered on it (the AI_TEXT_ASSISTANT gate checks lastSelectedText.length).
+      var mdHasImage = /!\[IMG:|\{\{IMG:/.test(lastEnrichedMd);
       if (!plainText) {
-        lastEnrichedMd = "";
+        if (mdHasImage) {
+          lastSelectedText = lastEnrichedMd;
+        } else {
+          lastEnrichedMd = "";
+        }
       }
 
       // Push selection to React only when panel is listening
