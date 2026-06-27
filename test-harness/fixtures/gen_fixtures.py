@@ -424,6 +424,30 @@ FIXTURES = [
             [{'t': 'Outro paragraph'}],
         ],
     },
+    {
+        # Famille A — ¶ VIDES (A7). 5 ¶ : Intro / VIDE / Middle / VIDE / Outro.
+        # Une sélection P2@start..P4@end a un ¶ VIDE à CHAQUE bord (P2 et P4) et
+        # entoure le ¶ "Middle" : sert à vérifier que l'extraction/injection
+        # PRÉSERVE les ¶ vides en bord (split sur double-newline avant le lexer).
+        'name': 'a7-empty.docx',
+        'paras': [
+            [{'t': 'Intro paragraph'}],
+            [],
+            [{'t': 'Middle paragraph'}],
+            [],
+            [{'t': 'Outro paragraph'}],
+        ],
+    },
+    {
+        # Famille A — TRÈS GRANDE sélection (A8, garde de perf). 120 ¶ "Para NNN"
+        # (>100 → exerce un éventuel repli extraction texte brut). P2 est en GRAS :
+        # témoin pour détecter une éventuelle perte du formatage (« perte du riche »).
+        'name': 'a8-large.docx',
+        'paras': [
+            [{'t': 'Para %03d' % i, 'b': 1}] if i == 2 else [{'t': 'Para %03d' % i}]
+            for i in range(1, 121)
+        ],
+    },
 ]
 
 
