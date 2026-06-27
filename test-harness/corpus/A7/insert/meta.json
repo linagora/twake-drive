@@ -1,0 +1,15 @@
+{
+  "caseId": "A7",
+  "mode": "insert",
+  "spec": "P2@start..P4@end",
+  "fixture": "a7-empty",
+  "source": "a7-empty.docx",
+  "statusFromCsv": "pass",
+  "stable": true,
+  "setSelectionOk": true,
+  "capturedVia": "Chrome DevTools MCP v4 (build 2026-06-26.8; multi-¶ driver; extract+injectAtSelection atomic; forcesave docx; no grabFocus)",
+  "capturedAt": "2026-06-27",
+  "verdict": "pass",
+  "comment": "Insert sur sélection à ¶ VIDES en bord (A7). Fixture = Intro / VIDE / Middle / VIDE / Outro ; sélection P2@start..P4@end = [¶vide, Middle, ¶vide] (vide à CHAQUE bord). EXTRACTION préserve les vides : extMd = '\\n\\nMiddle paragraph\\n\\n' (split sur double-newline avant lexer — cœur du cas). Insert au point (fin de sélection = P4 vide) → 'Added line' remplit ce ¶ vide cible ; le ¶ vide de tête (P2) est PRÉSERVÉ ; Intro/Outro intacts. blockCount=5 stable. Sélection multi-¶ via branche cross (build .8).",
+  "captureVersion": "v4"
+}

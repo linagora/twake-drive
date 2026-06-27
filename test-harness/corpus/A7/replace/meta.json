@@ -1,0 +1,15 @@
+{
+  "caseId": "A7",
+  "mode": "replace",
+  "spec": "P2@start..P4@end",
+  "fixture": "a7-empty",
+  "source": "a7-empty.docx",
+  "statusFromCsv": "pass",
+  "stable": true,
+  "setSelectionOk": true,
+  "capturedVia": "Chrome DevTools MCP v4 (build 2026-06-26.8; multi-¶ driver; extract+injectAtSelection atomic; forcesave docx; no grabFocus)",
+  "capturedAt": "2026-06-27",
+  "verdict": "pass",
+  "comment": "Replace sur sélection à ¶ VIDES en bord (A7). Sélection P2@start..P4@end = [¶vide, Middle, ¶vide] remplacée par 'New middle'. EXTRACTION préserve les vides (extMd = '\\n\\nMiddle paragraph\\n\\n', split double-newline avant lexer = cœur du cas). Résultat : Intro / 'New middle' / ¶vide / Outro (blockCount 5→4) — texte correct, contenu HORS sélection (Intro/Outro) intact, 1 ¶ vide résiduel (L#7, commun aux replace). Aucune corruption. Sélection multi-¶ via branche cross (build .8).",
+  "captureVersion": "v4"
+}

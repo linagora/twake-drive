@@ -1,0 +1,15 @@
+{
+  "caseId": "A8",
+  "mode": "replace",
+  "spec": "P1@start..P120@end",
+  "fixture": "a8-large",
+  "source": "a8-large.docx",
+  "statusFromCsv": "pass",
+  "stable": true,
+  "setSelectionOk": true,
+  "capturedVia": "Chrome DevTools MCP v4 (build 2026-06-26.8; multi-¶ driver; extract+injectAtSelection atomic; forcesave docx; no grabFocus)",
+  "capturedAt": "2026-06-27",
+  "verdict": "pass",
+  "comment": "Sélection TRÈS GRANDE (A8) — garde de perf VÉRIFIÉE. Sélection P1@start..P120@end (120 ¶). EXTRACTION : garde code.js:2993 (>100 ¶) → extMd VIDE + extText=1198 (brut), guardFired=true ('perte du riche', gras P2 perdu). Seuil exact >100 ¶. Inject : les 120 ¶ sont remplacés par 1 seul ¶ 'A8 replaced all' (blockCount 120→1), propre et stable. Sélection via branche cross (build .8).",
+  "captureVersion": "v4"
+}
