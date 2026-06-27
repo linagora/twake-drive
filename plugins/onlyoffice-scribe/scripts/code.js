@@ -9,7 +9,7 @@
   // If the console shows an OLDER build than expected, the editor served a CACHED
   // code.js → reopen the editor in a fresh tab / private window (a plain F5 won't
   // refetch the async plugin iframe).
-  var SCRIBE_BUILD = "2026-06-27.9 — fix(drag): suppress extraction while mouse held + attach pointer tracking to ALL frame docs (canvas is in an inner OO frame; single-attach hit a stale doc)";
+  var SCRIBE_BUILD = "2026-06-27.10 — fix(insert): place content at selection END (not after the table) for {table + following ¶} selections (T7)";
   try { window.__scribeBuild = SCRIBE_BUILD; } catch (e) {}
 
   // ---- State ----
@@ -1858,22 +1858,32 @@
         }
 
         if (mode === "insert") {
-          // For table selections: move cursor after the table so InsertContent
-          // places content after the table, not inside the last cell.
+          // Insert places content at the END OF THE SELECTION (spec §"Convention":
+          // "Insérer = au point d'insertion (fin de la sélection)"). For a selection
+          // that contains a table we still must collapse the cursor first (an active
+          // multi-element selection would otherwise be deleted by InsertContent), but
+          // the target is the selection END — NOT blindly "after the table". The old
+          // code always jumped to after the last response table, so a selection of
+          // {table + following ¶} inserted between the table and the ¶ ({T,F,P})
+          // instead of after the ¶ ({T,P,F}). We only bump past a table when the
+          // selection actually ENDS inside one (table-only / cell-end), where
+          // collapsing to selEnd would land in a cell.
           if (parsedTables.length > 0) {
             try {
-              for (var itp = parsedTables.length - 1; itp >= 0; itp--) {
-                var itpDocIdx = tableDocIndices[parsedTables[itp].index];
-                var itpTable = (itpDocIdx !== undefined && itpDocIdx < allTables.length) ? allTables[itpDocIdx] : null;
-                if (itpTable) {
-                  var itpRange = itpTable.GetRange();
-                  if (itpRange) {
-                    var afterPos = itpRange.GetEndPos() + 1;
-                    var afterRange = doc.GetRange(afterPos, afterPos);
-                    if (afterRange) afterRange.Select();
+              var insSelR = doc.GetRangeBySelect();
+              var insSelEnd = insSelR ? insSelR.GetEndPos() : -1;
+              if (insSelEnd >= 0) {
+                var insTarget = insSelEnd;
+                var insDocTables = doc.GetAllTables();
+                for (var idt = 0; idt < insDocTables.length; idt++) {
+                  var idtR = insDocTables[idt].GetRange();
+                  if (idtR && insSelEnd >= idtR.GetStartPos() && insSelEnd <= idtR.GetEndPos()) {
+                    insTarget = idtR.GetEndPos() + 1; // selection ends inside this table → after it
                     break;
                   }
                 }
+                var insCur = doc.GetRange(insTarget, insTarget);
+                if (insCur) insCur.Select();
               }
             } catch (e) {
               // Cursor repositioning failed — InsertContent will use current position
