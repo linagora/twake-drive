@@ -9,7 +9,7 @@
   // If the console shows an OLDER build than expected, the editor served a CACHED
   // code.js → reopen the editor in a fresh tab / private window (a plain F5 won't
   // refetch the async plugin iframe).
-  var SCRIBE_BUILD = "2026-06-27.5 — fix(table-image save): cell images use marker+PasteHtml (media upload) + injectPendingImages scans cells, so clone-path (T9 full) cell images survive save";
+  var SCRIBE_BUILD = "2026-06-27.9 — fix(drag): suppress extraction while mouse held + attach pointer tracking to ALL frame docs (canvas is in an inner OO frame; single-attach hit a stale doc)";
   try { window.__scribeBuild = SCRIBE_BUILD; } catch (e) {}
 
   // ---- State ----
@@ -122,6 +122,11 @@
   // we coalesce bursts of selection changes and extract only once they settle.
   var extractionDebounceTimer = null;
   var EXTRACTION_DEBOUNCE_MS = 250;
+  // True while a mouse button is held in the editor (e.g. dragging an image handle
+  // to resize/move). The extraction callCommand must NOT run during this — it
+  // re-enters the editor and aborts OO's drag tracking (the image snaps back). We
+  // suppress it on mousedown and run it once on mouseup (see handleEditorPointer*).
+  var pointerDown = false;
 
   // ---- Register <u> underline extension for marked.lexer ----
   // Custom inline extension so marked tokenizes <u>...</u> into underline tokens
@@ -2542,6 +2547,12 @@
   // SELECTION_CHANGED to the host.
   function runSelectionExtraction() {
     extractionDebounceTimer = null;
+    // A mouse button is held in the editor (dragging an image handle to
+    // resize/move) — do NOT run the extraction callCommand now; it would abort
+    // OO's drag tracking and the image would snap back. mouseup reschedules it.
+    if (pointerDown) {
+      return;
+    }
     // Ignore extraction triggered by our own paste operations.
     if (pasteInProgress) {
       log("extraction skipped — paste in progress");
@@ -3559,6 +3570,55 @@
     }
   }
 
+  // While the mouse is held in the editor (e.g. dragging an image handle to
+  // resize/move), suppress the selection-extraction callCommand — it re-enters the
+  // editor and aborts OO's drag tracking (the image snaps back mid-drag). On
+  // release, run the extraction once so selection state refreshes. (initOnSelection
+  // Changed fires ~once at drag start, so the debounce alone fired mid-drag.)
+  function handleEditorPointerDown() {
+    pointerDown = true;
+    if (extractionDebounceTimer) { clearTimeout(extractionDebounceTimer); extractionDebounceTimer = null; }
+  }
+  function handleEditorPointerUp() {
+    if (!pointerDown) return;
+    pointerDown = false;
+    if (extractionDebounceTimer) { clearTimeout(extractionDebounceTimer); }
+    extractionDebounceTimer = setTimeout(runSelectionExtraction, EXTRACTION_DEBOUNCE_MS);
+  }
+
+  // Attach pointer tracking to EVERY accessible frame document. The editor canvas
+  // mousedown/pointerdown fires in an INNER OO frame, not window.parent.document —
+  // attaching only there missed it (build .6 still snapped back). Walk the
+  // same-origin frame tree from the top; cross-origin frames are skipped. Both
+  // mouse and pointer events are bound (canvas may use Pointer Events). Re-run
+  // after a delay since frames load after the plugin. addEventListener dedupes
+  // identical (type, fn, capture), so re-attaching is safe.
+  function attachPointerTrackingAll() {
+    var seen = [];
+    function bind(d) {
+      try {
+        d.addEventListener("mousedown", handleEditorPointerDown, true);
+        d.addEventListener("mouseup", handleEditorPointerUp, true);
+        d.addEventListener("pointerdown", handleEditorPointerDown, true);
+        d.addEventListener("pointerup", handleEditorPointerUp, true);
+      } catch (e) {}
+    }
+    function visit(w) {
+      if (!w) return;
+      var d; try { d = w.document; } catch (e) { return; } // cross-origin → skip
+      if (!d) return;
+      for (var s = 0; s < seen.length; s++) { if (seen[s] === d) return; }
+      seen.push(d);
+      bind(d);
+      var fs; try { fs = w.frames; } catch (e) { return; }
+      for (var i = 0; i < fs.length; i++) { try { visit(fs[i]); } catch (e) {} }
+    }
+    try { visit(window.top); } catch (e) { try { visit(window); } catch (e2) {} }
+    // Safety net: a release anywhere (incl. outside the editor) clears the flag.
+    try { window.addEventListener("mouseup", handleEditorPointerUp, true); } catch (e) {}
+    try { window.addEventListener("pointerup", handleEditorPointerUp, true); } catch (e) {}
+  }
+
   try {
     window.parent.document.addEventListener("keydown", handleCtrlShiftI);
     window.parent.document.addEventListener("keydown", handleUndoRedoKey);
@@ -3570,6 +3630,9 @@
     document.addEventListener("keydown", handleUndoRedoKey);
     document.addEventListener("click", handleUndoRedoClick, true);
   }
+  attachPointerTrackingAll();
+  try { setTimeout(attachPointerTrackingAll, 1500); } catch (e) {}
+  try { setTimeout(attachPointerTrackingAll, 4000); } catch (e) {}
 
   // ---- Toolbar button ----
   // Add a "Scribe" button in the OO toolbar (Plugins tab).
