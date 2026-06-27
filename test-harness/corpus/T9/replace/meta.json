@@ -2,14 +2,13 @@
   "caseId": "T9",
   "mode": "replace",
   "spec": "T1.full",
-  "fixture": "[CELL:0,0]![IMG:scribe-img-0][/CELL][CELL:0,1]BetaX[/CELL][CELL:1,0]GammaX[/CELL][CELL:1,1]DeltaX[/CELL]",
+  "fixture": "[CELL:0,0]![IMG:scribe-img-0](placeholder)[/CELL][CELL:0,1]BetaX[/CELL][CELL:1,0]GammaX[/CELL][CELL:1,1]DeltaX[/CELL]",
   "source": "table-image.docx",
-  "statusFromCsv": "xfail",
+  "statusFromCsv": "pass",
   "stable": true,
   "setSelectionOk": true,
-  "capturedVia": "Chrome DevTools MCP v4 (build 2026-06-26.4; extract+injectAtSelection atomic; snapshots cabled; forcesave docx; no grabFocus)",
-  "capturedAt": "2026-06-26",
-  "verdict": "xfail",
-  "comment": "Replace tableau entier avec IMAGE (T1.full, chemin clone) : l'image en cellule (0,0) est PERDUE à la sauvegarde. Live l'éditeur la montre (rendu rouge, drawingsInCells=1) MAIS after.docx (forcesave x3) n'a NI a:blip NI media -> le clone reconstruit via ToJSON perd le fill de l'image (caveat Copy-vs-ToJSON documenté), et l'original détruit emporte son média. Discriminant : doc image pristine round-trip OK (a:blip=2,media), et replace partiel in-place (cellule image non touchée) préserve l'image -> bug localisé au chemin reconstructTable/ToJSON en REPLACE structurel. after.png = état live (image visible) ; after.docx = persisté (image perdue).",
-  "captureVersion": "v4"
+  "capturedVia": "Chrome DevTools MCP v5 (build 2026-06-27.9; marker+PasteHtml cell images; forcesave docx)",
+  "capturedAt": "2026-06-27",
+  "verdict": "pass",
+  "comment": "Replace tableau entier avec IMAGE (T1.full, chemin clone) — FIXÉ (commit 8ee036220, build .9). L'image en cellule (0,0) survit DÉSORMAIS à la sauvegarde : after.docx a 1 word/media + a:blip présent (hasBlip=True), cellules BetaX/GammaX/DeltaX appliquées. Ancien xfail (L#8) : le clone via reconstructTable/ToJSON + AddDrawing(Copy) perdait le média (0 blip). Fix : les images de cellule passent par marqueur texte + PasteHtml post-InsertContent (upload média serveur) et injectPendingImages scanne les cellules. Live: drawingsInCells=1 (rendu OK) ; save: média persisté. Remplace l'ancien bundle xfail."
 }
