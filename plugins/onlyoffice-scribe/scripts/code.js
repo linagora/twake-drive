@@ -9,7 +9,7 @@
   // If the console shows an OLDER build than expected, the editor served a CACHED
   // code.js → reopen the editor in a fresh tab / private window (a plain F5 won't
   // refetch the async plugin iframe).
-  var SCRIBE_BUILD = "2026-06-27.4 — fix(extract): keep image marker for image-only selection (no wipe; selection counts) so a pure-image cell/¶ round-trips";
+  var SCRIBE_BUILD = "2026-06-27.5 — fix(table-image save): cell images use marker+PasteHtml (media upload) + injectPendingImages scans cells, so clone-path (T9 full) cell images survive save";
   try { window.__scribeBuild = SCRIBE_BUILD; } catch (e) {}
 
   // ---- State ----
@@ -1091,12 +1091,13 @@
       // Add block content to a paragraph: handles runs and image_placeholder blocks.
       function addBlockToParagraph(para, block, fontFamily, fontSize) {
         if (block.type === "image_placeholder" && block.name) {
-          var imgDrawing = restoreImage(block.name);
-          if (imgDrawing) {
-            para.AddDrawing(imgDrawing);
-          }
+          // Cell block image: marker + post-InsertContent PasteHtml (media upload),
+          // like top-level images — so a re-inserted cell image survives save.
+          // AddDrawing(Copy) renders live but leaves an orphaned data-URL dropped at
+          // save (the table clone-path / T9 bug).
+          addImageMarker(para, block.name, fontFamily, fontSize);
         } else {
-          addRunsToParagraph(para, block.runs || [], fontFamily, fontSize);
+          addRunsToParagraph(para, block.runs || [], fontFamily, fontSize, pendingImages);
         }
       }
 
@@ -1651,7 +1652,7 @@
             if (!cellContent) return;
             var cellPara = cellContent.GetElement(0);
             if (!cellPara) return;
-            addRunsToParagraph(cellPara, runs, srcFontFamily, srcFontSize);
+            addRunsToParagraph(cellPara, runs, srcFontFamily, srcFontSize, pendingImages);
           }
 
           // Fill header row (row 0) — bold by default
@@ -2141,17 +2142,43 @@
       window.Asc.plugin.callCommand(function() {
         var doc = Api.GetDocument();
         var marker = Asc.scope._imgMarker;
-        var paras = doc.GetAllParagraphs();
-        for (var p = 0; p < paras.length; p++) {
-          var para = paras[p];
-          var ec = para.GetElementsCount ? para.GetElementsCount() : 0;
+        // Select the marker run inside a paragraph (returns true if found).
+        function selectMarkerIn(para) {
+          var ec = para && para.GetElementsCount ? para.GetElementsCount() : 0;
           for (var e = 0; e < ec; e++) {
             var el = para.GetElement(e);
             var t = el && el.GetText ? el.GetText() : "";
             if (t === marker) {
               var rg = el.GetRange ? el.GetRange() : null;
               if (rg) rg.Select();
-              return;
+              return true;
+            }
+          }
+          return false;
+        }
+        // Top-level paragraphs first.
+        var paras = doc.GetAllParagraphs();
+        for (var p = 0; p < paras.length; p++) {
+          if (selectMarkerIn(paras[p])) return;
+        }
+        // Then table cells (GetAllParagraphs does NOT include them) — needed for
+        // images re-inserted into a reconstructed/cloned table (T9 clone path).
+        var tables = doc.GetAllTables();
+        for (var ti = 0; ti < tables.length; ti++) {
+          var rows = tables[ti].GetRowsCount();
+          for (var r = 0; r < rows; r++) {
+            var row = tables[ti].GetRow(r);
+            var cc = row ? row.GetCellsCount() : 0;
+            for (var c = 0; c < cc; c++) {
+              var cell = tables[ti].GetCell(r, c);
+              var content = cell ? cell.GetContent() : null;
+              var n = content ? content.GetElementsCount() : 0;
+              for (var k = 0; k < n; k++) {
+                var elx = content.GetElement(k);
+                if (elx && elx.GetClassType && elx.GetClassType() === "paragraph") {
+                  if (selectMarkerIn(elx)) return;
+                }
+              }
             }
           }
         }
