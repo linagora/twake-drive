@@ -9,7 +9,7 @@
   // If the console shows an OLDER build than expected, the editor served a CACHED
   // code.js → reopen the editor in a fresh tab / private window (a plain F5 won't
   // refetch the async plugin iframe).
-  var SCRIBE_BUILD = "2026-06-26.8 — test(driver): multi-¶ top-level selection (A5/A6) rides the cross branch (ExpandTo of two collapsed ¶ ranges) on top of .7";
+  var SCRIBE_BUILD = "2026-06-27.1 — fix(image): top-level ¶ images re-inserted via PasteHtml (marker + post-InsertContent paste) so media is uploaded & survives save; table-cell images unchanged for now";
   try { window.__scribeBuild = SCRIBE_BUILD; } catch (e) {}
 
   // ---- State ----
@@ -917,6 +917,42 @@
         return cached;
       }
 
+      // --- Image media-orphan fix (top-level ¶ images) ---
+      // AddDrawing(Copy()) renders live but the re-inserted image carries a raw
+      // data-URL RasterImageId that is NEVER uploaded to the doc-server, so at save
+      // it has no blip/media and is dropped (probed 2026-06-27). The paste pipeline
+      // DOES upload media, so we instead insert top-level images via PasteHtml AFTER
+      // InsertContent: here we only drop a text MARKER run where the image goes and
+      // record its data-URL + size; the plugin-side callback (injectPendingImages)
+      // selects each marker and PasteHtml's the <img>. (Table-cell images still use
+      // AddDrawing for now — same latent save bug, handled in a later pass.)
+      var pendingImages = [];  // [{marker, src(dataURL), w, h}] returned to the callback
+      function imageSpecFor(name) {
+        var d = drawingIndex[name];
+        if (!d) return null;
+        try {
+          var j = JSON.parse(d.ToJSON());
+          var bf = j && j.graphic ? j.graphic.blipFill : null;
+          var src = bf ? bf.rasterImageId : null;
+          if (!src) return null;
+          return { src: src, w: d.GetWidth(), h: d.GetHeight() };  // w/h in EMU
+        } catch (e) { return null; }
+      }
+      // Append a marker run for image `name` to `para`; record the pending image.
+      // Returns true if a marker was added (image known), false otherwise.
+      function addImageMarker(para, name, fontFamily, fontSize) {
+        var spec = imageSpecFor(name);
+        if (!spec) return false;
+        var marker = "\u0000IMG:" + pendingImages.length + "\u0000";
+        var run = Api.CreateRun();
+        run.AddText(marker);
+        if (fontFamily) run.SetFontFamily(fontFamily);
+        if (fontSize) run.SetFontSize(fontSize);
+        para.AddElement(run);
+        pendingImages.push({ marker: marker, src: spec.src, w: spec.w, h: spec.h });
+        return true;
+      }
+
       // --- Footnote round-trip: save content text, recreate after InsertContent ---
       // Footnote calls appear as runs with style "footnote reference" and empty text.
       // Copy() on these runs does NOT preserve the internal footnote link.
@@ -1313,13 +1349,20 @@
       // Shared function: add runs to a paragraph (used for both document paragraphs
       // and table cells). Handles text, bold/italic/strikethrough/code, hyperlinks,
       // and image markers (via restoreImage from image cache).
-      function addRunsToParagraph(para, runs, fontFamily, fontSize) {
+      function addRunsToParagraph(para, runs, fontFamily, fontSize, imageSink) {
         for (var ri = 0; ri < runs.length; ri++) {
           var run = runs[ri];
           if (run.imageMarker) {
-            var imDrawing = restoreImage(run.imageMarker);
-            if (imDrawing) {
-              para.AddDrawing(imDrawing);
+            // Top-level (imageSink given): drop a marker, PasteHtml the image later
+            // so its media is uploaded (AddDrawing would orphan it at save).
+            // Table cells (no imageSink): keep AddDrawing for now.
+            if (imageSink) {
+              addImageMarker(para, run.imageMarker, fontFamily, fontSize);
+            } else {
+              var imDrawing = restoreImage(run.imageMarker);
+              if (imDrawing) {
+                para.AddDrawing(imDrawing);
+              }
             }
           } else if (run.footnoteMarker) {
             // Footnote placeholder: defer actual footnote creation to post-InsertContent.
@@ -1541,7 +1584,7 @@
           var headingStyle = doc.GetStyle(styleName);
           if (headingStyle) p.SetStyle(headingStyle);
           if (isFirst && needSpaceBefore) p.AddElement(makeSpaceRun());
-          addRunsToParagraph(p, block.runs || [], null, null);
+          addRunsToParagraph(p, block.runs || [], null, null, pendingImages);
           if (isLast && needSpaceAfter) p.AddElement(makeSpaceRun());
           content.push(p);
         } else if (block.type === "list_item") {
@@ -1550,7 +1593,7 @@
           var numLvl = numbering.GetLevel(block.level);
           p.SetNumbering(numLvl);
           if (isFirst && needSpaceBefore) p.AddElement(makeSpaceRun());
-          addRunsToParagraph(p, block.runs || [], srcFontFamily, srcFontSize);
+          addRunsToParagraph(p, block.runs || [], srcFontFamily, srcFontSize, pendingImages);
           if (isLast && needSpaceAfter) p.AddElement(makeSpaceRun());
           content.push(p);
         } else if (block.type === "code_block") {
@@ -1565,10 +1608,7 @@
           for (var j = 0; j < runs.length; j++) {
             var run = runs[j];
             if (run.imageMarker) {
-              var imDrawing = restoreImage(run.imageMarker);
-              if (imDrawing) {
-                p.AddDrawing(imDrawing);
-              }
+              addImageMarker(p, run.imageMarker, null, srcFontSize);
             } else {
               var r = Api.CreateRun();
               r.AddText(run.text);
@@ -1637,18 +1677,17 @@
         } else if (block.type === "paragraph") {
           var p = Api.CreateParagraph();
           if (isFirst && needSpaceBefore) p.AddElement(makeSpaceRun());
-          addRunsToParagraph(p, block.runs || [], srcFontFamily, srcFontSize);
+          addRunsToParagraph(p, block.runs || [], srcFontFamily, srcFontSize, pendingImages);
           if (isLast && needSpaceAfter) p.AddElement(makeSpaceRun());
           content.push(p);
         } else if (block.type === "image_placeholder") {
-          var imgDrawing = restoreImage(block.name);
-          if (imgDrawing) {
-            var imgPara = Api.CreateParagraph();
-            if (isFirst && needSpaceBefore) imgPara.AddElement(makeSpaceRun());
-            imgPara.AddDrawing(imgDrawing);
-            if (isLast && needSpaceAfter) imgPara.AddElement(makeSpaceRun());
-            content.push(imgPara);
-          }
+          // Pure-image paragraph (top-level): marker now, PasteHtml the image later
+          // so its media is uploaded (AddDrawing would orphan it at save).
+          var imgPara = Api.CreateParagraph();
+          if (isFirst && needSpaceBefore) imgPara.AddElement(makeSpaceRun());
+          var added = addImageMarker(imgPara, block.name, srcFontFamily, srcFontSize);
+          if (isLast && needSpaceAfter) imgPara.AddElement(makeSpaceRun());
+          if (added) content.push(imgPara);
           // If not in cache (image was deleted from doc), silently skip
         }
 
@@ -2057,12 +2096,67 @@
           // Selection failed — not critical, document content is correct
         }
       }
-    }, false, false, function() {
+
+      // Hand back the deferred top-level images so the callback can PasteHtml them
+      // (their bitmap+size travels as a data URL; PasteHtml uploads the media).
+      return JSON.stringify({ pendingImages: pendingImages });
+    }, false, false, function(ret) {
       callbackFired = true;
       clearTimeout(fallbackTimer);
-      pasteInProgress = false;
       log("Builder injection complete (" + mode + ")");
+      var pend = [];
+      try { pend = (JSON.parse(ret || "{}").pendingImages) || []; } catch (e) {}
+      if (pend.length === 0) {
+        pasteInProgress = false;
+        return;
+      }
+      // Replace each marker with a properly-uploaded image, then clear the flag.
+      injectPendingImages(pend, function() { pasteInProgress = false; });
     });
+  }
+
+  // Post-InsertContent: for each deferred top-level image, find its marker run,
+  // select it, and PasteHtml the <img> in its place. PasteHtml routes through OO's
+  // paste pipeline which UPLOADS the image media to the doc-server — so the saved
+  // .docx keeps a real blip+media part (AddDrawing leaves an orphaned data URL that
+  // is dropped at save). Runs sequentially (each PasteHtml is async).
+  function injectPendingImages(list, done) {
+    var i = 0;
+    function emu2px(emu) {
+      var n = Math.round((emu || 0) / 9525);  // 1 px = 9525 EMU
+      return n > 0 ? n : 48;
+    }
+    function step() {
+      if (i >= list.length) { if (done) done(); return; }
+      var img = list[i++];
+      // 1) select the marker run (its range) so PasteHtml replaces it
+      Asc.scope._imgMarker = img.marker;
+      window.Asc.plugin.callCommand(function() {
+        var doc = Api.GetDocument();
+        var marker = Asc.scope._imgMarker;
+        var paras = doc.GetAllParagraphs();
+        for (var p = 0; p < paras.length; p++) {
+          var para = paras[p];
+          var ec = para.GetElementsCount ? para.GetElementsCount() : 0;
+          for (var e = 0; e < ec; e++) {
+            var el = para.GetElement(e);
+            var t = el && el.GetText ? el.GetText() : "";
+            if (t === marker) {
+              var rg = el.GetRange ? el.GetRange() : null;
+              if (rg) rg.Select();
+              return;
+            }
+          }
+        }
+      }, false, false, function() {
+        // 2) PasteHtml the image over the now-selected marker
+        var html = '<img src="' + img.src + '" width="' + emu2px(img.w) + '" height="' + emu2px(img.h) + '"/>';
+        window.Asc.plugin.executeMethod("PasteHtml", [html], function() {
+          setTimeout(step, 60);
+        });
+      });
+    }
+    step();
   }
 
   // Rich text paste pipeline:

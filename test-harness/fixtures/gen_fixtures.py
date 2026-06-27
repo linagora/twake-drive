@@ -22,16 +22,24 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 # A run can be an image: {'img': N} (1-based). The generator embeds a tiny PNG as
 # word/media/imageN.png + a relationship, and emits an inline <w:drawing>. Used by
 # the T9 case (image inside a table cell). OO scales the 1×1 PNG to the extent.
-def _png_1x1():
+def _png_1x1(rgb=(220, 40, 40)):
     def chunk(typ, data):
         body = typ + data
         return struct.pack(">I", len(data)) + body + struct.pack(">I", zlib.crc32(body) & 0xffffffff)
     sig = b"\x89PNG\r\n\x1a\n"
     ihdr = chunk(b"IHDR", struct.pack(">IIBBBBB", 1, 1, 8, 2, 0, 0, 0))  # 1×1, 8-bit RGB
-    idat = chunk(b"IDAT", zlib.compress(b"\x00" + bytes((220, 40, 40))))  # filter 0 + red pixel
+    idat = chunk(b"IDAT", zlib.compress(b"\x00" + bytes(rgb)))  # filter 0 + 1 pixel
     return sig + ihdr + idat + chunk(b"IEND", b"")
 
 TINY_PNG = _png_1x1()
+
+# Distinct per-image colours so each word/media/imageN.png is byte-distinct.
+# Avoids OO deduplicating identical media (which obscures which drawing owns which
+# media when diagnosing the orphan-media-at-save bug).
+_IMG_PALETTE = [(220, 40, 40), (40, 120, 220), (40, 180, 80), (220, 180, 40)]
+
+def _png_for_index(i):  # i is 0-based
+    return _png_1x1(_IMG_PALETTE[i % len(_IMG_PALETTE)])
 
 # Set per-document in write_docx so run_xml can compute image rIds. (Single-threaded.)
 _DOC_WITH_STYLES = False
@@ -58,19 +66,23 @@ def drawing_xml(n):
 
 def _count_images(elements):
     mx = 0
-    def scan_paras(paras):
+    def scan_one_para(p):
+        # p = a single paragraph (list of runs, or {'runs':..,'style':..}).
         nonlocal mx
-        for p in paras:
-            for r in (_norm_para(p)[0] or []):
-                if isinstance(r, dict) and r.get('img'):
-                    mx = max(mx, r['img'])
+        for r in (_norm_para(p)[0] or []):
+            if isinstance(r, dict) and r.get('img'):
+                mx = max(mx, r['img'])
     for el in elements:
         if isinstance(el, dict) and 'table' in el:
             for row in el['table']:
                 for cell in row:
-                    scan_paras(_norm_cell(cell)[0])
+                    for p in _norm_cell(cell)[0]:
+                        scan_one_para(p)
         else:
-            scan_paras(_norm_para(el)[0])
+            # Top-level element IS a single paragraph — scan it directly.
+            # (Earlier code double-normalised it, treating its runs as paragraphs
+            # and so never seeing top-level ¶ images.)
+            scan_one_para(el)
     return mx
 
 def content_types(with_styles, with_images=False):
@@ -306,7 +318,7 @@ def write_docx(path, paras):
         if with_styles:
             z.writestr('word/styles.xml', STYLES_XML)
         for i in range(n_images):
-            z.writestr('word/media/image%d.png' % (i + 1), TINY_PNG)
+            z.writestr('word/media/image%d.png' % (i + 1), _png_for_index(i))
 
 
 # --- Corpus de fixtures ------------------------------------------------------
@@ -446,6 +458,22 @@ FIXTURES = [
         'paras': [
             [{'t': 'Para %03d' % i, 'b': 1}] if i == 2 else [{'t': 'Para %03d' % i}]
             for i in range(1, 121)
+        ],
+    },
+    {
+        # Famille IMAGE EN PARAGRAPHE — support du chantier « image au Replace »
+        # côté TOP-LEVEL (hors tableau). 2 images couvrant les 2 chemins de code :
+        #   P2 = "Photo " + image inline  → run.imageMarker (addRunsToParagraph)
+        #   P3 = image SEULE              → bloc image_placeholder
+        # Encadrée Intro/Outro. Sert à reproduire/valider le bug « ¶-image perdue
+        # dès le live » (AddDrawing dans un content[] détaché non transporté par
+        # InsertContent) et à vérifier le round-trip après fix.
+        'name': 'img-para.docx',
+        'paras': [
+            [{'t': 'Intro paragraph'}],
+            [{'t': 'Photo '}, {'img': 1}],
+            [{'img': 2}],
+            [{'t': 'Outro paragraph'}],
         ],
     },
 ]
