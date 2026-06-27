@@ -9,7 +9,7 @@
   // If the console shows an OLDER build than expected, the editor served a CACHED
   // code.js → reopen the editor in a fresh tab / private window (a plain F5 won't
   // refetch the async plugin iframe).
-  var SCRIBE_BUILD = "2026-06-27.1 — fix(image): top-level ¶ images re-inserted via PasteHtml (marker + post-InsertContent paste) so media is uploaded & survives save; table-cell images unchanged for now";
+  var SCRIBE_BUILD = "2026-06-27.3 — fix(image-save via PasteHtml, .1) + fix(drag): debounce selection-extraction so init-on-selection-change no longer interrupts OO image resize/move drag";
   try { window.__scribeBuild = SCRIBE_BUILD; } catch (e) {}
 
   // ---- State ----
@@ -115,6 +115,13 @@
   // ---- Paste HTML with smart spacing ----
   // Prevents init() and polling from interfering during paste.
   var pasteInProgress = false;
+
+  // Debounce for the selection-extraction triggered by OO on every selection
+  // change (config initOnSelectionChanged:true). Running it on each change
+  // interrupts OO's mouse-drag tracking (broke image resize/move via handles), so
+  // we coalesce bursts of selection changes and extract only once they settle.
+  var extractionDebounceTimer = null;
+  var EXTRACTION_DEBOUNCE_MS = 250;
 
   // ---- Register <u> underline extension for marked.lexer ----
   // Custom inline extension so marked tokenizes <u>...</u> into underline tokens
@@ -2483,11 +2490,6 @@
 
   window.Asc.plugin.init = function(data) {
     log("init() — build " + SCRIBE_BUILD);
-    // Ignore init calls triggered by our own paste operations
-    if (pasteInProgress) {
-      log("init() called (ignored — paste in progress)");
-      return;
-    }
     // Add toolbar button on first init (API is ready at this point)
     if (!toolbarButtonAdded) {
       addToolbarButton();
@@ -2496,18 +2498,38 @@
       // case the module-load announce raced ahead of the host's listener.
       announceReady();
     }
+    // OO calls init() on EVERY selection change (config initOnSelectionChanged:
+    // true). Running the heavy extraction callCommand on each change re-enters the
+    // editor mid-interaction and INTERRUPTS OO's mouse-drag tracking — which broke
+    // resizing/moving an image by dragging its handles (a drag fires a continuous
+    // burst of selection changes). Debounce it so the extraction runs only once
+    // the selection has settled; a drag never triggers it mid-operation, and the
+    // result is ready well before the user can reach the Scribe trigger.
+    if (extractionDebounceTimer) { clearTimeout(extractionDebounceTimer); }
+    extractionDebounceTimer = setTimeout(runSelectionExtraction, EXTRACTION_DEBOUNCE_MS);
+  };
 
+  // Heavy enriched-markdown extraction from the current selection. Debounced from
+  // init() (see above) and called directly by the extractSelection dev-hook.
+  // Updates lastSelectedText / lastEnrichedMd / table state and casts
+  // SELECTION_CHANGED to the host.
+  function runSelectionExtraction() {
+    extractionDebounceTimer = null;
+    // Ignore extraction triggered by our own paste operations.
+    if (pasteInProgress) {
+      log("extraction skipped — paste in progress");
+      return;
+    }
     // Skip the heavy extraction right after an undo/redo so its callCommand
     // doesn't wipe the redo stack (which would make redo impossible). The cache
     // stays as-is and self-refreshes on the next real selection change.
     if (Date.now() < suppressExtractionUntil) {
-      log("init() extraction suppressed (undo/redo in progress)");
+      log("extraction suppressed (undo/redo in progress)");
       return;
     }
 
-    // Run callCommand pre-scan to extract enriched markdown from selection
-    // initDataType:"html" is kept for trigger mechanism; data parameter is ignored
-    // Pass counters via Asc.scope for stable naming across selections
+    // Run callCommand pre-scan to extract enriched markdown from selection.
+    // Pass counters via Asc.scope for stable naming across selections.
     window.Asc.scope.imgCounter = imageCounter;
     window.Asc.scope._fnCounter = footnoteCounter;
     window.Asc.scope._crCounter = crossRefCounter;
@@ -3976,7 +3998,9 @@
       // runs (its callCommand completes asynchronously, after this call returns).
       lastEnrichedMd = "__pending__";
       lastSelectedText = "__pending__";
-      try { window.Asc.plugin.init(); } catch (e) {}
+      // Call the extraction directly (not init()) so the dev-hook bypasses the
+      // selection-change debounce and stays deterministic.
+      try { runSelectionExtraction(); } catch (e) {}
       var tries = 0;
       function check() {
         tries++;
