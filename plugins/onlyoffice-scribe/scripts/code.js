@@ -9,7 +9,7 @@
   // If the console shows an OLDER build than expected, the editor served a CACHED
   // code.js → reopen the editor in a fresh tab / private window (a plain F5 won't
   // refetch the async plugin iframe).
-  var SCRIBE_BUILD = "2026-06-28.1 — fix(drag3b): attach pointer tracking from highest SAME-ORIGIN ancestor (window.top is cross-origin in real Drive → listeners never bound → long drags still snapped)";
+  var SCRIBE_BUILD = "2026-06-29.1 — undo-group (single Ctrl+Z for multi-image replies) + inline post-selection via sentinel run (exact, style-agnostic) + collapsed-cursor clears the selection chip (was extracting the whole host paragraph)";
   try { window.__scribeBuild = SCRIBE_BUILD; } catch (e) {}
 
   // ---- State ----
@@ -115,6 +115,13 @@
   // ---- Paste HTML with smart spacing ----
   // Prevents init() and polling from interfering during paste.
   var pasteInProgress = false;
+  // Tracks whether a GroupActions undo-group is currently open (see
+  // startUndoGroup/endUndoGroup). A full-table/image injection makes several
+  // history points (InsertContent callCommand + one PasteHtml per image); wrapping
+  // them in a GroupActions group collapses them into a SINGLE undo point so one
+  // Ctrl+Z reverts the whole reply. Guard keeps Start/End balanced (an unbalanced
+  // StartAction would swallow every later edit into the group).
+  var undoGroupOpen = false;
 
   // Debounce for the selection-extraction triggered by OO on every selection
   // change (config initOnSelectionChanged:true). Running it on each change
@@ -372,6 +379,26 @@
     return blocks;
   }
 
+  // ---- Undo-group helpers ----
+  // OO's plugin API exposes StartAction/EndAction with type "GroupActions" — the
+  // same primitive OO uses internally to make a multi-step operation a single undo
+  // point (probe-confirmed: a group spans separate callCommand + async PasteHtml
+  // calls and collapses to ONE point that one Undo reverts / one Redo restores).
+  // We open a group around the whole Builder injection so a full-table/image reply
+  // (InsertContent + N image PasteHtml = N+1 points) becomes a single Ctrl+Z.
+  // Fire-and-forget is safe: the plugin→editor command channel is FIFO, so the
+  // StartAction lands before the first callCommand point (probe-confirmed).
+  function startUndoGroup() {
+    if (undoGroupOpen) return;
+    undoGroupOpen = true;
+    try { window.Asc.plugin.executeMethod("StartAction", ["GroupActions", "Scribe injection"], function() {}); } catch (e) {}
+  }
+  function endUndoGroup() {
+    if (!undoGroupOpen) return;
+    undoGroupOpen = false;
+    try { window.Asc.plugin.executeMethod("EndAction", ["GroupActions", "Scribe injection"], function() {}); } catch (e) {}
+  }
+
   // ---- Builder API injection with PasteHtml fallback ----
   // Tokenizes markdown via marked.lexer(), flattens to paragraph+runs,
   // passes through Asc.scope, and interprets as Builder API calls inside
@@ -455,6 +482,10 @@
     }
 
     pasteInProgress = true;
+    // Open an undo-group so the InsertContent callCommand + every image PasteHtml
+    // collapse into ONE undo point. Closed on every exit path below (timeout
+    // fallback, no-image callback, and post-image-injection callback).
+    startUndoGroup();
     Asc.scope.tokens = JSON.stringify(flat);
     Asc.scope._mode = mode || "replace";
     if (parsedTables.length > 0) {
@@ -488,6 +519,7 @@
     var fallbackTimer = setTimeout(function() {
       if (!callbackFired) {
         log("Builder callCommand timeout -- falling back to PasteHtml");
+        endUndoGroup();
         pasteInProgress = false;
         if (fallbackHtml) { pasteHtml(fallbackHtml, mode); }
       }
@@ -1748,6 +1780,22 @@
         var mergedTrailingLen = 0; // track trailing text merged into last paragraph
 
         var useRefSelection = false; // true = use paragraph refs, false = use position-based
+        // Inline insert/replace merges runs into the host ¶, so neither content refs
+        // (absorbed) nor char arithmetic work for the post-selection: OO logical
+        // positions count run boundaries, so `preSelStart + textLen` mis-counts — and
+        // it gets WORSE with styled runs (each adds boundaries), which is the off-by-N
+        // users see. Fix: append a sentinel run to the inline content; after
+        // InsertContent, fresh-scan for it, take its REAL start position as the
+        // selection end, then delete it. Two real positions (start + sentinel) → exact
+        // selection, style-agnostic. Deletion is reliable (probe-confirmed) so it never
+        // leaks; uses a plain-ASCII token (NOT a  marker — a real NUL byte in
+        // source corrupts the file). (Block mode keeps refs → selectByRefs; tables
+        // derive bounds from real cell ranges → both already correct.)
+        var SCRIBE_SEL_SENT = "zZscribeSelMarkZz";
+        var useSentinelSel = false; // inline insert/replace: select via sentinel, not arithmetic
+        function appendSelSentinel(para) {
+          try { var sr = Api.CreateRun(); sr.AddText(SCRIBE_SEL_SENT); para.AddElement(sr); } catch (e) {}
+        }
 
         // §5bis: after a BLOCK InsertContent, OO splits the host ¶ at the insertion
         // point and the right remainder becomes a trailing paragraph. Remove it ONLY
@@ -1899,8 +1947,9 @@
           var insSimpleInline = (content.length === 1 && blocks.length === 1 && blocks[0].type === "paragraph"
             && !(content[0] && content[0].GetClassType && content[0].GetClassType() === "table"));
           if (insSimpleInline) {
+            appendSelSentinel(content[0]); useSentinelSel = true;
             doc.InsertContent(content, true);
-            // useRefSelection stays false -> position-based selection (like inline replace)
+            // useSentinelSel -> sentinel-based post-selection (robust vs run-boundary positions)
           } else {
             prepareFirstBlockForMerge(); // §5bis: Cas A inline-style OR Cas B spacer
             doc.InsertContent(content);
@@ -1955,6 +2004,7 @@
             && !(content[0] && content[0].GetClassType && content[0].GetClassType() === "table"));
           if (isSimpleInline) {
             // Single paragraph: inline mode merges into existing paragraph
+            appendSelSentinel(content[0]); useSentinelSel = true;
             doc.InsertContent(content, true);
           } else {
             // Multi-paragraph: block mode to keep paragraph separation. OO splits
@@ -2031,6 +2081,35 @@
           }
         }
 
+        // Robust inline post-selection: the sentinel run appended to the inline content
+        // is now a live run in the host ¶. Fresh-scan for it (stale content refs are
+        // absorbed by the inline merge; only freshly-read elements give correct ranges),
+        // take its REAL start position as the selection end, delete it, then select
+        // [preSelStart .. sentinelStart]. Both ends are real OO positions in the same
+        // post-insert doc, so the selection is exact regardless of run/style boundaries.
+        function selectBySentinel(doc, startPos, sentinel) {
+          try {
+            var paras = doc.GetAllParagraphs();
+            for (var p = 0; p < paras.length; p++) {
+              var para = paras[p];
+              var ec = para && para.GetElementsCount ? para.GetElementsCount() : 0;
+              for (var e = 0; e < ec; e++) {
+                var el = para.GetElement(e);
+                if (el && el.GetText && el.GetText() === sentinel) {
+                  var rg = el.GetRange ? el.GetRange() : null;
+                  var sentStart = rg ? rg.GetStartPos() : -1;
+                  try { el.Delete(); } catch (ex) {}
+                  if (sentStart < 0) return false;
+                  var sel = doc.GetRange(startPos, sentStart);
+                  if (sel) { sel.Select(); return true; }
+                  return false;
+                }
+              }
+            }
+          } catch (e) {}
+          return false;
+        }
+
         function selectByPositions(doc, preSelStart, totalTextLen, mergedTrailingLen) {
           // Simple arithmetic: the injected text starts at preSelStart and
           // spans totalTextLen characters. +2 compensates an OO logical
@@ -2044,6 +2123,8 @@
         try {
           if (useRefSelection) {
             selectByRefs(doc, content, mode, preSelStart, mergedTrailingLen);
+          } else if (useSentinelSel && selectBySentinel(doc, preSelStart, SCRIBE_SEL_SENT)) {
+            // selected via sentinel (inline insert/replace) — exact, style-agnostic
           } else {
             selectByPositions(doc, preSelStart, totalTextLen, mergedTrailingLen);
           }
@@ -2130,11 +2211,13 @@
       var pend = [];
       try { pend = (JSON.parse(ret || "{}").pendingImages) || []; } catch (e) {}
       if (pend.length === 0) {
+        endUndoGroup();
         pasteInProgress = false;
         return;
       }
-      // Replace each marker with a properly-uploaded image, then clear the flag.
-      injectPendingImages(pend, function() { pasteInProgress = false; });
+      // Replace each marker with a properly-uploaded image, then close the group
+      // (all the PasteHtml points fold into the single undo point) and clear the flag.
+      injectPendingImages(pend, function() { endUndoGroup(); pasteInProgress = false; });
     });
   }
 
@@ -2588,6 +2671,20 @@
     // prod this stays off → byte-identical return; snapshots flow via the host relay.
     window.Asc.scope._tReturnSnaps = (window.__scribeTestForce === true);
     window.Asc.plugin.callCommand(function() {
+      // Empty-selection gate (FIRST): a collapsed cursor (start==end) is NOT a
+      // selection. Without this, the walk below returns the WHOLE host paragraph, so
+      // moving the cursor (e.g. select P1, then click in P2) wrongly refilled the
+      // side-panel chip with that paragraph's text instead of clearing it. A text OR
+      // image selection is non-collapsed (an image is a 1-position range — probe-
+      // confirmed s≠e), so both still extract. Returns an empty signal → the callback
+      // clears the chip.
+      try {
+        var __selRange = Api.GetDocument().GetRangeBySelect();
+        if (__selRange && __selRange.GetStartPos() === __selRange.GetEndPos()) {
+          return JSON.stringify({ empty: true, text: "", md: "" });
+        }
+      } catch (e) {}
+
       // --- All helpers defined inside callCommand (ES5 sandbox) ---
 
       function escapeMarkdown(text) {
@@ -3440,6 +3537,20 @@
         result = JSON.parse(resultJson);
       } catch (e) {
         result = { text: "", md: "" };
+      }
+      // Collapsed cursor (no real selection) — clear the chip instead of leaving the
+      // previous selection (or refilling it with the clicked-into paragraph). See the
+      // empty-selection gate inside the callCommand above.
+      if (result && result.empty) {
+        lastSelectedText = "";
+        lastEnrichedMd = "";
+        lastTableSnapshots = null;
+        lastTableAmbiguity = null;
+        lastPartialTableInfo = null;
+        lastSelectedHtml = "";
+        lastPolledNonEmpty = false;
+        if (selectionSubscribed) castEmptySelection();
+        return;
       }
       // Read crossRefMeta from JSON return (Asc.scope objects set inside callCommand may not persist)
       lastCrossRefMeta = result.crossRefMeta || {};
