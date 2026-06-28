@@ -74,6 +74,14 @@
       ]
     },
     {
+      "type": "p",
+      "runs": [
+        {
+          "t": "Outro p"
+        }
+      ]
+    },
+    {
       "type": "table",
       "grid": [
         [
@@ -119,7 +127,7 @@
       "type": "p",
       "runs": [
         {
-          "t": "Outro paragraph"
+          "t": "aragraph"
         }
       ]
     }
@@ -130,7 +138,7 @@
       "offset": -1
     },
     "end": {
-      "block": 3,
+      "block": 4,
       "offset": 13
     }
   }
