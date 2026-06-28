@@ -9,7 +9,7 @@
   // If the console shows an OLDER build than expected, the editor served a CACHED
   // code.js → reopen the editor in a fresh tab / private window (a plain F5 won't
   // refetch the async plugin iframe).
-  var SCRIBE_BUILD = "2026-06-27.10 — fix(insert): place content at selection END (not after the table) for {table + following ¶} selections (T7)";
+  var SCRIBE_BUILD = "2026-06-28.1 — fix(drag3b): attach pointer tracking from highest SAME-ORIGIN ancestor (window.top is cross-origin in real Drive → listeners never bound → long drags still snapped)";
   try { window.__scribeBuild = SCRIBE_BUILD; } catch (e) {}
 
   // ---- State ----
@@ -3623,7 +3623,24 @@
       var fs; try { fs = w.frames; } catch (e) { return; }
       for (var i = 0; i < fs.length; i++) { try { visit(fs[i]); } catch (e) {} }
     }
-    try { visit(window.top); } catch (e) { try { visit(window); } catch (e2) {} }
+    // Roots to walk DOWN from. We must NOT rely on window.top: in real Cozy Drive
+    // the top page is a DIFFERENT origin (drive-rb.…) from the OO/plugin frames
+    // (localhost), so starting at window.top reaches nothing and the canvas-frame
+    // mousedown is never caught → pointerDown never set → the (throttled, ~1s)
+    // extraction timer still fires mid-drag and the image snaps back. Instead climb
+    // to the HIGHEST SAME-ORIGIN ancestor (the OO editor frame, same origin as the
+    // plugin — its subtree contains the canvas frame) and walk down from there.
+    var roots = [window];
+    try {
+      var anc = window;
+      while (anc.parent && anc.parent !== anc) {
+        try { void anc.parent.document; anc = anc.parent; } // same-origin → climb
+        catch (e) { break; }                                 // cross-origin → stop
+      }
+      roots.push(anc);
+    } catch (e) {}
+    try { roots.push(window.top); } catch (e) {} // also try top (same-origin case)
+    for (var ri = 0; ri < roots.length; ri++) { try { visit(roots[ri]); } catch (e) {} }
     // Safety net: a release anywhere (incl. outside the editor) clears the flag.
     try { window.addEventListener("mouseup", handleEditorPointerUp, true); } catch (e) {}
     try { window.addEventListener("pointerup", handleEditorPointerUp, true); } catch (e) {}
