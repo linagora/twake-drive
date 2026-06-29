@@ -6,8 +6,8 @@ import { ensureFilePath } from 'cozy-client/dist/models/file'
 import { receiveMutationResult } from 'cozy-client/dist/store'
 import CozyRealtime from 'cozy-realtime'
 
-import { buildFileOrFolderByIdQuery } from '@/queries'
 import { useSharedDrives } from '@/modules/shareddrives/hooks/useSharedDrives'
+import { buildFileOrFolderByIdQuery } from '@/queries'
 
 const REALTIME_DEBOUNCE_TIME = 500
 
@@ -21,7 +21,7 @@ const driveIdByFileId = new Map()
 
 // Test-only affordance: resets the module-level driveIdByFileId Map so test
 // isolation is not broken by entries leaking across test cases.
-// eslint-disable-next-line no-underscore-dangle
+
 export const __resetDriveIdByFileId = () => driveIdByFileId.clear()
 
 const getParentFolder = async (client, dirId, driveId) => {
@@ -302,7 +302,6 @@ const FilesRealTimeQueries = ({
     }
     // recipientDriveKey encodes all recipient-drive IDs as a sorted string;
     // re-opening sockets only when the set of drives changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [client, recipientDriveKey])
 
   return null
