@@ -9,7 +9,7 @@
   // If the console shows an OLDER build than expected, the editor served a CACHED
   // code.js → reopen the editor in a fresh tab / private window (a plain F5 won't
   // refetch the async plugin iframe).
-  var SCRIBE_BUILD = "2026-06-29.5 — merge into scribe-in-right-panel: selection-cases fixes (.4: list extract/inject, insert host-style, table/image/§5bis) reconciled with v3.2-03 whole-document extraction (buildScribeExtractionResult mode branch + buildDocumentExtractionResult)";
+  var SCRIBE_BUILD = "2026-06-29.6 — merge into scribe-in-right-panel (document-extraction branch moved AFTER var-inits, verified v3.2 placement; empty-gate guarded to selection mode): selection-cases fixes (.4: list extract/inject, insert host-style, table/image/§5bis) reconciled with v3.2-03 whole-document extraction (buildScribeExtractionResult mode branch + buildDocumentExtractionResult)";
   try { window.__scribeBuild = SCRIBE_BUILD; } catch (e) {}
 
   // ---- State ----
@@ -2779,24 +2779,24 @@
   // all leaf emitters AND buildDocumentExtractionResult live inside it. Reads
   // Asc.scope.scribeExtractMode to pick the document or selection path.
   function buildScribeExtractionResult() {
-    // Mode branch: whole-document extraction ignores the selection and MUST run
-    // before the empty-selection gate (a collapsed cursor must not block it).
-    if (Asc.scope.scribeExtractMode === "document") {
-      return buildDocumentExtractionResult(Api.GetDocument());
-    }
-      // Empty-selection gate (FIRST): a collapsed cursor (start==end) is NOT a
-      // selection. Without this, the walk below returns the WHOLE host paragraph, so
-      // moving the cursor (e.g. select P1, then click in P2) wrongly refilled the
-      // side-panel chip with that paragraph's text instead of clearing it. A text OR
-      // image selection is non-collapsed (an image is a 1-position range — probe-
-      // confirmed s≠e), so both still extract. Returns an empty signal → the callback
-      // clears the chip.
-      try {
-        var __selRange = Api.GetDocument().GetRangeBySelect();
-        if (__selRange && __selRange.GetStartPos() === __selRange.GetEndPos()) {
-          return JSON.stringify({ empty: true, text: "", md: "" });
-        }
-      } catch (e) {}
+      // Empty-selection gate (SELECTION mode only): a collapsed cursor (start==end)
+      // is NOT a selection. Without this, the walk below returns the WHOLE host
+      // paragraph, so moving the cursor (e.g. select P1, then click in P2) wrongly
+      // refilled the side-panel chip with that paragraph's text instead of clearing
+      // it. A text OR image selection is non-collapsed (an image is a 1-position
+      // range — probe-confirmed s≠e), so both still extract. Returns an empty signal
+      // → the callback clears the chip. SKIPPED in document mode: the whole-document
+      // branch runs later (after the helper/var inits), exactly like the v3.2-03
+      // placement — putting it before the inits made buildDocumentExtractionResult
+      // run too early and the document callCommand never called back.
+      if (Asc.scope.scribeExtractMode !== "document") {
+        try {
+          var __selRange = Api.GetDocument().GetRangeBySelect();
+          if (__selRange && __selRange.GetStartPos() === __selRange.GetEndPos()) {
+            return JSON.stringify({ empty: true, text: "", md: "" });
+          }
+        } catch (e) {}
+      }
 
       // --- All helpers defined inside callCommand (ES5 sandbox) ---
 
@@ -3508,6 +3508,14 @@
 
       // --- Main extraction logic ---
       var doc = Api.GetDocument();
+
+      // v3.2-03 mode branch: 'document' extracts the WHOLE document HERE — after all
+      // helper declarations and var inits above are in scope (the verified v3.2
+      // placement). Any other value ('selection'/undefined) runs the selection logic.
+      if (Asc.scope.scribeExtractMode === "document") {
+        return buildDocumentExtractionResult(doc);
+      }
+
       var range = doc.GetRangeBySelect();
       if (!range) return JSON.stringify({ text: "", md: "" });
 
