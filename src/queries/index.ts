@@ -107,6 +107,36 @@ export const buildRecentQuery: QueryBuilder = () => ({
   }
 })
 
+interface BuildRecentsScopedQueryParams {
+  driveId?: string
+}
+
+export const buildRecentsScopedQuery = ({
+  driveId
+}: BuildRecentsScopedQueryParams) => ({
+  definition: () =>
+    Q('io.cozy.files')
+      .where({
+        updated_at: {
+          $gt: null
+        }
+      })
+      .partialIndex({
+        type: 'file',
+        trashed: false,
+        dir_id: { $nin: [SHARED_DRIVES_DIR_ID, TRASH_DIR_ID] }
+      })
+      .indexFields(['updated_at'])
+      .sortBy([{ updated_at: 'desc' }])
+      .limitBy(50),
+  options: {
+    as: driveId ? `recents-drive-${driveId}` : 'recents-own',
+    driveId,
+    forceLink: driveId ? 'dataproxy' : undefined,
+    fetchPolicy: defaultFetchPolicy
+  }
+})
+
 export const buildParentsByIdsQuery: QueryBuilder<string[]> = ids => ({
   definition: () => Q('io.cozy.files').getByIds(ids),
   options: {
