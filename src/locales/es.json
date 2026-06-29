@@ -49,7 +49,6 @@
     "empty_trash": "Vaciar la papelera",
     "share": "Compartir",
     "trash": "Suprimir",
-    "delete_shared_drive": "Eliminar unidad compartida",
     "leave": "Salir de la carpeta compartida & borrarla",
     "select_all": "Seleccionar todo",
     "select_all_mobile": "todos",
@@ -280,9 +279,7 @@
     "paste_failed": "Error al pegar los archivos",
     "paste_sharing_error": "No se pueden pegar los archivos debido a restricciones de compartición. Por favor use la acción Mover en su lugar.",
     "paste_same_folder_skipped": "No se pueden mover elementos a la misma carpeta en la que ya se encuentran.",
-    "paste_not_allowed": "No puedes pegar en esta carpeta",
-    "cannot_move_shared_drive": "No puedes mover la carpeta de unidad compartida",
-    "cannot_copy_shared_drive": "No puedes copiar la carpeta de la unidad compartida"
+    "paste_not_allowed": "No puedes pegar en esta carpeta"
   },
   "upload": {
     "label": "Subir",

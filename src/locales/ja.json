@@ -43,7 +43,6 @@
     "empty_trash": "ゴミ箱を空にする",
     "share": "共有",
     "trash": "削除",
-    "delete_shared_drive": "共有ドライブを削除",
     "leave": "共有されたフォルダーから離れて削除する",
     "select_all": "すべて選択",
     "clear_selection": "選択をクリア",
@@ -265,9 +264,7 @@
     "paste_failed": "ファイルの貼り付けに失敗しました",
     "paste_sharing_error": "共有制限のためファイルを貼り付けることができません。代わりに移動アクションを使用してください。",
     "paste_same_folder_skipped": "アイテムを既に存在する同じフォルダに移動することはできません。",
-    "paste_not_allowed": "このフォルダに貼り付けることはできません",
-    "cannot_move_shared_drive": "共有ドライブフォルダを移動することはできません",
-    "cannot_copy_shared_drive": "共有ドライブのフォルダをコピーできません"
+    "paste_not_allowed": "このフォルダに貼り付けることはできません"
   },
   "upload": {
     "label": "アップロード",

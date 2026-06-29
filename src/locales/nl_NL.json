@@ -48,7 +48,6 @@
     "empty_trash": "Prullenbak legen",
     "share": "Delen",
     "trash": "Verwijderen",
-    "delete_shared_drive": "Gedeelde schijf verwijderen",
     "leave": "Gedeelde map verlaten en verwijderen",
     "menu_add": "Toevoegen",
     "menu_create": "Creëren",
@@ -290,9 +289,7 @@
     "paste_failed": "Plakken van bestanden mislukt",
     "paste_sharing_error": "Kan bestanden niet plakken vanwege deelbeperkingen. Gebruik in plaats daarvan de actie Verplaatsen.",
     "paste_same_folder_skipped": "Kan items niet verplaatsen naar dezelfde map waar ze al in staan.",
-    "paste_not_allowed": "U kunt niet plakken in deze map",
-    "cannot_move_shared_drive": "U kunt de gedeelde schijfmap niet verplaatsen",
-    "cannot_copy_shared_drive": "Je kunt de gedeelde schijfmap niet kopiëren"
+    "paste_not_allowed": "U kunt niet plakken in deze map"
   },
   "upload": {
     "label": "Uploaden",

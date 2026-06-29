@@ -47,7 +47,6 @@
     "menu_upload": "Importer des fichiers",
     "item_more": "Plus",
     "menu_new_folder": "Dossier",
-    "menu_new_shared_drive": "Drive partagé",
     "menu_select": "Sélectionner les éléments",
     "menu_share_folder": "Partager le dossier",
     "menu_download": "Télécharger",
@@ -62,7 +61,6 @@
     "menu_create_shortcut": "Raccourci",
     "share": "Partager",
     "trash": "Supprimer",
-    "delete_shared_drive": "Supprimer le drive partagé",
     "leave": "Quitter le partage et supprimer le dossier",
     "menu_add": "Ajouter",
     "menu_create": "Créer",
@@ -299,7 +297,6 @@
     "restore_file_success": "La sélection a été restaurée avec succès.",
     "trash_file_success": "La sélection a été déplacée dans la Corbeille.",
     "trash_file_processing": "Le déplacement vers la Corbeille est en cours...",
-    "trash_shared_drive_success": "Le drive partagé a été déplacé dans la Corbeille.",
     "destroy_file_success": "La sélection a été supprimée définitivement.",
     "folder_name": "L'élément %{folderName} existe déjà, merci de choisir un nouveau nom.",
     "file_name": "L'élément %{fileName} existe déjà, utilisez un nouveau nom",
@@ -326,9 +323,7 @@
     "paste_failed": "Échec du collage des fichiers",
     "paste_sharing_error": "Impossible de coller les fichiers en raison de restrictions de partage. Veuillez utiliser l'action Déplacer à la place.",
     "paste_same_folder_skipped": "Impossible de déplacer les éléments dans le même dossier où ils se trouvent déjà.",
-    "paste_not_allowed": "Vous ne pouvez pas coller dans ce dossier",
-    "cannot_move_shared_drive": "Vous ne pouvez pas déplacer le dossier de lecteur partagé",
-    "cannot_copy_shared_drive": "Vous ne pouvez pas copier le dossier du lecteur partagé"
+    "paste_not_allowed": "Vous ne pouvez pas coller dans ce dossier"
   },
   "upload": {
     "label": "Importer",

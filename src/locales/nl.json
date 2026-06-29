@@ -14,7 +14,6 @@
     "menu_select": "Selecteer items",
     "empty_trash": "Leeg de prullenbak",
     "select_all": "Alles selecteren",
-    "delete_shared_drive": "Gedeelde schijf verwijderen",
     "sharings_tab_all": "Alles",
     "sharings_tab_drives": "Stations"
   },
@@ -101,9 +100,7 @@
     "paste_failed": "Plakken van bestanden mislukt",
     "paste_sharing_error": "Kan bestanden niet plakken vanwege deelbeperkingen. Gebruik in plaats daarvan de actie Verplaatsen.",
     "paste_same_folder_skipped": "Kan items niet verplaatsen naar dezelfde map waar ze al in staan.",
-    "paste_not_allowed": "Je kunt niet plakken in deze map",
-    "cannot_move_shared_drive": "Je kunt de gedeelde schijfmap niet verplaatsen",
-    "cannot_copy_shared_drive": "Je kunt de gedeelde schijfmap niet kopiëren"
+    "paste_not_allowed": "Je kunt niet plakken in deze map"
   },
   "actions": {
     "details": "Details",

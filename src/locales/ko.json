@@ -73,9 +73,7 @@
     "paste_failed": "파일 붙여넣기에 실패했습니다",
     "paste_sharing_error": "공유 제한으로 인해 파일을 붙여넣을 수 없습니다. 대신 이동 작업을 사용하십시오.",
     "paste_same_folder_skipped": "항목을 이미 있는 동일한 폴더로 이동할 수 없습니다.",
-    "paste_not_allowed": "이 폴더에 붙여넣을 수 없습니다",
-    "cannot_move_shared_drive": "공유 드라이브 폴더를 이동할 수 없습니다",
-    "cannot_copy_shared_drive": "공유 드라이브 폴더를 복사할 수 없습니다"
+    "paste_not_allowed": "이 폴더에 붙여넣을 수 없습니다"
   },
   "History": {
     "loading": "불러오는 중..."

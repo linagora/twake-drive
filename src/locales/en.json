@@ -47,7 +47,6 @@
     "menu_upload": "Upload files",
     "item_more": "More",
     "menu_new_folder": "Folder",
-    "menu_new_shared_drive": "Shared drive",
     "menu_select": "Select items",
     "menu_share_folder": "Share folder",
     "menu_download": "Download",
@@ -62,7 +61,6 @@
     "menu_create_shortcut": "Shortcut",
     "share": "Share",
     "trash": "Remove",
-    "delete_shared_drive": "Delete shared drive",
     "leave": "Leave shared folder & delete it",
     "menu_add": "Add",
     "menu_create": "Create",
@@ -302,7 +300,6 @@
     "restore_file_success": "The selection has been successfully restored.",
     "trash_file_success": "The selection has been moved to the Trash.",
     "trash_file_processing": "The move to Trash is in progress...",
-    "trash_shared_drive_success": "The shared drive has been moved to the Trash.",
     "destroy_file_success": "The selection has been deleted permanently.",
     "folder_name": "The element %{folderName} already exists, please choose a new name.",
     "file_name": "The element %{fileName} already exists, please choose a new name.",
@@ -329,9 +326,7 @@
     "paste_failed": "Failed to paste files",
     "paste_sharing_error": "Cannot paste files due to sharing restrictions. Please use the Move action instead.",
     "paste_same_folder_skipped": "Cannot move items to the same folder they are already in.",
-    "paste_not_allowed": "You cannot paste into this folder",
-    "cannot_move_shared_drive": "You cannot move shared drive folder",
-    "cannot_copy_shared_drive": "You cannot copy shared drive folder"
+    "paste_not_allowed": "You cannot paste into this folder"
   },
   "upload": {
     "label": "Upload",
