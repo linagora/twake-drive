@@ -17,7 +17,9 @@ set -euo pipefail
 CONTAINER_NAME="oo-dev"
 PLUGIN_HOST_PATH="$(cd "$(dirname "$0")/.." && pwd)/plugins/onlyoffice-scribe"
 PLUGIN_CONTAINER_PATH="/var/www/onlyoffice/documentserver/sdkjs-plugins/scribe"
-OO_IMAGE="onlyoffice/documentserver"
+# OO 9.4.0.1 == documentserver build 9.4.0-129 (matches sdkjs patch tag v9.4.0.129).
+# Override with OO_IMAGE=... to pin a different build.
+OO_IMAGE="${OO_IMAGE:-onlyoffice/documentserver:9.4.0.1}"
 
 echo "=== OnlyOffice Document Server - Scribe Dev Setup ==="
 echo ""
@@ -45,14 +47,20 @@ else
   # This way ALL *.localhost subdomains (alice.localhost, alice2.localhost, etc.)
   # resolve correctly without needing --add-host entries for each one.
 
-  # Patched SDK: mount non-minified sdkjs word bundles with GetInlineDrawings patch
-  # (see plugins/onlyoffice-scribe/oo-api-proposal.md)
-  SDKJS_PATCHED_DIR="$(cd "$(dirname "$0")/.." && pwd)/../onlyoffice-sdkjs/word"
+  # Patched SDK (OO 9.4): mount ONLY sdk-all.js with the GetInlineDrawings patch.
+  # On 9.4 apiBuilder.js (the builder API + our patch) lives only in sdk-all.js,
+  # not sdk-all-min.js; sdk-all.js has no .gz in the image so the bind mount is
+  # served directly. Built from sdkjs v9.4.0.129 + the patch + the sdkjs-forms
+  # addon (see ~/Dev-local/onlyoffice-sdkjs-94 and plugins/onlyoffice-scribe/oo-api-proposal.md).
+  SDKJS_PATCHED_94="$(cd "$(dirname "$0")/.." && pwd)/../onlyoffice-sdkjs-94/dist/sdkjs-patch-9.4.0.129/sdk-all.js"
   SDKJS_CONTAINER_DIR="/var/www/onlyoffice/documentserver/sdkjs/word"
   SDKJS_VOLUMES=""
-  if [ -f "${SDKJS_PATCHED_DIR}/sdk-all-patched.js" ] && [ -f "${SDKJS_PATCHED_DIR}/sdk-all-min-patched.js" ]; then
-    echo "  Patched SDK: mounting non-minified word bundles"
-    SDKJS_VOLUMES="-v ${SDKJS_PATCHED_DIR}/sdk-all-patched.js:${SDKJS_CONTAINER_DIR}/sdk-all.js -v ${SDKJS_PATCHED_DIR}/sdk-all-min-patched.js:${SDKJS_CONTAINER_DIR}/sdk-all-min.js"
+  if [ -f "${SDKJS_PATCHED_94}" ]; then
+    echo "  Patched SDK (9.4): mounting sdk-all.js (GetInlineDrawings)"
+    SDKJS_VOLUMES="-v ${SDKJS_PATCHED_94}:${SDKJS_CONTAINER_DIR}/sdk-all.js:ro"
+  else
+    echo "  WARNING: 9.4 patched sdk-all.js not found at ${SDKJS_PATCHED_94}"
+    echo "           Starting WITHOUT the SDK patch — inline-image extraction will fall back."
   fi
 
   docker run -itd \
