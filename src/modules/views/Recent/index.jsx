@@ -51,15 +51,17 @@ export const RecentView = () => {
     useFolderSort(RECENT_FOLDER_ID)
 
   const recentsResult = useRecentFiles()
+  const { scopeQueries, ...recentsResultWithoutScopes } = recentsResult
 
   // Shared-drive and federated files arrive from the dataproxy seconds after
   // the local files; surface that background fetch once a list is on screen.
   const isFetchingMore =
-    recentsResult?.fetchStatus === 'loading' && recentsResult?.data?.length > 0
+    recentsResultWithoutScopes?.fetchStatus === 'loading' &&
+    recentsResultWithoutScopes?.data?.length > 0
 
   useKeyboardShortcuts({
     client: base.client,
-    items: recentsResult?.data || [],
+    items: recentsResultWithoutScopes?.data || [],
     sharingContext,
     allowCopy: false,
     pushModal: base.pushModal,
@@ -77,7 +79,8 @@ export const RecentView = () => {
     allLoaded,
     isOwner,
     byDocId,
-    selectAll: () => base.toggleSelectAllItems(recentsResult?.data || [])
+    selectAll: () =>
+      base.toggleSelectAllItems(recentsResultWithoutScopes?.data || [])
   }
 
   const actions = makeActions(
@@ -104,6 +107,7 @@ export const RecentView = () => {
 
   return (
     <FolderView>
+      {scopeQueries}
       <Content className={base.isMobile ? '' : 'u-pt-1'}>
         <FolderViewHeader>
           <Breadcrumb path={[{ name: base.t('breadcrumb.title_recent') }]} />
@@ -113,7 +117,7 @@ export const RecentView = () => {
         {flag('drive.virtualization.enabled') && !base.isMobile ? (
           <FolderViewBodyVz
             actions={actions}
-            queryResults={[recentsResult]}
+            queryResults={[recentsResultWithoutScopes]}
             withFilePath={true}
             orderProps={{
               sortOrder,
@@ -124,7 +128,7 @@ export const RecentView = () => {
         ) : (
           <FolderViewBody
             actions={actions}
-            queryResults={[recentsResult]}
+            queryResults={[recentsResultWithoutScopes]}
             withFilePath={true}
           />
         )}

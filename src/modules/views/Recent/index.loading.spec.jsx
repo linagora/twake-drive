@@ -35,9 +35,6 @@ jest.mock('cozy-sharing', () => ({
   ...jest.requireActual('cozy-sharing'),
   useSharingContext: jest.fn()
 }))
-jest.mock('cozy-dataproxy-lib', () => ({
-  useDataProxy: jest.fn(() => ({ dataProxyServicesAvailable: false }))
-}))
 jest.mock('@/hooks/useRecentFiles', () => ({
   __esModule: true,
   default: jest.fn()
@@ -55,7 +52,10 @@ const renderRecentView = recentsResult => {
     .fn()
     .mockReturnValue({ data: [], rows: [] })
 
-  mockUseRecentFiles.mockReturnValue(recentsResult)
+  mockUseRecentFiles.mockReturnValue({
+    scopeQueries: [],
+    ...recentsResult
+  })
 
   return render(
     <AppLike client={client} store={store}>
