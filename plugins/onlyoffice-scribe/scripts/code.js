@@ -9,7 +9,7 @@
   // If the console shows an OLDER build than expected, the editor served a CACHED
   // code.js → reopen the editor in a fresh tab / private window (a plain F5 won't
   // refetch the async plugin iframe).
-  var SCRIBE_BUILD = "2026-06-29.1 — undo-group (single Ctrl+Z for multi-image replies) + inline post-selection via sentinel run (exact, style-agnostic) + collapsed-cursor clears the selection chip (was extracting the whole host paragraph)";
+  var SCRIBE_BUILD = "2026-06-29.2 — insert host ¶ style = paragraph at insertion point (selection END), not selection START (was bumping the last selected ¶ to the first's heading level on multi-¶ Insert)";
   try { window.__scribeBuild = SCRIBE_BUILD; } catch (e) {}
 
   // ---- State ----
@@ -750,6 +750,13 @@
             if (!er) continue;
             if (insPos >= er.GetStartPos() && insPos <= er.GetEndPos()) { hostPara = eel; hostStart = er.GetStartPos(); break; }
           }
+          // Insert host ¶ = the one at the insertion point (selection END). hostStyle
+          // was seeded from the selection START (§5bis, lines ~701-716); for a multi-¶
+          // selection that is the WRONG paragraph — e.g. select H1+H2 and Insert: the
+          // host is the H2, not the H1. Without this override the Cas B spacer (or the
+          // Cas A first-¶) carries the START style and OO stamps it onto the host's
+          // left split half, bumping the last selected ¶ to the first's heading level.
+          if (hostPara && hostPara.GetStyle) hostStyle = hostPara.GetStyle();
           if (hostPara) {
             var hpText = (hostPara.GetText ? hostPara.GetText() : "").replace(/[\r\n]+$/, "");
             var prefR = doc.GetRange(hostStart, insPos);

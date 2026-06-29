@@ -24,6 +24,16 @@ Dans chaque root, sous-structure identique : `A0..A4/{insert,replace}/` + bundle
 | `corpus-styledFixture/` | Normal (`a-family.docx`) | **stylée** (`# Injected`) | §5bis Cas B sur hôte Normal — **9/9 pass** (créé 2026-06-26) |
 | `corpus-styledHost-styledFixture/` | stylé (`styled-family.docx`, H1) | **stylée** (`# Injected`) | §5bis Cas B sur hôte stylé — **9/9 pass** |
 
+### Régression A9 — Insert multi-¶ hôte à styles HÉTÉROGÈNES (2026-06-29)
+
+`corpus-styledHost-styledFixture/A9/insert/` — **nouveau cas** (hors matrice A0–A4), build `2026-06-29.2`, verdict **pass**.
+Spec `P1@start..P2@end` sur `styled-family.docx` : sélection = P1 (Heading 1) **+** P2 (Heading 2) entiers ; fixture
+stylée = 2 titres (`# Injected H1` / `## Injected H2`) ; mode **insert**. **Bug Ben** : le DERNIER ¶ sélectionné (P2)
+montait H2→H1 à l'insertion. **Cause** : `hostStyle` lu au DÉBUT de la sélection (P1=H1) au lieu du point d'insertion
+(fin = P2=H2) → le spacer §5bis Cas B estampillait H1 sur la moitié gauche du split de l'hôte. **Fix** `code.js` :
+`hostStyle = hostPara.GetStyle()` au ¶ couvrant `selEnd`. Vérifié LIVE (dumpState) **et** SAVE (`after.docx`). Garde
+exécutable : `oracle/a9-multiheading-insert.spec.js` (5 assertions). Couvre une lacune des axes stylés (A0–A4 = mono-¶).
+
 > **Cas B** = fixture *avec style* → règle §5bis « block, jamais de fusion inline, hôte garde son style ».
 > **27/27 bundles recapturés (2026-06-26), verdict `pass` groupé (Ben).** Build `2026-06-25.2` :
 > l'espace parasite en tête du bloc stylé est **corrigé** (smart-spacing supprimé en mode block,
