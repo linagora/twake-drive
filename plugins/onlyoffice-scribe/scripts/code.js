@@ -9,7 +9,7 @@
   // If the console shows an OLDER build than expected, the editor served a CACHED
   // code.js → reopen the editor in a fresh tab / private window (a plain F5 won't
   // refetch the async plugin iframe).
-  var SCRIBE_BUILD = "2026-06-29.7 — fix whole-document extraction: callCommand isClose flag true→false (true ran the close-command so the callback never fired and the host showed 'Impossible de lire le document') + merged selection-cases fixes (.4) with v3.2-03 whole-document extraction";
+  var SCRIBE_BUILD = "2026-06-29.12 — stable image ids + docs, diagnostics removed. Image round-trip now uses a STABLE per-image name: extraction reuses an image's scribe-img-N name when it is UNIQUE in the doc (so an old chat fragment still resolves while the image exists) and re-stamps only colliding/stale names; the counter is seeded past every existing scribe-img-N so new names never collide. See the imgNameOf block comment for the full extract→LLM→reinject mechanism. Carries floating-image extraction (.8). Removed [img-ri]/[img] instrumentation.";
   try { window.__scribeBuild = SCRIBE_BUILD; } catch (e) {}
 
   // ---- State ----
@@ -942,8 +942,11 @@
       //
       // Build a name->drawing index by scanning all paragraphs in the document,
       // since ApiDocument has no GetDrawingsByName method.
+      // Build a name->drawing index by scanning the whole document (there is no
+      // GetDrawingsByName API). Each fragment marker scribe-img-N is resolved to the
+      // drawing CURRENTLY bearing that name (see imgNameOf for the round-trip + the
+      // uniqueness/stability guarantees that keep this lookup unambiguous).
       var drawingIndex = {};  // name -> ApiDrawing
-      // Scan document-level paragraphs
       var allParas = doc.GetAllParagraphs();
       for (var dp = 0; dp < allParas.length; dp++) {
         var dpDrawings = allParas[dp].GetAllDrawingObjects();
@@ -2956,17 +2959,72 @@
         // Build an array of annotated parts for buildMarkdownFromParts()
         var annotatedParts = [];
 
-        // Check if paragraph has any scribe drawings (fast path)
-        var paraDrawings = para.GetAllDrawingObjects();
-        var hasScribeDrawings = false;
-        if (paraDrawings) {
-          for (var pd = 0; pd < paraDrawings.length; pd++) {
-            var pdName = paraDrawings[pd].GetName();
-            if (pdName && pdName.indexOf("scribe-img-") === 0) {
-              hasScribeDrawings = true;
-              break;
-            }
+        // All drawings anchored in this paragraph — INLINE (inside a run, with a
+        // character position) AND FLOATING (anchored to the paragraph, outside the
+        // run text stream). GetInlineDrawings() below only sees inline ones; we
+        // reconcile against this superset at the end so floating images are never
+        // dropped (the cause of "image sometimes missing from the extracted md").
+        var paraDrawings = para.GetAllDrawingObjects() || [];
+        var hasScribeDrawings = paraDrawings.length > 0;
+        var emittedImg = {};     // scribe-img names already emitted inline (dedup vs floating pass)
+        // Stable scribe-img-* name for a drawing: reuse an existing scribe name,
+        // else assign the next counter value. SetName persists on the read-write
+        // extraction paths (selection AND document); guarded so it is harmless if
+        // it ever no-ops. getDrawingMarker() already named these in document order
+        // before paragraphToMarkdown runs, so this normally just reads them back.
+        // ---------------------------------------------------------------------
+        // IMAGE ROUND-TRIP — how a picture survives "extract → LLM → reinject".
+        //
+        // An image has no portable content in markdown, so we give each picture a
+        // STABLE NAME and pass only that name through the text:
+        //
+        //   1. EXTRACTION (here): every image in the selection is named
+        //      "scribe-img-<N>" via ApiDrawing.SetName() — a name that PERSISTS on
+        //      the drawing inside the live document. The markdown carries the name
+        //      as a marker: inline "{{IMG:scribe-img-N}}" (positioned in the text
+        //      via the GetInlineDrawings patch) or block "![IMG:scribe-img-N]".
+        //   2. The marker travels verbatim through the LLM and stays in the chat
+        //      message — it is just text.
+        //   3. REINJECTION (buildAndInject): the fragment's markers are resolved by
+        //      scanning the live document for the drawing that currently bears that
+        //      name (drawingIndex, name -> ApiDrawing), Copy()-ing its bitmap, and
+        //      PasteHtml-ing it where the marker sits.
+        //
+        // The name is therefore a REFERENCE to a live drawing, not the picture
+        // itself. Consequences:
+        //   • A chat fragment produced long ago still inserts correctly AS LONG AS
+        //     the referenced drawing still exists in the document with that name.
+        //   • If that image was deleted, the marker resolves to nothing and the
+        //     image is silently dropped (the surrounding text still injects).
+        //
+        // STABILITY — why the name does not drift. The historical counter reset to 0
+        // on each extraction, so repeated edits stamped many images with the SAME
+        // name (scribe-img-0) and reinjection then resolved markers to the wrong
+        // image. We now (a) seed the counter PAST every existing scribe-img-N so a
+        // NEW name can never collide, and (b) reuse an image's existing name ONLY
+        // when it is UNIQUE in the document (count === 1). A unique name is thus
+        // preserved across re-extractions → the id is stable; a duplicated/stale
+        // name is re-stamped fresh so the picture becomes addressable again.
+        // ---------------------------------------------------------------------
+        function imgNameOf(drawing) {
+          var nm = (drawing && drawing.GetName) ? drawing.GetName() : "";
+          if (nm && nm.indexOf("scribe-img-") === 0) {
+            // CONTEXT (whole-document) extraction: reuse any scribe name and never
+            // SetName — its markers are never reinjected, so it must not mutate the
+            // document. SELECTION (round-trip): reuse only a name that is UNIQUE in
+            // the doc (stable id); a duplicated name is a stale collision → re-stamp.
+            if (Asc.scope.scribeExtractMode === "document") return nm;
+            if (((Asc.scope._imgNameCount || {})[nm] || 0) === 1) return nm;
           }
+          nm = "scribe-img-" + Asc.scope.imgCounter;
+          Asc.scope.imgCounter = Asc.scope.imgCounter + 1;
+          if (Asc.scope.scribeExtractMode !== "document") {
+            try { if (drawing && drawing.SetName) drawing.SetName(nm); } catch (e) {}
+            // The fresh name is now unique → reuse it on later visits to the same
+            // drawing within THIS extraction (run loop, then floating-image pass).
+            if (Asc.scope._imgNameCount) Asc.scope._imgNameCount[nm] = 1;
+          }
+          return nm;
         }
 
         // Helper to extract formatting flags from a text properties object
@@ -3060,15 +3118,13 @@
                   }
                 }
               } catch (eFn) { /* style check failed — not a footnote ref */ }
-              // Check for drawing-only run
+              // Inline drawing(s) inside an otherwise-empty run.
               if (hasScribeDrawings) {
                 var emptyRunDrawings = el.GetInlineDrawings ? el.GetInlineDrawings() : [];
                 for (var ed = 0; ed < emptyRunDrawings.length; ed++) {
-                  var edDrawing = emptyRunDrawings[ed].drawing;
-                  var edName = edDrawing && edDrawing.GetName ? edDrawing.GetName() : "";
-                  if (edName && edName.indexOf("scribe-img-") === 0) {
-                    annotatedParts.push({ text: "{{IMG:" + edName + "}}", raw: true });
-                  }
+                  var edName = imgNameOf(emptyRunDrawings[ed].drawing);
+                  annotatedParts.push({ text: "{{IMG:" + edName + "}}", raw: true });
+                  emittedImg[edName] = true;
                 }
               }
               continue;
@@ -3083,14 +3139,12 @@
                 var lastPos = 0;
                 for (var id = 0; id < inlineDrawings.length; id++) {
                   var dPos = inlineDrawings[id].position;
-                  var idDrawing = inlineDrawings[id].drawing;
-                  var dName = idDrawing && idDrawing.GetName ? idDrawing.GetName() : "";
+                  var dName = imgNameOf(inlineDrawings[id].drawing);
                   if (dPos > lastPos) {
                     annotatedParts.push({ text: runText.substring(lastPos, dPos), bold: flags.bold, italic: flags.italic, strikethrough: flags.strikethrough, underline: flags.underline, code: flags.code });
                   }
-                  if (dName && dName.indexOf("scribe-img-") === 0) {
-                    annotatedParts.push({ text: "{{IMG:" + dName + "}}", raw: true });
-                  }
+                  annotatedParts.push({ text: "{{IMG:" + dName + "}}", raw: true });
+                  emittedImg[dName] = true;
                   lastPos = dPos;
                 }
                 if (lastPos < runText.length) {
@@ -3141,6 +3195,21 @@
               }
             }
             annotatedParts = clipped;
+          }
+        }
+
+        // FLOATING / ANCHORED images: present in GetAllDrawingObjects() but never
+        // returned by GetInlineDrawings() (they live outside the run text stream),
+        // so the run loop above never emitted them. Emit a marker for every
+        // paragraph drawing not already emitted inline — wrap type (inline vs
+        // floating) and which paragraph the image is anchored to no longer decide
+        // whether it survives extraction. Appended after clipping so a floating
+        // image anchored to a partially-selected paragraph is still kept.
+        for (var fd = 0; fd < paraDrawings.length; fd++) {
+          var fdName = imgNameOf(paraDrawings[fd]);
+          if (!emittedImg[fdName]) {
+            annotatedParts.push({ text: "{{IMG:" + fdName + "}}", raw: true });
+            emittedImg[fdName] = true;
           }
         }
 
@@ -3215,14 +3284,22 @@
         for (var d = 0; d < drawings.length; d++) {
           var drawing = drawings[d];
           var name = drawing.GetName();
-          if (!name || name.indexOf("scribe-img-") !== 0) {
+          var _reuse = false;
+          // Mirror of imgNameOf (see its block comment for the full round-trip):
+          // reuse any scribe name on the CONTEXT path, but on the SELECTION path
+          // reuse ONLY a name that is UNIQUE in the document (stable id); a
+          // duplicated name is a stale collision → re-stamp it fresh.
+          if (name && name.indexOf("scribe-img-") === 0) {
+            if (Asc.scope.scribeExtractMode === "document") _reuse = true;
+            else if (((Asc.scope._imgNameCount || {})[name] || 0) === 1) _reuse = true;
+          }
+          if (!_reuse) {
             name = "scribe-img-" + Asc.scope.imgCounter;
             Asc.scope.imgCounter = Asc.scope.imgCounter + 1;
-            // SetName persists the marker for selection re-injection (read-write path).
-            // The whole-document path runs read-only (Pitfall 5: preserve the redo
-            // stack); there SetName is a no-op or throws, so guard it. The computed
-            // name is already assigned above and is emitted into the markdown either way.
-            try { drawing.SetName(name); } catch (eSetName) {}
+            if (Asc.scope.scribeExtractMode !== "document") {
+              try { drawing.SetName(name); } catch (eSetName) {}
+              if (Asc.scope._imgNameCount) Asc.scope._imgNameCount[name] = 1;
+            }
             hasUnnamed = true;
           }
           markers.push({ name: name });
@@ -3514,6 +3591,58 @@
 
       // --- Main extraction logic ---
       var doc = Api.GetDocument();
+
+      // --- Image identity seed (fixes wrong-image reinjection) ---
+      // The image counter historically reset to 0 each extraction, so repeated
+      // edits stamped MANY images with the SAME name (scribe-img-0). At reinjection
+      // the name->drawing index then resolved a marker to the WRONG image (the last
+      // one bearing that name), and two selected images could both be scribe-img-0.
+      // Seed the counter PAST the highest scribe-img-N already in the document, and
+      // record that base. On the SELECTION (round-trip) path imgNameOf /
+      // getDrawingMarker re-stamp any image whose number is below the base, so the
+      // images that reach the LLM fragment carry unique, resolvable names. The
+      // CONTEXT (document) path keeps existing names (base 0) and never SetName's —
+      // it isn't reinjected, so it must not mutate the document.
+      (function seedImageCounter() {
+        if (Asc.scope.scribeExtractMode === "document") { Asc.scope._imgNameCount = null; return; }
+        var counts = {};   // scribe-img-N -> how many drawings currently bear it
+        var mx = -1;
+        function scanNames(draws) {
+          if (!draws) return;
+          for (var k = 0; k < draws.length; k++) {
+            var nm = (draws[k] && draws[k].GetName) ? draws[k].GetName() : "";
+            if (nm && nm.indexOf("scribe-img-") === 0) {
+              counts[nm] = (counts[nm] || 0) + 1;
+              var v = parseInt(nm.substring(11), 10);
+              if (!isNaN(v) && v > mx) mx = v;
+            }
+          }
+        }
+        try {
+          var ps = doc.GetAllParagraphs();
+          for (var i = 0; i < ps.length; i++) scanNames(ps[i].GetAllDrawingObjects());
+          var ts = doc.GetAllTables();
+          for (var t = 0; t < ts.length; t++) {
+            var rows = ts[t].GetRowsCount();
+            for (var r = 0; r < rows; r++) {
+              var row = ts[t].GetRow(r);
+              var cc = row ? row.GetCellsCount() : 0;
+              for (var c = 0; c < cc; c++) {
+                var cell = ts[t].GetCell(r, c);
+                var content = cell ? cell.GetContent() : null;
+                var ec = content ? content.GetElementsCount() : 0;
+                for (var e = 0; e < ec; e++) {
+                  var elx = content.GetElement(e);
+                  if (elx && elx.GetAllDrawingObjects) scanNames(elx.GetAllDrawingObjects());
+                }
+              }
+            }
+          }
+        } catch (eSeed) {}
+        Asc.scope._imgNameCount = counts;   // imgNameOf reuses a name only if its count === 1 (unique → stable id)
+        // New names start past every existing scribe-img-N so they can never collide.
+        if (!Asc.scope.imgCounter || Asc.scope.imgCounter < mx + 1) Asc.scope.imgCounter = mx + 1;
+      })();
 
       // v3.2-03 mode branch: 'document' extracts the WHOLE document HERE — after all
       // helper declarations and var inits above are in scope (the verified v3.2
