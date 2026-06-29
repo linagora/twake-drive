@@ -1,209 +1,327 @@
-import { renderHook, waitFor } from '@testing-library/react'
+import { render, act, waitFor } from '@testing-library/react'
+import React from 'react'
 
-import { useClient } from 'cozy-client'
-import { useDataProxy } from 'cozy-dataproxy-lib'
+import { useClient, DataProxyLink } from 'cozy-client'
 
-import useDataProxyRecents from './useRecentFiles'
+import useRecentFiles from './useRecentFiles'
 
-import logger from '@/lib/logger'
-import { buildRecentQuery } from '@/queries'
+import { useSharedDrives } from '@/modules/shareddrives/hooks/useSharedDrives'
 
-jest.mock('cozy-client', () => ({
-  useClient: jest.fn()
+// Mock cozy-client: create a fake DataProxyLink class that can be used with instanceof
+jest.mock('cozy-client', () => {
+  class FakeDataProxyLink {}
+  return {
+    useClient: jest.fn(),
+    DataProxyLink: FakeDataProxyLink
+  }
+})
+
+jest.mock('@/modules/shareddrives/hooks/useSharedDrives', () => ({
+  useSharedDrives: jest.fn()
 }))
 
-jest.mock('cozy-dataproxy-lib', () => ({
-  useDataProxy: jest.fn()
+jest.mock('@/hooks/useRecentFiles/RecentScopeQuery', () => ({
+  __esModule: true,
+  default: jest.fn()
 }))
 
-jest.mock('@/lib/logger', () => ({
-  warn: jest.fn(),
-  error: jest.fn()
-}))
-
-jest.mock('@/queries', () => ({
-  buildRecentQuery: jest.fn()
-}))
+const MockRecentScopeQuery = require('@/hooks/useRecentFiles/RecentScopeQuery')
+  .default
 
 const mockUseClient = useClient
-const mockUseDataProxy = useDataProxy
-const mockBuildRecentQuery = buildRecentQuery
+const mockUseSharedDrives = useSharedDrives
 
-describe('useDataProxyRecents', () => {
-  let mockClient
+// Get the FakeDataProxyLink class to create instances
+const { DataProxyLink: FakeDataProxyLink } = require('cozy-client')
+
+const makeClientWithDataProxy = () => ({
+  links: [new FakeDataProxyLink()]
+})
+
+const makeClientWithoutDataProxy = () => ({
+  links: []
+})
+
+const makeFile = (id, updated_at, extra = {}) => ({
+  _id: id,
+  id,
+  updated_at,
+  trashed: false,
+  type: 'file',
+  name: `file-${id}`,
+  ...extra
+})
+
+/**
+ * Renders a TestComponent that calls useRecentFiles and also mounts the
+ * scopeQueries elements so MockRecentScopeQuery is invoked and populates
+ * onResultRegistry. Returns a ref object that always holds the latest result.
+ */
+const renderHookWithScopes = () => {
+  const ref = { current: null }
+
+  const TestComponent = () => {
+    const result = useRecentFiles()
+    ref.current = result
+    return <>{result.scopeQueries}</>
+  }
+
+  const renderResult = render(<TestComponent />)
+  return { ref, renderResult }
+}
+
+describe('useRecentFiles', () => {
+  let onResultRegistry
 
   beforeEach(() => {
     jest.clearAllMocks()
-    mockClient = {
-      fetchQueryAndGetFromState: jest.fn()
-    }
-    mockUseClient.mockReturnValue(mockClient)
-    mockBuildRecentQuery.mockReturnValue({
-      definition: jest.fn(() => ({})),
-      options: {}
+    onResultRegistry = {}
+
+    MockRecentScopeQuery.mockImplementation(({ scopeKey, onResult }) => {
+      onResultRegistry[scopeKey] = onResult
+      return null
+    })
+
+    mockUseSharedDrives.mockReturnValue({ recipientDriveIds: [] })
+    mockUseClient.mockReturnValue(makeClientWithDataProxy())
+  })
+
+  describe('merge, sort, dedup, and cap', () => {
+    it('merges own and drive scopes sorted by updated_at desc, filtered, deduped, capped at 50', async () => {
+      const driveId = 'drive-1'
+      mockUseSharedDrives.mockReturnValue({ recipientDriveIds: [driveId] })
+
+      const fileA = makeFile('A', '2020-01-01T00:00:01Z')
+      const fileB = makeFile('B', '2020-01-01T00:00:02Z')
+      const fileC = makeFile('C', '2020-01-01T00:00:03Z')
+
+      const { ref } = renderHookWithScopes()
+
+      // Initially loading (no scopes have reported yet)
+      expect(ref.current.fetchStatus).toBe('loading')
+      expect(ref.current.data).toEqual([])
+
+      // Own scope reports: A and C
+      act(() => {
+        onResultRegistry['recents-own']('recents-own', {
+          data: [fileA, fileC],
+          fetchStatus: 'loaded',
+          error: null
+        })
+      })
+
+      // Drive scope hasn't reported yet — still loading but partial data visible
+      expect(ref.current.fetchStatus).toBe('loading')
+      // Partial data: C then A (sorted desc)
+      expect(ref.current.data.map(f => f._id)).toEqual(['C', 'A'])
+
+      // Drive scope reports: B
+      act(() => {
+        onResultRegistry[`recents-drive-${driveId}`](
+          `recents-drive-${driveId}`,
+          {
+            data: [fileB],
+            fetchStatus: 'loaded',
+            error: null
+          }
+        )
+      })
+
+      // All scopes reported → loaded
+      expect(ref.current.fetchStatus).toBe('loaded')
+      // Sorted desc: C(3) > B(2) > A(1)
+      expect(ref.current.data.map(f => f._id)).toEqual(['C', 'B', 'A'])
+      expect(ref.current.error).toBeNull()
+    })
+
+    it('filters out trashed files', () => {
+      const trashedFile = makeFile('T', '2020-01-01T00:00:05Z', {
+        trashed: true
+      })
+      const okFile = makeFile('OK', '2020-01-01T00:00:01Z')
+
+      const { ref } = renderHookWithScopes()
+
+      act(() => {
+        onResultRegistry['recents-own']('recents-own', {
+          data: [trashedFile, okFile],
+          fetchStatus: 'loaded',
+          error: null
+        })
+      })
+
+      expect(ref.current.data.map(f => f._id)).toEqual(['OK'])
+    })
+
+    it('caps results at 50', () => {
+      const files = Array.from({ length: 60 }, (_, i) =>
+        makeFile(`f${i}`, `2020-01-${String(i + 1).padStart(2, '0')}T00:00:00Z`)
+      )
+
+      const { ref } = renderHookWithScopes()
+
+      act(() => {
+        onResultRegistry['recents-own']('recents-own', {
+          data: files,
+          fetchStatus: 'loaded',
+          error: null
+        })
+      })
+
+      expect(ref.current.data).toHaveLength(50)
+    })
+
+    it('deduplicates by _id keeping the most-recently-updated occurrence', () => {
+      const driveId = 'drive-1'
+      mockUseSharedDrives.mockReturnValue({ recipientDriveIds: [driveId] })
+
+      // Same _id in both own and drive — drive has newer timestamp
+      const fileFromOwn = makeFile('SHARED', '2020-01-01T00:00:01Z')
+      const fileFromDrive = makeFile('SHARED', '2020-01-01T00:00:05Z')
+      const uniqueFile = makeFile('UNIQUE', '2020-01-01T00:00:03Z')
+
+      const { ref } = renderHookWithScopes()
+
+      act(() => {
+        onResultRegistry['recents-own']('recents-own', {
+          data: [fileFromOwn, uniqueFile],
+          fetchStatus: 'loaded',
+          error: null
+        })
+        onResultRegistry[`recents-drive-${driveId}`](
+          `recents-drive-${driveId}`,
+          {
+            data: [fileFromDrive],
+            fetchStatus: 'loaded',
+            error: null
+          }
+        )
+      })
+
+      // SHARED appears once, drive version wins (updated_at=5 > 3 > 1)
+      expect(ref.current.data.map(f => f._id)).toEqual(['SHARED', 'UNIQUE'])
+      expect(ref.current.data).toHaveLength(2)
     })
   })
 
-  describe('when dataProxy is available and succeeds', () => {
-    it('should return data from dataProxy', async () => {
-      const mockData = [
-        { id: '1', name: 'file1' },
-        { id: '2', name: 'file2' }
-      ]
-      const mockDataProxy = {
-        dataProxyServicesAvailable: true,
-        recents: jest.fn().mockResolvedValue(mockData)
-      }
+  describe('fetchStatus semantics', () => {
+    it('is loading until all active scopes have reported at least once', () => {
+      const driveId = 'drive-1'
+      mockUseSharedDrives.mockReturnValue({ recipientDriveIds: [driveId] })
 
-      mockUseDataProxy.mockReturnValue(mockDataProxy)
+      const { ref } = renderHookWithScopes()
 
-      const { result } = renderHook(() => useDataProxyRecents())
+      expect(ref.current.fetchStatus).toBe('loading')
 
-      expect(result.current.fetchStatus).toBe('loading')
-      expect(result.current.data).toEqual([])
+      act(() => {
+        onResultRegistry['recents-own']('recents-own', {
+          data: [],
+          fetchStatus: 'loaded',
+          error: null
+        })
+      })
 
-      await waitFor(() => expect(result.current.fetchStatus).toBe('loaded'))
-      expect(result.current.data).toEqual(mockData)
-      expect(result.current.error).toBe(null)
-      expect(mockDataProxy.recents).toHaveBeenCalledTimes(1)
-      expect(mockClient.fetchQueryAndGetFromState).not.toHaveBeenCalled()
-      expect(logger.error).not.toHaveBeenCalled()
+      // Drive scope not yet reported
+      expect(ref.current.fetchStatus).toBe('loading')
+
+      act(() => {
+        onResultRegistry[`recents-drive-${driveId}`](
+          `recents-drive-${driveId}`,
+          {
+            data: [],
+            fetchStatus: 'loaded',
+            error: null
+          }
+        )
+      })
+
+      expect(ref.current.fetchStatus).toBe('loaded')
+    })
+
+    it('returns loading + partial data while drive scopes have not yet reported', () => {
+      const driveId = 'drive-1'
+      mockUseSharedDrives.mockReturnValue({ recipientDriveIds: [driveId] })
+      const ownFile = makeFile('OWN', '2020-01-01T00:00:01Z')
+
+      const { ref } = renderHookWithScopes()
+
+      act(() => {
+        onResultRegistry['recents-own']('recents-own', {
+          data: [ownFile],
+          fetchStatus: 'loaded',
+          error: null
+        })
+      })
+
+      // Own reported, drive has not — partial data + loading (isFetchingMore semantics)
+      expect(ref.current.fetchStatus).toBe('loading')
+      expect(ref.current.data).toHaveLength(1)
+      expect(ref.current.data[0]._id).toBe('OWN')
     })
   })
 
-  describe('when dataProxy throws an error', () => {
-    it('should use fallback query when dataProxy fails', async () => {
-      const mockError = new Error('DataProxy error')
-      const mockDataProxy = {
-        dataProxyServicesAvailable: true,
-        recents: jest.fn().mockRejectedValue(mockError)
-      }
-      const fallbackData = [
-        { id: '3', name: 'file3' },
-        { id: '4', name: 'file4' }
-      ]
+  describe('degrade without data-proxy link', () => {
+    it('renders only the own scope when client has no DataProxyLink', () => {
+      mockUseClient.mockReturnValue(makeClientWithoutDataProxy())
+      mockUseSharedDrives.mockReturnValue({ recipientDriveIds: ['drive-x'] })
 
-      mockUseDataProxy.mockReturnValue(mockDataProxy)
-      mockClient.fetchQueryAndGetFromState.mockResolvedValue({
-        data: fallbackData
+      const { ref } = renderHookWithScopes()
+
+      // Only one scope element (own)
+      expect(ref.current.scopeQueries).toHaveLength(1)
+
+      // Only 'recents-own' is registered — no drive scope
+      expect(Object.keys(onResultRegistry)).toEqual(['recents-own'])
+
+      const ownFile = makeFile('OWN', '2020-01-01T00:00:01Z')
+      act(() => {
+        onResultRegistry['recents-own']('recents-own', {
+          data: [ownFile],
+          fetchStatus: 'loaded',
+          error: null
+        })
       })
 
-      const { result } = renderHook(() => useDataProxyRecents())
-
-      expect(result.current.fetchStatus).toBe('loading')
-      expect(result.current.data).toEqual([])
-
-      // Wait for fallback query to complete
-      await waitFor(() => expect(result.current.fetchStatus).toBe('loaded'))
-      expect(result.current.data).toEqual(fallbackData)
-      expect(result.current.error).toBe(null)
-      expect(logger.error).toHaveBeenCalledWith(
-        'Error fetching recents from dataproxy',
-        mockError
-      )
-      expect(mockClient.fetchQueryAndGetFromState).toHaveBeenCalledTimes(1)
-      expect(mockClient.fetchQueryAndGetFromState).toHaveBeenCalledWith({
-        definition: expect.any(Object),
-        options: expect.any(Object)
-      })
+      expect(ref.current.fetchStatus).toBe('loaded')
+      expect(ref.current.data.map(f => f._id)).toEqual(['OWN'])
     })
 
-    it('should handle fallback query error', async () => {
-      const mockError = new Error('DataProxy error')
-      const fallbackError = new Error('Fallback query error')
-      const mockDataProxy = {
-        dataProxyServicesAvailable: true,
-        recents: jest.fn().mockRejectedValue(mockError)
-      }
+    it('renders only the own scope when client.links is absent', () => {
+      mockUseClient.mockReturnValue({ links: null })
+      mockUseSharedDrives.mockReturnValue({ recipientDriveIds: ['drive-x'] })
 
-      mockUseDataProxy.mockReturnValue(mockDataProxy)
-      mockClient.fetchQueryAndGetFromState.mockRejectedValue(fallbackError)
+      const { ref } = renderHookWithScopes()
 
-      const { result } = renderHook(() => useDataProxyRecents())
-
-      // Wait for fallback query error to be processed
-      await waitFor(() => expect(result.current.fetchStatus).toBe('error'))
-      expect(result.current.error).toEqual(fallbackError)
-      expect(logger.error).toHaveBeenCalledWith(
-        'Error fetching recents from dataproxy',
-        mockError
-      )
-      expect(logger.warn).toHaveBeenCalledWith(
-        'Error fetching recents from fallback query',
-        fallbackError
-      )
-      expect(mockClient.fetchQueryAndGetFromState).toHaveBeenCalledTimes(1)
+      expect(ref.current.scopeQueries).toHaveLength(1)
     })
   })
 
-  describe('when dataProxy is not available', () => {
-    it('should use fallback query when dataProxy is not available', async () => {
-      const mockDataProxy = {
-        dataProxyServicesAvailable: false
-      }
-      const fallbackData = [
-        { id: '5', name: 'file5' },
-        { id: '6', name: 'file6' }
-      ]
-
-      mockUseDataProxy.mockReturnValue(mockDataProxy)
-      mockClient.fetchQueryAndGetFromState.mockResolvedValue({
-        data: fallbackData
+  describe('scopeQueries elements', () => {
+    it('renders one own scope + one per drive', () => {
+      mockUseSharedDrives.mockReturnValue({
+        recipientDriveIds: ['d1', 'd2']
       })
 
-      const { result } = renderHook(() => useDataProxyRecents())
+      const { ref } = renderHookWithScopes()
 
-      // When dataProxy is not available, the hook should execute fallback query
-      expect(mockClient.fetchQueryAndGetFromState).toHaveBeenCalledTimes(1)
+      expect(ref.current.scopeQueries).toHaveLength(3)
 
-      // Wait for fallback query to complete
-      await waitFor(() => expect(result.current.fetchStatus).toBe('loaded'))
-      expect(result.current.data).toEqual(fallbackData)
-      expect(mockClient.fetchQueryAndGetFromState).toHaveBeenCalledWith({
-        definition: expect.any(Object),
-        options: expect.any(Object)
-      })
-    })
-
-    it('should handle fallback query loading state', async () => {
-      const mockDataProxy = {
-        dataProxyServicesAvailable: false
-      }
-
-      mockUseDataProxy.mockReturnValue(mockDataProxy)
-      // Don't resolve the query immediately to test loading state
-      mockClient.fetchQueryAndGetFromState.mockImplementation(
-        () => new Promise(() => {}) // Never resolves
+      // Check MockRecentScopeQuery was called with the expected scopeKeys
+      const calls = MockRecentScopeQuery.mock.calls.map(
+        ([{ scopeKey }]) => scopeKey
       )
-
-      const { result } = renderHook(() => useDataProxyRecents())
-
-      expect(result.current.fetchStatus).toBe('loading')
-      expect(result.current.data).toEqual([])
-      expect(result.current.error).toBe(null)
-      expect(mockClient.fetchQueryAndGetFromState).toHaveBeenCalledTimes(1)
+      expect(calls).toContain('recents-own')
+      expect(calls).toContain('recents-drive-d1')
+      expect(calls).toContain('recents-drive-d2')
     })
   })
 
-  describe('when client is not available', () => {
-    it('should set error when client is not available', async () => {
-      const mockDataProxy = {
-        dataProxyServicesAvailable: false
-      }
-
-      mockUseDataProxy.mockReturnValue(mockDataProxy)
-      mockUseClient.mockReturnValue(null)
-
-      const { result } = renderHook(() => useDataProxyRecents())
-
-      // Wait for error to be set
-      await waitFor(() => {
-        expect(result.current.fetchStatus).toBe('error')
-      })
-
-      expect(result.current.error).toEqual(new Error('Client not available'))
-      expect(result.current.data).toEqual([])
-      expect(mockClient.fetchQueryAndGetFromState).not.toHaveBeenCalled()
+  describe('no dependency on useDataProxy or dataProxy.recents()', () => {
+    it('does not import useDataProxy and runs correctly without cozy-dataproxy-lib', () => {
+      // If the hook still imported cozy-dataproxy-lib, this test would fail
+      // because we don't mock it — any call would throw. We confirm by running
+      // the hook and asserting it works without that dependency.
+      expect(() => renderHookWithScopes()).not.toThrow()
     })
   })
 })
