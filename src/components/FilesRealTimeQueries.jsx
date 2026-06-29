@@ -19,6 +19,11 @@ const bufferDeletedFiles = new Map()
 // Populated by drive-socket handlers; absent (undefined) for own-instance files.
 const driveIdByFileId = new Map()
 
+// Test-only affordance: resets the module-level driveIdByFileId Map so test
+// isolation is not broken by entries leaking across test cases.
+// eslint-disable-next-line no-underscore-dangle
+export const __resetDriveIdByFileId = () => driveIdByFileId.clear()
+
 const getParentFolder = async (client, dirId, driveId) => {
   let parentDir = client.getDocumentFromState('io.cozy.files', dirId)
   if (!parentDir) {
