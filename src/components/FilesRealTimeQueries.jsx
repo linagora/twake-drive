@@ -28,13 +28,19 @@ const getParentFolder = async (client, dirId, driveId) => {
   let parentDir = client.getDocumentFromState('io.cozy.files', dirId)
   if (!parentDir) {
     if (driveId) {
-      // Drive file: resolve the parent via the drive-scoped collection so the
-      // request is authenticated against the correct shared drive.
-      // statById returns { data: folderDoc, included: children, links }.
-      const result = await client
-        .collection('io.cozy.files', { driveId })
-        .statById(dirId)
-      parentDir = result.data
+      // Drive file: resolve the parent from the drive's locally-replicated pouch
+      // (Plan A capability), not the network, keeping the realtime path reactive.
+      const parentQuery = buildFileOrFolderByIdQuery(dirId)
+      const parentResult = await client.fetchQueryAndGetFromState({
+        definition: parentQuery.definition(),
+        options: {
+          ...parentQuery.options,
+          as: `${parentQuery.options.as}-drive-${driveId}`,
+          driveId,
+          forceLink: 'dataproxy'
+        }
+      })
+      parentDir = parentResult.data
     } else {
       // Own-instance file: fall back to the standard store query path.
       const parentQuery = buildFileOrFolderByIdQuery(dirId)
@@ -249,17 +255,12 @@ const FilesRealTimeQueries = ({
   ])
 
   // ── Per-recipient-drive subscriptions ──────────────────────────────────────
-  // NOTE: owner is typed as optional in the sharing type. The filter below uses
-  // strict === false (as specified). If a drive has owner === undefined it will
-  // not be subscribed; see phase3-report.md for details.
-  const { sharedDrives } = useSharedDrives()
+  // recipientDriveIds is derived in the hook (owner !== true), covering both
+  // owner === false and owner === undefined so no recipient drive is silently skipped.
+  const { recipientDriveIds } = useSharedDrives()
   // Build a stable string key from the sorted IDs of recipient drives so the
   // effect below only re-runs when the set of drives actually changes.
-  const recipientDriveKey = sharedDrives
-    .filter(d => d.owner === false)
-    .map(d => d._id)
-    .sort()
-    .join(',')
+  const recipientDriveKey = [...recipientDriveIds].sort().join(',')
 
   useEffect(() => {
     if (!recipientDriveKey) return

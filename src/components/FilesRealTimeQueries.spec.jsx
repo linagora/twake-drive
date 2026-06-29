@@ -39,11 +39,7 @@ const PARENT_FOLDER = {
   dir_id: ''
 }
 
-const buildMockClient = ({ statByIdFn } = {}) => {
-  // Default statById returns PARENT_FOLDER unless the caller overrides it.
-  const resolvedStatById =
-    statByIdFn || jest.fn().mockResolvedValue({ data: PARENT_FOLDER })
-
+const buildMockClient = () => {
   const client = createMockClient({})
   client.dispatch = jest.fn()
   client.getDocumentFromState = jest.fn().mockReturnValue(null)
@@ -51,9 +47,8 @@ const buildMockClient = ({ statByIdFn } = {}) => {
   client.fetchQueryAndGetFromState = jest
     .fn()
     .mockResolvedValue({ data: PARENT_FOLDER })
-  // Always mock collection so drive-scoped statById calls don't hit the real stack.
   client.collection = jest.fn().mockReturnValue({
-    statById: resolvedStatById
+    statById: jest.fn().mockResolvedValue({ data: PARENT_FOLDER })
   })
 
   client.plugins = {
@@ -78,7 +73,8 @@ describe('FilesRealTimeQueries', () => {
     useSharedDrives.mockReturnValue({
       isLoading: false,
       isLoaded: true,
-      sharedDrives: []
+      sharedDrives: [],
+      recipientDriveIds: []
     })
   })
 
@@ -172,7 +168,8 @@ describe('FilesRealTimeQueries', () => {
       useSharedDrives.mockReturnValue({
         isLoading: false,
         isLoaded: true,
-        sharedDrives: [{ _id: 'd1', owner: false }]
+        sharedDrives: [{ _id: 'd1', owner: false }],
+        recipientDriveIds: ['d1']
       })
 
       setup()
@@ -190,7 +187,8 @@ describe('FilesRealTimeQueries', () => {
         sharedDrives: [
           { _id: 'd1', owner: false },
           { _id: 'd2', owner: false }
-        ]
+        ],
+        recipientDriveIds: ['d1', 'd2']
       })
 
       setup()
@@ -210,7 +208,8 @@ describe('FilesRealTimeQueries', () => {
       useSharedDrives.mockReturnValue({
         isLoading: false,
         isLoaded: true,
-        sharedDrives: [{ _id: 'd2', owner: true }]
+        sharedDrives: [{ _id: 'd2', owner: true }],
+        recipientDriveIds: []
       })
 
       setup()
@@ -230,7 +229,8 @@ describe('FilesRealTimeQueries', () => {
       useSharedDrives.mockReturnValue({
         isLoading: false,
         isLoaded: true,
-        sharedDrives: [{ _id: 'd1', owner: false }]
+        sharedDrives: [{ _id: 'd1', owner: false }],
+        recipientDriveIds: ['d1']
       })
 
       setup()
@@ -253,7 +253,7 @@ describe('FilesRealTimeQueries', () => {
       const action = client.dispatch.mock.calls[0][0]
       expect(action.response.data[0]._type).toBe('io.cozy.files')
       expect(action.response.data[0]._id).toBe('drive-file-1')
-      // Path must be resolved via the drive-scoped statById (parent.path + '/' + name)
+      // Path must be resolved via the local-pouch fetchQueryAndGetFromState (parent.path + '/' + name)
       expect(action.response.data[0].path).toBe(
         `${PARENT_FOLDER.path}/shared-doc.txt`
       )
@@ -269,7 +269,8 @@ describe('FilesRealTimeQueries', () => {
       useSharedDrives.mockReturnValue({
         isLoading: false,
         isLoaded: true,
-        sharedDrives: [{ _id: 'd1', owner: false }]
+        sharedDrives: [{ _id: 'd1', owner: false }],
+        recipientDriveIds: ['d1']
       })
 
       setup()
@@ -301,7 +302,8 @@ describe('FilesRealTimeQueries', () => {
       useSharedDrives.mockReturnValue({
         isLoading: false,
         isLoaded: true,
-        sharedDrives: [{ _id: 'd1', owner: false }]
+        sharedDrives: [{ _id: 'd1', owner: false }],
+        recipientDriveIds: ['d1']
       })
 
       const { unmount } = setup()
@@ -324,7 +326,8 @@ describe('FilesRealTimeQueries', () => {
         sharedDrives: [
           { _id: 'd1', owner: false },
           { _id: 'd2', owner: false }
-        ]
+        ],
+        recipientDriveIds: ['d1', 'd2']
       })
 
       const { unmount } = setup()
@@ -349,7 +352,8 @@ describe('FilesRealTimeQueries', () => {
       useSharedDrives.mockReturnValue({
         isLoading: false,
         isLoaded: true,
-        sharedDrives: [{ _id: 'd1', owner: false }]
+        sharedDrives: [{ _id: 'd1', owner: false }],
+        recipientDriveIds: ['d1']
       })
 
       const { rerender } = setup()
@@ -361,7 +365,8 @@ describe('FilesRealTimeQueries', () => {
       useSharedDrives.mockReturnValue({
         isLoading: false,
         isLoaded: true,
-        sharedDrives: [{ _id: 'd2', owner: false }]
+        sharedDrives: [{ _id: 'd2', owner: false }],
+        recipientDriveIds: ['d2']
       })
 
       rerender(
@@ -386,7 +391,7 @@ describe('FilesRealTimeQueries', () => {
   // ── Task 3.2: drive-scoped path resolution ─────────────────────────────────
 
   describe('drive-scoped path resolution', () => {
-    it('resolves parent folder via drive-scoped statById for drive files', async () => {
+    it('resolves parent folder via fetchQueryAndGetFromState (local pouch) for drive files', async () => {
       const driveParentFolder = {
         _id: 'drive-folder-parent',
         _type: 'io.cozy.files',
@@ -396,15 +401,16 @@ describe('FilesRealTimeQueries', () => {
         dir_id: ''
       }
 
-      const statByIdFn = jest
+      const driveClient = buildMockClient()
+      driveClient.fetchQueryAndGetFromState = jest
         .fn()
         .mockResolvedValue({ data: driveParentFolder })
-      const driveClient = buildMockClient({ statByIdFn })
 
       useSharedDrives.mockReturnValue({
         isLoading: false,
         isLoaded: true,
-        sharedDrives: [{ _id: 'd1', owner: false }]
+        sharedDrives: [{ _id: 'd1', owner: false }],
+        recipientDriveIds: ['d1']
       })
 
       let capturedCreatedCallback
@@ -435,15 +441,22 @@ describe('FilesRealTimeQueries', () => {
       const action = driveClient.dispatch.mock.calls[0][0]
       const dispatchedDoc = action.response.data[0]
 
-      // The path must be resolved via the drive-scoped statById
+      // The path must be resolved via the local-pouch fetchQueryAndGetFromState
       expect(dispatchedDoc.path).toBe('/Shared Drive/new-doc.txt')
 
-      // The drive-scoped collection must have been used, not fetchQueryAndGetFromState
-      expect(driveClient.collection).toHaveBeenCalledWith('io.cozy.files', {
+      // Must use fetchQueryAndGetFromState with driveId and forceLink: 'dataproxy'
+      expect(driveClient.fetchQueryAndGetFromState).toHaveBeenCalledWith(
+        expect.objectContaining({
+          options: expect.objectContaining({
+            driveId: 'd1',
+            forceLink: 'dataproxy'
+          })
+        })
+      )
+      // The network drive-scoped collection (statById) must NOT have been used
+      expect(driveClient.collection).not.toHaveBeenCalledWith('io.cozy.files', {
         driveId: 'd1'
       })
-      expect(statByIdFn).toHaveBeenCalledWith(driveParentFolder._id)
-      expect(driveClient.fetchQueryAndGetFromState).not.toHaveBeenCalled()
     })
 
     it('resolves parent folder via fetchQueryAndGetFromState for own files (no driveId)', async () => {
