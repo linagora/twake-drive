@@ -38,6 +38,10 @@ const PARENT_FOLDER = {
 }
 
 const buildMockClient = ({ statByIdFn } = {}) => {
+  // Default statById returns PARENT_FOLDER unless the caller overrides it.
+  const resolvedStatById =
+    statByIdFn || jest.fn().mockResolvedValue({ data: PARENT_FOLDER })
+
   const client = createMockClient({})
   client.dispatch = jest.fn()
   client.getDocumentFromState = jest.fn().mockReturnValue(null)
@@ -45,18 +49,16 @@ const buildMockClient = ({ statByIdFn } = {}) => {
   client.fetchQueryAndGetFromState = jest
     .fn()
     .mockResolvedValue({ data: PARENT_FOLDER })
+  // Always mock collection so drive-scoped statById calls don't hit the real stack.
+  client.collection = jest.fn().mockReturnValue({
+    statById: resolvedStatById
+  })
 
   client.plugins = {
     realtime: {
       subscribe: jest.fn(),
       unsubscribe: jest.fn()
     }
-  }
-
-  if (statByIdFn) {
-    client.collection = jest.fn().mockReturnValue({
-      statById: statByIdFn
-    })
   }
 
   return client
