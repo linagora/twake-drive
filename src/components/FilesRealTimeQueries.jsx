@@ -19,16 +19,26 @@ const bufferDeletedFiles = new Map()
 // Populated by drive-socket handlers; absent (undefined) for own-instance files.
 const driveIdByFileId = new Map()
 
-const getParentFolder = async (client, dirId) => {
+const getParentFolder = async (client, dirId, driveId) => {
   let parentDir = client.getDocumentFromState('io.cozy.files', dirId)
   if (!parentDir) {
-    // Parent is not in the store: query it
-    const parentQuery = buildFileOrFolderByIdQuery(dirId)
-    const parentResult = await client.fetchQueryAndGetFromState({
-      definition: parentQuery.definition(),
-      options: parentQuery.options
-    })
-    parentDir = parentResult.data
+    if (driveId) {
+      // Drive file: resolve the parent via the drive-scoped collection so the
+      // request is authenticated against the correct shared drive.
+      // statById returns { data: folderDoc, included: children, links }.
+      const result = await client
+        .collection('io.cozy.files', { driveId })
+        .statById(dirId)
+      parentDir = result.data
+    } else {
+      // Own-instance file: fall back to the standard store query path.
+      const parentQuery = buildFileOrFolderByIdQuery(dirId)
+      const parentResult = await client.fetchQueryAndGetFromState({
+        definition: parentQuery.definition(),
+        options: parentQuery.options
+      })
+      parentDir = parentResult.data
+    }
   }
   return parentDir
 }
@@ -79,9 +89,17 @@ const processEvents = async (client, mutationType) => {
   }
 
   for (const folderId in filesByFolder) {
+    const filesInFolder = filesByFolder[folderId]
+    // Derive the originating drive ID from the first file in the group.
+    // All files sharing the same dir_id in a given processing cycle come from
+    // the same drive (or from own-instance files which have no entry).
+    const driveId =
+      filesInFolder.length > 0
+        ? driveIdByFileId.get(filesInFolder[0]._id)
+        : undefined
     const files = []
-    const folder = await getParentFolder(client, folderId)
-    for (const file of filesByFolder[folderId]) {
+    const folder = await getParentFolder(client, folderId, driveId)
+    for (const file of filesInFolder) {
       const fileWithPath = ensureFilePath(file, folder)
       files.push(fileWithPath)
     }
@@ -101,10 +119,11 @@ const processEvents = async (client, mutationType) => {
       )
     )
   }
-  // Remove processed files from buffer
+  // Remove processed files from buffer and clear drive-id tracking.
   // Do not clear all at once in case pending events arrived during the processing
   for (const fileId of fileIdsToProcess) {
     bufferFiles.delete(fileId)
+    driveIdByFileId.delete(fileId)
   }
 }
 
