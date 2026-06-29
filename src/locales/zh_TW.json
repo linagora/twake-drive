@@ -37,7 +37,6 @@
     "empty_trash": "清空垃圾桶",
     "share": "分享",
     "trash": "移除",
-    "delete_shared_drive": "刪除共用磁碟機",
     "leave": "離開分享資料夾並刪除",
     "select_all": "全選",
     "sharings_tab_all": "全部",
@@ -175,9 +174,7 @@
     "paste_failed": "貼上檔案失敗",
     "paste_sharing_error": "由於共享限制，無法貼上檔案。請改用移動操作。",
     "paste_same_folder_skipped": "無法將項目移動到它們已經所在的同一資料夾。",
-    "paste_not_allowed": "您無法貼上到此資料夾",
-    "cannot_move_shared_drive": "您無法移動共享磁碟機資料夾",
-    "cannot_copy_shared_drive": "您無法複製共用雲端硬碟資料夾"
+    "paste_not_allowed": "您無法貼上到此資料夾"
   },
   "actions": {
     "details": "詳細資訊",

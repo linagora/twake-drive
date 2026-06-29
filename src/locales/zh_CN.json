@@ -46,7 +46,6 @@
     "empty_trash": "清空垃圾桶",
     "share": "分享",
     "trash": "移除",
-    "delete_shared_drive": "删除共享驱动器",
     "leave": "离开文件夹并删除",
     "menu_add": "添加",
     "menu_create": "创造",
@@ -88,9 +87,7 @@
     "paste_failed": "粘贴文件失败",
     "paste_sharing_error": "由于共享限制，无法粘贴文件。请改用移动操作。",
     "paste_same_folder_skipped": "无法将项目移动到它们已经所在的同一文件夹。",
-    "paste_not_allowed": "您无法粘贴到此文件夹",
-    "cannot_move_shared_drive": "您无法移动共享驱动器文件夹",
-    "cannot_copy_shared_drive": "您无法复制共享云端硬盘文件夹"
+    "paste_not_allowed": "您无法粘贴到此文件夹"
   },
   "actions": {
     "details": "详细信息",

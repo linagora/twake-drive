@@ -84,9 +84,7 @@
     "paste_failed": "Wklejanie plików nie powiodło się",
     "paste_sharing_error": "Nie można wkleić plików z powodu ograniczeń udostępniania. Zamiast tego użyj akcji Przenieś.",
     "paste_same_folder_skipped": "Nie można przenieść elementów do tego samego folderu, w którym już się znajdują.",
-    "paste_not_allowed": "Nie możesz wkleić do tego folderu",
-    "cannot_move_shared_drive": "Nie możesz przenieść folderu dysku udostępnionego",
-    "cannot_copy_shared_drive": "Nie możesz skopiować folderu dysku współdzielonego"
+    "paste_not_allowed": "Nie możesz wkleić do tego folderu"
   },
   "actions": {
     "details": "Szczegóły",
