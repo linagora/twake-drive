@@ -1,0 +1,259 @@
+{
+  "name": "Drive",
+  "name_prefix": "Twake",
+  "slug": "drive",
+  "version": "1.105.0",
+  "type": "webapp",
+  "licence": "AGPL-3.0",
+  "icon": "assets/app-icon.svg",
+  "categories": ["cozy"],
+  "source": "https://github.com/cozy/cozy-drive",
+  "editor": "Cozy",
+  "developer": {
+   "name": "Twake Workplace",
+    "url": "https://twake.app"
+  },
+  "locales": {
+    "en": {
+      "short_description": "Twake Drive helps you to save, sync and secure your files on your Twake.",
+      "long_description": "With Twake Drive, you can easily:\n- Store your important files and keep them secure in your Twake\n- Access to all your documents online & offline, from your desktop, and on your smartphone or tablet\n- Share links to files ans folders with who you like;\n- Automatically retrieve bills, payrolls, tax notices and other data from your main online services (internet, energy, retail, mobile, energy, travel...)\n- Upload files to your Twake from your Android",
+      "screenshots": [
+        "assets/screenshots/en/screenshot01.png",
+        "assets/screenshots/en/screenshot02.png",
+        "assets/screenshots/en/screenshot03.png",
+        "assets/screenshots/en/screenshot04.png"
+      ]
+    },
+    "fr": {
+      "short_description": "Twake Drive est l’application de sauvegarde, de synchronisation et de sécurisation de tous vos fichiers sur Twake.",
+      "long_description": "Avec Twake Drive vous pourrez :\n- Sauvegarder et synchroniser gratuitement tous vos documents importants (carte d’identité, photos de vacances, avis d’imposition, fiches de salaires…);\n- Accéder à vos documents n’importe quand, n’importe ou même en mode avion depuis votre bureau, votre smartphone ou tablette;\n- Partager vos fichiers et dossiers par lien avec qui vous le souhaitez;\n- Récupérer automatiquement vos documents administratifs de vos principaux fournisseurs de service (opérateur mobile, fournisseur d’énergie, assureur, internet, santé…);\n- Rester synchronisé·e lors de vos voyages et déplacements professionnels avec nos applications mobiles.",
+      "screenshots": [
+        "assets/screenshots/fr/screenshot01.png",
+        "assets/screenshots/fr/screenshot02.png",
+        "assets/screenshots/fr/screenshot03.png",
+        "assets/screenshots/fr/screenshot04.png"
+      ]
+    }
+  },
+  "screenshots": [
+    "assets/screenshots/fr/screenshot01.png",
+    "assets/screenshots/fr/screenshot02.png",
+    "assets/screenshots/fr/screenshot03.png",
+    "assets/screenshots/fr/screenshot04.png"
+  ],
+  "langs": ["en", "fr"],
+  "routes": {
+    "/": {
+      "folder": "/",
+      "index": "index.html",
+      "public": false
+    },
+    "/intents": {
+      "folder": "/intents",
+      "index": "index.html",
+      "public": false
+    },
+    "/public": {
+      "folder": "/public",
+      "index": "index.html",
+      "public": true
+    },
+    "/preview": {
+      "folder": "/public",
+      "index": "index.html",
+      "public": true
+    },
+    "/assets": {
+      "folder": "/assets",
+      "public": true
+    },
+    "/static": {
+      "folder": "/static",
+      "public": true
+    }
+  },
+  "intents": [
+    {
+      "action": "OPEN",
+      "type": ["io.cozy.files"],
+      "href": "/intents"
+    },
+    {
+      "action": "OPEN",
+      "type": ["io.cozy.suggestions"],
+      "href": "/intents"
+    }
+  ],
+  "entrypoints": [
+    {
+      "name": "new-file-type-text",
+      "title": {
+        "en": "Doc",
+        "fr": "Doc",
+        "ru": "документ",
+        "vi": "Doc"
+      },
+      "hash": "/onlyoffice/create/io.cozy.files.root-dir/text",
+      "icon": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgZmlsbD0ibm9uZSI+PHBhdGggZmlsbD0iIzAwNzZFRCIgZD0iTTguNCAwQTYuNCA2LjQgMCAwIDAgMiA2LjR2MTkuMkE2LjQgNi40IDAgMCAwIDguNCAzMmgxNmE2LjQgNi40IDAgMCAwIDYuNC02LjRWMTAuNEwyMC40IDBjLTQuMDEzIDAtNCAwIDAgMGgtMTJaIi8+PHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjIuOTA5IiB4PSI4IiB5PSIxMCIgZmlsbD0iI2ZmZiIgcng9IjEuNDU1Ii8+PHJlY3Qgd2lkdGg9IjE2IiBoZWlnaHQ9IjIuOTA5IiB4PSI4IiB5PSIxNS45MDkiIGZpbGw9IiNmZmYiIHJ4PSIxLjQ1NSIvPjxyZWN0IHdpZHRoPSIxNiIgaGVpZ2h0PSIyLjkwOSIgeD0iOCIgeT0iMjEuODE4IiBmaWxsPSIjZmZmIiByeD0iMS40NTUiLz48cGF0aCBmaWxsPSIjMDA2OEQyIiBkPSJNMzAuOCAxMC44IDIwIDB2NS41ODZjMCAyLjg4IDIuMjU3IDUuMjE0IDUuMDQgNS4yMTRoNS43NloiLz48L3N2Zz4=",
+      "conditions": [{ "type": "flag", "name": "drive.office.enabled", "value": true }, { "type": "flag", "name": "drive.office.write", "value": true }, { "type": "flag", "name": "bar.onlyoffice.enabled", "value": true }]
+    },
+    {
+      "name": "new-file-type-sheet",
+      "title": {
+        "en": "Spreadsheet",
+        "fr": "Tableur",
+        "ru": "Электронная таблица",
+        "vi": "Bảng tính"
+      },
+      "hash": "/onlyoffice/create/io.cozy.files.root-dir/spreadsheet",
+      "icon": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgZmlsbD0ibm9uZSI+PHBhdGggZmlsbD0iIzBEOUUzMCIgZD0iTTguNCAwQTYuNCA2LjQgMCAwIDAgMiA2LjR2MTkuMkE2LjQgNi40IDAgMCAwIDguNCAzMmgxNmE2LjQgNi40IDAgMCAwIDYuNC02LjRWMTAuNEwyMC40IDBjLTQuMDEzIDAtNCAwIDAgMGgtMTJaIi8+PHJlY3Qgd2lkdGg9IjYuODU3IiBoZWlnaHQ9IjYuODU3IiB4PSI4IiB5PSIxMCIgZmlsbD0iI2ZmZiIgcng9Ii40NTciLz48cmVjdCB3aWR0aD0iNi44NTciIGhlaWdodD0iNi44NTciIHg9IjgiIHk9IjE5LjE0MyIgZmlsbD0iI2ZmZiIgcng9Ii40NTciLz48cmVjdCB3aWR0aD0iNi44NTciIGhlaWdodD0iNi44NTciIHg9IjE3LjE0MyIgeT0iMTkuMTQzIiBmaWxsPSIjZmZmIiByeD0iLjQ1NyIvPjxyZWN0IHdpZHRoPSI2Ljg1NyIgaGVpZ2h0PSI2Ljg1NyIgeD0iMTcuMTQzIiB5PSIxMCIgZmlsbD0iI2ZmZiIgcng9Ii40NTciLz48cGF0aCBmaWxsPSIjMDA4NDIwIiBkPSJNMzAuOCAxMC44IDIwIDB2NS41ODZjMCAyLjg4IDIuMjU3IDUuMjE0IDUuMDQgNS4yMTRoNS43NloiLz48L3N2Zz4=",
+      "conditions": [{ "type": "flag", "name": "drive.office.enabled", "value": true }, { "type": "flag", "name": "drive.office.write", "value": true }, { "type": "flag", "name": "bar.onlyoffice.enabled", "value": true }]
+    },
+    {
+      "name": "new-file-type-slide",
+      "title": {
+        "fr": "Présentation",
+        "en": "Presentation",
+        "ru": "Презентация",
+        "vi": "Giới thiệu"
+      },
+      "hash": "/onlyoffice/create/io.cozy.files.root-dir/slide",
+      "icon": "PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgZmlsbD0ibm9uZSI+PHBhdGggZmlsbD0iI0ZGOTUwMCIgZD0iTTguNCAwQTYuNCA2LjQgMCAwIDAgMiA2LjR2MTkuMkE2LjQgNi40IDAgMCAwIDguNCAzMmgxNmE2LjQgNi40IDAgMCAwIDYuNC02LjRWMTAuNEwyMC40IDBjLTQuMDEzIDAtNCAwIDAgMGgtMTJaIi8+PHBhdGggZmlsbD0iI0RGNjMxMCIgZD0iTTMwLjggMTAuOCAyMCAwdjUuNTg2YzAgMi44OCAyLjI1NyA1LjIxNCA1LjA0IDUuMjE0aDUuNzZaIi8+PHBhdGggZmlsbD0iI2ZmZiIgZD0iTTE1LjQyMiAxMS4xNTdhNy40MjIgNy40MjIgMCAxIDAgNy40MjEgNy40MjFoLTcuNDIxdi03LjQyMVoiLz48cGF0aCBmaWxsPSIjZmZmIiBkPSJNMTYuNTc4IDEwdjcuNDIySDI0QTcuNDIyIDcuNDIyIDAgMCAwIDE2LjU3OCAxMFoiLz48L3N2Zz4=",
+      "conditions": [{ "type": "flag", "name": "drive.office.enabled", "value": true }, { "type": "flag", "name": "drive.office.write", "value": true }, { "type": "flag", "name": "bar.onlyoffice.enabled", "value": true }]
+    },
+    {
+      "name": "new-file-type-excalidraw",
+      "title": {
+        "en": "Excalidraw",
+        "fr": "Excalidraw"
+      },
+      "hash": "/excalidraw/create/io.cozy.files.root-dir",
+      "icon": "PHN2ZyB2aWV3Qm94PSIwIDAgMzIgMzIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNiIgZmlsbD0iI2ZmZiIgLz4KICA8cGF0aCBmaWxsPSIjNjk2NWRiIiBkPSJNMjkuOTM3IDI1LjA3OGEuMTkuMTkgMCAwIDAtLjE4NS0uMDQyYy0xLjQ2NC0yLjE2Mi0zLjMyNS00LjIxMy01LjEyOC02LjE5M2wtLjI5Ny0uMzI1YS4xNy4xNyAwIDAgMC0uMDQyLS4xMDVhLjIuMiAwIDAgMC0uMTE4LS4wN2wtLjA2LS4wNjNsLS4wNDItLjAzMWMtLjA1Mi0uMTEyLS4xODUtLjE5Ni0uMzMyLS4xMjJjLS41NTEuMjgzLTEuMDQ3LjY4OC0xLjUzNiAxLjA2MmMtLjY1NC41LTEuMjkzIDEuMDItMS44OTQgMS41NzlhNiA2IDAgMCAwLS42ODguNzNjLS4wOTguMTI5LS4wMjQuMjUxLjA5NS4zMDNxLS42NC42My0xLjI4NiAxLjMwN2EuMi4yIDAgMCAwLS4wNTYuMTU0YS4yLjIgMCAwIDAgLjA3Ny4xNDNsLjc1NS41NzZzLjAwMy4wMS4wMS4wMTRjMS4wOCAxLjA2NSAyLjk3MyAyLjU0MyA0Ljk3OCA0LjEwOHEuNDQ2LjM1MS44OTcuNzAycS4yMDQuMjQ3LjM5Mi40OWEuMi4yIDAgMCAwIC4yNzkuMDM4Yy4wNDUuMDM0LjA5LjA3My4xMzYuMTA4YS4yLjIgMCAwIDAgLjI4LS4wMzVhLjIuMiAwIDAgMCAuMDM4LS4xMDhjLjAxNCAwIC4wMjUuMDEuMDM1LjAxYS4yLjIgMCAwIDAgLjE0Ny0uMDYzbDMuNTU2LTMuODg0YS4xOTYuMTk2IDAgMCAwLS4wMTQtLjI4em0tMTAuMjEtMS4zNDVxLjAzNy4wNDcuMDczLjA4OGMuNDA2LjM0Mi44MzkuNzEyIDEuMjc5IDEuMDlsLTEuNzg5LTEuMzY2bC0uMTgxLS4xMjZhMiAyIDAgMCAxLS4xMDgtLjA4NGwtLjEzMy0uMTEycy4wMjQtLjAyNC4wMzUtLjAzOGwuMTIyLS4xMjNjLjYtLjYwNyAxLjYzMS0xLjYyIDIuMTYyLTIuMTE2Yy0uNTYyLjU2Ni0xLjcgMi4yMjUtMS40NTYgMi43ODd6bTYuMTIzIDQuODI0bC0xLjQ3NC0xLjEyNWEzNyAzNyAwIDAgMC0xLjgzLTEuNzU3Yy43OTYuNjE1IDEuNDc3IDEuMTM1IDEuNTc5IDEuMjI2Yy43NzIuNjg5LjczNy41NjMgMS4yNjggMS4wMTdsLjYzOS40NjRjLS4wNjMuMDU2LS4xMjYuMTE2LS4xODUuMTcyem0uMzcuMjgzbC0uMDI3LS4wMmwuMTctLjEzNGwtLjEzOS4xNTR6TTIuODQzIDYuMDMxbC4xNC43MzdjLjI0IDEuMjkyLjQ2NCAyLjQ1Ni44OSAzLjM0bC4xNjguNjdjLjA2Ni4yNTUuMTYuNTczLjI0OC42NGMuOTk1Ljg4IDIuNTIyIDIuMTkzIDQuMTUzIDMuNDNhLjIuMiAwIDAgMCAuMjQ1LS4wMDRxLjAwNi4wMS4wMTQuMDE0YS4yLjIgMCAwIDAgLjEzMi4wNTJhLjIuMiAwIDAgMCAuMTQ3LS4wNjZjMi4wODktMi4zMjMgMy42NDMtNC4yMzQgNC43NS01LjgzNGEuNDQuNDQgMCAwIDAgLjEwMi0uMjkzYy4wNy0uMDg0LjE0My0uMTY4LjIxLS4yMzdhLjE5NS4xOTUgMCAwIDAtLjAzNS0uM2EuMi4yIDAgMCAwLS4wNi0uMTI3YTk1IDk1IDAgMCAwLTEuMjA4LTEuMTQ1YTEwNCAxMDQgMCAwIDEtMi43MTUtMi42MjRMMTAgNC4yNjRhLjIuMiAwIDAgMC0uMDc3LS4wNWMtLjM4OC0uMTM2LTEuMTg0LS4yNzItMi4xODYtLjQ0N2MtMS40NzUtLjI1MS0zLjQ5My0uNi01LjMxLTEuMTQyaC0uMDE0di0uMDAzcy0uMDA3IDAtLjAxLjAwN2gtLjAwNGwuMDE0LS4wMDdzLS4xMDguMDAzLS4xMy4wMTRhLjIuMiAwIDAgMC0uMDY1LjA1MmMtLjAxOC4wMjEtLjAzMi4wNDItLjE2NS4wN2MtLjEzMi4wMjguMDI4IDAgLjAzOSAwaC0uMDM5di4wMWMuMDI1LjEyLjAxOC4yMDMuMDU2LjM0Yy0uMDA3LjAzNC4wNzQuMzU2LjA4NC4zODdsLjY0IDIuNTM2em0xMC44MSAyLjI4NGwtLjAxMy4wMThsLS4yMjQtLjI0OHEuMTE0LjEwNy4yMzguMjN6bS0yLjQ3NiAzLjI4bC0uMDM1LjA0MmwtLjAwNy0uMDA3cS4wMi0uMDE3LjA0NS0uMDM0em0tMS40MTUtNy4wMmMuMTIzLjEyMi42MDguNTc2LjcyLjY4OGMtLjUwNy0uMjMxLTEuNzY4LS44MTgtMi4zNTQtMS4wMDZjLjU3Ni4xIDEuMzcyLjIzIDEuNjM0LjMxN3ptLTYuNy0uOTY4Yy4yOTQuNTAzLjUyNSAyLjI2Ny43NTUgMy45ODJjLS4xMy0uNTUyLS4yNC0xLjA5LS4zNDYtMS42MDdjLS4xODEtLjg5NC0uMzQ5LTEuNjk0LS41ODMtMi40MDNxLjA3NS4wMDYuMTcxLjAxN3EtLjAwMi4wMDYuMDA3LjAxem0tLjEtLjQyM3EtLjEyMi0uMDEyLS4yMTctLjAxN3EtLjAxLS4wMjEtLjAxNC0uMDQybC4yMy4wNjN6bS0uNzc2LjE1N3YtLjAwN3ptMjcuNDM0LS40MTJjLjAxNC0uMDgtLjM4NC0uNDMzLS4yNTktLjQ0Yy4yOTctLjAxNC4zLS40NzEgMC0uNDU4Yy0uMzk0LjAyMS0uNzkzLjExMi0xLjE3Ny4xODZxLTEuMDM2LjE5NS0yLjA2OC40MjJhODUgODUgMCAwIDAtNC41NzYgMS4wODdjLS40NzUuMTI5LS45OTkuMjQ0LTEuNDM1LjQ3NWMtLjE0Ny4wNzYtLjE0LjIzNC0uMDYuMzMxYS4zLjMgMCAwIDEtLjA5Ny4wMzJxLS4xOTUuMDM1LS4zODguMDY2YS4xOTguMTk4IDAgMCAwLS4xMzYuM2MtLjgxIDEuMDg0LTEuNzMzIDIuMjUtMi43MzIgMy40NzZhMzUxIDM1MSAwIDAgMC0zLjA0NiAzLjU0M2MtMy4yODcgMy44NjMtNy4wMTQgOC4yNDMtMTEuMTQzIDEyLjFhLjIuMiAwIDAgMC0uMDEuMjc5YS4yLjIgMCAwIDAgLjA2Ni4wNDVsLS4xNjguMTU0YS4xOC4xOCAwIDAgMC0uMDU2LjExMmwtLjA4LjA4N2EuMi4yIDAgMCAwIC4wMS4yOGEuMi4yIDAgMCAwIC4yOC0uMDFsLjA0Mi0uMDQ2YS4yOTMuMjkzIDAgMCAxIC40MjYgMGwuNjgxLjczbC0uNDgyLS40MDJhLjIuMiAwIDAgMC0uMjguMDI0YS4yLjIgMCAwIDAgLjAyNS4yOGw1LjE3NyA0LjM0MmEuMi4yIDAgMCAwIC4yNjktLjAxNGwuMTI2LS4xMjZhLjIuMiAwIDAgMCAuMjItLjA0MmM3LjAxNy03LjA0OSAxMi42NjktMTIuMzc2IDE5LjE0Mi0xNy4xMzdhLjIuMiAwIDAgMCAuMDgtLjE3OGEuMi4yIDAgMCAwIC4xNjgtLjEzNmMxLjE5NC0zLjY1NCAxLjQyNS02Ljg4OSAxLjQ5NS04LjQ3OGwuMDA3LS4wMjRxLjAxLS4wMjcuMDE0LS4wNWwuMDE3LS4wNjVhLjk1Ljk1IDAgMCAwLS4wNTItLjc1MXpNMTcuMDcyIDguNjQ3cS40NzEtLjU0LjkzMy0xLjA1NUMxNS45OTMgMTAuMjQgMTIuNjYgMTQuMzIgNy45NDIgMTkuMTY4YzMuMjEzLTMuNTU1IDYuNDUxLTcuMjQgOS4xMy0xMC41MnpNNS43MDIgMjcuMDk0bC0uMDEtLjAxbC4wNy4wMTRhLjIuMiAwIDAgMC0uMDYgMHptMi40MSAyLjI0M2wtLjAxNy0uMDE0bC4wMS0uMDFjLjAwNyAwIC4wMS4wMDYuMDE0LjAwNmMwIC4wMDctLjAwNy4wMS0uMDEuMDE4em0yLjkyLTIuNTE5bC40ODItLjUwM2wuMDEuMDE4Yy0uMTYzLjE2LS4zMjguMzI1LS40OTUuNDg1em0uNzgzLS43NzJsLjMwNC0uMzU2cS4wMDQtLjAwNi4wMTQtLjAxNGEyMDEgMjAxIDAgMCAxIDMuNTU1LTMuNThsLjAyNS0uMDIxbC45NS0uNzI3YTUyMCA1MjAgMCAwIDAtNC44NDggNC43MDJ6bTcuNTYyLTE5LjUxOWMtLjY1Ljg0Ni0xLjM2MiAxLjk0Mi0xLjk2NiAyLjgyYy0xLjkwOCAyLjc2Mi04LjA0OCA5LjUyOC04LjE4NSA5LjY1N2MtLjk0Ni45MTYtMy44IDMuNjU0LTUuNjIgNS4zN2ExIDEgMCAwIDAtLjExOS4xMjJhLjI3Ny4yNzcgMCAwIDEgLjAxLS4zOTVjOC42Ny04LjE3NCAxMy45My0xNC45ODIgMTYuMDY5LTE3Ljk0N2MtLjA0Ni4xMTUtLjA4NC4yNC0uMTkyLjM4em01Ljc2NyAyLjQ4bC0uMDAzLjAwN2MwLS4wMDctLjAwNy0uMDI0LjAwMy0uMDA3bS0yLjM3NSAxLjUxYy0uNzktLjQ1OC0xLjE2LTEuMTQzLS45NDctMS44MzRsLjA2Ny0uMjNxLjA0MS0uMS4wOTgtLjJjLjIwNi0uMzQyLjUyLS42NDYuODgtLjgyNHEuMDI2LS4wMS4wNTItLjAxNGEuMy4zIDAgMCAxLS4wMTQtLjE1Yy4wMTgtLjEwOS4wODgtLjIwMy4yMy0uMjAzYy4yMzUgMCAuOTYxLjIxNiAxLjIzNy40NTRxLjEyNy4xLjIzOC4yMmMuMTA1LjEyMi4yNTguMzIxLjMzNS40NjVjLjA0Ni4wMi4wOC4yMTYuMTMzLjMxN3EuMDczLjI0Mi4wNjMuNDljMCAuMDA2IDAgLjAwNi4wMDMuMDFjLS4wMS4wMjQgMCAuMTMtLjAxNC4xNGMtLjAzNS4yNTEtLjEyNi41LS4yNjIuNzE2bC0uMDM4LjA1NmMwIC4wMDMtLjAwNy4wMDctLjAxLjAxNGExLjYgMS42IDAgMCAxLS4zNzguMzk0Yy0uNDQuMzExLS45NTMuNDA2LTEuNDY3LjI3NmEyIDIgMCAwIDEtLjItLjA4N3ptNS42ODMtLjU3Yy0uMTcxLjcxNi0uMzggMS40NjQtLjYyOSAyLjIyOWMtLjAxLjAyOC0uMDEuMDU1LS4wMS4wOGEuMi4yIDAgMCAwLS4wOTQuMDM4YTEwNiAxMDYgMCAwIDAtNC41MzUgMy41MzJhMjUwIDI1MCAwIDAgMSAzLjkyMy0zLjQ3NmEyLjI0IDIuMjQgMCAwIDAgLjczNy0xLjMwNmwuMTk2LTEuMTc4bC4wMS0uMDM1Yy4wODgtLjI0OC40NjgtLjE0LjQwOS4xMTZ6Ii8+Cjwvc3ZnPgo=",
+      "conditions": [{ "type": "flag", "name": "drive.excalidraw.enabled", "value": true }, { "type": "flag", "name": "drive.excalidraw.shortcut.enabled", "value": true }]
+    }
+  ],
+  "services": {
+    "qualificationMigration": {
+      "type": "node",
+      "file": "services/qualificationMigration/drive.js"
+    },
+    "dacc": {
+      "type": "node",
+      "file": "services/dacc/drive.js",
+      "trigger": "@monthly on the 5-7 between 2pm and 7pm"
+    }
+  },
+  "permissions": {
+    "files": {
+      "description": "Required to access the files",
+      "type": "io.cozy.files",
+      "verbs": ["ALL"]
+    },
+    "allFiles": {
+      "description": "Required to access the files",
+      "type": "io.cozy.files.*",
+      "verbs": ["ALL"]
+    },
+    "apps": {
+      "description": "Required by the cozy-bar to display the icons of the apps",
+      "type": "io.cozy.apps",
+      "verbs": ["GET"]
+    },
+    "sharings": {
+      "description": "Required to have access to the sharings in realtime",
+      "type": "io.cozy.sharings",
+      "verbs": ["GET"]
+    },
+    "albums": {
+      "description": "Required to manage photos albums",
+      "type": "io.cozy.photos.albums",
+      "verbs": ["PUT", "GET"]
+    },
+    "contacts": {
+      "type": "io.cozy.contacts",
+      "verbs": ["GET", "POST"]
+    },
+    "groups": {
+      "type": "io.cozy.contacts.groups",
+      "verbs": ["GET"]
+    },
+    "settings": {
+      "description": "Required by the cozy-bar to display Claudy and know which applications are coming soon",
+      "type": "io.cozy.settings",
+      "verbs": ["GET"]
+    },
+    "oauth": {
+      "description": "Required to display the cozy-desktop banner",
+      "type": "io.cozy.oauth.clients",
+      "verbs": ["GET"]
+    },
+    "errorsreporting": {
+      "description": "Allow to report unexpected errors to the support team",
+      "type": "cc.cozycloud.errors",
+      "verbs": ["POST"]
+    },
+    "mail": {
+      "description": "Send feedback emails to the support team",
+      "type": "io.cozy.jobs",
+      "verbs": ["POST"],
+      "selector": "worker",
+      "values": ["sendmail"]
+    },
+    "konnectors": {
+      "description": "Required to display additional information in the viewer for files automatically retrieved by services",
+      "type": "io.cozy.konnectors",
+      "verbs": ["GET"]
+    },
+    "accounts": {
+      "description": "Required to display additional information in the viewer for files automatically retrieved by services",
+      "type": "io.cozy.accounts",
+      "verbs": ["ALL"]
+    },
+    "jobs": {
+      "type": "io.cozy.jobs",
+      "verbs": ["ALL"]
+    },
+    "triggers": {
+      "description": "Required to display additional information in the viewer for files automatically retrieved by services",
+      "type": "io.cozy.triggers",
+      "verbs": ["ALL"]
+    },
+    "dacc": {
+      "type": "cc.cozycloud.dacc_v2",
+      "verbs": ["POST"],
+      "description": "Remote-doctype required to send anonymized measures to the DACC shared among mycozy.cloud's Cozy."
+    },
+    "dacc-eu": {
+      "type": "eu.mycozy.dacc_v2",
+      "verbs": ["POST"],
+      "description": "Remote-doctype required to send anonymized measures to the DACC shared among mycozy.eu's Cozy."
+    },
+    "chatConversations": {
+      "description": "Required by the cozy Assistant",
+      "type": "io.cozy.ai.chat.conversations",
+      "verbs": ["GET", "POST"]
+    },
+    "chatEvents": {
+      "description": "Required by the cozy Assistant",
+      "type": "io.cozy.ai.chat.events",
+      "verbs": ["GET"]
+    },
+    "driveSettings": {
+      "description": "Required to access the drive settings",
+      "type": "io.cozy.drive.settings",
+      "verbs": ["ALL"]
+    },
+    "nextcloud_migrations": {
+      "description": "Read Nextcloud migration documents and subscribe to updates",
+      "type": "io.cozy.nextcloud.migrations",
+      "verbs": ["GET"]
+    }
+  },
+  "accept_from_flagship": true,
+  "accept_documents_from_flagship": {
+    "accepted_mime_types": ["*/*"],
+    "max_number_of_files": 10,
+    "max_size_per_file_in_MB": 100,
+    "route_to_upload": "/#/upload?fromFlagshipUpload=true"
+  }
+}
