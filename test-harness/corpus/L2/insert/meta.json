@@ -1,0 +1,14 @@
+{
+  "caseId": "L2",
+  "mode": "insert",
+  "spec": "P1@start..P1@end (empty doc target)",
+  "fixture": "inject.md — LLM markdown: nested mixed list, 2-space indentation per level",
+  "source": "empty document",
+  "stable": true,
+  "setSelectionOk": true,
+  "capturedVia": "Chrome DevTools MCP (build 2026-06-29.4; injectAtSelection + per-paragraph GetNumbering().GetLevelIndex()/ToJSON probe; forcesave docx content-verified)",
+  "capturedAt": "2026-06-29",
+  "captureVersion": "v4",
+  "verdict": "pass",
+  "comment": "RÉGRESSION GUARD (bug Ben 2026-06-29 / build .4) — côté INJECTION (md→docx). Une réponse LLM avec listes imbriquées indentées à 2 espaces/niveau perdait l'imbrication à l'injection : marked/CommonMark n'imbrique un sous-niveau que si l'indent atteint l'offset de contenu du parent (2 pour '- ', mais 3+ pour '1. '). Donc les sous-listes NUMÉROTÉES à 2 espaces ne s'imbriquaient pas (probe: marked aplatit tout au niveau 0, voire perd les items profonds) ; les puces finales tombaient aussi au niveau 0. Fix : `normalizeListIndent()` mappe l'indent brut de chaque item à un niveau logique (pile d'indentation, tout pas constant = 1 niveau) puis ré-émet 4 espaces/niveau AVANT marked.lexer → imbrication fiable pour numéros ET puces à toute profondeur. Vérifié LIVE (GetLevelIndex/ToJSON) ET SAVE (after.docx : numId 11=numbered ilvl 0/1/2, numId 10=bullet ilvl 1). Golden = levels.json. Garde : oracle/l2-list-injection.spec.js."
+}

@@ -9,7 +9,7 @@
   // If the console shows an OLDER build than expected, the editor served a CACHED
   // code.js → reopen the editor in a fresh tab / private window (a plain F5 won't
   // refetch the async plugin iframe).
-  var SCRIBE_BUILD = "2026-06-29.3 — list extraction reads real numFmt via ApiNumbering.ToJSON (numbered lists were all extracted as bullets; GetNumFmt() does not exist in the SDK) + true nesting level via GetLevelIndex";
+  var SCRIBE_BUILD = "2026-06-29.4 — normalize 2-space LLM list indentation to marked-nestable 4-space levels before lexer (nested ordered sub-lists & trailing bullets lost their nesting on inject) + .3 list extraction numFmt fix";
   try { window.__scribeBuild = SCRIBE_BUILD; } catch (e) {}
 
   // ---- State ----
@@ -399,6 +399,45 @@
     try { window.Asc.plugin.executeMethod("EndAction", ["GroupActions", "Scribe injection"], function() {}); } catch (e) {}
   }
 
+  // ---- Normalize list indentation before marked.lexer ----
+  // LLMs (and our own extraction) indent nested list items by 2 spaces per level.
+  // But CommonMark/marked only nests a child list when its indent reaches the
+  // PARENT's content offset — which is the marker width: 2 for bullets ("- "),
+  // but 3+ for ordered items ("1. "). So 2-space-indented ORDERED sub-lists do
+  // NOT nest (probe-confirmed: marked flattens them all to level 0, and can even
+  // drop deeper items). Fix: map each list item's raw indent to a logical level
+  // via an indent stack (any consistent step → one level), then re-emit 4 spaces
+  // per level — wide enough that marked nests ordered AND bullet lists at every
+  // depth. Fenced code is left untouched; a column-0 non-list line ends the list
+  // (stack reset). Single-line items only — wrapped continuation lines are rare
+  // in LLM list output and pass through unchanged.
+  function normalizeListIndent(md) {
+    var lines = md.split("\n"), out = [], inFence = false, fenceCh = "", stack = [];
+    var listRe = /^(\s*)([-*+]|\d{1,9}[.)])(\s+)(.*)$/;
+    var fenceRe = /^(\s*)(```+|~~~+)/;
+    function rep(s, n) { var r = ""; for (var j = 0; j < n; j++) r += s; return r; }
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i], fm = line.match(fenceRe);
+      if (fm) {
+        if (!inFence) { inFence = true; fenceCh = fm[2].charAt(0); }
+        else if (fm[2].charAt(0) === fenceCh) { inFence = false; }
+        out.push(line); continue;
+      }
+      if (inFence) { out.push(line); continue; }
+      var m = line.match(listRe);
+      if (m) {
+        var ind = m[1].length;
+        while (stack.length && ind < stack[stack.length - 1]) stack.pop();
+        if (!stack.length || ind > stack[stack.length - 1]) stack.push(ind);
+        out.push(rep("    ", stack.length - 1) + m[2] + " " + m[4]);
+      } else {
+        if (line.replace(/\s+$/, "") === "") { out.push(line); } // blank: keep stack (loose lists)
+        else { if (/^\S/.test(line)) stack = []; out.push(line); } // col-0 non-list ends the list
+      }
+    }
+    return out.join("\n");
+  }
+
   // ---- Builder API injection with PasteHtml fallback ----
   // Tokenizes markdown via marked.lexer(), flattens to paragraph+runs,
   // passes through Asc.scope, and interprets as Builder API calls inside
@@ -408,6 +447,9 @@
     // Convert inline image markers to standard markdown image syntax
     // so marked.lexer() produces image tokens for both block and inline markers
     md = md.replace(/\{\{IMG:(scribe-img-\d+)\}\}/g, "![IMG:$1](placeholder)");
+    // Normalize 2-space (LLM) list indentation to marked-nestable 4-space levels
+    // BEFORE any tokenization (covers both the table-cell and main lexer paths).
+    md = normalizeListIndent(md);
     // Keep visible text in cross-ref markers — the LLM may modify it (e.g. translation).
     // flattenInline will parse both the ref name and the visible text.
 
