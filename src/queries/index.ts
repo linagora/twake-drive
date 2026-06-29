@@ -324,21 +324,6 @@ export const buildFolderByPathQuery: QueryBuilder<string> = path => ({
   }
 })
 
-export const buildNewSharingShortcutQuery: QueryBuilder = () => ({
-  definition: () =>
-    Q('io.cozy.files')
-      .where({
-        'metadata.sharing.status': 'new',
-        class: 'shortcut',
-        trashed: false
-      })
-      .indexFields(['metadata.sharing.status', 'class', 'trashed']),
-  options: {
-    as: 'io.cozy.files/metadata.sharing.status/new/class/shortcut',
-    fetchPolicy: defaultFetchPolicy
-  }
-})
-
 export const buildTriggersQueryByAccountId: QueryBuilder<
   string
 > = accountId => ({
