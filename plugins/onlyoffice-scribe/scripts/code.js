@@ -9,7 +9,7 @@
   // If the console shows an OLDER build than expected, the editor served a CACHED
   // code.js → reopen the editor in a fresh tab / private window (a plain F5 won't
   // refetch the async plugin iframe).
-  var SCRIBE_BUILD = "2026-06-29.12 — stable image ids + docs, diagnostics removed. Image round-trip now uses a STABLE per-image name: extraction reuses an image's scribe-img-N name when it is UNIQUE in the doc (so an old chat fragment still resolves while the image exists) and re-stamps only colliding/stale names; the counter is seeded past every existing scribe-img-N so new names never collide. See the imgNameOf block comment for the full extract→LLM→reinject mechanism. Carries floating-image extraction (.8). Removed [img-ri]/[img] instrumentation.";
+  var SCRIBE_BUILD = "2026-06-29.13 — redo fix: suppressExtraction widened 500ms→3000ms + cancels pending throttled extraction (passive extraction callCommand truncated redo ~1s after every Scribe insert/replace). On top of .12 (stable per-image scribe-img-N ids + docs, diagnostics removed; carries floating-image extraction).";
   try { window.__scribeBuild = SCRIBE_BUILD; } catch (e) {}
 
   // ---- State ----
@@ -4078,9 +4078,20 @@
 
   // Undo/redo trigger the passive init() extraction (via the resulting
   // selection change), whose callCommand truncates the redo stack and breaks
-  // redo. We suppress that extraction briefly whenever an undo/redo is invoked.
+  // redo. We suppress that extraction whenever an undo/redo is invoked.
+  //
+  // Two reasons the old 500ms window failed (Scribe's redo died ~1s after every
+  // insert/replace, while keyboard redo survived):
+  //   1. The plugin runs in a BACKGROUND iframe whose setTimeout is heavily
+  //      throttled, so the debounced extraction fires ~1s later — AFTER a 500ms
+  //      window — then its callCommand truncates redo. Window widened to 3000ms
+  //      so the throttled fire is still caught.
+  //   2. An extraction scheduled BEFORE this undo/redo (e.g. by Scribe's
+  //      programmatic post-injection selection) was never cancelled, so it fired
+  //      ~1s later regardless. Cancel the pending timer here too.
   function suppressExtraction() {
-    suppressExtractionUntil = Date.now() + 500;
+    suppressExtractionUntil = Date.now() + 3000;
+    if (extractionDebounceTimer) { clearTimeout(extractionDebounceTimer); extractionDebounceTimer = null; }
   }
 
   // Keyboard: Ctrl/Cmd+Z = undo, Ctrl/Cmd+Y or Ctrl/Cmd+Shift+Z = redo.
