@@ -9,7 +9,7 @@
   // If the console shows an OLDER build than expected, the editor served a CACHED
   // code.js → reopen the editor in a fresh tab / private window (a plain F5 won't
   // refetch the async plugin iframe).
-  var SCRIBE_BUILD = "2026-06-29.6 — merge into scribe-in-right-panel (document-extraction branch moved AFTER var-inits, verified v3.2 placement; empty-gate guarded to selection mode): selection-cases fixes (.4: list extract/inject, insert host-style, table/image/§5bis) reconciled with v3.2-03 whole-document extraction (buildScribeExtractionResult mode branch + buildDocumentExtractionResult)";
+  var SCRIBE_BUILD = "2026-06-29.7 — fix whole-document extraction: callCommand isClose flag true→false (true ran the close-command so the callback never fired and the host showed 'Impossible de lire le document') + merged selection-cases fixes (.4) with v3.2-03 whole-document extraction";
   try { window.__scribeBuild = SCRIBE_BUILD; } catch (e) {}
 
   // ---- State ----
@@ -2665,10 +2665,16 @@
       window.Asc.scope._crCounter = crossRefCounter;
       window.Asc.scope._crMeta = {};
       window.Asc.scope.scribeExtractMode = "document";
-      // Read-only callCommand (second arg true) so the scan does NOT truncate the
-      // redo stack (Pitfall 5). The lone document write (image SetName) is guarded
-      // for this read-only path; the document is reference-only and never re-injected.
-      window.Asc.plugin.callCommand(buildScribeExtractionResult, true, false, function(resultJson) {
+      // 2nd arg = isClose (NOT "read-only", despite the original v3.2 comment):
+      // executeCommand(isClose ? "close" : "command"). With true ("close") the
+      // command runs but the callback never fires → the host timed out and showed
+      // "Impossible de lire le document". Use false ("command") like the selection
+      // path so the callback returns the extracted markdown. (Any callCommand
+      // truncates the redo stack regardless of this flag — the "preserve redo"
+      // rationale was a misreading; here it costs nothing the selection path doesn't
+      // already cost.) Image SetName runs read-write like selection extraction;
+      // the try/catch guard around it is now just belt-and-suspenders.
+      window.Asc.plugin.callCommand(buildScribeExtractionResult, false, false, function(resultJson) {
         var md = "";
         var error = null;
         try {
