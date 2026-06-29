@@ -1,0 +1,14 @@
+{
+  "caseId": "L1",
+  "mode": "extract",
+  "spec": "P1@start..P6@end",
+  "fixture": "nested mixed list (numbered L0 + bullet L1 + numbered L1 + bullet L2)",
+  "source": "nested-lists.docx",
+  "stable": true,
+  "setSelectionOk": true,
+  "capturedVia": "Chrome DevTools MCP (build 2026-06-29.3; setSelection P1@start..P6@end + extractSelection; same-origin /example/)",
+  "capturedAt": "2026-06-29",
+  "captureVersion": "v4",
+  "verdict": "pass",
+  "comment": "RÉGRESSION GUARD (bug Ben 2026-06-29 / build .3). EXTRACTION de listes : les listes NUMÉROTÉES étaient extraites en MD comme des PUCES. Cause : `isListParagraph` appelait `numPr.GetNumFmt()` — méthode INEXISTANTE dans le SDK → numFmt toujours null → toujours classé 'bullet'. Fix : lecture du vrai format via `ApiNumbering.ToJSON()` (numFmt.val par niveau) + niveau d'imbrication réel via `GetLevelIndex()`. Fixture = liste imbriquée MIXTE (numId 8=numbered, 9=bullet ; ilvl 0/1/2). MD attendu : '1. / 2. / 3.' au niveau 0 (compteur qui reprend après l'imbrication), puces '- ' indentées 2 esp/niveau, sous-numéroté '1.' au niveau 1, puce profonde au niveau 2. Vérifie numéroté vs puce ET multi-niveaux ET mélange puces/numéros imbriqués. Garde exécutable : oracle/l1-list-extraction.spec.js."
+}

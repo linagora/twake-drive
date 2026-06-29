@@ -9,7 +9,7 @@
   // If the console shows an OLDER build than expected, the editor served a CACHED
   // code.js → reopen the editor in a fresh tab / private window (a plain F5 won't
   // refetch the async plugin iframe).
-  var SCRIBE_BUILD = "2026-06-29.2 — insert host ¶ style = paragraph at insertion point (selection END), not selection START (was bumping the last selected ¶ to the first's heading level on multi-¶ Insert)";
+  var SCRIBE_BUILD = "2026-06-29.3 — list extraction reads real numFmt via ApiNumbering.ToJSON (numbered lists were all extracted as bullets; GetNumFmt() does not exist in the SDK) + true nesting level via GetLevelIndex";
   try { window.__scribeBuild = SCRIBE_BUILD; } catch (e) {}
 
   // ---- State ----
@@ -3046,21 +3046,50 @@
         return match ? parseInt(match[1], 10) : 0;
       }
 
-      // Detect list type from numbering or style name.
-      // Level is resolved later via indentDepthMap (see pre-scan below).
+      // Read a numbering level's format (bullet vs ordered) via the PUBLIC API.
+      // `ApiNumberingLevel` (what para.GetNumbering() returns) has NO format getter,
+      // and the old `GetNumFmt()` does not exist in the SDK at all → it always
+      // returned null → every list was classified "bullet" (bug: numbered lists
+      // extracted as bullets). The only stable public path is ApiNumbering.ToJSON(),
+      // which serializes each level's `numFmt.val` ("decimal"/"lowerLetter"/…/"bullet").
+      // We DON'T reach into the mangled internal (`np.fj`/`np.tc`) — those names are
+      // build-specific. JSON shape (probe-confirmed): { abstractNum:{<id>:{lvl:[{numFmt:
+      // {val}},…]}}, num:{<numId>:{abstractNumId:<id>}} }.
+      function numFormatAtLevel(numPr, lvl) {
+        try {
+          var apiNum = numPr.GetNumbering ? numPr.GetNumbering() : null;
+          if (!apiNum || !apiNum.ToJSON) return null;
+          var def = JSON.parse(apiNum.ToJSON());
+          var absId = null;
+          for (var nk in def.num) { absId = def.num[nk].abstractNumId; break; }
+          if (!absId || !def.abstractNum || !def.abstractNum[absId]) return null;
+          var lvls = def.abstractNum[absId].lvl;
+          if (!lvls || !lvls[lvl]) return null;
+          var nf = lvls[lvl].numFmt;
+          var val = nf && (typeof nf === "object" ? nf.val : nf);
+          if (!val || val === "bullet" || val === "none") return "bullet";
+          return "ordered";
+        } catch (e) { return null; }
+      }
+
+      // Detect list type AND nesting level from numbering (preferred) or style name.
+      // level = the TRUE numbering level (ilvl) when available — reliable for nested
+      // multi-level lists; null falls back to the indent heuristic at the call site.
       function isListParagraph(para) {
         var numPr = para.GetNumbering();
         if (numPr) {
-          var numFmt = numPr.GetNumFmt ? numPr.GetNumFmt() : null;
-          var isBullet = !numFmt || numFmt === "bullet" || numFmt === "none";
-          return { type: isBullet ? "bullet" : "ordered" };
+          var lvl = numPr.GetLevelIndex ? numPr.GetLevelIndex() : 0;
+          if (typeof lvl !== "number" || lvl < 0) lvl = 0;
+          var fmt = numFormatAtLevel(numPr, lvl);
+          // fmt null (ToJSON unreadable) → fall back to bullet (old safe default)
+          return { type: fmt === "ordered" ? "ordered" : "bullet", level: lvl };
         }
-        // Fallback: check style name
+        // Fallback: check style name (no reliable level → null = use indent)
         var style = para.GetStyle();
         if (style) {
           var sn = style.GetName();
-          if (sn && /list\s*bullet/i.test(sn)) return { type: "bullet" };
-          if (sn && /list\s*number/i.test(sn)) return { type: "ordered" };
+          if (sn && /list\s*number/i.test(sn)) return { type: "ordered", level: null };
+          if (sn && /list\s*bullet/i.test(sn)) return { type: "bullet", level: null };
         }
         return null;
       }
@@ -3410,8 +3439,12 @@
         var listType = isListParagraph(para);
         var listInfo = null;
         if (listType) {
-          var paraIndent = para.GetIndLeft ? para.GetIndLeft() : 0;
-          listInfo = { type: listType.type, level: indentToLevel(paraIndent) };
+          // Prefer the true numbering level (ilvl) for nested lists; fall back to
+          // the indent heuristic only for style-name-based lists (level === null).
+          var lvl = (listType.level !== null && listType.level !== undefined)
+            ? listType.level
+            : indentToLevel(para.GetIndLeft ? para.GetIndLeft() : 0);
+          listInfo = { type: listType.type, level: lvl };
         }
 
         // Compute clip bounds using text matching (not position arithmetic,
