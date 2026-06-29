@@ -4,14 +4,20 @@ import { memo, useEffect } from 'react'
 import { useClient, Mutations } from 'cozy-client'
 import { ensureFilePath } from 'cozy-client/dist/models/file'
 import { receiveMutationResult } from 'cozy-client/dist/store'
+import CozyRealtime from 'cozy-realtime'
 
 import { buildFileOrFolderByIdQuery } from '@/queries'
+import { useSharedDrives } from '@/modules/shareddrives/hooks/useSharedDrives'
 
 const REALTIME_DEBOUNCE_TIME = 500
 
 const bufferCreatedFiles = new Map()
 const bufferUpdatedFiles = new Map()
 const bufferDeletedFiles = new Map()
+
+// Tracks which shared-drive ID a buffered file originated from.
+// Populated by drive-socket handlers; absent (undefined) for own-instance files.
+const driveIdByFileId = new Map()
 
 const getParentFolder = async (client, dirId) => {
   let parentDir = client.getDocumentFromState('io.cozy.files', dirId)
@@ -169,6 +175,7 @@ const FilesRealTimeQueries = ({
 }) => {
   const client = useClient()
 
+  // ── Global own-file subscription (unchanged) ────────────────────────────────
   useEffect(() => {
     const { realtime } = client.plugins || {}
 
@@ -216,6 +223,63 @@ const FilesRealTimeQueries = ({
     computeDocBeforeDispatchUpdate,
     computeDocBeforeDispatchDelete
   ])
+
+  // ── Per-recipient-drive subscriptions ──────────────────────────────────────
+  // NOTE: owner is typed as optional in the sharing type. The filter below uses
+  // strict === false (as specified). If a drive has owner === undefined it will
+  // not be subscribed; see phase3-report.md for details.
+  const { sharedDrives } = useSharedDrives()
+  // Build a stable string key from the sorted IDs of recipient drives so the
+  // effect below only re-runs when the set of drives actually changes.
+  const recipientDriveKey = sharedDrives
+    .filter(d => d.owner === false)
+    .map(d => d._id)
+    .sort()
+    .join(',')
+
+  useEffect(() => {
+    if (!recipientDriveKey) return
+
+    const driveIds = recipientDriveKey.split(',').filter(Boolean)
+
+    const realtimeInstances = driveIds.map(driveId => {
+      const rt = new CozyRealtime({ client, sharedDriveId: driveId })
+
+      rt.subscribe('created', 'io.cozy.files', couchDBDoc => {
+        bufferCreatedFiles.set(
+          couchDBDoc._id,
+          normalizeDoc(couchDBDoc, 'io.cozy.files')
+        )
+        driveIdByFileId.set(couchDBDoc._id, driveId)
+        debouncedDispatchEvents(client, 'created')
+      })
+      rt.subscribe('updated', 'io.cozy.files', couchDBDoc => {
+        bufferUpdatedFiles.set(
+          couchDBDoc._id,
+          normalizeDoc(couchDBDoc, 'io.cozy.files')
+        )
+        driveIdByFileId.set(couchDBDoc._id, driveId)
+        debouncedDispatchEvents(client, 'updated')
+      })
+      rt.subscribe('deleted', 'io.cozy.files', couchDBDoc => {
+        bufferDeletedFiles.set(
+          couchDBDoc._id,
+          normalizeDoc(couchDBDoc, 'io.cozy.files')
+        )
+        driveIdByFileId.set(couchDBDoc._id, driveId)
+        debouncedDispatchEvents(client, 'deleted')
+      })
+
+      return rt
+    })
+
+    return () => {
+      realtimeInstances.forEach(rt => rt.stop())
+    }
+    // recipientDriveKey encodes all recipient-drive IDs as a sorted string;
+    // re-opening sockets only when the set of drives changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [client, recipientDriveKey])
 
   return null
 }
