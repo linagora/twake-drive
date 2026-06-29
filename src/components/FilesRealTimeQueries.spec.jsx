@@ -1,10 +1,12 @@
-import React from 'react'
 import { render, act, waitFor } from '@testing-library/react'
+import React from 'react'
 
 import { createMockClient } from 'cozy-client'
 import CozyRealtime from 'cozy-realtime'
 
-import FilesRealTimeQueries, { __resetDriveIdByFileId } from './FilesRealTimeQueries'
+import FilesRealTimeQueries, {
+  __resetDriveIdByFileId
+} from './FilesRealTimeQueries'
 import AppLike from 'test/components/AppLike'
 
 import { useSharedDrives } from '@/modules/shareddrives/hooks/useSharedDrives'
@@ -394,7 +396,9 @@ describe('FilesRealTimeQueries', () => {
         dir_id: ''
       }
 
-      const statByIdFn = jest.fn().mockResolvedValue({ data: driveParentFolder })
+      const statByIdFn = jest
+        .fn()
+        .mockResolvedValue({ data: driveParentFolder })
       const driveClient = buildMockClient({ statByIdFn })
 
       useSharedDrives.mockReturnValue({
