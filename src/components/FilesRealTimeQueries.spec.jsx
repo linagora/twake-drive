@@ -4,7 +4,7 @@ import { render, act, waitFor } from '@testing-library/react'
 import { createMockClient } from 'cozy-client'
 import CozyRealtime from 'cozy-realtime'
 
-import FilesRealTimeQueries from './FilesRealTimeQueries'
+import FilesRealTimeQueries, { __resetDriveIdByFileId } from './FilesRealTimeQueries'
 import AppLike from 'test/components/AppLike'
 
 import { useSharedDrives } from '@/modules/shareddrives/hooks/useSharedDrives'
@@ -69,6 +69,7 @@ describe('FilesRealTimeQueries', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
+    __resetDriveIdByFileId()
     client = buildMockClient()
 
     // Default: no shared drives
@@ -250,6 +251,10 @@ describe('FilesRealTimeQueries', () => {
       const action = client.dispatch.mock.calls[0][0]
       expect(action.response.data[0]._type).toBe('io.cozy.files')
       expect(action.response.data[0]._id).toBe('drive-file-1')
+      // Path must be resolved via the drive-scoped statById (parent.path + '/' + name)
+      expect(action.response.data[0].path).toBe(
+        `${PARENT_FOLDER.path}/shared-doc.txt`
+      )
     })
 
     it('subscribes to created, updated, and deleted events on the drive socket', () => {
@@ -325,6 +330,54 @@ describe('FilesRealTimeQueries', () => {
       unmount()
 
       expect(mockStop).toHaveBeenCalledTimes(2)
+    })
+
+    it('stops the d1 socket and opens a d2 socket when the recipient-drive list changes mid-lifecycle', () => {
+      const instances = []
+      CozyRealtime.mockImplementation(({ sharedDriveId }) => {
+        const inst = {
+          subscribe: jest.fn(),
+          stop: jest.fn(),
+          _driveId: sharedDriveId
+        }
+        instances.push(inst)
+        return inst
+      })
+
+      useSharedDrives.mockReturnValue({
+        isLoading: false,
+        isLoaded: true,
+        sharedDrives: [{ _id: 'd1', owner: false }]
+      })
+
+      const { rerender } = setup()
+
+      expect(CozyRealtime).toHaveBeenCalledTimes(1)
+      expect(CozyRealtime).toHaveBeenCalledWith({ client, sharedDriveId: 'd1' })
+
+      // Replace the drive list with d2 only — the effect deps change
+      useSharedDrives.mockReturnValue({
+        isLoading: false,
+        isLoaded: true,
+        sharedDrives: [{ _id: 'd2', owner: false }]
+      })
+
+      rerender(
+        <AppLike client={client}>
+          <FilesRealTimeQueries />
+        </AppLike>
+      )
+
+      // The d1 socket must have been stopped by the effect cleanup
+      expect(instances[0]._driveId).toBe('d1')
+      expect(instances[0].stop).toHaveBeenCalledTimes(1)
+
+      // CozyRealtime was constructed exactly twice (once for d1, once for d2)
+      expect(CozyRealtime).toHaveBeenCalledTimes(2)
+      expect(CozyRealtime).toHaveBeenNthCalledWith(2, {
+        client,
+        sharedDriveId: 'd2'
+      })
     })
   })
 
