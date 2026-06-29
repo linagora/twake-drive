@@ -1,0 +1,7 @@
+content,fixture,expected_insert,expected_replace,status,limits,notes
+text-simple,"XXX","OK","OK",pass,,
+rich-inline,"**g** *i* ~~s~~ `c` [l](u)","OK (formatage préservé)","OK",pass,,"gras/italique/barré/code/liens/souligné"
+color,"(texte coloré)","non préservé","non préservé",xfail,L5,"L5: couleur non préservée"
+image,"![img](data...)","OK (round-trip)","OK",pass,,
+footnote,"texte[^1]","OK (recréée post-InsertContent)","OK",pass,,
+crossref,"(réf titre / bookmark)","liens parfois perdus selon le document","idem",xfail,L4,"L4: cross-refs perdus selon le document (pré-existant v2.6)"

@@ -1,6 +1,17 @@
 (function(window, undefined) {
   "use strict";
 
+  // ---- Build marker ----
+  // Bump SCRIBE_BUILD on every meaningful code.js change so a loaded build can be
+  // identified despite OO's immutable plugin cache. Verify which build is live:
+  //   • browser console → look for the "[Scribe] build …" line at plugin load/init;
+  //   • or evaluate `window.__scribeBuild` in the plugin iframe.
+  // If the console shows an OLDER build than expected, the editor served a CACHED
+  // code.js → reopen the editor in a fresh tab / private window (a plain F5 won't
+  // refetch the async plugin iframe).
+  var SCRIBE_BUILD = "2026-06-29.5 — merge into scribe-in-right-panel: selection-cases fixes (.4: list extract/inject, insert host-style, table/image/§5bis) reconciled with v3.2-03 whole-document extraction (buildScribeExtractionResult mode branch + buildDocumentExtractionResult)";
+  try { window.__scribeBuild = SCRIBE_BUILD; } catch (e) {}
+
   // ---- State ----
   var lastSelectedText = "";
   var lastSelectedHtml = "";
@@ -39,6 +50,9 @@
   function log(msg) {
     console.log("[Scribe] " + msg);
   }
+
+  // Announce the loaded build immediately (module load = code.js fetched & executed).
+  log("build " + SCRIBE_BUILD);
 
   // ---- Helper: generateIntentId() ----
   function generateIntentId() {
@@ -101,6 +115,25 @@
   // ---- Paste HTML with smart spacing ----
   // Prevents init() and polling from interfering during paste.
   var pasteInProgress = false;
+  // Tracks whether a GroupActions undo-group is currently open (see
+  // startUndoGroup/endUndoGroup). A full-table/image injection makes several
+  // history points (InsertContent callCommand + one PasteHtml per image); wrapping
+  // them in a GroupActions group collapses them into a SINGLE undo point so one
+  // Ctrl+Z reverts the whole reply. Guard keeps Start/End balanced (an unbalanced
+  // StartAction would swallow every later edit into the group).
+  var undoGroupOpen = false;
+
+  // Debounce for the selection-extraction triggered by OO on every selection
+  // change (config initOnSelectionChanged:true). Running it on each change
+  // interrupts OO's mouse-drag tracking (broke image resize/move via handles), so
+  // we coalesce bursts of selection changes and extract only once they settle.
+  var extractionDebounceTimer = null;
+  var EXTRACTION_DEBOUNCE_MS = 250;
+  // True while a mouse button is held in the editor (e.g. dragging an image handle
+  // to resize/move). The extraction callCommand must NOT run during this — it
+  // re-enters the editor and aborts OO's drag tracking (the image snaps back). We
+  // suppress it on mousedown and run it once on mouseup (see handleEditorPointer*).
+  var pointerDown = false;
 
   // ---- Register <u> underline extension for marked.lexer ----
   // Custom inline extension so marked tokenizes <u>...</u> into underline tokens
@@ -346,6 +379,65 @@
     return blocks;
   }
 
+  // ---- Undo-group helpers ----
+  // OO's plugin API exposes StartAction/EndAction with type "GroupActions" — the
+  // same primitive OO uses internally to make a multi-step operation a single undo
+  // point (probe-confirmed: a group spans separate callCommand + async PasteHtml
+  // calls and collapses to ONE point that one Undo reverts / one Redo restores).
+  // We open a group around the whole Builder injection so a full-table/image reply
+  // (InsertContent + N image PasteHtml = N+1 points) becomes a single Ctrl+Z.
+  // Fire-and-forget is safe: the plugin→editor command channel is FIFO, so the
+  // StartAction lands before the first callCommand point (probe-confirmed).
+  function startUndoGroup() {
+    if (undoGroupOpen) return;
+    undoGroupOpen = true;
+    try { window.Asc.plugin.executeMethod("StartAction", ["GroupActions", "Scribe injection"], function() {}); } catch (e) {}
+  }
+  function endUndoGroup() {
+    if (!undoGroupOpen) return;
+    undoGroupOpen = false;
+    try { window.Asc.plugin.executeMethod("EndAction", ["GroupActions", "Scribe injection"], function() {}); } catch (e) {}
+  }
+
+  // ---- Normalize list indentation before marked.lexer ----
+  // LLMs (and our own extraction) indent nested list items by 2 spaces per level.
+  // But CommonMark/marked only nests a child list when its indent reaches the
+  // PARENT's content offset — which is the marker width: 2 for bullets ("- "),
+  // but 3+ for ordered items ("1. "). So 2-space-indented ORDERED sub-lists do
+  // NOT nest (probe-confirmed: marked flattens them all to level 0, and can even
+  // drop deeper items). Fix: map each list item's raw indent to a logical level
+  // via an indent stack (any consistent step → one level), then re-emit 4 spaces
+  // per level — wide enough that marked nests ordered AND bullet lists at every
+  // depth. Fenced code is left untouched; a column-0 non-list line ends the list
+  // (stack reset). Single-line items only — wrapped continuation lines are rare
+  // in LLM list output and pass through unchanged.
+  function normalizeListIndent(md) {
+    var lines = md.split("\n"), out = [], inFence = false, fenceCh = "", stack = [];
+    var listRe = /^(\s*)([-*+]|\d{1,9}[.)])(\s+)(.*)$/;
+    var fenceRe = /^(\s*)(```+|~~~+)/;
+    function rep(s, n) { var r = ""; for (var j = 0; j < n; j++) r += s; return r; }
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i], fm = line.match(fenceRe);
+      if (fm) {
+        if (!inFence) { inFence = true; fenceCh = fm[2].charAt(0); }
+        else if (fm[2].charAt(0) === fenceCh) { inFence = false; }
+        out.push(line); continue;
+      }
+      if (inFence) { out.push(line); continue; }
+      var m = line.match(listRe);
+      if (m) {
+        var ind = m[1].length;
+        while (stack.length && ind < stack[stack.length - 1]) stack.pop();
+        if (!stack.length || ind > stack[stack.length - 1]) stack.push(ind);
+        out.push(rep("    ", stack.length - 1) + m[2] + " " + m[4]);
+      } else {
+        if (line.replace(/\s+$/, "") === "") { out.push(line); } // blank: keep stack (loose lists)
+        else { if (/^\S/.test(line)) stack = []; out.push(line); } // col-0 non-list ends the list
+      }
+    }
+    return out.join("\n");
+  }
+
   // ---- Builder API injection with PasteHtml fallback ----
   // Tokenizes markdown via marked.lexer(), flattens to paragraph+runs,
   // passes through Asc.scope, and interprets as Builder API calls inside
@@ -355,6 +447,9 @@
     // Convert inline image markers to standard markdown image syntax
     // so marked.lexer() produces image tokens for both block and inline markers
     md = md.replace(/\{\{IMG:(scribe-img-\d+)\}\}/g, "![IMG:$1](placeholder)");
+    // Normalize 2-space (LLM) list indentation to marked-nestable 4-space levels
+    // BEFORE any tokenization (covers both the table-cell and main lexer paths).
+    md = normalizeListIndent(md);
     // Keep visible text in cross-ref markers — the LLM may modify it (e.g. translation).
     // flattenInline will parse both the ref name and the visible text.
 
@@ -429,6 +524,10 @@
     }
 
     pasteInProgress = true;
+    // Open an undo-group so the InsertContent callCommand + every image PasteHtml
+    // collapse into ONE undo point. Closed on every exit path below (timeout
+    // fallback, no-image callback, and post-image-injection callback).
+    startUndoGroup();
     Asc.scope.tokens = JSON.stringify(flat);
     Asc.scope._mode = mode || "replace";
     if (parsedTables.length > 0) {
@@ -462,6 +561,7 @@
     var fallbackTimer = setTimeout(function() {
       if (!callbackFired) {
         log("Builder callCommand timeout -- falling back to PasteHtml");
+        endUndoGroup();
         pasteInProgress = false;
         if (fallbackHtml) { pasteHtml(fallbackHtml, mode); }
       }
@@ -475,11 +575,141 @@
       var blocks = JSON.parse(tokensJson);
       var doc = Api.GetDocument();
 
+      // [TEST HOOK — flag-gated, inert in prod] When a test selection spec is
+      // queued (Asc.scope._testSelSpec, set ONLY by the injectAtSelection dev
+      // hook), apply it HERE so it lives in the SAME callCommand that reads it —
+      // a collapsed cursor set in a separate callCommand resets to offset 0.
+      // One-shot: cleared immediately so later (real) injects never see it.
+      var _testSelSpec = Asc.scope._testSelSpec;
+      Asc.scope._testSelSpec = null;
+      if (_testSelSpec) {
+        try {
+          var _tsp = JSON.parse(_testSelSpec);
+          var _ttgt = null;
+          // Cross-boundary (T4/T5/T6) — twin of hookSetSelection's cross branch.
+          // Multi-¶ top-level (A5/A6) also rides this branch (both ends ¶, diff ¶).
+          var _tCross = (!!_tsp.startCell !== !!_tsp.endCell) || (_tsp.startCell && _tsp.endCell && _tsp.startN !== _tsp.endN) || (!_tsp.startCell && !_tsp.endCell && _tsp.startN !== _tsp.endN);
+          var _tIsRange = _tsp.full || (_tsp.startCell && _tsp.endCell && (_tsp.startCell.r !== _tsp.endCell.r || _tsp.startCell.c !== _tsp.endCell.c));
+          if (_tCross) {
+            var _txNth = function(kind, nn) {
+              var c = doc.GetElementsCount(), s = 0;
+              for (var i = 0; i < c; i++) { var e = doc.GetElement(i); if (e.GetClassType && e.GetClassType() === kind) { s++; if (s === nn) return e; } }
+              return null;
+            };
+            var _txParaRange = function(para, kind) {
+              var txt = (para.GetText ? para.GetText() : "").replace(/[\r\n]+$/, ""), len = txt.length, off;
+              if (/^\d+$/.test(kind)) { off = parseInt(kind, 10); if (off > len) off = len; }
+              else if (kind === "end") off = len;
+              else if (kind === "mid") off = Math.floor(len / 2);
+              else if (kind === "space") { var ix = txt.indexOf(" "); off = ix >= 0 ? ix + 1 : 0; }
+              else off = 0;
+              var cnt = para.GetElementsCount ? para.GetElementsCount() : 0, acc = 0;
+              for (var i = 0; i < cnt; i++) {
+                var el = para.GetElement(i), ct = el.GetClassType ? el.GetClassType() : "";
+                if (ct !== "run" && ct !== "hyperlink") continue;
+                var t = (el.GetText ? el.GetText() : "").replace(/[\r\n]+$/, "");
+                if (off <= acc + t.length) return el.GetRange ? el.GetRange(off - acc, off - acc) : null;
+                acc += t.length;
+              }
+              return para.GetRange ? para.GetRange() : null;
+            };
+            var _txEndpoint = function(nn, kind, cell, isStart) {
+              if (!cell) { var pp = _txNth("paragraph", nn); return pp ? _txParaRange(pp, kind) : null; }
+              var tb = _txNth("table", nn); if (!tb) return null;
+              var cl = tb.GetCell(cell.r, cell.c); if (!cl) return null;
+              var cc = cl.GetContent(), pe = isStart ? cc.GetElement(0) : cc.GetElement(cc.GetElementsCount() - 1);
+              return pe && pe.GetRange ? pe.GetRange() : null;
+            };
+            var _txsr = _txEndpoint(_tsp.startN, _tsp.startKind, _tsp.startCell, true);
+            var _txer = _txEndpoint(_tsp.endN, _tsp.endKind, _tsp.endCell, false);
+            var _txrng = (_txsr && _txer && _txsr.ExpandTo) ? _txsr.ExpandTo(_txer) : null;
+            if (_txrng && _txrng.Select) _txrng.Select();
+          } else if (_tIsRange) {
+            // Multi-cell range (T2a/b/c) or whole table (T3) — twin of hookSetSelection.
+            var _rtc = doc.GetElementsCount(), _rts = 0, _rtb = null;
+            for (var _rti = 0; _rti < _rtc; _rti++) {
+              var _rte = doc.GetElement(_rti);
+              if (_rte.GetClassType && _rte.GetClassType() === "table") { _rts++; if (_rts === _tsp.startN) { _rtb = _rte; break; } }
+            }
+            if (_rtb) {
+              var _rsc, _rec;
+              if (_tsp.full) {
+                _rsc = _rtb.GetCell(0, 0);
+                var _rlr = _rtb.GetRowsCount() - 1;
+                _rec = _rtb.GetCell(_rlr, _rtb.GetRow(_rlr).GetCellsCount() - 1);
+              } else {
+                _rsc = _rtb.GetCell(_tsp.startCell.r, _tsp.startCell.c);
+                _rec = _rtb.GetCell(_tsp.endCell.r, _tsp.endCell.c);
+              }
+              if (_rsc && _rec) {
+                var _rscC = _rsc.GetContent(), _recC = _rec.GetContent();
+                var _rsp = _rscC.GetElement(0), _rep = _recC.GetElement(_recC.GetElementsCount() - 1);
+                var _rsr = _rsp && _rsp.GetRange ? _rsp.GetRange() : null;
+                var _rer = _rep && _rep.GetRange ? _rep.GetRange() : null;
+                var _rrng = (_rsr && _rer && _rsr.ExpandTo) ? _rsr.ExpandTo(_rer) : (_rsr || _rer);
+                if (_rrng && _rrng.Select) _rrng.Select();
+              }
+            }
+          } else {
+          if (_tsp.startCell) {
+            // §4ter intra-cell: n-th TABLE → cell (r,c) → 1st ¶.
+            var _tcc = doc.GetElementsCount(), _tsn = 0, _tbl = null;
+            for (var _ti = 0; _ti < _tcc; _ti++) {
+              var _tel = doc.GetElement(_ti);
+              if (_tel.GetClassType && _tel.GetClassType() === "table") { _tsn++; if (_tsn === _tsp.startN) { _tbl = _tel; break; } }
+            }
+            if (_tbl) { try { _ttgt = _tbl.GetCell(_tsp.startCell.r, _tsp.startCell.c).GetContent().GetElement(0); } catch (e) {} }
+          } else {
+            var _tcnt = doc.GetElementsCount(), _tseen = 0;
+            for (var _tj = 0; _tj < _tcnt; _tj++) {
+              var _tel2 = doc.GetElement(_tj);
+              if (_tel2.GetClassType && _tel2.GetClassType() === "paragraph") { _tseen++; if (_tseen === _tsp.startN) { _ttgt = _tel2; break; } }
+            }
+          }
+          if (_ttgt) {
+            var _ttxt = (_ttgt.GetText ? _ttgt.GetText() : "").replace(/[\r\n]+$/, "");
+            var _tlen = _ttxt.length;
+            var _toff = function(k) {
+              if (/^\d+$/.test(k)) { var _n = parseInt(k, 10); return _n > _tlen ? _tlen : _n; }
+              if (k === "end") return _tlen;
+              if (k === "mid") return Math.floor(_tlen / 2);
+              if (k === "space") { var _ix = _ttxt.indexOf(" "); return _ix >= 0 ? _ix + 1 : 0; }
+              return 0;
+            };
+            var _tat = function(para, off) {
+              var _c = para.GetElementsCount ? para.GetElementsCount() : 0, _a = 0;
+              for (var _i = 0; _i < _c; _i++) {
+                var _e2 = para.GetElement(_i);
+                var _ct = _e2.GetClassType ? _e2.GetClassType() : "";
+                if (_ct !== "run" && _ct !== "hyperlink") continue;
+                var _t2 = (_e2.GetText ? _e2.GetText() : "").replace(/[\r\n]+$/, "");
+                if (off <= _a + _t2.length) return _e2.GetRange ? _e2.GetRange(off - _a, off - _a) : null;
+                _a += _t2.length;
+              }
+              return null;
+            };
+            var _ts = _toff(_tsp.startKind), _te = _toff(_tsp.endKind), _trng = null;
+            if (_ts === 0 && _te === _tlen) _trng = _ttgt.GetRange ? _ttgt.GetRange() : null;
+            else if (_ts === _te) _trng = _tat(_ttgt, _ts) || (_ttgt.GetRange ? _ttgt.GetRange(0, 0) : null);
+            else { var _ra = _tat(_ttgt, _ts), _rb = _tat(_ttgt, _te); _trng = (_ra && _rb && _ra.ExpandTo) ? _ra.ExpandTo(_rb) : (_ra || _rb); }
+            if (_trng && _trng.Select) _trng.Select();
+          }
+          }
+        } catch (e) {}
+      }
+
       // Read paragraph-level font style at insertion point
       // Uses paragraph mark text properties (base style, ignoring local run overrides)
       // Falls back to document default text properties
       var srcFontFamily = null;
       var srcFontSize = null;
+      var hostStyle = null; // §5bis: ¶ style of the host at the insertion point —
+                            // both halves of a block split must keep it.
+      var firstBlockStyled = false;  // §5bis Cas B: 1st injected block has its own
+                                     // md style (heading/list/quote/code) → must NOT
+                                     // merge inline; host keeps its own style.
+      var leadSpacerInserted = false; // §5bis Cas B: a host-styled empty spacer was
+                                      // unshifted into content[] to absorb OO's merge.
       try {
         var selRange = doc.GetRangeBySelect();
         if (selRange) {
@@ -490,6 +720,7 @@
               srcFontFamily = textPr.GetFontFamily();
               srcFontSize = textPr.GetFontSize();
             }
+            if (para.GetStyle) hostStyle = para.GetStyle();
           }
         }
       } catch (e) {
@@ -506,6 +737,25 @@
           // No default available — runs will use OO built-in default
         }
       }
+      // Robust host ¶ style: GetRangeBySelect().GetParagraph() is unreliable for a
+      // COLLAPSED cursor, so find the host paragraph by iterating to the element whose
+      // range covers the selection start position (same technique as smart spacing).
+      try {
+        var hsSel = doc.GetRangeBySelect();
+        if (hsSel) {
+          var hsStart = hsSel.GetStartPos();
+          var hsCount = doc.GetElementsCount();
+          for (var hsi = 0; hsi < hsCount; hsi++) {
+            var hsEl = doc.GetElement(hsi);
+            if (!hsEl.GetClassType || hsEl.GetClassType() !== "paragraph") continue;
+            var hsR = hsEl.GetRange ? hsEl.GetRange() : null;
+            if (hsR && hsStart >= hsR.GetStartPos() && hsStart <= hsR.GetEndPos()) {
+              if (hsEl.GetStyle) hostStyle = hsEl.GetStyle();
+              break;
+            }
+          }
+        }
+      } catch (e) {}
 
       // ---- Smart spacing detection ----
       // Mirrors the pasteHtml spacing pattern (lines 378-416) but for Builder API.
@@ -515,23 +765,53 @@
       var needSpaceAfter = false;
       var WS = /[\s\n\r\t\u00A0]/;
 
-      // For insert mode: collapse cursor to end of selection.
-      // If the next char is a space, extend cursor to consume it so it doesn't
-      // end up as a leading space on the line after the insertion.
+      // Insert mode (\u00A75bis): SYMMETRIC spacing \u2014 add a space before/after the
+      // inserted runs only when the adjacent char is non-whitespace, never doubled.
+      // OO document positions are ELEMENT units (not chars), so reading the char
+      // before/after via doc.GetRange(pos\u00B1n) breaks at a paragraph boundary (the \u00B6
+      // mark gets mistaken for the neighbour char). Instead compute the char OFFSET
+      // inside the host paragraph from the text length of [paraStart..cursor]
+      // (GetText resolves real chars), then index the paragraph text directly.
       if (mode === "insert") {
         var insSelRange = doc.GetRangeBySelect();
         if (insSelRange) {
-          var endPos = insSelRange.GetEndPos();
-          var afterRange = doc.GetRange(endPos, endPos + 1);
-          var afterChar = afterRange ? afterRange.GetText() : "";
-          if (afterChar === " " || afterChar === "\u00A0") {
-            // Select the trailing space so InsertContent consumes it
-            var eatRange = doc.GetRange(endPos, endPos + 1);
-            if (eatRange) eatRange.Select();
-          } else {
-            var endRange = doc.GetRange(endPos, endPos);
-            if (endRange) endRange.Select();
+          var insPos = insSelRange.GetEndPos();
+          // Find the HOST paragraph by iteration (GetRangeBySelect().GetParagraph()
+          // is unreliable for collapsed cursors) — the element whose range covers
+          // insPos. Then compute the cursor's CHAR offset inside it (text length of
+          // [hostStart..cursor], GetText resolves real chars) and read the char
+          // before/after directly from the paragraph text. aChar = "" at end-of-
+          // paragraph → no trailing space (the previous range-based read leaked into
+          // the NEXT paragraph and wrongly added a space at @end).
+          var hostPara = null, hostStart = -1;
+          var ecount = doc.GetElementsCount();
+          for (var ei = 0; ei < ecount; ei++) {
+            var eel = doc.GetElement(ei);
+            if (!eel.GetClassType || eel.GetClassType() !== "paragraph") continue;
+            var er = eel.GetRange ? eel.GetRange() : null;
+            if (!er) continue;
+            if (insPos >= er.GetStartPos() && insPos <= er.GetEndPos()) { hostPara = eel; hostStart = er.GetStartPos(); break; }
           }
+          // Insert host ¶ = the one at the insertion point (selection END). hostStyle
+          // was seeded from the selection START (§5bis, lines ~701-716); for a multi-¶
+          // selection that is the WRONG paragraph — e.g. select H1+H2 and Insert: the
+          // host is the H2, not the H1. Without this override the Cas B spacer (or the
+          // Cas A first-¶) carries the START style and OO stamps it onto the host's
+          // left split half, bumping the last selected ¶ to the first's heading level.
+          if (hostPara && hostPara.GetStyle) hostStyle = hostPara.GetStyle();
+          if (hostPara) {
+            var hpText = (hostPara.GetText ? hostPara.GetText() : "").replace(/[\r\n]+$/, "");
+            var prefR = doc.GetRange(hostStart, insPos);
+            var pref = prefR ? (prefR.GetText() || "").replace(/[\r\n]+$/, "") : "";
+            var off = pref.length;
+            var bChar = off > 0 ? hpText.charAt(off - 1) : "";
+            var aChar = off < hpText.length ? hpText.charAt(off) : "";
+            if (bChar && !WS.test(bChar)) needSpaceBefore = true;
+            if (aChar && !WS.test(aChar)) needSpaceAfter = true;
+          }
+          // Collapse the cursor to the insertion point (end of the selection).
+          var collapseRange = doc.GetRange(insPos, insPos);
+          if (collapseRange) collapseRange.Select();
         }
       }
 
@@ -542,24 +822,64 @@
           // Replace mode: check char before selection start and after selection end
           var repRange = doc.GetRangeBySelect();
           if (repRange) {
-            var repStart = repRange.GetStartPos();
-            var repEnd = repRange.GetEndPos();
-
-            if (repStart > 0) {
-              var bRange2 = doc.GetRange(Math.max(0, repStart - 5), repStart);
-              var bText2 = bRange2 ? bRange2.GetText() : "";
-              var bChar2 = bText2.length > 0 ? bText2.charAt(bText2.length - 1) : "";
-              if (bChar2 && !WS.test(bChar2)) needSpaceBefore = true;
+            // §5bis: read the neighbour char CLAMPED to its host paragraph, so a ¶
+            // boundary counts as a newline (blank → no space), exactly like the
+            // insert branch above. The old doc.GetRange(repEnd, repEnd+5) read
+            // leaked across the ¶ mark into the NEXT paragraph and added a spurious
+            // trailing space when the whole host ¶ was selected (A1/replace: the
+            // selection end lands at the paragraph's GetEndPos, whose forward read
+            // returns the next paragraph's first word). Clamping fixes it: at
+            // end-of-¶ the within-paragraph char is "" → no space.
+            var hostAt = function(pos) {
+              var ec2 = doc.GetElementsCount();
+              for (var k = 0; k < ec2; k++) {
+                var pel = doc.GetElement(k);
+                if (!pel.GetClassType || pel.GetClassType() !== "paragraph") continue;
+                var pr = pel.GetRange ? pel.GetRange() : null;
+                if (!pr) continue;
+                if (pos >= pr.GetStartPos() && pos <= pr.GetEndPos()) {
+                  var ptext = (pel.GetText ? pel.GetText() : "").replace(/[\r\n]+$/, "");
+                  var pfR = doc.GetRange(pr.GetStartPos(), pos);
+                  var pf = pfR ? (pfR.GetText() || "").replace(/[\r\n]+$/, "") : "";
+                  return { text: ptext, off: pf.length };
+                }
+              }
+              return null;
+            };
+            var hB = hostAt(repRange.GetStartPos());
+            if (hB) {
+              var bc = hB.off > 0 ? hB.text.charAt(hB.off - 1) : "";
+              if (bc && !WS.test(bc)) needSpaceBefore = true;
             }
-
-            var aRange2 = doc.GetRange(repEnd, repEnd + 5);
-            var aText2 = aRange2 ? aRange2.GetText() : "";
-            var aChar2 = aText2.length > 0 ? aText2.charAt(0) : "";
-            if (aChar2 && !WS.test(aChar2)) needSpaceAfter = true;
+            var hA = hostAt(repRange.GetEndPos());
+            if (hA) {
+              var ac = hA.off < hA.text.length ? hA.text.charAt(hA.off) : "";
+              if (ac && !WS.test(ac)) needSpaceAfter = true;
+            }
           }
         } // end else (replace mode)
       } catch (e) {
         // Spacing detection failed -- proceed without spacing (safe fallback)
+      }
+
+      // §5bis Cas B: when the 1st injected block carries its own paragraph style
+      // (heading / list / quote / code), the whole insert goes BLOCK (separate ¶s
+      // via the host-styled spacer, see prepareFirstBlockForMerge). Every injected
+      // block is then bounded by ¶ marks on BOTH sides, and "bord de ¶ = saut de
+      // ligne" (= blank) → NO space run must be added. Suppress smart spacing so the
+      // styled block stays clean ("Injected", not " Injected"). Test inlined (the
+      // blockHasParaStyle helper is declared later, inside the content>0 block, so
+      // it isn't assigned yet here).
+      var firstInjBlock = blocks[0];
+      var firstInjBlockStyled = !!firstInjBlock && (
+        firstInjBlock.type === "heading" ||
+        firstInjBlock.type === "list_item" ||
+        firstInjBlock.type === "code_block" ||
+        (firstInjBlock.type === "paragraph" && firstInjBlock.blockquote)
+      );
+      if (firstInjBlockStyled) {
+        needSpaceBefore = false;
+        needSpaceAfter = false;
       }
 
       // Pre-scan: create numbering objects once if needed
@@ -688,6 +1008,42 @@
         // Copy() is consumed by AddDrawing — make a fresh copy for next use
         try { imageCache[name] = cached.Copy(); } catch (e) { imageCache[name] = null; }
         return cached;
+      }
+
+      // --- Image media-orphan fix (top-level ¶ images) ---
+      // AddDrawing(Copy()) renders live but the re-inserted image carries a raw
+      // data-URL RasterImageId that is NEVER uploaded to the doc-server, so at save
+      // it has no blip/media and is dropped (probed 2026-06-27). The paste pipeline
+      // DOES upload media, so we instead insert top-level images via PasteHtml AFTER
+      // InsertContent: here we only drop a text MARKER run where the image goes and
+      // record its data-URL + size; the plugin-side callback (injectPendingImages)
+      // selects each marker and PasteHtml's the <img>. (Table-cell images still use
+      // AddDrawing for now — same latent save bug, handled in a later pass.)
+      var pendingImages = [];  // [{marker, src(dataURL), w, h}] returned to the callback
+      function imageSpecFor(name) {
+        var d = drawingIndex[name];
+        if (!d) return null;
+        try {
+          var j = JSON.parse(d.ToJSON());
+          var bf = j && j.graphic ? j.graphic.blipFill : null;
+          var src = bf ? bf.rasterImageId : null;
+          if (!src) return null;
+          return { src: src, w: d.GetWidth(), h: d.GetHeight() };  // w/h in EMU
+        } catch (e) { return null; }
+      }
+      // Append a marker run for image `name` to `para`; record the pending image.
+      // Returns true if a marker was added (image known), false otherwise.
+      function addImageMarker(para, name, fontFamily, fontSize) {
+        var spec = imageSpecFor(name);
+        if (!spec) return false;
+        var marker = "\u0000IMG:" + pendingImages.length + "\u0000";
+        var run = Api.CreateRun();
+        run.AddText(marker);
+        if (fontFamily) run.SetFontFamily(fontFamily);
+        if (fontSize) run.SetFontSize(fontSize);
+        para.AddElement(run);
+        pendingImages.push({ marker: marker, src: spec.src, w: spec.w, h: spec.h });
+        return true;
       }
 
       // --- Footnote round-trip: save content text, recreate after InsertContent ---
@@ -821,12 +1177,13 @@
       // Add block content to a paragraph: handles runs and image_placeholder blocks.
       function addBlockToParagraph(para, block, fontFamily, fontSize) {
         if (block.type === "image_placeholder" && block.name) {
-          var imgDrawing = restoreImage(block.name);
-          if (imgDrawing) {
-            para.AddDrawing(imgDrawing);
-          }
+          // Cell block image: marker + post-InsertContent PasteHtml (media upload),
+          // like top-level images — so a re-inserted cell image survives save.
+          // AddDrawing(Copy) renders live but leaves an orphaned data-URL dropped at
+          // save (the table clone-path / T9 bug).
+          addImageMarker(para, block.name, fontFamily, fontSize);
         } else {
-          addRunsToParagraph(para, block.runs || [], fontFamily, fontSize);
+          addRunsToParagraph(para, block.runs || [], fontFamily, fontSize, pendingImages);
         }
       }
 
@@ -924,6 +1281,18 @@
         return null;
       }
 
+      // §4bis #2: a table containing ANY merge must be Inserted as a FULL clone — the
+      // RemoveRow/RemoveColumn reduction corrupts spans (Q4: RemoveColumn through an
+      // H-span deletes the whole span). Detect via the lossless ToJSON, which emits
+      // "gridSpan":N (N>=2, H-merge) and "vMerge":"restart"|"continue" (V-merge) ONLY
+      // for merged cells.
+      function tableHasMerge(table) {
+        try {
+          var s = table.ToJSON(true, true);
+          return /"vMerge":\s*"(restart|continue)"/.test(s) || /"gridSpan":\s*([2-9]|\d\d+)/.test(s);
+        } catch (e) { return false; }
+      }
+
       if (parsedTables.length > 0) {
         // Find original tables by their document-level index (saved during extraction).
         // We cannot rely on selection range here — it may have collapsed since extraction.
@@ -1018,7 +1387,12 @@
               replaceCellContent(rdCc, rdc, rdf.family, rdf.size);
             }
             tableClones[ptIndex] = reducedClone;
-            pendingTableReductions.push({ clone: reducedClone, selectedCellCoords: selectedCellCoords });
+            // §4bis #2: only reduce (RemoveRow/Column) when the table has NO merge.
+            // Merged → keep the FULL clone (selected cells already modified above);
+            // reduction would corrupt the spans.
+            if (!tableHasMerge(reducedClone)) {
+              pendingTableReductions.push({ clone: reducedClone, selectedCellCoords: selectedCellCoords });
+            }
           } else {
             // Full Insert — reconstruct via FromJSON + modify all cells
             var clone = reconstructTable(ptIndex, origTable);
@@ -1069,13 +1443,20 @@
       // Shared function: add runs to a paragraph (used for both document paragraphs
       // and table cells). Handles text, bold/italic/strikethrough/code, hyperlinks,
       // and image markers (via restoreImage from image cache).
-      function addRunsToParagraph(para, runs, fontFamily, fontSize) {
+      function addRunsToParagraph(para, runs, fontFamily, fontSize, imageSink) {
         for (var ri = 0; ri < runs.length; ri++) {
           var run = runs[ri];
           if (run.imageMarker) {
-            var imDrawing = restoreImage(run.imageMarker);
-            if (imDrawing) {
-              para.AddDrawing(imDrawing);
+            // Top-level (imageSink given): drop a marker, PasteHtml the image later
+            // so its media is uploaded (AddDrawing would orphan it at save).
+            // Table cells (no imageSink): keep AddDrawing for now.
+            if (imageSink) {
+              addImageMarker(para, run.imageMarker, fontFamily, fontSize);
+            } else {
+              var imDrawing = restoreImage(run.imageMarker);
+              if (imDrawing) {
+                para.AddDrawing(imDrawing);
+              }
             }
           } else if (run.footnoteMarker) {
             // Footnote placeholder: defer actual footnote creation to post-InsertContent.
@@ -1297,7 +1678,7 @@
           var headingStyle = doc.GetStyle(styleName);
           if (headingStyle) p.SetStyle(headingStyle);
           if (isFirst && needSpaceBefore) p.AddElement(makeSpaceRun());
-          addRunsToParagraph(p, block.runs || [], null, null);
+          addRunsToParagraph(p, block.runs || [], null, null, pendingImages);
           if (isLast && needSpaceAfter) p.AddElement(makeSpaceRun());
           content.push(p);
         } else if (block.type === "list_item") {
@@ -1306,7 +1687,7 @@
           var numLvl = numbering.GetLevel(block.level);
           p.SetNumbering(numLvl);
           if (isFirst && needSpaceBefore) p.AddElement(makeSpaceRun());
-          addRunsToParagraph(p, block.runs || [], srcFontFamily, srcFontSize);
+          addRunsToParagraph(p, block.runs || [], srcFontFamily, srcFontSize, pendingImages);
           if (isLast && needSpaceAfter) p.AddElement(makeSpaceRun());
           content.push(p);
         } else if (block.type === "code_block") {
@@ -1321,10 +1702,7 @@
           for (var j = 0; j < runs.length; j++) {
             var run = runs[j];
             if (run.imageMarker) {
-              var imDrawing = restoreImage(run.imageMarker);
-              if (imDrawing) {
-                p.AddDrawing(imDrawing);
-              }
+              addImageMarker(p, run.imageMarker, null, srcFontSize);
             } else {
               var r = Api.CreateRun();
               r.AddText(run.text);
@@ -1360,7 +1738,7 @@
             if (!cellContent) return;
             var cellPara = cellContent.GetElement(0);
             if (!cellPara) return;
-            addRunsToParagraph(cellPara, runs, srcFontFamily, srcFontSize);
+            addRunsToParagraph(cellPara, runs, srcFontFamily, srcFontSize, pendingImages);
           }
 
           // Fill header row (row 0) — bold by default
@@ -1393,18 +1771,17 @@
         } else if (block.type === "paragraph") {
           var p = Api.CreateParagraph();
           if (isFirst && needSpaceBefore) p.AddElement(makeSpaceRun());
-          addRunsToParagraph(p, block.runs || [], srcFontFamily, srcFontSize);
+          addRunsToParagraph(p, block.runs || [], srcFontFamily, srcFontSize, pendingImages);
           if (isLast && needSpaceAfter) p.AddElement(makeSpaceRun());
           content.push(p);
         } else if (block.type === "image_placeholder") {
-          var imgDrawing = restoreImage(block.name);
-          if (imgDrawing) {
-            var imgPara = Api.CreateParagraph();
-            if (isFirst && needSpaceBefore) imgPara.AddElement(makeSpaceRun());
-            imgPara.AddDrawing(imgDrawing);
-            if (isLast && needSpaceAfter) imgPara.AddElement(makeSpaceRun());
-            content.push(imgPara);
-          }
+          // Pure-image paragraph (top-level): marker now, PasteHtml the image later
+          // so its media is uploaded (AddDrawing would orphan it at save).
+          var imgPara = Api.CreateParagraph();
+          if (isFirst && needSpaceBefore) imgPara.AddElement(makeSpaceRun());
+          var added = addImageMarker(imgPara, block.name, srcFontFamily, srcFontSize);
+          if (isLast && needSpaceAfter) imgPara.AddElement(makeSpaceRun());
+          if (added) content.push(imgPara);
           // If not in cache (image was deleted from doc), silently skip
         }
 
@@ -1452,33 +1829,183 @@
         var mergedTrailingLen = 0; // track trailing text merged into last paragraph
 
         var useRefSelection = false; // true = use paragraph refs, false = use position-based
+        // Inline insert/replace merges runs into the host ¶, so neither content refs
+        // (absorbed) nor char arithmetic work for the post-selection: OO logical
+        // positions count run boundaries, so `preSelStart + textLen` mis-counts — and
+        // it gets WORSE with styled runs (each adds boundaries), which is the off-by-N
+        // users see. Fix: append a sentinel run to the inline content; after
+        // InsertContent, fresh-scan for it, take its REAL start position as the
+        // selection end, then delete it. Two real positions (start + sentinel) → exact
+        // selection, style-agnostic. Deletion is reliable (probe-confirmed) so it never
+        // leaks; uses a plain-ASCII token (NOT a  marker — a real NUL byte in
+        // source corrupts the file). (Block mode keeps refs → selectByRefs; tables
+        // derive bounds from real cell ranges → both already correct.)
+        var SCRIBE_SEL_SENT = "zZscribeSelMarkZz";
+        var useSentinelSel = false; // inline insert/replace: select via sentinel, not arithmetic
+        function appendSelSentinel(para) {
+          try { var sr = Api.CreateRun(); sr.AddText(SCRIBE_SEL_SENT); para.AddElement(sr); } catch (e) {}
+        }
+
+        // §5bis: after a BLOCK InsertContent, OO splits the host ¶ at the insertion
+        // point and the right remainder becomes a trailing paragraph. Remove it ONLY
+        // if it is EMPTY (insertion at the host's start/end) so no empty ¶ is left at
+        // the edges. If it is NON-EMPTY (insertion at a true middle), KEEP it as-is —
+        // that is the host split whose right half keeps the host ¶ style AND its own
+        // run formatting. (The previous replace path rebuilt it from plain GetText(),
+        // which dropped bold/italic and leaked a trailing \r.)
+        function cleanupTrailingBlockPara() {
+          try {
+            var lastContentPara = content[content.length - 1];
+            var lcRange = lastContentPara && lastContentPara.GetRange ? lastContentPara.GetRange() : null;
+            if (!lcRange) return;
+            var lcEndPos = lcRange.GetEndPos();
+            var total = doc.GetElementsCount();
+            for (var si = 0; si < total; si++) {
+              var scanEl = doc.GetElement(si);
+              var scanRange = scanEl && scanEl.GetRange ? scanEl.GetRange() : null;
+              if (scanRange && scanRange.GetStartPos() >= lcEndPos) {
+                var trailText = (scanRange.GetText() || "").replace(/[\r\n]+$/, "");
+                if (trailText.length === 0) {
+                  doc.RemoveElement(si); // empty right half -> no ¶ vide at the edge
+                } else if (hostStyle && scanEl.SetStyle) {
+                  scanEl.SetStyle(hostStyle); // §5bis split invariant: right half keeps host ¶ style
+                }
+                break;
+              }
+            }
+          } catch (e) {}
+        }
+
+        // §5bis Cas A: when the 1st injected para is PLAIN (no md style), it merges
+        // inline into the host's LEFT split half. Give that first content paragraph
+        // the HOST ¶ style up front, so after OO's merge the left half keeps the host
+        // style (OO would otherwise stamp the para's default Normal style on it).
+        // Cas B (1st para has its own md style — heading/list/quote/code) is left
+        // untouched: it stays a block with its own style.
+        function applyHostStyleToFirstParaIfPlain() {
+          try {
+            if (hostStyle && blocks[0] && blocks[0].type === "paragraph"
+                && content[0] && content[0].SetStyle && content[0].GetClassType
+                && content[0].GetClassType() === "paragraph") {
+              content[0].SetStyle(hostStyle);
+            }
+          } catch (e) {}
+        }
+
+        // §5bis Cas B: does the 1st injected block carry its own paragraph-level
+        // md style (heading / list / quote / fenced code)? Character formatting
+        // (bold/italic/…) does NOT count — a bold plain paragraph stays "plain".
+        // Tables / images are standalone blocks and never merge into the host, so
+        // they don't need the spacer trick.
+        function blockHasParaStyle(b) {
+          if (!b) return false;
+          if (b.type === "heading" || b.type === "list_item" || b.type === "code_block") return true;
+          if (b.type === "paragraph" && b.blockquote) return true;
+          return false;
+        }
+        firstBlockStyled = blockHasParaStyle(blocks[0]);
+
+        // §5bis Cas B: prepend a host-styled EMPTY paragraph so OO's block
+        // InsertContent merges *it* (empty) into the host's left split half — the
+        // merged half then keeps the HOST style (OO stamps content[0]'s style on the
+        // merge target), and the real styled 1st block stays a separate ¶. Mutually
+        // exclusive with the Cas A inline-style fix.
+        function prepareFirstBlockForMerge() {
+          if (firstBlockStyled) {
+            try {
+              var sp = Api.CreateParagraph();
+              if (hostStyle && sp.SetStyle) sp.SetStyle(hostStyle);
+              content.unshift(sp);
+              leadSpacerInserted = true;
+            } catch (e) {}
+          } else {
+            applyHostStyleToFirstParaIfPlain(); // §5bis Cas A
+          }
+        }
+
+        // §5bis Cas B: after the block insert, drop the leading host-styled spacer
+        // IF it ended up empty. Two shapes are possible and both resolve correctly:
+        //  - spacer merged into a non-empty host left half → element before the 1st
+        //    real block is that non-empty half → KEEP it.
+        //  - spacer left as a standalone empty ¶ (no merge), or merged into an empty
+        //    left half (@start insertion) → element before the 1st real block is
+        //    empty → REMOVE it (no ¶ vide at the edge, §5bis).
+        function cleanupLeadingSpacer() {
+          try {
+            var firstReal = content[1]; // content[0] is the spacer
+            var frRange = firstReal && firstReal.GetRange ? firstReal.GetRange() : null;
+            if (!frRange) return;
+            var frStart = frRange.GetStartPos();
+            var total = doc.GetElementsCount();
+            var prevIdx = -1;
+            for (var i = 0; i < total; i++) {
+              var el = doc.GetElement(i);
+              var r = el && el.GetRange ? el.GetRange() : null;
+              if (!r) continue;
+              if (r.GetStartPos() >= frStart) break;
+              prevIdx = i; // last element starting before the 1st real block
+            }
+            if (prevIdx >= 0) {
+              var prevEl = doc.GetElement(prevIdx);
+              var pr = prevEl && prevEl.GetRange ? prevEl.GetRange() : null;
+              var ptext = pr ? (pr.GetText() || "").replace(/[\r\n]+$/, "") : "";
+              if (ptext.length === 0) doc.RemoveElement(prevIdx);
+            }
+          } catch (e) {}
+        }
 
         if (mode === "insert") {
-          // For table selections: move cursor after the table so InsertContent
-          // places content after the table, not inside the last cell.
+          // Insert places content at the END OF THE SELECTION (spec §"Convention":
+          // "Insérer = au point d'insertion (fin de la sélection)"). For a selection
+          // that contains a table we still must collapse the cursor first (an active
+          // multi-element selection would otherwise be deleted by InsertContent), but
+          // the target is the selection END — NOT blindly "after the table". The old
+          // code always jumped to after the last response table, so a selection of
+          // {table + following ¶} inserted between the table and the ¶ ({T,F,P})
+          // instead of after the ¶ ({T,P,F}). We only bump past a table when the
+          // selection actually ENDS inside one (table-only / cell-end), where
+          // collapsing to selEnd would land in a cell.
           if (parsedTables.length > 0) {
             try {
-              for (var itp = parsedTables.length - 1; itp >= 0; itp--) {
-                var itpDocIdx = tableDocIndices[parsedTables[itp].index];
-                var itpTable = (itpDocIdx !== undefined && itpDocIdx < allTables.length) ? allTables[itpDocIdx] : null;
-                if (itpTable) {
-                  var itpRange = itpTable.GetRange();
-                  if (itpRange) {
-                    var afterPos = itpRange.GetEndPos() + 1;
-                    var afterRange = doc.GetRange(afterPos, afterPos);
-                    if (afterRange) afterRange.Select();
+              var insSelR = doc.GetRangeBySelect();
+              var insSelEnd = insSelR ? insSelR.GetEndPos() : -1;
+              if (insSelEnd >= 0) {
+                var insTarget = insSelEnd;
+                var insDocTables = doc.GetAllTables();
+                for (var idt = 0; idt < insDocTables.length; idt++) {
+                  var idtR = insDocTables[idt].GetRange();
+                  if (idtR && insSelEnd >= idtR.GetStartPos() && insSelEnd <= idtR.GetEndPos()) {
+                    insTarget = idtR.GetEndPos() + 1; // selection ends inside this table → after it
                     break;
                   }
                 }
+                var insCur = doc.GetRange(insTarget, insTarget);
+                if (insCur) insCur.Select();
               }
             } catch (e) {
               // Cursor repositioning failed — InsertContent will use current position
             }
           }
-          // Insert mode: leading empty paragraph creates a line break before content.
-          content.unshift(Api.CreateParagraph());
-          doc.InsertContent(content);
-          useRefSelection = true;
+          // §5bis: single plain paragraph -> INLINE (runs spliced into the host ¶,
+          // which keeps its paragraph style); multi-¶ / styled / non-text -> BLOCK.
+          // No leading empty paragraph any more (that was the L#7 bug).
+          // blocks[0] is the SCRIBE-TABLE placeholder PARAGRAPH, but content[0] may
+          // have been substituted with a TABLE clone (table-only Insert: T2a/T3).
+          // Inserting a table in inline mode at a collapsed cursor is a silent no-op
+          // → only treat as inline when the actual content element is a paragraph.
+          var insSimpleInline = (content.length === 1 && blocks.length === 1 && blocks[0].type === "paragraph"
+            && !(content[0] && content[0].GetClassType && content[0].GetClassType() === "table"));
+          if (insSimpleInline) {
+            appendSelSentinel(content[0]); useSentinelSel = true;
+            doc.InsertContent(content, true);
+            // useSentinelSel -> sentinel-based post-selection (robust vs run-boundary positions)
+          } else {
+            prepareFirstBlockForMerge(); // §5bis: Cas A inline-style OR Cas B spacer
+            doc.InsertContent(content);
+            useRefSelection = true;
+            cleanupTrailingBlockPara(); // §5bis: drop empty trailing ¶, keep a real split
+            if (leadSpacerInserted) cleanupLeadingSpacer(); // §5bis Cas B
+          }
 
           // Post-InsertContent: remove unselected rows/columns from inserted tables.
           // Uses the clone reference directly (now in the document after InsertContent).
@@ -1518,46 +2045,28 @@
           }
         } else {
           // Replace mode
-          var isSimpleInline = (content.length === 1 && blocks.length === 1 && blocks[0].type === "paragraph");
+          // Same guard as insert: blocks[0] is the SCRIBE-TABLE placeholder ¶, but
+          // content[0] may be a substituted TABLE clone (full-table Replace, T3).
+          // Inline mode over a full-table selection only clears the first cell — must
+          // use block mode for a table.
+          var isSimpleInline = (content.length === 1 && blocks.length === 1 && blocks[0].type === "paragraph"
+            && !(content[0] && content[0].GetClassType && content[0].GetClassType() === "table"));
           if (isSimpleInline) {
             // Single paragraph: inline mode merges into existing paragraph
+            appendSelSentinel(content[0]); useSentinelSel = true;
             doc.InsertContent(content, true);
           } else {
-            // Multi-paragraph: block mode to keep paragraph separation.
-            // Block mode splits the paragraph at selection end, creating a trailing
-            // paragraph. After InsertContent, merge that trailing paragraph into
-            // the last content paragraph to eliminate the extra line break.
+            // Multi-paragraph: block mode to keep paragraph separation. OO splits
+            // the host ¶ at the (collapsed, post-delete) selection point; the right
+            // remainder becomes a trailing ¶. §5bis: drop it only if empty (edge
+            // insertion), else KEEP it — that is the split's right half, preserving
+            // the host style AND the suffix's own run formatting (no plain-text
+            // rebuild, no leaked \r).
+            prepareFirstBlockForMerge(); // §5bis: Cas A inline-style OR Cas B spacer
             doc.InsertContent(content);
             useRefSelection = true; // block mode preserves paragraph refs
-            try {
-              var lastContentPara = content[content.length - 1];
-              var lcRange = lastContentPara.GetRange();
-              if (lcRange) {
-                var lcEndPos = lcRange.GetEndPos();
-                var total = doc.GetElementsCount();
-                for (var si = 0; si < total; si++) {
-                  var scanEl = doc.GetElement(si);
-                  var scanRange = scanEl ? scanEl.GetRange() : null;
-                  if (scanRange && scanRange.GetStartPos() >= lcEndPos) {
-                    var trailText = scanRange.GetText();
-                    if (trailText.length > 0) {
-                      // Merge trailing text into last content paragraph
-                      var mRun = Api.CreateRun();
-                      mRun.AddText(trailText);
-                      if (srcFontFamily) mRun.SetFontFamily(srcFontFamily);
-                      if (srcFontSize) mRun.SetFontSize(srcFontSize);
-                      lastContentPara.AddElement(mRun);
-                      mergedTrailingLen = trailText.length;
-                    }
-                    // Remove the trailing paragraph (empty or merged)
-                    doc.RemoveElement(si);
-                    break;
-                  }
-                }
-              }
-            } catch (e) {
-              // Merge failed — trailing line break remains (minor visual issue)
-            }
+            cleanupTrailingBlockPara();
+            if (leadSpacerInserted) cleanupLeadingSpacer(); // §5bis Cas B
           }
         }
 
@@ -1587,10 +2096,10 @@
         // So we pick the right tool for each insertion mode.
 
         function selectByRefs(doc, content, mode, preSelStart, mergedTrailingLen) {
-          // In insert mode content[0] is the leading empty paragraph (line break),
-          // so the first real content paragraph is content[1].
-          // In replace mode content[0] is the first real content paragraph.
-          var selectFirst = (mode === "insert" && content.length > 1) ? content[1] : content[0];
+          // First real content paragraph (block mode, both insert and replace).
+          // §5bis Cas B unshifts a host-styled spacer at content[0] (absorbed into
+          // the host's left half), so the first *real* block is content[1] then.
+          var selectFirst = leadSpacerInserted ? content[1] : content[0];
           var selectLast = content[content.length - 1];
           if (!selectFirst || !selectLast) return;
 
@@ -1621,6 +2130,35 @@
           }
         }
 
+        // Robust inline post-selection: the sentinel run appended to the inline content
+        // is now a live run in the host ¶. Fresh-scan for it (stale content refs are
+        // absorbed by the inline merge; only freshly-read elements give correct ranges),
+        // take its REAL start position as the selection end, delete it, then select
+        // [preSelStart .. sentinelStart]. Both ends are real OO positions in the same
+        // post-insert doc, so the selection is exact regardless of run/style boundaries.
+        function selectBySentinel(doc, startPos, sentinel) {
+          try {
+            var paras = doc.GetAllParagraphs();
+            for (var p = 0; p < paras.length; p++) {
+              var para = paras[p];
+              var ec = para && para.GetElementsCount ? para.GetElementsCount() : 0;
+              for (var e = 0; e < ec; e++) {
+                var el = para.GetElement(e);
+                if (el && el.GetText && el.GetText() === sentinel) {
+                  var rg = el.GetRange ? el.GetRange() : null;
+                  var sentStart = rg ? rg.GetStartPos() : -1;
+                  try { el.Delete(); } catch (ex) {}
+                  if (sentStart < 0) return false;
+                  var sel = doc.GetRange(startPos, sentStart);
+                  if (sel) { sel.Select(); return true; }
+                  return false;
+                }
+              }
+            }
+          } catch (e) {}
+          return false;
+        }
+
         function selectByPositions(doc, preSelStart, totalTextLen, mergedTrailingLen) {
           // Simple arithmetic: the injected text starts at preSelStart and
           // spans totalTextLen characters. +2 compensates an OO logical
@@ -1634,6 +2172,8 @@
         try {
           if (useRefSelection) {
             selectByRefs(doc, content, mode, preSelStart, mergedTrailingLen);
+          } else if (useSentinelSel && selectBySentinel(doc, preSelStart, SCRIBE_SEL_SENT)) {
+            // selected via sentinel (inline insert/replace) — exact, style-agnostic
           } else {
             selectByPositions(doc, preSelStart, totalTextLen, mergedTrailingLen);
           }
@@ -1709,12 +2249,95 @@
           // Selection failed — not critical, document content is correct
         }
       }
-    }, false, false, function() {
+
+      // Hand back the deferred top-level images so the callback can PasteHtml them
+      // (their bitmap+size travels as a data URL; PasteHtml uploads the media).
+      return JSON.stringify({ pendingImages: pendingImages });
+    }, false, false, function(ret) {
       callbackFired = true;
       clearTimeout(fallbackTimer);
-      pasteInProgress = false;
       log("Builder injection complete (" + mode + ")");
+      var pend = [];
+      try { pend = (JSON.parse(ret || "{}").pendingImages) || []; } catch (e) {}
+      if (pend.length === 0) {
+        endUndoGroup();
+        pasteInProgress = false;
+        return;
+      }
+      // Replace each marker with a properly-uploaded image, then close the group
+      // (all the PasteHtml points fold into the single undo point) and clear the flag.
+      injectPendingImages(pend, function() { endUndoGroup(); pasteInProgress = false; });
     });
+  }
+
+  // Post-InsertContent: for each deferred top-level image, find its marker run,
+  // select it, and PasteHtml the <img> in its place. PasteHtml routes through OO's
+  // paste pipeline which UPLOADS the image media to the doc-server — so the saved
+  // .docx keeps a real blip+media part (AddDrawing leaves an orphaned data URL that
+  // is dropped at save). Runs sequentially (each PasteHtml is async).
+  function injectPendingImages(list, done) {
+    var i = 0;
+    function emu2px(emu) {
+      var n = Math.round((emu || 0) / 9525);  // 1 px = 9525 EMU
+      return n > 0 ? n : 48;
+    }
+    function step() {
+      if (i >= list.length) { if (done) done(); return; }
+      var img = list[i++];
+      // 1) select the marker run (its range) so PasteHtml replaces it
+      Asc.scope._imgMarker = img.marker;
+      window.Asc.plugin.callCommand(function() {
+        var doc = Api.GetDocument();
+        var marker = Asc.scope._imgMarker;
+        // Select the marker run inside a paragraph (returns true if found).
+        function selectMarkerIn(para) {
+          var ec = para && para.GetElementsCount ? para.GetElementsCount() : 0;
+          for (var e = 0; e < ec; e++) {
+            var el = para.GetElement(e);
+            var t = el && el.GetText ? el.GetText() : "";
+            if (t === marker) {
+              var rg = el.GetRange ? el.GetRange() : null;
+              if (rg) rg.Select();
+              return true;
+            }
+          }
+          return false;
+        }
+        // Top-level paragraphs first.
+        var paras = doc.GetAllParagraphs();
+        for (var p = 0; p < paras.length; p++) {
+          if (selectMarkerIn(paras[p])) return;
+        }
+        // Then table cells (GetAllParagraphs does NOT include them) — needed for
+        // images re-inserted into a reconstructed/cloned table (T9 clone path).
+        var tables = doc.GetAllTables();
+        for (var ti = 0; ti < tables.length; ti++) {
+          var rows = tables[ti].GetRowsCount();
+          for (var r = 0; r < rows; r++) {
+            var row = tables[ti].GetRow(r);
+            var cc = row ? row.GetCellsCount() : 0;
+            for (var c = 0; c < cc; c++) {
+              var cell = tables[ti].GetCell(r, c);
+              var content = cell ? cell.GetContent() : null;
+              var n = content ? content.GetElementsCount() : 0;
+              for (var k = 0; k < n; k++) {
+                var elx = content.GetElement(k);
+                if (elx && elx.GetClassType && elx.GetClassType() === "paragraph") {
+                  if (selectMarkerIn(elx)) return;
+                }
+              }
+            }
+          }
+        }
+      }, false, false, function() {
+        // 2) PasteHtml the image over the now-selected marker
+        var html = '<img src="' + img.src + '" width="' + emu2px(img.w) + '" height="' + emu2px(img.h) + '"/>';
+        window.Asc.plugin.executeMethod("PasteHtml", [html], function() {
+          setTimeout(step, 60);
+        });
+      });
+    }
+    step();
   }
 
   // Rich text paste pipeline:
@@ -2090,11 +2713,91 @@
   // truncates OO's redo stack, breaking redo.
   var suppressExtractionUntil = 0;
 
-  // Reusable extraction entry passed to callCommand. ES5 sandbox: every leaf
-  // helper is defined INSIDE this function because callCommand re-evaluates the
-  // function body in the sdkjs context and drops outer closures. Reads
-  // Asc.scope.scribeExtractMode to pick the selection or whole-document path.
+  window.Asc.plugin.init = function(data) {
+    log("init() — build " + SCRIBE_BUILD);
+    // Add toolbar button on first init (API is ready at this point)
+    if (!toolbarButtonAdded) {
+      addToolbarButton();
+      toolbarButtonAdded = true;
+      // Re-announce readiness now that OO has fully initialized the plugin, in
+      // case the module-load announce raced ahead of the host's listener.
+      announceReady();
+    }
+    // OO calls init() on EVERY selection change (config initOnSelectionChanged:
+    // true). Running the heavy extraction callCommand on each change re-enters the
+    // editor mid-interaction and INTERRUPTS OO's mouse-drag tracking — which broke
+    // resizing/moving an image by dragging its handles (a drag fires a continuous
+    // burst of selection changes). Debounce it so the extraction runs only once
+    // the selection has settled; a drag never triggers it mid-operation, and the
+    // result is ready well before the user can reach the Scribe trigger.
+    if (extractionDebounceTimer) { clearTimeout(extractionDebounceTimer); }
+    extractionDebounceTimer = setTimeout(runSelectionExtraction, EXTRACTION_DEBOUNCE_MS);
+  };
+
+  // Heavy enriched-markdown extraction from the current selection. Debounced from
+  // init() (see above) and called directly by the extractSelection dev-hook.
+  // Updates lastSelectedText / lastEnrichedMd / table state and casts
+  // SELECTION_CHANGED to the host.
+  function runSelectionExtraction() {
+    extractionDebounceTimer = null;
+    // A mouse button is held in the editor (dragging an image handle to
+    // resize/move) — do NOT run the extraction callCommand now; it would abort
+    // OO's drag tracking and the image would snap back. mouseup reschedules it.
+    if (pointerDown) {
+      return;
+    }
+    // Ignore extraction triggered by our own paste operations.
+    if (pasteInProgress) {
+      log("extraction skipped — paste in progress");
+      return;
+    }
+    // Skip the heavy extraction right after an undo/redo so its callCommand
+    // doesn't wipe the redo stack (which would make redo impossible). The cache
+    // stays as-is and self-refreshes on the next real selection change.
+    if (Date.now() < suppressExtractionUntil) {
+      log("extraction suppressed (undo/redo in progress)");
+      return;
+    }
+
+    // Run callCommand pre-scan to extract enriched markdown from selection.
+    // Pass counters via Asc.scope for stable naming across selections.
+    window.Asc.scope.imgCounter = imageCounter;
+    window.Asc.scope._fnCounter = footnoteCounter;
+    window.Asc.scope._crCounter = crossRefCounter;
+    window.Asc.scope._crMeta = {};
+    // [TEST HOOK — flag-gated, inert in prod] When the test driver is active, also
+    // return tableSnapshots in the extraction JSON (reliable across the callCommand
+    // boundary) instead of only via Asc.scope (which doesn't survive callback). In
+    // prod this stays off → byte-identical return; snapshots flow via the host relay.
+    window.Asc.scope._tReturnSnaps = (window.__scribeTestForce === true);
+    window.Asc.scope.scribeExtractMode = "selection";
+    window.Asc.plugin.callCommand(buildScribeExtractionResult, false, false, onSelectionExtractResult);
+  }
+
+  // v3.2-03 refactor: the selection-extraction callCommand body is a NAMED function
+  // so the whole-document path (extract-document handler) reuses the SAME sandbox —
+  // all leaf emitters AND buildDocumentExtractionResult live inside it. Reads
+  // Asc.scope.scribeExtractMode to pick the document or selection path.
   function buildScribeExtractionResult() {
+    // Mode branch: whole-document extraction ignores the selection and MUST run
+    // before the empty-selection gate (a collapsed cursor must not block it).
+    if (Asc.scope.scribeExtractMode === "document") {
+      return buildDocumentExtractionResult(Api.GetDocument());
+    }
+      // Empty-selection gate (FIRST): a collapsed cursor (start==end) is NOT a
+      // selection. Without this, the walk below returns the WHOLE host paragraph, so
+      // moving the cursor (e.g. select P1, then click in P2) wrongly refilled the
+      // side-panel chip with that paragraph's text instead of clearing it. A text OR
+      // image selection is non-collapsed (an image is a 1-position range — probe-
+      // confirmed s≠e), so both still extract. Returns an empty signal → the callback
+      // clears the chip.
+      try {
+        var __selRange = Api.GetDocument().GetRangeBySelect();
+        if (__selRange && __selRange.GetStartPos() === __selRange.GetEndPos()) {
+          return JSON.stringify({ empty: true, text: "", md: "" });
+        }
+      } catch (e) {}
+
       // --- All helpers defined inside callCommand (ES5 sandbox) ---
 
       function escapeMarkdown(text) {
@@ -2449,21 +3152,50 @@
         return match ? parseInt(match[1], 10) : 0;
       }
 
-      // Detect list type from numbering or style name.
-      // Level is resolved later via indentDepthMap (see pre-scan below).
+      // Read a numbering level's format (bullet vs ordered) via the PUBLIC API.
+      // `ApiNumberingLevel` (what para.GetNumbering() returns) has NO format getter,
+      // and the old `GetNumFmt()` does not exist in the SDK at all → it always
+      // returned null → every list was classified "bullet" (bug: numbered lists
+      // extracted as bullets). The only stable public path is ApiNumbering.ToJSON(),
+      // which serializes each level's `numFmt.val` ("decimal"/"lowerLetter"/…/"bullet").
+      // We DON'T reach into the mangled internal (`np.fj`/`np.tc`) — those names are
+      // build-specific. JSON shape (probe-confirmed): { abstractNum:{<id>:{lvl:[{numFmt:
+      // {val}},…]}}, num:{<numId>:{abstractNumId:<id>}} }.
+      function numFormatAtLevel(numPr, lvl) {
+        try {
+          var apiNum = numPr.GetNumbering ? numPr.GetNumbering() : null;
+          if (!apiNum || !apiNum.ToJSON) return null;
+          var def = JSON.parse(apiNum.ToJSON());
+          var absId = null;
+          for (var nk in def.num) { absId = def.num[nk].abstractNumId; break; }
+          if (!absId || !def.abstractNum || !def.abstractNum[absId]) return null;
+          var lvls = def.abstractNum[absId].lvl;
+          if (!lvls || !lvls[lvl]) return null;
+          var nf = lvls[lvl].numFmt;
+          var val = nf && (typeof nf === "object" ? nf.val : nf);
+          if (!val || val === "bullet" || val === "none") return "bullet";
+          return "ordered";
+        } catch (e) { return null; }
+      }
+
+      // Detect list type AND nesting level from numbering (preferred) or style name.
+      // level = the TRUE numbering level (ilvl) when available — reliable for nested
+      // multi-level lists; null falls back to the indent heuristic at the call site.
       function isListParagraph(para) {
         var numPr = para.GetNumbering();
         if (numPr) {
-          var numFmt = numPr.GetNumFmt ? numPr.GetNumFmt() : null;
-          var isBullet = !numFmt || numFmt === "bullet" || numFmt === "none";
-          return { type: isBullet ? "bullet" : "ordered" };
+          var lvl = numPr.GetLevelIndex ? numPr.GetLevelIndex() : 0;
+          if (typeof lvl !== "number" || lvl < 0) lvl = 0;
+          var fmt = numFormatAtLevel(numPr, lvl);
+          // fmt null (ToJSON unreadable) → fall back to bullet (old safe default)
+          return { type: fmt === "ordered" ? "ordered" : "bullet", level: lvl };
         }
-        // Fallback: check style name
+        // Fallback: check style name (no reliable level → null = use indent)
         var style = para.GetStyle();
         if (style) {
           var sn = style.GetName();
-          if (sn && /list\s*bullet/i.test(sn)) return { type: "bullet" };
-          if (sn && /list\s*number/i.test(sn)) return { type: "ordered" };
+          if (sn && /list\s*number/i.test(sn)) return { type: "ordered", level: null };
+          if (sn && /list\s*bullet/i.test(sn)) return { type: "bullet", level: null };
         }
         return null;
       }
@@ -2663,16 +3395,14 @@
       //
       // Iterates top-level blocks in document order via GetElementsCount()/
       // GetElement(i)/GetClassType(). It deliberately does NOT use
-      // doc.GetAllParagraphs(), which silently omits table-cell paragraphs (see the
-      // compensating comment elsewhere in this file) and would drop all table
-      // content. Tables surface as first-class blocks and are emitted via
+      // doc.GetAllParagraphs(), which silently omits table-cell paragraphs and would
+      // drop all table content. Tables surface as first-class blocks via
       // extractTableCells.
       //
       // NO plugin-side size guard (D-02 "send everything by default"): the WHOLE
       // document is always returned. The selection path's silent >100-paragraph
-      // md:"" fallback is intentionally NOT inherited here — the document path must
-      // never silently drop content. All size bounding and never-silent truncation
-      // signalling happen host-side (plan 02 applyBudget).
+      // md:"" fallback is intentionally NOT inherited here. All size bounding and
+      // never-silent truncation signalling happen host-side (plan 02 applyBudget).
       function buildDocumentExtractionResult(doc) {
         var mdParts = [];
         var orderedCounters = {};
@@ -2778,14 +3508,6 @@
 
       // --- Main extraction logic ---
       var doc = Api.GetDocument();
-
-      // Mode branch (v3.2-03): 'document' extracts the WHOLE document; any other
-      // value ('selection' / undefined) runs the existing selection logic below
-      // unchanged. The document path is implemented in buildDocumentExtractionResult.
-      if (Asc.scope.scribeExtractMode === "document") {
-        return buildDocumentExtractionResult(doc);
-      }
-
       var range = doc.GetRangeBySelect();
       if (!range) return JSON.stringify({ text: "", md: "" });
 
@@ -2944,8 +3666,12 @@
         var listType = isListParagraph(para);
         var listInfo = null;
         if (listType) {
-          var paraIndent = para.GetIndLeft ? para.GetIndLeft() : 0;
-          listInfo = { type: listType.type, level: indentToLevel(paraIndent) };
+          // Prefer the true numbering level (ilvl) for nested lists; fall back to
+          // the indent heuristic only for style-name-based lists (level === null).
+          var lvl = (listType.level !== null && listType.level !== undefined)
+            ? listType.level
+            : indentToLevel(para.GetIndLeft ? para.GetIndLeft() : 0);
+          listInfo = { type: listType.type, level: lvl };
         }
 
         // Compute clip bounds using text matching (not position arithmetic,
@@ -2995,15 +3721,25 @@
         // Regular paragraph — inline images are now handled inside paragraphToMarkdown
         var paraMarkdown = paragraphToMarkdown(para, clipStart, clipEnd);
 
+        // §5bis extraction rule: a paragraph-level style MARKER (heading #, list
+        // bullet/number) is emitted ONLY when the paragraph is FULLY selected.
+        // A partially-selected ¶ (clipStart/clipEnd > 0 — e.g. the first/last ¶ of
+        // a cross-¶ range) extracts as plain text + inline formatting only, with no
+        // line-start marker (so re-injection treats it inline, not block). Char-level
+        // formatting (bold/italic/…) is unaffected — it's handled per-run inside
+        // paragraphToMarkdown.
+        var fullySel = (clipStart === 0 && clipEnd === 0);
+
         // Apply heading prefix
-        if (headingLvl > 0 && headingLvl <= 6) {
+        if (headingLvl > 0 && headingLvl <= 6 && fullySel) {
           var hashes = "";
           for (var h = 0; h < headingLvl; h++) hashes = hashes + "#";
           paraMarkdown = hashes + " " + paraMarkdown;
         }
 
-        // Apply list prefix with nesting indentation
-        if (listInfo) {
+        // Apply list prefix with nesting indentation (only for a fully-selected ¶)
+        var emitList = listInfo && fullySel;
+        if (emitList) {
           var indent = "";
           for (var li = 0; li < listInfo.level; li++) indent = indent + "  ";
           if (listInfo.type === "bullet") {
@@ -3019,11 +3755,11 @@
             orderedCounters[rl] = 0;
           }
         } else {
-          // Not a list item — reset all ordered counters
+          // Not a (fully-selected) list item — reset all ordered counters
           orderedCounters = {};
         }
 
-        mdParts.push({ md: paraMarkdown, isList: !!listInfo });
+        mdParts.push({ md: paraMarkdown, isList: !!emitList });
         // Clip plain text to match selection bounds
         var paraPlain = paraText;
         if (clipStart > 0 || clipEnd > 0) {
@@ -3052,42 +3788,16 @@
         tableDocIndices: tableDocIndices,
         tableAmbiguity: tableAmbiguity,
         partialTableInfo: partialTableInfo,
-        crossRefMeta: Asc.scope._crMeta || {}
+        crossRefMeta: Asc.scope._crMeta || {},
+        // [TEST HOOK] only when the driver is active (else undefined → omitted from
+        // the JSON → prod return size unchanged; snapshots still go via Asc.scope/host).
+        tableSnapshots: (Asc.scope._tReturnSnaps && tableSnapshots.length > 0) ? tableSnapshots : undefined
       });
   }
 
-  window.Asc.plugin.init = function(data) {
-    // Ignore init calls triggered by our own paste operations
-    if (pasteInProgress) {
-      log("init() called (ignored — paste in progress)");
-      return;
-    }
-    // Add toolbar button on first init (API is ready at this point)
-    if (!toolbarButtonAdded) {
-      addToolbarButton();
-      toolbarButtonAdded = true;
-      // Re-announce readiness now that OO has fully initialized the plugin, in
-      // case the module-load announce raced ahead of the host's listener.
-      announceReady();
-    }
-
-    // Skip the heavy extraction right after an undo/redo so its callCommand
-    // doesn't wipe the redo stack (which would make redo impossible). The cache
-    // stays as-is and self-refreshes on the next real selection change.
-    if (Date.now() < suppressExtractionUntil) {
-      log("init() extraction suppressed (undo/redo in progress)");
-      return;
-    }
-
-    // Run callCommand pre-scan to extract enriched markdown from selection
-    // initDataType:"html" is kept for trigger mechanism; data parameter is ignored
-    // Pass counters via Asc.scope for stable naming across selections
-    window.Asc.scope.imgCounter = imageCounter;
-    window.Asc.scope._fnCounter = footnoteCounter;
-    window.Asc.scope._crCounter = crossRefCounter;
-    window.Asc.scope._crMeta = {};
-    window.Asc.scope.scribeExtractMode = "selection";
-    window.Asc.plugin.callCommand(buildScribeExtractionResult, false, false, function(resultJson) {
+  // Callback for the selection-extraction callCommand (was the inline 4th arg
+  // before the v3.2-03 refactor). Updates module caches and casts SELECTION_CHANGED.
+  function onSelectionExtractResult(resultJson) {
       // false = read-write (allows SetName on images for stable naming)
       // Update module-level counters from Asc.scope
       imageCounter = window.Asc.scope.imgCounter || imageCounter;
@@ -3099,6 +3809,20 @@
       } catch (e) {
         result = { text: "", md: "" };
       }
+      // Collapsed cursor (no real selection) — clear the chip instead of leaving the
+      // previous selection (or refilling it with the clicked-into paragraph). See the
+      // empty-selection gate inside the callCommand above.
+      if (result && result.empty) {
+        lastSelectedText = "";
+        lastEnrichedMd = "";
+        lastTableSnapshots = null;
+        lastTableAmbiguity = null;
+        lastPartialTableInfo = null;
+        lastSelectedHtml = "";
+        lastPolledNonEmpty = false;
+        if (selectionSubscribed) castEmptySelection();
+        return;
+      }
       // Read crossRefMeta from JSON return (Asc.scope objects set inside callCommand may not persist)
       lastCrossRefMeta = result.crossRefMeta || {};
       var plainText = (result.text || "").replace(/^\s+|\s+$/g, "");
@@ -3106,14 +3830,23 @@
       lastSelectedText = plainText;
       lastEnrichedMd = result.md || "";
       lastTableDocIndices = result.tableDocIndices || [];
-      lastTableSnapshots = window.Asc.scope.tableSnapshots || null;
+      // Prefer the reliable JSON return (test driver path); fall back to Asc.scope/host relay.
+      lastTableSnapshots = result.tableSnapshots || window.Asc.scope.tableSnapshots || null;
       lastTableAmbiguity = result.tableAmbiguity || null;
       lastPartialTableInfo = result.partialTableInfo || null;
       lastSelectedHtml = ""; // No longer used for primary extraction
 
-
+      // An image-only selection has empty plain text but a meaningful enriched md
+      // (the image marker). Don't wipe it — that lost the image (nothing reached
+      // the LLM / re-injection). Also make the selection "count" so Scribe can be
+      // triggered on it (the AI_TEXT_ASSISTANT gate checks lastSelectedText.length).
+      var mdHasImage = /!\[IMG:|\{\{IMG:/.test(lastEnrichedMd);
       if (!plainText) {
-        lastEnrichedMd = "";
+        if (mdHasImage) {
+          lastSelectedText = lastEnrichedMd;
+        } else {
+          lastEnrichedMd = "";
+        }
       }
 
       // Push selection to React only when panel is listening
@@ -3122,8 +3855,7 @@
         selData.html = lastSelectedHtml || null;
         castIntent("SELECTION_CHANGED", selData, true);
       }
-    });
-  };
+  }
 
   // ---- Required: button handler ----
   window.Asc.plugin.button = function(id) {
@@ -3229,6 +3961,72 @@
     }
   }
 
+  // While the mouse is held in the editor (e.g. dragging an image handle to
+  // resize/move), suppress the selection-extraction callCommand — it re-enters the
+  // editor and aborts OO's drag tracking (the image snaps back mid-drag). On
+  // release, run the extraction once so selection state refreshes. (initOnSelection
+  // Changed fires ~once at drag start, so the debounce alone fired mid-drag.)
+  function handleEditorPointerDown() {
+    pointerDown = true;
+    if (extractionDebounceTimer) { clearTimeout(extractionDebounceTimer); extractionDebounceTimer = null; }
+  }
+  function handleEditorPointerUp() {
+    if (!pointerDown) return;
+    pointerDown = false;
+    if (extractionDebounceTimer) { clearTimeout(extractionDebounceTimer); }
+    extractionDebounceTimer = setTimeout(runSelectionExtraction, EXTRACTION_DEBOUNCE_MS);
+  }
+
+  // Attach pointer tracking to EVERY accessible frame document. The editor canvas
+  // mousedown/pointerdown fires in an INNER OO frame, not window.parent.document —
+  // attaching only there missed it (build .6 still snapped back). Walk the
+  // same-origin frame tree from the top; cross-origin frames are skipped. Both
+  // mouse and pointer events are bound (canvas may use Pointer Events). Re-run
+  // after a delay since frames load after the plugin. addEventListener dedupes
+  // identical (type, fn, capture), so re-attaching is safe.
+  function attachPointerTrackingAll() {
+    var seen = [];
+    function bind(d) {
+      try {
+        d.addEventListener("mousedown", handleEditorPointerDown, true);
+        d.addEventListener("mouseup", handleEditorPointerUp, true);
+        d.addEventListener("pointerdown", handleEditorPointerDown, true);
+        d.addEventListener("pointerup", handleEditorPointerUp, true);
+      } catch (e) {}
+    }
+    function visit(w) {
+      if (!w) return;
+      var d; try { d = w.document; } catch (e) { return; } // cross-origin → skip
+      if (!d) return;
+      for (var s = 0; s < seen.length; s++) { if (seen[s] === d) return; }
+      seen.push(d);
+      bind(d);
+      var fs; try { fs = w.frames; } catch (e) { return; }
+      for (var i = 0; i < fs.length; i++) { try { visit(fs[i]); } catch (e) {} }
+    }
+    // Roots to walk DOWN from. We must NOT rely on window.top: in real Cozy Drive
+    // the top page is a DIFFERENT origin (drive-rb.…) from the OO/plugin frames
+    // (localhost), so starting at window.top reaches nothing and the canvas-frame
+    // mousedown is never caught → pointerDown never set → the (throttled, ~1s)
+    // extraction timer still fires mid-drag and the image snaps back. Instead climb
+    // to the HIGHEST SAME-ORIGIN ancestor (the OO editor frame, same origin as the
+    // plugin — its subtree contains the canvas frame) and walk down from there.
+    var roots = [window];
+    try {
+      var anc = window;
+      while (anc.parent && anc.parent !== anc) {
+        try { void anc.parent.document; anc = anc.parent; } // same-origin → climb
+        catch (e) { break; }                                 // cross-origin → stop
+      }
+      roots.push(anc);
+    } catch (e) {}
+    try { roots.push(window.top); } catch (e) {} // also try top (same-origin case)
+    for (var ri = 0; ri < roots.length; ri++) { try { visit(roots[ri]); } catch (e) {} }
+    // Safety net: a release anywhere (incl. outside the editor) clears the flag.
+    try { window.addEventListener("mouseup", handleEditorPointerUp, true); } catch (e) {}
+    try { window.addEventListener("pointerup", handleEditorPointerUp, true); } catch (e) {}
+  }
+
   try {
     window.parent.document.addEventListener("keydown", handleCtrlShiftI);
     window.parent.document.addEventListener("keydown", handleUndoRedoKey);
@@ -3240,6 +4038,9 @@
     document.addEventListener("keydown", handleUndoRedoKey);
     document.addEventListener("click", handleUndoRedoClick, true);
   }
+  attachPointerTrackingAll();
+  try { setTimeout(attachPointerTrackingAll, 1500); } catch (e) {}
+  try { setTimeout(attachPointerTrackingAll, 4000); } catch (e) {}
 
   // ---- Toolbar button ----
   // Add a "Scribe" button in the OO toolbar (Plugins tab).
@@ -3284,6 +4085,479 @@
 
   document.addEventListener("DOMContentLoaded", function() {
     log("Plugin loaded, Scribe trigger ready");
+  });
+
+  // ==========================================================================
+  // DEV TEST HOOKS (T-03 selection-case harness) — FLAG-GATED, DEV-ONLY.
+  // Never active in production: gated on localStorage "scribe.testHooks"==="1"
+  // or window.__scribeTestForce===true (set explicitly by the test driver).
+  //
+  // Contract: test-harness/ORACLE-SCHEMA.md §1-§2. Driveable two ways so the
+  // channel can be chosen at run time:
+  //   (a) global  window.__scribeTest(cmd) -> Promise   (frame-eval driving)
+  //   (b) postMessage {scribeTest, reqId, ...} -> {scribeTestResult,...}
+  //                                                      (host-relay driving)
+  // Determinism: injectFixture short-circuits the LLM and calls buildAndInject
+  // directly; OO serializes callCommands, so a dumpState issued right after
+  // injectFixture runs only once the injection callCommand has completed.
+  // ==========================================================================
+  function testHooksEnabled() {
+    try {
+      if (typeof window !== "undefined" && window.__scribeTestForce === true) return true;
+      return (typeof localStorage !== "undefined" && localStorage.getItem("scribe.testHooks") === "1");
+    } catch (e) {
+      return (typeof window !== "undefined" && window.__scribeTestForce === true);
+    }
+  }
+
+  // Parse a SELECTION-CASES spec into endpoints. Two endpoint forms:
+  //   "P<n>@<pos>"            → n-th TOP-LEVEL paragraph
+  //   "T<n>.C(<r>,<c>)@<pos>" → 1st ¶ of cell (r,c) of the n-th TABLE (intra-cell)
+  // <pos> = start|space|mid|end|x|<int>. A range "<a>..<b>" must stay within the
+  // SAME target (same paragraph, or same table+cell) — intra-cell only for now.
+  function parseSelSpec(spec) {
+    if (!spec) return null;
+    var parts = String(spec).split("..");
+    function one(p) {
+      var m = /^\s*P(\d+)@(\w+)\s*$/.exec(p);
+      if (m) return { n: parseInt(m[1], 10), kind: m[2], cell: null };
+      var mc = /^\s*T(\d+)\.C\((\d+),(\d+)\)@(\w+)\s*$/.exec(p);
+      if (mc) return { n: parseInt(mc[1], 10), kind: mc[4], cell: { r: parseInt(mc[2], 10), c: parseInt(mc[3], 10) } };
+      // Whole-table selection (T3): T<n>.full — no endpoint position.
+      var mf = /^\s*T(\d+)\.full\s*$/.exec(p);
+      if (mf) return { n: parseInt(mf[1], 10), kind: "full", cell: null, full: true };
+      return null;
+    }
+    var a = one(parts[0]);
+    var b = parts.length > 1 ? one(parts[1]) : a;
+    if (!a || !b) return null;
+    return { startN: a.n, startKind: a.kind, startCell: a.cell, endN: b.n, endKind: b.kind, endCell: b.cell, full: !!(a.full || b.full) };
+  }
+
+  // Which selection specs the driver can establish:
+  //  • T<n>.full                            → whole table (T3)
+  //  • P<n>@a..P<n>@b (SAME ¶)               → intra-paragraph (A0–A4)
+  //  • T<n>.C(r,c)@a..T<n>.C(r,c)@b (SAME)   → intra-cell (T1/T8/T9)
+  //  • T<n>.C(r1,c1)@..T<n>.C(r2,c2)@ (SAME table) → cross-cell range (T2a/b/c)
+  //  • P<n>@a..T<m>.C(r,c)@b  /  T<m>.C(r,c)@a..P<n>@b  → ¶↔cell crossing (T4/T5)
+  //  • T<m>.C(..)@..T<k>.C(..)@ (DIFFERENT tables)     → cross-table range (T6)
+  // Cross-boundary works because OO's Range.ExpandTo()+Select() spans a ¶↔cell
+  // boundary (probe-confirmed 2026-06-26) and snaps table-side ends to cell
+  // boundaries. Multi-¶ top-level (A5/A6 — no cell on either side, different ¶)
+  // rides the SAME cross branch: each endpoint is a collapsed ¶ range, ExpandTo'd.
+  function selSpecSupported(p) {
+    if (p.full) return true;
+    var sc = p.startCell, ec = p.endCell;
+    if (!sc && !ec) return true;                      // intra-¶ (A0–A4) OR multi-¶ top-level (A5/A6)
+    if (sc && ec && p.startN === p.endN) return true; // intra-cell OR cross-cell, same table
+    return true;                                      // cross-boundary: ¶↔cell or cross-table
+  }
+  // True when the two endpoints live in DIFFERENT targets (¶↔cell, or cells of
+  // two different tables) — handled by the cross-boundary establishment branch,
+  // distinct from the same-table multi-cell "range" path (T2a/b/c).
+  function selSpecCross(p) {
+    var sc = p.startCell, ec = p.endCell;
+    return (!!sc !== !!ec) || !!(sc && ec && p.startN !== p.endN);
+  }
+  // Kept for the intra-target fast path (collapsed-cursor handling).
+  function selSpecSameTarget(p) {
+    if (p.startN !== p.endN) return false;
+    var sc = p.startCell, ec = p.endCell;
+    if (!sc && !ec) return true;
+    return !!(sc && ec && sc.r === ec.r && sc.c === ec.c);
+  }
+
+  function hookSetSelection(spec) {
+    return new Promise(function(resolve) {
+      var p = parseSelSpec(spec);
+      if (!p) { resolve({ ok: false, error: "bad selection spec: " + spec }); return; }
+      if (!selSpecSupported(p)) {
+        // Multi-paragraph (A5/A6) / ¶↔cell crossing / cross-table — out of scope.
+        resolve({ ok: false, error: "selection spec not supported: " + spec });
+        return;
+      }
+      Asc.scope._selspec = JSON.stringify(p);
+      window.Asc.plugin.callCommand(function() {
+        var p = JSON.parse(Asc.scope._selspec);
+        var doc = Api.GetDocument();
+
+        // Cross-boundary (T4/T5/T6): start & end in DIFFERENT targets (¶↔cell, or
+        // cells of two different tables). Resolve each endpoint — partial for a ¶
+        // endpoint (collapsed at offset), whole first/last ¶ for a cell endpoint —
+        // then ExpandTo their union. OO snaps table ends to cell boundaries, so
+        // every cell between is fully included (probe-confirmed).
+        // Multi-¶ top-level (A5/A6: !startCell && !endCell && startN !== endN)
+        // joins the cross branch — _xEndpoint's !cell path resolves each ¶ endpoint.
+        var _isCross = (!!p.startCell !== !!p.endCell) || (p.startCell && p.endCell && p.startN !== p.endN) || (!p.startCell && !p.endCell && p.startN !== p.endN);
+        if (_isCross) {
+          function _xNth(kind, nn) {
+            var c = doc.GetElementsCount(), s = 0;
+            for (var i = 0; i < c; i++) { var e = doc.GetElement(i); if (e.GetClassType && e.GetClassType() === kind) { s++; if (s === nn) return e; } }
+            return null;
+          }
+          function _xParaRange(para, kind) {
+            var txt = (para.GetText ? para.GetText() : "").replace(/[\r\n]+$/, ""), len = txt.length, off;
+            if (/^\d+$/.test(kind)) { off = parseInt(kind, 10); if (off > len) off = len; }
+            else if (kind === "end") off = len;
+            else if (kind === "mid") off = Math.floor(len / 2);
+            else if (kind === "space") { var ix = txt.indexOf(" "); off = ix >= 0 ? ix + 1 : 0; }
+            else off = 0;
+            var cnt = para.GetElementsCount ? para.GetElementsCount() : 0, acc = 0;
+            for (var i = 0; i < cnt; i++) {
+              var el = para.GetElement(i), ct = el.GetClassType ? el.GetClassType() : "";
+              if (ct !== "run" && ct !== "hyperlink") continue;
+              var t = (el.GetText ? el.GetText() : "").replace(/[\r\n]+$/, "");
+              if (off <= acc + t.length) return el.GetRange ? el.GetRange(off - acc, off - acc) : null;
+              acc += t.length;
+            }
+            return para.GetRange ? para.GetRange() : null;
+          }
+          function _xEndpoint(nn, kind, cell, isStart) {
+            if (!cell) { var pp = _xNth("paragraph", nn); return pp ? _xParaRange(pp, kind) : null; }
+            var tb = _xNth("table", nn); if (!tb) return null;
+            var cl = tb.GetCell(cell.r, cell.c); if (!cl) return null;
+            var cc = cl.GetContent(), pe = isStart ? cc.GetElement(0) : cc.GetElement(cc.GetElementsCount() - 1);
+            return pe && pe.GetRange ? pe.GetRange() : null;
+          }
+          var _xsr = _xEndpoint(p.startN, p.startKind, p.startCell, true);
+          var _xer = _xEndpoint(p.endN, p.endKind, p.endCell, false);
+          if (!_xsr || !_xer) return JSON.stringify({ ok: false, error: "cross endpoint not found" });
+          var _xrng = _xsr.ExpandTo ? _xsr.ExpandTo(_xer) : null;
+          if (_xrng && _xrng.Select) _xrng.Select();
+          return JSON.stringify({ ok: true, mode: "cross" });
+        }
+
+        // Multi-cell range (T2a/b/c) or whole table (T3): select from the start
+        // cell's 1st ¶ to the end cell's last ¶ and ExpandTo their union. OO snaps
+        // both ends to cell boundaries, so GetAllParagraphs() of the resulting
+        // selection covers every cell in between — which is what the prod table
+        // path (analyzeTableSelection → GetParentTableCell) reads.
+        var _isRange = p.full || (p.startCell && p.endCell && (p.startCell.r !== p.endCell.r || p.startCell.c !== p.endCell.c));
+        if (_isRange) {
+          var _rc = doc.GetElementsCount(), _rs = 0, _rt = null;
+          for (var _ri = 0; _ri < _rc; _ri++) {
+            var _re = doc.GetElement(_ri);
+            if (_re.GetClassType && _re.GetClassType() === "table") { _rs++; if (_rs === p.startN) { _rt = _re; break; } }
+          }
+          if (!_rt) return JSON.stringify({ ok: false, error: "table " + p.startN + " not found" });
+          var _sc, _ec;
+          if (p.full) {
+            _sc = _rt.GetCell(0, 0);
+            var _lr = _rt.GetRowsCount() - 1;
+            _ec = _rt.GetCell(_lr, _rt.GetRow(_lr).GetCellsCount() - 1);
+          } else {
+            _sc = _rt.GetCell(p.startCell.r, p.startCell.c);
+            _ec = _rt.GetCell(p.endCell.r, p.endCell.c);
+          }
+          if (!_sc || !_ec) return JSON.stringify({ ok: false, error: "range cell not found" });
+          var _scC = _sc.GetContent(), _ecC = _ec.GetContent();
+          var _sp = _scC.GetElement(0), _ep = _ecC.GetElement(_ecC.GetElementsCount() - 1);
+          var _sr = _sp && _sp.GetRange ? _sp.GetRange() : null;
+          var _er = _ep && _ep.GetRange ? _ep.GetRange() : null;
+          var _rng = (_sr && _er && _sr.ExpandTo) ? _sr.ExpandTo(_er) : (_sr || _er);
+          if (_rng && _rng.Select) _rng.Select();
+          return JSON.stringify({ ok: true, mode: p.full ? "full" : "cellrange", full: !!p.full });
+        }
+
+        var target = null;
+        if (p.startCell) {
+          // n-th TABLE → cell (r,c) → 1st ¶ of the cell (intra-cell, §4ter).
+          var tcnt = doc.GetElementsCount(), tseen = 0, tbl = null;
+          for (var ti = 0; ti < tcnt; ti++) {
+            var tel = doc.GetElement(ti);
+            if (tel.GetClassType && tel.GetClassType() === "table") { tseen++; if (tseen === p.startN) { tbl = tel; break; } }
+          }
+          if (tbl) { try { target = tbl.GetCell(p.startCell.r, p.startCell.c).GetContent().GetElement(0); } catch (e) {} }
+        } else {
+          var count = doc.GetElementsCount(), seen = 0;
+          for (var i = 0; i < count; i++) {
+            var el = doc.GetElement(i);
+            if (el.GetClassType && el.GetClassType() === "paragraph") { seen++; if (seen === p.startN) { target = el; break; } }
+          }
+        }
+        if (!target) return JSON.stringify({ ok: false, error: "target not found (P/cell " + p.startN + ")" });
+        // GetText() includes the trailing paragraph mark "\r\n" — strip it for char length.
+        var txt = (target.GetText ? target.GetText() : "").replace(/[\r\n]+$/, "");
+        var len = txt.length;
+        var sk = p.startKind, ek = p.endKind;
+        function resolveOffset(kind) {
+          if (/^\d+$/.test(kind)) { var n = parseInt(kind, 10); return n > len ? len : n; }
+          if (kind === "end") return len;
+          if (kind === "mid") return Math.floor(len / 2);
+          if (kind === "space") { var idx = txt.indexOf(" "); return idx >= 0 ? idx + 1 : 0; }
+          return 0; // "start" | "x"
+        }
+        // Build a COLLAPSED range at char offset `off` by walking runs/hyperlinks
+        // and using per-element GetRange(inOff,inOff) — char-reliable WITHIN one
+        // element. (Document-absolute positions count element boundaries, so plain
+        // char math mis-selects across runs; this avoids that.)
+        function rangeAtChar(para, off) {
+          var cnt = para.GetElementsCount ? para.GetElementsCount() : 0, acc = 0;
+          for (var i = 0; i < cnt; i++) {
+            var el = para.GetElement(i);
+            var ct = el.GetClassType ? el.GetClassType() : "";
+            if (ct !== "run" && ct !== "hyperlink") continue;
+            var t = (el.GetText ? el.GetText() : "").replace(/[\r\n]+$/, "");
+            if (off <= acc + t.length) {
+              var inOff = off - acc;
+              return el.GetRange ? el.GetRange(inOff, inOff) : null;
+            }
+            acc += t.length;
+          }
+          return null; // off past end
+        }
+        var s = resolveOffset(sk), e = resolveOffset(ek);
+        var rng = null;
+        if (s === 0 && e === len) {
+          // Whole paragraph — GetRange() no-args is reliable regardless of run count.
+          rng = target.GetRange ? target.GetRange() : null;
+        } else if (s === e) {
+          // Collapsed cursor (A0 @x, A2 @mid).
+          rng = rangeAtChar(target, s) || (target.GetRange ? target.GetRange(0, 0) : null);
+        } else {
+          // Range — collapse at both endpoints then ExpandTo (union of the two
+          // collapsed ranges, cf selectByRefs). rangeAtChar(len) lands collapsed
+          // at the end of the last run, so @end works without a special case.
+          var ra = rangeAtChar(target, s);
+          var rb = rangeAtChar(target, e);
+          if (ra && rb && ra.ExpandTo) rng = ra.ExpandTo(rb);
+          else rng = ra || rb;
+        }
+        if (rng && rng.Select) rng.Select();
+        return JSON.stringify({ ok: true, paraLen: len, mode: sk + ".." + ek, s: s, e: e });
+      }, false, false, function(ret) {
+        try { resolve(JSON.parse(ret)); } catch (e) { resolve({ ok: false, error: "setSelection parse: " + e }); }
+      });
+    });
+  }
+
+  function hookInjectFixture(md, mode) {
+    return new Promise(function(resolve) {
+      try {
+        Asc.scope._testSelSpec = null; // never apply a stale test selection
+        buildAndInject(md, mode === "insert" ? "insert" : "replace", null);
+        resolve({ ok: true }); // dumpState issued next will run after this callCommand (OO serializes)
+      } catch (e) {
+        resolve({ ok: false, error: e.message });
+      }
+    });
+  }
+
+  // Atomic set-selection + inject (one callCommand) — needed for COLLAPSED
+  // cursors (A0/A2): a cursor set by a separate setSelection callCommand resets
+  // to offset 0 before injectFixture runs. The spec is queued in Asc.scope and
+  // applied at the top of buildAndInject's own callCommand (see [TEST HOOK]).
+  function hookInjectAtSelection(spec, md, mode) {
+    return new Promise(function(resolve) {
+      var p = parseSelSpec(spec);
+      if (!p) { resolve({ ok: false, error: "bad selection spec: " + spec }); return; }
+      if (!selSpecSupported(p)) {
+        resolve({ ok: false, error: "selection spec not supported: " + spec });
+        return;
+      }
+      try {
+        Asc.scope._testSelSpec = JSON.stringify(p);
+        buildAndInject(md, mode === "insert" ? "insert" : "replace", null);
+        resolve({ ok: true, spec: spec });
+      } catch (e) {
+        resolve({ ok: false, error: e.message });
+      }
+    });
+  }
+
+  function hookDumpState(scope) {
+    return new Promise(function(resolve) {
+      window.Asc.plugin.callCommand(function() {
+        var doc = Api.GetDocument();
+
+        function runFlags(tp) {
+          var r = {};
+          if (!tp) return r;
+          if (tp.GetBold && tp.GetBold()) r.b = 1;
+          if (tp.GetItalic && tp.GetItalic()) r.i = 1;
+          if (tp.GetStrikeout && tp.GetStrikeout()) r.s = 1;
+          if (tp.GetUnderline && tp.GetUnderline()) r.u = 1;
+          var ff = tp.GetFontFamily ? tp.GetFontFamily() : null;
+          if (ff) {
+            var f = ff.toLowerCase();
+            if (f.indexOf("courier") !== -1 || f.indexOf("consolas") !== -1 || f.indexOf("mono") !== -1) r.code = 1;
+          }
+          return r;
+        }
+        function paraToBlock(para) {
+          var runs = [];
+          var n = para.GetElementsCount ? para.GetElementsCount() : 0;
+          for (var i = 0; i < n; i++) {
+            var el = para.GetElement(i);
+            var ct = el.GetClassType ? el.GetClassType() : "";
+            if (ct === "run") {
+              var t = el.GetText ? el.GetText() : "";
+              if (t === "") continue;
+              var fl = runFlags(el.GetTextPr ? el.GetTextPr() : null);
+              fl.t = t;
+              runs.push(fl);
+            } else if (ct === "hyperlink") {
+              var ht = "", first = null;
+              var hc = el.GetElementsCount ? el.GetElementsCount() : 0;
+              for (var h = 0; h < hc; h++) {
+                var ch = el.GetElement(h);
+                var cht = ch.GetText ? ch.GetText() : "";
+                if (cht) { ht += cht; if (!first) first = ch; }
+              }
+              if (ht) {
+                var fl2 = first ? runFlags(first.GetTextPr ? first.GetTextPr() : null) : {};
+                fl2.t = ht;
+                var url = el.GetLinkedText ? el.GetLinkedText() : "";
+                if (url) fl2.link = url;
+                runs.push(fl2);
+              }
+            }
+          }
+          var pblock = { type: "p", runs: runs };
+          try {
+            var pst = para.GetStyle ? para.GetStyle() : null;
+            var psn = (pst && pst.GetName) ? pst.GetName() : null;
+            if (psn && psn !== "Normal") pblock.style = psn;
+            var plvl = para.GetOutlineLvl ? para.GetOutlineLvl() : -1;
+            if (typeof plvl === "number" && plvl >= 0) pblock.lvl = plvl;
+          } catch (e) {}
+          return pblock;
+        }
+        function cellToBlocks(cell) {
+          var blocks = [];
+          var c = cell && cell.GetContent ? cell.GetContent() : null;
+          if (!c) return blocks;
+          var n = c.GetElementsCount();
+          for (var i = 0; i < n; i++) {
+            var el = c.GetElement(i);
+            if (el.GetClassType && el.GetClassType() === "paragraph") blocks.push(paraToBlock(el));
+            // nested tables: out of spike scope (T13)
+          }
+          return blocks;
+        }
+        function tableToBlock(tbl) {
+          var grid = [];
+          var rc = tbl.GetRowsCount();
+          for (var r = 0; r < rc; r++) {
+            var row = tbl.GetRow(r);
+            var cc = row.GetCellsCount();
+            var cells = [];
+            for (var ci = 0; ci < cc; ci++) {
+              var cell = tbl.GetCell(r, ci);
+              cells.push({ blocks: cell ? cellToBlocks(cell) : [] });
+              // vmerge/hspan: deferred (T12) — captured in a later iteration
+            }
+            grid.push(cells);
+          }
+          return { type: "table", grid: grid };
+        }
+
+        var blocks = [], blockRanges = [];
+        var bc = doc.GetElementsCount();
+        for (var i = 0; i < bc; i++) {
+          var el = doc.GetElement(i);
+          var ct = el.GetClassType ? el.GetClassType() : "";
+          if (ct === "paragraph") {
+            var idx = blocks.length;
+            blocks.push(paraToBlock(el));
+            var rg = el.GetRange ? el.GetRange() : null;
+            blockRanges.push({
+              idx: idx,
+              start: rg && rg.GetStartPos ? rg.GetStartPos() : -1,
+              end: rg && rg.GetEndPos ? rg.GetEndPos() : -1
+            });
+          } else if (ct === "table") {
+            blocks.push(tableToBlock(el));
+            // table selection-mapping deferred to T4-T6 work
+          }
+        }
+
+        var sel = null;
+        var srange = doc.GetRangeBySelect ? doc.GetRangeBySelect() : null;
+        if (srange) {
+          var ss = srange.GetStartPos ? srange.GetStartPos() : -1;
+          var se = srange.GetEndPos ? srange.GetEndPos() : -1;
+          var locate = function(pos) {
+            for (var k = 0; k < blockRanges.length; k++) {
+              var br = blockRanges[k];
+              if (pos >= br.start && pos <= br.end) return { block: br.idx, offset: pos - br.start };
+            }
+            return { block: -1, offset: -1 };
+          };
+          sel = { start: locate(ss), end: locate(se) };
+        }
+
+        return JSON.stringify({ blocks: blocks, selection: sel });
+      }, false, false, function(ret) {
+        try { resolve(JSON.parse(ret)); } catch (e) { resolve({ error: "dumpState parse: " + e }); }
+      });
+    });
+  }
+
+  // Run the REAL selection extraction (window.Asc.plugin.init path) on the current
+  // selection and return the enriched markdown + plain text it produced. Lets the
+  // harness capture the EXTRACTION side of §5bis (conditional ¶-style markers) and,
+  // later, table-cell extraction — the round-trip counterpart of injectFixture.
+  function hookExtractSelection() {
+    return new Promise(function(resolve) {
+      // Sentinel: init()'s extraction callback overwrites these. Poll until it
+      // runs (its callCommand completes asynchronously, after this call returns).
+      lastEnrichedMd = "__pending__";
+      lastSelectedText = "__pending__";
+      // Call the extraction directly (not init()) so the dev-hook bypasses the
+      // selection-change debounce and stays deterministic.
+      try { runSelectionExtraction(); } catch (e) {}
+      var tries = 0;
+      function check() {
+        tries++;
+        var done = (lastSelectedText !== "__pending__") || (lastEnrichedMd !== "__pending__");
+        if (done || tries > 30) {
+          resolve({
+            ok: true,
+            text: lastSelectedText === "__pending__" ? "" : lastSelectedText,
+            md: lastEnrichedMd === "__pending__" ? "" : lastEnrichedMd,
+            tries: tries
+          });
+        } else {
+          setTimeout(check, 120);
+        }
+      }
+      setTimeout(check, 120);
+    });
+  }
+
+  function runTestCmd(action, params) {
+    if (!testHooksEnabled()) return Promise.resolve({ ok: false, error: "test hooks disabled" });
+    if (action === "setSelection") return hookSetSelection(params.spec);
+    if (action === "injectFixture") return hookInjectFixture(params.md, params.mode);
+    if (action === "injectAtSelection") return hookInjectAtSelection(params.spec, params.md, params.mode);
+    if (action === "dumpState") return hookDumpState(params.scope || "region");
+    if (action === "extractSelection") return hookExtractSelection();
+    return Promise.resolve({ ok: false, error: "unknown scribeTest action: " + action });
+  }
+
+  // Channel (a): direct global, for frame-eval driving (Chrome DevTools / MCP).
+  window.__scribeTest = function(cmd) {
+    cmd = cmd || {};
+    return runTestCmd(cmd.action, cmd);
+  };
+
+  // Channel (b): postMessage, for host-relay driving.
+  window.addEventListener("message", function(event) {
+    var msg = event.data;
+    if (!msg || typeof msg.scribeTest !== "string") return;
+    var action = msg.scribeTest, reqId = msg.reqId;
+    runTestCmd(action, msg).then(function(res) {
+      var reply = { scribeTestResult: action, reqId: reqId };
+      if (action === "dumpState") {
+        reply.model = { blocks: res.blocks, selection: res.selection };
+        if (res.error) reply.error = res.error;
+      } else {
+        reply.ok = res.ok !== false;
+        if (res.error) reply.error = res.error;
+      }
+      postToAncestors(reply);
+    });
   });
 
 })(window, undefined);

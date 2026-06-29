@@ -1,0 +1,15 @@
+{
+  "caseId": "A1",
+  "mode": "insert",
+  "spec": "P1@start..P1@end",
+  "fixture": "XXX",
+  "source": "a-family.docx",
+  "statusFromCsv": "pass",
+  "stable": true,
+  "setSelectionOk": true,
+  "capturedVia": "Chrome DevTools MCP v3 (§5bis fix; injectAtSelection atomic; paraMarks+grabFocus+forcesave docx)",
+  "capturedAt": "2026-06-24",
+  "verdict": "pass",
+  "comment": "§5bis OK. Insert sur ¶ entier -> point d'insertion @end -> 'The quick brown fox XXX'. 1 espace avant XXX, AUCUN espace trainant (fix (b) @end), plus de ¶ vide. .docx = 3 <w:p>. (Avant-fix: ¶ vide en queue.)",
+  "captureVersion": "v3"
+}

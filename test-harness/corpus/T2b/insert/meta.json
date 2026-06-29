@@ -1,0 +1,15 @@
+{
+  "caseId": "T2b",
+  "mode": "insert",
+  "spec": "T1.C(3,0)@start..T1.C(3,1)@end",
+  "fixture": "[CELL:3,0]Hi[/CELL][CELL:3,1]Hj[/CELL]",
+  "source": "table-merged.docx",
+  "statusFromCsv": "pass",
+  "stable": true,
+  "setSelectionOk": true,
+  "capturedVia": "Chrome DevTools MCP v4 (build 2026-06-26.4; extract+injectAtSelection atomic; snapshots cabled; forcesave docx; no grabFocus)",
+  "capturedAt": "2026-06-26",
+  "verdict": "pass",
+  "comment": "Insert cellules partielles, fusion H (ligne C(3,0)..C(3,1)) : §4bis#2 -> clone COMPLET (4 lignes, fusions préservées : continuation (2,0) vide + H-span ligne 3) inséré APRÈS, ligne 3 du clone = [Hi,Hj] ; original intact. PAS de réduction RemoveColumn (évite corruption Q4). blockCount=4, 2 tableaux.",
+  "captureVersion": "v4"
+}

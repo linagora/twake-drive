@@ -1,0 +1,38 @@
+{
+  "blocks": [
+    {
+      "type": "p",
+      "runs": [
+        {
+          "t": "The "
+        },
+        {
+          "t": "quick",
+          "b": 1
+        },
+        {
+          "t": " "
+        },
+        {
+          "t": "Mid replaced"
+        },
+        {
+          "t": " "
+        },
+        {
+          "t": "er flows"
+        }
+      ]
+    }
+  ],
+  "selection": {
+    "start": {
+      "block": 0,
+      "offset": 10
+    },
+    "end": {
+      "block": 0,
+      "offset": 26
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "caseId": "T2a",
+  "mode": "replace",
+  "spec": "T1.C(0,0)@start..T1.C(0,1)@end",
+  "fixture": "[CELL:0,0]CC[/CELL][CELL:0,1]DD[/CELL]",
+  "source": "table-plain.docx",
+  "statusFromCsv": "pass",
+  "stable": true,
+  "setSelectionOk": true,
+  "capturedVia": "Chrome DevTools MCP v4 (build 2026-06-26.4; extract+injectAtSelection atomic; snapshots cabled; forcesave docx; no grabFocus)",
+  "capturedAt": "2026-06-26",
+  "verdict": "pass",
+  "comment": "Replace cellules partielles (top-row C(0,0)..C(0,1)) : in-place modifyOriginalTableCells -> (0,0)='CC' (0,1)='DD' ; cellules non sélectionnées (Gamma/Delta) intactes. blockCount=3, tableau original modifié en place (pas de copie).",
+  "captureVersion": "v4"
+}

@@ -141,7 +141,11 @@ const ScribePopover = ({
       // Compute normalized HTML for dev panels
       const normalized = selectedHtml ? normalizeHtml(selectedHtml) : ''
 
-      // Dev mode: test-markdown bypasses LLM entirely
+      // Dev mode: test-markdown bypasses LLM entirely. The extracted markdown IS
+      // the fragment that will be injected/replaced, so feed it through the SAME
+      // state the LLM path uses (parsedResponse.fragments + rawResult) — otherwise
+      // the "Fragments (marqueurs) / — MD d'affichage / — aperçu" dev panels read
+      // parsedResponse.fragments (null here) and render empty.
       if (actionId === 'test-markdown') {
         setDevData({
           html: selectedHtml || '',
@@ -150,6 +154,16 @@ const ScribePopover = ({
           md: inputMd,
           source: enrichedMd ? 'plugin' : 'turndown'
         })
+        const parsedMd = {
+          discussion: '',
+          fragments: inputMd ? [inputMd] : [],
+          valid: true,
+          fellBack: false,
+          warnings: [],
+          raw: inputMd
+        }
+        setParsedResponse(parsedMd)
+        setRawResult(inputMd)
         setResult({
           text: inputMd,
           breadcrumb: 'Test MD',
@@ -270,6 +284,26 @@ const ScribePopover = ({
         // normalized single-fragment blob — so the chat render-time compose helper
         // renders inline turns identically to chat-native turns (and v3.1-04 cards
         // light up for inline turns too). Reuses `parsed` from above.
+        //
+        // Dev-only: attach the SAME _devExchange the chat path sets (ScribeContext)
+        // so inline-originated cards in the side panel also show the "inspecteur
+        // détaillé" button (bug: it only appeared on chat-native turns because the
+        // popover mirror omitted _devExchange). Guarded by isScribeDevMd() → absent
+        // in prod. Built from the data already in scope (messages, text, parsed).
+        const devExchange = isScribeDevMd()
+          ? {
+              messages,
+              rawResponse: text,
+              parsed,
+              devData: {
+                html: selectedHtml || '',
+                normalizedHtml: normalized,
+                enrichedMd: enrichedMd || '',
+                md: inputMd,
+                source: enrichedMd ? 'plugin' : 'turndown'
+              }
+            }
+          : undefined
         if (addMessage) {
           addMessage({
             id: Date.now(),
@@ -289,6 +323,7 @@ const ScribePopover = ({
             discussion: parsed.discussion,
             fragments: parsed.fragments,
             fellBack: parsed.fellBack,
+            _devExchange: devExchange,
             timestamp: new Date()
           })
         }

@@ -1,0 +1,15 @@
+{
+  "caseId": "T5",
+  "mode": "replace",
+  "spec": "T1.C(1,0)@start..P2@mid",
+  "fixture": "[TABLE:0]\n[CELL:1,0]GG[/CELL]\n[CELL:1,1]DD[/CELL]\n[/TABLE]\n\nTail edit",
+  "source": "table-plain.docx",
+  "statusFromCsv": "xfail",
+  "stable": true,
+  "setSelectionOk": true,
+  "capturedVia": "Chrome DevTools MCP v4 (build 2026-06-26.7; cross-boundary driver; extract+injectAtSelection atomic; forcesave docx; no grabFocus)",
+  "capturedAt": "2026-06-26",
+  "verdict": "xfail",
+  "comment": "Replace tableau->¶ (cas 2c) : RÉSULTAT DOCUMENT CORRECT — cellules (1,0)/(1,1) -> GG/DD in-place ; tête de ¶ Outro remplacée par 'Tail edit', queue non sél. 'aragraph' conservée (-> 'Tail editaragraph') ; ligne 0 (Alpha/Beta) intacte. blockCount=3. xfail = L#2 UNIQUEMENT : post-sélection collapsed (block:2 offset:0). Document juste, xfail purement cosmétique (curseur).",
+  "captureVersion": "v4"
+}

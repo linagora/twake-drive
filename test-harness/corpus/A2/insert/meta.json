@@ -1,0 +1,15 @@
+{
+  "caseId": "A2",
+  "mode": "insert",
+  "spec": "P1@mid..P1@mid",
+  "fixture": "XXX",
+  "source": "a-family.docx",
+  "statusFromCsv": "pass",
+  "stable": true,
+  "setSelectionOk": true,
+  "capturedVia": "Chrome DevTools MCP v3 (§5bis fix; injectAtSelection atomic; paraMarks+grabFocus+forcesave docx)",
+  "capturedAt": "2026-06-24",
+  "verdict": "pass",
+  "comment": "§5bis OK. Curseur @mid (offset 9, sur l'espace quick|brown) -> 'The quick XXX brown fox', pas de double espace, plus de ¶ vide. Place correctement grace au hook atomique injectAtSelection (le curseur collapsed ne retombe plus a l'offset 0). .docx = 3 <w:p>.",
+  "captureVersion": "v3"
+}

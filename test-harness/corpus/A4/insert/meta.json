@@ -1,0 +1,15 @@
+{
+  "caseId": "A4",
+  "mode": "insert",
+  "spec": "P1@start..P1@space",
+  "fixture": "XXX",
+  "source": "a-family.docx",
+  "statusFromCsv": "pass",
+  "stable": true,
+  "setSelectionOk": true,
+  "capturedVia": "Chrome DevTools MCP v3 (§5bis fix; injectAtSelection atomic; paraMarks+grabFocus+forcesave docx)",
+  "capturedAt": "2026-06-24",
+  "verdict": "pass",
+  "comment": "§5bis OK. Range start..space, insert au point (offset 4) -> 'The XXX quick brown fox', split inline propre, pas de double espace, plus de ¶ vide isole. .docx = 3 <w:p>.",
+  "captureVersion": "v3"
+}

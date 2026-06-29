@@ -1,0 +1,145 @@
+{
+  "blocks": [
+    {
+      "type": "p",
+      "runs": [
+        {
+          "t": "Intro paragraph"
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "grid": [
+        [
+          {
+            "blocks": [
+              {
+                "type": "p",
+                "runs": [
+                  {
+                    "t": "Alpha"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "blocks": [
+              {
+                "type": "p",
+                "runs": [
+                  {
+                    "t": "Beta"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        [
+          {
+            "blocks": [
+              {
+                "type": "p",
+                "runs": [
+                  {
+                    "t": "Gamma"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "blocks": [
+              {
+                "type": "p",
+                "runs": [
+                  {
+                    "t": "Delta"
+                  }
+                ]
+              },
+              {
+                "type": "p",
+                "runs": [
+                  {
+                    "t": "Delta2"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "type": "p",
+      "runs": [
+        {
+          "t": "Outro p"
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "grid": [
+        [
+          {
+            "blocks": [
+              {
+                "type": "p",
+                "runs": [
+                  {
+                    "t": "GG"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "blocks": [
+              {
+                "type": "p",
+                "runs": [
+                  {
+                    "t": "DD"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "type": "p",
+      "runs": [
+        {
+          "t": "Tail edit"
+        },
+        {
+          "t": " "
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "runs": [
+        {
+          "t": "aragraph"
+        }
+      ]
+    }
+  ],
+  "selection": {
+    "start": {
+      "block": -1,
+      "offset": -1
+    },
+    "end": {
+      "block": 4,
+      "offset": 13
+    }
+  }
+}

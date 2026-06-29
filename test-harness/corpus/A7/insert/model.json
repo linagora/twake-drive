@@ -1,0 +1,50 @@
+{
+  "blocks": [
+    {
+      "type": "p",
+      "runs": [
+        {
+          "t": "Intro paragraph"
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "runs": []
+    },
+    {
+      "type": "p",
+      "runs": [
+        {
+          "t": "Middle paragraph"
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "runs": [
+        {
+          "t": "Added line"
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "runs": [
+        {
+          "t": "Outro paragraph"
+        }
+      ]
+    }
+  ],
+  "selection": {
+    "start": {
+      "block": 3,
+      "offset": 0
+    },
+    "end": {
+      "block": 3,
+      "offset": 12
+    }
+  }
+}

@@ -59,3 +59,6 @@ plugins/onlyoffice-scribe/**/*.gz
 e2e/.auth-state.json
 playwright-report/
 test-results/
+
+# LibreOffice lock files (accidentally captured when a .docx golden is open)
+.~lock.*#

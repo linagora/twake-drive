@@ -1,0 +1,15 @@
+{
+  "caseId": "A6",
+  "mode": "insert",
+  "spec": "P1@mid..P3@mid",
+  "fixture": "format",
+  "source": "format-family.docx",
+  "statusFromCsv": "pass",
+  "stable": true,
+  "setSelectionOk": true,
+  "capturedVia": "Chrome DevTools MCP v4 (build 2026-06-26.8; multi-¶ driver; extract+injectAtSelection atomic; forcesave docx; no grabFocus)",
+  "capturedAt": "2026-06-26",
+  "verdict": "pass",
+  "comment": "Insert multi-¶ partiel→entiers→partiel (A6) : insertion AU POINT (fin de sélection = mid de P3, 'Lazy riv|er flows') → 'Lazy riv Mid insert er flows'. P1 (The quick(gras) brown fox(ital)) et P2 INTACTS, formatage inline de P1 préservé. Fixture format-family (P1 gras/ital) pour vérifier la non-altération des styles hors zone d'insertion. blockCount=3. Sélection multi-¶ établie via la branche cross (build .8).",
+  "captureVersion": "v4"
+}

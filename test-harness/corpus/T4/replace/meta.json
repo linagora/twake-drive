@@ -1,0 +1,15 @@
+{
+  "caseId": "T4",
+  "mode": "replace",
+  "spec": "P1@mid..T1.C(0,1)@end",
+  "fixture": "Head edit\n\n[TABLE:0]\n[CELL:0,0]AA[/CELL]\n[CELL:0,1]BB[/CELL]\n[/TABLE]",
+  "source": "table-plain.docx",
+  "statusFromCsv": "xfail",
+  "stable": true,
+  "setSelectionOk": true,
+  "capturedVia": "Chrome DevTools MCP v4 (build 2026-06-26.7; cross-boundary driver; extract+injectAtSelection atomic; forcesave docx; no grabFocus)",
+  "capturedAt": "2026-06-26",
+  "verdict": "xfail",
+  "comment": "Replace ¶->tableau (cas 2b) : RÉSULTAT DOCUMENT CORRECT — tête de ¶ Intro ('Intro p') conservée + portion sélectionnée remplacée par 'Head edit' ; cellules (0,0)/(0,1) -> AA/BB in-place ; ligne 1 (Gamma/Delta) intacte. blockCount=3. xfail = L#2 UNIQUEMENT : post-sélection absente (sel collapsed block:0 offset:0). Document juste, xfail purement cosmétique (curseur).",
+  "captureVersion": "v4"
+}

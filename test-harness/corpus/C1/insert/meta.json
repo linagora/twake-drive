@@ -1,0 +1,14 @@
+{
+  "caseId": "C1",
+  "mode": "insert",
+  "spec": "P2@start..P2@end",
+  "fixture": "Extra {{IMG:scribe-img-0}}",
+  "source": "img-para.docx",
+  "statusFromCsv": "pass",
+  "stable": true,
+  "setSelectionOk": true,
+  "capturedVia": "Chrome DevTools MCP v5 (build 2026-06-27.9; ¶ image marker+PasteHtml; forcesave docx)",
+  "capturedAt": "2026-06-27",
+  "verdict": "pass",
+  "comment": "Image dans un PARAGRAPHE top-level, Insert — FIXÉ (commit ecb2df5b0, build .9). Sélection P2 = 'Photo '+image ; extraction → 'Photo {{IMG:scribe-img-0}}' ; insertion de 'Extra '+image (fusion inline §5bis dans P2). Les 3 images survivent au save : after.docx = 3 word/media + 3/3 drawings avec a:blip (original 'Photo '+img + 'Extra '+img inséré + P3 image-seule). L'original conservé garde son média ; la copie insérée passe par marqueur+PasteHtml (upload média). model.json = structure texte (dumpState ne voit pas les images). after.png = rendu live (3 images)."
+}

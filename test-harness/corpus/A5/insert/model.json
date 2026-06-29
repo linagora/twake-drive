@@ -1,0 +1,52 @@
+{
+  "blocks": [
+    {
+      "type": "p",
+      "runs": [
+        {
+          "t": "The quick brown fox"
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "runs": [
+        {
+          "t": "Jumps over the dog"
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "runs": [
+        {
+          "t": "Lazy river flows"
+        },
+        {
+          "t": " "
+        },
+        {
+          "t": "Alpha edit"
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "runs": [
+        {
+          "t": "Beta edit"
+        }
+      ]
+    }
+  ],
+  "selection": {
+    "start": {
+      "block": 2,
+      "offset": 0
+    },
+    "end": {
+      "block": 3,
+      "offset": 11
+    }
+  }
+}

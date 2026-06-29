@@ -1,0 +1,61 @@
+{
+  "blocks": [
+    {
+      "type": "p",
+      "runs": [
+        {
+          "t": "The "
+        },
+        {
+          "t": "quick",
+          "b": 1
+        },
+        {
+          "t": " brown "
+        },
+        {
+          "t": "fox",
+          "i": 1
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "runs": [
+        {
+          "t": "Jumps over the dog"
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "runs": [
+        {
+          "t": "Lazy riv"
+        },
+        {
+          "t": " "
+        },
+        {
+          "t": "Mid insert"
+        },
+        {
+          "t": " "
+        },
+        {
+          "t": "er flows"
+        }
+      ]
+    }
+  ],
+  "selection": {
+    "start": {
+      "block": 2,
+      "offset": 8
+    },
+    "end": {
+      "block": 2,
+      "offset": 22
+    }
+  }
+}

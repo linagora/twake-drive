@@ -1,0 +1,2 @@
+id,group,selection,description,driving,fixture,expected_insert,status_insert,expected_replace,status_replace,limits,notes
+A1,paragraph,"[P1@start,P1@end]","paragraphe entier",auto,XXX,"nouveau ¶ après le ¶ courant; pas de &nbsp;",pass,"remplace tout le ¶",pass,,
