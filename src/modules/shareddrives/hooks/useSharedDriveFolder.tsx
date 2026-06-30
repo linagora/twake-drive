@@ -39,10 +39,16 @@ const useSharedDriveFolder = ({
     enabled: isSettingsLoaded && !!driveId && !!folderId
   })
 
+  // While sort settings are loading, the query is gated off and useQuery
+  // returns fetchStatus: 'pending'. getFolderViewState only treats 'loading'
+  // (with no lastUpdate) as a loading state, so we normalise to 'loading'
+  // to avoid a brief empty-state flash before settings are ready.
+  const fetchStatus = isSettingsLoaded ? query.fetchStatus : 'loading'
+
   return {
     sharedDriveQuery: q,
     sharedDriveResult: { data: query.data },
-    fetchStatus: query.fetchStatus,
+    fetchStatus,
     lastUpdate: query.lastUpdate,
     hasMore: query.hasMore,
     fetchMore: query.fetchMore

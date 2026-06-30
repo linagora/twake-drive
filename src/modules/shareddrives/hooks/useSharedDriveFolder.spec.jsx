@@ -140,4 +140,34 @@ describe('useSharedDriveFolder', () => {
       expect.objectContaining({ forceLink: 'dataproxy' })
     )
   })
+
+  describe('fetchStatus while sort settings load', () => {
+    it('returns "loading" (not "pending") when isSettingsLoaded is false', () => {
+      useFolderSort.mockReturnValue([
+        { attribute: 'name', order: 'asc' },
+        jest.fn(),
+        false // settings not yet loaded
+      ])
+      // useQuery returns 'pending' when the query is gated off via enabled: false
+      useQuery.mockReturnValue({
+        ...defaultQueryResult,
+        fetchStatus: 'pending',
+        lastUpdate: undefined
+      })
+      const { result } = setup()
+      expect(result.current.fetchStatus).toBe('loading')
+      expect(result.current.lastUpdate).toBeFalsy()
+    })
+
+    it('passes through query.fetchStatus when isSettingsLoaded is true', () => {
+      useFolderSort.mockReturnValue([
+        { attribute: 'name', order: 'asc' },
+        jest.fn(),
+        true
+      ])
+      useQuery.mockReturnValue({ ...defaultQueryResult, fetchStatus: 'loaded' })
+      const { result } = setup()
+      expect(result.current.fetchStatus).toBe('loaded')
+    })
+  })
 })
