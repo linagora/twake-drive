@@ -776,5 +776,8 @@
       "SHARING_LINK_FAILED": "Impossible de générer le lien de partage.",
       "DOWNLOAD_LINK_FAILED": "Impossible de générer le lien de téléchargement."
     }
+  },
+  "SharedDrive": {
+    "access_revoked": "Vous n'avez plus accès à ce drive partagé."
   }
 }
