@@ -24,11 +24,10 @@ jest.mock('twake-i18n', () => ({
   useI18n: () => ({ t: mockT })
 }))
 
-// --- useSharedDrives mock ---
-const mockUseSharedDrives = jest.fn()
-
-jest.mock('@/modules/shareddrives/hooks/useSharedDrives', () => ({
-  useSharedDrives: (...args) => mockUseSharedDrives(...args)
+// --- useRedirectOnRevokedDrive is now a no-op in view tests; redirect
+//     behaviour is covered by useRedirectOnRevokedDrive.spec.jsx ---
+jest.mock('@/modules/shareddrives/hooks/useRedirectOnRevokedDrive', () => ({
+  useRedirectOnRevokedDrive: jest.fn()
 }))
 
 // --- stub out everything else the component imports so it can render ---
@@ -190,50 +189,13 @@ import { SharedDriveFolderView } from './SharedDriveFolderView'
 
 const DRIVE_ID = 'drive-1'
 
-describe('SharedDriveFolderView — revocation redirect', () => {
+describe('SharedDriveFolderView', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockUseParams.mockReturnValue({ driveId: DRIVE_ID, folderId: 'folder-1' })
   })
 
-  it('redirects to /sharings?tab=1 and shows an alert when driveId is no longer in recipientDriveIds', () => {
-    mockUseSharedDrives.mockReturnValue({
-      isLoaded: true,
-      recipientDriveIds: ['other-drive']
-    })
-
+  it('renders without errors', () => {
     render(<SharedDriveFolderView />)
-
-    expect(mockNavigate).toHaveBeenCalledWith('/sharings?tab=1', {
-      replace: true
-    })
-    expect(mockShowAlert).toHaveBeenCalledWith({
-      message: 'SharedDrive.access_revoked',
-      severity: 'secondary'
-    })
-  })
-
-  it('does not redirect when driveId is still in recipientDriveIds', () => {
-    mockUseSharedDrives.mockReturnValue({
-      isLoaded: true,
-      recipientDriveIds: [DRIVE_ID]
-    })
-
-    render(<SharedDriveFolderView />)
-
-    expect(mockNavigate).not.toHaveBeenCalled()
-    expect(mockShowAlert).not.toHaveBeenCalled()
-  })
-
-  it('does not redirect before shared drives finish loading (no premature redirect)', () => {
-    mockUseSharedDrives.mockReturnValue({
-      isLoaded: false,
-      recipientDriveIds: []
-    })
-
-    render(<SharedDriveFolderView />)
-
-    expect(mockNavigate).not.toHaveBeenCalled()
-    expect(mockShowAlert).not.toHaveBeenCalled()
   })
 })
