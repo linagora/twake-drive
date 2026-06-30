@@ -756,5 +756,8 @@
       "title": "Downloading and sharing is blocked for security reasons",
       "description": "Twake system detected a virus"
     }
+  },
+  "SharedDrive": {
+    "access_revoked": "You no longer have access to this shared drive."
   }
 }

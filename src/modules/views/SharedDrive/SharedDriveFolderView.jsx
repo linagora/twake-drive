@@ -37,6 +37,7 @@ import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 import { SharedDriveBreadcrumb } from '@/modules/shareddrives/components/SharedDriveBreadcrumb'
 import { SharedDriveFolderBody } from '@/modules/shareddrives/components/SharedDriveFolderBody'
 import { useSharedDriveFolder } from '@/modules/shareddrives/hooks/useSharedDriveFolder'
+import { useSharedDrives } from '@/modules/shareddrives/hooks/useSharedDrives'
 import Dropzone from '@/modules/upload/Dropzone'
 import DropzoneDnD from '@/modules/upload/DropzoneDnD'
 import FolderView from '@/modules/views/Folder/FolderView'
@@ -63,6 +64,27 @@ const SharedDriveFolderView = () => {
   const isInRootOfSharedDrive = displayedFolder?.dir_id === SHARED_DRIVES_DIR_ID
   const { isFabDisplayed, setIsFabDisplayed } = useContext(FabContext)
   const { isSelectionBarVisible } = useSelectionContext()
+
+  const { recipientDriveIds, isLoaded: areSharedDrivesLoaded } =
+    useSharedDrives()
+
+  useEffect(() => {
+    if (!driveId || !areSharedDrivesLoaded) return
+    if (!recipientDriveIds.includes(driveId)) {
+      showAlert({
+        message: t('SharedDrive.access_revoked'),
+        severity: 'secondary'
+      })
+      navigate('/sharings?tab=1', { replace: true })
+    }
+  }, [
+    driveId,
+    areSharedDrivesLoaded,
+    recipientDriveIds,
+    navigate,
+    showAlert,
+    t
+  ])
 
   const { sharedDriveResult, fetchStatus, lastUpdate, hasMore, fetchMore } =
     useSharedDriveFolder({
