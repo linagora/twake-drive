@@ -584,6 +584,35 @@ export const buildSharedDriveFolderQuery: QueryBuilder<
   }
 })
 
+interface buildSharedDriveFolderMangoQueryParams {
+  driveId: string
+  folderId: string
+  sortAttribute: string
+  sortOrder: string
+}
+
+export const buildSharedDriveFolderMangoQuery: QueryBuilder<
+  buildSharedDriveFolderMangoQueryParams
+> = ({ driveId, folderId, sortAttribute, sortOrder }) => ({
+  definition: () =>
+    Q('io.cozy.files')
+      .where({
+        dir_id: folderId,
+        driveId,
+        [sortAttribute]: { $gt: null }
+      })
+      .indexFields(['dir_id', 'driveId', sortAttribute])
+      .sortBy([{ dir_id: sortOrder }, { [sortAttribute]: sortOrder }])
+      .include(['encryption'])
+      .limitBy(100),
+  options: {
+    as: `shareddrive-folder-${driveId}-${folderId}-${sortAttribute}-${sortOrder}`,
+    driveId,
+    forceLink: 'dataproxy',
+    fetchPolicy: defaultFetchPolicy
+  }
+})
+
 export const buildSharedDriveIdQuery: QueryBuilder<
   buildSharedDriveIdQueryParams
 > = ({ driveId }) => ({
