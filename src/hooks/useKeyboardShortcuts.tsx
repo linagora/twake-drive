@@ -10,7 +10,6 @@ import { useI18n } from 'twake-i18n'
 import { shouldBlockKeyboardShortcuts, normalizeKey } from './helpers'
 
 import { isMacOS } from '@/components/pushClient'
-import { SHARED_DRIVES_DIR_ID } from '@/constants/config'
 import {
   useClipboardContext,
   OPERATION_CUT
@@ -110,13 +109,6 @@ export const useKeyboardShortcuts = ({
     }
 
     const parentFolderIds = selectedItems.map(item => item.dir_id)
-    if (parentFolderIds.includes(SHARED_DRIVES_DIR_ID)) {
-      showAlert({
-        message: t('alert.cannot_copy_shared_drive'),
-        severity: 'secondary'
-      })
-      return
-    }
 
     if (!selectedItems.length) return
 
@@ -147,14 +139,6 @@ export const useKeyboardShortcuts = ({
     }
 
     const parentFolderIds = selectedItems.map(item => item.dir_id)
-
-    if (parentFolderIds.includes(SHARED_DRIVES_DIR_ID)) {
-      showAlert({
-        message: t('alert.cannot_move_shared_drive'),
-        severity: 'secondary'
-      })
-      return
-    }
 
     cutFiles(
       selectedItems,
