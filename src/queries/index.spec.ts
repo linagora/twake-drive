@@ -1,8 +1,63 @@
-import { buildRecentsScopedQuery } from '@/queries'
+import { buildRecentsScopedQuery, buildSharedDriveFolderMangoQuery } from '@/queries'
 import {
   SHARED_DRIVES_DIR_ID,
   TRASH_DIR_ID
 } from '@/constants/config'
+
+describe('buildSharedDriveFolderMangoQuery', () => {
+  const params = {
+    driveId: 'drive-abc',
+    folderId: 'folder-xyz',
+    sortAttribute: 'name',
+    sortOrder: 'asc'
+  }
+
+  it('sets options.driveId to the provided driveId', () => {
+    const q = buildSharedDriveFolderMangoQuery(params)
+    expect(q.options.driveId).toBe('drive-abc')
+  })
+
+  it('sets options.forceLink to dataproxy', () => {
+    const q = buildSharedDriveFolderMangoQuery(params)
+    expect(q.options.forceLink).toBe('dataproxy')
+  })
+
+  it('generates a stable options.as keyed by all four params', () => {
+    const q1 = buildSharedDriveFolderMangoQuery(params)
+    const q2 = buildSharedDriveFolderMangoQuery(params)
+    expect(q1.options.as).toBe(q2.options.as)
+    expect(q1.options.as).toContain('drive-abc')
+    expect(q1.options.as).toContain('folder-xyz')
+    expect(q1.options.as).toContain('name')
+    expect(q1.options.as).toContain('asc')
+  })
+
+  it('generates distinct as values for different param combinations', () => {
+    const q1 = buildSharedDriveFolderMangoQuery(params)
+    const q2 = buildSharedDriveFolderMangoQuery({ ...params, sortOrder: 'desc' })
+    expect(q1.options.as).not.toBe(q2.options.as)
+  })
+
+  it('includes driveId in the definition where clause', () => {
+    const q = buildSharedDriveFolderMangoQuery(params)
+    const def = q.definition().toDefinition()
+    expect(def.selector).toMatchObject({ driveId: 'drive-abc' })
+  })
+
+  it('does not filter by type (returns both folders and files)', () => {
+    const q = buildSharedDriveFolderMangoQuery(params)
+    const def = q.definition().toDefinition()
+    expect(def.selector).not.toHaveProperty('type')
+  })
+
+  it('definition includes dir_id and driveId in indexedFields', () => {
+    const q = buildSharedDriveFolderMangoQuery(params)
+    const def = q.definition().toDefinition()
+    expect(def.indexedFields).toEqual(
+      expect.arrayContaining(['dir_id', 'driveId', 'name'])
+    )
+  })
+})
 
 describe('buildRecentsScopedQuery', () => {
   describe('own scope (no driveId)', () => {
