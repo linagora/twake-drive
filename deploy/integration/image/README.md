@@ -14,6 +14,19 @@ in `../` for production; those remain handy for quick patching of a running cont
 Defaults: base `onlyoffice/documentserver:9.4.0.1` (= build `9.4.0-129`), addon =
 this repo's `plugins/onlyoffice-scribe`, tag `scribe-onlyoffice:9.4.0-129-<build>`.
 
+The published patched sdkjs artifact (a `.tar.gz` containing `sdk-all.js`) lives as a
+GitHub release asset:
+
+```
+https://github.com/Benibur/sdkjs/releases/download/scribe-sdkjs-patch-9.4.0.129/scribe-sdkjs-patch-9.4.0.129.tar.gz
+```
+
+> `--base` is a **Docker image reference** (`[registry/]repo:tag`), not a filesystem
+> path nor an http URL — Docker resolves it locally, then pulls from the registry.
+> A private registry image needs `docker login` on the build machine first.
+> If the integration build cannot reach github.com, mirror the `--sdk` asset to an
+> internal store and pass that URL instead.
+
 Common overrides:
 
 ```bash
