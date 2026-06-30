@@ -74,7 +74,7 @@ const SharedDriveFolderView = () => {
     {
       fetchStatus,
       lastUpdate,
-      data: sharedDriveResult.included ?? [],
+      data: sharedDriveResult.data ?? [],
       hasMore,
       fetchMore
     }
@@ -96,7 +96,7 @@ const SharedDriveFolderView = () => {
   useKeyboardShortcuts({
     canPaste: hasClipboardData && canWriteToCurrentFolder,
     client,
-    items: sharedDriveResult?.included || [],
+    items: sharedDriveResult?.data || [],
     sharingContext,
     allowCut: canWriteToCurrentFolder,
     allowCopy: false,
