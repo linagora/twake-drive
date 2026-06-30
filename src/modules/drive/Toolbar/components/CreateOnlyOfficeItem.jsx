@@ -1,8 +1,8 @@
+import { Icon } from '@linagora/twake-icons'
 import React, { useCallback, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
-import Icon from 'cozy-ui/transpiled/react/Icon'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'

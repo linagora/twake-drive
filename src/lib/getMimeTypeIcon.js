@@ -1,18 +1,19 @@
+import {
+  FileTypeAudio,
+  FileTypeBin,
+  FileTypeCode,
+  FileTypeFiles,
+  FileTypeFolder,
+  FileTypeImage,
+  FileTypeNote,
+  FileTypePdf,
+  FileTypeSheet,
+  FileTypeSlide,
+  FileTypeText,
+  FileTypeVideo,
+  FileTypeZip
+} from '@linagora/twake-icons'
 import get from 'lodash/get'
-
-import IconAudio from 'cozy-ui/transpiled/react/Icons/FileTypeAudio'
-import IconBin from 'cozy-ui/transpiled/react/Icons/FileTypeBin'
-import IconCode from 'cozy-ui/transpiled/react/Icons/FileTypeCode'
-import IconFiles from 'cozy-ui/transpiled/react/Icons/FileTypeFiles'
-import IconFolder from 'cozy-ui/transpiled/react/Icons/FileTypeFolder'
-import IconImage from 'cozy-ui/transpiled/react/Icons/FileTypeImage'
-import IconNote from 'cozy-ui/transpiled/react/Icons/FileTypeNote'
-import IconPdf from 'cozy-ui/transpiled/react/Icons/FileTypePdf'
-import IconSheet from 'cozy-ui/transpiled/react/Icons/FileTypeSheet'
-import IconSlide from 'cozy-ui/transpiled/react/Icons/FileTypeSlide'
-import IconText from 'cozy-ui/transpiled/react/Icons/FileTypeText'
-import IconVideo from 'cozy-ui/transpiled/react/Icons/FileTypeVideo'
-import IconZip from 'cozy-ui/transpiled/react/Icons/FileTypeZip'
 
 import IconDocs from '@/assets/icons/icon-docs.svg'
 import IconExcalidraw from '@/assets/icons/icon-excalidraw.svg'
@@ -28,28 +29,28 @@ import { getFileMimetype } from '@/lib/getFileMimetype'
  */
 const getMimeTypeIcon = (isDirectory, name, mime) => {
   if (isDirectory) {
-    return IconFolder
+    return FileTypeFolder
   } else if (/\.cozy-note$/.test(name)) {
-    return IconNote
+    return FileTypeNote
   } else if (/\.docs-note$/.test(name)) {
     return IconDocs
   } else if (/\.excalidraw$/.test(name)) {
     return IconExcalidraw
   } else {
     const iconsByMimeType = {
-      audio: IconAudio,
-      bin: IconBin,
-      code: IconCode,
-      image: IconImage,
-      pdf: IconPdf,
-      slide: IconSlide,
-      sheet: IconSheet,
-      text: IconText,
-      video: IconVideo,
-      zip: IconZip
+      audio: FileTypeAudio,
+      bin: FileTypeBin,
+      code: FileTypeCode,
+      image: FileTypeImage,
+      pdf: FileTypePdf,
+      slide: FileTypeSlide,
+      sheet: FileTypeSheet,
+      text: FileTypeText,
+      video: FileTypeVideo,
+      zip: FileTypeZip
     }
     const type = getFileMimetype(iconsByMimeType)(mime, name)
-    return get(iconsByMimeType, type, IconFiles)
+    return get(iconsByMimeType, type, FileTypeFiles)
   }
 }
 

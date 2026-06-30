@@ -1,8 +1,7 @@
+import { Icon, Restore } from '@linagora/twake-icons'
 import React, { forwardRef } from 'react'
 
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import RestoreIcon from 'cozy-ui/transpiled/react/Icons/Restore'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 
@@ -26,7 +25,7 @@ const makeComponent = (label, icon) => {
 
 export const restore = ({ t, refresh, client }) => {
   const label = t('SelectionBar.restore')
-  const icon = RestoreIcon
+  const icon = Restore
 
   return {
     name: 'restore',

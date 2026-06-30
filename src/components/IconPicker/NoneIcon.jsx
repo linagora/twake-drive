@@ -1,7 +1,6 @@
+import { Cross } from '@linagora/twake-icons'
 import PropTypes from 'prop-types'
 import React from 'react'
-
-import Cross from 'cozy-ui/transpiled/react/Icons/Cross'
 
 import styles from '@/styles/folder-customizer.styl'
 

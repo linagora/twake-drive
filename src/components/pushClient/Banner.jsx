@@ -1,6 +1,12 @@
 // eslint-disable-next-line no-redeclare,no-unused-vars
 /* global localStorage */
 
+import {
+  Icon,
+  DesktopDownload,
+  Download,
+  PhoneDownload
+} from '@linagora/twake-icons'
 import localforage from 'localforage'
 import flow from 'lodash/flow'
 import React, { Component } from 'react'
@@ -9,10 +15,6 @@ import { withClient } from 'cozy-client'
 import flag from 'cozy-flags'
 import Alert from 'cozy-ui/transpiled/react/Alert'
 import Button from 'cozy-ui/transpiled/react/Buttons'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import DesktopDownloadIcon from 'cozy-ui/transpiled/react/Icons/DesktopDownload'
-import DownloadIcon from 'cozy-ui/transpiled/react/Icons/Download'
-import PhoneDownloadIcon from 'cozy-ui/transpiled/react/Icons/PhoneDownload'
 import { translate } from 'twake-i18n'
 
 import {
@@ -75,7 +77,7 @@ class BannerClient extends Component {
           icon={
             <Icon
               className="u-mt-1 u-ml-1"
-              icon={isMobile ? PhoneDownloadIcon : DesktopDownloadIcon}
+              icon={isMobile ? PhoneDownload : DesktopDownload}
               color="var(--primaryTextColor)"
               size={isMobile ? 24 : 20}
             />
@@ -89,7 +91,7 @@ class BannerClient extends Component {
                 label={t('Nav.banner-btn-client')}
                 size="small"
                 onClick={() => this.markAsSeen()}
-                startIcon={<Icon icon={DownloadIcon} />}
+                startIcon={<Icon icon={Download} />}
                 target="_blank"
                 rel="noopener noreferrer"
                 href={link}

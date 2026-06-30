@@ -1,12 +1,10 @@
+import { Icon, LabelOutlined, Qualify } from '@linagora/twake-icons'
 import React, { forwardRef } from 'react'
 
 import { getQualification } from 'cozy-client/dist/models/document'
 import { getBoundT } from 'cozy-client/dist/models/document/locales'
 import { isFile } from 'cozy-client/dist/models/file'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import UnqualifyIcon from 'cozy-ui/transpiled/react/Icons/LabelOutlined'
-import QualifyIcon from 'cozy-ui/transpiled/react/Icons/Qualify'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 
@@ -20,7 +18,7 @@ const makeComponent = ({ label, scannerT, t }) => {
     return (
       <ActionsMenuItem {...props} ref={ref}>
         <ListItemIcon>
-          <Icon icon={fileQualif ? QualifyIcon : UnqualifyIcon} />
+          <Icon icon={fileQualif ? Qualify : LabelOutlined} />
         </ListItemIcon>
         <ListItemText primary={fileQualif ? t('Scan.requalify') : label} />
         {fileQualif && (
@@ -45,7 +43,7 @@ export const qualify = ({ t, lang, navigate, pathname }) => {
   return {
     name: 'qualify',
     label,
-    icon: QualifyIcon,
+    icon: Qualify,
     displayCondition: selection => {
       return selection.length === 1 && isFile(selection[0])
     },

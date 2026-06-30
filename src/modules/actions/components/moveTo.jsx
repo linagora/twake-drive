@@ -1,8 +1,7 @@
+import { Icon, Moveto } from '@linagora/twake-icons'
 import React, { forwardRef } from 'react'
 
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import MovetoIcon from 'cozy-ui/transpiled/react/Icons/Moveto'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 
@@ -18,7 +17,7 @@ const moveTo = ({
   search,
   shouldHideIfSharedDriveRecipient
 }) => {
-  const icon = MovetoIcon
+  const icon = Moveto
   const label = isMobile
     ? t('SelectionBar.moveto_mobile')
     : t('SelectionBar.moveto')

@@ -1,9 +1,8 @@
+import { Icon, Certified } from '@linagora/twake-icons'
 import React, { forwardRef } from 'react'
 
 import flag from 'cozy-flags'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import CertifiedIcon from 'cozy-ui/transpiled/react/Icons/Certified'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 
@@ -33,7 +32,7 @@ export const verifyWithEuDss = ({
   showAlert
 }) => {
   const label = t('actions.verifyWithEuDss')
-  const icon = CertifiedIcon
+  const icon = Certified
 
   return {
     name: 'verifyWithEuDss',

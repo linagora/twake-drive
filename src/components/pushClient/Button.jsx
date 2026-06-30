@@ -1,12 +1,10 @@
+import { Icon, CrossSmall, Drive } from '@linagora/twake-icons'
 import localforage from 'localforage'
 import React, { useState, useEffect } from 'react'
 
 import { withClient } from 'cozy-client'
 import { isFlagshipApp } from 'cozy-device-helper'
-import Icon from 'cozy-ui/transpiled/react/Icon'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
-import CrossSmallIcon from 'cozy-ui/transpiled/react/Icons/CrossSmall'
-import DriveIcon from 'cozy-ui/transpiled/react/Icons/Drive'
 import ListItem from 'cozy-ui/transpiled/react/ListItem'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
@@ -72,11 +70,11 @@ const ButtonClient = ({ client, t }) => {
         size="small"
         onClick={handleClick}
       >
-        <Icon icon={CrossSmallIcon} size={8} />
+        <Icon icon={CrossSmall} size={8} />
       </IconButton>
       <ListItem component="div">
         <ListItemIcon>
-          <Icon icon={DriveIcon} size={32} />
+          <Icon icon={Drive} size={32} />
         </ListItemIcon>
         <ListItemText
           primaryTypographyProps={{

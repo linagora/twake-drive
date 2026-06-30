@@ -1,11 +1,9 @@
+import { Icon, Star, StarOutline } from '@linagora/twake-icons'
 import React from 'react'
 
 import { useClient } from 'cozy-client'
 import { splitFilename } from 'cozy-client/dist/models/file'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import StarIcon from 'cozy-ui/transpiled/react/Icons/Star'
-import StarOutlineIcon from 'cozy-ui/transpiled/react/Icons/StarOutline'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
@@ -44,7 +42,7 @@ const FavoritesItem = ({ displayedFolder }) => {
     }
   }
 
-  const icon = isFavorite ? StarIcon : StarOutlineIcon
+  const icon = isFavorite ? Star : StarOutline
 
   return (
     <ActionsMenuItem onClick={handleClick}>

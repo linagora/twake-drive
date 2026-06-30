@@ -1,9 +1,8 @@
+import { Icon, Article } from '@linagora/twake-icons'
 import React, { forwardRef } from 'react'
 
 import flag from 'cozy-flags'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import ArticleIcon from 'cozy-ui/transpiled/react/Icons/Article'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import { isFileSummaryCompatible } from 'cozy-viewer/dist/helpers'
@@ -27,7 +26,7 @@ const makeComponent = (label, icon) => {
 
 export const summariseByAI = ({ t, hasWriteAccess, navigate, isPublic }) => {
   const label = t('actions.summariseByAI')
-  const icon = ArticleIcon
+  const icon = Article
 
   return {
     name: 'summariseByAI',

@@ -1,8 +1,7 @@
+import { Icon, Trash } from '@linagora/twake-icons'
 import React, { forwardRef } from 'react'
 
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import TrashIcon from 'cozy-ui/transpiled/react/Icons/Trash'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 
@@ -23,7 +22,7 @@ export const destroy = ({
   search
 }: destroyProps): ActionWithPolicy => {
   const label = t('SelectionBar.destroy')
-  const icon = TrashIcon
+  const icon = Trash
 
   return {
     name: 'destroy',

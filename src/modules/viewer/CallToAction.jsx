@@ -1,9 +1,8 @@
+import { Icon, Cross } from '@linagora/twake-icons'
 import localforage from 'localforage'
 import React, { Component } from 'react'
 
 import { withClient } from 'cozy-client'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import CrossIcon from 'cozy-ui/transpiled/react/Icons/Cross'
 
 import styles from './styles.styl'
 
@@ -52,7 +51,7 @@ class CallToAction extends Component {
         <Icon
           className={styles['pho-viewer-noviewer-cta-cross']}
           color="var(--white)"
-          icon={CrossIcon}
+          icon={Cross}
           onClick={this.markAsSeen}
         />
         <h3>{t('Viewer.noviewer.cta.saveTime')}</h3>

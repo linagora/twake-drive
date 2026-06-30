@@ -1,3 +1,4 @@
+import { Icon, Share } from '@linagora/twake-icons'
 import React, { useCallback, useEffect, useState, useMemo } from 'react'
 import { RemoveScroll } from 'react-remove-scroll'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
@@ -5,8 +6,6 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { Q, useClient } from 'cozy-client'
 import flag from 'cozy-flags'
 import Button from 'cozy-ui/transpiled/react/Buttons'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import ShareIcon from 'cozy-ui/transpiled/react/Icons/Share'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import Viewer, {
   FooterActionButtons,
@@ -217,7 +216,7 @@ const FilesViewer = ({ filesQuery, files, onClose, onChange, viewerProps }) => {
                   variant="secondary"
                   aria-label={t('Viewer.share_btn')}
                   label={t('Viewer.share_btn')}
-                  startIcon={<Icon icon={ShareIcon} />}
+                  startIcon={<Icon icon={Share} />}
                   onClick={() =>
                     navigateToModal({
                       navigate,

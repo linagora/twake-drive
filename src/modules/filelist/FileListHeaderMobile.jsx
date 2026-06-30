@@ -1,10 +1,8 @@
+import { Icon, List, ListMin } from '@linagora/twake-icons'
 import cx from 'classnames'
 import React, { useState, useCallback } from 'react'
 
 import Button from 'cozy-ui/transpiled/react/Buttons'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import ListIcon from 'cozy-ui/transpiled/react/Icons/List'
-import ListMinIcon from 'cozy-ui/transpiled/react/Icons/ListMin'
 import {
   TableHead,
   TableHeader,
@@ -81,10 +79,7 @@ const FileListHeaderMobile = ({
               switchViewType(viewType === 'list' ? 'grid' : 'list')
             }}
             label={
-              <Icon
-                icon={viewType === 'list' ? ListMinIcon : ListIcon}
-                size={17}
-              />
+              <Icon icon={viewType === 'list' ? ListMin : List} size={17} />
             }
           />
         </TableHeader>

@@ -1,8 +1,7 @@
+import { Icon, Dots } from '@linagora/twake-icons'
 import React, { forwardRef } from 'react'
 
-import Icon from 'cozy-ui/transpiled/react/Icon'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
-import DotsIcon from 'cozy-ui/transpiled/react/Icons/Dots'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import { useI18n } from 'twake-i18n'
 
@@ -16,7 +15,7 @@ const FileAction = forwardRef(function FileAction({ onClick, disabled }, ref) {
         disabled={disabled}
         arial-label={t('Toolbar.more')}
       >
-        <Icon icon={DotsIcon} />
+        <Icon icon={Dots} />
       </IconButton>
     </ListItemIcon>
   )

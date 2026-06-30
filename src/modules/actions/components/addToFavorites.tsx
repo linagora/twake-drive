@@ -1,10 +1,9 @@
+import { Icon, StarOutline } from '@linagora/twake-icons'
 import React, { forwardRef } from 'react'
 
 import { splitFilename } from 'cozy-client/dist/models/file'
 import CozyClient from 'cozy-client/types/CozyClient'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import StarOutlineIcon from 'cozy-ui/transpiled/react/Icons/StarOutline'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 
@@ -23,7 +22,7 @@ const addToFavorites = ({
   isMobile,
   showAlert
 }: addToFavoritesProps): ActionWithPolicy => {
-  const icon = StarOutlineIcon
+  const icon = StarOutline
   const label = isMobile
     ? t('favorites.label.addMobile')
     : t('favorites.label.add')

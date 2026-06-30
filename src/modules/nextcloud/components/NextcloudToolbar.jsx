@@ -1,3 +1,4 @@
+import { Icon, Plus, Share } from '@linagora/twake-icons'
 import cx from 'classnames'
 import React, { useState, useRef } from 'react'
 
@@ -7,9 +8,6 @@ import {
   divider
 } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
 import Buttons from 'cozy-ui/transpiled/react/Buttons'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import PlusIcon from 'cozy-ui/transpiled/react/Icons/Plus'
-import ShareIcon from 'cozy-ui/transpiled/react/Icons/Share'
 import { useI18n } from 'twake-i18n'
 
 import { BarRightOnMobile } from '@/components/Bar'
@@ -52,15 +50,15 @@ const NextcloudToolbar = () => {
         disabled
         label={t('NextcloudToolbar.share')}
         variant="secondary"
-        startIcon={<Icon icon={ShareIcon} />}
+        startIcon={<Icon icon={Share} />}
         className="u-mr-half"
       />
       <div ref={addButtonRef}>
         <Buttons
           onClick={toggleAddMenu}
-          icon={PlusIcon}
+          icon={Plus}
           label={t('toolbar.menu_add')}
-          startIcon={<Icon icon={PlusIcon} />}
+          startIcon={<Icon icon={Plus} />}
           aria-controls={isAddMenuOpened ? 'add-menu' : undefined}
           aria-haspopup={true}
           aria-expanded={isAddMenuOpened ? true : undefined}

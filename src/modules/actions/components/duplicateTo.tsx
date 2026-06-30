@@ -1,9 +1,8 @@
+import { Icon, MultiFiles } from '@linagora/twake-icons'
 import React, { forwardRef } from 'react'
 
 import { isFile } from 'cozy-client/dist/models/file'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import MultiFilesIcon from 'cozy-ui/transpiled/react/Icons/MultiFiles'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 
@@ -27,7 +26,7 @@ const duplicateTo = ({
   search,
   canDuplicate = true
 }: duplicateToProps): ActionWithPolicy => {
-  const icon = MultiFilesIcon
+  const icon = MultiFiles
   const label = isMobile
     ? t('actions.duplicateToMobile.label')
     : t('actions.duplicateTo.label')

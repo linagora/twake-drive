@@ -1,6 +1,6 @@
+import { FileTypeSharedDrive } from '@linagora/twake-icons'
 import React, { FC } from 'react'
 
-import FileTypeSharedDriveIcon from 'cozy-ui/transpiled/react/Icons/FileTypeSharedDrive'
 import { NavIcon, NavLink, NavItem } from 'cozy-ui/transpiled/react/Nav'
 import Typography from 'cozy-ui/transpiled/react/Typography'
 
@@ -28,7 +28,7 @@ const SharedDriveListItem: FC<SharedDriveListItemProps> = ({
         className={NavLink.className}
         onClick={(): void => setLastClicked(undefined)}
       >
-        <NavIcon icon={FileTypeSharedDriveIcon} />
+        <NavIcon icon={FileTypeSharedDrive} />
         <Typography
           className="u-fz-small"
           variant="inherit"

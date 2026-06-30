@@ -1,3 +1,4 @@
+import { Icon, Upload } from '@linagora/twake-icons'
 import PropTypes from 'prop-types'
 import React from 'react'
 import { useDispatch } from 'react-redux'
@@ -6,8 +7,6 @@ import { useClient } from 'cozy-client'
 import withSharingState from 'cozy-sharing/dist/hoc/withSharingState'
 import Button from 'cozy-ui/transpiled/react/Buttons'
 import FileInput from 'cozy-ui/transpiled/react/FileInput'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import UploadIcon from 'cozy-ui/transpiled/react/Icons/Upload'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import { useI18n } from 'twake-i18n'
 
@@ -66,7 +65,7 @@ const UploadButton = ({
             }
       }
       component="span"
-      startIcon={<Icon icon={UploadIcon} size={12} />}
+      startIcon={<Icon icon={Upload} size={12} />}
       label={label}
     />
   )

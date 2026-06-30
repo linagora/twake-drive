@@ -1,9 +1,8 @@
+import { Icon, ShieldClean, InfoOutlined } from '@linagora/twake-icons'
 import React, { useRef, useState } from 'react'
 
 import ActionsBar from 'cozy-ui/transpiled/react/ActionsBar'
-import Icon from 'cozy-ui/transpiled/react/Icon'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
-import ShieldCleanIcon from 'cozy-ui/transpiled/react/Icons/ShieldClean'
 import List from 'cozy-ui/transpiled/react/List'
 import ListItem from 'cozy-ui/transpiled/react/ListItem'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
@@ -64,7 +63,7 @@ const SelectionBar: React.FC<{
       iconComponent = (): JSX.Element => (
         <div onMouseEnter={handlePopoverOpen} onMouseLeave={handlePopoverClose}>
           <IconButton ref={anchorRef}>
-            <Icon color="white" icon="info-outlined" className="u-mr-1" />
+            <Icon color="white" icon={InfoOutlined} className="u-mr-1" />
           </IconButton>
           <Popover
             open={popoverOpen}
@@ -83,7 +82,7 @@ const SelectionBar: React.FC<{
               <List>
                 <ListItem ellipsis={false}>
                   <ListItemIcon>
-                    <Icon icon={ShieldCleanIcon} color="var(--primaryColor)" />
+                    <Icon icon={ShieldClean} color="var(--primaryColor)" />
                   </ListItemIcon>
                   <ListItemText
                     primary={t('antivirus.popover.title')}

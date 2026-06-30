@@ -1,3 +1,4 @@
+import { Icon } from '@linagora/twake-icons'
 import React, { useCallback, useEffect, useState } from 'react'
 
 import { useClient } from 'cozy-client'
@@ -5,7 +6,6 @@ import { splitFilename } from 'cozy-client/dist/models/file'
 import { SharedDocument, SharedRecipientsList } from 'cozy-sharing'
 import Button from 'cozy-ui/transpiled/react/Buttons'
 import { ConfirmDialog } from 'cozy-ui/transpiled/react/CozyDialogs'
-import Icon from 'cozy-ui/transpiled/react/Icon'
 import Stack from 'cozy-ui/transpiled/react/Stack'
 import Typography from 'cozy-ui/transpiled/react/Typography'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'

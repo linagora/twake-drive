@@ -1,9 +1,7 @@
+import { Icon, CrossCircleOutline, Magnifier } from '@linagora/twake-icons'
 import React from 'react'
 
-import Icon from 'cozy-ui/transpiled/react/Icon'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
-import CrossCircleOutlineIcon from 'cozy-ui/transpiled/react/Icons/CrossCircleOutline'
-import Magnifier from 'cozy-ui/transpiled/react/Icons/Magnifier'
 import InputGroup from 'cozy-ui/transpiled/react/InputGroup'
 
 import styles from '@/modules/search/components/styles.styl'
@@ -30,7 +28,7 @@ const BarSearchInputGroup = ({
       append={
         isInputNotEmpty ? (
           <IconButton size="medium" onClick={onClean}>
-            <Icon icon={CrossCircleOutlineIcon} />
+            <Icon icon={CrossCircleOutline} />
           </IconButton>
         ) : null
       }

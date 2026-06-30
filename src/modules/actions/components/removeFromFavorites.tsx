@@ -1,10 +1,9 @@
+import { Icon, Star } from '@linagora/twake-icons'
 import React, { forwardRef } from 'react'
 
 import { splitFilename } from 'cozy-client/dist/models/file'
 import CozyClient from 'cozy-client/types/CozyClient'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import StarIcon from 'cozy-ui/transpiled/react/Icons/Star'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 
@@ -22,7 +21,7 @@ const removeFromFavorites = ({
   showAlert
 }: removeFromFavoritesProps): ActionWithPolicy => {
   const label = t('favorites.label.remove')
-  const icon = StarIcon
+  const icon = Star
 
   return {
     name: 'removeFromFavorites',

@@ -1,7 +1,7 @@
+import { Plus } from '@linagora/twake-icons'
 import React, { useContext } from 'react'
 
 import { ExtendableFab } from 'cozy-ui/transpiled/react/Fab'
-import PlusIcon from 'cozy-ui/transpiled/react/Icons/Plus'
 import { useI18n } from 'twake-i18n'
 
 import { AddMenuContext } from '@/modules/drive/AddMenu/AddMenuProvider'
@@ -29,7 +29,7 @@ const FabWithAddMenuContext = ({ noSidebar }) => {
         ref={anchorRef ? anchorRef : undefined}
         color="primary"
         label={t('button.create')}
-        icon={PlusIcon}
+        icon={Plus}
         className={styles.root}
         disabled={isDisabled || isOffline}
         follow={window}

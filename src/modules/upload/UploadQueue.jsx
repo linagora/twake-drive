@@ -1,12 +1,14 @@
+import {
+  Icon,
+  CheckCircle,
+  CrossCircle,
+  Spinner,
+  Warning
+} from '@linagora/twake-icons'
 import cx from 'classnames'
 import React, { useCallback, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import CheckCircleIcon from 'cozy-ui/transpiled/react/Icons/CheckCircle'
-import CrossCircleIcon from 'cozy-ui/transpiled/react/Icons/CrossCircle'
-import SpinnerIcon from 'cozy-ui/transpiled/react/Icons/Spinner'
-import WarningIcon from 'cozy-ui/transpiled/react/Icons/Warning'
 import LinearProgress from 'cozy-ui/transpiled/react/LinearProgress'
 import List from 'cozy-ui/transpiled/react/List'
 import ListItem from 'cozy-ui/transpiled/react/ListItem'
@@ -121,16 +123,16 @@ const UploadItem = ({ item, t }) => {
     // SVG in a div whose line-box baseline pushes the glyph ~2px above the
     // sibling label, which looks misaligned in the row.
     statusIcon = (
-      <Icon icon={SpinnerIcon} color="var(--primaryColor)" spin size={16} />
+      <Icon icon={Spinner} color="var(--primaryColor)" spin size={16} />
     )
   } else if (status === CANCEL) {
-    statusIcon = <Icon icon={CrossCircleIcon} color="var(--errorColor)" />
+    statusIcon = <Icon icon={CrossCircle} color="var(--errorColor)" />
   } else if (isConflict) {
-    statusIcon = <Icon icon={WarningIcon} color="var(--primaryColor)" />
+    statusIcon = <Icon icon={Warning} color="var(--primaryColor)" />
   } else if (isError) {
-    statusIcon = <Icon icon={WarningIcon} color="var(--errorColor)" />
+    statusIcon = <Icon icon={Warning} color="var(--errorColor)" />
   } else if (isDone) {
-    statusIcon = <Icon icon={CheckCircleIcon} color="var(--successColor)" />
+    statusIcon = <Icon icon={CheckCircle} color="var(--successColor)" />
   }
 
   let label = null

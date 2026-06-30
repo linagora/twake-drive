@@ -1,8 +1,7 @@
+import { Icon, Download } from '@linagora/twake-icons'
 import React, { forwardRef } from 'react'
 
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import DownloadIcon from 'cozy-ui/transpiled/react/Icons/Download'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 
@@ -35,7 +34,7 @@ export const download = ({
   displayedFolder
 }) => {
   const label = t('SelectionBar.download')
-  const icon = DownloadIcon
+  const icon = Download
 
   return {
     name: 'download',

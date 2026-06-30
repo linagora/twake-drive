@@ -1,3 +1,4 @@
+import { Icon, FileTypeNote } from '@linagora/twake-icons'
 import get from 'lodash/get'
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -13,8 +14,6 @@ import { isFlagshipApp } from 'cozy-device-helper'
 import flag from 'cozy-flags'
 import { useWebviewIntent } from 'cozy-intent'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import IconNote from 'cozy-ui/transpiled/react/Icons/FileTypeNote'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
@@ -117,7 +116,7 @@ const CreateNoteItem = ({
   return (
     <ActionsMenuItem data-testid="create-a-note" onClick={handleClick}>
       <ListItemIcon>
-        <Icon icon={IconNote} />
+        <Icon icon={FileTypeNote} />
       </ListItemIcon>
       <ListItemText primary={t('toolbar.menu_create_note')} />
     </ActionsMenuItem>

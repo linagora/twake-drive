@@ -1,10 +1,8 @@
+import { Icon, Forbidden, Restore } from '@linagora/twake-icons'
 import React, { useCallback, useState } from 'react'
 
 import Button from 'cozy-ui/transpiled/react/Buttons'
 import { ConfirmDialog } from 'cozy-ui/transpiled/react/CozyDialogs'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import ForbiddenIcon from 'cozy-ui/transpiled/react/Icons/Forbidden'
-import RestoreIcon from 'cozy-ui/transpiled/react/Icons/Restore'
 import List from 'cozy-ui/transpiled/react/List'
 import ListItem from 'cozy-ui/transpiled/react/ListItem'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
@@ -58,13 +56,13 @@ const EmptyTrashConfirm: React.FC<EmptyTrashConfirmProps> = ({
         <List>
           <ListItem gutters="disabled" size="small" ellipsis={false}>
             <ListItemIcon>
-              <Icon icon={ForbiddenIcon} />
+              <Icon icon={Forbidden} />
             </ListItemIcon>
             <ListItemText primary={t('EmptyTrashConfirm.forbidden')} />
           </ListItem>
           <ListItem gutters="disabled" size="small" ellipsis={false}>
             <ListItemIcon>
-              <Icon icon={RestoreIcon} />
+              <Icon icon={Restore} />
             </ListItemIcon>
             <ListItemText primary={t('EmptyTrashConfirm.restore')} />
           </ListItem>

@@ -1,10 +1,9 @@
+import { Icon, FileTypeFolder } from '@linagora/twake-icons'
 import React, { FC } from 'react'
 import { useDispatch } from 'react-redux'
 
 import { useClient } from 'cozy-client'
 import Divider from 'cozy-ui/transpiled/react/Divider'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import IconFolder from 'cozy-ui/transpiled/react/Icons/FileTypeFolder'
 import ListItem from 'cozy-ui/transpiled/react/ListItem'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
@@ -62,7 +61,7 @@ const FolderPickerAddFolderItem: FC<FolderPickerAddFolderItemProps> = ({
       <>
         <ListItem gutters={gutters}>
           <ListItemIcon>
-            <Icon icon={IconFolder} size={32} />
+            <Icon icon={FileTypeFolder} size={32} />
           </ListItemIcon>
           <FilenameInput onSubmit={handleSubmit} onAbort={handleAbort} />
         </ListItem>

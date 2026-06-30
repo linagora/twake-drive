@@ -1,8 +1,8 @@
+import { Icon } from '@linagora/twake-icons'
 import cx from 'classnames'
 import React from 'react'
 
 import Alert from 'cozy-ui/transpiled/react/Alert'
-import Icon from 'cozy-ui/transpiled/react/Icon'
 import Typography from 'cozy-ui/transpiled/react/Typography'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import { useI18n } from 'twake-i18n'

@@ -1,11 +1,10 @@
+import { Icon, Restore } from '@linagora/twake-icons'
 import React, { forwardRef } from 'react'
 
 import CozyClient from 'cozy-client/types/CozyClient'
 import { NextcloudFile } from 'cozy-client/types/types'
 import { Action } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import RestoreIcon from 'cozy-ui/transpiled/react/Icons/Restore'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 
@@ -28,7 +27,7 @@ export const restoreNextcloudFile = ({
   showAlert
 }: RestoreNextcloudFileProps): Action<NextcloudFile> => {
   const label = t('RestoreNextcloudFile.label')
-  const icon = RestoreIcon
+  const icon = Restore
 
   return {
     name: 'restoreNextcloudFile',

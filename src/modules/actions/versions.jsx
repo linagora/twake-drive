@@ -1,9 +1,8 @@
+import { Icon, History } from '@linagora/twake-icons'
 import React, { forwardRef } from 'react'
 
 import { isFile } from 'cozy-client/dist/models/file'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import HistoryIcon from 'cozy-ui/transpiled/react/Icons/History'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 
@@ -27,7 +26,7 @@ const makeComponent = (label, icon) => {
 
 export const versions = ({ t, navigate, pathname }) => {
   const label = t('SelectionBar.history')
-  const icon = HistoryIcon
+  const icon = History
 
   return {
     name: 'history',

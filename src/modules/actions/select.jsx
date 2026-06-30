@@ -1,8 +1,7 @@
+import { Icon, CheckSquare } from '@linagora/twake-icons'
 import React, { forwardRef } from 'react'
 
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import CheckSquareIcon from 'cozy-ui/transpiled/react/Icons/CheckSquare'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 
@@ -24,7 +23,7 @@ const makeComponent = (label, icon) => {
 
 export const select = ({ t, showSelectionBar }) => {
   const label = t('toolbar.menu_select')
-  const icon = CheckSquareIcon
+  const icon = CheckSquare
 
   return {
     name: 'select',

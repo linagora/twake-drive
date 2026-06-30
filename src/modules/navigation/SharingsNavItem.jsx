@@ -1,10 +1,9 @@
+import { Icon, ShareExternal } from '@linagora/twake-icons'
 import React, { useMemo } from 'react'
 
 import { useQuery } from 'cozy-client'
 import { isSharingShortcutNew } from 'cozy-client/dist/models/file'
 import { useSharingContext } from 'cozy-sharing'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import ShareIcon from 'cozy-ui/transpiled/react/Icons/ShareExternal'
 
 import { NavItem } from '@/modules/navigation/NavItem'
 import { buildSharingsQuery } from '@/queries'
@@ -29,7 +28,7 @@ const SharingsNavItem = ({ clickState }) => {
   return (
     <NavItem
       to="/sharings"
-      icon={<Icon icon={ShareIcon} />}
+      icon={<Icon icon={ShareExternal} />}
       label="sharings"
       rx={/\/sharings(\/.*)?|\/shareddrive(\/.*)?/}
       clickState={clickState}
