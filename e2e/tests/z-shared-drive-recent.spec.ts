@@ -6,7 +6,7 @@ import { test, expect, stamp, safeUnlink } from '../helpers/fixtures'
 import {
   createAndShareFolderWithBob,
   openOwnerFolder,
-  waitForSharingRow
+  openSharedDrive
 } from '../helpers/sharing'
 import { SidebarPage } from '../pages/SidebarPage'
 
@@ -126,10 +126,11 @@ test.describe.serial('Shared drive recents', () => {
     bobPage,
     bobDrive
   }) => {
-    // Ensure the sharing has propagated to Bob's instance before checking
-    // his recent view. waitForSharingRow polls /#/sharings until the drive
-    // row appears.
-    await waitForSharingRow(bobPage, USERS.bob, bobDrive, DRIVE_NAME)
+    // Open the shared drive once so Bob's instance registers and replicates it
+    // (the recipient's drive pouch/realtime subscription is set up on first
+    // visit). openSharedDrive waits for the sharing row, then navigates into
+    // the proxied /shareddrive/ view.
+    await openSharedDrive(bobPage, USERS.bob, bobDrive, DRIVE_NAME)
 
     // Poll until the shared-drive file surfaces in Bob's /#/recent. Files
     // proxied from Alice's instance may take a few seconds to appear.
@@ -147,6 +148,10 @@ test.describe.serial('Shared drive recents', () => {
     bobPage,
     bobDrive
   }) => {
+    // Fresh per-test context: open the shared drive so Bob's instance
+    // registers/replicates it before the recent view is checked.
+    await openSharedDrive(bobPage, USERS.bob, bobDrive, DRIVE_NAME)
+
     // Poll until the rename-candidate file appears in Bob's recent view.
     await expect(async () => {
       await bobPage.goto(`${USERS.bob.appUrl}/#/recent`)
