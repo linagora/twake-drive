@@ -44,7 +44,8 @@ const FEATURE_FLAGS = {
   'cozy.hide-sharing-cozy-to-cozy': true,
   'drive.shared-drive.enabled': true,
   'drive.federated-shared-folder.enabled': true,
-  'drive.federated-shared-modal.enabled': true
+  'drive.federated-shared-modal.enabled': true,
+  'drive.file-picker-demo.enabled': true
 }
 
 async function waitForStack(url: string, timeoutMs = 60_000): Promise<void> {

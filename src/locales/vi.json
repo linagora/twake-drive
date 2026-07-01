@@ -12,6 +12,7 @@
     "item_shared_drives": "Ổ đĩa nhóm",
     "item_favorites": "Yêu thích",
     "item_my_drive": "Ổ đĩa của tôi",
+    "item_file_picker": "Chọn một tệp",
     "btn-client": "Tải TwakeDrive cho máy tính",
     "support-us": "Xem những ưu đãi",
     "support-us-description": "Bạn muốn có thêm dung lượng hay đơn giản chỉ muốn ủng hộ Cozy??",
@@ -714,6 +715,28 @@
     "error": {
       "title": "Không thể truy cập tài liệu",
       "subtitle": "Liên kết chia sẻ bị thiếu hoặc không hợp lệ. Vui lòng yêu cầu chủ sở hữu tài liệu kiểm tra quyền truy cập"
+    }
+  },
+  "FilePicker": {
+    "linkTitle": "Liên kết cho %{name}",
+    "close": "Đóng",
+    "footer": {
+      "buttons": {
+        "cancel": "Hủy",
+        "publicLink": "Chia sẻ bằng liên kết công khai",
+        "temporaryDownloadLink": "Đính kèm bằng liên kết tạm thời"
+      }
+    },
+    "constraints": {
+      "disabledReasons": {
+        "folderNotAllowed": "Folders are not allowed for this action",
+        "mimeTypeNotAllowed": "This file type is not allowed for this action",
+        "fileTooLarge": "This file is larger than %{maxFileSize}"
+      }
+    },
+    "actions": {
+      "sharingLink": "Chia sẻ với liên kết công khai",
+      "downloadLink": "Đính kèm với liên kết tạm thời"
     }
   }
 }
