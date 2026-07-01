@@ -829,6 +829,7 @@
       "rate_limit": "Trop de requêtes. Veuillez patienter et réessayer.",
       "server": "Le service IA est temporairement indisponible. Veuillez réessayer.",
       "generic": "Une erreur est survenue. Veuillez réessayer plus tard.",
+      "context_too_large": "Le contexte inclus est trop volumineux pour l'IA, qui n'a pas pu tout prendre en compte. Réduisez-le — raccourcissez la sélection ou décochez le document — puis réessayez.",
       "network": "Erreur réseau. Vérifiez votre connexion et réessayez.",
       "empty_response": "Aucun résultat reçu. Veuillez réessayer.",
       "unexpected": "Une erreur inattendue est survenue. Veuillez réessayer."

@@ -548,6 +548,7 @@
       "rate_limit": "Demasiadas solicitudes. Espere un momento e inténtelo de nuevo.",
       "server": "El servicio de IA no está disponible temporalmente. Inténtelo de nuevo.",
       "generic": "Algo salió mal. Inténtelo de nuevo más tarde.",
+      "context_too_large": "El contexto incluido es demasiado grande para la IA, que no pudo tenerlo todo en cuenta. Redúzcalo — acorte la selección o desmarque el documento — y vuelva a intentarlo.",
       "network": "Error de red. Verifique su conexión e inténtelo de nuevo.",
       "empty_response": "No se recibió resultado. Inténtelo de nuevo.",
       "unexpected": "Ocurrió un error inesperado. Inténtelo de nuevo."

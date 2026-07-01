@@ -577,6 +577,7 @@
       "rate_limit": "Zu viele Anfragen. Bitte warten Sie einen Moment und versuchen Sie es erneut.",
       "server": "Der KI-Dienst ist vorübergehend nicht verfügbar. Bitte versuchen Sie es erneut.",
       "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es später erneut.",
+      "context_too_large": "Der einbezogene Kontext ist zu groß für die KI, die nicht alles berücksichtigen konnte. Reduzieren Sie ihn – kürzen Sie die Auswahl oder wählen Sie das Dokument ab – und versuchen Sie es erneut.",
       "network": "Netzwerkfehler. Überprüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
       "empty_response": "Kein Ergebnis erhalten. Bitte versuchen Sie es erneut.",
       "unexpected": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut."

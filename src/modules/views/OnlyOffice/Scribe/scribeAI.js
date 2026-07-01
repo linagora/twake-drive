@@ -484,6 +484,14 @@ export function classifyScribeError(err) {
     if (err.status === 429) {
       return { messageKey: 'Scribe.error.rate_limit', canRetry: true }
     }
+    // 413 Request Entity Too Large: the assembled context exceeds the AI's
+    // context window (token limit enforced by the RAG/LLM server, not the
+    // stack). A plain retry re-sends the same oversized payload, so canRetry is
+    // false — the user must reduce the included context (shorten the selection
+    // or uncheck the document) before trying again.
+    if (err.status === 413) {
+      return { messageKey: 'Scribe.error.context_too_large', canRetry: false }
+    }
     if (err.status >= 500) {
       return { messageKey: 'Scribe.error.server', canRetry: true }
     }

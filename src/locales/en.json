@@ -832,6 +832,7 @@
       "rate_limit": "Too many requests. Please wait a moment and try again.",
       "server": "The AI service is temporarily unavailable. Please try again.",
       "generic": "Something went wrong. Please try again later.",
+      "context_too_large": "The included context is too large for the AI, which could not take all of it into account. Reduce it — shorten the selection or uncheck the document — then try again.",
       "network": "Network error. Check your connection and try again.",
       "empty_response": "No result received. Please try again.",
       "unexpected": "An unexpected error occurred. Please try again."

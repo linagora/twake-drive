@@ -401,6 +401,7 @@
       "rate_limit": "Troppe richieste. Attendi un momento e riprova.",
       "server": "Il servizio IA è temporaneamente non disponibile. Riprova.",
       "generic": "Qualcosa è andato storto. Riprova più tardi.",
+      "context_too_large": "Il contesto incluso è troppo grande per l'IA, che non ha potuto considerarlo tutto. Riducilo — accorcia la selezione o deseleziona il documento — e riprova.",
       "network": "Errore di rete. Verifica la connessione e riprova.",
       "empty_response": "Nessun risultato ricevuto. Riprova.",
       "unexpected": "Si è verificato un errore imprevisto. Riprova."
