@@ -2,6 +2,9 @@
   "name": "cozy-drive",
   "version": "1.105.0",
   "main": "src/main.jsx",
+  "engines": {
+    "node": "~24"
+  },
   "scripts": {
     "build": "rsbuild build",
     "watch": "rsbuild build --watch --mode development",
@@ -137,5 +140,6 @@
     "redux-thunk": "2.4.2",
     "twake-i18n": "^0.3.4",
     "whatwg-fetch": "3.0.0"
-  }
+  },
+  "packageManager": "yarn@4.17.0"
 }
