@@ -16,11 +16,13 @@ const NavLink = ({
   children,
   to,
   rx,
+  isActive,
   clickState: [lastClicked, setLastClicked]
 }) => {
   const location = useLocation()
   const pathname = lastClicked ? lastClicked : location.pathname
-  const isActive = navLinkMatch(rx, to, pathname)
+  const active = isActive ? isActive(pathname) : navLinkMatch(rx, to, pathname)
+
   return (
     <a
       style={{ outline: 'none' }}
@@ -31,7 +33,7 @@ const NavLink = ({
       href={`#${to}`}
       className={cx(
         UINavLink.className,
-        isActive ? UINavLink.activeClassName : null
+        active ? UINavLink.activeClassName : null
       )}
     >
       {children}
@@ -42,7 +44,8 @@ const NavLink = ({
 NavLink.propTypes = {
   children: PropTypes.node.isRequired,
   to: PropTypes.string,
-  rx: PropTypes.shape(RegExp)
+  rx: PropTypes.shape(RegExp),
+  isActive: PropTypes.func
 }
 
 export { NavLink }
