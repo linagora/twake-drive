@@ -9,7 +9,7 @@
   // If the console shows an OLDER build than expected, the editor served a CACHED
   // code.js → reopen the editor in a fresh tab / private window (a plain F5 won't
   // refetch the async plugin iframe).
-  var SCRIBE_BUILD = "2026-06-29.13 — redo fix: suppressExtraction widened 500ms→3000ms + cancels pending throttled extraction (passive extraction callCommand truncated redo ~1s after every Scribe insert/replace). On top of .12 (stable per-image scribe-img-N ids + docs, diagnostics removed; carries floating-image extraction).";
+  var SCRIBE_BUILD = "2026-06-29.14 — inline Scribe triggers force a FRESH selection extraction (direct callCommand, not the throttled debounce) before casting AI_TEXT_ASSISTANT, so the prompt uses the CURRENT selection not the previous one. On top of .13 (redo fix) / .12 (stable image ids).";
   try { window.__scribeBuild = SCRIBE_BUILD; } catch (e) {}
 
   // ---- State ----
@@ -2543,15 +2543,45 @@
     });
   });
 
+  // Inline-Scribe triggers must act on the CURRENT selection. But the enriched
+  // markdown (lastEnrichedMd, sent to the LLM) is refreshed ONLY by the debounced
+  // passive extraction, whose scheduling setTimeout is throttled in this background
+  // iframe — so a quick select-then-trigger sent the PREVIOUS selection. Force a
+  // fresh extraction HERE by calling the extraction callCommand DIRECTLY (no
+  // setTimeout → not throttled → prompt callback) and cast AI_TEXT_ASSISTANT from
+  // its callback, so the intent carries the up-to-date enrichedMd. Empty selection
+  // → no cast (Scribe needs a selection); onEmpty lets the caller pick a fallback.
+  function castScribeTriggerFresh(extraData, onEmpty) {
+    window.Asc.scope.imgCounter = imageCounter;
+    window.Asc.scope._fnCounter = footnoteCounter;
+    window.Asc.scope._crCounter = crossRefCounter;
+    window.Asc.scope._crMeta = {};
+    window.Asc.scope._tReturnSnaps = (window.__scribeTestForce === true);
+    window.Asc.scope.scribeExtractMode = "selection";
+    function finish() {
+      if (lastSelectedText && lastSelectedText.length > 0) {
+        var data = buildEditIntentData();
+        if (extraData) { for (var k in extraData) { if (extraData.hasOwnProperty(k)) data[k] = extraData[k]; } }
+        castIntent("AI_TEXT_ASSISTANT", data);
+      } else if (onEmpty) { onEmpty(); }
+    }
+    try {
+      window.Asc.plugin.callCommand(buildScribeExtractionResult, false, false, function(resultJson) {
+        try { onSelectionExtractResult(resultJson); } catch (e) {}
+        finish();
+      });
+    } catch (e) { finish(); } // fall back to whatever the cache holds
+  }
+
   // ---- Trigger-intent listener (host -> plugin) ----
   // Cozy Drive sends trigger-intent to ask the plugin to cast an AI_TEXT_ASSISTANT intent
   window.addEventListener("message", function(event) {
     var msg = event.data;
     if (!msg || msg.type !== "cozy-bridge:trigger-intent") return;
 
-    if (msg.action === "AI_TEXT_ASSISTANT" && lastSelectedText.length > 0) {
-      log("Trigger-intent received, casting AI_TEXT_ASSISTANT");
-      castIntent("AI_TEXT_ASSISTANT", buildEditIntentData());
+    if (msg.action === "AI_TEXT_ASSISTANT") {
+      log("Trigger-intent received, refreshing selection then casting AI_TEXT_ASSISTANT");
+      castScribeTriggerFresh();
     }
   });
 
@@ -4032,8 +4062,7 @@
       TabSymbol: String.fromCharCode(9)
     }], function(selectedText) {
       lastSelectedText = selectedText || "";
-      // Use stored HTML from latest init() call
-      castIntent("AI_TEXT_ASSISTANT", buildEditIntentData());
+      castScribeTriggerFresh();
     });
   });
 
@@ -4065,9 +4094,7 @@
         // fired after 250-440ms in practice), so addon-side timing is unusable.
         // The toolbar/context-menu paths cast without deferReveal -> open now.
         lastSelectedText = txt;
-        var data = buildEditIntentData();
-        data.deferReveal = true;
-        castIntent("AI_TEXT_ASSISTANT", data);
+        castScribeTriggerFresh({ deferReveal: true });
       } else {
         log("Ctrl+Shift+I: toggle panel");
         lastSelectedText = "";
@@ -4231,7 +4258,7 @@
 
   function triggerScribeIfSelection() {
     if (lastSelectedText.length > 0) {
-      castIntent("AI_TEXT_ASSISTANT", buildEditIntentData());
+      castScribeTriggerFresh();
     } else {
       log("No text selected — toolbar click ignored");
     }
