@@ -26,6 +26,7 @@ import AddMenuProvider from '@/modules/drive/AddMenu/AddMenuProvider'
 import AddButton from '@/modules/drive/Toolbar/components/AddButton'
 import Nav from '@/modules/navigation/Nav'
 import { NavProvider, useNavContext } from '@/modules/navigation/NavContext'
+import FilePickerButton from '@/modules/navigation/components/FilePickerButton'
 import {
   wasOperationRedirected,
   RESET_OPERATION_REDIRECTED
@@ -144,6 +145,7 @@ const LayoutContent = () => {
           </div>
           {isDesktop && (
             <div>
+              {flag('drive.file-picker-demo.enabled') && <FilePickerButton />}
               <div className="u-p-1-half">
                 <Storage />
               </div>
