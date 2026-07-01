@@ -13,7 +13,7 @@
     "item_favorites": "Favoris",
     "item_external_drives": "Disques externes",
     "item_my_drive": "Mon Drive",
-    "item_folder_picker": "Choisir un fichier",
+    "item_file_picker": "Choisir un fichier",
     "btn-client": "Télécharger Twake Drive ",
     "btn-client-web": "Obtenez un Twake",
     "btn-client-mobile": "Emportez votre cloud personnel avec vous : installez notre app %{name} !",
