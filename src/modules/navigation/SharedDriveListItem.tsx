@@ -30,7 +30,7 @@ const SharedDriveListItem: FC<SharedDriveListItemProps> = ({
         <NavIcon icon={FileTypeSharedDriveIcon} />
         <Typography
           className="u-fz-small"
-          variant="inherit"
+          variant="button"
           color="inherit"
           noWrap
         >
