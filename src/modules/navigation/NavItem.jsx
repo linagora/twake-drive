@@ -27,6 +27,7 @@ const NavItem = ({
   icon,
   label,
   rx,
+  isActive,
   clickState,
   badgeContent,
   secondary,
@@ -36,7 +37,7 @@ const NavItem = ({
 
   return (
     <UINavItem secondary={secondary}>
-      <NavLink to={to} rx={rx} clickState={clickState}>
+      <NavLink to={to} rx={rx} isActive={isActive} clickState={clickState}>
         <NavContent
           icon={icon}
           label={forcedLabel ?? t(`Nav.item_${label}`)}
@@ -53,6 +54,7 @@ NavItem.propTypes = {
   label: PropTypes.string,
   forcedLabel: PropTypes.string,
   rx: PropTypes.shape(RegExp),
+  isActive: PropTypes.func,
   badgeContent: PropTypes.number
 }
 
