@@ -751,5 +751,27 @@
       "title": "Downloading and sharing is blocked for security reasons",
       "description": "Twake system detected a virus"
     }
+  },
+  "FilePicker": {
+    "linkTitle": "Link for %{name}",
+    "close": "Close",
+    "footer": {
+      "buttons": {
+        "cancel": "Cancel",
+        "publicLink": "Share with public link",
+        "temporaryDownloadLink": "Attach with temporary link"
+      }
+    },
+    "constraints": {
+      "disabledReasons": {
+        "folderNotAllowed": "Folders are not allowed for this action",
+        "mimeTypeNotAllowed": "This file type is not allowed for this action",
+        "fileTooLarge": "This file is larger than %{maxFileSize}"
+      }
+    },
+    "actions": {
+      "sharingLink": "Share with public link",
+      "downloadLink": "Attach with temporary link"
+    }
   }
 }

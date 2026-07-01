@@ -748,5 +748,27 @@
       "title": "Le téléchargement et le partage sont bloqués pour des raisons de sécurité",
       "description": "Le système Twake a détecté un virus"
     }
+  },
+  "FilePicker": {
+    "linkTitle": "Lien pour %{name}",
+    "close": "Fermer",
+    "footer": {
+      "buttons": {
+        "cancel": "Annuler",
+        "publicLink": "Partager par lien public",
+        "temporaryDownloadLink": "Joindre avec un lien temporaire"
+      }
+    },
+    "constraints": {
+      "disabledReasons": {
+        "folderNotAllowed": "Les dossiers ne sont pas autorisés pour cette action",
+        "mimeTypeNotAllowed": "Ce type de fichier n'est pas autorisé pour cette action",
+        "fileTooLarge": "Ce fichier est plus grand que %{maxFileSize}"
+      }
+    },
+    "actions": {
+      "sharingLink": "Partager par lien public",
+      "downloadLink": "Joindre avec un lien temporaire"
+    }
   }
 }
