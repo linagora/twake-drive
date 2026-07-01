@@ -1,10 +1,10 @@
 import React, { FC } from 'react'
 
 import FileTypeSharedDriveIcon from 'cozy-ui/transpiled/react/Icons/FileTypeSharedDrive'
-import { NavIcon, NavLink, NavItem } from 'cozy-ui/transpiled/react/Nav'
+import { NavIcon, NavItem } from 'cozy-ui/transpiled/react/Nav'
 import Typography from 'cozy-ui/transpiled/react/Typography'
 
-import { FileLink } from './components/FileLink'
+import { NavLink } from './NavLink'
 
 import { useSharedDriveLink } from '@/modules/navigation/hooks/useSharedDriveLink'
 import type { SharedDrive } from '@/modules/shareddrives/helpers'
@@ -16,17 +16,16 @@ interface SharedDriveListItemProps {
 
 const SharedDriveListItem: FC<SharedDriveListItemProps> = ({
   sharing,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  clickState: [lastClicked, setLastClicked]
+  clickState
 }) => {
   const { link } = useSharedDriveLink(sharing)
 
   return (
     <NavItem key={sharing._id}>
-      <FileLink
-        link={link}
-        className={NavLink.className}
-        onClick={(): void => setLastClicked(undefined)}
+      <NavLink
+        to={link.to.pathname}
+        rx={new RegExp(`^\\/shareddrive\\/${sharing._id}(\\/.*|$)`)}
+        clickState={clickState}
       >
         <NavIcon icon={FileTypeSharedDriveIcon} />
         <Typography
@@ -37,7 +36,7 @@ const SharedDriveListItem: FC<SharedDriveListItemProps> = ({
         >
           {sharing.description}
         </Typography>
-      </FileLink>
+      </NavLink>
     </NavItem>
   )
 }
