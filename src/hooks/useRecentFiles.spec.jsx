@@ -1,11 +1,11 @@
-import { render, act, waitFor } from '@testing-library/react'
+import { render, act } from '@testing-library/react'
 import React from 'react'
-
-import { useClient, DataProxyLink } from 'cozy-client'
 
 import useRecentFiles from './useRecentFiles'
 
 import { useSharedDrives } from '@/modules/shareddrives/hooks/useSharedDrives'
+
+import { useClient } from 'cozy-client'
 
 // Mock cozy-client: create a fake DataProxyLink class that can be used with instanceof
 jest.mock('cozy-client', () => {
@@ -25,14 +25,14 @@ jest.mock('@/hooks/useRecentFiles/RecentScopeQuery', () => ({
   default: jest.fn()
 }))
 
-const MockRecentScopeQuery = require('@/hooks/useRecentFiles/RecentScopeQuery')
-  .default
-
 const mockUseClient = useClient
 const mockUseSharedDrives = useSharedDrives
 
 // Get the FakeDataProxyLink class to create instances
 const { DataProxyLink: FakeDataProxyLink } = require('cozy-client')
+
+const MockRecentScopeQuery =
+  require('@/hooks/useRecentFiles/RecentScopeQuery').default
 
 const makeClientWithDataProxy = () => ({
   links: [new FakeDataProxyLink()]
@@ -58,16 +58,18 @@ const makeFile = (id, updated_at, extra = {}) => ({
  * onResultRegistry. Returns a ref object that always holds the latest result.
  */
 const renderHookWithScopes = () => {
-  const ref = { current: null }
+  const resultRef = React.createRef()
 
   const TestComponent = () => {
     const result = useRecentFiles()
-    ref.current = result
+    React.useEffect(() => {
+      resultRef.current = result
+    })
     return <>{result.scopeQueries}</>
   }
 
   const renderResult = render(<TestComponent />)
-  return { ref, renderResult }
+  return { ref: resultRef, renderResult }
 }
 
 describe('useRecentFiles', () => {

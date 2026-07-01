@@ -111,9 +111,9 @@ interface BuildRecentsScopedQueryParams {
   driveId?: string
 }
 
-export const buildRecentsScopedQuery = ({
-  driveId
-}: BuildRecentsScopedQueryParams) => ({
+export const buildRecentsScopedQuery: QueryBuilder<
+  BuildRecentsScopedQueryParams
+> = ({ driveId }) => ({
   definition: () =>
     Q('io.cozy.files')
       .where({

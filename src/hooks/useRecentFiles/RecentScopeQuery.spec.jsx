@@ -1,6 +1,6 @@
+import { render } from '@testing-library/react'
 import React from 'react'
 
-import { render } from '@testing-library/react'
 import { useQuery } from 'cozy-client'
 
 import RecentScopeQuery from './RecentScopeQuery'
@@ -44,7 +44,11 @@ describe('RecentScopeQuery', () => {
     const onResult = jest.fn()
 
     render(
-      <RecentScopeQuery scopeKey="drive-abc" driveId="abc" onResult={onResult} />
+      <RecentScopeQuery
+        scopeKey="drive-abc"
+        driveId="abc"
+        onResult={onResult}
+      />
     )
 
     expect(onResult).toHaveBeenCalledWith('drive-abc', {

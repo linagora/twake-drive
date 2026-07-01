@@ -77,7 +77,10 @@ describe('useSharedDriveFolder', () => {
 
   it('delegates fetchMore to query.fetchMore', () => {
     const mockFetchMore = jest.fn()
-    useQuery.mockReturnValue({ ...defaultQueryResult, fetchMore: mockFetchMore })
+    useQuery.mockReturnValue({
+      ...defaultQueryResult,
+      fetchMore: mockFetchMore
+    })
     const { result } = setup()
     result.current.fetchMore()
     expect(mockFetchMore).toHaveBeenCalledTimes(1)

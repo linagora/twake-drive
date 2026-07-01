@@ -1,8 +1,8 @@
-import { buildRecentsScopedQuery, buildSharedDriveFolderMangoQuery } from '@/queries'
 import {
-  SHARED_DRIVES_DIR_ID,
-  TRASH_DIR_ID
-} from '@/constants/config'
+  buildRecentsScopedQuery,
+  buildSharedDriveFolderMangoQuery
+} from '@/queries'
+import { SHARED_DRIVES_DIR_ID, TRASH_DIR_ID } from '@/constants/config'
 
 describe('buildSharedDriveFolderMangoQuery', () => {
   const params = {
@@ -34,7 +34,10 @@ describe('buildSharedDriveFolderMangoQuery', () => {
 
   it('generates distinct as values for different param combinations', () => {
     const q1 = buildSharedDriveFolderMangoQuery(params)
-    const q2 = buildSharedDriveFolderMangoQuery({ ...params, sortOrder: 'desc' })
+    const q2 = buildSharedDriveFolderMangoQuery({
+      ...params,
+      sortOrder: 'desc'
+    })
     expect(q1.options.as).not.toBe(q2.options.as)
   })
 
@@ -88,7 +91,10 @@ describe('buildRecentsScopedQuery', () => {
       const def = q.definition().toDefinition()
       expect(def.partialFilter).toMatchObject({
         dir_id: {
-          $nin: expect.arrayContaining([SHARED_DRIVES_DIR_ID, TRASH_DIR_ID])
+          $nin: expect.arrayContaining([
+            SHARED_DRIVES_DIR_ID,
+            TRASH_DIR_ID
+          ]) as string[]
         }
       })
     })
@@ -122,7 +128,10 @@ describe('buildRecentsScopedQuery', () => {
       const def = q.definition().toDefinition()
       expect(def.partialFilter).toMatchObject({
         dir_id: {
-          $nin: expect.arrayContaining([SHARED_DRIVES_DIR_ID, TRASH_DIR_ID])
+          $nin: expect.arrayContaining([
+            SHARED_DRIVES_DIR_ID,
+            TRASH_DIR_ID
+          ]) as string[]
         }
       })
     })
