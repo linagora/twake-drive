@@ -36,4 +36,5 @@ const flagsList = () => {
   flag('sharing.generate-link-button.enabled')
   flag('drive.sign.enabled')
   flag('drive.verify.enabled')
+  flag('drive.file-picker-demo.enabled')
 }
