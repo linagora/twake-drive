@@ -61,7 +61,7 @@ const FavoriteListItem: FC<FavoriteListItemProps> = ({
         <NavIcon icon={ItemIcon} />
         <Typography
           className="u-fz-small"
-          variant="inherit"
+          variant="button"
           color="inherit"
           noWrap
         >
