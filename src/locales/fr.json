@@ -748,5 +748,8 @@
       "title": "Le téléchargement et le partage sont bloqués pour des raisons de sécurité",
       "description": "Le système Twake a détecté un virus"
     }
+  },
+  "SharedDrive": {
+    "access_revoked": "Vous n'avez plus accès à ce drive partagé."
   }
 }

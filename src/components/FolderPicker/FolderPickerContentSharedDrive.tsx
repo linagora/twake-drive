@@ -41,9 +41,9 @@ const FolderPickerContentSharedDrive: React.FC<
 
   const { fetchStatus, files } = useMemo(
     () =>
-      sharedDriveResult.included || sharedDriveResult.data
-        ? { fetchStatus: 'loaded', files: sharedDriveResult.included ?? [] }
-        : { fetchStatus: 'loading', files: [] },
+      sharedDriveResult.data != null
+        ? { fetchStatus: 'loaded' as const, files: sharedDriveResult.data }
+        : { fetchStatus: 'loading' as const, files: [] as IOCozyFile[] },
     [sharedDriveResult]
   )
 

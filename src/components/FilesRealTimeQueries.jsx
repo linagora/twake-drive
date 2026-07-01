@@ -4,7 +4,9 @@ import { memo, useEffect } from 'react'
 import { useClient, Mutations } from 'cozy-client'
 import { ensureFilePath } from 'cozy-client/dist/models/file'
 import { receiveMutationResult } from 'cozy-client/dist/store'
+import CozyRealtime from 'cozy-realtime'
 
+import { useSharedDrives } from '@/modules/shareddrives/hooks/useSharedDrives'
 import { buildFileOrFolderByIdQuery } from '@/queries'
 
 const REALTIME_DEBOUNCE_TIME = 500
@@ -13,16 +15,41 @@ const bufferCreatedFiles = new Map()
 const bufferUpdatedFiles = new Map()
 const bufferDeletedFiles = new Map()
 
-const getParentFolder = async (client, dirId) => {
+// Tracks which shared-drive ID a buffered file originated from.
+// Populated by drive-socket handlers; absent (undefined) for own-instance files.
+const driveIdByFileId = new Map()
+
+// Test-only affordance: resets the module-level driveIdByFileId Map so test
+// isolation is not broken by entries leaking across test cases.
+
+export const __resetDriveIdByFileId = () => driveIdByFileId.clear()
+
+const getParentFolder = async (client, dirId, driveId) => {
   let parentDir = client.getDocumentFromState('io.cozy.files', dirId)
   if (!parentDir) {
-    // Parent is not in the store: query it
-    const parentQuery = buildFileOrFolderByIdQuery(dirId)
-    const parentResult = await client.fetchQueryAndGetFromState({
-      definition: parentQuery.definition(),
-      options: parentQuery.options
-    })
-    parentDir = parentResult.data
+    if (driveId) {
+      // Drive file: resolve the parent from the drive's locally-replicated pouch
+      // (Plan A capability), not the network, keeping the realtime path reactive.
+      const parentQuery = buildFileOrFolderByIdQuery(dirId)
+      const parentResult = await client.fetchQueryAndGetFromState({
+        definition: parentQuery.definition(),
+        options: {
+          ...parentQuery.options,
+          as: `${parentQuery.options.as}-drive-${driveId}`,
+          driveId,
+          forceLink: 'dataproxy'
+        }
+      })
+      parentDir = parentResult.data
+    } else {
+      // Own-instance file: fall back to the standard store query path.
+      const parentQuery = buildFileOrFolderByIdQuery(dirId)
+      const parentResult = await client.fetchQueryAndGetFromState({
+        definition: parentQuery.definition(),
+        options: parentQuery.options
+      })
+      parentDir = parentResult.data
+    }
   }
   return parentDir
 }
@@ -73,9 +100,17 @@ const processEvents = async (client, mutationType) => {
   }
 
   for (const folderId in filesByFolder) {
+    const filesInFolder = filesByFolder[folderId]
+    // Derive the originating drive ID from the first file in the group.
+    // All files sharing the same dir_id in a given processing cycle come from
+    // the same drive (or from own-instance files which have no entry).
+    const driveId =
+      filesInFolder.length > 0
+        ? driveIdByFileId.get(filesInFolder[0]._id)
+        : undefined
     const files = []
-    const folder = await getParentFolder(client, folderId)
-    for (const file of filesByFolder[folderId]) {
+    const folder = await getParentFolder(client, folderId, driveId)
+    for (const file of filesInFolder) {
       const fileWithPath = ensureFilePath(file, folder)
       files.push(fileWithPath)
     }
@@ -95,10 +130,11 @@ const processEvents = async (client, mutationType) => {
       )
     )
   }
-  // Remove processed files from buffer
+  // Remove processed files from buffer and clear drive-id tracking.
   // Do not clear all at once in case pending events arrived during the processing
   for (const fileId of fileIdsToProcess) {
     bufferFiles.delete(fileId)
+    driveIdByFileId.delete(fileId)
   }
 }
 
@@ -169,6 +205,7 @@ const FilesRealTimeQueries = ({
 }) => {
   const client = useClient()
 
+  // ── Global own-file subscription (unchanged) ────────────────────────────────
   useEffect(() => {
     const { realtime } = client.plugins || {}
 
@@ -216,6 +253,57 @@ const FilesRealTimeQueries = ({
     computeDocBeforeDispatchUpdate,
     computeDocBeforeDispatchDelete
   ])
+
+  // ── Per-recipient-drive subscriptions ──────────────────────────────────────
+  // recipientDriveIds is derived in the hook (owner !== true), covering both
+  // owner === false and owner === undefined so no recipient drive is silently skipped.
+  const { recipientDriveIds } = useSharedDrives()
+  // Build a stable string key from the sorted IDs of recipient drives so the
+  // effect below only re-runs when the set of drives actually changes.
+  const recipientDriveKey = [...recipientDriveIds].sort().join(',')
+
+  useEffect(() => {
+    if (!recipientDriveKey) return
+
+    const driveIds = recipientDriveKey.split(',').filter(Boolean)
+
+    const realtimeInstances = driveIds.map(driveId => {
+      const rt = new CozyRealtime({ client, sharedDriveId: driveId })
+
+      rt.subscribe('created', 'io.cozy.files', couchDBDoc => {
+        bufferCreatedFiles.set(
+          couchDBDoc._id,
+          normalizeDoc(couchDBDoc, 'io.cozy.files')
+        )
+        driveIdByFileId.set(couchDBDoc._id, driveId)
+        debouncedDispatchEvents(client, 'created')
+      })
+      rt.subscribe('updated', 'io.cozy.files', couchDBDoc => {
+        bufferUpdatedFiles.set(
+          couchDBDoc._id,
+          normalizeDoc(couchDBDoc, 'io.cozy.files')
+        )
+        driveIdByFileId.set(couchDBDoc._id, driveId)
+        debouncedDispatchEvents(client, 'updated')
+      })
+      rt.subscribe('deleted', 'io.cozy.files', couchDBDoc => {
+        bufferDeletedFiles.set(
+          couchDBDoc._id,
+          normalizeDoc(couchDBDoc, 'io.cozy.files')
+        )
+        driveIdByFileId.set(couchDBDoc._id, driveId)
+        debouncedDispatchEvents(client, 'deleted')
+      })
+
+      return rt
+    })
+
+    return () => {
+      realtimeInstances.forEach(rt => rt.stop())
+    }
+    // recipientDriveKey encodes all recipient-drive IDs as a sorted string;
+    // re-opening sockets only when the set of drives changes.
+  }, [client, recipientDriveKey])
 
   return null
 }

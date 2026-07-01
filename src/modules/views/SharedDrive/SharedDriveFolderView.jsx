@@ -36,6 +36,7 @@ import Toolbar from '@/modules/drive/Toolbar'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 import { SharedDriveBreadcrumb } from '@/modules/shareddrives/components/SharedDriveBreadcrumb'
 import { SharedDriveFolderBody } from '@/modules/shareddrives/components/SharedDriveFolderBody'
+import { useRedirectOnRevokedDrive } from '@/modules/shareddrives/hooks/useRedirectOnRevokedDrive'
 import { useSharedDriveFolder } from '@/modules/shareddrives/hooks/useSharedDriveFolder'
 import Dropzone from '@/modules/upload/Dropzone'
 import DropzoneDnD from '@/modules/upload/DropzoneDnD'
@@ -64,6 +65,8 @@ const SharedDriveFolderView = () => {
   const { isFabDisplayed, setIsFabDisplayed } = useContext(FabContext)
   const { isSelectionBarVisible } = useSelectionContext()
 
+  useRedirectOnRevokedDrive(driveId)
+
   const { sharedDriveResult, fetchStatus, lastUpdate, hasMore, fetchMore } =
     useSharedDriveFolder({
       driveId,
@@ -74,7 +77,7 @@ const SharedDriveFolderView = () => {
     {
       fetchStatus,
       lastUpdate,
-      data: sharedDriveResult.included ?? [],
+      data: sharedDriveResult.data ?? [],
       hasMore,
       fetchMore
     }
@@ -96,7 +99,7 @@ const SharedDriveFolderView = () => {
   useKeyboardShortcuts({
     canPaste: hasClipboardData && canWriteToCurrentFolder,
     client,
-    items: sharedDriveResult?.included || [],
+    items: sharedDriveResult?.data || [],
     sharingContext,
     allowCut: canWriteToCurrentFolder,
     allowCopy: false,

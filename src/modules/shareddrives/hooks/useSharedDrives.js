@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 
 import { useClient } from 'cozy-client'
 
@@ -67,5 +67,13 @@ export const useSharedDrives = () => {
     }
   }, [client])
 
-  return { isLoading, isLoaded, sharedDrives }
+  const recipientDriveIds = useMemo(
+    () =>
+      sharedDrives
+        .filter(drive => drive.owner !== true)
+        .map(drive => drive._id),
+    [sharedDrives]
+  )
+
+  return { isLoading, isLoaded, sharedDrives, recipientDriveIds }
 }
