@@ -60,45 +60,49 @@ export const matchMimeType = (mime, patterns) => {
  * 5. Otherwise -> enabled.
  *
  * @param {object|null|undefined} actionConfig
- * @param {object|null|undefined} selectedItem - Cozy file/folder doc.
+ * @param {object|object[]|null|undefined} selectedItems - Cozy file/folder doc(s).
  * @returns {{ disabled: boolean, reasonKey: string|null }}
  */
-export const getActionDisabledState = (actionConfig, selectedItem) => {
+export const getActionDisabledState = (actionConfig, selectedItems) => {
   if (!actionConfig) {
     return { disabled: true, reasonKey: null }
   }
 
-  if (selectedItem && fileModel.isDirectory(selectedItem)) {
-    if (actionConfig.allowFolder === false) {
-      return {
-        disabled: true,
-        reasonKey: 'FilePicker.constraints.disabledReasons.folderNotAllowed'
-      }
-    }
-    return { disabled: false, reasonKey: null }
-  }
+  const items = selectedItems == null ? [] : [].concat(selectedItems)
 
-  if (selectedItem && fileModel.isFile(selectedItem)) {
-    const allowedMimeTypes = actionConfig.allowedMimeTypes
-    if (
-      Array.isArray(allowedMimeTypes) &&
-      allowedMimeTypes.length > 0 &&
-      !matchMimeType(getFileMime(selectedItem), allowedMimeTypes)
-    ) {
-      return {
-        disabled: true,
-        reasonKey: 'FilePicker.constraints.disabledReasons.mimeTypeNotAllowed'
+  for (const selectedItem of items) {
+    if (selectedItem && fileModel.isDirectory(selectedItem)) {
+      if (actionConfig.allowFolder === false) {
+        return {
+          disabled: true,
+          reasonKey: 'FilePicker.constraints.disabledReasons.folderNotAllowed'
+        }
       }
+      continue
     }
 
-    const maxFileSize = actionConfig.maxFileSize
-    if (
-      typeof maxFileSize === 'number' &&
-      Number(selectedItem.size) > maxFileSize
-    ) {
-      return {
-        disabled: true,
-        reasonKey: 'FilePicker.constraints.disabledReasons.fileTooLarge'
+    if (selectedItem && fileModel.isFile(selectedItem)) {
+      const allowedMimeTypes = actionConfig.allowedMimeTypes
+      if (
+        Array.isArray(allowedMimeTypes) &&
+        allowedMimeTypes.length > 0 &&
+        !matchMimeType(getFileMime(selectedItem), allowedMimeTypes)
+      ) {
+        return {
+          disabled: true,
+          reasonKey: 'FilePicker.constraints.disabledReasons.mimeTypeNotAllowed'
+        }
+      }
+
+      const maxFileSize = actionConfig.maxFileSize
+      if (
+        typeof maxFileSize === 'number' &&
+        Number(selectedItem.size) > maxFileSize
+      ) {
+        return {
+          disabled: true,
+          reasonKey: 'FilePicker.constraints.disabledReasons.fileTooLarge'
+        }
       }
     }
   }
