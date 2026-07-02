@@ -1,0 +1,18 @@
+.filePickerBreadcrumb-previousPath
+    color var(--actionColorActive)
+    cursor pointer
+
+.filePickerBreadcrumb-icon
+    color var(--actionColorActive)
+    margin 0 0.25rem
+
+@supports (display: contents)
+    .filePickerBreadcrumb-wrapper
+        display contents
+
+@supports not (display: contents)
+    .filePickerBreadcrumb-wrapper
+        display flex
+        flex 1 1 auto
+        align-items center
+        width 100%

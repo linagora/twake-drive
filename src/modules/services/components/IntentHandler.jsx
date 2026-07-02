@@ -4,7 +4,8 @@ import { useClient } from 'cozy-client'
 import Intents from 'cozy-interapp'
 import logger from 'cozy-logger'
 
-import Embeder from './Embeder'
+// import Embeder from './Embeder'
+import Picker from './Picker'
 
 const IntentHandler = ({ intentId }) => {
   const client = useClient()
@@ -27,11 +28,19 @@ const IntentHandler = ({ intentId }) => {
         service = await intents.createService(intentId, window)
         intent = service.getIntent()
 
+        // This is highly inefficient as it imply to load both part whatever the intent is
+        // breaking potential tree shaking
+        // if (
+        //   intent.attributes.action === 'OPEN' &&
+        //   intent.attributes.type === 'io.cozy.files'
+        // ) {
+        //   component = Embeder
+        // } else
         if (
-          intent.attributes.action === 'OPEN' &&
+          intent.attributes.action === 'PICK' &&
           intent.attributes.type === 'io.cozy.files'
         ) {
-          component = Embeder
+          component = Picker
         }
 
         setState({
