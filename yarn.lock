@@ -4379,14 +4379,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@linagora/twake-icons@npm:^2.6.6":
-  version: 2.6.6
-  resolution: "@linagora/twake-icons@npm:2.6.6"
+"@linagora/twake-icons@npm:^2.6.7":
+  version: 2.6.7
+  resolution: "@linagora/twake-icons@npm:2.6.7"
   dependencies:
     mime: "npm:4.1.0"
   peerDependencies:
     react: ^18
-  checksum: 10/5b4ee0bda6117a5879bbd244bea652fca8d4d382b8de35181d38b578c2e04649fc30a2c92bf46846403fa6407671be30829c1c06e1ce8c11ac55c83e19e9a619
+  checksum: 10/a7de1fe01b40e5c3079570501081b881121e5aeb55f1db22e60dc15cc5a3f1286eee8f19655e61b8b9b2892aae61ca4349f45da263a01de480514320cdd56458
   languageName: node
   linkType: hard
 
@@ -11395,15 +11395,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cozy-bar@npm:^33.3.4":
-  version: 33.3.4
-  resolution: "cozy-bar@npm:33.3.4"
+"cozy-bar@npm:^35.1.0":
+  version: 35.1.0
+  resolution: "cozy-bar@npm:35.1.0"
   dependencies:
     classnames: "npm:^2.5.1"
     lodash.set: "npm:^4.3.2"
     prop-types: "npm:15.7.2"
   peerDependencies:
     "@cozy/minilog": ">=1.0.0"
+    "@linagora/twake-icons": ">=2.6.6"
     cozy-client: ">=60.21.0"
     cozy-dataproxy-lib: ">=4.1.0"
     cozy-device-helper: ">=2.6.0"
@@ -11417,7 +11418,7 @@ __metadata:
     react-dom: ^16 || ^17 || ^18
     react-router-dom: ">=6.14.2"
     twake-i18n: ">=0.3.0"
-  checksum: 10/29ac92e86b8ae02cbc6f29fc1c2d2ecdf0dd4926d44093e7bf69675e3222b2f69dcf7cc48388611dfff8ffcc14173eb159fc159aae346eeb574dd4e9d0039f2d
+  checksum: 10/a42255db25c4944eec408140ed1f523492cc1903f6a19c5d8317421e46344079ac7887c9bdf3c205ca68a336d81ad5ca3bf991b2ea8f0a3d20c4a011f52a48db
   languageName: node
   linkType: hard
 
@@ -11713,7 +11714,7 @@ __metadata:
     "@embedpdf/pdfium": "npm:2.14.3"
     "@embedpdf/react-pdf-viewer": "npm:2.14.3"
     "@excalidraw/excalidraw": "npm:0.18.1"
-    "@linagora/twake-icons": "npm:^2.6.6"
+    "@linagora/twake-icons": "npm:^2.6.7"
     "@playwright/test": "npm:^1.58.2"
     "@rsbuild/core": "npm:^1.5.15"
     "@sentry/react": "npm:7.119.0"
@@ -11730,7 +11731,7 @@ __metadata:
     bundlemon: "npm:3.1.0"
     classnames: "npm:2.3.1"
     cozy-app-publish: "npm:^0.40.1"
-    cozy-bar: "npm:^33.3.4"
+    cozy-bar: "npm:^35.1.0"
     cozy-client: "npm:^60.28.0"
     cozy-dataproxy-lib: "npm:^4.15.3"
     cozy-device-helper: "npm:^4.0.1"
