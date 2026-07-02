@@ -62,6 +62,20 @@ describe('buildSharedDriveFolderMangoQuery', () => {
   })
 })
 
+const expectPartialIndexExcludesDirs = (
+  q: ReturnType<typeof buildRecentsScopedQuery>
+): void => {
+  const def = q.definition().toDefinition()
+  expect(def.partialFilter).toMatchObject({
+    dir_id: {
+      $nin: expect.arrayContaining([
+        SHARED_DRIVES_DIR_ID,
+        TRASH_DIR_ID
+      ]) as string[]
+    }
+  })
+}
+
 describe('buildRecentsScopedQuery', () => {
   describe('own scope (no driveId)', () => {
     it('sets options.as to recents-own', () => {
@@ -87,16 +101,7 @@ describe('buildRecentsScopedQuery', () => {
     })
 
     it('definition partialIndex excludes SHARED_DRIVES_DIR_ID and TRASH_DIR_ID', () => {
-      const q = buildRecentsScopedQuery({})
-      const def = q.definition().toDefinition()
-      expect(def.partialFilter).toMatchObject({
-        dir_id: {
-          $nin: expect.arrayContaining([
-            SHARED_DRIVES_DIR_ID,
-            TRASH_DIR_ID
-          ]) as string[]
-        }
-      })
+      expectPartialIndexExcludesDirs(buildRecentsScopedQuery({}))
     })
   })
 
@@ -124,16 +129,9 @@ describe('buildRecentsScopedQuery', () => {
     })
 
     it('definition partialIndex excludes SHARED_DRIVES_DIR_ID and TRASH_DIR_ID', () => {
-      const q = buildRecentsScopedQuery({ driveId: 'abc' })
-      const def = q.definition().toDefinition()
-      expect(def.partialFilter).toMatchObject({
-        dir_id: {
-          $nin: expect.arrayContaining([
-            SHARED_DRIVES_DIR_ID,
-            TRASH_DIR_ID
-          ]) as string[]
-        }
-      })
+      expectPartialIndexExcludesDirs(
+        buildRecentsScopedQuery({ driveId: 'abc' })
+      )
     })
   })
 })

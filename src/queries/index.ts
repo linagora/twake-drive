@@ -85,22 +85,20 @@ export const buildDriveQuery: QueryBuilder<buildDriveQueryParams> = ({
   }
 })
 
+const buildRecentsDefinition = (): QueryDefinition =>
+  Q('io.cozy.files')
+    .where({ updated_at: { $gt: null } })
+    .partialIndex({
+      type: 'file',
+      trashed: false,
+      dir_id: { $nin: [SHARED_DRIVES_DIR_ID, TRASH_DIR_ID] }
+    })
+    .indexFields(['updated_at'])
+    .sortBy([{ updated_at: 'desc' }])
+    .limitBy(50)
+
 export const buildRecentQuery: QueryBuilder = () => ({
-  definition: () =>
-    Q('io.cozy.files')
-      .where({
-        updated_at: {
-          $gt: null
-        }
-      })
-      .partialIndex({
-        type: 'file',
-        trashed: false,
-        dir_id: { $nin: [SHARED_DRIVES_DIR_ID, TRASH_DIR_ID] }
-      })
-      .indexFields(['updated_at'])
-      .sortBy([{ updated_at: 'desc' }])
-      .limitBy(50),
+  definition: buildRecentsDefinition,
   options: {
     as: 'recent-view-query',
     fetchPolicy: defaultFetchPolicy
@@ -114,21 +112,7 @@ interface BuildRecentsScopedQueryParams {
 export const buildRecentsScopedQuery: QueryBuilder<
   BuildRecentsScopedQueryParams
 > = ({ driveId }) => ({
-  definition: () =>
-    Q('io.cozy.files')
-      .where({
-        updated_at: {
-          $gt: null
-        }
-      })
-      .partialIndex({
-        type: 'file',
-        trashed: false,
-        dir_id: { $nin: [SHARED_DRIVES_DIR_ID, TRASH_DIR_ID] }
-      })
-      .indexFields(['updated_at'])
-      .sortBy([{ updated_at: 'desc' }])
-      .limitBy(50),
+  definition: buildRecentsDefinition,
   options: {
     as: driveId ? `recents-drive-${driveId}` : 'recents-own',
     driveId,

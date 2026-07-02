@@ -86,6 +86,32 @@ describe('FilesRealTimeQueries', () => {
     )
   }
 
+  const expectThreeEvents = mockFn => {
+    for (const event of ['created', 'updated', 'deleted']) {
+      expect(mockFn).toHaveBeenCalledWith(
+        event,
+        'io.cozy.files',
+        expect.any(Function)
+      )
+    }
+  }
+
+  const setupDriveSocketsWithStop = driveIds => {
+    const mockStop = jest.fn()
+    CozyRealtime.mockImplementation(() => ({
+      subscribe: jest.fn(),
+      stop: mockStop
+    }))
+    useSharedDrives.mockReturnValue({
+      isLoading: false,
+      isLoaded: true,
+      sharedDrives: driveIds.map(id => ({ _id: id, owner: false })),
+      recipientDriveIds: driveIds
+    })
+    const { unmount } = setup()
+    return { unmount, mockStop }
+  }
+
   // ── Task 3.1: subscribe shared-drive sockets ────────────────────────────────
 
   describe('global plugin subscription (no regression)', () => {
@@ -94,21 +120,7 @@ describe('FilesRealTimeQueries', () => {
       // subscribeToEvents() is async; flush microtasks to let it complete
       await act(async () => {})
 
-      expect(client.plugins.realtime.subscribe).toHaveBeenCalledWith(
-        'created',
-        'io.cozy.files',
-        expect.any(Function)
-      )
-      expect(client.plugins.realtime.subscribe).toHaveBeenCalledWith(
-        'updated',
-        'io.cozy.files',
-        expect.any(Function)
-      )
-      expect(client.plugins.realtime.subscribe).toHaveBeenCalledWith(
-        'deleted',
-        'io.cozy.files',
-        expect.any(Function)
-      )
+      expectThreeEvents(client.plugins.realtime.subscribe)
     })
 
     it('dispatches own-file events into the store with _type io.cozy.files', async () => {
@@ -145,21 +157,7 @@ describe('FilesRealTimeQueries', () => {
 
       unmount()
 
-      expect(client.plugins.realtime.unsubscribe).toHaveBeenCalledWith(
-        'created',
-        'io.cozy.files',
-        expect.any(Function)
-      )
-      expect(client.plugins.realtime.unsubscribe).toHaveBeenCalledWith(
-        'updated',
-        'io.cozy.files',
-        expect.any(Function)
-      )
-      expect(client.plugins.realtime.unsubscribe).toHaveBeenCalledWith(
-        'deleted',
-        'io.cozy.files',
-        expect.any(Function)
-      )
+      expectThreeEvents(client.plugins.realtime.unsubscribe)
     })
   })
 
@@ -275,65 +273,18 @@ describe('FilesRealTimeQueries', () => {
 
       setup()
 
-      expect(mockSubscribe).toHaveBeenCalledWith(
-        'created',
-        'io.cozy.files',
-        expect.any(Function)
-      )
-      expect(mockSubscribe).toHaveBeenCalledWith(
-        'updated',
-        'io.cozy.files',
-        expect.any(Function)
-      )
-      expect(mockSubscribe).toHaveBeenCalledWith(
-        'deleted',
-        'io.cozy.files',
-        expect.any(Function)
-      )
+      expectThreeEvents(mockSubscribe)
     })
 
     it('calls stop() on each drive socket when the component unmounts', () => {
-      const mockStop = jest.fn()
-      CozyRealtime.mockImplementation(() => ({
-        subscribe: jest.fn(),
-        stop: mockStop
-      }))
-
-      useSharedDrives.mockReturnValue({
-        isLoading: false,
-        isLoaded: true,
-        sharedDrives: [{ _id: 'd1', owner: false }],
-        recipientDriveIds: ['d1']
-      })
-
-      const { unmount } = setup()
-
+      const { unmount, mockStop } = setupDriveSocketsWithStop(['d1'])
       unmount()
-
       expect(mockStop).toHaveBeenCalledTimes(1)
     })
 
     it('calls stop() on all drive sockets when the component unmounts', () => {
-      const mockStop = jest.fn()
-      CozyRealtime.mockImplementation(() => ({
-        subscribe: jest.fn(),
-        stop: mockStop
-      }))
-
-      useSharedDrives.mockReturnValue({
-        isLoading: false,
-        isLoaded: true,
-        sharedDrives: [
-          { _id: 'd1', owner: false },
-          { _id: 'd2', owner: false }
-        ],
-        recipientDriveIds: ['d1', 'd2']
-      })
-
-      const { unmount } = setup()
-
+      const { unmount, mockStop } = setupDriveSocketsWithStop(['d1', 'd2'])
       unmount()
-
       expect(mockStop).toHaveBeenCalledTimes(2)
     })
 

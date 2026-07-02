@@ -61,6 +61,32 @@ export const ensureFileHasPath = async (doc, client) => {
   return ensureFilePath(doc, parentDir)
 }
 
+const dispatchFolderFiles = async (
+  client,
+  folderId,
+  filesInFolder,
+  mutations
+) => {
+  // Derive the originating drive ID from the first file in the group.
+  const driveId =
+    filesInFolder.length > 0
+      ? driveIdByFileId.get(filesInFolder[0]._id)
+      : undefined
+  const folder = await getParentFolder(client, folderId, driveId)
+  const files = filesInFolder.map(file => ensureFilePath(file, folder))
+  if (files.length < 1) return
+  const mutation =
+    files.length > 1 ? mutations.multiple(files) : mutations.single(files[0])
+  client.dispatch(
+    receiveMutationResult(
+      client.generateRandomId(),
+      { data: files },
+      {},
+      mutation
+    )
+  )
+}
+
 /**
  * This method process the bufferised files after debounced realtime events
  * It creates the related mutation and dispatch it to the store.
@@ -71,21 +97,27 @@ export const ensureFileHasPath = async (doc, client) => {
  * @returns {Promise<void>}
  */
 const processEvents = async (client, mutationType) => {
-  let bufferFiles, mutationFn, multipleMutationFn
+  let bufferFiles, mutations
   if (mutationType === 'created') {
     bufferFiles = bufferCreatedFiles
-    mutationFn = Mutations.createDocument
-    multipleMutationFn = Mutations.createDocuments
+    mutations = {
+      single: Mutations.createDocument,
+      multiple: Mutations.createDocuments
+    }
   }
   if (mutationType === 'updated') {
     bufferFiles = bufferUpdatedFiles
-    mutationFn = Mutations.updateDocument
-    multipleMutationFn = Mutations.updateDocuments
+    mutations = {
+      single: Mutations.updateDocument,
+      multiple: Mutations.updateDocuments
+    }
   }
   if (mutationType === 'deleted') {
     bufferFiles = bufferDeletedFiles
-    mutationFn = Mutations.deleteDocument
-    multipleMutationFn = Mutations.deleteDocuments
+    mutations = {
+      single: Mutations.deleteDocument,
+      multiple: Mutations.deleteDocuments
+    }
   }
   if (bufferFiles.size === 0) return
 
@@ -100,34 +132,11 @@ const processEvents = async (client, mutationType) => {
   }
 
   for (const folderId in filesByFolder) {
-    const filesInFolder = filesByFolder[folderId]
-    // Derive the originating drive ID from the first file in the group.
-    // All files sharing the same dir_id in a given processing cycle come from
-    // the same drive (or from own-instance files which have no entry).
-    const driveId =
-      filesInFolder.length > 0
-        ? driveIdByFileId.get(filesInFolder[0]._id)
-        : undefined
-    const files = []
-    const folder = await getParentFolder(client, folderId, driveId)
-    for (const file of filesInFolder) {
-      const fileWithPath = ensureFilePath(file, folder)
-      files.push(fileWithPath)
-    }
-    if (files.length < 1) {
-      // No files to process, early return
-      return
-    }
-    const mutation =
-      files.length > 1 ? multipleMutationFn(files) : mutationFn(files[0])
-
-    client.dispatch(
-      receiveMutationResult(
-        client.generateRandomId(),
-        { data: files },
-        {},
-        mutation
-      )
+    await dispatchFolderFiles(
+      client,
+      folderId,
+      filesByFolder[folderId],
+      mutations
     )
   }
   // Remove processed files from buffer and clear drive-id tracking.
@@ -255,9 +264,7 @@ const FilesRealTimeQueries = ({
   ])
 
   // ── Per-recipient-drive subscriptions ──────────────────────────────────────
-  // recipientDriveIds is derived in the hook (owner !== true), covering both
-  // owner === false and owner === undefined so no recipient drive is silently skipped.
-  const { recipientDriveIds } = useSharedDrives()
+  const { recipientDriveIds = [] } = useSharedDrives()
   // Build a stable string key from the sorted IDs of recipient drives so the
   // effect below only re-runs when the set of drives actually changes.
   const recipientDriveKey = [...recipientDriveIds].sort().join(',')

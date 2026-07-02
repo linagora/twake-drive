@@ -110,30 +110,25 @@ describe('useSharedDriveFolder', () => {
     expect(result.current.lastUpdate).toBe(9999)
   })
 
-  it('gates the query on isSettingsLoaded via enabled option', () => {
+  const expectQueryEnabled = (isSettingsLoaded, expectedEnabled) => {
     useFolderSort.mockReturnValue([
       { attribute: 'name', order: 'asc' },
       jest.fn(),
-      false // not yet loaded
+      isSettingsLoaded
     ])
     setup()
     expect(useQuery).toHaveBeenCalledWith(
       expect.any(Function),
-      expect.objectContaining({ enabled: false })
+      expect.objectContaining({ enabled: expectedEnabled })
     )
+  }
+
+  it('gates the query on isSettingsLoaded via enabled option', () => {
+    expectQueryEnabled(false, false)
   })
 
   it('enables the query when isSettingsLoaded is true and params are present', () => {
-    useFolderSort.mockReturnValue([
-      { attribute: 'name', order: 'asc' },
-      jest.fn(),
-      true
-    ])
-    setup()
-    expect(useQuery).toHaveBeenCalledWith(
-      expect.any(Function),
-      expect.objectContaining({ enabled: true })
-    )
+    expectQueryEnabled(true, true)
   })
 
   it('sets forceLink dataproxy in the query options', () => {
