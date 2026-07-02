@@ -21,7 +21,7 @@ const FilePicker = ({
 }) => {
   const [folderId, setFolderId] = useState(ROOT_DIR_ID)
   const [itemsIdsSelected, setItemsIdsSelected] = useState([])
-  const [selectedItem, setSelectedItem] = useState(null)
+  const [selectedItems, setSelectedItems] = useState([])
 
   const config = filePickerConfig || defaultFilePickerConfig
   const publicLinkAction = config.sharingLink ?? null
@@ -29,16 +29,21 @@ const FilePicker = ({
   const onSelectItemId = (fileId, item = null) => {
     if (multiple) {
       setItemsIdsSelected(fileId)
+      if (item) {
+        setSelectedItems(prev => [...prev, item])
+      } else {
+        setSelectedItems(prev => prev.filter(it => fileId.includes(it._id)))
+      }
     } else {
       setItemsIdsSelected([fileId])
-      setSelectedItem(item)
+      setSelectedItems(item ? [item] : [])
     }
   }
 
   const navigateTo = folder => {
     setFolderId(folder.id)
     setItemsIdsSelected([])
-    setSelectedItem(null)
+    setSelectedItems([])
   }
 
   const handleConfirm = linkMode => {
@@ -50,10 +55,10 @@ const FilePicker = ({
   const hasSelection = itemsIdsSelected.length > 0
 
   const publicLinkState = hasSelection
-    ? getActionDisabledState(publicLinkAction, selectedItem)
+    ? getActionDisabledState(publicLinkAction, selectedItems)
     : { disabled: true, reasonKey: null }
   const downloadLinkState = hasSelection
-    ? getActionDisabledState(downloadLinkAction, selectedItem)
+    ? getActionDisabledState(downloadLinkAction, selectedItems)
     : { disabled: true, reasonKey: null }
 
   return (

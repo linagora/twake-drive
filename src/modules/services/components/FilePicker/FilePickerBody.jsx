@@ -30,12 +30,15 @@ const FilePickerBody = ({
   } = useQuery(contentFolderQuery.definition, contentFolderQuery.options)
 
   const onCheck = useCallback(
-    itemId => {
+    (itemId, item) => {
       const isChecked = itemsIdsSelected.some(id => id === itemId)
       if (isChecked) {
-        onSelectItemId(itemsIdsSelected.filter(id => id !== itemId))
+        onSelectItemId(
+          itemsIdsSelected.filter(id => id !== itemId),
+          null
+        )
       } else {
-        onSelectItemId([...itemsIdsSelected, itemId])
+        onSelectItemId([...itemsIdsSelected, itemId], item)
       }
     },
     [itemsIdsSelected, onSelectItemId]
@@ -50,7 +53,7 @@ const FilePickerBody = ({
 
       if (!canSelect) return
 
-      if (multiple) onCheck(item._id)
+      if (multiple) onCheck(item._id, item)
       else onSelectItemId(item._id, item)
     },
     [folderSelectable, itemTypesAccepted, multiple, onCheck, onSelectItemId]
@@ -65,7 +68,7 @@ const FilePickerBody = ({
 
       if (!canSelect) return
 
-      if (multiple) onCheck(item._id)
+      if (multiple) onCheck(item._id, item)
       else onSelectItemId(item._id, item)
     },
     [folderSelectable, itemTypesAccepted, multiple, onCheck, onSelectItemId]
