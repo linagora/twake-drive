@@ -30,6 +30,14 @@ jest.mock('@/modules/shareddrives/hooks/useRedirectOnRevokedDrive', () => ({
   useRedirectOnRevokedDrive: jest.fn()
 }))
 
+jest.mock('@/modules/shareddrives/hooks/useSharedDriveFolderActions', () => ({
+  useSharedDriveFolderActions: () => []
+}))
+
+jest.mock('@/modules/views/SharedDrive/SharedDriveFolderContent', () => ({
+  SharedDriveFolderContent: () => null
+}))
+
 // --- stub out everything else the component imports so it can render ---
 jest.mock('react-redux', () => ({
   useDispatch: () => jest.fn()
