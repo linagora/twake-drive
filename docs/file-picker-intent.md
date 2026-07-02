@@ -243,57 +243,6 @@ User cancellation uses the generic intent `cancel` channel.
 
 There is no File Picker cancellation payload and no `CANCELLED` error code.
 
-## React example
-
-```jsx
-import IntentDialogOpener from 'cozy-ui-plus/dist/Intent/IntentDialogOpener'
-
-const filePickerOptions = {
-  sharingLink: null,
-  downloadLink: {
-    label: 'Attach file',
-    allowFolder: false,
-    maxFileSize: 50 * 1024 * 1024,
-    allowedMimeTypes: ['image/*', 'application/pdf']
-  }
-}
-
-const handleComplete = result => {
-  result.removeIntentIframe?.()
-
-  const entry = result.document?.[0]
-  if (!entry) return
-
-  if (entry.downloadLink) {
-    attachRemoteFile({
-      id: entry.id,
-      name: entry.name,
-      size: entry.size,
-      mimeType: entry.mimeType,
-      url: entry.downloadLink
-    })
-  }
-}
-
-const handleDismiss = () => {
-  // User cancelled or dismissed the picker.
-}
-
-export const AttachFromDriveButton = () => (
-  <IntentDialogOpener
-    action="PICK"
-    doctype="io.cozy.files"
-    options={filePickerOptions}
-    onComplete={handleComplete}
-    onDismiss={handleDismiss}
-    fullWidth
-    maxWidth="md"
-  >
-    <button type="button">Attach from Drive</button>
-  </IntentDialogOpener>
-)
-```
-
 ## Handling both link modes
 
 ```js
