@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useClient, isQueryLoading, generateWebLink } from 'cozy-client'
 import useFetchJSON from 'cozy-client/dist/hooks/useFetchJSON'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
+import { useI18n } from 'twake-i18n'
 
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
 import {
@@ -27,6 +28,11 @@ const useConfig = () => {
   const client = useClient()
   const instanceUri = client.getStackClient().uri
   const [currentSearchParams] = useSearchParams()
+  // The viewer's own locale. For a shared document opened by a recipient, the
+  // editor is rendered on the owner's instance, so we carry this through the
+  // redirect (see the `lang` search param below) to keep the editor in the
+  // recipient's language instead of the owner's.
+  const { lang } = useI18n()
 
   const [config, setConfig] = useState()
   const [status, setStatus] = useState('loading')
@@ -70,6 +76,7 @@ const useConfig = () => {
           ])
         }
         if (public_name) searchParams.push(['username', public_name])
+        if (lang) searchParams.push(['lang', lang])
 
         const link = generateWebLink({
           cozyUrl: `${protocol}://${instance}`,
@@ -99,6 +106,9 @@ const useConfig = () => {
           document: onlyoffice.document,
           editorConfig: {
             ...(onlyoffice.editorConfig ?? onlyoffice.editor),
+            // Show the editor in the viewer's language. The backend fills this
+            // with the owner's instance locale, which is wrong for a recipient.
+            lang,
             mode:
               (onlyoffice.editorConfig?.mode ?? onlyoffice.editor?.mode) ===
               'edit'
@@ -135,7 +145,8 @@ const useConfig = () => {
     instanceUri,
     isDesktop,
     currentSearchParams,
-    setOfficeKey
+    setOfficeKey,
+    lang
   ])
 
   return { config, status }
