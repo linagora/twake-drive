@@ -38,6 +38,13 @@ describe('isValidFile', () => {
     expect(isValidFile(item, validTypesAccepted)).toBe(true)
   })
 
+  it('should be valid when item has an accepted extension with different case', () => {
+    const item = makeMockFile({ extension: '.PDF' })
+    const validTypesAccepted = ['.pdf']
+
+    expect(isValidFile(item, validTypesAccepted)).toBe(true)
+  })
+
   it('should not be valid when item has not an accepted extension', () => {
     const item = makeMockFile({ extension: '.png' })
     const validTypesAccepted = ['.pdf']
@@ -48,6 +55,13 @@ describe('isValidFile', () => {
   it('should be valid when item has an accepted mime', () => {
     const item = makeMockFile({ mime: 'image/png' })
     const validTypesAccepted = ['application/pdf', 'image/png']
+
+    expect(isValidFile(item, validTypesAccepted)).toBe(true)
+  })
+
+  it('should be valid when item has an accepted mime with different case', () => {
+    const item = makeMockFile({ mime: 'IMAGE/PNG' })
+    const validTypesAccepted = ['image/png']
 
     expect(isValidFile(item, validTypesAccepted)).toBe(true)
   })
