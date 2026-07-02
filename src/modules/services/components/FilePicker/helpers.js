@@ -27,9 +27,12 @@ export const getCompliantTypes = types => {
  * @returns {boolean}
  */
 export const isValidFile = (item, validTypes) => {
+  const normalizedValidTypes = validTypes.map(type => type.toLowerCase())
+  const extension = `.${item.name.split('.').pop()}`.toLowerCase()
+  const mime = item.mime?.toLowerCase()
   const fileTypesAccepted =
-    validTypes.includes(`.${item.name.split('.').pop()}`) ||
-    validTypes.includes(item.mime)
+    normalizedValidTypes.includes(extension) ||
+    normalizedValidTypes.includes(mime)
 
   return isFile(item) && (fileTypesAccepted || validTypes.length === 0)
 }
