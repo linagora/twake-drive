@@ -79,6 +79,34 @@ describe('isValidFile', () => {
 
     expect(isValidFile(item, validTypesAccepted)).toBe(false)
   })
+
+  it('should be valid when item mime matches a subtype wildcard', () => {
+    const item = makeMockFile({ mime: 'image/png', extension: '.txt' })
+    const validTypesAccepted = ['image/*']
+
+    expect(isValidFile(item, validTypesAccepted)).toBe(true)
+  })
+
+  it('should not be valid when item mime does not match a subtype wildcard', () => {
+    const item = makeMockFile({ mime: 'application/pdf', extension: '.txt' })
+    const validTypesAccepted = ['image/*']
+
+    expect(isValidFile(item, validTypesAccepted)).toBe(false)
+  })
+
+  it('should be valid when item mime matches the global wildcard', () => {
+    const item = makeMockFile({ mime: 'application/pdf', extension: '.txt' })
+    const validTypesAccepted = ['*/*']
+
+    expect(isValidFile(item, validTypesAccepted)).toBe(true)
+  })
+
+  it('should match extension or wildcard mime in the same list', () => {
+    const item = makeMockFile({ mime: 'image/png', extension: '.pdf' })
+    const validTypesAccepted = ['.pdf', 'image/*']
+
+    expect(isValidFile(item, validTypesAccepted)).toBe(true)
+  })
 })
 
 describe('isValidFolder', () => {
