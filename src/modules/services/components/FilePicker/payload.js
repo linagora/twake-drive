@@ -20,7 +20,7 @@ export const makeFilePickerFileEntry = (
   file,
   { sharingLink, downloadLink } = {}
 ) => ({
-  id: file._id || file.id,
+  id: file._id,
   name: file.name,
   size: fileModel.isFile(file) ? parseInt(file.size, 10) || 0 : 0,
   mimeType: fileModel.isFile(file) ? file.mime : null,
