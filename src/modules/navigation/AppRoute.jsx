@@ -9,10 +9,7 @@ import Index from './Index'
 import AIAssistantPaywallView from '../views/AI/AIAssistantPaywallView'
 import { DriveFolderView } from '../views/Drive/DriveFolderView'
 import FilesViewerDrive from '../views/Drive/FilesViewerDrive'
-import { getExcalidrawRoutes } from '../views/Excalidraw/routes'
 import OnlyOfficePaywallView from '../views/OnlyOffice/OnlyOfficePaywallView'
-import { getOnlyOfficeRoutes } from '../views/OnlyOffice/routes'
-import { getPdfRoutes } from '../views/Pdf/routes'
 import RecentView from '../views/Recent'
 import FilesViewerRecent from '../views/Recent/FilesViewerRecent'
 import FilesViewerSharedDrive from '../views/SharedDrive/FilesViewerSharedDrive'
@@ -56,6 +53,7 @@ import SearchView from '@/modules/views/Search/SearchView'
 import { SharedDriveFolderView } from '@/modules/views/SharedDrive/SharedDriveFolderView'
 import { TrashDestroyView } from '@/modules/views/Trash/TrashDestroyView'
 import { TrashEmptyView } from '@/modules/views/Trash/TrashEmptyView'
+import { getEditorRoutes } from '@/modules/views/editor/routes'
 
 const FilesRedirect = () => {
   const { folderId } = useParams()
@@ -120,13 +118,6 @@ const sharedDriveRoutes = () => (
       <Route path="move" element={<MoveSharedDriveFilesView />} />
       <Route path="duplicate" element={<DuplicateSharedDriveFilesView />} />
     </Route>
-  </>
-)
-
-const getEditorRoutes = () => (
-  <>
-    {flag('drive.excalidraw.enabled') && getExcalidrawRoutes()}
-    {flag('drive.pdf-editor.enabled') && getPdfRoutes()}
   </>
 )
 
@@ -266,8 +257,6 @@ const AppRoute = () => (
         </Route>
         <Route path="move" element={<MoveFilesView />} />
       </Route>
-
-      {getOnlyOfficeRoutes()}
 
       {getEditorRoutes()}
 
