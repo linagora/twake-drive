@@ -16,12 +16,7 @@ const { file: fileModel } = models
  * @returns {boolean} True if the mime matches at least one pattern.
  */
 const getFileMime = file => {
-  const mime =
-    file?.mime ||
-    file?.mimeType ||
-    file?.attributes?.mime ||
-    file?.attributes?.mimeType ||
-    mimeTypes.lookup(file?.name)
+  const mime = file?.mime || mimeTypes.lookup(file?.name)
 
   return mime || null
 }
