@@ -2,43 +2,18 @@ import mimeTypes from 'mime-types'
 
 import { models } from 'cozy-client'
 
+import { matchMimeType } from './helpers'
+
+export { matchMimeType }
+
 const { file: fileModel } = models
 
 // TODO with multi selection: enforce maxFileCount and availableSize.
 
-/**
- * Match a mime type against a list of patterns. Supports wildcards
- * on the subtype (e.g. image plus star) and the global wildcard
- * (star plus slash plus star). An exact match counts as well.
- *
- * @param {string} mime - The mime type to test.
- * @param {string[]} patterns - The patterns to match against.
- * @returns {boolean} True if the mime matches at least one pattern.
- */
 const getFileMime = file => {
   const mime = file?.mime || mimeTypes.lookup(file?.name)
 
   return mime || null
-}
-
-export const matchMimeType = (mime, patterns) => {
-  if (!mime || !Array.isArray(patterns) || patterns.length === 0) {
-    return false
-  }
-  const slashIndex = mime.indexOf('/')
-  if (slashIndex < 0) return false
-  const type = mime.substring(0, slashIndex)
-
-  return patterns.some(pattern => {
-    if (pattern === '*/*') return true
-    if (pattern === mime) return true
-    const pSlash = pattern.indexOf('/')
-    if (pSlash < 0) return false
-    const pType = pattern.substring(0, pSlash)
-    const pSubtype = pattern.substring(pSlash + 1)
-    if (pSubtype === '*' && pType === type) return true
-    return false
-  })
 }
 
 /**
