@@ -39,6 +39,12 @@ export class FilePickerPage {
     await frameLocator.locator('h4').first().waitFor({ state: 'visible' })
   }
 
+  /** Whether the picker iframe is currently visible (picker is open). */
+  async isOpen(): Promise<boolean> {
+    const frame = this.page.locator('iframe[src*="intents"]')
+    return frame.isVisible()
+  }
+
   /** Wait for the picker dialog to close (e.g. after a link is generated). */
   async waitForClosed(): Promise<void> {
     // The parent dialog / iframe is removed after completion.
@@ -143,6 +149,24 @@ export class FilePickerPage {
     // violation from the two matching buttons.
     await dialog.getByText('Close').click()
     await dialog.waitFor({ state: 'hidden' })
+  }
+
+  // ---------------------------------------------------------------------------
+  // Error display (inside the picker iframe)
+  // ---------------------------------------------------------------------------
+
+  /** Whether the inline error alert is visible inside the picker. */
+  async isErrorVisible(): Promise<boolean> {
+    const frame = this.getFrameLocator()
+    return frame.getByTestId('file-picker-error').isVisible()
+  }
+
+  /** Get the error text displayed inside the picker. */
+  async getErrorText(): Promise<string> {
+    const frame = this.getFrameLocator()
+    const alert = frame.getByTestId('file-picker-error')
+    await alert.waitFor({ state: 'visible' })
+    return (await alert.textContent()) ?? ''
   }
 
   // ---------------------------------------------------------------------------

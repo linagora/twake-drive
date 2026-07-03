@@ -3,8 +3,11 @@ import React from 'react'
 
 import { makeSharingLink } from 'cozy-client/dist/models/sharing'
 
-import { filePickerLinkModes, TEMPORARY_LINK_TTL } from './FilePicker/constants'
-import { filePickerErrorCodes } from './FilePicker/errors'
+import {
+  filePickerErrorCodes,
+  filePickerLinkModes,
+  TEMPORARY_LINK_TTL
+} from './FilePicker/constants'
 import Picker from './Picker'
 
 const mockQuery = jest.fn()
@@ -12,6 +15,13 @@ const mockGetStackClient = jest.fn()
 const mockGetDownloadLinkById = jest.fn()
 const mockFindLinksByDoctype = jest.fn()
 const mockCozyClient = jest.fn()
+
+jest.mock('@/lib/logger', () => ({
+  __esModule: true,
+  default: {
+    warn: jest.fn()
+  }
+}))
 
 jest.mock('cozy-client', () => {
   const generateWebLink = jest.fn()
@@ -44,28 +54,42 @@ jest.mock('cozy-client/dist/models/sharing', () => ({
 }))
 
 jest.mock('./FilePicker', () => ({ onChange, onClose, filePickerConfig }) => {
+  const React = jest.requireActual('react')
+  const [error, setError] = React.useState(null)
+
   // Expose the received config so tests can assert on the transit.
   return (
     <div>
       <div data-testid="received-config">
         {JSON.stringify(filePickerConfig)}
       </div>
+      {error && <div data-testid="error-message">{error}</div>}
       <button type="button" data-testid="close-picker-btn" onClick={onClose}>
         Close picker
       </button>
       <button
         type="button"
         data-testid="public-link-btn"
-        onClick={() => onChange('file-id', filePickerLinkModes.PUBLIC_LINK)}
+        onClick={async () => {
+          const pickError = await onChange(
+            'file-id',
+            filePickerLinkModes.PUBLIC_LINK
+          )
+          if (pickError) setError(pickError)
+        }}
       >
         Public link
       </button>
       <button
         type="button"
         data-testid="temporary-download-link-btn"
-        onClick={() =>
-          onChange('file-id', filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK)
-        }
+        onClick={async () => {
+          const pickError = await onChange(
+            'file-id',
+            filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK
+          )
+          if (pickError) setError(pickError)
+        }}
       >
         Temporary link
       </button>
@@ -212,18 +236,15 @@ describe('Picker', () => {
     ])
   })
 
-  it('should throw an ITEM_NOT_FOUND error through the error channel when metadata loading fails', async () => {
+  it('should return an ITEM_NOT_FOUND error code when metadata loading fails', async () => {
     mockQuery.mockRejectedValue(new Error('not found'))
-    const { service, getByTestId } = setup()
+    const { service, getByTestId, findByTestId } = setup()
 
     fireEvent.click(getByTestId('public-link-btn'))
 
-    await waitFor(() => expect(service.throw).toHaveBeenCalled())
-    const error = service.throw.mock.calls[0][0]
-    expect(error).toBeInstanceOf(Error)
-    expect(error.code).toBe(filePickerErrorCodes.ITEM_NOT_FOUND)
-    expect(error.id).toBe('file-id')
-    expect(error.message).toBe('not found')
+    const errorMessage = await findByTestId('error-message')
+    expect(errorMessage.textContent).toBe(filePickerErrorCodes.ITEM_NOT_FOUND)
+    expect(service.throw).not.toHaveBeenCalled()
     expect(service.terminate).not.toHaveBeenCalled()
   })
 
@@ -266,39 +287,33 @@ describe('Picker', () => {
     ])
   })
 
-  it('should throw a SHARING_LINK_FAILED error when public link generation fails', async () => {
+  it('should return a SHARING_LINK_FAILED error code when public link generation fails', async () => {
     mockQuery.mockResolvedValue({ data: mockFile })
     makeSharingLink.mockRejectedValue(new Error('sharing failed'))
-    const { service, getByTestId } = setup()
+    const { service, getByTestId, findByTestId } = setup()
 
     fireEvent.click(getByTestId('public-link-btn'))
 
-    await waitFor(() => expect(service.throw).toHaveBeenCalled())
-    const error = service.throw.mock.calls[0][0]
-    expect(error).toBeInstanceOf(Error)
-    expect(error.code).toBe(filePickerErrorCodes.SHARING_LINK_FAILED)
-    expect(error.id).toBe('file-id')
-    expect(error.fileName).toBe('invoice.pdf')
-    expect(error.message).toBe('sharing failed')
+    const errorMessage = await findByTestId('error-message')
+    expect(errorMessage.textContent).toBe(
+      filePickerErrorCodes.SHARING_LINK_FAILED
+    )
+    expect(service.throw).not.toHaveBeenCalled()
     expect(service.terminate).not.toHaveBeenCalled()
   })
 
-  it('should throw a DOWNLOAD_LINK_FAILED error when temporary link generation fails', async () => {
+  it('should return a DOWNLOAD_LINK_FAILED error code when temporary link generation fails', async () => {
     mockQuery.mockResolvedValue({ data: mockFile })
     makeSharingLink.mockResolvedValue('https://drive.example/public')
-    const { service, getByTestId } = setup()
+    const { service, getByTestId, findByTestId } = setup()
 
     fireEvent.click(getByTestId('temporary-download-link-btn'))
 
-    await waitFor(() => expect(service.throw).toHaveBeenCalled())
-    const error = service.throw.mock.calls[0][0]
-    expect(error).toBeInstanceOf(Error)
-    expect(error.code).toBe(filePickerErrorCodes.DOWNLOAD_LINK_FAILED)
-    expect(error.id).toBe('file-id')
-    expect(error.fileName).toBe('invoice.pdf')
-    expect(error.message).toBe(
-      'Temporary sharing link does not contain a sharecode'
+    const errorMessage = await findByTestId('error-message')
+    expect(errorMessage.textContent).toBe(
+      filePickerErrorCodes.DOWNLOAD_LINK_FAILED
     )
+    expect(service.throw).not.toHaveBeenCalled()
     expect(service.terminate).not.toHaveBeenCalled()
   })
 })

@@ -16,6 +16,16 @@ export const filePickerLinkModes = {
 }
 
 /**
+ * Error codes used by the File Picker internally to track
+ * and display error messages in the UI.
+ */
+export const filePickerErrorCodes = {
+  ITEM_NOT_FOUND: 'ITEM_NOT_FOUND',
+  SHARING_LINK_FAILED: 'SHARING_LINK_FAILED',
+  DOWNLOAD_LINK_FAILED: 'DOWNLOAD_LINK_FAILED'
+}
+
+/**
  * Default FilePickerConfig used when the intent client does not send
  * any action config (e.g. legacy callers or the in-app demo button
  * before explicit config is wired). Only the keys whose default

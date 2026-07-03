@@ -770,6 +770,11 @@
     "actions": {
       "sharingLink": "Partager par lien public",
       "downloadLink": "Joindre avec un lien temporaire"
+    },
+    "errors": {
+      "ITEM_NOT_FOUND": "Le fichier sélectionné est introuvable.",
+      "SHARING_LINK_FAILED": "Impossible de générer le lien de partage.",
+      "DOWNLOAD_LINK_FAILED": "Impossible de générer le lien de téléchargement."
     }
   }
 }

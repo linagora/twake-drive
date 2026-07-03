@@ -4,14 +4,17 @@ import { Q, useClient } from 'cozy-client'
 
 import FilePicker from './FilePicker'
 import { getFilePickerConfig } from './FilePicker/config'
-import { filePickerLinkModes } from './FilePicker/constants'
-import { filePickerErrorCodes, makeFilePickerError } from './FilePicker/errors'
+import {
+  filePickerErrorCodes,
+  filePickerLinkModes
+} from './FilePicker/constants'
 import { makeFilePickerFileEntry } from './FilePicker/payload'
 import {
-  getFileId,
   getOrCreateSharingLink,
   makeTemporaryDownloadLink
 } from './FilePicker/sharing'
+
+import logger from '@/lib/logger'
 
 const Picker = ({ service, intent }) => {
   const client = useClient()
@@ -23,29 +26,16 @@ const Picker = ({ service, intent }) => {
   }
 
   const handlePick = async (fileId, linkMode) => {
-    let file
-
+    let file = null
     try {
       const { data } = await client.query(Q('io.cozy.files').getById(fileId))
       file = data ?? null
-    } catch (error) {
-      service.throw(
-        makeFilePickerError(filePickerErrorCodes.ITEM_NOT_FOUND, {
-          message: error instanceof Error ? error.message : String(error),
-          id: fileId
-        })
-      )
-      return null
+    } catch {
+      // file stays null
     }
 
     if (!file) {
-      service.throw(
-        makeFilePickerError(filePickerErrorCodes.ITEM_NOT_FOUND, {
-          message: 'Selected file could not be found',
-          id: fileId
-        })
-      )
-      return null
+      return filePickerErrorCodes.ITEM_NOT_FOUND
     }
 
     try {
@@ -62,19 +52,10 @@ const Picker = ({ service, intent }) => {
       service.terminate([makeFilePickerFileEntry(file, { sharingLink })])
       return null
     } catch (error) {
-      service.throw(
-        makeFilePickerError(
-          linkMode === filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK
-            ? filePickerErrorCodes.DOWNLOAD_LINK_FAILED
-            : filePickerErrorCodes.SHARING_LINK_FAILED,
-          {
-            message: error instanceof Error ? error.message : String(error),
-            id: getFileId(file),
-            fileName: file.name
-          }
-        )
-      )
-      return null
+      logger.warn('FilePicker link generation failed', error)
+      return linkMode === filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK
+        ? filePickerErrorCodes.DOWNLOAD_LINK_FAILED
+        : filePickerErrorCodes.SHARING_LINK_FAILED
     }
   }
 

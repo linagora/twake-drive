@@ -214,28 +214,12 @@ Example:
 
 For folders, `size` is `0` and `mimeType` is `null`.
 
-## Error result
+## Error handling
 
-Business errors are sent through the intent `error` channel, not inside `document`.
+Business errors (such as a missing file or failure to generate a link) are handled internally by the File Picker.
+It displays an error message directly to the user, allowing them to select another file or cancel.
 
-The serialized error contains:
-
-```ts
-interface FilePickerError {
-  message: string
-  code: 'ITEM_NOT_FOUND' | 'SHARING_LINK_FAILED' | 'DOWNLOAD_LINK_FAILED'
-  id?: string
-  fileName?: string
-}
-```
-
-| Code | Meaning |
-| --- | --- |
-| `ITEM_NOT_FOUND` | The selected Drive item could not be fetched. |
-| `SHARING_LINK_FAILED` | Drive could not create the public sharing link. |
-| `DOWNLOAD_LINK_FAILED` | Drive could not create the temporary download link. |
-
-Switch on `error.code` for programmatic handling.
+The intent does not throw business errors back to the caller application. It will only return a success document or a cancellation.
 
 ## Cancel result
 
