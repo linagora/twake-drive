@@ -22,11 +22,13 @@ const FilePicker = ({
   const [folderId, setFolderId] = useState(ROOT_DIR_ID)
   const [itemsIdsSelected, setItemsIdsSelected] = useState([])
   const [selectedItems, setSelectedItems] = useState([])
+  const [error, setError] = useState(null)
 
   const config = filePickerConfig || defaultFilePickerConfig
   const publicLinkAction = config.sharingLink ?? null
   const downloadLinkAction = config.downloadLink ?? null
   const onSelectItemId = (fileId, item = null) => {
+    setError(null)
     if (multiple) {
       setItemsIdsSelected(fileId)
       if (item) {
@@ -41,14 +43,19 @@ const FilePicker = ({
   }
 
   const navigateTo = folder => {
+    setError(null)
     setFolderId(folder.id)
     setItemsIdsSelected([])
     setSelectedItems([])
   }
 
-  const handleConfirm = linkMode => {
+  const handleConfirm = async linkMode => {
+    setError(null)
     const value = multiple ? itemsIdsSelected : itemsIdsSelected[0]
-    onChange(value, linkMode)
+    const pickError = await onChange(value, linkMode)
+    if (pickError) {
+      setError(pickError)
+    }
   }
 
   const itemTypesAccepted = getCompliantTypes(accept)
@@ -83,6 +90,7 @@ const FilePicker = ({
           itemTypesAccepted={itemTypesAccepted}
           multiple={multiple}
           folderSelectable
+          error={error}
         />
       }
       actions={

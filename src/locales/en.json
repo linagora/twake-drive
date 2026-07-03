@@ -773,6 +773,11 @@
     "actions": {
       "sharingLink": "Share with public link",
       "downloadLink": "Attach with temporary link"
+    },
+    "errors": {
+      "ITEM_NOT_FOUND": "The selected file could not be found.",
+      "SHARING_LINK_FAILED": "Could not generate a sharing link.",
+      "DOWNLOAD_LINK_FAILED": "Could not generate a download link."
     }
   }
 }

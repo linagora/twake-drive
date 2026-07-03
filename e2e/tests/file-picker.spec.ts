@@ -264,4 +264,46 @@ test.describe('File Picker', () => {
 
     await picker.closeConfirmation()
   })
+
+  // ---------------------------------------------------------------------------
+  // Error handling — inline error alerts
+  // ---------------------------------------------------------------------------
+  test.describe('Error display', () => {
+    test.afterEach(async ({ alicePage }) => {
+      await alicePage.unrouteAll({ behavior: 'ignoreErrors' })
+    })
+
+    test('shows ITEM_NOT_FOUND when the selected file is missing', async ({
+      alicePage
+    }) => {
+      picker = new FilePickerPage(alicePage)
+      await picker.open()
+      await picker.navigateToFolder(parentFolder)
+      await picker.selectItem(testFileName)
+
+      // Intercept single-file GET requests and return 404 — simulates a
+      // file that was deleted between selection and confirmation.
+      await alicePage.route(
+        url => {
+          const seg = url.pathname.split('/').pop() ?? ''
+          return (
+            url.hostname.includes('cozy.localhost') &&
+            url.pathname.startsWith('/files/') &&
+            seg !== '' &&
+            !seg.startsWith('_')
+          )
+        },
+        route => route.fulfill({ status: 404, body: '{}' }),
+        { times: 1 }
+      )
+
+      await picker.clickPublicLink()
+
+      // Picker must stay open with an inline error.
+      await expect(picker.isOpen()).resolves.toBe(true)
+      await expect(picker.isErrorVisible()).resolves.toBe(true)
+      const errorText = await picker.getErrorText()
+      expect(errorText).toBe('The selected file could not be found.')
+    })
+  })
 })
