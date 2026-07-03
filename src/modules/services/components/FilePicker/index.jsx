@@ -27,17 +27,17 @@ const FilePicker = ({
   const config = filePickerConfig || defaultFilePickerConfig
   const publicLinkAction = config.sharingLink ?? null
   const downloadLinkAction = config.downloadLink ?? null
-  const onSelectItemId = (fileId, item = null) => {
+  const onSelectItemId = (fileIds, item = null) => {
     setError(null)
     if (multiple) {
-      setItemsIdsSelected(fileId)
+      setItemsIdsSelected(fileIds)
       if (item) {
         setSelectedItems(prev => [...prev, item])
       } else {
-        setSelectedItems(prev => prev.filter(it => fileId.includes(it._id)))
+        setSelectedItems(prev => prev.filter(it => fileIds.includes(it._id)))
       }
     } else {
-      setItemsIdsSelected([fileId])
+      setItemsIdsSelected(fileIds)
       setSelectedItems(item ? [item] : [])
     }
   }
