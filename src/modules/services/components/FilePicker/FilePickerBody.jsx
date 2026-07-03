@@ -58,7 +58,7 @@ const FilePickerBody = ({
       if (!canSelect) return
 
       if (multiple) onCheck(item._id, item)
-      else onSelectItemId(item._id, item)
+      else onSelectItemId([item._id], item)
     },
     [folderSelectable, itemTypesAccepted, multiple, onCheck, onSelectItemId]
   )
@@ -73,7 +73,7 @@ const FilePickerBody = ({
       if (!canSelect) return
 
       if (multiple) onCheck(item._id, item)
-      else onSelectItemId(item._id, item)
+      else onSelectItemId([item._id], item)
     },
     [folderSelectable, itemTypesAccepted, multiple, onCheck, onSelectItemId]
   )

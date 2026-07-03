@@ -34,7 +34,7 @@ jest.mock('./FilePickerBody', () => ({ onSelectItemId, folderSelectable }) => (
       type="button"
       data-testid="select-file-btn"
       onClick={() =>
-        onSelectItemId('file-id', {
+        onSelectItemId(['file-id'], {
           _id: 'file-id',
           type: 'file',
           name: 'file.pdf'
@@ -47,7 +47,7 @@ jest.mock('./FilePickerBody', () => ({ onSelectItemId, folderSelectable }) => (
       type="button"
       data-testid="select-folder-btn"
       onClick={() =>
-        onSelectItemId('folder-id', {
+        onSelectItemId(['folder-id'], {
           _id: 'folder-id',
           type: 'directory',
           name: 'Folder'
