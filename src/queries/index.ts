@@ -571,7 +571,11 @@ export const buildSharedDriveFolderMangoQuery: QueryBuilder<
         [sortAttribute]: { $gt: null }
       })
       .indexFields(['dir_id', 'driveId', sortAttribute])
-      .sortBy([{ dir_id: sortOrder }, { [sortAttribute]: sortOrder }])
+      .sortBy([
+        { dir_id: sortOrder },
+        { driveId: sortOrder },
+        { [sortAttribute]: sortOrder }
+      ])
       .include(['encryption'])
       .limitBy(100),
   options: {
