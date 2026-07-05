@@ -73,7 +73,15 @@ const dispatchFolderFiles = async (
       ? driveIdByFileId.get(filesInFolder[0]._id)
       : undefined
   const folder = await getParentFolder(client, folderId, driveId)
-  const files = filesInFolder.map(file => ensureFilePath(file, folder))
+  const files = filesInFolder.map(file => {
+    const withPath = ensureFilePath(file, folder)
+    // Drive files carry a synthetic driveId (added by the data-proxy on
+    // replication). Realtime docs come straight from the stack without it, so
+    // reapply it here; otherwise the shared-drive folder query, whose selector
+    // filters on driveId, drops the file from its live results on every update.
+    const fileDriveId = driveIdByFileId.get(file._id)
+    return fileDriveId ? { ...withPath, driveId: fileDriveId } : withPath
+  })
   if (files.length < 1) return
   const mutation =
     files.length > 1 ? mutations.multiple(files) : mutations.single(files[0])
