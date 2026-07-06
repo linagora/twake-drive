@@ -9,7 +9,7 @@
   // If the console shows an OLDER build than expected, the editor served a CACHED
   // code.js → reopen the editor in a fresh tab / private window (a plain F5 won't
   // refetch the async plugin iframe).
-  var SCRIBE_BUILD = "2026-07-06.1 — cross-boundary mixed Replace (T4/T5/T6) re-establishes a spanning post-selection over the INJECTED region only (L#2 fix): text ¶s bracketed with two XSEL sentinels, injected span recovered shift-compensated, paired with fresh GetCell ranges, ExpandTo the extremes — no doc.GetRange(int,int) across a cell boundary. On top of .14 (inline fresh extraction).";
+  var SCRIBE_BUILD = "2026-07-06.4 — merge: new \"Assistant\" ribbon tab with two explicit buttons (Inline Scribe / Scribe side panel, own icons + Ctrl+Maj+I hints) and the native OO AI plugin hidden host-side. On top of the L#2 cross-boundary mixed Replace fix (T4/T5/T6 spanning post-selection over the injected region) and .14 (inline fresh extraction).";
   try { window.__scribeBuild = SCRIBE_BUILD; } catch (e) {}
 
   // ---- State ----
@@ -2857,6 +2857,7 @@
     // Add toolbar button on first init (API is ready at this point)
     if (!toolbarButtonAdded) {
       addToolbarButton();
+      addAssistantTab();
       toolbarButtonAdded = true;
       // Re-announce readiness now that OO has fully initialized the plugin, in
       // case the module-load announce raced ahead of the host's listener.
@@ -4349,10 +4350,87 @@
     log("Toolbar button added");
   }
 
+  // ---- "Assistant" toolbar tab ----
+  // Our own ribbon tab, separate from the built-in "Plugins" tab and from the
+  // native OO "AI" tab (which we disable host-side via editorConfig.plugins.
+  // disable). It holds two explicit buttons — each with its own illustration —
+  // for the two ways to open Scribe: the inline popover (acts on the current
+  // selection) and the side panel. Both map to intents that already exist and
+  // are handled React-side in useCozyBridge.js — this only adds new entry
+  // points, no new core logic. The keyboard shortcut is the same Ctrl+Shift+I
+  // for both (with a selection -> inline, without -> panel), surfaced in the
+  // hints so users can discover it.
+  function addAssistantTab() {
+    window.Asc.plugin.executeMethod("AddToolbarMenuItem", [{
+      guid: window.Asc.plugin.guid,
+      tabs: [{
+        id: "scribeAssistantTab",
+        text: "Assistant",
+        items: [
+          {
+            id: "scribeOpenInline",
+            type: "button",
+            // OO toolbar buttons render `text`/`hint` as plain strings only —
+            // a {en,fr} object shows as "[object Object]" and kills the tooltip.
+            // The plugin UI here is French-first (like the existing "Scribe"
+            // button), so we use French strings.
+            text: "Scribe en ligne",
+            hint: "Ouvrir Scribe en ligne sur le texte sélectionné (Ctrl+Maj+I)",
+            lockInViewMode: true,
+            enableToggle: false,
+            separator: false,
+            icons: "resources/%theme-type%(light|dark)/icon-inline%scale%(default).%extension%(png)"
+          },
+          {
+            id: "scribeOpenPanel",
+            type: "button",
+            text: "Panneau Scribe",
+            hint: "Ouvrir/fermer le panneau latéral Scribe (Ctrl+Maj+I)",
+            lockInViewMode: true,
+            enableToggle: false,
+            separator: false,
+            icons: "resources/%theme-type%(light|dark)/icon-panel%scale%(default).%extension%(png)"
+          }
+        ]
+      }]
+    }]);
+
+    window.Asc.plugin.attachToolbarMenuClickEvent("scribeOpenInline", openScribeInline);
+    window.Asc.plugin.attachToolbarMenuClickEvent("scribeOpenPanel", openScribePanel);
+
+    log("Assistant tab added");
+  }
+
+  // Inline mode: open the popover on the CURRENT selection. Read the live
+  // selection (not cached lastSelectedText, which can be stale — see the
+  // Ctrl+Shift+I handler) so the popover reflects what is selected right now.
+  // With no selection the inline popover has nothing to act on, so we no-op.
+  function openScribeInline() {
+    window.Asc.plugin.executeMethod("GetSelectedText", [], function(txt) {
+      if (txt && txt.length > 0) {
+        log("Assistant > Scribe inline");
+        lastSelectedText = txt;
+        castScribeTriggerFresh();
+      } else {
+        log("Assistant > inline: no selection — ignored");
+      }
+    });
+  }
+
+  // Side-panel mode: toggle the Scribe side panel (host decides open/close).
+  function openScribePanel() {
+    log("Assistant > Scribe side panel");
+    castIntent("TOGGLE_SCRIBE_PANEL", {}, true);
+  }
+
   // Fallback: global toolbar click event
   window.Asc.plugin.event_onToolbarMenuClick = function(id) {
     if (id === "scribeToolbarBtn") {
       triggerScribeIfSelection();
+    } else if (id === "scribeOpenInline") {
+      openScribeInline();
+    } else if (id === "scribeOpenPanel") {
+      openScribePanel();
     }
   };
 
