@@ -1,8 +1,7 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react'
+import React, { useMemo, useRef, useState } from 'react'
 import { useSelector } from 'react-redux'
 
 import { useClient } from 'cozy-client'
-import flag from 'cozy-flags'
 import { useSharingContext } from 'cozy-sharing'
 import {
   stableSort,
@@ -55,8 +54,7 @@ const FolderViewBodyContent = ({
 
   const client = useClient()
 
-  const { selectAll, selectedItems, setSelectedItems, setIsSelectAll } =
-    useSelectionContext()
+  const { selectAll, selectedItems } = useSelectionContext()
   const { sharedPaths } = useSharingContext()
   const { registerCancelable } = useCancelable()
   const { showAlert } = useAlert()
@@ -100,20 +98,6 @@ const FolderViewBodyContent = ({
     setLastInteractedItem(itemId)
     onShiftClick(itemId, event)
   }
-
-  const isDynamicSelectionEnabled = flag('drive.dynamic-selection.enabled')
-
-  const handleContainerClick = useCallback(
-    e => {
-      const target = e.target
-      const isOnFile = target.closest('[data-file-id]')
-      if (isOnFile) return
-
-      setSelectedItems({})
-      setIsSelectAll(false)
-    },
-    [setSelectedItems, setIsSelectAll]
-  )
 
   const dragProps = useMemo(
     () => ({
@@ -188,20 +172,14 @@ const FolderViewBodyContent = ({
   return (
     <div className="u-h-100 u-w-100">
       <SelectionBar actions={actions} />
-      {isDynamicSelectionEnabled ? (
-        <RectangularSelection
-          items={sortedRows}
-          scrollContainerRef={folderViewRef}
-          scrollElement={scrollElement}
-          onSelectEnd={setLastInteractedItem}
-        >
-          {viewContent}
-        </RectangularSelection>
-      ) : (
-        <div onClick={handleContainerClick} className="u-h-100">
-          {viewContent}
-        </div>
-      )}
+      <RectangularSelection
+        items={sortedRows}
+        scrollContainerRef={folderViewRef}
+        scrollElement={scrollElement}
+        onSelectEnd={setLastInteractedItem}
+      >
+        {viewContent}
+      </RectangularSelection>
     </div>
   )
 }
