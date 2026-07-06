@@ -62,7 +62,7 @@ import { TrashEmptyView } from '@/modules/views/Trash/TrashEmptyView'
 // Avoid conflict with legacy Bar routes
 export const ASSISTANT_ROUTE_PATH = 'assistant/:conversationId'
 const filteredBarRoutes = BarRoutes.filter(
-  r => r.props?.path !== 'assistant/:conversationId'
+  r => r.props?.path !== ASSISTANT_ROUTE_PATH
 )
 
 const FilesRedirect = () => {

@@ -15,8 +15,10 @@ const { Response } = require('undici')
 global.Response = Response
 
 jest.mock('cozy-search', () => ({
+  AiText: () => null,
   AssistantDesktop: () => null,
   AssistantDialog: () => null,
+  AssistantView: () => null,
   SearchDialog: () => null
 }))
 
