@@ -60,7 +60,10 @@ const FilePickerHeader = ({ navigateTo, folderId, onClose, breakpoints }) => {
   }, [isMobile, path, navigateTo, onClose])
 
   return (
-    <div className="u-flex u-flex-items-center">
+    <div
+      className="u-flex u-flex-items-center"
+      data-testid="file-picker-header"
+    >
       {isMobile && (
         <IconButton
           onClick={handleClick}

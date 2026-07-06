@@ -35,8 +35,9 @@ export class FilePickerPage {
   /** Wait until the picker iframe is present and loaded. */
   async waitForPicker(): Promise<void> {
     const frameLocator = this.getFrameLocator()
-    // The FilePickerHeader renders a breadcrumb <h4> once the folder query resolves.
-    await frameLocator.locator('h4').first().waitFor({ state: 'visible' })
+    await frameLocator
+      .getByTestId('file-picker-header')
+      .waitFor({ state: 'visible' })
   }
 
   /** Whether the picker iframe is currently visible (picker is open). */
@@ -63,10 +64,10 @@ export class FilePickerPage {
     const folderRow = frame.getByTestId('list-item').filter({ hasText: name })
     await folderRow.getByTestId('listitem-onclick').dblclick()
     // Wait for the breadcrumb heading to update with the folder name.
-    await frame.locator('h4', { hasText: name }).waitFor({
-      state: 'visible',
-      timeout: 10_000
-    })
+    await frame
+      .getByTestId('file-picker-header')
+      .filter({ hasText: name })
+      .waitFor({ state: 'visible', timeout: 10_000 })
   }
 
   // ---------------------------------------------------------------------------

@@ -31,6 +31,9 @@ jest.mock('cozy-client', () => {
       return mockCozyClient(...args)
     },
     Q: () => ({ getById: id => ({ id }) }),
+    fetchPolicies: {
+      olderThan: () => () => true
+    },
     generateWebLink,
     models: {
       file: {
