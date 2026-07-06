@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { Q, useClient } from 'cozy-client'
+import { Q, useClient, fetchPolicies } from 'cozy-client'
 
 import FilePicker from './FilePicker'
 import { getFilePickerConfig } from './FilePicker/config'
@@ -28,7 +28,12 @@ const Picker = ({ service, intent }) => {
   const handlePick = async (fileId, linkMode) => {
     let file = null
     try {
-      const { data } = await client.query(Q('io.cozy.files').getById(fileId))
+      const { data } = await client.query(Q('io.cozy.files').getById(fileId), {
+        as: `picker-confirm-${fileId}`,
+        // Always go to the network — the file might have been deleted
+        // between listing and confirmation.
+        fetchPolicy: fetchPolicies.olderThan(0)
+      })
       file = data ?? null
     } catch {
       // file stays null
