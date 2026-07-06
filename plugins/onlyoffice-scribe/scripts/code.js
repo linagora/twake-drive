@@ -9,7 +9,7 @@
   // If the console shows an OLDER build than expected, the editor served a CACHED
   // code.js → reopen the editor in a fresh tab / private window (a plain F5 won't
   // refetch the async plugin iframe).
-  var SCRIBE_BUILD = "2026-06-29.14 — inline Scribe triggers force a FRESH selection extraction (direct callCommand, not the throttled debounce) before casting AI_TEXT_ASSISTANT, so the prompt uses the CURRENT selection not the previous one. On top of .13 (redo fix) / .12 (stable image ids).";
+  var SCRIBE_BUILD = "2026-07-06.1 — new \"Assistant\" toolbar tab with a Scribe dropdown offering two open modes (inline popover / side panel). On top of 2026-06-29.14 (fresh selection extraction).";
   try { window.__scribeBuild = SCRIBE_BUILD; } catch (e) {}
 
   // ---- State ----
@@ -2757,6 +2757,7 @@
     // Add toolbar button on first init (API is ready at this point)
     if (!toolbarButtonAdded) {
       addToolbarButton();
+      addAssistantTab();
       toolbarButtonAdded = true;
       // Re-announce readiness now that OO has fully initialized the plugin, in
       // case the module-load announce raced ahead of the host's listener.
@@ -4249,10 +4250,79 @@
     log("Toolbar button added");
   }
 
+  // ---- "Assistant" toolbar tab ----
+  // Our own ribbon tab, separate from the built-in "Plugins" tab and from the
+  // native OO "AI" tab (which we disable host-side via editorConfig.plugins.
+  // disable). It holds a single dropdown button offering the two ways to open
+  // Scribe: the inline popover (acts on the current selection) and the side
+  // panel. Both map to intents that already exist and are handled React-side
+  // in useCozyBridge.js — this only adds a new entry point, no new core logic.
+  function addAssistantTab() {
+    window.Asc.plugin.executeMethod("AddToolbarMenuItem", [{
+      guid: window.Asc.plugin.guid,
+      tabs: [{
+        id: "scribeAssistantTab",
+        text: "Assistant",
+        items: [{
+          id: "scribeAssistantMenu",
+          type: "button",
+          text: "Scribe",
+          hint: "Ouvrir Scribe",
+          lockInViewMode: true,
+          icons: "resources/%theme-type%(light|dark)/icon%scale%(default).%extension%(png)",
+          // No `split`: the whole button opens the dropdown (both modes are
+          // equal peers, there is no single default action to bind to a
+          // primary click).
+          items: [
+            {
+              id: "scribeOpenInline",
+              text: { en: "Scribe (inline)", fr: "Scribe (en ligne)" }
+            },
+            {
+              id: "scribeOpenPanel",
+              text: { en: "Scribe (side panel)", fr: "Scribe (panneau latéral)" }
+            }
+          ]
+        }]
+      }]
+    }]);
+
+    window.Asc.plugin.attachToolbarMenuClickEvent("scribeOpenInline", openScribeInline);
+    window.Asc.plugin.attachToolbarMenuClickEvent("scribeOpenPanel", openScribePanel);
+
+    log("Assistant tab added");
+  }
+
+  // Inline mode: open the popover on the CURRENT selection. Read the live
+  // selection (not cached lastSelectedText, which can be stale — see the
+  // Ctrl+Shift+I handler) so the popover reflects what is selected right now.
+  // With no selection the inline popover has nothing to act on, so we no-op.
+  function openScribeInline() {
+    window.Asc.plugin.executeMethod("GetSelectedText", [], function(txt) {
+      if (txt && txt.length > 0) {
+        log("Assistant > Scribe inline");
+        lastSelectedText = txt;
+        castScribeTriggerFresh();
+      } else {
+        log("Assistant > inline: no selection — ignored");
+      }
+    });
+  }
+
+  // Side-panel mode: toggle the Scribe side panel (host decides open/close).
+  function openScribePanel() {
+    log("Assistant > Scribe side panel");
+    castIntent("TOGGLE_SCRIBE_PANEL", {}, true);
+  }
+
   // Fallback: global toolbar click event
   window.Asc.plugin.event_onToolbarMenuClick = function(id) {
     if (id === "scribeToolbarBtn") {
       triggerScribeIfSelection();
+    } else if (id === "scribeOpenInline") {
+      openScribeInline();
+    } else if (id === "scribeOpenPanel") {
+      openScribePanel();
     }
   };
 
