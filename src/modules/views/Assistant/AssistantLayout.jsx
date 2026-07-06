@@ -1,10 +1,11 @@
 import cx from 'classnames'
 import React from 'react'
-import { Outlet } from 'react-router-dom'
+import { Link, Outlet } from 'react-router-dom'
 
-import { BarComponent } from 'cozy-bar'
+import { BarComponent, BarLeft } from 'cozy-bar'
 import { RealTimeQueries } from 'cozy-client'
 import { AiText } from 'cozy-search'
+import AppTitle from 'cozy-ui/transpiled/react/AppTitle'
 import TwakeWorkplace from 'cozy-ui/transpiled/react/Icons/TwakeWorkplace'
 import { Layout as LayoutUI } from 'cozy-ui/transpiled/react/Layout'
 
@@ -22,16 +23,19 @@ const AssistantLayout = () => {
       <RealTimeQueries doctype={DOCTYPE_AI_CHAT_ASSISTANTS} />
       <BarComponent
         searchOptions={{ enabled: true }}
-        appSlug="home" // hack to hide the first Twake Workplace icon
         appIcon={TwakeWorkplace}
         appTextIcon={AiText}
-        disableInternalStore
         componentsProps={{
           Wrapper: {
             className: cx('u-elevation-0', styles['assistant-topbar-border'])
           }
         }}
       />
+      <BarLeft>
+        <Link to="/folder" className="coz-nav-apps-btns-home">
+          <AppTitle appIcon={TwakeWorkplace} appTextIcon={AiText} />
+        </Link>
+      </BarLeft>
       <main className={styles['assistant-view']}>
         <Outlet />
       </main>
