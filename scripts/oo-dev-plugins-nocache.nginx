@@ -1,0 +1,25 @@
+# OO-DEV-CACHE-FIX BEGIN — managed by oo-dev-setup.sh; do not edit by hand.
+# Serve Scribe/plugin assets with no-store so a plain browser hard-refresh always
+# picks up code.js (and config.json) edits. The stock image serves sdkjs-plugins
+# with `Cache-Control: public, max-age=31536000, immutable`, which defeats reloads
+# because the plugin iframe is created dynamically (an ignoreCache reload of the
+# parent page does not refetch it). nginx picks the FIRST matching regex location,
+# so this block MUST sit above the catch-all immutable block for
+# web-apps|sdkjs|sdkjs-plugins. `gzip_static off` => nginx gzips the live file on
+# the fly instead of serving a possibly-stale pre-generated .gz.
+location ~ ^(\/[\d]+\.[\d]+\.[\d]+[\.|-][\w]+)?\/(sdkjs-plugins)(\/.*)$ {
+  add_header Cache-Control "no-store, no-cache, must-revalidate" always;
+  add_header Pragma "no-cache" always;
+  etag on;
+  gzip_static off;
+  alias /var/www/onlyoffice/documentserver/$2$3;
+}
+# The editor service worker itself: serve no-store so a patched SW (see
+# oo-dev-setup.sh, which drops sdkjs-plugins from its cache-first prefixes) is
+# picked up by the browser instead of a stale immutable copy.
+location ~ ^(\/[\d]+\.[\d]+\.[\d]+[\.|-][\w]+)?\/(document_editor_service_worker\.js)$ {
+  add_header Cache-Control "no-store, no-cache, must-revalidate" always;
+  gzip_static off;
+  alias /var/www/onlyoffice/documentserver/sdkjs/common/serviceworker/$2;
+}
+# OO-DEV-CACHE-FIX END

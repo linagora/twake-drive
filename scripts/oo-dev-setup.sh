@@ -15,6 +15,7 @@
 set -euo pipefail
 
 CONTAINER_NAME="oo-dev"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PLUGIN_HOST_PATH="$(cd "$(dirname "$0")/.." && pwd)/plugins/onlyoffice-scribe"
 PLUGIN_CONTAINER_PATH="/var/www/onlyoffice/documentserver/sdkjs-plugins/scribe"
 # OO 9.4.0.1 == documentserver build 9.4.0-129 (matches sdkjs patch tag v9.4.0.129).
@@ -166,6 +167,59 @@ docker exec "${CONTAINER_NAME}" bash -c "chown -R $(id -u):$(id -g) '${PLUGIN_CO
   || echo "Could not fix permissions. Run: sudo chown -R \$(whoami):\$(whoami) plugins/onlyoffice-scribe/"
 # Remove .gz files created by OO (may contain stale cached versions)
 rm -f "${PLUGIN_HOST_PATH}"/*.gz "${PLUGIN_HOST_PATH}"/scripts/*.gz 2>/dev/null
+
+echo ""
+echo "=== Disabling service-worker caching of plugin assets ==="
+# OO's editor service worker caches sdkjs-plugins with a CACHE-FIRST strategy in
+# the Cache API, which serves a stale code.js even when nginx says no-store (the
+# SW intercepts the fetch before it reaches the network). Drop "sdkjs-plugins/"
+# from its cacheable prefixes so plugin requests always go to the network; every
+# other asset (web-apps/sdkjs/fonts) stays SW-cached for speed. Idempotent and
+# re-applied every run — the SW file is static in the image, so a fresh container
+# ships it pristine (with sdkjs-plugins) and this re-patches it.
+SW_FILE="/var/www/onlyoffice/documentserver/sdkjs/common/serviceworker/document_editor_service_worker.js"
+if docker exec "${CONTAINER_NAME}" sh -c '
+      SW="'"${SW_FILE}"'"
+      [ -f "$SW" ] || exit 1
+      if grep -q "\"sdkjs-plugins/\"," "$SW"; then
+        sed -i "/^[[:space:]]*\"sdkjs-plugins\/\",[[:space:]]*\$/d" "$SW"
+      fi
+      ! grep -q "\"sdkjs-plugins/\"," "$SW"   # confirm it is gone
+    ' 2>/dev/null; then
+  echo "Service worker no longer caches sdkjs-plugins (plugin edits reach the network)."
+else
+  echo "WARNING: could not patch the editor service worker — a browser 'Clear site data' may be needed to drop old plugin code.js."
+fi
+
+echo ""
+echo "=== Applying plugin no-cache nginx override ==="
+# Make plugin assets always revalidate so a plain browser hard-refresh (Ctrl+Shift+R)
+# picks up code.js edits — no fresh browser context needed. Re-applied on EVERY run
+# because the fix lives in the image's static ds-docservice.conf: a `docker start`
+# keeps it, but `docker rm` + `docker run` (fresh container) resets it to immutable.
+# Idempotent via the OO-DEV-CACHE-FIX BEGIN/END markers.
+DS_CONF="/etc/onlyoffice/documentserver/nginx/includes/ds-docservice.conf"
+NOCACHE_SNIPPET="${SCRIPT_DIR}/oo-dev-plugins-nocache.nginx"
+if [ -f "${NOCACHE_SNIPPET}" ] \
+   && docker cp "${NOCACHE_SNIPPET}" "${CONTAINER_NAME}:/tmp/oo-dev-plugins-nocache.nginx" 2>/dev/null \
+   && docker exec "${CONTAINER_NAME}" sh -c '
+        CONF="'"${DS_CONF}"'"
+        [ -f "$CONF" ] || exit 1
+        cp "$CONF" "$CONF.bak"
+        # drop any previous managed block, then prepend a fresh one (first-match wins)
+        sed -i "/# OO-DEV-CACHE-FIX BEGIN/,/# OO-DEV-CACHE-FIX END/d" "$CONF"
+        cat /tmp/oo-dev-plugins-nocache.nginx "$CONF" > "$CONF.new" && mv "$CONF.new" "$CONF"
+        if nginx -t >/dev/null 2>&1; then
+          nginx -s reload >/dev/null 2>&1; rm -f "$CONF.bak"
+        else
+          mv "$CONF.bak" "$CONF"; exit 1   # rollback a broken config, never leave it live
+        fi
+      ' 2>/dev/null; then
+  echo "Plugins served no-store (hard refresh picks up code.js); nginx reloaded."
+else
+  echo "WARNING: could not apply plugin no-cache override — a hard refresh may serve a stale plugin."
+  echo "  Fallback: open the editor in a fresh browser context/incognito to load new code.js."
+fi
 
 echo ""
 echo "=== Setup Complete ==="
