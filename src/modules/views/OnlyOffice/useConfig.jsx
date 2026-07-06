@@ -108,6 +108,15 @@ const useConfig = () => {
             customization: {
               ...(onlyoffice.editorConfig ?? onlyoffice.editor).customization,
               reviewDisplay: 'markup'
+            },
+            // Disable OnlyOffice's built-in "AI" plugin — its toolbar tab is
+            // redundant with Scribe, which provides the AI writing assistant.
+            // `plugins.disable` blocks a plugin by GUID without turning off the
+            // Plugins tab, so the Scribe plugin keeps loading. GUID read from the
+            // OO AI plugin config.json (asc.{9DC93CDB-...}); it is the plugin's
+            // stable identity across versions.
+            plugins: {
+              disable: ['asc.{9DC93CDB-B576-4F0C-B55E-FCC9C48DD007}']
             }
           },
           // JWT signing the editor config — server-side protection against
