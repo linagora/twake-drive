@@ -9,7 +9,7 @@
   // If the console shows an OLDER build than expected, the editor served a CACHED
   // code.js → reopen the editor in a fresh tab / private window (a plain F5 won't
   // refetch the async plugin iframe).
-  var SCRIBE_BUILD = "2026-06-29.14 — inline Scribe triggers force a FRESH selection extraction (direct callCommand, not the throttled debounce) before casting AI_TEXT_ASSISTANT, so the prompt uses the CURRENT selection not the previous one. On top of .13 (redo fix) / .12 (stable image ids).";
+  var SCRIBE_BUILD = "2026-07-06.1 — cross-boundary mixed Replace (T4/T5/T6) re-establishes a spanning post-selection over the INJECTED region only (L#2 fix): text ¶s bracketed with two XSEL sentinels, injected span recovered shift-compensated, paired with fresh GetCell ranges, ExpandTo the extremes — no doc.GetRange(int,int) across a cell boundary. On top of .14 (inline fresh extraction).";
   try { window.__scribeBuild = SCRIBE_BUILD; } catch (e) {}
 
   // ---- State ----
@@ -1576,6 +1576,15 @@
       // Each non-table paragraph gets its own narrowed InsertContent (inline mode),
       // which handles partial paragraphs natively (preserves prefix/suffix).
       // Processed in reverse order to avoid position shifts.
+      // Cross-boundary post-selection locators: two plain-ASCII sentinel runs
+      // BRACKET each modified text ¶'s injected content (one before, one after) so
+      // the post-selection can re-find the exact injected span after the inline
+      // merge absorbs pbParagraph's refs and shifts its top-level position. Both are
+      // deleted before the selection is built (with shift compensation), so they
+      // never leak into the saved doc and the selection covers the injected text
+      // only — not the kept prefix/suffix.
+      var SCRIBE_XSEL_A = "zZscribeXAZz"; // opens the injected span
+      var SCRIBE_XSEL_B = "zZscribeXBZz"; // closes the injected span
       var skipContentAndInsert = false;
       if (mode === "replace" && tablesModifiedInPlace && hasMixedContent) {
         try {
@@ -1633,9 +1642,13 @@
                 var selPRange = doc.GetRange(selPStart, selPEnd);
                 if (selPRange) selPRange.Select();
 
-                // Build content and InsertContent (same mechanism as non-table case)
+                // Build content and InsertContent (same mechanism as non-table case).
+                // Bracket the injected runs with two sentinels so the post-selection
+                // can recover the exact injected span (kept prefix/suffix excluded).
                 var pbParagraph = Api.CreateParagraph();
+                try { var xRunA = Api.CreateRun(); xRunA.AddText(SCRIBE_XSEL_A); pbParagraph.AddElement(xRunA); } catch (e) {}
                 addBlockToParagraph(pbParagraph, pbBlock, srcFontFamily, srcFontSize);
+                try { var xRunB = Api.CreateRun(); xRunB.AddText(SCRIBE_XSEL_B); pbParagraph.AddElement(xRunB); } catch (e) {}
                 doc.InsertContent([pbParagraph], true); // inline mode: preserves suffix
 
                 // Save the narrowed selection bounds for post-selection.
@@ -2242,11 +2255,98 @@
           } // end if (!skipContentAndInsert)
 
           // Select the modified cell range (pure table Replace only).
-          // For mixed content Replace (skipContentAndInsert), post-selection is skipped
-          // because OO's selection API can't select partial table + text cross-boundary.
           if (!skipContentAndInsert && postSelStart >= 0 && postSelEnd > postSelStart) {
             var postRange = doc.GetRange(postSelStart, postSelEnd);
             if (postRange) postRange.Select();
+          }
+
+          // Cross-boundary mixed Replace (skipContentAndInsert): re-establish a
+          // spanning selection over the INJECTED region only. Re-fetch every touched
+          // element FRESH — cells via GetCell, text ¶s via their XSEL_A/XSEL_B
+          // sentinel bracket — then ExpandTo the global extremes' union. We NEVER use
+          // doc.GetRange(int,int) ACROSS a cell boundary (that is exactly L#2:
+          // integer positions don't compose cross-cell); the only integer ranges we
+          // build are WITHIN a single ¶ (the injected span), and ExpandTo of two live
+          // range objects composes across the boundary (probe-confirmed post-mutation).
+          if (skipContentAndInsert) {
+            // 1. locate the sentinel pair in each modified text ¶. injStartPre points
+            //    just after XSEL_A (first injected char); injEndPre just before XSEL_B
+            //    (last injected char). Positions are PRE-deletion.
+            var xSpans = [];   // { injStartPre, injEndPre }
+            var xSents = [];   // { run, pos, len } for every sentinel, for compensation
+            var xAllParas = doc.GetAllParagraphs();
+            for (var xpi = 0; xpi < xAllParas.length; xpi++) {
+              var xPara = xAllParas[xpi];
+              var xEc = (xPara && xPara.GetElementsCount) ? xPara.GetElementsCount() : 0;
+              var xA = null, xB = null;
+              for (var xei = 0; xei < xEc; xei++) {
+                var xEl = xPara.GetElement(xei);
+                var xTxt = (xEl && xEl.GetText) ? xEl.GetText() : "";
+                if (xTxt === SCRIBE_XSEL_A) xA = xEl;
+                else if (xTxt === SCRIBE_XSEL_B) xB = xEl;
+              }
+              if (xA && xB) {
+                var xAr = xA.GetRange(), xBr = xB.GetRange();
+                xSpans.push({ injStartPre: xAr.GetEndPos(), injEndPre: xBr.GetStartPos() });
+                xSents.push({ run: xA, pos: xAr.GetStartPos(), len: xAr.GetEndPos() - xAr.GetStartPos() });
+                xSents.push({ run: xB, pos: xBr.GetStartPos(), len: xBr.GetEndPos() - xBr.GetStartPos() });
+              }
+            }
+            // 2. delete every sentinel (content is now final & clean).
+            for (var xsd = 0; xsd < xSents.length; xsd++) {
+              try { xSents[xsd].run.Delete(); } catch (e) {}
+            }
+            // compensate a PRE-deletion position for all sentinels removed before it.
+            function xCompensate(pos) {
+              var shift = 0;
+              for (var i = 0; i < xSents.length; i++) { if (xSents[i].pos < pos) shift += xSents[i].len; }
+              return pos - shift;
+            }
+
+            // 3. collect fresh candidate ranges (all consistent, post-deletion).
+            var xCand = [];
+            // cells — GetCell is always fresh, no compensation needed.
+            var xTables = doc.GetAllTables();
+            for (var xti in partialTableInfo) {
+              if (!partialTableInfo.hasOwnProperty(xti)) continue;
+              var xCells = partialTableInfo[xti];
+              if (!xCells || !xCells.length) continue;
+              var xDi = tableDocIndices[parseInt(xti)];
+              var xTb = (xDi !== undefined && xDi < xTables.length) ? xTables[xDi] : null;
+              if (!xTb) continue;
+              for (var xci = 0; xci < xCells.length; xci++) {
+                var xCl = xTb.GetCell(xCells[xci].r, xCells[xci].c);
+                if (!xCl) continue;
+                var xCont = xCl.GetContent();
+                if (!xCont || xCont.GetElementsCount() === 0) continue;
+                var xP0 = xCont.GetElement(0);
+                var xPN = xCont.GetElement(xCont.GetElementsCount() - 1);
+                var xR0 = (xP0 && xP0.GetRange) ? xP0.GetRange() : null;
+                var xRN = (xPN && xPN.GetRange) ? xPN.GetRange() : null;
+                if (xR0) xCand.push({ s: xR0.GetStartPos(), e: xR0.GetEndPos(), r: xR0 });
+                if (xRN) xCand.push({ s: xRN.GetStartPos(), e: xRN.GetEndPos(), r: xRN });
+              }
+            }
+            // text ¶s — injected span via compensated positions (WITHIN one ¶, safe).
+            for (var xsp = 0; xsp < xSpans.length; xsp++) {
+              var xS = xCompensate(xSpans[xsp].injStartPre);
+              var xE = xCompensate(xSpans[xsp].injEndPre);
+              if (xE > xS) {
+                var xr = doc.GetRange(xS, xE);
+                if (xr) xCand.push({ s: xS, e: xE, r: xr });
+              }
+            }
+
+            // 4. ExpandTo the extreme range objects (min start .. max end) and Select.
+            var xMin = null, xMax = null;
+            for (var xc = 0; xc < xCand.length; xc++) {
+              if (!xMin || xCand[xc].s < xMin.s) xMin = xCand[xc];
+              if (!xMax || xCand[xc].e > xMax.e) xMax = xCand[xc];
+            }
+            if (xMin && xMax && xMin.r && xMax.r && xMin.r.ExpandTo) {
+              var xRng = xMin.r.ExpandTo(xMax.r);
+              if (xRng && xRng.Select) xRng.Select();
+            }
           }
         } catch (e) {
           // Selection failed — not critical, document content is correct
