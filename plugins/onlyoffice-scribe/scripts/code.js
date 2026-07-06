@@ -9,7 +9,7 @@
   // If the console shows an OLDER build than expected, the editor served a CACHED
   // code.js → reopen the editor in a fresh tab / private window (a plain F5 won't
   // refetch the async plugin iframe).
-  var SCRIBE_BUILD = "2026-07-06.2 — \"Assistant\" toolbar tab now shows two explicit buttons (Inline Scribe / Scribe side panel), each with its own icon and a Ctrl+Shift+I hint, instead of a dropdown. On top of 2026-06-29.14 (fresh selection extraction).";
+  var SCRIBE_BUILD = "2026-07-06.3 — \"Assistant\" tab two-button labels/hints fixed to plain strings (OO toolbar buttons don't accept {en,fr}, which showed [object Object] and no tooltip). On top of .2 (two explicit buttons) / 2026-06-29.14 (fresh selection extraction).";
   try { window.__scribeBuild = SCRIBE_BUILD; } catch (e) {}
 
   // ---- State ----
@@ -4270,23 +4270,25 @@
           {
             id: "scribeOpenInline",
             type: "button",
-            text: { en: "Inline Scribe", fr: "Scribe en ligne" },
-            hint: {
-              en: "Open Scribe inline on the selected text (Ctrl+Shift+I)",
-              fr: "Ouvrir Scribe en ligne sur le texte sélectionné (Ctrl+Maj+I)"
-            },
+            // OO toolbar buttons render `text`/`hint` as plain strings only —
+            // a {en,fr} object shows as "[object Object]" and kills the tooltip.
+            // The plugin UI here is French-first (like the existing "Scribe"
+            // button), so we use French strings.
+            text: "Scribe en ligne",
+            hint: "Ouvrir Scribe en ligne sur le texte sélectionné (Ctrl+Maj+I)",
             lockInViewMode: true,
+            enableToggle: false,
+            separator: false,
             icons: "resources/%theme-type%(light|dark)/icon-inline%scale%(default).%extension%(png)"
           },
           {
             id: "scribeOpenPanel",
             type: "button",
-            text: { en: "Scribe side panel", fr: "Panneau Scribe" },
-            hint: {
-              en: "Open/close the Scribe side panel (Ctrl+Shift+I)",
-              fr: "Ouvrir/fermer le panneau latéral Scribe (Ctrl+Maj+I)"
-            },
+            text: "Panneau Scribe",
+            hint: "Ouvrir/fermer le panneau latéral Scribe (Ctrl+Maj+I)",
             lockInViewMode: true,
+            enableToggle: false,
+            separator: false,
             icons: "resources/%theme-type%(light|dark)/icon-panel%scale%(default).%extension%(png)"
           }
         ]
