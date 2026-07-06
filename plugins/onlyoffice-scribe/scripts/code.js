@@ -9,7 +9,7 @@
   // If the console shows an OLDER build than expected, the editor served a CACHED
   // code.js → reopen the editor in a fresh tab / private window (a plain F5 won't
   // refetch the async plugin iframe).
-  var SCRIBE_BUILD = "2026-07-06.1 — new \"Assistant\" toolbar tab with a Scribe dropdown offering two open modes (inline popover / side panel). On top of 2026-06-29.14 (fresh selection extraction).";
+  var SCRIBE_BUILD = "2026-07-06.2 — \"Assistant\" toolbar tab now shows two explicit buttons (Inline Scribe / Scribe side panel), each with its own icon and a Ctrl+Shift+I hint, instead of a dropdown. On top of 2026-06-29.14 (fresh selection extraction).";
   try { window.__scribeBuild = SCRIBE_BUILD; } catch (e) {}
 
   // ---- State ----
@@ -4253,37 +4253,43 @@
   // ---- "Assistant" toolbar tab ----
   // Our own ribbon tab, separate from the built-in "Plugins" tab and from the
   // native OO "AI" tab (which we disable host-side via editorConfig.plugins.
-  // disable). It holds a single dropdown button offering the two ways to open
-  // Scribe: the inline popover (acts on the current selection) and the side
-  // panel. Both map to intents that already exist and are handled React-side
-  // in useCozyBridge.js — this only adds a new entry point, no new core logic.
+  // disable). It holds two explicit buttons — each with its own illustration —
+  // for the two ways to open Scribe: the inline popover (acts on the current
+  // selection) and the side panel. Both map to intents that already exist and
+  // are handled React-side in useCozyBridge.js — this only adds new entry
+  // points, no new core logic. The keyboard shortcut is the same Ctrl+Shift+I
+  // for both (with a selection -> inline, without -> panel), surfaced in the
+  // hints so users can discover it.
   function addAssistantTab() {
     window.Asc.plugin.executeMethod("AddToolbarMenuItem", [{
       guid: window.Asc.plugin.guid,
       tabs: [{
         id: "scribeAssistantTab",
         text: "Assistant",
-        items: [{
-          id: "scribeAssistantMenu",
-          type: "button",
-          text: "Scribe",
-          hint: "Ouvrir Scribe",
-          lockInViewMode: true,
-          icons: "resources/%theme-type%(light|dark)/icon%scale%(default).%extension%(png)",
-          // No `split`: the whole button opens the dropdown (both modes are
-          // equal peers, there is no single default action to bind to a
-          // primary click).
-          items: [
-            {
-              id: "scribeOpenInline",
-              text: { en: "Scribe (inline)", fr: "Scribe (en ligne)" }
+        items: [
+          {
+            id: "scribeOpenInline",
+            type: "button",
+            text: { en: "Inline Scribe", fr: "Scribe en ligne" },
+            hint: {
+              en: "Open Scribe inline on the selected text (Ctrl+Shift+I)",
+              fr: "Ouvrir Scribe en ligne sur le texte sélectionné (Ctrl+Maj+I)"
             },
-            {
-              id: "scribeOpenPanel",
-              text: { en: "Scribe (side panel)", fr: "Scribe (panneau latéral)" }
-            }
-          ]
-        }]
+            lockInViewMode: true,
+            icons: "resources/%theme-type%(light|dark)/icon-inline%scale%(default).%extension%(png)"
+          },
+          {
+            id: "scribeOpenPanel",
+            type: "button",
+            text: { en: "Scribe side panel", fr: "Panneau Scribe" },
+            hint: {
+              en: "Open/close the Scribe side panel (Ctrl+Shift+I)",
+              fr: "Ouvrir/fermer le panneau latéral Scribe (Ctrl+Maj+I)"
+            },
+            lockInViewMode: true,
+            icons: "resources/%theme-type%(light|dark)/icon-panel%scale%(default).%extension%(png)"
+          }
+        ]
       }]
     }]);
 
