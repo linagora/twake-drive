@@ -96,22 +96,6 @@ describe('FilesRealTimeQueries', () => {
     }
   }
 
-  const setupDriveSocketsWithStop = driveIds => {
-    const mockStop = jest.fn()
-    CozyRealtime.mockImplementation(() => ({
-      subscribe: jest.fn(),
-      stop: mockStop
-    }))
-    useSharedDrives.mockReturnValue({
-      isLoading: false,
-      isLoaded: true,
-      sharedDrives: driveIds.map(id => ({ _id: id, owner: false })),
-      recipientDriveIds: driveIds
-    })
-    const { unmount } = setup()
-    return { unmount, mockStop }
-  }
-
   // ── Task 3.1: subscribe shared-drive sockets ────────────────────────────────
 
   describe('global plugin subscription (no regression)', () => {
@@ -161,181 +145,75 @@ describe('FilesRealTimeQueries', () => {
     })
   })
 
-  describe('shared-drive sockets', () => {
-    it('opens a CozyRealtime socket for each recipient drive (owner === false)', () => {
-      useSharedDrives.mockReturnValue({
-        isLoading: false,
-        isLoaded: true,
-        sharedDrives: [{ _id: 'd1', owner: false }],
-        recipientDriveIds: ['d1']
-      })
-
+  describe('data-proxy realtime push (replaces per-drive websockets)', () => {
+    it('does not open per-drive websockets anymore', () => {
+      useSharedDrives.mockReturnValue({ recipientDriveIds: ['d1', 'd2'] })
       setup()
-
-      expect(CozyRealtime).toHaveBeenCalledWith({
-        client,
-        sharedDriveId: 'd1'
-      })
-    })
-
-    it('opens one socket per recipient drive when multiple exist', () => {
-      useSharedDrives.mockReturnValue({
-        isLoading: false,
-        isLoaded: true,
-        sharedDrives: [
-          { _id: 'd1', owner: false },
-          { _id: 'd2', owner: false }
-        ],
-        recipientDriveIds: ['d1', 'd2']
-      })
-
-      setup()
-
-      expect(CozyRealtime).toHaveBeenCalledTimes(2)
-      expect(CozyRealtime).toHaveBeenCalledWith({
-        client,
-        sharedDriveId: 'd1'
-      })
-      expect(CozyRealtime).toHaveBeenCalledWith({
-        client,
-        sharedDriveId: 'd2'
-      })
-    })
-
-    it('does not open a socket for owned drives (owner === true)', () => {
-      useSharedDrives.mockReturnValue({
-        isLoading: false,
-        isLoaded: true,
-        sharedDrives: [{ _id: 'd2', owner: true }],
-        recipientDriveIds: []
-      })
-
-      setup()
-
       expect(CozyRealtime).not.toHaveBeenCalled()
     })
 
-    it('dispatches drive-file events into the store with _type io.cozy.files', async () => {
-      let capturedUpdatedCallback
-      CozyRealtime.mockImplementation(() => ({
-        subscribe: jest.fn((event, _doctype, callback) => {
-          if (event === 'updated') capturedUpdatedCallback = callback
-        }),
-        stop: jest.fn()
-      }))
+    it('dispatches a store mutation when the data-proxy pushes a realtime update', async () => {
+      const driveClient = buildMockClient()
+      driveClient.fetchQueryAndGetFromState = jest
+        .fn()
+        .mockResolvedValue({ data: PARENT_FOLDER })
+      useSharedDrives.mockReturnValue({ recipientDriveIds: ['d1'] })
 
-      useSharedDrives.mockReturnValue({
-        isLoading: false,
-        isLoaded: true,
-        sharedDrives: [{ _id: 'd1', owner: false }],
-        recipientDriveIds: ['d1']
+      setup(driveClient)
+
+      await act(async () => {
+        window.dispatchEvent(
+          new MessageEvent('message', {
+            origin: 'http://dataproxy.cozy.localhost:8080',
+            data: {
+              type: 'DATAPROXYMESSAGE',
+              payload: {
+                kind: 'realtime',
+                event: 'updated',
+                doctype: 'io.cozy.files',
+                driveId: 'd1',
+                doc: { _id: 'file-1', name: 'renamed.txt', dir_id: 'folder-1' }
+              }
+            }
+          })
+        )
       })
 
-      setup()
-
-      expect(capturedUpdatedCallback).toBeDefined()
-
-      const driveFileDoc = {
-        _id: 'drive-file-1',
-        name: 'shared-doc.txt',
-        dir_id: PARENT_FOLDER._id,
-        type: 'file'
-      }
-
-      act(() => {
-        capturedUpdatedCallback(driveFileDoc)
-      })
-
-      await waitFor(() => expect(client.dispatch).toHaveBeenCalled())
-
-      const action = client.dispatch.mock.calls[0][0]
-      expect(action.response.data[0]._type).toBe('io.cozy.files')
-      expect(action.response.data[0]._id).toBe('drive-file-1')
-      // Path must be resolved via the local-pouch fetchQueryAndGetFromState (parent.path + '/' + name)
-      expect(action.response.data[0].path).toBe(
-        `${PARENT_FOLDER.path}/shared-doc.txt`
+      await waitFor(() => expect(driveClient.dispatch).toHaveBeenCalled())
+      expect(driveClient.fetchQueryAndGetFromState).toHaveBeenCalledWith(
+        expect.objectContaining({
+          options: expect.objectContaining({
+            driveId: 'd1',
+            forceLink: 'dataproxy'
+          })
+        })
       )
     })
 
-    it('subscribes to created, updated, and deleted events on the drive socket', () => {
-      const mockSubscribe = jest.fn()
-      CozyRealtime.mockImplementation(() => ({
-        subscribe: mockSubscribe,
-        stop: jest.fn()
-      }))
+    it('ignores messages from a non data-proxy origin', async () => {
+      const driveClient = buildMockClient()
+      useSharedDrives.mockReturnValue({ recipientDriveIds: ['d1'] })
+      setup(driveClient)
 
-      useSharedDrives.mockReturnValue({
-        isLoading: false,
-        isLoaded: true,
-        sharedDrives: [{ _id: 'd1', owner: false }],
-        recipientDriveIds: ['d1']
+      await act(async () => {
+        window.dispatchEvent(
+          new MessageEvent('message', {
+            origin: 'http://evil.example.com',
+            data: {
+              type: 'DATAPROXYMESSAGE',
+              payload: {
+                kind: 'realtime',
+                event: 'updated',
+                doctype: 'io.cozy.files',
+                driveId: 'd1',
+                doc: { _id: 'x' }
+              }
+            }
+          })
+        )
       })
 
-      setup()
-
-      expectThreeEvents(mockSubscribe)
-    })
-
-    it('calls stop() on each drive socket when the component unmounts', () => {
-      const { unmount, mockStop } = setupDriveSocketsWithStop(['d1'])
-      unmount()
-      expect(mockStop).toHaveBeenCalledTimes(1)
-    })
-
-    it('calls stop() on all drive sockets when the component unmounts', () => {
-      const { unmount, mockStop } = setupDriveSocketsWithStop(['d1', 'd2'])
-      unmount()
-      expect(mockStop).toHaveBeenCalledTimes(2)
-    })
-
-    it('stops the d1 socket and opens a d2 socket when the recipient-drive list changes mid-lifecycle', () => {
-      const instances = []
-      CozyRealtime.mockImplementation(({ sharedDriveId }) => {
-        const inst = {
-          subscribe: jest.fn(),
-          stop: jest.fn(),
-          _driveId: sharedDriveId
-        }
-        instances.push(inst)
-        return inst
-      })
-
-      useSharedDrives.mockReturnValue({
-        isLoading: false,
-        isLoaded: true,
-        sharedDrives: [{ _id: 'd1', owner: false }],
-        recipientDriveIds: ['d1']
-      })
-
-      const { rerender } = setup()
-
-      expect(CozyRealtime).toHaveBeenCalledTimes(1)
-      expect(CozyRealtime).toHaveBeenCalledWith({ client, sharedDriveId: 'd1' })
-
-      // Replace the drive list with d2 only — the effect deps change
-      useSharedDrives.mockReturnValue({
-        isLoading: false,
-        isLoaded: true,
-        sharedDrives: [{ _id: 'd2', owner: false }],
-        recipientDriveIds: ['d2']
-      })
-
-      rerender(
-        <AppLike client={client}>
-          <FilesRealTimeQueries />
-        </AppLike>
-      )
-
-      // The d1 socket must have been stopped by the effect cleanup
-      expect(instances[0]._driveId).toBe('d1')
-      expect(instances[0].stop).toHaveBeenCalledTimes(1)
-
-      // CozyRealtime was constructed exactly twice (once for d1, once for d2)
-      expect(CozyRealtime).toHaveBeenCalledTimes(2)
-      expect(CozyRealtime).toHaveBeenNthCalledWith(2, {
-        client,
-        sharedDriveId: 'd2'
-      })
+      expect(driveClient.dispatch).not.toHaveBeenCalled()
     })
   })
 
@@ -364,17 +242,7 @@ describe('FilesRealTimeQueries', () => {
         recipientDriveIds: ['d1']
       })
 
-      let capturedCreatedCallback
-      CozyRealtime.mockImplementation(() => ({
-        subscribe: jest.fn((event, _doctype, callback) => {
-          if (event === 'created') capturedCreatedCallback = callback
-        }),
-        stop: jest.fn()
-      }))
-
       setup(driveClient)
-
-      expect(capturedCreatedCallback).toBeDefined()
 
       const driveFileDoc = {
         _id: 'drive-file-new',
@@ -383,8 +251,22 @@ describe('FilesRealTimeQueries', () => {
         type: 'file'
       }
 
-      act(() => {
-        capturedCreatedCallback(driveFileDoc)
+      await act(async () => {
+        window.dispatchEvent(
+          new MessageEvent('message', {
+            origin: 'http://dataproxy.cozy.localhost:8080',
+            data: {
+              type: 'DATAPROXYMESSAGE',
+              payload: {
+                kind: 'realtime',
+                event: 'created',
+                doctype: 'io.cozy.files',
+                driveId: 'd1',
+                doc: driveFileDoc
+              }
+            }
+          })
+        )
       })
 
       await waitFor(() => expect(driveClient.dispatch).toHaveBeenCalled())

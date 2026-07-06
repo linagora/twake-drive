@@ -4,9 +4,7 @@ import { memo, useEffect } from 'react'
 import { useClient, Mutations } from 'cozy-client'
 import { ensureFilePath } from 'cozy-client/dist/models/file'
 import { receiveMutationResult } from 'cozy-client/dist/store'
-import CozyRealtime from 'cozy-realtime'
 
-import { useSharedDrives } from '@/modules/shareddrives/hooks/useSharedDrives'
 import { buildFileOrFolderByIdQuery } from '@/queries'
 
 const REALTIME_DEBOUNCE_TIME = 500
@@ -271,54 +269,35 @@ const FilesRealTimeQueries = ({
     computeDocBeforeDispatchDelete
   ])
 
-  // ── Per-recipient-drive subscriptions ──────────────────────────────────────
-  const { recipientDriveIds = [] } = useSharedDrives()
-  // Build a stable string key from the sorted IDs of recipient drives so the
-  // effect below only re-runs when the set of drives actually changes.
-  const recipientDriveKey = [...recipientDriveIds].sort().join(',')
-
+  // ── Data-proxy push (replaces per-drive websockets) ─────────────────────────
   useEffect(() => {
-    if (!recipientDriveKey) return
-
-    const driveIds = recipientDriveKey.split(',').filter(Boolean)
-
-    const realtimeInstances = driveIds.map(driveId => {
-      const rt = new CozyRealtime({ client, sharedDriveId: driveId })
-
-      rt.subscribe('created', 'io.cozy.files', couchDBDoc => {
-        bufferCreatedFiles.set(
-          couchDBDoc._id,
-          normalizeDoc(couchDBDoc, 'io.cozy.files')
-        )
-        driveIdByFileId.set(couchDBDoc._id, driveId)
-        debouncedDispatchEvents(client, 'created')
-      })
-      rt.subscribe('updated', 'io.cozy.files', couchDBDoc => {
-        bufferUpdatedFiles.set(
-          couchDBDoc._id,
-          normalizeDoc(couchDBDoc, 'io.cozy.files')
-        )
-        driveIdByFileId.set(couchDBDoc._id, driveId)
-        debouncedDispatchEvents(client, 'updated')
-      })
-      rt.subscribe('deleted', 'io.cozy.files', couchDBDoc => {
-        bufferDeletedFiles.set(
-          couchDBDoc._id,
-          normalizeDoc(couchDBDoc, 'io.cozy.files')
-        )
-        driveIdByFileId.set(couchDBDoc._id, driveId)
-        debouncedDispatchEvents(client, 'deleted')
-      })
-
-      return rt
-    })
-
-    return () => {
-      realtimeInstances.forEach(rt => rt.stop())
+    const buffers = {
+      updated: bufferUpdatedFiles,
+      created: bufferCreatedFiles,
+      deleted: bufferDeletedFiles
     }
-    // recipientDriveKey encodes all recipient-drive IDs as a sorted string;
-    // re-opening sockets only when the set of drives changes.
-  }, [client, recipientDriveKey])
+
+    const onMessage = event => {
+      if (!event.origin.includes('dataproxy')) return
+      const payload = event.data?.payload
+      if (
+        !payload ||
+        payload.kind !== 'realtime' ||
+        payload.doctype !== 'io.cozy.files' ||
+        !payload.doc?._id
+      ) {
+        return
+      }
+      const buffer = buffers[payload.event]
+      if (!buffer) return
+      buffer.set(payload.doc._id, normalizeDoc(payload.doc, 'io.cozy.files'))
+      driveIdByFileId.set(payload.doc._id, payload.driveId)
+      debouncedDispatchEvents(client, payload.event)
+    }
+
+    window.addEventListener('message', onMessage)
+    return () => window.removeEventListener('message', onMessage)
+  }, [client])
 
   return null
 }
