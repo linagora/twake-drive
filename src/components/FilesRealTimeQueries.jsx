@@ -14,7 +14,8 @@ const bufferUpdatedFiles = new Map()
 const bufferDeletedFiles = new Map()
 
 // Tracks which shared-drive ID a buffered file originated from.
-// Populated by drive-socket handlers; absent (undefined) for own-instance files.
+// Populated by the data-proxy push message-listener effect below; absent
+// (undefined) for own-instance files.
 const driveIdByFileId = new Map()
 
 // Test-only affordance: resets the module-level driveIdByFileId Map so test
@@ -279,6 +280,7 @@ const FilesRealTimeQueries = ({
 
     const onMessage = event => {
       if (!event.origin.includes('dataproxy')) return
+      if (event.data?.type !== 'DATAPROXYMESSAGE') return
       const payload = event.data?.payload
       if (
         !payload ||

@@ -147,6 +147,8 @@ describe('FilesRealTimeQueries', () => {
 
   describe('data-proxy realtime push (replaces per-drive websockets)', () => {
     it('does not open per-drive websockets anymore', () => {
+      // Deliberately proves the negative: even with shared drives present,
+      // the component must not fall back to per-drive CozyRealtime sockets.
       useSharedDrives.mockReturnValue({ recipientDriveIds: ['d1', 'd2'] })
       setup()
       expect(CozyRealtime).not.toHaveBeenCalled()
@@ -157,7 +159,6 @@ describe('FilesRealTimeQueries', () => {
       driveClient.fetchQueryAndGetFromState = jest
         .fn()
         .mockResolvedValue({ data: PARENT_FOLDER })
-      useSharedDrives.mockReturnValue({ recipientDriveIds: ['d1'] })
 
       setup(driveClient)
 
@@ -192,7 +193,6 @@ describe('FilesRealTimeQueries', () => {
 
     it('ignores messages from a non data-proxy origin', async () => {
       const driveClient = buildMockClient()
-      useSharedDrives.mockReturnValue({ recipientDriveIds: ['d1'] })
       setup(driveClient)
 
       await act(async () => {
@@ -214,6 +214,89 @@ describe('FilesRealTimeQueries', () => {
       })
 
       expect(driveClient.dispatch).not.toHaveBeenCalled()
+    })
+
+    it('ignores messages with the right payload but a wrong/absent envelope type', async () => {
+      const driveClient = buildMockClient()
+      setup(driveClient)
+
+      const validPayload = {
+        kind: 'realtime',
+        event: 'updated',
+        doctype: 'io.cozy.files',
+        driveId: 'd1',
+        doc: { _id: 'file-envelope', name: 'x.txt', dir_id: 'folder-1' }
+      }
+
+      await act(async () => {
+        // Wrong type
+        window.dispatchEvent(
+          new MessageEvent('message', {
+            origin: 'http://dataproxy.cozy.localhost:8080',
+            data: { type: 'SOMETHING_ELSE', payload: validPayload }
+          })
+        )
+        // Absent type
+        window.dispatchEvent(
+          new MessageEvent('message', {
+            origin: 'http://dataproxy.cozy.localhost:8080',
+            data: { payload: validPayload }
+          })
+        )
+      })
+
+      expect(driveClient.dispatch).not.toHaveBeenCalled()
+    })
+
+    it('dispatches a store mutation when the data-proxy pushes a realtime delete', async () => {
+      const driveClient = buildMockClient()
+      driveClient.fetchQueryAndGetFromState = jest
+        .fn()
+        .mockResolvedValue({ data: PARENT_FOLDER })
+
+      setup(driveClient)
+
+      await act(async () => {
+        window.dispatchEvent(
+          new MessageEvent('message', {
+            origin: 'http://dataproxy.cozy.localhost:8080',
+            data: {
+              type: 'DATAPROXYMESSAGE',
+              payload: {
+                kind: 'realtime',
+                event: 'deleted',
+                doctype: 'io.cozy.files',
+                driveId: 'd1',
+                doc: {
+                  _id: 'file-deleted-1',
+                  name: 'gone.txt',
+                  dir_id: 'io.cozy.files.trash-dir'
+                }
+              }
+            }
+          })
+        )
+      })
+
+      await waitFor(() => expect(driveClient.dispatch).toHaveBeenCalled())
+
+      const action = driveClient.dispatch.mock.calls[0][0]
+      expect(action.response.data[0]._id).toBe('file-deleted-1')
+      expect(action.definition).toBeDefined()
+    })
+
+    it('removes the window message listener on unmount', async () => {
+      jest.spyOn(window, 'removeEventListener')
+
+      const { unmount } = setup()
+      await act(async () => {})
+
+      unmount()
+
+      expect(window.removeEventListener).toHaveBeenCalledWith(
+        'message',
+        expect.any(Function)
+      )
     })
   })
 
