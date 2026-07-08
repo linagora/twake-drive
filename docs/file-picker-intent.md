@@ -191,6 +191,9 @@ interface FilePickerEntry {
   mimeType: string | null
   sharingLink?: string
   downloadLink?: string
+  thumbnail?: {
+    link: string
+  }
 }
 ```
 
@@ -206,13 +209,20 @@ Example:
       "name": "invoice.pdf",
       "size": 123456,
       "mimeType": "application/pdf",
-      "downloadLink": "https://alice.example/files/download/..."
+      "downloadLink": "https://alice.example/files/download/...",
+      "thumbnail": {
+        "link": "https://cdn.example.com/files/pdf.jpg"
+      }
     }
   ]
 }
 ```
 
 For folders, `size` is `0` and `mimeType` is `null`.
+
+### Thumbnails
+
+The File Picker may provide a thumbnail (an illustration or a preview) that may be used by the caller. The thumbnail link is public and has an unlimited lifetime.
 
 ## Error handling
 
