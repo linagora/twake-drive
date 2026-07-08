@@ -757,14 +757,16 @@
       "buttons": {
         "cancel": "Annuler",
         "publicLink": "Partager par lien public",
-        "temporaryDownloadLink": "Joindre avec un lien temporaire"
+        "temporaryDownloadLink": "Joindre avec un lien temporaire",
+        "reference": "Sélectionner"
       }
     },
     "constraints": {
       "disabledReasons": {
         "folderNotAllowed": "Les dossiers ne sont pas autorisés pour cette action",
         "mimeTypeNotAllowed": "Ce type de fichier n'est pas autorisé pour cette action",
-        "fileTooLarge": "Ce fichier est plus grand que %{maxFileSize}"
+        "fileTooLarge": "Ce fichier est plus grand que %{maxFileSize}",
+        "fileNotAllowed": "Seuls les dossiers peuvent être sélectionnés pour cette action"
       }
     },
     "actions": {

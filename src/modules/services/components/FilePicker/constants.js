@@ -12,7 +12,8 @@ export const TEMPORARY_LINK_TTL = '5m'
 
 export const filePickerLinkModes = {
   PUBLIC_LINK: 'public-link',
-  TEMPORARY_DOWNLOAD_LINK: 'temporary-download-link'
+  TEMPORARY_DOWNLOAD_LINK: 'temporary-download-link',
+  REFERENCE: 'reference'
 }
 
 /**
@@ -41,5 +42,6 @@ export const filePickerErrorCodes = {
 // the downloadLink action when multi-select lands.
 export const defaultFilePickerConfig = {
   sharingLink: { allowFolder: true },
-  downloadLink: { allowFolder: false }
+  downloadLink: { allowFolder: false },
+  reference: null
 }

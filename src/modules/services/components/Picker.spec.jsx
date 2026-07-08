@@ -96,6 +96,19 @@ jest.mock('./FilePicker', () => ({ onChange, onClose, filePickerConfig }) => {
       >
         Temporary link
       </button>
+      <button
+        type="button"
+        data-testid="reference-btn"
+        onClick={async () => {
+          const pickError = await onChange(
+            'file-id',
+            filePickerLinkModes.REFERENCE
+          )
+          if (pickError) setError(pickError)
+        }}
+      >
+        Reference
+      </button>
     </div>
   )
 })
@@ -150,6 +163,7 @@ describe('Picker', () => {
 
     expect(received.sharingLink).toEqual({ allowFolder: true })
     expect(received.downloadLink).toEqual({ allowFolder: false })
+    expect(received.reference).toBeNull()
   })
 
   it('should pass the client-provided config from the intent to the FilePicker', () => {
@@ -235,6 +249,27 @@ describe('Picker', () => {
         mimeType: 'application/pdf',
         downloadLink:
           'https://alice.example/files/downloads/123/invoice.pdf?Dl=1'
+      }
+    ])
+  })
+
+  it('should terminate with a bare array containing a reference entry, no sharing calls', async () => {
+    mockQuery.mockResolvedValue({ data: mockFile })
+    const { service, getByTestId } = setup()
+
+    fireEvent.click(getByTestId('reference-btn'))
+
+    await waitFor(() => expect(service.terminate).toHaveBeenCalled())
+    expect(makeSharingLink).not.toHaveBeenCalled()
+    expect(mockGetDownloadLinkById).not.toHaveBeenCalled()
+    expect(service.terminate).toHaveBeenCalledWith([
+      {
+        id: 'file-id',
+        name: 'invoice.pdf',
+        size: 42,
+        mimeType: 'application/pdf',
+        type: 'file',
+        doctype: 'io.cozy.files'
       }
     ])
   })

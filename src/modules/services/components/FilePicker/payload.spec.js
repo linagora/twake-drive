@@ -46,6 +46,42 @@ describe('FilePicker payload', () => {
       expect(entry.sharingLink).toBe('https://x')
     })
 
+    it('should build a reference entry with type and doctype, no link fields', () => {
+      const folder = {
+        _id: 'folder-id',
+        name: 'Knowledge base',
+        type: 'directory'
+      }
+
+      const entry = makeFilePickerFileEntry(folder, { reference: true })
+
+      expect(entry).toEqual({
+        id: 'folder-id',
+        name: 'Knowledge base',
+        size: 0,
+        mimeType: null,
+        type: 'directory',
+        doctype: 'io.cozy.files'
+      })
+      expect(entry.sharingLink).toBeUndefined()
+      expect(entry.downloadLink).toBeUndefined()
+    })
+
+    it('should not add type/doctype when reference is falsy', () => {
+      const file = {
+        _id: '1',
+        name: 'a.txt',
+        type: 'file',
+        size: '1',
+        mime: 'text/plain'
+      }
+
+      const entry = makeFilePickerFileEntry(file, { reference: false })
+
+      expect(entry).not.toHaveProperty('type')
+      expect(entry).not.toHaveProperty('doctype')
+    })
+
     it('should only include the links that are actually provided', () => {
       const file = {
         _id: '1',

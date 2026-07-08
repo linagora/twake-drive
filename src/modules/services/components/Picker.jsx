@@ -43,6 +43,11 @@ const Picker = ({ service, intent }) => {
       return filePickerErrorCodes.ITEM_NOT_FOUND
     }
 
+    if (linkMode === filePickerLinkModes.REFERENCE) {
+      service.terminate([makeFilePickerFileEntry(file, { reference: true })])
+      return null
+    }
+
     try {
       if (linkMode === filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK) {
         const downloadLink = await makeTemporaryDownloadLink(client, file)

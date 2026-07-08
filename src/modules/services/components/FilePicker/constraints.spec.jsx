@@ -80,6 +80,34 @@ describe('FilePicker constraints', () => {
       })
     })
 
+    it('should disable a file when onlyFolder is true', () => {
+      expect(
+        getActionDisabledState({ allowFolder: true, onlyFolder: true }, filePdf)
+      ).toEqual({
+        disabled: true,
+        reasonKey: 'FilePicker.constraints.disabledReasons.fileNotAllowed'
+      })
+    })
+
+    it('should allow a folder when onlyFolder is true', () => {
+      expect(
+        getActionDisabledState({ allowFolder: true, onlyFolder: true }, folder)
+      ).toEqual({ disabled: false, reasonKey: null })
+    })
+
+    it('should not disable a file when onlyFolder is false or absent', () => {
+      expect(
+        getActionDisabledState(
+          { allowFolder: true, onlyFolder: false },
+          filePdf
+        )
+      ).toEqual({ disabled: false, reasonKey: null })
+      expect(getActionDisabledState({ allowFolder: true }, filePdf)).toEqual({
+        disabled: false,
+        reasonKey: null
+      })
+    })
+
     it('should disable when allowedMimeTypes is set and the file mime does not match', () => {
       expect(
         getActionDisabledState(

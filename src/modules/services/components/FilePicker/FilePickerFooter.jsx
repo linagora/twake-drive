@@ -12,8 +12,10 @@ const FilePickerFooter = ({
   onConfirm,
   publicLinkState,
   downloadLinkState,
+  referenceState,
   publicLinkAction,
-  downloadLinkAction
+  downloadLinkAction,
+  referenceAction
 }) => {
   const { t } = useI18n()
 
@@ -24,6 +26,9 @@ const FilePickerFooter = ({
     downloadLinkAction &&
     (downloadLinkAction.label ??
       t('FilePicker.footer.buttons.temporaryDownloadLink'))
+  const referenceLabel =
+    referenceAction &&
+    (referenceAction.label ?? t('FilePicker.footer.buttons.reference'))
 
   const handlePublicLinkClick = () => {
     onConfirm(filePickerLinkModes.PUBLIC_LINK)
@@ -31,6 +36,10 @@ const FilePickerFooter = ({
 
   const handleTemporaryDownloadLinkClick = () => {
     onConfirm(filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK)
+  }
+
+  const handleReferenceClick = () => {
+    onConfirm(filePickerLinkModes.REFERENCE)
   }
 
   const renderAction = (
@@ -77,6 +86,14 @@ const FilePickerFooter = ({
   return (
     <>
       {renderAction(
+        referenceLabel,
+        referenceState,
+        referenceAction,
+        handleReferenceClick,
+        'reference-btn',
+        'primary'
+      )}
+      {renderAction(
         publicLinkLabel,
         publicLinkState,
         publicLinkAction,
@@ -106,15 +123,22 @@ FilePickerFooter.propTypes = {
     disabled: PropTypes.bool,
     reasonKey: PropTypes.string
   }),
+  referenceState: PropTypes.shape({
+    disabled: PropTypes.bool,
+    reasonKey: PropTypes.string
+  }),
   publicLinkAction: PropTypes.object,
-  downloadLinkAction: PropTypes.object
+  downloadLinkAction: PropTypes.object,
+  referenceAction: PropTypes.object
 }
 
 FilePickerFooter.defaultProps = {
   publicLinkState: { disabled: true, reasonKey: null },
   downloadLinkState: { disabled: true, reasonKey: null },
+  referenceState: { disabled: true, reasonKey: null },
   publicLinkAction: null,
-  downloadLinkAction: null
+  downloadLinkAction: null,
+  referenceAction: null
 }
 
 export default memo(FilePickerFooter)

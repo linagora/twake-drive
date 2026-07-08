@@ -59,6 +59,31 @@ describe('FilePicker config', () => {
       expect(config.downloadLink).toBe(defaultFilePickerConfig.downloadLink)
     })
 
+    it('hides the reference action by default (undefined -> null)', () => {
+      const intent = {
+        attributes: { data: { sharingLink: { label: 'As link' } } }
+      }
+      const config = getFilePickerConfig(intent)
+
+      expect(config.reference).toBeNull()
+    })
+
+    it('merges a client reference action config over the default (null)', () => {
+      const intent = {
+        attributes: {
+          data: {
+            reference: { label: 'Select this folder', onlyFolder: true }
+          }
+        }
+      }
+      const config = getFilePickerConfig(intent)
+
+      expect(config.reference).toEqual({
+        label: 'Select this folder',
+        onlyFolder: true
+      })
+    })
+
     it('does not leak cozy-interapp transport keys into the config', () => {
       const intent = {
         attributes: {

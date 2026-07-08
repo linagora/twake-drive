@@ -40,6 +40,26 @@ It is not a top-level `actions` field.
 }
 ```
 
+A folder picker that only returns a reference to the picked folder (no
+sharing/download link, no side effect):
+
+```json
+{
+  "action": "PICK",
+  "type": "io.cozy.files",
+  "permissions": ["GET"],
+  "data": {
+    "sharingLink": null,
+    "downloadLink": null,
+    "reference": {
+      "label": "Select this folder",
+      "allowFolder": true,
+      "onlyFolder": true
+    }
+  }
+}
+```
+
 ## FilePickerConfig
 
 ```ts
@@ -55,6 +75,14 @@ interface FilePickerConfig {
    * Omit to use defaults. Set to null to hide the action.
    */
   downloadLink?: ActionConfig | null
+
+  /**
+   * Configuration for the plain reference action.
+   * Omit or absent to hide the action (unlike sharingLink/downloadLink,
+   * there is no default: the action must be explicitly configured by
+   * the caller). Set to an object to show it.
+   */
+  reference?: ActionConfig | null
 }
 ```
 
@@ -73,6 +101,12 @@ interface ActionConfig {
    * Whether folders are allowed for this action.
    */
   allowFolder?: boolean
+
+  /**
+   * When true, only folders may be selected for this action: selecting
+   * a file disables the button (disabledReasons.fileNotAllowed).
+   */
+  onlyFolder?: boolean
 
   /**
    * Allowed MIME type patterns for files.
@@ -106,7 +140,8 @@ When no config is provided, Drive uses:
 ```js
 {
   sharingLink: { allowFolder: true },
-  downloadLink: { allowFolder: false }
+  downloadLink: { allowFolder: false },
+  reference: null
 }
 ```
 
@@ -116,6 +151,7 @@ Default labels:
 | --- | --- |
 | `sharingLink` | `Share with public link` |
 | `downloadLink` | `Attach with temporary link` |
+| `reference` | `Select` |
 
 ## Actions
 
@@ -134,6 +170,17 @@ Creates a temporary download link.
 - Works for files only (folders disabled by default).
 - Uses a GET-only permission on `io.cozy.files` with a 5-minute TTL.
 - The returned URL is intended to be consumed quickly by the calling app.
+
+### `reference`
+
+Returns a plain reference to the picked doc: no link is generated, no
+sharing/download side effect happens.
+
+- Hidden by default: the caller must explicitly configure `reference` to
+  show the button (unlike `sharingLink`/`downloadLink`, there is no
+  default config for this action).
+- Typically combined with `onlyFolder: true` to build a folder picker
+  (e.g. selecting a knowledge-base folder).
 
 ## Hiding an action
 
@@ -158,6 +205,7 @@ When the selected item violates an action constraint, the corresponding button i
 | Constraint | Behavior |
 | --- | --- |
 | `allowFolder: false` and selected item is a folder | Button disabled |
+| `onlyFolder: true` and selected item is a file | Button disabled |
 | `allowedMimeTypes` does not match selected file MIME | Button disabled |
 | selected file size > `maxFileSize` | Button disabled |
 
@@ -191,12 +239,31 @@ interface FilePickerEntry {
   mimeType: string | null
   sharingLink?: string
   downloadLink?: string
+  type?: string
+  doctype?: 'io.cozy.files'
 }
 ```
 
-Exactly one of `sharingLink` or `downloadLink` is present, depending on the action selected by the user.
+Exactly one of `sharingLink` or `downloadLink` is present, depending on the action selected by the user, **except** when the user picked the `reference` action: in that case neither link field is present, and the entry instead carries `type` (the picked doc's `io.cozy.files` type, e.g. `directory` or `file`) and `doctype: 'io.cozy.files'`.
 
-Example:
+Example (`reference` action):
+
+```json
+{
+  "document": [
+    {
+      "id": "folder-id",
+      "name": "Knowledge base",
+      "size": 0,
+      "mimeType": null,
+      "type": "directory",
+      "doctype": "io.cozy.files"
+    }
+  ]
+}
+```
+
+Example (`sharingLink`/`downloadLink` actions):
 
 ```json
 {

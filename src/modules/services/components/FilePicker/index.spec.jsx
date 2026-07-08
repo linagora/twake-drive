@@ -4,21 +4,47 @@ import React from 'react'
 import { filePickerLinkModes } from './constants'
 import FilePicker from './index'
 
+var mockIsMobile = false
+
 jest.mock('cozy-client', () => ({
   models: {
     file: {
       isDirectory: item => item?.type === 'directory',
       isFile: item => item?.type === 'file'
     }
-  }
+  },
+  Q: () => ({ getById: id => ({ id }) }),
+  fetchPolicies: {
+    olderThan: () => () => true
+  },
+  useQuery: () => ({ data: null })
 }))
 
+jest.mock(
+  'cozy-ui/transpiled/react/helpers/withBreakpoints',
+  () => () => Component => props =>
+    React.createElement(Component, {
+      ...props,
+      breakpoints: { isMobile: mockIsMobile }
+    })
+)
+
 jest.mock('cozy-ui/transpiled/react/CozyDialogs', () => ({
-  FixedDialog: ({ title, content, actions }) => (
+  FixedDialog: ({ title, content, actions, onBack, onClose }) => (
     <div>
       <div data-testid="dialog-title">{title}</div>
       <div data-testid="dialog-content">{content}</div>
       <div data-testid="dialog-actions">{actions}</div>
+      {onBack && (
+        <button type="button" data-testid="back-btn" onClick={onBack}>
+          Back
+        </button>
+      )}
+      {onClose && (
+        <button type="button" data-testid="close-btn" onClick={onClose}>
+          Close
+        </button>
+      )}
     </div>
   )
 }))
@@ -66,10 +92,22 @@ jest.mock(
       onConfirm,
       publicLinkState,
       downloadLinkState,
+      referenceState,
       publicLinkAction,
-      downloadLinkAction
+      downloadLinkAction,
+      referenceAction
     }) => (
       <div>
+        {referenceAction && (
+          <button
+            type="button"
+            data-testid="reference-btn"
+            disabled={referenceState?.disabled}
+            onClick={() => onConfirm('reference')}
+          >
+            {referenceAction.label || 'Reference'}
+          </button>
+        )}
         {publicLinkAction && (
           <button
             type="button"
@@ -110,6 +148,7 @@ describe('FilePicker', () => {
 
   afterEach(() => {
     jest.clearAllMocks()
+    mockIsMobile = false
   })
 
   it('should render both action buttons by default', () => {
@@ -117,6 +156,49 @@ describe('FilePicker', () => {
 
     expect(getByTestId('public-link-btn')).toBeInTheDocument()
     expect(getByTestId('temporary-download-link-btn')).toBeInTheDocument()
+  })
+
+  it('should hide the reference button by default', () => {
+    const { queryByTestId } = setup()
+
+    expect(queryByTestId('reference-btn')).toBeNull()
+  })
+
+  it('should show and wire the reference button when the config enables it', () => {
+    const { getByTestId } = setup({
+      filePickerConfig: {
+        sharingLink: null,
+        downloadLink: null,
+        reference: { label: 'Select this folder' }
+      }
+    })
+
+    expect(getByTestId('reference-btn')).toHaveTextContent('Select this folder')
+
+    fireEvent.click(getByTestId('select-folder-btn'))
+    fireEvent.click(getByTestId('reference-btn'))
+
+    expect(mockOnChange).toHaveBeenCalledWith(
+      'folder-id',
+      filePickerLinkModes.REFERENCE
+    )
+  })
+
+  it('should not render a back button on desktop (breakpoints.isMobile false)', () => {
+    mockIsMobile = false
+    const { queryByTestId, getByTestId } = setup()
+
+    expect(queryByTestId('back-btn')).toBeNull()
+    expect(getByTestId('close-btn')).toBeInTheDocument()
+  })
+
+  it('should call onClose from the back button on mobile when at the root folder', () => {
+    mockIsMobile = true
+    const { getByTestId } = setup()
+
+    fireEvent.click(getByTestId('back-btn'))
+
+    expect(mockOnClose).toHaveBeenCalled()
   })
 
   it('should enable folder selection for public link mode', () => {

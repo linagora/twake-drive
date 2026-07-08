@@ -27,12 +27,15 @@ const getFileMime = file => {
  * 1. No action config -> disabled, no reason.
  * 2. Selected item is a folder and the action disallows folders ->
  *    FilePicker.constraints.disabledReasons.folderNotAllowed.
- * 3. Selected item is a file whose mime is not in the action's
+ * 3. Selected item is a file and the action only allows folders
+ *    (`onlyFolder: true`) ->
+ *    FilePicker.constraints.disabledReasons.fileNotAllowed.
+ * 4. Selected item is a file whose mime is not in the action's
  *    allowedMimeTypes (when that list is non-empty) ->
  *    FilePicker.constraints.disabledReasons.mimeTypeNotAllowed.
- * 4. Selected item is a file larger than the action's maxFileSize ->
+ * 5. Selected item is a file larger than the action's maxFileSize ->
  *    FilePicker.constraints.disabledReasons.fileTooLarge.
- * 5. Otherwise -> enabled.
+ * 6. Otherwise -> enabled.
  *
  * @param {object|null|undefined} actionConfig
  * @param {object|object[]|null|undefined} selectedItems - Cozy file/folder doc(s).
@@ -57,6 +60,13 @@ export const getActionDisabledState = (actionConfig, selectedItems) => {
     }
 
     if (selectedItem && fileModel.isFile(selectedItem)) {
+      if (actionConfig.onlyFolder === true) {
+        return {
+          disabled: true,
+          reasonKey: 'FilePicker.constraints.disabledReasons.fileNotAllowed'
+        }
+      }
+
       const allowedMimeTypes = actionConfig.allowedMimeTypes
       if (
         Array.isArray(allowedMimeTypes) &&
