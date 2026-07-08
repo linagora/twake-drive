@@ -1,2 +1,2 @@
-let id = 0;
-module.exports = { id: `icon-${id++}` };
+const React = require('react')
+module.exports = function SvgMock(props) { return React.createElement('svg', props) }
