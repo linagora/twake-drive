@@ -1,8 +1,11 @@
+import {
+  FileTypeSheet,
+  FileTypeSlide,
+  FileTypeText
+} from '@linagora/twake-icons'
+
 import { isMobile } from 'cozy-device-helper'
 import flag from 'cozy-flags'
-import FileTypeSheetIcon from 'cozy-ui/transpiled/react/Icons/FileTypeSheet'
-import FileTypeSlideIcon from 'cozy-ui/transpiled/react/Icons/FileTypeSlide'
-import FileTypeTextIcon from 'cozy-ui/transpiled/react/Icons/FileTypeText'
 
 /**
  * Checks if the Office feature is enabled.
@@ -135,9 +138,9 @@ export const shouldBeOpenedOnOtherInstance = ({ data }, instanceUri) => {
 
 export const makeOnlyOfficeIconByClass = fileClass => {
   const iconByClass = {
-    spreadsheet: FileTypeSheetIcon,
-    slide: FileTypeSlideIcon,
-    text: FileTypeTextIcon
+    spreadsheet: FileTypeSheet,
+    slide: FileTypeSlide,
+    text: FileTypeText
   }
 
   return iconByClass[fileClass]

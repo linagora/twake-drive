@@ -4,15 +4,6 @@ declare module 'cozy-ui/transpiled/react/styles' {
   export function makeStyles<T>(styles: T): () => T
 }
 
-declare module 'cozy-ui/transpiled/react/Icons/*' {
-  const Icon: React.ComponentType<{
-    className?: string
-    color?: string
-    size?: string
-  }>
-  export default Icon
-}
-
 declare module 'cozy-ui/transpiled/react' {
   export const logger: {
     info: (message: string, ...rest: unknown[]) => void

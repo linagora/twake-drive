@@ -1,8 +1,8 @@
+import { Icon } from '@linagora/twake-icons'
 import PropTypes from 'prop-types'
 import React from 'react'
 
 import { isDirectory } from 'cozy-client/dist/models/file'
-import Icon from 'cozy-ui/transpiled/react/Icon'
 
 import getMimeTypeIcon from '@/lib/getMimeTypeIcon'
 import { CustomizedIcon } from '@/modules/views/Folder/CustomizedIcon'

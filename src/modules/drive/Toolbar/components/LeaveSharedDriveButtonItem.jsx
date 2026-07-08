@@ -1,10 +1,9 @@
+import { Icon, Logout } from '@linagora/twake-icons'
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { useClient } from 'cozy-client'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import LogoutIcon from 'cozy-ui/transpiled/react/Icons/Logout'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
@@ -33,7 +32,7 @@ const LeaveSharedDriveButtonItem = ({ files }) => {
   return (
     <ActionsMenuItem onClick={handleClick}>
       <ListItemIcon>
-        <Icon icon={LogoutIcon} className="u-error" />
+        <Icon icon={Logout} className="u-error" />
       </ListItemIcon>
       <ListItemText primary={t('toolbar.menu_leave_shared_drive')} />
     </ActionsMenuItem>

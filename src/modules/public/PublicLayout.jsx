@@ -1,9 +1,9 @@
+import { Sprite } from '@linagora/twake-icons'
 import React from 'react'
 import { Outlet } from 'react-router-dom'
 
 import { BarComponent } from 'cozy-bar'
 import FlagSwitcher from 'cozy-flags/dist/FlagSwitcher'
-import Sprite from 'cozy-ui/transpiled/react/Icon/Sprite'
 import { Layout } from 'cozy-ui/transpiled/react/Layout'
 
 import FilesRealTimeQueries from '@/components/FilesRealTimeQueries'

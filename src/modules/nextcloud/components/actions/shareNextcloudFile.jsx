@@ -1,15 +1,13 @@
+import { Icon, LinkOut, Share } from '@linagora/twake-icons'
 import React, { forwardRef } from 'react'
 
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import LinkOutIcon from 'cozy-ui/transpiled/react/Icons/LinkOut'
-import ShareIcon from 'cozy-ui/transpiled/react/Icons/Share'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 
 const shareNextcloudFile = ({ t }) => {
   const label = t('toolbar.share')
-  const icon = ShareIcon
+  const icon = Share
 
   return {
     name: 'share',
@@ -27,7 +25,7 @@ const shareNextcloudFile = ({ t }) => {
           </ListItemIcon>
           <ListItemText primary={label} />
           <ListItemIcon>
-            <Icon icon={LinkOutIcon} />
+            <Icon icon={LinkOut} />
           </ListItemIcon>
         </ActionsMenuItem>
       )

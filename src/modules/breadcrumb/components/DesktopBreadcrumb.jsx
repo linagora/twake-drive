@@ -1,12 +1,14 @@
+import {
+  Icon,
+  FileTypeSharedDriveGrey,
+  Folder,
+  Right
+} from '@linagora/twake-icons'
 import React, { useEffect, useMemo, useState } from 'react'
 
 import ActionsMenu from 'cozy-ui/transpiled/react/ActionsMenu'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
 import BreadcrumbMui from 'cozy-ui/transpiled/react/Breadcrumbs'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import FileTypeSharedDriveIcon from 'cozy-ui/transpiled/react/Icons/FileTypeSharedDriveGrey'
-import FolderIcon from 'cozy-ui/transpiled/react/Icons/Folder'
-import RightIcon from 'cozy-ui/transpiled/react/Icons/Right'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import { useI18n } from 'twake-i18n'
 
@@ -52,7 +54,7 @@ const DesktopBreadcrumb = ({ onBreadcrumbClick, path }) => {
   }, [anchorElRef.current]) // eslint-disable-line react-hooks/exhaustive-deps, react-hooks/refs
 
   const Separator = (
-    <Icon icon={RightIcon} className={styles['fil-path-separator']} />
+    <Icon icon={Right} className={styles['fil-path-separator']} />
   )
 
   // When we are in a shared drive, we want to display the shared drive icon
@@ -85,7 +87,7 @@ const DesktopBreadcrumb = ({ onBreadcrumbClick, path }) => {
                 onClick={onBreadcrumbClick}
                 item={breadcrumbPath}
                 isCurrent={index === pathToDisplay.length - 1}
-                icon={FolderIcon}
+                icon={Folder}
               />
             )
           }
@@ -100,7 +102,7 @@ const DesktopBreadcrumb = ({ onBreadcrumbClick, path }) => {
                 onClick={onBreadcrumbClick}
                 item={breadcrumbPath}
                 isCurrent={index === pathToDisplay.length - 1}
-                icon={FileTypeSharedDriveIcon}
+                icon={FileTypeSharedDriveGrey}
               />
             )
           }
@@ -115,7 +117,6 @@ const DesktopBreadcrumb = ({ onBreadcrumbClick, path }) => {
           )
         })}
       </BreadcrumbMui>
-
       {menuDisplayed && (
         <ActionsMenu
           open

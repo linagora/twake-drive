@@ -1,9 +1,8 @@
+import { Icon, Right } from '@linagora/twake-icons'
 import cx from 'classnames'
 import PropTypes from 'prop-types'
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import RightIcon from 'cozy-ui/transpiled/react/Icons/Right'
 import Spinner from 'cozy-ui/transpiled/react/Spinner'
 import { useI18n } from 'twake-i18n'
 
@@ -77,10 +76,7 @@ const Breadcrumb = ({
                 <span className={styles['fil-path-link-name']}>
                   {folderName}
                 </span>
-                <Icon
-                  icon={RightIcon}
-                  className={styles['fil-path-separator']}
-                />
+                <Icon icon={Right} className={styles['fil-path-separator']} />
               </span>
             )
           } else {

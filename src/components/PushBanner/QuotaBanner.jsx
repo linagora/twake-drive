@@ -1,3 +1,4 @@
+import { Icon, CloudSync } from '@linagora/twake-icons'
 import React, { useEffect, useState } from 'react'
 
 import { useInstanceInfo } from 'cozy-client'
@@ -10,8 +11,6 @@ import flag from 'cozy-flags'
 import { useWebviewIntent } from 'cozy-intent'
 import Alert from 'cozy-ui/transpiled/react/Alert'
 import Button from 'cozy-ui/transpiled/react/Buttons'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import CloudSyncIcon from 'cozy-ui/transpiled/react/Icons/CloudSync'
 import { useI18n } from 'twake-i18n'
 
 import { usePushBannerContext } from './PushBannerProvider'
@@ -54,7 +53,7 @@ const QuotaBanner = () => {
   return (
     <div className="u-pos-relative">
       <Alert
-        icon={<Icon icon={CloudSyncIcon} />}
+        icon={<Icon icon={CloudSync} />}
         color="var(--defaultBackgroundColor)"
         action={
           <>

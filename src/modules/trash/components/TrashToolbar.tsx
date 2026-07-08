@@ -1,3 +1,4 @@
+import { Icon, Trash } from '@linagora/twake-icons'
 import cx from 'classnames'
 import React, { FC } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -5,8 +6,6 @@ import { useNavigate } from 'react-router-dom'
 import { BarRight } from 'cozy-bar'
 import { makeActions } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
 import Button from 'cozy-ui/transpiled/react/Buttons'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import TrashIcon from 'cozy-ui/transpiled/react/Icons/Trash'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import { useI18n } from 'twake-i18n'
 
@@ -54,7 +53,7 @@ const TrashToolbar: FC = () => {
         color="error"
         onClick={handleEmptyTrash}
         disabled={isSelectionBarVisible}
-        startIcon={<Icon icon={TrashIcon} />}
+        startIcon={<Icon icon={Trash} />}
         label={t('TrashToolbar.emptyTrash')}
       />
     </div>

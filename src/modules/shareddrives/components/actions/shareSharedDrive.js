@@ -1,8 +1,7 @@
+import { Icon, Share } from '@linagora/twake-icons'
 import React, { forwardRef } from 'react'
 
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import ShareIcon from 'cozy-ui/transpiled/react/Icons/Share'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 
@@ -16,7 +15,7 @@ import { isFileRootSharedDrive } from '@/modules/shareddrives/rootFileNavigation
 // file-root one only shows for file-roots.
 export const shareSharedDrive = ({ navigate, t, pathname }) => {
   const label = t('Files.share.cta')
-  const icon = ShareIcon
+  const icon = Share
 
   return {
     name: 'shareSharedDrive',

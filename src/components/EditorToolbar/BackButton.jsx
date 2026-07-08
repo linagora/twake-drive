@@ -1,8 +1,7 @@
+import { Icon, Previous } from '@linagora/twake-icons'
 import React from 'react'
 
-import Icon from 'cozy-ui/transpiled/react/Icon'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
-import PreviousIcon from 'cozy-ui/transpiled/react/Icons/Previous'
 import { useI18n } from 'twake-i18n'
 
 const BackButton = ({ onClick }) => {
@@ -17,7 +16,7 @@ const BackButton = ({ onClick }) => {
       size="medium"
       aria-label={t('button.back')}
     >
-      <Icon icon={PreviousIcon} />
+      <Icon icon={Previous} />
     </IconButton>
   )
 }

@@ -1,11 +1,7 @@
+import { Icon, ClockOutline, Cloud2, Star, Trash } from '@linagora/twake-icons'
 import React from 'react'
 
 import flag from 'cozy-flags'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import ClockIcon from 'cozy-ui/transpiled/react/Icons/ClockOutline'
-import CloudIcon from 'cozy-ui/transpiled/react/Icons/Cloud2'
-import StarIcon from 'cozy-ui/transpiled/react/Icons/Star'
-import TrashIcon from 'cozy-ui/transpiled/react/Icons/Trash'
 import { NavDesktopDropdown } from 'cozy-ui/transpiled/react/Nav'
 import UINav from 'cozy-ui/transpiled/react/Nav'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
@@ -29,7 +25,7 @@ export const Nav = () => {
     <UINav>
       <NavItem
         to="/folder"
-        icon={<Icon icon={CloudIcon} />}
+        icon={<Icon icon={Cloud2} />}
         label="drive"
         rx={/\/(folder|nextcloud)(\/.*)?/}
         clickState={clickState}
@@ -37,7 +33,7 @@ export const Nav = () => {
       {!isDesktop ? (
         <NavItem
           to="/favorites"
-          icon={<Icon icon={StarIcon} />}
+          icon={<Icon icon={Star} />}
           label="favorites"
           rx={/\/favorites(\/.*)?/}
           clickState={clickState}
@@ -45,7 +41,7 @@ export const Nav = () => {
       ) : null}
       <NavItem
         to="/recent"
-        icon={<Icon icon={ClockIcon} />}
+        icon={<Icon icon={ClockOutline} />}
         label="recent"
         rx={/\/recent(\/.*)?/}
         clickState={clickState}
@@ -53,7 +49,7 @@ export const Nav = () => {
       <SharingsNavItem clickState={clickState} />
       <NavItem
         to="/trash"
-        icon={<Icon icon={TrashIcon} />}
+        icon={<Icon icon={Trash} />}
         label="trash"
         rx={/\/trash(\/.*)?/}
         clickState={clickState}

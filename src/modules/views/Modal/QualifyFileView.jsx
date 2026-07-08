@@ -1,3 +1,4 @@
+import { Icon, FileDuotone, FileTypeNote } from '@linagora/twake-icons'
 import React from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
@@ -6,9 +7,6 @@ import { getQualification } from 'cozy-client/dist/models/document'
 import { themesList } from 'cozy-client/dist/models/document/documentTypeData'
 import { isQualificationNote } from 'cozy-client/dist/models/document/documentTypeDataHelpers'
 import { getBoundT } from 'cozy-client/dist/models/document/locales'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import FileDuotoneIcon from 'cozy-ui/transpiled/react/Icons/FileDuotone'
-import FileTypeNoteIcon from 'cozy-ui/transpiled/react/Icons/FileTypeNote'
 import NestedSelectResponsive from 'cozy-ui/transpiled/react/NestedSelect/NestedSelectResponsive'
 import { useI18n } from 'twake-i18n'
 
@@ -19,7 +17,7 @@ import { buildFileOrFolderByIdQuery } from '@/queries'
 const OptionIconStack = ({ icon }) => {
   return (
     <IconStack
-      backgroundIcon={<Icon icon={FileDuotoneIcon} color="#E049BF" size={32} />}
+      backgroundIcon={<Icon icon={FileDuotone} color="#E049BF" size={32} />}
       {...(icon && {
         foregroundIcon: <Icon icon={icon} color="#E049BF" size={16} />
       })}
@@ -52,7 +50,7 @@ const makeOptions = ({ t, scannerT, focusedId }) => {
             item,
             title: scannerT(`Scan.items.${item.label}`),
             icon: isQualificationNote(item) ? (
-              <Icon icon={FileTypeNoteIcon} size={64} />
+              <Icon icon={FileTypeNote} size={64} />
             ) : (
               <OptionIconStack icon={item.icon} />
             )

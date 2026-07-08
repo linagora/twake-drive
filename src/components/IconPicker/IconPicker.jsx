@@ -1,10 +1,10 @@
+import { Icon } from '@linagora/twake-icons'
 import PropTypes from 'prop-types'
 import React, { useState, useEffect } from 'react'
 
 import Backdrop from 'cozy-ui/transpiled/react/Backdrop'
 import GridList from 'cozy-ui/transpiled/react/GridList'
 import GridListTile from 'cozy-ui/transpiled/react/GridListTile'
-import Icon from 'cozy-ui/transpiled/react/Icon'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
 import { Spinner } from 'cozy-ui/transpiled/react/Spinner'
 import Typography from 'cozy-ui/transpiled/react/Typography'

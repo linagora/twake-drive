@@ -1,8 +1,7 @@
+import { Icon, Plus } from '@linagora/twake-icons'
 import React, { useContext } from 'react'
 
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import PlusIcon from 'cozy-ui/transpiled/react/Icons/Plus'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import { useI18n } from 'twake-i18n'
@@ -34,7 +33,7 @@ const AddMenuItem = ({ onClick }) => {
       {...a11y}
     >
       <ListItemIcon>
-        <Icon icon={<Icon icon={PlusIcon} />} />
+        <Icon icon={Plus} />
       </ListItemIcon>
       <ListItemText primary={t('toolbar.menu_add_item')} />
     </ActionsMenuItem>

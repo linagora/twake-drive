@@ -1,11 +1,10 @@
+import { Icon, SadCozy } from '@linagora/twake-icons'
 import React, { FC, useEffect, useState } from 'react'
 import { useLocation, useParams } from 'react-router-dom'
 
 import { useClient } from 'cozy-client'
 import { fetchURL } from 'cozy-client/dist/models/note'
 import Empty from 'cozy-ui/transpiled/react/Empty'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import SadCozyIcon from 'cozy-ui/transpiled/react/Icons/SadCozy'
 import Spinner from 'cozy-ui/transpiled/react/Spinner'
 import { useI18n } from 'twake-i18n'
 
@@ -68,7 +67,7 @@ const PublicNoteRedirect: FC = () => {
     <DummyLayout>
       {fetchStatus === 'failed' && (
         <Empty
-          icon={<Icon icon={SadCozyIcon} color="var(--primaryColor)" />}
+          icon={<Icon icon={SadCozy} color="var(--primaryColor)" />}
           title={t('PublicNoteRedirect.error.title')}
           text={t('PublicNoteRedirect.error.subtitle')}
         />

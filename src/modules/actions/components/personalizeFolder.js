@@ -1,7 +1,7 @@
+import { Palette } from '@linagora/twake-icons'
 import React from 'react'
 
 import { makeAction } from 'cozy-ui/transpiled/react/ActionsMenu/Actions/makeAction'
-import PaletteIcon from 'cozy-ui/transpiled/react/Icons/Palette'
 
 import { FolderCustomizerModal } from '../../views/Folder/FolderCustomizer'
 
@@ -13,7 +13,7 @@ const personalizeFolder = ({
   hasWriteAccess,
   onClose
 }) => {
-  const icon = PaletteIcon
+  const icon = Palette
   const label = t('actions.personalizeFolder.label')
 
   return makeAction({

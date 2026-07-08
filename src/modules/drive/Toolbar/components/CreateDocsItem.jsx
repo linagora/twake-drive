@@ -1,9 +1,9 @@
+import { Icon } from '@linagora/twake-icons'
 import get from 'lodash/get'
 import React from 'react'
 
 import { useClient, generateWebLink, useCapabilities } from 'cozy-client'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
-import Icon from 'cozy-ui/transpiled/react/Icon'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'

@@ -1,9 +1,8 @@
+import { Icon, Dots } from '@linagora/twake-icons'
 import cx from 'classnames'
 import React, { forwardRef } from 'react'
 
-import Icon from 'cozy-ui/transpiled/react/Icon'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
-import DotsIcon from 'cozy-ui/transpiled/react/Icons/Dots'
 import { TableCell } from 'cozy-ui/transpiled/react/deprecated/Table'
 
 import styles from '@/styles/filelist.styl'
@@ -27,7 +26,7 @@ const FileAction = forwardRef(function FileAction(
           size="small"
           aria-label={t('Toolbar.more')}
         >
-          <Icon icon={DotsIcon} size={17} />
+          <Icon icon={Dots} size={17} />
         </IconButton>
       </span>
     </TableCell>

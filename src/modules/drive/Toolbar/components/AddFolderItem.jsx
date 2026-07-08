@@ -1,9 +1,8 @@
+import { Icon, FileTypeFolder } from '@linagora/twake-icons'
 import React, { useContext } from 'react'
 import { connect } from 'react-redux'
 
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import IconFolder from 'cozy-ui/transpiled/react/Icons/FileTypeFolder'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
@@ -41,7 +40,7 @@ const AddFolderItem = ({ addFolder, onClick, isReadOnly }) => {
   return (
     <ActionsMenuItem data-testid="add-folder-link" onClick={handleClick}>
       <ListItemIcon>
-        <Icon icon={IconFolder} />
+        <Icon icon={FileTypeFolder} />
       </ListItemIcon>
       <ListItemText primary={t('toolbar.menu_new_folder')} />
     </ActionsMenuItem>

@@ -1,8 +1,7 @@
+import { Icon, Dots } from '@linagora/twake-icons'
 import React from 'react'
 
-import Icon from 'cozy-ui/transpiled/react/Icon'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
-import DotsIcon from 'cozy-ui/transpiled/react/Icons/Dots'
 import { useI18n } from 'twake-i18n'
 
 const MoreButton = ({ disabled, onClick, ...props }) => {
@@ -18,7 +17,7 @@ const MoreButton = ({ disabled, onClick, ...props }) => {
         aria-label={t('Toolbar.more')}
         {...props}
       >
-        <Icon icon={DotsIcon} />
+        <Icon icon={Dots} />
       </IconButton>
     </div>
   )

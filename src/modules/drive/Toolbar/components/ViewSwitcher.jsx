@@ -1,8 +1,6 @@
+import { Icon, ListMin, MosaicMin } from '@linagora/twake-icons'
 import React from 'react'
 
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import ListMinIcon from 'cozy-ui/transpiled/react/Icons/ListMin'
-import MosaicMinIcon from 'cozy-ui/transpiled/react/Icons/MosaicMin'
 import ToggleButton from 'cozy-ui/transpiled/react/ToggleButton'
 import ToggleButtonGroup from 'cozy-ui/transpiled/react/ToggleButtonGroup'
 import { useI18n } from 'twake-i18n'
@@ -44,7 +42,7 @@ const ViewSwitcher = ({ className }) => {
         rounded={true}
         color="default"
       >
-        <Icon icon={ListMinIcon} />
+        <Icon icon={ListMin} />
       </ToggleButton>
       <ToggleButton
         value="grid"
@@ -52,7 +50,7 @@ const ViewSwitcher = ({ className }) => {
         rounded={true}
         color="default"
       >
-        <Icon icon={MosaicMinIcon} />
+        <Icon icon={MosaicMin} />
       </ToggleButton>
     </ToggleButtonGroup>
   )

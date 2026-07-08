@@ -1,10 +1,10 @@
+import { Icon } from '@linagora/twake-icons'
 import React from 'react'
 
 import {
   getSharingShortcutTargetMime,
   getSharingShortcutTargetDoctype
 } from 'cozy-client/dist/models/file'
-import Icon from 'cozy-ui/transpiled/react/Icon'
 
 import { DOCTYPE_FILES } from '@/lib/doctypes'
 import getMimeTypeIcon from '@/lib/getMimeTypeIcon'

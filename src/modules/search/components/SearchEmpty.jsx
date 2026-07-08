@@ -1,7 +1,7 @@
+import { Icon } from '@linagora/twake-icons'
 import React from 'react'
 
 import Grid from 'cozy-ui/transpiled/react/Grid'
-import Icon from 'cozy-ui/transpiled/react/Icon'
 import Typography from 'cozy-ui/transpiled/react/Typography'
 import { useI18n } from 'twake-i18n'
 

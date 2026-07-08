@@ -1,11 +1,10 @@
+import { Icon, Share } from '@linagora/twake-icons'
 import React, { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import flag from 'cozy-flags'
 import { ShareButton, ShareModal, SharedRecipients } from 'cozy-sharing'
-import Icon from 'cozy-ui/transpiled/react/Icon'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
-import ShareIcon from 'cozy-ui/transpiled/react/Icons/Share'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import { makeRevokeSuccessRedirectPath } from '@/modules/views/Modal/revokeSuccessRedirect'
@@ -32,7 +31,7 @@ const Sharing = ({ file }) => {
           onClick={toggleShareModal}
           size="medium"
         >
-          <Icon icon={ShareIcon} />
+          <Icon icon={Share} />
         </IconButton>
       ) : (
         <>

@@ -1,7 +1,7 @@
+import { Sprite } from '@linagora/twake-icons'
 import React from 'react'
 import { HashRouter, Routes, Route } from 'react-router-dom'
 
-import Sprite from 'cozy-ui/transpiled/react/Icon/Sprite'
 import Spinner from 'cozy-ui/transpiled/react/Spinner'
 import withBreakpoints from 'cozy-ui/transpiled/react/helpers/withBreakpoints'
 

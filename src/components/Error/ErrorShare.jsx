@@ -1,7 +1,7 @@
+import { CloudBroken } from '@linagora/twake-icons'
 import React from 'react'
 
 import Empty from 'cozy-ui/transpiled/react/Empty'
-import CloudBrokenIcon from 'cozy-ui/transpiled/react/Icons/CloudBroken'
 import { useI18n } from 'twake-i18n'
 
 export const ErrorShare = ({ errorType }) => {
@@ -9,7 +9,7 @@ export const ErrorShare = ({ errorType }) => {
   return (
     <Empty
       data-testid="empty-share"
-      icon={CloudBrokenIcon}
+      icon={CloudBroken}
       title={t(`Error.${errorType}_title`)}
       text={t(`Error.${errorType}_text`)}
       componentsProps={{

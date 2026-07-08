@@ -1,9 +1,9 @@
+import { Globe } from '@linagora/twake-icons'
 import React from 'react'
 import { useParams } from 'react-router-dom'
 
 import { useClient, useFetchShortcut } from 'cozy-client'
 import Empty from 'cozy-ui/transpiled/react/Empty'
-import GlobeIcon from 'cozy-ui/transpiled/react/Icons/Globe'
 import { translate } from 'twake-i18n'
 
 import EmptyIcon from '@/assets/icons/icon-folder-broken.svg'
@@ -31,7 +31,7 @@ const ExternalRedirect = ({ t }) => {
       {fetchStatus !== 'failed' && (
         <Empty
           data-testid="empty-share"
-          icon={GlobeIcon}
+          icon={Globe}
           title={t('External.redirection.title')}
           text={t('External.redirection.text')}
         />

@@ -1,9 +1,8 @@
+import { Icon, Camera } from '@linagora/twake-icons'
 import React from 'react'
 
 import logger from 'cozy-logger'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import CameraIcon from 'cozy-ui/transpiled/react/Icons/Camera'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import { useI18n } from 'twake-i18n'
@@ -38,7 +37,7 @@ export const ScannerMenuItem = ({
   return hasScanner ? (
     <ActionsMenuItem onClick={handleClick} data-testid="scan-doc">
       <ListItemIcon>
-        <Icon icon={CameraIcon} />
+        <Icon icon={Camera} />
       </ListItemIcon>
       <ListItemText primary={t('Scan.scan_a_doc')} />
     </ActionsMenuItem>
