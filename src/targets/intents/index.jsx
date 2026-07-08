@@ -20,6 +20,9 @@ import IntentHandler from '@/modules/services'
 
 // ambient styles
 import styles from '@/styles/main.styl' // eslint-disable-line no-unused-vars
+// Constrains the intents page to a single scroll (the dialog content's),
+// see src/styles/intents.styl for details.
+import intentsStyles from '@/styles/intents.styl' // eslint-disable-line no-unused-vars
 
 document.addEventListener('DOMContentLoaded', () => {
   const root = document.getElementById('main')

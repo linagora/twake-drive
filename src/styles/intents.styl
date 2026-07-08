@@ -1,0 +1,9 @@
+// The intents target renders a single full-screen dialog (e.g. the File
+// Picker `PICK io.cozy.files` intent). Its content already scrolls on its
+// own (see cozy-ui's FixedDialog `DialogContent`), so the surrounding page
+// must not introduce a second, competing scrollbar.
+html,
+body,
+#main
+    height 100%
+    overflow hidden

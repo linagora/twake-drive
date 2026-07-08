@@ -44,7 +44,14 @@ const Picker = ({ service, intent }) => {
     }
 
     if (linkMode === filePickerLinkModes.REFERENCE) {
-      service.terminate([makeFilePickerFileEntry(file, { reference: true })])
+      try {
+        service.terminate([makeFilePickerFileEntry(file, { reference: true })])
+      } catch (error) {
+        // terminate throws when the intent is already terminated or the
+        // postMessage transport fails: the channel to the caller is gone,
+        // there is no user-facing recovery beyond logging.
+        logger.warn('FilePicker intent termination failed', error)
+      }
       return null
     }
 

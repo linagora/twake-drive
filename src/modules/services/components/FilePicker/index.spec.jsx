@@ -5,6 +5,8 @@ import { filePickerLinkModes } from './constants'
 import FilePicker from './index'
 
 var mockIsMobile = false
+var mockFolderDoc = null
+var mockFolderLoaded = false
 
 jest.mock('cozy-client', () => ({
   models: {
@@ -17,17 +19,14 @@ jest.mock('cozy-client', () => ({
   fetchPolicies: {
     olderThan: () => () => true
   },
-  useQuery: () => ({ data: null })
+  useQuery: () => ({ data: mockFolderDoc }),
+  hasQueryBeenLoaded: () => mockFolderLoaded
 }))
 
-jest.mock(
-  'cozy-ui/transpiled/react/helpers/withBreakpoints',
-  () => () => Component => props =>
-    React.createElement(Component, {
-      ...props,
-      breakpoints: { isMobile: mockIsMobile }
-    })
-)
+jest.mock('cozy-ui/transpiled/react/providers/Breakpoints', () => ({
+  __esModule: true,
+  default: () => ({ isMobile: mockIsMobile })
+}))
 
 jest.mock('cozy-ui/transpiled/react/CozyDialogs', () => ({
   FixedDialog: ({ title, content, actions, onBack, onClose }) => (
@@ -51,39 +50,51 @@ jest.mock('cozy-ui/transpiled/react/CozyDialogs', () => ({
 
 jest.mock('./FilePickerHeader', () => () => <div>Header</div>)
 
-jest.mock('./FilePickerBody', () => ({ onSelectItemId, folderSelectable }) => (
-  <div>
-    <span data-testid="folder-selectable">
-      {folderSelectable ? 'true' : 'false'}
-    </span>
-    <button
-      type="button"
-      data-testid="select-file-btn"
-      onClick={() =>
-        onSelectItemId(['file-id'], {
-          _id: 'file-id',
-          type: 'file',
-          name: 'file.pdf'
-        })
-      }
-    >
-      Select file
-    </button>
-    <button
-      type="button"
-      data-testid="select-folder-btn"
-      onClick={() =>
-        onSelectItemId(['folder-id'], {
-          _id: 'folder-id',
-          type: 'directory',
-          name: 'Folder'
-        })
-      }
-    >
-      Select folder
-    </button>
-  </div>
-))
+jest.mock(
+  './FilePickerBody',
+  () =>
+    ({ onSelectItemId, folderSelectable, navigateTo, folderId }) => (
+      <div>
+        <span data-testid="folder-selectable">
+          {folderSelectable ? 'true' : 'false'}
+        </span>
+        <span data-testid="current-folder">{folderId}</span>
+        <button
+          type="button"
+          data-testid="navigate-subfolder-btn"
+          onClick={() => navigateTo({ id: 'subfolder-id' })}
+        >
+          Open subfolder
+        </button>
+        <button
+          type="button"
+          data-testid="select-file-btn"
+          onClick={() =>
+            onSelectItemId(['file-id'], {
+              _id: 'file-id',
+              type: 'file',
+              name: 'file.pdf'
+            })
+          }
+        >
+          Select file
+        </button>
+        <button
+          type="button"
+          data-testid="select-folder-btn"
+          onClick={() =>
+            onSelectItemId(['folder-id'], {
+              _id: 'folder-id',
+              type: 'directory',
+              name: 'Folder'
+            })
+          }
+        >
+          Select folder
+        </button>
+      </div>
+    )
+)
 
 jest.mock(
   './FilePickerFooter',
@@ -149,6 +160,8 @@ describe('FilePicker', () => {
   afterEach(() => {
     jest.clearAllMocks()
     mockIsMobile = false
+    mockFolderDoc = null
+    mockFolderLoaded = false
   })
 
   it('should render both action buttons by default', () => {
@@ -196,6 +209,48 @@ describe('FilePicker', () => {
     mockIsMobile = true
     const { getByTestId } = setup()
 
+    fireEvent.click(getByTestId('back-btn'))
+
+    expect(mockOnClose).toHaveBeenCalled()
+  })
+
+  it('should navigate up one level from the back button on mobile inside a subfolder', () => {
+    mockIsMobile = true
+    mockFolderDoc = {
+      _id: 'subfolder-id',
+      dir_id: 'parent-id',
+      type: 'directory'
+    }
+    mockFolderLoaded = true
+    const { getByTestId } = setup()
+
+    fireEvent.click(getByTestId('navigate-subfolder-btn'))
+    fireEvent.click(getByTestId('back-btn'))
+
+    expect(getByTestId('current-folder')).toHaveTextContent('parent-id')
+    expect(mockOnClose).not.toHaveBeenCalled()
+  })
+
+  it('should ignore the back button while the folder doc is still loading', () => {
+    mockIsMobile = true
+    mockFolderDoc = null
+    mockFolderLoaded = false
+    const { getByTestId } = setup()
+
+    fireEvent.click(getByTestId('navigate-subfolder-btn'))
+    fireEvent.click(getByTestId('back-btn'))
+
+    expect(getByTestId('current-folder')).toHaveTextContent('subfolder-id')
+    expect(mockOnClose).not.toHaveBeenCalled()
+  })
+
+  it('should close from the back button when the folder doc is unavailable', () => {
+    mockIsMobile = true
+    mockFolderDoc = null
+    mockFolderLoaded = true
+    const { getByTestId } = setup()
+
+    fireEvent.click(getByTestId('navigate-subfolder-btn'))
     fireEvent.click(getByTestId('back-btn'))
 
     expect(mockOnClose).toHaveBeenCalled()

@@ -1,9 +1,8 @@
 import PropTypes from 'prop-types'
 import React, { useState, memo } from 'react'
 
-import { useQuery } from 'cozy-client'
 import { FixedDialog } from 'cozy-ui/transpiled/react/CozyDialogs'
-import withBreakpoints from 'cozy-ui/transpiled/react/helpers/withBreakpoints'
+import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import FilePickerBody from './FilePickerBody'
 import FilePickerFooter from './FilePickerFooter'
@@ -11,7 +10,7 @@ import FilePickerHeader from './FilePickerHeader'
 import { defaultFilePickerConfig } from './constants'
 import { getActionDisabledState } from './constraints'
 import { getCompliantTypes } from './helpers'
-import { buildCurrentFolderQuery } from './queries'
+import { useCurrentFolder } from './useCurrentFolder'
 
 export const ROOT_DIR_ID = 'io.cozy.files.root-dir'
 
@@ -20,9 +19,9 @@ const FilePicker = ({
   onChange,
   accept,
   multiple,
-  filePickerConfig,
-  breakpoints
+  filePickerConfig
 }) => {
+  const { isMobile } = useBreakpoints()
   const [folderId, setFolderId] = useState(ROOT_DIR_ID)
   const [itemsIdsSelected, setItemsIdsSelected] = useState([])
   const [selectedItems, setSelectedItems] = useState([])
@@ -33,14 +32,7 @@ const FilePicker = ({
   const downloadLinkAction = config.downloadLink ?? null
   const referenceAction = config.reference ?? null
 
-  const currentFolderQuery = buildCurrentFolderQuery(folderId)
-  const { data: currentFolder } = useQuery(
-    currentFolderQuery.definition,
-    currentFolderQuery.options
-  )
-  const displayedFolder = Array.isArray(currentFolder)
-    ? currentFolder[0]
-    : currentFolder
+  const { displayedFolder, hasLoaded } = useCurrentFolder(folderId)
 
   const onSelectItemId = (fileIds, item = null) => {
     setError(null)
@@ -65,11 +57,17 @@ const FilePicker = ({
   }
 
   const handleBack = () => {
-    if (folderId !== ROOT_DIR_ID) {
-      navigateTo({ id: displayedFolder?.dir_id ?? ROOT_DIR_ID })
-    } else {
+    if (folderId === ROOT_DIR_ID) {
+      onClose()
+    } else if (displayedFolder?.dir_id) {
+      navigateTo({ id: displayedFolder.dir_id })
+    } else if (hasLoaded) {
+      // Folder doc unavailable (deleted, access lost): the parent is
+      // unknowable, closing is the only way out.
       onClose()
     }
+    // While the folder doc is still loading, ignore the tap: the parent
+    // is unknown yet, navigating would jump to the wrong place.
   }
 
   const handleConfirm = async linkMode => {
@@ -99,7 +97,7 @@ const FilePicker = ({
   // onBack are provided. We only want the "up one level or close" behavior
   // to collapse into cozy-ui's single fullScreen back/close button on
   // mobile, so onBack must stay undefined on desktop.
-  const onBack = breakpoints.isMobile ? handleBack : undefined
+  const onBack = isMobile ? handleBack : undefined
 
   return (
     <FixedDialog
@@ -145,10 +143,7 @@ FilePicker.propTypes = {
     sharingLink: PropTypes.object,
     downloadLink: PropTypes.object,
     reference: PropTypes.object
-  }),
-  breakpoints: PropTypes.shape({
-    isMobile: PropTypes.bool.isRequired
-  }).isRequired
+  })
 }
 
 FilePicker.defaultProps = {
@@ -157,4 +152,4 @@ FilePicker.defaultProps = {
   filePickerConfig: defaultFilePickerConfig
 }
 
-export default memo(withBreakpoints()(FilePicker))
+export default memo(FilePicker)
