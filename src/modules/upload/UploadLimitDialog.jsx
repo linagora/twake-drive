@@ -1,9 +1,8 @@
+import { Icon, DesktopDownload } from '@linagora/twake-icons'
 import React from 'react'
 
 import Button from 'cozy-ui/transpiled/react/Buttons'
 import { ConfirmDialog } from 'cozy-ui/transpiled/react/CozyDialogs'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import DesktopDownloadIcon from 'cozy-ui/transpiled/react/Icons/DesktopDownload'
 import Typography from 'cozy-ui/transpiled/react/Typography'
 import { useI18n } from 'twake-i18n'
 
@@ -43,7 +42,7 @@ const UploadLimitDialog = ({ onClose, maxFileCount }) => {
             <Button
               onClick={handleDownloadDesktop}
               label={t('upload.limit.download_desktop')}
-              startIcon={<Icon icon={DesktopDownloadIcon} />}
+              startIcon={<Icon icon={DesktopDownload} />}
             />
           </>
         )

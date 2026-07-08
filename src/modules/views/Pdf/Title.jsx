@@ -1,8 +1,8 @@
+import { FileTypePdf } from '@linagora/twake-icons'
 import PropTypes from 'prop-types'
 import React, { useCallback, useState } from 'react'
 
 import Button from 'cozy-ui/transpiled/react/Buttons'
-import PdfIcon from 'cozy-ui/transpiled/react/Icons/FileTypePdf'
 import { useI18n } from 'twake-i18n'
 
 import EditorTitle from '@/modules/views/editor/EditorTitle'
@@ -26,7 +26,7 @@ const Title = ({ file, flushRef, isPublic = false, isReadOnly = false }) => {
     <EditorTitle
       file={file}
       flushRef={flushRef}
-      icon={PdfIcon}
+      icon={FileTypePdf}
       dataTestId="pdf-title"
       isPublic={isPublic}
       isReadOnly={isReadOnly}

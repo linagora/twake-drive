@@ -1,6 +1,5 @@
+import { Icon } from '@linagora/twake-icons'
 import React from 'react'
-
-import Icon from 'cozy-ui/transpiled/react/Icon'
 
 import ColoredFolder from './ColoredFolder'
 

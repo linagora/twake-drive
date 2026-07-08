@@ -1,9 +1,8 @@
+import { Icon, Moveto } from '@linagora/twake-icons'
 import React from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import MovetoIcon from 'cozy-ui/transpiled/react/Icons/Moveto'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
@@ -38,7 +37,7 @@ const MoveItem = ({ displayedFolder, hasWriteAccess }) => {
   return (
     <ActionsMenuItem onClick={handleClick}>
       <ListItemIcon>
-        <Icon icon={MovetoIcon} />
+        <Icon icon={Moveto} />
       </ListItemIcon>
       <ListItemText primary={label} />
     </ActionsMenuItem>

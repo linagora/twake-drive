@@ -1,11 +1,9 @@
+import { Icon, Folder, Openwith } from '@linagora/twake-icons'
 import React, { useMemo, useState } from 'react'
 
 import Button from 'cozy-ui/transpiled/react/Buttons'
 import { ConfirmDialog } from 'cozy-ui/transpiled/react/CozyDialogs'
 import FormControlLabel from 'cozy-ui/transpiled/react/FormControlLabel'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import FolderIcon from 'cozy-ui/transpiled/react/Icons/Folder'
-import OpenwithIcon from 'cozy-ui/transpiled/react/Icons/Openwith'
 import RadioGroup from 'cozy-ui/transpiled/react/RadioGroup'
 import Radios from 'cozy-ui/transpiled/react/Radios'
 import IntentDialogOpener from 'cozy-ui-plus/dist/Intent/IntentDialogOpener'
@@ -142,12 +140,11 @@ export const FilePickerButton = () => {
       >
         <Button
           label={t('Nav.item_file_picker')}
-          startIcon={<Icon icon={FolderIcon} />}
+          startIcon={<Icon icon={Folder} />}
           variant="secondary"
           className="u-w-100 u-bdrs-6"
         />
       </IntentDialogOpener>
-
       {modalData && (
         <ConfirmDialog
           open
@@ -163,7 +160,7 @@ export const FilePickerButton = () => {
                   rel="noopener noreferrer"
                   className="u-flex u-flex-items-center"
                 >
-                  <Icon icon={OpenwithIcon} className="u-mr-half" />
+                  <Icon icon={Openwith} className="u-mr-half" />
                   {modalData.link}
                 </a>
               )}

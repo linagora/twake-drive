@@ -1,3 +1,4 @@
+import { File, FileTypeServer, Folder } from '@linagora/twake-icons'
 import React, { FC } from 'react'
 
 import {
@@ -7,9 +8,6 @@ import {
   isOnlyOfficeFile
 } from 'cozy-client/dist/models/file'
 import type { IOCozyFile } from 'cozy-client/types/types'
-import FileIcon from 'cozy-ui/transpiled/react/Icons/File'
-import FileTypeServerIcon from 'cozy-ui/transpiled/react/Icons/FileTypeServer'
-import FolderIcon from 'cozy-ui/transpiled/react/Icons/Folder'
 import { NavIcon, NavLink, NavItem } from 'cozy-ui/transpiled/react/Nav'
 import Typography from 'cozy-ui/transpiled/react/Typography'
 
@@ -28,11 +26,7 @@ interface FavoriteListItemProps {
 }
 
 const makeIcon = (file: IOCozyFile): string | React.ComponentType =>
-  isNextcloudShortcut(file)
-    ? FileTypeServerIcon
-    : isDirectory(file)
-      ? FolderIcon
-      : FileIcon
+  isNextcloudShortcut(file) ? FileTypeServer : isDirectory(file) ? Folder : File
 
 const FavoriteListItem: FC<FavoriteListItemProps> = ({
   file,

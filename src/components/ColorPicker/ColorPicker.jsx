@@ -1,13 +1,11 @@
+import { Icon, Check, Cross } from '@linagora/twake-icons'
 import PropTypes from 'prop-types'
 import React from 'react'
 
 import Avatar from 'cozy-ui/transpiled/react/Avatar'
 import GridList from 'cozy-ui/transpiled/react/GridList'
 import GridListTile from 'cozy-ui/transpiled/react/GridListTile'
-import Icon from 'cozy-ui/transpiled/react/Icon'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
-import CheckIcon from 'cozy-ui/transpiled/react/Icons/Check'
-import CrossIcon from 'cozy-ui/transpiled/react/Icons/Cross'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import {
@@ -48,7 +46,7 @@ export const ColorPicker = ({ selectedColor, onColorSelect }) => {
             <IconButton onClick={() => onColorSelect()}>
               <Icon
                 size={isMobile ? ICON_SIZE_MOBILE : ICON_SIZE_DESKTOP}
-                icon={CrossIcon}
+                icon={Cross}
                 color="textSecondary"
               />
             </IconButton>
@@ -65,7 +63,7 @@ export const ColorPicker = ({ selectedColor, onColorSelect }) => {
                 {selectedColor === color && (
                   <Icon
                     size={isMobile ? ICON_SIZE_MOBILE : ICON_SIZE_DESKTOP}
-                    icon={CheckIcon}
+                    icon={Check}
                     color="white"
                   />
                 )}

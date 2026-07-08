@@ -1,3 +1,4 @@
+import { Icon, Upload } from '@linagora/twake-icons'
 import React from 'react'
 import { useDispatch } from 'react-redux'
 
@@ -5,8 +6,6 @@ import { useClient } from 'cozy-client'
 import withSharingState from 'cozy-sharing/dist/hoc/withSharingState'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
 import FileInput from 'cozy-ui/transpiled/react/FileInput'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import UploadIcon from 'cozy-ui/transpiled/react/Icons/Upload'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
@@ -93,7 +92,7 @@ const UploadItem = ({
     >
       <ActionsMenuItem onClick={handleMenuItemClick}>
         <ListItemIcon>
-          <Icon icon={UploadIcon} />
+          <Icon icon={Upload} />
         </ListItemIcon>
         <ListItemText primary={t('toolbar.menu_upload')} />
       </ActionsMenuItem>

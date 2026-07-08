@@ -1,14 +1,13 @@
+import { Icon, Rename } from '@linagora/twake-icons'
 import React, { forwardRef } from 'react'
 
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import RenameIcon from 'cozy-ui/transpiled/react/Icons/Rename'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 
 const rename = ({ t }) => {
   const label = t('SelectionBar.rename')
-  const icon = RenameIcon
+  const icon = Rename
 
   return {
     name: 'rename',

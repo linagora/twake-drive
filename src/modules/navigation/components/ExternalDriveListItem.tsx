@@ -1,8 +1,8 @@
+import { FileTypeServer } from '@linagora/twake-icons'
 import React, { FC } from 'react'
 
 import { splitFilename } from 'cozy-client/dist/models/file'
 import type { IOCozyFile } from 'cozy-client/types/types'
-import FileTypeServerIcon from 'cozy-ui/transpiled/react/Icons/FileTypeServer'
 import { NavIcon, NavLink, NavItem } from 'cozy-ui/transpiled/react/Nav'
 import Typography from 'cozy-ui/transpiled/react/Typography'
 
@@ -29,7 +29,7 @@ const ExternalDriveListItem: FC<ExternalDriveListItemProps> = ({
         className={NavLink.className}
         onClick={(): void => setLastClicked(undefined)}
       >
-        <NavIcon icon={FileTypeServerIcon} />
+        <NavIcon icon={FileTypeServer} />
         <Typography
           className="u-fz-small"
           variant="inherit"

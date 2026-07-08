@@ -1,8 +1,7 @@
+import { Icon, FileTypeFolder } from '@linagora/twake-icons'
 import React from 'react'
 
 import Avatar from 'cozy-ui/transpiled/react/Avatar'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import DriveIcon from 'cozy-ui/transpiled/react/Icons/FileTypeFolder'
 
 import { FolderPickerEntry } from '@/components/FolderPicker/types'
 import getMimeTypeIcon from '@/lib/getMimeTypeIcon'
@@ -33,7 +32,7 @@ const FolderPickerHeaderIllustration: React.FC<
       )
     }
 
-    return <Icon icon={DriveIcon} size={32} />
+    return <Icon icon={FileTypeFolder} size={32} />
   }
   if (entries.length > 1) {
     return (

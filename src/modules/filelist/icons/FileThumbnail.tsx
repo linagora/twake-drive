@@ -1,3 +1,4 @@
+import { Icon, FileTypeServer, Link, TrashDuotone } from '@linagora/twake-icons'
 import React from 'react'
 
 import { isReferencedBy, models } from 'cozy-client'
@@ -5,10 +6,6 @@ import { isDirectory } from 'cozy-client/dist/models/file'
 import { SharedBadge, SharingOwnerAvatar } from 'cozy-sharing'
 import Badge from 'cozy-ui/transpiled/react/Badge'
 import Box from 'cozy-ui/transpiled/react/Box'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import FileTypeServerIcon from 'cozy-ui/transpiled/react/Icons/FileTypeServer'
-import LinkIcon from 'cozy-ui/transpiled/react/Icons/Link'
-import TrashDuotoneIcon from 'cozy-ui/transpiled/react/Icons/TrashDuotone'
 import Spinner from 'cozy-ui/transpiled/react/Spinner'
 
 import styles from '@/styles/filelist.styl'
@@ -61,16 +58,16 @@ const FileThumbnail: React.FC<FileThumbnailProps> = ({
         height={size}
         bgcolor="var(--contrastBackgroundColor)"
       >
-        <Icon icon={TrashDuotoneIcon} size={48} />
+        <Icon icon={TrashDuotone} size={48} />
       </Box>
     ) : (
-      <Icon icon={TrashDuotoneIcon} size={size ?? 32} />
+      <Icon icon={TrashDuotone} size={size ?? 32} />
     )
   }
 
   if (isNextcloudShortcut(file)) {
     return (
-      <Icon className="u-mr-half" icon={FileTypeServerIcon} size={size ?? 32} />
+      <Icon className="u-mr-half" icon={FileTypeServer} size={size ?? 32} />
     )
   }
 
@@ -169,7 +166,7 @@ const FileThumbnail: React.FC<FileThumbnailProps> = ({
                     boxShadow: 'var(--shadow3)'
                   }}
                 >
-                  <Icon icon={LinkIcon} size="10" />
+                  <Icon icon={Link} size="10" />
                 </div>
               }
             >

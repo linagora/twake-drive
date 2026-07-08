@@ -1,8 +1,7 @@
+import { Icon, Right } from '@linagora/twake-icons'
 import PropTypes from 'prop-types'
 import React, { Fragment, useCallback, memo } from 'react'
 
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import RightIcon from 'cozy-ui/transpiled/react/Icons/Right'
 import Typography from 'cozy-ui/transpiled/react/Typography'
 import withBreakpoints from 'cozy-ui/transpiled/react/helpers/withBreakpoints'
 
@@ -33,7 +32,7 @@ const FilePickerBreadcrumb = ({ path, onBreadcrumbClick, breakpoints }) => {
                       {folder.name}
                     </span>
                     <Icon
-                      icon={RightIcon}
+                      icon={Right}
                       className={styles['filePickerBreadcrumb-icon']}
                     />
                   </Fragment>

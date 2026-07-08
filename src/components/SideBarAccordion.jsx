@@ -1,10 +1,9 @@
+import { Icon, Bottom } from '@linagora/twake-icons'
 import React, { useState } from 'react'
 
 import Accordion from 'cozy-ui/transpiled/react/Accordion'
 import AccordionDetails from 'cozy-ui/transpiled/react/AccordionDetails'
 import AccordionSummary from 'cozy-ui/transpiled/react/AccordionSummary'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import BottomIcon from 'cozy-ui/transpiled/react/Icons/Bottom'
 import { makeStyles } from 'cozy-ui/transpiled/react/styles'
 
 const useStyles = makeStyles({
@@ -50,7 +49,7 @@ export const SideBarAccordion = ({
         {shouldShowExpand && (
           <Icon
             className="u-mh-half"
-            icon={BottomIcon}
+            icon={Bottom}
             rotate={isExpanded ? 0 : -90}
           />
         )}

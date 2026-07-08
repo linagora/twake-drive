@@ -1,10 +1,9 @@
+import { Icon, Previous } from '@linagora/twake-icons'
 import PropTypes from 'prop-types'
 import React, { useCallback, memo } from 'react'
 
 import { useQuery, hasQueryBeenLoaded } from 'cozy-client'
-import Icon from 'cozy-ui/transpiled/react/Icon'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
-import Previous from 'cozy-ui/transpiled/react/Icons/Previous'
 import withBreakpoints from 'cozy-ui/transpiled/react/helpers/withBreakpoints'
 
 import { ROOT_DIR_ID } from '.'

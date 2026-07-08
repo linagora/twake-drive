@@ -1,10 +1,10 @@
+import { Icon } from '@linagora/twake-icons'
 import PropTypes from 'prop-types'
 import React from 'react'
 
 import ClickAwayListener from 'cozy-ui/transpiled/react/ClickAwayListener'
 import GridList from 'cozy-ui/transpiled/react/GridList'
 import GridListTile from 'cozy-ui/transpiled/react/GridListTile'
-import Icon from 'cozy-ui/transpiled/react/Icon'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
 import Paper from 'cozy-ui/transpiled/react/Paper'
 import Popper from 'cozy-ui/transpiled/react/Popper'

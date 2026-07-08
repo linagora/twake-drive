@@ -1,8 +1,7 @@
+import { Icon, Moveto } from '@linagora/twake-icons'
 import React, { forwardRef } from 'react'
 
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
-import Icon from 'cozy-ui/transpiled/react/Icon'
-import MovetoIcon from 'cozy-ui/transpiled/react/Icons/Moveto'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 
@@ -10,7 +9,7 @@ import { navigateToModalWithMultipleFile } from '@/modules/actions/helpers'
 
 const moveNextcloud = ({ t, pathname, navigate, search }) => {
   const label = t('SelectionBar.moveto')
-  const icon = MovetoIcon
+  const icon = Moveto
 
   return {
     name: 'moveNextcloud',
