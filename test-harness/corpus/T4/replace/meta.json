@@ -1,0 +1,15 @@
+{
+  "caseId": "T4",
+  "mode": "replace",
+  "spec": "P1@mid..T1.C(0,1)@end",
+  "fixture": "Head edit\n\n[TABLE:0]\n[CELL:0,0]AA[/CELL]\n[CELL:0,1]BB[/CELL]\n[/TABLE]",
+  "source": "table-plain (2).docx",
+  "statusFromCsv": "pass",
+  "stable": true,
+  "setSelectionOk": true,
+  "capturedVia": "Chrome DevTools MCP v4 (build 2026-07-02.2; L#2 cross-boundary post-selection fix)",
+  "capturedAt": "2026-07-02",
+  "verdict": "pass",
+  "comment": "Replace ¶->tableau (cas 2b) : document correct (Intro p + Head edit ; cellules (0,0)/(0,1)->AA/BB in-place ; ligne 1 Gamma/Delta intacte) ET post-sélection RÉPARÉE (L#2). La sélection enjambe désormais le contenu injecté : GetText()='Head edit\\r\\nAA\\tBB\\r\\n' (préfixe non-sél 'Intro p' EXCLU), start={block:0,offset:9}->end={block:-1} (cellule). Ancien xfail = curseur collapsed {block:0,offset:0}. Fix build 2026-07-02.2 : bracket XSEL_A/XSEL_B autour du texte injecté + GetCell frais + ExpandTo. Sentinelles supprimées, zéro fuite. raw sel 9..34.",
+  "captureVersion": "v4"
+}

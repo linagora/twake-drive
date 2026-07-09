@@ -1,5 +1,6 @@
 import {
   isThereFileReferencedBySharingId,
+  removeSharingFromContext,
   createSyncingFakeFile,
   computeSyncingFakeFile,
   checkSyncingFakeFileObsolescence,
@@ -109,6 +110,45 @@ describe('syncHelpers', () => {
       expect(
         isThereFileReferencedBySharingId(queryResults, 'other-type-id')
       ).toBeFalsy()
+    })
+  })
+
+  describe('removeSharingFromContext', () => {
+    it('should call setSharingsValue with a new object reference (immutability)', () => {
+      const setSharingsValue = jest.fn()
+      const original = { ...sharingsValue }
+
+      removeSharingFromContext({
+        sharingsValue,
+        setSharingsValue,
+        sharingId: 'id1'
+      })
+
+      expect(setSharingsValue).toHaveBeenCalledTimes(1)
+      const newValue = setSharingsValue.mock.calls[0][0]
+      // Must be a different reference
+      expect(newValue).not.toBe(sharingsValue)
+      // Must not contain the removed key
+      expect(newValue).not.toHaveProperty('id1')
+      // Must still contain the other key
+      expect(newValue).toHaveProperty('file-with-sharing-id')
+      // Original object must not be mutated
+      expect(sharingsValue).toEqual(original)
+    })
+
+    it('should handle removing a non-existent key without error', () => {
+      const setSharingsValue = jest.fn()
+
+      removeSharingFromContext({
+        sharingsValue,
+        setSharingsValue,
+        sharingId: 'non-existent-id'
+      })
+
+      expect(setSharingsValue).toHaveBeenCalledTimes(1)
+      const newValue = setSharingsValue.mock.calls[0][0]
+      expect(newValue).not.toBe(sharingsValue)
+      expect(Object.keys(newValue)).toHaveLength(2)
     })
   })
 

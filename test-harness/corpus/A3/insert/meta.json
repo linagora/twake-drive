@@ -1,0 +1,15 @@
+{
+  "caseId": "A3",
+  "mode": "insert",
+  "spec": "P1@space..P1@end",
+  "fixture": "XXX",
+  "source": "a-family.docx",
+  "statusFromCsv": "pass",
+  "stable": true,
+  "setSelectionOk": true,
+  "capturedVia": "Chrome DevTools MCP v3 (§5bis fix; injectAtSelection atomic; paraMarks+grabFocus+forcesave docx)",
+  "capturedAt": "2026-06-24",
+  "verdict": "pass",
+  "comment": "§5bis OK. Range space..end, insert -> point @end -> 'The quick brown fox XXX'. 1 espace avant, pas de trainant, plus de ¶ vide. .docx = 3 <w:p>. (Avant-fix: ¶ vide en queue.)",
+  "captureVersion": "v3"
+}

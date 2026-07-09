@@ -1,0 +1,33 @@
+{
+  "blocks": [
+    {
+      "type": "p",
+      "runs": [
+        {
+          "t": "Intro paragraph"
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "runs": [
+        {
+          "t": "Caption "
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "runs": []
+    },
+    {
+      "type": "p",
+      "runs": [
+        {
+          "t": "Outro paragraph"
+        }
+      ]
+    }
+  ],
+  "selection": null
+}

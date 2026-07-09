@@ -1,0 +1,62 @@
+{
+  "source": "seed",
+  "note": "Grammar-faithful SEED inputs for the two zero-tolerance hard blockers (GATE thresholds #4 split-table / #5 broken-REF, coverage #8/#9). These are hand-authored to the EXACT marker grammar used by the OO plugin (plugins/onlyoffice-scribe/scripts/code.js) and scribeResponse.js — clean selection content only (the instruction comes from the action template). They let the gate run TODAY; replace/augment with source:'live' captures exported from the dev panel for the final verdict. The MODEL OUTPUT is what the gate measures — these are only the inputs.",
+  "cases": [
+    {
+      "id": "cap-table-fr-1",
+      "surface": "popover",
+      "action": "translate-en",
+      "locale": "en",
+      "tags": { "hasTable": true, "hasRef": false },
+      "input": "Résultats trimestriels :\n[TABLE:0][CELL:0,0]Trimestre[/CELL][CELL:0,1]Revenu[/CELL][CELL:1,0]T1[/CELL][CELL:1,1]120 k€[/CELL][CELL:2,0]T2[/CELL][CELL:2,1]148 k€[/CELL][/TABLE]"
+    },
+    {
+      "id": "cap-table-en-1",
+      "surface": "popover",
+      "action": "translate-fr",
+      "locale": "fr",
+      "tags": { "hasTable": true, "hasRef": false },
+      "input": "Weekly schedule:\n[TABLE:0][CELL:0,0]Day[/CELL][CELL:0,1]Task[/CELL][CELL:1,0]Mon[/CELL][CELL:1,1]Draft report[/CELL][CELL:2,0]Tue[/CELL][CELL:2,1]Review draft[/CELL][/TABLE]"
+    },
+    {
+      "id": "cap-ref-en-1",
+      "surface": "popover",
+      "action": "translate-en",
+      "locale": "en",
+      "tags": { "hasTable": false, "hasRef": true },
+      "input": "Le détail figure en {{REF:scribe-ref-1:Section 2}} du document, juste après l'introduction."
+    },
+    {
+      "id": "cap-ref-de-1",
+      "surface": "popover",
+      "action": "translate-de",
+      "locale": "de",
+      "tags": { "hasTable": false, "hasRef": true },
+      "input": "Further details are given in {{REF:scribe-ref-3:Section 4}} of the appendix."
+    },
+    {
+      "id": "cap-ref-es-1",
+      "surface": "popover",
+      "action": "rewrite-professional",
+      "locale": "es",
+      "tags": { "hasTable": false, "hasRef": true },
+      "input": "Puedes ver los datos completos en {{REF:scribe-ref-7:Anexo A}}, está todo ahí."
+    },
+    {
+      "id": "cap-tableref-en-1",
+      "surface": "popover",
+      "action": "translate-en",
+      "locale": "en",
+      "tags": { "hasTable": true, "hasRef": true },
+      "input": "Comme indiqué dans {{REF:scribe-ref-2:Annexe B}}, voici les chiffres du mois :\n[TABLE:0][CELL:0,0]Mois[/CELL][CELL:0,1]Ventes[/CELL][CELL:1,0]Janvier[/CELL][CELL:1,1]42[/CELL][/TABLE]"
+    },
+    {
+      "id": "cap-fn-en-1",
+      "surface": "popover",
+      "action": "translate-fr",
+      "locale": "fr",
+      "tags": { "hasTable": false, "hasRef": true },
+      "input": "The method was validated in three independent trials[^scribe-fn-1] before the public release."
+    }
+  ]
+}

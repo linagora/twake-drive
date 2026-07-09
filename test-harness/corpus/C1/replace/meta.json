@@ -1,0 +1,14 @@
+{
+  "caseId": "C1",
+  "mode": "replace",
+  "spec": "P2@start..P2@end",
+  "fixture": "Caption {{IMG:scribe-img-0}}",
+  "source": "img-para.docx",
+  "statusFromCsv": "pass",
+  "stable": true,
+  "setSelectionOk": true,
+  "capturedVia": "Chrome DevTools MCP v5 (build 2026-06-27.9; ¶ image marker+PasteHtml; forcesave docx)",
+  "capturedAt": "2026-06-27",
+  "verdict": "pass",
+  "comment": "Image dans un PARAGRAPHE top-level, Replace — FIXÉ (commit ecb2df5b0, build .9). Sélection P2 = 'Photo '+image inline ; extraction → 'Photo {{IMG:scribe-img-0}}' ; remplacée par 'Caption '+image. L'image survit à la sauvegarde : after.docx = 2 word/media + 2/2 drawings avec a:blip (P2 Caption+image ré-insérée + P3 image-seule intacte), médias distincts. Ancien diagnostic 'perdu dès le live' = FAUX ; le seul bug était au save (data-URL non uploadée par AddDrawing). Fix : marqueur texte + PasteHtml post-InsertContent (upload média). dumpState ne voit pas les images → model.json = structure texte (Intro/'Caption '/¶image/Outro). after.png = rendu live (2 images)."
+}

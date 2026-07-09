@@ -1,0 +1,15 @@
+{
+  "caseId": "T9",
+  "mode": "insert",
+  "spec": "T1.full",
+  "fixture": "[CELL:0,0]![IMG:scribe-img-0][/CELL][CELL:0,1]BetaI[/CELL][CELL:1,0]GammaI[/CELL][CELL:1,1]DeltaI[/CELL]",
+  "source": "table-image.docx",
+  "statusFromCsv": "pass",
+  "stable": true,
+  "setSelectionOk": true,
+  "capturedVia": "Chrome DevTools MCP v4 (build 2026-06-26.4; extract+injectAtSelection atomic; snapshots cabled; forcesave docx; no grabFocus)",
+  "capturedAt": "2026-06-26",
+  "verdict": "pass",
+  "comment": "Insert tableau avec IMAGE (T1.full) : copie complète insérée APRÈS ; tableau original (avec image) NON touché -> son média survit. after.docx = 2 tableaux, a:blip=2 / media=image1.png (les 2 images persistent, la copie partage le média de l'original). Image PRÉSERVÉE car l'original n'est pas reconstruit via ToJSON.",
+  "captureVersion": "v4"
+}

@@ -36,8 +36,8 @@ export const removeSharingFromContext = ({
   setSharingsValue,
   sharingId
 }) => {
-  delete sharingsValue[sharingId]
-  setSharingsValue(sharingsValue)
+  const { [sharingId]: _removed, ...rest } = sharingsValue
+  setSharingsValue(rest)
 }
 
 /**

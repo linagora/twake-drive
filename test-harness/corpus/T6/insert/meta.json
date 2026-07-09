@@ -1,0 +1,15 @@
+{
+  "caseId": "T6",
+  "mode": "insert",
+  "spec": "T1.C(1,0)@start..T2.C(0,1)@end",
+  "fixture": "[TABLE:0]\n[CELL:1,0]aa[/CELL]\n[CELL:1,1]bb[/CELL]\n[/TABLE]\n\nMid edit\n\n[TABLE:1]\n[CELL:0,0]cc[/CELL]\n[CELL:0,1]dd[/CELL]\n[/TABLE]",
+  "source": "table-pair.docx",
+  "statusFromCsv": "pass",
+  "stable": true,
+  "setSelectionOk": true,
+  "capturedVia": "Chrome DevTools MCP v4 (build 2026-06-26.7; cross-boundary driver; extract+injectAtSelection atomic; forcesave docx; no grabFocus)",
+  "capturedAt": "2026-06-26",
+  "verdict": "pass",
+  "comment": "Insert cross-table (cas 2d) : sélection T1.C(1,0)..T2.C(0,1) = queue de A (A3/A4) + ¶ Middle entier + tête de B (B1/B2). Les DEUX tableaux originaux + Intro/Middle/Outro restent INTACTS ; la réponse (copie réduite [[aa,bb]] + ¶ 'Mid edit' + copie réduite [[cc,dd]]) est insérée APRÈS le 2e tableau, avant Outro. blockCount=8, 4 tableaux. Première validation LIVE du driver cross-frontière (build .7).",
+  "captureVersion": "v4"
+}

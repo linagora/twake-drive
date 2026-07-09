@@ -1,0 +1,46 @@
+{
+  "blocks": [
+    {
+      "type": "p",
+      "runs": [
+        {
+          "t": "The quick brown fox"
+        },
+        {
+          "t": " "
+        },
+        {
+          "t": "XXX"
+        }
+      ],
+      "style": "Heading 1"
+    },
+    {
+      "type": "p",
+      "runs": [
+        {
+          "t": "Jumps over the dog"
+        }
+      ],
+      "style": "Heading 2"
+    },
+    {
+      "type": "p",
+      "runs": [
+        {
+          "t": "Lazy river flows"
+        }
+      ]
+    }
+  ],
+  "selection": {
+    "start": {
+      "block": 0,
+      "offset": 21
+    },
+    "end": {
+      "block": 0,
+      "offset": 27
+    }
+  }
+}

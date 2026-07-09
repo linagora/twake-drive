@@ -1,0 +1,16 @@
+{
+  "caseId": "A1",
+  "mode": "replace",
+  "spec": "P1@start..P1@end",
+  "fixture": "# Injected",
+  "source": "a-family.docx",
+  "hostStyle": null,
+  "stable": true,
+  "setSelectionOk": true,
+  "capturedVia": "Chrome DevTools MCP (build 2026-06-25.2 §5bis Cas B host-styled spacer + no-parasitic-space; injectAtSelection atomic; forcesave docx)",
+  "capturedAt": "2026-06-25",
+  "captureVersion": "v1",
+  "verdict": "pass",
+  "comment": "§5bis Cas B sur hôte Normal — fixture stylée en ¶ séparé Heading 1, paragraphes hôte restent Normal, zéro fusion / ¶ vide / espace parasite. Verdict pass groupé (Ben, 2026-06-25).",
+  "fixtureStyle": "Heading 1"
+}

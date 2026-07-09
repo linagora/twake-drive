@@ -1,29 +1,68 @@
-import { useContext, useMemo } from 'react'
+import { useContext, useEffect, useMemo, useRef } from 'react'
 
-import { computeSyncingFakeFile } from './syncHelpers'
+import {
+  createSyncingFakeFile,
+  isThereFileReferencedBySharingId,
+  removeSharingFromContext
+} from './syncHelpers'
 
 import AcceptingSharingContext from '@/lib/AcceptingSharingContext'
-import { getSharingIdFromUrl } from '@/modules/navigation/duck'
 
 export const useSyncingFakeFile = ({ isEmpty, queryResults }) => {
   const { sharingsValue, setSharingsValue, fileValue } = useContext(
     AcceptingSharingContext
   )
-  const isSharingContextEmpty = useMemo(
-    () => Object.keys(sharingsValue).length <= 0,
+
+  const sharingIds = useMemo(
+    () => Object.keys(sharingsValue),
     [sharingsValue]
   )
-  const sharingId = getSharingIdFromUrl(window.location)
 
-  const syncingFakeFile = computeSyncingFakeFile({
+  const isSharingContextEmpty = sharingIds.length <= 0
+
+  // Detect which sharings are obsolete (real file has arrived in queryResults)
+  const obsoleteSharingIds = useMemo(() => {
+    if (isEmpty || isSharingContextEmpty) return []
+
+    return sharingIds.filter(sharingId =>
+      isThereFileReferencedBySharingId(queryResults, sharingId)
+    )
+  }, [isEmpty, isSharingContextEmpty, sharingIds, queryResults])
+
+  // Track obsolete IDs in a ref so the effect doesn't depend on sharingsValue
+  const obsoleteRef = useRef(obsoleteSharingIds)
+  obsoleteRef.current = obsoleteSharingIds
+
+  // Clean up obsolete sharings from context
+  useEffect(() => {
+    if (obsoleteRef.current.length === 0) return
+
+    for (const sharingId of obsoleteRef.current) {
+      removeSharingFromContext({ sharingsValue, setSharingsValue, sharingId })
+    }
+  }, [obsoleteSharingIds]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Return the first fake file that is still needed
+  const syncingFakeFile = useMemo(() => {
+    if (isEmpty || isSharingContextEmpty || fileValue) return null
+
+    for (const sharingId of sharingIds) {
+      if (obsoleteSharingIds.includes(sharingId)) continue
+
+      const sharingValue = sharingsValue[sharingId]
+      const fakeFile = createSyncingFakeFile({ sharingValue })
+      if (fakeFile) return fakeFile
+    }
+
+    return null
+  }, [
     isEmpty,
     isSharingContextEmpty,
-    queryResults,
-    sharingId,
-    sharingsValue,
-    setSharingsValue,
-    fileValue
-  })
+    fileValue,
+    sharingIds,
+    obsoleteSharingIds,
+    sharingsValue
+  ])
 
   return { syncingFakeFile }
 }

@@ -1,0 +1,74 @@
+{
+  "blocks": [
+    {
+      "type": "p",
+      "runs": [
+        {
+          "t": "Intro paragraph"
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "grid": [
+        [
+          {
+            "blocks": [
+              {
+                "type": "p",
+                "runs": []
+              }
+            ]
+          },
+          {
+            "blocks": [
+              {
+                "type": "p",
+                "runs": [
+                  {
+                    "t": "BetaX"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        [
+          {
+            "blocks": [
+              {
+                "type": "p",
+                "runs": [
+                  {
+                    "t": "GammaX"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "blocks": [
+              {
+                "type": "p",
+                "runs": [
+                  {
+                    "t": "DeltaX"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "type": "p",
+      "runs": [
+        {
+          "t": "Outro paragraph"
+        }
+      ]
+    }
+  ],
+  "selection": null
+}

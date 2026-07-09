@@ -106,10 +106,32 @@ const useConfig = () => {
                 : 'view',
             user: { name },
             customization: {
+              ...(onlyoffice.editorConfig ?? onlyoffice.editor).customization,
               reviewDisplay: 'markup'
+            },
+            // Disable OnlyOffice's built-in "AI" plugin — its toolbar tab is
+            // redundant with Scribe, which provides the AI writing assistant.
+            // `plugins.disable` blocks a plugin by GUID without turning off the
+            // Plugins tab, so the Scribe plugin keeps loading. GUID read from the
+            // OO AI plugin config.json (asc.{9DC93CDB-...}); it is the plugin's
+            // stable identity across versions.
+            plugins: {
+              disable: ['asc.{9DC93CDB-B576-4F0C-B55E-FCC9C48DD007}']
             }
           },
-          token: onlyoffice.token,
+          // JWT signing the editor config — server-side protection against
+          // forged editor configs. cozy-stack signs the config itself as the
+          // token payload; OO re-signs the received config and compares.
+          //
+          // Sent in production. Omitted ONLY on local dev instances: the dev
+          // OnlyOffice container (browser JWT disabled, see oo-dev-setup.sh)
+          // rejects the token because we augment the config client-side above
+          // (mode/user/customization), so it no longer matches what the stack
+          // signed — a mismatch the dev container can't reconcile. Gating on
+          // the localhost instance keeps production fully protected.
+          ...(/(^|\.)localhost(:|$)/.test(instanceUri)
+            ? {}
+            : { token: onlyoffice.token }),
           documentType: onlyoffice.documentType,
           events: {
             onAppReady: () => setIsEditorReady(true)

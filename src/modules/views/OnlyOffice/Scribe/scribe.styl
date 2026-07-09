@@ -1,0 +1,121 @@
+.scribe-result-panel
+  padding 16px
+  min-width 300px
+  max-width 800px
+  width fit-content
+  border-radius 8px
+  box-shadow 0 4px 20px rgba(0,0,0,0.15)
+  position relative
+  @media (max-width: 768px)
+    min-width unset
+    max-width unset
+    width 100%
+    border-radius 0
+    box-shadow none
+    box-sizing border-box
+
+.scribe-result-header
+  display flex
+  align-items center
+  justify-content space-between
+  margin-bottom 8px
+
+.scribe-result-text
+  max-height min(500px, 70vh)
+  min-height 48px
+  overflow-y auto
+  padding 12px
+  border-radius 4px
+  font-family inherit
+  font-size 13px
+  line-height 1.5
+  white-space normal
+  margin-bottom 12px
+  transition max-height 200ms ease-out
+
+.scribe-result-actions
+  display flex
+  justify-content flex-end
+  align-items center
+  gap 8px
+
+.scribe-resize-handle
+  position absolute
+  bottom 0
+  right 0
+  width 16px
+  height 16px
+  cursor nwse-resize
+  opacity 0.3
+  transition opacity 150ms ease
+  &:hover
+    opacity 0.6
+  &::after
+    content ''
+    position absolute
+    bottom 3px
+    right 3px
+    width 8px
+    height 8px
+    border-right 2px solid currentColor
+    border-bottom 2px solid currentColor
+  &::before
+    content ''
+    position absolute
+    bottom 3px
+    right 3px
+    width 4px
+    height 4px
+    border-right 2px solid currentColor
+    border-bottom 2px solid currentColor
+
+// -- MarkdownPreview: code blocks & inline code --
+// Nested under & so CSS modules hashes the parent class correctly
+.scribe-md-preview
+  & pre
+    background #282c34
+    color #d4d4d4
+    padding 12px
+    border-radius 4px
+    overflow-x auto
+    margin 8px 0
+    font-family "Courier New", Consolas, Monaco, monospace
+    font-size 0.85em
+    line-height 1.5
+    white-space pre
+  & pre > code
+    background none
+    padding 0
+    border-radius 0
+    font-size inherit
+    font-family inherit
+    color inherit
+    white-space inherit
+  & :not(pre) > code
+    background rgba(128, 128, 128, 0.15)
+    padding 2px 4px
+    border-radius 3px
+    font-size 0.9em
+    font-family "Courier New", Consolas, Monaco, monospace
+
+.scribe-loading-panel
+  padding 32px 48px
+  display flex
+  flex-direction column
+  align-items center
+  justify-content center
+  gap 16px
+  min-width 250px
+  border-radius 8px
+  box-shadow 0 4px 20px rgba(0,0,0,0.15)
+  @media (max-width: 768px)
+    min-width unset
+    width 100%
+    border-radius 0
+    box-shadow none
+    box-sizing border-box
+
+.scribe-loading-message
+  text-align center
+  font-style italic
+

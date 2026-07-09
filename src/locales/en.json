@@ -781,5 +781,86 @@
       "SHARING_LINK_FAILED": "Could not generate a sharing link.",
       "DOWNLOAD_LINK_FAILED": "Could not generate a download link."
     }
+  },
+  "Scribe": {
+    "panel": {
+      "tagline": "Your writing assistant",
+      "description": "Panel description"
+    },
+    "chat": {
+      "typing": "Scribe is thinking...",
+      "error_prefix": "Error",
+      "welcome": "Ask me anything about your document",
+      "selection_context": "Selected text"
+    },
+    "menu": {
+      "correct_grammar": "Correct grammar",
+      "translate": "Translate",
+      "change_tone": "Change tone",
+      "improve": "Improve"
+    },
+    "tone": {
+      "professional": "More professional",
+      "casual": "More casual",
+      "polite": "More polite"
+    },
+    "improve": {
+      "shorter": "Make it shorter",
+      "expand": "Expand context",
+      "emojify": "Emojify",
+      "bullets": "Transform to bullets"
+    },
+    "translate": {
+      "other_language": "Other language...",
+      "translating_to": "Translating to %{language}..."
+    },
+    "prompt": {
+      "placeholder": "Help me write"
+    },
+    "include": {
+      "label": "Include",
+      "document": "Document",
+      "discussion": "Conversation",
+      "selection": "Selection",
+      "documentTruncated": "Document too long — only part of it was sent to the assistant.",
+      "documentUnavailable": "Couldn't read the document — your message was sent without it."
+    },
+    "button": {
+      "text_ai": "Text AI",
+      "insert": "Insert",
+      "replace": "Replace",
+      "retry": "Retry",
+      "cancel": "Cancel",
+      "insert_after": "Insert After",
+      "open_panel": "Scribe Panel",
+      "copy": "Copy"
+    },
+    "modal": {
+      "selected_text": "Selected text:"
+    },
+    "result": {
+      "table_partial_insert_unavailable": "Insertion unavailable for a partial table selection"
+    },
+    "loading": {
+      "processing": "Processing...",
+      "correct_grammar": "Correcting grammar...",
+      "tone_professional": "Making it more professional...",
+      "tone_casual": "Making it more casual...",
+      "tone_polite": "Making it more polite...",
+      "improve_shorter": "Making it shorter...",
+      "improve_expand": "Expanding context...",
+      "improve_emojify": "Emojifying...",
+      "improve_bullets": "Transforming to bullets..."
+    },
+    "error": {
+      "auth": "Authorization error. Please check your Cozy permissions.",
+      "rate_limit": "Too many requests. Please wait a moment and try again.",
+      "server": "The AI service is temporarily unavailable. Please try again.",
+      "generic": "Something went wrong. Please try again later.",
+      "context_too_large": "The included context is too large for the AI, which could not take all of it into account. Reduce it — shorten the selection or uncheck the document — then try again.",
+      "network": "Network error. Check your connection and try again.",
+      "empty_response": "No result received. Please try again.",
+      "unexpected": "An unexpected error occurred. Please try again."
+    }
   }
 }

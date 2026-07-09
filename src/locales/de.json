@@ -498,5 +498,86 @@
       "recents": "Zuletzt verwendet",
       "chooseCustomIcon": "Wählen Sie ein benutzerdefiniertes Symbol"
     }
+  },
+  "Scribe": {
+    "panel": {
+      "tagline": "Ihr Schreibassistent",
+      "description": "Panel-Beschreibung"
+    },
+    "chat": {
+      "typing": "Scribe denkt nach...",
+      "error_prefix": "Fehler",
+      "welcome": "Fragen Sie mich etwas über Ihr Dokument",
+      "selection_context": "Ausgewählter Text"
+    },
+    "menu": {
+      "correct_grammar": "Grammatik korrigieren",
+      "translate": "Übersetzen",
+      "change_tone": "Tonfall ändern",
+      "improve": "Verbessern"
+    },
+    "tone": {
+      "professional": "Professioneller",
+      "casual": "Lockerer",
+      "polite": "Höflicher"
+    },
+    "improve": {
+      "shorter": "Kürzer fassen",
+      "expand": "Ausführlicher",
+      "emojify": "Emojis hinzufügen",
+      "bullets": "In Aufzählung umwandeln"
+    },
+    "translate": {
+      "other_language": "Andere Sprache...",
+      "translating_to": "Wird übersetzt nach %{language}..."
+    },
+    "prompt": {
+      "placeholder": "Hilf mir beim Schreiben"
+    },
+    "include": {
+      "label": "Einbeziehen",
+      "document": "Dokument",
+      "discussion": "Unterhaltung",
+      "selection": "Auswahl",
+      "documentTruncated": "Dokument zu lang – nur ein Teil wurde an den Assistenten gesendet.",
+      "documentUnavailable": "Dokument konnte nicht gelesen werden – Ihre Nachricht wurde ohne es gesendet."
+    },
+    "button": {
+      "text_ai": "Text-KI",
+      "insert": "Einfügen",
+      "replace": "Ersetzen",
+      "retry": "Erneut versuchen",
+      "cancel": "Abbrechen",
+      "insert_after": "Danach einfügen",
+      "open_panel": "Scribe-Panel",
+      "copy": "Kopieren"
+    },
+    "modal": {
+      "selected_text": "Ausgewählter Text:"
+    },
+    "result": {
+      "table_partial_insert_unavailable": "Einfügen für eine partielle Tabellenauswahl nicht verfügbar"
+    },
+    "loading": {
+      "processing": "Wird verarbeitet...",
+      "correct_grammar": "Grammatik wird korrigiert...",
+      "tone_professional": "Wird professioneller formuliert...",
+      "tone_casual": "Wird lockerer formuliert...",
+      "tone_polite": "Wird höflicher formuliert...",
+      "improve_shorter": "Wird gekürzt...",
+      "improve_expand": "Wird ausführlicher...",
+      "improve_emojify": "Emojis werden hinzugefügt...",
+      "improve_bullets": "Wird in Aufzählung umgewandelt..."
+    },
+    "error": {
+      "auth": "Autorisierungsfehler. Bitte überprüfen Sie Ihre Cozy-Berechtigungen.",
+      "rate_limit": "Zu viele Anfragen. Bitte warten Sie einen Moment und versuchen Sie es erneut.",
+      "server": "Der KI-Dienst ist vorübergehend nicht verfügbar. Bitte versuchen Sie es erneut.",
+      "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es später erneut.",
+      "context_too_large": "Der einbezogene Kontext ist zu groß für die KI, die nicht alles berücksichtigen konnte. Reduzieren Sie ihn – kürzen Sie die Auswahl oder wählen Sie das Dokument ab – und versuchen Sie es erneut.",
+      "network": "Netzwerkfehler. Überprüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+      "empty_response": "Kein Ergebnis erhalten. Bitte versuchen Sie es erneut.",
+      "unexpected": "Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
+    }
   }
 }

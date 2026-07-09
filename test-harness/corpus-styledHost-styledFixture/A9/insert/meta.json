@@ -1,0 +1,16 @@
+{
+  "caseId": "A9",
+  "mode": "insert",
+  "spec": "P1@start..P2@end",
+  "fixture": "# Injected H1\n## Injected H2",
+  "source": "styled-family.docx",
+  "hostStyle": "Heading 1 + Heading 2",
+  "fixtureStyle": "Heading 1 + Heading 2",
+  "stable": true,
+  "setSelectionOk": true,
+  "capturedVia": "Chrome DevTools MCP (build 2026-06-29.2; injectAtSelection atomic; dumpState styles; forcesave docx content-verified)",
+  "capturedAt": "2026-06-29",
+  "captureVersion": "v4",
+  "verdict": "pass",
+  "comment": "RÉGRESSION GUARD (bug Ben 2026-06-29 / build .2). Insert multi-¶ sur hôte stylé à styles HÉTÉROGÈNES : sélection = P1 (Heading 1) + P2 (Heading 2) entiers ; fixture stylée = 2 titres (# / ##). Attendu §5bis : insertion APRÈS la sélection (fin = fin de P2), P1/P2 INTACTS, P3 (Normal) intact, les 2 ¶ injectés gardent H1/H2. BUG corrigé : hostStyle était lu au DÉBUT de la sélection (P1=H1) au lieu du point d'insertion (fin = P2=H2) → le spacer §5bis Cas B estampillait H1 sur la moitié gauche du split → P2 montait H2→H1. Fix code.js : `hostStyle = hostPara.GetStyle()` au point d'insertion (¶ couvrant selEnd). Vérifié LIVE (dumpState : P2='Jumps over the dog'/Heading 2) ET SAVE (after.docx : pStyle 666=H2, distinct de 664=H1). Post-sélection = les 2 ¶ injectés (block 2→3). blockCount=5, zéro ¶ vide."
+}

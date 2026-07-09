@@ -1,0 +1,15 @@
+{
+  "caseId": "A8",
+  "mode": "insert",
+  "spec": "P1@start..P120@end",
+  "fixture": "a8-large",
+  "source": "a8-large.docx",
+  "statusFromCsv": "pass",
+  "stable": true,
+  "setSelectionOk": true,
+  "capturedVia": "Chrome DevTools MCP v4 (build 2026-06-26.8; multi-¶ driver; extract+injectAtSelection atomic; forcesave docx; no grabFocus)",
+  "capturedAt": "2026-06-27",
+  "verdict": "pass",
+  "comment": "Sélection TRÈS GRANDE (A8) — garde de perf VÉRIFIÉE (était 'assumé'). Fixture = 120 ¶ 'Para 001'..'Para 120' (P2 en gras = témoin de richesse). Sélection P1@start..P120@end (120 ¶). EXTRACTION : la garde code.js:2993 (paragraphs.length > 100) renvoie {text: range.GetText(), md: ''} → extMd VIDE, extText=1198 (texte brut), guardFired=true → 'perte du riche' confirmée (le gras de P2 disparaît, md enrichi supprimé). Seuil EXACT = >100 ¶ (100 ¶ → md enrichi 1002 ; 101 ¶ → md vide + text 1008). C'est le chemin d'extraction PROD (pas test-only). L'inject lui-même reste un multi-¶ normal : 120 originaux intacts, 'A8 tail line' fusionné inline en fin de P120 (smart-spacing), blockCount=120. Sélection via branche cross (build .8).",
+  "captureVersion": "v4"
+}

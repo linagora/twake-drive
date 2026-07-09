@@ -1,0 +1,55 @@
+{
+  "blocks": [
+    {
+      "type": "p",
+      "runs": [
+        {
+          "t": "The quick"
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "runs": [
+        {
+          "t": "Injected"
+        }
+      ],
+      "style": "Heading 1"
+    },
+    {
+      "type": "p",
+      "runs": [
+        {
+          "t": " brown fox"
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "runs": [
+        {
+          "t": "Jumps over the dog"
+        }
+      ]
+    },
+    {
+      "type": "p",
+      "runs": [
+        {
+          "t": "Lazy river flows"
+        }
+      ]
+    }
+  ],
+  "selection": {
+    "start": {
+      "block": 0,
+      "offset": 9
+    },
+    "end": {
+      "block": 1,
+      "offset": 10
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "caseId": "T4",
+  "mode": "insert",
+  "spec": "P1@mid..T1.C(0,1)@end",
+  "fixture": "Head edit\n\n[TABLE:0]\n[CELL:0,0]AA[/CELL]\n[CELL:0,1]BB[/CELL]\n[/TABLE]",
+  "source": "table-plain.docx",
+  "statusFromCsv": "pass",
+  "stable": true,
+  "setSelectionOk": true,
+  "capturedVia": "Chrome DevTools MCP v4 (build 2026-06-26.7; cross-boundary driver; extract+injectAtSelection atomic; forcesave docx; no grabFocus)",
+  "capturedAt": "2026-06-26",
+  "verdict": "pass",
+  "comment": "Insert ¶->tableau (cas 2b) : sélection P1@mid..T1.C(0,1) = queue du ¶ Intro ('aragraph') + tête du tableau (cellules (0,0)/(0,1) = Alpha/Beta). Original INTACT (Intro + table complète) ; la réponse (¶ 'Head edit' + copie réduite [[AA,BB]]) est insérée APRÈS le tableau, avant Outro. blockCount=5, 2 tableaux. Première validation LIVE du driver cross-frontière (build .7).",
+  "captureVersion": "v4"
+}

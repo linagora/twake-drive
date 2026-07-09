@@ -1,0 +1,21 @@
+{
+  "mode": "interactive",
+  "model_profile": "quality",
+  "commit_docs": true,
+  "search_gitignored": false,
+  "phase_branch_template": "gsd/phase-{phase}-{slug}",
+  "milestone_branch_template": "gsd/{milestone}-{slug}",
+  "workflow": {
+    "research": true,
+    "plan_check": true,
+    "verifier": true,
+    "nyquist_validation": false,
+    "_auto_chain_active": false
+  },
+  "parallelization": true,
+  "brave_search": false,
+  "granularity": "standard",
+  "git": {
+    "branching_strategy": "none"
+  }
+}

@@ -1,0 +1,13 @@
+[
+  { "text": "Numbered lists", "style": "Heading 2" },
+  { "text": "First item", "ilvl": 0, "fmt": "ordered" },
+  { "text": "Three", "ilvl": 0, "fmt": "ordered" },
+  { "text": "Second item", "ilvl": 0, "fmt": "ordered" },
+  { "text": "Numbered sub-item", "ilvl": 1, "fmt": "ordered" },
+  { "text": "Another sub-item", "ilvl": 1, "fmt": "ordered" },
+  { "text": "Even deeper level", "ilvl": 2, "fmt": "ordered" },
+  { "text": "Continuation", "ilvl": 2, "fmt": "ordered" },
+  { "text": "Third item", "ilvl": 0, "fmt": "ordered" },
+  { "text": "First bullet", "ilvl": 1, "fmt": "bullet" },
+  { "text": "Second bullet", "ilvl": 1, "fmt": "bullet" }
+]

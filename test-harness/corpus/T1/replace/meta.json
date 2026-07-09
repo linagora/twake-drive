@@ -1,0 +1,15 @@
+{
+  "caseId": "T1",
+  "mode": "replace",
+  "spec": "T1.C(0,0)@start..T1.C(0,0)@end",
+  "fixture": "XXX",
+  "source": "table-plain.docx",
+  "statusFromCsv": "pass",
+  "stable": true,
+  "setSelectionOk": true,
+  "capturedVia": "Chrome DevTools MCP v4 (build 2026-06-26.4; extract+injectAtSelection atomic; snapshots cabled; forcesave docx; no grabFocus)",
+  "capturedAt": "2026-06-26",
+  "verdict": "pass",
+  "comment": "Replace intra-cellule : texte de la cellule (0,0) remplacé par XXX ('Alpha'->'XXX'). Zéro débordement (blockCount=3). Selection post-inject non mappée (curseur cellule, limite connue).",
+  "captureVersion": "v4"
+}

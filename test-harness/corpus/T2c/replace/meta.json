@@ -1,0 +1,15 @@
+{
+  "caseId": "T2c",
+  "mode": "replace",
+  "spec": "T1.C(1,0)@start..T1.C(2,2)@end",
+  "fixture": "[CELL:1,0]Vf[/CELL][CELL:1,1]Vg[/CELL][CELL:1,2]Vh[/CELL][CELL:2,1]Vi[/CELL][CELL:2,2]Vj[/CELL]",
+  "source": "table-merged.docx",
+  "statusFromCsv": "pass",
+  "stable": true,
+  "setSelectionOk": true,
+  "capturedVia": "Chrome DevTools MCP v4 (build 2026-06-26.4; extract+injectAtSelection atomic; snapshots cabled; forcesave docx; no grabFocus)",
+  "capturedAt": "2026-06-26",
+  "verdict": "pass",
+  "comment": "Replace cellules partielles, fusion V (région C(1,0)..C(2,2)) : in-place -> maître ligne1 = Vf/Vg/Vh, ligne2 = Vi/Vj ; continuation (2,0) restée VIDE (jamais écrite, conforme §4bis), lignes 0/3 intactes. blockCount=3, 1 tableau.",
+  "captureVersion": "v4"
+}

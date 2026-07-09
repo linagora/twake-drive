@@ -1,0 +1,15 @@
+{
+  "caseId": "A2",
+  "mode": "replace",
+  "spec": "P1@mid..P1@mid",
+  "fixture": "XXX",
+  "source": "a-family.docx",
+  "statusFromCsv": "xfail",
+  "stable": true,
+  "setSelectionOk": true,
+  "capturedVia": "Chrome DevTools MCP v3 (§5bis fix; injectAtSelection atomic; paraMarks+grabFocus+forcesave docx)",
+  "capturedAt": "2026-06-24",
+  "verdict": "pass",
+  "comment": "§5bis OK. Replace sur curseur collapsed @mid = insertion au point -> 'The quick XXX brown fox', PLUS de double espace (l'ancien statusFromCsv=xfail 'double espace' est resolu par le fix). Hook atomique. .docx = 3 <w:p>.",
+  "captureVersion": "v3"
+}

@@ -1,0 +1,83 @@
+{
+  "source": "live",
+  "note": "Real enrichedMd captured via the IHM dev panel (SCRIBE_DEV_MD) on 2026-06-19; action inferred as translate-en from captured discussions. Replayed through the harness under --variant v2.",
+  "cases": [
+    {
+      "id": "live-4",
+      "surface": "popover",
+      "action": "translate-en",
+      "locale": "en",
+      "tags": {
+        "hasTable": true,
+        "hasRef": false
+      },
+      "input": "## Tableaux\n\n[TABLE:0]\n[CELL:0,0]**Colonne 1**[/CELL]\n[CELL:0,1]**Colonne 2**[/CELL]\n[CELL:0,2]**Colonne 3**[/CELL]\n[CELL:1,0]Cellule normale[/CELL]\n[CELL:1,1]**Gras**[/CELL]\n[CELL:1,2]*Italique*[/CELL]\n[CELL:2,0]Valeur A[/CELL]\n[CELL:2,1]Valeur B[/CELL]\n[CELL:2,2]Valeur C[/CELL]\n[CELL:3,0]Valeur D[/CELL]\n[CELL:3,1]Valeur E[/CELL]\n[CELL:3,2]Valeur F[/CELL]\n[/TABLE]"
+    },
+    {
+      "id": "live-8",
+      "surface": "popover",
+      "action": "translate-en",
+      "locale": "en",
+      "tags": {
+        "hasTable": true,
+        "hasRef": false
+      },
+      "input": "\n\n[TABLE:0]\n[CELL:0,0]**Français : du texte en** ***gras*** **et** **`inline`**[/CELL]\n[CELL:0,1]<u>[English: a link and code](https://example.com/)</u>[/CELL]\n[CELL:0,2]**Deutsch:** ~~**durchgestrichen**~~ **und fett**[/CELL]\n[CELL:1,0]<u>[Español: cursiva y enlace](https://ejemplo.es/)</u>[/CELL]\n[CELL:1,1]**Italiano**: `comando` e **grassetto**[/CELL]\n[CELL:1,2]**Português**: **negrito**, *itálico*, ~~erro~~\n\n<u>[Svenska: kod och länk](https://exempel.se/)</u>[/CELL]\n[CELL:2,0]<u>[Nederlands: een link](https://voorbeeld.nl/)</u>[/CELL]\n[CELL:2,1]**Polski**: **pogrubienie**, *kursywa* i `kod`[/CELL]\n[CELL:3,0]**Ελληνικά**: **έντονα** και *πλάγια*\n\n<u>[Русский: код, жирный, ссылка](https://xn--e1afmkfd.xn--p1ai/)</u>[/CELL]\n[CELL:3,1]**日本語**: **太字**と*斜体*、`コード`[/CELL]\n[/TABLE]\n\n"
+    },
+    {
+      "id": "live-9",
+      "surface": "popover",
+      "action": "translate-en",
+      "locale": "en",
+      "tags": {
+        "hasTable": true,
+        "hasRef": false
+      },
+      "input": "[TABLE:0]\n[CELL:0,2]**Deutsch:** ~~**durchgestrichen**~~ **und fett**[/CELL]\n[CELL:1,2]**Português**: **negrito**, *itálico*, ~~erro~~\n\n<u>[Svenska: kod och länk](https://exempel.se/)</u>[/CELL]\n[/TABLE]"
+    },
+    {
+      "id": "live-10",
+      "surface": "popover",
+      "action": "translate-en",
+      "locale": "en",
+      "tags": {
+        "hasTable": true,
+        "hasRef": false
+      },
+      "input": "[TABLE:0]\n[CELL:0,0]**Français : du texte en** ***gras*** **et** **`inline`**[/CELL]\n[CELL:0,1]<u>[English: a link and code](https://example.com/)</u>[/CELL]\n[CELL:1,0]<u>[Español: cursiva y enlace](https://ejemplo.es/)</u>[/CELL]\n[CELL:1,1]**Italiano**: `comando` e **grassetto**[/CELL]\n[CELL:2,0]<u>[Nederlands: een link](https://voorbeeld.nl/)</u>[/CELL]\n[CELL:2,1]**Polski**: **pogrubienie**, *kursywa* i `kod`[/CELL]\n[CELL:3,0]**Ελληνικά**: **έντονα** και *πλάγια*\n\n<u>[Русский: код, жирный, ссылка](https://xn--e1afmkfd.xn--p1ai/)</u>[/CELL]\n[/TABLE]"
+    },
+    {
+      "id": "live-11",
+      "surface": "popover",
+      "action": "translate-en",
+      "locale": "en",
+      "tags": {
+        "hasTable": true,
+        "hasRef": false
+      },
+      "input": "[TABLE:0]\n[CELL:1,0]<u>[Español: cursiva y enlace](https://ejemplo.es/)</u>[/CELL]\n[CELL:1,1]**Italiano**: `comando` e **grassetto**[/CELL]\n[CELL:1,2]**Português**: **negrito**, *itálico*, ~~erro~~\n\n<u>[Svenska: kod och länk](https://exempel.se/)</u>[/CELL]\n[/TABLE]"
+    },
+    {
+      "id": "live-12",
+      "surface": "popover",
+      "action": "translate-en",
+      "locale": "en",
+      "tags": {
+        "hasTable": false,
+        "hasRef": true
+      },
+      "input": "\n\n## Références de liens \\(Link references\\)\n\nVoici un lien via {{REF:scribe-ref-0:référence vers le chapitre suivant}} et un autre {{REF:scribe-ref-1:lien nommé vers le chapitre HTML inline}}.\n\n"
+    },
+    {
+      "id": "live-13",
+      "surface": "popover",
+      "action": "translate-en",
+      "locale": "en",
+      "tags": {
+        "hasTable": false,
+        "hasRef": true
+      },
+      "input": "\n\n## Footnotes\n\n- Ceci est la première note de bas de page. [^scribe-fn-0]\n- Ceci est une note plus détaillée. Elle peut contenir plusieurs lignes. [^scribe-fn-1]\n\n"
+    }
+  ]
+}

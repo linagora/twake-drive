@@ -1,0 +1,15 @@
+{
+  "caseId": "T8",
+  "mode": "insert",
+  "spec": "T1.C(1,1)@end..T1.C(1,1)@end",
+  "fixture": "AAA\n\nBBB",
+  "source": "table-plain.docx",
+  "statusFromCsv": "pass",
+  "stable": true,
+  "setSelectionOk": true,
+  "capturedVia": "Chrome DevTools MCP v4 (build 2026-06-26.4; extract+injectAtSelection atomic; snapshots cabled; forcesave docx; no grabFocus)",
+  "capturedAt": "2026-06-26",
+  "verdict": "pass",
+  "comment": "Insert dans cellule MULTI-¶ (1,1) au @end du 1er ¶ 'Delta', contenu multi-¶ 'AAA\\n\\nBBB' : injecté in-cellule -> 'DeltaAAA' / 'BBB' / [¶ vide] / 'Delta2'. ZÉRO débordement (blockCount=3) -> infirme L#3 'block déborde hors cellule'. Delta2 (2e ¶ non sélectionné) préservé. Résidu ¶ vide = L#7 (cosmétique, commun top-level).",
+  "captureVersion": "v4"
+}

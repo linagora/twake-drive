@@ -778,5 +778,86 @@
       "SHARING_LINK_FAILED": "Impossible de générer le lien de partage.",
       "DOWNLOAD_LINK_FAILED": "Impossible de générer le lien de téléchargement."
     }
+  },
+  "Scribe": {
+    "panel": {
+      "tagline": "Votre assistant d'ecriture",
+      "description": "Description du panneau"
+    },
+    "chat": {
+      "typing": "Scribe reflechit...",
+      "error_prefix": "Erreur",
+      "welcome": "Posez-moi une question sur votre document",
+      "selection_context": "Texte selectionne"
+    },
+    "menu": {
+      "correct_grammar": "Corriger la grammaire",
+      "translate": "Traduire",
+      "change_tone": "Changer le ton",
+      "improve": "Améliorer"
+    },
+    "tone": {
+      "professional": "Plus professionnel",
+      "casual": "Plus décontracté",
+      "polite": "Plus poli"
+    },
+    "improve": {
+      "shorter": "Raccourcir",
+      "expand": "Développer",
+      "emojify": "Emojifier",
+      "bullets": "Transformer en liste"
+    },
+    "translate": {
+      "other_language": "Autre langue...",
+      "translating_to": "Traduction en %{language}..."
+    },
+    "prompt": {
+      "placeholder": "Aidez-moi à écrire"
+    },
+    "include": {
+      "label": "Inclure",
+      "document": "Document",
+      "discussion": "Conversation",
+      "selection": "Sélection",
+      "documentTruncated": "Document trop long — seule une partie a été envoyée à l'assistant.",
+      "documentUnavailable": "Impossible de lire le document — votre message a été envoyé sans lui."
+    },
+    "button": {
+      "text_ai": "IA Texte",
+      "insert": "Insérer",
+      "replace": "Remplacer",
+      "retry": "Réessayer",
+      "cancel": "Annuler",
+      "insert_after": "Insérer après",
+      "open_panel": "Panneau Scribe",
+      "copy": "Copier"
+    },
+    "modal": {
+      "selected_text": "Texte sélectionné :"
+    },
+    "result": {
+      "table_partial_insert_unavailable": "Insertion non disponible pour une sélection partielle de tableau"
+    },
+    "loading": {
+      "processing": "Traitement en cours...",
+      "correct_grammar": "Correction de la grammaire...",
+      "tone_professional": "Ton plus professionnel...",
+      "tone_casual": "Ton plus décontracté...",
+      "tone_polite": "Ton plus poli...",
+      "improve_shorter": "Raccourcissement...",
+      "improve_expand": "Développement...",
+      "improve_emojify": "Ajout d'emojis...",
+      "improve_bullets": "Transformation en liste..."
+    },
+    "error": {
+      "auth": "Erreur d'autorisation. Vérifiez vos permissions Cozy.",
+      "rate_limit": "Trop de requêtes. Veuillez patienter et réessayer.",
+      "server": "Le service IA est temporairement indisponible. Veuillez réessayer.",
+      "generic": "Une erreur est survenue. Veuillez réessayer plus tard.",
+      "context_too_large": "Le contexte inclus est trop volumineux pour l'IA, qui n'a pas pu tout prendre en compte. Réduisez-le — raccourcissez la sélection ou décochez le document — puis réessayez.",
+      "network": "Erreur réseau. Vérifiez votre connexion et réessayez.",
+      "empty_response": "Aucun résultat reçu. Veuillez réessayer.",
+      "unexpected": "Une erreur inattendue est survenue. Veuillez réessayer."
+    }
   }
 }

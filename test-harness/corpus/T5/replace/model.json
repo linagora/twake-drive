@@ -1,0 +1,90 @@
+{
+  "blocks": [
+    {
+      "type": "p",
+      "runs": [
+        {
+          "t": "Intro paragraph"
+        }
+      ]
+    },
+    {
+      "type": "table",
+      "grid": [
+        [
+          {
+            "blocks": [
+              {
+                "type": "p",
+                "runs": [
+                  {
+                    "t": "Alpha"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "blocks": [
+              {
+                "type": "p",
+                "runs": [
+                  {
+                    "t": "Beta"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        [
+          {
+            "blocks": [
+              {
+                "type": "p",
+                "runs": [
+                  {
+                    "t": "GG"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "blocks": [
+              {
+                "type": "p",
+                "runs": [
+                  {
+                    "t": "DD"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "type": "p",
+      "runs": [
+        {
+          "t": "Tail edit"
+        },
+        {
+          "t": "aragraph"
+        }
+      ]
+    }
+  ],
+  "selection": {
+    "start": {
+      "block": -1,
+      "offset": -1
+    },
+    "end": {
+      "block": 2,
+      "offset": 13
+    }
+  }
+}

@@ -322,5 +322,86 @@
       "recents": "Recenti",
       "chooseCustomIcon": "Scegli un'icona personalizzata"
     }
+  },
+  "Scribe": {
+    "panel": {
+      "tagline": "Il tuo assistente di scrittura",
+      "description": "Descrizione del pannello"
+    },
+    "chat": {
+      "typing": "Scribe sta pensando...",
+      "error_prefix": "Errore",
+      "welcome": "Chiedimi qualsiasi cosa sul tuo documento",
+      "selection_context": "Testo selezionato"
+    },
+    "menu": {
+      "correct_grammar": "Correggi grammatica",
+      "translate": "Traduci",
+      "change_tone": "Cambia tono",
+      "improve": "Migliora"
+    },
+    "tone": {
+      "professional": "Più professionale",
+      "casual": "Più informale",
+      "polite": "Più cortese"
+    },
+    "improve": {
+      "shorter": "Accorcia",
+      "expand": "Espandi",
+      "emojify": "Aggiungi emoji",
+      "bullets": "Trasforma in elenco"
+    },
+    "translate": {
+      "other_language": "Altra lingua...",
+      "translating_to": "Traduzione in %{language}..."
+    },
+    "prompt": {
+      "placeholder": "Aiutami a scrivere"
+    },
+    "include": {
+      "label": "Includi",
+      "document": "Documento",
+      "discussion": "Conversazione",
+      "selection": "Selezione",
+      "documentTruncated": "Documento troppo lungo: è stata inviata solo una parte all'assistente.",
+      "documentUnavailable": "Impossibile leggere il documento: il messaggio è stato inviato senza di esso."
+    },
+    "button": {
+      "text_ai": "IA Testo",
+      "insert": "Inserisci",
+      "replace": "Sostituisci",
+      "retry": "Riprova",
+      "cancel": "Annulla",
+      "insert_after": "Inserisci dopo",
+      "open_panel": "Pannello Scribe",
+      "copy": "Copia"
+    },
+    "modal": {
+      "selected_text": "Testo selezionato:"
+    },
+    "result": {
+      "table_partial_insert_unavailable": "Inserimento non disponibile per una selezione parziale di tabella"
+    },
+    "loading": {
+      "processing": "Elaborazione in corso...",
+      "correct_grammar": "Correzione della grammatica...",
+      "tone_professional": "Rendo più professionale...",
+      "tone_casual": "Rendo più informale...",
+      "tone_polite": "Rendo più cortese...",
+      "improve_shorter": "Accorciamento...",
+      "improve_expand": "Espansione...",
+      "improve_emojify": "Aggiunta emoji...",
+      "improve_bullets": "Trasformazione in elenco..."
+    },
+    "error": {
+      "auth": "Errore di autorizzazione. Verifica i tuoi permessi Cozy.",
+      "rate_limit": "Troppe richieste. Attendi un momento e riprova.",
+      "server": "Il servizio IA è temporaneamente non disponibile. Riprova.",
+      "generic": "Qualcosa è andato storto. Riprova più tardi.",
+      "context_too_large": "Il contesto incluso è troppo grande per l'IA, che non ha potuto considerarlo tutto. Riducilo — accorcia la selezione o deseleziona il documento — e riprova.",
+      "network": "Errore di rete. Verifica la connessione e riprova.",
+      "empty_response": "Nessun risultato ricevuto. Riprova.",
+      "unexpected": "Si è verificato un errore imprevisto. Riprova."
+    }
   }
 }

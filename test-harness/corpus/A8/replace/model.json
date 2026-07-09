@@ -1,0 +1,22 @@
+{
+  "blocks": [
+    {
+      "type": "p",
+      "runs": [
+        {
+          "t": "A8 replaced all"
+        }
+      ]
+    }
+  ],
+  "selection": {
+    "start": {
+      "block": 0,
+      "offset": 0
+    },
+    "end": {
+      "block": 0,
+      "offset": 17
+    }
+  }
+}

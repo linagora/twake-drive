@@ -1,0 +1,15 @@
+{
+  "caseId": "A0",
+  "mode": "insert",
+  "spec": "P1@x..P1@x",
+  "fixture": "XXX",
+  "source": "styled-family.docx",
+  "hostStyle": "Heading 1",
+  "stable": true,
+  "setSelectionOk": true,
+  "capturedVia": "Chrome DevTools MCP (build 2026-06-25.2 §5bis Cas B host-styled spacer + no-parasitic-space; injectAtSelection atomic; forcesave docx)",
+  "capturedAt": "2026-06-25",
+  "captureVersion": "v1",
+  "verdict": "pass",
+  "comment": "§5bis Cas A sur hôte stylé — XXX inline hérite Heading 1, espacement symétrique, 1 ¶, zéro ¶ vide. Recapture post-fix (l'ancien golden montrait XXX en Normal + ¶ vide volant Heading 1). Verdict pass groupé (Ben, 2026-06-25)."
+}
