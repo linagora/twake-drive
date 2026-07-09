@@ -134,7 +134,7 @@ describe('handleShiftArrow', () => {
       expect(result.lastInteractedItemId).toBe('2')
     })
 
-    it('should handle boundary conditions at the start of the list', () => {
+    it('should keep selection unchanged when moving before the start of the list', () => {
       const selectedItems: SelectedItems = { '1': mockFiles[0] }
       mockIsItemSelected.mockImplementation((id: string) => id === '1')
 
@@ -148,11 +148,11 @@ describe('handleShiftArrow', () => {
 
       const result = handleShiftArrow(params)
 
-      expect(result.newSelectedItems).toEqual({})
+      expect(result.newSelectedItems).toEqual(selectedItems)
       expect(result.lastInteractedItemId).toBe('1')
     })
 
-    it('should handle boundary conditions at the end of the list', () => {
+    it('should keep selection unchanged when moving after the end of the list', () => {
       const selectedItems: SelectedItems = { '5': mockFiles[4] }
       mockIsItemSelected.mockImplementation((id: string) => id === '5')
 
@@ -166,7 +166,7 @@ describe('handleShiftArrow', () => {
 
       const result = handleShiftArrow(params)
 
-      expect(result.newSelectedItems).toEqual({})
+      expect(result.newSelectedItems).toEqual(selectedItems)
       expect(result.lastInteractedItemId).toBe('5')
     })
   })
