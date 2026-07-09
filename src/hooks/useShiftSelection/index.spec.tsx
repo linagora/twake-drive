@@ -2,13 +2,14 @@ import { renderHook, act } from '@testing-library/react'
 import { RefObject } from 'react'
 
 import { IOCozyFile } from 'cozy-client/types/types'
+import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import * as helpers from './helpers'
 import { useShiftSelection } from './index'
 
 jest.mock('cozy-ui/transpiled/react/providers/Breakpoints', () => ({
   __esModule: true,
-  default: (): { isMobile: boolean } => ({ isMobile: false })
+  default: jest.fn((): { isMobile: boolean } => ({ isMobile: false }))
 }))
 
 jest.mock('@/modules/selection/SelectionProvider', () => ({
@@ -29,6 +30,7 @@ jest.mock('./helpers', () => ({
 }))
 
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
+const mockUseBreakpoints = useBreakpoints as jest.Mock
 const mockUseSelectionContext = useSelectionContext as jest.Mock
 
 // Get references to mocked functions
@@ -60,6 +62,7 @@ describe('useShiftSelection', () => {
   let mockScrollBy: jest.Mock
 
   beforeEach(() => {
+    mockUseBreakpoints.mockReturnValue({ isMobile: false })
     mockSetSelectedItems = jest.fn()
     mockIsItemSelected = jest.fn()
     mockAddEventListener = jest.fn()
@@ -101,6 +104,40 @@ describe('useShiftSelection', () => {
       expect(typeof result.current.onShiftClick).toBe('function')
       expect(typeof result.current.setLastInteractedItem).toBe('function')
     })
+
+    it('should attach keyboard listener when items are loaded after initial render', () => {
+      const { rerender } = renderHook(
+        ({ items }) => useShiftSelection({ items }, mockRef),
+        { initialProps: { items: [] } }
+      )
+
+      expect(mockAddEventListener).not.toHaveBeenCalled()
+
+      rerender({ items: mockFiles })
+
+      expect(mockAddEventListener).toHaveBeenCalledWith(
+        'keydown',
+        expect.any(Function)
+      )
+    })
+
+    it('should attach keyboard listener on mobile when a keyboard event target is explicitly provided', () => {
+      mockUseBreakpoints.mockReturnValue({ isMobile: true })
+      const keyboardEventTarget = document.createElement('div')
+      const addEventListener = jest.spyOn(
+        keyboardEventTarget,
+        'addEventListener'
+      )
+
+      renderHook(() =>
+        useShiftSelection({ items: mockFiles, keyboardEventTarget }, mockRef)
+      )
+
+      expect(addEventListener).toHaveBeenCalledWith(
+        'keydown',
+        expect.any(Function)
+      )
+    })
   })
 
   describe('keyboard event handling - list view', () => {
@@ -129,6 +166,30 @@ describe('useShiftSelection', () => {
         lastInteractedIdx: 0,
         isItemSelected: mockIsItemSelected
       })
+    })
+
+    it('should scroll by index when the selected item is not rendered', () => {
+      const scrollToIndex = jest.fn()
+      renderHook(() =>
+        useShiftSelection(
+          { items: mockFiles, viewType: 'list', scrollToIndex },
+          mockRef
+        )
+      )
+
+      const keydownHandler = (
+        (mockElement.addEventListener as jest.Mock).mock.calls[0] as unknown[]
+      )[1] as (event: KeyboardEvent) => void
+
+      act(() => {
+        keydownHandler({
+          shiftKey: true,
+          key: 'ArrowDown',
+          preventDefault: jest.fn()
+        } as unknown as KeyboardEvent)
+      })
+
+      expect(scrollToIndex).toHaveBeenCalledWith(0, 'end')
     })
 
     it('should call handleShiftArrow on Shift+ArrowUp in list view', () => {

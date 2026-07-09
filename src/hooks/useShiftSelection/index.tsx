@@ -24,11 +24,14 @@ import { scrollElementIntoViewInContainer } from '@/modules/selection/scrollHelp
 import { SelectedItems } from '@/modules/selection/types'
 
 type ViewType = 'list' | 'grid'
+type ScrollAlign = 'start' | 'center' | 'end'
 
 interface UseShiftSelectionParams {
   items: IOCozyFile[]
   viewType?: ViewType
   scrollElement?: HTMLElement | null
+  keyboardEventTarget?: EventTarget | null
+  scrollToIndex?: (index: number, align: ScrollAlign) => void
 }
 
 interface UseShiftSelectionReturn {
@@ -58,7 +61,13 @@ interface UseShiftSelectionReturn {
  * @returns {UseShiftSelectionReturn}
  */
 const useShiftSelection = (
-  { items, viewType = 'list', scrollElement = null }: UseShiftSelectionParams,
+  {
+    items,
+    viewType = 'list',
+    scrollElement = null,
+    keyboardEventTarget = null,
+    scrollToIndex
+  }: UseShiftSelectionParams,
   ref: RefObject<HTMLElement>
 ): UseShiftSelectionReturn => {
   const { isMobile } = useBreakpoints()
@@ -72,16 +81,21 @@ const useShiftSelection = (
    * and scroll only by the amount needed to reveal the current item.
    */
   const scrollToItem = useCallback(
-    (id: string) => {
+    (id: string, align: ScrollAlign = 'center') => {
       const container = scrollElement || ref.current
-      if (!container) return
+      const element = container?.querySelector(`[data-file-id="${id}"]`)
 
-      const element = container.querySelector(`[data-file-id="${id}"]`)
-      if (!element) return
+      if (container && element) {
+        scrollElementIntoViewInContainer(container, element)
+        return
+      }
 
-      scrollElementIntoViewInContainer(container, element)
+      const index = itemsRef.current.findIndex(item => item._id === id)
+      if (index !== -1) {
+        scrollToIndex?.(index, align)
+      }
     },
-    [ref, scrollElement]
+    [ref, scrollElement, scrollToIndex]
   )
 
   const { selectedItems, setSelectedItems, isItemSelected, setIsSelectAll } =
@@ -103,6 +117,22 @@ const useShiftSelection = (
       return acc
     }, {})
   }, [selectedItems])
+
+  const applySelection = useCallback(
+    (
+      newSelectedItems: SelectedItems,
+      lastInteractedItemId: string,
+      align: ScrollAlign = 'center'
+    ): void => {
+      setSelectedItems(newSelectedItems)
+      setLastInteractedItem(lastInteractedItemId)
+      setIsSelectAll(
+        Object.keys(newSelectedItems).length === itemsRef.current.length
+      )
+      scrollToItem(lastInteractedItemId, align)
+    },
+    [setSelectedItems, setLastInteractedItem, setIsSelectAll, scrollToItem]
+  )
 
   /**
    * Handles shift+click events for range selection.
@@ -127,22 +157,9 @@ const useShiftSelection = (
         items
       })
 
-      setSelectedItems(newSelectedItems)
-      setLastInteractedItem(lastInteractedItemId)
-      setIsSelectAll(
-        Object.keys(newSelectedItems).length === itemsRef.current.length
-      )
-      scrollToItem(lastInteractedItemId)
+      applySelection(newSelectedItems, lastInteractedItemId)
     },
-    [
-      items,
-      lastInteractedIdx,
-      selectedItemMap,
-      setSelectedItems,
-      setIsSelectAll,
-      setLastInteractedItem,
-      scrollToItem
-    ]
+    [items, lastInteractedIdx, selectedItemMap, applySelection]
   )
 
   /**
@@ -182,23 +199,18 @@ const useShiftSelection = (
         isItemSelected
       })
 
-      setSelectedItems(newSelectedItems)
-      setLastInteractedItem(lastInteractedItemId)
-      setIsSelectAll(
-        Object.keys(newSelectedItems).length === itemsRef.current.length
+      applySelection(
+        newSelectedItems,
+        lastInteractedItemId,
+        direction === FORWARD_DIRECTION ? 'end' : 'start'
       )
-      scrollToItem(lastInteractedItemId)
     },
     [
       viewType,
       selectedItemMap,
       lastInteractedIdx,
-      selectedItems.length,
-      setSelectedItems,
       isItemSelected,
-      setIsSelectAll,
-      setLastInteractedItem,
-      scrollToItem
+      applySelection
     ]
   )
 
@@ -210,19 +222,21 @@ const useShiftSelection = (
    * - Skips setup on mobile devices or when no items/container available
    */
   useEffect(() => {
-    if (isMobile || !itemsRef.current.length || !ref.current) return
+    const shouldSkipMobileKeyboard = isMobile && !keyboardEventTarget
+    if (shouldSkipMobileKeyboard || items.length === 0 || !ref.current) return
 
-    const container = ref.current
+    const keyboardTarget = keyboardEventTarget || ref.current
+    if (!keyboardTarget) return
+
     if (!isEditableTarget(document.activeElement)) {
-      container.focus()
+      ref.current.focus()
     }
 
-    container.addEventListener('keydown', handleKeyDown)
+    keyboardTarget.addEventListener('keydown', handleKeyDown)
     return (): void => {
-      container.removeEventListener('keydown', handleKeyDown)
+      keyboardTarget.removeEventListener('keydown', handleKeyDown)
     }
-  }, [isMobile, ref, handleKeyDown])
-
+  }, [isMobile, ref, handleKeyDown, keyboardEventTarget, items.length])
   return {
     setLastInteractedItem,
     onShiftClick

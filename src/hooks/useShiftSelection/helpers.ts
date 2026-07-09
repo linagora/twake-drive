@@ -172,6 +172,13 @@ export const handleShiftArrow = ({
   }
 
   const nextIdx = lastInteractedIdx + direction
+  if (nextIdx < 0 || nextIdx >= items.length) {
+    return {
+      newSelectedItems: selectedItems,
+      lastInteractedItemId: items[lastInteractedIdx]._id
+    }
+  }
+
   const currentIdx = clamp(items.length, nextIdx)
 
   const prevSelected = isItemSelected(items[lastInteractedIdx]?._id)
