@@ -117,7 +117,7 @@ describe('ScribeContainer', () => {
     })
   })
 
-  it('configures Drawer PaperProps for fullscreen on mobile', () => {
+  it('configures Drawer PaperProps for a bottom sheet on mobile', () => {
     useBreakpoints.mockReturnValue({ isMobile: true })
 
     render(
@@ -129,8 +129,8 @@ describe('ScribeContainer', () => {
     const props = JSON.parse(screen.getByTestId('drawer').dataset.props)
     expect(props.PaperProps.style).toEqual(
       expect.objectContaining({
-        height: '100%',
-        borderRadius: 0
+        maxHeight: '85vh',
+        borderRadius: '12px 12px 0 0'
       })
     )
   })
