@@ -1,4 +1,4 @@
-import { Icon } from '@linagora/twake-icons'
+import { CrossMedium, Icon } from '@linagora/twake-icons'
 import PropTypes from 'prop-types'
 import React, { memo } from 'react'
 
@@ -20,7 +20,7 @@ const FilePickerHeader = ({ onClose }) => {
       <AppTitle appIcon={Drive} appTextIcon={DriveText} />
       {isMobile && (
         <IconButton onClick={onClose} className="u-ml-auto" size="medium">
-          <Icon icon="cross-medium" />
+          <Icon icon={CrossMedium} />
         </IconButton>
       )}
     </div>
