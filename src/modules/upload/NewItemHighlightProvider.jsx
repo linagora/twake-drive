@@ -36,8 +36,12 @@ const NewItemHighlightProvider = ({ children }) => {
   )
 }
 
+const useOptionalNewItemHighlightContext = () => {
+  return useContext(NewItemHighlightContext)
+}
+
 const useNewItemHighlightContext = () => {
-  const ctx = useContext(NewItemHighlightContext)
+  const ctx = useOptionalNewItemHighlightContext()
 
   if (!ctx)
     throw new Error(
@@ -47,4 +51,8 @@ const useNewItemHighlightContext = () => {
   return ctx
 }
 
-export { NewItemHighlightProvider, useNewItemHighlightContext }
+export {
+  NewItemHighlightProvider,
+  useNewItemHighlightContext,
+  useOptionalNewItemHighlightContext
+}

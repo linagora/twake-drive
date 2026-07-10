@@ -46,4 +46,5 @@ export interface SelectionContextType {
 
 export interface SelectionProviderProps {
   children: ReactNode
+  clearOnLocationChange?: boolean
 }

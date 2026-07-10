@@ -32,7 +32,8 @@ jest.mock('@/modules/upload/NewItemHighlightProvider', () => {
   return {
     __esModule: true,
     NewItemHighlightProvider: ({ children }) => <>{children}</>,
-    useNewItemHighlightContext: jest.fn()
+    useNewItemHighlightContext: jest.fn(),
+    useOptionalNewItemHighlightContext: jest.fn()
   }
 })
 
