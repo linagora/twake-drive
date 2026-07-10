@@ -22,7 +22,7 @@ test.describe('File Picker', () => {
   let largeFileName: string
   let picker: FilePickerPage
 
-  const pick = async (name: string, configName?: string) => {
+  const pick = async (name: string, configName?: string): Promise<void> => {
     await picker.open(configName)
     await picker.navigateToFolder(parentFolder)
     await picker.selectItem(name)
@@ -261,6 +261,104 @@ test.describe('File Picker', () => {
     expect(entry.mimeType).toEqual(expect.any(String))
     expect(entry.sharingLink).toMatch(/^https?:\/\//)
     expect(entry.downloadLink).toBeUndefined()
+
+    await picker.closeConfirmation()
+  })
+
+  // ---------------------------------------------------------------------------
+  // Multi-file selection
+  // ---------------------------------------------------------------------------
+  test('select two files and generate one public link per file', async ({
+    alicePage
+  }) => {
+    picker = new FilePickerPage(alicePage)
+    await picker.open()
+    await picker.navigateToFolder(parentFolder)
+    await picker.selectItem(testFileName)
+    await picker.toggleItem(largeFileName)
+
+    await expect(picker.isPublicLinkDisabled()).resolves.toBe(false)
+    await picker.clickPublicLink()
+    await picker.waitForClosed()
+
+    const document = await picker.getResultDocument()
+    expect(Array.isArray(document)).toBe(true)
+    const entries = document as Array<Record<string, unknown>>
+    expect(entries).toHaveLength(2)
+
+    for (const entry of entries) {
+      expect(entry.sharingLink).toMatch(/^https?:\/\//)
+      expect(entry.downloadLink).toBeUndefined()
+      expect(entry.id).toEqual(expect.any(String))
+      expect(entry.name).toEqual(expect.any(String))
+    }
+
+    await picker.closeConfirmation()
+  })
+
+  test(
+    'select two files and generate one temporary download link per file',
+    async ({ alicePage }) => {
+      picker = new FilePickerPage(alicePage)
+      await picker.open()
+      await picker.navigateToFolder(parentFolder)
+      await picker.selectItem(testFileName)
+      await picker.toggleItem(largeFileName)
+
+      await expect(picker.isTemporaryDownloadDisabled()).resolves.toBe(false)
+      await picker.clickTemporaryDownloadLink()
+      await picker.waitForClosed()
+
+      const document = await picker.getResultDocument()
+      expect(Array.isArray(document)).toBe(true)
+      const entries = document as Array<Record<string, unknown>>
+      expect(entries).toHaveLength(2)
+
+      for (const entry of entries) {
+        expect(entry.downloadLink).toMatch(/^https?:\/\//)
+        expect(entry.sharingLink).toBeUndefined()
+        expect(entry.id).toEqual(expect.any(String))
+        expect(entry.name).toEqual(expect.any(String))
+        expect(entry.size).toEqual(expect.any(Number))
+        expect(entry.mimeType).toEqual(expect.any(String))
+      }
+
+      await picker.closeConfirmation()
+    }
+  )
+
+  test('select a folder and a file: public link enabled, download disabled', async ({
+    alicePage,
+    aliceDrive
+  }) => {
+    await aliceDrive.row(parentFolder).open()
+    await alicePage.waitForURL(/\/folder\/[^/]+$/)
+    const subFolder = `sub-${stamp()}`
+    await aliceDrive.createFolder(subFolder)
+
+    picker = new FilePickerPage(alicePage)
+    await picker.open()
+    await picker.navigateToFolder(parentFolder)
+    await picker.selectItem(testFileName)
+    await picker.toggleItem(subFolder)
+
+    // Download disabled because a folder is in the selection.
+    await expect(picker.isTemporaryDownloadDisabled()).resolves.toBe(true)
+    // Public link still works.
+    await expect(picker.isPublicLinkDisabled()).resolves.toBe(false)
+
+    await picker.clickPublicLink()
+    await picker.waitForClosed()
+
+    const document = await picker.getResultDocument()
+    expect(Array.isArray(document)).toBe(true)
+    const entries = document as Array<Record<string, unknown>>
+    expect(entries).toHaveLength(2)
+    // Both entries should have a sharingLink.
+    for (const entry of entries) {
+      expect(entry.sharingLink).toMatch(/^https?:\/\//)
+      expect(entry.id).toEqual(expect.any(String))
+    }
 
     await picker.closeConfirmation()
   })

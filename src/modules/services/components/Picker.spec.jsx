@@ -56,55 +56,100 @@ jest.mock('cozy-client/dist/models/sharing', () => ({
   makeSharingLink: jest.fn()
 }))
 
-jest.mock('./FilePicker', () => ({ onChange, onClose, filePickerConfig }) => {
-  const React = jest.requireActual('react')
-  const [error, setError] = React.useState(null)
+jest.mock(
+  './FilePicker',
+  () =>
+    ({ onChange, onClose, filePickerConfig, multiple }) => {
+      const React = jest.requireActual('react')
+      const [error, setError] = React.useState(null)
 
-  // Expose the received config so tests can assert on the transit.
-  return (
-    <div>
-      <div data-testid="received-config">
-        {JSON.stringify(filePickerConfig)}
-      </div>
-      {error && <div data-testid="error-message">{error}</div>}
-      <button type="button" data-testid="close-picker-btn" onClick={onClose}>
-        Close picker
-      </button>
-      <button
-        type="button"
-        data-testid="public-link-btn"
-        onClick={async () => {
-          const pickError = await onChange(
-            'file-id',
-            filePickerLinkModes.PUBLIC_LINK
-          )
-          if (pickError) setError(pickError)
-        }}
-      >
-        Public link
-      </button>
-      <button
-        type="button"
-        data-testid="temporary-download-link-btn"
-        onClick={async () => {
-          const pickError = await onChange(
-            'file-id',
-            filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK
-          )
-          if (pickError) setError(pickError)
-        }}
-      >
-        Temporary link
-      </button>
-    </div>
-  )
-})
+      // Expose the received config so tests can assert on the transit.
+      return (
+        <div>
+          <div data-testid="received-config">
+            {JSON.stringify(filePickerConfig)}
+          </div>
+          <div data-testid="received-multiple">
+            {multiple ? 'true' : 'false'}
+          </div>
+          {error && <div data-testid="error-message">{error}</div>}
+          <button
+            type="button"
+            data-testid="close-picker-btn"
+            onClick={onClose}
+          >
+            Close picker
+          </button>
+          <button
+            type="button"
+            data-testid="public-link-btn"
+            onClick={async () => {
+              const pickError = await onChange(
+                'file-id',
+                filePickerLinkModes.PUBLIC_LINK
+              )
+              if (pickError) setError(pickError)
+            }}
+          >
+            Public link
+          </button>
+          <button
+            type="button"
+            data-testid="temporary-download-link-btn"
+            onClick={async () => {
+              const pickError = await onChange(
+                'file-id',
+                filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK
+              )
+              if (pickError) setError(pickError)
+            }}
+          >
+            Temporary link
+          </button>
+          <button
+            type="button"
+            data-testid="multiple-public-link-btn"
+            onClick={async () => {
+              const pickError = await onChange(
+                ['file-id', 'second-file-id'],
+                filePickerLinkModes.PUBLIC_LINK
+              )
+              if (pickError) setError(pickError)
+            }}
+          >
+            Multiple public link
+          </button>
+          <button
+            type="button"
+            data-testid="multiple-temporary-download-link-btn"
+            onClick={async () => {
+              const pickError = await onChange(
+                ['file-id', 'second-file-id'],
+                filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK
+              )
+              if (pickError) setError(pickError)
+            }}
+          >
+            Multiple temporary link
+          </button>
+        </div>
+      )
+    }
+)
 
 const mockFile = {
   _id: 'file-id',
   type: 'file',
   name: 'invoice.pdf',
   size: '42',
+  mime: 'application/pdf'
+}
+
+const mockSecondFile = {
+  _id: 'second-file-id',
+  type: 'file',
+  name: 'receipt.pdf',
+  size: '84',
   mime: 'application/pdf'
 }
 
@@ -174,6 +219,12 @@ describe('Picker', () => {
     })
   })
 
+  it('should render the FilePicker in multiple selection mode', () => {
+    const { getByTestId } = setup()
+
+    expect(getByTestId('received-multiple')).toHaveTextContent('true')
+  })
+
   it('should terminate with a bare array containing a public link entry', async () => {
     mockQuery.mockResolvedValue({ data: mockFile })
     makeSharingLink.mockResolvedValue(
@@ -194,6 +245,44 @@ describe('Picker', () => {
         size: 42,
         mimeType: 'application/pdf',
         sharingLink: 'https://drive.example/public?sharecode=abc'
+      }
+    ])
+  })
+
+  it('should terminate with a bare array containing public link entries', async () => {
+    mockQuery.mockImplementation(({ id }) => {
+      return Promise.resolve({
+        data: id === 'file-id' ? mockFile : mockSecondFile
+      })
+    })
+    makeSharingLink
+      .mockResolvedValueOnce('https://drive.example/public?sharecode=abc')
+      .mockResolvedValueOnce('https://drive.example/public?sharecode=def')
+    const { service, getByTestId } = setup()
+
+    fireEvent.click(getByTestId('multiple-public-link-btn'))
+
+    await waitFor(() => expect(service.terminate).toHaveBeenCalled())
+    expect(makeSharingLink).toHaveBeenCalledWith(expect.any(Object), [
+      'file-id'
+    ])
+    expect(makeSharingLink).toHaveBeenCalledWith(expect.any(Object), [
+      'second-file-id'
+    ])
+    expect(service.terminate).toHaveBeenCalledWith([
+      {
+        id: 'file-id',
+        name: 'invoice.pdf',
+        size: 42,
+        mimeType: 'application/pdf',
+        sharingLink: 'https://drive.example/public?sharecode=abc'
+      },
+      {
+        id: 'second-file-id',
+        name: 'receipt.pdf',
+        size: 84,
+        mimeType: 'application/pdf',
+        sharingLink: 'https://drive.example/public?sharecode=def'
       }
     ])
   })
@@ -235,6 +324,66 @@ describe('Picker', () => {
         mimeType: 'application/pdf',
         downloadLink:
           'https://alice.example/files/downloads/123/invoice.pdf?Dl=1'
+      }
+    ])
+  })
+
+  it('should use one temporary sharing link for multiple download links', async () => {
+    mockQuery.mockImplementation(({ id }) => {
+      return Promise.resolve({
+        data: id === 'file-id' ? mockFile : mockSecondFile
+      })
+    })
+    makeSharingLink.mockResolvedValue(
+      'https://drive.example/public?sharecode=abc'
+    )
+    mockGetDownloadLinkById
+      .mockResolvedValueOnce(
+        'https://alice.example/files/downloads/123/invoice.pdf?Dl=1'
+      )
+      .mockResolvedValueOnce(
+        'https://alice.example/files/downloads/456/receipt.pdf?Dl=1'
+      )
+    const { service, getByTestId } = setup()
+
+    fireEvent.click(getByTestId('multiple-temporary-download-link-btn'))
+
+    await waitFor(() => expect(service.terminate).toHaveBeenCalled())
+    expect(makeSharingLink).toHaveBeenCalledTimes(1)
+    expect(makeSharingLink).toHaveBeenCalledWith(
+      expect.any(Object),
+      ['file-id', 'second-file-id'],
+      {
+        ttl: TEMPORARY_LINK_TTL
+      }
+    )
+    expect(mockCozyClient).toHaveBeenCalledTimes(1)
+    expect(mockGetDownloadLinkById).toHaveBeenNthCalledWith(
+      1,
+      'file-id',
+      'invoice.pdf'
+    )
+    expect(mockGetDownloadLinkById).toHaveBeenNthCalledWith(
+      2,
+      'second-file-id',
+      'receipt.pdf'
+    )
+    expect(service.terminate).toHaveBeenCalledWith([
+      {
+        id: 'file-id',
+        name: 'invoice.pdf',
+        size: 42,
+        mimeType: 'application/pdf',
+        downloadLink:
+          'https://alice.example/files/downloads/123/invoice.pdf?Dl=1'
+      },
+      {
+        id: 'second-file-id',
+        name: 'receipt.pdf',
+        size: 84,
+        mimeType: 'application/pdf',
+        downloadLink:
+          'https://alice.example/files/downloads/456/receipt.pdf?Dl=1'
       }
     ])
   })

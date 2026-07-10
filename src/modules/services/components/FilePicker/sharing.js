@@ -82,22 +82,22 @@ export const getOrCreateSharingLink = async (client, file) => {
 }
 
 /**
- * Create a temporary download link for a file.
- * A temporary sharing link is created first, then used to obtain a
- * direct download link.
+ * Create temporary download links for files.
+ * A single temporary sharing link grants access to all the files, then
+ * the public client creates one direct download link per file.
  *
  * @param {object} client - CozyClient instance
- * @param {object} file - File document
- * @returns {Promise<string>} - The download link
+ * @param {object[]} files - File documents
+ * @returns {Promise<string[]>} - The download links in file order
  */
-export const makeTemporaryDownloadLink = async (client, file) => {
-  if (!isFile(file)) {
-    throw new Error('Temporary download link is only available for files')
+export const makeTemporaryDownloadLinks = async (client, files) => {
+  if (files.some(file => !isFile(file))) {
+    throw new Error('Temporary download links are only available for files')
   }
 
   const temporarySharingLink = await makeSharingLink(
     client,
-    [getFileId(file)],
+    files.map(getFileId),
     {
       ttl: TEMPORARY_LINK_TTL
     }
@@ -116,8 +116,12 @@ export const makeTemporaryDownloadLink = async (client, file) => {
     token: sharecode,
     useCustomStore: true
   })
+  const filesCollection = publicClient.collection('io.cozy.files')
+  const downloadLinks = await Promise.all(
+    files.map(file =>
+      filesCollection.getDownloadLinkById(getFileId(file), file.name)
+    )
+  )
 
-  return await publicClient
-    .collection('io.cozy.files')
-    .getDownloadLinkById(getFileId(file), file.name)
+  return downloadLinks
 }

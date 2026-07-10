@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types'
-import React, { useState, memo } from 'react'
+import React, { useState, memo, useMemo } from 'react'
 
 import { FixedDialog } from 'cozy-ui/transpiled/react/CozyDialogs'
 
@@ -11,6 +11,8 @@ import { getActionDisabledState } from './constraints'
 import { getCompliantTypes } from './helpers'
 import styles from './styles.styl'
 
+import { useSelectionContext } from '@/modules/selection/SelectionProvider'
+
 export const ROOT_DIR_ID = 'io.cozy.files.root-dir'
 
 const FilePicker = ({
@@ -21,33 +23,26 @@ const FilePicker = ({
   filePickerConfig
 }) => {
   const [folderId, setFolderId] = useState(ROOT_DIR_ID)
-  const [itemsIdsSelected, setItemsIdsSelected] = useState([])
-  const [selectedItems, setSelectedItems] = useState([])
   const [error, setError] = useState(null)
+  const { selectedItems, clearSelection } = useSelectionContext()
+  const itemsIdsSelected = useMemo(
+    () => selectedItems.map(item => item._id),
+    [selectedItems]
+  )
 
   const config = filePickerConfig || defaultFilePickerConfig
   const publicLinkAction = config.sharingLink ?? null
   const downloadLinkAction = config.downloadLink ?? null
-  const onSelectItemId = (fileIds, item = null) => {
-    setError(null)
-    if (multiple) {
-      setItemsIdsSelected(fileIds)
-      if (item) {
-        setSelectedItems(prev => [...prev, item])
-      } else {
-        setSelectedItems(prev => prev.filter(it => fileIds.includes(it._id)))
-      }
-    } else {
-      setItemsIdsSelected(fileIds)
-      setSelectedItems(item ? [item] : [])
-    }
+
+  const handleClose = () => {
+    clearSelection()
+    onClose()
   }
 
   const navigateTo = folder => {
     setError(null)
-    setFolderId(folder.id)
-    setItemsIdsSelected([])
-    setSelectedItems([])
+    setFolderId(folder.id ?? folder._id)
+    clearSelection()
   }
 
   const handleConfirm = async linkMode => {
@@ -56,7 +51,10 @@ const FilePicker = ({
     const pickError = await onChange(value, linkMode)
     if (pickError) {
       setError(pickError)
+      return
     }
+
+    clearSelection()
   }
 
   const itemTypesAccepted = getCompliantTypes(accept)
@@ -73,7 +71,7 @@ const FilePicker = ({
     <FixedDialog
       open
       disableGutters
-      onClose={onClose}
+      onClose={handleClose}
       size="large"
       disableTitleAutoPadding
       classes={{ paper: styles.filePickerDialogPaper }}
@@ -85,12 +83,10 @@ const FilePicker = ({
           className: 'u-pos-relative'
         }
       }}
-      title={<FilePickerHeader onClose={onClose} />}
+      title={<FilePickerHeader onClose={handleClose} />}
       content={
         <FilePickerBody
           navigateTo={navigateTo}
-          onSelectItemId={onSelectItemId}
-          itemsIdsSelected={itemsIdsSelected}
           folderId={folderId}
           itemTypesAccepted={itemTypesAccepted}
           multiple={multiple}

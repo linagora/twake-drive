@@ -1,8 +1,10 @@
-import { fireEvent, render } from '@testing-library/react'
+import { fireEvent, render, waitFor } from '@testing-library/react'
 import React from 'react'
 
 import { filePickerLinkModes } from './constants'
 import FilePicker from './index'
+
+import { SelectionProvider } from '@/modules/selection/SelectionProvider'
 
 jest.mock('cozy-client', () => ({
   models: {
@@ -25,39 +27,81 @@ jest.mock('cozy-ui/transpiled/react/CozyDialogs', () => ({
 
 jest.mock('./FilePickerHeader', () => () => <div>Header</div>)
 
-jest.mock('./FilePickerBody', () => ({ onSelectItemId, folderSelectable }) => (
-  <div>
-    <span data-testid="folder-selectable">
-      {folderSelectable ? 'true' : 'false'}
-    </span>
-    <button
-      type="button"
-      data-testid="select-file-btn"
-      onClick={() =>
-        onSelectItemId(['file-id'], {
-          _id: 'file-id',
-          type: 'file',
-          name: 'file.pdf'
-        })
-      }
-    >
-      Select file
-    </button>
-    <button
-      type="button"
-      data-testid="select-folder-btn"
-      onClick={() =>
-        onSelectItemId(['folder-id'], {
-          _id: 'folder-id',
-          type: 'directory',
-          name: 'Folder'
-        })
-      }
-    >
-      Select folder
-    </button>
-  </div>
-))
+jest.mock('./FilePickerBody', () => {
+  const {
+    useSelectionContext
+  } = require('@/modules/selection/SelectionProvider')
+
+  const file = {
+    _id: 'file-id',
+    type: 'file',
+    name: 'file.pdf'
+  }
+
+  const secondFile = {
+    _id: 'second-file-id',
+    type: 'file',
+    name: 'second-file.pdf'
+  }
+
+  const folder = {
+    _id: 'folder-id',
+    id: 'folder-id',
+    type: 'directory',
+    name: 'Folder'
+  }
+
+  return ({ folderSelectable, navigateTo }) => {
+    const { setSelectedItems } = useSelectionContext()
+
+    return (
+      <div>
+        <span data-testid="folder-selectable">
+          {folderSelectable ? 'true' : 'false'}
+        </span>
+        <button
+          type="button"
+          data-testid="select-file-btn"
+          onClick={() => setSelectedItems({ [file._id]: file })}
+        >
+          Select file
+        </button>
+        <button
+          type="button"
+          data-testid="select-second-file-btn"
+          onClick={() =>
+            setSelectedItems({ [file._id]: file, [secondFile._id]: secondFile })
+          }
+        >
+          Select second file
+        </button>
+        <button
+          type="button"
+          data-testid="select-folder-btn"
+          onClick={() => setSelectedItems({ [folder._id]: folder })}
+        >
+          Select folder
+        </button>
+        <button
+          type="button"
+          data-testid="select-file-and-folder-btn"
+          onClick={() =>
+            setSelectedItems({ [file._id]: file, [folder._id]: folder })
+          }
+        >
+          Select file and folder
+        </button>
+        <button
+          type="button"
+          data-testid="navigate-folder-btn"
+          onClick={() => navigateTo(folder)}
+        >
+          Navigate folder
+        </button>
+      </div>
+    )
+  }
+})
 
 jest.mock(
   './FilePickerFooter',
@@ -94,17 +138,26 @@ jest.mock(
     )
 )
 
+const FilePickerWrapper = ({ children }) => (
+  <SelectionProvider clearOnLocationChange={false}>
+    {children}
+  </SelectionProvider>
+)
+
 describe('FilePicker', () => {
   const mockOnChange = jest.fn()
   const mockOnClose = jest.fn()
 
-  const setup = ({ filePickerConfig } = {}) => {
+  const setup = ({ filePickerConfig, multiple = false } = {}) => {
     return render(
-      <FilePicker
-        onChange={mockOnChange}
-        onClose={mockOnClose}
-        filePickerConfig={filePickerConfig}
-      />
+      <FilePickerWrapper>
+        <FilePicker
+          onChange={mockOnChange}
+          onClose={mockOnClose}
+          filePickerConfig={filePickerConfig}
+          multiple={multiple}
+        />
+      </FilePickerWrapper>
     )
   }
 
@@ -137,7 +190,7 @@ describe('FilePicker', () => {
     expect(getByTestId('public-link-btn')).toBeInTheDocument()
   })
 
-  it('should keep simple file selection until an action is chosen', () => {
+  it('should keep simple file selection until an action is chosen', async () => {
     const { getByTestId } = setup()
 
     expect(getByTestId('public-link-btn')).toBeDisabled()
@@ -151,9 +204,11 @@ describe('FilePicker', () => {
 
     fireEvent.click(getByTestId('public-link-btn'))
 
-    expect(mockOnChange).toHaveBeenCalledWith(
-      'file-id',
-      filePickerLinkModes.PUBLIC_LINK
+    await waitFor(() =>
+      expect(mockOnChange).toHaveBeenCalledWith(
+        'file-id',
+        filePickerLinkModes.PUBLIC_LINK
+      )
     )
   })
 
@@ -164,5 +219,41 @@ describe('FilePicker', () => {
 
     expect(getByTestId('public-link-btn')).not.toBeDisabled()
     expect(getByTestId('temporary-download-link-btn')).toBeDisabled()
+  })
+
+  it('should keep multiple selected file ids until an action is chosen', async () => {
+    const { getByTestId } = setup({ multiple: true })
+
+    fireEvent.click(getByTestId('select-file-btn'))
+    fireEvent.click(getByTestId('select-second-file-btn'))
+    fireEvent.click(getByTestId('public-link-btn'))
+
+    await waitFor(() =>
+      expect(mockOnChange).toHaveBeenCalledWith(
+        ['file-id', 'second-file-id'],
+        filePickerLinkModes.PUBLIC_LINK
+      )
+    )
+  })
+
+  it('should apply action constraints to all selected items', () => {
+    const { getByTestId } = setup({ multiple: true })
+
+    fireEvent.click(getByTestId('select-file-btn'))
+    fireEvent.click(getByTestId('select-file-and-folder-btn'))
+
+    expect(getByTestId('public-link-btn')).not.toBeDisabled()
+    expect(getByTestId('temporary-download-link-btn')).toBeDisabled()
+  })
+
+  it('should clear selection when navigating to another folder', () => {
+    const { getByTestId } = setup({ multiple: true })
+
+    fireEvent.click(getByTestId('select-file-btn'))
+    expect(getByTestId('public-link-btn')).not.toBeDisabled()
+
+    fireEvent.click(getByTestId('navigate-folder-btn'))
+
+    expect(getByTestId('public-link-btn')).toBeDisabled()
   })
 })

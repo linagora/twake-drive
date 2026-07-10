@@ -1,5 +1,6 @@
+import cx from 'classnames'
 import PropTypes from 'prop-types'
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useMemo, useRef, useState } from 'react'
 
 import { models, useQuery } from 'cozy-client'
 import Alert from 'cozy-ui/transpiled/react/Alert'
@@ -10,6 +11,8 @@ import FilePickerBreadcrumb from './FilePickerBreadcrumb'
 import { FilePickerTable } from './FilePickerTable'
 import { isValidFile } from './helpers'
 import { buildContentFolderQuery } from './queries'
+import styles from './styles.styl'
+import { useFilePickerSelection } from './useFilePickerSelection'
 
 import { ROOT_DIR_ID } from '@/constants/config'
 import { useBreadcrumbPath } from '@/modules/breadcrumb/hooks/useBreadcrumbPath'
@@ -21,14 +24,15 @@ const {
 const FilePickerBody = ({
   navigateTo,
   folderId,
-  onSelectItemId,
-  itemsIdsSelected,
   itemTypesAccepted,
   multiple,
   folderSelectable,
   error
 }) => {
   const { t } = useI18n()
+  const selectionContainerRef = useRef(null)
+  const virtuosoRef = useRef(null)
+  const [scrollElement, setScrollElement] = useState(null)
   const rootBreadcrumbPath = useMemo(
     () => ({ id: ROOT_DIR_ID, name: t('Nav.item_drive') }),
     [t]
@@ -43,35 +47,31 @@ const FilePickerBody = ({
     hasMore,
     fetchMore
   } = useQuery(contentFolderQuery.definition, contentFolderQuery.options)
+  const items = contentFolder || []
 
-  const onCheck = useCallback(
-    (itemId, item) => {
-      const isChecked = itemsIdsSelected.some(id => id === itemId)
-      if (isChecked) {
-        onSelectItemId(
-          itemsIdsSelected.filter(id => id !== itemId),
-          null
-        )
-      } else {
-        onSelectItemId([...itemsIdsSelected, itemId], item)
-      }
-    },
-    [itemsIdsSelected, onSelectItemId]
+  const canSelectItem = useCallback(
+    item =>
+      (folderSelectable && isDirectory(item)) ||
+      isValidFile(item, itemTypesAccepted),
+    [folderSelectable, itemTypesAccepted]
   )
 
-  const handleListItemClick = useCallback(
-    item => {
-      const canSelect =
-        (folderSelectable && isDirectory(item)) ||
-        isValidFile(item, itemTypesAccepted)
+  const scrollToIndex = useCallback((index, align) => {
+    virtuosoRef.current?.scrollToIndex({
+      index,
+      align,
+      behavior: 'auto'
+    })
+  }, [])
 
-      if (!canSelect) return
-
-      if (multiple) onCheck(item._id, item)
-      else onSelectItemId([item._id], item)
-    },
-    [folderSelectable, itemTypesAccepted, multiple, onCheck, onSelectItemId]
-  )
+  const { handleItemClick, selectedItemIds } = useFilePickerSelection({
+    items,
+    canSelectItem,
+    multiple,
+    selectionContainerRef,
+    scrollElement,
+    scrollToIndex
+  })
 
   const handleListItemDoubleClick = useCallback(
     item => {
@@ -84,7 +84,12 @@ const FilePickerBody = ({
 
   return (
     <Box
-      className="u-pos-absolute u-top-0 u-right-0 u-bottom-0 u-left-0"
+      ref={selectionContainerRef}
+      tabIndex={-1}
+      className={cx(
+        'u-pos-absolute u-top-0 u-right-0 u-bottom-0 u-left-0',
+        styles.filePickerSelectionContainer
+      )}
       display="flex"
       flexDirection="column"
     >
@@ -101,19 +106,19 @@ const FilePickerBody = ({
         <FilePickerBreadcrumb path={path} onBreadcrumbClick={navigateTo} />
       </Box>
       <FilePickerTable
-        items={contentFolder || []}
-        itemsIdsSelected={itemsIdsSelected}
-        onItemClick={handleListItemClick}
+        items={items}
+        itemsIdsSelected={selectedItemIds}
+        onItemClick={handleItemClick}
         onItemDoubleClick={handleListItemDoubleClick}
         fetchMore={hasMore ? fetchMore : undefined}
+        scrollerRef={setScrollElement}
+        virtuosoRef={virtuosoRef}
       />
     </Box>
   )
 }
 
 FilePickerBody.propTypes = {
-  onSelectItemId: PropTypes.func.isRequired,
-  itemsIdsSelected: PropTypes.arrayOf(PropTypes.string).isRequired,
   folderId: PropTypes.string.isRequired,
   navigateTo: PropTypes.func.isRequired,
   itemTypesAccepted: PropTypes.arrayOf(PropTypes.string).isRequired,

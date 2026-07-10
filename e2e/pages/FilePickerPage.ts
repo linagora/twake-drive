@@ -83,6 +83,17 @@ export class FilePickerPage {
     await listItem.getByTestId('choice-onclick').click()
   }
 
+  /**
+   * Ctrl-click a choice area to toggle it without clearing existing selection.
+   * Works only in multiple mode (checkboxes).
+   */
+  async toggleItem(name: string): Promise<void> {
+    const listItem = this.getListItemByName(name)
+    const isMac = process.platform === 'darwin'
+    await listItem
+      .getByTestId('choice-onclick')
+      .click({ modifiers: [isMac ? 'Meta' : 'Control'] })
+  }
 
   /** Click the "Public link" button in the picker footer. */
   async clickPublicLink(): Promise<void> {

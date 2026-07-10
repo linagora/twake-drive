@@ -17,6 +17,7 @@ import appMetadata from '@/lib/appMetadata'
 import { schema } from '@/lib/doctypes'
 import registerClientPlugins from '@/lib/registerClientPlugins'
 import IntentHandler from '@/modules/services'
+import { SelectionProvider } from '@/modules/selection/SelectionProvider'
 
 // ambient styles
 import styles from '@/styles/main.styl' // eslint-disable-line no-unused-vars
@@ -45,7 +46,9 @@ document.addEventListener('DOMContentLoaded', () => {
       lang={data.locale}
       dictRequire={lang => require(`@/locales/${lang}`)}
     >
-      <IntentHandler intentId={intent} />
+      <SelectionProvider clearOnLocationChange={false}>
+        <IntentHandler intentId={intent} />
+      </SelectionProvider>
     </DriveProvider>
   )
 })
