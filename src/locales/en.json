@@ -759,8 +759,8 @@
     "footer": {
       "buttons": {
         "cancel": "Cancel",
-        "publicLink": "Share with public link",
-        "temporaryDownloadLink": "Attach with temporary link"
+        "publicLink": "Add as link",
+        "temporaryDownloadLink": "Add as attachment"
       }
     },
     "constraints": {
@@ -771,8 +771,8 @@
       }
     },
     "actions": {
-      "sharingLink": "Share with public link",
-      "downloadLink": "Attach with temporary link"
+      "sharingLink": "Add as link",
+      "downloadLink": "Add as attachment"
     },
     "errors": {
       "ITEM_NOT_FOUND": "The selected file could not be found.",

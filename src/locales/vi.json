@@ -723,8 +723,8 @@
     "footer": {
       "buttons": {
         "cancel": "Hủy",
-        "publicLink": "Chia sẻ bằng liên kết công khai",
-        "temporaryDownloadLink": "Đính kèm bằng liên kết tạm thời"
+        "publicLink": "Thêm dưới dạng liên kết",
+        "temporaryDownloadLink": "Thêm dưới dạng tệp đính kèm"
       }
     },
     "constraints": {
@@ -735,8 +735,8 @@
       }
     },
     "actions": {
-      "sharingLink": "Chia sẻ với liên kết công khai",
-      "downloadLink": "Đính kèm với liên kết tạm thời"
+      "sharingLink": "Thêm dưới dạng liên kết",
+      "downloadLink": "Thêm dưới dạng tệp đính kèm"
     },
     "errors": {
       "ITEM_NOT_FOUND": "The selected file could not be found.",
