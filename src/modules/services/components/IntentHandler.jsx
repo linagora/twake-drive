@@ -1,4 +1,3 @@
-import { Sprite } from '@linagora/twake-icons'
 import React, { useEffect, useState } from 'react'
 
 import { useClient } from 'cozy-client'
@@ -49,15 +48,10 @@ const IntentHandler = ({ intentId }) => {
     startService()
   }, [client, intentId])
 
-  return (
-    <>
-      {ServiceComponent ? (
-        <ServiceComponent service={state.service} intent={state.intent} />
-      ) : (
-        <div className="u-w-100 u-bg-charcoalGrey" />
-      )}
-      <Sprite />
-    </>
+  return ServiceComponent ? (
+    <ServiceComponent service={state.service} intent={state.intent} />
+  ) : (
+    <div className="u-w-100 u-bg-charcoalGrey" />
   )
 }
 
