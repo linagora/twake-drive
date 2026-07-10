@@ -1,4 +1,4 @@
-import type { FrameLocator, Page } from '@playwright/test'
+import type { FrameLocator, Locator, Page } from '@playwright/test'
 
 import { USERS } from '../helpers/config'
 
@@ -61,12 +61,11 @@ export class FilePickerPage {
    */
   async navigateToFolder(name: string): Promise<void> {
     const frame = this.getFrameLocator()
-    const folderRow = frame.getByTestId('list-item').filter({ hasText: name })
+    const folderRow = this.getListItemByName(name)
     await folderRow.getByTestId('listitem-onclick').dblclick()
-    // Wait for the breadcrumb heading to update with the folder name.
     await frame
-      .getByTestId('file-picker-header')
-      .filter({ hasText: name })
+      .getByTestId('file-picker-breadcrumb')
+      .getByText(name, { exact: true })
       .waitFor({ state: 'visible', timeout: 10_000 })
   }
 
@@ -79,11 +78,11 @@ export class FilePickerPage {
    * The item must be currently visible in the list.
    */
   async selectItem(name: string): Promise<void> {
-    const frame = this.getFrameLocator()
-    const listItem = frame.getByTestId('list-item').filter({ hasText: name })
+    const listItem = this.getListItemByName(name)
     // Click the choice area (radio/checkbox wrapper).
     await listItem.getByTestId('choice-onclick').click()
   }
+
 
   /** Click the "Public link" button in the picker footer. */
   async clickPublicLink(): Promise<void> {
@@ -182,5 +181,13 @@ export class FilePickerPage {
    */
   private getFrameLocator(): FrameLocator {
     return this.page.frameLocator('iframe[src*="intents"]')
+  }
+
+  /** Find an item by its untruncated, clean DOM title. */
+  private getListItemByName(name: string): Locator {
+    const frame = this.getFrameLocator()
+    return frame
+      .getByTestId('list-item')
+      .filter({ has: frame.getByTitle(name, { exact: true }) })
   }
 }

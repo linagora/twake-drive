@@ -756,8 +756,8 @@
     "footer": {
       "buttons": {
         "cancel": "Annuler",
-        "publicLink": "Partager par lien public",
-        "temporaryDownloadLink": "Joindre avec un lien temporaire"
+        "publicLink": "Ajouter comme lien",
+        "temporaryDownloadLink": "Ajouter en pièce jointe"
       }
     },
     "constraints": {
@@ -768,8 +768,8 @@
       }
     },
     "actions": {
-      "sharingLink": "Partager par lien public",
-      "downloadLink": "Joindre avec un lien temporaire"
+      "sharingLink": "Ajouter comme lien",
+      "downloadLink": "Ajouter en pièce jointe"
     },
     "errors": {
       "ITEM_NOT_FOUND": "Le fichier sélectionné est introuvable.",

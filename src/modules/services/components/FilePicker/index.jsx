@@ -9,6 +9,7 @@ import FilePickerHeader from './FilePickerHeader'
 import { defaultFilePickerConfig } from './constants'
 import { getActionDisabledState } from './constraints'
 import { getCompliantTypes } from './helpers'
+import styles from './styles.styl'
 
 export const ROOT_DIR_ID = 'io.cozy.files.root-dir'
 
@@ -74,18 +75,17 @@ const FilePicker = ({
       disableGutters
       onClose={onClose}
       size="large"
+      disableTitleAutoPadding
+      classes={{ paper: styles.filePickerDialogPaper }}
       componentsProps={{
+        dialogTitle: {
+          className: 'u-pl-1-half'
+        },
         dialogContent: {
           className: 'u-pos-relative'
         }
       }}
-      title={
-        <FilePickerHeader
-          navigateTo={navigateTo}
-          folderId={folderId}
-          onClose={onClose}
-        />
-      }
+      title={<FilePickerHeader onClose={onClose} />}
       content={
         <FilePickerBody
           navigateTo={navigateTo}
