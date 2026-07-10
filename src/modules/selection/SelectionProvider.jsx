@@ -8,7 +8,7 @@ import React, {
 } from 'react'
 import { useLocation } from 'react-router-dom'
 
-import { useNewItemHighlightContext } from '@/modules/upload/NewItemHighlightProvider'
+import { useOptionalNewItemHighlightContext } from '@/modules/upload/NewItemHighlightProvider'
 
 /**
  * @typedef TSelectionContext
@@ -27,24 +27,33 @@ import { useNewItemHighlightContext } from '@/modules/upload/NewItemHighlightPro
 /** @type {import('react').Context<TSelectionContext>} */
 const SelectionContext = createContext()
 
+const SelectionRouteCleaner = ({ onLocationChange }) => {
+  const location = useLocation()
+
+  useEffect(() => {
+    onLocationChange()
+  }, [location, onLocationChange])
+
+  return null
+}
+
 /**
  * This provider allows you to manage item selection
  */
-const SelectionProvider = ({ children }) => {
-  const location = useLocation()
+const SelectionProvider = ({ children, clearOnLocationChange = true }) => {
   const [selectedItems, setSelectedItems] = useState({})
   const [isSelectionBarOpen, setSelectionBarOpen] = useState(false)
   const [isSelectAll, setIsSelectAll] = useState(false)
 
-  const { highlightedItems, clearItems } = useNewItemHighlightContext()
+  const newItemHighlightContext = useOptionalNewItemHighlightContext()
 
   const isItemSelected = id => {
     return selectedItems[id] !== undefined
   }
 
   const toggleSelectedItem = item => {
-    if (highlightedItems?.length) {
-      clearItems()
+    if (newItemHighlightContext?.highlightedItems?.length) {
+      newItemHighlightContext.clearItems()
     }
 
     if (isItemSelected(item._id)) {
@@ -87,10 +96,6 @@ const SelectionProvider = ({ children }) => {
     return Object.keys(selectedItems).length !== 0 || isSelectionBarOpen
   }, [isSelectionBarOpen, selectedItems])
 
-  useEffect(() => {
-    hideSelectionBar()
-  }, [location, hideSelectionBar])
-
   return (
     <SelectionContext.Provider
       value={{
@@ -108,6 +113,9 @@ const SelectionProvider = ({ children }) => {
         setIsSelectAll
       }}
     >
+      {clearOnLocationChange && (
+        <SelectionRouteCleaner onLocationChange={hideSelectionBar} />
+      )}
       {children}
     </SelectionContext.Provider>
   )
