@@ -3,11 +3,10 @@ import React, { useCallback } from 'react'
 
 import { models, useQuery } from 'cozy-client'
 import Alert from 'cozy-ui/transpiled/react/Alert'
-import List from 'cozy-ui/transpiled/react/List'
-import LoadMore from 'cozy-ui/transpiled/react/LoadMore'
+import Box from 'cozy-ui/transpiled/react/Box'
 import { useI18n } from 'twake-i18n'
 
-import FilePickerBodyItem from './FilePickerBodyItem'
+import { FilePickerTable } from './FilePickerTable'
 import { isValidFile } from './helpers'
 import { buildContentFolderQuery } from './queries'
 
@@ -48,24 +47,8 @@ const FilePickerBody = ({
     [itemsIdsSelected, onSelectItemId]
   )
 
-  // When click on checkbox/radio area...
-  const handleChoiceClick = useCallback(
-    item => () => {
-      const canSelect =
-        (folderSelectable && isDirectory(item)) ||
-        isValidFile(item, itemTypesAccepted)
-
-      if (!canSelect) return
-
-      if (multiple) onCheck(item._id, item)
-      else onSelectItemId([item._id], item)
-    },
-    [folderSelectable, itemTypesAccepted, multiple, onCheck, onSelectItemId]
-  )
-
-  // ...when click anywhere on the rest of the line
   const handleListItemClick = useCallback(
-    item => () => {
+    item => {
       const canSelect =
         (folderSelectable && isDirectory(item)) ||
         isValidFile(item, itemTypesAccepted)
@@ -79,7 +62,7 @@ const FilePickerBody = ({
   )
 
   const handleListItemDoubleClick = useCallback(
-    item => () => {
+    item => {
       if (isDirectory(item)) {
         navigateTo(item)
       }
@@ -88,7 +71,11 @@ const FilePickerBody = ({
   )
 
   return (
-    <>
+    <Box
+      className="u-pos-absolute u-top-0 u-right-0 u-bottom-0 u-left-0"
+      display="flex"
+      flexDirection="column"
+    >
       {error && (
         <Alert
           severity="error"
@@ -98,29 +85,14 @@ const FilePickerBody = ({
           {t(`FilePicker.errors.${error}`)}
         </Alert>
       )}
-      <List>
-        {contentFolder &&
-          contentFolder.map((item, idx) => {
-            const hasDivider = idx !== contentFolder.length - 1
-
-            return (
-              <FilePickerBodyItem
-                key={item._id}
-                item={item}
-                itemTypesAccepted={itemTypesAccepted}
-                multiple={multiple}
-                folderSelectable={folderSelectable}
-                handleChoiceClick={handleChoiceClick}
-                handleListItemClick={handleListItemClick}
-                handleListItemDoubleClick={handleListItemDoubleClick}
-                itemsIdsSelected={itemsIdsSelected}
-                hasDivider={hasDivider}
-              />
-            )
-          })}
-        {hasMore && <LoadMore label="loadMore" fetchMore={fetchMore} />}
-      </List>
-    </>
+      <FilePickerTable
+        items={contentFolder || []}
+        itemsIdsSelected={itemsIdsSelected}
+        onItemClick={handleListItemClick}
+        onItemDoubleClick={handleListItemDoubleClick}
+        fetchMore={hasMore ? fetchMore : undefined}
+      />
+    </Box>
   )
 }
 
@@ -130,12 +102,15 @@ FilePickerBody.propTypes = {
   folderId: PropTypes.string.isRequired,
   navigateTo: PropTypes.func.isRequired,
   itemTypesAccepted: PropTypes.arrayOf(PropTypes.string).isRequired,
+  multiple: PropTypes.bool,
   folderSelectable: PropTypes.bool,
   error: PropTypes.string
 }
 
 FilePickerBody.defaultProps = {
-  folderSelectable: false
+  multiple: false,
+  folderSelectable: false,
+  error: null
 }
 
 export default FilePickerBody
