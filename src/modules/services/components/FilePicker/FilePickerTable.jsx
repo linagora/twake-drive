@@ -35,14 +35,24 @@ const FilePickerTableRow = forwardRef(
   ({ item, context, className, ...props }, ref) => {
     const row = item
 
+    const handleClick = event => {
+      context.onItemClick(row, event)
+    }
+
+    const handleDoubleClick = event => {
+      context.onItemDoubleClick(row, event)
+    }
+
     return (
       <TableRow
         {...props}
         ref={ref}
         data-testid="list-item"
         data-file-id={row?._id}
-        className={cx(className, 'virtualized')}
+        className={cx(className, 'virtualized', 'u-c-pointer')}
         selected={context.isSelectedItem(row)}
+        onClick={handleClick}
+        onDoubleClick={handleDoubleClick}
         hover
       />
     )
@@ -54,7 +64,9 @@ FilePickerTableRow.propTypes = {
   item: PropTypes.object,
   context: PropTypes.shape({
     data: PropTypes.array,
-    isSelectedItem: PropTypes.func.isRequired
+    isSelectedItem: PropTypes.func.isRequired,
+    onItemClick: PropTypes.func.isRequired,
+    onItemDoubleClick: PropTypes.func.isRequired
   }).isRequired,
   className: PropTypes.string
 }
@@ -73,7 +85,15 @@ const tableComponentsProps = {
 }
 
 export const FilePickerTable = memo(
-  ({ items, itemsIdsSelected, onItemClick, onItemDoubleClick, fetchMore }) => {
+  ({
+    items,
+    itemsIdsSelected,
+    onItemClick,
+    onItemDoubleClick,
+    fetchMore,
+    scrollerRef,
+    virtuosoRef
+  }) => {
     const { t } = useI18n()
     const columns = useMemo(() => makeFilePickerColumns(t), [t])
 
@@ -88,29 +108,23 @@ export const FilePickerTable = memo(
 
     const tableContext = useMemo(
       () => ({
-        data: items
+        data: items,
+        onItemClick,
+        onItemDoubleClick
       }),
-      [items]
+      [items, onItemClick, onItemDoubleClick]
     )
 
-    const componentsProps = useMemo(
-      () => ({
-        rowContent: {
-          onClick: onItemClick,
-          onDoubleClick: onItemDoubleClick,
-          children: <FilePickerTableCell />
-        }
-      }),
-      [onItemClick, onItemDoubleClick]
-    )
     return (
       <Box height="100%" flex={1} minHeight={0} px={3} boxSizing="border-box">
         <VirtualizedTable
+          ref={virtuosoRef}
           context={tableContext}
           components={tableComponents}
           rows={items}
           columns={columns}
           endReached={fetchMore}
+          scrollerRef={scrollerRef}
           selectedItems={selectedItems}
           isSelectedItem={isSelectedItem}
           componentsProps={tableComponentsProps}
@@ -126,5 +140,7 @@ FilePickerTable.propTypes = {
   itemsIdsSelected: PropTypes.arrayOf(PropTypes.string).isRequired,
   onItemClick: PropTypes.func.isRequired,
   onItemDoubleClick: PropTypes.func.isRequired,
-  fetchMore: PropTypes.func
+  fetchMore: PropTypes.func,
+  scrollerRef: PropTypes.func,
+  virtuosoRef: PropTypes.object
 }

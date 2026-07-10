@@ -1,12 +1,26 @@
+import { Icon } from '@linagora/twake-icons'
 import { filesize } from 'filesize'
 import PropTypes from 'prop-types'
 import React, { memo } from 'react'
 
+import Box from 'cozy-ui/transpiled/react/Box'
 import Button from 'cozy-ui/transpiled/react/Buttons'
+import IconButton from 'cozy-ui/transpiled/react/IconButton'
 import Tooltip from 'cozy-ui/transpiled/react/Tooltip'
+import Typography from 'cozy-ui/transpiled/react/Typography'
 import { useI18n } from 'twake-i18n'
 
 import { filePickerLinkModes } from './constants'
+
+import { useSelectionContext } from '@/modules/selection/SelectionProvider'
+
+function getTooltipTitle(t, reasonKey, actionConfig) {
+  return reasonKey === 'FilePicker.constraints.disabledReasons.fileTooLarge'
+    ? t(reasonKey, {
+        maxFileSize: filesize(actionConfig?.maxFileSize ?? 0, { base: 10 })
+      })
+    : t(reasonKey)
+}
 
 const FilePickerFooter = ({
   onConfirm,
@@ -16,6 +30,8 @@ const FilePickerFooter = ({
   downloadLinkAction
 }) => {
   const { t } = useI18n()
+  const { selectedItems, clearSelection } = useSelectionContext()
+  const selectedCount = selectedItems.length
 
   const publicLinkLabel =
     publicLinkAction &&
@@ -25,74 +41,73 @@ const FilePickerFooter = ({
     (downloadLinkAction.label ??
       t('FilePicker.footer.buttons.temporaryDownloadLink'))
 
-  const handlePublicLinkClick = () => {
-    onConfirm(filePickerLinkModes.PUBLIC_LINK)
-  }
-
-  const handleTemporaryDownloadLinkClick = () => {
-    onConfirm(filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK)
-  }
-
-  const renderAction = (
-    label,
-    state,
-    actionConfig,
-    onClick,
-    testId,
-    variant
-  ) => {
+  const renderAction = (label, state, actionConfig, onClick, testId, icon) => {
     if (!label) return null
-    if (state.disabled) {
-      const button = (
-        <Button data-testid={testId} label={label} onClick={onClick} disabled />
-      )
-      if (!state.reasonKey) {
-        return <span>{button}</span>
-      }
-      const tooltipTitle =
-        state.reasonKey ===
-        'FilePicker.constraints.disabledReasons.fileTooLarge'
-          ? t(state.reasonKey, {
-              maxFileSize: filesize(actionConfig?.maxFileSize ?? 0, {
-                base: 10
-              })
-            })
-          : t(state.reasonKey)
-      return (
-        <Tooltip title={tooltipTitle} placement="top">
-          <span>{button}</span>
-        </Tooltip>
-      )
-    }
-    return (
+
+    const button = (
       <Button
         data-testid={testId}
-        label={label}
-        variant={variant}
+        label={
+          <span className="u-flex u-flex-items-center">
+            <Icon icon={icon} size={16} />
+            <span className="u-ml-half">{label}</span>
+          </span>
+        }
+        variant="primary"
         onClick={onClick}
+        disabled={state.disabled}
       />
+    )
+
+    if (!state.disabled || !state.reasonKey) {
+      return <span>{button}</span>
+    }
+
+    const tooltipTitle = getTooltipTitle(t, state.reasonKey, actionConfig)
+    return (
+      <Tooltip title={tooltipTitle} placement="top">
+        <span>{button}</span>
+      </Tooltip>
     )
   }
 
   return (
-    <>
-      {renderAction(
-        publicLinkLabel,
-        publicLinkState,
-        publicLinkAction,
-        handlePublicLinkClick,
-        'public-link-btn',
-        'secondary'
+    <Box className="u-flex u-flex-items-center u-flex-justify-between u-w-100">
+      {selectedCount > 0 ? (
+        <Box className="u-flex u-flex-items-center">
+          <IconButton
+            onClick={clearSelection}
+            size="small"
+            aria-label={t('toolbar.clear_selection')}
+          >
+            <Icon icon={Cross} size={16} />
+          </IconButton>
+          <Typography variant="body1" className="u-ml-half">
+            {selectedCount} {t('SelectionBar.selected_count', selectedCount)}
+          </Typography>
+        </Box>
+      ) : (
+        <span />
       )}
-      {renderAction(
-        downloadLinkLabel,
-        downloadLinkState,
-        downloadLinkAction,
-        handleTemporaryDownloadLinkClick,
-        'temporary-download-link-btn',
-        undefined
-      )}
-    </>
+      <Box className="u-flex u-flex-items-center" gap="1rem">
+        {renderAction(
+          downloadLinkLabel,
+          downloadLinkState,
+          downloadLinkAction,
+          () => onConfirm(filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK),
+          'temporary-download-link-btn',
+          'attachment'
+        )}
+        {renderAction(
+          publicLinkLabel,
+          publicLinkState,
+          publicLinkAction,
+          () => onConfirm(filePickerLinkModes.PUBLIC_LINK),
+          'public-link-btn',
+          'link'
+        )}
+      </Box>
+    </Box>
   )
 }
 
