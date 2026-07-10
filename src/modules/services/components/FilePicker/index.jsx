@@ -74,6 +74,11 @@ const FilePicker = ({
       disableGutters
       onClose={onClose}
       size="large"
+      componentsProps={{
+        dialogContent: {
+          className: 'u-pos-relative'
+        }
+      }}
       title={
         <FilePickerHeader
           navigateTo={navigateTo}
