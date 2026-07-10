@@ -83,7 +83,7 @@ const FilePicker = ({
           className: 'u-pos-relative'
         }
       }}
-      title={<FilePickerHeader onClose={handleClose} />}
+      title={<FilePickerHeader />}
       content={
         <FilePickerBody
           navigateTo={navigateTo}
