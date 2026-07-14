@@ -69,6 +69,16 @@ To remove the runtime without running tests:
 docker compose -f docker-compose.e2e.yml down --volumes
 ```
 
+## Isolate a test runtime
+
+By default, the E2E suite uses the default Docker Compose project name. If you need to isolate a test run from an existing persistent runtime, use `E2E_PROJECT_NAME`:
+
+```sh
+E2E_PROJECT_NAME=custom-harness yarn e2e
+```
+
+The harness will apply this explicit Compose identity to all startup, lifecycle, and teardown commands. To run concurrent suites, combine `E2E_PROJECT_NAME` with custom port overrides (`COZY_E2E_STACK_PORT`, etc.) to prevent port collisions.
+
 ## Debugging and reports
 
 ```sh
