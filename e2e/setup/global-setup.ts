@@ -1,4 +1,4 @@
-import { execSync } from 'child_process'
+import { execFileSync } from 'child_process'
 import { pbkdf2Sync } from 'crypto'
 
 import { saveAuthState } from '../helpers/auth'
@@ -6,9 +6,11 @@ import {
   ADMIN_PASSPHRASE,
   ADMIN_URL,
   ADMIN_USER,
-  COMPOSE_FILE,
+  composeArgs,
   ORG_DOMAIN,
   ORG_ID,
+  PERSIST,
+  RESET,
   STACK_URL,
   USERS,
   User,
@@ -18,7 +20,31 @@ import { setFlags } from '../helpers/flags'
 
 const ADMIN_AUTH = `Basic ${Buffer.from(`${ADMIN_USER}:${ADMIN_PASSPHRASE}`).toString('base64')}`
 
+function compose(...args: string[]): void {
+  execFileSync('docker', composeArgs(...args), {
+    encoding: 'utf-8',
+    cwd: process.cwd(),
+    stdio: 'inherit'
+  })
+}
+
+async function instanceExists(user: User): Promise<boolean> {
+  const res = await fetch(`${ADMIN_URL}/instances/${user.instance}`, {
+    headers: { Authorization: ADMIN_AUTH, Accept: 'application/json' }
+  })
+  if (res.ok) return true
+  if (res.status === 404) return false
+  throw new Error(
+    `Failed to inspect instance ${user.instance} (${res.status}): ${await res.text()}`
+  )
+}
+
 async function createInstance(user: User): Promise<void> {
+  if (await instanceExists(user)) {
+    console.log(`[e2e] Reusing instance for ${user.label} (${user.instance}).`)
+    return
+  }
+
   const params = new URLSearchParams({
     Domain: user.instance,
     Email: user.email,
@@ -125,14 +151,32 @@ async function getSessionCookie(
   return { name: m[1], value: m[2] }
 }
 
+function isDriveInstalled(user: User): boolean {
+  const apps = stackExec('apps', 'ls', '--domain', user.instance)
+  return apps
+    .split('\n')
+    .some(line => line.trim().split(/\s+/, 1)[0] === 'drive')
+}
+
 async function setupUser(
   user: User
 ): Promise<{ cookieName: string; cookieValue: string }> {
-  console.log(`[e2e] Creating instance for ${user.label} (${user.instance})...`)
+  console.log(`[e2e] Ensuring instance for ${user.label} (${user.instance})...`)
   await createInstance(user)
 
-  console.log(`[e2e] Installing Drive app for ${user.label}...`)
-  stackExec(`apps install drive file:///app/drive --domain ${user.instance}`)
+  if (isDriveInstalled(user)) {
+    console.log(`[e2e] Reusing Drive app for ${user.label}.`)
+  } else {
+    console.log(`[e2e] Installing Drive app for ${user.label}...`)
+    stackExec(
+      'apps',
+      'install',
+      'drive',
+      'file:///app/drive',
+      '--domain',
+      user.instance
+    )
+  }
 
   console.log(`[e2e] Setting feature flags for ${user.label}...`)
   setFlags(user.instance, FEATURE_FLAGS)
@@ -143,19 +187,19 @@ async function setupUser(
 }
 
 // Pre-populate each instance's address book with a contact for every other
-// org member. Without this, the cozy-sharing modal only knows the recipient's
-// email, and `Sharing.SendInvitations` fails over to SMTP. With the contact
-// in place the modal stamps the recipient's instance URL on the share, so
-// cozy-stack does a direct stack-to-stack PUT and the trusted-domain rule on
-// the receiving side fires `auto_accept_trusted`.
+// org member. A deterministic document ID makes this provisioning idempotent.
 async function createContact(hostUser: User, peer: User): Promise<void> {
   const token = stackExec(
-    `instances token-cli ${hostUser.instance} io.cozy.contacts`
+    'instances',
+    'token-cli',
+    hostUser.instance,
+    'io.cozy.contacts'
   )
+  const contactId = `e2e-contact-${hostUser.label}-${peer.label}`
   const res = await fetch(
-    `http://${hostUser.instance}/data/io.cozy.contacts/`,
+    `http://${hostUser.instance}/data/io.cozy.contacts/${contactId}`,
     {
-      method: 'POST',
+      method: 'PUT',
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -168,6 +212,8 @@ async function createContact(hostUser: User, peer: User): Promise<void> {
       })
     }
   )
+  // A prior persistent run has already created this fixture.
+  if (res.status === 409) return
   if (!res.ok) {
     const body = await res.text()
     throw new Error(
@@ -188,25 +234,21 @@ async function syncContacts(): Promise<void> {
 }
 
 export default async function globalSetup(): Promise<void> {
-  if (process.env.E2E_SKIP_TEARDOWN === '1') {
+  if (RESET || !PERSIST) {
     console.log(
-      '[e2e] E2E_SKIP_TEARDOWN=1 — skipping pre-run cleanup. ' +
-        'Provisioning will fail if state from a previous run conflicts; ' +
-        '`docker compose -f docker-compose.e2e.yml down -v` to reset.'
+      RESET
+        ? '[e2e] E2E_RESET=1 — explicitly removing this runtime and its data.'
+        : '[e2e] Cleaning up previous containers (set E2E_PERSIST=1 to retain them)...'
     )
+    compose('down', '--volumes')
   } else {
-    console.log('[e2e] Cleaning up previous containers...')
-    execSync(`docker compose -f ${COMPOSE_FILE} down -v`, {
-      encoding: 'utf-8',
-      cwd: process.cwd()
-    })
+    console.log(
+      '[e2e] Persistent mode — retaining this runtime and its data.'
+    )
   }
 
   console.log('[e2e] Starting Docker containers...')
-  execSync(`docker compose -f ${COMPOSE_FILE} up -d --wait`, {
-    encoding: 'utf-8',
-    cwd: process.cwd()
-  })
+  compose('up', '--detach', '--wait', ...(PERSIST ? ['--no-recreate'] : []))
 
   console.log('[e2e] Waiting for cozy-stack...')
   await waitForStack(STACK_URL)

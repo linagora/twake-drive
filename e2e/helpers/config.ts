@@ -1,4 +1,4 @@
-import { execSync } from 'child_process'
+import { execFileSync } from 'child_process'
 
 export const COMPOSE_FILE = 'docker-compose.e2e.yml'
 export const STACK_HOST = 'localhost'
@@ -6,6 +6,9 @@ export const STACK_PORT = 80
 export const STACK_URL = `http://${STACK_HOST}:${STACK_PORT}`
 export const ADMIN_PORT = 6060
 export const ADMIN_URL = `http://${STACK_HOST}:${ADMIN_PORT}`
+export const PERSIST =
+  process.env.E2E_PERSIST === '1' || process.env.E2E_SKIP_TEARDOWN === '1'
+export const RESET = process.env.E2E_RESET === '1'
 export const ADMIN_USER = 'admin'
 export const ADMIN_PASSPHRASE = 'cozy'
 
@@ -43,9 +46,26 @@ export const USERS: Record<UserLabel, User> = {
   }
 }
 
-export function stackExec(cmd: string): string {
-  return execSync(
-    `docker compose -f ${COMPOSE_FILE} exec -T -e COZY_ADMIN_PASSPHRASE=cozy -e COZY_ADMIN_HOST=${STACK_HOST} cozystack cozy-stack ${cmd}`,
+/** Arguments shared by every Docker Compose call for this E2E runtime. */
+export function composeArgs(...args: string[]): string[] {
+  return ['compose', '--file', COMPOSE_FILE, ...args]
+}
+
+/** Execute a cozy-stack command inside the E2E Compose project. */
+export function stackExec(...args: string[]): string {
+  return execFileSync(
+    'docker',
+    composeArgs(
+      'exec',
+      '-T',
+      '-e',
+      `COZY_ADMIN_PASSPHRASE=${ADMIN_PASSPHRASE}`,
+      '-e',
+      `COZY_ADMIN_HOST=${STACK_HOST}`,
+      'cozystack',
+      'cozy-stack',
+      ...args
+    ),
     { encoding: 'utf-8', cwd: process.cwd() }
   ).trim()
 }
