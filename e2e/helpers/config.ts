@@ -48,9 +48,17 @@ export const USERS: Record<UserLabel, User> = {
   }
 }
 
+export const PROJECT_NAME = process.env.E2E_PROJECT_NAME
+
 /** Arguments shared by every Docker Compose call for this E2E runtime. */
 export function composeArgs(...args: string[]): string[] {
-  return ['compose', '--file', COMPOSE_FILE, ...args]
+  return [
+    'compose',
+    '--file',
+    COMPOSE_FILE,
+    ...(PROJECT_NAME ? ['--project-name', PROJECT_NAME] : []),
+    ...args
+  ]
 }
 
 /** Execute a cozy-stack command inside the E2E Compose project. */
