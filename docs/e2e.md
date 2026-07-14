@@ -8,7 +8,7 @@ and installs the Drive app in each instance.
 
 - Node version from `.nvmrc` and dependencies installed with `yarn install`
 - Docker with the Compose plugin available as `docker compose`
-- The host ports `80`, `5984`, and `6060` available
+- The host ports `18080`, `15984`, and `16060` available (can be configured via `COZY_E2E_STACK_PORT`, `COZY_E2E_COUCHDB_PORT`, `COZY_E2E_ADMIN_PORT`)
 - A production build of Drive
 - Playwright Chromium installed
 
