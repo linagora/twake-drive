@@ -24,7 +24,7 @@ interface PermissionDoc {
 
 /** Mint an app token for the drive app, the parent of the link permission. */
 function driveAppToken(instance: string): string {
-  return stackExec(`instances token-app ${instance} drive`)
+  return stackExec('instances', 'token-app', instance, 'drive')
 }
 
 /** Find the share-by-link permission whose rule targets `fileId`. */

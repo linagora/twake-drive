@@ -17,6 +17,8 @@
     "lint:js": "eslint --concurrency 4 --cache --cache-strategy=content '{src,test}/**/*.{js,jsx,ts,tsx}'",
     "test": "env NODE_ENV='test' jest",
     "e2e": "playwright test --config e2e/playwright.config.ts",
+    "e2e:persist": "E2E_PERSIST=1 yarn e2e",
+    "e2e:reset": "E2E_PERSIST=1 E2E_RESET=1 yarn e2e",
     "e2e:setup": "playwright install chromium",
     "e2e:debug": "playwright test --config e2e/playwright.config.ts --headed --debug",
     "e2e:report": "playwright show-report playwright-report",
