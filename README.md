@@ -153,6 +153,8 @@ $ cd twake-drive
 $ yarn test
 ```
 
+For Playwright end-to-end tests, see [the E2E test guide](docs/e2e.md).
+
 :pushpin: Don't forget to update / create new tests when you contribute to code to keep the app the consistent.
 
 ### Open a Pull-Request
