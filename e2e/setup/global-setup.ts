@@ -111,7 +111,7 @@ async function getSessionCookie(
   user: User
 ): Promise<{ name: string; value: string }> {
   const { instance, passphrase } = user
-  const loginPageRes = await fetch(`http://${instance}:80/auth/login`)
+  const loginPageRes = await fetch(`http://${instance}/auth/login`)
   if (!loginPageRes.ok) {
     throw new Error(
       `GET /auth/login on ${instance} failed (${loginPageRes.status}): ${await loginPageRes.text()}`
@@ -126,7 +126,7 @@ async function getSessionCookie(
   const hashed = pbkdf2Sync(Uint8Array.from(master), passphrase, 1, 32, 'sha256')
 
   const initialCookies = loginPageRes.headers.getSetCookie?.() ?? []
-  const res = await fetch(`http://${instance}:80/auth/login`, {
+  const res = await fetch(`http://${instance}/auth/login`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
