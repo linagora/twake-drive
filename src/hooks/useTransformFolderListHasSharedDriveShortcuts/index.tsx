@@ -17,10 +17,14 @@ interface SharedDrive {
   id: string
   drive_root_type?: DriveRootType
   rules: SharingRule[]
+  org_drive?: boolean
+  owner?: boolean
 }
 
 interface TransformedSharedDrive extends SharedDriveFile {
   driveId: string
+  orgDrive?: boolean
+  driveOwner?: boolean
 }
 
 interface UseTransformFolderListReturn {
@@ -78,11 +82,16 @@ const useTransformFolderListHasSharedDriveShortcuts = (
           ...(sharing.rules[0]?.mime ? { mime: sharing.rules[0].mime } : {})
         }
 
+        // org_drive/owner only exist on the sharing doc; stamp them on the
+        // entry so the Sharings view can classify drives into tabs without
+        // refetching the sharings.
         const sharedDriveData = {
           type: isFileDriveRoot ? ('file' as const) : ('directory' as const),
           name: driveName,
           dir_id: SHARED_DRIVES_DIR_ID,
           driveId: sharing.id,
+          orgDrive: Boolean(sharing.org_drive),
+          driveOwner: Boolean(sharing.owner),
           ...(isFileDriveRoot
             ? {
                 ...fileMetadata,
@@ -105,6 +114,8 @@ const useTransformFolderListHasSharedDriveShortcuts = (
             {
               ...fileInSharingSection,
               driveId: sharing.id,
+              orgDrive: Boolean(sharing.org_drive),
+              driveOwner: Boolean(sharing.owner),
               ...(isFileDriveRoot
                 ? {
                     ...fileMetadata,
