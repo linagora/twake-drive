@@ -1,4 +1,9 @@
-import { computeFileType, computeApp, computePath } from './helpers'
+import {
+  computeFileType,
+  computeApp,
+  computePath,
+  getSharingsTabSearch
+} from './helpers'
 
 import { TRASH_DIR_ID, SHARED_DRIVES_DIR_ID } from '@/constants/config'
 import { DRIVE_ROOT_TYPE } from '@/modules/shareddrives/types'
@@ -743,5 +748,24 @@ describe('computePath', () => {
         pathname: '/sharings'
       })
     ).toBe('folder-1')
+  })
+})
+
+describe('getSharingsTabSearch', () => {
+  it('returns the tab param when navigating within the sharings section', () => {
+    expect(getSharingsTabSearch('/sharings', '?tab=by-me')).toBe('?tab=by-me')
+    expect(
+      getSharingsTabSearch('/sharings/folder-1', '?foo=bar&tab=drives')
+    ).toBe('?tab=drives')
+  })
+
+  it('returns an empty search outside the sharings section', () => {
+    expect(getSharingsTabSearch('/folder/dir-1', '?tab=by-me')).toBe('')
+    expect(getSharingsTabSearch('/favorites', '?tab=by-me')).toBe('')
+  })
+
+  it('returns an empty search when no tab is set', () => {
+    expect(getSharingsTabSearch('/sharings', '')).toBe('')
+    expect(getSharingsTabSearch('/sharings', '?foo=bar')).toBe('')
   })
 })
