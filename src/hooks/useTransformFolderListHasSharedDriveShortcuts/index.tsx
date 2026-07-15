@@ -82,9 +82,6 @@ const useTransformFolderListHasSharedDriveShortcuts = (
           ...(sharing.rules[0]?.mime ? { mime: sharing.rules[0].mime } : {})
         }
 
-        // org_drive/owner only exist on the sharing doc; stamp them on the
-        // entry so the Sharings view can classify drives into tabs without
-        // refetching the sharings.
         const sharedDriveData = {
           type: isFileDriveRoot ? ('file' as const) : ('directory' as const),
           name: driveName,
