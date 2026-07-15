@@ -11792,7 +11792,7 @@ __metadata:
     redux-logger: "npm:3.0.6"
     redux-mock-store: "npm:1.5.4"
     redux-thunk: "npm:2.4.2"
-    rsbuild-config-cozy-app: "npm:^0.7.1"
+    rsbuild-config-cozy-app: "npm:^0.7.3"
     stylint: "npm:1.5.9"
     stylus-config-cozy-app: "npm:^0.1.0"
     twake-i18n: "npm:^0.3.4"
@@ -23569,9 +23569,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rsbuild-config-cozy-app@npm:^0.7.1":
-  version: 0.7.1
-  resolution: "rsbuild-config-cozy-app@npm:0.7.1"
+"rsbuild-config-cozy-app@npm:^0.7.3":
+  version: 0.7.3
+  resolution: "rsbuild-config-cozy-app@npm:0.7.3"
   dependencies:
     "@rsbuild/plugin-node-polyfill": "npm:1.4.2"
     "@rsbuild/plugin-react": "npm:1.4.0"
@@ -23582,7 +23582,7 @@ __metadata:
   peerDependencies:
     "@rsbuild/core": ">= 1.5.4"
     cozy-ui: ">= 113.2.0"
-  checksum: 10/88c6308fcaf8bf689ebb72bb21abf4ad41238cc78287ad28443f7314c0ee19f6704be24ef6c451e95ccefd78bf8ce04e0c875881255b839b440417e42c30a6c8
+  checksum: 10/012d5b843e69920d2995c0c7a937c1725d748192ac57e4d4d78cda2803c9b4f210ac3da003d6d8eedcbdc3fc584618c5d38fa7357665ee9628028ce30e4733f0
   languageName: node
   linkType: hard
 
