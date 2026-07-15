@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react'
+import { render, fireEvent } from '@testing-library/react'
 import React from 'react'
 
 import FolderViewBreadcrumb from './FolderViewBreadcrumb'
@@ -9,22 +9,36 @@ import {
 
 import { useBreadcrumbPath } from '@/modules/breadcrumb/hooks/useBreadcrumbPath'
 
+const mockNavigate = jest.fn()
+const mockLocation = jest.fn()
+
 jest.mock('modules/breadcrumb/hooks/useBreadcrumbPath')
 jest.mock('modules/breadcrumb/components/MobileAwareBreadcrumb', () => ({
-  MobileAwareBreadcrumb: ({ path, opening }) => (
+  MobileAwareBreadcrumb: ({ path, opening, onBreadcrumbClick }) => (
     <div
       data-testid="MobileAwareBreadcrumb"
       data-path={path}
       data-opening={opening ? 'true' : 'false'}
-    />
+    >
+      {path.map(item => (
+        <button key={item.name} onClick={() => onBreadcrumbClick(item)}>
+          {item.name}
+        </button>
+      ))}
+    </div>
   )
 }))
 jest.mock('react-router-dom', () => ({
-  useNavigate: jest.fn()
+  useNavigate: () => mockNavigate,
+  useLocation: () => mockLocation()
 }))
 
 describe('FolderViewBreadcrumb', () => {
   const rootBreadcrumbPath = dummyRootBreadcrumbPath()
+
+  beforeEach(() => {
+    mockLocation.mockReturnValue({ pathname: '/folder/folder-1', search: '' })
+  })
 
   it('should use breadcrumb path', () => {
     // Given
@@ -102,5 +116,68 @@ describe('FolderViewBreadcrumb', () => {
     // Then
     expect(getByTestId('breadcrumb-skeleton')).toBeTruthy()
     expect(queryByTestId('MobileAwareBreadcrumb')).toBeNull()
+  })
+
+  describe('navigation', () => {
+    beforeEach(() => {
+      useBreadcrumbPath.mockReturnValue([
+        { name: 'Sharings' },
+        { id: 'parent-1', name: 'Parent' },
+        { id: 'folder-1', name: 'Current' }
+      ])
+    })
+
+    const setup = () =>
+      render(
+        <FolderViewBreadcrumb
+          currentFolderId="folder-1"
+          rootBreadcrumbPath={{ name: 'Sharings' }}
+        />
+      )
+
+    it('keeps the sharings tab when navigating back to the section root', () => {
+      mockLocation.mockReturnValue({
+        pathname: '/sharings/folder-1',
+        search: '?tab=by-me'
+      })
+      const { getByText } = setup()
+
+      fireEvent.click(getByText('Sharings'))
+
+      expect(mockNavigate).toHaveBeenCalledWith(
+        { pathname: '..', search: '?tab=by-me' },
+        { relative: 'path' }
+      )
+    })
+
+    it('keeps the sharings tab when navigating to a parent folder', () => {
+      mockLocation.mockReturnValue({
+        pathname: '/sharings/folder-1',
+        search: '?tab=by-me'
+      })
+      const { getByText } = setup()
+
+      fireEvent.click(getByText('Parent'))
+
+      expect(mockNavigate).toHaveBeenCalledWith(
+        { pathname: '../parent-1', search: '?tab=by-me' },
+        { relative: 'path' }
+      )
+    })
+
+    it('does not carry search params outside the sharings section', () => {
+      mockLocation.mockReturnValue({
+        pathname: '/folder/folder-1',
+        search: '?foo=bar'
+      })
+      const { getByText } = setup()
+
+      fireEvent.click(getByText('Parent'))
+
+      expect(mockNavigate).toHaveBeenCalledWith(
+        { pathname: '../parent-1', search: '' },
+        { relative: 'path' }
+      )
+    })
   })
 })

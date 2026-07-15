@@ -11,7 +11,8 @@ import { joinPath } from '@/lib/path'
 import {
   computeFileType,
   computeApp,
-  computePath
+  computePath,
+  getSharingsTabSearch
 } from '@/modules/navigation/hooks/helpers'
 import { usePublicContext } from '@/modules/public/PublicProvider'
 import { getFolderPath } from '@/modules/routeUtils'
@@ -83,7 +84,7 @@ const useFileLink = (
   { forceFolderPath }: { forceFolderPath?: boolean } = {}
 ): UseFileLinkResult => {
   const navigate = useNavigate()
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
   const client = useClient()
   const { isDesktop } = useBreakpoints()
   const isOfficeEnabled = computeOfficeEnabled(isDesktop)
@@ -141,6 +142,15 @@ const useFileLink = (
         (type === 'directory' ? '/folder' : getFolderPath(file.dir_id)) +
         to.pathname
     }
+  }
+
+  // The active sharings tab lives in ?tab= only: carry it over when the
+  // in-app navigation stays under /sharings. Owner docs resolve to
+  // /folder/... routes and deliberately leave the section, so they never
+  // inherit it; a search already carried by the computed path wins.
+  const tabSearch = getSharingsTabSearch(pathname, search)
+  if (tabSearch && to.pathname.startsWith('/sharings') && !to.search) {
+    to = { ...to, search: tabSearch }
   }
 
   // we need to merge the searchParams of the current url and the new one created in computed path
