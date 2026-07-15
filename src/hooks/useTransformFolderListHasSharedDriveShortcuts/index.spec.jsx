@@ -288,6 +288,89 @@ describe('useTransformFolderListHasSharedDriveShortcuts', () => {
       })
     })
 
+    it('should stamp org-drive and ownership metadata on recipient drive entries', () => {
+      mockUseSharedDrives.mockReturnValue({
+        sharedDrives: [
+          {
+            id: 'sharing-org',
+            org_drive: true,
+            rules: [{ values: ['folder-org'], title: 'Company Drive' }]
+          },
+          {
+            id: 'sharing-owned',
+            owner: true,
+            rules: [{ values: ['folder-owned'], title: 'My Drive' }]
+          },
+          {
+            id: 'sharing-received',
+            rules: [{ values: ['folder-received'], title: 'Their Drive' }]
+          }
+        ]
+      })
+
+      const { result } = renderHook(() =>
+        useTransformFolderListHasSharedDriveShortcuts([])
+      )
+
+      expect(result.current.sharedDrives).toEqual([
+        expect.objectContaining({
+          driveId: 'sharing-org',
+          orgDrive: true,
+          driveOwner: false
+        }),
+        expect.objectContaining({
+          driveId: 'sharing-owned',
+          orgDrive: false,
+          driveOwner: true
+        }),
+        expect.objectContaining({
+          driveId: 'sharing-received',
+          orgDrive: false,
+          driveOwner: false
+        })
+      ])
+    })
+
+    it('should stamp org-drive and ownership metadata on the owner file entry', () => {
+      mockUseSharedDrives.mockReturnValue({
+        sharedDrives: [
+          {
+            id: 'sharing-1',
+            owner: true,
+            rules: [{ values: ['folder-1'], title: 'My Drive' }]
+          }
+        ]
+      })
+
+      mockUseSharingContext.mockReturnValue({
+        isOwner: jest.fn(() => true)
+      })
+
+      const mockFolderList = [
+        {
+          _id: 'file-1',
+          id: 'file-1',
+          name: 'My Drive',
+          relationships: {
+            referenced_by: {
+              data: [{ id: 'sharing-1' }]
+            }
+          }
+        }
+      ]
+
+      const { result } = renderHook(() =>
+        useTransformFolderListHasSharedDriveShortcuts(mockFolderList)
+      )
+
+      expect(result.current.sharedDrives[0]).toMatchObject({
+        _id: 'file-1',
+        driveId: 'sharing-1',
+        orgDrive: false,
+        driveOwner: true
+      })
+    })
+
     it('should filter out nextcloud shortcuts', () => {
       const mockSharedDrives = [
         {

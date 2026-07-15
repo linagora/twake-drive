@@ -1,8 +1,15 @@
 import { useMemo } from 'react'
 
+import { isSharingShortcut } from 'cozy-client/dist/models/file'
 import flag from 'cozy-flags'
+import { useSharingContext } from 'cozy-sharing'
 
-import { SHARED_DRIVES_DIR_ID } from '@/constants/config'
+import {
+  SHARED_DRIVES_DIR_ID,
+  SHARING_TAB_BY_ME,
+  SHARING_TAB_DRIVES,
+  SHARING_TAB_WITH_ME
+} from '@/constants/config'
 import { useTransformFolderListHasSharedDriveShortcuts } from '@/hooks/useTransformFolderListHasSharedDriveShortcuts'
 
 const buildBaseShape = (result, hasIds) => ({
@@ -16,6 +23,19 @@ const isSharedDrivesDirItem = item => item.dir_id === SHARED_DRIVES_DIR_ID
 const shouldReplaceItem = (current, candidate) =>
   isSharedDrivesDirItem(current) && !isSharedDrivesDirItem(candidate)
 
+// The regular Drive row wins deduplication for display, but only the
+// transformed entry carries the driveId/orgDrive/driveOwner attributes the
+// tab classification needs; backfill them onto the surviving row.
+const withDriveMetadata = (kept, dropped) =>
+  !kept.driveId && dropped.driveId
+    ? {
+        ...kept,
+        driveId: dropped.driveId,
+        orgDrive: dropped.orgDrive,
+        driveOwner: dropped.driveOwner
+      }
+    : kept
+
 /**
  * Drops duplicate representations of the same file/folder.
  *
@@ -24,7 +44,8 @@ const shouldReplaceItem = (current, candidate) =>
  * shared-drive entry. The transformed entry has `dir_id` set to the
  * shared-drives magic directory, which renders as `/sharings` in the list.
  * Keep the real Drive entry whenever it is available so the row path matches
- * the stable state after a page reload.
+ * the stable state after a page reload, while retaining the drive
+ * classification metadata of the discarded transformed entry.
  */
 export const deduplicateSharingShortcuts = data => {
   if (!data?.length) return data
@@ -48,12 +69,36 @@ export const deduplicateSharingShortcuts = data => {
     }
 
     hasDuplicates = true
-    if (shouldReplaceItem(deduplicatedData[existingIndex], item)) {
-      deduplicatedData[existingIndex] = item
-    }
+    const existing = deduplicatedData[existingIndex]
+    deduplicatedData[existingIndex] = shouldReplaceItem(existing, item)
+      ? withDriveMetadata(item, existing)
+      : withDriveMetadata(existing, item)
   }
 
   return hasDuplicates ? deduplicatedData : data
+}
+
+/**
+ * Returns the sharings tab a list entry belongs to.
+ *
+ * Shared-drive entries carry `driveId` plus the `orgDrive`/`driveOwner`
+ * flags stamped from the sharing doc by
+ * useTransformFolderListHasSharedDriveShortcuts. Pending invitation
+ * shortcuts must be resolved before `isOwner`: cozy-sharing's `isOwner`
+ * answers true for documents it has no sharing for, which would misfile
+ * them under "shared by me".
+ *
+ * @param {object} entry - File-like entry from the sharings list
+ * @param {(docId: string) => boolean} isOwner - From cozy-sharing's useSharingContext
+ * @returns {string} One of the SHARING_TAB_* constants
+ */
+export const getSharingsTabForEntry = (entry, isOwner) => {
+  if (entry.driveId) {
+    if (entry.orgDrive) return SHARING_TAB_DRIVES
+    return entry.driveOwner ? SHARING_TAB_BY_ME : SHARING_TAB_WITH_ME
+  }
+  if (isSharingShortcut(entry)) return SHARING_TAB_WITH_ME
+  return isOwner(getDocId(entry)) ? SHARING_TAB_BY_ME : SHARING_TAB_WITH_ME
 }
 
 const computeData = ({
@@ -79,9 +124,10 @@ const computeData = ({
  * shared-folder flags are both off, otherwise merges transformed shared-drive
  * shortcuts into the result. Then drops transient duplicate representations of
  * the same document, preferring the real Drive entry over the shared-drives
- * synthetic entry.
+ * synthetic entry. When `tab` is provided, keeps only the entries belonging
+ * to that tab (see getSharingsTabForEntry).
  */
-export const useFilteredSharings = ({ result, sharedDocumentIds }) => {
+export const useFilteredSharings = ({ result, sharedDocumentIds, tab }) => {
   const isEnabledSharedDrive = flag('drive.shared-drive.enabled')
   const isEnabledFederatedSharedFolder = flag(
     'drive.federated-shared-folder.enabled'
@@ -95,21 +141,30 @@ export const useFilteredSharings = ({ result, sharedDocumentIds }) => {
     sharedDrivesLoaded
   } = useTransformFolderListHasSharedDriveShortcuts(result.data)
 
+  const { isOwner } = useSharingContext()
+
   const filteredResult = useMemo(() => {
     const hasIds = sharedDocumentIds?.length > 0
-    const data = computeData({
+    // Filter by tab only after deduplication so each document lands in
+    // exactly one tab.
+    const combined = computeData({
       result,
       withoutSharedDrives,
       transformedSharedDrives,
       nonSharedDriveList
     })
+    const data = tab
+      ? combined.filter(entry => getSharingsTabForEntry(entry, isOwner) === tab)
+      : combined
     return { ...buildBaseShape(result, hasIds), data, count: data.length }
   }, [
     withoutSharedDrives,
     transformedSharedDrives,
     nonSharedDriveList,
     result,
-    sharedDocumentIds?.length
+    sharedDocumentIds?.length,
+    tab,
+    isOwner
   ])
 
   // When shared drives are disabled the view ignores the transformed list,
