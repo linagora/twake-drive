@@ -15,12 +15,14 @@ import { useSelectionContext } from '../selection/SelectionProvider'
 
 import { DOCTYPE_ALBUMS } from '@/lib/doctypes'
 import { getEntriesTypeTranslated } from '@/lib/entries'
+import { getTwakeIcon } from '@/lib/getTwakeIcon'
 import { trashFiles } from '@/modules/actions/utils'
 import { buildAlbumByIdQuery } from '@/queries'
 
 const Message = ({ type, fileCount }) => {
-  const icon =
+  const iconName =
     type === 'referenced' ? 'album' : type.includes('share') ? 'people' : type
+  const icon = getTwakeIcon(iconName)
 
   const { t } = useI18n()
   return (
