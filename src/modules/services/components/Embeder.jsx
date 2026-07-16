@@ -1,4 +1,3 @@
-import { Sprite } from '@linagora/twake-icons'
 import React from 'react'
 import { HashRouter, Routes, Route } from 'react-router-dom'
 
@@ -64,7 +63,6 @@ class Embeder extends React.Component {
             </Routes>
           </HashRouter>
         )}
-        <Sprite />
       </div>
     )
   }

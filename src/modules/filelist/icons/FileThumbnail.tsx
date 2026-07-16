@@ -1,4 +1,10 @@
-import { Icon, FileTypeServer, Link, TrashDuotone } from '@linagora/twake-icons'
+import {
+  Icon,
+  FileTypeServer,
+  Link,
+  TrashDuotone,
+  WarningCircle
+} from '@linagora/twake-icons'
 import React from 'react'
 
 import { isReferencedBy, models } from 'cozy-client'
@@ -135,7 +141,7 @@ const FileThumbnail: React.FC<FileThumbnailProps> = ({
     <Badge
       size="large"
       badgeContent={
-        <Icon icon="warning-circle" color="var(--errorColor)" size={20} />
+        <Icon icon={WarningCircle} color="var(--errorColor)" size={20} />
       }
       withBorder={false}
       anchorOrigin={{

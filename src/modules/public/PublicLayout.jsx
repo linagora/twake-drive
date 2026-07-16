@@ -1,4 +1,3 @@
-import { Sprite } from '@linagora/twake-icons'
 import React from 'react'
 import { Outlet } from 'react-router-dom'
 
@@ -33,7 +32,6 @@ const PublicLayout = () => {
           <Outlet />
         </SelectionProvider>
       </NewItemHighlightProvider>
-      <Sprite />
     </Layout>
   )
 }

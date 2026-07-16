@@ -1,4 +1,4 @@
-import { Icon, ShieldClean } from '@linagora/twake-icons'
+import { Icon, InfoOutlined, ShieldClean } from '@linagora/twake-icons'
 import React, { useRef, useState } from 'react'
 
 import ActionsBar from 'cozy-ui/transpiled/react/ActionsBar'
@@ -63,7 +63,7 @@ const SelectionBar: React.FC<{
       iconComponent = (): JSX.Element => (
         <div onMouseEnter={handlePopoverOpen} onMouseLeave={handlePopoverClose}>
           <IconButton ref={anchorRef}>
-            <Icon color="white" icon="info-outlined" className="u-mr-1" />
+            <Icon color="white" icon={InfoOutlined} className="u-mr-1" />
           </IconButton>
           <Popover
             open={popoverOpen}
