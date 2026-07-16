@@ -12,15 +12,18 @@ import { useI18n } from 'twake-i18n'
 
 import IconStack from '@/components/IconStack'
 import { LoaderModal } from '@/components/LoaderModal'
+import { getTwakeIcon } from '@/lib/getTwakeIcon'
 import { buildFileOrFolderByIdQuery } from '@/queries'
 
 const OptionIconStack = ({ icon }) => {
+  const IconComponent = getTwakeIcon(icon)
+
   return (
     <IconStack
       backgroundIcon={<Icon icon={FileDuotone} color="#E049BF" size={32} />}
-      {...(icon && {
-        foregroundIcon: <Icon icon={icon} color="#E049BF" size={16} />
-      })}
+      foregroundIcon={
+        IconComponent && <Icon icon={IconComponent} color="#E049BF" size={16} />
+      }
     />
   )
 }
