@@ -1,6 +1,6 @@
 # File Picker optimization decision report
 
-**Status: validated.** The recommendations and the accepted omission of the Cozy Stack image identity were validated on 2026-07-17. Raw machine-readable evidence is [file-picker-optimization-campaign.json](./file-picker-optimization-campaign.json).
+**Status: validated.** The recommendations and the accepted omission of the Cozy Stack image identity were validated on 2026-07-17. Raw machine-readable evidence is [file-picker-optimization-campaign.json](./file-picker-optimization-campaign.json). The later viewer-style measurement is recorded separately in [file-picker-viewer-styles-measurement.json](./file-picker-viewer-styles-measurement.json).
 
 ## Decision summary
 
@@ -12,6 +12,12 @@ The campaign directly measured a neutral baseline, each isolated optimization, a
 | Root-folder prefetch | **Discuss** | Root request count remains one and timing distributions overlap; no independent user-visible gain is established. |
 | Intent locale splitting | **Retain** | Intent initial JavaScript gzip decreases; startup timing overlaps and is therefore non-conclusive. |
 | Combined | **Retain, subject to validation** | Directly measured static payload reduction and faster median; interaction timing remains constrained, Chromium-only evidence. |
+
+## Viewer-style removal
+
+Removing `cozy-viewer/dist/stylesheet.css` only from the File Picker intent entrypoint reduced its initial stylesheet payload from 29,160 B to 27,807 B gzip (-1,353 B, -4.6%) and its total initial payload by 1,360 B gzip. The initial request shape remained 8 JavaScript and 3 stylesheet requests. Production asset inspection found no viewer signature in the intent stylesheets and retained the sharing stylesheet signature. Main and public entrypoints retain their viewer imports.
+
+The matched Chromium runs used the same cold-cache desktop profile as the campaign. Median first actionable row was 8,141.5 ms with viewer styles and 8,142.4 ms without them (+0.9 ms); the distributions overlap, so this is measurement noise rather than a startup regression. All 13 complete File Picker end-to-end scenarios passed, including public sharing links, temporary downloads, selection, navigation, constraints, and error rendering. Generated JavaScript and CSS fell by 135 B gzip; the registry archive changed by +253 B (+0.002%), within archive-generation noise.
 
 ## Scope and protocol
 

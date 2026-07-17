@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-07-17",
+  "sourceRevision": "dfe29e7e4a78196a5013fa0aa2e33f7a0996a90a",
+  "method": {
+    "baseline": "Production build with the cozy-viewer stylesheet import retained in the File Picker intent entrypoint.",
+    "candidate": "Production build with the cozy-viewer stylesheet import removed from the File Picker intent entrypoint and the cozy-sharing stylesheet import retained.",
+    "buildCommand": "yarn build && node scripts/measureBuildAssets.mjs --json",
+    "startupCommand": "E2E_PERFORMANCE=1 yarn e2e e2e/tests/intent-startup-performance.spec.ts",
+    "behaviorCommand": "yarn e2e e2e/tests/file-picker.spec.ts"
+  },
+  "build": {
+    "baseline": {
+      "entrypoints": {
+        "main": { "javascriptRequests": 9, "stylesheetRequests": 4, "javascriptGzipBytes": 2863252, "stylesheetGzipBytes": 72342, "totalGzipBytes": 2935594 },
+        "public": { "javascriptRequests": 10, "stylesheetRequests": 4, "javascriptGzipBytes": 2627288, "stylesheetGzipBytes": 60789, "totalGzipBytes": 2688077 },
+        "intents": { "javascriptRequests": 8, "stylesheetRequests": 3, "javascriptGzipBytes": 1305631, "stylesheetGzipBytes": 29160, "totalGzipBytes": 1334791 }
+      },
+      "generatedJavaScriptAndCssGzipBytes": 6672314,
+      "registryArchiveGzipBytes": 12729418
+    },
+    "candidate": {
+      "entrypoints": {
+        "main": { "javascriptRequests": 9, "stylesheetRequests": 4, "javascriptGzipBytes": 2863262, "stylesheetGzipBytes": 72202, "totalGzipBytes": 2935464 },
+        "public": { "javascriptRequests": 10, "stylesheetRequests": 4, "javascriptGzipBytes": 2627298, "stylesheetGzipBytes": 60649, "totalGzipBytes": 2687947 },
+        "intents": { "javascriptRequests": 8, "stylesheetRequests": 3, "javascriptGzipBytes": 1305624, "stylesheetGzipBytes": 27807, "totalGzipBytes": 1333431 }
+      },
+      "generatedJavaScriptAndCssGzipBytes": 6672179,
+      "registryArchiveGzipBytes": 12729671
+    },
+    "intentDelta": {
+      "javascriptRequests": 0,
+      "stylesheetRequests": 0,
+      "javascriptGzipBytes": -7,
+      "stylesheetGzipBytes": -1353,
+      "totalGzipBytes": -1360
+    },
+    "assetVerification": {
+      "viewerSelectorAbsent": "viewer-imageviewer___2O8pW",
+      "sharingSelectorPresent": "recipient__spin___2tYv3"
+    }
+  },
+  "chromiumStartup": {
+    "environment": {
+      "browser": "chromium",
+      "viewport": { "width": 1280, "height": 720 },
+      "runs": 5,
+      "warmups": 1,
+      "cache": "disabled",
+      "network": { "latencyMs": 40, "downloadBytesPerSecond": 196608, "uploadBytesPerSecond": 96000 },
+      "cpuThrottlingRate": 4
+    },
+    "baseline": {
+      "firstActionableFileRowMs": [8141.5, 8028.2, 8131.1, 8146.3, 12705.4],
+      "medianFirstActionableFileRowMs": 8141.5,
+      "medianJavaScriptTransferredBeforeInteractionBytes": 2396748,
+      "medianJavaScriptRequestCountBeforeInteraction": 12,
+      "medianRootFolderRequestCount": 1,
+      "medianRootFolderSuccessfulRequestCount": 1
+    },
+    "candidate": {
+      "firstActionableFileRowMs": [8539.4, 8142.4, 8103.1, 8094.3, 8162.7],
+      "medianFirstActionableFileRowMs": 8142.4,
+      "medianJavaScriptTransferredBeforeInteractionBytes": 2396844,
+      "medianJavaScriptRequestCountBeforeInteraction": 12,
+      "medianRootFolderRequestCount": 1,
+      "medianRootFolderSuccessfulRequestCount": 1
+    },
+    "medianFirstActionableFileRowDeltaMs": 0.9,
+    "assessment": "No measurable startup regression; the 0.9 ms median delta is measurement noise and the distributions overlap."
+  },
+  "behavior": {
+    "filePickerEndToEndTestsPassed": 13,
+    "filePickerEndToEndTestsFailed": 0,
+    "sharingLinkCoveragePassed": true,
+    "temporaryDownloadCoveragePassed": true,
+    "selectionAndNavigationCoveragePassed": true,
+    "errorCoveragePassed": true
+  }
+}
