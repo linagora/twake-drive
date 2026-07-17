@@ -172,6 +172,14 @@ export class FilePickerPage {
     return frame.getByTestId('file-picker-error').isVisible()
   }
 
+  /** Wait until the inline error alert is visible inside the picker. */
+  async waitForError(): Promise<void> {
+    const frame = this.getFrameLocator()
+    await frame
+      .getByTestId('file-picker-error')
+      .waitFor({ state: 'visible', timeout: 5_000 })
+  }
+
   /** Get the error text displayed inside the picker. */
   async getErrorText(): Promise<string> {
     const frame = this.getFrameLocator()

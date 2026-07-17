@@ -399,7 +399,7 @@ test.describe('File Picker', () => {
 
       // Picker must stay open with an inline error.
       await expect(picker.isOpen()).resolves.toBe(true)
-      await expect(picker.isErrorVisible()).resolves.toBe(true)
+      await picker.waitForError()
       const errorText = await picker.getErrorText()
       expect(errorText).toBe('The selected file could not be found.')
     })
