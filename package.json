@@ -21,8 +21,7 @@
     "e2e:reset": "E2E_PERSIST=1 E2E_RESET=1 yarn e2e",
     "e2e:setup": "playwright install chromium",
     "e2e:debug": "playwright test --config e2e/playwright.config.ts --headed --debug",
-    "e2e:report": "playwright show-report playwright-report",
-    "service": "yarn cozy-konnector-dev -m ./manifest.webapp"
+    "e2e:report": "playwright show-report playwright-report"
   },
   "repository": {
     "type": "git",
