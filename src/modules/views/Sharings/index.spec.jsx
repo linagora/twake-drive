@@ -2,6 +2,7 @@ import { render, fireEvent, waitFor } from '@testing-library/react'
 import React from 'react'
 
 import { useQuery } from 'cozy-client'
+import flag from 'cozy-flags'
 
 import { SharingsView } from './index'
 import {
@@ -40,13 +41,17 @@ jest.mock('cozy-client/dist/hooks/useQuery', () =>
 jest.mock('cozy-keys-lib', () => ({
   useVaultClient: jest.fn()
 }))
+jest.mock('cozy-flags', () => ({
+  __esModule: true,
+  default: jest.fn(() => false)
+}))
 jest.mock('cozy-client/dist/utils', () => ({
   ...jest.requireActual('cozy-client/dist/utils'),
   hasQueryBeenLoaded: jest.fn().mockReturnValue(true)
 }))
 jest.mock('components/useHead', () => jest.fn())
 
-const setup = () => {
+const setup = ({ sharedDrives = [] } = {}) => {
   const { store, client } = setupStoreAndClient()
 
   client.plugins.realtime = {
@@ -56,7 +61,11 @@ const setup = () => {
   client.query = jest.fn().mockReturnValue({ data: [] })
   client.stackClient.fetchJSON = jest
     .fn()
-    .mockReturnValue({ data: [], rows: [] })
+    .mockImplementation((method, route) =>
+      route === '/sharings/drives'
+        ? { data: sharedDrives }
+        : { data: [], rows: [] }
+    )
 
   const rendered = render(
     <AppLike client={client} store={store}>
@@ -94,6 +103,7 @@ describe('Sharings View', () => {
   })
 
   beforeEach(() => {
+    flag.mockImplementation(() => false)
     // isOwner is consumed by useFilteredSharings to classify entries into
     // tabs; false files every fixture under the default with-me tab.
     mockSharingContext.mockReturnValue({
@@ -206,5 +216,56 @@ describe('Sharings View', () => {
       expect(getByText('foobar0')).toBeInTheDocument()
     })
     expect(queryByText('foobar1')).toBeNull()
+  })
+
+  describe('team drives tab visibility', () => {
+    const orgDriveSharing = {
+      id: 'sharing-org',
+      _id: 'sharing-org',
+      org_drive: true,
+      rules: [{ title: 'Org Drive', values: ['folder-org'] }]
+    }
+
+    beforeEach(() => {
+      flag.mockImplementation(name => name === 'drive.shared-drive.enabled')
+    })
+
+    it('hides the team drives tab when there are no org drives', async () => {
+      useQuery.mockReturnValue(filesFixtureWithPath)
+
+      const { getByRole, queryByRole } = setup()
+
+      await waitFor(() => {
+        expect(getByRole('tab', { name: 'With me' })).toBeInTheDocument()
+      })
+      expect(queryByRole('tab', { name: 'Team drives' })).toBeNull()
+    })
+
+    it('shows the team drives tab once an org drive exists', async () => {
+      useQuery.mockReturnValue(filesFixtureWithPath)
+
+      const { getByRole } = setup({ sharedDrives: [orgDriveSharing] })
+
+      await waitFor(() => {
+        expect(getByRole('tab', { name: 'Team drives' })).toBeInTheDocument()
+      })
+    })
+
+    it('renders the drives tab when deep-linked even without drives', async () => {
+      // The ?tab= URL contract is kept: a deep link opens the tab and the
+      // active pill renders even while the tab has no content.
+      window.location.hash = '#/sharings?tab=drives'
+      useQuery.mockReturnValue(filesFixtureWithPath)
+
+      const { getByRole } = setup()
+
+      await waitFor(() => {
+        expect(getByRole('tab', { name: 'Team drives' })).toBeInTheDocument()
+      })
+      expect(getByRole('tab', { name: 'Team drives' })).toHaveAttribute(
+        'aria-selected',
+        'true'
+      )
+    })
   })
 })

@@ -22,6 +22,7 @@ import { useFolderViewBase } from '../Folder/hooks/useFolderViewBase'
 import FolderViewBodyVz from '../Folder/virtualized/FolderViewBody'
 
 import useHead from '@/components/useHead'
+import { SHARING_TAB_DRIVES } from '@/constants/config'
 import { useFolderSort } from '@/hooks'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import {
@@ -53,7 +54,6 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
   useHead({ title: base.t('breadcrumb.title_sharings') })
   const [sortOrder, setSortOrder, isSettingsLoaded] = useFolderSort('sharings')
   const [tab, setTab] = useSharingsTab()
-  const showDrives = areDrivesAvailable()
 
   const query = useMemo(
     () =>
@@ -65,11 +65,19 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
   )
   const result = useQuery(query.definition, query.options)
 
-  const { filteredResult, sharedDrivesLoaded } = useFilteredSharings({
-    result,
-    sharedDocumentIds,
-    tab
-  })
+  const { filteredResult, sharedDrivesLoaded, hasDrives } = useFilteredSharings(
+    {
+      result,
+      sharedDocumentIds,
+      tab
+    }
+  )
+
+  // The Team drives tab only shows while it has content; it stays rendered
+  // when it is the active tab so a ?tab=drives deep link keeps a visible,
+  // consistent control (the list then shows the empty state).
+  const showDrives =
+    areDrivesAvailable() && (hasDrives || tab === SHARING_TAB_DRIVES)
 
   useKeyboardShortcuts({
     onPaste: () => refresh(),
