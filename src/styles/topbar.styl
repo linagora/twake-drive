@@ -32,3 +32,17 @@
 
         path
             fill: var(--shadow7)
+
+// Boxes the breadcrumb so the Sharings header can place the tabs right
+// after the title: the breadcrumb root stretches over all free header
+// space (flex 1 1 auto / width 1% in breadcrumb.styl), which pushes any
+// sibling to the far edge and collapses the title once boxed. The inner
+// override targets the breadcrumb's <nav> root by element because the
+// module-hashed fil-path-backdrop class cannot be referenced from here.
+.fil-sharings-title
+    flex 0 1 auto
+    min-width 0
+
+    > nav
+        flex none
+        width auto

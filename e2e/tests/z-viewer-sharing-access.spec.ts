@@ -41,7 +41,14 @@ test.describe('Viewer sharing access panel', () => {
       await safeUnlink(filePath)
     }
 
-    await waitForSharingRow(alicePage, USERS.alice, aliceDrive, DRIVE_NAME)
+    // Alice owns the drive, so her row lives on the by-me tab.
+    await waitForSharingRow(
+      alicePage,
+      USERS.alice,
+      aliceDrive,
+      DRIVE_NAME,
+      'by-me'
+    )
     await openOwnerFolder(alicePage, USERS.alice, aliceDrive, DRIVE_NAME)
     await aliceDrive.row(SUBFOLDER).open()
     await aliceDrive.row(FILE_NAME).waitVisible({ timeout: 10_000 })

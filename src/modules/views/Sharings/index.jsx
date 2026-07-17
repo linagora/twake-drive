@@ -11,12 +11,13 @@ import {
 import { makeActions } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
 import { Content } from 'cozy-ui/transpiled/react/Layout'
 
+import SharingsHeader from './SharingsHeader'
 import { buildSharingsActionsOptions } from './helpers'
 import { useFilteredSharings } from './useFilteredSharings'
+import { areDrivesAvailable, useSharingsTab } from './useSharingsTab'
 import withSharedDocumentIds from './withSharedDocumentIds'
 import FolderView from '../Folder/FolderView'
 import FolderViewBody from '../Folder/FolderViewBody'
-import FolderViewHeader from '../Folder/FolderViewHeader'
 import { useFolderViewBase } from '../Folder/hooks/useFolderViewBase'
 import FolderViewBodyVz from '../Folder/virtualized/FolderViewBody'
 
@@ -36,10 +37,8 @@ import {
 import { addToFavorites } from '@/modules/actions/components/addToFavorites'
 import { moveTo } from '@/modules/actions/components/moveTo'
 import { removeFromFavorites } from '@/modules/actions/components/removeFromFavorites'
-import { MobileAwareBreadcrumb as Breadcrumb } from '@/modules/breadcrumb/components/MobileAwareBreadcrumb'
 import AddMenuProvider from '@/modules/drive/AddMenu/AddMenuProvider'
 import FabWithAddMenuContext from '@/modules/drive/FabWithAddMenuContext'
-import Toolbar from '@/modules/drive/Toolbar'
 import FileListRowsPlaceholder from '@/modules/filelist/FileListRowsPlaceholder'
 import { leaveSharedDrive } from '@/modules/shareddrives/components/actions/leaveSharedDrive'
 import { shareFileRootSharedDrive } from '@/modules/shareddrives/components/actions/shareFileRootSharedDrive'
@@ -53,6 +52,8 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
   const nativeSharing = useNativeFileSharing()
   useHead({ title: base.t('breadcrumb.title_sharings') })
   const [sortOrder, setSortOrder, isSettingsLoaded] = useFolderSort('sharings')
+  const [tab, setTab] = useSharingsTab()
+  const showDrives = areDrivesAvailable()
 
   const query = useMemo(
     () =>
@@ -66,7 +67,8 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
 
   const { filteredResult, sharedDrivesLoaded } = useFilteredSharings({
     result,
-    sharedDocumentIds
+    sharedDocumentIds,
+    tab
   })
 
   useKeyboardShortcuts({
@@ -113,10 +115,13 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
   return (
     <FolderView>
       <Content className={base.isMobile ? '' : 'u-pt-1'}>
-        <FolderViewHeader>
-          <Breadcrumb path={[{ name: base.t('breadcrumb.title_sharings') }]} />
-          <Toolbar canUpload={false} canCreateFolder={false} />
-        </FolderViewHeader>
+        <SharingsHeader
+          title={base.t('breadcrumb.title_sharings')}
+          isMobile={base.isMobile}
+          tab={tab}
+          onChange={setTab}
+          showDrives={showDrives}
+        />
         {!allLoaded ||
         !sharedDrivesLoaded ||
         !hasQueryBeenLoaded(filteredResult) ? (

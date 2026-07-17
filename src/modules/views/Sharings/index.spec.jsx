@@ -93,12 +93,32 @@ describe('Sharings View', () => {
     jest.spyOn(console, 'error').mockImplementation()
   })
 
+  beforeEach(() => {
+    // isOwner is consumed by useFilteredSharings to classify entries into
+    // tabs; false files every fixture under the default with-me tab.
+    mockSharingContext.mockReturnValue({
+      byDocId: [],
+      allLoaded: true,
+      isOwner: () => false
+    })
+  })
+
+  afterEach(() => {
+    // useSharingsTab writes ?tab= into the hash-router URL; reset it so
+    // a tab switched in one test does not leak into the next.
+    window.location.hash = ''
+  })
+
   afterAll(() => {
     jest.clearAllMocks()
   })
 
   it('should display placeholder when all files are not loaded', async () => {
-    mockSharingContext.mockReturnValue({ byDocId: [], allLoaded: false })
+    mockSharingContext.mockReturnValue({
+      byDocId: [],
+      allLoaded: false,
+      isOwner: () => false
+    })
     const { container } = setup()
 
     await waitFor(() => {
@@ -109,7 +129,6 @@ describe('Sharings View', () => {
   })
 
   it('should not display placeholder when all files are loaded', async () => {
-    mockSharingContext.mockReturnValue({ byDocId: [], allLoaded: true })
     useQuery.mockReturnValue(filesFixtureWithPath)
 
     const { container } = setup()
@@ -162,5 +181,30 @@ describe('Sharings View', () => {
     })
 
     expect(mockNavigate).toHaveBeenCalledWith('/file/file-foobar0/revision')
+  })
+
+  it('filters the list by the active tab and swaps it on tab switch', async () => {
+    useQuery.mockReturnValue(filesFixtureWithPath)
+    mockSharingContext.mockReturnValue({
+      byDocId: [],
+      allLoaded: true,
+      isOwner: id => id === 'file-foobar0'
+    })
+
+    const { getByText, queryByText, getByRole } = setup()
+
+    // Default with-me tab: only the file shared by someone else is listed.
+    await waitFor(() => {
+      expect(getByText('foobar1')).toBeInTheDocument()
+    })
+    expect(queryByText('foobar0')).toBeNull()
+
+    // Switching to the by-me tab swaps the list to the owned file.
+    fireEvent.click(getByRole('tab', { name: 'By me' }))
+
+    await waitFor(() => {
+      expect(getByText('foobar0')).toBeInTheDocument()
+    })
+    expect(queryByText('foobar1')).toBeNull()
   })
 })

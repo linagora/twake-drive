@@ -50,7 +50,14 @@ test.describe.serial('Share modal surfaces (shared drives)', () => {
     alicePage,
     aliceDrive
   }) => {
-    await waitForSharingRow(alicePage, USERS.alice, aliceDrive, DRIVE_NAME)
+    // Alice owns the drive, so her row lives on the by-me tab.
+    await waitForSharingRow(
+      alicePage,
+      USERS.alice,
+      aliceDrive,
+      DRIVE_NAME,
+      'by-me'
+    )
 
     const modal = await aliceDrive.row(DRIVE_NAME).share()
 
@@ -62,7 +69,8 @@ test.describe.serial('Share modal surfaces (shared drives)', () => {
     await expect(alicePage.getByTestId('fil-content-body')).toBeVisible()
 
     await modal.close()
-    await expect(alicePage).toHaveURL(/#\/sharings$/)
+    // The list canonicalizes its URL with the active tab param.
+    await expect(alicePage).toHaveURL(/#\/sharings(\?tab=[a-z-]+)?$/)
   })
 
   test('Share from the shared-drive file viewer renders the modal', async ({

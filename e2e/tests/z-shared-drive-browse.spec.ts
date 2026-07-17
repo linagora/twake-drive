@@ -40,7 +40,14 @@ test.describe.serial('Shared drive browsing (recipient)', () => {
       await safeUnlink(filePath)
     }
 
-    await waitForSharingRow(alicePage, USERS.alice, aliceDrive, DRIVE_NAME)
+    // Alice owns the drive, so her row lives on the by-me tab.
+    await waitForSharingRow(
+      alicePage,
+      USERS.alice,
+      aliceDrive,
+      DRIVE_NAME,
+      'by-me'
+    )
   })
 
   test('the share auto-accepts as a proxied drive Bob can browse', async ({
