@@ -64,10 +64,9 @@ describe('qualification migration', () => {
     })
   })
 
-  it('should get the new qualification for a file qualified by a konnector', () => {
+  it('should get the new qualification for a file qualified by cozy-client', () => {
     const file = {
       metadata: {
-        contentAuthor: 'ameli',
         classification: 'invoicing',
         categorie: 'health',
         label: 'health_invoice'

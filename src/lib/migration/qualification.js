@@ -150,86 +150,6 @@ const getNewQualificationSetFromCozyScanner = file => {
 }
 
 /**
- * Takes a file with an old qualification set by a konnector and
- * returns the new qualification.
- * The qualification is fixed by a set of rules primarily based on the
- * contentAuthor and old attributes in certain cases.
- *
- * @param {object} file - The file qualified by a konnector
- * @returns {Qualification} The new qualification
- */
-const getNewQualificationSetFromKonnector = file => {
-  const contentAuthor = get(file, 'metadata.contentAuthor')
-  const classification = get(file, 'metadata.classification')
-  const categories = get(file, 'metadata.categories')
-
-  // See https://github.com/konnectors/cozy-konnector-digiposte/blob/master/src/index.js
-  // See https://github.com/konnectors/orangeapi/blob/master/src/index.js
-  if (contentAuthor === 'orange') {
-    if (classification === 'invoicing') {
-      if (categories && categories.length > 0) {
-        if (categories[0] === 'phone') {
-          return Qualification.getByLabel('phone_invoice')
-        } else if (categories[0] === 'isp') {
-          return Qualification.getByLabel('telecom_invoice') // it might be both isp and phone
-        }
-      }
-    } else if (classification === 'payslip') {
-      return Qualification.getByLabel('pay_sheet')
-    }
-  }
-  // See https://github.com/konnectors/cozy-konnector-sncf/blob/master/src/index.js
-  else if (contentAuthor === 'sncf') {
-    return Qualification.getByLabel('transport_invoice')
-  }
-
-  // See https://github.com/konnectors/cozy-konnector-bouyguestelecom/blob/src/index.js
-  // See https://github.com/konnectors/cozy-konnector-bouyguesbox/blob/src/index.js
-  else if (contentAuthor === 'bouygues') {
-    return Qualification.getByLabel('telecom_invoice')
-  }
-
-  // See https://github.com/konnectors/cozy-konnector-free-mobile/blob/master/src/index.js
-  // See https://github.com/konnectors/cozy-konnector-free/blob/master/src/index.js
-  if (contentAuthor === 'free') {
-    if (categories && categories.length > 0) {
-      if (categories[0] === 'isp') {
-        return Qualification.getByLabel('isp_invoice')
-      } else if (categories[0] === 'phone') {
-        return Qualification.getByLabel('phone_invoice')
-      }
-    }
-  }
-
-  // See https://github.com/konnectors/edf/blob/master/src/index.js
-  if (contentAuthor === 'edf') {
-    return Qualification.getByLabel('energy_invoice')
-  }
-
-  // https://github.com/konnectors/cozy-konnector-ameli/blob/master/src/index.js
-  if (contentAuthor === 'ameli') {
-    return Qualification.getByLabel('health_invoice')
-  }
-
-  // https://github.com/konnectors/impots/blob/master/src/metadata.js
-  if (contentAuthor === 'impots.gouv') {
-    if (classification === 'tax_notice') {
-      return Qualification.getByLabel('tax_notice')
-    } else if (classification === 'tax_return') {
-      return Qualification.getByLabel('tax_return')
-    } else if (classification === 'tax_timetable') {
-      return Qualification.getByLabel('tax_timetable')
-    } else if (classification === 'mail') {
-      return Qualification.getByLabel('receipt')
-        .setSourceCategory('gov')
-        .setSourceSubCategory('tax')
-        .setSubjects(['tax'])
-    }
-  }
-  return null
-}
-
-/**
  * Get the new qualification from a file with old qualification attributes.
  *
  * @param {object} file - The file to requalify
@@ -238,10 +158,9 @@ const getNewQualificationSetFromKonnector = file => {
 export const getFileRequalification = file => {
   try {
     const hasQualificationLabel = has(file, 'metadata.label')
-    // cozy-scanner stores the qualification label but konnectors don't
     return hasQualificationLabel
       ? getNewQualificationSetFromCozyScanner(file)
-      : getNewQualificationSetFromKonnector(file)
+      : null
   } catch (e) {
     log('error', `The file cannot be migrated. ${e}`)
     return null
