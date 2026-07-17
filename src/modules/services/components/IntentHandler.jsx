@@ -4,7 +4,10 @@ import { useClient } from 'cozy-client'
 import Intents from 'cozy-interapp'
 import logger from 'cozy-logger'
 
+import { buildContentFolderQuery } from './FilePicker/queries'
 import Picker from './Picker'
+
+import { ROOT_DIR_ID } from '@/constants/config'
 
 const IntentHandler = ({ intentId }) => {
   const client = useClient()
@@ -23,6 +26,14 @@ const IntentHandler = ({ intentId }) => {
       let service
       let intent
       try {
+        const rootFolderQuery = buildContentFolderQuery(ROOT_DIR_ID)
+        const rootFolderPrefetch = client
+          .query(rootFolderQuery.definition(), rootFolderQuery.options)
+          .catch(error => {
+            logger.warn('File Picker root prefetch failed', error)
+            return null
+          })
+
         const intents = new Intents({ client })
         service = await intents.createService(intentId, window)
         intent = service.getIntent()
@@ -31,6 +42,7 @@ const IntentHandler = ({ intentId }) => {
           intent.attributes.action === 'PICK' &&
           intent.attributes.type === 'io.cozy.files'
         ) {
+          await rootFolderPrefetch
           component = Picker
         }
 
