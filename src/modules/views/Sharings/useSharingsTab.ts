@@ -33,7 +33,7 @@ const isAvailableTab = (
 ): value is SharingsTab =>
   isSharingsTab(value) && (value !== SHARING_TAB_DRIVES || drivesAvailable)
 
-const areDrivesAvailable = (): boolean =>
+export const areDrivesAvailable = (): boolean =>
   Boolean(flag('drive.shared-drive.enabled')) ||
   Boolean(flag('drive.federated-shared-folder.enabled'))
 

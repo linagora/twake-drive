@@ -66,7 +66,14 @@ test.describe.serial('Shared drive members & permissions', () => {
     // The owner manages members through the share modal, reachable from the
     // Sharings-list row without entering the drive (the owner's in-drive view
     // is the regular /folder route, not the proxied /shareddrive one).
-    await waitForSharingRow(alicePage, USERS.alice, aliceDrive, VIEWER_DRIVE)
+    // Alice owns the drive, so her row lives on the by-me tab.
+    await waitForSharingRow(
+      alicePage,
+      USERS.alice,
+      aliceDrive,
+      VIEWER_DRIVE,
+      'by-me'
+    )
     const modal = await aliceDrive.row(VIEWER_DRIVE).share()
     await expect(modal.memberItem('bob')).toContainText(/viewer/i)
     await modal.close()
@@ -78,7 +85,13 @@ test.describe.serial('Shared drive members & permissions', () => {
     bobPage,
     bobDrive
   }) => {
-    await waitForSharingRow(alicePage, USERS.alice, aliceDrive, VIEWER_DRIVE)
+    await waitForSharingRow(
+      alicePage,
+      USERS.alice,
+      aliceDrive,
+      VIEWER_DRIVE,
+      'by-me'
+    )
     const modal = await aliceDrive.row(VIEWER_DRIVE).share()
     await modal.removeMember('bob')
     await modal.close()

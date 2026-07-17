@@ -46,6 +46,7 @@ const SelectionConsumer = ({ items }) => {
   return (
     <>
       {pathname === '/' && <Link to="/other">Change route</Link>}
+      {pathname === '/' && <Link to="/?tab=by-me">Change tab</Link>}
       {isSelectionBarVisible && (
         <button onClick={hideSelectionBar}>Hide selection bar</button>
       )}
@@ -128,6 +129,24 @@ describe('SelectionProvider', () => {
     expect(screen.getByText('Item file-foobar1')).toBeInTheDocument()
     expect(screen.getByText('Item file-foobar2')).toBeInTheDocument()
     expect(screen.queryByText('Hide selection bar')).toBeNull()
+  })
+
+  it('should deselect items when only the search params change (tab switch)', async () => {
+    setup()
+
+    // selecting an item
+    fireEvent.click(screen.getByText('Item file-foobar1'))
+    expect(screen.getByText('Item file-foobar1 selected')).toBeInTheDocument()
+    expect(screen.getByText('Hide selection bar')).toBeInTheDocument()
+
+    // navigate to the same pathname with different search params, which is
+    // what a Sharings tab switch does (tab state lives in ?tab=)
+    fireEvent.click(screen.getByText('Change tab'))
+
+    await waitFor(async () => {
+      expect(await screen.findByText('Item file-foobar1')).toBeInTheDocument()
+      expect(screen.queryByText('Hide selection bar')).toBeNull()
+    })
   })
 
   it('should deselects items when location changed', async () => {

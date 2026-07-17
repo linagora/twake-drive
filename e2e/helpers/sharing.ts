@@ -43,16 +43,23 @@ export async function createAndShareFolderWithBob(
   await modal.share()
 }
 
+/** The Sharings list is split into tabs (?tab= in the URL): rows shared
+ * WITH the user live on `with-me` (the default), the user's own shares on
+ * `by-me`, organizational drives on `drives`. */
+export type SharingsTab = 'with-me' | 'by-me' | 'drives'
+
 /** Sharing propagates asynchronously across instances — reload the user's
- * Sharings tab until the row shows up. */
+ * Sharings tab until the row shows up. Recipients find their rows on the
+ * default `with-me` tab; pass `by-me` when asserting the OWNER's side. */
 export async function waitForSharingRow(
   page: Page,
   user: User,
   drive: DrivePage,
-  name: string
+  name: string,
+  tab: SharingsTab = 'with-me'
 ): Promise<void> {
   await expect(async () => {
-    await page.goto(`${user.appUrl}/#/sharings`)
+    await page.goto(`${user.appUrl}/#/sharings?tab=${tab}`)
     await drive.row(name).waitVisible({ timeout: 5_000 })
   }).toPass({ timeout: 30_000 })
 }

@@ -75,8 +75,10 @@
     "select_all_mobile": "all",
     "clear_selection": "Clear Selection",
     "clear_selection_mobile": "Clear",
-    "sharings_tab_all": "All",
-    "sharings_tab_drives": "Drives"
+    "sharings_tabs": "Sharings tabs",
+    "sharings_tab_with_me": "With me",
+    "sharings_tab_by_me": "By me",
+    "sharings_tab_drives": "Team drives"
   },
   "Share": {
     "create-cozy": "Create my Twake"

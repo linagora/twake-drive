@@ -73,8 +73,10 @@
     "select_all_mobile": "Tất cả",
     "clear_selection": "Xóa lựa chọn",
     "clear_selection_mobile": "Hủy",
-    "sharings_tab_all": "Tất cả",
-    "sharings_tab_drives": "Ổ đĩa"
+    "sharings_tabs": "Các thẻ chia sẻ",
+    "sharings_tab_with_me": "Với tôi",
+    "sharings_tab_by_me": "Do tôi",
+    "sharings_tab_drives": "Ổ đĩa nhóm"
   },
   "Share": {
     "create-cozy": "Tạo Twake của tôi"

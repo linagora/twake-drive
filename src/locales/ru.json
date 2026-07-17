@@ -73,8 +73,10 @@
     "select_all_mobile": "все",
     "clear_selection": "Очистить выбор",
     "clear_selection_mobile": "отмена",
-    "sharings_tab_all": "Всё",
-    "sharings_tab_drives": "Диски"
+    "sharings_tabs": "Общий доступ",
+    "sharings_tab_with_me": "Со мной",
+    "sharings_tab_by_me": "От меня",
+    "sharings_tab_drives": "Командные диски"
   },
   "Share": {
     "create-cozy": "Создать Twake Drive"
