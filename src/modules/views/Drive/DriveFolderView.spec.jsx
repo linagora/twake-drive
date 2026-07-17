@@ -39,10 +39,6 @@ jest.mock('modules/shareddrives/hooks/useSharedDrives', () => ({
   useSharedDrives: jest.fn().mockReturnValue([])
 }))
 
-jest.mock('cozy-keys-lib', () => ({
-  useVaultClient: jest.fn()
-}))
-
 jest.mock('components/useHead', () => jest.fn())
 
 jest.mock('@/modules/shareddrives/hooks/useSharedDriveFolder', () => ({

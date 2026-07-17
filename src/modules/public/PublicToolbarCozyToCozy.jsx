@@ -2,7 +2,6 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import { useClient } from 'cozy-client'
-import { useVaultClient } from 'cozy-keys-lib'
 import {
   addToCozySharingLink,
   syncToCozySharingLink,
@@ -34,7 +33,6 @@ const PublicToolbarCozyToCozy = ({ sharingInfos, files }) => {
   const { showAlert } = useAlert()
   const client = useClient()
   const { showSelectionBar } = useSelectionContext()
-  const vaultClient = useVaultClient()
   const currentFolderId = useCurrentFolderId()
   // Sharing can be a folder or a file
   const itemId = currentFolderId ?? files[0]?._id
@@ -54,7 +52,6 @@ const PublicToolbarCozyToCozy = ({ sharingInfos, files }) => {
       t,
       showAlert,
       client,
-      vaultClient,
       showSelectionBar,
       isSharingShortcutCreated,
       addSharingLink,

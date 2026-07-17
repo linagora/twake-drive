@@ -5,8 +5,7 @@ export const generateFile = ({
   ext,
   path = '/',
   dir_id = 'io.cozy.files.root-dir',
-  updated_at = '',
-  encrypted = false
+  updated_at = ''
 } = {}) => {
   let extension = ext
   if (extension === undefined) {
@@ -38,7 +37,6 @@ export const generateFile = ({
     path: `${path === '/' ? '' : path}/${prefix}${i}${extension}`,
     type,
     _type: 'io.cozy.files',
-    encrypted,
     ...optional
   }
 }

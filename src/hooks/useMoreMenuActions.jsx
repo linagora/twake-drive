@@ -4,7 +4,6 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useClient } from 'cozy-client'
 import { fetchBlobFileById, isFile } from 'cozy-client/dist/models/file'
 import { useWebviewIntent } from 'cozy-intent'
-import { useVaultClient } from 'cozy-keys-lib'
 import {
   useSharingContext,
   useNativeFileSharing,
@@ -37,7 +36,6 @@ export const useMoreMenuActions = (
 ) => {
   const [isPrintAvailable, setIsPrintAvailable] = useState(false)
   const client = useClient()
-  const vaultClient = useVaultClient()
   const webviewIntent = useWebviewIntent()
   const { t, lang } = useI18n()
   const { isMobile } = useBreakpoints()
@@ -79,7 +77,6 @@ export const useMoreMenuActions = (
       client,
       t,
       lang,
-      vaultClient,
       pushModal,
       popModal,
       refresh: () => navigate('..'),

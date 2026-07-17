@@ -6,9 +6,6 @@ import { createMockClient } from 'cozy-client'
 import { useMoreMenuActions } from './useMoreMenuActions'
 import AppLike from 'test/components/AppLike'
 
-jest.mock('cozy-keys-lib', () => ({
-  useVaultClient: jest.fn()
-}))
 jest.mock('cozy-intent', () => ({
   useWebviewIntent: jest.fn()
 }))

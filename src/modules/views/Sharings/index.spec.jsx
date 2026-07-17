@@ -37,9 +37,6 @@ jest.mock('cozy-client/dist/hooks/useQuery', () =>
     data: []
   }))
 )
-jest.mock('cozy-keys-lib', () => ({
-  useVaultClient: jest.fn()
-}))
 jest.mock('cozy-client/dist/utils', () => ({
   ...jest.requireActual('cozy-client/dist/utils'),
   hasQueryBeenLoaded: jest.fn().mockReturnValue(true)

@@ -1,6 +1,5 @@
 import React from 'react'
 
-import { useVaultClient } from 'cozy-keys-lib'
 import Table from 'cozy-ui/transpiled/react/Table'
 import TableBody from 'cozy-ui/transpiled/react/TableBody'
 import TableCell from 'cozy-ui/transpiled/react/TableCell'
@@ -18,14 +17,12 @@ const AddFolderWrapper = ({
   refreshFolderContent,
   driveId
 }) => {
-  const vaultClient = useVaultClient()
   const { viewType } = useViewSwitcherContext()
 
   if (viewType === 'grid') {
     return (
       <div className={styles['fil-folder-body-grid']}>
         <AddFolder
-          vaultClient={vaultClient}
           currentFolderId={currentFolderId}
           refreshFolderContent={refreshFolderContent}
           driveId={driveId}
@@ -52,7 +49,6 @@ const AddFolderWrapper = ({
         <TableRow>
           <TableCell className="u-pl-1">
             <AddFolder
-              vaultClient={vaultClient}
               currentFolderId={currentFolderId}
               refreshFolderContent={refreshFolderContent}
               driveId={driveId}

@@ -1,7 +1,6 @@
 import cx from 'classnames'
 import React, { useCallback } from 'react'
 
-import { useVaultClient } from 'cozy-keys-lib'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import styles from '@/styles/folder-view.styl'
@@ -52,7 +51,6 @@ const FolderBody = ({
   canInteractWith,
   driveId
 }) => {
-  const vaultClient = useVaultClient()
   const { isDesktop } = useBreakpoints()
 
   useScrollToTop(folderId)
@@ -104,7 +102,6 @@ const FolderBody = ({
               )}
             >
               <AddFolder
-                vaultClient={vaultClient}
                 refreshFolderContent={refreshFolderContent}
                 currentFolderId={folderId}
                 driveId={driveId}
@@ -124,7 +121,6 @@ const FolderBody = ({
               )}
             >
               <AddFolder
-                vaultClient={vaultClient}
                 refreshFolderContent={refreshFolderContent}
                 currentFolderId={folderId}
                 driveId={driveId}

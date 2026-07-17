@@ -59,7 +59,6 @@ export interface ActionContext {
   client?: unknown
   t?: (key: string, options?: Record<string, unknown>) => string
   lang?: string
-  vaultClient?: unknown
   pushModal?: (modal: React.ReactNode) => void
   popModal?: () => void
   refresh?: () => void

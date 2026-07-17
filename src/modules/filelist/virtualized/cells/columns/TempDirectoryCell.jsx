@@ -1,7 +1,5 @@
 import React from 'react'
 
-import { useVaultClient } from 'cozy-keys-lib'
-
 import AddFolder from '@/modules/filelist/AddFolder'
 
 /**
@@ -15,11 +13,9 @@ const TempDirectoryCell = ({
   refreshFolderContent,
   driveId
 }) => {
-  const vaultClient = useVaultClient()
   if (column.id === 'name') {
     return (
       <AddFolder
-        vaultClient={vaultClient}
         currentFolderId={currentFolderId}
         refreshFolderContent={refreshFolderContent}
         driveId={driveId}

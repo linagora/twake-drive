@@ -7,7 +7,6 @@ import React, {
   useState
 } from 'react'
 
-import { useVaultClient } from 'cozy-keys-lib'
 import VirtualizedGridList from 'cozy-ui/transpiled/react/GridList/Virtualized'
 import virtuosoComponents from 'cozy-ui/transpiled/react/GridList/Virtualized/Dnd/virtuosoComponents'
 import CustomDragLayer from 'cozy-ui/transpiled/react/utils/Dnd/CustomDrag/CustomDragLayer'
@@ -69,7 +68,6 @@ const Grid = forwardRef(
     },
     ref
   ) => {
-    const vaultClient = useVaultClient()
     const internalVirtuosoRef = useRef(null)
     const virtuosoRef = parentVirtuosoRef || internalVirtuosoRef
     const [itemsInDropProcess, setItemsInDropProcess] = useState([])
@@ -106,7 +104,6 @@ const Grid = forwardRef(
             </RightClickFileMenu>
           ) : (
             <AddFolder
-              vaultClient={vaultClient}
               currentFolderId={currentFolderId}
               refreshFolderContent={refreshFolderContent}
               driveId={driveId}
@@ -123,7 +120,6 @@ const Grid = forwardRef(
         isReferencedByShareInSharingContext,
         sharingsValue,
         onInteractWithFile,
-        vaultClient,
         currentFolderId,
         driveId
       ]

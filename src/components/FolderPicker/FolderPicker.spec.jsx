@@ -8,10 +8,6 @@ import AppLike from 'test/components/AppLike'
 
 import { FolderPicker } from '@/components/FolderPicker/FolderPicker'
 
-jest.mock('cozy-keys-lib', () => ({
-  useVaultClient: jest.fn()
-}))
-
 jest.mock('cozy-sharing', () => ({
   ...jest.requireActual('cozy-sharing'),
   useSharingContext: jest.fn(),

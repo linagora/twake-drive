@@ -26,9 +26,6 @@ jest.mock('cozy-client/dist/hooks/useQuery', () =>
     data: []
   }))
 )
-jest.mock('cozy-keys-lib', () => ({
-  useVaultClient: jest.fn()
-}))
 jest.mock('components/useHead', () => jest.fn())
 jest.mock('cozy-sharing', () => ({
   __esModule: true,
