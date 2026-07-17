@@ -52,6 +52,18 @@ import { buildSharingsQuery } from '@/queries'
 const shouldShowDrivesTab = ({ hasDrives, tab }) =>
   areDrivesAvailable() && (hasDrives || tab === SHARING_TAB_DRIVES)
 
+const useSharingsQueryResult = (sharedDocumentIds, allLoaded) => {
+  const query = useMemo(
+    () =>
+      buildSharingsQuery({
+        ids: sharedDocumentIds,
+        enabled: allLoaded && sharedDocumentIds?.length > 0
+      }),
+    [sharedDocumentIds, allLoaded]
+  )
+  return useQuery(query.definition, query.options)
+}
+
 export const SharingsView = ({ sharedDocumentIds = [] }) => {
   const base = useFolderViewBase()
   const sharingContext = useSharingContext()
@@ -61,15 +73,7 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
   const [sortOrder, setSortOrder, isSettingsLoaded] = useFolderSort('sharings')
   const [tab, setTab] = useSharingsTab()
 
-  const query = useMemo(
-    () =>
-      buildSharingsQuery({
-        ids: sharedDocumentIds,
-        enabled: allLoaded && sharedDocumentIds?.length > 0
-      }),
-    [sharedDocumentIds, allLoaded]
-  )
-  const result = useQuery(query.definition, query.options)
+  const result = useSharingsQueryResult(sharedDocumentIds, allLoaded)
 
   const { filteredResult, sharedDrivesLoaded, hasDrives } = useFilteredSharings(
     {
