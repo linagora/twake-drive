@@ -1,0 +1,1247 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-07-17T00:09:23.642Z",
+  "host": {
+    "hostname": "kubik",
+    "platform": "linux",
+    "release": "6.17.0-35-generic",
+    "arch": "x64",
+    "cpu": "AMD Ryzen 7 PRO 7840U w/ Radeon 780M Graphics",
+    "cpuCount": 16,
+    "memoryBytes": 62820442112
+  },
+  "software": {
+    "node": "v24.15.0",
+    "yarn": "4.17.0",
+    "cozyStackImage": null,
+    "throttling": {
+      "network": "40ms latency, 1.5Mbps down, 750Kbps up",
+      "cpu": "4x"
+    }
+  },
+  "variants": [
+    {
+      "variant": "neutral",
+      "directory": "/tmp/twake-drive-variants",
+      "gitRevision": "6738e9fca92492697a908e1bc16dbdc005806f2a",
+      "build": {
+        "entrypoints": {
+          "main": {
+            "html": "index.html",
+            "assets": [
+              "static/css/cozy.02d526691ffb1884.css",
+              "static/css/6960.e6e70f4a39a12b84.css",
+              "static/css/7918.5f76373558a7b586.css",
+              "static/css/main.f30be78f263522af.css",
+              "static/js/cozy.fdb66fc1a955a73e.js",
+              "static/js/lib-polyfill.d8c01b89745f0c0b.js",
+              "static/js/lib-router.9b59f01ae24e1674.js",
+              "static/js/lib-react.31b90f70334d1e95.js",
+              "static/js/8468.ce6bd652e6c39805.js",
+              "static/js/6960.55c5f90b3a0b50f9.js",
+              "static/js/3627.5749a75bba2cb552.js",
+              "static/js/7918.df50b4414d4f6280.js",
+              "static/js/9927.1f86fbe421b49f72.js",
+              "static/js/main.61ac3ae139b417a0.js"
+            ],
+            "requests": {
+              "javascript": 10,
+              "stylesheets": 4,
+              "total": 14
+            },
+            "bytes": {
+              "uncompressed": 11026207,
+              "gzip": 2934739,
+              "javascript": {
+                "uncompressed": 10646610,
+                "gzip": 2862600
+              },
+              "stylesheets": {
+                "uncompressed": 379597,
+                "gzip": 72139
+              },
+              "total": {
+                "uncompressed": 11026207,
+                "gzip": 2934739
+              }
+            },
+            "initialJavaScript": {
+              "files": 10,
+              "bytes": {
+                "uncompressed": 10646610,
+                "gzip": 2862600
+              },
+              "gzipKiB": 2795.5078125
+            }
+          },
+          "public": {
+            "html": "public/index.html",
+            "assets": [
+              "static/css/cozy.02d526691ffb1884.css",
+              "static/css/6960.e6e70f4a39a12b84.css",
+              "static/css/7918.5f76373558a7b586.css",
+              "static/css/public.56354fbd94c33635.css",
+              "static/js/cozy.fdb66fc1a955a73e.js",
+              "static/js/lib-polyfill.d8c01b89745f0c0b.js",
+              "static/js/lib-router.9b59f01ae24e1674.js",
+              "static/js/lib-react.31b90f70334d1e95.js",
+              "static/js/8468.ce6bd652e6c39805.js",
+              "static/js/6960.55c5f90b3a0b50f9.js",
+              "static/js/6601.b50a4d0981785d87.js",
+              "static/js/7918.df50b4414d4f6280.js",
+              "static/js/9927.1f86fbe421b49f72.js",
+              "static/js/public.9f1cbff0e77d5e2b.js"
+            ],
+            "requests": {
+              "javascript": 10,
+              "stylesheets": 4,
+              "total": 14
+            },
+            "bytes": {
+              "uncompressed": 10618740,
+              "gzip": 2807811,
+              "javascript": {
+                "uncompressed": 10270704,
+                "gzip": 2747223
+              },
+              "stylesheets": {
+                "uncompressed": 348036,
+                "gzip": 60588
+              },
+              "total": {
+                "uncompressed": 10618740,
+                "gzip": 2807811
+              }
+            },
+            "initialJavaScript": {
+              "files": 10,
+              "bytes": {
+                "uncompressed": 10270704,
+                "gzip": 2747223
+              },
+              "gzipKiB": 2682.8349609375
+            }
+          },
+          "intents": {
+            "html": "intents/index.html",
+            "assets": [
+              "static/css/cozy.02d526691ffb1884.css",
+              "static/css/7918.5f76373558a7b586.css",
+              "static/css/intents.afcdc643f8459cd7.css",
+              "static/js/cozy.fdb66fc1a955a73e.js",
+              "static/js/lib-polyfill.d8c01b89745f0c0b.js",
+              "static/js/lib-router.9b59f01ae24e1674.js",
+              "static/js/lib-react.31b90f70334d1e95.js",
+              "static/js/8468.ce6bd652e6c39805.js",
+              "static/js/6842.a49c95f78a532205.js",
+              "static/js/7918.df50b4414d4f6280.js",
+              "static/js/intents.5cb7c7040253ef10.js"
+            ],
+            "requests": {
+              "javascript": 8,
+              "stylesheets": 3,
+              "total": 11
+            },
+            "bytes": {
+              "uncompressed": 7065744,
+              "gzip": 1742225,
+              "javascript": {
+                "uncompressed": 6868974,
+                "gzip": 1706303
+              },
+              "stylesheets": {
+                "uncompressed": 196770,
+                "gzip": 35922
+              },
+              "total": {
+                "uncompressed": 7065744,
+                "gzip": 1742225
+              }
+            },
+            "initialJavaScript": {
+              "files": 8,
+              "bytes": {
+                "uncompressed": 6868974,
+                "gzip": 1706303
+              },
+              "gzipKiB": 1666.3115234375
+            }
+          }
+        },
+        "generated": {
+          "javascript": {
+            "files": 139,
+            "bytes": {
+              "uncompressed": 23262422,
+              "gzip": 6498282
+            }
+          },
+          "stylesheets": {
+            "files": 6,
+            "bytes": {
+              "uncompressed": 388960,
+              "gzip": 75242
+            }
+          },
+          "total": {
+            "files": 145,
+            "bytes": {
+              "uncompressed": 23651382,
+              "gzip": 6573524
+            }
+          }
+        },
+        "registry": {
+          "files": 252,
+          "bytes": {
+            "uncompressed": 33806974,
+            "gzip": 12626090
+          }
+        }
+      },
+      "startup": {
+        "schemaVersion": 1,
+        "recordedAt": "2026-07-17T00:03:01.716Z",
+        "variant": "neutral",
+        "environment": {
+          "browser": "chromium",
+          "viewport": {
+            "width": 1280,
+            "height": 720
+          },
+          "runs": 5,
+          "warmups": 1,
+          "cache": "disabled",
+          "network": {
+            "latencyMs": 40,
+            "downloadBytesPerSecond": 196608,
+            "uploadBytesPerSecond": 96000
+          },
+          "cpuThrottlingRate": 4
+        },
+        "runs": [
+          {
+            "firstActionableFileRowMs": 12363,
+            "javascriptTransferredBeforeInteractionBytes": 2375301,
+            "javascriptRequestCountBeforeInteraction": 13,
+            "rootFolderRequestCount": 1,
+            "rootFolderSuccessfulRequestCount": 1
+          },
+          {
+            "firstActionableFileRowMs": 10363.600000023842,
+            "javascriptTransferredBeforeInteractionBytes": 2375301,
+            "javascriptRequestCountBeforeInteraction": 13,
+            "rootFolderRequestCount": 1,
+            "rootFolderSuccessfulRequestCount": 1
+          },
+          {
+            "firstActionableFileRowMs": 11523,
+            "javascriptTransferredBeforeInteractionBytes": 2375301,
+            "javascriptRequestCountBeforeInteraction": 13,
+            "rootFolderRequestCount": 1,
+            "rootFolderSuccessfulRequestCount": 1
+          },
+          {
+            "firstActionableFileRowMs": 10239.700000047684,
+            "javascriptTransferredBeforeInteractionBytes": 2375301,
+            "javascriptRequestCountBeforeInteraction": 13,
+            "rootFolderRequestCount": 1,
+            "rootFolderSuccessfulRequestCount": 1
+          },
+          {
+            "firstActionableFileRowMs": 11940.5,
+            "javascriptTransferredBeforeInteractionBytes": 2375301,
+            "javascriptRequestCountBeforeInteraction": 13,
+            "rootFolderRequestCount": 1,
+            "rootFolderSuccessfulRequestCount": 1
+          }
+        ],
+        "medians": {
+          "firstActionableFileRowMs": 11523,
+          "javascriptTransferredBeforeInteractionBytes": 2375301,
+          "javascriptRequestCountBeforeInteraction": 13,
+          "rootFolderRequestCount": 1,
+          "rootFolderSuccessfulRequestCount": 1
+        }
+      }
+    },
+    {
+      "variant": "force-splitting",
+      "directory": "/tmp/twake-drive-force",
+      "gitRevision": "ccf856b2e9df833abf99c911d9964923ddc897e6",
+      "build": {
+        "entrypoints": {
+          "main": {
+            "html": "index.html",
+            "assets": [
+              "static/css/2870.7a503bfd3744faea.css",
+              "static/css/8360.fef92853e2749701.css",
+              "static/css/7918.5f76373558a7b586.css",
+              "static/css/main.f30be78f263522af.css",
+              "static/js/lib-polyfill.d8c01b89745f0c0b.js",
+              "static/js/lib-router.9b59f01ae24e1674.js",
+              "static/js/lib-react.31b90f70334d1e95.js",
+              "static/js/2870.09f09c3bb8610c89.js",
+              "static/js/8360.6520524d4712a189.js",
+              "static/js/4747.8b40cbb611c9201e.js",
+              "static/js/7918.1226acf9493e0a0f.js",
+              "static/js/9927.c88cffd9b0a7d514.js",
+              "static/js/main.b7282f9ddad8ec0e.js"
+            ],
+            "requests": {
+              "javascript": 9,
+              "stylesheets": 4,
+              "total": 13
+            },
+            "bytes": {
+              "uncompressed": 10994379,
+              "gzip": 2935025,
+              "javascript": {
+                "uncompressed": 10614714,
+                "gzip": 2862716
+              },
+              "stylesheets": {
+                "uncompressed": 379665,
+                "gzip": 72309
+              },
+              "total": {
+                "uncompressed": 10994379,
+                "gzip": 2935025
+              }
+            },
+            "initialJavaScript": {
+              "files": 9,
+              "bytes": {
+                "uncompressed": 10614714,
+                "gzip": 2862716
+              },
+              "gzipKiB": 2795.62109375
+            }
+          },
+          "public": {
+            "html": "public/index.html",
+            "assets": [
+              "static/css/2870.7a503bfd3744faea.css",
+              "static/css/8360.fef92853e2749701.css",
+              "static/css/7918.5f76373558a7b586.css",
+              "static/css/public.56354fbd94c33635.css",
+              "static/js/lib-polyfill.d8c01b89745f0c0b.js",
+              "static/js/lib-router.9b59f01ae24e1674.js",
+              "static/js/lib-react.31b90f70334d1e95.js",
+              "static/js/2870.09f09c3bb8610c89.js",
+              "static/js/8360.6520524d4712a189.js",
+              "static/js/2935.8fda6b3ad0a69308.js",
+              "static/js/1487.c8db14d3a726478d.js",
+              "static/js/7918.1226acf9493e0a0f.js",
+              "static/js/9927.c88cffd9b0a7d514.js",
+              "static/js/public.788548aff05a8ca5.js"
+            ],
+            "requests": {
+              "javascript": 10,
+              "stylesheets": 4,
+              "total": 14
+            },
+            "bytes": {
+              "uncompressed": 10130339,
+              "gzip": 2688120,
+              "javascript": {
+                "uncompressed": 9782235,
+                "gzip": 2627362
+              },
+              "stylesheets": {
+                "uncompressed": 348104,
+                "gzip": 60758
+              },
+              "total": {
+                "uncompressed": 10130339,
+                "gzip": 2688120
+              }
+            },
+            "initialJavaScript": {
+              "files": 10,
+              "bytes": {
+                "uncompressed": 9782235,
+                "gzip": 2627362
+              },
+              "gzipKiB": 2565.783203125
+            }
+          },
+          "intents": {
+            "html": "intents/index.html",
+            "assets": [
+              "static/css/2870.7a503bfd3744faea.css",
+              "static/css/7918.5f76373558a7b586.css",
+              "static/css/intents.afcdc643f8459cd7.css",
+              "static/js/lib-polyfill.d8c01b89745f0c0b.js",
+              "static/js/lib-router.9b59f01ae24e1674.js",
+              "static/js/lib-react.31b90f70334d1e95.js",
+              "static/js/2870.09f09c3bb8610c89.js",
+              "static/js/2935.8fda6b3ad0a69308.js",
+              "static/js/488.cee167f2d56e98c7.js",
+              "static/js/7918.1226acf9493e0a0f.js",
+              "static/js/intents.cf8dc50f8c706288.js"
+            ],
+            "requests": {
+              "javascript": 8,
+              "stylesheets": 3,
+              "total": 11
+            },
+            "bytes": {
+              "uncompressed": 5681873,
+              "gzip": 1393933,
+              "javascript": {
+                "uncompressed": 5517244,
+                "gzip": 1364773
+              },
+              "stylesheets": {
+                "uncompressed": 164629,
+                "gzip": 29160
+              },
+              "total": {
+                "uncompressed": 5681873,
+                "gzip": 1393933
+              }
+            },
+            "initialJavaScript": {
+              "files": 8,
+              "bytes": {
+                "uncompressed": 5517244,
+                "gzip": 1364773
+              },
+              "gzipKiB": 1332.7861328125
+            }
+          }
+        },
+        "generated": {
+          "javascript": {
+            "files": 139,
+            "bytes": {
+              "uncompressed": 23306616,
+              "gzip": 6520331
+            }
+          },
+          "stylesheets": {
+            "files": 6,
+            "bytes": {
+              "uncompressed": 389028,
+              "gzip": 75412
+            }
+          },
+          "total": {
+            "files": 145,
+            "bytes": {
+              "uncompressed": 23695644,
+              "gzip": 6595743
+            }
+          }
+        },
+        "registry": {
+          "files": 251,
+          "bytes": {
+            "uncompressed": 33851271,
+            "gzip": 12650884
+          }
+        }
+      },
+      "startup": {
+        "schemaVersion": 1,
+        "recordedAt": "2026-07-17T00:04:35.066Z",
+        "variant": "force-splitting",
+        "environment": {
+          "browser": "chromium",
+          "viewport": {
+            "width": 1280,
+            "height": 720
+          },
+          "runs": 5,
+          "warmups": 1,
+          "cache": "disabled",
+          "network": {
+            "latencyMs": 40,
+            "downloadBytesPerSecond": 196608,
+            "uploadBytesPerSecond": 96000
+          },
+          "cpuThrottlingRate": 4
+        },
+        "runs": [
+          {
+            "firstActionableFileRowMs": 10394.800000071526,
+            "javascriptTransferredBeforeInteractionBytes": 2375301,
+            "javascriptRequestCountBeforeInteraction": 13,
+            "rootFolderRequestCount": 1,
+            "rootFolderSuccessfulRequestCount": 1
+          },
+          {
+            "firstActionableFileRowMs": 10408.199999928474,
+            "javascriptTransferredBeforeInteractionBytes": 2375301,
+            "javascriptRequestCountBeforeInteraction": 13,
+            "rootFolderRequestCount": 1,
+            "rootFolderSuccessfulRequestCount": 1
+          },
+          {
+            "firstActionableFileRowMs": 10268.5,
+            "javascriptTransferredBeforeInteractionBytes": 2375301,
+            "javascriptRequestCountBeforeInteraction": 13,
+            "rootFolderRequestCount": 1,
+            "rootFolderSuccessfulRequestCount": 1
+          },
+          {
+            "firstActionableFileRowMs": 10572.5,
+            "javascriptTransferredBeforeInteractionBytes": 2375301,
+            "javascriptRequestCountBeforeInteraction": 13,
+            "rootFolderRequestCount": 1,
+            "rootFolderSuccessfulRequestCount": 1
+          },
+          {
+            "firstActionableFileRowMs": 10214,
+            "javascriptTransferredBeforeInteractionBytes": 2375301,
+            "javascriptRequestCountBeforeInteraction": 13,
+            "rootFolderRequestCount": 1,
+            "rootFolderSuccessfulRequestCount": 1
+          }
+        ],
+        "medians": {
+          "firstActionableFileRowMs": 10394.800000071526,
+          "javascriptTransferredBeforeInteractionBytes": 2375301,
+          "javascriptRequestCountBeforeInteraction": 13,
+          "rootFolderRequestCount": 1,
+          "rootFolderSuccessfulRequestCount": 1
+        }
+      }
+    },
+    {
+      "variant": "prefetch",
+      "directory": "/tmp/twake-drive-prefetch",
+      "gitRevision": "9c44bcc9a5798fa66e8f0c5f4692907d1e71163d",
+      "build": {
+        "entrypoints": {
+          "main": {
+            "html": "index.html",
+            "assets": [
+              "static/css/cozy.02d526691ffb1884.css",
+              "static/css/6960.e6e70f4a39a12b84.css",
+              "static/css/7918.5f76373558a7b586.css",
+              "static/css/main.f30be78f263522af.css",
+              "static/js/cozy.fdb66fc1a955a73e.js",
+              "static/js/lib-polyfill.d8c01b89745f0c0b.js",
+              "static/js/lib-router.9b59f01ae24e1674.js",
+              "static/js/lib-react.31b90f70334d1e95.js",
+              "static/js/8468.ce6bd652e6c39805.js",
+              "static/js/6960.ec6d69adfa6f2b00.js",
+              "static/js/3627.5749a75bba2cb552.js",
+              "static/js/7918.df50b4414d4f6280.js",
+              "static/js/9927.1f86fbe421b49f72.js",
+              "static/js/main.9da3b592e1735427.js"
+            ],
+            "requests": {
+              "javascript": 10,
+              "stylesheets": 4,
+              "total": 14
+            },
+            "bytes": {
+              "uncompressed": 11026207,
+              "gzip": 2934734,
+              "javascript": {
+                "uncompressed": 10646610,
+                "gzip": 2862595
+              },
+              "stylesheets": {
+                "uncompressed": 379597,
+                "gzip": 72139
+              },
+              "total": {
+                "uncompressed": 11026207,
+                "gzip": 2934734
+              }
+            },
+            "initialJavaScript": {
+              "files": 10,
+              "bytes": {
+                "uncompressed": 10646610,
+                "gzip": 2862595
+              },
+              "gzipKiB": 2795.5029296875
+            }
+          },
+          "public": {
+            "html": "public/index.html",
+            "assets": [
+              "static/css/cozy.02d526691ffb1884.css",
+              "static/css/6960.e6e70f4a39a12b84.css",
+              "static/css/7918.5f76373558a7b586.css",
+              "static/css/public.56354fbd94c33635.css",
+              "static/js/cozy.fdb66fc1a955a73e.js",
+              "static/js/lib-polyfill.d8c01b89745f0c0b.js",
+              "static/js/lib-router.9b59f01ae24e1674.js",
+              "static/js/lib-react.31b90f70334d1e95.js",
+              "static/js/8468.ce6bd652e6c39805.js",
+              "static/js/6960.ec6d69adfa6f2b00.js",
+              "static/js/6601.b50a4d0981785d87.js",
+              "static/js/7918.df50b4414d4f6280.js",
+              "static/js/9927.1f86fbe421b49f72.js",
+              "static/js/public.097fb5deec715e2a.js"
+            ],
+            "requests": {
+              "javascript": 10,
+              "stylesheets": 4,
+              "total": 14
+            },
+            "bytes": {
+              "uncompressed": 10618740,
+              "gzip": 2807806,
+              "javascript": {
+                "uncompressed": 10270704,
+                "gzip": 2747218
+              },
+              "stylesheets": {
+                "uncompressed": 348036,
+                "gzip": 60588
+              },
+              "total": {
+                "uncompressed": 10618740,
+                "gzip": 2807806
+              }
+            },
+            "initialJavaScript": {
+              "files": 10,
+              "bytes": {
+                "uncompressed": 10270704,
+                "gzip": 2747218
+              },
+              "gzipKiB": 2682.830078125
+            }
+          },
+          "intents": {
+            "html": "intents/index.html",
+            "assets": [
+              "static/css/cozy.02d526691ffb1884.css",
+              "static/css/7918.5f76373558a7b586.css",
+              "static/css/intents.afcdc643f8459cd7.css",
+              "static/js/cozy.fdb66fc1a955a73e.js",
+              "static/js/lib-polyfill.d8c01b89745f0c0b.js",
+              "static/js/lib-router.9b59f01ae24e1674.js",
+              "static/js/lib-react.31b90f70334d1e95.js",
+              "static/js/8468.ce6bd652e6c39805.js",
+              "static/js/6842.a49c95f78a532205.js",
+              "static/js/7918.df50b4414d4f6280.js",
+              "static/js/intents.b26989d6a31a24eb.js"
+            ],
+            "requests": {
+              "javascript": 8,
+              "stylesheets": 3,
+              "total": 11
+            },
+            "bytes": {
+              "uncompressed": 7065882,
+              "gzip": 1742281,
+              "javascript": {
+                "uncompressed": 6869112,
+                "gzip": 1706359
+              },
+              "stylesheets": {
+                "uncompressed": 196770,
+                "gzip": 35922
+              },
+              "total": {
+                "uncompressed": 7065882,
+                "gzip": 1742281
+              }
+            },
+            "initialJavaScript": {
+              "files": 8,
+              "bytes": {
+                "uncompressed": 6869112,
+                "gzip": 1706359
+              },
+              "gzipKiB": 1666.3662109375
+            }
+          }
+        },
+        "generated": {
+          "javascript": {
+            "files": 139,
+            "bytes": {
+              "uncompressed": 23262560,
+              "gzip": 6498330
+            }
+          },
+          "stylesheets": {
+            "files": 6,
+            "bytes": {
+              "uncompressed": 388960,
+              "gzip": 75242
+            }
+          },
+          "total": {
+            "files": 145,
+            "bytes": {
+              "uncompressed": 23651520,
+              "gzip": 6573572
+            }
+          }
+        },
+        "registry": {
+          "files": 252,
+          "bytes": {
+            "uncompressed": 33807112,
+            "gzip": 12626138
+          }
+        }
+      },
+      "startup": {
+        "schemaVersion": 1,
+        "recordedAt": "2026-07-17T00:06:08.823Z",
+        "variant": "prefetch",
+        "environment": {
+          "browser": "chromium",
+          "viewport": {
+            "width": 1280,
+            "height": 720
+          },
+          "runs": 5,
+          "warmups": 1,
+          "cache": "disabled",
+          "network": {
+            "latencyMs": 40,
+            "downloadBytesPerSecond": 196608,
+            "uploadBytesPerSecond": 96000
+          },
+          "cpuThrottlingRate": 4
+        },
+        "runs": [
+          {
+            "firstActionableFileRowMs": 10240.099999904633,
+            "javascriptTransferredBeforeInteractionBytes": 2375301,
+            "javascriptRequestCountBeforeInteraction": 13,
+            "rootFolderRequestCount": 1,
+            "rootFolderSuccessfulRequestCount": 1
+          },
+          {
+            "firstActionableFileRowMs": 10209.700000047684,
+            "javascriptTransferredBeforeInteractionBytes": 2375301,
+            "javascriptRequestCountBeforeInteraction": 13,
+            "rootFolderRequestCount": 1,
+            "rootFolderSuccessfulRequestCount": 1
+          },
+          {
+            "firstActionableFileRowMs": 10352.399999976158,
+            "javascriptTransferredBeforeInteractionBytes": 2375301,
+            "javascriptRequestCountBeforeInteraction": 13,
+            "rootFolderRequestCount": 1,
+            "rootFolderSuccessfulRequestCount": 1
+          },
+          {
+            "firstActionableFileRowMs": 10198.700000047684,
+            "javascriptTransferredBeforeInteractionBytes": 2375301,
+            "javascriptRequestCountBeforeInteraction": 13,
+            "rootFolderRequestCount": 1,
+            "rootFolderSuccessfulRequestCount": 1
+          },
+          {
+            "firstActionableFileRowMs": 11561.899999976158,
+            "javascriptTransferredBeforeInteractionBytes": 2375301,
+            "javascriptRequestCountBeforeInteraction": 13,
+            "rootFolderRequestCount": 1,
+            "rootFolderSuccessfulRequestCount": 1
+          }
+        ],
+        "medians": {
+          "firstActionableFileRowMs": 10240.099999904633,
+          "javascriptTransferredBeforeInteractionBytes": 2375301,
+          "javascriptRequestCountBeforeInteraction": 13,
+          "rootFolderRequestCount": 1,
+          "rootFolderSuccessfulRequestCount": 1
+        }
+      }
+    },
+    {
+      "variant": "locales",
+      "directory": "/tmp/twake-drive-locales",
+      "gitRevision": "0ae2ff986870600e2eaaacd68767eb2521037658",
+      "build": {
+        "entrypoints": {
+          "main": {
+            "html": "index.html",
+            "assets": [
+              "static/css/cozy.02d526691ffb1884.css",
+              "static/css/6960.e6e70f4a39a12b84.css",
+              "static/css/4723.5f76373558a7b586.css",
+              "static/css/main.f30be78f263522af.css",
+              "static/js/cozy.fdb66fc1a955a73e.js",
+              "static/js/lib-polyfill.d8c01b89745f0c0b.js",
+              "static/js/lib-router.9b59f01ae24e1674.js",
+              "static/js/lib-react.31b90f70334d1e95.js",
+              "static/js/8468.ce6bd652e6c39805.js",
+              "static/js/6960.97b1be97d81ac8f0.js",
+              "static/js/3627.5749a75bba2cb552.js",
+              "static/js/4723.da22fb86f3f7bcae.js",
+              "static/js/7464.97b2e72a084b60ce.js",
+              "static/js/main.a726c27cb3961dd3.js"
+            ],
+            "requests": {
+              "javascript": 10,
+              "stylesheets": 4,
+              "total": 14
+            },
+            "bytes": {
+              "uncompressed": 11025933,
+              "gzip": 2934167,
+              "javascript": {
+                "uncompressed": 10646336,
+                "gzip": 2862028
+              },
+              "stylesheets": {
+                "uncompressed": 379597,
+                "gzip": 72139
+              },
+              "total": {
+                "uncompressed": 11025933,
+                "gzip": 2934167
+              }
+            },
+            "initialJavaScript": {
+              "files": 10,
+              "bytes": {
+                "uncompressed": 10646336,
+                "gzip": 2862028
+              },
+              "gzipKiB": 2794.94921875
+            }
+          },
+          "public": {
+            "html": "public/index.html",
+            "assets": [
+              "static/css/cozy.02d526691ffb1884.css",
+              "static/css/6960.e6e70f4a39a12b84.css",
+              "static/css/4723.5f76373558a7b586.css",
+              "static/css/public.56354fbd94c33635.css",
+              "static/js/cozy.fdb66fc1a955a73e.js",
+              "static/js/lib-polyfill.d8c01b89745f0c0b.js",
+              "static/js/lib-router.9b59f01ae24e1674.js",
+              "static/js/lib-react.31b90f70334d1e95.js",
+              "static/js/8468.ce6bd652e6c39805.js",
+              "static/js/6960.97b1be97d81ac8f0.js",
+              "static/js/6601.b50a4d0981785d87.js",
+              "static/js/4723.da22fb86f3f7bcae.js",
+              "static/js/7464.97b2e72a084b60ce.js",
+              "static/js/public.e9931cf67d1e7bbe.js"
+            ],
+            "requests": {
+              "javascript": 10,
+              "stylesheets": 4,
+              "total": 14
+            },
+            "bytes": {
+              "uncompressed": 10618466,
+              "gzip": 2807238,
+              "javascript": {
+                "uncompressed": 10270430,
+                "gzip": 2746650
+              },
+              "stylesheets": {
+                "uncompressed": 348036,
+                "gzip": 60588
+              },
+              "total": {
+                "uncompressed": 10618466,
+                "gzip": 2807238
+              }
+            },
+            "initialJavaScript": {
+              "files": 10,
+              "bytes": {
+                "uncompressed": 10270430,
+                "gzip": 2746650
+              },
+              "gzipKiB": 2682.275390625
+            }
+          },
+          "intents": {
+            "html": "intents/index.html",
+            "assets": [
+              "static/css/cozy.02d526691ffb1884.css",
+              "static/css/4723.5f76373558a7b586.css",
+              "static/css/intents.afcdc643f8459cd7.css",
+              "static/js/cozy.fdb66fc1a955a73e.js",
+              "static/js/lib-polyfill.d8c01b89745f0c0b.js",
+              "static/js/lib-router.9b59f01ae24e1674.js",
+              "static/js/lib-react.31b90f70334d1e95.js",
+              "static/js/8468.ce6bd652e6c39805.js",
+              "static/js/6842.a49c95f78a532205.js",
+              "static/js/4723.da22fb86f3f7bcae.js",
+              "static/js/intents.34a40dd82974dd35.js"
+            ],
+            "requests": {
+              "javascript": 8,
+              "stylesheets": 3,
+              "total": 11
+            },
+            "bytes": {
+              "uncompressed": 6837483,
+              "gzip": 1683019,
+              "javascript": {
+                "uncompressed": 6640713,
+                "gzip": 1647097
+              },
+              "stylesheets": {
+                "uncompressed": 196770,
+                "gzip": 35922
+              },
+              "total": {
+                "uncompressed": 6837483,
+                "gzip": 1683019
+              }
+            },
+            "initialJavaScript": {
+              "files": 8,
+              "bytes": {
+                "uncompressed": 6640713,
+                "gzip": 1647097
+              },
+              "gzipKiB": 1608.4931640625
+            }
+          }
+        },
+        "generated": {
+          "javascript": {
+            "files": 154,
+            "bytes": {
+              "uncompressed": 23497410,
+              "gzip": 6573461
+            }
+          },
+          "stylesheets": {
+            "files": 6,
+            "bytes": {
+              "uncompressed": 388960,
+              "gzip": 75242
+            }
+          },
+          "total": {
+            "files": 160,
+            "bytes": {
+              "uncompressed": 23886370,
+              "gzip": 6648703
+            }
+          }
+        },
+        "registry": {
+          "files": 267,
+          "bytes": {
+            "uncompressed": 34041962,
+            "gzip": 12707565
+          }
+        }
+      },
+      "startup": {
+        "schemaVersion": 1,
+        "recordedAt": "2026-07-17T00:07:47.436Z",
+        "variant": "locales",
+        "environment": {
+          "browser": "chromium",
+          "viewport": {
+            "width": 1280,
+            "height": 720
+          },
+          "runs": 5,
+          "warmups": 1,
+          "cache": "disabled",
+          "network": {
+            "latencyMs": 40,
+            "downloadBytesPerSecond": 196608,
+            "uploadBytesPerSecond": 96000
+          },
+          "cpuThrottlingRate": 4
+        },
+        "runs": [
+          {
+            "firstActionableFileRowMs": 10239.799999952316,
+            "javascriptTransferredBeforeInteractionBytes": 2375301,
+            "javascriptRequestCountBeforeInteraction": 13,
+            "rootFolderRequestCount": 1,
+            "rootFolderSuccessfulRequestCount": 1
+          },
+          {
+            "firstActionableFileRowMs": 10154.399999976158,
+            "javascriptTransferredBeforeInteractionBytes": 2375301,
+            "javascriptRequestCountBeforeInteraction": 13,
+            "rootFolderRequestCount": 1,
+            "rootFolderSuccessfulRequestCount": 1
+          },
+          {
+            "firstActionableFileRowMs": 11429.700000047684,
+            "javascriptTransferredBeforeInteractionBytes": 2375301,
+            "javascriptRequestCountBeforeInteraction": 13,
+            "rootFolderRequestCount": 1,
+            "rootFolderSuccessfulRequestCount": 1
+          },
+          {
+            "firstActionableFileRowMs": 12558.5,
+            "javascriptTransferredBeforeInteractionBytes": 2375301,
+            "javascriptRequestCountBeforeInteraction": 13,
+            "rootFolderRequestCount": 1,
+            "rootFolderSuccessfulRequestCount": 1
+          },
+          {
+            "firstActionableFileRowMs": 11473.899999976158,
+            "javascriptTransferredBeforeInteractionBytes": 2375301,
+            "javascriptRequestCountBeforeInteraction": 13,
+            "rootFolderRequestCount": 1,
+            "rootFolderSuccessfulRequestCount": 1
+          }
+        ],
+        "medians": {
+          "firstActionableFileRowMs": 11429.700000047684,
+          "javascriptTransferredBeforeInteractionBytes": 2375301,
+          "javascriptRequestCountBeforeInteraction": 13,
+          "rootFolderRequestCount": 1,
+          "rootFolderSuccessfulRequestCount": 1
+        }
+      }
+    },
+    {
+      "variant": "combined",
+      "directory": "/tmp/twake-drive-combined",
+      "gitRevision": "d7fc4735fd8720ba2db5ce4abbbb4c2002554aac",
+      "build": {
+        "entrypoints": {
+          "main": {
+            "html": "index.html",
+            "assets": [
+              "static/css/2870.7a503bfd3744faea.css",
+              "static/css/8360.fef92853e2749701.css",
+              "static/css/4723.5f76373558a7b586.css",
+              "static/css/main.f30be78f263522af.css",
+              "static/js/lib-polyfill.d8c01b89745f0c0b.js",
+              "static/js/lib-router.9b59f01ae24e1674.js",
+              "static/js/lib-react.31b90f70334d1e95.js",
+              "static/js/2870.09f09c3bb8610c89.js",
+              "static/js/8360.d5fee6e9bb6063e3.js",
+              "static/js/4747.8b40cbb611c9201e.js",
+              "static/js/4723.cbee2a17c9e13c62.js",
+              "static/js/7464.fe1612d2e0621642.js",
+              "static/js/main.eb3ee7cd176fcff9.js"
+            ],
+            "requests": {
+              "javascript": 9,
+              "stylesheets": 4,
+              "total": 13
+            },
+            "bytes": {
+              "uncompressed": 10994109,
+              "gzip": 2934465,
+              "javascript": {
+                "uncompressed": 10614444,
+                "gzip": 2862156
+              },
+              "stylesheets": {
+                "uncompressed": 379665,
+                "gzip": 72309
+              },
+              "total": {
+                "uncompressed": 10994109,
+                "gzip": 2934465
+              }
+            },
+            "initialJavaScript": {
+              "files": 9,
+              "bytes": {
+                "uncompressed": 10614444,
+                "gzip": 2862156
+              },
+              "gzipKiB": 2795.07421875
+            }
+          },
+          "public": {
+            "html": "public/index.html",
+            "assets": [
+              "static/css/2870.7a503bfd3744faea.css",
+              "static/css/8360.fef92853e2749701.css",
+              "static/css/4723.5f76373558a7b586.css",
+              "static/css/public.56354fbd94c33635.css",
+              "static/js/lib-polyfill.d8c01b89745f0c0b.js",
+              "static/js/lib-router.9b59f01ae24e1674.js",
+              "static/js/lib-react.31b90f70334d1e95.js",
+              "static/js/2870.09f09c3bb8610c89.js",
+              "static/js/8360.d5fee6e9bb6063e3.js",
+              "static/js/2935.8fda6b3ad0a69308.js",
+              "static/js/1487.c8db14d3a726478d.js",
+              "static/js/4723.cbee2a17c9e13c62.js",
+              "static/js/7464.fe1612d2e0621642.js",
+              "static/js/public.b2a20558a788fb6e.js"
+            ],
+            "requests": {
+              "javascript": 10,
+              "stylesheets": 4,
+              "total": 14
+            },
+            "bytes": {
+              "uncompressed": 10130069,
+              "gzip": 2687561,
+              "javascript": {
+                "uncompressed": 9781965,
+                "gzip": 2626803
+              },
+              "stylesheets": {
+                "uncompressed": 348104,
+                "gzip": 60758
+              },
+              "total": {
+                "uncompressed": 10130069,
+                "gzip": 2687561
+              }
+            },
+            "initialJavaScript": {
+              "files": 10,
+              "bytes": {
+                "uncompressed": 9781965,
+                "gzip": 2626803
+              },
+              "gzipKiB": 2565.2373046875
+            }
+          },
+          "intents": {
+            "html": "intents/index.html",
+            "assets": [
+              "static/css/2870.7a503bfd3744faea.css",
+              "static/css/4723.5f76373558a7b586.css",
+              "static/css/intents.afcdc643f8459cd7.css",
+              "static/js/lib-polyfill.d8c01b89745f0c0b.js",
+              "static/js/lib-router.9b59f01ae24e1674.js",
+              "static/js/lib-react.31b90f70334d1e95.js",
+              "static/js/2870.09f09c3bb8610c89.js",
+              "static/js/2935.8fda6b3ad0a69308.js",
+              "static/js/488.cee167f2d56e98c7.js",
+              "static/js/4723.cbee2a17c9e13c62.js",
+              "static/js/intents.ebf40edb3f1feb2d.js"
+            ],
+            "requests": {
+              "javascript": 8,
+              "stylesheets": 3,
+              "total": 11
+            },
+            "bytes": {
+              "uncompressed": 5453758,
+              "gzip": 1334790,
+              "javascript": {
+                "uncompressed": 5289129,
+                "gzip": 1305630
+              },
+              "stylesheets": {
+                "uncompressed": 164629,
+                "gzip": 29160
+              },
+              "total": {
+                "uncompressed": 5453758,
+                "gzip": 1334790
+              }
+            },
+            "initialJavaScript": {
+              "files": 8,
+              "bytes": {
+                "uncompressed": 5289129,
+                "gzip": 1305630
+              },
+              "gzipKiB": 1275.029296875
+            }
+          }
+        },
+        "generated": {
+          "javascript": {
+            "files": 154,
+            "bytes": {
+              "uncompressed": 23541762,
+              "gzip": 6595598
+            }
+          },
+          "stylesheets": {
+            "files": 6,
+            "bytes": {
+              "uncompressed": 389028,
+              "gzip": 75412
+            }
+          },
+          "total": {
+            "files": 160,
+            "bytes": {
+              "uncompressed": 23930790,
+              "gzip": 6671010
+            }
+          }
+        },
+        "registry": {
+          "files": 266,
+          "bytes": {
+            "uncompressed": 34086417,
+            "gzip": 12729556
+          }
+        }
+      },
+      "startup": {
+        "schemaVersion": 1,
+        "recordedAt": "2026-07-17T00:09:23.466Z",
+        "variant": "combined",
+        "environment": {
+          "browser": "chromium",
+          "viewport": {
+            "width": 1280,
+            "height": 720
+          },
+          "runs": 5,
+          "warmups": 1,
+          "cache": "disabled",
+          "network": {
+            "latencyMs": 40,
+            "downloadBytesPerSecond": 196608,
+            "uploadBytesPerSecond": 96000
+          },
+          "cpuThrottlingRate": 4
+        },
+        "runs": [
+          {
+            "firstActionableFileRowMs": 11154.199999928474,
+            "javascriptTransferredBeforeInteractionBytes": 2375301,
+            "javascriptRequestCountBeforeInteraction": 13,
+            "rootFolderRequestCount": 1,
+            "rootFolderSuccessfulRequestCount": 1
+          },
+          {
+            "firstActionableFileRowMs": 10154.299999952316,
+            "javascriptTransferredBeforeInteractionBytes": 2375301,
+            "javascriptRequestCountBeforeInteraction": 13,
+            "rootFolderRequestCount": 1,
+            "rootFolderSuccessfulRequestCount": 1
+          },
+          {
+            "firstActionableFileRowMs": 10118.600000023842,
+            "javascriptTransferredBeforeInteractionBytes": 2375301,
+            "javascriptRequestCountBeforeInteraction": 13,
+            "rootFolderRequestCount": 1,
+            "rootFolderSuccessfulRequestCount": 1
+          },
+          {
+            "firstActionableFileRowMs": 10674.700000047684,
+            "javascriptTransferredBeforeInteractionBytes": 2375301,
+            "javascriptRequestCountBeforeInteraction": 13,
+            "rootFolderRequestCount": 1,
+            "rootFolderSuccessfulRequestCount": 1
+          },
+          {
+            "firstActionableFileRowMs": 11907,
+            "javascriptTransferredBeforeInteractionBytes": 2375301,
+            "javascriptRequestCountBeforeInteraction": 13,
+            "rootFolderRequestCount": 1,
+            "rootFolderSuccessfulRequestCount": 1
+          }
+        ],
+        "medians": {
+          "firstActionableFileRowMs": 10674.700000047684,
+          "javascriptTransferredBeforeInteractionBytes": 2375301,
+          "javascriptRequestCountBeforeInteraction": 13,
+          "rootFolderRequestCount": 1,
+          "rootFolderSuccessfulRequestCount": 1
+        }
+      }
+    }
+  ]
+}
