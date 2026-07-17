@@ -1,7 +1,6 @@
 import React from 'react'
 
 import { useClient } from 'cozy-client'
-import { useVaultClient } from 'cozy-keys-lib'
 import { createCozySharingLink, useSharingInfos } from 'cozy-sharing'
 import { makeActions } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
@@ -29,7 +28,6 @@ const PublicToolbarByLink = ({
   const { t } = useI18n()
   const { showAlert } = useAlert()
   const client = useClient()
-  const vaultClient = useVaultClient()
   const { createCozyLink } = useSharingInfos()
 
   const isMoreMenuDisplayed = files.length > 1
@@ -46,7 +44,6 @@ const PublicToolbarByLink = ({
       t,
       showAlert,
       client,
-      vaultClient,
       showSelectionBar,
       createCozyLink,
       hasWriteAccess

@@ -10,10 +10,6 @@ import { generateFile } from 'test/generate'
 import { useCurrentFileId } from '@/hooks'
 
 jest.mock('cozy-client/dist/hooks/useQuery', () => jest.fn())
-jest.mock('cozy-keys-lib', () => ({
-  useVaultClient: jest.fn()
-}))
-
 jest.mock('lib/logger', () => ({
   error: jest.fn()
 }))

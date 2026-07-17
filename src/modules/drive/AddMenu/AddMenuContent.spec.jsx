@@ -11,9 +11,6 @@ import { setupFolderContent, mockCozyClientRequestQuery } from 'test/setup'
 import { ScannerProvider } from '@/modules/drive/Toolbar/components/Scanner/ScannerProvider'
 
 jest.mock('cozy-client/dist/hooks/useAppLinkWithStoreFallback', () => jest.fn())
-jest.mock('cozy-keys-lib', () => ({
-  useVaultClient: jest.fn()
-}))
 jest.mock('cozy-flags')
 mockCozyClientRequestQuery()
 
