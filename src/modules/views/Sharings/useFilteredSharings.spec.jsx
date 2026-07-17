@@ -443,5 +443,65 @@ describe('useFilteredSharings', () => {
       expect(renderTab(SHARING_TAB_WITH_ME)).toEqual([])
       expect(renderTab(SHARING_TAB_BY_ME)).toEqual([])
     })
+
+    it('exposes hasDrives when an org drive is present, whatever the active tab', () => {
+      setupTabMocks()
+
+      const { result: hook } = renderHook(() =>
+        useFilteredSharings({
+          result: {
+            data: [...classicShares, orgDrive],
+            fetchStatus: 'loaded',
+            lastFetch: Date.now()
+          },
+          sharedDocumentIds: [ownedFolder._id],
+          tab: SHARING_TAB_WITH_ME
+        })
+      )
+
+      expect(hook.current.hasDrives).toBe(true)
+    })
+
+    it('reports no drives content when only non-org federated drives exist', () => {
+      // Federated drives classify onto with-me/by-me, so they must not
+      // make the drives tab appear.
+      mockFlag.mockImplementation(name => name === 'drive.shared-drive.enabled')
+      mockUseTransform.mockReturnValue({
+        sharedDrives: [ownedFederatedDrive, receivedFederatedDrive],
+        nonSharedDriveList: classicShares,
+        sharedDrivesLoaded: true
+      })
+
+      const { result: hook } = renderHook(() =>
+        useFilteredSharings({
+          result: {
+            data: classicShares,
+            fetchStatus: 'loaded',
+            lastFetch: Date.now()
+          },
+          sharedDocumentIds: [ownedFolder._id],
+          tab: SHARING_TAB_WITH_ME
+        })
+      )
+
+      expect(hook.current.hasDrives).toBe(false)
+    })
+
+    it('reports no drives content when shared drives are disabled', () => {
+      setupTabMocks({ drivesEnabled: false })
+
+      const { result: hook } = renderHook(() =>
+        useFilteredSharings({
+          result: {
+            data: [...classicShares, orgDrive],
+            fetchStatus: 'loaded',
+            lastFetch: Date.now()
+          },
+          sharedDocumentIds: [ownedFolder._id]
+        })
+      )
+
+      expect(hook.current.hasDrives).toBe(false)
+    })
   })
 })

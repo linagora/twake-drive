@@ -126,6 +126,10 @@ const computeData = ({
  * the same document, preferring the real Drive entry over the shared-drives
  * synthetic entry. When `tab` is provided, keeps only the entries belonging
  * to that tab (see getSharingsTabForEntry).
+ *
+ * Also exposes `hasDrives`: whether any entry classifies onto the drives
+ * tab, computed from the same deduplicated list regardless of the active
+ * tab, so the view can hide the Team drives tab while it has no content.
  */
 export const useFilteredSharings = ({ result, sharedDocumentIds, tab }) => {
   const isEnabledSharedDrive = flag('drive.shared-drive.enabled')
@@ -143,7 +147,7 @@ export const useFilteredSharings = ({ result, sharedDocumentIds, tab }) => {
 
   const { isOwner } = useSharingContext()
 
-  const filteredResult = useMemo(() => {
+  const { filteredResult, hasDrives } = useMemo(() => {
     const hasIds = sharedDocumentIds?.length > 0
     // Filter by tab only after deduplication so each document lands in
     // exactly one tab.
@@ -156,7 +160,16 @@ export const useFilteredSharings = ({ result, sharedDocumentIds, tab }) => {
     const data = tab
       ? combined.filter(entry => getSharingsTabForEntry(entry, isOwner) === tab)
       : combined
-    return { ...buildBaseShape(result, hasIds), data, count: data.length }
+    return {
+      filteredResult: {
+        ...buildBaseShape(result, hasIds),
+        data,
+        count: data.length
+      },
+      hasDrives: combined.some(
+        entry => getSharingsTabForEntry(entry, isOwner) === SHARING_TAB_DRIVES
+      )
+    }
   }, [
     withoutSharedDrives,
     transformedSharedDrives,
@@ -171,6 +184,7 @@ export const useFilteredSharings = ({ result, sharedDocumentIds, tab }) => {
   // so don't block the page on that hook's load state.
   return {
     filteredResult,
+    hasDrives,
     sharedDrivesLoaded: withoutSharedDrives || sharedDrivesLoaded
   }
 }
