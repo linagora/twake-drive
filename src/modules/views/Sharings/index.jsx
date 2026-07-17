@@ -46,6 +46,12 @@ import { shareFileRootSharedDrive } from '@/modules/shareddrives/components/acti
 import { shareSharedDrive } from '@/modules/shareddrives/components/actions/shareSharedDrive'
 import { buildSharingsQuery } from '@/queries'
 
+// The Team drives tab only shows while it has content; it stays rendered
+// when it is the active tab so a ?tab=drives deep link keeps a visible,
+// consistent control (the list then shows the empty state).
+const shouldShowDrivesTab = ({ hasDrives, tab }) =>
+  areDrivesAvailable() && (hasDrives || tab === SHARING_TAB_DRIVES)
+
 export const SharingsView = ({ sharedDocumentIds = [] }) => {
   const base = useFolderViewBase()
   const sharingContext = useSharingContext()
@@ -73,11 +79,7 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
     }
   )
 
-  // The Team drives tab only shows while it has content; it stays rendered
-  // when it is the active tab so a ?tab=drives deep link keeps a visible,
-  // consistent control (the list then shows the empty state).
-  const showDrives =
-    areDrivesAvailable() && (hasDrives || tab === SHARING_TAB_DRIVES)
+  const showDrives = shouldShowDrivesTab({ hasDrives, tab })
 
   useKeyboardShortcuts({
     onPaste: () => refresh(),
