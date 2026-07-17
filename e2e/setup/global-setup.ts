@@ -18,6 +18,9 @@ import {
 } from '../helpers/config'
 import { setFlags } from '../helpers/flags'
 
+const BENCHMARK_FILE_COUNT = 20
+const BENCHMARK_FILE_PREFIX = 'file-picker-benchmark-'
+
 const ADMIN_AUTH = `Basic ${Buffer.from(`${ADMIN_USER}:${ADMIN_PASSPHRASE}`).toString('base64')}`
 
 function compose(...args: string[]): void {
@@ -48,7 +51,7 @@ async function createInstance(user: User): Promise<void> {
   const params = new URLSearchParams({
     Domain: user.instance,
     Email: user.email,
-    Locale: 'en',
+    Locale: user.locale ?? 'en',
     Passphrase: user.passphrase,
     ContextName: 'default',
     OrgID: ORG_ID,
@@ -222,8 +225,86 @@ async function createContact(hostUser: User, peer: User): Promise<void> {
   }
 }
 
+async function provisionBenchmarkFiles(): Promise<void> {
+  const user = USERS.benchmark
+  const token = stackExec(
+    'instances',
+    'token-cli',
+    user.instance,
+    'io.cozy.files'
+  )
+
+  const expectedNames = new Set(
+    Array.from(
+      { length: BENCHMARK_FILE_COUNT },
+      (_, index) =>
+        `${BENCHMARK_FILE_PREFIX}${String(index + 1).padStart(2, '0')}.txt`
+    )
+  )
+  const listingResponse = await fetch(`http://${user.instance}/files/_find`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      selector: {
+        dir_id: 'io.cozy.files.root-dir',
+        type: 'file',
+        trashed: false
+      },
+      limit: 100
+    })
+  })
+  if (!listingResponse.ok) {
+    throw new Error(
+      `Failed to inspect benchmark root (${listingResponse.status}): ${await listingResponse.text()}`
+    )
+  }
+  const listing = (await listingResponse.json()) as {
+    data?: Array<{ id: string; attributes?: { name?: string } }>
+  }
+  for (const file of listing.data ?? []) {
+    if (file.attributes?.name && !expectedNames.has(file.attributes.name)) {
+      const response = await fetch(`http://${user.instance}/files/${file.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      if (!response.ok) {
+        throw new Error(
+          `Failed to remove extra benchmark file (${response.status}): ${await response.text()}`
+        )
+      }
+    }
+  }
+
+  for (let index = 1; index <= BENCHMARK_FILE_COUNT; index += 1) {
+    const name = `${BENCHMARK_FILE_PREFIX}${String(index).padStart(2, '0')}.txt`
+    const response = await fetch(
+      `http://${user.instance}/files/io.cozy.files.root-dir?Type=file&Name=${encodeURIComponent(name)}`, 
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'text/plain'
+        },
+        body: `benchmark file ${index}\n`
+      }
+    )
+    // Stable names make a persistent rerun a no-op for already provisioned files.
+    if (response.status === 409) continue
+    if (!response.ok) {
+      throw new Error(
+        `Failed to provision ${name} (${response.status}): ${await response.text()}`
+      )
+    }
+  }
+}
+
 async function syncContacts(): Promise<void> {
-  const entries = Object.values(USERS)
+  const entries = Object.values(USERS).filter(
+    user => user.label !== 'benchmark'
+  )
   await Promise.all(
     entries.flatMap(host =>
       entries
@@ -263,6 +344,9 @@ export default async function globalSetup(): Promise<void> {
 
   console.log('[e2e] Cross-populating org contacts...')
   await syncContacts()
+
+  console.log('[e2e] Provisioning deterministic File Picker benchmark files...')
+  await provisionBenchmarkFiles()
 
   console.log('[e2e] Setup complete.')
 }

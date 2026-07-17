@@ -8,6 +8,7 @@ import { DrivePage } from '../pages/DrivePage'
 type AuthedFixtures = {
   alicePage: Page
   bobPage: Page
+  benchmarkPage: Page
   aliceDrive: DrivePage
   bobDrive: DrivePage
 }
@@ -31,7 +32,7 @@ const attachIfAny = async (
 }
 
 const userPageFixture =
-  (user: 'alice' | 'bob') =>
+  (user: 'alice' | 'bob' | 'benchmark') =>
   async (
     { browser }: { browser: import('@playwright/test').Browser },
     use: (page: Page) => Promise<void>,
@@ -68,6 +69,7 @@ const userPageFixture =
 export const test = base.extend<AuthedFixtures>({
   alicePage: userPageFixture('alice'),
   bobPage: userPageFixture('bob'),
+  benchmarkPage: userPageFixture('benchmark'),
   aliceDrive: async ({ alicePage }, use) => {
     await use(new DrivePage(alicePage))
   },

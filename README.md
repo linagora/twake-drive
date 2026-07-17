@@ -155,6 +155,22 @@ $ yarn test
 
 For Playwright end-to-end tests, see [the E2E test guide](docs/e2e.md).
 
+### Measure production build assets
+
+Build the application and report the assets initially referenced by each web
+entrypoint, the complete JavaScript and CSS output, and the compressed registry
+artifact size:
+
+```sh
+yarn measure:build-assets
+```
+
+The command measures gzip at level 9 and creates a deterministic registry
+archive for comparison. Stack-injected fonts and theme resources are not part
+of the generated HTML and are therefore excluded from the entrypoint totals.
+Use `node scripts/measureBuildAssets.mjs --json` after a build when exact byte
+counts are needed for automated comparisons.
+
 :pushpin: Don't forget to update / create new tests when you contribute to code to keep the app the consistent.
 
 ### Open a Pull-Request

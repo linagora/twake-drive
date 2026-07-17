@@ -19,7 +19,7 @@ export const ADMIN_PASSPHRASE = 'cozy'
 export const ORG_ID = 'twake-drive-e2e'
 export const ORG_DOMAIN = 'cozy.localhost'
 
-export type UserLabel = 'alice' | 'bob'
+export type UserLabel = 'alice' | 'bob' | 'benchmark'
 
 export interface User {
   label: UserLabel
@@ -27,11 +27,20 @@ export interface User {
   appUrl: string
   email: string
   passphrase: string
+  locale?: string
 }
 
 const instancePortSuffix = STACK_PORT === 80 ? '' : `:${STACK_PORT}`
 
 export const USERS: Record<UserLabel, User> = {
+  benchmark: {
+    label: 'benchmark',
+    instance: `benchmark.cozy.localhost${instancePortSuffix}`,
+    appUrl: `http://benchmark-drive.cozy.localhost${instancePortSuffix}`,
+    email: 'benchmark@cozy.localhost',
+    passphrase: 'benchmark1234',
+    locale: 'fr'
+  },
   alice: {
     label: 'alice',
     instance: `alice.cozy.localhost${instancePortSuffix}`,

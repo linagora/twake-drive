@@ -2,6 +2,10 @@ import { defineConfig } from '@playwright/test'
 
 export default defineConfig({
   testDir: './tests',
+  testIgnore:
+    process.env.E2E_PERFORMANCE === '1'
+      ? undefined
+      : '**/intent-startup-performance.spec.ts',
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
