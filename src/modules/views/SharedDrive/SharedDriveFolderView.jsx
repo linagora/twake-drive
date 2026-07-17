@@ -4,7 +4,6 @@ import { Outlet, useParams, useNavigate, useLocation } from 'react-router-dom'
 
 import { useClient } from 'cozy-client'
 import flag from 'cozy-flags'
-import { useVaultClient } from 'cozy-keys-lib'
 import { useSharingContext } from 'cozy-sharing'
 import { makeActions } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
@@ -59,7 +58,6 @@ const SharedDriveFolderView = () => {
   const { t } = useI18n()
   const { showAlert } = useAlert()
   const dispatch = useDispatch()
-  const vaultClient = useVaultClient()
   const isInRootOfSharedDrive = displayedFolder?.dir_id === SHARED_DRIVES_DIR_ID
   const { isFabDisplayed, setIsFabDisplayed } = useContext(FabContext)
   const { isSelectionBarVisible } = useSelectionContext()
@@ -109,7 +107,6 @@ const SharedDriveFolderView = () => {
     () => ({
       client,
       t,
-      vaultClient,
       pathname,
       isOwner,
       isMobile,
@@ -129,7 +126,6 @@ const SharedDriveFolderView = () => {
     [
       client,
       t,
-      vaultClient,
       pathname,
       isOwner,
       isMobile,

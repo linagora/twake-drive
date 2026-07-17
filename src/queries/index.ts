@@ -76,7 +76,6 @@ export const buildDriveQuery: QueryBuilder<buildDriveQueryParams> = ({
         { type: sortOrder },
         { [sortAttribute]: sortOrder }
       ])
-      .include(['encryption'])
       .limitBy(100)
   },
   options: {
@@ -204,7 +203,6 @@ export const buildSharedDriveQuery: QueryBuilder<
         { type: sortOrder },
         { [sortAttribute]: sortOrder }
       ])
-      .include(['encryption'])
       .limitBy(100),
   options: {
     as: formatFolderQueryId(

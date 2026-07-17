@@ -6,10 +6,6 @@ import { SHAREDWITHME_DIR_ID } from '@/constants/config'
 
 const mockFileModels = require('cozy-client/dist/models/file')
 
-jest.mock('cozy-keys-lib', () => ({
-  withVaultClient: jest.fn().mockReturnValue({}),
-  useVaultClient: jest.fn()
-}))
 const client = createMockClient({})
 const navigate = jest.fn()
 const setSharingsValue = jest.fn()

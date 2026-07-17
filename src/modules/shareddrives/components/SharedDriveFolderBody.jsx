@@ -3,7 +3,6 @@ import { useDispatch } from 'react-redux'
 import { useNavigate, useLocation, useParams } from 'react-router-dom'
 
 import { useClient } from 'cozy-client'
-import { useVaultClient } from 'cozy-keys-lib'
 import { useSharingContext } from 'cozy-sharing'
 import { makeActions } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
@@ -32,7 +31,6 @@ const SharedDriveFolderBody = ({
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const client = useClient()
-  const vaultClient = useVaultClient()
   const { driveId } = useParams()
   const { t } = useI18n()
   const { isOwner, byDocId, hasWriteAccess, refresh } = useSharingContext()
@@ -46,7 +44,6 @@ const SharedDriveFolderBody = ({
   const actionsOptions = {
     client,
     t,
-    vaultClient,
     pathname,
     isOwner,
     isMobile,

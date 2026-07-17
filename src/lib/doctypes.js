@@ -4,7 +4,6 @@ import { Contact, Group } from '@/models'
 export const DOCTYPE_FILES = 'io.cozy.files'
 export const DOCTYPE_FILES_SETTINGS = 'io.cozy.files.settings'
 export const DOCTYPE_DRIVE_SETTINGS = 'io.cozy.drive.settings'
-export const DOCTYPE_FILES_ENCRYPTION = 'io.cozy.files.encryption'
 export const DOCTYPE_FILES_SHORTCUT = 'io.cozy.files.shortcuts'
 export const DOCTYPE_ALBUMS = 'io.cozy.photos.albums'
 export const DOCTYPE_PHOTOS_SETTINGS = 'io.cozy.photos.settings'
@@ -24,10 +23,6 @@ export const schema = {
       old_versions: {
         type: 'has-many',
         doctype: 'io.cozy.files.versions'
-      },
-      encryption: {
-        type: 'io.cozy.files:has-many',
-        doctype: DOCTYPE_FILES_ENCRYPTION
       }
     }
   },

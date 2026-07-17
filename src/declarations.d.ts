@@ -182,10 +182,6 @@ declare module 'cozy-ui/transpiled/react/Typography' {
   export default Typography
 }
 
-declare module 'cozy-keys-lib' {
-  export const useVaultClient: () => object
-}
-
 declare module '*.styl' {
   const content: Record<string, string>
   export default content

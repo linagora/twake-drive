@@ -12,25 +12,6 @@ import configureStore from '../src/store/configureStore'
 import AppLike from 'test/components/AppLike'
 import FolderContent from 'test/components/FolderContent'
 
-jest.mock('cozy-keys-lib', () => ({
-  withVaultClient: BaseComponent => {
-    const Component = props => (
-      <>
-        {({ vaultClient }) => (
-          <BaseComponent vaultClient={vaultClient} {...props} />
-        )}
-      </>
-    )
-
-    Component.displayName = `withVaultClient(${
-      BaseComponent.displayName || BaseComponent.name
-    })`
-
-    return Component
-  },
-  useVaultClient: jest.fn()
-}))
-
 configure({ testIdAttribute: 'data-testid' })
 
 export const mockCozyClientRequestQuery = dir_id => {

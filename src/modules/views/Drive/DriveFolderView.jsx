@@ -2,7 +2,6 @@ import React, { useMemo } from 'react'
 import { Outlet, useParams } from 'react-router-dom'
 
 import flag from 'cozy-flags'
-import { useVaultClient } from 'cozy-keys-lib'
 import {
   useSharingContext,
   useNativeFileSharing,
@@ -64,7 +63,6 @@ const DriveFolderView = () => {
   const { allLoaded, hasWriteAccess, refresh, isOwner, byDocId } =
     sharingContext
   const nativeSharing = useNativeFileSharing()
-  const vaultClient = useVaultClient()
   const { hasClipboardData } = useClipboardContext()
 
   const { displayedFolder, isNotFound } = useDisplayedFolder()
@@ -106,7 +104,6 @@ const DriveFolderView = () => {
   const actionsOptions = {
     ...base,
     ...nativeSharing,
-    vaultClient,
     refresh,
     hasWriteAccess: canWriteToCurrentFolder,
     canMove: true,
