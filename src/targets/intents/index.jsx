@@ -16,12 +16,13 @@ import appMetadata from '@/lib/appMetadata'
 import { schema } from '@/lib/doctypes'
 import registerClientPlugins from '@/lib/registerClientPlugins'
 import IntentHandler from '@/modules/services'
+import { loadIntentLocales } from '@/targets/intents/loadIntentLocales'
 import { SelectionProvider } from '@/modules/selection/SelectionProvider'
 
 // ambient styles
 import styles from '@/styles/main.styl' // eslint-disable-line no-unused-vars
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const root = document.getElementById('main')
   const data = JSON.parse(root.dataset.cozy)
 
@@ -39,12 +40,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   registerClientPlugins(client)
 
+  const dictRequire = await loadIntentLocales(data.locale)
+
   createRoot(root).render(
-    <DriveProvider
-      client={client}
-      lang={data.locale}
-      dictRequire={lang => require(`@/locales/${lang}`)}
-    >
+    <DriveProvider client={client} lang={data.locale} dictRequire={dictRequire}>
       <SelectionProvider clearOnLocationChange={false}>
         <IntentHandler intentId={intent} />
       </SelectionProvider>
