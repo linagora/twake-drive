@@ -38,7 +38,6 @@ import Layout from '@/modules/layout/Layout'
 import { PublicNoteRedirect } from '@/modules/navigation/PublicNoteRedirect'
 import { SHARED_DRIVE_ROOT_FILE_ROUTE } from '@/modules/routeUtils'
 import FileOpenerExternal from '@/modules/viewer/FileOpenerExternal'
-import { KonnectorRoutes } from '@/modules/views/Drive/KonnectorRoutes'
 import { FavoritesView } from '@/modules/views/Favorites/FavoritesView'
 import { FolderDuplicateView } from '@/modules/views/Folder/FolderDuplicateView'
 import { DuplicateSharedDriveFilesView } from '@/modules/views/Modal/DuplicateSharedDriveFilesView'
@@ -174,7 +173,6 @@ const AppRoute = () => (
         <Route path="paywall" element={<OnlyOfficePaywallView />} />
         <Route path="share" element={<ShareDisplayedFolderView />} />
         <Route path="move" element={<MoveFilesView />} />
-        <Route path="harvest/:konnectorSlug/*" element={<KonnectorRoutes />} />
         <Route path="duplicate" element={<FolderDuplicateView />} />
       </Route>
 

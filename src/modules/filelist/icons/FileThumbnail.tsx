@@ -1,7 +1,7 @@
 import { Icon, FileTypeServer, Link, TrashDuotone } from '@linagora/twake-icons'
 import React from 'react'
 
-import { isReferencedBy, models } from 'cozy-client'
+import { models } from 'cozy-client'
 import { isDirectory } from 'cozy-client/dist/models/file'
 import { SharedBadge, SharingOwnerAvatar } from 'cozy-sharing'
 import Badge from 'cozy-ui/transpiled/react/Badge'
@@ -12,9 +12,7 @@ import styles from '@/styles/filelist.styl'
 
 import type { File, FolderPickerEntry } from '@/components/FolderPicker/types'
 import { useViewSwitcherContext } from '@/lib/ViewSwitcherContext'
-import { DOCTYPE_KONNECTORS } from '@/lib/doctypes'
 import { isInfected, isDriveBackedFile } from '@/modules/filelist/helpers'
-import { BadgeKonnector } from '@/modules/filelist/icons/BadgeKonnector'
 import FileIcon from '@/modules/filelist/icons/FileIcon'
 import FileIconMime from '@/modules/filelist/icons/FileIconMime'
 import { SharingShortcutIcon } from '@/modules/filelist/icons/SharingShortcutIcon'
@@ -83,8 +81,6 @@ const FileThumbnail: React.FC<FileThumbnailProps> = ({
   const isSimpleFile =
     !isSharingShortcut && !isRegularShortcut && !isInSyncFromSharing
   const isFolder = isSimpleFile && isDirectory(file)
-  const isKonnectorFolder = isReferencedBy(file, DOCTYPE_KONNECTORS)
-
   if (isFolder) {
     if (size && size >= 48) {
       return (
@@ -94,41 +90,20 @@ const FileThumbnail: React.FC<FileThumbnailProps> = ({
           height={size}
           bgcolor={viewType === 'list' ? 'var(--contrastBackgroundColor)' : ''}
         >
-          {isKonnectorFolder ? (
-            <BadgeKonnector file={file}>
-              {fileIcon}
-              {file.class !== 'shortcut' &&
-                showSharedBadge &&
-                viewType === 'grid' && (
-                  <SharedBadge
-                    docId={file._id}
-                    {...componentsProps.sharedBadge}
-                    small
-                  />
-                )}
-            </BadgeKonnector>
-          ) : (
-            <>
-              {fileIcon}
-              {file.class !== 'shortcut' &&
-                showSharedBadge &&
-                viewType === 'grid' && (
-                  <SharedBadge
-                    docId={file._id}
-                    {...componentsProps.sharedBadge}
-                    small
-                  />
-                )}
-            </>
-          )}
+          {fileIcon}
+          {file.class !== 'shortcut' &&
+            showSharedBadge &&
+            viewType === 'grid' && (
+              <SharedBadge
+                docId={file._id}
+                {...componentsProps.sharedBadge}
+                small
+              />
+            )}
         </Box>
       )
     }
   }
-  if (isKonnectorFolder) {
-    return <BadgeKonnector file={file}>{fileIcon}</BadgeKonnector>
-  }
-
   const infected = isInfected(file)
 
   const fileIconWithInfection = infected ? (
