@@ -11749,10 +11749,10 @@ __metadata:
     cozy-pouch-link: "npm:^60.19.0"
     cozy-realtime: "npm:^5.9.3"
     cozy-search: "npm:^2.0.2"
-    cozy-sharing: "npm:^36.4.0"
+    cozy-sharing: "npm:^37.0.1"
     cozy-stack-client: "npm:^60.28.0"
     cozy-tsconfig: "npm:^1.8.1"
-    cozy-ui: "npm:^140.1.2"
+    cozy-ui: "npm:^140.5.0"
     cozy-ui-plus: "npm:^10.0.0"
     cozy-viewer: "npm:^30.0.10"
     css-mediaquery: "npm:0.1.2"
@@ -12127,9 +12127,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cozy-sharing@npm:^36.4.0":
-  version: 36.4.0
-  resolution: "cozy-sharing@npm:36.4.0"
+"cozy-sharing@npm:^37.0.1":
+  version: 37.0.1
+  resolution: "cozy-sharing@npm:37.0.1"
   dependencies:
     "@cozy/minilog": "npm:^1.0.0"
     classnames: "npm:^2.5.1"
@@ -12146,13 +12146,13 @@ __metadata:
     cozy-flags: ">=4.8.1"
     cozy-intent: ">=2.29.1"
     cozy-minilog: ">=3.9.1"
-    cozy-ui: ">=139.0.2"
+    cozy-ui: ">=140.5.0"
     cozy-ui-plus: ">=6.0.0"
     prop-types: ">=15.7.2"
     react: ">=16.12.0"
     react-router: ">=5.0.1"
     twake-i18n: ">=0.3.0"
-  checksum: 10/185239be8e5cbcf07d8606a15f54fe614ec45da39bc511e4f349c0407d12764ff961e7af47e79abb1abe25c8b492bdc7392f9489b159a9f71c04d03c0a541600
+  checksum: 10/2dfd55c53ee901a6b69a4b8fd68179b44fcc126368461920dbad3ea62bc57ae7254efe187e6e35935a3a5e5b6ca889c927e8b2dfc5c95d75f42be047c0197606
   languageName: node
   linkType: hard
 
@@ -12236,9 +12236,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cozy-ui@npm:^140.1.2":
-  version: 140.1.2
-  resolution: "cozy-ui@npm:140.1.2"
+"cozy-ui@npm:^140.5.0":
+  version: 140.5.0
+  resolution: "cozy-ui@npm:140.5.0"
   dependencies:
     "@babel/runtime": "npm:^7.3.4"
     "@date-io/date-fns": "npm:1"
@@ -12255,6 +12255,7 @@ __metadata:
     normalize.css: "npm:^8.0.0"
     patch-package: "npm:^8.0.0"
     pdf-lib: "npm:1.17.1"
+    react-colorful: "npm:5.7.0"
     react-markdown: "npm:^4.0.8"
     react-popper: "npm:^2.2.3"
     react-remove-scroll: "npm:^2.4.0"
@@ -12273,7 +12274,7 @@ __metadata:
     twake-i18n: ">=0.3.0"
   bin:
     rsg-screenshots: scripts/screenshots.js
-  checksum: 10/57f15130020d77996c50df4e5fc6532adc7ae808c9c12c69ba73e54dc3adda234e3ef2444ebd0670cadfec3f92aa0651ffac3e74462e8bf4907fe9ff8c365fd9
+  checksum: 10/5fdd176fc3c1cc19fe192a96709b4113ebf2ff071ec95c03e0db71a21b639ce1a1340b1e99754c77d8aaaab7c022ba2579fffc5a74e071b17f79f4da8f208cfe
   languageName: node
   linkType: hard
 
@@ -22188,6 +22189,16 @@ __metadata:
   peerDependencies:
     react: ">=16.3.0"
   checksum: 10/17b2121d568edd809216f6bbae35a63543694e1c0b32209a9a356e5400794ff275dfc18c53ae898a7df95ce5f9b8123e37e09bd7de6735a4cb47e1bd0890d8c5
+  languageName: node
+  linkType: hard
+
+"react-colorful@npm:5.7.0":
+  version: 5.7.0
+  resolution: "react-colorful@npm:5.7.0"
+  peerDependencies:
+    react: ">=16.8.0"
+    react-dom: ">=16.8.0"
+  checksum: 10/4322e60386542e7b315bd50d006f16e54d4d3cbff8b2a9b0d4d6111b4abc45eb4cf8ff77b8752b3b12f9b02f63a773202b8a50767ddead3d96d6b70005ed0fa8
   languageName: node
   linkType: hard
 
