@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-07-17",
+  "sourceRevision": "e9d5702e867ba2e3d811d8d38e9b9fdd505049ef",
+  "baselineRevision": "d8c3a072fa7930b1b8c697520cdbc8a56d0010f3",
+  "method": {
+    "baseline": "Commit parent before removing Drive's encrypted-file integration.",
+    "candidate": "Drive with encrypted-file integration removed; cozy-keys-lib remains only for cozy-harvest-lib runtime peer requirements.",
+    "command": "yarn measure:file-picker-campaign --output docs/performance/file-picker-encrypted-files-removal-campaign.json --variant before=<baseline-worktree> --variant after=<candidate-worktree>"
+  },
+  "environment": {
+    "browser": "chromium",
+    "viewport": { "width": 1280, "height": 720 },
+    "runs": 5,
+    "warmups": 1,
+    "cache": "disabled",
+    "network": "40ms latency, 1.5Mbps down, 750Kbps up",
+    "cpuThrottlingRate": 4
+  },
+  "build": {
+    "baseline": {
+      "intentInitialJavaScriptGzipBytes": 1305624,
+      "intentAssetRequests": 11,
+      "generatedJavaScriptAndCssGzipBytes": 6672102,
+      "registryArchiveGzipBytes": 12729678
+    },
+    "candidate": {
+      "intentInitialJavaScriptGzipBytes": 1046846,
+      "intentAssetRequests": 10,
+      "generatedJavaScriptAndCssGzipBytes": 6665979,
+      "registryArchiveGzipBytes": 12723326
+    },
+    "delta": {
+      "intentInitialJavaScriptGzipBytes": -258778,
+      "intentAssetRequests": -1,
+      "generatedJavaScriptAndCssGzipBytes": -6123,
+      "registryArchiveGzipBytes": -6352
+    }
+  },
+  "startup": {
+    "baseline": {
+      "firstActionableFileRowMs": [9070, 9089.7, 9242.4, 9151.6, 9103.6],
+      "medianFirstActionableFileRowMs": 9103.6,
+      "medianJavaScriptTransferredBeforeInteractionBytes": 2397266,
+      "medianJavaScriptRequestCountBeforeInteraction": 12,
+      "medianRootFolderRequestCount": 1,
+      "medianRootFolderSuccessfulRequestCount": 1
+    },
+    "candidate": {
+      "firstActionableFileRowMs": [9128.7, 8985.2, 16156.4, 26753.6, 17701.9],
+      "medianFirstActionableFileRowMs": 16156.4,
+      "medianJavaScriptTransferredBeforeInteractionBytes": 2397266,
+      "medianJavaScriptRequestCountBeforeInteraction": 12,
+      "medianRootFolderRequestCount": 1,
+      "medianRootFolderSuccessfulRequestCount": 1
+    },
+    "medianFirstActionableFileRowDeltaMs": 7052.8,
+    "assessment": "Static payload reduction is conclusive. Startup timing is inconclusive because the candidate has three large outliers; runtime JavaScript transfer and request counts are unchanged."
+  },
+  "validation": {
+    "campaignTargetedTestsAndBuildPassed": true,
+    "startupRunsPerVariant": 5,
+    "fullUnitTestSuitePassedBeforeCampaign": true
+  }
+}
