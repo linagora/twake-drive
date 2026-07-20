@@ -20,7 +20,8 @@ const FilePicker = ({
   onChange,
   accept,
   multiple,
-  filePickerConfig
+  filePickerConfig,
+  onReadyToUse
 }) => {
   const [folderId, setFolderId] = useState(ROOT_DIR_ID)
   const [error, setError] = useState(null)
@@ -92,6 +93,7 @@ const FilePicker = ({
           multiple={multiple}
           folderSelectable
           error={error}
+          onReadyToUse={onReadyToUse}
         />
       }
       actions={
@@ -115,7 +117,8 @@ FilePicker.propTypes = {
   filePickerConfig: PropTypes.shape({
     sharingLink: PropTypes.object,
     downloadLink: PropTypes.object
-  })
+  }),
+  onReadyToUse: PropTypes.func
 }
 
 FilePicker.defaultProps = {

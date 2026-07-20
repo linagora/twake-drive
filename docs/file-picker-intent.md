@@ -227,6 +227,15 @@ User cancellation uses the generic intent `cancel` channel.
 
 There is no File Picker cancellation payload and no `CANCELLED` error code.
 
+## `readyToUse` signal
+
+In addition to the generic intent `ready` handshake, the File Picker sends a
+`readyToUse` message once its UI is rendered and the root folder has loaded.
+
+The signal fires exactly once per intent. Navigating into subfolders does not
+re-fire it. It fires even if the initial folder query errors, since the picker
+is still interactive.
+
 ## Handling both link modes
 
 ```js

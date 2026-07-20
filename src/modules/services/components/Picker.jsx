@@ -16,7 +16,7 @@ import {
 
 import logger from '@/lib/logger'
 
-const Picker = ({ service, intent }) => {
+const Picker = ({ service, intent, onReadyToUse }) => {
   const client = useClient()
   const serviceData = service.getData?.()
   const filePickerConfig = getFilePickerConfig(intent, serviceData)
@@ -85,6 +85,7 @@ const Picker = ({ service, intent }) => {
       onChange={handlePick}
       onClose={handleClose}
       filePickerConfig={filePickerConfig}
+      onReadyToUse={onReadyToUse}
       multiple
     />
   )
