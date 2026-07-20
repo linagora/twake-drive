@@ -3,6 +3,7 @@ import React, { useState, useRef } from 'react'
 import { useClient, useQuery } from 'cozy-client'
 import Backdrop from 'cozy-ui/transpiled/react/Backdrop'
 import Buttons from 'cozy-ui/transpiled/react/Buttons'
+import ColorList, { COLORS } from 'cozy-ui/transpiled/react/ColorList'
 import { FixedDialog } from 'cozy-ui/transpiled/react/CozyDialogs'
 import Grid from 'cozy-ui/transpiled/react/Grid'
 import { Spinner } from 'cozy-ui/transpiled/react/Spinner'
@@ -10,17 +11,17 @@ import Tab from 'cozy-ui/transpiled/react/Tab'
 import Tabs from 'cozy-ui/transpiled/react/Tabs'
 import Typography from 'cozy-ui/transpiled/react/Typography'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
+import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import { useI18n } from 'twake-i18n'
 
 import { CustomizedIcon } from './CustomizedIcon'
 
 import styles from '@/styles/folder-customizer.styl'
 
-import { ColorPicker } from '@/components/ColorPicker/ColorPicker'
-import { COLORS } from '@/components/ColorPicker/constants'
 import { IconPicker } from '@/components/IconPicker/index.jsx'
 import { addRecentIcon } from '@/hooks'
 import logger from '@/lib/logger'
+import FolderCustomColorPicker from '@/modules/views/Folder/FolderCustomColorPicker'
 import {
   buildFileOrFolderByIdQuery,
   buildSharedDriveFileOrFolderByIdQuery
@@ -46,9 +47,10 @@ FolderCustomizerModal.displayName = 'FolderCustomizerModal'
 
 const DumbFolderCustomizer = ({ folder, driveId, onClose }) => {
   const { t } = useI18n()
+  const { isDesktop } = useBreakpoints()
   const tabItems = ['colors', 'icons']
   const [selectedColor, setSelectedColor] = useState(
-    folder.metadata?.decorations?.color || COLORS[8]
+    folder.metadata?.decorations?.color || COLORS[4]
   )
   const [selectedIcon, setSelectedIcon] = useState(
     folder.metadata?.decorations?.icon || null
@@ -56,18 +58,11 @@ const DumbFolderCustomizer = ({ folder, driveId, onClose }) => {
   const [selectedIconColor, setSelectedIconColor] = useState(
     folder.metadata?.decorations?.icon_color
   )
+  const [customColoranchorEl, setCustomColorAnchorEl] = useState(null)
+  const [selectedTab, setSelectedTab] = useState(0)
   const { showAlert } = useAlert()
   const client = useClient()
-
-  const handleColorSelect = color => {
-    setSelectedColor(color)
-  }
-  const handleIconSelect = iconName => {
-    setSelectedIcon(iconName)
-  }
-  const handleIconColorSelect = color => {
-    setSelectedIconColor(color)
-  }
+  const iconContainerRef = useRef(null)
 
   const handleApply = async () => {
     try {
@@ -119,12 +114,6 @@ const DumbFolderCustomizer = ({ folder, driveId, onClose }) => {
       onClose()
     }
   }
-  const [selectedTab, setSelectedTab] = useState(0)
-  const iconContainerRef = useRef(null)
-
-  const handleTabChange = (_, newValue) => {
-    setSelectedTab(newValue)
-  }
 
   return (
     <FixedDialog
@@ -154,7 +143,7 @@ const DumbFolderCustomizer = ({ folder, driveId, onClose }) => {
               value={selectedTab}
               textColor="primary"
               indicatorColor="primary"
-              onChange={handleTabChange}
+              onChange={(_, newValue) => setSelectedTab(newValue)}
             >
               {tabItems.map(tabItem => (
                 <Tab
@@ -180,9 +169,23 @@ const DumbFolderCustomizer = ({ folder, driveId, onClose }) => {
                 >
                   {t('FolderCustomizer.description')}
                 </Typography>
-                <ColorPicker
+                <ColorList
+                  size="medium"
+                  customColorProps={{
+                    enabled: isDesktop,
+                    onClick: ev => setCustomColorAnchorEl(ev.currentTarget)
+                  }}
                   selectedColor={selectedColor}
-                  onColorSelect={handleColorSelect}
+                  onClick={color => setSelectedColor(color)}
+                />
+                <FolderCustomColorPicker
+                  anchorEl={customColoranchorEl}
+                  color={selectedColor}
+                  onSave={color => {
+                    setSelectedColor(color)
+                    setCustomColorAnchorEl(null)
+                  }}
+                  onClose={() => setCustomColorAnchorEl(null)}
                 />
               </Grid>
             )}
@@ -194,8 +197,8 @@ const DumbFolderCustomizer = ({ folder, driveId, onClose }) => {
               >
                 <IconPicker
                   selectedIcon={selectedIcon}
-                  onIconSelect={handleIconSelect}
-                  onIconColorSelect={handleIconColorSelect}
+                  onIconSelect={iconName => setSelectedIcon(iconName)}
+                  onIconColorSelect={color => setSelectedIconColor(color)}
                   scrollContainerRef={iconContainerRef}
                 />
               </Grid>
