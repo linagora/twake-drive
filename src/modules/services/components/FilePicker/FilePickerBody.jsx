@@ -1,6 +1,6 @@
 import cx from 'classnames'
 import PropTypes from 'prop-types'
-import React, { useCallback, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { models, useQuery } from 'cozy-client'
 import Alert from 'cozy-ui/transpiled/react/Alert'
@@ -27,7 +27,8 @@ const FilePickerBody = ({
   itemTypesAccepted,
   multiple,
   folderSelectable,
-  error
+  error,
+  onReadyToUse
 }) => {
   const { t } = useI18n()
   const selectionContainerRef = useRef(null)
@@ -44,10 +45,16 @@ const FilePickerBody = ({
   const contentFolderQuery = buildContentFolderQuery(folderId)
   const {
     data: contentFolder,
+    isLoading,
     hasMore,
     fetchMore
   } = useQuery(contentFolderQuery.definition, contentFolderQuery.options)
   const items = contentFolder || []
+
+  useEffect(() => {
+    if (isLoading) return
+    onReadyToUse?.()
+  }, [isLoading, onReadyToUse])
 
   const canSelectItem = useCallback(
     item =>
@@ -124,7 +131,8 @@ FilePickerBody.propTypes = {
   itemTypesAccepted: PropTypes.arrayOf(PropTypes.string).isRequired,
   multiple: PropTypes.bool,
   folderSelectable: PropTypes.bool,
-  error: PropTypes.string
+  error: PropTypes.string,
+  onReadyToUse: PropTypes.func
 }
 
 FilePickerBody.defaultProps = {

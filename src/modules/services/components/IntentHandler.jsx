@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 
 import { useClient } from 'cozy-client'
 import Intents from 'cozy-interapp'
@@ -31,6 +31,13 @@ const IntentHandler = ({ intentId }) => {
   })
 
   const ServiceComponent = state.component
+  const hasNotifiedReadyRef = useRef(false)
+
+  const handleReadyToUse = useCallback(() => {
+    if (hasNotifiedReadyRef.current) return
+    hasNotifiedReadyRef.current = true
+    state.service?.notifyReadyToUse()
+  }, [state.service])
 
   useEffect(() => {
     const startService = async () => {
@@ -66,7 +73,11 @@ const IntentHandler = ({ intentId }) => {
   }, [client, intentId])
 
   return ServiceComponent ? (
-    <ServiceComponent service={state.service} intent={state.intent} />
+    <ServiceComponent
+      service={state.service}
+      intent={state.intent}
+      onReadyToUse={handleReadyToUse}
+    />
   ) : (
     <div className="u-w-100 u-bg-charcoalGrey" />
   )
