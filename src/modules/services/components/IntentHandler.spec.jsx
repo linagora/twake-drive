@@ -1,11 +1,14 @@
 import { act, render, waitFor } from '@testing-library/react'
 import React from 'react'
 
+import logger from 'cozy-logger'
+
 import { buildContentFolderQuery } from './FilePicker/queries'
 import IntentHandler from './IntentHandler'
 
 const mockClient = { query: jest.fn() }
 const mockCreateService = jest.fn()
+const mockGetIntent = jest.fn()
 const mockRootFolderDefinition = { doctype: 'io.cozy.files' }
 const mockRootFolderOptions = {
   as: 'buildContentFolderQuery-io.cozy.files.root-dir',
@@ -17,7 +20,10 @@ jest.mock('cozy-client', () => ({
 }))
 
 jest.mock('cozy-interapp', () =>
-  jest.fn().mockImplementation(() => ({ createService: mockCreateService }))
+  jest.fn().mockImplementation(() => ({
+    createService: mockCreateService,
+    request: { get: mockGetIntent }
+  }))
 )
 
 jest.mock('./FilePicker/queries', () => ({
@@ -41,6 +47,9 @@ function makeDeferredPromise() {
 
 describe('IntentHandler', () => {
   beforeEach(() => {
+    mockGetIntent.mockResolvedValue({
+      attributes: { action: 'PICK', type: 'io.cozy.files' }
+    })
     buildContentFolderQuery.mockReturnValue({
       definition: () => mockRootFolderDefinition,
       options: mockRootFolderOptions
@@ -61,14 +70,16 @@ describe('IntentHandler', () => {
       <IntentHandler intentId="intent-id" />
     )
 
-    expect(buildContentFolderQuery).toHaveBeenCalledWith(
-      'io.cozy.files.root-dir'
+    expect(mockCreateService).toHaveBeenCalledWith('intent-id', window)
+    await waitFor(() =>
+      expect(buildContentFolderQuery).toHaveBeenCalledWith(
+        'io.cozy.files.root-dir'
+      )
     )
     expect(mockClient.query).toHaveBeenCalledWith(
       mockRootFolderDefinition,
       mockRootFolderOptions
     )
-    expect(mockCreateService).toHaveBeenCalledWith('intent-id', window)
 
     const service = {
       getIntent: () => ({
@@ -98,5 +109,21 @@ describe('IntentHandler', () => {
     const { getByTestId } = render(<IntentHandler intentId="intent-id" />)
 
     await waitFor(() => expect(getByTestId('picker')).toBeInTheDocument())
+  })
+
+  it('does not prefetch the root folder for unrelated intents', async () => {
+    const intent = {
+      attributes: { action: 'OPEN', type: 'io.cozy.files' }
+    }
+    const getIntent = jest.fn(() => intent)
+    mockGetIntent.mockResolvedValue(intent)
+    mockCreateService.mockResolvedValue({ getIntent })
+
+    render(<IntentHandler intentId="intent-id" />)
+
+    await waitFor(() => expect(getIntent).toHaveBeenCalled())
+    expect(buildContentFolderQuery).not.toHaveBeenCalled()
+    expect(mockClient.query).not.toHaveBeenCalled()
+    expect(logger.warn).not.toHaveBeenCalled()
   })
 })
