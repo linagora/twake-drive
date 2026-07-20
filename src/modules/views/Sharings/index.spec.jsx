@@ -248,21 +248,20 @@ describe('Sharings View', () => {
       })
     })
 
-    it('renders the drives tab when deep-linked even without drives', async () => {
-      // The ?tab= URL contract is kept: a deep link opens the tab and the
-      // active pill renders even while the tab has no content.
+    it('canonicalizes an empty drives deep link to the with-me tab', async () => {
       window.location.hash = '#/sharings?tab=drives'
       useQuery.mockReturnValue(filesFixtureWithPath)
 
-      const { getByRole } = setup()
+      const { getByRole, queryByRole } = setup()
 
       await waitFor(() => {
-        expect(getByRole('tab', { name: 'Team drives' })).toBeInTheDocument()
+        expect(getByRole('tab', { name: 'With me' })).toHaveAttribute(
+          'aria-selected',
+          'true'
+        )
       })
-      expect(getByRole('tab', { name: 'Team drives' })).toHaveAttribute(
-        'aria-selected',
-        'true'
-      )
+      expect(queryByRole('tab', { name: 'Team drives' })).toBeNull()
+      expect(window.location.hash).toContain('tab=with-me')
     })
   })
 })

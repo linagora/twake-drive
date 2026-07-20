@@ -5,7 +5,7 @@ import { ShareModal } from 'cozy-sharing'
 
 import { ShareDisplayedFolderView } from './ShareDisplayedFolderView'
 
-import { SHARING_TAB_DRIVES } from '@/constants/config'
+import { SHARING_TAB_WITH_ME } from '@/constants/config'
 import { useDisplayedFolder } from '@/hooks'
 
 const mockNavigate = jest.fn()
@@ -32,7 +32,7 @@ describe('ShareDisplayedFolderView', () => {
     jest.clearAllMocks()
   })
 
-  it('should redirect to the drives sharing tab after leaving a shared drive', () => {
+  it('should redirect to the with-me tab after leaving a shared drive', () => {
     useDisplayedFolder.mockReturnValue({
       displayedFolder: {
         driveId: 'drive-id',
@@ -45,7 +45,7 @@ describe('ShareDisplayedFolderView', () => {
     fireEvent.click(screen.getByText('Revoke self'))
 
     expect(mockNavigate).toHaveBeenCalledWith(
-      `/sharings?tab=${SHARING_TAB_DRIVES}`,
+      `/sharings?tab=${SHARING_TAB_WITH_ME}`,
       {
         replace: true
       }
@@ -63,7 +63,10 @@ describe('ShareDisplayedFolderView', () => {
 
     fireEvent.click(screen.getByText('Revoke self'))
 
-    expect(mockNavigate).toHaveBeenCalledWith('/sharings', { replace: true })
+    expect(mockNavigate).toHaveBeenCalledWith(
+      `/sharings?tab=${SHARING_TAB_WITH_ME}`,
+      { replace: true }
+    )
   })
 
   it('should keep passing onClose to the share modal', () => {

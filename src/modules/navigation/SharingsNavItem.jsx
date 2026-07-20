@@ -5,6 +5,7 @@ import { useQuery } from 'cozy-client'
 import { isSharingShortcutNew } from 'cozy-client/dist/models/file'
 import { useSharingContext } from 'cozy-sharing'
 
+import { DEFAULT_SHARINGS_VIEW_ROUTE } from '@/constants/config'
 import { NavItem } from '@/modules/navigation/NavItem'
 import { useSharedDrives } from '@/modules/shareddrives/hooks/useSharedDrives'
 import { buildSharingsQuery } from '@/queries'
@@ -53,7 +54,7 @@ const SharingsNavItem = ({ clickState }) => {
 
   return (
     <NavItem
-      to="/sharings"
+      to={DEFAULT_SHARINGS_VIEW_ROUTE}
       icon={<Icon icon={ShareExternal} />}
       label="sharings"
       isActive={isActive}

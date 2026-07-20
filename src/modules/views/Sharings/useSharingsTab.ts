@@ -17,6 +17,8 @@ const SHARINGS_TABS = [
 ] as const
 
 export type SharingsTab = (typeof SHARINGS_TABS)[number]
+type SetTabOptions = { replace?: boolean }
+type SetSharingsTab = (tab: SharingsTab, options?: SetTabOptions) => void
 
 const TAB_SEARCH_PARAM = 'tab'
 
@@ -51,9 +53,10 @@ const withTab = (prev: URLSearchParams, tab: SharingsTab): URLSearchParams => {
  * unrecognized (including the legacy numeric `?tab=1`) or unavailable values
  * resolve to the default "With me" tab, and the URL is canonicalized with a
  * `replace` navigation so the back button is never trapped. User tab switches
- * push a history entry so browser back/forward moves between visited tabs.
+ * push a history entry by default; callers can request `replace` for later
+ * canonicalization once asynchronously loaded tab availability is known.
  */
-export const useSharingsTab = (): [SharingsTab, (tab: SharingsTab) => void] => {
+export const useSharingsTab = (): [SharingsTab, SetSharingsTab] => {
   const [searchParams, setSearchParams] = useSearchParams()
   const drivesAvailable = areDrivesAvailable()
 
@@ -71,7 +74,7 @@ export const useSharingsTab = (): [SharingsTab, (tab: SharingsTab) => void] => {
   }, [paramValue, tab, setSearchParams])
 
   const setTab = useCallback(
-    (nextTab: SharingsTab): void => {
+    (nextTab: SharingsTab, options: SetTabOptions = {}): void => {
       if (!isAvailableTab(nextTab, drivesAvailable)) {
         logger.warn(
           `useSharingsTab: ignoring unknown or unavailable tab value "${String(
@@ -87,9 +90,11 @@ export const useSharingsTab = (): [SharingsTab, (tab: SharingsTab) => void] => {
       if (nextTab === tab) {
         return
       }
-      // A user tab switch pushes a history entry so back/forward moves
-      // between visited tabs; unrelated params (future filters) are kept.
-      setSearchParams(prev => withTab(prev, nextTab))
+      // User tab switches push by default so back/forward moves between tabs;
+      // canonicalization callers can replace. Unrelated params are kept.
+      setSearchParams(prev => withTab(prev, nextTab), {
+        replace: options.replace
+      })
     },
     [drivesAvailable, setSearchParams, tab]
   )
