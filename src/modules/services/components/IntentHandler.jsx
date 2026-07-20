@@ -26,25 +26,29 @@ const IntentHandler = ({ intentId }) => {
       let service
       let intent
       try {
-        const rootFolderQuery = buildContentFolderQuery(ROOT_DIR_ID)
-        const rootFolderPrefetch = client
-          .query(rootFolderQuery.definition(), rootFolderQuery.options)
-          .catch(error => {
-            logger.warn('File Picker root prefetch failed', error)
-            return null
-          })
-
         const intents = new Intents({ client })
-        service = await intents.createService(intentId, window)
-        intent = service.getIntent()
+        const intentPromise = intents.request.get(intentId)
+        const servicePromise = intents.createService(intentId, window)
+        const pendingIntent = await intentPromise
+        let rootFolderPrefetch = null
 
         if (
-          intent.attributes.action === 'PICK' &&
-          intent.attributes.type === 'io.cozy.files'
+          pendingIntent.attributes.action === 'PICK' &&
+          pendingIntent.attributes.type === 'io.cozy.files'
         ) {
-          await rootFolderPrefetch
           component = Picker
+          const rootFolderQuery = buildContentFolderQuery(ROOT_DIR_ID)
+          rootFolderPrefetch = client
+            .query(rootFolderQuery.definition(), rootFolderQuery.options)
+            .catch(error => {
+              logger.warn('File Picker root prefetch failed', error)
+              return null
+            })
         }
+
+        service = await servicePromise
+        intent = service.getIntent()
+        await rootFolderPrefetch
 
         setState({
           component,
