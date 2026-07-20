@@ -9,6 +9,18 @@ import Picker from './Picker'
 
 import { ROOT_DIR_ID } from '@/constants/config'
 
+async function initPicker(client) {
+  const rootFolderQuery = buildContentFolderQuery(ROOT_DIR_ID)
+
+  try {
+    await client.query(rootFolderQuery.definition(), rootFolderQuery.options)
+  } catch (error) {
+    logger.warn('File Picker root prefetch failed', error)
+  }
+
+  return Picker
+}
+
 const IntentHandler = ({ intentId }) => {
   const client = useClient()
 
@@ -22,33 +34,22 @@ const IntentHandler = ({ intentId }) => {
 
   useEffect(() => {
     const startService = async () => {
-      let component
       let service
-      let intent
       try {
         const intents = new Intents({ client })
+        // createService exposes the intent only after the handshake, so fetch it separately to start prefetching earlier
         const intentPromise = intents.request.get(intentId)
         const servicePromise = intents.createService(intentId, window)
         const pendingIntent = await intentPromise
-        let rootFolderPrefetch = null
-
-        if (
+        const pickerInitialization =
           pendingIntent.attributes.action === 'PICK' &&
           pendingIntent.attributes.type === 'io.cozy.files'
-        ) {
-          component = Picker
-          const rootFolderQuery = buildContentFolderQuery(ROOT_DIR_ID)
-          rootFolderPrefetch = client
-            .query(rootFolderQuery.definition(), rootFolderQuery.options)
-            .catch(error => {
-              logger.warn('File Picker root prefetch failed', error)
-              return null
-            })
-        }
+            ? initPicker(client)
+            : null
 
         service = await servicePromise
-        intent = service.getIntent()
-        await rootFolderPrefetch
+        const intent = service.getIntent()
+        const component = await pickerInitialization
 
         setState({
           component,
