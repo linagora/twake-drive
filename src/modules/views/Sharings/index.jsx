@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useEffect, useMemo } from 'react'
 import { Outlet } from 'react-router-dom'
 
 import { hasQueryBeenLoaded, useQuery } from 'cozy-client'
@@ -22,7 +22,7 @@ import { useFolderViewBase } from '../Folder/hooks/useFolderViewBase'
 import FolderViewBodyVz from '../Folder/virtualized/FolderViewBody'
 
 import useHead from '@/components/useHead'
-import { SHARING_TAB_DRIVES } from '@/constants/config'
+import { SHARING_TAB_DRIVES, SHARING_TAB_WITH_ME } from '@/constants/config'
 import { useFolderSort } from '@/hooks'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import {
@@ -46,11 +46,9 @@ import { shareFileRootSharedDrive } from '@/modules/shareddrives/components/acti
 import { shareSharedDrive } from '@/modules/shareddrives/components/actions/shareSharedDrive'
 import { buildSharingsQuery } from '@/queries'
 
-// The Team drives tab only shows while it has content; it stays rendered
-// when it is the active tab so a ?tab=drives deep link keeps a visible,
-// consistent control (the list then shows the empty state).
-const shouldShowDrivesTab = ({ hasDrives, tab }) =>
-  areDrivesAvailable() && (hasDrives || tab === SHARING_TAB_DRIVES)
+// The Team drives tab only exists while the feature is enabled and at least
+// one organizational drive can be displayed in it.
+const shouldShowDrivesTab = ({ hasDrives }) => areDrivesAvailable() && hasDrives
 
 const useSharingsQueryResult = (sharedDocumentIds, allLoaded) => {
   const query = useMemo(
@@ -83,7 +81,13 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
     }
   )
 
-  const showDrives = shouldShowDrivesTab({ hasDrives, tab })
+  const showDrives = shouldShowDrivesTab({ hasDrives })
+
+  useEffect(() => {
+    if (sharedDrivesLoaded && tab === SHARING_TAB_DRIVES && !showDrives) {
+      setTab(SHARING_TAB_WITH_ME, { replace: true })
+    }
+  }, [setTab, sharedDrivesLoaded, showDrives, tab])
 
   useKeyboardShortcuts({
     onPaste: () => refresh(),

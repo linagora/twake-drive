@@ -45,6 +45,11 @@ const TabProbe = (): JSX.Element => {
         go-drives
       </button>
       <button onClick={(): void => setTab(SHARING_TAB_BY_ME)}>go-by-me</button>
+      <button
+        onClick={(): void => setTab(SHARING_TAB_WITH_ME, { replace: true })}
+      >
+        replace-with-me
+      </button>
       <button onClick={(): void => navigate(-1)}>go-back</button>
     </>
   )
@@ -149,6 +154,17 @@ describe('useSharingsTab', () => {
     fireEvent.click(screen.getByText('go-back'))
     expect(getTab()).toBe(SHARING_TAB_BY_ME)
     expect(getSearch()).toBe(`?tab=${SHARING_TAB_BY_ME}`)
+  })
+
+  it('can replace the current history entry when canonicalizing a tab', () => {
+    renderWithSearch(`?tab=${SHARING_TAB_BY_ME}`)
+
+    fireEvent.click(screen.getByText('replace-with-me'))
+    expect(getTab()).toBe(SHARING_TAB_WITH_ME)
+
+    fireEvent.click(screen.getByText('go-back'))
+    expect(getTab()).toBe(SHARING_TAB_WITH_ME)
+    expect(getSearch()).toBe(`?tab=${SHARING_TAB_WITH_ME}`)
   })
 
   it('returns to the canonicalized entry when going back after a tab switch', () => {

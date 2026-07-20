@@ -21,5 +21,6 @@ export const MAX_UPLOAD_FILE_COUNT = 500
 export const SHARING_TAB_WITH_ME = 'with-me'
 export const SHARING_TAB_BY_ME = 'by-me'
 export const SHARING_TAB_DRIVES = 'drives'
-export const DEFAULT_UPLOAD_PROGRESS_HIDE_DELAY = 5000
 export const SHARINGS_VIEW_ROUTE = '/sharings'
+export const DEFAULT_SHARINGS_VIEW_ROUTE = `${SHARINGS_VIEW_ROUTE}?tab=${SHARING_TAB_WITH_ME}`
+export const DEFAULT_UPLOAD_PROGRESS_HIDE_DELAY = 5000

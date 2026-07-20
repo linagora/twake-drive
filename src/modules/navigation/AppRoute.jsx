@@ -27,10 +27,10 @@ import TrashFolderView from '../views/Trash/TrashFolderView'
 
 import FileHistory from '@/components/FileHistory'
 import {
+  DEFAULT_SHARINGS_VIEW_ROUTE,
   ROOT_DIR_ID,
-  TRASH_DIR_ID,
   SHARED_DRIVES_DIR_ID,
-  SHARING_TAB_DRIVES
+  TRASH_DIR_ID
 } from '@/constants/config'
 import { SentryRoutes } from '@/lib/sentry'
 import { UploaderComponent } from '@/modules//views/Upload/UploaderComponent'
@@ -71,7 +71,7 @@ const FilesRedirect = () => {
 }
 
 const SharedDrivesRedirect = () => {
-  return <Navigate to={`/sharings?tab=${SHARING_TAB_DRIVES}`} replace={true} />
+  return <Navigate to={DEFAULT_SHARINGS_VIEW_ROUTE} replace={true} />
 }
 
 const OutletWrapper = ({ Component }) => (
