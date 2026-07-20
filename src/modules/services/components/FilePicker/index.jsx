@@ -74,7 +74,7 @@ const FilePicker = ({
       onClose={handleClose}
       size="large"
       disableTitleAutoPadding
-      classes={{ paper: styles.filePickerDialogPaper }}
+      classes={{ paper: `${styles.filePickerDialogPaper} u-h-100` }}
       componentsProps={{
         dialogTitle: {
           className: 'u-pl-1-half'
