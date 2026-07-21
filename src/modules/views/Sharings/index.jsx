@@ -62,6 +62,21 @@ const useSharingsQueryResult = (sharedDocumentIds, allLoaded) => {
   return useQuery(query.definition, query.options)
 }
 
+function useCanonicalizeUnavailableDrivesTab({
+  setTab,
+  sharedDrivesLoaded,
+  showDrives,
+  tab
+}) {
+  useEffect(() => {
+    if (!sharedDrivesLoaded) return
+    if (tab !== SHARING_TAB_DRIVES) return
+    if (showDrives) return
+
+    setTab(SHARING_TAB_WITH_ME, { replace: true })
+  }, [setTab, sharedDrivesLoaded, showDrives, tab])
+}
+
 export const SharingsView = ({ sharedDocumentIds = [] }) => {
   const base = useFolderViewBase()
   const sharingContext = useSharingContext()
@@ -83,11 +98,12 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
 
   const showDrives = shouldShowDrivesTab({ hasDrives })
 
-  useEffect(() => {
-    if (sharedDrivesLoaded && tab === SHARING_TAB_DRIVES && !showDrives) {
-      setTab(SHARING_TAB_WITH_ME, { replace: true })
-    }
-  }, [setTab, sharedDrivesLoaded, showDrives, tab])
+  useCanonicalizeUnavailableDrivesTab({
+    setTab,
+    sharedDrivesLoaded,
+    showDrives,
+    tab
+  })
 
   useKeyboardShortcuts({
     onPaste: () => refresh(),
