@@ -3,6 +3,7 @@ import path from 'path'
 
 import { USERS } from '../helpers/config'
 import { test, expect, safeUnlink, stamp } from '../helpers/fixtures'
+import { findLinkPermission } from '../helpers/stack'
 import { FilePickerPage } from '../pages/FilePickerPage'
 
 const FIXTURE = path.resolve(__dirname, '..', 'fixtures', 'sample.txt')
@@ -72,11 +73,23 @@ test.describe('File Picker', () => {
     // Footer buttons should be enabled once a file is selected.
     await expect(picker.isPublicLinkDisabled()).resolves.toBe(false)
 
-    await picker.clickPublicLink()
+    await picker.openPublicLinkAccess()
+    await expect(picker.isLinkAccessOpen()).resolves.toBe(true)
+    await expect(picker.hasLinkAccessDocument(testFileName)).resolves.toBe(true)
+    await picker.setLinkAccess('Editor')
+    await picker.confirmPublicLinks()
     await picker.waitForClosed()
 
     const link = await picker.getConfirmationLink()
     expect(link).toMatch(/^https?:\/\//)
+
+    const document = await picker.getResultDocument()
+    const [entry] = document as Array<{ id: string }>
+    const permission = await findLinkPermission(USERS.alice.instance, entry.id)
+    const fileRule = Object.values(
+      permission.attributes.permissions ?? {}
+    ).find(rule => rule.values?.includes(entry.id))
+    expect(fileRule?.verbs).toEqual(['GET', 'POST', 'PUT', 'PATCH'])
 
     // Open the link in a new tab — the Cozy public page should load
     // (heading visible) or show a download button.
@@ -139,7 +152,7 @@ test.describe('File Picker', () => {
     // Public link must be enabled.
     await expect(picker.isPublicLinkDisabled()).resolves.toBe(false)
 
-    await picker.clickPublicLink()
+    await picker.createPublicLinks()
     await picker.waitForClosed()
 
     const link = await picker.getConfirmationLink()
@@ -171,7 +184,7 @@ test.describe('File Picker', () => {
     // Temporary download should be disabled (it's a folder).
     await expect(picker.isTemporaryDownloadDisabled()).resolves.toBe(true)
 
-    await picker.clickPublicLink()
+    await picker.createPublicLinks()
     await picker.waitForClosed()
 
     const link = await picker.getConfirmationLink()
@@ -212,7 +225,7 @@ test.describe('File Picker', () => {
     await expect(picker.hasTemporaryDownloadButton()).resolves.toBe(false)
     await expect(picker.isPublicLinkDisabled()).resolves.toBe(false)
 
-    await picker.clickPublicLink()
+    await picker.createPublicLinks()
     await picker.waitForClosed()
 
     const document = await picker.getResultDocument()
@@ -249,7 +262,7 @@ test.describe('File Picker', () => {
   }) => {
     picker = new FilePickerPage(alicePage)
     await pick(testFileName, 'Default (sharing + download)')
-    await picker.clickPublicLink()
+    await picker.createPublicLinks()
     await picker.waitForClosed()
 
     const document = await picker.getResultDocument()
@@ -278,7 +291,12 @@ test.describe('File Picker', () => {
     await picker.toggleItem(largeFileName)
 
     await expect(picker.isPublicLinkDisabled()).resolves.toBe(false)
-    await picker.clickPublicLink()
+    await picker.openPublicLinkAccess()
+    await expect(picker.hasLinkAccessDocument(testFileName)).resolves.toBe(true)
+    await expect(picker.hasLinkAccessDocument(largeFileName)).resolves.toBe(
+      true
+    )
+    await picker.confirmPublicLinks()
     await picker.waitForClosed()
 
     const document = await picker.getResultDocument()
@@ -296,36 +314,35 @@ test.describe('File Picker', () => {
     await picker.closeConfirmation()
   })
 
-  test(
-    'select two files and generate one temporary download link per file',
-    async ({ alicePage }) => {
-      picker = new FilePickerPage(alicePage)
-      await picker.open()
-      await picker.navigateToFolder(parentFolder)
-      await picker.selectItem(testFileName)
-      await picker.toggleItem(largeFileName)
+  test('select two files and generate one temporary download link per file', async ({
+    alicePage
+  }) => {
+    picker = new FilePickerPage(alicePage)
+    await picker.open()
+    await picker.navigateToFolder(parentFolder)
+    await picker.selectItem(testFileName)
+    await picker.toggleItem(largeFileName)
 
-      await expect(picker.isTemporaryDownloadDisabled()).resolves.toBe(false)
-      await picker.clickTemporaryDownloadLink()
-      await picker.waitForClosed()
+    await expect(picker.isTemporaryDownloadDisabled()).resolves.toBe(false)
+    await picker.clickTemporaryDownloadLink()
+    await picker.waitForClosed()
 
-      const document = await picker.getResultDocument()
-      expect(Array.isArray(document)).toBe(true)
-      const entries = document as Array<Record<string, unknown>>
-      expect(entries).toHaveLength(2)
+    const document = await picker.getResultDocument()
+    expect(Array.isArray(document)).toBe(true)
+    const entries = document as Array<Record<string, unknown>>
+    expect(entries).toHaveLength(2)
 
-      for (const entry of entries) {
-        expect(entry.downloadLink).toMatch(/^https?:\/\//)
-        expect(entry.sharingLink).toBeUndefined()
-        expect(entry.id).toEqual(expect.any(String))
-        expect(entry.name).toEqual(expect.any(String))
-        expect(entry.size).toEqual(expect.any(Number))
-        expect(entry.mimeType).toEqual(expect.any(String))
-      }
-
-      await picker.closeConfirmation()
+    for (const entry of entries) {
+      expect(entry.downloadLink).toMatch(/^https?:\/\//)
+      expect(entry.sharingLink).toBeUndefined()
+      expect(entry.id).toEqual(expect.any(String))
+      expect(entry.name).toEqual(expect.any(String))
+      expect(entry.size).toEqual(expect.any(Number))
+      expect(entry.mimeType).toEqual(expect.any(String))
     }
-  )
+
+    await picker.closeConfirmation()
+  })
 
   test('select a folder and a file: public link enabled, download disabled', async ({
     alicePage,
@@ -347,7 +364,7 @@ test.describe('File Picker', () => {
     // Public link still works.
     await expect(picker.isPublicLinkDisabled()).resolves.toBe(false)
 
-    await picker.clickPublicLink()
+    await picker.createPublicLinks()
     await picker.waitForClosed()
 
     const document = await picker.getResultDocument()
@@ -395,7 +412,7 @@ test.describe('File Picker', () => {
         { times: 1 }
       )
 
-      await picker.clickPublicLink()
+      await picker.clickTemporaryDownloadLink()
 
       // Picker must stay open with an inline error.
       await expect(picker.isOpen()).resolves.toBe(true)

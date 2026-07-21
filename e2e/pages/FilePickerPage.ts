@@ -2,6 +2,8 @@ import type { FrameLocator, Locator, Page } from '@playwright/test'
 
 import { USERS } from '../helpers/config'
 
+export type LinkAccessLevel = 'Viewer' | 'Editor'
+
 /**
  * Page object for the File Picker intent dialog.
  *
@@ -95,10 +97,45 @@ export class FilePickerPage {
       .click({ modifiers: [isMac ? 'Meta' : 'Control'] })
   }
 
-  /** Click the "Public link" button in the picker footer. */
-  async clickPublicLink(): Promise<void> {
+  /** Open the link access dialog from the "Public link" footer button. */
+  async openPublicLinkAccess(): Promise<void> {
     const frame = this.getFrameLocator()
     await frame.getByTestId('public-link-btn').click()
+    await this.getLinkAccessDialog().waitFor({ state: 'visible' })
+  }
+
+  /** Select the access level used by the generated public links. */
+  async setLinkAccess(level: LinkAccessLevel): Promise<void> {
+    const frame = this.getFrameLocator()
+    await this.getLinkAccessDialog()
+      .getByRole('button', { name: 'Access level' })
+      .click()
+    await frame.getByRole('menuitem', { name: level, exact: true }).click()
+  }
+
+  /** Confirm the current access settings and generate the public links. */
+  async confirmPublicLinks(): Promise<void> {
+    await this.getLinkAccessDialog()
+      .getByRole('button', { name: 'Add links' })
+      .click()
+  }
+
+  /** Open the access dialog and generate public links with default settings. */
+  async createPublicLinks(): Promise<void> {
+    await this.openPublicLinkAccess()
+    await this.confirmPublicLinks()
+  }
+
+  /** Whether the link access dialog is currently visible. */
+  async isLinkAccessOpen(): Promise<boolean> {
+    return this.getLinkAccessDialog().isVisible()
+  }
+
+  /** Whether a selected document is listed in the link access dialog. */
+  async hasLinkAccessDocument(name: string): Promise<boolean> {
+    return this.getLinkAccessDialog()
+      .getByText(name, { exact: true })
+      .isVisible()
   }
 
   /** Click the "Temporary download link" button in the picker footer. */
@@ -192,6 +229,14 @@ export class FilePickerPage {
    */
   private getFrameLocator(): FrameLocator {
     return this.page.frameLocator('iframe[src*="intents"]')
+  }
+
+  /** Return the public-link access dialog displayed inside the picker. */
+  private getLinkAccessDialog(): Locator {
+    const frame = this.getFrameLocator()
+    return frame
+      .getByRole('dialog')
+      .filter({ has: frame.getByText('Set link access', { exact: true }) })
   }
 
   /** Find an item by its untruncated, clean DOM title. */

@@ -18,7 +18,7 @@ interface PermissionDoc {
   id: string
   attributes: {
     expires_at?: string
-    permissions?: Record<string, { values?: string[] }>
+    permissions?: Record<string, { values?: string[]; verbs?: string[] }>
   }
 }
 
@@ -35,7 +35,9 @@ export async function findLinkPermission(
   const token = driveAppToken(instance)
   const res = await fetch(
     `http://${instance}/permissions/doctype/io.cozy.files/shared-by-link`,
-    { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' } }
+    {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' }
+    }
   )
   if (!res.ok) {
     throw new Error(

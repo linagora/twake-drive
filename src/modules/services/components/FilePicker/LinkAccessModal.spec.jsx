@@ -61,6 +61,21 @@ describe('LinkAccessModal', () => {
     expect(screen.queryByTestId('thumbnail-folder-id')).toBeInTheDocument()
   })
 
+  it('forwards cancellation to the file picker', () => {
+    const onCancel = jest.fn()
+    render(
+      <LinkAccessModal
+        selectedItems={selectedItems}
+        onCancel={onCancel}
+        onConfirm={jest.fn()}
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+
+    expect(onCancel).toHaveBeenCalledTimes(1)
+  })
+
   it('forwards generated links to the file picker', () => {
     const onConfirm = jest.fn()
     render(
