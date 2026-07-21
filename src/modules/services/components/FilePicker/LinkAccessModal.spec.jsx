@@ -13,7 +13,7 @@ jest.mock('cozy-sharing', () => ({
     <div role="dialog" aria-label="Set link access">
       {documents.map(document => (
         <div key={document._id}>
-          {renderDocumentIcon(document)}
+          {renderDocumentIcon(document, 18)}
           {document.name}
         </div>
       ))}
@@ -37,7 +37,9 @@ jest.mock('cozy-sharing', () => ({
 
 jest.mock('@/modules/filelist/icons/FileThumbnail', () => ({
   __esModule: true,
-  default: ({ file }) => <span data-testid={`thumbnail-${file._id}`} />
+  default: ({ file, size }) => (
+    <span data-testid={`thumbnail-${file._id}`} data-size={size} />
+  )
 }))
 
 describe('LinkAccessModal', () => {
@@ -57,8 +59,14 @@ describe('LinkAccessModal', () => {
 
     expect(screen.queryByText('invoice.pdf')).toBeInTheDocument()
     expect(screen.queryByText('Projects')).toBeInTheDocument()
-    expect(screen.queryByTestId('thumbnail-file-id')).toBeInTheDocument()
-    expect(screen.queryByTestId('thumbnail-folder-id')).toBeInTheDocument()
+    expect(screen.queryByTestId('thumbnail-file-id')).toHaveAttribute(
+      'data-size',
+      '18'
+    )
+    expect(screen.queryByTestId('thumbnail-folder-id')).toHaveAttribute(
+      'data-size',
+      '18'
+    )
   })
 
   it('forwards cancellation to the file picker', () => {
