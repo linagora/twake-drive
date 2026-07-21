@@ -2,6 +2,7 @@ import PropTypes from 'prop-types'
 import React, { useState, memo, useMemo } from 'react'
 
 import { FixedDialog } from 'cozy-ui/transpiled/react/CozyDialogs'
+import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 
 import FilePickerBody from './FilePickerBody'
 import FilePickerFooter from './FilePickerFooter'
@@ -28,6 +29,7 @@ const FilePicker = ({
   const [error, setError] = useState(null)
   const [isLinkAccessOpen, setIsLinkAccessOpen] = useState(false)
   const { selectedItems, clearSelection } = useSelectionContext()
+  const { showAlert } = useAlert()
   const itemsIdsSelected = useMemo(
     () => selectedItems.map(item => item._id),
     [selectedItems]
@@ -73,7 +75,7 @@ const FilePicker = ({
       sharingLinks
     )
     if (pickError) {
-      setError(pickError)
+      showAlert({ message: pickError, severity: 'error' })
       return
     }
 
