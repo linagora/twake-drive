@@ -10,6 +10,7 @@ import {
 } from './FilePicker/constants'
 import { makeFilePickerFileEntry } from './FilePicker/payload'
 import {
+  getFileId,
   getOrCreateSharingLink,
   makeTemporaryDownloadLinks
 } from './FilePicker/sharing'
@@ -25,7 +26,28 @@ const Picker = ({ service, intent, onReadyToUse }) => {
     service.cancel()
   }
 
-  const handlePick = async (fileIds, linkMode) => {
+  const handlePick = async (fileIds, linkMode, generatedSharingLinks) => {
+    if (linkMode === filePickerLinkModes.PUBLIC_LINK && generatedSharingLinks) {
+      try {
+        const linksByDocumentId = new Map(
+          generatedSharingLinks.map(({ documentId, url }) => [documentId, url])
+        )
+        const entries = fileIds.map(file => {
+          const sharingLink = linksByDocumentId.get(getFileId(file))
+          if (!sharingLink) {
+            throw new Error('Missing generated sharing link')
+          }
+          return makeFilePickerFileEntry(file, { sharingLink })
+        })
+
+        service.terminate(entries)
+        return null
+      } catch (error) {
+        logger.warn('FilePicker link generation failed', error)
+        return filePickerErrorCodes.SHARING_LINK_FAILED
+      }
+    }
+
     const selectedFileIds = Array.isArray(fileIds) ? fileIds : [fileIds]
     let queryResults
     try {
