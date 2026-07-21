@@ -15,6 +15,12 @@ jest.mock('cozy-client', () => ({
   }
 }))
 
+const mockShowAlert = jest.fn()
+
+jest.mock('cozy-ui/transpiled/react/providers/Alert', () => ({
+  useAlert: () => ({ showAlert: mockShowAlert })
+}))
+
 jest.mock('cozy-ui/transpiled/react/CozyDialogs', () => ({
   FixedDialog: ({ title, content, actions }) => (
     <div>
@@ -260,6 +266,10 @@ describe('FilePicker', () => {
     await waitFor(() =>
       expect(getByTestId('link-access-modal')).toBeInTheDocument()
     )
+    expect(mockShowAlert).toHaveBeenCalledWith({
+      message: 'SHARING_LINK_FAILED',
+      severity: 'error'
+    })
   })
 
   it('should disable temporary download link when a folder is selected', () => {
