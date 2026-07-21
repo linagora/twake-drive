@@ -5,7 +5,9 @@ import { ShareLinkAccessModal } from 'cozy-sharing'
 
 import FileThumbnail from '@/modules/filelist/icons/FileThumbnail'
 
-const renderDocumentIcon = document => <FileThumbnail file={document} />
+const renderDocumentIcon = (document, size) => (
+  <FileThumbnail file={document} size={size} />
+)
 
 export const LinkAccessModal = ({ selectedItems, onCancel, onConfirm }) => (
   <ShareLinkAccessModal
