@@ -6,7 +6,8 @@ import { FixedDialog } from 'cozy-ui/transpiled/react/CozyDialogs'
 import FilePickerBody from './FilePickerBody'
 import FilePickerFooter from './FilePickerFooter'
 import FilePickerHeader from './FilePickerHeader'
-import { defaultFilePickerConfig } from './constants'
+import { LinkAccessModal } from './LinkAccessModal'
+import { defaultFilePickerConfig, filePickerLinkModes } from './constants'
 import { getActionDisabledState } from './constraints'
 import { getCompliantTypes } from './helpers'
 import styles from './styles.styl'
@@ -25,6 +26,7 @@ const FilePicker = ({
 }) => {
   const [folderId, setFolderId] = useState(ROOT_DIR_ID)
   const [error, setError] = useState(null)
+  const [isLinkAccessOpen, setIsLinkAccessOpen] = useState(false)
   const { selectedItems, clearSelection } = useSelectionContext()
   const itemsIdsSelected = useMemo(
     () => selectedItems.map(item => item._id),
@@ -52,10 +54,40 @@ const FilePicker = ({
     const pickError = await onChange(value, linkMode)
     if (pickError) {
       setError(pickError)
+      return pickError
+    }
+
+    clearSelection()
+    return null
+  }
+
+  const handleOpenLinkAccess = () => {
+    setError(null)
+    setIsLinkAccessOpen(true)
+  }
+
+  const handleLinkAccessConfirm = async sharingLinks => {
+    const pickError = await onChange(
+      selectedItems,
+      filePickerLinkModes.PUBLIC_LINK,
+      sharingLinks
+    )
+    if (pickError) {
+      setError(pickError)
       return
     }
 
     clearSelection()
+    setIsLinkAccessOpen(false)
+  }
+
+  const handleFooterConfirm = linkMode => {
+    if (linkMode === filePickerLinkModes.PUBLIC_LINK) {
+      handleOpenLinkAccess()
+      return
+    }
+
+    handleConfirm(linkMode)
   }
 
   const itemTypesAccepted = getCompliantTypes(accept)
@@ -69,43 +101,53 @@ const FilePicker = ({
     : { disabled: true, reasonKey: null }
 
   return (
-    <FixedDialog
-      open
-      disableGutters
-      onClose={handleClose}
-      size="large"
-      disableTitleAutoPadding
-      classes={{ paper: `${styles.filePickerDialogPaper} u-h-100` }}
-      componentsProps={{
-        dialogTitle: {
-          className: 'u-pl-1-half'
-        },
-        dialogContent: {
-          className: 'u-pos-relative'
+    <>
+      <FixedDialog
+        open
+        disableGutters
+        onClose={handleClose}
+        size="large"
+        disableTitleAutoPadding
+        classes={{ paper: `${styles.filePickerDialogPaper} u-h-100` }}
+        componentsProps={{
+          dialogTitle: {
+            className: 'u-pl-1-half'
+          },
+          dialogContent: {
+            className: 'u-pos-relative'
+          }
+        }}
+        title={<FilePickerHeader />}
+        content={
+          <FilePickerBody
+            navigateTo={navigateTo}
+            folderId={folderId}
+            itemTypesAccepted={itemTypesAccepted}
+            multiple={multiple}
+            folderSelectable
+            error={error}
+            onReadyToUse={onReadyToUse}
+          />
         }
-      }}
-      title={<FilePickerHeader />}
-      content={
-        <FilePickerBody
-          navigateTo={navigateTo}
-          folderId={folderId}
-          itemTypesAccepted={itemTypesAccepted}
-          multiple={multiple}
-          folderSelectable
-          error={error}
-          onReadyToUse={onReadyToUse}
+        actions={
+          <FilePickerFooter
+            onConfirm={handleFooterConfirm}
+            publicLinkState={publicLinkState}
+            downloadLinkState={downloadLinkState}
+            publicLinkAction={publicLinkAction}
+            downloadLinkAction={downloadLinkAction}
+          />
+        }
+      />
+
+      {isLinkAccessOpen && (
+        <LinkAccessModal
+          selectedItems={selectedItems}
+          onCancel={() => setIsLinkAccessOpen(false)}
+          onConfirm={handleLinkAccessConfirm}
         />
-      }
-      actions={
-        <FilePickerFooter
-          onConfirm={handleConfirm}
-          publicLinkState={publicLinkState}
-          downloadLinkState={downloadLinkState}
-          publicLinkAction={publicLinkAction}
-          downloadLinkAction={downloadLinkAction}
-        />
-      }
-    />
+      )}
+    </>
   )
 }
 
