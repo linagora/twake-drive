@@ -85,24 +85,38 @@ export const buildDriveQuery: QueryBuilder<buildDriveQueryParams> = ({
   }
 })
 
+const buildRecentsDefinition = (): QueryDefinition =>
+  Q('io.cozy.files')
+    .where({ updated_at: { $gt: null } })
+    .partialIndex({
+      type: 'file',
+      trashed: false,
+      dir_id: { $nin: [SHARED_DRIVES_DIR_ID, TRASH_DIR_ID] }
+    })
+    .indexFields(['updated_at'])
+    .sortBy([{ updated_at: 'desc' }])
+    .limitBy(50)
+
 export const buildRecentQuery: QueryBuilder = () => ({
-  definition: () =>
-    Q('io.cozy.files')
-      .where({
-        updated_at: {
-          $gt: null
-        }
-      })
-      .partialIndex({
-        type: 'file',
-        trashed: false,
-        dir_id: { $nin: [SHARED_DRIVES_DIR_ID, TRASH_DIR_ID] }
-      })
-      .indexFields(['updated_at'])
-      .sortBy([{ updated_at: 'desc' }])
-      .limitBy(50),
+  definition: buildRecentsDefinition,
   options: {
     as: 'recent-view-query',
+    fetchPolicy: defaultFetchPolicy
+  }
+})
+
+interface BuildRecentsScopedQueryParams {
+  driveId?: string
+}
+
+export const buildRecentsScopedQuery: QueryBuilder<
+  BuildRecentsScopedQueryParams
+> = ({ driveId }) => ({
+  definition: buildRecentsDefinition,
+  options: {
+    as: driveId ? `recents-drive-${driveId}` : 'recents-own',
+    driveId,
+    forceLink: driveId ? 'dataproxy' : undefined,
     fetchPolicy: defaultFetchPolicy
   }
 })
@@ -536,6 +550,39 @@ export const buildSharedDriveFolderQuery: QueryBuilder<
     // see https://github.com/cozy/cozy-client/issues/1620
     enabled: !!driveId && !!folderId,
     singleDocData: true
+  }
+})
+
+interface buildSharedDriveFolderMangoQueryParams {
+  driveId: string
+  folderId: string
+  sortAttribute: string
+  sortOrder: string
+}
+
+export const buildSharedDriveFolderMangoQuery: QueryBuilder<
+  buildSharedDriveFolderMangoQueryParams
+> = ({ driveId, folderId, sortAttribute, sortOrder }) => ({
+  definition: () =>
+    Q('io.cozy.files')
+      .where({
+        dir_id: folderId,
+        driveId,
+        [sortAttribute]: { $gt: null }
+      })
+      .indexFields(['dir_id', 'driveId', sortAttribute])
+      .sortBy([
+        { dir_id: sortOrder },
+        { driveId: sortOrder },
+        { [sortAttribute]: sortOrder }
+      ])
+      .include(['encryption'])
+      .limitBy(100),
+  options: {
+    as: `shareddrive-folder-${driveId}-${folderId}-${sortAttribute}-${sortOrder}`,
+    driveId,
+    forceLink: 'dataproxy',
+    fetchPolicy: defaultFetchPolicy
   }
 })
 

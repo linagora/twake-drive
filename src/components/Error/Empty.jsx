@@ -12,8 +12,7 @@ import styles from './empty.styl'
 import FolderEmptyIllu from '@/assets/icons/illu-folder-empty.svg'
 import TrashIllustration from '@/assets/icons/illu-trash-empty.svg'
 import { TRASH_DIR_ID } from '@/constants/config'
-import { useCurrentFolderId, useDisplayedFolder } from '@/hooks'
-import { useSharedDriveFolder } from '@/modules/shareddrives/hooks/useSharedDriveFolder'
+import { useDisplayedFolder } from '@/hooks'
 import UploadButton from '@/modules/upload/UploadButton'
 
 const EmptyCanvas = ({
@@ -21,15 +20,11 @@ const EmptyCanvas = ({
   canUpload,
   localeKey,
   hasTextMobileVersion,
-  onUploaded,
-  driveId
+  onUploaded
 }) => {
   const { t } = useI18n()
   const { isDesktop } = useBreakpoints()
-  const folderId = useCurrentFolderId()
   const { displayedFolder } = useDisplayedFolder()
-  const { sharedDriveResult } = useSharedDriveFolder({ driveId, folderId })
-  const displayedSharedFolder = sharedDriveResult?.data
 
   const IconToShow = type === 'trash' ? TrashIllustration : FolderEmptyIllu
   const showUploadLayout = type === 'drive'
@@ -62,7 +57,7 @@ const EmptyCanvas = ({
                   button: { variant: 'secondary' }
                 }}
                 label={t('toolbar.menu_upload')}
-                displayedFolder={displayedSharedFolder || displayedFolder}
+                displayedFolder={displayedFolder}
                 onUploaded={onUploaded}
               />
             </span>

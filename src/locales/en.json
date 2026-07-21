@@ -781,5 +781,8 @@
       "SHARING_LINK_FAILED": "Could not generate a sharing link.",
       "DOWNLOAD_LINK_FAILED": "Could not generate a download link."
     }
+  },
+  "SharedDrive": {
+    "access_revoked": "You no longer have access to this shared drive."
   }
 }

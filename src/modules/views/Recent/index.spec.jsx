@@ -43,11 +43,12 @@ jest.mock('cozy-sharing', () => ({
   useSharingContext: jest.fn()
 }))
 
-jest.mock('cozy-dataproxy-lib', () => ({
-  useDataProxy: jest.fn()
+jest.mock('@/hooks/useRecentFiles', () => ({
+  __esModule: true,
+  default: jest.fn()
 }))
 
-const mockUseDataProxy = require('cozy-dataproxy-lib').useDataProxy
+const mockUseRecentFiles = require('@/hooks/useRecentFiles').default
 
 useSharingContext.mockReturnValue({ byDocId: [] })
 
@@ -75,10 +76,11 @@ const setup = ({ nbFiles, path, dir_id, updated_at }) => {
     displayedPath: path
   }))
 
-  // Mock useDataProxy to return a dataProxy object
-  mockUseDataProxy.mockReturnValue({
-    dataProxyServicesAvailable: true,
-    recents: jest.fn().mockResolvedValue(filesWithPath)
+  mockUseRecentFiles.mockReturnValue({
+    data: filesWithPath,
+    fetchStatus: 'loaded',
+    error: null,
+    scopeQueries: []
   })
 
   const rendered = render(

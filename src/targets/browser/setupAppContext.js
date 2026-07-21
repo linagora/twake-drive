@@ -22,7 +22,13 @@ const setupApp = memoize(() => {
   }
 
   const links = [new StackLink({ platform })]
-  if (flag('dataproxy.queries.enabled')) {
+  // cozy-flags is not guaranteed to be populated this early, so the DataProxy
+  // link would be dropped on first load; read the flag from the injected data
+  // blob (always present synchronously) with a cozy-flags fallback.
+  const dataproxyQueriesEnabled =
+    data.flags?.['dataproxy.queries.enabled'] ??
+    flag('dataproxy.queries.enabled')
+  if (dataproxyQueriesEnabled) {
     // DataProxy link will be used for offline data queries
     const dataproxyLink = new DataProxyLink()
     links.push(dataproxyLink)
