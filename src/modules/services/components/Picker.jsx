@@ -47,10 +47,6 @@ const Picker = ({ service, intent, onReadyToUse }) => {
   const serviceData = service.getData?.()
   const filePickerConfig = getFilePickerConfig(intent, serviceData)
 
-  const handleClose = () => {
-    service.cancel()
-  }
-
   const handlePick = async (fileIds, linkMode, generatedSharingLinks) => {
     const selectedFiles = Array.isArray(fileIds) ? fileIds : [fileIds]
     const selectedFileIds = selectedFiles.map(file =>
@@ -120,7 +116,6 @@ const Picker = ({ service, intent, onReadyToUse }) => {
   return (
     <FilePicker
       onChange={handlePick}
-      onClose={handleClose}
       filePickerConfig={filePickerConfig}
       onReadyToUse={onReadyToUse}
       multiple

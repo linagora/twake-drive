@@ -21,17 +21,9 @@ jest.mock('cozy-ui/transpiled/react/providers/Alert', () => ({
   useAlert: () => ({ showAlert: mockShowAlert })
 }))
 
-jest.mock('cozy-ui/transpiled/react/CozyDialogs', () => ({
-  FixedDialog: ({ title, content, actions }) => (
-    <div>
-      <div data-testid="dialog-title">{title}</div>
-      <div data-testid="dialog-content">{content}</div>
-      <div data-testid="dialog-actions">{actions}</div>
-    </div>
-  )
-}))
-
-jest.mock('./FilePickerHeader', () => () => <div>Header</div>)
+jest.mock('./FilePickerHeader', () => () => (
+  <div data-testid="file-picker-header-inner">Header</div>
+))
 
 jest.mock('./FilePickerBody', () => {
   const {
@@ -177,14 +169,12 @@ const FilePickerWrapper = ({ children }) => (
 
 describe('FilePicker', () => {
   const mockOnChange = jest.fn()
-  const mockOnClose = jest.fn()
 
   const setup = ({ filePickerConfig, multiple = false } = {}) => {
     return render(
       <FilePickerWrapper>
         <FilePicker
           onChange={mockOnChange}
-          onClose={mockOnClose}
           filePickerConfig={filePickerConfig}
           multiple={multiple}
         />
@@ -194,6 +184,14 @@ describe('FilePicker', () => {
 
   afterEach(() => {
     jest.clearAllMocks()
+  })
+
+  it('should render the header, content and footer', () => {
+    const { getByTestId } = setup()
+
+    expect(getByTestId('file-picker-header-inner')).toBeInTheDocument()
+    expect(getByTestId('file-picker-body-wrapper')).toBeInTheDocument()
+    expect(getByTestId('file-picker-footer')).toBeInTheDocument()
   })
 
   it('should render both action buttons by default', () => {

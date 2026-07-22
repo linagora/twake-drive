@@ -56,113 +56,100 @@ jest.mock('cozy-client/dist/models/sharing', () => ({
   makeSharingLink: jest.fn()
 }))
 
-jest.mock(
-  './FilePicker',
-  () =>
-    ({ onChange, onClose, filePickerConfig, multiple }) => {
-      const React = jest.requireActual('react')
-      const [error, setError] = React.useState(null)
+jest.mock('./FilePicker', () => ({ onChange, filePickerConfig, multiple }) => {
+  const React = jest.requireActual('react')
+  const [error, setError] = React.useState(null)
 
-      // Expose the received config so tests can assert on the transit.
-      return (
-        <div>
-          <div data-testid="received-config">
-            {JSON.stringify(filePickerConfig)}
-          </div>
-          <div data-testid="received-multiple">
-            {multiple ? 'true' : 'false'}
-          </div>
-          {error && <div data-testid="error-message">{error}</div>}
-          <button
-            type="button"
-            data-testid="close-picker-btn"
-            onClick={onClose}
-          >
-            Close picker
-          </button>
-          <button
-            type="button"
-            data-testid="public-link-btn"
-            onClick={async () => {
-              const pickError = await onChange(
-                'file-id',
-                filePickerLinkModes.PUBLIC_LINK
-              )
-              if (pickError) setError(pickError)
-            }}
-          >
-            Public link
-          </button>
-          <button
-            type="button"
-            data-testid="generated-public-links-btn"
-            onClick={async () => {
-              const pickError = await onChange(
-                [
-                  {
-                    _id: 'file-id',
-                    type: 'file',
-                    name: 'invoice.pdf',
-                    size: '42',
-                    mime: 'application/pdf'
-                  }
-                ],
-                filePickerLinkModes.PUBLIC_LINK,
-                [
-                  {
-                    documentId: 'file-id',
-                    url: 'https://drive.example/public?sharecode=abc'
-                  }
-                ]
-              )
-              if (pickError) setError(pickError)
-            }}
-          >
-            Generated public links
-          </button>
-          <button
-            type="button"
-            data-testid="temporary-download-link-btn"
-            onClick={async () => {
-              const pickError = await onChange(
-                'file-id',
-                filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK
-              )
-              if (pickError) setError(pickError)
-            }}
-          >
-            Temporary link
-          </button>
-          <button
-            type="button"
-            data-testid="multiple-public-link-btn"
-            onClick={async () => {
-              const pickError = await onChange(
-                ['file-id', 'second-file-id'],
-                filePickerLinkModes.PUBLIC_LINK
-              )
-              if (pickError) setError(pickError)
-            }}
-          >
-            Multiple public link
-          </button>
-          <button
-            type="button"
-            data-testid="multiple-temporary-download-link-btn"
-            onClick={async () => {
-              const pickError = await onChange(
-                ['file-id', 'second-file-id'],
-                filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK
-              )
-              if (pickError) setError(pickError)
-            }}
-          >
-            Multiple temporary link
-          </button>
-        </div>
-      )
-    }
-)
+  // Expose the received config so tests can assert on the transit.
+  return (
+    <div>
+      <div data-testid="received-config">
+        {JSON.stringify(filePickerConfig)}
+      </div>
+      <div data-testid="received-multiple">{multiple ? 'true' : 'false'}</div>
+      {error && <div data-testid="error-message">{error}</div>}
+      <button
+        type="button"
+        data-testid="public-link-btn"
+        onClick={async () => {
+          const pickError = await onChange(
+            'file-id',
+            filePickerLinkModes.PUBLIC_LINK
+          )
+          if (pickError) setError(pickError)
+        }}
+      >
+        Public link
+      </button>
+      <button
+        type="button"
+        data-testid="generated-public-links-btn"
+        onClick={async () => {
+          const pickError = await onChange(
+            [
+              {
+                _id: 'file-id',
+                type: 'file',
+                name: 'invoice.pdf',
+                size: '42',
+                mime: 'application/pdf'
+              }
+            ],
+            filePickerLinkModes.PUBLIC_LINK,
+            [
+              {
+                documentId: 'file-id',
+                url: 'https://drive.example/public?sharecode=abc'
+              }
+            ]
+          )
+          if (pickError) setError(pickError)
+        }}
+      >
+        Generated public links
+      </button>
+      <button
+        type="button"
+        data-testid="temporary-download-link-btn"
+        onClick={async () => {
+          const pickError = await onChange(
+            'file-id',
+            filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK
+          )
+          if (pickError) setError(pickError)
+        }}
+      >
+        Temporary link
+      </button>
+      <button
+        type="button"
+        data-testid="multiple-public-link-btn"
+        onClick={async () => {
+          const pickError = await onChange(
+            ['file-id', 'second-file-id'],
+            filePickerLinkModes.PUBLIC_LINK
+          )
+          if (pickError) setError(pickError)
+        }}
+      >
+        Multiple public link
+      </button>
+      <button
+        type="button"
+        data-testid="multiple-temporary-download-link-btn"
+        onClick={async () => {
+          const pickError = await onChange(
+            ['file-id', 'second-file-id'],
+            filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK
+          )
+          if (pickError) setError(pickError)
+        }}
+      >
+        Multiple temporary link
+      </button>
+    </div>
+  )
+})
 
 const mockFile = {
   _id: 'file-id',
@@ -182,7 +169,6 @@ const mockSecondFile = {
 
 const setup = ({ intent = null } = {}) => {
   const service = {
-    cancel: jest.fn(),
     terminate: jest.fn(),
     throw: jest.fn()
   }
@@ -204,16 +190,6 @@ describe('Picker', () => {
 
   afterEach(() => {
     jest.clearAllMocks()
-  })
-
-  it('should cancel the intent when the picker is closed', () => {
-    const { service, getByTestId } = setup()
-
-    fireEvent.click(getByTestId('close-picker-btn'))
-
-    expect(service.cancel).toHaveBeenCalled()
-    expect(service.terminate).not.toHaveBeenCalled()
-    expect(service.throw).not.toHaveBeenCalled()
   })
 
   it('should pass the default filePickerConfig when the intent carries no data', () => {
