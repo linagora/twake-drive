@@ -49,6 +49,28 @@ describe('FilePicker payload', () => {
       expect(entry.sharingLink).toBe('https://x')
     })
 
+    it('should return a document reference without sharing or download links', () => {
+      const file = {
+        _id: '1',
+        name: 'a.txt',
+        type: 'file',
+        size: '1',
+        mime: 'text/plain'
+      }
+
+      expect(makeFilePickerFileEntry(file, { reference: true })).toEqual({
+        id: '1',
+        name: 'a.txt',
+        size: 1,
+        mimeType: 'text/plain',
+        thumbnail: {
+          link: 'https://files.twake.app/email-assets/file-picker/default.png'
+        },
+        type: 'file',
+        doctype: 'io.cozy.files'
+      })
+    })
+
     it('should only include the links that are actually provided', () => {
       const file = {
         _id: '1',
