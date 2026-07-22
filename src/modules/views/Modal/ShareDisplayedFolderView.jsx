@@ -4,8 +4,8 @@ import { useNavigate } from 'react-router-dom'
 import flag from 'cozy-flags'
 import { ShareModal } from 'cozy-sharing'
 
+import { DEFAULT_SHARINGS_VIEW_ROUTE } from '@/constants/config'
 import { useDisplayedFolder } from '@/hooks'
-import { makeRevokeSuccessRedirectPath } from '@/modules/views/Modal/revokeSuccessRedirect'
 
 const ShareDisplayedFolderView = () => {
   const { displayedFolder } = useDisplayedFolder()
@@ -17,9 +17,7 @@ const ShareDisplayedFolderView = () => {
     }
 
     const onRevokeSuccess = () => {
-      navigate(makeRevokeSuccessRedirectPath({ document: displayedFolder }), {
-        replace: true
-      })
+      navigate(DEFAULT_SHARINGS_VIEW_ROUTE, { replace: true })
     }
 
     return (
