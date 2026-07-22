@@ -45,7 +45,7 @@ const IntentHandler = ({ intentId }) => {
       try {
         const intents = new Intents({ client })
         // createService exposes the intent only after the handshake, so fetch it separately to start prefetching earlier
-        const intentPromise = intents.request.get(intentId)
+        const intentPromise = intents.request.get(intentId, { tryDOM: true })
         const servicePromise = intents.createService(intentId, window)
         const pendingIntent = await intentPromise
         const pickerInitialization =
