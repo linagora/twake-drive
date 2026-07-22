@@ -1,7 +1,8 @@
 import PropTypes from 'prop-types'
 import React, { useState, memo, useMemo } from 'react'
 
-import { FixedDialog } from 'cozy-ui/transpiled/react/CozyDialogs'
+import Box from 'cozy-ui/transpiled/react/Box'
+import Divider from 'cozy-ui/transpiled/react/Divider'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 
 import FilePickerBody from './FilePickerBody'
@@ -11,14 +12,12 @@ import { LinkAccessModal } from './LinkAccessModal'
 import { defaultFilePickerConfig, filePickerLinkModes } from './constants'
 import { getActionDisabledState } from './constraints'
 import { getCompliantTypes } from './helpers'
-import styles from './styles.styl'
 
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 
 export const ROOT_DIR_ID = 'io.cozy.files.root-dir'
 
 const FilePicker = ({
-  onClose,
   onChange,
   accept,
   multiple,
@@ -38,11 +37,6 @@ const FilePicker = ({
   const config = filePickerConfig || defaultFilePickerConfig
   const publicLinkAction = config.sharingLink ?? null
   const downloadLinkAction = config.downloadLink ?? null
-
-  const handleClose = () => {
-    clearSelection()
-    onClose()
-  }
 
   const navigateTo = folder => {
     setError(null)
@@ -104,23 +98,23 @@ const FilePicker = ({
 
   return (
     <>
-      <FixedDialog
-        open
-        disableGutters
-        onClose={handleClose}
-        size="large"
-        disableTitleAutoPadding
-        classes={{ paper: `${styles.filePickerDialogPaper} u-h-100` }}
-        componentsProps={{
-          dialogTitle: {
-            className: 'u-pl-1-half'
-          },
-          dialogContent: {
-            className: 'u-pos-relative'
-          }
-        }}
-        title={<FilePickerHeader />}
-        content={
+      <div
+        className="u-h-100 u-w-100 u-flex u-flex-column"
+        data-testid="file-picker"
+      >
+        <header
+          className="u-pv-1-half u-pl-1-half u-pr-2"
+          data-testid="file-picker-header-wrapper"
+        >
+          <FilePickerHeader />
+        </header>
+        <Divider />
+        <Box
+          flex={1}
+          minHeight={0}
+          className="u-pos-relative"
+          data-testid="file-picker-body-wrapper"
+        >
           <FilePickerBody
             navigateTo={navigateTo}
             folderId={folderId}
@@ -130,8 +124,9 @@ const FilePicker = ({
             error={error}
             onReadyToUse={onReadyToUse}
           />
-        }
-        actions={
+        </Box>
+        <Divider />
+        <footer className="u-mv-1 u-mh-2" data-testid="file-picker-footer">
           <FilePickerFooter
             onConfirm={handleFooterConfirm}
             publicLinkState={publicLinkState}
@@ -139,8 +134,8 @@ const FilePicker = ({
             publicLinkAction={publicLinkAction}
             downloadLinkAction={downloadLinkAction}
           />
-        }
-      />
+        </footer>
+      </div>
 
       {isLinkAccessOpen && (
         <LinkAccessModal
@@ -154,7 +149,6 @@ const FilePicker = ({
 }
 
 FilePicker.propTypes = {
-  onClose: PropTypes.func.isRequired,
   onChange: PropTypes.func.isRequired,
   accept: PropTypes.string,
   multiple: PropTypes.bool,
