@@ -7,7 +7,7 @@ import { ShareButton, ShareModal, SharedRecipients } from 'cozy-sharing'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
-import { makeRevokeSuccessRedirectPath } from '@/modules/views/Modal/revokeSuccessRedirect'
+import { DEFAULT_SHARINGS_VIEW_ROUTE } from '@/constants/config'
 
 const Sharing = ({ file }) => {
   const [showShareModal, setShowShareModal] = useState(false)
@@ -19,8 +19,8 @@ const Sharing = ({ file }) => {
     [setShowShareModal]
   )
 
-  const handleRevokeSuccess = document => {
-    navigate(makeRevokeSuccessRedirectPath({ document }), { replace: true })
+  const handleRevokeSuccess = () => {
+    navigate(DEFAULT_SHARINGS_VIEW_ROUTE, { replace: true })
   }
 
   return (

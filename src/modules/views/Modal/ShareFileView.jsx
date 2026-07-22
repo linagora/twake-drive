@@ -6,7 +6,7 @@ import flag from 'cozy-flags'
 import { ShareModal } from 'cozy-sharing'
 
 import { LoaderModal } from '@/components/LoaderModal'
-import { makeRevokeSuccessRedirectPath } from '@/modules/views/Modal/revokeSuccessRedirect'
+import { DEFAULT_SHARINGS_VIEW_ROUTE } from '@/constants/config'
 import {
   buildFileOrFolderByIdQuery,
   buildSharedDriveFileOrFolderByIdQuery
@@ -25,10 +25,8 @@ const ShareFileView = () => {
     navigate('..', { replace: true })
   }
 
-  const handleRevokeSuccess = document => {
-    navigate(makeRevokeSuccessRedirectPath({ document, driveId }), {
-      replace: true
-    })
+  const handleRevokeSuccess = () => {
+    navigate(DEFAULT_SHARINGS_VIEW_ROUTE, { replace: true })
   }
 
   if (hasQueryBeenLoaded(fileResult) && fileResult.data) {
