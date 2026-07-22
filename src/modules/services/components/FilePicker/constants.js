@@ -37,9 +37,9 @@ export const filePickerErrorCodes = {
  * shared via a public link), downloadLink does not (downloading a
  * folder is not meaningful for an attachment use case).
  */
-// TODO with multi selection: enforce maxFileCount and availableSize on
-// the downloadLink action when multi-select lands.
+// TODO: enforce maxFileCount and availableSize on the downloadLink action.
 export const defaultFilePickerConfig = {
+  multiple: true,
   sharingLink: { allowFolder: true },
   downloadLink: { allowFolder: false }
 }

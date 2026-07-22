@@ -51,7 +51,7 @@ export const useFilePickerSelection = ({
 
   const { setLastInteractedItem, onShiftClick } = useShiftSelection(
     {
-      items: selectableItems,
+      items: multiple ? selectableItems : [],
       viewType: 'list',
       scrollElement,
       keyboardEventTarget: document,

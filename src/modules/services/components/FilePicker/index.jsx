@@ -153,6 +153,7 @@ FilePicker.propTypes = {
   accept: PropTypes.string,
   multiple: PropTypes.bool,
   filePickerConfig: PropTypes.shape({
+    multiple: PropTypes.bool,
     sharingLink: PropTypes.object,
     downloadLink: PropTypes.object
   }),

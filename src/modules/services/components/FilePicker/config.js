@@ -18,6 +18,7 @@ import { defaultFilePickerConfig } from './constants'
  * @param {object|null|undefined} intent - The intent object returned
  *   by `service.getIntent()`. Null-safe.
  * @returns {{
+ *   multiple: boolean,
  *   sharingLink: object|null,
  *   downloadLink: object|null
  * }}
@@ -40,6 +41,7 @@ export const getFilePickerConfig = (intent, serviceData = null) => {
   }
 
   return {
+    multiple: data.multiple ?? defaultFilePickerConfig.multiple,
     sharingLink: resolveActionConfig(
       data.sharingLink,
       defaultFilePickerConfig.sharingLink
