@@ -85,6 +85,18 @@ const Picker = ({ service, intent, onReadyToUse }) => {
       )
     }
 
+    if (linkMode === filePickerLinkModes.REFERENCE) {
+      try {
+        service.terminate(
+          files.map(file => makeFilePickerFileEntry(file, { reference: true }))
+        )
+        return null
+      } catch (error) {
+        logger.warn('FilePicker reference termination failed', error)
+        return null
+      }
+    }
+
     try {
       if (linkMode === filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK) {
         const downloadLinks = await makeTemporaryDownloadLinks(client, files)

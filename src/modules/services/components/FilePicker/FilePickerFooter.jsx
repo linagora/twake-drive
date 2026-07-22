@@ -1,4 +1,4 @@
-import { Attachment, Cross, Icon, Link } from '@linagora/twake-icons'
+import { Attachment, Check, Cross, Icon, Link } from '@linagora/twake-icons'
 import { filesize } from 'filesize'
 import PropTypes from 'prop-types'
 import React, { memo } from 'react'
@@ -27,7 +27,9 @@ const FilePickerFooter = ({
   publicLinkState,
   downloadLinkState,
   publicLinkAction,
-  downloadLinkAction
+  downloadLinkAction,
+  referenceState,
+  referenceAction
 }) => {
   const { t } = useI18n()
   const { selectedItems, clearSelection } = useSelectionContext()
@@ -40,6 +42,9 @@ const FilePickerFooter = ({
     downloadLinkAction &&
     (downloadLinkAction.label ??
       t('FilePicker.footer.buttons.temporaryDownloadLink'))
+  const referenceLabel =
+    referenceAction &&
+    (referenceAction.label ?? t('FilePicker.footer.buttons.reference'))
 
   const renderAction = (
     label,
@@ -98,13 +103,23 @@ const FilePickerFooter = ({
       )}
       <Box className="u-flex u-flex-items-center">
         {renderAction(
-          downloadLinkLabel,
-          downloadLinkState,
-          downloadLinkAction,
-          () => onConfirm(filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK),
-          'temporary-download-link-btn',
-          Attachment
+          referenceLabel,
+          referenceState,
+          referenceAction,
+          () => onConfirm(filePickerLinkModes.REFERENCE),
+          'reference-btn',
+          Check
         )}
+        <span className="u-ml-1">
+          {renderAction(
+            downloadLinkLabel,
+            downloadLinkState,
+            downloadLinkAction,
+            () => onConfirm(filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK),
+            'temporary-download-link-btn',
+            Attachment
+          )}
+        </span>
         <span className="u-ml-1">
           {renderAction(
             publicLinkLabel,
@@ -131,14 +146,21 @@ FilePickerFooter.propTypes = {
     reasonKey: PropTypes.string
   }),
   publicLinkAction: PropTypes.object,
-  downloadLinkAction: PropTypes.object
+  downloadLinkAction: PropTypes.object,
+  referenceState: PropTypes.shape({
+    disabled: PropTypes.bool,
+    reasonKey: PropTypes.string
+  }),
+  referenceAction: PropTypes.object
 }
 
 FilePickerFooter.defaultProps = {
   publicLinkState: { disabled: true, reasonKey: null },
   downloadLinkState: { disabled: true, reasonKey: null },
+  referenceState: { disabled: true, reasonKey: null },
   publicLinkAction: null,
-  downloadLinkAction: null
+  downloadLinkAction: null,
+  referenceAction: null
 }
 
 export default memo(FilePickerFooter)

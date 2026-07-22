@@ -215,6 +215,38 @@ test.describe('File Picker', () => {
     await picker.closeConfirmation()
   })
 
+  test('reference config returns a plain folder reference', async ({
+    alicePage,
+    aliceDrive
+  }) => {
+    await aliceDrive.row(parentFolder).open()
+    await alicePage.waitForURL(/\/folder\/[^/]+$/)
+    const referenceFolder = `reference-${stamp()}`
+    await aliceDrive.createFolder(referenceFolder)
+
+    picker = new FilePickerPage(alicePage)
+    await pick(referenceFolder, 'Reference folder')
+
+    await expect(picker.hasReferenceButton()).resolves.toBe(true)
+    await expect(picker.isReferenceDisabled()).resolves.toBe(false)
+    await expect(picker.hasPublicLinkButton()).resolves.toBe(false)
+    await expect(picker.hasTemporaryDownloadButton()).resolves.toBe(false)
+
+    await picker.clickReference()
+    await picker.waitForClosed()
+
+    const document = await picker.getResultDocument()
+    expect(document).toHaveLength(1)
+    const [entry] = document as Array<Record<string, unknown>>
+    expect(entry.name).toBe(referenceFolder)
+    expect(entry.type).toBe('directory')
+    expect(entry.doctype).toBe('io.cozy.files')
+    expect(entry.sharingLink).toBeUndefined()
+    expect(entry.downloadLink).toBeUndefined()
+
+    await picker.closeConfirmation()
+  })
+
   test('sharing-only config hides download link and returns a sharing link', async ({
     alicePage
   }) => {

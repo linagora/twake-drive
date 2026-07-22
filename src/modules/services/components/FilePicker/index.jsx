@@ -37,6 +37,7 @@ const FilePicker = ({
   const config = filePickerConfig || defaultFilePickerConfig
   const publicLinkAction = config.sharingLink ?? null
   const downloadLinkAction = config.downloadLink ?? null
+  const referenceAction = config.reference ?? null
 
   const navigateTo = folder => {
     setError(null)
@@ -95,6 +96,9 @@ const FilePicker = ({
   const downloadLinkState = hasSelection
     ? getActionDisabledState(downloadLinkAction, selectedItems)
     : { disabled: true, reasonKey: null }
+  const referenceState = hasSelection
+    ? getActionDisabledState(referenceAction, selectedItems)
+    : { disabled: true, reasonKey: null }
 
   return (
     <>
@@ -133,6 +137,8 @@ const FilePicker = ({
             downloadLinkState={downloadLinkState}
             publicLinkAction={publicLinkAction}
             downloadLinkAction={downloadLinkAction}
+            referenceState={referenceState}
+            referenceAction={referenceAction}
           />
         </footer>
       </div>
@@ -155,7 +161,8 @@ FilePicker.propTypes = {
   filePickerConfig: PropTypes.shape({
     multiple: PropTypes.bool,
     sharingLink: PropTypes.object,
-    downloadLink: PropTypes.object
+    downloadLink: PropTypes.object,
+    reference: PropTypes.object
   }),
   onReadyToUse: PropTypes.func
 }

@@ -57,6 +57,23 @@ describe('FilePicker config', () => {
       })
     })
 
+    it('keeps reference hidden by default', () => {
+      expect(getFilePickerConfig(null).reference).toBeNull()
+    })
+
+    it('resolves an explicit reference action', () => {
+      const config = getFilePickerConfig({
+        attributes: {
+          data: { reference: { label: 'Select', onlyFolder: true } }
+        }
+      })
+
+      expect(config.reference).toEqual({
+        label: 'Select',
+        onlyFolder: true
+      })
+    })
+
     it('preserves an explicit null action (action not offered)', () => {
       const intent = {
         attributes: { data: { downloadLink: null } }

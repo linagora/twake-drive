@@ -123,6 +123,32 @@ jest.mock('./FilePicker', () => ({ onChange, filePickerConfig, multiple }) => {
       </button>
       <button
         type="button"
+        data-testid="reference-btn"
+        onClick={async () => {
+          const pickError = await onChange(
+            'file-id',
+            filePickerLinkModes.REFERENCE
+          )
+          if (pickError) setError(pickError)
+        }}
+      >
+        Reference
+      </button>
+      <button
+        type="button"
+        data-testid="multiple-reference-btn"
+        onClick={async () => {
+          const pickError = await onChange(
+            ['file-id', 'second-file-id'],
+            filePickerLinkModes.REFERENCE
+          )
+          if (pickError) setError(pickError)
+        }}
+      >
+        Multiple reference
+      </button>
+      <button
+        type="button"
         data-testid="multiple-public-link-btn"
         onClick={async () => {
           const pickError = await onChange(
@@ -274,6 +300,32 @@ describe('Picker', () => {
     ])
   })
 
+  it('should terminate with a bare array containing a reference entry', async () => {
+    mockQuery.mockResolvedValue({
+      data: { ...mockFile, name: 'updated-invoice.pdf', type: 'file' }
+    })
+    const { service, getByTestId } = setup()
+
+    fireEvent.click(getByTestId('reference-btn'))
+
+    await waitFor(() => expect(service.terminate).toHaveBeenCalled())
+    expect(makeSharingLink).not.toHaveBeenCalled()
+    expect(mockGetDownloadLinkById).not.toHaveBeenCalled()
+    expect(service.terminate).toHaveBeenCalledWith([
+      {
+        id: 'file-id',
+        name: 'updated-invoice.pdf',
+        size: 42,
+        mimeType: 'application/pdf',
+        thumbnail: {
+          link: 'https://files.twake.app/email-assets/file-picker/pdf.png'
+        },
+        type: 'file',
+        doctype: 'io.cozy.files'
+      }
+    ])
+  })
+
   it('should terminate with a bare array containing a public link entry', async () => {
     mockQuery.mockResolvedValue({ data: mockFile })
     makeSharingLink.mockResolvedValue(
@@ -299,6 +351,45 @@ describe('Picker', () => {
         }
       }
     ])
+  })
+
+  it('should terminate with a bare array containing multiple reference entries', async () => {
+    mockQuery.mockImplementation(({ id }) =>
+      Promise.resolve({
+        data: id === 'file-id' ? mockFile : mockSecondFile
+      })
+    )
+    const { service, getByTestId } = setup()
+
+    fireEvent.click(getByTestId('multiple-reference-btn'))
+
+    await waitFor(() => expect(service.terminate).toHaveBeenCalled())
+    expect(service.terminate).toHaveBeenCalledWith([
+      {
+        id: 'file-id',
+        name: 'invoice.pdf',
+        size: 42,
+        mimeType: 'application/pdf',
+        thumbnail: {
+          link: 'https://files.twake.app/email-assets/file-picker/pdf.png'
+        },
+        type: 'file',
+        doctype: 'io.cozy.files'
+      },
+      {
+        id: 'second-file-id',
+        name: 'receipt.pdf',
+        size: 84,
+        mimeType: 'application/pdf',
+        thumbnail: {
+          link: 'https://files.twake.app/email-assets/file-picker/pdf.png'
+        },
+        type: 'file',
+        doctype: 'io.cozy.files'
+      }
+    ])
+    expect(makeSharingLink).not.toHaveBeenCalled()
+    expect(mockGetDownloadLinkById).not.toHaveBeenCalled()
   })
 
   it('should terminate with a bare array containing public link entries', async () => {
