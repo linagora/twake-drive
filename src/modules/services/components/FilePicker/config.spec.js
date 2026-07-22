@@ -18,6 +18,24 @@ describe('FilePicker config', () => {
       )
     })
 
+    it('preserves multiple selection by default', () => {
+      expect(getFilePickerConfig(null).multiple).toBe(true)
+    })
+
+    it('preserves an explicit single selection mode', () => {
+      const intent = {
+        attributes: { data: { multiple: false } }
+      }
+
+      expect(getFilePickerConfig(intent).multiple).toBe(false)
+    })
+
+    it('reads multiple selection mode from service data', () => {
+      expect(getFilePickerConfig(null, { multiple: false }).multiple).toBe(
+        false
+      )
+    })
+
     it('merges a client action config over the default', () => {
       const intent = {
         attributes: {

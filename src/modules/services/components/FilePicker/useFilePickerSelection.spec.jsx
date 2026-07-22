@@ -88,6 +88,23 @@ describe('useFilePickerSelection', () => {
     expect(result.current.selectedItemIds).toEqual(['file-1', 'file-2'])
   })
 
+  it('should replace selection with modified clicks in single mode', () => {
+    const { result } = setup({ multiple: false })
+
+    act(() => {
+      result.current.handleItemClick(items[0], makeClickEvent())
+    })
+
+    act(() => {
+      result.current.handleItemClick(
+        items[1],
+        makeClickEvent({ ctrlKey: true, shiftKey: true })
+      )
+    })
+
+    expect(result.current.selectedItemIds).toEqual(['file-2'])
+  })
+
   it('should select a range with Shift+click', () => {
     const { result } = setup()
 
@@ -122,6 +139,29 @@ describe('useFilePickerSelection', () => {
       'file-3',
       'file-4'
     ])
+  })
+
+  it('should ignore Ctrl+A in single mode', () => {
+    const { result } = setup({ multiple: false })
+
+    act(() => {
+      fireEvent.keyDown(document, { key: 'a', ctrlKey: true })
+    })
+
+    expect(result.current.selectedItemIds).toEqual([])
+  })
+
+  it('should ignore Shift+ArrowDown in single mode', () => {
+    const { result, selectionContainer } = setup({ multiple: false })
+
+    act(() => {
+      fireEvent.keyDown(selectionContainer, {
+        key: 'ArrowDown',
+        shiftKey: true
+      })
+    })
+
+    expect(result.current.selectedItemIds).toEqual([])
   })
 
   it('should focus the selection container after clicking an item', () => {

@@ -118,7 +118,7 @@ const Picker = ({ service, intent, onReadyToUse }) => {
       onChange={handlePick}
       filePickerConfig={filePickerConfig}
       onReadyToUse={onReadyToUse}
-      multiple
+      multiple={filePickerConfig.multiple}
     />
   )
 }

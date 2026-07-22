@@ -8,7 +8,7 @@ export { matchMimeType }
 
 const { file: fileModel } = models
 
-// TODO with multi selection: enforce maxFileCount and availableSize.
+// TODO: enforce maxFileCount and availableSize.
 
 const getFileMime = file => {
   const mime = file?.mime || mimeTypes.lookup(file?.name)

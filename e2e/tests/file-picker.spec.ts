@@ -279,6 +279,37 @@ test.describe('File Picker', () => {
   })
 
   // ---------------------------------------------------------------------------
+  // Single-file selection
+  // ---------------------------------------------------------------------------
+  test('selecting a second file replaces the first in single selection mode', async ({
+    alicePage
+  }) => {
+    picker = new FilePickerPage(alicePage)
+    await picker.open('Single selection')
+    await picker.navigateToFolder(parentFolder)
+    await picker.selectItem(testFileName)
+    await picker.selectItem(largeFileName)
+
+    await picker.openPublicLinkAccess()
+    await expect(picker.hasLinkAccessDocument(testFileName)).resolves.toBe(
+      false
+    )
+    await expect(picker.hasLinkAccessDocument(largeFileName)).resolves.toBe(
+      true
+    )
+    await picker.confirmPublicLinks()
+    await picker.waitForClosed()
+
+    const document = await picker.getResultDocument()
+    expect(document).toHaveLength(1)
+    expect((document as Array<Record<string, unknown>>)[0].name).toBe(
+      largeFileName
+    )
+
+    await picker.closeConfirmation()
+  })
+
+  // ---------------------------------------------------------------------------
   // Multi-file selection
   // ---------------------------------------------------------------------------
   test('select two files and generate one public link per file', async ({

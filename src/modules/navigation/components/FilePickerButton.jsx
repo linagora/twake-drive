@@ -17,6 +17,10 @@ const PICKER_CONFIGS = [
     label: 'Default (sharing + download)'
   },
   {
+    id: 'single-selection',
+    label: 'Single selection'
+  },
+  {
     id: 'sharing-only',
     label: 'Sharing link only'
   },
@@ -40,6 +44,8 @@ const PICKER_CONFIGS = [
 
 const buildFilePickerOptions = (configId, t) => {
   switch (configId) {
+    case 'single-selection':
+      return { multiple: false }
     case 'sharing-only':
       return {
         sharingLink: { label: 'Share as link' },

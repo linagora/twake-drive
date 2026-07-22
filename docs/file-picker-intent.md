@@ -13,7 +13,7 @@ action = 'PICK'
 type = 'io.cozy.files'
 ```
 
-The service lets the user browse Drive, select a file or folder, and choose one of the configured link actions.
+The service lets the user browse Drive, select a file or folder, and choose one of the configured link actions. By default, several files or folders can be selected. Set `multiple: false` to limit the selection to one item; the result is still returned as a `FilePickerEntry[]` array containing at most one entry.
 
 ## Configuration
 
@@ -30,6 +30,7 @@ It is not a top-level `actions` field.
   "type": "io.cozy.files",
   "permissions": ["GET"],
   "data": {
+    "multiple": false,
     "sharingLink": { "label": "Share as link" },
     "downloadLink": {
       "label": "Attach file",
@@ -44,6 +45,12 @@ It is not a top-level `actions` field.
 
 ```ts
 interface FilePickerConfig {
+  /**
+   * Whether several files or folders can be selected.
+   * Defaults to true. When false, modifier-key selection shortcuts are disabled.
+   */
+  multiple?: boolean
+
   /**
    * Configuration for the public sharing link action.
    * Omit to use defaults. Set to null to hide the action.
@@ -88,12 +95,12 @@ interface ActionConfig {
   maxFileSize?: number
 
   /**
-   * Reserved for multi-file selection. Currently not enforced.
+   * Reserved for limiting multi-file selection. Currently not enforced.
    */
   maxFileCount?: number
 
   /**
-   * Reserved for multi-file selection. Currently not enforced.
+   * Reserved for limiting multi-file selection. Currently not enforced.
    */
   availableSize?: number
 }
@@ -105,6 +112,7 @@ When no config is provided, Drive uses:
 
 ```js
 {
+  multiple: true,
   sharingLink: { allowFolder: true },
   downloadLink: { allowFolder: false }
 }
@@ -169,7 +177,7 @@ image/*         any image type
 */*             any MIME type
 ```
 
-`maxFileCount` and `availableSize` are currently accepted in the config shape but are not enforced until multi-file selection is implemented.
+`maxFileCount` and `availableSize` are currently accepted in the config shape but are not enforced yet.
 
 ## Success result
 
@@ -256,6 +264,5 @@ const handleComplete = result => {
 
 ## Limitations
 
-- Multi-file selection is not wired yet.
 - `maxFileCount` is reserved but not enforced.
 - `availableSize` is reserved but not enforced.
