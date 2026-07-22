@@ -5,16 +5,16 @@ import { ShareButton } from 'cozy-sharing'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import { useDisplayedFolder } from '@/hooks'
-import { getPathToShareDisplayedFolder } from '@/modules/drive/Toolbar/share/helpers'
+import { makeDisplayedFolderShareLocation } from '@/modules/drive/Toolbar/share/helpers'
 
 const ShareButtonWithProps = ({ isDisabled, className, useShortLabel }) => {
   const { displayedFolder } = useDisplayedFolder()
   const navigate = useNavigate()
-  const { pathname } = useLocation()
+  const location = useLocation()
   const { isMobile } = useBreakpoints()
 
   const share = () => {
-    navigate(getPathToShareDisplayedFolder(pathname))
+    navigate(makeDisplayedFolderShareLocation({ location }))
   }
 
   if (!displayedFolder) return null

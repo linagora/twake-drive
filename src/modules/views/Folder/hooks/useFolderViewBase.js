@@ -18,7 +18,8 @@ import { useSelectionContext } from '@/modules/selection/SelectionProvider'
  */
 export const useFolderViewBase = () => {
   const navigate = useNavigate()
-  const { pathname } = useLocation()
+  const location = useLocation()
+  const { pathname } = location
   const { isMobile } = useBreakpoints()
   const { t, lang } = useI18n()
   const client = useClient()
@@ -30,6 +31,7 @@ export const useFolderViewBase = () => {
 
   return {
     navigate,
+    location,
     pathname,
     isMobile,
     t,

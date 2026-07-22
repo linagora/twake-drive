@@ -1,4 +1,4 @@
-import { makeFileSharePath } from './sharePath'
+import { makeFileShareLocation, makeFileSharePath } from './sharePath'
 
 import { DRIVE_ROOT_TYPE } from '@/modules/shareddrives/types'
 
@@ -22,5 +22,22 @@ describe('makeFileSharePath', () => {
     ${'folder-root shared drive outside sharings'}     | ${{ _id: 'folder-1', id: 'folder-1', driveId: 'drive-1' }}                                    | ${'/shareddrive/drive-1/folder-1'}             | ${'/shareddrive/drive-1/folder-1/file/folder-1/share'}
   `('builds $label share path', ({ file, pathname, expectedPath }) => {
     expectSharePath({ file, pathname, expectedPath })
+  })
+})
+
+describe('makeFileShareLocation', () => {
+  it('preserves the active Sharings tab', () => {
+    expect(
+      makeFileShareLocation({
+        file: { id: 'file-1' },
+        location: {
+          pathname: '/sharings',
+          search: '?tab=by-me'
+        }
+      })
+    ).toEqual({
+      pathname: '/sharings/file/file-1/share',
+      search: '?tab=by-me'
+    })
   })
 })

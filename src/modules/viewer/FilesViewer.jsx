@@ -222,7 +222,8 @@ const FilesViewer = ({ filesQuery, files, onClose, onChange, viewerProps }) => {
                       navigate,
                       pathname: '',
                       files,
-                      path: 'share'
+                      path: 'share',
+                      location
                     })
                   }
                 />

@@ -1,10 +1,22 @@
 import { joinPath } from '@/lib/path'
+import { makeSharingsTabLocation } from '@/modules/navigation/sharingsTabNavigation'
 
-export const navigateToModal = ({ navigate, pathname, files, path }) => {
+export const navigateToModal = ({
+  navigate,
+  pathname,
+  files,
+  path,
+  location
+}) => {
   const file = Array.isArray(files) ? files[0] : files
+  const targetPathname = pathname
+    ? joinPath(pathname, `file/${file.id}/${path}`)
+    : `v/${path}`
 
   return navigate(
-    pathname ? joinPath(pathname, `file/${file.id}/${path}`) : `v/${path}`
+    location
+      ? makeSharingsTabLocation({ currentLocation: location, targetPathname })
+      : targetPathname
   )
 }
 

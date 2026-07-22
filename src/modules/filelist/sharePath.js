@@ -1,4 +1,5 @@
 import { joinPath } from '@/lib/path'
+import { makeSharingsTabLocation } from '@/modules/navigation/sharingsTabNavigation'
 import { isSharedDriveDoc } from '@/modules/shareddrives/helpers'
 import {
   getFileRootSharePath,
@@ -27,4 +28,14 @@ export const makeFileSharePath = ({ file, pathname }) => {
   // itself: the route's `:folderId` segment and the share modal's `:fileId`
   // segment reference the same doc. Use one resolved id for both.
   return `/shareddrive/${file.driveId}/${fileId}/file/${fileId}/share`
+}
+
+export function makeFileShareLocation({ file, location }) {
+  return makeSharingsTabLocation({
+    currentLocation: location,
+    targetPathname: makeFileSharePath({
+      file,
+      pathname: location.pathname
+    })
+  })
 }

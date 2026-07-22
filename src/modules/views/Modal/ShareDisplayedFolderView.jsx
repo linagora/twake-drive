@@ -1,23 +1,35 @@
 import React from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 import flag from 'cozy-flags'
 import { ShareModal } from 'cozy-sharing'
 
-import { DEFAULT_SHARINGS_VIEW_ROUTE } from '@/constants/config'
 import { useDisplayedFolder } from '@/hooks'
+import {
+  makeSharingsTabLocation,
+  makeSharingsViewLocation
+} from '@/modules/navigation/sharingsTabNavigation'
 
 const ShareDisplayedFolderView = () => {
   const { displayedFolder } = useDisplayedFolder()
+  const location = useLocation()
   const navigate = useNavigate()
 
   if (displayedFolder) {
-    const onClose = () => {
-      navigate('..', { replace: true })
+    const handleClose = () => {
+      navigate(
+        makeSharingsTabLocation({
+          currentLocation: location,
+          targetPathname: '..'
+        }),
+        { replace: true }
+      )
     }
 
-    const onRevokeSuccess = () => {
-      navigate(DEFAULT_SHARINGS_VIEW_ROUTE, { replace: true })
+    const handleRevokeSuccess = () => {
+      navigate(makeSharingsViewLocation({ currentLocation: location }), {
+        replace: true
+      })
     }
 
     return (
@@ -25,8 +37,8 @@ const ShareDisplayedFolderView = () => {
         document={displayedFolder}
         documentType="Files"
         sharingDesc={displayedFolder.name}
-        onClose={onClose}
-        onRevokeSuccess={onRevokeSuccess}
+        onClose={handleClose}
+        onRevokeSuccess={handleRevokeSuccess}
         autoOpenShareRestriction={flag('sharing.auto-open-settings.enabled')}
         showGenerateLinkButton={flag('sharing.generate-link-button.enabled')}
       />

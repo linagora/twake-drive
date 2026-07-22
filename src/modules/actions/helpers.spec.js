@@ -50,6 +50,26 @@ describe('actions helpers', () => {
 
       expect(mockNavigate).toHaveBeenCalledWith('/folder/456/file/file-1/edit')
     })
+
+    it('should preserve the active Sharings tab', () => {
+      const params = {
+        navigate: mockNavigate,
+        pathname: '/sharings',
+        location: {
+          pathname: '/sharings',
+          search: '?foo=bar&tab=by-me'
+        },
+        files: { id: 'file-123', name: 'test.pdf' },
+        path: 'share'
+      }
+
+      navigateToModal(params)
+
+      expect(mockNavigate).toHaveBeenCalledWith({
+        pathname: '/sharings/file/file-123/share',
+        search: '?tab=by-me'
+      })
+    })
   })
 
   describe('navigateToModalWithMultipleFile', () => {

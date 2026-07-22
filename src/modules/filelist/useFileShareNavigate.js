@@ -1,10 +1,10 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 
-import { makeFileSharePath } from '@/modules/filelist/sharePath'
+import { makeFileShareLocation } from '@/modules/filelist/sharePath'
 
 export const useFileShareNavigate = ({ file, disabled }) => {
   const navigate = useNavigate()
-  const { pathname } = useLocation()
+  const location = useLocation()
 
   return e => {
     // Avoid triggering row click from FileOpener.
@@ -12,7 +12,7 @@ export const useFileShareNavigate = ({ file, disabled }) => {
     e.stopPropagation()
 
     if (!disabled) {
-      navigate(makeFileSharePath({ file, pathname }))
+      navigate(makeFileShareLocation({ file, location }))
     }
   }
 }

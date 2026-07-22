@@ -1,18 +1,22 @@
 import React from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 
 import { hasQueryBeenLoaded, useQuery } from 'cozy-client'
 import flag from 'cozy-flags'
 import { ShareModal } from 'cozy-sharing'
 
 import { LoaderModal } from '@/components/LoaderModal'
-import { DEFAULT_SHARINGS_VIEW_ROUTE } from '@/constants/config'
+import {
+  makeSharingsTabLocation,
+  makeSharingsViewLocation
+} from '@/modules/navigation/sharingsTabNavigation'
 import {
   buildFileOrFolderByIdQuery,
   buildSharedDriveFileOrFolderByIdQuery
 } from '@/queries'
 
 const ShareFileView = () => {
+  const location = useLocation()
   const navigate = useNavigate()
   const { fileId, driveId } = useParams()
 
@@ -22,11 +26,19 @@ const ShareFileView = () => {
   const fileResult = useQuery(fileQuery.definition, fileQuery.options)
 
   const handleExit = () => {
-    navigate('..', { replace: true })
+    navigate(
+      makeSharingsTabLocation({
+        currentLocation: location,
+        targetPathname: '..'
+      }),
+      { replace: true }
+    )
   }
 
   const handleRevokeSuccess = () => {
-    navigate(DEFAULT_SHARINGS_VIEW_ROUTE, { replace: true })
+    navigate(makeSharingsViewLocation({ currentLocation: location }), {
+      replace: true
+    })
   }
 
   if (hasQueryBeenLoaded(fileResult) && fileResult.data) {

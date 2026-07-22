@@ -1,4 +1,5 @@
 import { joinPath } from '@/lib/path'
+import { makeSharingsTabLocation } from '@/modules/navigation/sharingsTabNavigation'
 
 /**
  * Get the path to share the displayed folder
@@ -7,4 +8,11 @@ import { joinPath } from '@/lib/path'
  */
 export function getPathToShareDisplayedFolder(pathname) {
   return joinPath(pathname, 'share')
+}
+
+export function makeDisplayedFolderShareLocation({ location }) {
+  return makeSharingsTabLocation({
+    currentLocation: location,
+    targetPathname: getPathToShareDisplayedFolder(location.pathname)
+  })
 }

@@ -9,15 +9,15 @@ import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import { useI18n } from 'twake-i18n'
 
-import { getPathToShareDisplayedFolder } from '@/modules/drive/Toolbar/share/helpers'
+import { makeDisplayedFolderShareLocation } from '@/modules/drive/Toolbar/share/helpers'
 
 const ShareItem = ({ displayedFolder }) => {
   const { t } = useI18n()
   const navigate = useNavigate()
-  const { pathname } = useLocation()
+  const location = useLocation()
 
   const share = () => {
-    navigate(getPathToShareDisplayedFolder(pathname))
+    navigate(makeDisplayedFolderShareLocation({ location }))
   }
 
   return (

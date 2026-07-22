@@ -4,15 +4,15 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { SharedRecipients } from 'cozy-sharing'
 
 import { useDisplayedFolder } from '@/hooks'
-import { getPathToShareDisplayedFolder } from '@/modules/drive/Toolbar/share/helpers'
+import { makeDisplayedFolderShareLocation } from '@/modules/drive/Toolbar/share/helpers'
 
 const SharedRecipientsComponent = () => {
   const { displayedFolder } = useDisplayedFolder()
   const navigate = useNavigate()
-  const { pathname } = useLocation()
+  const location = useLocation()
 
   const share = () => {
-    navigate(getPathToShareDisplayedFolder(pathname))
+    navigate(makeDisplayedFolderShareLocation({ location }))
   }
 
   return (
