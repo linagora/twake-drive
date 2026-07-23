@@ -80,15 +80,15 @@ function renderWithRoute(route: string): ReturnType<typeof render> {
     <MemoryRouter initialEntries={[route]}>
       <Routes>
         <Route
-          path="/sharings/with-me"
+          path="/sharings/with-me/*"
           element={<TabRoute tab={SHARING_TAB_WITH_ME} />}
         />
         <Route
-          path="/sharings/by-me"
+          path="/sharings/by-me/*"
           element={<TabRoute tab={SHARING_TAB_BY_ME} />}
         />
         <Route
-          path="/sharings/drives"
+          path="/sharings/drives/*"
           element={<TabRoute tab={SHARING_TAB_DRIVES} />}
         />
       </Routes>
@@ -138,6 +138,20 @@ describe('useSharingsTab', () => {
     await waitFor(() => {
       expect(getTab()).toBe(SHARING_TAB_WITH_ME)
       expect(getPathname()).toBe('/sharings/with-me')
+    })
+  })
+
+  it('preserves a nested path when its tab becomes unavailable', async () => {
+    renderWithRoute(
+      '/sharings/drives/folder/folder-1/file/file-1?foo=bar&tab=drives'
+    )
+
+    await waitFor(() => {
+      expect(getTab()).toBe(SHARING_TAB_WITH_ME)
+      expect(getPathname()).toBe(
+        '/sharings/with-me/folder/folder-1/file/file-1'
+      )
+      expect(getSearch()).toBe('?foo=bar')
     })
   })
 

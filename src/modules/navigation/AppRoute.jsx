@@ -59,6 +59,7 @@ import { NextcloudTrashEmptyView } from '@/modules/views/Nextcloud/NextcloudTras
 import { NextcloudTrashView } from '@/modules/views/Nextcloud/NextcloudTrashView'
 import SearchView from '@/modules/views/Search/SearchView'
 import { SharedDriveFolderView } from '@/modules/views/SharedDrive/SharedDriveFolderView'
+import { LegacySharingsRedirect } from '@/modules/views/Sharings/LegacySharingsRedirect'
 import { SharingsTabProvider } from '@/modules/views/Sharings/useSharingsTab'
 import { TrashDestroyView } from '@/modules/views/Trash/TrashDestroyView'
 import { TrashEmptyView } from '@/modules/views/Trash/TrashEmptyView'
@@ -286,51 +287,11 @@ const AppRoute = () => (
       </Route>
 
       <Route path="sharings">
-        <Route
-          index
-          element={<Navigate to={SHARING_TAB_WITH_ME} replace={true} />}
-        />
+        <Route index element={<LegacySharingsRedirect />} />
         {[SHARING_TAB_WITH_ME, SHARING_TAB_BY_ME, SHARING_TAB_DRIVES].map(
           sharingsTabRoute
         )}
-        <Route element={<SharingsTabLayout tab={SHARING_TAB_WITH_ME} />}>
-          <Route element={<SharingsView />}>
-            <Route
-              path="file/:fileId"
-              element={<OutletWrapper Component={SharingsFilesViewer} />}
-            >
-              <Route path="v/revision" element={<FileHistory />} />
-              <Route path="v/share" element={<ShareFileView />} />
-              <Route path="v/move" element={<MoveFilesView isOpenInViewer />} />
-              <Route path="v/duplicate" element={<FolderDuplicateView />} />
-            </Route>
-            {/* This route must be a child of SharingsView so the modal opens on top of the sharing view */}
-            <Route path="file/:fileId/revision" element={<FileHistory />} />
-            <Route path="file/:fileId/share" element={<ShareFileView />} />
-            {/* Shared-drive entries open their share modal layered over the
-                sharings list (driveId in the path resolves a proxied recipient
-                document) instead of navigating into the shared-drive view */}
-            <Route
-              path="shareddrive/:driveId/:fileId/share"
-              element={<ShareFileView />}
-            />
-            <Route path="file/:fileId/qualify" element={<QualifyFileView />} />
-            {flag('drive.shared-drive.enabled') ||
-            flag('drive.federated-shared-folder.enabled')
-              ? sharedDriveRootFileRoute()
-              : null}
-          </Route>
-          {/* This route must be inside the /sharing path for the nav to have an activate state */}
-          <Route path=":folderId" element={<SharingsFolderView />}>
-            <Route path="file/:fileId" element={<SharingsFilesViewer />} />
-            {/* This route must be a child of SharingsFolderView so the modal opens on top of the folder view */}
-            <Route path="file/:fileId/revision" element={<FileHistory />} />
-            <Route path="file/:fileId/share" element={<ShareFileView />} />
-            <Route path="file/:fileId/qualify" element={<QualifyFileView />} />
-            <Route path="share" element={<ShareDisplayedFolderView />} />
-          </Route>
-          <Route path="move" element={<MoveFilesView />} />
-        </Route>
+        <Route path="*" element={<LegacySharingsRedirect />} />
       </Route>
 
       {getOnlyOfficeRoutes()}

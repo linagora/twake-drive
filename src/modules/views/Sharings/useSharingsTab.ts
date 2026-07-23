@@ -11,11 +11,12 @@ import { useLocation, useNavigate } from 'react-router-dom'
 
 import flag from 'cozy-flags'
 
+import { getSearchWithoutLegacyTab, getSharingsRouteForTab } from './routes'
+
 import {
   SHARING_TAB_BY_ME,
   SHARING_TAB_DRIVES,
-  SHARING_TAB_WITH_ME,
-  SHARINGS_VIEW_ROUTE
+  SHARING_TAB_WITH_ME
 } from '@/constants/config'
 import logger from '@/lib/logger'
 
@@ -51,17 +52,6 @@ export const areDrivesAvailable = (): boolean =>
   Boolean(flag('drive.shared-drive.enabled')) ||
   Boolean(flag('drive.federated-shared-folder.enabled'))
 
-export const getSharingsTabRoute = (tab: SharingsTab): string => {
-  return `${SHARINGS_VIEW_ROUTE}/${tab}`
-}
-
-const getSearchWithoutLegacyTab = (search: string): string => {
-  const searchParams = new URLSearchParams(search)
-  searchParams.delete('tab')
-  const nextSearch = searchParams.toString()
-  return nextSearch ? `?${nextSearch}` : ''
-}
-
 const SharingsTabContext = createContext<SharingsTabContextValue | null>(null)
 
 export const SharingsTabProvider = ({
@@ -80,13 +70,13 @@ export const SharingsTabProvider = ({
     if (activeTab !== tab) {
       navigate(
         {
-          pathname: getSharingsTabRoute(activeTab),
+          pathname: getSharingsRouteForTab(location.pathname, activeTab),
           search
         },
         { replace: true }
       )
     }
-  }, [activeTab, navigate, search, tab])
+  }, [activeTab, location.pathname, navigate, search, tab])
 
   const setTab = useCallback(
     (nextTab: SharingsTab, options: SetTabOptions = {}): void => {
@@ -103,13 +93,13 @@ export const SharingsTabProvider = ({
       }
       navigate(
         {
-          pathname: getSharingsTabRoute(nextTab),
+          pathname: getSharingsRouteForTab(location.pathname, nextTab),
           search
         },
         { replace: options.replace }
       )
     },
-    [activeTab, drivesAvailable, navigate, search]
+    [activeTab, drivesAvailable, location.pathname, navigate, search]
   )
 
   const contextValue = useMemo<SharingsTabContextValue>(

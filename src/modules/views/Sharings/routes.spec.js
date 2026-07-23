@@ -1,0 +1,45 @@
+import {
+  getLegacySharingsRoute,
+  getSearchWithoutLegacyTab,
+  getSharingsRouteForTab,
+  getSharingsTabFromPath
+} from './routes'
+
+describe('Sharings routes', () => {
+  it.each`
+    route                                                | expected
+    ${'/sharings'}                                       | ${'/sharings/with-me'}
+    ${'/sharings/file/file-1'}                           | ${'/sharings/with-me/file/file-1'}
+    ${'/sharings/file/file-1/v/share'}                   | ${'/sharings/with-me/file/file-1/v/share'}
+    ${'/sharings/move'}                                  | ${'/sharings/with-me/move'}
+    ${'/sharings/shareddrive/drive-1/file/file-1/share'} | ${'/sharings/with-me/shareddrive/drive-1/file/file-1/share'}
+    ${'/sharings/folder-1'}                              | ${'/sharings/with-me/folder/folder-1'}
+    ${'/sharings/folder-1/file/file-1/v/revision'}       | ${'/sharings/with-me/folder/folder-1/file/file-1/v/revision'}
+    ${'/sharings/folder-1/share'}                        | ${'/sharings/with-me/folder/folder-1/share'}
+    ${'/sharings/with-me/unknown-junk'}                  | ${'/sharings/with-me'}
+    ${'/sharings/by-me/removed-feature/path'}            | ${'/sharings/by-me'}
+  `('redirects $route to $expected', ({ route, expected }) => {
+    expect(getLegacySharingsRoute(route)).toBe(expected)
+  })
+
+  it('preserves unrelated query params and removes the obsolete tab param', () => {
+    expect(
+      getSearchWithoutLegacyTab('?sort=name&tab=by-me&search=report')
+    ).toBe('?sort=name&search=report')
+  })
+
+  it('changes only the tab segment of a nested sharings route', () => {
+    expect(
+      getSharingsRouteForTab(
+        '/sharings/drives/folder/folder-1/file/file-1',
+        'with-me'
+      )
+    ).toBe('/sharings/with-me/folder/folder-1/file/file-1')
+  })
+
+  it('gets the active tab from a nested path', () => {
+    expect(
+      getSharingsTabFromPath('/sharings/by-me/folder/folder-1/file/file-1')
+    ).toBe('by-me')
+  })
+})
