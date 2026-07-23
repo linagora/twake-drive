@@ -36,6 +36,10 @@ It is not a top-level `actions` field.
       "label": "Attach file",
       "maxFileSize": 52428800,
       "allowedMimeTypes": ["image/*", "application/pdf"]
+    },
+    "reference": {
+      "label": "Select",
+      "onlyFolder": true
     }
   }
 }
@@ -62,6 +66,11 @@ interface FilePickerConfig {
    * Omit to use defaults. Set to null to hide the action.
    */
   downloadLink?: ActionConfig | null
+  /**
+   * Configuration for the plain reference action.
+   * Omit to use defaults. Set to null to hide the action.
+   */
+  reference?: ActionConfig | null
 }
 ```
 
@@ -80,6 +89,9 @@ interface ActionConfig {
    * Whether folders are allowed for this action.
    */
   allowFolder?: boolean
+
+  /** When true, files are disabled and only folders can be selected. */
+  onlyFolder?: boolean
 
   /**
    * Allowed MIME type patterns for files.
@@ -114,7 +126,8 @@ When no config is provided, Drive uses:
 {
   multiple: true,
   sharingLink: { allowFolder: true },
-  downloadLink: { allowFolder: false }
+  downloadLink: { allowFolder: false },
+  reference: null
 }
 ```
 
@@ -143,6 +156,10 @@ Creates a temporary download link.
 - Uses a GET-only permission on `io.cozy.files` with a 5-minute TTL.
 - The returned URL is intended to be consumed quickly by the calling app.
 
+### `reference`
+
+Returns a plain reference to the picked document. No link is generated and no sharing or download side effect occurs. With `multiple: true`, one entry is returned for each selected document; with `multiple: false`, the result contains at most one entry. Use `onlyFolder: true` to create a folder-only reference picker.
+
 ## Hiding an action
 
 Set an action to `null` to hide its button:
@@ -166,6 +183,7 @@ When the selected item violates an action constraint, the corresponding button i
 | Constraint | Behavior |
 | --- | --- |
 | `allowFolder: false` and selected item is a folder | Button disabled |
+| `onlyFolder: true` and selected item is a file | Button disabled |
 | `allowedMimeTypes` does not match selected file MIME | Button disabled |
 | selected file size > `maxFileSize` | Button disabled |
 
@@ -202,10 +220,12 @@ interface FilePickerEntry {
   thumbnail?: {
     link: string
   }
+  type?: string
+  doctype?: 'io.cozy.files'
 }
 ```
 
-Exactly one of `sharingLink` or `downloadLink` is present, depending on the action selected by the user.
+Exactly one of `sharingLink` or `downloadLink` is present, depending on the action selected by the user, except for `reference`, which contains neither link field and instead includes `type` and `doctype: 'io.cozy.files'`.
 
 Example:
 

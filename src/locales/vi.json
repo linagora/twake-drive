@@ -726,14 +726,16 @@
       "buttons": {
         "cancel": "Hủy",
         "publicLink": "Thêm dưới dạng liên kết",
-        "temporaryDownloadLink": "Thêm dưới dạng tệp đính kèm"
+        "temporaryDownloadLink": "Thêm dưới dạng tệp đính kèm",
+        "reference": "Chọn"
       }
     },
     "constraints": {
       "disabledReasons": {
         "folderNotAllowed": "Thư mục không được phép cho hành động này",
         "mimeTypeNotAllowed": "Loại tệp này không được phép cho hành động này",
-        "fileTooLarge": "Tệp này lớn hơn %{maxFileSize}"
+        "fileTooLarge": "Tệp này lớn hơn %{maxFileSize}",
+        "fileNotAllowed": "Chỉ có thể chọn thư mục cho hành động này"
       }
     },
     "actions": {

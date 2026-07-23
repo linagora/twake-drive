@@ -1,4 +1,4 @@
-import { Attachment, Cross, Icon, Link } from '@linagora/twake-icons'
+import { Cross, Icon } from '@linagora/twake-icons'
 import { filesize } from 'filesize'
 import PropTypes from 'prop-types'
 import React, { memo } from 'react'
@@ -10,8 +10,6 @@ import Tooltip from 'cozy-ui/transpiled/react/Tooltip'
 import Typography from 'cozy-ui/transpiled/react/Typography'
 import { useI18n } from 'twake-i18n'
 
-import { filePickerLinkModes } from './constants'
-
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 
 function getTooltipTitle(t, reasonKey, actionConfig) {
@@ -22,38 +20,18 @@ function getTooltipTitle(t, reasonKey, actionConfig) {
     : t(reasonKey)
 }
 
-const FilePickerFooter = ({
-  onConfirm,
-  publicLinkState,
-  downloadLinkState,
-  publicLinkAction,
-  downloadLinkAction
-}) => {
+const FilePickerFooter = ({ onConfirm, actions }) => {
   const { t } = useI18n()
   const { selectedItems, clearSelection } = useSelectionContext()
   const selectedCount = selectedItems.length
 
-  const publicLinkLabel =
-    publicLinkAction &&
-    (publicLinkAction.label ?? t('FilePicker.footer.buttons.publicLink'))
-  const downloadLinkLabel =
-    downloadLinkAction &&
-    (downloadLinkAction.label ??
-      t('FilePicker.footer.buttons.temporaryDownloadLink'))
-
-  const renderAction = (
-    label,
-    state,
-    actionConfig,
-    onClick,
-    testId,
-    IconComponent
-  ) => {
+  const renderAction = (label, action) => {
     if (!label) return null
 
+    const { actionConfig, icon: IconComponent, mode, state } = action
     const button = (
       <Button
-        data-testid={testId}
+        data-testid={`${mode}-btn`}
         label={
           <span className="u-flex u-flex-items-center">
             <Icon icon={IconComponent} size={16} />
@@ -61,7 +39,7 @@ const FilePickerFooter = ({
           </span>
         }
         variant="primary"
-        onClick={onClick}
+        onClick={() => onConfirm(mode)}
         disabled={state.disabled}
       />
     )
@@ -97,48 +75,39 @@ const FilePickerFooter = ({
         <span />
       )}
       <Box className="u-flex u-flex-items-center">
-        {renderAction(
-          downloadLinkLabel,
-          downloadLinkState,
-          downloadLinkAction,
-          () => onConfirm(filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK),
-          'temporary-download-link-btn',
-          Attachment
-        )}
-        <span className="u-ml-1">
-          {renderAction(
-            publicLinkLabel,
-            publicLinkState,
-            publicLinkAction,
-            () => onConfirm(filePickerLinkModes.PUBLIC_LINK),
-            'public-link-btn',
-            Link
-          )}
-        </span>
+        {actions.map((action, index) => {
+          if (!action.actionConfig) return null
+          const label = action.actionConfig.label ?? t(action.localeKey)
+          return (
+            <span
+              key={action.mode}
+              className={index > 0 ? 'u-ml-1' : undefined}
+            >
+              {renderAction(label, action)}
+            </span>
+          )
+        })}
       </Box>
     </Box>
   )
 }
 
+const actionStateShape = PropTypes.shape({
+  disabled: PropTypes.bool,
+  reasonKey: PropTypes.string
+})
+
 FilePickerFooter.propTypes = {
   onConfirm: PropTypes.func.isRequired,
-  publicLinkState: PropTypes.shape({
-    disabled: PropTypes.bool,
-    reasonKey: PropTypes.string
-  }),
-  downloadLinkState: PropTypes.shape({
-    disabled: PropTypes.bool,
-    reasonKey: PropTypes.string
-  }),
-  publicLinkAction: PropTypes.object,
-  downloadLinkAction: PropTypes.object
-}
-
-FilePickerFooter.defaultProps = {
-  publicLinkState: { disabled: true, reasonKey: null },
-  downloadLinkState: { disabled: true, reasonKey: null },
-  publicLinkAction: null,
-  downloadLinkAction: null
+  actions: PropTypes.arrayOf(
+    PropTypes.shape({
+      mode: PropTypes.string.isRequired,
+      icon: PropTypes.elementType.isRequired,
+      localeKey: PropTypes.string.isRequired,
+      state: actionStateShape.isRequired,
+      actionConfig: PropTypes.object
+    })
+  ).isRequired
 }
 
 export default memo(FilePickerFooter)

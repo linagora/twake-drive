@@ -138,6 +138,21 @@ export class FilePickerPage {
       .isVisible()
   }
 
+  /** Click the reference action in the picker footer. */
+  async clickReference(): Promise<void> {
+    await this.getFrameLocator().getByTestId('reference-btn').click()
+  }
+
+  /** Whether the reference action is disabled. */
+  async isReferenceDisabled(): Promise<boolean> {
+    return this.getFrameLocator().getByTestId('reference-btn').isDisabled()
+  }
+
+  /** Whether the reference action is visible. */
+  async hasReferenceButton(): Promise<boolean> {
+    return this.getFrameLocator().getByTestId('reference-btn').isVisible()
+  }
+
   /** Click the "Temporary download link" button in the picker footer. */
   async clickTemporaryDownloadLink(): Promise<void> {
     const frame = this.getFrameLocator()

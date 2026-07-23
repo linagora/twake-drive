@@ -10,17 +10,18 @@ import { makeThumbnail } from './thumbnail'
  *
  * `links` is an object that may contain `sharingLink` (public link)
  * and/or `downloadLink` (temporary link) depending on the chosen
- * generation mode.
+ * generation mode. A reference entry contains neither link.
  *
  * @param {object} file  - io.cozy.files document
  * @param {object} links - Generated links
  * @param {string} [links.sharingLink] - Public sharing link
  * @param {string} [links.downloadLink] - Temporary download link
- * @returns {{id: string, name: string, size: number, mimeType: string|null, sharingLink?: string, downloadLink?: string}}
+ * @param {boolean} [links.reference] - Return a plain document reference
+ * @returns {{id: string, name: string, size: number, mimeType: string|null, sharingLink?: string, downloadLink?: string, type?: string, doctype?: string}}
  */
 export const makeFilePickerFileEntry = (
   file,
-  { sharingLink, downloadLink } = {}
+  { sharingLink, downloadLink, reference } = {}
 ) => ({
   id: file._id,
   name: file.name,
@@ -28,5 +29,6 @@ export const makeFilePickerFileEntry = (
   mimeType: fileModel.isFile(file) ? file.mime : null,
   ...(sharingLink ? { sharingLink } : {}),
   ...(downloadLink ? { downloadLink } : {}),
-  ...makeThumbnail(file)
+  ...makeThumbnail(file),
+  ...(reference ? { type: file.type, doctype: 'io.cozy.files' } : {})
 })
