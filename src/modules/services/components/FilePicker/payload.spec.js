@@ -18,7 +18,10 @@ describe('FilePicker payload', () => {
         name: 'invoice.pdf',
         size: 1024,
         mimeType: 'application/pdf',
-        sharingLink: 'https://x'
+        sharingLink: 'https://x',
+        thumbnail: {
+          link: 'https://files.twake.app/email-assets/file-picker/pdf.png'
+        }
       })
     })
 
