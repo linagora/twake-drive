@@ -133,7 +133,10 @@ export const makeOnlyOfficeFileRoute = (
  * @returns {boolean}
  */
 export const shouldBeOpenedOnOtherInstance = ({ data }, instanceUri) => {
-  return !!instanceUri && !instanceUri.includes(data.attributes.instance)
+  if (!instanceUri) return false
+  const docHost = data.attributes.instance.split(':')[0]
+  const currentHost = new URL(instanceUri).hostname
+  return docHost !== currentHost
 }
 
 export const makeOnlyOfficeIconByClass = fileClass => {
