@@ -2,6 +2,8 @@ import { models } from 'cozy-client'
 
 const { file: fileModel } = models
 
+import { makeThumbnail } from './thumbnail'
+
 /**
  * Build a single file entry of the File Picker payload from a
  * Cozy file/folder document and the links generated for it.
@@ -25,5 +27,6 @@ export const makeFilePickerFileEntry = (
   size: fileModel.isFile(file) ? parseInt(file.size, 10) || 0 : 0,
   mimeType: fileModel.isFile(file) ? file.mime : null,
   ...(sharingLink ? { sharingLink } : {}),
-  ...(downloadLink ? { downloadLink } : {})
+  ...(downloadLink ? { downloadLink } : {}),
+  ...makeThumbnail(file)
 })

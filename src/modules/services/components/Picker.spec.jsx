@@ -266,7 +266,10 @@ describe('Picker', () => {
         name: 'updated-invoice.pdf',
         size: 84,
         mimeType: 'application/pdf',
-        sharingLink: 'https://drive.example/public?sharecode=abc'
+        sharingLink: 'https://drive.example/public?sharecode=abc',
+        thumbnail: {
+          link: 'https://files.twake.app/email-assets/file-picker/pdf.png'
+        }
       }
     ])
   })
@@ -290,7 +293,10 @@ describe('Picker', () => {
         name: 'invoice.pdf',
         size: 42,
         mimeType: 'application/pdf',
-        sharingLink: 'https://drive.example/public?sharecode=abc'
+        sharingLink: 'https://drive.example/public?sharecode=abc',
+        thumbnail: {
+          link: 'https://files.twake.app/email-assets/file-picker/pdf.png'
+        }
       }
     ])
   })
@@ -321,14 +327,20 @@ describe('Picker', () => {
         name: 'invoice.pdf',
         size: 42,
         mimeType: 'application/pdf',
-        sharingLink: 'https://drive.example/public?sharecode=abc'
+        sharingLink: 'https://drive.example/public?sharecode=abc',
+        thumbnail: {
+          link: 'https://files.twake.app/email-assets/file-picker/pdf.png'
+        }
       },
       {
         id: 'second-file-id',
         name: 'receipt.pdf',
         size: 84,
         mimeType: 'application/pdf',
-        sharingLink: 'https://drive.example/public?sharecode=def'
+        sharingLink: 'https://drive.example/public?sharecode=def',
+        thumbnail: {
+          link: 'https://files.twake.app/email-assets/file-picker/pdf.png'
+        }
       }
     ])
   })
@@ -369,7 +381,10 @@ describe('Picker', () => {
         size: 42,
         mimeType: 'application/pdf',
         downloadLink:
-          'https://alice.example/files/downloads/123/invoice.pdf?Dl=1'
+          'https://alice.example/files/downloads/123/invoice.pdf?Dl=1',
+        thumbnail: {
+          link: 'https://files.twake.app/email-assets/file-picker/pdf.png'
+        }
       }
     ])
   })
@@ -421,7 +436,10 @@ describe('Picker', () => {
         size: 42,
         mimeType: 'application/pdf',
         downloadLink:
-          'https://alice.example/files/downloads/123/invoice.pdf?Dl=1'
+          'https://alice.example/files/downloads/123/invoice.pdf?Dl=1',
+        thumbnail: {
+          link: 'https://files.twake.app/email-assets/file-picker/pdf.png'
+        }
       },
       {
         id: 'second-file-id',
@@ -429,7 +447,10 @@ describe('Picker', () => {
         size: 84,
         mimeType: 'application/pdf',
         downloadLink:
-          'https://alice.example/files/downloads/456/receipt.pdf?Dl=1'
+          'https://alice.example/files/downloads/456/receipt.pdf?Dl=1',
+        thumbnail: {
+          link: 'https://files.twake.app/email-assets/file-picker/pdf.png'
+        }
       }
     ])
   })
@@ -480,7 +501,10 @@ describe('Picker', () => {
         name: 'invoice.pdf',
         size: 42,
         mimeType: 'application/pdf',
-        sharingLink: 'https://drive.example/public?sharecode=existing-code'
+        sharingLink: 'https://drive.example/public?sharecode=existing-code',
+        thumbnail: {
+          link: 'https://files.twake.app/email-assets/file-picker/pdf.png'
+        }
       }
     ])
   })
