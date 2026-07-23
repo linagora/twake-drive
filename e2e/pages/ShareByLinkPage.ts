@@ -72,7 +72,7 @@ export class ShareByLinkPage {
   async enablePassword(password: string): Promise<void> {
     const modal = this.restrictionModal
     await modal.getByText('Limit access with a password').click()
-    await modal.getByLabel('Password').fill(password)
+    await modal.getByRole('textbox', { name: 'Password' }).fill(password)
   }
 
   /** `date` must already be formatted for the current locale (MM/dd/yyyy in
