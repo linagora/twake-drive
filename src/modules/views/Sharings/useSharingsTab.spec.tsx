@@ -1,10 +1,20 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import React from 'react'
-import { MemoryRouter, useLocation, useNavigate } from 'react-router-dom'
+import {
+  MemoryRouter,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate
+} from 'react-router-dom'
 
 import flag from 'cozy-flags'
 
-import { useSharingsTab } from './useSharingsTab'
+import {
+  SharingsTab,
+  SharingsTabProvider,
+  useSharingsTab
+} from './useSharingsTab'
 
 import {
   SHARING_TAB_BY_ME,
@@ -26,19 +36,21 @@ jest.mock('@/lib/logger', () => ({
 const mockFlag = flag as unknown as jest.Mock
 const mockLogger = logger as unknown as { warn: jest.Mock }
 
-const enableSharedDrives = (): void => {
+function enableSharedDrives(): void {
   mockFlag.mockImplementation(
     (name: string) => name === 'drive.shared-drive.enabled'
   )
 }
 
-const TabProbe = (): JSX.Element => {
+function TabProbe(): JSX.Element {
   const [tab, setTab] = useSharingsTab()
-  const { search, key } = useLocation()
+  const { pathname, search, key } = useLocation()
   const navigate = useNavigate()
+
   return (
     <>
       <div data-testid="tab">{tab}</div>
+      <div data-testid="pathname">{pathname}</div>
       <div data-testid="search">{search}</div>
       <div data-testid="location-key">{key}</div>
       <button onClick={(): void => setTab(SHARING_TAB_DRIVES)}>
@@ -55,87 +67,102 @@ const TabProbe = (): JSX.Element => {
   )
 }
 
-const renderWithSearch = (search = ''): ReturnType<typeof render> =>
-  render(
-    <MemoryRouter initialEntries={[`/sharings${search}`]}>
+function TabRoute({ tab }: { tab: SharingsTab }): JSX.Element {
+  return (
+    <SharingsTabProvider tab={tab}>
       <TabProbe />
+    </SharingsTabProvider>
+  )
+}
+
+function renderWithRoute(route: string): ReturnType<typeof render> {
+  return render(
+    <MemoryRouter initialEntries={[route]}>
+      <Routes>
+        <Route
+          path="/sharings/with-me"
+          element={<TabRoute tab={SHARING_TAB_WITH_ME} />}
+        />
+        <Route
+          path="/sharings/by-me"
+          element={<TabRoute tab={SHARING_TAB_BY_ME} />}
+        />
+        <Route
+          path="/sharings/drives"
+          element={<TabRoute tab={SHARING_TAB_DRIVES} />}
+        />
+      </Routes>
     </MemoryRouter>
   )
+}
 
-const getTab = (): string | null => screen.getByTestId('tab').textContent
-const getSearch = (): string | null => screen.getByTestId('search').textContent
+function getTab(): string | null {
+  return screen.getByTestId('tab').textContent
+}
+
+function getPathname(): string | null {
+  return screen.getByTestId('pathname').textContent
+}
+
+function getSearch(): string | null {
+  return screen.getByTestId('search').textContent
+}
 
 describe('useSharingsTab', () => {
   beforeEach(() => {
     mockFlag.mockReturnValue(false)
   })
 
-  it('defaults to the "with me" tab and canonicalizes the URL when no param is set', () => {
-    renderWithSearch()
+  it.each([
+    [SHARING_TAB_WITH_ME, '/sharings/with-me'],
+    [SHARING_TAB_BY_ME, '/sharings/by-me']
+  ])('uses the %s tab from its route', (tab, route) => {
+    renderWithRoute(route)
 
-    expect(getTab()).toBe(SHARING_TAB_WITH_ME)
-    expect(getSearch()).toBe(`?tab=${SHARING_TAB_WITH_ME}`)
+    expect(getTab()).toBe(tab)
+    expect(getPathname()).toBe(route)
   })
 
-  it('uses the tab from the URL when it is valid', () => {
-    renderWithSearch(`?tab=${SHARING_TAB_BY_ME}`)
-
-    expect(getTab()).toBe(SHARING_TAB_BY_ME)
-    expect(getSearch()).toBe(`?tab=${SHARING_TAB_BY_ME}`)
-  })
-
-  it('canonicalizes the legacy numeric param to the default tab', () => {
-    renderWithSearch('?tab=1')
-
-    expect(getTab()).toBe(SHARING_TAB_WITH_ME)
-    expect(getSearch()).toBe(`?tab=${SHARING_TAB_WITH_ME}`)
-  })
-
-  it('canonicalizes an unrecognized param to the default tab', () => {
-    renderWithSearch('?tab=nonsense')
-
-    expect(getTab()).toBe(SHARING_TAB_WITH_ME)
-    expect(getSearch()).toBe(`?tab=${SHARING_TAB_WITH_ME}`)
-  })
-
-  it('accepts the drives tab while a shared-drive flag is enabled', () => {
+  it('accepts the drives route while a shared-drive flag is enabled', () => {
     enableSharedDrives()
 
-    renderWithSearch(`?tab=${SHARING_TAB_DRIVES}`)
+    renderWithRoute('/sharings/drives')
 
     expect(getTab()).toBe(SHARING_TAB_DRIVES)
-    expect(getSearch()).toBe(`?tab=${SHARING_TAB_DRIVES}`)
+    expect(getPathname()).toBe('/sharings/drives')
   })
 
-  it('canonicalizes a drives deep link to the default tab when the feature is disabled', () => {
-    renderWithSearch(`?tab=${SHARING_TAB_DRIVES}`)
+  it('redirects the drives route to the default tab when the feature is disabled', async () => {
+    renderWithRoute('/sharings/drives')
 
-    expect(getTab()).toBe(SHARING_TAB_WITH_ME)
-    expect(getSearch()).toBe(`?tab=${SHARING_TAB_WITH_ME}`)
+    await waitFor(() => {
+      expect(getTab()).toBe(SHARING_TAB_WITH_ME)
+      expect(getPathname()).toBe('/sharings/with-me')
+    })
   })
 
-  it('updates the tab and the URL when setTab is called', () => {
+  it('updates the route when setTab is called', () => {
     enableSharedDrives()
-    renderWithSearch(`?tab=${SHARING_TAB_WITH_ME}`)
+    renderWithRoute('/sharings/with-me')
 
     fireEvent.click(screen.getByText('go-drives'))
 
     expect(getTab()).toBe(SHARING_TAB_DRIVES)
-    expect(getSearch()).toBe(`?tab=${SHARING_TAB_DRIVES}`)
+    expect(getPathname()).toBe('/sharings/drives')
   })
 
   it('ignores setTab calls targeting an unavailable tab', () => {
-    renderWithSearch(`?tab=${SHARING_TAB_BY_ME}`)
+    renderWithRoute('/sharings/by-me')
 
     fireEvent.click(screen.getByText('go-drives'))
 
     expect(getTab()).toBe(SHARING_TAB_BY_ME)
-    expect(getSearch()).toBe(`?tab=${SHARING_TAB_BY_ME}`)
+    expect(getPathname()).toBe('/sharings/by-me')
     expect(mockLogger.warn).toHaveBeenCalledTimes(1)
   })
 
-  it('does not navigate when re-selecting the already active tab', () => {
-    renderWithSearch(`?tab=${SHARING_TAB_BY_ME}`)
+  it('does not navigate when re-selecting the active tab', () => {
+    renderWithRoute('/sharings/by-me')
     const keyBefore = screen.getByTestId('location-key').textContent
 
     fireEvent.click(screen.getByText('go-by-me'))
@@ -144,55 +171,36 @@ describe('useSharingsTab', () => {
     expect(screen.getByTestId('location-key').textContent).toBe(keyBefore)
   })
 
-  it('pushes a history entry on setTab so back returns to the previous tab', () => {
+  it('pushes a history entry so back returns to the previous tab', () => {
     enableSharedDrives()
-    renderWithSearch(`?tab=${SHARING_TAB_BY_ME}`)
+    renderWithRoute('/sharings/by-me')
 
     fireEvent.click(screen.getByText('go-drives'))
     expect(getTab()).toBe(SHARING_TAB_DRIVES)
 
     fireEvent.click(screen.getByText('go-back'))
     expect(getTab()).toBe(SHARING_TAB_BY_ME)
-    expect(getSearch()).toBe(`?tab=${SHARING_TAB_BY_ME}`)
+    expect(getPathname()).toBe('/sharings/by-me')
   })
 
-  it('can replace the current history entry when canonicalizing a tab', () => {
-    renderWithSearch(`?tab=${SHARING_TAB_BY_ME}`)
+  it('can replace the current history entry', () => {
+    renderWithRoute('/sharings/by-me')
 
     fireEvent.click(screen.getByText('replace-with-me'))
     expect(getTab()).toBe(SHARING_TAB_WITH_ME)
 
     fireEvent.click(screen.getByText('go-back'))
     expect(getTab()).toBe(SHARING_TAB_WITH_ME)
-    expect(getSearch()).toBe(`?tab=${SHARING_TAB_WITH_ME}`)
+    expect(getPathname()).toBe('/sharings/with-me')
   })
 
-  it('returns to the canonicalized entry when going back after a tab switch', () => {
-    renderWithSearch('?tab=1')
-    expect(getSearch()).toBe(`?tab=${SHARING_TAB_WITH_ME}`)
-
-    fireEvent.click(screen.getByText('go-by-me'))
-    expect(getTab()).toBe(SHARING_TAB_BY_ME)
-
-    fireEvent.click(screen.getByText('go-back'))
-    expect(getTab()).toBe(SHARING_TAB_WITH_ME)
-    expect(getSearch()).toBe(`?tab=${SHARING_TAB_WITH_ME}`)
-  })
-
-  it('preserves unrelated query params', () => {
+  it('preserves unrelated query params and removes the obsolete tab param', () => {
     enableSharedDrives()
-    renderWithSearch(`?foo=bar&tab=${SHARING_TAB_WITH_ME}`)
+    renderWithRoute('/sharings/with-me?foo=bar&tab=by-me')
 
     fireEvent.click(screen.getByText('go-drives'))
 
-    expect(getSearch()).toContain('foo=bar')
-    expect(getSearch()).toContain(`tab=${SHARING_TAB_DRIVES}`)
-  })
-
-  it('keeps unrelated query params when canonicalizing', () => {
-    renderWithSearch('?foo=bar&tab=1')
-
-    expect(getSearch()).toContain('foo=bar')
-    expect(getSearch()).toContain(`tab=${SHARING_TAB_WITH_ME}`)
+    expect(getPathname()).toBe('/sharings/drives')
+    expect(getSearch()).toBe('?foo=bar')
   })
 })
