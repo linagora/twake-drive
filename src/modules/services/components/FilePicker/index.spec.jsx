@@ -101,40 +101,23 @@ jest.mock('./FilePickerBody', () => {
   }
 })
 
-jest.mock(
-  './FilePickerFooter',
-  () =>
-    ({
-      onConfirm,
-      publicLinkState,
-      downloadLinkState,
-      publicLinkAction,
-      downloadLinkAction
-    }) => (
-      <div>
-        {publicLinkAction && (
-          <button
-            type="button"
-            data-testid="public-link-btn"
-            disabled={publicLinkState?.disabled}
-            onClick={() => onConfirm('public-link')}
-          >
-            {publicLinkAction.label || 'Public link'}
-          </button>
-        )}
-        {downloadLinkAction && (
-          <button
-            type="button"
-            data-testid="temporary-download-link-btn"
-            disabled={downloadLinkState?.disabled}
-            onClick={() => onConfirm('temporary-download-link')}
-          >
-            {downloadLinkAction.label || 'Temporary link'}
-          </button>
-        )}
-      </div>
-    )
-)
+jest.mock('./FilePickerFooter', () => ({ onConfirm, actions }) => (
+  <div>
+    {actions.map(({ actionConfig, mode, state }) =>
+      actionConfig ? (
+        <button
+          key={mode}
+          type="button"
+          data-testid={`${mode}-btn`}
+          disabled={state?.disabled}
+          onClick={() => onConfirm(mode)}
+        >
+          {actionConfig.label || mode}
+        </button>
+      ) : null
+    )}
+  </div>
+))
 
 jest.mock('./LinkAccessModal', () => ({
   LinkAccessModal: ({ selectedItems, onCancel, onConfirm }) => (
