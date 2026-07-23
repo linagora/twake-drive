@@ -15,6 +15,7 @@ import { TRASH_DIR_ID } from '@/constants/config'
 import { useCurrentFolderId, useDisplayedFolder } from '@/hooks'
 import { useSharedDriveFolder } from '@/modules/shareddrives/hooks/useSharedDriveFolder'
 import UploadButton from '@/modules/upload/UploadButton'
+import { isSharingsTabRootRoute } from '@/modules/views/Sharings/routes'
 
 const EmptyCanvas = ({
   type,
@@ -91,7 +92,7 @@ export const EmptyWrapper = ({
 }) => {
   const { pathname } = useLocation()
 
-  if (pathname === '/sharings') {
+  if (isSharingsTabRootRoute(pathname)) {
     return <EmptyCanvas type="sharing" driveId={driveId} />
   }
   if (currentFolderId !== TRASH_DIR_ID) {

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 
 import MidEllipsis from 'cozy-ui/transpiled/react/MidEllipsis'
 import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'
@@ -7,9 +7,9 @@ import { useI18n } from 'twake-i18n'
 
 import styles from '@/styles/filelist.styl'
 
-import { SHARINGS_VIEW_ROUTE } from '@/constants/config'
 import { getFileNameAndExtension } from '@/modules/filelist/helpers'
 import { getFolderPath } from '@/modules/routeUtils'
+import { getSharingsRootRoute } from '@/modules/views/Sharings/routes'
 
 const FileNamePath = ({
   attributes,
@@ -20,6 +20,7 @@ const FileNamePath = ({
 }) => {
   const { isMobile } = useBreakpoints()
   const { t } = useI18n()
+  const { pathname } = useLocation()
   const { filename, extension } = getFileNameAndExtension(attributes, t)
 
   if (!withFilePath) {
@@ -44,7 +45,7 @@ const FileNamePath = ({
     )
   }
   const to = attributes.driveId
-    ? SHARINGS_VIEW_ROUTE
+    ? getSharingsRootRoute(pathname)
     : getFolderPath(attributes.dir_id)
 
   return (

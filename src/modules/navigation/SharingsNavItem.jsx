@@ -41,7 +41,9 @@ const SharingsNavItem = ({ clickState }) => {
   const isActive = useCallback(
     pathname => {
       // For sharing tab
-      if (pathname === '/sharings') return true
+      if (pathname === '/sharings' || pathname.startsWith('/sharings/')) {
+        return true
+      }
       // For shared folder but not shared drive
       if (pathname.startsWith('/shareddrive/')) {
         const driveId = pathname.split('/')[2]

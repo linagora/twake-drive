@@ -24,7 +24,7 @@ test.describe.serial('Shared folder browsing', () => {
     await shareModal.share()
 
     // Alice owns the share, so her row lives on the by-me tab.
-    await alicePage.goto(`${USERS.alice.appUrl}/#/sharings?tab=by-me`)
+    await alicePage.goto(`${USERS.alice.appUrl}/#/sharings/by-me`)
     await expect(aliceDrive.row(SHARED_FOLDER_NAME).cell).toBeVisible({
       timeout: 15_000
     })
@@ -48,7 +48,7 @@ test.describe.serial('Shared folder browsing', () => {
     bobPage,
     bobDrive
   }) => {
-    await alicePage.goto(`${USERS.alice.appUrl}/#/sharings?tab=by-me`)
+    await alicePage.goto(`${USERS.alice.appUrl}/#/sharings/by-me`)
     await aliceDrive.row(SHARED_FOLDER_NAME).open()
     await expect(alicePage.getByText(SHARED_FOLDER_NAME).first()).toBeVisible()
     await aliceDrive.createFolder(FOLDER_INSIDE)

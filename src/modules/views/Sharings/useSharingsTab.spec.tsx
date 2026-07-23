@@ -208,9 +208,9 @@ describe('useSharingsTab', () => {
     expect(getPathname()).toBe('/sharings/with-me')
   })
 
-  it('preserves unrelated query params and removes the obsolete tab param', () => {
+  it('preserves unrelated query params', () => {
     enableSharedDrives()
-    renderWithRoute('/sharings/with-me?foo=bar&tab=by-me')
+    renderWithRoute('/sharings/with-me?foo=bar')
 
     fireEvent.click(screen.getByText('go-drives'))
 

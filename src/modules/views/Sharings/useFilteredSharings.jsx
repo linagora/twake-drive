@@ -42,7 +42,7 @@ const withDriveMetadata = (kept, dropped) =>
  * During transient sharing updates, the Sharings view can receive the same
  * document twice: once as the real Drive entry and once as a transformed
  * shared-drive entry. The transformed entry has `dir_id` set to the
- * shared-drives magic directory, which renders as `/sharings` in the list.
+ * shared-drives magic directory, which renders as the active Sharings tab.
  * Keep the real Drive entry whenever it is available so the row path matches
  * the stable state after a page reload, while retaining the drive
  * classification metadata of the discarded transformed entry.

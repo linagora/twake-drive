@@ -387,7 +387,7 @@ describe('computeFileType', () => {
     // file, the file lives on the user's instance in a regular folder
     // (typically `io.cozy.files.root-dir`), not in the shared-drives
     // directory. It should therefore be opened as a normal file, not
-    // routed through `/sharings/shareddrive/...`.
+    // routed through the active Sharings tab.
     const file = {
       _id: '3d8083154feb44bb1abef401040173d5',
       _type: 'io.cozy.files',
@@ -404,7 +404,7 @@ describe('computeFileType', () => {
 
   it('should return "shared-drive-root-file" for shared-drive root files in the shared-drives directory', () => {
     // Counterpart of the owner case: when a recipient views a file-root
-    // sharing from `/sharings`, the synthetic root file lives in
+    // sharing from a Sharings tab, the synthetic root file lives in
     // `SHARED_DRIVES_DIR_ID` and must keep its `shared-drive-root-file`
     // classification so the path stays scoped to the shared drive.
     const file = {

@@ -1,6 +1,6 @@
 import { Icon, Logout } from '@linagora/twake-icons'
 import React from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 import { useClient } from 'cozy-client'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
@@ -10,11 +10,13 @@ import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import { useI18n } from 'twake-i18n'
 
 import { getSharingIdFromRelationships } from '@/modules/shareddrives/helpers'
+import { getSharingsRootRoute } from '@/modules/views/Sharings/routes'
 
 const LeaveSharedDriveButtonItem = ({ files }) => {
   const { t } = useI18n()
   const client = useClient()
   const navigate = useNavigate()
+  const { pathname } = useLocation()
   const { showAlert } = useAlert()
   const handleClick = async () => {
     const file = files[0]
@@ -25,7 +27,7 @@ const LeaveSharedDriveButtonItem = ({ files }) => {
         message: t('Files.share.revokeSelf.success'),
         severity: 'success'
       })
-      navigate('/sharings')
+      navigate(getSharingsRootRoute(pathname))
     }
   }
 
