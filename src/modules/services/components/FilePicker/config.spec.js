@@ -83,18 +83,18 @@ describe('FilePicker config', () => {
       })
     })
 
-    it('keeps reference hidden by default', () => {
-      expect(getFilePickerConfig(null).reference).toBeNull()
+    it('keeps documents hidden by default', () => {
+      expect(getFilePickerConfig(null).documents).toBeNull()
     })
 
-    it('resolves an explicit reference action', () => {
+    it('resolves an explicit documents action', () => {
       const config = getFilePickerConfig({
         attributes: {
-          data: { reference: { label: 'Select', onlyFolder: true } }
+          data: { documents: { label: 'Select', onlyFolder: true } }
         }
       })
 
-      expect(config.reference).toEqual({
+      expect(config.documents).toEqual({
         label: 'Select',
         onlyFolder: true
       })

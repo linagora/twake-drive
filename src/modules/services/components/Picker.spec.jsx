@@ -123,29 +123,29 @@ jest.mock('./FilePicker', () => ({ onChange, filePickerConfig, multiple }) => {
       </button>
       <button
         type="button"
-        data-testid="reference-btn"
+        data-testid="documents-btn"
         onClick={async () => {
           const pickError = await onChange(
             'file-id',
-            filePickerLinkModes.REFERENCE
+            filePickerLinkModes.DOCUMENTS
           )
           if (pickError) setError(pickError)
         }}
       >
-        Reference
+        Documents
       </button>
       <button
         type="button"
-        data-testid="multiple-reference-btn"
+        data-testid="multiple-documents-btn"
         onClick={async () => {
           const pickError = await onChange(
             ['file-id', 'second-file-id'],
-            filePickerLinkModes.REFERENCE
+            filePickerLinkModes.DOCUMENTS
           )
           if (pickError) setError(pickError)
         }}
       >
-        Multiple reference
+        Multiple documents
       </button>
       <button
         type="button"
@@ -179,6 +179,9 @@ jest.mock('./FilePicker', () => ({ onChange, filePickerConfig, multiple }) => {
 
 const mockFile = {
   _id: 'file-id',
+  _rev: '1-file',
+  _type: 'io.cozy.files',
+  dir_id: 'folder-id',
   type: 'file',
   name: 'invoice.pdf',
   size: '42',
@@ -187,6 +190,9 @@ const mockFile = {
 
 const mockSecondFile = {
   _id: 'second-file-id',
+  _rev: '1-second-file',
+  _type: 'io.cozy.files',
+  dir_id: 'folder-id',
   type: 'file',
   name: 'receipt.pdf',
   size: '84',
@@ -300,30 +306,17 @@ describe('Picker', () => {
     ])
   })
 
-  it('should terminate with a bare array containing a reference entry', async () => {
-    mockQuery.mockResolvedValue({
-      data: { ...mockFile, name: 'updated-invoice.pdf', type: 'file' }
-    })
+  it('should terminate with a bare array containing a full document', async () => {
+    const updatedFile = { ...mockFile, name: 'updated-invoice.pdf' }
+    mockQuery.mockResolvedValue({ data: updatedFile })
     const { service, getByTestId } = setup()
 
-    fireEvent.click(getByTestId('reference-btn'))
+    fireEvent.click(getByTestId('documents-btn'))
 
     await waitFor(() => expect(service.terminate).toHaveBeenCalled())
     expect(makeSharingLink).not.toHaveBeenCalled()
     expect(mockGetDownloadLinkById).not.toHaveBeenCalled()
-    expect(service.terminate).toHaveBeenCalledWith([
-      {
-        id: 'file-id',
-        name: 'updated-invoice.pdf',
-        size: 42,
-        mimeType: 'application/pdf',
-        thumbnail: {
-          link: 'https://files.twake.app/email-assets/file-picker/pdf.png'
-        },
-        type: 'file',
-        doctype: 'io.cozy.files'
-      }
-    ])
+    expect(service.terminate).toHaveBeenCalledWith([updatedFile])
   })
 
   it('should terminate with a bare array containing a public link entry', async () => {
@@ -353,7 +346,7 @@ describe('Picker', () => {
     ])
   })
 
-  it('should terminate with a bare array containing multiple reference entries', async () => {
+  it('should terminate with a bare array containing multiple documents', async () => {
     mockQuery.mockImplementation(({ id }) =>
       Promise.resolve({
         data: id === 'file-id' ? mockFile : mockSecondFile
@@ -361,33 +354,10 @@ describe('Picker', () => {
     )
     const { service, getByTestId } = setup()
 
-    fireEvent.click(getByTestId('multiple-reference-btn'))
+    fireEvent.click(getByTestId('multiple-documents-btn'))
 
     await waitFor(() => expect(service.terminate).toHaveBeenCalled())
-    expect(service.terminate).toHaveBeenCalledWith([
-      {
-        id: 'file-id',
-        name: 'invoice.pdf',
-        size: 42,
-        mimeType: 'application/pdf',
-        thumbnail: {
-          link: 'https://files.twake.app/email-assets/file-picker/pdf.png'
-        },
-        type: 'file',
-        doctype: 'io.cozy.files'
-      },
-      {
-        id: 'second-file-id',
-        name: 'receipt.pdf',
-        size: 84,
-        mimeType: 'application/pdf',
-        thumbnail: {
-          link: 'https://files.twake.app/email-assets/file-picker/pdf.png'
-        },
-        type: 'file',
-        doctype: 'io.cozy.files'
-      }
-    ])
+    expect(service.terminate).toHaveBeenCalledWith([mockFile, mockSecondFile])
     expect(makeSharingLink).not.toHaveBeenCalled()
     expect(mockGetDownloadLinkById).not.toHaveBeenCalled()
   })

@@ -760,7 +760,7 @@
         "cancel": "Annuler",
         "publicLink": "Ajouter comme lien",
         "temporaryDownloadLink": "Ajouter en pièce jointe",
-        "reference": "Sélectionner"
+        "documents": "Sélectionner"
       }
     },
     "constraints": {

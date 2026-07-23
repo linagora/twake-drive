@@ -727,7 +727,7 @@
         "cancel": "Отменить",
         "publicLink": "Добавить как ссылку",
         "temporaryDownloadLink": "Добавить как вложение",
-        "reference": "Выбрать"
+        "documents": "Выбрать"
       }
     },
     "constraints": {

@@ -22,7 +22,7 @@ import { defaultFilePickerConfig, filePickerThemes } from './constants'
  *   multiple: boolean,
  *   sharingLink: object|null,
  *   downloadLink: object|null,
- *   reference: object|null
+ *   documents: object|null
  * }}
  */
 export const getFilePickerConfig = (intent, serviceData = null) => {
@@ -59,9 +59,9 @@ export const getFilePickerConfig = (intent, serviceData = null) => {
       data.downloadLink,
       defaultFilePickerConfig.downloadLink
     ),
-    reference: resolveActionConfig(
-      data.reference,
-      defaultFilePickerConfig.reference
+    documents: resolveActionConfig(
+      data.documents,
+      defaultFilePickerConfig.documents
     )
   }
 }

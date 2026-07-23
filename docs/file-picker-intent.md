@@ -13,7 +13,7 @@ action = 'PICK'
 type = 'io.cozy.files'
 ```
 
-The service lets the user browse Drive, select a file or folder, and choose one of the configured link actions. By default, several files or folders can be selected. Set `multiple: false` to limit the selection to one item; the result is still returned as a `FilePickerEntry[]` array containing at most one entry.
+The service lets the user browse Drive, select a file or folder, and choose one of the configured actions. By default, several files or folders can be selected. Set `multiple: false` to limit the selection to one item; the result is still returned as an array containing at most one entry.
 
 ## Configuration
 
@@ -38,7 +38,7 @@ It is not a top-level `actions` field.
       "maxFileSize": 52428800,
       "allowedMimeTypes": ["image/*", "application/pdf"]
     },
-    "reference": {
+    "documents": {
       "label": "Select",
       "onlyFolder": true
     }
@@ -74,10 +74,10 @@ interface FilePickerConfig {
    */
   downloadLink?: ActionConfig | null
   /**
-   * Configuration for the plain reference action.
+   * Configuration for the full documents action.
    * Omit to use defaults. Set to null to hide the action.
    */
-  reference?: ActionConfig | null
+  documents?: ActionConfig | null
 }
 ```
 
@@ -135,7 +135,7 @@ When no config is provided, Drive uses:
   multiple: true,
   sharingLink: { allowFolder: true },
   downloadLink: { allowFolder: false },
-  reference: null
+  documents: null
 }
 ```
 
@@ -165,6 +165,7 @@ Default labels:
 | --- | --- |
 | `sharingLink` | `Share with public link` |
 | `downloadLink` | `Attach with temporary link` |
+| `documents` | `Select` |
 
 ## Actions
 
@@ -184,9 +185,9 @@ Creates a temporary download link.
 - Uses a GET-only permission on `io.cozy.files` with a 5-minute TTL.
 - The returned URL is intended to be consumed quickly by the calling app.
 
-### `reference`
+### `documents`
 
-Returns a plain reference to the picked document. No link is generated and no sharing or download side effect occurs. With `multiple: true`, one entry is returned for each selected document; with `multiple: false`, the result contains at most one entry. Use `onlyFolder: true` to create a folder-only reference picker.
+Returns the complete `io.cozy.files` documents selected by the user, as provided by cozy-client. No link is generated and no sharing or download side effect occurs. With `multiple: true`, one document is returned for each selected item; with `multiple: false`, the result contains at most one document. Use `onlyFolder: true` to create a folder-only document picker.
 
 ## Hiding an action
 
@@ -227,15 +228,21 @@ image/*         any image type
 
 ## Success result
 
-On success, the intent result document is a **bare array** of file entries:
+On success, the intent result document is a **bare array**. Its entry type depends on the selected action:
 
 ```ts
-{
-  document: FilePickerEntry[]
+import type { IOCozyFile, IOCozyFolder } from 'cozy-client/types/types'
+
+type FilePickerDocument = IOCozyFile | IOCozyFolder
+
+interface FilePickerResult {
+  document: FilePickerEntry[] | FilePickerDocument[]
 }
 ```
 
 ### FilePickerEntry
+
+The link actions return mapped entries:
 
 ```ts
 interface FilePickerEntry {
@@ -248,12 +255,12 @@ interface FilePickerEntry {
   thumbnail?: {
     link: string
   }
-  type?: string
-  doctype?: 'io.cozy.files'
 }
 ```
 
-Exactly one of `sharingLink` or `downloadLink` is present, depending on the action selected by the user, except for `reference`, which contains neither link field and instead includes `type` and `doctype: 'io.cozy.files'`.
+Exactly one of `sharingLink` or `downloadLink` is present, depending on the link action selected by the user.
+
+The `documents` action instead returns complete cozy-client documents without mapping or removing fields.
 
 Example:
 
@@ -302,12 +309,17 @@ The signal fires exactly once per intent. Navigating into subfolders does not
 re-fire it. It fires even if the initial folder query errors, since the picker
 is still interactive.
 
-## Handling both link modes
+## Handling result modes
 
 ```js
 const handleComplete = result => {
   const entry = result.document?.[0]
   if (!entry) return
+
+  if (entry._type === 'io.cozy.files') {
+    useDocument(entry)
+    return
+  }
 
   if (entry.downloadLink) {
     attachRemoteFile(entry.downloadLink)

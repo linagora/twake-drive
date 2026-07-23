@@ -39,11 +39,11 @@ describe('FilePickerFooter', () => {
     expect(
       screen.getAllByRole('button').map(button => button.dataset.testid)
     ).toEqual([
-      'reference-btn',
+      'documents-btn',
       'temporary-download-link-btn',
       'public-link-btn'
     ])
-    expect(screen.queryByTestId('reference-btn')).toHaveTextContent('reference')
+    expect(screen.queryByTestId('documents-btn')).toHaveTextContent('documents')
     expect(
       screen.queryByTestId('temporary-download-link-btn')
     ).toHaveTextContent('temporaryDownloadLink')
@@ -61,7 +61,7 @@ describe('FilePickerFooter', () => {
       }))
     })
 
-    expect(screen.queryByTestId('reference-btn')).toBe(null)
+    expect(screen.queryByTestId('documents-btn')).toBe(null)
     expect(screen.queryByTestId('temporary-download-link-btn')).toBe(null)
     expect(screen.queryByTestId('public-link-btn')).toHaveTextContent(
       'Share file'
@@ -81,7 +81,7 @@ describe('FilePickerFooter', () => {
   })
 
   it.each([
-    ['reference-btn', filePickerLinkModes.REFERENCE],
+    ['documents-btn', filePickerLinkModes.DOCUMENTS],
     [
       'temporary-download-link-btn',
       filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK

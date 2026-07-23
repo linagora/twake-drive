@@ -15,7 +15,7 @@ export const TEMPORARY_LINK_TTL = '5m'
 export const filePickerLinkModes = {
   PUBLIC_LINK: 'public-link',
   TEMPORARY_DOWNLOAD_LINK: 'temporary-download-link',
-  REFERENCE: 'reference'
+  DOCUMENTS: 'documents'
 }
 
 export const filePickerThemes = ['auto', 'light', 'dark']
@@ -32,10 +32,10 @@ export const filePickerDoubleClickResults = {
 
 export const filePickerActions = [
   {
-    mode: filePickerLinkModes.REFERENCE,
-    configKey: 'reference',
+    mode: filePickerLinkModes.DOCUMENTS,
+    configKey: 'documents',
     icon: Check,
-    localeKey: 'FilePicker.footer.buttons.reference'
+    localeKey: 'FilePicker.footer.buttons.documents'
   },
   {
     mode: filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK,
@@ -79,5 +79,5 @@ export const defaultFilePickerConfig = {
   multiple: true,
   sharingLink: { allowFolder: true },
   downloadLink: { allowFolder: false },
-  reference: null
+  documents: null
 }

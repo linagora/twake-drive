@@ -88,14 +88,12 @@ const Picker = ({ service, intent, onReadyToUse }) => {
       )
     }
 
-    if (linkMode === filePickerLinkModes.REFERENCE) {
+    if (linkMode === filePickerLinkModes.DOCUMENTS) {
       try {
-        service.terminate(
-          files.map(file => makeFilePickerFileEntry(file, { reference: true }))
-        )
+        service.terminate(files)
         return null
       } catch (error) {
-        logger.warn('FilePicker reference termination failed', error)
+        logger.warn('FilePicker documents termination failed', error)
         return null
       }
     }

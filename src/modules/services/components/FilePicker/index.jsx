@@ -221,7 +221,7 @@ FilePicker.propTypes = {
     multiple: PropTypes.bool,
     sharingLink: PropTypes.object,
     downloadLink: PropTypes.object,
-    reference: PropTypes.object
+    documents: PropTypes.object
   }),
   onReadyToUse: PropTypes.func,
   onFileDoubleClick: PropTypes.func
