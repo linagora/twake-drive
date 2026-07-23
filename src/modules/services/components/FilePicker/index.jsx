@@ -11,6 +11,7 @@ import FilePickerHeader from './FilePickerHeader'
 import { LinkAccessModal } from './LinkAccessModal'
 import {
   defaultFilePickerConfig,
+  filePickerActions,
   filePickerDoubleClickResults,
   filePickerErrorCodes,
   filePickerLinkModes,
@@ -46,7 +47,6 @@ const FilePicker = ({
   const config = filePickerConfig || defaultFilePickerConfig
   const publicLinkAction = config.sharingLink ?? null
   const downloadLinkAction = config.downloadLink ?? null
-  const referenceAction = config.reference ?? null
 
   const navigateTo = folder => {
     setError(null)
@@ -99,15 +99,17 @@ const FilePicker = ({
   const itemTypesAccepted = getCompliantTypes(accept)
   const hasSelection = itemsIdsSelected.length > 0
 
-  const publicLinkState = hasSelection
-    ? getActionDisabledState(publicLinkAction, selectedItems)
-    : { disabled: true, reasonKey: null }
-  const downloadLinkState = hasSelection
-    ? getActionDisabledState(downloadLinkAction, selectedItems)
-    : { disabled: true, reasonKey: null }
-  const referenceState = hasSelection
-    ? getActionDisabledState(referenceAction, selectedItems)
-    : { disabled: true, reasonKey: null }
+  const actions = filePickerActions.map(action => {
+    const actionConfig = config[action.configKey] ?? null
+
+    return {
+      ...action,
+      actionConfig,
+      state: hasSelection
+        ? getActionDisabledState(actionConfig, selectedItems)
+        : { disabled: true, reasonKey: null }
+    }
+  })
 
   const handleFileDoubleClick = useCallback(
     async item => {
@@ -193,15 +195,7 @@ const FilePicker = ({
         </Box>
         <Divider />
         <footer className="u-mv-1 u-mh-2" data-testid="file-picker-footer">
-          <FilePickerFooter
-            onConfirm={handleFooterConfirm}
-            publicLinkState={publicLinkState}
-            downloadLinkState={downloadLinkState}
-            publicLinkAction={publicLinkAction}
-            downloadLinkAction={downloadLinkAction}
-            referenceState={referenceState}
-            referenceAction={referenceAction}
-          />
+          <FilePickerFooter onConfirm={handleFooterConfirm} actions={actions} />
         </footer>
       </div>
 
