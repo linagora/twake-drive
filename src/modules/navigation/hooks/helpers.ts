@@ -139,24 +139,6 @@ export const computeFileType = (
   }
 }
 
-/**
- * Search string preserving the active Sharings tab across in-section
- * navigations.
- *
- * The `?tab=` query param is the only storage of the active tab (see
- * useSharingsTab), so any navigation staying under /sharings must carry it
- * over. Outside the section it returns an empty search, so other views
- * never inherit the param.
- */
-export const getSharingsTabSearch = (
-  pathname: string,
-  search: string
-): string => {
-  if (!pathname.startsWith('/sharings')) return ''
-  const tab = new URLSearchParams(search).get('tab')
-  return tab ? `?${new URLSearchParams({ tab }).toString()}` : ''
-}
-
 export const computeApp = (type: string): string => {
   switch (type) {
     case 'nextcloud-file':
@@ -240,8 +222,10 @@ export const computePath = (
       if (pathname.startsWith('/favorites')) {
         return `/folder/${file._id}`
       }
-      // paths with only one element correspond to the root of a page like /sharings
-      // when we add id we want to keep the path before to make /sharings/id
+      if (pathname.startsWith('/sharings/') && paths.length === 2) {
+        return `folder/${file._id}`
+      }
+      // Paths with only one element correspond to the root of a page.
       return paths.length === 1 ? file._id : `../${file._id}`
     case 'onlyoffice':
       return makeOnlyOfficeFileRoute(file._id, {

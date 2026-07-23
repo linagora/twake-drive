@@ -1,9 +1,4 @@
-import {
-  computeFileType,
-  computeApp,
-  computePath,
-  getSharingsTabSearch
-} from './helpers'
+import { computeFileType, computeApp, computePath } from './helpers'
 
 import { TRASH_DIR_ID, SHARED_DRIVES_DIR_ID } from '@/constants/config'
 import { DRIVE_ROOT_TYPE } from '@/modules/shareddrives/types'
@@ -654,7 +649,7 @@ describe('computePath', () => {
     expect(
       computePath(file, {
         type: 'directory',
-        pathname: '/sharings',
+        pathname: '/sharings/by-me',
         isPublic: false,
         client: null,
         isOwner: true
@@ -662,14 +657,14 @@ describe('computePath', () => {
     ).toBe('/folder/folder-1')
   })
 
-  it('should return /folder/:id for an owner folder opened from a nested /sharings/folder', () => {
+  it('should return /folder/:id for an owner folder opened from a nested sharings folder', () => {
     // The owner detection also covers nested sharings views (a folder
     // browsed inside /sharings).
     const file = { _id: 'folder-1', dir_id: 'io.cozy.files.root-dir' }
     expect(
       computePath(file, {
         type: 'directory',
-        pathname: '/sharings/parent-folder',
+        pathname: '/sharings/by-me/folder/parent-folder',
         isPublic: false,
         client: null,
         isOwner: true
@@ -684,7 +679,7 @@ describe('computePath', () => {
     expect(
       computePath(file, {
         type: 'file',
-        pathname: '/sharings',
+        pathname: '/sharings/by-me',
         isPublic: false,
         client: null,
         isOwner: true
@@ -692,30 +687,25 @@ describe('computePath', () => {
     ).toBe('/folder/io.cozy.files.root-dir/file/file-1')
   })
 
-  it('should keep the sharings path for a recipient directory in /sharings', () => {
-    // Non-owner case must remain on the existing relative /sharings path
-    // so the recipient keeps browsing inside the sharings section.
+  it('should keep the tab route for a recipient directory in sharings', () => {
     const file = { _id: 'folder-1', dir_id: 'io.cozy.files.root-dir' }
     expect(
       computePath(file, {
         type: 'directory',
-        pathname: '/sharings',
+        pathname: '/sharings/with-me',
         isPublic: false,
         client: null,
         isOwner: false
       })
-    ).toBe('folder-1')
+    ).toBe('folder/folder-1')
   })
 
-  it('should keep the sharings path for a recipient file in /sharings', () => {
-    // Non-owner case for a file: stays on `file/:id` (resolves to
-    // /sharings/file/:id) so the recipient keeps using the sharings
-    // viewer.
+  it('should keep the tab route for a recipient file in sharings', () => {
     const file = { _id: 'file-1', dir_id: 'io.cozy.files.root-dir' }
     expect(
       computePath(file, {
         type: 'file',
-        pathname: '/sharings',
+        pathname: '/sharings/with-me',
         isPublic: false,
         client: null,
         isOwner: false
@@ -745,27 +735,8 @@ describe('computePath', () => {
     expect(
       computePath(file, {
         type: 'directory',
-        pathname: '/sharings'
+        pathname: '/sharings/with-me'
       })
-    ).toBe('folder-1')
-  })
-})
-
-describe('getSharingsTabSearch', () => {
-  it('returns the tab param when navigating within the sharings section', () => {
-    expect(getSharingsTabSearch('/sharings', '?tab=by-me')).toBe('?tab=by-me')
-    expect(
-      getSharingsTabSearch('/sharings/folder-1', '?foo=bar&tab=drives')
-    ).toBe('?tab=drives')
-  })
-
-  it('returns an empty search outside the sharings section', () => {
-    expect(getSharingsTabSearch('/folder/dir-1', '?tab=by-me')).toBe('')
-    expect(getSharingsTabSearch('/favorites', '?tab=by-me')).toBe('')
-  })
-
-  it('returns an empty search when no tab is set', () => {
-    expect(getSharingsTabSearch('/sharings', '')).toBe('')
-    expect(getSharingsTabSearch('/sharings', '?foo=bar')).toBe('')
+    ).toBe('folder/folder-1')
   })
 })

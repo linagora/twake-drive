@@ -135,32 +135,32 @@ describe('FolderViewBreadcrumb', () => {
         />
       )
 
-    it('keeps the sharings tab when navigating back to the section root', () => {
+    it('navigates back to the active sharings tab root', () => {
       mockLocation.mockReturnValue({
-        pathname: '/sharings/folder-1',
-        search: '?tab=by-me'
+        pathname: '/sharings/by-me/folder/folder-1',
+        search: '?sort=name'
       })
       const { getByText } = setup()
 
       fireEvent.click(getByText('Sharings'))
 
       expect(mockNavigate).toHaveBeenCalledWith(
-        { pathname: '..', search: '?tab=by-me' },
+        { pathname: '../..', search: '?sort=name' },
         { relative: 'path' }
       )
     })
 
-    it('keeps the sharings tab when navigating to a parent folder', () => {
+    it('uses the tab-scoped folder route for a parent folder', () => {
       mockLocation.mockReturnValue({
-        pathname: '/sharings/folder-1',
-        search: '?tab=by-me'
+        pathname: '/sharings/by-me/folder/folder-1',
+        search: '?sort=name'
       })
       const { getByText } = setup()
 
       fireEvent.click(getByText('Parent'))
 
       expect(mockNavigate).toHaveBeenCalledWith(
-        { pathname: '../parent-1', search: '?tab=by-me' },
+        { pathname: '../parent-1', search: '?sort=name' },
         { relative: 'path' }
       )
     })
