@@ -40,6 +40,29 @@ export function isSharingsTabRootRoute(pathname) {
   return pathname === getSharingsRootRoute(pathname)
 }
 
+export function getSharingsSharedDrivePath(pathname, driveId, folderId) {
+  return `${getSharingsRootRoute(pathname)}/shareddrive/${driveId}/${folderId}`
+}
+
+export function getSharingsSharedDriveViewerPath(
+  pathname,
+  driveId,
+  folderId,
+  fileId
+) {
+  return `${getSharingsSharedDrivePath(
+    pathname,
+    driveId,
+    folderId
+  )}/file/${fileId}`
+}
+
+export function getSharingsSharedDriveRootFilePath(pathname, driveId, fileId) {
+  return `${getSharingsRootRoute(
+    pathname
+  )}/shareddrive/${driveId}/file/${fileId}`
+}
+
 export function getSearchWithoutLegacyTab(search) {
   const searchParams = new URLSearchParams(search)
   searchParams.delete('tab')

@@ -31,6 +31,12 @@ import {
   makeExcalidrawFileRoute
 } from '@/modules/views/Excalidraw/helpers'
 import { makeOnlyOfficeFileRoute } from '@/modules/views/OnlyOffice/helpers'
+import {
+  getSharingsSharedDrivePath,
+  getSharingsSharedDriveRootFilePath,
+  getSharingsSharedDriveViewerPath,
+  getSharingsTabFromPath
+} from '@/modules/views/Sharings/routes'
 
 interface ComputeFileTypeOptions {
   isOfficeEnabled?: boolean
@@ -194,7 +200,7 @@ export const computePath = (
     case 'public-note':
       if (driveId) {
         const returnUrl = client
-          ? makeSharedDriveNoteReturnUrl(client, file as IOCozyFile)
+          ? makeSharedDriveNoteReturnUrl(client, file as IOCozyFile, pathname)
           : ''
 
         return `/note/${driveId}/${file._id}?returnUrl=${encodeURIComponent(
@@ -241,6 +247,10 @@ export const computePath = (
         return `/folder/${file._id}`
       }
 
+      if (getSharingsTabFromPath(pathname)) {
+        return getSharingsSharedDrivePath(pathname, driveId, file._id)
+      }
+
       return `/shareddrive/${driveId}/${file._id}`
     case 'shared-drive-root-file':
       if (!driveId || isNextcloudFile(file)) {
@@ -248,11 +258,13 @@ export const computePath = (
           'Missing driveId or invalid file type in shared drive root file'
         )
       }
-      return getSharedDriveRootFilePath({
-        driveId,
-        fileId: file._id,
-        scope: getSharedDriveRootFilePathScope(pathname)
-      })
+      return getSharingsTabFromPath(pathname)
+        ? getSharingsSharedDriveRootFilePath(pathname, driveId, file._id)
+        : getSharedDriveRootFilePath({
+            driveId,
+            fileId: file._id,
+            scope: getSharedDriveRootFilePathScope(pathname)
+          })
     case 'shared-drive-file':
       if (!driveId || isNextcloudFile(file)) {
         throw new Error(
@@ -262,7 +274,14 @@ export const computePath = (
       if (!file.dir_id) {
         throw new Error('Missing dir_id in shared drive file')
       }
-      return `/shareddrive/${driveId}/${file.dir_id}/file/${file._id}`
+      return getSharingsTabFromPath(pathname)
+        ? getSharingsSharedDriveViewerPath(
+            pathname,
+            driveId,
+            file.dir_id,
+            file._id
+          )
+        : `/shareddrive/${driveId}/${file.dir_id}/file/${file._id}`
     default:
       if (isOwner && pathname.startsWith('/sharings/')) {
         return `/folder/${file.dir_id}/file/${file._id}`

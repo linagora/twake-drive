@@ -11,6 +11,11 @@ import {
   getSharedDriveRootFilePathScope
 } from '@/modules/routeUtils'
 import FilesViewer from '@/modules/viewer/FilesViewer'
+import {
+  getSharingsRootRoute,
+  getSharingsSharedDriveRootFilePath,
+  getSharingsTabFromPath
+} from '@/modules/views/Sharings/routes'
 import { buildSharedDriveFileOrFolderByIdQuery } from '@/queries'
 
 const isViewerReady = ({ allLoaded, fileResult, file }) =>
@@ -24,7 +29,9 @@ const FilesViewerSharedDriveRootFile = () => {
   useHead()
 
   const pathScope = getSharedDriveRootFilePathScope(location.pathname)
-  const closePath = location.state?.fromPathname || '/sharings'
+  const sharingsTab = getSharingsTabFromPath(location.pathname)
+  const sharingsRootRoute = getSharingsRootRoute(location.pathname)
+  const closePath = location.state?.fromPathname || sharingsRootRoute
 
   const fileQuery = buildSharedDriveFileOrFolderByIdQuery({ fileId, driveId })
   const fileResult = useQuery(fileQuery.definition, fileQuery.options)
@@ -32,9 +39,9 @@ const FilesViewerSharedDriveRootFile = () => {
 
   useEffect(() => {
     if (fileResult.fetchStatus === 'failed') {
-      navigate('/sharings', { replace: true })
+      navigate(sharingsRootRoute, { replace: true })
     }
-  }, [fileResult.fetchStatus, navigate])
+  }, [fileResult.fetchStatus, navigate, sharingsRootRoute])
 
   const filesQuery = useMemo(
     () => ({
@@ -55,11 +62,17 @@ const FilesViewerSharedDriveRootFile = () => {
         onClose={() => navigate(closePath)}
         onChange={nextFileId =>
           navigate(
-            getSharedDriveRootFilePath({
-              driveId,
-              fileId: nextFileId,
-              scope: pathScope
-            }),
+            sharingsTab
+              ? getSharingsSharedDriveRootFilePath(
+                  location.pathname,
+                  driveId,
+                  nextFileId
+                )
+              : getSharedDriveRootFilePath({
+                  driveId,
+                  fileId: nextFileId,
+                  scope: pathScope
+                }),
             { state: { fromPathname: closePath } }
           )
         }

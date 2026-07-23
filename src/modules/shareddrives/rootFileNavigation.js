@@ -6,7 +6,7 @@ import {
 import { isSharedDriveDoc } from '@/modules/shareddrives/helpers'
 import { DRIVE_ROOT_TYPE } from '@/modules/shareddrives/types'
 import {
-  getSharingsRootRoute,
+  getSharingsSharedDriveRootFilePath,
   getSharingsTabFromPath
 } from '@/modules/views/Sharings/routes'
 
@@ -58,9 +58,11 @@ export const getFileRootSharePath = ({ file, pathname = '' }) => {
   const sharingsTab = getSharingsTabFromPath(pathname)
 
   return sharingsTab
-    ? `${getSharingsRootRoute(pathname)}/shareddrive/${params.driveId}/file/${
+    ? `${getSharingsSharedDriveRootFilePath(
+        pathname,
+        params.driveId,
         params.fileId
-      }/share`
+      )}/share`
     : getSharedDriveRootFileSharePath({
         ...params,
         scope: getSharedDriveRootFilePathScope(pathname)
@@ -70,9 +72,7 @@ export const getFileRootSharePath = ({ file, pathname = '' }) => {
 export const navigateToFileRootViewer = ({ navigate, file, pathname = '' }) => {
   const sharingsTab = getSharingsTabFromPath(pathname)
   const path = sharingsTab
-    ? `${getSharingsRootRoute(pathname)}/shareddrive/${
-        file.driveId
-      }/file/${file._id}`
+    ? getSharingsSharedDriveRootFilePath(pathname, file.driveId, file._id)
     : getSharedDriveRootFilePath({
         driveId: file.driveId,
         fileId: file._id,

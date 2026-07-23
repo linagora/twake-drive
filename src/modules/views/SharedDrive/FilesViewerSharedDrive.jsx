@@ -1,5 +1,5 @@
 import React from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 
 import { useQuery } from 'cozy-client'
 import { useSharingContext } from 'cozy-sharing'
@@ -12,10 +12,16 @@ import {
   getSharedDriveViewerPath
 } from '@/modules/routeUtils'
 import FilesViewer from '@/modules/viewer/FilesViewer'
+import {
+  getSharingsSharedDrivePath,
+  getSharingsSharedDriveViewerPath,
+  getSharingsTabFromPath
+} from '@/modules/views/Sharings/routes'
 import { buildSharedDriveQuery } from '@/queries'
 
 const FilesViewerSharedDrive = () => {
   const navigate = useNavigate()
+  const { pathname } = useLocation()
   const [sortOrder] = useFolderSort()
   const folderId = useCurrentFolderId()
   const { driveId } = useParams()
@@ -38,13 +44,27 @@ const FilesViewerSharedDrive = () => {
   const viewableFiles = filesQuery.data
 
   if (viewableFiles) {
+    const isInSharings = Boolean(getSharingsTabFromPath(pathname))
+    const closePath = isInSharings
+      ? getSharingsSharedDrivePath(pathname, driveId, folderId)
+      : getSharedDrivePath(driveId, folderId)
+
     return (
       <FilesViewer
         files={viewableFiles}
         filesQuery={filesQuery}
-        onClose={() => navigate(getSharedDrivePath(driveId, folderId))}
+        onClose={() => navigate(closePath)}
         onChange={fileId =>
-          navigate(`${getSharedDriveViewerPath(driveId, folderId, fileId)}`)
+          navigate(
+            isInSharings
+              ? getSharingsSharedDriveViewerPath(
+                  pathname,
+                  driveId,
+                  folderId,
+                  fileId
+                )
+              : getSharedDriveViewerPath(driveId, folderId, fileId)
+          )
         }
         viewerProps={{
           panel: {

@@ -550,6 +550,16 @@ describe('computePath', () => {
     )
   })
 
+  it('should keep a shared drive in the active sharings tab', () => {
+    const file = { _id: 'folder123', driveId: 'drive456' }
+    expect(
+      computePath(file, {
+        type: 'shared-drive',
+        pathname: '/sharings/drives'
+      })
+    ).toBe('/sharings/drives/shareddrive/drive456/folder123')
+  })
+
   it('should return correct path for shared-drive-root-file', () => {
     const file = {
       _id: 'file123',
@@ -573,9 +583,9 @@ describe('computePath', () => {
     expect(
       computePath(file, {
         type: 'shared-drive-root-file',
-        pathname: '/sharings'
+        pathname: '/sharings/drives'
       })
-    ).toBe('/sharings/shareddrive/drive456/file/file123')
+    ).toBe('/sharings/drives/shareddrive/drive456/file/file123')
   })
 
   it('should return correct for shared-drive in case user is owner', () => {
@@ -609,6 +619,21 @@ describe('computePath', () => {
     expect(
       computePath(file, { type: 'shared-drive-file', pathname: '/recent' })
     ).toBe('/shareddrive/drive789/parent-folder/file/file123')
+  })
+
+  it('should keep a shared-drive file viewer in the active sharings tab', () => {
+    const file = {
+      _id: 'file123',
+      dir_id: 'parent-folder',
+      driveId: 'drive789',
+      _type: 'io.cozy.files'
+    }
+    expect(
+      computePath(file, {
+        type: 'shared-drive-file',
+        pathname: '/sharings/with-me/shareddrive/drive789/parent-folder'
+      })
+    ).toBe('/sharings/with-me/shareddrive/drive789/parent-folder/file/file123')
   })
 
   it('should throw error for shared-drive-file without driveId', () => {
