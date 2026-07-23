@@ -5,6 +5,10 @@ import {
 } from '@/modules/routeUtils'
 import { isSharedDriveDoc } from '@/modules/shareddrives/helpers'
 import { DRIVE_ROOT_TYPE } from '@/modules/shareddrives/types'
+import {
+  getSharingsRootRoute,
+  getSharingsTabFromPath
+} from '@/modules/views/Sharings/routes'
 
 /**
  * A file is a "file root" shared drive recipient when it is itself the
@@ -46,20 +50,34 @@ export const isResolvableFileRootSharedDriveShortcut = file =>
     file.metadata.target.mime.length > 0
   )
 
-export const getFileRootSharePath = ({ file, pathname = '' }) =>
-  getSharedDriveRootFileSharePath({
+export const getFileRootSharePath = ({ file, pathname = '' }) => {
+  const params = {
     driveId: file.driveId,
-    fileId: file._id ?? file.id,
-    scope: getSharedDriveRootFilePathScope(pathname)
-  })
+    fileId: file._id ?? file.id
+  }
+  const sharingsTab = getSharingsTabFromPath(pathname)
+
+  return sharingsTab
+    ? `${getSharingsRootRoute(pathname)}/shareddrive/${params.driveId}/file/${
+        params.fileId
+      }/share`
+    : getSharedDriveRootFileSharePath({
+        ...params,
+        scope: getSharedDriveRootFilePathScope(pathname)
+      })
+}
 
 export const navigateToFileRootViewer = ({ navigate, file, pathname = '' }) => {
-  navigate(
-    getSharedDriveRootFilePath({
-      driveId: file.driveId,
-      fileId: file._id,
-      scope: getSharedDriveRootFilePathScope(pathname)
-    }),
-    { state: { fromPathname: pathname } }
-  )
+  const sharingsTab = getSharingsTabFromPath(pathname)
+  const path = sharingsTab
+    ? `${getSharingsRootRoute(pathname)}/shareddrive/${
+        file.driveId
+      }/file/${file._id}`
+    : getSharedDriveRootFilePath({
+        driveId: file.driveId,
+        fileId: file._id,
+        scope: getSharedDriveRootFilePathScope(pathname)
+      })
+
+  navigate(path, { state: { fromPathname: pathname } })
 }

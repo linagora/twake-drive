@@ -6,7 +6,7 @@ describe('shareSharedDrive', () => {
   const t = key => key
   const navigate = jest.fn()
 
-  const makeAction = ({ isOwner, pathname = '/sharings' } = {}) =>
+  const makeAction = ({ isOwner, pathname = '/sharings/drives' } = {}) =>
     shareSharedDrive({ navigate, t, isOwner, pathname })
 
   beforeEach(() => {
@@ -43,7 +43,7 @@ describe('shareSharedDrive', () => {
   })
 
   it('layers the share modal over the sharings list', () => {
-    makeAction({ pathname: '/sharings' }).action([
+    makeAction({ pathname: '/sharings/drives' }).action([
       {
         _id: 'folder-id',
         id: 'folder-id',
@@ -52,7 +52,7 @@ describe('shareSharedDrive', () => {
     ])
 
     expect(navigate).toHaveBeenCalledWith(
-      '/sharings/shareddrive/drive-id/folder-id/share'
+      '/sharings/drives/shareddrive/drive-id/folder-id/share'
     )
   })
 

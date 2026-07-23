@@ -58,10 +58,10 @@ describe('isResolvableFileRootSharedDriveShortcut', () => {
 
 describe('getFileRootSharePath', () => {
   it.each`
-    label                      | file                                     | pathname       | expectedPath
-    ${'file with _id'}         | ${{ _id: 'file-1', driveId: 'drive-1' }} | ${'/sharings'} | ${'/sharings/shareddrive/drive-1/file/file-1/share'}
-    ${'file with id only'}     | ${{ id: 'file-1', driveId: 'drive-1' }}  | ${'/sharings'} | ${'/sharings/shareddrive/drive-1/file/file-1/share'}
-    ${'file outside sharings'} | ${{ _id: 'file-1', driveId: 'drive-1' }} | ${'/recent'}   | ${'/shareddrive/drive-1/file/file-1/share'}
+    label                      | file                                     | pathname              | expectedPath
+    ${'file with _id'}         | ${{ _id: 'file-1', driveId: 'drive-1' }} | ${'/sharings/drives'} | ${'/sharings/drives/shareddrive/drive-1/file/file-1/share'}
+    ${'file with id only'}     | ${{ id: 'file-1', driveId: 'drive-1' }}  | ${'/sharings/drives'} | ${'/sharings/drives/shareddrive/drive-1/file/file-1/share'}
+    ${'file outside sharings'} | ${{ _id: 'file-1', driveId: 'drive-1' }} | ${'/recent'}          | ${'/shareddrive/drive-1/file/file-1/share'}
   `('builds share path for $label', ({ file, pathname, expectedPath }) => {
     expect(getFileRootSharePath({ file, pathname })).toBe(expectedPath)
   })
@@ -73,11 +73,11 @@ describe('navigateToFileRootViewer', () => {
     navigateToFileRootViewer({
       navigate,
       file: { _id: 'file-1', driveId: 'drive-1' },
-      pathname: '/sharings'
+      pathname: '/sharings/drives'
     })
     expect(navigate).toHaveBeenCalledWith(
-      '/sharings/shareddrive/drive-1/file/file-1',
-      { state: { fromPathname: '/sharings' } }
+      '/sharings/drives/shareddrive/drive-1/file/file-1',
+      { state: { fromPathname: '/sharings/drives' } }
     )
   })
 

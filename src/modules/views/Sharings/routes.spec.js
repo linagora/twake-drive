@@ -1,8 +1,10 @@
 import {
   getLegacySharingsRoute,
   getSearchWithoutLegacyTab,
+  getSharingsRootRoute,
   getSharingsRouteForTab,
-  getSharingsTabFromPath
+  getSharingsTabFromPath,
+  isSharingsTabRootRoute
 } from './routes'
 
 describe('Sharings routes', () => {
@@ -37,9 +39,22 @@ describe('Sharings routes', () => {
     ).toBe('/sharings/with-me/folder/folder-1/file/file-1')
   })
 
-  it('gets the active tab from a nested path', () => {
-    expect(
-      getSharingsTabFromPath('/sharings/by-me/folder/folder-1/file/file-1')
-    ).toBe('by-me')
+  it('gets the active tab and its root route from a nested path', () => {
+    const pathname = '/sharings/by-me/folder/folder-1/file/file-1'
+
+    expect(getSharingsTabFromPath(pathname)).toBe('by-me')
+    expect(getSharingsRootRoute(pathname)).toBe('/sharings/by-me')
+  })
+
+  it('falls back to with-me outside a canonical sharings route', () => {
+    expect(getSharingsTabFromPath('/folder/folder-1')).toBeNull()
+    expect(getSharingsRootRoute('/folder/folder-1')).toBe('/sharings/with-me')
+  })
+
+  it('recognizes only canonical tab root routes', () => {
+    expect(isSharingsTabRootRoute('/sharings/drives')).toBe(true)
+    expect(isSharingsTabRootRoute('/sharings/drives/folder/folder-1')).toBe(
+      false
+    )
   })
 })

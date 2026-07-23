@@ -5,14 +5,16 @@ import { ShareModal } from 'cozy-sharing'
 
 import { ShareDisplayedFolderView } from './ShareDisplayedFolderView'
 
-import { SHARING_TAB_WITH_ME } from '@/constants/config'
+import { SHARING_TAB_DRIVES, SHARING_TAB_WITH_ME } from '@/constants/config'
 import { useDisplayedFolder } from '@/hooks'
 
 const mockNavigate = jest.fn()
+const mockUseLocation = jest.fn()
 
 jest.mock('react-router-dom', () => ({
   ...jest.requireActual('react-router-dom'),
-  useNavigate: () => mockNavigate
+  useNavigate: () => mockNavigate,
+  useLocation: () => mockUseLocation()
 }))
 
 jest.mock('cozy-flags', () => jest.fn())
@@ -30,9 +32,13 @@ jest.mock('@/hooks', () => ({
 describe('ShareDisplayedFolderView', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    mockUseLocation.mockReturnValue({ pathname: '/folder/folder-id/share' })
   })
 
-  it('should redirect to the with-me tab after leaving a shared drive', () => {
+  it('should redirect to the active tab after leaving a shared drive', () => {
+    mockUseLocation.mockReturnValue({
+      pathname: '/sharings/drives/folder/folder-id/share'
+    })
     useDisplayedFolder.mockReturnValue({
       displayedFolder: {
         driveId: 'drive-id',
@@ -45,7 +51,7 @@ describe('ShareDisplayedFolderView', () => {
     fireEvent.click(screen.getByText('Revoke self'))
 
     expect(mockNavigate).toHaveBeenCalledWith(
-      `/sharings?tab=${SHARING_TAB_WITH_ME}`,
+      `/sharings/${SHARING_TAB_DRIVES}`,
       {
         replace: true
       }
@@ -64,7 +70,7 @@ describe('ShareDisplayedFolderView', () => {
     fireEvent.click(screen.getByText('Revoke self'))
 
     expect(mockNavigate).toHaveBeenCalledWith(
-      `/sharings?tab=${SHARING_TAB_WITH_ME}`,
+      `/sharings/${SHARING_TAB_WITH_ME}`,
       { replace: true }
     )
   })

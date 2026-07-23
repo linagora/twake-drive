@@ -1,15 +1,16 @@
 import React from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 import flag from 'cozy-flags'
 import { ShareModal } from 'cozy-sharing'
 
-import { DEFAULT_SHARINGS_VIEW_ROUTE } from '@/constants/config'
 import { useDisplayedFolder } from '@/hooks'
+import { getSharingsRootRoute } from '@/modules/views/Sharings/routes'
 
 const ShareDisplayedFolderView = () => {
   const { displayedFolder } = useDisplayedFolder()
   const navigate = useNavigate()
+  const { pathname } = useLocation()
 
   if (displayedFolder) {
     const onClose = () => {
@@ -17,7 +18,7 @@ const ShareDisplayedFolderView = () => {
     }
 
     const onRevokeSuccess = () => {
-      navigate(DEFAULT_SHARINGS_VIEW_ROUTE, { replace: true })
+      navigate(getSharingsRootRoute(pathname), { replace: true })
     }
 
     return (

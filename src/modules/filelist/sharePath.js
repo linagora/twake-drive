@@ -4,6 +4,7 @@ import {
   getFileRootSharePath,
   isFileRootSharedDrive
 } from '@/modules/shareddrives/rootFileNavigation'
+import { isSharingsTabRootRoute } from '@/modules/views/Sharings/routes'
 
 export const makeFileSharePath = ({ file, pathname }) => {
   const fileId = file._id ?? file.id
@@ -15,8 +16,8 @@ export const makeFileSharePath = ({ file, pathname }) => {
   // From the sharings list, layer the share modal over the list rather than
   // navigating into the shared-drive folder/file view. The driveId stays in
   // the path so the modal can still resolve a proxied (recipient) document.
-  if (pathname === '/sharings') {
-    return `/sharings/shareddrive/${file.driveId}/${fileId}/share`
+  if (isSharingsTabRootRoute(pathname)) {
+    return joinPath(pathname, `shareddrive/${file.driveId}/${fileId}/share`)
   }
 
   if (isFileRootSharedDrive(file)) {

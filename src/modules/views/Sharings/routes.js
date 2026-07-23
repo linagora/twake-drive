@@ -31,6 +31,15 @@ export function getSharingsTabFromPath(pathname) {
   return SHARINGS_TABS.has(tab) ? tab : null
 }
 
+export function getSharingsRootRoute(pathname) {
+  const tab = getSharingsTabFromPath(pathname)
+  return tab ? getSharingsTabRoute(tab) : DEFAULT_SHARINGS_VIEW_ROUTE
+}
+
+export function isSharingsTabRootRoute(pathname) {
+  return pathname === getSharingsRootRoute(pathname)
+}
+
 export function getSearchWithoutLegacyTab(search) {
   const searchParams = new URLSearchParams(search)
   searchParams.delete('tab')
