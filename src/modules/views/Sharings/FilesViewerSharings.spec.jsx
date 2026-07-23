@@ -6,6 +6,9 @@ import { useQuery } from 'cozy-client'
 import { useSharingContext } from 'cozy-sharing'
 
 import FilesViewerSharings from './FilesViewerSharings'
+import { SharingsTabProvider } from './useSharingsTab'
+
+import { SHARING_TAB_BY_ME, SHARING_TAB_WITH_ME } from '@/constants/config'
 
 const mockNavigate = jest.fn()
 
@@ -56,13 +59,21 @@ const receivedFile = { _id: 'file-received', id: 'file-received', type: 'file' }
 const someDirectory = { _id: 'dir-1', id: 'dir-1', type: 'directory' }
 
 const setup = ({
-  route = `/sharings/file/${receivedFile._id}?tab=with-me`,
-  path = '/sharings/file/:fileId'
+  route = `/sharings/with-me/file/${receivedFile._id}`,
+  path = '/sharings/with-me/file/:fileId',
+  tab = SHARING_TAB_WITH_ME
 } = {}) =>
   render(
     <MemoryRouter initialEntries={[route]}>
       <Routes>
-        <Route path={path} element={<FilesViewerSharings />} />
+        <Route
+          path={path}
+          element={
+            <SharingsTabProvider tab={tab}>
+              <FilesViewerSharings />
+            </SharingsTabProvider>
+          }
+        />
       </Routes>
     </MemoryRouter>
   )
@@ -78,7 +89,7 @@ describe('FilesViewerSharings', () => {
   })
 
   it('pages only through the files of the active tab at the sharings root', () => {
-    setup({ route: `/sharings/file/${receivedFile._id}?tab=with-me` })
+    setup()
 
     expect(screen.getByTestId('viewer-files').textContent).toBe(
       receivedFile._id
@@ -86,30 +97,34 @@ describe('FilesViewerSharings', () => {
   })
 
   it('pages only through owned files on the by-me tab', () => {
-    setup({ route: `/sharings/file/${ownedFile._id}?tab=by-me` })
+    setup({
+      route: `/sharings/by-me/file/${ownedFile._id}`,
+      path: '/sharings/by-me/file/:fileId',
+      tab: SHARING_TAB_BY_ME
+    })
 
     expect(screen.getByTestId('viewer-files').textContent).toBe(ownedFile._id)
   })
 
-  it('keeps the tab in the URL when closing the viewer', () => {
-    setup({ route: `/sharings/file/${receivedFile._id}?tab=with-me` })
+  it('closes the viewer to the active tab route', () => {
+    setup({ route: `/sharings/with-me/file/${receivedFile._id}?sort=name` })
 
     fireEvent.click(screen.getByText('close-viewer'))
 
     expect(mockNavigate).toHaveBeenCalledWith({
-      pathname: '/sharings',
-      search: '?tab=with-me'
+      pathname: '/sharings/with-me',
+      search: '?sort=name'
     })
   })
 
-  it('keeps the tab in the URL when the viewer changes file', () => {
-    setup({ route: `/sharings/file/${receivedFile._id}?tab=with-me` })
+  it('changes files within the active tab route', () => {
+    setup({ route: `/sharings/with-me/file/${receivedFile._id}?sort=name` })
 
     fireEvent.click(screen.getByText('change-file'))
 
     expect(mockNavigate).toHaveBeenCalledWith({
-      pathname: `/sharings/file/${ownedFile._id}`,
-      search: '?tab=with-me'
+      pathname: `/sharings/with-me/file/${ownedFile._id}`,
+      search: '?sort=name'
     })
   })
 
@@ -118,8 +133,8 @@ describe('FilesViewerSharings', () => {
     // to the sharing context (isOwner would misclassify them), so the tab
     // filter only applies at the sharings root.
     setup({
-      route: `/sharings/folder-1/file/${receivedFile._id}?tab=with-me`,
-      path: '/sharings/:folderId/file/:fileId'
+      route: `/sharings/with-me/folder/folder-1/file/${receivedFile._id}`,
+      path: '/sharings/with-me/folder/:folderId/file/:fileId'
     })
 
     expect(screen.getByTestId('viewer-files').textContent).toBe(
@@ -128,8 +143,8 @@ describe('FilesViewerSharings', () => {
 
     fireEvent.click(screen.getByText('close-viewer'))
     expect(mockNavigate).toHaveBeenCalledWith({
-      pathname: '/sharings/folder-1',
-      search: '?tab=with-me'
+      pathname: '/sharings/with-me/folder/folder-1',
+      search: ''
     })
   })
 })

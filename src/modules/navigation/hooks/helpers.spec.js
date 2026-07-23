@@ -640,11 +640,7 @@ describe('computePath', () => {
     )
   })
 
-  it('should return /folder/:id for an owner folder opened from /sharings', () => {
-    // When the user is the owner of a sharing shown in /sharings, the
-    // folder is the real io.cozy.files document living in their Drive.
-    // The path must drop the /sharings prefix and use the normal Drive
-    // folder view.
+  it('should open an owner folder from sharings in the normal Drive view', () => {
     const file = { _id: 'folder-1', dir_id: 'io.cozy.files.root-dir' }
     expect(
       computePath(file, {
@@ -657,9 +653,7 @@ describe('computePath', () => {
     ).toBe('/folder/folder-1')
   })
 
-  it('should return /folder/:id for an owner folder opened from a nested sharings folder', () => {
-    // The owner detection also covers nested sharings views (a folder
-    // browsed inside /sharings).
+  it('should open a nested owner folder from sharings in the normal Drive view', () => {
     const file = { _id: 'folder-1', dir_id: 'io.cozy.files.root-dir' }
     expect(
       computePath(file, {
@@ -672,9 +666,7 @@ describe('computePath', () => {
     ).toBe('/folder/folder-1')
   })
 
-  it('should return /folder/:dirId/file/:id for an owner file opened from /sharings', () => {
-    // Symmetric case for files: owner files shown in /sharings open in
-    // the normal Drive viewer (`FilesViewerDrive`).
+  it('should open an owner file from sharings in the normal Drive viewer', () => {
     const file = { _id: 'file-1', dir_id: 'io.cozy.files.root-dir' }
     expect(
       computePath(file, {
@@ -713,30 +705,13 @@ describe('computePath', () => {
     ).toBe('file/file-1')
   })
 
-  it('should not redirect an owner file outside /sharings', () => {
-    // Outside /sharings the isOwner flag must not influence the path:
-    // the regular Drive behaviour (relative path) is preserved.
-    const file = { _id: 'file-1', dir_id: 'io.cozy.files.root-dir' }
-    expect(
-      computePath(file, {
-        type: 'file',
-        pathname: '/folder/parent',
-        isPublic: false,
-        client: null,
-        isOwner: true
-      })
-    ).toBe('file/file-1')
-  })
-
-  it('should default to non-owner behaviour when isOwner is undefined', () => {
-    // Backward compatibility: callers that don't pass isOwner keep the
-    // historical relative path.
+  it('should keep nested sharings folders inside the active tab', () => {
     const file = { _id: 'folder-1', dir_id: 'io.cozy.files.root-dir' }
     expect(
       computePath(file, {
         type: 'directory',
-        pathname: '/sharings/with-me'
+        pathname: '/sharings/with-me/folder/parent-folder'
       })
-    ).toBe('folder/folder-1')
+    ).toBe('../folder-1')
   })
 })

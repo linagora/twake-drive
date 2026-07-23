@@ -48,14 +48,13 @@ const computeIsSharingsOwner = ({
   isPublic: boolean
   sharingContext?: SharingContextForFileLink
 }): boolean => {
-  const isInSharings = pathname.startsWith('/sharings')
   const isKnownSharedDoc = Boolean(
     file._id && sharingContext?.byDocId?.[file._id]
   )
 
   return (
     !isPublic &&
-    isInSharings &&
+    pathname.startsWith('/sharings/') &&
     isKnownSharedDoc &&
     Boolean(sharingContext?.allLoaded) &&
     Boolean(sharingContext?.isOwner?.(file._id))
