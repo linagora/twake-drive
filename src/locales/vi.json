@@ -204,7 +204,7 @@
     "increase": "Tăng dung lượng"
   },
   "SelectionBar": {
-    "selected_count": "1 mục đã chọn |||| %{smart_count} mục đã chọn",
+    "selected_count": "mục đã chọn |||| mục đã chọn",
     "share": "Chia sẻ",
     "download": "tải xuống",
     "trash": "Xoá bỏ",
