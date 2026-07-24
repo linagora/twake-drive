@@ -45,8 +45,12 @@ const SelectionConsumer = ({ items }) => {
 
   return (
     <>
-      {pathname === '/' && <Link to="/other">Change route</Link>}
-      {pathname === '/' && <Link to="/by-me">Change tab</Link>}
+      {pathname === '/sharings/with-me' && (
+        <Link to="/other">Change route</Link>
+      )}
+      {pathname === '/sharings/with-me' && (
+        <Link to="/sharings/by-me">Change tab</Link>
+      )}
       {isSelectionBarVisible && (
         <button onClick={hideSelectionBar}>Hide selection bar</button>
       )}
@@ -73,16 +77,19 @@ describe('SelectionProvider', () => {
   const setup = () => {
     return render(
       <Provider store={mockStore}>
-        <MemoryRouter initialEntries={['/']}>
+        <MemoryRouter initialEntries={['/sharings/with-me']}>
           <SelectionProvider>
             <Routes>
-              <Route path="/" element={<SelectionConsumer items={items} />} />
+              <Route
+                path="/sharings/with-me"
+                element={<SelectionConsumer items={items} />}
+              />
               <Route
                 path="/other"
                 element={<SelectionConsumer items={items} />}
               />
               <Route
-                path="/by-me"
+                path="/sharings/by-me"
                 element={<SelectionConsumer items={items} />}
               />
             </Routes>
