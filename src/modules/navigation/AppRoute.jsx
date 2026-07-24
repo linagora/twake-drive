@@ -30,6 +30,9 @@ import {
   DEFAULT_SHARINGS_VIEW_ROUTE,
   ROOT_DIR_ID,
   SHARED_DRIVES_DIR_ID,
+  SHARING_TAB_BY_ME,
+  SHARING_TAB_DRIVES,
+  SHARING_TAB_WITH_ME,
   TRASH_DIR_ID
 } from '@/constants/config'
 import { SentryRoutes } from '@/lib/sentry'
@@ -56,6 +59,11 @@ import { NextcloudTrashEmptyView } from '@/modules/views/Nextcloud/NextcloudTras
 import { NextcloudTrashView } from '@/modules/views/Nextcloud/NextcloudTrashView'
 import SearchView from '@/modules/views/Search/SearchView'
 import { SharedDriveFolderView } from '@/modules/views/SharedDrive/SharedDriveFolderView'
+import { LegacySharingsRedirect } from '@/modules/views/Sharings/LegacySharingsRedirect'
+import {
+  areDrivesAvailable,
+  SharingsTabProvider
+} from '@/modules/views/Sharings/useSharingsTab'
 import { TrashDestroyView } from '@/modules/views/Trash/TrashDestroyView'
 import { TrashEmptyView } from '@/modules/views/Trash/TrashEmptyView'
 
@@ -81,6 +89,46 @@ const OutletWrapper = ({ Component }) => (
   </>
 )
 
+const SharingsTabLayout = ({ tab }) => (
+  <SharingsTabProvider tab={tab}>
+    <Outlet />
+  </SharingsTabProvider>
+)
+
+const sharingsTabRoute = (tab, sharedDrivesEnabled) => (
+  <Route key={tab} path={tab} element={<SharingsTabLayout tab={tab} />}>
+    <Route index element={<SharingsView />} />
+    <Route element={<SharingsView />}>
+      <Route
+        path="file/:fileId"
+        element={<OutletWrapper Component={SharingsFilesViewer} />}
+      >
+        <Route path="v/revision" element={<FileHistory />} />
+        <Route path="v/share" element={<ShareFileView />} />
+        <Route path="v/move" element={<MoveFilesView isOpenInViewer />} />
+        <Route path="v/duplicate" element={<FolderDuplicateView />} />
+      </Route>
+      <Route path="file/:fileId/revision" element={<FileHistory />} />
+      <Route path="file/:fileId/share" element={<ShareFileView />} />
+      <Route
+        path="shareddrive/:driveId/:fileId/share"
+        element={<ShareFileView />}
+      />
+      <Route path="file/:fileId/qualify" element={<QualifyFileView />} />
+      {sharedDrivesEnabled ? sharedDriveRootFileRoute() : null}
+    </Route>
+    <Route path="folder/:folderId" element={<SharingsFolderView />}>
+      <Route path="file/:fileId" element={<SharingsFilesViewer />} />
+      <Route path="file/:fileId/revision" element={<FileHistory />} />
+      <Route path="file/:fileId/share" element={<ShareFileView />} />
+      <Route path="file/:fileId/qualify" element={<QualifyFileView />} />
+      <Route path="share" element={<ShareDisplayedFolderView />} />
+    </Route>
+    {sharedDrivesEnabled ? sharedDriveFolderRoute() : null}
+    <Route path="move" element={<MoveFilesView />} />
+  </Route>
+)
+
 const sharedDriveRootFileViewerRoutes = () => (
   <>
     <Route path="v/revision" element={<FileHistory />} />
@@ -99,35 +147,39 @@ const sharedDriveRootFileRoute = () => (
   </Route>
 )
 
+const sharedDriveFolderRoute = () => (
+  <Route
+    path="shareddrive/:driveId/:folderId"
+    element={<SharedDriveFolderView />}
+  >
+    <Route
+      path="file/:fileId"
+      element={<OutletWrapper Component={FilesViewerSharedDrive} />}
+    >
+      <Route
+        path="v/move"
+        element={<MoveSharedDriveFilesView isOpenInViewer />}
+      />
+      <Route path="v/duplicate" element={<DuplicateSharedDriveFilesView />} />
+      {/* The viewer's Share action navigates to a relative `v/share`; without
+          this child route the URL matches nothing and the page goes blank.
+          driveId is in the path so the modal resolves a proxied recipient
+          document. */}
+      <Route path="v/share" element={<ShareFileView />} />
+    </Route>
+    <Route path="file/:fileId/revision" element={<FileHistory />} />
+    <Route path="file/:fileId/v/revision" element={<FileHistory />} />
+    <Route path="file/:fileId/share" element={<ShareFileView />} />
+    <Route path="share" element={<ShareDisplayedFolderView />} />
+    <Route path="move" element={<MoveSharedDriveFilesView />} />
+    <Route path="duplicate" element={<DuplicateSharedDriveFilesView />} />
+  </Route>
+)
+
 const sharedDriveRoutes = () => (
   <>
     {sharedDriveRootFileRoute()}
-    <Route
-      path="shareddrive/:driveId/:folderId"
-      element={<SharedDriveFolderView />}
-    >
-      <Route
-        path="file/:fileId"
-        element={<OutletWrapper Component={FilesViewerSharedDrive} />}
-      >
-        <Route
-          path="v/move"
-          element={<MoveSharedDriveFilesView isOpenInViewer />}
-        />
-        <Route path="v/duplicate" element={<DuplicateSharedDriveFilesView />} />
-        {/* The viewer's Share action navigates to a relative `v/share`; without
-            this child route the URL matches nothing and the page goes blank.
-            driveId is in the path so the modal resolves a proxied recipient
-            document. */}
-        <Route path="v/share" element={<ShareFileView />} />
-      </Route>
-      <Route path="file/:fileId/revision" element={<FileHistory />} />
-      <Route path="file/:fileId/v/revision" element={<FileHistory />} />
-      <Route path="file/:fileId/share" element={<ShareFileView />} />
-      <Route path="share" element={<ShareDisplayedFolderView />} />
-      <Route path="move" element={<MoveSharedDriveFilesView />} />
-      <Route path="duplicate" element={<DuplicateSharedDriveFilesView />} />
-    </Route>
+    {sharedDriveFolderRoute()}
   </>
 )
 
@@ -138,7 +190,7 @@ const getEditorRoutes = () => (
   </>
 )
 
-const AppRoute = () => (
+const AppRoutes = ({ sharedDrivesEnabled }) => (
   <SentryRoutes>
     <Route path="external/:fileId" element={<ExternalRedirect />} />
     <Route path="note/:fileId" element={<PublicNoteRedirect />} />
@@ -205,10 +257,7 @@ const AppRoute = () => (
         </>
       ) : null}
 
-      {flag('drive.shared-drive.enabled') ||
-      flag('drive.federated-shared-folder.enabled')
-        ? sharedDriveRoutes()
-        : null}
+      {sharedDrivesEnabled ? sharedDriveRoutes() : null}
 
       <Route path="recent" element={<RecentView />}>
         <Route
@@ -240,43 +289,11 @@ const AppRoute = () => (
       </Route>
 
       <Route path="sharings">
-        <Route index element={<SharingsView />} />
-        <Route element={<SharingsView />}>
-          <Route
-            path="file/:fileId"
-            element={<OutletWrapper Component={SharingsFilesViewer} />}
-          >
-            <Route path="v/revision" element={<FileHistory />} />
-            <Route path="v/share" element={<ShareFileView />} />
-            <Route path="v/move" element={<MoveFilesView isOpenInViewer />} />
-            <Route path="v/duplicate" element={<FolderDuplicateView />} />
-          </Route>
-          {/* This route must be a child of SharingsView so the modal opens on top of the sharing view */}
-          <Route path="file/:fileId/revision" element={<FileHistory />} />
-          <Route path="file/:fileId/share" element={<ShareFileView />} />
-          {/* Shared-drive entries open their share modal layered over the
-              sharings list (driveId in the path resolves a proxied recipient
-              document) instead of navigating into the shared-drive view */}
-          <Route
-            path="shareddrive/:driveId/:fileId/share"
-            element={<ShareFileView />}
-          />
-          <Route path="file/:fileId/qualify" element={<QualifyFileView />} />
-          {flag('drive.shared-drive.enabled') ||
-          flag('drive.federated-shared-folder.enabled')
-            ? sharedDriveRootFileRoute()
-            : null}
-        </Route>
-        {/* This route must be inside the /sharing path for the nav to have an activate state */}
-        <Route path=":folderId" element={<SharingsFolderView />}>
-          <Route path="file/:fileId" element={<SharingsFilesViewer />} />
-          {/* This route must be a child of SharingsFolderView so the modal opens on top of the folder view */}
-          <Route path="file/:fileId/revision" element={<FileHistory />} />
-          <Route path="file/:fileId/share" element={<ShareFileView />} />
-          <Route path="file/:fileId/qualify" element={<QualifyFileView />} />
-          <Route path="share" element={<ShareDisplayedFolderView />} />
-        </Route>
-        <Route path="move" element={<MoveFilesView />} />
+        <Route index element={<LegacySharingsRedirect />} />
+        {[SHARING_TAB_WITH_ME, SHARING_TAB_BY_ME, SHARING_TAB_DRIVES].map(tab =>
+          sharingsTabRoute(tab, sharedDrivesEnabled)
+        )}
+        <Route path="*" element={<LegacySharingsRedirect />} />
       </Route>
 
       {getOnlyOfficeRoutes()}
@@ -299,5 +316,7 @@ const AppRoute = () => (
     </Route>
   </SentryRoutes>
 )
+
+const AppRoute = () => <AppRoutes sharedDrivesEnabled={areDrivesAvailable()} />
 
 export default AppRoute

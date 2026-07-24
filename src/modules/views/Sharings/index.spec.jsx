@@ -1,10 +1,12 @@
 import { render, fireEvent, waitFor } from '@testing-library/react'
 import React from 'react'
+import { Route, Routes } from 'react-router-dom'
 
 import { useQuery } from 'cozy-client'
 import flag from 'cozy-flags'
 
 import { SharingsView } from './index'
+import { SharingsTabProvider } from './useSharingsTab'
 import {
   generateFileFixtures,
   getByTextWithMarkup,
@@ -13,13 +15,14 @@ import {
 import AppLike from 'test/components/AppLike'
 import { setupStoreAndClient } from 'test/setup'
 
-const mockNavigate = jest.fn()
+import {
+  SHARING_TAB_BY_ME,
+  SHARING_TAB_DRIVES,
+  SHARING_TAB_WITH_ME
+} from '@/constants/config'
+
 const mockSharingContext = jest.fn()
 
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
-  useNavigate: () => mockNavigate
-}))
 jest.mock('cozy-sharing', () => ({
   __esModule: true,
   ...jest.requireActual('cozy-sharing'),
@@ -48,8 +51,18 @@ jest.mock('cozy-client/dist/utils', () => ({
 }))
 jest.mock('components/useHead', () => jest.fn())
 
-const setup = ({ sharedDrives = [] } = {}) => {
+const SharingsRoute = ({ tab }) => (
+  <SharingsTabProvider tab={tab}>
+    <SharingsView />
+  </SharingsTabProvider>
+)
+
+const setup = ({
+  initialTab = SHARING_TAB_WITH_ME,
+  sharedDrives = []
+} = {}) => {
   const { store, client } = setupStoreAndClient()
+  window.location.hash = `#/sharings/${initialTab}`
 
   client.plugins.realtime = {
     subscribe: jest.fn(),
@@ -66,7 +79,20 @@ const setup = ({ sharedDrives = [] } = {}) => {
 
   const rendered = render(
     <AppLike client={client} store={store}>
-      <SharingsView />
+      <Routes>
+        <Route
+          path="/sharings/with-me"
+          element={<SharingsRoute tab={SHARING_TAB_WITH_ME} />}
+        />
+        <Route
+          path="/sharings/by-me"
+          element={<SharingsRoute tab={SHARING_TAB_BY_ME} />}
+        />
+        <Route
+          path="/sharings/drives"
+          element={<SharingsRoute tab={SHARING_TAB_DRIVES} />}
+        />
+      </Routes>
     </AppLike>
   )
   return { ...rendered, client }
@@ -111,8 +137,6 @@ describe('Sharings View', () => {
   })
 
   afterEach(() => {
-    // useSharingsTab writes ?tab= into the hash-router URL; reset it so
-    // a tab switched in one test does not leak into the next.
     window.location.hash = ''
   })
 
@@ -187,7 +211,9 @@ describe('Sharings View', () => {
       fireEvent.click(historyItem)
     })
 
-    expect(mockNavigate).toHaveBeenCalledWith('/file/file-foobar0/revision')
+    expect(window.location.hash).toBe(
+      '#/sharings/with-me/file/file-foobar0/revision'
+    )
   })
 
   it('filters the list by the active tab and swaps it on tab switch', async () => {
@@ -249,10 +275,11 @@ describe('Sharings View', () => {
     })
 
     it('canonicalizes an empty drives deep link to the with-me tab', async () => {
-      window.location.hash = '#/sharings?tab=drives'
       useQuery.mockReturnValue(filesFixtureWithPath)
 
-      const { getByRole, queryByRole } = setup()
+      const { getByRole, queryByRole } = setup({
+        initialTab: SHARING_TAB_DRIVES
+      })
 
       await waitFor(() => {
         expect(getByRole('tab', { name: 'With me' })).toHaveAttribute(
@@ -261,7 +288,7 @@ describe('Sharings View', () => {
         )
       })
       expect(queryByRole('tab', { name: 'Team drives' })).toBeNull()
-      expect(window.location.hash).toContain('tab=with-me')
+      expect(window.location.hash).toBe('#/sharings/with-me')
     })
   })
 })

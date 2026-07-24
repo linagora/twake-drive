@@ -11,6 +11,7 @@ import withSharedDocumentIds from './withSharedDocumentIds'
 import { FilesViewerLoading } from '@/components/FilesViewerLoading'
 import { useCurrentFolderId } from '@/hooks'
 import FilesViewer from '@/modules/viewer/FilesViewer'
+import { getSharingsTabRoute } from '@/modules/views/Sharings/routes'
 import { buildSharingsQuery } from '@/queries'
 
 const FilesViewerSharing = ({ sharedDocumentIds }) => {
@@ -18,8 +19,6 @@ const FilesViewerSharing = ({ sharedDocumentIds }) => {
   const filesQuery = buildSharingsQuery({ ids: sharedDocumentIds })
   const results = useQuery(filesQuery.definition, filesQuery.options)
   const navigate = useNavigate()
-  // The active tab only lives in ?tab= (see useSharingsTab): navigations
-  // must carry the current search over or the tab resets to the default.
   const { search } = useLocation()
   const [tab] = useSharingsTab()
   const { isOwner } = useSharingContext()
@@ -35,9 +34,10 @@ const FilesViewerSharing = ({ sharedDocumentIds }) => {
         f.type !== 'directory' &&
         (currentFolderId || getSharingsTabForEntry(f, isOwner) === tab)
     )
+    const tabPath = getSharingsTabRoute(tab)
     const basePath = currentFolderId
-      ? `/sharings/${currentFolderId}`
-      : '/sharings'
+      ? `${tabPath}/folder/${currentFolderId}`
+      : tabPath
     return (
       <FilesViewer
         files={viewableFiles}

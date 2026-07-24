@@ -73,7 +73,7 @@ describe('actions helpers', () => {
           { id: 'file-3', name: 'doc3.pdf' }
         ],
         path: 'share',
-        search: 'tab=link'
+        search: 'filter=link'
       }
 
       navigateToModalWithMultipleFile(params)
@@ -81,7 +81,7 @@ describe('actions helpers', () => {
       expect(mockNavigate).toHaveBeenCalledWith(
         {
           pathname: '/folder/123/share',
-          search: '?tab=link'
+          search: '?filter=link'
         },
         {
           state: { fileIds: ['file-1', 'file-2', 'file-3'] }

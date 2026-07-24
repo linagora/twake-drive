@@ -5,7 +5,6 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import BreadcrumbSkeleton from '@/modules/breadcrumb/components/BreadcrumbSkeleton'
 import { MobileAwareBreadcrumb as Breadcrumb } from '@/modules/breadcrumb/components/MobileAwareBreadcrumb'
 import { useBreadcrumbPath } from '@/modules/breadcrumb/hooks/useBreadcrumbPath.jsx'
-import { getSharingsTabSearch } from '@/modules/navigation/hooks/helpers'
 
 const FolderViewBreadcrumb = ({
   currentFolderId,
@@ -22,12 +21,11 @@ const FolderViewBreadcrumb = ({
 
   const onBreadcrumbClick = useCallback(
     ({ id }) => {
+      const isInSharings = pathname.startsWith('/sharings/')
       navigate(
         {
-          pathname: id ? `../${id}` : '..',
-          // The active sharings tab lives in ?tab= only: keep it when
-          // navigating back within the section (empty search elsewhere).
-          search: getSharingsTabSearch(pathname, search)
+          pathname: id ? `../${id}` : isInSharings ? '../..' : '..',
+          search: isInSharings ? search : ''
         },
         { relative: 'path' }
       )

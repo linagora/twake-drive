@@ -45,8 +45,12 @@ const SelectionConsumer = ({ items }) => {
 
   return (
     <>
-      {pathname === '/' && <Link to="/other">Change route</Link>}
-      {pathname === '/' && <Link to="/?tab=by-me">Change tab</Link>}
+      {pathname === '/sharings/with-me' && (
+        <Link to="/other">Change route</Link>
+      )}
+      {pathname === '/sharings/with-me' && (
+        <Link to="/sharings/by-me">Change tab</Link>
+      )}
       {isSelectionBarVisible && (
         <button onClick={hideSelectionBar}>Hide selection bar</button>
       )}
@@ -73,12 +77,19 @@ describe('SelectionProvider', () => {
   const setup = () => {
     return render(
       <Provider store={mockStore}>
-        <MemoryRouter initialEntries={['/']}>
+        <MemoryRouter initialEntries={['/sharings/with-me']}>
           <SelectionProvider>
             <Routes>
-              <Route path="/" element={<SelectionConsumer items={items} />} />
+              <Route
+                path="/sharings/with-me"
+                element={<SelectionConsumer items={items} />}
+              />
               <Route
                 path="/other"
+                element={<SelectionConsumer items={items} />}
+              />
+              <Route
+                path="/sharings/by-me"
                 element={<SelectionConsumer items={items} />}
               />
             </Routes>
@@ -131,7 +142,7 @@ describe('SelectionProvider', () => {
     expect(screen.queryByText('Hide selection bar')).toBeNull()
   })
 
-  it('should deselect items when only the search params change (tab switch)', async () => {
+  it('should deselect items when a tab route changes', async () => {
     setup()
 
     // selecting an item
@@ -139,8 +150,7 @@ describe('SelectionProvider', () => {
     expect(screen.getByText('Item file-foobar1 selected')).toBeInTheDocument()
     expect(screen.getByText('Hide selection bar')).toBeInTheDocument()
 
-    // navigate to the same pathname with different search params, which is
-    // what a Sharings tab switch does (tab state lives in ?tab=)
+    // Sharings tabs are separate routes, so switching tabs changes location.
     fireEvent.click(screen.getByText('Change tab'))
 
     await waitFor(async () => {

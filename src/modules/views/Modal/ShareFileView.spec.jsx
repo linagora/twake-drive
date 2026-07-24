@@ -5,14 +5,16 @@ import { hasQueryBeenLoaded, useQuery } from 'cozy-client'
 
 import { ShareFileView } from './ShareFileView'
 
-import { SHARING_TAB_WITH_ME } from '@/constants/config'
+import { SHARING_TAB_BY_ME, SHARING_TAB_WITH_ME } from '@/constants/config'
 
 const mockNavigate = jest.fn()
+const mockUseLocation = jest.fn()
 const mockUseParams = jest.fn()
 
 jest.mock('react-router-dom', () => ({
   ...jest.requireActual('react-router-dom'),
   useNavigate: () => mockNavigate,
+  useLocation: () => mockUseLocation(),
   useParams: () => mockUseParams()
 }))
 
@@ -49,6 +51,7 @@ jest.mock('@/queries', () => ({
 describe('ShareFileView', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    mockUseLocation.mockReturnValue({ pathname: '/folder/folder-id' })
     hasQueryBeenLoaded.mockReturnValue(true)
     useQuery.mockReturnValue({
       data: {
@@ -59,7 +62,10 @@ describe('ShareFileView', () => {
     })
   })
 
-  it('should redirect to the with-me tab after leaving a shared drive file', () => {
+  it('should redirect to the active tab after leaving a shared drive file', () => {
+    mockUseLocation.mockReturnValue({
+      pathname: '/sharings/by-me/shareddrive/drive-id/file-id/share'
+    })
     mockUseParams.mockReturnValue({ driveId: 'drive-id', fileId: 'file-id' })
 
     render(<ShareFileView />)
@@ -67,7 +73,7 @@ describe('ShareFileView', () => {
     fireEvent.click(screen.getByText('Revoke self'))
 
     expect(mockNavigate).toHaveBeenCalledWith(
-      `/sharings?tab=${SHARING_TAB_WITH_ME}`,
+      `/sharings/${SHARING_TAB_BY_ME}`,
       {
         replace: true
       }
@@ -82,7 +88,7 @@ describe('ShareFileView', () => {
     fireEvent.click(screen.getByText('Revoke self'))
 
     expect(mockNavigate).toHaveBeenCalledWith(
-      `/sharings?tab=${SHARING_TAB_WITH_ME}`,
+      `/sharings/${SHARING_TAB_WITH_ME}`,
       { replace: true }
     )
   })

@@ -6,8 +6,10 @@ describe('shareFileRootSharedDrive', () => {
   const t = key => key
   const navigate = jest.fn()
 
-  const makeAction = ({ isOwner = () => true, pathname = '/sharings' } = {}) =>
-    shareFileRootSharedDrive({ navigate, t, isOwner, pathname })
+  const makeAction = ({
+    isOwner = () => true,
+    pathname = '/sharings/drives'
+  } = {}) => shareFileRootSharedDrive({ navigate, t, isOwner, pathname })
 
   beforeEach(() => {
     jest.clearAllMocks()
@@ -25,7 +27,7 @@ describe('shareFileRootSharedDrive', () => {
   })
 
   it('layers the share modal over the sharings list', () => {
-    makeAction({ pathname: '/sharings' }).action([
+    makeAction({ pathname: '/sharings/drives' }).action([
       {
         _id: 'file-id',
         driveId: 'drive-id',
@@ -34,7 +36,7 @@ describe('shareFileRootSharedDrive', () => {
     ])
 
     expect(navigate).toHaveBeenCalledWith(
-      '/sharings/shareddrive/drive-id/file-id/share'
+      '/sharings/drives/shareddrive/drive-id/file-id/share'
     )
   })
 

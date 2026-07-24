@@ -1,18 +1,20 @@
 import { Icon, Share } from '@linagora/twake-icons'
 import React, { useState, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
+import { deconstructRedirectLink } from 'cozy-client'
 import flag from 'cozy-flags'
 import { ShareButton, ShareModal, SharedRecipients } from 'cozy-sharing'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
-import { DEFAULT_SHARINGS_VIEW_ROUTE } from '@/constants/config'
+import { getSharingsRootRoute } from '@/modules/views/Sharings/routes'
 
 const Sharing = ({ file }) => {
   const [showShareModal, setShowShareModal] = useState(false)
   const { isMobile } = useBreakpoints()
   const navigate = useNavigate()
+  const { search } = useLocation()
 
   const toggleShareModal = useCallback(
     () => setShowShareModal(v => !v),
@@ -20,7 +22,13 @@ const Sharing = ({ file }) => {
   )
 
   const handleRevokeSuccess = () => {
-    navigate(DEFAULT_SHARINGS_VIEW_ROUTE, { replace: true })
+    const redirectLink = new URLSearchParams(search).get('redirectLink')
+    const { slug, hash } = redirectLink
+      ? deconstructRedirectLink(redirectLink)
+      : {}
+    const fromPathname = slug === 'drive' ? hash : ''
+
+    navigate(getSharingsRootRoute(fromPathname), { replace: true })
   }
 
   return (

@@ -1,6 +1,11 @@
 import CozyClient, { generateWebLink } from 'cozy-client'
 import { IOCozyFile } from 'cozy-client/types/types'
 
+import {
+  getSharingsSharedDrivePath,
+  getSharingsTabFromPath
+} from '@/modules/views/Sharings/routes'
+
 // Temporary type, need to be completed and then put in cozy-client
 export interface SharedDrive {
   _id: string
@@ -53,8 +58,13 @@ export const isSharedDriveDoc = (folder: IOCozyFile): boolean =>
 
 export const makeSharedDriveNoteReturnUrl = (
   client: CozyClient,
-  file: IOCozyFile
+  file: IOCozyFile,
+  pathname = ''
 ): string => {
+  const hash = getSharingsTabFromPath(pathname)
+    ? getSharingsSharedDrivePath(pathname, file.driveId, file.dir_id)
+    : `/shareddrive/${file.driveId!}/${file.dir_id}`
+
   return generateWebLink({
     slug: 'drive',
     searchParams: [],
@@ -63,6 +73,6 @@ export const makeSharedDriveNoteReturnUrl = (
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     subDomainType: client.getInstanceOptions().subdomain,
     pathname: '',
-    hash: `/shareddrive/${file.driveId!}/${file.dir_id}`
+    hash
   })
 }

@@ -53,7 +53,7 @@ const renderRootFileViewer = ({
   queryLoaded = true,
   sharingLoaded = true,
   location = {
-    pathname: '/sharings/shareddrive/drive-1/file/route-id',
+    pathname: '/sharings/drives/shareddrive/drive-1/file/route-id',
     state: undefined
   }
 } = {}) => {
@@ -88,18 +88,39 @@ describe('FilesViewerSharedDriveRootFile', () => {
     )
   })
 
-  it('redirects to /sharings when the file query fails', () => {
+  it('closes a deep-linked viewer to the active sharings tab', () => {
+    renderRootFileViewer()
+
+    mockFilesViewer.mock.calls[0][0].onClose()
+
+    expect(mockNavigate).toHaveBeenCalledWith('/sharings/drives')
+  })
+
+  it('changes files inside the active sharings tab', () => {
+    renderRootFileViewer()
+
+    mockFilesViewer.mock.calls[0][0].onChange('next-file-id')
+
+    expect(mockNavigate).toHaveBeenCalledWith(
+      '/sharings/drives/shareddrive/drive-1/file/next-file-id',
+      { state: { fromPathname: '/sharings/drives' } }
+    )
+  })
+
+  it('redirects to the active sharings tab when the file query fails', () => {
     renderRootFileViewer({
       fetchedFile: null,
       queryStatus: 'failed',
       queryLoaded: false,
       location: {
-        pathname: '/sharings',
+        pathname: '/sharings/drives/shareddrive/drive-1/file/route-id',
         state: undefined
       }
     })
 
-    expect(mockNavigate).toHaveBeenCalledWith('/sharings', { replace: true })
+    expect(mockNavigate).toHaveBeenCalledWith('/sharings/drives', {
+      replace: true
+    })
   })
 
   it('shows the loading state until everything is ready', () => {
@@ -109,7 +130,7 @@ describe('FilesViewerSharedDriveRootFile', () => {
       queryLoaded: false,
       sharingLoaded: false,
       location: {
-        pathname: '/sharings',
+        pathname: '/sharings/drives/shareddrive/drive-1/file/route-id',
         state: undefined
       }
     })

@@ -31,6 +31,12 @@ import {
   makeExcalidrawFileRoute
 } from '@/modules/views/Excalidraw/helpers'
 import { makeOnlyOfficeFileRoute } from '@/modules/views/OnlyOffice/helpers'
+import {
+  getSharingsSharedDrivePath,
+  getSharingsSharedDriveRootFilePath,
+  getSharingsSharedDriveViewerPath,
+  getSharingsTabFromPath
+} from '@/modules/views/Sharings/routes'
 
 interface ComputeFileTypeOptions {
   isOfficeEnabled?: boolean
@@ -139,24 +145,6 @@ export const computeFileType = (
   }
 }
 
-/**
- * Search string preserving the active Sharings tab across in-section
- * navigations.
- *
- * The `?tab=` query param is the only storage of the active tab (see
- * useSharingsTab), so any navigation staying under /sharings must carry it
- * over. Outside the section it returns an empty search, so other views
- * never inherit the param.
- */
-export const getSharingsTabSearch = (
-  pathname: string,
-  search: string
-): string => {
-  if (!pathname.startsWith('/sharings')) return ''
-  const tab = new URLSearchParams(search).get('tab')
-  return tab ? `?${new URLSearchParams({ tab }).toString()}` : ''
-}
-
 export const computeApp = (type: string): string => {
   switch (type) {
     case 'nextcloud-file':
@@ -212,7 +200,7 @@ export const computePath = (
     case 'public-note':
       if (driveId) {
         const returnUrl = client
-          ? makeSharedDriveNoteReturnUrl(client, file as IOCozyFile)
+          ? makeSharedDriveNoteReturnUrl(client, file as IOCozyFile, pathname)
           : ''
 
         return `/note/${driveId}/${file._id}?returnUrl=${encodeURIComponent(
@@ -228,11 +216,7 @@ export const computePath = (
     case 'shortcut':
       return `/external/${file._id}`
     case 'directory':
-      // When the user is the owner of a sharing displayed in /sharings, the
-      // file/folder is the real io.cozy.files document living in their Drive,
-      // so we must drop the /sharings prefix and open it in the normal Drive
-      // folder view instead of the sharings folder view.
-      if (isOwner && pathname.startsWith('/sharings')) {
+      if (isOwner && pathname.startsWith('/sharings/')) {
         return `/folder/${file._id}`
       }
       // On mobile, if we are in /favorites tab, we do not want it to appears in computed path
@@ -240,8 +224,10 @@ export const computePath = (
       if (pathname.startsWith('/favorites')) {
         return `/folder/${file._id}`
       }
-      // paths with only one element correspond to the root of a page like /sharings
-      // when we add id we want to keep the path before to make /sharings/id
+      if (pathname.startsWith('/sharings/') && paths.length === 2) {
+        return `folder/${file._id}`
+      }
+      // Paths with only one element correspond to the root of a page.
       return paths.length === 1 ? file._id : `../${file._id}`
     case 'onlyoffice':
       return makeOnlyOfficeFileRoute(file._id, {
@@ -261,6 +247,10 @@ export const computePath = (
         return `/folder/${file._id}`
       }
 
+      if (getSharingsTabFromPath(pathname)) {
+        return getSharingsSharedDrivePath(pathname, driveId, file._id)
+      }
+
       return `/shareddrive/${driveId}/${file._id}`
     case 'shared-drive-root-file':
       if (!driveId || isNextcloudFile(file)) {
@@ -268,11 +258,13 @@ export const computePath = (
           'Missing driveId or invalid file type in shared drive root file'
         )
       }
-      return getSharedDriveRootFilePath({
-        driveId,
-        fileId: file._id,
-        scope: getSharedDriveRootFilePathScope(pathname)
-      })
+      return getSharingsTabFromPath(pathname)
+        ? getSharingsSharedDriveRootFilePath(pathname, driveId, file._id)
+        : getSharedDriveRootFilePath({
+            driveId,
+            fileId: file._id,
+            scope: getSharedDriveRootFilePathScope(pathname)
+          })
     case 'shared-drive-file':
       if (!driveId || isNextcloudFile(file)) {
         throw new Error(
@@ -282,14 +274,16 @@ export const computePath = (
       if (!file.dir_id) {
         throw new Error('Missing dir_id in shared drive file')
       }
-      return `/shareddrive/${driveId}/${file.dir_id}/file/${file._id}`
+      return getSharingsTabFromPath(pathname)
+        ? getSharingsSharedDriveViewerPath(
+            pathname,
+            driveId,
+            file.dir_id,
+            file._id
+          )
+        : `/shareddrive/${driveId}/${file.dir_id}/file/${file._id}`
     default:
-      // Owner of a file shown in /sharings owns the real io.cozy.files
-      // document on their instance, so the file should open in the normal
-      // Drive viewer (`/folder/:dirId/file/:fileId`) and leave the sharings
-      // section. Recipients (and the rest of the file cases) keep the
-      // existing relative /sharings/file/:fileId path.
-      if (isOwner && pathname.startsWith('/sharings')) {
+      if (isOwner && pathname.startsWith('/sharings/')) {
         return `/folder/${file.dir_id}/file/${file._id}`
       }
       // On mobile, if we are in /favorites tab, we do not want it to appears in computed path

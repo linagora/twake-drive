@@ -32,7 +32,7 @@ describe('infos', () => {
       t,
       isMobile: false,
       navigate,
-      pathname: '/sharings'
+      pathname: '/sharings/drives'
     })
 
     action.action([
@@ -45,8 +45,8 @@ describe('infos', () => {
     ])
 
     expect(navigate).toHaveBeenCalledWith(
-      '/sharings/shareddrive/drive-id/file/file-id',
-      { state: { fromPathname: '/sharings' } }
+      '/sharings/drives/shareddrive/drive-id/file/file-id',
+      { state: { fromPathname: '/sharings/drives' } }
     )
   })
 

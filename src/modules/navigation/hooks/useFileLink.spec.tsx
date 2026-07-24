@@ -11,7 +11,7 @@ describe('computeIsSharingsOwner', () => {
     jest.clearAllMocks()
   })
 
-  it('returns true for an owner shared document opened from sharings', () => {
+  it('returns true for an owner shared document opened from a tab route', () => {
     expect(
       computeIsSharingsOwner({
         file: {
@@ -21,14 +21,14 @@ describe('computeIsSharingsOwner', () => {
           name: 'file.pdf',
           dir_id: 'io.cozy.files.root-dir'
         },
-        pathname: '/sharings',
+        pathname: '/sharings/by-me',
         isPublic: false,
         sharingContext: ownerSharingContext
       })
     ).toBe(true)
   })
 
-  it('returns false when isOwner defaults to true for a document absent from byDocId', () => {
+  it('returns false for a document absent from byDocId', () => {
     expect(
       computeIsSharingsOwner({
         file: {
@@ -38,7 +38,7 @@ describe('computeIsSharingsOwner', () => {
           name: 'nested-file.pdf',
           dir_id: 'shared-folder-1'
         },
-        pathname: '/sharings/shared-folder-1',
+        pathname: '/sharings/with-me/folder/shared-folder-1',
         isPublic: false,
         sharingContext: {
           allLoaded: true,
@@ -59,7 +59,7 @@ describe('computeIsSharingsOwner', () => {
           name: 'file.pdf',
           dir_id: 'io.cozy.files.root-dir'
         },
-        pathname: '/sharings',
+        pathname: '/sharings/by-me',
         isPublic: false,
         sharingContext: {
           ...ownerSharingContext,
@@ -79,7 +79,7 @@ describe('computeIsSharingsOwner', () => {
           name: 'file.pdf',
           dir_id: 'io.cozy.files.root-dir'
         },
-        pathname: '/sharings',
+        pathname: '/sharings/by-me',
         isPublic: true,
         sharingContext: ownerSharingContext
       })

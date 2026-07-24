@@ -1,6 +1,6 @@
 import cx from 'classnames'
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 
 import { isDirectory } from 'cozy-client/dist/models/file'
 import MidEllipsis from 'cozy-ui/transpiled/react/MidEllipsis'
@@ -15,6 +15,7 @@ import {
   getFileNameAndExtension,
   makeParentFolderPath
 } from '@/modules/filelist/helpers'
+import { getSharingsRootRoute } from '@/modules/views/Sharings/routes'
 
 const FileName = ({
   attributes,
@@ -28,6 +29,7 @@ const FileName = ({
   isInSyncFromSharing
 }) => {
   const { t } = useI18n()
+  const { pathname } = useLocation()
   const { viewType } = useViewSwitcherContext()
   const classes = cx(
     styles['fil-content-cell'],
@@ -77,7 +79,11 @@ const FileName = ({
               </div>
             ) : (
               <Link
-                to={`/folder/${attributes.dir_id}`}
+                to={
+                  attributes.driveId
+                    ? getSharingsRootRoute(pathname)
+                    : `/folder/${attributes.dir_id}`
+                }
                 // Please do not modify the className as it is used in event handling, see FileOpener#46
                 className={styles['fil-file-path']}
               >
