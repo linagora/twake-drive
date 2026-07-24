@@ -41,6 +41,7 @@ describe('Sharings routes', () => {
 
   it('falls back to with-me outside a canonical sharings route', () => {
     expect(getSharingsTabFromPath('/folder/folder-1')).toBeNull()
+    expect(getSharingsTabFromPath('/folder/12with-me/file-1')).toBeNull()
     expect(getSharingsRootRoute('/folder/folder-1')).toBe('/sharings/with-me')
   })
 

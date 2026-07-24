@@ -27,7 +27,12 @@ export function getSharingsRouteForTab(pathname, tab) {
 }
 
 export function getSharingsTabFromPath(pathname) {
-  const [tab] = pathname.slice(SHARINGS_VIEW_ROUTE.length + 1).split('/')
+  const sharingsPrefix = `${SHARINGS_VIEW_ROUTE}/`
+  if (!pathname.startsWith(sharingsPrefix)) {
+    return null
+  }
+
+  const [tab] = pathname.slice(sharingsPrefix.length).split('/')
   return SHARINGS_TABS.has(tab) ? tab : null
 }
 
