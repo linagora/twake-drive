@@ -8,9 +8,9 @@ import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
 import {
   shouldBeOpenedOnOtherInstance,
-  isOfficeEnabled,
-  makeName
+  isOfficeEnabled
 } from '@/modules/views/OnlyOffice/helpers'
+import { useEditorAuthor } from '@/modules/views/editor/useEditorAuthor'
 
 const useConfig = () => {
   const {
@@ -18,8 +18,6 @@ const useConfig = () => {
     driveId,
     setIsEditorReady,
     isPublic,
-    username,
-    isFromSharing,
     editorMode,
     isEditorModeView,
     setOfficeKey
@@ -27,6 +25,7 @@ const useConfig = () => {
   const client = useClient()
   const instanceUri = client.getStackClient().uri
   const [currentSearchParams] = useSearchParams()
+  const { author, isLoading: isAuthorLoading } = useEditorAuthor({ isPublic })
 
   const [config, setConfig] = useState()
   const [status, setStatus] = useState('loading')
@@ -81,14 +80,11 @@ const useConfig = () => {
 
         window.location = link
       } else if (isOfficeEnabled(isDesktop)) {
+        // The editor reads the author from its config at mount, so wait for it.
+        if (isAuthorLoading) return
+
         const { attributes } = data.data
-        const { onlyoffice, public_name } = attributes
-        const name = makeName({
-          isPublic,
-          isFromSharing,
-          username,
-          public_name
-        })
+        const { onlyoffice } = attributes
 
         setOfficeKey(onlyoffice.document.key)
 
@@ -104,7 +100,7 @@ const useConfig = () => {
               'edit'
                 ? editorMode
                 : 'view',
-            user: { name },
+            user: { name: author },
             customization: {
               reviewDisplay: 'markup'
             }
@@ -130,8 +126,8 @@ const useConfig = () => {
     setConfig,
     setIsEditorReady,
     isPublic,
-    username,
-    isFromSharing,
+    author,
+    isAuthorLoading,
     instanceUri,
     isDesktop,
     currentSearchParams,
