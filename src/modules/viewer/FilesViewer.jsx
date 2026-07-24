@@ -174,7 +174,9 @@ const FilesViewer = ({ filesQuery, files, onClose, onChange, viewerProps }) => {
           currentIndex={viewerIndex}
           onChangeRequest={handleOnChange}
           onCloseRequest={handleOnClose}
-          renderFallbackExtraContent={file => <Fallback file={file} t={t} />}
+          renderFallbackExtraContent={(file, url) => (
+            <Fallback file={file} url={url} t={t} />
+          )}
           componentsProps={{
             OnlyOfficeViewer: {
               isEnabled: isOfficeEnabled(isDesktop),
