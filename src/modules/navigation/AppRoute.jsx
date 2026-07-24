@@ -60,7 +60,10 @@ import { NextcloudTrashView } from '@/modules/views/Nextcloud/NextcloudTrashView
 import SearchView from '@/modules/views/Search/SearchView'
 import { SharedDriveFolderView } from '@/modules/views/SharedDrive/SharedDriveFolderView'
 import { LegacySharingsRedirect } from '@/modules/views/Sharings/LegacySharingsRedirect'
-import { SharingsTabProvider } from '@/modules/views/Sharings/useSharingsTab'
+import {
+  areDrivesAvailable,
+  SharingsTabProvider
+} from '@/modules/views/Sharings/useSharingsTab'
 import { TrashDestroyView } from '@/modules/views/Trash/TrashDestroyView'
 import { TrashEmptyView } from '@/modules/views/Trash/TrashEmptyView'
 
@@ -92,7 +95,7 @@ const SharingsTabLayout = ({ tab }) => (
   </SharingsTabProvider>
 )
 
-const sharingsTabRoute = tab => (
+const sharingsTabRoute = (tab, sharedDrivesEnabled) => (
   <Route key={tab} path={tab} element={<SharingsTabLayout tab={tab} />}>
     <Route index element={<SharingsView />} />
     <Route element={<SharingsView />}>
@@ -112,10 +115,7 @@ const sharingsTabRoute = tab => (
         element={<ShareFileView />}
       />
       <Route path="file/:fileId/qualify" element={<QualifyFileView />} />
-      {flag('drive.shared-drive.enabled') ||
-      flag('drive.federated-shared-folder.enabled')
-        ? sharedDriveRootFileRoute()
-        : null}
+      {sharedDrivesEnabled ? sharedDriveRootFileRoute() : null}
     </Route>
     <Route path="folder/:folderId" element={<SharingsFolderView />}>
       <Route path="file/:fileId" element={<SharingsFilesViewer />} />
@@ -124,10 +124,7 @@ const sharingsTabRoute = tab => (
       <Route path="file/:fileId/qualify" element={<QualifyFileView />} />
       <Route path="share" element={<ShareDisplayedFolderView />} />
     </Route>
-    {flag('drive.shared-drive.enabled') ||
-    flag('drive.federated-shared-folder.enabled')
-      ? sharedDriveFolderRoute()
-      : null}
+    {sharedDrivesEnabled ? sharedDriveFolderRoute() : null}
     <Route path="move" element={<MoveFilesView />} />
   </Route>
 )
@@ -193,7 +190,7 @@ const getEditorRoutes = () => (
   </>
 )
 
-const AppRoute = () => (
+const AppRoutes = ({ sharedDrivesEnabled }) => (
   <SentryRoutes>
     <Route path="external/:fileId" element={<ExternalRedirect />} />
     <Route path="note/:fileId" element={<PublicNoteRedirect />} />
@@ -260,10 +257,7 @@ const AppRoute = () => (
         </>
       ) : null}
 
-      {flag('drive.shared-drive.enabled') ||
-      flag('drive.federated-shared-folder.enabled')
-        ? sharedDriveRoutes()
-        : null}
+      {sharedDrivesEnabled ? sharedDriveRoutes() : null}
 
       <Route path="recent" element={<RecentView />}>
         <Route
@@ -296,8 +290,8 @@ const AppRoute = () => (
 
       <Route path="sharings">
         <Route index element={<LegacySharingsRedirect />} />
-        {[SHARING_TAB_WITH_ME, SHARING_TAB_BY_ME, SHARING_TAB_DRIVES].map(
-          sharingsTabRoute
+        {[SHARING_TAB_WITH_ME, SHARING_TAB_BY_ME, SHARING_TAB_DRIVES].map(tab =>
+          sharingsTabRoute(tab, sharedDrivesEnabled)
         )}
         <Route path="*" element={<LegacySharingsRedirect />} />
       </Route>
@@ -322,5 +316,7 @@ const AppRoute = () => (
     </Route>
   </SentryRoutes>
 )
+
+const AppRoute = () => <AppRoutes sharedDrivesEnabled={areDrivesAvailable()} />
 
 export default AppRoute
