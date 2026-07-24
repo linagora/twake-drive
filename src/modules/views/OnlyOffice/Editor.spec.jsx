@@ -23,6 +23,10 @@ jest.mock('modules/views/OnlyOffice/helpers', () => ({
   isOfficeEnabled: jest.fn()
 }))
 
+jest.mock('@/modules/views/editor/useEditorAuthor', () => ({
+  useEditorAuthor: jest.fn(() => ({ author: 'Bob', isLoading: false }))
+}))
+
 jest.mock('cozy-ui/transpiled/react/providers/Breakpoints', () => ({
   ...jest.requireActual('cozy-ui/transpiled/react/providers/Breakpoints'),
   __esModule: true,

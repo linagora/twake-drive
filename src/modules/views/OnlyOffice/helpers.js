@@ -186,16 +186,3 @@ export const showSharingBanner = ({
     (isInSharedFolder ? window.history.length <= 1 : window.history.length <= 2)
   )
 }
-
-/**
- * Make username to use in the Only office editor in order to show the name
- * when adding comment or moving the cursor for example
- * @param {object} params - Params
- * @param {boolean} params.isPublic - Whether the route is public (like /public)
- * @param {boolean} params.isFromSharing - Whether the doc is shared from cozy to cozy
- * @param {string} params.username - The name of the sharing recipient
- * @param {string} params.public_name - The name of the owner
- * @returns {string|undefined}
- */
-export const makeName = ({ isPublic, isFromSharing, username, public_name }) =>
-  isPublic && !isFromSharing ? undefined : username ? username : public_name
