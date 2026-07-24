@@ -1,3 +1,4 @@
+import { getQueryParameter } from '@/lib/react-cozy-helpers'
 import { locales } from '@/locales'
 
 const supportedLocales = new Set(Object.keys(locales))
@@ -32,9 +33,13 @@ export const getBrowserLocale = () => {
 /**
  * Determines the locale for the public sharing page.
  *
- * When `isLoggedIn` is `false`, the visitor is anonymous so the browser locale
- * is used. When `isLoggedIn` is `true` or absent (cozy-stack < PR#4719), the
- * instance locale from the dataset is used for backward compatibility.
+ * A `lang` query param takes precedence when it names a supported locale: a
+ * recipient opening a shared document is redirected here from their own
+ * instance, which forwards their locale so the page is shown in their language
+ * rather than the owner's. Otherwise, when `isLoggedIn` is `false` the visitor
+ * is anonymous so the browser locale is used, and when `isLoggedIn` is `true`
+ * or absent (cozy-stack < PR#4719) the instance locale from the dataset is used
+ * for backward compatibility.
  *
  * @param {object} dataset - The parsed `data-cozy` dataset from the DOM root.
  * @param {boolean} [dataset.isLoggedIn] - Whether the current user is
@@ -42,7 +47,13 @@ export const getBrowserLocale = () => {
  * @param {string} [dataset.locale] - The Cozy instance locale (e.g. `'fr'`).
  * @returns {string} The resolved locale key to use for translations.
  */
-export const getPublicPageLocale = dataset =>
-  'isLoggedIn' in dataset && !dataset.isLoggedIn
+export const getPublicPageLocale = dataset => {
+  const { lang } = getQueryParameter()
+  if (lang && supportedLocales.has(lang)) {
+    return lang
+  }
+
+  return 'isLoggedIn' in dataset && !dataset.isLoggedIn
     ? getBrowserLocale()
     : dataset.locale || 'en'
+}
