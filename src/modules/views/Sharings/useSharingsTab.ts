@@ -11,7 +11,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 
 import flag from 'cozy-flags'
 
-import { getSearchWithoutLegacyTab, getSharingsRouteForTab } from './routes'
+import { getSharingsRouteForTab } from './routes'
 
 import {
   SHARING_TAB_BY_ME,
@@ -64,7 +64,7 @@ export const SharingsTabProvider = ({
   const activeTab = isAvailableTab(tab, drivesAvailable)
     ? tab
     : SHARING_TAB_WITH_ME
-  const search = getSearchWithoutLegacyTab(location.search)
+  const search = location.search
 
   useEffect(() => {
     if (activeTab !== tab) {

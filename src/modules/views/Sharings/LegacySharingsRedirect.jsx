@@ -1,7 +1,7 @@
 import React from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 
-import { getLegacySharingsRoute, getSearchWithoutLegacyTab } from './routes'
+import { getLegacySharingsRoute } from './routes'
 
 export const LegacySharingsRedirect = () => {
   const location = useLocation()
@@ -10,7 +10,7 @@ export const LegacySharingsRedirect = () => {
     <Navigate
       to={{
         pathname: getLegacySharingsRoute(location.pathname),
-        search: getSearchWithoutLegacyTab(location.search)
+        search: location.search
       }}
       replace={true}
     />

@@ -18,7 +18,7 @@ describe('LegacySharingsRedirect', () => {
   it('replaces a pre-tab file URL with its default-tab route', async () => {
     render(
       <MemoryRouter
-        initialEntries={['/sharings/folder-1/file/file-1?tab=by-me&sort=name']}
+        initialEntries={['/sharings/folder-1/file/file-1?sort=name']}
       >
         <Routes>
           <Route

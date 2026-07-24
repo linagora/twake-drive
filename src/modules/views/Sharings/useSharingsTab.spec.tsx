@@ -142,9 +142,7 @@ describe('useSharingsTab', () => {
   })
 
   it('preserves a nested path when its tab becomes unavailable', async () => {
-    renderWithRoute(
-      '/sharings/drives/folder/folder-1/file/file-1?foo=bar&tab=drives'
-    )
+    renderWithRoute('/sharings/drives/folder/folder-1/file/file-1?foo=bar')
 
     await waitFor(() => {
       expect(getTab()).toBe(SHARING_TAB_WITH_ME)

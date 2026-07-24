@@ -1,6 +1,5 @@
 import {
   getLegacySharingsRoute,
-  getSearchWithoutLegacyTab,
   getSharingsRootRoute,
   getSharingsRouteForTab,
   getSharingsTabFromPath,
@@ -22,12 +21,6 @@ describe('Sharings routes', () => {
     ${'/sharings/by-me/removed-feature/path'}            | ${'/sharings/by-me'}
   `('redirects $route to $expected', ({ route, expected }) => {
     expect(getLegacySharingsRoute(route)).toBe(expected)
-  })
-
-  it('preserves unrelated query params and removes the obsolete tab param', () => {
-    expect(
-      getSearchWithoutLegacyTab('?sort=name&tab=by-me&search=report')
-    ).toBe('?sort=name&search=report')
   })
 
   it('changes only the tab segment of a nested sharings route', () => {

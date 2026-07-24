@@ -63,13 +63,6 @@ export function getSharingsSharedDriveRootFilePath(pathname, driveId, fileId) {
   )}/shareddrive/${driveId}/file/${fileId}`
 }
 
-export function getSearchWithoutLegacyTab(search) {
-  const searchParams = new URLSearchParams(search)
-  searchParams.delete('tab')
-  const nextSearch = searchParams.toString()
-  return nextSearch ? `?${nextSearch}` : ''
-}
-
 export function getLegacySharingsRoute(pathname) {
   const legacyPath = pathname
     .slice(SHARINGS_VIEW_ROUTE.length)
