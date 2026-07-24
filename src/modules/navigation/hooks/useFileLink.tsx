@@ -16,8 +16,6 @@ import {
 } from '@/modules/navigation/hooks/helpers'
 import { usePublicContext } from '@/modules/public/PublicProvider'
 import { getFolderPath } from '@/modules/routeUtils'
-import { isExcalidrawEnabled as computeExcalidrawEnabled } from '@/modules/views/Excalidraw/helpers'
-import { isOfficeEnabled as computeOfficeEnabled } from '@/modules/views/OnlyOffice/helpers'
 
 export interface LinkResult {
   app: string
@@ -87,8 +85,6 @@ const useFileLink = (
   const { pathname, search } = useLocation()
   const client = useClient()
   const { isDesktop } = useBreakpoints()
-  const isOfficeEnabled = computeOfficeEnabled(isDesktop)
-  const isExcalidrawEnabled = computeExcalidrawEnabled()
   const { isPublic } = usePublicContext()
   const sharingContext = useSharingContext() as
     | SharingContextForFileLink
@@ -104,8 +100,7 @@ const useFileLink = (
   const cozyUrl = client?.getStackClient().uri as string
 
   const type = computeFileType(file, {
-    isOfficeEnabled,
-    isExcalidrawEnabled,
+    isDesktop,
     isPublic,
     cozyUrl
   })
