@@ -35,6 +35,20 @@ jest.mock('cozy-logger', () => ({
   warn: jest.fn()
 }))
 
+jest.mock(
+  'cozy-ui-plus/dist/providers/CozyTheme',
+  () =>
+    ({ children, ignoreItself, type }) => (
+      <div
+        data-testid="intent-theme"
+        data-theme={type}
+        data-ignore-itself={ignoreItself}
+      >
+        {children}
+      </div>
+    )
+)
+
 jest.mock('./Picker', () => () => <div data-testid="picker" />)
 
 function makeDeferredPromise() {
@@ -59,6 +73,34 @@ describe('IntentHandler', () => {
   afterEach(() => {
     jest.clearAllMocks()
   })
+
+  it.each(['light', 'dark'])(
+    'forces the %s theme while the picker initializes',
+    async theme => {
+      mockGetIntent.mockResolvedValue({
+        attributes: {
+          action: 'PICK',
+          type: 'io.cozy.files',
+          data: { theme: { type: theme } }
+        }
+      })
+      mockCreateService.mockReturnValue(new Promise(() => {}))
+      mockClient.query.mockReturnValue(new Promise(() => {}))
+
+      const { getByTestId, queryByTestId } = render(
+        <IntentHandler intentId="intent-id" />
+      )
+
+      await waitFor(() =>
+        expect(getByTestId('intent-theme')).toHaveAttribute('data-theme', theme)
+      )
+      expect(getByTestId('intent-theme')).toHaveAttribute(
+        'data-ignore-itself',
+        'false'
+      )
+      expect(queryByTestId('picker')).toBe(null)
+    }
+  )
 
   it('prefetches the root folder while the intent handshake is pending', async () => {
     const handshake = makeDeferredPromise()

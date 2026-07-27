@@ -18,6 +18,32 @@ describe('FilePicker config', () => {
       )
     })
 
+    it('uses the automatic theme by default', () => {
+      expect(getFilePickerConfig(null).theme.type).toBe('auto')
+    })
+
+    it.each(['auto', 'light', 'dark'])('preserves the %s theme', theme => {
+      const intent = {
+        attributes: { data: { theme: { type: theme } } }
+      }
+
+      expect(getFilePickerConfig(intent).theme.type).toBe(theme)
+    })
+
+    it.each([null, 'sepia'])('falls back to auto for the %s theme', theme => {
+      const intent = {
+        attributes: { data: { theme: { type: theme } } }
+      }
+
+      expect(getFilePickerConfig(intent).theme.type).toBe('auto')
+    })
+
+    it('reads the theme from service data', () => {
+      expect(
+        getFilePickerConfig(null, { theme: { type: 'dark' } }).theme.type
+      ).toBe('dark')
+    })
+
     it('preserves multiple selection by default', () => {
       expect(getFilePickerConfig(null).multiple).toBe(true)
     })

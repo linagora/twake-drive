@@ -1,4 +1,4 @@
-import { defaultFilePickerConfig } from './constants'
+import { defaultFilePickerConfig, filePickerThemes } from './constants'
 
 /**
  * Read the FilePickerConfig carried in the intent data and merge it
@@ -18,6 +18,7 @@ import { defaultFilePickerConfig } from './constants'
  * @param {object|null|undefined} intent - The intent object returned
  *   by `service.getIntent()`. Null-safe.
  * @returns {{
+ *   theme: { type: 'auto'|'light'|'dark' },
  *   multiple: boolean,
  *   sharingLink: object|null,
  *   downloadLink: object|null
@@ -40,7 +41,14 @@ export const getFilePickerConfig = (intent, serviceData = null) => {
     return { ...defaultAction, ...clientAction }
   }
 
+  const themeType = data.theme?.type
+
   return {
+    theme: {
+      type: filePickerThemes.includes(themeType)
+        ? themeType
+        : defaultFilePickerConfig.theme.type
+    },
     multiple: data.multiple ?? defaultFilePickerConfig.multiple,
     sharingLink: resolveActionConfig(
       data.sharingLink,

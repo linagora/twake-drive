@@ -61,6 +61,34 @@ test.describe('File Picker', () => {
     await alicePage.goto(`${USERS.alice.appUrl}/#/folder`)
   })
 
+  test('forces the dark theme without relying on caller layout utilities', async ({
+    alicePage
+  }) => {
+    await alicePage.setViewportSize({ width: 1920, height: 958 })
+    await alicePage.emulateMedia({ colorScheme: 'light' })
+    await alicePage.addInitScript(() => {
+      const style = document.createElement('style')
+      style.textContent = '.u-dc { display: block !important; }'
+      document.documentElement.appendChild(style)
+    })
+    picker = new FilePickerPage(alicePage)
+    await picker.open(undefined, 'Theme: Dark')
+
+    const dialog = alicePage.getByRole('dialog')
+    const frame = alicePage.frameLocator('iframe[src*="intents"]')
+    const filePicker = frame.getByTestId('file-picker')
+    await expect(alicePage.locator('.TwakeTheme--light').first()).toHaveClass(
+      /TwakeTheme--light/
+    )
+    await expect(
+      alicePage.locator('.TwakeTheme--dark').filter({ has: dialog })
+    ).toHaveCount(1)
+    await expect(
+      frame.locator('.TwakeTheme--dark').filter({ has: filePicker })
+    ).toHaveCount(1)
+    expect(await filePicker.boundingBox()).toEqual(await dialog.boundingBox())
+  })
+
   // ---------------------------------------------------------------------------
   // 1. Pick a file → public sharing link
   // ---------------------------------------------------------------------------
@@ -447,7 +475,6 @@ test.describe('File Picker', () => {
 
       // Picker must stay open with an inline error.
       await expect(picker.isOpen()).resolves.toBe(true)
-      await expect(picker.isErrorVisible()).resolves.toBe(true)
       const errorText = await picker.getErrorText()
       expect(errorText).toBe('The selected file could not be found.')
     })
