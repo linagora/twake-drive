@@ -1,6 +1,6 @@
 {
   "name": "cozy-drive",
-  "version": "1.105.0",
+  "version": "1.106.0",
   "main": "src/main.jsx",
   "engines": {
     "node": "~24"
