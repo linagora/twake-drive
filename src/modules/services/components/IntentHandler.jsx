@@ -3,11 +3,21 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useClient } from 'cozy-client'
 import Intents from 'cozy-interapp'
 import logger from 'cozy-logger'
+import Box from 'cozy-ui/transpiled/react/Box'
+import CozyTheme from 'cozy-ui-plus/dist/providers/CozyTheme'
 
+import { getFilePickerConfig } from './FilePicker/config'
 import { buildContentFolderQuery } from './FilePicker/queries'
 import Picker from './Picker'
 
 import { ROOT_DIR_ID } from '@/constants/config'
+
+function isFilePickerIntent(intent) {
+  return (
+    intent?.attributes?.action === 'PICK' &&
+    intent?.attributes?.type === 'io.cozy.files'
+  )
+}
 
 async function initPicker(client) {
   const rootFolderQuery = buildContentFolderQuery(ROOT_DIR_ID)
@@ -48,11 +58,13 @@ const IntentHandler = ({ intentId }) => {
         const intentPromise = intents.request.get(intentId, { tryDOM: true })
         const servicePromise = intents.createService(intentId, window)
         const pendingIntent = await intentPromise
-        const pickerInitialization =
-          pendingIntent.attributes.action === 'PICK' &&
-          pendingIntent.attributes.type === 'io.cozy.files'
-            ? initPicker(client)
-            : null
+        setState(currentState => ({
+          ...currentState,
+          intent: pendingIntent
+        }))
+        const pickerInitialization = isFilePickerIntent(pendingIntent)
+          ? initPicker(client)
+          : null
 
         service = await servicePromise
         const intent = service.getIntent()
@@ -72,14 +84,35 @@ const IntentHandler = ({ intentId }) => {
     startService()
   }, [client, intentId])
 
-  return ServiceComponent ? (
+  const content = ServiceComponent ? (
     <ServiceComponent
       service={state.service}
       intent={state.intent}
       onReadyToUse={handleReadyToUse}
     />
   ) : (
-    <div className="u-w-100 u-bg-charcoalGrey" />
+    <Box className="u-h-100 u-w-100" bgcolor="background.paper" />
+  )
+
+  if (!isFilePickerIntent(state.intent)) return content
+
+  const serviceData = state.service?.getData?.()
+  const { type: themeType } = getFilePickerConfig(
+    state.intent,
+    serviceData
+  ).theme
+
+  return themeType === 'auto' ? (
+    content
+  ) : (
+    <CozyTheme
+      type={themeType}
+      ignoreCozySettings
+      ignoreItself={false}
+      className="u-h-100 u-w-100"
+    >
+      {content}
+    </CozyTheme>
   )
 }
 

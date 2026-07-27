@@ -30,6 +30,7 @@ It is not a top-level `actions` field.
   "type": "io.cozy.files",
   "permissions": ["GET"],
   "data": {
+    "theme": { "type": "dark" },
     "multiple": false,
     "sharingLink": { "label": "Share as link" },
     "downloadLink": {
@@ -45,6 +46,12 @@ It is not a top-level `actions` field.
 
 ```ts
 interface FilePickerConfig {
+  /**
+   * Theme used to render the File Picker.
+   * Defaults to { type: "auto" }.
+   */
+  theme?: { type: 'light' | 'dark' | 'auto' }
+
   /**
    * Whether several files or folders can be selected.
    * Defaults to true. When false, modifier-key selection shortcuts are disabled.
@@ -112,11 +119,32 @@ When no config is provided, Drive uses:
 
 ```js
 {
+  theme: { type: 'auto' },
   multiple: true,
   sharingLink: { allowFolder: true },
   downloadLink: { allowFolder: false }
 }
 ```
+
+### Theme
+
+Use `theme.type` with `light` or `dark` to force the File Picker theme. The
+theme is fixed when the intent is created and does not change while it remains
+open.
+
+`auto`, an invalid value or an omitted value preserves the existing behavior:
+the iframe follows the Cozy instance theme, with the system color scheme as a
+fallback. For `auto`, omit `theme` from the options passed to
+`IntentDialogOpener`, which only accepts explicit `light` or `dark` values.
+`IntentDialogOpener` and `IntentIframe` from `cozy-ui-plus >= 12.2.0` apply an
+explicit theme to their dialog, close button and loading surface.
+Older versions still pass the option to Drive, so the iframe is themed but the
+calling application's surrounding UI keeps its own theme.
+
+Custom intent containers remain responsible for styling their own UI. For raw
+intents, pass the `theme` object in `attributes.data` like the other File Picker
+options. The option never changes Cozy settings, local storage or the caller's
+global theme.
 
 Default labels:
 

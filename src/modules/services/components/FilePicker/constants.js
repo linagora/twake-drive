@@ -15,6 +15,8 @@ export const filePickerLinkModes = {
   TEMPORARY_DOWNLOAD_LINK: 'temporary-download-link'
 }
 
+export const filePickerThemes = ['auto', 'light', 'dark']
+
 /**
  * Error codes used by the File Picker internally to track
  * and display error messages in the UI.
@@ -39,6 +41,7 @@ export const filePickerErrorCodes = {
  */
 // TODO: enforce maxFileCount and availableSize on the downloadLink action.
 export const defaultFilePickerConfig = {
+  theme: { type: 'auto' },
   multiple: true,
   sharingLink: { allowFolder: true },
   downloadLink: { allowFolder: false }

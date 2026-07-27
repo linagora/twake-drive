@@ -10,6 +10,7 @@ import IntentDialogOpener from 'cozy-ui-plus/dist/Intent/IntentDialogOpener'
 import { useI18n } from 'twake-i18n'
 
 import logger from '@/lib/logger'
+import { filePickerThemes } from '@/modules/services/components/FilePicker/constants'
 
 const PICKER_CONFIGS = [
   {
@@ -90,10 +91,14 @@ export const FilePickerButton = () => {
   const { t } = useI18n()
   const [modalData, setModalData] = useState(null)
   const [configId, setConfigId] = useState(PICKER_CONFIGS[0].id)
+  const [themeType, setThemeType] = useState(filePickerThemes[0])
 
   const filePickerOptions = useMemo(
-    () => buildFilePickerOptions(configId, t),
-    [configId, t]
+    () => ({
+      ...buildFilePickerOptions(configId, t),
+      ...(themeType === 'auto' ? {} : { theme: { type: themeType } })
+    }),
+    [configId, t, themeType]
   )
 
   const handleComplete = res => {
@@ -130,6 +135,20 @@ export const FilePickerButton = () => {
             value={config.id}
             control={<Radios />}
             label={config.label}
+          />
+        ))}
+      </RadioGroup>
+      <RadioGroup
+        name="file-picker-theme"
+        value={themeType}
+        onChange={event => setThemeType(event.target.value)}
+      >
+        {filePickerThemes.map(themeOption => (
+          <FormControlLabel
+            key={themeOption}
+            value={themeOption}
+            control={<Radios />}
+            label={`Theme: ${themeOption[0].toUpperCase()}${themeOption.slice(1)}`}
           />
         ))}
       </RadioGroup>

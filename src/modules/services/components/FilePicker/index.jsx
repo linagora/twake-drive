@@ -9,7 +9,11 @@ import FilePickerBody from './FilePickerBody'
 import FilePickerFooter from './FilePickerFooter'
 import FilePickerHeader from './FilePickerHeader'
 import { LinkAccessModal } from './LinkAccessModal'
-import { defaultFilePickerConfig, filePickerLinkModes } from './constants'
+import {
+  defaultFilePickerConfig,
+  filePickerLinkModes,
+  filePickerThemes
+} from './constants'
 import { getActionDisabledState } from './constraints'
 import { getCompliantTypes } from './helpers'
 
@@ -153,6 +157,9 @@ FilePicker.propTypes = {
   accept: PropTypes.string,
   multiple: PropTypes.bool,
   filePickerConfig: PropTypes.shape({
+    theme: PropTypes.shape({
+      type: PropTypes.oneOf(filePickerThemes)
+    }),
     multiple: PropTypes.bool,
     sharingLink: PropTypes.object,
     downloadLink: PropTypes.object

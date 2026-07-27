@@ -21,13 +21,16 @@ export class FilePickerPage {
   }
 
   /** Navigate to Drive and open the file picker dialog. */
-  async open(configName?: string): Promise<void> {
+  async open(configName?: string, themeName?: string): Promise<void> {
     await this.page.goto(`${USERS.alice.appUrl}/#/folder`)
     await this.page.getByRole('button', { name: /pick a file/i }).waitFor({
       state: 'visible'
     })
     if (configName) {
       await this.page.getByRole('radio', { name: configName }).check()
+    }
+    if (themeName) {
+      await this.page.getByRole('radio', { name: themeName }).check()
     }
     await this.page.getByRole('button', { name: /pick a file/i }).click()
     // The picker is loaded inside an iframe inside a MUI/Dialog — wait for it.
@@ -202,12 +205,6 @@ export class FilePickerPage {
   // ---------------------------------------------------------------------------
   // Error display (inside the picker iframe)
   // ---------------------------------------------------------------------------
-
-  /** Whether the inline error alert is visible inside the picker. */
-  async isErrorVisible(): Promise<boolean> {
-    const frame = this.getFrameLocator()
-    return frame.getByTestId('file-picker-error').isVisible()
-  }
 
   /** Get the error text displayed inside the picker. */
   async getErrorText(): Promise<string> {
