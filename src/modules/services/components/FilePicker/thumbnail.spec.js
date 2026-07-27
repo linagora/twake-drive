@@ -43,12 +43,32 @@ describe('makeThumbnail', () => {
     })
   })
 
-  it('should return default thumbnail link for unknown MIME types', () => {
+  it('should return code thumbnail link for JSON MIME type', () => {
     const file = { mime: 'application/json' }
     const result = makeThumbnail(file)
     expect(result).toEqual({
       thumbnail: {
+        link: 'https://files.twake.app/email-assets/file-picker/code.png'
+      }
+    })
+  })
+
+  it('should return default thumbnail link for unknown MIME types', () => {
+    const file = { mime: 'application/x-some-unknown-type' }
+    const result = makeThumbnail(file)
+    expect(result).toEqual({
+      thumbnail: {
         link: 'https://files.twake.app/email-assets/file-picker/default.png'
+      }
+    })
+  })
+
+  it('should match MIME types case-insensitively', () => {
+    const file = { mime: 'IMAGE/PNG' }
+    const result = makeThumbnail(file)
+    expect(result).toEqual({
+      thumbnail: {
+        link: 'https://files.twake.app/email-assets/file-picker/image.png'
       }
     })
   })
