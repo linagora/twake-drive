@@ -1,4 +1,4 @@
-import { matchMimeType } from './helpers'
+import { matchMimePattern } from './helpers'
 
 const MIME_TYPE_TO_THUMBNAIL_TYPE = {
   // Audio
@@ -104,10 +104,14 @@ const THUMBNAIL_TYPE_TO_THUMBNAIL_LINK = {
  * @returns {string} - The link of the thumbnail.
  */
 function getThumbnailLinkFromMimeType(mimeType) {
+  if (!mimeType) return THUMBNAIL_TYPE_TO_THUMBNAIL_LINK.default
+
+  const mime = mimeType?.toLowerCase()
+
   const patterns = Object.keys(MIME_TYPE_TO_THUMBNAIL_TYPE)
 
   const matchedPattern = patterns.find(pattern =>
-    matchMimeType(mimeType, [pattern])
+    matchMimePattern(mime, pattern)
   )
 
   const thumbnailType = matchedPattern

@@ -21,11 +21,14 @@ export const getCompliantTypes = types => {
 
 // Check whether a single mime type matches a single pattern.
 // Patterns may be exact ('image/png'), a subtype wildcard
-// ('image/*'), or the global wildcard ('*/*').
-const matchMimePattern = (mime, pattern) => {
-  if (pattern === '*/*' || pattern === mime) return true
-  const [pType, pSubtype] = pattern.split('/')
-  const [type] = mime.split('/')
+// ('image/*'), or the global wildcard ('*/*'). Matching is
+// case-insensitive, as MIME types are per RFC 2045.
+export const matchMimePattern = (mime, pattern) => {
+  const m = mime.toLowerCase()
+  const p = pattern.toLowerCase()
+  if (p === '*/*' || p === m) return true
+  const [pType, pSubtype] = p.split('/')
+  const [type] = m.split('/')
   return pSubtype === '*' && pType === type
 }
 
