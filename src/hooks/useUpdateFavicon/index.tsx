@@ -35,13 +35,11 @@ const useUpdateFavicon = (
       return
     }
 
-    const type = getFileMimetype(FAVICON_BY_MIMETYPE)(
-      file.mime,
-      file.name
-    ) as string
+    const type = getFileMimetype(file.mime, file.name)
 
     const faviconUrl =
-      FAVICON_BY_MIMETYPE[type] ?? originalFaviconUrlRef.current
+      (type === null ? null : FAVICON_BY_MIMETYPE[type]) ??
+      originalFaviconUrlRef.current
 
     if (faviconUrl) {
       updateFavicon(faviconUrl)

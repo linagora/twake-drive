@@ -1,7 +1,18 @@
 declare module 'cozy-ui/*'
 
 declare module 'cozy-ui/transpiled/react/styles' {
-  export function makeStyles<T>(styles: T): () => T
+  interface CozyStylesTheme {
+    breakpoints: {
+      down: (key: string) => string
+    }
+    spacing: (...values: number[]) => string | number
+  }
+
+  export function makeStyles<ClassKey extends string>(
+    styles:
+      | Record<ClassKey, unknown>
+      | ((theme: CozyStylesTheme) => Record<ClassKey, unknown>)
+  ): () => Record<ClassKey, string>
 }
 
 declare module 'cozy-ui/transpiled/react' {
@@ -73,6 +84,9 @@ declare module 'cozy-client/dist/models/file' {
   ) => boolean
   export const isShortcut: (
     file: import('components/FolderPicker/types').File
+  ) => boolean
+  export const isSharingShortcut: (
+    file: import('cozy-client/types/types').IOCozyFile
   ) => boolean
   export const isNote: (
     file: import('components/FolderPicker/types').File

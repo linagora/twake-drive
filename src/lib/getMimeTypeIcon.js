@@ -50,7 +50,7 @@ const getMimeTypeIcon = (isDirectory, name, mime) => {
   } else if (/\.excalidraw$/.test(name)) {
     return IconExcalidraw
   } else {
-    const type = getFileMimetype(MIME_TYPE_ICONS)(mime, name)
+    const type = getFileMimetype(mime, name)
     return get(MIME_TYPE_ICONS, type, FileTypeFiles)
   }
 }

@@ -86,6 +86,7 @@
       "clear": "Effacer le filtre par contact",
       "me": "moi"
     },
+    "clear_all": "Tout effacer",
     "date": {
       "label": "Date de modification",
       "aria_label": "Filtre par date de modification",

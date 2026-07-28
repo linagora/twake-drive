@@ -149,7 +149,7 @@ describe('useSharingsTab', () => {
       expect(getPathname()).toBe(
         '/sharings/with-me/folder/folder-1/file/file-1'
       )
-      expect(getSearch()).toBe('?foo=bar')
+      expect(getSearch()).toBe('')
     })
   })
 
@@ -206,13 +206,13 @@ describe('useSharingsTab', () => {
     expect(getPathname()).toBe('/sharings/with-me')
   })
 
-  it('preserves unrelated query params', () => {
+  it('clears search params when switching tabs', () => {
     enableSharedDrives()
-    renderWithRoute('/sharings/with-me?foo=bar')
+    renderWithRoute('/sharings/with-me?foo=bar&f.type=pdf&f.future=value')
 
     fireEvent.click(screen.getByText('go-drives'))
 
     expect(getPathname()).toBe('/sharings/drives')
-    expect(getSearch()).toBe('?foo=bar')
+    expect(getSearch()).toBe('')
   })
 })

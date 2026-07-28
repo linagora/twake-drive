@@ -4,7 +4,9 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useQuery } from 'cozy-client'
 import { useSharingContext } from 'cozy-sharing'
 
+import { isSharingsEntryMatchingFilters } from './matchSharingsFilters'
 import { getSharingsTabForEntry } from './useFilteredSharings'
+import { useSharingsFilters } from './useSharingsFilters'
 import { useSharingsTab } from './useSharingsTab'
 import withSharedDocumentIds from './withSharedDocumentIds'
 
@@ -21,6 +23,7 @@ const FilesViewerSharing = ({ sharedDocumentIds }) => {
   const navigate = useNavigate()
   const { search } = useLocation()
   const [tab] = useSharingsTab()
+  const { filters } = useSharingsFilters(tab)
   const { isOwner } = useSharingContext()
 
   if (results.data) {
@@ -32,7 +35,9 @@ const FilesViewerSharing = ({ sharedDocumentIds }) => {
     const viewableFiles = results.data.filter(
       f =>
         f.type !== 'directory' &&
-        (currentFolderId || getSharingsTabForEntry(f, isOwner) === tab)
+        (currentFolderId ||
+          (getSharingsTabForEntry(f, isOwner) === tab &&
+            isSharingsEntryMatchingFilters(f, filters)))
     )
     const tabPath = getSharingsTabRoute(tab)
     const basePath = currentFolderId

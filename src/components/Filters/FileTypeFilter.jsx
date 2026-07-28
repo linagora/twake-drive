@@ -7,11 +7,9 @@ import { makeStyles } from 'cozy-ui/transpiled/react/styles'
 import { useI18n } from 'twake-i18n'
 
 import { Filter } from './Filter'
-import {
-  FILE_TYPE_OPTIONS,
-  FILE_TYPE_VALUES,
-  findFileTypeOption
-} from './fileTypes'
+import { FILE_TYPE_OPTIONS, findFileTypeOption } from './fileTypes'
+
+import { FILE_TYPE_VALUES } from '@/lib/fileTypes'
 
 const useStyles = makeStyles(theme => ({
   filter: {

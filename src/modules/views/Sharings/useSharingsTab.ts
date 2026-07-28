@@ -64,19 +64,18 @@ export const SharingsTabProvider = ({
   const activeTab = isAvailableTab(tab, drivesAvailable)
     ? tab
     : SHARING_TAB_WITH_ME
-  const search = location.search
 
   useEffect(() => {
     if (activeTab !== tab) {
       navigate(
         {
           pathname: getSharingsRouteForTab(location.pathname, activeTab),
-          search
+          search: ''
         },
         { replace: true }
       )
     }
-  }, [activeTab, location.pathname, navigate, search, tab])
+  }, [activeTab, location.pathname, navigate, tab])
 
   const setTab = useCallback(
     (nextTab: SharingsTab, options: SetTabOptions = {}): void => {
@@ -94,12 +93,12 @@ export const SharingsTabProvider = ({
       navigate(
         {
           pathname: getSharingsRouteForTab(location.pathname, nextTab),
-          search
+          search: ''
         },
         { replace: options.replace }
       )
     },
-    [activeTab, drivesAvailable, location.pathname, navigate, search]
+    [activeTab, drivesAvailable, location.pathname, navigate]
   )
 
   const contextValue = useMemo<SharingsTabContextValue>(

@@ -59,10 +59,11 @@ const SharingsRoute = ({ tab }) => (
 
 const setup = ({
   initialTab = SHARING_TAB_WITH_ME,
+  initialSearch = '',
   sharedDrives = []
 } = {}) => {
   const { store, client } = setupStoreAndClient()
-  window.location.hash = `#/sharings/${initialTab}`
+  window.location.hash = `#/sharings/${initialTab}${initialSearch}`
 
   client.plugins.realtime = {
     subscribe: jest.fn(),
@@ -239,6 +240,36 @@ describe('Sharings View', () => {
       expect(getByText('foobar0')).toBeInTheDocument()
     })
     expect(queryByText('foobar1')).toBeNull()
+  })
+
+  it('filters the active tab by the file type stored in the URL', async () => {
+    const folder = {
+      ...filesFixture[1],
+      name: 'Shared folder',
+      path: '/test/Shared folder',
+      type: 'directory'
+    }
+    useQuery.mockReturnValue({
+      data: [{ ...filesFixture[0], mime: 'application/pdf' }, folder]
+    })
+
+    const { getByRole, getByText, queryByText } = setup({
+      initialSearch: '?f.type=directory'
+    })
+
+    const sharedFolderName = await waitFor(() => getByText('Shared folder'))
+    expect(queryByText('foobar0')).toBe(null)
+    expect(sharedFolderName.closest('a')).toHaveAttribute(
+      'href',
+      expect.stringContaining('?f.type=directory')
+    )
+
+    fireEvent.click(getByRole('button', { name: 'Clear all' }))
+
+    await waitFor(() => {
+      expect(getByText('foobar0')).toBeInTheDocument()
+    })
+    expect(window.location.hash).toBe('#/sharings/with-me')
   })
 
   describe('team drives tab visibility', () => {
