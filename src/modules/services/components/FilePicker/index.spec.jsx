@@ -360,11 +360,14 @@ describe('FilePicker', () => {
       fireEvent.click(getByTestId('double-click-file-btn'))
 
       await waitFor(() =>
-        expect(mockOnFileDoubleClick).toHaveBeenCalledWith({
-          _id: 'file-id',
-          type: 'file',
-          name: 'file.pdf'
-        })
+        expect(mockOnFileDoubleClick).toHaveBeenCalledWith(
+          {
+            _id: 'file-id',
+            type: 'file',
+            name: 'file.pdf'
+          },
+          filePickerLinkModes.PUBLIC_LINK
+        )
       )
       expect(queryByTestId('link-access-modal')).toBeNull()
       expect(mockOnChange).not.toHaveBeenCalled()
@@ -397,8 +400,8 @@ describe('FilePicker', () => {
       expect(mockOnChange).not.toHaveBeenCalled()
     })
 
-    it('should generate download link directly when sharing is unavailable', async () => {
-      mockOnChange.mockResolvedValue(null)
+    it('should delegate download link generation when sharing is unavailable', async () => {
+      mockOnFileDoubleClick.mockResolvedValue(null)
       const { getByTestId, queryByTestId } = setup({
         filePickerConfig: {
           sharingLink: null,
@@ -409,13 +412,13 @@ describe('FilePicker', () => {
       fireEvent.click(getByTestId('double-click-file-btn'))
 
       await waitFor(() =>
-        expect(mockOnChange).toHaveBeenCalledWith(
-          [{ _id: 'file-id', type: 'file', name: 'file.pdf' }],
+        expect(mockOnFileDoubleClick).toHaveBeenCalledWith(
+          { _id: 'file-id', type: 'file', name: 'file.pdf' },
           filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK
         )
       )
       expect(queryByTestId('link-access-modal')).toBeNull()
-      expect(mockOnFileDoubleClick).not.toHaveBeenCalled()
+      expect(mockOnChange).not.toHaveBeenCalled()
     })
 
     it('should do nothing when neither action is configured', () => {
@@ -509,8 +512,8 @@ describe('FilePicker', () => {
       )
     })
 
-    it('should display download error when onChange rejects', async () => {
-      mockOnChange.mockRejectedValue(new Error('download failed'))
+    it('should display download error when onFileDoubleClick rejects', async () => {
+      mockOnFileDoubleClick.mockRejectedValue(new Error('download failed'))
       const { getByTestId } = setup({
         filePickerConfig: {
           sharingLink: null,

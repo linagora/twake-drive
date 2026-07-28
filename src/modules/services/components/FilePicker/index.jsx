@@ -122,23 +122,16 @@ const FilePicker = ({
       const useDownload = sharingState.disabled && !downloadState.disabled
       if (sharingState.disabled && downloadState.disabled) return
 
+      const linkMode = useDownload
+        ? filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK
+        : filePickerLinkModes.PUBLIC_LINK
+
       isProcessingRef.current = true
       setError(null)
       setSelectedItems({ [item._id]: item })
 
       try {
-        if (useDownload) {
-          const pickError = await onChange(
-            [item],
-            filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK
-          )
-          if (pickError) {
-            setError(pickError)
-          }
-          return
-        }
-
-        const result = await onFileDoubleClick(item)
+        const result = await onFileDoubleClick(item, linkMode)
         if (result === filePickerDoubleClickResults.OPEN_MODAL) {
           handleOpenLinkAccess()
         } else if (result) {
@@ -159,7 +152,6 @@ const FilePicker = ({
       downloadLinkAction,
       itemTypesAccepted,
       onFileDoubleClick,
-      onChange,
       setSelectedItems,
       handleOpenLinkAccess
     ]

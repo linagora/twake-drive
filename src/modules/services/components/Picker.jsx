@@ -116,7 +116,11 @@ const Picker = ({ service, intent, onReadyToUse }) => {
     }
   }
 
-  const handleFileDoubleClick = async file => {
+  const handleFileDoubleClick = async (file, linkMode) => {
+    if (linkMode === filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK) {
+      return handlePick([file], linkMode)
+    }
+
     try {
       const result = await fetchExistingSharingLink(client, file, {
         singleFileOnly: true
