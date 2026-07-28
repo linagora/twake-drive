@@ -33,10 +33,6 @@ const useStyles = makeStyles(() => ({
   filter: {
     minWidth: 241,
     maxWidth: 320
-  },
-  menu: {
-    width: 210,
-    minWidth: '210px !important'
   }
 }))
 
@@ -75,7 +71,6 @@ function DateFilter({ value = null, onChange, onClear }) {
       className={classes.filter}
       clearLabel={t('filters.date.clear')}
       label={label}
-      menuClassName={classes.menu}
       onChange={handleChange}
       onClear={onClear}
       options={mobileOptions}

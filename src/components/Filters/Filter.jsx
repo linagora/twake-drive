@@ -99,7 +99,6 @@ const Filter = forwardRef(function Filter(
     clearLabel = null,
     disabled = false,
     label,
-    menuClassName = null,
     onChange = null,
     onClear = null,
     options,
@@ -141,13 +140,6 @@ const Filter = forwardRef(function Filter(
           }
         }}
         SelectProps={{
-          MenuProps: menuClassName
-            ? {
-                classes: {
-                  paper: menuClassName
-                }
-              }
-            : undefined,
           classes: {
             icon: classes.selectIcon,
             iconOpen: classes.selectIconOpen
@@ -189,7 +181,6 @@ Filter.propTypes = {
   clearLabel: PropTypes.string,
   disabled: PropTypes.bool,
   label: PropTypes.string.isRequired,
-  menuClassName: PropTypes.string,
   onChange: PropTypes.func,
   onClear: PropTypes.func,
   options: PropTypes.arrayOf(
