@@ -1,7 +1,9 @@
+import { CrossSmall, Icon } from '@linagora/twake-icons'
 import cx from 'classnames'
 import PropTypes from 'prop-types'
 import React, { forwardRef } from 'react'
 
+import IconButton from 'cozy-ui/transpiled/react/IconButton'
 import TextField from 'cozy-ui/transpiled/react/TextField'
 import { makeStyles } from 'cozy-ui/transpiled/react/styles'
 
@@ -10,6 +12,13 @@ import styles from './styles.styl'
 const FILTER_HEIGHT = 32
 
 const useStyles = makeStyles(theme => ({
+  control: {
+    display: 'flex',
+    alignItems: 'center',
+    minWidth: 0,
+    maxWidth: '100%',
+    gap: theme.spacing(0.5)
+  },
   root: {
     height: FILTER_HEIGHT,
     alignItems: 'center',
@@ -66,6 +75,18 @@ const useStyles = makeStyles(theme => ({
     alignItems: 'center',
     minWidth: 0,
     gap: theme.spacing(1)
+  },
+  clearButton: {
+    width: FILTER_HEIGHT,
+    height: FILTER_HEIGHT,
+    flexShrink: 0,
+    borderRadius: theme.shape.borderRadius,
+    color: theme.palette.text.primary,
+    backgroundColor: theme.palette.primary.light,
+    '&:hover': {
+      color: theme.palette.text.primary,
+      backgroundColor: theme.palette.primary.light
+    }
   }
 }))
 
@@ -75,9 +96,11 @@ const Filter = forwardRef(function Filter(
     autoWidth = false,
     children,
     className,
+    clearLabel = null,
     disabled = false,
     label,
     onChange = null,
+    onClear = null,
     options,
     startAdornment = null,
     value = '',
@@ -88,49 +111,63 @@ const Filter = forwardRef(function Filter(
   const classes = useStyles()
 
   return (
-    <TextField
-      {...textFieldProps}
-      ref={ref}
-      className={cx(
-        {
-          [classes.active]: active,
-          [styles.autoWidth]: autoWidth
-        },
-        className
-      )}
-      disabled={disabled}
-      fullWidth={!autoWidth}
-      hiddenLabel
-      options={options}
-      onChange={onChange}
-      select
-      size="small"
-      value={value}
-      variant="filled"
-      InputProps={{
-        classes: {
-          root: classes.root,
-          focused: classes.focused,
-          disabled: classes.disabled,
-          input: classes.input
-        }
-      }}
-      SelectProps={{
-        classes: {
-          icon: classes.selectIcon,
-          iconOpen: classes.selectIconOpen
-        },
-        displayEmpty: true,
-        renderValue: () => (
-          <span className={classes.value}>
-            {startAdornment}
-            <span className="u-ellipsis">{label}</span>
-          </span>
-        )
-      }}
-    >
-      {children}
-    </TextField>
+    <div className={classes.control}>
+      <TextField
+        {...textFieldProps}
+        ref={ref}
+        className={cx(
+          {
+            [classes.active]: active,
+            [styles.autoWidth]: autoWidth
+          },
+          className
+        )}
+        disabled={disabled}
+        fullWidth={!autoWidth}
+        hiddenLabel
+        options={options}
+        onChange={onChange}
+        select
+        size="small"
+        value={value}
+        variant="filled"
+        InputProps={{
+          classes: {
+            root: classes.root,
+            focused: classes.focused,
+            disabled: classes.disabled,
+            input: classes.input
+          }
+        }}
+        SelectProps={{
+          classes: {
+            icon: classes.selectIcon,
+            iconOpen: classes.selectIconOpen
+          },
+          displayEmpty: true,
+          renderValue: () => (
+            <span className={classes.value}>
+              {startAdornment}
+              <span className="u-ellipsis">{label}</span>
+            </span>
+          )
+        }}
+      >
+        {children}
+      </TextField>
+
+      {active && onClear ? (
+        <IconButton
+          aria-label={clearLabel}
+          className={classes.clearButton}
+          disabled={disabled}
+          onClick={onClear}
+          size="small"
+        >
+          <Icon icon={CrossSmall} size={12} />
+        </IconButton>
+      ) : null}
+    </div>
   )
 })
 
@@ -141,9 +178,11 @@ Filter.propTypes = {
   autoWidth: PropTypes.bool,
   children: PropTypes.node.isRequired,
   className: PropTypes.string,
+  clearLabel: PropTypes.string,
   disabled: PropTypes.bool,
   label: PropTypes.string.isRequired,
   onChange: PropTypes.func,
+  onClear: PropTypes.func,
   options: PropTypes.arrayOf(
     PropTypes.shape({
       label: PropTypes.string.isRequired,
