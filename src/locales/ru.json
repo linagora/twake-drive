@@ -78,6 +78,26 @@
     "sharings_tab_by_me": "От меня",
     "sharings_tab_drives": "Командные диски"
   },
+  "filters": {
+    "type": {
+      "label": "Тип",
+      "aria_label": "Фильтр по типу",
+      "clear": "Очистить фильтр по типу",
+      "options": {
+        "folder": "Папки",
+        "document": "Документы",
+        "spreadsheet": "Таблицы",
+        "presentation": "Презентации",
+        "photo": "Фото",
+        "pdf": "PDF",
+        "video": "Видео",
+        "archive": "Архивы",
+        "audio": "Аудио",
+        "draw": "Рисунки",
+        "shortcut": "Ярлыки"
+      }
+    }
+  },
   "Share": {
     "create-cozy": "Создать Twake Drive"
   },

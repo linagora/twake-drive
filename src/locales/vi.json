@@ -78,6 +78,26 @@
     "sharings_tab_by_me": "Do tôi",
     "sharings_tab_drives": "Ổ đĩa nhóm"
   },
+  "filters": {
+    "type": {
+      "label": "Loại",
+      "aria_label": "Bộ lọc loại tệp",
+      "clear": "Xóa bộ lọc loại tệp",
+      "options": {
+        "folder": "Thư mục",
+        "document": "Tài liệu",
+        "spreadsheet": "Bảng tính",
+        "presentation": "Bài thuyết trình",
+        "photo": "Ảnh",
+        "pdf": "PDF",
+        "video": "Video",
+        "archive": "Tệp nén",
+        "audio": "Âm thanh",
+        "draw": "Bản vẽ",
+        "shortcut": "Lối tắt"
+      }
+    }
+  },
   "Share": {
     "create-cozy": "Tạo Twake của tôi"
   },
