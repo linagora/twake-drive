@@ -20,65 +20,56 @@ const getShortcode = permission => {
 }
 
 /**
- * Check if a permission is related to a specific file
+ * Fetch a public link for a file without creating or updating permissions.
+ * The strict mode only accepts permissions concerning this file alone.
  */
-const isPermissionRelatedTo = (perm, file) => {
+export async function fetchExistingSharingLink(
+  client,
+  file,
+  { singleFileOnly = false } = {}
+) {
+  const permissionsCol = client.collection('io.cozy.permissions')
+  const result = await permissionsCol.findLinksByDoctype('io.cozy.files')
+  const permissions = result?.data ?? []
   const fileId = getFileId(file)
-  return perm.attributes?.permissions?.files?.values?.includes(fileId)
-}
 
-/**
- * Fetch an existing sharing link for a file, if one exists.
- * This avoids creating duplicate sharing links.
- *
- * @param {object} client - CozyClient instance
- * @param {object} file - File document
- * @returns {Promise<string|null>} - The existing sharing link or null
- */
-const fetchExistingSharingLink = async (client, file) => {
-  try {
-    const permissionsCol = client.collection('io.cozy.permissions')
-    const result = await permissionsCol.findLinksByDoctype('io.cozy.files')
-    const permissions = result?.data ?? []
+  const existingPermission = permissions.find(permission => {
+    const fileIds = permission.attributes?.permissions?.files?.values ?? []
+    return fileIds.includes(fileId) && (!singleFileOnly || fileIds.length === 1)
+  })
 
-    const existingPermission = permissions.find(perm =>
-      isPermissionRelatedTo(perm, file)
-    )
+  if (!existingPermission) {
+    return { status: 'not_found' }
+  }
 
-    if (!existingPermission) {
-      return null
-    }
+  const sharecode = getShortcode(existingPermission)
+  if (!sharecode) {
+    return { status: 'no_sharecode' }
+  }
 
-    const sharecode = getShortcode(existingPermission)
-
-    if (!sharecode) {
-      return null
-    }
-
-    return generateWebLink({
+  return {
+    status: 'found',
+    url: generateWebLink({
       cozyUrl: client.getStackClient().uri,
       searchParams: [['sharecode', sharecode]],
       pathname: '/public',
       slug: 'drive',
       subDomainType: client.capabilities.flat_subdomains ? 'flat' : 'nested'
     })
-  } catch {
-    // Silently fail if we can't fetch existing links — we'll create a new one
-    return null
   }
 }
 
-/**
- * Get an existing sharing link for a file, or create a new one if none exists.
- *
- * @param {object} client - CozyClient instance
- * @param {object} file - File document
- * @returns {Promise<string>} - The sharing link
- */
-export const getOrCreateSharingLink = async (client, file) => {
-  const existingLink = await fetchExistingSharingLink(client, file)
+export async function getOrCreateSharingLink(client, file) {
+  let result
+  try {
+    result = await fetchExistingSharingLink(client, file)
+  } catch {
+    result = { status: 'not_found' }
+  }
 
-  return existingLink || makeSharingLink(client, [getFileId(file)])
+  return result.status === 'found'
+    ? result.url
+    : makeSharingLink(client, [getFileId(file)])
 }
 
 /**

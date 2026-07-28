@@ -49,7 +49,7 @@ jest.mock('./FilePickerBody', () => {
     name: 'Folder'
   }
 
-  return ({ folderSelectable, navigateTo }) => {
+  return ({ folderSelectable, navigateTo, onFileDoubleClick, error }) => {
     const { setSelectedItems } = useSelectionContext()
 
     return (
@@ -57,6 +57,7 @@ jest.mock('./FilePickerBody', () => {
         <span data-testid="folder-selectable">
           {folderSelectable ? 'true' : 'false'}
         </span>
+        {error && <div data-testid="file-picker-error">{error}</div>}
         <button
           type="button"
           data-testid="select-file-btn"
@@ -96,6 +97,15 @@ jest.mock('./FilePickerBody', () => {
         >
           Navigate folder
         </button>
+        {onFileDoubleClick && (
+          <button
+            type="button"
+            data-testid="double-click-file-btn"
+            onClick={() => onFileDoubleClick(file)}
+          >
+            Double-click file
+          </button>
+        )}
       </div>
     )
   }
@@ -169,14 +179,22 @@ const FilePickerWrapper = ({ children }) => (
 
 describe('FilePicker', () => {
   const mockOnChange = jest.fn()
+  const mockOnFileDoubleClick = jest.fn()
 
-  const setup = ({ filePickerConfig, multiple = false } = {}) => {
+  const setup = ({
+    filePickerConfig,
+    multiple = false,
+    onFileDoubleClick,
+    accept
+  } = {}) => {
     return render(
       <FilePickerWrapper>
         <FilePicker
           onChange={mockOnChange}
+          onFileDoubleClick={onFileDoubleClick ?? mockOnFileDoubleClick}
           filePickerConfig={filePickerConfig}
           multiple={multiple}
+          accept={accept}
         />
       </FilePickerWrapper>
     )
@@ -328,5 +346,176 @@ describe('FilePicker', () => {
     fireEvent.click(getByTestId('navigate-folder-btn'))
 
     expect(getByTestId('public-link-btn')).toBeDisabled()
+  })
+
+  describe('double-click action', () => {
+    it('should reuse existing single-file sharing link without opening modal', async () => {
+      const { getByTestId, queryByTestId } = setup({
+        filePickerConfig: {
+          sharingLink: { allowFolder: true },
+          downloadLink: null
+        }
+      })
+
+      fireEvent.click(getByTestId('double-click-file-btn'))
+
+      await waitFor(() =>
+        expect(mockOnFileDoubleClick).toHaveBeenCalledWith({
+          _id: 'file-id',
+          type: 'file',
+          name: 'file.pdf'
+        })
+      )
+      expect(queryByTestId('link-access-modal')).toBeNull()
+      expect(mockOnChange).not.toHaveBeenCalled()
+    })
+
+    it('should open LinkAccessModal when onFileDoubleClick returns open-modal', async () => {
+      mockOnFileDoubleClick.mockResolvedValue('open-modal')
+      const { getByTestId } = setup()
+
+      fireEvent.click(getByTestId('double-click-file-btn'))
+
+      await waitFor(() =>
+        expect(getByTestId('link-access-modal')).toHaveTextContent('file.pdf')
+      )
+      expect(mockOnChange).not.toHaveBeenCalled()
+    })
+
+    it('should display error when onFileDoubleClick returns SHARING_LINK_FAILED', async () => {
+      mockOnFileDoubleClick.mockResolvedValue('SHARING_LINK_FAILED')
+      const { getByTestId, queryByTestId } = setup()
+
+      fireEvent.click(getByTestId('double-click-file-btn'))
+
+      await waitFor(() =>
+        expect(getByTestId('file-picker-error')).toBeInTheDocument()
+      )
+      expect(queryByTestId('link-access-modal')).toBeNull()
+      expect(mockOnChange).not.toHaveBeenCalled()
+    })
+
+    it('should generate download link directly when sharing is unavailable', async () => {
+      mockOnChange.mockResolvedValue(null)
+      const { getByTestId, queryByTestId } = setup({
+        filePickerConfig: {
+          sharingLink: null,
+          downloadLink: { allowFolder: false }
+        }
+      })
+
+      fireEvent.click(getByTestId('double-click-file-btn'))
+
+      await waitFor(() =>
+        expect(mockOnChange).toHaveBeenCalledWith(
+          [{ _id: 'file-id', type: 'file', name: 'file.pdf' }],
+          filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK
+        )
+      )
+      expect(queryByTestId('link-access-modal')).toBeNull()
+      expect(mockOnFileDoubleClick).not.toHaveBeenCalled()
+    })
+
+    it('should do nothing when neither action is configured', () => {
+      const { getByTestId, queryByTestId } = setup({
+        filePickerConfig: {
+          sharingLink: null,
+          downloadLink: null
+        }
+      })
+
+      fireEvent.click(getByTestId('double-click-file-btn'))
+
+      expect(mockOnFileDoubleClick).not.toHaveBeenCalled()
+      expect(mockOnChange).not.toHaveBeenCalled()
+      expect(queryByTestId('file-picker-error')).toBeNull()
+    })
+
+    it('should ignore file rejected by accept filter', () => {
+      const { getByTestId } = setup({ accept: 'image/*' })
+
+      fireEvent.click(getByTestId('double-click-file-btn'))
+
+      expect(mockOnFileDoubleClick).not.toHaveBeenCalled()
+      expect(mockOnChange).not.toHaveBeenCalled()
+    })
+
+    it('should block repeated double-clicks during processing', async () => {
+      // First call never resolves — lock stays engaged
+      let resolveFirst
+      mockOnFileDoubleClick.mockReturnValue(
+        new Promise(resolve => {
+          resolveFirst = resolve
+        })
+      )
+      const { getByTestId } = setup()
+
+      fireEvent.click(getByTestId('double-click-file-btn'))
+      fireEvent.click(getByTestId('double-click-file-btn'))
+      fireEvent.click(getByTestId('double-click-file-btn'))
+
+      expect(mockOnFileDoubleClick).toHaveBeenCalledTimes(1)
+
+      resolveFirst('open-modal')
+      await waitFor(() =>
+        expect(getByTestId('link-access-modal')).toBeInTheDocument()
+      )
+    })
+
+    it('should release lock after error so user can retry', async () => {
+      mockOnFileDoubleClick.mockResolvedValueOnce('SHARING_LINK_FAILED')
+      const { getByTestId } = setup()
+
+      fireEvent.click(getByTestId('double-click-file-btn'))
+
+      await waitFor(() =>
+        expect(getByTestId('file-picker-error')).toBeInTheDocument()
+      )
+
+      // Second double-click should trigger a new call
+      mockOnFileDoubleClick.mockResolvedValueOnce('open-modal')
+      fireEvent.click(getByTestId('double-click-file-btn'))
+
+      await waitFor(() =>
+        expect(getByTestId('link-access-modal')).toBeInTheDocument()
+      )
+      expect(mockOnFileDoubleClick).toHaveBeenCalledTimes(2)
+    })
+
+    it('should replace multi-selection with the double-clicked file', async () => {
+      mockOnFileDoubleClick.mockResolvedValue('open-modal')
+      const { getByTestId } = setup({ multiple: true })
+
+      // Create a multi-selection
+      fireEvent.click(getByTestId('select-file-btn'))
+      fireEvent.click(getByTestId('select-second-file-btn'))
+
+      // Double-click a file
+      fireEvent.click(getByTestId('double-click-file-btn'))
+
+      await waitFor(() =>
+        expect(getByTestId('link-access-modal')).toHaveTextContent('file.pdf')
+      )
+      // The modal should show only the double-clicked file, not the second one
+      expect(getByTestId('link-access-modal')).not.toHaveTextContent(
+        'second-file.pdf'
+      )
+    })
+
+    it('should display download error when onChange returns an error code', async () => {
+      mockOnChange.mockResolvedValue('DOWNLOAD_LINK_FAILED')
+      const { getByTestId } = setup({
+        filePickerConfig: {
+          sharingLink: null,
+          downloadLink: { allowFolder: false }
+        }
+      })
+
+      fireEvent.click(getByTestId('double-click-file-btn'))
+
+      await waitFor(() =>
+        expect(getByTestId('file-picker-error')).toBeInTheDocument()
+      )
+    })
   })
 })

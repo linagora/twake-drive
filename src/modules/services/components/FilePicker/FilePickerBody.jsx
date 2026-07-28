@@ -28,7 +28,8 @@ const FilePickerBody = ({
   multiple,
   folderSelectable,
   error,
-  onReadyToUse
+  onReadyToUse,
+  onFileDoubleClick
 }) => {
   const { t } = useI18n()
   const selectionContainerRef = useRef(null)
@@ -84,9 +85,11 @@ const FilePickerBody = ({
     item => {
       if (isDirectory(item)) {
         navigateTo(item)
+      } else if (onFileDoubleClick) {
+        onFileDoubleClick(item)
       }
     },
-    [navigateTo]
+    [navigateTo, onFileDoubleClick]
   )
 
   return (
@@ -132,7 +135,8 @@ FilePickerBody.propTypes = {
   multiple: PropTypes.bool,
   folderSelectable: PropTypes.bool,
   error: PropTypes.string,
-  onReadyToUse: PropTypes.func
+  onReadyToUse: PropTypes.func,
+  onFileDoubleClick: PropTypes.func
 }
 
 FilePickerBody.defaultProps = {

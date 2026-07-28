@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types'
-import React, { useState, memo, useMemo } from 'react'
+import React, { useState, memo, useMemo, useRef, useCallback } from 'react'
 
 import Box from 'cozy-ui/transpiled/react/Box'
 import Divider from 'cozy-ui/transpiled/react/Divider'
@@ -15,7 +15,7 @@ import {
   filePickerThemes
 } from './constants'
 import { getActionDisabledState } from './constraints'
-import { getCompliantTypes } from './helpers'
+import { getCompliantTypes, isValidFile } from './helpers'
 
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 
@@ -26,13 +26,16 @@ const FilePicker = ({
   accept,
   multiple,
   filePickerConfig,
-  onReadyToUse
+  onReadyToUse,
+  onFileDoubleClick
 }) => {
   const [folderId, setFolderId] = useState(ROOT_DIR_ID)
   const [error, setError] = useState(null)
   const [isLinkAccessOpen, setIsLinkAccessOpen] = useState(false)
-  const { selectedItems, clearSelection } = useSelectionContext()
+  const { selectedItems, clearSelection, setSelectedItems } =
+    useSelectionContext()
   const { showAlert } = useAlert()
+  const isProcessingRef = useRef(false)
   const itemsIdsSelected = useMemo(
     () => selectedItems.map(item => item._id),
     [selectedItems]
@@ -100,6 +103,58 @@ const FilePicker = ({
     ? getActionDisabledState(downloadLinkAction, selectedItems)
     : { disabled: true, reasonKey: null }
 
+  const handleFileDoubleClick = useCallback(
+    async item => {
+      if (!onFileDoubleClick) return
+      if (isProcessingRef.current) return
+
+      if (!isValidFile(item, itemTypesAccepted)) return
+
+      // Sharing takes priority over download
+      const sharingState = publicLinkAction
+        ? getActionDisabledState(publicLinkAction, [item])
+        : { disabled: true }
+      const downloadState = downloadLinkAction
+        ? getActionDisabledState(downloadLinkAction, [item])
+        : { disabled: true }
+      const useDownload = sharingState.disabled && !downloadState.disabled
+      if (sharingState.disabled && downloadState.disabled) return
+
+      isProcessingRef.current = true
+      setSelectedItems({ [item._id]: item })
+
+      try {
+        if (useDownload) {
+          const pickError = await onChange(
+            [item],
+            filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK
+          )
+          if (pickError) {
+            setError(pickError)
+          }
+          return
+        }
+
+        const result = await onFileDoubleClick(item)
+        if (result === 'open-modal') {
+          setIsLinkAccessOpen(true)
+        } else if (result) {
+          setError(result)
+        }
+      } finally {
+        isProcessingRef.current = false
+      }
+    },
+    [
+      publicLinkAction,
+      downloadLinkAction,
+      itemTypesAccepted,
+      onFileDoubleClick,
+      onChange,
+      setSelectedItems
+    ]
+  )
+
   return (
     <>
       <div
@@ -127,6 +182,7 @@ const FilePicker = ({
             folderSelectable
             error={error}
             onReadyToUse={onReadyToUse}
+            onFileDoubleClick={handleFileDoubleClick}
           />
         </Box>
         <Divider />
@@ -164,7 +220,8 @@ FilePicker.propTypes = {
     sharingLink: PropTypes.object,
     downloadLink: PropTypes.object
   }),
-  onReadyToUse: PropTypes.func
+  onReadyToUse: PropTypes.func,
+  onFileDoubleClick: PropTypes.func
 }
 
 FilePicker.defaultProps = {

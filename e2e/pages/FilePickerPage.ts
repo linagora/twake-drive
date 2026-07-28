@@ -74,6 +74,10 @@ export class FilePickerPage {
       .waitFor({ state: 'visible', timeout: 10_000 })
   }
 
+  async doubleClickItem(name: string): Promise<void> {
+    await this.getListItemByName(name).getByTestId('listitem-onclick').dblclick()
+  }
+
   // ---------------------------------------------------------------------------
   // Selection (single mode — radio buttons)
   // ---------------------------------------------------------------------------
