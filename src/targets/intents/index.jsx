@@ -11,7 +11,7 @@ import { createRoot } from 'react-dom/client'
 
 import CozyClient from 'cozy-client'
 
-import DriveProvider from '@/lib/DriveProvider'
+import IntentProvider from '@/lib/IntentProvider'
 import appMetadata from '@/lib/appMetadata'
 import { schema } from '@/lib/doctypes'
 import registerClientPlugins from '@/lib/registerClientPlugins'
@@ -43,10 +43,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   const dictRequire = await loadIntentLocales(data.locale)
 
   createRoot(root).render(
-    <DriveProvider client={client} lang={data.locale} dictRequire={dictRequire}>
+    <IntentProvider
+      client={client}
+      lang={data.locale}
+      dictRequire={dictRequire}
+    >
       <SelectionProvider clearOnLocationChange={false}>
         <IntentHandler intentId={intent} />
       </SelectionProvider>
-    </DriveProvider>
+    </IntentProvider>
   )
 })
