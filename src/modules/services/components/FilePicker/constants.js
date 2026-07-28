@@ -17,6 +17,16 @@ export const filePickerLinkModes = {
 
 export const filePickerThemes = ['auto', 'light', 'dark']
 
+export const filePickerSharingLinkStatuses = {
+  FOUND: 'found',
+  NOT_FOUND: 'not_found',
+  NO_SHARECODE: 'no_sharecode'
+}
+
+export const filePickerDoubleClickResults = {
+  OPEN_MODAL: 'open-modal'
+}
+
 /**
  * Error codes used by the File Picker internally to track
  * and display error messages in the UI.

@@ -5,8 +5,10 @@ import { Q, useClient, fetchPolicies } from 'cozy-client'
 import FilePicker from './FilePicker'
 import { getFilePickerConfig } from './FilePicker/config'
 import {
+  filePickerDoubleClickResults,
   filePickerErrorCodes,
-  filePickerLinkModes
+  filePickerLinkModes,
+  filePickerSharingLinkStatuses
 } from './FilePicker/constants'
 import { makeFilePickerFileEntry } from './FilePicker/payload'
 import {
@@ -119,13 +121,13 @@ const Picker = ({ service, intent, onReadyToUse }) => {
       const result = await fetchExistingSharingLink(client, file, {
         singleFileOnly: true
       })
-      if (result.status === 'found') {
+      if (result.status === filePickerSharingLinkStatuses.FOUND) {
         return handlePick([file], filePickerLinkModes.PUBLIC_LINK, [
           { documentId: getFileId(file), url: result.url }
         ])
       }
-      if (result.status === 'not_found') {
-        return 'open-modal'
+      if (result.status === filePickerSharingLinkStatuses.NOT_FOUND) {
+        return filePickerDoubleClickResults.OPEN_MODAL
       }
       return filePickerErrorCodes.SHARING_LINK_FAILED
     } catch {
