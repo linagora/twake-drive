@@ -82,7 +82,7 @@ const useFileLink = (
   { forceFolderPath }: { forceFolderPath?: boolean } = {}
 ): UseFileLinkResult => {
   const navigate = useNavigate()
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
   const client = useClient()
   const { isDesktop } = useBreakpoints()
   const isOfficeEnabled = computeOfficeEnabled(isDesktop)
@@ -140,6 +140,9 @@ const useFileLink = (
         (type === 'directory' ? '/folder' : getFolderPath(file.dir_id)) +
         to.pathname
     }
+  }
+  if (pathname.startsWith('/sharings/')) {
+    to = { ...to, search }
   }
 
   // we need to merge the searchParams of the current url and the new one created in computed path

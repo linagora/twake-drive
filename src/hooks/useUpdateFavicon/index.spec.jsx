@@ -46,7 +46,7 @@ describe('useUpdateFavicon', () => {
     }
 
     const { getFileMimetype } = require('@/lib/getFileMimetype')
-    getFileMimetype.mockReturnValue(() => 'text')
+    getFileMimetype.mockReturnValue('text')
 
     const originalLink = createMockLinkElement('/assets/favicon.ico')
     const mockLink = createMockLinkElement('/assets/favicon.ico')
@@ -67,7 +67,7 @@ describe('useUpdateFavicon', () => {
     }
 
     const { getFileMimetype } = require('@/lib/getFileMimetype')
-    getFileMimetype.mockReturnValue(() => 'sheet')
+    getFileMimetype.mockReturnValue('sheet')
 
     const originalLink = createMockLinkElement('/assets/favicon.ico')
     const mockLink = createMockLinkElement('/assets/favicon.ico')
@@ -88,7 +88,7 @@ describe('useUpdateFavicon', () => {
     }
 
     const { getFileMimetype } = require('@/lib/getFileMimetype')
-    getFileMimetype.mockReturnValue(() => 'slide')
+    getFileMimetype.mockReturnValue('slide')
 
     const originalLink = createMockLinkElement('/assets/favicon.ico')
     const mockLink = createMockLinkElement('/assets/favicon.ico')
@@ -109,7 +109,7 @@ describe('useUpdateFavicon', () => {
     }
 
     const { getFileMimetype } = require('@/lib/getFileMimetype')
-    getFileMimetype.mockReturnValue(() => 'image')
+    getFileMimetype.mockReturnValue('image')
 
     const originalFaviconLink = createMockLinkElement('/custom/favicon.ico')
     const mockLink = createMockLinkElement('/custom/favicon.ico')
@@ -130,7 +130,7 @@ describe('useUpdateFavicon', () => {
     }
 
     const { getFileMimetype } = require('@/lib/getFileMimetype')
-    getFileMimetype.mockReturnValue(() => 'text')
+    getFileMimetype.mockReturnValue('text')
 
     const originalFaviconLink = createMockLinkElement('/original/favicon.ico')
     const mockLink = createMockLinkElement('/original/favicon.ico')
@@ -157,7 +157,7 @@ describe('useUpdateFavicon', () => {
     }
 
     const { getFileMimetype } = require('@/lib/getFileMimetype')
-    getFileMimetype.mockReturnValue(() => 'text')
+    getFileMimetype.mockReturnValue('text')
 
     const mockLink = createMockLinkElement('/assets/favicon.ico')
     mockQuerySelectorAll.mockReturnValue([mockLink])

@@ -11,9 +11,11 @@ import {
 import { makeActions } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
 import { Content } from 'cozy-ui/transpiled/react/Layout'
 
+import { SharingsFilters } from './SharingsFilters'
 import SharingsHeader from './SharingsHeader'
 import { buildSharingsActionsOptions } from './helpers'
 import { useFilteredSharings } from './useFilteredSharings'
+import { useSharingsFilters } from './useSharingsFilters'
 import { areDrivesAvailable, useSharingsTab } from './useSharingsTab'
 import withSharedDocumentIds from './withSharedDocumentIds'
 import FolderView from '../Folder/FolderView'
@@ -50,6 +52,26 @@ import { buildSharingsQuery } from '@/queries'
 // one organizational drive can be displayed in it.
 const shouldShowDrivesTab = ({ hasDrives }) => areDrivesAvailable() && hasDrives
 
+const SHARINGS_ACTIONS = [
+  selectAllItems,
+  share,
+  shareNative,
+  shareSharedDrive,
+  shareFileRootSharedDrive,
+  download,
+  hr,
+  summariseByAI,
+  hr,
+  rename,
+  moveTo,
+  addToFavorites,
+  removeFromFavorites,
+  leaveSharedDrive,
+  infos,
+  hr,
+  versions
+]
+
 const useSharingsQueryResult = (sharedDocumentIds, allLoaded) => {
   const query = useMemo(
     () =>
@@ -85,6 +107,7 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
   useHead({ title: base.t('breadcrumb.title_sharings') })
   const [sortOrder, setSortOrder, isSettingsLoaded] = useFolderSort('sharings')
   const [tab, setTab] = useSharingsTab()
+  const sharingsFilters = useSharingsFilters(tab)
 
   const result = useSharingsQueryResult(sharedDocumentIds, allLoaded)
 
@@ -92,7 +115,8 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
     {
       result,
       sharedDocumentIds,
-      tab
+      tab,
+      filters: sharingsFilters.filters
     }
   )
 
@@ -123,28 +147,7 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
     filteredResult
   })
 
-  const actions = makeActions(
-    [
-      selectAllItems,
-      share,
-      shareNative,
-      shareSharedDrive,
-      shareFileRootSharedDrive,
-      download,
-      hr,
-      summariseByAI,
-      hr,
-      rename,
-      moveTo,
-      addToFavorites,
-      removeFromFavorites,
-      leaveSharedDrive,
-      infos,
-      hr,
-      versions
-    ],
-    actionsOptions
-  )
+  const actions = makeActions(SHARINGS_ACTIONS, actionsOptions)
 
   return (
     <FolderView>
@@ -156,6 +159,7 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
           onChange={setTab}
           showDrives={showDrives}
         />
+        <SharingsFilters {...sharingsFilters} />
         {!allLoaded ||
         !sharedDrivesLoaded ||
         !hasQueryBeenLoaded(filteredResult) ? (

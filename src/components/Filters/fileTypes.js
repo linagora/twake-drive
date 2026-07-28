@@ -61,8 +61,6 @@ export const FILE_TYPE_OPTIONS = [
   }
 ]
 
-export const FILE_TYPE_VALUES = FILE_TYPE_OPTIONS.map(option => option.value)
-
 export function findFileTypeOption(value) {
   return FILE_TYPE_OPTIONS.find(option => option.value === value) ?? null
 }

@@ -86,6 +86,7 @@
       "clear": "Clear Contact filter",
       "me": "me"
     },
+    "clear_all": "Clear all",
     "date": {
       "label": "Modification date",
       "aria_label": "Modification date filter",

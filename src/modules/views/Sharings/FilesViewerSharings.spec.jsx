@@ -54,8 +54,18 @@ jest.mock('@/modules/viewer/FilesViewer', () => {
   return FilesViewer
 })
 
-const ownedFile = { _id: 'file-owned', id: 'file-owned', type: 'file' }
-const receivedFile = { _id: 'file-received', id: 'file-received', type: 'file' }
+const ownedFile = {
+  _id: 'file-owned',
+  id: 'file-owned',
+  type: 'file',
+  mime: 'application/pdf'
+}
+const receivedFile = {
+  _id: 'file-received',
+  id: 'file-received',
+  type: 'file',
+  mime: 'image/jpeg'
+}
 const someDirectory = { _id: 'dir-1', id: 'dir-1', type: 'directory' }
 
 const setup = ({
@@ -104,6 +114,16 @@ describe('FilesViewerSharings', () => {
     })
 
     expect(screen.getByTestId('viewer-files').textContent).toBe(ownedFile._id)
+  })
+
+  it('pages only through files matching the active root filter', () => {
+    setup({
+      route: `/sharings/with-me/file/${receivedFile._id}?f.type=image`
+    })
+
+    expect(screen.getByTestId('viewer-files').textContent).toBe(
+      receivedFile._id
+    )
   })
 
   it('closes the viewer to the active tab route', () => {

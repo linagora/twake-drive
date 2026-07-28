@@ -4,6 +4,8 @@ import { isSharingShortcut } from 'cozy-client/dist/models/file'
 import flag from 'cozy-flags'
 import { useSharingContext } from 'cozy-sharing'
 
+import { isSharingsEntryMatchingFilters } from './matchSharingsFilters'
+
 import {
   SHARED_DRIVES_DIR_ID,
   SHARING_TAB_BY_ME,
@@ -11,6 +13,8 @@ import {
   SHARING_TAB_WITH_ME
 } from '@/constants/config'
 import { useTransformFolderListHasSharedDriveShortcuts } from '@/hooks/useTransformFolderListHasSharedDriveShortcuts'
+
+const NO_FILTERS = {}
 
 const buildBaseShape = (result, hasIds) => ({
   ...result,
@@ -131,7 +135,12 @@ const computeData = ({
  * tab, computed from the same deduplicated list regardless of the active
  * tab, so the view can hide the Team drives tab while it has no content.
  */
-export const useFilteredSharings = ({ result, sharedDocumentIds, tab }) => {
+export const useFilteredSharings = ({
+  result,
+  sharedDocumentIds,
+  tab,
+  filters = NO_FILTERS
+}) => {
   const isEnabledSharedDrive = flag('drive.shared-drive.enabled')
   const isEnabledFederatedSharedFolder = flag(
     'drive.federated-shared-folder.enabled'
@@ -157,9 +166,12 @@ export const useFilteredSharings = ({ result, sharedDocumentIds, tab }) => {
       transformedSharedDrives,
       nonSharedDriveList
     })
-    const data = tab
+    const tabData = tab
       ? combined.filter(entry => getSharingsTabForEntry(entry, isOwner) === tab)
       : combined
+    const data = tabData.filter(entry =>
+      isSharingsEntryMatchingFilters(entry, filters)
+    )
     return {
       filteredResult: {
         ...buildBaseShape(result, hasIds),
@@ -177,6 +189,7 @@ export const useFilteredSharings = ({ result, sharedDocumentIds, tab }) => {
     result,
     sharedDocumentIds?.length,
     tab,
+    filters,
     isOwner
   ])
 
