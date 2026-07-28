@@ -80,6 +80,26 @@
     "sharings_tab_by_me": "Par moi",
     "sharings_tab_drives": "Drives d'équipe"
   },
+  "filters": {
+    "type": {
+      "label": "Type",
+      "aria_label": "Filtre par type",
+      "clear": "Effacer le filtre par type",
+      "options": {
+        "folder": "Dossiers",
+        "document": "Documents",
+        "spreadsheet": "Feuilles de calcul",
+        "presentation": "Présentations",
+        "photo": "Photos",
+        "pdf": "PDF",
+        "video": "Vidéos",
+        "archive": "Archives",
+        "audio": "Audio",
+        "draw": "Dessins",
+        "shortcut": "Raccourcis"
+      }
+    }
+  },
   "Share": {
     "create-cozy": "Créer mon Twake"
   },
