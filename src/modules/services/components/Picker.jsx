@@ -10,6 +10,7 @@ import {
 } from './FilePicker/constants'
 import { makeFilePickerFileEntry } from './FilePicker/payload'
 import {
+  fetchExistingSharingLink,
   getFileId,
   getOrCreateSharingLink,
   makeTemporaryDownloadLinks
@@ -113,9 +114,29 @@ const Picker = ({ service, intent, onReadyToUse }) => {
     }
   }
 
+  const handleFileDoubleClick = async file => {
+    try {
+      const result = await fetchExistingSharingLink(client, file, {
+        singleFileOnly: true
+      })
+      if (result.status === 'found') {
+        return handlePick([file], filePickerLinkModes.PUBLIC_LINK, [
+          { documentId: getFileId(file), url: result.url }
+        ])
+      }
+      if (result.status === 'not_found') {
+        return 'open-modal'
+      }
+      return filePickerErrorCodes.SHARING_LINK_FAILED
+    } catch {
+      return filePickerErrorCodes.SHARING_LINK_FAILED
+    }
+  }
+
   return (
     <FilePicker
       onChange={handlePick}
+      onFileDoubleClick={handleFileDoubleClick}
       filePickerConfig={filePickerConfig}
       onReadyToUse={onReadyToUse}
       multiple={filePickerConfig.multiple}

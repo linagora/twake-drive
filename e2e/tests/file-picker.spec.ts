@@ -21,6 +21,7 @@ test.describe('File Picker', () => {
   let parentFolder: string
   let testFileName: string
   let largeFileName: string
+  let linkFreeFileName: string
   let picker: FilePickerPage
 
   const pick = async (name: string, configName?: string): Promise<void> => {
@@ -34,6 +35,7 @@ test.describe('File Picker', () => {
     parentFolder = `picker-${stamp()}`
     testFileName = `picker-${stamp()}.txt`
     largeFileName = `picker-large-${stamp()}.txt`
+    linkFreeFileName = `picker-link-free-${stamp()}.txt`
 
     await alicePage.goto(`${USERS.alice.appUrl}/#/folder?flags`)
     await aliceDrive.createFolder(parentFolder)
@@ -44,15 +46,19 @@ test.describe('File Picker', () => {
 
     const tmpPath = path.join(path.dirname(FIXTURE), testFileName)
     const largeTmpPath = path.join(path.dirname(FIXTURE), largeFileName)
+    const linkFreeTmpPath = path.join(path.dirname(FIXTURE), linkFreeFileName)
     await copyFile(FIXTURE, tmpPath)
     await writeFile(largeTmpPath, 'x'.repeat(2048))
+    await copyFile(FIXTURE, linkFreeTmpPath)
     try {
-      await aliceDrive.uploadFiles([tmpPath, largeTmpPath])
+      await aliceDrive.uploadFiles([tmpPath, largeTmpPath, linkFreeTmpPath])
       await aliceDrive.row(testFileName).waitVisible()
       await aliceDrive.row(largeFileName).waitVisible()
+      await aliceDrive.row(linkFreeFileName).waitVisible()
     } finally {
       await safeUnlink(tmpPath)
       await safeUnlink(largeTmpPath)
+      await safeUnlink(linkFreeTmpPath)
     }
   })
 
@@ -112,7 +118,13 @@ test.describe('File Picker', () => {
     expect(link).toMatch(/^https?:\/\//)
 
     const document = await picker.getResultDocument()
-    const [entry] = document as Array<{ id: string }>
+    const [entry] = document as Array<{
+      id: string
+      sharingLink?: string
+      downloadLink?: string
+    }>
+    expect(entry.sharingLink).toBe(link)
+    expect(entry.downloadLink).toBeUndefined()
     const permission = await findLinkPermission(USERS.alice.instance, entry.id)
     const fileRule = Object.values(
       permission.attributes.permissions ?? {}
@@ -130,6 +142,19 @@ test.describe('File Picker', () => {
     } finally {
       await publicPage.close()
     }
+
+    await picker.closeConfirmation()
+
+    await picker.open()
+    await picker.navigateToFolder(parentFolder)
+    await picker.doubleClickItem(testFileName)
+    await picker.waitForClosed()
+
+    const reusedDocument = await picker.getResultDocument()
+    const reusedEntries = reusedDocument as Array<Record<string, unknown>>
+    expect(reusedEntries).toHaveLength(1)
+    expect(reusedEntries[0].sharingLink).toBe(entry.sharingLink)
+    expect(reusedEntries[0].downloadLink).toBeUndefined()
 
     await picker.closeConfirmation()
   })
@@ -225,13 +250,13 @@ test.describe('File Picker', () => {
     alicePage
   }) => {
     picker = new FilePickerPage(alicePage)
-    await pick(testFileName, 'Download link only')
+    await pick(largeFileName, 'Download link only')
 
     await expect(picker.hasPublicLinkButton()).resolves.toBe(false)
     await expect(picker.hasTemporaryDownloadButton()).resolves.toBe(true)
     await expect(picker.isTemporaryDownloadDisabled()).resolves.toBe(false)
 
-    await picker.clickTemporaryDownloadLink()
+    await picker.doubleClickItem(largeFileName)
     await picker.waitForClosed()
 
     const document = await picker.getResultDocument()
@@ -273,6 +298,9 @@ test.describe('File Picker', () => {
 
     await expect(picker.hasTemporaryDownloadButton()).resolves.toBe(true)
     await expect(picker.isTemporaryDownloadDisabled()).resolves.toBe(true)
+
+    await picker.doubleClickItem(testFileName)
+    await expect(picker.isOpen()).resolves.toBe(true)
   })
 
   test('max-size config disables temporary download for a large file', async ({
@@ -289,19 +317,32 @@ test.describe('File Picker', () => {
     alicePage
   }) => {
     picker = new FilePickerPage(alicePage)
-    await pick(testFileName, 'Default (sharing + download)')
-    await picker.createPublicLinks()
+    await picker.open()
+    await picker.navigateToFolder(parentFolder)
+    await picker.selectItem(linkFreeFileName)
+    await picker.toggleItem(testFileName)
+
+    await picker.doubleClickItem(linkFreeFileName)
+    await expect.poll(() => picker.isLinkAccessOpen()).toBe(true)
+    await expect(
+      picker.hasLinkAccessDocument(linkFreeFileName)
+    ).resolves.toBe(true)
+    await expect(picker.hasLinkAccessDocument(testFileName)).resolves.toBe(
+      false
+    )
+    await picker.confirmPublicLinks()
     await picker.waitForClosed()
 
     const document = await picker.getResultDocument()
     expect(Array.isArray(document)).toBe(true)
-    const [entry] = document as Array<Record<string, unknown>>
-    expect(entry.id).toEqual(expect.any(String))
-    expect(entry.name).toBe(testFileName)
-    expect(entry.size).toEqual(expect.any(Number))
-    expect(entry.mimeType).toEqual(expect.any(String))
-    expect(entry.sharingLink).toMatch(/^https?:\/\//)
-    expect(entry.downloadLink).toBeUndefined()
+    const entries = document as Array<Record<string, unknown>>
+    expect(entries).toHaveLength(1)
+    expect(entries[0].id).toEqual(expect.any(String))
+    expect(entries[0].name).toBe(linkFreeFileName)
+    expect(entries[0].size).toEqual(expect.any(Number))
+    expect(entries[0].mimeType).toEqual(expect.any(String))
+    expect(entries[0].sharingLink).toMatch(/^https?:\/\//)
+    expect(entries[0].downloadLink).toBeUndefined()
 
     await picker.closeConfirmation()
   })
@@ -475,8 +516,9 @@ test.describe('File Picker', () => {
 
       // Picker must stay open with an inline error.
       await expect(picker.isOpen()).resolves.toBe(true)
-      const errorText = await picker.getErrorText()
-      expect(errorText).toBe('The selected file could not be found.')
+      expect(await picker.getErrorText()).toBe(
+        'The selected file could not be found.'
+      )
     })
   })
 })
