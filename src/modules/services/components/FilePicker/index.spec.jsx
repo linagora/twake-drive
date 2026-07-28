@@ -238,7 +238,7 @@ describe('FilePicker', () => {
   })
 
   it('should collect link access before confirming a public link', async () => {
-    const { getByTestId } = setup()
+    const { getByTestId, findByTestId } = setup()
 
     expect(getByTestId('public-link-btn')).toBeDisabled()
     expect(getByTestId('temporary-download-link-btn')).toBeDisabled()
@@ -251,7 +251,9 @@ describe('FilePicker', () => {
 
     fireEvent.click(getByTestId('public-link-btn'))
 
-    expect(getByTestId('link-access-modal')).toHaveTextContent('file.pdf')
+    expect(await findByTestId('link-access-modal')).toHaveTextContent(
+      'file.pdf'
+    )
     expect(mockOnChange).not.toHaveBeenCalled()
 
     fireEvent.click(getByTestId('confirm-link-access-btn'))
@@ -273,19 +275,20 @@ describe('FilePicker', () => {
 
   it('should keep link access open when link generation fails', async () => {
     mockOnChange.mockResolvedValueOnce('SHARING_LINK_FAILED')
-    const { getByTestId } = setup()
+    const { getByTestId, findByTestId } = setup()
 
     fireEvent.click(getByTestId('select-file-btn'))
     fireEvent.click(getByTestId('public-link-btn'))
+
+    await findByTestId('link-access-modal')
     fireEvent.click(getByTestId('confirm-link-access-btn'))
 
     await waitFor(() =>
-      expect(getByTestId('link-access-modal')).toBeInTheDocument()
+      expect(mockShowAlert).toHaveBeenCalledWith({
+        message: 'SHARING_LINK_FAILED',
+        severity: 'error'
+      })
     )
-    expect(mockShowAlert).toHaveBeenCalledWith({
-      message: 'SHARING_LINK_FAILED',
-      severity: 'error'
-    })
   })
 
   it('should disable temporary download link when a folder is selected', () => {
@@ -298,11 +301,13 @@ describe('FilePicker', () => {
   })
 
   it('should preserve multiple selected file ids while collecting link access', async () => {
-    const { getByTestId } = setup({ multiple: true })
+    const { getByTestId, findByTestId } = setup({ multiple: true })
 
     fireEvent.click(getByTestId('select-file-btn'))
     fireEvent.click(getByTestId('select-second-file-btn'))
     fireEvent.click(getByTestId('public-link-btn'))
+
+    await findByTestId('link-access-modal')
     fireEvent.click(getByTestId('confirm-link-access-btn'))
 
     await waitFor(() =>
