@@ -1,5 +1,13 @@
 import PropTypes from 'prop-types'
-import React, { useState, memo, useMemo, useRef, useCallback } from 'react'
+import React, {
+  useState,
+  memo,
+  useMemo,
+  useRef,
+  useCallback,
+  lazy,
+  Suspense
+} from 'react'
 
 import Box from 'cozy-ui/transpiled/react/Box'
 import Divider from 'cozy-ui/transpiled/react/Divider'
@@ -8,7 +16,6 @@ import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import FilePickerBody from './FilePickerBody'
 import FilePickerFooter from './FilePickerFooter'
 import FilePickerHeader from './FilePickerHeader'
-import { LinkAccessModal } from './LinkAccessModal'
 import {
   defaultFilePickerConfig,
   filePickerDoubleClickResults,
@@ -20,6 +27,10 @@ import { getActionDisabledState } from './constraints'
 import { getCompliantTypes, isValidFile } from './helpers'
 
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
+
+const LinkAccessModal = lazy(() =>
+  import('./LinkAccessModal').then(m => ({ default: m.LinkAccessModal }))
+)
 
 export const ROOT_DIR_ID = 'io.cozy.files.root-dir'
 
@@ -200,11 +211,13 @@ const FilePicker = ({
       </div>
 
       {isLinkAccessOpen && (
-        <LinkAccessModal
-          selectedItems={selectedItems}
-          onCancel={() => setIsLinkAccessOpen(false)}
-          onConfirm={handleLinkAccessConfirm}
-        />
+        <Suspense fallback={null}>
+          <LinkAccessModal
+            selectedItems={selectedItems}
+            onCancel={() => setIsLinkAccessOpen(false)}
+            onConfirm={handleLinkAccessConfirm}
+          />
+        </Suspense>
       )}
     </>
   )
