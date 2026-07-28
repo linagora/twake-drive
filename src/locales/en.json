@@ -81,6 +81,17 @@
     "sharings_tab_drives": "Team drives"
   },
   "filters": {
+    "date": {
+      "label": "Modification date",
+      "aria_label": "Modification date filter",
+      "clear": "Clear Modification date filter",
+      "options": {
+        "today": "Today",
+        "last_7_days": "Last 7 days",
+        "last_month": "Last month",
+        "this_year": "This year"
+      }
+    },
     "type": {
       "label": "Type",
       "aria_label": "Type filter",
