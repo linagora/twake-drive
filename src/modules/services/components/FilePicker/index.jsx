@@ -11,6 +11,7 @@ import FilePickerHeader from './FilePickerHeader'
 import { LinkAccessModal } from './LinkAccessModal'
 import {
   defaultFilePickerConfig,
+  filePickerDoubleClickResults,
   filePickerErrorCodes,
   filePickerLinkModes,
   filePickerThemes
@@ -138,7 +139,7 @@ const FilePicker = ({
         }
 
         const result = await onFileDoubleClick(item)
-        if (result === 'open-modal') {
+        if (result === filePickerDoubleClickResults.OPEN_MODAL) {
           handleOpenLinkAccess()
         } else if (result) {
           setError(result)

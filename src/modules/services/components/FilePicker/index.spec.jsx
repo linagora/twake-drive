@@ -1,7 +1,7 @@
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import React from 'react'
 
-import { filePickerLinkModes } from './constants'
+import { filePickerDoubleClickResults, filePickerLinkModes } from './constants'
 import FilePicker from './index'
 
 import { SelectionProvider } from '@/modules/selection/SelectionProvider'
@@ -371,7 +371,9 @@ describe('FilePicker', () => {
     })
 
     it('should open LinkAccessModal when onFileDoubleClick returns open-modal', async () => {
-      mockOnFileDoubleClick.mockResolvedValue('open-modal')
+      mockOnFileDoubleClick.mockResolvedValue(
+        filePickerDoubleClickResults.OPEN_MODAL
+      )
       const { getByTestId } = setup()
 
       fireEvent.click(getByTestId('double-click-file-btn'))
@@ -456,7 +458,7 @@ describe('FilePicker', () => {
 
       expect(mockOnFileDoubleClick).toHaveBeenCalledTimes(1)
 
-      resolveFirst('open-modal')
+      resolveFirst(filePickerDoubleClickResults.OPEN_MODAL)
       await waitFor(() =>
         expect(getByTestId('link-access-modal')).toBeInTheDocument()
       )
@@ -473,7 +475,9 @@ describe('FilePicker', () => {
       )
 
       // Second double-click should trigger a new call
-      mockOnFileDoubleClick.mockResolvedValueOnce('open-modal')
+      mockOnFileDoubleClick.mockResolvedValueOnce(
+        filePickerDoubleClickResults.OPEN_MODAL
+      )
       fireEvent.click(getByTestId('double-click-file-btn'))
 
       await waitFor(() =>
@@ -484,7 +488,9 @@ describe('FilePicker', () => {
     })
 
     it('should replace multi-selection with the double-clicked file', async () => {
-      mockOnFileDoubleClick.mockResolvedValue('open-modal')
+      mockOnFileDoubleClick.mockResolvedValue(
+        filePickerDoubleClickResults.OPEN_MODAL
+      )
       const { getByTestId } = setup({ multiple: true })
 
       // Create a multi-selection

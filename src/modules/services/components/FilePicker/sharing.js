@@ -1,7 +1,7 @@
 import CozyClient, { generateWebLink, models } from 'cozy-client'
 import { makeSharingLink } from 'cozy-client/dist/models/sharing'
 
-import { TEMPORARY_LINK_TTL } from './constants'
+import { filePickerSharingLinkStatuses, TEMPORARY_LINK_TTL } from './constants'
 
 const {
   file: { isFile }
@@ -39,16 +39,16 @@ export async function fetchExistingSharingLink(
   })
 
   if (!existingPermission) {
-    return { status: 'not_found' }
+    return { status: filePickerSharingLinkStatuses.NOT_FOUND }
   }
 
   const sharecode = getShortcode(existingPermission)
   if (!sharecode) {
-    return { status: 'no_sharecode' }
+    return { status: filePickerSharingLinkStatuses.NO_SHARECODE }
   }
 
   return {
-    status: 'found',
+    status: filePickerSharingLinkStatuses.FOUND,
     url: generateWebLink({
       cozyUrl: client.getStackClient().uri,
       searchParams: [['sharecode', sharecode]],
@@ -64,10 +64,10 @@ export async function getOrCreateSharingLink(client, file) {
   try {
     result = await fetchExistingSharingLink(client, file)
   } catch {
-    result = { status: 'not_found' }
+    result = { status: filePickerSharingLinkStatuses.NOT_FOUND }
   }
 
-  return result.status === 'found'
+  return result.status === filePickerSharingLinkStatuses.FOUND
     ? result.url
     : makeSharingLink(client, [getFileId(file)])
 }
