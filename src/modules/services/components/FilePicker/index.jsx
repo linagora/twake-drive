@@ -11,6 +11,7 @@ import FilePickerHeader from './FilePickerHeader'
 import { LinkAccessModal } from './LinkAccessModal'
 import {
   defaultFilePickerConfig,
+  filePickerErrorCodes,
   filePickerLinkModes,
   filePickerThemes
 } from './constants'
@@ -64,10 +65,10 @@ const FilePicker = ({
     return null
   }
 
-  const handleOpenLinkAccess = () => {
+  const handleOpenLinkAccess = useCallback(() => {
     setError(null)
     setIsLinkAccessOpen(true)
-  }
+  }, [])
 
   const handleLinkAccessConfirm = async sharingLinks => {
     const pickError = await onChange(
@@ -121,6 +122,7 @@ const FilePicker = ({
       if (sharingState.disabled && downloadState.disabled) return
 
       isProcessingRef.current = true
+      setError(null)
       setSelectedItems({ [item._id]: item })
 
       try {
@@ -137,10 +139,16 @@ const FilePicker = ({
 
         const result = await onFileDoubleClick(item)
         if (result === 'open-modal') {
-          setIsLinkAccessOpen(true)
+          handleOpenLinkAccess()
         } else if (result) {
           setError(result)
         }
+      } catch {
+        setError(
+          useDownload
+            ? filePickerErrorCodes.DOWNLOAD_LINK_FAILED
+            : filePickerErrorCodes.SHARING_LINK_FAILED
+        )
       } finally {
         isProcessingRef.current = false
       }
@@ -151,7 +159,8 @@ const FilePicker = ({
       itemTypesAccepted,
       onFileDoubleClick,
       onChange,
-      setSelectedItems
+      setSelectedItems,
+      handleOpenLinkAccess
     ]
   )
 
