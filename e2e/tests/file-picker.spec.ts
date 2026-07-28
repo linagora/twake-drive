@@ -324,9 +324,9 @@ test.describe('File Picker', () => {
 
     await picker.doubleClickItem(linkFreeFileName)
     await expect.poll(() => picker.isLinkAccessOpen()).toBe(true)
-    await expect(
-      picker.hasLinkAccessDocument(linkFreeFileName)
-    ).resolves.toBe(true)
+    await expect(picker.hasLinkAccessDocument(linkFreeFileName)).resolves.toBe(
+      true
+    )
     await expect(picker.hasLinkAccessDocument(testFileName)).resolves.toBe(
       false
     )

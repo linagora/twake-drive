@@ -75,7 +75,9 @@ export class FilePickerPage {
   }
 
   async doubleClickItem(name: string): Promise<void> {
-    await this.getListItemByName(name).getByTestId('listitem-onclick').dblclick()
+    await this.getListItemByName(name)
+      .getByTestId('listitem-onclick')
+      .dblclick()
   }
 
   // ---------------------------------------------------------------------------
