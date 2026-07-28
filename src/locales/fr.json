@@ -81,6 +81,17 @@
     "sharings_tab_drives": "Drives d'équipe"
   },
   "filters": {
+    "date": {
+      "label": "Date de modification",
+      "aria_label": "Filtre par date de modification",
+      "clear": "Effacer le filtre par date de modification",
+      "options": {
+        "today": "Aujourd'hui",
+        "last_7_days": "7 derniers jours",
+        "last_month": "Le mois dernier",
+        "this_year": "Cette année"
+      }
+    },
     "type": {
       "label": "Type",
       "aria_label": "Filtre par type",

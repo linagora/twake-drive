@@ -79,6 +79,17 @@
     "sharings_tab_drives": "Ổ đĩa nhóm"
   },
   "filters": {
+    "date": {
+      "label": "Ngày sửa đổi",
+      "aria_label": "Bộ lọc theo ngày sửa đổi",
+      "clear": "Xóa bộ lọc theo ngày sửa đổi",
+      "options": {
+        "today": "Hôm nay",
+        "last_7_days": "7 ngày qua",
+        "last_month": "Tháng trước",
+        "this_year": "Năm nay"
+      }
+    },
     "type": {
       "label": "Loại",
       "aria_label": "Bộ lọc loại tệp",
