@@ -8,20 +8,12 @@ import { BreakpointsProvider } from 'cozy-ui/transpiled/react/providers/Breakpoi
 import CozyTheme from 'cozy-ui-plus/dist/providers/CozyTheme'
 import { I18n } from 'twake-i18n'
 
-import { usePublicContext } from '@/modules/public/PublicProvider'
-
 const IntentProvider = ({ client, lang, polyglot, dictRequire, children }) => {
-  const { isPublic } = usePublicContext()
-
   return (
     <I18n lang={lang} polyglot={polyglot} dictRequire={dictRequire}>
       <CozyProvider client={client}>
-        <SharingProvider
-          doctype="io.cozy.files"
-          documentType="Files"
-          isPublic={isPublic}
-        >
-          <CozyTheme ignoreCozySettings={isPublic} className="u-w-100">
+        <SharingProvider doctype="io.cozy.files" documentType="Files">
+          <CozyTheme className="u-w-100">
             <BreakpointsProvider>
               <AlertProvider>{children}</AlertProvider>
             </BreakpointsProvider>
