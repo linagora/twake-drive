@@ -268,6 +268,40 @@ test.describe('File Picker', () => {
     await picker.closeConfirmation()
   })
 
+  test('documents config returns the full folder document', async ({
+    alicePage,
+    aliceDrive
+  }) => {
+    await aliceDrive.row(parentFolder).open()
+    await alicePage.waitForURL(/\/folder\/[^/]+$/)
+    const documentFolder = `document-${stamp()}`
+    await aliceDrive.createFolder(documentFolder)
+
+    picker = new FilePickerPage(alicePage)
+    await pick(documentFolder, 'Documents folder')
+
+    await expect(picker.hasDocumentsButton()).resolves.toBe(true)
+    await expect(picker.isDocumentsDisabled()).resolves.toBe(false)
+    await expect(picker.hasPublicLinkButton()).resolves.toBe(false)
+    await expect(picker.hasTemporaryDownloadButton()).resolves.toBe(false)
+
+    await picker.clickDocuments()
+    await picker.waitForClosed()
+
+    const document = await picker.getResultDocument()
+    expect(document).toHaveLength(1)
+    const [entry] = document as Array<Record<string, unknown>>
+    expect(entry.name).toBe(documentFolder)
+    expect(entry.type).toBe('directory')
+    expect(entry._type).toBe('io.cozy.files')
+    expect(entry._id).toEqual(expect.any(String))
+    expect(entry._rev).toEqual(expect.any(String))
+    expect(entry.sharingLink).toBeUndefined()
+    expect(entry.downloadLink).toBeUndefined()
+
+    await picker.closeConfirmation()
+  })
+
   test('sharing-only config hides download link and returns a sharing link', async ({
     alicePage
   }) => {

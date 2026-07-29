@@ -13,7 +13,7 @@ action = 'PICK'
 type = 'io.cozy.files'
 ```
 
-The service lets the user browse Drive, select a file or folder, and choose one of the configured link actions. By default, several files or folders can be selected. Set `multiple: false` to limit the selection to one item; the result is still returned as a `FilePickerEntry[]` array containing at most one entry.
+The service lets the user browse Drive, select a file or folder, and choose one of the configured actions. By default, several files or folders can be selected. Set `multiple: false` to limit the selection to one item; the result is still returned as an array containing at most one entry.
 
 ## Configuration
 
@@ -37,6 +37,10 @@ It is not a top-level `actions` field.
       "label": "Attach file",
       "maxFileSize": 52428800,
       "allowedMimeTypes": ["image/*", "application/pdf"]
+    },
+    "documents": {
+      "label": "Select",
+      "onlyFolder": true
     }
   }
 }
@@ -69,6 +73,11 @@ interface FilePickerConfig {
    * Omit to use defaults. Set to null to hide the action.
    */
   downloadLink?: ActionConfig | null
+  /**
+   * Configuration for the full documents action.
+   * Omit to use defaults. Set to null to hide the action.
+   */
+  documents?: ActionConfig | null
 }
 ```
 
@@ -87,6 +96,9 @@ interface ActionConfig {
    * Whether folders are allowed for this action.
    */
   allowFolder?: boolean
+
+  /** When true, files are disabled and only folders can be selected. */
+  onlyFolder?: boolean
 
   /**
    * Allowed MIME type patterns for files.
@@ -122,7 +134,8 @@ When no config is provided, Drive uses:
   theme: { type: 'auto' },
   multiple: true,
   sharingLink: { allowFolder: true },
-  downloadLink: { allowFolder: false }
+  downloadLink: { allowFolder: false },
+  documents: null
 }
 ```
 
@@ -152,6 +165,7 @@ Default labels:
 | --- | --- |
 | `sharingLink` | `Share with public link` |
 | `downloadLink` | `Attach with temporary link` |
+| `documents` | `Select` |
 
 ## Actions
 
@@ -170,6 +184,10 @@ Creates a temporary download link.
 - Works for files only (folders disabled by default).
 - Uses a GET-only permission on `io.cozy.files` with a 5-minute TTL.
 - The returned URL is intended to be consumed quickly by the calling app.
+
+### `documents`
+
+Returns the complete `io.cozy.files` documents selected by the user, as provided by cozy-client. No link is generated and no sharing or download side effect occurs. With `multiple: true`, one document is returned for each selected item; with `multiple: false`, the result contains at most one document. Use `onlyFolder: true` to create a folder-only document picker.
 
 ## Hiding an action
 
@@ -194,6 +212,7 @@ When the selected item violates an action constraint, the corresponding button i
 | Constraint | Behavior |
 | --- | --- |
 | `allowFolder: false` and selected item is a folder | Button disabled |
+| `onlyFolder: true` and selected item is a file | Button disabled |
 | `allowedMimeTypes` does not match selected file MIME | Button disabled |
 | selected file size > `maxFileSize` | Button disabled |
 
@@ -209,15 +228,21 @@ image/*         any image type
 
 ## Success result
 
-On success, the intent result document is a **bare array** of file entries:
+On success, the intent result document is a **bare array**. Its entry type depends on the selected action:
 
 ```ts
-{
-  document: FilePickerEntry[]
+import type { IOCozyFile, IOCozyFolder } from 'cozy-client/types/types'
+
+type FilePickerDocument = IOCozyFile | IOCozyFolder
+
+interface FilePickerResult {
+  document: FilePickerEntry[] | FilePickerDocument[]
 }
 ```
 
 ### FilePickerEntry
+
+The link actions return mapped entries:
 
 ```ts
 interface FilePickerEntry {
@@ -233,7 +258,9 @@ interface FilePickerEntry {
 }
 ```
 
-Exactly one of `sharingLink` or `downloadLink` is present, depending on the action selected by the user.
+Exactly one of `sharingLink` or `downloadLink` is present, depending on the link action selected by the user.
+
+The `documents` action instead returns complete cozy-client documents without mapping or removing fields.
 
 Example:
 
@@ -282,12 +309,17 @@ The signal fires exactly once per intent. Navigating into subfolders does not
 re-fire it. It fires even if the initial folder query errors, since the picker
 is still interactive.
 
-## Handling both link modes
+## Handling result modes
 
 ```js
 const handleComplete = result => {
   const entry = result.document?.[0]
   if (!entry) return
+
+  if (entry._type === 'io.cozy.files') {
+    useDocument(entry)
+    return
+  }
 
   if (entry.downloadLink) {
     attachRemoteFile(entry.downloadLink)

@@ -18,6 +18,7 @@ import FilePickerFooter from './FilePickerFooter'
 import FilePickerHeader from './FilePickerHeader'
 import {
   defaultFilePickerConfig,
+  filePickerActions,
   filePickerDoubleClickResults,
   filePickerErrorCodes,
   filePickerLinkModes,
@@ -109,12 +110,17 @@ const FilePicker = ({
   const itemTypesAccepted = getCompliantTypes(accept)
   const hasSelection = itemsIdsSelected.length > 0
 
-  const publicLinkState = hasSelection
-    ? getActionDisabledState(publicLinkAction, selectedItems)
-    : { disabled: true, reasonKey: null }
-  const downloadLinkState = hasSelection
-    ? getActionDisabledState(downloadLinkAction, selectedItems)
-    : { disabled: true, reasonKey: null }
+  const actions = filePickerActions.map(action => {
+    const actionConfig = config[action.configKey] ?? null
+
+    return {
+      ...action,
+      actionConfig,
+      state: hasSelection
+        ? getActionDisabledState(actionConfig, selectedItems)
+        : { disabled: true, reasonKey: null }
+    }
+  })
 
   const handleFileDoubleClick = useCallback(
     async item => {
@@ -200,13 +206,7 @@ const FilePicker = ({
         </Box>
         <Divider />
         <footer className="u-mv-1 u-mh-2" data-testid="file-picker-footer">
-          <FilePickerFooter
-            onConfirm={handleFooterConfirm}
-            publicLinkState={publicLinkState}
-            downloadLinkState={downloadLinkState}
-            publicLinkAction={publicLinkAction}
-            downloadLinkAction={downloadLinkAction}
-          />
+          <FilePickerFooter onConfirm={handleFooterConfirm} actions={actions} />
         </footer>
       </div>
 
@@ -233,7 +233,8 @@ FilePicker.propTypes = {
     }),
     multiple: PropTypes.bool,
     sharingLink: PropTypes.object,
-    downloadLink: PropTypes.object
+    downloadLink: PropTypes.object,
+    documents: PropTypes.object
   }),
   onReadyToUse: PropTypes.func,
   onFileDoubleClick: PropTypes.func

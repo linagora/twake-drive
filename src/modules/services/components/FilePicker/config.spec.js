@@ -83,6 +83,23 @@ describe('FilePicker config', () => {
       })
     })
 
+    it('keeps documents hidden by default', () => {
+      expect(getFilePickerConfig(null).documents).toBeNull()
+    })
+
+    it('resolves an explicit documents action', () => {
+      const config = getFilePickerConfig({
+        attributes: {
+          data: { documents: { label: 'Select', onlyFolder: true } }
+        }
+      })
+
+      expect(config.documents).toEqual({
+        label: 'Select',
+        onlyFolder: true
+      })
+    })
+
     it('preserves an explicit null action (action not offered)', () => {
       const intent = {
         attributes: { data: { downloadLink: null } }

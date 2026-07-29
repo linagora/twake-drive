@@ -147,6 +147,21 @@ export class FilePickerPage {
       .isVisible()
   }
 
+  /** Click the documents action in the picker footer. */
+  async clickDocuments(): Promise<void> {
+    await this.getFrameLocator().getByTestId('documents-btn').click()
+  }
+
+  /** Whether the documents action is disabled. */
+  async isDocumentsDisabled(): Promise<boolean> {
+    return this.getFrameLocator().getByTestId('documents-btn').isDisabled()
+  }
+
+  /** Whether the documents action is visible. */
+  async hasDocumentsButton(): Promise<boolean> {
+    return this.getFrameLocator().getByTestId('documents-btn').isVisible()
+  }
+
   /** Click the "Temporary download link" button in the picker footer. */
   async clickTemporaryDownloadLink(): Promise<void> {
     const frame = this.getFrameLocator()

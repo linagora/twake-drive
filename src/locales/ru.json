@@ -757,14 +757,16 @@
       "buttons": {
         "cancel": "Отменить",
         "publicLink": "Добавить как ссылку",
-        "temporaryDownloadLink": "Добавить как вложение"
+        "temporaryDownloadLink": "Добавить как вложение",
+        "documents": "Выбрать"
       }
     },
     "constraints": {
       "disabledReasons": {
         "folderNotAllowed": "Folders are not allowed for this action",
         "mimeTypeNotAllowed": "This file type is not allowed for this action",
-        "fileTooLarge": "This file is larger than %{maxFileSize}"
+        "fileTooLarge": "This file is larger than %{maxFileSize}",
+        "fileNotAllowed": "Only folders can be selected for this action"
       }
     },
     "actions": {

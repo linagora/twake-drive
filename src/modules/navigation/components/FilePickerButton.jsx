@@ -22,6 +22,10 @@ const PICKER_CONFIGS = [
     label: 'Single selection'
   },
   {
+    id: 'documents-folder',
+    label: 'Documents folder'
+  },
+  {
     id: 'sharing-only',
     label: 'Sharing link only'
   },
@@ -47,6 +51,17 @@ const buildFilePickerOptions = (configId, t) => {
   switch (configId) {
     case 'single-selection':
       return { multiple: false }
+    case 'documents-folder':
+      return {
+        multiple: false,
+        sharingLink: null,
+        downloadLink: null,
+        documents: {
+          label: 'Select folder',
+          allowFolder: true,
+          onlyFolder: true
+        }
+      }
     case 'sharing-only':
       return {
         sharingLink: { label: 'Share as link' },
