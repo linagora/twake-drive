@@ -19,6 +19,19 @@ import IconDocs from '@/assets/icons/icon-docs.svg'
 import IconExcalidraw from '@/assets/icons/icon-excalidraw.svg'
 import { getFileMimetype } from '@/lib/getFileMimetype'
 
+export const MIME_TYPE_ICONS = {
+  audio: FileTypeAudio,
+  bin: FileTypeBin,
+  code: FileTypeCode,
+  image: FileTypeImage,
+  pdf: FileTypePdf,
+  sheet: FileTypeSheet,
+  slide: FileTypeSlide,
+  text: FileTypeText,
+  video: FileTypeVideo,
+  zip: FileTypeZip
+}
+
 /**
  * Returns the appropriate icon for a given file based on its mime type.
  *
@@ -37,20 +50,8 @@ const getMimeTypeIcon = (isDirectory, name, mime) => {
   } else if (/\.excalidraw$/.test(name)) {
     return IconExcalidraw
   } else {
-    const iconsByMimeType = {
-      audio: FileTypeAudio,
-      bin: FileTypeBin,
-      code: FileTypeCode,
-      image: FileTypeImage,
-      pdf: FileTypePdf,
-      slide: FileTypeSlide,
-      sheet: FileTypeSheet,
-      text: FileTypeText,
-      video: FileTypeVideo,
-      zip: FileTypeZip
-    }
-    const type = getFileMimetype(iconsByMimeType)(mime, name)
-    return get(iconsByMimeType, type, FileTypeFiles)
+    const type = getFileMimetype(MIME_TYPE_ICONS)(mime, name)
+    return get(MIME_TYPE_ICONS, type, FileTypeFiles)
   }
 }
 
