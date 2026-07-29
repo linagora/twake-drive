@@ -1,17 +1,7 @@
-import {
-  FileTypeAudio,
-  FileTypeFolder,
-  FileTypeImage,
-  FileTypePdf,
-  FileTypeSheet,
-  FileTypeSlide,
-  FileTypeText,
-  FileTypeVideo,
-  FileTypeZip,
-  Globe
-} from '@linagora/twake-icons'
+import { FileTypeFolder, Globe } from '@linagora/twake-icons'
 
 import IconExcalidraw from '@/assets/icons/icon-excalidraw.svg'
+import { MIME_TYPE_ICONS } from '@/lib/getMimeTypeIcon'
 
 export const FILE_TYPE_OPTIONS = [
   {
@@ -22,42 +12,42 @@ export const FILE_TYPE_OPTIONS = [
   {
     value: 'text',
     labelKey: 'filters.type.options.document',
-    icon: FileTypeText
+    icon: MIME_TYPE_ICONS.text
   },
   {
     value: 'sheet',
     labelKey: 'filters.type.options.spreadsheet',
-    icon: FileTypeSheet
+    icon: MIME_TYPE_ICONS.sheet
   },
   {
     value: 'slide',
     labelKey: 'filters.type.options.presentation',
-    icon: FileTypeSlide
+    icon: MIME_TYPE_ICONS.slide
   },
   {
     value: 'image',
     labelKey: 'filters.type.options.photo',
-    icon: FileTypeImage
+    icon: MIME_TYPE_ICONS.image
   },
   {
     value: 'pdf',
     labelKey: 'filters.type.options.pdf',
-    icon: FileTypePdf
+    icon: MIME_TYPE_ICONS.pdf
   },
   {
     value: 'video',
     labelKey: 'filters.type.options.video',
-    icon: FileTypeVideo
+    icon: MIME_TYPE_ICONS.video
   },
   {
     value: 'zip',
     labelKey: 'filters.type.options.archive',
-    icon: FileTypeZip
+    icon: MIME_TYPE_ICONS.zip
   },
   {
     value: 'audio',
     labelKey: 'filters.type.options.audio',
-    icon: FileTypeAudio
+    icon: MIME_TYPE_ICONS.audio
   },
   {
     value: 'excalidraw',
