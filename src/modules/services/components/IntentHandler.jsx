@@ -4,6 +4,8 @@ import { useClient } from 'cozy-client'
 import Intents from 'cozy-interapp'
 import logger from 'cozy-logger'
 import Box from 'cozy-ui/transpiled/react/Box'
+import AlertProvider from 'cozy-ui/transpiled/react/providers/Alert'
+import { BreakpointsProvider } from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import CozyTheme from 'cozy-ui-plus/dist/providers/CozyTheme'
 
 import { getFilePickerConfig } from './FilePicker/config'
@@ -11,7 +13,6 @@ import { buildContentFolderQuery } from './FilePicker/queries'
 import Picker from './Picker'
 
 import { ROOT_DIR_ID } from '@/constants/config'
-
 function isFilePickerIntent(intent) {
   return (
     intent?.attributes?.action === 'PICK' &&
@@ -102,16 +103,16 @@ const IntentHandler = ({ intentId }) => {
     serviceData
   ).theme
 
-  return themeType === 'auto' ? (
-    content
-  ) : (
+  return (
     <CozyTheme
+      className="u-h-100 u-w-100"
       type={themeType}
       ignoreCozySettings
       ignoreItself={false}
-      className="u-h-100 u-w-100"
     >
-      {content}
+      <BreakpointsProvider>
+        <AlertProvider>{content}</AlertProvider>
+      </BreakpointsProvider>
     </CozyTheme>
   )
 }
