@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useQuery } from 'cozy-client'
 import { useSharingContext } from 'cozy-sharing'
 
+import { useSharingsRootList } from './SharingsRootListContext'
 import { isSharingsEntryMatchingFilters } from './matchSharingsFilters'
 import { getSharingsTabForEntry } from './useFilteredSharings'
 import { useSharingsFilters } from './useSharingsFilters'
@@ -11,8 +12,11 @@ import { useSharingsTab } from './useSharingsTab'
 import withSharedDocumentIds from './withSharedDocumentIds'
 
 import { FilesViewerLoading } from '@/components/FilesViewerLoading'
+import { SORT_BY_UPDATE_DATE } from '@/config/sort'
 import { useCurrentFolderId } from '@/hooks'
+import { useFileLastUpdated } from '@/modules/filelist/FileLastUpdatedContext'
 import FilesViewer from '@/modules/viewer/FilesViewer'
+import { sortFiles } from '@/modules/views/Folder/sortFiles'
 import { getSharingsTabRoute } from '@/modules/views/Sharings/routes'
 import { buildSharingsQuery } from '@/queries'
 
@@ -25,6 +29,9 @@ const FilesViewerSharing = ({ sharedDocumentIds }) => {
   const [tab] = useSharingsTab()
   const { filters } = useSharingsFilters(tab)
   const { isOwner } = useSharingContext()
+  const rootList = useSharingsRootList()
+  const { getFileLastUpdatedAt, groupDirectoriesFirstByUpdatedAt } =
+    useFileLastUpdated()
 
   if (results.data) {
     // At the sharings root, next/previous must not leak into files that
@@ -32,13 +39,25 @@ const FilesViewerSharing = ({ sharedDocumentIds }) => {
     // belongs to the folder's tab and nested files are unknown to the
     // sharing context (isOwner would misclassify them), so the tab filter
     // only applies at the root.
-    const viewableFiles = results.data.filter(
-      f =>
-        f.type !== 'directory' &&
-        (currentFolderId ||
-          (getSharingsTabForEntry(f, isOwner) === tab &&
-            isSharingsEntryMatchingFilters(f, filters)))
-    )
+    // Reuse the rendered root list so viewer navigation matches its filters
+    // and contextual activity order without issuing another query.
+    const rootEntries =
+      rootList?.entries ??
+      results.data.filter(
+        file =>
+          getSharingsTabForEntry(file, isOwner) === tab &&
+          isSharingsEntryMatchingFilters(file, filters, getFileLastUpdatedAt)
+      )
+    const viewableFiles = currentFolderId
+      ? results.data.filter(file => file.type !== 'directory')
+      : sortFiles(
+          rootEntries.filter(file => file.type !== 'directory'),
+          rootList?.sortOrder ?? SORT_BY_UPDATE_DATE,
+          {
+            getFileLastUpdatedAt,
+            groupDirectoriesFirstByUpdatedAt
+          }
+        )
     const tabPath = getSharingsTabRoute(tab)
     const basePath = currentFolderId
       ? `${tabPath}/folder/${currentFolderId}`
