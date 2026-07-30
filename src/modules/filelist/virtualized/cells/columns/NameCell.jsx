@@ -11,6 +11,7 @@ import {
   isRenaming as isRenamingSelector,
   getRenamingFile
 } from '@/modules/drive/rename'
+import { useFileLastUpdated } from '@/modules/filelist/FileLastUpdatedContext'
 import FileOpener from '@/modules/filelist/FileOpener'
 import { useFormattedUpdatedAt } from '@/modules/filelist/useFormattedUpdatedAt'
 import FileName from '@/modules/filelist/virtualized/cells/FileName'
@@ -29,9 +30,8 @@ const NameCell = ({
       isRenamingSelector(state) && get(getRenamingFile(state), 'id') === row.id
   )
   const isInSyncFromSharing = useIsInSyncFromSharing(row)
-  const formattedUpdatedAt = useFormattedUpdatedAt(
-    row.updated_at || row.created_at
-  )
+  const { getFileLastUpdatedAt } = useFileLastUpdated()
+  const formattedUpdatedAt = useFormattedUpdatedAt(getFileLastUpdatedAt(row))
 
   if (!cell) return '—'
 

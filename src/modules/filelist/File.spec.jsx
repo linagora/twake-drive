@@ -10,6 +10,8 @@ import { DumbFile } from './File'
 import AppLike from 'test/components/AppLike'
 import { folder, actionsMenu } from 'test/data'
 
+import { FileLastUpdatedProvider } from '@/modules/filelist/FileLastUpdatedContext'
+
 jest.mock('cozy-sharing', () => ({
   ...jest.requireActual('cozy-sharing'),
   useSharingContext: jest.fn()
@@ -37,21 +39,35 @@ const setup = ({
   onFileOpen = jest.fn(),
   onCheckboxToggle = jest.fn(),
   isInSyncFromSharing = false,
-  disableSelection = false
+  disableSelection = false,
+  getFileLastUpdatedAt = null,
+  showDirectoryLastUpdated = false
 } = {}) => {
+  const file = (
+    <DumbFile
+      attributes={attributes}
+      actions={actions}
+      selected={selected}
+      withSelectionCheckbox={withSelectionCheckbox}
+      selectionModeActive={selectionModeActive}
+      onFileOpen={onFileOpen}
+      onCheckboxToggle={onCheckboxToggle}
+      isInSyncFromSharing={isInSyncFromSharing}
+      disableSelection={disableSelection}
+    />
+  )
   const root = render(
     <AppLike client={client}>
-      <DumbFile
-        attributes={attributes}
-        actions={actions}
-        selected={selected}
-        withSelectionCheckbox={withSelectionCheckbox}
-        selectionModeActive={selectionModeActive}
-        onFileOpen={onFileOpen}
-        onCheckboxToggle={onCheckboxToggle}
-        isInSyncFromSharing={isInSyncFromSharing}
-        disableSelection={disableSelection}
-      />
+      {getFileLastUpdatedAt ? (
+        <FileLastUpdatedProvider
+          getFileLastUpdatedAt={getFileLastUpdatedAt}
+          showDirectoryLastUpdated={showDirectoryLastUpdated}
+        >
+          {file}
+        </FileLastUpdatedProvider>
+      ) : (
+        file
+      )}
     </AppLike>
   )
   return { root }
@@ -111,6 +127,16 @@ describe('File', () => {
       fireEvent.click(checkbox)
 
       expect(queryByText('SelectAllMenuItem'))
+    })
+
+    it('shows a provider timestamp for a directory when enabled', () => {
+      const lastUpdatedAt = '2026-07-29T08:00:00.000Z'
+      const { root } = setup({
+        getFileLastUpdatedAt: () => lastUpdatedAt,
+        showDirectoryLastUpdated: true
+      })
+
+      expect(root.container.querySelector('time').dateTime).toBe(lastUpdatedAt)
     })
   })
 
