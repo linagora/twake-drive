@@ -12,6 +12,11 @@ import { isNextcloudShortcut } from '@/modules/nextcloud/helpers'
 
 export const isDriveBackedFile = (file: File): boolean => !!file.driveId
 
+export const makeFileMetadata = (
+  formattedUpdatedAt?: string,
+  formattedSize?: string
+): string => [formattedUpdatedAt, formattedSize].filter(Boolean).join(' - ')
+
 export const makeParentFolderPath = (file: File): string => {
   if (file.dir_id === SHARED_DRIVES_DIR_ID) {
     return SHARINGS_VIEW_ROUTE

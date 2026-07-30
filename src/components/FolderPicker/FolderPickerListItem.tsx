@@ -12,7 +12,10 @@ import { useI18n } from 'twake-i18n'
 import styles from '@/styles/folder-picker.styl'
 
 import type { File } from '@/components/FolderPicker/types'
-import { getFileNameAndExtension } from '@/modules/filelist/helpers'
+import {
+  getFileNameAndExtension,
+  makeFileMetadata
+} from '@/modules/filelist/helpers'
 import FileThumbnail from '@/modules/filelist/icons/FileThumbnail'
 
 interface FolderPickerListItemProps {
@@ -44,7 +47,7 @@ const FolderPickerListItem: FC<FolderPickerListItemProps> = ({
     ? filesize(file.size, { base: 10 })
     : undefined
   const secondaryText = !isDirectory(file)
-    ? `${formattedUpdatedAt}${formattedSize ? ` - ${formattedSize}` : ''}`
+    ? makeFileMetadata(formattedUpdatedAt, formattedSize)
     : undefined
 
   const { title } = getFileNameAndExtension(file, t)

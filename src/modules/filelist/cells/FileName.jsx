@@ -13,6 +13,7 @@ import { useViewSwitcherContext } from '@/lib/ViewSwitcherContext'
 import RenameInput from '@/modules/drive/RenameInput'
 import {
   getFileNameAndExtension,
+  makeFileMetadata,
   makeParentFolderPath
 } from '@/modules/filelist/helpers'
 import { getSharingsRootRoute } from '@/modules/views/Sharings/routes'
@@ -93,9 +94,7 @@ const FileName = ({
           {!withFilePath &&
             (isDirectory(attributes) || (
               <div className={styles['fil-file-infos']}>
-                {`${formattedUpdatedAt}${
-                  formattedSize ? ` - ${formattedSize}` : ''
-                }`}
+                {makeFileMetadata(formattedUpdatedAt, formattedSize)}
               </div>
             ))}
         </div>
