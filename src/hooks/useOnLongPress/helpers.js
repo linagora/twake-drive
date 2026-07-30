@@ -127,11 +127,17 @@ export const makeMobileHandlers = ({
     }, 250)
   }
 
+  const cancelPress = () => {
+    clearTimeout(timerId.current)
+    isLongPress.current = false
+  }
+
   return {
     // first event triggered on Mobile when taping an item
     onTouchStart: startPressTimer,
     // second event triggered on Mobile when dragging an item
     onTouchMove: () => clearTimeout(timerId.current),
+    onTouchCancel: cancelPress,
     // third event triggered on Mobile when taping an item
     onTouchEnd: () => clearTimeout(timerId.current),
     // fourth event triggered on Mobile

@@ -74,14 +74,15 @@ const FilePickerBody = ({
     })
   }, [])
 
-  const { handleItemClick, selectedItemIds } = useFilePickerSelection({
-    items,
-    canSelectItem,
-    multiple,
-    selectionContainerRef,
-    scrollElement,
-    scrollToIndex
-  })
+  const { handleItemClick, handleMobileToggleSelect, selectedItemIds } =
+    useFilePickerSelection({
+      items,
+      canSelectItem,
+      multiple,
+      selectionContainerRef,
+      scrollElement,
+      scrollToIndex
+    })
 
   const handleListItemDoubleClick = useCallback(
     item => {
@@ -128,6 +129,7 @@ const FilePickerBody = ({
         items={items}
         itemsIdsSelected={selectedItemIds}
         onItemClick={isMobile ? handleMobileItemClick : handleItemClick}
+        onItemToggle={isMobile ? handleMobileToggleSelect : null}
         onItemDoubleClick={isMobile ? null : handleListItemDoubleClick}
         fetchMore={hasMore ? fetchMore : undefined}
         scrollerRef={setScrollElement}

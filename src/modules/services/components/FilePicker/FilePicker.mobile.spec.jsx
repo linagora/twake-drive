@@ -1,4 +1,4 @@
-import { fireEvent, render, within } from '@testing-library/react'
+import { act, fireEvent, render, within } from '@testing-library/react'
 import React from 'react'
 
 import { Q, createMockClient } from 'cozy-client'
@@ -33,6 +33,13 @@ const mockFile = {
   updated_at: '2025-01-02T10:00:00.000Z',
   size: 1500
 }
+const mockChildFile = {
+  ...mockFile,
+  _id: 'child-file-id',
+  id: 'child-file-id',
+  dir_id: mockFolder.id,
+  name: 'child-report.pdf'
+}
 const mockItems = [mockFolder, mockEmptyFile, mockFile]
 const mockClient = createMockClient({
   queries: {
@@ -44,7 +51,7 @@ const mockClient = createMockClient({
     'buildContentFolderQuery-folder-id': {
       definition: buildContentFolderQuery(mockFolder.id).definition(),
       doctype: 'io.cozy.files',
-      data: mockItems
+      data: [mockChildFile]
     },
     [`io.cozy.files/${mockRootId}`]: {
       definition: Q('io.cozy.files').getById(mockRootId),
@@ -120,12 +127,14 @@ function getVisibleText(element) {
   return element.textContent.replaceAll('\u200e', '')
 }
 
-function setup({ isMobile = true } = {}) {
+function setup({ accept, isMobile = true, multiple = false } = {}) {
   window.innerWidth = isMobile ? 500 : 1024
 
   return render(
     <AppLike client={mockClient}>
       <FilePicker
+        accept={accept}
+        multiple={multiple}
         onChange={mockOnChange}
         onFileDoubleClick={mockOnFileDoubleClick}
       />
@@ -133,9 +142,164 @@ function setup({ isMobile = true } = {}) {
   )
 }
 
+function tap(row) {
+  fireEvent.touchStart(row)
+  fireEvent.touchEnd(row)
+  fireEvent.click(row)
+}
+
+function longPress(row) {
+  fireEvent.touchStart(row)
+  act(() => jest.advanceTimersByTime(250))
+  fireEvent.touchEnd(row)
+  fireEvent.click(row)
+}
+
 describe('FilePicker mobile navigation and list', () => {
   afterEach(() => {
     jest.clearAllMocks()
+    jest.useRealTimers()
+  })
+
+  it('starts selection on long press and ignores the following click', () => {
+    jest.useFakeTimers()
+    const { getAllByRole, getAllByTestId, getByTestId, queryAllByRole } =
+      setup()
+    const fileRow = getAllByTestId('list-item').find(
+      row => row.dataset.fileId === mockFile.id
+    )
+
+    expect(queryAllByRole('checkbox')).toHaveLength(0)
+
+    longPress(fileRow)
+
+    expect(getAllByRole('checkbox')).toHaveLength(mockItems.length)
+    expect(within(fileRow).getByRole('checkbox')).toBeChecked()
+    expect(getByTestId('public-link-btn')).not.toBeDisabled()
+  })
+
+  it('selects folders by long press without navigating', () => {
+    jest.useFakeTimers()
+    const { getAllByTestId, getByTestId } = setup()
+    const folderRow = getAllByTestId('list-item').find(
+      row => row.dataset.fileId === mockFolder.id
+    )
+
+    longPress(folderRow)
+
+    expect(within(folderRow).getByRole('checkbox')).toBeChecked()
+    expect(getByTestId('file-picker-breadcrumb')).toHaveTextContent('My Drive')
+  })
+
+  it('cancels pending selection when touch movement starts', () => {
+    jest.useFakeTimers()
+    const { getAllByTestId, getByTestId, queryAllByRole } = setup()
+    const fileRow = getAllByTestId('list-item').find(
+      row => row.dataset.fileId === mockFile.id
+    )
+
+    fireEvent.touchStart(fileRow)
+    fireEvent.touchMove(fileRow)
+    act(() => jest.advanceTimersByTime(300))
+    fireEvent.touchEnd(fileRow)
+
+    expect(queryAllByRole('checkbox')).toHaveLength(0)
+    expect(getByTestId('public-link-btn')).toBeDisabled()
+  })
+
+  it('cancels pending selection when the touch is cancelled', () => {
+    jest.useFakeTimers()
+    const { getAllByTestId, getByTestId, queryAllByRole } = setup()
+    const fileRow = getAllByTestId('list-item').find(
+      row => row.dataset.fileId === mockFile.id
+    )
+
+    fireEvent.touchStart(fileRow)
+    fireEvent.touchCancel(fileRow)
+    act(() => jest.advanceTimersByTime(300))
+
+    expect(queryAllByRole('checkbox')).toHaveLength(0)
+    expect(getByTestId('public-link-btn')).toBeDisabled()
+  })
+
+  it('toggles only the tapped item in multiple selection mode', () => {
+    jest.useFakeTimers()
+    const { getAllByRole, getAllByTestId } = setup({ multiple: true })
+    const rows = getAllByTestId('list-item')
+    const folderRow = rows.find(row => row.dataset.fileId === mockFolder.id)
+    const emptyFileRow = rows.find(
+      row => row.dataset.fileId === mockEmptyFile.id
+    )
+    const fileRow = rows.find(row => row.dataset.fileId === mockFile.id)
+
+    longPress(fileRow)
+    expect(getAllByRole('checkbox')).toHaveLength(mockItems.length)
+    tap(folderRow)
+    expect(within(folderRow).getByRole('checkbox')).toBeChecked()
+    tap(emptyFileRow)
+    expect(within(emptyFileRow).getByRole('checkbox')).toBeChecked()
+    tap(fileRow)
+
+    expect(getAllByRole('checkbox')).toHaveLength(mockItems.length)
+    expect(within(folderRow).getByRole('checkbox')).toBeChecked()
+    expect(within(emptyFileRow).getByRole('checkbox')).toBeChecked()
+    expect(within(fileRow).getByRole('checkbox')).not.toBeChecked()
+  })
+
+  it('replaces and clears selection in single selection mode', () => {
+    jest.useFakeTimers()
+    const { getAllByTestId, queryAllByRole } = setup()
+    const rows = getAllByTestId('list-item')
+    const folderRow = rows.find(row => row.dataset.fileId === mockFolder.id)
+    const fileRow = rows.find(row => row.dataset.fileId === mockFile.id)
+
+    longPress(fileRow)
+    tap(folderRow)
+
+    expect(within(folderRow).getByRole('checkbox')).toBeChecked()
+    expect(within(fileRow).getByRole('checkbox')).not.toBeChecked()
+
+    tap(folderRow)
+
+    expect(queryAllByRole('checkbox')).toHaveLength(0)
+  })
+
+  it('allows selection of files outside the accepted action types', () => {
+    jest.useFakeTimers()
+    const { getAllByTestId } = setup({ accept: 'application/pdf' })
+    const incompatibleFileRow = getAllByTestId('list-item').find(
+      row => row.dataset.fileId === mockEmptyFile.id
+    )
+
+    longPress(incompatibleFileRow)
+
+    expect(within(incompatibleFileRow).getByRole('checkbox')).toBeChecked()
+  })
+
+  it('clears selection when navigating back to the parent folder', () => {
+    jest.useFakeTimers()
+    const {
+      getAllByTestId,
+      getByRole,
+      getByTestId,
+      queryAllByRole,
+      queryByRole
+    } = setup()
+    const folderRow = getAllByTestId('list-item').find(
+      row => row.dataset.fileId === mockFolder.id
+    )
+
+    fireEvent.click(folderRow)
+    const childFileRow = getAllByTestId('list-item').find(
+      row => row.dataset.fileId === mockChildFile.id
+    )
+    longPress(childFileRow)
+    fireEvent.click(getByRole('button', { name: 'Back' }))
+
+    expect(getByTestId('file-picker-breadcrumb')).toHaveTextContent('My Drive')
+    expect(queryByRole('button', { name: 'Back' })).toBe(null)
+    expect(queryAllByRole('checkbox')).toHaveLength(0)
+    expect(getByTestId('public-link-btn')).toBeDisabled()
   })
 
   it('preserves desktop columns, selection and folder double-click navigation', () => {
