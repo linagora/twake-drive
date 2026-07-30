@@ -12,6 +12,7 @@ import AssistantLayout from '../views/Assistant/AssistantLayout'
 import { DriveFolderView } from '../views/Drive/DriveFolderView'
 import FilesViewerDrive from '../views/Drive/FilesViewerDrive'
 import { getExcalidrawRoutes } from '../views/Excalidraw/routes'
+import { FilePickerDemoView } from '../views/FilePickerDemo/FilePickerDemoView'
 import OnlyOfficePaywallView from '../views/OnlyOffice/OnlyOfficePaywallView'
 import { getOnlyOfficeRoutes } from '../views/OnlyOffice/routes'
 import { getPdfRoutes } from '../views/Pdf/routes'
@@ -202,6 +203,9 @@ const AppRoutes = ({ sharedDrivesEnabled }) => (
 
     <Route element={<Layout />}>
       <Route path="upload" element={<UploaderComponent />} />
+      {flag('drive.file-picker-demo.enabled') && (
+        <Route path="file-picker-demo" element={<FilePickerDemoView />} />
+      )}
       <Route path="/files/:folderId" element={<FilesRedirect />} />
       <Route path="/" element={<Index />} />
 

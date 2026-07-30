@@ -6,6 +6,7 @@ import { ConfirmDialog } from 'cozy-ui/transpiled/react/CozyDialogs'
 import FormControlLabel from 'cozy-ui/transpiled/react/FormControlLabel'
 import RadioGroup from 'cozy-ui/transpiled/react/RadioGroup'
 import Radios from 'cozy-ui/transpiled/react/Radios'
+import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import IntentDialogOpener from 'cozy-ui-plus/dist/Intent/IntentDialogOpener'
 import { useI18n } from 'twake-i18n'
 
@@ -89,6 +90,7 @@ const buildFilePickerOptions = (configId, t) => {
 
 export const FilePickerButton = () => {
   const { t } = useI18n()
+  const { isMobile } = useBreakpoints()
   const [modalData, setModalData] = useState(null)
   const [configId, setConfigId] = useState(PICKER_CONFIGS[0].id)
   const [themeType, setThemeType] = useState(filePickerThemes[0])
@@ -157,6 +159,7 @@ export const FilePickerButton = () => {
         doctype="io.cozy.files"
         options={filePickerOptions}
         classes={{ paper: 'u-h-100' }}
+        fullScreen={isMobile}
         fullWidth
         maxWidth="md"
         iframeProps={{ spinnerProps: { middle: true } }}
