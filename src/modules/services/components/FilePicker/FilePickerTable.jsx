@@ -6,6 +6,7 @@ import Box from 'cozy-ui/transpiled/react/Box'
 import VirtualizedTable from 'cozy-ui/transpiled/react/Table/Virtualized'
 import virtuosoComponents from 'cozy-ui/transpiled/react/Table/Virtualized/virtuosoComponents'
 import TableRow from 'cozy-ui/transpiled/react/TableRow'
+import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import { useI18n } from 'twake-i18n'
 
 import { FilePickerTableCell } from './FilePickerTableCell'
@@ -40,7 +41,7 @@ const FilePickerTableRow = forwardRef(
     }
 
     const handleDoubleClick = event => {
-      context.onItemDoubleClick(row, event)
+      context.onItemDoubleClick?.(row, event)
     }
 
     return (
@@ -66,16 +67,25 @@ FilePickerTableRow.propTypes = {
     data: PropTypes.array,
     isSelectedItem: PropTypes.func.isRequired,
     onItemClick: PropTypes.func.isRequired,
-    onItemDoubleClick: PropTypes.func.isRequired
+    onItemDoubleClick: PropTypes.func
   }).isRequired,
   className: PropTypes.string
 }
 
 const FilePickerTableRowMemo = memo(FilePickerTableRow)
 
+const MobileTableHead = forwardRef(function MobileTableHead(_props, ref) {
+  return <thead ref={ref} />
+})
+
 const tableComponents = {
   ...virtuosoComponents,
   TableRow: FilePickerTableRowMemo
+}
+
+const mobileTableComponents = {
+  ...tableComponents,
+  TableHead: MobileTableHead
 }
 
 const tableComponentsProps = {
@@ -95,7 +105,11 @@ export const FilePickerTable = memo(
     virtuosoRef
   }) => {
     const { t } = useI18n()
-    const columns = useMemo(() => makeFilePickerColumns(t), [t])
+    const { isMobile } = useBreakpoints()
+    const columns = useMemo(() => {
+      const filePickerColumns = makeFilePickerColumns(t)
+      return isMobile ? filePickerColumns.slice(0, 1) : filePickerColumns
+    }, [isMobile, t])
 
     const selectedItems = useMemo(
       () => items.filter(item => itemsIdsSelected.includes(item._id)),
@@ -120,7 +134,7 @@ export const FilePickerTable = memo(
         <VirtualizedTable
           ref={virtuosoRef}
           context={tableContext}
-          components={tableComponents}
+          components={isMobile ? mobileTableComponents : tableComponents}
           rows={items}
           columns={columns}
           endReached={fetchMore}
@@ -139,7 +153,7 @@ FilePickerTable.propTypes = {
   items: PropTypes.arrayOf(PropTypes.object).isRequired,
   itemsIdsSelected: PropTypes.arrayOf(PropTypes.string).isRequired,
   onItemClick: PropTypes.func.isRequired,
-  onItemDoubleClick: PropTypes.func.isRequired,
+  onItemDoubleClick: PropTypes.func,
   fetchMore: PropTypes.func,
   scrollerRef: PropTypes.func,
   virtuosoRef: PropTypes.object

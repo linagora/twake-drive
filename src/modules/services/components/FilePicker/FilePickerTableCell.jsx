@@ -1,17 +1,34 @@
+import { filesize } from 'filesize'
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import { isDirectory } from 'cozy-client/dist/models/file'
 import Filename from 'cozy-ui/transpiled/react/Filename'
+import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import { useI18n } from 'twake-i18n'
 
 import { getFileNameAndExtension } from '@/modules/filelist/helpers'
 import FileThumbnail from '@/modules/filelist/icons/FileThumbnail'
+import { useFormattedUpdatedAt } from '@/modules/filelist/useFormattedUpdatedAt'
 import SizeCell from '@/modules/filelist/virtualized/cells/columns/SizeCell'
 import UpdatedAtCell from '@/modules/filelist/virtualized/cells/columns/UpdatedAtCell'
 
 const FilePickerNameCell = ({ row }) => {
   const { t } = useI18n()
+  const { isMobile } = useBreakpoints()
   const { title, filename, extension } = getFileNameAndExtension(row, t)
+  const isFolder = isDirectory(row)
+  const formattedUpdatedAt = useFormattedUpdatedAt(
+    row.updated_at || row.created_at
+  )
+  const formattedSize =
+    !isFolder && row.size !== null && row.size !== undefined
+      ? filesize(row.size, { base: 10 })
+      : null
+  const metadata =
+    isMobile && !isFolder
+      ? `${formattedUpdatedAt ?? '—'} - ${formattedSize ?? '—'}`
+      : null
 
   return (
     <div
@@ -26,7 +43,12 @@ const FilePickerNameCell = ({ row }) => {
         <FileThumbnail file={row} />
       </div>
       <div className="u-flex-grow-1 u-ellipsis">
-        <Filename filename={filename} extension={extension} midEllipsis />
+        <Filename
+          filename={filename}
+          extension={extension}
+          midEllipsis
+          path={metadata}
+        />
       </div>
     </div>
   )
