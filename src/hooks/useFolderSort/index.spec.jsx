@@ -6,7 +6,7 @@ import flag from 'cozy-flags'
 import { useFolderSort } from './index'
 
 import { DEFAULT_SORT, SORT_BY_UPDATE_DATE } from '@/config/sort'
-import { TRASH_DIR_ID } from '@/constants/config'
+import { SHARINGS_VIEW_ID, TRASH_DIR_ID } from '@/constants/config'
 import { DOCTYPE_DRIVE_SETTINGS } from '@/lib/doctypes'
 import logger from '@/lib/logger'
 import { usePublicContext } from '@/modules/public/PublicProvider'
@@ -96,6 +96,13 @@ describe('useFolderSort', () => {
       })
 
       const { result } = renderHook(() => useFolderSort(folderId))
+
+      const [currentSort] = result.current
+      expect(currentSort).toEqual(SORT_BY_UPDATE_DATE)
+    })
+
+    it('should use SORT_BY_UPDATE_DATE for the sharings root', () => {
+      const { result } = renderHook(() => useFolderSort(SHARINGS_VIEW_ID))
 
       const [currentSort] = result.current
       expect(currentSort).toEqual(SORT_BY_UPDATE_DATE)

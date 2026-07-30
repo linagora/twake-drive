@@ -10,6 +10,10 @@ import { isFileType } from '@/lib/fileTypes'
 import type { FileType } from '@/lib/fileTypes'
 import { getFileMimetype } from '@/lib/getFileMimetype'
 import { isFileLastUpdatedInRange } from '@/lib/isFileLastUpdatedInRange'
+import {
+  getDefaultFileLastUpdatedAt,
+  type GetFileLastUpdatedAt
+} from '@/modules/filelist/FileLastUpdatedContext'
 import { DRIVE_ROOT_TYPE } from '@/modules/shareddrives/types'
 import { EXCALIDRAW_MIME } from '@/modules/views/Excalidraw/helpers'
 
@@ -22,10 +26,13 @@ interface SharingsTarget {
   drive_root_type: string | null
   mime: string | null
   name: string | null
-  updated_at: string | null
 }
 
-type FilterMatcher = (entry: IOCozyFile, value: string) => boolean
+type FilterMatcher = (
+  entry: IOCozyFile,
+  value: string,
+  getFileLastUpdatedAt: GetFileLastUpdatedAt
+) => boolean
 type OptionalFileType = FileType | null
 
 interface FileTypeContext {
@@ -67,8 +74,7 @@ function getTarget(entry: IOCozyFile): SharingsTarget | null {
     class: getStringProperty(target, 'class'),
     drive_root_type: getStringProperty(target, 'drive_root_type'),
     mime: getStringProperty(target, 'mime'),
-    name: getStringProperty(target, 'name'),
-    updated_at: getStringProperty(target, 'updated_at')
+    name: getStringProperty(target, 'name')
   }
 }
 
@@ -186,10 +192,10 @@ function isSharingsEntryFileType(entry: IOCozyFile, fileType: string): boolean {
 
 function isSharingsEntryModificationDate(
   entry: IOCozyFile,
-  dateRangeValue: string
+  dateRangeValue: string,
+  getFileLastUpdatedAt: GetFileLastUpdatedAt
 ): boolean {
-  const updatedAt = getTarget(entry)?.updated_at ?? entry.updated_at ?? null
-  return isFileLastUpdatedInRange(updatedAt, dateRangeValue)
+  return isFileLastUpdatedInRange(getFileLastUpdatedAt(entry), dateRangeValue)
 }
 
 const FILTER_MATCHERS = {
@@ -207,12 +213,13 @@ function getFilterMatcher(filterName: string): FilterMatcher | null {
 
 export function isSharingsEntryMatchingFilters(
   entry: IOCozyFile,
-  filters: Readonly<SharingsFilterValues>
+  filters: Readonly<SharingsFilterValues>,
+  getFileLastUpdatedAt: GetFileLastUpdatedAt = getDefaultFileLastUpdatedAt
 ): boolean {
   return Object.entries(filters).every(([filterName, value]) => {
     if (value === null) return true
 
     const matcher = getFilterMatcher(filterName)
-    return matcher ? matcher(entry, value) : false
+    return matcher ? matcher(entry, value, getFileLastUpdatedAt) : false
   })
 }

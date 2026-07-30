@@ -31,6 +31,10 @@ function makeFile(overrides: Partial<IOCozyFile>): IOCozyFile {
   }
 }
 
+function makeLocalTimestamp(year: number, month: number, day: number): string {
+  return new Date(year, month - 1, day, 8).toISOString()
+}
+
 describe('isSharingsEntryMatchingFilters', () => {
   const fileTypeCases: Array<[Partial<IOCozyFile>, string]> = [
     [{ type: 'directory', name: 'Folder' }, 'directory'],
@@ -117,7 +121,7 @@ describe('isSharingsEntryMatchingFilters', () => {
   describe('modification date filter', () => {
     beforeAll(() => {
       jest.useFakeTimers()
-      jest.setSystemTime(new Date('2026-07-29T12:00:00.000Z'))
+      jest.setSystemTime(new Date(2026, 6, 29, 12))
     })
 
     afterAll(() => {
@@ -125,8 +129,12 @@ describe('isSharingsEntryMatchingFilters', () => {
     })
 
     it('matches files modified today', () => {
-      const today = makeFile({ updated_at: '2026-07-29T08:00:00.000Z' })
-      const yesterday = makeFile({ updated_at: '2026-07-28T08:00:00.000Z' })
+      const today = makeFile({
+        updated_at: makeLocalTimestamp(2026, 7, 29)
+      })
+      const yesterday = makeFile({
+        updated_at: makeLocalTimestamp(2026, 7, 28)
+      })
 
       expect(isSharingsEntryMatchingFilters(today, { date: 'today' })).toBe(
         true
@@ -138,10 +146,10 @@ describe('isSharingsEntryMatchingFilters', () => {
 
     it('matches the last seven calendar days including today', () => {
       const withinRange = makeFile({
-        updated_at: '2026-07-23T08:00:00.000Z'
+        updated_at: makeLocalTimestamp(2026, 7, 23)
       })
       const beforeRange = makeFile({
-        updated_at: '2026-07-22T08:00:00.000Z'
+        updated_at: makeLocalTimestamp(2026, 7, 22)
       })
 
       expect(
@@ -158,10 +166,10 @@ describe('isSharingsEntryMatchingFilters', () => {
 
     it('matches only the previous calendar month', () => {
       const lastMonth = makeFile({
-        updated_at: '2026-06-15T08:00:00.000Z'
+        updated_at: makeLocalTimestamp(2026, 6, 15)
       })
       const thisMonth = makeFile({
-        updated_at: '2026-07-01T08:00:00.000Z'
+        updated_at: makeLocalTimestamp(2026, 7, 1)
       })
 
       expect(
@@ -174,10 +182,10 @@ describe('isSharingsEntryMatchingFilters', () => {
 
     it('matches files modified during the current year', () => {
       const thisYear = makeFile({
-        updated_at: '2026-01-01T08:00:00.000Z'
+        updated_at: makeLocalTimestamp(2026, 1, 1)
       })
       const lastYear = makeFile({
-        updated_at: '2025-12-31T08:00:00.000Z'
+        updated_at: makeLocalTimestamp(2025, 12, 31)
       })
 
       expect(
@@ -188,25 +196,28 @@ describe('isSharingsEntryMatchingFilters', () => {
       ).toBe(false)
     })
 
-    it('uses the shared target modification date when available', () => {
+    it('uses the supplied last-updated resolver', () => {
       const entry = makeFile({
-        updated_at: '2025-01-01T08:00:00.000Z',
-        metadata: {
-          target: {
-            updated_at: '2026-07-29T08:00:00.000Z'
-          }
-        }
+        updated_at: '2025-01-01T08:00:00.000Z'
       })
-
-      expect(isSharingsEntryMatchingFilters(entry, { date: 'today' })).toBe(
-        true
+      const getFileLastUpdatedAt = jest.fn(() =>
+        makeLocalTimestamp(2026, 7, 29)
       )
+
+      expect(
+        isSharingsEntryMatchingFilters(
+          entry,
+          { date: 'today' },
+          getFileLastUpdatedAt
+        )
+      ).toBe(true)
+      expect(getFileLastUpdatedAt).toHaveBeenCalledWith(entry)
     })
 
     it('combines file type and modification date filters', () => {
       const recentPdf = makeFile({
         name: 'Manual.pdf',
-        updated_at: '2026-07-29T08:00:00.000Z'
+        updated_at: makeLocalTimestamp(2026, 7, 29)
       })
 
       expect(
