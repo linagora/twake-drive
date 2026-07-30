@@ -73,6 +73,16 @@ describe('makeThumbnail', () => {
     })
   })
 
+  it('should return folder thumbnail link for directories', () => {
+    const folder = { type: 'directory' }
+    const result = makeThumbnail(folder)
+    expect(result).toEqual({
+      thumbnail: {
+        link: 'https://files.twake.app/email-assets/file-picker/folder.png'
+      }
+    })
+  })
+
   it('should return default thumbnail link when file has no mime property', () => {
     const file = { name: 'test.txt' }
     const result = makeThumbnail(file)
