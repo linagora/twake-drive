@@ -27,6 +27,7 @@ import {
   isRenaming as isRenamingReducer,
   getRenamingFile
 } from '@/modules/drive/rename'
+import { useFileLastUpdated } from '@/modules/filelist/FileLastUpdatedContext'
 import FileOpener from '@/modules/filelist/FileOpener'
 import FileThumbnail from '@/modules/filelist/icons/FileThumbnail'
 import { useFormattedUpdatedAt } from '@/modules/filelist/useFormattedUpdatedAt'
@@ -56,6 +57,7 @@ const GridFile = ({
     useSelectionContext()
   const { isItemCut } = useClipboardContext()
   const { isNew } = useNewItemHighlightContext()
+  const { getFileLastUpdatedAt } = useFileLastUpdated()
 
   const toggleActionMenu = () => {
     if (actionMenuVisible) return hideActionMenu()
@@ -84,7 +86,7 @@ const GridFile = ({
       ? filesize(attributes.size, { base: 10 })
       : undefined
 
-  const updatedAt = attributes.updated_at || attributes.created_at
+  const updatedAt = getFileLastUpdatedAt(attributes)
   const formattedUpdatedAt = useFormattedUpdatedAt(updatedAt)
 
   // We don't allow any action on shared drives and trash
