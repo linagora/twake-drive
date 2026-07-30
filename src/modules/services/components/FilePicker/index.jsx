@@ -11,6 +11,7 @@ import React, {
 
 import Box from 'cozy-ui/transpiled/react/Box'
 import Divider from 'cozy-ui/transpiled/react/Divider'
+import Paper from 'cozy-ui/transpiled/react/Paper'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 
 import FilePickerBody from './FilePickerBody'
@@ -170,8 +171,9 @@ const FilePicker = ({
 
   return (
     <>
-      <div
+      <Paper
         className="u-h-100 u-w-100 u-flex u-flex-column"
+        square
         data-testid="file-picker"
       >
         <header
@@ -208,7 +210,7 @@ const FilePicker = ({
             downloadLinkAction={downloadLinkAction}
           />
         </footer>
-      </div>
+      </Paper>
 
       {isLinkAccessOpen && (
         <Suspense fallback={null}>
