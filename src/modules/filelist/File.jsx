@@ -31,6 +31,7 @@ import {
   isRenaming as isRenamingReducer,
   getRenamingFile
 } from '@/modules/drive/rename'
+import { useFileLastUpdated } from '@/modules/filelist/FileLastUpdatedContext'
 import FileOpener from '@/modules/filelist/FileOpener'
 import FileThumbnail from '@/modules/filelist/icons/FileThumbnail'
 import { useFormattedUpdatedAt } from '@/modules/filelist/useFormattedUpdatedAt'
@@ -80,6 +81,8 @@ const File = ({
   onToggleSelect
 }) => {
   const { viewType } = useViewSwitcherContext()
+  const { getFileLastUpdatedAt, showDirectoryLastUpdated } =
+    useFileLastUpdated()
 
   const [actionMenuVisible, setActionMenuVisible] = useState(false)
   const filerowMenuToggleRef = useRef()
@@ -126,7 +129,7 @@ const File = ({
       ? filesize(attributes.size, { base: 10 })
       : undefined
 
-  const updatedAt = attributes.updated_at || attributes.created_at
+  const updatedAt = getFileLastUpdatedAt(attributes)
   const formattedUpdatedAt = useFormattedUpdatedAt(updatedAt)
 
   // We don't allow any action on shared drives and trash
@@ -225,7 +228,9 @@ const File = ({
             <LastUpdate
               date={updatedAt}
               formatted={
-                isDirectory(attributes) ? undefined : formattedUpdatedAt
+                isDirectory(attributes) && !showDirectoryLastUpdated
+                  ? undefined
+                  : formattedUpdatedAt
               }
             />
             <Size filesize={formattedSize} />
