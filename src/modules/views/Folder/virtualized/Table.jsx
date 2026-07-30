@@ -13,8 +13,6 @@ import TableRowDnD from 'cozy-ui/transpiled/react/Table/Virtualized/Dnd/TableRow
 import virtuosoComponentsDnd from 'cozy-ui/transpiled/react/Table/Virtualized/Dnd/virtuosoComponents'
 import CustomDragLayer from 'cozy-ui/transpiled/react/utils/Dnd/CustomDrag/CustomDragLayer'
 
-import { secondarySort } from '../helpers'
-
 import styles from '@/styles/filelist.styl'
 
 import RightClickFileMenu from '@/components/RightClick/RightClickFileMenu'
@@ -86,6 +84,9 @@ const Table = forwardRef(
     const [itemsInDropProcess, setItemsInDropProcess] = useState([])
 
     const { sortOrder, setOrder } = orderProps
+    // Parent views may resolve contextual dates before sorting. Keep that order
+    // instead of letting cozy-ui sort the rows again using raw updated_at.
+    const getRowsInResolvedOrder = useCallback(() => rows, [rows])
 
     // cozy-ui invokes this with (row, column) and no DOM event, so modifier
     // keys aren't available here: clicking the row body always selects just
@@ -170,7 +171,7 @@ const Table = forwardRef(
             direction: sortOrder.order,
             by: sortOrder.attribute
           }}
-          secondarySort={secondarySort}
+          secondarySort={getRowsInResolvedOrder}
           isSelectedItem={isSelectedItem}
           isNewItem={isNew}
           selectedItems={selectedItems}
