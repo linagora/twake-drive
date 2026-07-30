@@ -65,8 +65,8 @@ export const useFilePickerSelection = ({
   }, [selectionContainerRef])
 
   const handleToggleSelect = useCallback(
-    item => {
-      const nextSelectedItems = { ...selectedItemsById }
+    (item, selectableItemsCount = selectableItems.length) => {
+      const nextSelectedItems = multiple ? { ...selectedItemsById } : {}
 
       if (nextSelectedItems[item._id]) {
         delete nextSelectedItems[item._id]
@@ -76,19 +76,25 @@ export const useFilePickerSelection = ({
 
       setSelectedItems(nextSelectedItems)
       setIsSelectAll(
-        Object.keys(nextSelectedItems).length === selectableItems.length
+        Object.keys(nextSelectedItems).length === selectableItemsCount
       )
       setLastInteractedItem(item._id)
       focusSelectionContainer()
     },
     [
       focusSelectionContainer,
+      multiple,
       selectableItems.length,
       selectedItemsById,
       setIsSelectAll,
       setLastInteractedItem,
       setSelectedItems
     ]
+  )
+
+  const handleMobileToggleSelect = useCallback(
+    item => handleToggleSelect(item, items.length),
+    [handleToggleSelect, items.length]
   )
 
   const handleItemClick = useCallback(
@@ -173,5 +179,5 @@ export const useFilePickerSelection = ({
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [handleSelectAll, multiple])
-  return { handleItemClick, selectedItemIds }
+  return { handleItemClick, handleMobileToggleSelect, selectedItemIds }
 }
