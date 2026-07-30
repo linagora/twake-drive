@@ -16,6 +16,7 @@ import SharingsHeader from './SharingsHeader'
 import { buildSharingsActionsOptions } from './helpers'
 import { useFilteredSharings } from './useFilteredSharings'
 import { useSharingsFilters } from './useSharingsFilters'
+import { useSharingsLastUpdatedAt } from './useSharingsLastUpdatedAt'
 import { areDrivesAvailable, useSharingsTab } from './useSharingsTab'
 import withSharedDocumentIds from './withSharedDocumentIds'
 import FolderView from '../Folder/FolderView'
@@ -24,7 +25,11 @@ import { useFolderViewBase } from '../Folder/hooks/useFolderViewBase'
 import FolderViewBodyVz from '../Folder/virtualized/FolderViewBody'
 
 import useHead from '@/components/useHead'
-import { SHARING_TAB_DRIVES, SHARING_TAB_WITH_ME } from '@/constants/config'
+import {
+  SHARINGS_VIEW_ID,
+  SHARING_TAB_DRIVES,
+  SHARING_TAB_WITH_ME
+} from '@/constants/config'
 import { useFolderSort } from '@/hooks'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import {
@@ -42,6 +47,7 @@ import { moveTo } from '@/modules/actions/components/moveTo'
 import { removeFromFavorites } from '@/modules/actions/components/removeFromFavorites'
 import AddMenuProvider from '@/modules/drive/AddMenu/AddMenuProvider'
 import FabWithAddMenuContext from '@/modules/drive/FabWithAddMenuContext'
+import { FileLastUpdatedProvider } from '@/modules/filelist/FileLastUpdatedContext'
 import FileListRowsPlaceholder from '@/modules/filelist/FileListRowsPlaceholder'
 import { leaveSharedDrive } from '@/modules/shareddrives/components/actions/leaveSharedDrive'
 import { shareFileRootSharedDrive } from '@/modules/shareddrives/components/actions/shareFileRootSharedDrive'
@@ -105,9 +111,11 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
   const { allLoaded, refresh } = sharingContext
   const nativeSharing = useNativeFileSharing()
   useHead({ title: base.t('breadcrumb.title_sharings') })
-  const [sortOrder, setSortOrder, isSettingsLoaded] = useFolderSort('sharings')
+  const [sortOrder, setSortOrder, isSettingsLoaded] =
+    useFolderSort(SHARINGS_VIEW_ID)
   const [tab, setTab] = useSharingsTab()
   const sharingsFilters = useSharingsFilters(tab)
+  const getFileLastUpdatedAt = useSharingsLastUpdatedAt()
 
   const result = useSharingsQueryResult(sharedDocumentIds, allLoaded)
 
@@ -116,7 +124,8 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
       result,
       sharedDocumentIds,
       tab,
-      filters: sharingsFilters.filters
+      filters: sharingsFilters.filters,
+      getFileLastUpdatedAt
     }
   )
 
@@ -165,7 +174,12 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
         !hasQueryBeenLoaded(filteredResult) ? (
           <FileListRowsPlaceholder />
         ) : (
-          <>
+          <FileLastUpdatedProvider
+            getFileLastUpdatedAt={getFileLastUpdatedAt}
+            groupDirectoriesFirstByUpdatedAt={false}
+            showDirectoryLastUpdated={true}
+          >
+            {/* Shared folders are activity entries, so dates and chronology apply to every row. */}
             {flag('drive.virtualization.enabled') && !base.isMobile ? (
               <FolderViewBodyVz
                 actions={actions}
@@ -191,7 +205,7 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
               />
             )}
             <Outlet />
-          </>
+          </FileLastUpdatedProvider>
         )}
         {base.isMobile && (
           <AddMenuProvider

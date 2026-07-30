@@ -188,19 +188,20 @@ describe('isSharingsEntryMatchingFilters', () => {
       ).toBe(false)
     })
 
-    it('uses the shared target modification date when available', () => {
+    it('uses the supplied last-updated resolver', () => {
       const entry = makeFile({
-        updated_at: '2025-01-01T08:00:00.000Z',
-        metadata: {
-          target: {
-            updated_at: '2026-07-29T08:00:00.000Z'
-          }
-        }
+        updated_at: '2025-01-01T08:00:00.000Z'
       })
+      const getFileLastUpdatedAt = jest.fn(() => '2026-07-29T08:00:00.000Z')
 
-      expect(isSharingsEntryMatchingFilters(entry, { date: 'today' })).toBe(
-        true
-      )
+      expect(
+        isSharingsEntryMatchingFilters(
+          entry,
+          { date: 'today' },
+          getFileLastUpdatedAt
+        )
+      ).toBe(true)
+      expect(getFileLastUpdatedAt).toHaveBeenCalledWith(entry)
     })
 
     it('combines file type and modification date filters', () => {

@@ -13,6 +13,7 @@ import {
   SHARING_TAB_WITH_ME
 } from '@/constants/config'
 import { useTransformFolderListHasSharedDriveShortcuts } from '@/hooks/useTransformFolderListHasSharedDriveShortcuts'
+import { getDefaultFileLastUpdatedAt } from '@/modules/filelist/FileLastUpdatedContext'
 
 const NO_FILTERS = {}
 
@@ -139,7 +140,8 @@ export const useFilteredSharings = ({
   result,
   sharedDocumentIds,
   tab,
-  filters = NO_FILTERS
+  filters = NO_FILTERS,
+  getFileLastUpdatedAt = getDefaultFileLastUpdatedAt
 }) => {
   const isEnabledSharedDrive = flag('drive.shared-drive.enabled')
   const isEnabledFederatedSharedFolder = flag(
@@ -170,7 +172,7 @@ export const useFilteredSharings = ({
       ? combined.filter(entry => getSharingsTabForEntry(entry, isOwner) === tab)
       : combined
     const data = tabData.filter(entry =>
-      isSharingsEntryMatchingFilters(entry, filters)
+      isSharingsEntryMatchingFilters(entry, filters, getFileLastUpdatedAt)
     )
     return {
       filteredResult: {
@@ -190,6 +192,7 @@ export const useFilteredSharings = ({
     sharedDocumentIds?.length,
     tab,
     filters,
+    getFileLastUpdatedAt,
     isOwner
   ])
 
