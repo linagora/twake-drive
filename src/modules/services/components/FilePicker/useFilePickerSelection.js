@@ -68,7 +68,7 @@ export const useFilePickerSelection = ({
     (item, selectableItemsCount = selectableItems.length) => {
       const nextSelectedItems = multiple ? { ...selectedItemsById } : {}
 
-      if (nextSelectedItems[item._id]) {
+      if (selectedItemsById[item._id]) {
         delete nextSelectedItems[item._id]
       } else {
         nextSelectedItems[item._id] = item
