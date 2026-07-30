@@ -164,8 +164,7 @@ declare module 'cozy-sharing' {
     refresh: () => void
     hasWriteAccess: (id: string, driveId?: string) => boolean
     isOwner: (docId: string) => boolean
-    byDocId: Record<string, unknown>
-  }
+  } & import('./modules/views/Sharings/getSharingsLastUpdatedAt').SharingsTimestampContext
 
   export const useNativeFileSharing: () => {
     isNativeFileSharingAvailable: boolean
