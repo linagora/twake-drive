@@ -98,10 +98,12 @@ const Filter = forwardRef(function Filter(
     className,
     clearLabel = null,
     disabled = false,
+    InputProps = null,
     label,
     onChange = null,
     onClear = null,
     options,
+    select = true,
     startAdornment = null,
     value = '',
     ...textFieldProps
@@ -127,16 +129,18 @@ const Filter = forwardRef(function Filter(
         hiddenLabel
         options={options}
         onChange={onChange}
-        select
+        select={select}
         size="small"
         value={value}
         variant="filled"
         InputProps={{
+          ...InputProps,
           classes: {
-            root: classes.root,
-            focused: classes.focused,
-            disabled: classes.disabled,
-            input: classes.input
+            ...InputProps?.classes,
+            root: cx(classes.root, InputProps?.classes?.root),
+            focused: cx(classes.focused, InputProps?.classes?.focused),
+            disabled: cx(classes.disabled, InputProps?.classes?.disabled),
+            input: cx(classes.input, InputProps?.classes?.input)
           }
         }}
         SelectProps={{
@@ -176,10 +180,11 @@ Filter.displayName = 'Filter'
 Filter.propTypes = {
   active: PropTypes.bool,
   autoWidth: PropTypes.bool,
-  children: PropTypes.node.isRequired,
+  children: PropTypes.node,
   className: PropTypes.string,
   clearLabel: PropTypes.string,
   disabled: PropTypes.bool,
+  InputProps: PropTypes.object,
   label: PropTypes.string.isRequired,
   onChange: PropTypes.func,
   onClear: PropTypes.func,
@@ -189,7 +194,8 @@ Filter.propTypes = {
       value: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
         .isRequired
     })
-  ).isRequired,
+  ),
+  select: PropTypes.bool,
   startAdornment: PropTypes.node,
   value: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
 }

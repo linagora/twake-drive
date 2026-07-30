@@ -79,6 +79,11 @@
     "sharings_tab_drives": "Ổ đĩa nhóm"
   },
   "filters": {
+    "contact": {
+      "label": "Liên hệ",
+      "clear": "Xóa bộ lọc theo liên hệ",
+      "me": "tôi"
+    },
     "date": {
       "label": "Ngày sửa đổi",
       "aria_label": "Bộ lọc theo ngày sửa đổi",

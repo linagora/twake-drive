@@ -2,18 +2,13 @@ import { models } from 'cozy-client'
 
 import { ROOT_DIR_ID, SHARED_DRIVES_DIR_ID } from '@/constants/config'
 import FuzzyPathSearch from '@/lib/FuzzyPathSearch.js'
+import { normalizeSearchText } from '@/lib/normalizeSearchText'
 import { makeOnlyOfficeFileRoute } from '@/modules/views/OnlyOffice/helpers'
 
 export const TYPE_DIRECTORY = 'directory'
 
 export const normalizeString = str =>
-  str
-    .toString()
-    .toLowerCase()
-    .replace(/\//g, ' ')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .split(' ')
+  normalizeSearchText(str).replace(/\//g, ' ').split(' ')
 
 /**
  * Normalize file for Front usage in <AutoSuggestion> component inside <BarSearchAutosuggest>
