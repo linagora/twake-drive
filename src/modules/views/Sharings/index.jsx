@@ -13,6 +13,7 @@ import { Content } from 'cozy-ui/transpiled/react/Layout'
 
 import { SharingsFilters } from './SharingsFilters'
 import SharingsHeader from './SharingsHeader'
+import { SharingsRootListProvider } from './SharingsRootListContext'
 import { buildSharingsActionsOptions } from './helpers'
 import { useFilteredSharings } from './useFilteredSharings'
 import { useSharingsFilters } from './useSharingsFilters'
@@ -180,31 +181,36 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
             showDirectoryLastUpdated={true}
           >
             {/* Shared folders are activity entries, so dates and chronology apply to every row. */}
-            {flag('drive.virtualization.enabled') && !base.isMobile ? (
-              <FolderViewBodyVz
-                actions={actions}
-                queryResults={[filteredResult]}
-                withFilePath={true}
-                orderProps={{
-                  sortOrder,
-                  setOrder: setSortOrder,
-                  isSettingsLoaded
-                }}
-              />
-            ) : (
-              <FolderViewBody
-                actions={actions}
-                queryResults={[filteredResult]}
-                canSort={true}
-                withFilePath={true}
-                orderProps={{
-                  sortOrder,
-                  setOrder: setSortOrder,
-                  isSettingsLoaded
-                }}
-              />
-            )}
-            <Outlet />
+            <SharingsRootListProvider
+              entries={filteredResult.data}
+              sortOrder={sortOrder}
+            >
+              {flag('drive.virtualization.enabled') && !base.isMobile ? (
+                <FolderViewBodyVz
+                  actions={actions}
+                  queryResults={[filteredResult]}
+                  withFilePath={true}
+                  orderProps={{
+                    sortOrder,
+                    setOrder: setSortOrder,
+                    isSettingsLoaded
+                  }}
+                />
+              ) : (
+                <FolderViewBody
+                  actions={actions}
+                  queryResults={[filteredResult]}
+                  canSort={true}
+                  withFilePath={true}
+                  orderProps={{
+                    sortOrder,
+                    setOrder: setSortOrder,
+                    isSettingsLoaded
+                  }}
+                />
+              )}
+              <Outlet />
+            </SharingsRootListProvider>
           </FileLastUpdatedProvider>
         )}
         {base.isMobile && (
