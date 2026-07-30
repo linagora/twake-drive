@@ -127,13 +127,19 @@ function getVisibleText(element) {
   return element.textContent.replaceAll('\u200e', '')
 }
 
-function setup({ accept, isMobile = true, multiple = false } = {}) {
+function setup({
+  accept,
+  filePickerConfig,
+  isMobile = true,
+  multiple = false
+} = {}) {
   window.innerWidth = isMobile ? 500 : 1024
 
   return render(
     <AppLike client={mockClient}>
       <FilePicker
         accept={accept}
+        filePickerConfig={filePickerConfig}
         multiple={multiple}
         onChange={mockOnChange}
         onFileDoubleClick={mockOnFileDoubleClick}
@@ -155,10 +161,55 @@ function longPress(row) {
   fireEvent.click(row)
 }
 
-describe('FilePicker mobile navigation and list', () => {
+describe('FilePicker mobile navigation, list and actions', () => {
   afterEach(() => {
     jest.clearAllMocks()
     jest.useRealTimers()
+  })
+
+  it('gives a single mobile action the available width', () => {
+    const { getByTestId } = setup({
+      filePickerConfig: {
+        sharingLink: { allowFolder: true },
+        downloadLink: null
+      }
+    })
+
+    expect(getByTestId('public-link-btn')).toHaveClass('u-flex-grow-1')
+  })
+
+  it('uses equal-width iconless mobile action variants', () => {
+    const { getByTestId } = setup()
+    const downloadButton = getByTestId('temporary-download-link-btn')
+    const publicButton = getByTestId('public-link-btn')
+
+    expect(downloadButton).toHaveClass('u-flex-grow-1')
+    expect(publicButton).toHaveClass('u-flex-grow-1')
+    expect(downloadButton).toHaveClass('MuiButton-outlined')
+    expect(publicButton).toHaveClass('MuiButton-contained')
+    expect(downloadButton.querySelector('svg')).toBe(null)
+    expect(publicButton.querySelector('svg')).toBe(null)
+  })
+
+  it('evaluates each action against the complete selection', () => {
+    jest.useFakeTimers()
+    const { getAllByTestId, getByTestId, queryByRole, queryByText } = setup({
+      multiple: true
+    })
+    const rows = getAllByTestId('list-item')
+    const folderRow = rows.find(row => row.dataset.fileId === mockFolder.id)
+    const fileRow = rows.find(row => row.dataset.fileId === mockFile.id)
+
+    longPress(fileRow)
+    tap(folderRow)
+
+    expect(getByTestId('public-link-btn')).not.toBeDisabled()
+    expect(getByTestId('temporary-download-link-btn')).toBeDisabled()
+    expect(queryByRole('button', { name: 'Clear Selection' })).toBe(null)
+    expect(queryByText(/item selected/)).toBe(null)
+    expect(
+      queryByText('FilePicker.constraints.disabledReasons.folderNotAllowed')
+    ).toBe(null)
   })
 
   it('starts selection on long press and ignores the following click', () => {
@@ -248,7 +299,7 @@ describe('FilePicker mobile navigation and list', () => {
 
   it('replaces and clears selection in single selection mode', () => {
     jest.useFakeTimers()
-    const { getAllByTestId, queryAllByRole } = setup()
+    const { getAllByTestId, getByTestId, queryAllByRole } = setup()
     const rows = getAllByTestId('list-item')
     const folderRow = rows.find(row => row.dataset.fileId === mockFolder.id)
     const fileRow = rows.find(row => row.dataset.fileId === mockFile.id)
@@ -262,6 +313,8 @@ describe('FilePicker mobile navigation and list', () => {
     tap(folderRow)
 
     expect(queryAllByRole('checkbox')).toHaveLength(0)
+    expect(getByTestId('public-link-btn')).toBeDisabled()
+    expect(getByTestId('temporary-download-link-btn')).toBeDisabled()
   })
 
   it('allows selection of files outside the accepted action types', () => {
@@ -317,6 +370,16 @@ describe('FilePicker mobile navigation and list', () => {
     expect(queryByRole('columnheader', { name: 'Size' })).toBeInTheDocument()
     fireEvent.click(fileRow)
     expect(getByTestId('public-link-btn')).not.toBeDisabled()
+    expect(getByTestId('temporary-download-link-btn')).toHaveClass(
+      'MuiButton-contained'
+    )
+    expect(getByTestId('public-link-btn')).toHaveClass('MuiButton-contained')
+    expect(
+      getByTestId('temporary-download-link-btn').querySelector('svg')
+    ).toBeInTheDocument()
+    expect(
+      getByTestId('public-link-btn').querySelector('svg')
+    ).toBeInTheDocument()
 
     fireEvent.doubleClick(folderRow)
     expect(getByTestId('file-picker-breadcrumb')).toHaveTextContent('My Drive')

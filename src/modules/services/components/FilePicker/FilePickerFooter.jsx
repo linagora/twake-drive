@@ -8,6 +8,7 @@ import Button from 'cozy-ui/transpiled/react/Buttons'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
 import Tooltip from 'cozy-ui/transpiled/react/Tooltip'
 import Typography from 'cozy-ui/transpiled/react/Typography'
+import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import { useI18n } from 'twake-i18n'
 
 import { filePickerLinkModes } from './constants'
@@ -30,6 +31,7 @@ const FilePickerFooter = ({
   downloadLinkAction
 }) => {
   const { t } = useI18n()
+  const { isMobile } = useBreakpoints()
   const { selectedItems, clearSelection } = useSelectionContext()
   const selectedCount = selectedItems.length
 
@@ -47,74 +49,102 @@ const FilePickerFooter = ({
     actionConfig,
     onClick,
     testId,
-    IconComponent
+    IconComponent,
+    mobileVariant,
+    hasLeftMargin = false
   ) => {
     if (!label) return null
 
+    const mobileMarginClass =
+      hasLeftMargin && (downloadLinkLabel || !isMobile) ? 'u-ml-1' : ''
     const button = (
       <Button
+        className={isMobile ? `u-flex-grow-1 ${mobileMarginClass}` : null}
         data-testid={testId}
         label={
-          <span className="u-flex u-flex-items-center">
-            <Icon icon={IconComponent} size={16} />
-            <span className="u-ml-half">{label}</span>
-          </span>
+          isMobile ? (
+            label
+          ) : (
+            <span className="u-flex u-flex-items-center">
+              <Icon icon={IconComponent} size={16} />
+              <span className="u-ml-half">{label}</span>
+            </span>
+          )
         }
-        variant="primary"
+        variant={isMobile ? mobileVariant : 'primary'}
         onClick={onClick}
         disabled={state.disabled}
       />
     )
 
-    if (!state.disabled || !state.reasonKey) {
-      return <span>{button}</span>
-    }
+    if (isMobile) return button
 
-    const tooltipTitle = getTooltipTitle(t, state.reasonKey, actionConfig)
-    return (
-      <Tooltip title={tooltipTitle} placement="top">
-        <span>{button}</span>
-      </Tooltip>
-    )
+    const action =
+      !state.disabled || !state.reasonKey ? (
+        button
+      ) : (
+        <Tooltip
+          title={getTooltipTitle(t, state.reasonKey, actionConfig)}
+          placement="top"
+        >
+          <span>{button}</span>
+        </Tooltip>
+      )
+
+    return <span className={hasLeftMargin ? 'u-ml-1' : null}>{action}</span>
   }
 
   return (
-    <Box className="u-flex u-flex-items-center u-flex-justify-between u-w-100">
-      {selectedCount > 0 ? (
-        <Box className="u-flex u-flex-items-center">
-          <IconButton
-            onClick={clearSelection}
-            size="small"
-            aria-label={t('toolbar.clear_selection')}
-          >
-            <Icon icon={Cross} size={16} />
-          </IconButton>
-          <Typography variant="body1" className="u-ml-half">
-            {selectedCount} {t('SelectionBar.selected_count', selectedCount)}
-          </Typography>
-        </Box>
-      ) : (
-        <span />
-      )}
-      <Box className="u-flex u-flex-items-center">
+    <Box
+      className={
+        isMobile
+          ? 'u-flex u-flex-items-center u-w-100'
+          : 'u-flex u-flex-items-center u-flex-justify-between u-w-100'
+      }
+    >
+      {!isMobile &&
+        (selectedCount > 0 ? (
+          <Box className="u-flex u-flex-items-center">
+            <IconButton
+              onClick={clearSelection}
+              size="small"
+              aria-label={t('toolbar.clear_selection')}
+            >
+              <Icon icon={Cross} size={16} />
+            </IconButton>
+            <Typography variant="body1" className="u-ml-half">
+              {selectedCount} {t('SelectionBar.selected_count', selectedCount)}
+            </Typography>
+          </Box>
+        ) : (
+          <span />
+        ))}
+      <Box
+        className={
+          isMobile
+            ? 'u-flex u-flex-items-center u-w-100'
+            : 'u-flex u-flex-items-center'
+        }
+      >
         {renderAction(
           downloadLinkLabel,
           downloadLinkState,
           downloadLinkAction,
           () => onConfirm(filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK),
           'temporary-download-link-btn',
-          Attachment
+          Attachment,
+          'secondary'
         )}
-        <span className="u-ml-1">
-          {renderAction(
-            publicLinkLabel,
-            publicLinkState,
-            publicLinkAction,
-            () => onConfirm(filePickerLinkModes.PUBLIC_LINK),
-            'public-link-btn',
-            Link
-          )}
-        </span>
+        {renderAction(
+          publicLinkLabel,
+          publicLinkState,
+          publicLinkAction,
+          () => onConfirm(filePickerLinkModes.PUBLIC_LINK),
+          'public-link-btn',
+          Link,
+          'primary',
+          true
+        )}
       </Box>
     </Box>
   )
