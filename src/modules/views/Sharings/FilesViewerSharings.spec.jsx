@@ -6,9 +6,11 @@ import { useQuery } from 'cozy-client'
 import { useSharingContext } from 'cozy-sharing'
 
 import FilesViewerSharings from './FilesViewerSharings'
+import { SharingsRootListProvider } from './SharingsRootListContext'
 import { SharingsTabProvider } from './useSharingsTab'
 
 import { SHARING_TAB_BY_ME, SHARING_TAB_WITH_ME } from '@/constants/config'
+import { FileLastUpdatedProvider } from '@/modules/filelist/FileLastUpdatedContext'
 
 const mockNavigate = jest.fn()
 
@@ -67,26 +69,48 @@ const receivedFile = {
   mime: 'image/jpeg'
 }
 const someDirectory = { _id: 'dir-1', id: 'dir-1', type: 'directory' }
+const olderReceivedFile = {
+  _id: 'file-received-older',
+  id: 'file-received-older',
+  type: 'file',
+  mime: 'image/jpeg'
+}
 
 const setup = ({
   route = `/sharings/with-me/file/${receivedFile._id}`,
   path = '/sharings/with-me/file/:fileId',
-  tab = SHARING_TAB_WITH_ME
-} = {}) =>
-  render(
+  tab = SHARING_TAB_WITH_ME,
+  rootEntries = null,
+  sortOrder = { attribute: 'updated_at', order: 'desc' },
+  getFileLastUpdatedAt = file => file.updated_at ?? null
+} = {}) => {
+  const viewer = <FilesViewerSharings />
+  const element = rootEntries ? (
+    <FileLastUpdatedProvider
+      getFileLastUpdatedAt={getFileLastUpdatedAt}
+      groupDirectoriesFirstByUpdatedAt={false}
+    >
+      <SharingsRootListProvider entries={rootEntries} sortOrder={sortOrder}>
+        {viewer}
+      </SharingsRootListProvider>
+    </FileLastUpdatedProvider>
+  ) : (
+    viewer
+  )
+
+  return render(
     <MemoryRouter initialEntries={[route]}>
       <Routes>
         <Route
           path={path}
           element={
-            <SharingsTabProvider tab={tab}>
-              <FilesViewerSharings />
-            </SharingsTabProvider>
+            <SharingsTabProvider tab={tab}>{element}</SharingsTabProvider>
           }
         />
       </Routes>
     </MemoryRouter>
   )
+}
 
 describe('FilesViewerSharings', () => {
   beforeEach(() => {
@@ -114,6 +138,25 @@ describe('FilesViewerSharings', () => {
     })
 
     expect(screen.getByTestId('viewer-files').textContent).toBe(ownedFile._id)
+  })
+
+  it('uses the filtered and sorted root list for viewer navigation', () => {
+    useQuery.mockReturnValue({
+      data: [ownedFile, receivedFile, olderReceivedFile, someDirectory]
+    })
+    const lastUpdatedById = {
+      [receivedFile._id]: '2026-07-29T08:00:00.000Z',
+      [olderReceivedFile._id]: '2026-07-28T08:00:00.000Z'
+    }
+
+    setup({
+      rootEntries: [olderReceivedFile, receivedFile],
+      getFileLastUpdatedAt: file => lastUpdatedById[file._id] ?? null
+    })
+
+    expect(screen.getByTestId('viewer-files').textContent).toBe(
+      `${receivedFile._id},${olderReceivedFile._id}`
+    )
   })
 
   it('pages only through files matching the active root filter', () => {
