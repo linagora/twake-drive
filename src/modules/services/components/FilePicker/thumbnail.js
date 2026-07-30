@@ -1,3 +1,5 @@
+import { isDirectory } from 'cozy-client/dist/models/file'
+
 import { matchMimePattern } from './helpers'
 
 const MIME_TYPE_TO_THUMBNAIL_TYPE = {
@@ -82,6 +84,7 @@ const MIME_TYPE_TO_THUMBNAIL_TYPE = {
 }
 
 const THUMBNAIL_TYPE_TO_THUMBNAIL_LINK = {
+  folder: 'https://files.twake.app/email-assets/file-picker/folder.png',
   audio: 'https://files.twake.app/email-assets/file-picker/audio.png',
   image: 'https://files.twake.app/email-assets/file-picker/image.png',
   video: 'https://files.twake.app/email-assets/file-picker/video.png',
@@ -125,7 +128,9 @@ export const makeThumbnail = file => {
   try {
     return {
       thumbnail: {
-        link: getThumbnailLinkFromMimeType(file.mime)
+        link: isDirectory(file)
+          ? THUMBNAIL_TYPE_TO_THUMBNAIL_LINK.folder
+          : getThumbnailLinkFromMimeType(file.mime)
       }
     }
   } catch {

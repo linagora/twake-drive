@@ -258,7 +258,7 @@ For folders, `size` is `0` and `mimeType` is `null`.
 
 ### Thumbnails
 
-The File Picker may provide a thumbnail (an illustration or a preview) that may be used by the caller. The thumbnail link is public and has an unlimited lifetime. It is currently a 80x80 png image.
+The File Picker may provide a thumbnail (an illustration or a preview) that may be used by the caller. The thumbnail link is public and has an unlimited lifetime. It is currently a 60x60 png image. Folders use a dedicated `folder.png` thumbnail.
 
 ## Error handling
 
