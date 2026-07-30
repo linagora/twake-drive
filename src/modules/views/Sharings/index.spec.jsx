@@ -23,6 +23,17 @@ import {
 
 const mockSharingContext = jest.fn()
 
+function makeSharingContext(overrides = {}) {
+  return {
+    byDocId: {},
+    allLoaded: true,
+    isOwner: () => false,
+    getDocumentPermissions: () => [],
+    getSharingById: () => null,
+    ...overrides
+  }
+}
+
 jest.mock('cozy-sharing', () => ({
   __esModule: true,
   ...jest.requireActual('cozy-sharing'),
@@ -130,11 +141,7 @@ describe('Sharings View', () => {
     flag.mockImplementation(() => false)
     // isOwner is consumed by useFilteredSharings to classify entries into
     // tabs; false files every fixture under the default with-me tab.
-    mockSharingContext.mockReturnValue({
-      byDocId: [],
-      allLoaded: true,
-      isOwner: () => false
-    })
+    mockSharingContext.mockReturnValue(makeSharingContext())
   })
 
   afterEach(() => {
@@ -146,11 +153,11 @@ describe('Sharings View', () => {
   })
 
   it('should display placeholder when all files are not loaded', async () => {
-    mockSharingContext.mockReturnValue({
-      byDocId: [],
-      allLoaded: false,
-      isOwner: () => false
-    })
+    mockSharingContext.mockReturnValue(
+      makeSharingContext({
+        allLoaded: false
+      })
+    )
     const { container } = setup()
 
     await waitFor(() => {
@@ -217,13 +224,45 @@ describe('Sharings View', () => {
     )
   })
 
+  it('displays the latest sharing activity in the update column', async () => {
+    const sharingUpdatedAt = '2026-07-29T08:00:00.000Z'
+    useQuery.mockReturnValue(filesFixtureWithPath)
+    mockSharingContext.mockReturnValue(
+      makeSharingContext({
+        byDocId: {
+          'file-foobar0': {
+            sharings: ['sharing-1'],
+            permissions: []
+          }
+        },
+        getSharingById: id =>
+          id === 'sharing-1'
+            ? {
+                id,
+                attributes: {
+                  created_at: '2026-07-28T08:00:00.000Z',
+                  updated_at: sharingUpdatedAt
+                }
+              }
+            : null
+      })
+    )
+
+    const { getByText } = setup()
+
+    await waitFor(() => {
+      const fileRow = getByText('foobar0').closest('.fil-content-row')
+      expect(fileRow.querySelector('time').dateTime).toBe(sharingUpdatedAt)
+    })
+  })
+
   it('filters the list by the active tab and swaps it on tab switch', async () => {
     useQuery.mockReturnValue(filesFixtureWithPath)
-    mockSharingContext.mockReturnValue({
-      byDocId: [],
-      allLoaded: true,
-      isOwner: id => id === 'file-foobar0'
-    })
+    mockSharingContext.mockReturnValue(
+      makeSharingContext({
+        isOwner: id => id === 'file-foobar0'
+      })
+    )
 
     const { getByText, queryByText, getByRole } = setup()
 
