@@ -7,7 +7,10 @@ import { useI18n } from 'twake-i18n'
 
 import styles from '@/styles/filelist.styl'
 
-import { getFileNameAndExtension } from '@/modules/filelist/helpers'
+import {
+  getFileNameAndExtension,
+  makeFileMetadata
+} from '@/modules/filelist/helpers'
 import { getFolderPath } from '@/modules/routeUtils'
 import { getSharingsRootRoute } from '@/modules/views/Sharings/routes'
 
@@ -26,7 +29,7 @@ const FileNamePath = ({
   if (!withFilePath) {
     return (
       <div className={styles['fil-file-infos']}>
-        {`${formattedUpdatedAt}${formattedSize ? ` - ${formattedSize}` : ''}`}
+        {makeFileMetadata(formattedUpdatedAt, formattedSize)}
       </div>
     )
   }

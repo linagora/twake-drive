@@ -8,7 +8,10 @@ import Filename from 'cozy-ui/transpiled/react/Filename'
 import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import { useI18n } from 'twake-i18n'
 
-import { getFileNameAndExtension } from '@/modules/filelist/helpers'
+import {
+  getFileNameAndExtension,
+  makeFileMetadata
+} from '@/modules/filelist/helpers'
 import FileThumbnail from '@/modules/filelist/icons/FileThumbnail'
 import { useFormattedUpdatedAt } from '@/modules/filelist/useFormattedUpdatedAt'
 import SizeCell from '@/modules/filelist/virtualized/cells/columns/SizeCell'
@@ -30,7 +33,7 @@ const FilePickerNameCell = ({ row, selectionModeActive }) => {
       : null
   const metadata =
     isMobile && !isFolder
-      ? `${formattedUpdatedAt ?? '—'} - ${formattedSize ?? '—'}`
+      ? makeFileMetadata(formattedUpdatedAt ?? '—', formattedSize ?? '—')
       : null
 
   return (
