@@ -201,7 +201,10 @@ const FilePicker = ({
           />
         </Box>
         <Divider />
-        <footer className="u-mv-1 u-mh-2" data-testid="file-picker-footer">
+        <footer
+          className="u-mv-1 u-mh-2 u-flex-shrink-0-s"
+          data-testid="file-picker-footer"
+        >
           <FilePickerFooter
             onConfirm={handleFooterConfirm}
             publicLinkState={publicLinkState}
