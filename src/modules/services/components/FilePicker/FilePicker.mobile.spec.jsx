@@ -1,4 +1,4 @@
-import { render, within } from '@testing-library/react'
+import { fireEvent, render, within } from '@testing-library/react'
 import React from 'react'
 
 import { Q, createMockClient } from 'cozy-client'
@@ -41,6 +41,11 @@ const mockClient = createMockClient({
       doctype: 'io.cozy.files',
       data: mockItems
     },
+    'buildContentFolderQuery-folder-id': {
+      definition: buildContentFolderQuery(mockFolder.id).definition(),
+      doctype: 'io.cozy.files',
+      data: mockItems
+    },
     [`io.cozy.files/${mockRootId}`]: {
       definition: Q('io.cozy.files').getById(mockRootId),
       doctype: 'io.cozy.files',
@@ -53,6 +58,11 @@ const mockClient = createMockClient({
           name: 'My Drive'
         }
       ]
+    },
+    'io.cozy.files/folder-id': {
+      definition: Q('io.cozy.files').getById(mockFolder.id),
+      doctype: 'io.cozy.files',
+      data: [mockFolder]
     }
   }
 })
@@ -110,8 +120,8 @@ function getVisibleText(element) {
   return element.textContent.replaceAll('\u200e', '')
 }
 
-function setup() {
-  window.innerWidth = 500
+function setup({ isMobile = true } = {}) {
+  window.innerWidth = isMobile ? 500 : 1024
 
   return render(
     <AppLike client={mockClient}>
@@ -123,9 +133,51 @@ function setup() {
   )
 }
 
-describe('FilePicker mobile list', () => {
+describe('FilePicker mobile navigation and list', () => {
   afterEach(() => {
     jest.clearAllMocks()
+  })
+
+  it('preserves desktop columns, selection and folder double-click navigation', () => {
+    const { getAllByTestId, getByTestId, queryByRole } = setup({
+      isMobile: false
+    })
+    const rows = getAllByTestId('list-item')
+    const folderRow = rows.find(row => row.dataset.fileId === mockFolder.id)
+    const fileRow = rows.find(row => row.dataset.fileId === mockFile.id)
+
+    expect(queryByRole('columnheader', { name: 'Name' })).toBeInTheDocument()
+    expect(
+      queryByRole('columnheader', { name: 'Last update' })
+    ).toBeInTheDocument()
+    expect(queryByRole('columnheader', { name: 'Size' })).toBeInTheDocument()
+    fireEvent.click(fileRow)
+    expect(getByTestId('public-link-btn')).not.toBeDisabled()
+
+    fireEvent.doubleClick(folderRow)
+    expect(getByTestId('file-picker-breadcrumb')).toHaveTextContent('My Drive')
+    expect(getByTestId('file-picker-breadcrumb')).toHaveTextContent('Photos')
+    expect(queryByRole('button', { name: 'Back' })).toBe(null)
+  })
+
+  it('leaves files unselected and gives double taps no extra behavior', () => {
+    const { getAllByTestId, getByTestId } = setup()
+    const rows = getAllByTestId('list-item')
+    const folderRow = rows.find(row => row.dataset.fileId === mockFolder.id)
+    const fileRow = rows.find(row => row.dataset.fileId === mockFile.id)
+
+    fireEvent.click(fileRow)
+    fireEvent.click(fileRow)
+    fireEvent.doubleClick(fileRow)
+
+    expect(getByTestId('public-link-btn')).toBeDisabled()
+    expect(getByTestId('file-picker-breadcrumb')).toHaveTextContent('My Drive')
+
+    fireEvent.click(folderRow)
+
+    expect(getByTestId('file-picker-breadcrumb')).toHaveTextContent('Photos')
+    expect(mockOnFileDoubleClick).not.toHaveBeenCalled()
+    expect(mockOnChange).not.toHaveBeenCalled()
   })
 
   it('renders compact rows without column headers', () => {
@@ -151,5 +203,24 @@ describe('FilePicker mobile list', () => {
     expect(
       within(emptyFileRow).getByText('Jan 2, 2025 - 0 B')
     ).toBeInTheDocument()
+  })
+
+  it('opens a folder on tap and shows only its name with a back control', () => {
+    const { getByTestId, getByRole, getAllByTestId, queryByRole } = setup()
+    const folderRow = getAllByTestId('list-item').find(
+      row => row.dataset.fileId === mockFolder.id
+    )
+
+    fireEvent.click(folderRow)
+
+    expect(getByTestId('file-picker-breadcrumb')).toHaveTextContent('Photos')
+    expect(getByTestId('file-picker-breadcrumb')).not.toHaveTextContent(
+      'My Drive'
+    )
+
+    fireEvent.click(getByRole('button', { name: 'Back' }))
+
+    expect(getByTestId('file-picker-breadcrumb')).toHaveTextContent('My Drive')
+    expect(queryByRole('button', { name: 'Back' })).toBe(null)
   })
 })
