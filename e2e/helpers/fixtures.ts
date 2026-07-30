@@ -1,6 +1,12 @@
 import { unlink } from 'fs/promises'
+
 import { test as base, expect } from '@playwright/test'
-import type { Page, TestInfo } from '@playwright/test'
+import type {
+  Browser,
+  BrowserContextOptions,
+  Page,
+  TestInfo
+} from '@playwright/test'
 
 import { authenticate } from './auth'
 import { DrivePage } from '../pages/DrivePage'
@@ -10,6 +16,11 @@ type AuthedFixtures = {
   bobPage: Page
   aliceDrive: DrivePage
   bobDrive: DrivePage
+}
+
+type ContextFixtures = {
+  browser: Browser
+  contextOptions: BrowserContextOptions
 }
 
 // Console messages we never want to fail on — benign in the test stack
@@ -33,11 +44,11 @@ const attachIfAny = async (
 const userPageFixture =
   (user: 'alice' | 'bob') =>
   async (
-    { browser }: { browser: import('@playwright/test').Browser },
+    { browser, contextOptions }: ContextFixtures,
     use: (page: Page) => Promise<void>,
     testInfo: TestInfo
   ): Promise<void> => {
-    const ctx = await browser.newContext()
+    const ctx = await browser.newContext(contextOptions)
     const consoleErrors: string[] = []
     const pageErrors: string[] = []
     try {
