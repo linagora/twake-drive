@@ -81,6 +81,11 @@
     "sharings_tab_drives": "Drives d'équipe"
   },
   "filters": {
+    "contact": {
+      "label": "Contact",
+      "clear": "Effacer le filtre par contact",
+      "me": "moi"
+    },
     "date": {
       "label": "Date de modification",
       "aria_label": "Filtre par date de modification",
