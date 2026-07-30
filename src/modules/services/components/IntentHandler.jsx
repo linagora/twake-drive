@@ -110,7 +110,7 @@ const IntentHandler = ({ intentId }) => {
       ignoreCozySettings
       ignoreItself={false}
     >
-      <BreakpointsProvider>
+      <BreakpointsProvider parentBasedIframe>
         <AlertProvider>{content}</AlertProvider>
       </BreakpointsProvider>
     </CozyTheme>
