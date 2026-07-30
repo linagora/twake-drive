@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { models, useQuery } from 'cozy-client'
 import Alert from 'cozy-ui/transpiled/react/Alert'
 import Box from 'cozy-ui/transpiled/react/Box'
+import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import { useI18n } from 'twake-i18n'
 
 import FilePickerBreadcrumb from './FilePickerBreadcrumb'
@@ -32,6 +33,7 @@ const FilePickerBody = ({
   onFileDoubleClick
 }) => {
   const { t } = useI18n()
+  const { isMobile } = useBreakpoints()
   const selectionContainerRef = useRef(null)
   const virtuosoRef = useRef(null)
   const [scrollElement, setScrollElement] = useState(null)
@@ -92,6 +94,13 @@ const FilePickerBody = ({
     [navigateTo, onFileDoubleClick]
   )
 
+  const handleMobileItemClick = useCallback(
+    item => {
+      if (isDirectory(item)) navigateTo(item)
+    },
+    [navigateTo]
+  )
+
   return (
     <Box
       ref={selectionContainerRef}
@@ -118,8 +127,8 @@ const FilePickerBody = ({
       <FilePickerTable
         items={items}
         itemsIdsSelected={selectedItemIds}
-        onItemClick={handleItemClick}
-        onItemDoubleClick={handleListItemDoubleClick}
+        onItemClick={isMobile ? handleMobileItemClick : handleItemClick}
+        onItemDoubleClick={isMobile ? null : handleListItemDoubleClick}
         fetchMore={hasMore ? fetchMore : undefined}
         scrollerRef={setScrollElement}
         virtuosoRef={virtuosoRef}
