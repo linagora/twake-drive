@@ -37,6 +37,15 @@ export class FilePickerPage {
     await this.waitForPicker()
   }
 
+  /** Navigate to the mobile demo route and open the picker with a tap. */
+  async openMobile(): Promise<void> {
+    await this.page.goto(`${USERS.alice.appUrl}/#/file-picker-demo`)
+    const button = this.page.getByRole('button', { name: /pick a file/i })
+    await button.waitFor({ state: 'visible' })
+    await button.tap()
+    await this.waitForPicker()
+  }
+
   /** Wait until the picker iframe is present and loaded. */
   async waitForPicker(): Promise<void> {
     const frameLocator = this.getFrameLocator()
@@ -78,6 +87,42 @@ export class FilePickerPage {
     await this.getListItemByName(name)
       .getByTestId('listitem-onclick')
       .dblclick()
+  }
+
+  async tapItem(name: string): Promise<void> {
+    await this.getListItemByName(name).getByTestId('listitem-onclick').tap()
+  }
+
+  async navigateToFolderOnMobile(name: string): Promise<void> {
+    await this.tapItem(name)
+    await this.getFrameLocator()
+      .getByTestId('file-picker-breadcrumb')
+      .getByText(name, { exact: true })
+      .waitFor({ state: 'visible', timeout: 10_000 })
+  }
+
+  async navigateBackOnMobile(parentName: string): Promise<void> {
+    const frame = this.getFrameLocator()
+    await frame.getByRole('button', { name: 'Back' }).tap()
+    await frame
+      .getByTestId('file-picker-breadcrumb')
+      .getByText(parentName, { exact: true })
+      .waitFor({ state: 'visible', timeout: 10_000 })
+  }
+
+  async longPressItem(name: string): Promise<void> {
+    const row = this.getListItemByName(name)
+    await row.dispatchEvent('touchstart')
+    await this.page.waitForTimeout(300)
+    await row.dispatchEvent('touchend')
+  }
+
+  async getCheckboxCount(): Promise<number> {
+    return this.getFrameLocator().getByRole('checkbox').count()
+  }
+
+  async isItemChecked(name: string): Promise<boolean> {
+    return this.getListItemByName(name).getByRole('checkbox').isChecked()
   }
 
   // ---------------------------------------------------------------------------

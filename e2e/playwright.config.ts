@@ -1,4 +1,4 @@
-import { defineConfig } from '@playwright/test'
+import { defineConfig, devices } from '@playwright/test'
 
 export default defineConfig({
   testDir: './tests',
@@ -24,9 +24,18 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
+      testIgnore: /file-picker\.mobile\.spec\.ts/,
       use: {
         browserName: 'chromium',
         viewport: { width: 1280, height: 720 }
+      }
+    },
+    {
+      name: 'mobile',
+      testMatch: /file-picker\.mobile\.spec\.ts/,
+      use: {
+        ...devices['Pixel 5'],
+        browserName: 'chromium'
       }
     }
   ]
