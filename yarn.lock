@@ -2310,15 +2310,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/runtime@npm:^7.1.2, @babel/runtime@npm:^7.12.1, @babel/runtime@npm:^7.6.0, @babel/runtime@npm:^7.9.2":
-  version: 7.26.0
-  resolution: "@babel/runtime@npm:7.26.0"
-  dependencies:
-    regenerator-runtime: "npm:^0.14.0"
-  checksum: 10/9f4ea1c1d566c497c052d505587554e782e021e6ccd302c2ad7ae8291c8e16e3f19d4a7726fb64469e057779ea2081c28b7dbefec6d813a22f08a35712c0f699
-  languageName: node
-  linkType: hard
-
 "@babel/runtime@npm:^7.13.10":
   version: 7.29.7
   resolution: "@babel/runtime@npm:7.29.7"
@@ -2355,6 +2346,15 @@ __metadata:
   dependencies:
     regenerator-runtime: "npm:^0.14.0"
   checksum: 10/a9fdd322ae1f5d5e3446b6181745300f863164a30acb35ee296c6989cf0ecfd57598a7a6ef209b414575cabe81ef17756412052b3d85fcaf8729332b5b70c45f
+  languageName: node
+  linkType: hard
+
+"@babel/runtime@npm:^7.6.0, @babel/runtime@npm:^7.9.2":
+  version: 7.26.0
+  resolution: "@babel/runtime@npm:7.26.0"
+  dependencies:
+    regenerator-runtime: "npm:^0.14.0"
+  checksum: 10/9f4ea1c1d566c497c052d505587554e782e021e6ccd302c2ad7ae8291c8e16e3f19d4a7726fb64469e057779ea2081c28b7dbefec6d813a22f08a35712c0f699
   languageName: node
   linkType: hard
 
@@ -11700,7 +11700,6 @@ __metadata:
     cozy-devtools: "npm:^3.0.0"
     cozy-doctypes: "npm:1.99.1"
     cozy-flags: "npm:^4.9.1"
-    cozy-harvest-lib: "npm:^39.0.7"
     cozy-intent: "npm:^2.31.1"
     cozy-interapp: "npm:^0.18.1"
     cozy-jobs-cli: "npm:^2.4.3"
@@ -11789,46 +11788,6 @@ __metadata:
   bin:
     cozy-flags: ./bin/cozy-flags
   checksum: 10/166b81377cf2c409c6d928081df854bb9a24f14bb739d7c0699760771f87c32ec6233e7bbf682e70def354949bd9a44881ef03fba2c214438e8be27ddf248dd0
-  languageName: node
-  linkType: hard
-
-"cozy-harvest-lib@npm:^39.0.7":
-  version: 39.0.10
-  resolution: "cozy-harvest-lib@npm:39.0.10"
-  dependencies:
-    "@cozy/minilog": "npm:^1.0.0"
-    classnames: "npm:^2.5.1"
-    cozy-doctypes: "npm:^1.99.1"
-    cozy-logger: "npm:^1.18.1"
-    date-fns: "npm:2.30.0"
-    final-form: "npm:^4.18.5"
-    lodash: "npm:^4.17.21"
-    microee: "npm:^0.0.6"
-    node-polyglot: "npm:^2.4.0"
-    react-final-form: "npm:^3.7.0"
-    react-json-print: "npm:^0.1.3"
-    react-markdown: "npm:^4.2.2"
-    react-redux: "npm:7.2.2"
-    use-deep-compare-effect: "npm:^1.8.1"
-    uuid: "npm:^3.3.2"
-  peerDependencies:
-    "@babel/runtime": ">=7.12.5"
-    "@linagora/twake-icons": ">=2.6.6"
-    "@sentry/react": ">=7.118.0"
-    cozy-client: ">=52.1.0"
-    cozy-device-helper: ">=2.6.0"
-    cozy-flags: ">=2.3.5"
-    cozy-intent: ">=2.29.1"
-    cozy-interapp: ">=0.9.0"
-    cozy-keys-lib: ">=6.1.1"
-    cozy-realtime: ">=4.2.8"
-    cozy-ui: ">=138.1.0"
-    cozy-ui-plus: ">=6.0.0"
-    cozy-viewer: ">=28.0.0"
-    leaflet: ^1.7.1
-    react-router-dom: ">=6.14.2"
-    twake-i18n: ">=0.3.0"
-  checksum: 10/12774907716c719b89dc63de6bf4718d4d1a74b0743fe42715730d143f73288030980b7bc60c815a0e87fd17fe2f595ed166abce8f10e9e3222b5935bddbbb17
   languageName: node
   linkType: hard
 
@@ -13331,13 +13290,6 @@ __metadata:
   version: 1.1.2
   resolution: "depd@npm:1.1.2"
   checksum: 10/2ed6966fc14463a9e85451db330ab8ba041efed0b9a1a472dbfc6fbf2f82bab66491915f996b25d8517dddc36c8c74e24c30879b34877f3c4410733444a51d1d
-  languageName: node
-  linkType: hard
-
-"dequal@npm:^2.0.2":
-  version: 2.0.3
-  resolution: "dequal@npm:2.0.3"
-  checksum: 10/6ff05a7561f33603df87c45e389c9ac0a95e3c056be3da1a0c4702149e3a7f6fe5ffbb294478687ba51a9e95f3a60e8b6b9005993acd79c292c7d15f71964b6b
   languageName: node
   linkType: hard
 
@@ -15124,15 +15076,6 @@ __metadata:
   dependencies:
     "@babel/runtime": "npm:^7.10.0"
   checksum: 10/7c14855e226f1b87f947dad096f49400afdb235e9623e0a1b32f9430639fbeeba18f3e68995590583288906951fc73a72501e914afe257c24f1487492e4af924
-  languageName: node
-  linkType: hard
-
-"final-form@npm:^4.18.5":
-  version: 4.20.1
-  resolution: "final-form@npm:4.20.1"
-  dependencies:
-    "@babel/runtime": "npm:^7.10.0"
-  checksum: 10/7a8492f513ae1991692180e595c4d5f8cdbcb121e93f9d513c28987681735761d8bd7602653c897d7563eb9b6e42a96c0cc4afdc64489aef33e32c392c2a09f2
   languageName: node
   linkType: hard
 
@@ -22227,19 +22170,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-final-form@npm:^3.7.0":
-  version: 3.7.0
-  resolution: "react-final-form@npm:3.7.0"
-  dependencies:
-    "@babel/runtime": "npm:^7.1.2"
-  peerDependencies:
-    final-form: ^4.11.0
-    prop-types: ^15.6.0
-    react: ^15.3.0 || ^16.0.0-0
-  checksum: 10/7e9c4170eff915e74b084e5f64ee6037a8a64a2e3cef76c1cadfa58703df61a9280669c658395e4d25afa7f764a6e1795aab65ca28be086550846562f9db0e5e
-  languageName: node
-  linkType: hard
-
 "react-input-autosize@npm:^3.0.0":
   version: 3.0.0
   resolution: "react-input-autosize@npm:3.0.0"
@@ -22294,16 +22224,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-json-print@npm:^0.1.3":
-  version: 0.1.3
-  resolution: "react-json-print@npm:0.1.3"
-  peerDependencies:
-    react: ^16.12.0
-    react-dom: ^16.12.0
-  checksum: 10/0447343c1356576feae4043c2cbd4130b7f8f82b34fbbba97643b0899d45b9b1509b14b95aacbe5b50436f1377940a1d35021139be42342a4c10fe0737824734
-  languageName: node
-  linkType: hard
-
 "react-layout-effect@npm:^1.0.1":
   version: 1.0.5
   resolution: "react-layout-effect@npm:1.0.5"
@@ -22313,7 +22233,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-markdown@npm:^4.0.8, react-markdown@npm:^4.2.2":
+"react-markdown@npm:^4.0.8":
   version: 4.3.1
   resolution: "react-markdown@npm:4.3.1"
   dependencies:
@@ -22383,27 +22303,6 @@ __metadata:
     react-native:
       optional: true
   checksum: 10/17829aa8db7d75839e0bbe6655ad61a09f014571e462db530c9d412efc19e4eae799ba8d408eab7c7bc7754f7417cdc87fd2ec9ac38b1af2f2bba1b3756c64bc
-  languageName: node
-  linkType: hard
-
-"react-redux@npm:7.2.2":
-  version: 7.2.2
-  resolution: "react-redux@npm:7.2.2"
-  dependencies:
-    "@babel/runtime": "npm:^7.12.1"
-    hoist-non-react-statics: "npm:^3.3.2"
-    loose-envify: "npm:^1.4.0"
-    prop-types: "npm:^15.7.2"
-    react-is: "npm:^16.13.1"
-  peerDependencies:
-    react: ^16.8.3 || ^17
-    redux: ^2.0.0 || ^3.0.0 || ^4.0.0-0
-  peerDependenciesMeta:
-    react-dom:
-      optional: true
-    react-native:
-      optional: true
-  checksum: 10/38c96b2baa16a8ca1d6d551f54d4841701e512a9e157d2960e6651ab503680be8a5f36751dfcd54eff73c493aa3e9cddad05f49ffc0fed8d550e7e0b80221af8
   languageName: node
   linkType: hard
 
@@ -26165,18 +26064,6 @@ __metadata:
     "@types/react":
       optional: true
   checksum: 10/a0f199ba510e008ce7b6166d9bda095f1e4e4449089bde665938a9689a0d236a6cca655f18d7272208aaca20bb364ef5fc895d5e37128f29814c1141a4258ab1
-  languageName: node
-  linkType: hard
-
-"use-deep-compare-effect@npm:^1.8.1":
-  version: 1.8.1
-  resolution: "use-deep-compare-effect@npm:1.8.1"
-  dependencies:
-    "@babel/runtime": "npm:^7.12.5"
-    dequal: "npm:^2.0.2"
-  peerDependencies:
-    react: ">=16.13"
-  checksum: 10/1b16c391ebd3378c38ab298fdf86c82183fc1125c24ae43c2fe73c0184ab5527e22d42ddaeddde8dc8b50b0a8e5752d262e0a6eb8e49c67369d76d86b9d655ac
   languageName: node
   linkType: hard
 
