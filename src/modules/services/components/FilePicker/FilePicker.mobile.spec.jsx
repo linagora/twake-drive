@@ -185,7 +185,7 @@ describe('FilePicker mobile navigation, list and actions', () => {
 
     expect(downloadButton).toHaveClass('u-flex-grow-1')
     expect(publicButton).toHaveClass('u-flex-grow-1')
-    expect(downloadButton).toHaveClass('MuiButton-outlined')
+    expect(downloadButton).toHaveClass('MuiButton-text')
     expect(publicButton).toHaveClass('MuiButton-contained')
     expect(downloadButton.querySelector('svg')).toBe(null)
     expect(publicButton.querySelector('svg')).toBe(null)
@@ -205,7 +205,10 @@ describe('FilePicker mobile navigation, list and actions', () => {
 
     expect(getByTestId('public-link-btn')).not.toBeDisabled()
     expect(getByTestId('temporary-download-link-btn')).toBeDisabled()
-    expect(queryByRole('button', { name: 'Clear Selection' })).toBe(null)
+    expect(
+      queryByRole('button', { name: 'Clear Selection' })
+    ).toBeInTheDocument()
+    expect(getByTestId('file-picker-selected-count')).toHaveTextContent('2')
     expect(queryByText(/item selected/)).toBe(null)
     expect(
       queryByText('FilePicker.constraints.disabledReasons.folderNotAllowed')
