@@ -28,10 +28,7 @@ const FilePickerBreadcrumb = ({ path, onBreadcrumbClick }) => {
       className="u-flex u-flex-items-center u-fw-bold u-h-2 u-h-2-half-s"
     >
       {hasPath && path.length > 1 && (
-        <BackButton
-          onClick={navigateBack}
-          size={isMobile ? 'large' : 'small'}
-        />
+        <BackButton onClick={navigateBack} size="small" />
       )}
       {isMobile && hasPath ? (
         <span>{path[path.length - 1].name}</span>
