@@ -204,13 +204,8 @@
       "selector": "worker",
       "values": ["sendmail"]
     },
-    "konnectors": {
-      "description": "Required to display additional information in the viewer for files automatically retrieved by services",
-      "type": "io.cozy.konnectors",
-      "verbs": ["GET"]
-    },
     "accounts": {
-      "description": "Required to display additional information in the viewer for files automatically retrieved by services",
+      "description": "Required by the AI Assistant to access providers",
       "type": "io.cozy.accounts",
       "verbs": ["ALL"]
     },
