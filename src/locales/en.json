@@ -544,7 +544,17 @@
     "description": "The last 20 versions of your files are automatically kept. Select a version to download it.",
     "current_version": "Current version",
     "loading": "Loading...",
-    "noFileVersionEnabled": "Your Twake will soon be able to archive the last modifications of a file to never risk losing them again"
+    "noFileVersionEnabled": "Your Twake will soon be able to archive the last modifications of a file to never risk losing them again",
+    "download": "Download this version",
+    "deleteVersion": {
+      "action": "Delete this version",
+      "title": "Delete this version?",
+      "version": "Version of %{date} (%{size})",
+      "irreversible": "This version will be permanently deleted. This action cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Delete",
+      "error": "This version could not be deleted."
+    }
   },
   "External": {
     "redirection": {

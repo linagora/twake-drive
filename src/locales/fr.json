@@ -541,7 +541,17 @@
     "description": "Les 20 dernières versions de vos fichiers sont conservées automatiquement. Sélectionnez une version pour la télécharger.",
     "current_version": "Version actuelle",
     "loading": "Chargement...",
-    "noFileVersionEnabled": "Nouveauté : votre Twake pourra prochainement archiver les dernières modifications d'un fichier pour ne plus jamais risquer de les perdre"
+    "noFileVersionEnabled": "Nouveauté : votre Twake pourra prochainement archiver les dernières modifications d'un fichier pour ne plus jamais risquer de les perdre",
+    "download": "Télécharger cette version",
+    "deleteVersion": {
+      "action": "Supprimer cette version",
+      "title": "Supprimer cette version ?",
+      "version": "Version du %{date} (%{size})",
+      "irreversible": "Cette version sera définitivement supprimée. Cette action est irréversible.",
+      "cancel": "Annuler",
+      "confirm": "Supprimer",
+      "error": "Cette version n'a pas pu être supprimée."
+    }
   },
   "External": {
     "redirection": {
