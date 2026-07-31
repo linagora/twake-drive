@@ -21,6 +21,14 @@ const formatDate = (date, f) => {
   return f(date, 'dd LLLL - HH:mm')
 }
 
+const VersioningCaption = ({ fetchStatus, isFileVersioningEnabled, t }) => {
+  if (fetchStatus === 'loading') return <span>{t('History.loading')}</span>
+  if (fetchStatus === 'loaded' && isFileVersioningEnabled) {
+    return <span>{t('History.description')}</span>
+  }
+  return <span>{t('History.noFileVersionEnabled')}</span>
+}
+
 export const HistoryModal = ({ file, revisions, revisionsFetchStatus }) => {
   const client = useClient()
   const { t, f } = useI18n()
@@ -49,18 +57,11 @@ export const HistoryModal = ({ file, revisions, revisionsFetchStatus }) => {
         content={
           <>
             <Typography variant="caption" className={styles.HistoryRowCaption}>
-              {capabilities.fetchStatus === 'loading' && (
-                <span>{t('History.loading')}</span>
-              )}
-              {capabilities.fetchStatus === 'loaded' &&
-                isFileVersioningEnabled && (
-                  <span>{t('History.description')}</span>
-                )}
-              {(capabilities.fetchStatus === 'failed' ||
-                (!isFileVersioningEnabled &&
-                  capabilities.fetchStatus !== 'loading')) && (
-                <span>{t('History.noFileVersionEnabled')}</span>
-              )}
+              <VersioningCaption
+                fetchStatus={capabilities.fetchStatus}
+                isFileVersioningEnabled={isFileVersioningEnabled}
+                t={t}
+              />
             </Typography>
             <List>
               <HistoryRow
