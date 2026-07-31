@@ -23,15 +23,18 @@ const FilePickerBreadcrumb = ({ path, onBreadcrumbClick }) => {
 
   return (
     <Typography
-      variant="body1"
+      variant="body2"
       data-testid="file-picker-breadcrumb"
-      className="u-flex u-flex-items-center u-fw-bold"
+      className="u-flex u-flex-items-center u-fw-bold u-h-2 u-h-2-half-s"
     >
+      {hasPath && path.length > 1 && (
+        <BackButton
+          onClick={navigateBack}
+          size={isMobile ? 'large' : 'small'}
+        />
+      )}
       {isMobile && hasPath ? (
-        <>
-          {path.length > 1 && <BackButton onClick={navigateBack} />}
-          <span>{path[path.length - 1].name}</span>
-        </>
+        <span>{path[path.length - 1].name}</span>
       ) : (
         hasPath &&
         path.map((folder, idx) => {

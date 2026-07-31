@@ -356,7 +356,7 @@ describe('FilePicker mobile navigation, list and actions', () => {
   })
 
   it('preserves desktop columns, selection and folder double-click navigation', () => {
-    const { getAllByTestId, getByTestId, queryByRole } = setup({
+    const { getAllByTestId, getByRole, getByTestId, queryByRole } = setup({
       isMobile: false
     })
     const rows = getAllByTestId('list-item')
@@ -384,6 +384,8 @@ describe('FilePicker mobile navigation, list and actions', () => {
     fireEvent.doubleClick(folderRow)
     expect(getByTestId('file-picker-breadcrumb')).toHaveTextContent('My Drive')
     expect(getByTestId('file-picker-breadcrumb')).toHaveTextContent('Photos')
+    fireEvent.click(getByRole('button', { name: 'Back' }))
+    expect(getByTestId('file-picker-breadcrumb')).toHaveTextContent('My Drive')
     expect(queryByRole('button', { name: 'Back' })).toBe(null)
   })
 
