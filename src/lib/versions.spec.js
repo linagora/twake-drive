@@ -23,7 +23,10 @@ describe('destroyFileVersion', () => {
       version: { id: 'file-id/2-fa3a3bec' }
     })
 
-    expect(fetchJSON).toHaveBeenCalledWith('DELETE', '/files/file-id/2-fa3a3bec')
+    expect(fetchJSON).toHaveBeenCalledWith(
+      'DELETE',
+      '/files/file-id/2-fa3a3bec'
+    )
   })
 
   it('deletes the version through the shared drive route when a driveId is given', async () => {
