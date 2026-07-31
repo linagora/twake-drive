@@ -3,20 +3,17 @@ import { useSelector } from 'react-redux'
 
 import { useClient } from 'cozy-client'
 import { useSharingContext } from 'cozy-sharing'
-import {
-  stableSort,
-  getComparator
-} from 'cozy-ui/transpiled/react/Table/Virtualized/helpers'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import { useI18n } from 'twake-i18n'
 
 import Grid from './Grid'
-import { secondarySort } from '../helpers'
+import { sortFiles } from '../sortFiles'
 import { useSyncingFakeFile } from '../useSyncingFakeFile'
 
 import { SHARED_DRIVES_DIR_ID } from '@/constants/config'
 import { useShiftSelection } from '@/hooks/useShiftSelection'
 import { useViewSwitcherContext } from '@/lib/ViewSwitcherContext'
+import { useFileLastUpdated } from '@/modules/filelist/FileLastUpdatedContext'
 import { isTypingNewFolderName } from '@/modules/filelist/duck'
 import { useCancelable } from '@/modules/move/hooks/useCancelable'
 import RectangularSelection from '@/modules/selection/RectangularSelection'
@@ -60,6 +57,8 @@ const FolderViewBodyContent = ({
   const { showAlert } = useAlert()
   const { viewType } = useViewSwitcherContext()
   const { t } = useI18n()
+  const { getFileLastUpdatedAt, groupDirectoriesFirstByUpdatedAt } =
+    useFileLastUpdated()
   const IsAddingFolder = useSelector(isTypingNewFolderName)
   const { sortOrder } = orderProps
   const { order, attribute: orderBy } = sortOrder
@@ -81,9 +80,18 @@ const FolderViewBodyContent = ({
   )
 
   const sortedRows = useMemo(() => {
-    const sortedData = stableSort(rows, getComparator(order, orderBy))
-    return secondarySort(sortedData)
-  }, [rows, order, orderBy])
+    return sortFiles(
+      rows,
+      { order, attribute: orderBy },
+      { getFileLastUpdatedAt, groupDirectoriesFirstByUpdatedAt }
+    )
+  }, [
+    rows,
+    order,
+    orderBy,
+    getFileLastUpdatedAt,
+    groupDirectoriesFirstByUpdatedAt
+  ])
 
   const { setLastInteractedItem, onShiftClick } = useShiftSelection(
     {

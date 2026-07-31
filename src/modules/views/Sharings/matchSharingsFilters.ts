@@ -1,14 +1,3 @@
-import endOfDay from 'date-fns/endOfDay'
-import endOfMonth from 'date-fns/endOfMonth'
-import isValid from 'date-fns/isValid'
-import isWithinInterval from 'date-fns/isWithinInterval'
-import parseISO from 'date-fns/parseISO'
-import startOfDay from 'date-fns/startOfDay'
-import startOfMonth from 'date-fns/startOfMonth'
-import startOfYear from 'date-fns/startOfYear'
-import subDays from 'date-fns/subDays'
-import subMonths from 'date-fns/subMonths'
-
 import {
   isDirectory,
   isDocs,
@@ -20,6 +9,11 @@ import type { IOCozyFile } from 'cozy-client/types/types'
 import { isFileType } from '@/lib/fileTypes'
 import type { FileType } from '@/lib/fileTypes'
 import { getFileMimetype } from '@/lib/getFileMimetype'
+import { isFileLastUpdatedInRange } from '@/lib/isFileLastUpdatedInRange'
+import {
+  getDefaultFileLastUpdatedAt,
+  type GetFileLastUpdatedAt
+} from '@/modules/filelist/FileLastUpdatedContext'
 import { DRIVE_ROOT_TYPE } from '@/modules/shareddrives/types'
 import { EXCALIDRAW_MIME } from '@/modules/views/Excalidraw/helpers'
 
@@ -32,18 +26,14 @@ interface SharingsTarget {
   drive_root_type: string | null
   mime: string | null
   name: string | null
-  updated_at: string | null
 }
 
-type FilterMatcher = (entry: IOCozyFile, value: string) => boolean
+type FilterMatcher = (
+  entry: IOCozyFile,
+  value: string,
+  getFileLastUpdatedAt: GetFileLastUpdatedAt
+) => boolean
 type OptionalFileType = FileType | null
-
-interface ModificationDateRange {
-  start: Date
-  end: Date
-}
-
-type DateRangeGetter = (now: Date) => ModificationDateRange
 
 interface FileTypeContext {
   entry: IOCozyFile
@@ -61,28 +51,6 @@ const FILTER_TYPE_BY_CLASS: Record<string, FileType> = {
   document: 'text',
   presentation: 'slide',
   spreadsheet: 'sheet'
-}
-
-const MODIFICATION_DATE_RANGE_GETTERS: Record<string, DateRangeGetter> = {
-  today: now => ({
-    start: startOfDay(now),
-    end: endOfDay(now)
-  }),
-  'last-7-days': now => ({
-    start: startOfDay(subDays(now, 6)),
-    end: endOfDay(now)
-  }),
-  'last-month': now => {
-    const previousMonth = subMonths(now, 1)
-    return {
-      start: startOfMonth(previousMonth),
-      end: endOfMonth(previousMonth)
-    }
-  },
-  'this-year': now => ({
-    start: startOfYear(now),
-    end: endOfDay(now)
-  })
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -106,8 +74,7 @@ function getTarget(entry: IOCozyFile): SharingsTarget | null {
     class: getStringProperty(target, 'class'),
     drive_root_type: getStringProperty(target, 'drive_root_type'),
     mime: getStringProperty(target, 'mime'),
-    name: getStringProperty(target, 'name'),
-    updated_at: getStringProperty(target, 'updated_at')
+    name: getStringProperty(target, 'name')
   }
 }
 
@@ -225,18 +192,10 @@ function isSharingsEntryFileType(entry: IOCozyFile, fileType: string): boolean {
 
 function isSharingsEntryModificationDate(
   entry: IOCozyFile,
-  dateRangeValue: string
+  dateRangeValue: string,
+  getFileLastUpdatedAt: GetFileLastUpdatedAt
 ): boolean {
-  const updatedAt = getTarget(entry)?.updated_at ?? entry.updated_at
-  if (!updatedAt) return false
-
-  const updatedAtDate = parseISO(updatedAt)
-  if (!isValid(updatedAtDate)) return false
-
-  const getDateRange = MODIFICATION_DATE_RANGE_GETTERS[dateRangeValue]
-  if (!getDateRange) return false
-
-  return isWithinInterval(updatedAtDate, getDateRange(new Date()))
+  return isFileLastUpdatedInRange(getFileLastUpdatedAt(entry), dateRangeValue)
 }
 
 const FILTER_MATCHERS = {
@@ -254,12 +213,13 @@ function getFilterMatcher(filterName: string): FilterMatcher | null {
 
 export function isSharingsEntryMatchingFilters(
   entry: IOCozyFile,
-  filters: Readonly<SharingsFilterValues>
+  filters: Readonly<SharingsFilterValues>,
+  getFileLastUpdatedAt: GetFileLastUpdatedAt = getDefaultFileLastUpdatedAt
 ): boolean {
   return Object.entries(filters).every(([filterName, value]) => {
     if (value === null) return true
 
     const matcher = getFilterMatcher(filterName)
-    return matcher ? matcher(entry, value) : false
+    return matcher ? matcher(entry, value, getFileLastUpdatedAt) : false
   })
 }

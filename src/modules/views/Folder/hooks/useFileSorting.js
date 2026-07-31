@@ -1,13 +1,9 @@
 import { useMemo, useCallback } from 'react'
 
-import {
-  stableSort,
-  getComparator
-} from 'cozy-ui/transpiled/react/Table/Virtualized/helpers'
-
-import { secondarySort } from '../helpers'
+import { sortFiles } from '../sortFiles'
 
 import { useFolderSort } from '@/hooks'
+import { useFileLastUpdated } from '@/modules/filelist/FileLastUpdatedContext'
 
 /**
  * Custom hook for handling file sorting logic
@@ -17,6 +13,8 @@ import { useFolderSort } from '@/hooks'
  * @returns {Object} Sorting state and functions
  */
 export const useFileSorting = (currentFolderId, queryResults, orderProps) => {
+  const { getFileLastUpdatedAt, groupDirectoriesFirstByUpdatedAt } =
+    useFileLastUpdated()
   // Get internal sorting state from existing hook
   const [internalSortOrder, internalSetSortOrder, internalIsSettingsLoaded] =
     useFolderSort(currentFolderId)
@@ -40,13 +38,16 @@ export const useFileSorting = (currentFolderId, queryResults, orderProps) => {
 
   // Sort files based on current sort order
   const sortedFiles = useMemo(() => {
-    const { order, attribute: orderBy } = sortOrder
-    if (!order || !orderBy) {
-      return secondarySort(allFiles)
-    }
-    const sortedData = stableSort(allFiles, getComparator(order, orderBy))
-    return secondarySort(sortedData)
-  }, [allFiles, sortOrder])
+    return sortFiles(allFiles, sortOrder, {
+      getFileLastUpdatedAt,
+      groupDirectoriesFirstByUpdatedAt
+    })
+  }, [
+    allFiles,
+    sortOrder,
+    getFileLastUpdatedAt,
+    groupDirectoriesFirstByUpdatedAt
+  ])
 
   // Create sort change handler
   const changeSortOrder = useCallback(

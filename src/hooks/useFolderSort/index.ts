@@ -4,7 +4,11 @@ import { useClient, Q } from 'cozy-client'
 import flag from 'cozy-flags'
 
 import { DEFAULT_SORT, SORT_BY_UPDATE_DATE } from '@/config/sort'
-import { RECENT_FOLDER_ID, TRASH_DIR_ID } from '@/constants/config'
+import {
+  RECENT_FOLDER_ID,
+  SHARINGS_VIEW_ID,
+  TRASH_DIR_ID
+} from '@/constants/config'
 import { DOCTYPE_DRIVE_SETTINGS } from '@/lib/doctypes'
 import logger from '@/lib/logger'
 import { usePublicContext } from '@/modules/public/PublicProvider'
@@ -30,6 +34,7 @@ const useFolderSort = (
   const defaultSort: Sort =
     folderId === TRASH_DIR_ID ||
     folderId === RECENT_FOLDER_ID ||
+    folderId === SHARINGS_VIEW_ID ||
     flag('drive.default-updated-at-sort.enabled')
       ? SORT_BY_UPDATE_DATE
       : DEFAULT_SORT
