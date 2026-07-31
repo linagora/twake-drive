@@ -9,7 +9,6 @@ import {
 } from 'cozy-sharing'
 import { makeActions } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
 
-import HarvestBanner from './HarvestBanner'
 import { useDriveQueries } from './useDriveQueries'
 
 import useHead from '@/components/useHead'
@@ -179,9 +178,6 @@ const DriveFolderView = () => {
             toggleThumbnailSize={toggleThumbnailSize}
           />
         </FolderViewHeader>
-        {flag('drive.show.harvest-banner') && (
-          <HarvestBanner folderId={currentFolderId} />
-        )}
         {flag('drive.virtualization.enabled') && !base.isMobile ? (
           <FolderViewBodyVz
             actions={actions}
