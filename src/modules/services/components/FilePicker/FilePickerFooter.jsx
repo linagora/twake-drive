@@ -1,4 +1,10 @@
-import { Attachment, Cross, Icon, Link } from '@linagora/twake-icons'
+import {
+  Attachment,
+  CheckCircle,
+  Cross,
+  Icon,
+  Link
+} from '@linagora/twake-icons'
 import { filesize } from 'filesize'
 import PropTypes from 'prop-types'
 import React, { memo } from 'react'
@@ -34,6 +40,7 @@ const FilePickerFooter = ({
   const { isMobile } = useBreakpoints()
   const { selectedItems, clearSelection } = useSelectionContext()
   const selectedCount = selectedItems.length
+  const hasSelection = selectedCount > 0
 
   const publicLinkLabel =
     publicLinkAction &&
@@ -102,27 +109,46 @@ const FilePickerFooter = ({
           : 'u-flex u-flex-items-center u-flex-justify-between u-w-100'
       }
     >
-      {!isMobile &&
-        (selectedCount > 0 ? (
-          <Box className="u-flex u-flex-items-center">
-            <IconButton
-              onClick={clearSelection}
-              size="small"
-              aria-label={t('toolbar.clear_selection')}
-            >
-              <Icon icon={Cross} size={16} />
-            </IconButton>
+      {hasSelection ? (
+        <Box className="u-flex u-flex-items-center u-flex-shrink-0">
+          <IconButton
+            onClick={clearSelection}
+            size="small"
+            aria-label={t('toolbar.clear_selection')}
+          >
+            <Icon icon={Cross} size={16} />
+          </IconButton>
+          {isMobile ? (
+            <>
+              <Icon
+                icon={CheckCircle}
+                color="var(--primaryColor)"
+                size={16}
+                className="u-ml-half"
+              />
+              <Typography
+                variant="body1"
+                className="u-ml-half"
+                data-testid="file-picker-selected-count"
+              >
+                {selectedCount}
+              </Typography>
+            </>
+          ) : (
             <Typography variant="body1" className="u-ml-half">
               {selectedCount} {t('SelectionBar.selected_count', selectedCount)}
             </Typography>
-          </Box>
-        ) : (
-          <span />
-        ))}
+          )}
+        </Box>
+      ) : (
+        !isMobile && <span />
+      )}
       <Box
         className={
           isMobile
-            ? 'u-flex u-flex-items-center u-w-100'
+            ? `u-flex u-flex-items-center ${
+                hasSelection ? 'u-flex-grow-1' : 'u-w-100'
+              }`
             : 'u-flex u-flex-items-center'
         }
       >
@@ -133,7 +159,7 @@ const FilePickerFooter = ({
           () => onConfirm(filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK),
           'temporary-download-link-btn',
           Attachment,
-          'secondary'
+          'text'
         )}
         {renderAction(
           publicLinkLabel,

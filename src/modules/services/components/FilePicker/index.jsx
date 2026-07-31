@@ -202,7 +202,7 @@ const FilePicker = ({
         </Box>
         <Divider />
         <footer
-          className="u-mv-1 u-mh-2 u-flex-shrink-0-s"
+          className="u-m-1 u-flex-shrink-0-s"
           data-testid="file-picker-footer"
         >
           <FilePickerFooter
