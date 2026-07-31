@@ -10,9 +10,17 @@ const createFileWithVersions = async (
   name: string,
   count: number
 ): Promise<string> => {
-  const fileId = await createFile(ALICE.instance, name, 'version 0')
+  const fileId = await createFile({
+    instance: ALICE.instance,
+    name,
+    content: 'version 0'
+  })
   for (let i = 1; i <= count; i++) {
-    await overwriteFile(ALICE.instance, fileId, `version ${i}`.repeat(i + 1))
+    await overwriteFile({
+      instance: ALICE.instance,
+      fileId,
+      content: `version ${i}`.repeat(i + 1)
+    })
   }
   return fileId
 }
@@ -24,7 +32,7 @@ test.describe('File versions', () => {
   }) => {
     const name = `versioned-${stamp()}.txt`
     const fileId = await createFileWithVersions(name, 2)
-    expect(await countFileVersions(ALICE.instance, fileId)).toBe(2)
+    expect(await countFileVersions({ instance: ALICE.instance, fileId })).toBe(2)
 
     await alicePage.goto(ALICE_ROOT)
     const row = aliceDrive.row(name)
@@ -42,7 +50,7 @@ test.describe('File versions', () => {
     await alicePage.getByRole('button', { name: 'Delete', exact: true }).click()
 
     await expect(deleteButtons).toHaveCount(1)
-    expect(await countFileVersions(ALICE.instance, fileId)).toBe(1)
+    expect(await countFileVersions({ instance: ALICE.instance, fileId })).toBe(1)
   })
 
   test('offers no delete action on the current version', async ({

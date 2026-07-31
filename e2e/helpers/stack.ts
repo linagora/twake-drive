@@ -100,12 +100,21 @@ function filesToken(instance: string): string {
   return stackExec('instances', 'token-cli', instance, 'io.cozy.files')
 }
 
+interface FileRef {
+  instance: string
+  fileId: string
+}
+
 /** Create a text file at the root of the instance and return its id. */
-export async function createFile(
-  instance: string,
-  name: string,
+export async function createFile({
+  instance,
+  name,
+  content
+}: {
+  instance: string
+  name: string
   content: string
-): Promise<string> {
+}): Promise<string> {
   const res = await fetch(
     `http://${instance}/files/${ROOT_DIR_ID}?Type=file&Name=${encodeURIComponent(name)}`,
     {
@@ -127,11 +136,11 @@ export async function createFile(
 }
 
 /** Overwrite a file's content, which makes the stack keep the former one as a version. */
-export async function overwriteFile(
-  instance: string,
-  fileId: string,
-  content: string
-): Promise<void> {
+export async function overwriteFile({
+  instance,
+  fileId,
+  content
+}: FileRef & { content: string }): Promise<void> {
   const res = await fetch(`http://${instance}/files/${fileId}`, {
     method: 'PUT',
     headers: {
@@ -148,10 +157,10 @@ export async function overwriteFile(
 }
 
 /** Number of versions the stack currently keeps for a file. */
-export async function countFileVersions(
-  instance: string,
-  fileId: string
-): Promise<number> {
+export async function countFileVersions({
+  instance,
+  fileId
+}: FileRef): Promise<number> {
   const res = await fetch(`http://${instance}/files/${fileId}`, {
     headers: {
       Authorization: `Bearer ${filesToken(instance)}`,
