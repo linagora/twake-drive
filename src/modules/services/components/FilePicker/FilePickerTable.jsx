@@ -170,7 +170,14 @@ export const FilePickerTable = memo(
     )
 
     return (
-      <Box height="100%" flex={1} minHeight={0} px={3} boxSizing="border-box">
+      <Box
+        className="u-ph-1"
+        height="100%"
+        flex={1}
+        minHeight={0}
+        px={3}
+        boxSizing="border-box"
+      >
         <VirtualizedTable
           ref={virtuosoRef}
           context={tableContext}
