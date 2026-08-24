@@ -253,6 +253,25 @@ describe('isSharingsEntryMatchingFilters', () => {
     expect(isSharingsEntryMatchingFilters(entry, {})).toBe(true)
   })
 
+  it('matches entries associated with the selected contact', () => {
+    const entry = makeFile({ name: 'Shared report.pdf' })
+
+    expect(
+      isSharingsEntryMatchingFilters(
+        entry,
+        { contact: 'person:alice@example.com' },
+        { contactValues: ['person:alice@example.com'] }
+      )
+    ).toBe(true)
+    expect(
+      isSharingsEntryMatchingFilters(
+        entry,
+        { contact: 'person:bob@example.com' },
+        { contactValues: ['person:alice@example.com'] }
+      )
+    ).toBe(false)
+  })
+
   it('rejects active filters without a matcher', () => {
     const entry = makeFile({ name: 'Manual.pdf' })
 

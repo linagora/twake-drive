@@ -120,15 +120,18 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
 
   const result = useSharingsQueryResult(sharedDocumentIds, allLoaded)
 
-  const { filteredResult, sharedDrivesLoaded, hasDrives } = useFilteredSharings(
-    {
-      result,
-      sharedDocumentIds,
-      tab,
-      filters: sharingsFilters.filters,
-      getFileLastUpdatedAt
-    }
-  )
+  const {
+    contactFilterOptions,
+    filteredResult,
+    sharedDrivesLoaded,
+    hasDrives
+  } = useFilteredSharings({
+    result,
+    sharedDocumentIds,
+    tab,
+    filters: sharingsFilters.filters,
+    getFileLastUpdatedAt
+  })
 
   const showDrives = shouldShowDrivesTab({ hasDrives })
 
@@ -169,7 +172,11 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
           onChange={setTab}
           showDrives={showDrives}
         />
-        <SharingsFilters {...sharingsFilters} />
+        <SharingsFilters
+          {...sharingsFilters}
+          contactFilterLoading={!allLoaded}
+          contactFilterOptions={contactFilterOptions}
+        />
         {!allLoaded ||
         !sharedDrivesLoaded ||
         !hasQueryBeenLoaded(filteredResult) ? (
