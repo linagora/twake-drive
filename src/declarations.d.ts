@@ -166,6 +166,11 @@ declare module 'cozy-sharing' {
     isOwner: (docId: string) => boolean
   } & import('./modules/views/Sharings/getSharingsLastUpdatedAt').SharingsTimestampContext
 
+  export const getRecipientsFromSharing: (
+    sharing: unknown,
+    docId: string
+  ) => unknown
+
   export const useNativeFileSharing: () => {
     isNativeFileSharingAvailable: boolean
     shareFilesNative: (
