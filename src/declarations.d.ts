@@ -164,12 +164,18 @@ declare module 'cozy-sharing' {
     refresh: () => void
     hasWriteAccess: (id: string, driveId?: string) => boolean
     isOwner: (docId: string) => boolean
+    getRecipients: (docId: string) => unknown
   } & import('./modules/views/Sharings/getSharingsLastUpdatedAt').SharingsTimestampContext
 
   export const getRecipientsFromSharing: (
     sharing: unknown,
     docId: string
   ) => unknown
+
+  export const MemberAvatar: React.ComponentType<{
+    recipient: unknown
+    size?: string
+  }>
 
   export const useNativeFileSharing: () => {
     isNativeFileSharingAvailable: boolean

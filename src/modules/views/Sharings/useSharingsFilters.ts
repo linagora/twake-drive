@@ -22,16 +22,18 @@ export interface UseSharingsFiltersResult {
 }
 
 const SHARINGS_FILTER_PREFIX = 'f.'
+const CONTACT_FILTER = 'contact'
 const FILE_TYPE_FILTER = 'type'
 const MODIFICATION_DATE_FILTER = 'date'
 const SHARINGS_FILTERS: readonly string[] = [
+  CONTACT_FILTER,
   FILE_TYPE_FILTER,
   MODIFICATION_DATE_FILTER
 ]
 const SHARINGS_FILTERS_BY_TAB: Record<SharingsTab, readonly string[]> = {
   [SHARING_TAB_WITH_ME]: SHARINGS_FILTERS,
   [SHARING_TAB_BY_ME]: SHARINGS_FILTERS,
-  [SHARING_TAB_DRIVES]: SHARINGS_FILTERS
+  [SHARING_TAB_DRIVES]: []
 }
 
 function getSupportedFilters(tab: SharingsTab): readonly string[] {

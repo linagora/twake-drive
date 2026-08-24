@@ -5,6 +5,7 @@ import flag from 'cozy-flags'
 import { useSharingContext } from 'cozy-sharing'
 
 import { isSharingsEntryMatchingFilters } from './matchSharingsFilters'
+import { getSharingsContactFilterData } from './sharingContactFilter'
 
 import {
   SHARED_DRIVES_DIR_ID,
@@ -16,6 +17,8 @@ import { useTransformFolderListHasSharedDriveShortcuts } from '@/hooks/useTransf
 import { getDefaultFileLastUpdatedAt } from '@/modules/filelist/FileLastUpdatedContext'
 
 const NO_FILTERS = {}
+const getNoRecipients = () => []
+const getNoSharing = () => null
 
 const buildBaseShape = (result, hasIds) => ({
   ...result,
@@ -156,10 +159,15 @@ export const useFilteredSharings = ({
     sharedDrivesLoaded
   } = useTransformFolderListHasSharedDriveShortcuts(result.data)
 
-  const { isOwner } = useSharingContext()
+  const sharingContext = useSharingContext()
 
-  const { filteredResult, hasDrives } = useMemo(() => {
+  const { contactFilterOptions, filteredResult, hasDrives } = useMemo(() => {
     const hasIds = sharedDocumentIds?.length > 0
+    const {
+      isOwner,
+      getRecipients = getNoRecipients,
+      getSharingById = getNoSharing
+    } = sharingContext
     // Filter by tab only after deduplication so each document lands in
     // exactly one tab.
     const combined = computeData({
@@ -171,10 +179,23 @@ export const useFilteredSharings = ({
     const tabData = tab
       ? combined.filter(entry => getSharingsTabForEntry(entry, isOwner) === tab)
       : combined
-    const data = tabData.filter(entry =>
-      isSharingsEntryMatchingFilters(entry, filters, getFileLastUpdatedAt)
-    )
+    const contactFilterData = getSharingsContactFilterData(tabData, tab, {
+      getRecipients,
+      getSharingById
+    })
+    const data = tabData.filter(entry => {
+      const entryId = getDocId(entry)
+      const contactValues = entryId
+        ? contactFilterData.contactValuesByEntryId.get(entryId)
+        : undefined
+
+      return isSharingsEntryMatchingFilters(entry, filters, {
+        contactValues,
+        getFileLastUpdatedAt
+      })
+    })
     return {
+      contactFilterOptions: contactFilterData.options,
       filteredResult: {
         ...buildBaseShape(result, hasIds),
         data,
@@ -193,12 +214,13 @@ export const useFilteredSharings = ({
     tab,
     filters,
     getFileLastUpdatedAt,
-    isOwner
+    sharingContext
   ])
 
   // When shared drives are disabled the view ignores the transformed list,
   // so don't block the page on that hook's load state.
   return {
+    contactFilterOptions,
     filteredResult,
     hasDrives,
     sharedDrivesLoaded: withoutSharedDrives || sharedDrivesLoaded

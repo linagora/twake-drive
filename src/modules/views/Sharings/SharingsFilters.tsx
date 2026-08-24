@@ -5,12 +5,21 @@ import Button from 'cozy-ui/transpiled/react/Button'
 import { makeStyles } from 'cozy-ui/transpiled/react/styles'
 import { useI18n } from 'twake-i18n'
 
+import { SharingContactAvatar } from './SharingContactAvatar'
+import type { SharingsContactFilterOptionData } from './sharingContactFilter'
 import type { UseSharingsFiltersResult } from './useSharingsFilters'
 
-import { DateFilter, FileTypeFilter } from '@/components/Filters'
+import { ContactFilter, DateFilter, FileTypeFilter } from '@/components/Filters'
+import type { ContactFilterOption } from '@/components/Filters/ContactFilter'
 
+const CONTACT_FILTER = 'contact'
 const FILE_TYPE_FILTER = 'type'
 const MODIFICATION_DATE_FILTER = 'date'
+
+export interface SharingsFiltersProps extends UseSharingsFiltersResult {
+  contactFilterLoading?: boolean
+  contactFilterOptions?: SharingsContactFilterOptionData[]
+}
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -30,22 +39,43 @@ const useStyles = makeStyles(theme => ({
 
 function SharingsFilters({
   clearAllFilters,
+  contactFilterLoading = false,
+  contactFilterOptions = [],
   filters,
   hasActiveFilters,
   setFilter,
   supportedFilters
-}: UseSharingsFiltersResult): JSX.Element | null {
+}: SharingsFiltersProps): JSX.Element | null {
   const classes = useStyles()
   const { t } = useI18n()
+  const supportsContact = supportedFilters.includes(CONTACT_FILTER)
   const supportsFileType = supportedFilters.includes(FILE_TYPE_FILTER)
   const supportsModificationDate = supportedFilters.includes(
     MODIFICATION_DATE_FILTER
   )
+  const contact = filters[CONTACT_FILTER] ?? null
   const fileType = filters[FILE_TYPE_FILTER] ?? null
   const modificationDate = filters[MODIFICATION_DATE_FILTER] ?? null
+  const contactOptions: ContactFilterOption[] = contactFilterOptions.map(
+    option => ({
+      avatar: <SharingContactAvatar option={option} />,
+      label: option.label,
+      searchableValues: option.searchableValues,
+      secondaryLabel: option.secondaryLabel,
+      value: option.value
+    })
+  )
 
-  if (!supportsFileType && !supportsModificationDate) return null
+  if (!supportsContact && !supportsFileType && !supportsModificationDate) {
+    return null
+  }
 
+  const handleContactChange = (value: string): void => {
+    setFilter(CONTACT_FILTER, value)
+  }
+  const handleContactClear = (): void => {
+    setFilter(CONTACT_FILTER, null)
+  }
   const handleFileTypeChange = (value: string): void => {
     setFilter(FILE_TYPE_FILTER, value)
   }
@@ -61,6 +91,15 @@ function SharingsFilters({
 
   return (
     <div className={classes.root} data-testid="sharings-filters">
+      {supportsContact ? (
+        <ContactFilter
+          loading={contactFilterLoading}
+          onChange={handleContactChange}
+          onClear={handleContactClear}
+          options={contactOptions}
+          value={contact}
+        />
+      ) : null}
       {supportsFileType ? (
         <FileTypeFilter
           onChange={handleFileTypeChange}

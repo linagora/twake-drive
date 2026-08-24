@@ -11,12 +11,16 @@ import { BreakpointsProvider } from 'cozy-ui/transpiled/react/providers/Breakpoi
 import CozyTheme from 'cozy-ui-plus/dist/providers/CozyTheme'
 
 import { SharingsFilters } from './SharingsFilters'
-import type { UseSharingsFiltersResult } from './useSharingsFilters'
+import type { SharingsFiltersProps } from './SharingsFilters'
+import type { SharingsContactFilterOptionData } from './sharingContactFilter'
 
 import type { SharingsFilterValue } from '@/modules/views/Sharings/matchSharingsFilters'
 
 const TRANSLATIONS: Record<string, string> = {
   'filters.clear_all': 'Clear all',
+  'filters.contact.clear': 'Clear Contact filter',
+  'filters.contact.label': 'Contact',
+  'filters.contact.me': 'me',
   'filters.date.aria_label': 'Modification date filter',
   'filters.date.clear': 'Clear Modification date filter',
   'filters.date.label': 'Modification date',
@@ -37,8 +41,25 @@ const TRANSLATIONS: Record<string, string> = {
   'filters.type.options.archive': 'Archives',
   'filters.type.options.audio': 'Audio',
   'filters.type.options.draw': 'Draw',
-  'filters.type.options.shortcut': 'Shortcuts'
+  'filters.type.options.shortcut': 'Shortcuts',
+  'loading.message': 'Loading',
+  'search.action': 'Search',
+  'search.empty.title': 'No result'
 }
+
+const CONTACT_OPTIONS = [
+  {
+    kind: 'group',
+    label: 'Design team',
+    recipient: { groupIndex: 0, name: 'Design team', color: '#297ef2' },
+    searchableValues: ['Design team'],
+    value: 'group:design team'
+  }
+] satisfies SharingsContactFilterOptionData[]
+
+jest.mock('cozy-sharing', () => ({
+  MemberAvatar: (): React.ReactElement => <span>Avatar</span>
+}))
 
 jest.mock('twake-i18n', () => ({
   translate:
@@ -48,6 +69,7 @@ jest.mock('twake-i18n', () => ({
   useI18n: (): { t: (key: string) => string } => ({
     t: (key: string): string => TRANSLATIONS[key] ?? key
   }),
+  useExtendI18n: jest.fn(),
   withOnlyLocales:
     () =>
     (Component: React.ComponentType): React.ComponentType =>
@@ -55,16 +77,17 @@ jest.mock('twake-i18n', () => ({
 }))
 
 interface SetupResult extends RenderResult {
-  defaultProps: UseSharingsFiltersResult
+  defaultProps: SharingsFiltersProps
 }
 
-function setup(props: Partial<UseSharingsFiltersResult> = {}): SetupResult {
-  const defaultProps: UseSharingsFiltersResult = {
+function setup(props: Partial<SharingsFiltersProps> = {}): SetupResult {
+  const defaultProps: SharingsFiltersProps = {
     clearAllFilters: jest.fn<void, []>(),
-    filters: { type: null, date: null },
+    contactFilterOptions: CONTACT_OPTIONS,
+    filters: { contact: null, type: null, date: null },
     hasActiveFilters: false,
     setFilter: jest.fn<void, [string, SharingsFilterValue]>(),
-    supportedFilters: ['type', 'date']
+    supportedFilters: ['contact', 'type', 'date']
   }
 
   return {
@@ -80,6 +103,35 @@ function setup(props: Partial<UseSharingsFiltersResult> = {}): SetupResult {
 }
 
 describe('SharingsFilters', () => {
+  it('selects and clears a sharing contact', () => {
+    const { defaultProps, rerender } = setup()
+
+    fireEvent.click(screen.getByDisplayValue('Contact'))
+    fireEvent.click(screen.getByRole('option', { name: /Design team/ }))
+
+    expect(defaultProps.setFilter).toHaveBeenCalledWith(
+      'contact',
+      'group:design team'
+    )
+
+    rerender(
+      <CozyTheme>
+        <BreakpointsProvider>
+          <SharingsFilters
+            {...defaultProps}
+            filters={{ contact: 'group:design team', type: null, date: null }}
+            hasActiveFilters={true}
+          />
+        </BreakpointsProvider>
+      </CozyTheme>
+    )
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Clear Contact filter' })
+    )
+
+    expect(defaultProps.setFilter).toHaveBeenCalledWith('contact', null)
+  })
+
   it('changes the file type and modification date filters', () => {
     const { defaultProps } = setup()
     const fileTypeFilter = screen.getByLabelText('Type filter')

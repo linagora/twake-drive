@@ -332,6 +332,60 @@ describe('useFilteredSharings', () => {
       expect(count).toBe(3)
     })
 
+    it('filters the active tab by sharing owner and exposes its contact option', () => {
+      setupTabMocks()
+      mockUseSharingContext.mockReturnValue({
+        isOwner: id => id === ownedFolder._id,
+        getRecipients: id => {
+          if (id === receivedFolder._id) {
+            return [
+              {
+                status: 'owner',
+                public_name: 'Alice Martin',
+                email: 'alice@example.com'
+              }
+            ]
+          }
+          if (id === invitationShortcut._id) {
+            return [
+              {
+                status: 'owner',
+                public_name: 'Claude Durand',
+                email: 'claude@example.com'
+              }
+            ]
+          }
+          return []
+        },
+        getSharingById: () => null
+      })
+
+      const { result: hook } = renderHook(() =>
+        useFilteredSharings({
+          result: {
+            data: [...classicShares, orgDrive],
+            fetchStatus: 'loaded',
+            lastFetch: Date.now()
+          },
+          sharedDocumentIds: [ownedFolder._id, receivedFolder._id],
+          tab: SHARING_TAB_WITH_ME,
+          filters: { contact: 'person:alice@example.com' }
+        })
+      )
+
+      expect(hook.current.filteredResult.data).toEqual([receivedFolder])
+      expect(hook.current.contactFilterOptions).toEqual([
+        expect.objectContaining({
+          label: 'Alice Martin',
+          value: 'person:alice@example.com'
+        }),
+        expect.objectContaining({
+          label: 'Claude Durand',
+          value: 'person:claude@example.com'
+        })
+      ])
+    })
+
     it('keeps only entries shared by the user on the by-me tab', () => {
       setupTabMocks()
 

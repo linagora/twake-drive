@@ -20,6 +20,11 @@ import { EXCALIDRAW_MIME } from '@/modules/views/Excalidraw/helpers'
 export type SharingsFilterValue = string | null
 export type SharingsFilterValues = Record<string, SharingsFilterValue>
 
+export interface SharingsFilterMatchContext {
+  contactValues?: readonly string[]
+  getFileLastUpdatedAt?: GetFileLastUpdatedAt
+}
+
 interface SharingsTarget {
   _type: string | null
   class: string | null
@@ -31,7 +36,7 @@ interface SharingsTarget {
 type FilterMatcher = (
   entry: IOCozyFile,
   value: string,
-  getFileLastUpdatedAt: GetFileLastUpdatedAt
+  context: Readonly<SharingsFilterMatchContext>
 ) => boolean
 type OptionalFileType = FileType | null
 
@@ -193,14 +198,25 @@ function isSharingsEntryFileType(entry: IOCozyFile, fileType: string): boolean {
 function isSharingsEntryModificationDate(
   entry: IOCozyFile,
   dateRangeValue: string,
-  getFileLastUpdatedAt: GetFileLastUpdatedAt
+  context: Readonly<SharingsFilterMatchContext>
 ): boolean {
+  const getFileLastUpdatedAt =
+    context.getFileLastUpdatedAt ?? getDefaultFileLastUpdatedAt
   return isFileLastUpdatedInRange(getFileLastUpdatedAt(entry), dateRangeValue)
+}
+
+function isSharingsEntryContact(
+  _entry: IOCozyFile,
+  contactValue: string,
+  context: Readonly<SharingsFilterMatchContext>
+): boolean {
+  return context.contactValues?.includes(contactValue) ?? false
 }
 
 const FILTER_MATCHERS = {
   type: isSharingsEntryFileType,
-  date: isSharingsEntryModificationDate
+  date: isSharingsEntryModificationDate,
+  contact: isSharingsEntryContact
 } satisfies Record<string, FilterMatcher>
 
 function getFilterMatcher(filterName: string): FilterMatcher | null {
@@ -214,12 +230,12 @@ function getFilterMatcher(filterName: string): FilterMatcher | null {
 export function isSharingsEntryMatchingFilters(
   entry: IOCozyFile,
   filters: Readonly<SharingsFilterValues>,
-  getFileLastUpdatedAt: GetFileLastUpdatedAt = getDefaultFileLastUpdatedAt
+  context: Readonly<SharingsFilterMatchContext> = {}
 ): boolean {
   return Object.entries(filters).every(([filterName, value]) => {
     if (value === null) return true
 
     const matcher = getFilterMatcher(filterName)
-    return matcher ? matcher(entry, value, getFileLastUpdatedAt) : false
+    return matcher ? matcher(entry, value, context) : false
   })
 }
