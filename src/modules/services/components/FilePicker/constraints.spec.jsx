@@ -44,16 +44,23 @@ describe('FilePicker constraints', () => {
       type: 'file',
       name: 'a.pdf',
       mime: 'application/pdf',
-      size: '1024'
+      size: 1024
     }
     const fileBig = {
       _id: '2',
       type: 'file',
       name: 'big.pdf',
       mime: 'application/pdf',
-      size: '99999999'
+      size: 99999999
     }
-    const folder = { _id: '3', type: 'directory', name: 'docs' }
+    const filePdf2 = {
+      _id: '3',
+      type: 'file',
+      name: 'b.pdf',
+      mime: 'application/pdf',
+      size: 1024
+    }
+    const folder = { _id: '4', type: 'directory', name: 'docs' }
 
     it('should disable when action config is missing', () => {
       expect(getActionDisabledState(null, filePdf)).toEqual({
@@ -127,6 +134,70 @@ describe('FilePicker constraints', () => {
         disabled: false,
         reasonKey: null
       })
+    })
+
+    it('should disable when the selected count exceeds maxFileCount', () => {
+      expect(
+        getActionDisabledState({ allowFolder: true, maxFileCount: 1 }, [
+          filePdf,
+          folder
+        ])
+      ).toEqual({
+        disabled: true,
+        reasonKey: 'FilePicker.constraints.disabledReasons.maxFileCountExceeded'
+      })
+    })
+
+    it('should not disable when the selected count is at or below maxFileCount', () => {
+      expect(
+        getActionDisabledState({ allowFolder: true, maxFileCount: 2 }, [
+          filePdf,
+          folder
+        ])
+      ).toEqual({ disabled: false, reasonKey: null })
+    })
+
+    it('should not enforce maxFileCount when undefined', () => {
+      expect(
+        getActionDisabledState({ allowFolder: true }, [filePdf, folder])
+      ).toEqual({ disabled: false, reasonKey: null })
+    })
+
+    it('should disable when the total selected file size exceeds availableSize', () => {
+      expect(
+        getActionDisabledState({ allowFolder: true, availableSize: 2000 }, [
+          filePdf,
+          filePdf2
+        ])
+      ).toEqual({
+        disabled: true,
+        reasonKey:
+          'FilePicker.constraints.disabledReasons.availableSizeExceeded'
+      })
+    })
+
+    it('should not disable when total selected size is at or below availableSize', () => {
+      expect(
+        getActionDisabledState({ allowFolder: true, availableSize: 2048 }, [
+          filePdf,
+          filePdf2
+        ])
+      ).toEqual({ disabled: false, reasonKey: null })
+    })
+
+    it('should not enforce availableSize when undefined', () => {
+      expect(
+        getActionDisabledState({ allowFolder: true }, [filePdf, filePdf2])
+      ).toEqual({ disabled: false, reasonKey: null })
+    })
+
+    it('should ignore folders when computing availableSize', () => {
+      expect(
+        getActionDisabledState({ allowFolder: true, availableSize: 1024 }, [
+          filePdf,
+          folder
+        ])
+      ).toEqual({ disabled: false, reasonKey: null })
     })
 
     it('should return enabled when no selection', () => {

@@ -770,7 +770,9 @@
       "disabledReasons": {
         "folderNotAllowed": "Thư mục không được phép cho hành động này",
         "mimeTypeNotAllowed": "Loại tệp này không được phép cho hành động này",
-        "fileTooLarge": "Tệp này lớn hơn %{maxFileSize}"
+        "fileTooLarge": "Tệp này lớn hơn %{maxFileSize}",
+        "maxFileCountExceeded": "Quá nhiều tệp được chọn (giới hạn %{maxFileCount})",
+        "availableSizeExceeded": "Tổng kích thước tệp đã chọn vượt quá %{availableSize}"
       }
     },
     "actions": {
