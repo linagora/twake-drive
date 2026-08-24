@@ -11,6 +11,7 @@ const OPTIONS = [
   {
     avatar: null,
     label: 'Thomas Jolly',
+    searchableValues: ['Thomas Alexandre Jolly'],
     secondaryLabel: 'tdesign25@gmail.com',
     value: 'contact:thomas'
   }
@@ -31,6 +32,12 @@ describe('filterContactFilterOptions', () => {
   it('matches labels without accents and secondary labels', () => {
     expect(filterContactFilterOptions(OPTIONS, 'elodie')).toEqual([OPTIONS[0]])
     expect(filterContactFilterOptions(OPTIONS, 'tdesign25')).toEqual([
+      OPTIONS[1]
+    ])
+  })
+
+  it('matches additional searchable values without displaying them', () => {
+    expect(filterContactFilterOptions(OPTIONS, 'alexandre')).toEqual([
       OPTIONS[1]
     ])
   })

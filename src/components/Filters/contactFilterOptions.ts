@@ -16,11 +16,13 @@ function filterContactFilterOptions(
 
   return options
     .filter(option => {
-      const searchableValues = [option.label, option.secondaryLabel].filter(
-        (searchableValue): searchableValue is string => {
-          return searchableValue !== undefined
-        }
-      )
+      const searchableValues = [
+        option.label,
+        option.secondaryLabel,
+        ...(option.searchableValues ?? [])
+      ].filter((searchableValue): searchableValue is string => {
+        return searchableValue !== undefined
+      })
 
       return searchableValues.some(value =>
         normalizeSearchText(value).includes(normalizedInputValue)
