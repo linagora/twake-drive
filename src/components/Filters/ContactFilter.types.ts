@@ -4,6 +4,7 @@ interface ContactFilterOption {
   avatar: ReactNode
   isCurrentUser?: boolean
   label: string
+  searchableValues?: readonly string[]
   secondaryLabel?: string
   value: string
 }
