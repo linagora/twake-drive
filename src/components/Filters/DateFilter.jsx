@@ -1,4 +1,4 @@
-import { Calendar, Icon } from '@linagora/twake-icons'
+import { CalendarToday, Icon } from '@linagora/twake-icons'
 import PropTypes from 'prop-types'
 import React from 'react'
 
@@ -74,7 +74,7 @@ function DateFilter({ value = null, onChange, onClear }) {
       onChange={handleChange}
       onClear={onClear}
       options={mobileOptions}
-      startAdornment={<Icon icon={Calendar} size={20} />}
+      startAdornment={<Icon icon={CalendarToday} size={20} />}
       value={value ?? ''}
     >
       {options.map(option => (
