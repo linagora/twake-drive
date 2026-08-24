@@ -92,7 +92,7 @@
     "@embedpdf/pdfium": "2.14.3",
     "@embedpdf/react-pdf-viewer": "2.14.3",
     "@excalidraw/excalidraw": "0.18.1",
-    "@linagora/twake-icons": "^2.6.7",
+    "@linagora/twake-icons": "^2.7.0",
     "@sentry/react": "7.119.0",
     "classnames": "2.3.1",
     "cozy-bar": "^35.2.3",
