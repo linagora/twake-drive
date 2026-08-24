@@ -172,6 +172,12 @@ declare module 'cozy-sharing' {
     docId: string
   ) => unknown
 
+  export const GroupAvatar: React.ComponentType<{
+    className?: string
+    color?: string
+    size?: string
+  }>
+
   export const MemberAvatar: React.ComponentType<{
     recipient: unknown
     size?: string

@@ -1,11 +1,11 @@
 import { Cross, Icon } from '@linagora/twake-icons'
 import React from 'react'
 
+import { GroupAvatar, MemberAvatar } from 'cozy-sharing'
 import Button from 'cozy-ui/transpiled/react/Button'
 import { makeStyles } from 'cozy-ui/transpiled/react/styles'
 import { useI18n } from 'twake-i18n'
 
-import { SharingContactAvatar } from './SharingContactAvatar'
 import type { SharingsContactFilterOptionData } from './sharingContactFilter'
 import type { UseSharingsFiltersResult } from './useSharingsFilters'
 
@@ -58,7 +58,19 @@ function SharingsFilters({
   const modificationDate = filters[MODIFICATION_DATE_FILTER] ?? null
   const contactOptions: ContactFilterOption[] = contactFilterOptions.map(
     option => ({
-      avatar: <SharingContactAvatar option={option} />,
+      avatar:
+        option.kind === 'person' ? (
+          <MemberAvatar recipient={option.recipient} size="s" />
+        ) : (
+          <GroupAvatar
+            color={
+              typeof option.recipient.color === 'string'
+                ? option.recipient.color
+                : undefined
+            }
+            size="s"
+          />
+        ),
       label: option.label,
       searchableValues: option.searchableValues,
       secondaryLabel: option.secondaryLabel,

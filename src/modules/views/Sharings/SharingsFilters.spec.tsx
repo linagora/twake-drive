@@ -58,6 +58,7 @@ const CONTACT_OPTIONS = [
 ] satisfies SharingsContactFilterOptionData[]
 
 jest.mock('cozy-sharing', () => ({
+  GroupAvatar: (): React.ReactElement => <span>Group avatar</span>,
   MemberAvatar: (): React.ReactElement => <span>Avatar</span>
 }))
 
