@@ -806,7 +806,9 @@
       "disabledReasons": {
         "folderNotAllowed": "Folders are not allowed for this action",
         "mimeTypeNotAllowed": "This file type is not allowed for this action",
-        "fileTooLarge": "This file is larger than %{maxFileSize}"
+        "fileTooLarge": "This file is larger than %{maxFileSize}",
+        "maxFileCountExceeded": "Too many files selected (limit %{maxFileCount})",
+        "availableSizeExceeded": "The total selected size exceeds %{availableSize}"
       }
     },
     "actions": {

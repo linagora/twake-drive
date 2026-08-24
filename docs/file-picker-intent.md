@@ -102,12 +102,15 @@ interface ActionConfig {
   maxFileSize?: number
 
   /**
-   * Reserved for limiting multi-file selection. Currently not enforced.
+   * Maximum number of selectable items.
+   * Absent means no count restriction.
    */
   maxFileCount?: number
 
   /**
-   * Reserved for limiting multi-file selection. Currently not enforced.
+   * Maximum total size of selected files, in bytes.
+   * Folders do not count toward the total.
+   * Absent means no total-size restriction.
    */
   availableSize?: number
 }
@@ -196,6 +199,8 @@ When the selected item violates an action constraint, the corresponding button i
 | `allowFolder: false` and selected item is a folder | Button disabled |
 | `allowedMimeTypes` does not match selected file MIME | Button disabled |
 | selected file size > `maxFileSize` | Button disabled |
+| selected items count > `maxFileCount` | Button disabled |
+| total selected file size > `availableSize` | Button disabled |
 
 MIME matching supports:
 
@@ -205,7 +210,8 @@ image/*         any image type
 */*             any MIME type
 ```
 
-`maxFileCount` and `availableSize` are currently accepted in the config shape but are not enforced yet.
+`maxFileCount` and `availableSize` are enforced when present. Folders count
+toward `maxFileCount` but are excluded from the `availableSize` total.
 
 ## Success result
 
@@ -302,5 +308,6 @@ const handleComplete = result => {
 
 ## Limitations
 
-- `maxFileCount` is reserved but not enforced.
-- `availableSize` is reserved but not enforced.
+The count and size limits are checked on the currently selected items only: 
+`maxFileCount` counts every selected item including folders, while 
+`availableSize` sums only selected files (folders are excluded).

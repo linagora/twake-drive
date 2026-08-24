@@ -8,8 +8,6 @@ export { matchMimeType }
 
 const { file: fileModel } = models
 
-// TODO: enforce maxFileCount and availableSize.
-
 const getFileMime = file => {
   const mime = file?.mime || mimeTypes.lookup(file?.name)
 
@@ -32,7 +30,11 @@ const getFileMime = file => {
  *    FilePicker.constraints.disabledReasons.mimeTypeNotAllowed.
  * 4. Selected item is a file larger than the action's maxFileSize ->
  *    FilePicker.constraints.disabledReasons.fileTooLarge.
- * 5. Otherwise -> enabled.
+ * 5. Selected items count exceeds the action's maxFileCount ->
+ *    FilePicker.constraints.disabledReasons.maxFileCountExceeded.
+ * 6. Total selected file size exceeds the action's availableSize ->
+ *    FilePicker.constraints.disabledReasons.availableSizeExceeded.
+ * 7. Otherwise -> enabled.
  *
  * @param {object|null|undefined} actionConfig
  * @param {object|object[]|null|undefined} selectedItems - Cozy file/folder doc(s).
@@ -70,14 +72,37 @@ export const getActionDisabledState = (actionConfig, selectedItems) => {
       }
 
       const maxFileSize = actionConfig.maxFileSize
-      if (
-        typeof maxFileSize === 'number' &&
-        Number(selectedItem.size) > maxFileSize
-      ) {
+      if (typeof maxFileSize === 'number' && selectedItem.size > maxFileSize) {
         return {
           disabled: true,
           reasonKey: 'FilePicker.constraints.disabledReasons.fileTooLarge'
         }
+      }
+    }
+  }
+
+  const maxFileCount = actionConfig.maxFileCount
+  if (typeof maxFileCount === 'number' && items.length > maxFileCount) {
+    return {
+      disabled: true,
+      reasonKey: 'FilePicker.constraints.disabledReasons.maxFileCountExceeded'
+    }
+  }
+
+  const availableSize = actionConfig.availableSize
+  if (typeof availableSize === 'number') {
+    let totalSize = 0
+    for (const selectedItem of items) {
+      if (selectedItem && fileModel.isFile(selectedItem)) {
+        totalSize += selectedItem.size
+      }
+    }
+
+    if (totalSize > availableSize) {
+      return {
+        disabled: true,
+        reasonKey:
+          'FilePicker.constraints.disabledReasons.availableSizeExceeded'
       }
     }
   }

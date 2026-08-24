@@ -49,7 +49,6 @@ export const filePickerErrorCodes = {
  * shared via a public link), downloadLink does not (downloading a
  * folder is not meaningful for an attachment use case).
  */
-// TODO: enforce maxFileCount and availableSize on the downloadLink action.
 export const defaultFilePickerConfig = {
   theme: { type: 'auto' },
   multiple: true,

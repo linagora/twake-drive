@@ -22,11 +22,25 @@ import { filePickerLinkModes } from './constants'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 
 function getTooltipTitle(t, reasonKey, actionConfig) {
-  return reasonKey === 'FilePicker.constraints.disabledReasons.fileTooLarge'
-    ? t(reasonKey, {
-        maxFileSize: filesize(actionConfig?.maxFileSize ?? 0, { base: 10 })
-      })
-    : t(reasonKey)
+  const filesizeTooltip =
+    reasonKey === 'FilePicker.constraints.disabledReasons.fileTooLarge' ||
+    reasonKey === 'FilePicker.constraints.disabledReasons.availableSizeExceeded'
+  if (filesizeTooltip) {
+    return t(reasonKey, {
+      maxFileSize: filesize(actionConfig?.maxFileSize ?? 0, { base: 10 }),
+      availableSize: filesize(actionConfig?.availableSize ?? 0, { base: 10 })
+    })
+  }
+
+  if (
+    reasonKey === 'FilePicker.constraints.disabledReasons.maxFileCountExceeded'
+  ) {
+    return t(reasonKey, {
+      maxFileCount: actionConfig?.maxFileCount
+    })
+  }
+
+  return t(reasonKey)
 }
 
 const FilePickerFooter = ({

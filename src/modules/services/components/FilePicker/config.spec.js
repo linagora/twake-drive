@@ -83,6 +83,20 @@ describe('FilePicker config', () => {
       })
     })
 
+    it('carries maxFileCount and availableSize into the action config', () => {
+      const intent = {
+        attributes: {
+          data: {
+            sharingLink: { maxFileCount: 3, availableSize: 52_428_800 }
+          }
+        }
+      }
+      const config = getFilePickerConfig(intent)
+
+      expect(config.sharingLink.maxFileCount).toBe(3)
+      expect(config.sharingLink.availableSize).toBe(52_428_800)
+    })
+
     it('preserves an explicit null action (action not offered)', () => {
       const intent = {
         attributes: { data: { downloadLink: null } }
