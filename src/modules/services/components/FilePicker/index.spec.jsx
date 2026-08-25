@@ -33,13 +33,15 @@ jest.mock('./FilePickerBody', () => {
   const file = {
     _id: 'file-id',
     type: 'file',
-    name: 'file.pdf'
+    name: 'file.pdf',
+    size: 1024
   }
 
   const secondFile = {
     _id: 'second-file-id',
     type: 'file',
-    name: 'second-file.pdf'
+    name: 'second-file.pdf',
+    size: 2048
   }
 
   const folder = {
@@ -264,7 +266,8 @@ describe('FilePicker', () => {
           {
             _id: 'file-id',
             type: 'file',
-            name: 'file.pdf'
+            name: 'file.pdf',
+            size: 1024
           }
         ],
         filePickerLinkModes.PUBLIC_LINK,
@@ -313,11 +316,12 @@ describe('FilePicker', () => {
     await waitFor(() =>
       expect(mockOnChange).toHaveBeenCalledWith(
         [
-          { _id: 'file-id', type: 'file', name: 'file.pdf' },
+          { _id: 'file-id', type: 'file', name: 'file.pdf', size: 1024 },
           {
             _id: 'second-file-id',
             type: 'file',
-            name: 'second-file.pdf'
+            name: 'second-file.pdf',
+            size: 2048
           }
         ],
         filePickerLinkModes.PUBLIC_LINK,
@@ -369,7 +373,8 @@ describe('FilePicker', () => {
           {
             _id: 'file-id',
             type: 'file',
-            name: 'file.pdf'
+            name: 'file.pdf',
+            size: 1024
           },
           filePickerLinkModes.PUBLIC_LINK
         )
@@ -418,7 +423,7 @@ describe('FilePicker', () => {
 
       await waitFor(() =>
         expect(mockOnFileDoubleClick).toHaveBeenCalledWith(
-          { _id: 'file-id', type: 'file', name: 'file.pdf' },
+          { _id: 'file-id', type: 'file', name: 'file.pdf', size: 1024 },
           filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK
         )
       )

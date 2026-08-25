@@ -39,6 +39,10 @@ const PICKER_CONFIGS = [
     label: 'Max size 1 KB'
   },
   {
+    id: 'max-size-and-available-size',
+    label: 'Max 50 MB per file / 100 MB total'
+  },
+  {
     id: 'no-folder-sharing',
     label: 'No folder sharing'
   }
@@ -72,6 +76,15 @@ const buildFilePickerOptions = (configId, t) => {
         downloadLink: {
           label: 'Attach small file',
           maxFileSize: 1024
+        }
+      }
+    case 'max-size-and-available-size':
+      return {
+        sharingLink: null,
+        downloadLink: {
+          label: 'Attach files',
+          maxFileSize: 50 * 1024 * 1024,
+          availableSize: 100 * 1024 * 1024
         }
       }
     case 'no-folder-sharing':
