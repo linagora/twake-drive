@@ -96,6 +96,13 @@ function SharingsFilters({
 
   return (
     <div className={classes.root} data-testid="sharings-filters">
+      {supportsFileType ? (
+        <FileTypeFilter
+          onChange={handleFileTypeChange}
+          onClear={handleFileTypeClear}
+          value={fileType}
+        />
+      ) : null}
       {supportsContact ? (
         <ContactFilter
           loading={contactFilterLoading}
@@ -103,13 +110,6 @@ function SharingsFilters({
           onClear={handleContactClear}
           options={contactOptions}
           value={contact}
-        />
-      ) : null}
-      {supportsFileType ? (
-        <FileTypeFilter
-          onChange={handleFileTypeChange}
-          onClear={handleFileTypeClear}
-          value={fileType}
         />
       ) : null}
       {supportsModificationDate ? (

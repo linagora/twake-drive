@@ -13,7 +13,6 @@ import { FILE_TYPE_VALUES } from '@/lib/fileTypes'
 
 const useStyles = makeStyles(theme => ({
   filter: {
-    minWidth: 130,
     maxWidth: 320
   },
   option: {
@@ -57,7 +56,7 @@ function FileTypeFilter({ value = null, onChange, onClear }) {
       onChange={handleChange}
       onClear={onClear}
       options={mobileOptions}
-      startAdornment={<Icon icon={File} size={20} />}
+      startAdornment={<Icon icon={File} size={16} />}
       value={value ?? ''}
     >
       {options.map(option => (
