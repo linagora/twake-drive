@@ -129,6 +129,32 @@ describe('FilePicker constraints', () => {
       })
     })
 
+    it('should reject files with invalid sizes', () => {
+      const invalidSizes = [
+        undefined,
+        null,
+        '',
+        'not-a-number',
+        NaN,
+        Infinity,
+        -1
+      ]
+
+      for (const size of invalidSizes) {
+        expect(
+          getActionDisabledState(
+            { allowFolder: true, maxFileSize: 2048 },
+            { ...filePdf, size }
+          )
+        ).toEqual({ disabled: true, reasonKey: null })
+        expect(
+          getActionDisabledState({ allowFolder: true, availableSize: 2048 }, [
+            { ...filePdf, size }
+          ])
+        ).toEqual({ disabled: true, reasonKey: null })
+      }
+    })
+
     it('should not enforce maxFileSize when undefined', () => {
       expect(getActionDisabledState({ allowFolder: true }, fileBig)).toEqual({
         disabled: false,
@@ -181,6 +207,15 @@ describe('FilePicker constraints', () => {
         getActionDisabledState({ allowFolder: true, availableSize: 2048 }, [
           filePdf,
           filePdf2
+        ])
+      ).toEqual({ disabled: false, reasonKey: null })
+    })
+
+    it('should sum string file sizes numerically', () => {
+      expect(
+        getActionDisabledState({ allowFolder: true, availableSize: 2048 }, [
+          { ...filePdf, size: '1024' },
+          { ...filePdf2, size: '1024' }
         ])
       ).toEqual({ disabled: false, reasonKey: null })
     })

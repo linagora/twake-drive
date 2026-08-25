@@ -28,13 +28,14 @@ const getFileMime = file => {
  * 3. Selected item is a file whose mime is not in the action's
  *    allowedMimeTypes (when that list is non-empty) ->
  *    FilePicker.constraints.disabledReasons.mimeTypeNotAllowed.
- * 4. Selected item is a file larger than the action's maxFileSize ->
+ * 4. Selected item is a file whose size is invalid -> disabled, no reason.
+ * 5. Selected item is a file larger than the action's maxFileSize ->
  *    FilePicker.constraints.disabledReasons.fileTooLarge.
- * 5. Selected items count exceeds the action's maxFileCount ->
+ * 6. Selected items count exceeds the action's maxFileCount ->
  *    FilePicker.constraints.disabledReasons.maxFileCountExceeded.
- * 6. Total selected file size exceeds the action's availableSize ->
+ * 7. Total selected file size exceeds the action's availableSize ->
  *    FilePicker.constraints.disabledReasons.availableSizeExceeded.
- * 7. Otherwise -> enabled.
+ * 8. Otherwise -> enabled.
  *
  * @param {object|null|undefined} actionConfig
  * @param {object|object[]|null|undefined} selectedItems - Cozy file/folder doc(s).
@@ -71,8 +72,21 @@ export const getActionDisabledState = (actionConfig, selectedItems) => {
         }
       }
 
+      const rawFileSize = selectedItem.size
+      const fileSize =
+        typeof rawFileSize === 'number' || typeof rawFileSize === 'string'
+          ? Number(rawFileSize)
+          : NaN
+      if (
+        (typeof rawFileSize === 'string' && rawFileSize.trim() === '') ||
+        !Number.isFinite(fileSize) ||
+        fileSize < 0
+      ) {
+        return { disabled: true, reasonKey: null }
+      }
+
       const maxFileSize = actionConfig.maxFileSize
-      if (typeof maxFileSize === 'number' && selectedItem.size > maxFileSize) {
+      if (typeof maxFileSize === 'number' && fileSize > maxFileSize) {
         return {
           disabled: true,
           reasonKey: 'FilePicker.constraints.disabledReasons.fileTooLarge'
@@ -94,7 +108,7 @@ export const getActionDisabledState = (actionConfig, selectedItems) => {
     let totalSize = 0
     for (const selectedItem of items) {
       if (selectedItem && fileModel.isFile(selectedItem)) {
-        totalSize += selectedItem.size
+        totalSize += Number(selectedItem.size)
       }
     }
 
