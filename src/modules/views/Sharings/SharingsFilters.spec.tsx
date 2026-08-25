@@ -129,6 +129,25 @@ function setup(props: Partial<SharingsFiltersProps> = {}): SetupResult {
 }
 
 describe('SharingsFilters', () => {
+  it('renders type before contact and modification date', () => {
+    setup()
+
+    const fileTypeFilter = screen.getByLabelText('Type filter')
+    const contactFilter = screen.getByDisplayValue('Contact')
+    const modificationDateFilter = screen.getByLabelText(
+      'Modification date filter'
+    )
+
+    expect(
+      fileTypeFilter.compareDocumentPosition(contactFilter) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(
+      contactFilter.compareDocumentPosition(modificationDateFilter) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+  })
+
   it('selects and clears a sharing contact', () => {
     const { defaultProps, rerender } = setup()
 

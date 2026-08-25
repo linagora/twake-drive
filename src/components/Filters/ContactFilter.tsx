@@ -114,7 +114,7 @@ const ContactFilter = ({
           },
           startAdornment: (
             <InputAdornment position="start">
-              <Icon icon={Account} size={20} />
+              <Icon icon={Account} size={16} />
             </InputAdornment>
           ),
           endAdornment: (

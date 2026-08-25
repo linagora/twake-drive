@@ -31,7 +31,6 @@ const DATE_RANGE_VALUES = DATE_RANGE_OPTIONS.map(option => option.value)
 
 const useStyles = makeStyles(() => ({
   filter: {
-    minWidth: 241,
     maxWidth: 320
   }
 }))
@@ -74,7 +73,7 @@ function DateFilter({ value = null, onChange, onClear }) {
       onChange={handleChange}
       onClear={onClear}
       options={mobileOptions}
-      startAdornment={<Icon icon={CalendarToday} size={20} />}
+      startAdornment={<Icon icon={CalendarToday} size={16} />}
       value={value ?? ''}
     >
       {options.map(option => (
