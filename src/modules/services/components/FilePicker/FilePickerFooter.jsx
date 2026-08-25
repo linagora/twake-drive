@@ -48,7 +48,8 @@ const FilePickerFooter = ({
   publicLinkState,
   downloadLinkState,
   publicLinkAction,
-  downloadLinkAction
+  downloadLinkAction,
+  busyLinkMode
 }) => {
   const { t } = useI18n()
   const { isMobile } = useBreakpoints()
@@ -65,10 +66,10 @@ const FilePickerFooter = ({
       t('FilePicker.footer.buttons.temporaryDownloadLink'))
 
   const renderAction = (
+    linkMode,
     label,
     state,
     actionConfig,
-    onClick,
     testId,
     IconComponent,
     mobileVariant,
@@ -93,8 +94,9 @@ const FilePickerFooter = ({
           )
         }
         variant={isMobile ? mobileVariant : 'primary'}
-        onClick={onClick}
+        onClick={() => onConfirm(linkMode)}
         disabled={state.disabled}
+        busy={busyLinkMode === linkMode}
       />
     )
 
@@ -167,19 +169,19 @@ const FilePickerFooter = ({
         }
       >
         {renderAction(
+          filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK,
           downloadLinkLabel,
           downloadLinkState,
           downloadLinkAction,
-          () => onConfirm(filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK),
           'temporary-download-link-btn',
           Attachment,
           'text'
         )}
         {renderAction(
+          filePickerLinkModes.PUBLIC_LINK,
           publicLinkLabel,
           publicLinkState,
           publicLinkAction,
-          () => onConfirm(filePickerLinkModes.PUBLIC_LINK),
           'public-link-btn',
           Link,
           'primary',
@@ -201,14 +203,16 @@ FilePickerFooter.propTypes = {
     reasonKey: PropTypes.string
   }),
   publicLinkAction: PropTypes.object,
-  downloadLinkAction: PropTypes.object
+  downloadLinkAction: PropTypes.object,
+  busyLinkMode: PropTypes.string
 }
 
 FilePickerFooter.defaultProps = {
   publicLinkState: { disabled: true, reasonKey: null },
   downloadLinkState: { disabled: true, reasonKey: null },
   publicLinkAction: null,
-  downloadLinkAction: null
+  downloadLinkAction: null,
+  busyLinkMode: null
 }
 
 export default memo(FilePickerFooter)
