@@ -164,19 +164,31 @@ describe('isSharingsEntryMatchingFilters', () => {
       ).toBe(false)
     })
 
-    it('matches only the previous calendar month', () => {
-      const lastMonth = makeFile({
-        updated_at: makeLocalTimestamp(2026, 6, 15)
+    it('matches from the same date in the previous month through today', () => {
+      const firstDay = makeFile({
+        updated_at: makeLocalTimestamp(2026, 6, 29)
       })
-      const thisMonth = makeFile({
-        updated_at: makeLocalTimestamp(2026, 7, 1)
+      const today = makeFile({
+        updated_at: makeLocalTimestamp(2026, 7, 29)
+      })
+      const beforeRange = makeFile({
+        updated_at: makeLocalTimestamp(2026, 6, 28)
+      })
+      const afterRange = makeFile({
+        updated_at: makeLocalTimestamp(2026, 7, 30)
       })
 
       expect(
-        isSharingsEntryMatchingFilters(lastMonth, { date: 'last-month' })
+        isSharingsEntryMatchingFilters(firstDay, { date: 'last-month' })
       ).toBe(true)
       expect(
-        isSharingsEntryMatchingFilters(thisMonth, { date: 'last-month' })
+        isSharingsEntryMatchingFilters(today, { date: 'last-month' })
+      ).toBe(true)
+      expect(
+        isSharingsEntryMatchingFilters(beforeRange, { date: 'last-month' })
+      ).toBe(false)
+      expect(
+        isSharingsEntryMatchingFilters(afterRange, { date: 'last-month' })
       ).toBe(false)
     })
 
@@ -208,7 +220,7 @@ describe('isSharingsEntryMatchingFilters', () => {
         isSharingsEntryMatchingFilters(
           entry,
           { date: 'today' },
-          getFileLastUpdatedAt
+          { getFileLastUpdatedAt }
         )
       ).toBe(true)
       expect(getFileLastUpdatedAt).toHaveBeenCalledWith(entry)
