@@ -1,10 +1,8 @@
 import endOfDay from 'date-fns/endOfDay'
-import endOfMonth from 'date-fns/endOfMonth'
 import isValid from 'date-fns/isValid'
 import isWithinInterval from 'date-fns/isWithinInterval'
 import parseISO from 'date-fns/parseISO'
 import startOfDay from 'date-fns/startOfDay'
-import startOfMonth from 'date-fns/startOfMonth'
 import startOfYear from 'date-fns/startOfYear'
 import subDays from 'date-fns/subDays'
 import subMonths from 'date-fns/subMonths'
@@ -25,13 +23,10 @@ const MODIFICATION_DATE_RANGE_GETTERS: Record<string, DateRangeGetter> = {
     start: startOfDay(subDays(now, 6)),
     end: endOfDay(now)
   }),
-  'last-month': now => {
-    const previousMonth = subMonths(now, 1)
-    return {
-      start: startOfMonth(previousMonth),
-      end: endOfMonth(previousMonth)
-    }
-  },
+  'last-month': now => ({
+    start: startOfDay(subMonths(now, 1)),
+    end: endOfDay(now)
+  }),
   'this-year': now => ({
     start: startOfYear(now),
     end: endOfDay(now)

@@ -10,7 +10,6 @@ describe('isFileLastUpdatedInRange', () => {
   it.each([
     ['today', makeLocalTimestamp(2026, 7, 29)],
     ['last-7-days', makeLocalTimestamp(2026, 7, 23)],
-    ['last-month', makeLocalTimestamp(2026, 6, 15)],
     ['this-year', makeLocalTimestamp(2026, 1, 1)]
   ])('matches the %s date range', (range, lastUpdatedAt) => {
     expect(isFileLastUpdatedInRange(lastUpdatedAt, range, now)).toBe(true)
@@ -19,10 +18,40 @@ describe('isFileLastUpdatedInRange', () => {
   it.each([
     ['today', makeLocalTimestamp(2026, 7, 28)],
     ['last-7-days', makeLocalTimestamp(2026, 7, 22)],
-    ['last-month', makeLocalTimestamp(2026, 7, 1)],
     ['this-year', makeLocalTimestamp(2025, 12, 31)]
   ])('rejects dates outside the %s date range', (range, lastUpdatedAt) => {
     expect(isFileLastUpdatedInRange(lastUpdatedAt, range, now)).toBe(false)
+  })
+
+  it('matches a rolling month including both boundary dates', () => {
+    expect(
+      isFileLastUpdatedInRange(
+        makeLocalTimestamp(2026, 6, 29),
+        'last-month',
+        now
+      )
+    ).toBe(true)
+    expect(
+      isFileLastUpdatedInRange(
+        makeLocalTimestamp(2026, 7, 29),
+        'last-month',
+        now
+      )
+    ).toBe(true)
+    expect(
+      isFileLastUpdatedInRange(
+        makeLocalTimestamp(2026, 6, 28),
+        'last-month',
+        now
+      )
+    ).toBe(false)
+    expect(
+      isFileLastUpdatedInRange(
+        makeLocalTimestamp(2026, 7, 30),
+        'last-month',
+        now
+      )
+    ).toBe(false)
   })
 
   it('rejects missing dates, malformed dates, and unknown ranges', () => {
