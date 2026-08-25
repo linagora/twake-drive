@@ -62,14 +62,7 @@ function SharingsFilters({
         option.kind === 'person' ? (
           <MemberAvatar recipient={option.recipient} size="s" />
         ) : (
-          <GroupAvatar
-            color={
-              typeof option.recipient.color === 'string'
-                ? option.recipient.color
-                : undefined
-            }
-            size="s"
-          />
+          <GroupAvatar color={option.recipient.color} size="s" />
         ),
       label: option.label,
       searchableValues: option.searchableValues,

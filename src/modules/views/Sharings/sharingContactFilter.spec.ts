@@ -1,9 +1,12 @@
 import type { IOCozyFile } from 'cozy-client/types/types'
+import type {
+  SharingGroupRecipient,
+  SharingMember,
+  SharingMemberRecipient,
+  SharingRecipient
+} from 'cozy-sharing/types'
 
-import {
-  getSharingsContactFilterData,
-  type SharingContactSource
-} from './sharingContactFilter'
+import { getSharingsContactFilterData } from './sharingContactFilter'
 
 import {
   SHARING_TAB_BY_ME,
@@ -21,42 +24,63 @@ const SECOND_RECEIVED_FILE = {
 } as IOCozyFile
 const OWNED_FILE = { _id: 'owned-file', id: 'owned-file' } as IOCozyFile
 
-const OWNER = {
+const OWNER_MEMBER: SharingMember = {
   status: 'owner',
   name: 'Alice from contacts',
   public_name: 'Alice Martin',
   email: 'alice@example.com',
   instance: 'https://alice.example.com'
 }
-const CURRENT_USER = {
+const CURRENT_USER_MEMBER: SharingMember = {
   status: 'owner',
   public_name: 'Bob',
   email: 'bob@example.com'
 }
-const RECIPIENT = {
+const RECIPIENT_MEMBER: SharingMember = {
   status: 'ready',
   public_name: 'Claude Durand',
   email: 'claude@example.com'
 }
-const DESIGN_GROUP = {
-  id: 'design-group',
-  groupIndex: 0,
-  name: 'Design team',
-  color: '#297ef2'
+
+function makeMemberRecipient(
+  member: SharingMember,
+  memberIndex: number
+): SharingMemberRecipient {
+  return {
+    ...member,
+    avatarPath: `/sharings/sharing/recipients/${memberIndex}/avatar`,
+    index: `sharing-sharing-member-${memberIndex}`,
+    memberIndex,
+    sharingId: 'sharing',
+    type: 'two-way'
+  }
 }
 
-function makeSource(
-  recipientsByDocumentId: Record<string, unknown[]> = {}
-): SharingContactSource {
-  return {
-    getRecipients: documentId => recipientsByDocumentId[documentId] ?? [],
-    getSharingById: () => null
-  }
+const OWNER = makeMemberRecipient(OWNER_MEMBER, 0)
+const CURRENT_USER = makeMemberRecipient(CURRENT_USER_MEMBER, 0)
+const RECIPIENT = makeMemberRecipient(RECIPIENT_MEMBER, 1)
+const DESIGN_GROUP: SharingGroupRecipient = {
+  addedBy: 0,
+  color: '#297ef2',
+  groupIndex: 0,
+  id: 'design-group',
+  index: 'sharing-sharing-group-0',
+  members: [RECIPIENT],
+  name: 'Design team',
+  owner: CURRENT_USER,
+  read_only: false,
+  sharingId: 'sharing'
+}
+
+function makeGetRecipients(
+  recipientsByDocumentId: Record<string, SharingRecipient[]> = {}
+): (documentId: string) => SharingRecipient[] {
+  return documentId => recipientsByDocumentId[documentId] ?? []
 }
 
 describe('getSharingsContactFilterData', () => {
   it('indexes and deduplicates owners for the With me tab', () => {
-    const source = makeSource({
+    const getRecipients = makeGetRecipients({
       [RECEIVED_FILE._id]: [OWNER, RECIPIENT],
       [SECOND_RECEIVED_FILE._id]: [OWNER]
     })
@@ -64,7 +88,7 @@ describe('getSharingsContactFilterData', () => {
     const result = getSharingsContactFilterData(
       [RECEIVED_FILE, SECOND_RECEIVED_FILE],
       SHARING_TAB_WITH_ME,
-      source
+      getRecipients
     )
 
     expect(result.options).toHaveLength(1)
@@ -87,14 +111,14 @@ describe('getSharingsContactFilterData', () => {
   })
 
   it('indexes direct recipients and groups for the By me tab', () => {
-    const source = makeSource({
+    const getRecipients = makeGetRecipients({
       [OWNED_FILE._id]: [CURRENT_USER, RECIPIENT, DESIGN_GROUP]
     })
 
     const result = getSharingsContactFilterData(
       [OWNED_FILE],
       SHARING_TAB_BY_ME,
-      source
+      getRecipients
     )
 
     expect(result.options).toEqual([
@@ -115,58 +139,38 @@ describe('getSharingsContactFilterData', () => {
     ])
   })
 
-  it('resolves shared drive recipients from the sharing id', () => {
+  it('resolves shared drive root recipients from the document id', () => {
     const drive = {
       ...RECEIVED_FILE,
       driveId: 'sharing-drive'
     }
-    const source: SharingContactSource = {
-      getRecipients: jest.fn(() => []),
-      getSharingById: sharingId =>
-        sharingId === 'sharing-drive'
-          ? {
-              id: 'sharing-drive',
-              attributes: {
-                members: [OWNER, RECIPIENT],
-                rules: [
-                  {
-                    values: [RECEIVED_FILE._id],
-                    update: 'sync',
-                    remove: 'sync'
-                  }
-                ]
-              }
-            }
-          : null
-    }
+    const getRecipients = jest.fn(documentId =>
+      documentId === RECEIVED_FILE._id ? [OWNER, RECIPIENT] : []
+    )
 
     const result = getSharingsContactFilterData(
       [drive],
       SHARING_TAB_WITH_ME,
-      source
+      getRecipients
     )
 
     expect(result.options).toEqual([
       expect.objectContaining({ value: 'person:alice@example.com' })
     ])
-    expect(source.getRecipients).not.toHaveBeenCalled()
+    expect(getRecipients).toHaveBeenCalledWith(RECEIVED_FILE._id)
   })
 
   it('does not expose contact data on the Team drives tab', () => {
-    const source: SharingContactSource = {
-      getRecipients: jest.fn(() => [OWNER]),
-      getSharingById: jest.fn(() => null)
-    }
+    const getRecipients = jest.fn(() => [OWNER])
 
     const result = getSharingsContactFilterData(
       [RECEIVED_FILE],
       SHARING_TAB_DRIVES,
-      source
+      getRecipients
     )
 
     expect(result.options).toEqual([])
     expect(result.contactValuesByEntryId.get(RECEIVED_FILE._id)).toEqual([])
-    expect(source.getRecipients).not.toHaveBeenCalled()
-    expect(source.getSharingById).not.toHaveBeenCalled()
+    expect(getRecipients).not.toHaveBeenCalled()
   })
 })
