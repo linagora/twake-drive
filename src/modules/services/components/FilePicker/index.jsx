@@ -50,6 +50,7 @@ const FilePicker = ({
     useSelectionContext()
   const { showAlert } = useAlert()
   const isProcessingRef = useRef(false)
+  const [busyLinkMode, setBusyLinkMode] = useState(null)
   const itemsIdsSelected = useMemo(
     () => selectedItems.map(item => item._id),
     [selectedItems]
@@ -66,16 +67,25 @@ const FilePicker = ({
   }
 
   const handleConfirm = async linkMode => {
-    setError(null)
-    const value = multiple ? itemsIdsSelected : itemsIdsSelected[0]
-    const pickError = await onChange(value, linkMode)
-    if (pickError) {
-      setError(pickError)
-      return pickError
-    }
+    if (busyLinkMode) return null
 
-    clearSelection()
-    return null
+    setBusyLinkMode(linkMode)
+    setError(null)
+
+    const value = multiple ? itemsIdsSelected : itemsIdsSelected[0]
+
+    try {
+      const pickError = await onChange(value, linkMode)
+      if (pickError) {
+        setError(pickError)
+        return pickError
+      }
+
+      clearSelection()
+      return null
+    } finally {
+      setBusyLinkMode(null)
+    }
   }
 
   const handleOpenLinkAccess = useCallback(() => {
@@ -211,6 +221,7 @@ const FilePicker = ({
             downloadLinkState={downloadLinkState}
             publicLinkAction={publicLinkAction}
             downloadLinkAction={downloadLinkAction}
+            busyLinkMode={busyLinkMode}
           />
         </footer>
       </Paper>
