@@ -356,8 +356,7 @@ describe('useFilteredSharings', () => {
             ]
           }
           return []
-        },
-        getSharingById: () => null
+        }
       })
 
       const { result: hook } = renderHook(() =>

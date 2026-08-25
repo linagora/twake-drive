@@ -7,6 +7,10 @@ import {
 } from '@testing-library/react'
 import React from 'react'
 
+import type {
+  SharingGroupRecipient,
+  SharingMemberRecipient
+} from 'cozy-sharing/types'
 import { BreakpointsProvider } from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import CozyTheme from 'cozy-ui-plus/dist/providers/CozyTheme'
 
@@ -47,11 +51,32 @@ const TRANSLATIONS: Record<string, string> = {
   'search.empty.title': 'No result'
 }
 
+const GROUP_OWNER: SharingMemberRecipient = {
+  avatarPath: '/sharings/sharing/recipients/0/avatar',
+  index: 'sharing-sharing-member-0',
+  memberIndex: 0,
+  sharingId: 'sharing',
+  status: 'owner',
+  type: 'two-way'
+}
+
+const GROUP_RECIPIENT: SharingGroupRecipient = {
+  addedBy: 0,
+  color: '#297ef2',
+  groupIndex: 0,
+  index: 'sharing-sharing-group-0',
+  members: [],
+  name: 'Design team',
+  owner: GROUP_OWNER,
+  read_only: false,
+  sharingId: 'sharing'
+}
+
 const CONTACT_OPTIONS = [
   {
     kind: 'group',
     label: 'Design team',
-    recipient: { groupIndex: 0, name: 'Design team', color: '#297ef2' },
+    recipient: GROUP_RECIPIENT,
     searchableValues: ['Design team'],
     value: 'group:design team'
   }

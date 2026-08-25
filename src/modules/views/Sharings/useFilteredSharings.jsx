@@ -18,7 +18,6 @@ import { getDefaultFileLastUpdatedAt } from '@/modules/filelist/FileLastUpdatedC
 
 const NO_FILTERS = {}
 const getNoRecipients = () => []
-const getNoSharing = () => null
 
 const buildBaseShape = (result, hasIds) => ({
   ...result,
@@ -163,11 +162,7 @@ export const useFilteredSharings = ({
 
   const { contactFilterOptions, filteredResult, hasDrives } = useMemo(() => {
     const hasIds = sharedDocumentIds?.length > 0
-    const {
-      isOwner,
-      getRecipients = getNoRecipients,
-      getSharingById = getNoSharing
-    } = sharingContext
+    const { isOwner, getRecipients = getNoRecipients } = sharingContext
     // Filter by tab only after deduplication so each document lands in
     // exactly one tab.
     const combined = computeData({
@@ -179,10 +174,11 @@ export const useFilteredSharings = ({
     const tabData = tab
       ? combined.filter(entry => getSharingsTabForEntry(entry, isOwner) === tab)
       : combined
-    const contactFilterData = getSharingsContactFilterData(tabData, tab, {
-      getRecipients,
-      getSharingById
-    })
+    const contactFilterData = getSharingsContactFilterData(
+      tabData,
+      tab,
+      getRecipients
+    )
     const data = tabData.filter(entry => {
       const entryId = getDocId(entry)
       const contactValues = entryId

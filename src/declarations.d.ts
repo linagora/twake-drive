@@ -164,13 +164,15 @@ declare module 'cozy-sharing' {
     refresh: () => void
     hasWriteAccess: (id: string, driveId?: string) => boolean
     isOwner: (docId: string) => boolean
-    getRecipients: (docId: string) => unknown
+    getRecipients: (
+      docId: string
+    ) => import('cozy-sharing/types').SharingRecipient[]
   } & import('./modules/views/Sharings/getSharingsLastUpdatedAt').SharingsTimestampContext
 
   export const getRecipientsFromSharing: (
     sharing: unknown,
     docId: string
-  ) => unknown
+  ) => import('cozy-sharing/types').SharingRecipient[]
 
   export const GroupAvatar: React.ComponentType<{
     className?: string
@@ -179,7 +181,7 @@ declare module 'cozy-sharing' {
   }>
 
   export const MemberAvatar: React.ComponentType<{
-    recipient: unknown
+    recipient: import('cozy-sharing/types').SharingMemberRecipient
     size?: string
   }>
 
