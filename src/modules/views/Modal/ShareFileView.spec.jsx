@@ -25,8 +25,8 @@ jest.mock('cozy-client', () => ({
 
 jest.mock('cozy-flags', () => jest.fn())
 
-jest.mock('cozy-sharing', () => ({
-  ShareModal: jest.fn(({ onRevokeSuccess }) => (
+jest.mock('./SharingModal', () => ({
+  SharingModal: jest.fn(({ onRevokeSuccess }) => (
     <button onClick={() => onRevokeSuccess({ id: 'file-id' })}>
       Revoke self
     </button>

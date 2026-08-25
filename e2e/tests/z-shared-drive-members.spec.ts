@@ -16,6 +16,7 @@ const SAMPLE = path.join(FIXTURE_DIR, 'sample.txt')
 const VIEWER_DRIVE = `Viewer Drive ${stamp()}`
 const VIEWER_FILE = `viewer-file-${stamp()}.txt`
 const LEAVE_DRIVE = `Leave Drive ${stamp()}`
+const CRASH_DRIVE = `Crash Drive ${stamp()}`
 
 test.describe.serial('Shared drive members & permissions', () => {
   test('Alice shares a drive with Bob as Viewer', async ({
@@ -94,7 +95,9 @@ test.describe.serial('Shared drive members & permissions', () => {
     )
     const modal = await aliceDrive.row(VIEWER_DRIVE).share()
     await modal.removeMember('bob')
-    await modal.close()
+    // The modal is left open on purpose: removing the last member takes the
+    // page down with it (see the expected failure at the end of this file),
+    // and what this test is about is Bob losing access.
 
     // Revocation propagates to Bob's instance asynchronously.
     await expect(async () => {
@@ -119,5 +122,30 @@ test.describe.serial('Shared drive members & permissions', () => {
       await bobPage.goto(`${USERS.bob.appUrl}/#/sharings`)
       await bobDrive.row(LEAVE_DRIVE).waitHidden({ timeout: 5_000 })
     }).toPass({ timeout: 30_000 })
+  })
+
+  test('the share modal survives removing the last member', async ({
+    alicePage,
+    aliceDrive
+  }) => {
+    // Expected failure: revoking the last member drops the sharing from
+    // cozy-sharing's store while the modal is still mounted, and canReshare()
+    // then dereferences it (state.js reads `sharing.attributes` on a sharing
+    // that is now null), white-screening the app. Kept failing rather than
+    // deleted, so the suite reports it the day the dependency stops crashing.
+    // Last in the file: nothing else should depend on a crashed page.
+    test.fail()
+
+    await createAndShareFolderWithBob(alicePage, aliceDrive, CRASH_DRIVE)
+    await waitForSharingRow(
+      alicePage,
+      USERS.alice,
+      aliceDrive,
+      CRASH_DRIVE,
+      'by-me'
+    )
+    const modal = await aliceDrive.row(CRASH_DRIVE).share()
+    await modal.removeMember('bob')
+    await modal.close()
   })
 })

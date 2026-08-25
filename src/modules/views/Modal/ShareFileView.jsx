@@ -3,7 +3,8 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 
 import { hasQueryBeenLoaded, useQuery } from 'cozy-client'
 import flag from 'cozy-flags'
-import { ShareModal } from 'cozy-sharing'
+
+import { SharingModal } from './SharingModal'
 
 import { LoaderModal } from '@/components/LoaderModal'
 import { getSharingsRootRoute } from '@/modules/views/Sharings/routes'
@@ -32,7 +33,7 @@ const ShareFileView = () => {
 
   if (hasQueryBeenLoaded(fileResult) && fileResult.data) {
     return (
-      <ShareModal
+      <SharingModal
         document={fileResult.data}
         driveId={driveId}
         documentType="Files"

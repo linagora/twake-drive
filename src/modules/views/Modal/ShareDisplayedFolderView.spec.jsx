@@ -1,9 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import React from 'react'
 
-import { ShareModal } from 'cozy-sharing'
-
 import { ShareDisplayedFolderView } from './ShareDisplayedFolderView'
+import { SharingModal } from './SharingModal'
 
 import { SHARING_TAB_DRIVES, SHARING_TAB_WITH_ME } from '@/constants/config'
 import { useDisplayedFolder } from '@/hooks'
@@ -19,8 +18,8 @@ jest.mock('react-router-dom', () => ({
 
 jest.mock('cozy-flags', () => jest.fn())
 
-jest.mock('cozy-sharing', () => ({
-  ShareModal: jest.fn(({ onRevokeSuccess }) => (
+jest.mock('./SharingModal', () => ({
+  SharingModal: jest.fn(({ onRevokeSuccess }) => (
     <button onClick={onRevokeSuccess}>Revoke self</button>
   ))
 }))
@@ -84,7 +83,7 @@ describe('ShareDisplayedFolderView', () => {
 
     render(<ShareDisplayedFolderView />)
 
-    ShareModal.mock.calls[0][0].onClose()
+    SharingModal.mock.calls[0][0].onClose()
 
     expect(mockNavigate).toHaveBeenCalledWith('..', { replace: true })
   })

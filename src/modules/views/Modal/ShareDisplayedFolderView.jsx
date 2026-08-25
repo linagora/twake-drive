@@ -2,7 +2,8 @@ import React from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 import flag from 'cozy-flags'
-import { ShareModal } from 'cozy-sharing'
+
+import { SharingModal } from './SharingModal'
 
 import { useDisplayedFolder } from '@/hooks'
 import { getSharingsRootRoute } from '@/modules/views/Sharings/routes'
@@ -22,7 +23,7 @@ const ShareDisplayedFolderView = () => {
     }
 
     return (
-      <ShareModal
+      <SharingModal
         document={displayedFolder}
         documentType="Files"
         sharingDesc={displayedFolder.name}

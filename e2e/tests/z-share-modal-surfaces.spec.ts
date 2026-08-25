@@ -77,6 +77,15 @@ test.describe.serial('Share modal surfaces (shared drives)', () => {
     bobPage,
     bobDrive
   }) => {
+    // Expected failure: the modal mounts on the right route, then cozy-sharing
+    // takes the page down. For a recipient, FederatedFolderModal resolves
+    // `isCurrentUserOwner` from the drive sharing (false for Bob) and falls
+    // through to canReshare(fileId); a file inside a drive carries no sharing
+    // of its own, so cozy-sharing's state.js dereferences a null sharing.
+    // Kept failing rather than deleted, so the suite reports it the day the
+    // dependency stops crashing.
+    test.fail()
+
     // The v/share route lives under the recipient's proxied shared-drive
     // viewer, so this is Bob's path (he's an Editor, so the viewer's sharing
     // affordances stay enabled). The owner never reaches this route — his

@@ -41,18 +41,23 @@ test.describe.serial('File sharing (federated)', () => {
     } finally {
       await safeUnlink(filePath)
     }
+
+    // Confirming with no recipient picked also just closes the modal, so the
+    // owner's row on the by-me tab is what proves the share happened.
+    await alicePage.goto(`${USERS.alice.appUrl}/#/sharings/by-me`)
+    await expect(aliceDrive.row(FILE_NAME).cell).toBeVisible({
+      timeout: 15_000
+    })
   })
 
   test('Bob sees the file in his Sharings tab', async ({
     bobPage,
     bobDrive
   }) => {
-    await bobPage.goto(`${USERS.bob.appUrl}/#/sharings`)
-
     // Sharing propagates asynchronously across instances; reload until the
     // federated shortcut lands in the Sharings list.
     await expect(async () => {
-      await bobPage.reload()
+      await bobPage.goto(`${USERS.bob.appUrl}/#/sharings`)
       await bobDrive.row(FILE_NAME).waitVisible({ timeout: 5_000 })
     }).toPass({ timeout: 30_000 })
   })
@@ -67,13 +72,10 @@ test.describe.serial('File sharing (federated)', () => {
 
     await row.open()
 
-    // The branch exposes a dedicated /shareddrive/:driveId/file/:fileId
-    // route for file-root shared drives, but the recipient-side row in
-    // the current state still resolves to the folder-root path
-    // (/:driveId/:folderId where :folderId is the rule's file id). The
-    // branch is mid-flight on wiring up the recipient's file-root view,
-    // so we just assert the navigation lands on the shared drive rather
-    // than locking the test to a specific route shape.
+    // A file-root shared drive still resolves to the folder-root path on the
+    // recipient's side (/:driveId/:folderId where :folderId is the rule's file
+    // id), so assert the navigation lands on the shared drive rather than
+    // locking the test to a specific route shape.
     await expect(bobPage).toHaveURL(/\/shareddrive\/[^/]+\/[^/]+/)
   })
 })
