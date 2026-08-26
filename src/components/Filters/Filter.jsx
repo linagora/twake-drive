@@ -5,7 +5,7 @@ import React, { forwardRef } from 'react'
 
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
 import TextField from 'cozy-ui/transpiled/react/TextField'
-import { makeStyles } from 'cozy-ui/transpiled/react/styles'
+import { alpha, makeStyles } from 'cozy-ui/transpiled/react/styles'
 
 import styles from './styles.styl'
 
@@ -37,9 +37,19 @@ const useStyles = makeStyles(theme => ({
   },
   active: {
     '& .MuiFilledInput-root': {
-      backgroundColor: theme.palette.primary.light,
+      color: theme.palette.primary.main,
+      backgroundColor: alpha(
+        theme.palette.primary.main,
+        theme.palette.action.ghostOpacity
+      ),
+      '& .MuiSelect-icon': {
+        color: theme.palette.primary.main
+      },
       '&:hover, &.Mui-focused': {
-        backgroundColor: theme.palette.primary.light
+        backgroundColor: alpha(
+          theme.palette.primary.main,
+          theme.palette.action.hoverGhostOpacity
+        )
       }
     }
   },
@@ -81,11 +91,17 @@ const useStyles = makeStyles(theme => ({
     height: FILTER_HEIGHT,
     flexShrink: 0,
     borderRadius: theme.shape.borderRadius,
-    color: theme.palette.text.primary,
-    backgroundColor: theme.palette.primary.light,
-    '&:hover': {
-      color: theme.palette.text.primary,
-      backgroundColor: theme.palette.primary.light
+    color: theme.palette.primary.main,
+    backgroundColor: alpha(
+      theme.palette.primary.main,
+      theme.palette.action.ghostOpacity
+    ),
+    '&:hover, &:focus': {
+      color: theme.palette.primary.main,
+      backgroundColor: alpha(
+        theme.palette.primary.main,
+        theme.palette.action.hoverGhostOpacity
+      )
     }
   }
 }))
