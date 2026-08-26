@@ -182,11 +182,13 @@ const FilePickerWrapper = ({ children }) => (
 describe('FilePicker', () => {
   const mockOnChange = jest.fn()
   const mockOnFileDoubleClick = jest.fn()
+  const mockOnClose = jest.fn()
 
   const setup = ({
     filePickerConfig,
     multiple = false,
     onFileDoubleClick,
+    onClose,
     accept
   } = {}) => {
     return render(
@@ -194,6 +196,7 @@ describe('FilePicker', () => {
         <FilePicker
           onChange={mockOnChange}
           onFileDoubleClick={onFileDoubleClick ?? mockOnFileDoubleClick}
+          onClose={onClose ?? mockOnClose}
           filePickerConfig={filePickerConfig}
           multiple={multiple}
           accept={accept}

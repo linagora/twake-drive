@@ -37,6 +37,7 @@ export const ROOT_DIR_ID = 'io.cozy.files.root-dir'
 
 const FilePicker = ({
   onChange,
+  onClose,
   accept,
   multiple,
   filePickerConfig,
@@ -187,10 +188,10 @@ const FilePicker = ({
         data-testid="file-picker"
       >
         <header
-          className="u-pv-1-half u-pl-1-half u-pr-2"
+          className="u-pv-1 u-pl-2 u-pr-1"
           data-testid="file-picker-header-wrapper"
         >
-          <FilePickerHeader />
+          <FilePickerHeader onClose={onClose} />
         </header>
         <Divider />
         <Box
@@ -241,6 +242,7 @@ const FilePicker = ({
 
 FilePicker.propTypes = {
   onChange: PropTypes.func.isRequired,
+  onClose: PropTypes.func.isRequired,
   accept: PropTypes.string,
   multiple: PropTypes.bool,
   filePickerConfig: PropTypes.shape({

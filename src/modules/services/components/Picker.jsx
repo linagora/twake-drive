@@ -139,10 +139,15 @@ const Picker = ({ service, intent, onReadyToUse }) => {
     }
   }
 
+  const handleClose = () => {
+    service.cancel()
+  }
+
   return (
     <FilePicker
       onChange={handlePick}
       onFileDoubleClick={handleFileDoubleClick}
+      onClose={handleClose}
       filePickerConfig={filePickerConfig}
       onReadyToUse={onReadyToUse}
       multiple={filePickerConfig.multiple}

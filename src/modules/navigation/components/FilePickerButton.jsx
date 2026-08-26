@@ -176,6 +176,7 @@ export const FilePickerButton = () => {
         fullWidth
         maxWidth="md"
         iframeProps={{ spinnerProps: { middle: true } }}
+        showCloseButton={false}
         onComplete={handleComplete}
         onDismiss={handleDismiss}
       >
