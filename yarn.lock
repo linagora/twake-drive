@@ -11709,8 +11709,8 @@ __metadata:
     cozy-minilog: "npm:^3.10.1"
     cozy-pouch-link: "npm:^60.29.0"
     cozy-realtime: "npm:^5.9.3"
-    cozy-search: "npm:^2.0.2"
-    cozy-sharing: "npm:^37.2.12"
+    cozy-search: "npm:^2.2.18"
+    cozy-sharing: "npm:^37.5.2"
     cozy-stack-client: "npm:^60.28.0"
     cozy-tsconfig: "npm:^1.8.1"
     cozy-ui: "npm:^141.0.0"
@@ -12029,9 +12029,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cozy-search@npm:^2.0.2":
-  version: 2.0.2
-  resolution: "cozy-search@npm:2.0.2"
+"cozy-search@npm:^2.2.18":
+  version: 2.2.18
+  resolution: "cozy-search@npm:2.2.18"
   dependencies:
     "@assistant-ui/react": "npm:^0.12.5"
     classnames: "npm:^2.5.1"
@@ -12045,6 +12045,7 @@ __metadata:
     cozy-device-helper: ">=3.7.1"
     cozy-flags: ">=4.6.1"
     cozy-intent: ">=2.26.0"
+    cozy-interapp: ">=0.17.1"
     cozy-logger: ">=1.10.4"
     cozy-minilog: ">=3.3.1"
     cozy-pouch-link: 54.0.0
@@ -12055,13 +12056,13 @@ __metadata:
     react-dom: ">=18.0.0"
     react-router-dom: ^6.28.0
     twake-i18n: ">=0.3.0"
-  checksum: 10/7c29884fb346007297a6f9ff5ab086a6ff064bf6a35aee35e58ab57554c8380f247e5826fc2697a2493a9c4c8cdf4d4082fa7dd56215da4ad54ddd0b9c5cb481
+  checksum: 10/912d5c7d9fc893106c2084f003a1938aa500fa9511a21657419a7f9079fd9837bea01a4080ceb5c4571f8a9e8996344e32a310989a55d402c084175ac4cc61fc
   languageName: node
   linkType: hard
 
-"cozy-sharing@npm:^37.2.12":
-  version: 37.2.12
-  resolution: "cozy-sharing@npm:37.2.12"
+"cozy-sharing@npm:^37.5.2":
+  version: 37.5.2
+  resolution: "cozy-sharing@npm:37.5.2"
   dependencies:
     "@cozy/minilog": "npm:^1.0.0"
     classnames: "npm:^2.5.1"
@@ -12084,7 +12085,7 @@ __metadata:
     react: ">=16.12.0"
     react-router: ">=5.0.1"
     twake-i18n: ">=0.3.0"
-  checksum: 10/eb0c6ecb3aebd2751c41bbd78b1b7ca4fbd57d6ea6febf0d41c27183500925c24aa8405c97437c2675d4c893ae21ac436a747eeeed6d4342e12e097bde0c23f7
+  checksum: 10/311cfb7c744417a13ac69604ec665bcc04511bbf3ef83d508f8ce32b1b4ecd9745cdf0b06a001340f8b50a971e3fd36b747b6359e6689e51e99a31bea800950e
   languageName: node
   linkType: hard
 
