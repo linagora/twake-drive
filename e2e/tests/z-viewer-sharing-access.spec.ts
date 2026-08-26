@@ -29,8 +29,7 @@ test.describe('Viewer sharing access panel', () => {
       await createAndShareFolderWithBob(alicePage, aliceDrive, DRIVE_NAME, {
         seed: async () => {
           await aliceDrive.createFolder(SUBFOLDER)
-          await aliceDrive.row(SUBFOLDER).open()
-          await alicePage.waitForURL(/\/folder\/[^/]+$/)
+          await aliceDrive.openFolder(SUBFOLDER)
           await aliceDrive.uploadFiles(filePath)
           await aliceDrive.row(FILE_NAME).waitVisible()
           await alicePage.goBack()
