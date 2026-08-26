@@ -62,8 +62,7 @@ test.describe('Upload & file viewer', () => {
     // space (the AddMenu) rather than a file row (the file menu).
     const folder = `CtxUpload ${stamp()}`
     await aliceDrive.createFolder(folder)
-    await aliceDrive.row(folder).open()
-    await alicePage.waitForURL(/\/folder\/[^/]+$/)
+    await aliceDrive.openFolder(folder)
 
     const uniqueName = `ctx-${stamp()}.txt`
     const fixturePath = path.join(FIXTURE_DIR, uniqueName)
@@ -84,8 +83,7 @@ test.describe('Upload & file viewer', () => {
 
     const folder = `DragDrop ${stamp()}`
     await aliceDrive.createFolder(folder)
-    await aliceDrive.row(folder).open()
-    await alicePage.waitForURL(/\/folder\/[^/]+$/)
+    await aliceDrive.openFolder(folder)
 
     const fileName = `dropped-${stamp()}.txt`
     await aliceDrive.dropFiles([
