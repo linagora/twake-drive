@@ -111,7 +111,7 @@ export const FilePickerButton = () => {
   const filePickerOptions = useMemo(
     () => ({
       ...buildFilePickerOptions(configId, t),
-      ...(themeType === 'auto' ? {} : { theme: { type: themeType } })
+      ...(themeType === 'default' ? {} : { theme: { type: themeType } })
     }),
     [configId, t, themeType]
   )
@@ -158,6 +158,12 @@ export const FilePickerButton = () => {
         value={themeType}
         onChange={event => setThemeType(event.target.value)}
       >
+        <FormControlLabel
+          key="default"
+          value="default"
+          control={<Radios />}
+          label="Theme: default"
+        />
         {filePickerThemes.map(themeOption => (
           <FormControlLabel
             key={themeOption}
