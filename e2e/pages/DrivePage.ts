@@ -22,6 +22,20 @@ export class DrivePage {
     return new FileRow(this.page, this.fileList, name)
   }
 
+  /** Open a folder and wait until its document has loaded. The route
+   * changes before `displayedFolder` is ready, while Create and Upload derive
+   * their destination from that document. The resolved breadcrumb confirms
+   * that the folder query has completed. */
+  async openFolder(name: string): Promise<void> {
+    await this.row(name).open()
+    await this.page.waitForURL(/\/folder\/[^/]+$/)
+    await this.page
+      .getByRole('main')
+      .getByRole('navigation')
+      .getByText(name, { exact: true })
+      .waitFor({ state: 'visible' })
+  }
+
   /** Locator for the file list cell whose filename contains the substring —
    *  use for "the original and its (1) copy" style multi-row assertions. */
   matching(stem: string): Locator {

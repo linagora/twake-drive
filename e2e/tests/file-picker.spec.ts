@@ -41,8 +41,7 @@ test.describe('File Picker', () => {
     await aliceDrive.createFolder(parentFolder)
 
     // Enter the parent folder and upload a file.
-    await aliceDrive.row(parentFolder).open()
-    await alicePage.waitForURL(/\/folder\/[^/]+$/)
+    await aliceDrive.openFolder(parentFolder)
 
     const tmpPath = path.join(path.dirname(FIXTURE), testFileName)
     const largeTmpPath = path.join(path.dirname(FIXTURE), largeFileName)
@@ -192,8 +191,7 @@ test.describe('File Picker', () => {
     aliceDrive
   }) => {
     // Create a subfolder inside the parent folder that we'll pick.
-    await aliceDrive.row(parentFolder).open()
-    await alicePage.waitForURL(/\/folder\/[^/]+$/)
+    await aliceDrive.openFolder(parentFolder)
     const subFolder = `sub-${stamp()}`
     await aliceDrive.createFolder(subFolder)
 
@@ -226,8 +224,7 @@ test.describe('File Picker', () => {
     aliceDrive
   }) => {
     // Create a nested folder inside the parent folder.
-    await aliceDrive.row(parentFolder).open()
-    await alicePage.waitForURL(/\/folder\/[^/]+$/)
+    await aliceDrive.openFolder(parentFolder)
     const nested = `nested-${stamp()}`
     await aliceDrive.createFolder(nested)
 
@@ -448,8 +445,7 @@ test.describe('File Picker', () => {
     alicePage,
     aliceDrive
   }) => {
-    await aliceDrive.row(parentFolder).open()
-    await alicePage.waitForURL(/\/folder\/[^/]+$/)
+    await aliceDrive.openFolder(parentFolder)
     const subFolder = `sub-${stamp()}`
     await aliceDrive.createFolder(subFolder)
 
