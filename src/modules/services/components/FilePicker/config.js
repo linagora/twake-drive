@@ -18,7 +18,7 @@ import { defaultFilePickerConfig, filePickerThemes } from './constants'
  * @param {object|null|undefined} intent - The intent object returned
  *   by `service.getIntent()`. Null-safe.
  * @returns {{
- *   theme: { type: 'auto'|'light'|'dark' },
+ *   theme: { type: 'light'|'dark'|undefined },
  *   multiple: boolean,
  *   sharingLink: object|null,
  *   downloadLink: object|null
