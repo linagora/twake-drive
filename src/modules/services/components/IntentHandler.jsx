@@ -107,7 +107,6 @@ const IntentHandler = ({ intentId }) => {
     <CozyTheme
       className="u-h-100 u-w-100"
       type={themeType}
-      ignoreCozySettings
       ignoreItself={false}
     >
       <BreakpointsProvider parentBasedIframe>
