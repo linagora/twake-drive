@@ -1,7 +1,12 @@
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import React from 'react'
 
-import { filePickerDoubleClickResults, filePickerLinkModes } from './constants'
+import {
+  filePickerDoubleClickResults,
+  filePickerLinkModes,
+  filePickerSections,
+  FILE_PICKER_SHARINGS_ROOT_ID
+} from './constants'
 import FilePicker from './index'
 
 import { SelectionProvider } from '@/modules/selection/SelectionProvider'
@@ -21,8 +26,24 @@ jest.mock('cozy-ui/transpiled/react/providers/Alert', () => ({
   useAlert: () => ({ showAlert: mockShowAlert })
 }))
 
-jest.mock('./FilePickerHeader', () => () => (
-  <div data-testid="file-picker-header-inner">Header</div>
+jest.mock('./FilePickerHeader', () => ({ activeSection, onSectionChange }) => (
+  <div data-testid="file-picker-header-inner">
+    <span data-testid="active-section">{activeSection}</span>
+    <button
+      type="button"
+      data-testid="drive-section-btn"
+      onClick={() => onSectionChange('drive')}
+    >
+      Drive
+    </button>
+    <button
+      type="button"
+      data-testid="sharings-section-btn"
+      onClick={() => onSectionChange('sharings')}
+    >
+      Sharings
+    </button>
+  </div>
 ))
 
 jest.mock('./FilePickerBody', () => {
@@ -51,11 +72,20 @@ jest.mock('./FilePickerBody', () => {
     name: 'Folder'
   }
 
-  return ({ folderSelectable, navigateTo, onFileDoubleClick, error }) => {
+  return ({
+    folderSelectable,
+    navigateTo,
+    onFileDoubleClick,
+    error,
+    section,
+    folderId
+  }) => {
     const { setSelectedItems } = useSelectionContext()
 
     return (
       <div>
+        <span data-testid="body-section">{section}</span>
+        <span data-testid="body-folder-id">{folderId}</span>
         <span data-testid="folder-selectable">
           {folderSelectable ? 'true' : 'false'}
         </span>
@@ -369,6 +399,31 @@ describe('FilePicker', () => {
 
     expect(getByTestId('public-link-btn')).not.toBeDisabled()
     expect(getByTestId('temporary-download-link-btn')).toBeDisabled()
+  })
+
+  it('should switch sections at their roots and clear selection', () => {
+    const { getByTestId } = setup({ multiple: true })
+
+    expect(getByTestId('active-section')).toHaveTextContent(
+      filePickerSections.DRIVE
+    )
+    fireEvent.click(getByTestId('select-file-btn'))
+    fireEvent.click(getByTestId('sharings-section-btn'))
+
+    expect(getByTestId('body-section')).toHaveTextContent(
+      filePickerSections.SHARINGS
+    )
+    expect(getByTestId('body-folder-id')).toHaveTextContent(
+      FILE_PICKER_SHARINGS_ROOT_ID
+    )
+    expect(getByTestId('public-link-btn')).toBeDisabled()
+
+    fireEvent.click(getByTestId('navigate-folder-btn'))
+    fireEvent.click(getByTestId('drive-section-btn'))
+    fireEvent.click(getByTestId('sharings-section-btn'))
+    expect(getByTestId('body-folder-id')).toHaveTextContent(
+      FILE_PICKER_SHARINGS_ROOT_ID
+    )
   })
 
   it('should clear selection when navigating to another folder', () => {

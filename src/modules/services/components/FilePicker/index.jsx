@@ -22,7 +22,9 @@ import {
   filePickerDoubleClickResults,
   filePickerErrorCodes,
   filePickerLinkModes,
-  filePickerThemes
+  filePickerSections,
+  filePickerThemes,
+  FILE_PICKER_SHARINGS_ROOT_ID
 } from './constants'
 import { getActionDisabledState } from './constraints'
 import { getCompliantTypes, isValidFile } from './helpers'
@@ -44,7 +46,11 @@ const FilePicker = ({
   onReadyToUse,
   onFileDoubleClick
 }) => {
-  const [folderId, setFolderId] = useState(ROOT_DIR_ID)
+  const [location, setLocation] = useState({
+    section: filePickerSections.DRIVE,
+    folderId: ROOT_DIR_ID,
+    driveId: null
+  })
   const [error, setError] = useState(null)
   const [isLinkAccessOpen, setIsLinkAccessOpen] = useState(false)
   const { selectedItems, clearSelection, setSelectedItems } =
@@ -63,7 +69,35 @@ const FilePicker = ({
 
   const navigateTo = folder => {
     setError(null)
-    setFolderId(folder.id ?? folder._id)
+    setLocation(currentLocation => {
+      const folderId = folder.id ?? folder._id
+      if (folderId === FILE_PICKER_SHARINGS_ROOT_ID) {
+        return {
+          section: filePickerSections.SHARINGS,
+          folderId: FILE_PICKER_SHARINGS_ROOT_ID,
+          driveId: null
+        }
+      }
+
+      return {
+        ...currentLocation,
+        folderId,
+        driveId: folder.driveId ?? currentLocation.driveId
+      }
+    })
+    clearSelection()
+  }
+
+  const handleSectionChange = section => {
+    setError(null)
+    setLocation({
+      section,
+      folderId:
+        section === filePickerSections.DRIVE
+          ? ROOT_DIR_ID
+          : FILE_PICKER_SHARINGS_ROOT_ID,
+      driveId: null
+    })
     clearSelection()
   }
 
@@ -73,7 +107,10 @@ const FilePicker = ({
     setBusyLinkMode(linkMode)
     setError(null)
 
-    const value = multiple ? itemsIdsSelected : itemsIdsSelected[0]
+    const selectedValues = selectedItems.map(item =>
+      item.driveId ? item : item._id
+    )
+    const value = multiple ? selectedValues : selectedValues[0]
 
     try {
       const pickError = await onChange(value, linkMode)
@@ -196,8 +233,15 @@ const FilePicker = ({
         square
         data-testid="file-picker"
       >
-        <header className="u-p-1" data-testid="file-picker-header-wrapper">
-          <FilePickerHeader onClose={onClose} />
+        <header
+          className="u-pt-1-half u-pb-0 u-pl-1-half u-pr-2"
+          data-testid="file-picker-header-wrapper"
+        >
+          <FilePickerHeader
+            activeSection={location.section}
+            onSectionChange={handleSectionChange}
+            onClose={onClose}
+          />
         </header>
         <Divider />
         <Box
@@ -208,7 +252,9 @@ const FilePicker = ({
         >
           <FilePickerBody
             navigateTo={navigateTo}
-            folderId={folderId}
+            section={location.section}
+            folderId={location.folderId}
+            driveId={location.driveId}
             itemTypesAccepted={itemTypesAccepted}
             multiple={multiple}
             folderSelectable

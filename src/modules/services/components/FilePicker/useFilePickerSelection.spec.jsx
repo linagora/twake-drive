@@ -38,7 +38,12 @@ const makeWrapper = () => {
   return Wrapper
 }
 
-const setup = ({ multiple = true, setupItems = items, scrollToIndex } = {}) => {
+const setup = ({
+  multiple = true,
+  setupItems = items,
+  scrollToIndex,
+  selectItem = canSelectItem
+} = {}) => {
   const selectionContainer = document.createElement('div')
   selectionContainer.tabIndex = -1
   document.body.appendChild(selectionContainer)
@@ -47,7 +52,7 @@ const setup = ({ multiple = true, setupItems = items, scrollToIndex } = {}) => {
     () => {
       const pickerSelection = useFilePickerSelection({
         items: setupItems,
-        canSelectItem,
+        canSelectItem: selectItem,
         multiple,
         selectionContainerRef,
         scrollToIndex
@@ -136,6 +141,20 @@ describe('useFilePickerSelection', () => {
     expect(result.current.selectedItemIds).toEqual([
       'file-1',
       'file-2',
+      'file-3',
+      'file-4'
+    ])
+  })
+
+  it('should exclude disabled items from select all', () => {
+    const selectItem = item => item._id !== 'file-2'
+    const { result } = setup({ selectItem })
+
+    act(() => {
+      fireEvent.keyDown(document, { key: 'a', ctrlKey: true })
+    })
+    expect(result.current.selectedItemIds).toEqual([
+      'file-1',
       'file-3',
       'file-4'
     ])

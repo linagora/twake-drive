@@ -15,12 +15,28 @@ const mockGetStackClient = jest.fn()
 const mockGetDownloadLinkById = jest.fn()
 const mockFindLinksByDoctype = jest.fn()
 const mockCozyClient = jest.fn()
+const mockBuildFileOrFolderByIdQuery = jest.fn(fileId => ({
+  definition: () => ({ id: fileId }),
+  options: { as: `io.cozy.files/${fileId}` }
+}))
+const mockBuildSharedDriveFileOrFolderByIdQuery = jest.fn(
+  ({ fileId, driveId }) => ({
+    definition: () => ({ id: fileId, driveId }),
+    options: { as: `io.cozy.files/${driveId}/${fileId}` }
+  })
+)
 
 jest.mock('@/lib/logger', () => ({
   __esModule: true,
   default: {
     warn: jest.fn()
   }
+}))
+
+jest.mock('@/queries', () => ({
+  buildFileOrFolderByIdQuery: fileId => mockBuildFileOrFolderByIdQuery(fileId),
+  buildSharedDriveFileOrFolderByIdQuery: params =>
+    mockBuildSharedDriveFileOrFolderByIdQuery(params)
 }))
 
 jest.mock('cozy-client', () => {
@@ -110,6 +126,19 @@ jest.mock('./FilePicker', () => ({ onChange, filePickerConfig, multiple }) => {
       </button>
       <button
         type="button"
+        data-testid="shared-drive-public-link-btn"
+        onClick={async () => {
+          const pickError = await onChange(
+            { _id: 'file-id', driveId: 'drive-id' },
+            filePickerLinkModes.PUBLIC_LINK
+          )
+          if (pickError) setError(pickError)
+        }}
+      >
+        Shared drive public link
+      </button>
+      <button
+        type="button"
         data-testid="temporary-download-link-btn"
         onClick={async () => {
           const pickError = await onChange(
@@ -120,6 +149,19 @@ jest.mock('./FilePicker', () => ({ onChange, filePickerConfig, multiple }) => {
         }}
       >
         Temporary link
+      </button>
+      <button
+        type="button"
+        data-testid="shared-drive-temporary-download-link-btn"
+        onClick={async () => {
+          const pickError = await onChange(
+            { _id: 'file-id', driveId: 'drive-id' },
+            filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK
+          )
+          if (pickError) setError(pickError)
+        }}
+      >
+        Shared drive temporary link
       </button>
       <button
         type="button"
@@ -252,6 +294,7 @@ describe('Picker', () => {
     fireEvent.click(getByTestId('generated-public-links-btn'))
 
     await waitFor(() => expect(service.terminate).toHaveBeenCalled())
+    expect(mockBuildFileOrFolderByIdQuery).toHaveBeenCalledWith('file-id')
     expect(mockQuery).toHaveBeenCalledWith(
       { id: 'file-id' },
       expect.objectContaining({
@@ -272,6 +315,29 @@ describe('Picker', () => {
         }
       }
     ])
+  })
+
+  it('should revalidate a shared-drive file with its drive id', async () => {
+    mockQuery.mockResolvedValue({ data: mockFile })
+    makeSharingLink.mockResolvedValue(
+      'https://drive.example/public?sharecode=abc'
+    )
+    const { service, getByTestId } = setup()
+
+    fireEvent.click(getByTestId('shared-drive-public-link-btn'))
+
+    await waitFor(() => expect(service.terminate).toHaveBeenCalled())
+    expect(mockBuildSharedDriveFileOrFolderByIdQuery).toHaveBeenCalledWith({
+      fileId: 'file-id',
+      driveId: 'drive-id'
+    })
+    expect(mockQuery).toHaveBeenCalledWith(
+      { id: 'file-id', driveId: 'drive-id' },
+      expect.objectContaining({
+        as: 'io.cozy.files/drive-id/file-id',
+        fetchPolicy: expect.any(Function)
+      })
+    )
   })
 
   it('should terminate with a bare array containing a public link entry', async () => {
@@ -382,6 +448,37 @@ describe('Picker', () => {
         mimeType: 'application/pdf',
         downloadLink:
           'https://alice.example/files/downloads/123/invoice.pdf?Dl=1',
+        thumbnail: {
+          link: 'https://files.twake.app/email-assets/file-picker/pdf.png'
+        }
+      }
+    ])
+  })
+
+  it('should use the shared drive API for a temporary download link', async () => {
+    mockQuery.mockResolvedValue({ data: mockFile })
+    mockGetDownloadLinkById.mockResolvedValue(
+      'https://alice.example/sharings/drives/drive-id/downloads/123'
+    )
+    const { service, getByTestId } = setup()
+
+    fireEvent.click(getByTestId('shared-drive-temporary-download-link-btn'))
+
+    await waitFor(() => expect(service.terminate).toHaveBeenCalled())
+    expect(makeSharingLink).not.toHaveBeenCalled()
+    expect(mockCozyClient).not.toHaveBeenCalled()
+    expect(mockGetDownloadLinkById).toHaveBeenCalledWith(
+      'file-id',
+      'invoice.pdf'
+    )
+    expect(service.terminate).toHaveBeenCalledWith([
+      {
+        id: 'file-id',
+        name: 'invoice.pdf',
+        size: 42,
+        mimeType: 'application/pdf',
+        downloadLink:
+          'https://alice.example/sharings/drives/drive-id/downloads/123',
         thumbnail: {
           link: 'https://files.twake.app/email-assets/file-picker/pdf.png'
         }

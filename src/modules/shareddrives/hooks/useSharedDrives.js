@@ -7,12 +7,14 @@ export const useSharedDrives = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [isLoaded, setIsLoaded] = useState(false)
   const [sharedDrives, setSharedDrives] = useState([])
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     let isCancelled = false
 
     const fetchSharedDrives = async () => {
       setIsLoading(true)
+      setError(null)
       try {
         const { data: sharedDrives } = await client
           .collection('io.cozy.sharings')
@@ -20,6 +22,10 @@ export const useSharedDrives = () => {
 
         if (!isCancelled) {
           setSharedDrives(sharedDrives)
+        }
+      } catch (error) {
+        if (!isCancelled) {
+          setError(error)
         }
       } finally {
         if (!isCancelled) {
@@ -67,5 +73,5 @@ export const useSharedDrives = () => {
     }
   }, [client])
 
-  return { isLoading, isLoaded, sharedDrives }
+  return { isLoading, isLoaded, sharedDrives, error }
 }

@@ -86,6 +86,17 @@ export const makeTemporaryDownloadLinks = async (client, files) => {
     throw new Error('Temporary download links are only available for files')
   }
 
+  if (files[0].driveId) {
+    const filesCollection = client.collection('io.cozy.files', {
+      driveId: files[0].driveId
+    })
+    return Promise.all(
+      files.map(file =>
+        filesCollection.getDownloadLinkById(getFileId(file), file.name)
+      )
+    )
+  }
+
   const temporarySharingLink = await makeSharingLink(
     client,
     files.map(getFileId),

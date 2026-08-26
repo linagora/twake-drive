@@ -15,6 +15,13 @@ export const filePickerLinkModes = {
   TEMPORARY_DOWNLOAD_LINK: 'temporary-download-link'
 }
 
+export const filePickerSections = {
+  DRIVE: 'drive',
+  SHARINGS: 'sharings'
+}
+
+export const FILE_PICKER_SHARINGS_ROOT_ID = 'file-picker-sharings-root'
+
 export const filePickerThemes = ['light', 'dark']
 
 export const filePickerSharingLinkStatuses = {

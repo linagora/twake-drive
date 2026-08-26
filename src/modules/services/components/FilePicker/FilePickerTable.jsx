@@ -39,17 +39,18 @@ const FilePickerTableRow = forwardRef(
     const row = item
     const timerId = useRef()
     const isLongPress = useRef(false)
+    const isDisabled = context.isItemDisabled(row)
 
     const handleClick = event => {
-      context.onItemClick(row, event)
+      if (!isDisabled) context.onItemClick(row, event)
     }
 
     const handleToggle = event => {
-      context.onItemToggle(row, event)
+      if (!isDisabled) context.onItemToggle(row, event)
     }
 
     const handleDoubleClick = event => {
-      context.onItemDoubleClick?.(row, event)
+      if (!isDisabled) context.onItemDoubleClick?.(row, event)
     }
 
     let handlers = { onClick: handleClick, onDoubleClick: handleDoubleClick }
@@ -57,7 +58,7 @@ const FilePickerTableRow = forwardRef(
       // eslint-disable-next-line react-hooks/refs
       handlers = makeMobileHandlers({
         timerId,
-        disabled: false,
+        disabled: isDisabled,
         selectionModeActive: context.selectionModeActive,
         isRenaming: false,
         isLongPress,
@@ -72,10 +73,16 @@ const FilePickerTableRow = forwardRef(
         ref={ref}
         data-testid="list-item"
         data-file-id={row?._id}
-        className={cx(className, 'virtualized', 'u-c-pointer')}
+        aria-disabled={isDisabled}
+        className={cx(
+          className,
+          'virtualized',
+          !isDisabled && 'u-c-pointer',
+          isDisabled && 'u-c-default u-o-50'
+        )}
         selected={context.isSelectedItem(row)}
         {...handlers}
-        hover
+        hover={!isDisabled}
       />
     )
   }
@@ -87,6 +94,7 @@ FilePickerTableRow.propTypes = {
   context: PropTypes.shape({
     data: PropTypes.array,
     isSelectedItem: PropTypes.func.isRequired,
+    isItemDisabled: PropTypes.func.isRequired,
     isMobile: PropTypes.bool.isRequired,
     selectionModeActive: PropTypes.bool.isRequired,
     onItemClick: PropTypes.func.isRequired,
@@ -119,6 +127,7 @@ export const FilePickerTable = memo(
     onItemClick,
     onItemToggle,
     onItemDoubleClick,
+    isItemDisabled,
     fetchMore,
     scrollerRef,
     virtuosoRef
@@ -155,11 +164,13 @@ export const FilePickerTable = memo(
         data: items,
         isMobile,
         selectionModeActive,
+        isItemDisabled,
         onItemClick,
         onItemToggle,
         onItemDoubleClick
       }),
       [
+        isItemDisabled,
         isMobile,
         items,
         selectionModeActive,
@@ -202,6 +213,7 @@ FilePickerTable.propTypes = {
   onItemClick: PropTypes.func.isRequired,
   onItemToggle: PropTypes.func,
   onItemDoubleClick: PropTypes.func,
+  isItemDisabled: PropTypes.func.isRequired,
   fetchMore: PropTypes.func,
   scrollerRef: PropTypes.func,
   virtuosoRef: PropTypes.object
