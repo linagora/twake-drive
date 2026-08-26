@@ -32,10 +32,12 @@ export async function createAndShareFolderWithBob(
   await aliceDrive.createFolder(folderName)
   await aliceDrive.row(folderName).open()
   await alicePage.waitForURL(/\/folder\/[^/]+$/)
+  const shareButton = alicePage.getByRole('button', { name: /share/i })
+  await shareButton.waitFor({ state: 'visible' })
 
   await opts.seed?.()
 
-  await alicePage.getByRole('button', { name: /share/i }).click()
+  await shareButton.click()
   const modal = new ShareModalPage(alicePage)
   await modal.waitForOpen()
   if (opts.role) await modal.setNewMemberRole(opts.role)
