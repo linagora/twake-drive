@@ -122,6 +122,7 @@ jest.mock('cozy-ui/transpiled/react/Table/Virtualized', () => {
 
 const mockOnChange = jest.fn()
 const mockOnFileDoubleClick = jest.fn()
+const mockOnClose = jest.fn()
 
 function getVisibleText(element) {
   return element.textContent.replaceAll('\u200e', '')
@@ -143,6 +144,7 @@ function setup({
         multiple={multiple}
         onChange={mockOnChange}
         onFileDoubleClick={mockOnFileDoubleClick}
+        onClose={mockOnClose}
       />
     </AppLike>
   )
