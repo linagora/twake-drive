@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { Q, useClient, fetchPolicies } from 'cozy-client'
+import { useClient, fetchPolicies } from 'cozy-client'
 
 import FilePicker from './FilePicker'
 import { getFilePickerConfig } from './FilePicker/config'
@@ -19,6 +19,10 @@ import {
 } from './FilePicker/sharing'
 
 import logger from '@/lib/logger'
+import {
+  buildFileOrFolderByIdQuery,
+  buildSharedDriveFileOrFolderByIdQuery
+} from '@/queries'
 
 function terminateWithGeneratedSharingLinks(
   files,
@@ -52,32 +56,38 @@ const Picker = ({ service, intent, onReadyToUse }) => {
 
   const handlePick = async (fileIds, linkMode, generatedSharingLinks) => {
     const selectedFiles = Array.isArray(fileIds) ? fileIds : [fileIds]
-    const selectedFileIds = selectedFiles.map(file =>
-      typeof file === 'string' ? file : getFileId(file)
-    )
     let queryResults
     try {
       queryResults = await Promise.all(
-        selectedFileIds.map(fileId =>
-          client.query(Q('io.cozy.files').getById(fileId), {
-            as: `picker-confirm-${fileId}`,
+        selectedFiles.map(async file => {
+          const fileId = typeof file === 'string' ? file : getFileId(file)
+          const driveId = typeof file === 'string' ? null : file.driveId
+          const query = driveId
+            ? buildSharedDriveFileOrFolderByIdQuery({ fileId, driveId })
+            : buildFileOrFolderByIdQuery(fileId)
+
+          const result = await client.query(query.definition(), {
+            ...query.options,
+            ...(driveId ? {} : { as: `picker-confirm-${fileId}` }),
             // Always go to the network — the file might have been deleted
             // between listing and confirmation.
             fetchPolicy: fetchPolicies.olderThan(0)
           })
-        )
+
+          return { result, driveId }
+        })
       )
     } catch {
       return filePickerErrorCodes.ITEM_NOT_FOUND
     }
 
     const files = []
-    for (const result of queryResults) {
+    for (const { result, driveId } of queryResults) {
       const data = result?.data
       if (!data) {
         return filePickerErrorCodes.ITEM_NOT_FOUND
       }
-      files.push(data)
+      files.push(driveId ? { ...data, driveId } : data)
     }
 
     if (linkMode === filePickerLinkModes.PUBLIC_LINK && generatedSharingLinks) {

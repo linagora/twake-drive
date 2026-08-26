@@ -1,10 +1,19 @@
+.filePickerNavigation
+    min-height 2rem
+
+.filePickerNavigationTab
+    min-height 2rem
+    text-transform none
+
 .filePickerBreadcrumb-previousPath
+    background none
+    border 0
     color var(--actionColorActive)
-    cursor pointer
+    font inherit
+    padding 0
 
 .filePickerBreadcrumb-icon
     color var(--actionColorActive)
-    margin 0 .25rem
 
 @supports (display: contents) // @stylint ignore
     .filePickerBreadcrumb-wrapper
@@ -29,3 +38,4 @@
 
     &:focus
         outline 0
+

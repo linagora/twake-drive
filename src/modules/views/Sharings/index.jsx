@@ -1,7 +1,6 @@
-import React, { useEffect, useMemo } from 'react'
+import React, { useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
 
-import { hasQueryBeenLoaded, useQuery } from 'cozy-client'
 import flag from 'cozy-flags'
 import {
   useSharingContext,
@@ -18,6 +17,10 @@ import { buildSharingsActionsOptions } from './helpers'
 import { useFilteredSharings } from './useFilteredSharings'
 import { useSharingsFilters } from './useSharingsFilters'
 import { useSharingsLastUpdatedAt } from './useSharingsLastUpdatedAt'
+import {
+  getSharingsFetchStatus,
+  useSharingsQueryResult
+} from './useSharingsQueryResult'
 import { areDrivesAvailable, useSharingsTab } from './useSharingsTab'
 import withSharedDocumentIds from './withSharedDocumentIds'
 import FolderView from '../Folder/FolderView'
@@ -53,8 +56,6 @@ import FileListRowsPlaceholder from '@/modules/filelist/FileListRowsPlaceholder'
 import { leaveSharedDrive } from '@/modules/shareddrives/components/actions/leaveSharedDrive'
 import { shareFileRootSharedDrive } from '@/modules/shareddrives/components/actions/shareFileRootSharedDrive'
 import { shareSharedDrive } from '@/modules/shareddrives/components/actions/shareSharedDrive'
-import { buildSharingsQuery } from '@/queries'
-
 // The Team drives tab only exists while the feature is enabled and at least
 // one organizational drive can be displayed in it.
 const shouldShowDrivesTab = ({ hasDrives }) => areDrivesAvailable() && hasDrives
@@ -78,18 +79,6 @@ const SHARINGS_ACTIONS = [
   hr,
   versions
 ]
-
-const useSharingsQueryResult = (sharedDocumentIds, allLoaded) => {
-  const query = useMemo(
-    () =>
-      buildSharingsQuery({
-        ids: sharedDocumentIds,
-        enabled: allLoaded && sharedDocumentIds?.length > 0
-      }),
-    [sharedDocumentIds, allLoaded]
-  )
-  return useQuery(query.definition, query.options)
-}
 
 function useCanonicalizeUnavailableDrivesTab({
   setTab,
@@ -124,6 +113,7 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
     contactFilterOptions,
     filteredResult,
     sharedDrivesLoaded,
+    sharedDrivesError,
     hasDrives
   } = useFilteredSharings({
     result,
@@ -134,6 +124,12 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
   })
 
   const showDrives = shouldShowDrivesTab({ hasDrives })
+  const fetchStatus = getSharingsFetchStatus({
+    allLoaded,
+    filteredResult,
+    sharedDrivesLoaded,
+    sharedDrivesError
+  })
 
   useCanonicalizeUnavailableDrivesTab({
     setTab,
@@ -179,9 +175,7 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
             contactFilterOptions={contactFilterOptions}
           />
         )}
-        {!allLoaded ||
-        !sharedDrivesLoaded ||
-        !hasQueryBeenLoaded(filteredResult) ? (
+        {fetchStatus === 'loading' ? (
           <FileListRowsPlaceholder />
         ) : (
           <FileLastUpdatedProvider

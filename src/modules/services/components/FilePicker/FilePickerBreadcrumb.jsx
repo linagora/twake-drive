@@ -1,4 +1,5 @@
 import { Icon, Right } from '@linagora/twake-icons'
+import cx from 'classnames'
 import PropTypes from 'prop-types'
 import React, { Fragment, useCallback, memo } from 'react'
 
@@ -38,15 +39,22 @@ const FilePickerBreadcrumb = ({ path, onBreadcrumbClick }) => {
           if (idx < path.length - 1) {
             return (
               <Fragment key={idx}>
-                <span
-                  className={styles['filePickerBreadcrumb-previousPath']}
+                <button
+                  type="button"
+                  className={cx(
+                    styles['filePickerBreadcrumb-previousPath'],
+                    'u-c-pointer'
+                  )}
                   onClick={navigateTo(folder)}
                 >
                   {folder.name}
-                </span>
+                </button>
                 <Icon
                   icon={Right}
-                  className={styles['filePickerBreadcrumb-icon']}
+                  className={cx(
+                    styles['filePickerBreadcrumb-icon'],
+                    'u-mh-half'
+                  )}
                 />
               </Fragment>
             )

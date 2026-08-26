@@ -31,6 +31,7 @@ interface UseTransformFolderListReturn {
   sharedDrives: TransformedSharedDrive[]
   nonSharedDriveList: IOCozyFile[]
   sharedDrivesLoaded: boolean
+  sharedDrivesError: Error | null
 }
 
 const useTransformFolderListHasSharedDriveShortcuts = (
@@ -41,7 +42,11 @@ const useTransformFolderListHasSharedDriveShortcuts = (
     isOwner: (fileId: string) => boolean
   }
 
-  const { sharedDrives, isLoaded: sharedDrivesLoaded } = useSharedDrives()
+  const {
+    sharedDrives,
+    isLoaded: sharedDrivesLoaded,
+    error: sharedDrivesError
+  } = useSharedDrives()
 
   /**
    * Filter out Nextcloud shortcuts from shared drives.
@@ -170,7 +175,8 @@ const useTransformFolderListHasSharedDriveShortcuts = (
   return {
     sharedDrives: transformedSharedDrives,
     nonSharedDriveList,
-    sharedDrivesLoaded
+    sharedDrivesLoaded,
+    sharedDrivesError
   }
 }
 

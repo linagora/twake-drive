@@ -144,6 +144,7 @@ export const useFilteredSharings = ({
   filters = NO_FILTERS,
   getFileLastUpdatedAt = getDefaultFileLastUpdatedAt
 }) => {
+  const { getRecipients, isOwner } = useSharingContext()
   const isEnabledSharedDrive = flag('drive.shared-drive.enabled')
   const isEnabledFederatedSharedFolder = flag(
     'drive.federated-shared-folder.enabled'
@@ -154,10 +155,9 @@ export const useFilteredSharings = ({
   const {
     sharedDrives: transformedSharedDrives,
     nonSharedDriveList,
-    sharedDrivesLoaded
+    sharedDrivesLoaded,
+    sharedDrivesError
   } = useTransformFolderListHasSharedDriveShortcuts(result.data)
-
-  const { getRecipients, isOwner } = useSharingContext()
 
   const { contactFilterOptions, filteredResult, hasDrives } = useMemo(() => {
     const hasIds = sharedDocumentIds?.length > 0
@@ -218,6 +218,7 @@ export const useFilteredSharings = ({
     contactFilterOptions,
     filteredResult,
     hasDrives,
-    sharedDrivesLoaded: withoutSharedDrives || sharedDrivesLoaded
+    sharedDrivesLoaded: withoutSharedDrives || sharedDrivesLoaded,
+    sharedDrivesError: withoutSharedDrives ? null : sharedDrivesError
   }
 }
