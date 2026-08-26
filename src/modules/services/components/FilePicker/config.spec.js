@@ -19,10 +19,10 @@ describe('FilePicker config', () => {
     })
 
     it('uses the automatic theme by default', () => {
-      expect(getFilePickerConfig(null).theme.type).toBe('auto')
+      expect(getFilePickerConfig(null).theme.type).toBe(undefined)
     })
 
-    it.each(['auto', 'light', 'dark'])('preserves the %s theme', theme => {
+    it.each([undefined, 'light', 'dark'])('preserves the %s theme', theme => {
       const intent = {
         attributes: { data: { theme: { type: theme } } }
       }
@@ -30,13 +30,16 @@ describe('FilePicker config', () => {
       expect(getFilePickerConfig(intent).theme.type).toBe(theme)
     })
 
-    it.each([null, 'sepia'])('falls back to auto for the %s theme', theme => {
-      const intent = {
-        attributes: { data: { theme: { type: theme } } }
-      }
+    it.each([null, 'sepia'])(
+      'falls back to undefined for the %s theme',
+      theme => {
+        const intent = {
+          attributes: { data: { theme: { type: theme } } }
+        }
 
-      expect(getFilePickerConfig(intent).theme.type).toBe('auto')
-    })
+        expect(getFilePickerConfig(intent).theme.type).toBe(undefined)
+      }
+    )
 
     it('reads the theme from service data', () => {
       expect(

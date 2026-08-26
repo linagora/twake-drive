@@ -48,9 +48,9 @@ It is not a top-level `actions` field.
 interface FilePickerConfig {
   /**
    * Theme used to render the File Picker.
-   * Defaults to { type: "auto" }.
+   * Defaults to { type: undefined }.
    */
-  theme?: { type: 'light' | 'dark' | 'auto' }
+  theme?: { type: 'light' | 'dark' | undefined }
 
   /**
    * Whether several files or folders can be selected.
@@ -122,7 +122,7 @@ When no config is provided, Drive uses:
 
 ```js
 {
-  theme: { type: 'auto' },
+  theme: { type: undefined },
   multiple: true,
   sharingLink: { allowFolder: true },
   downloadLink: { allowFolder: false }
@@ -135,9 +135,9 @@ Use `theme.type` with `light` or `dark` to force the File Picker theme. The
 theme is fixed when the intent is created and does not change while it remains
 open.
 
-`auto`, an invalid value or an omitted value preserves the existing behavior:
+`undefined`, an invalid value or an omitted value preserves the existing behavior:
 the iframe follows the Cozy instance theme, with the system color scheme as a
-fallback. For `auto`, omit `theme` from the options passed to
+fallback. For `undefined`, omit `theme` from the options passed to
 `IntentDialogOpener`, which only accepts explicit `light` or `dark` values.
 `IntentDialogOpener` and `IntentIframe` from `cozy-ui-plus >= 12.2.0` apply an
 explicit theme to their dialog, close button and loading surface.
@@ -308,6 +308,6 @@ const handleComplete = result => {
 
 ## Limitations
 
-The count and size limits are checked on the currently selected items only: 
-`maxFileCount` counts every selected item including folders, while 
+The count and size limits are checked on the currently selected items only:
+`maxFileCount` counts every selected item including folders, while
 `availableSize` sums only selected files (folders are excluded).

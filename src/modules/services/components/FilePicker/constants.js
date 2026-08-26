@@ -15,7 +15,7 @@ export const filePickerLinkModes = {
   TEMPORARY_DOWNLOAD_LINK: 'temporary-download-link'
 }
 
-export const filePickerThemes = ['auto', 'light', 'dark']
+export const filePickerThemes = ['light', 'dark']
 
 export const filePickerSharingLinkStatuses = {
   FOUND: 'found',
@@ -50,7 +50,7 @@ export const filePickerErrorCodes = {
  * folder is not meaningful for an attachment use case).
  */
 export const defaultFilePickerConfig = {
-  theme: { type: 'auto' },
+  theme: { type: undefined },
   multiple: true,
   sharingLink: { allowFolder: true },
   downloadLink: { allowFolder: false }
