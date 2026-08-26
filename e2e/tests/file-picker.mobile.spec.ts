@@ -63,6 +63,12 @@ test.describe('File Picker mobile', () => {
 
     await picker.navigateToFolderOnMobile(parentFolder)
     await picker.tapItem(fileName)
+    await expect.poll(() => picker.getCheckboxCount()).toBe(2)
+    await expect(picker.isItemChecked(fileName)).resolves.toBe(true)
+    await expect(picker.isTemporaryDownloadDisabled()).resolves.toBe(false)
+    await expect(picker.isPublicLinkDisabled()).resolves.toBe(false)
+
+    await picker.tapItem(fileName)
     await expect.poll(() => picker.getCheckboxCount()).toBe(0)
     await expect(picker.isTemporaryDownloadDisabled()).resolves.toBe(true)
     await expect(picker.isPublicLinkDisabled()).resolves.toBe(true)

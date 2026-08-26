@@ -96,10 +96,14 @@ const FilePickerBody = ({
   )
 
   const handleMobileItemClick = useCallback(
-    item => {
-      if (isDirectory(item)) navigateTo(item)
+    (item, event) => {
+      if (isDirectory(item)) {
+        navigateTo(item)
+      } else {
+        handleMobileToggleSelect(item, event)
+      }
     },
-    [navigateTo]
+    [handleMobileToggleSelect, navigateTo]
   )
 
   return (

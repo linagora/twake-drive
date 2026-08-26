@@ -394,22 +394,17 @@ describe('FilePicker mobile navigation, list and actions', () => {
     expect(queryByRole('button', { name: 'Back' })).toBe(null)
   })
 
-  it('leaves files unselected and gives double taps no extra behavior', () => {
+  it('selects files on a single tap', () => {
     const { getAllByTestId, getByTestId } = setup()
-    const rows = getAllByTestId('list-item')
-    const folderRow = rows.find(row => row.dataset.fileId === mockFolder.id)
-    const fileRow = rows.find(row => row.dataset.fileId === mockFile.id)
+    const fileRow = getAllByTestId('list-item').find(
+      row => row.dataset.fileId === mockFile.id
+    )
 
-    fireEvent.click(fileRow)
-    fireEvent.click(fileRow)
-    fireEvent.doubleClick(fileRow)
+    tap(fileRow)
 
-    expect(getByTestId('public-link-btn')).toBeDisabled()
+    expect(within(fileRow).getByRole('checkbox')).toBeChecked()
+    expect(getByTestId('public-link-btn')).not.toBeDisabled()
     expect(getByTestId('file-picker-breadcrumb')).toHaveTextContent('My Drive')
-
-    fireEvent.click(folderRow)
-
-    expect(getByTestId('file-picker-breadcrumb')).toHaveTextContent('Photos')
     expect(mockOnFileDoubleClick).not.toHaveBeenCalled()
     expect(mockOnChange).not.toHaveBeenCalled()
   })
