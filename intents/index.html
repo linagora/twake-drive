@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="{{.Locale}}">
+  <head>
+    <meta charset="utf-8" />
+    <title>Twake Drive</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png" />
+    <link
+      rel="icon"
+      type="image/png"
+      href="/assets/favicon-32x32.png"
+      sizes="32x32"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      href="/assets/favicon-16x16.png"
+      sizes="16x16"
+    />
+    <link rel="mask-icon" href="/assets/safari-pinned-tab.svg" color="#5bbad5" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    {{.CozyFonts}}
+    
+      <link rel="stylesheet" href="/static/css/2127.6691bb98697079df.css?e5c05b3710dad3ca" />
+    
+      <link rel="stylesheet" href="/static/css/5555.5f76373558a7b586.css?e5c05b3710dad3ca" />
+    
+      <link rel="stylesheet" href="/static/css/intents.684f2433870319f5.css?e5c05b3710dad3ca" />
+    
+    {{.ThemeCSS}}
+  <style>
+    /* Static pre-React skeleton: paints at first parse, before the JS bundle.
+       Removed by IntentHandler once the real service component mounts. */
+    #intent-skeleton {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      background: var(--paperBackgroundColor, #fff);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        sans-serif;
+    }
+    #intent-skeleton header,
+    #intent-skeleton .sk-breadcrumb,
+    #intent-skeleton footer {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 0.9rem 1.25rem;
+      flex-shrink: 0;
+    }
+    #intent-skeleton header {
+      justify-content: space-between;
+      padding-top: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--dividerColor, #e4e2d9);
+    }
+    #intent-skeleton .sk-breadcrumb {
+      gap: 10px;
+      padding-top: 0.5rem;
+      padding-bottom: 0.5rem;
+    }
+    #intent-skeleton footer {
+      justify-content: flex-end;
+      gap: 10px;
+      border-top: 1px solid var(--dividerColor, #e4e2d9);
+    }
+    #intent-skeleton .sk-rows {
+      flex: 1;
+      min-height: 0;
+    }
+    #intent-skeleton .sk-rows svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    /* SVG list rows: gray cells + one sweeping highlight rect (no clipPath) */
+    #intent-skeleton .sk {
+      fill: #efede5;
+    }
+    #intent-skeleton .sk-shimmer {
+      animation: sk-sweep 1.6s linear infinite;
+      will-change: transform;
+    }
+    @keyframes sk-sweep {
+      from {
+        transform: translateX(-220px);
+      }
+      to {
+        transform: translateX(660px);
+      }
+    }
+    /* Static div cells (header / breadcrumb / footer) — the SVG sweep carries the motion */
+    #intent-skeleton .sk-div {
+      height: 14px;
+      border-radius: 6px;
+      background: #efede5;
+      flex-shrink: 0;
+    }
+    @media (prefers-color-scheme: dark) {
+      #intent-skeleton .sk {
+        fill: #323230;
+      }
+      #intent-skeleton .sk-div {
+        background: #323230;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #intent-skeleton .sk-shimmer {
+        animation: none;
+      }
+    }
+  </style>
+  <script>
+    performance.mark("start");
+  </script>
+  </head>
+  <div
+    id="main"
+    role="application"
+    data-cozy="{{.CozyData}}"
+  ></div>
+  <div id="intent-skeleton" data-testid="file-picker-skeleton">
+    <header>
+      <div class="sk-div" style="width: 140px; height: 32px; border-radius: 8px;"></div>
+      <div class="sk-div" style="width: 40px; height: 40px; border-radius: 50%;"></div>
+    </header>
+    <div class="sk-breadcrumb">
+      <div class="sk-div" style="width: 56px;"></div>
+      <div class="sk-div" style="width: 12px;"></div>
+      <div class="sk-div" style="width: 90px;"></div>
+    </div>
+    <div class="sk-rows">
+      <svg
+        viewBox="0 0 640 352"
+        preserveAspectRatio="xMidYMin meet"
+        role="img"
+        aria-label="Loading"
+      >
+        <defs>
+          <linearGradient id="sk-hl" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#fff" stop-opacity="0"/>
+            <stop offset="0.5" stop-color="#fff" stop-opacity="0.6"/>
+            <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <g class="sk">
+          <rect x="20" y="14" width="190" height="14" rx="6"/><rect x="476" y="14" width="80" height="14" rx="6"/><rect x="576" y="14" width="44" height="14" rx="6"/>
+          <rect x="20" y="70" width="130" height="14" rx="6"/><rect x="476" y="70" width="80" height="14" rx="6"/><rect x="576" y="70" width="44" height="14" rx="6"/>
+          <rect x="20" y="126" width="190" height="14" rx="6"/><rect x="476" y="126" width="80" height="14" rx="6"/><rect x="576" y="126" width="44" height="14" rx="6"/>
+          <rect x="20" y="182" width="100" height="14" rx="6"/><rect x="476" y="182" width="80" height="14" rx="6"/><rect x="576" y="182" width="44" height="14" rx="6"/>
+          <rect x="20" y="238" width="190" height="14" rx="6"/><rect x="476" y="238" width="80" height="14" rx="6"/><rect x="576" y="238" width="44" height="14" rx="6"/>
+          <rect x="20" y="294" width="155" height="14" rx="6"/><rect x="476" y="294" width="80" height="14" rx="6"/><rect x="576" y="294" width="44" height="14" rx="6"/>
+        </g>
+        <rect class="sk-shimmer" x="0" y="0" width="180" height="352" fill="url(#sk-hl)"/>
+      </svg>
+    </div>
+    <footer>
+      <div class="sk-div" style="width: 170px; height: 36px; border-radius: 8px;"></div>
+      <div class="sk-div" style="width: 140px; height: 36px; border-radius: 8px;"></div>
+    </footer>
+  </div>
+  
+    <script src="/static/js/lib-polyfill.d8c01b89745f0c0b.js?e5c05b3710dad3ca"></script>
+  
+    <script src="/static/js/lib-router.9b59f01ae24e1674.js?e5c05b3710dad3ca"></script>
+  
+    <script src="/static/js/lib-react.31b90f70334d1e95.js?e5c05b3710dad3ca"></script>
+  
+    <script src="/static/js/2127.b350ca2d90b1442a.js?e5c05b3710dad3ca"></script>
+  
+    <script src="/static/js/9150.9698602bf20022ac.js?e5c05b3710dad3ca"></script>
+  
+    <script src="/static/js/1720.876a0f1262c4c59f.js?e5c05b3710dad3ca"></script>
+  
+    <script src="/static/js/5555.daa4411c5238aace.js?e5c05b3710dad3ca"></script>
+  
+    <script src="/static/js/intents.08e222f61e838514.js?e5c05b3710dad3ca"></script>
+  
+</html>
