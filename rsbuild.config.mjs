@@ -1,4 +1,5 @@
 import { defineConfig, mergeRsbuildConfig } from '@rsbuild/core'
+import { RsdoctorRspackPlugin } from '@rsdoctor/rspack-plugin'
 import { getRsbuildConfig } from 'rsbuild-config-cozy-app'
 
 const config = getRsbuildConfig({
@@ -144,6 +145,16 @@ config.environments = {
           assetModuleFilename: 'static/resource/[hash][ext][query]'
         },
         plugins: [
+          process.env.RSDOCTOR_CI &&
+            new RsdoctorRspackPlugin({
+              output: {
+                mode: 'brief',
+                options: {
+                  type: ['json']
+                },
+                reportDir: '.'
+              }
+            }),
           {
             // @embedpdf/pdfium references its wasm with
             // `new URL('pdfium.wasm', import.meta.url)`, which rspack bundles as

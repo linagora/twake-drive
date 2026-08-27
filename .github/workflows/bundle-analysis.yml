@@ -1,0 +1,39 @@
+name: Bundle Analysis
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - master
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bundle-analysis:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      actions: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Enable Corepack
+        run: corepack enable
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+      - name: Install dependencies
+        run: yarn install --immutable
+      - name: Build
+        run: RSDOCTOR_CI=true yarn build
+      - uses: web-infra-dev/rsdoctor-action@4d71e0001b4df27b50215fdbc685a0e69e2ced44
+        with:
+          file_path: rsdoctor-data.json
+          target_branch: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.event.repository.default_branch }}
