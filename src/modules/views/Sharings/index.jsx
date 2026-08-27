@@ -172,11 +172,13 @@ export const SharingsView = ({ sharedDocumentIds = [] }) => {
           onChange={setTab}
           showDrives={showDrives}
         />
-        <SharingsFilters
-          {...sharingsFilters}
-          contactFilterLoading={!allLoaded}
-          contactFilterOptions={contactFilterOptions}
-        />
+        {!base.isMobile && (
+          <SharingsFilters
+            {...sharingsFilters}
+            contactFilterLoading={!allLoaded}
+            contactFilterOptions={contactFilterOptions}
+          />
+        )}
         {!allLoaded ||
         !sharedDrivesLoaded ||
         !hasQueryBeenLoaded(filteredResult) ? (

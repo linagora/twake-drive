@@ -72,9 +72,11 @@ const SharingsRoute = ({ tab }) => (
 const setup = ({
   initialTab = SHARING_TAB_WITH_ME,
   initialSearch = '',
-  sharedDrives = []
+  sharedDrives = [],
+  viewportWidth = 1024
 } = {}) => {
   const { store, client } = setupStoreAndClient()
+  window.innerWidth = viewportWidth
   window.location.hash = `#/sharings/${initialTab}${initialSearch}`
 
   client.plugins.realtime = {
@@ -310,6 +312,17 @@ describe('Sharings View', () => {
       expect(getByText('foobar0')).toBeInTheDocument()
     })
     expect(window.location.hash).toBe('#/sharings/with-me')
+  })
+
+  it('hides filters on mobile', async () => {
+    useQuery.mockReturnValue(filesFixtureWithPath)
+
+    const { getByRole, queryByTestId } = setup({ viewportWidth: 500 })
+
+    await waitFor(() => {
+      expect(getByRole('tab', { name: 'With me' })).toBeInTheDocument()
+    })
+    expect(queryByTestId('sharings-filters')).toBe(null)
   })
 
   describe('team drives tab visibility', () => {
