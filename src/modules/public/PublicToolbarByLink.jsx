@@ -15,7 +15,7 @@ import AddButton from '@/modules/drive/Toolbar/components/AddButton'
 import ViewSwitcher from '@/modules/drive/Toolbar/components/ViewSwitcher'
 import PublicToolbarMoreMenu from '@/modules/public/PublicToolbarMoreMenu'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
-import UploadButton from '@/modules/upload/UploadButton'
+import { UploadButton } from '@/modules/upload/UploadButton'
 
 const PublicToolbarByLink = ({
   files,

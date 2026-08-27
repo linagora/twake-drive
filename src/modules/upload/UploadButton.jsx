@@ -14,12 +14,13 @@ import { uploadFiles } from '@/modules/navigation/duck'
 import { usePublicContext } from '@/modules/public/PublicProvider'
 import { useNewItemHighlightContext } from '@/modules/upload/NewItemHighlightProvider'
 
-const UploadButton = ({
+const UploadButtonBase = ({
   label,
   disabled,
   className,
   displayedFolder,
   folderId,
+  driveId,
   sharingState,
   componentsProps,
   onUploaded,
@@ -31,8 +32,10 @@ const UploadButton = ({
   const dispatch = useDispatch()
   const client = useClient()
 
-  // Explicit folderId (e.g. null on no-folder sections) overrides displayedFolder.id.
+  // Route identifiers remain available when proxied folders have no local document.
   const dirId = folderId !== undefined ? folderId : displayedFolder?.id
+  const targetDriveId =
+    driveId !== undefined ? driveId : displayedFolder?.driveId
 
   const onUpload = files => {
     onUploadStart?.()
@@ -43,7 +46,7 @@ const UploadButton = ({
         sharingState,
         onUploaded,
         { client, showAlert, t },
-        displayedFolder?.driveId,
+        targetDriveId,
         addItems
       )
     )
@@ -89,7 +92,7 @@ const UploadButton = ({
   )
 }
 
-UploadButton.propTypes = {
+UploadButtonBase.propTypes = {
   label: PropTypes.string.isRequired,
   disabled: PropTypes.bool,
   className: PropTypes.string,
@@ -97,13 +100,16 @@ UploadButton.propTypes = {
   onUploaded: PropTypes.func,
   displayedFolder: PropTypes.object, // io.cozy.files
   folderId: PropTypes.string,
+  driveId: PropTypes.string,
   onUploadStart: PropTypes.func,
   // in case of upload conflicts, shared files are not overridden
   sharingState: PropTypes.object.isRequired
 }
 
-UploadButton.defaultProps = {
+UploadButtonBase.defaultProps = {
   disabled: false
 }
 
-export default withSharingState(UploadButton)
+const UploadButton = withSharingState(UploadButtonBase)
+
+export { UploadButton, UploadButtonBase }
