@@ -2,7 +2,8 @@ import {
   fireEvent,
   render,
   screen,
-  type RenderResult
+  type RenderResult,
+  within
 } from '@testing-library/react'
 import React from 'react'
 
@@ -153,6 +154,23 @@ describe('ContactFilter', () => {
       screen.queryByRole('option', { name: /Thomas Jolly/ })
     ).toBeInTheDocument()
     expect(screen.queryByRole('option', { name: /Élodie Martin/ })).toBe(null)
+  })
+
+  it('clears the contact search through the clear button', () => {
+    renderContactFilter()
+    openContactFilter()
+
+    const searchInput = screen.getByRole('searchbox', { name: 'Search' })
+    fireEvent.change(searchInput, { target: { value: 'elodie' } })
+
+    const searchForm = searchInput.closest('form')
+    if (searchForm === null) throw new Error('Search form not found')
+
+    fireEvent.click(within(searchForm).getByRole('button'))
+
+    expect(searchInput).toHaveValue('')
+    expect(within(searchForm).queryByRole('button')).toBe(null)
+    expect(screen.queryAllByRole('option')).toHaveLength(OPTIONS.length)
   })
 
   it('limits suggestions and finds options beyond the limit through search', () => {
