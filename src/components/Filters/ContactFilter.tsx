@@ -59,10 +59,14 @@ const ContactFilter = ({
     handleClose()
   }
 
-  const renderSuggestion = (option: ContactFilterOption): ReactElement => {
+  const renderSuggestion = (
+    option: ContactFilterOption,
+    { isHighlighted }: Autosuggest.RenderSuggestionParams
+  ): ReactElement => {
     return (
       <ContactFilterSuggestion
         currentUserLabel={t('filters.contact.me')}
+        highlighted={isHighlighted}
         option={option}
       />
     )
@@ -176,9 +180,7 @@ const ContactFilter = ({
             suggestions={suggestions}
             theme={{
               container: 'u-w-100',
-              suggestion: 'u-bdrs-4',
-              suggestionHighlighted: styles.suggestionHighlighted,
-              suggestionsContainer: 'u-mt-half',
+              suggestionsContainer: `${styles.suggestionsContainer} u-mt-half`,
               suggestionsList: `${styles.suggestionsList} u-m-0 u-p-0`
             }}
           />
