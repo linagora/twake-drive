@@ -3,8 +3,6 @@ import type Autosuggest from 'react-autosuggest'
 
 import SearchBar from 'cozy-ui/transpiled/react/SearchBar'
 
-import styles from './ContactFilter.styl'
-
 function handleSearchSubmit(event: FormEvent<HTMLFormElement>): void {
   event.preventDefault()
 }
@@ -19,13 +17,18 @@ function ContactFilterSearchInput({
 }: Autosuggest.RenderInputComponentProps): ReactElement {
   return (
     <SearchBar
-      className={`${styles.searchInput} u-w-100`}
+      className="u-w-100"
       componentsProps={{
         inputBase: {
-          inputProps
+          inputProps: {
+            ...inputProps,
+            role: 'searchbox',
+            // SearchBar provides the clear IconButton, so suppress the
+            // browser-native search clear control.
+            type: 'text'
+          }
         }
       }}
-      disabledClear
       elevation={0}
       onBlur={onBlur}
       onChange={onChange}
