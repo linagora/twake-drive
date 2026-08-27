@@ -29,6 +29,7 @@ function makeSharingContext(overrides = {}) {
     allLoaded: true,
     isOwner: () => false,
     getDocumentPermissions: () => [],
+    getRecipients: () => [],
     getSharingById: () => null,
     ...overrides
   }
