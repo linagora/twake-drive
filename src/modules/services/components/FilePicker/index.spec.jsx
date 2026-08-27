@@ -279,6 +279,28 @@ describe('FilePicker', () => {
     )
   })
 
+  it('should ignore a second public-link confirmation while the first is in-flight', async () => {
+    let resolveFirst
+    mockOnChange.mockReturnValue(
+      new Promise(resolve => {
+        resolveFirst = resolve
+      })
+    )
+    const { getByTestId, findByTestId } = setup()
+
+    fireEvent.click(getByTestId('select-file-btn'))
+    fireEvent.click(getByTestId('public-link-btn'))
+
+    await findByTestId('link-access-modal')
+    fireEvent.click(getByTestId('confirm-link-access-btn'))
+    fireEvent.click(getByTestId('confirm-link-access-btn'))
+
+    expect(mockOnChange).toHaveBeenCalledTimes(1)
+
+    resolveFirst(null)
+    await waitFor(() => expect(mockShowAlert).not.toHaveBeenCalled())
+  })
+
   it('should keep link access open when link generation fails', async () => {
     mockOnChange.mockResolvedValueOnce('SHARING_LINK_FAILED')
     const { getByTestId, findByTestId } = setup()
