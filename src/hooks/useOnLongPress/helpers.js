@@ -122,6 +122,7 @@ export const makeMobileHandlers = ({
   // used to determine if it's a longpress
   // i.e. delay onClick
   const startPressTimer = e => {
+    if (disabled || isRenaming) return
     e.persist()
     isLongPress.current = false
     timerId.current = setTimeout(() => {
