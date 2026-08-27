@@ -221,6 +221,7 @@ const FilesViewer = ({ filesQuery, files, onClose, onChange, viewerProps }) => {
                     navigateToModal({
                       navigate,
                       pathname: '',
+                      search: location.search,
                       files,
                       path: 'share'
                     })

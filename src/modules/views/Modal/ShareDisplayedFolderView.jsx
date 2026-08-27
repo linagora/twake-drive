@@ -10,11 +10,11 @@ import { getSharingsRootRoute } from '@/modules/views/Sharings/routes'
 const ShareDisplayedFolderView = () => {
   const { displayedFolder } = useDisplayedFolder()
   const navigate = useNavigate()
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
 
   if (displayedFolder) {
     const onClose = () => {
-      navigate('..', { replace: true })
+      navigate({ pathname: '..', search }, { replace: true })
     }
 
     const onRevokeSuccess = () => {

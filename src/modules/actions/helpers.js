@@ -1,11 +1,21 @@
 import { joinPath } from '@/lib/path'
 
-export const navigateToModal = ({ navigate, pathname, files, path }) => {
+export const navigateToModal = ({
+  navigate,
+  pathname,
+  search = '',
+  files,
+  path
+}) => {
   const file = Array.isArray(files) ? files[0] : files
+  const targetPathname = pathname
+    ? joinPath(pathname, `file/${file.id}/${path}`)
+    : `v/${path}`
+  const targetLocation = search
+    ? { pathname: targetPathname, search }
+    : targetPathname
 
-  return navigate(
-    pathname ? joinPath(pathname, `file/${file.id}/${path}`) : `v/${path}`
-  )
+  return navigate(targetLocation)
 }
 
 export const navigateToModalWithMultipleFile = ({
