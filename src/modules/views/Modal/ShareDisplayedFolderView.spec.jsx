@@ -32,7 +32,10 @@ jest.mock('@/hooks', () => ({
 describe('ShareDisplayedFolderView', () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    mockUseLocation.mockReturnValue({ pathname: '/folder/folder-id/share' })
+    mockUseLocation.mockReturnValue({
+      pathname: '/folder/folder-id/share',
+      search: ''
+    })
   })
 
   it('should redirect to the active tab after leaving a shared drive', () => {
@@ -75,7 +78,11 @@ describe('ShareDisplayedFolderView', () => {
     )
   })
 
-  it('should keep passing onClose to the share modal', () => {
+  it('should preserve search params when closing the share modal', () => {
+    mockUseLocation.mockReturnValue({
+      pathname: '/sharings/with-me/folder/folder-id/share',
+      search: '?f.type=directory&f.date=last-month'
+    })
     useDisplayedFolder.mockReturnValue({
       displayedFolder: {
         name: 'Shared folder'
@@ -86,6 +93,12 @@ describe('ShareDisplayedFolderView', () => {
 
     ShareModal.mock.calls[0][0].onClose()
 
-    expect(mockNavigate).toHaveBeenCalledWith('..', { replace: true })
+    expect(mockNavigate).toHaveBeenCalledWith(
+      {
+        pathname: '..',
+        search: '?f.type=directory&f.date=last-month'
+      },
+      { replace: true }
+    )
   })
 })

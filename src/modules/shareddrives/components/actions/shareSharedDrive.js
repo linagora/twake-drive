@@ -13,7 +13,7 @@ import { isFileRootSharedDrive } from '@/modules/shareddrives/rootFileNavigation
 // drives are handled by `shareFileRootSharedDrive`. The two are mutually
 // exclusive: this one hides itself when the doc is a file-root, and the
 // file-root one only shows for file-roots.
-export const shareSharedDrive = ({ navigate, t, pathname }) => {
+export const shareSharedDrive = ({ navigate, t, pathname, search = '' }) => {
   const label = t('Files.share.cta')
   const icon = Share
 
@@ -33,7 +33,10 @@ export const shareSharedDrive = ({ navigate, t, pathname }) => {
     // Same route the avatars build, so the share button layers the modal over
     // the sharings list instead of navigating into the shared-drive view.
     action: docs => {
-      navigate(makeFileSharePath({ file: docs[0], pathname }))
+      navigate({
+        pathname: makeFileSharePath({ file: docs[0], pathname }),
+        search
+      })
     },
     Component: forwardRef(function ShareSharedDrive(props, ref) {
       return (

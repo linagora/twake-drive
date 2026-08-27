@@ -10,11 +10,11 @@ import { getPathToShareDisplayedFolder } from '@/modules/drive/Toolbar/share/hel
 const ShareButtonWithProps = ({ isDisabled, className, useShortLabel }) => {
   const { displayedFolder } = useDisplayedFolder()
   const navigate = useNavigate()
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
   const { isMobile } = useBreakpoints()
 
   const share = () => {
-    navigate(getPathToShareDisplayedFolder(pathname))
+    navigate({ pathname: getPathToShareDisplayedFolder(pathname), search })
   }
 
   if (!displayedFolder) return null

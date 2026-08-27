@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import React from 'react'
 
 import { hasQueryBeenLoaded, useQuery } from 'cozy-client'
+import { ShareModal } from 'cozy-sharing'
 
 import { ShareFileView } from './ShareFileView'
 
@@ -51,7 +52,10 @@ jest.mock('@/queries', () => ({
 describe('ShareFileView', () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    mockUseLocation.mockReturnValue({ pathname: '/folder/folder-id' })
+    mockUseLocation.mockReturnValue({
+      pathname: '/folder/folder-id',
+      search: ''
+    })
     hasQueryBeenLoaded.mockReturnValue(true)
     useQuery.mockReturnValue({
       data: {
@@ -89,6 +93,26 @@ describe('ShareFileView', () => {
 
     expect(mockNavigate).toHaveBeenCalledWith(
       `/sharings/${SHARING_TAB_WITH_ME}`,
+      { replace: true }
+    )
+  })
+
+  it('should preserve search params when closing the modal', () => {
+    mockUseLocation.mockReturnValue({
+      pathname: '/sharings/with-me/file/file-id/share',
+      search: '?f.contact=person%3Aalice%40example.com'
+    })
+    mockUseParams.mockReturnValue({ fileId: 'file-id' })
+
+    render(<ShareFileView />)
+
+    ShareModal.mock.calls[0][0].onClose()
+
+    expect(mockNavigate).toHaveBeenCalledWith(
+      {
+        pathname: '..',
+        search: '?f.contact=person%3Aalice%40example.com'
+      },
       { replace: true }
     )
   })

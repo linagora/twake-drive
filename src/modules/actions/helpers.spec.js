@@ -50,6 +50,21 @@ describe('actions helpers', () => {
 
       expect(mockNavigate).toHaveBeenCalledWith('/folder/456/file/file-1/edit')
     })
+
+    it('should preserve search params when opening a modal', () => {
+      navigateToModal({
+        navigate: mockNavigate,
+        pathname: '/sharings/with-me',
+        search: '?f.contact=person%3Aalice%40example.com&f.type=document',
+        files: { id: 'file-123', name: 'test.pdf' },
+        path: 'share'
+      })
+
+      expect(mockNavigate).toHaveBeenCalledWith({
+        pathname: '/sharings/with-me/file/file-123/share',
+        search: '?f.contact=person%3Aalice%40example.com&f.type=document'
+      })
+    })
   })
 
   describe('navigateToModalWithMultipleFile', () => {

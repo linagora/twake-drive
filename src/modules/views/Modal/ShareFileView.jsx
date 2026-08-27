@@ -14,7 +14,7 @@ import {
 
 const ShareFileView = () => {
   const navigate = useNavigate()
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
   const { fileId, driveId } = useParams()
 
   const fileQuery = driveId
@@ -23,7 +23,7 @@ const ShareFileView = () => {
   const fileResult = useQuery(fileQuery.definition, fileQuery.options)
 
   const handleExit = () => {
-    navigate('..', { replace: true })
+    navigate({ pathname: '..', search }, { replace: true })
   }
 
   const handleRevokeSuccess = () => {
