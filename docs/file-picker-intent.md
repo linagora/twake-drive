@@ -144,7 +144,11 @@ open.
 
 `undefined`, an invalid value or an omitted value preserves the existing behavior:
 the iframe follows the Cozy instance theme, with the system color scheme as a
-fallback. For `undefined`, omit `theme` from the options passed to
+fallback. But following the Cozy instance theme imply to send a request to the backend
+and the theme may change after the request succeed. So if the client app knows its theme,
+it should pass it to ensure no theme glitch.
+
+For `undefined`, omit `theme` from the options passed to
 `IntentDialogOpener`, which only accepts explicit `light` or `dark` values.
 `IntentDialogOpener` and `IntentIframe` from `cozy-ui-plus >= 12.2.0` apply an
 explicit theme to their dialog, close button and loading surface.
