@@ -187,10 +187,7 @@ const FilePicker = ({
         square
         data-testid="file-picker"
       >
-        <header
-          className="u-pv-1 u-pl-2 u-pr-1"
-          data-testid="file-picker-header-wrapper"
-        >
+        <header className="u-p-1" data-testid="file-picker-header-wrapper">
           <FilePickerHeader onClose={onClose} />
         </header>
         <Divider />
