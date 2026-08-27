@@ -129,6 +129,13 @@ When no config is provided, Drive uses:
 }
 ```
 
+Default labels:
+
+| Action | Default label |
+| --- | --- |
+| `sharingLink` | `Share with public link` |
+| `downloadLink` | `Attach with temporary link` |
+
 ### Theme
 
 Use `theme.type` with `light` or `dark` to force the File Picker theme. The
@@ -148,13 +155,6 @@ Custom intent containers remain responsible for styling their own UI. For raw
 intents, pass the `theme` object in `attributes.data` like the other File Picker
 options. The option never changes Cozy settings, local storage or the caller's
 global theme.
-
-Default labels:
-
-| Action | Default label |
-| --- | --- |
-| `sharingLink` | `Share with public link` |
-| `downloadLink` | `Attach with temporary link` |
 
 ## Actions
 
