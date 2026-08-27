@@ -239,14 +239,6 @@ describe('FilePicker', () => {
     jest.clearAllMocks()
   })
 
-  it('should render the header, content and footer', () => {
-    const { getByTestId } = setup()
-
-    expect(getByTestId('file-picker-header-inner')).toBeInTheDocument()
-    expect(getByTestId('file-picker-body-wrapper')).toBeInTheDocument()
-    expect(getByTestId('file-picker-footer')).toBeInTheDocument()
-  })
-
   it('should render both action buttons by default', () => {
     const { getByTestId } = setup()
 

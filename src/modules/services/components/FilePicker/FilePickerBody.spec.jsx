@@ -6,7 +6,7 @@ import { useSharingContext } from 'cozy-sharing'
 import { useI18n } from 'twake-i18n'
 
 import FilePickerBody from './FilePickerBody'
-import { filePickerSections } from './constants'
+import { filePickerSections, FILE_PICKER_SHARINGS_ROOT_ID } from './constants'
 
 import { useBreadcrumbPath } from '@/modules/breadcrumb/hooks/useBreadcrumbPath'
 import { useSharedDriveFolder } from '@/modules/shareddrives/hooks/useSharedDriveFolder'
@@ -31,8 +31,10 @@ jest.mock('./queries', () => ({
     options: { as: folderId }
   })
 }))
+const mockFilePickerSharingsContent = jest.fn(() => <div>Sharings root</div>)
+
 jest.mock('./FilePickerSharingsContent', () => ({
-  FilePickerSharingsContent: () => <div>Sharings root</div>
+  FilePickerSharingsContent: props => mockFilePickerSharingsContent(props)
 }))
 jest.mock('./useFilePickerSelection', () => ({
   useFilePickerSelection: () => ({
@@ -87,6 +89,27 @@ describe('FilePickerBody', () => {
   })
 
   afterEach(() => jest.clearAllMocks())
+
+  it('delegates the Sharings root without running folder queries', () => {
+    render(
+      <FilePickerBody
+        {...baseProps}
+        section={filePickerSections.SHARINGS}
+        folderId={FILE_PICKER_SHARINGS_ROOT_ID}
+      />
+    )
+
+    expect(mockFilePickerSharingsContent).toHaveBeenCalledWith({
+      rootBreadcrumbPath: {
+        id: FILE_PICKER_SHARINGS_ROOT_ID,
+        name: 'Nav.item_sharings'
+      },
+      renderContent: expect.any(Function)
+    })
+    expect(useQuery).not.toHaveBeenCalled()
+    expect(useSharedDriveFolder).not.toHaveBeenCalled()
+    expect(useBreadcrumbPath).not.toHaveBeenCalled()
+  })
 
   it('loads descendants of a standard shared folder with a Sharings breadcrumb', () => {
     useQuery.mockReturnValue({
