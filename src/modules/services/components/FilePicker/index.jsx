@@ -95,21 +95,30 @@ const FilePicker = ({
   }, [])
 
   const handleLinkAccessConfirm = async sharingLinks => {
-    const pickError = await onChange(
-      selectedItems,
-      filePickerLinkModes.PUBLIC_LINK,
-      sharingLinks
-    )
-    if (pickError) {
-      showAlert({ message: pickError, severity: 'error' })
-      return
-    }
+    if (busyLinkMode) return
 
-    clearSelection()
-    setIsLinkAccessOpen(false)
+    setBusyLinkMode(filePickerLinkModes.PUBLIC_LINK)
+    try {
+      const pickError = await onChange(
+        selectedItems,
+        filePickerLinkModes.PUBLIC_LINK,
+        sharingLinks
+      )
+      if (pickError) {
+        showAlert({ message: pickError, severity: 'error' })
+        return
+      }
+
+      clearSelection()
+      setIsLinkAccessOpen(false)
+    } finally {
+      setBusyLinkMode(null)
+    }
   }
 
   const handleFooterConfirm = linkMode => {
+    if (busyLinkMode) return
+
     if (linkMode === filePickerLinkModes.PUBLIC_LINK) {
       handleOpenLinkAccess()
       return
