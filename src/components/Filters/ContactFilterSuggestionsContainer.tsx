@@ -2,6 +2,7 @@ import React, { type ReactElement } from 'react'
 import type Autosuggest from 'react-autosuggest'
 
 import { Spinner } from 'cozy-ui/transpiled/react/Spinner'
+import Typography from 'cozy-ui/transpiled/react/Typography'
 
 import styles from './ContactFilter.styl'
 
@@ -40,7 +41,9 @@ const ContactFilterSuggestionsContainer = ({
           className={`${styles.status} u-flex u-flex-items-center u-flex-justify-center u-ph-1 u-ta-center`}
           role="status"
         >
-          {emptyMessage}
+          <Typography color="textSecondary" variant="body1">
+            {emptyMessage}
+          </Typography>
         </div>
       </div>
     )
