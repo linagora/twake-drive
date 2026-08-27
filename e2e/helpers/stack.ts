@@ -86,3 +86,108 @@ export async function setLinkExpiry(
     )
   }
 }
+
+/**
+ * Version-history helpers. The Drive UI renames a same-name upload rather than
+ * overwriting it, so the only way to build a version history for a test is to
+ * PUT new content onto an existing file, which is what the stack records as a
+ * version.
+ */
+
+const ROOT_DIR_ID = 'io.cozy.files.root-dir'
+
+/** `min_delay_between_two_versions` as set for the e2e stack in `e2e/cozy.yml`. */
+const MIN_VERSION_DELAY_MS = 1000
+
+/**
+ * The stack discards a new version when the previous one is younger than
+ * `min_delay_between_two_versions`, so consecutive overwrites have to be
+ * spaced out for each of them to be kept.
+ */
+export function waitForVersionWindow(): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, MIN_VERSION_DELAY_MS + 100))
+}
+
+function filesToken(instance: string): string {
+  return stackExec('instances', 'token-cli', instance, 'io.cozy.files')
+}
+
+interface FileRef {
+  instance: string
+  fileId: string
+}
+
+/** Create a text file at the root of the instance and return its id. */
+export async function createFile({
+  instance,
+  name,
+  content
+}: {
+  instance: string
+  name: string
+  content: string
+}): Promise<string> {
+  const res = await fetch(
+    `http://${instance}/files/${ROOT_DIR_ID}?Type=file&Name=${encodeURIComponent(name)}`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${filesToken(instance)}`,
+        'Content-Type': 'text/plain'
+      },
+      body: content
+    }
+  )
+  if (!res.ok) {
+    throw new Error(
+      `Create file ${name} on ${instance} failed (${res.status}): ${await res.text()}`
+    )
+  }
+  const body = (await res.json()) as { data: { id: string } }
+  return body.data.id
+}
+
+/** Overwrite a file's content, which makes the stack keep the former one as a version. */
+export async function overwriteFile({
+  instance,
+  fileId,
+  content
+}: FileRef & { content: string }): Promise<void> {
+  const res = await fetch(`http://${instance}/files/${fileId}`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${filesToken(instance)}`,
+      'Content-Type': 'text/plain'
+    },
+    body: content
+  })
+  if (!res.ok) {
+    throw new Error(
+      `Overwrite file ${fileId} on ${instance} failed (${res.status}): ${await res.text()}`
+    )
+  }
+}
+
+/** Number of versions the stack currently keeps for a file. */
+export async function countFileVersions({
+  instance,
+  fileId
+}: FileRef): Promise<number> {
+  const res = await fetch(`http://${instance}/files/${fileId}`, {
+    headers: {
+      Authorization: `Bearer ${filesToken(instance)}`,
+      Accept: 'application/json'
+    }
+  })
+  if (!res.ok) {
+    throw new Error(
+      `Get file ${fileId} on ${instance} failed (${res.status}): ${await res.text()}`
+    )
+  }
+  const body = (await res.json()) as {
+    included?: { type: string }[]
+  }
+  return (body.included ?? []).filter(
+    doc => doc.type === 'io.cozy.files.versions'
+  ).length
+}

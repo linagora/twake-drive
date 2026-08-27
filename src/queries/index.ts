@@ -10,6 +10,7 @@ import {
 import {
   DOCTYPE_ALBUMS,
   DOCTYPE_FILES_SETTINGS,
+  DOCTYPE_FILES_VERSIONS,
   NEXTCLOUD_MIGRATIONS_DOCTYPE
 } from '@/lib/doctypes'
 import { formatFolderQueryId } from '@/lib/queries'
@@ -557,4 +558,22 @@ export const buildRunningMigrationQuery: QueryBuilder = () => ({
       .sortBy([{ status: 'desc' }, { 'cozyMetadata.createdAt': 'desc' }])
       .limitBy(1),
   options: { as: `${NEXTCLOUD_MIGRATIONS_DOCTYPE}/running` }
+})
+
+export const buildFileVersionsQuery: QueryBuilder<string> = fileId => ({
+  definition: () =>
+    Q(DOCTYPE_FILES_VERSIONS)
+      .where({
+        relationships: { file: { data: { _id: fileId } } },
+        updated_at: { $gt: null }
+      })
+      .sortBy([
+        { 'relationships.file.data._id': 'desc' },
+        { updated_at: 'desc' }
+      ])
+      .indexFields(['relationships.file.data._id', 'updated_at']),
+  options: {
+    as: `${DOCTYPE_FILES_VERSIONS}/file/${fileId}`,
+    enabled: !!fileId
+  }
 })
