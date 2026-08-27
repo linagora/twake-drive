@@ -53,10 +53,11 @@ function setup({
     allLoaded,
     byDocId: { 'shared-id': {}, duplicate: {} }
   })
-  buildSharingsQuery.mockReturnValue({
+  const query = {
     definition: jest.fn(),
     options: { enabled: allLoaded }
-  })
+  }
+  buildSharingsQuery.mockReturnValue(query)
   const queryResult = { data: [], fetchStatus: 'loaded' }
   useQuery.mockReturnValue(queryResult)
   useFilteredSharings.mockReturnValue({
@@ -65,19 +66,22 @@ function setup({
     sharedDrivesError
   })
 
-  return render(
-    <FilePickerSharingsContent
-      rootBreadcrumbPath={rootBreadcrumbPath}
-      renderContent={renderContent}
-    />
-  )
+  return {
+    query,
+    ...render(
+      <FilePickerSharingsContent
+        rootBreadcrumbPath={rootBreadcrumbPath}
+        renderContent={renderContent}
+      />
+    )
+  }
 }
 
 describe('FilePickerSharingsContent', () => {
   afterEach(() => jest.clearAllMocks())
 
   it('renders the canonical With me result and disables pending invitations', () => {
-    setup({
+    const { query } = setup({
       filteredResult: {
         fetchStatus: 'loaded',
         lastFetch: 1,
@@ -96,6 +100,7 @@ describe('FilePickerSharingsContent', () => {
       ids: ['shared-id', 'duplicate'],
       enabled: true
     })
+    expect(useQuery).toHaveBeenCalledWith(query.definition, query.options)
     expect(useFilteredSharings).toHaveBeenCalledWith(
       expect.objectContaining({
         sharedDocumentIds: ['shared-id', 'duplicate'],
