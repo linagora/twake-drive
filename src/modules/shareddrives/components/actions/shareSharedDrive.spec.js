@@ -6,8 +6,11 @@ describe('shareSharedDrive', () => {
   const t = key => key
   const navigate = jest.fn()
 
-  const makeAction = ({ isOwner, pathname = '/sharings/drives' } = {}) =>
-    shareSharedDrive({ navigate, t, isOwner, pathname })
+  const makeAction = ({
+    isOwner,
+    pathname = '/sharings/drives',
+    search = ''
+  } = {}) => shareSharedDrive({ navigate, t, isOwner, pathname, search })
 
   beforeEach(() => {
     jest.clearAllMocks()
@@ -51,9 +54,10 @@ describe('shareSharedDrive', () => {
       }
     ])
 
-    expect(navigate).toHaveBeenCalledWith(
-      '/sharings/drives/shareddrive/drive-id/folder-id/share'
-    )
+    expect(navigate).toHaveBeenCalledWith({
+      pathname: '/sharings/drives/shareddrive/drive-id/folder-id/share',
+      search: ''
+    })
   })
 
   it('opens the folder view share modal when outside /sharings', () => {
@@ -65,8 +69,9 @@ describe('shareSharedDrive', () => {
       }
     ])
 
-    expect(navigate).toHaveBeenCalledWith(
-      '/shareddrive/drive-id/folder-id/file/folder-id/share'
-    )
+    expect(navigate).toHaveBeenCalledWith({
+      pathname: '/shareddrive/drive-id/folder-id/file/folder-id/share',
+      search: ''
+    })
   })
 })

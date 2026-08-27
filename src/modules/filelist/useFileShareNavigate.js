@@ -4,7 +4,7 @@ import { makeFileSharePath } from '@/modules/filelist/sharePath'
 
 export const useFileShareNavigate = ({ file, disabled }) => {
   const navigate = useNavigate()
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
 
   return e => {
     // Avoid triggering row click from FileOpener.
@@ -12,7 +12,7 @@ export const useFileShareNavigate = ({ file, disabled }) => {
     e.stopPropagation()
 
     if (!disabled) {
-      navigate(makeFileSharePath({ file, pathname }))
+      navigate({ pathname: makeFileSharePath({ file, pathname }), search })
     }
   }
 }

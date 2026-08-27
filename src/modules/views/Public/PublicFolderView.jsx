@@ -78,7 +78,7 @@ const getBreadcrumbPath = async ({
 const PublicFolderView = ({ sharedDocumentId }) => {
   const base = useFolderViewBase()
   const { navigate, pathname } = base
-  // `state` is on useLocation; useFolderViewBase only forwards pathname.
+  // `state` is read separately because useFolderViewBase does not forward it.
   const { state } = useLocation()
   const currentFolderId = useCurrentFolderId()
   const { displayedFolder } = useDisplayedFolder()

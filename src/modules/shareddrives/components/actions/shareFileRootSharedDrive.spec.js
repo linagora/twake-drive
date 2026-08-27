@@ -8,8 +8,10 @@ describe('shareFileRootSharedDrive', () => {
 
   const makeAction = ({
     isOwner = () => true,
-    pathname = '/sharings/drives'
-  } = {}) => shareFileRootSharedDrive({ navigate, t, isOwner, pathname })
+    pathname = '/sharings/drives',
+    search = ''
+  } = {}) =>
+    shareFileRootSharedDrive({ navigate, t, isOwner, pathname, search })
 
   beforeEach(() => {
     jest.clearAllMocks()
@@ -35,9 +37,10 @@ describe('shareFileRootSharedDrive', () => {
       }
     ])
 
-    expect(navigate).toHaveBeenCalledWith(
-      '/sharings/drives/shareddrive/drive-id/file-id/share'
-    )
+    expect(navigate).toHaveBeenCalledWith({
+      pathname: '/sharings/drives/shareddrive/drive-id/file-id/share',
+      search: ''
+    })
   })
 
   it('navigates to the direct share route when pathname is outside /sharings', () => {
@@ -49,8 +52,9 @@ describe('shareFileRootSharedDrive', () => {
       }
     ])
 
-    expect(navigate).toHaveBeenCalledWith(
-      '/shareddrive/drive-id/file/file-id/share'
-    )
+    expect(navigate).toHaveBeenCalledWith({
+      pathname: '/shareddrive/drive-id/file/file-id/share',
+      search: ''
+    })
   })
 })

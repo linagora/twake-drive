@@ -14,10 +14,10 @@ import { getPathToShareDisplayedFolder } from '@/modules/drive/Toolbar/share/hel
 const ShareItem = ({ displayedFolder }) => {
   const { t } = useI18n()
   const navigate = useNavigate()
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
 
   const share = () => {
-    navigate(getPathToShareDisplayedFolder(pathname))
+    navigate({ pathname: getPathToShareDisplayedFolder(pathname), search })
   }
 
   return (

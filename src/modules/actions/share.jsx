@@ -16,6 +16,7 @@ const share = ({
   hasWriteAccess,
   navigate,
   pathname,
+  search,
   allLoaded
 }) => {
   const label = t('Files.share.cta')
@@ -41,7 +42,7 @@ const share = ({
       )
     },
     action: files =>
-      navigateToModal({ navigate, pathname, files, path: 'share' }),
+      navigateToModal({ navigate, pathname, search, files, path: 'share' }),
     Component: forwardRef(function ShareMenuItemInMenu(props, ref) {
       const { isMobile } = useBreakpoints()
 
