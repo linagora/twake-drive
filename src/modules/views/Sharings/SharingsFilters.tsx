@@ -75,47 +75,30 @@ function SharingsFilters({
     return null
   }
 
-  const handleContactChange = (value: string): void => {
-    setFilter(CONTACT_FILTER, value)
-  }
-  const handleContactClear = (): void => {
-    setFilter(CONTACT_FILTER, null)
-  }
-  const handleFileTypeChange = (value: string): void => {
-    setFilter(FILE_TYPE_FILTER, value)
-  }
-  const handleFileTypeClear = (): void => {
-    setFilter(FILE_TYPE_FILTER, null)
-  }
-  const handleModificationDateChange = (value: string): void => {
-    setFilter(MODIFICATION_DATE_FILTER, value)
-  }
-  const handleModificationDateClear = (): void => {
-    setFilter(MODIFICATION_DATE_FILTER, null)
-  }
-
   return (
     <div className={classes.root} data-testid="sharings-filters">
       {supportsFileType ? (
         <FileTypeFilter
-          onChange={handleFileTypeChange}
-          onClear={handleFileTypeClear}
+          onChange={(value: string): void => setFilter(FILE_TYPE_FILTER, value)}
+          onClear={(): void => setFilter(FILE_TYPE_FILTER, null)}
           value={fileType}
         />
       ) : null}
       {supportsContact ? (
         <ContactFilter
           loading={contactFilterLoading}
-          onChange={handleContactChange}
-          onClear={handleContactClear}
+          onChange={(value: string): void => setFilter(CONTACT_FILTER, value)}
+          onClear={(): void => setFilter(CONTACT_FILTER, null)}
           options={contactOptions}
           value={contact}
         />
       ) : null}
       {supportsModificationDate ? (
         <DateFilter
-          onChange={handleModificationDateChange}
-          onClear={handleModificationDateClear}
+          onChange={(value: string): void =>
+            setFilter(MODIFICATION_DATE_FILTER, value)
+          }
+          onClear={(): void => setFilter(MODIFICATION_DATE_FILTER, null)}
           value={modificationDate}
         />
       ) : null}

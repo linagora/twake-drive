@@ -227,7 +227,10 @@ describe('getSharingsTabForEntry', () => {
 
 describe('useFilteredSharings', () => {
   beforeEach(() => {
-    mockUseSharingContext.mockReturnValue({ isOwner: () => false })
+    mockUseSharingContext.mockReturnValue({
+      getRecipients: () => [],
+      isOwner: () => false
+    })
   })
 
   const setupMocks = ({ flags = {} } = {}) => {
@@ -300,6 +303,7 @@ describe('useFilteredSharings', () => {
         sharedDrivesLoaded: true
       })
       mockUseSharingContext.mockReturnValue({
+        getRecipients: () => [],
         isOwner: id => id === ownedFolder._id
       })
     }
@@ -441,6 +445,7 @@ describe('useFilteredSharings', () => {
       // by-me tab via isOwner — same tab it gets with the flags on.
       setupTabMocks({ drivesEnabled: false })
       mockUseSharingContext.mockReturnValue({
+        getRecipients: () => [],
         isOwner: id => [ownedFolder._id, orgDriveRegularRow._id].includes(id)
       })
 

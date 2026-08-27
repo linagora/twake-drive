@@ -17,7 +17,6 @@ import { useTransformFolderListHasSharedDriveShortcuts } from '@/hooks/useTransf
 import { getDefaultFileLastUpdatedAt } from '@/modules/filelist/FileLastUpdatedContext'
 
 const NO_FILTERS = {}
-const getNoRecipients = () => []
 
 const buildBaseShape = (result, hasIds) => ({
   ...result,
@@ -158,11 +157,10 @@ export const useFilteredSharings = ({
     sharedDrivesLoaded
   } = useTransformFolderListHasSharedDriveShortcuts(result.data)
 
-  const sharingContext = useSharingContext()
+  const { getRecipients, isOwner } = useSharingContext()
 
   const { contactFilterOptions, filteredResult, hasDrives } = useMemo(() => {
     const hasIds = sharedDocumentIds?.length > 0
-    const { isOwner, getRecipients = getNoRecipients } = sharingContext
     // Filter by tab only after deduplication so each document lands in
     // exactly one tab.
     const combined = computeData({
@@ -210,7 +208,8 @@ export const useFilteredSharings = ({
     tab,
     filters,
     getFileLastUpdatedAt,
-    sharingContext
+    getRecipients,
+    isOwner
   ])
 
   // When shared drives are disabled the view ignores the transformed list,
