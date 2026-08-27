@@ -37,14 +37,12 @@ const useStyles = makeStyles(theme => ({
   },
   active: {
     '& .MuiFilledInput-root': {
+      '--iconTextColor': theme.palette.primary.main,
       color: theme.palette.primary.main,
       backgroundColor: alpha(
         theme.palette.primary.main,
         theme.palette.action.ghostOpacity
       ),
-      '& .MuiSelect-icon': {
-        color: theme.palette.primary.main
-      },
       '&.Mui-focused': {
         backgroundColor: alpha(
           theme.palette.primary.main,
