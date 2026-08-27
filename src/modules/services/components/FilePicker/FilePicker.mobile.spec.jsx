@@ -247,6 +247,27 @@ describe('FilePicker mobile navigation, list and actions', () => {
     expect(getByTestId('file-picker-breadcrumb')).toHaveTextContent('My Drive')
   })
 
+  it('supports a mouse long press when the layout is mobile', () => {
+    jest.useFakeTimers()
+    const { getAllByTestId, getByTestId } = setup({ isMobile: false })
+    act(() => {
+      window.innerWidth = 500
+      fireEvent.resize(window)
+      jest.advanceTimersByTime(100)
+    })
+    const folderRow = getAllByTestId('list-item').find(
+      row => row.dataset.fileId === mockFolder.id
+    )
+
+    fireEvent.mouseDown(folderRow)
+    act(() => jest.advanceTimersByTime(250))
+    fireEvent.mouseUp(folderRow)
+    fireEvent.click(folderRow)
+
+    expect(within(folderRow).getByRole('checkbox')).toBeChecked()
+    expect(getByTestId('file-picker-breadcrumb')).toHaveTextContent('My Drive')
+  })
+
   it('cancels pending selection when touch movement starts', () => {
     jest.useFakeTimers()
     const { getAllByTestId, getByTestId, queryAllByRole } = setup()

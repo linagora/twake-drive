@@ -93,7 +93,12 @@ export const handlePress = ({
 
   // isLongPress is to prevent executing onPress twice while a longpress
   // can happen if button is released quickly just after startPressTimer execution
-  if (disabled || isLongPress.current || isRenaming) return
+  if (disabled || isRenaming) return
+
+  if (isLongPress.current) {
+    isLongPress.current = false
+    return
+  }
 
   if (selectionModeActive) {
     toggle(event)
@@ -132,6 +137,14 @@ export const makeMobileHandlers = ({
     isLongPress.current = false
   }
 
+  const startMousePress = event => {
+    // Touch devices can synthesize mouse events after touchend. Do not restart
+    // the timer after a long touch, otherwise its click would toggle twice.
+    if (!isLongPress.current) startPressTimer(event)
+  }
+
+  const cancelMousePress = () => clearTimeout(timerId.current)
+
   return {
     // first event triggered on Mobile when taping an item
     onTouchStart: startPressTimer,
@@ -140,6 +153,11 @@ export const makeMobileHandlers = ({
     onTouchCancel: cancelPress,
     // third event triggered on Mobile when taping an item
     onTouchEnd: () => clearTimeout(timerId.current),
+    // A resized desktop window still produces mouse events.
+    onMouseDown: startMousePress,
+    onMouseMove: cancelMousePress,
+    onMouseUp: cancelMousePress,
+    onMouseLeave: cancelMousePress,
     // fourth event triggered on Mobile
     onClick: event =>
       handlePress({
