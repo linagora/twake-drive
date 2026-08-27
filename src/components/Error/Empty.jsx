@@ -14,7 +14,7 @@ import TrashIllustration from '@/assets/icons/illu-trash-empty.svg'
 import { TRASH_DIR_ID } from '@/constants/config'
 import { useCurrentFolderId, useDisplayedFolder } from '@/hooks'
 import { useSharedDriveFolder } from '@/modules/shareddrives/hooks/useSharedDriveFolder'
-import UploadButton from '@/modules/upload/UploadButton'
+import { UploadButton } from '@/modules/upload/UploadButton'
 import { isSharingsTabRootRoute } from '@/modules/views/Sharings/routes'
 
 const EmptyCanvas = ({

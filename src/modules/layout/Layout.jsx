@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { Outlet, useNavigate } from 'react-router-dom'
+import { Outlet, useNavigate, useParams } from 'react-router-dom'
 
 import { BarComponent } from 'cozy-bar'
 import CozyDevtools from 'cozy-devtools'
@@ -32,7 +32,7 @@ import {
 } from '@/modules/navigation/duck/reducer'
 import { SelectionProvider } from '@/modules/selection/SelectionProvider'
 import { NewItemHighlightProvider } from '@/modules/upload/NewItemHighlightProvider'
-import UploadButton from '@/modules/upload/UploadButton'
+import { UploadButton } from '@/modules/upload/UploadButton'
 import UploadQueue from '@/modules/upload/UploadQueue'
 
 initFlags()
@@ -55,6 +55,7 @@ const LayoutContent = () => {
   const { displayedFolder } = useDisplayedFolder()
   const { t } = useI18n()
   const rawFolderId = useCurrentFolderId()
+  const { driveId } = useParams()
 
   const shouldRedirect = useSelector(wasOperationRedirected)
   const [, setLastClicked] = useNavContext()
@@ -129,6 +130,8 @@ const LayoutContent = () => {
                 </AddMenuProvider>
                 <UploadButton
                   disabled={isReadOnly}
+                  folderId={rawFolderId}
+                  driveId={driveId}
                   componentsProps={{
                     button: {
                       className: 'u-w-100 u-bdrs-6 u-fz-small',
