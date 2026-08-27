@@ -16,7 +16,6 @@ import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 
 import FilePickerBody from './FilePickerBody'
 import FilePickerFooter from './FilePickerFooter'
-import FilePickerHeader from './FilePickerHeader'
 import {
   defaultFilePickerConfig,
   filePickerDoubleClickResults,
@@ -37,7 +36,6 @@ export const ROOT_DIR_ID = 'io.cozy.files.root-dir'
 
 const FilePicker = ({
   onChange,
-  onClose,
   accept,
   multiple,
   filePickerConfig,
@@ -187,13 +185,6 @@ const FilePicker = ({
         square
         data-testid="file-picker"
       >
-        <header
-          className="u-pv-1 u-pl-2 u-pr-1"
-          data-testid="file-picker-header-wrapper"
-        >
-          <FilePickerHeader onClose={onClose} />
-        </header>
-        <Divider />
         <Box
           flex={1}
           minHeight={0}
