@@ -140,7 +140,8 @@ export const makeMobileHandlers = ({
   const startMousePress = event => {
     // Touch devices can synthesize mouse events after touchend. Do not restart
     // the timer after a long touch, otherwise its click would toggle twice.
-    if (!isLongPress.current) startPressTimer(event)
+    if (disabled || isLongPress.current) return
+    startPressTimer(event)
   }
 
   const cancelMousePress = () => clearTimeout(timerId.current)
