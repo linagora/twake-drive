@@ -225,6 +225,9 @@ describe('ContactFilter', () => {
     )
 
     expect(screen.queryByRole('status')).toHaveTextContent('No result')
+    expect(screen.queryByText('No result')).toHaveClass(
+      'MuiTypography-colorTextSecondary'
+    )
   })
 
   it('does not open the autocomplete from its wrapper when disabled', () => {
