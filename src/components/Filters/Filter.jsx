@@ -45,7 +45,13 @@ const useStyles = makeStyles(theme => ({
       '& .MuiSelect-icon': {
         color: theme.palette.primary.main
       },
-      '&:hover, &.Mui-focused': {
+      '&.Mui-focused': {
+        backgroundColor: alpha(
+          theme.palette.primary.main,
+          theme.palette.action.focusOpacity
+        )
+      },
+      '&:hover': {
         backgroundColor: alpha(
           theme.palette.primary.main,
           theme.palette.action.hoverGhostOpacity
