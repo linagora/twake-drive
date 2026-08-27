@@ -60,9 +60,9 @@ function SharingsFilters({
     option => ({
       avatar:
         option.kind === 'person' ? (
-          <MemberAvatar recipient={option.recipient} size="s" />
+          <MemberAvatar recipient={option.recipient} size="m" />
         ) : (
-          <GroupAvatar color={option.recipient.color} size="s" />
+          <GroupAvatar color={option.recipient.color} size="m" />
         ),
       label: option.label,
       searchableValues: option.searchableValues,
