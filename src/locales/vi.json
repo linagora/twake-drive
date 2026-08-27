@@ -529,7 +529,17 @@
     "description": "20 phiên bản gần nhất của tệp sẽ được lưu tự động. Chọn một phiên bản để tải về.",
     "current_version": "Phiên bản hiện tại",
     "loading": "Đang tải...",
-    "noFileVersionEnabled": "Twake của bạn sắp có thể lưu lại những thay đổi cuối cùng để bạn không bao giờ lo mất dữ liệu nữa"
+    "noFileVersionEnabled": "Twake của bạn sắp có thể lưu lại những thay đổi cuối cùng để bạn không bao giờ lo mất dữ liệu nữa",
+    "download": "Tải phiên bản này về",
+    "deleteVersion": {
+      "action": "Xóa phiên bản này",
+      "title": "Xóa phiên bản này?",
+      "version": "Phiên bản ngày %{date} (%{size})",
+      "irreversible": "Phiên bản này sẽ bị xóa vĩnh viễn. Không thể hoàn tác thao tác này.",
+      "cancel": "Huỷ",
+      "confirm": "Xóa",
+      "error": "Không thể xóa phiên bản này."
+    }
   },
   "External": {
     "redirection": {

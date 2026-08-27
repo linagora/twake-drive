@@ -1,51 +1,41 @@
 import React from 'react'
 import { useParams } from 'react-router-dom'
 
-import { Query, Q } from 'cozy-client'
+import { useQuery } from 'cozy-client'
 
-import HistoryModal from './HistoryModal'
+import { HistoryModal } from './HistoryModal'
+
+import {
+  buildFileOrFolderByIdQuery,
+  buildFileVersionsQuery,
+  buildSharedDriveFileOrFolderByIdQuery
+} from '@/queries'
 
 const FileHistory = () => {
   const { fileId, driveId } = useParams()
 
+  const fileQuery = driveId
+    ? buildSharedDriveFileOrFolderByIdQuery({ fileId, driveId })
+    : buildFileOrFolderByIdQuery(fileId)
+  const { data: file, fetchStatus: fileFetchStatus } = useQuery(
+    fileQuery.definition,
+    fileQuery.options
+  )
+
+  const revisionsQuery = buildFileVersionsQuery(fileId)
+  const { data: revisions, fetchStatus: revisionsFetchStatus } = useQuery(
+    revisionsQuery.definition,
+    revisionsQuery.options
+  )
+
+  if (fileFetchStatus !== 'loaded') return null
+
   return (
-    <Query
-      query={() => Q('io.cozy.files').getById(fileId).sharingById(driveId)}
-    >
-      {({ data: file, fetchStatus: fileFetchStatus }) => {
-        return (
-          <Query
-            query={client =>
-              client
-                .all('io.cozy.files.versions')
-                .where({
-                  relationships: { file: { data: { _id: fileId } } },
-                  updated_at: { $gt: null }
-                })
-                .sortBy([
-                  { 'relationships.file.data._id': 'desc' },
-                  { updated_at: 'desc' }
-                ])
-                .indexFields(['relationships.file.data._id', 'updated_at'])
-            }
-          >
-            {({ data: revisions, fetchStatus: revisionsFetchStatus }) => {
-              if (fileFetchStatus === 'loaded') {
-                return (
-                  <HistoryModal
-                    revisions={revisions}
-                    file={file}
-                    revisionsFetchStatus={revisionsFetchStatus}
-                    fileFetchStatus={fileFetchStatus}
-                  />
-                )
-              }
-              return null
-            }}
-          </Query>
-        )
-      }}
-    </Query>
+    <HistoryModal
+      file={file}
+      revisions={revisions}
+      revisionsFetchStatus={revisionsFetchStatus}
+    />
   )
 }
 

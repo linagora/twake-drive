@@ -9,6 +9,11 @@ subdomains: flat
 
 fs:
   url: file:///var/lib/cozy/storage
+  # The stack otherwise waits 15 minutes before recording a new version, which
+  # no test can wait for.
+  versioning:
+    max_number_of_versions_to_keep: 20
+    min_delay_between_two_versions: 1s
 
 couchdb:
   url: http://admin:password@couchdb:5984/
