@@ -144,7 +144,7 @@ const FilePickerFooter = ({
               />
               <Typography
                 variant="body1"
-                className="u-ml-half"
+                className="u-ml-half u-mr-1"
                 data-testid="file-picker-selected-count"
               >
                 {selectedCount}
