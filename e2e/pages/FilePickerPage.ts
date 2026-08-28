@@ -1,6 +1,6 @@
 import type { FrameLocator, Locator, Page } from '@playwright/test'
 
-import { USERS } from '../helpers/config'
+import { USERS, type User } from '../helpers/config'
 
 export type LinkAccessLevel = 'Viewer' | 'Editor'
 
@@ -15,14 +15,16 @@ export type LinkAccessLevel = 'Viewer' | 'Editor'
  */
 export class FilePickerPage {
   private readonly page: Page
+  private readonly user: User
 
-  constructor(page: Page) {
+  constructor(page: Page, user: User = USERS.alice) {
     this.page = page
+    this.user = user
   }
 
   /** Navigate to Drive and open the file picker dialog. */
   async open(configName?: string, themeName?: string): Promise<void> {
-    await this.page.goto(`${USERS.alice.appUrl}/#/folder`)
+    await this.page.goto(`${this.user.appUrl}/#/folder`)
     await this.page.getByRole('button', { name: /pick a file/i }).waitFor({
       state: 'visible'
     })
@@ -39,7 +41,7 @@ export class FilePickerPage {
 
   /** Navigate to the mobile demo route and open the picker with a tap. */
   async openMobile(): Promise<void> {
-    await this.page.goto(`${USERS.alice.appUrl}/#/file-picker-demo`)
+    await this.page.goto(`${this.user.appUrl}/#/file-picker-demo`)
     const button = this.page.getByRole('button', { name: /pick a file/i })
     await button.waitFor({ state: 'visible' })
     await button.tap()

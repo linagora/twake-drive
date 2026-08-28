@@ -1,9 +1,15 @@
 import { copyFile } from 'fs/promises'
 import path from 'path'
 
+import type { Locator } from '@playwright/test'
+
 import { authenticate } from '../helpers/auth'
 import { USERS } from '../helpers/config'
 import { test, expect, safeUnlink, stamp } from '../helpers/fixtures'
+import {
+  createAndShareFolderWithBob,
+  openSharedDrive
+} from '../helpers/sharing'
 import { DrivePage } from '../pages/DrivePage'
 import { FilePickerPage } from '../pages/FilePickerPage'
 
@@ -80,5 +86,61 @@ test.describe('File Picker mobile', () => {
     await expect(picker.isItemChecked(folderName)).resolves.toBe(true)
     await expect(picker.isTemporaryDownloadDisabled()).resolves.toBe(true)
     await expect(picker.isPublicLinkDisabled()).resolves.toBe(false)
+  })
+})
+
+test.describe.serial('File Picker Sharings mobile', () => {
+  const rootName = `PickerShareMobile-${stamp()}`
+  const nestedName = `PickerNestedMobile-${stamp()}`
+
+  test.beforeAll(async ({ browser }) => {
+    const aliceContext = await browser.newContext({
+      viewport: { width: 1280, height: 720 }
+    })
+    const bobContext = await browser.newContext({
+      viewport: { width: 1280, height: 720 }
+    })
+    try {
+      const alicePage = await aliceContext.newPage()
+      const bobPage = await bobContext.newPage()
+      const aliceDrive = new DrivePage(alicePage)
+      const bobDrive = new DrivePage(bobPage)
+      await authenticate(alicePage, 'alice')
+      await authenticate(bobPage, 'bob')
+
+      await createAndShareFolderWithBob(alicePage, aliceDrive, rootName, {
+        seed: async () => {
+          await aliceDrive.createFolder(nestedName)
+        }
+      })
+      await openSharedDrive(bobPage, USERS.bob, bobDrive, rootName)
+    } finally {
+      await aliceContext.close()
+      await bobContext.close()
+    }
+  })
+
+  test('navigates into a sharing', async ({ bobPage }) => {
+    const picker = new FilePickerPage(bobPage, USERS.bob)
+    await picker.openMobile()
+
+    const frame = bobPage.frameLocator('iframe[src*="intents"]')
+    const row = (name: string): Locator =>
+      frame
+        .getByTestId('list-item')
+        .filter({ has: frame.getByTitle(name, { exact: true }) })
+    const breadcrumb = frame.getByTestId('file-picker-breadcrumb')
+    const myDriveTab = frame.getByRole('tab', { name: /My Drive/i })
+    const sharingsTab = frame.getByRole('tab', { name: /Sharings/i })
+
+    await expect(myDriveTab).toBeVisible()
+    await expect(sharingsTab).toBeVisible()
+    await sharingsTab.tap()
+    await expect(sharingsTab).toHaveAttribute('aria-selected', 'true')
+    await expect(breadcrumb).toHaveText('Sharings')
+    await expect(row(rootName)).toBeVisible()
+
+    await picker.tapItem(rootName)
+    await expect(row(nestedName)).toBeVisible()
   })
 })
