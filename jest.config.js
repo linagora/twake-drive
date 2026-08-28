@@ -63,7 +63,7 @@ module.exports = {
     '^.+\\.webapp$': '<rootDir>/test/jestLib/json-transformer.js'
   },
   transformIgnorePatterns: [
-    'node_modules/(?!cozy-ui|cozy-keys-lib|cozy-sharing)',
+    'node_modules/(?!cozy-ui|cozy-keys-lib|cozy-sharing|react-dnd|react-dnd-html5-backend|dnd-core|@react-dnd)',
     'jest-runner'
   ],
   testEnvironment: 'jsdom',
