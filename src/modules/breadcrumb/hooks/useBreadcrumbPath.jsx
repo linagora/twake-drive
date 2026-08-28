@@ -95,7 +95,11 @@ export const useBreadcrumbPath = ({
         }
       } else {
         if (isSubscribed && rootBreadcrumbPath) {
-          setPaths([rootBreadcrumbPath])
+          const pathsWithRoot =
+            returnedPaths[0]?.id === rootBreadcrumbPath.id
+              ? returnedPaths
+              : [rootBreadcrumbPath, ...returnedPaths]
+          setPaths(pathsWithRoot)
         }
         log(
           'error',
