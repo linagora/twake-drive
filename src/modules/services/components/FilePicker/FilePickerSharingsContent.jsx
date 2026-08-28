@@ -33,7 +33,7 @@ export const FilePickerSharingsContent = ({
   })
 
   return renderContent({
-    items: filteredResult.data ?? [],
+    items: fetchStatus === 'loaded' ? (filteredResult.data ?? []) : [],
     fetchStatus,
     hasMore: false,
     fetchMore: null,

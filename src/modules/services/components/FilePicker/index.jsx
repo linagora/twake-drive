@@ -51,6 +51,7 @@ const FilePicker = ({
     folderId: ROOT_DIR_ID,
     driveId: null
   })
+  const [isSectionChanging, setIsSectionChanging] = useState(false)
   const [error, setError] = useState(null)
   const [isLinkAccessOpen, setIsLinkAccessOpen] = useState(false)
   const { selectedItems, clearSelection, setSelectedItems } =
@@ -88,8 +89,13 @@ const FilePicker = ({
     clearSelection()
   }
 
+  const handleSectionReady = useCallback(() => {
+    setIsSectionChanging(false)
+  }, [])
+
   const handleSectionChange = section => {
     setError(null)
+    setIsSectionChanging(true)
     setLocation({
       section,
       folderId:
@@ -251,6 +257,9 @@ const FilePicker = ({
           data-testid="file-picker-body-wrapper"
         >
           <FilePickerBody
+            key={location.section}
+            isSectionChanging={isSectionChanging}
+            onSectionReady={handleSectionReady}
             navigateTo={navigateTo}
             section={location.section}
             folderId={location.folderId}

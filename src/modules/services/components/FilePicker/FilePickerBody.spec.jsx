@@ -206,6 +206,41 @@ describe('FilePickerBody', () => {
     ).toBeInTheDocument()
   })
 
+  it('clears the previous section content until the new query is ready', () => {
+    const onSectionReady = jest.fn()
+    useQuery.mockReturnValue({
+      data: [{ _id: 'cached-id', name: 'Cached file', type: 'file' }],
+      fetchStatus: 'loaded'
+    })
+
+    const { rerender } = render(
+      <FilePickerBody
+        {...baseProps}
+        section={filePickerSections.SHARINGS}
+        folderId="folder-id"
+        isSectionChanging
+        onSectionReady={onSectionReady}
+      />
+    )
+
+    expect(screen.queryByTestId('source-item')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('file-picker-loading')).not.toBeInTheDocument()
+    expect(onSectionReady).toHaveBeenCalledTimes(1)
+
+    rerender(
+      <FilePickerBody
+        {...baseProps}
+        section={filePickerSections.SHARINGS}
+        folderId="folder-id"
+        onSectionReady={onSectionReady}
+      />
+    )
+
+    expect(
+      screen.getByRole('button', { name: 'Cached file:local' })
+    ).toBeInTheDocument()
+  })
+
   it('waits for the initial My Drive query before notifying readiness', () => {
     const onReadyToUse = jest.fn()
     useQuery.mockReturnValue({ data: [], fetchStatus: 'pending' })
