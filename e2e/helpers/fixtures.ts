@@ -9,13 +9,16 @@ import type {
 } from '@playwright/test'
 
 import { authenticate } from './auth'
+import type { UserLabel } from './config'
 import { DrivePage } from '../pages/DrivePage'
 
 type AuthedFixtures = {
   alicePage: Page
   bobPage: Page
+  charliePage: Page
   aliceDrive: DrivePage
   bobDrive: DrivePage
+  charlieDrive: DrivePage
 }
 
 type ContextFixtures = {
@@ -42,7 +45,7 @@ const attachIfAny = async (
 }
 
 const userPageFixture =
-  (user: 'alice' | 'bob') =>
+  (user: UserLabel) =>
   async (
     { browser, contextOptions }: ContextFixtures,
     use: (page: Page) => Promise<void>,
@@ -79,11 +82,15 @@ const userPageFixture =
 export const test = base.extend<AuthedFixtures>({
   alicePage: userPageFixture('alice'),
   bobPage: userPageFixture('bob'),
+  charliePage: userPageFixture('charlie'),
   aliceDrive: async ({ alicePage }, use) => {
     await use(new DrivePage(alicePage))
   },
   bobDrive: async ({ bobPage }, use) => {
     await use(new DrivePage(bobPage))
+  },
+  charlieDrive: async ({ charliePage }, use) => {
+    await use(new DrivePage(charliePage))
   }
 })
 

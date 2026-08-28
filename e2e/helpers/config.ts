@@ -12,14 +12,14 @@ export const RESET = process.env.E2E_RESET === '1'
 export const ADMIN_USER = 'admin'
 export const ADMIN_PASSPHRASE = 'cozy'
 
-// Tying both instances to the same (OrgID, OrgDomain) makes them count as
+// Tying all instances to the same (OrgID, OrgDomain) makes them count as
 // trusted contacts of each other for cozy-to-cozy sharing — combined with the
 // `auto_accept_trusted_contacts` context option, invitations no longer need
 // an SMTP delivery to be accepted.
 export const ORG_ID = 'twake-drive-e2e'
 export const ORG_DOMAIN = 'cozy.localhost'
 
-export type UserLabel = 'alice' | 'bob'
+export type UserLabel = 'alice' | 'bob' | 'charlie'
 
 export interface User {
   label: UserLabel
@@ -45,6 +45,13 @@ export const USERS: Record<UserLabel, User> = {
     appUrl: `http://bob-drive.cozy.localhost${instancePortSuffix}`,
     email: 'bob@cozy.localhost',
     passphrase: 'bob1234'
+  },
+  charlie: {
+    label: 'charlie',
+    instance: `charlie.cozy.localhost${instancePortSuffix}`,
+    appUrl: `http://charlie-drive.cozy.localhost${instancePortSuffix}`,
+    email: 'charlie@cozy.localhost',
+    passphrase: 'charlie1234'
   }
 }
 
