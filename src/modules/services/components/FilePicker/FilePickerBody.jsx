@@ -24,6 +24,7 @@ import { useFilePickerSelection } from './useFilePickerSelection'
 import { ROOT_DIR_ID } from '@/constants/config'
 import { useBreadcrumbPath } from '@/modules/breadcrumb/hooks/useBreadcrumbPath'
 import { useSharedDriveFolder } from '@/modules/shareddrives/hooks/useSharedDriveFolder'
+import { filterOutReceivedShares } from '@/modules/views/Folder/syncHelpers'
 
 const {
   file: { isDirectory }
@@ -193,6 +194,9 @@ const LocalFolderContent = ({
   rootBreadcrumbPath,
   sharedDocumentIds,
   isItemDisabled,
+  filterReceivedShares,
+  allLoaded,
+  isOwner,
   onReady,
   renderContent
 }) => {
@@ -206,19 +210,26 @@ const LocalFolderContent = ({
     contentFolderQuery.definition,
     contentFolderQuery.options
   )
-  const fetchStatus = isQueryLoading(result)
+  const filteredResult = useMemo(
+    () =>
+      filterReceivedShares && allLoaded
+        ? filterOutReceivedShares([result], isOwner)[0]
+        : result,
+    [allLoaded, filterReceivedShares, isOwner, result]
+  )
+  const fetchStatus = isQueryLoading(filteredResult)
     ? 'loading'
-    : (result.fetchStatus ?? 'loaded')
+    : (filteredResult.fetchStatus ?? 'loaded')
 
   useEffect(() => {
     if (fetchStatus !== 'loading') onReady?.()
   }, [fetchStatus, onReady])
 
   return renderContent({
-    items: result.data ?? [],
+    items: filteredResult.data ?? [],
     fetchStatus,
-    hasMore: Boolean(result.hasMore),
-    fetchMore: result.fetchMore ?? null,
+    hasMore: Boolean(filteredResult.hasMore),
+    fetchMore: filteredResult.fetchMore ?? null,
     breadcrumbPath: path,
     isItemDisabled
   })
@@ -229,6 +240,9 @@ LocalFolderContent.propTypes = {
   rootBreadcrumbPath: PropTypes.object.isRequired,
   sharedDocumentIds: PropTypes.arrayOf(PropTypes.string),
   isItemDisabled: PropTypes.func.isRequired,
+  filterReceivedShares: PropTypes.bool.isRequired,
+  allLoaded: PropTypes.bool.isRequired,
+  isOwner: PropTypes.func.isRequired,
   onReady: PropTypes.func,
   renderContent: PropTypes.func.isRequired
 }
@@ -287,7 +301,7 @@ const FilePickerBody = ({
   onFileDoubleClick
 }) => {
   const { t } = useI18n()
-  const { byDocId } = useSharingContext()
+  const { allLoaded, byDocId, isOwner } = useSharingContext()
   const readyNotified = useRef(false)
   const sharedDocumentIds = useMemo(() => Object.keys(byDocId ?? {}), [byDocId])
   const rootBreadcrumbPath = useMemo(
@@ -371,6 +385,9 @@ const FilePickerBody = ({
         section === filePickerSections.SHARINGS ? sharedDocumentIds : undefined
       }
       isItemDisabled={isItemDisabled}
+      filterReceivedShares={section === filePickerSections.DRIVE}
+      allLoaded={allLoaded === true}
+      isOwner={isOwner}
       onReady={
         section === filePickerSections.DRIVE ? handleDriveReady : undefined
       }
