@@ -183,7 +183,7 @@ describe('useBreadcrumbPath', () => {
     })
   })
 
-  it('should log error when fetchFolder rejects error', async () => {
+  it('should keep the current folder when its parent cannot be fetched', async () => {
     // Given
     const currentFolderId = '1234'
     useClient.mockReturnValue('cozy-client')
@@ -207,7 +207,10 @@ describe('useBreadcrumbPath', () => {
     })
 
     // Then
-    expect(render.result.current).toEqual([rootBreadcrumbPath])
+    expect(render.result.current).toEqual([
+      rootBreadcrumbPath,
+      { id: currentFolderId, name: 'current' }
+    ])
     expect(log).toHaveBeenCalledWith(
       'error',
       'Error while fetching folder for breadcrumbs of folder id: 1234, here is the error: error'
