@@ -38,7 +38,9 @@ const FilePickerContent = ({
   multiple,
   folderSelectable,
   error,
-  onFileDoubleClick
+  onFileDoubleClick,
+  isSectionChanging,
+  onSectionReady
 }) => {
   const { t } = useI18n()
   const { isMobile } = useBreakpoints()
@@ -47,6 +49,11 @@ const FilePickerContent = ({
   const [scrollElement, setScrollElement] = useState(null)
   const items = source.items ?? []
   const { isItemDisabled } = source
+  useEffect(() => {
+    if (isSectionChanging && source.fetchStatus !== 'loading') {
+      onSectionReady?.()
+    }
+  }, [isSectionChanging, onSectionReady, source.fetchStatus])
 
   const canSelectItem = useCallback(
     item =>
@@ -127,7 +134,7 @@ const FilePickerContent = ({
           onBreadcrumbClick={navigateTo}
         />
       </Box>
-      {source.fetchStatus === 'failed' ? (
+      {isSectionChanging ? null : source.fetchStatus === 'failed' ? (
         <Alert
           severity="error"
           data-testid="file-picker-source-error"
@@ -186,7 +193,9 @@ FilePickerContent.propTypes = {
   multiple: PropTypes.bool,
   folderSelectable: PropTypes.bool,
   error: PropTypes.string,
-  onFileDoubleClick: PropTypes.func
+  onFileDoubleClick: PropTypes.func,
+  isSectionChanging: PropTypes.bool,
+  onSectionReady: PropTypes.func
 }
 
 const LocalFolderContent = ({
@@ -298,7 +307,9 @@ const FilePickerBody = ({
   folderSelectable,
   error,
   onReadyToUse,
-  onFileDoubleClick
+  onFileDoubleClick,
+  isSectionChanging,
+  onSectionReady
 }) => {
   const { t } = useI18n()
   const { allLoaded, byDocId, isOwner } = useSharingContext()
@@ -339,6 +350,8 @@ const FilePickerBody = ({
         folderSelectable={folderSelectable}
         error={error}
         onFileDoubleClick={onFileDoubleClick}
+        isSectionChanging={isSectionChanging}
+        onSectionReady={onSectionReady}
       />
     ),
     [
@@ -348,7 +361,9 @@ const FilePickerBody = ({
       multiple,
       navigateTo,
       onFileDoubleClick,
-      section
+      section,
+      isSectionChanging,
+      onSectionReady
     ]
   )
 
@@ -406,14 +421,17 @@ FilePickerBody.propTypes = {
   folderSelectable: PropTypes.bool,
   error: PropTypes.string,
   onReadyToUse: PropTypes.func,
-  onFileDoubleClick: PropTypes.func
+  onFileDoubleClick: PropTypes.func,
+  isSectionChanging: PropTypes.bool,
+  onSectionReady: PropTypes.func
 }
 
 FilePickerBody.defaultProps = {
   driveId: null,
   multiple: false,
   folderSelectable: false,
-  error: null
+  error: null,
+  isSectionChanging: false
 }
 
 export default FilePickerBody

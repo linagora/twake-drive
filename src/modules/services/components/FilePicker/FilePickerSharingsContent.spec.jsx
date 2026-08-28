@@ -8,6 +8,7 @@ import { FilePickerSharingsContent } from './FilePickerSharingsContent'
 
 import { SHARING_TAB_WITH_ME } from '@/constants/config'
 import { useFilteredSharings } from '@/modules/views/Sharings/useFilteredSharings'
+import { getSharingsFetchStatus } from '@/modules/views/Sharings/useSharingsQueryResult'
 import { buildSharingsQuery } from '@/queries'
 
 jest.mock('cozy-client', () => ({
@@ -46,8 +47,7 @@ function renderContent(source) {
 function setup({
   allLoaded = true,
   filteredResult = { data: [], fetchStatus: 'loaded', lastFetch: 1 },
-  sharedDrivesLoaded = true,
-  sharedDrivesError = null
+  sharedDrivesLoaded = true
 } = {}) {
   useSharingContext.mockReturnValue({
     allLoaded,
@@ -62,8 +62,7 @@ function setup({
   useQuery.mockReturnValue(queryResult)
   useFilteredSharings.mockReturnValue({
     filteredResult,
-    sharedDrivesLoaded,
-    sharedDrivesError
+    sharedDrivesLoaded
   })
 
   return {
@@ -114,28 +113,103 @@ describe('FilePickerSharingsContent', () => {
     expect(screen.getByTestId('breadcrumb')).toHaveTextContent('Sharings')
   })
 
+  it('does not expose cached items while Sharings is loading', () => {
+    setup({
+      sharedDrivesLoaded: false,
+      filteredResult: {
+        fetchStatus: 'loaded',
+        lastFetch: 1,
+        data: [{ _id: 'cached-file-id', name: 'Cached file' }]
+      }
+    })
+
+    expect(screen.getByTestId('fetch-status')).toHaveTextContent('loading')
+    expect(
+      screen.queryByRole('button', { name: 'Cached file' })
+    ).not.toBeInTheDocument()
+  })
+
+  it('reports loading during a background refetch', () => {
+    expect(
+      getSharingsFetchStatus({
+        allLoaded: true,
+        sharedDrivesLoaded: true,
+        filteredResult: {
+          fetchStatus: 'loaded',
+          isFetching: true,
+          lastFetch: 1,
+          data: []
+        },
+        sharedDrivesError: null
+      })
+    ).toBe('loading')
+  })
+
   it.each([
-    ['loading', false, true, 'loaded', 1],
-    ['loading', true, false, 'loaded', 1],
-    ['loading', true, true, 'pending', null],
-    ['failed', true, true, 'failed', null],
-    ['loaded', true, true, 'loaded', 1]
-  ])(
-    'reports %s for the source state',
-    (expected, allLoaded, sharedDrivesLoaded, fetchStatus, lastFetch) => {
-      setup({
+    {
+      expected: 'loading',
+      allLoaded: false,
+      sharedDrivesLoaded: true,
+      fetchStatus: 'loaded',
+      lastFetch: 1
+    },
+    {
+      expected: 'loading',
+      allLoaded: true,
+      sharedDrivesLoaded: false,
+      fetchStatus: 'loaded',
+      lastFetch: 1
+    },
+    {
+      expected: 'loading',
+      allLoaded: true,
+      sharedDrivesLoaded: true,
+      fetchStatus: 'loading',
+      lastFetch: 1
+    },
+    {
+      expected: 'loading',
+      allLoaded: true,
+      sharedDrivesLoaded: true,
+      fetchStatus: 'pending',
+      lastFetch: null
+    },
+    {
+      expected: 'failed',
+      allLoaded: true,
+      sharedDrivesLoaded: true,
+      fetchStatus: 'failed',
+      lastFetch: null
+    },
+    {
+      expected: 'loaded',
+      allLoaded: true,
+      sharedDrivesLoaded: true,
+      fetchStatus: 'loaded',
+      lastFetch: 1
+    }
+  ])('reports $expected for the source state', caseState => {
+    const { expected, allLoaded, sharedDrivesLoaded, fetchStatus, lastFetch } =
+      caseState
+
+    expect(
+      getSharingsFetchStatus({
         allLoaded,
         sharedDrivesLoaded,
-        filteredResult: { data: [], fetchStatus, lastFetch }
+        filteredResult: { data: [], fetchStatus, lastFetch },
+        sharedDrivesError: null
       })
-
-      expect(screen.getByTestId('fetch-status')).toHaveTextContent(expected)
-    }
-  )
+    ).toBe(expected)
+  })
 
   it('reports a shared-drive loading failure', () => {
-    setup({ sharedDrivesError: new Error('shared drives failed') })
-
-    expect(screen.getByTestId('fetch-status')).toHaveTextContent('failed')
+    expect(
+      getSharingsFetchStatus({
+        allLoaded: true,
+        sharedDrivesLoaded: true,
+        filteredResult: { data: [], fetchStatus: 'loaded', lastFetch: 1 },
+        sharedDrivesError: new Error('shared drives failed')
+      })
+    ).toBe('failed')
   })
 })

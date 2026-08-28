@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 
-import { hasQueryBeenLoaded, useQuery } from 'cozy-client'
+import { hasQueryBeenLoaded, isQueryLoading, useQuery } from 'cozy-client'
 
 import { buildSharingsQuery } from '@/queries'
 
@@ -25,6 +25,10 @@ export function getSharingsFetchStatus({
 }) {
   if (filteredResult.fetchStatus === 'failed' || sharedDrivesError) {
     return 'failed'
+  }
+
+  if (isQueryLoading(filteredResult) || filteredResult.isFetching) {
+    return 'loading'
   }
 
   return allLoaded && sharedDrivesLoaded && hasQueryBeenLoaded(filteredResult)
