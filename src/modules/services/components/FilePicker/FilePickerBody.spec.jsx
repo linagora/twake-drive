@@ -81,7 +81,11 @@ const baseProps = {
 describe('FilePickerBody', () => {
   beforeEach(() => {
     useI18n.mockReturnValue({ t: key => key })
-    useSharingContext.mockReturnValue({ byDocId: { 'shared-root': {} } })
+    useSharingContext.mockReturnValue({
+      allLoaded: true,
+      byDocId: { 'shared-root': {} },
+      isOwner: () => false
+    })
     useBreadcrumbPath.mockReturnValue([
       { id: 'file-picker-sharings-root', name: 'Nav.item_sharings' },
       { id: 'folder-id', name: 'Shared folder' }
@@ -116,6 +120,16 @@ describe('FilePickerBody', () => {
       data: [
         { _id: 'child-id', name: 'Child file', type: 'file' },
         {
+          _id: 'nested-share-id',
+          name: 'Nested shared folder',
+          type: 'directory',
+          relationships: {
+            referenced_by: {
+              data: [{ id: 'nested-sharing-id', type: 'io.cozy.sharings' }]
+            }
+          }
+        },
+        {
           _id: 'pending-id',
           name: 'Pending invitation',
           type: 'directory',
@@ -137,6 +151,9 @@ describe('FilePickerBody', () => {
       screen.getByRole('button', { name: 'Child file:local' })
     ).toBeEnabled()
     expect(
+      screen.getByRole('button', { name: 'Nested shared folder:local' })
+    ).toBeEnabled()
+    expect(
       screen.getByRole('button', { name: 'Pending invitation:local' })
     ).toBeDisabled()
     expect(screen.getByTestId('file-picker-breadcrumb')).toHaveTextContent(
@@ -148,6 +165,45 @@ describe('FilePickerBody', () => {
         sharedDocumentIds: ['shared-root']
       })
     )
+  })
+
+  it('filters received shares from the My Drive listing', () => {
+    useSharingContext.mockReturnValue({
+      allLoaded: true,
+      isOwner: () => false,
+      byDocId: {}
+    })
+    useQuery.mockReturnValue({
+      data: [
+        {
+          _id: 'received-share',
+          name: 'Received share',
+          type: 'directory',
+          relationships: {
+            referenced_by: {
+              data: [{ id: 'sharing-id', type: 'io.cozy.sharings' }]
+            }
+          }
+        },
+        { _id: 'own-folder', name: 'Own folder', type: 'directory' }
+      ],
+      fetchStatus: 'loaded'
+    })
+
+    render(
+      <FilePickerBody
+        {...baseProps}
+        section={filePickerSections.DRIVE}
+        folderId="root-id"
+      />
+    )
+
+    expect(
+      screen.queryByRole('button', { name: 'Received share:local' })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Own folder:local' })
+    ).toBeInTheDocument()
   })
 
   it('waits for the initial My Drive query before notifying readiness', () => {
