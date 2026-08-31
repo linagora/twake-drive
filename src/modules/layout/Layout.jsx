@@ -18,6 +18,7 @@ import DriveText from '@/components/Icons/DriveText'
 import ButtonClient from '@/components/pushClient/Button'
 import { ROOT_DIR_ID, TRASH_DIR_ID } from '@/constants/config'
 import { useDisplayedFolder } from '@/hooks'
+import { isEditableTarget } from '@/hooks/helpers'
 import useCurrentFolderId from '@/hooks/useCurrentFolderId'
 import useCurrentFolderWriteAccess from '@/hooks/useCurrentFolderWriteAccess'
 import { initFlags } from '@/lib/flags'
@@ -46,6 +47,14 @@ export const consumeCreateOnRoot = () => {
     return true
   }
   return false
+}
+
+// Text fields keep their paste entry, and so does the bar, which renders
+// outside the application node but is a React child of this layout.
+const handleContextMenu = ev => {
+  if (isEditableTarget(ev.target)) return
+  if (!ev.target.closest('[role="application"]')) return
+  ev.preventDefault()
 }
 
 const LayoutContent = () => {
@@ -80,7 +89,7 @@ const LayoutContent = () => {
   }
 
   return (
-    <LayoutUI onContextMenu={ev => ev.preventDefault()}>
+    <LayoutUI onContextMenu={handleContextMenu}>
       <NewItemHighlightProvider>
         <BarComponent
           searchOptions={{ enabled: !isMobile }}
