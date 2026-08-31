@@ -49,7 +49,7 @@
   "homepage": "https://github.com/cozy/cozy-drive#readme",
   "devDependencies": {
     "@playwright/test": "^1.58.2",
-    "@rsbuild/core": "^1.5.15",
+    "@rsbuild/core": "^2.2.0",
     "@swc-contrib/mut-cjs-exports": "^14.7.0",
     "@swc/core": "^1.15.18",
     "@swc/jest": "^0.2.39",
@@ -63,6 +63,7 @@
     "@welldone-software/why-did-you-render": "^10.0.1",
     "babel-preset-cozy-app": "2.1.0",
     "bundlemon": "3.1.0",
+    "core-js": "^3.50.0",
     "cozy-app-publish": "^0.40.1",
     "cozy-jobs-cli": "^2.4.3",
     "cozy-tsconfig": "^1.8.1",
@@ -145,6 +146,14 @@
     "redux-thunk": "2.4.2",
     "twake-i18n": "^0.3.4",
     "whatwg-fetch": "3.0.0"
+  },
+  "resolutions": {
+    "@rsbuild/plugin-node-polyfill": "1.4.6",
+    "@rsbuild/plugin-react": "2.1.0",
+    "@rsbuild/plugin-stylus": "2.0.1",
+    "@rsbuild/plugin-svgr": "2.0.5",
+    "@rsdoctor/rspack-plugin": "1.6.3",
+    "rsbuild-plugin-ejs": "2.0.1"
   },
   "packageManager": "yarn@4.17.0"
 }

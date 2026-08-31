@@ -31,18 +31,6 @@ const templates = {
 
 config.environments = {
   web: {
-    performance: {
-      chunkSplit: {
-        // The inherited config forces every cozy-* dependency into one broad
-        // chunk, so the intent downloads unrelated Drive capabilities.
-        forceSplitting: {},
-        override: {
-          cacheGroups: {
-            cozy: false
-          }
-        }
-      }
-    },
     html: {
       template: ({ entryName }) => templates[entryName]
     },
