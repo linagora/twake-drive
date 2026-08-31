@@ -73,30 +73,9 @@ export async function getOrCreateSharingLink(client, file) {
 }
 
 /**
- * Create temporary download links for files.
- * A single temporary sharing link grants access to all the files, then
- * the public client creates one direct download link per file.
- *
- * @param {object} client - CozyClient instance
- * @param {object[]} files - File documents
- * @returns {Promise<string[]>} - The download links in file order
+ * Create temporary download links for files without a drive.
  */
-export const makeTemporaryDownloadLinks = async (client, files) => {
-  if (files.some(file => !isFile(file))) {
-    throw new Error('Temporary download links are only available for files')
-  }
-
-  if (files[0].driveId) {
-    const filesCollection = client.collection('io.cozy.files', {
-      driveId: files[0].driveId
-    })
-    return Promise.all(
-      files.map(file =>
-        filesCollection.getDownloadLinkById(getFileId(file), file.name)
-      )
-    )
-  }
-
+async function makeTemporaryDownloadLinksForDriveLessFiles(client, files) {
   const temporarySharingLink = await makeSharingLink(
     client,
     files.map(getFileId),
@@ -119,10 +98,60 @@ export const makeTemporaryDownloadLinks = async (client, files) => {
     useCustomStore: true
   })
   const filesCollection = publicClient.collection('io.cozy.files')
-  const downloadLinks = await Promise.all(
+  return Promise.all(
     files.map(file =>
       filesCollection.getDownloadLinkById(getFileId(file), file.name)
     )
+  )
+}
+
+/**
+ * Create temporary download links for files.
+ * A single temporary sharing link grants access to drive-less files, then
+ * the public client creates one direct download link per file.
+ *
+ * @param {object} client - CozyClient instance
+ * @param {object[]} files - File documents
+ * @returns {Promise<string[]>} - The download links in file order
+ */
+export const makeTemporaryDownloadLinks = async (client, files) => {
+  if (files.some(file => !isFile(file))) {
+    throw new Error('Temporary download links are only available for files')
+  }
+
+  const filesByDriveId = new Map()
+  files.forEach((file, index) => {
+    const driveId = file.driveId || null
+    const group = filesByDriveId.get(driveId) || []
+    group.push({ file, index })
+    filesByDriveId.set(driveId, group)
+  })
+
+  const downloadLinks = Array(files.length)
+  await Promise.all(
+    [...filesByDriveId].map(async ([driveId, group]) => {
+      const groupFiles = group.map(({ file }) => file)
+      let links
+      if (driveId) {
+        const filesCollection = client.collection('io.cozy.files', {
+          driveId
+        })
+        links = await Promise.all(
+          groupFiles.map(file =>
+            filesCollection.getDownloadLinkById(getFileId(file), file.name)
+          )
+        )
+      } else {
+        links = await makeTemporaryDownloadLinksForDriveLessFiles(
+          client,
+          groupFiles
+        )
+      }
+
+      group.forEach(({ index }, groupIndex) => {
+        downloadLinks[index] = links[groupIndex]
+      })
+    })
   )
 
   return downloadLinks
