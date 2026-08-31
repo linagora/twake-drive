@@ -15,6 +15,7 @@ const mockQuery = jest.fn()
 const mockGetStackClient = jest.fn()
 const mockGetDownloadLinkById = jest.fn()
 const mockFindLinksByDoctype = jest.fn()
+const mockCollection = jest.fn()
 const mockCozyClient = jest.fn()
 const mockBuildFileOrFolderByIdQuery = jest.fn(fileId => ({
   definition: () => ({ id: fileId }),
@@ -60,10 +61,7 @@ jest.mock('cozy-client', () => {
     useClient: () => ({
       query: mockQuery,
       getStackClient: mockGetStackClient,
-      collection: () => ({
-        findLinksByDoctype: mockFindLinksByDoctype,
-        getDownloadLinkById: mockGetDownloadLinkById
-      }),
+      collection: mockCollection,
       capabilities: {}
     })
   }
@@ -96,6 +94,14 @@ const mockSecondFile = {
   mime: 'application/pdf'
 }
 
+const mockThirdFile = {
+  _id: 'third-file-id',
+  type: 'file',
+  name: 'report.pdf',
+  size: '126',
+  mime: 'application/pdf'
+}
+
 const callOnChange = (...args) => mockFilePickerProps.onChange(...args)
 const callOnFileDoubleClick = linkMode =>
   mockFilePickerProps.onFileDoubleClick(mockFile, linkMode)
@@ -115,6 +121,10 @@ describe('Picker', () => {
   beforeEach(() => {
     mockGetStackClient.mockReturnValue({ uri: 'https://alice.example' })
     mockFindLinksByDoctype.mockResolvedValue({ data: [] })
+    mockCollection.mockReturnValue({
+      findLinksByDoctype: mockFindLinksByDoctype,
+      getDownloadLinkById: mockGetDownloadLinkById
+    })
     mockCozyClient.mockReturnValue({
       collection: () => ({ getDownloadLinkById: mockGetDownloadLinkById })
     })
@@ -389,6 +399,67 @@ describe('Picker', () => {
           link: 'https://files.twake.app/email-assets/file-picker/pdf.png'
         }
       }
+    ])
+  })
+
+  it('should use the corresponding shared drive API for each drive group', async () => {
+    mockQuery.mockImplementation(({ id }) => {
+      const files = {
+        'file-id': mockFile,
+        'second-file-id': mockSecondFile,
+        'third-file-id': mockThirdFile
+      }
+      return Promise.resolve({ data: files[id] })
+    })
+    makeSharingLink.mockResolvedValue(
+      'https://drive.example/public?sharecode=abc'
+    )
+    mockGetDownloadLinkById.mockImplementation(fileId =>
+      Promise.resolve(`https://alice.example/downloads/${fileId}`)
+    )
+    const { service } = setup()
+
+    await callOnChange(
+      [
+        { _id: 'file-id', driveId: 'drive-a' },
+        { _id: 'second-file-id' },
+        { _id: 'third-file-id', driveId: 'drive-b' }
+      ],
+      filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK
+    )
+
+    await waitFor(() => expect(service.terminate).toHaveBeenCalled())
+    expect(mockCollection).toHaveBeenNthCalledWith(1, 'io.cozy.files', {
+      driveId: 'drive-a'
+    })
+    expect(mockCollection).toHaveBeenNthCalledWith(2, 'io.cozy.files', {
+      driveId: 'drive-b'
+    })
+    expect(makeSharingLink).toHaveBeenCalledWith(
+      expect.any(Object),
+      ['second-file-id'],
+      { ttl: TEMPORARY_LINK_TTL }
+    )
+    expect(service.terminate.mock.calls[0][0]).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'file-id',
+          downloadLink: 'https://alice.example/downloads/file-id'
+        }),
+        expect.objectContaining({
+          id: 'second-file-id',
+          downloadLink: 'https://alice.example/downloads/second-file-id'
+        }),
+        expect.objectContaining({
+          id: 'third-file-id',
+          downloadLink: 'https://alice.example/downloads/third-file-id'
+        })
+      ])
+    )
+    expect(service.terminate.mock.calls[0][0].map(entry => entry.id)).toEqual([
+      'file-id',
+      'second-file-id',
+      'third-file-id'
     ])
   })
 
