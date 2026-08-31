@@ -1,4 +1,5 @@
 import { defineConfig, mergeRsbuildConfig } from '@rsbuild/core'
+import { RsdoctorRspackPlugin } from '@rsdoctor/rspack-plugin'
 import { getRsbuildConfig } from 'rsbuild-config-cozy-app'
 
 const config = getRsbuildConfig({
@@ -203,6 +204,23 @@ const mergedConfig = mergeRsbuildConfig(config, {
       // static/ (the webpack4 entry inlines file-loader, which emits the
       // worker at the build root where only the private `/` route serves it).
       'react-pdf$': 'react-pdf/dist/esm/entry.webpack5'
+    }
+  },
+  // Trying rsdoctor in CI to measure build size
+  tools: {
+    rspack: {
+      plugins: [
+        process.env.RSDOCTOR_CI &&
+          new RsdoctorRspackPlugin({
+            output: {
+              mode: 'brief',
+              options: {
+                type: ['json']
+              },
+              reportDir: '.'
+            }
+          })
+      ]
     }
   }
 })

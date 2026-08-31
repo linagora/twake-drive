@@ -50,6 +50,7 @@
   "devDependencies": {
     "@playwright/test": "^1.58.2",
     "@rsbuild/core": "^1.5.15",
+    "@rsdoctor/rspack-plugin": "^1.6.3",
     "@swc-contrib/mut-cjs-exports": "^14.7.0",
     "@swc/core": "^1.15.18",
     "@swc/jest": "^0.2.39",
