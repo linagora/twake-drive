@@ -386,7 +386,14 @@ const RectangularSelection = ({
           className={styles['cozy-selecto-box']}
           // eslint-disable-next-line react-hooks/refs
           container={containerRef.current}
-          dragContainer={window}
+          // The main column, so a drag can still start in the empty space
+          // above the files, which the grid view leaves almost none of inside
+          // the list. On window, a drag starting anywhere at all rubber band
+          // selected the files, including from behind a modal.
+          dragContainer={
+            // eslint-disable-next-line react-hooks/refs
+            containerRef.current.closest('main') ?? containerRef.current
+          }
           selectableTargets={['[data-file-id]']}
           selectByClick={false}
           selectFromInside={false}
