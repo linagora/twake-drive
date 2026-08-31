@@ -95,6 +95,25 @@ export class FilePickerPage {
     await this.getListItemByName(name).getByTestId('listitem-onclick').tap()
   }
 
+  async scrollToItem(name: string): Promise<void> {
+    const item = this.getListItemByName(name)
+    const scroller = this.getFrameLocator().getByTestId('virtuoso-scroller')
+
+    for (let attempt = 0; attempt < 100; attempt += 1) {
+      if ((await item.count()) > 0) {
+        await item.scrollIntoViewIfNeeded()
+        return
+      }
+
+      await scroller.evaluate((element: HTMLElement) => {
+        element.scrollTop += element.clientHeight
+      })
+      await this.page.waitForTimeout(50)
+    }
+
+    await item.waitFor({ state: 'visible' })
+  }
+
   async navigateToFolderOnMobile(name: string): Promise<void> {
     await this.tapItem(name)
     await this.getFrameLocator()

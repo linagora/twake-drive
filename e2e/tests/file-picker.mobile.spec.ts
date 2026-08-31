@@ -138,6 +138,7 @@ test.describe.serial('File Picker Sharings mobile', () => {
     await sharingsTab.tap()
     await expect(sharingsTab).toHaveAttribute('aria-selected', 'true')
     await expect(breadcrumb).toHaveText('Sharings')
+    await picker.scrollToItem(rootName)
     await expect(row(rootName)).toBeVisible()
 
     await picker.tapItem(rootName)
