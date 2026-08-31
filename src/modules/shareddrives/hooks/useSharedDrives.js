@@ -11,8 +11,10 @@ export const useSharedDrives = () => {
 
   useEffect(() => {
     let isCancelled = false
+    let requestGeneration = 0
 
     const fetchSharedDrives = async () => {
+      const currentRequestGeneration = ++requestGeneration
       setIsLoading(true)
       setError(null)
       try {
@@ -20,15 +22,15 @@ export const useSharedDrives = () => {
           .collection('io.cozy.sharings')
           .fetchSharedDrives()
 
-        if (!isCancelled) {
+        if (!isCancelled && currentRequestGeneration === requestGeneration) {
           setSharedDrives(sharedDrives)
         }
       } catch (error) {
-        if (!isCancelled) {
+        if (!isCancelled && currentRequestGeneration === requestGeneration) {
           setError(error)
         }
       } finally {
-        if (!isCancelled) {
+        if (!isCancelled && currentRequestGeneration === requestGeneration) {
           setIsLoading(false)
           setIsLoaded(true)
         }
