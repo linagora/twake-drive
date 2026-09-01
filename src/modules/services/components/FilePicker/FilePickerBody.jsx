@@ -40,7 +40,8 @@ const FilePickerContent = ({
   error,
   onFileDoubleClick,
   isSectionChanging,
-  onSectionReady
+  onSectionReady,
+  isRoot
 }) => {
   const { t } = useI18n()
   const { isMobile } = useBreakpoints()
@@ -149,7 +150,7 @@ const FilePickerContent = ({
           ))}
         </Box>
       ) : items.length === 0 ? (
-        <EmptyMessage section={section} />
+        <EmptyMessage section={section} isRoot={isRoot} />
       ) : (
         <FilePickerTable
           items={items}
@@ -184,7 +185,8 @@ FilePickerContent.propTypes = {
   error: PropTypes.string,
   onFileDoubleClick: PropTypes.func,
   isSectionChanging: PropTypes.bool,
-  onSectionReady: PropTypes.func
+  onSectionReady: PropTypes.func,
+  isRoot: PropTypes.bool
 }
 
 const LocalFolderContent = ({
@@ -333,6 +335,7 @@ const FilePickerBody = ({
       <FilePickerContent
         source={source}
         section={section}
+        isRoot={folderId === FILE_PICKER_SHARINGS_ROOT_ID}
         navigateTo={navigateTo}
         itemTypesAccepted={itemTypesAccepted}
         multiple={multiple}
@@ -349,6 +352,7 @@ const FilePickerBody = ({
       itemTypesAccepted,
       multiple,
       navigateTo,
+      folderId,
       onFileDoubleClick,
       section,
       isSectionChanging,

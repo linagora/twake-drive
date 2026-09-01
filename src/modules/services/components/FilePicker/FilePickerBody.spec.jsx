@@ -167,6 +167,22 @@ describe('FilePickerBody', () => {
     )
   })
 
+  it('shows the folder empty state inside a shared folder', () => {
+    useQuery.mockReturnValue({ data: [], fetchStatus: 'loaded' })
+
+    render(
+      <FilePickerBody
+        {...baseProps}
+        section={filePickerSections.SHARINGS}
+        folderId="folder-id"
+      />
+    )
+
+    expect(screen.getByTestId('file-picker-empty')).toHaveTextContent(
+      'empty.title'
+    )
+  })
+
   it('filters received shares from the My Drive listing', () => {
     useSharingContext.mockReturnValue({
       allLoaded: true,
