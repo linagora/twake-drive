@@ -12,7 +12,7 @@ import {
 } from '@/modules/views/Sharings/useSharingsQueryResult'
 
 export const FilePickerSharingsContent = ({
-  renderContent,
+  renderFilePickerContent,
   rootBreadcrumbPath
 }) => {
   const { allLoaded, byDocId } = useSharingContext()
@@ -32,7 +32,7 @@ export const FilePickerSharingsContent = ({
     sharedDrivesError
   })
 
-  return renderContent({
+  return renderFilePickerContent({
     items: fetchStatus === 'loaded' ? (filteredResult.data ?? []) : [],
     fetchStatus,
     hasMore: false,
@@ -43,7 +43,7 @@ export const FilePickerSharingsContent = ({
 }
 
 FilePickerSharingsContent.propTypes = {
-  renderContent: PropTypes.func.isRequired,
+  renderFilePickerContent: PropTypes.func.isRequired,
   rootBreadcrumbPath: PropTypes.shape({
     id: PropTypes.string.isRequired,
     name: PropTypes.string.isRequired

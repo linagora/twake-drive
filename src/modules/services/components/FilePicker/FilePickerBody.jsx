@@ -196,7 +196,7 @@ const LocalFolderContent = ({
   allLoaded,
   isOwner,
   onReady,
-  renderContent
+  renderFilePickerContent
 }) => {
   const path = useBreadcrumbPath({
     currentFolderId: folderId,
@@ -223,7 +223,7 @@ const LocalFolderContent = ({
     if (fetchStatus !== 'loading') onReady?.()
   }, [fetchStatus, onReady])
 
-  return renderContent({
+  return renderFilePickerContent({
     items: filteredResult.data ?? [],
     fetchStatus,
     hasMore: Boolean(filteredResult.hasMore),
@@ -242,7 +242,7 @@ LocalFolderContent.propTypes = {
   allLoaded: PropTypes.bool.isRequired,
   isOwner: PropTypes.func.isRequired,
   onReady: PropTypes.func,
-  renderContent: PropTypes.func.isRequired
+  renderFilePickerContent: PropTypes.func.isRequired
 }
 
 const SharedDriveFolderContent = ({
@@ -251,7 +251,7 @@ const SharedDriveFolderContent = ({
   rootBreadcrumbPath,
   sharedDocumentIds,
   isItemDisabled,
-  renderContent
+  renderFilePickerContent
 }) => {
   const path = useBreadcrumbPath({
     currentFolderId: folderId,
@@ -267,7 +267,7 @@ const SharedDriveFolderContent = ({
     [driveId, sharedDriveResult.included]
   )
 
-  return renderContent({
+  return renderFilePickerContent({
     items,
     fetchStatus,
     hasMore,
@@ -283,7 +283,7 @@ SharedDriveFolderContent.propTypes = {
   rootBreadcrumbPath: PropTypes.object.isRequired,
   sharedDocumentIds: PropTypes.arrayOf(PropTypes.string),
   isItemDisabled: PropTypes.func.isRequired,
-  renderContent: PropTypes.func.isRequired
+  renderFilePickerContent: PropTypes.func.isRequired
 }
 
 const FilePickerBody = ({
@@ -328,7 +328,7 @@ const FilePickerBody = ({
     onReadyToUse?.()
   }, [onReadyToUse])
 
-  const renderContent = useCallback(
+  const renderFilePickerContent = useCallback(
     source => (
       <FilePickerContent
         source={source}
@@ -363,7 +363,7 @@ const FilePickerBody = ({
     return (
       <FilePickerSharingsContent
         rootBreadcrumbPath={rootBreadcrumbPath}
-        renderContent={renderContent}
+        renderFilePickerContent={renderFilePickerContent}
       />
     )
   }
@@ -376,7 +376,7 @@ const FilePickerBody = ({
         rootBreadcrumbPath={rootBreadcrumbPath}
         sharedDocumentIds={sharedDocumentIds}
         isItemDisabled={isItemDisabled}
-        renderContent={renderContent}
+        renderFilePickerContent={renderFilePickerContent}
       />
     )
   }
@@ -395,7 +395,7 @@ const FilePickerBody = ({
       onReady={
         section === filePickerSections.DRIVE ? handleDriveReady : undefined
       }
-      renderContent={renderContent}
+      renderFilePickerContent={renderFilePickerContent}
     />
   )
 }
