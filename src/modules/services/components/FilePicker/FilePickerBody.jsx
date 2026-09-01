@@ -330,34 +330,20 @@ const FilePickerBody = ({
     onReadyToUse?.()
   }, [onReadyToUse])
 
-  const renderFilePickerContent = useCallback(
-    source => (
-      <FilePickerContent
-        source={source}
-        section={section}
-        isRoot={folderId === FILE_PICKER_SHARINGS_ROOT_ID}
-        navigateTo={navigateTo}
-        itemTypesAccepted={itemTypesAccepted}
-        multiple={multiple}
-        folderSelectable={folderSelectable}
-        error={error}
-        onFileDoubleClick={onFileDoubleClick}
-        isSectionChanging={isSectionChanging}
-        onSectionReady={onSectionReady}
-      />
-    ),
-    [
-      error,
-      folderSelectable,
-      itemTypesAccepted,
-      multiple,
-      navigateTo,
-      folderId,
-      onFileDoubleClick,
-      section,
-      isSectionChanging,
-      onSectionReady
-    ]
+  const renderFilePickerContent = source => (
+    <FilePickerContent
+      source={source}
+      section={section}
+      isRoot={folderId === FILE_PICKER_SHARINGS_ROOT_ID}
+      navigateTo={navigateTo}
+      itemTypesAccepted={itemTypesAccepted}
+      multiple={multiple}
+      folderSelectable={folderSelectable}
+      error={error}
+      onFileDoubleClick={onFileDoubleClick}
+      isSectionChanging={isSectionChanging}
+      onSectionReady={onSectionReady}
+    />
   )
 
   if (
