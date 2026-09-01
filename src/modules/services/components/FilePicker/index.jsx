@@ -113,10 +113,7 @@ const FilePicker = ({
     setBusyLinkMode(linkMode)
     setError(null)
 
-    const selectedValues = selectedItems.map(item =>
-      item.driveId ? item : item._id
-    )
-    const value = multiple ? selectedValues : selectedValues[0]
+    const value = multiple ? selectedItems : selectedItems[0]
 
     try {
       const pickError = await onChange(value, linkMode)

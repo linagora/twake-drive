@@ -257,7 +257,7 @@ describe('Picker', () => {
     )
     const { service } = setup()
 
-    await callOnChange('file-id', filePickerLinkModes.PUBLIC_LINK)
+    await callOnChange(mockFile, filePickerLinkModes.PUBLIC_LINK)
 
     await waitFor(() => expect(service.terminate).toHaveBeenCalled())
     expect(makeSharingLink).toHaveBeenCalledWith(expect.any(Object), [
@@ -289,7 +289,7 @@ describe('Picker', () => {
     const { service } = setup()
 
     await callOnChange(
-      ['file-id', 'second-file-id'],
+      [mockFile, mockSecondFile],
       filePickerLinkModes.PUBLIC_LINK
     )
 
@@ -334,7 +334,7 @@ describe('Picker', () => {
     )
     const { service } = setup()
 
-    await callOnChange('file-id', filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK)
+    await callOnChange(mockFile, filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK)
 
     await waitFor(() => expect(service.terminate).toHaveBeenCalled())
     expect(makeSharingLink).toHaveBeenCalledWith(
@@ -482,7 +482,7 @@ describe('Picker', () => {
     const { service } = setup()
 
     await callOnChange(
-      ['file-id', 'second-file-id'],
+      [mockFile, mockSecondFile],
       filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK
     )
 
@@ -657,10 +657,7 @@ describe('Picker', () => {
     mockQuery.mockRejectedValue(new Error('not found'))
     const { service } = setup()
 
-    const result = await callOnChange(
-      'file-id',
-      filePickerLinkModes.PUBLIC_LINK
-    )
+    const result = await callOnChange(mockFile, filePickerLinkModes.PUBLIC_LINK)
 
     expect(result).toBe(filePickerErrorCodes.ITEM_NOT_FOUND)
     expect(service.throw).not.toHaveBeenCalled()
@@ -691,7 +688,7 @@ describe('Picker', () => {
     )
     const { service } = setup()
 
-    await callOnChange('file-id', filePickerLinkModes.PUBLIC_LINK)
+    await callOnChange(mockFile, filePickerLinkModes.PUBLIC_LINK)
 
     await waitFor(() => expect(service.terminate).toHaveBeenCalled())
     expect(makeSharingLink).not.toHaveBeenCalled()
@@ -714,10 +711,7 @@ describe('Picker', () => {
     makeSharingLink.mockRejectedValue(new Error('sharing failed'))
     const { service } = setup()
 
-    const result = await callOnChange(
-      'file-id',
-      filePickerLinkModes.PUBLIC_LINK
-    )
+    const result = await callOnChange(mockFile, filePickerLinkModes.PUBLIC_LINK)
 
     expect(result).toBe(filePickerErrorCodes.SHARING_LINK_FAILED)
     expect(service.throw).not.toHaveBeenCalled()
@@ -730,7 +724,7 @@ describe('Picker', () => {
     const { service } = setup()
 
     const result = await callOnChange(
-      'file-id',
+      mockFile,
       filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK
     )
 
