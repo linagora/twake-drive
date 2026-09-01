@@ -353,6 +353,7 @@ const FilePickerBody = ({
     return (
       <FilePickerSharingsContent
         rootBreadcrumbPath={rootBreadcrumbPath}
+        sharedDocumentIds={sharedDocumentIds}
         renderFilePickerContent={renderFilePickerContent}
       />
     )

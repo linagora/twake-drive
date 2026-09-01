@@ -108,6 +108,7 @@ describe('FilePickerBody', () => {
         id: FILE_PICKER_SHARINGS_ROOT_ID,
         name: 'Nav.item_sharings'
       },
+      sharedDocumentIds: ['shared-root'],
       renderFilePickerContent: expect.any(Function)
     })
     expect(useQuery).not.toHaveBeenCalled()
