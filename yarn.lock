@@ -11528,9 +11528,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cozy-client@npm:^60.29.0":
-  version: 60.29.0
-  resolution: "cozy-client@npm:60.29.0"
+"cozy-client@npm:^60.32.0":
+  version: 60.32.0
+  resolution: "cozy-client@npm:60.32.0"
   dependencies:
     "@cozy/minilog": "npm:1.0.0"
     "@fastify/deepmerge": "npm:^2.0.2"
@@ -11563,7 +11563,7 @@ __metadata:
     react-native-google-play-integrity: ^1.1.0
     react-native-inappbrowser-reborn: ^3.5.1
     react-native-ios11-devicecheck: ^0.0.3
-  checksum: 10/39bfd09ae399e0e6e8826afb54172559f0be4da75da8346c833e8851ecabcdfcc008708058e81420e45d4741ebe521d96763a35c2f90cd06b12a8b7d1abb18b8
+  checksum: 10/d7ab24f0ebf006285bb9544d7602ad745e1447f48f3ecd3f47600bb2ef26d7f3aa0f3dd955f6865a803d2ef82e896e9b83913a0b1c9fcf7771012c1315e3fc26
   languageName: node
   linkType: hard
 
@@ -11694,7 +11694,7 @@ __metadata:
     classnames: "npm:2.3.1"
     cozy-app-publish: "npm:^0.40.1"
     cozy-bar: "npm:^35.2.3"
-    cozy-client: "npm:^60.29.0"
+    cozy-client: "npm:^60.32.0"
     cozy-dataproxy-lib: "npm:^4.15.6"
     cozy-device-helper: "npm:^4.0.3"
     cozy-devtools: "npm:^3.0.0"
@@ -11706,10 +11706,10 @@ __metadata:
     cozy-keys-lib: "npm:^7.1.0"
     cozy-logger: "npm:^1.18.1"
     cozy-minilog: "npm:^3.10.1"
-    cozy-pouch-link: "npm:^60.29.0"
+    cozy-pouch-link: "npm:^60.32.0"
     cozy-realtime: "npm:^5.9.3"
     cozy-search: "npm:^2.2.18"
-    cozy-sharing: "npm:^37.5.4"
+    cozy-sharing: "npm:^37.5.5"
     cozy-stack-client: "npm:^60.28.0"
     cozy-tsconfig: "npm:^1.8.1"
     cozy-ui: "npm:^141.0.0"
@@ -11962,18 +11962,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cozy-pouch-link@npm:^60.29.0":
-  version: 60.29.0
-  resolution: "cozy-pouch-link@npm:60.29.0"
+"cozy-pouch-link@npm:^60.32.0":
+  version: 60.32.0
+  resolution: "cozy-pouch-link@npm:60.32.0"
   dependencies:
-    cozy-client: "npm:^60.29.0"
+    cozy-client: "npm:^60.32.0"
     pouchdb-browser: "npm:^7.2.2"
     pouchdb-find: "npm:^7.2.2"
   peerDependencies:
     "@cozy/minilog": 1.0.0
     "@op-engineering/op-sqlite": "*"
     cozy-device-helper: ">=2.1.0"
-  checksum: 10/6995827dfc9de9624600eb1960ec2e480bd05433c177187545be429ae6671a50f941d4eddfa030e35299aed860582d08a72a6008c995f7fb6300901889d5b124
+  checksum: 10/82e747b14a8e94249c26b76cda894e590113d4d1cb5601505a909bbafb239174006f836c8d5c6e49ba95cee7756331f43ccbc9ced84e3390eff372004e8a76e1
   languageName: node
   linkType: hard
 
@@ -12019,9 +12019,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cozy-sharing@npm:^37.5.4":
-  version: 37.5.4
-  resolution: "cozy-sharing@npm:37.5.4"
+"cozy-sharing@npm:^37.5.5":
+  version: 37.5.5
+  resolution: "cozy-sharing@npm:37.5.5"
   dependencies:
     "@cozy/minilog": "npm:^1.0.0"
     classnames: "npm:^2.5.1"
@@ -12044,7 +12044,7 @@ __metadata:
     react: ">=16.12.0"
     react-router: ">=5.0.1"
     twake-i18n: ">=0.3.0"
-  checksum: 10/26b3027b890230e85ff4ec4cf0b901315211a9438d6921d2b9d2136e95eb7dcb19ba18db13342688e21f7a829ed6d437ea4eb29a1203474fe10b0b2177c5ae1c
+  checksum: 10/aeab1fea9bb8ae68c00814bee1edf567388cf9cb93123ab2acf89d520df6f63dcae3b6e96c86cd28b35ed6f109d7eb961817c5975939e38dcfc584b62dc4bf6a
   languageName: node
   linkType: hard
 
