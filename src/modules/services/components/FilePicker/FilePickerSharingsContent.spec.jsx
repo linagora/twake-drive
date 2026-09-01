@@ -26,7 +26,7 @@ jest.mock('@/queries', () => ({ buildSharingsQuery: jest.fn() }))
 
 const rootBreadcrumbPath = { id: 'sharings-root', name: 'Sharings' }
 
-function renderContent(source) {
+function renderFilePickerContent(source) {
   return (
     <div>
       <span data-testid="fetch-status">{source.fetchStatus}</span>
@@ -70,7 +70,7 @@ function setup({
     ...render(
       <FilePickerSharingsContent
         rootBreadcrumbPath={rootBreadcrumbPath}
-        renderContent={renderContent}
+        renderFilePickerContent={renderFilePickerContent}
       />
     )
   }
