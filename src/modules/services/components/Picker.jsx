@@ -54,14 +54,16 @@ const Picker = ({ service, intent, onReadyToUse }) => {
   const serviceData = service.getData?.()
   const filePickerConfig = getFilePickerConfig(intent, serviceData)
 
-  const handlePick = async (fileIds, linkMode, generatedSharingLinks) => {
-    const selectedFiles = Array.isArray(fileIds) ? fileIds : [fileIds]
+  const handlePick = async (selectedItems, linkMode, generatedSharingLinks) => {
+    const selectedFiles = Array.isArray(selectedItems)
+      ? selectedItems
+      : [selectedItems]
     let queryResults
     try {
       queryResults = await Promise.all(
         selectedFiles.map(async file => {
-          const fileId = typeof file === 'string' ? file : getFileId(file)
-          const driveId = typeof file === 'string' ? null : file.driveId
+          const fileId = getFileId(file)
+          const driveId = file.driveId ?? null
           const query = driveId
             ? buildSharedDriveFileOrFolderByIdQuery({ fileId, driveId })
             : buildFileOrFolderByIdQuery(fileId)

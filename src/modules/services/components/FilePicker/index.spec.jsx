@@ -301,6 +301,25 @@ describe('FilePicker', () => {
     )
   })
 
+  it('should pass selected file objects when confirming an action', async () => {
+    const { getByTestId } = setup()
+
+    fireEvent.click(getByTestId('select-file-btn'))
+    fireEvent.click(getByTestId('temporary-download-link-btn'))
+
+    await waitFor(() =>
+      expect(mockOnChange).toHaveBeenCalledWith(
+        {
+          _id: 'file-id',
+          type: 'file',
+          name: 'file.pdf',
+          size: 1024
+        },
+        filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK
+      )
+    )
+  })
+
   it('should ignore a second public-link confirmation while the first is in-flight', async () => {
     let resolveFirst
     mockOnChange.mockReturnValue(
