@@ -6,10 +6,10 @@ import { useI18n } from 'twake-i18n'
 
 import { filePickerSections } from './constants'
 
-export const EmptyMessage = ({ section }) => {
+export const EmptyMessage = ({ section, isRoot }) => {
   const { t } = useI18n()
   const messageKey =
-    section === filePickerSections.SHARINGS
+    section === filePickerSections.SHARINGS && isRoot
       ? 'empty.sharing_text'
       : 'empty.title'
 
@@ -25,5 +25,10 @@ export const EmptyMessage = ({ section }) => {
 }
 
 EmptyMessage.propTypes = {
-  section: PropTypes.oneOf(Object.values(filePickerSections)).isRequired
+  section: PropTypes.oneOf(Object.values(filePickerSections)).isRequired,
+  isRoot: PropTypes.bool
+}
+
+EmptyMessage.defaultProps = {
+  isRoot: false
 }
