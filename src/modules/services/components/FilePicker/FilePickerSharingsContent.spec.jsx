@@ -47,7 +47,8 @@ function renderFilePickerContent(source) {
 function setup({
   allLoaded = true,
   filteredResult = { data: [], fetchStatus: 'loaded', lastFetch: 1 },
-  sharedDrivesLoaded = true
+  sharedDrivesLoaded = true,
+  sharedDocumentIds = ['shared-id', 'duplicate']
 } = {}) {
   useSharingContext.mockReturnValue({
     allLoaded,
@@ -70,6 +71,7 @@ function setup({
     ...render(
       <FilePickerSharingsContent
         rootBreadcrumbPath={rootBreadcrumbPath}
+        sharedDocumentIds={sharedDocumentIds}
         renderFilePickerContent={renderFilePickerContent}
       />
     )

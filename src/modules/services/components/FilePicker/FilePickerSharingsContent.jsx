@@ -1,5 +1,4 @@
 import PropTypes from 'prop-types'
-import { useMemo } from 'react'
 
 import { isSharingShortcutNew } from 'cozy-client/dist/models/file'
 import { useSharingContext } from 'cozy-sharing'
@@ -13,10 +12,10 @@ import {
 
 export const FilePickerSharingsContent = ({
   renderFilePickerContent,
-  rootBreadcrumbPath
+  rootBreadcrumbPath,
+  sharedDocumentIds
 }) => {
-  const { allLoaded, byDocId } = useSharingContext()
-  const sharedDocumentIds = useMemo(() => Object.keys(byDocId ?? {}), [byDocId])
+  const { allLoaded } = useSharingContext()
   const sharingsResult = useSharingsQueryResult(sharedDocumentIds, allLoaded)
   const { filteredResult, sharedDrivesLoaded, sharedDrivesError } =
     useFilteredSharings({
@@ -47,5 +46,6 @@ FilePickerSharingsContent.propTypes = {
   rootBreadcrumbPath: PropTypes.shape({
     id: PropTypes.string.isRequired,
     name: PropTypes.string.isRequired
-  }).isRequired
+  }).isRequired,
+  sharedDocumentIds: PropTypes.arrayOf(PropTypes.string).isRequired
 }
