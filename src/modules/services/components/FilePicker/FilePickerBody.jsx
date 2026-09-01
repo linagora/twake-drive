@@ -8,10 +8,10 @@ import { useSharingContext } from 'cozy-sharing'
 import Alert from 'cozy-ui/transpiled/react/Alert'
 import Box from 'cozy-ui/transpiled/react/Box'
 import ListItemSkeleton from 'cozy-ui/transpiled/react/Skeletons/ListItemSkeleton'
-import Typography from 'cozy-ui/transpiled/react/Typography'
 import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import { useI18n } from 'twake-i18n'
 
+import { EmptyMessage } from './EmptyMessage'
 import FilePickerBreadcrumb from './FilePickerBreadcrumb'
 import { FilePickerSharingsContent } from './FilePickerSharingsContent'
 import { FilePickerTable } from './FilePickerTable'
@@ -103,11 +103,6 @@ const FilePickerContent = ({
     [handleMobileToggleSelect, navigateTo]
   )
 
-  const emptyMessageKey =
-    section === filePickerSections.SHARINGS
-      ? 'empty.sharing_text'
-      : 'empty.title'
-
   return (
     <Box
       ref={selectionContainerRef}
@@ -154,13 +149,7 @@ const FilePickerContent = ({
           ))}
         </Box>
       ) : items.length === 0 ? (
-        <Typography
-          className="u-ta-center u-pa-2"
-          color="textSecondary"
-          data-testid="file-picker-empty"
-        >
-          {t(emptyMessageKey)}
-        </Typography>
+        <EmptyMessage section={section} />
       ) : (
         <FilePickerTable
           items={items}
