@@ -149,6 +149,14 @@
     }
   },
   "permissions": {
+    "banners": {
+      "description": "Required by the cozy-bar to display platform messages",
+      "type": "io.cozy.banners",
+      "verbs": [
+        "GET",
+        "PUT"
+      ]
+    },
     "files": {
       "description": "Required to access the files",
       "type": "io.cozy.files",
