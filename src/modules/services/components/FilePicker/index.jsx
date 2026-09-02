@@ -24,6 +24,7 @@ import {
   filePickerLinkModes,
   filePickerSections,
   filePickerThemes,
+  FILE_PICKER_RECENTS_ROOT_ID,
   FILE_PICKER_SHARINGS_ROOT_ID
 } from './constants'
 import { getActionDisabledState } from './constraints'
@@ -36,6 +37,12 @@ const LinkAccessModal = lazy(() =>
 )
 
 export const ROOT_DIR_ID = 'io.cozy.files.root-dir'
+
+const sectionRootIds = {
+  [filePickerSections.DRIVE]: ROOT_DIR_ID,
+  [filePickerSections.RECENTS]: FILE_PICKER_RECENTS_ROOT_ID,
+  [filePickerSections.SHARINGS]: FILE_PICKER_SHARINGS_ROOT_ID
+}
 
 const FilePicker = ({
   onChange,
@@ -58,6 +65,8 @@ const FilePicker = ({
     useSelectionContext()
   const { showAlert } = useAlert()
   const isProcessingRef = useRef(false)
+  // FilePickerBody is remounted when switching sections, but readiness is notified once per picker.
+  const readyNotifiedRef = useRef(false)
   const [busyLinkMode, setBusyLinkMode] = useState(null)
   const itemsIdsSelected = useMemo(
     () => selectedItems.map(item => item._id),
@@ -93,15 +102,19 @@ const FilePicker = ({
     setIsSectionChanging(false)
   }, [])
 
+  // Keep the callback stable so FilePickerBody's readiness effect does not rerun on unrelated renders.
+  const handleReadyToUse = useCallback(() => {
+    if (readyNotifiedRef.current) return
+    readyNotifiedRef.current = true
+    onReadyToUse?.()
+  }, [onReadyToUse])
+
   const handleSectionChange = section => {
     setError(null)
     setIsSectionChanging(true)
     setLocation({
       section,
-      folderId:
-        section === filePickerSections.DRIVE
-          ? ROOT_DIR_ID
-          : FILE_PICKER_SHARINGS_ROOT_ID,
+      folderId: sectionRootIds[section],
       driveId: null
     })
     clearSelection()
@@ -265,7 +278,7 @@ const FilePicker = ({
             multiple={multiple}
             folderSelectable
             error={error}
-            onReadyToUse={onReadyToUse}
+            onReadyToUse={handleReadyToUse}
             onFileDoubleClick={handleFileDoubleClick}
           />
         </Box>

@@ -805,6 +805,10 @@
   "FilePicker": {
     "linkTitle": "Link for %{name}",
     "close": "Close",
+    "recents": {
+      "empty": "No recent files.",
+      "error": "Unable to load recent files."
+    },
     "footer": {
       "buttons": {
         "cancel": "Cancel",

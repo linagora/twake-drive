@@ -130,7 +130,8 @@ export const FilePickerTable = memo(
     isItemDisabled,
     fetchMore,
     scrollerRef,
-    virtuosoRef
+    virtuosoRef,
+    withFilePath
   }) => {
     const { t } = useI18n()
     const { isMobile } = useBreakpoints()
@@ -148,11 +149,14 @@ export const FilePickerTable = memo(
       () => ({
         rowContent: {
           children: (
-            <FilePickerTableCell selectionModeActive={selectionModeActive} />
+            <FilePickerTableCell
+              selectionModeActive={selectionModeActive}
+              withFilePath={withFilePath}
+            />
           )
         }
       }),
-      [selectionModeActive]
+      [selectionModeActive, withFilePath]
     )
 
     const isSelectedItem = item => {
@@ -216,5 +220,6 @@ FilePickerTable.propTypes = {
   isItemDisabled: PropTypes.func.isRequired,
   fetchMore: PropTypes.func,
   scrollerRef: PropTypes.func,
-  virtuosoRef: PropTypes.object
+  virtuosoRef: PropTypes.object,
+  withFilePath: PropTypes.bool
 }

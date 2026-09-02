@@ -10,7 +10,8 @@ import { useI18n } from 'twake-i18n'
 
 import {
   getFileNameAndExtension,
-  makeFileMetadata
+  makeFileMetadata,
+  makeParentFolderPath
 } from '@/modules/filelist/helpers'
 import FileThumbnail from '@/modules/filelist/icons/FileThumbnail'
 import { useFormattedUpdatedAt } from '@/modules/filelist/useFormattedUpdatedAt'
@@ -18,7 +19,7 @@ import SizeCell from '@/modules/filelist/virtualized/cells/columns/SizeCell'
 import UpdatedAtCell from '@/modules/filelist/virtualized/cells/columns/UpdatedAtCell'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 
-const FilePickerNameCell = ({ row, selectionModeActive }) => {
+const FilePickerNameCell = ({ row, selectionModeActive, withFilePath }) => {
   const { t } = useI18n()
   const { isMobile } = useBreakpoints()
   const { isItemSelected } = useSelectionContext()
@@ -31,8 +32,9 @@ const FilePickerNameCell = ({ row, selectionModeActive }) => {
     !isFolder && row.size !== null && row.size !== undefined
       ? filesize(row.size, { base: 10 })
       : null
-  const metadata =
-    isMobile && !isFolder
+  const metadata = withFilePath
+    ? makeParentFolderPath(row) || null
+    : isMobile && !isFolder
       ? makeFileMetadata(formattedUpdatedAt ?? '—', formattedSize ?? '—')
       : null
 
@@ -69,15 +71,25 @@ const FilePickerNameCell = ({ row, selectionModeActive }) => {
 
 FilePickerNameCell.propTypes = {
   row: PropTypes.object.isRequired,
-  selectionModeActive: PropTypes.bool.isRequired
+  selectionModeActive: PropTypes.bool.isRequired,
+  withFilePath: PropTypes.bool
 }
 
-export const FilePickerTableCell = ({ column, row, selectionModeActive }) => {
+export const FilePickerTableCell = ({
+  column,
+  row,
+  selectionModeActive,
+  withFilePath
+}) => {
   if (!column || !row) return null
 
   if (column.id === 'name') {
     return (
-      <FilePickerNameCell row={row} selectionModeActive={selectionModeActive} />
+      <FilePickerNameCell
+        row={row}
+        selectionModeActive={selectionModeActive}
+        withFilePath={withFilePath}
+      />
     )
   }
   if (column.id === 'updated_at') {
@@ -95,5 +107,6 @@ FilePickerTableCell.propTypes = {
     id: PropTypes.string.isRequired
   }),
   row: PropTypes.object,
-  selectionModeActive: PropTypes.bool
+  selectionModeActive: PropTypes.bool,
+  withFilePath: PropTypes.bool
 }

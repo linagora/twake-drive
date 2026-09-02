@@ -17,9 +17,11 @@ export const filePickerLinkModes = {
 
 export const filePickerSections = {
   DRIVE: 'drive',
+  RECENTS: 'recents',
   SHARINGS: 'sharings'
 }
 
+export const FILE_PICKER_RECENTS_ROOT_ID = 'file-picker-recents-root'
 export const FILE_PICKER_SHARINGS_ROOT_ID = 'file-picker-sharings-root'
 
 export const filePickerThemes = ['light', 'dark']

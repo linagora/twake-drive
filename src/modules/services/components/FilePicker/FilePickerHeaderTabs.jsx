@@ -1,4 +1,9 @@
-import { Cloud2, Icon, ShareExternal } from '@linagora/twake-icons'
+import {
+  ClockOutline,
+  Cloud2,
+  Icon,
+  ShareExternal
+} from '@linagora/twake-icons'
 import cx from 'classnames'
 import PropTypes from 'prop-types'
 import React from 'react'
@@ -15,6 +20,11 @@ const navigationItems = [
     icon: Cloud2,
     labelKey: 'Nav.item_drive',
     value: filePickerSections.DRIVE
+  },
+  {
+    icon: ClockOutline,
+    labelKey: 'Nav.item_recent',
+    value: filePickerSections.RECENTS
   },
   {
     icon: ShareExternal,

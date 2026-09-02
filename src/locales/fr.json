@@ -802,6 +802,10 @@
   "FilePicker": {
     "linkTitle": "Lien pour %{name}",
     "close": "Fermer",
+    "recents": {
+      "empty": "Aucun fichier récent.",
+      "error": "Impossible de charger les fichiers récents."
+    },
     "footer": {
       "buttons": {
         "cancel": "Annuler",
