@@ -1,5 +1,7 @@
 import type { Page, Locator } from '@playwright/test'
 
+import { expect } from '../helpers/fixtures'
+
 /**
  * Drives the "share by link" flow inside the share modal.
  *
@@ -46,14 +48,13 @@ export class ShareByLinkPage {
     // The link is generated asynchronously and only then copied, so poll
     // until the clipboard holds a URL different from the previous one.
     let text = ''
-    const start = Date.now()
-    while (Date.now() - start < 15_000) {
+    await expect(async (): Promise<void> => {
       text = await this.page.evaluate(() =>
         navigator.clipboard.readText().catch(() => '')
       )
-      if (/^https?:\/\//.test(text) && text !== previousUrl) break
-      await this.page.waitForTimeout(100)
-    }
+      expect(text).toMatch(/^https?:\/\//)
+      expect(text).not.toBe(previousUrl)
+    }).toPass({ intervals: [100], timeout: 15_000 })
     return text
   }
 
@@ -88,9 +89,7 @@ export class ShareByLinkPage {
 
   /** Confirm the restriction modal and wait for it to close. */
   async confirm(): Promise<void> {
-    await this.restrictionModal
-      .getByRole('button', { name: 'Confirm' })
-      .click()
+    await this.restrictionModal.getByRole('button', { name: 'Confirm' }).click()
     await this.restrictionModal.waitFor({ state: 'hidden', timeout: 15_000 })
   }
 }

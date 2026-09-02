@@ -1,6 +1,7 @@
 import type { FrameLocator, Locator, Page } from '@playwright/test'
 
 import { USERS, type User } from '../helpers/config'
+import { expect } from '../helpers/fixtures'
 
 export type LinkAccessLevel = 'Viewer' | 'Editor'
 
@@ -99,19 +100,22 @@ export class FilePickerPage {
     const item = this.getListItemByName(name)
     const scroller = this.getFrameLocator().getByTestId('virtuoso-scroller')
 
-    for (let attempt = 0; attempt < 100; attempt += 1) {
-      if ((await item.count()) > 0) {
-        await item.scrollIntoViewIfNeeded()
-        return
-      }
+    await expect
+      .poll(
+        async (): Promise<number> => {
+          const count = await item.count()
+          if (count === 0) {
+            await scroller.evaluate((element: HTMLElement) => {
+              element.scrollTop += element.clientHeight
+            })
+          }
+          return count
+        },
+        { intervals: [50], timeout: 5_000 }
+      )
+      .toBeGreaterThan(0)
 
-      await scroller.evaluate((element: HTMLElement) => {
-        element.scrollTop += element.clientHeight
-      })
-      await this.page.waitForTimeout(50)
-    }
-
-    await item.waitFor({ state: 'visible' })
+    await item.scrollIntoViewIfNeeded()
   }
 
   async navigateToFolderOnMobile(name: string): Promise<void> {
