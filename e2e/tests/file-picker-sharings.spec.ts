@@ -20,6 +20,7 @@ test.describe.serial('File Picker Sharings', () => {
   const rootName = `PickerShare-${stamp()}`
   const nestedName = `PickerNested-${stamp()}`
   const fileName = `picker-shared-${stamp()}.txt`
+  const recentFileName = `picker-recent-${stamp()}.txt`
 
   test.beforeAll(async ({ browser, contextOptions }) => {
     const aliceContext = await browser.newContext(contextOptions)
@@ -54,6 +55,16 @@ test.describe.serial('File Picker Sharings', () => {
         await safeUnlink(tmpPath)
       }
 
+      await bobPage.goto(`${USERS.bob.appUrl}/#/folder`)
+      const recentTmpPath = path.join(path.dirname(FIXTURE), recentFileName)
+      await copyFile(FIXTURE, recentTmpPath)
+      try {
+        await bobDrive.uploadFiles(recentTmpPath)
+        await bobDrive.row(recentFileName).waitVisible()
+      } finally {
+        await safeUnlink(recentTmpPath)
+      }
+
       await openSharedDrive(bobPage, USERS.bob, bobDrive, rootName)
     } finally {
       await aliceContext.close()
@@ -75,15 +86,28 @@ test.describe.serial('File Picker Sharings', () => {
         .getByTestId('list-item')
         .filter({ has: frame.getByTitle(name, { exact: true }) })
     const breadcrumb = frame.getByTestId('file-picker-breadcrumb')
+    const tabs = frame.getByRole('tab')
     const myDriveTab = frame.getByRole('tab', { name: /My Drive/i })
+    const recentsTab = frame.getByRole('tab', { name: /Recents/i })
     const sharingsTab = frame.getByRole('tab', { name: /Sharings/i })
     const publicLinkButton = frame.getByTestId('public-link-btn')
     const downloadLinkButton = frame.getByTestId('temporary-download-link-btn')
 
+    await expect(tabs).toHaveCount(3)
+    expect(await tabs.allTextContents()).toEqual([
+      'My Drive',
+      'Recents',
+      'Sharings'
+    ])
     await expect(myDriveTab).toHaveAttribute('aria-selected', 'true')
-    await expect(sharingsTab).toBeVisible()
     await expect(breadcrumb).toContainText('My Drive')
     await expect(downloadLinkButton).toBeDisabled()
+
+    await recentsTab.click()
+    await expect(recentsTab).toHaveAttribute('aria-selected', 'true')
+    await expect(breadcrumb).toHaveText('Recents')
+    await expect(breadcrumb.getByRole('button')).toHaveCount(0)
+    await expect(row(recentFileName)).toBeVisible()
 
     await sharingsTab.click()
     await expect(sharingsTab).toHaveAttribute('aria-selected', 'true')

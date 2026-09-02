@@ -12,7 +12,11 @@ import { filePickerSections } from './constants'
 import Drive from '@/components/Icons/Drive'
 import DriveText from '@/components/Icons/DriveText'
 
-const FilePickerHeader = ({ activeSection, onSectionChange, onClose }) => {
+export const FilePickerHeader = ({
+  activeSection,
+  onSectionChange,
+  onClose
+}) => {
   const { t } = useI18n()
 
   return (

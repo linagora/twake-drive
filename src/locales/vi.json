@@ -769,6 +769,10 @@
   "FilePicker": {
     "linkTitle": "Liên kết cho %{name}",
     "close": "Đóng",
+    "recents": {
+      "empty": "Không có tệp gần đây.",
+      "error": "Không thể tải các tệp gần đây."
+    },
     "footer": {
       "buttons": {
         "cancel": "Hủy",

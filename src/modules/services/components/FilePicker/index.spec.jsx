@@ -5,6 +5,7 @@ import {
   filePickerDoubleClickResults,
   filePickerLinkModes,
   filePickerSections,
+  FILE_PICKER_RECENTS_ROOT_ID,
   FILE_PICKER_SHARINGS_ROOT_ID
 } from './constants'
 import FilePicker from './index'
@@ -35,6 +36,13 @@ jest.mock('./FilePickerHeader', () => ({ activeSection, onSectionChange }) => (
       onClick={() => onSectionChange('drive')}
     >
       Drive
+    </button>
+    <button
+      type="button"
+      data-testid="recents-section-btn"
+      onClick={() => onSectionChange('recents')}
+    >
+      Recents
     </button>
     <button
       type="button"
@@ -78,7 +86,8 @@ jest.mock('./FilePickerBody', () => {
     onFileDoubleClick,
     error,
     section,
-    folderId
+    folderId,
+    onReadyToUse
   }) => {
     const { setSelectedItems } = useSelectionContext()
 
@@ -89,6 +98,9 @@ jest.mock('./FilePickerBody', () => {
         <span data-testid="folder-selectable">
           {folderSelectable ? 'true' : 'false'}
         </span>
+        <button type="button" onClick={onReadyToUse}>
+          Ready
+        </button>
         {error && <div data-testid="file-picker-error">{error}</div>}
         <button
           type="button"
@@ -219,6 +231,7 @@ describe('FilePicker', () => {
     multiple = false,
     onFileDoubleClick,
     onClose,
+    onReadyToUse,
     accept
   } = {}) => {
     return render(
@@ -227,6 +240,7 @@ describe('FilePicker', () => {
           onChange={mockOnChange}
           onFileDoubleClick={onFileDoubleClick ?? mockOnFileDoubleClick}
           onClose={onClose ?? mockOnClose}
+          onReadyToUse={onReadyToUse}
           filePickerConfig={filePickerConfig}
           multiple={multiple}
           accept={accept}
@@ -419,15 +433,23 @@ describe('FilePicker', () => {
       filePickerSections.DRIVE
     )
     fireEvent.click(getByTestId('select-file-btn'))
-    fireEvent.click(getByTestId('sharings-section-btn'))
+    fireEvent.click(getByTestId('recents-section-btn'))
 
+    expect(getByTestId('body-section')).toHaveTextContent(
+      filePickerSections.RECENTS
+    )
+    expect(getByTestId('body-folder-id')).toHaveTextContent(
+      FILE_PICKER_RECENTS_ROOT_ID
+    )
+    expect(getByTestId('public-link-btn')).toBeDisabled()
+
+    fireEvent.click(getByTestId('sharings-section-btn'))
     expect(getByTestId('body-section')).toHaveTextContent(
       filePickerSections.SHARINGS
     )
     expect(getByTestId('body-folder-id')).toHaveTextContent(
       FILE_PICKER_SHARINGS_ROOT_ID
     )
-    expect(getByTestId('public-link-btn')).toBeDisabled()
 
     fireEvent.click(getByTestId('navigate-folder-btn'))
     fireEvent.click(getByTestId('drive-section-btn'))
@@ -435,6 +457,18 @@ describe('FilePicker', () => {
     expect(getByTestId('body-folder-id')).toHaveTextContent(
       FILE_PICKER_SHARINGS_ROOT_ID
     )
+  })
+
+  it('notifies readiness only once across section remounts', () => {
+    const onReadyToUse = jest.fn()
+    const { getByRole, getByTestId } = setup({ onReadyToUse })
+
+    fireEvent.click(getByRole('button', { name: 'Ready' }))
+    fireEvent.click(getByTestId('recents-section-btn'))
+    fireEvent.click(getByTestId('drive-section-btn'))
+    fireEvent.click(getByRole('button', { name: 'Ready' }))
+
+    expect(onReadyToUse).toHaveBeenCalledTimes(1)
   })
 
   it('should clear selection when navigating to another folder', () => {

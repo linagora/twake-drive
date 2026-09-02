@@ -24,6 +24,22 @@ const renderBreadcrumb = ({ path, isMobile = false } = {}) => {
 }
 
 describe('FilePickerBreadcrumb', () => {
+  it.each([false, true])(
+    'renders a single Recents segment without navigation on mobile=%s',
+    isMobile => {
+      const { onBreadcrumbClick } = renderBreadcrumb({
+        isMobile,
+        path: [{ id: 'recents-root', name: 'Recents' }]
+      })
+
+      expect(screen.getByTestId('file-picker-breadcrumb')).toHaveTextContent(
+        'Recents'
+      )
+      expect(screen.queryByRole('button')).toBe(null)
+      expect(onBreadcrumbClick).not.toHaveBeenCalled()
+    }
+  )
+
   it('renders previous desktop segments as navigation buttons', () => {
     const sharingsRoot = { id: 'sharings-root', name: 'Sharings' }
     const { onBreadcrumbClick } = renderBreadcrumb({

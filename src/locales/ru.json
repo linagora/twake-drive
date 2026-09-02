@@ -769,6 +769,10 @@
   "FilePicker": {
     "linkTitle": "Ссылка для %{name}",
     "close": "Закрыть",
+    "recents": {
+      "empty": "Нет недавних файлов.",
+      "error": "Не удалось загрузить недавние файлы."
+    },
     "footer": {
       "buttons": {
         "cancel": "Отменить",

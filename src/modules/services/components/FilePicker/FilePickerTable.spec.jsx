@@ -19,17 +19,19 @@ jest.mock('cozy-ui/transpiled/react/Table/Virtualized', () => {
     ({ rows, context, components, isSelectedItem }, ref) => {
       const TableRow = components.TableRow
       return (
-        <table ref={ref}>
-          <tbody>
-            {rows.map(row => (
-              <TableRow
-                key={row._id}
-                item={row}
-                context={{ ...context, isSelectedItem }}
-              />
-            ))}
-          </tbody>
-        </table>
+        <div data-testid="virtuoso-scroller">
+          <table ref={ref}>
+            <tbody>
+              {rows.map(row => (
+                <TableRow
+                  key={row._id}
+                  item={row}
+                  context={{ ...context, isSelectedItem }}
+                />
+              ))}
+            </tbody>
+          </table>
+        </div>
       )
     }
   )
@@ -42,16 +44,16 @@ const items = [
   { _id: 'pending-id', name: 'Pending' }
 ]
 
-function setup({ isMobile = false } = {}) {
+function setup({ isMobile = false, tableItems = items } = {}) {
   const onItemClick = jest.fn()
   const onItemToggle = jest.fn()
   const onItemDoubleClick = jest.fn()
   useBreakpoints.mockReturnValue({ isMobile })
   useI18n.mockReturnValue({ t: key => key })
 
-  render(
+  const view = render(
     <FilePickerTable
-      items={items}
+      items={tableItems}
       itemsIdsSelected={[]}
       isItemDisabled={item => item._id === 'pending-id'}
       onItemClick={onItemClick}
@@ -60,7 +62,7 @@ function setup({ isMobile = false } = {}) {
     />
   )
 
-  return { onItemClick, onItemToggle, onItemDoubleClick }
+  return { ...view, onItemClick, onItemToggle, onItemDoubleClick }
 }
 
 describe('FilePickerTable', () => {
@@ -83,6 +85,33 @@ describe('FilePickerTable', () => {
     fireEvent.doubleClick(enabledRow)
     expect(onItemClick).toHaveBeenCalledTimes(1)
     expect(onItemDoubleClick).toHaveBeenCalledTimes(1)
+  })
+
+  it('preserves the virtual scroller while a long list is enriched', () => {
+    const initialItems = Array.from({ length: 100 }, (_, index) => ({
+      _id: `file-${index}`,
+      name: `File ${index}`
+    }))
+    const enrichedItems = [
+      { _id: 'federated-file', name: 'Federated file' },
+      ...initialItems
+    ]
+    const props = {
+      itemsIdsSelected: [],
+      isItemDisabled: () => false,
+      onItemClick: jest.fn(),
+      onItemToggle: jest.fn(),
+      onItemDoubleClick: jest.fn()
+    }
+    const { rerender } = setup({ tableItems: initialItems })
+    const scroller = screen.getByTestId('virtuoso-scroller')
+    scroller.scrollTop = 480
+
+    rerender(<FilePickerTable {...props} items={enrichedItems} />)
+
+    expect(screen.getByTestId('virtuoso-scroller')).toBe(scroller)
+    expect(scroller.scrollTop).toBe(480)
+    expect(screen.getAllByTestId('list-item')).toHaveLength(101)
   })
 
   it('blocks mobile tap and long press on disabled rows', () => {

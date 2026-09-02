@@ -6,7 +6,11 @@ import { useSharingContext } from 'cozy-sharing'
 import { useI18n } from 'twake-i18n'
 
 import FilePickerBody from './FilePickerBody'
-import { filePickerSections, FILE_PICKER_SHARINGS_ROOT_ID } from './constants'
+import {
+  filePickerSections,
+  FILE_PICKER_RECENTS_ROOT_ID,
+  FILE_PICKER_SHARINGS_ROOT_ID
+} from './constants'
 
 import { useBreadcrumbPath } from '@/modules/breadcrumb/hooks/useBreadcrumbPath'
 import { useSharedDriveFolder } from '@/modules/shareddrives/hooks/useSharedDriveFolder'
@@ -31,8 +35,19 @@ jest.mock('./queries', () => ({
     options: { as: folderId }
   })
 }))
+let mockRecentsSource = null
+const mockFilePickerRecentsContent = jest.fn(props =>
+  mockRecentsSource ? (
+    props.renderContent(mockRecentsSource)
+  ) : (
+    <div>Recents root</div>
+  )
+)
 const mockFilePickerSharingsContent = jest.fn(() => <div>Sharings root</div>)
 
+jest.mock('./FilePickerRecentsContent', () => ({
+  FilePickerRecentsContent: props => mockFilePickerRecentsContent(props)
+}))
 jest.mock('./FilePickerSharingsContent', () => ({
   FilePickerSharingsContent: props => mockFilePickerSharingsContent(props)
 }))
@@ -45,7 +60,7 @@ jest.mock('./useFilePickerSelection', () => ({
 }))
 jest.mock('./FilePickerTable', () => ({
   FilePickerTable: ({ items, fetchMore, isItemDisabled }) => (
-    <div>
+    <div data-testid="file-picker-table">
       {items.map(item => (
         <button
           key={item._id}
@@ -78,8 +93,22 @@ const baseProps = {
   folderSelectable: true
 }
 
+const makeRecentsSource = overrides => ({
+  items: [],
+  fetchStatus: 'loaded',
+  hasMore: false,
+  fetchMore: null,
+  breadcrumbPath: [
+    { id: FILE_PICKER_RECENTS_ROOT_ID, name: 'Nav.item_recent' }
+  ],
+  isItemDisabled: () => false,
+  isFetchingMore: false,
+  ...overrides
+})
+
 describe('FilePickerBody', () => {
   beforeEach(() => {
+    mockRecentsSource = null
     useI18n.mockReturnValue({ t: key => key })
     useSharingContext.mockReturnValue({
       allLoaded: true,
@@ -93,6 +122,122 @@ describe('FilePickerBody', () => {
   })
 
   afterEach(() => jest.clearAllMocks())
+
+  it('delegates the Recents root without running folder queries', () => {
+    render(
+      <FilePickerBody
+        {...baseProps}
+        section={filePickerSections.RECENTS}
+        folderId={FILE_PICKER_RECENTS_ROOT_ID}
+      />
+    )
+
+    expect(mockFilePickerRecentsContent).toHaveBeenCalledWith({
+      rootBreadcrumbPath: {
+        id: FILE_PICKER_RECENTS_ROOT_ID,
+        name: 'Nav.item_recent'
+      },
+      renderContent: expect.any(Function)
+    })
+    expect(useQuery).not.toHaveBeenCalled()
+    expect(useSharedDriveFolder).not.toHaveBeenCalled()
+    expect(useBreadcrumbPath).not.toHaveBeenCalled()
+  })
+
+  it('renders partial Recents while loading and keeps the table on error', () => {
+    const item = { _id: 'recent-id', name: 'Recent file', type: 'file' }
+    mockRecentsSource = makeRecentsSource({
+      items: [item],
+      fetchStatus: 'loading',
+      withFilePath: true,
+      isFetchingMore: true,
+      keepItemsOnError: true,
+      emptyMessageKey: 'FilePicker.recents.empty',
+      errorMessageKey: 'FilePicker.recents.error'
+    })
+
+    const { rerender } = render(
+      <FilePickerBody
+        {...baseProps}
+        section={filePickerSections.RECENTS}
+        folderId={FILE_PICKER_RECENTS_ROOT_ID}
+      />
+    )
+
+    expect(screen.getByTestId('file-picker-loading-more')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Recent file:local' })
+    ).toBeInTheDocument()
+    expect(screen.queryByTestId('file-picker-loading')).toBe(null)
+
+    mockRecentsSource = {
+      ...mockRecentsSource,
+      fetchStatus: 'error',
+      isFetchingMore: false
+    }
+    rerender(
+      <FilePickerBody
+        {...baseProps}
+        section={filePickerSections.RECENTS}
+        folderId={FILE_PICKER_RECENTS_ROOT_ID}
+      />
+    )
+
+    expect(
+      screen.getByRole('button', { name: 'Recent file:local' })
+    ).toBeInTheDocument()
+    expect(screen.queryByTestId('file-picker-loading-more')).toBe(null)
+    expect(screen.queryByTestId('file-picker-source-error')).toBe(null)
+  })
+
+  it.each([
+    ['loading', 'file-picker-loading', null],
+    ['loaded', 'file-picker-empty', 'FilePicker.recents.empty'],
+    ['error', 'file-picker-source-error', 'FilePicker.recents.error']
+  ])(
+    'renders the Recents %s state without results',
+    (fetchStatus, testId, text) => {
+      mockRecentsSource = makeRecentsSource({
+        fetchStatus,
+        emptyMessageKey: 'FilePicker.recents.empty',
+        errorMessageKey: 'FilePicker.recents.error'
+      })
+
+      render(
+        <FilePickerBody
+          {...baseProps}
+          section={filePickerSections.RECENTS}
+          folderId={FILE_PICKER_RECENTS_ROOT_ID}
+        />
+      )
+
+      const state = screen.getByTestId(testId)
+      expect(state).toBeInTheDocument()
+      if (text) expect(state).toHaveTextContent(text)
+    }
+  )
+
+  it('shows partial Recents while a section change is completing', () => {
+    const onSectionReady = jest.fn()
+    mockRecentsSource = makeRecentsSource({
+      items: [{ _id: 'recent-id', name: 'Recent file', type: 'file' }],
+      fetchStatus: 'loading',
+      isFetchingMore: true
+    })
+
+    render(
+      <FilePickerBody
+        {...baseProps}
+        section={filePickerSections.RECENTS}
+        folderId={FILE_PICKER_RECENTS_ROOT_ID}
+        isSectionChanging
+        onSectionReady={onSectionReady}
+      />
+    )
+
+    expect(screen.queryByTestId('source-item')).toBe(null)
+    expect(onSectionReady).toHaveBeenCalledTimes(1)
+  })
 
   it('delegates the Sharings root without running folder queries', () => {
     render(
