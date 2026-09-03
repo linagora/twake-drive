@@ -1,4 +1,4 @@
-import { isValidFile, isValidFolder, getCompliantTypes } from './helpers'
+import { isValidFile, getCompliantTypes } from './helpers'
 
 const makeMockFile = ({
   extension = '.pdf',
@@ -106,21 +106,5 @@ describe('isValidFile', () => {
     const validTypesAccepted = ['.pdf', 'image/*']
 
     expect(isValidFile(item, validTypesAccepted)).toBe(true)
-  })
-})
-
-describe('isValidFolder', () => {
-  it('should be valid when item is an folder', () => {
-    const item = makeMockFolder()
-    const validTypesAccepted = ['folder']
-
-    expect(isValidFolder(item, validTypesAccepted)).toBe(true)
-  })
-
-  it('should not be valid when item is not an folder', () => {
-    const item = makeMockFile()
-    const validTypesAccepted = ['folder']
-
-    expect(isValidFolder(item, validTypesAccepted)).toBe(false)
   })
 })
