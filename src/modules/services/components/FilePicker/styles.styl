@@ -15,24 +15,6 @@
 .filePickerBreadcrumb-icon
     color var(--actionColorActive)
 
-@supports (display: contents) // @stylint ignore
-    .filePickerBreadcrumb-wrapper
-        display contents
-
-@supports not (display: contents) // @stylint ignore
-    .filePickerBreadcrumb-wrapper
-        display flex
-        flex 1 1 auto
-        align-items center
-        width 100%
-
-.verticalDivider
-    height 2rem
-    display flex
-    align-self auto
-    align-items center
-    margin-left .5rem
-
 .filePickerSelectionContainer
     user-select none
 
