@@ -36,17 +36,13 @@ export const useFilePickerSelection = ({
   )
 
   const selectedItemsById = useMemo(
-    () =>
-      selectedItems.reduce((acc, item) => {
-        acc[item._id] = item
-        return acc
-      }, {}),
+    () => Object.fromEntries(selectedItems.map(item => [item._id, item])),
     [selectedItems]
   )
 
   const selectedItemIds = useMemo(
-    () => selectedItems.map(item => item._id),
-    [selectedItems]
+    () => Object.keys(selectedItemsById),
+    [selectedItemsById]
   )
 
   const { setLastInteractedItem, onShiftClick } = useShiftSelection(
