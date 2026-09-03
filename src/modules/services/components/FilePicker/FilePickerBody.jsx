@@ -335,7 +335,6 @@ const FilePickerBody = ({
 }) => {
   const { t } = useI18n()
   const { allLoaded, byDocId, isOwner } = useSharingContext()
-  const readyNotified = useRef(false)
   const sharedDocumentIds = useMemo(() => Object.keys(byDocId ?? {}), [byDocId])
   const rootBreadcrumbPath = useMemo(() => {
     if (section === filePickerSections.DRIVE) {
@@ -355,12 +354,6 @@ const FilePickerBody = ({
 
   const isItemDisabled =
     section === filePickerSections.SHARINGS ? isSharingShortcutNew : () => false
-
-  const handleDriveReady = useCallback(() => {
-    if (readyNotified.current) return
-    readyNotified.current = true
-    onReadyToUse?.()
-  }, [onReadyToUse])
 
   const renderFilePickerContent = source => (
     <FilePickerContent
@@ -424,9 +417,7 @@ const FilePickerBody = ({
       filterReceivedShares={section === filePickerSections.DRIVE}
       allLoaded={allLoaded === true}
       isOwner={isOwner}
-      onReady={
-        section === filePickerSections.DRIVE ? handleDriveReady : undefined
-      }
+      onReady={section === filePickerSections.DRIVE ? onReadyToUse : undefined}
       renderFilePickerContent={renderFilePickerContent}
     />
   )
