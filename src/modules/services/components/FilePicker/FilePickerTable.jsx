@@ -92,7 +92,6 @@ FilePickerTableRow.displayName = 'FilePickerTableRow'
 FilePickerTableRow.propTypes = {
   item: PropTypes.object,
   context: PropTypes.shape({
-    data: PropTypes.array,
     isSelectedItem: PropTypes.func.isRequired,
     isItemDisabled: PropTypes.func.isRequired,
     isMobile: PropTypes.bool.isRequired,
@@ -141,10 +140,6 @@ export const FilePickerTable = memo(
     }, [isMobile, t])
 
     const selectionModeActive = itemsIdsSelected.length > 0
-    const selectedItems = useMemo(
-      () => items.filter(item => itemsIdsSelected.includes(item._id)),
-      [items, itemsIdsSelected]
-    )
     const tableComponentsProps = useMemo(
       () => ({
         rowContent: {
@@ -165,7 +160,6 @@ export const FilePickerTable = memo(
 
     const tableContext = useMemo(
       () => ({
-        data: items,
         isMobile,
         selectionModeActive,
         isItemDisabled,
@@ -176,7 +170,6 @@ export const FilePickerTable = memo(
       [
         isItemDisabled,
         isMobile,
-        items,
         selectionModeActive,
         onItemClick,
         onItemDoubleClick,
@@ -201,7 +194,6 @@ export const FilePickerTable = memo(
           columns={columns}
           endReached={fetchMore}
           scrollerRef={scrollerRef}
-          selectedItems={selectedItems}
           isSelectedItem={isSelectedItem}
           componentsProps={tableComponentsProps}
         />
