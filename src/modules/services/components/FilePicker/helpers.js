@@ -1,6 +1,6 @@
 import mimeTypes from 'mime-types'
 
-import { isDirectory, isFile } from 'cozy-client/dist/models/file'
+import { isFile } from 'cozy-client/dist/models/file'
 
 /**
  * @param {string} types - Types we wish to accept ("folder" and/or "extensions/mime" of file), separated by commas
@@ -63,13 +63,3 @@ export const isValidFile = (item, validTypes) => {
   })
 }
 
-/**
- * Check if Item is a folder with accepted type
- *
- * @param {object} item - file or folder
- * @param {string[]} validTypes - List of accepted types
- * @returns {boolean}
- */
-export const isValidFolder = (item, validTypes) => {
-  return isDirectory(item) && validTypes.includes(`folder`)
-}
