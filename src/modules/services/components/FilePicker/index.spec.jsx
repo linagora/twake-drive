@@ -256,11 +256,6 @@ describe('FilePicker', () => {
     expect(getByTestId('temporary-download-link-btn')).toBeInTheDocument()
   })
 
-  it('should enable folder selection for public link mode', () => {
-    const { getByTestId } = setup()
-
-  })
-
   it('should hide the download link button when the config disables the action', () => {
     const { queryByTestId, getByTestId } = setup({
       filePickerConfig: {

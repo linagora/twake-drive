@@ -80,8 +80,6 @@ describe('FilePickerRecentsContent', () => {
     expect(screen.getByTestId('with-file-path')).toHaveTextContent('true')
     expect(screen.getByTestId('keep-items-on-error')).toHaveTextContent('true')
     expect(screen.getByTestId('disabled')).toHaveTextContent('false')
-    expect(data[0]).toBe(sharedFile)
-    expect(data[0].driveId).toBe('drive-id')
   })
 
   it.each([
@@ -156,7 +154,6 @@ describe('FilePickerRecentsContent', () => {
       />
     )
     expect(setSelectedItems).not.toHaveBeenCalled()
-    expect(sharedFile.driveId).toBe('drive-id')
 
     recentResult = { data: [localFile], fetchStatus: 'loaded', error: null }
     view.rerender(

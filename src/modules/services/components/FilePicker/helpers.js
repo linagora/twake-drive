@@ -62,4 +62,3 @@ export const isValidFile = (item, validTypes) => {
     return false
   })
 }
-
