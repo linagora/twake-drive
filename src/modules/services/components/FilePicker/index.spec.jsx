@@ -55,6 +55,7 @@ jest.mock('./FilePickerHeader', () => ({ activeSection, onSectionChange }) => (
 ))
 
 jest.mock('./FilePickerBody', () => {
+  const React = require('react')
   const {
     useSelectionContext
   } = require('@/modules/selection/SelectionProvider')
@@ -73,6 +74,14 @@ jest.mock('./FilePickerBody', () => {
     size: 2048
   }
 
+  const imageFile = {
+    _id: 'image-file-id',
+    type: 'file',
+    name: 'image.png',
+    size: 1024,
+    mime: 'image/png'
+  }
+
   const folder = {
     _id: 'folder-id',
     id: 'folder-id',
@@ -86,9 +95,17 @@ jest.mock('./FilePickerBody', () => {
     error,
     section,
     folderId,
-    onReadyToUse
+    onReadyToUse,
+    isSectionChanging,
+    onSectionReady
   }) => {
     const { setSelectedItems } = useSelectionContext()
+
+    React.useEffect(() => {
+      if (isSectionChanging) {
+        onSectionReady?.()
+      }
+    }, [isSectionChanging, onSectionReady])
 
     return (
       <div>
@@ -97,6 +114,9 @@ jest.mock('./FilePickerBody', () => {
         <button type="button" onClick={onReadyToUse}>
           Ready
         </button>
+        <span data-testid="body-section-changing">
+          {String(Boolean(isSectionChanging))}
+        </span>
         {error && <div data-testid="file-picker-error">{error}</div>}
         <button
           type="button"
@@ -113,6 +133,13 @@ jest.mock('./FilePickerBody', () => {
           }
         >
           Select second file
+        </button>
+        <button
+          type="button"
+          data-testid="select-image-file-btn"
+          onClick={() => setSelectedItems({ [imageFile._id]: imageFile })}
+        >
+          Select image file
         </button>
         <button
           type="button"
@@ -324,6 +351,57 @@ describe('FilePicker', () => {
     )
   })
 
+  it('should pass all selected file objects in multiple mode', async () => {
+    const { getByTestId } = setup({ multiple: true })
+
+    fireEvent.click(getByTestId('select-second-file-btn'))
+    fireEvent.click(getByTestId('temporary-download-link-btn'))
+
+    await waitFor(() =>
+      expect(mockOnChange).toHaveBeenCalledWith(
+        [
+          {
+            _id: 'file-id',
+            type: 'file',
+            name: 'file.pdf',
+            size: 1024
+          },
+          {
+            _id: 'second-file-id',
+            type: 'file',
+            name: 'second-file.pdf',
+            size: 2048
+          }
+        ],
+        filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK
+      )
+    )
+  })
+
+  it('should pass confirmation errors to the body and retain selection', async () => {
+    mockOnChange.mockResolvedValueOnce('ITEM_NOT_FOUND')
+    const { getByTestId } = setup()
+
+    fireEvent.click(getByTestId('select-file-btn'))
+    fireEvent.click(getByTestId('temporary-download-link-btn'))
+
+    await waitFor(() =>
+      expect(getByTestId('file-picker-error')).toHaveTextContent(
+        'ITEM_NOT_FOUND'
+      )
+    )
+    expect(getByTestId('temporary-download-link-btn')).not.toBeDisabled()
+    expect(mockOnChange).toHaveBeenCalledWith(
+      {
+        _id: 'file-id',
+        type: 'file',
+        name: 'file.pdf',
+        size: 1024
+      },
+      filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK
+    )
+  })
+
   it('should ignore a second public-link confirmation while the first is in-flight', async () => {
     let resolveFirst
     mockOnChange.mockReturnValue(
@@ -416,12 +494,68 @@ describe('FilePicker', () => {
     expect(getByTestId('temporary-download-link-btn')).toBeDisabled()
   })
 
-  it('should switch sections at their roots and clear selection', () => {
+  it.each([
+    [
+      'maximum file size',
+      { sharingLink: { allowFolder: true, maxFileSize: 1536 } },
+      'public-link-btn',
+      'select-file-btn',
+      'select-second-file-btn'
+    ],
+    [
+      'allowed MIME types (image file)',
+      { sharingLink: { allowFolder: true, allowedMimeTypes: ['image/*'] } },
+      'public-link-btn',
+      'select-image-file-btn',
+      'select-file-btn'
+    ],
+    [
+      'allowed MIME types (folder)',
+      { sharingLink: { allowFolder: true, allowedMimeTypes: ['image/*'] } },
+      'public-link-btn',
+      'select-folder-btn',
+      'select-file-btn'
+    ],
+    [
+      'maximum file count',
+      { downloadLink: { maxFileCount: 1 } },
+      'temporary-download-link-btn',
+      'select-file-btn',
+      'select-second-file-btn'
+    ],
+    [
+      'available size',
+      { downloadLink: { availableSize: 2048 } },
+      'temporary-download-link-btn',
+      'select-file-btn',
+      'select-second-file-btn'
+    ]
+  ])(
+    'should disable an action when its %s constraint is exceeded',
+    (
+      _,
+      filePickerConfig,
+      actionTestId,
+      validSelectionTestId,
+      invalidSelectionTestId
+    ) => {
+      const { getByTestId } = setup({ filePickerConfig, multiple: true })
+
+      fireEvent.click(getByTestId(validSelectionTestId))
+      expect(getByTestId(actionTestId)).not.toBeDisabled()
+
+      fireEvent.click(getByTestId(invalidSelectionTestId))
+      expect(getByTestId(actionTestId)).toBeDisabled()
+    }
+  )
+
+  it('should switch sections at their roots, clear selection, and complete section transition', async () => {
     const { getByTestId } = setup({ multiple: true })
 
     expect(getByTestId('active-section')).toHaveTextContent(
       filePickerSections.DRIVE
     )
+    expect(getByTestId('body-section-changing')).toHaveTextContent('false')
     fireEvent.click(getByTestId('select-file-btn'))
     fireEvent.click(getByTestId('recents-section-btn'))
 
@@ -439,6 +573,10 @@ describe('FilePicker', () => {
     )
     expect(getByTestId('body-folder-id')).toHaveTextContent(
       FILE_PICKER_SHARINGS_ROOT_ID
+    )
+    expect(getByTestId('public-link-btn')).toBeDisabled()
+    await waitFor(() =>
+      expect(getByTestId('body-section-changing')).toHaveTextContent('false')
     )
 
     fireEvent.click(getByTestId('navigate-folder-btn'))
