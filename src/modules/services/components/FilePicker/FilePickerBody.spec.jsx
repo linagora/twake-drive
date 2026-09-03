@@ -89,8 +89,7 @@ jest.mock('@/modules/shareddrives/hooks/useSharedDriveFolder', () => ({
 const baseProps = {
   navigateTo: jest.fn(),
   itemTypesAccepted: [],
-  multiple: true,
-  folderSelectable: true
+  multiple: true
 }
 
 const makeRecentsSource = overrides => ({

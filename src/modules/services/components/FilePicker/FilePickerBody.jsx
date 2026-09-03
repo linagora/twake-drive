@@ -41,7 +41,6 @@ const FilePickerContent = ({
   navigateTo,
   itemTypesAccepted,
   multiple,
-  folderSelectable,
   error,
   onFileDoubleClick,
   isSectionChanging,
@@ -75,9 +74,8 @@ const FilePickerContent = ({
   const canSelectItem = useCallback(
     item =>
       !isItemDisabled(item) &&
-      ((folderSelectable && isDirectory(item)) ||
-        isValidFile(item, itemTypesAccepted)),
-    [folderSelectable, isItemDisabled, itemTypesAccepted]
+      (isDirectory(item) || isValidFile(item, itemTypesAccepted)),
+    [isItemDisabled, itemTypesAccepted]
   )
 
   const scrollToIndex = useCallback((index, align) => {
@@ -217,7 +215,6 @@ FilePickerContent.propTypes = {
   navigateTo: PropTypes.func.isRequired,
   itemTypesAccepted: PropTypes.arrayOf(PropTypes.string).isRequired,
   multiple: PropTypes.bool,
-  folderSelectable: PropTypes.bool,
   error: PropTypes.string,
   onFileDoubleClick: PropTypes.func,
   isSectionChanging: PropTypes.bool,
@@ -330,7 +327,6 @@ const FilePickerBody = ({
   driveId,
   itemTypesAccepted,
   multiple,
-  folderSelectable,
   error,
   onReadyToUse,
   onFileDoubleClick,
@@ -372,7 +368,6 @@ const FilePickerBody = ({
       navigateTo={navigateTo}
       itemTypesAccepted={itemTypesAccepted}
       multiple={multiple}
-      folderSelectable={folderSelectable}
       error={error}
       onFileDoubleClick={onFileDoubleClick}
       isSectionChanging={isSectionChanging}
@@ -444,7 +439,6 @@ FilePickerBody.propTypes = {
   navigateTo: PropTypes.func.isRequired,
   itemTypesAccepted: PropTypes.arrayOf(PropTypes.string).isRequired,
   multiple: PropTypes.bool,
-  folderSelectable: PropTypes.bool,
   error: PropTypes.string,
   onReadyToUse: PropTypes.func,
   onFileDoubleClick: PropTypes.func,
@@ -455,7 +449,6 @@ FilePickerBody.propTypes = {
 FilePickerBody.defaultProps = {
   driveId: null,
   multiple: false,
-  folderSelectable: false,
   error: null,
   isSectionChanging: false
 }
