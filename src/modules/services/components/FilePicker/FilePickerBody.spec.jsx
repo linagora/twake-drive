@@ -3,6 +3,7 @@ import React from 'react'
 
 import { useQuery } from 'cozy-client'
 import { useSharingContext } from 'cozy-sharing'
+import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import { useI18n } from 'twake-i18n'
 
 import FilePickerBody from './FilePickerBody'
@@ -14,6 +15,8 @@ import {
 
 import { useBreadcrumbPath } from '@/modules/breadcrumb/hooks/useBreadcrumbPath'
 import { useSharedDriveFolder } from '@/modules/shareddrives/hooks/useSharedDriveFolder'
+const mockHandleItemClick = jest.fn()
+const mockHandleMobileToggleSelect = jest.fn()
 
 jest.mock('cozy-client', () => ({
   isQueryLoading: result =>
@@ -27,7 +30,7 @@ jest.mock('cozy-client/dist/models/file', () => ({
 jest.mock('cozy-sharing', () => ({ useSharingContext: jest.fn() }))
 jest.mock('twake-i18n')
 jest.mock('cozy-ui/transpiled/react/providers/Breakpoints', () => ({
-  useBreakpoints: () => ({ isMobile: false })
+  useBreakpoints: jest.fn()
 }))
 jest.mock('./queries', () => ({
   buildContentFolderQuery: folderId => ({
@@ -53,13 +56,19 @@ jest.mock('./FilePickerSharingsContent', () => ({
 }))
 jest.mock('./useFilePickerSelection', () => ({
   useFilePickerSelection: () => ({
-    handleItemClick: jest.fn(),
-    handleMobileToggleSelect: jest.fn(),
+    handleItemClick: mockHandleItemClick,
+    handleMobileToggleSelect: mockHandleMobileToggleSelect,
     selectedItemIds: []
   })
 }))
 jest.mock('./FilePickerTable', () => ({
-  FilePickerTable: ({ items, fetchMore, isItemDisabled }) => (
+  FilePickerTable: ({
+    items,
+    fetchMore,
+    isItemDisabled,
+    onItemClick,
+    onItemDoubleClick
+  }) => (
     <div data-testid="file-picker-table">
       {items.map(item => (
         <button
@@ -67,6 +76,8 @@ jest.mock('./FilePickerTable', () => ({
           type="button"
           data-testid="source-item"
           disabled={isItemDisabled(item)}
+          onClick={event => onItemClick?.(item, event)}
+          onDoubleClick={() => onItemDoubleClick?.(item)}
         >
           {item.name}:{item.driveId ?? 'local'}
         </button>
@@ -118,6 +129,7 @@ describe('FilePickerBody', () => {
       { id: 'file-picker-sharings-root', name: 'Nav.item_sharings' },
       { id: 'folder-id', name: 'Shared folder' }
     ])
+    useBreakpoints.mockReturnValue({ isMobile: false })
   })
 
   afterEach(() => jest.clearAllMocks())
@@ -258,6 +270,216 @@ describe('FilePickerBody', () => {
     expect(useQuery).not.toHaveBeenCalled()
     expect(useSharedDriveFolder).not.toHaveBeenCalled()
     expect(useBreadcrumbPath).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['loading', 'file-picker-loading'],
+    ['loaded', 'file-picker-empty']
+  ])('renders the shared drive %s state', (fetchStatus, testId) => {
+    useSharedDriveFolder.mockReturnValue({
+      sharedDriveResult: { included: [] },
+      fetchStatus,
+      hasMore: false,
+      fetchMore: null
+    })
+
+    render(
+      <FilePickerBody
+        {...baseProps}
+        section={filePickerSections.SHARINGS}
+        folderId="folder-id"
+        driveId="drive-id"
+      />
+    )
+
+    expect(screen.getByTestId(testId)).toBeInTheDocument()
+  })
+
+  it('renders a shared drive source error', () => {
+    useSharedDriveFolder.mockReturnValue({
+      sharedDriveResult: { included: [] },
+      fetchStatus: 'failed',
+      hasMore: false,
+      fetchMore: null
+    })
+
+    render(
+      <FilePickerBody
+        {...baseProps}
+        section={filePickerSections.SHARINGS}
+        folderId="folder-id"
+        driveId="drive-id"
+      />
+    )
+
+    expect(screen.getByTestId('file-picker-source-error')).toHaveTextContent(
+      'error.open_folder'
+    )
+    expect(screen.queryByTestId('file-picker-empty')).toBe(null)
+  })
+
+  it('renders My Drive items with their breadcrumb and query', () => {
+    useQuery.mockReturnValue({
+      data: [{ _id: 'file-id', name: 'My file', type: 'file' }],
+      fetchStatus: 'loaded'
+    })
+    useBreadcrumbPath.mockReturnValue([{ id: 'root-id', name: 'My Drive' }])
+
+    render(
+      <FilePickerBody
+        {...baseProps}
+        section={filePickerSections.DRIVE}
+        folderId="root-id"
+      />
+    )
+
+    expect(useQuery).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ as: 'root-id' })
+    )
+    expect(screen.getByRole('button', { name: 'My file:local' })).toBeEnabled()
+    expect(screen.getByTestId('file-picker-breadcrumb')).toHaveTextContent(
+      'My Drive'
+    )
+  })
+
+  it('navigates when clicking an ancestor segment in the breadcrumb', () => {
+    const navigateTo = jest.fn()
+    useQuery.mockReturnValue({ data: [], fetchStatus: 'loaded' })
+    useBreadcrumbPath.mockReturnValue([
+      { id: 'root-id', name: 'My Drive' },
+      { id: 'folder-id', name: 'Subfolder' }
+    ])
+
+    render(
+      <FilePickerBody
+        {...baseProps}
+        navigateTo={navigateTo}
+        section={filePickerSections.DRIVE}
+        folderId="folder-id"
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'My Drive' }))
+    expect(navigateTo).toHaveBeenCalledWith({
+      id: 'root-id',
+      name: 'My Drive'
+    })
+  })
+
+  it('navigates on directory double-click and triggers onFileDoubleClick on file double-click on desktop', () => {
+    const navigateTo = jest.fn()
+    const onFileDoubleClick = jest.fn()
+    const folderItem = {
+      _id: 'subfolder-id',
+      name: 'Subfolder',
+      type: 'directory'
+    }
+    const fileItem = { _id: 'file-id', name: 'My file', type: 'file' }
+
+    useQuery.mockReturnValue({
+      data: [folderItem, fileItem],
+      fetchStatus: 'loaded'
+    })
+    useBreadcrumbPath.mockReturnValue([{ id: 'root-id', name: 'My Drive' }])
+
+    render(
+      <FilePickerBody
+        {...baseProps}
+        navigateTo={navigateTo}
+        onFileDoubleClick={onFileDoubleClick}
+        section={filePickerSections.DRIVE}
+        folderId="root-id"
+      />
+    )
+
+    fireEvent.doubleClick(
+      screen.getByRole('button', { name: 'Subfolder:local' })
+    )
+    expect(navigateTo).toHaveBeenCalledWith(folderItem)
+    expect(onFileDoubleClick).not.toHaveBeenCalled()
+
+    fireEvent.doubleClick(screen.getByRole('button', { name: 'My file:local' }))
+    expect(onFileDoubleClick).toHaveBeenCalledWith(fileItem)
+  })
+
+  it('handles mobile tap navigation for directories, selection toggle for files, and disables double-click', () => {
+    useBreakpoints.mockReturnValue({ isMobile: true })
+    const navigateTo = jest.fn()
+    const onFileDoubleClick = jest.fn()
+    const folderItem = {
+      _id: 'subfolder-id',
+      name: 'Subfolder',
+      type: 'directory'
+    }
+    const fileItem = { _id: 'file-id', name: 'My file', type: 'file' }
+
+    useQuery.mockReturnValue({
+      data: [folderItem, fileItem],
+      fetchStatus: 'loaded'
+    })
+    useBreadcrumbPath.mockReturnValue([{ id: 'root-id', name: 'My Drive' }])
+
+    render(
+      <FilePickerBody
+        {...baseProps}
+        navigateTo={navigateTo}
+        onFileDoubleClick={onFileDoubleClick}
+        section={filePickerSections.DRIVE}
+        folderId="root-id"
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Subfolder:local' }))
+    expect(navigateTo).toHaveBeenCalledWith(folderItem)
+    expect(mockHandleMobileToggleSelect).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByRole('button', { name: 'My file:local' }))
+    expect(mockHandleMobileToggleSelect).toHaveBeenCalledWith(
+      fileItem,
+      expect.anything()
+    )
+
+    fireEvent.doubleClick(screen.getByRole('button', { name: 'My file:local' }))
+    expect(onFileDoubleClick).not.toHaveBeenCalled()
+  })
+
+  it('renders an inline picker error', () => {
+    useQuery.mockReturnValue({ data: [], fetchStatus: 'loaded' })
+
+    render(
+      <FilePickerBody
+        {...baseProps}
+        section={filePickerSections.DRIVE}
+        folderId="root-id"
+        error="ITEM_NOT_FOUND"
+      />
+    )
+
+    expect(screen.getByTestId('file-picker-error')).toHaveTextContent(
+      'FilePicker.errors.ITEM_NOT_FOUND'
+    )
+  })
+
+  it('shows a source error when loading a folder fails', () => {
+    const onReadyToUse = jest.fn()
+    useQuery.mockReturnValue({ data: [], fetchStatus: 'failed' })
+
+    render(
+      <FilePickerBody
+        {...baseProps}
+        section={filePickerSections.DRIVE}
+        folderId="root-id"
+        onReadyToUse={onReadyToUse}
+      />
+    )
+
+    expect(screen.getByTestId('file-picker-source-error')).toHaveTextContent(
+      'error.open_folder'
+    )
+    expect(screen.queryByTestId('file-picker-loading')).toBe(null)
+    expect(screen.queryByTestId('file-picker-empty')).toBe(null)
+    expect(onReadyToUse).toHaveBeenCalledTimes(1)
   })
 
   it('loads descendants of a standard shared folder with a Sharings breadcrumb', () => {
