@@ -6,15 +6,6 @@ const defaultFetchPolicy = fetchPolicies.olderThan(30 * 1000)
 const TRASH_DIR_ID = `${FILES_DOCTYPE}.trash-dir`
 const SHARED_DRIVES_DIR_ID = `${FILES_DOCTYPE}.shared-drives-dir`
 
-export const buildCurrentFolderQuery = folderId => ({
-  definition: () => Q(FILES_DOCTYPE).getById(folderId),
-  options: {
-    as: `onlyfolder-${folderId}`,
-    fetchPolicy: defaultFetchPolicy,
-    singleDocData: true
-  }
-})
-
 export const buildContentFolderQuery = dirId => ({
   definition: () =>
     Q(FILES_DOCTYPE)
