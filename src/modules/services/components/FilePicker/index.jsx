@@ -276,7 +276,6 @@ const FilePicker = ({
             driveId={location.driveId}
             itemTypesAccepted={itemTypesAccepted}
             multiple={multiple}
-            folderSelectable
             error={error}
             onReadyToUse={handleReadyToUse}
             onFileDoubleClick={handleFileDoubleClick}

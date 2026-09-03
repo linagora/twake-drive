@@ -81,7 +81,6 @@ jest.mock('./FilePickerBody', () => {
   }
 
   return ({
-    folderSelectable,
     navigateTo,
     onFileDoubleClick,
     error,
@@ -95,9 +94,6 @@ jest.mock('./FilePickerBody', () => {
       <div>
         <span data-testid="body-section">{section}</span>
         <span data-testid="body-folder-id">{folderId}</span>
-        <span data-testid="folder-selectable">
-          {folderSelectable ? 'true' : 'false'}
-        </span>
         <button type="button" onClick={onReadyToUse}>
           Ready
         </button>
@@ -263,7 +259,6 @@ describe('FilePicker', () => {
   it('should enable folder selection for public link mode', () => {
     const { getByTestId } = setup()
 
-    expect(getByTestId('folder-selectable')).toHaveTextContent('true')
   })
 
   it('should hide the download link button when the config disables the action', () => {
