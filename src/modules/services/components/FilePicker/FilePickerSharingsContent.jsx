@@ -37,7 +37,8 @@ export const FilePickerSharingsContent = ({
     hasMore: false,
     fetchMore: null,
     breadcrumbPath: [rootBreadcrumbPath],
-    isItemDisabled: isSharingShortcutNew
+    isItemDisabled: isSharingShortcutNew,
+    emptyMessageKey: 'empty.sharing_text'
   })
 }
 

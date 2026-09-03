@@ -13,7 +13,6 @@ import Typography from 'cozy-ui/transpiled/react/Typography'
 import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import { useI18n } from 'twake-i18n'
 
-import { EmptyMessage } from './EmptyMessage'
 import FilePickerBreadcrumb from './FilePickerBreadcrumb'
 import { FilePickerRecentsContent } from './FilePickerRecentsContent'
 import { FilePickerSharingsContent } from './FilePickerSharingsContent'
@@ -39,7 +38,6 @@ const {
 
 const FilePickerContent = ({
   source,
-  section,
   navigateTo,
   itemTypesAccepted,
   multiple,
@@ -47,8 +45,7 @@ const FilePickerContent = ({
   error,
   onFileDoubleClick,
   isSectionChanging,
-  onSectionReady,
-  isRoot
+  onSectionReady
 }) => {
   const { t } = useI18n()
   const { isMobile } = useBreakpoints()
@@ -170,17 +167,13 @@ const FilePickerContent = ({
           ))}
         </Box>
       ) : !hasItems ? (
-        source.emptyMessageKey ? (
-          <Typography
-            className="u-ta-center u-pa-2"
-            color="textSecondary"
-            data-testid="file-picker-empty"
-          >
-            {t(source.emptyMessageKey)}
-          </Typography>
-        ) : (
-          <EmptyMessage section={section} isRoot={isRoot} />
-        )
+        <Typography
+          className="u-ta-center u-pa-2"
+          color="textSecondary"
+          data-testid="file-picker-empty"
+        >
+          {t(source.emptyMessageKey ?? 'empty.title')}
+        </Typography>
       ) : (
         <>
           {source.isFetchingMore && (
@@ -221,7 +214,6 @@ FilePickerContent.propTypes = {
     emptyMessageKey: PropTypes.string,
     errorMessageKey: PropTypes.string
   }).isRequired,
-  section: PropTypes.oneOf(Object.values(filePickerSections)).isRequired,
   navigateTo: PropTypes.func.isRequired,
   itemTypesAccepted: PropTypes.arrayOf(PropTypes.string).isRequired,
   multiple: PropTypes.bool,
@@ -229,8 +221,7 @@ FilePickerContent.propTypes = {
   error: PropTypes.string,
   onFileDoubleClick: PropTypes.func,
   isSectionChanging: PropTypes.bool,
-  onSectionReady: PropTypes.func,
-  isRoot: PropTypes.bool
+  onSectionReady: PropTypes.func
 }
 
 const LocalFolderContent = ({
@@ -378,8 +369,6 @@ const FilePickerBody = ({
   const renderFilePickerContent = source => (
     <FilePickerContent
       source={source}
-      section={section}
-      isRoot={folderId === FILE_PICKER_SHARINGS_ROOT_ID}
       navigateTo={navigateTo}
       itemTypesAccepted={itemTypesAccepted}
       multiple={multiple}
