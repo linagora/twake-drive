@@ -2,7 +2,6 @@ import PropTypes from 'prop-types'
 import React, {
   useState,
   memo,
-  useMemo,
   useRef,
   useCallback,
   lazy,
@@ -68,10 +67,6 @@ const FilePicker = ({
   // FilePickerBody is remounted when switching sections, but readiness is notified once per picker.
   const readyNotifiedRef = useRef(false)
   const [busyLinkMode, setBusyLinkMode] = useState(null)
-  const itemsIdsSelected = useMemo(
-    () => selectedItems.map(item => item._id),
-    [selectedItems]
-  )
 
   const config = filePickerConfig || defaultFilePickerConfig
   const publicLinkAction = config.sharingLink ?? null
@@ -181,7 +176,7 @@ const FilePicker = ({
   }
 
   const itemTypesAccepted = getCompliantTypes(accept)
-  const hasSelection = itemsIdsSelected.length > 0
+  const hasSelection = selectedItems.length > 0
 
   const publicLinkState = hasSelection
     ? getActionDisabledState(publicLinkAction, selectedItems)
