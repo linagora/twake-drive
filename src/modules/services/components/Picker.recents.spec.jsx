@@ -2,14 +2,16 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import React from 'react'
 
 import { Q, createMockClient } from 'cozy-client'
+import { useDataProxy } from 'cozy-dataproxy-lib'
 
 import { buildContentFolderQuery } from './FilePicker/queries'
 import Picker from './Picker'
 import AppLike from 'test/components/AppLike'
 
-import useRecentFiles from '@/hooks/useRecentFiles'
-
-jest.mock('@/hooks/useRecentFiles')
+jest.mock('cozy-dataproxy-lib', () => ({
+  DataProxyProvider: ({ children }) => children,
+  useDataProxy: jest.fn()
+}))
 
 jest.mock('cozy-ui/transpiled/react/Table/Virtualized', () => {
   const React = require('react')
@@ -57,16 +59,6 @@ jest.mock('cozy-ui/transpiled/react/Table/Virtualized', () => {
   return { __esModule: true, default: VirtualizedTable }
 })
 
-let recentResult
-let recentsMountCount
-
-function useRecentFilesMock() {
-  React.useEffect(() => {
-    recentsMountCount += 1
-  }, [])
-  return recentResult
-}
-
 const rootId = 'io.cozy.files.root-dir'
 const recentFile = {
   _id: 'recent-shared-id',
@@ -110,15 +102,13 @@ function makeClient() {
 describe('Picker Recents integration', () => {
   afterEach(() => jest.clearAllMocks())
 
-  it('revalidates a selected recent drive item through its shared drive', async () => {
+  it('fetches federated shared folder files from dataproxy and revalidates on pick', async () => {
     window.innerWidth = 1024
-    recentsMountCount = 0
-    recentResult = {
-      data: [recentFile],
-      fetchStatus: 'loaded',
-      error: null
-    }
-    useRecentFiles.mockImplementation(useRecentFilesMock)
+    const mockRecents = jest.fn().mockResolvedValue([recentFile])
+    useDataProxy.mockReturnValue({
+      dataProxyServicesAvailable: true,
+      recents: mockRecents
+    })
     const client = makeClient()
     const service = {
       cancel: jest.fn(),
@@ -137,12 +127,12 @@ describe('Picker Recents integration', () => {
       'data-file-id',
       recentFile._id
     )
-    await waitFor(() => expect(recentsMountCount).toBe(1))
+    await waitFor(() => expect(mockRecents).toHaveBeenCalledTimes(1))
 
     fireEvent.click(screen.getByRole('tab', { name: /My Drive/i }))
     fireEvent.click(screen.getByRole('tab', { name: /Recents/i }))
     const row = await screen.findByTestId('list-item')
-    await waitFor(() => expect(recentsMountCount).toBe(2))
+    await waitFor(() => expect(mockRecents).toHaveBeenCalledTimes(2))
 
     const query = jest.spyOn(client, 'query').mockResolvedValue({
       data: { ...recentFile }

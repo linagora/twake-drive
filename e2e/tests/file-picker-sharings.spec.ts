@@ -166,4 +166,44 @@ test.describe.serial('File Picker Sharings', () => {
 
     await picker.closeConfirmation()
   })
+
+  test('displays a federated shared folder file in Recents via dataproxy and generates a download link', async ({
+    bobPage
+  }) => {
+    const picker = new FilePickerPage(bobPage, USERS.bob)
+    await picker.open()
+
+    const frame = bobPage.frameLocator('iframe[src*="intents"]')
+    const row = (name: string): Locator =>
+      frame
+        .getByTestId('list-item')
+        .filter({ has: frame.getByTitle(name, { exact: true }) })
+    const recentsTab = frame.getByRole('tab', { name: /Recents/i })
+    const downloadLinkButton = frame.getByTestId('temporary-download-link-btn')
+
+    await recentsTab.click()
+    await expect(recentsTab).toHaveAttribute('aria-selected', 'true')
+    await expect(row(fileName)).toBeVisible({ timeout: 25_000 })
+
+    await row(fileName).getByTestId('choice-onclick').click()
+    await expect(downloadLinkButton).toBeEnabled()
+
+    await picker.clickTemporaryDownloadLink()
+    await picker.waitForClosed()
+
+    const link = await picker.getConfirmationLink()
+    expect(link).toMatch(/^https?:\/\//)
+
+    const document = await picker.getResultDocument()
+    expect(Array.isArray(document)).toBe(true)
+    const [entry] = document as Array<Record<string, unknown>>
+    expect(entry.name).toBe(fileName)
+    expect(entry.downloadLink).toBe(link)
+    expect(entry.sharingLink).toBeUndefined()
+
+    const response = await bobPage.request.get(link)
+    expect(response.status()).toBeLessThan(400)
+
+    await picker.closeConfirmation()
+  })
 })
