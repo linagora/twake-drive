@@ -2,6 +2,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import { RealTimeQueries } from 'cozy-client'
+import flag from 'cozy-flags'
 import { Main as MainUI } from 'cozy-ui/transpiled/react/Layout'
 
 import { MigrationProgressBanner } from '@/components/Migration/MigrationProgressBanner'
@@ -13,8 +14,12 @@ const Main = ({ children, isPublic = false }) => (
     {!isPublic && (
       <>
         <PushBanner />
-        <RealTimeQueries doctype={NEXTCLOUD_MIGRATIONS_DOCTYPE} />
-        <MigrationProgressBanner />
+        {flag('settings.migration.enabled') && (
+          <>
+            <RealTimeQueries doctype={NEXTCLOUD_MIGRATIONS_DOCTYPE} />
+            <MigrationProgressBanner />
+          </>
+        )}
       </>
     )}
     {children}
