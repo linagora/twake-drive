@@ -1,22 +1,13 @@
-import cx from 'classnames'
 import PropTypes from 'prop-types'
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useMemo, useRef, useState } from 'react'
 
-import { isQueryLoading, models, useQuery } from 'cozy-client'
+import { models } from 'cozy-client'
 import { isSharingShortcutNew } from 'cozy-client/dist/models/file'
 import { useSharingContext } from 'cozy-sharing'
-import Alert from 'cozy-ui/transpiled/react/Alert'
-import Box from 'cozy-ui/transpiled/react/Box'
-import LinearProgress from 'cozy-ui/transpiled/react/LinearProgress'
-import ListItemSkeleton from 'cozy-ui/transpiled/react/Skeletons/ListItemSkeleton'
-import Typography from 'cozy-ui/transpiled/react/Typography'
-import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import { useI18n } from 'twake-i18n'
 
-import FilePickerBreadcrumb from './FilePickerBreadcrumb'
 import { FilePickerRecentsContent } from './FilePickerRecentsContent'
 import { FilePickerSharingsContent } from './FilePickerSharingsContent'
-import { FilePickerTable } from './FilePickerTable'
 import {
   filePickerSections,
   FILE_PICKER_RECENTS_ROOT_ID,
@@ -24,13 +15,14 @@ import {
 } from './constants'
 import { isValidFile } from './helpers'
 import { buildContentFolderQuery } from './queries'
-import styles from './styles.styl'
-import { useFilePickerSelection } from './useFilePickerSelection'
+import { useFilePickerAdapter } from './useFilePickerAdapter'
 
+import { EmptyMessage as PickerViewEmptyMessage } from '@/components/PickerView/EmptyMessage'
+import { PickerView } from '@/components/PickerView/PickerView'
+import { useLocalFolderBrowser } from '@/components/PickerView/useLocalFolderBrowser'
 import { ROOT_DIR_ID } from '@/constants/config'
 import { useBreadcrumbPath } from '@/modules/breadcrumb/hooks/useBreadcrumbPath'
 import { useSharedDriveFolder } from '@/modules/shareddrives/hooks/useSharedDriveFolder'
-import { filterOutReceivedShares } from '@/modules/views/Folder/syncHelpers'
 
 const {
   file: { isDirectory }
@@ -44,32 +36,14 @@ const FilePickerContent = ({
   error,
   onFileDoubleClick,
   isSectionChanging,
-  onSectionReady
+  onSectionReady,
+  emptyMessage
 }) => {
-  const { t } = useI18n()
-  const { isMobile } = useBreakpoints()
   const selectionContainerRef = useRef(null)
   const virtuosoRef = useRef(null)
   const [scrollElement, setScrollElement] = useState(null)
   const items = source.items ?? []
   const { isItemDisabled } = source
-  const hasItems = items.length > 0
-  const shouldShowSourceError =
-    ['error', 'failed'].includes(source.fetchStatus) &&
-    (!hasItems || !source.keepItemsOnError)
-  useEffect(() => {
-    if (
-      isSectionChanging &&
-      (source.fetchStatus !== 'loading' || source.isFetchingMore)
-    ) {
-      onSectionReady?.()
-    }
-  }, [
-    isSectionChanging,
-    onSectionReady,
-    source.fetchStatus,
-    source.isFetchingMore
-  ])
 
   const canSelectItem = useCallback(
     item =>
@@ -86,115 +60,49 @@ const FilePickerContent = ({
     })
   }, [])
 
-  const { handleItemClick, handleMobileToggleSelect, selectedItemIds } =
-    useFilePickerSelection({
+  const { selectedItemIds, onItemClick, onItemToggle, onItemDoubleClick } =
+    useFilePickerAdapter({
       items,
       canSelectItem,
       multiple,
       selectionContainerRef,
       scrollElement,
-      scrollToIndex
+      scrollToIndex,
+      navigateTo,
+      onFileDoubleClick
     })
 
-  const handleListItemDoubleClick = useCallback(
-    item => {
-      if (isDirectory(item)) {
-        navigateTo(item)
-      } else if (onFileDoubleClick) {
-        onFileDoubleClick(item)
-      }
-    },
-    [navigateTo, onFileDoubleClick]
-  )
-
-  const handleMobileItemClick = useCallback(
-    (item, event) => {
-      if (isDirectory(item)) {
-        navigateTo(item)
-      } else {
-        handleMobileToggleSelect(item, event)
-      }
-    },
-    [handleMobileToggleSelect, navigateTo]
-  )
-
-  const sourceErrorMessageKey = source.errorMessageKey ?? 'error.open_folder'
   return (
-    <Box
-      ref={selectionContainerRef}
-      tabIndex={-1}
-      className={cx(
-        'u-pos-absolute u-top-0 u-right-0 u-bottom-0 u-left-0',
-        styles.filePickerSelectionContainer
-      )}
-      display="flex"
-      flexDirection="column"
-    >
-      {error && (
-        <Alert
-          severity="error"
-          data-testid="file-picker-error"
-          className="u-mt-1 u-mh-1"
-        >
-          {t(`FilePicker.errors.${error}`)}
-        </Alert>
-      )}
-      <Box px={3} py={0} className="u-mt-half">
-        <FilePickerBreadcrumb
-          path={source.breadcrumbPath}
-          onBreadcrumbClick={navigateTo}
-        />
-      </Box>
-      {isSectionChanging ? null : shouldShowSourceError ? (
-        <Alert
-          severity="error"
-          data-testid="file-picker-source-error"
-          className="u-mt-1 u-mh-1"
-        >
-          {t(sourceErrorMessageKey)}
-        </Alert>
-      ) : source.fetchStatus === 'loading' && !source.isFetchingMore ? (
-        <Box
-          px={3}
-          role="status"
-          aria-label={t('loading.message')}
-          data-testid="file-picker-loading"
-        >
-          {Array.from({ length: 3 }, (_, index) => (
-            <ListItemSkeleton key={index} hasSecondary divider={index !== 2} />
-          ))}
-        </Box>
-      ) : !hasItems ? (
-        <Typography
-          className="u-ta-center u-pa-2"
-          color="textSecondary"
-          data-testid="file-picker-empty"
-        >
-          {t(source.emptyMessageKey ?? 'empty.title')}
-        </Typography>
-      ) : (
-        <>
-          {source.isFetchingMore && (
-            <LinearProgress
-              className="u-mh-1"
-              data-testid="file-picker-loading-more"
-            />
-          )}
-          <FilePickerTable
-            items={items}
-            itemsIdsSelected={selectedItemIds}
-            isItemDisabled={isItemDisabled}
-            onItemClick={isMobile ? handleMobileItemClick : handleItemClick}
-            onItemToggle={isMobile ? handleMobileToggleSelect : null}
-            onItemDoubleClick={isMobile ? null : handleListItemDoubleClick}
-            fetchMore={source.hasMore ? source.fetchMore : null}
-            scrollerRef={setScrollElement}
-            virtuosoRef={virtuosoRef}
-            withFilePath={source.withFilePath}
+    <PickerView
+      selectionContainerRef={selectionContainerRef}
+      virtuosoRef={virtuosoRef}
+      scrollerRef={setScrollElement}
+      items={items}
+      breadcrumbPath={source.breadcrumbPath}
+      onBreadcrumbClick={navigateTo}
+      fetchStatus={source.fetchStatus}
+      hasMore={source.hasMore}
+      fetchMore={source.fetchMore}
+      selectedItemIds={selectedItemIds}
+      isFetchingMore={source.isFetchingMore}
+      keepItemsOnError={source.keepItemsOnError}
+      errorMessageKey={source.errorMessageKey}
+      withFilePath={source.withFilePath}
+      isItemDisabled={isItemDisabled}
+      onItemClick={onItemClick}
+      onItemToggle={onItemToggle}
+      onItemDoubleClick={onItemDoubleClick}
+      error={error}
+      emptyMessage={
+        emptyMessage ?? (
+          <PickerViewEmptyMessage
+            messageKey={source.emptyMessageKey ?? 'empty.title'}
           />
-        </>
-      )}
-    </Box>
+        )
+      }
+      isSectionChanging={isSectionChanging}
+      onSectionReady={onSectionReady}
+    />
   )
 }
 
@@ -218,7 +126,8 @@ FilePickerContent.propTypes = {
   error: PropTypes.string,
   onFileDoubleClick: PropTypes.func,
   isSectionChanging: PropTypes.bool,
-  onSectionReady: PropTypes.func
+  onSectionReady: PropTypes.func,
+  emptyMessage: PropTypes.node
 }
 
 const LocalFolderContent = ({
@@ -232,39 +141,19 @@ const LocalFolderContent = ({
   onReady,
   renderFilePickerContent
 }) => {
-  const path = useBreadcrumbPath({
-    currentFolderId: folderId,
+  const source = useLocalFolderBrowser({
+    folderId,
     rootBreadcrumbPath,
-    sharedDocumentIds
-  })
-  const contentFolderQuery = buildContentFolderQuery(folderId)
-  const result = useQuery(
-    contentFolderQuery.definition,
-    contentFolderQuery.options
-  )
-  const filteredResult = useMemo(
-    () =>
-      filterReceivedShares && allLoaded
-        ? filterOutReceivedShares([result], isOwner)[0]
-        : result,
-    [allLoaded, filterReceivedShares, isOwner, result]
-  )
-  const fetchStatus = isQueryLoading(filteredResult)
-    ? 'loading'
-    : (filteredResult.fetchStatus ?? 'loaded')
-
-  useEffect(() => {
-    if (fetchStatus !== 'loading') onReady?.()
-  }, [fetchStatus, onReady])
-
-  return renderFilePickerContent({
-    items: filteredResult.data ?? [],
-    fetchStatus,
-    hasMore: Boolean(filteredResult.hasMore),
-    fetchMore: filteredResult.fetchMore ?? null,
-    breadcrumbPath: path,
+    sharedDocumentIds,
+    buildFolderQuery: buildContentFolderQuery,
+    filterReceivedShares,
+    allLoaded,
+    isOwner,
+    onReady,
     isItemDisabled
   })
+
+  return renderFilePickerContent(source)
 }
 
 LocalFolderContent.propTypes = {
@@ -335,6 +224,7 @@ const FilePickerBody = ({
 }) => {
   const { t } = useI18n()
   const { allLoaded, byDocId, isOwner } = useSharingContext()
+  const readyNotified = useRef(false)
   const sharedDocumentIds = useMemo(() => Object.keys(byDocId ?? {}), [byDocId])
   const rootBreadcrumbPath = useMemo(() => {
     if (section === filePickerSections.DRIVE) {
@@ -354,6 +244,17 @@ const FilePickerBody = ({
 
   const isItemDisabled =
     section === filePickerSections.SHARINGS ? isSharingShortcutNew : () => false
+  const emptyMessageKey =
+    section === filePickerSections.SHARINGS &&
+    folderId === FILE_PICKER_SHARINGS_ROOT_ID
+      ? 'empty.sharing_text'
+      : 'empty.title'
+
+  const handleDriveReady = useCallback(() => {
+    if (readyNotified.current) return
+    readyNotified.current = true
+    onReadyToUse?.()
+  }, [onReadyToUse])
 
   const renderFilePickerContent = source => (
     <FilePickerContent
@@ -362,6 +263,12 @@ const FilePickerBody = ({
       itemTypesAccepted={itemTypesAccepted}
       multiple={multiple}
       error={error}
+      emptyMessage={
+        section === filePickerSections.SHARINGS &&
+        folderId === FILE_PICKER_SHARINGS_ROOT_ID ? (
+          <PickerViewEmptyMessage messageKey={emptyMessageKey} />
+        ) : null
+      }
       onFileDoubleClick={onFileDoubleClick}
       isSectionChanging={isSectionChanging}
       onSectionReady={onSectionReady}
@@ -417,7 +324,9 @@ const FilePickerBody = ({
       filterReceivedShares={section === filePickerSections.DRIVE}
       allLoaded={allLoaded === true}
       isOwner={isOwner}
-      onReady={section === filePickerSections.DRIVE ? onReadyToUse : undefined}
+      onReady={
+        section === filePickerSections.DRIVE ? handleDriveReady : undefined
+      }
       renderFilePickerContent={renderFilePickerContent}
     />
   )
