@@ -61,8 +61,8 @@ jest.mock('./useFilePickerSelection', () => ({
     selectedItemIds: []
   })
 }))
-jest.mock('./FilePickerTable', () => ({
-  FilePickerTable: ({
+jest.mock('@/components/PickerView/PickerViewTable', () => ({
+  PickerViewTable: ({
     items,
     fetchMore,
     isItemDisabled,

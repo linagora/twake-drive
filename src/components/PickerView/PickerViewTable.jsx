@@ -1,6 +1,6 @@
 import cx from 'classnames'
 import PropTypes from 'prop-types'
-import React, { forwardRef, memo, useMemo, useRef } from 'react'
+import React, { forwardRef, memo, useCallback, useMemo, useRef } from 'react'
 
 import Box from 'cozy-ui/transpiled/react/Box'
 import VirtualizedTable from 'cozy-ui/transpiled/react/Table/Virtualized'
@@ -9,11 +9,11 @@ import TableRow from 'cozy-ui/transpiled/react/TableRow'
 import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import { useI18n } from 'twake-i18n'
 
-import { FilePickerTableCell } from './FilePickerTableCell'
+import { PickerViewTableCell } from './PickerViewTableCell'
 
 import { makeMobileHandlers } from '@/hooks/useOnLongPress/helpers'
 
-const makeFilePickerColumns = t => [
+export const makePickerViewColumns = t => [
   {
     id: 'name',
     label: t('table.head_name'),
@@ -34,7 +34,7 @@ const makeFilePickerColumns = t => [
   }
 ]
 
-const FilePickerTableRow = forwardRef(
+export const PickerViewTableRow = forwardRef(
   ({ item, context, className, ...props }, ref) => {
     const row = item
     const timerId = useRef()
@@ -46,7 +46,7 @@ const FilePickerTableRow = forwardRef(
     }
 
     const handleToggle = event => {
-      if (!isDisabled) context.onItemToggle(row, event)
+      if (!isDisabled) context.onItemToggle?.(row, event)
     }
 
     const handleDoubleClick = event => {
@@ -88,10 +88,11 @@ const FilePickerTableRow = forwardRef(
   }
 )
 
-FilePickerTableRow.displayName = 'FilePickerTableRow'
-FilePickerTableRow.propTypes = {
+PickerViewTableRow.displayName = 'PickerViewTableRow'
+PickerViewTableRow.propTypes = {
   item: PropTypes.object,
   context: PropTypes.shape({
+    data: PropTypes.array,
     isSelectedItem: PropTypes.func.isRequired,
     isItemDisabled: PropTypes.func.isRequired,
     isMobile: PropTypes.bool.isRequired,
@@ -103,15 +104,17 @@ FilePickerTableRow.propTypes = {
   className: PropTypes.string
 }
 
-const FilePickerTableRowMemo = memo(FilePickerTableRow)
+export const PickerViewTableRowMemo = memo(PickerViewTableRow)
 
-const MobileTableHead = forwardRef(function MobileTableHead(_props, ref) {
-  return <thead ref={ref} />
-})
+export const MobileTableHead = forwardRef(
+  function MobileTableHead(_props, ref) {
+    return <thead ref={ref} />
+  }
+)
 
 const tableComponents = {
   ...virtuosoComponents,
-  TableRow: FilePickerTableRowMemo
+  TableRow: PickerViewTableRowMemo
 }
 
 const mobileTableComponents = {
@@ -119,14 +122,15 @@ const mobileTableComponents = {
   TableHead: MobileTableHead
 }
 
-export const FilePickerTable = memo(
+export const PickerViewTable = memo(
   ({
-    items,
-    itemsIdsSelected,
-    onItemClick,
-    onItemToggle,
+    items = [],
+    itemsIdsSelected = [],
+    onItemClick = () => {},
+    onItemToggle = () => {},
     onItemDoubleClick,
-    isItemDisabled,
+    onItemNavigate,
+    isItemDisabled = () => false,
     fetchMore,
     scrollerRef,
     virtuosoRef,
@@ -135,45 +139,64 @@ export const FilePickerTable = memo(
     const { t } = useI18n()
     const { isMobile } = useBreakpoints()
     const columns = useMemo(() => {
-      const filePickerColumns = makeFilePickerColumns(t)
-      return isMobile ? filePickerColumns.slice(0, 1) : filePickerColumns
+      const defaultColumns = makePickerViewColumns(t)
+      return isMobile ? defaultColumns.slice(0, 1) : defaultColumns
     }, [isMobile, t])
 
     const selectionModeActive = itemsIdsSelected.length > 0
+    const isSelectedItem = useCallback(
+      item => Boolean(item && itemsIdsSelected.includes(item._id)),
+      [itemsIdsSelected]
+    )
+    const selectedItems = useMemo(
+      () => items.filter(isSelectedItem),
+      [items, isSelectedItem]
+    )
     const tableComponentsProps = useMemo(
       () => ({
         rowContent: {
           children: (
-            <FilePickerTableCell
+            <PickerViewTableCell
               selectionModeActive={selectionModeActive}
+              isSelectedItem={isSelectedItem}
+              onItemNavigate={onItemNavigate}
+              isItemDisabled={isItemDisabled}
               withFilePath={withFilePath}
             />
           )
         }
       }),
-      [selectionModeActive, withFilePath]
+      [
+        isItemDisabled,
+        isSelectedItem,
+        onItemNavigate,
+        selectionModeActive,
+        withFilePath
+      ]
     )
-
-    const isSelectedItem = item => {
-      return Boolean(item && itemsIdsSelected.includes(item._id))
-    }
 
     const tableContext = useMemo(
       () => ({
+        data: items,
         isMobile,
         selectionModeActive,
         isItemDisabled,
+        isSelectedItem,
         onItemClick,
         onItemToggle,
-        onItemDoubleClick
+        onItemDoubleClick,
+        onItemNavigate
       }),
       [
         isItemDisabled,
         isMobile,
-        selectionModeActive,
+        isSelectedItem,
+        items,
         onItemClick,
         onItemDoubleClick,
-        onItemToggle
+        onItemNavigate,
+        onItemToggle,
+        selectionModeActive
       ]
     )
 
@@ -194,6 +217,7 @@ export const FilePickerTable = memo(
           columns={columns}
           endReached={fetchMore}
           scrollerRef={scrollerRef}
+          selectedItems={selectedItems}
           isSelectedItem={isSelectedItem}
           componentsProps={tableComponentsProps}
         />
@@ -202,16 +226,19 @@ export const FilePickerTable = memo(
   }
 )
 
-FilePickerTable.displayName = 'FilePickerTable'
-FilePickerTable.propTypes = {
+PickerViewTable.displayName = 'PickerViewTable'
+PickerViewTable.propTypes = {
   items: PropTypes.arrayOf(PropTypes.object).isRequired,
-  itemsIdsSelected: PropTypes.arrayOf(PropTypes.string).isRequired,
-  onItemClick: PropTypes.func.isRequired,
+  itemsIdsSelected: PropTypes.arrayOf(PropTypes.string),
+  onItemClick: PropTypes.func,
   onItemToggle: PropTypes.func,
   onItemDoubleClick: PropTypes.func,
+  onItemNavigate: PropTypes.func,
   isItemDisabled: PropTypes.func.isRequired,
   fetchMore: PropTypes.func,
   scrollerRef: PropTypes.func,
   virtuosoRef: PropTypes.object,
   withFilePath: PropTypes.bool
 }
+
+export default PickerViewTable
