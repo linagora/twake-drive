@@ -71,7 +71,9 @@ const FEATURE_FLAGS = {
   'drive.shared-drive.enabled': true,
   'drive.federated-shared-folder.enabled': true,
   'drive.federated-shared-modal.enabled': true,
-  'drive.file-picker-demo.enabled': true
+  'drive.file-picker-demo.enabled': true,
+  'cozy.search.enabled': true,
+  'dataproxy.force-trusted-device.enabled': true
 }
 
 async function waitForStack(url: string, timeoutMs = 60_000): Promise<void> {
@@ -151,11 +153,11 @@ async function getSessionCookie(
   return { name: m[1], value: m[2] }
 }
 
-function isDriveInstalled(user: User): boolean {
+function isAppInstalled(user: User, slug: string): boolean {
   const apps = stackExec('apps', 'ls', '--domain', user.instance)
   return apps
     .split('\n')
-    .some(line => line.trim().split(/\s+/, 1)[0] === 'drive')
+    .some(line => line.trim().split(/\s+/, 1)[0] === slug)
 }
 
 async function setupUser(
@@ -164,7 +166,7 @@ async function setupUser(
   console.log(`[e2e] Ensuring instance for ${user.label} (${user.instance})...`)
   await createInstance(user)
 
-  if (isDriveInstalled(user)) {
+  if (isAppInstalled(user, 'drive')) {
     console.log(`[e2e] Reusing Drive app for ${user.label}.`)
   } else {
     console.log(`[e2e] Installing Drive app for ${user.label}...`)
@@ -173,6 +175,20 @@ async function setupUser(
       'install',
       'drive',
       'file:///app/drive',
+      '--domain',
+      user.instance
+    )
+  }
+
+  if (isAppInstalled(user, 'dataproxy')) {
+    console.log(`[e2e] Reusing Dataproxy app for ${user.label}.`)
+  } else {
+    console.log(`[e2e] Installing Dataproxy app for ${user.label}...`)
+    stackExec(
+      'apps',
+      'install',
+      'dataproxy',
+      'registry://dataproxy/stable',
       '--domain',
       user.instance
     )
@@ -224,13 +240,13 @@ async function createContact(hostUser: User, peer: User): Promise<void> {
 
 async function syncContacts(): Promise<void> {
   const entries = Object.values(USERS)
-  await Promise.all(
-    entries.flatMap(host =>
-      entries
-        .filter(peer => peer.instance !== host.instance)
-        .map(peer => createContact(host, peer))
-    )
-  )
+  for (const host of entries) {
+    for (const peer of entries) {
+      if (peer.instance !== host.instance) {
+        await createContact(host, peer)
+      }
+    }
+  }
 }
 
 export default async function globalSetup(): Promise<void> {
@@ -242,9 +258,7 @@ export default async function globalSetup(): Promise<void> {
     )
     compose('down', '--volumes')
   } else {
-    console.log(
-      '[e2e] Persistent mode — retaining this runtime and its data.'
-    )
+    console.log('[e2e] Persistent mode — retaining this runtime and its data.')
   }
 
   console.log('[e2e] Starting Docker containers...')
@@ -253,12 +267,13 @@ export default async function globalSetup(): Promise<void> {
   console.log('[e2e] Waiting for cozy-stack...')
   await waitForStack(STACK_URL)
 
-  const results = await Promise.all(
-    Object.values(USERS).map(async user => {
-      const cookie = await setupUser(user)
-      return [user.label, { domain: user.instance, ...cookie }] as const
-    })
-  )
+  const results: Array<
+    [string, { domain: string; cookieName: string; cookieValue: string }]
+  > = []
+  for (const user of Object.values(USERS)) {
+    const cookie = await setupUser(user)
+    results.push([user.label, { domain: user.instance, ...cookie }])
+  }
   saveAuthState(Object.fromEntries(results))
 
   console.log('[e2e] Cross-populating org contacts...')
