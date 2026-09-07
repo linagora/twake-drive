@@ -160,38 +160,41 @@ function isAppInstalled(user: User, slug: string): boolean {
     .some(line => line.trim().split(/\s+/, 1)[0] === slug)
 }
 
+interface AppSpec {
+  slug: string
+  source: string
+  label: string
+}
+
+const DEFAULT_APPS: AppSpec[] = [
+  { slug: 'drive', source: 'file:///app/drive', label: 'Drive' },
+  {
+    slug: 'dataproxy',
+    source: 'registry://dataproxy/stable',
+    label: 'Dataproxy'
+  }
+]
+
 async function setupUser(
   user: User
 ): Promise<{ cookieName: string; cookieValue: string }> {
   console.log(`[e2e] Ensuring instance for ${user.label} (${user.instance})...`)
   await createInstance(user)
 
-  if (isAppInstalled(user, 'drive')) {
-    console.log(`[e2e] Reusing Drive app for ${user.label}.`)
-  } else {
-    console.log(`[e2e] Installing Drive app for ${user.label}...`)
-    stackExec(
-      'apps',
-      'install',
-      'drive',
-      'file:///app/drive',
-      '--domain',
-      user.instance
-    )
-  }
-
-  if (isAppInstalled(user, 'dataproxy')) {
-    console.log(`[e2e] Reusing Dataproxy app for ${user.label}.`)
-  } else {
-    console.log(`[e2e] Installing Dataproxy app for ${user.label}...`)
-    stackExec(
-      'apps',
-      'install',
-      'dataproxy',
-      'registry://dataproxy/stable',
-      '--domain',
-      user.instance
-    )
+  for (const app of DEFAULT_APPS) {
+    if (isAppInstalled(user, app.slug)) {
+      console.log(`[e2e] Reusing ${app.label} app for ${user.label}.`)
+    } else {
+      console.log(`[e2e] Installing ${app.label} app for ${user.label}...`)
+      stackExec(
+        'apps',
+        'install',
+        app.slug,
+        app.source,
+        '--domain',
+        user.instance
+      )
+    }
   }
 
   console.log(`[e2e] Setting feature flags for ${user.label}...`)
