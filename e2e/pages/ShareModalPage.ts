@@ -2,7 +2,8 @@ import type { Page, Locator } from '@playwright/test'
 
 export class ShareModalPage {
   private readonly page: Page
-  private readonly dialog: Locator
+  /** The modal dialog — exposed so tests can assert its inner elements. */
+  readonly dialog: Locator
 
   constructor(page: Page) {
     this.page = page
@@ -50,6 +51,14 @@ export class ShareModalPage {
    * any text in the row (display name, email or instance URL). */
   memberItem(nameOrEmail: string): Locator {
     return this.dialog.getByRole('listitem').filter({ hasText: nameOrEmail })
+  }
+
+  /** Role dropdown button ("Editor"/"Viewer") of a confirmed member row.
+   * Only rendered for confirmed members, never for pending ones or the owner. */
+  memberRole(nameOrEmail: string): Locator {
+    return this.memberItem(nameOrEmail)
+      .getByRole('button')
+      .filter({ hasText: /^(editor|viewer)$/i })
   }
 
   /** Revoke a member's access from the member list. Some cozy-sharing
