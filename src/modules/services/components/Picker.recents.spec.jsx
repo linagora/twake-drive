@@ -4,9 +4,10 @@ import React from 'react'
 import { Q, createMockClient } from 'cozy-client'
 import { useDataProxy } from 'cozy-dataproxy-lib'
 
-import { buildContentFolderQuery } from './FilePicker/queries'
 import Picker from './Picker'
 import AppLike from 'test/components/AppLike'
+
+import { buildContentFolderQuery } from '@/components/FilePicker/queries'
 
 jest.mock('cozy-dataproxy-lib', () => ({
   DataProxyProvider: ({ children }) => children,
