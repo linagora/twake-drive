@@ -16,7 +16,7 @@ import {
   User,
   stackExec
 } from '../helpers/config'
-import { setFlags } from '../helpers/flags'
+import { DEFAULT_FLAGS, setFlags } from '../helpers/flags'
 
 const ADMIN_AUTH = `Basic ${Buffer.from(`${ADMIN_USER}:${ADMIN_PASSPHRASE}`).toString('base64')}`
 
@@ -64,16 +64,6 @@ async function createInstance(user: User): Promise<void> {
       `Failed to create instance ${user.instance} (${res.status}): ${body}`
     )
   }
-}
-
-const FEATURE_FLAGS = {
-  'cozy.hide-sharing-cozy-to-cozy': true,
-  'drive.shared-drive.enabled': true,
-  'drive.federated-shared-folder.enabled': true,
-  'drive.federated-shared-modal.enabled': true,
-  'drive.file-picker-demo.enabled': true,
-  'cozy.search.enabled': true,
-  'dataproxy.force-trusted-device.enabled': true
 }
 
 async function waitForStack(url: string, timeoutMs = 60_000): Promise<void> {
@@ -198,7 +188,7 @@ async function setupUser(
   }
 
   console.log(`[e2e] Setting feature flags for ${user.label}...`)
-  setFlags(user.instance, FEATURE_FLAGS)
+  setFlags(user.instance, DEFAULT_FLAGS)
 
   console.log(`[e2e] Getting session cookie for ${user.label}...`)
   const cookie = await getSessionCookie(user)

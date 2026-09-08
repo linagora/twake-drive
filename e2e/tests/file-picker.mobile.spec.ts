@@ -142,6 +142,10 @@ test.describe.serial('File Picker Sharings mobile', () => {
     await expect(row(rootName)).toBeVisible()
 
     await picker.tapItem(rootName)
-    await expect(row(nestedName)).toBeVisible()
+    // Virtualized list + proxied listing: poll instead of a bare 5s expect.
+    await expect(async () => {
+      await picker.scrollToItem(nestedName)
+      await expect(row(nestedName)).toBeVisible()
+    }).toPass({ timeout: 30_000 })
   })
 })
