@@ -8,6 +8,7 @@ import { createMockClient } from 'cozy-client'
 import AppRouter from './AppRouter'
 import AppLike from 'test/components/AppLike'
 
+import { isExcalidrawEnabled } from '@/modules/views/Excalidraw/helpers'
 import { isOfficeEnabled } from '@/modules/views/OnlyOffice/helpers'
 
 const client = createMockClient({})
@@ -16,6 +17,17 @@ jest.mock('modules/views/OnlyOffice/helpers', () => ({
   ...jest.requireActual('modules/views/OnlyOffice/helpers'),
   isOfficeEnabled: jest.fn().mockImplementation(() => true)
 }))
+
+jest.mock('modules/views/Excalidraw/helpers', () => ({
+  ...jest.requireActual('modules/views/Excalidraw/helpers'),
+  isExcalidrawEnabled: jest.fn().mockImplementation(() => true)
+}))
+
+jest.mock('modules/views/Excalidraw', () => {
+  return jest.fn().mockImplementation(() => {
+    return <div>ExcalidrawView</div>
+  })
+})
 
 jest.mock('modules/upload/UploadQueue')
 
@@ -85,5 +97,19 @@ describe('Public AppRouter', () => {
     setupRouter({ data: textDocument, route: '/onlyoffice/id' })
 
     expect(screen.getByText('LightFileViewer')).toBeInTheDocument()
+  })
+
+  it('should render the excalidraw view when a shared folder page targets a drawing', async () => {
+    setupRouter({ route: '/excalidraw/file-id' })
+
+    expect(screen.getByText('ExcalidrawView')).toBeInTheDocument()
+  })
+
+  it('should redirect the excalidraw route to the folder view when excalidraw is disabled', async () => {
+    isExcalidrawEnabled.mockImplementation(() => false)
+
+    setupRouter({ route: '/excalidraw/file-id' })
+
+    expect(screen.getByText('PublicFolderView')).toBeInTheDocument()
   })
 })
