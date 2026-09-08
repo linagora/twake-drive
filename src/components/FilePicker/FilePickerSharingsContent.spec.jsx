@@ -5,6 +5,7 @@ import { useQuery } from 'cozy-client'
 import { useSharingContext } from 'cozy-sharing'
 
 import { FilePickerSharingsContent } from './FilePickerSharingsContent'
+import { filePickerItemTypes } from './constants'
 
 import { SHARING_TAB_WITH_ME } from '@/constants/config'
 import { useFilteredSharings } from '@/modules/views/Sharings/useFilteredSharings'
@@ -13,9 +14,14 @@ import { buildSharingsQuery } from '@/queries'
 
 jest.mock('cozy-client', () => ({
   ...jest.requireActual('cozy-client'),
+  models: {
+    file: { isDirectory: item => item.type === 'directory' }
+  },
   useQuery: jest.fn()
 }))
 jest.mock('cozy-client/dist/models/file', () => ({
+  isDirectory: item => item.type === 'directory',
+  isFile: item => item.type === 'file',
   isSharingShortcutNew: item => item.metadata?.sharing?.status === 'new'
 }))
 jest.mock('cozy-sharing', () => ({ useSharingContext: jest.fn() }))
@@ -72,6 +78,7 @@ function setup({
       <FilePickerSharingsContent
         rootBreadcrumbPath={rootBreadcrumbPath}
         sharedDocumentIds={sharedDocumentIds}
+        displayedTypes={Object.values(filePickerItemTypes)}
         renderFilePickerContent={renderFilePickerContent}
       />
     )

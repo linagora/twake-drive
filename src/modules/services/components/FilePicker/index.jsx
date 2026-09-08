@@ -2,18 +2,17 @@ import PropTypes from 'prop-types'
 import React, {
   useState,
   memo,
+  useMemo,
   useRef,
   useCallback,
   lazy,
   Suspense
 } from 'react'
 
-import Box from 'cozy-ui/transpiled/react/Box'
 import Divider from 'cozy-ui/transpiled/react/Divider'
 import Paper from 'cozy-ui/transpiled/react/Paper'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 
-import FilePickerBody from './FilePickerBody'
 import FilePickerFooter from './FilePickerFooter'
 import FilePickerHeader from './FilePickerHeader'
 import {
@@ -21,27 +20,21 @@ import {
   filePickerDoubleClickResults,
   filePickerErrorCodes,
   filePickerLinkModes,
-  filePickerSections,
-  filePickerThemes,
-  FILE_PICKER_RECENTS_ROOT_ID,
-  FILE_PICKER_SHARINGS_ROOT_ID
+  filePickerThemes
 } from './constants'
 import { getActionDisabledState } from './constraints'
-import { getCompliantTypes, isValidFile } from './helpers'
 
-import { useSelectionContext } from '@/modules/selection/SelectionProvider'
+import { FilePicker as SharedFilePicker } from '@/components/FilePicker/FilePicker'
+import {
+  filePickerItemTypes,
+  filePickerModes,
+  filePickerSections
+} from '@/components/FilePicker/constants'
+import { getCompliantTypes, isValidFile } from '@/components/FilePicker/helpers'
 
 const LinkAccessModal = lazy(() =>
   import('./LinkAccessModal').then(m => ({ default: m.LinkAccessModal }))
 )
-
-export const ROOT_DIR_ID = 'io.cozy.files.root-dir'
-
-const sectionRootIds = {
-  [filePickerSections.DRIVE]: ROOT_DIR_ID,
-  [filePickerSections.RECENTS]: FILE_PICKER_RECENTS_ROOT_ID,
-  [filePickerSections.SHARINGS]: FILE_PICKER_SHARINGS_ROOT_ID
-}
 
 const FilePicker = ({
   onChange,
@@ -52,68 +45,23 @@ const FilePicker = ({
   onReadyToUse,
   onFileDoubleClick
 }) => {
-  const [location, setLocation] = useState({
-    section: filePickerSections.DRIVE,
-    folderId: ROOT_DIR_ID,
-    driveId: null
-  })
-  const [isSectionChanging, setIsSectionChanging] = useState(false)
   const [error, setError] = useState(null)
   const [isLinkAccessOpen, setIsLinkAccessOpen] = useState(false)
-  const { selectedItems, clearSelection, setSelectedItems } =
-    useSelectionContext()
+  const [selectedItems, setSelectedItems] = useState([])
   const { showAlert } = useAlert()
   const isProcessingRef = useRef(false)
-  // FilePickerBody is remounted when switching sections, but readiness is notified once per picker.
-  const readyNotifiedRef = useRef(false)
   const [busyLinkMode, setBusyLinkMode] = useState(null)
+  const itemsIdsSelected = useMemo(
+    () => selectedItems.map(item => item._id),
+    [selectedItems]
+  )
 
   const config = filePickerConfig || defaultFilePickerConfig
   const publicLinkAction = config.sharingLink ?? null
   const downloadLinkAction = config.downloadLink ?? null
 
-  const navigateTo = folder => {
-    setError(null)
-    setLocation(currentLocation => {
-      const folderId = folder.id ?? folder._id
-      if (folderId === FILE_PICKER_SHARINGS_ROOT_ID) {
-        return {
-          section: filePickerSections.SHARINGS,
-          folderId: FILE_PICKER_SHARINGS_ROOT_ID,
-          driveId: null
-        }
-      }
-
-      return {
-        ...currentLocation,
-        folderId,
-        driveId: folder.driveId ?? currentLocation.driveId
-      }
-    })
-    clearSelection()
-  }
-
-  const handleSectionReady = useCallback(() => {
-    setIsSectionChanging(false)
-  }, [])
-
-  // Keep the callback stable so FilePickerBody's readiness effect does not rerun on unrelated renders.
-  const handleReadyToUse = useCallback(() => {
-    if (readyNotifiedRef.current) return
-    readyNotifiedRef.current = true
-    onReadyToUse?.()
-  }, [onReadyToUse])
-
-  const handleSectionChange = section => {
-    setError(null)
-    setIsSectionChanging(true)
-    setLocation({
-      section,
-      folderId: sectionRootIds[section],
-      driveId: null
-    })
-    clearSelection()
-  }
+  const clearSelection = () => setSelectedItems([])
+  const handleLocationChange = useCallback(() => setError(null), [])
 
   const handleConfirm = async linkMode => {
     if (busyLinkMode) return null
@@ -176,7 +124,11 @@ const FilePicker = ({
   }
 
   const itemTypesAccepted = getCompliantTypes(accept)
-  const hasSelection = selectedItems.length > 0
+  const selectableTypes =
+    itemTypesAccepted.length === 0
+      ? Object.values(filePickerItemTypes)
+      : [filePickerItemTypes.FOLDER, ...itemTypesAccepted]
+  const hasSelection = itemsIdsSelected.length > 0
 
   const publicLinkState = hasSelection
     ? getActionDisabledState(publicLinkAction, selectedItems)
@@ -208,7 +160,7 @@ const FilePicker = ({
 
       isProcessingRef.current = true
       setError(null)
-      setSelectedItems({ [item._id]: item })
+      setSelectedItems([item])
 
       try {
         const result = await onFileDoubleClick(item, linkMode)
@@ -244,38 +196,39 @@ const FilePicker = ({
         square
         data-testid="file-picker"
       >
-        <header
-          className="u-pt-1-half u-pb-0 u-pl-1-half u-pr-2"
-          data-testid="file-picker-header-wrapper"
-        >
-          <FilePickerHeader
-            activeSection={location.section}
-            onSectionChange={handleSectionChange}
-            onClose={onClose}
-          />
-        </header>
-        <Divider />
-        <Box
-          flex={1}
-          minHeight={0}
-          className="u-pos-relative"
-          data-testid="file-picker-body-wrapper"
-        >
-          <FilePickerBody
-            key={location.section}
-            isSectionChanging={isSectionChanging}
-            onSectionReady={handleSectionReady}
-            navigateTo={navigateTo}
-            section={location.section}
-            folderId={location.folderId}
-            driveId={location.driveId}
-            itemTypesAccepted={itemTypesAccepted}
-            multiple={multiple}
-            error={error}
-            onReadyToUse={handleReadyToUse}
-            onFileDoubleClick={handleFileDoubleClick}
-          />
-        </Box>
+        <SharedFilePicker
+          mode={filePickerModes.SELECTION}
+          availableSections={Object.values(filePickerSections)}
+          displayedTypes={Object.values(filePickerItemTypes)}
+          selectableTypes={selectableTypes}
+          multiple={multiple}
+          selectedItems={selectedItems}
+          onSelectionChange={setSelectedItems}
+          onLocationChange={handleLocationChange}
+          error={error}
+          onReadyToUse={onReadyToUse}
+          onFileDoubleClick={handleFileDoubleClick}
+          renderHeader={({
+            activeSection,
+            availableSections,
+            onSectionChange
+          }) => (
+            <>
+              <header
+                className="u-pt-1-half u-pb-0 u-pl-1-half u-pr-2"
+                data-testid="file-picker-header-wrapper"
+              >
+                <FilePickerHeader
+                  activeSection={activeSection}
+                  availableSections={availableSections}
+                  onSectionChange={onSectionChange}
+                  onClose={onClose}
+                />
+              </header>
+              <Divider />
+            </>
+          )}
+        />
         <Divider />
         <footer
           className="u-m-1 u-flex-shrink-0-s"
@@ -288,6 +241,8 @@ const FilePicker = ({
             publicLinkAction={publicLinkAction}
             downloadLinkAction={downloadLinkAction}
             busyLinkMode={busyLinkMode}
+            selectedItems={selectedItems}
+            onClearSelection={clearSelection}
           />
         </footer>
       </Paper>

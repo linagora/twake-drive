@@ -6,15 +6,22 @@ import { useSharingContext } from 'cozy-sharing'
 import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import { useI18n } from 'twake-i18n'
 
-import FilePickerBody from './FilePickerBody'
+import { FilePickerBody } from './FilePickerBody'
 import {
+  filePickerItemTypes,
+  filePickerModes,
   filePickerSections,
-  FILE_PICKER_RECENTS_ROOT_ID,
   FILE_PICKER_SHARINGS_ROOT_ID
 } from './constants'
 
 import { useBreadcrumbPath } from '@/modules/breadcrumb/hooks/useBreadcrumbPath'
 import { useSharedDriveFolder } from '@/modules/shareddrives/hooks/useSharedDriveFolder'
+import { useFilteredSharings } from '@/modules/views/Sharings/useFilteredSharings'
+import {
+  getSharingsFetchStatus,
+  useSharingsQueryResult
+} from '@/modules/views/Sharings/useSharingsQueryResult'
+
 const mockHandleItemClick = jest.fn()
 const mockHandleMobileToggleSelect = jest.fn()
 
@@ -25,6 +32,8 @@ jest.mock('cozy-client', () => ({
   useQuery: jest.fn()
 }))
 jest.mock('cozy-client/dist/models/file', () => ({
+  isDirectory: item => item.type === 'directory',
+  isFile: item => item.type === 'file',
   isSharingShortcutNew: item => item.metadata?.sharing?.status === 'new'
 }))
 jest.mock('cozy-sharing', () => ({ useSharingContext: jest.fn() }))
@@ -33,26 +42,21 @@ jest.mock('cozy-ui/transpiled/react/providers/Breakpoints', () => ({
   useBreakpoints: jest.fn()
 }))
 jest.mock('./queries', () => ({
-  buildContentFolderQuery: folderId => ({
+  buildDisplayedContentFolderQuery: folderId => ({
     definition: jest.fn(),
     options: { as: folderId }
   })
 }))
-let mockRecentsSource = null
-const mockFilePickerRecentsContent = jest.fn(props =>
-  mockRecentsSource ? (
-    props.renderContent(mockRecentsSource)
-  ) : (
-    <div>Recents root</div>
-  )
+jest.mock(
+  '@/modules/services/components/FilePicker/FilePickerRecentsContent',
+  () => ({ FilePickerRecentsContent: () => null })
 )
-const mockFilePickerSharingsContent = jest.fn(() => <div>Sharings root</div>)
-
-jest.mock('./FilePickerRecentsContent', () => ({
-  FilePickerRecentsContent: props => mockFilePickerRecentsContent(props)
+jest.mock('@/modules/views/Sharings/useFilteredSharings', () => ({
+  useFilteredSharings: jest.fn()
 }))
-jest.mock('./FilePickerSharingsContent', () => ({
-  FilePickerSharingsContent: props => mockFilePickerSharingsContent(props)
+jest.mock('@/modules/views/Sharings/useSharingsQueryResult', () => ({
+  getSharingsFetchStatus: jest.fn(),
+  useSharingsQueryResult: jest.fn()
 }))
 jest.mock('./useFilePickerSelection', () => ({
   useFilePickerSelection: () => ({
@@ -69,7 +73,7 @@ jest.mock('@/components/PickerView/PickerViewTable', () => ({
     onItemClick,
     onItemDoubleClick
   }) => (
-    <div data-testid="file-picker-table">
+    <div>
       {items.map(item => (
         <button
           key={item._id}
@@ -98,33 +102,31 @@ jest.mock('@/modules/shareddrives/hooks/useSharedDriveFolder', () => ({
 }))
 
 const baseProps = {
+  mode: filePickerModes.SELECTION,
   navigateTo: jest.fn(),
-  itemTypesAccepted: [],
+  displayedTypes: Object.values(filePickerItemTypes),
+  selectableTypes: Object.values(filePickerItemTypes),
   multiple: true
 }
 
-const makeRecentsSource = overrides => ({
-  items: [],
-  fetchStatus: 'loaded',
-  hasMore: false,
-  fetchMore: null,
-  breadcrumbPath: [
-    { id: FILE_PICKER_RECENTS_ROOT_ID, name: 'Nav.item_recent' }
-  ],
-  isItemDisabled: () => false,
-  isFetchingMore: false,
-  ...overrides
-})
-
 describe('FilePickerBody', () => {
   beforeEach(() => {
-    mockRecentsSource = null
     useI18n.mockReturnValue({ t: key => key })
     useSharingContext.mockReturnValue({
       allLoaded: true,
       byDocId: { 'shared-root': {} },
       isOwner: () => false
     })
+    useSharingsQueryResult.mockReturnValue({
+      data: [],
+      fetchStatus: 'loaded'
+    })
+    useFilteredSharings.mockReturnValue({
+      filteredResult: { data: [], fetchStatus: 'loaded', lastFetch: 1 },
+      sharedDrivesLoaded: true,
+      sharedDrivesError: null
+    })
+    getSharingsFetchStatus.mockReturnValue('loaded')
     useBreadcrumbPath.mockReturnValue([
       { id: 'file-picker-sharings-root', name: 'Nav.item_sharings' },
       { id: 'folder-id', name: 'Shared folder' }
@@ -133,122 +135,6 @@ describe('FilePickerBody', () => {
   })
 
   afterEach(() => jest.clearAllMocks())
-
-  it('delegates the Recents root without running folder queries', () => {
-    render(
-      <FilePickerBody
-        {...baseProps}
-        section={filePickerSections.RECENTS}
-        folderId={FILE_PICKER_RECENTS_ROOT_ID}
-      />
-    )
-
-    expect(mockFilePickerRecentsContent).toHaveBeenCalledWith({
-      rootBreadcrumbPath: {
-        id: FILE_PICKER_RECENTS_ROOT_ID,
-        name: 'Nav.item_recent'
-      },
-      renderContent: expect.any(Function)
-    })
-    expect(useQuery).not.toHaveBeenCalled()
-    expect(useSharedDriveFolder).not.toHaveBeenCalled()
-    expect(useBreadcrumbPath).not.toHaveBeenCalled()
-  })
-
-  it('renders partial Recents while loading and keeps the table on error', () => {
-    const item = { _id: 'recent-id', name: 'Recent file', type: 'file' }
-    mockRecentsSource = makeRecentsSource({
-      items: [item],
-      fetchStatus: 'loading',
-      withFilePath: true,
-      isFetchingMore: true,
-      keepItemsOnError: true,
-      emptyMessageKey: 'FilePicker.recents.empty',
-      errorMessageKey: 'FilePicker.recents.error'
-    })
-
-    const { rerender } = render(
-      <FilePickerBody
-        {...baseProps}
-        section={filePickerSections.RECENTS}
-        folderId={FILE_PICKER_RECENTS_ROOT_ID}
-      />
-    )
-
-    expect(screen.getByTestId('file-picker-loading-more')).toBeInTheDocument()
-    expect(
-      screen.getByRole('button', { name: 'Recent file:local' })
-    ).toBeInTheDocument()
-    expect(screen.queryByTestId('file-picker-loading')).toBe(null)
-
-    mockRecentsSource = {
-      ...mockRecentsSource,
-      fetchStatus: 'error',
-      isFetchingMore: false
-    }
-    rerender(
-      <FilePickerBody
-        {...baseProps}
-        section={filePickerSections.RECENTS}
-        folderId={FILE_PICKER_RECENTS_ROOT_ID}
-      />
-    )
-
-    expect(
-      screen.getByRole('button', { name: 'Recent file:local' })
-    ).toBeInTheDocument()
-    expect(screen.queryByTestId('file-picker-loading-more')).toBe(null)
-    expect(screen.queryByTestId('file-picker-source-error')).toBe(null)
-  })
-
-  it.each([
-    ['loading', 'file-picker-loading', null],
-    ['loaded', 'file-picker-empty', 'FilePicker.recents.empty'],
-    ['error', 'file-picker-source-error', 'FilePicker.recents.error']
-  ])(
-    'renders the Recents %s state without results',
-    (fetchStatus, testId, text) => {
-      mockRecentsSource = makeRecentsSource({
-        fetchStatus,
-        emptyMessageKey: 'FilePicker.recents.empty',
-        errorMessageKey: 'FilePicker.recents.error'
-      })
-
-      render(
-        <FilePickerBody
-          {...baseProps}
-          section={filePickerSections.RECENTS}
-          folderId={FILE_PICKER_RECENTS_ROOT_ID}
-        />
-      )
-
-      const state = screen.getByTestId(testId)
-      expect(state).toBeInTheDocument()
-      if (text) expect(state).toHaveTextContent(text)
-    }
-  )
-
-  it('shows partial Recents while a section change is completing', () => {
-    const onSectionReady = jest.fn()
-    mockRecentsSource = makeRecentsSource({
-      items: [{ _id: 'recent-id', name: 'Recent file', type: 'file' }],
-      fetchStatus: 'loading',
-      isFetchingMore: true
-    })
-
-    render(
-      <FilePickerBody
-        {...baseProps}
-        section={filePickerSections.RECENTS}
-        folderId={FILE_PICKER_RECENTS_ROOT_ID}
-        isSectionChanging
-        onSectionReady={onSectionReady}
-      />
-    )
-
-    expect(screen.queryByTestId('source-item')).toBe(null)
-    expect(onSectionReady).toHaveBeenCalledTimes(1)
-  })
 
   it('delegates the Sharings root without running folder queries', () => {
     render(
@@ -259,17 +145,48 @@ describe('FilePickerBody', () => {
       />
     )
 
-    expect(mockFilePickerSharingsContent).toHaveBeenCalledWith({
-      rootBreadcrumbPath: {
-        id: FILE_PICKER_SHARINGS_ROOT_ID,
-        name: 'Nav.item_sharings'
-      },
-      sharedDocumentIds: ['shared-root'],
-      renderFilePickerContent: expect.any(Function)
-    })
+    expect(useSharingsQueryResult).toHaveBeenCalledWith(['shared-root'], true)
+    expect(useFilteredSharings).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sharedDocumentIds: ['shared-root'],
+        tab: expect.any(String)
+      })
+    )
     expect(useQuery).not.toHaveBeenCalled()
     expect(useSharedDriveFolder).not.toHaveBeenCalled()
     expect(useBreadcrumbPath).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['loading', 'file-picker-loading'],
+    ['failed', 'file-picker-source-error']
+  ])('renders the Sharings root %s state', (fetchStatus, testId) => {
+    getSharingsFetchStatus.mockReturnValue(fetchStatus)
+
+    render(
+      <FilePickerBody
+        {...baseProps}
+        section={filePickerSections.SHARINGS}
+        folderId={FILE_PICKER_SHARINGS_ROOT_ID}
+      />
+    )
+
+    expect(screen.getByTestId(testId)).toBeInTheDocument()
+    expect(screen.queryByTestId('file-picker-empty')).toBe(null)
+  })
+
+  it('renders the empty Sharings root state', () => {
+    render(
+      <FilePickerBody
+        {...baseProps}
+        section={filePickerSections.SHARINGS}
+        folderId={FILE_PICKER_SHARINGS_ROOT_ID}
+      />
+    )
+
+    expect(screen.getByTestId('file-picker-empty')).toHaveTextContent(
+      'empty.sharing_text'
+    )
   })
 
   it.each([
@@ -548,6 +465,161 @@ describe('FilePickerBody', () => {
     expect(screen.getByTestId('file-picker-empty')).toHaveTextContent(
       'empty.title'
     )
+  })
+
+  it('keeps all visible folders in current-folder mode by default', () => {
+    useQuery.mockReturnValue({
+      data: [
+        { _id: 'local-folder', name: 'Local folder', type: 'directory' },
+        {
+          _id: 'nextcloud-folder',
+          name: 'Nextcloud folder',
+          type: 'directory',
+          cozyMetadata: { createdByApp: 'nextcloud' }
+        },
+        {
+          _id: 'shared-drive-folder',
+          name: 'Shared Drive folder',
+          type: 'directory',
+          driveId: 'drive-id'
+        }
+      ],
+      fetchStatus: 'loaded'
+    })
+
+    render(
+      <FilePickerBody
+        {...baseProps}
+        mode={filePickerModes.CURRENT_FOLDER}
+        displayedTypes={[filePickerItemTypes.FOLDER]}
+        selectableTypes={[]}
+        section={filePickerSections.DRIVE}
+        folderId="root-id"
+      />
+    )
+
+    expect(
+      screen.queryByRole('button', { name: 'Local folder:local' })
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Nextcloud folder:local' })
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Shared Drive folder:drive-id' })
+    ).toBeInTheDocument()
+  })
+
+  it('applies the visibility predicate to local folders', () => {
+    useQuery.mockReturnValue({
+      data: [
+        { _id: 'visible-folder', name: 'Visible folder', type: 'directory' },
+        { _id: 'hidden-folder', name: 'Hidden folder', type: 'directory' }
+      ],
+      fetchStatus: 'loaded'
+    })
+
+    render(
+      <FilePickerBody
+        {...baseProps}
+        isItemVisible={item => item._id !== 'hidden-folder'}
+        section={filePickerSections.DRIVE}
+        folderId="root-id"
+      />
+    )
+
+    expect(
+      screen.getByRole('button', { name: 'Visible folder:local' })
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Hidden folder:local' })).toBe(
+      null
+    )
+  })
+
+  it('applies the visibility predicate to sharings and shared-drive items', () => {
+    useFilteredSharings.mockReturnValue({
+      filteredResult: {
+        data: [
+          { _id: 'visible-sharing', name: 'Visible sharing', type: 'file' },
+          { _id: 'hidden-sharing', name: 'Hidden sharing', type: 'file' }
+        ],
+        fetchStatus: 'loaded',
+        lastFetch: 1
+      },
+      sharedDrivesLoaded: true,
+      sharedDrivesError: null
+    })
+
+    const isItemVisible = item => !item._id.startsWith('hidden')
+    render(
+      <FilePickerBody
+        {...baseProps}
+        isItemVisible={isItemVisible}
+        section={filePickerSections.SHARINGS}
+        folderId={FILE_PICKER_SHARINGS_ROOT_ID}
+      />
+    )
+
+    expect(
+      screen.getByRole('button', { name: 'Visible sharing:local' })
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Hidden sharing:local' })).toBe(
+      null
+    )
+
+    useSharedDriveFolder.mockReturnValue({
+      sharedDriveResult: {
+        included: [
+          { _id: 'visible-drive', name: 'Visible drive', type: 'file' },
+          { _id: 'hidden-drive', name: 'Hidden drive', type: 'file' }
+        ]
+      },
+      fetchStatus: 'loaded',
+      hasMore: false,
+      fetchMore: null
+    })
+    render(
+      <FilePickerBody
+        {...baseProps}
+        isItemVisible={isItemVisible}
+        section={filePickerSections.SHARINGS}
+        folderId="folder-id"
+        driveId="drive-id"
+      />
+    )
+
+    expect(
+      screen.getByRole('button', { name: 'Visible drive:drive-id' })
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Hidden drive:drive-id' })
+    ).toBe(null)
+  })
+
+  it('normalizes shared-drive items before applying visibility', () => {
+    useSharedDriveFolder.mockReturnValue({
+      sharedDriveResult: {
+        included: [
+          { _id: 'drive-folder', name: 'Drive folder', type: 'directory' }
+        ]
+      },
+      fetchStatus: 'loaded',
+      hasMore: false,
+      fetchMore: null
+    })
+
+    render(
+      <FilePickerBody
+        {...baseProps}
+        isItemVisible={item => !item.driveId}
+        section={filePickerSections.SHARINGS}
+        folderId="folder-id"
+        driveId="drive-id"
+      />
+    )
+
+    expect(
+      screen.queryByRole('button', { name: 'Drive folder:drive-id' })
+    ).toBe(null)
   })
 
   it('filters received shares from the My Drive listing', () => {

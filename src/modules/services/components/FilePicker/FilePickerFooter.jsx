@@ -19,8 +19,6 @@ import { useI18n } from 'twake-i18n'
 
 import { filePickerLinkModes } from './constants'
 
-import { useSelectionContext } from '@/modules/selection/SelectionProvider'
-
 function getTooltipTitle(t, reasonKey, actionConfig) {
   const filesizeTooltip =
     reasonKey === 'FilePicker.constraints.disabledReasons.fileTooLarge' ||
@@ -49,11 +47,12 @@ const FilePickerFooter = ({
   downloadLinkState,
   publicLinkAction,
   downloadLinkAction,
-  busyLinkMode
+  busyLinkMode,
+  selectedItems,
+  onClearSelection
 }) => {
   const { t } = useI18n()
   const { isMobile } = useBreakpoints()
-  const { selectedItems, clearSelection } = useSelectionContext()
   const selectedCount = selectedItems.length
   const hasSelection = selectedCount > 0
 
@@ -128,7 +127,7 @@ const FilePickerFooter = ({
       {hasSelection ? (
         <Box className="u-flex u-flex-items-center u-flex-shrink-0">
           <IconButton
-            onClick={clearSelection}
+            onClick={onClearSelection}
             size="small"
             aria-label={t('toolbar.clear_selection')}
           >
@@ -204,7 +203,9 @@ FilePickerFooter.propTypes = {
   }),
   publicLinkAction: PropTypes.object,
   downloadLinkAction: PropTypes.object,
-  busyLinkMode: PropTypes.string
+  busyLinkMode: PropTypes.string,
+  selectedItems: PropTypes.arrayOf(PropTypes.object),
+  onClearSelection: PropTypes.func.isRequired
 }
 
 FilePickerFooter.defaultProps = {
@@ -212,7 +213,8 @@ FilePickerFooter.defaultProps = {
   downloadLinkState: { disabled: true, reasonKey: null },
   publicLinkAction: null,
   downloadLinkAction: null,
-  busyLinkMode: null
+  busyLinkMode: null,
+  selectedItems: []
 }
 
 export default memo(FilePickerFooter)
