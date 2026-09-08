@@ -214,7 +214,9 @@ export const computePath = (
     case 'grist':
       return `/bridge/grist/${(file as IOCozyFile).metadata.externalId}`
     case 'shortcut':
-      return `/external/${file._id}`
+      return driveId
+        ? `/external/${driveId}/${file._id}`
+        : `/external/${file._id}`
     case 'directory':
       if (isOwner && pathname.startsWith('/sharings/')) {
         return `/folder/${file._id}`
