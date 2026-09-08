@@ -52,3 +52,18 @@ export const updateFileBinary = (client, file, content, contentType) =>
       name: file.name,
       contentType
     })
+
+/**
+ * Returns true when the stack resolved the file to another instance.
+ * See https://docs.cozy.io/en/cozy-stack/files/#get-editorfile-idopen
+ *
+ * @param {object} params - Result of an editor `/open` route
+ * @param {string} instanceUri - Current instance uri
+ * @returns {boolean}
+ */
+export const shouldBeOpenedOnOtherInstance = ({ data }, instanceUri) => {
+  if (!instanceUri) return false
+  const docHost = data.attributes.instance.split(':')[0]
+  const currentHost = new URL(instanceUri).hostname
+  return docHost !== currentHost
+}

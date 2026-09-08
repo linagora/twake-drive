@@ -6,10 +6,8 @@ import useFetchJSON from 'cozy-client/dist/hooks/useFetchJSON'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
-import {
-  shouldBeOpenedOnOtherInstance,
-  isOfficeEnabled
-} from '@/modules/views/OnlyOffice/helpers'
+import { isOfficeEnabled } from '@/modules/views/OnlyOffice/helpers'
+import { shouldBeOpenedOnOtherInstance } from '@/modules/views/editor/helpers'
 import { useEditorAuthor } from '@/modules/views/editor/useEditorAuthor'
 
 const useConfig = () => {

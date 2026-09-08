@@ -125,20 +125,6 @@ export const makeOnlyOfficeFileRoute = (
   return `/onlyoffice/${fileId}${searchParam}`
 }
 
-/**
- * Returns true in case of the document is shared and should be opened on another instance.
- * See https://docs.cozy.io/en/cozy-stack/office/#get-officeidopen
- * @param {object} params - Result of `/office/fileId/open`
- * @param {string} instanceUri - Current instanceUri
- * @returns {boolean}
- */
-export const shouldBeOpenedOnOtherInstance = ({ data }, instanceUri) => {
-  if (!instanceUri) return false
-  const docHost = data.attributes.instance.split(':')[0]
-  const currentHost = new URL(instanceUri).hostname
-  return docHost !== currentHost
-}
-
 export const makeOnlyOfficeIconByClass = fileClass => {
   const iconByClass = {
     spreadsheet: FileTypeSheet,
