@@ -43,8 +43,9 @@ jest.mock('modules/views/OnlyOffice', () => {
 })
 
 describe('Public AppRouter', () => {
+  // AppLike mounts a HashRouter: a pathname would leave every render on '/'.
   const setupRouter = ({ route = '/', data = {} } = {}) => {
-    window.history.pushState({}, 'Test page', route)
+    window.location.hash = `#${route}`
     render(
       <AppLike client={client}>
         <AppRouter history={history} data={data} />
