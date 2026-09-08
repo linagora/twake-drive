@@ -118,8 +118,8 @@ describe('PickerView', () => {
     expect(screen.queryByRole('table')).toBe(null)
   })
 
-  it('renders the fixed PickerViewTable assembly', () => {
-    render(<PickerView items={mockItems} breadcrumbPath={mockBreadcrumbPath} />)
+  it('renders the table when items are loaded', () => {
+    setup()
 
     expect(screen.getByRole('table')).toBeInTheDocument()
   })
