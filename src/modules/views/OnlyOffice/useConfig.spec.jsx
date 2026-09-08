@@ -6,14 +6,15 @@ import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import { officeDoc } from 'test/data'
 
+import { changeLocation } from '@/hooks/helpers'
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
 import useConfig from '@/modules/views/OnlyOffice/useConfig'
 import { useEditorAuthor } from '@/modules/views/editor/useEditorAuthor'
 
 jest.mock('cozy-client', () => ({
+  ...jest.requireActual('cozy-client'),
   useClient: jest.fn(),
-  isQueryLoading: jest.fn(() => false),
-  generateWebLink: jest.fn()
+  isQueryLoading: jest.fn(() => false)
 }))
 jest.mock('cozy-client/dist/hooks/useFetchJSON', () => ({
   __esModule: true,
@@ -37,6 +38,10 @@ jest.mock('@/modules/views/OnlyOffice/helpers', () => ({
   isOfficeEnabled: jest.fn(() => true)
 }))
 jest.mock('cozy-flags')
+jest.mock('@/hooks/helpers', () => ({
+  ...jest.requireActual('@/hooks/helpers'),
+  changeLocation: jest.fn()
+}))
 
 // Same instance as the client so the doc is opened locally (no redirect branch).
 const officeDocWithoutPublicName = {
@@ -92,5 +97,30 @@ describe('useConfig', () => {
     const { result } = setup({ isAuthorLoading: true })
 
     expect(result.current.config).toBeUndefined()
+  })
+
+  it('sends a document the stack resolved elsewhere to its owner', async () => {
+    setup({
+      data: {
+        data: {
+          ...officeDoc,
+          attributes: {
+            ...officeDoc.attributes,
+            protocol: 'https',
+            instance: 'alice.cozy.example',
+            subdomain: 'flat',
+            sharecode: 'abc123',
+            public_name: 'Bob',
+            document_id: 'owner-file-id'
+          }
+        }
+      }
+    })
+
+    await waitFor(() =>
+      expect(changeLocation).toHaveBeenCalledWith(
+        'https://alice-drive.cozy.example/public/?sharecode=abc123&isOnlyOfficeDocShared=true&onlyOfficeDocId=owner-file-id&username=Bob#/'
+      )
+    )
   })
 })

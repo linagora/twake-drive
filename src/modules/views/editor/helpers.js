@@ -1,3 +1,5 @@
+import { generateWebLink } from 'cozy-client'
+
 /**
  * @typedef {Object} EditorRouteOptions
  * @property {string} [driveId] Id of the shared drive the file belongs to
@@ -66,4 +68,41 @@ export const shouldBeOpenedOnOtherInstance = ({ data }, instanceUri) => {
   const docHost = data.attributes.instance.split(':')[0]
   const currentHost = new URL(instanceUri).hostname
   return docHost !== currentHost
+}
+
+/**
+ * Builds the URL where a shared document must be opened: the public Drive page
+ * of the instance the stack resolved, with the sharecode that grants access.
+ *
+ * The three editor `/open` routes answer with the same attributes; only how the
+ * target page is told which document to open differs, hence `hash` for the
+ * editors mounted in Drive and `searchParams` for OnlyOffice.
+ *
+ * @param {object} params
+ * @param {object} params.attributes - Attributes of an editor `/open` response
+ * @param {string} [params.hash] - In-app route to open on the target page
+ * @param {string[][]} [params.searchParams] - Extra query params for that page
+ * @param {string} [params.redirectLink] - Where to send the user back to
+ * @returns {string}
+ */
+export const makePublicEditorUrl = ({
+  attributes,
+  hash,
+  searchParams = [],
+  redirectLink
+}) => {
+  const { protocol, instance, subdomain, sharecode, public_name } = attributes
+
+  const params = [['sharecode', sharecode], ...searchParams]
+  if (public_name) params.push(['username', public_name])
+  if (redirectLink) params.push(['redirectLink', redirectLink])
+
+  return generateWebLink({
+    cozyUrl: `${protocol}://${instance}`,
+    slug: 'drive',
+    subDomainType: subdomain,
+    pathname: '/public/',
+    searchParams: params,
+    hash
+  })
 }
