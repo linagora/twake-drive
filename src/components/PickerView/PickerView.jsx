@@ -4,8 +4,8 @@ import React, { useEffect } from 'react'
 
 import Alert from 'cozy-ui/transpiled/react/Alert'
 import Box from 'cozy-ui/transpiled/react/Box'
-import ListItemSkeleton from 'cozy-ui/transpiled/react/Skeletons/ListItemSkeleton'
 import LinearProgress from 'cozy-ui/transpiled/react/LinearProgress'
+import ListItemSkeleton from 'cozy-ui/transpiled/react/Skeletons/ListItemSkeleton'
 import { useI18n } from 'twake-i18n'
 
 import { EmptyMessage as DefaultEmptyMessage } from './EmptyMessage'
@@ -41,10 +41,7 @@ export const PickerView = ({
   const { t } = useI18n()
 
   useEffect(() => {
-    if (
-      isSectionChanging &&
-      (fetchStatus !== 'loading' || isFetchingMore)
-    ) {
+    if (isSectionChanging && (fetchStatus !== 'loading' || isFetchingMore)) {
       onSectionReady?.()
     }
   }, [fetchStatus, isFetchingMore, isSectionChanging, onSectionReady])
@@ -113,18 +110,18 @@ export const PickerView = ({
             />
           )}
           <PickerViewTable
-          items={items}
-          itemsIdsSelected={selectedItemIds}
-          isItemDisabled={isItemDisabled}
-          onItemClick={onItemClick}
-          onItemToggle={onItemToggle}
-          onItemDoubleClick={onItemDoubleClick}
-          onItemNavigate={onItemNavigate}
-          fetchMore={hasMore ? fetchMore : null}
-          scrollerRef={scrollerRef}
-          virtuosoRef={virtuosoRef}
-          withFilePath={withFilePath}
-        />
+            items={items}
+            itemsIdsSelected={selectedItemIds}
+            isItemDisabled={isItemDisabled}
+            onItemClick={onItemClick}
+            onItemToggle={onItemToggle}
+            onItemDoubleClick={onItemDoubleClick}
+            onItemNavigate={onItemNavigate}
+            fetchMore={hasMore ? fetchMore : null}
+            scrollerRef={scrollerRef}
+            virtuosoRef={virtuosoRef}
+            withFilePath={withFilePath}
+          />
         </>
       )}
     </Box>
