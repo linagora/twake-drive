@@ -2,6 +2,7 @@ import PropTypes from 'prop-types'
 import React, { useState } from 'react'
 
 import { useClient } from 'cozy-client'
+import flag from 'cozy-flags'
 import { useSharingContext } from 'cozy-sharing'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import { useI18n } from 'twake-i18n'
@@ -14,6 +15,7 @@ import { joinPath, getParentPath } from '@/lib/path'
 import { MoveInsideSharedFolderModal } from '@/modules/move/MoveInsideSharedFolderModal'
 import { MoveOutsideSharedFolderModal } from '@/modules/move/MoveOutsideSharedFolderModal'
 import { MoveSharedFolderInsideAnotherModal } from '@/modules/move/MoveSharedFolderInsideAnotherModal'
+import { MoveTo } from '@/modules/move/MoveTo'
 import { hasOneOfEntriesShared } from '@/modules/move/helpers'
 import { useCancelable } from '@/modules/move/hooks/useCancelable'
 import { computeNextcloudFolderQueryId } from '@/modules/nextcloud/helpers'
@@ -216,18 +218,30 @@ const MoveModal = ({
     setMovingSharedFolderInsideAnother(false)
   }
 
+  const isNewMoveToEnabled = !isPublic && flag('drive.move-to-picker.enabled')
+
   return (
     <>
-      <FolderPicker
-        showNextcloudFolder={showNextcloudFolder}
-        showSharedDriveFolder={showSharedDriveFolder}
-        currentFolder={currentFolder}
-        entries={entries}
-        onConfirm={handleConfirm}
-        onClose={onClose}
-        isBusy={isMoveInProgress || (!isPublic && !allLoaded)}
-        isPublic={isPublic}
-      />
+      {isNewMoveToEnabled ? (
+        <MoveTo
+          currentFolder={currentFolder}
+          entries={entries}
+          onConfirm={handleConfirm}
+          onClose={onClose}
+          isBusy={isMoveInProgress || !allLoaded}
+        />
+      ) : (
+        <FolderPicker
+          showNextcloudFolder={showNextcloudFolder}
+          showSharedDriveFolder={showSharedDriveFolder}
+          currentFolder={currentFolder}
+          entries={entries}
+          onConfirm={handleConfirm}
+          onClose={onClose}
+          isBusy={isMoveInProgress || (!isPublic && !allLoaded)}
+          isPublic={isPublic}
+        />
+      )}
       {isMovingOutsideSharedFolder ? (
         <MoveOutsideSharedFolderModal
           entries={entries}
