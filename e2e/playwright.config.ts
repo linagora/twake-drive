@@ -19,8 +19,9 @@ export default defineConfig({
   // 60s on a slow stack; give per-test headroom.
   timeout: 120_000,
   // Covers docker provisioning plus the full suite — the shared-drive specs
-  // add ~15 multi-instance tests on a single worker.
-  globalTimeout: 900_000,
+  // add ~15 multi-instance tests and the nested-sharing spec runs its five
+  // scenarios for every flag combination, on a single worker.
+  globalTimeout: 1_500_000,
   projects: [
     {
       name: 'chromium',

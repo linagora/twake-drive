@@ -235,6 +235,8 @@ declare module 'cozy-realtime' {
       doctype: string,
       callback: () => void | Promise<void>
     ) => void
+    on: (event: string, callback: () => void) => void
+    removeListener: (event: string, callback: () => void) => void
     stop: () => void
   }
 }

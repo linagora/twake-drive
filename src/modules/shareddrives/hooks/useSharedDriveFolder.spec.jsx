@@ -12,6 +12,8 @@ import logger from '@/lib/logger'
 jest.mock('cozy-realtime', () => {
   return jest.fn().mockImplementation(() => ({
     subscribe: jest.fn(),
+    on: jest.fn(),
+    removeListener: jest.fn(),
     stop: jest.fn()
   }))
 })
@@ -226,6 +228,8 @@ describe('useSharedDriveFolder', () => {
         subscribe: jest.fn((_event, _doctype, callback) => {
           triggerRealtimeEvent = callback
         }),
+        on: jest.fn(),
+        removeListener: jest.fn(),
         stop: jest.fn()
       }))
     })

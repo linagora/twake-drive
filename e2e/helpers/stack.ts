@@ -168,6 +168,40 @@ export async function overwriteFile({
   }
 }
 
+/** Trash a root-level file or folder by name. Trashing a shared folder
+ * revokes its members, so cross-instance test fixtures can clean up their
+ * sharings here. No-op when the name does not exist. */
+export async function trashByName(
+  instance: string,
+  name: string
+): Promise<void> {
+  const listRes = await fetch(`http://${instance}/files/${ROOT_DIR_ID}`, {
+    headers: {
+      Authorization: `Bearer ${filesToken(instance)}`,
+      Accept: 'application/json'
+    }
+  })
+  if (!listRes.ok) {
+    throw new Error(
+      `List root files on ${instance} failed (${listRes.status}): ${await listRes.text()}`
+    )
+  }
+  const body = (await listRes.json()) as {
+    included?: { id: string; attributes?: { name?: string } }[]
+  }
+  const doc = (body.included ?? []).find(item => item.attributes?.name === name)
+  if (!doc) return
+  const delRes = await fetch(`http://${instance}/files/${doc.id}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${filesToken(instance)}` }
+  })
+  if (!delRes.ok) {
+    throw new Error(
+      `Trash ${name} (${doc.id}) on ${instance} failed (${delRes.status}): ${await delRes.text()}`
+    )
+  }
+}
+
 /** Number of versions the stack currently keeps for a file. */
 export async function countFileVersions({
   instance,

@@ -149,10 +149,15 @@ const useSharedDriveFolder = ({
       realtime.subscribe('updated', 'io.cozy.files', debouncedFetch)
       realtime.subscribe('created', 'io.cozy.files', debouncedFetch)
       realtime.subscribe('deleted', 'io.cozy.files', debouncedFetch)
+      // Events fired while the socket is down or not yet subscribed are lost
+      // (the shared-drive realtime channel replays nothing): catch up with a
+      // background refetch on every (re)connect.
+      realtime.on('ready', debouncedFetch)
     }
 
     return (): void => {
       if (realtime) {
+        realtime.removeListener('ready', debouncedFetch)
         realtime.stop()
       }
       debouncedFetch.cancel()
