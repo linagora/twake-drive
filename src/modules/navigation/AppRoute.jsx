@@ -193,6 +193,7 @@ const getEditorRoutes = () => (
 const AppRoutes = ({ sharedDrivesEnabled }) => (
   <SentryRoutes>
     <Route path="external/:fileId" element={<ExternalRedirect />} />
+    <Route path="external/:driveId/:fileId" element={<ExternalRedirect />} />
     <Route path="note/:fileId" element={<PublicNoteRedirect />} />
     <Route path="note/:driveId/:fileId" element={<PublicNoteRedirect />} />
 

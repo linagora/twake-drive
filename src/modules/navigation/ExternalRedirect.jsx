@@ -10,9 +10,13 @@ import EmptyIcon from '@/assets/icons/icon-folder-broken.svg'
 import { DummyLayout } from '@/modules/layout/DummyLayout'
 
 const ExternalRedirect = ({ t }) => {
-  const { fileId } = useParams()
+  const { driveId, fileId } = useParams()
   const client = useClient()
-  const { shortcutInfos, fetchStatus } = useFetchShortcut(client, fileId)
+  const { shortcutInfos, fetchStatus } = useFetchShortcut(
+    client,
+    fileId,
+    driveId
+  )
   if (shortcutInfos) {
     // eslint-disable-next-line react-hooks/immutability
     window.location.href = shortcutInfos.data.attributes.url
