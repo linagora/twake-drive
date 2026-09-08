@@ -505,6 +505,13 @@ describe('computePath', () => {
     )
   })
 
+  it('should return correct path for a shortcut inside a shared drive', () => {
+    const file = { _id: 'shortcut123', driveId: 'drive123' }
+    expect(computePath(file, { type: 'shortcut', pathname: '/any' })).toBe(
+      '/external/drive123/shortcut123'
+    )
+  })
+
   it('should return correct path for directory at root', () => {
     const file = { _id: 'dir123' }
     expect(computePath(file, { type: 'directory', pathname: '/root' })).toBe(
