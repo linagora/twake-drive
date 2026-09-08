@@ -1,15 +1,13 @@
 import { fireEvent, render, waitFor } from '@testing-library/react'
 import React from 'react'
 
-import {
-  filePickerDoubleClickResults,
-  filePickerLinkModes,
-  filePickerSections,
-  FILE_PICKER_RECENTS_ROOT_ID,
-  FILE_PICKER_SHARINGS_ROOT_ID
-} from './constants'
+import { filePickerDoubleClickResults, filePickerLinkModes } from './constants'
 import FilePicker from './index'
 
+import {
+  filePickerSections,
+  FILE_PICKER_SHARINGS_ROOT_ID
+} from '@/components/FilePicker/constants'
 import { SelectionProvider } from '@/modules/selection/SelectionProvider'
 
 jest.mock('cozy-client', () => ({
@@ -39,13 +37,6 @@ jest.mock('./FilePickerHeader', () => ({ activeSection, onSectionChange }) => (
     </button>
     <button
       type="button"
-      data-testid="recents-section-btn"
-      onClick={() => onSectionChange('recents')}
-    >
-      Recents
-    </button>
-    <button
-      type="button"
       data-testid="sharings-section-btn"
       onClick={() => onSectionChange('sharings')}
     >
@@ -54,11 +45,8 @@ jest.mock('./FilePickerHeader', () => ({ activeSection, onSectionChange }) => (
   </div>
 ))
 
-jest.mock('./FilePickerBody', () => {
+jest.mock('@/components/FilePicker/FilePicker', () => {
   const React = require('react')
-  const {
-    useSelectionContext
-  } = require('@/modules/selection/SelectionProvider')
 
   const file = {
     _id: 'file-id',
@@ -89,92 +77,107 @@ jest.mock('./FilePickerBody', () => {
     name: 'Folder'
   }
 
-  return ({
-    navigateTo,
-    onFileDoubleClick,
-    error,
-    section,
-    folderId,
-    onReadyToUse,
-    isSectionChanging,
-    onSectionReady
-  }) => {
-    const { setSelectedItems } = useSelectionContext()
-
-    React.useEffect(() => {
-      if (isSectionChanging) {
-        onSectionReady?.()
+  return {
+    FilePicker: ({
+      selectableTypes,
+      selectedItems,
+      onSelectionChange,
+      onLocationChange,
+      onFileDoubleClick,
+      error,
+      renderHeader
+    }) => {
+      const [location, setLocation] = React.useState({
+        section: 'drive',
+        folderId: 'io.cozy.files.root-dir'
+      })
+      const handleSectionChange = section => {
+        setLocation({
+          section,
+          folderId:
+            section === 'drive'
+              ? 'io.cozy.files.root-dir'
+              : 'file-picker-sharings-root'
+        })
+        onSelectionChange([])
+        onLocationChange()
       }
-    }, [isSectionChanging, onSectionReady])
+      const navigateTo = item => {
+        setLocation(current => ({ ...current, folderId: item._id }))
+        onSelectionChange([])
+        onLocationChange()
+      }
 
-    return (
-      <div>
-        <span data-testid="body-section">{section}</span>
-        <span data-testid="body-folder-id">{folderId}</span>
-        <button type="button" onClick={onReadyToUse}>
-          Ready
-        </button>
-        <span data-testid="body-section-changing">
-          {String(Boolean(isSectionChanging))}
-        </span>
-        {error && <div data-testid="file-picker-error">{error}</div>}
-        <button
-          type="button"
-          data-testid="select-file-btn"
-          onClick={() => setSelectedItems({ [file._id]: file })}
-        >
-          Select file
-        </button>
-        <button
-          type="button"
-          data-testid="select-second-file-btn"
-          onClick={() =>
-            setSelectedItems({ [file._id]: file, [secondFile._id]: secondFile })
-          }
-        >
-          Select second file
-        </button>
-        <button
-          type="button"
-          data-testid="select-image-file-btn"
-          onClick={() => setSelectedItems({ [imageFile._id]: imageFile })}
-        >
-          Select image file
-        </button>
-        <button
-          type="button"
-          data-testid="select-folder-btn"
-          onClick={() => setSelectedItems({ [folder._id]: folder })}
-        >
-          Select folder
-        </button>
-        <button
-          type="button"
-          data-testid="select-file-and-folder-btn"
-          onClick={() =>
-            setSelectedItems({ [file._id]: file, [folder._id]: folder })
-          }
-        >
-          Select file and folder
-        </button>
-        <button
-          type="button"
-          data-testid="navigate-folder-btn"
-          onClick={() => navigateTo(folder)}
-        >
-          Navigate folder
-        </button>
-        {onFileDoubleClick && (
-          <button
-            type="button"
-            data-testid="double-click-file-btn"
-            onClick={() => onFileDoubleClick(file)}
-          >
-            Double-click file
-          </button>
-        )}
-      </div>
-    )
+      return (
+        <>
+          {renderHeader({
+            activeSection: location.section,
+            onSectionChange: handleSectionChange
+          })}
+          <div>
+            <span data-testid="body-section">{location.section}</span>
+            <span data-testid="body-folder-id">{location.folderId}</span>
+            <span data-testid="body-section-changing">false</span>
+            <span data-testid="folder-selectable">
+              {selectableTypes.includes('folder') ? 'true' : 'false'}
+            </span>
+            {error && <div data-testid="file-picker-error">{error}</div>}
+            <button
+              type="button"
+              data-testid="select-file-btn"
+              onClick={() => onSelectionChange([file])}
+            >
+              Select file
+            </button>
+            <button
+              type="button"
+              data-testid="select-second-file-btn"
+              onClick={() => onSelectionChange([file, secondFile])}
+            >
+              Select second file
+            </button>
+            <button
+              type="button"
+              data-testid="select-image-file-btn"
+              onClick={() => onSelectionChange([imageFile])}
+            >
+              Select image file
+            </button>
+            <button
+              type="button"
+              data-testid="select-folder-btn"
+              onClick={() => onSelectionChange([folder])}
+            >
+              Select folder
+            </button>
+            <button
+              type="button"
+              data-testid="select-file-and-folder-btn"
+              onClick={() => onSelectionChange([file, folder])}
+            >
+              Select file and folder
+            </button>
+            <button
+              type="button"
+              data-testid="navigate-folder-btn"
+              onClick={() => navigateTo(folder)}
+            >
+              Navigate folder
+            </button>
+            {onFileDoubleClick && (
+              <button
+                type="button"
+                data-testid="double-click-file-btn"
+                onClick={() => onFileDoubleClick(file)}
+              >
+                Double-click file
+              </button>
+            )}
+            <span data-testid="selected-count">{selectedItems.length}</span>
+          </div>
+        </>
+      )
+    }
   }
 })
 
@@ -254,7 +257,6 @@ describe('FilePicker', () => {
     multiple = false,
     onFileDoubleClick,
     onClose,
-    onReadyToUse,
     accept
   } = {}) => {
     return render(
@@ -263,7 +265,6 @@ describe('FilePicker', () => {
           onChange={mockOnChange}
           onFileDoubleClick={onFileDoubleClick ?? mockOnFileDoubleClick}
           onClose={onClose ?? mockOnClose}
-          onReadyToUse={onReadyToUse}
           filePickerConfig={filePickerConfig}
           multiple={multiple}
           accept={accept}
@@ -281,6 +282,12 @@ describe('FilePicker', () => {
 
     expect(getByTestId('public-link-btn')).toBeInTheDocument()
     expect(getByTestId('temporary-download-link-btn')).toBeInTheDocument()
+  })
+
+  it('should enable folder selection for public link mode', () => {
+    const { getByTestId } = setup()
+
+    expect(getByTestId('folder-selectable')).toHaveTextContent('true')
   })
 
   it('should hide the download link button when the config disables the action', () => {
@@ -380,7 +387,7 @@ describe('FilePicker', () => {
 
   it('should pass confirmation errors to the body and retain selection', async () => {
     mockOnChange.mockResolvedValueOnce('ITEM_NOT_FOUND')
-    const { getByTestId } = setup()
+    const { getByTestId, queryByTestId } = setup()
 
     fireEvent.click(getByTestId('select-file-btn'))
     fireEvent.click(getByTestId('temporary-download-link-btn'))
@@ -400,6 +407,9 @@ describe('FilePicker', () => {
       },
       filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK
     )
+
+    fireEvent.click(getByTestId('navigate-folder-btn'))
+    expect(queryByTestId('file-picker-error')).toBe(null)
   })
 
   it('should ignore a second public-link confirmation while the first is in-flight', async () => {
@@ -557,17 +567,8 @@ describe('FilePicker', () => {
     )
     expect(getByTestId('body-section-changing')).toHaveTextContent('false')
     fireEvent.click(getByTestId('select-file-btn'))
-    fireEvent.click(getByTestId('recents-section-btn'))
-
-    expect(getByTestId('body-section')).toHaveTextContent(
-      filePickerSections.RECENTS
-    )
-    expect(getByTestId('body-folder-id')).toHaveTextContent(
-      FILE_PICKER_RECENTS_ROOT_ID
-    )
-    expect(getByTestId('public-link-btn')).toBeDisabled()
-
     fireEvent.click(getByTestId('sharings-section-btn'))
+
     expect(getByTestId('body-section')).toHaveTextContent(
       filePickerSections.SHARINGS
     )
@@ -585,18 +586,6 @@ describe('FilePicker', () => {
     expect(getByTestId('body-folder-id')).toHaveTextContent(
       FILE_PICKER_SHARINGS_ROOT_ID
     )
-  })
-
-  it('notifies readiness only once across section remounts', () => {
-    const onReadyToUse = jest.fn()
-    const { getByRole, getByTestId } = setup({ onReadyToUse })
-
-    fireEvent.click(getByRole('button', { name: 'Ready' }))
-    fireEvent.click(getByTestId('recents-section-btn'))
-    fireEvent.click(getByTestId('drive-section-btn'))
-    fireEvent.click(getByRole('button', { name: 'Ready' }))
-
-    expect(onReadyToUse).toHaveBeenCalledTimes(1)
   })
 
   it('should clear selection when navigating to another folder', () => {

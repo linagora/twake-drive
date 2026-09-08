@@ -14,6 +14,7 @@ it('shows the attachment action as busy while confirming', () => {
     <AppLike client={client}>
       <FilePickerFooter
         onConfirm={jest.fn()}
+        onClearSelection={jest.fn()}
         downloadLinkState={{ disabled: false, reasonKey: null }}
         downloadLinkAction={{ label: 'Add as attachment' }}
         busyLinkMode={filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK}
