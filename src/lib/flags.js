@@ -37,4 +37,5 @@ const flagsList = () => {
   flag('drive.sign.enabled')
   flag('drive.verify.enabled')
   flag('drive.file-picker-demo.enabled')
+  flag('drive.move-to-picker.enabled')
 }
