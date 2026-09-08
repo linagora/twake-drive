@@ -1,13 +1,17 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
-import { useClient, isQueryLoading, generateWebLink } from 'cozy-client'
+import { useClient, isQueryLoading } from 'cozy-client'
 import useFetchJSON from 'cozy-client/dist/hooks/useFetchJSON'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
+import { changeLocation } from '@/hooks/helpers'
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
 import { isOfficeEnabled } from '@/modules/views/OnlyOffice/helpers'
-import { shouldBeOpenedOnOtherInstance } from '@/modules/views/editor/helpers'
+import {
+  makePublicEditorUrl,
+  shouldBeOpenedOnOtherInstance
+} from '@/modules/views/editor/helpers'
 import { useEditorAuthor } from '@/modules/views/editor/useEditorAuthor'
 
 const useConfig = () => {
@@ -48,35 +52,19 @@ const useConfig = () => {
   useEffect(() => {
     if (!isQueryLoading(queryResult) && fetchStatus !== 'error' && !config) {
       if (shouldBeOpenedOnOtherInstance(data, instanceUri)) {
-        const {
-          protocol,
-          instance,
-          document_id,
-          subdomain,
-          sharecode,
-          public_name
-        } = data.data.attributes
+        // No hash: the public page routes to the editor from these two params.
+        const { document_id } = data.data.attributes
 
-        const searchParams = [['sharecode', sharecode]]
-        searchParams.push(['isOnlyOfficeDocShared', true])
-        searchParams.push(['onlyOfficeDocId', document_id])
-        if (currentSearchParams.get('redirectLink')) {
-          searchParams.push([
-            'redirectLink',
-            currentSearchParams.get('redirectLink')
-          ])
-        }
-        if (public_name) searchParams.push(['username', public_name])
-
-        const link = generateWebLink({
-          cozyUrl: `${protocol}://${instance}`,
-          searchParams,
-          pathname: '/public/',
-          slug: 'drive',
-          subDomainType: subdomain
-        })
-
-        window.location = link
+        changeLocation(
+          makePublicEditorUrl({
+            attributes: data.data.attributes,
+            searchParams: [
+              ['isOnlyOfficeDocShared', true],
+              ['onlyOfficeDocId', document_id]
+            ],
+            redirectLink: currentSearchParams.get('redirectLink')
+          })
+        )
       } else if (isOfficeEnabled(isDesktop)) {
         // The editor reads the author from its config at mount, so wait for it.
         if (isAuthorLoading) return
