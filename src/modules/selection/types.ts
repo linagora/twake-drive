@@ -47,4 +47,6 @@ export interface SelectionContextType {
 export interface SelectionProviderProps {
   children: ReactNode
   clearOnLocationChange?: boolean
+  selection?: SelectedItems
+  onSelectionChange?: (items: IOCozyFile[]) => void
 }

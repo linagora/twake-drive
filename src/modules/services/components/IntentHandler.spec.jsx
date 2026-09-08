@@ -3,8 +3,9 @@ import React from 'react'
 
 import logger from 'cozy-logger'
 
-import { buildContentFolderQuery } from './FilePicker/queries'
 import IntentHandler from './IntentHandler'
+
+import { buildContentFolderQuery } from '@/components/FilePicker/queries'
 
 const mockClient = { query: jest.fn() }
 const mockCreateService = jest.fn()
@@ -26,7 +27,7 @@ jest.mock('cozy-interapp', () =>
   }))
 )
 
-jest.mock('./FilePicker/queries', () => ({
+jest.mock('@/components/FilePicker/queries', () => ({
   buildContentFolderQuery: jest.fn()
 }))
 

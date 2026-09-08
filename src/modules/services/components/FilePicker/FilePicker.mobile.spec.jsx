@@ -4,8 +4,9 @@ import React from 'react'
 import { Q, createMockClient } from 'cozy-client'
 
 import FilePicker from './index'
-import { buildContentFolderQuery } from './queries'
 import AppLike from 'test/components/AppLike'
+
+import { buildContentFolderQuery } from '@/components/FilePicker/queries'
 
 const mockRootId = 'io.cozy.files.root-dir'
 const mockFolder = {

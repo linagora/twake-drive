@@ -2,8 +2,10 @@ import React, {
   createContext,
   useContext,
   useMemo,
+  useRef,
   useState,
   useEffect,
+  useLayoutEffect,
   useCallback
 } from 'react'
 import { useLocation } from 'react-router-dom'
@@ -40,10 +42,38 @@ const SelectionRouteCleaner = ({ onLocationChange }) => {
 /**
  * This provider allows you to manage item selection
  */
-const SelectionProvider = ({ children, clearOnLocationChange = true }) => {
-  const [selectedItems, setSelectedItems] = useState({})
+const SelectionProvider = ({
+  children,
+  clearOnLocationChange = true,
+  selection,
+  onSelectionChange
+}) => {
+  const [internalSelectedItems, setInternalSelectedItems] = useState({})
   const [isSelectionBarOpen, setSelectionBarOpen] = useState(false)
   const [isSelectAll, setIsSelectAll] = useState(false)
+  const selectedItems = selection ?? internalSelectedItems
+  const selectedItemsRef = useRef(selectedItems)
+  const isControlledRef = useRef(selection !== undefined)
+  const onSelectionChangeRef = useRef(onSelectionChange)
+  useLayoutEffect(() => {
+    selectedItemsRef.current = selectedItems
+    isControlledRef.current = selection !== undefined
+    onSelectionChangeRef.current = onSelectionChange
+  }, [selectedItems, selection, onSelectionChange])
+
+  const setSelectedItems = useCallback(nextSelection => {
+    const resolvedSelection =
+      typeof nextSelection === 'function'
+        ? nextSelection(selectedItemsRef.current)
+        : nextSelection
+
+    selectedItemsRef.current = resolvedSelection
+
+    if (!isControlledRef.current) {
+      setInternalSelectedItems(nextSelection)
+    }
+    onSelectionChangeRef.current?.(Object.values(resolvedSelection))
+  }, [])
 
   const newItemHighlightContext = useOptionalNewItemHighlightContext()
 
@@ -76,7 +106,7 @@ const SelectionProvider = ({ children, clearOnLocationChange = true }) => {
   const clearSelection = useCallback(() => {
     setIsSelectAll(false)
     setSelectedItems({})
-  }, [])
+  }, [setSelectedItems])
 
   const toggleSelectAllItems = items => {
     if (isSelectAll) {

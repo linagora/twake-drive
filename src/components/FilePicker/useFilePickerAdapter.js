@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react'
+import { useCallback } from 'react'
 
 import { models } from 'cozy-client'
 import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'
@@ -13,16 +13,13 @@ export const useFilePickerAdapter = ({
   items = [],
   canSelectItem,
   multiple = false,
-  selectionContainerRef: externalSelectionContainerRef,
+  selectionContainerRef,
   scrollElement,
   scrollToIndex,
   navigateTo,
   onFileDoubleClick
 }) => {
   const { isMobile } = useBreakpoints()
-  const internalSelectionContainerRef = useRef(null)
-  const selectionContainerRef =
-    externalSelectionContainerRef || internalSelectionContainerRef
 
   const { handleItemClick, handleMobileToggleSelect, selectedItemIds } =
     useFilePickerSelection({
@@ -65,5 +62,3 @@ export const useFilePickerAdapter = ({
     onItemDoubleClick: isMobile ? null : handleListItemDoubleClick
   }
 }
-
-export default useFilePickerAdapter

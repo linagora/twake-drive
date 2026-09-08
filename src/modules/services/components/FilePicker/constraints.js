@@ -2,7 +2,7 @@ import mimeTypes from 'mime-types'
 
 import { models } from 'cozy-client'
 
-import { matchMimeType } from './helpers'
+import { matchMimeType } from '@/components/FilePicker/helpers'
 
 export { matchMimeType }
 
