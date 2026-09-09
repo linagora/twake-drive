@@ -18,7 +18,7 @@ import {
   stackExec
 } from '../helpers/config'
 import { DEFAULT_FLAGS, setFlags } from '../helpers/flags'
-import { resolveE2EPorts } from '../helpers/ports'
+import { resolveE2EPorts, type E2EPortsConfig } from '../helpers/ports'
 
 const ADMIN_AUTH = `Basic ${Buffer.from(`${ADMIN_USER}:${ADMIN_PASSPHRASE}`).toString('base64')}`
 
@@ -244,8 +244,7 @@ async function syncContacts(): Promise<void> {
   }
 }
 
-export default async function globalSetup(): Promise<void> {
-  const portsConfig = await resolveE2EPorts()
+export async function setupStack(portsConfig: E2EPortsConfig): Promise<void> {
   process.env.E2E_PROJECT_NAME = portsConfig.projectName
   process.env.COZY_E2E_ROOT_DOMAIN = portsConfig.rootDomain
   process.env.COZY_E2E_STACK_PORT = String(portsConfig.stackPort)
@@ -291,4 +290,9 @@ export default async function globalSetup(): Promise<void> {
   await syncContacts()
 
   console.log('[e2e] Setup complete.')
+}
+
+export default async function globalSetup(): Promise<void> {
+  const portsConfig = await resolveE2EPorts()
+  await setupStack(portsConfig)
 }

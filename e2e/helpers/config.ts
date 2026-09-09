@@ -34,13 +34,6 @@ export const STACK_PORT = parseInt(
     (savedPorts ? String(savedPorts.stackPort) : '18080'),
   10
 )
-export const STACK_URL = `http://${STACK_HOST}:${STACK_PORT}`
-export const ADMIN_PORT = parseInt(
-  process.env.COZY_E2E_ADMIN_PORT ||
-    (savedPorts ? String(savedPorts.adminPort) : '16060'),
-  10
-)
-export const ADMIN_URL = `http://${STACK_HOST}:${ADMIN_PORT}`
 export const PERSIST =
   process.env.E2E_PERSIST === '1' || process.env.E2E_SKIP_TEARDOWN === '1'
 export const RESET = process.env.E2E_RESET === '1'
