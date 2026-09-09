@@ -15,7 +15,7 @@ export const openWithinNextcloud = ({ t }) => {
     icon,
     displayCondition: docs => docs.length === 1,
     action: docs => {
-      window.open(docs[0].links.self, '_blank')
+      window.open(docs[0].links.self, '_blank', 'noopener,noreferrer')
     },
     Component: forwardRef(function OpenWithinNextcloud(props, ref) {
       return (

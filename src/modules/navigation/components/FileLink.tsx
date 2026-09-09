@@ -11,7 +11,9 @@ interface FileLinkProps {
 
 const FileLink = forwardRef<HTMLAnchorElement, FileLinkProps>(
   function FileLinkComponent({ link, children, ...props }, ref) {
-    const openInNewTab = link.openInNewTab ? { target: '_blank' } : {}
+    const openInNewTab = link.openInNewTab
+      ? { target: '_blank', rel: 'noopener noreferrer' }
+      : {}
 
     if (link.app === 'drive') {
       return (

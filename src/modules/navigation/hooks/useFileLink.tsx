@@ -179,7 +179,7 @@ const useFileLink = (
         evt.shiftKey ||
         shouldBeOpenedInNewTab
       ) {
-        window.open(href, '_blank')
+        window.open(href, '_blank', 'noopener,noreferrer')
       } else if (app === 'drive') {
         navigate(to)
       } else {
