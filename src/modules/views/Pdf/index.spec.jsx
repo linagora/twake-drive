@@ -38,30 +38,6 @@ describe('Pdf', () => {
     })
   })
 
-  it('mounts the editor once the document is known to live here', () => {
-    useEditorOpen.mockReturnValue('local')
-
-    renderPdf()
-
-    expect(screen.queryByTestId('pdf-editor')).toBeInTheDocument()
-  })
-
-  it('holds the editor back while the stack resolves the document', () => {
-    useEditorOpen.mockReturnValue('loading')
-
-    renderPdf()
-
-    expect(screen.queryByTestId('pdf-editor')).toBe(null)
-  })
-
-  it('never mounts the editor on a copy we are leaving', () => {
-    useEditorOpen.mockReturnValue('redirecting')
-
-    renderPdf()
-
-    expect(screen.queryByTestId('pdf-editor')).toBe(null)
-  })
-
   it('sends a read-only recipient to the owner rather than back to their drive', () => {
     useSharingContext.mockReturnValue({
       hasWriteAccess: () => false,

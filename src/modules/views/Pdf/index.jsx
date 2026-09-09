@@ -7,19 +7,11 @@ import Dialog from 'cozy-ui/transpiled/react/Dialog'
 import Loader from '@/components/Loader'
 import useHead from '@/components/useHead'
 import Editor from '@/modules/views/Pdf/Editor'
-import { useEditorOpen } from '@/modules/views/editor/useEditorOpen'
+import { RedirectEditor } from '@/modules/views/editor/RedirectEditor'
 
-const Pdf = ({ isPublic = false }) => {
+const PdfDialog = ({ isPublic }) => {
   const { fileId, driveId } = useParams()
   const { hasWriteAccess, allLoaded } = useSharingContext()
-  const openStatus = useEditorOpen({ fileId, driveId, slug: 'pdf' })
-  useHead()
-
-  // Before the local permissions, which are those of a replica we are about to
-  // leave: a read-only recipient goes to the owner too.
-  if (openStatus !== 'local') {
-    return <Loader />
-  }
 
   // The editor is for editing only. A private recipient with read-only access
   // must not reach it, even by typing the URL (the Edit button is already hidden
@@ -48,6 +40,19 @@ const Pdf = ({ isPublic = false }) => {
         isReadOnly={readOnly}
       />
     </Dialog>
+  )
+}
+
+const Pdf = ({ isPublic = false }) => {
+  const { fileId, driveId } = useParams()
+  useHead()
+
+  // Wrapping the permission checks rather than sitting among them: a read-only
+  // recipient goes to the owner too, where their access is decided.
+  return (
+    <RedirectEditor fileId={fileId} driveId={driveId} slug="pdf">
+      <PdfDialog isPublic={isPublic} />
+    </RedirectEditor>
   )
 }
 

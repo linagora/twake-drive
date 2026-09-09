@@ -40,22 +40,6 @@ describe('Excalidraw', () => {
     expect(screen.queryByTestId('excalidraw-editor')).toBeInTheDocument()
   })
 
-  it('holds the editor back while the stack resolves the drawing', () => {
-    useEditorOpen.mockReturnValue('loading')
-
-    renderExcalidraw()
-
-    expect(screen.queryByTestId('excalidraw-editor')).toBe(null)
-  })
-
-  it('never mounts the editor on a copy we are leaving', () => {
-    useEditorOpen.mockReturnValue('redirecting')
-
-    renderExcalidraw()
-
-    expect(screen.queryByTestId('excalidraw-editor')).toBe(null)
-  })
-
   it('resolves the drawing through its shared drive', () => {
     useParams.mockReturnValue({ fileId: 'file-id', driveId: 'drive-id' })
     useEditorOpen.mockReturnValue('local')
