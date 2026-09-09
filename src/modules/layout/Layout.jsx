@@ -19,6 +19,7 @@ import ButtonClient from '@/components/pushClient/Button'
 import { ROOT_DIR_ID, TRASH_DIR_ID } from '@/constants/config'
 import { useDisplayedFolder } from '@/hooks'
 import { isEditableTarget } from '@/hooks/helpers'
+import { useAutoprovisionAssistants } from '@/hooks/useAutoprovisionAssistants'
 import useCurrentFolderId from '@/hooks/useCurrentFolderId'
 import useCurrentFolderWriteAccess from '@/hooks/useCurrentFolderWriteAccess'
 import { initFlags } from '@/lib/flags'
@@ -58,6 +59,7 @@ const handleContextMenu = ev => {
 }
 
 const LayoutContent = () => {
+  useAutoprovisionAssistants()
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const { isMobile, isDesktop } = useBreakpoints()
