@@ -1,6 +1,7 @@
 import { execFileSync } from 'child_process'
+import * as fs from 'fs'
 
-import { composeArgs, PERSIST } from '../helpers/config'
+import { composeArgs, E2E_PORTS_PATH, PERSIST } from '../helpers/config'
 
 export default function globalTeardown(): void {
   if (PERSIST) {
@@ -15,4 +16,12 @@ export default function globalTeardown(): void {
     stdio: 'inherit',
     cwd: process.cwd()
   })
+
+  if (fs.existsSync(E2E_PORTS_PATH)) {
+    try {
+      fs.unlinkSync(E2E_PORTS_PATH)
+    } catch {
+      // ignore
+    }
+  }
 }
