@@ -12076,6 +12076,7 @@ __metadata:
     identity-obj-proxy: "npm:3.0.0"
     jest: "npm:^30.0.0"
     jest-environment-jsdom: "npm:^30.0.0"
+    jiti: "npm:^2.6.1"
     leaflet: "npm:1.9.4"
     localforage: "npm:1.10.0"
     lodash: "npm:4.17.21"
