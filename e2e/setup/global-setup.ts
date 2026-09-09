@@ -4,19 +4,21 @@ import { pbkdf2Sync } from 'crypto'
 import { saveAuthState } from '../helpers/auth'
 import {
   ADMIN_PASSPHRASE,
-  ADMIN_URL,
   ADMIN_USER,
+  applyConfigUpdate,
   composeArgs,
+  getAdminUrl,
+  getStackUrl,
   ORG_DOMAIN,
   ORG_ID,
   PERSIST,
   RESET,
-  STACK_URL,
   USERS,
   User,
   stackExec
 } from '../helpers/config'
 import { DEFAULT_FLAGS, setFlags } from '../helpers/flags'
+import { resolveE2EPorts } from '../helpers/ports'
 
 const ADMIN_AUTH = `Basic ${Buffer.from(`${ADMIN_USER}:${ADMIN_PASSPHRASE}`).toString('base64')}`
 
@@ -29,7 +31,7 @@ function compose(...args: string[]): void {
 }
 
 async function instanceExists(user: User): Promise<boolean> {
-  const res = await fetch(`${ADMIN_URL}/instances/${user.instance}`, {
+  const res = await fetch(`${getAdminUrl()}/instances/${user.instance}`, {
     headers: { Authorization: ADMIN_AUTH, Accept: 'application/json' }
   })
   if (res.ok) return true
@@ -54,7 +56,7 @@ async function createInstance(user: User): Promise<void> {
     OrgID: ORG_ID,
     OrgDomain: ORG_DOMAIN
   })
-  const res = await fetch(`${ADMIN_URL}/instances?${params}`, {
+  const res = await fetch(`${getAdminUrl()}/instances?${params}`, {
     method: 'POST',
     headers: { Authorization: ADMIN_AUTH, Accept: 'application/json' }
   })
@@ -243,6 +245,22 @@ async function syncContacts(): Promise<void> {
 }
 
 export default async function globalSetup(): Promise<void> {
+  const portsConfig = await resolveE2EPorts()
+  process.env.E2E_PROJECT_NAME = portsConfig.projectName
+  process.env.COZY_E2E_ROOT_DOMAIN = portsConfig.rootDomain
+  process.env.COZY_E2E_STACK_PORT = String(portsConfig.stackPort)
+  process.env.COZY_E2E_ADMIN_PORT = String(portsConfig.adminPort)
+  process.env.COZY_E2E_COUCHDB_PORT = String(portsConfig.couchdbPort)
+
+  applyConfigUpdate(portsConfig)
+
+  console.log(`[e2e] Runtime environment:`)
+  console.log(`  - Project:  ${portsConfig.projectName}`)
+  console.log(`  - Domain:   *.${portsConfig.rootDomain}`)
+  console.log(`  - Stack:    http://localhost:${portsConfig.stackPort}`)
+  console.log(`  - Admin:    http://localhost:${portsConfig.adminPort}`)
+  console.log(`  - CouchDB:  http://localhost:${portsConfig.couchdbPort}`)
+
   if (RESET || !PERSIST) {
     console.log(
       RESET
@@ -258,7 +276,7 @@ export default async function globalSetup(): Promise<void> {
   compose('up', '--detach', '--wait', ...(PERSIST ? ['--no-recreate'] : []))
 
   console.log('[e2e] Waiting for cozy-stack...')
-  await waitForStack(STACK_URL)
+  await waitForStack(getStackUrl())
 
   const results: Array<
     [string, { domain: string; cookieName: string; cookieValue: string }]
