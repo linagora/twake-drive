@@ -4,15 +4,13 @@ import { useParams } from 'react-router-dom'
 import { useSharingContext } from 'cozy-sharing'
 import Dialog from 'cozy-ui/transpiled/react/Dialog'
 
-import Loader from '@/components/Loader'
 import useHead from '@/components/useHead'
 import Editor from '@/modules/views/Excalidraw/Editor'
-import { useEditorOpen } from '@/modules/views/editor/useEditorOpen'
+import { RedirectEditor } from '@/modules/views/editor/RedirectEditor'
 
 const Excalidraw = ({ isPublic = false, isReadOnly = false }) => {
   const { fileId, driveId } = useParams()
   const { hasWriteAccess } = useSharingContext()
-  const openStatus = useEditorOpen({ fileId, driveId, slug: 'excalidraw' })
   useHead()
 
   // In public the share code already determines read-only (passed in as
@@ -23,16 +21,14 @@ const Excalidraw = ({ isPublic = false, isReadOnly = false }) => {
 
   return (
     <Dialog open={true} fullScreen transitionDuration={0}>
-      {openStatus === 'local' ? (
+      <RedirectEditor fileId={fileId} driveId={driveId} slug="excalidraw">
         <Editor
           fileId={fileId}
           driveId={driveId}
           isPublic={isPublic}
           isReadOnly={readOnly}
         />
-      ) : (
-        <Loader />
-      )}
+      </RedirectEditor>
     </Dialog>
   )
 }
