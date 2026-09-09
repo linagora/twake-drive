@@ -135,6 +135,26 @@ describe('useEditorOpen', () => {
     expect(changeLocation).toHaveBeenCalledTimes(1)
   })
 
+  it('redirects again when the route switches to another remote file', () => {
+    useFetchJSON.mockReturnValue({
+      fetchStatus: 'loaded',
+      data: makeResponse('alice.cozy.example')
+    })
+
+    const { rerender } = renderEditorOpen()
+
+    useFetchJSON.mockReturnValue({
+      fetchStatus: 'loaded',
+      data: makeResponse('carol.cozy.example')
+    })
+    rerender()
+
+    expect(changeLocation).toHaveBeenCalledTimes(2)
+    expect(changeLocation.mock.calls[1][0]).toContain(
+      'carol-drive.cozy.example'
+    )
+  })
+
   it('falls back to the local copy when the stack cannot resolve the file', () => {
     useFetchJSON.mockReturnValue({ fetchStatus: 'error', data: null })
 

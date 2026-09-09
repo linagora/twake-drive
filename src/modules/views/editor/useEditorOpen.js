@@ -44,7 +44,7 @@ const computeStatus = ({ fetchStatus, data, instanceUri }) => {
 export const useEditorOpen = ({ fileId, slug, driveId }) => {
   const client = useClient()
   const [searchParams] = useSearchParams()
-  const hasRedirected = useRef(false)
+  const redirectedTo = useRef(null)
 
   const instanceUri = client?.getStackClient().uri
   const { data, fetchStatus } = useFetchJSON(
@@ -60,18 +60,22 @@ export const useEditorOpen = ({ fileId, slug, driveId }) => {
   }, [fetchStatus, fileId])
 
   useEffect(() => {
-    if (status !== 'redirecting' || hasRedirected.current) return
-    hasRedirected.current = true
+    if (status !== 'redirecting') return
 
     const { file_id } = data.data.attributes
+    const url = makePublicEditorUrl({
+      attributes: data.data.attributes,
+      hash: `/${slug}/${file_id}`,
+      redirectLink: searchParams.get('redirectLink')
+    })
 
-    changeLocation(
-      makePublicEditorUrl({
-        attributes: data.data.attributes,
-        hash: `/${slug}/${file_id}`,
-        redirectLink: searchParams.get('redirectLink')
-      })
-    )
+    // Keyed on the target rather than on a single redirect having happened: the
+    // route reuses this view when its params change, so another shared file has
+    // to be able to redirect in turn.
+    if (redirectedTo.current === url) return
+    redirectedTo.current = url
+
+    changeLocation(url)
   }, [status, data, searchParams, slug])
 
   return status
