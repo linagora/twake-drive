@@ -4,10 +4,15 @@ import * as net from 'net'
 import * as path from 'path'
 
 export const E2E_PORTS_PATH = path.join(__dirname, '..', '.e2e-ports.json')
+export const DEV_PORTS_PATH = path.join(__dirname, '..', '.dev-ports.json')
 
 export const DEFAULT_E2E_STACK_PORT = 18080
 export const DEFAULT_E2E_ADMIN_PORT = 16060
 export const DEFAULT_E2E_COUCHDB_PORT = 15984
+
+export const DEFAULT_DEV_STACK_PORT = 19080
+export const DEFAULT_DEV_ADMIN_PORT = 17060
+export const DEFAULT_DEV_COUCHDB_PORT = 16984
 
 export interface E2EPortsConfig {
   projectName: string
@@ -138,5 +143,93 @@ export async function resolveE2EPorts(): Promise<E2EPortsConfig> {
   }
 
   fs.writeFileSync(E2E_PORTS_PATH, JSON.stringify(config, null, 2))
+  return config
+}
+
+// --- Dev Stack (Persistent / Browser development) ---
+
+export function loadDevPorts(): E2EPortsConfig | null {
+  try {
+    if (fs.existsSync(DEV_PORTS_PATH)) {
+      return JSON.parse(fs.readFileSync(DEV_PORTS_PATH, 'utf-8'))
+    }
+  } catch {
+    // ignore
+  }
+  return null
+}
+
+export function getDevProjectName(): string {
+  if (process.env.E2E_PROJECT_NAME) {
+    return process.env.E2E_PROJECT_NAME
+  }
+  const saved = loadDevPorts()
+  if (saved?.projectName) {
+    return saved.projectName
+  }
+  return `twake-dev-${getWorktreeSlug()}`
+}
+
+export function getDevRootDomain(): string {
+  if (process.env.COZY_E2E_ROOT_DOMAIN) {
+    return process.env.COZY_E2E_ROOT_DOMAIN
+  }
+  const saved = loadDevPorts()
+  if (saved?.rootDomain) {
+    return saved.rootDomain
+  }
+  return `${getWorktreeSlug()}.localhost`
+}
+
+export async function resolveDevPorts(): Promise<E2EPortsConfig> {
+  const projectName = getDevProjectName()
+  const rootDomain = getDevRootDomain()
+
+  if (fs.existsSync(DEV_PORTS_PATH)) {
+    try {
+      const saved = JSON.parse(fs.readFileSync(DEV_PORTS_PATH, 'utf-8'))
+      if (saved.projectName === projectName) {
+        if (!saved.rootDomain) {
+          saved.rootDomain = rootDomain
+        }
+        if (isDockerProjectRunning(projectName)) {
+          return saved
+        }
+        const [stackFree, adminFree, couchFree] = await Promise.all([
+          isPortAvailable(saved.stackPort),
+          isPortAvailable(saved.adminPort),
+          isPortAvailable(saved.couchdbPort)
+        ])
+        if (stackFree && adminFree && couchFree) {
+          return saved
+        }
+      }
+    } catch {
+      // ignore corrupted file and reallocate
+    }
+  }
+
+  const reserved = new Set<number>()
+  const stackPort = process.env.COZY_E2E_STACK_PORT
+    ? parseInt(process.env.COZY_E2E_STACK_PORT, 10)
+    : await findAvailablePort(DEFAULT_DEV_STACK_PORT, reserved)
+
+  const adminPort = process.env.COZY_E2E_ADMIN_PORT
+    ? parseInt(process.env.COZY_E2E_ADMIN_PORT, 10)
+    : await findAvailablePort(DEFAULT_DEV_ADMIN_PORT, reserved)
+
+  const couchdbPort = process.env.COZY_E2E_COUCHDB_PORT
+    ? parseInt(process.env.COZY_E2E_COUCHDB_PORT, 10)
+    : await findAvailablePort(DEFAULT_DEV_COUCHDB_PORT, reserved)
+
+  const config: E2EPortsConfig = {
+    projectName,
+    rootDomain,
+    stackPort,
+    adminPort,
+    couchdbPort
+  }
+
+  fs.writeFileSync(DEV_PORTS_PATH, JSON.stringify(config, null, 2))
   return config
 }
