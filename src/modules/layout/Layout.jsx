@@ -19,9 +19,9 @@ import ButtonClient from '@/components/pushClient/Button'
 import { ROOT_DIR_ID, TRASH_DIR_ID } from '@/constants/config'
 import { useDisplayedFolder } from '@/hooks'
 import { isEditableTarget } from '@/hooks/helpers'
-import { useAutoprovisionAssistants } from '@/hooks/useAutoprovisionAssistants'
 import useCurrentFolderId from '@/hooks/useCurrentFolderId'
 import useCurrentFolderWriteAccess from '@/hooks/useCurrentFolderWriteAccess'
+import { useRagIndexingSetup } from '@/hooks/useRagIndexingSetup'
 import { initFlags } from '@/lib/flags'
 import AddMenuProvider from '@/modules/drive/AddMenu/AddMenuProvider'
 import AddButton from '@/modules/drive/Toolbar/components/AddButton'
@@ -59,7 +59,7 @@ const handleContextMenu = ev => {
 }
 
 const LayoutContent = () => {
-  useAutoprovisionAssistants()
+  useRagIndexingSetup()
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const { isMobile, isDesktop } = useBreakpoints()
