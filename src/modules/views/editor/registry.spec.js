@@ -3,7 +3,6 @@ const mockIsDocs = jest.fn()
 const mockIsExcalidrawEnabled = jest.fn()
 const mockIsOfficeEnabled = jest.fn()
 const mockIsOfficeEditingEnabled = jest.fn()
-const mockFlag = jest.fn()
 
 jest.mock('cozy-client/dist/models/file', () => ({
   isDocs: (...args) => mockIsDocs(...args),
@@ -11,9 +10,12 @@ jest.mock('cozy-client/dist/models/file', () => ({
     mockShouldBeOpenedByOnlyOffice(...args)
 }))
 
+// The mock owns its jest.fn rather than closing over an outer const: loading
+// the registry pulls in cozy-client, which calls flag() while that const is
+// still in its temporal dead zone.
 jest.mock('cozy-flags', () => ({
   __esModule: true,
-  default: (...args) => mockFlag(...args)
+  default: jest.fn()
 }))
 
 jest.mock('@/modules/views/Excalidraw/helpers', () => ({
@@ -26,6 +28,8 @@ jest.mock('@/modules/views/OnlyOffice/helpers', () => ({
   isOfficeEnabled: (...args) => mockIsOfficeEnabled(...args),
   isOfficeEditingEnabled: (...args) => mockIsOfficeEditingEnabled(...args)
 }))
+
+import flag from 'cozy-flags'
 
 import {
   findEditorBySlug,
@@ -41,7 +45,7 @@ describe('editor registry', () => {
     mockIsExcalidrawEnabled.mockReturnValue(false)
     mockIsOfficeEnabled.mockReturnValue(false)
     mockIsOfficeEditingEnabled.mockReturnValue(false)
-    mockFlag.mockReturnValue(false)
+    flag.mockReturnValue(false)
   })
 
   describe('findEditorForFile', () => {
@@ -178,18 +182,18 @@ describe('editor registry', () => {
     })
 
     it('offers Docs only privately and behind its flag', () => {
-      mockFlag.mockReturnValue(true)
+      flag.mockReturnValue(true)
       expect(canCreate('docs', { isPublic: false })).toBe(true)
       expect(canCreate('docs', { isPublic: true })).toBe(false)
-      mockFlag.mockReturnValue(false)
+      flag.mockReturnValue(false)
       expect(canCreate('docs', { isPublic: false })).toBe(false)
     })
 
     it('offers Grist only privately and behind its flag', () => {
-      mockFlag.mockReturnValue(true)
+      flag.mockReturnValue(true)
       expect(canCreate('grist', { isPublic: false })).toBe(true)
       expect(canCreate('grist', { isPublic: true })).toBe(false)
-      mockFlag.mockReturnValue(false)
+      flag.mockReturnValue(false)
       expect(canCreate('grist', { isPublic: false })).toBe(false)
     })
 
