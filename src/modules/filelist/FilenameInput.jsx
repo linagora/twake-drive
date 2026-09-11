@@ -1,5 +1,5 @@
 import cx from 'classnames'
-import React, { useState, useRef, useEffect, useCallback } from 'react'
+import React, { useState, useRef, useEffect, useCallback, useId } from 'react'
 
 import { isDirectory } from 'cozy-client/dist/models/file'
 import Button from 'cozy-ui/transpiled/react/Buttons'
@@ -25,9 +25,12 @@ const FilenameInput = ({
   onChange,
   t,
   className,
-  style
+  style,
+  inputAriaLabel,
+  errorMessage
 }) => {
   const textInput = useRef()
+  const errorId = `filename-input-error-${useId()}`
   const [value, setValue] = useState(initialName || '')
   const [working, setWorking] = useState(false)
   const [error, setError] = useState(false)
@@ -85,6 +88,7 @@ const FilenameInput = ({
 
   const handleChange = e => {
     const newValue = e.target.value
+    setError(false)
     setValue(newValue)
     onChange && onChange(newValue)
   }
@@ -138,6 +142,10 @@ const FilenameInput = ({
   }
 
   useEffect(() => {
+    if (error && !working) textInput.current?.focus()
+  }, [error, working])
+
+  useEffect(() => {
     if (!shouldSetSelection.current || !textInput.current) return
     if (!initialName) return
 
@@ -181,8 +189,16 @@ const FilenameInput = ({
         onKeyDown={handleKeyDown}
         onMouseUp={handleMouseUp}
         className={error ? styles['error'] : null}
+        aria-label={inputAriaLabel}
+        aria-invalid={error || undefined}
+        aria-describedby={error && errorMessage ? errorId : undefined}
         autoFocus
       />
+      {error && errorMessage && (
+        <span id={errorId} className="u-error u-fz-small" role="alert">
+          {errorMessage}
+        </span>
+      )}
       {working && <Spinner />}
       <Dialog
         onClose={abort}

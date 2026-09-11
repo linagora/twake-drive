@@ -10,7 +10,11 @@ import styles from './styles.styl'
 
 import { BackButton } from '@/components/Button/BackButton'
 
-export const PickerViewBreadcrumb = ({ path, onBreadcrumbClick }) => {
+export const PickerViewBreadcrumb = ({
+  path,
+  onBreadcrumbClick,
+  isNavigationDisabled
+}) => {
   const { isMobile } = useBreakpoints()
   const hasPath = path && path.length > 0
 
@@ -29,7 +33,11 @@ export const PickerViewBreadcrumb = ({ path, onBreadcrumbClick }) => {
       className="u-flex u-flex-items-center u-fw-bold u-h-2 u-h-2-half-s"
     >
       {hasPath && path.length > 1 && (
-        <BackButton onClick={navigateBack} size="small" />
+        <BackButton
+          onClick={navigateBack}
+          disabled={isNavigationDisabled}
+          size="small"
+        />
       )}
       {isMobile && hasPath ? (
         <span>{path[path.length - 1].name}</span>
@@ -46,6 +54,7 @@ export const PickerViewBreadcrumb = ({ path, onBreadcrumbClick }) => {
                     'u-c-pointer'
                   )}
                   onClick={navigateTo(folder)}
+                  disabled={isNavigationDisabled}
                 >
                   {folder.name}
                 </button>
@@ -70,7 +79,8 @@ export const PickerViewBreadcrumb = ({ path, onBreadcrumbClick }) => {
 PickerViewBreadcrumb.displayName = 'PickerViewBreadcrumb'
 PickerViewBreadcrumb.propTypes = {
   path: PropTypes.array,
-  onBreadcrumbClick: PropTypes.func
+  onBreadcrumbClick: PropTypes.func,
+  isNavigationDisabled: PropTypes.bool
 }
 
 export default memo(PickerViewBreadcrumb)
