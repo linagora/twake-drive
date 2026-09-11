@@ -9,10 +9,22 @@ const mockUseSharingContext = jest.fn()
 const mockHasQueryBeenLoaded = jest.fn()
 const mockFilesViewer = jest.fn(() => <div>files-viewer</div>)
 
+const mockFindEditorForFile = jest.fn()
+
 jest.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
   useLocation: () => mockUseLocation(),
-  useParams: () => mockUseParams()
+  useParams: () => mockUseParams(),
+  Navigate: ({ to }) => <div>{`navigate:${to}`}</div>
+}))
+
+jest.mock('cozy-ui/transpiled/react/providers/Breakpoints', () => ({
+  __esModule: true,
+  default: () => ({ isDesktop: true })
+}))
+
+jest.mock('@/modules/views/editor/registry', () => ({
+  findEditorForFile: (...args) => mockFindEditorForFile(...args)
 }))
 
 jest.mock('cozy-client', () => ({
@@ -73,6 +85,50 @@ const renderRootFileViewer = ({
 describe('FilesViewerSharedDriveRootFile', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    mockFindEditorForFile.mockReturnValue(undefined)
+  })
+
+  it('redirects an editor document to its editor', () => {
+    mockFindEditorForFile.mockReturnValue({
+      slug: 'excalidraw',
+      kind: 'editor',
+      makeRoute: file => `/excalidraw/drive-1/${file._id}`
+    })
+    renderRootFileViewer({
+      fetchedFile: {
+        _id: 'canonical-id',
+        id: 'canonical-id',
+        name: 'Drawing.excalidraw'
+      }
+    })
+
+    expect(
+      screen.getByText('navigate:/excalidraw/drive-1/canonical-id')
+    ).toBeInTheDocument()
+    expect(mockFilesViewer).not.toHaveBeenCalled()
+  })
+
+  it('does not redirect a bridge document (it has no in-app route)', () => {
+    mockFindEditorForFile.mockReturnValue({
+      slug: 'grist',
+      kind: 'bridge',
+      makeRoute: file => `/bridge/grist/${file.metadata.externalId}`
+    })
+    renderRootFileViewer({
+      fetchedFile: {
+        _id: 'canonical-id',
+        id: 'canonical-id',
+        name: 'Budget.grist'
+      }
+    })
+
+    expect(screen.getByText('files-viewer')).toBeInTheDocument()
+  })
+
+  it('renders the viewer when the file is not an editor document', () => {
+    renderRootFileViewer()
+
+    expect(screen.getByText('files-viewer')).toBeInTheDocument()
   })
 
   it('disables the sharing panel', () => {
