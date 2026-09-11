@@ -39,6 +39,7 @@ const filePickerContentPropTypes = {
     fetchMore: PropTypes.func,
     breadcrumbPath: PropTypes.array,
     isItemDisabled: PropTypes.func.isRequired,
+    getItemDisabledReason: PropTypes.func,
     withFilePath: PropTypes.bool,
     isFetchingMore: PropTypes.bool,
     keepItemsOnError: PropTypes.bool,
@@ -53,7 +54,9 @@ const filePickerContentPropTypes = {
   onFileDoubleClick: PropTypes.func,
   isSectionChanging: PropTypes.bool,
   onSectionReady: PropTypes.func,
-  emptyMessage: PropTypes.node
+  emptyMessage: PropTypes.node,
+  beforeItems: PropTypes.node,
+  isNavigationDisabled: PropTypes.bool
 }
 
 const CurrentFolderContent = ({
@@ -62,7 +65,9 @@ const CurrentFolderContent = ({
   error,
   isSectionChanging,
   onSectionReady,
-  emptyMessage
+  emptyMessage,
+  beforeItems,
+  isNavigationDisabled
 }) => {
   const { t } = useI18n()
   const { isMobile } = useBreakpoints()
@@ -82,6 +87,9 @@ const CurrentFolderContent = ({
       hasMore={source.hasMore}
       fetchMore={source.fetchMore}
       isItemDisabled={source.isItemDisabled}
+      getItemDisabledReason={source.getItemDisabledReason}
+      beforeItems={beforeItems}
+      isNavigationDisabled={isNavigationDisabled}
       onItemClick={isMobile ? handleItemDoubleClick : undefined}
       onItemDoubleClick={handleItemDoubleClick}
       onItemNavigate={navigateTo}
@@ -112,7 +120,9 @@ const SelectionFilePickerContent = ({
   onFileDoubleClick,
   isSectionChanging,
   onSectionReady,
-  emptyMessage
+  emptyMessage,
+  beforeItems,
+  isNavigationDisabled
 }) => {
   const { t } = useI18n()
   const selectionContainerRef = useRef(null)
@@ -170,6 +180,9 @@ const SelectionFilePickerContent = ({
       withFilePath={source.withFilePath}
       selectedItemIds={pickerAdapter.selectedItemIds}
       isItemDisabled={isItemDisabled}
+      getItemDisabledReason={source.getItemDisabledReason}
+      beforeItems={beforeItems}
+      isNavigationDisabled={isNavigationDisabled}
       onItemClick={pickerAdapter.onItemClick}
       onItemToggle={pickerAdapter.onItemToggle}
       onItemDoubleClick={pickerAdapter.onItemDoubleClick}
@@ -211,7 +224,9 @@ const LocalFolderContent = ({
   allLoaded,
   isOwner,
   onReady,
-  renderFilePickerContent
+  renderFilePickerContent,
+  getItemDisabledReason,
+  additionalItems
 }) => {
   const buildFolderQuery = id =>
     buildDisplayedContentFolderQuery(id, displayedTypes)
@@ -224,17 +239,27 @@ const LocalFolderContent = ({
     allLoaded,
     isOwner,
     onReady,
-    isItemDisabled
+    isItemDisabled,
+    getItemDisabledReason
   })
-  const items = useMemo(
-    () =>
-      source.items.filter(
-        item => isDisplayedItem(item, displayedTypes) && isItemVisible(item)
-      ),
-    [displayedTypes, isItemVisible, source.items]
-  )
+  const items = useMemo(() => {
+    const sourceItems = source.items ?? []
+    const sourceIds = new Set(sourceItems.map(item => item._id ?? item.id))
+    const addedItems = additionalItems.filter(
+      item => item?.dir_id === folderId && !sourceIds.has(item._id ?? item.id)
+    )
+    const visibleItems = [...sourceItems, ...addedItems].filter(
+      item => isDisplayedItem(item, displayedTypes) && isItemVisible(item)
+    )
+    return additionalItems.length > 0
+      ? visibleItems.sort((left, right) => left.name.localeCompare(right.name))
+      : visibleItems
+  }, [additionalItems, displayedTypes, folderId, isItemVisible, source.items])
 
-  return renderFilePickerContent({ ...source, items })
+  return renderFilePickerContent({
+    ...source,
+    items
+  })
 }
 
 LocalFolderContent.propTypes = {
@@ -248,7 +273,9 @@ LocalFolderContent.propTypes = {
   allLoaded: PropTypes.bool.isRequired,
   isOwner: PropTypes.func.isRequired,
   onReady: PropTypes.func,
-  renderFilePickerContent: PropTypes.func.isRequired
+  renderFilePickerContent: PropTypes.func.isRequired,
+  getItemDisabledReason: PropTypes.func.isRequired,
+  additionalItems: PropTypes.arrayOf(PropTypes.object)
 }
 
 const SharedDriveFolderContent = ({
@@ -312,6 +339,12 @@ export const FilePickerBody = ({
   onReadyToUse,
   onFileDoubleClick,
   isItemVisible,
+  isItemDisabled: externalIsItemDisabled,
+  getItemDisabledReason: externalGetItemDisabledReason,
+  beforeItems,
+  additionalItems,
+  filterReceivedShares,
+  isNavigationDisabled,
   isSectionChanging,
   onSectionReady
 }) => {
@@ -338,8 +371,9 @@ export const FilePickerBody = ({
     [section, t]
   )
 
-  const isItemDisabled =
-    section === filePickerSections.SHARINGS ? isSharingShortcutNew : () => false
+  const isItemDisabled = item =>
+    (section === filePickerSections.SHARINGS && isSharingShortcutNew(item)) ||
+    externalIsItemDisabled(item)
 
   const handleDriveReady = useCallback(() => {
     if (readyNotified.current) return
@@ -362,6 +396,8 @@ export const FilePickerBody = ({
         ) : null
       }
       onFileDoubleClick={onFileDoubleClick}
+      beforeItems={beforeItems}
+      isNavigationDisabled={isNavigationDisabled}
       isSectionChanging={isSectionChanging}
       onSectionReady={onSectionReady}
     />
@@ -419,13 +455,17 @@ export const FilePickerBody = ({
       }
       isItemDisabled={isItemDisabled}
       isItemVisible={isItemVisible}
-      filterReceivedShares={section === filePickerSections.DRIVE}
+      getItemDisabledReason={externalGetItemDisabledReason}
+      filterReceivedShares={
+        filterReceivedShares && section === filePickerSections.DRIVE
+      }
       allLoaded={allLoaded === true}
       isOwner={isOwner}
       onReady={
         section === filePickerSections.DRIVE ? handleDriveReady : undefined
       }
       renderFilePickerContent={renderFilePickerContent}
+      additionalItems={additionalItems}
     />
   )
 }
@@ -445,6 +485,12 @@ FilePickerBody.propTypes = {
   onReadyToUse: PropTypes.func,
   onFileDoubleClick: PropTypes.func,
   isItemVisible: PropTypes.func.isRequired,
+  isItemDisabled: PropTypes.func,
+  getItemDisabledReason: PropTypes.func,
+  beforeItems: PropTypes.node,
+  additionalItems: PropTypes.arrayOf(PropTypes.object),
+  filterReceivedShares: PropTypes.bool,
+  isNavigationDisabled: PropTypes.bool,
   isSectionChanging: PropTypes.bool,
   onSectionReady: PropTypes.func
 }
@@ -454,5 +500,10 @@ FilePickerBody.defaultProps = {
   multiple: false,
   error: null,
   isItemVisible: () => true,
+  isItemDisabled: () => false,
+  getItemDisabledReason: () => null,
+  beforeItems: null,
+  additionalItems: [],
+  filterReceivedShares: true,
   isSectionChanging: false
 }

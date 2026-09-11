@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import React from 'react'
 
 import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'
@@ -117,6 +117,25 @@ describe('PickerViewTableCell', () => {
     )
 
     expect(screen.queryByText(/1.02 kB/)).toBe(null)
+  })
+
+  it('shows the disabled reason in a tooltip', async () => {
+    render(
+      <PickerViewTableCell
+        column={{ id: 'name' }}
+        row={mockFolder}
+        selectionModeActive={false}
+        isItemDisabled={() => true}
+        getItemDisabledReason={() => 'Move.destinationReadOnly'}
+      />
+    )
+
+    fireEvent.mouseOver(screen.getByTestId('picker-item-name'))
+    await waitFor(() => {
+      expect(screen.getByRole('tooltip')).toHaveTextContent(
+        'Move.destinationReadOnly'
+      )
+    })
   })
 
   it('opens folders through the navigation control without selecting the row', () => {

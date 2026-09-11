@@ -16,9 +16,13 @@ import { createFolder } from '@/modules/navigation/duck'
 interface FolderPickerAddFolderItemProps {
   currentFolderId: string
   visible: boolean
-  afterSubmit: () => void
+  afterSubmit?: () => void
   afterAbort: () => void
   driveId?: string
+  onSubmit?: (name: string) => Promise<void>
+  inputAriaLabel?: string
+  errorMessage?: string
+  disableGutters?: boolean
 }
 
 const FolderPickerAddFolderItem: FC<FolderPickerAddFolderItemProps> = ({
@@ -26,22 +30,28 @@ const FolderPickerAddFolderItem: FC<FolderPickerAddFolderItemProps> = ({
   visible,
   afterSubmit,
   afterAbort,
-  driveId
+  driveId,
+  onSubmit,
+  inputAriaLabel,
+  errorMessage,
+  disableGutters = false
 }) => {
   const { isMobile } = useBreakpoints()
-  const gutters = isMobile ? 'default' : 'double'
+  const gutters = disableGutters ? 'disabled' : isMobile ? 'default' : 'double'
   const dispatch = useDispatch()
   const { showAlert } = useAlert()
   const { t } = useI18n()
   const client = useClient()
 
-  const handleSubmit = (name: string): void => {
+  const handleSubmit = async (name: string): Promise<void> => {
+    if (onSubmit) {
+      await onSubmit(name)
+      return
+    }
     dispatch(
       createFolder(client, name, currentFolderId, { showAlert, t }, driveId)
     )
-    if (typeof afterSubmit === 'function') {
-      afterSubmit()
-    }
+    afterSubmit?.()
   }
 
   const handleAbort = (accidental: boolean): void => {
@@ -59,11 +69,16 @@ const FolderPickerAddFolderItem: FC<FolderPickerAddFolderItemProps> = ({
   if (visible) {
     return (
       <>
-        <ListItem gutters={gutters}>
+        <ListItem gutters={gutters} data-testid="folder-picker-add-folder-item">
           <ListItemIcon>
             <Icon icon={FileTypeFolder} size={32} />
           </ListItemIcon>
-          <FilenameInput onSubmit={handleSubmit} onAbort={handleAbort} />
+          <FilenameInput
+            inputAriaLabel={inputAriaLabel}
+            errorMessage={errorMessage}
+            onSubmit={handleSubmit}
+            onAbort={handleAbort}
+          />
         </ListItem>
         <Divider />
       </>

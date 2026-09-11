@@ -5,6 +5,8 @@ import React, { forwardRef, memo, useCallback, useMemo, useRef } from 'react'
 import Box from 'cozy-ui/transpiled/react/Box'
 import VirtualizedTable from 'cozy-ui/transpiled/react/Table/Virtualized'
 import virtuosoComponents from 'cozy-ui/transpiled/react/Table/Virtualized/virtuosoComponents'
+import TableBody from 'cozy-ui/transpiled/react/TableBody'
+import TableCell from 'cozy-ui/transpiled/react/TableCell'
 import TableRow from 'cozy-ui/transpiled/react/TableRow'
 import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import { useI18n } from 'twake-i18n'
@@ -40,6 +42,8 @@ export const PickerViewTableRow = forwardRef(
     const timerId = useRef()
     const isLongPress = useRef(false)
     const isDisabled = context.isItemDisabled(row)
+    const disabledReason = context.getItemDisabledReason?.(row)
+    const { t } = useI18n()
 
     const handleClick = event => {
       if (!isDisabled) context.onItemClick(row, event)
@@ -74,6 +78,9 @@ export const PickerViewTableRow = forwardRef(
         data-testid="list-item"
         data-file-id={row?._id}
         aria-disabled={isDisabled}
+        aria-label={
+          disabledReason ? `${row.name}. ${t(disabledReason)}` : undefined
+        }
         className={cx(
           className,
           'virtualized',
@@ -95,6 +102,7 @@ PickerViewTableRow.propTypes = {
     data: PropTypes.array,
     isSelectedItem: PropTypes.func.isRequired,
     isItemDisabled: PropTypes.func.isRequired,
+    getItemDisabledReason: PropTypes.func,
     isMobile: PropTypes.bool.isRequired,
     selectionModeActive: PropTypes.bool.isRequired,
     onItemClick: PropTypes.func.isRequired,
@@ -112,8 +120,26 @@ export const MobileTableHead = forwardRef(
   }
 )
 
+export const PickerViewTableBody = forwardRef(
+  ({ context, children, ...props }, ref) => (
+    <TableBody {...props} ref={ref}>
+      {context.beforeItems && (
+        <TableRow data-testid="picker-view-before-items">
+          <TableCell colSpan={context.columns.length}>
+            {context.beforeItems}
+          </TableCell>
+        </TableRow>
+      )}
+      {children}
+    </TableBody>
+  )
+)
+
+PickerViewTableBody.displayName = 'PickerViewTableBody'
+
 const tableComponents = {
   ...virtuosoComponents,
+  TableBody: PickerViewTableBody,
   TableRow: PickerViewTableRowMemo
 }
 
@@ -131,10 +157,12 @@ export const PickerViewTable = memo(
     onItemDoubleClick,
     onItemNavigate,
     isItemDisabled = () => false,
+    getItemDisabledReason = () => null,
     fetchMore,
     scrollerRef,
     virtuosoRef,
-    withFilePath
+    withFilePath,
+    beforeItems
   }) => {
     const { t } = useI18n()
     const { isMobile } = useBreakpoints()
@@ -161,12 +189,14 @@ export const PickerViewTable = memo(
               isSelectedItem={isSelectedItem}
               onItemNavigate={onItemNavigate}
               isItemDisabled={isItemDisabled}
+              getItemDisabledReason={getItemDisabledReason}
               withFilePath={withFilePath}
             />
           )
         }
       }),
       [
+        getItemDisabledReason,
         isItemDisabled,
         isSelectedItem,
         onItemNavigate,
@@ -181,14 +211,18 @@ export const PickerViewTable = memo(
         isMobile,
         selectionModeActive,
         isItemDisabled,
+        getItemDisabledReason,
         isSelectedItem,
         onItemClick,
         onItemToggle,
         onItemDoubleClick,
-        onItemNavigate
+        onItemNavigate,
+        beforeItems,
+        columns
       }),
       [
         isItemDisabled,
+        getItemDisabledReason,
         isMobile,
         isSelectedItem,
         items,
@@ -196,7 +230,9 @@ export const PickerViewTable = memo(
         onItemDoubleClick,
         onItemNavigate,
         onItemToggle,
-        selectionModeActive
+        selectionModeActive,
+        beforeItems,
+        columns
       ]
     )
 
@@ -235,10 +271,12 @@ PickerViewTable.propTypes = {
   onItemDoubleClick: PropTypes.func,
   onItemNavigate: PropTypes.func,
   isItemDisabled: PropTypes.func.isRequired,
+  getItemDisabledReason: PropTypes.func,
   fetchMore: PropTypes.func,
   scrollerRef: PropTypes.func,
   virtuosoRef: PropTypes.object,
-  withFilePath: PropTypes.bool
+  withFilePath: PropTypes.bool,
+  beforeItems: PropTypes.node
 }
 
 export default PickerViewTable

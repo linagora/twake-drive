@@ -215,7 +215,7 @@ describe('FolderPickerTopbar', () => {
     setup({ canCreateFolder: true, folder: cozyFolder, showFolderCreation })
 
     const addFolderButton = screen.getByRole('button', {
-      name: 'Add a folder'
+      name: 'Create folder'
     })
     fireEvent.click(addFolderButton)
     await waitFor(() => {
@@ -227,7 +227,7 @@ describe('FolderPickerTopbar', () => {
     setup({ canCreateFolder: false, folder: cozyFolder })
 
     const addFolderButton = screen.queryByRole('button', {
-      name: 'Add a folder'
+      name: 'Create folder'
     })
     expect(addFolderButton).toBeNull()
   })
@@ -239,7 +239,7 @@ describe('FolderPickerTopbar', () => {
     })
 
     const addFolderButton = screen.queryByRole('button', {
-      name: 'Add a folder'
+      name: 'Create folder'
     })
     expect(addFolderButton).toBeNull()
   })
