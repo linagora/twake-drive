@@ -1,10 +1,23 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import { FolderOutlined, Icon } from '@linagora/twake-icons'
+import React, { useState } from 'react'
+import { useDispatch } from 'react-redux'
 
-import { models } from 'cozy-client'
+import { useClient } from 'cozy-client'
+import { useSharingContext } from 'cozy-sharing'
 import Buttons from 'cozy-ui/transpiled/react/Buttons'
 import { FixedDialog } from 'cozy-ui/transpiled/react/CozyDialogs'
 import { makeStyles } from 'cozy-ui/transpiled/react/styles'
 import { useI18n } from 'twake-i18n'
+
+import {
+  areAllEntriesInFolder,
+  getInitialFolderId,
+  getItemId,
+  getMoveDestinationDisabledReason,
+  hasUnknownEntryLocation,
+  isLocalMoveDestination,
+  isMoveDestination
+} from './helpers'
 
 import { FilePicker } from '@/components/FilePicker/FilePicker'
 import {
@@ -12,23 +25,12 @@ import {
   filePickerModes,
   filePickerSections
 } from '@/components/FilePicker/constants'
+import { FolderPickerAddFolderItem } from '@/components/FolderPicker/FolderPickerAddFolderItem'
 import { FolderPickerHeader } from '@/components/FolderPicker/FolderPickerHeader'
-import { ROOT_DIR_ID } from '@/constants/config'
-import { getParentPath } from '@/lib/path'
+import { createFolder } from '@/modules/navigation/duck'
 
 const MOVE_TO_SECTIONS = [filePickerSections.DRIVE]
 const MOVE_TO_DISPLAYED_TYPES = [filePickerItemTypes.FOLDER]
-
-function isMoveDestination(item, entryIds) {
-  const itemId = item?._id ?? item?.id
-  return (
-    Boolean(item) &&
-    models.file.isDirectory(item) &&
-    !item.driveId &&
-    item.cozyMetadata?.createdByApp !== 'nextcloud' &&
-    (!entryIds || !entryIds.has(itemId))
-  )
-}
 
 const useStyles = makeStyles({
   paper: {
@@ -52,19 +54,6 @@ const useStyles = makeStyles({
   }
 })
 
-function getInitialFolderId(currentFolder, entries) {
-  const sourceFolderIds = new Set(
-    entries
-      .map(entry => entry.dir_id ?? getParentPath(entry.path))
-      .filter(Boolean)
-  )
-  const isLocalFolder =
-    currentFolder?._type === 'io.cozy.files' && !currentFolder.driveId
-
-  if (!isLocalFolder || sourceFolderIds.size > 1) return ROOT_DIR_ID
-  return currentFolder?._id ?? ROOT_DIR_ID
-}
-
 export function MoveTo({
   currentFolder,
   entries,
@@ -73,50 +62,113 @@ export function MoveTo({
   isBusy = false
 }) {
   const { t } = useI18n()
+  const client = useClient()
+  const dispatch = useDispatch()
   const classes = useStyles()
+  const { allLoaded, hasWriteAccess } = useSharingContext()
   const initialFolderId = getInitialFolderId(currentFolder, entries)
-  const entryIds = useMemo(
-    () => new Set(entries.map(entry => entry._id ?? entry.id).filter(Boolean)),
-    [entries]
-  )
-  const isItemVisible = useCallback(
-    item => isMoveDestination(item, entryIds),
-    [entryIds]
-  )
   const initialLocation = {
     section: filePickerSections.DRIVE,
     folderId: initialFolderId,
     driveId: null
   }
+  const [isFolderCreationDisplayed, setFolderCreationDisplayed] =
+    useState(false)
+  const [isCreatingFolder, setCreatingFolder] = useState(false)
+  const [createdItems, setCreatedItems] = useState([])
   const [currentFolderState, setCurrentFolderState] = useState({
     folder: null,
     location: initialLocation,
     status: 'loading'
   })
-
+  const isBrowserBusy = isBusy || isCreatingFolder
+  const isItemVisible = isLocalMoveDestination
+  const getItemDisabledReason = item =>
+    isBrowserBusy
+      ? 'Move.folderCreationInProgress'
+      : getMoveDestinationDisabledReason(
+          item,
+          entries,
+          hasWriteAccess,
+          allLoaded
+        )
   const destinationFolder = currentFolderState.folder
   const destinationError =
     currentFolderState.status === 'failed' ? 'DESTINATION_UNAVAILABLE' : null
-  const isCurrentFolderInitial =
-    currentFolderState.location.folderId === initialFolderId
+  const isDestinationWritable = Boolean(
+    destinationFolder &&
+    (!hasWriteAccess ||
+      hasWriteAccess(getItemId(destinationFolder), destinationFolder.driveId))
+  )
   const canConfirm =
-    !isCurrentFolderInitial &&
     currentFolderState.status === 'loaded' &&
-    isMoveDestination(destinationFolder, entryIds)
+    allLoaded === true &&
+    isMoveDestination(destinationFolder, entries, hasWriteAccess, allLoaded) &&
+    !(
+      currentFolderState.location.folderId === initialFolderId &&
+      (areAllEntriesInFolder(entries, destinationFolder) ||
+        hasUnknownEntryLocation(entries))
+    )
+  const canCreateFolder = Boolean(
+    allLoaded &&
+    currentFolderState.status === 'loaded' &&
+    destinationFolder &&
+    isLocalMoveDestination(destinationFolder) &&
+    isDestinationWritable
+  )
 
   const handleConfirm = () => {
-    if (canConfirm && destinationFolder) onConfirm(destinationFolder)
+    if (canConfirm && destinationFolder && !isBrowserBusy) {
+      onConfirm(destinationFolder)
+    }
+  }
+
+  const handleCreate = () => {
+    if (!isBrowserBusy && canCreateFolder) setFolderCreationDisplayed(true)
+  }
+
+  const handleItemsAdded = items => {
+    setCreatedItems(previousItems => [...previousItems, ...items])
+  }
+
+  const handleFolderCreation = async name => {
+    setCreatingFolder(true)
+    try {
+      await dispatch(
+        createFolder(
+          client,
+          name,
+          currentFolderState.location.folderId,
+          { t },
+          currentFolderState.location.driveId,
+          handleItemsAdded
+        )
+      )
+      setFolderCreationDisplayed(false)
+    } finally {
+      setCreatingFolder(false)
+    }
+  }
+
+  const handleAbortCreation = () => {
+    if (!isCreatingFolder) setFolderCreationDisplayed(false)
   }
 
   return (
     <FixedDialog
       open
-      onClose={isBusy ? undefined : onClose}
+      onClose={isBrowserBusy ? undefined : onClose}
       size="large"
       classes={{ paper: classes.paper }}
       title={<FolderPickerHeader entries={entries} />}
       content={
-        <div className="u-pos-relative u-h-100 u-flex u-flex-column u-flex-grow-1">
+        <div
+          className="u-pos-relative u-h-100 u-flex u-flex-column u-flex-grow-1"
+          data-testid="move-to-browser"
+        >
+          <span className="u-visuallyhidden" role="status" aria-live="polite">
+            {isCreatingFolder ? t('Move.folderCreationInProgress') : null}
+          </span>
           <FilePicker
             mode={filePickerModes.CURRENT_FOLDER}
             initialLocation={initialLocation}
@@ -124,6 +176,24 @@ export function MoveTo({
             displayedTypes={MOVE_TO_DISPLAYED_TYPES}
             selectableTypes={[]}
             isItemVisible={isItemVisible}
+            getItemDisabledReason={getItemDisabledReason}
+            isNavigationDisabled={isBrowserBusy}
+            filterReceivedShares={false}
+            additionalItems={createdItems}
+            beforeItems={
+              isFolderCreationDisplayed && canCreateFolder ? (
+                <FolderPickerAddFolderItem
+                  currentFolderId={currentFolderState.location.folderId}
+                  driveId={currentFolderState.location.driveId}
+                  visible
+                  afterAbort={handleAbortCreation}
+                  onSubmit={handleFolderCreation}
+                  inputAriaLabel={t('Move.folderName')}
+                  errorMessage={t('Move.folderCreationError')}
+                  disableGutters
+                />
+              ) : null
+            }
             error={destinationError}
             onCurrentFolderChange={setCurrentFolderState}
           />
@@ -131,16 +201,26 @@ export function MoveTo({
       }
       actions={
         <>
+          {canCreateFolder && (
+            <Buttons
+              className="u-mr-auto"
+              disabled={isBrowserBusy || isFolderCreationDisplayed}
+              label={t('Move.addFolder')}
+              onClick={handleCreate}
+              startIcon={<Icon icon={FolderOutlined} />}
+              variant="ghost"
+            />
+          )}
           <Buttons
             variant="secondary"
             label={t('Move.cancel')}
             onClick={onClose}
-            disabled={isBusy}
+            disabled={isBrowserBusy}
           />
           <Buttons
             label={t('Move.action')}
             onClick={handleConfirm}
-            disabled={!canConfirm || isBusy}
+            disabled={!canConfirm || isBrowserBusy}
             busy={isBusy}
           />
         </>

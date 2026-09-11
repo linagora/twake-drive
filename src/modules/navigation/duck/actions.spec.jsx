@@ -122,6 +122,22 @@ describe('createFolder', () => {
       type: 'directory'
     })
   })
+
+  it('should not show an alert when no alert callback is provided', async () => {
+    const folderId = 'folder123456'
+    const { client, store } = await setupFolderContent({
+      folderId
+    })
+    const error = new Error('failed')
+    CozyClient.prototype.collection.mockReturnValue({
+      create: jest.fn().mockRejectedValue(error)
+    })
+
+    await expect(
+      store.dispatch(createFolder(client, 'foobar5', folderId, { t }))
+    ).rejects.toBe(error)
+    expect(showAlert).not.toHaveBeenCalled()
+  })
 })
 
 describe('uploadFiles', () => {

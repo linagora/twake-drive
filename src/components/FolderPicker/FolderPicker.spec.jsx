@@ -107,7 +107,7 @@ describe('FolderPicker', () => {
     setup()
 
     const addFolderButton = screen.queryByRole('button', {
-      name: 'Add a folder'
+      name: 'Create folder'
     })
     fireEvent.click(addFolderButton)
 

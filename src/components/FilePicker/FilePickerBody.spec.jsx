@@ -189,6 +189,26 @@ describe('FilePickerBody', () => {
     )
   })
 
+  it('disables an item when the caller provides a disabled reason', () => {
+    useQuery.mockReturnValue({
+      data: [{ _id: 'disabled-file', name: 'Disabled file', type: 'file' }],
+      fetchStatus: 'loaded'
+    })
+
+    render(
+      <FilePickerBody
+        {...baseProps}
+        getItemDisabledReason={() => 'disabled.reason'}
+        section={filePickerSections.DRIVE}
+        folderId="root-id"
+      />
+    )
+
+    expect(
+      screen.getByRole('button', { name: 'Disabled file:local' })
+    ).toBeDisabled()
+  })
+
   it.each([
     ['loading', 'file-picker-loading'],
     ['loaded', 'file-picker-empty']

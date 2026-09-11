@@ -424,6 +424,11 @@ export const createFolder = (
   addItems = () => {}
 ) => {
   const safeAddItems = typeof addItems === 'function' ? addItems : () => {}
+  const notifyError = message => {
+    if (typeof showAlert === 'function') {
+      showAlert({ message, severity: 'error' })
+    }
+  }
   return async (dispatch, getState) => {
     const state = getState()
     let targetFolderId = currentFolderId
@@ -441,10 +446,7 @@ export const createFolder = (
     const existingFolder = doesFolderExistByName(state, targetFolderId, name)
 
     if (existingFolder) {
-      showAlert({
-        message: t('alert.folder_name', { folderName: name }),
-        severity: 'error'
-      })
+      notifyError(t('alert.folder_name', { folderName: name }))
       throw new Error('alert.folder_name')
     }
 
@@ -467,12 +469,9 @@ export const createFolder = (
       }
     } catch (err) {
       if (err.response && err.response.status === HTTP_CODE_CONFLICT) {
-        showAlert({
-          message: t('alert.folder_name', { folderName: name }),
-          severity: 'error'
-        })
+        notifyError(t('alert.folder_name', { folderName: name }))
       } else {
-        showAlert({ message: t('alert.folder_generic'), severity: 'error' })
+        notifyError(t('alert.folder_generic'))
       }
       throw err
     }

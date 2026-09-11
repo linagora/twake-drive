@@ -7,6 +7,7 @@ import { isDirectory } from 'cozy-client/dist/models/file'
 import Checkbox from 'cozy-ui/transpiled/react/Checkbox'
 import Filename from 'cozy-ui/transpiled/react/Filename'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
+import Tooltip from 'cozy-ui/transpiled/react/Tooltip'
 import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import { useI18n } from 'twake-i18n'
 
@@ -26,6 +27,7 @@ export const PickerViewNameCell = ({
   isSelectedItem,
   onItemNavigate,
   isItemDisabled = () => false,
+  getItemDisabledReason,
   withFilePath
 }) => {
   const { t } = useI18n()
@@ -45,16 +47,38 @@ export const PickerViewNameCell = ({
     : isMobile && !isFolder
       ? makeFileMetadata(formattedUpdatedAt ?? '—', formattedSize ?? '—')
       : null
+  const disabledReason = getItemDisabledReason?.(row)
   const handleNavigate = event => {
     event.stopPropagation()
     onItemNavigate(row)
   }
 
+  const filenameContent = (
+    <Filename
+      filename={filename}
+      extension={extension}
+      midEllipsis
+      path={metadata}
+    />
+  )
+  const filenameWithTooltip = disabledReason ? (
+    <Tooltip title={t(disabledReason)} placement="top">
+      <span
+        className="u-inline-flex u-flex-items-center"
+        data-testid="picker-item-name"
+      >
+        {filenameContent}
+      </span>
+    </Tooltip>
+  ) : (
+    filenameContent
+  )
+
   return (
     <div
       data-testid="listitem-onclick"
       className="u-flex u-flex-items-center"
-      title={title}
+      title={disabledReason ? undefined : title}
     >
       {isMobile && selectionModeActive && (
         <Checkbox checked={isSelected} size="medium" onChange={() => {}} />
@@ -65,14 +89,7 @@ export const PickerViewNameCell = ({
       >
         <FileThumbnail file={row} />
       </div>
-      <div className="u-flex-grow-1 u-ellipsis">
-        <Filename
-          filename={filename}
-          extension={extension}
-          midEllipsis
-          path={metadata}
-        />
-      </div>
+      <div className="u-flex-grow-1 u-ellipsis">{filenameWithTooltip}</div>
       {onItemNavigate && isFolder && (
         <IconButton
           aria-label={t('Move.openFolder')}
@@ -95,6 +112,7 @@ PickerViewNameCell.propTypes = {
   isSelectedItem: PropTypes.func,
   onItemNavigate: PropTypes.func,
   isItemDisabled: PropTypes.func,
+  getItemDisabledReason: PropTypes.func,
   withFilePath: PropTypes.bool
 }
 
@@ -105,6 +123,7 @@ export const PickerViewTableCell = ({
   isSelectedItem,
   onItemNavigate,
   isItemDisabled,
+  getItemDisabledReason,
   withFilePath
 }) => {
   if (!column || !row) return null
@@ -117,6 +136,7 @@ export const PickerViewTableCell = ({
         isSelectedItem={isSelectedItem}
         onItemNavigate={onItemNavigate}
         isItemDisabled={isItemDisabled}
+        getItemDisabledReason={getItemDisabledReason}
         withFilePath={withFilePath}
       />
     )
@@ -141,6 +161,7 @@ PickerViewTableCell.propTypes = {
   isSelectedItem: PropTypes.func,
   onItemNavigate: PropTypes.func,
   isItemDisabled: PropTypes.func,
+  getItemDisabledReason: PropTypes.func,
   withFilePath: PropTypes.bool
 }
 

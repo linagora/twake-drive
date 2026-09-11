@@ -18,9 +18,10 @@ jest.mock('cozy-ui/transpiled/react/Table/Virtualized', () => {
   const VirtualizedTable = React.forwardRef(
     ({ rows, context, components, isSelectedItem, selectedItems }, ref) => {
       const TableRow = components.TableRow
+      const TableBody = components.TableBody
       return (
         <table ref={ref}>
-          <tbody>
+          <TableBody context={context}>
             {rows.map(row => (
               <TableRow
                 key={row._id}
@@ -28,7 +29,7 @@ jest.mock('cozy-ui/transpiled/react/Table/Virtualized', () => {
                 context={{ ...context, isSelectedItem, selectedItems }}
               />
             ))}
-          </tbody>
+          </TableBody>
         </table>
       )
     }
@@ -42,7 +43,11 @@ const items = [
   { _id: 'pending-id', name: 'Pending' }
 ]
 
-function setup({ isMobile = false, itemsIdsSelected = [] } = {}) {
+function setup({
+  isMobile = false,
+  itemsIdsSelected = [],
+  beforeItems = null
+} = {}) {
   const onItemClick = jest.fn()
   const onItemToggle = jest.fn()
   const onItemDoubleClick = jest.fn()
@@ -53,7 +58,11 @@ function setup({ isMobile = false, itemsIdsSelected = [] } = {}) {
     <PickerViewTable
       items={items}
       itemsIdsSelected={itemsIdsSelected}
+      beforeItems={beforeItems}
       isItemDisabled={item => item._id === 'pending-id'}
+      getItemDisabledReason={item =>
+        item._id === 'pending-id' ? 'Move.destinationReadOnly' : null
+      }
       onItemClick={onItemClick}
       onItemToggle={onItemToggle}
       onItemDoubleClick={onItemDoubleClick}
@@ -69,12 +78,32 @@ describe('PickerViewTable', () => {
     jest.useRealTimers()
   })
 
+  it('renders beforeItems as the first row below the table header', () => {
+    setup({ beforeItems: <div data-testid="before-items">Create folder</div> })
+
+    const beforeRow = screen.getByTestId('picker-view-before-items')
+    const firstItemRow = screen.getAllByTestId('list-item')[0]
+
+    expect(beforeRow.parentElement.firstElementChild).toBe(beforeRow)
+    expect(beforeRow.compareDocumentPosition(firstItemRow)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING
+    )
+  })
+
   it('marks selected rows based purely on controlled itemsIdsSelected prop', () => {
     setup({ itemsIdsSelected: ['enabled-id'] })
     const [enabledRow, pendingRow] = screen.getAllByTestId('list-item')
 
     expect(enabledRow).toHaveClass('Mui-selected')
     expect(pendingRow).not.toHaveClass('Mui-selected')
+  })
+
+  it('exposes the disabled reason in the row accessible name', () => {
+    setup()
+
+    expect(screen.getAllByTestId('list-item')[1]).toHaveAccessibleName(
+      'Pending. Move.destinationReadOnly'
+    )
   })
 
   it('blocks click and double-click on disabled rows', () => {

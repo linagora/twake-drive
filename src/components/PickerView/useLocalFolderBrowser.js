@@ -14,7 +14,8 @@ export const useLocalFolderBrowser = ({
   allLoaded = true,
   isOwner = () => false,
   onReady,
-  isItemDisabled = () => false
+  isItemDisabled = () => false,
+  getItemDisabledReason = () => null
 }) => {
   const path = useBreadcrumbPath({
     currentFolderId: folderId,
@@ -47,7 +48,8 @@ export const useLocalFolderBrowser = ({
     hasMore: Boolean(filteredResult.hasMore),
     fetchMore: filteredResult.fetchMore ?? null,
     breadcrumbPath: path,
-    isItemDisabled
+    isItemDisabled,
+    getItemDisabledReason
   }
 }
 

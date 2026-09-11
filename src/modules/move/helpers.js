@@ -1,5 +1,134 @@
+import { models } from 'cozy-client'
+
+import { ROOT_DIR_ID } from '@/constants/config'
 import logger from '@/lib/logger'
+import { getParentPath, joinPath } from '@/lib/path'
 import { CozyFile } from '@/models'
+import { isNextcloudFile } from '@/modules/nextcloud/helpers'
+
+export function getItemId(item) {
+  return item?._id ?? item?.id ?? null
+}
+
+function isSameOrDescendantPath(candidatePath, ancestorPath) {
+  if (typeof candidatePath !== 'string' || typeof ancestorPath !== 'string') {
+    return false
+  }
+  return (
+    candidatePath === ancestorPath ||
+    (ancestorPath !== '/' &&
+      candidatePath.startsWith(joinPath(ancestorPath, '')))
+  )
+}
+
+function isDirectoryItem(item) {
+  return Boolean(item) && models.file.isDirectory(item)
+}
+
+function isLocalItem(item) {
+  return (
+    Boolean(item) &&
+    !isNextcloudFile(item) &&
+    !item.driveId &&
+    item.cozyMetadata?.createdByApp !== 'nextcloud'
+  )
+}
+
+export function isLocalMoveDestination(item) {
+  return isDirectoryItem(item) && isLocalItem(item)
+}
+
+function isDescendantOfEntry(item, entry) {
+  const itemId = getItemId(item)
+  const entryId = getItemId(entry)
+  if (itemId && entryId && itemId === entryId) return true
+  if (!isLocalItem(item) || !isLocalItem(entry)) return false
+
+  if (item.dir_id && entryId && item.dir_id === entryId) return true
+
+  if (item.path && entry.path) {
+    return isSameOrDescendantPath(item.path, entry.path)
+  }
+
+  return false
+}
+
+export function getMoveDestinationDisabledReason(
+  item,
+  entries,
+  hasWriteAccess,
+  allLoaded = true
+) {
+  if (!isLocalMoveDestination(item)) return null
+
+  const directoryEntries = entries.filter(isDirectoryItem)
+  const sourceEntry = directoryEntries.find(entry =>
+    isDescendantOfEntry(item, entry)
+  )
+  if (sourceEntry) {
+    return getItemId(item) === getItemId(sourceEntry)
+      ? 'Move.destinationSource'
+      : 'Move.destinationDescendant'
+  }
+
+  if (allLoaded !== true) return 'Move.permissionsLoading'
+
+  if (typeof hasWriteAccess === 'function') {
+    const itemId = getItemId(item)
+    if (itemId && !hasWriteAccess(itemId, item.driveId)) {
+      return 'Move.destinationReadOnly'
+    }
+  }
+
+  return null
+}
+
+export function isMoveDestination(
+  item,
+  entries,
+  hasWriteAccess,
+  allLoaded = true
+) {
+  return (
+    isLocalMoveDestination(item) &&
+    !getMoveDestinationDisabledReason(item, entries, hasWriteAccess, allLoaded)
+  )
+}
+
+function getEntryParentId(entry) {
+  return (
+    entry.dir_id ??
+    (typeof entry.path === 'string' ? getParentPath(entry.path) : null)
+  )
+}
+
+function isEntryInFolder(entry, folder) {
+  const folderId = getItemId(folder)
+  if (entry.dir_id && folderId && entry.dir_id === folderId) return true
+  if (!isLocalItem(entry) || !isLocalItem(folder)) return false
+  return Boolean(
+    entry.path && folder?.path && getParentPath(entry.path) === folder.path
+  )
+}
+
+export function areAllEntriesInFolder(entries, folder) {
+  return (
+    entries.length > 0 && entries.every(entry => isEntryInFolder(entry, folder))
+  )
+}
+
+export function hasUnknownEntryLocation(entries) {
+  return entries.some(entry => !entry.dir_id && !entry.path)
+}
+
+export function getInitialFolderId(currentFolder, entries) {
+  const sourceFolderIds = new Set(entries.map(getEntryParentId).filter(Boolean))
+  const isLocalFolder =
+    currentFolder?._type === 'io.cozy.files' && !currentFolder.driveId
+
+  if (!isLocalFolder || sourceFolderIds.size > 1) return ROOT_DIR_ID
+  return currentFolder?._id ?? ROOT_DIR_ID
+}
 
 /**
  * Cancel file movement function
