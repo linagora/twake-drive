@@ -1,7 +1,6 @@
 import memoize from 'lodash/memoize'
 
 import CozyClient, { DataProxyLink, StackLink } from 'cozy-client'
-import { Document } from 'cozy-doctypes'
 import flag from 'cozy-flags'
 import { initTranslation } from 'twake-i18n'
 
@@ -37,9 +36,6 @@ const setupApp = memoize(() => {
     links
   })
 
-  if (!Document.cozyClient) {
-    Document.registerClient(client)
-  }
   const locale = data.locale
   registerClientPlugins(client)
   const polyglot = initTranslation(locale, lang => require(`@/locales/${lang}`))

@@ -1,7 +1,7 @@
 import { Icon } from '@linagora/twake-icons'
 import React from 'react'
 
-import { isDirectory } from 'cozy-client/dist/models/file'
+import { isDirectory, splitFilename } from 'cozy-client/dist/models/file'
 import ActionsMenu from 'cozy-ui/transpiled/react/ActionsMenu'
 import ActionsMenuMobileHeader from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuMobileHeader'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
@@ -10,7 +10,6 @@ import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 import styles from '@/styles/actionmenu.styl'
 
 import getMimeTypeIcon from '@/lib/getMimeTypeIcon'
-import { CozyFile } from '@/models'
 
 export const ActionMenuWithHeader = ({
   file,
@@ -38,7 +37,7 @@ export const ActionMenuWithHeader = ({
 }
 
 const MenuHeaderFile = ({ file }) => {
-  const { filename, extension } = CozyFile.splitFilename(file)
+  const { filename, extension } = splitFilename(file)
 
   return (
     <>

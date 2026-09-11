@@ -11636,24 +11636,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cozy-doctypes@npm:1.99.1, cozy-doctypes@npm:^1.99.1":
-  version: 1.99.1
-  resolution: "cozy-doctypes@npm:1.99.1"
-  dependencies:
-    cozy-logger: "npm:^1.18.1"
-    date-fns: "npm:^1.30.1"
-    es6-promise-pool: "npm:^2.5.0"
-    lodash: "npm:^4.17.21"
-    prop-types: "npm:^15.7.2"
-  peerDependencies:
-    "@babel/runtime": ">=7.12.5"
-    cozy-client: ">=13.15.1"
-    cozy-flags: ">=2.3.5"
-    cozy-stack-client: ">=13.15.1"
-  checksum: 10/4908fc76388add8c789e9c6208580ec1ac65661730d0ea804d400b9af3994dcba96e22b8653a0c8b28b545319c8e10b67acf56d10a7480f238cf06dafb136013
-  languageName: node
-  linkType: hard
-
 "cozy-doctypes@npm:^1.83.8":
   version: 1.88.6
   resolution: "cozy-doctypes@npm:1.88.6"
@@ -11669,6 +11651,24 @@ __metadata:
     cozy-flags: ">=2.3.5"
     cozy-stack-client: ">=13.15.1"
   checksum: 10/801f4dce9245124a8607f0d32991de3b6928d34f939b6cf818cda099761cddc209bf66444728b592e032ab86e783f83820ba5ed14a1d2319bd3cc887b8327269
+  languageName: node
+  linkType: hard
+
+"cozy-doctypes@npm:^1.99.1":
+  version: 1.99.1
+  resolution: "cozy-doctypes@npm:1.99.1"
+  dependencies:
+    cozy-logger: "npm:^1.18.1"
+    date-fns: "npm:^1.30.1"
+    es6-promise-pool: "npm:^2.5.0"
+    lodash: "npm:^4.17.21"
+    prop-types: "npm:^15.7.2"
+  peerDependencies:
+    "@babel/runtime": ">=7.12.5"
+    cozy-client: ">=13.15.1"
+    cozy-flags: ">=2.3.5"
+    cozy-stack-client: ">=13.15.1"
+  checksum: 10/4908fc76388add8c789e9c6208580ec1ac65661730d0ea804d400b9af3994dcba96e22b8653a0c8b28b545319c8e10b67acf56d10a7480f238cf06dafb136013
   languageName: node
   linkType: hard
 
@@ -11709,7 +11709,6 @@ __metadata:
     cozy-dataproxy-lib: "npm:^4.15.6"
     cozy-device-helper: "npm:^4.0.3"
     cozy-devtools: "npm:^3.0.0"
-    cozy-doctypes: "npm:1.99.1"
     cozy-flags: "npm:^4.9.1"
     cozy-intent: "npm:^2.31.1"
     cozy-interapp: "npm:^0.18.1"

@@ -2,13 +2,13 @@ import React from 'react'
 import { connect } from 'react-redux'
 
 import { useClient } from 'cozy-client'
+import { splitFilename } from 'cozy-client/dist/models/file'
 import useBrowserOffline from 'cozy-ui/transpiled/react/hooks/useBrowserOffline'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import { useI18n } from 'twake-i18n'
 
 import { abortRenaming } from './rename'
 
-import { CozyFile } from '@/models'
 import FilenameInput from '@/modules/filelist/FilenameInput'
 
 // If we set the _rev then CozyClient tries to update. Else
@@ -33,7 +33,7 @@ export const RenameInput = ({
   const { showAlert } = useAlert()
   const { t } = useI18n()
 
-  const { filename, extension } = CozyFile.splitFilename(file)
+  const { filename, extension } = splitFilename(file)
   const name = withoutExtension ? filename : file.name
   const isOffline = useBrowserOffline()
 

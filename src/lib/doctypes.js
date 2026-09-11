@@ -1,5 +1,4 @@
 import extraDoctypes from '@/lib/extraDoctypes'
-import { Contact, Group } from '@/models'
 
 export const DOCTYPE_FILES = 'io.cozy.files'
 export const DOCTYPE_FILES_SETTINGS = 'io.cozy.files.settings'
@@ -10,6 +9,7 @@ export const DOCTYPE_ALBUMS = 'io.cozy.photos.albums'
 export const DOCTYPE_PHOTOS_SETTINGS = 'io.cozy.photos.settings'
 export const DOCTYPE_APPS = 'io.cozy.apps'
 export const DOCTYPE_CONTACTS = 'io.cozy.contacts'
+export const DOCTYPE_GROUPS = 'io.cozy.contacts.groups'
 export const DOCTYPE_KONNECTORS = 'io.cozy.konnectors'
 export const NEXTCLOUD_MIGRATIONS_DOCTYPE = 'io.cozy.nextcloud.migrations'
 export const DOCTYPE_ACCOUNTS = 'io.cozy.accounts'
@@ -28,10 +28,10 @@ export const schema = {
     }
   },
   contacts: {
-    doctype: Contact.doctype,
+    doctype: DOCTYPE_CONTACTS,
     doctypeVersion: DOCTYPE_CONTACTS_VERSION
   },
-  groups: { doctype: Group.doctype },
+  groups: { doctype: DOCTYPE_GROUPS },
   versions: { doctype: 'io.cozy.files.versions' },
   assistants: {
     doctype: DOCTYPE_AI_CHAT_ASSISTANTS,

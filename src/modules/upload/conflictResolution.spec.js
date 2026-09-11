@@ -1,3 +1,5 @@
+import { getFullpath } from 'cozy-client/dist/models/file'
+
 import {
   createFolderWithRenameOnFileCollision,
   MAX_UPLOAD_CONFLICT_RENAME_ATTEMPTS,
@@ -8,9 +10,11 @@ import {
 import { uploadConflictStrategies } from './constants'
 
 import logger from '@/lib/logger'
-import { CozyFile } from '@/models'
 
-jest.mock('cozy-doctypes')
+jest.mock('cozy-client/dist/models/file', () => ({
+  ...jest.requireActual('cozy-client/dist/models/file'),
+  getFullpath: jest.fn()
+}))
 
 const createFileSpy = jest.fn().mockName('createFile')
 const createDirectorySpy = jest.fn().mockName('createDirectory')
@@ -32,7 +36,7 @@ describe('conflict resolution service', () => {
     statByPathSpy.mockReset()
     updateFileSpy.mockReset()
     fakeClient.collection.mockClear()
-    CozyFile.getFullpath.mockReset()
+    getFullpath.mockReset()
     logger.warn = jest.fn()
     logger.error = jest.fn()
   })
@@ -162,7 +166,7 @@ describe('conflict resolution service', () => {
         type: 'file',
         name: 'hello.docx'
       }
-      CozyFile.getFullpath.mockResolvedValueOnce('/parent/hello.docx')
+      getFullpath.mockResolvedValueOnce('/parent/hello.docx')
       statByPathSpy.mockResolvedValueOnce({ data: existingItem })
 
       const result = await resolveFileConflict({
@@ -180,7 +184,7 @@ describe('conflict resolution service', () => {
       const file = new File(['content'], 'hello.docx')
       const statError = new Error('stat failed')
       statError.status = 500
-      CozyFile.getFullpath.mockResolvedValueOnce('/parent/hello.docx')
+      getFullpath.mockResolvedValueOnce('/parent/hello.docx')
       statByPathSpy.mockRejectedValueOnce(statError)
 
       await expect(
@@ -198,7 +202,7 @@ describe('conflict resolution service', () => {
     it('rejects when existing item path resolution fails', async () => {
       const file = new File(['content'], 'hello.docx')
       const pathError = new Error('path failed')
-      CozyFile.getFullpath.mockRejectedValueOnce(pathError)
+      getFullpath.mockRejectedValueOnce(pathError)
 
       await expect(
         resolveFileConflict({
@@ -216,7 +220,7 @@ describe('conflict resolution service', () => {
     it('uses updateFile when replace strategy is selected', async () => {
       const file = new File(['content'], 'hello.docx')
       const onUploadProgress = jest.fn()
-      CozyFile.getFullpath.mockResolvedValueOnce('/parent/hello.docx')
+      getFullpath.mockResolvedValueOnce('/parent/hello.docx')
       statByPathSpy.mockResolvedValueOnce({
         data: { id: 'existing-file-id', type: 'file', name: 'hello.docx' }
       })
@@ -247,7 +251,7 @@ describe('conflict resolution service', () => {
 
     it('uses a generated name when keep-both strategy is selected', async () => {
       const file = new File(['content'], 'hello.docx')
-      CozyFile.getFullpath.mockResolvedValueOnce('/parent/hello.docx')
+      getFullpath.mockResolvedValueOnce('/parent/hello.docx')
       statByPathSpy.mockResolvedValueOnce({
         data: { id: 'existing-file-id', type: 'file', name: 'hello.docx' }
       })
@@ -282,7 +286,7 @@ describe('conflict resolution service', () => {
         type: 'file',
         name: 'hello.docx'
       }
-      CozyFile.getFullpath.mockResolvedValueOnce('/parent/hello.docx')
+      getFullpath.mockResolvedValueOnce('/parent/hello.docx')
       statByPathSpy.mockResolvedValueOnce({ data: existingItem })
 
       const result = await resolveFileConflict({
@@ -299,7 +303,7 @@ describe('conflict resolution service', () => {
 
     it('renames automatically when a file name collides with a folder', async () => {
       const file = new File(['content'], 'hello.docx')
-      CozyFile.getFullpath.mockResolvedValueOnce('/parent/hello.docx')
+      getFullpath.mockResolvedValueOnce('/parent/hello.docx')
       statByPathSpy.mockResolvedValueOnce({
         data: {
           id: 'existing-folder-id',
@@ -332,7 +336,7 @@ describe('conflict resolution service', () => {
   describe('createFolderWithRenameOnFileCollision', () => {
     it('reuses an existing directory on folder-vs-folder conflict', async () => {
       createDirectorySpy.mockRejectedValueOnce({ status: 409 })
-      CozyFile.getFullpath.mockResolvedValueOnce('/parent/Photos')
+      getFullpath.mockResolvedValueOnce('/parent/Photos')
       statByPathSpy.mockResolvedValueOnce({
         data: { id: 'existing-folder-id', type: 'directory', name: 'Photos' }
       })
@@ -360,7 +364,7 @@ describe('conflict resolution service', () => {
             name: 'Photos (1)'
           }
         })
-      CozyFile.getFullpath.mockResolvedValueOnce('/parent/Photos')
+      getFullpath.mockResolvedValueOnce('/parent/Photos')
       statByPathSpy.mockResolvedValueOnce({
         data: { id: 'existing-file-id', type: 'file', name: 'Photos' }
       })
@@ -388,9 +392,7 @@ describe('conflict resolution service', () => {
 
     it('fails instead of retrying forever when every generated folder name conflicts with a file', async () => {
       createDirectorySpy.mockRejectedValue({ status: 409 })
-      CozyFile.getFullpath.mockImplementation(
-        (dirID, name) => `/parent/${name}`
-      )
+      getFullpath.mockImplementation((client, dirID, name) => `/parent/${name}`)
       statByPathSpy.mockResolvedValue({
         data: { id: 'existing-file-id', type: 'file', name: 'Photos' }
       })

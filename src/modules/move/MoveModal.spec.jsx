@@ -19,7 +19,6 @@ jest.mock('cozy-flags', () => jest.fn())
 jest.mock('@/lib/logger', () => ({ warn: jest.fn() }))
 
 import { ROOT_DIR_ID } from '@/constants/config'
-import { CozyFile } from '@/models'
 import { computeNextcloudFolderQueryId } from '@/modules/nextcloud/helpers'
 
 jest.mock('cozy-sharing', () => ({
@@ -27,8 +26,6 @@ jest.mock('cozy-sharing', () => ({
   useSharingContext: jest.fn()
 }))
 
-jest.mock('cozy-doctypes')
-CozyFile.doctype = 'io.cozy.files'
 const onCloseSpy = jest.fn()
 const refreshSpy = jest.fn()
 
@@ -42,11 +39,6 @@ jest.mock('cozy-client', () => ({
   ...jest.requireActual('cozy-client'),
   cancelable: promise => Object.assign(promise, { cancel: jest.fn() }),
   useQuery: jest.fn()
-}))
-
-CozyFile.splitFilename.mockImplementation(({ name }) => ({
-  filename: name,
-  extension: ''
 }))
 
 jest.mock('components/FolderPicker/FolderPicker', () => ({
@@ -237,10 +229,6 @@ describe('MoveModal component', () => {
       ...sharingContext
     })
 
-    CozyFile.getFullpath.mockImplementation(
-      (destinationFolder, name) => `/${destinationFolder}/${name}`
-    )
-
     move.mockImplementation(id => {
       if (id === 'bill_201902') {
         return Promise.resolve({
@@ -414,12 +402,6 @@ describe('MoveModal component', () => {
     })
 
     it('should move entries to destination', async () => {
-      CozyFile.getFullpath.mockImplementation((destinationFolder, name) =>
-        Promise.resolve(
-          name === 'bill_201903.pdf' ? '/bills/bill_201903.pdf' : '/whatever'
-        )
-      )
-
       setup()
 
       const moveButton = await screen.findByText('Move')
@@ -542,10 +524,6 @@ describe('MoveModal component', () => {
 
   describe('move shared folder inside another', () => {
     it('should display an alert when move shared folder inside another', async () => {
-      CozyFile.getFullpath.mockImplementation((destinationFolder, name) =>
-        Promise.resolve(`/${destinationFolder}/${name}`)
-      )
-
       setup({
         sharedPaths: ['/bills', '/Destination Folder'],
         byDocId: {
@@ -571,9 +549,6 @@ describe('MoveModal component', () => {
     })
 
     it('should move files after revoke all recipients when folder owner confirms', async () => {
-      CozyFile.getFullpath.mockImplementation((destinationFolder, name) =>
-        Promise.resolve(`/${destinationFolder}/${name}`)
-      )
       const revokeAllSpy = jest.fn()
       const revokeSelfSpy = jest.fn()
 
@@ -616,9 +591,6 @@ describe('MoveModal component', () => {
     })
 
     it('should move files after revoke self when user confirms', async () => {
-      CozyFile.getFullpath.mockImplementation((destinationFolder, name) =>
-        Promise.resolve(`/${destinationFolder}/${name}`)
-      )
       const revokeAllSpy = jest.fn()
       const revokeSelfSpy = jest.fn()
 

@@ -1,16 +1,17 @@
 import CozyClient from 'cozy-client'
+import { move } from 'cozy-client/dist/models/file'
 
-import { CozyFile } from '@/models'
 import {
   cancelMove,
   computeNextcloudMoveDirections,
   hasOneOfEntriesShared
 } from '@/modules/move/helpers'
 
-jest.mock('cozy-doctypes')
+jest.mock('cozy-client/dist/models/file', () => ({
+  ...jest.requireActual('cozy-client/dist/models/file'),
+  move: jest.fn()
+}))
 jest.mock('cozy-stack-client')
-
-CozyFile.doctype = 'io.cozy.files'
 
 const getSpy = jest.fn().mockResolvedValue({
   data: { id: 'fakeDoc', _type: 'io.cozy.files' }
@@ -67,11 +68,11 @@ describe('cancelMove', () => {
   it('should move items back to their previous location', async () => {
     await setup()
 
-    expect(CozyFile.move).toHaveBeenCalledWith('bill_201901', {
-      folderId: 'bills'
+    expect(move).toHaveBeenCalledWith(mockClient, defaultEntries[0], {
+      _id: 'bills'
     })
-    expect(CozyFile.move).toHaveBeenCalledWith('bill_201902', {
-      folderId: 'bills'
+    expect(move).toHaveBeenCalledWith(mockClient, defaultEntries[1], {
+      _id: 'bills'
     })
     expect(restoreSpy).not.toHaveBeenCalled()
     expect(refreshSpy).toHaveBeenCalled()

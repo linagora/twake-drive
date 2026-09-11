@@ -1,9 +1,10 @@
 import { models } from 'cozy-client'
+import { move } from 'cozy-client/dist/models/file'
 
 import { NEXTCLOUD_FILE_ID, ROOT_DIR_ID } from '@/constants/config'
+import { DOCTYPE_FILES } from '@/lib/doctypes'
 import logger from '@/lib/logger'
 import { getParentPath, joinPath } from '@/lib/path'
-import { CozyFile } from '@/models'
 import { isNextcloudFile } from '@/modules/nextcloud/helpers'
 
 export function getItemId(item) {
@@ -180,10 +181,10 @@ export const cancelMove = async ({
   try {
     await Promise.all(
       entries.map(entry =>
-        registerCancelable(CozyFile.move(entry._id, { folderId: entry.dir_id }))
+        registerCancelable(move(client, entry, { _id: entry.dir_id }))
       )
     )
-    const fileCollection = client.collection(CozyFile.doctype)
+    const fileCollection = client.collection(DOCTYPE_FILES)
     let restoreErrorsCount = 0
     await Promise.all(
       trashedFiles.map(id => {

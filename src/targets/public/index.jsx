@@ -15,7 +15,6 @@ import { HashRouter } from 'react-router-dom'
 import 'whatwg-fetch'
 
 import CozyClient, { models } from 'cozy-client'
-import { Document } from 'cozy-doctypes'
 import getSharedDocument from 'cozy-sharing/dist/getSharedDocument'
 import CozyTheme from 'cozy-ui-plus/dist/providers/CozyTheme'
 import { I18n, initTranslation } from 'twake-i18n'
@@ -65,10 +64,6 @@ const init = async () => {
     useCustomStore: true
   })
   registerClientPlugins(client)
-
-  if (!Document.cozyClient) {
-    Document.registerClient(client)
-  }
 
   const polyglot = initTranslation(lang, locale =>
     require(`@/locales/${locale}`)

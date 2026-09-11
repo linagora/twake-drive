@@ -1,3 +1,5 @@
+import { getFullpath } from 'cozy-client/dist/models/file'
+
 import {
   processNextFile,
   selectors,
@@ -15,9 +17,11 @@ import {
 } from './index'
 
 import logger from '@/lib/logger'
-import { CozyFile } from '@/models'
 
-jest.mock('cozy-doctypes')
+jest.mock('cozy-client/dist/models/file', () => ({
+  ...jest.requireActual('cozy-client/dist/models/file'),
+  getFullpath: jest.fn()
+}))
 
 const createFileSpy = jest.fn().mockName('createFile')
 const createDirectorySpy = jest.fn().mockName('createDirectory')
@@ -33,7 +37,7 @@ const fakeClient = {
   query: jest.fn()
 }
 
-CozyFile.getFullpath.mockResolvedValue('/my-dir/mydoc.odt')
+getFullpath.mockResolvedValue('/my-dir/mydoc.odt')
 
 describe('processNextFile function', () => {
   const fileUploadedCallbackSpy = jest.fn()
@@ -59,8 +63,8 @@ describe('processNextFile function', () => {
     dispatchSpy.mockClear()
     fileUploadedCallbackSpy.mockClear()
     queueCompletedCallbackSpy.mockClear()
-    CozyFile.getFullpath.mockReset()
-    CozyFile.getFullpath.mockResolvedValue('/my-dir/my-doc.odt')
+    getFullpath.mockReset()
+    getFullpath.mockResolvedValue('/my-dir/my-doc.odt')
     logger.error = jest.fn()
   })
 
@@ -1314,7 +1318,7 @@ describe('flattenEntries', () => {
     createFileSpy.mockReset()
     statByPathSpy.mockReset()
     updateFileSpy.mockReset()
-    CozyFile.getFullpath.mockReset()
+    getFullpath.mockReset()
     createDirectorySpy.mockImplementation(async ({ name }) => ({
       data: { id: `dir-${name}`, name, type: 'directory' }
     }))
@@ -1345,7 +1349,7 @@ describe('flattenEntries', () => {
   it('should reuse an existing folder when createDirectory returns 409', async () => {
     createDirectorySpy.mockReset()
     createDirectorySpy.mockRejectedValueOnce({ status: 409 })
-    CozyFile.getFullpath.mockResolvedValueOnce('/root/photos')
+    getFullpath.mockResolvedValueOnce('/root/photos')
     statByPathSpy.mockResolvedValueOnce({
       data: { type: 'directory', id: 'existing-photos' }
     })
@@ -1565,7 +1569,7 @@ describe('addToUploadQueue placeholder flow', () => {
     createFileSpy.mockReset()
     statByPathSpy.mockReset()
     updateFileSpy.mockReset()
-    CozyFile.getFullpath.mockReset()
+    getFullpath.mockReset()
     createDirectorySpy.mockImplementation(async ({ name }) => ({
       data: { id: `dir-${name}`, name, type: 'directory' }
     }))
