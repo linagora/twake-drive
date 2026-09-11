@@ -64,12 +64,6 @@ declare module 'cozy-ui/transpiled/react/providers/Breakpoints' {
   export default useBreakpoints
 }
 
-declare module 'models/index' {
-  export const CozyFile: {
-    splitFilename: (file: IOCozyFile) => { filename: string; extension: string }
-  }
-}
-
 declare module 'cozy-client/dist/models/file' {
   export const splitFilename: (file: IOCozyFile) => {
     filename: string
@@ -105,7 +99,7 @@ declare module 'cozy-client/dist/models/file' {
     client: import('cozy-client/types/CozyClient').CozyClient,
     dirID: string,
     filename: string,
-    driveId: string
+    driveId?: string | null
   ) => Promise<string>
 }
 

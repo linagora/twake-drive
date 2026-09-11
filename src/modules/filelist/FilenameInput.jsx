@@ -1,7 +1,7 @@
 import cx from 'classnames'
 import React, { useState, useRef, useEffect, useCallback, useId } from 'react'
 
-import { isDirectory } from 'cozy-client/dist/models/file'
+import { isDirectory, splitFilename } from 'cozy-client/dist/models/file'
 import Button from 'cozy-ui/transpiled/react/Buttons'
 import { Dialog } from 'cozy-ui/transpiled/react/CozyDialogs'
 import Spinner from 'cozy-ui/transpiled/react/Spinner'
@@ -9,7 +9,6 @@ import { translate } from 'twake-i18n'
 
 import styles from '@/styles/filenameinput.styl'
 
-import { CozyFile } from '@/models'
 import { getCaretPositionFromPoint } from '@/modules/filelist/getCaretPositionFromPoint'
 
 const ENTER_KEY = 13
@@ -116,11 +115,11 @@ const FilenameInput = ({
     }
 
     if (file && !isDirectory(file)) {
-      const previousExtension = CozyFile.splitFilename({
+      const previousExtension = splitFilename({
         name: initialName,
         type: 'file'
       }).extension
-      const newExtension = CozyFile.splitFilename({
+      const newExtension = splitFilename({
         name: value,
         type: 'file'
       }).extension
@@ -149,7 +148,7 @@ const FilenameInput = ({
     if (!shouldSetSelection.current || !textInput.current) return
     if (!initialName) return
 
-    const { filename } = CozyFile.splitFilename({
+    const { filename } = splitFilename({
       name: initialName,
       type: 'file'
     })

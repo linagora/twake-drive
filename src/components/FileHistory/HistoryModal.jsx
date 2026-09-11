@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { useClient, useCapabilities } from 'cozy-client'
+import { generateFileNameForRevision } from 'cozy-client/dist/models/file'
 import { useSharingContext } from 'cozy-sharing'
 import { Dialog } from 'cozy-ui/transpiled/react/CozyDialogs'
 import List from 'cozy-ui/transpiled/react/List'
@@ -14,8 +15,6 @@ import { useI18n } from 'twake-i18n'
 import { DeleteVersionConfirm } from './DeleteVersionConfirm'
 import { HistoryRow } from './HistoryRow'
 import styles from './styles.styl'
-
-import { CozyFile } from '@/models'
 
 const formatDate = (date, f) => {
   return f(date, 'dd LLLL - HH:mm')
@@ -80,7 +79,7 @@ export const HistoryModal = ({ file, revisions, revisionsFetchStatus }) => {
                       fileCollection.download(
                         file,
                         revision.id,
-                        CozyFile.generateFileNameForRevision(file, revision, f)
+                        generateFileNameForRevision(file, revision, f)
                       )
                     }
                     onDelete={

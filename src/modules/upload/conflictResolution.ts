@@ -7,7 +7,6 @@ import type CozyClient from 'cozy-client/types/CozyClient'
 
 import { DOCTYPE_FILES } from '@/lib/doctypes'
 import logger from '@/lib/logger'
-import { CozyFile } from '@/models'
 import {
   uploadConflictStrategies,
   type UploadConflictStrategy
@@ -104,12 +103,6 @@ type FolderCollisionResult = {
   reusedExisting: boolean
 }
 
-type CozyFileModel = {
-  getFullpath: (dirID: string, name: string) => Promise<string>
-}
-
-const cozyFileModel = CozyFile as CozyFileModel
-
 /**
  * Checks whether an upload error is the server conflict response.
  *
@@ -195,9 +188,7 @@ const statByName = async (
   name: string,
   driveId?: DriveId
 ): Promise<FileDoc> => {
-  const path = driveId
-    ? await getFullpath(client, dirID, name, driveId)
-    : await cozyFileModel.getFullpath(dirID, name)
+  const path = await getFullpath(client, dirID, name, driveId)
   const resp = await filesCollection(client, driveId).statByPath(path)
   return resp.data
 }
