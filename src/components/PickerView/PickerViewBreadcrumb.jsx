@@ -10,7 +10,7 @@ import styles from './styles.styl'
 
 import { BackButton } from '@/components/Button/BackButton'
 
-const FilePickerBreadcrumb = ({ path, onBreadcrumbClick }) => {
+export const PickerViewBreadcrumb = ({ path, onBreadcrumbClick }) => {
   const { isMobile } = useBreakpoints()
   const hasPath = path && path.length > 0
 
@@ -42,7 +42,7 @@ const FilePickerBreadcrumb = ({ path, onBreadcrumbClick }) => {
                 <button
                   type="button"
                   className={cx(
-                    styles['filePickerBreadcrumb-previousPath'],
+                    styles['pickerViewBreadcrumb-previousPath'],
                     'u-c-pointer'
                   )}
                   onClick={navigateTo(folder)}
@@ -52,7 +52,7 @@ const FilePickerBreadcrumb = ({ path, onBreadcrumbClick }) => {
                 <Icon
                   icon={Right}
                   className={cx(
-                    styles['filePickerBreadcrumb-icon'],
+                    styles['pickerViewBreadcrumb-icon'],
                     'u-mh-half'
                   )}
                 />
@@ -67,9 +67,10 @@ const FilePickerBreadcrumb = ({ path, onBreadcrumbClick }) => {
   )
 }
 
-FilePickerBreadcrumb.propTypes = {
+PickerViewBreadcrumb.displayName = 'PickerViewBreadcrumb'
+PickerViewBreadcrumb.propTypes = {
   path: PropTypes.array,
   onBreadcrumbClick: PropTypes.func
 }
 
-export default memo(FilePickerBreadcrumb)
+export default memo(PickerViewBreadcrumb)

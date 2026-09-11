@@ -9,9 +9,9 @@ import { BreakpointsProvider } from 'cozy-ui/transpiled/react/providers/Breakpoi
 import CozyTheme from 'cozy-ui-plus/dist/providers/CozyTheme'
 
 import { getFilePickerConfig } from './FilePicker/config'
-import { buildContentFolderQuery } from './FilePicker/queries'
 import Picker from './Picker'
 
+import { buildContentFolderQuery } from '@/components/FilePicker/queries'
 import { ROOT_DIR_ID } from '@/constants/config'
 function isFilePickerIntent(intent) {
   return (

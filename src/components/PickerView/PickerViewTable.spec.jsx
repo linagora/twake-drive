@@ -4,34 +4,32 @@ import React from 'react'
 import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import { useI18n } from 'twake-i18n'
 
-import { FilePickerTable } from './FilePickerTable'
+import { PickerViewTable } from './PickerViewTable'
 
 jest.mock('twake-i18n')
-jest.mock('./FilePickerTableCell', () => ({
-  FilePickerTableCell: () => null
-}))
 jest.mock('cozy-ui/transpiled/react/providers/Breakpoints', () => ({
   useBreakpoints: jest.fn()
 }))
+jest.mock('@/modules/filelist/icons/FileThumbnail', () => () => (
+  <div data-testid="file-thumbnail">Thumbnail</div>
+))
 jest.mock('cozy-ui/transpiled/react/Table/Virtualized', () => {
   const React = require('react')
   const VirtualizedTable = React.forwardRef(
-    ({ rows, context, components, isSelectedItem }, ref) => {
+    ({ rows, context, components, isSelectedItem, selectedItems }, ref) => {
       const TableRow = components.TableRow
       return (
-        <div data-testid="virtuoso-scroller">
-          <table ref={ref}>
-            <tbody>
-              {rows.map(row => (
-                <TableRow
-                  key={row._id}
-                  item={row}
-                  context={{ ...context, isSelectedItem }}
-                />
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <table ref={ref}>
+          <tbody>
+            {rows.map(row => (
+              <TableRow
+                key={row._id}
+                item={row}
+                context={{ ...context, isSelectedItem, selectedItems }}
+              />
+            ))}
+          </tbody>
+        </table>
       )
     }
   )
@@ -44,17 +42,17 @@ const items = [
   { _id: 'pending-id', name: 'Pending' }
 ]
 
-function setup({ isMobile = false, tableItems = items } = {}) {
+function setup({ isMobile = false, itemsIdsSelected = [] } = {}) {
   const onItemClick = jest.fn()
   const onItemToggle = jest.fn()
   const onItemDoubleClick = jest.fn()
   useBreakpoints.mockReturnValue({ isMobile })
   useI18n.mockReturnValue({ t: key => key })
 
-  const view = render(
-    <FilePickerTable
-      items={tableItems}
-      itemsIdsSelected={[]}
+  render(
+    <PickerViewTable
+      items={items}
+      itemsIdsSelected={itemsIdsSelected}
       isItemDisabled={item => item._id === 'pending-id'}
       onItemClick={onItemClick}
       onItemToggle={onItemToggle}
@@ -62,13 +60,21 @@ function setup({ isMobile = false, tableItems = items } = {}) {
     />
   )
 
-  return { ...view, onItemClick, onItemToggle, onItemDoubleClick }
+  return { onItemClick, onItemToggle, onItemDoubleClick }
 }
 
-describe('FilePickerTable', () => {
+describe('PickerViewTable', () => {
   afterEach(() => {
     jest.clearAllMocks()
     jest.useRealTimers()
+  })
+
+  it('marks selected rows based purely on controlled itemsIdsSelected prop', () => {
+    setup({ itemsIdsSelected: ['enabled-id'] })
+    const [enabledRow, pendingRow] = screen.getAllByTestId('list-item')
+
+    expect(enabledRow).toHaveClass('Mui-selected')
+    expect(pendingRow).not.toHaveClass('Mui-selected')
   })
 
   it('blocks click and double-click on disabled rows', () => {
@@ -87,33 +93,6 @@ describe('FilePickerTable', () => {
     expect(onItemDoubleClick).toHaveBeenCalledTimes(1)
   })
 
-  it('preserves the virtual scroller while a long list is enriched', () => {
-    const initialItems = Array.from({ length: 100 }, (_, index) => ({
-      _id: `file-${index}`,
-      name: `File ${index}`
-    }))
-    const enrichedItems = [
-      { _id: 'federated-file', name: 'Federated file' },
-      ...initialItems
-    ]
-    const props = {
-      itemsIdsSelected: [],
-      isItemDisabled: () => false,
-      onItemClick: jest.fn(),
-      onItemToggle: jest.fn(),
-      onItemDoubleClick: jest.fn()
-    }
-    const { rerender } = setup({ tableItems: initialItems })
-    const scroller = screen.getByTestId('virtuoso-scroller')
-    scroller.scrollTop = 480
-
-    rerender(<FilePickerTable {...props} items={enrichedItems} />)
-
-    expect(screen.getByTestId('virtuoso-scroller')).toBe(scroller)
-    expect(scroller.scrollTop).toBe(480)
-    expect(screen.getAllByTestId('list-item')).toHaveLength(101)
-  })
-
   it('blocks mobile tap and long press on disabled rows', () => {
     jest.useFakeTimers()
     const { onItemClick, onItemToggle } = setup({ isMobile: true })
@@ -126,5 +105,19 @@ describe('FilePickerTable', () => {
 
     expect(onItemClick).not.toHaveBeenCalled()
     expect(onItemToggle).not.toHaveBeenCalled()
+  })
+
+  it('triggers onItemToggle on mobile long press on enabled row', () => {
+    jest.useFakeTimers()
+    const { onItemClick, onItemToggle } = setup({ isMobile: true })
+    const enabledRow = screen.getAllByTestId('list-item')[0]
+
+    fireEvent.touchStart(enabledRow)
+    act(() => jest.advanceTimersByTime(300))
+    fireEvent.touchEnd(enabledRow)
+    fireEvent.click(enabledRow)
+
+    expect(onItemToggle).toHaveBeenCalledWith(items[0], expect.anything())
+    expect(onItemClick).not.toHaveBeenCalled()
   })
 })

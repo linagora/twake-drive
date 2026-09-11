@@ -6,14 +6,14 @@ import AppTitle from 'cozy-ui/transpiled/react/AppTitle'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
 import { useI18n } from 'twake-i18n'
 
-import FilePickerHeaderTabs from './FilePickerHeaderTabs'
-import { filePickerSections } from './constants'
-
+import { FilePickerHeaderTabs } from '@/components/FilePicker/FilePickerHeaderTabs'
+import { filePickerSections } from '@/components/FilePicker/constants'
 import Drive from '@/components/Icons/Drive'
 import DriveText from '@/components/Icons/DriveText'
 
-export const FilePickerHeader = ({
+const FilePickerHeader = ({
   activeSection,
+  availableSections,
   onSectionChange,
   onClose
 }) => {
@@ -31,6 +31,7 @@ export const FilePickerHeader = ({
       </div>
       <FilePickerHeaderTabs
         activeSection={activeSection}
+        availableSections={availableSections}
         onSectionChange={onSectionChange}
       />
     </div>
@@ -39,8 +40,15 @@ export const FilePickerHeader = ({
 
 FilePickerHeader.propTypes = {
   activeSection: PropTypes.oneOf(Object.values(filePickerSections)).isRequired,
+  availableSections: PropTypes.arrayOf(
+    PropTypes.oneOf(Object.values(filePickerSections))
+  ).isRequired,
   onSectionChange: PropTypes.func.isRequired,
   onClose: PropTypes.func
+}
+
+FilePickerHeader.defaultProps = {
+  availableSections: Object.values(filePickerSections)
 }
 
 export default FilePickerHeader

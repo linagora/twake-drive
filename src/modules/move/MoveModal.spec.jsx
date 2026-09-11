@@ -3,10 +3,13 @@ import React from 'react'
 
 import { createMockClient, useQuery } from 'cozy-client'
 import { move } from 'cozy-client/dist/models/file'
+import flag from 'cozy-flags'
 import { useSharingContext } from 'cozy-sharing'
 
 import { MoveModal } from './MoveModal'
 import AppLike from 'test/components/AppLike'
+
+jest.mock('cozy-flags', () => jest.fn())
 
 import { ROOT_DIR_ID } from '@/constants/config'
 import { CozyFile } from '@/models'
@@ -44,7 +47,7 @@ jest.mock('components/FolderPicker/FolderPicker', () => ({
     }
 
     return (
-      <div>
+      <div data-testid="folder-picker">
         <h1>{currentFolder.name}</h1>
         <button onClick={handleClick} disabled={isBusy}>
           Move
@@ -53,6 +56,19 @@ jest.mock('components/FolderPicker/FolderPicker', () => ({
       </div>
     )
   }
+}))
+
+jest.mock('@/modules/move/MoveTo', () => ({
+  __esModule: true,
+  MoveTo: ({ onConfirm, currentFolder, isBusy }) => (
+    <div data-testid="move-to">
+      <h1>{currentFolder.name}</h1>
+      <button onClick={() => onConfirm(currentFolder)} disabled={isBusy}>
+        Move
+      </button>
+      <button>Close</button>
+    </div>
+  )
 }))
 
 describe('MoveModal component', () => {
@@ -117,6 +133,10 @@ describe('MoveModal component', () => {
     }
   })
 
+  beforeEach(() => {
+    flag.mockImplementation(name => name === 'drive.move-to-picker.enabled')
+  })
+
   const setup = ({
     entries = defaultEntries,
     sharedPaths = ['/sharedFolder'],
@@ -124,12 +144,14 @@ describe('MoveModal component', () => {
     getSharedParentPath = () => null,
     allLoaded = true,
     sharingContext = {},
-    currentFolder = destinationFolder
+    currentFolder = destinationFolder,
+    isPublic = false
   } = {}) => {
     const props = {
       entries,
       onClose: onCloseSpy,
-      classes: { paper: {} }
+      classes: { paper: {} },
+      isPublic
     }
 
     // Mock the useQuery hook for shared folder data
@@ -457,6 +479,29 @@ describe('MoveModal component', () => {
         expect(onCloseSpy).toHaveBeenCalled()
         expect(refreshSpy).toHaveBeenCalled()
       })
+    })
+  })
+
+  describe('feature flag drive.move-to-picker.enabled', () => {
+    it('renders MoveTo when the flag is enabled for non-public moves', () => {
+      flag.mockImplementation(name => name === 'drive.move-to-picker.enabled')
+      setup({ currentFolder: destinationFolder })
+      expect(screen.getByTestId('move-to')).toBeInTheDocument()
+      expect(screen.queryByTestId('folder-picker')).not.toBeInTheDocument()
+    })
+
+    it('renders legacy FolderPicker when the flag is disabled', () => {
+      flag.mockImplementation(() => false)
+      setup({ currentFolder: destinationFolder })
+      expect(screen.getByTestId('folder-picker')).toBeInTheDocument()
+      expect(screen.queryByTestId('move-to')).not.toBeInTheDocument()
+    })
+
+    it('renders legacy FolderPicker when isPublic is true even if flag is enabled', () => {
+      flag.mockImplementation(() => true)
+      setup({ currentFolder: destinationFolder, isPublic: true })
+      expect(screen.getByTestId('folder-picker')).toBeInTheDocument()
+      expect(screen.queryByTestId('move-to')).not.toBeInTheDocument()
     })
   })
 })

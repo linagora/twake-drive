@@ -461,6 +461,7 @@
   "Move": {
     "to": "Move to:",
     "action": "Move",
+    "openFolder": "Open folder",
     "cancel": "Cancel",
     "modalTitle": "Move",
     "title": "%{smart_count} element |||| %{smart_count} elements",
@@ -831,6 +832,7 @@
     },
     "errors": {
       "ITEM_NOT_FOUND": "The selected file could not be found.",
+      "DESTINATION_UNAVAILABLE": "The destination folder could not be loaded.",
       "SHARING_LINK_FAILED": "Could not generate a sharing link.",
       "DOWNLOAD_LINK_FAILED": "Could not generate a download link."
     }

@@ -120,12 +120,18 @@ export class FileRow {
     // No .first() here — if the folder name is ambiguous in the picker,
     // surface that as a Playwright strict-mode error instead of silently
     // operating on whichever match the DOM happened to put first.
-    await dialog
-      .getByRole('button', {
-        name: new RegExp(`^${escapeRegExp(targetFolder)}$`)
+    const targetItem = dialog
+      .locator('tr[data-testid="list-item"]')
+      .filter({
+        has: dialog.getByTitle(targetFolder, { exact: true })
       })
-      .dblclick()
-    await dialog.getByRole('button', { name: /^move$/i }).click()
+      .or(
+        dialog.getByRole('button', {
+          name: new RegExp(`^${escapeRegExp(targetFolder)}$`)
+        })
+      )
+    await targetItem.dblclick()
+    await dialog.getByRole('button', { name: /^move/i }).click()
     await dialog.waitFor({ state: 'hidden' })
   }
 

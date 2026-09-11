@@ -1,6 +1,6 @@
 import { isDirectory } from 'cozy-client/dist/models/file'
 
-import { matchMimePattern } from './helpers'
+import { matchMimePattern } from '@/components/FilePicker/helpers'
 
 const MIME_TYPE_TO_THUMBNAIL_TYPE = {
   // Audio

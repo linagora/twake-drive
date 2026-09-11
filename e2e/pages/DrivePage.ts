@@ -24,8 +24,9 @@ export class DrivePage {
 
   /** Open a folder and wait until its document has loaded. The route
    * changes before `displayedFolder` is ready, while Create and Upload derive
-   * their destination from that document. The resolved breadcrumb confirms
-   * that the folder query has completed. */
+   * their destination from that document. The attached breadcrumb item
+   * confirms that the folder query has completed; the current item can be
+   * clipped by the breadcrumb's ellipsis and therefore not be visible. */
   async openFolder(name: string): Promise<void> {
     await this.row(name).open()
     await this.page.waitForURL(/\/folder\/[^/]+$/)
@@ -33,7 +34,7 @@ export class DrivePage {
       .getByRole('main')
       .getByRole('navigation')
       .getByText(name, { exact: true })
-      .waitFor({ state: 'visible' })
+      .waitFor({ state: 'attached' })
   }
 
   /** Locator for the file list cell whose filename contains the substring —
