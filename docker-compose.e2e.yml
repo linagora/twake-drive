@@ -26,7 +26,7 @@ services:
       COZY_PORT: "${COZY_E2E_STACK_PORT:-18080}"
       COZY_ADMIN_HOST: 0.0.0.0
       COZY_ADMIN_PORT: "${COZY_E2E_ADMIN_PORT:-16060}"
-      COZY_CONTEXTS_DEFAULT_SHARING_TRUSTED_DOMAINS: "cozy.localhost,cozy.localhost:${COZY_E2E_STACK_PORT:-18080}"
+      COZY_CONTEXTS_DEFAULT_SHARING_TRUSTED_DOMAINS: "${COZY_E2E_ROOT_DOMAIN:-cozy.localhost},${COZY_E2E_ROOT_DOMAIN:-cozy.localhost}:${COZY_E2E_STACK_PORT:-18080}"
       COZY_SUBDOMAINS: flat
     command: ["cozy-stack", "serve", "--dev"]
     volumes:
