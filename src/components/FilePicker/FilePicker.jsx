@@ -122,7 +122,13 @@ const FilePickerController = ({
   onReadyToUse,
   error,
   renderHeader,
-  isItemVisible
+  isItemVisible,
+  isItemDisabled,
+  getItemDisabledReason,
+  isNavigationDisabled,
+  beforeItems,
+  filterReceivedShares,
+  additionalItems
 }) => {
   const { clearSelection } = useSelectionContext()
   const initialSection = availableSections.includes(initialLocation.section)
@@ -143,6 +149,7 @@ const FilePickerController = ({
 
   const navigateTo = useCallback(
     folder => {
+      if (isNavigationDisabled) return
       const folderId = folder.id ?? folder._id
       const nextLocation =
         folderId === FILE_PICKER_SHARINGS_ROOT_ID
@@ -163,11 +170,15 @@ const FilePickerController = ({
       onLocationChange?.(nextLocation)
       clearSelection()
     },
-    [clearSelection, location, onLocationChange]
+    [clearSelection, isNavigationDisabled, location, onLocationChange]
   )
 
   const handleSectionChange = section => {
-    if (!availableSections.includes(section) || section === location.section) {
+    if (
+      isNavigationDisabled ||
+      !availableSections.includes(section) ||
+      section === location.section
+    ) {
       return
     }
 
@@ -228,6 +239,12 @@ const FilePickerController = ({
           onReadyToUse={handleReadyToUse}
           onFileDoubleClick={onFileDoubleClick}
           isItemVisible={isItemVisible}
+          isItemDisabled={isItemDisabled}
+          getItemDisabledReason={getItemDisabledReason}
+          beforeItems={beforeItems}
+          isNavigationDisabled={isNavigationDisabled}
+          filterReceivedShares={filterReceivedShares}
+          additionalItems={additionalItems}
         />
       </Box>
     </>
@@ -255,7 +272,13 @@ FilePickerController.propTypes = {
   onReadyToUse: PropTypes.func,
   error: PropTypes.string,
   renderHeader: PropTypes.func,
-  isItemVisible: PropTypes.func
+  isItemVisible: PropTypes.func,
+  isItemDisabled: PropTypes.func,
+  getItemDisabledReason: PropTypes.func,
+  isNavigationDisabled: PropTypes.bool,
+  beforeItems: PropTypes.node,
+  filterReceivedShares: PropTypes.bool,
+  additionalItems: PropTypes.arrayOf(PropTypes.object)
 }
 
 export const FilePicker = ({ selectedItems, onSelectionChange, ...props }) => {
@@ -298,7 +321,13 @@ FilePicker.propTypes = {
   onReadyToUse: PropTypes.func,
   error: PropTypes.string,
   renderHeader: PropTypes.func,
-  isItemVisible: PropTypes.func
+  isItemVisible: PropTypes.func,
+  isItemDisabled: PropTypes.func,
+  getItemDisabledReason: PropTypes.func,
+  isNavigationDisabled: PropTypes.bool,
+  beforeItems: PropTypes.node,
+  filterReceivedShares: PropTypes.bool,
+  additionalItems: PropTypes.arrayOf(PropTypes.object)
 }
 
 FilePicker.defaultProps = {
@@ -308,5 +337,11 @@ FilePicker.defaultProps = {
   selectableTypes: Object.values(filePickerItemTypes),
   multiple: false,
   error: null,
-  isItemVisible: () => true
+  isItemVisible: () => true,
+  isItemDisabled: () => false,
+  getItemDisabledReason: () => null,
+  isNavigationDisabled: false,
+  beforeItems: null,
+  filterReceivedShares: true,
+  additionalItems: []
 }

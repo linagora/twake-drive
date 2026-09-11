@@ -1,5 +1,6 @@
 import type { Page, Locator } from '@playwright/test'
 
+import { MoveToPage } from './MoveToPage'
 import { ShareModalPage } from './ShareModalPage'
 import { escapeRegExp } from '../helpers/fixtures'
 
@@ -112,27 +113,18 @@ export class FileRow {
       .waitFor({ state: 'visible' })
   }
 
-  async moveTo(targetFolder: string): Promise<void> {
+  async openMoveTo(): Promise<MoveToPage> {
     const menu = await this.openMenu()
     await menu.getByRole('menuitem', { name: /move to/i }).click()
-    const dialog = this.page.getByRole('dialog')
-    await dialog.waitFor({ state: 'visible' })
-    // No .first() here — if the folder name is ambiguous in the picker,
-    // surface that as a Playwright strict-mode error instead of silently
-    // operating on whichever match the DOM happened to put first.
-    const targetItem = dialog
-      .locator('tr[data-testid="list-item"]')
-      .filter({
-        has: this.page.getByTitle(targetFolder, { exact: true })
-      })
-      .or(
-        dialog.getByRole('button', {
-          name: new RegExp(`^${escapeRegExp(targetFolder)}$`)
-        })
-      )
-    await targetItem.dblclick()
-    await dialog.getByRole('button', { name: /^move/i }).click()
-    await dialog.waitFor({ state: 'hidden' })
+    const moveTo = new MoveToPage(this.page)
+    await moveTo.waitForOpen()
+    return moveTo
+  }
+
+  async moveTo(targetFolder: string): Promise<void> {
+    const moveTo = await this.openMoveTo()
+    await moveTo.openFolder(targetFolder)
+    await moveTo.confirm()
   }
 
   async duplicate(): Promise<void> {

@@ -1,7 +1,7 @@
 'use strict'
 
 import '@testing-library/jest-dom'
-import { render, fireEvent, screen, act } from '@testing-library/react'
+import { render, fireEvent, screen, act, waitFor } from '@testing-library/react'
 import React from 'react'
 
 import { createMockClient } from 'cozy-client'
@@ -145,6 +145,23 @@ describe('FilenameInput', () => {
       // Should submit without any race condition issues
       expect(onSubmit).toHaveBeenCalledWith('valid-file')
       expect(onAbort).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('error behavior', () => {
+    it('keeps focus and clears the error when the value changes', async () => {
+      const onSubmit = jest.fn().mockRejectedValue(new Error('failed'))
+      setup({ onSubmit })
+      const input = screen.getByRole('textbox')
+
+      fireEvent.change(input, { target: { value: 'broken' } })
+      fireEvent.keyDown(input, { keyCode: 13 })
+
+      await waitFor(() => expect(input).toHaveFocus())
+      expect(input).toHaveAttribute('aria-invalid', 'true')
+
+      fireEvent.change(input, { target: { value: 'fixed' } })
+      expect(input).not.toHaveAttribute('aria-invalid')
     })
   })
 

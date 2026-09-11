@@ -40,13 +40,15 @@ function PickerViewTableContent({
   isFetchingMore,
   selectedItemIds,
   isItemDisabled,
+  getItemDisabledReason,
   onItemClick,
   onItemToggle,
   onItemDoubleClick,
   onItemNavigate,
   withFilePath,
   virtuosoRef,
-  scrollerRef
+  scrollerRef,
+  beforeItems
 }) {
   return (
     <>
@@ -60,6 +62,7 @@ function PickerViewTableContent({
         items={items}
         itemsIdsSelected={selectedItemIds}
         isItemDisabled={isItemDisabled}
+        getItemDisabledReason={getItemDisabledReason}
         onItemClick={onItemClick}
         onItemToggle={onItemToggle}
         onItemDoubleClick={onItemDoubleClick}
@@ -68,6 +71,7 @@ function PickerViewTableContent({
         scrollerRef={scrollerRef}
         virtuosoRef={virtuosoRef}
         withFilePath={withFilePath}
+        beforeItems={beforeItems}
       />
     </>
   )
@@ -80,13 +84,15 @@ PickerViewTableContent.propTypes = {
   isFetchingMore: PropTypes.bool.isRequired,
   selectedItemIds: PropTypes.arrayOf(PropTypes.string).isRequired,
   isItemDisabled: PropTypes.func.isRequired,
+  getItemDisabledReason: PropTypes.func,
   onItemClick: PropTypes.func,
   onItemToggle: PropTypes.func,
   onItemDoubleClick: PropTypes.func,
   onItemNavigate: PropTypes.func,
   withFilePath: PropTypes.bool.isRequired,
   virtuosoRef: PropTypes.object,
-  scrollerRef: PropTypes.oneOfType([PropTypes.func, PropTypes.object])
+  scrollerRef: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
+  beforeItems: PropTypes.node
 }
 
 function PickerViewContent({
@@ -100,12 +106,14 @@ function PickerViewContent({
   withFilePath,
   selectedItemIds,
   isItemDisabled,
+  getItemDisabledReason,
   onItemClick,
   onItemToggle,
   onItemDoubleClick,
   onItemNavigate,
   error,
   emptyMessage,
+  beforeItems,
   isSectionChanging,
   virtuosoRef,
   scrollerRef
@@ -120,13 +128,16 @@ function PickerViewContent({
     <>
       <PickerViewErrorMessage error={error} />
       {isSectionChanging ? null : shouldShowSourceError ? (
-        <Alert
-          severity="error"
-          data-testid="file-picker-source-error"
-          className="u-mt-1 u-mh-1"
-        >
-          {t(errorMessageKey)}
-        </Alert>
+        <>
+          {beforeItems}
+          <Alert
+            severity="error"
+            data-testid="file-picker-source-error"
+            className="u-mt-1 u-mh-1"
+          >
+            {t(errorMessageKey)}
+          </Alert>
+        </>
       ) : fetchStatus === 'loading' && !isFetchingMore ? (
         <Box
           px={3}
@@ -139,7 +150,10 @@ function PickerViewContent({
           ))}
         </Box>
       ) : !hasItems ? (
-        (emptyMessage ?? <DefaultEmptyMessage />)
+        <>
+          {beforeItems}
+          {emptyMessage ?? <DefaultEmptyMessage />}
+        </>
       ) : (
         <PickerViewTableContent
           items={items}
@@ -148,11 +162,13 @@ function PickerViewContent({
           isFetchingMore={isFetchingMore}
           selectedItemIds={selectedItemIds}
           isItemDisabled={isItemDisabled}
+          getItemDisabledReason={getItemDisabledReason}
           onItemClick={onItemClick}
           onItemToggle={onItemToggle}
           onItemDoubleClick={onItemDoubleClick}
           onItemNavigate={onItemNavigate}
           withFilePath={withFilePath}
+          beforeItems={beforeItems}
           virtuosoRef={virtuosoRef}
           scrollerRef={scrollerRef}
         />
@@ -172,12 +188,14 @@ PickerViewContent.propTypes = {
   withFilePath: PropTypes.bool.isRequired,
   selectedItemIds: PropTypes.arrayOf(PropTypes.string).isRequired,
   isItemDisabled: PropTypes.func.isRequired,
+  getItemDisabledReason: PropTypes.func,
   onItemClick: PropTypes.func,
   onItemToggle: PropTypes.func,
   onItemDoubleClick: PropTypes.func,
   onItemNavigate: PropTypes.func,
   error: PropTypes.string,
   emptyMessage: PropTypes.node,
+  beforeItems: PropTypes.node,
   isSectionChanging: PropTypes.bool.isRequired,
   virtuosoRef: PropTypes.object,
   scrollerRef: PropTypes.oneOfType([PropTypes.func, PropTypes.object])
@@ -196,12 +214,15 @@ export const PickerView = ({
   withFilePath = false,
   selectedItemIds = [],
   isItemDisabled = () => false,
+  getItemDisabledReason = () => null,
   onItemClick,
   onItemToggle,
   onItemDoubleClick,
   onItemNavigate,
   error,
   emptyMessage,
+  beforeItems = null,
+  isNavigationDisabled = false,
   isSectionChanging = false,
   onSectionReady,
   selectionContainerRef,
@@ -229,6 +250,7 @@ export const PickerView = ({
         <PickerViewBreadcrumb
           path={breadcrumbPath}
           onBreadcrumbClick={onBreadcrumbClick}
+          isNavigationDisabled={isNavigationDisabled}
         />
       </Box>
       <PickerViewContent
@@ -242,12 +264,14 @@ export const PickerView = ({
         withFilePath={withFilePath}
         selectedItemIds={selectedItemIds}
         isItemDisabled={isItemDisabled}
+        getItemDisabledReason={getItemDisabledReason}
         onItemClick={onItemClick}
         onItemToggle={onItemToggle}
         onItemDoubleClick={onItemDoubleClick}
         onItemNavigate={onItemNavigate}
         error={error}
         emptyMessage={emptyMessage}
+        beforeItems={beforeItems}
         isSectionChanging={isSectionChanging}
         virtuosoRef={virtuosoRef}
         scrollerRef={scrollerRef}
@@ -270,12 +294,15 @@ PickerView.propTypes = {
   withFilePath: PropTypes.bool,
   selectedItemIds: PropTypes.arrayOf(PropTypes.string),
   isItemDisabled: PropTypes.func,
+  getItemDisabledReason: PropTypes.func,
   onItemClick: PropTypes.func,
   onItemToggle: PropTypes.func,
   onItemDoubleClick: PropTypes.func,
   onItemNavigate: PropTypes.func,
   error: PropTypes.string,
   emptyMessage: PropTypes.node,
+  beforeItems: PropTypes.node,
+  isNavigationDisabled: PropTypes.bool,
   isSectionChanging: PropTypes.bool,
   onSectionReady: PropTypes.func,
   selectionContainerRef: PropTypes.object,

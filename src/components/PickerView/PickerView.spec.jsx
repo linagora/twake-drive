@@ -31,7 +31,8 @@ function setup({
   isSectionChanging = false,
   onSectionReady = jest.fn(),
   onBreadcrumbClick = jest.fn(),
-  emptyMessage
+  emptyMessage,
+  beforeItems
 } = {}) {
   useBreakpoints.mockReturnValue({ isMobile: false })
   useI18n.mockReturnValue({ t: key => key, f: val => String(val) })
@@ -46,6 +47,7 @@ function setup({
       isSectionChanging={isSectionChanging}
       onSectionReady={onSectionReady}
       emptyMessage={emptyMessage}
+      beforeItems={beforeItems}
     />
   )
 
@@ -76,11 +78,15 @@ describe('PickerView', () => {
   })
 
   it('renders source error when fetchStatus is failed', () => {
-    setup({ fetchStatus: 'failed' })
+    setup({
+      fetchStatus: 'failed',
+      beforeItems: <div data-testid="before-items">Create folder</div>
+    })
 
     expect(screen.getByTestId('file-picker-source-error')).toHaveTextContent(
       'error.open_folder'
     )
+    expect(screen.getByTestId('before-items')).toBeInTheDocument()
     expect(screen.queryByRole('table')).toBe(null)
   })
 
