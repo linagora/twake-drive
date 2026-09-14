@@ -47,6 +47,20 @@ export class ShareModalPage {
     await menu.waitFor({ state: 'hidden' })
   }
 
+  /** Change the role of an already-added member from its row. The role menu
+   * is portal'd outside the dialog, same as setNewMemberRole. */
+  async setMemberRole(
+    nameOrEmail: string,
+    role: 'Viewer' | 'Editor'
+  ): Promise<void> {
+    await this.memberRole(nameOrEmail).click()
+    const menu = this.page.getByRole('menu')
+    await menu
+      .getByRole('menuitem', { name: new RegExp(`^${role}$`, 'i') })
+      .click()
+    await menu.waitFor({ state: 'hidden' })
+  }
+
   /** Row of an already-added member in the dialog's member list. Matches on
    * any text in the row (display name, email or instance URL). */
   memberItem(nameOrEmail: string): Locator {
