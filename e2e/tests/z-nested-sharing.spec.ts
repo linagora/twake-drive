@@ -29,11 +29,13 @@ const comboFlags = (combo: FlagCombo): Record<string, boolean> => ({
 })
 
 // The same modal surfaces are asserted for every flag combination. With
-// federated on, sharing a folder creates a shared drive and a folder inside
-// a shared one shows the only-by-link banner instead of the contact input,
-// while keeping the parent's members listed and manageable. With federated
-// off, the legacy modal keeps the same banner surfaces but lists direct
-// recipients only (shared-drive itself never affects the modal).
+// federated on, the hasSharedParent/hasSharedChild gates are gone: a folder
+// stays shareable by email even inside a shared parent or containing a
+// shared child, and the modal lists effective recipients (direct +
+// inherited), all manageable — role/revoke actions on an inherited member
+// are routed to the source sharing. With federated off, the legacy modal
+// keeps the banner surfaces and lists direct recipients only (shared-drive
+// itself never affects the modal).
 for (const combo of COMBOS) {
   // federated=off + hide-cozy-to-cozy=on → the legacy modal renders
   // ShareDialogOnlyByLink for every document: contact sharing is impossible,
@@ -130,29 +132,50 @@ for (const combo of COMBOS) {
         await modal.waitForOpen()
 
         await expect(
-          modal.dialog.getByText(/can only be shared by link/i)
-        ).toBeVisible()
-        await expect(modal.dialog.getByRole('combobox')).toHaveCount(0)
-        await expect(
           modal.dialog.getByRole('button', { name: /^copy link$/i })
         ).toBeVisible()
         if (combo.federated) {
-          // The federated modal resolves the parent sharing's members.
+          // The federated modal lists the parent's members as inherited
+          // effective recipients, all manageable, and keeps email sharing
+          // available: the hasSharedParent gate is gone.
+          await expect(
+            modal.dialog.getByText(/can only be shared by link/i)
+          ).toHaveCount(0)
+          await expect(modal.dialog.getByRole('combobox')).toBeVisible()
           await expect(modal.memberItem('bob')).toBeVisible()
           await expect(modal.memberRole('bob')).toHaveText(/editor/i)
           await expect(
             modal.dialog.getByRole('button', { name: /^done$/i })
-          ).toHaveCount(0)
+          ).toBeVisible()
+
+          // Demoting an inherited member from the child's modal applies to
+          // the parent sharing the member comes from.
+          await modal.setMemberRole('bob', 'Viewer')
+          await expect(modal.memberRole('bob')).toHaveText(/viewer/i)
+          await modal.close()
+
+          await alicePage.goto(`${USERS.alice.appUrl}/#/folder`)
+          await aliceDrive.openFolder(PARENTFOLDER)
+          await alicePage.getByRole('button', { name: /share/i }).click()
+          const parentModal = new ShareModalPage(alicePage)
+          await parentModal.waitForOpen()
+          await expect(parentModal.memberRole('bob')).toHaveText(/viewer/i)
+          await parentModal.close()
         } else {
-          // The legacy modal lists direct recipients only — the child
-          // inherits none — but its Done button is always rendered.
+          // The legacy modal keeps the gate: email sharing is blocked, it
+          // lists direct recipients only — the child inherits none — but
+          // its Done button is always rendered.
+          await expect(
+            modal.dialog.getByText(/can only be shared by link/i)
+          ).toBeVisible()
+          await expect(modal.dialog.getByRole('combobox')).toHaveCount(0)
           await expect(modal.memberItem('bob')).toHaveCount(0)
           await expect(
             modal.dialog.getByRole('button', { name: /^done$/i })
           ).toBeVisible()
-        }
 
-        await modal.close()
+          await modal.close()
+        }
       })
 
       test('child modal shared directly', async ({ alicePage, aliceDrive }) => {
@@ -226,8 +249,8 @@ for (const combo of COMBOS) {
         await modal.addMember(USERS.bob.email)
         await modal.share()
 
-        // The parent itself has no direct sharing: its modal is restricted
-        // by the shared child and lists none of the child's recipients.
+        // The parent itself has no direct sharing, and the child share
+        // grants no access to it: Bob is not an effective recipient of it.
         await alicePage.goto(`${USERS.alice.appUrl}/#/folder`)
         await aliceDrive.openFolder(SHAREDCHILD_PARENT)
 
@@ -235,29 +258,50 @@ for (const combo of COMBOS) {
         const parentModal = new ShareModalPage(alicePage)
         await parentModal.waitForOpen()
 
-        await expect(
-          parentModal.dialog.getByText(/can only be shared by link/i)
-        ).toBeVisible()
-        await expect(
-          parentModal.dialog.getByText(/it contains a shared element/i)
-        ).toBeVisible()
-        await expect(parentModal.dialog.getByRole('combobox')).toHaveCount(0)
         await expect(parentModal.memberItem('bob')).toHaveCount(0)
         await expect(
           parentModal.dialog.getByRole('button', { name: /^copy link$/i })
         ).toBeVisible()
         if (combo.federated) {
+          // The hasSharedChild gate is gone: the parent stays shareable by
+          // email, with no banner.
+          await expect(
+            parentModal.dialog.getByText(/can only be shared by link/i)
+          ).toHaveCount(0)
+          await expect(
+            parentModal.dialog.getByText(/it contains a shared element/i)
+          ).toHaveCount(0)
+          await expect(parentModal.dialog.getByRole('combobox')).toBeVisible()
           await expect(
             parentModal.dialog.getByRole('button', { name: /^done$/i })
-          ).toHaveCount(0)
+          ).toBeVisible()
+
+          // The newly allowed flow: share the parent by email anyway.
+          await parentModal.addMember(USERS.charlie.email)
+          await parentModal.share()
+
+          await alicePage.getByRole('button', { name: /share/i }).click()
+          const resharedModal = new ShareModalPage(alicePage)
+          await resharedModal.waitForOpen()
+          await expect(resharedModal.memberItem('charlie')).toBeVisible()
+          await expect(resharedModal.memberItem('bob')).toHaveCount(0)
+          await resharedModal.close()
         } else {
+          // The legacy modal keeps the gate: restricted by the shared child.
+          await expect(
+            parentModal.dialog.getByText(/can only be shared by link/i)
+          ).toBeVisible()
+          await expect(
+            parentModal.dialog.getByText(/it contains a shared element/i)
+          ).toBeVisible()
+          await expect(parentModal.dialog.getByRole('combobox')).toHaveCount(0)
           // The legacy modal always renders its Done button.
           await expect(
             parentModal.dialog.getByRole('button', { name: /^done$/i })
           ).toBeVisible()
-        }
 
-        await parentModal.close()
+          await parentModal.close()
+        }
       })
     } else {
       test('hide cozy-to-cozy forces only-by-link modal', async ({
