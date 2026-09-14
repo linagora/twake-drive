@@ -57,9 +57,10 @@ const useFolderSort = (
           Q(DOCTYPE_DRIVE_SETTINGS)
         )) as QueryResult
 
-        if (!data?.length) return
-
-        setCurrentSort(data[0]?.attributes)
+        const savedSort = data?.[0]?.attributes
+        if (savedSort?.attribute && savedSort?.order) {
+          setCurrentSort(savedSort)
+        }
       } catch (error) {
         logger.error('Failed to load settings:', error)
       } finally {

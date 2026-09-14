@@ -5,7 +5,9 @@ import { useSharingContext } from 'cozy-sharing'
 
 import { isDisplayedItem } from './helpers'
 
+import { DEFAULT_SORT } from '@/config/sort'
 import { SHARING_TAB_WITH_ME } from '@/constants/config'
+import { sortFiles } from '@/modules/views/Folder/sortFiles'
 import { useFilteredSharings } from '@/modules/views/Sharings/useFilteredSharings'
 import {
   getSharingsFetchStatus,
@@ -19,7 +21,8 @@ export const FilePickerSharingsContent = ({
   displayedTypes,
   isItemVisible,
   isItemDisabled: externalIsItemDisabled,
-  getItemDisabledReason
+  getItemDisabledReason,
+  sortOrder
 }) => {
   const { allLoaded } = useSharingContext()
   const isItemDisabled = item =>
@@ -41,8 +44,14 @@ export const FilePickerSharingsContent = ({
 
   const items =
     fetchStatus === 'loaded'
-      ? (filteredResult.data ?? []).filter(
-          item => isDisplayedItem(item, displayedTypes) && isItemVisible(item)
+      ? sortFiles(
+          (filteredResult.data ?? [])
+            .filter(
+              item =>
+                isDisplayedItem(item, displayedTypes) && isItemVisible(item)
+            )
+            .map(item => (item.type ? item : { ...item, type: 'file' })),
+          sortOrder
         )
       : []
 
@@ -68,11 +77,16 @@ FilePickerSharingsContent.propTypes = {
   displayedTypes: PropTypes.arrayOf(PropTypes.string).isRequired,
   isItemVisible: PropTypes.func.isRequired,
   isItemDisabled: PropTypes.func,
-  getItemDisabledReason: PropTypes.func
+  getItemDisabledReason: PropTypes.func,
+  sortOrder: PropTypes.shape({
+    attribute: PropTypes.string.isRequired,
+    order: PropTypes.string.isRequired
+  }).isRequired
 }
 
 FilePickerSharingsContent.defaultProps = {
   isItemVisible: () => true,
   isItemDisabled: () => false,
-  getItemDisabledReason: () => null
+  getItemDisabledReason: () => null,
+  sortOrder: DEFAULT_SORT
 }
