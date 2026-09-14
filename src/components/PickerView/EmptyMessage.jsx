@@ -4,7 +4,7 @@ import React from 'react'
 import Typography from 'cozy-ui/transpiled/react/Typography'
 import { useI18n } from 'twake-i18n'
 
-export const EmptyMessage = ({ message, messageKey = 'empty.title' }) => {
+export const EmptyMessage = ({ message }) => {
   const { t } = useI18n()
 
   return (
@@ -13,14 +13,13 @@ export const EmptyMessage = ({ message, messageKey = 'empty.title' }) => {
       color="textSecondary"
       data-testid="file-picker-empty"
     >
-      {message ?? t(messageKey)}
+      {message ?? t('empty.title')}
     </Typography>
   )
 }
 
 EmptyMessage.propTypes = {
-  message: PropTypes.node,
-  messageKey: PropTypes.string
+  message: PropTypes.node
 }
 
 export default EmptyMessage

@@ -64,6 +64,7 @@ const CurrentFolderContent = ({
   onSectionReady,
   emptyMessage
 }) => {
+  const { t } = useI18n()
   const { isMobile } = useBreakpoints()
   const handleItemDoubleClick = useCallback(
     item => {
@@ -88,7 +89,9 @@ const CurrentFolderContent = ({
       emptyMessage={
         emptyMessage ?? (
           <PickerViewEmptyMessage
-            messageKey={source.emptyMessageKey ?? 'empty.title'}
+            message={
+              source.emptyMessageKey ? t(source.emptyMessageKey) : undefined
+            }
           />
         )
       }
@@ -111,6 +114,7 @@ const SelectionFilePickerContent = ({
   onSectionReady,
   emptyMessage
 }) => {
+  const { t } = useI18n()
   const selectionContainerRef = useRef(null)
   const virtuosoRef = useRef(null)
   const [scrollElement, setScrollElement] = useState(null)
@@ -173,7 +177,9 @@ const SelectionFilePickerContent = ({
       emptyMessage={
         emptyMessage ?? (
           <PickerViewEmptyMessage
-            messageKey={source.emptyMessageKey ?? 'empty.title'}
+            message={
+              source.emptyMessageKey ? t(source.emptyMessageKey) : undefined
+            }
           />
         )
       }
@@ -334,11 +340,6 @@ export const FilePickerBody = ({
 
   const isItemDisabled =
     section === filePickerSections.SHARINGS ? isSharingShortcutNew : () => false
-  const emptyMessageKey =
-    section === filePickerSections.SHARINGS &&
-    folderId === FILE_PICKER_SHARINGS_ROOT_ID
-      ? 'empty.sharing_text'
-      : 'empty.title'
 
   const handleDriveReady = useCallback(() => {
     if (readyNotified.current) return
@@ -357,7 +358,7 @@ export const FilePickerBody = ({
       emptyMessage={
         section === filePickerSections.SHARINGS &&
         folderId === FILE_PICKER_SHARINGS_ROOT_ID ? (
-          <PickerViewEmptyMessage messageKey={emptyMessageKey} />
+          <PickerViewEmptyMessage message={t('empty.sharing_text')} />
         ) : null
       }
       onFileDoubleClick={onFileDoubleClick}
