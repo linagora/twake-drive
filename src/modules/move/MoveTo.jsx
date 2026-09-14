@@ -2,7 +2,7 @@ import { FolderOutlined, Icon } from '@linagora/twake-icons'
 import React, { useState } from 'react'
 import { useDispatch } from 'react-redux'
 
-import { useClient } from 'cozy-client'
+import { fetchPolicies, useClient } from 'cozy-client'
 import { useSharingContext } from 'cozy-sharing'
 import Buttons from 'cozy-ui/transpiled/react/Buttons'
 import { FixedDialog } from 'cozy-ui/transpiled/react/CozyDialogs'
@@ -10,13 +10,11 @@ import { makeStyles } from 'cozy-ui/transpiled/react/styles'
 import { useI18n } from 'twake-i18n'
 
 import {
-  areAllEntriesInFolder,
   getInitialFolderId,
   getItemId,
   getMoveDestinationDisabledReason,
-  hasUnknownEntryLocation,
-  isLocalMoveDestination,
-  isMoveDestination
+  isDestinationAllowed,
+  isLocalMoveDestination
 } from './helpers'
 
 import { FilePicker } from '@/components/FilePicker/FilePicker'
@@ -25,6 +23,7 @@ import {
   filePickerModes,
   filePickerSections
 } from '@/components/FilePicker/constants'
+import { buildCurrentFolderQuery } from '@/components/FilePicker/queries'
 import { FolderPickerAddFolderItem } from '@/components/FolderPicker/FolderPickerAddFolderItem'
 import { FolderPickerHeader } from '@/components/FolderPicker/FolderPickerHeader'
 import { createFolder } from '@/modules/navigation/duck'
@@ -59,14 +58,17 @@ export function MoveTo({
   entries,
   onConfirm,
   onClose,
-  isBusy = false
+  isBusy = false,
+  isDestinationLocked = false
 }) {
   const { t } = useI18n()
   const client = useClient()
   const dispatch = useDispatch()
   const classes = useStyles()
   const { allLoaded, hasWriteAccess } = useSharingContext()
-  const initialFolderId = getInitialFolderId(currentFolder, entries)
+  const [initialFolderId] = useState(() =>
+    getInitialFolderId(currentFolder, entries)
+  )
   const initialLocation = {
     section: filePickerSections.DRIVE,
     folderId: initialFolderId,
@@ -75,17 +77,22 @@ export function MoveTo({
   const [isFolderCreationDisplayed, setFolderCreationDisplayed] =
     useState(false)
   const [isCreatingFolder, setCreatingFolder] = useState(false)
+  const [isValidatingDestination, setValidatingDestination] = useState(false)
+  const [confirmationError, setConfirmationError] = useState(null)
   const [createdItems, setCreatedItems] = useState([])
   const [currentFolderState, setCurrentFolderState] = useState({
     folder: null,
     location: initialLocation,
     status: 'loading'
   })
-  const isBrowserBusy = isBusy || isCreatingFolder || allLoaded !== true
+  const isBrowserBusy =
+    isBusy || isCreatingFolder || isValidatingDestination || allLoaded !== true
+  const isNavigationLocked = isBrowserBusy || isDestinationLocked
   const isItemVisible = isLocalMoveDestination
   const getItemDisabledReason = item => {
-    if (isBusy) return 'Move.moveInProgress'
+    if (isBusy || isValidatingDestination) return 'Move.moveInProgress'
     if (isCreatingFolder) return 'Move.folderCreationInProgress'
+    if (isDestinationLocked) return 'Move.destinationLocked'
     return getMoveDestinationDisabledReason(
       item,
       entries,
@@ -95,7 +102,8 @@ export function MoveTo({
   }
   const destinationFolder = currentFolderState.folder
   const destinationError =
-    currentFolderState.status === 'failed' ? 'DESTINATION_UNAVAILABLE' : null
+    confirmationError ||
+    (currentFolderState.status === 'failed' ? 'DESTINATION_UNAVAILABLE' : null)
   const isDestinationWritable = Boolean(
     destinationFolder &&
     (!hasWriteAccess ||
@@ -104,11 +112,13 @@ export function MoveTo({
   const canConfirm =
     currentFolderState.status === 'loaded' &&
     allLoaded === true &&
-    isMoveDestination(destinationFolder, entries, hasWriteAccess, allLoaded) &&
-    !(
-      currentFolderState.location.folderId === initialFolderId &&
-      (areAllEntriesInFolder(entries, destinationFolder) ||
-        hasUnknownEntryLocation(entries))
+    Boolean(destinationFolder) &&
+    isDestinationAllowed(
+      destinationFolder,
+      entries,
+      hasWriteAccess,
+      allLoaded,
+      initialFolderId
     )
   const canCreateFolder = Boolean(
     allLoaded &&
@@ -118,14 +128,53 @@ export function MoveTo({
     isDestinationWritable
   )
 
-  const handleConfirm = () => {
-    if (canConfirm && destinationFolder && !isBrowserBusy) {
-      onConfirm(destinationFolder)
+  const handleConfirm = async () => {
+    if (!canConfirm || !destinationFolder || isBrowserBusy) return
+
+    setValidatingDestination(true)
+    setConfirmationError(null)
+    try {
+      const query = buildCurrentFolderQuery(
+        currentFolderState.location.folderId,
+        currentFolderState.location.driveId
+      )
+      const result = await client.query(query.definition(), {
+        ...query.options,
+        as: `move-confirm-${currentFolderState.location.folderId}`,
+        fetchPolicy: fetchPolicies.olderThan(0)
+      })
+      const freshDestination = result?.data ?? null
+      const isFreshDestinationValid =
+        getItemId(freshDestination) === currentFolderState.location.folderId &&
+        isDestinationAllowed(
+          freshDestination,
+          entries,
+          hasWriteAccess,
+          allLoaded,
+          initialFolderId
+        )
+
+      if (!isFreshDestinationValid) {
+        setConfirmationError('DESTINATION_UNAVAILABLE')
+        return
+      }
+      onConfirm(freshDestination)
+    } catch {
+      setConfirmationError('DESTINATION_UNAVAILABLE')
+    } finally {
+      setValidatingDestination(false)
     }
   }
 
+  const handleCurrentFolderChange = state => {
+    setConfirmationError(null)
+    setCurrentFolderState(state)
+  }
+
   const handleCreate = () => {
-    if (!isBrowserBusy && canCreateFolder) setFolderCreationDisplayed(true)
+    if (!isNavigationLocked && canCreateFolder) {
+      setFolderCreationDisplayed(true)
+    }
   }
 
   const handleItemsAdded = items => {
@@ -178,11 +227,13 @@ export function MoveTo({
             selectableTypes={[]}
             isItemVisible={isItemVisible}
             getItemDisabledReason={getItemDisabledReason}
-            isNavigationDisabled={isBrowserBusy}
+            isNavigationDisabled={isNavigationLocked}
             filterReceivedShares={false}
             additionalItems={createdItems}
             beforeItems={
-              isFolderCreationDisplayed && canCreateFolder ? (
+              isFolderCreationDisplayed &&
+              canCreateFolder &&
+              !isDestinationLocked ? (
                 <FolderPickerAddFolderItem
                   currentFolderId={currentFolderState.location.folderId}
                   driveId={currentFolderState.location.driveId}
@@ -196,7 +247,7 @@ export function MoveTo({
               ) : null
             }
             error={destinationError}
-            onCurrentFolderChange={setCurrentFolderState}
+            onCurrentFolderChange={handleCurrentFolderChange}
           />
         </div>
       }
@@ -205,7 +256,7 @@ export function MoveTo({
           {canCreateFolder && (
             <Buttons
               className="u-mr-auto"
-              disabled={isBrowserBusy || isFolderCreationDisplayed}
+              disabled={isNavigationLocked || isFolderCreationDisplayed}
               label={t('Move.addFolder')}
               onClick={handleCreate}
               startIcon={<Icon icon={FolderOutlined} />}
@@ -222,7 +273,7 @@ export function MoveTo({
             label={t('Move.action')}
             onClick={handleConfirm}
             disabled={!canConfirm || isBrowserBusy}
-            busy={isBusy}
+            busy={isBusy || isValidatingDestination}
           />
         </>
       }

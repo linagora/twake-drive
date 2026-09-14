@@ -57,6 +57,17 @@ export class FileRow {
     await this.cell.waitFor({ state: 'hidden', timeout: opts?.timeout })
   }
 
+  async fileId(): Promise<string> {
+    const href = await this.rowEl.getByRole('link').first().getAttribute('href')
+    const fileId = href?.match(/\/file\/([^/?#]+)/)?.[1]
+    if (!fileId) throw new Error(`No file id found for ${this.name}`)
+    return fileId
+  }
+
+  async select(): Promise<void> {
+    await this.rowEl.getByRole('checkbox').click()
+  }
+
   /** cozy-drive desktop semantics: single-click selects, double-click
    * navigates / opens. See src/hooks/useOnLongPress/helpers.js handleClick. */
   async open(): Promise<void> {
