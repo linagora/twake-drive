@@ -1,4 +1,4 @@
-import type { Locator, Page } from '@playwright/test'
+import type { Locator, Page, Route } from '@playwright/test'
 
 import { escapeRegExp, expect } from '../helpers/fixtures'
 
@@ -12,6 +12,9 @@ import { escapeRegExp, expect } from '../helpers/fixtures'
  */
 export class MoveToPage {
   private readonly dialog: Locator
+  private readonly moveRequestCounts = new Map<string, number>()
+  private readonly moveFailures = new Map<string, number>()
+  private routeHandler: ((route: Route) => Promise<void>) | null = null
 
   constructor(private readonly page: Page) {
     this.dialog = page.getByRole('dialog')
@@ -29,8 +32,68 @@ export class MoveToPage {
     return this.dialog.getByRole('button', { name: /^move$/i })
   }
 
+  get dialogLocator(): Locator {
+    return this.dialog
+  }
+
   get creationForm(): Locator {
     return this.dialog.getByTestId('folder-picker-add-folder-item')
+  }
+
+  private async ensureNetworkInterceptor(): Promise<void> {
+    if (this.routeHandler) return
+
+    this.routeHandler = async (route): Promise<void> => {
+      const request = route.request()
+      const pathname = new URL(request.url()).pathname
+      const fileId = pathname.match(/\/files\/([^/]+)\/?$/)?.[1]
+
+      if (!fileId) {
+        await route.continue()
+        return
+      }
+
+      if (request.method() === 'PATCH') {
+        this.moveRequestCounts.set(
+          fileId,
+          (this.moveRequestCounts.get(fileId) ?? 0) + 1
+        )
+        const remainingFailures = this.moveFailures.get(fileId) ?? 0
+        if (remainingFailures > 0) {
+          this.moveFailures.set(fileId, remainingFailures - 1)
+          await route.fulfill({
+            status: 500,
+            contentType: 'application/json',
+            body: JSON.stringify({ error: 'Injected move failure' })
+          })
+          return
+        }
+      }
+
+      await route.continue()
+    }
+
+    await this.page.route('**/files/**', this.routeHandler)
+  }
+
+  async failMoves(fileIds: string[], once = false): Promise<void> {
+    await this.ensureNetworkInterceptor()
+    for (const fileId of fileIds) {
+      this.moveFailures.set(fileId, once ? 1 : Number.POSITIVE_INFINITY)
+      this.moveRequestCounts.set(fileId, 0)
+    }
+  }
+
+  moveRequestCount(fileId: string): number {
+    return this.moveRequestCounts.get(fileId) ?? 0
+  }
+
+  async clearNetworkFailures(): Promise<void> {
+    if (this.routeHandler) {
+      await this.page.unroute('**/files/**', this.routeHandler)
+      this.routeHandler = null
+    }
+    this.moveFailures.clear()
   }
 
   get creationInput(): Locator {
@@ -51,6 +114,17 @@ export class MoveToPage {
     return this.dialog.getByRole('row', {
       name: new RegExp(`^${escapeRegExp(prefix)}.*${escapeRegExp(suffix)}`)
     })
+  }
+
+  async folderId(name: string): Promise<string> {
+    const folderId = await this.folderRow(name).getAttribute('data-file-id')
+    if (!folderId) throw new Error(`No folder id found for ${name}`)
+    return folderId
+  }
+
+  async selectFolder(name: string): Promise<void> {
+    await this.folderRow(name).click()
+    await expect(this.moveButton).toBeEnabled()
   }
 
   async openFolder(name: string): Promise<void> {
@@ -77,8 +151,53 @@ export class MoveToPage {
     await expect(this.moveButton).toBeDisabled()
   }
 
-  async confirm(): Promise<void> {
+  async clickMove(): Promise<void> {
     await this.moveButton.click()
+  }
+
+  async expectPartialResult(
+    successfulCount: number,
+    failedCount: number
+  ): Promise<void> {
+    await expect(
+      this.page.getByText(
+        new RegExp(
+          `(Moved: ${successfulCount}\\. Failed: ${failedCount}\\.|Déplacés : ${successfulCount}\\. Échecs : ${failedCount}\\.)`
+        )
+      )
+    ).toBeVisible()
+  }
+
+  async expectRemainingEntry(name: string): Promise<void> {
+    await expect(this.dialog.getByRole('heading')).toHaveText(name)
+  }
+
+  async expectDestinationLocked(): Promise<void> {
+    const breadcrumbButtons = this.dialog
+      .getByTestId('file-picker-breadcrumb')
+      .getByRole('button')
+    const count = await breadcrumbButtons.count()
+    for (let index = 0; index < count; index += 1) {
+      await expect(breadcrumbButtons.nth(index)).toBeDisabled()
+    }
+    await expect(this.createFolderButton).toBeDisabled()
+    await expect(this.moveButton).toBeEnabled()
+    await expect(this.cancelButton).toBeEnabled()
+    await expect(
+      this.dialog.getByRole('button', { name: /retry/i })
+    ).toHaveCount(0)
+  }
+
+  async expectSuccessNotification(name: string): Promise<void> {
+    await expect(
+      this.page.getByRole('alert').filter({
+        hasText: new RegExp(`${escapeRegExp(name)}.*moved`)
+      })
+    ).toBeVisible()
+  }
+
+  async confirm(): Promise<void> {
+    await this.clickMove()
     await expect(this.dialog).toBeHidden()
   }
 
