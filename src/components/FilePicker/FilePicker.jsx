@@ -192,6 +192,13 @@ const FilePickerController = ({
     setIsSectionChanging(false)
   }, [])
 
+  const readyNotifiedRef = useRef(false)
+  const handleReadyToUse = useCallback(() => {
+    if (readyNotifiedRef.current) return
+    readyNotifiedRef.current = true
+    onReadyToUse?.()
+  }, [onReadyToUse])
+
   return (
     <>
       {renderHeader?.({
@@ -218,7 +225,7 @@ const FilePickerController = ({
           selectableTypes={selectableTypes}
           multiple={multiple}
           error={error}
-          onReadyToUse={onReadyToUse}
+          onReadyToUse={handleReadyToUse}
           onFileDoubleClick={onFileDoubleClick}
           isItemVisible={isItemVisible}
         />
