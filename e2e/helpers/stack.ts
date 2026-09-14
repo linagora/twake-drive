@@ -202,6 +202,22 @@ export async function trashByName(
   }
 }
 
+/** Trash a file or folder by id, regardless of its current parent folder. */
+export async function trashById(
+  instance: string,
+  fileId: string
+): Promise<void> {
+  const delRes = await fetch(`http://${instance}/files/${fileId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${filesToken(instance)}` }
+  })
+  if (!delRes.ok) {
+    throw new Error(
+      `Trash ${fileId} on ${instance} failed (${delRes.status}): ${await delRes.text()}`
+    )
+  }
+}
+
 /** Number of versions the stack currently keeps for a file. */
 export async function countFileVersions({
   instance,

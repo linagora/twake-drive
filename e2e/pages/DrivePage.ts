@@ -1,6 +1,7 @@
 import type { Page, Locator } from '@playwright/test'
 
 import { FileRow } from './FileRow'
+import { MoveToPage } from './MoveToPage'
 
 /**
  * Page object for the Drive file list view (My Drive, Trash, Favorites,
@@ -20,6 +21,20 @@ export class DrivePage {
 
   row(name: string): FileRow {
     return new FileRow(this.page, this.fileList, name)
+  }
+
+  async selectRows(names: string[]): Promise<void> {
+    if (names.length === 0) throw new Error('At least one row is required')
+    for (const name of names) {
+      await this.row(name).select()
+    }
+  }
+
+  async openMoveToForSelection(): Promise<MoveToPage> {
+    await this.page.getByRole('button', { name: /move to/i }).click()
+    const moveTo = new MoveToPage(this.page)
+    await moveTo.waitForOpen()
+    return moveTo
   }
 
   /** Open a folder and wait until its document has loaded. The route

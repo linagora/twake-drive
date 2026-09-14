@@ -1,6 +1,6 @@
 import { models } from 'cozy-client'
 
-import { ROOT_DIR_ID } from '@/constants/config'
+import { NEXTCLOUD_FILE_ID, ROOT_DIR_ID } from '@/constants/config'
 import logger from '@/lib/logger'
 import { getParentPath, joinPath } from '@/lib/path'
 import { CozyFile } from '@/models'
@@ -121,6 +121,24 @@ export function hasUnknownEntryLocation(entries) {
   return entries.some(entry => !entry.dir_id && !entry.path)
 }
 
+export function isDestinationAllowed(
+  destination,
+  entries,
+  hasWriteAccess,
+  allLoaded,
+  initialFolderId
+) {
+  if (!isMoveDestination(destination, entries, hasWriteAccess, allLoaded)) {
+    return false
+  }
+  const isInitialFolder = getItemId(destination) === initialFolderId
+  return !(
+    isInitialFolder &&
+    (areAllEntriesInFolder(entries, destination) ||
+      hasUnknownEntryLocation(entries))
+  )
+}
+
 export function getInitialFolderId(currentFolder, entries) {
   const sourceFolderIds = new Set(entries.map(getEntryParentId).filter(Boolean))
   const isLocalFolder =
@@ -205,6 +223,14 @@ export const getEntriesName = (entries, t) => {
         smart_count: entries.length
       })
     : entries[0].name
+}
+
+export function computeNextcloudMoveDirections(folder, sourceEntry) {
+  const isMovingInsideNextcloud = folder?._type === NEXTCLOUD_FILE_ID
+  const isMovingOutsideNextcloud =
+    !isMovingInsideNextcloud && sourceEntry?._type === NEXTCLOUD_FILE_ID
+
+  return { isMovingInsideNextcloud, isMovingOutsideNextcloud }
 }
 
 /**

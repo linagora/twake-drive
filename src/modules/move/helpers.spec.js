@@ -1,7 +1,11 @@
 import CozyClient from 'cozy-client'
 
 import { CozyFile } from '@/models'
-import { cancelMove, hasOneOfEntriesShared } from '@/modules/move/helpers'
+import {
+  cancelMove,
+  computeNextcloudMoveDirections,
+  hasOneOfEntriesShared
+} from '@/modules/move/helpers'
 
 jest.mock('cozy-doctypes')
 jest.mock('cozy-stack-client')
@@ -84,6 +88,30 @@ describe('cancelMove', () => {
     expect(restoreSpy).toHaveBeenCalledWith('trashed-2')
     expect(refreshSpy).toHaveBeenCalled()
   })
+})
+
+describe('computeNextcloudMoveDirections', () => {
+  const nextcloudEntry = { _type: 'io.cozy.remote.nextcloud.files' }
+  const cozyEntry = { _type: 'io.cozy.files' }
+
+  it.each([
+    [nextcloudEntry, cozyEntry, true, false],
+    [cozyEntry, nextcloudEntry, false, true],
+    [cozyEntry, cozyEntry, false, false]
+  ])(
+    'computes the Nextcloud move directions',
+    (
+      folder,
+      sourceEntry,
+      isMovingInsideNextcloud,
+      isMovingOutsideNextcloud
+    ) => {
+      expect(computeNextcloudMoveDirections(folder, sourceEntry)).toEqual({
+        isMovingInsideNextcloud,
+        isMovingOutsideNextcloud
+      })
+    }
+  )
 })
 
 describe('hasOneOfEntriesShared', () => {
