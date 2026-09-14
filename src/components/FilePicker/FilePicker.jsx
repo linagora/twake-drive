@@ -15,6 +15,7 @@ import {
 import { buildCurrentFolderQuery } from './queries'
 
 import { ROOT_DIR_ID } from '@/constants/config'
+import { useFolderSort } from '@/hooks'
 import {
   SelectionProvider,
   useSelectionContext
@@ -131,6 +132,7 @@ const FilePickerController = ({
   additionalItems
 }) => {
   const { clearSelection } = useSelectionContext()
+  const [sortOrder] = useFolderSort(ROOT_DIR_ID)
   const initialSection = availableSections.includes(initialLocation.section)
     ? initialLocation.section
     : availableSections[0]
@@ -228,6 +230,7 @@ const FilePickerController = ({
           mode={mode}
           isSectionChanging={isSectionChanging}
           onSectionReady={handleSectionReady}
+          sortOrder={sortOrder}
           navigateTo={navigateTo}
           section={location.section}
           folderId={location.folderId}

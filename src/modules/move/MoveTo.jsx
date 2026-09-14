@@ -259,7 +259,7 @@ export function MoveTo({
               disabled={isNavigationLocked || isFolderCreationDisplayed}
               label={t('Move.addFolder')}
               onClick={handleCreate}
-              startIcon={<Icon icon={FolderOutlined} />}
+              startIcon={<Icon icon={FolderOutlined} size={16} />}
               variant="ghost"
             />
           )}

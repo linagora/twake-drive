@@ -15,6 +15,7 @@ import {
 } from './constants'
 
 import { ROOT_DIR_ID } from '@/constants/config'
+import { useFolderSort } from '@/hooks'
 import { useBreadcrumbPath } from '@/modules/breadcrumb/hooks/useBreadcrumbPath'
 import {
   SelectionProvider,
@@ -46,6 +47,9 @@ jest.mock('cozy-client', () => ({
 }))
 jest.mock('cozy-sharing', () => ({ useSharingContext: jest.fn() }))
 jest.mock('twake-i18n')
+jest.mock('@/hooks', () => ({
+  useFolderSort: jest.fn()
+}))
 jest.mock('cozy-ui/transpiled/react/providers/Breakpoints', () => ({
   __esModule: true,
   default: jest.fn(),
@@ -136,6 +140,7 @@ describe('FilePicker', () => {
   const fetchMore = jest.fn()
 
   beforeEach(() => {
+    useFolderSort.mockReturnValue([{ attribute: 'name', order: 'asc' }])
     useI18n.mockReturnValue({ t: key => key })
     useSharingContext.mockReturnValue({
       allLoaded: true,
