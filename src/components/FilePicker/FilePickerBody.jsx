@@ -22,10 +22,12 @@ import { useFilePickerAdapter } from './useFilePickerAdapter'
 import { EmptyMessage as PickerViewEmptyMessage } from '@/components/PickerView/EmptyMessage'
 import { PickerView } from '@/components/PickerView/PickerView'
 import { useLocalFolderBrowser } from '@/components/PickerView/useLocalFolderBrowser'
+import { DEFAULT_SORT } from '@/config/sort'
 import { ROOT_DIR_ID } from '@/constants/config'
 import { useBreadcrumbPath } from '@/modules/breadcrumb/hooks/useBreadcrumbPath'
 import { FilePickerRecentsContent } from '@/modules/services/components/FilePicker/FilePickerRecentsContent'
 import { useSharedDriveFolder } from '@/modules/shareddrives/hooks/useSharedDriveFolder'
+import { sortFiles } from '@/modules/views/Folder/sortFiles'
 
 const {
   file: { isDirectory }
@@ -226,10 +228,11 @@ const LocalFolderContent = ({
   onReady,
   renderFilePickerContent,
   getItemDisabledReason,
-  additionalItems
+  additionalItems,
+  sortOrder
 }) => {
   const buildFolderQuery = id =>
-    buildDisplayedContentFolderQuery(id, displayedTypes)
+    buildDisplayedContentFolderQuery(id, displayedTypes, sortOrder)
   const source = useLocalFolderBrowser({
     folderId,
     rootBreadcrumbPath,
@@ -252,9 +255,16 @@ const LocalFolderContent = ({
       item => isDisplayedItem(item, displayedTypes) && isItemVisible(item)
     )
     return additionalItems.length > 0
-      ? visibleItems.sort((left, right) => left.name.localeCompare(right.name))
+      ? sortFiles(visibleItems, sortOrder)
       : visibleItems
-  }, [additionalItems, displayedTypes, folderId, isItemVisible, source.items])
+  }, [
+    additionalItems,
+    displayedTypes,
+    folderId,
+    isItemVisible,
+    sortOrder,
+    source.items
+  ])
 
   return renderFilePickerContent({
     ...source,
@@ -275,7 +285,11 @@ LocalFolderContent.propTypes = {
   onReady: PropTypes.func,
   renderFilePickerContent: PropTypes.func.isRequired,
   getItemDisabledReason: PropTypes.func.isRequired,
-  additionalItems: PropTypes.arrayOf(PropTypes.object)
+  additionalItems: PropTypes.arrayOf(PropTypes.object),
+  sortOrder: PropTypes.shape({
+    attribute: PropTypes.string.isRequired,
+    order: PropTypes.string.isRequired
+  }).isRequired
 }
 
 const SharedDriveFolderContent = ({
@@ -287,7 +301,8 @@ const SharedDriveFolderContent = ({
   isItemDisabled,
   getItemDisabledReason,
   isItemVisible,
-  renderFilePickerContent
+  renderFilePickerContent,
+  sortOrder
 }) => {
   const path = useBreadcrumbPath({
     currentFolderId: folderId,
@@ -297,13 +312,12 @@ const SharedDriveFolderContent = ({
   })
   const { sharedDriveResult, fetchStatus, hasMore, fetchMore } =
     useSharedDriveFolder({ driveId, folderId })
-  const items = useMemo(
-    () =>
-      (sharedDriveResult.included ?? [])
-        .map(item => ({ ...item, driveId }))
-        .filter(item => isDisplayedItem(item, displayedTypes))
-        .filter(isItemVisible),
-    [displayedTypes, driveId, isItemVisible, sharedDriveResult.included]
+  const items = sortFiles(
+    (sharedDriveResult.included ?? [])
+      .map(item => ({ ...item, driveId }))
+      .filter(item => isDisplayedItem(item, displayedTypes))
+      .filter(isItemVisible),
+    sortOrder
   )
 
   return renderFilePickerContent({
@@ -326,7 +340,11 @@ SharedDriveFolderContent.propTypes = {
   isItemDisabled: PropTypes.func.isRequired,
   getItemDisabledReason: PropTypes.func,
   isItemVisible: PropTypes.func.isRequired,
-  renderFilePickerContent: PropTypes.func.isRequired
+  renderFilePickerContent: PropTypes.func.isRequired,
+  sortOrder: PropTypes.shape({
+    attribute: PropTypes.string.isRequired,
+    order: PropTypes.string.isRequired
+  }).isRequired
 }
 
 export const FilePickerBody = ({
@@ -349,7 +367,8 @@ export const FilePickerBody = ({
   filterReceivedShares,
   isNavigationDisabled,
   isSectionChanging,
-  onSectionReady
+  onSectionReady,
+  sortOrder
 }) => {
   const { t } = useI18n()
   const { allLoaded, byDocId, isOwner } = useSharingContext()
@@ -432,6 +451,7 @@ export const FilePickerBody = ({
         isItemVisible={isItemVisible}
         isItemDisabled={isItemDisabled}
         getItemDisabledReason={externalGetItemDisabledReason}
+        sortOrder={sortOrder}
         renderFilePickerContent={renderFilePickerContent}
       />
     )
@@ -448,6 +468,7 @@ export const FilePickerBody = ({
         isItemDisabled={isItemDisabled}
         getItemDisabledReason={externalGetItemDisabledReason}
         isItemVisible={isItemVisible}
+        sortOrder={sortOrder}
         renderFilePickerContent={renderFilePickerContent}
       />
     )
@@ -474,6 +495,7 @@ export const FilePickerBody = ({
       }
       renderFilePickerContent={renderFilePickerContent}
       additionalItems={additionalItems}
+      sortOrder={sortOrder}
     />
   )
 }
@@ -495,6 +517,10 @@ FilePickerBody.propTypes = {
   isItemVisible: PropTypes.func.isRequired,
   isItemDisabled: PropTypes.func,
   getItemDisabledReason: PropTypes.func,
+  sortOrder: PropTypes.shape({
+    attribute: PropTypes.string.isRequired,
+    order: PropTypes.string.isRequired
+  }).isRequired,
   beforeItems: PropTypes.node,
   additionalItems: PropTypes.arrayOf(PropTypes.object),
   filterReceivedShares: PropTypes.bool,
@@ -510,6 +536,7 @@ FilePickerBody.defaultProps = {
   isItemVisible: () => true,
   isItemDisabled: () => false,
   getItemDisabledReason: () => null,
+  sortOrder: DEFAULT_SORT,
   beforeItems: null,
   additionalItems: [],
   filterReceivedShares: true,
