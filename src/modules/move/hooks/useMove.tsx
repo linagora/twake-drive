@@ -7,12 +7,9 @@ import { useI18n } from 'twake-i18n'
 import { File, FolderPickerEntry } from '@/components/FolderPicker/types'
 import { MoveModalSuccessAction } from '@/modules/move/components/MoveModalSuccessAction'
 
-interface useMoveProps {
-  entries: FolderPickerEntry[]
-}
-
 interface showSuccessProps {
   folder: File
+  entries: FolderPickerEntry[]
   trashedFiles: File[]
   canCancel?: boolean
   refreshSharing: () => void
@@ -22,13 +19,14 @@ interface useMoveReturn {
   showSuccess: (props: showSuccessProps) => void
 }
 
-const useMove = ({ entries }: useMoveProps): useMoveReturn => {
+const useMove = (): useMoveReturn => {
   const { t } = useI18n()
   const navigate = useNavigate()
   const { showAlert } = useAlert()
 
   const showSuccess = ({
     folder,
+    entries,
     trashedFiles,
     canCancel = true,
     refreshSharing

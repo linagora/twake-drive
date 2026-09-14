@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { useClient } from 'cozy-client'
 import flag from 'cozy-flags'
 import { useSharingContext } from 'cozy-sharing'
+import useBrowserOffline from 'cozy-ui/transpiled/react/hooks/useBrowserOffline'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import { useI18n } from 'twake-i18n'
 
@@ -47,10 +48,14 @@ const MoveModal = ({
     allLoaded
   } = useSharingContext()
   const { registerCancelable } = useCancelable()
-  const { showSuccess } = useMove({ entries })
+  const { showSuccess } = useMove()
   const { t } = useI18n()
   const { showAlert } = useAlert()
+  const isOffline = useBrowserOffline()
 
+  const [remainingEntries, setRemainingEntries] = useState(entries)
+  const [successfulEntries, setSuccessfulEntries] = useState([])
+  const [successfulTrashedFiles, setSuccessfulTrashedFiles] = useState([])
   const [folderSelected, setFolderSelected] = useState(null)
   const [isMoveInProgress, setMoveInProgress] = useState(false)
   const [isMovingOutsideSharedFolder, setMovingOutsideSharedFolder] =
@@ -64,15 +69,19 @@ const MoveModal = ({
 
   const handleConfirm = async folder => {
     setFolderSelected(folder)
+    if (isOffline) {
+      moveEntries(folder)
+      return
+    }
 
-    const sharedParentPath = entries[0].path
-      ? getSharedParentPath(entries[0].path)
+    const sharedParentPath = remainingEntries[0].path
+      ? getSharedParentPath(remainingEntries[0].path)
       : ''
-    const targetPath = joinPath(folder.path, entries[0].name)
+    const targetPath = joinPath(folder.path, remainingEntries[0].name)
 
-    const areMovedFilesShared = hasOneOfEntriesShared(entries, byDocId)
+    const areMovedFilesShared = hasOneOfEntriesShared(remainingEntries, byDocId)
     const isOriginParentShared =
-      hasSharedParent(entries[0].path || '') || !!driveId
+      hasSharedParent(remainingEntries[0].path || '') || !!driveId
     const isTargetShared =
       hasSharedParent(targetPath || '') ||
       (!!folder.driveId && folder.driveId !== driveId)
@@ -104,71 +113,125 @@ const MoveModal = ({
     moveEntries(folder)
   }
 
+  const notifyMoveSuccess = (folder, movedEntries, trashedFiles) => {
+    const isMovingInsideNextcloud =
+      folder?._type === 'io.cozy.remote.nextcloud.files'
+    const isMovingOutsideNextcloud =
+      !isMovingInsideNextcloud &&
+      movedEntries[0]?._type === 'io.cozy.remote.nextcloud.files'
+
+    showSuccess({
+      folder,
+      entries: movedEntries,
+      trashedFiles,
+      refreshSharing,
+      canCancel: !isMovingInsideNextcloud && !isMovingOutsideNextcloud
+    })
+  }
+
   const moveEntries = async folder => {
+    if (isOffline) {
+      showAlert({
+        message: t('Move.error', { smart_count: remainingEntries.length }),
+        severity: 'error',
+        duration: 4000
+      })
+      return
+    }
+
     try {
       setMoveInProgress(true)
-      const trashedFiles = []
       const force = !sharedPaths.includes(folder.path)
-      await Promise.all(
-        entries.map(async entry => {
-          const moveResponse = await registerCancelable(
+      const results = await Promise.allSettled(
+        remainingEntries.map(entry =>
+          registerCancelable(
             executeMove(client, entry, currentFolder, folder, force)
           )
-          if (moveResponse.deleted) {
-            trashedFiles.push(moveResponse.deleted)
-          }
-        })
+        )
       )
-
-      const isMovingInsideNextcloud =
-        folder._type === 'io.cozy.remote.nextcloud.files'
-
-      const isMovingOutsideNextcloud =
-        !isMovingInsideNextcloud &&
-        entries[0]._type === 'io.cozy.remote.nextcloud.files'
-
-      refreshNextcloudQueries({
-        isMovingInsideNextcloud,
-        isMovingOutsideNextcloud,
-        folder
+      const movedEntries = remainingEntries.filter(
+        (_entry, index) => results[index].status === 'fulfilled'
+      )
+      const failedEntries = remainingEntries.filter(
+        (_entry, index) => results[index].status === 'rejected'
+      )
+      const trashedFiles = results.flatMap(result =>
+        result.status === 'fulfilled' && result.value?.deleted
+          ? [result.value.deleted]
+          : []
+      )
+      results.forEach(result => {
+        if (result.status === 'rejected') logger.warn(result.reason)
       })
 
-      showSuccess({
-        folder,
-        trashedFiles,
-        refreshSharing,
-        canCancel: !isMovingInsideNextcloud && !isMovingOutsideNextcloud
-      })
+      const allSuccessfulEntries = [...successfulEntries, ...movedEntries]
+      const allTrashedFiles = [...successfulTrashedFiles, ...trashedFiles]
 
-      if (refreshSharing) refreshSharing()
+      if (movedEntries.length > 0) {
+        refreshNextcloudQueries(folder, movedEntries[0])
+        refreshSharing?.()
+      }
 
+      if (failedEntries.length > 0) {
+        setRemainingEntries(failedEntries)
+        setSuccessfulEntries(allSuccessfulEntries)
+        setSuccessfulTrashedFiles(allTrashedFiles)
+        showAlert({
+          message:
+            allSuccessfulEntries.length > 0
+              ? t('Move.partialError', {
+                  successCount: allSuccessfulEntries.length,
+                  failureCount: failedEntries.length
+                })
+              : t('Move.error', { smart_count: failedEntries.length }),
+          severity: 'error',
+          duration: 4000
+        })
+        return
+      }
+
+      notifyMoveSuccess(folder, allSuccessfulEntries, allTrashedFiles)
       onMovingSuccess?.()
+      onClose()
     } catch (e) {
       logger.warn(e)
       showAlert({
-        message: t('Move.error', { smart_count: entries.length }),
+        message: t('Move.error', { smart_count: remainingEntries.length }),
         severity: 'error',
         duration: 4000
       })
     } finally {
       setMoveInProgress(false)
-      onClose()
     }
+  }
+
+  const handleClose = event => {
+    event?.stopPropagation()
+    if (successfulEntries.length > 0) {
+      notifyMoveSuccess(
+        folderSelected,
+        successfulEntries,
+        successfulTrashedFiles
+      )
+    }
+    onClose()
   }
 
   /**
    * The content from nextcloud queries must be refreshed when moving files
    * This is only a proxy to Nextcloud queries so we don't have real-time or mutations updates
    */
-  const refreshNextcloudQueries = ({
-    isMovingOutsideNextcloud,
-    isMovingInsideNextcloud,
-    folder
-  }) => {
+  const refreshNextcloudQueries = (folder, sourceEntry) => {
+    const isMovingInsideNextcloud =
+      folder?._type === 'io.cozy.remote.nextcloud.files'
+    const isMovingOutsideNextcloud =
+      !isMovingInsideNextcloud &&
+      sourceEntry?._type === 'io.cozy.remote.nextcloud.files'
+
     if (isMovingInsideNextcloud) {
       client.resetQuery(
         computeNextcloudFolderQueryId({
-          sourceAccount: folder.cozyMetadata.sourceAccount,
+          sourceAccount: folder.cozyMetadata?.sourceAccount,
           path: folder.path
         })
       )
@@ -177,8 +240,8 @@ const MoveModal = ({
     if (isMovingOutsideNextcloud) {
       client.resetQuery(
         computeNextcloudFolderQueryId({
-          sourceAccount: entries[0].cozyMetadata.sourceAccount,
-          path: getParentPath(entries[0].path)
+          sourceAccount: sourceEntry.cozyMetadata?.sourceAccount,
+          path: getParentPath(sourceEntry.path)
         })
       )
     }
@@ -204,7 +267,7 @@ const MoveModal = ({
 
   const handleMovingSharedFolderInsideAnother = async () => {
     setMoveInProgress(true)
-    entries.forEach(async entry => {
+    remainingEntries.forEach(async entry => {
       if (byDocId[entry._id] !== undefined) {
         if (isOwner(entry._id)) {
           await revokeAllRecipients(entry)
@@ -225,26 +288,27 @@ const MoveModal = ({
       {isNewMoveToEnabled ? (
         <MoveTo
           currentFolder={currentFolder}
-          entries={entries}
+          entries={remainingEntries}
           onConfirm={handleConfirm}
-          onClose={onClose}
+          onClose={handleClose}
           isBusy={isMoveInProgress}
+          isDestinationLocked={successfulEntries.length > 0}
         />
       ) : (
         <FolderPicker
           showNextcloudFolder={showNextcloudFolder}
           showSharedDriveFolder={showSharedDriveFolder}
           currentFolder={currentFolder}
-          entries={entries}
+          entries={remainingEntries}
           onConfirm={handleConfirm}
-          onClose={onClose}
+          onClose={handleClose}
           isBusy={isMoveInProgress || (!isPublic && !allLoaded)}
           isPublic={isPublic}
         />
       )}
       {isMovingOutsideSharedFolder ? (
         <MoveOutsideSharedFolderModal
-          entries={entries}
+          entries={remainingEntries}
           onCancel={handleCancelMovingOutside}
           onConfirm={handleConfirmMovingOutside}
           driveId={driveId}
@@ -252,7 +316,7 @@ const MoveModal = ({
       ) : null}
       {isMovingSharedFolderInsideAnother ? (
         <MoveSharedFolderInsideAnotherModal
-          entries={entries}
+          entries={remainingEntries}
           folderId={folderSelected._id}
           driveId={folderSelected.driveId}
           onCancel={() => setMovingSharedFolderInsideAnother(false)}
@@ -263,7 +327,7 @@ const MoveModal = ({
         <MoveInsideSharedFolderModal
           onCancel={handleCancelMovingInside}
           onConfirm={handleConfirmMovingInside}
-          entries={entries}
+          entries={remainingEntries}
           folderId={folderSelected._id}
           driveId={folderSelected.driveId}
         />

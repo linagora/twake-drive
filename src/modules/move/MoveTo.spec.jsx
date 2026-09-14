@@ -141,6 +141,7 @@ const destinationFolder = {
   path: '/Source folder/Child folder'
 }
 let contentItems
+let clientQuery
 
 function getFolder(folderId) {
   if (folderId === currentFolder._id) return currentFolder
@@ -257,7 +258,11 @@ describe('MoveTo', () => {
   })
   beforeEach(() => {
     useI18n.mockReturnValue({ t: key => key })
-    useClient.mockReturnValue({})
+    clientQuery = jest.fn((_definition, options) => {
+      const folderId = options.as.replace('move-confirm-', '')
+      return Promise.resolve({ data: getFolder(folderId) })
+    })
+    useClient.mockReturnValue({ query: clientQuery })
     useDispatch.mockReturnValue(action => action())
     useAlert.mockReturnValue({ showAlert: jest.fn() })
     createFolder.mockReset()
@@ -488,7 +493,32 @@ describe('MoveTo', () => {
     expect(screen.queryByRole('alert')).toBe(null)
   })
 
-  it('does not select a folder and moves into the current folder after navigation', () => {
+  it('keeps the browser inside the content area below the file summary', () => {
+    setup()
+
+    expect(screen.getByTestId('move-to-browser')).toHaveClass(
+      'u-pos-relative',
+      'u-flex',
+      'u-flex-column'
+    )
+  })
+
+  it('keeps the destination locked and the Move action available after a partial success', () => {
+    setup({
+      currentFolder: destinationFolder,
+      entries: [{ _id: 'file-id', dir_id: 'other-folder', name: 'File' }],
+      isDestinationLocked: true
+    })
+
+    expect(screen.getByRole('button', { name: 'My Drive' })).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: 'Move.addFolder' })
+    ).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Move.cancel' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Move.action' })).toBeEnabled()
+  })
+
+  it('does not select a folder and moves into the current folder after navigation', async () => {
     const onConfirm = jest.fn()
     setup({ onConfirm })
 
@@ -502,7 +532,9 @@ describe('MoveTo', () => {
 
     expect(moveButton).toBeEnabled()
     fireEvent.click(moveButton)
-    expect(onConfirm).toHaveBeenCalledWith(destinationFolder)
+    await waitFor(() => {
+      expect(onConfirm).toHaveBeenCalledWith(destinationFolder)
+    })
   })
 
   it('does not clear the Drive selection while navigating', () => {
@@ -514,7 +546,7 @@ describe('MoveTo', () => {
     expect(screen.getByTestId('drive-selection-count')).toHaveTextContent('1')
   })
 
-  it('uses the current folder after breadcrumb navigation', () => {
+  it('uses the current folder after breadcrumb navigation', async () => {
     const onConfirm = jest.fn()
     setup({
       currentFolder: destinationFolder,
@@ -527,9 +559,11 @@ describe('MoveTo', () => {
 
     expect(moveButton).toBeEnabled()
     fireEvent.click(moveButton)
-    expect(onConfirm).toHaveBeenCalledWith(
-      expect.objectContaining({ _id: ROOT_DIR_ID, path: '/' })
-    )
+    await waitFor(() => {
+      expect(onConfirm).toHaveBeenCalledWith(
+        expect.objectContaining({ _id: ROOT_DIR_ID, path: '/' })
+      )
+    })
   })
 
   it('shows an error and keeps the action disabled when the destination cannot be loaded', () => {
@@ -638,6 +672,31 @@ describe('MoveTo', () => {
     expect(screen.queryByRole('button', { name: 'Shared Drive folder' })).toBe(
       null
     )
+  })
+
+  it('reloads and rechecks the destination when confirming', async () => {
+    const onConfirm = jest.fn()
+    clientQuery.mockRejectedValue(new Error('offline'))
+    setup({
+      currentFolder: destinationFolder,
+      entries: [{ _id: 'file-id', dir_id: 'other-folder', name: 'File' }],
+      onConfirm
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Move.action' }))
+
+    await waitFor(() => {
+      expect(screen.getByTestId('file-picker-error')).toBeInTheDocument()
+    })
+    expect(clientQuery).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        as: 'move-confirm-child-folder',
+        fetchPolicy: expect.any(Function)
+      })
+    )
+    expect(onConfirm).not.toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: 'Move.cancel' })).toBeEnabled()
   })
 
   it('rechecks the destination policy before confirmation', () => {
