@@ -85,7 +85,8 @@ jest.mock('@/components/FilePicker/FilePicker', () => {
       onLocationChange,
       onFileDoubleClick,
       error,
-      renderHeader
+      renderHeader,
+      onReadyToUse
     }) => {
       const [location, setLocation] = React.useState({
         section: 'drive',
@@ -122,6 +123,13 @@ jest.mock('@/components/FilePicker/FilePicker', () => {
               {selectableTypes.includes('folder') ? 'true' : 'false'}
             </span>
             {error && <div data-testid="file-picker-error">{error}</div>}
+            <button
+              type="button"
+              data-testid="ready-btn"
+              onClick={onReadyToUse}
+            >
+              Ready
+            </button>
             <button
               type="button"
               data-testid="select-file-btn"
@@ -257,6 +265,7 @@ describe('FilePicker', () => {
     multiple = false,
     onFileDoubleClick,
     onClose,
+    onReadyToUse,
     accept
   } = {}) => {
     return render(
@@ -265,6 +274,7 @@ describe('FilePicker', () => {
           onChange={mockOnChange}
           onFileDoubleClick={onFileDoubleClick ?? mockOnFileDoubleClick}
           onClose={onClose ?? mockOnClose}
+          onReadyToUse={onReadyToUse}
           filePickerConfig={filePickerConfig}
           multiple={multiple}
           accept={accept}
@@ -586,6 +596,15 @@ describe('FilePicker', () => {
     expect(getByTestId('body-folder-id')).toHaveTextContent(
       FILE_PICKER_SHARINGS_ROOT_ID
     )
+  })
+
+  it('forwards onReadyToUse to the shared file picker', () => {
+    const onReadyToUse = jest.fn()
+    const { getByTestId } = setup({ onReadyToUse })
+
+    fireEvent.click(getByTestId('ready-btn'))
+
+    expect(onReadyToUse).toHaveBeenCalledTimes(1)
   })
 
   it('should clear selection when navigating to another folder', () => {

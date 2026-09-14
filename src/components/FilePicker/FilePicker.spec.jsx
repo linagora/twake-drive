@@ -545,4 +545,45 @@ describe('FilePicker', () => {
       })
     )
   })
+
+  it('notifies readiness only once across section remounts', () => {
+    const onReadyToUse = jest.fn()
+    const renderHeader = ({ onSectionChange }) => (
+      <div>
+        <button
+          type="button"
+          onClick={() => onSectionChange(filePickerSections.SHARINGS)}
+        >
+          Sharings
+        </button>
+        <button
+          type="button"
+          onClick={() => onSectionChange(filePickerSections.DRIVE)}
+        >
+          Drive
+        </button>
+      </div>
+    )
+
+    render(
+      <FilePicker
+        mode={filePickerModes.SELECTION}
+        availableSections={[
+          filePickerSections.DRIVE,
+          filePickerSections.SHARINGS
+        ]}
+        displayedTypes={[filePickerItemTypes.FILE]}
+        selectableTypes={[filePickerItemTypes.FILE]}
+        onReadyToUse={onReadyToUse}
+        renderHeader={renderHeader}
+      />
+    )
+
+    expect(onReadyToUse).toHaveBeenCalledTimes(1)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sharings' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Drive' }))
+
+    expect(onReadyToUse).toHaveBeenCalledTimes(1)
+  })
 })
