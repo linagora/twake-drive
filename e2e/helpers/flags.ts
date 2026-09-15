@@ -11,7 +11,8 @@ export const DEFAULT_FLAGS: Record<string, boolean | string | number> = {
   'drive.file-picker-demo.enabled': true,
   'cozy.search.enabled': true,
   'dataproxy.force-trusted-device.enabled': true,
-  'drive.move-to-picker.enabled': true
+  'drive.move-to-picker.enabled': true,
+  'drive.default-updated-at-sort.enabled': true
 }
 
 export function setFlags(

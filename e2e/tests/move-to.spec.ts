@@ -25,11 +25,13 @@ async function createMoveScenario(
   alicePage: Page,
   aliceDrive: DrivePage
 ): Promise<MoveScenario> {
-  const destination = 'Administrative'
+  const destination = `Move destination ${stamp()}`
   const entries = [
     `Move partial A ${stamp()}.txt`,
     `Move partial B ${stamp()}.txt`
   ]
+
+  await aliceDrive.createFolder(destination)
 
   const sourcePaths = entries.map(entry =>
     path.join(path.dirname(FIXTURE), entry)
@@ -125,10 +127,22 @@ test.describe('MoveTo folder creation', () => {
   }) => {
     await alicePage.goto(ALICE_ROOT)
 
-    const moveTo = await aliceDrive.row('Administrative').openMoveTo()
-    await moveTo.expectFolderDisabled('Administrative', /being moved/i)
-    await moveTo.expectMoveDisabled()
-    await moveTo.close()
+    const sourceFolder = `Move source folder ${stamp()}`
+    let created = false
+    try {
+      await aliceDrive.createFolder(sourceFolder)
+      created = true
+
+      const moveTo = await aliceDrive.row(sourceFolder).openMoveTo()
+      await moveTo.expectFolderDisabled(sourceFolder, /being moved/i)
+      await moveTo.expectMoveDisabled()
+      await moveTo.close()
+    } finally {
+      if (created) {
+        await alicePage.goto(ALICE_ROOT)
+        await aliceDrive.row(sourceFolder).sendToTrash()
+      }
+    }
   })
 })
 
@@ -151,7 +165,7 @@ test.describe('MoveTo execution', () => {
         await expect(aliceDrive.row(entry).cell).toBeVisible()
       }
     } finally {
-      await cleanupMoveScenario(scenario.entries)
+      await cleanupMoveScenario([...scenario.entries, scenario.destination])
     }
   })
 
@@ -183,7 +197,7 @@ test.describe('MoveTo execution', () => {
       }
     } finally {
       await scenario.moveTo.clearNetworkFailures()
-      await cleanupMoveScenario(scenario.entries)
+      await cleanupMoveScenario([...scenario.entries, scenario.destination])
     }
   })
 
@@ -205,7 +219,7 @@ test.describe('MoveTo execution', () => {
       await expect(aliceDrive.row(scenario.entries[1]).cell).toBeVisible()
     } finally {
       await scenario.moveTo.clearNetworkFailures()
-      await cleanupMoveScenario(scenario.entries)
+      await cleanupMoveScenario([...scenario.entries, scenario.destination])
     }
   })
 })
