@@ -39,11 +39,20 @@ function renderContent(source) {
       <span data-testid="disabled">
         {String(source.isItemDisabled(source.items[0]))}
       </span>
+      <span data-testid="disabled-reason">
+        {source.getItemDisabledReason(source.items[0])}
+      </span>
     </div>
   )
 }
 
-function setup({ data = [], fetchStatus = 'loaded', selectedItems = [] } = {}) {
+function setup({
+  data = [],
+  fetchStatus = 'loaded',
+  selectedItems = [],
+  isItemDisabled,
+  getItemDisabledReason
+} = {}) {
   const setIsSelectAll = jest.fn()
   const setSelectedItems = jest.fn()
   useRecentFiles.mockReturnValue({ data, fetchStatus, error: null })
@@ -59,6 +68,8 @@ function setup({ data = [], fetchStatus = 'loaded', selectedItems = [] } = {}) {
     ...render(
       <FilePickerRecentsContent
         rootBreadcrumbPath={rootBreadcrumbPath}
+        isItemDisabled={isItemDisabled}
+        getItemDisabledReason={getItemDisabledReason}
         renderContent={renderContent}
       />
     )
@@ -80,6 +91,17 @@ describe('FilePickerRecentsContent', () => {
     expect(screen.getByTestId('with-file-path')).toHaveTextContent('true')
     expect(screen.getByTestId('keep-items-on-error')).toHaveTextContent('true')
     expect(screen.getByTestId('disabled')).toHaveTextContent('false')
+  })
+
+  it('forwards item disabling callbacks', () => {
+    setup({
+      data: [localFile],
+      isItemDisabled: () => true,
+      getItemDisabledReason: () => 'reason'
+    })
+
+    expect(screen.getByTestId('disabled')).toHaveTextContent('true')
+    expect(screen.getByTestId('disabled-reason')).toHaveTextContent('reason')
   })
 
   it.each([
