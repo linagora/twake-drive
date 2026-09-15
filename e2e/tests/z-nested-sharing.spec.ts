@@ -2,6 +2,7 @@ import { USERS } from '../helpers/config'
 import { test, expect, stamp } from '../helpers/fixtures'
 import { DEFAULT_FLAGS, setFlags } from '../helpers/flags'
 import { trashByName } from '../helpers/stack'
+import { DowngradeConfirmDialogPage } from '../pages/DowngradeConfirmDialogPage'
 import { ShareModalPage } from '../pages/ShareModalPage'
 
 interface FlagCombo {
@@ -148,9 +149,24 @@ for (const combo of COMBOS) {
             modal.dialog.getByRole('button', { name: /^done$/i })
           ).toBeVisible()
 
-          // Demoting an inherited member from the child's modal applies to
-          // the parent sharing the member comes from.
-          await modal.setMemberRole('bob', 'Viewer')
+          // Demoting an inherited member from the child's modal also lowers
+          // their rights on the shared parent, so it opens a confirmation
+          // dialog naming both folders. Cancelling keeps the role.
+          await modal.selectMemberRole('bob', 'Viewer')
+          const confirmDialog = new DowngradeConfirmDialogPage(alicePage)
+          await confirmDialog.waitForOpen()
+          await expect(confirmDialog.contactName()).toHaveText('bob')
+          await expect(confirmDialog.folderRow(PARENTFOLDER)).toBeVisible()
+          await expect(confirmDialog.folderRow(SUBFOLDER)).toBeVisible()
+
+          await confirmDialog.cancel()
+          await expect(modal.memberRole('bob')).toHaveText(/editor/i)
+
+          // Confirming applies the change to the parent sharing the member
+          // comes from.
+          await modal.selectMemberRole('bob', 'Viewer')
+          await confirmDialog.waitForOpen()
+          await confirmDialog.confirm()
           await expect(modal.memberRole('bob')).toHaveText(/viewer/i)
           await modal.close()
 
