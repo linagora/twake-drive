@@ -471,6 +471,7 @@
     "folderName": "Nom du dossier",
     "folderCreationError": "Le dossier n'a pas pu être créé. Merci de réessayer.",
     "folderCreationInProgress": "Création du dossier en cours",
+    "moveInProgress": "Déplacement en cours",
     "destinationSource": "Ce dossier est en cours de déplacement.",
     "destinationDescendant": "Un dossier ne peut pas être déplacé dans lui-même.",
     "destinationReadOnly": "Ce dossier est en lecture seule.",
