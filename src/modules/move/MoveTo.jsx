@@ -1,4 +1,4 @@
-import { FolderOutlined } from '@linagora/twake-icons'
+import { FolderOutlined, Icon } from '@linagora/twake-icons'
 import React, { useState } from 'react'
 import { useDispatch } from 'react-redux'
 
@@ -394,7 +394,7 @@ export function MoveTo({
               disabled={isNavigationLocked || isFolderCreationDisplayed}
               label={t('Move.addFolder')}
               onClick={handleCreate}
-              startIcon={<FolderOutlined />}
+              startIcon={<Icon icon={FolderOutlined} size={16} />}
               variant="ghost"
             />
           )}

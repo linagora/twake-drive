@@ -23,4 +23,28 @@ describe('FilePicker queries', () => {
     expect(definition.limit).toBe(100)
     expect(query.options.as).toBe('filePicker-folders-folder-id')
   })
+
+  it('uses the selected sort in the selector, index, and ordering', () => {
+    const query = buildDisplayedContentFolderQuery(
+      'folder-id',
+      [filePickerItemTypes.FOLDER],
+      { attribute: 'updated_at', order: 'desc' }
+    )
+    const definition = query.definition()
+
+    expect(definition.selector).toEqual({
+      dir_id: 'folder-id',
+      type: 'directory',
+      updated_at: { $gt: null }
+    })
+    expect(definition.indexedFields).toEqual(['dir_id', 'type', 'updated_at'])
+    expect(definition.sort).toEqual([
+      { dir_id: 'asc' },
+      { type: 'asc' },
+      { updated_at: 'desc' }
+    ])
+    expect(query.options.as).toBe(
+      'filePicker-folders-folder-id-updated_at-desc'
+    )
+  })
 })
