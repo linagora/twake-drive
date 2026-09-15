@@ -8,7 +8,8 @@ const {
   getDevProjectName,
   getDevRootDomain,
   isDockerProjectRunning,
-  resolveDevPorts
+  resolveDevPorts,
+  withPortAllocationLock
 } = jiti('../helpers/ports.ts')
 
 function ensureBuildExists() {
@@ -25,39 +26,41 @@ function ensureBuildExists() {
 async function start() {
   ensureBuildExists()
 
-  const config = await resolveDevPorts()
+  await withPortAllocationLock(async () => {
+    const config = await resolveDevPorts()
 
-  process.env.E2E_PROJECT_NAME = config.projectName
-  process.env.COZY_E2E_ROOT_DOMAIN = config.rootDomain
-  process.env.COZY_E2E_STACK_PORT = String(config.stackPort)
-  process.env.COZY_E2E_ADMIN_PORT = String(config.adminPort)
-  process.env.COZY_E2E_COUCHDB_PORT = String(config.couchdbPort)
-  process.env.E2E_PERSIST = '1'
+    process.env.E2E_PROJECT_NAME = config.projectName
+    process.env.COZY_E2E_ROOT_DOMAIN = config.rootDomain
+    process.env.COZY_E2E_STACK_PORT = String(config.stackPort)
+    process.env.COZY_E2E_ADMIN_PORT = String(config.adminPort)
+    process.env.COZY_E2E_COUCHDB_PORT = String(config.couchdbPort)
+    process.env.E2E_PERSIST = '1'
 
-  console.log(`[stack] Starting Cozy Stack dev environment:`)
-  console.log(`  - Project:  ${config.projectName}`)
-  console.log(`  - Domain:   *.${config.rootDomain}`)
-  console.log(`  - Stack:    http://localhost:${config.stackPort}`)
-  console.log(`  - Admin:    http://localhost:${config.adminPort}`)
-  console.log(`  - CouchDB:  http://localhost:${config.couchdbPort}`)
+    console.log(`[stack] Starting Cozy Stack dev environment:`)
+    console.log(`  - Project:  ${config.projectName}`)
+    console.log(`  - Domain:   *.${config.rootDomain}`)
+    console.log(`  - Stack:    http://localhost:${config.stackPort}`)
+    console.log(`  - Admin:    http://localhost:${config.adminPort}`)
+    console.log(`  - CouchDB:  http://localhost:${config.couchdbPort}`)
 
-  const { setupStack } = jiti('./global-setup.ts')
-  await setupStack(config)
+    const { setupStack } = jiti('./global-setup.ts')
+    await setupStack(config)
 
-  const { USERS } = jiti('../helpers/config.ts')
+    const { USERS } = jiti('../helpers/config.ts')
 
-  console.log('\n' + '='.repeat(60))
-  console.log(`🚀 Cozy Stack is ready for development! (${config.projectName})`)
-  console.log('='.repeat(60))
-  for (const user of Object.values(USERS)) {
-    console.log(`👤 ${user.label.toUpperCase()}:`)
-    console.log(`   App:      ${user.appUrl}`)
-    console.log(`   Email:    ${user.email}`)
-    console.log(`   Password: ${user.passphrase}`)
-  }
-  console.log('='.repeat(60))
-  console.log('💡 Run "yarn watch" in another terminal for live recompilation.')
-  console.log(`🛑 Run "yarn stack down" to stop this stack.\n`)
+    console.log('\n' + '='.repeat(60))
+    console.log(`🚀 Cozy Stack is ready for development! (${config.projectName})`)
+    console.log('='.repeat(60))
+    for (const user of Object.values(USERS)) {
+      console.log(`👤 ${user.label.toUpperCase()}:`)
+      console.log(`   App:      ${user.appUrl}`)
+      console.log(`   Email:    ${user.email}`)
+      console.log(`   Password: ${user.passphrase}`)
+    }
+    console.log('='.repeat(60))
+    console.log('💡 Run "yarn watch" in another terminal for live recompilation.')
+    console.log(`🛑 Run "yarn stack down" to stop this stack.\n`)
+  })
 }
 
 function stop(cleanVolumes = false) {

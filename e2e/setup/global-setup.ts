@@ -18,7 +18,11 @@ import {
   stackExec
 } from '../helpers/config'
 import { DEFAULT_FLAGS, setFlags } from '../helpers/flags'
-import { resolveE2EPorts, type E2EPortsConfig } from '../helpers/ports'
+import {
+  resolveE2EPorts,
+  withPortAllocationLock,
+  type E2EPortsConfig
+} from '../helpers/ports'
 
 const ADMIN_AUTH = `Basic ${Buffer.from(`${ADMIN_USER}:${ADMIN_PASSPHRASE}`).toString('base64')}`
 
@@ -293,6 +297,8 @@ export async function setupStack(portsConfig: E2EPortsConfig): Promise<void> {
 }
 
 export default async function globalSetup(): Promise<void> {
-  const portsConfig = await resolveE2EPorts()
-  await setupStack(portsConfig)
+  await withPortAllocationLock(async () => {
+    const portsConfig = await resolveE2EPorts()
+    await setupStack(portsConfig)
+  })
 }
