@@ -47,9 +47,11 @@ export class ShareModalPage {
     await menu.waitFor({ state: 'hidden' })
   }
 
-  /** Change the role of an already-added member from its row. The role menu
-   * is portal'd outside the dialog, same as setNewMemberRole. */
-  async setMemberRole(
+  /** Opens the role menu for an already-added member and picks `role`,
+   * without handling any confirm dialog that might follow. Use this instead
+   * of setMemberRole when the test needs to interact with
+   * DowngradePermissionConfirmDialog itself (DowngradeConfirmDialogPage). */
+  async selectMemberRole(
     nameOrEmail: string,
     role: 'Viewer' | 'Editor'
   ): Promise<void> {
@@ -59,6 +61,31 @@ export class ShareModalPage {
       .getByRole('menuitem', { name: new RegExp(`^${role}$`, 'i') })
       .click()
     await menu.waitFor({ state: 'hidden' })
+  }
+
+  /** Same as selectMemberRole, but also confirms the second, stacked confirm
+   * dialog (DowngradePermissionConfirmDialog) interposed when downgrading a
+   * member on a folder that has a shared parent — only if it shows up
+   * within a short grace window, same pattern as removeMember. */
+  async setMemberRole(
+    nameOrEmail: string,
+    role: 'Viewer' | 'Editor'
+  ): Promise<void> {
+    await this.selectMemberRole(nameOrEmail, role)
+
+    const confirmButton = this.page
+      .getByRole('dialog')
+      .filter({ has: this.page.getByRole('button', { name: 'Update parent' }) })
+      .last()
+      .getByRole('button', { name: 'Update parent' })
+    const appeared = await confirmButton
+      .waitFor({ state: 'visible', timeout: 2_000 })
+      .then(() => true)
+      .catch((err: Error) => {
+        if (err.name === 'TimeoutError') return false
+        throw err
+      })
+    if (appeared) await confirmButton.click()
   }
 
   /** Row of an already-added member in the dialog's member list. Matches on
