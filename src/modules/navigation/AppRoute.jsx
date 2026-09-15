@@ -11,11 +11,8 @@ import AIAssistantPaywallView from '../views/AI/AIAssistantPaywallView'
 import AssistantLayout from '../views/Assistant/AssistantLayout'
 import { DriveFolderView } from '../views/Drive/DriveFolderView'
 import FilesViewerDrive from '../views/Drive/FilesViewerDrive'
-import { getExcalidrawRoutes } from '../views/Excalidraw/routes'
 import { FilePickerDemoView } from '../views/FilePickerDemo/FilePickerDemoView'
 import OnlyOfficePaywallView from '../views/OnlyOffice/OnlyOfficePaywallView'
-import { getOnlyOfficeRoutes } from '../views/OnlyOffice/routes'
-import { getPdfRoutes } from '../views/Pdf/routes'
 import RecentView from '../views/Recent'
 import FilesViewerRecent from '../views/Recent/FilesViewerRecent'
 import FilesViewerSharedDrive from '../views/SharedDrive/FilesViewerSharedDrive'
@@ -66,6 +63,7 @@ import {
 } from '@/modules/views/Sharings/useSharingsTab'
 import { TrashDestroyView } from '@/modules/views/Trash/TrashDestroyView'
 import { TrashEmptyView } from '@/modules/views/Trash/TrashEmptyView'
+import { getEditorRoutes } from '@/modules/views/editor/routes'
 
 // Avoid conflict with legacy Bar routes
 export const ASSISTANT_ROUTE_PATH = 'assistant/:conversationId'
@@ -183,13 +181,6 @@ const sharedDriveRoutes = () => (
   </>
 )
 
-const getEditorRoutes = () => (
-  <>
-    {flag('drive.excalidraw.enabled') && getExcalidrawRoutes()}
-    {flag('drive.pdf-editor.enabled') && getPdfRoutes()}
-  </>
-)
-
 const AppRoutes = ({ sharedDrivesEnabled }) => (
   <SentryRoutes>
     <Route path="external/:fileId" element={<ExternalRedirect />} />
@@ -297,8 +288,6 @@ const AppRoutes = ({ sharedDrivesEnabled }) => (
         )}
         <Route path="*" element={<LegacySharingsRedirect />} />
       </Route>
-
-      {getOnlyOfficeRoutes()}
 
       {getEditorRoutes()}
 
