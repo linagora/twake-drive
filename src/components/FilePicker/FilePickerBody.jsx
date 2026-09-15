@@ -285,6 +285,7 @@ const SharedDriveFolderContent = ({
   rootBreadcrumbPath,
   sharedDocumentIds,
   isItemDisabled,
+  getItemDisabledReason,
   isItemVisible,
   renderFilePickerContent
 }) => {
@@ -311,7 +312,8 @@ const SharedDriveFolderContent = ({
     hasMore,
     fetchMore,
     breadcrumbPath: path,
-    isItemDisabled
+    isItemDisabled,
+    getItemDisabledReason
   })
 }
 
@@ -322,6 +324,7 @@ SharedDriveFolderContent.propTypes = {
   rootBreadcrumbPath: PropTypes.object.isRequired,
   sharedDocumentIds: PropTypes.arrayOf(PropTypes.string),
   isItemDisabled: PropTypes.func.isRequired,
+  getItemDisabledReason: PropTypes.func,
   isItemVisible: PropTypes.func.isRequired,
   renderFilePickerContent: PropTypes.func.isRequired
 }
@@ -411,6 +414,8 @@ export const FilePickerBody = ({
     return (
       <FilePickerRecentsContent
         rootBreadcrumbPath={rootBreadcrumbPath}
+        isItemDisabled={isItemDisabled}
+        getItemDisabledReason={externalGetItemDisabledReason}
         renderContent={renderFilePickerContent}
       />
     )
@@ -426,6 +431,8 @@ export const FilePickerBody = ({
         rootBreadcrumbPath={rootBreadcrumbPath}
         sharedDocumentIds={sharedDocumentIds}
         isItemVisible={isItemVisible}
+        isItemDisabled={isItemDisabled}
+        getItemDisabledReason={externalGetItemDisabledReason}
         renderFilePickerContent={renderFilePickerContent}
       />
     )
@@ -440,6 +447,7 @@ export const FilePickerBody = ({
         rootBreadcrumbPath={rootBreadcrumbPath}
         sharedDocumentIds={sharedDocumentIds}
         isItemDisabled={isItemDisabled}
+        getItemDisabledReason={externalGetItemDisabledReason}
         isItemVisible={isItemVisible}
         renderFilePickerContent={renderFilePickerContent}
       />
