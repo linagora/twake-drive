@@ -57,6 +57,10 @@ export class FileRow {
     await this.cell.waitFor({ state: 'hidden', timeout: opts?.timeout })
   }
 
+  async isNewSharingShortcut(): Promise<boolean> {
+    return this.rowEl.getByLabel('New sharing shortcut').isVisible()
+  }
+
   async fileId(): Promise<string> {
     const href = await this.rowEl.getByRole('link').first().getAttribute('href')
     const fileId = href?.match(/\/file\/([^/?#]+)/)?.[1]
