@@ -1,10 +1,17 @@
 import { execFileSync } from 'child_process'
 import * as fs from 'fs'
 import * as net from 'net'
+import * as os from 'os'
 import * as path from 'path'
 
 export const E2E_PORTS_PATH = path.join(__dirname, '..', '.e2e-ports.json')
 export const DEV_PORTS_PATH = path.join(__dirname, '..', '.dev-ports.json')
+
+const PORT_ALLOCATION_LOCK_PATH = path.join(
+  os.tmpdir(),
+  'twake-drive-e2e-ports.lock'
+)
+let portAllocationLockSequence = 0
 
 export const DEFAULT_E2E_STACK_PORT = 18080
 export const DEFAULT_E2E_ADMIN_PORT = 16060
@@ -20,6 +27,82 @@ export interface E2EPortsConfig {
   adminPort: number
   couchdbPort: number
   rootDomain: string
+}
+
+function isNodeError(error: unknown): error is NodeJS.ErrnoException {
+  return error instanceof Error && 'code' in error
+}
+
+function normalizeError(error: unknown): Error {
+  return error instanceof Error ? error : new Error(String(error))
+}
+
+function isProcessRunning(pid: number): boolean {
+  try {
+    process.kill(pid, 0)
+    return true
+  } catch (error: unknown) {
+    return isNodeError(error) && error.code === 'EPERM'
+  }
+}
+
+function removeStalePortAllocationLock(): void {
+  let token: string
+  try {
+    token = fs.readlinkSync(PORT_ALLOCATION_LOCK_PATH)
+  } catch (error: unknown) {
+    if (isNodeError(error) && error.code === 'ENOENT') return
+    throw error
+  }
+
+  const pid = parseInt(token.split(':', 1)[0], 10)
+  if (Number.isInteger(pid) && isProcessRunning(pid)) return
+
+  try {
+    if (fs.readlinkSync(PORT_ALLOCATION_LOCK_PATH) === token) {
+      fs.unlinkSync(PORT_ALLOCATION_LOCK_PATH)
+    }
+  } catch (error: unknown) {
+    if (!isNodeError(error) || error.code !== 'ENOENT') throw error
+  }
+}
+
+export async function withPortAllocationLock(
+  callback: () => Promise<void>
+): Promise<void> {
+  const token = `${process.pid}:${portAllocationLockSequence++}`
+
+  while (true) {
+    try {
+      fs.symlinkSync(token, PORT_ALLOCATION_LOCK_PATH)
+      break
+    } catch (error: unknown) {
+      if (!isNodeError(error) || error.code !== 'EEXIST') throw error
+      removeStalePortAllocationLock()
+      await new Promise(resolve => setTimeout(resolve, 100))
+    }
+  }
+
+  let callbackResult: { ok: true } | { ok: false; error: unknown } = {
+    ok: true
+  }
+  try {
+    await callback()
+  } catch (error: unknown) {
+    callbackResult = { ok: false, error }
+  }
+
+  let releaseError: unknown = null
+  try {
+    if (fs.readlinkSync(PORT_ALLOCATION_LOCK_PATH) === token) {
+      fs.unlinkSync(PORT_ALLOCATION_LOCK_PATH)
+    }
+  } catch (error: unknown) {
+    if (!isNodeError(error) || error.code !== 'ENOENT') releaseError = error
+  }
+
+  if (!callbackResult.ok) throw normalizeError(callbackResult.error)
+  if (releaseError !== null) throw normalizeError(releaseError)
 }
 
 export function isPortAvailable(port: number): Promise<boolean> {
