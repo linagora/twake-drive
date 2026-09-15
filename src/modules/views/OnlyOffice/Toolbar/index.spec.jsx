@@ -227,7 +227,7 @@ describe('Toolbar', () => {
           expect(queryByTestId('onlyoffice-sharing-button')).toBeNull()
         })
         describe("Sharing is not added to the recipient's Cozy", () => {
-          it('should show "MoreMenu" button', () => {
+          it('should not show "MoreMenu" button since the primary button already covers it', () => {
             useQuery.mockReturnValue({ data: [officeDoc] })
 
             const sharingInfos = {
@@ -236,7 +236,7 @@ describe('Toolbar', () => {
             const { root } = setup({ isPublic: true, sharingInfos })
             const { queryByTestId } = root
 
-            expect(queryByTestId('more-menu')).toBeTruthy()
+            expect(queryByTestId('more-menu')).toBeNull()
           })
           it('should show "Add to my Cozy" button', () => {
             useQuery.mockReturnValue({ data: [officeDoc] })

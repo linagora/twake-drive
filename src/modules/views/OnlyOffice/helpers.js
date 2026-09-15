@@ -158,6 +158,13 @@ export const makeMimeByClass = fileClass => {
   return mimeByClass[fileClass]
 }
 
+export const showCreateCozyButton = ({
+  isPublic,
+  isMobile,
+  isShareNotAdded,
+  isCozyToCozySharingSynced
+}) => isPublic && !isMobile && isShareNotAdded && !isCozyToCozySharingSynced
+
 // The sharing banner need to be shown only on the first arrival
 // and not after browsing inside a folder
 // When it comes from cozy to cozy sharing, we don't want the banner at all

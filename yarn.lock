@@ -12060,7 +12060,7 @@ __metadata:
     cozy-pouch-link: "npm:^60.33.0"
     cozy-realtime: "npm:^5.9.3"
     cozy-search: "npm:^2.2.18"
-    cozy-sharing: "npm:^38.0.0"
+    cozy-sharing: "npm:^38.1.0"
     cozy-stack-client: "npm:^60.33.0"
     cozy-tsconfig: "npm:^1.8.1"
     cozy-ui: "npm:^141.0.0"
@@ -12371,9 +12371,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cozy-sharing@npm:^38.0.0":
-  version: 38.0.0
-  resolution: "cozy-sharing@npm:38.0.0"
+"cozy-sharing@npm:^38.1.0":
+  version: 38.1.0
+  resolution: "cozy-sharing@npm:38.1.0"
   dependencies:
     "@cozy/minilog": "npm:^1.0.0"
     classnames: "npm:^2.5.1"
@@ -12396,7 +12396,7 @@ __metadata:
     react: ">=16.12.0"
     react-router: ">=5.0.1"
     twake-i18n: ">=0.3.0"
-  checksum: 10/b1da7884a4aabe3ab877f0cfbf39696b42fcae6c921396faf9e1a520e31d33fa75e37d8112718b3fec3cbd7d35eae77bf1305f1c14b6115c7ab9748a95462812
+  checksum: 10/195342d1d421f192387b5ae1342b0d6774a7fae31dfa32684c5bd4b224727b93b1355ed9467765a2464ccbe3fc1b86ee40929c42dfb0e033563fb8b4b66cb277
   languageName: node
   linkType: hard
 
