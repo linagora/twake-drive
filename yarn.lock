@@ -4379,14 +4379,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@linagora/twake-icons@npm:^2.7.0":
-  version: 2.7.0
-  resolution: "@linagora/twake-icons@npm:2.7.0"
+"@linagora/twake-icons@npm:^2.10.0":
+  version: 2.10.0
+  resolution: "@linagora/twake-icons@npm:2.10.0"
   dependencies:
     mime: "npm:4.1.0"
   peerDependencies:
     react: ^18
-  checksum: 10/847b632874cb95fbddadb2840511d49fa123de4f4514b14a387ab8e50bc38074ddb799526fac7a9ee0f8c7b43c873d817b9938b791aef71f3b7866755fe42839
+  checksum: 10/33ad04d9cfe60dc47f6d3db0f114068cef4a10ea539d6ba3e3434bfa68874cc22a37ad7d2aad734b682700945aecb9d951e47addca26390c09e472a12084ec92
   languageName: node
   linkType: hard
 
@@ -12024,7 +12024,7 @@ __metadata:
     "@embedpdf/pdfium": "npm:2.14.3"
     "@embedpdf/react-pdf-viewer": "npm:2.14.3"
     "@excalidraw/excalidraw": "npm:0.18.1"
-    "@linagora/twake-icons": "npm:^2.7.0"
+    "@linagora/twake-icons": "npm:^2.10.0"
     "@playwright/test": "npm:^1.58.2"
     "@rsbuild/core": "npm:^1.5.15"
     "@rsdoctor/rspack-plugin": "npm:^1.6.3"
@@ -12060,7 +12060,7 @@ __metadata:
     cozy-pouch-link: "npm:^60.33.0"
     cozy-realtime: "npm:^5.9.3"
     cozy-search: "npm:^2.2.18"
-    cozy-sharing: "npm:^37.6.0"
+    cozy-sharing: "npm:^37.7.0"
     cozy-stack-client: "npm:^60.33.0"
     cozy-tsconfig: "npm:^1.8.1"
     cozy-ui: "npm:^141.0.0"
@@ -12370,9 +12370,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cozy-sharing@npm:^37.6.0":
-  version: 37.6.0
-  resolution: "cozy-sharing@npm:37.6.0"
+"cozy-sharing@npm:^37.7.0":
+  version: 37.7.0
+  resolution: "cozy-sharing@npm:37.7.0"
   dependencies:
     "@cozy/minilog": "npm:^1.0.0"
     classnames: "npm:^2.5.1"
@@ -12395,7 +12395,7 @@ __metadata:
     react: ">=16.12.0"
     react-router: ">=5.0.1"
     twake-i18n: ">=0.3.0"
-  checksum: 10/c2c21092f1108c4cbb2ee35e5c6e88e3447e3471bf9098be9c7520aba8b8b113a13eb24112d7831bf02fd06021ac141b316e45d55c8174a6e3a35d6c7e9e0759
+  checksum: 10/43be925cd0aca1c59bf053e82c3b4e06339c70870a64618f961625ed1c0aa7f2197f2c3d80bea62982d31e5e76e1199a40e6d12e9da620104e33c51a3c524085
   languageName: node
   linkType: hard
 
