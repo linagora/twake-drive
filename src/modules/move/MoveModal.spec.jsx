@@ -60,15 +60,28 @@ jest.mock('components/FolderPicker/FolderPicker', () => ({
 
 jest.mock('@/modules/move/MoveTo', () => ({
   __esModule: true,
-  MoveTo: ({ onConfirm, currentFolder, isBusy }) => (
-    <div data-testid="move-to">
-      <h1>{currentFolder.name}</h1>
-      <button onClick={() => onConfirm(currentFolder)} disabled={isBusy}>
-        Move
-      </button>
-      <button>Close</button>
-    </div>
-  )
+  MoveTo: ({ onConfirm, currentFolder, isBusy }) => {
+    const { allLoaded } = require('cozy-sharing').useSharingContext()
+    const disabledReason = isBusy
+      ? 'Move.moveInProgress'
+      : !allLoaded
+        ? 'Move.permissionsLoading'
+        : null
+
+    return (
+      <div data-testid="move-to">
+        <h1>{currentFolder.name}</h1>
+        <button
+          onClick={() => onConfirm(currentFolder)}
+          disabled={Boolean(disabledReason)}
+          aria-label={disabledReason ?? 'Move'}
+        >
+          Move
+        </button>
+        <button>Close</button>
+      </div>
+    )
+  }
 }))
 
 describe('MoveModal component', () => {
@@ -206,13 +219,13 @@ describe('MoveModal component', () => {
   }
 
   describe('MoveModal', () => {
-    it('should wait for shares to load before authorising moves', async () => {
+    it('reports permission loading before authorising moves', async () => {
       await waitFor(async () => {
         setup({ allLoaded: false })
       })
 
       const moveButton = await screen.findByRole('button', {
-        name: 'Move'
+        name: 'Move.permissionsLoading'
       })
       expect(moveButton).toBeDisabled()
     })
