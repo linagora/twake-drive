@@ -79,7 +79,7 @@ const FileName = ({
 
   return (
     <span
-      className={hidePath ? undefined : styles['fil-file-name-with-path']}
+      className="u-w-100"
       title={infected ? t('antivirus.infectedFile') : title}
     >
       <Filename
