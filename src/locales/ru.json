@@ -453,6 +453,7 @@
     "folderName": "Имя папки",
     "folderCreationError": "Не удалось создать папку. Попробуйте еще раз.",
     "folderCreationInProgress": "Создание папки",
+    "moveInProgress": "Перемещение",
     "destinationSource": "Эта папка перемещается.",
     "destinationDescendant": "Нельзя переместить папку в саму себя.",
     "destinationReadOnly": "Эта папка доступна только для чтения.",
