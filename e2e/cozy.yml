@@ -32,4 +32,4 @@ contexts:
       auto_accept_trusted: true
       auto_accept_trusted_contacts: true
       trusted_domains:
-        - cozy.localhost
+        - "{{if .Env.COZY_E2E_ROOT_DOMAIN}}{{.Env.COZY_E2E_ROOT_DOMAIN}}{{else}}cozy.localhost{{end}}"
