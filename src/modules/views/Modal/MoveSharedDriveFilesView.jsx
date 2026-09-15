@@ -1,5 +1,5 @@
 import React from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { Navigate, useNavigate, useLocation } from 'react-router-dom'
 
 import { LoaderModal } from '@/components/LoaderModal'
 import useDisplayedFolder from '@/hooks/useDisplayedFolder'
@@ -11,15 +11,23 @@ const MoveSharedDriveFilesView = ({ isOpenInViewer }) => {
   const { state } = useLocation()
   const { displayedFolder } = useDisplayedFolder()
 
+  const hasFileIds = state?.fileIds !== null && state?.fileIds !== undefined
+
   const { sharedDriveResults } = useQueryMultipleSharedDriveFolders({
-    folderIds: state.fileIds,
+    folderIds: hasFileIds ? state.fileIds : [],
     driveId: displayedFolder?.driveId
   })
 
+  if (!hasFileIds) {
+    return <Navigate to=".." replace={true} />
+  }
+
   if (sharedDriveResults && displayedFolder) {
-    // Moved files leave the current folder, so closing from the viewer returns
-    // to the folder rather than the now-stale file viewer.
     const onClose = () => {
+      navigate('..', { replace: true })
+    }
+
+    const onMovingSuccess = () => {
       navigate(isOpenInViewer ? '../..' : '..', { replace: true })
     }
 
@@ -37,6 +45,7 @@ const MoveSharedDriveFilesView = ({ isOpenInViewer }) => {
         currentFolder={displayedFolder}
         entries={entries}
         onClose={onClose}
+        onMovingSuccess={onMovingSuccess}
         showNextcloudFolder={showNextcloudFolder}
         showSharedDriveFolder={true}
         driveId={displayedFolder.driveId}

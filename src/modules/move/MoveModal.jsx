@@ -168,7 +168,7 @@ const MoveModal = ({
       const allTrashedFiles = [...successfulTrashedFiles, ...trashedFiles]
 
       if (movedEntries.length > 0) {
-        refreshNextcloudQueries(folder, movedEntries[0])
+        refreshNextcloudQueries(folder, movedEntries)
         refreshSharing?.()
       }
 
@@ -191,8 +191,11 @@ const MoveModal = ({
       }
 
       notifyMoveSuccess(folder, allSuccessfulEntries, allTrashedFiles)
-      onMovingSuccess?.()
-      onClose()
+      if (onMovingSuccess) {
+        onMovingSuccess()
+      } else {
+        onClose()
+      }
     } catch (e) {
       logger.warn(e)
       showAlert({
@@ -221,12 +224,9 @@ const MoveModal = ({
    * The content from nextcloud queries must be refreshed when moving files
    * This is only a proxy to Nextcloud queries so we don't have real-time or mutations updates
    */
-  const refreshNextcloudQueries = (folder, sourceEntry) => {
+  const refreshNextcloudQueries = (folder, movedEntries) => {
     const isMovingInsideNextcloud =
       folder?._type === 'io.cozy.remote.nextcloud.files'
-    const isMovingOutsideNextcloud =
-      !isMovingInsideNextcloud &&
-      sourceEntry?._type === 'io.cozy.remote.nextcloud.files'
 
     if (isMovingInsideNextcloud) {
       client.resetQuery(
@@ -237,14 +237,23 @@ const MoveModal = ({
       )
     }
 
-    if (isMovingOutsideNextcloud) {
-      client.resetQuery(
-        computeNextcloudFolderQueryId({
-          sourceAccount: sourceEntry.cozyMetadata?.sourceAccount,
-          path: getParentPath(sourceEntry.path)
-        })
-      )
-    }
+    const entries = Array.isArray(movedEntries) ? movedEntries : [movedEntries]
+    const queryIds = new Set()
+    entries.forEach(entry => {
+      if (
+        !isMovingInsideNextcloud &&
+        entry?._type === 'io.cozy.remote.nextcloud.files'
+      ) {
+        const parentPath = entry.parentPath ?? getParentPath(entry.path) ?? '/'
+        queryIds.add(
+          computeNextcloudFolderQueryId({
+            sourceAccount: entry.cozyMetadata?.sourceAccount,
+            path: parentPath
+          })
+        )
+      }
+    })
+    queryIds.forEach(queryId => client.resetQuery(queryId))
   }
 
   const handleCancelMovingOutside = () => {
