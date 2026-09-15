@@ -129,6 +129,18 @@ export async function findAvailablePort(
   throw new Error(`No available port found starting from ${startPort}`)
 }
 
+function reserveExplicitPort(value: string, reserved: Set<number>): number {
+  const port = Number(value)
+  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    throw new Error(`Invalid explicit port: ${value}`)
+  }
+  if (reserved.has(port)) {
+    throw new Error(`Explicit port ${port} is configured more than once`)
+  }
+  reserved.add(port)
+  return port
+}
+
 export function isDockerProjectRunning(projectName: string): boolean {
   try {
     const output = execFileSync(
@@ -175,6 +187,7 @@ export function getE2EProjectName(): string {
 export async function resolveE2EPorts(): Promise<E2EPortsConfig> {
   const projectName = getE2EProjectName()
   const rootDomain = process.env.COZY_E2E_ROOT_DOMAIN || 'cozy.localhost'
+  const reserved = new Set<number>()
 
   if (
     process.env.COZY_E2E_STACK_PORT &&
@@ -183,9 +196,12 @@ export async function resolveE2EPorts(): Promise<E2EPortsConfig> {
   ) {
     const config: E2EPortsConfig = {
       projectName,
-      stackPort: parseInt(process.env.COZY_E2E_STACK_PORT, 10),
-      adminPort: parseInt(process.env.COZY_E2E_ADMIN_PORT, 10),
-      couchdbPort: parseInt(process.env.COZY_E2E_COUCHDB_PORT, 10),
+      stackPort: reserveExplicitPort(process.env.COZY_E2E_STACK_PORT, reserved),
+      adminPort: reserveExplicitPort(process.env.COZY_E2E_ADMIN_PORT, reserved),
+      couchdbPort: reserveExplicitPort(
+        process.env.COZY_E2E_COUCHDB_PORT,
+        reserved
+      ),
       rootDomain
     }
     fs.writeFileSync(E2E_PORTS_PATH, JSON.stringify(config, null, 2))
@@ -207,17 +223,16 @@ export async function resolveE2EPorts(): Promise<E2EPortsConfig> {
     }
   }
 
-  const reserved = new Set<number>()
   const stackPort = process.env.COZY_E2E_STACK_PORT
-    ? parseInt(process.env.COZY_E2E_STACK_PORT, 10)
+    ? reserveExplicitPort(process.env.COZY_E2E_STACK_PORT, reserved)
     : await findAvailablePort(DEFAULT_E2E_STACK_PORT, reserved)
 
   const adminPort = process.env.COZY_E2E_ADMIN_PORT
-    ? parseInt(process.env.COZY_E2E_ADMIN_PORT, 10)
+    ? reserveExplicitPort(process.env.COZY_E2E_ADMIN_PORT, reserved)
     : await findAvailablePort(DEFAULT_E2E_ADMIN_PORT, reserved)
 
   const couchdbPort = process.env.COZY_E2E_COUCHDB_PORT
-    ? parseInt(process.env.COZY_E2E_COUCHDB_PORT, 10)
+    ? reserveExplicitPort(process.env.COZY_E2E_COUCHDB_PORT, reserved)
     : await findAvailablePort(DEFAULT_E2E_COUCHDB_PORT, reserved)
 
   const config: E2EPortsConfig = {
@@ -283,6 +298,7 @@ function matchesDevOverrides(config: E2EPortsConfig): boolean {
 export async function resolveDevPorts(): Promise<E2EPortsConfig> {
   const projectName = getDevProjectName()
   const rootDomain = getDevRootDomain()
+  const reserved = new Set<number>()
 
   const saved = loadDevPorts()
   if (
@@ -306,17 +322,16 @@ export async function resolveDevPorts(): Promise<E2EPortsConfig> {
     }
   }
 
-  const reserved = new Set<number>()
   const stackPort = process.env.COZY_E2E_STACK_PORT
-    ? parseInt(process.env.COZY_E2E_STACK_PORT, 10)
+    ? reserveExplicitPort(process.env.COZY_E2E_STACK_PORT, reserved)
     : await findAvailablePort(DEFAULT_DEV_STACK_PORT, reserved)
 
   const adminPort = process.env.COZY_E2E_ADMIN_PORT
-    ? parseInt(process.env.COZY_E2E_ADMIN_PORT, 10)
+    ? reserveExplicitPort(process.env.COZY_E2E_ADMIN_PORT, reserved)
     : await findAvailablePort(DEFAULT_DEV_ADMIN_PORT, reserved)
 
   const couchdbPort = process.env.COZY_E2E_COUCHDB_PORT
-    ? parseInt(process.env.COZY_E2E_COUCHDB_PORT, 10)
+    ? reserveExplicitPort(process.env.COZY_E2E_COUCHDB_PORT, reserved)
     : await findAvailablePort(DEFAULT_DEV_COUCHDB_PORT, reserved)
 
   const config: E2EPortsConfig = {
