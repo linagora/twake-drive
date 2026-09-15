@@ -8,7 +8,9 @@ and installs the Drive app in each instance.
 
 - Node version from `.nvmrc` and dependencies installed with `yarn install`
 - Docker with the Compose plugin available as `docker compose`
-- The host ports `18080`, `15984`, and `16060` available (can be configured via `COZY_E2E_STACK_PORT`, `COZY_E2E_COUCHDB_PORT`, `COZY_E2E_ADMIN_PORT`)
+- Host ports are selected automatically, starting from `18080`, `15984`, and
+  `16060`. They can be forced with `COZY_E2E_STACK_PORT`,
+  `COZY_E2E_COUCHDB_PORT`, and `COZY_E2E_ADMIN_PORT`.
 - A production build of Drive
 - Playwright Chromium installed
 
@@ -30,8 +32,8 @@ before the suite starts and after it finishes. Use it when a clean E2E state
 is wanted.
 
 The suite uses one Playwright worker because its scenarios share Alice and Bob
-fixture state. Do not run two local suites at the same time: they target the
-same Compose project and host ports.
+fixture state. Each worktree gets its own Compose project and available host
+ports, so suites from different worktrees can run concurrently.
 
 ## Reuse a local runtime
 
@@ -66,18 +68,24 @@ the normal teardown also runs after the suite.
 To remove the runtime without running tests:
 
 ```sh
-docker compose -f docker-compose.e2e.yml down --volumes
+E2E_PROJECT_NAME=$(node -p "require('./e2e/.e2e-ports.json').projectName")
+docker compose -f docker-compose.e2e.yml \
+  --project-name "$E2E_PROJECT_NAME" down --volumes
 ```
 
 ## Isolate a test runtime
 
-By default, the E2E suite uses the default Docker Compose project name. If you need to isolate a test run from an existing persistent runtime, use `E2E_PROJECT_NAME`:
+By default, the E2E suite derives a project name from the current worktree, such
+as `twake-e2e-wt-stack`. Use `E2E_PROJECT_NAME` to override that identity:
 
 ```sh
 E2E_PROJECT_NAME=custom-harness yarn e2e
 ```
 
-The harness will apply this explicit Compose identity to all startup, lifecycle, and teardown commands. To run concurrent suites, combine `E2E_PROJECT_NAME` with custom port overrides (`COZY_E2E_STACK_PORT`, etc.) to prevent port collisions.
+The harness applies this explicit Compose identity to every startup, lifecycle,
+and teardown command. Concurrent suites launched from the same worktree must
+use distinct project names and explicit, non-overlapping port overrides because
+they share the same saved configuration file.
 
 ## Debugging and reports
 
