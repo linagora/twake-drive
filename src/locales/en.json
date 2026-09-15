@@ -475,6 +475,7 @@
     "folderName": "Folder name",
     "folderCreationError": "The folder could not be created. Please try again.",
     "folderCreationInProgress": "Creating folder",
+    "moveInProgress": "Moving",
     "destinationSource": "This folder is being moved.",
     "destinationDescendant": "A folder cannot be moved inside itself.",
     "destinationReadOnly": "This folder is read-only.",

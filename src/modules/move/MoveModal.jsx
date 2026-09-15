@@ -228,7 +228,7 @@ const MoveModal = ({
           entries={entries}
           onConfirm={handleConfirm}
           onClose={onClose}
-          isBusy={isMoveInProgress || !allLoaded}
+          isBusy={isMoveInProgress}
         />
       ) : (
         <FolderPicker
