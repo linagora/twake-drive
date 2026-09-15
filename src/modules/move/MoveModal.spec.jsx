@@ -1,15 +1,24 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  within
+} from '@testing-library/react'
 import React from 'react'
 
 import { createMockClient, useQuery } from 'cozy-client'
 import { move } from 'cozy-client/dist/models/file'
 import flag from 'cozy-flags'
 import { useSharingContext } from 'cozy-sharing'
+import useBrowserOffline from 'cozy-ui/transpiled/react/hooks/useBrowserOffline'
 
 import { MoveModal } from './MoveModal'
 import AppLike from 'test/components/AppLike'
 
 jest.mock('cozy-flags', () => jest.fn())
+jest.mock('cozy-ui/transpiled/react/hooks/useBrowserOffline')
+jest.mock('@/lib/logger', () => ({ warn: jest.fn() }))
 
 import { ROOT_DIR_ID } from '@/constants/config'
 import { CozyFile } from '@/models'
@@ -32,6 +41,7 @@ jest.mock('cozy-client/dist/models/file', () => ({
 
 jest.mock('cozy-client', () => ({
   ...jest.requireActual('cozy-client'),
+  cancelable: promise => Object.assign(promise, { cancel: jest.fn() }),
   useQuery: jest.fn()
 }))
 
@@ -60,25 +70,37 @@ jest.mock('components/FolderPicker/FolderPicker', () => ({
 
 jest.mock('@/modules/move/MoveTo', () => ({
   __esModule: true,
-  MoveTo: ({ onConfirm, currentFolder, isBusy }) => {
+  MoveTo: ({
+    onConfirm,
+    onClose,
+    currentFolder,
+    entries,
+    isBusy,
+    isDestinationLocked
+  }) => {
     const { allLoaded } = require('cozy-sharing').useSharingContext()
-    const disabledReason = isBusy
-      ? 'Move.moveInProgress'
-      : !allLoaded
-        ? 'Move.permissionsLoading'
-        : null
+    const disabledReason = !allLoaded ? 'Move.permissionsLoading' : null
+    const isDisabled = Boolean(isBusy || disabledReason)
 
     return (
       <div data-testid="move-to">
         <h1>{currentFolder.name}</h1>
+        <span data-testid="move-entries">
+          {entries.map(entry => entry.name).join(',')}
+        </span>
+        <span data-testid="destination-locked">
+          {String(isDestinationLocked)}
+        </span>
         <button
           onClick={() => onConfirm(currentFolder)}
-          disabled={Boolean(disabledReason)}
-          aria-label={disabledReason ?? 'Move'}
+          disabled={isDisabled}
+          aria-label={disabledReason ?? undefined}
         >
           Move
         </button>
-        <button>Close</button>
+        <button onClick={onClose} disabled={isDisabled}>
+          Close
+        </button>
       </div>
     )
   }
@@ -148,6 +170,7 @@ describe('MoveModal component', () => {
 
   beforeEach(() => {
     flag.mockImplementation(name => name === 'drive.move-to-picker.enabled')
+    useBrowserOffline.mockReturnValue(false)
   })
 
   const setup = ({
@@ -158,11 +181,13 @@ describe('MoveModal component', () => {
     allLoaded = true,
     sharingContext = {},
     currentFolder = destinationFolder,
-    isPublic = false
+    isPublic = false,
+    onMovingSuccess
   } = {}) => {
     const props = {
       entries,
       onClose: onCloseSpy,
+      onMovingSuccess,
       classes: { paper: {} },
       isPublic
     }
@@ -248,6 +273,141 @@ describe('MoveModal component', () => {
         expect(move).toHaveBeenCalled()
         expect(onCloseSpy).toHaveBeenCalled()
       })
+    })
+
+    it('keeps the modal open and retries only failed entries after a partial success', async () => {
+      let shouldFail = true
+      const onMovingSuccess = jest.fn()
+      setup({ entries: defaultEntries.slice(0, 2), onMovingSuccess })
+      move.mockImplementation((_client, entry) => {
+        if (entry._id === 'bill_201902' && shouldFail) {
+          return Promise.reject(new Error('network error'))
+        }
+        return Promise.resolve({
+          deleted: entry._id === 'bill_201901' ? 'trashed-file' : null,
+          moved: entry
+        })
+      })
+
+      fireEvent.click(await screen.findByText('Move'))
+
+      await waitFor(() => {
+        expect(screen.getByTestId('move-entries')).toHaveTextContent(
+          /^bill_201902.pdf$/
+        )
+      })
+      expect(screen.getByTestId('move-entries')).not.toHaveTextContent(
+        'bill_201901.pdf'
+      )
+      expect(screen.getByTestId('destination-locked')).toHaveTextContent('true')
+      expect(screen.getByRole('button', { name: 'Move' })).toBeEnabled()
+      expect(
+        within(screen.getByTestId('move-to')).getByRole('button', {
+          name: 'Close'
+        })
+      ).toBeEnabled()
+      expect(screen.getByText('Moved: 1. Failed: 1.')).toBeInTheDocument()
+      expect(onCloseSpy).not.toHaveBeenCalled()
+      expect(onMovingSuccess).not.toHaveBeenCalled()
+
+      shouldFail = false
+      fireEvent.click(screen.getByRole('button', { name: 'Move' }))
+
+      await waitFor(() => expect(onCloseSpy).toHaveBeenCalledTimes(1))
+      expect(move.mock.calls.map(([, entry]) => entry._id)).toEqual([
+        'bill_201901',
+        'bill_201902',
+        'bill_201902'
+      ])
+      expect(onMovingSuccess).toHaveBeenCalledTimes(1)
+      expect(
+        await screen.findByText(
+          '2 elements have been moved to Destination Folder.'
+        )
+      ).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument()
+    })
+
+    it('notifies only successful entries when closing after a partial success', async () => {
+      setup({ entries: defaultEntries.slice(0, 2) })
+      move.mockImplementation((_client, entry) =>
+        entry._id === 'bill_201902'
+          ? Promise.reject(new Error('network error'))
+          : Promise.resolve({ deleted: null, moved: entry })
+      )
+      fireEvent.click(await screen.findByText('Move'))
+      await screen.findByText('Moved: 1. Failed: 1.')
+      fireEvent.click(
+        within(screen.getByTestId('move-to')).getByRole('button', {
+          name: 'Close'
+        })
+      )
+
+      expect(onCloseSpy).toHaveBeenCalledTimes(1)
+      expect(
+        await screen.findByText(
+          'bill_201901.pdf has been moved to Destination Folder.'
+        )
+      ).toBeInTheDocument()
+      expect(
+        screen.queryByText(
+          'bill_201902.pdf has been moved to Destination Folder.'
+        )
+      ).toBe(null)
+    })
+
+    it('keeps the modal open and restores controls after every move fails', async () => {
+      setup({ entries: defaultEntries.slice(0, 2) })
+      move.mockRejectedValue(new Error('network error'))
+      fireEvent.click(await screen.findByText('Move'))
+
+      await screen.findByText(
+        'Something went wrong while moving these elements, please try again later.'
+      )
+      expect(screen.getByRole('button', { name: 'Move' })).toBeEnabled()
+      expect(
+        within(screen.getByTestId('move-to')).getByRole('button', {
+          name: 'Close'
+        })
+      ).toBeEnabled()
+      expect(screen.getByTestId('destination-locked')).toHaveTextContent(
+        'false'
+      )
+      expect(onCloseSpy).not.toHaveBeenCalled()
+    })
+
+    it('does not start a move while offline', async () => {
+      useBrowserOffline.mockReturnValue(true)
+      setup({ entries: defaultEntries.slice(0, 1) })
+
+      fireEvent.click(await screen.findByText('Move'))
+
+      expect(move).not.toHaveBeenCalled()
+      expect(onCloseSpy).not.toHaveBeenCalled()
+      expect(screen.getByRole('button', { name: 'Move' })).toBeEnabled()
+      expect(
+        screen.getByText(
+          'Something went wrong while moving this element, please try again later.'
+        )
+      ).toBeInTheDocument()
+    })
+
+    it('locks close and confirmation while moves are pending', async () => {
+      let resolveMove
+      setup({ entries: defaultEntries.slice(0, 1) })
+      move.mockReturnValue(
+        new Promise(resolve => {
+          resolveMove = resolve
+        })
+      )
+
+      fireEvent.click(await screen.findByText('Move'))
+
+      expect(screen.getByRole('button', { name: 'Move' })).toBeDisabled()
+      expect(screen.getByRole('button', { name: 'Close' })).toBeDisabled()
+
+      resolveMove({ deleted: null, moved: defaultEntries[0] })
+      await waitFor(() => expect(onCloseSpy).toHaveBeenCalledTimes(1))
     })
 
     it('should move entries to destination', async () => {
