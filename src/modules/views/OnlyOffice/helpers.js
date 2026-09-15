@@ -158,6 +158,16 @@ export const makeMimeByClass = fileClass => {
   return mimeByClass[fileClass]
 }
 
+// The primary "Create my Twake" CTA must appear once: this decides whether
+// it's the toolbar button, so the more-menu and the sharing banner know to
+// hide their own copy of it.
+export const showCreateCozyButton = ({
+  isPublic,
+  isMobile,
+  isShareNotAdded,
+  isCozyToCozySharingSynced
+}) => isPublic && !isMobile && isShareNotAdded && !isCozyToCozySharingSynced
+
 // The sharing banner need to be shown only on the first arrival
 // and not after browsing inside a folder
 // When it comes from cozy to cozy sharing, we don't want the banner at all

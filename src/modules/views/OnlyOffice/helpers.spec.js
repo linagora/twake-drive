@@ -1,4 +1,40 @@
-import { showSharingBanner } from '@/modules/views/OnlyOffice/helpers'
+import {
+  showCreateCozyButton,
+  showSharingBanner
+} from '@/modules/views/OnlyOffice/helpers'
+
+describe('showCreateCozyButton', () => {
+  const baseProps = {
+    isPublic: true,
+    isMobile: false,
+    isShareNotAdded: true,
+    isCozyToCozySharingSynced: false
+  }
+
+  it('should show it on a public desktop view where the share is not added yet', () => {
+    expect(showCreateCozyButton(baseProps)).toBe(true)
+  })
+
+  it('should not show it when not public', () => {
+    expect(showCreateCozyButton({ ...baseProps, isPublic: false })).toBe(false)
+  })
+
+  it('should not show it on mobile', () => {
+    expect(showCreateCozyButton({ ...baseProps, isMobile: true })).toBe(false)
+  })
+
+  it('should not show it when the share has already been added', () => {
+    expect(showCreateCozyButton({ ...baseProps, isShareNotAdded: false })).toBe(
+      false
+    )
+  })
+
+  it('should not show it once cozy to cozy sharing is synced', () => {
+    expect(
+      showCreateCozyButton({ ...baseProps, isCozyToCozySharingSynced: true })
+    ).toBe(false)
+  })
+})
 
 describe('showSharingBanner', () => {
   describe('for 1 entry in history', () => {

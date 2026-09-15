@@ -11,6 +11,7 @@ import { makeStyles } from 'cozy-ui/transpiled/react/styles'
 import { TrashedBanner } from '@/components/TrashedBanner'
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
 import Toolbar from '@/modules/views/OnlyOffice/Toolbar'
+import { showCreateCozyButton } from '@/modules/views/OnlyOffice/helpers'
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -39,6 +40,14 @@ const Title = () => {
     isPublic &&
     (!isShareAlreadyAdded || !isCozyToCozySharing) &&
     !isCozyToCozySharingSynced
+  // The toolbar already shows the "Create my Twake" button in this case:
+  // avoid duplicating it in the sharing banner
+  const showCreateCozyAction = showCreateCozyButton({
+    isPublic,
+    isMobile,
+    isShareNotAdded: !loading && !isSharingShortcutCreated,
+    isCozyToCozySharingSynced
+  })
 
   const isAddToMyCozyFabDisplayed =
     isMobile && isCozyToCozySharing && !isShareAlreadyAdded
@@ -59,7 +68,7 @@ const Title = () => {
           <TrashedBanner fileId={fileId} isPublic={isPublic} />
         </div>
       ) : isSharingBannerPluginDisplayed ? (
-        <SharingBannerPlugin />
+        <SharingBannerPlugin hideCreateCozyAction={showCreateCozyAction} />
       ) : null}
       {isAddToMyCozyFabDisplayed && (
         <OpenSharingLinkFabButton link={sharingInfos.addSharingLink} />
