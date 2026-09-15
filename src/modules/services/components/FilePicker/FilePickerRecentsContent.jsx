@@ -4,11 +4,11 @@ import { useEffect } from 'react'
 import useRecentFiles from '@/hooks/useRecentFiles'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 
-const isItemDisabled = () => false
-
 export const FilePickerRecentsContent = ({
   renderContent,
-  rootBreadcrumbPath
+  rootBreadcrumbPath,
+  isItemDisabled,
+  getItemDisabledReason
 }) => {
   const { data, fetchStatus } = useRecentFiles()
   const { selectedItems, setIsSelectAll, setSelectedItems } =
@@ -38,6 +38,7 @@ export const FilePickerRecentsContent = ({
     fetchMore: null,
     breadcrumbPath: [rootBreadcrumbPath],
     isItemDisabled,
+    getItemDisabledReason,
     withFilePath: true,
     isFetchingMore: fetchStatus === 'loading' && items.length > 0,
     keepItemsOnError: true,
@@ -51,5 +52,12 @@ FilePickerRecentsContent.propTypes = {
   rootBreadcrumbPath: PropTypes.shape({
     id: PropTypes.string.isRequired,
     name: PropTypes.string.isRequired
-  }).isRequired
+  }).isRequired,
+  isItemDisabled: PropTypes.func,
+  getItemDisabledReason: PropTypes.func
+}
+
+FilePickerRecentsContent.defaultProps = {
+  isItemDisabled: () => false,
+  getItemDisabledReason: () => null
 }

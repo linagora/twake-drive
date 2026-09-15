@@ -189,6 +189,42 @@ describe('FilePickerBody', () => {
     )
   })
 
+  it('combines caller disabling with pending invitation disabling at the Sharings root', () => {
+    useFilteredSharings.mockReturnValue({
+      filteredResult: {
+        data: [
+          { _id: 'disabled-file', name: 'Disabled file', type: 'file' },
+          {
+            _id: 'pending-id',
+            name: 'Pending invitation',
+            type: 'directory',
+            metadata: { sharing: { status: 'new' } }
+          }
+        ],
+        fetchStatus: 'loaded',
+        lastFetch: 1
+      },
+      sharedDrivesLoaded: true,
+      sharedDrivesError: null
+    })
+
+    render(
+      <FilePickerBody
+        {...baseProps}
+        isItemDisabled={item => item._id === 'disabled-file'}
+        section={filePickerSections.SHARINGS}
+        folderId={FILE_PICKER_SHARINGS_ROOT_ID}
+      />
+    )
+
+    expect(
+      screen.getByRole('button', { name: 'Disabled file:local' })
+    ).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: 'Pending invitation:local' })
+    ).toBeDisabled()
+  })
+
   it.each([
     ['loading', 'file-picker-loading'],
     ['loaded', 'file-picker-empty']
