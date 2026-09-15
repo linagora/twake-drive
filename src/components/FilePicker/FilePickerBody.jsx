@@ -302,6 +302,7 @@ const SharedDriveFolderContent = ({
   getItemDisabledReason,
   isItemIncluded,
   renderFilePickerContent,
+  additionalItems,
   sortOrder
 }) => {
   const path = useBreadcrumbPath({
@@ -312,25 +313,33 @@ const SharedDriveFolderContent = ({
   })
   const { sharedDriveResult, fetchStatus, hasMore, fetchMore } =
     useSharedDriveFolder({ driveId, folderId })
-  const items = useMemo(
-    () =>
-      sortFiles(
-        (sharedDriveResult.included ?? [])
-          .map(item => ({ ...item, driveId }))
-          .filter(
-            item =>
-              isItemTypeDisplayed(item, displayedTypes) && isItemIncluded(item)
-          ),
-        sortOrder
-      ),
-    [
-      displayedTypes,
-      driveId,
-      isItemIncluded,
-      sharedDriveResult.included,
+  const items = useMemo(() => {
+    const sourceItems = (sharedDriveResult.included ?? []).map(item => ({
+      ...item,
+      driveId
+    }))
+    const sourceIds = new Set(sourceItems.map(item => item._id ?? item.id))
+    const addedItems = additionalItems.filter(
+      item =>
+        item?.dir_id === folderId &&
+        item.driveId === driveId &&
+        !sourceIds.has(item._id ?? item.id)
+    )
+    return sortFiles(
+      [...sourceItems, ...addedItems]
+        .filter(item => isItemTypeDisplayed(item, displayedTypes))
+        .filter(isItemIncluded),
       sortOrder
-    ]
-  )
+    )
+  }, [
+    additionalItems,
+    displayedTypes,
+    driveId,
+    folderId,
+    isItemIncluded,
+    sharedDriveResult.included,
+    sortOrder
+  ])
 
   return renderFilePickerContent({
     items,
@@ -353,6 +362,7 @@ SharedDriveFolderContent.propTypes = {
   getItemDisabledReason: PropTypes.func,
   isItemIncluded: PropTypes.func.isRequired,
   renderFilePickerContent: PropTypes.func.isRequired,
+  additionalItems: PropTypes.arrayOf(PropTypes.object),
   sortOrder: PropTypes.shape({
     attribute: PropTypes.string.isRequired,
     order: PropTypes.string.isRequired
@@ -481,6 +491,7 @@ export const FilePickerBody = ({
         isItemDisabled={isItemDisabled}
         getItemDisabledReason={externalGetItemDisabledReason}
         isItemIncluded={isItemIncluded}
+        additionalItems={additionalItems}
         sortOrder={sortOrder}
         renderFilePickerContent={renderFilePickerContent}
       />
