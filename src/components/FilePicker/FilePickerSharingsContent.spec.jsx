@@ -46,6 +46,9 @@ function renderFilePickerContent(source) {
           {item.name}
         </button>
       ))}
+      <span data-testid="disabled-reason">
+        {source.getItemDisabledReason(source.items[0])}
+      </span>
     </div>
   )
 }
@@ -54,7 +57,9 @@ function setup({
   allLoaded = true,
   filteredResult = { data: [], fetchStatus: 'loaded', lastFetch: 1 },
   sharedDrivesLoaded = true,
-  sharedDocumentIds = ['shared-id', 'duplicate']
+  sharedDocumentIds = ['shared-id', 'duplicate'],
+  isItemDisabled,
+  getItemDisabledReason
 } = {}) {
   useSharingContext.mockReturnValue({
     allLoaded,
@@ -79,6 +84,8 @@ function setup({
         rootBreadcrumbPath={rootBreadcrumbPath}
         sharedDocumentIds={sharedDocumentIds}
         displayedTypes={Object.values(filePickerItemTypes)}
+        isItemDisabled={isItemDisabled}
+        getItemDisabledReason={getItemDisabledReason}
         renderFilePickerContent={renderFilePickerContent}
       />
     )
@@ -120,6 +127,34 @@ describe('FilePickerSharingsContent', () => {
       screen.getByRole('button', { name: 'Pending invitation' })
     ).toBeDisabled()
     expect(screen.getByTestId('breadcrumb')).toHaveTextContent('Sharings')
+  })
+
+  it('combines caller disabling callbacks with pending invitation disabling', () => {
+    const isItemDisabled = item => item._id === 'file-id'
+    const getItemDisabledReason = () => 'reason'
+
+    setup({
+      isItemDisabled,
+      getItemDisabledReason,
+      filteredResult: {
+        fetchStatus: 'loaded',
+        lastFetch: 1,
+        data: [
+          { _id: 'file-id', name: 'Received file' },
+          {
+            _id: 'pending-id',
+            name: 'Pending invitation',
+            metadata: { sharing: { status: 'new' } }
+          }
+        ]
+      }
+    })
+
+    expect(screen.getByRole('button', { name: 'Received file' })).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: 'Pending invitation' })
+    ).toBeDisabled()
+    expect(screen.getByTestId('disabled-reason')).toHaveTextContent('reason')
   })
 
   it('does not expose cached items while Sharings is loading', () => {
