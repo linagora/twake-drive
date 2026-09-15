@@ -194,17 +194,18 @@ export function MoveTo({
     location: initialLocation,
     status: 'loading'
   })
-  const isBrowserBusy = isBusy || isCreatingFolder
+  const isBrowserBusy = isBusy || isCreatingFolder || allLoaded !== true
   const isItemVisible = isLocalMoveDestination
-  const getItemDisabledReason = item =>
-    isBrowserBusy
-      ? 'Move.folderCreationInProgress'
-      : getMoveDestinationDisabledReason(
-          item,
-          entries,
-          hasWriteAccess,
-          allLoaded
-        )
+  const getItemDisabledReason = item => {
+    if (isBusy) return 'Move.moveInProgress'
+    if (isCreatingFolder) return 'Move.folderCreationInProgress'
+    return getMoveDestinationDisabledReason(
+      item,
+      entries,
+      hasWriteAccess,
+      allLoaded
+    )
+  }
   const isItemDisabled = item => Boolean(getItemDisabledReason(item))
   const destinationFolder = currentFolderState.folder
   const destinationError =

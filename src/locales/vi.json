@@ -453,6 +453,7 @@
     "folderName": "Tên thư mục",
     "folderCreationError": "Không thể tạo thư mục. Vui lòng thử lại.",
     "folderCreationInProgress": "Đang tạo thư mục",
+    "moveInProgress": "Đang di chuyển",
     "destinationSource": "Thư mục này đang được di chuyển.",
     "destinationDescendant": "Không thể di chuyển thư mục vào chính nó.",
     "destinationReadOnly": "Thư mục này chỉ có quyền đọc.",

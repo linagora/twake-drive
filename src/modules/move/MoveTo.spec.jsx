@@ -305,6 +305,15 @@ describe('MoveTo', () => {
   afterEach(() => jest.clearAllMocks())
 
   it('keeps the move action disabled until permissions are loaded', () => {
+    contentItems = [
+      {
+        _id: 'available-folder',
+        _type: 'io.cozy.files',
+        type: 'directory',
+        name: 'Available folder',
+        path: '/Available folder'
+      }
+    ]
     useSharingContext.mockReturnValue({
       allLoaded: false,
       byDocId: {},
@@ -313,12 +322,24 @@ describe('MoveTo', () => {
     })
 
     setup({
-      currentFolder: destinationFolder,
       entries: [{ _id: 'file-id', dir_id: 'other-folder', name: 'File' }]
     })
 
     expect(screen.getByRole('button', { name: 'Move.action' })).toBeDisabled()
     expect(screen.queryByRole('button', { name: 'Move.addFolder' })).toBe(null)
+    expect(
+      screen.getByRole('button', {
+        name: 'Available folder. Move.permissionsLoading'
+      })
+    ).toBeDisabled()
+  })
+
+  it('shows a move-in-progress reason while the move is busy', () => {
+    setup({ isBusy: true })
+
+    expect(
+      screen.getByRole('button', { name: 'Child folder. Move.moveInProgress' })
+    ).toBeDisabled()
   })
 
   it('keeps read-only destinations visible and disabled', () => {
@@ -410,6 +431,11 @@ describe('MoveTo', () => {
     expect(input).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Move.cancel' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Move.action' })).toBeDisabled()
+    expect(
+      screen.getByRole('button', {
+        name: 'Alpha. Move.folderCreationInProgress'
+      })
+    ).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Open Alpha' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'My Drive' })).toBeDisabled()
     fireEvent.click(screen.getByRole('button', { name: 'My Drive' }))
