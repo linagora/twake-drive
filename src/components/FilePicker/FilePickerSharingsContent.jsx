@@ -17,9 +17,13 @@ export const FilePickerSharingsContent = ({
   rootBreadcrumbPath,
   sharedDocumentIds,
   displayedTypes,
-  isItemVisible
+  isItemVisible,
+  isItemDisabled: externalIsItemDisabled,
+  getItemDisabledReason
 }) => {
   const { allLoaded } = useSharingContext()
+  const isItemDisabled = item =>
+    isSharingShortcutNew(item) || externalIsItemDisabled(item)
   const sharingsResult = useSharingsQueryResult(sharedDocumentIds, allLoaded)
   const { filteredResult, sharedDrivesLoaded, sharedDrivesError } =
     useFilteredSharings({
@@ -48,7 +52,8 @@ export const FilePickerSharingsContent = ({
     hasMore: false,
     fetchMore: null,
     breadcrumbPath: [rootBreadcrumbPath],
-    isItemDisabled: isSharingShortcutNew,
+    isItemDisabled,
+    getItemDisabledReason,
     emptyMessageKey: 'empty.sharing_text'
   })
 }
@@ -61,9 +66,13 @@ FilePickerSharingsContent.propTypes = {
   }).isRequired,
   sharedDocumentIds: PropTypes.arrayOf(PropTypes.string).isRequired,
   displayedTypes: PropTypes.arrayOf(PropTypes.string).isRequired,
-  isItemVisible: PropTypes.func.isRequired
+  isItemVisible: PropTypes.func.isRequired,
+  isItemDisabled: PropTypes.func,
+  getItemDisabledReason: PropTypes.func
 }
 
 FilePickerSharingsContent.defaultProps = {
-  isItemVisible: () => true
+  isItemVisible: () => true,
+  isItemDisabled: () => false,
+  getItemDisabledReason: () => null
 }
