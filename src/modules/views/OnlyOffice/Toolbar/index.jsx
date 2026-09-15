@@ -18,6 +18,7 @@ import PublicToolbarMoreMenu from '@/modules/public/PublicToolbarMoreMenu'
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
 import FileIcon from '@/modules/views/OnlyOffice/Toolbar/FileIcon'
 import SummarizeByAIButtonWrapper from '@/modules/views/OnlyOffice/Toolbar/SummarizeByAIButtonWrapper'
+import { showCreateCozyButton } from '@/modules/views/OnlyOffice/helpers'
 import EditorTitleStart from '@/modules/views/editor/EditorTitleStart'
 import { buildFileOrFolderByIdQuery, buildFileWhereByIdQuery } from '@/queries'
 
@@ -60,9 +61,15 @@ const Toolbar = ({ sharingInfos }) => {
 
   // addSharingLink exists only in cozy to cozy sharing
   const link = isCozyToCozySharing ? addSharingLink : createCozyLink
+  const showSharingLinkButton = showCreateCozyButton({
+    isPublic,
+    isMobile,
+    isShareNotAdded,
+    isCozyToCozySharingSynced
+  })
   const actions = makeActions(
     [
-      !isCozyToCozySharing && createCozySharingLink,
+      !isCozyToCozySharing && !showSharingLinkButton && createCozySharingLink,
       isCozyToCozySharing && addToCozySharingLink,
       isCozyToCozySharing && syncToCozySharingLink
     ],
@@ -74,8 +81,6 @@ const Toolbar = ({ sharingInfos }) => {
       isSharingShortcutCreated
     }
   )
-  const showSharingLinkButton =
-    isPublic && !isMobile && isShareNotAdded && !isCozyToCozySharingSynced
 
   return (
     <>
