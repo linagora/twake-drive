@@ -119,6 +119,7 @@ export class FilePickerPage {
   }
 
   async navigateToFolderOnMobile(name: string): Promise<void> {
+    await this.scrollToItem(name)
     await this.tapItem(name)
     await this.getFrameLocator()
       .getByTestId('file-picker-breadcrumb')
