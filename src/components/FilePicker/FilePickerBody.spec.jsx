@@ -565,7 +565,7 @@ describe('FilePickerBody', () => {
     ).toBeInTheDocument()
   })
 
-  it('applies the visibility predicate to local folders', () => {
+  it('applies the inclusion predicate to local folders', () => {
     useQuery.mockReturnValue({
       data: [
         { _id: 'visible-folder', name: 'Visible folder', type: 'directory' },
@@ -577,7 +577,7 @@ describe('FilePickerBody', () => {
     render(
       <FilePickerBody
         {...baseProps}
-        isItemVisible={item => item._id !== 'hidden-folder'}
+        isItemIncluded={item => item._id !== 'hidden-folder'}
         section={filePickerSections.DRIVE}
         folderId="root-id"
       />
@@ -591,7 +591,7 @@ describe('FilePickerBody', () => {
     )
   })
 
-  it('applies the visibility predicate to sharings and shared-drive items', () => {
+  it('applies the inclusion predicate to sharings and shared-drive items', () => {
     useFilteredSharings.mockReturnValue({
       filteredResult: {
         data: [
@@ -605,11 +605,11 @@ describe('FilePickerBody', () => {
       sharedDrivesError: null
     })
 
-    const isItemVisible = item => !item._id.startsWith('hidden')
+    const isItemIncluded = item => !item._id.startsWith('hidden')
     render(
       <FilePickerBody
         {...baseProps}
-        isItemVisible={isItemVisible}
+        isItemIncluded={isItemIncluded}
         section={filePickerSections.SHARINGS}
         folderId={FILE_PICKER_SHARINGS_ROOT_ID}
       />
@@ -636,7 +636,7 @@ describe('FilePickerBody', () => {
     render(
       <FilePickerBody
         {...baseProps}
-        isItemVisible={isItemVisible}
+        isItemIncluded={isItemIncluded}
         section={filePickerSections.SHARINGS}
         folderId="folder-id"
         driveId="drive-id"
@@ -651,7 +651,7 @@ describe('FilePickerBody', () => {
     ).toBe(null)
   })
 
-  it('normalizes shared-drive items before applying visibility', () => {
+  it('normalizes shared-drive items before applying inclusion', () => {
     useSharedDriveFolder.mockReturnValue({
       sharedDriveResult: {
         included: [
@@ -666,7 +666,7 @@ describe('FilePickerBody', () => {
     render(
       <FilePickerBody
         {...baseProps}
-        isItemVisible={item => !item.driveId}
+        isItemIncluded={item => !item.driveId}
         section={filePickerSections.SHARINGS}
         folderId="folder-id"
         driveId="drive-id"

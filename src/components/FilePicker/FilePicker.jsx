@@ -123,7 +123,7 @@ const FilePickerController = ({
   onReadyToUse,
   error,
   renderHeader,
-  isItemVisible,
+  isItemIncluded,
   isItemDisabled,
   getItemDisabledReason,
   isNavigationDisabled,
@@ -241,7 +241,7 @@ const FilePickerController = ({
           error={error}
           onReadyToUse={handleReadyToUse}
           onFileDoubleClick={onFileDoubleClick}
-          isItemVisible={isItemVisible}
+          isItemIncluded={isItemIncluded}
           isItemDisabled={isItemDisabled}
           getItemDisabledReason={getItemDisabledReason}
           beforeItems={beforeItems}
@@ -275,7 +275,7 @@ FilePickerController.propTypes = {
   onReadyToUse: PropTypes.func,
   error: PropTypes.string,
   renderHeader: PropTypes.func,
-  isItemVisible: PropTypes.func,
+  isItemIncluded: PropTypes.func,
   isItemDisabled: PropTypes.func,
   getItemDisabledReason: PropTypes.func,
   isNavigationDisabled: PropTypes.bool,
@@ -324,7 +324,7 @@ FilePicker.propTypes = {
   onReadyToUse: PropTypes.func,
   error: PropTypes.string,
   renderHeader: PropTypes.func,
-  isItemVisible: PropTypes.func,
+  isItemIncluded: PropTypes.func,
   isItemDisabled: PropTypes.func,
   getItemDisabledReason: PropTypes.func,
   isNavigationDisabled: PropTypes.bool,
@@ -340,7 +340,7 @@ FilePicker.defaultProps = {
   selectableTypes: Object.values(filePickerItemTypes),
   multiple: false,
   error: null,
-  isItemVisible: () => true,
+  isItemIncluded: () => true,
   isItemDisabled: () => false,
   getItemDisabledReason: () => null,
   isNavigationDisabled: false,

@@ -76,7 +76,7 @@ export const isValidFolder = (item, validTypes) => {
   return isDirectory(item) && validTypes.includes(`folder`)
 }
 
-export const isDisplayedItem = (item, displayedTypes) =>
+export const isItemTypeDisplayed = (item, displayedTypes) =>
   isDirectory(item)
     ? displayedTypes.includes(filePickerItemTypes.FOLDER)
     : displayedTypes.includes(filePickerItemTypes.FILE)
