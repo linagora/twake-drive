@@ -14,6 +14,7 @@ import CustomDragLayer from 'cozy-ui/transpiled/react/utils/Dnd/CustomDrag/Custo
 import GridWrapper from './GridWrapper'
 
 import styles from '@/styles/filelist.styl'
+import gridStyles from '@/styles/folder-view.styl'
 
 import RightClickFileMenu from '@/components/RightClick/RightClickFileMenu'
 import AddFolder from '@/modules/filelist/AddFolder'
@@ -153,7 +154,7 @@ const Grid = forwardRef(
 
     return (
       <div
-        className="u-h-100"
+        className={cx('u-h-100', gridStyles['fil-folder-body-grid-scroller'])}
         ref={ref}
         tabIndex={0}
         style={{ outline: 'none' }}
