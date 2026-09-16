@@ -15,7 +15,7 @@ import {
   FILE_PICKER_RECENTS_ROOT_ID,
   FILE_PICKER_SHARINGS_ROOT_ID
 } from './constants'
-import { isDisplayedItem, isValidFile } from './helpers'
+import { isItemTypeDisplayed, isValidFile } from './helpers'
 import { buildDisplayedContentFolderQuery } from './queries'
 import { useFilePickerAdapter } from './useFilePickerAdapter'
 
@@ -221,7 +221,7 @@ const LocalFolderContent = ({
   rootBreadcrumbPath,
   sharedDocumentIds,
   isItemDisabled,
-  isItemVisible,
+  isItemIncluded,
   filterReceivedShares,
   allLoaded,
   isOwner,
@@ -252,7 +252,7 @@ const LocalFolderContent = ({
       item => item?.dir_id === folderId && !sourceIds.has(item._id ?? item.id)
     )
     const visibleItems = [...sourceItems, ...addedItems].filter(
-      item => isDisplayedItem(item, displayedTypes) && isItemVisible(item)
+      item => isItemTypeDisplayed(item, displayedTypes) && isItemIncluded(item)
     )
     return additionalItems.length > 0
       ? sortFiles(visibleItems, sortOrder)
@@ -261,7 +261,7 @@ const LocalFolderContent = ({
     additionalItems,
     displayedTypes,
     folderId,
-    isItemVisible,
+    isItemIncluded,
     sortOrder,
     source.items
   ])
@@ -278,7 +278,7 @@ LocalFolderContent.propTypes = {
   rootBreadcrumbPath: PropTypes.object.isRequired,
   sharedDocumentIds: PropTypes.arrayOf(PropTypes.string),
   isItemDisabled: PropTypes.func.isRequired,
-  isItemVisible: PropTypes.func.isRequired,
+  isItemIncluded: PropTypes.func.isRequired,
   filterReceivedShares: PropTypes.bool.isRequired,
   allLoaded: PropTypes.bool.isRequired,
   isOwner: PropTypes.func.isRequired,
@@ -300,7 +300,7 @@ const SharedDriveFolderContent = ({
   sharedDocumentIds,
   isItemDisabled,
   getItemDisabledReason,
-  isItemVisible,
+  isItemIncluded,
   renderFilePickerContent,
   sortOrder
 }) => {
@@ -319,14 +319,14 @@ const SharedDriveFolderContent = ({
           .map(item => ({ ...item, driveId }))
           .filter(
             item =>
-              isDisplayedItem(item, displayedTypes) && isItemVisible(item)
+              isItemTypeDisplayed(item, displayedTypes) && isItemIncluded(item)
           ),
         sortOrder
       ),
     [
       displayedTypes,
       driveId,
-      isItemVisible,
+      isItemIncluded,
       sharedDriveResult.included,
       sortOrder
     ]
@@ -351,7 +351,7 @@ SharedDriveFolderContent.propTypes = {
   sharedDocumentIds: PropTypes.arrayOf(PropTypes.string),
   isItemDisabled: PropTypes.func.isRequired,
   getItemDisabledReason: PropTypes.func,
-  isItemVisible: PropTypes.func.isRequired,
+  isItemIncluded: PropTypes.func.isRequired,
   renderFilePickerContent: PropTypes.func.isRequired,
   sortOrder: PropTypes.shape({
     attribute: PropTypes.string.isRequired,
@@ -371,7 +371,7 @@ export const FilePickerBody = ({
   error,
   onReadyToUse,
   onFileDoubleClick,
-  isItemVisible,
+  isItemIncluded,
   isItemDisabled: externalIsItemDisabled,
   getItemDisabledReason: externalGetItemDisabledReason,
   beforeItems,
@@ -461,7 +461,7 @@ export const FilePickerBody = ({
         displayedTypes={displayedTypes}
         rootBreadcrumbPath={rootBreadcrumbPath}
         sharedDocumentIds={sharedDocumentIds}
-        isItemVisible={isItemVisible}
+        isItemIncluded={isItemIncluded}
         isItemDisabled={isItemDisabled}
         getItemDisabledReason={externalGetItemDisabledReason}
         sortOrder={sortOrder}
@@ -480,7 +480,7 @@ export const FilePickerBody = ({
         sharedDocumentIds={sharedDocumentIds}
         isItemDisabled={isItemDisabled}
         getItemDisabledReason={externalGetItemDisabledReason}
-        isItemVisible={isItemVisible}
+        isItemIncluded={isItemIncluded}
         sortOrder={sortOrder}
         renderFilePickerContent={renderFilePickerContent}
       />
@@ -496,7 +496,7 @@ export const FilePickerBody = ({
         section === filePickerSections.SHARINGS ? sharedDocumentIds : undefined
       }
       isItemDisabled={isItemDisabled}
-      isItemVisible={isItemVisible}
+      isItemIncluded={isItemIncluded}
       getItemDisabledReason={externalGetItemDisabledReason}
       filterReceivedShares={
         filterReceivedShares && section === filePickerSections.DRIVE
@@ -527,7 +527,7 @@ FilePickerBody.propTypes = {
   error: PropTypes.string,
   onReadyToUse: PropTypes.func,
   onFileDoubleClick: PropTypes.func,
-  isItemVisible: PropTypes.func.isRequired,
+  isItemIncluded: PropTypes.func.isRequired,
   isItemDisabled: PropTypes.func,
   getItemDisabledReason: PropTypes.func,
   sortOrder: PropTypes.shape({
@@ -546,7 +546,7 @@ FilePickerBody.defaultProps = {
   driveId: null,
   multiple: false,
   error: null,
-  isItemVisible: () => true,
+  isItemIncluded: () => true,
   isItemDisabled: () => false,
   getItemDisabledReason: () => null,
   sortOrder: DEFAULT_SORT,

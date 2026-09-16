@@ -88,7 +88,7 @@ export function MoveTo({
   const isBrowserBusy =
     isBusy || isCreatingFolder || isValidatingDestination || allLoaded !== true
   const isNavigationLocked = isBrowserBusy || isDestinationLocked
-  const isItemVisible = isLocalMoveDestination
+  const isItemIncluded = isLocalMoveDestination
   const getItemDisabledReason = item => {
     if (isBusy || isValidatingDestination) return 'Move.moveInProgress'
     if (isCreatingFolder) return 'Move.folderCreationInProgress'
@@ -225,7 +225,7 @@ export function MoveTo({
             availableSections={MOVE_TO_SECTIONS}
             displayedTypes={MOVE_TO_DISPLAYED_TYPES}
             selectableTypes={[]}
-            isItemVisible={isItemVisible}
+            isItemIncluded={isItemIncluded}
             getItemDisabledReason={getItemDisabledReason}
             isNavigationDisabled={isNavigationLocked}
             filterReceivedShares={false}
