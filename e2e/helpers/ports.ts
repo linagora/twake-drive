@@ -209,7 +209,11 @@ export async function resolveE2EPorts(): Promise<E2EPortsConfig> {
   }
 
   const saved = loadE2EPorts()
-  if (saved && saved.projectName === projectName) {
+  if (
+    saved &&
+    saved.projectName === projectName &&
+    matchesDevOverrides(saved)
+  ) {
     if (isDockerProjectRunning(projectName)) {
       return saved
     }
