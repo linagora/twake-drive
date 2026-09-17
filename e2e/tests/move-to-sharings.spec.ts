@@ -1,7 +1,6 @@
-import { copyFile } from 'fs/promises'
+import { copyFile, readFile } from 'fs/promises'
 import path from 'path'
 
-import { authenticate } from '../helpers/auth'
 import { USERS } from '../helpers/config'
 import { expect, safeUnlink, stamp, test } from '../helpers/fixtures'
 import {
@@ -9,44 +8,43 @@ import {
   openOwnerFolder,
   openSharedDrive
 } from '../helpers/sharing'
-import { trashByName } from '../helpers/stack'
-import { DrivePage } from '../pages/DrivePage'
+import { fetchFileContent, trashByName } from '../helpers/stack'
 
 const FIXTURE = path.resolve(__dirname, '..', 'fixtures', 'sample.txt')
 const BOB_ROOT = `${USERS.bob.appUrl}/#/folder`
 const EDITOR_SHARE = `Move Editor Share ${stamp()}`
+const DESTINATION_SHARE = `Move Destination Share ${stamp()}`
 const VIEWER_SHARE = `Move Viewer Share ${stamp()}`
 const NESTED_DESTINATION = `Move Nested Destination ${stamp()}`
 
 test.describe.serial('MoveTo received sharings', () => {
-  test.beforeAll(async ({ browser, contextOptions }) => {
-    const aliceContext = await browser.newContext(contextOptions)
-    const bobContext = await browser.newContext(contextOptions)
+  test('sets up received sharing destinations', async ({
+    alicePage,
+    aliceDrive,
+    bobPage,
+    bobDrive,
+    charliePage,
+    charlieDrive
+  }) => {
+    await createAndShareFolderWithBob(alicePage, aliceDrive, EDITOR_SHARE, {
+      seed: async () => {
+        await aliceDrive.createFolder(NESTED_DESTINATION)
+      }
+    })
+    await createAndShareFolderWithBob(alicePage, aliceDrive, VIEWER_SHARE, {
+      role: 'Viewer'
+    })
 
-    try {
-      const alicePage = await aliceContext.newPage()
-      const bobPage = await bobContext.newPage()
-      const aliceDrive = new DrivePage(alicePage)
-      const bobDrive = new DrivePage(bobPage)
+    await charliePage.goto(`${USERS.charlie.appUrl}/#/folder`)
+    await charlieDrive.createFolder(DESTINATION_SHARE)
+    await charlieDrive.openFolder(DESTINATION_SHARE)
+    const shareModal = await charlieDrive.openShareModal()
+    await shareModal.addMember(USERS.bob.email)
+    await shareModal.share()
 
-      await authenticate(alicePage, 'alice')
-      await authenticate(bobPage, 'bob')
-
-      await createAndShareFolderWithBob(alicePage, aliceDrive, EDITOR_SHARE, {
-        seed: async () => {
-          await aliceDrive.createFolder(NESTED_DESTINATION)
-        }
-      })
-      await createAndShareFolderWithBob(alicePage, aliceDrive, VIEWER_SHARE, {
-        role: 'Viewer'
-      })
-
-      await openSharedDrive(bobPage, USERS.bob, bobDrive, EDITOR_SHARE)
-      await openSharedDrive(bobPage, USERS.bob, bobDrive, VIEWER_SHARE)
-    } finally {
-      await aliceContext.close()
-      await bobContext.close()
-    }
+    await openSharedDrive(bobPage, USERS.bob, bobDrive, EDITOR_SHARE)
+    await openSharedDrive(bobPage, USERS.bob, bobDrive, DESTINATION_SHARE)
+    await openSharedDrive(bobPage, USERS.bob, bobDrive, VIEWER_SHARE)
   })
 
   test('moves a file into a nested received folder', async ({
@@ -132,6 +130,66 @@ test.describe.serial('MoveTo received sharings', () => {
     } finally {
       await trashByName(USERS.bob.instance, sourceFolder)
       await safeUnlink(childPath)
+    }
+  })
+
+  test('moves a file between federated shared drives owned by different users', async ({
+    alicePage,
+    aliceDrive,
+    bobPage,
+    bobDrive,
+    charliePage,
+    charlieDrive
+  }) => {
+    const sourceFile = `Move between shares ${stamp()}.txt`
+    const sourcePath = path.join(path.dirname(FIXTURE), sourceFile)
+    await copyFile(FIXTURE, sourcePath)
+
+    try {
+      await openOwnerFolder(alicePage, USERS.alice, aliceDrive, EDITOR_SHARE)
+      await aliceDrive.uploadFiles(sourcePath)
+      await aliceDrive.row(sourceFile).waitVisible()
+
+      await openSharedDrive(bobPage, USERS.bob, bobDrive, EDITOR_SHARE)
+      await bobDrive.row(sourceFile).waitVisible({ timeout: 10_000 })
+
+      const moveTo = await bobDrive.row(sourceFile).openMoveTo()
+      await moveTo.openSharings()
+      await moveTo.openFolder(DESTINATION_SHARE)
+      await moveTo.confirmSharedFolderMove()
+
+      await bobPage.reload()
+      await bobDrive.row(sourceFile).waitHidden()
+
+      await expect(async () => {
+        await alicePage.reload()
+        await aliceDrive.row(sourceFile).waitHidden({ timeout: 5_000 })
+      }).toPass({ timeout: 30_000 })
+
+      await openOwnerFolder(
+        charliePage,
+        USERS.charlie,
+        charlieDrive,
+        DESTINATION_SHARE
+      )
+      await expect(async () => {
+        await charliePage.reload()
+        await charlieDrive.row(sourceFile).waitVisible({ timeout: 5_000 })
+      }).toPass({ timeout: 30_000 })
+
+      const destinationFileId = await charlieDrive.row(sourceFile).fileId()
+      const expectedContent = await readFile(FIXTURE, 'utf8')
+      await expect(
+        fetchFileContent({
+          instance: USERS.charlie.instance,
+          fileId: destinationFileId
+        })
+      ).resolves.toBe(expectedContent)
+
+      await openSharedDrive(bobPage, USERS.bob, bobDrive, DESTINATION_SHARE)
+      await bobDrive.row(sourceFile).waitVisible({ timeout: 10_000 })
+    } finally {
+      await safeUnlink(sourcePath)
     }
   })
 

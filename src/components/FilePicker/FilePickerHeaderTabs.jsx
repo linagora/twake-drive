@@ -53,7 +53,7 @@ export const FilePickerHeaderTabs = ({
       aria-label={t('Nav.item_file_picker')}
       className={cx(
         styles.filePickerNavigation,
-        'u-flex-self-start u-mt-half u-w-auto'
+        'u-flex-self-start u-ml-1 u-mt-half u-w-auto'
       )}
       narrowed
       textColor="primary"

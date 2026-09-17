@@ -178,6 +178,8 @@ describe('MoveModal component', () => {
   beforeEach(() => {
     flag.mockImplementation(name => name === 'drive.move-to-picker.enabled')
     mockClient.resetQuery = jest.fn()
+    delete defaultTargetFolder.driveId
+    delete defaultTargetFolder.cozyMetadata
     moveRelateToSharedDrive.mockReset()
     moveRelateToSharedDrive.mockResolvedValue({ deleted: null, moved: true })
   })
@@ -738,6 +740,50 @@ describe('MoveModal component', () => {
         expect(onCloseSpy).toHaveBeenCalledTimes(1)
         expect(refreshSpy).toHaveBeenCalled()
         expect(screen.queryByRole('button', { name: 'Cancel' })).toBe(null)
+      })
+    })
+
+    it('confirms moving a file between federated shared drives', async () => {
+      defaultTargetFolder.driveId = 'drive-beta'
+      defaultTargetFolder.cozyMetadata = {
+        createdOn: 'https://charlie.mycozy.cloud'
+      }
+      setup({
+        entries: sharedDriveEntries.slice(0, 1),
+        currentFolder: {
+          _id: 'source-folder',
+          _type: 'io.cozy.files',
+          driveId: 'drive-alpha',
+          name: 'Team Alpha',
+          path: '/Shared drives/Team Alpha'
+        },
+        driveId: 'drive-alpha'
+      })
+
+      fireEvent.click(await screen.findByText('Move'))
+
+      expect(
+        await screen.findByText('Move to a shared folder?')
+      ).toBeInTheDocument()
+      fireEvent.click(screen.getByRole('button', { name: 'Ok' }))
+
+      await waitFor(() => {
+        expect(moveRelateToSharedDrive).toHaveBeenCalledWith(
+          mockClient,
+          {
+            instance: 'instance.cozy.example',
+            file_id: 'sd-file-1',
+            dir_id: '',
+            sharing_id: 'drive-alpha'
+          },
+          {
+            instance: 'https://charlie.mycozy.cloud',
+            sharing_id: 'drive-beta',
+            dir_id: 'destinationFolder'
+          },
+          false
+        )
+        expect(onCloseSpy).toHaveBeenCalledTimes(1)
       })
     })
 

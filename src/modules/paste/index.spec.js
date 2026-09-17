@@ -4,7 +4,8 @@ import { handlePasteOperation } from './index'
 jest.mock('cozy-client/dist/models/file', () => ({
   isFile: jest.fn(),
   copy: jest.fn(),
-  move: jest.fn()
+  move: jest.fn(),
+  moveRelateToSharedDrive: jest.fn()
 }))
 
 jest.mock('./utils', () => ({
@@ -20,7 +21,12 @@ jest.mock('../../lib/logger', () => ({
   info: jest.fn()
 }))
 
-const { isFile, copy, move } = require('cozy-client/dist/models/file')
+const {
+  isFile,
+  copy,
+  move,
+  moveRelateToSharedDrive
+} = require('cozy-client/dist/models/file')
 
 const { resolveNameConflictsForCut } = require('./utils')
 const { hasOneOfEntriesShared } = require('../move/helpers')
@@ -75,6 +81,10 @@ describe('handlePasteOperation', () => {
     isFile.mockReturnValue(true)
     copy.mockResolvedValue({ data: { _id: 'copied-file' } })
     move.mockResolvedValue({ data: { _id: 'moved-file' } })
+    moveRelateToSharedDrive.mockResolvedValue({
+      moved: { _id: 'moved-shared-file' },
+      deleted: null
+    })
     resolveNameConflictsForCut.mockResolvedValue(mockFiles)
     hasOneOfEntriesShared.mockReturnValue(false)
 
@@ -220,6 +230,60 @@ describe('handlePasteOperation', () => {
         mockTargetFolder,
         { force: false }
       )
+    })
+
+    it('moves a file between federated shared drives', async () => {
+      const sharedFile = {
+        _id: 'shared-file',
+        driveId: 'source-drive',
+        name: 'shared.txt',
+        type: 'file',
+        cozyMetadata: { createdOn: 'https://alice.mycozy.cloud' }
+      }
+      const sharedTarget = {
+        _id: 'target-folder',
+        driveId: 'destination-drive',
+        name: 'Target Folder',
+        path: '/Target Folder',
+        cozyMetadata: { createdOn: 'https://charlie.mycozy.cloud' }
+      }
+      resolveNameConflictsForCut.mockResolvedValue([sharedFile])
+
+      const result = await handlePasteOperation(
+        mockClient,
+        [sharedFile],
+        'cut',
+        mockSourceDirectory,
+        sharedTarget,
+        mockOptions
+      )
+
+      expect(moveRelateToSharedDrive).toHaveBeenCalledWith(
+        mockClient,
+        {
+          instance: 'https://alice.mycozy.cloud',
+          file_id: 'shared-file',
+          dir_id: '',
+          sharing_id: 'source-drive'
+        },
+        {
+          instance: 'https://charlie.mycozy.cloud',
+          sharing_id: 'destination-drive',
+          dir_id: 'target-folder'
+        },
+        false
+      )
+      expect(move).not.toHaveBeenCalled()
+      expect(result).toEqual([
+        {
+          success: true,
+          file: {
+            moved: { _id: 'moved-shared-file' },
+            deleted: null
+          },
+          operation: 'move'
+        }
+      ])
     })
   })
 

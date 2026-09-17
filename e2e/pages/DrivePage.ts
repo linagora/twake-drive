@@ -2,6 +2,7 @@ import type { Page, Locator } from '@playwright/test'
 
 import { FileRow } from './FileRow'
 import { MoveToPage } from './MoveToPage'
+import { ShareModalPage } from './ShareModalPage'
 
 /**
  * Page object for the Drive file list view (My Drive, Trash, Favorites,
@@ -35,6 +36,13 @@ export class DrivePage {
     const moveTo = new MoveToPage(this.page)
     await moveTo.waitForOpen()
     return moveTo
+  }
+
+  async openShareModal(): Promise<ShareModalPage> {
+    await this.page.getByRole('button', { name: /share/i }).click()
+    const shareModal = new ShareModalPage(this.page)
+    await shareModal.waitForOpen()
+    return shareModal
   }
 
   /** Open a folder and wait until its document has loaded. The route
