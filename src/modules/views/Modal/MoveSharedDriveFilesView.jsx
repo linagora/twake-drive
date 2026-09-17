@@ -1,5 +1,5 @@
 import React from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
 
 import { LoaderModal } from '@/components/LoaderModal'
 import useDisplayedFolder from '@/hooks/useDisplayedFolder'
@@ -9,27 +9,41 @@ import { useQueryMultipleSharedDriveFolders } from '@/modules/shareddrives/hooks
 const MoveSharedDriveFilesView = ({ isOpenInViewer }) => {
   const navigate = useNavigate()
   const { state } = useLocation()
+  const { driveId } = useParams()
   const { displayedFolder } = useDisplayedFolder()
 
+  const hasFileIds = state?.fileIds !== null && state?.fileIds !== undefined
+
   const { sharedDriveResults } = useQueryMultipleSharedDriveFolders({
-    folderIds: state.fileIds,
-    driveId: displayedFolder?.driveId
+    folderIds: hasFileIds ? state.fileIds : [],
+    driveId
   })
 
+  if (!hasFileIds) {
+    return <Navigate to=".." replace={true} />
+  }
+
   if (sharedDriveResults && displayedFolder) {
-    // Moved files leave the current folder, so closing from the viewer returns
-    // to the folder rather than the now-stale file viewer.
     const onClose = () => {
+      navigate('..', { replace: true })
+    }
+
+    const onMovingSuccess = () => {
       navigate(isOpenInViewer ? '../..' : '..', { replace: true })
     }
 
     const showNextcloudFolder = !sharedDriveResults.some(
       file => file.type === 'directory'
     )
+    const displayedFolderPath = displayedFolder.path.startsWith(
+      '/Shared drives/'
+    )
+      ? displayedFolder.path
+      : `/Shared drives${displayedFolder.path}`
 
     const entries = sharedDriveResults.map(file => ({
       ...file,
-      path: `${displayedFolder.path}/${file.name}`
+      path: `${displayedFolderPath}/${file.name}`
     }))
 
     return (
@@ -37,9 +51,10 @@ const MoveSharedDriveFilesView = ({ isOpenInViewer }) => {
         currentFolder={displayedFolder}
         entries={entries}
         onClose={onClose}
+        onMovingSuccess={onMovingSuccess}
         showNextcloudFolder={showNextcloudFolder}
         showSharedDriveFolder={true}
-        driveId={displayedFolder.driveId}
+        driveId={driveId}
       />
     )
   }
