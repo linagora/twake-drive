@@ -1,13 +1,21 @@
+import { copyFile } from 'fs/promises'
+import path from 'path'
+
 import type { Browser, Page } from '@playwright/test'
 
 import { USERS } from '../helpers/config'
-import { findLinkPermission, setLinkExpiry } from '../helpers/stack'
-import { test, expect, stamp } from '../helpers/fixtures'
+import {
+  findLinkPermission,
+  setLinkExpiry,
+  trashById
+} from '../helpers/stack'
+import { test, expect, safeUnlink, stamp } from '../helpers/fixtures'
 import type { DrivePage } from '../pages/DrivePage'
 import { ShareByLinkPage } from '../pages/ShareByLinkPage'
 import { PublicLinkPage } from '../pages/PublicLinkPage'
 
 const ALICE_ROOT = `${USERS.alice.appUrl}/#/folder`
+const FIXTURE = path.resolve(__dirname, '..', 'fixtures', 'sample.txt')
 
 /** MM/dd/yyyy for the English DatePicker, `offsetDays` from today. */
 function localeDate(offsetDays: number): string {
@@ -68,6 +76,59 @@ async function withAnonymousPage(
 }
 
 test.describe('Share by link', () => {
+  test('moves a file into a folder through an editable public link', async ({
+    alicePage,
+    aliceDrive,
+    publicPage
+  }) => {
+    await alicePage
+      .context()
+      .grantPermissions(['clipboard-read', 'clipboard-write'])
+
+    await alicePage.goto(ALICE_ROOT)
+    const sharedFolder = `Public move ${stamp()}`
+    const destination = `Destination ${stamp()}`
+    const sourceFile = `Public source ${stamp()}.txt`
+    const sourcePath = path.join(path.dirname(FIXTURE), sourceFile)
+    let sharedFolderId: string | null = null
+
+    await copyFile(FIXTURE, sourcePath)
+    try {
+      await aliceDrive.createFolder(sharedFolder)
+      await aliceDrive.openFolder(sharedFolder)
+      sharedFolderId = alicePage.url().match(/\/folder\/([^/?]+)/)?.[1] ?? null
+      expect(sharedFolderId).not.toBe(null)
+
+      await aliceDrive.createFolder(destination)
+      await aliceDrive.uploadFiles(sourcePath)
+      await aliceDrive.row(sourceFile).waitVisible()
+
+      await openShareModal(alicePage)
+      const link = new ShareByLinkPage(alicePage)
+      const url = await link.createLink()
+      await reopenShareModal(alicePage)
+      await link.waitForLinkRow()
+      await link.allowEditing()
+
+      await publicPage.goto(url)
+      const publicLink = new PublicLinkPage(publicPage)
+      await expect(publicLink.fileList).toBeVisible({ timeout: 15_000 })
+
+      const moveTo = await publicLink.openMoveTo(sourceFile)
+      await moveTo.openFolder(destination)
+      await moveTo.confirm()
+
+      await publicLink.row(sourceFile).waitHidden()
+      await publicLink.openFolder(destination)
+      await expect(publicLink.row(sourceFile).cell).toBeVisible()
+    } finally {
+      await safeUnlink(sourcePath)
+      if (sharedFolderId) {
+        await trashById(USERS.alice.instance, sharedFolderId)
+      }
+    }
+  })
+
   test('a password-protected link challenges before granting access', async ({
     alicePage,
     aliceDrive,

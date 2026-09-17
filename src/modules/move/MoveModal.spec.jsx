@@ -946,5 +946,29 @@ describe('MoveModal component', () => {
       expect(screen.getByTestId('folder-picker')).toBeInTheDocument()
       expect(screen.queryByTestId('move-to')).not.toBeInTheDocument()
     })
+
+    it('moves inside a public folder without authenticated sharing paths', async () => {
+      flag.mockImplementation(() => true)
+      setup({
+        entries: defaultEntries.slice(0, 1),
+        currentFolder: destinationFolder,
+        isPublic: true,
+        sharingContext: {
+          sharedPaths: undefined,
+          hasSharedParent: () => false
+        }
+      })
+
+      fireEvent.click(screen.getByRole('button', { name: 'Move' }))
+
+      await waitFor(() => {
+        expect(move).toHaveBeenCalledWith(
+          mockClient,
+          defaultEntries[0],
+          destinationFolder,
+          { force: false }
+        )
+      })
+    })
   })
 })
