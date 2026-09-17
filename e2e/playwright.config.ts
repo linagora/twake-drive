@@ -25,7 +25,7 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      testIgnore: /file-picker\.mobile\.spec\.ts/,
+      testIgnore: /\.mobile\.spec\.ts/,
       use: {
         browserName: 'chromium',
         viewport: { width: 1280, height: 720 }
@@ -33,7 +33,7 @@ export default defineConfig({
     },
     {
       name: 'mobile',
-      testMatch: /file-picker\.mobile\.spec\.ts/,
+      testMatch: /\.mobile\.spec\.ts/,
       use: {
         ...devices['Pixel 5'],
         browserName: 'chromium'

@@ -130,7 +130,12 @@ export class FileRow {
 
   async openMoveTo(): Promise<MoveToPage> {
     const menu = await this.openMenu()
-    await menu.getByRole('menuitem', { name: /move to/i }).click()
+    const menuItem = menu.getByRole('menuitem', { name: /move to/i })
+    if (await menuItem.isVisible()) {
+      await menuItem.click()
+    } else {
+      await this.page.getByRole('button', { name: /^move$/i }).click()
+    }
     const moveTo = new MoveToPage(this.page)
     await moveTo.waitForOpen()
     return moveTo
