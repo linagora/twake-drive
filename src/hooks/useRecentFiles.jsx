@@ -3,8 +3,13 @@ import { useEffect, useState, useMemo } from 'react'
 import { useClient } from 'cozy-client'
 import { useDataProxy } from 'cozy-dataproxy-lib'
 
+import { SETTINGS_DIR_PATH } from '@/constants/config'
 import logger from '@/lib/logger'
 import { buildRecentQuery } from '@/queries'
+
+const filterOutSettingsFiles = files => {
+  return files.filter(file => !file.path?.startsWith(SETTINGS_DIR_PATH))
+}
 
 const useDataProxyRecents = () => {
   const [data, setData] = useState([])
@@ -23,7 +28,7 @@ const useDataProxyRecents = () => {
       if (dataProxy.dataProxyServicesAvailable) {
         try {
           const data = await dataProxy.recents()
-          setData(data || [])
+          setData(filterOutSettingsFiles(data || []))
           setFetchStatus('loaded')
           return
         } catch (err) {
@@ -37,7 +42,7 @@ const useDataProxyRecents = () => {
             definition: recentQuery.definition(),
             options: recentQuery.options
           })
-          setData(result?.data || [])
+          setData(filterOutSettingsFiles(result?.data || []))
           setFetchStatus('loaded')
         } catch (err) {
           logger.warn('Error fetching recents from fallback query', err)
