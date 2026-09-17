@@ -18,11 +18,15 @@ export const isNavigableUrl = url => {
   }
 }
 
-const ExternalRedirect = ({ t }) => {
-  const { fileId } = useParams()
+export const ExternalRedirect = ({ t }) => {
+  const { driveId, fileId } = useParams()
   const client = useClient()
-  const { shortcutInfos, fetchStatus } = useFetchShortcut(client, fileId)
-  const url = shortcutInfos?.data.attributes.url
+  const { shortcutInfos, fetchStatus } = useFetchShortcut(
+    client,
+    fileId,
+    driveId
+  )
+  const url = shortcutInfos?.data.url
   const isLoaded = fetchStatus === 'loaded'
   const hasFailed =
     fetchStatus === 'failed' || (isLoaded && (!url || !isNavigableUrl(url)))
