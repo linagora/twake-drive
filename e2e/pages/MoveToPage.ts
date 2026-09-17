@@ -174,6 +174,17 @@ export class MoveToPage {
     ).toBeVisible()
   }
 
+  async expectTotalFailure(): Promise<void> {
+    await expect(this.dialog).toBeVisible()
+    await expect(
+      this.page.getByText(
+        /Something went wrong while moving these elements|Une erreur est survenue pendant le déplacement de ces éléments/i
+      )
+    ).toBeVisible()
+    await expect(this.moveButton).toBeEnabled()
+    await expect(this.cancelButton).toBeEnabled()
+  }
+
   async expectRemainingEntry(name: string): Promise<void> {
     await expect(this.dialog.getByRole('heading')).toHaveText(name)
   }

@@ -53,11 +53,14 @@ export class DrivePage {
   async openFolder(name: string): Promise<void> {
     await this.row(name).open()
     await this.page.waitForURL(/\/folder\/[^/]+$/)
-    await this.page
+    const desktopBreadcrumb = this.page
       .getByRole('main')
       .getByRole('navigation')
       .getByText(name, { exact: true })
-      .waitFor({ state: 'attached' })
+    const mobileHeading = this.page
+      .getByRole('banner')
+      .getByRole('heading', { name, exact: true })
+    await desktopBreadcrumb.or(mobileHeading).waitFor({ state: 'attached' })
   }
 
   /** Locator for the file list cell whose filename contains the substring —
