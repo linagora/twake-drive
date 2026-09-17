@@ -1,6 +1,7 @@
 import { USERS } from '../helpers/config'
 import { test, expect, stamp } from '../helpers/fixtures'
 import { DEFAULT_FLAGS, setFlags } from '../helpers/flags'
+import { openSharedDrive } from '../helpers/sharing'
 import { trashByName } from '../helpers/stack'
 import { DowngradeConfirmDialogPage } from '../pages/DowngradeConfirmDialogPage'
 import { ShareModalPage } from '../pages/ShareModalPage'
@@ -53,6 +54,7 @@ for (const combo of COMBOS) {
     const SUBFOLDER = `Nested Child ${stamp()}`
     const DIRECT_PARENT = `Nested Direct Parent ${stamp()}`
     const SHAREDCHILD_PARENT = `Nested Shared-Child Parent ${stamp()}`
+    const RECIPIENT_PARENT = `Nested Recipient Parent ${stamp()}`
 
     test.beforeAll(() => {
       setFlags(USERS.alice.instance, {
@@ -68,6 +70,9 @@ for (const combo of COMBOS) {
         await trashByName(USERS.alice.instance, PARENTFOLDER)
         await trashByName(USERS.alice.instance, DIRECT_PARENT)
         await trashByName(USERS.alice.instance, SHAREDCHILD_PARENT)
+        if (combo.federated) {
+          await trashByName(USERS.alice.instance, RECIPIENT_PARENT)
+        }
       }
       setFlags(USERS.alice.instance, DEFAULT_FLAGS)
     })
@@ -193,6 +198,51 @@ for (const combo of COMBOS) {
           await modal.close()
         }
       })
+
+      if (combo.federated) {
+        test('recipient keeps the full modal on a subfolder they create themselves', async ({
+          alicePage,
+          aliceDrive,
+          bobPage,
+          bobDrive
+        }) => {
+          await alicePage.goto(`${USERS.alice.appUrl}/#/folder`)
+          await aliceDrive.createFolder(RECIPIENT_PARENT)
+          await aliceDrive.openFolder(RECIPIENT_PARENT)
+
+          await alicePage.getByRole('button', { name: /share/i }).click()
+          const shareModal = new ShareModalPage(alicePage)
+          await shareModal.waitForOpen()
+          await shareModal.addMember(USERS.bob.email)
+          await shareModal.share()
+
+          await openSharedDrive(bobPage, USERS.bob, bobDrive, RECIPIENT_PARENT)
+          const childName = `Nested Recipient Child ${stamp()}`
+          await bobDrive.createFolder(childName)
+          await bobDrive.row(childName).waitVisible({ timeout: 10_000 })
+          await bobDrive.row(childName).open()
+          await bobPage.waitForURL(/\/shareddrive\/[^/]+\/[^/]+$/)
+
+          // No Share trigger reaches a subfolder from here without
+          // drive.virtualization.enabled; go straight to its share route.
+          await bobPage.goto(`${bobPage.url()}/share`)
+          const modal = new ShareModalPage(bobPage)
+          await modal.waitForOpen()
+
+          await expect(modal.dialog.getByRole('combobox')).toBeVisible()
+          await expect(
+            modal.dialog.getByRole('button', { name: /^done$/i })
+          ).toBeVisible()
+          await expect(
+            modal.dialog.getByText(/can only be shared by link/i)
+          ).toHaveCount(0)
+          await expect(
+            modal.dialog.getByRole('button', { name: /^copy link$/i })
+          ).toBeVisible()
+
+          await modal.close()
+        })
+      }
 
       test('child modal shared directly', async ({ alicePage, aliceDrive }) => {
         const child = `Nested Direct Child ${stamp()}`
