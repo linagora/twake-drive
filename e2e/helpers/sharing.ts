@@ -3,7 +3,6 @@ import type { Page } from '@playwright/test'
 import { USERS, User } from './config'
 import { expect } from './fixtures'
 import { DrivePage } from '../pages/DrivePage'
-import { ShareModalPage } from '../pages/ShareModalPage'
 
 /**
  * Cross-instance sharing flows shared by the shared-drive specs. With the
@@ -30,16 +29,11 @@ export async function createAndShareFolderWithBob(
 ): Promise<void> {
   await alicePage.goto(`${USERS.alice.appUrl}/#/folder`)
   await aliceDrive.createFolder(folderName)
-  await aliceDrive.row(folderName).open()
-  await alicePage.waitForURL(/\/folder\/[^/]+$/)
-  const shareButton = alicePage.getByRole('button', { name: /share/i })
-  await shareButton.waitFor({ state: 'visible' })
+  await aliceDrive.openFolder(folderName)
 
   await opts.seed?.()
 
-  await shareButton.click()
-  const modal = new ShareModalPage(alicePage)
-  await modal.waitForOpen()
+  const modal = await aliceDrive.openShareModal()
   if (opts.role) await modal.setNewMemberRole(opts.role)
   await modal.addMember(USERS.bob.email)
   await modal.share()
