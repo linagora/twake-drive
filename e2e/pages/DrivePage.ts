@@ -51,6 +51,13 @@ export class DrivePage {
     return moveTo
   }
 
+  async openShareModal(): Promise<ShareModalPage> {
+    await this.page.getByRole('button', { name: /share/i }).click()
+    const shareModal = new ShareModalPage(this.page)
+    await shareModal.waitForOpen()
+    return shareModal
+  }
+
   /** Open a folder and wait until its document has loaded. The route
    * changes before `displayedFolder` is ready, while Create and Upload derive
    * their destination from that document. The attached breadcrumb item
