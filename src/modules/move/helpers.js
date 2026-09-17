@@ -233,6 +233,14 @@ export function computeNextcloudMoveDirections(folder, sourceEntry) {
   return { isMovingInsideNextcloud, isMovingOutsideNextcloud }
 }
 
+export function isSharedDriveMove(folder, sourceEntries, sourceDriveId) {
+  return Boolean(
+    sourceDriveId ||
+    folder?.driveId ||
+    sourceEntries.some(entry => entry.driveId)
+  )
+}
+
 /**
  * @typedef {Object} SharedDoc
  * @property {string[]} permissions - List of permissions

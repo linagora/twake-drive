@@ -24,9 +24,8 @@ const useQueryMultipleSharedDriveFolders = ({
 }: UseQueryMultipleSharedDriveFoldersProps): SharedDriveFolderReturn => {
   const client = useClient()
 
-  const [sharedDriveResults, setSharedDriveResults] = useState<
-    SharedDriveFolderReturn['sharedDriveResults']
-  >([])
+  const [sharedDriveResults, setSharedDriveResults] =
+    useState<SharedDriveFolderReturn['sharedDriveResults']>(null)
 
   const sharedDriveQueries = useMemo(
     () =>
