@@ -25,9 +25,7 @@ test.describe.serial('Shared folder browsing', () => {
 
     // Alice owns the share, so her row lives on the by-me tab.
     await alicePage.goto(`${USERS.alice.appUrl}/#/sharings/by-me`)
-    await expect(aliceDrive.row(SHARED_FOLDER_NAME).cell).toBeVisible({
-      timeout: 15_000
-    })
+    await aliceDrive.row(SHARED_FOLDER_NAME).waitVisible({ timeout: 15_000 })
   })
 
   test('the share auto-accepts on Bob’s side', async ({
@@ -36,9 +34,7 @@ test.describe.serial('Shared folder browsing', () => {
   }) => {
     await expect(async () => {
       await bobPage.goto(`${USERS.bob.appUrl}/#/sharings`)
-      await expect(bobDrive.row(SHARED_FOLDER_NAME).cell).toBeVisible({
-        timeout: 5_000
-      })
+      await bobDrive.row(SHARED_FOLDER_NAME).waitVisible({ timeout: 5_000 })
     }).toPass({ timeout: 30_000 })
   })
 

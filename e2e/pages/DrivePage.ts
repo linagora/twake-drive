@@ -2,6 +2,7 @@ import type { Page, Locator } from '@playwright/test'
 
 import { FileRow } from './FileRow'
 import { MoveToPage } from './MoveToPage'
+import { expect } from '../helpers/fixtures'
 
 /**
  * Page object for the Drive file list view (My Drive, Trash, Favorites,
@@ -12,11 +13,26 @@ import { MoveToPage } from './MoveToPage'
  */
 export class DrivePage {
   private readonly page: Page
-  private readonly fileList: Locator
 
   constructor(page: Page) {
     this.page = page
-    this.fileList = page.getByTestId('fil-content-body')
+  }
+
+  /** The virtualized list replaces the table with its empty-folder dropzone
+   * when there are no rows. Keep a single dynamic locator for both states. */
+  get fileList(): Locator {
+    return this.page
+      .getByRole('table')
+      .or(this.page.getByTestId('empty-folder'))
+  }
+
+  /** List surface in the DOM, including when a modal marks it aria-hidden. */
+  get fileListInDom(): Locator {
+    return this.page
+      .locator('table')
+      .or(this.page.getByTestId('fil-content-body'))
+      .or(this.page.getByTestId('empty-folder'))
+      .first()
   }
 
   row(name: string): FileRow {
@@ -53,17 +69,30 @@ export class DrivePage {
   }
 
   /** Locator for the file list cell whose filename contains the substring —
-   *  use for "the original and its (1) copy" style multi-row assertions. */
+   *  use for "the original and its (1) copy" style multi-row assertions.
+   *  The virtualized table exposes the filename through its title instead of
+   *  the legacy filename test id. */
   matching(stem: string): Locator {
     return this.fileList
       .getByTestId('fil-file-filename-and-ext')
       .filter({ hasText: stem })
+      .or(this.fileList.getByTitle(stem, { exact: false }))
   }
 
   async createFolder(name: string): Promise<void> {
     await this.page.getByRole('button', { name: 'Create' }).click()
     await this.page.getByTestId('add-folder-link').click()
     const input = this.page.getByTestId('name-input').locator('input')
+    await expect
+      .poll(
+        async (): Promise<number> => {
+          const count = await input.count()
+          if (count === 0) await this.scrollFileListToTop()
+          return count
+        },
+        { intervals: [50], timeout: 10_000 }
+      )
+      .toBeGreaterThan(0)
     await input.waitFor({ state: 'visible' })
     await input.fill(name)
     await input.press('Enter')
@@ -137,6 +166,14 @@ export class DrivePage {
   /** Right-click the empty content area; the dropzone wrapper's onContextMenu
    * opens the AddMenu. Callers must be in an empty folder so the click lands
    * on blank space and not on a file row (which opens the file menu instead). */
+  private async scrollFileListToTop(): Promise<void> {
+    const scroller = this.page.getByTestId('virtuoso-scroller')
+    if ((await scroller.count()) === 0) return
+    await scroller.evaluate((element: HTMLElement) => {
+      element.scrollTop = 0
+    })
+  }
+
   private async openAddContextMenu(): Promise<void> {
     await this.fileList.click({ button: 'right' })
     await this.page.getByRole('menu').waitFor({ state: 'visible' })

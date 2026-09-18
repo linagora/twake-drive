@@ -2,7 +2,7 @@ import type { Page, Locator } from '@playwright/test'
 
 import { MoveToPage } from './MoveToPage'
 import { ShareModalPage } from './ShareModalPage'
-import { escapeRegExp } from '../helpers/fixtures'
+import { escapeRegExp, expect } from '../helpers/fixtures'
 
 interface ConfirmDialog {
   button: RegExp
@@ -34,23 +34,83 @@ export class FileRow {
 
   /** Locator for the row's filename cell — exposed so tests can assert
    * visibility / count without going through a wrapper method. Anchored
-   * so similar names ("Folder 1" vs "Folder 12") don't collide. */
+   * so similar names ("Folder 1" vs "Folder 12") don't collide.
+   *
+   * The legacy list exposes a dedicated test id while the virtualized table
+   * exposes the untruncated name through the title attribute. Keep both
+   * locators here so the page object supports either list implementation. */
   get cell(): Locator {
     return this.fileList
       .getByTestId('fil-file-filename-and-ext')
       .filter({ hasText: this.anchored })
+      .or(this.fileList.getByTitle(this.name, { exact: true }))
   }
 
   private get rowEl(): Locator {
-    // Each row is a plain <div> with no semantic role; locate the closest
-    // ancestor that contains the per-row "More" button — that's the row.
-    return this.cell.locator(
-      'xpath=ancestor::*[.//button[@aria-label="More"]][1]'
-    )
+    // Both list implementations render semantic table rows. Locating the
+    // nearest row also works when the virtualized filename is a span rather
+    // than the legacy filename cell.
+    return this.cell.locator('xpath=ancestor::tr[1]')
+  }
+
+  private get actionButton(): Locator {
+    // The virtualized action component currently spells aria-label as
+    // `arial-label`, so support it alongside the correctly labelled legacy
+    // action button.
+    return this.rowEl
+      .getByRole('button', { name: 'More' })
+      .or(this.rowEl.locator('button[arial-label="More"]'))
   }
 
   async waitVisible(opts?: { timeout?: number }): Promise<void> {
-    await this.cell.waitFor({ state: 'visible', timeout: opts?.timeout })
+    let startedFromCurrentPosition = false
+    await expect
+      .poll(
+        async (): Promise<number> => {
+          const cell = this.cell.first()
+          if ((await cell.count()) === 0) {
+            if (startedFromCurrentPosition) await this.scrollNextViewport()
+            else {
+              await this.scrollFileListToTop()
+              startedFromCurrentPosition = true
+            }
+            return 0
+          }
+
+          // Virtualized rows can be replaced between count() and the action
+          // below while a query result is settling. Keep the whole lookup in
+          // the poll so a detached row is retried instead of escaping as a
+          // flaky Playwright error.
+          try {
+            await cell.scrollIntoViewIfNeeded()
+            return (await cell.isVisible()) ? 1 : 0
+          } catch {
+            return 0
+          }
+        },
+        { intervals: [50], timeout: opts?.timeout ?? 10_000 }
+      )
+      .toBe(1)
+  }
+
+  private async scrollFileListToTop(): Promise<void> {
+    const scroller = this.fileList.locator(
+      'xpath=ancestor::*[@data-testid="virtuoso-scroller"][1]'
+    )
+    if ((await scroller.count()) === 0) return
+    await scroller.evaluate((element: HTMLElement) => {
+      element.scrollTop = 0
+    })
+  }
+
+  private async scrollNextViewport(): Promise<void> {
+    const scroller = this.fileList.locator(
+      'xpath=ancestor::*[@data-testid="virtuoso-scroller"][1]'
+    )
+    if ((await scroller.count()) === 0) return
+    await scroller.evaluate((element: HTMLElement) => {
+      element.scrollTop += Math.max(1, Math.floor(element.clientHeight / 2))
+    })
   }
 
   async waitHidden(opts?: { timeout?: number }): Promise<void> {
@@ -71,6 +131,9 @@ export class FileRow {
   /** cozy-drive desktop semantics: single-click selects, double-click
    * navigates / opens. See src/hooks/useOnLongPress/helpers.js handleClick. */
   async open(): Promise<void> {
+    // Virtualized rows outside the viewport are not mounted, so make the
+    // row available before looking for its link.
+    await this.waitVisible()
     // The row's link includes the value of every column in its accessible
     // name ("Foo — — —"), so we locate the row through the filename cell
     // and dblclick whichever link sits inside.
@@ -78,7 +141,7 @@ export class FileRow {
   }
 
   async openMenu(): Promise<Locator> {
-    await this.rowEl.getByRole('button', { name: 'More' }).click()
+    await this.actionButton.click()
     return this.page.getByRole('menu')
   }
 
@@ -119,8 +182,12 @@ export class FileRow {
     await input.fill(newName)
     await input.press('Enter')
     await this.fileList
-      .getByTestId('fil-file-filename-and-ext')
-      .filter({ hasText: new RegExp(`^${escapeRegExp(newName)}$`) })
+      .getByTitle(newName, { exact: true })
+      .or(
+        this.fileList
+          .getByTestId('fil-file-filename-and-ext')
+          .filter({ hasText: new RegExp(`^${escapeRegExp(newName)}$`) })
+      )
       .waitFor({ state: 'visible' })
   }
 

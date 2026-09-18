@@ -62,11 +62,12 @@ test.describe.serial('Share modal surfaces (shared drives)', () => {
     const modal = await aliceDrive.row(DRIVE_NAME).share()
 
     // The modal is layered over the sharings list: the URL is the dedicated
-    // overlay route and the list is still mounted underneath.
+    // overlay route and the list remains the route's background surface.
     await expect(alicePage).toHaveURL(
       /\/sharings\/by-me\/shareddrive\/[^/]+\/[^/]+\/share/
     )
-    await expect(alicePage.getByTestId('fil-content-body')).toBeVisible()
+    await expect(aliceDrive.fileListInDom).toBeAttached()
+    await expect(alicePage.getByRole('dialog')).toBeVisible()
 
     await modal.close()
     // Closing the modal returns to the tab it was opened from.

@@ -21,9 +21,12 @@ export class PublicLinkPage {
     return this.page.locator('input[type="password"]').first()
   }
 
-  /** The Drive public folder view's file list once access is granted. */
+  /** The Drive public folder view once access is granted. */
   get fileList(): Locator {
-    return this.page.getByTestId('fil-content-body')
+    return this.page
+      .getByTestId('fil-content-body')
+      .or(this.page.getByRole('table'))
+      .or(this.page.getByTestId('empty-folder'))
   }
 
   /** Shown when the link is expired or revoked (Error.public_unshared_title). */

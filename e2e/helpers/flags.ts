@@ -6,6 +6,7 @@ import { stackExec } from './config'
 export const DEFAULT_FLAGS: Record<string, boolean | string | number> = {
   'cozy.hide-sharing-cozy-to-cozy': true,
   'drive.shared-drive.enabled': true,
+  'drive.virtualization.enabled': true,
   'drive.federated-shared-folder.enabled': true,
   'drive.federated-shared-modal.enabled': true,
   'drive.file-picker-demo.enabled': true,
