@@ -1,0 +1,1 @@
+"use strict";(globalThis.rspackChunkcozy_drive=globalThis.rspackChunkcozy_drive||[]).push([["3d"],{d3F(r,c,e){var s=e("hpo");e("F0"),e.d(c,{createArchitectureServices:()=>s.S})}}]);

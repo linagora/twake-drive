@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkcozy_drive=self.webpackChunkcozy_drive||[]).push([["4400"],{47747:function(e,c,r){r.d(c,{createArchitectureServices:()=>i.S});var i=r(59363);r(99993)}}]);
