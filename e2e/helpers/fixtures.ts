@@ -13,6 +13,7 @@ import type { UserLabel } from './config'
 import { DrivePage } from '../pages/DrivePage'
 
 type AuthedFixtures = {
+  publicPage: Page
   alicePage: Page
   bobPage: Page
   charliePage: Page
@@ -80,6 +81,14 @@ const userPageFixture =
   }
 
 export const test = base.extend<AuthedFixtures>({
+  publicPage: async ({ browser, contextOptions }, use) => {
+    const context = await browser.newContext(contextOptions)
+    try {
+      await use(await context.newPage())
+    } finally {
+      await context.close()
+    }
+  },
   alicePage: userPageFixture('alice'),
   bobPage: userPageFixture('bob'),
   charliePage: userPageFixture('charlie'),

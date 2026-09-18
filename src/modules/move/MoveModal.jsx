@@ -130,7 +130,7 @@ const MoveModal = ({
   const moveEntries = async folder => {
     try {
       setMoveInProgress(true)
-      const force = !sharedPaths.includes(folder.path)
+      const force = !isPublic && !sharedPaths.includes(folder.path)
       const results = await Promise.allSettled(
         remainingEntries.map(entry =>
           registerCancelable(

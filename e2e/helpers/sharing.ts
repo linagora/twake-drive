@@ -3,7 +3,6 @@ import type { Page } from '@playwright/test'
 import { USERS, User } from './config'
 import { expect } from './fixtures'
 import { DrivePage } from '../pages/DrivePage'
-import { ShareModalPage } from '../pages/ShareModalPage'
 
 /**
  * Cross-instance sharing flows shared by the shared-drive specs. With the
@@ -30,16 +29,11 @@ export async function createAndShareFolderWithBob(
 ): Promise<void> {
   await alicePage.goto(`${USERS.alice.appUrl}/#/folder`)
   await aliceDrive.createFolder(folderName)
-  await aliceDrive.row(folderName).open()
-  await alicePage.waitForURL(/\/folder\/[^/]+$/)
-  const shareButton = alicePage.getByRole('button', { name: /share/i })
-  await shareButton.waitFor({ state: 'visible' })
+  await aliceDrive.openFolder(folderName)
 
   await opts.seed?.()
 
-  await shareButton.click()
-  const modal = new ShareModalPage(alicePage)
-  await modal.waitForOpen()
+  const modal = await aliceDrive.openShareModal()
   if (opts.role) await modal.setNewMemberRole(opts.role)
   await modal.addMember(USERS.bob.email)
   await modal.share()
@@ -78,8 +72,36 @@ export async function openSharedDrive(
   name: string
 ): Promise<void> {
   await waitForSharingRow(page, user, drive, name)
-  await drive.row(name).open()
+  const sharingRow = drive.row(name)
+  const isNewSharingShortcut = await sharingRow.isNewSharingShortcut()
+  const sharingsLink = page
+    .getByRole('complementary')
+    .getByRole('link', { name: /Sharings/ })
+  const sharingsLinkText = isNewSharingShortcut
+    ? await sharingsLink.textContent()
+    : null
+
+  // Opening the drive starts a foreground realtime connection. The stack
+  // uses it to mark the shortcut as seen, so wait until Drive receives that
+  // update before a beforeAll hook can close this temporary browser context.
+  const folderLoaded = page.waitForResponse(response => {
+    const url = new URL(response.url())
+
+    return (
+      response.request().method() === 'GET' &&
+      /\/sharings\/drives\/[^/]+\/[^/]+$/.test(url.pathname) &&
+      url.searchParams.has('page[limit]') &&
+      response.ok()
+    )
+  })
+  await sharingRow.open()
   await page.waitForURL(/\/shareddrive\/[^/]+\/[^/]+/)
+  await folderLoaded
+  if (sharingsLinkText !== null) {
+    await expect
+      .poll(() => sharingsLink.textContent(), { timeout: 30_000 })
+      .not.toBe(sharingsLinkText)
+  }
 }
 
 /**

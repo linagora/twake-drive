@@ -32,6 +32,14 @@ export class MoveToPage {
     })
   }
 
+  get driveTab(): Locator {
+    return this.dialog.getByRole('tab', { name: /my drive/i })
+  }
+
+  get sharingsTab(): Locator {
+    return this.dialog.getByRole('tab', { name: /sharings/i })
+  }
+
   get createFolderButton(): Locator {
     return this.dialog.getByRole('button', { name: /create folder/i })
   }
@@ -79,6 +87,18 @@ export class MoveToPage {
     await this.dialog.getByTestId('move-to-browser').waitFor({
       state: 'visible'
     })
+  }
+
+  async expectDestinationTabs(): Promise<void> {
+    await expect(this.dialog.getByRole('tab')).toHaveCount(2)
+    await expect(this.driveTab).toHaveAttribute('aria-selected', 'true')
+    await expect(this.sharingsTab).toBeVisible()
+  }
+
+  async openSharings(): Promise<void> {
+    await this.sharingsTab.click()
+    await expect(this.sharingsTab).toHaveAttribute('aria-selected', 'true')
+    await expect(this.breadcrumb).toHaveText('Sharings')
   }
 
   folderRow(name: string): Locator {
@@ -154,6 +174,17 @@ export class MoveToPage {
     ).toBeVisible()
   }
 
+  async expectTotalFailure(): Promise<void> {
+    await expect(this.dialog).toBeVisible()
+    await expect(
+      this.page.getByText(
+        /Something went wrong while moving these elements|Une erreur est survenue pendant le déplacement de ces éléments/i
+      )
+    ).toBeVisible()
+    await expect(this.moveButton).toBeEnabled()
+    await expect(this.cancelButton).toBeEnabled()
+  }
+
   async expectRemainingEntry(name: string): Promise<void> {
     await expect(this.dialog.getByRole('heading')).toHaveText(name)
   }
@@ -184,6 +215,17 @@ export class MoveToPage {
 
   async confirm(): Promise<void> {
     await this.clickMove()
+    await expect(this.dialog).toBeHidden()
+  }
+
+  async confirmSharedFolderMove(): Promise<void> {
+    await this.clickMove()
+    const confirmation = this.page.getByRole('dialog').filter({
+      has: this.page.getByText(/^Move to a shared folder\?$/i)
+    })
+    await expect(confirmation).toBeVisible()
+    await confirmation.getByRole('button', { name: /^ok$/i }).click()
+    await expect(confirmation).toBeHidden()
     await expect(this.dialog).toBeHidden()
   }
 

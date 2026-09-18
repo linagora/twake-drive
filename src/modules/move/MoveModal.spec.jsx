@@ -178,6 +178,8 @@ describe('MoveModal component', () => {
   beforeEach(() => {
     flag.mockImplementation(name => name === 'drive.move-to-picker.enabled')
     mockClient.resetQuery = jest.fn()
+    delete defaultTargetFolder.driveId
+    delete defaultTargetFolder.cozyMetadata
     moveRelateToSharedDrive.mockReset()
     moveRelateToSharedDrive.mockResolvedValue({ deleted: null, moved: true })
   })
@@ -741,6 +743,50 @@ describe('MoveModal component', () => {
       })
     })
 
+    it('confirms moving a file between federated shared drives', async () => {
+      defaultTargetFolder.driveId = 'drive-beta'
+      defaultTargetFolder.cozyMetadata = {
+        createdOn: 'https://charlie.mycozy.cloud'
+      }
+      setup({
+        entries: sharedDriveEntries.slice(0, 1),
+        currentFolder: {
+          _id: 'source-folder',
+          _type: 'io.cozy.files',
+          driveId: 'drive-alpha',
+          name: 'Team Alpha',
+          path: '/Shared drives/Team Alpha'
+        },
+        driveId: 'drive-alpha'
+      })
+
+      fireEvent.click(await screen.findByText('Move'))
+
+      expect(
+        await screen.findByText('Move to a shared folder?')
+      ).toBeInTheDocument()
+      fireEvent.click(screen.getByRole('button', { name: 'Ok' }))
+
+      await waitFor(() => {
+        expect(moveRelateToSharedDrive).toHaveBeenCalledWith(
+          mockClient,
+          {
+            instance: 'instance.cozy.example',
+            file_id: 'sd-file-1',
+            dir_id: '',
+            sharing_id: 'drive-alpha'
+          },
+          {
+            instance: 'https://charlie.mycozy.cloud',
+            sharing_id: 'drive-beta',
+            dir_id: 'destinationFolder'
+          },
+          false
+        )
+        expect(onCloseSpy).toHaveBeenCalledTimes(1)
+      })
+    })
+
     it('handles partial successes when moving multiple shared drive entries', async () => {
       let shouldFail = true
       setup({
@@ -899,6 +945,30 @@ describe('MoveModal component', () => {
       setup({ currentFolder: destinationFolder, isPublic: true })
       expect(screen.getByTestId('folder-picker')).toBeInTheDocument()
       expect(screen.queryByTestId('move-to')).not.toBeInTheDocument()
+    })
+
+    it('moves inside a public folder without authenticated sharing paths', async () => {
+      flag.mockImplementation(() => true)
+      setup({
+        entries: defaultEntries.slice(0, 1),
+        currentFolder: destinationFolder,
+        isPublic: true,
+        sharingContext: {
+          sharedPaths: undefined,
+          hasSharedParent: () => false
+        }
+      })
+
+      fireEvent.click(screen.getByRole('button', { name: 'Move' }))
+
+      await waitFor(() => {
+        expect(move).toHaveBeenCalledWith(
+          mockClient,
+          defaultEntries[0],
+          destinationFolder,
+          { force: false }
+        )
+      })
     })
   })
 })

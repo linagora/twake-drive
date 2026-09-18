@@ -100,13 +100,23 @@ export class FilePickerPage {
     const item = this.getListItemByName(name)
     const scroller = this.getFrameLocator().getByTestId('virtuoso-scroller')
 
+    // Virtuoso only mounts visible rows and may preserve a previous scroll
+    // position. Scan downward by viewport, then wrap to the top so rows above
+    // that starting position can also be found.
     await expect
       .poll(
         async (): Promise<number> => {
           const count = await item.count()
           if (count === 0) {
             await scroller.evaluate((element: HTMLElement) => {
-              element.scrollTop += element.clientHeight
+              const maxScrollTop = element.scrollHeight - element.clientHeight
+              element.scrollTop =
+                element.scrollTop >= maxScrollTop
+                  ? 0
+                  : Math.min(
+                      element.scrollTop + element.clientHeight,
+                      maxScrollTop
+                    )
             })
           }
           return count

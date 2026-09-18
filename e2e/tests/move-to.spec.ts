@@ -206,6 +206,44 @@ test.describe('MoveTo execution', () => {
     }
   })
 
+  test('keeps every entry in place and allows retry after a total failure', async ({
+    alicePage,
+    aliceDrive
+  }) => {
+    await alicePage.goto(ALICE_ROOT)
+    const scenario = await createMoveScenario(alicePage, aliceDrive)
+
+    try {
+      for (const entryId of scenario.entryIds) {
+        await scenario.moveTo.failNextMove(entryId)
+      }
+      await scenario.moveTo.clickMove()
+      await scenario.moveTo.expectTotalFailure()
+
+      for (const entry of scenario.entries) {
+        await expect(aliceDrive.row(entry).cell).toBeVisible()
+      }
+
+      await scenario.moveTo.confirm()
+      for (const entryId of scenario.entryIds) {
+        expect(scenario.moveTo.moveRequestCount(entryId)).toBe(2)
+      }
+      for (const entry of scenario.entries) {
+        await aliceDrive.row(entry).waitHidden()
+      }
+      await aliceDrive.openFolder(scenario.destination)
+      for (const entry of scenario.entries) {
+        await expect(aliceDrive.row(entry).cell).toBeVisible()
+      }
+    } finally {
+      await cleanupMoveScenario(
+        scenario.entryIds,
+        scenario.sourcePaths,
+        scenario.destinationId
+      )
+    }
+  })
+
   test('keeps successful entries moved when cancelling after a partial success', async ({
     alicePage,
     aliceDrive

@@ -87,6 +87,22 @@ export class ShareByLinkPage {
     await modal.locator('input[inputmode="numeric"]').fill(date)
   }
 
+  async allowEditing(): Promise<void> {
+    const recipient = this.page
+      .getByRole('dialog')
+      .filter({ has: this.linkRow })
+      .getByRole('listitem')
+      .filter({ hasText: /Anyone with the link/ })
+    const roleButton = recipient
+      .getByRole('button')
+      .filter({ hasText: /^(Editor|Viewer)$/ })
+    await roleButton.click()
+    const menu = this.page.getByRole('menu')
+    await menu.getByRole('menuitem', { name: /^Editor$/ }).click()
+    await menu.waitFor({ state: 'hidden' })
+    await expect(roleButton).toHaveText('Editor')
+  }
+
   /** Confirm the restriction modal and wait for it to close. */
   async confirm(): Promise<void> {
     await this.restrictionModal.getByRole('button', { name: 'Confirm' }).click()

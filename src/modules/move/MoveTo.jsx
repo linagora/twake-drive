@@ -14,10 +14,11 @@ import {
   getItemId,
   getMoveDestinationDisabledReason,
   isDestinationAllowed,
-  isLocalMoveDestination
+  isMoveDestinationFolder
 } from './helpers'
 
 import { FilePicker } from '@/components/FilePicker/FilePicker'
+import { FilePickerHeaderTabs } from '@/components/FilePicker/FilePickerHeaderTabs'
 import {
   filePickerItemTypes,
   filePickerModes,
@@ -28,7 +29,7 @@ import { FolderPickerAddFolderItem } from '@/components/FolderPicker/FolderPicke
 import { FolderPickerHeader } from '@/components/FolderPicker/FolderPickerHeader'
 import { createFolder } from '@/modules/navigation/duck'
 
-const MOVE_TO_SECTIONS = [filePickerSections.DRIVE]
+const MOVE_TO_SECTIONS = [filePickerSections.DRIVE, filePickerSections.SHARINGS]
 const MOVE_TO_DISPLAYED_TYPES = [filePickerItemTypes.FOLDER]
 
 const useStyles = makeStyles({
@@ -88,7 +89,7 @@ export function MoveTo({
   const isBrowserBusy =
     isBusy || isCreatingFolder || isValidatingDestination || allLoaded !== true
   const isNavigationLocked = isBrowserBusy || isDestinationLocked
-  const isItemIncluded = isLocalMoveDestination
+  const isItemIncluded = isMoveDestinationFolder
   const getItemDisabledReason = item => {
     if (isBusy || isValidatingDestination) return 'Move.moveInProgress'
     if (isCreatingFolder) return 'Move.folderCreationInProgress'
@@ -124,7 +125,7 @@ export function MoveTo({
     allLoaded &&
     currentFolderState.status === 'loaded' &&
     destinationFolder &&
-    isLocalMoveDestination(destinationFolder) &&
+    isMoveDestinationFolder(destinationFolder) &&
     isDestinationWritable
   )
 
@@ -143,7 +144,14 @@ export function MoveTo({
         as: `move-confirm-${currentFolderState.location.folderId}`,
         fetchPolicy: fetchPolicies.olderThan(0)
       })
-      const freshDestination = result?.data ?? null
+      const freshDestination = result?.data
+        ? {
+            ...result.data,
+            ...(currentFolderState.location.driveId
+              ? { driveId: currentFolderState.location.driveId }
+              : {})
+          }
+        : null
       const isFreshDestinationValid =
         getItemId(freshDestination) === currentFolderState.location.folderId &&
         isDestinationAllowed(
@@ -178,7 +186,11 @@ export function MoveTo({
   }
 
   const handleItemsAdded = items => {
-    setCreatedItems(previousItems => [...previousItems, ...items])
+    const driveId = currentFolderState.location.driveId
+    const itemsWithDriveId = driveId
+      ? items.map(item => ({ ...item, driveId }))
+      : items
+    setCreatedItems(previousItems => [...previousItems, ...itemsWithDriveId])
   }
 
   const handleFolderCreation = async name => {
@@ -223,12 +235,14 @@ export function MoveTo({
             mode={filePickerModes.CURRENT_FOLDER}
             initialLocation={initialLocation}
             availableSections={MOVE_TO_SECTIONS}
+            renderHeader={headerProps => (
+              <FilePickerHeaderTabs {...headerProps} />
+            )}
             displayedTypes={MOVE_TO_DISPLAYED_TYPES}
             selectableTypes={[]}
             isItemIncluded={isItemIncluded}
             getItemDisabledReason={getItemDisabledReason}
             isNavigationDisabled={isNavigationLocked}
-            filterReceivedShares={false}
             additionalItems={createdItems}
             beforeItems={
               isFolderCreationDisplayed &&

@@ -2,6 +2,7 @@ import type { Page, Locator } from '@playwright/test'
 
 import { FileRow } from './FileRow'
 import { MoveToPage } from './MoveToPage'
+import { ShareModalPage } from './ShareModalPage'
 
 /**
  * Page object for the Drive file list view (My Drive, Trash, Favorites,
@@ -37,6 +38,13 @@ export class DrivePage {
     return moveTo
   }
 
+  async openShareModal(): Promise<ShareModalPage> {
+    await this.page.getByRole('button', { name: /share/i }).click()
+    const shareModal = new ShareModalPage(this.page)
+    await shareModal.waitForOpen()
+    return shareModal
+  }
+
   /** Open a folder and wait until its document has loaded. The route
    * changes before `displayedFolder` is ready, while Create and Upload derive
    * their destination from that document. The attached breadcrumb item
@@ -45,11 +53,14 @@ export class DrivePage {
   async openFolder(name: string): Promise<void> {
     await this.row(name).open()
     await this.page.waitForURL(/\/folder\/[^/]+$/)
-    await this.page
+    const desktopBreadcrumb = this.page
       .getByRole('main')
       .getByRole('navigation')
       .getByText(name, { exact: true })
-      .waitFor({ state: 'attached' })
+    const mobileHeading = this.page
+      .getByRole('banner')
+      .getByRole('heading', { name, exact: true })
+    await desktopBreadcrumb.or(mobileHeading).waitFor({ state: 'attached' })
   }
 
   /** Locator for the file list cell whose filename contains the substring —

@@ -291,6 +291,62 @@ describe('FilePickerBody', () => {
     expect(screen.queryByTestId('file-picker-empty')).toBe(null)
   })
 
+  it('shows a newly created folder only in its shared drive destination', () => {
+    useSharedDriveFolder.mockReturnValue({
+      sharedDriveResult: {
+        included: [{ _id: 'existing-folder', name: 'Alpha', type: 'directory' }]
+      },
+      fetchStatus: 'loaded',
+      hasMore: false,
+      fetchMore: null
+    })
+
+    render(
+      <FilePickerBody
+        {...baseProps}
+        section={filePickerSections.SHARINGS}
+        folderId="folder-id"
+        driveId="drive-id"
+        additionalItems={[
+          {
+            _id: 'existing-folder',
+            name: 'Duplicate',
+            type: 'directory',
+            dir_id: 'folder-id',
+            driveId: 'drive-id'
+          },
+          {
+            _id: 'created-folder',
+            name: 'Bravo',
+            type: 'directory',
+            dir_id: 'folder-id',
+            driveId: 'drive-id'
+          },
+          {
+            _id: 'other-drive-folder',
+            name: 'Other drive',
+            type: 'directory',
+            dir_id: 'folder-id',
+            driveId: 'other-drive-id'
+          }
+        ]}
+      />
+    )
+
+    expect(
+      screen.getByRole('button', { name: 'Alpha:drive-id' })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Bravo:drive-id' })
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Duplicate:drive-id' })).toBe(
+      null
+    )
+    expect(
+      screen.queryByRole('button', { name: 'Other drive:other-drive-id' })
+    ).toBe(null)
+  })
+
   it('renders My Drive items with their breadcrumb and query', () => {
     useQuery.mockReturnValue({
       data: [{ _id: 'file-id', name: 'My file', type: 'file' }],

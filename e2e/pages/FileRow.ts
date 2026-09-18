@@ -57,6 +57,10 @@ export class FileRow {
     await this.cell.waitFor({ state: 'hidden', timeout: opts?.timeout })
   }
 
+  async isNewSharingShortcut(): Promise<boolean> {
+    return this.rowEl.getByLabel('New sharing shortcut').isVisible()
+  }
+
   async fileId(): Promise<string> {
     const href = await this.rowEl.getByRole('link').first().getAttribute('href')
     const fileId = href?.match(/\/file\/([^/?#]+)/)?.[1]
@@ -126,7 +130,12 @@ export class FileRow {
 
   async openMoveTo(): Promise<MoveToPage> {
     const menu = await this.openMenu()
-    await menu.getByRole('menuitem', { name: /move to/i }).click()
+    const menuItem = menu.getByRole('menuitem', { name: /move to/i })
+    if (await menuItem.isVisible()) {
+      await menuItem.click()
+    } else {
+      await this.page.getByRole('button', { name: /^move$/i }).click()
+    }
     const moveTo = new MoveToPage(this.page)
     await moveTo.waitForOpen()
     return moveTo

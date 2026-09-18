@@ -1,5 +1,9 @@
 import type { Page, Locator } from '@playwright/test'
 
+import { DrivePage } from './DrivePage'
+import { PublicMoveToPage } from './PublicMoveToPage'
+import type { FileRow } from './FileRow'
+
 /**
  * A public share link opened in a fresh, unauthenticated browser context.
  *
@@ -11,9 +15,11 @@ import type { Page, Locator } from '@playwright/test'
  */
 export class PublicLinkPage {
   private readonly page: Page
+  private readonly drive: DrivePage
 
   constructor(page: Page) {
     this.page = page
+    this.drive = new DrivePage(page)
   }
 
   /** The password prompt's input — stack-rendered, no testid we own. */
@@ -29,6 +35,22 @@ export class PublicLinkPage {
   /** Shown when the link is expired or revoked (Error.public_unshared_title). */
   get unavailableMessage(): Locator {
     return this.page.getByRole('heading', { name: /no longer available/i })
+  }
+
+  row(name: string): FileRow {
+    return this.drive.row(name)
+  }
+
+  async openFolder(name: string): Promise<void> {
+    await this.drive.openFolder(name)
+  }
+
+  async openMoveTo(name: string): Promise<PublicMoveToPage> {
+    const menu = await this.row(name).openMenu()
+    await menu.getByRole('menuitem', { name: /move to/i }).click()
+    const moveTo = new PublicMoveToPage(this.page)
+    await moveTo.waitForOpen()
+    return moveTo
   }
 
   /** Fill the stack-served password prompt and submit it. */

@@ -25,24 +25,42 @@ function isDirectoryItem(item) {
   return Boolean(item) && models.file.isDirectory(item)
 }
 
-function isLocalItem(item) {
+function isCozyItem(item) {
   return (
     Boolean(item) &&
     !isNextcloudFile(item) &&
-    !item.driveId &&
     item.cozyMetadata?.createdByApp !== 'nextcloud'
   )
+}
+
+function isLocalItem(item) {
+  return isCozyItem(item) && !item.driveId
 }
 
 export function isLocalMoveDestination(item) {
   return isDirectoryItem(item) && isLocalItem(item)
 }
 
+export function isMoveDestinationFolder(item) {
+  return (
+    isDirectoryItem(item) &&
+    isCozyItem(item) &&
+    item.orgDrive !== true &&
+    item.driveOwner !== true
+  )
+}
+
+function isSameDrive(firstItem, secondItem) {
+  return (firstItem?.driveId ?? null) === (secondItem?.driveId ?? null)
+}
+
 function isDescendantOfEntry(item, entry) {
+  if (!isSameDrive(item, entry)) return false
+
   const itemId = getItemId(item)
   const entryId = getItemId(entry)
   if (itemId && entryId && itemId === entryId) return true
-  if (!isLocalItem(item) || !isLocalItem(entry)) return false
+  if (!isCozyItem(item) || !isCozyItem(entry)) return false
 
   if (item.dir_id && entryId && item.dir_id === entryId) return true
 
@@ -59,7 +77,7 @@ export function getMoveDestinationDisabledReason(
   hasWriteAccess,
   allLoaded = true
 ) {
-  if (!isLocalMoveDestination(item)) return null
+  if (!isMoveDestinationFolder(item)) return null
 
   const directoryEntries = entries.filter(isDirectoryItem)
   const sourceEntry = directoryEntries.find(entry =>
@@ -90,7 +108,7 @@ export function isMoveDestination(
   allLoaded = true
 ) {
   return (
-    isLocalMoveDestination(item) &&
+    isMoveDestinationFolder(item) &&
     !getMoveDestinationDisabledReason(item, entries, hasWriteAccess, allLoaded)
   )
 }
@@ -103,9 +121,11 @@ function getEntryParentId(entry) {
 }
 
 function isEntryInFolder(entry, folder) {
+  if (!isSameDrive(entry, folder)) return false
+
   const folderId = getItemId(folder)
   if (entry.dir_id && folderId && entry.dir_id === folderId) return true
-  if (!isLocalItem(entry) || !isLocalItem(folder)) return false
+  if (!isCozyItem(entry) || !isCozyItem(folder)) return false
   return Boolean(
     entry.path && folder?.path && getParentPath(entry.path) === folder.path
   )

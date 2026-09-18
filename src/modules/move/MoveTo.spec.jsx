@@ -18,6 +18,9 @@ import {
   SelectionProvider,
   useSelectionContext
 } from '@/modules/selection/SelectionProvider'
+import { useSharedDriveFolder } from '@/modules/shareddrives/hooks/useSharedDriveFolder'
+import { useFilteredSharings } from '@/modules/views/Sharings/useFilteredSharings'
+import { useSharingsQueryResult } from '@/modules/views/Sharings/useSharingsQueryResult'
 
 jest.mock('cozy-client', () => ({
   ...jest.requireActual('cozy-client'),
@@ -47,6 +50,16 @@ jest.mock('cozy-ui/transpiled/react/providers/Breakpoints', () => ({
 }))
 jest.mock('@/modules/breadcrumb/hooks/useBreadcrumbPath', () => ({
   useBreadcrumbPath: jest.fn()
+}))
+jest.mock('@/modules/shareddrives/hooks/useSharedDriveFolder', () => ({
+  useSharedDriveFolder: jest.fn()
+}))
+jest.mock('@/modules/views/Sharings/useFilteredSharings', () => ({
+  useFilteredSharings: jest.fn()
+}))
+jest.mock('@/modules/views/Sharings/useSharingsQueryResult', () => ({
+  ...jest.requireActual('@/modules/views/Sharings/useSharingsQueryResult'),
+  useSharingsQueryResult: jest.fn()
 }))
 jest.mock('@/components/PickerView/PickerViewTable', () => ({
   PickerViewTable: ({
@@ -256,6 +269,25 @@ describe('MoveTo', () => {
         () => true
       )
     ).toBe(null)
+    expect(
+      getMoveDestinationDisabledReason(
+        {
+          _id: 'shared-child',
+          type: 'directory',
+          driveId: 'shared-drive',
+          path: '/Documents/2024'
+        },
+        [
+          {
+            _id: 'shared-source',
+            type: 'directory',
+            driveId: 'shared-drive',
+            path: '/Documents'
+          }
+        ],
+        () => true
+      )
+    ).toBe('Move.destinationDescendant')
   })
   beforeEach(() => {
     useI18n.mockReturnValue({ t: key => key })
@@ -273,6 +305,21 @@ describe('MoveTo', () => {
       byDocId: {},
       isOwner: () => false,
       hasWriteAccess: jest.fn(() => true)
+    })
+    useSharingsQueryResult.mockReturnValue({
+      data: [],
+      fetchStatus: 'loaded'
+    })
+    useFilteredSharings.mockReturnValue({
+      filteredResult: { data: [], fetchStatus: 'loaded', lastFetch: 1 },
+      sharedDrivesLoaded: true,
+      sharedDrivesError: null
+    })
+    useSharedDriveFolder.mockReturnValue({
+      sharedDriveResult: { included: [] },
+      fetchStatus: 'loaded',
+      hasMore: false,
+      fetchMore: null
     })
     useBreakpoints.mockReturnValue({ isMobile: false })
     require('cozy-ui/transpiled/react/providers/Breakpoints').default.mockReturnValue(
@@ -309,6 +356,18 @@ describe('MoveTo', () => {
   })
 
   afterEach(() => jest.clearAllMocks())
+
+  it('shows Drive and Sharing as move destination sections', () => {
+    setup()
+
+    expect(
+      screen.getByRole('tab', { name: 'Nav.item_drive' })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('tab', { name: 'Nav.item_sharings' })
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: 'Nav.item_recent' })).toBe(null)
+  })
 
   it('keeps the move action disabled until permissions are loaded', () => {
     contentItems = [
@@ -379,7 +438,6 @@ describe('MoveTo', () => {
         }
       }
     }
-    contentItems = [receivedFolder]
     const hasWriteAccess = jest.fn(() => false)
     useSharingContext.mockReturnValue({
       allLoaded: true,
@@ -387,8 +445,18 @@ describe('MoveTo', () => {
       isOwner: () => false,
       hasWriteAccess
     })
+    useFilteredSharings.mockReturnValue({
+      filteredResult: {
+        data: [receivedFolder],
+        fetchStatus: 'loaded',
+        lastFetch: 1
+      },
+      sharedDrivesLoaded: true,
+      sharedDrivesError: null
+    })
 
     setup()
+    fireEvent.click(screen.getByRole('tab', { name: 'Nav.item_sharings' }))
 
     expect(
       screen.getByRole('button', {
@@ -396,6 +464,117 @@ describe('MoveTo', () => {
       })
     ).toBeDisabled()
     expect(hasWriteAccess).toHaveBeenCalledWith('received-folder', undefined)
+  })
+
+  it('creates and confirms a destination inside a received federated folder', async () => {
+    const receivedRoot = {
+      _id: 'received-root',
+      _type: 'io.cozy.files',
+      type: 'directory',
+      name: 'Received folder',
+      path: '/Drives/Received folder',
+      driveId: 'sharing-id',
+      orgDrive: false,
+      driveOwner: false
+    }
+    const receivedChild = {
+      _id: 'received-child',
+      _type: 'io.cozy.files',
+      type: 'directory',
+      name: 'Received child',
+      path: '/Drives/Received folder/Received child',
+      dir_id: receivedRoot._id
+    }
+    const createdFolder = {
+      _id: 'created-folder',
+      _type: 'io.cozy.files',
+      type: 'directory',
+      name: 'Created folder',
+      dir_id: receivedRoot._id
+    }
+    const onConfirm = jest.fn()
+    const hasWriteAccess = jest.fn(() => true)
+
+    useSharingContext.mockReturnValue({
+      allLoaded: true,
+      byDocId: {},
+      isOwner: () => false,
+      hasWriteAccess
+    })
+    useFilteredSharings.mockReturnValue({
+      filteredResult: {
+        data: [receivedRoot],
+        fetchStatus: 'loaded',
+        lastFetch: 1
+      },
+      sharedDrivesLoaded: true,
+      sharedDrivesError: null
+    })
+    useSharedDriveFolder.mockImplementation(({ folderId }) => ({
+      sharedDriveResult: {
+        included: folderId === receivedRoot._id ? [receivedChild] : []
+      },
+      fetchStatus: 'loaded',
+      hasMore: false,
+      fetchMore: null
+    }))
+    useQuery.mockImplementation((_definition, options) => {
+      if (options.as.startsWith('filePicker-folders-')) {
+        return { data: contentItems, fetchStatus: 'loaded', hasMore: false }
+      }
+
+      const folderId = options.as.split('/').at(-1)
+      if (folderId === receivedRoot._id) {
+        return { data: receivedRoot, fetchStatus: 'loaded' }
+      }
+      if (folderId === receivedChild._id) {
+        return { data: receivedChild, fetchStatus: 'loaded' }
+      }
+      return { data: getFolder(folderId), fetchStatus: 'loaded' }
+    })
+    createFolder.mockImplementation((...args) => async () => {
+      args[5]([createdFolder])
+    })
+    clientQuery.mockResolvedValue({ data: receivedChild })
+
+    setup({ onConfirm })
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Nav.item_sharings' }))
+    fireEvent.doubleClick(
+      await screen.findByRole('button', { name: 'Received folder' })
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Move.addFolder' }))
+    const input = screen.getByRole('textbox', { name: 'Move.folderName' })
+    fireEvent.change(input, { target: { value: 'Created folder' } })
+    fireEvent.keyDown(input, { keyCode: 13 })
+
+    expect(createFolder).toHaveBeenCalledWith(
+      expect.anything(),
+      'Created folder',
+      receivedRoot._id,
+      expect.anything(),
+      'sharing-id',
+      expect.any(Function)
+    )
+    expect(
+      await screen.findByRole('button', { name: 'Created folder' })
+    ).toBeInTheDocument()
+
+    fireEvent.doubleClick(
+      screen.getByRole('button', { name: 'Received child' })
+    )
+    expect(hasWriteAccess).toHaveBeenCalledWith(receivedChild._id, 'sharing-id')
+    const moveButton = screen.getByRole('button', { name: 'Move.action' })
+    await waitFor(() => expect(moveButton).toBeEnabled())
+    fireEvent.click(moveButton)
+
+    await waitFor(() => {
+      expect(onConfirm).toHaveBeenCalledWith({
+        ...receivedChild,
+        driveId: 'sharing-id'
+      })
+    })
   })
 
   it('creates a folder inline, keeps it sorted and does not navigate', async () => {
@@ -627,7 +806,7 @@ describe('MoveTo', () => {
     }
   )
 
-  it('hides Nextcloud and shared-drive destinations', () => {
+  it('hides Nextcloud and team-drive destinations', () => {
     useQuery.mockImplementation((_definition, options) => {
       if (options.as.startsWith('filePicker-folders-')) {
         return {
@@ -643,7 +822,8 @@ describe('MoveTo', () => {
               _id: 'shared-drive-folder',
               name: 'Shared Drive folder',
               type: 'directory',
-              driveId: 'drive-id'
+              driveId: 'drive-id',
+              orgDrive: true
             }
           ],
           fetchStatus: 'loaded',

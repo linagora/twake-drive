@@ -218,6 +218,22 @@ export async function trashById(
   }
 }
 
+/** Download a file from its owner instance to verify its stored content. */
+export async function fetchFileContent({
+  instance,
+  fileId
+}: FileRef): Promise<string> {
+  const res = await fetch(`http://${instance}/files/download/${fileId}`, {
+    headers: { Authorization: `Bearer ${filesToken(instance)}` }
+  })
+  if (!res.ok) {
+    throw new Error(
+      `Download file ${fileId} on ${instance} failed (${res.status}): ${await res.text()}`
+    )
+  }
+  return await res.text()
+}
+
 /** Number of versions the stack currently keeps for a file. */
 export async function countFileVersions({
   instance,
