@@ -13,6 +13,7 @@ interface ConfirmDialog {
 }
 
 const OPTIONAL_DIALOG_TIMEOUT = 2_000
+const DOUBLE_CLICK_DELAY = 400
 
 /**
  * Handle for a single row in the Drive file list. Returned from
@@ -125,7 +126,11 @@ export class FileRow {
   }
 
   async select(): Promise<void> {
-    await this.rowEl.getByRole('checkbox').click()
+    await this.waitVisible()
+    await this.rowEl
+      .getByRole('link')
+      .first()
+      .click({ modifiers: ['Control'] })
   }
 
   /** cozy-drive desktop semantics: single-click selects, double-click
@@ -134,10 +139,13 @@ export class FileRow {
     // Virtualized rows outside the viewport are not mounted, so make the
     // row available before looking for its link.
     await this.waitVisible()
-    // The row's link includes the value of every column in its accessible
-    // name ("Foo — — —"), so we locate the row through the filename cell
-    // and dblclick whichever link sits inside.
-    await this.rowEl.getByRole('link').first().dblclick()
+    // Two simple clicks trigger the app's double-click handling without
+    // dispatching a native dblclick after navigation onto the next view.
+    const link = this.rowEl.getByRole('link').first()
+    // Virtuoso can reuse a row whose last click just opened its parent.
+    await this.page.waitForTimeout(DOUBLE_CLICK_DELAY)
+    await link.click()
+    await link.click()
   }
 
   async openMenu(): Promise<Locator> {
