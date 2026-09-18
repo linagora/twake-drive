@@ -1,0 +1,82 @@
+# yaml-language-server: $schema=https://www.coderabbit.ai/integrations/schema.v2.json
+#
+# CodeRabbit owns: PR summary and walkthrough, security/tooling scanners,
+# and the path-specific checks below.
+# It does not own: logic, security and architecture review (OpenCode, see
+# .github/prompts/code-review.md), code health (CodeScene), lint and tests
+# (CI/CD workflow). Keep path exclusions in sync with
+# .github/workflows/opencode-review.yml.
+
+inheritance: true
+language: en-US
+tone_instructions: 'Be terse. Only comment when a rule below is broken or a scanner reports an issue.'
+
+reviews:
+  profile: quiet
+  high_level_summary: true
+  collapse_walkthrough: true
+  sequence_diagrams: false
+  poem: false
+  estimate_code_review_effort: false
+  auto_review:
+    enabled: true
+    drafts: false
+
+  path_filters:
+    - '!yarn.lock'
+    - '!.yarn/**'
+    - '!src/locales/**'
+    - 'src/locales/en.json'
+    - '!CHANGELOG.md'
+    - '!**/*.png'
+    - '!**/*.svg'
+    - '!**/*.jpg'
+    - '!**/*.jpeg'
+
+  path_instructions:
+    - path: '**/*'
+      instructions: >-
+        Do not review logic, architecture, style, formatting or complexity:
+        another reviewer and the CI own those. Only report violations of the
+        path-specific rules and scanner findings.
+    - path: 'e2e/**'
+      instructions: >-
+        Enforce the hard rules of e2e/AGENTS.md: no raw selectors
+        (page.locator, getByTestId, getByRole, getByText) in e2e/tests, they
+        belong in e2e/pages; no browser.newContext() or authenticate() in
+        specs, use fixtures from helpers/fixtures.ts; unique names come from
+        stamp(), never Date.now() or Math.random(); temp files removed with
+        safeUnlink() in a finally; literal names in a RegExp go through
+        escapeRegExp(); no hardcoded URL, port or instance domain.
+    - path: 'src/**/*.spec.{js,jsx,ts,tsx}'
+      instructions: >-
+        Tests use @testing-library/react. Flag Enzyme, snapshot tests and
+        __tests__ folders.
+    - path: 'src/locales/en.json'
+      instructions: >-
+        Flag keys removed while still used in src, and new keys whose value
+        is empty or not English.
+    - path: '.github/workflows/**'
+      instructions: >-
+        Flag secrets exposed to fork PRs or to untrusted comment triggers,
+        pull_request_target with a checkout of the PR head, and missing
+        permissions blocks.
+
+  tools:
+    eslint:
+      enabled: false
+    biome:
+      enabled: false
+    oxc:
+      enabled: false
+    gitleaks:
+      enabled: true
+    actionlint:
+      enabled: true
+    zizmor:
+      enabled: true
+    shellcheck:
+      enabled: true
+
+chat:
+  auto_reply: true

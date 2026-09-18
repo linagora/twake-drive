@@ -1,0 +1,79 @@
+name: OpenCode review
+
+# Semantic review only. Summary is owned by CodeRabbit, code health by
+# CodeScene, style and tests by the CI/CD workflow. See
+# .github/prompts/code-review.md for the review scope.
+
+on:
+  pull_request:
+    types: [opened, ready_for_review, reopened]
+    # Later patterns override earlier ones: en.json is re-included.
+    paths:
+      - '**'
+      - '!yarn.lock'
+      - '!.yarn/**'
+      - '!src/locales/**'
+      - 'src/locales/en.json'
+      - '!CHANGELOG.md'
+      - '!docs/**'
+      - '!**/*.png'
+      - '!**/*.svg'
+      - '!**/*.jpg'
+      - '!**/*.jpeg'
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+
+jobs:
+  review:
+    # Secrets are not exposed to fork PRs, and comment triggers are limited
+    # to organization members since the agent runs with an API key.
+    if: >-
+      (github.event_name == 'pull_request'
+        && !github.event.pull_request.draft
+        && github.event.pull_request.head.repo.full_name == github.repository)
+      || (github.event_name != 'pull_request'
+        && (contains(github.event.comment.body, '/oc') || contains(github.event.comment.body, '/opencode'))
+        && contains(fromJSON('["OWNER","MEMBER"]'), github.event.comment.author_association))
+    # Job level so that skipped runs (any other PR comment) do not cancel it.
+    concurrency:
+      group: opencode-${{ github.event.pull_request.number || github.event.issue.number }}
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Load review prompt
+        id: prompt
+        # A bare /oc re-runs the full review; any other text is a free question.
+        if: >-
+          github.event_name == 'pull_request'
+          || contains(fromJSON('["/oc","/opencode"]'), github.event.comment.body)
+        run: |
+          {
+            echo 'text<<PROMPT_EOF'
+            cat .github/prompts/code-review.md
+            echo 'PROMPT_EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Run OpenCode
+        uses: anomalyco/opencode/github@latest
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          model: ${{ vars.OPENCODE_REVIEW_MODEL || 'openrouter/anthropic/claude-sonnet-5' }}
+          use_github_token: true
+          share: false
+          prompt: ${{ steps.prompt.outputs.text }}
