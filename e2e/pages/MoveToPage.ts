@@ -100,10 +100,46 @@ export class MoveToPage {
   }
 
   async openFolder(name: string): Promise<void> {
-    await this.folderRow(name).dblclick()
+    const row = this.folderRow(name)
+    let startedFromCurrentPosition = false
+    await expect
+      .poll(
+        async (): Promise<number> => {
+          const count = await row.count()
+          if (count === 0) {
+            if (startedFromCurrentPosition) await this.scrollNextViewport()
+            else {
+              await this.scrollDialogToTop()
+              startedFromCurrentPosition = true
+            }
+            return 0
+          }
+          await row.first().scrollIntoViewIfNeeded()
+          return (await row.first().isVisible()) ? 1 : 0
+        },
+        { intervals: [50], timeout: 10_000 }
+      )
+      .toBe(1)
+    await row.dblclick()
     await expect(
       this.dialog.getByTestId('file-picker-breadcrumb')
     ).toContainText(name)
+  }
+
+  private async scrollDialogToTop(): Promise<void> {
+    const scroller = this.dialog.getByTestId('virtuoso-scroller')
+    if ((await scroller.count()) === 0) return
+    await scroller.evaluate((element: HTMLElement) => {
+      element.scrollTop = 0
+    })
+  }
+
+  private async scrollNextViewport(): Promise<void> {
+    const scroller = this.dialog.getByTestId('virtuoso-scroller')
+    if ((await scroller.count()) === 0) return
+    await scroller.evaluate((element: HTMLElement) => {
+      element.scrollTop += Math.max(1, Math.floor(element.clientHeight / 2))
+    })
   }
 
   async showFolderCreation(): Promise<void> {
