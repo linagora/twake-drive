@@ -6,6 +6,7 @@ import { BarComponent } from 'cozy-bar'
 import CozyDevtools from 'cozy-devtools'
 import flag from 'cozy-flags'
 import FlagSwitcher from 'cozy-flags/dist/FlagSwitcher'
+import { useRagIndexTriggers } from 'cozy-search'
 import { Layout as LayoutUI } from 'cozy-ui/transpiled/react/Layout'
 import Sidebar from 'cozy-ui/transpiled/react/Sidebar'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
@@ -58,6 +59,7 @@ const handleContextMenu = ev => {
 }
 
 const LayoutContent = () => {
+  useRagIndexTriggers() // Ensure RAG triggers are set when cozy.assistant.autoprovision is defined
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const { isMobile, isDesktop } = useBreakpoints()
