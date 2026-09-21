@@ -8,7 +8,6 @@ import { isSharingsEntryMatchingFilters } from './matchSharingsFilters'
 import { getSharingsContactFilterData } from './sharingContactFilter'
 
 import {
-  SHARED_DRIVES_DIR_ID,
   SHARING_TAB_BY_ME,
   SHARING_TAB_DRIVES,
   SHARING_TAB_WITH_ME
@@ -25,9 +24,8 @@ const buildBaseShape = (result, hasIds) => ({
 })
 
 const getDocId = item => item._id ?? item.id
-const isSharedDrivesDirItem = item => item.dir_id === SHARED_DRIVES_DIR_ID
 const shouldReplaceItem = (current, candidate) =>
-  isSharedDrivesDirItem(current) && !isSharedDrivesDirItem(candidate)
+  !current.dir_id && Boolean(candidate.dir_id)
 
 // The regular Drive row wins deduplication for display, but only the
 // transformed entry carries the driveId/orgDrive/driveOwner attributes the
@@ -47,8 +45,7 @@ const withDriveMetadata = (kept, dropped) =>
  *
  * During transient sharing updates, the Sharings view can receive the same
  * document twice: once as the real Drive entry and once as a transformed
- * shared-drive entry. The transformed entry has `dir_id` set to the
- * shared-drives magic directory, which renders as the active Sharings tab.
+ * shared-drive entry. The transformed entry has no local parent directory.
  * Keep the real Drive entry whenever it is available so the row path matches
  * the stable state after a page reload, while retaining the drive
  * classification metadata of the discarded transformed entry.
@@ -115,8 +112,7 @@ const computeData = ({
 }) => {
   let data
   if (withoutSharedDrives) {
-    data =
-      result.data?.filter(item => item.dir_id !== SHARED_DRIVES_DIR_ID) || []
+    data = result.data?.filter(item => !item.driveId) || []
   } else {
     data = [...transformedSharedDrives, ...nonSharedDriveList]
   }
@@ -126,8 +122,8 @@ const computeData = ({
 /**
  * Reshapes the raw sharings query result for the Sharings view.
  *
- * Drops the magic shared-drives directory when shared-drive and federated
- * shared-folder flags are both off, otherwise merges transformed shared-drive
+ * Uses local documents when shared-drive and federated shared-folder flags
+ * are both off, otherwise merges transformed shared-drive
  * shortcuts into the result. Then drops transient duplicate representations of
  * the same document, preferring the real Drive entry over the shared-drives
  * synthetic entry. When `tab` is provided, keeps only the entries belonging

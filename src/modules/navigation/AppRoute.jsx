@@ -28,9 +28,7 @@ import TrashFolderView from '../views/Trash/TrashFolderView'
 
 import FileHistory from '@/components/FileHistory'
 import {
-  DEFAULT_SHARINGS_VIEW_ROUTE,
   ROOT_DIR_ID,
-  SHARED_DRIVES_DIR_ID,
   SHARING_TAB_BY_ME,
   SHARING_TAB_DRIVES,
   SHARING_TAB_WITH_ME,
@@ -76,10 +74,6 @@ const filteredBarRoutes = BarRoutes.filter(
 const FilesRedirect = () => {
   const { folderId } = useParams()
   return <Navigate to={`/folder/${folderId}`} replace={true} />
-}
-
-const SharedDrivesRedirect = () => {
-  return <Navigate to={DEFAULT_SHARINGS_VIEW_ROUTE} replace={true} />
 }
 
 const OutletWrapper = ({ Component }) => (
@@ -231,13 +225,6 @@ const AppRoutes = ({ sharedDrivesEnabled }) => (
         <Route path="share" element={<ShareDisplayedFolderView />} />
         <Route path="move" element={<MoveFilesView />} />
         <Route path="duplicate" element={<FolderDuplicateView />} />
-      </Route>
-
-      <Route
-        path={`folder/${SHARED_DRIVES_DIR_ID}`}
-        element={<SharedDrivesRedirect />}
-      >
-        <Route path="file/:fileId" element={<FilesViewerDrive />} />
       </Route>
 
       {!flag('drive.hide-nextcloud-dev') ? (

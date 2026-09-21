@@ -70,9 +70,7 @@ describe('DesktopBreadcrumb', () => {
         )
 
         // Then
-        expect(
-          container.querySelector('[aria-label="Shared Drive"]')
-        ).toBeTruthy()
+        expect(queryByText('Shared Drive')).toBeInTheDocument()
         expect(queryByText('grandparent')).toBeFalsy()
         expect(queryByText('parent')).toBeTruthy()
         expect(queryByText('current')).toBeTruthy()
@@ -87,9 +85,7 @@ describe('DesktopBreadcrumb', () => {
         )
 
         // Then
-        expect(
-          container.querySelector('[aria-label="Shared Drive"]')
-        ).toBeTruthy()
+        expect(queryByText('Shared Drive')).toBeInTheDocument()
         expect(queryByText('grandparent')).toBeFalsy()
         expect(queryByText('parent')).toBeTruthy()
         expect(queryByText('current')).toBeTruthy()

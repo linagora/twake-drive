@@ -2,7 +2,7 @@ import React, { useMemo, useContext, useEffect } from 'react'
 import { useDispatch } from 'react-redux'
 import { Outlet, useParams, useNavigate, useLocation } from 'react-router-dom'
 
-import { useClient } from 'cozy-client'
+import { useClient, useQuery } from 'cozy-client'
 import flag from 'cozy-flags'
 import { useSharingContext } from 'cozy-sharing'
 import { makeActions } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
@@ -11,7 +11,6 @@ import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import { useI18n } from 'twake-i18n'
 
 import useHead from '@/components/useHead'
-import { SHARED_DRIVES_DIR_ID } from '@/constants/config'
 import { useClipboardContext } from '@/contexts/ClipboardProvider'
 import { useDisplayedFolder, useFolderSort } from '@/hooks'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
@@ -35,12 +34,14 @@ import Toolbar from '@/modules/drive/Toolbar'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 import { SharedDriveBreadcrumb } from '@/modules/shareddrives/components/SharedDriveBreadcrumb'
 import { SharedDriveFolderBody } from '@/modules/shareddrives/components/SharedDriveFolderBody'
+import { getFolderIdFromSharing } from '@/modules/shareddrives/helpers'
 import { useSharedDriveFolder } from '@/modules/shareddrives/hooks/useSharedDriveFolder'
 import Dropzone from '@/modules/upload/Dropzone'
 import DropzoneDnD from '@/modules/upload/DropzoneDnD'
 import FolderView from '@/modules/views/Folder/FolderView'
 import FolderViewHeader from '@/modules/views/Folder/FolderViewHeader'
 import FolderViewBodyVz from '@/modules/views/Folder/virtualized/FolderViewBody'
+import { buildSharedDriveIdQuery } from '@/queries'
 
 const SharedDriveFolderView = () => {
   const client = useClient()
@@ -58,7 +59,12 @@ const SharedDriveFolderView = () => {
   const { t } = useI18n()
   const { showAlert } = useAlert()
   const dispatch = useDispatch()
-  const isInRootOfSharedDrive = displayedFolder?.dir_id === SHARED_DRIVES_DIR_ID
+  const sharingQuery = buildSharedDriveIdQuery({ driveId })
+  const { data: sharing } = useQuery(
+    sharingQuery.definition,
+    sharingQuery.options
+  )
+  const isInRootOfSharedDrive = getFolderIdFromSharing(sharing) === folderId
   const { isFabDisplayed, setIsFabDisplayed } = useContext(FabContext)
   const { isSelectionBarVisible } = useSelectionContext()
 

@@ -15,6 +15,7 @@ import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import { useI18n } from 'twake-i18n'
 
+import { ROOT_DIR_ID } from '@/constants/config'
 import { useFolderSort } from '@/hooks'
 import { useModalContext } from '@/lib/ModalContext'
 import {
@@ -118,7 +119,7 @@ const FavoritesView: FC = () => {
           <Toolbar canUpload={false} canCreateFolder={false} />
         </FolderViewHeader>
         <FolderBody
-          folderId="io.cozy.files.shared-drives-dir"
+          folderId={ROOT_DIR_ID}
           queryResults={[favoritesResult]}
           actions={actions}
           canSort={true}

@@ -45,7 +45,9 @@ describe('useCurrentFolderId', () => {
   })
 
   it('should return io.cozy.files.shared-drives-dir if in /folder/io.cozy.files.shared-drives-dir', () => {
-    jest.spyOn(ReactRouter, 'useParams').mockReturnValue({})
+    jest.spyOn(ReactRouter, 'useParams').mockReturnValue({
+      folderId: 'io.cozy.files.shared-drives-dir'
+    })
     jest
       .spyOn(ReactRouter, 'useLocation')
       .mockReturnValue({ pathname: '/folder/io.cozy.files.shared-drives-dir' })

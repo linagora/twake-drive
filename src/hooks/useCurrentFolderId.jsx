@@ -8,8 +8,6 @@ const useCurrentFolderId = () => {
 
   if (folderId) {
     return folderId
-  } else if (pathname.startsWith('/folder/io.cozy.files.shared-drives-dir')) {
-    return 'io.cozy.files.shared-drives-dir'
   } else if (pathname === '/folder') {
     return ROOT_DIR_ID
   } else if (pathname === '/trash') {

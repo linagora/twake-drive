@@ -47,8 +47,8 @@ const sharedDrivesFolder = {
   name: 'Photos',
   class: 'directory',
   type: 'directory',
-  dir_id: 'io.cozy.files.shared-drives-dir',
-  path: '/Drives/Photos'
+  dir_id: '',
+  path: '/Photos'
 }
 
 const anotherFolder = {
@@ -100,7 +100,7 @@ const orgDrive = {
   name: 'Company drive',
   class: 'directory',
   type: 'directory',
-  dir_id: 'io.cozy.files.shared-drives-dir',
+  dir_id: '',
   driveId: 'sharing-org',
   orgDrive: true,
   driveOwner: false
@@ -112,7 +112,7 @@ const ownedFederatedDrive = {
   name: 'My federated folder',
   class: 'directory',
   type: 'directory',
-  dir_id: 'io.cozy.files.shared-drives-dir',
+  dir_id: '',
   driveId: 'sharing-fed-owned',
   orgDrive: false,
   driveOwner: true
@@ -124,7 +124,7 @@ const receivedFederatedDrive = {
   name: 'Partner federated folder',
   class: 'directory',
   type: 'directory',
-  dir_id: 'io.cozy.files.shared-drives-dir',
+  dir_id: '',
   driveId: 'sharing-fed-received',
   orgDrive: false,
   driveOwner: false

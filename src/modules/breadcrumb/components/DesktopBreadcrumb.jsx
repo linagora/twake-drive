@@ -1,9 +1,4 @@
-import {
-  Icon,
-  FileTypeSharedDriveGrey,
-  Folder,
-  Right
-} from '@linagora/twake-icons'
+import { Icon, Folder, Right } from '@linagora/twake-icons'
 import React, { useEffect, useMemo, useState } from 'react'
 
 import ActionsMenu from 'cozy-ui/transpiled/react/ActionsMenu'
@@ -57,19 +52,6 @@ const DesktopBreadcrumb = ({ onBreadcrumbClick, path }) => {
     <Icon icon={Right} className={styles['fil-path-separator']} />
   )
 
-  // When we are in a shared drive, we want to display the shared drive icon
-  // in first position to reduce the number of displayed path elements
-  const pathToDisplay = useMemo(() => {
-    const sharedDriveIndex = path.findIndex(
-      item => item.id === 'io.cozy.files.shared-drives-dir'
-    )
-    if (sharedDriveIndex !== -1 && path.length > 2) {
-      return path.slice(sharedDriveIndex)
-    }
-
-    return path
-  }, [path])
-
   return (
     <>
       <BreadcrumbMui
@@ -79,30 +61,15 @@ const DesktopBreadcrumb = ({ onBreadcrumbClick, path }) => {
         itemsAfterCollapse={2}
         expandText={expandText}
       >
-        {pathToDisplay.map((breadcrumbPath, index) => {
-          if (pathToDisplay.length > 1 && breadcrumbPath.id === ROOT_DIR_ID) {
+        {path.map((breadcrumbPath, index) => {
+          if (path.length > 1 && breadcrumbPath.id === ROOT_DIR_ID) {
             return (
               <DesktopBreadcrumbItem
                 key={breadcrumbPath.name}
                 onClick={onBreadcrumbClick}
                 item={breadcrumbPath}
-                isCurrent={index === pathToDisplay.length - 1}
+                isCurrent={index === path.length - 1}
                 icon={Folder}
-              />
-            )
-          }
-
-          if (
-            index === 0 &&
-            breadcrumbPath.id === 'io.cozy.files.shared-drives-dir'
-          ) {
-            return (
-              <DesktopBreadcrumbItem
-                key={breadcrumbPath.name}
-                onClick={onBreadcrumbClick}
-                item={breadcrumbPath}
-                isCurrent={index === pathToDisplay.length - 1}
-                icon={FileTypeSharedDriveGrey}
               />
             )
           }
@@ -112,7 +79,7 @@ const DesktopBreadcrumb = ({ onBreadcrumbClick, path }) => {
               key={breadcrumbPath.name}
               onClick={onBreadcrumbClick}
               item={breadcrumbPath}
-              isCurrent={index === pathToDisplay.length - 1}
+              isCurrent={index === path.length - 1}
             />
           )
         })}

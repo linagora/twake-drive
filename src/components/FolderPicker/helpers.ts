@@ -2,12 +2,13 @@ import CozyClient from 'cozy-client/types/CozyClient'
 import { IOCozyFile, NextcloudFile } from 'cozy-client/types/types'
 
 import { FolderPickerEntry, File } from '@/components/FolderPicker/types'
-import { SHARED_DRIVES_DIR_ID } from '@/constants/config'
+import { ROOT_DIR_ID } from '@/constants/config'
 import { getParentPath } from '@/lib/path'
 import {
   buildFileOrFolderByIdQuery,
   buildNextcloudFolderQuery,
-  buildSharedDriveFileOrFolderByIdQuery
+  buildSharedDriveFileOrFolderByIdQuery,
+  buildSharedDriveIdQuery
 } from '@/queries'
 
 /**
@@ -119,12 +120,24 @@ export const computeNextcloudRootFolder = ({
  *
  * @param client - The CozyClient instance used to fetch the parent folder.
  * @param folder - The Nextcloud file for which to retrieve the parent folder.
- * @returns A Promise that resolves to the parent folder of the given Nextcloud file, or undefined if not found.
+ * @param instanceName - The display name of the Nextcloud instance.
+ * @returns The parent folder, or the local Drive root when leaving Nextcloud.
  */
-const getNextcloudParentFolder = async (
+async function getNextcloudParentFolder(
   client: CozyClient | null,
-  folder: NextcloudFile
-): Promise<NextcloudFile> => {
+  folder: NextcloudFile,
+  instanceName?: string
+): Promise<File> {
+  if (folder.path === '/') {
+    return await getCozyParentFolder(client, ROOT_DIR_ID)
+  }
+  if (folder.parentPath === '/') {
+    return computeNextcloudRootFolder({
+      sourceAccount: folder.cozyMetadata.sourceAccount,
+      instanceName
+    })
+  }
+
   const parentFolderQuery = buildNextcloudFolderQuery({
     sourceAccount: folder.cozyMetadata.sourceAccount,
     path: getParentPath(folder.parentPath) ?? 'unknown'
@@ -154,25 +167,27 @@ const getNextcloudParentFolder = async (
  * @param instanceName - (Optional) The name of the Cozy instance.
  * @returns A Promise that resolves to the parent folder of the given file, or undefined if the file is the root folder.
  */
-export const getParentFolder = async (
+export async function getParentFolder(
   client: CozyClient | null,
   folder: File,
   { instanceName }: { instanceName?: string }
-): Promise<File> => {
+): Promise<File> {
   if (folder._type === 'io.cozy.remote.nextcloud.files') {
-    if (folder.path === '/') {
-      return await getCozyParentFolder(client, SHARED_DRIVES_DIR_ID)
-    }
-    if (folder.parentPath === '/') {
-      return computeNextcloudRootFolder({
-        sourceAccount: folder.cozyMetadata.sourceAccount,
-        instanceName
-      })
-    } else {
-      return await getNextcloudParentFolder(client, folder)
-    }
+    return await getNextcloudParentFolder(client, folder, instanceName)
   }
 
-  const driveId = folder.dir_id === SHARED_DRIVES_DIR_ID ? '' : folder.driveId
-  return await getCozyParentFolder(client, folder.dir_id, driveId)
+  if (folder.driveId) {
+    const sharingQuery = buildSharedDriveIdQuery({ driveId: folder.driveId })
+    const result = (await client?.fetchQueryAndGetFromState({
+      definition: sharingQuery.definition(),
+      options: sharingQuery.options
+    })) as { data?: { rules?: { values?: string[] }[] } } | null
+    if (
+      !folder.dir_id ||
+      result?.data?.rules?.[0]?.values?.[0] === folder._id
+    ) {
+      return await getCozyParentFolder(client, ROOT_DIR_ID)
+    }
+  }
+  return await getCozyParentFolder(client, folder.dir_id, folder.driveId)
 }

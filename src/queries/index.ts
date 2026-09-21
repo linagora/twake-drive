@@ -2,11 +2,7 @@ import CozyClient, { Q, QueryDefinition } from 'cozy-client'
 import { QueryOptions } from 'cozy-client/types/types'
 import flag from 'cozy-flags'
 
-import {
-  SHARED_DRIVES_DIR_ID,
-  TRASH_DIR_ID,
-  SETTINGS_DIR_PATH
-} from '@/constants/config'
+import { TRASH_DIR_ID, SETTINGS_DIR_PATH } from '@/constants/config'
 import {
   DOCTYPE_ALBUMS,
   DOCTYPE_FILES_SETTINGS,
@@ -51,10 +47,8 @@ export const buildDriveQuery: QueryBuilder<buildDriveQueryParams> = ({
       _id: { $nin: string[] }
       path?: Record<string, unknown>
     } = {
-      // This is to avoid fetching shared drives
-      // They are hidden clientside
       _id: {
-        $nin: [TRASH_DIR_ID, 'io.cozy.files.shared-drives-dir']
+        $nin: [TRASH_DIR_ID]
       }
     }
 
@@ -96,7 +90,7 @@ export const buildRecentQuery: QueryBuilder = () => ({
       .partialIndex({
         type: 'file',
         trashed: false,
-        dir_id: { $nin: [SHARED_DRIVES_DIR_ID, TRASH_DIR_ID] }
+        dir_id: { $nin: [TRASH_DIR_ID] }
       })
       .indexFields(['updated_at'])
       .sortBy([{ updated_at: 'desc' }])
@@ -226,10 +220,8 @@ export const buildMoveOrImportQuery: QueryBuilder<string> = dirId => ({
         name: { $gt: null }
       })
       .partialIndex({
-        // This is to avoid fetching shared drives and trash
-        // They are hidden clientside
         _id: {
-          $nin: [SHARED_DRIVES_DIR_ID, TRASH_DIR_ID]
+          $nin: [TRASH_DIR_ID]
         }
       })
       .indexFields(['dir_id', 'type', 'name'])

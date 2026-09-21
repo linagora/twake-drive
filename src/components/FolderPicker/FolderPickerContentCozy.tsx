@@ -45,10 +45,6 @@ const FolderPickerContentCozy: React.FC<FolderPickerContentCozyProps> = ({
     fetchMore: () => void
   }
 
-  // The "Drives" folder (shared-drives-dir) is hidden from the normal file
-  // list, so it must not appear as a destination in the move/copy picker.
-  // buildMoveOrImportQuery already excludes it via partialIndex, so the list
-  // is used as-is with no manual injection.
   const files: IOCozyFile[] = filesData ?? []
 
   const handleClick = (file: File): void => {

@@ -207,7 +207,7 @@ describe('FolderPickerTopbar', () => {
     })
     fireEvent.click(backButton)
     await waitFor(() => {
-      expect(navigateTo).toHaveBeenCalledWith(sharedDrivesFolder)
+      expect(navigateTo).toHaveBeenCalledWith(rootCozyFolder)
     })
   })
 
