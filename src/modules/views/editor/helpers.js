@@ -38,6 +38,30 @@ export const makeEditorFileRoute = (
 }
 
 /**
+ * Reads the file binary, scoped to the shared drive when the file belongs to
+ * one. The stack serves /download/:id without Cache-Control, so the browser
+ * may reuse a stale copy for days on an old file: bypass the cache so an editor
+ * never reopens (and then autosaves over) an outdated version.
+ *
+ * @param {object} client - cozy-client
+ * @param {string} fileId - Id of the file
+ * @param {string} [driveId] - Shared drive the file belongs to
+ * @returns {Promise<Response>}
+ */
+export const fetchFileBinary = (client, fileId, driveId) => {
+  const collection = client.collection(
+    'io.cozy.files',
+    driveId ? { driveId } : {}
+  )
+  return collection.stackClient.fetch(
+    'GET',
+    `${collection.prefix}/download/${encodeURIComponent(fileId)}`,
+    undefined,
+    { cache: 'no-store' }
+  )
+}
+
+/**
  * Writes the edited content back to the file binary, scoped to the shared drive
  * when the file belongs to one.
  *

@@ -24,19 +24,23 @@ const emptyBinary = () => ({
 
 describe('useSceneSync', () => {
   const updateFile = jest.fn().mockResolvedValue(undefined)
-  const fetchFileContentById = jest.fn()
-  const collection = jest.fn(() => ({ fetchFileContentById, updateFile }))
+  const fetch = jest.fn()
+  const collection = jest.fn(() => ({
+    prefix: '/files',
+    stackClient: { fetch },
+    updateFile
+  }))
 
   beforeEach(() => {
     jest.clearAllMocks()
-    fetchFileContentById.mockResolvedValue(emptyBinary())
+    fetch.mockResolvedValue(emptyBinary())
     useClient.mockReturnValue({ collection })
   })
 
   describe('loading', () => {
     it('reads and parses the scene from the file binary', async () => {
       const scene = { type: 'excalidraw', elements: [{ id: 'a' }], files: {} }
-      fetchFileContentById.mockResolvedValue({
+      fetch.mockResolvedValue({
         text: () => Promise.resolve(JSON.stringify(scene))
       })
       const file = { _id: 'f1', name: 'd.excalidraw' }
@@ -44,12 +48,17 @@ describe('useSceneSync', () => {
       const { result } = renderHook(() => useSceneSync(file))
 
       await waitFor(() => expect(result.current.status).toBe('loaded'))
-      expect(fetchFileContentById).toHaveBeenCalledWith('f1')
+      expect(fetch).toHaveBeenCalledWith(
+        'GET',
+        '/files/download/f1',
+        undefined,
+        { cache: 'no-store' }
+      )
       expect(result.current.scene).toEqual(scene)
     })
 
     it('falls back to an empty scene when the binary is not a valid scene', async () => {
-      fetchFileContentById.mockResolvedValue({
+      fetch.mockResolvedValue({
         text: () => Promise.resolve('not json')
       })
       const file = { _id: 'f1', name: 'd.excalidraw' }

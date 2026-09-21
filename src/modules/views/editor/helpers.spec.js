@@ -1,4 +1,5 @@
 import {
+  fetchFileBinary,
   makePublicEditorUrl,
   shouldBeOpenedOnOtherInstance
 } from '@/modules/views/editor/helpers'
@@ -146,6 +147,46 @@ describe('makePublicEditorUrl', () => {
       })
     ).toBe(
       'https://alice-drive.cozy.example/public/?sharecode=abc123&isOnlyOfficeDocShared=true&onlyOfficeDocId=owner-file-id&username=Bob#/'
+    )
+  })
+})
+
+describe('fetchFileBinary', () => {
+  const fetch = jest.fn().mockResolvedValue('response')
+  const collection = jest.fn((doctype, options) => ({
+    prefix: options.driveId ? `/sharings/drives/${options.driveId}` : '/files',
+    stackClient: { fetch }
+  }))
+  const client = { collection }
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  it('downloads the binary bypassing the HTTP cache', async () => {
+    const response = await fetchFileBinary(client, 'file1')
+
+    expect(response).toBe('response')
+    expect(collection).toHaveBeenCalledWith('io.cozy.files', {})
+    expect(fetch).toHaveBeenCalledWith(
+      'GET',
+      '/files/download/file1',
+      undefined,
+      { cache: 'no-store' }
+    )
+  })
+
+  it('downloads from the shared drive when a driveId is given', async () => {
+    await fetchFileBinary(client, 'file1', 'drive9')
+
+    expect(collection).toHaveBeenCalledWith('io.cozy.files', {
+      driveId: 'drive9'
+    })
+    expect(fetch).toHaveBeenCalledWith(
+      'GET',
+      '/sharings/drives/drive9/download/file1',
+      undefined,
+      { cache: 'no-store' }
     )
   })
 })

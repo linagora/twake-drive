@@ -9,7 +9,10 @@ import {
   isExcalidrawScene,
   makeEmptyScene
 } from '@/modules/views/Excalidraw/helpers'
-import { updateFileBinary } from '@/modules/views/editor/helpers'
+import {
+  fetchFileBinary,
+  updateFileBinary
+} from '@/modules/views/editor/helpers'
 import { useSaveOnHideAndUnmount } from '@/modules/views/editor/useSaveOnHideAndUnmount'
 
 const DEFAULT_INTERVAL_MS = 10000
@@ -21,9 +24,7 @@ const serializeScene = ({ elements, appState, files }) =>
   serializeAsJSON(elements ?? [], appState ?? {}, files ?? {}, 'local')
 
 const readSceneFromBinary = async (client, fileId, driveId) => {
-  const response = await client
-    .collection('io.cozy.files', driveId ? { driveId } : {})
-    .fetchFileContentById(fileId)
+  const response = await fetchFileBinary(client, fileId, driveId)
   const text = await response.text()
   const scene = text ? JSON.parse(text) : makeEmptyScene()
   return isExcalidrawScene(scene) ? scene : makeEmptyScene()
