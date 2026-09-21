@@ -323,7 +323,7 @@ const SharedDriveFolderContent = ({
     )
     const locallyAddedItems = additionalItems.filter(
       item =>
-        item?.dir_id === folderId &&
+        item.dir_id === folderId &&
         item.driveId === driveId &&
         !fetchedItemIds.has(item._id ?? item.id)
     )
