@@ -331,13 +331,13 @@ describe('MoveModal component', () => {
       shouldFail = false
       fireEvent.click(screen.getByRole('button', { name: 'Move' }))
 
-      await waitFor(() => expect(onCloseSpy).toHaveBeenCalledTimes(1))
+      await waitFor(() => expect(onMovingSuccess).toHaveBeenCalledTimes(1))
+      expect(onCloseSpy).not.toHaveBeenCalled()
       expect(move.mock.calls.map(([, entry]) => entry._id)).toEqual([
         'bill_201901',
         'bill_201902',
         'bill_201902'
       ])
-      expect(onMovingSuccess).toHaveBeenCalledTimes(1)
       expect(
         await screen.findByText(
           '2 elements have been moved to Destination Folder.'

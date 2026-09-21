@@ -178,8 +178,11 @@ const MoveModal = ({
       }
 
       notifyMoveSuccess(folder, allSuccessfulEntries, allTrashedFiles)
-      onMovingSuccess?.()
-      onClose()
+      if (onMovingSuccess) {
+        onMovingSuccess()
+      } else {
+        onClose()
+      }
     } catch (e) {
       logger.warn(e)
       showAlert({

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import React from 'react'
 
 import { MoveSharedDriveFilesView } from './MoveSharedDriveFilesView'
@@ -34,11 +34,13 @@ jest.mock('@/components/LoaderModal', () => ({
 
 jest.mock('@/modules/move/MoveModal', () => ({
   __esModule: true,
-  default: ({ entries }) => (
+  default: ({ entries, onClose, onMovingSuccess }) => (
     <div>
       {entries.map(entry => (
         <span key={entry._id}>{entry.path}</span>
       ))}
+      <button onClick={onClose}>Close modal</button>
+      <button onClick={onMovingSuccess}>Success modal</button>
     </div>
   )
 }))
@@ -101,5 +103,26 @@ describe('MoveSharedDriveFilesView', () => {
     expect(
       screen.getByText('/Team/Shared Folder 1/File 2.pdf')
     ).toBeInTheDocument()
+  })
+
+  it('navigates to .. on onClose even when in viewer (staying in viewer after cancelling)', () => {
+    render(<MoveSharedDriveFilesView isOpenInViewer={true} />)
+
+    fireEvent.click(screen.getByText('Close modal'))
+    expect(mockNavigate).toHaveBeenCalledWith('..', { replace: true })
+  })
+
+  it('navigates to ../.. on onMovingSuccess when in viewer (exiting viewer after move)', () => {
+    render(<MoveSharedDriveFilesView isOpenInViewer={true} />)
+
+    fireEvent.click(screen.getByText('Success modal'))
+    expect(mockNavigate).toHaveBeenCalledWith('../..', { replace: true })
+  })
+
+  it('navigates to .. on onMovingSuccess when not in viewer', () => {
+    render(<MoveSharedDriveFilesView isOpenInViewer={false} />)
+
+    fireEvent.click(screen.getByText('Success modal'))
+    expect(mockNavigate).toHaveBeenCalledWith('..', { replace: true })
   })
 })
