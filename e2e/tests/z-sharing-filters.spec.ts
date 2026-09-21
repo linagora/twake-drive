@@ -56,9 +56,7 @@ test.describe.serial('Filtered federated re-sharing', () => {
     await bobPage.getByRole('button', { name: 'Type', exact: true }).click()
     await bobPage.getByRole('option', { name: 'Folders' }).click()
 
-    await expect(bobPage).toHaveURL(
-      /#\/sharings\/with-me\?f\.type=directory$/
-    )
+    await expect(bobPage).toHaveURL(/#\/sharings\/with-me\?f\.type=directory$/)
     await expect(
       bobPage.getByRole('button', { name: 'Folders', exact: true })
     ).toBeVisible()
@@ -67,14 +65,12 @@ test.describe.serial('Filtered federated re-sharing', () => {
 
     const shareModal = await bobDrive.row(FOLDER_NAME).share()
     await expect(bobPage).toHaveURL(
-      /#\/sharings\/with-me\/shareddrive\/[^/]+\/[^/]+\/share\?f\.type=directory$/
+      /#\/sharings\/with-me\/share\/shareddrive\/[^/]+\/[^/]+\?f\.type=directory$/
     )
     await shareModal.addMember(USERS.charlie.email)
     await shareModal.share()
 
-    await expect(bobPage).toHaveURL(
-      /#\/sharings\/with-me\?f\.type=directory$/
-    )
+    await expect(bobPage).toHaveURL(/#\/sharings\/with-me\?f\.type=directory$/)
     await expect(
       bobPage.getByRole('button', { name: 'Folders', exact: true })
     ).toBeVisible()
