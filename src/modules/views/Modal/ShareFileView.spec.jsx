@@ -68,7 +68,7 @@ describe('ShareFileView', () => {
 
   it('should redirect to the active tab after leaving a shared drive file', () => {
     mockUseLocation.mockReturnValue({
-      pathname: '/sharings/by-me/shareddrive/drive-id/file-id/share'
+      pathname: '/sharings/by-me/share/shareddrive/drive-id/file-id'
     })
     mockUseParams.mockReturnValue({ driveId: 'drive-id', fileId: 'file-id' })
 

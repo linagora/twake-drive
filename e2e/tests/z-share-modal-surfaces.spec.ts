@@ -22,8 +22,8 @@ const FILE_NAME = `${FILE_PREFIX}-${stamp()}.txt`
 /**
  * Regression guards for where the share modal renders. Two recent fixes:
  *  - from the Sharings list, Share must layer the modal over the list
- *    (`/sharings/:tab/shareddrive/:driveId/:fileId/share`) instead of
- *    navigating into the drive's folder view;
+ *    (`/sharings/:tab/share/shareddrive/:driveId/:fileId`) instead of
+ *    navigating into the drive's folder view
  *  - from the file viewer inside a shared drive, Share navigates to a
  *    relative `v/share`, which needs its own route or the page goes blank.
  */
@@ -64,13 +64,33 @@ test.describe.serial('Share modal surfaces (shared drives)', () => {
     // The modal is layered over the sharings list: the URL is the dedicated
     // overlay route and the list is still mounted underneath.
     await expect(alicePage).toHaveURL(
-      /\/sharings\/by-me\/shareddrive\/[^/]+\/[^/]+\/share/
+      /\/sharings\/by-me\/share\/shareddrive\/[^/]+\/[^/]+/
     )
     await expect(alicePage.getByTestId('fil-content-body')).toBeVisible()
 
     await modal.close()
     // Closing the modal returns to the tab it was opened from.
     await expect(alicePage).toHaveURL(/#\/sharings\/by-me$/)
+  })
+
+  test('Toolbar avatars inside the shared drive keep the folder view', async ({
+    bobPage,
+    bobDrive
+  }) => {
+    await openSharedDrive(bobPage, USERS.bob, bobDrive, DRIVE_NAME)
+    await bobDrive.row(FILE_NAME).waitVisible()
+
+    const modal = await bobDrive.openShareFromToolbarRecipients()
+
+    await expect(bobPage).toHaveURL(
+      /\/sharings\/with-me\/shareddrive\/[^/]+\/[^/]+\/share/
+    )
+    await expect(modal.dialog).toContainText(DRIVE_NAME)
+    // The folder content is still mounted under the modal, not the list.
+    await bobDrive.row(FILE_NAME).waitVisible()
+
+    await modal.close()
+    await expect(bobPage).toHaveURL(/\/shareddrive\/[^/]+\/[^/]+$/)
   })
 
   test('Share from the shared-drive file viewer renders the modal', async ({

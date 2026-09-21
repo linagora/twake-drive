@@ -55,7 +55,7 @@ describe('shareSharedDrive', () => {
     ])
 
     expect(navigate).toHaveBeenCalledWith({
-      pathname: '/sharings/drives/shareddrive/drive-id/folder-id/share',
+      pathname: '/sharings/drives/share/shareddrive/drive-id/folder-id',
       search: ''
     })
   })
