@@ -4,6 +4,8 @@ import { MoveToPage } from './MoveToPage'
 import { ShareModalPage } from './ShareModalPage'
 import { escapeRegExp, expect } from '../helpers/fixtures'
 
+import { DOUBLE_CLICK_DELAY } from '@/hooks/useOnLongPress/helpers'
+
 interface ConfirmDialog {
   button: RegExp
   /** `required`: the dialog always shows up. `optional`: only confirm when
@@ -13,7 +15,6 @@ interface ConfirmDialog {
 }
 
 const OPTIONAL_DIALOG_TIMEOUT = 2_000
-const DOUBLE_CLICK_DELAY = 400
 
 /**
  * Handle for a single row in the Drive file list. Returned from
