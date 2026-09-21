@@ -20,6 +20,7 @@ jest.mock('@/lib/logger', () => ({ warn: jest.fn() }))
 
 import { ROOT_DIR_ID } from '@/constants/config'
 import { CozyFile } from '@/models'
+import { computeNextcloudFolderQueryId } from '@/modules/nextcloud/helpers'
 
 jest.mock('cozy-sharing', () => ({
   ...jest.requireActual('cozy-sharing'),
@@ -176,6 +177,7 @@ describe('MoveModal component', () => {
 
   beforeEach(() => {
     flag.mockImplementation(name => name === 'drive.move-to-picker.enabled')
+    mockClient.resetQuery = jest.fn()
     moveRelateToSharedDrive.mockReset()
     moveRelateToSharedDrive.mockResolvedValue({ deleted: null, moved: true })
   })
@@ -778,6 +780,102 @@ describe('MoveModal component', () => {
         expect(onCloseSpy).toHaveBeenCalledTimes(1)
       })
       expect(moveRelateToSharedDrive).toHaveBeenCalledTimes(3)
+    })
+  })
+
+  describe('Nextcloud context', () => {
+    const nextcloudEntries = [
+      {
+        _id: 'nc-file-1',
+        _type: 'io.cozy.remote.nextcloud.files',
+        name: 'remote-doc.pdf',
+        path: '/work/remote-doc.pdf',
+        parentPath: '/work',
+        cozyMetadata: { sourceAccount: 'nc-account-1' }
+      },
+      {
+        _id: 'nc-file-2',
+        _type: 'io.cozy.remote.nextcloud.files',
+        name: 'remote-notes.txt',
+        path: '/work/remote-notes.txt',
+        parentPath: '/work',
+        cozyMetadata: { sourceAccount: 'nc-account-1' }
+      }
+    ]
+
+    it('refreshes Nextcloud queries and does not allow cancel when moving outside Nextcloud', async () => {
+      setup({
+        entries: nextcloudEntries.slice(0, 1),
+        currentFolder: {
+          _id: 'nc-folder',
+          _type: 'io.cozy.remote.nextcloud.files',
+          name: 'work',
+          path: '/work'
+        }
+      })
+
+      fireEvent.click(await screen.findByText('Move'))
+
+      await waitFor(() => {
+        expect(move).toHaveBeenCalled()
+        expect(mockClient.resetQuery).toHaveBeenCalledWith(
+          computeNextcloudFolderQueryId({
+            sourceAccount: 'nc-account-1',
+            path: '/work'
+          })
+        )
+        expect(onCloseSpy).toHaveBeenCalledTimes(1)
+      })
+
+      expect(
+        await screen.findByText(
+          'remote-doc.pdf has been moved to Destination Folder.'
+        )
+      ).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Cancel' })).toBeNull()
+    })
+
+    it('refreshes Nextcloud queries for successfully moved files on partial failure', async () => {
+      let shouldFail = true
+      setup({
+        entries: nextcloudEntries,
+        currentFolder: {
+          _id: 'nc-folder',
+          _type: 'io.cozy.remote.nextcloud.files',
+          name: 'work',
+          path: '/work'
+        }
+      })
+      move.mockImplementation((_client, entry) => {
+        if (entry._id === 'nc-file-2' && shouldFail) {
+          return Promise.reject(new Error('nc move error'))
+        }
+        return Promise.resolve({ deleted: null, moved: entry })
+      })
+
+      fireEvent.click(await screen.findByText('Move'))
+
+      await waitFor(() => {
+        expect(screen.getByTestId('move-entries')).toHaveTextContent(
+          /^remote-notes.txt$/
+        )
+      })
+      expect(mockClient.resetQuery).toHaveBeenCalledWith(
+        computeNextcloudFolderQueryId({
+          sourceAccount: 'nc-account-1',
+          path: '/work'
+        })
+      )
+      expect(screen.getByText('Moved: 1. Failed: 1.')).toBeInTheDocument()
+      expect(onCloseSpy).not.toHaveBeenCalled()
+
+      shouldFail = false
+      fireEvent.click(screen.getByRole('button', { name: 'Move' }))
+
+      await waitFor(() => {
+        expect(onCloseSpy).toHaveBeenCalledTimes(1)
+      })
+      expect(move).toHaveBeenCalledTimes(3)
     })
   })
 
