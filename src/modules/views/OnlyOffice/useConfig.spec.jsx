@@ -58,7 +58,8 @@ const setup = ({
   isPublic = false
 } = {}) => {
   useClient.mockReturnValue({
-    getStackClient: () => ({ uri: 'https://bob.cozy.example' })
+    getStackClient: () => ({ uri: 'https://bob.cozy.example' }),
+    getInstanceOptions: () => ({ subdomain: 'flat' })
   })
   useBreakpoints.mockReturnValue({ isDesktop: true })
   useFetchJSON.mockReturnValue({ data, fetchStatus: 'loaded' })
@@ -119,7 +120,7 @@ describe('useConfig', () => {
 
     await waitFor(() =>
       expect(changeLocation).toHaveBeenCalledWith(
-        'https://alice-drive.cozy.example/public/?sharecode=abc123&isOnlyOfficeDocShared=true&onlyOfficeDocId=owner-file-id&username=Bob#/'
+        'https://alice-drive.cozy.example/public/?sharecode=abc123&isOnlyOfficeDocShared=true&onlyOfficeDocId=owner-file-id&username=Bob&shareUrl=https%3A%2F%2Fbob-drive.cozy.example%2F%23%2Fsharings%2Fwith-me%2Ffile%2F123%2Fshare#/'
       )
     )
   })

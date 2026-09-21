@@ -27,7 +27,9 @@ const Toolbar = ({ sharingInfos }) => {
   const [searchParams] = useSearchParams(window.location.search)
   const { isEditorReady, isReadOnly, fileId, isPublic } = useOnlyOfficeContext()
   const { t } = useI18n()
-  const { redirectBack, canRedirect } = useRedirectLink({ isPublic })
+  const { redirectBack, canRedirect, homeLink, shareLink } = useRedirectLink({
+    isPublic
+  })
 
   const fileQuery = isPublic
     ? buildFileOrFolderByIdQuery(fileId) // do not return path but return correctly data in public context
@@ -88,6 +90,7 @@ const Toolbar = ({ sharingInfos }) => {
         file={file}
         icon={file.class && <FileIcon fileClass={file.class} />}
         isPublic={isPublic}
+        homeHref={homeLink}
         isReadOnly={isReadOnly}
         canRedirect={showBackButton}
         onBack={handleOnClick}
@@ -106,7 +109,9 @@ const Toolbar = ({ sharingInfos }) => {
 
       <SummarizeByAIButtonWrapper isLoaded={isEditorReady} />
 
-      {!isPublic && isEditorReady && <Sharing file={file} />}
+      {(!isPublic || shareLink) && isEditorReady && (
+        <Sharing file={file} href={shareLink} />
+      )}
     </>
   )
 }

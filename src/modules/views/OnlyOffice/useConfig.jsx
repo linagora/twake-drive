@@ -10,6 +10,7 @@ import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvi
 import { isOfficeEnabled } from '@/modules/views/OnlyOffice/helpers'
 import {
   makePublicEditorUrl,
+  makeShareUrl,
   shouldBeOpenedOnOtherInstance
 } from '@/modules/views/editor/helpers'
 import { useEditorAuthor } from '@/modules/views/editor/useEditorAuthor'
@@ -62,7 +63,12 @@ const useConfig = () => {
               ['isOnlyOfficeDocShared', true],
               ['onlyOfficeDocId', document_id]
             ],
-            redirectLink: currentSearchParams.get('redirectLink')
+            redirectLink: currentSearchParams.get('redirectLink'),
+            shareUrl: makeShareUrl(client, {
+              fileId,
+              driveId,
+              redirectLink: currentSearchParams.get('redirectLink')
+            })
           })
         )
       } else if (isOfficeEnabled(isDesktop)) {
@@ -117,7 +123,10 @@ const useConfig = () => {
     instanceUri,
     isDesktop,
     currentSearchParams,
-    setOfficeKey
+    setOfficeKey,
+    client,
+    fileId,
+    driveId
   ])
 
   return { config, status }
