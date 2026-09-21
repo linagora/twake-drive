@@ -8,9 +8,15 @@ import { ShareButton, ShareModal, SharedRecipients } from 'cozy-sharing'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
+import { changeLocation } from '@/hooks/helpers'
 import { getSharingsRootRoute } from '@/modules/views/Sharings/routes'
 
-const Sharing = ({ file }) => {
+/**
+ * @param {object} props
+ * @param {object} props.file - The io.cozy.files document
+ * @param {string} [props.href] - Where to manage the sharing instead of here
+ */
+const Sharing = ({ file, href }) => {
   const [showShareModal, setShowShareModal] = useState(false)
   const { isMobile } = useBreakpoints()
   const navigate = useNavigate()
@@ -20,6 +26,7 @@ const Sharing = ({ file }) => {
     () => setShowShareModal(v => !v),
     [setShowShareModal]
   )
+  const openSharing = href ? () => changeLocation(href) : toggleShareModal
 
   const handleRevokeSuccess = () => {
     const redirectLink = new URLSearchParams(search).get('redirectLink')
@@ -36,22 +43,24 @@ const Sharing = ({ file }) => {
       {isMobile ? (
         <IconButton
           data-testid="onlyoffice-sharing-icon"
-          onClick={toggleShareModal}
+          onClick={openSharing}
           size="medium"
         >
           <Icon icon={Share} />
         </IconButton>
       ) : (
         <>
-          <SharedRecipients
-            docId={file._id}
-            size={32}
-            onClick={toggleShareModal}
-          />
+          {!href && (
+            <SharedRecipients
+              docId={file._id}
+              size={32}
+              onClick={toggleShareModal}
+            />
+          )}
           <ShareButton
             data-testid="onlyoffice-sharing-button"
             docId={file._id}
-            onClick={toggleShareModal}
+            onClick={openSharing}
           />
         </>
       )}

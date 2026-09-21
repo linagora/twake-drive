@@ -56,16 +56,12 @@ export const getFolderIdFromSharing = (
 export const isSharedDriveDoc = (folder: IOCozyFile): boolean =>
   folder && Boolean(folder.driveId)
 
-export const makeSharedDriveNoteReturnUrl = (
-  client: CozyClient,
-  file: IOCozyFile,
-  pathname = ''
-): string => {
-  const hash = getSharingsTabFromPath(pathname)
-    ? getSharingsSharedDrivePath(pathname, file.driveId, file.dir_id)
-    : `/shareddrive/${file.driveId!}/${file.dir_id}`
-
-  return generateWebLink({
+/**
+ * Absolute URL of a Drive route on the current instance, e.g. to come back to
+ * it from an app opened on another instance.
+ */
+export const makeDriveWebLink = (client: CozyClient, hash: string): string =>
+  generateWebLink({
     slug: 'drive',
     searchParams: [],
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -75,4 +71,21 @@ export const makeSharedDriveNoteReturnUrl = (
     pathname: '',
     hash
   })
-}
+
+/**
+ * Drive route of the folder holding a shared drive note, inside the active
+ * sharings tab when there is one.
+ */
+export const makeSharedDriveNoteHash = (
+  file: IOCozyFile,
+  pathname = ''
+): string =>
+  getSharingsTabFromPath(pathname)
+    ? getSharingsSharedDrivePath(pathname, file.driveId, file.dir_id)
+    : `/shareddrive/${file.driveId!}/${file.dir_id}`
+
+export const makeSharedDriveNoteReturnUrl = (
+  client: CozyClient,
+  file: IOCozyFile,
+  pathname = ''
+): string => makeDriveWebLink(client, makeSharedDriveNoteHash(file, pathname))

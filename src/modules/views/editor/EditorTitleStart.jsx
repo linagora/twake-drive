@@ -2,6 +2,7 @@ import PropTypes from 'prop-types'
 import React from 'react'
 
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
+import { useI18n } from 'twake-i18n'
 
 import BackButton from '@/components/EditorToolbar/BackButton'
 import FileName from '@/components/EditorToolbar/FileName'
@@ -17,6 +18,7 @@ import Separator from '@/components/EditorToolbar/Separator'
  * @param {object} props.file - The io.cozy.files document
  * @param {React.ReactNode} [props.icon] - The file type icon (already rendered)
  * @param {boolean} [props.isPublic]
+ * @param {string} [props.homeHref] - Home of a sharing member browsing the owner's instance
  * @param {boolean} [props.isReadOnly]
  * @param {boolean} [props.canRedirect] - Whether to show the back button
  * @param {Function} [props.onBack] - Back button handler
@@ -25,18 +27,30 @@ const EditorTitleStart = ({
   file,
   icon,
   isPublic = false,
+  homeHref,
   isReadOnly = false,
   canRedirect = false,
   onBack
 }) => {
   const { isMobile } = useBreakpoints()
+  const { t } = useI18n()
 
   return (
     <div className="u-flex u-flex-items-center u-flex-grow-1 u-ellipsis">
       {!isMobile && (
         <>
           {isPublic ? (
-            <HomeIcon />
+            homeHref ? (
+              <a
+                href={homeHref}
+                aria-label={t('OnlyOffice.toolbar.goToHome')}
+                data-testid="editor-home-link"
+              >
+                <HomeIcon />
+              </a>
+            ) : (
+              <HomeIcon />
+            )
           ) : (
             <HomeLinker>
               <HomeIcon />
@@ -56,6 +70,7 @@ EditorTitleStart.propTypes = {
   file: PropTypes.object.isRequired,
   icon: PropTypes.node,
   isPublic: PropTypes.bool,
+  homeHref: PropTypes.string,
   isReadOnly: PropTypes.bool,
   canRedirect: PropTypes.bool,
   onBack: PropTypes.func

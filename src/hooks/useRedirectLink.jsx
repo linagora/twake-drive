@@ -15,6 +15,8 @@ import logger from '@/lib/logger'
  * @property {string} redirectLink - The redirect link
  * @property {function} redirectBack - The function to redirect the user
  * @property {boolean} canRedirect - True if the user can be redirected
+ * @property {string} [homeLink] - Home of a sharing member browsing the owner's instance
+ * @property {string} [shareLink] - Where a sharing member manages the sharing
  */
 
 /**
@@ -39,6 +41,9 @@ const useRedirectLink = ({ isPublic = false } = {}) => {
   const isFromPublicFolder = getParam('fromPublicFolder') === 'true'
 
   const redirectLink = getParam('redirectLink')
+  const shareLink = getParam('shareUrl')
+  // The stack names the visitor only for a member of a Cozy to Cozy sharing
+  const isSharingMember = !!getParam('username')
 
   const [currentMemberInstance, setCurrentMemberInstance] = useState(undefined)
 
@@ -59,13 +64,12 @@ const useRedirectLink = ({ isPublic = false } = {}) => {
       }
     }
 
-    // Only resolve the share owner's instance when we actually have a redirect
-    // target. Public-share tokens don't always have permission to read
+    // Public-share tokens don't always have permission to read
     // /permissions/self, so skipping unnecessary calls avoids 403 noise.
-    if (isPublic && !isFromPublicFolder && redirectLink) {
+    if (isPublic && !isFromPublicFolder && (redirectLink || isSharingMember)) {
       fetch()
     }
-  }, [client, isPublic, isFromPublicFolder, redirectLink])
+  }, [client, isPublic, isFromPublicFolder, redirectLink, isSharingMember])
 
   const redirectBack = () => {
     if (!redirectLink) {
@@ -120,7 +124,10 @@ const useRedirectLink = ({ isPublic = false } = {}) => {
   return {
     redirectLink,
     redirectBack,
-    canRedirect
+    canRedirect,
+    // The instance root redirects to its default app
+    homeLink: currentMemberInstance,
+    shareLink
   }
 }
 

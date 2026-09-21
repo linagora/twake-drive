@@ -1,4 +1,8 @@
-import { generateWebLink } from 'cozy-client'
+import { deconstructRedirectLink, generateWebLink } from 'cozy-client'
+
+import { SHARING_TAB_WITH_ME } from '@/constants/config'
+import { makeDriveWebLink } from '@/modules/shareddrives/helpers'
+import { getSharingsTabRoute } from '@/modules/views/Sharings/routes'
 
 /**
  * @typedef {Object} EditorRouteOptions
@@ -107,19 +111,22 @@ export const shouldBeOpenedOnOtherInstance = ({ data }, instanceUri) => {
  * @param {string} [params.hash] - In-app route to open on the target page
  * @param {string[][]} [params.searchParams] - Extra query params for that page
  * @param {string} [params.redirectLink] - Where to send the user back to
+ * @param {string} [params.shareUrl] - Where the visitor manages the sharing
  * @returns {string}
  */
 export const makePublicEditorUrl = ({
   attributes,
   hash,
   searchParams = [],
-  redirectLink
+  redirectLink,
+  shareUrl
 }) => {
   const { protocol, instance, subdomain, sharecode, public_name } = attributes
 
   const params = [['sharecode', sharecode], ...searchParams]
   if (public_name) params.push(['username', public_name])
   if (redirectLink) params.push(['redirectLink', redirectLink])
+  if (shareUrl) params.push(['shareUrl', shareUrl])
 
   return generateWebLink({
     cozyUrl: `${protocol}://${instance}`,
@@ -129,4 +136,28 @@ export const makePublicEditorUrl = ({
     searchParams: params,
     hash
   })
+}
+
+/**
+ * URL of the share modal, in the recipient's own Drive, of a file they edit
+ * on its owner's instance, where their sharecode cannot manage the sharing.
+ *
+ * @param {object} client - cozy-client of the recipient's instance
+ * @param {object} params
+ * @param {string} params.fileId - Id of the file on the recipient's instance
+ * @param {string} [params.driveId] - Shared drive the file belongs to
+ * @param {string} [params.redirectLink] - Drive route the file was opened from
+ * @returns {string|undefined}
+ */
+export const makeShareUrl = (client, { fileId, driveId, redirectLink }) => {
+  if (!driveId) {
+    return makeDriveWebLink(
+      client,
+      `${getSharingsTabRoute(SHARING_TAB_WITH_ME)}/file/${fileId}/share`
+    )
+  }
+  // ponytail: a shared drive file opened by id has no folder to share over
+  if (!redirectLink) return undefined
+  const { hash } = deconstructRedirectLink(redirectLink)
+  return makeDriveWebLink(client, `${hash}/file/${fileId}/share`)
 }

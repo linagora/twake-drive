@@ -3,6 +3,8 @@ import React from 'react'
 
 import Sharing from './Sharing'
 
+import * as hookHelpers from '@/hooks/helpers'
+
 const mockNavigate = jest.fn()
 const mockUseLocation = jest.fn()
 
@@ -53,5 +55,21 @@ describe('EditorToolbar Sharing', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/sharings/with-me', {
       replace: true
     })
+  })
+})
+
+describe('EditorToolbar Sharing for a recipient on the owner instance', () => {
+  it('sends the recipient to their own drive instead of opening the modal', () => {
+    const spyChangeLocation = jest
+      .spyOn(hookHelpers, 'changeLocation')
+      .mockImplementation(() => {})
+    const href = 'https://bob-drive.cozy.cloud/#/sharings/with-me/file/id/share'
+
+    render(<Sharing file={{ _id: 'file-id', name: 'Document' }} href={href} />)
+
+    fireEvent.click(screen.getByText('Share'))
+
+    expect(spyChangeLocation).toHaveBeenCalledWith(href)
+    expect(screen.queryByText('Revoke self')).toBe(null)
   })
 })

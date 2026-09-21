@@ -190,3 +190,55 @@ describe('useRedirectLink', () => {
     expect(mockClient.collection().fetchOwnPermissions).not.toHaveBeenCalled()
   })
 })
+
+describe('useRedirectLink for a sharing member on the owner instance', () => {
+  const mockClient = {
+    collection: jest.fn().mockReturnValue({
+      fetchOwnPermissions: jest.fn().mockResolvedValue({
+        included: [{ attributes: { instance: 'https://bob.cozy.cloud' } }]
+      })
+    }),
+    getInstanceOptions: jest.fn().mockReturnValue({ subdomain: 'flat' })
+  }
+
+  beforeEach(() => {
+    useClient.mockReturnValue(mockClient)
+    useNavigate.mockReturnValue(jest.fn())
+  })
+
+  afterEach(() => {
+    window.history.replaceState({}, '', '/')
+    jest.clearAllMocks()
+  })
+
+  it('links the logo to the member home and exposes the share link', async () => {
+    useSearchParams.mockReturnValue([new URLSearchParams('')])
+    window.history.replaceState(
+      {},
+      '',
+      '/?sharecode=abc&username=Bob&shareUrl=https%3A%2F%2Fbob-drive.cozy.cloud%2F%23%2Fsharings%2Fwith-me%2Ffile%2Fid123%2Fshare'
+    )
+    let render
+    await act(async () => {
+      render = renderHook(() => useRedirectLink({ isPublic: true }))
+    })
+
+    expect(render.result.current.homeLink).toBe('https://bob.cozy.cloud')
+    expect(render.result.current.shareLink).toBe(
+      'https://bob-drive.cozy.cloud/#/sharings/with-me/file/id123/share'
+    )
+  })
+
+  it('does not resolve the home of an anonymous visitor', async () => {
+    useSearchParams.mockReturnValue([new URLSearchParams('')])
+    window.history.replaceState({}, '', '/?sharecode=abc')
+    let render
+    await act(async () => {
+      render = renderHook(() => useRedirectLink({ isPublic: true }))
+    })
+
+    expect(mockClient.collection().fetchOwnPermissions).not.toHaveBeenCalled()
+    expect(render.result.current.homeLink).toBeUndefined()
+    expect(render.result.current.shareLink).toBeNull()
+  })
+})

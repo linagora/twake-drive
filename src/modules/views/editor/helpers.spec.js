@@ -1,6 +1,7 @@
 import {
   fetchFileBinary,
   makePublicEditorUrl,
+  makeShareUrl,
   shouldBeOpenedOnOtherInstance
 } from '@/modules/views/editor/helpers'
 
@@ -126,6 +127,18 @@ describe('makePublicEditorUrl', () => {
     ).toContain('redirectLink=drive%23%2Ffolder%2Fio.cozy.files.root-dir')
   })
 
+  it('forwards the link to manage the sharing', () => {
+    expect(
+      makePublicEditorUrl({
+        attributes,
+        hash: '/excalidraw/owner-file-id',
+        shareUrl: 'https://bob-drive.cozy.example/#/sharings/with-me'
+      })
+    ).toContain(
+      'shareUrl=https%3A%2F%2Fbob-drive.cozy.example%2F%23%2Fsharings%2Fwith-me'
+    )
+  })
+
   it('omits the username when the stack could not name the visitor', () => {
     expect(
       makePublicEditorUrl({
@@ -188,5 +201,36 @@ describe('fetchFileBinary', () => {
       undefined,
       { cache: 'no-store' }
     )
+  })
+})
+
+describe('makeShareUrl', () => {
+  const client = {
+    getStackClient: () => ({ uri: 'https://bob.cozy.example' }),
+    getInstanceOptions: () => ({ subdomain: 'flat' })
+  }
+
+  it('opens the share modal over the shared-with-me tab of the recipient drive', () => {
+    expect(makeShareUrl(client, { fileId: 'recipient-file-id' })).toBe(
+      'https://bob-drive.cozy.example/#/sharings/with-me/file/recipient-file-id/share'
+    )
+  })
+
+  it('opens the share modal over the shared drive folder the file comes from', () => {
+    expect(
+      makeShareUrl(client, {
+        fileId: 'file-id',
+        driveId: 'drive-id',
+        redirectLink: 'drive#/sharings/with-me/shareddrive/drive-id/folder-id'
+      })
+    ).toBe(
+      'https://bob-drive.cozy.example/#/sharings/with-me/shareddrive/drive-id/folder-id/file/file-id/share'
+    )
+  })
+
+  it('offers nothing for a shared drive file opened without a folder to come back to', () => {
+    expect(
+      makeShareUrl(client, { fileId: 'file-id', driveId: 'drive-id' })
+    ).toBeUndefined()
   })
 })
