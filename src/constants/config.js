@@ -6,8 +6,7 @@
 export const ROOT_DIR_ID = 'io.cozy.files.root-dir'
 export const TRASH_DIR_ID = 'io.cozy.files.trash-dir'
 export const SHAREDWITHME_DIR_ID = 'io.cozy.files.shared-with-me-dir'
-export const SHARED_DRIVES_DIR_ID = 'io.cozy.files.shared-drives-dir' // This folder mostly contains external drives like Nextcloud
-export const SHARED_DRIVES_DIR_PATH = 'io.cozy.files.shared-drives-dir'
+export const SHARED_DRIVES_DIR_ID = 'io.cozy.files.shared-drives-dir'
 export const SETTINGS_DIR_PATH = '/Settings'
 export const NEXTCLOUD_FILE_ID = 'io.cozy.remote.nextcloud.files'
 export const RECENT_FOLDER_ID = 'recent'

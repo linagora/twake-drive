@@ -5,7 +5,6 @@ import type { File } from '@/components/FolderPicker/types'
 import {
   TRASH_DIR_ID,
   ROOT_DIR_ID,
-  SHARED_DRIVES_DIR_ID,
   SHARINGS_VIEW_ROUTE
 } from '@/constants/config'
 import { isNextcloudShortcut } from '@/modules/nextcloud/helpers'
@@ -18,7 +17,7 @@ export const makeFileMetadata = (
 ): string => [formattedUpdatedAt, formattedSize].filter(Boolean).join(' - ')
 
 export const makeParentFolderPath = (file: File): string => {
-  if (file.dir_id === SHARED_DRIVES_DIR_ID) {
+  if (file.driveId && !file.dir_id) {
     return SHARINGS_VIEW_ROUTE
   }
 
@@ -44,15 +43,6 @@ export const getFileNameAndExtension = (
     return {
       title: t('FileName.trash'),
       filename: t('FileName.trash')
-    }
-  }
-
-  // we can have ROOT_DIR_ID in some case, like in sharing view when fetching docs for the first time
-  // in that case we want to do the same trick as for SHARED_DRIVES_DIR_ID
-  if (file._id === SHARED_DRIVES_DIR_ID || file._id === ROOT_DIR_ID) {
-    return {
-      title: t('FileName.sharedDrive'),
-      filename: t('FileName.sharedDrive')
     }
   }
 

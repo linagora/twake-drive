@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react'
 import { useClient } from 'cozy-client'
 import log from 'cozy-logger'
 
-import { SHARED_DRIVES_DIR_ID } from '@/constants/config'
 import { fetchFolder, useFolder } from '@/modules/breadcrumb/utils/fetchFolder'
 
 /**
@@ -68,9 +67,7 @@ export const useBreadcrumbPath = ({
     ]
 
     const shouldContinueLoop = id => {
-      return (
-        !!id && id !== rootBreadcrumbPath?.id && id !== SHARED_DRIVES_DIR_ID
-      )
+      return !!id && id !== rootBreadcrumbPath?.id
     }
 
     const processFolder = async id => {

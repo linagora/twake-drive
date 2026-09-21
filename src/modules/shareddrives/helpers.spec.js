@@ -1,10 +1,25 @@
 import { generateWebLink } from 'cozy-client'
 
-import { makeSharedDriveNoteReturnUrl } from './helpers'
+import { getFolderIdFromSharing, makeSharedDriveNoteReturnUrl } from './helpers'
 
 jest.mock('cozy-client', () => ({
   generateWebLink: jest.fn(({ hash }) => hash)
 }))
+
+describe('getFolderIdFromSharing', () => {
+  it('returns the shared root id', () => {
+    expect(
+      getFolderIdFromSharing({ rules: [{ values: ['shared-root'] }] })
+    ).toBe('shared-root')
+  })
+
+  it.each([undefined, null, {}, { rules: [] }, { rules: [{ values: [] }] }])(
+    'returns no root for missing sharing data: %p',
+    sharing => {
+      expect(getFolderIdFromSharing(sharing)).toBeUndefined()
+    }
+  )
+})
 
 describe('makeSharedDriveNoteReturnUrl', () => {
   const client = {

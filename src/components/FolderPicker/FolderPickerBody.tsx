@@ -1,13 +1,10 @@
 import React from 'react'
 
-import { FolderPickerContentSharedDriveRoot } from './FolderPickerContentSharedDriveRoot'
-
 import { FolderPickerContentCozy } from '@/components/FolderPicker/FolderPickerContentCozy'
 import { FolderPickerContentNextcloud } from '@/components/FolderPicker/FolderPickerContentNextcloud'
 import { FolderPickerContentPublic } from '@/components/FolderPicker/FolderPickerContentPublic'
 import { FolderPickerContentSharedDrive } from '@/components/FolderPicker/FolderPickerContentSharedDrive'
 import { File, FolderPickerEntry } from '@/components/FolderPicker/types'
-import { ROOT_DIR_ID, SHARED_DRIVES_DIR_ID } from '@/constants/config'
 
 interface FolderPickerBodyProps {
   folder: File
@@ -62,23 +59,6 @@ const FolderPickerBody: React.FC<FolderPickerBodyProps> = ({
         hideFolderCreation={hideFolderCreation}
         entries={entries}
         navigateTo={navigateTo}
-      />
-    )
-  }
-
-  if (
-    folder.dir_id === ROOT_DIR_ID &&
-    folder._id === SHARED_DRIVES_DIR_ID &&
-    showSharedDriveFolder
-  ) {
-    return (
-      <FolderPickerContentSharedDriveRoot
-        folder={folder}
-        isFolderCreationDisplayed={isFolderCreationDisplayed}
-        hideFolderCreation={hideFolderCreation}
-        entries={entries}
-        navigateTo={navigateTo}
-        showNextcloudFolder={showNextcloudFolder}
       />
     )
   }
