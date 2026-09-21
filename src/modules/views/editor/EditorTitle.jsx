@@ -34,7 +34,9 @@ const EditorTitle = ({
   isReadOnly = false,
   children
 }) => {
-  const { redirectBack, canRedirect } = useRedirectLink({ isPublic })
+  const { redirectBack, canRedirect, homeLink, shareLink } = useRedirectLink({
+    isPublic
+  })
   const styles = useStyles()
 
   // Force a save of any pending change before leaving the editor.
@@ -55,12 +57,13 @@ const EditorTitle = ({
           file={file}
           icon={<Icon className="u-ml-half" icon={icon} size={32} />}
           isPublic={isPublic}
+          homeHref={homeLink}
           isReadOnly={isReadOnly}
           canRedirect={canRedirect}
           onBack={handleBack}
         />
         {children}
-        {!isPublic && <Sharing file={file} />}
+        {(!isPublic || shareLink) && <Sharing file={file} href={shareLink} />}
       </DialogTitle>
       <Divider />
     </div>

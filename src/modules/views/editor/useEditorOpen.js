@@ -8,6 +8,7 @@ import { changeLocation } from '@/hooks/helpers'
 import logger from '@/lib/logger'
 import {
   makePublicEditorUrl,
+  makeShareUrl,
   shouldBeOpenedOnOtherInstance
 } from '@/modules/views/editor/helpers'
 
@@ -66,7 +67,12 @@ export const useEditorOpen = ({ fileId, slug, driveId }) => {
     const url = makePublicEditorUrl({
       attributes: data.data.attributes,
       hash: `/${slug}/${file_id}`,
-      redirectLink: searchParams.get('redirectLink')
+      redirectLink: searchParams.get('redirectLink'),
+      shareUrl: makeShareUrl(client, {
+        fileId,
+        driveId,
+        redirectLink: searchParams.get('redirectLink')
+      })
     })
 
     // Keyed on the target rather than on a single redirect having happened: the
@@ -76,7 +82,7 @@ export const useEditorOpen = ({ fileId, slug, driveId }) => {
     redirectedTo.current = url
 
     changeLocation(url)
-  }, [status, data, searchParams, slug])
+  }, [status, data, searchParams, slug, client, fileId, driveId])
 
   return status
 }

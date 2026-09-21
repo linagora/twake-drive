@@ -48,7 +48,8 @@ describe('useEditorOpen', () => {
   beforeEach(() => {
     mockSearch = ''
     useClient.mockReturnValue({
-      getStackClient: () => ({ uri: 'https://bob.cozy.example' })
+      getStackClient: () => ({ uri: 'https://bob.cozy.example' }),
+      getInstanceOptions: () => ({ subdomain: 'flat' })
     })
   })
 
@@ -105,7 +106,7 @@ describe('useEditorOpen', () => {
 
     expect(result.current).toBe('redirecting')
     expect(changeLocation).toHaveBeenCalledWith(
-      'https://alice-drive.cozy.example/public/?sharecode=abc123&username=Bob#/excalidraw/owner-file-id'
+      'https://alice-drive.cozy.example/public/?sharecode=abc123&username=Bob&shareUrl=https%3A%2F%2Fbob-drive.cozy.example%2F%23%2Fsharings%2Fwith-me%2Ffile%2Flocal-file-id%2Fshare#/excalidraw/owner-file-id'
     )
   })
 
@@ -120,6 +121,33 @@ describe('useEditorOpen', () => {
 
     expect(changeLocation.mock.calls[0][0]).toContain(
       'redirectLink=drive%23%2Ffolder%2Fabc'
+    )
+  })
+
+  it('does not offer to manage the sharing of a shared drive file opened by id', () => {
+    useFetchJSON.mockReturnValue({
+      fetchStatus: 'loaded',
+      data: makeResponse('alice.cozy.example')
+    })
+
+    renderEditorOpen({ driveId: 'drive-id' })
+
+    expect(changeLocation.mock.calls[0][0]).not.toContain('shareUrl')
+  })
+
+  it('manages the sharing of a shared drive file over its folder', () => {
+    mockSearch = 'redirectLink=drive%23%2Fshareddrive%2Fdrive-id%2Ffolder-id'
+    useFetchJSON.mockReturnValue({
+      fetchStatus: 'loaded',
+      data: makeResponse('alice.cozy.example')
+    })
+
+    renderEditorOpen({ driveId: 'drive-id' })
+
+    expect(changeLocation.mock.calls[0][0]).toContain(
+      `shareUrl=${encodeURIComponent(
+        'https://bob-drive.cozy.example/#/shareddrive/drive-id/folder-id/file/local-file-id/share'
+      )}`
     )
   })
 
