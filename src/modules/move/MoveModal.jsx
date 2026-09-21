@@ -18,7 +18,8 @@ import { MoveSharedFolderInsideAnotherModal } from '@/modules/move/MoveSharedFol
 import { MoveTo } from '@/modules/move/MoveTo'
 import {
   computeNextcloudMoveDirections,
-  hasOneOfEntriesShared
+  hasOneOfEntriesShared,
+  isSharedDriveMove
 } from '@/modules/move/helpers'
 import { useCancelable } from '@/modules/move/hooks/useCancelable'
 import { computeNextcloudFolderQueryId } from '@/modules/nextcloud/helpers'
@@ -119,7 +120,10 @@ const MoveModal = ({
       entries: movedEntries,
       trashedFiles,
       refreshSharing,
-      canCancel: !isMovingInsideNextcloud && !isMovingOutsideNextcloud
+      canCancel:
+        !isMovingInsideNextcloud &&
+        !isMovingOutsideNextcloud &&
+        !isSharedDriveMove(folder, movedEntries, driveId)
     })
   }
 

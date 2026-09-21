@@ -448,6 +448,9 @@ describe('MoveModal component', () => {
         )
         expect(onCloseSpy).toHaveBeenCalled()
         expect(refreshSpy).toHaveBeenCalled()
+        expect(
+          screen.queryByRole('button', { name: 'Cancel' })
+        ).toBeInTheDocument()
         // TODO: check that trashedFiles are passed to cancel button
       })
     })
@@ -732,6 +735,7 @@ describe('MoveModal component', () => {
         )
         expect(onCloseSpy).toHaveBeenCalledTimes(1)
         expect(refreshSpy).toHaveBeenCalled()
+        expect(screen.queryByRole('button', { name: 'Cancel' })).toBe(null)
       })
     })
 
