@@ -25,18 +25,20 @@ const MoveOutsideSharedFolderModal = ({
   const { getSharedParentPath } = useSharingContext()
 
   const sharedParentPath = getSharedParentPath(entries[0]?.path || '')
+  const shouldQuery = !driveId && Boolean(sharedParentPath)
   const folderByPathQuery = buildFolderByPathQuery(sharedParentPath)
-  const { fetchStatus, data } = useQuery(
-    folderByPathQuery.definition,
-    folderByPathQuery.options
-  )
+  const { fetchStatus, data } = useQuery(folderByPathQuery.definition, {
+    ...folderByPathQuery.options,
+    enabled: shouldQuery
+  })
 
-  if (fetchStatus === 'loaded') {
+  if (driveId || fetchStatus === 'loaded') {
     const type = getEntriesTypeTranslated(t, entries)
 
+    const sharedDrivePath = entries[0]?.path?.split('/').filter(Boolean) ?? []
     const sharedFolderName = !driveId
-      ? data[0]?.name
-      : (entries[0]?.path?.split('/')?.[2] ?? '')
+      ? data?.[0]?.name
+      : (sharedDrivePath[sharedDrivePath[0] === 'Shared drives' ? 1 : 0] ?? '')
 
     return (
       <ConfirmDialog

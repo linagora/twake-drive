@@ -8,7 +8,7 @@ import {
 import React from 'react'
 
 import { createMockClient, useQuery } from 'cozy-client'
-import { move } from 'cozy-client/dist/models/file'
+import { move, moveRelateToSharedDrive } from 'cozy-client/dist/models/file'
 import flag from 'cozy-flags'
 import { useSharingContext } from 'cozy-sharing'
 
@@ -33,7 +33,7 @@ const refreshSpy = jest.fn()
 
 jest.mock('cozy-client/dist/models/file', () => ({
   move: jest.fn(),
-  isFile: jest.fn(),
+  isFile: jest.fn(file => file?.type !== 'directory'),
   moveRelateToSharedDrive: jest.fn()
 }))
 
@@ -66,6 +66,14 @@ jest.mock('components/FolderPicker/FolderPicker', () => ({
   }
 }))
 
+const defaultTargetFolder = {
+  id: 'destinationFolder',
+  _id: 'destinationFolder',
+  _type: 'io.cozy.files',
+  name: 'Destination Folder',
+  path: '/Destination Folder'
+}
+
 jest.mock('@/modules/move/MoveTo', () => ({
   __esModule: true,
   MoveTo: ({
@@ -90,7 +98,13 @@ jest.mock('@/modules/move/MoveTo', () => ({
           {String(isDestinationLocked)}
         </span>
         <button
-          onClick={() => onConfirm(currentFolder)}
+          onClick={() =>
+            onConfirm(
+              currentFolder?._type === 'io.cozy.files' && !currentFolder.driveId
+                ? currentFolder
+                : defaultTargetFolder
+            )
+          }
           disabled={isDisabled}
           aria-label={disabledReason ?? undefined}
         >
@@ -127,13 +141,7 @@ describe('MoveModal component', () => {
     }
   ]
 
-  const destinationFolder = {
-    id: 'destinationFolder',
-    _id: 'destinationFolder',
-    _type: 'io.cozy.files',
-    name: 'Destination Folder',
-    path: '/Destination Folder'
-  }
+  const destinationFolder = defaultTargetFolder
 
   const mockClient = createMockClient({
     queries: {
@@ -168,6 +176,8 @@ describe('MoveModal component', () => {
 
   beforeEach(() => {
     flag.mockImplementation(name => name === 'drive.move-to-picker.enabled')
+    moveRelateToSharedDrive.mockReset()
+    moveRelateToSharedDrive.mockResolvedValue({ deleted: null, moved: true })
   })
 
   const setup = ({
@@ -179,19 +189,28 @@ describe('MoveModal component', () => {
     sharingContext = {},
     currentFolder = destinationFolder,
     isPublic = false,
-    onMovingSuccess
+    onMovingSuccess,
+    driveId,
+    showSharedDriveFolder,
+    showNextcloudFolder,
+    queryResult
   } = {}) => {
     const props = {
       entries,
       onClose: onCloseSpy,
       onMovingSuccess,
       classes: { paper: {} },
-      isPublic
+      isPublic,
+      driveId,
+      showSharedDriveFolder,
+      showNextcloudFolder
     }
 
     // Mock the useQuery hook for shared folder data
     const sharedParentPath = getSharedParentPath(entries[0]?.path || '')
-    if (sharedParentPath) {
+    if (queryResult) {
+      useQuery.mockReturnValue(queryResult)
+    } else if (sharedParentPath) {
       const folderName = sharedParentPath.split('/').pop() || 'Bills'
       useQuery.mockReturnValue({
         fetchStatus: 'loaded',
@@ -633,6 +652,128 @@ describe('MoveModal component', () => {
         expect(onCloseSpy).toHaveBeenCalled()
         expect(refreshSpy).toHaveBeenCalled()
       })
+    })
+  })
+
+  describe('Shared Drive context', () => {
+    const sharedDriveEntries = [
+      {
+        _id: 'sd-file-1',
+        driveId: 'drive-alpha',
+        name: 'report.pdf',
+        path: '/Team Alpha/report.pdf',
+        cozyMetadata: { createdOn: 'instance.cozy.example' }
+      },
+      {
+        _id: 'sd-file-2',
+        driveId: 'drive-alpha',
+        name: 'notes.txt',
+        path: '/Team Alpha/notes.txt',
+        cozyMetadata: { createdOn: 'instance.cozy.example' }
+      }
+    ]
+
+    it('shows MoveOutsideSharedFolderModal when moving from a Shared Drive to My Drive', async () => {
+      setup({
+        entries: sharedDriveEntries,
+        driveId: 'drive-alpha',
+        queryResult: { fetchStatus: 'loading', data: null }
+      })
+
+      fireEvent.click(await screen.findByText('Move'))
+
+      await waitFor(() => {
+        expect(
+          screen.getByText('Moving outside the Team Alpha folder')
+        ).toBeInTheDocument()
+      })
+    })
+
+    it('cancels moving outside without executing shared drive move', async () => {
+      setup({
+        entries: sharedDriveEntries,
+        driveId: 'drive-alpha'
+      })
+
+      fireEvent.click(await screen.findByText('Move'))
+
+      const cancelButton = await screen.findByRole('button', { name: 'Cancel' })
+      fireEvent.click(cancelButton)
+
+      expect(moveRelateToSharedDrive).not.toHaveBeenCalled()
+      expect(onCloseSpy).not.toHaveBeenCalled()
+      expect(screen.getByTestId('move-to')).toBeInTheDocument()
+    })
+
+    it('confirms moving outside and executes moveRelateToSharedDrive', async () => {
+      setup({
+        entries: sharedDriveEntries.slice(0, 1),
+        driveId: 'drive-alpha'
+      })
+
+      fireEvent.click(await screen.findByText('Move'))
+
+      const confirmButton = await screen.findByRole('button', {
+        name: 'I understand'
+      })
+      fireEvent.click(confirmButton)
+
+      await waitFor(() => {
+        expect(moveRelateToSharedDrive).toHaveBeenCalledWith(
+          mockClient,
+          expect.objectContaining({
+            file_id: 'sd-file-1',
+            sharing_id: 'drive-alpha'
+          }),
+          expect.objectContaining({
+            dir_id: 'destinationFolder'
+          }),
+          false
+        )
+        expect(onCloseSpy).toHaveBeenCalledTimes(1)
+        expect(refreshSpy).toHaveBeenCalled()
+      })
+    })
+
+    it('handles partial successes when moving multiple shared drive entries', async () => {
+      let shouldFail = true
+      setup({
+        entries: sharedDriveEntries,
+        driveId: 'drive-alpha'
+      })
+      moveRelateToSharedDrive.mockImplementation((_client, source) => {
+        const id = source.file_id || source.dir_id
+        if (id === 'sd-file-2' && shouldFail) {
+          return Promise.reject(new Error('sd move error'))
+        }
+        return Promise.resolve({ deleted: null, moved: true })
+      })
+
+      fireEvent.click(await screen.findByText('Move'))
+      const confirmButton = await screen.findByRole('button', {
+        name: 'I understand'
+      })
+      fireEvent.click(confirmButton)
+
+      await waitFor(() => {
+        expect(screen.getByTestId('move-entries')).toHaveTextContent(
+          /^notes.txt$/
+        )
+      })
+      expect(screen.getByText('Moved: 1. Failed: 1.')).toBeInTheDocument()
+      expect(onCloseSpy).not.toHaveBeenCalled()
+
+      shouldFail = false
+      fireEvent.click(screen.getByRole('button', { name: 'Move' }))
+      const retryConfirm = await screen.findByRole('button', {
+        name: 'I understand'
+      })
+      fireEvent.click(retryConfirm)
+
+      await waitFor(() => {
+        expect(onCloseSpy).toHaveBeenCalledTimes(1)
+      })
+      expect(moveRelateToSharedDrive).toHaveBeenCalledTimes(3)
     })
   })
 
