@@ -104,7 +104,6 @@ const GridFile = ({
   return (
     <Box
       display="block"
-      borderColor="var(--dividerColor)"
       borderRadius={8}
       padding={2}
       data-file-id={attributes._id}
