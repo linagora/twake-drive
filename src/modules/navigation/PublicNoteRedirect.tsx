@@ -30,6 +30,7 @@ const PublicNoteRedirect: FC = () => {
         // Inside notes, we need to add / at the end of /public/ or /preview/ to avoid 409 error
         const searchParams = new URLSearchParams(search)
         const returnUrl = searchParams.get('returnUrl')
+        const shareUrl = searchParams.get('shareUrl')
 
         const pathname =
           location.pathname === '/'
@@ -46,7 +47,9 @@ const PublicNoteRedirect: FC = () => {
             returnUrl
           }
         )
-        setNoteUrl(url)
+        const target = new URL(url)
+        if (shareUrl) target.searchParams.set('shareUrl', shareUrl)
+        setNoteUrl(target.toString())
         setFetchStatus('loaded')
       } catch (_error) {
         setFetchStatus('failed')

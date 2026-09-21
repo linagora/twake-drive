@@ -20,7 +20,10 @@ import {
   getSharedDriveRootFilePath,
   getSharedDriveRootFilePathScope
 } from '@/modules/routeUtils'
-import { makeSharedDriveNoteReturnUrl } from '@/modules/shareddrives/helpers'
+import {
+  makeDriveWebLink,
+  makeSharedDriveNoteHash
+} from '@/modules/shareddrives/helpers'
 import {
   isFileRootSharedDrive,
   isFileRootSharedDriveShortcut,
@@ -37,6 +40,7 @@ import {
   getSharingsSharedDriveViewerPath,
   getSharingsTabFromPath
 } from '@/modules/views/Sharings/routes'
+import { makeShareUrl } from '@/modules/views/editor/helpers'
 
 interface ComputeFileTypeOptions {
   isOfficeEnabled?: boolean
@@ -197,18 +201,27 @@ export const computePath = (
       return `/n/${file._id}`
     case 'public-note-same-instance':
       return `/?id=${file._id}`
-    case 'public-note':
-      if (driveId) {
-        const returnUrl = client
-          ? makeSharedDriveNoteReturnUrl(client, file as IOCozyFile, pathname)
-          : ''
-
-        return `/note/${driveId}/${file._id}?returnUrl=${encodeURIComponent(
-          returnUrl
-        )}`
-      } else {
-        return `/note/${file._id}`
+    case 'public-note': {
+      const returnHash = driveId
+        ? makeSharedDriveNoteHash(file as IOCozyFile, pathname)
+        : pathname
+      const params = new URLSearchParams({
+        returnUrl: client ? makeDriveWebLink(client, returnHash) : ''
+      })
+      if (client) {
+        params.set(
+          'shareUrl',
+          driveId
+            ? makeDriveWebLink(client, `${returnHash}/file/${file._id}/share`)
+            : makeShareUrl(client, { fileId: file._id })
+        )
       }
+      const route = driveId
+        ? `/note/${driveId}/${file._id}`
+        : `/note/${file._id}`
+
+      return `${route}?${params.toString()}`
+    }
     case 'docs':
       return `/bridge/docs/${(file as IOCozyFile).metadata.externalId}`
     case 'grist':

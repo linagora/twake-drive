@@ -478,7 +478,48 @@ describe('computePath', () => {
     const file = { _id: 'note123' }
     expect(
       computePath(file, { type: 'public-note', pathname: '/public' })
-    ).toBe('/note/note123')
+    ).toBe('/note/note123?returnUrl=')
+  })
+
+  it('should send the owner instance the back and share links for public-note', () => {
+    const file = { _id: 'note123' }
+    const client = {
+      getStackClient: () => ({ uri: 'https://bob.cozy.cloud' }),
+      getInstanceOptions: () => ({ subdomain: 'flat' })
+    }
+    const params = new URLSearchParams({
+      returnUrl: 'https://bob-drive.cozy.cloud/#/sharings/with-me',
+      shareUrl:
+        'https://bob-drive.cozy.cloud/#/sharings/with-me/file/note123/share'
+    })
+    expect(
+      computePath(file, {
+        type: 'public-note',
+        pathname: '/sharings/with-me',
+        client
+      })
+    ).toBe(`/note/note123?${params.toString()}`)
+  })
+
+  it('should send the owner instance the back and share links for a shared drive public-note', () => {
+    const file = { _id: 'note123', driveId: 'drive456', dir_id: 'folder789' }
+    const client = {
+      getStackClient: () => ({ uri: 'https://bob.cozy.cloud' }),
+      getInstanceOptions: () => ({ subdomain: 'flat' })
+    }
+    const folder =
+      'https://bob-drive.cozy.cloud/#/sharings/with-me/shareddrive/drive456/folder789'
+    const params = new URLSearchParams({
+      returnUrl: folder,
+      shareUrl: `${folder}/file/note123/share`
+    })
+    expect(
+      computePath(file, {
+        type: 'public-note',
+        pathname: '/sharings/with-me/shareddrive/drive456/folder789',
+        client
+      })
+    ).toBe(`/note/drive456/note123?${params.toString()}`)
   })
 
   it('should return correct path for public-note with driveId in shared drive', () => {
