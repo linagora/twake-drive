@@ -314,19 +314,21 @@ const SharedDriveFolderContent = ({
   const { sharedDriveResult, fetchStatus, hasMore, fetchMore } =
     useSharedDriveFolder({ driveId, folderId })
   const items = useMemo(() => {
-    const sourceItems = (sharedDriveResult.included ?? []).map(item => ({
+    const fetchedItems = (sharedDriveResult.included ?? []).map(item => ({
       ...item,
       driveId
     }))
-    const sourceIds = new Set(sourceItems.map(item => item._id ?? item.id))
-    const addedItems = additionalItems.filter(
+    const fetchedItemIds = new Set(
+      fetchedItems.map(item => item._id ?? item.id)
+    )
+    const locallyAddedItems = additionalItems.filter(
       item =>
         item?.dir_id === folderId &&
         item.driveId === driveId &&
-        !sourceIds.has(item._id ?? item.id)
+        !fetchedItemIds.has(item._id ?? item.id)
     )
     return sortFiles(
-      [...sourceItems, ...addedItems]
+      [...fetchedItems, ...locallyAddedItems]
         .filter(item => isItemTypeDisplayed(item, displayedTypes))
         .filter(isItemIncluded),
       sortOrder
