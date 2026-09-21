@@ -1,4 +1,4 @@
-import { computeIsSharingsOwner } from './useFileLink'
+import { computeIsSharingsOwner, mergeSearch } from './useFileLink'
 
 describe('computeIsSharingsOwner', () => {
   const ownerSharingContext = {
@@ -84,5 +84,17 @@ describe('computeIsSharingsOwner', () => {
         sharingContext: ownerSharingContext
       })
     ).toBe(false)
+  })
+})
+
+describe('mergeSearch', () => {
+  it('keeps the sharings filters and the params computed for the target', () => {
+    expect(mergeSearch('?type=note', '?returnUrl=https%3A%2F%2Fx')).toBe(
+      '?type=note&returnUrl=https%3A%2F%2Fx'
+    )
+  })
+
+  it('returns an empty search when there is nothing to keep', () => {
+    expect(mergeSearch('', '')).toBe('')
   })
 })

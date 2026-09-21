@@ -77,6 +77,14 @@ const computeIsSharingsOwner = ({
  * The first one is useful for link inside Drive and the second one for link outside of external application (eg. Notes, Nextcloud) or that will be opened in a new tab be default.
  *
  */
+// Keeps the sharings filters without dropping the params of the target path
+export const mergeSearch = (current: string, target: string): string => {
+  const params = new URLSearchParams(current)
+  new URLSearchParams(target).forEach((value, key) => params.set(key, value))
+  const search = params.toString()
+  return search ? `?${search}` : ''
+}
+
 const useFileLink = (
   file: File,
   { forceFolderPath }: { forceFolderPath?: boolean } = {}
@@ -142,7 +150,7 @@ const useFileLink = (
     }
   }
   if (pathname.startsWith('/sharings/')) {
-    to = { ...to, search }
+    to = { ...to, search: mergeSearch(search, to.search) }
   }
 
   // we need to merge the searchParams of the current url and the new one created in computed path
