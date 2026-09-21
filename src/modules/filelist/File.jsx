@@ -45,8 +45,6 @@ const FileWrapper = ({ children, viewType, className, onContextMenu }) =>
   ) : (
     <Box
       display="block"
-      border={1}
-      borderColor="var(--dividerColor)"
       borderRadius={8}
       padding={2}
       className={className}
