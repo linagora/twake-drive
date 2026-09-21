@@ -155,7 +155,7 @@ const MoveModal = ({
       const allTrashedFiles = [...successfulTrashedFiles, ...trashedFiles]
 
       if (movedEntries.length > 0) {
-        refreshNextcloudQueries(folder, movedEntries[0])
+        refreshNextcloudQueries(folder, movedEntries)
         refreshSharing?.()
       }
 
@@ -208,9 +208,11 @@ const MoveModal = ({
    * The content from nextcloud queries must be refreshed when moving files
    * This is only a proxy to Nextcloud queries so we don't have real-time or mutations updates
    */
-  const refreshNextcloudQueries = (folder, sourceEntry) => {
-    const { isMovingInsideNextcloud, isMovingOutsideNextcloud } =
-      computeNextcloudMoveDirections(folder, sourceEntry)
+  const refreshNextcloudQueries = (folder, movedEntries) => {
+    const { isMovingInsideNextcloud } = computeNextcloudMoveDirections(
+      folder,
+      movedEntries[0]
+    )
 
     if (isMovingInsideNextcloud) {
       client.resetQuery(
@@ -221,14 +223,23 @@ const MoveModal = ({
       )
     }
 
-    if (isMovingOutsideNextcloud) {
-      client.resetQuery(
-        computeNextcloudFolderQueryId({
-          sourceAccount: sourceEntry.cozyMetadata?.sourceAccount,
-          path: getParentPath(sourceEntry.path)
-        })
+    const queryIds = new Set()
+    movedEntries.forEach(entry => {
+      const { isMovingOutsideNextcloud } = computeNextcloudMoveDirections(
+        folder,
+        entry
       )
-    }
+      if (isMovingOutsideNextcloud) {
+        const parentPath = entry.parentPath ?? getParentPath(entry.path) ?? '/'
+        queryIds.add(
+          computeNextcloudFolderQueryId({
+            sourceAccount: entry.cozyMetadata?.sourceAccount,
+            path: parentPath
+          })
+        )
+      }
+    })
+    queryIds.forEach(queryId => client.resetQuery(queryId))
   }
 
   const handleCancelMovingOutside = () => {
