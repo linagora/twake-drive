@@ -24,9 +24,8 @@ const useQueryMultipleSharedDriveFolders = ({
 }: UseQueryMultipleSharedDriveFoldersProps): SharedDriveFolderReturn => {
   const client = useClient()
 
-  const [sharedDriveResults, setSharedDriveResults] = useState<
-    SharedDriveFolderReturn['sharedDriveResults']
-  >([])
+  const [sharedDriveResults, setSharedDriveResults] =
+    useState<SharedDriveFolderReturn['sharedDriveResults']>(null)
 
   const sharedDriveQueries = useMemo(
     () =>
@@ -39,7 +38,9 @@ const useQueryMultipleSharedDriveFolders = ({
     [driveId, folderIds]
   )
 
-  const fetchSharedDriveResults = useCallback(async () => {
+  const fetchSharedDriveResults = useCallback(async (): Promise<
+    SharedDriveFolderReturn['sharedDriveResults']
+  > => {
     const results = await Promise.all(
       sharedDriveQueries.map(async query => {
         return client?.query(
@@ -49,17 +50,30 @@ const useQueryMultipleSharedDriveFolders = ({
       })
     )
 
-    setSharedDriveResults(
-      results.map(
-        (result: SharedDriveResult) => result.data
-      ) as SharedDriveFolderReturn['sharedDriveResults']
-    )
+    return results.map(
+      (result: SharedDriveResult) => result.data
+    ) as SharedDriveFolderReturn['sharedDriveResults']
   }, [client, sharedDriveQueries])
 
   useEffect(() => {
+    let cancelled = false
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSharedDriveResults(null)
+
+    const fetch = async (): Promise<void> => {
+      const results = await fetchSharedDriveResults()
+      if (!cancelled) {
+        setSharedDriveResults(results)
+      }
+    }
+
     if (client) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      void fetchSharedDriveResults()
+      void fetch()
+    }
+
+    return (): void => {
+      cancelled = true
     }
   }, [client, fetchSharedDriveResults])
 
