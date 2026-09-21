@@ -111,7 +111,7 @@ const sharingsTabRoute = (tab, sharedDrivesEnabled) => (
       <Route path="file/:fileId/revision" element={<FileHistory />} />
       <Route path="file/:fileId/share" element={<ShareFileView />} />
       <Route
-        path="shareddrive/:driveId/:fileId/share"
+        path="share/shareddrive/:driveId/:fileId"
         element={<ShareFileView />}
       />
       <Route path="file/:fileId/qualify" element={<QualifyFileView />} />

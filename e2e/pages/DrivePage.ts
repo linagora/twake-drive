@@ -2,6 +2,7 @@ import type { Page, Locator } from '@playwright/test'
 
 import { FileRow } from './FileRow'
 import { MoveToPage } from './MoveToPage'
+import { ShareModalPage } from './ShareModalPage'
 
 /**
  * Page object for the Drive file list view (My Drive, Trash, Favorites,
@@ -28,6 +29,19 @@ export class DrivePage {
     for (const name of names) {
       await this.row(name).select()
     }
+  }
+
+  // Click the recipients avatars in the folder toolbar
+  // to open the ShareModal for the folder itself
+  async openShareFromToolbarRecipients(): Promise<ShareModalPage> {
+    await this.page
+      .getByTestId('fil-toolbar-files')
+      .getByTestId(/^AvatarList-avatar/)
+      .first()
+      .click()
+    const modal = new ShareModalPage(this.page)
+    await modal.waitForOpen()
+    return modal
   }
 
   async openMoveToForSelection(): Promise<MoveToPage> {

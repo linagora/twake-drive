@@ -17,7 +17,7 @@ export const makeFileSharePath = ({ file, pathname }) => {
   // navigating into the shared-drive folder/file view. The driveId stays in
   // the path so the modal can still resolve a proxied (recipient) document.
   if (isSharingsTabRootRoute(pathname)) {
-    return joinPath(pathname, `shareddrive/${file.driveId}/${fileId}/share`)
+    return joinPath(pathname, `share/shareddrive/${file.driveId}/${fileId}`)
   }
 
   if (isFileRootSharedDrive(file)) {
