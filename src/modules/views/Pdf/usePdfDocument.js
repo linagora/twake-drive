@@ -4,11 +4,10 @@ import { useClient } from 'cozy-client'
 
 import logger from '@/lib/logger'
 import { usePdfSave } from '@/modules/views/Pdf/usePdfSave'
+import { fetchFileBinary } from '@/modules/views/editor/helpers'
 
 const readPdfBlobUrl = async (client, fileId, driveId) => {
-  const response = await client
-    .collection('io.cozy.files', driveId ? { driveId } : {})
-    .fetchFileContentById(fileId)
+  const response = await fetchFileBinary(client, fileId, driveId)
   const blob = await response.blob()
   return URL.createObjectURL(blob)
 }
