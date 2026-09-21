@@ -9,7 +9,6 @@ import List from 'cozy-ui/transpiled/react/List'
 
 import styles from '@/modules/search/components/styles.styl'
 
-import { SHARED_DRIVES_DIR_ID } from '@/constants/config'
 import BarSearchInputGroup from '@/modules/search/components/BarSearchInputGroup'
 import SuggestionItem from '@/modules/search/components/SuggestionItem'
 import SuggestionListSkeleton from '@/modules/search/components/SuggestionListSkeleton'
@@ -47,12 +46,6 @@ const BarSearchAutosuggest = ({ t }) => {
   }
 
   const onSuggestionSelected = async (event, { suggestion }) => {
-    // Open the shared drive in a new tab
-    if (suggestion.parentUrl?.includes(SHARED_DRIVES_DIR_ID)) {
-      window.open(`/#/external/${suggestion.id}`, '_blank')
-      return cleanSearch()
-    }
-
     let url = `${window.location.origin}/#${suggestion.url}`
     if (suggestion.openOn === 'notes') {
       url = await models.note.fetchURL(client, {

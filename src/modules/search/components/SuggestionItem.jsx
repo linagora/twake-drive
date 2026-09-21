@@ -4,7 +4,6 @@ import ListItem from 'cozy-ui/transpiled/react/ListItem'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'
 
-import { SHARED_DRIVES_DIR_ID } from '@/constants/config'
 import FileIconMime from '@/modules/filelist/icons/FileIconMime'
 import FileIconShortcut from '@/modules/filelist/icons/FileIconShortcut'
 import SuggestionItemTextHighlighted from '@/modules/search/components/SuggestionItemTextHighlighted'
@@ -45,15 +44,13 @@ const SuggestionItem = ({
           <SuggestionItemTextHighlighted text={file.name} query={query} />
         }
         secondary={
-          file.parentUrl?.includes(SHARED_DRIVES_DIR_ID) ? null : (
-            <SuggestionItemTextSecondary
-              text={suggestion.subtitle}
-              url={suggestion.parentUrl}
-              query={query}
-              onOpened={onParentOpened}
-              isMobile={isMobile}
-            />
-          )
+          <SuggestionItemTextSecondary
+            text={suggestion.subtitle}
+            url={suggestion.parentUrl}
+            query={query}
+            onOpened={onParentOpened}
+            isMobile={isMobile}
+          />
         }
       />
     </ListItem>

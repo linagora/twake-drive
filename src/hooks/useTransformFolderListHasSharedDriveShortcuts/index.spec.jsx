@@ -68,9 +68,9 @@ describe('useTransformFolderListHasSharedDriveShortcuts', () => {
         _type: 'io.cozy.files',
         type: 'directory',
         name: 'Shared Drive 1',
-        dir_id: SHARED_DRIVES_DIR_ID,
+        dir_id: '',
         driveId: 'sharing-1',
-        path: '/Drives/Shared Drive 1'
+        path: '/Shared Drive 1'
       })
     })
 
@@ -107,10 +107,10 @@ describe('useTransformFolderListHasSharedDriveShortcuts', () => {
         type: 'file',
         name: 'CIR.docx',
         mime: docxMime,
-        dir_id: SHARED_DRIVES_DIR_ID,
+        dir_id: '',
         driveId: 'sharing-1',
         drive_root_type: DRIVE_ROOT_TYPE.FILE,
-        path: '/Drives/CIR.docx'
+        path: '/CIR.docx'
       })
     })
 
@@ -412,7 +412,7 @@ describe('useTransformFolderListHasSharedDriveShortcuts', () => {
   })
 
   describe('nonSharedDriveList', () => {
-    it('should filter out shared drives from folder list', () => {
+    it('keeps ordinary files inside the legacy drives folder', () => {
       const mockFolderList = [
         {
           _id: 'file-1',
@@ -430,8 +430,7 @@ describe('useTransformFolderListHasSharedDriveShortcuts', () => {
         useTransformFolderListHasSharedDriveShortcuts(mockFolderList)
       )
 
-      expect(result.current.nonSharedDriveList).toHaveLength(1)
-      expect(result.current.nonSharedDriveList[0].name).toBe('Regular File')
+      expect(result.current.nonSharedDriveList).toEqual(mockFolderList)
     })
 
     it('should include nextcloud shortcuts when showNextcloudFolder is true', () => {

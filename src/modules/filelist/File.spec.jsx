@@ -75,6 +75,19 @@ const setup = ({
 
 describe('File', () => {
   describe('default behavior', () => {
+    it('uses the stored name and enables actions on the legacy drives folder', () => {
+      const { root } = setup({
+        attributes: {
+          ...folder,
+          _id: 'io.cozy.files.shared-drives-dir',
+          name: 'Recovered files'
+        }
+      })
+      expect(root.queryByText('Recovered files')).toBeInTheDocument()
+      expect(root.queryByRole('checkbox')).toBeEnabled()
+      expect(root.queryByRole('button', { name: 'More' })).toBeEnabled()
+    })
+
     it('should show a select box', () => {
       const { root } = setup()
       const { getByRole } = root

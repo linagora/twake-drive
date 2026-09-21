@@ -131,4 +131,39 @@ describe('makeNormalizedFile', () => {
 
     expect(normalizedFile.url).toContain('/onlyoffice/drive123/')
   })
+
+  it('preserves the drive id when opening a shortcut from search', () => {
+    const file = {
+      _id: 'remote-shortcut',
+      type: 'file',
+      class: 'shortcut',
+      driveId: 'sharing-1',
+      name: 'External link.url'
+    }
+
+    expect(makeNormalizedFile(client, [], file).url).toBe(
+      '/external/sharing-1/remote-shortcut'
+    )
+  })
+
+  it('opens legacy folder contents according to their type', () => {
+    models.file.shouldBeOpenedByOnlyOffice.mockReturnValue(false)
+    const dirId = 'io.cozy.files.shared-drives-dir'
+    const folders = [{ _id: dirId, path: '/Recovered files' }]
+    const file = {
+      _id: 'kept-file',
+      dir_id: dirId,
+      type: 'file',
+      name: 'kept.txt'
+    }
+    expect(makeNormalizedFile(client, folders, file).url).toBe(
+      `/folder/${dirId}/file/kept-file`
+    )
+    expect(
+      makeNormalizedFile(client, folders, {
+        ...file,
+        class: 'shortcut'
+      }).url
+    ).toBe('/external/kept-file')
+  })
 })

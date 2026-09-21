@@ -8,7 +8,6 @@ const FILES_DOCTYPE = 'io.cozy.files'
 
 const defaultFetchPolicy = fetchPolicies.olderThan(30 * 1000)
 const TRASH_DIR_ID = `${FILES_DOCTYPE}.trash-dir`
-const SHARED_DRIVES_DIR_ID = `${FILES_DOCTYPE}.shared-drives-dir`
 
 const getQueryAlias = (as, sortOrder) =>
   sortOrder.attribute === DEFAULT_SORT.attribute &&
@@ -33,7 +32,7 @@ const buildFolderQuery = (dirId, type, as, limit, sortOrder = DEFAULT_SORT) => {
         })
         .partialIndex({
           _id: {
-            $nin: [SHARED_DRIVES_DIR_ID, TRASH_DIR_ID]
+            $nin: [TRASH_DIR_ID]
           }
         })
         .indexFields(['dir_id', 'type', validSortOrder.attribute])

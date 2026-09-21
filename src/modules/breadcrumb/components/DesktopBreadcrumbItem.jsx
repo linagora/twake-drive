@@ -3,12 +3,10 @@ import classNames from 'classnames'
 import React, { useCallback } from 'react'
 
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
-import { useI18n } from 'twake-i18n'
 
 import styles from '@/modules/breadcrumb/styles/breadcrumb.styl'
 
 const DesktopBreadcrumbItem = ({ item, isCurrent, onClick, icon }) => {
-  const { t } = useI18n()
   const handleClick = useCallback(
     e => {
       e.stopPropagation()
@@ -16,11 +14,6 @@ const DesktopBreadcrumbItem = ({ item, isCurrent, onClick, icon }) => {
     },
     [onClick, item]
   )
-
-  const itemName =
-    item.id === 'io.cozy.files.shared-drives-dir'
-      ? t('breadcrumb.title_shared_drives')
-      : item.name
 
   return (
     <span
@@ -36,7 +29,7 @@ const DesktopBreadcrumbItem = ({ item, isCurrent, onClick, icon }) => {
           <Icon icon={icon} />
         </IconButton>
       ) : (
-        itemName
+        item.name
       )}
     </span>
   )

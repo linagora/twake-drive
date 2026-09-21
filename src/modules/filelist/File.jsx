@@ -130,12 +130,8 @@ const File = ({
   const updatedAt = getFileLastUpdatedAt(attributes)
   const formattedUpdatedAt = useFormattedUpdatedAt(updatedAt)
 
-  // We don't allow any action on shared drives and trash
-  // because they are magic folder created by the stack
   let canInteractWithFile =
-    attributes._id &&
-    attributes._id !== 'io.cozy.files.shared-drives-dir' &&
-    !attributes._id.endsWith('.trash-dir')
+    attributes._id && !attributes._id.endsWith('.trash-dir')
   if (typeof canInteractWith === 'function') {
     canInteractWithFile &&= canInteractWith(attributes)
   }

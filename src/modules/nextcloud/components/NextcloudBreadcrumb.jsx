@@ -20,10 +20,6 @@ const NextcloudBreadcrumb = ({ sourceAccount, path }) => {
       name: t('breadcrumb.title_drive'),
       id: ROOT_DIR_ID
     },
-    {
-      name: t('breadcrumb.title_shared_drives'),
-      id: 'io.cozy.files.shared-drives-dir'
-    },
     { name: rootFolderName, id: '/' }
   ]
 
@@ -51,10 +47,7 @@ const NextcloudBreadcrumb = ({ sourceAccount, path }) => {
   })
 
   const handleBreadcrumbClick = item => {
-    if (
-      item.id === 'io.cozy.files.shared-drives-dir' ||
-      item.id === ROOT_DIR_ID
-    ) {
+    if (item.id === ROOT_DIR_ID) {
       navigate(`/folder/${item.id}`)
     } else if (pathname.endsWith('trash') && item.id === '/') {
       navigate('..', { relative: 'path' })
