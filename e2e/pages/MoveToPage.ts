@@ -19,7 +19,9 @@ export class MoveToPage {
   private readonly moveRequestCounts = new Map<string, number>()
 
   constructor(private readonly page: Page) {
-    this.dialog = page.getByRole('dialog')
+    this.dialog = page
+      .getByRole('dialog')
+      .filter({ has: page.getByTestId('move-to-browser') })
     page.on('request', request => {
       const fileId = getFileId(new URL(request.url()))
       if (request.method() !== 'PATCH' || !fileId) return
@@ -125,6 +127,18 @@ export class MoveToPage {
 
   async clickMove(): Promise<void> {
     await this.moveButton.click()
+  }
+
+  async confirmMovingOutsideSharedFolder(
+    sharedFolderName: string
+  ): Promise<void> {
+    const confirmDialog = this.page.getByRole('dialog', {
+      name: new RegExp(
+        `Moving outside the ${escapeRegExp(sharedFolderName)} folder`
+      )
+    })
+    await expect(confirmDialog).toBeVisible()
+    await confirmDialog.getByRole('button', { name: 'I understand' }).click()
   }
 
   async expectPartialResult(

@@ -24,9 +24,11 @@ const MoveSharedDriveFilesView = ({ isOpenInViewer }) => {
   }
 
   if (sharedDriveResults && displayedFolder) {
-    // Moved files leave the current folder, so closing from the viewer returns
-    // to the folder rather than the now-stale file viewer.
     const onClose = () => {
+      navigate('..', { replace: true })
+    }
+
+    const onMovingSuccess = () => {
       navigate(isOpenInViewer ? '../..' : '..', { replace: true })
     }
 
@@ -43,6 +45,7 @@ const MoveSharedDriveFilesView = ({ isOpenInViewer }) => {
         currentFolder={displayedFolder}
         entries={entries}
         onClose={onClose}
+        onMovingSuccess={onMovingSuccess}
         showNextcloudFolder={showNextcloudFolder}
         showSharedDriveFolder={true}
         driveId={driveId}
