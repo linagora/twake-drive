@@ -91,14 +91,11 @@ jobs:
         if: >-
           github.event_name == 'pull_request'
           || steps.pr.outputs.head_repo == github.repository
-        # anomalyco/opencode/github@latest, pinned: a tag can be moved.
-        uses: anomalyco/opencode/github@77fc88c8ade8e5a620ebbe1197f3a572d29ae91a
+        uses: ./.github/actions/opencode
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           model: ${{ vars.OPENCODE_REVIEW_MODEL || 'openrouter/deepseek/deepseek-v4.1-flash' }}
-          use_github_token: true
-          share: false
           prompt: ${{ steps.prompt.outputs.text }}
