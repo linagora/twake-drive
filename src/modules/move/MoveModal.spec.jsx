@@ -68,7 +68,6 @@ jest.mock('components/FolderPicker/FolderPicker', () => ({
 }))
 
 const defaultTargetFolder = {
-  id: 'destinationFolder',
   _id: 'destinationFolder',
   _type: 'io.cozy.files',
   name: 'Destination Folder',
@@ -246,12 +245,12 @@ describe('MoveModal component', () => {
       if (id === 'bill_201902') {
         return Promise.resolve({
           deleted: 'other_bill_201902',
-          moved: { id }
+          moved: { _id: id }
         })
       } else {
         return Promise.resolve({
           deleted: null,
-          moved: { id }
+          moved: { _id: id }
         })
       }
     })

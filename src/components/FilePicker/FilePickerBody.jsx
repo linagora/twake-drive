@@ -247,9 +247,9 @@ const LocalFolderContent = ({
   })
   const items = useMemo(() => {
     const sourceItems = source.items ?? []
-    const sourceIds = new Set(sourceItems.map(item => item._id ?? item.id))
+    const sourceIds = new Set(sourceItems.map(item => item._id))
     const addedItems = additionalItems.filter(
-      item => item?.dir_id === folderId && !sourceIds.has(item._id ?? item.id)
+      item => item?.dir_id === folderId && !sourceIds.has(item._id)
     )
     const visibleItems = [...sourceItems, ...addedItems].filter(
       item => isItemTypeDisplayed(item, displayedTypes) && isItemIncluded(item)
@@ -318,14 +318,12 @@ const SharedDriveFolderContent = ({
       ...item,
       driveId
     }))
-    const fetchedItemIds = new Set(
-      fetchedItems.map(item => item._id ?? item.id)
-    )
+    const fetchedItemIds = new Set(fetchedItems.map(item => item._id))
     const locallyAddedItems = additionalItems.filter(
       item =>
         item.dir_id === folderId &&
         item.driveId === driveId &&
-        !fetchedItemIds.has(item._id ?? item.id)
+        !fetchedItemIds.has(item._id)
     )
     return sortFiles(
       [...fetchedItems, ...locallyAddedItems]
