@@ -1,0 +1,102 @@
+name: OpenCode review
+
+# Semantic review only. Summary is owned by CodeRabbit, code health by
+# CodeScene, style and tests by the CI/CD workflow. See
+# .github/prompts/code-review.md for the review scope.
+
+on:
+  pull_request:
+    types: [opened, ready_for_review, reopened]
+    paths:
+      - '**'
+      - '!yarn.lock'
+      - '!.yarn/**'
+      - '!CHANGELOG.md'
+      - '!docs/**'
+      - '!**/*.png'
+      - '!**/*.svg'
+      - '!**/*.jpg'
+      - '!**/*.jpeg'
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+
+jobs:
+  review:
+    # Secrets are not exposed to fork PRs, and comment triggers are limited
+    # to organization members on pull requests: a comment on a plain issue
+    # would start the agent's branch-and-PR flow instead of a review.
+    if: >-
+      (github.event_name == 'pull_request'
+        && !github.event.pull_request.draft
+        && github.event.pull_request.head.repo.full_name == github.repository)
+      || (github.event_name != 'pull_request'
+        && github.event.issue.pull_request != null
+        && (contains(github.event.comment.body, '/oc') || contains(github.event.comment.body, '/opencode'))
+        && contains(fromJSON('["OWNER","MEMBER"]'), github.event.comment.author_association))
+    # Job level so that skipped runs (any other PR comment) do not cancel it.
+    concurrency:
+      group: opencode-${{ github.event.pull_request.number || github.event.issue.number }}
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      # A comment carries no head repository, and the agent checks out the
+      # branch it reviews: a fork branch would run next to the API key.
+      - name: Reject fork pull requests
+        id: pr
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.issue.number || github.event.pull_request.number }}
+        run: |
+          head_repo=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" -q .head.repo.full_name)
+          echo "head_repo=$head_repo" >> "$GITHUB_OUTPUT"
+          if [ "$head_repo" != "$GITHUB_REPOSITORY" ]; then
+            echo "::notice::skipping review of fork pull request $head_repo"
+          fi
+
+      # A bare /oc re-runs the full review, any other text is a free question.
+      - name: Load review prompt
+        id: prompt
+        env:
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" != 'pull_request' ]; then
+            case "$(echo "$COMMENT_BODY" | tr -d '[:space:]')" in
+              /oc|/opencode) ;;
+              *) exit 0 ;;
+            esac
+          fi
+          {
+            echo 'text<<PROMPT_EOF'
+            cat .github/prompts/code-review.md
+            echo 'PROMPT_EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Run OpenCode
+        if: >-
+          github.event_name == 'pull_request'
+          || steps.pr.outputs.head_repo == github.repository
+        # anomalyco/opencode/github@latest, pinned: a tag can be moved.
+        uses: anomalyco/opencode/github@77fc88c8ade8e5a620ebbe1197f3a572d29ae91a
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          model: ${{ vars.OPENCODE_REVIEW_MODEL || 'openrouter/deepseek/deepseek-v4.1-flash' }}
+          use_github_token: true
+          share: false
+          prompt: ${{ steps.prompt.outputs.text }}

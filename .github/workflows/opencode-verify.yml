@@ -1,0 +1,90 @@
+name: OpenCode verify findings
+
+# Audits what the other reviewers claimed, it does not review the code.
+# See .github/prompts/verify-findings.md.
+#
+# Runs once the findings stop arriving: every new review comment cancels the
+# waiting run and restarts the timer, so a burst of inline comments produces
+# a single verification.
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+
+jobs:
+  verify:
+    # Reviewer bots start the debounce, an org member can ask for it directly.
+    # Never triggered by its own output, which uses a different heading.
+    if: >-
+      (github.event.issue.pull_request != null || github.event.pull_request != null)
+      && (
+        (contains(github.event.comment.body, '/oc verify')
+          && contains(fromJSON('["OWNER","MEMBER"]'), github.event.comment.author_association))
+        || (github.event.comment.user.login == 'coderabbitai[bot]'
+          && contains(github.event.comment.body, 'cr-indicator-types'))
+        || (github.event.comment.user.login == 'github-actions[bot]'
+          && contains(github.event.comment.body, '### OpenCode review'))
+      )
+    # A later comment cancels the run still waiting and starts a fresh delay.
+    concurrency:
+      group: opencode-verify-${{ github.event.issue.number || github.event.pull_request.number }}
+      cancel-in-progress: true
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Reject fork pull requests
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.issue.number || github.event.pull_request.number }}
+        run: |
+          head_repo=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" -q .head.repo.full_name)
+          echo "head_repo=$head_repo" >> "$GITHUB_OUTPUT"
+          if [ "$head_repo" != "$GITHUB_REPOSITORY" ]; then
+            echo "::notice::skipping verification of fork pull request $head_repo"
+          fi
+
+      # Cancelled by the next comment, which is what debounces the run.
+      - name: Wait for the findings to settle
+        if: >-
+          steps.pr.outputs.head_repo == github.repository
+          && !contains(github.event.comment.body, '/oc verify')
+        env:
+          DELAY: ${{ vars.OPENCODE_VERIFY_DELAY || 600 }}
+        run: sleep "$DELAY"
+
+      - name: Load verification prompt
+        if: steps.pr.outputs.head_repo == github.repository
+        id: prompt
+        run: |
+          {
+            echo 'text<<PROMPT_EOF'
+            cat .github/prompts/verify-findings.md
+            echo 'PROMPT_EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Run OpenCode
+        if: steps.pr.outputs.head_repo == github.repository
+        # anomalyco/opencode/github@latest, pinned: a tag can be moved.
+        uses: anomalyco/opencode/github@77fc88c8ade8e5a620ebbe1197f3a572d29ae91a
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          model: ${{ vars.OPENCODE_VERIFY_MODEL || vars.OPENCODE_REVIEW_MODEL || 'openrouter/deepseek/deepseek-v4.1-flash' }}
+          use_github_token: true
+          share: false
+          prompt: ${{ steps.prompt.outputs.text }}
