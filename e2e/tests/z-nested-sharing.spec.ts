@@ -222,10 +222,11 @@ for (const combo of COMBOS) {
           await bobDrive.row(childName).waitVisible({ timeout: 10_000 })
           await bobDrive.row(childName).open()
           await bobPage.waitForURL(/\/shareddrive\/[^/]+\/[^/]+$/)
+          const childFolderUrl = bobPage.url()
 
           // No Share trigger reaches a subfolder from here without
           // drive.virtualization.enabled; go straight to its share route.
-          await bobPage.goto(`${bobPage.url()}/share`)
+          await bobPage.goto(`${childFolderUrl}/share`)
           const modal = new ShareModalPage(bobPage)
           await modal.waitForOpen()
 
@@ -240,7 +241,14 @@ for (const combo of COMBOS) {
             modal.dialog.getByRole('button', { name: /^copy link$/i })
           ).toBeVisible()
 
-          await modal.close()
+          await modal.addMember(USERS.charlie.email)
+          await modal.share()
+
+          await bobPage.goto(`${childFolderUrl}/share`)
+          const reopenedModal = new ShareModalPage(bobPage)
+          await reopenedModal.waitForOpen()
+          await expect(reopenedModal.memberItem('charlie')).toBeVisible()
+          await reopenedModal.close()
         })
       }
 
