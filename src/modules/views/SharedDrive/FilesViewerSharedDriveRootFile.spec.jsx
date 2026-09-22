@@ -8,8 +8,11 @@ const mockUseQuery = jest.fn()
 const mockUseSharingContext = jest.fn()
 const mockHasQueryBeenLoaded = jest.fn()
 const mockFilesViewer = jest.fn(() => <div>files-viewer</div>)
+const mockNavigateElement = jest.fn(() => <div>navigate</div>)
+const mockIsOfficeEnabled = jest.fn(() => false)
 
 jest.mock('react-router-dom', () => ({
+  Navigate: props => mockNavigateElement(props),
   useNavigate: () => mockNavigate,
   useLocation: () => mockUseLocation(),
   useParams: () => mockUseParams()
@@ -22,6 +25,16 @@ jest.mock('cozy-client', () => ({
 
 jest.mock('cozy-sharing', () => ({
   useSharingContext: () => mockUseSharingContext()
+}))
+
+jest.mock('cozy-ui/transpiled/react/providers/Breakpoints', () => ({
+  __esModule: true,
+  default: () => ({ isDesktop: true })
+}))
+
+jest.mock('@/modules/views/OnlyOffice/helpers', () => ({
+  ...jest.requireActual('@/modules/views/OnlyOffice/helpers'),
+  isOfficeEnabled: () => mockIsOfficeEnabled()
 }))
 
 jest.mock('@/components/useHead', () => ({
@@ -118,9 +131,11 @@ describe('FilesViewerSharedDriveRootFile', () => {
       }
     })
 
-    expect(mockNavigate).toHaveBeenCalledWith('/sharings/drives', {
+    expect(mockNavigateElement).toHaveBeenCalledWith({
+      to: '/sharings/drives',
       replace: true
     })
+    expect(mockFilesViewer).not.toHaveBeenCalled()
   })
 
   it('shows the loading state until everything is ready', () => {
@@ -137,5 +152,36 @@ describe('FilesViewerSharedDriveRootFile', () => {
 
     expect(screen.getByText('files-viewer-loading')).toBeInTheDocument()
     expect(mockFilesViewer).not.toHaveBeenCalled()
+  })
+
+  describe('office documents', () => {
+    const deck = {
+      _id: 'canonical-id',
+      id: 'canonical-id',
+      type: 'file',
+      class: 'slide',
+      name: 'deck.pptx'
+    }
+
+    it('opens the editor instead of the viewer when office is enabled', () => {
+      mockIsOfficeEnabled.mockReturnValue(true)
+
+      renderRootFileViewer({ fetchedFile: deck })
+
+      expect(mockNavigateElement).toHaveBeenCalledWith({
+        to: '/onlyoffice/drive-1/canonical-id?redirectLink=drive%23%2Fsharings%2Fdrives',
+        replace: true
+      })
+      expect(mockFilesViewer).not.toHaveBeenCalled()
+    })
+
+    it('keeps the viewer when office is disabled', () => {
+      mockIsOfficeEnabled.mockReturnValue(false)
+
+      renderRootFileViewer({ fetchedFile: deck })
+
+      expect(mockNavigateElement).not.toHaveBeenCalled()
+      expect(screen.getByText('files-viewer')).toBeInTheDocument()
+    })
   })
 })
