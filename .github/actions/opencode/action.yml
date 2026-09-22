@@ -1,10 +1,12 @@
 name: OpenCode
-description: Install a pinned OpenCode release and run it on the current event
+description: Run a pinned OpenCode release on the current event
 
 # Replaces anomalyco/opencode/github, whose first step resolves the latest
 # release through the unauthenticated GitHub API and fails the job whenever
-# the shared runner IP is rate limited. Pinning the release and its checksum
-# also means an upstream release cannot change what runs next to our secrets.
+# the shared runner IP is rate limited (anomalyco/opencode#35120, closed as
+# not planned). The action also installs the latest CLI whatever SHA it is
+# pinned to (anomalyco/opencode#39163); an npm version is immutable, so this
+# one always runs the same code next to our secrets.
 
 inputs:
   model:
@@ -14,35 +16,18 @@ inputs:
     description: Prompt overriding the default one
     required: false
   version:
-    description: OpenCode release, without the leading v
+    description: opencode-ai npm version
     required: false
     default: '1.18.32'
-  sha256:
-    description: Checksum of opencode-linux-x64.tar.gz for that release
-    required: false
-    default: '3046e0404fdc60fb80307e7a47824ba07477364178a4d09baa8548496dd6d43b'
 
 runs:
   using: composite
   steps:
-    - name: Install OpenCode
-      shell: bash
-      env:
-        VERSION: ${{ inputs.version }}
-        SHA256: ${{ inputs.sha256 }}
-      run: |
-        archive="$RUNNER_TEMP/opencode.tar.gz"
-        curl -fsSL --retry 3 -o "$archive" \
-          "https://github.com/anomalyco/opencode/releases/download/v$VERSION/opencode-linux-x64.tar.gz"
-        echo "$SHA256  $archive" | sha256sum -c -
-        mkdir -p "$RUNNER_TEMP/opencode"
-        tar -xzf "$archive" -C "$RUNNER_TEMP/opencode"
-        echo "$RUNNER_TEMP/opencode" >> "$GITHUB_PATH"
-
     - name: Run OpenCode
       shell: bash
-      run: opencode github run
+      run: npx --yes "opencode-ai@$VERSION" github run
       env:
+        VERSION: ${{ inputs.version }}
         MODEL: ${{ inputs.model }}
         PROMPT: ${{ inputs.prompt }}
         SHARE: 'false'
