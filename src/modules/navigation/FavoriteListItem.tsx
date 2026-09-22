@@ -4,8 +4,7 @@ import React, { FC } from 'react'
 import {
   splitFilename,
   isDirectory,
-  isNote,
-  isOnlyOfficeFile
+  isNote
 } from 'cozy-client/dist/models/file'
 import type { IOCozyFile } from 'cozy-client/types/types'
 import { NavIcon, NavLink, NavItem } from 'cozy-ui/transpiled/react/Nav'
@@ -19,6 +18,7 @@ import {
   isExcalidraw,
   isExcalidrawEnabled
 } from '@/modules/views/Excalidraw/helpers'
+import { shouldOpenWithOnlyOffice } from '@/modules/views/OnlyOffice/helpers'
 
 interface FavoriteListItemProps {
   file: IOCozyFile
@@ -38,7 +38,7 @@ const FavoriteListItem: FC<FavoriteListItemProps> = ({
   // that matches nothing and renders a blank screen.
   const opensInOwnRoute =
     isNote(file) ||
-    isOnlyOfficeFile(file) ||
+    shouldOpenWithOnlyOffice(file) ||
     (isExcalidrawEnabled() && isExcalidraw(file))
   const { link } = useFileLink(file, { forceFolderPath: !opensInOwnRoute })
   const { filename } = splitFilename(file)

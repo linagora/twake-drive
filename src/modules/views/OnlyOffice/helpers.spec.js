@@ -1,7 +1,44 @@
+import { FileTypePdf } from '@linagora/twake-icons'
+
+import flag from 'cozy-flags'
+
 import {
+  isPdfOnlyOfficeEnabled,
+  makeOnlyOfficeIconByClass,
+  shouldOpenWithOnlyOffice,
   showCreateCozyButton,
   showSharingBanner
 } from '@/modules/views/OnlyOffice/helpers'
+
+jest.mock('cozy-flags')
+
+describe('PDF OnlyOffice support', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  it('opens PDFs with OnlyOffice only when its capability is enabled', () => {
+    const file = {
+      _type: 'io.cozy.files',
+      type: 'file',
+      class: 'pdf',
+      mime: 'application/pdf',
+      name: 'contract.pdf'
+    }
+
+    flag.mockReturnValue(false)
+    expect(isPdfOnlyOfficeEnabled()).toBe(false)
+    expect(shouldOpenWithOnlyOffice(file)).toBe(false)
+
+    flag.mockReturnValue(true)
+    expect(isPdfOnlyOfficeEnabled()).toBe(true)
+    expect(shouldOpenWithOnlyOffice(file)).toBe(true)
+  })
+
+  it('uses the PDF icon in the OnlyOffice toolbar', () => {
+    expect(makeOnlyOfficeIconByClass('pdf')).toBe(FileTypePdf)
+  })
+})
 
 describe('showCreateCozyButton', () => {
   const baseProps = {

@@ -8,6 +8,7 @@ import { officeDoc } from 'test/data'
 
 import { changeLocation } from '@/hooks/helpers'
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
+import { isPdfOnlyOfficeEnabled } from '@/modules/views/OnlyOffice/helpers'
 import useConfig from '@/modules/views/OnlyOffice/useConfig'
 import { useEditorAuthor } from '@/modules/views/editor/useEditorAuthor'
 
@@ -35,7 +36,8 @@ jest.mock('@/modules/views/editor/useEditorAuthor', () => ({
 }))
 jest.mock('@/modules/views/OnlyOffice/helpers', () => ({
   ...jest.requireActual('@/modules/views/OnlyOffice/helpers'),
-  isOfficeEnabled: jest.fn(() => true)
+  isOfficeEnabled: jest.fn(() => true),
+  isPdfOnlyOfficeEnabled: jest.fn(() => false)
 }))
 jest.mock('cozy-flags')
 jest.mock('@/hooks/helpers', () => ({
@@ -51,11 +53,33 @@ const officeDocWithoutPublicName = {
   }
 }
 
+const pdfOfficeDoc = {
+  data: {
+    ...officeDoc,
+    class: 'pdf',
+    name: 'Contract.pdf',
+    attributes: {
+      ...officeDoc.attributes,
+      onlyoffice: {
+        ...officeDoc.attributes.onlyoffice,
+        documentType: 'pdf',
+        document: {
+          ...officeDoc.attributes.onlyoffice.document,
+          fileType: 'pdf',
+          title: 'Contract.pdf',
+          permissions: { edit: true }
+        }
+      }
+    }
+  }
+}
+
 const setup = ({
   data = officeDocWithoutPublicName,
   author = 'Bob',
   isAuthorLoading = false,
-  isPublic = false
+  isPublic = false,
+  isReadOnly = false
 } = {}) => {
   useClient.mockReturnValue({
     getStackClient: () => ({ uri: 'https://bob.cozy.example' })
@@ -68,6 +92,7 @@ const setup = ({
     driveId: undefined,
     setIsEditorReady: jest.fn(),
     isPublic,
+    isReadOnly,
     username: undefined,
     isFromSharing: false,
     editorMode: 'edit',
@@ -81,6 +106,7 @@ const setup = ({
 describe('useConfig', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    isPdfOnlyOfficeEnabled.mockReturnValue(false)
   })
 
   it('sets the OnlyOffice username from the resolved editor author, even when the office open response has no public_name', async () => {
@@ -95,6 +121,47 @@ describe('useConfig', () => {
 
   it('does not build the config until the editor author is resolved', () => {
     const { result } = setup({ isAuthorLoading: true })
+
+    expect(result.current.config).toBeUndefined()
+  })
+
+  it('preserves the editable PDF payload returned by the stack', async () => {
+    isPdfOnlyOfficeEnabled.mockReturnValue(true)
+    const { result } = setup({ data: pdfOfficeDoc })
+
+    await waitFor(() => expect(result.current.config).toBeDefined())
+
+    expect(result.current.config.docEditorConfig).toEqual(
+      expect.objectContaining({
+        documentType: 'pdf',
+        document: expect.objectContaining({
+          fileType: 'pdf',
+          permissions: { edit: true }
+        }),
+        editorConfig: expect.objectContaining({
+          mode: 'edit',
+          callbackUrl: officeDoc.attributes.onlyoffice.editor.callbackUrl
+        })
+      })
+    )
+  })
+
+  it('forces a read-only PDF config to view mode', async () => {
+    isPdfOnlyOfficeEnabled.mockReturnValue(true)
+    const { result } = setup({ data: pdfOfficeDoc, isReadOnly: true })
+
+    await waitFor(() => expect(result.current.config).toBeDefined())
+
+    expect(
+      result.current.config.docEditorConfig.document.permissions.edit
+    ).toBe(false)
+    expect(result.current.config.docEditorConfig.editorConfig.mode).toBe('view')
+  })
+
+  it('falls back when a PDF reaches OnlyOffice without the capability', async () => {
+    const { result } = setup({ data: pdfOfficeDoc })
+
+    await waitFor(() => expect(result.current.status).toBe('error'))
 
     expect(result.current.config).toBeUndefined()
   })

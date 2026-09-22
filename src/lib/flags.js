@@ -22,6 +22,7 @@ const flagsList = () => {
   flag('switcher', true)
   flag('debug')
   flag('drive.onlyoffice.editorToolbarHeight') // flagName should use kebab case
+  flag('drive.office.pdf.enabled')
   flag('drive.logger')
   flag('drive.dacc-files-size-by-slug')
   flag('drive.pushBanner-hide-mobile.enabled', true)

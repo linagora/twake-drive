@@ -1,11 +1,15 @@
 import {
+  FileTypePdf,
   FileTypeSheet,
   FileTypeSlide,
   FileTypeText
 } from '@linagora/twake-icons'
 
+import { shouldBeOpenedByOnlyOffice } from 'cozy-client/dist/models/file'
 import { isMobile } from 'cozy-device-helper'
 import flag from 'cozy-flags'
+
+import { isPdf } from '@/modules/views/Pdf/helpers'
 
 /**
  * Checks if the Office feature is enabled.
@@ -71,6 +75,12 @@ export const isOfficeEditingEnabled = isDesktop => {
   return true
 }
 
+export const isPdfOnlyOfficeEnabled = () =>
+  flag('drive.office.pdf.enabled') === true
+
+export const shouldOpenWithOnlyOffice = file =>
+  shouldBeOpenedByOnlyOffice(file) || (isPdfOnlyOfficeEnabled() && isPdf(file))
+
 /**
  * @typedef {Object} OnlyOfficeFileRouteOptions
  * @property {string} [driveId]
@@ -127,6 +137,7 @@ export const makeOnlyOfficeFileRoute = (
 
 export const makeOnlyOfficeIconByClass = fileClass => {
   const iconByClass = {
+    pdf: FileTypePdf,
     spreadsheet: FileTypeSheet,
     slide: FileTypeSlide,
     text: FileTypeText

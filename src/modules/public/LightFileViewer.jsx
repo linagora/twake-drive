@@ -23,6 +23,7 @@ import { FilesViewerLoading } from '@/components/FilesViewerLoading'
 import PublicToolbar from '@/modules/public/PublicToolbar'
 import {
   isOfficeEnabled,
+  isPdfOnlyOfficeEnabled,
   makeOnlyOfficeFileRoute
 } from '@/modules/views/OnlyOffice/helpers'
 import { isPdfEditorEnabled, makePdfRoute } from '@/modules/views/Pdf/helpers'
@@ -33,6 +34,8 @@ const LightFileViewer = ({ files, isPublic }) => {
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const { loading, isSharingShortcutCreated, addSharingLink } = sharingInfos
+  const canEditPdfWithOnlyOffice =
+    isOfficeEnabled(isDesktop) && isPdfOnlyOfficeEnabled()
 
   const onlyOfficeOpener = useCallback(
     file => {
@@ -93,8 +96,9 @@ const LightFileViewer = ({ files, isPublic }) => {
               opener: onlyOfficeOpener
             },
             PdfViewer: {
-              isPdfEditorEnabled: isPdfEditorEnabled(),
-              opener: pdfOpener
+              isPdfEditorEnabled:
+                canEditPdfWithOnlyOffice || isPdfEditorEnabled(),
+              opener: canEditPdfWithOnlyOffice ? onlyOfficeOpener : pdfOpener
             },
             toolbarProps: {
               showToolbar: isDesktop,

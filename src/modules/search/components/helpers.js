@@ -3,7 +3,10 @@ import { models } from 'cozy-client'
 import { ROOT_DIR_ID, SHARED_DRIVES_DIR_ID } from '@/constants/config'
 import FuzzyPathSearch from '@/lib/FuzzyPathSearch.js'
 import { normalizeSearchText } from '@/lib/normalizeSearchText'
-import { makeOnlyOfficeFileRoute } from '@/modules/views/OnlyOffice/helpers'
+import {
+  makeOnlyOfficeFileRoute,
+  shouldOpenWithOnlyOffice
+} from '@/modules/views/OnlyOffice/helpers'
 
 export const TYPE_DIRECTORY = 'directory'
 
@@ -40,7 +43,7 @@ export const makeNormalizedFile = (client, folders, file) => {
     if (models.file.isNote(file)) {
       url = `/n/${file.id}`
       openOn = 'notes'
-    } else if (models.file.shouldBeOpenedByOnlyOffice(file)) {
+    } else if (shouldOpenWithOnlyOffice(file)) {
       url = makeOnlyOfficeFileRoute(file.id, {
         driveId: file.driveId,
         fromPathname: urlToFolder

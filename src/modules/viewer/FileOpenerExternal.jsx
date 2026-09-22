@@ -9,7 +9,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { RemoveScroll } from 'react-remove-scroll'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 
-import { useClient, models } from 'cozy-client'
+import { useClient } from 'cozy-client'
 import Spinner from 'cozy-ui/transpiled/react/Spinner'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
@@ -25,7 +25,8 @@ import { ensureFileHasPath } from '@/components/FilesRealTimeQueries'
 import Fallback from '@/modules/viewer/Fallback'
 import {
   isOfficeEnabled,
-  makeOnlyOfficeFileRoute
+  makeOnlyOfficeFileRoute,
+  shouldOpenWithOnlyOffice
 } from '@/modules/views/OnlyOffice/helpers'
 import { buildFileOrFolderByIdQuery } from '@/queries'
 
@@ -84,7 +85,7 @@ const FileOpener = props => {
     !loading &&
     !fileNotFound &&
     file &&
-    models.file.shouldBeOpenedByOnlyOffice(file) &&
+    shouldOpenWithOnlyOffice(file) &&
     isOfficeEnabled(isDesktop)
   ) {
     return (

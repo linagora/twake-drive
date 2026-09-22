@@ -58,11 +58,13 @@ describe('FileOpenerExternal', () => {
     jest.clearAllMocks()
     flag('drive.office.enabled', true)
     flag('drive.office.touchScreen.enabled', true)
+    flag('drive.office.pdf.enabled', false)
   })
 
   afterEach(() => {
     flag('drive.office.enabled', null)
     flag('drive.office.touchScreen.enabled', null)
+    flag('drive.office.pdf.enabled', null)
   })
 
   const setup = ({ file }) => {
@@ -94,6 +96,15 @@ describe('FileOpenerExternal', () => {
     setup({ file: pdfFile })
 
     expect(await screen.findByText('Viewer')).toBeInTheDocument()
+  })
+
+  it('redirects a PDF straight to OnlyOffice when PDF support is enabled', async () => {
+    flag('drive.office.pdf.enabled', true)
+
+    setup({ file: pdfFile })
+
+    expect(await screen.findByText('OnlyOffice editor')).toBeInTheDocument()
+    expect(mockViewer).not.toHaveBeenCalled()
   })
 
   it('renders the viewer for an Office file when Office is disabled', async () => {

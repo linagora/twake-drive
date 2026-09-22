@@ -16,7 +16,10 @@ import {
 import { usePublicContext } from '@/modules/public/PublicProvider'
 import { getFolderPath } from '@/modules/routeUtils'
 import { isExcalidrawEnabled as computeExcalidrawEnabled } from '@/modules/views/Excalidraw/helpers'
-import { isOfficeEnabled as computeOfficeEnabled } from '@/modules/views/OnlyOffice/helpers'
+import {
+  isOfficeEnabled as computeOfficeEnabled,
+  isPdfOnlyOfficeEnabled as computePdfOnlyOfficeEnabled
+} from '@/modules/views/OnlyOffice/helpers'
 
 export interface LinkResult {
   app: string
@@ -86,6 +89,8 @@ const useFileLink = (
   const client = useClient()
   const { isDesktop } = useBreakpoints()
   const isOfficeEnabled = computeOfficeEnabled(isDesktop)
+  const isPdfOnlyOfficeEnabled =
+    isOfficeEnabled && computePdfOnlyOfficeEnabled()
   const isExcalidrawEnabled = computeExcalidrawEnabled()
   const { isPublic } = usePublicContext()
   const sharingContext = useSharingContext() as
@@ -103,6 +108,7 @@ const useFileLink = (
 
   const type = computeFileType(file, {
     isOfficeEnabled,
+    isPdfOnlyOfficeEnabled,
     isExcalidrawEnabled,
     isPublic,
     cozyUrl

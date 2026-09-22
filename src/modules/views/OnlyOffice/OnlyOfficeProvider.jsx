@@ -31,9 +31,10 @@ const OnlyOfficeProvider = ({
   const { isDesktop, isMobile } = useBreakpoints()
   const [searchParam] = useSearchParams()
   const { hasWriteAccess } = useSharingContext()
+  const canWrite = !isReadOnly && hasWriteAccess(fileId, driveId)
   const [isEditorReady, setIsEditorReady] = useState(false)
   const [editorMode, setEditorMode] = useState(
-    officeDefaultMode(isDesktop, isMobile)
+    canWrite ? officeDefaultMode(isDesktop, isMobile) : 'view'
   )
 
   const [hasFileDiverged, setFileDiverged] = useState(false)
@@ -83,17 +84,22 @@ const OnlyOfficeProvider = ({
   }, [client, fileId, handleFileUpdated])
 
   useEffect(() => {
-    if (!hasWriteAccess(fileId, driveId)) return
+    if (!canWrite) {
+      if (!isEditorModeView) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setEditorMode('view')
+      }
+      return
+    }
 
     if (
       isEditorModeView ||
       searchParam.get('fromCreate') === 'true' ||
       searchParam.get('fromEdit') === 'true'
     ) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setEditorMode('edit')
     }
-  }, [searchParam, fileId, driveId, hasWriteAccess, isEditorModeView])
+  }, [searchParam, canWrite, isEditorModeView])
 
   useEffect(() => {
     if (fileResult.data?.trashed) {
@@ -122,7 +128,7 @@ const OnlyOfficeProvider = ({
         hasFileDeleted,
         setFileDeleted,
         isPublic,
-        isReadOnly,
+        isReadOnly: !canWrite,
         isFromSharing,
         username,
         isInSharedFolder,

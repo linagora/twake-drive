@@ -12,7 +12,8 @@ import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvi
 import { makeOnlyOfficeFileRoute } from '@/modules/views/OnlyOffice/helpers'
 
 const FileDivergedModal = () => {
-  const { officeKey, setFileDiverged, editorMode } = useOnlyOfficeContext()
+  const { officeKey, driveId, setFileDiverged, editorMode } =
+    useOnlyOfficeContext()
   const navigate = useNavigate()
   const client = useClient()
   const { t } = useI18n()
@@ -35,6 +36,7 @@ const FileDivergedModal = () => {
         .getStackClient()
         .fetchJSON('POST', `/office/keys/${officeKey}`)
       const route = makeOnlyOfficeFileRoute(resp.data.id, {
+        driveId,
         fromRedirect: redirectLink,
         fromEdit: editorMode === 'edit'
       })

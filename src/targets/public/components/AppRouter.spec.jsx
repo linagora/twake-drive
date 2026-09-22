@@ -9,13 +9,17 @@ import AppRouter from './AppRouter'
 import AppLike from 'test/components/AppLike'
 
 import { isExcalidrawEnabled } from '@/modules/views/Excalidraw/helpers'
-import { isOfficeEnabled } from '@/modules/views/OnlyOffice/helpers'
+import {
+  isOfficeEnabled,
+  shouldOpenWithOnlyOffice
+} from '@/modules/views/OnlyOffice/helpers'
 
 const client = createMockClient({})
 
 jest.mock('modules/views/OnlyOffice/helpers', () => ({
   ...jest.requireActual('modules/views/OnlyOffice/helpers'),
-  isOfficeEnabled: jest.fn().mockImplementation(() => true)
+  isOfficeEnabled: jest.fn().mockImplementation(() => true),
+  shouldOpenWithOnlyOffice: jest.fn(file => file?.class === 'text')
 }))
 
 jest.mock('modules/views/Excalidraw/helpers', () => ({
@@ -55,6 +59,11 @@ jest.mock('modules/views/OnlyOffice', () => {
 })
 
 describe('Public AppRouter', () => {
+  beforeEach(() => {
+    isOfficeEnabled.mockImplementation(() => true)
+    shouldOpenWithOnlyOffice.mockImplementation(file => file?.class === 'text')
+  })
+
   // AppLike mounts a HashRouter: a pathname would leave every render on '/'.
   const setupRouter = ({ route = '/', data = {} } = {}) => {
     window.location.hash = `#${route}`
@@ -89,6 +98,38 @@ describe('Public AppRouter', () => {
     setupRouter({ data: textDocument, route: '/onlyoffice/id' })
 
     expect(screen.getByText('OnlyOfficeView')).toBeInTheDocument()
+  })
+
+  it('should render OnlyOffice for a public PDF when PDF support is enabled', () => {
+    shouldOpenWithOnlyOffice.mockImplementation(file => file?.class === 'pdf')
+
+    setupRouter({
+      data: {
+        id: 'pdf-id',
+        name: 'contract.pdf',
+        type: 'file',
+        class: 'pdf',
+        mime: 'application/pdf'
+      }
+    })
+
+    expect(screen.queryByText('OnlyOfficeView')).toBeInTheDocument()
+    expect(screen.queryByText('LightFileViewer')).toBe(null)
+  })
+
+  it('should keep the public PDF viewer when PDF support is disabled', () => {
+    setupRouter({
+      data: {
+        id: 'pdf-id',
+        name: 'contract.pdf',
+        type: 'file',
+        class: 'pdf',
+        mime: 'application/pdf'
+      }
+    })
+
+    expect(screen.queryByText('OnlyOfficeView')).toBe(null)
+    expect(screen.queryByText('LightFileViewer')).toBeInTheDocument()
   })
 
   it('should redirect onlyoffice route to file viewer if office is disabled', async () => {

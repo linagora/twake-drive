@@ -1,9 +1,11 @@
 import { createMockClient, models } from 'cozy-client'
+import flag from 'cozy-flags'
 
 import { makeNormalizedFile, TYPE_DIRECTORY } from './helpers'
 
 models.note.fetchURL = jest.fn(() => 'noteUrl')
 models.file.shouldBeOpenedByOnlyOffice = jest.fn(() => false)
+jest.mock('cozy-flags')
 
 const client = createMockClient({})
 
@@ -18,6 +20,11 @@ const noteFileProps = {
 }
 
 describe('makeNormalizedFile', () => {
+  beforeEach(() => {
+    flag.mockReturnValue(false)
+    models.file.shouldBeOpenedByOnlyOffice = jest.fn(() => false)
+  })
+
   it('should return correct values for a directory', () => {
     const folders = []
     const file = {
@@ -130,5 +137,26 @@ describe('makeNormalizedFile', () => {
     const normalizedFile = makeNormalizedFile(client, folders, file)
 
     expect(normalizedFile.url).toContain('/onlyoffice/drive123/')
+  })
+
+  it('should route a PDF search result to OnlyOffice when enabled', () => {
+    flag.mockImplementation(name => name === 'drive.office.pdf.enabled')
+    const folders = [{ _id: 'folderId', path: 'folderPath' }]
+    const file = {
+      _id: 'pdfId',
+      id: 'pdfId',
+      dir_id: 'folderId',
+      type: 'file',
+      name: 'contract.pdf',
+      mime: 'application/pdf',
+      class: 'pdf',
+      driveId: 'drive123'
+    }
+
+    const normalizedFile = makeNormalizedFile(client, folders, file)
+
+    expect(normalizedFile.url).toBe(
+      '/onlyoffice/drive123/pdfId?redirectLink=drive%23%2Ffolder%2FfolderId'
+    )
   })
 })

@@ -10,7 +10,10 @@ import { officeDocParam } from 'test/data'
 
 import Editor from '@/modules/views/OnlyOffice/Editor'
 import { OnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
-import { isOfficeEnabled } from '@/modules/views/OnlyOffice/helpers'
+import {
+  isOfficeEnabled,
+  isPdfOnlyOfficeEnabled
+} from '@/modules/views/OnlyOffice/helpers'
 
 jest.mock('cozy-client/dist/hooks/useFetchJSON', () => ({
   __esModule: true,
@@ -20,7 +23,8 @@ jest.mock('cozy-client/dist/hooks/useFetchJSON', () => ({
 
 jest.mock('modules/views/OnlyOffice/helpers', () => ({
   ...jest.requireActual('modules/views/OnlyOffice/helpers'),
-  isOfficeEnabled: jest.fn()
+  isOfficeEnabled: jest.fn(),
+  isPdfOnlyOfficeEnabled: jest.fn()
 }))
 
 jest.mock('@/modules/views/editor/useEditorAuthor', () => ({
@@ -49,6 +53,26 @@ client.plugins = {
   realtime: {
     subscribe: () => {},
     unsubscribe: () => {}
+  }
+}
+
+const pdfOfficeDocParam = {
+  data: {
+    ...officeDocParam.data,
+    class: 'pdf',
+    name: 'Contract.pdf',
+    attributes: {
+      ...officeDocParam.data.attributes,
+      onlyoffice: {
+        ...officeDocParam.data.attributes.onlyoffice,
+        documentType: 'pdf',
+        document: {
+          ...officeDocParam.data.attributes.onlyoffice.document,
+          fileType: 'pdf',
+          permissions: { edit: true }
+        }
+      }
+    }
   }
 }
 
@@ -92,6 +116,10 @@ const setup = ({
 }
 
 describe('Editor', () => {
+  beforeEach(() => {
+    isPdfOnlyOfficeEnabled.mockReturnValue(false)
+  })
+
   afterEach(() => {
     document.body.innerHTML = '' // used to reset document.getElementById(id) present in View
   })
@@ -148,6 +176,20 @@ describe('Editor', () => {
     expect(queryByTestId('onlyoffice-content-spinner')).toBeFalsy()
     expect(queryByTestId('onlyoffice-title')).toBeFalsy()
     expect(queryByTestId('ViewerForTest')).toBeTruthy()
+  })
+
+  it('should show the PDF viewer fallback when PDF OnlyOffice is disabled', () => {
+    useFetchJSON.mockReturnValue({
+      fetchStatus: 'loaded',
+      data: pdfOfficeDocParam
+    })
+    useQuery.mockReturnValue({ data: pdfOfficeDocParam.data })
+    isOfficeEnabled.mockReturnValue(true)
+
+    const { root } = setup()
+
+    expect(root.queryByTestId('onlyoffice-title')).toBeFalsy()
+    expect(root.queryByTestId('ViewerForTest')).toBeTruthy()
   })
 
   it('should show trashed banner when when the file has been deleted', () => {

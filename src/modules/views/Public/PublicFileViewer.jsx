@@ -1,6 +1,7 @@
 import React, { useMemo, useEffect, useState, useCallback } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 
+import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import Viewer, {
   FooterActionButtons,
   ForwardOrDownloadButton
@@ -9,6 +10,11 @@ import Viewer, {
 import { FilesViewerLoading } from '@/components/FilesViewerLoading'
 import useHead from '@/components/useHead'
 import { useCurrentFolderId } from '@/hooks'
+import {
+  isOfficeEnabled,
+  isPdfOnlyOfficeEnabled,
+  makeOnlyOfficeFileRoute
+} from '@/modules/views/OnlyOffice/helpers'
 import { isPdfEditorEnabled, makePdfRoute } from '@/modules/views/Pdf/helpers'
 import usePublicFilesQuery from '@/modules/views/Public/usePublicFilesQuery'
 
@@ -16,18 +22,26 @@ const PublicFileViewer = () => {
   const { fileId } = useParams()
   const navigate = useNavigate()
   const { pathname } = useLocation()
+  const { isDesktop } = useBreakpoints()
+  const canEditPdfWithOnlyOffice =
+    isOfficeEnabled(isDesktop) && isPdfOnlyOfficeEnabled()
   useHead()
 
   const pdfOpener = useCallback(
     file => {
       navigate(
-        makePdfRoute(file.id, {
-          fromPathname: pathname,
-          fromPublicFolder: true
-        })
+        canEditPdfWithOnlyOffice
+          ? makeOnlyOfficeFileRoute(file.id, {
+              fromPathname: pathname,
+              fromPublicFolder: true
+            })
+          : makePdfRoute(file.id, {
+              fromPathname: pathname,
+              fromPublicFolder: true
+            })
       )
     },
-    [navigate, pathname]
+    [canEditPdfWithOnlyOffice, navigate, pathname]
   )
 
   const [fetchingMore, setFetchingMore] = useState(false)
@@ -104,7 +118,7 @@ const PublicFileViewer = () => {
       onCloseRequest={handleClose}
       componentsProps={{
         PdfViewer: {
-          isPdfEditorEnabled: isPdfEditorEnabled(),
+          isPdfEditorEnabled: canEditPdfWithOnlyOffice || isPdfEditorEnabled(),
           opener: pdfOpener
         },
         toolbarProps: {

@@ -1,7 +1,6 @@
 import React from 'react'
 import { Route, Navigate } from 'react-router-dom'
 
-import { models } from 'cozy-client'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import FileHistory from '@/components/FileHistory'
@@ -20,7 +19,10 @@ import { MovePublicFilesView } from '@/modules/views/Modal/MovePublicFilesView'
 import OnlyOfficeView from '@/modules/views/OnlyOffice'
 import OnlyOfficeCreateView from '@/modules/views/OnlyOffice/Create'
 import OnlyOfficePaywallView from '@/modules/views/OnlyOffice/OnlyOfficePaywallView'
-import { isOfficeEnabled } from '@/modules/views/OnlyOffice/helpers'
+import {
+  isOfficeEnabled,
+  shouldOpenWithOnlyOffice
+} from '@/modules/views/OnlyOffice/helpers'
 import { isPdfEditorEnabled } from '@/modules/views/Pdf/helpers'
 import { getPublicPdfRoutes } from '@/modules/views/Pdf/routes'
 import { PublicFileViewer } from '@/modules/views/Public/PublicFileViewer'
@@ -76,13 +78,12 @@ const AppRouter = ({
               path="onlyoffice/create/:folderId/:fileClass"
               element={<OnlyOfficeCreateView isPublic={true} />}
             />
-            {models.file.shouldBeOpenedByOnlyOffice(data) &&
-              !isExcalidrawShared && (
-                <Route
-                  path="/"
-                  element={<Navigate to={`onlyoffice/${data.id}`} replace />}
-                />
-              )}
+            {shouldOpenWithOnlyOffice(data) && !isExcalidrawShared && (
+              <Route
+                path="/"
+                element={<Navigate to={`onlyoffice/${data.id}`} replace />}
+              />
+            )}
           </>
         ) : (
           <Route path="onlyoffice/*" element={<Navigate to="/" />} />

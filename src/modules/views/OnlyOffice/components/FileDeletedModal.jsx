@@ -14,7 +14,7 @@ import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvi
 import { makeOnlyOfficeFileRoute } from '@/modules/views/OnlyOffice/helpers'
 
 const FileDeletedModal = () => {
-  const { fileId, setFileDeleted, editorMode, isPublic } =
+  const { fileId, driveId, setFileDeleted, editorMode, isPublic } =
     useOnlyOfficeContext()
   const navigate = useNavigate()
   const client = useClient()
@@ -31,6 +31,7 @@ const FileDeletedModal = () => {
     try {
       const resp = await client.collection(DOCTYPE_FILES).restore(fileId)
       const route = makeOnlyOfficeFileRoute(resp.data.id, {
+        driveId,
         fromRedirect: redirectLink,
         fromEdit: editorMode === 'edit'
       })
