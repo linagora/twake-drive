@@ -148,5 +148,8 @@
     "twake-i18n": "^0.3.4",
     "whatwg-fetch": "3.0.0"
   },
-  "packageManager": "yarn@4.17.0"
+  "packageManager": "yarn@4.17.0",
+  "resolutions": {
+    "cozy-search": "file:./vendor/cozy-search-f759273c7.tgz"
+  }
 }

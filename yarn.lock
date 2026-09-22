@@ -12030,9 +12030,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cozy-search@npm:^2.2.18":
-  version: 2.2.18
-  resolution: "cozy-search@npm:2.2.18"
+"cozy-search@file:./vendor/cozy-search-f759273c7.tgz::locator=cozy-drive%40workspace%3A.":
+  version: 2.6.1
+  resolution: "cozy-search@file:./vendor/cozy-search-f759273c7.tgz#./vendor/cozy-search-f759273c7.tgz::hash=be47b9&locator=cozy-drive%40workspace%3A."
   dependencies:
     "@assistant-ui/react": "npm:^0.12.5"
     classnames: "npm:^2.5.1"
@@ -12042,7 +12042,7 @@ __metadata:
     rooks: "npm:7.14.1"
   peerDependencies:
     "@linagora/twake-icons": ">=2.6.6"
-    cozy-client: ">=60.26.0"
+    cozy-client: ">=60.30.6"
     cozy-device-helper: ">=3.7.1"
     cozy-flags: ">=4.6.1"
     cozy-intent: ">=2.26.0"
@@ -12057,7 +12057,7 @@ __metadata:
     react-dom: ">=18.0.0"
     react-router-dom: ^6.28.0
     twake-i18n: ">=0.3.0"
-  checksum: 10/912d5c7d9fc893106c2084f003a1938aa500fa9511a21657419a7f9079fd9837bea01a4080ceb5c4571f8a9e8996344e32a310989a55d402c084175ac4cc61fc
+  checksum: 10/f4d597839aa254f058e3c47f260f99147b7793364cdaa5ed2f97b2b8de24a8292ab4ee8baac539c134610f8e90b62a17ca01d79275f526029f0c310735bca467
   languageName: node
   linkType: hard
 
