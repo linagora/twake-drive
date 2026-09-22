@@ -7,7 +7,7 @@ import { CozyFile } from '@/models'
 import { isNextcloudFile } from '@/modules/nextcloud/helpers'
 
 export function getItemId(item) {
-  return item?._id ?? item?.id ?? null
+  return item?._id ?? null
 }
 
 function isSameOrDescendantPath(candidatePath, ancestorPath) {
