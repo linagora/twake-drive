@@ -55,6 +55,7 @@ for (const combo of COMBOS) {
     const DIRECT_PARENT = `Nested Direct Parent ${stamp()}`
     const SHAREDCHILD_PARENT = `Nested Shared-Child Parent ${stamp()}`
     const RECIPIENT_PARENT = `Nested Recipient Parent ${stamp()}`
+    const BOTH_SHARED_PARENT = `Nested Both-Shared Parent ${stamp()}`
 
     test.beforeAll(() => {
       setFlags(USERS.alice.instance, {
@@ -72,6 +73,7 @@ for (const combo of COMBOS) {
         await trashByName(USERS.alice.instance, SHAREDCHILD_PARENT)
         if (combo.federated) {
           await trashByName(USERS.alice.instance, RECIPIENT_PARENT)
+          await trashByName(USERS.alice.instance, BOTH_SHARED_PARENT)
         }
       }
       setFlags(USERS.alice.instance, DEFAULT_FLAGS)
@@ -249,6 +251,52 @@ for (const combo of COMBOS) {
           await reopenedModal.waitForOpen()
           await expect(reopenedModal.memberItem('charlie')).toBeVisible()
           await reopenedModal.close()
+        })
+      }
+
+      if (combo.federated) {
+        test('downgrading a member shared on both the child and its parent lowers both', async ({
+          alicePage,
+          aliceDrive
+        }) => {
+          const child = `Nested Both-Shared Child ${stamp()}`
+
+          await alicePage.goto(`${USERS.alice.appUrl}/#/folder`)
+          await aliceDrive.createFolder(BOTH_SHARED_PARENT)
+          await aliceDrive.openFolder(BOTH_SHARED_PARENT)
+
+          const parentShareModal = await aliceDrive.openShareModal()
+          await parentShareModal.addMember(USERS.bob.email)
+          await parentShareModal.share()
+
+          await aliceDrive.createFolder(child)
+          await aliceDrive.openFolder(child)
+
+          const childShareModal = await aliceDrive.openShareModal()
+          await childShareModal.addMember(USERS.bob.email)
+          await childShareModal.share()
+
+          // Bob is the child's only recipient, and still editor through the
+          // parent: confirming must downgrade him on both sharings, or the
+          // effective role flips back to editor.
+          const modal = await aliceDrive.openShareModal()
+          await expect(modal.memberRole('bob')).toHaveText(/editor/i)
+          await modal.selectMemberRole('bob', 'Viewer')
+          const confirmDialog = new DowngradeConfirmDialogPage(alicePage)
+          await confirmDialog.waitForOpen()
+          await confirmDialog.confirm()
+          await expect(modal.memberRole('bob')).toHaveText(/viewer/i)
+          await modal.close()
+
+          const reopenedModal = await aliceDrive.openShareModal()
+          await expect(reopenedModal.memberRole('bob')).toHaveText(/viewer/i)
+          await reopenedModal.close()
+
+          await alicePage.goto(`${USERS.alice.appUrl}/#/folder`)
+          await aliceDrive.openFolder(BOTH_SHARED_PARENT)
+          const parentModal = await aliceDrive.openShareModal()
+          await expect(parentModal.memberRole('bob')).toHaveText(/viewer/i)
+          await parentModal.close()
         })
       }
 
