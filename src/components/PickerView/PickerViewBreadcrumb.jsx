@@ -37,6 +37,7 @@ export const PickerViewBreadcrumb = ({
           onClick={navigateBack}
           disabled={isNavigationDisabled}
           size="small"
+          className="u-pl-0 u-mr-half"
         />
       )}
       {isMobile && hasPath ? (

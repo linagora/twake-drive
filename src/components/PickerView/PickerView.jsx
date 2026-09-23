@@ -246,7 +246,7 @@ export const PickerView = ({
       display="flex"
       flexDirection="column"
     >
-      <Box px={3} py={0} className="u-mt-half">
+      <Box pl={2.5} pr={2} py={0} className="u-mt-half">
         <PickerViewBreadcrumb
           path={breadcrumbPath}
           onBreadcrumbClick={onBreadcrumbClick}
