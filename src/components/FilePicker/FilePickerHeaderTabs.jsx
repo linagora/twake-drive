@@ -53,7 +53,7 @@ export const FilePickerHeaderTabs = ({
       aria-label={t('Nav.item_file_picker')}
       className={cx(
         styles.filePickerNavigation,
-        'u-flex-self-start u-ml-1 u-mt-half u-w-auto'
+        'u-flex-self-start u-mt-half u-w-auto'
       )}
       narrowed
       textColor="primary"
@@ -61,7 +61,7 @@ export const FilePickerHeaderTabs = ({
     >
       {navigationItems
         .filter(item => availableSections.includes(item.value))
-        .map(item => (
+        .map((item, index) => (
           <Tab
             key={item.value}
             value={item.value}
@@ -73,7 +73,9 @@ export const FilePickerHeaderTabs = ({
             }
             className={cx(
               styles.filePickerNavigationTab,
-              'u-pv-half u-ph-half'
+              index === 0 && styles.filePickerNavigationFirstTab,
+              'u-pv-half',
+              index === 0 ? 'u-pr-half' : 'u-ph-half'
             )}
           />
         ))}

@@ -215,7 +215,7 @@ const FilePicker = ({
           }) => (
             <>
               <header
-                className="u-pt-1-half u-pb-0 u-pl-1-half u-pr-2"
+                className="u-pt-1-half u-pb-0 u-pl-1 u-pr-2"
                 data-testid="file-picker-header-wrapper"
               >
                 <FilePickerHeader
