@@ -3,6 +3,7 @@ import { models } from 'cozy-client'
 import { ROOT_DIR_ID } from '@/constants/config'
 import FuzzyPathSearch from '@/lib/FuzzyPathSearch.js'
 import { normalizeSearchText } from '@/lib/normalizeSearchText'
+import { isNextcloudShortcut } from '@/modules/nextcloud/helpers'
 import { makeOnlyOfficeFileRoute } from '@/modules/views/OnlyOffice/helpers'
 
 export const TYPE_DIRECTORY = 'directory'
@@ -37,7 +38,9 @@ export const makeNormalizedFile = (client, folders, file) => {
     const parentDir = folders.find(folder => folder._id === file.dir_id)
     path = parentDir && parentDir.path ? parentDir.path : ''
     parentUrl = parentDir && parentDir._id ? `/folder/${parentDir._id}` : ''
-    if (models.file.isShortcut(file)) {
+    if (isNextcloudShortcut(file)) {
+      url = `/nextcloud/${file.cozyMetadata?.sourceAccount ?? 'unknown'}`
+    } else if (models.file.isShortcut(file)) {
       url = file.driveId
         ? `/external/${file.driveId}/${file._id}`
         : `/external/${file._id}`
@@ -85,7 +88,7 @@ export const indexFiles = async client => {
     .getStackClient()
     .fetchJSON(
       'GET',
-      '/data/io.cozy.files/_all_docs?Fields=_id,trashed,dir_id,name,path,type,mime,class,driveId,metadata.title,metadata.version&DesignDocs=false&include_docs=true'
+      '/data/io.cozy.files/_all_docs?Fields=_id,trashed,dir_id,name,path,type,mime,class,driveId,metadata.title,metadata.version,cozyMetadata.createdByApp,cozyMetadata.sourceAccount&DesignDocs=false&include_docs=true'
     )
   const files = resp.rows.map(row => ({ id: row.id, ...row.doc }))
   const folders = files.filter(file => file.type === TYPE_DIRECTORY)
