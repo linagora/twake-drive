@@ -11,7 +11,8 @@ import {
   filePickerItemTypes,
   filePickerModes,
   filePickerSections,
-  FILE_PICKER_SHARINGS_ROOT_ID
+  FILE_PICKER_SHARINGS_ROOT_ID,
+  ROOT_DIR_UNAVAILABLE_ERROR
 } from './constants'
 
 import { ROOT_DIR_ID } from '@/constants/config'
@@ -590,5 +591,86 @@ describe('FilePicker', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Drive' }))
 
     expect(onReadyToUse).toHaveBeenCalledTimes(1)
+  })
+  describe('when scoped to a root folder', () => {
+    const renderScopedHeader =
+      sections =>
+      ({ availableSections }) => {
+        sections.push(availableSections)
+        return <div data-testid="scoped-header" />
+      }
+
+    it('opens on the root folder and roots the breadcrumb there', () => {
+      render(
+        <FilePicker
+          mode={filePickerModes.SELECTION}
+          rootDirId={folder._id}
+          displayedTypes={[filePickerItemTypes.FILE]}
+          selectableTypes={[filePickerItemTypes.FILE]}
+        />
+      )
+
+      expect(useBreadcrumbPath).toHaveBeenCalledWith(
+        expect.objectContaining({
+          currentFolderId: folder._id,
+          rootBreadcrumbPath: { id: folder._id, name: folder.name }
+        })
+      )
+    })
+
+    it('offers the Drive section only, whatever the caller asks for', () => {
+      const sections = []
+
+      render(
+        <FilePicker
+          mode={filePickerModes.SELECTION}
+          rootDirId={folder._id}
+          availableSections={Object.values(filePickerSections)}
+          displayedTypes={[filePickerItemTypes.FILE]}
+          selectableTypes={[filePickerItemTypes.FILE]}
+          renderHeader={renderScopedHeader(sections)}
+        />
+      )
+
+      expect(sections[0]).toEqual([filePickerSections.DRIVE])
+    })
+
+    it('keeps every section when scoped to the Drive root', () => {
+      const sections = []
+
+      render(
+        <FilePicker
+          mode={filePickerModes.SELECTION}
+          rootDirId={ROOT_DIR_ID}
+          availableSections={Object.values(filePickerSections)}
+          displayedTypes={[filePickerItemTypes.FILE]}
+          selectableTypes={[filePickerItemTypes.FILE]}
+          renderHeader={renderScopedHeader(sections)}
+        />
+      )
+
+      expect(sections[0]).toEqual(Object.values(filePickerSections))
+    })
+
+    it('surfaces an error when the root folder cannot be loaded', () => {
+      useQuery.mockImplementation((_definition, options) =>
+        options.as === `io.cozy.files/${folder._id}`
+          ? { data: null, fetchStatus: 'failed' }
+          : { data: [], fetchStatus: 'loaded', hasMore: false }
+      )
+
+      render(
+        <FilePicker
+          mode={filePickerModes.SELECTION}
+          rootDirId={folder._id}
+          displayedTypes={[filePickerItemTypes.FILE]}
+          selectableTypes={[filePickerItemTypes.FILE]}
+        />
+      )
+
+      expect(screen.getByTestId('file-picker-error')).toHaveTextContent(
+        `FilePicker.errors.${ROOT_DIR_UNAVAILABLE_ERROR}`
+      )
+    })
   })
 })

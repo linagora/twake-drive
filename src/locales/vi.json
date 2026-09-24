@@ -787,7 +787,8 @@
       "buttons": {
         "cancel": "Hủy",
         "publicLink": "Thêm dưới dạng liên kết",
-        "temporaryDownloadLink": "Thêm dưới dạng tệp đính kèm"
+        "temporaryDownloadLink": "Thêm dưới dạng tệp đính kèm",
+        "documents": "Chọn"
       }
     },
     "constraints": {
@@ -796,7 +797,8 @@
         "mimeTypeNotAllowed": "Loại tệp này không được phép cho hành động này",
         "fileTooLarge": "Tệp này lớn hơn %{maxFileSize}",
         "maxFileCountExceeded": "Quá nhiều tệp được chọn (giới hạn %{maxFileCount})",
-        "availableSizeExceeded": "Tổng kích thước tệp đã chọn vượt quá %{availableSize}"
+        "availableSizeExceeded": "Tổng kích thước tệp đã chọn vượt quá %{availableSize}",
+        "fileNotAllowed": "Chỉ có thể chọn thư mục cho hành động này"
       }
     },
     "actions": {
@@ -807,7 +809,8 @@
       "ITEM_NOT_FOUND": "The selected file could not be found.",
       "DESTINATION_UNAVAILABLE": "Không thể tải thư mục đích.",
       "SHARING_LINK_FAILED": "Could not generate a sharing link.",
-      "DOWNLOAD_LINK_FAILED": "Could not generate a download link."
+      "DOWNLOAD_LINK_FAILED": "Could not generate a download link.",
+      "ROOT_DIR_UNAVAILABLE": "Không thể tải thư mục mà bộ chọn này bị giới hạn."
     }
   }
 }

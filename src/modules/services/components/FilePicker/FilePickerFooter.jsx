@@ -1,13 +1,15 @@
 import {
   Attachment,
+  Check,
   CheckCircle,
   Cross,
   Icon,
   Link
 } from '@linagora/twake-icons'
+import cx from 'classnames'
 import { filesize } from 'filesize'
 import PropTypes from 'prop-types'
-import React, { memo } from 'react'
+import React, { Fragment, memo } from 'react'
 
 import Box from 'cozy-ui/transpiled/react/Box'
 import Button from 'cozy-ui/transpiled/react/Buttons'
@@ -45,8 +47,10 @@ const FilePickerFooter = ({
   onConfirm,
   publicLinkState,
   downloadLinkState,
+  documentsState,
   publicLinkAction,
   downloadLinkAction,
+  documentsAction,
   busyLinkMode,
   selectedItems,
   onClearSelection
@@ -63,24 +67,59 @@ const FilePickerFooter = ({
     downloadLinkAction &&
     (downloadLinkAction.label ??
       t('FilePicker.footer.buttons.temporaryDownloadLink'))
+  const documentsLabel =
+    documentsAction &&
+    (documentsAction.label ?? t('FilePicker.footer.buttons.documents'))
+
+  // The offered actions in display order; each one after the first is
+  // spaced from its predecessor.
+  const actions = [
+    {
+      linkMode: filePickerLinkModes.DOCUMENTS,
+      label: documentsLabel,
+      state: documentsState,
+      actionConfig: documentsAction,
+      testId: 'documents-btn',
+      icon: Check,
+      mobileVariant: 'primary'
+    },
+    {
+      linkMode: filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK,
+      label: downloadLinkLabel,
+      state: downloadLinkState,
+      actionConfig: downloadLinkAction,
+      testId: 'temporary-download-link-btn',
+      icon: Attachment,
+      mobileVariant: 'text'
+    },
+    {
+      linkMode: filePickerLinkModes.PUBLIC_LINK,
+      label: publicLinkLabel,
+      state: publicLinkState,
+      actionConfig: publicLinkAction,
+      testId: 'public-link-btn',
+      icon: Link,
+      mobileVariant: 'primary'
+    }
+  ].filter(action => action.label)
 
   const renderAction = (
-    linkMode,
-    label,
-    state,
-    actionConfig,
-    testId,
-    IconComponent,
-    mobileVariant,
-    hasLeftMargin = false
+    {
+      linkMode,
+      label,
+      state,
+      actionConfig,
+      testId,
+      icon: IconComponent,
+      mobileVariant
+    },
+    hasLeftMargin
   ) => {
-    if (!label) return null
-
-    const mobileMarginClass =
-      hasLeftMargin && (downloadLinkLabel || !isMobile) ? 'u-ml-1' : ''
     const button = (
       <Button
-        className={isMobile ? `u-flex-grow-1 ${mobileMarginClass}` : null}
+        className={
+          isMobile ? cx('u-flex-grow-1', { 'u-ml-1': hasLeftMargin }) : null
+        }
         data-testid={testId}
         label={
           isMobile ? (
@@ -167,25 +206,11 @@ const FilePickerFooter = ({
             : 'u-flex u-flex-items-center'
         }
       >
-        {renderAction(
-          filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK,
-          downloadLinkLabel,
-          downloadLinkState,
-          downloadLinkAction,
-          'temporary-download-link-btn',
-          Attachment,
-          'text'
-        )}
-        {renderAction(
-          filePickerLinkModes.PUBLIC_LINK,
-          publicLinkLabel,
-          publicLinkState,
-          publicLinkAction,
-          'public-link-btn',
-          Link,
-          'primary',
-          true
-        )}
+        {actions.map((action, index) => (
+          <Fragment key={action.linkMode}>
+            {renderAction(action, index > 0)}
+          </Fragment>
+        ))}
       </Box>
     </Box>
   )
@@ -201,8 +226,13 @@ FilePickerFooter.propTypes = {
     disabled: PropTypes.bool,
     reasonKey: PropTypes.string
   }),
+  documentsState: PropTypes.shape({
+    disabled: PropTypes.bool,
+    reasonKey: PropTypes.string
+  }),
   publicLinkAction: PropTypes.object,
   downloadLinkAction: PropTypes.object,
+  documentsAction: PropTypes.object,
   busyLinkMode: PropTypes.string,
   selectedItems: PropTypes.arrayOf(PropTypes.object),
   onClearSelection: PropTypes.func.isRequired
@@ -211,8 +241,10 @@ FilePickerFooter.propTypes = {
 FilePickerFooter.defaultProps = {
   publicLinkState: { disabled: true, reasonKey: null },
   downloadLinkState: { disabled: true, reasonKey: null },
+  documentsState: { disabled: true, reasonKey: null },
   publicLinkAction: null,
   downloadLinkAction: null,
+  documentsAction: null,
   busyLinkMode: null,
   selectedItems: []
 }
