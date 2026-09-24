@@ -820,7 +820,8 @@
       "buttons": {
         "cancel": "Annuler",
         "publicLink": "Ajouter comme lien",
-        "temporaryDownloadLink": "Ajouter en pièce jointe"
+        "temporaryDownloadLink": "Ajouter en pièce jointe",
+        "documents": "Sélectionner"
       }
     },
     "constraints": {
@@ -829,7 +830,8 @@
         "mimeTypeNotAllowed": "Ce type de fichier n'est pas autorisé pour cette action",
         "fileTooLarge": "Ce fichier est plus grand que %{maxFileSize}",
         "maxFileCountExceeded": "Trop de fichiers sélectionnés (limite %{maxFileCount})",
-        "availableSizeExceeded": "La taille totale sélectionnée dépasse %{availableSize}"
+        "availableSizeExceeded": "La taille totale sélectionnée dépasse %{availableSize}",
+        "fileNotAllowed": "Seuls les dossiers peuvent être sélectionnés pour cette action"
       }
     },
     "actions": {

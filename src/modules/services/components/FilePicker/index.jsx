@@ -60,6 +60,7 @@ const FilePicker = ({
   const config = filePickerConfig || defaultFilePickerConfig
   const publicLinkAction = config.sharingLink ?? null
   const downloadLinkAction = config.downloadLink ?? null
+  const documentsAction = config.documents ?? null
 
   const clearSelection = () => setSelectedItems([])
   const handleLocationChange = useCallback(() => setError(null), [])
@@ -136,6 +137,9 @@ const FilePicker = ({
     : { disabled: true, reasonKey: null }
   const downloadLinkState = hasSelection
     ? getActionDisabledState(downloadLinkAction, selectedItems)
+    : { disabled: true, reasonKey: null }
+  const documentsState = hasSelection
+    ? getActionDisabledState(documentsAction, selectedItems)
     : { disabled: true, reasonKey: null }
 
   const handleFileDoubleClick = useCallback(
@@ -240,8 +244,10 @@ const FilePicker = ({
             onConfirm={handleFooterConfirm}
             publicLinkState={publicLinkState}
             downloadLinkState={downloadLinkState}
+            documentsState={documentsState}
             publicLinkAction={publicLinkAction}
             downloadLinkAction={downloadLinkAction}
+            documentsAction={documentsAction}
             busyLinkMode={busyLinkMode}
             selectedItems={selectedItems}
             onClearSelection={clearSelection}
@@ -274,7 +280,8 @@ FilePicker.propTypes = {
     multiple: PropTypes.bool,
     rootDirId: PropTypes.string,
     sharingLink: PropTypes.object,
-    downloadLink: PropTypes.object
+    downloadLink: PropTypes.object,
+    documents: PropTypes.object
   }),
   onReadyToUse: PropTypes.func,
   onFileDoubleClick: PropTypes.func

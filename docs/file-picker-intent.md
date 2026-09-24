@@ -38,7 +38,8 @@ It is not a top-level `actions` field.
       "label": "Attach file",
       "maxFileSize": 52428800,
       "allowedMimeTypes": ["image/*", "application/pdf"]
-    }
+    },
+    "documents": { "label": "Add to the conversation" }
   }
 }
 ```
@@ -77,6 +78,12 @@ interface FilePickerConfig {
    * Omit to use defaults. Set to null to hide the action.
    */
   downloadLink?: ActionConfig | null
+
+  /**
+   * Configuration for the documents action, which returns the picked
+   * io.cozy.files documents themselves. Hidden unless configured.
+   */
+  documents?: ActionConfig | null
 }
 ```
 
@@ -95,6 +102,11 @@ interface ActionConfig {
    * Whether folders are allowed for this action.
    */
   allowFolder?: boolean
+
+  /**
+   * When true, only folders can be selected: files disable the action.
+   */
+  onlyFolder?: boolean
 
   /**
    * Allowed MIME type patterns for files.
@@ -134,7 +146,8 @@ When no config is provided, Drive uses:
   multiple: true,
   rootDirId: null,
   sharingLink: { allowFolder: true },
-  downloadLink: { allowFolder: false }
+  downloadLink: { allowFolder: false },
+  documents: null
 }
 ```
 
@@ -144,6 +157,7 @@ Default labels:
 | --- | --- |
 | `sharingLink` | `Share with public link` |
 | `downloadLink` | `Attach with temporary link` |
+| `documents` | `Select` |
 
 ### Theme
 
@@ -216,6 +230,16 @@ Creates a temporary download link.
 - Uses a GET-only permission on `io.cozy.files` with a 5-minute TTL.
 - The returned URL is intended to be consumed quickly by the calling app.
 
+### `documents`
+
+Returns the complete `io.cozy.files` documents selected by the user, as
+provided by cozy-client: no link is generated, so nothing is shared or
+exposed. Meant for callers that work with the documents through the stack
+afterwards, such as attaching them to an AI conversation.
+
+- Hidden unless the caller configures it.
+- Works for files and folders; set `onlyFolder: true` for a folder picker.
+
 ## Hiding an action
 
 Set an action to `null` to hide its button:
@@ -239,6 +263,7 @@ When the selected item violates an action constraint, the corresponding button i
 | Constraint | Behavior |
 | --- | --- |
 | `allowFolder: false` and selected item is a folder | Button disabled |
+| `onlyFolder: true` and selected item is a file | Button disabled |
 | `allowedMimeTypes` does not match selected file MIME | Button disabled |
 | selected file size > `maxFileSize` | Button disabled |
 | selected items count > `maxFileCount` | Button disabled |
@@ -257,11 +282,16 @@ toward `maxFileCount` but are excluded from the `availableSize` total.
 
 ## Success result
 
-On success, the intent result document is a **bare array** of file entries:
+On success, the intent result document is a **bare array**. Its entry type
+depends on the action selected by the user: the link actions return mapped
+entries, the `documents` action returns the `io.cozy.files` documents
+themselves.
 
 ```ts
+import type { IOCozyFile } from 'cozy-client/types/types'
+
 {
-  document: FilePickerEntry[]
+  document: FilePickerEntry[] | IOCozyFile[]
 }
 ```
 
@@ -281,7 +311,8 @@ interface FilePickerEntry {
 }
 ```
 
-Exactly one of `sharingLink` or `downloadLink` is present, depending on the action selected by the user.
+Exactly one of `sharingLink` or `downloadLink` is present, depending on the
+link action selected by the user.
 
 Example:
 
@@ -303,6 +334,29 @@ Example:
 ```
 
 For folders, `size` is `0` and `mimeType` is `null`.
+
+### Documents
+
+The `documents` action does not map the selection: each entry is the CouchDB
+document of the file or folder, unchanged, with at least `_id`, `_rev`,
+`type` and `name`. Example:
+
+```json
+{
+  "document": [
+    {
+      "_id": "01971620-4608-736a-be8e-3032ba794a1e",
+      "_rev": "3-4f2a9c1e0b7d6a8f",
+      "type": "file",
+      "name": "invoice.pdf",
+      "dir_id": "b3f4c1a2e5d64f8b9c0a1d2e3f4a5b6c",
+      "mime": "application/pdf",
+      "size": "123456",
+      "updated_at": "2026-05-27T09:12:44Z"
+    }
+  ]
+}
+```
 
 ### Thumbnails
 

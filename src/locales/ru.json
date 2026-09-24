@@ -787,7 +787,8 @@
       "buttons": {
         "cancel": "Отменить",
         "publicLink": "Добавить как ссылку",
-        "temporaryDownloadLink": "Добавить как вложение"
+        "temporaryDownloadLink": "Добавить как вложение",
+        "documents": "Выбрать"
       }
     },
     "constraints": {
@@ -796,7 +797,8 @@
         "mimeTypeNotAllowed": "Этот тип файла не разрешён для этого действия",
         "fileTooLarge": "Этот файл больше %{maxFileSize}",
         "maxFileCountExceeded": "Выбрано слишком много файлов (лимит %{maxFileCount})",
-        "availableSizeExceeded": "Общий размер выбранных файлов превышает %{availableSize}"
+        "availableSizeExceeded": "Общий размер выбранных файлов превышает %{availableSize}",
+        "fileNotAllowed": "Для этого действия можно выбрать только папки"
       }
     },
     "actions": {

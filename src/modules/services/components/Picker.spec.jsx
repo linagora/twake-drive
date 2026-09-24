@@ -277,6 +277,18 @@ describe('Picker', () => {
     ])
   })
 
+  it('should terminate with the documents themselves without generating any link', async () => {
+    mockQuery.mockResolvedValue({ data: mockFile })
+    const { service } = setup()
+
+    await callOnChange([mockFile], filePickerLinkModes.DOCUMENTS)
+
+    await waitFor(() => expect(service.terminate).toHaveBeenCalled())
+    expect(makeSharingLink).not.toHaveBeenCalled()
+    expect(mockGetDownloadLinkById).not.toHaveBeenCalled()
+    expect(service.terminate).toHaveBeenCalledWith([mockFile])
+  })
+
   it('should terminate with a bare array containing public link entries', async () => {
     mockQuery.mockImplementation(({ id }) => {
       return Promise.resolve({

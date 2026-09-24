@@ -824,7 +824,8 @@
       "buttons": {
         "cancel": "Cancel",
         "publicLink": "Add as link",
-        "temporaryDownloadLink": "Add as attachment"
+        "temporaryDownloadLink": "Add as attachment",
+        "documents": "Select"
       }
     },
     "constraints": {
@@ -833,7 +834,8 @@
         "mimeTypeNotAllowed": "This file type is not allowed for this action",
         "fileTooLarge": "This file is larger than %{maxFileSize}",
         "maxFileCountExceeded": "Too many files selected (limit %{maxFileCount})",
-        "availableSizeExceeded": "The total selected size exceeds %{availableSize}"
+        "availableSizeExceeded": "The total selected size exceeds %{availableSize}",
+        "fileNotAllowed": "Only folders can be selected for this action"
       }
     },
     "actions": {

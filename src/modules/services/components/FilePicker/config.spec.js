@@ -163,5 +163,24 @@ describe('FilePicker config', () => {
 
       expect(getFilePickerConfig(intent).rootDirId).toBeNull()
     })
+    it('hides the documents action unless the client configures it', () => {
+      expect(getFilePickerConfig(null).documents).toBeNull()
+      expect(
+        getFilePickerConfig({ attributes: { data: { multiple: false } } })
+          .documents
+      ).toBeNull()
+    })
+
+    it('keeps the documents action configured by the client', () => {
+      const intent = {
+        attributes: {
+          data: { documents: { label: 'Add to the conversation' } }
+        }
+      }
+
+      expect(getFilePickerConfig(intent).documents).toEqual({
+        label: 'Add to the conversation'
+      })
+    })
   })
 })

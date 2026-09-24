@@ -64,3 +64,6 @@ e2e/.dev-ports.json
 e2e/.e2e-ports.json
 playwright-report/
 test-results/
+
+# Playwright MCP session artifacts (screenshots, snapshots, console logs)
+.playwright-mcp/
