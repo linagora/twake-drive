@@ -15,11 +15,6 @@ jest.mock('components/FolderPicker/FolderPickerContentSharedDrive', () => ({
     <div>FolderPickerContentSharedDrive</div>
   )
 }))
-jest.mock('components/FolderPicker/FolderPickerContentSharedDriveRoot', () => ({
-  FolderPickerContentSharedDriveRoot: () => (
-    <div>FolderPickerContentSharedDriveRoot</div>
-  )
-}))
 
 describe('FolderPickerBody', () => {
   const defaultProps = {
@@ -60,7 +55,7 @@ describe('FolderPickerBody', () => {
     ).toBeInTheDocument()
   })
 
-  it('should display content of `Drives` folder', () => {
+  it('displays the legacy Drives folder as an ordinary folder', () => {
     const drivesFolder = {
       _type: 'io.cozy.files',
       _id: SHARED_DRIVES_DIR_ID,
@@ -75,9 +70,7 @@ describe('FolderPickerBody', () => {
         showSharedDriveFolder={true}
       />
     )
-    expect(
-      screen.getByText('FolderPickerContentSharedDriveRoot')
-    ).toBeInTheDocument()
+    expect(screen.queryByText('FolderPickerContentCozy')).toBeInTheDocument()
   })
 
   it('should fallback to cozy content for regular folders without driveId', () => {

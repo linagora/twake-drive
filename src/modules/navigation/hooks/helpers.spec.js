@@ -29,18 +29,63 @@ describe('computeFileType', () => {
     expect(computeFileType(file)).toBe('nextcloud-trash')
   })
 
-  it('should return "shared-drive" for files in shared drives directory', () => {
+  it('opens ordinary files in the legacy drives directory as files', () => {
     const file = {
       dir_id: SHARED_DRIVES_DIR_ID,
       _type: 'io.cozy.files',
       type: 'file'
     }
-    expect(computeFileType(file)).toBe('shared-drive')
+    expect(computeFileType(file)).toBe('file')
+  })
+
+  it.each(['file', 'directory'])(
+    'opens a legacy %s through its ordinary route',
+    type => {
+      const file = {
+        _id: 'kept-item',
+        _type: 'io.cozy.files',
+        type,
+        dir_id: SHARED_DRIVES_DIR_ID
+      }
+      expect(
+        computePath(file, {
+          type: computeFileType(file),
+          pathname: `/folder/${SHARED_DRIVES_DIR_ID}`,
+          isPublic: false,
+          client: null
+        })
+      ).toBe(type === 'file' ? 'file/kept-item' : '../kept-item')
+    }
+  )
+
+  it('resolves local invitation shortcuts before opening their remote file', () => {
+    const file = {
+      _id: 'local-shortcut',
+      _type: 'io.cozy.files',
+      type: 'file',
+      class: 'shortcut',
+      metadata: {
+        target: {
+          drive_root_type: DRIVE_ROOT_TYPE.FILE,
+          mime: 'image/png'
+        }
+      }
+    }
+    const type = computeFileType(file)
+    expect(type).toBe('shortcut')
+    expect(
+      computePath(file, {
+        type,
+        pathname: '/folder/io.cozy.files.root-dir',
+        isPublic: false,
+        client: null
+      })
+    ).toBe('/external/local-shortcut')
   })
 
   it('should return "shared-drive-root-file" for file-root shared drives', () => {
     const file = {
-      dir_id: SHARED_DRIVES_DIR_ID,
+      dir_id: '',
       _type: 'io.cozy.files',
       type: 'file',
       driveId: 'drive456',
@@ -49,11 +94,11 @@ describe('computeFileType', () => {
     expect(computeFileType(file)).toBe('shared-drive-root-file')
   })
 
-  it('should return "shared-drive" for directory-root shared drives in shared drives directory', () => {
+  it('routes federated folders using their sharing metadata', () => {
     const file = {
       dir_id: SHARED_DRIVES_DIR_ID,
       _type: 'io.cozy.files',
-      type: 'file',
+      type: 'directory',
       driveId: 'drive456',
       drive_root_type: DRIVE_ROOT_TYPE.DIRECTORY
     }
@@ -79,6 +124,7 @@ describe('computeFileType', () => {
     // exposes the shared file's real class in metadata.target.class so we
     // can route to OnlyOffice without re-deriving the class.
     const file = {
+      driveId: 'sharing-1',
       _id: 'shortcut-1',
       name: 'CIR.docx',
       mime: 'application/internet-shortcut',
@@ -100,6 +146,7 @@ describe('computeFileType', () => {
 
   it('should return "onlyoffice" for spreadsheet file-root shared drive .url shortcuts on the recipient', () => {
     const file = {
+      driveId: 'sharing-1',
       _id: 'shortcut-1',
       name: 'Budget.xlsx',
       mime: 'application/internet-shortcut',
@@ -121,6 +168,7 @@ describe('computeFileType', () => {
 
   it('should return "shared-drive-root-file" for file-root .url shortcuts when Office is disabled', () => {
     const file = {
+      driveId: 'sharing-1',
       _id: 'shortcut-1',
       name: 'CIR.docx',
       mime: 'application/internet-shortcut',
@@ -161,10 +209,7 @@ describe('computeFileType', () => {
     expect(computeFileType(file, { isOfficeEnabled: true })).toBe('shortcut')
   })
 
-  it('should return "shared-drive" for directory-root .url shortcuts in shared drives directory', () => {
-    // Directory-root sharings (drive_root_type: directory) keep the
-    // existing `shared-drive` branch behaviour; only the file-root
-    // shortcut gets the OnlyOffice dispatch.
+  it('opens directory-root shortcuts through the shortcut route', () => {
     const file = {
       _id: 'shortcut-1',
       name: 'My Drive',
@@ -180,9 +225,7 @@ describe('computeFileType', () => {
         }
       }
     }
-    expect(computeFileType(file, { isOfficeEnabled: true })).toBe(
-      'shared-drive'
-    )
+    expect(computeFileType(file, { isOfficeEnabled: true })).toBe('shortcut')
   })
 
   it('should return "nextcloud-directory" for Nextcloud directories', () => {
@@ -402,15 +445,11 @@ describe('computeFileType', () => {
     expect(computeFileType(file)).toBe('file')
   })
 
-  it('should return "shared-drive-root-file" for shared-drive root files in the shared-drives directory', () => {
-    // Counterpart of the owner case: when a recipient views a file-root
-    // sharing from a Sharings tab, the synthetic root file lives in
-    // `SHARED_DRIVES_DIR_ID` and must keep its `shared-drive-root-file`
-    // classification so the path stays scoped to the shared drive.
+  it('opens synthetic file roots without requiring a local parent folder', () => {
     const file = {
       _type: 'io.cozy.files',
       type: 'file',
-      dir_id: SHARED_DRIVES_DIR_ID,
+      dir_id: '',
       driveId: '3d8083154feb44bb1abef40104018386',
       drive_root_type: DRIVE_ROOT_TYPE.FILE
     }

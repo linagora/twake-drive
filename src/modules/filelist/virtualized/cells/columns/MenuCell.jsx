@@ -2,14 +2,12 @@ import React, { useReducer, useRef } from 'react'
 
 import { useIsInSyncFromSharing } from './useIsInSyncFromSharing'
 
-import { SHARED_DRIVES_DIR_ID } from '@/constants/config'
 import { ActionMenuWithHeader } from '@/modules/actionmenu/ActionMenuWithHeader'
 import { getContextMenuActions } from '@/modules/actions/helpers'
 import { filterActionsByPolicy } from '@/modules/actions/policies'
 import FileAction from '@/modules/filelist/virtualized/cells/FileAction'
 
-const canInteractWithRow = row =>
-  row._id && row._id !== SHARED_DRIVES_DIR_ID && !row._id.endsWith('.trash-dir')
+const canInteractWithRow = row => row._id && !row._id.endsWith('.trash-dir')
 
 const MenuCell = ({ row, actions }) => {
   const filerowMenuToggleRef = useRef()

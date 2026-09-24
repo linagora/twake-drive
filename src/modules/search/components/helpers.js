@@ -1,8 +1,9 @@
 import { models } from 'cozy-client'
 
-import { ROOT_DIR_ID, SHARED_DRIVES_DIR_ID } from '@/constants/config'
+import { ROOT_DIR_ID } from '@/constants/config'
 import FuzzyPathSearch from '@/lib/FuzzyPathSearch.js'
 import { normalizeSearchText } from '@/lib/normalizeSearchText'
+import { isNextcloudShortcut } from '@/modules/nextcloud/helpers'
 import { makeOnlyOfficeFileRoute } from '@/modules/views/OnlyOffice/helpers'
 
 export const TYPE_DIRECTORY = 'directory'
@@ -37,7 +38,13 @@ export const makeNormalizedFile = (client, folders, file) => {
     const parentDir = folders.find(folder => folder._id === file.dir_id)
     path = parentDir && parentDir.path ? parentDir.path : ''
     parentUrl = parentDir && parentDir._id ? `/folder/${parentDir._id}` : ''
-    if (models.file.isNote(file)) {
+    if (isNextcloudShortcut(file)) {
+      url = `/nextcloud/${file.cozyMetadata?.sourceAccount ?? 'unknown'}`
+    } else if (models.file.isShortcut(file)) {
+      url = file.driveId
+        ? `/external/${file.driveId}/${file._id}`
+        : `/external/${file._id}`
+    } else if (models.file.isNote(file)) {
       url = `/n/${file.id}`
       openOn = 'notes'
     } else if (models.file.shouldBeOpenedByOnlyOffice(file)) {
@@ -81,7 +88,7 @@ export const indexFiles = async client => {
     .getStackClient()
     .fetchJSON(
       'GET',
-      '/data/io.cozy.files/_all_docs?Fields=_id,trashed,dir_id,name,path,type,mime,class,driveId,metadata.title,metadata.version&DesignDocs=false&include_docs=true'
+      '/data/io.cozy.files/_all_docs?Fields=_id,trashed,dir_id,name,path,type,mime,class,driveId,metadata.title,metadata.version,cozyMetadata.createdByApp,cozyMetadata.sourceAccount&DesignDocs=false&include_docs=true'
     )
   const files = resp.rows.map(row => ({ id: row.id, ...row.doc }))
   const folders = files.filter(file => file.type === TYPE_DIRECTORY)
@@ -90,16 +97,8 @@ export const indexFiles = async client => {
   const notOrphans = file =>
     folders.find(folder => folder._id === file.dir_id) !== undefined
   const notRoot = file => file._id !== ROOT_DIR_ID
-  // Shared drives folder to be hidden in search.
-  // The files inside it though must appear. Thus only the file with the folder ID is filtered out.
-  const notSharedDrivesDir = file => file._id !== SHARED_DRIVES_DIR_ID
-
   const normalizedFilesPrevious = files.filter(
-    file =>
-      notInTrash(file) &&
-      notOrphans(file) &&
-      notRoot(file) &&
-      notSharedDrivesDir(file)
+    file => notInTrash(file) && notOrphans(file) && notRoot(file)
   )
 
   const normalizedFiles = normalizedFilesPrevious.map(file =>

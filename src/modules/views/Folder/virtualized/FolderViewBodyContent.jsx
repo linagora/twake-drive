@@ -10,7 +10,6 @@ import Grid from './Grid'
 import { sortFiles } from '../sortFiles'
 import { useSyncingFakeFile } from '../useSyncingFakeFile'
 
-import { SHARED_DRIVES_DIR_ID } from '@/constants/config'
 import { useShiftSelection } from '@/hooks/useShiftSelection'
 import { useViewSwitcherContext } from '@/lib/ViewSwitcherContext'
 import { useFileLastUpdated } from '@/modules/filelist/FileLastUpdatedContext'
@@ -66,9 +65,6 @@ const FolderViewBodyContent = ({
   const fetchMore = queryResults.find(query => query.hasMore)?.fetchMore
 
   const isSelectedItem = file => {
-    if (file._id === SHARED_DRIVES_DIR_ID) {
-      return false
-    }
     return selectedItems.some(item => item._id === file._id)
   }
 

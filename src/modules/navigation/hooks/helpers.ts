@@ -9,7 +9,7 @@ import {
 import { IOCozyFile } from 'cozy-client/types/types'
 
 import type { File } from '@/components/FolderPicker/types'
-import { TRASH_DIR_ID, SHARED_DRIVES_DIR_ID } from '@/constants/config'
+import { TRASH_DIR_ID } from '@/constants/config'
 import { joinPath } from '@/lib/path'
 import { isGrist } from '@/modules/grist/helpers'
 import {
@@ -23,7 +23,6 @@ import {
 import { makeSharedDriveNoteReturnUrl } from '@/modules/shareddrives/helpers'
 import {
   isFileRootSharedDrive,
-  isFileRootSharedDriveShortcut,
   isResolvableFileRootSharedDriveShortcut
 } from '@/modules/shareddrives/rootFileNavigation'
 import {
@@ -66,12 +65,7 @@ export const computeFileType = (
     return 'trash'
   } else if (file._id === 'io.cozy.remote.nextcloud.files.trash-dir') {
     return 'nextcloud-trash'
-  } else if (
-    file.dir_id === SHARED_DRIVES_DIR_ID &&
-    !isFileRootSharedDrive(file) &&
-    !isFileRootSharedDriveShortcut(file) &&
-    !isNextcloudShortcut(file)
-  ) {
+  } else if (file.driveId && isDirectory(file) && !isNextcloudShortcut(file)) {
     return 'shared-drive'
   } else if (file._type === 'io.cozy.remote.nextcloud.files') {
     return isDirectory(file) ? 'nextcloud-directory' : 'nextcloud-file'
@@ -93,7 +87,7 @@ export const computeFileType = (
     return 'grist'
   } else if (isExcalidraw(file) && isExcalidrawEnabled) {
     return 'excalidraw'
-  } else if (isResolvableFileRootSharedDriveShortcut(file)) {
+  } else if (file.driveId && isResolvableFileRootSharedDriveShortcut(file)) {
     // File-root shared drives are materialized on the recipient as `.url`
     // shortcuts (`class: 'shortcut'`, mime `application/internet-shortcut`),
     // so the regular `isShortcut` / `shouldBeOpenedByOnlyOffice` branches
@@ -126,17 +120,12 @@ export const computeFileType = (
     return 'shortcut'
   } else if (isDirectory(file)) {
     return 'directory'
-  } else if (
-    isFileRootSharedDrive(file) &&
-    file.dir_id === SHARED_DRIVES_DIR_ID
-  ) {
+  } else if (isFileRootSharedDrive(file) && !file.dir_id) {
     return 'shared-drive-root-file'
   } else if (file.driveId && file.dir_id && !isFileRootSharedDrive(file)) {
     // Any file carrying a driveId is a proxied shared-drive file, except the
     // owner's own file-root sharing root (which lives locally and is caught
-    // by isFileRootSharedDrive). Keying on dir_id === SHARED_DRIVES_DIR_ID
-    // here used to drop every recipient file nested in a shared-drive folder
-    // back to the local /files/:id route, which 404s. dir_id is required
+    // by isFileRootSharedDrive). dir_id is required
     // because the shared-drive route is built from it; without it, fall back
     // to 'file' rather than letting computePath throw.
     return 'shared-drive-file'
@@ -244,8 +233,7 @@ export const computePath = (
         fromPublicFolder: isPublic
       })
     case 'shared-drive':
-      // Without driveId, we should use path `/folder/:folderId` because it's shared drive folder of owner
-      if (!driveId) {
+      if (!driveId || isOwner) {
         return `/folder/${file._id}`
       }
 

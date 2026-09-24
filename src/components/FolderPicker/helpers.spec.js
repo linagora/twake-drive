@@ -1,4 +1,53 @@
-import { areTargetsInCurrentDir } from './helpers'
+import { areTargetsInCurrentDir, getParentFolder } from './helpers'
+
+describe('getParentFolder', () => {
+  it('leaves a federated root without fetching its private parent on the owner', async () => {
+    const root = { _id: 'io.cozy.files.root-dir' }
+    const client = {
+      fetchQueryAndGetFromState: jest
+        .fn()
+        .mockResolvedValueOnce({
+          data: { rules: [{ values: ['shared-root'] }] }
+        })
+        .mockResolvedValueOnce({ data: root })
+    }
+    const result = await getParentFolder(
+      client,
+      {
+        _id: 'shared-root',
+        _type: 'io.cozy.files',
+        dir_id: 'private-owner-parent',
+        driveId: 'sharing-1'
+      },
+      {}
+    )
+    expect(result).toBe(root)
+    expect(
+      client.fetchQueryAndGetFromState.mock.calls[1][0].definition.id
+    ).toBe(root._id)
+  })
+
+  it('uses the real parent of an ordinary file in the legacy folder', async () => {
+    const parent = { _id: 'io.cozy.files.shared-drives-dir' }
+    const client = {
+      fetchQueryAndGetFromState: jest.fn().mockResolvedValue({ data: parent })
+    }
+    expect(
+      await getParentFolder(
+        client,
+        {
+          _id: 'kept-file',
+          _type: 'io.cozy.files',
+          dir_id: parent._id
+        },
+        {}
+      )
+    ).toBe(parent)
+    expect(
+      client.fetchQueryAndGetFromState.mock.calls[0][0].definition.id
+    ).toBe(parent._id)
+  })
+})
 
 describe('areTargetsInCurrentDir', () => {
   it('should return false if the current folder is undefined', () => {
