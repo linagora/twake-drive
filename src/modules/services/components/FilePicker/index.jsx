@@ -31,6 +31,7 @@ import {
   filePickerSections
 } from '@/components/FilePicker/constants'
 import { getCompliantTypes, isValidFile } from '@/components/FilePicker/helpers'
+import { ROOT_DIR_ID } from '@/constants/config'
 
 const LinkAccessModal = lazy(() =>
   import('./LinkAccessModal').then(m => ({ default: m.LinkAccessModal }))
@@ -198,6 +199,7 @@ const FilePicker = ({
       >
         <SharedFilePicker
           mode={filePickerModes.SELECTION}
+          rootDirId={config.rootDirId ?? ROOT_DIR_ID}
           availableSections={Object.values(filePickerSections)}
           displayedTypes={Object.values(filePickerItemTypes)}
           selectableTypes={selectableTypes}
@@ -270,6 +272,7 @@ FilePicker.propTypes = {
       type: PropTypes.oneOf(filePickerThemes)
     }),
     multiple: PropTypes.bool,
+    rootDirId: PropTypes.string,
     sharingLink: PropTypes.object,
     downloadLink: PropTypes.object
   }),

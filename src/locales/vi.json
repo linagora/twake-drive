@@ -807,7 +807,8 @@
       "ITEM_NOT_FOUND": "The selected file could not be found.",
       "DESTINATION_UNAVAILABLE": "Không thể tải thư mục đích.",
       "SHARING_LINK_FAILED": "Could not generate a sharing link.",
-      "DOWNLOAD_LINK_FAILED": "Could not generate a download link."
+      "DOWNLOAD_LINK_FAILED": "Could not generate a download link.",
+      "ROOT_DIR_UNAVAILABLE": "Không thể tải thư mục mà bộ chọn này bị giới hạn."
     }
   }
 }

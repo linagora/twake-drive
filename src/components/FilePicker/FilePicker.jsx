@@ -27,13 +27,13 @@ const DEFAULT_LOCATION = {
   driveId: null
 }
 
-function getSectionRoot(section) {
+function getSectionRoot(section, rootDirId = ROOT_DIR_ID) {
   if (section === filePickerSections.RECENTS) {
     return FILE_PICKER_RECENTS_ROOT_ID
   }
   return section === filePickerSections.SHARINGS
     ? FILE_PICKER_SHARINGS_ROOT_ID
-    : ROOT_DIR_ID
+    : rootDirId
 }
 
 function getSelectionMap(selectedItems) {
@@ -113,6 +113,7 @@ function useCurrentFolderResolver({
 const FilePickerController = ({
   mode,
   initialLocation,
+  rootDirId,
   availableSections,
   displayedTypes,
   selectableTypes,
@@ -133,19 +134,22 @@ const FilePickerController = ({
 }) => {
   const { clearSelection } = useSelectionContext()
   const [sortOrder] = useFolderSort(ROOT_DIR_ID)
-  const initialSection = availableSections.includes(initialLocation.section)
+  // A root folder other than Drive's own confines the picker to that subtree:
+  // Recents and Sharings would let the user out of it, so only Drive is
+  // browsable, and browsing always starts at the root folder itself.
+  const isDirScoped = rootDirId !== ROOT_DIR_ID
+  const sections = isDirScoped ? [filePickerSections.DRIVE] : availableSections
+  const initialSection = sections.includes(initialLocation.section)
     ? initialLocation.section
-    : availableSections[0]
+    : sections[0]
+  const keepsInitialLocation =
+    initialSection === initialLocation.section && !isDirScoped
   const [location, setLocation] = useState({
     section: initialSection,
-    folderId:
-      initialSection === initialLocation.section
-        ? initialLocation.folderId
-        : getSectionRoot(initialSection),
-    driveId:
-      initialSection === initialLocation.section
-        ? initialLocation.driveId
-        : null
+    folderId: keepsInitialLocation
+      ? initialLocation.folderId
+      : getSectionRoot(initialSection, rootDirId),
+    driveId: keepsInitialLocation ? initialLocation.driveId : null
   })
   const [isSectionChanging, setIsSectionChanging] = useState(false)
 
@@ -153,6 +157,8 @@ const FilePickerController = ({
     folder => {
       if (isNavigationDisabled) return
       const folderId = folder.id ?? folder._id
+      if (isDirScoped && folderId === FILE_PICKER_SHARINGS_ROOT_ID) return
+
       const nextLocation =
         folderId === FILE_PICKER_SHARINGS_ROOT_ID
           ? {
@@ -172,13 +178,19 @@ const FilePickerController = ({
       onLocationChange?.(nextLocation)
       clearSelection()
     },
-    [clearSelection, isNavigationDisabled, location, onLocationChange]
+    [
+      clearSelection,
+      isDirScoped,
+      isNavigationDisabled,
+      location,
+      onLocationChange
+    ]
   )
 
   const handleSectionChange = section => {
     if (
       isNavigationDisabled ||
-      !availableSections.includes(section) ||
+      !sections.includes(section) ||
       section === location.section
     ) {
       return
@@ -186,7 +198,7 @@ const FilePickerController = ({
 
     const nextLocation = {
       section,
-      folderId: getSectionRoot(section),
+      folderId: getSectionRoot(section, rootDirId),
       driveId: null
     }
     setIsSectionChanging(true)
@@ -216,7 +228,7 @@ const FilePickerController = ({
     <>
       {renderHeader?.({
         activeSection: location.section,
-        availableSections,
+        availableSections: sections,
         onSectionChange: handleSectionChange
       })}
       <Box
@@ -235,6 +247,7 @@ const FilePickerController = ({
           section={location.section}
           folderId={location.folderId}
           driveId={location.driveId}
+          rootDirId={rootDirId}
           displayedTypes={displayedTypes}
           selectableTypes={selectableTypes}
           multiple={multiple}
@@ -261,6 +274,7 @@ FilePickerController.propTypes = {
     folderId: PropTypes.string.isRequired,
     driveId: PropTypes.string
   }).isRequired,
+  rootDirId: PropTypes.string,
   availableSections: PropTypes.arrayOf(
     PropTypes.oneOf(Object.values(filePickerSections))
   ).isRequired,
@@ -308,6 +322,7 @@ FilePicker.propTypes = {
     folderId: PropTypes.string.isRequired,
     driveId: PropTypes.string
   }),
+  rootDirId: PropTypes.string,
   availableSections: PropTypes.arrayOf(
     PropTypes.oneOf(Object.values(filePickerSections))
   ),
@@ -335,6 +350,7 @@ FilePicker.propTypes = {
 
 FilePicker.defaultProps = {
   initialLocation: DEFAULT_LOCATION,
+  rootDirId: ROOT_DIR_ID,
   availableSections: Object.values(filePickerSections),
   displayedTypes: Object.values(filePickerItemTypes),
   selectableTypes: Object.values(filePickerItemTypes),

@@ -844,7 +844,8 @@
       "ITEM_NOT_FOUND": "The selected file could not be found.",
       "DESTINATION_UNAVAILABLE": "The destination folder could not be loaded.",
       "SHARING_LINK_FAILED": "Could not generate a sharing link.",
-      "DOWNLOAD_LINK_FAILED": "Could not generate a download link."
+      "DOWNLOAD_LINK_FAILED": "Could not generate a download link.",
+      "ROOT_DIR_UNAVAILABLE": "The folder this picker is limited to could not be loaded."
     }
   }
 }

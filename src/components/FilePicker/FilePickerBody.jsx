@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types'
 import React, { useCallback, useMemo, useRef, useState } from 'react'
 
-import { models } from 'cozy-client'
+import { isQueryLoading, models, useQuery } from 'cozy-client'
 import { isSharingShortcutNew } from 'cozy-client/dist/models/file'
 import { useSharingContext } from 'cozy-sharing'
 import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'
@@ -13,10 +13,14 @@ import {
   filePickerModes,
   filePickerSections,
   FILE_PICKER_RECENTS_ROOT_ID,
-  FILE_PICKER_SHARINGS_ROOT_ID
+  FILE_PICKER_SHARINGS_ROOT_ID,
+  ROOT_DIR_UNAVAILABLE_ERROR
 } from './constants'
 import { isItemTypeDisplayed, isValidFile } from './helpers'
-import { buildDisplayedContentFolderQuery } from './queries'
+import {
+  buildCurrentFolderQuery,
+  buildDisplayedContentFolderQuery
+} from './queries'
 import { useFilePickerAdapter } from './useFilePickerAdapter'
 
 import { EmptyMessage as PickerViewEmptyMessage } from '@/components/PickerView/EmptyMessage'
@@ -32,6 +36,32 @@ import { sortFiles } from '@/modules/views/Folder/sortFiles'
 const {
   file: { isDirectory }
 } = models
+
+/**
+ * Resolve the folder the Drive breadcrumb is rooted at.
+ *
+ * `useBreadcrumbPath` stops climbing the parents once it reaches this id, so
+ * rooting it at a scoped folder is what keeps the user inside that subtree.
+ * Drive's own root needs no lookup: it has no name of its own and is labelled
+ * from the locale.
+ *
+ * @param {string} rootDirId - Id of the folder the picker is scoped to.
+ * @returns {{ name: string, isUnavailable: boolean }}
+ */
+const useScopedRootDir = rootDirId => {
+  const isDirScoped = rootDirId !== ROOT_DIR_ID
+  const query = useMemo(() => buildCurrentFolderQuery(rootDirId), [rootDirId])
+  const result = useQuery(query.definition, {
+    ...query.options,
+    enabled: isDirScoped
+  })
+  const folder = isDirScoped ? (result.data ?? null) : null
+
+  return {
+    name: folder?.name ?? '',
+    isUnavailable: isDirScoped && !folder && !isQueryLoading(result)
+  }
+}
 
 const filePickerContentPropTypes = {
   source: PropTypes.shape({
@@ -375,6 +405,7 @@ export const FilePickerBody = ({
   section,
   folderId,
   driveId,
+  rootDirId,
   displayedTypes,
   selectableTypes,
   multiple,
@@ -396,24 +427,18 @@ export const FilePickerBody = ({
   const { allLoaded, byDocId, isOwner } = useSharingContext()
   const readyNotified = useRef(false)
   const sharedDocumentIds = useMemo(() => Object.keys(byDocId ?? {}), [byDocId])
-  const rootBreadcrumbPath = useMemo(
-    () => ({
-      id:
-        section === filePickerSections.DRIVE
-          ? ROOT_DIR_ID
-          : section === filePickerSections.RECENTS
-            ? FILE_PICKER_RECENTS_ROOT_ID
-            : FILE_PICKER_SHARINGS_ROOT_ID,
-      name: t(
-        section === filePickerSections.DRIVE
-          ? 'Nav.item_drive'
-          : section === filePickerSections.RECENTS
-            ? 'Nav.item_recent'
-            : 'Nav.item_sharings'
-      )
-    }),
-    [section, t]
-  )
+  const scopedRootDir = useScopedRootDir(rootDirId)
+  const rootBreadcrumbPath = useMemo(() => {
+    if (section === filePickerSections.RECENTS) {
+      return { id: FILE_PICKER_RECENTS_ROOT_ID, name: t('Nav.item_recent') }
+    }
+    if (section === filePickerSections.SHARINGS) {
+      return { id: FILE_PICKER_SHARINGS_ROOT_ID, name: t('Nav.item_sharings') }
+    }
+    return rootDirId === ROOT_DIR_ID
+      ? { id: ROOT_DIR_ID, name: t('Nav.item_drive') }
+      : { id: rootDirId, name: scopedRootDir.name }
+  }, [rootDirId, scopedRootDir.name, section, t])
 
   const isItemDisabled = item =>
     (section === filePickerSections.SHARINGS && isSharingShortcutNew(item)) ||
@@ -433,7 +458,7 @@ export const FilePickerBody = ({
       navigateTo={navigateTo}
       selectableTypes={selectableTypes}
       multiple={multiple}
-      error={error}
+      error={scopedRootDir.isUnavailable ? ROOT_DIR_UNAVAILABLE_ERROR : error}
       emptyMessage={
         section === filePickerSections.SHARINGS &&
         folderId === FILE_PICKER_SHARINGS_ROOT_ID ? (
@@ -529,6 +554,7 @@ FilePickerBody.propTypes = {
   section: PropTypes.oneOf(Object.values(filePickerSections)).isRequired,
   folderId: PropTypes.string.isRequired,
   driveId: PropTypes.string,
+  rootDirId: PropTypes.string,
   navigateTo: PropTypes.func.isRequired,
   displayedTypes: PropTypes.arrayOf(
     PropTypes.oneOf(Object.values(filePickerItemTypes))
@@ -555,6 +581,7 @@ FilePickerBody.propTypes = {
 
 FilePickerBody.defaultProps = {
   driveId: null,
+  rootDirId: ROOT_DIR_ID,
   multiple: false,
   error: null,
   isItemIncluded: () => true,

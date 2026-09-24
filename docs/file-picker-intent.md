@@ -32,6 +32,7 @@ It is not a top-level `actions` field.
   "data": {
     "theme": { "type": "dark" },
     "multiple": false,
+    "rootDirId": "b3f4c1a2e5d64f8b9c0a1d2e3f4a5b6c",
     "sharingLink": { "label": "Share as link" },
     "downloadLink": {
       "label": "Attach file",
@@ -57,6 +58,13 @@ interface FilePickerConfig {
    * Defaults to true. When false, modifier-key selection shortcuts are disabled.
    */
   multiple?: boolean
+
+  /**
+   * Id of the folder the picker is limited to.
+   * The user browses that folder and its descendants only.
+   * Absent or null means the whole Drive.
+   */
+  rootDirId?: string | null
 
   /**
    * Configuration for the public sharing link action.
@@ -124,6 +132,7 @@ When no config is provided, Drive uses:
 {
   theme: { type: undefined },
   multiple: true,
+  rootDirId: null,
   sharingLink: { allowFolder: true },
   downloadLink: { allowFolder: false }
 }
@@ -159,6 +168,35 @@ Custom intent containers remain responsible for styling their own UI. For raw
 intents, pass the `theme` object in `attributes.data` like the other File Picker
 options. The option never changes Cozy settings, local storage or the caller's
 global theme.
+
+## Restricting the picker to a folder
+
+Set `rootDirId` to the id of a folder to limit the picker to that folder and
+everything below it:
+
+```json
+{
+  "rootDirId": "b3f4c1a2e5d64f8b9c0a1d2e3f4a5b6c"
+}
+```
+
+- The picker opens on that folder instead of the Drive root.
+- The breadcrumb is rooted there: the folder's own parents are never shown and
+  cannot be reached.
+- The user still navigates freely into the subfolders, and the breadcrumb walks
+  back down to the root folder but no further.
+- Only the Drive tab is offered. `Recents` and `Sharings` list documents from
+  anywhere in the Drive, so they are hidden as long as the restriction is set,
+  whatever the caller asks for.
+
+The restriction scopes navigation, not the actions: the `sharingLink` and
+`downloadLink` constraints (`allowFolder`, `allowedMimeTypes`, `maxFileSize`)
+still apply on top of it.
+
+If the folder cannot be read — wrong id, deleted folder, or outside the
+permissions granted to the intent — the picker shows an error instead of
+falling back to the Drive root, which would hand the user a wider scope than
+the one requested.
 
 ## Actions
 

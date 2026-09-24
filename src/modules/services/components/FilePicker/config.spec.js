@@ -139,5 +139,29 @@ describe('FilePicker config', () => {
         label: 'As link'
       })
     })
+    it('keeps a non-empty rootDirId sent by the client', () => {
+      const intent = {
+        attributes: { data: { rootDirId: 'folder-id' } }
+      }
+
+      expect(getFilePickerConfig(intent).rootDirId).toBe('folder-id')
+    })
+
+    it('ignores a rootDirId that is not a non-empty string', () => {
+      expect(
+        getFilePickerConfig({ attributes: { data: { rootDirId: '' } } })
+          .rootDirId
+      ).toBeNull()
+      expect(
+        getFilePickerConfig({ attributes: { data: { rootDirId: 42 } } })
+          .rootDirId
+      ).toBeNull()
+    })
+
+    it('leaves the picker unrestricted when no rootDirId is sent', () => {
+      const intent = { attributes: { data: { multiple: false } } }
+
+      expect(getFilePickerConfig(intent).rootDirId).toBeNull()
+    })
   })
 })

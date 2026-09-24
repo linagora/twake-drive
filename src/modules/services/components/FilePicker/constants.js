@@ -52,6 +52,7 @@ export const filePickerErrorCodes = {
 export const defaultFilePickerConfig = {
   theme: { type: undefined },
   multiple: true,
+  rootDirId: null,
   sharingLink: { allowFolder: true },
   downloadLink: { allowFolder: false }
 }

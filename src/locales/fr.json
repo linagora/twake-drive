@@ -840,7 +840,8 @@
       "ITEM_NOT_FOUND": "Le fichier sélectionné est introuvable.",
       "DESTINATION_UNAVAILABLE": "Impossible de charger le dossier de destination.",
       "SHARING_LINK_FAILED": "Impossible de générer le lien de partage.",
-      "DOWNLOAD_LINK_FAILED": "Impossible de générer le lien de téléchargement."
+      "DOWNLOAD_LINK_FAILED": "Impossible de générer le lien de téléchargement.",
+      "ROOT_DIR_UNAVAILABLE": "Le dossier auquel ce sélecteur est limité n'a pas pu être chargé."
     }
   }
 }

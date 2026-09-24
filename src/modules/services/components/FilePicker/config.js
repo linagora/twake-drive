@@ -15,11 +15,15 @@ import { defaultFilePickerConfig, filePickerThemes } from './constants'
  * over the default for that action. An action key absent falls back to
  * the default.
  *
+ * `rootDirId` confines browsing to one folder and its descendants. Only
+ * a non-empty string is kept: anything else means no restriction.
+ *
  * @param {object|null|undefined} intent - The intent object returned
  *   by `service.getIntent()`. Null-safe.
  * @returns {{
  *   theme: { type: 'light'|'dark'|undefined },
  *   multiple: boolean,
+ *   rootDirId: string|null,
  *   sharingLink: object|null,
  *   downloadLink: object|null
  * }}
@@ -50,6 +54,10 @@ export const getFilePickerConfig = (intent, serviceData = null) => {
         : defaultFilePickerConfig.theme.type
     },
     multiple: data.multiple ?? defaultFilePickerConfig.multiple,
+    rootDirId:
+      typeof data.rootDirId === 'string' && data.rootDirId.length > 0
+        ? data.rootDirId
+        : defaultFilePickerConfig.rootDirId,
     sharingLink: resolveActionConfig(
       data.sharingLink,
       defaultFilePickerConfig.sharingLink
