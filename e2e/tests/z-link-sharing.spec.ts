@@ -4,15 +4,11 @@ import path from 'path'
 import type { Browser, Page } from '@playwright/test'
 
 import { USERS } from '../helpers/config'
-import {
-  findLinkPermission,
-  setLinkExpiry,
-  trashById
-} from '../helpers/stack'
 import { test, expect, safeUnlink, stamp } from '../helpers/fixtures'
+import { findLinkPermission, setLinkExpiry, trashById } from '../helpers/stack'
 import type { DrivePage } from '../pages/DrivePage'
-import { ShareByLinkPage } from '../pages/ShareByLinkPage'
 import { PublicLinkPage } from '../pages/PublicLinkPage'
+import { ShareByLinkPage } from '../pages/ShareByLinkPage'
 
 const ALICE_ROOT = `${USERS.alice.appUrl}/#/folder`
 const FIXTURE = path.resolve(__dirname, '..', 'fixtures', 'sample.txt')
@@ -153,7 +149,9 @@ test.describe('Share by link', () => {
       await pub.goto(url)
       const publicPage = new PublicLinkPage(pub)
       await publicPage.enterPassword(password)
-      await expect(publicPage.fileList).toBeVisible({ timeout: 15_000 })
+      await expect(publicPage.fileList).toBeVisible({
+        timeout: 15_000
+      })
     })
   })
 
@@ -166,7 +164,10 @@ test.describe('Share by link', () => {
       .context()
       .grantPermissions(['clipboard-read', 'clipboard-write'])
 
-    const { folderId, link } = await openShareForNewFolder(alicePage, aliceDrive)
+    const { folderId, link } = await openShareForNewFolder(
+      alicePage,
+      aliceDrive
+    )
     const url = await link.createLink()
 
     await reopenShareModal(alicePage)
@@ -190,7 +191,9 @@ test.describe('Share by link', () => {
       // Assert the rejection positively (the "link no longer available" page)
       // rather than only the absence of content, which the SPA would satisfy
       // momentarily before mounting regardless of expiry.
-      await expect(publicPage.unavailableMessage).toBeVisible({ timeout: 15_000 })
+      await expect(publicPage.unavailableMessage).toBeVisible({
+        timeout: 15_000
+      })
       await expect(publicPage.fileList).toHaveCount(0)
     })
   })
