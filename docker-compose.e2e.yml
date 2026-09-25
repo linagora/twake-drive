@@ -13,8 +13,8 @@ services:
       retries: 10
 
   cozystack:
-    image: cozy/cozy-stack:latest
-    pull_policy: always
+    image: ${COZY_E2E_STACK_IMAGE-cozy/cozy-stack:latest}
+    pull_policy: ${COZY_E2E_STACK_PULL_POLICY:-always}
     depends_on:
       couchdb:
         condition: service_healthy

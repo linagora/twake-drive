@@ -27,6 +27,41 @@ yarn e2e:setup
 yarn e2e
 ```
 
+### Test an unpublished Stack revision
+
+1. **Choose a Stack revision.** Use a clean checkout and record its commit SHA.
+2. **Build a local image** following the Stack's
+   [production image documentation](https://github.com/cozy/cozy-stack/blob/master/scripts/docker/production/README.md#building-the-image).
+   Use the README and Dockerfile from the chosen revision. Give the image a
+   distinct tag such as `twake-stack-e2e:<sha>`; do not overwrite
+   `cozy/cozy-stack:latest`. No registry push is needed.
+3. **Get the image ID.** Replace `<sha>` with the chosen commit and record the
+   resulting ID alongside it:
+
+   ```sh
+   STACK_IMAGE_ID=$(docker image inspect --format '{{.Id}}' 'twake-stack-e2e:<sha>')
+   ```
+
+4. **Run the E2E tests** from the Drive worktree, with `E2E_PERSIST` and
+   `E2E_SKIP_TEARDOWN` unset:
+
+   ```sh
+   COZY_E2E_STACK_IMAGE="$STACK_IMAGE_ID" \
+   COZY_E2E_STACK_PULL_POLICY=never \
+   E2E_PROJECT_NAME="twake-e2e-stack-$(date +%s)-$$" \
+   yarn e2e
+   ```
+
+   A missing image fails without pulling a replacement. Before attributing
+   results to a Stack commit, verify the running image ID and `/version` against
+   the build; a tag alone does not prove source identity.
+
+5. **Return to the standard image** by running without the two
+   `COZY_E2E_STACK_*` variables. The defaults are `cozy/cozy-stack:latest` and
+   `pull_policy: always`.
+
+Selecting a Stack image does not add an OnlyOffice Document Server.
+
 The default lifecycle is destructive. It removes the E2E Compose runtime
 before the suite starts and after it finishes. Use it when a clean E2E state
 is wanted.
