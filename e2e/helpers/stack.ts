@@ -117,6 +117,38 @@ interface FileRef {
   fileId: string
 }
 
+/** Upload a real PDF without passing its bytes through a text encoding. */
+export async function createPdfFile({
+  instance,
+  name,
+  content,
+  dirId = ROOT_DIR_ID
+}: {
+  instance: string
+  name: string
+  content: Buffer
+  dirId?: string
+}): Promise<string> {
+  const res = await fetch(
+    `http://${instance}/files/${dirId}?Type=file&Name=${encodeURIComponent(name)}`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${filesToken(instance)}`,
+        'Content-Type': 'application/pdf'
+      },
+      body: content
+    }
+  )
+  if (!res.ok) {
+    throw new Error(
+      `Create PDF ${name} on ${instance} failed (${res.status}): ${await res.text()}`
+    )
+  }
+  const body = (await res.json()) as { data: { id: string } }
+  return body.data.id
+}
+
 /** Create a text file at the root of the instance and return its id. */
 export async function createFile({
   instance,
@@ -232,6 +264,23 @@ export async function fetchFileContent({
     )
   }
   return await res.text()
+}
+
+/** Download the owner's stored bytes; used to inspect the PDF after Office closes. */
+export async function fetchFileBinary({
+  instance,
+  fileId
+}: FileRef): Promise<Buffer> {
+  const res = await fetch(`http://${instance}/files/download/${fileId}`, {
+    headers: { Authorization: `Bearer ${filesToken(instance)}` },
+    cache: 'no-store'
+  })
+  if (!res.ok) {
+    throw new Error(
+      `Download file ${fileId} on ${instance} failed (${res.status}): ${await res.text()}`
+    )
+  }
+  return Buffer.from(await res.arrayBuffer())
 }
 
 /** Number of versions the stack currently keeps for a file. */
