@@ -21,6 +21,8 @@ services:
     environment:
       COZY_ADMIN_PASSPHRASE: cozy
       COZY_COUCHDB_URL: http://admin:password@couchdb:5984/
+      COUCHDB_USER: admin
+      COUCHDB_PASSWORD: password
       COZY_FS_URL: file:///var/lib/cozy/storage
       COZY_HOST: 0.0.0.0
       COZY_PORT: "${COZY_E2E_STACK_PORT:-18080}"
@@ -31,6 +33,15 @@ services:
       COZY_E2E_ONLYOFFICE_PORT: "${COZY_E2E_ONLYOFFICE_PORT:-18081}"
       COZY_SUBDOMAINS: flat
     command: ["cozy-stack", "serve", "--dev"]
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          curl -fsS -u "$$COUCHDB_USER:$$COUCHDB_PASSWORD" http://couchdb:5984/_users >/dev/null &&
+          curl -fsS -u "$$COUCHDB_USER:$$COUCHDB_PASSWORD" http://couchdb:5984/_replicator >/dev/null
+      interval: 5s
+      timeout: 5s
+      retries: 10
     volumes:
       - ./build:/app/drive
       - ./e2e/cozy.yml:/etc/cozy/cozy.yml
