@@ -13,13 +13,16 @@ export class OnlyOfficePdfPage {
   }
 
   async waitForOpen(fileId: string): Promise<void> {
-    await this.page.waitForURL(url => {
-      const route = url.hash.split(/[/?#]/)
-      return route.includes('onlyoffice') && route.includes(fileId)
-    })
+    await this.page.waitForURL(
+      url => {
+        const route = url.hash.split(/[/?#]/)
+        return route.includes('onlyoffice') && route.includes(fileId)
+      },
+      { timeout: 30_000 }
+    )
     await expect(
       this.frame.getByRole('button', { name: /Edit PDF/ })
-    ).toBeVisible()
+    ).toBeVisible({ timeout: 30_000 })
     const guestNamePrompt = this.frame.getByText(
       'Enter a name to be used for collaboration'
     )

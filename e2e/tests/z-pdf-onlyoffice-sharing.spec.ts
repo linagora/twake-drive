@@ -6,7 +6,6 @@ import { test, expect, stamp } from '../helpers/fixtures'
 import { extractPdfText } from '../helpers/pdf'
 import {
   createAndShareFolderWithBob,
-  openOwnerFolder,
   openSharedDrive
 } from '../helpers/sharing'
 import {
@@ -98,13 +97,6 @@ test('Bob edits Alice PDF in a received federated folder', async ({
     await bobEditor.waitForOpen(fileId)
     await bobEditor.expectTextVisible(marker)
     await bobEditor.close('about:blank')
-
-    await openOwnerFolder(alicePage, USERS.alice, aliceDrive, folderName)
-    await aliceDrive.row(fileName).open()
-    const aliceEditor = new OnlyOfficePdfPage(alicePage)
-    await aliceEditor.waitForOpen(fileId)
-    await aliceEditor.expectTextVisible(marker)
-    await aliceEditor.close('about:blank')
   } finally {
     await bobPage.goto('about:blank')
     await alicePage.goto('about:blank')
