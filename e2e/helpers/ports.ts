@@ -1,4 +1,5 @@
 import { execFileSync } from 'child_process'
+import { createHash } from 'crypto'
 import * as fs from 'fs'
 import * as net from 'net'
 import * as os from 'os'
@@ -16,16 +17,19 @@ let portAllocationLockSequence = 0
 export const DEFAULT_E2E_STACK_PORT = 18080
 export const DEFAULT_E2E_ADMIN_PORT = 16060
 export const DEFAULT_E2E_COUCHDB_PORT = 15984
+export const DEFAULT_E2E_ONLYOFFICE_PORT = 18081
 
 export const DEFAULT_DEV_STACK_PORT = 19080
 export const DEFAULT_DEV_ADMIN_PORT = 17060
 export const DEFAULT_DEV_COUCHDB_PORT = 16984
+export const DEFAULT_DEV_ONLYOFFICE_PORT = 19081
 
 export interface E2EPortsConfig {
   projectName: string
   stackPort: number
   adminPort: number
   couchdbPort: number
+  onlyofficePort: number
   rootDomain: string
 }
 
@@ -178,10 +182,15 @@ export function getE2EProjectName(): string {
     return process.env.E2E_PROJECT_NAME
   }
   const saved = loadE2EPorts()
-  if (saved?.projectName) {
+  if (
+    saved?.projectName &&
+    saved.onlyofficePort &&
+    saved.rootDomain === (process.env.COZY_E2E_ROOT_DOMAIN || 'cozy.localhost')
+  ) {
     return saved.projectName
   }
-  return `twake-e2e-${getWorktreeSlug()}`
+  const pathHash = createHash('sha256').update(process.cwd()).digest('hex').slice(0, 8)
+  return `twake-e2e-${getWorktreeSlug()}-${pathHash}`
 }
 
 export async function resolveE2EPorts(): Promise<E2EPortsConfig> {
@@ -192,7 +201,8 @@ export async function resolveE2EPorts(): Promise<E2EPortsConfig> {
   if (
     process.env.COZY_E2E_STACK_PORT &&
     process.env.COZY_E2E_ADMIN_PORT &&
-    process.env.COZY_E2E_COUCHDB_PORT
+    process.env.COZY_E2E_COUCHDB_PORT &&
+    process.env.COZY_E2E_ONLYOFFICE_PORT
   ) {
     const config: E2EPortsConfig = {
       projectName,
@@ -200,6 +210,10 @@ export async function resolveE2EPorts(): Promise<E2EPortsConfig> {
       adminPort: reserveExplicitPort(process.env.COZY_E2E_ADMIN_PORT, reserved),
       couchdbPort: reserveExplicitPort(
         process.env.COZY_E2E_COUCHDB_PORT,
+        reserved
+      ),
+      onlyofficePort: reserveExplicitPort(
+        process.env.COZY_E2E_ONLYOFFICE_PORT,
         reserved
       ),
       rootDomain
@@ -212,17 +226,19 @@ export async function resolveE2EPorts(): Promise<E2EPortsConfig> {
   if (
     saved &&
     saved.projectName === projectName &&
+    saved.rootDomain === rootDomain &&
     matchesDevOverrides(saved)
   ) {
-    if (isDockerProjectRunning(projectName)) {
+    if (saved.onlyofficePort && isDockerProjectRunning(projectName)) {
       return saved
     }
-    const [stackFree, adminFree, couchFree] = await Promise.all([
+    const [stackFree, adminFree, couchFree, officeFree] = await Promise.all([
       isPortAvailable(saved.stackPort),
       isPortAvailable(saved.adminPort),
-      isPortAvailable(saved.couchdbPort)
+      isPortAvailable(saved.couchdbPort),
+      saved.onlyofficePort ? isPortAvailable(saved.onlyofficePort) : false
     ])
-    if (stackFree && adminFree && couchFree) {
+    if (stackFree && adminFree && couchFree && officeFree) {
       return saved
     }
   }
@@ -239,11 +255,16 @@ export async function resolveE2EPorts(): Promise<E2EPortsConfig> {
     ? reserveExplicitPort(process.env.COZY_E2E_COUCHDB_PORT, reserved)
     : await findAvailablePort(DEFAULT_E2E_COUCHDB_PORT, reserved)
 
+  const onlyofficePort = process.env.COZY_E2E_ONLYOFFICE_PORT
+    ? reserveExplicitPort(process.env.COZY_E2E_ONLYOFFICE_PORT, reserved)
+    : await findAvailablePort(DEFAULT_E2E_ONLYOFFICE_PORT, reserved)
+
   const config: E2EPortsConfig = {
     projectName,
     stackPort,
     adminPort,
     couchdbPort,
+    onlyofficePort,
     rootDomain
   }
 
@@ -294,6 +315,8 @@ function matchesDevOverrides(config: E2EPortsConfig): boolean {
       Number(process.env.COZY_E2E_ADMIN_PORT) === config.adminPort) &&
     (!process.env.COZY_E2E_COUCHDB_PORT ||
       Number(process.env.COZY_E2E_COUCHDB_PORT) === config.couchdbPort) &&
+    (!process.env.COZY_E2E_ONLYOFFICE_PORT ||
+      Number(process.env.COZY_E2E_ONLYOFFICE_PORT) === config.onlyofficePort) &&
     (!process.env.COZY_E2E_ROOT_DOMAIN ||
       process.env.COZY_E2E_ROOT_DOMAIN === config.rootDomain)
   )
@@ -313,15 +336,16 @@ export async function resolveDevPorts(): Promise<E2EPortsConfig> {
     if (!saved.rootDomain) {
       saved.rootDomain = rootDomain
     }
-    if (isDockerProjectRunning(projectName)) {
+    if (saved.onlyofficePort && isDockerProjectRunning(projectName)) {
       return saved
     }
-    const [stackFree, adminFree, couchFree] = await Promise.all([
+    const [stackFree, adminFree, couchFree, officeFree] = await Promise.all([
       isPortAvailable(saved.stackPort),
       isPortAvailable(saved.adminPort),
-      isPortAvailable(saved.couchdbPort)
+      isPortAvailable(saved.couchdbPort),
+      saved.onlyofficePort ? isPortAvailable(saved.onlyofficePort) : false
     ])
-    if (stackFree && adminFree && couchFree) {
+    if (stackFree && adminFree && couchFree && officeFree) {
       return saved
     }
   }
@@ -338,12 +362,17 @@ export async function resolveDevPorts(): Promise<E2EPortsConfig> {
     ? reserveExplicitPort(process.env.COZY_E2E_COUCHDB_PORT, reserved)
     : await findAvailablePort(DEFAULT_DEV_COUCHDB_PORT, reserved)
 
+  const onlyofficePort = process.env.COZY_E2E_ONLYOFFICE_PORT
+    ? reserveExplicitPort(process.env.COZY_E2E_ONLYOFFICE_PORT, reserved)
+    : await findAvailablePort(DEFAULT_DEV_ONLYOFFICE_PORT, reserved)
+
   const config: E2EPortsConfig = {
     projectName,
     rootDomain,
     stackPort,
     adminPort,
-    couchdbPort
+    couchdbPort,
+    onlyofficePort
   }
 
   fs.writeFileSync(DEV_PORTS_PATH, JSON.stringify(config, null, 2))

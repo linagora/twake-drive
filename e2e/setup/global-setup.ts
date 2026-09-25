@@ -1,7 +1,9 @@
 import { execFileSync } from 'child_process'
 import { pbkdf2Sync } from 'crypto'
+import * as fs from 'fs'
 
 import { saveAuthState } from '../helpers/auth'
+import { saveComposeDiagnostics } from '../helpers/compose-diagnostics'
 import {
   ADMIN_PASSPHRASE,
   ADMIN_USER,
@@ -19,6 +21,7 @@ import {
 } from '../helpers/config'
 import { DEFAULT_FLAGS, setFlags } from '../helpers/flags'
 import {
+  E2E_PORTS_PATH,
   resolveE2EPorts,
   withPortAllocationLock,
   type E2EPortsConfig
@@ -84,6 +87,36 @@ async function waitForStack(url: string, timeoutMs = 60_000): Promise<void> {
     await new Promise(r => setTimeout(r, 500))
   }
   throw new Error(`cozy-stack did not become ready within ${timeoutMs}ms`)
+}
+
+async function verifyOfficeNetwork(portsConfig: E2EPortsConfig): Promise<void> {
+  const officeUrl = `http://onlyoffice.${portsConfig.rootDomain}:${portsConfig.onlyofficePort}`
+  const apiResponse = await fetch(`${officeUrl}/web-apps/apps/api/documents/api.js`)
+  if (!apiResponse.ok) {
+    throw new Error(`OnlyOffice browser API unavailable (${apiResponse.status})`)
+  }
+
+  for (const user of Object.values(USERS)) {
+    execFileSync(
+      'docker',
+      composeArgs(
+        'exec', '-T', 'onlyoffice', 'python3', '-c',
+        'import sys, urllib.request; opener = urllib.request.build_opener(urllib.request.ProxyHandler({})); assert opener.open(sys.argv[1], timeout=5).status == 200',
+        `http://${user.instance}/version`
+      ),
+      { cwd: process.cwd(), stdio: 'ignore' }
+    )
+  }
+
+  execFileSync(
+    'docker',
+    composeArgs(
+      'exec', '-T', 'cozystack', 'node', '-e',
+      '(async () => { const response = await fetch(process.argv[1]); if (!response.ok || (await response.text()).trim() !== "true") process.exit(1) })().catch(() => process.exit(1))',
+      `${officeUrl}/healthcheck`
+    ),
+    { cwd: process.cwd(), stdio: 'ignore' }
+  )
 }
 
 interface LoginParams {
@@ -254,6 +287,7 @@ export async function setupStack(portsConfig: E2EPortsConfig): Promise<void> {
   process.env.COZY_E2E_STACK_PORT = String(portsConfig.stackPort)
   process.env.COZY_E2E_ADMIN_PORT = String(portsConfig.adminPort)
   process.env.COZY_E2E_COUCHDB_PORT = String(portsConfig.couchdbPort)
+  process.env.COZY_E2E_ONLYOFFICE_PORT = String(portsConfig.onlyofficePort)
 
   applyConfigUpdate(portsConfig)
 
@@ -263,6 +297,7 @@ export async function setupStack(portsConfig: E2EPortsConfig): Promise<void> {
   console.log(`  - Stack:    http://localhost:${portsConfig.stackPort}`)
   console.log(`  - Admin:    http://localhost:${portsConfig.adminPort}`)
   console.log(`  - CouchDB:  http://localhost:${portsConfig.couchdbPort}`)
+  console.log(`  - Office:   http://onlyoffice.${portsConfig.rootDomain}:${portsConfig.onlyofficePort}`)
 
   if (RESET || !PERSIST) {
     console.log(
@@ -276,10 +311,11 @@ export async function setupStack(portsConfig: E2EPortsConfig): Promise<void> {
   }
 
   console.log('[e2e] Starting Docker containers...')
-  compose('up', '--detach', '--wait', ...(PERSIST ? ['--no-recreate'] : []))
+  compose('up', '--detach', '--wait', '--wait-timeout', '330')
 
   console.log('[e2e] Waiting for cozy-stack...')
   await waitForStack(getStackUrl())
+  await verifyOfficeNetwork(portsConfig)
 
   const results: Array<
     [string, { domain: string; cookieName: string; cookieValue: string }]
@@ -297,8 +333,27 @@ export async function setupStack(portsConfig: E2EPortsConfig): Promise<void> {
 }
 
 export default async function globalSetup(): Promise<void> {
-  await withPortAllocationLock(async () => {
-    const portsConfig = await resolveE2EPorts()
-    await setupStack(portsConfig)
-  })
+  let portsResolved = false
+  try {
+    await withPortAllocationLock(async () => {
+      const portsConfig = await resolveE2EPorts()
+      portsResolved = true
+      await setupStack(portsConfig)
+    })
+  } catch (error) {
+    if (portsResolved && !PERSIST) {
+      try {
+        saveComposeDiagnostics()
+      } catch (diagnosticsError) {
+        console.error('[e2e] Could not collect setup diagnostics:', diagnosticsError)
+      }
+      try {
+        compose('down', '--volumes')
+      } catch (cleanupError) {
+        console.error('[e2e] Cleanup after setup failure failed:', cleanupError)
+      }
+      fs.rmSync(E2E_PORTS_PATH, { force: true })
+    }
+    throw error
+  }
 }

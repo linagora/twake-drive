@@ -1,18 +1,27 @@
 # End-to-end tests
 
-The end-to-end suite runs Playwright against a local Cozy Stack and CouchDB
-started with Docker Compose. It provisions two test instances, Alice and Bob,
-and installs the Drive app in each instance.
+The end-to-end suite runs Playwright against Cozy Stack, CouchDB, and
+OnlyOffice Docs Community started in one Docker Compose project. It provisions
+Alice, Bob, and Charlie and installs Drive in each instance. It does not use a
+native Stack or a personal OnlyOffice container.
+The E2E context redirects to Drive because the Home app is not installed.
 
 ## Prerequisites
 
 - Node version from `.nvmrc` and dependencies installed with `yarn install`
 - Docker with the Compose plugin available as `docker compose`
-- Host ports are selected automatically, starting from `18080`, `15984`, and
-  `16060`. They can be forced with `COZY_E2E_STACK_PORT`,
-  `COZY_E2E_COUCHDB_PORT`, and `COZY_E2E_ADMIN_PORT`.
+- Host ports are selected automatically, starting from `18080`, `15984`,
+  `16060`, and `18081`. They can be forced with `COZY_E2E_STACK_PORT`,
+  `COZY_E2E_COUCHDB_PORT`, `COZY_E2E_ADMIN_PORT`, and
+  `COZY_E2E_ONLYOFFICE_PORT`.
 - A production build of Drive
 - Playwright Chromium installed
+
+The default `cozy.localhost` names resolve to host loopback in the browser.
+Stack reaches its instance names on loopback. Document Server uses a separate
+Compose network where those names resolve to the proxy, which forwards source
+downloads and save callbacks to Stack. Stack reaches Docs through the proxy's
+`onlyoffice.cozy.localhost` alias on the default network.
 
 Prepare the environment once:
 
@@ -45,9 +54,10 @@ yarn e2e:persist
 ```
 
 `yarn e2e:persist` sets `E2E_PERSIST=1`. Persistent runs do not run Compose
-cleanup and start with `--no-recreate`. Setup is idempotent: existing Alice
-and Bob instances, Drive installations,
-feature flags, and contacts are reused.
+cleanup. Compose recreates services when their configuration changes, while
+keeping the project volumes. Setup is idempotent: existing instances, Drive
+installations, feature flags, and contacts are reused. Use `yarn e2e:reset`
+when changing the Stack image so old Stack data are discarded.
 
 `E2E_SKIP_TEARDOWN=1` is kept as a compatibility alias for `E2E_PERSIST=1`.
 Use `E2E_PERSIST` in new commands.
@@ -75,8 +85,9 @@ docker compose -f docker-compose.e2e.yml \
 
 ## Isolate a test runtime
 
-By default, the E2E suite derives a project name from the current worktree, such
-as `twake-e2e-wt-stack`. Use `E2E_PROJECT_NAME` to override that identity:
+By default, the E2E suite derives a project name from the current worktree
+path, such as `twake-e2e-twake-drive-1a2b3c4d`. Use `E2E_PROJECT_NAME` to
+override that identity:
 
 ```sh
 E2E_PROJECT_NAME=custom-harness yarn e2e
@@ -86,6 +97,24 @@ The harness applies this explicit Compose identity to every startup, lifecycle,
 and teardown command. Concurrent suites launched from the same worktree must
 use distinct project names and explicit, non-overlapping port overrides because
 they share the same saved configuration file.
+
+The Compose project provides Docs on
+`http://onlyoffice.<root-domain>:<office-port>`. The browser and Stack reach
+Docs through that origin; Docs reaches the three Stack instance domains for
+source downloads and save callbacks. JWT is disabled in this local E2E
+runtime, as in Stack's `scripts/start-oo.sh`.
+
+Check the Office integration with a normal Word document:
+
+```sh
+yarn e2e e2e/tests/onlyoffice-open.spec.ts --project=chromium
+```
+
+The test uploads a DOCX, opens it from the Drive file list, and checks the
+Stack's editor configuration and the loaded editor UI. PDF editing tests need
+both the PDF frontend changes and a Stack image built from a revision that
+includes the PDF Office backend; `cozy/cozy-stack:latest` is not proof of PDF
+support.
 
 ## Debugging and reports
 

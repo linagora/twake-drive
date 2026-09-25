@@ -2,6 +2,7 @@ import { execFileSync } from 'child_process'
 import * as fs from 'fs'
 
 import { composeArgs, E2E_PORTS_PATH, PERSIST } from '../helpers/config'
+import { saveComposeDiagnostics } from '../helpers/compose-diagnostics'
 
 export default function globalTeardown(): void {
   if (PERSIST) {
@@ -12,6 +13,11 @@ export default function globalTeardown(): void {
   }
 
   console.log('[e2e] Tearing down Docker containers and runtime data...')
+  try {
+    saveComposeDiagnostics()
+  } catch (error) {
+    console.error('[e2e] Could not collect Compose diagnostics:', error)
+  }
   execFileSync('docker', composeArgs('down', '--volumes'), {
     stdio: 'inherit',
     cwd: process.cwd()

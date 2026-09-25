@@ -13,8 +13,8 @@ services:
       retries: 10
 
   cozystack:
-    image: cozy/cozy-stack:latest
-    pull_policy: always
+    image: ${COZY_E2E_STACK_IMAGE:-cozy/cozy-stack:latest}
+    pull_policy: ${COZY_E2E_STACK_PULL_POLICY:-always}
     depends_on:
       couchdb:
         condition: service_healthy
@@ -28,6 +28,7 @@ services:
       COZY_ADMIN_PORT: "${COZY_E2E_ADMIN_PORT:-16060}"
       COZY_E2E_ROOT_DOMAIN: "${COZY_E2E_ROOT_DOMAIN:-cozy.localhost}"
       COZY_CONTEXTS_DEFAULT_SHARING_TRUSTED_DOMAINS: "${COZY_E2E_ROOT_DOMAIN:-cozy.localhost},${COZY_E2E_ROOT_DOMAIN:-cozy.localhost}:${COZY_E2E_STACK_PORT:-18080}"
+      COZY_E2E_ONLYOFFICE_PORT: "${COZY_E2E_ONLYOFFICE_PORT:-18081}"
       COZY_SUBDOMAINS: flat
     command: ["cozy-stack", "serve", "--dev"]
     volumes:
@@ -36,3 +37,54 @@ services:
     ports:
       - "127.0.0.1:${COZY_E2E_STACK_PORT:-18080}:${COZY_E2E_STACK_PORT:-18080}"
       - "127.0.0.1:${COZY_E2E_ADMIN_PORT:-16060}:${COZY_E2E_ADMIN_PORT:-16060}"
+
+  onlyoffice:
+    image: onlyoffice/documentserver:9.3.1.2@sha256:290a0a1406a485acc8a6bc20418ac7158c5eec78b4844c218f8f975a9800ddbc
+    environment:
+      JWT_ENABLED: "false"
+      ALLOW_PRIVATE_IP_ADDRESS: "true"
+      ALLOW_META_IP_ADDRESS: "false"
+    networks:
+      - office
+    healthcheck:
+      test:
+        ["CMD-SHELL", 'test "$(curl -fsS http://localhost/healthcheck)" = true']
+      interval: 5s
+      timeout: 5s
+      retries: 60
+      start_period: 30s
+
+  onlyoffice-proxy:
+    image: nginx:1.27-alpine@sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10
+    depends_on:
+      onlyoffice:
+        condition: service_healthy
+    environment:
+      COZY_E2E_ONLYOFFICE_PORT: "${COZY_E2E_ONLYOFFICE_PORT:-18081}"
+      COZY_E2E_STACK_PORT: "${COZY_E2E_STACK_PORT:-18080}"
+      NGINX_ENVSUBST_FILTER: "^COZY_E2E_(ONLYOFFICE|STACK)_PORT$"
+    volumes:
+      - ./e2e/onlyoffice-proxy.conf.template:/etc/nginx/templates/default.conf.template:ro
+    ports:
+      - "127.0.0.1:${COZY_E2E_ONLYOFFICE_PORT:-18081}:${COZY_E2E_ONLYOFFICE_PORT:-18081}"
+    networks:
+      default:
+        aliases:
+          - onlyoffice.${COZY_E2E_ROOT_DOMAIN:-cozy.localhost}
+      office:
+        aliases:
+          - alice.${COZY_E2E_ROOT_DOMAIN:-cozy.localhost}
+          - bob.${COZY_E2E_ROOT_DOMAIN:-cozy.localhost}
+          - charlie.${COZY_E2E_ROOT_DOMAIN:-cozy.localhost}
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget -q -O - http://127.0.0.1:${COZY_E2E_ONLYOFFICE_PORT:-18081}/healthcheck | grep -qx true",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+networks:
+  office:
