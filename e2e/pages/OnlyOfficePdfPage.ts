@@ -5,14 +5,18 @@ import { expect } from '../helpers/fixtures'
 export class OnlyOfficePdfPage {
   private readonly frame: FrameLocator
 
-  constructor(private readonly page: Page) {
+  constructor(
+    private readonly page: Page,
+    private readonly guestName = 'E2E Alice'
+  ) {
     this.frame = page.frameLocator('iframe[name="frameEditor"]')
   }
 
   async waitForOpen(fileId: string): Promise<void> {
-    await this.page.waitForURL(url =>
-      url.hash.includes(`/onlyoffice/${fileId}`)
-    )
+    await this.page.waitForURL(url => {
+      const route = url.hash.split(/[/?#]/)
+      return route.includes('onlyoffice') && route.includes(fileId)
+    })
     await expect(
       this.frame.getByRole('button', { name: /Edit PDF/ })
     ).toBeVisible()
@@ -20,7 +24,7 @@ export class OnlyOfficePdfPage {
       'Enter a name to be used for collaboration'
     )
     if (await guestNamePrompt.isVisible()) {
-      await this.frame.getByRole('textbox').last().fill('E2E Alice')
+      await this.frame.getByRole('textbox').last().fill(this.guestName)
       await this.frame.getByRole('button', { name: 'OK' }).click()
     }
   }
@@ -56,8 +60,12 @@ export class OnlyOfficePdfPage {
     await expect(save).toBeDisabled()
   }
 
-  async close(): Promise<void> {
-    await this.page.goBack()
+  async close(destination?: string): Promise<void> {
+    if (destination) {
+      await this.page.goto(destination)
+    } else {
+      await this.page.goBack()
+    }
     await expect(this.page.locator('iframe[name="frameEditor"]')).toHaveCount(0)
   }
 
