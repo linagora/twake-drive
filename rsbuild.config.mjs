@@ -199,6 +199,14 @@ const mergedConfig = mergeRsbuildConfig(config, {
   dev: {
     lazyCompilation: false
   },
+  source: {
+    define: {
+      // Error reporting is opt-in: a build without SENTRY_DSN initialises no
+      // reporter at all, so a deployment reports to the collector it operates
+      // or to none.
+      'process.env.SENTRY_DSN': JSON.stringify(process.env.SENTRY_DSN ?? '')
+    }
+  },
   resolve: {
     alias: {
       // cozy-viewer requires the CommonJS build of react-pdf. Both builds
