@@ -185,6 +185,14 @@ const mergedConfig = mergeRsbuildConfig(config, {
   dev: {
     lazyCompilation: false
   },
+  source: {
+    define: {
+      // Error reporting is opt-in: a build without SENTRY_DSN initialises no
+      // reporter at all, so a deployment reports to the collector it operates
+      // or to none.
+      'process.env.SENTRY_DSN': JSON.stringify(process.env.SENTRY_DSN ?? '')
+    }
+  },
   resolve: {
     alias: {
       // The webpack5 entry wires the pdf.js worker through a `new URL(...)`
