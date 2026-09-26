@@ -9,10 +9,8 @@ on:
       - '[0-9]+.[0-9]+.[0-9]+'
       - '[0-9]+.[0-9]+.[0-9]+-beta.[0-9]+'
 
-env:
-  MATTERMOST_CHANNEL: '{"dev":"appvengers","beta":"appvengers,publication","stable":"appvengers,publication"}'
-  MATTERMOST_HOOK_URL: ${{ secrets.MATTERMOST_HOOK_URL }}
-  REGISTRY_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -43,6 +41,14 @@ jobs:
         uses: webfactory/ssh-agent@v0.10.0
         with:
           ssh-private-key: ${{ secrets.DOWNCLOUD_SSH_KEY }}
+      # The publication secrets are scoped to this step. Declared at workflow
+      # level they were also in the environment of `yarn install`, and so of
+      # every install script of every dependency, of the linter, of the tests
+      # and of the third-party actions above.
       - name: Publish
         if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')
         run: yarn run cozyPublish --yes
+        env:
+          MATTERMOST_CHANNEL: '{"dev":"appvengers","beta":"appvengers,publication","stable":"appvengers,publication"}'
+          MATTERMOST_HOOK_URL: ${{ secrets.MATTERMOST_HOOK_URL }}
+          REGISTRY_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
