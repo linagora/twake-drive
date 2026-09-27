@@ -362,7 +362,8 @@
       "title": "Verplaatsen buiten de map ‘%{sharedFolder}’",
       "cancel": "Annuleren",
       "confirm": "Ik begrĳp het"
-    }
+    },
+    "revoke_error": "Het delen kon niet worden gestopt, het element is niet verplaatst. Probeer het later opnieuw."
   },
   "ImportToDrive": {
     "title": "%{smart_count} item |||| %{smart_count} items",
