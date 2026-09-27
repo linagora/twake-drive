@@ -27,7 +27,9 @@ import {
   type E2EPortsConfig
 } from '../helpers/ports'
 
-const ADMIN_AUTH = `Basic ${Buffer.from(`${ADMIN_USER}:${ADMIN_PASSPHRASE}`).toString('base64')}`
+const ADMIN_AUTH = `Basic ${Buffer.from(
+  `${ADMIN_USER}:${ADMIN_PASSPHRASE}`
+).toString('base64')}`
 
 function compose(...args: string[]): void {
   execFileSync('docker', composeArgs(...args), {
@@ -44,7 +46,9 @@ async function instanceExists(user: User): Promise<boolean> {
   if (res.ok) return true
   if (res.status === 404) return false
   throw new Error(
-    `Failed to inspect instance ${user.instance} (${res.status}): ${await res.text()}`
+    `Failed to inspect instance ${user.instance} (${
+      res.status
+    }): ${await res.text()}`
   )
 }
 
@@ -91,16 +95,24 @@ async function waitForStack(url: string, timeoutMs = 60_000): Promise<void> {
 
 async function verifyOfficeNetwork(portsConfig: E2EPortsConfig): Promise<void> {
   const officeUrl = `http://onlyoffice.${portsConfig.rootDomain}:${portsConfig.onlyofficePort}`
-  const apiResponse = await fetch(`${officeUrl}/web-apps/apps/api/documents/api.js`)
+  const apiResponse = await fetch(
+    `${officeUrl}/web-apps/apps/api/documents/api.js`
+  )
   if (!apiResponse.ok) {
-    throw new Error(`OnlyOffice browser API unavailable (${apiResponse.status})`)
+    throw new Error(
+      `OnlyOffice browser API unavailable (${apiResponse.status})`
+    )
   }
 
   for (const user of Object.values(USERS)) {
     execFileSync(
       'docker',
       composeArgs(
-        'exec', '-T', 'onlyoffice', 'python3', '-c',
+        'exec',
+        '-T',
+        'onlyoffice',
+        'python3',
+        '-c',
         'import sys, urllib.request; opener = urllib.request.build_opener(urllib.request.ProxyHandler({})); assert opener.open(sys.argv[1], timeout=5).status == 200',
         `http://${user.instance}/version`
       ),
@@ -111,7 +123,11 @@ async function verifyOfficeNetwork(portsConfig: E2EPortsConfig): Promise<void> {
   execFileSync(
     'docker',
     composeArgs(
-      'exec', '-T', 'cozystack', 'node', '-e',
+      'exec',
+      '-T',
+      'cozystack',
+      'node',
+      '-e',
       '(async () => { const response = await fetch(process.argv[1]); if (!response.ok || (await response.text()).trim() !== "true") process.exit(1) })().catch(() => process.exit(1))',
       `${officeUrl}/healthcheck`
     ),
@@ -133,7 +149,10 @@ function parseLoginParams(html: string, instance: string): LoginParams {
   }
   return {
     csrfToken: find(/name="csrf_token"\s+value="([^"]+)"/, 'CSRF token'),
-    iterations: parseInt(find(/data-iterations="(\d+)"/, 'PBKDF2 iterations'), 10),
+    iterations: parseInt(
+      find(/data-iterations="(\d+)"/, 'PBKDF2 iterations'),
+      10
+    ),
     salt: find(/data-salt="([^"]+)"/, 'PBKDF2 salt')
   }
 }
@@ -145,7 +164,9 @@ async function getSessionCookie(
   const loginPageRes = await fetch(`http://${instance}/auth/login`)
   if (!loginPageRes.ok) {
     throw new Error(
-      `GET /auth/login on ${instance} failed (${loginPageRes.status}): ${await loginPageRes.text()}`
+      `GET /auth/login on ${instance} failed (${
+        loginPageRes.status
+      }): ${await loginPageRes.text()}`
     )
   }
   const params = parseLoginParams(await loginPageRes.text(), instance)
@@ -153,8 +174,20 @@ async function getSessionCookie(
   // Two-step PBKDF2 hash matching cozy-stack's password-helpers.js:
   // 1. master = PBKDF2(password, salt, iterations, 32, sha256)
   // 2. hashed = PBKDF2(master, password, 1, 32, sha256) — base64-encoded.
-  const master = pbkdf2Sync(passphrase, params.salt, params.iterations, 32, 'sha256')
-  const hashed = pbkdf2Sync(Uint8Array.from(master), passphrase, 1, 32, 'sha256')
+  const master = pbkdf2Sync(
+    passphrase,
+    params.salt,
+    params.iterations,
+    32,
+    'sha256'
+  )
+  const hashed = pbkdf2Sync(
+    Uint8Array.from(master),
+    passphrase,
+    1,
+    32,
+    'sha256'
+  )
 
   const initialCookies = loginPageRes.headers.getSetCookie?.() ?? []
   const res = await fetch(`http://${instance}/auth/login`, {
@@ -176,7 +209,9 @@ async function getSessionCookie(
   const m = sess?.match(/^([^=]+)=([^;]+)/)
   if (!m) {
     throw new Error(
-      `POST /auth/login on ${instance} did not return a session cookie (status ${res.status}): ${await res.text()}`
+      `POST /auth/login on ${instance} did not return a session cookie (status ${
+        res.status
+      }): ${await res.text()}`
     )
   }
   return { name: m[1], value: m[2] }
@@ -184,9 +219,7 @@ async function getSessionCookie(
 
 function isAppInstalled(user: User, slug: string): boolean {
   const apps = stackExec('apps', 'ls', '--domain', user.instance)
-  return apps
-    .split('\n')
-    .some(line => line.trim().split(/\s+/, 1)[0] === slug)
+  return apps.split('\n').some(line => line.trim().split(/\s+/, 1)[0] === slug)
 }
 
 interface AppSpec {
@@ -196,6 +229,7 @@ interface AppSpec {
 }
 
 const DEFAULT_APPS: AppSpec[] = [
+  { slug: 'home', source: 'registry://home/stable', label: 'Home' },
   { slug: 'drive', source: 'file:///app/drive', label: 'Drive' },
   {
     slug: 'dataproxy',
@@ -297,7 +331,9 @@ export async function setupStack(portsConfig: E2EPortsConfig): Promise<void> {
   console.log(`  - Stack:    http://localhost:${portsConfig.stackPort}`)
   console.log(`  - Admin:    http://localhost:${portsConfig.adminPort}`)
   console.log(`  - CouchDB:  http://localhost:${portsConfig.couchdbPort}`)
-  console.log(`  - Office:   http://onlyoffice.${portsConfig.rootDomain}:${portsConfig.onlyofficePort}`)
+  console.log(
+    `  - Office:   http://onlyoffice.${portsConfig.rootDomain}:${portsConfig.onlyofficePort}`
+  )
 
   if (RESET || !PERSIST) {
     console.log(
@@ -345,7 +381,10 @@ export default async function globalSetup(): Promise<void> {
       try {
         saveComposeDiagnostics()
       } catch (diagnosticsError) {
-        console.error('[e2e] Could not collect setup diagnostics:', diagnosticsError)
+        console.error(
+          '[e2e] Could not collect setup diagnostics:',
+          diagnosticsError
+        )
       }
       try {
         compose('down', '--volumes')

@@ -2,8 +2,9 @@ import path from 'path'
 
 import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.js'
 
-pdfjs.GlobalWorkerOptions.workerSrc =
-  require.resolve('pdfjs-dist/legacy/build/pdf.worker.js')
+pdfjs.GlobalWorkerOptions.workerSrc = require.resolve(
+  'pdfjs-dist/legacy/build/pdf.worker.js'
+)
 const standardFontDataUrl = path.join(
   path.dirname(require.resolve('pdfjs-dist/package.json')),
   'standard_fonts/'

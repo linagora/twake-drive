@@ -2,6 +2,7 @@ import { readFile } from 'fs/promises'
 import path from 'path'
 
 import { USERS } from '../helpers/config'
+import { DEFAULT_FLAGS, setFlags } from '../helpers/flags'
 import { test, expect, stamp } from '../helpers/fixtures'
 import { extractPdfText } from '../helpers/pdf'
 import { createPdfFile, fetchFileBinary, trashById } from '../helpers/stack'
@@ -14,6 +15,24 @@ const PDF_FIXTURE = path.join(
   'onlyoffice-editable.pdf'
 )
 const normalizePdfText = (text: string): string => text.replace(/\s+/g, '')
+
+test.skip(
+  !process.env.COZY_E2E_STACK_IMAGE,
+  'PDF editing requires an explicitly selected Stack image with Office PDF support'
+)
+
+test.beforeEach(() => {
+  setFlags(USERS.alice.instance, {
+    ...DEFAULT_FLAGS,
+    'drive.office.enabled': true,
+    'drive.office.write': true,
+    'drive.office.pdf.enabled': true
+  })
+})
+
+test.afterEach(() => {
+  setFlags(USERS.alice.instance, DEFAULT_FLAGS)
+})
 
 test('Alice edits a personal PDF and sees it after reopening', async ({
   alicePage,
@@ -54,8 +73,9 @@ test('Alice edits a personal PDF and sees it after reopening', async ({
       .poll(
         async () =>
           normalizePdfText(
-            (await extractPdfText(await fetchFileBinary({ instance, fileId })))
-              .text
+            (
+              await extractPdfText(await fetchFileBinary({ instance, fileId }))
+            ).text
           ),
         { timeout: 90_000, intervals: [1000, 2000, 5000] }
       )

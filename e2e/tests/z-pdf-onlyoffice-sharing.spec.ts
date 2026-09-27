@@ -2,6 +2,7 @@ import { readFile } from 'fs/promises'
 import path from 'path'
 
 import { USERS } from '../helpers/config'
+import { DEFAULT_FLAGS, setFlags } from '../helpers/flags'
 import { test, expect, stamp } from '../helpers/fixtures'
 import { extractPdfText } from '../helpers/pdf'
 import {
@@ -25,6 +26,28 @@ const PDF_FIXTURE = path.join(
 )
 const normalizePdfText = (text: string): string => text.replace(/\s+/g, '')
 const ALICE_ROOT = `${USERS.alice.appUrl}/#/folder/io.cozy.files.root-dir`
+
+test.skip(
+  !process.env.COZY_E2E_STACK_IMAGE,
+  'PDF editing requires an explicitly selected Stack image with Office PDF support'
+)
+
+test.beforeEach(() => {
+  for (const user of [USERS.alice, USERS.bob]) {
+    setFlags(user.instance, {
+      ...DEFAULT_FLAGS,
+      'drive.office.enabled': true,
+      'drive.office.write': true,
+      'drive.office.pdf.enabled': true
+    })
+  }
+})
+
+test.afterEach(() => {
+  for (const user of [USERS.alice, USERS.bob]) {
+    setFlags(user.instance, DEFAULT_FLAGS)
+  }
+})
 
 async function expectOwnerPdfText(
   fileId: string,

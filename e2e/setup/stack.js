@@ -43,7 +43,9 @@ async function start() {
     console.log(`  - Stack:    http://localhost:${config.stackPort}`)
     console.log(`  - Admin:    http://localhost:${config.adminPort}`)
     console.log(`  - CouchDB:  http://localhost:${config.couchdbPort}`)
-    console.log(`  - Office:   http://onlyoffice.${config.rootDomain}:${config.onlyofficePort}`)
+    console.log(
+      `  - Office:   http://onlyoffice.${config.rootDomain}:${config.onlyofficePort}`
+    )
 
     const { setupStack } = jiti('./global-setup.ts')
     await setupStack(config)
@@ -51,7 +53,9 @@ async function start() {
     const { USERS } = jiti('../helpers/config.ts')
 
     console.log('\n' + '='.repeat(60))
-    console.log(`🚀 Cozy Stack is ready for development! (${config.projectName})`)
+    console.log(
+      `🚀 Cozy Stack is ready for development! (${config.projectName})`
+    )
     console.log('='.repeat(60))
     for (const user of Object.values(USERS)) {
       console.log(`👤 ${user.label.toUpperCase()}:`)
@@ -60,7 +64,9 @@ async function start() {
       console.log(`   Password: ${user.passphrase}`)
     }
     console.log('='.repeat(60))
-    console.log('💡 Run "yarn watch" in another terminal for live recompilation.')
+    console.log(
+      '💡 Run "yarn watch" in another terminal for live recompilation.'
+    )
     console.log(`🛑 Run "yarn stack down" to stop this stack.\n`)
   })
 }
@@ -119,7 +125,9 @@ function status() {
   }
 
   if (!running) {
-    console.log(`\n[stack] Dev stack for project "${projectName}" is currently STOPPED.`)
+    console.log(
+      `\n[stack] Dev stack for project "${projectName}" is currently STOPPED.`
+    )
     console.log(`   Allocated port: http://localhost:${config.stackPort}`)
     console.log(`💡 Run "yarn stack up" to start it.\n`)
     return
@@ -193,6 +201,8 @@ Options:
 `)
     break
   default:
-    console.error(`[stack] Unknown command "${command}". Run "yarn stack --help" for available commands.`)
+    console.error(
+      `[stack] Unknown command "${command}". Run "yarn stack --help" for available commands.`
+    )
     process.exit(1)
 }

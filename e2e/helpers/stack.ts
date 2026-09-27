@@ -41,7 +41,9 @@ export async function findLinkPermission(
   )
   if (!res.ok) {
     throw new Error(
-      `List sharedByLink permissions on ${instance} failed (${res.status}): ${await res.text()}`
+      `List sharedByLink permissions on ${instance} failed (${
+        res.status
+      }): ${await res.text()}`
     )
   }
   const body = (await res.json()) as { data: PermissionDoc[] }
@@ -82,7 +84,9 @@ export async function setLinkExpiry(
   })
   if (!res.ok) {
     throw new Error(
-      `PATCH permission ${permissionId} on ${instance} failed (${res.status}): ${await res.text()}`
+      `PATCH permission ${permissionId} on ${instance} failed (${
+        res.status
+      }): ${await res.text()}`
     )
   }
 }
@@ -130,7 +134,9 @@ export async function createPdfFile({
   dirId?: string
 }): Promise<string> {
   const res = await fetch(
-    `http://${instance}/files/${dirId}?Type=file&Name=${encodeURIComponent(name)}`,
+    `http://${instance}/files/${dirId}?Type=file&Name=${encodeURIComponent(
+      name
+    )}`,
     {
       method: 'POST',
       headers: {
@@ -142,7 +148,9 @@ export async function createPdfFile({
   )
   if (!res.ok) {
     throw new Error(
-      `Create PDF ${name} on ${instance} failed (${res.status}): ${await res.text()}`
+      `Create PDF ${name} on ${instance} failed (${
+        res.status
+      }): ${await res.text()}`
     )
   }
   const body = (await res.json()) as { data: { id: string } }
@@ -160,7 +168,9 @@ export async function createFile({
   content: string
 }): Promise<string> {
   const res = await fetch(
-    `http://${instance}/files/${ROOT_DIR_ID}?Type=file&Name=${encodeURIComponent(name)}`,
+    `http://${instance}/files/${ROOT_DIR_ID}?Type=file&Name=${encodeURIComponent(
+      name
+    )}`,
     {
       method: 'POST',
       headers: {
@@ -172,7 +182,9 @@ export async function createFile({
   )
   if (!res.ok) {
     throw new Error(
-      `Create file ${name} on ${instance} failed (${res.status}): ${await res.text()}`
+      `Create file ${name} on ${instance} failed (${
+        res.status
+      }): ${await res.text()}`
     )
   }
   const body = (await res.json()) as { data: { id: string } }
@@ -195,7 +207,9 @@ export async function overwriteFile({
   })
   if (!res.ok) {
     throw new Error(
-      `Overwrite file ${fileId} on ${instance} failed (${res.status}): ${await res.text()}`
+      `Overwrite file ${fileId} on ${instance} failed (${
+        res.status
+      }): ${await res.text()}`
     )
   }
 }
@@ -215,7 +229,9 @@ export async function trashByName(
   })
   if (!listRes.ok) {
     throw new Error(
-      `List root files on ${instance} failed (${listRes.status}): ${await listRes.text()}`
+      `List root files on ${instance} failed (${
+        listRes.status
+      }): ${await listRes.text()}`
     )
   }
   const body = (await listRes.json()) as {
@@ -229,7 +245,9 @@ export async function trashByName(
   })
   if (!delRes.ok) {
     throw new Error(
-      `Trash ${name} (${doc.id}) on ${instance} failed (${delRes.status}): ${await delRes.text()}`
+      `Trash ${name} (${doc.id}) on ${instance} failed (${
+        delRes.status
+      }): ${await delRes.text()}`
     )
   }
 }
@@ -245,7 +263,9 @@ export async function trashById(
   })
   if (!delRes.ok) {
     throw new Error(
-      `Trash ${fileId} on ${instance} failed (${delRes.status}): ${await delRes.text()}`
+      `Trash ${fileId} on ${instance} failed (${
+        delRes.status
+      }): ${await delRes.text()}`
     )
   }
 }
@@ -260,7 +280,9 @@ export async function fetchFileContent({
   })
   if (!res.ok) {
     throw new Error(
-      `Download file ${fileId} on ${instance} failed (${res.status}): ${await res.text()}`
+      `Download file ${fileId} on ${instance} failed (${
+        res.status
+      }): ${await res.text()}`
     )
   }
   return await res.text()
@@ -277,7 +299,9 @@ export async function fetchFileBinary({
   })
   if (!res.ok) {
     throw new Error(
-      `Download file ${fileId} on ${instance} failed (${res.status}): ${await res.text()}`
+      `Download file ${fileId} on ${instance} failed (${
+        res.status
+      }): ${await res.text()}`
     )
   }
   return Buffer.from(await res.arrayBuffer())
@@ -296,7 +320,9 @@ export async function countFileVersions({
   })
   if (!res.ok) {
     throw new Error(
-      `Get file ${fileId} on ${instance} failed (${res.status}): ${await res.text()}`
+      `Get file ${fileId} on ${instance} failed (${
+        res.status
+      }): ${await res.text()}`
     )
   }
   const body = (await res.json()) as {

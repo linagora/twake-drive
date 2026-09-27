@@ -149,8 +149,20 @@ export function isDockerProjectRunning(projectName: string): boolean {
   try {
     const output = execFileSync(
       'docker',
-      ['compose', '-f', 'docker-compose.e2e.yml', '-p', projectName, 'ps', '-q'],
-      { encoding: 'utf-8', cwd: process.cwd(), stdio: ['ignore', 'pipe', 'ignore'] }
+      [
+        'compose',
+        '-f',
+        'docker-compose.e2e.yml',
+        '-p',
+        projectName,
+        'ps',
+        '-q'
+      ],
+      {
+        encoding: 'utf-8',
+        cwd: process.cwd(),
+        stdio: ['ignore', 'pipe', 'ignore']
+      }
     )
     return output.trim().length > 0
   } catch {
@@ -189,7 +201,10 @@ export function getE2EProjectName(): string {
   ) {
     return saved.projectName
   }
-  const pathHash = createHash('sha256').update(process.cwd()).digest('hex').slice(0, 8)
+  const pathHash = createHash('sha256')
+    .update(process.cwd())
+    .digest('hex')
+    .slice(0, 8)
   return `twake-e2e-${getWorktreeSlug()}-${pathHash}`
 }
 

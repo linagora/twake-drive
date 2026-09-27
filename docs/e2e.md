@@ -4,7 +4,7 @@ The end-to-end suite runs Playwright against Cozy Stack, CouchDB, and
 OnlyOffice Docs Community started in one Docker Compose project. It provisions
 Alice, Bob, and Charlie and installs Drive in each instance. It does not use a
 native Stack or a personal OnlyOffice container.
-The E2E context redirects to Drive because the Home app is not installed.
+The Home app is installed with Drive for PDF editor navigation.
 
 ## Prerequisites
 
@@ -166,6 +166,30 @@ Stack's editor configuration and the loaded editor UI. PDF editing tests need
 both the PDF frontend changes and a Stack image built from a revision that
 includes the PDF Office backend; `cozy/cozy-stack:latest` is not proof of PDF
 support.
+
+The PDF Docker flows were validated with Stack commit
+`ce45c8dbb7f25654fb49ce26e52bc6e04f6d37d0`. Set `STACK_SHA` to this
+revision in the build commands above to reproduce that backend.
+
+With `STACK_IMAGE_ID` set to an image built from such a revision, run the three
+PDF editing flows in the ordinary Docker suite:
+
+```sh
+COZY_E2E_STACK_IMAGE="$STACK_IMAGE_ID" \
+COZY_E2E_STACK_PULL_POLICY=never \
+E2E_PROJECT_NAME="twake-e2e-pdf-$(date +%s)-$$" \
+yarn e2e e2e/tests/onlyoffice-pdf-personal.spec.ts \
+  e2e/tests/z-pdf-onlyoffice-sharing.spec.ts --project=chromium
+```
+
+They cover a personal PDF, Bob editing a received federated PDF, and an
+anonymous editor using an editable link. Each flow checks the edited content
+after reopening; the tests also download and parse the owner's stored PDF
+bytes. PDF Office flags are enabled only while these tests run, then restored
+to the default E2E values. Without `COZY_E2E_STACK_IMAGE`, these PDF cases
+are skipped because the default published Stack image is not required to
+support PDF editing yet. Omit both image variables on the next fresh
+`yarn e2e` run to use the standard Docker Stack image again.
 
 ## Debugging and reports
 

@@ -25,7 +25,9 @@ export class OnlyOfficePage {
       timeout: 90_000
     })
     await expect(
-      this.page.frameLocator('iframe[name="frameEditor"]').getByText('Page 1 of 1')
+      this.page
+        .frameLocator('iframe[name="frameEditor"]')
+        .getByText('Page 1 of 1')
     ).toBeVisible({ timeout: 90_000 })
   }
 }

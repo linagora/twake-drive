@@ -6,9 +6,7 @@ import { saveComposeDiagnostics } from '../helpers/compose-diagnostics'
 
 export default function globalTeardown(): void {
   if (PERSIST) {
-    console.log(
-      '[e2e] Persistent mode — leaving this runtime and its data up.'
-    )
+    console.log('[e2e] Persistent mode — leaving this runtime and its data up.')
     return
   }
 
