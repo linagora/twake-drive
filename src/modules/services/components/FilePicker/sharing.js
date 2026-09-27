@@ -76,32 +76,38 @@ export async function getOrCreateSharingLink(client, file) {
  * Create temporary download links for files without a drive.
  */
 async function makeTemporaryDownloadLinksForDriveLessFiles(client, files) {
-  const temporarySharingLink = await makeSharingLink(
-    client,
-    files.map(getFileId),
-    {
-      ttl: TEMPORARY_LINK_TTL
-    }
-  )
   const stackUri = client.getStackClient().uri
-  const sharecode = new URL(temporarySharingLink, stackUri).searchParams.get(
-    'sharecode'
-  )
 
-  if (!sharecode) {
-    throw new Error('Temporary sharing link does not contain a sharecode')
-  }
-
-  const publicClient = new CozyClient({
-    uri: stackUri,
-    token: sharecode,
-    useCustomStore: true
-  })
-  const filesCollection = publicClient.collection('io.cozy.files')
+  // One permission per file, never a single permission covering the whole
+  // selection. cozy-sharing reuses any share-by-link permission whose values
+  // contain the document, so a multi-file permission picked up later when
+  // sharing one of those files would be turned into a permanent public link
+  // granting read access to all of them.
   return Promise.all(
-    files.map(file =>
-      filesCollection.getDownloadLinkById(getFileId(file), file.name)
-    )
+    files.map(async file => {
+      const fileId = getFileId(file)
+      const temporarySharingLink = await makeSharingLink(client, [fileId], {
+        ttl: TEMPORARY_LINK_TTL
+      })
+      const sharecode = new URL(
+        temporarySharingLink,
+        stackUri
+      ).searchParams.get('sharecode')
+
+      if (!sharecode) {
+        throw new Error('Temporary sharing link does not contain a sharecode')
+      }
+
+      const publicClient = new CozyClient({
+        uri: stackUri,
+        token: sharecode,
+        useCustomStore: true
+      })
+
+      return publicClient
+        .collection('io.cozy.files')
+        .getDownloadLinkById(fileId, file.name)
+    })
   )
 }
 

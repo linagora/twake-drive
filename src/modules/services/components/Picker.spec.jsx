@@ -463,7 +463,7 @@ describe('Picker', () => {
     ])
   })
 
-  it('should use one temporary sharing link for multiple download links', async () => {
+  it('should use one temporary sharing link per file, not one for the selection', async () => {
     mockQuery.mockImplementation(({ id }) => {
       return Promise.resolve({
         data: id === 'file-id' ? mockFile : mockSecondFile
@@ -487,15 +487,28 @@ describe('Picker', () => {
     )
 
     await waitFor(() => expect(service.terminate).toHaveBeenCalled())
-    expect(makeSharingLink).toHaveBeenCalledTimes(1)
-    expect(makeSharingLink).toHaveBeenCalledWith(
+    // One permission per file. cozy-sharing reuses any share-by-link
+    // permission whose values contain the document, so a permission covering
+    // the whole selection could later be turned into a permanent public link
+    // granting read access to every file of that selection.
+    expect(makeSharingLink).toHaveBeenCalledTimes(2)
+    expect(makeSharingLink).toHaveBeenNthCalledWith(
+      1,
       expect.any(Object),
-      ['file-id', 'second-file-id'],
+      ['file-id'],
       {
         ttl: TEMPORARY_LINK_TTL
       }
     )
-    expect(mockCozyClient).toHaveBeenCalledTimes(1)
+    expect(makeSharingLink).toHaveBeenNthCalledWith(
+      2,
+      expect.any(Object),
+      ['second-file-id'],
+      {
+        ttl: TEMPORARY_LINK_TTL
+      }
+    )
+    expect(mockCozyClient).toHaveBeenCalledTimes(2)
     expect(mockGetDownloadLinkById).toHaveBeenNthCalledWith(
       1,
       'file-id',
