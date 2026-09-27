@@ -7,7 +7,9 @@ import flag from 'cozy-flags'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import { changeLocation } from '@/hooks/helpers'
+import logger from '@/lib/logger'
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
+import { makeOfficeApiUrl } from '@/modules/views/OnlyOffice/apiUrl'
 import {
   canOpenPdfWithOnlyOffice,
   isOfficeEnabled
@@ -93,8 +95,18 @@ const useConfig = () => {
 
         setOfficeKey(onlyoffice.document.key)
 
-        const serverUrl = onlyoffice.url
-        const apiUrl = `${serverUrl}/web-apps/apps/api/documents/api.js`
+        // For a shared drive the stack proxies /open to the drive owner, so
+        // this URL can come from a federated instance. It becomes a script
+        // src, hence the validation.
+        const apiUrl = makeOfficeApiUrl(onlyoffice.url)
+        if (!apiUrl) {
+          logger.error(
+            'Refusing the OnlyOffice server URL returned by the open route'
+          )
+          setStatus('error')
+          return
+        }
+
         const serverEditorConfig = onlyoffice.editorConfig ?? onlyoffice.editor
         const docEditorConfig = {
           // complete config doc : https://api.onlyoffice.com/editors/advanced
@@ -126,7 +138,13 @@ const useConfig = () => {
           }
         }
 
-        setConfig({ serverUrl, apiUrl, docEditorConfig })
+        // Derived from the validated URL, so the editor never sees the raw
+        // value returned by the open route.
+        setConfig({
+          serverUrl: new URL(apiUrl).origin,
+          apiUrl,
+          docEditorConfig
+        })
       }
     }
   }, [
