@@ -1,4 +1,55 @@
-import { computeIsSharingsOwner } from './useFileLink'
+import { renderHook } from '@testing-library/react'
+import React from 'react'
+import { MemoryRouter } from 'react-router-dom'
+
+import { computeIsSharingsOwner, useFileLink } from './useFileLink'
+
+jest.mock('cozy-client', () => ({
+  ...jest.requireActual('cozy-client'),
+  useClient: jest.fn(() => ({
+    getStackClient: (): { uri: string } => ({
+      uri: 'http://cozy.localhost:8080'
+    }),
+    getInstanceOptions: (): { subdomain: string } => ({ subdomain: 'nested' })
+  }))
+}))
+jest.mock('cozy-sharing', () => ({ useSharingContext: jest.fn() }))
+jest.mock('cozy-ui/transpiled/react/providers/Breakpoints', () => ({
+  __esModule: true,
+  default: jest.fn(() => ({ isDesktop: true }))
+}))
+jest.mock('@/modules/public/PublicProvider', () => ({
+  usePublicContext: jest.fn(() => ({ isPublic: false }))
+}))
+
+describe('useFileLink with forceFolderPath', () => {
+  const folder = {
+    _id: 'folder-1',
+    _type: 'io.cozy.files',
+    type: 'directory',
+    name: 'Folder',
+    dir_id: 'io.cozy.files.root-dir'
+  }
+
+  it.each([
+    '/folder/io.cozy.files.root-dir',
+    '/recent',
+    '/sharings/with-me',
+    '/sharings/by-me',
+    '/sharings/with-me/folder/shared-folder-1'
+  ])('links a folder to /folder/:id from %s', pathname => {
+    const { result } = renderHook(
+      () => useFileLink(folder, { forceFolderPath: true }),
+      {
+        wrapper: ({ children }: { children: React.ReactNode }) => (
+          <MemoryRouter initialEntries={[pathname]}>{children}</MemoryRouter>
+        )
+      }
+    )
+
+    expect(result.current.link.to.pathname).toBe('/folder/folder-1')
+  })
+})
 
 describe('computeIsSharingsOwner', () => {
   const ownerSharingContext = {
