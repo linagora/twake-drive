@@ -20,6 +20,7 @@ const useConfig = () => {
     driveId,
     setIsEditorReady,
     isPublic,
+    isReadOnly,
     editorMode,
     isEditorModeView,
     setOfficeKey
@@ -78,12 +79,21 @@ const useConfig = () => {
         const apiUrl = `${serverUrl}/web-apps/apps/api/documents/api.js`
         const docEditorConfig = {
           // complete config doc : https://api.onlyoffice.com/editors/advanced
-          document: onlyoffice.document,
+          document: isReadOnly
+            ? {
+                ...onlyoffice.document,
+                permissions: {
+                  ...onlyoffice.document.permissions,
+                  edit: false
+                }
+              }
+            : onlyoffice.document,
           editorConfig: {
             ...(onlyoffice.editorConfig ?? onlyoffice.editor),
             mode:
+              !isReadOnly &&
               (onlyoffice.editorConfig?.mode ?? onlyoffice.editor?.mode) ===
-              'edit'
+                'edit'
                 ? editorMode
                 : 'view',
             user: { name: author },
@@ -112,6 +122,7 @@ const useConfig = () => {
     setConfig,
     setIsEditorReady,
     isPublic,
+    isReadOnly,
     author,
     isAuthorLoading,
     instanceUri,

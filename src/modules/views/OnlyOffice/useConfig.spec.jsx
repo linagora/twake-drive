@@ -55,7 +55,8 @@ const setup = ({
   data = officeDocWithoutPublicName,
   author = 'Bob',
   isAuthorLoading = false,
-  isPublic = false
+  isPublic = false,
+  isReadOnly = false
 } = {}) => {
   useClient.mockReturnValue({
     getStackClient: () => ({ uri: 'https://bob.cozy.example' })
@@ -68,6 +69,7 @@ const setup = ({
     driveId: undefined,
     setIsEditorReady: jest.fn(),
     isPublic,
+    isReadOnly,
     username: undefined,
     isFromSharing: false,
     editorMode: 'edit',
@@ -97,6 +99,17 @@ describe('useConfig', () => {
     const { result } = setup({ isAuthorLoading: true })
 
     expect(result.current.config).toBeUndefined()
+  })
+
+  it('forces a read-only Office config to view mode', async () => {
+    const { result } = setup({ isReadOnly: true })
+
+    await waitFor(() => expect(result.current.config).toBeDefined())
+
+    expect(
+      result.current.config.docEditorConfig.document.permissions.edit
+    ).toBe(false)
+    expect(result.current.config.docEditorConfig.editorConfig.mode).toBe('view')
   })
 
   it('sends a document the stack resolved elsewhere to its owner', async () => {
