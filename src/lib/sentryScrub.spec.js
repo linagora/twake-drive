@@ -83,6 +83,50 @@ describe('redactEvent', () => {
     expect(event.spans[0].data.url).toBe('/public')
   })
 
+  it('should redact the http.url span attribute set by the tracing integration', () => {
+    // The fetch and xhr instrumentations store the resolved URL under
+    // `http.url`, which keeps the query string.
+    const event = redactEvent({
+      spans: [
+        {
+          data: {
+            url: '/files/downloads/s3cr3t/report.pdf',
+            'http.url':
+              'https://drive.example.org/files/downloads/s3cr3t/report.pdf'
+          }
+        },
+        {
+          data: {
+            'http.url': 'https://drive.example.org/public?sharecode=s3cr3t'
+          }
+        }
+      ]
+    })
+
+    expect(event.spans[0].data['http.url']).toBe(
+      'https://drive.example.org/files/downloads/[redacted]/report.pdf'
+    )
+    expect(event.spans[1].data['http.url']).toBe(
+      'https://drive.example.org/public'
+    )
+  })
+
+  it('should redact the span name, which carries the url', () => {
+    const event = redactEvent({
+      spans: [{ name: 'GET /public?sharecode=s3cr3t' }]
+    })
+
+    expect(event.spans[0].name).toBe('GET /public')
+  })
+
+  it('should redact http.url carried by a breadcrumb', () => {
+    const event = redactEvent({
+      breadcrumbs: [{ data: { 'http.url': '/public?sharecode=s3cr3t' } }]
+    })
+
+    expect(event.breadcrumbs[0].data['http.url']).toBe('/public')
+  })
+
   it('should handle an event without request, breadcrumbs nor spans', () => {
     expect(redactEvent({})).toEqual({})
   })
