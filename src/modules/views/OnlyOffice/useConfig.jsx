@@ -60,93 +60,91 @@ const useConfig = () => {
   }, [isEditorModeView])
 
   useEffect(() => {
-    if (!isQueryLoading(queryResult) && fetchStatus !== 'error' && !config) {
-      if (shouldBeOpenedOnOtherInstance(data, instanceUri)) {
-        // No hash: the public page routes to the editor from these two params.
-        const { document_id } = data.data.attributes
+    if (isQueryLoading(queryResult) || fetchStatus === 'error' || config) return
 
-        changeLocation(
-          makePublicEditorUrl({
-            attributes: data.data.attributes,
-            searchParams: [
-              ['isOnlyOfficeDocShared', true],
-              ['onlyOfficeDocId', document_id]
-            ],
-            redirectLink: currentSearchParams.get('redirectLink')
-          })
-        )
-      } else {
-        const { attributes } = data.data
-        const { onlyoffice } = attributes
-        const isPdfDoc =
-          isPdf(data.data) ||
-          onlyoffice?.documentType === 'pdf' ||
-          onlyoffice?.document?.fileType === 'pdf'
-        if (
-          !isOfficeEnabled(isDesktop) ||
-          (isPdfDoc && !canOpenPdfWithOnlyOffice(isOfficeEnabled(isDesktop)))
-        ) {
-          setStatus('viewer')
-          return
-        }
+    if (shouldBeOpenedOnOtherInstance(data, instanceUri)) {
+      // No hash: the public page routes to the editor from these two params.
+      const { document_id } = data.data.attributes
 
-        // The editor reads the author from its config at mount, so wait for it.
-        if (isAuthorLoading) return
-
-        setOfficeKey(onlyoffice.document.key)
-
-        // For a shared drive the stack proxies /open to the drive owner, so
-        // this URL can come from a federated instance. It becomes a script
-        // src, hence the validation.
-        const apiUrl = makeOfficeApiUrl(onlyoffice.url)
-        if (!apiUrl) {
-          logger.error(
-            'Refusing the OnlyOffice server URL returned by the open route'
-          )
-          setStatus('error')
-          return
-        }
-
-        const serverEditorConfig = onlyoffice.editorConfig ?? onlyoffice.editor
-        const docEditorConfig = {
-          // complete config doc : https://api.onlyoffice.com/editors/advanced
-          document: onlyoffice.document,
-          editorConfig: {
-            ...serverEditorConfig,
-            mode:
-              !isReadOnly && serverEditorConfig?.mode === 'edit'
-                ? editorMode
-                : 'view',
-            user: { name: author },
-            ...(isPdfDoc && {
-              coEditing: { ...serverEditorConfig?.coEditing, mode: 'fast' }
-            }),
-            customization: {
-              ...(isPdfDoc && serverEditorConfig?.customization),
-              reviewDisplay: 'markup'
-            },
-            // The AI plugin of the editor would sit beside the assistant of
-            // Twake, which writes in the document through the scribe
-            ...(flag('cozy.assistant.enabled') && {
-              plugins: { disable: [ONLYOFFICE_AI_PLUGIN] }
-            })
-          },
-          token: onlyoffice.token,
-          documentType: onlyoffice.documentType,
-          events: {
-            onAppReady: () => setIsEditorReady(true)
-          }
-        }
-
-        // Derived from the validated URL, so the editor never sees the raw
-        // value returned by the open route.
-        setConfig({
-          serverUrl: new URL(apiUrl).origin,
-          apiUrl,
-          docEditorConfig
+      changeLocation(
+        makePublicEditorUrl({
+          attributes: data.data.attributes,
+          searchParams: [
+            ['isOnlyOfficeDocShared', true],
+            ['onlyOfficeDocId', document_id]
+          ],
+          redirectLink: currentSearchParams.get('redirectLink')
         })
+      )
+
+      return
+    }
+
+    const { onlyoffice } = data.data.attributes
+    const isPdfDoc =
+      isPdf(data.data) ||
+      onlyoffice?.documentType === 'pdf' ||
+      onlyoffice?.document?.fileType === 'pdf'
+    if (
+      !isOfficeEnabled(isDesktop) ||
+      (isPdfDoc && !canOpenPdfWithOnlyOffice(isOfficeEnabled(isDesktop)))
+    ) {
+      setStatus('viewer')
+      return
+    }
+
+    // The editor reads the author from its config at mount, so wait for it.
+    if (isAuthorLoading) return
+
+    setOfficeKey(onlyoffice.document.key)
+
+    const apiUrl = makeOfficeApiUrl(onlyoffice.url)
+    if (!apiUrl) {
+      logger.error(
+        'Refusing the OnlyOffice server URL returned by the open route'
+      )
+      setStatus('error')
+      return
+    }
+
+    const serverEditorConfig = onlyoffice.editorConfig ?? onlyoffice.editor
+    const docEditorConfig = {
+      // complete config doc : https://api.onlyoffice.com/editors/advanced
+      document: onlyoffice.document,
+      editorConfig: {
+        ...serverEditorConfig,
+        mode:
+          !isReadOnly && serverEditorConfig?.mode === 'edit'
+            ? editorMode
+            : 'view',
+        user: { name: author },
+        ...(isPdfDoc && {
+          coEditing: { ...serverEditorConfig?.coEditing, mode: 'fast' }
+        }),
+        customization: {
+          ...(isPdfDoc && serverEditorConfig?.customization),
+          reviewDisplay: 'markup'
+        },
+        // The AI plugin of the editor would sit beside the assistant of
+        // Twake, which writes in the document through the scribe
+        ...(flag('cozy.assistant.enabled') && {
+          plugins: { disable: [ONLYOFFICE_AI_PLUGIN] }
+        })
+      },
+      token: onlyoffice.token,
+      documentType: onlyoffice.documentType,
+      events: {
+        onAppReady: () => setIsEditorReady(true)
       }
     }
+
+    // Derived from the validated URL, so the editor never sees the raw value
+    // returned by the open route.
+    setConfig({
+      serverUrl: new URL(apiUrl).origin,
+      apiUrl,
+      docEditorConfig
+    })
   }, [
     editorMode,
     queryResult,
