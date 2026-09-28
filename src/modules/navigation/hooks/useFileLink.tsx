@@ -137,8 +137,9 @@ const useFileLink = (
     to = {
       ...to,
       pathname:
-        (type === 'directory' ? '/folder' : getFolderPath(file.dir_id)) +
-        to.pathname
+        type === 'directory'
+          ? getFolderPath(file._id)
+          : getFolderPath(file.dir_id) + to.pathname
     }
   }
   if (pathname.startsWith('/sharings/')) {
