@@ -4,12 +4,12 @@ import React, { FC } from 'react'
 import {
   splitFilename,
   isDirectory,
-  isNote,
-  isOnlyOfficeFile
+  isNote
 } from 'cozy-client/dist/models/file'
 import type { IOCozyFile } from 'cozy-client/types/types'
 import { NavIcon, NavLink, NavItem } from 'cozy-ui/transpiled/react/Nav'
 import Typography from 'cozy-ui/transpiled/react/Typography'
+import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import { FileLink } from './components/FileLink'
 
@@ -19,6 +19,10 @@ import {
   isExcalidraw,
   isExcalidrawEnabled
 } from '@/modules/views/Excalidraw/helpers'
+import {
+  isOfficeEnabled,
+  shouldOpenWithOnlyOffice
+} from '@/modules/views/OnlyOffice/helpers'
 
 interface FavoriteListItemProps {
   file: IOCozyFile
@@ -33,12 +37,13 @@ const FavoriteListItem: FC<FavoriteListItemProps> = ({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   clickState: [lastClicked, setLastClicked]
 }) => {
+  const { isDesktop } = useBreakpoints()
   // Files that open in their own top-level route (notes, OnlyOffice, Excalidraw)
   // must not get the in-folder path prefix, or they resolve to a nested route
   // that matches nothing and renders a blank screen.
   const opensInOwnRoute =
     isNote(file) ||
-    isOnlyOfficeFile(file) ||
+    shouldOpenWithOnlyOffice(file, isOfficeEnabled(isDesktop)) ||
     (isExcalidrawEnabled() && isExcalidraw(file))
   const { link } = useFileLink(file, { forceFolderPath: !opensInOwnRoute })
   const { filename } = splitFilename(file)

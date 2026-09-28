@@ -9,7 +9,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { RemoveScroll } from 'react-remove-scroll'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 
-import { useClient, models } from 'cozy-client'
+import { useClient } from 'cozy-client'
 import Spinner from 'cozy-ui/transpiled/react/Spinner'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
@@ -25,7 +25,8 @@ import { ensureFileHasPath } from '@/components/FilesRealTimeQueries'
 import Fallback from '@/modules/viewer/Fallback'
 import {
   isOfficeEnabled,
-  makeOnlyOfficeFileRoute
+  makeOnlyOfficeFileRoute,
+  shouldOpenWithOnlyOffice
 } from '@/modules/views/OnlyOffice/helpers'
 import { buildFileOrFolderByIdQuery } from '@/queries'
 
@@ -36,6 +37,7 @@ const FileNotFoundError = translate()(({ t }) => (
 const FileOpener = props => {
   const navigate = useNavigate()
   const { isDesktop } = useBreakpoints()
+  const officeEnabled = isOfficeEnabled(isDesktop)
   const { t } = useI18n()
   const { fileId } = useParams()
   const { showAlert } = useAlert()
@@ -84,8 +86,8 @@ const FileOpener = props => {
     !loading &&
     !fileNotFound &&
     file &&
-    models.file.shouldBeOpenedByOnlyOffice(file) &&
-    isOfficeEnabled(isDesktop)
+    officeEnabled &&
+    shouldOpenWithOnlyOffice(file, officeEnabled)
   ) {
     return (
       <Navigate
@@ -109,7 +111,7 @@ const FileOpener = props => {
             renderFallbackExtraContent={file => <Fallback file={file} t={t} />}
             componentsProps={{
               OnlyOfficeViewer: {
-                isEnabled: isOfficeEnabled(isDesktop),
+                isEnabled: officeEnabled,
                 opener: file =>
                   navigate(
                     makeOnlyOfficeFileRoute(file.id, { driveId: file.driveId })

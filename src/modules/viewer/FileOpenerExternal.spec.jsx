@@ -90,7 +90,17 @@ describe('FileOpenerExternal', () => {
     expect(mockViewer).not.toHaveBeenCalled()
   })
 
-  it('renders the viewer for a non Office file', async () => {
+  it('redirects a PDF straight to OnlyOffice when Office is enabled', async () => {
+    setup({ file: pdfFile })
+
+    expect(await screen.findByText('OnlyOffice editor')).toBeInTheDocument()
+    expect(mockViewer).not.toHaveBeenCalled()
+  })
+
+  it('renders the viewer for a PDF when Office is disabled', async () => {
+    flag('drive.office.enabled', false)
+    flag('drive.office.touchScreen.enabled', false)
+
     setup({ file: pdfFile })
 
     expect(await screen.findByText('Viewer')).toBeInTheDocument()

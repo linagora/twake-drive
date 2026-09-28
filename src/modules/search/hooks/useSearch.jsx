@@ -1,12 +1,16 @@
 import { useState, useEffect, useMemo } from 'react'
 
 import { useClient } from 'cozy-client'
+import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import useDebounce from '@/hooks/useDebounce'
 import { indexFiles } from '@/modules/search/components/helpers'
+import { isOfficeEnabled } from '@/modules/views/OnlyOffice/helpers'
 
 const useSearch = (searchTerm, { limit = 10 } = {}) => {
   const client = useClient()
+  const { isDesktop } = useBreakpoints()
+  const officeEnabled = isOfficeEnabled(isDesktop)
   const [allSuggestions, setAllSuggestions] = useState([])
   const [suggestions, setSuggestions] = useState([])
   const [fuzzy, setFuzzy] = useState(null)
@@ -19,18 +23,20 @@ const useSearch = (searchTerm, { limit = 10 } = {}) => {
   })
 
   const makeIndexes = async () => {
-    if (fuzzy == null) {
-      setFuzzy(await indexFiles(client))
+    if (fuzzy?.officeEnabled !== officeEnabled) {
+      const index = await indexFiles(client, officeEnabled)
+      setFuzzy({ index, officeEnabled })
     }
   }
 
   useEffect(() => {
     const fetchSuggestions = async value => {
       setBusy(true)
-      let currentFuzzy = fuzzy
+      let currentFuzzy =
+        fuzzy?.officeEnabled === officeEnabled ? fuzzy.index : null
       if (currentFuzzy == null) {
-        currentFuzzy = await indexFiles(client)
-        setFuzzy(currentFuzzy)
+        currentFuzzy = await indexFiles(client, officeEnabled)
+        setFuzzy({ index: currentFuzzy, officeEnabled })
       }
       const suggestions = currentFuzzy.search(value).map(result => ({
         id: result.id,
@@ -56,7 +62,7 @@ const useSearch = (searchTerm, { limit = 10 } = {}) => {
       // eslint-disable-next-line react-hooks/immutability
       clearSuggestions()
     }
-  }, [client, debouncedSearchTerm, fuzzy, limit])
+  }, [client, debouncedSearchTerm, fuzzy, limit, officeEnabled])
 
   const hasSuggestions = useMemo(() => suggestions.length > 0, [suggestions])
 

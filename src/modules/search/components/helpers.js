@@ -3,7 +3,10 @@ import { models } from 'cozy-client'
 import { ROOT_DIR_ID, SHARED_DRIVES_DIR_ID } from '@/constants/config'
 import FuzzyPathSearch from '@/lib/FuzzyPathSearch.js'
 import { normalizeSearchText } from '@/lib/normalizeSearchText'
-import { makeOnlyOfficeFileRoute } from '@/modules/views/OnlyOffice/helpers'
+import {
+  makeOnlyOfficeFileRoute,
+  shouldOpenWithOnlyOffice
+} from '@/modules/views/OnlyOffice/helpers'
 
 export const TYPE_DIRECTORY = 'directory'
 
@@ -22,7 +25,12 @@ export const normalizeString = str =>
  * @param {IOCozyFile} file - file to normalize
  * @returns file with normalized field to be used in AutoSuggestion
  */
-export const makeNormalizedFile = (client, folders, file) => {
+export const makeNormalizedFile = (
+  client,
+  folders,
+  file,
+  officeEnabled = false
+) => {
   const isDir = file.type === TYPE_DIRECTORY
   const dirId = isDir ? file._id : file.dir_id
   const urlToFolder = `/folder/${dirId}`
@@ -40,7 +48,7 @@ export const makeNormalizedFile = (client, folders, file) => {
     if (models.file.isNote(file)) {
       url = `/n/${file.id}`
       openOn = 'notes'
-    } else if (models.file.shouldBeOpenedByOnlyOffice(file)) {
+    } else if (shouldOpenWithOnlyOffice(file, officeEnabled)) {
       url = makeOnlyOfficeFileRoute(file.id, {
         driveId: file.driveId,
         fromPathname: urlToFolder
@@ -76,7 +84,7 @@ export const makeNormalizedFile = (client, folders, file) => {
  *
  * @returns {Promise<void>} nothing
  */
-export const indexFiles = async client => {
+export const indexFiles = async (client, officeEnabled = false) => {
   const resp = await client
     .getStackClient()
     .fetchJSON(
@@ -103,7 +111,7 @@ export const indexFiles = async client => {
   )
 
   const normalizedFiles = normalizedFilesPrevious.map(file =>
-    makeNormalizedFile(client, folders, file)
+    makeNormalizedFile(client, folders, file, officeEnabled)
   )
 
   return new FuzzyPathSearch(normalizedFiles)
