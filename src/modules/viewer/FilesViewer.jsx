@@ -49,6 +49,7 @@ const FilesViewer = ({ filesQuery, files, onClose, onChange, viewerProps }) => {
   const navigate = useNavigate()
   const location = useLocation()
   const { driveId } = useParams()
+  const canEditPdfWithOnlyOffice = isOfficeEnabled(isDesktop)
 
   const handleOnClose = useCallback(() => {
     if (onClose) {
@@ -184,13 +185,19 @@ const FilesViewer = ({ filesQuery, files, onClose, onChange, viewerProps }) => {
                 )
             },
             PdfViewer: {
-              isPdfEditorEnabled: isPdfEditorEnabled(),
+              isPdfEditorEnabled:
+                canEditPdfWithOnlyOffice || isPdfEditorEnabled(),
               opener: file =>
                 navigate(
-                  makePdfRoute(file.id, {
-                    driveId: file.driveId,
-                    fromPathname: location.pathname
-                  })
+                  canEditPdfWithOnlyOffice
+                    ? makeOnlyOfficeFileRoute(file.id, {
+                        driveId: file.driveId,
+                        fromPathname: location.pathname
+                      })
+                    : makePdfRoute(file.id, {
+                        driveId: file.driveId,
+                        fromPathname: location.pathname
+                      })
                 )
             },
             toolbarProps: {
