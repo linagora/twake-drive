@@ -179,3 +179,37 @@ export const showSharingBanner = ({
     (isInSharedFolder ? window.history.length <= 1 : window.history.length <= 2)
   )
 }
+
+const MAX_GENERATED_TITLE_LENGTH = 100
+
+/**
+ * Makes a document title from its first complete sentence, or from its first
+ * paragraph once another one has been started
+ *
+ * @param {string} text - Plain text content of the document
+ * @returns {string|null} The title, or null when no sentence is complete yet
+ */
+export const makeTitleFromText = text => {
+  const match = text
+    .trimStart()
+    .match(/^(.*?)(?:[.!?…]+(?=\s|$)|\r?\n(?=\s*\S))/)
+  if (!match) return null
+
+  const title = Array.from(match[1].replace(/[\s/]+/g, ' ').trim())
+    .slice(0, MAX_GENERATED_TITLE_LENGTH)
+    .join('')
+    .trim()
+
+  return title || null
+}
+
+/**
+ * Checks if a file still has the name given at creation to text documents,
+ * including the " (2)" suffix added on name conflicts
+ *
+ * @param {string} fileName
+ * @param {string} untitledName - Localized name given at creation, without extension
+ * @returns {boolean}
+ */
+export const isUntitledFileName = (fileName, untitledName) =>
+  fileName.replace(/ \(\d+\)(?=\.docx$)/, '') === `${untitledName}.docx`

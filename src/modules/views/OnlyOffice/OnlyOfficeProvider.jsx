@@ -4,7 +4,8 @@ import React, {
   useMemo,
   useEffect,
   useContext,
-  useCallback
+  useCallback,
+  useRef
 } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
@@ -32,6 +33,7 @@ const OnlyOfficeProvider = ({
   const [searchParam] = useSearchParams()
   const { hasWriteAccess } = useSharingContext()
   const [isEditorReady, setIsEditorReady] = useState(false)
+  const docEditorRef = useRef(null)
   const [editorMode, setEditorMode] = useState(
     officeDefaultMode(isDesktop, isMobile)
   )
@@ -128,6 +130,7 @@ const OnlyOfficeProvider = ({
         isInSharedFolder,
         isEditorReady,
         setIsEditorReady,
+        docEditorRef,
         editorMode,
         setEditorMode,
         isEditorModeView,

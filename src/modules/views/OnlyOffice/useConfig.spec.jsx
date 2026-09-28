@@ -24,6 +24,12 @@ jest.mock('cozy-ui/transpiled/react/providers/Breakpoints', () => ({
   __esModule: true,
   default: jest.fn()
 }))
+jest.mock('twake-i18n', () => ({
+  useI18n: () => ({ t: key => key })
+}))
+jest.mock('@/modules/views/OnlyOffice/autoTitle', () => ({
+  makeAutoTitleEvents: () => ({})
+}))
 jest.mock('react-router-dom', () => ({
   useSearchParams: () => [new URLSearchParams()]
 }))
