@@ -52,6 +52,26 @@ client.plugins = {
   }
 }
 
+const pdfOfficeDocParam = {
+  data: {
+    ...officeDocParam.data,
+    class: 'pdf',
+    name: 'Contract.pdf',
+    attributes: {
+      ...officeDocParam.data.attributes,
+      onlyoffice: {
+        ...officeDocParam.data.attributes.onlyoffice,
+        documentType: 'pdf',
+        document: {
+          ...officeDocParam.data.attributes.onlyoffice.document,
+          fileType: 'pdf',
+          permissions: { edit: true }
+        }
+      }
+    }
+  }
+}
+
 const setup = ({
   isMobile = false,
   isEditorModeView = true,
@@ -148,6 +168,20 @@ describe('Editor', () => {
     expect(queryByTestId('onlyoffice-content-spinner')).toBeFalsy()
     expect(queryByTestId('onlyoffice-title')).toBeFalsy()
     expect(queryByTestId('ViewerForTest')).toBeTruthy()
+  })
+
+  it('should show the PDF viewer fallback when Office is disabled', () => {
+    useFetchJSON.mockReturnValue({
+      fetchStatus: 'loaded',
+      data: pdfOfficeDocParam
+    })
+    useQuery.mockReturnValue({ data: pdfOfficeDocParam.data })
+    isOfficeEnabled.mockReturnValue(false)
+
+    const { root } = setup()
+
+    expect(root.queryByTestId('onlyoffice-title')).toBeFalsy()
+    expect(root.queryByTestId('ViewerForTest')).toBeTruthy()
   })
 
   it('should show trashed banner when when the file has been deleted', () => {

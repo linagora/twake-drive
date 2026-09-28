@@ -8,6 +8,7 @@ import { officeDoc } from 'test/data'
 
 import { changeLocation } from '@/hooks/helpers'
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
+import { isOfficeEnabled } from '@/modules/views/OnlyOffice/helpers'
 import useConfig from '@/modules/views/OnlyOffice/useConfig'
 import { useEditorAuthor } from '@/modules/views/editor/useEditorAuthor'
 
@@ -51,6 +52,27 @@ const officeDocWithoutPublicName = {
   }
 }
 
+const pdfOfficeDoc = {
+  data: {
+    ...officeDoc,
+    class: 'pdf',
+    name: 'Contract.pdf',
+    attributes: {
+      ...officeDoc.attributes,
+      onlyoffice: {
+        ...officeDoc.attributes.onlyoffice,
+        documentType: 'pdf',
+        document: {
+          ...officeDoc.attributes.onlyoffice.document,
+          fileType: 'pdf',
+          title: 'Contract.pdf',
+          permissions: { edit: true }
+        }
+      }
+    }
+  }
+}
+
 const setup = ({
   data = officeDocWithoutPublicName,
   author = 'Bob',
@@ -83,6 +105,7 @@ const setup = ({
 describe('useConfig', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    isOfficeEnabled.mockReturnValue(true)
   })
 
   it('sets the OnlyOffice username from the resolved editor author, even when the office open response has no public_name', async () => {
@@ -101,6 +124,26 @@ describe('useConfig', () => {
     expect(result.current.config).toBeUndefined()
   })
 
+  it('preserves the editable PDF payload returned by the stack', async () => {
+    const { result } = setup({ data: pdfOfficeDoc })
+
+    await waitFor(() => expect(result.current.config).toBeDefined())
+
+    expect(result.current.config.docEditorConfig).toEqual(
+      expect.objectContaining({
+        documentType: 'pdf',
+        document: expect.objectContaining({
+          fileType: 'pdf',
+          permissions: { edit: true }
+        }),
+        editorConfig: expect.objectContaining({
+          mode: 'edit',
+          callbackUrl: officeDoc.attributes.onlyoffice.editor.callbackUrl
+        })
+      })
+    )
+  })
+
   it('forces a read-only Office config to view mode', async () => {
     const { result } = setup({ isReadOnly: true })
 
@@ -110,6 +153,26 @@ describe('useConfig', () => {
       result.current.config.docEditorConfig.document.permissions.edit
     ).toBe(false)
     expect(result.current.config.docEditorConfig.editorConfig.mode).toBe('view')
+  })
+
+  it('forces a read-only PDF config to view mode', async () => {
+    const { result } = setup({ data: pdfOfficeDoc, isReadOnly: true })
+
+    await waitFor(() => expect(result.current.config).toBeDefined())
+
+    expect(
+      result.current.config.docEditorConfig.document.permissions.edit
+    ).toBe(false)
+    expect(result.current.config.docEditorConfig.editorConfig.mode).toBe('view')
+  })
+
+  it('falls back when a PDF reaches OnlyOffice with Office disabled', async () => {
+    isOfficeEnabled.mockReturnValue(false)
+    const { result } = setup({ data: pdfOfficeDoc })
+
+    await waitFor(() => expect(result.current.status).toBe('error'))
+
+    expect(result.current.config).toBeUndefined()
   })
 
   it('sends a document the stack resolved elsewhere to its owner', async () => {

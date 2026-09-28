@@ -66,17 +66,22 @@ const useConfig = () => {
             redirectLink: currentSearchParams.get('redirectLink')
           })
         )
-      } else if (isOfficeEnabled(isDesktop)) {
-        // The editor reads the author from its config at mount, so wait for it.
-        if (isAuthorLoading) return
-
+      } else {
         const { attributes } = data.data
         const { onlyoffice } = attributes
+        if (!isOfficeEnabled(isDesktop)) {
+          setStatus('error')
+          return
+        }
+
+        // The editor reads the author from its config at mount, so wait for it.
+        if (isAuthorLoading) return
 
         setOfficeKey(onlyoffice.document.key)
 
         const serverUrl = onlyoffice.url
         const apiUrl = `${serverUrl}/web-apps/apps/api/documents/api.js`
+        const serverEditorConfig = onlyoffice.editorConfig ?? onlyoffice.editor
         const docEditorConfig = {
           // complete config doc : https://api.onlyoffice.com/editors/advanced
           document: isReadOnly
@@ -89,11 +94,9 @@ const useConfig = () => {
               }
             : onlyoffice.document,
           editorConfig: {
-            ...(onlyoffice.editorConfig ?? onlyoffice.editor),
+            ...serverEditorConfig,
             mode:
-              !isReadOnly &&
-              (onlyoffice.editorConfig?.mode ?? onlyoffice.editor?.mode) ===
-                'edit'
+              !isReadOnly && serverEditorConfig?.mode === 'edit'
                 ? editorMode
                 : 'view',
             user: { name: author },
@@ -109,8 +112,6 @@ const useConfig = () => {
         }
 
         setConfig({ serverUrl, apiUrl, docEditorConfig })
-      } else {
-        setStatus('error')
       }
     }
   }, [
