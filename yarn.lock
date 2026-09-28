@@ -12030,9 +12030,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cozy-search@file:./vendor/cozy-search-027838729.tgz::locator=cozy-drive%40workspace%3A.":
+"cozy-search@file:./vendor/cozy-search-bb0c19876.tgz::locator=cozy-drive%40workspace%3A.":
   version: 2.6.1
-  resolution: "cozy-search@file:./vendor/cozy-search-027838729.tgz#./vendor/cozy-search-027838729.tgz::hash=09b06a&locator=cozy-drive%40workspace%3A."
+  resolution: "cozy-search@file:./vendor/cozy-search-bb0c19876.tgz#./vendor/cozy-search-bb0c19876.tgz::hash=d234f7&locator=cozy-drive%40workspace%3A."
   dependencies:
     "@assistant-ui/react": "npm:^0.12.5"
     classnames: "npm:^2.5.1"
@@ -12057,7 +12057,7 @@ __metadata:
     react-dom: ">=18.0.0"
     react-router-dom: ^6.28.0
     twake-i18n: ">=0.3.0"
-  checksum: 10/6c0203bdbcf09cea23263fe6b0b83a1a1f7f8d3e87409ef79067f7ed8e1c10cc403fc2eed4c7e775f045db565df26a37878eeafa177938bcc5e9d51dc9e6289a
+  checksum: 10/0da8fc8b1ac2f5869b9be65c979f1e3f54fb59866782043364b0e7fb43661b09988a300f9be7d342e420c870ebe800836f4ef19aaa5a7c8309a6386914969547
   languageName: node
   linkType: hard
 
