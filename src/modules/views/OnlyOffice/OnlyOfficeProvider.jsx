@@ -1,7 +1,6 @@
 import React, {
   createContext,
   useState,
-  useMemo,
   useEffect,
   useContext,
   useCallback
@@ -31,10 +30,12 @@ const OnlyOfficeProvider = ({
   const { isDesktop, isMobile } = useBreakpoints()
   const [searchParam] = useSearchParams()
   const { hasWriteAccess } = useSharingContext()
+  const canWrite = !isReadOnly && hasWriteAccess(fileId, driveId)
   const [isEditorReady, setIsEditorReady] = useState(false)
-  const [editorMode, setEditorMode] = useState(
+  const [requestedEditorMode, setEditorMode] = useState(
     officeDefaultMode(isDesktop, isMobile)
   )
+  const editorMode = canWrite ? requestedEditorMode : 'view'
 
   const [hasFileDiverged, setFileDiverged] = useState(false)
   const [hasFileDeleted, setFileDeleted] = useState(false)
@@ -42,7 +43,7 @@ const OnlyOfficeProvider = ({
   const [isTrashed, setTrashed] = useState(false)
   const [hasBeenEdited, setHasBeenEdited] = useState(editorMode === 'edit')
 
-  const isEditorModeView = useMemo(() => editorMode === 'view', [editorMode])
+  const isEditorModeView = editorMode === 'view'
 
   const fileQuery = buildFileOrFolderByIdQuery(fileId)
   const fileResult = useQuery(fileQuery.definition, fileQuery.options)
@@ -83,7 +84,7 @@ const OnlyOfficeProvider = ({
   }, [client, fileId, handleFileUpdated])
 
   useEffect(() => {
-    if (!hasWriteAccess(fileId, driveId)) return
+    if (!canWrite) return
 
     if (
       isEditorModeView ||
@@ -93,7 +94,7 @@ const OnlyOfficeProvider = ({
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setEditorMode('edit')
     }
-  }, [searchParam, fileId, driveId, hasWriteAccess, isEditorModeView])
+  }, [searchParam, canWrite, isEditorModeView])
 
   useEffect(() => {
     if (fileResult.data?.trashed) {
@@ -122,7 +123,7 @@ const OnlyOfficeProvider = ({
         hasFileDeleted,
         setFileDeleted,
         isPublic,
-        isReadOnly,
+        isReadOnly: !canWrite,
         isFromSharing,
         username,
         isInSharedFolder,
