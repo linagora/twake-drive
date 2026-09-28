@@ -33,6 +33,7 @@ const LightFileViewer = ({ files, isPublic }) => {
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const { loading, isSharingShortcutCreated, addSharingLink } = sharingInfos
+  const canEditPdfWithOnlyOffice = isOfficeEnabled(isDesktop)
 
   const onlyOfficeOpener = useCallback(
     file => {
@@ -93,8 +94,9 @@ const LightFileViewer = ({ files, isPublic }) => {
               opener: onlyOfficeOpener
             },
             PdfViewer: {
-              isPdfEditorEnabled: isPdfEditorEnabled(),
-              opener: pdfOpener
+              isPdfEditorEnabled:
+                canEditPdfWithOnlyOffice || isPdfEditorEnabled(),
+              opener: canEditPdfWithOnlyOffice ? onlyOfficeOpener : pdfOpener
             },
             toolbarProps: {
               showToolbar: isDesktop,
