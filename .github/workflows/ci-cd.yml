@@ -41,10 +41,6 @@ jobs:
         uses: webfactory/ssh-agent@e83874834305fe9a4a2997156cb26c5de65a8555 # v0.10.0
         with:
           ssh-private-key: ${{ secrets.DOWNCLOUD_SSH_KEY }}
-      # The publication secrets are scoped to this step. Declared at workflow
-      # level they were also in the environment of `yarn install`, and so of
-      # every install script of every dependency, of the linter, of the tests
-      # and of the third-party actions above.
       - name: Publish
         if: github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/')
         run: yarn run cozyPublish --yes
