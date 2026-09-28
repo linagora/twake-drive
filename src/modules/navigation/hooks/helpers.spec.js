@@ -277,6 +277,82 @@ describe('computeFileType', () => {
     expect(computeFileType(file, { isOfficeEnabled: true })).toBe('onlyoffice')
   })
 
+  it('should return "onlyoffice" for PDFs when Office is enabled', () => {
+    const file = {
+      _id: 'pdf-1',
+      _type: 'io.cozy.files',
+      class: 'pdf',
+      mime: 'application/pdf',
+      name: 'contract.pdf',
+      type: 'file'
+    }
+
+    expect(computeFileType(file, { isOfficeEnabled: true })).toBe('onlyoffice')
+  })
+
+  it('should keep PDFs in the file viewer when Office is disabled', () => {
+    const file = {
+      _id: 'pdf-1',
+      _type: 'io.cozy.files',
+      class: 'pdf',
+      mime: 'application/pdf',
+      name: 'contract.pdf',
+      type: 'file'
+    }
+
+    expect(computeFileType(file, { isOfficeEnabled: false })).toBe('file')
+  })
+
+  it('should route a shared-drive PDF through OnlyOffice', () => {
+    const file = {
+      _id: 'pdf-1',
+      _type: 'io.cozy.files',
+      class: 'pdf',
+      mime: 'application/pdf',
+      name: 'contract.pdf',
+      type: 'file',
+      dir_id: 'shared-folder',
+      driveId: 'drive-1'
+    }
+
+    const type = computeFileType(file, { isOfficeEnabled: true })
+    makeOnlyOfficeFileRoute.mockReturnValue('/onlyoffice/drive-1/pdf-1')
+
+    expect(type).toBe('onlyoffice')
+    expect(
+      computePath(file, {
+        type,
+        pathname: '/shareddrive/drive-1/shared-folder',
+        isPublic: false
+      })
+    ).toBe('/onlyoffice/drive-1/pdf-1')
+  })
+
+  it('should route a file-root shared-drive PDF shortcut through OnlyOffice only when Office is enabled', () => {
+    const file = {
+      _id: 'shortcut-1',
+      name: 'contract.pdf',
+      mime: 'application/internet-shortcut',
+      class: 'shortcut',
+      dir_id: SHARED_DRIVES_DIR_ID,
+      _type: 'io.cozy.files',
+      type: 'file',
+      metadata: {
+        target: {
+          _type: 'io.cozy.files',
+          drive_root_type: DRIVE_ROOT_TYPE.FILE,
+          class: 'pdf',
+          mime: 'application/pdf'
+        }
+      }
+    }
+
+    expect(computeFileType(file, { isOfficeEnabled: true })).toBe('onlyoffice')
+    expect(computeFileType(file, { isOfficeEnabled: false })).toBe(
+      'shared-drive-root-file'
+    )
+  })
+
   it.each([
     {
       desc: 'should return "excalidraw" for .excalidraw files when Excalidraw is enabled',

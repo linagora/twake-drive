@@ -31,6 +31,7 @@ import {
   makeExcalidrawFileRoute
 } from '@/modules/views/Excalidraw/helpers'
 import { makeOnlyOfficeFileRoute } from '@/modules/views/OnlyOffice/helpers'
+import { isPdf } from '@/modules/views/Pdf/helpers'
 import {
   getSharingsSharedDrivePath,
   getSharingsSharedDriveRootFilePath,
@@ -105,15 +106,19 @@ export const computeFileType = (
     // extra `class` field is `unknown`; widen to `unknown` explicitly to
     // avoid the `no-unsafe-assignment` lint on the access below.
     const targetClass: unknown = file.metadata?.target?.['class']
+    const isOfficeClass =
+      targetClass === 'text' ||
+      targetClass === 'spreadsheet' ||
+      targetClass === 'slide'
     if (
-      (targetClass === 'text' ||
-        targetClass === 'spreadsheet' ||
-        targetClass === 'slide') &&
-      isOfficeEnabled
+      (isOfficeClass && isOfficeEnabled) ||
+      (targetClass === 'pdf' && isOfficeEnabled)
     ) {
       return 'onlyoffice'
     }
     return 'shared-drive-root-file'
+  } else if (isPdf(file) && isOfficeEnabled) {
+    return 'onlyoffice'
   } else if (shouldBeOpenedByOnlyOffice(file) && isOfficeEnabled) {
     // Load-bearing: this branch runs before `isFileRootSharedDrive` below, so
     // an Office file shared as a drive root routes through OnlyOffice (its own
