@@ -55,6 +55,10 @@ jest.mock('modules/views/OnlyOffice', () => {
 })
 
 describe('Public AppRouter', () => {
+  beforeEach(() => {
+    isOfficeEnabled.mockImplementation(() => true)
+  })
+
   // AppLike mounts a HashRouter: a pathname would leave every render on '/'.
   const setupRouter = ({ route = '/', data = {} } = {}) => {
     window.location.hash = `#${route}`
@@ -77,7 +81,14 @@ describe('Public AppRouter', () => {
     expect(screen.getByText('LightFileViewer')).toBeInTheDocument()
   })
 
-  const textDocument = { name: 'document.docs', type: 'file', class: 'text' }
+  const textDocument = {
+    id: 'doc-id',
+    _type: 'io.cozy.files',
+    name: 'document.docx',
+    type: 'file',
+    class: 'text',
+    mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  }
 
   it('should render onlyoffice view when accessing a document file with /', async () => {
     setupRouter({ data: textDocument })
@@ -89,6 +100,37 @@ describe('Public AppRouter', () => {
     setupRouter({ data: textDocument, route: '/onlyoffice/id' })
 
     expect(screen.getByText('OnlyOfficeView')).toBeInTheDocument()
+  })
+
+  it('should render OnlyOffice for a public PDF when Office is enabled', () => {
+    setupRouter({
+      data: {
+        id: 'pdf-id',
+        name: 'contract.pdf',
+        type: 'file',
+        class: 'pdf',
+        mime: 'application/pdf'
+      }
+    })
+
+    expect(screen.queryByText('OnlyOfficeView')).toBeInTheDocument()
+    expect(screen.queryByText('LightFileViewer')).toBe(null)
+  })
+
+  it('should keep the public PDF viewer when Office is disabled', () => {
+    isOfficeEnabled.mockImplementation(() => false)
+    setupRouter({
+      data: {
+        id: 'pdf-id',
+        name: 'contract.pdf',
+        type: 'file',
+        class: 'pdf',
+        mime: 'application/pdf'
+      }
+    })
+
+    expect(screen.queryByText('OnlyOfficeView')).toBe(null)
+    expect(screen.queryByText('LightFileViewer')).toBeInTheDocument()
   })
 
   it('should redirect onlyoffice route to file viewer if office is disabled', async () => {
