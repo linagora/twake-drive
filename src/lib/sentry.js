@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/react'
-import { useEffect } from 'react'
+import { createElement, useEffect } from 'react'
 import {
   Routes,
   useLocation,
@@ -47,5 +47,16 @@ export const initSentry = () => {
   })
 }
 
-// A no-op wrapper around Routes until initSentry has run.
-export const SentryRoutes = Sentry.withSentryReactRouterV6Routing(Routes)
+// withSentryReactRouterV6Routing reads module state that
+// reactRouterV6BrowserTracingIntegration only fills during Sentry.init, and
+// returns the plain Routes when it is missing. Wrapping at import time would
+// bind the unwrapped Routes for good, since this module is imported before
+// initSentry runs. Wrapping on first render happens after it.
+let wrappedRoutes = null
+
+export const SentryRoutes = props => {
+  if (!wrappedRoutes) {
+    wrappedRoutes = Sentry.withSentryReactRouterV6Routing(Routes)
+  }
+  return createElement(wrappedRoutes, props)
+}

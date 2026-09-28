@@ -44,11 +44,17 @@ const redactRequest = request => {
   }
 }
 
+// The browser tracing integration records a request URL twice: `url` as
+// given, and `http.url` resolved against the origin by getFullURL, which keeps
+// the query string. Redacting only `url` leaves the secret in `http.url`.
+// `from` and `to` carry navigation breadcrumbs.
+const URL_KEYS = ['url', 'http.url', 'from', 'to']
+
 const redactBreadcrumbData = data => {
   if (!data) return
-  if (data.url) data.url = redactUrl(data.url)
-  if (data.from) data.from = redactUrl(data.from)
-  if (data.to) data.to = redactUrl(data.to)
+  URL_KEYS.forEach(key => {
+    if (data[key]) data[key] = redactUrl(data[key])
+  })
 }
 
 /**
@@ -68,7 +74,9 @@ export const redactEvent = event => {
   })
 
   event.spans?.forEach(span => {
+    // The span label is `${method} ${url}`, so it carries the URL too.
     if (span.description) span.description = redactUrl(span.description)
+    if (span.name) span.name = redactUrl(span.name)
     redactBreadcrumbData(span.data)
   })
 
