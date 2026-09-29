@@ -27,6 +27,8 @@ jobs:
           node-version-file: '.nvmrc'
       - name: Install dependencies
         run: yarn install --immutable
+      - name: Audit dependencies
+        run: yarn npm audit --recursive --severity high --environment production
       - name: Lint
         run: yarn lint
       - name: Test
