@@ -99,12 +99,13 @@ const useConfig = () => {
           documentType: onlyoffice.documentType,
           events: {
             onAppReady: () => setIsEditorReady(true),
-            ...makeAutoTitleEvents({
-              client,
-              docEditorRef,
-              fileId,
-              untitledName: t('OnlyOffice.createFileName.text')
-            })
+            ...(currentSearchParams.get('fromCreate') === 'true' &&
+              makeAutoTitleEvents({
+                client,
+                docEditorRef,
+                fileId,
+                untitledName: t('OnlyOffice.createFileName.text')
+              }))
           }
         }
 
