@@ -1,0 +1,8 @@
+/*!
+
+pica
+https://github.com/nodeca/pica
+
+*/
+
+/*! image-blob-reduce 3.0.1 https://github.com/nodeca/image-blob-reduce @license MIT */
