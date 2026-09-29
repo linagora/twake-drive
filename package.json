@@ -150,6 +150,6 @@
   },
   "packageManager": "yarn@4.17.0",
   "resolutions": {
-    "cozy-search": "file:./vendor/cozy-search-11384e225.tgz"
+    "cozy-search": "file:./vendor/cozy-search-39cfeb7ad.tgz"
   }
 }
