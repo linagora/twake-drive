@@ -16,7 +16,7 @@ import { useRedirectLink } from '@/hooks/useRedirectLink'
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
 import { buildFileOrFolderByIdQuery } from '@/queries'
 
-const Error = () => {
+const FallbackViewer = () => {
   const { t } = useI18n()
   const { fileId, isPublic } = useOnlyOfficeContext()
   const { redirectBack } = useRedirectLink({ isPublic })
@@ -53,4 +53,4 @@ const Error = () => {
   )
 }
 
-export default React.memo(Error)
+export default React.memo(FallbackViewer)
