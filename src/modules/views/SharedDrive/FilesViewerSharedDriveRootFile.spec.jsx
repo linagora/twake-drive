@@ -154,7 +154,14 @@ describe('FilesViewerSharedDriveRootFile', () => {
     expect(mockFilesViewer).not.toHaveBeenCalled()
   })
 
-  describe('office documents', () => {
+  describe('office routing', () => {
+    const pdf = {
+      _id: 'canonical-id',
+      id: 'canonical-id',
+      type: 'file',
+      class: 'pdf',
+      name: 'document.pdf'
+    }
     const deck = {
       _id: 'canonical-id',
       id: 'canonical-id',
@@ -182,6 +189,28 @@ describe('FilesViewerSharedDriveRootFile', () => {
 
       expect(mockNavigateElement).not.toHaveBeenCalled()
       expect(screen.getByText('files-viewer')).toBeInTheDocument()
+    })
+
+    it('opens a deep-linked PDF in OnlyOffice when office is enabled', () => {
+      mockIsOfficeEnabled.mockReturnValue(true)
+
+      renderRootFileViewer({ fetchedFile: pdf })
+
+      expect(screen.getByText('navigate')).toBeInTheDocument()
+      expect(mockNavigateElement).toHaveBeenCalledWith({
+        to: '/onlyoffice/drive-1/canonical-id?redirectLink=drive%23%2Fsharings%2Fdrives',
+        replace: true
+      })
+      expect(screen.queryByText('files-viewer')).toBe(null)
+    })
+
+    it('keeps the PDF viewer when office is disabled', () => {
+      mockIsOfficeEnabled.mockReturnValue(false)
+
+      renderRootFileViewer({ fetchedFile: pdf })
+
+      expect(screen.getByText('files-viewer')).toBeInTheDocument()
+      expect(screen.queryByText('navigate')).toBe(null)
     })
   })
 })
