@@ -181,21 +181,37 @@ export const showSharingBanner = ({
 }
 
 const MAX_GENERATED_TITLE_LENGTH = 100
+const SENTENCE_END = /[.!?…]+(["'”’»)\]]*)(?=\s|$)|\r?\n(?=\s*\S)/g
+
+function isAbbreviation(word) {
+  return word.length <= 2 || word.includes('.') || /^\d+$/.test(word)
+}
+
+function findFirstSentence(text) {
+  for (const match of text.matchAll(SENTENCE_END)) {
+    const sentence = text.slice(0, match.index)
+    const closing = match[1]
+    const isParagraphEnd = closing === undefined
+    if (isParagraphEnd || !isAbbreviation(sentence.split(/\s+/).pop())) {
+      return sentence + (closing ?? '')
+    }
+  }
+  return null
+}
 
 /**
  * Makes a document title from its first complete sentence, or from its first
- * paragraph once another one has been started
+ * paragraph once another one has been started. Periods after numbers, initials
+ * and short abbreviations ("1.", "Dr.", "U.S.") do not end a sentence.
  *
  * @param {string} text - Plain text content of the document
  * @returns {string|null} The title, or null when no sentence is complete yet
  */
 export const makeTitleFromText = text => {
-  const match = text
-    .trimStart()
-    .match(/^(.*?)(?:[.!?…]+(?=\s|$)|\r?\n(?=\s*\S))/)
-  if (!match) return null
+  const sentence = findFirstSentence(text.trimStart())
+  if (sentence === null) return null
 
-  const title = Array.from(match[1].replace(/[\s/]+/g, ' ').trim())
+  const title = Array.from(sentence.replace(/[\s/]+/g, ' ').trim())
     .slice(0, MAX_GENERATED_TITLE_LENGTH)
     .join('')
     .trim()

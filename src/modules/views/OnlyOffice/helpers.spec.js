@@ -146,6 +146,23 @@ describe('makeTitleFromText', () => {
     expect(makeTitleFromText('Is it done?! Yes')).toBe('Is it done')
   })
 
+  it('should not end a sentence after a number, an initial or a short abbreviation', () => {
+    expect(makeTitleFromText('1. Introduction\r\nBody')).toBe('1. Introduction')
+    expect(makeTitleFromText('Dr. Smith is here. Next')).toBe(
+      'Dr. Smith is here'
+    )
+    expect(makeTitleFromText('The U.S. market grows. Next')).toBe(
+      'The U.S. market grows'
+    )
+  })
+
+  it('should keep the closing quote or bracket of the sentence', () => {
+    expect(makeTitleFromText('He said "hello." Then')).toBe('He said "hello"')
+    expect(makeTitleFromText('Draft (to review.) Then')).toBe(
+      'Draft (to review)'
+    )
+  })
+
   it('should use the first paragraph once another one is started', () => {
     expect(makeTitleFromText('Roadmap\r\n\r\nQ1 goals')).toBe('Roadmap')
   })
