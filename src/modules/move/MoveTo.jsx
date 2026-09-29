@@ -236,7 +236,9 @@ export function MoveTo({
             initialLocation={initialLocation}
             availableSections={MOVE_TO_SECTIONS}
             renderHeader={headerProps => (
-              <FilePickerHeaderTabs {...headerProps} />
+              <header className="u-pl-1">
+                <FilePickerHeaderTabs {...headerProps} />
+              </header>
             )}
             displayedTypes={MOVE_TO_DISPLAYED_TYPES}
             selectableTypes={[]}
