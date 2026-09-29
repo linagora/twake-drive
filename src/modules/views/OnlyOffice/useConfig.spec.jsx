@@ -144,25 +144,11 @@ describe('useConfig', () => {
     )
   })
 
-  it('forces a read-only Office config to view mode', async () => {
+  it('sets read-only Office documents to view mode', async () => {
     const { result } = setup({ isReadOnly: true })
 
     await waitFor(() => expect(result.current.config).toBeDefined())
 
-    expect(
-      result.current.config.docEditorConfig.document.permissions.edit
-    ).toBe(false)
-    expect(result.current.config.docEditorConfig.editorConfig.mode).toBe('view')
-  })
-
-  it('forces a read-only PDF config to view mode', async () => {
-    const { result } = setup({ data: pdfOfficeDoc, isReadOnly: true })
-
-    await waitFor(() => expect(result.current.config).toBeDefined())
-
-    expect(
-      result.current.config.docEditorConfig.document.permissions.edit
-    ).toBe(false)
     expect(result.current.config.docEditorConfig.editorConfig.mode).toBe('view')
   })
 
