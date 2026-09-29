@@ -3,7 +3,7 @@ import React, { useEffect, useCallback, useState } from 'react'
 
 import Spinner from 'cozy-ui/transpiled/react/Spinner'
 
-import Error from '@/modules/views/OnlyOffice/Error'
+import FallbackViewer from '@/modules/views/OnlyOffice/FallbackViewer'
 import OnlyOfficeAIAssistantPanel from '@/modules/views/OnlyOffice/OnlyOfficeAIAssistantPanel'
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
 import { FRAME_EDITOR_NAME } from '@/modules/views/OnlyOffice/config'
@@ -49,7 +49,7 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
     }
   }, [isEditorReady])
 
-  if (isError) return <Error />
+  if (isError) return <FallbackViewer />
 
   return (
     <>

@@ -70,7 +70,7 @@ const useConfig = () => {
         const { attributes } = data.data
         const { onlyoffice } = attributes
         if (!isOfficeEnabled(isDesktop)) {
-          setStatus('error')
+          setStatus('viewer')
           return
         }
 

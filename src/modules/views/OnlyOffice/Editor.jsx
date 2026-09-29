@@ -5,7 +5,7 @@ import flag from 'cozy-flags'
 import { DialogContent } from 'cozy-ui/transpiled/react/Dialog'
 import ViewerProvider from 'cozy-viewer/dist/providers/ViewerProvider'
 
-import Error from '@/modules/views/OnlyOffice/Error'
+import FallbackViewer from '@/modules/views/OnlyOffice/FallbackViewer'
 import Loading from '@/modules/views/OnlyOffice/Loading'
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
 import Title from '@/modules/views/OnlyOffice/Title'
@@ -39,7 +39,7 @@ export const Editor = () => {
     isPublic
   } = useOnlyOfficeContext()
 
-  if (status === 'error') return <Error />
+  if (status === 'error' || status === 'viewer') return <FallbackViewer />
   if (status !== 'loaded' || !config) return <Loading />
 
   const { serverUrl, apiUrl, docEditorConfig } = config

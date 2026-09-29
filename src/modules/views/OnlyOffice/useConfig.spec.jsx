@@ -152,11 +152,11 @@ describe('useConfig', () => {
     expect(result.current.config.docEditorConfig.editorConfig.mode).toBe('view')
   })
 
-  it('falls back when a PDF reaches OnlyOffice with Office disabled', async () => {
+  it('selects the viewer without treating disabled Office as an error', async () => {
     isOfficeEnabled.mockReturnValue(false)
     const { result } = setup({ data: pdfOfficeDoc })
 
-    await waitFor(() => expect(result.current.status).toBe('error'))
+    await waitFor(() => expect(result.current.status).toBe('viewer'))
 
     expect(result.current.config).toBeUndefined()
   })
