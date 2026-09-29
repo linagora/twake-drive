@@ -84,15 +84,7 @@ const useConfig = () => {
         const serverEditorConfig = onlyoffice.editorConfig ?? onlyoffice.editor
         const docEditorConfig = {
           // complete config doc : https://api.onlyoffice.com/editors/advanced
-          document: isReadOnly
-            ? {
-                ...onlyoffice.document,
-                permissions: {
-                  ...onlyoffice.document.permissions,
-                  edit: false
-                }
-              }
-            : onlyoffice.document,
+          document: onlyoffice.document,
           editorConfig: {
             ...serverEditorConfig,
             mode:
