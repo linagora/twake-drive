@@ -6,7 +6,9 @@ import useFetchJSON from 'cozy-client/dist/hooks/useFetchJSON'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import { changeLocation } from '@/hooks/helpers'
+import logger from '@/lib/logger'
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
+import { makeOfficeApiUrl } from '@/modules/views/OnlyOffice/apiUrl'
 import { isOfficeEnabled } from '@/modules/views/OnlyOffice/helpers'
 import {
   makePublicEditorUrl,
@@ -50,59 +52,75 @@ const useConfig = () => {
   }, [isEditorModeView])
 
   useEffect(() => {
-    if (!isQueryLoading(queryResult) && fetchStatus !== 'error' && !config) {
-      if (shouldBeOpenedOnOtherInstance(data, instanceUri)) {
-        // No hash: the public page routes to the editor from these two params.
-        const { document_id } = data.data.attributes
+    if (isQueryLoading(queryResult) || fetchStatus === 'error' || config) return
 
-        changeLocation(
-          makePublicEditorUrl({
-            attributes: data.data.attributes,
-            searchParams: [
-              ['isOnlyOfficeDocShared', true],
-              ['onlyOfficeDocId', document_id]
-            ],
-            redirectLink: currentSearchParams.get('redirectLink')
-          })
-        )
-      } else if (isOfficeEnabled(isDesktop)) {
-        // The editor reads the author from its config at mount, so wait for it.
-        if (isAuthorLoading) return
+    if (shouldBeOpenedOnOtherInstance(data, instanceUri)) {
+      // No hash: the public page routes to the editor from these two params.
+      const { document_id } = data.data.attributes
 
-        const { attributes } = data.data
-        const { onlyoffice } = attributes
+      changeLocation(
+        makePublicEditorUrl({
+          attributes: data.data.attributes,
+          searchParams: [
+            ['isOnlyOfficeDocShared', true],
+            ['onlyOfficeDocId', document_id]
+          ],
+          redirectLink: currentSearchParams.get('redirectLink')
+        })
+      )
 
-        setOfficeKey(onlyoffice.document.key)
+      return
+    }
 
-        const serverUrl = onlyoffice.url
-        const apiUrl = `${serverUrl}/web-apps/apps/api/documents/api.js`
-        const docEditorConfig = {
-          // complete config doc : https://api.onlyoffice.com/editors/advanced
-          document: onlyoffice.document,
-          editorConfig: {
-            ...(onlyoffice.editorConfig ?? onlyoffice.editor),
-            mode:
-              (onlyoffice.editorConfig?.mode ?? onlyoffice.editor?.mode) ===
-              'edit'
-                ? editorMode
-                : 'view',
-            user: { name: author },
-            customization: {
-              reviewDisplay: 'markup'
-            }
-          },
-          token: onlyoffice.token,
-          documentType: onlyoffice.documentType,
-          events: {
-            onAppReady: () => setIsEditorReady(true)
-          }
+    if (!isOfficeEnabled(isDesktop)) {
+      setStatus('error')
+      return
+    }
+
+    // The editor reads the author from its config at mount, so wait for it.
+    if (isAuthorLoading) return
+
+    const { onlyoffice } = data.data.attributes
+
+    setOfficeKey(onlyoffice.document.key)
+
+    const apiUrl = makeOfficeApiUrl(onlyoffice.url)
+    if (!apiUrl) {
+      logger.error(
+        'Refusing the OnlyOffice server URL returned by the open route'
+      )
+      setStatus('error')
+      return
+    }
+
+    const docEditorConfig = {
+      // complete config doc : https://api.onlyoffice.com/editors/advanced
+      document: onlyoffice.document,
+      editorConfig: {
+        ...(onlyoffice.editorConfig ?? onlyoffice.editor),
+        mode:
+          (onlyoffice.editorConfig?.mode ?? onlyoffice.editor?.mode) === 'edit'
+            ? editorMode
+            : 'view',
+        user: { name: author },
+        customization: {
+          reviewDisplay: 'markup'
         }
-
-        setConfig({ serverUrl, apiUrl, docEditorConfig })
-      } else {
-        setStatus('error')
+      },
+      token: onlyoffice.token,
+      documentType: onlyoffice.documentType,
+      events: {
+        onAppReady: () => setIsEditorReady(true)
       }
     }
+
+    // Derived from the validated URL, so the editor never sees the raw value
+    // returned by the open route.
+    setConfig({
+      serverUrl: new URL(apiUrl).origin,
+      apiUrl,
+      docEditorConfig
+    })
   }, [
     editorMode,
     queryResult,
