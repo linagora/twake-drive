@@ -2,7 +2,6 @@ import React, { useMemo } from 'react'
 import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
 
 import { hasQueryBeenLoaded, useQuery } from 'cozy-client'
-import { shouldBeOpenedByOnlyOffice } from 'cozy-client/dist/models/file'
 import { useSharingContext } from 'cozy-sharing'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
@@ -15,7 +14,8 @@ import {
 import FilesViewer from '@/modules/viewer/FilesViewer'
 import {
   isOfficeEnabled,
-  makeOnlyOfficeFileRoute
+  makeOnlyOfficeFileRoute,
+  shouldOpenWithOnlyOffice
 } from '@/modules/views/OnlyOffice/helpers'
 import {
   getSharingsRootRoute,
@@ -93,7 +93,7 @@ const FilesViewerSharedDriveRootFileWrapper = () => {
     return <FilesViewerLoading />
   }
 
-  if (isOfficeEnabled(isDesktop) && shouldBeOpenedByOnlyOffice(file)) {
+  if (isOfficeEnabled(isDesktop) && shouldOpenWithOnlyOffice(file, true)) {
     return (
       <Navigate
         to={makeOnlyOfficeFileRoute(file._id, {
