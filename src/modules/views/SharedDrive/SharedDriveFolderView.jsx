@@ -2,7 +2,7 @@ import React, { useMemo, useContext, useEffect } from 'react'
 import { useDispatch } from 'react-redux'
 import { Outlet, useParams, useNavigate, useLocation } from 'react-router-dom'
 
-import { useClient, useQuery } from 'cozy-client'
+import { hasQueryBeenLoaded, useClient, useQuery } from 'cozy-client'
 import flag from 'cozy-flags'
 import { useSharingContext } from 'cozy-sharing'
 import { makeActions } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
@@ -10,6 +10,7 @@ import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import { useI18n } from 'twake-i18n'
 
+import Oops from '@/components/Error/Oops'
 import useHead from '@/components/useHead'
 import { useClipboardContext } from '@/contexts/ClipboardProvider'
 import { useDisplayedFolder, useFolderSort } from '@/hooks'
@@ -31,6 +32,7 @@ import { personalizeFolder } from '@/modules/actions/components/personalizeFolde
 import AddMenuProvider from '@/modules/drive/AddMenu/AddMenuProvider'
 import FabWithAddMenuContext from '@/modules/drive/FabWithAddMenuContext'
 import Toolbar from '@/modules/drive/Toolbar'
+import FileListRowsPlaceholder from '@/modules/filelist/FileListRowsPlaceholder'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 import { SharedDriveBreadcrumb } from '@/modules/shareddrives/components/SharedDriveBreadcrumb'
 import { SharedDriveFolderBody } from '@/modules/shareddrives/components/SharedDriveFolderBody'
@@ -43,14 +45,11 @@ import FolderViewHeader from '@/modules/views/Folder/FolderViewHeader'
 import FolderViewBodyVz from '@/modules/views/Folder/virtualized/FolderViewBody'
 import { buildSharedDriveIdQuery } from '@/queries'
 
-const SharedDriveFolderView = () => {
+function SharedDriveFolderViewContent({ sharing, driveId, folderId }) {
   const client = useClient()
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const { isMobile } = useBreakpoints()
-  const params = useParams()
-  useHead()
-  const { driveId, folderId } = params
   const sharingContext = useSharingContext()
   const { isOwner, byDocId, hasWriteAccess, refresh, allLoaded } =
     sharingContext
@@ -59,11 +58,6 @@ const SharedDriveFolderView = () => {
   const { t } = useI18n()
   const { showAlert } = useAlert()
   const dispatch = useDispatch()
-  const sharingQuery = buildSharedDriveIdQuery({ driveId })
-  const { data: sharing } = useQuery(
-    sharingQuery.definition,
-    sharingQuery.options
-  )
   const isInRootOfSharedDrive = getFolderIdFromSharing(sharing) === folderId
   const { isFabDisplayed, setIsFabDisplayed } = useContext(FabContext)
   const { isSelectionBarVisible } = useSelectionContext()
@@ -234,6 +228,42 @@ const SharedDriveFolderView = () => {
         )}
       </DropzoneComp>
     </FolderView>
+  )
+}
+
+function SharedDriveFolderView() {
+  const { driveId, folderId } = useParams()
+  useHead()
+
+  const sharingQuery = buildSharedDriveIdQuery({ driveId })
+  const sharingResult = useQuery(sharingQuery.definition, sharingQuery.options)
+
+  if (sharingResult.fetchStatus === 'failed') {
+    return (
+      <FolderView>
+        <Oops />
+      </FolderView>
+    )
+  }
+
+  if (!hasQueryBeenLoaded(sharingResult)) {
+    return (
+      <FolderView>
+        <FileListRowsPlaceholder />
+      </FolderView>
+    )
+  }
+
+  if (!sharingResult.data) {
+    return <FolderView isNotFound />
+  }
+
+  return (
+    <SharedDriveFolderViewContent
+      sharing={sharingResult.data}
+      driveId={driveId}
+      folderId={folderId}
+    />
   )
 }
 
