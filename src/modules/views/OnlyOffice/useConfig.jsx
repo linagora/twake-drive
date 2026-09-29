@@ -4,9 +4,11 @@ import { useSearchParams } from 'react-router-dom'
 import { useClient, isQueryLoading } from 'cozy-client'
 import useFetchJSON from 'cozy-client/dist/hooks/useFetchJSON'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
+import { useI18n } from 'twake-i18n'
 
 import { changeLocation } from '@/hooks/helpers'
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
+import { makeAutoTitleEvents } from '@/modules/views/OnlyOffice/autoTitle'
 import { isOfficeEnabled } from '@/modules/views/OnlyOffice/helpers'
 import {
   makePublicEditorUrl,
@@ -19,12 +21,14 @@ const useConfig = () => {
     fileId,
     driveId,
     setIsEditorReady,
+    docEditorRef,
     isPublic,
     editorMode,
     isEditorModeView,
     setOfficeKey
   } = useOnlyOfficeContext()
   const client = useClient()
+  const { t } = useI18n()
   const instanceUri = client.getStackClient().uri
   const [currentSearchParams] = useSearchParams()
   const { author, isLoading: isAuthorLoading } = useEditorAuthor({ isPublic })
@@ -94,7 +98,14 @@ const useConfig = () => {
           token: onlyoffice.token,
           documentType: onlyoffice.documentType,
           events: {
-            onAppReady: () => setIsEditorReady(true)
+            onAppReady: () => setIsEditorReady(true),
+            ...(currentSearchParams.get('fromCreate') === 'true' &&
+              makeAutoTitleEvents({
+                client,
+                docEditorRef,
+                fileId,
+                untitledName: t('OnlyOffice.createFileName.text')
+              }))
           }
         }
 
@@ -117,7 +128,11 @@ const useConfig = () => {
     instanceUri,
     isDesktop,
     currentSearchParams,
-    setOfficeKey
+    setOfficeKey,
+    client,
+    docEditorRef,
+    fileId,
+    t
   ])
 
   return { config, status }

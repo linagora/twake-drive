@@ -16,12 +16,15 @@ const forceIframeHeight = value => {
 const View = ({ id, apiUrl, docEditorConfig }) => {
   const [isError, setIsError] = useState(false)
 
-  const { isEditorReady } = useOnlyOfficeContext()
+  const { isEditorReady, docEditorRef } = useOnlyOfficeContext()
 
   const initEditor = useCallback(() => {
-    new window.DocsAPI.DocEditor('onlyOfficeEditor', docEditorConfig)
+    docEditorRef.current = new window.DocsAPI.DocEditor(
+      'onlyOfficeEditor',
+      docEditorConfig
+    )
     forceIframeHeight('0')
-  }, [docEditorConfig])
+  }, [docEditorConfig, docEditorRef])
 
   const handleError = useCallback(() => {
     const scriptNode = document.getElementById(id)

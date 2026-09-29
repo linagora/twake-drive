@@ -1,4 +1,6 @@
 import {
+  isUntitledFileName,
+  makeTitleFromText,
   showCreateCozyButton,
   showSharingBanner
 } from '@/modules/views/OnlyOffice/helpers'
@@ -133,5 +135,73 @@ describe('showSharingBanner', () => {
         })
       ).toBe(false)
     })
+  })
+})
+
+describe('makeTitleFromText', () => {
+  it('should use the first complete sentence without its punctuation', () => {
+    expect(makeTitleFromText('\uFEFF  Meeting notes. Second sentence')).toBe(
+      'Meeting notes'
+    )
+    expect(makeTitleFromText('Is it done?! Yes')).toBe('Is it done')
+  })
+
+  it('should not end a sentence after a number, an initial or a short abbreviation', () => {
+    expect(makeTitleFromText('1. Introduction\r\nBody')).toBe('1. Introduction')
+    expect(makeTitleFromText('Dr. Smith is here. Next')).toBe(
+      'Dr. Smith is here'
+    )
+    expect(makeTitleFromText('The U.S. market grows. Next')).toBe(
+      'The U.S. market grows'
+    )
+  })
+
+  it('should keep the closing quote or bracket of the sentence', () => {
+    expect(makeTitleFromText('He said "hello." Then')).toBe('He said "hello"')
+    expect(makeTitleFromText('Draft (to review.) Then')).toBe(
+      'Draft (to review)'
+    )
+  })
+
+  it('should use the first paragraph once another one is started', () => {
+    expect(makeTitleFromText('Roadmap\r\n\r\nQ1 goals')).toBe('Roadmap')
+  })
+
+  it('should wait for the first sentence to be complete', () => {
+    expect(makeTitleFromText('Roadmap in progr')).toBe(null)
+    expect(makeTitleFromText('Roadmap\r\n')).toBe(null)
+    expect(makeTitleFromText('Version 1.5 of')).toBe(null)
+  })
+
+  it('should not make a title from an empty document', () => {
+    expect(makeTitleFromText('')).toBe(null)
+    expect(makeTitleFromText(' \r\n\r\n')).toBe(null)
+    expect(makeTitleFromText('... next')).toBe(null)
+  })
+
+  it('should make a valid file name of at most 100 characters', () => {
+    expect(makeTitleFromText('Pros and/or  cons.')).toBe('Pros and or cons')
+    expect(makeTitleFromText(`${'a'.repeat(150)}.`)).toBe('a'.repeat(100))
+  })
+})
+
+describe('isUntitledFileName', () => {
+  it('should match the name given at creation', () => {
+    expect(
+      isUntitledFileName('New text document.docx', 'New text document')
+    ).toBe(true)
+    expect(
+      isUntitledFileName('New text document (2).docx', 'New text document')
+    ).toBe(true)
+  })
+
+  it('should not match a renamed file', () => {
+    expect(isUntitledFileName('Roadmap.docx', 'New text document')).toBe(false)
+    expect(
+      isUntitledFileName('New text document v2.docx', 'New text document')
+    ).toBe(false)
+    expect(
+      isUntitledFileName('New text document.odt', 'New text document')
+    ).toBe(false)
   })
 })

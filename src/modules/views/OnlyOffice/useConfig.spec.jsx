@@ -24,8 +24,15 @@ jest.mock('cozy-ui/transpiled/react/providers/Breakpoints', () => ({
   __esModule: true,
   default: jest.fn()
 }))
+jest.mock('twake-i18n', () => ({
+  useI18n: () => ({ t: key => key })
+}))
+jest.mock('@/modules/views/OnlyOffice/autoTitle', () => ({
+  makeAutoTitleEvents: () => ({ onDownloadAs: jest.fn() })
+}))
+let mockSearchParams = new URLSearchParams()
 jest.mock('react-router-dom', () => ({
-  useSearchParams: () => [new URLSearchParams()]
+  useSearchParams: () => [mockSearchParams]
 }))
 jest.mock('@/modules/views/OnlyOffice/OnlyOfficeProvider', () => ({
   useOnlyOfficeContext: jest.fn()
@@ -55,8 +62,10 @@ const setup = ({
   data = officeDocWithoutPublicName,
   author = 'Bob',
   isAuthorLoading = false,
-  isPublic = false
+  isPublic = false,
+  searchParams = ''
 } = {}) => {
+  mockSearchParams = new URLSearchParams(searchParams)
   useClient.mockReturnValue({
     getStackClient: () => ({ uri: 'https://bob.cozy.example' })
   })
@@ -122,5 +131,19 @@ describe('useConfig', () => {
         'https://alice-drive.cozy.example/public/?sharecode=abc123&isOnlyOfficeDocShared=true&onlyOfficeDocId=owner-file-id&username=Bob#/'
       )
     )
+  })
+
+  it('renames the document after its first sentence only when it has just been created', async () => {
+    const { result } = setup({ searchParams: 'fromCreate=true' })
+    await waitFor(() => expect(result.current.config).toBeDefined())
+    expect(
+      result.current.config.docEditorConfig.events.onDownloadAs
+    ).toBeDefined()
+
+    const { result: openedResult } = setup()
+    await waitFor(() => expect(openedResult.current.config).toBeDefined())
+    expect(
+      openedResult.current.config.docEditorConfig.events.onDownloadAs
+    ).toBeUndefined()
   })
 })
