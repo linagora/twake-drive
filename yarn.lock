@@ -11654,24 +11654,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cozy-doctypes@npm:^1.99.1":
-  version: 1.99.1
-  resolution: "cozy-doctypes@npm:1.99.1"
-  dependencies:
-    cozy-logger: "npm:^1.18.1"
-    date-fns: "npm:^1.30.1"
-    es6-promise-pool: "npm:^2.5.0"
-    lodash: "npm:^4.17.21"
-    prop-types: "npm:^15.7.2"
-  peerDependencies:
-    "@babel/runtime": ">=7.12.5"
-    cozy-client: ">=13.15.1"
-    cozy-flags: ">=2.3.5"
-    cozy-stack-client: ">=13.15.1"
-  checksum: 10/4908fc76388add8c789e9c6208580ec1ac65661730d0ea804d400b9af3994dcba96e22b8653a0c8b28b545319c8e10b67acf56d10a7480f238cf06dafb136013
-  languageName: node
-  linkType: hard
-
 "cozy-drive@workspace:.":
   version: 0.0.0-use.local
   resolution: "cozy-drive@workspace:."
@@ -11719,7 +11701,7 @@ __metadata:
     cozy-pouch-link: "npm:^60.33.0"
     cozy-realtime: "npm:^5.9.3"
     cozy-search: "npm:^2.2.18"
-    cozy-sharing: "npm:^38.1.3"
+    cozy-sharing: "npm:^38.1.5"
     cozy-stack-client: "npm:^60.33.0"
     cozy-tsconfig: "npm:^1.8.1"
     cozy-ui: "npm:^141.0.0"
@@ -12030,13 +12012,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cozy-sharing@npm:^38.1.3":
-  version: 38.1.3
-  resolution: "cozy-sharing@npm:38.1.3"
+"cozy-sharing@npm:^38.1.5":
+  version: 38.1.5
+  resolution: "cozy-sharing@npm:38.1.5"
   dependencies:
     "@cozy/minilog": "npm:^1.0.0"
     classnames: "npm:^2.5.1"
-    cozy-doctypes: "npm:^1.99.1"
     date-fns: "npm:2.30.0"
     lodash: "npm:^4.17.21"
     react-autosuggest: "npm:^10.1.0"
@@ -12055,7 +12036,7 @@ __metadata:
     react: ">=16.12.0"
     react-router: ">=5.0.1"
     twake-i18n: ">=0.3.0"
-  checksum: 10/01d2b6d5075298141c2d83e991c3b4f760b16964977108e20bbdd1479aa4a8121f2495d1f528ef0a41494183b1ba69eddba1ff7cfe7203232f55e9afdc09fc36
+  checksum: 10/0ea69e48d4d9a17c602c8b6bce9899d60891fce2422de5c7777e0d3d33197bd6224aa6a24d985afc66b07715493da2f49a72cda9fa0bf2e63c9a4f3980cb6b91
   languageName: node
   linkType: hard
 
