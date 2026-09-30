@@ -21,13 +21,14 @@ import { HashRouter } from 'react-router-dom'
 import setupApp from './setupAppContext'
 import App from '@/components/App/App'
 import AppRoute from '@/modules/navigation/AppRoute'
+import { ROUTER_FUTURE_FLAGS } from '@/constants/config'
 
 // ambient styles
 import styles from '@/styles/main.styl' // eslint-disable-line no-unused-vars
 
 const AppComponent = props => (
   <App {...props}>
-    <HashRouter>
+    <HashRouter future={ROUTER_FUTURE_FLAGS}>
       <AppRoute />
     </HashRouter>
   </App>

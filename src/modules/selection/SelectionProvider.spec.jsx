@@ -12,6 +12,7 @@ import { createStore } from 'redux'
 
 import { generateFile } from 'test/generate'
 
+import { ROUTER_FUTURE_FLAGS } from '@/constants/config'
 import {
   SelectionProvider,
   useSelectionContext
@@ -77,7 +78,10 @@ describe('SelectionProvider', () => {
   const setup = () => {
     return render(
       <Provider store={mockStore}>
-        <MemoryRouter initialEntries={['/sharings/with-me']}>
+        <MemoryRouter
+          future={ROUTER_FUTURE_FLAGS}
+          initialEntries={['/sharings/with-me']}
+        >
           <SelectionProvider>
             <Routes>
               <Route

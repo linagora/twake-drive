@@ -9,7 +9,11 @@ import FilesViewerSharings from './FilesViewerSharings'
 import { SharingsRootListProvider } from './SharingsRootListContext'
 import { SharingsTabProvider } from './useSharingsTab'
 
-import { SHARING_TAB_BY_ME, SHARING_TAB_WITH_ME } from '@/constants/config'
+import {
+  SHARING_TAB_BY_ME,
+  SHARING_TAB_WITH_ME,
+  ROUTER_FUTURE_FLAGS
+} from '@/constants/config'
 import { FileLastUpdatedProvider } from '@/modules/filelist/FileLastUpdatedContext'
 
 const mockNavigate = jest.fn()
@@ -99,7 +103,7 @@ const setup = ({
   )
 
   return render(
-    <MemoryRouter initialEntries={[route]}>
+    <MemoryRouter future={ROUTER_FUTURE_FLAGS} initialEntries={[route]}>
       <Routes>
         <Route
           path={path}

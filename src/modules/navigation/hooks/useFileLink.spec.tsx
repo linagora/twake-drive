@@ -4,6 +4,8 @@ import { MemoryRouter } from 'react-router-dom'
 
 import { computeIsSharingsOwner, useFileLink } from './useFileLink'
 
+import { ROUTER_FUTURE_FLAGS } from '@/constants/config'
+
 jest.mock('cozy-client', () => ({
   ...jest.requireActual('cozy-client'),
   useClient: jest.fn(() => ({
@@ -42,7 +44,12 @@ describe('useFileLink with forceFolderPath', () => {
       () => useFileLink(folder, { forceFolderPath: true }),
       {
         wrapper: ({ children }: { children: React.ReactNode }) => (
-          <MemoryRouter initialEntries={[pathname]}>{children}</MemoryRouter>
+          <MemoryRouter
+            future={ROUTER_FUTURE_FLAGS}
+            initialEntries={[pathname]}
+          >
+            {children}
+          </MemoryRouter>
         )
       }
     )

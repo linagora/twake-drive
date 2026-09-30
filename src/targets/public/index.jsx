@@ -34,6 +34,7 @@ import configureStore from '@/store/configureStore'
 import styles from '@/styles/main.styl'
 
 import { getPublicPageLocale } from './localeHelper'
+import { ROUTER_FUTURE_FLAGS } from '@/constants/config'
 
 const renderError = (lang, root) =>
   createRoot(root).render(
@@ -102,7 +103,7 @@ const init = async () => {
           client={client}
           store={store}
         >
-          <HashRouter>
+          <HashRouter future={ROUTER_FUTURE_FLAGS}>
             <AppRouter
               isReadOnly={isReadOnly}
               username={username}

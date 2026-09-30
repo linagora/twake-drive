@@ -8,7 +8,8 @@ import type { SharingsTab } from './useSharingsTab'
 import {
   SHARING_TAB_BY_ME,
   SHARING_TAB_DRIVES,
-  SHARING_TAB_WITH_ME
+  SHARING_TAB_WITH_ME,
+  ROUTER_FUTURE_FLAGS
 } from '@/constants/config'
 
 interface FiltersProbeProps {
@@ -70,7 +71,11 @@ function setup({
   tab = SHARING_TAB_WITH_ME
 }: SetupOptions = {}): ReturnType<typeof render> {
   return render(
-    <MemoryRouter initialEntries={entries} initialIndex={index}>
+    <MemoryRouter
+      future={ROUTER_FUTURE_FLAGS}
+      initialEntries={entries}
+      initialIndex={index}
+    >
       <FiltersProbe tab={tab} />
     </MemoryRouter>
   )

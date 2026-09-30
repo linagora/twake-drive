@@ -4,6 +4,8 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 
 import { LegacySharingsRedirect } from './LegacySharingsRedirect'
 
+import { ROUTER_FUTURE_FLAGS } from '@/constants/config'
+
 const LocationProbe = () => {
   const location = useLocation()
   return (
@@ -18,6 +20,7 @@ describe('LegacySharingsRedirect', () => {
   it('replaces a pre-tab file URL with its default-tab route', async () => {
     render(
       <MemoryRouter
+        future={ROUTER_FUTURE_FLAGS}
         initialEntries={['/sharings/folder-1/file/file-1?sort=name']}
       >
         <Routes>
@@ -37,7 +40,10 @@ describe('LegacySharingsRedirect', () => {
 
   it('replaces an unmatched nested tab URL with the tab root', async () => {
     render(
-      <MemoryRouter initialEntries={['/sharings/by-me/unknown-junk']}>
+      <MemoryRouter
+        future={ROUTER_FUTURE_FLAGS}
+        initialEntries={['/sharings/by-me/unknown-junk']}
+      >
         <Routes>
           <Route path="/sharings/by-me" element={<LocationProbe />} />
           <Route path="/sharings/*" element={<LegacySharingsRedirect />} />
