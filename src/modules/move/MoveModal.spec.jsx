@@ -230,6 +230,7 @@ describe('MoveModal component', () => {
       sharedPaths,
       refresh: refreshSpy,
       getSharedParentPath,
+      getSharingForSelf: () => null,
       hasSharedParent: path =>
         sharedPaths.filter(sharedPath => path.includes(sharedPath)).length > 0,
       byDocId,
