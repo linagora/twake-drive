@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types'
 import React, { useState } from 'react'
 
-import { useClient } from 'cozy-client'
+import { fetchPolicies, useClient } from 'cozy-client'
 import flag from 'cozy-flags'
 import { useSharingContext } from 'cozy-sharing'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
@@ -24,6 +24,7 @@ import {
 import { useCancelable } from '@/modules/move/hooks/useCancelable'
 import { computeNextcloudFolderQueryId } from '@/modules/nextcloud/helpers'
 import { executeMove } from '@/modules/paste'
+import { buildFolderByPathQuery } from '@/queries'
 
 /**
  * Modal to move a folder to an other
@@ -43,6 +44,7 @@ const MoveModal = ({
     sharedPaths,
     refresh: refreshSharing,
     getSharedParentPath,
+    getSharingForSelf,
     hasSharedParent,
     isOwner,
     revokeSelf,
@@ -127,14 +129,52 @@ const MoveModal = ({
     })
   }
 
+  const fetchMoveDestinationWithDriveContext = async (folder, entryName) => {
+    if (folder.driveId) return folder
+
+    // My Drive omits driveId for owned shares, but crossing into one requires the shared-drive move API.
+    const ownerSharedPath = getSharedParentPath(
+      joinPath(folder.path, entryName)
+    )
+    if (!ownerSharedPath) return folder
+
+    let rootFolder = folder
+    if (ownerSharedPath !== folder.path) {
+      const query = buildFolderByPathQuery(ownerSharedPath)
+      const result = await client.fetchQueryAndGetFromState({
+        definition: query.definition(),
+        options: {
+          ...query.options,
+          fetchPolicy: fetchPolicies.olderThan(0)
+        }
+      })
+      rootFolder = result.data?.[0]
+    }
+    const sharing = rootFolder && getSharingForSelf(rootFolder._id)
+    if (!sharing?.attributes?.drive || !sharing.attributes.owner) return folder
+
+    return {
+      ...folder,
+      driveId: sharing.id,
+      cozyMetadata: {
+        ...folder.cozyMetadata,
+        createdOn: client.getStackClient().uri
+      }
+    }
+  }
+
   const moveEntries = async folder => {
     try {
       setMoveInProgress(true)
       const force = !isPublic && !sharedPaths.includes(folder.path)
+      const moveDestination = await fetchMoveDestinationWithDriveContext(
+        folder,
+        remainingEntries[0].name
+      )
       const results = await Promise.allSettled(
         remainingEntries.map(entry =>
           registerCancelable(
-            executeMove(client, entry, currentFolder, folder, force)
+            executeMove(client, entry, currentFolder, moveDestination, force)
           )
         )
       )
@@ -177,7 +217,7 @@ const MoveModal = ({
         return
       }
 
-      notifyMoveSuccess(folder, allSuccessfulEntries, allTrashedFiles)
+      notifyMoveSuccess(moveDestination, allSuccessfulEntries, allTrashedFiles)
       if (onMovingSuccess) {
         onMovingSuccess()
       } else {
