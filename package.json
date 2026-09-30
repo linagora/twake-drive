@@ -22,8 +22,7 @@
     "e2e:setup": "playwright install chromium",
     "e2e:debug": "playwright test --config e2e/playwright.config.ts --headed --debug",
     "e2e:report": "playwright show-report playwright-report",
-    "stack": "node e2e/setup/stack.js",
-    "service": "yarn cozy-konnector-dev -m ./manifest.webapp"
+    "stack": "node e2e/setup/stack.js"
   },
   "repository": {
     "type": "git",
@@ -66,7 +65,6 @@
     "bundlemon": "3.1.0",
     "core-js": "^3.50.0",
     "cozy-app-publish": "^0.40.1",
-    "cozy-jobs-cli": "^2.4.3",
     "cozy-tsconfig": "^1.8.1",
     "css-mediaquery": "0.1.2",
     "eslint": "10.0.2",
