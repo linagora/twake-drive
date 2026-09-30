@@ -19,7 +19,8 @@ import {
 import {
   SHARING_TAB_BY_ME,
   SHARING_TAB_DRIVES,
-  SHARING_TAB_WITH_ME
+  SHARING_TAB_WITH_ME,
+  ROUTER_FUTURE_FLAGS
 } from '@/constants/config'
 import logger from '@/lib/logger'
 
@@ -77,7 +78,7 @@ function TabRoute({ tab }: { tab: SharingsTab }): JSX.Element {
 
 function renderWithRoute(route: string): ReturnType<typeof render> {
   return render(
-    <MemoryRouter initialEntries={[route]}>
+    <MemoryRouter future={ROUTER_FUTURE_FLAGS} initialEntries={[route]}>
       <Routes>
         <Route
           path="/sharings/with-me/*"

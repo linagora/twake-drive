@@ -4,6 +4,7 @@ import { HashRouter, Routes, Route } from 'react-router-dom'
 import Spinner from 'cozy-ui/transpiled/react/Spinner'
 import withBreakpoints from 'cozy-ui/transpiled/react/helpers/withBreakpoints'
 
+import { ROUTER_FUTURE_FLAGS } from '@/constants/config'
 import FileOpenerExternal from '@/modules/viewer/FileOpenerExternal'
 import OnlyOfficeView from '@/modules/views/OnlyOffice'
 import { isOfficeEnabled } from '@/modules/views/OnlyOffice/helpers'
@@ -46,7 +47,7 @@ class Embeder extends React.Component {
           <pre className="u-error">{this.state.error.toString()}</pre>
         )}
         {this.state.fileId && (
-          <HashRouter>
+          <HashRouter future={ROUTER_FUTURE_FLAGS}>
             <Routes>
               <Route
                 path="/"

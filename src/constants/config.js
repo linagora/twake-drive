@@ -18,6 +18,11 @@ export const FILES_FETCH_LIMIT = 100
 export const MAX_PAYLOAD_SIZE_IN_GB = 5
 export const MAX_PAYLOAD_SIZE = MAX_PAYLOAD_SIZE_IN_GB * 1024 * 1024 * 1024
 export const MAX_UPLOAD_FILE_COUNT = 500
+// Keep React Router v6 behaviour until the app migrates to v7
+export const ROUTER_FUTURE_FLAGS = {
+  v7_startTransition: false,
+  v7_relativeSplatPath: false
+}
 export const SHARING_TAB_WITH_ME = 'with-me'
 export const SHARING_TAB_BY_ME = 'by-me'
 export const SHARING_TAB_DRIVES = 'drives'

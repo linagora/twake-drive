@@ -15,6 +15,7 @@ import { I18n } from 'twake-i18n'
 
 import PushBannerProvider from '@/components/PushBanner/PushBannerProvider'
 import RightClickProvider from '@/components/RightClick/RightClickProvider'
+import { ROUTER_FUTURE_FLAGS } from '@/constants/config'
 import ClipboardProvider from '@/contexts/ClipboardProvider'
 import { AcceptingSharingProvider } from '@/lib/AcceptingSharingContext'
 import FabProvider from '@/lib/FabProvider'
@@ -70,7 +71,7 @@ const AppLike = ({
           >
             <AcceptingSharingProvider>
               <NativeFileSharingProvider>
-                <HashRouter>
+                <HashRouter future={ROUTER_FUTURE_FLAGS}>
                   <NewItemHighlightProvider>
                     <SelectionProvider>
                       <ViewSwitcherContextProvider>
