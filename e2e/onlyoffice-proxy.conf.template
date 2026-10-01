@@ -1,0 +1,25 @@
+server {
+    listen ${COZY_E2E_ONLYOFFICE_PORT};
+
+    location / {
+        proxy_pass http://onlyoffice:80;
+        proxy_http_version 1.1;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Forwarded-Host $http_host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_read_timeout 3600s;
+    }
+}
+
+server {
+    listen ${COZY_E2E_STACK_PORT};
+
+    location / {
+        proxy_pass http://cozystack:${COZY_E2E_STACK_PORT};
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Forwarded-Host $http_host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
