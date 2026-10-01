@@ -97,8 +97,9 @@ interface FilePickerConfig {
   restrictToDir?: boolean
 
   /**
-   * Visible tabs; Drive must always be visible. Omission keeps existing defaults.
-   * With restrictToDir: true, omission shows Drive alone; only "drive" is allowed.
+   * Visible tabs; Drive must always be visible. By default, display
+   * ['drive', 'recents', 'sharings'] in that order; with restrictToDir: true,
+   * display only ['drive'] by default.
    * Reject lists missing "drive", empty lists, unknown identifiers and tabs
    * forbidden by the restriction; never silently add the Drive tab.
    * Ignore duplicates and display in Drive's usual order, not the supplied order.
