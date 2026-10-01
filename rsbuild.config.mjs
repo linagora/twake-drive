@@ -137,9 +137,19 @@ config.environments = {
           entryName === 'main' ? 'index.html' : `${entryName}/index.html`
       },
       rspack: {
+        module: {
+          rules: [
+            {
+              // react-pdf declares no side effects, yet its index resets the
+              // pdf.js worker. Run it before src/lib/pdfjsWorker.js sets ours.
+              test: /react-pdf[\\/]dist[\\/]esm[\\/]index\.js$/,
+              sideEffects: true
+            }
+          ]
+        },
         output: {
           // Asset modules without a dedicated rsbuild rule (e.g. the pdf.js
-          // worker react-pdf imports as a resource) default to `[hash][ext]`
+          // worker set up in src/lib/pdfjsWorker.js) default to `[hash][ext]`
           // at the build root, which only the private `/` route serves. Keep
           // them under static/ so the public route covers them too.
           assetModuleFilename: 'static/resource/[hash][ext][query]'
@@ -187,11 +197,13 @@ const mergedConfig = mergeRsbuildConfig(config, {
   },
   resolve: {
     alias: {
-      // The webpack5 entry wires the pdf.js worker through a `new URL(...)`
-      // asset module, so it honors assetModuleFilename and lands under
-      // static/ (the webpack4 entry inlines file-loader, which emits the
-      // worker at the build root where only the private `/` route serves it).
-      'react-pdf$': 'react-pdf/dist/esm/entry.webpack5'
+      // cozy-viewer requires the CommonJS build of react-pdf. Both builds
+      // reset the pdf.js worker on load, so keep a single one or it
+      // overwrites the worker set up in src/lib/pdfjsWorker.js.
+      'react-pdf$': 'react-pdf/dist/esm/index.js',
+      // The legacy build polyfills Promise.withResolvers, missing before
+      // Safari 17.4, in both the main thread and the worker.
+      'pdfjs-dist$': 'pdfjs-dist/legacy/build/pdf.mjs'
     }
   },
   // Trying rsdoctor in CI to measure build size
