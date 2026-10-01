@@ -100,6 +100,12 @@ const Picker = ({ service, intent, onReadyToUse }) => {
       )
     }
 
+    // The documents themselves, as revalidated above: nothing to generate.
+    if (linkMode === filePickerLinkModes.DOCUMENTS) {
+      service.terminate(files)
+      return null
+    }
+
     try {
       if (linkMode === filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK) {
         const downloadLinks = await makeTemporaryDownloadLinks(client, files)

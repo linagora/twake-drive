@@ -787,7 +787,8 @@
       "buttons": {
         "cancel": "Отменить",
         "publicLink": "Добавить как ссылку",
-        "temporaryDownloadLink": "Добавить как вложение"
+        "temporaryDownloadLink": "Добавить как вложение",
+        "documents": "Выбрать"
       }
     },
     "constraints": {
@@ -796,7 +797,8 @@
         "mimeTypeNotAllowed": "Этот тип файла не разрешён для этого действия",
         "fileTooLarge": "Этот файл больше %{maxFileSize}",
         "maxFileCountExceeded": "Выбрано слишком много файлов (лимит %{maxFileCount})",
-        "availableSizeExceeded": "Общий размер выбранных файлов превышает %{availableSize}"
+        "availableSizeExceeded": "Общий размер выбранных файлов превышает %{availableSize}",
+        "fileNotAllowed": "Для этого действия можно выбрать только папки"
       }
     },
     "actions": {
@@ -807,7 +809,8 @@
       "ITEM_NOT_FOUND": "Выбранный файл не найден.",
       "DESTINATION_UNAVAILABLE": "Не удалось загрузить папку назначения.",
       "SHARING_LINK_FAILED": "Не удалось создать ссылку для общего доступа.",
-      "DOWNLOAD_LINK_FAILED": "Не удалось создать ссылку для скачивания."
+      "DOWNLOAD_LINK_FAILED": "Не удалось создать ссылку для скачивания.",
+      "ROOT_DIR_UNAVAILABLE": "Не удалось загрузить папку, которой ограничен этот выбор."
     }
   }
 }

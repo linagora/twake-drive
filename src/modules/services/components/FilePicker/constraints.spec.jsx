@@ -242,4 +242,28 @@ describe('FilePicker constraints', () => {
       })
     })
   })
+  describe('onlyFolder', () => {
+    const pdf = {
+      _id: 'pdf',
+      type: 'file',
+      name: 'a.pdf',
+      mime: 'application/pdf',
+      size: '10'
+    }
+    const folder = { _id: 'folder', type: 'directory', name: 'docs' }
+
+    it('should disable a file when the action only allows folders', () => {
+      expect(getActionDisabledState({ onlyFolder: true }, pdf)).toEqual({
+        disabled: true,
+        reasonKey: 'FilePicker.constraints.disabledReasons.fileNotAllowed'
+      })
+    })
+
+    it('should allow a folder when the action only allows folders', () => {
+      expect(getActionDisabledState({ onlyFolder: true }, folder)).toEqual({
+        disabled: false,
+        reasonKey: null
+      })
+    })
+  })
 })

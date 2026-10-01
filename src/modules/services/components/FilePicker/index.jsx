@@ -31,6 +31,7 @@ import {
   filePickerSections
 } from '@/components/FilePicker/constants'
 import { getCompliantTypes, isValidFile } from '@/components/FilePicker/helpers'
+import { ROOT_DIR_ID } from '@/constants/config'
 
 const LinkAccessModal = lazy(() =>
   import('./LinkAccessModal').then(m => ({ default: m.LinkAccessModal }))
@@ -59,6 +60,7 @@ const FilePicker = ({
   const config = filePickerConfig || defaultFilePickerConfig
   const publicLinkAction = config.sharingLink ?? null
   const downloadLinkAction = config.downloadLink ?? null
+  const documentsAction = config.documents ?? null
 
   const clearSelection = () => setSelectedItems([])
   const handleLocationChange = useCallback(() => setError(null), [])
@@ -136,6 +138,9 @@ const FilePicker = ({
   const downloadLinkState = hasSelection
     ? getActionDisabledState(downloadLinkAction, selectedItems)
     : { disabled: true, reasonKey: null }
+  const documentsState = hasSelection
+    ? getActionDisabledState(documentsAction, selectedItems)
+    : { disabled: true, reasonKey: null }
 
   const handleFileDoubleClick = useCallback(
     async item => {
@@ -198,6 +203,7 @@ const FilePicker = ({
       >
         <SharedFilePicker
           mode={filePickerModes.SELECTION}
+          rootDirId={config.rootDirId ?? ROOT_DIR_ID}
           availableSections={Object.values(filePickerSections)}
           displayedTypes={Object.values(filePickerItemTypes)}
           selectableTypes={selectableTypes}
@@ -238,8 +244,10 @@ const FilePicker = ({
             onConfirm={handleFooterConfirm}
             publicLinkState={publicLinkState}
             downloadLinkState={downloadLinkState}
+            documentsState={documentsState}
             publicLinkAction={publicLinkAction}
             downloadLinkAction={downloadLinkAction}
+            documentsAction={documentsAction}
             busyLinkMode={busyLinkMode}
             selectedItems={selectedItems}
             onClearSelection={clearSelection}
@@ -270,8 +278,10 @@ FilePicker.propTypes = {
       type: PropTypes.oneOf(filePickerThemes)
     }),
     multiple: PropTypes.bool,
+    rootDirId: PropTypes.string,
     sharingLink: PropTypes.object,
-    downloadLink: PropTypes.object
+    downloadLink: PropTypes.object,
+    documents: PropTypes.object
   }),
   onReadyToUse: PropTypes.func,
   onFileDoubleClick: PropTypes.func

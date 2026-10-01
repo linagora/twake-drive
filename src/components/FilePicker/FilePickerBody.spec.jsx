@@ -45,6 +45,10 @@ jest.mock('./queries', () => ({
   buildDisplayedContentFolderQuery: folderId => ({
     definition: jest.fn(),
     options: { as: folderId }
+  }),
+  buildCurrentFolderQuery: folderId => ({
+    definition: jest.fn(),
+    options: { as: `current-${folderId}` }
   })
 }))
 jest.mock(
@@ -152,7 +156,13 @@ describe('FilePickerBody', () => {
         tab: expect.any(String)
       })
     )
-    expect(useQuery).not.toHaveBeenCalled()
+    // The only query hook the Sharings root goes through is the scoped root
+    // folder resolution, kept disabled outside a folder-scoped picker.
+    expect(useQuery).toHaveBeenCalledTimes(1)
+    expect(useQuery).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ enabled: false })
+    )
     expect(useSharedDriveFolder).not.toHaveBeenCalled()
     expect(useBreadcrumbPath).not.toHaveBeenCalled()
   })
