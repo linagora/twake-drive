@@ -230,6 +230,7 @@ describe('MoveModal component', () => {
       sharedPaths,
       refresh: refreshSpy,
       getSharedParentPath,
+      getSharingForSelf: () => null,
       hasSharedParent: path =>
         sharedPaths.filter(sharedPath => path.includes(sharedPath)).length > 0,
       byDocId,
@@ -373,6 +374,55 @@ describe('MoveModal component', () => {
           'bill_201902.pdf has been moved to Destination Folder.'
         )
       ).toBe(null)
+      expect(
+        screen.queryByRole('button', { name: 'Cancel' })
+      ).toBeInTheDocument()
+    })
+
+    it('does not offer cancel when closing after a partial move into an owned shared folder', async () => {
+      setup({
+        entries: defaultEntries.slice(0, 2),
+        sharedPaths: [destinationFolder.path],
+        getSharedParentPath: path =>
+          path.startsWith(`${destinationFolder.path}/`)
+            ? destinationFolder.path
+            : null,
+        sharingContext: {
+          getSharingForSelf: id =>
+            id === destinationFolder._id
+              ? {
+                  id: 'owned-shared-drive',
+                  attributes: { drive: true, owner: true }
+                }
+              : null
+        }
+      })
+      moveRelateToSharedDrive.mockImplementation((_client, source) =>
+        source.file_id === 'bill_201902'
+          ? Promise.reject(new Error('network error'))
+          : Promise.resolve({ deleted: null, moved: true })
+      )
+
+      fireEvent.click(await screen.findByText('Move'))
+      fireEvent.click(await screen.findByRole('button', { name: 'Ok' }))
+      await screen.findByText('Moved: 1. Failed: 1.')
+      fireEvent.click(
+        within(screen.getByTestId('move-to')).getByRole('button', {
+          name: 'Close'
+        })
+      )
+
+      expect(
+        await screen.findByText(
+          'bill_201901.pdf has been moved to Destination Folder.'
+        )
+      ).toBeInTheDocument()
+      expect(
+        screen.queryByText(
+          'bill_201902.pdf has been moved to Destination Folder.'
+        )
+      ).toBe(null)
+      expect(screen.queryByRole('button', { name: 'Cancel' })).toBe(null)
     })
 
     it('keeps the modal open and restores controls after every move fails', async () => {

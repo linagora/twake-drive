@@ -8,7 +8,12 @@ import {
   openOwnerFolder,
   openSharedDrive
 } from '../helpers/sharing'
-import { fetchFileContent, trashByName } from '../helpers/stack'
+import {
+  createFile,
+  fetchFileContent,
+  trashById,
+  trashByName
+} from '../helpers/stack'
 
 const FIXTURE = path.resolve(__dirname, '..', 'fixtures', 'sample.txt')
 const BOB_ROOT = `${USERS.bob.appUrl}/#/folder`
@@ -17,7 +22,7 @@ const DESTINATION_SHARE = `Move Destination Share ${stamp()}`
 const VIEWER_SHARE = `Move Viewer Share ${stamp()}`
 const NESTED_DESTINATION = `Move Nested Destination ${stamp()}`
 
-test.describe.serial('MoveTo received sharings', () => {
+test.describe.serial('MoveTo sharing destinations', () => {
   test('sets up received sharing destinations', async ({
     alicePage,
     aliceDrive,
@@ -46,6 +51,45 @@ test.describe.serial('MoveTo received sharings', () => {
     await openSharedDrive(bobPage, USERS.bob, bobDrive, DESTINATION_SHARE)
     await openSharedDrive(bobPage, USERS.bob, bobDrive, VIEWER_SHARE)
   })
+
+  for (const nested of [false, true]) {
+    test(`moves a file into an owned shared ${nested ? 'nested' : 'root'} folder through MoveTo`, async ({
+      alicePage,
+      aliceDrive,
+      bobPage,
+      bobDrive
+    }) => {
+      const sourceFile = `Move into owned share ${stamp()}.txt`
+      const sourceId = await createFile({
+        instance: USERS.alice.instance,
+        name: sourceFile,
+        content: 'Owned shared destination move'
+      })
+
+      try {
+        await alicePage.goto(`${USERS.alice.appUrl}/#/folder`)
+        await aliceDrive.row(sourceFile).waitVisible()
+        const moveTo = await aliceDrive.row(sourceFile).openMoveTo()
+        await moveTo.openFolder(EDITOR_SHARE)
+        if (nested) await moveTo.openFolder(NESTED_DESTINATION)
+        await moveTo.confirmSharedFolderMove()
+
+        await aliceDrive.row(sourceFile).waitHidden()
+        await aliceDrive.openFolder(EDITOR_SHARE)
+        if (nested) await aliceDrive.openFolder(NESTED_DESTINATION)
+        await expect(aliceDrive.row(sourceFile).cell).toBeVisible()
+
+        await openSharedDrive(bobPage, USERS.bob, bobDrive, EDITOR_SHARE)
+        if (nested) {
+          await bobDrive.row(NESTED_DESTINATION).open()
+          await bobPage.waitForURL(/\/shareddrive\/[^/]+\/[^/]+/)
+        }
+        await expect(bobDrive.row(sourceFile).cell).toBeVisible()
+      } finally {
+        await trashById(USERS.alice.instance, sourceId)
+      }
+    })
+  }
 
   test('moves a file into a nested received folder', async ({
     alicePage,
