@@ -20,8 +20,6 @@ module.exports = {
     '^hooks(.*)': '<rootDir>/src/hooks$1',
     '^test(.*)': '<rootDir>/test/$1',
     '^lib(.*)': '<rootDir>/src/lib$1',
-    'react-pdf/dist/esm/pdf.worker.entry':
-      '<rootDir>/jestHelpers/mocks/pdfjsWorkerMock.js',
     '^cozy-client$': 'cozy-client/dist/index.js',
     '^react-redux': '<rootDir>/node_modules/react-redux',
     '^cozy-ui/react(.*)$': '<rootDir>/node_modules/cozy-ui/transpiled/react$1',
@@ -63,7 +61,7 @@ module.exports = {
     '^.+\\.webapp$': '<rootDir>/test/jestLib/json-transformer.js'
   },
   transformIgnorePatterns: [
-    'node_modules/(?!cozy-ui|cozy-sharing|react-dnd|react-dnd-html5-backend|dnd-core|@react-dnd)',
+    'node_modules/(?!cozy-ui|cozy-sharing|react-dnd|react-dnd-html5-backend|dnd-core|@react-dnd|pdfjs-dist)',
     'jest-runner'
   ],
   testEnvironment: 'jsdom',
