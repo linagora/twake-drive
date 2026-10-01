@@ -1,4 +1,4 @@
-const DOUBLECLICKDELAY = 400
+export const DOUBLE_CLICK_DELAY = 400
 
 export const handleClick = ({
   event,
@@ -21,7 +21,7 @@ export const handleClick = ({
   clearHighlightedItems?.()
 
   const currentTime = Date.now()
-  const isDoubleClick = currentTime - lastClickTime < DOUBLECLICKDELAY
+  const isDoubleClick = currentTime - lastClickTime < DOUBLE_CLICK_DELAY
 
   if (isDoubleClick) {
     openLink(event)
