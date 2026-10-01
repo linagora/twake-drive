@@ -34,6 +34,7 @@ async function start() {
     process.env.COZY_E2E_STACK_PORT = String(config.stackPort)
     process.env.COZY_E2E_ADMIN_PORT = String(config.adminPort)
     process.env.COZY_E2E_COUCHDB_PORT = String(config.couchdbPort)
+    process.env.COZY_E2E_ONLYOFFICE_PORT = String(config.onlyofficePort)
     process.env.E2E_PERSIST = '1'
 
     console.log(`[stack] Starting Cozy Stack dev environment:`)
@@ -42,6 +43,7 @@ async function start() {
     console.log(`  - Stack:    http://localhost:${config.stackPort}`)
     console.log(`  - Admin:    http://localhost:${config.adminPort}`)
     console.log(`  - CouchDB:  http://localhost:${config.couchdbPort}`)
+    console.log(`  - Office:   http://onlyoffice.${config.rootDomain}:${config.onlyofficePort}`)
 
     const { setupStack } = jiti('./global-setup.ts')
     await setupStack(config)
@@ -127,6 +129,7 @@ function status() {
   process.env.COZY_E2E_ROOT_DOMAIN = config.rootDomain || getDevRootDomain()
   process.env.COZY_E2E_STACK_PORT = String(config.stackPort)
   process.env.COZY_E2E_ADMIN_PORT = String(config.adminPort)
+  process.env.COZY_E2E_ONLYOFFICE_PORT = String(config.onlyofficePort)
   const { USERS } = jiti('../helpers/config.ts')
 
   console.log('\n' + '='.repeat(60))

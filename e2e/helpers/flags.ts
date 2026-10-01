@@ -12,7 +12,9 @@ export const DEFAULT_FLAGS: Record<string, boolean | string | number> = {
   'cozy.search.enabled': true,
   'dataproxy.force-trusted-device.enabled': true,
   'drive.move-to-picker.enabled': true,
-  'drive.default-updated-at-sort.enabled': true
+  'drive.default-updated-at-sort.enabled': true,
+  'drive.office.enabled': true,
+  'drive.office.write': true
 }
 
 export function setFlags(
