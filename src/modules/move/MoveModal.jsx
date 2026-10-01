@@ -171,6 +171,7 @@ const MoveModal = ({
         folder,
         remainingEntries[0].name
       )
+      setFolderSelected(moveDestination)
       const results = await Promise.allSettled(
         remainingEntries.map(entry =>
           registerCancelable(
