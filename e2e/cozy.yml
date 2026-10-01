@@ -18,6 +18,10 @@ fs:
 couchdb:
   url: http://admin:password@couchdb:5984/
 
+office:
+  default:
+    onlyoffice_url: "http://onlyoffice.{{if .Env.COZY_E2E_ROOT_DOMAIN}}{{.Env.COZY_E2E_ROOT_DOMAIN}}{{else}}cozy.localhost{{end}}:{{if .Env.COZY_E2E_ONLYOFFICE_PORT}}{{.Env.COZY_E2E_ONLYOFFICE_PORT}}{{else}}18081{{end}}"
+
 mail:
   disable_tls: true
   skip_certificate_validation: true
@@ -28,6 +32,7 @@ mail:
 
 contexts:
   default:
+    default_redirection: drive/
     sharing:
       auto_accept_trusted: true
       auto_accept_trusted_contacts: true

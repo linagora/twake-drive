@@ -31,6 +31,8 @@ jobs:
         run: yarn lint
       - name: Test
         run: yarn test
+      - name: Test E2E port migration
+        run: node --test e2e/helpers/ports.spec.js
       - name: Build
         run: yarn build
       - name: BundleMon
