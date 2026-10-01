@@ -22,6 +22,7 @@ import {
   isSharedDriveMove
 } from '@/modules/move/helpers'
 import { useCancelable } from '@/modules/move/hooks/useCancelable'
+import { revokeSharingsForEntries } from '@/modules/move/revokeSharings'
 import { computeNextcloudFolderQueryId } from '@/modules/nextcloud/helpers'
 import { executeMove } from '@/modules/paste'
 
@@ -265,15 +266,25 @@ const MoveModal = ({
 
   const handleMovingSharedFolderInsideAnother = async () => {
     setMoveInProgress(true)
-    remainingEntries.forEach(async entry => {
-      if (byDocId[entry._id] !== undefined) {
-        if (isOwner(entry._id)) {
-          await revokeAllRecipients(entry)
-        } else {
-          await revokeSelf(entry)
-        }
-      }
-    })
+    try {
+      await revokeSharingsForEntries(remainingEntries, {
+        byDocId,
+        isOwner,
+        revokeAllRecipients,
+        revokeSelf
+      })
+    } catch (error) {
+      // The user asked to stop the sharing. Moving anyway would leave the
+      // recipients with a live access the modal told them was removed.
+      logger.error('Failed to revoke sharings before moving:', error)
+      setMoveInProgress(false)
+      setMovingSharedFolderInsideAnother(false)
+      showAlert({
+        message: t('Move.revoke_error'),
+        severity: 'error'
+      })
+      return
+    }
     refreshSharing()
     moveEntries(folderSelected)
     setMovingSharedFolderInsideAnother(false)

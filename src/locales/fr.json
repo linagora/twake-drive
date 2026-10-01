@@ -497,7 +497,8 @@
       "content_2": "Si vous souhaitez tout de même déplacer %{source} dans %{destination}, veuillez arrêter le partage de :",
       "cancel": "Annuler le déplacement",
       "confirm": "Arrêter le partage"
-    }
+    },
+    "revoke_error": "Le partage n'a pas pu être arrêté, l'élément n'a pas été déplacé. Merci de réessayer plus tard."
   },
   "ImportToDrive": {
     "title": "%{smart_count} fichier |||| %{smart_count} fichiers",
