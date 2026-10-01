@@ -3,6 +3,7 @@ import path from 'path'
 
 import { USERS } from '../helpers/config'
 import { test, expect, stamp, safeUnlink } from '../helpers/fixtures'
+import { PublicLinkPage } from '../pages/PublicLinkPage'
 
 const ALICE_ROOT = `${USERS.alice.appUrl}/#/folder`
 const FIXTURE_DIR = path.resolve(__dirname, '..', 'fixtures')
@@ -67,13 +68,10 @@ test.describe.serial('File sharing (federated)', () => {
 
     await row.open()
 
-    // The branch exposes a dedicated /shareddrive/:driveId/file/:fileId
-    // route for file-root shared drives, but the recipient-side row in
-    // the current state still resolves to the folder-root path
-    // (/:driveId/:folderId where :folderId is the rule's file id). The
-    // branch is mid-flight on wiring up the recipient's file-root view,
-    // so we just assert the navigation lands on the shared drive rather
-    // than locking the test to a specific route shape.
-    await expect(bobPage).toHaveURL(/\/shareddrive\/[^/]+\/[^/]+/)
+    // The shared-file shortcut opens its owner's public viewer, so assert
+    // the shared content is actually rendered rather than checking the URL.
+    await new PublicLinkPage(bobPage).expectFileContent(
+      'hello from twake-drive e2e'
+    )
   })
 })

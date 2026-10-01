@@ -1,8 +1,9 @@
 import type { Page, Locator } from '@playwright/test'
 
 import { DrivePage } from './DrivePage'
-import { PublicMoveToPage } from './PublicMoveToPage'
 import type { FileRow } from './FileRow'
+import { PublicMoveToPage } from './PublicMoveToPage'
+import { expect } from '../helpers/fixtures'
 
 /**
  * A public share link opened in a fresh, unauthenticated browser context.
@@ -43,6 +44,10 @@ export class PublicLinkPage {
 
   async openFolder(name: string): Promise<void> {
     await this.drive.openFolder(name)
+  }
+
+  async expectFileContent(content: string): Promise<void> {
+    await expect(this.page.getByText(content, { exact: true })).toBeVisible()
   }
 
   async openMoveTo(name: string): Promise<PublicMoveToPage> {

@@ -63,7 +63,7 @@ export class FileRow {
 
   async fileId(): Promise<string> {
     const href = await this.rowEl.getByRole('link').first().getAttribute('href')
-    const fileId = href?.match(/\/file\/([^/?#]+)/)?.[1]
+    const fileId = href?.match(/\/(?:file|onlyoffice)\/(?:[^/?#]+\/)?([^/?#]+)/)?.[1]
     if (!fileId) throw new Error(`No file id found for ${this.name}`)
     return fileId
   }
