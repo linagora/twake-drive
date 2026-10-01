@@ -20,6 +20,7 @@ import { HashRouter } from 'react-router-dom'
 
 import setupApp from './setupAppContext'
 import App from '@/components/App/App'
+import { initSentry } from '@/lib/sentry'
 import AppRoute from '@/modules/navigation/AppRoute'
 import { ROUTER_FUTURE_FLAGS } from '@/constants/config'
 
@@ -35,6 +36,8 @@ const AppComponent = props => (
 )
 
 const init = () => {
+  initSentry()
+
   const { locale, polyglot, client, store, root } = setupApp()
 
   createRoot(root).render(
