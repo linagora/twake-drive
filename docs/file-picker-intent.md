@@ -81,7 +81,7 @@ interface FilePickerConfig {
   /**
    * Local folder on the Drive instance initially opened; remote folders are
    * not supported. Does not itself restrict navigation or hide tabs.
-   * Required when restrictToDir is true; then also defines the restricted root.
+   * Required when restrictToDefaultDir is true; then also defines the restricted root.
    * Without a restriction, omit to retain the existing starting location;
    * if deleted or inaccessible, use the usual root with a console warning.
    * With a restriction, an invalid root produces an intent error, not a fallback.
@@ -94,11 +94,11 @@ interface FilePickerConfig {
    * to an accessible local folder; otherwise report a generic intent error.
    * For move, this bounds destinations, not the supplied source file.
    */
-  restrictToDir?: boolean
+  restrictToDefaultDir?: boolean
 
   /**
    * Visible tabs; Drive must always be visible. By default, display
-   * ['drive', 'recents', 'sharings'] in that order; with restrictToDir: true,
+   * ['drive', 'recents', 'sharings'] in that order; with restrictToDefaultDir: true,
    * display only ['drive'] by default.
    * Reject lists missing "drive", empty lists, unknown identifiers and tabs
    * forbidden by the restriction; never silently add the Drive tab.
@@ -196,7 +196,7 @@ When no config is provided, Drive uses:
 {
   theme: { type: undefined },
   multiple: true,
-  restrictToDir: false,
+  restrictToDefaultDir: false,
   documents: null,
   move: null,
   sharingLink: { allowFolder: true },
@@ -206,7 +206,7 @@ When no config is provided, Drive uses:
 
 When no action is configured, Drive enables `sharingLink` and `downloadLink`, preserving the historical behavior. The `documents` and `move` actions must each be enabled explicitly; neither is offered by default. `fileId` alone does not enable `move` or change the default actions.
 
-Outside `move`, an omitted link action keeps its default; an object overrides its default options; `null` hides it. Configuring one selection action does not implicitly hide the other link action. Options such as `theme`, `multiple`, `defaultDirId`, `restrictToDir` and `tabs` do not enable `documents` or change these action defaults.
+Outside `move`, an omitted link action keeps its default; an object overrides its default options; `null` hides it. Configuring one selection action does not implicitly hide the other link action. Options such as `theme`, `multiple`, `defaultDirId`, `restrictToDefaultDir` and `tabs` do not enable `documents` or change these action defaults.
 
 `move` cannot coexist with an enabled selection action. Explicit combinations with `documents`, `sharingLink` or `downloadLink` are rejected, not silently hidden. When `move` is explicitly enabled, omitted `sharingLink` and `downloadLink` actions remain disabled rather than inheriting their historical enabled defaults. The caller does not need to set them to `null`. This move-specific normalization does not change the historical defaults outside `move`.
 
@@ -398,7 +398,7 @@ It displays an error message directly to the user, allowing them to select anoth
 
 For `move`, follow MoveTo: display a move error inside the picker and allow the user to retry. A failed move does not produce a success result. Success is returned only after the move succeeds, with the complete updated file document.
 
-Business errors remain inside the picker; they are not thrown back to the caller. Invalid configuration and fatal initialization errors instead terminate through the existing generic intent `error` channel to the caller. This includes incompatible actions, invalid tab lists, a remote folder supplied as `defaultDirId`, `restrictToDir: true` without `defaultDirId`, and a missing, deleted, inaccessible or unverifiable folder required as the restricted root. No new error codes are introduced. The specified recoverable starting-folder fallbacks remain fallbacks, not fatal errors.
+Business errors remain inside the picker; they are not thrown back to the caller. Invalid configuration and fatal initialization errors instead terminate through the existing generic intent `error` channel to the caller. This includes incompatible actions, invalid tab lists, a remote folder supplied as `defaultDirId`, `restrictToDefaultDir: true` without `defaultDirId`, and a missing, deleted, inaccessible or unverifiable folder required as the restricted root. No new error codes are introduced. The specified recoverable starting-folder fallbacks remain fallbacks, not fatal errors.
 
 If the mutation has already succeeded, failure to obtain its updated document must not cause another move attempt; retry only result retrieval as described under Success result.
 
@@ -450,17 +450,17 @@ The count and size limits are checked on the currently selected items only:
 
 `defaultDirId` accepts only local `io.cozy.files` folder documents on the Drive instance, not remote folder identifiers. A remote folder supplied for this option is invalid configuration and is reported through the generic intent `error` channel; do not attempt to resolve it through a remote sharing. Locality does not itself mean unshared: a shared folder stored on this instance is still local. This input restriction does not remove eligible shared destinations reached through navigation.
 
-A supplied `tabs` list filters the visible tabs, but Drive must always remain visible. A list missing `drive` is invalid and is rejected, not silently amended. Empty lists and unknown identifiers are also rejected, not silently replaced by defaults. Duplicate identifiers are ignored after their first occurrence. Drive displays the remaining tabs in its usual order, regardless of the caller's order. When `restrictToDir` is absent or false, omitting `tabs` retains the existing defaults.
+A supplied `tabs` list filters the visible tabs, but Drive must always remain visible. A list missing `drive` is invalid and is rejected, not silently amended. Empty lists and unknown identifiers are also rejected, not silently replaced by defaults. Duplicate identifiers are ignored after their first occurrence. Drive displays the remaining tabs in its usual order, regardless of the caller's order. When `restrictToDefaultDir` is absent or false, omitting `tabs` retains the existing defaults.
 
-`restrictToDir` defaults to `false`. When absent or false, `defaultDirId` is optional and only sets the starting location. When true, `defaultDirId` is required and defines both the starting folder and the hard navigation and selection boundary. `restrictToDir: true` without `defaultDirId` is invalid configuration, reported through the generic intent `error` channel; no implicit root is substituted.
+`restrictToDefaultDir` defaults to `false`. When absent or false, `defaultDirId` is optional and only sets the starting location. When true, `defaultDirId` is required and defines both the starting folder and the hard navigation and selection boundary. `restrictToDefaultDir: true` without `defaultDirId` is invalid configuration, reported through the generic intent `error` channel; no implicit root is substituted.
 
 The permitted subtree includes `defaultDirId` itself and its descendants. Users cannot navigate above it or select an item outside it through the picker. For `move`, this bounds destination selection, not the location of the source supplied through `move.fileId`: that local source may be outside the subtree. This configuration does not define a separate starting folder below a distinct restricted root.
 
-With `restrictToDir: true`, Recents and Sharings are forbidden. Omitted `tabs` shows Drive alone. An explicit list may contain only `drive` (duplicates are ignored); any other identifier, including `recents` or `sharings`, is rejected rather than silently hidden. The existing empty-list rejection still applies. When `restrictToDir` is absent or false, there is no imposed subtree; the general tab rules above apply, including the always-visible Drive tab.
+With `restrictToDefaultDir: true`, Recents and Sharings are forbidden. Omitted `tabs` shows Drive alone. An explicit list may contain only `drive` (duplicates are ignored); any other identifier, including `recents` or `sharings`, is rejected rather than silently hidden. The existing empty-list rejection still applies. When `restrictToDefaultDir` is absent or false, there is no imposed subtree; the general tab rules above apply, including the always-visible Drive tab.
 
 Without a restriction, if `defaultDirId` refers to a deleted or inaccessible folder, Drive falls back to the usual root without a user-visible message and logs a warning to the browser console. The starting folder does not itself restrict navigation or change the configured tabs.
 
-With `restrictToDir: true`, a missing, deleted, inaccessible or unverifiable `defaultDirId` folder terminates the intent through the generic `error` channel to the caller. It must never fall back to a broader location.
+With `restrictToDefaultDir: true`, a missing, deleted, inaccessible or unverifiable `defaultDirId` folder terminates the intent through the generic `error` channel to the caller. It must never fall back to a broader location.
 
 For example, this configuration starts in a local folder and confines destination choice to its subtree:
 
@@ -468,23 +468,23 @@ For example, this configuration starts in a local folder and confines destinatio
 {
   "move": { "fileId": "already-uploaded-local-file-id" },
   "defaultDirId": "local-destination-folder-id",
-  "restrictToDir": true,
+  "restrictToDefaultDir": true,
   "tabs": ["drive"]
 }
 ```
 
 ### Provisional: external file to destination folder
 
-The future flow lets a calling application have the user choose a destination folder for a local `io.cozy.files` file already uploaded to the Drive instance. A separate process or application performs the upload before invoking the File Picker intent. Remote source identifiers are not supported by `move.fileId`. `defaultDirId`, which also defines the restricted root when `restrictToDir` is true, accepts only local folders on this instance. These input restrictions do not exclude eligible shared destinations reached through navigation, subject to any imposed subtree. The picker receives the uploaded file's ID through the `fileId` input, not its bytes, and is not responsible for uploading it. The picker then lets the user choose a destination and executes the move, following Drive's existing MoveTo flow.
+The future flow lets a calling application have the user choose a destination folder for a local `io.cozy.files` file already uploaded to the Drive instance. A separate process or application performs the upload before invoking the File Picker intent. Remote source identifiers are not supported by `move.fileId`. `defaultDirId`, which also defines the restricted root when `restrictToDefaultDir` is true, accepts only local folders on this instance. These input restrictions do not exclude eligible shared destinations reached through navigation, subject to any imposed subtree. The picker receives the uploaded file's ID through the `fileId` input, not its bytes, and is not responsible for uploading it. The picker then lets the user choose a destination and executes the move, following Drive's existing MoveTo flow.
 
 The agreed configuration is `move: { fileId: "…" }`, with `fileId` required inside the action object for the existing, previously uploaded local file's ID. No global `fileId` option is defined. The caller explicitly enables the `move` action with this object under the existing `PICK` / `io.cozy.files` identity. `move` is exclusive with `documents`, `sharingLink` and `downloadLink`; explicitly enabling any of these selection actions alongside it is rejected. Historical link-action defaults remain unchanged outside move mode. Within move mode, omitted link actions remain disabled without requiring explicit `null`; explicitly enabled conflicting actions are rejected. The move success result is the one-element complete-document array specified above, containing the moved file after the move. No new intent identity or result wrapper is introduced. MoveTo is the reference for destination eligibility, validation and move behavior, subject to the explicit navigation and tab configuration specified here.
 
 - **Folders only:** display folders, not files, and allow only folders as destinations. Disabling a confirmation button on files is not sufficient.
 - **One destination:** confirm exactly one destination folder, not a multi-selection of files or folders, using current-folder confirmation as in MoveTo. The picker performs the move after confirmation and destination validation.
 - **Configurable starting folder:** `defaultDirId` chooses a local folder initially opened. A remote starting folder is invalid configuration. Without a restriction, omission retains the existing starting location; a deleted or inaccessible starting folder falls back to the usual root with a browser-console warning and no user-visible message. Do not infer a restriction or hide tabs from `defaultDirId` alone.
-- **Optional restricted subtree:** `restrictToDir: true` requires `defaultDirId` and confines navigation and destination selection to that folder and its descendants. The supplied local source file need not already be inside that subtree. An absent `defaultDirId` or a missing, deleted, inaccessible or unverifiable restricted folder produces a generic intent error to the caller, never a fallback to a broader location.
-- **Exact visible tabs:** `tabs` chooses visible tabs using `drive`, `recents` and `sharings`, with Drive always visible. An explicit list missing `drive` is rejected, never silently amended. Without a restriction, omission retains the existing defaults. With `restrictToDir: true`, omission shows Drive alone and any explicit tab other than `drive` is rejected, not silently hidden. Reject empty lists and unknown identifiers. Ignore duplicates after their first occurrence and use Drive's usual display order.
-- **Eligible destinations:** permit any accessible, writable folder in any displayed tab, including shared folders and Shared Drive locations, provided it is within the `defaultDirId` subtree when `restrictToDir` is true. An inaccessible or non-writable folder must not be presented as a valid placement destination. Apply MoveTo's destination eligibility checks and revalidate the destination before moving, preserving the shared-drive context. Receiving a file ID alone does not grant access or permission to move the file.
+- **Optional restricted subtree:** `restrictToDefaultDir: true` requires `defaultDirId` and confines navigation and destination selection to that folder and its descendants. The supplied local source file need not already be inside that subtree. An absent `defaultDirId` or a missing, deleted, inaccessible or unverifiable restricted folder produces a generic intent error to the caller, never a fallback to a broader location.
+- **Exact visible tabs:** `tabs` chooses visible tabs using `drive`, `recents` and `sharings`, with Drive always visible. An explicit list missing `drive` is rejected, never silently amended. Without a restriction, omission retains the existing defaults. With `restrictToDefaultDir: true`, omission shows Drive alone and any explicit tab other than `drive` is rejected, not silently hidden. Reject empty lists and unknown identifiers. Ignore duplicates after their first occurrence and use Drive's usual display order.
+- **Eligible destinations:** permit any accessible, writable folder in any displayed tab, including shared folders and Shared Drive locations, provided it is within the `defaultDirId` subtree when `restrictToDefaultDir` is true. An inaccessible or non-writable folder must not be presented as a valid placement destination. Apply MoveTo's destination eligibility checks and revalidate the destination before moving, preserving the shared-drive context. Receiving a file ID alone does not grant access or permission to move the file.
 
 The picker executes the move inside Drive using Drive's existing application permissions, without a new move-specific permission scheme. Drive's manifest declares `ALL` access for `io.cozy.files` and `io.cozy.files.*`, and the intent entrypoint uses Drive's client and token. These application permissions do not bypass user, file or destination access controls: retain MoveTo's eligibility, accessibility and writability checks, including shared-drive context and destination revalidation. Passing `move.fileId` or receiving the updated document does not transfer Drive's credentials or grant the calling application broad access to Drive or additional rights on the file.
 
