@@ -15,8 +15,6 @@ type = 'io.cozy.files'
 
 The service lets the user browse Drive, select a file or folder, and choose one of the configured actions. For the existing selection actions, several files or folders can be selected by default. Set `multiple: false` to limit that selection to one item; its result is still returned as a `FilePickerEntry[]` array containing at most one entry.
 
-The explicit opt-in `move` action uses the same `PICK` / `io.cozy.files` intent identity. It chooses a single destination for the already-uploaded local file identified by `move.fileId` and executes the move. It is distinct from `documents` and is not enabled by `fileId` alone. Its destination flow is described in the provisional section.
-
 ## Configuration
 
 Pass the File Picker configuration in the intent data.
@@ -25,8 +23,6 @@ Pass the File Picker configuration in the intent data.
 - In raw intent attributes, it must be placed in `attributes.data`.
 
 It is not a top-level `actions` field.
-
-The `move` action is explicitly enabled with `move: { fileId: "…" }`; `fileId` is required inside the action object and identifies an already-uploaded local `io.cozy.files` file on the Drive instance, not an arbitrary remote source ID. It is not a global configuration option. Enabling `documents` does not implicitly activate `move`. `move` is exclusive with `documents`, `sharingLink` and `downloadLink`: explicitly enabling any of them alongside `move` is invalid configuration and must be rejected. When `move` is enabled, omitted `sharingLink` and `downloadLink` actions remain disabled; explicit `null` values are not required. Explicitly enabled conflicting actions are rejected, not silently hidden. The destination flow is described in the provisional section; the link-action examples below do not replace the move configuration or its complete-document success result.
 
 This example retains the existing link-action configuration:
 
@@ -47,20 +43,6 @@ This example retains the existing link-action configuration:
   }
 }
 ```
-
-To choose a destination and move an already-uploaded local file, use:
-
-```json
-{
-  "action": "PICK",
-  "type": "io.cozy.files",
-  "data": {
-    "move": { "fileId": "already-uploaded-local-file-id" }
-  }
-}
-```
-
-The move executes inside Drive using Drive's existing permissions; no additional move-specific permission scheme is required. Omitted link actions stay disabled in this move configuration. This does not grant the calling application Drive's access rights.
 
 ## FilePickerConfig
 
@@ -92,7 +74,7 @@ interface FilePickerConfig {
    * Restrict navigation and selection to defaultDirId and its descendants.
    * Defaults to false. When true, defaultDirId is required and must resolve
    * to an accessible local folder; otherwise report a generic intent error.
-   * For move, this bounds destinations, not the supplied source file.
+   * This restricts browsing and selection to that subtree.
    */
   restrictToDefaultDir?: boolean
 
@@ -105,15 +87,6 @@ interface FilePickerConfig {
    * Ignore duplicates and display in Drive's usual order, not the supplied order.
    */
   tabs?: Array<'drive' | 'recents' | 'sharings'>
-
-  /**
-   * Move an already-uploaded local file after choosing its destination.
-   * fileId identifies a local io.cozy.files file on the Drive instance.
-   * It is required inside the action object, not at the top level.
-   * Omitted or null means hidden; an object explicitly enables move.
-   * Exclusive with enabled documents, sharingLink and downloadLink actions.
-   */
-  move?: { fileId: string } | null
 
   /**
    * Configuration for the documents action (proposed extension).
@@ -198,17 +171,14 @@ When no config is provided, Drive uses:
   multiple: true,
   restrictToDefaultDir: false,
   documents: null,
-  move: null,
   sharingLink: { allowFolder: true },
   downloadLink: { allowFolder: false }
 }
 ```
 
-When no action is configured, Drive enables `sharingLink` and `downloadLink`, preserving the historical behavior. The `documents` and `move` actions must each be enabled explicitly; neither is offered by default. `fileId` alone does not enable `move` or change the default actions.
+When no action is configured, Drive enables `sharingLink` and `downloadLink`, preserving the historical behavior. The `documents` action must be enabled explicitly and is not offered by default.
 
-Outside `move`, an omitted link action keeps its default; an object overrides its default options; `null` hides it. Configuring one selection action does not implicitly hide the other link action. Options such as `theme`, `multiple`, `defaultDirId`, `restrictToDefaultDir` and `tabs` do not enable `documents` or change these action defaults.
-
-`move` cannot coexist with an enabled selection action. Explicit combinations with `documents`, `sharingLink` or `downloadLink` are rejected, not silently hidden. When `move` is explicitly enabled, omitted `sharingLink` and `downloadLink` actions remain disabled rather than inheriting their historical enabled defaults. The caller does not need to set them to `null`. This move-specific normalization does not change the historical defaults outside `move`.
+An omitted link action keeps its default; an object overrides its default options; `null` hides it. Configuring `documents` does not implicitly hide either link action. Options such as `theme`, `multiple`, `defaultDirId`, `restrictToDefaultDir` and `tabs` do not enable `documents` or change these action defaults.
 
 For example, `{ "downloadLink": {} }` still offers both link actions. To offer only Documents, pass `{ "documents": {}, "sharingLink": null, "downloadLink": null }`. To offer Documents alongside the default link actions, pass `{ "documents": {} }`. Explicitly hiding every action leaves no confirmation action; cancellation remains available.
 
@@ -245,8 +215,6 @@ options. The option never changes Cozy settings, local storage or the caller's
 global theme.
 
 ## Actions
-
-As an alternative to the selection actions below, `move` is an explicit opt-in action for choosing a destination and moving the existing file identified by `fileId`, following MoveTo. It is exclusive with `documents`, `sharingLink` and `downloadLink`; explicitly enabling any of them alongside it is rejected. It creates no upload and does not change the behavior of `documents`. Its destination requirements and intent-boundary behavior are specified in the provisional section.
 
 ### `documents`
 
@@ -290,7 +258,7 @@ Set an action to `null` to hide its button:
 
 ## Constraint behavior
 
-Drive evaluates the following selection constraints independently for each selection-action button. The `move` action instead uses the destination eligibility and validation rules described in the provisional section.
+Drive evaluates the following selection constraints independently for each selection-action button.
 
 When the selected item violates an action constraint, the corresponding button is disabled and Drive displays a tooltip explaining why.
 
@@ -317,7 +285,7 @@ image/*         file with any image MIME type
 
 `file` and `folder` are picker tokens, not MIME types stored in the documents. Entries are combined with OR: `["folder", "image/*"]` accepts folders or images. Every selected item must match for the action to be enabled. An empty `accept` list accepts nothing. Without an explicit filter, Documents and sharing links accept files and folders, while download links retain their files-only default.
 
-Folder navigation remains available even when folders cannot be selected for an action. Constraints control confirmation, not the types displayed in the browser; displaying only folders is a separate destination-picker requirement.
+Folder navigation remains available even when folders cannot be selected for an action. Constraints control confirmation, not the types displayed in the browser; the browser may display both folders and files.
 
 `maxFileCount` and `availableSize` are enforced when present. Folders count
 toward `maxFileCount` but are excluded from the `availableSize` total.
@@ -333,10 +301,6 @@ On success, the intent result document is a **bare array** of file entries:
 ```
 
 All entries come from the action selected by the user. There is no new result wrapper or action discriminator.
-
-After a successful `move`, `result.document = [updatedFileDocument]`: exactly one complete Cozy document for the moved file, reflecting its new location. This is the file document, not the destination folder document. It uses the same document result shape as `documents`, adds no sharing or download link, and contains no binary file content. Success is returned after the move, not merely after choosing the destination.
-
-Keep successful mutation separate from obtaining its updated result. If the move has succeeded but retrieving the updated document fails, retry obtaining the result in its new location, not the move itself. Do not repeat a known-successful mutation or return the stale input document as success.
 
 ### FilePickerEntry
 
@@ -360,7 +324,7 @@ interface FilePickerLinkEntry {
 type FilePickerEntry = FilePickerDocument | FilePickerLinkEntry
 ```
 
-The `documents` action returns complete Cozy documents, preserving their fields and types, including metadata and relationships. The `move` action returns the same complete-document form for its single updated file after the move. It does not include binary file contents or recursively load a folder's children. It adds neither link nor a generated thumbnail and must not mutate the source document in cozy-client.
+The `documents` action returns complete Cozy documents, preserving their fields and types, including metadata and relationships. It does not include binary file contents or recursively load a folder's children.
 
 The link actions retain their historical result: `id`, `name`, numeric `size`, `mimeType`, the generated link and an optional thumbnail. They do not switch to complete Cozy documents. Exactly one of `sharingLink` or `downloadLink` is present for the corresponding link action.
 
@@ -385,28 +349,24 @@ Example of a download result:
 
 For link-action folders, `size` is `0` and `mimeType` is `null`. For `documents`, folders retain their original document fields; Drive does not synthesize those values or rename `_id` to `id`.
 
-Caller-controlled projection (`fields`) is deferred to a possible future option, outside this contract. No configuration support, projection behavior or projected result type is promised. Documents and move return complete documents; link actions retain their historical payload.
+Caller-controlled projection (`fields`) is deferred to a possible future option, outside this contract. No configuration support, projection behavior or projected result type is promised. Documents return complete documents; link actions retain their historical payload.
 
 ### Thumbnails
 
-For link actions, the File Picker may provide a thumbnail (an illustration or a preview) that may be used by the caller. The `documents` and `move` actions return their documents without generating a thumbnail. The thumbnail link is public and has an unlimited lifetime. It is currently a 60x60 png image. Folders use a dedicated `folder.png` thumbnail.
+For link actions, the File Picker may provide a thumbnail (an illustration or a preview) that may be used by the caller. The `documents` action returns its documents without generating a thumbnail. The thumbnail link is public and has an unlimited lifetime. It is currently a 60x60 png image. Folders use a dedicated `folder.png` thumbnail.
 
 ## Error handling
 
 For the selection actions, business errors (such as a missing file or failure to generate a link) are handled internally by the File Picker.
 It displays an error message directly to the user, allowing them to select another file or cancel.
 
-For `move`, follow MoveTo: display a move error inside the picker and allow the user to retry. A failed move does not produce a success result. Success is returned only after the move succeeds, with the complete updated file document.
-
-Business errors remain inside the picker; they are not thrown back to the caller. Invalid configuration and fatal initialization errors instead terminate through the existing generic intent `error` channel to the caller. This includes incompatible actions, invalid tab lists, a remote folder supplied as `defaultDirId`, `restrictToDefaultDir: true` without `defaultDirId`, and a missing, deleted, inaccessible or unverifiable folder required as the restricted root. No new error codes are introduced. The specified recoverable starting-folder fallbacks remain fallbacks, not fatal errors.
-
-If the mutation has already succeeded, failure to obtain its updated document must not cause another move attempt; retry only result retrieval as described under Success result.
+Business errors remain inside the picker; they are not thrown back to the caller. Invalid configuration and fatal initialization errors instead terminate through the existing generic intent `error` channel to the caller. This includes invalid tab lists, a remote folder supplied as `defaultDirId`, `restrictToDefaultDir: true` without `defaultDirId`, and a missing, deleted, inaccessible or unverifiable folder required as the restricted root. No new error codes are introduced. The specified recoverable starting-folder fallbacks remain fallbacks, not fatal errors.
 
 ## Cancel result
 
 User cancellation uses the generic intent `cancel` channel.
 
-There is no File Picker cancellation payload and no `CANCELLED` error code. For `move`, user cancellation also uses the generic `cancel` channel and does not delete the already-uploaded file.
+There is no File Picker cancellation payload and no `CANCELLED` error code.
 
 ## `readyToUse` signal
 
@@ -448,13 +408,13 @@ The count and size limits are checked on the currently selected items only:
 `maxFileCount` counts every selected item including folders, while
 `availableSize` sums only selected files (folders are excluded).
 
-`defaultDirId` accepts only local `io.cozy.files` folder documents on the Drive instance, not remote folder identifiers. A remote folder supplied for this option is invalid configuration and is reported through the generic intent `error` channel; do not attempt to resolve it through a remote sharing. Locality does not itself mean unshared: a shared folder stored on this instance is still local. This input restriction does not remove eligible shared destinations reached through navigation.
+`defaultDirId` accepts only local `io.cozy.files` folder documents on the Drive instance, not remote folder identifiers. A remote folder supplied for this option is invalid configuration and is reported through the generic intent `error` channel; do not attempt to resolve it through a remote sharing. Locality does not itself mean unshared: a shared folder stored on this instance is still local. This input restriction does not hide shared folders reached through navigation.
 
 A supplied `tabs` list filters the visible tabs, but Drive must always remain visible. A list missing `drive` is invalid and is rejected, not silently amended. Empty lists and unknown identifiers are also rejected, not silently replaced by defaults. Duplicate identifiers are ignored after their first occurrence. Drive displays the remaining tabs in its usual order, regardless of the caller's order. When `restrictToDefaultDir` is absent or false, omitting `tabs` retains the existing defaults.
 
 `restrictToDefaultDir` defaults to `false`. When absent or false, `defaultDirId` is optional and only sets the starting location. When true, `defaultDirId` is required and defines both the starting folder and the hard navigation and selection boundary. `restrictToDefaultDir: true` without `defaultDirId` is invalid configuration, reported through the generic intent `error` channel; no implicit root is substituted.
 
-The permitted subtree includes `defaultDirId` itself and its descendants. Users cannot navigate above it or select an item outside it through the picker. For `move`, this bounds destination selection, not the location of the source supplied through `move.fileId`: that local source may be outside the subtree. This configuration does not define a separate starting folder below a distinct restricted root.
+The permitted subtree includes `defaultDirId` itself and its descendants. Users cannot navigate above it or select an item outside it through the picker. This configuration does not define a separate starting folder below a distinct restricted root.
 
 With `restrictToDefaultDir: true`, Recents and Sharings are forbidden. Omitted `tabs` shows Drive alone. An explicit list may contain only `drive` (duplicates are ignored); any other identifier, including `recents` or `sharings`, is rejected rather than silently hidden. The existing empty-list rejection still applies. When `restrictToDefaultDir` is absent or false, there is no imposed subtree; the general tab rules above apply, including the always-visible Drive tab.
 
@@ -462,30 +422,25 @@ Without a restriction, if `defaultDirId` refers to a deleted or inaccessible fol
 
 With `restrictToDefaultDir: true`, a missing, deleted, inaccessible or unverifiable `defaultDirId` folder terminates the intent through the generic `error` channel to the caller. It must never fall back to a broader location.
 
-For example, this configuration starts in a local folder and confines destination choice to its subtree:
+For example, this configuration enables document selection, starts in a local folder and confines browsing and selection to its subtree:
 
 ```json
 {
-  "move": { "fileId": "already-uploaded-local-file-id" },
-  "defaultDirId": "local-destination-folder-id",
-  "restrictToDefaultDir": true,
-  "tabs": ["drive"]
+  "action": "PICK",
+  "type": "io.cozy.files",
+  "data": {
+    "documents": {},
+    "defaultDirId": "local-folder-id",
+    "restrictToDefaultDir": true,
+    "tabs": ["drive"]
+  }
 }
 ```
 
-### Provisional: external file to destination folder
+## Acceptance criteria
 
-The future flow lets a calling application have the user choose a destination folder for a local `io.cozy.files` file already uploaded to the Drive instance. A separate process or application performs the upload before invoking the File Picker intent. Remote source identifiers are not supported by `move.fileId`. `defaultDirId`, which also defines the restricted root when `restrictToDefaultDir` is true, accepts only local folders on this instance. These input restrictions do not exclude eligible shared destinations reached through navigation, subject to any imposed subtree. The picker receives the uploaded file's ID through the `fileId` input, not its bytes, and is not responsible for uploading it. The picker then lets the user choose a destination and executes the move, following Drive's existing MoveTo flow.
-
-The agreed configuration is `move: { fileId: "…" }`, with `fileId` required inside the action object for the existing, previously uploaded local file's ID. No global `fileId` option is defined. The caller explicitly enables the `move` action with this object under the existing `PICK` / `io.cozy.files` identity. `move` is exclusive with `documents`, `sharingLink` and `downloadLink`; explicitly enabling any of these selection actions alongside it is rejected. Historical link-action defaults remain unchanged outside move mode. Within move mode, omitted link actions remain disabled without requiring explicit `null`; explicitly enabled conflicting actions are rejected. The move success result is the one-element complete-document array specified above, containing the moved file after the move. No new intent identity or result wrapper is introduced. MoveTo is the reference for destination eligibility, validation and move behavior, subject to the explicit navigation and tab configuration specified here.
-
-- **Folders only:** display folders, not files, and allow only folders as destinations. Disabling a confirmation button on files is not sufficient.
-- **One destination:** confirm exactly one destination folder, not a multi-selection of files or folders, using current-folder confirmation as in MoveTo. The picker performs the move after confirmation and destination validation.
-- **Configurable starting folder:** `defaultDirId` chooses a local folder initially opened. A remote starting folder is invalid configuration. Without a restriction, omission retains the existing starting location; a deleted or inaccessible starting folder falls back to the usual root with a browser-console warning and no user-visible message. Do not infer a restriction or hide tabs from `defaultDirId` alone.
-- **Optional restricted subtree:** `restrictToDefaultDir: true` requires `defaultDirId` and confines navigation and destination selection to that folder and its descendants. The supplied local source file need not already be inside that subtree. An absent `defaultDirId` or a missing, deleted, inaccessible or unverifiable restricted folder produces a generic intent error to the caller, never a fallback to a broader location.
-- **Exact visible tabs:** `tabs` chooses visible tabs using `drive`, `recents` and `sharings`, with Drive always visible. An explicit list missing `drive` is rejected, never silently amended. Without a restriction, omission retains the existing defaults. With `restrictToDefaultDir: true`, omission shows Drive alone and any explicit tab other than `drive` is rejected, not silently hidden. Reject empty lists and unknown identifiers. Ignore duplicates after their first occurrence and use Drive's usual display order.
-- **Eligible destinations:** permit any accessible, writable folder in any displayed tab, including shared folders and Shared Drive locations, provided it is within the `defaultDirId` subtree when `restrictToDefaultDir` is true. An inaccessible or non-writable folder must not be presented as a valid placement destination. Apply MoveTo's destination eligibility checks and revalidate the destination before moving, preserving the shared-drive context. Receiving a file ID alone does not grant access or permission to move the file.
-
-The picker executes the move inside Drive using Drive's existing application permissions, without a new move-specific permission scheme. Drive's manifest declares `ALL` access for `io.cozy.files` and `io.cozy.files.*`, and the intent entrypoint uses Drive's client and token. These application permissions do not bypass user, file or destination access controls: retain MoveTo's eligibility, accessibility and writability checks, including shared-drive context and destination revalidation. Passing `move.fileId` or receiving the updated document does not transfer Drive's credentials or grant the calling application broad access to Drive or additional rights on the file.
-
-Exclusivity is settled: the single-destination move UI must not coexist with the selection-action UI. Existing MoveTo behavior remains the reference rather than a new conflict or move policy to design. Move errors are displayed inside the picker with retry available. User cancellation uses the generic `cancel` channel without deleting the already-uploaded file. Success returns exactly the complete updated moved file document in a one-element array after the move succeeds, as specified above. No new error codes, cancellation payloads, cleanup or rollback behavior are specified. No byte-transfer format or upload operation is required of the picker.
+- The intent identity is `PICK` / `io.cozy.files`; `documents` is opt-in, while the historical link actions retain their defaults.
+- Omitted `tabs` displays `drive`, `recents`, `sharings` in that order; with `restrictToDefaultDir: true`, omission displays only `drive`.
+- `defaultDirId` accepts only an accessible local folder. Without restriction it sets the starting location and falls back to the usual root with a console warning if unavailable; with restriction it is required and forms the navigation and selection boundary, with no broader fallback.
+- `tabs` always includes `drive`; invalid, empty, unknown, or restriction-forbidden lists are rejected rather than silently changed.
+- A successful selection returns the existing bare `document: FilePickerEntry[]` payload; business errors remain in the picker and user cancellation uses the generic `cancel` channel without a File Picker-specific payload.
