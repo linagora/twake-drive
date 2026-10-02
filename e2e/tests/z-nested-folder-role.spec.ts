@@ -1,12 +1,16 @@
 import { USERS } from '../helpers/config'
 import { test, expect, stamp } from '../helpers/fixtures'
-import { createAndShareFolderWithBob } from '../helpers/sharing'
+import {
+  createAndShareFolderWithBob,
+  openSharedDrive
+} from '../helpers/sharing'
 import { trashByName } from '../helpers/stack'
 
 const PARENT_FOLDER = `Parent Folder ${stamp()}`
 const NESTED_FOLDER = `Nested Folder ${stamp()}`
 
-test.describe('Nested folder role bug linagora/twake-drive#4200', () => {
+test.describe
+  .serial('Nested folder role bug linagora/twake-drive#4200 and #4220', () => {
   test.afterAll(async () => {
     await trashByName(USERS.alice.instance, PARENT_FOLDER)
   })
@@ -44,5 +48,33 @@ test.describe('Nested folder role bug linagora/twake-drive#4200', () => {
     // Expected: Bob remains Viewer on parent
     await expect(parentModal.memberItem('bob')).toContainText(/viewer/i)
     await parentModal.close()
+  })
+
+  test('Bob opens parent then navigates to nested: Bob has write access on nested (linagora/twake-drive#4220)', async ({
+    bobPage,
+    bobDrive
+  }) => {
+    // 1. Bob opens parent shared drive from Sharings
+    await openSharedDrive(bobPage, USERS.bob, bobDrive, PARENT_FOLDER)
+
+    // 2. In parent folder, Bob is Viewer -> Upload button is disabled
+    await expect(
+      bobPage.getByRole('button', { name: 'Upload', exact: true })
+    ).toBeDisabled()
+    await bobDrive.row(NESTED_FOLDER).waitVisible()
+
+    // 3. Bob navigates into nested folder from parent
+    await bobDrive.row(NESTED_FOLDER).open()
+    await bobPage.waitForURL(/\/shareddrive\/[^/]+\/[^/]+/)
+
+    // 4. In nested folder, Bob has Editor access -> Upload button is enabled
+    await expect(
+      bobPage.getByRole('button', { name: 'Upload', exact: true })
+    ).toBeEnabled()
+
+    // 5. Bob can create a folder inside nested
+    const BOB_SUBFOLDER = `Bob Folder ${stamp()}`
+    await bobDrive.createFolder(BOB_SUBFOLDER)
+    await bobDrive.row(BOB_SUBFOLDER).waitVisible()
   })
 })
