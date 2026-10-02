@@ -1,6 +1,6 @@
 # File Picker Intent
 
-This document specifies the revised **File Picker intent** API. It is a draft for collaborative review, not a statement that the proposed extensions are already implemented. Existing link actions retain their public contract; `documents` is an explicit opt-in extension. Options marked as proposals remain open product questions.
+This document specifies **version 2 of the File Picker intent API**. It is a draft for collaborative review, not a statement that the proposed extensions are already implemented. Existing link actions retain their public contract; `documents` is an explicit opt-in extension. Options marked as proposals remain open product questions.
 
 It assumes you already know how to create and run a Cozy intent (requesting an intent, loading the returned service URL, and handling the generic `ready` / `done` / `error` / `cancel` postMessage flow). It only documents what is specific to the File Picker service.
 
