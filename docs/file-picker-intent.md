@@ -2,7 +2,7 @@
 
 This document specifies **version 2 of the File Picker intent API**. It is a draft for collaborative review, not a statement that the proposed extensions are already implemented. Existing link actions retain their public contract; `documents` is an explicit opt-in extension. Options marked as proposals remain open product questions.
 
-It assumes you already know how to create and run a Cozy intent (requesting an intent, loading the returned service URL, and handling the generic `ready` / `done` / `error` / `cancel` postMessage flow). It only documents what is specific to the File Picker service.
+It assumes you already know how to create and run an intent (requesting an intent, loading the returned service URL, and handling the generic `ready` / `done` / `error` / `cancel` postMessage flow). It only documents what is specific to the File Picker service.
 
 ## Intent identity
 
@@ -186,10 +186,10 @@ For example, `{ "downloadLink": {} }` still offers both link actions. To offer o
 
 Default labels (`documents` is proposed):
 
-| Action | Default label |
-| --- | --- |
-| `documents` | `Select` |
-| `sharingLink` | `Share with public link` |
+| Action         | Default label                |
+| -------------- | ---------------------------- |
+| `documents`    | `Select`                     |
+| `sharingLink`  | `Share with public link`     |
 | `downloadLink` | `Attach with temporary link` |
 
 ### Theme
@@ -199,8 +199,8 @@ theme is fixed when the intent is created and does not change while it remains
 open.
 
 `undefined`, an invalid value or an omitted value preserves the existing behavior:
-the iframe follows the Cozy instance theme, with the system color scheme as a
-fallback. Following the Cozy instance theme requires a backend request, so the
+the iframe follows the instance theme, with the system color scheme as a
+fallback. Following the instance theme requires a backend request, so the
 theme may change after that request succeeds. If the client app knows its theme,
 it should pass it to avoid a theme glitch.
 
@@ -213,8 +213,8 @@ calling application's surrounding UI keeps its own theme.
 
 Custom intent containers remain responsible for styling their own UI. For raw
 intents, pass the `theme` object in `attributes.data` like the other File Picker
-options. The option never changes Cozy settings, local storage or the caller's
-global theme.
+options. The option never changes instance settings, local storage or the
+caller's global theme.
 
 ## Actions
 
@@ -326,9 +326,9 @@ interface FilePickerLinkEntry {
 type FilePickerEntry = FilePickerDocument | FilePickerLinkEntry
 ```
 
-The `documents` action returns complete Cozy documents, preserving their fields and types, including metadata and relationships. It does not include binary file contents or recursively load a folder's children.
+The `documents` action returns complete `io.cozy.files` documents, preserving their fields and types, including metadata and relationships. It does not include binary file contents or recursively load a folder's children.
 
-The link actions retain their historical result: `id`, `name`, numeric `size`, `mimeType`, the generated link and an optional thumbnail. They do not switch to complete Cozy documents. Exactly one of `sharingLink` or `downloadLink` is present for the corresponding link action.
+The link actions retain their historical result: `id`, `name`, numeric `size`, `mimeType`, the generated link and an optional thumbnail. They do not switch to complete `io.cozy.files` documents. Exactly one of `sharingLink` or `downloadLink` is present for the corresponding link action.
 
 Example of a download result:
 
