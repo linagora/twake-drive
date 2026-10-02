@@ -89,8 +89,10 @@ interface FilePickerConfig {
   tabs?: Array<'drive' | 'recents' | 'sharings'>
 
   /**
-   * Configuration for the documents action (proposed extension).
-   * Explicitly pass an object to enable it. Omitted or null means hidden.
+   * Proposed action returning complete selected io.cozy.files documents (files
+   * or folders), without creating links or granting permissions.
+   * Pass an object (even {}) to show its button; use ActionConfig to set its
+   * label or selection constraints. Omitted or null means hidden.
    */
   documents?: ActionConfig | null
 
