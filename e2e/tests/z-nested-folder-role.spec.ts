@@ -1,11 +1,15 @@
 import { USERS } from '../helpers/config'
 import { test, expect, stamp } from '../helpers/fixtures'
 import { createAndShareFolderWithBob } from '../helpers/sharing'
+import { trashByName } from '../helpers/stack'
 
 const PARENT_FOLDER = `Parent Folder ${stamp()}`
 const NESTED_FOLDER = `Nested Folder ${stamp()}`
 
 test.describe.serial('Nested folder role bug linagora/twake-drive#4200', () => {
+  test.afterAll(async () => {
+    await trashByName(USERS.alice.instance, PARENT_FOLDER)
+  })
   test('Alice creates parent and nested folder, shares parent with Bob as Viewer', async ({
     alicePage,
     aliceDrive
