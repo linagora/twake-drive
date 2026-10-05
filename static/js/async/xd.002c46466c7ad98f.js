@@ -1,0 +1,1 @@
+"use strict";(globalThis.rspackChunkcozy_drive=globalThis.rspackChunkcozy_drive||[]).push([["xd"],{vK0(e,r,s){var c=s("tYT");s("Pl2"),s.d(r,{createEventModelingServices:()=>c.g})}}]);
