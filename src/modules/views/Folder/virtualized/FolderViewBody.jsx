@@ -12,7 +12,6 @@ import Oops from '@/components/Error/Oops'
 import { useThumbnailSizeContext } from '@/lib/ThumbnailSizeContext'
 import FileListRowsPlaceholder from '@/modules/filelist/FileListRowsPlaceholder'
 import { isTypingNewFolderName } from '@/modules/filelist/duck'
-import { useNeedsToWait } from '@/modules/folder/hooks/useNeedsToWait'
 import { useScrollToTop } from '@/modules/folder/hooks/useScrollToTop'
 import { useNewItemHighlightContext } from '@/modules/upload/NewItemHighlightProvider'
 import AddFolderWrapper from '@/modules/views/Folder/virtualized/AddFolderWrapper'
@@ -51,9 +50,7 @@ const FolderViewBody = ({
     clearItems()
   }, [currentFolderId, isDesktop, clearItems])
 
-  const needsToWait = useNeedsToWait({ isLoading })
-
-  if (needsToWait || isLoading || !isSettingsLoaded) {
+  if (isLoading || !isSettingsLoaded) {
     return <FileListRowsPlaceholder />
   }
 
