@@ -9,10 +9,11 @@ import React from 'react'
 
 import CozyClient from 'cozy-client'
 import { useDataProxy } from 'cozy-dataproxy-lib'
+import { SharingContext } from 'cozy-sharing'
 import { SharingProvider } from 'cozy-sharing/dist/SharingProvider'
 
 import IntentHandler from './IntentHandler'
-import AppLike from 'test/components/AppLike'
+import { IntentLike } from 'test/components/IntentLike'
 
 import { ROOT_DIR_ID } from '@/constants/config'
 
@@ -231,17 +232,18 @@ function setup(
   })
   window.innerWidth = 1024
   render(
-    <AppLike
-      client={client}
-      sharingContextValue={{
-        allLoaded: true,
-        byDocId: {},
-        isOwner: () => true,
-        ensureSharingLink: sharingProvider?.ensureSharingLink
-      }}
-    >
-      <IntentHandler intentId="intent-id" />
-    </AppLike>
+    <IntentLike client={client}>
+      <SharingContext.Provider
+        value={{
+          allLoaded: true,
+          byDocId: {},
+          isOwner: () => true,
+          ensureSharingLink: sharingProvider?.ensureSharingLink
+        }}
+      >
+        <IntentHandler intentId="intent-id" />
+      </SharingContext.Provider>
+    </IntentLike>
   )
   return { client, service, documents, requests, writes, permissions }
 }
@@ -257,6 +259,11 @@ function getRow(id) {
 async function waitForRow(id) {
   await waitFor(() => expect(getRow(id)).toBeInTheDocument())
   return getRow(id)
+}
+
+async function confirmDocument(id) {
+  fireEvent.click(await waitForRow(id))
+  fireEvent.click(screen.getByTestId('documents-btn'))
 }
 
 describe('PICK intent integration', () => {
@@ -278,6 +285,88 @@ describe('PICK intent integration', () => {
     fireEvent.click(screen.getByRole('button', { name: /close/i }))
     expect(service.cancel).toHaveBeenCalledWith()
     expect(service.terminate).not.toHaveBeenCalled()
+  })
+
+  it('notifies readiness once through selection rerenders and section remounts', async () => {
+    const { service } = setup({ documents: {} })
+    fireEvent.click(await waitForRow('projects'))
+    expect(screen.getByTestId('documents-btn')).not.toBeDisabled()
+    fireEvent.click(screen.getByRole('tab', { name: 'Recents' }))
+    await waitFor(() =>
+      expect(screen.queryByTestId('file-picker-empty')).toBeInTheDocument()
+    )
+    expect(screen.getByTestId('documents-btn')).toBeDisabled()
+    fireEvent.click(screen.getByRole('tab', { name: 'My Drive' }))
+    await waitForRow('projects')
+    expect(screen.getByTestId('documents-btn')).toBeDisabled()
+    fireEvent.click(getRow('projects'))
+    expect(screen.getByTestId('documents-btn')).not.toBeDisabled()
+    expect(service.notifyReadyToUse).toHaveBeenCalledTimes(1)
+  })
+
+  it('confirms Documents once when double clicks repeat across selection rerenders', async () => {
+    const { service } = setup({
+      ...onlyDocuments,
+      defaultDirId: 'projects'
+    })
+    fireEvent.doubleClick(await waitForRow('invoice'))
+    fireEvent.doubleClick(getRow('invoice'))
+    await waitFor(() => expect(service.terminate).toHaveBeenCalledTimes(1))
+    expect(service.terminate.mock.calls[0][0]).toEqual([
+      { ...invoice, path: '/Projects/invoice.pdf' }
+    ])
+    expect(service.notifyReadyToUse).toHaveBeenCalledTimes(1)
+  })
+
+  it('revalidates and returns complete Documents with a freshly computed absolute file path, without saving it', async () => {
+    const { service, documents, writes, client } = setup({
+      ...onlyDocuments,
+      defaultDirId: 'projects'
+    })
+    await waitForRow('invoice')
+    documents.set('invoice', {
+      ...invoice,
+      _rev: '2-fresh',
+      metadata: { author: 'Bob' },
+      path: '/stale/invoice.pdf'
+    })
+    await confirmDocument('invoice')
+    await waitFor(() => expect(service.terminate).toHaveBeenCalledTimes(1))
+    expect(service.terminate.mock.calls[0][0]).toEqual([
+      {
+        ...invoice,
+        _rev: '2-fresh',
+        metadata: { author: 'Bob' },
+        path: '/Projects/invoice.pdf'
+      }
+    ])
+    expect(writes).toEqual([])
+    expect(documents.get('invoice').path).toBe('/stale/invoice.pdf')
+    expect(client.getDocumentFromState('io.cozy.files', 'invoice').path).toBe(
+      '/stale/invoice.pdf'
+    )
+    expect(screen.queryByTestId('public-link-btn')).toBe(null)
+    expect(screen.queryByTestId('temporary-download-link-btn')).toBe(null)
+  })
+
+  it('includes the filename at the Drive root and preserves complete folder documents', async () => {
+    const file = { ...invoice, dir_id: ROOT_DIR_ID }
+    const { service } = setup(
+      { documents: {} },
+      { files: [root, projects, file] }
+    )
+    fireEvent.click(await waitForRow('invoice'))
+    fireEvent.click(getRow('projects'), { ctrlKey: true })
+    fireEvent.click(screen.getByTestId('documents-btn'))
+    await waitFor(() => expect(service.terminate).toHaveBeenCalledTimes(1))
+    expect(service.terminate.mock.calls[0][0]).toEqual([
+      { ...file, path: '/invoice.pdf' },
+      projects
+    ])
+    expect(screen.queryByTestId('public-link-btn')).toBeInTheDocument()
+    expect(
+      screen.queryByTestId('temporary-download-link-btn')
+    ).toBeInTheDocument()
   })
 
   it('ignores defaultDirId when Drive is hidden and opens the first visible tab in normal order', async () => {
@@ -321,6 +410,77 @@ describe('PICK intent integration', () => {
       expect(service.notifyReadyToUse).toHaveBeenCalledTimes(1)
     )
     expect(service.throw).not.toHaveBeenCalled()
+  })
+
+  it('keeps single selection as an array result, including document-only double click confirmation', async () => {
+    const { service } = setup({
+      ...onlyDocuments,
+      multiple: false,
+      defaultDirId: 'projects'
+    })
+    fireEvent.click(await waitForRow('child'))
+    fireEvent.click(getRow('invoice'), { ctrlKey: true })
+    fireEvent.doubleClick(getRow('invoice'))
+    await waitFor(() => expect(service.terminate).toHaveBeenCalledTimes(1))
+    expect(service.terminate.mock.calls[0][0]).toEqual([
+      { ...invoice, path: '/Projects/invoice.pdf' }
+    ])
+  })
+
+  it('preserves local shared-folder selection without adding rights', async () => {
+    const { service, writes } = setup(
+      {
+        ...onlyDocuments,
+        defaultDirId: 'projects',
+        restrictToDefaultDir: true
+      },
+      {
+        files: [
+          root,
+          {
+            ...projects,
+            relationships: {
+              referenced_by: {
+                data: [{ id: 'sharing-id', type: 'io.cozy.sharings' }]
+              }
+            }
+          },
+          invoice
+        ]
+      }
+    )
+    await confirmDocument('invoice')
+    await waitFor(() => expect(service.terminate).toHaveBeenCalledTimes(1))
+    expect(service.terminate.mock.calls[0][0]).toEqual([
+      { ...invoice, path: '/Projects/invoice.pdf' }
+    ])
+    expect(writes).toEqual([])
+  })
+
+  it('does not confirm a file deleted between listing and confirmation, and remains cancellable', async () => {
+    const { service, documents } = setup({
+      ...onlyDocuments,
+      defaultDirId: 'projects'
+    })
+    fireEvent.click(await waitForRow('invoice'))
+    documents.delete('invoice')
+    fireEvent.click(screen.getByTestId('documents-btn'))
+    expect(await screen.findByTestId('file-picker-error')).toBeInTheDocument()
+    expect(service.terminate).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: /close/i }))
+    expect(service.cancel).toHaveBeenCalledWith()
+  })
+
+  it('rejects a file trashed after selection instead of returning a deleted document', async () => {
+    const { service, documents } = setup({
+      ...onlyDocuments,
+      defaultDirId: 'projects'
+    })
+    fireEvent.click(await waitForRow('invoice'))
+    documents.set('invoice', { ...invoice, trashed: true })
+    fireEvent.click(screen.getByTestId('documents-btn'))
+    expect(await screen.findByTestId('file-picker-error')).toBeInTheDocument()
+    expect(service.terminate).not.toHaveBeenCalled()
   })
 
   it.each(['moved', 'deleted', 'mime-changed'])(
@@ -399,6 +559,20 @@ describe('PICK intent integration', () => {
     expect(writes).toEqual([])
   })
 
+  it('accepts no items for an explicit empty accept while keeping navigation usable', async () => {
+    setup({
+      ...onlyDocuments,
+      documents: { label: 'Choose', accept: [], allowFolder: true },
+      defaultDirId: 'projects'
+    })
+    fireEvent.click(await waitForRow('invoice'))
+    expect(screen.getByRole('button', { name: /Choose/ })).toBeDisabled()
+    fireEvent.click(getRow('child'))
+    expect(screen.getByRole('button', { name: /Choose/ })).toBeDisabled()
+    fireEvent.doubleClick(getRow('child'))
+    await waitForRow('nested')
+  })
+
   it('keeps cancellation available when all actions are hidden', async () => {
     const { service } = setup({
       documents: null,
@@ -426,13 +600,14 @@ describe('PICK intent integration', () => {
     expect(service.notifyReadyToUse).toHaveBeenCalledTimes(1)
   })
 
-  it('anchors restricted breadcrumbs and navigation when entering and leaving descendants', async () => {
+  it('anchors restricted breadcrumbs and navigation, and clears selection when entering and leaving descendants', async () => {
     const { service } = setup({
       ...onlyDocuments,
       defaultDirId: 'projects',
       restrictToDefaultDir: true
     })
     fireEvent.click(await waitForRow('invoice'))
+    expect(screen.getByTestId('documents-btn')).not.toBeDisabled()
     expect(screen.getAllByRole('tab').map(tab => tab.textContent)).toEqual([
       'My Drive'
     ])
@@ -444,8 +619,10 @@ describe('PICK intent integration', () => {
     ).toBe(null)
     fireEvent.doubleClick(getRow('child'))
     await waitForRow('nested')
+    expect(screen.getByTestId('documents-btn')).toBeDisabled()
     fireEvent.click(await screen.findByRole('button', { name: 'Projects' }))
     await waitForRow('invoice')
+    expect(screen.getByTestId('documents-btn')).toBeDisabled()
     expect(service.notifyReadyToUse).toHaveBeenCalledTimes(1)
     expect(service.throw).not.toHaveBeenCalled()
   })
@@ -464,6 +641,7 @@ describe('PICK intent integration', () => {
         ROOT_DIR_ID
       )
     )
+    expect(screen.getByTestId('documents-btn')).toBeDisabled()
     expect(
       within(screen.getByTestId('file-picker-breadcrumb')).queryByRole(
         'button',
@@ -472,6 +650,19 @@ describe('PICK intent integration', () => {
     ).toBe(null)
     expect(getRow('nested')).toBe(null)
     expect(getRow('invoice')).toBeInTheDocument()
+  })
+
+  it('refuses confirmation when a selected file moved outside the restricted root', async () => {
+    const { service, documents } = setup({
+      ...onlyDocuments,
+      defaultDirId: 'projects',
+      restrictToDefaultDir: true
+    })
+    fireEvent.click(await waitForRow('invoice'))
+    documents.set('invoice', { ...invoice, dir_id: ROOT_DIR_ID })
+    fireEvent.click(screen.getByTestId('documents-btn'))
+    expect(await screen.findByTestId('file-picker-error')).toBeInTheDocument()
+    expect(service.terminate).not.toHaveBeenCalled()
   })
 
   it.each([
@@ -508,6 +699,42 @@ describe('PICK intent integration', () => {
     expect(service.throw).not.toHaveBeenCalled()
   })
 
+  it('evaluates accept independently for each action without hiding files or preventing folder navigation', async () => {
+    setup({
+      defaultDirId: 'projects',
+      documents: { accept: ['folder'] },
+      sharingLink: { accept: ['file'] },
+      downloadLink: { accept: ['folder'] }
+    })
+    fireEvent.click(await waitForRow('invoice'))
+    expect(screen.getByTestId('documents-btn')).toBeDisabled()
+    expect(screen.getByTestId('public-link-btn')).not.toBeDisabled()
+    expect(screen.getByTestId('temporary-download-link-btn')).toBeDisabled()
+    fireEvent.click(getRow('child'))
+    expect(screen.getByTestId('documents-btn')).not.toBeDisabled()
+    expect(screen.getByTestId('public-link-btn')).toBeDisabled()
+    expect(screen.getByTestId('temporary-download-link-btn')).toBeDisabled()
+    expect(getRow('invoice')).toBeInTheDocument()
+    fireEvent.doubleClick(getRow('child'))
+    await waitForRow('nested')
+  })
+
+  it('keeps path resolution business failures in the picker instead of returning an incomplete path', async () => {
+    const { service, documents, writes } = setup({
+      ...onlyDocuments,
+      defaultDirId: 'projects'
+    })
+    await waitForRow('invoice')
+    documents.set('projects', { ...projects, path: null })
+    await confirmDocument('invoice')
+    expect(await screen.findByTestId('file-picker-error')).toHaveTextContent(
+      'Could not retrieve the selected documents and their paths.'
+    )
+    expect(service.terminate).not.toHaveBeenCalled()
+    expect(service.throw).not.toHaveBeenCalled()
+    expect(writes).toEqual([])
+  })
+
   it('preserves the legacy temporary-download result instead of returning a Documents entry', async () => {
     const sharedFile = { ...invoice, driveId: 'shared-drive' }
     const { service, documents, client } = setup(
@@ -537,6 +764,7 @@ describe('PICK intent integration', () => {
     expect(service.terminate.mock.calls[0][0][0]).not.toHaveProperty('path')
     expect(service.terminate.mock.calls[0][0][0]).not.toHaveProperty('_id')
   })
+
   it.each(['local', 'shared'])(
     'keeps folders unavailable as attachments in the %s scope despite explicit accept',
     async scope => {
@@ -575,5 +803,24 @@ describe('PICK intent integration', () => {
     expect(await screen.findByTestId('file-picker-error')).toBeInTheDocument()
     expect(service.terminate).not.toHaveBeenCalled()
     expect(writes).toEqual([])
+  })
+
+  it('uses the correct Shared Drive parent path rather than the local parent with the same ID', async () => {
+    const sharedFile = {
+      ...invoice,
+      driveId: 'shared-drive',
+      dir_id: 'projects'
+    }
+    const { service, documents } = setup(
+      { ...onlyDocuments, tabs: ['recents'] },
+      { recents: [sharedFile] }
+    )
+    documents.set('shared-drive/invoice', invoice)
+    documents.set('shared-drive/projects', { ...projects, path: '/Team' })
+    await confirmDocument('invoice')
+    await waitFor(() => expect(service.terminate).toHaveBeenCalledTimes(1))
+    expect(service.terminate.mock.calls[0][0]).toEqual([
+      { ...invoice, driveId: 'shared-drive', path: '/Team/invoice.pdf' }
+    ])
   })
 })

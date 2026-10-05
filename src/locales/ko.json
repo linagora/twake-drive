@@ -128,5 +128,15 @@
     "accept": "수락",
     "decline": "거절",
     "close": "닫기"
+  },
+  "FilePicker": {
+    "footer": {
+      "buttons": {
+        "documents": "선택"
+      }
+    },
+    "errors": {
+      "DOCUMENTS_FAILED": "선택한 문서와 경로를 가져올 수 없습니다."
+    }
   }
 }

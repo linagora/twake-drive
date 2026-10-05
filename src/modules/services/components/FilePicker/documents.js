@@ -29,3 +29,23 @@ export async function isWithinPickerRoot(client, item, rootId) {
   }
   return false
 }
+
+export async function fetchPickerDocumentWithPath(client, item) {
+  if (models.file.isDirectory(item)) {
+    if (typeof item.path !== 'string' || !item.path.startsWith('/')) {
+      throw new Error('Missing folder path')
+    }
+    return { ...item }
+  }
+  const parent = await fetchPickerDocument(client, item.dir_id, item.driveId)
+  if (
+    !parent ||
+    !models.file.isDirectory(parent) ||
+    typeof parent.path !== 'string' ||
+    !parent.path.startsWith('/')
+  ) {
+    throw new Error('Missing parent folder path')
+  }
+  // File paths are computed response data, never a field to save in CouchDB.
+  return { ...item, path: `${parent.path.replace(/\/+$/, '')}/${item.name}` }
+}

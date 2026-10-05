@@ -843,7 +843,8 @@
       "buttons": {
         "cancel": "Abbrechen",
         "publicLink": "Als Link hinzufügen",
-        "temporaryDownloadLink": "Als Anhang hinzufügen"
+        "temporaryDownloadLink": "Als Anhang hinzufügen",
+        "documents": "Auswählen"
       }
     },
     "constraints": {
@@ -863,7 +864,8 @@
       "ITEM_NOT_FOUND": "Die ausgewählte Datei wurde nicht gefunden.",
       "DESTINATION_UNAVAILABLE": "Der Zielordner konnte nicht geladen werden.",
       "SHARING_LINK_FAILED": "Es konnte kein Freigabelink erstellt werden.",
-      "DOWNLOAD_LINK_FAILED": "Es konnte kein Download-Link erstellt werden."
+      "DOWNLOAD_LINK_FAILED": "Es konnte kein Download-Link erstellt werden.",
+      "DOCUMENTS_FAILED": "Die ausgewählten Dokumente und ihre Pfade konnten nicht abgerufen werden."
     }
   }
 }

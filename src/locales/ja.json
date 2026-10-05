@@ -456,5 +456,15 @@
     "accept": "承諾",
     "decline": "辞退",
     "close": "閉じる"
+  },
+  "FilePicker": {
+    "footer": {
+      "buttons": {
+        "documents": "選択"
+      }
+    },
+    "errors": {
+      "DOCUMENTS_FAILED": "選択したドキュメントとそのパスを取得できませんでした。"
+    }
   }
 }

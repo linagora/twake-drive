@@ -128,5 +128,15 @@
     "accept": "Akceptuj",
     "decline": "Odrzuć",
     "close": "Zamknij"
+  },
+  "FilePicker": {
+    "footer": {
+      "buttons": {
+        "documents": "Wybierz"
+      }
+    },
+    "errors": {
+      "DOCUMENTS_FAILED": "Nie udało się pobrać wybranych dokumentów i ich ścieżek."
+    }
   }
 }

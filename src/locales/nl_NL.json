@@ -547,5 +547,15 @@
     "accept": "Accepteren",
     "decline": "Weigeren",
     "close": "Sluiten"
+  },
+  "FilePicker": {
+    "footer": {
+      "buttons": {
+        "documents": "Selecteren"
+      }
+    },
+    "errors": {
+      "DOCUMENTS_FAILED": "De geselecteerde documenten en hun paden konden niet worden opgehaald."
+    }
   }
 }

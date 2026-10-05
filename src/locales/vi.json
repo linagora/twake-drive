@@ -843,7 +843,8 @@
       "buttons": {
         "cancel": "Hủy",
         "publicLink": "Thêm dưới dạng liên kết",
-        "temporaryDownloadLink": "Thêm dưới dạng tệp đính kèm"
+        "temporaryDownloadLink": "Thêm dưới dạng tệp đính kèm",
+        "documents": "Chọn"
       }
     },
     "constraints": {
@@ -863,7 +864,8 @@
       "ITEM_NOT_FOUND": "Không tìm thấy tệp đã chọn.",
       "DESTINATION_UNAVAILABLE": "Không thể tải thư mục đích.",
       "SHARING_LINK_FAILED": "Không thể tạo liên kết chia sẻ.",
-      "DOWNLOAD_LINK_FAILED": "Không thể tạo liên kết tải xuống."
+      "DOWNLOAD_LINK_FAILED": "Không thể tạo liên kết tải xuống.",
+      "DOCUMENTS_FAILED": "Không thể lấy các tài liệu đã chọn và đường dẫn của chúng."
     }
   }
 }
