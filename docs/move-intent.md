@@ -2,7 +2,7 @@
 
 This document specifies the standalone **Move intent** for moving one or more already-uploaded local files to a single destination selected in Drive. It is a draft for collaborative review, not a statement that the proposed behavior is already implemented.
 
-It assumes you already know how to create and run a Cozy intent (requesting an intent, loading the returned service URL, and handling the generic `ready` / `done` / `error` / `cancel` postMessage flow). It only documents what is specific to the Move service.
+It assumes you already know how to create and run an intent (requesting an intent, loading the returned service URL, and handling the generic `ready` / `done` / `error` / `cancel` postMessage flow). It only documents what is specific to the Move service.
 
 ## Intent identity
 
@@ -98,9 +98,9 @@ When no configuration other than the required `fileIds` is provided, Drive uses:
 
 When `restrictToDefaultDir` is true and `tabs` is omitted, only Drive is displayed. `defaultDirId` is optional without a restriction and required with one.
 
-Use `theme.type` with `light` or `dark` to force the picker theme. An omitted, `undefined` or invalid value preserves the existing behavior: the iframe follows the Cozy instance theme, with the system color scheme as a fallback. Following the Cozy instance theme requires a backend request, so the theme may change after that request succeeds. If the client app knows its theme, it should pass it to avoid a theme glitch.
+Use `theme.type` with `light` or `dark` to force the picker theme. An omitted, `undefined` or invalid value preserves the existing behavior: the iframe follows the instance theme, with the system color scheme as a fallback. Following the instance theme requires a backend request, so the theme may change after that request succeeds. If the client app knows its theme, it should pass it to avoid a theme glitch.
 
-For `undefined`, omit `theme` from the options passed to `IntentDialogOpener`, which only accepts explicit `light` or `dark` values. `IntentDialogOpener` and `IntentIframe` from `cozy-ui-plus >= 12.2.0` apply an explicit theme to their dialog, close button and loading surface. Older versions still pass the option to Drive, so the iframe is themed but the calling application's surrounding UI keeps its own theme. Custom intent containers remain responsible for styling their own UI. The option never changes Cozy settings, local storage or the caller's global theme.
+For `undefined`, omit `theme` from the options passed to `IntentDialogOpener`, which only accepts explicit `light` or `dark` values. `IntentDialogOpener` and `IntentIframe` from `cozy-ui-plus >= 12.2.0` apply an explicit theme to their dialog, close button and loading surface. Older versions still pass the option to Drive, so the iframe is themed but the calling application's surrounding UI keeps its own theme. Custom intent containers remain responsible for styling their own UI. The option never changes instance settings, local storage or the caller's global theme.
 
 ## Destination selection
 
