@@ -6,17 +6,16 @@ import { trashByName } from '../helpers/stack'
 const PARENT_FOLDER = `Parent Folder ${stamp()}`
 const NESTED_FOLDER = `Nested Folder ${stamp()}`
 
-test.describe.serial('Nested folder role bug linagora/twake-drive#4200', () => {
+test.describe('Nested folder role bug linagora/twake-drive#4200', () => {
   test.afterAll(async () => {
     await trashByName(USERS.alice.instance, PARENT_FOLDER)
   })
-  test('Alice creates parent and nested folder, shares parent with Bob as Viewer', async ({
+
+  test('Alice changes Bob role on nested from Viewer to Editor without mutating parent role', async ({
     alicePage,
     aliceDrive
   }) => {
-    // 1. Alice creates parent folder
-    // 2. Alice creates nested folder within parent
-    // 3. Alice shares parent with Bob as a viewer
+    // 1. Alice creates parent folder, seeds nested folder, and shares parent with Bob as Viewer
     await createAndShareFolderWithBob(alicePage, aliceDrive, PARENT_FOLDER, {
       role: 'Viewer',
       seed: async () => {
@@ -24,33 +23,25 @@ test.describe.serial('Nested folder role bug linagora/twake-drive#4200', () => {
         await aliceDrive.row(NESTED_FOLDER).waitVisible()
       }
     })
-  })
 
-  test('Alice changes Bob role on nested from Viewer to Editor, parent role should remain Viewer', async ({
-    alicePage,
-    aliceDrive
-  }) => {
-    // Navigate inside parent folder
-    await alicePage.goto(`${USERS.alice.appUrl}/#/folder`)
-    await aliceDrive.openFolder(PARENT_FOLDER)
+    // Alice is already inside parent folder; wait for nested folder row
     await aliceDrive.row(NESTED_FOLDER).waitVisible()
 
-    // Open share modal on nested folder
+    // 2. Open share modal on nested folder and verify Bob has Viewer role
     const modal = await aliceDrive.row(NESTED_FOLDER).share()
     await expect(modal.memberItem('bob')).toContainText(/viewer/i)
 
-    // Alice changes Bob's role on nested from viewer to editor
+    // 3. Alice changes Bob's role on nested from Viewer to Editor
     await modal.setMemberRole('bob', 'Editor')
     await expect(modal.memberItem('bob')).toContainText(/editor/i)
     await modal.close()
 
-    // Now check Alice's parent folder share modal
+    // 4. Verify Alice's parent folder share modal still has Bob as Viewer
     await alicePage.goto(`${USERS.alice.appUrl}/#/folder`)
     const parentModal = await aliceDrive.row(PARENT_FOLDER).share()
 
     // In issue linagora/twake-drive#4200:
-    // Expected: Bob is viewer on parent
-    // Actual (bug): Bob is editor on both parent and nested
+    // Expected: Bob remains Viewer on parent
     await expect(parentModal.memberItem('bob')).toContainText(/viewer/i)
     await parentModal.close()
   })
