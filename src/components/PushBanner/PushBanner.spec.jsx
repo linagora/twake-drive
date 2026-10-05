@@ -97,6 +97,12 @@ describe('PushBanner', () => {
       const { container } = setup()
       expect(container).toBeEmptyDOMElement()
     })
+
+    it('should hide client banner in the embedded space', () => {
+      isFlagshipApp.mockReturnValue(false)
+      const { container } = setup(50, false, '/space/drive-id/folder-id')
+      expect(container).toBeEmptyDOMElement()
+    })
   })
 
   it('should hide banner when the instance information is not loaded', () => {
