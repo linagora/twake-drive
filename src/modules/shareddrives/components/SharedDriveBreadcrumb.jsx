@@ -7,6 +7,7 @@ import { useI18n } from 'twake-i18n'
 import { SHARINGS_VIEW_ID } from '@/constants/config'
 import { MobileAwareBreadcrumb as Breadcrumb } from '@/modules/breadcrumb/components/MobileAwareBreadcrumb'
 import { useBreadcrumbPath } from '@/modules/breadcrumb/hooks/useBreadcrumbPath.jsx'
+import { getSpacePath, isSpacePath } from '@/modules/routeUtils'
 import { getSharingsRootRoute } from '@/modules/views/Sharings/routes'
 import { buildSharedDriveIdQuery } from '@/queries'
 
@@ -14,6 +15,7 @@ const SharedDriveBreadcrumb = ({ driveId, folderId }) => {
   const { t } = useI18n()
   const navigate = useNavigate()
   const { pathname } = useLocation()
+  const isInSpace = isSpacePath(pathname)
 
   const sharedDriveQuery = buildSharedDriveIdQuery({ driveId })
   const { data: sharedDrive } = useQuery(
@@ -41,20 +43,26 @@ const SharedDriveBreadcrumb = ({ driveId, folderId }) => {
         navigate(getSharingsRootRoute(pathname))
         return
       }
-      navigate(`/shareddrive/${driveId}/${id}`)
+      navigate(
+        isInSpace ? getSpacePath(driveId, id) : `/shareddrive/${driveId}/${id}`
+      )
     },
-    [driveId, navigate, pathname]
+    [driveId, isInSpace, navigate, pathname]
   )
 
   return (
     <Breadcrumb
-      path={[
-        {
-          id: SHARINGS_VIEW_ID,
-          name: t('breadcrumb.title_sharings')
-        },
-        ...path
-      ]}
+      path={
+        isInSpace
+          ? path
+          : [
+              {
+                id: SHARINGS_VIEW_ID,
+                name: t('breadcrumb.title_sharings')
+              },
+              ...path
+            ]
+      }
       onBreadcrumbClick={handleBreadcrumbClick}
       opening={false}
     />

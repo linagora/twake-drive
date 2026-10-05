@@ -693,6 +693,22 @@ describe('computePath', () => {
     ).toBe('/folder/folder123')
   })
 
+  it('should stay in the embedded space for shared drive folders and files', () => {
+    const pathname = '/space/drive456/root'
+    expect(
+      computePath(
+        { _id: 'folder123', driveId: 'drive456' },
+        { type: 'shared-drive', pathname }
+      )
+    ).toBe('/space/drive456/folder123')
+    expect(
+      computePath(
+        { _id: 'file123', driveId: 'drive456', dir_id: 'folder123' },
+        { type: 'shared-drive-file', pathname }
+      )
+    ).toBe('/space/drive456/folder123/file/file123')
+  })
+
   it('should return correct path for shared-drive-root-file', () => {
     const file = {
       _id: 'file123',

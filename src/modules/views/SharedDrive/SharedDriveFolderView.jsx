@@ -32,7 +32,9 @@ import { personalizeFolder } from '@/modules/actions/components/personalizeFolde
 import AddMenuProvider from '@/modules/drive/AddMenu/AddMenuProvider'
 import FabWithAddMenuContext from '@/modules/drive/FabWithAddMenuContext'
 import Toolbar from '@/modules/drive/Toolbar'
+import AddButton from '@/modules/drive/Toolbar/components/AddButton'
 import FileListRowsPlaceholder from '@/modules/filelist/FileListRowsPlaceholder'
+import { isSpacePath } from '@/modules/routeUtils'
 import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 import { SharedDriveBreadcrumb } from '@/modules/shareddrives/components/SharedDriveBreadcrumb'
 import { SharedDriveFolderBody } from '@/modules/shareddrives/components/SharedDriveFolderBody'
@@ -40,10 +42,59 @@ import { getFolderIdFromSharing } from '@/modules/shareddrives/helpers'
 import { useSharedDriveFolder } from '@/modules/shareddrives/hooks/useSharedDriveFolder'
 import Dropzone from '@/modules/upload/Dropzone'
 import DropzoneDnD from '@/modules/upload/DropzoneDnD'
+import { UploadButton } from '@/modules/upload/UploadButton'
 import FolderView from '@/modules/views/Folder/FolderView'
 import FolderViewHeader from '@/modules/views/Folder/FolderViewHeader'
 import FolderViewBodyVz from '@/modules/views/Folder/virtualized/FolderViewBody'
 import { buildSharedDriveIdQuery } from '@/queries'
+
+function SharedDriveFolderActions({
+  driveId,
+  folderId,
+  canWrite,
+  showShareButton
+}) {
+  const { pathname } = useLocation()
+  const { isMobile } = useBreakpoints()
+  const { t } = useI18n()
+  const { isSelectionBarVisible } = useSelectionContext()
+  const { displayedFolder } = useDisplayedFolder()
+  const isInSpace = isSpacePath(pathname)
+
+  return (
+    <>
+      {isInSpace && !isMobile && (
+        <div className="u-flex u-flex-items-center u-ml-auto">
+          <UploadButton
+            className="u-mr-half"
+            variant="secondary"
+            disabled={!canWrite}
+            folderId={folderId}
+            driveId={driveId}
+            displayedFolder={displayedFolder}
+            label={t('upload.label')}
+          />
+          <AddMenuProvider
+            canCreateFolder={true}
+            canUpload={true}
+            disabled={!canWrite}
+            displayedFolder={displayedFolder}
+            isSelectionBarVisible={isSelectionBarVisible}
+            componentsProps={{ AddMenu: { isUploadDisabled: true } }}
+          >
+            <AddButton className="u-mr-half" />
+          </AddMenuProvider>
+        </div>
+      )}
+      <Toolbar
+        canUpload={canWrite}
+        canCreateFolder={canWrite}
+        driveId={driveId}
+        showShareButton={showShareButton}
+      />
+    </>
+  )
+}
 
 function SharedDriveFolderViewContent({ sharing, driveId, folderId }) {
   const client = useClient()
@@ -175,10 +226,10 @@ function SharedDriveFolderViewContent({ sharing, driveId, folderId }) {
       >
         <FolderViewHeader>
           <SharedDriveBreadcrumb driveId={driveId} folderId={folderId} />
-          <Toolbar
-            canUpload={canWriteToCurrentFolder}
-            canCreateFolder={canWriteToCurrentFolder}
+          <SharedDriveFolderActions
             driveId={driveId}
+            folderId={folderId}
+            canWrite={canWriteToCurrentFolder}
             showShareButton={isInRootOfSharedDrive}
           />
         </FolderViewHeader>
