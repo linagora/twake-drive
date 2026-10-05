@@ -176,7 +176,7 @@ function SharedDriveFolderViewContent({ sharing, driveId, folderId }) {
         <FolderViewHeader>
           <SharedDriveBreadcrumb driveId={driveId} folderId={folderId} />
           <Toolbar
-            canUpload={false}
+            canUpload={canWriteToCurrentFolder}
             canCreateFolder={canWriteToCurrentFolder}
             driveId={driveId}
             showShareButton={isInRootOfSharedDrive}
