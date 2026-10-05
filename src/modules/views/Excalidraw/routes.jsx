@@ -1,8 +1,16 @@
-import React from 'react'
+import React, { Suspense, lazy } from 'react'
 import { Navigate, Route } from 'react-router-dom'
 
-import ExcalidrawView from '@/modules/views/Excalidraw'
+import Loader from '@/components/Loader'
 import ExcalidrawCreateView from '@/modules/views/Excalidraw/Create'
+
+const ExcalidrawLazyView = lazy(() => import('@/modules/views/Excalidraw'))
+
+const ExcalidrawView = props => (
+  <Suspense fallback={<Loader />}>
+    <ExcalidrawLazyView {...props} />
+  </Suspense>
+)
 
 // The route fragments are returned from plain functions (not components) so that
 // React Router's createRoutesFromChildren still sees the <Route> elements
