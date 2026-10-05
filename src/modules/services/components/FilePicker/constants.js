@@ -52,6 +52,10 @@ export const filePickerErrorCodes = {
 export const defaultFilePickerConfig = {
   theme: { type: undefined },
   multiple: true,
+  defaultDirId: null,
+  restrictToDefaultDir: false,
+  tabs: ['drive', 'recents', 'sharings'],
+  documents: null,
   sharingLink: { allowFolder: true },
   downloadLink: { allowFolder: false }
 }

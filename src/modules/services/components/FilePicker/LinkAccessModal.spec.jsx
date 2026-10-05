@@ -4,6 +4,7 @@ import React from 'react'
 import { LinkAccessModal } from './LinkAccessModal'
 
 jest.mock('cozy-sharing', () => ({
+  ...jest.requireActual('cozy-sharing'),
   ShareLinkAccessModal: ({
     documents,
     onCancel,

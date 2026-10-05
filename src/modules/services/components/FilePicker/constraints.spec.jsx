@@ -1,13 +1,8 @@
-import { matchMimeType, getActionDisabledState } from './constraints'
-
-jest.mock('cozy-client', () => ({
-  models: {
-    file: {
-      isDirectory: item => (item ? item.type === 'directory' : false),
-      isFile: item => (item ? item.type === 'file' : false)
-    }
-  }
-}))
+import {
+  matchMimeType,
+  getActionDisabledState,
+  getDownloadLinkDisabledState
+} from './constraints'
 
 describe('FilePicker constraints', () => {
   describe('matchMimeType', () => {
@@ -38,6 +33,33 @@ describe('FilePicker constraints', () => {
     })
   })
 
+  describe('getDownloadLinkDisabledState', () => {
+    const folder = { _id: 'folder', type: 'directory', name: 'Folder' }
+    const file = { _id: 'file', type: 'file', name: 'a.pdf', size: 42 }
+
+    it.each([
+      { allowFolder: false },
+      { allowFolder: true },
+      { accept: ['folder'] },
+      { accept: ['file', 'folder'], allowFolder: true }
+    ])('forbids any folder attachment despite action config %j', config => {
+      expect(getDownloadLinkDisabledState(config, [file, folder])).toEqual({
+        disabled: true,
+        reasonKey: 'FilePicker.constraints.disabledReasons.folderNotAllowed'
+      })
+    })
+
+    it('still evaluates accepted files without forbidding folders in other actions', () => {
+      const config = { accept: ['file', 'folder'], maxFileSize: 50 }
+      expect(getDownloadLinkDisabledState(config, [file]).disabled).toBe(false)
+      expect(getActionDisabledState(config, [folder]).disabled).toBe(false)
+      expect(
+        getDownloadLinkDisabledState({ ...config, maxFileSize: 40 }, [file])
+          .disabled
+      ).toBe(true)
+    })
+  })
+
   describe('getActionDisabledState', () => {
     const filePdf = {
       _id: '1',
@@ -61,6 +83,66 @@ describe('FilePicker constraints', () => {
       size: 1024
     }
     const folder = { _id: '4', type: 'directory', name: 'docs' }
+
+    it.each([
+      [['file'], filePdf, false],
+      [['folder'], filePdf, true],
+      [['folder'], folder, false],
+      [['file'], folder, true],
+      [['application/pdf'], filePdf, false],
+      [['image/*'], filePdf, true],
+      [['*/*'], filePdf, false],
+      [['*/*'], folder, true],
+      [[], folder, true],
+      [[], filePdf, true]
+    ])(
+      'evaluates accept %j independently for the selected item',
+      (accept, item, disabled) => {
+        expect(getActionDisabledState({ accept }, item).disabled).toBe(disabled)
+      }
+    )
+
+    it('uses OR matching for mixed selections and lets accept override deprecated type filters', () => {
+      expect(
+        getActionDisabledState(
+          {
+            accept: ['folder', 'application/*'],
+            allowFolder: false,
+            allowedMimeTypes: ['image/*']
+          },
+          [folder, filePdf]
+        ).disabled
+      ).toBe(false)
+      expect(
+        getActionDisabledState(
+          {
+            accept: [],
+            allowFolder: true,
+            allowedMimeTypes: []
+          },
+          [folder, filePdf]
+        ).disabled
+      ).toBe(true)
+    })
+
+    it('keeps size and count constraints independent of accept', () => {
+      expect(
+        getActionDisabledState({ accept: ['file'], maxFileSize: 10 }, filePdf)
+          .disabled
+      ).toBe(true)
+      expect(
+        getActionDisabledState({ accept: ['file'], maxFileCount: 1 }, [
+          filePdf,
+          filePdf2
+        ]).disabled
+      ).toBe(true)
+      expect(
+        getActionDisabledState(
+          { accept: ['file', 'folder'], availableSize: 1024 },
+          [filePdf, folder]
+        ).disabled
+      ).toBe(false)
+    })
 
     it('should disable when action config is missing', () => {
       expect(getActionDisabledState(null, filePdf)).toEqual({

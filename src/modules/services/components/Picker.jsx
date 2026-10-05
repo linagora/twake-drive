@@ -10,6 +10,10 @@ import {
   filePickerLinkModes,
   filePickerSharingLinkStatuses
 } from './FilePicker/constants'
+import {
+  getActionDisabledState,
+  getDownloadLinkDisabledState
+} from './FilePicker/constraints'
 import { makeFilePickerFileEntry } from './FilePicker/payload'
 import {
   fetchExistingSharingLink,
@@ -54,42 +58,72 @@ const Picker = ({ service, intent, onReadyToUse }) => {
   const serviceData = service.getData?.()
   const filePickerConfig = getFilePickerConfig(intent, serviceData)
 
-  const handlePick = async (selectedItems, linkMode, generatedSharingLinks) => {
+  const fetchSelectedFiles = async selectedItems => {
     const selectedFiles = Array.isArray(selectedItems)
       ? selectedItems
       : [selectedItems]
-    let queryResults
-    try {
-      queryResults = await Promise.all(
-        selectedFiles.map(async file => {
-          const fileId = getFileId(file)
-          const driveId = file.driveId ?? null
-          const query = driveId
-            ? buildSharedDriveFileOrFolderByIdQuery({ fileId, driveId })
-            : buildFileOrFolderByIdQuery(fileId)
+    const queryResults = await Promise.all(
+      selectedFiles.map(async file => {
+        const fileId = getFileId(file)
+        const driveId = file.driveId ?? null
+        const query = driveId
+          ? buildSharedDriveFileOrFolderByIdQuery({ fileId, driveId })
+          : buildFileOrFolderByIdQuery(fileId)
 
-          const result = await client.query(query.definition(), {
-            ...query.options,
-            ...(driveId ? {} : { as: `picker-confirm-${fileId}` }),
-            // Always go to the network — the file might have been deleted
-            // between listing and confirmation.
-            fetchPolicy: fetchPolicies.olderThan(0)
-          })
-
-          return { result, driveId }
+        const result = await client.query(query.definition(), {
+          ...query.options,
+          ...(driveId ? {} : { as: `picker-confirm-${fileId}` }),
+          // Always go to the network — the file might have been deleted
+          // between listing and confirmation.
+          fetchPolicy: fetchPolicies.olderThan(0)
         })
-      )
-    } catch {
-      return filePickerErrorCodes.ITEM_NOT_FOUND
-    }
+
+        return { result, driveId }
+      })
+    )
 
     const files = []
     for (const { result, driveId } of queryResults) {
       const data = result?.data
-      if (!data) {
-        return filePickerErrorCodes.ITEM_NOT_FOUND
+      if (!data || data.trashed) {
+        throw new Error(filePickerErrorCodes.ITEM_NOT_FOUND)
       }
       files.push(driveId ? { ...data, driveId } : data)
+    }
+
+    return files
+  }
+
+  const validateSharingSelection = async selectedItems => {
+    const files = await fetchSelectedFiles(selectedItems)
+    if (getActionDisabledState(filePickerConfig.sharingLink, files).disabled) {
+      throw new Error(filePickerErrorCodes.ITEM_NOT_FOUND)
+    }
+    return files
+  }
+
+  const handlePick = async (selectedItems, linkMode, generatedSharingLinks) => {
+    let files
+    try {
+      files = await fetchSelectedFiles(selectedItems)
+    } catch {
+      return filePickerErrorCodes.ITEM_NOT_FOUND
+    }
+
+    const linkAction =
+      linkMode === filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK
+        ? filePickerConfig.downloadLink
+        : filePickerConfig.sharingLink
+    const linkState =
+      linkMode === filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK
+        ? getDownloadLinkDisabledState(linkAction, files)
+        : getActionDisabledState(linkAction, files)
+    if (
+      (linkMode === filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK ||
+        linkAction?.accept !== undefined) &&
+      linkState.disabled
+    ) {
+      return filePickerErrorCodes.ITEM_NOT_FOUND
     }
 
     if (linkMode === filePickerLinkModes.PUBLIC_LINK && generatedSharingLinks) {
@@ -161,6 +195,7 @@ const Picker = ({ service, intent, onReadyToUse }) => {
       onFileDoubleClick={handleFileDoubleClick}
       onClose={handleClose}
       filePickerConfig={filePickerConfig}
+      validateSharingSelection={validateSharingSelection}
       onReadyToUse={onReadyToUse}
       multiple={filePickerConfig.multiple}
     />

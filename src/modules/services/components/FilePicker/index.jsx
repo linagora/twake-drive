@@ -22,7 +22,10 @@ import {
   filePickerLinkModes,
   filePickerThemes
 } from './constants'
-import { getActionDisabledState } from './constraints'
+import {
+  getActionDisabledState,
+  getDownloadLinkDisabledState
+} from './constraints'
 
 import { FilePicker as SharedFilePicker } from '@/components/FilePicker/FilePicker'
 import {
@@ -43,7 +46,8 @@ const FilePicker = ({
   multiple,
   filePickerConfig,
   onReadyToUse,
-  onFileDoubleClick
+  onFileDoubleClick,
+  validateSharingSelection
 }) => {
   const [error, setError] = useState(null)
   const [isLinkAccessOpen, setIsLinkAccessOpen] = useState(false)
@@ -134,7 +138,7 @@ const FilePicker = ({
     ? getActionDisabledState(publicLinkAction, selectedItems)
     : { disabled: true, reasonKey: null }
   const downloadLinkState = hasSelection
-    ? getActionDisabledState(downloadLinkAction, selectedItems)
+    ? getDownloadLinkDisabledState(downloadLinkAction, selectedItems)
     : { disabled: true, reasonKey: null }
 
   const handleFileDoubleClick = useCallback(
@@ -149,7 +153,7 @@ const FilePicker = ({
         ? getActionDisabledState(publicLinkAction, [item])
         : { disabled: true }
       const downloadState = downloadLinkAction
-        ? getActionDisabledState(downloadLinkAction, [item])
+        ? getDownloadLinkDisabledState(downloadLinkAction, [item])
         : { disabled: true }
       const useDownload = sharingState.disabled && !downloadState.disabled
       if (sharingState.disabled && downloadState.disabled) return
@@ -253,6 +257,7 @@ const FilePicker = ({
             selectedItems={selectedItems}
             onCancel={() => setIsLinkAccessOpen(false)}
             onConfirm={handleLinkAccessConfirm}
+            validateSelection={validateSharingSelection}
           />
         </Suspense>
       )}
@@ -273,6 +278,7 @@ FilePicker.propTypes = {
     sharingLink: PropTypes.object,
     downloadLink: PropTypes.object
   }),
+  validateSharingSelection: PropTypes.func,
   onReadyToUse: PropTypes.func,
   onFileDoubleClick: PropTypes.func
 }

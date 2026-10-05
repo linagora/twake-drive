@@ -3,6 +3,59 @@ import { defaultFilePickerConfig } from './constants'
 
 describe('FilePicker config', () => {
   describe('getFilePickerConfig', () => {
+    it('keeps Documents opt-in without changing the historical action defaults', () => {
+      expect(getFilePickerConfig(null).documents).toBe(null)
+      const config = getFilePickerConfig(null, {
+        documents: { accept: ['folder'] }
+      })
+      expect(config.documents).toEqual({ accept: ['folder'] })
+      expect(config.sharingLink).toEqual({ allowFolder: true })
+      expect(config.downloadLink).toEqual({ allowFolder: false })
+      expect(getFilePickerConfig(null, { documents: null }).documents).toBe(
+        null
+      )
+    })
+
+    it('merges intent data over handshake data while ignoring unrelated keys', () => {
+      const config = getFilePickerConfig(
+        {
+          attributes: {
+            data: {
+              multiple: false,
+              documents: null,
+              defaultDirId: 'intent-folder'
+            }
+          }
+        },
+        {
+          multiple: true,
+          documents: {},
+          defaultDirId: 'service-folder',
+          tabs: ['recents'],
+          unknown: true
+        }
+      )
+      expect(config).toEqual(
+        expect.objectContaining({
+          multiple: false,
+          documents: null,
+          defaultDirId: 'intent-folder',
+          tabs: ['recents']
+        })
+      )
+      expect(config).not.toHaveProperty('unknown')
+    })
+
+    it('defaults to Drive alone under restriction without silently replacing explicit tabs', () => {
+      expect(
+        getFilePickerConfig(null, { restrictToDefaultDir: true }).tabs
+      ).toEqual(['drive'])
+      expect(
+        getFilePickerConfig(null, { restrictToDefaultDir: true, tabs: [] }).tabs
+      ).toEqual([])
+      expect(getFilePickerConfig(null, { tabs: null }).tabs).toBe(null)
+    })
+
     it('returns the default config when intent has no data', () => {
       expect(getFilePickerConfig(null)).toBe(defaultFilePickerConfig)
       expect(getFilePickerConfig(undefined)).toBe(defaultFilePickerConfig)
