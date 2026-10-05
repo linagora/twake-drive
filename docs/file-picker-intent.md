@@ -220,7 +220,7 @@ caller's global theme.
 
 ### `documents`
 
-Returns the complete `io.cozy.files` documents selected by the user, as provided by cozy-client.
+Returns the complete selected `io.cozy.files` documents, enriched with each item's full `path`.
 
 - Must be explicitly enabled with an object, for example `documents: {}`.
 - Works for files and folders by default.
@@ -309,7 +309,7 @@ All entries come from the action selected by the user. There is no new result wr
 ```ts
 import type { IOCozyFile, IOCozyFolder } from 'cozy-client/types/types'
 
-type FilePickerDocument = IOCozyFile | IOCozyFolder
+type FilePickerDocument = (IOCozyFile | IOCozyFolder) & { path: string }
 
 interface FilePickerLinkEntry {
   id: string
@@ -326,7 +326,7 @@ interface FilePickerLinkEntry {
 type FilePickerEntry = FilePickerDocument | FilePickerLinkEntry
 ```
 
-The `documents` action returns complete `io.cozy.files` documents, preserving their fields and types, including metadata and relationships. It does not include binary file contents or recursively load a folder's children.
+The `documents` action returns complete `io.cozy.files` documents, preserving their fields and types, including metadata and relationships. Each returned item has a full, absolute `path` including its own name (for example `/Projects/invoice.pdf` for a file), not just its parent directory. For files, Drive derives this response-only field from the parent folder's path and the selected item's name, using the correct sharing/Shared Drive context when applicable. The path is not a field persisted in the file's CouchDB document; Drive does not save the enriched result or return an incomplete path if the parent cannot be resolved. It does not include binary file contents or recursively load a folder's children.
 
 The link actions retain their historical result: `id`, `name`, numeric `size`, `mimeType`, the generated link and an optional thumbnail. They do not switch to complete `io.cozy.files` documents. Exactly one of `sharingLink` or `downloadLink` is present for the corresponding link action.
 
@@ -445,4 +445,4 @@ For example, this configuration enables document selection, starts in a local fo
 - Omitted `tabs` displays `drive`, `recents`, `sharings` in that order; with `restrictToDefaultDir: true`, omission displays only `drive`.
 - `defaultDirId` accepts only an accessible local folder. Without restriction it sets the starting location and falls back to the usual root with a console warning if unavailable; with restriction it is required and forms the navigation and selection boundary, with no broader fallback.
 - `tabs` always includes `drive`; invalid, empty, unknown, or restriction-forbidden lists are rejected rather than silently changed.
-- A successful selection returns the existing bare `document: FilePickerEntry[]` payload; business errors remain in the picker and user cancellation uses the generic `cancel` channel without a File Picker-specific payload.
+- A successful selection returns the existing bare `document: FilePickerEntry[]` payload. Documents entries include a full response-only `path` with the item's name; historical link entries are unchanged. Business errors remain in the picker and user cancellation uses the generic `cancel` channel without a File Picker-specific payload.

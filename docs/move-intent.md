@@ -124,13 +124,13 @@ A supplied `tabs` list filters the visible tabs, but Drive must always remain vi
 
 ## Success result
 
-On success, the intent result document is a one-element array containing the complete updated file document:
+On success, the intent result document is a one-element array containing the complete updated file document, enriched with its full path:
 
 ```ts
 import type { IOCozyFile } from 'cozy-client/types/types'
 
 interface MoveIntentResult {
-  document: [IOCozyFile]
+  document: [IOCozyFile & { path: string }]
 }
 ```
 
@@ -145,15 +145,16 @@ For example:
       "name": "invoice.pdf",
       "mime": "application/pdf",
       "size": 123456,
-      "dir_id": "destination-folder-id"
+      "dir_id": "destination-folder-id",
+      "path": "/Projects/invoice.pdf"
     }
   ]
 }
 ```
 
-The returned item is the moved file, not the destination folder. It is a complete Cozy document reflecting its new location, contains no binary file content, and does not include a generated link or thumbnail. Success is returned only after the move succeeds, not merely after the user chooses a destination.
+The returned item is the moved file, not the destination folder. It is the complete updated `io.cozy.files` document reflecting its new location, with a full, absolute `path` that includes the filename (not just the destination folder path). Compute this response-only field from the final parent folder and final file name after the move, using the correct Shared Drive context when applicable; do not persist it in CouchDB or reuse the source file's old path. It contains no binary file content or generated link or thumbnail. Success is returned only after the move succeeds and its updated result and path are available, not merely after the user chooses a destination.
 
-Keep the successful mutation separate from obtaining its updated result. If the move succeeds but retrieving the updated document fails, retry obtaining the result in its new location, not the move itself. Do not repeat a known-successful mutation or return the stale input document as success.
+Keep the successful mutation separate from obtaining its updated result. If the move succeeds but retrieving the updated document or its final path fails, retry obtaining the result in its new location, not the move itself. Do not repeat a known-successful mutation or return the stale input document as success.
 
 ## Error handling
 
@@ -178,5 +179,5 @@ The signal fires once when the picker becomes usable; navigating into subfolders
 - Omitted `tabs` displays `drive`, `recents`, `sharings` in that order; with `restrictToDefaultDir: true`, omission displays only `drive`. Drive is always visible, and invalid tab lists are rejected.
 - `defaultDirId` accepts only a local folder. Without restriction it sets the starting location and falls back to the usual root with a console warning if unavailable; with restriction it is required and bounds navigation and destination selection to itself and descendants, without a broader fallback.
 - Restriction does not require the source file to be inside the destination subtree. It does not bypass access or writability checks.
-- Success returns exactly one complete updated moved file document after the mutation; a failed mutation does not return success, and result retrieval retries do not repeat a successful mutation.
+- Success returns exactly one complete updated moved file document with a response-only full `path` including the filename after the mutation; a failed mutation does not return success, and result retrieval retries do not repeat a successful mutation.
 - Business move errors remain in the picker with retry; invalid configuration uses the generic intent `error` channel; user cancellation uses the generic `cancel` channel without deleting the uploaded source.
