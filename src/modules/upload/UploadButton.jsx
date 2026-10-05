@@ -23,6 +23,7 @@ const UploadButtonBase = ({
   driveId,
   sharingState,
   componentsProps,
+  variant,
   onUploaded,
   onUploadStart
 }) => {
@@ -53,19 +54,20 @@ const UploadButtonBase = ({
   }
 
   const { isPublic } = usePublicContext()
+  const buttonVariant = variant ?? (isPublic ? 'secondary' : 'primary')
 
   const button = (
     <Button
       {...componentsProps?.button}
-      variant={isPublic ? 'secondary' : 'primary'}
+      variant={buttonVariant}
       disabled={disabled}
       style={
-        isPublic
-          ? undefined
-          : {
+        buttonVariant === 'primary'
+          ? {
               color: 'var(--primaryTextColor)',
               backgroundColor: 'var(--paperBackgroundColor)'
             }
+          : undefined
       }
       component="span"
       startIcon={<Icon icon={Upload} size={12} />}
@@ -97,6 +99,7 @@ UploadButtonBase.propTypes = {
   disabled: PropTypes.bool,
   className: PropTypes.string,
   componentsProps: PropTypes.object,
+  variant: PropTypes.oneOf(['primary', 'secondary']),
   onUploaded: PropTypes.func,
   displayedFolder: PropTypes.object, // io.cozy.files
   folderId: PropTypes.string,

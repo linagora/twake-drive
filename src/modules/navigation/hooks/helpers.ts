@@ -18,7 +18,9 @@ import {
 } from '@/modules/nextcloud/helpers'
 import {
   getSharedDriveRootFilePath,
-  getSharedDriveRootFilePathScope
+  getSharedDriveRootFilePathScope,
+  getSpacePath,
+  isSpacePath
 } from '@/modules/routeUtils'
 import { makeSharedDriveNoteReturnUrl } from '@/modules/shareddrives/helpers'
 import {
@@ -251,6 +253,10 @@ export const computePath = (
         return getSharingsSharedDrivePath(pathname, driveId, file._id)
       }
 
+      if (isSpacePath(pathname)) {
+        return getSpacePath(driveId, file._id)
+      }
+
       return `/shareddrive/${driveId}/${file._id}`
     case 'shared-drive-root-file':
       if (!driveId || isNextcloudFile(file)) {
@@ -273,6 +279,9 @@ export const computePath = (
       }
       if (!file.dir_id) {
         throw new Error('Missing dir_id in shared drive file')
+      }
+      if (isSpacePath(pathname)) {
+        return `${getSpacePath(driveId, file.dir_id)}/file/${file._id}`
       }
       return getSharingsTabFromPath(pathname)
         ? getSharingsSharedDriveViewerPath(

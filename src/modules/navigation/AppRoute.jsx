@@ -62,6 +62,10 @@ import {
   areDrivesAvailable,
   SharingsTabProvider
 } from '@/modules/views/Sharings/useSharingsTab'
+import {
+  SpaceLayout,
+  SpaceRootRedirect
+} from '@/modules/views/Space/SpaceLayout'
 import { TrashDestroyView } from '@/modules/views/Trash/TrashDestroyView'
 import { TrashEmptyView } from '@/modules/views/Trash/TrashEmptyView'
 
@@ -141,11 +145,8 @@ const sharedDriveRootFileRoute = () => (
   </Route>
 )
 
-const sharedDriveFolderRoute = () => (
-  <Route
-    path="shareddrive/:driveId/:folderId"
-    element={<SharedDriveFolderView />}
-  >
+const sharedDriveFolderRoute = (path = 'shareddrive/:driveId/:folderId') => (
+  <Route path={path} element={<SharedDriveFolderView />}>
     <Route
       path="file/:fileId"
       element={<OutletWrapper Component={FilesViewerSharedDrive} />}
@@ -190,6 +191,13 @@ const AppRoutes = ({ sharedDrivesEnabled }) => (
     <Route path="external/:driveId/:fileId" element={<ExternalRedirect />} />
     <Route path="note/:fileId" element={<PublicNoteRedirect />} />
     <Route path="note/:driveId/:fileId" element={<PublicNoteRedirect />} />
+
+    {sharedDrivesEnabled ? (
+      <Route path="space/:driveId" element={<SpaceLayout />}>
+        <Route index element={<SpaceRootRedirect />} />
+        {sharedDriveFolderRoute(':folderId')}
+      </Route>
+    ) : null}
 
     <Route element={<AssistantLayout />}>
       <Route path={ASSISTANT_ROUTE_PATH} element={<AssistantView />} />

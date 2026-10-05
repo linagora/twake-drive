@@ -9,7 +9,9 @@ import useHead from '@/components/useHead'
 import { useCurrentFolderId, useFolderSort } from '@/hooks'
 import {
   getSharedDrivePath,
-  getSharedDriveViewerPath
+  getSharedDriveViewerPath,
+  getSpacePath,
+  isSpacePath
 } from '@/modules/routeUtils'
 import FilesViewer from '@/modules/viewer/FilesViewer'
 import {
@@ -45,9 +47,12 @@ const FilesViewerSharedDrive = () => {
 
   if (viewableFiles) {
     const isInSharings = Boolean(getSharingsTabFromPath(pathname))
+    const isInSpace = isSpacePath(pathname)
     const closePath = isInSharings
       ? getSharingsSharedDrivePath(pathname, driveId, folderId)
-      : getSharedDrivePath(driveId, folderId)
+      : isInSpace
+        ? getSpacePath(driveId, folderId)
+        : getSharedDrivePath(driveId, folderId)
 
     return (
       <FilesViewer
@@ -63,7 +68,9 @@ const FilesViewerSharedDrive = () => {
                   folderId,
                   fileId
                 )
-              : getSharedDriveViewerPath(driveId, folderId, fileId)
+              : isInSpace
+                ? `${getSpacePath(driveId, folderId)}/file/${fileId}`
+                : getSharedDriveViewerPath(driveId, folderId, fileId)
           )
         }
         viewerProps={{
