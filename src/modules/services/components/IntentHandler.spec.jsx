@@ -103,7 +103,7 @@ describe('IntentHandler', () => {
     }
   )
 
-  it('prefetches the root folder while the intent handshake is pending', async () => {
+  it('waits for the final handshake configuration before prefetching the initial folder', async () => {
     const handshake = makeDeferredPromise()
     const rootFolderPrefetch = makeDeferredPromise()
     mockCreateService.mockReturnValue(handshake.promise)
@@ -114,15 +114,9 @@ describe('IntentHandler', () => {
     )
 
     expect(mockCreateService).toHaveBeenCalledWith('intent-id', window)
-    await waitFor(() =>
-      expect(buildContentFolderQuery).toHaveBeenCalledWith(
-        'io.cozy.files.root-dir'
-      )
-    )
-    expect(mockClient.query).toHaveBeenCalledWith(
-      mockRootFolderDefinition,
-      mockRootFolderOptions
-    )
+    await act(async () => {})
+    expect(buildContentFolderQuery).not.toHaveBeenCalled()
+    expect(queryByTestId('picker')).toBe(null)
 
     const service = {
       getIntent: () => ({
@@ -134,6 +128,9 @@ describe('IntentHandler', () => {
     })
 
     expect(queryByTestId('picker')).toBe(null)
+    expect(buildContentFolderQuery).toHaveBeenCalledWith(
+      'io.cozy.files.root-dir'
+    )
 
     rootFolderPrefetch.resolve({ data: [] })
 

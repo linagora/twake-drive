@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { useClient, fetchPolicies } from 'cozy-client'
+import { useClient, fetchPolicies, models } from 'cozy-client'
 
 import FilePicker from './FilePicker'
 import { getFilePickerConfig } from './FilePicker/config'
@@ -14,6 +14,7 @@ import {
   getActionDisabledState,
   getDownloadLinkDisabledState
 } from './FilePicker/constraints'
+import { fetchPickerDocument, isWithinPickerRoot } from './FilePicker/documents'
 import { makeFilePickerFileEntry } from './FilePicker/payload'
 import {
   fetchExistingSharingLink,
@@ -53,10 +54,38 @@ function terminateWithGeneratedSharingLinks(
   }
 }
 
-const Picker = ({ service, intent, onReadyToUse }) => {
+const Picker = ({
+  service,
+  intent,
+  filePickerConfig: initializedConfig,
+  onReadyToUse
+}) => {
   const client = useClient()
   const serviceData = service.getData?.()
-  const filePickerConfig = getFilePickerConfig(intent, serviceData)
+  const filePickerConfig =
+    initializedConfig || getFilePickerConfig(intent, serviceData)
+
+  const canNavigateTo = filePickerConfig.restrictToDefaultDir
+    ? async folder => {
+        if (folder.driveId) return false
+        try {
+          const document = await fetchPickerDocument(
+            client,
+            folder._id ?? folder.id
+          )
+          return (
+            models.file.isDirectory(document) &&
+            (await isWithinPickerRoot(
+              client,
+              document,
+              filePickerConfig.defaultDirId
+            ))
+          )
+        } catch {
+          return false
+        }
+      }
+    : null
 
   const fetchSelectedFiles = async selectedItems => {
     const selectedFiles = Array.isArray(selectedItems)
@@ -89,6 +118,16 @@ const Picker = ({ service, intent, onReadyToUse }) => {
         throw new Error(filePickerErrorCodes.ITEM_NOT_FOUND)
       }
       files.push(driveId ? { ...data, driveId } : data)
+    }
+
+    if (filePickerConfig.restrictToDefaultDir) {
+      const allowed = await Promise.all(
+        files.map(file =>
+          isWithinPickerRoot(client, file, filePickerConfig.defaultDirId)
+        )
+      )
+      if (allowed.some(isAllowed => !isAllowed))
+        throw new Error(filePickerErrorCodes.ITEM_NOT_FOUND)
     }
 
     return files
@@ -195,6 +234,7 @@ const Picker = ({ service, intent, onReadyToUse }) => {
       onFileDoubleClick={handleFileDoubleClick}
       onClose={handleClose}
       filePickerConfig={filePickerConfig}
+      canNavigateTo={canNavigateTo}
       validateSharingSelection={validateSharingSelection}
       onReadyToUse={onReadyToUse}
       multiple={filePickerConfig.multiple}

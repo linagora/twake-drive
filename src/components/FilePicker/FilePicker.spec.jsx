@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import React, { useState } from 'react'
 
 import { useQuery } from 'cozy-client'
@@ -549,6 +549,51 @@ describe('FilePicker', () => {
         location: expect.objectContaining({ folderId: folder._id })
       })
     )
+  })
+
+  it('keeps the latest navigation when ancestry checks finish out of order', async () => {
+    const secondFolder = {
+      ...folder,
+      _id: 'second-folder',
+      id: 'second-folder',
+      name: 'Second folder'
+    }
+    const firstFile = { ...file, _id: 'first-file', name: 'First file' }
+    useQuery.mockImplementation(definition => {
+      const folderId = definition().selector?.dir_id
+      return {
+        data:
+          folderId === secondFolder._id
+            ? [file]
+            : folderId === folder._id
+              ? [firstFile]
+              : [folder, secondFolder],
+        fetchStatus: 'loaded'
+      }
+    })
+    let resolveFirst = null
+    let resolveSecond = null
+    const firstCheck = new Promise(resolve => {
+      resolveFirst = resolve
+    })
+    const secondCheck = new Promise(resolve => {
+      resolveSecond = resolve
+    })
+    render(
+      <FilePicker
+        mode={filePickerModes.SELECTION}
+        canNavigateTo={item =>
+          item._id === folder._id ? firstCheck : secondCheck
+        }
+      />
+    )
+    fireEvent.doubleClick(screen.getByTestId('item-folder-id'))
+    fireEvent.doubleClick(screen.getByTestId('item-second-folder'))
+    await act(async () => resolveSecond(true))
+    expect(screen.queryByTestId('item-file-id')).toBeInTheDocument()
+    await act(async () => resolveFirst(true))
+    expect(screen.queryByTestId('item-file-id')).toBeInTheDocument()
+    expect(screen.queryByTestId('item-first-file')).toBe(null)
   })
 
   it('notifies readiness only once across section remounts', () => {

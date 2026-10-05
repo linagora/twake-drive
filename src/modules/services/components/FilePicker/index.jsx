@@ -47,6 +47,7 @@ const FilePicker = ({
   filePickerConfig,
   onReadyToUse,
   onFileDoubleClick,
+  canNavigateTo,
   validateSharingSelection
 }) => {
   const [error, setError] = useState(null)
@@ -202,7 +203,10 @@ const FilePicker = ({
       >
         <SharedFilePicker
           mode={filePickerModes.SELECTION}
-          availableSections={Object.values(filePickerSections)}
+          initialLocation={config.initialLocation}
+          restrictedRoot={config.restrictedRoot}
+          canNavigateTo={canNavigateTo}
+          availableSections={config.tabs || Object.values(filePickerSections)}
           displayedTypes={Object.values(filePickerItemTypes)}
           selectableTypes={selectableTypes}
           multiple={multiple}
@@ -280,7 +284,8 @@ FilePicker.propTypes = {
   }),
   validateSharingSelection: PropTypes.func,
   onReadyToUse: PropTypes.func,
-  onFileDoubleClick: PropTypes.func
+  onFileDoubleClick: PropTypes.func,
+  canNavigateTo: PropTypes.func
 }
 
 FilePicker.defaultProps = {

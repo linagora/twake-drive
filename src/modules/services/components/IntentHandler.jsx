@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 import { useClient } from 'cozy-client'
 import Intents from 'cozy-interapp'
@@ -9,10 +9,9 @@ import { BreakpointsProvider } from 'cozy-ui/transpiled/react/providers/Breakpoi
 import CozyTheme from 'cozy-ui-plus/dist/providers/CozyTheme'
 
 import { getFilePickerConfig } from './FilePicker/config'
+import { initializeFilePicker } from './FilePicker/initialization'
 import Picker from './Picker'
 
-import { buildContentFolderQuery } from '@/components/FilePicker/queries'
-import { ROOT_DIR_ID } from '@/constants/config'
 function isFilePickerIntent(intent) {
   return (
     intent?.attributes?.action === 'PICK' &&
@@ -20,42 +19,27 @@ function isFilePickerIntent(intent) {
   )
 }
 
-async function initPicker(client) {
-  const rootFolderQuery = buildContentFolderQuery(ROOT_DIR_ID)
-
-  try {
-    await client.query(rootFolderQuery.definition(), rootFolderQuery.options)
-  } catch (error) {
-    logger.warn('File Picker root prefetch failed', error)
-  }
-
-  return Picker
-}
-
 const IntentHandler = ({ intentId }) => {
   const client = useClient()
 
+  // Show the intent's loading theme until handshake and folder resolution finish.
   const [state, setState] = useState({
     component: null,
     service: null,
-    intent: null
+    intent: null,
+    filePickerConfig: null
   })
 
   const ServiceComponent = state.component
-  const hasNotifiedReadyRef = useRef(false)
+  const handleReadyToUse = () => state.service?.notifyReadyToUse()
 
-  const handleReadyToUse = useCallback(() => {
-    if (hasNotifiedReadyRef.current) return
-    hasNotifiedReadyRef.current = true
-    state.service?.notifyReadyToUse()
-  }, [state.service])
-
+  // The iframe handshake is external I/O, started after mount for this intent.
   useEffect(() => {
     const startService = async () => {
       let service
       try {
         const intents = new Intents({ client })
-        // createService exposes the intent only after the handshake, so fetch it separately to start prefetching earlier
+        // The intent is available before the handshake, allowing the loading surface to use its theme.
         const intentPromise = intents.request.get(intentId, { tryDOM: true })
         const servicePromise = intents.createService(intentId, window)
         const pendingIntent = await intentPromise
@@ -63,22 +47,24 @@ const IntentHandler = ({ intentId }) => {
           ...currentState,
           intent: pendingIntent
         }))
-        const pickerInitialization = isFilePickerIntent(pendingIntent)
-          ? initPicker(client)
-          : null
-
         service = await servicePromise
         const intent = service.getIntent()
-        const component = await pickerInitialization
+        const filePickerConfig = isFilePickerIntent(intent)
+          ? await initializeFilePicker(
+              client,
+              getFilePickerConfig(intent, service.getData?.())
+            )
+          : null
 
         setState({
-          component,
+          component: filePickerConfig ? Picker : null,
           service,
-          intent
+          intent,
+          filePickerConfig
         })
       } catch (error) {
         logger.error(error)
-        service.throw(error)
+        service?.throw(new Error(error?.message || String(error)))
       }
     }
 
@@ -89,6 +75,7 @@ const IntentHandler = ({ intentId }) => {
     <ServiceComponent
       service={state.service}
       intent={state.intent}
+      filePickerConfig={state.filePickerConfig}
       onReadyToUse={handleReadyToUse}
     />
   ) : (
@@ -98,9 +85,8 @@ const IntentHandler = ({ intentId }) => {
   if (!isFilePickerIntent(state.intent)) return content
 
   const serviceData = state.service?.getData?.()
-  const { type: themeType } = getFilePickerConfig(
-    state.intent,
-    serviceData
+  const { type: themeType } = (
+    state.filePickerConfig || getFilePickerConfig(state.intent, serviceData)
   ).theme
 
   return (
