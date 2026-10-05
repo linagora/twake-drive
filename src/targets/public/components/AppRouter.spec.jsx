@@ -144,7 +144,7 @@ describe('Public AppRouter', () => {
   it('should render the excalidraw view when a shared folder page targets a drawing', async () => {
     setupRouter({ route: '/excalidraw/file-id' })
 
-    expect(screen.getByText('ExcalidrawView')).toBeInTheDocument()
+    expect(await screen.findByText('ExcalidrawView')).toBeInTheDocument()
   })
 
   it('should redirect the excalidraw route to the folder view when excalidraw is disabled', async () => {
