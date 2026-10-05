@@ -79,12 +79,12 @@ interface FilePickerConfig {
   restrictToDefaultDir?: boolean
 
   /**
-   * Visible tabs; Drive must always be visible. By default, display
-   * ['drive', 'recents', 'sharings'] in that order; with restrictToDefaultDir: true,
-   * display only ['drive'] by default.
-   * Reject lists missing "drive", empty lists, unknown identifiers and tabs
-   * forbidden by the restriction; never silently add the Drive tab.
-   * Ignore duplicates and display in Drive's usual order, not the supplied order.
+   * Visible tabs. By default, display ['drive', 'recents', 'sharings'] in
+   * that order; with restrictToDefaultDir: true, display only ['drive'].
+   * Without a restriction, an explicit non-empty list may omit "drive".
+   * Reject empty lists, unknown identifiers and tabs forbidden by the
+   * restriction; never silently add the Drive tab. Ignore duplicates and
+   * display in Drive's usual order, not the supplied order.
    */
   tabs?: Array<'drive' | 'recents' | 'sharings'>
 
@@ -412,13 +412,15 @@ The count and size limits are checked on the currently selected items only:
 
 `defaultDirId` accepts only local `io.cozy.files` folder documents on the Drive instance, not remote folder identifiers. A remote folder supplied for this option is invalid configuration and is reported through the generic intent `error` channel; do not attempt to resolve it through a remote sharing. Locality does not itself mean unshared: a shared folder stored on this instance is still local. This input restriction does not hide shared folders reached through navigation.
 
-A supplied `tabs` list filters the visible tabs, but Drive must always remain visible. A list missing `drive` is invalid and is rejected, not silently amended. Empty lists and unknown identifiers are also rejected, not silently replaced by defaults. Duplicate identifiers are ignored after their first occurrence. Drive displays the remaining tabs in its usual order, regardless of the caller's order. When `restrictToDefaultDir` is absent or false, omitting `tabs` retains the existing defaults.
+A supplied `tabs` list filters the visible tabs. Without a restriction, a non-empty list may omit `drive`; for example, `{"tabs": ["sharings", "recents"]}` displays Recents then Sharings and opens Recents first. Drive is not silently added. Empty lists and unknown identifiers are rejected, not replaced by defaults. Duplicate identifiers are ignored after their first occurrence. Tabs appear in Drive's usual order, regardless of the caller's order. When `restrictToDefaultDir` is absent or false, omitting `tabs` retains all three default tabs.
+
+When `restrictToDefaultDir` is absent or false and the explicit `tabs` list omits `drive`, a supplied `defaultDirId` is ignored. The picker initializes the first visible tab in the effective display order (Drive's usual order filtered by `tabs`), rather than rejecting the configuration or opening an unavailable Drive location. For example, with `{"tabs": ["sharings", "recents"], "defaultDirId": "local-folder-id"}`, Recents is the first visible tab and opens first; the folder ID has no effect.
 
 `restrictToDefaultDir` defaults to `false`. When absent or false, `defaultDirId` is optional and only sets the starting location. When true, `defaultDirId` is required and defines both the starting folder and the hard navigation and selection boundary. `restrictToDefaultDir: true` without `defaultDirId` is invalid configuration, reported through the generic intent `error` channel; no implicit root is substituted.
 
 The permitted subtree includes `defaultDirId` itself and its descendants. Users cannot navigate above it or select an item outside it through the picker. This configuration does not define a separate starting folder below a distinct restricted root.
 
-With `restrictToDefaultDir: true`, Recents and Sharings are forbidden. Omitted `tabs` shows Drive alone. An explicit list may contain only `drive` (duplicates are ignored); any other identifier, including `recents` or `sharings`, is rejected rather than silently hidden. The existing empty-list rejection still applies. When `restrictToDefaultDir` is absent or false, there is no imposed subtree; the general tab rules above apply, including the always-visible Drive tab.
+With `restrictToDefaultDir: true`, Recents and Sharings are forbidden. Omitted `tabs` shows Drive alone. An explicit list may contain only `drive` (duplicates are ignored); any other identifier, including `recents` or `sharings`, is rejected rather than silently hidden. The existing empty-list rejection still applies. When `restrictToDefaultDir` is absent or false, there is no imposed subtree and callers may choose a non-empty list without Drive.
 
 Without a restriction, if `defaultDirId` refers to a deleted or inaccessible folder, Drive falls back to the usual root without a user-visible message and logs a warning to the browser console. The starting folder does not itself restrict navigation or change the configured tabs.
 
@@ -444,5 +446,5 @@ For example, this configuration enables document selection, starts in a local fo
 - The intent identity is `PICK` / `io.cozy.files`; `documents` is opt-in, while the historical link actions retain their defaults.
 - Omitted `tabs` displays `drive`, `recents`, `sharings` in that order; with `restrictToDefaultDir: true`, omission displays only `drive`.
 - `defaultDirId` accepts only an accessible local folder. Without restriction it sets the starting location and falls back to the usual root with a console warning if unavailable; with restriction it is required and forms the navigation and selection boundary, with no broader fallback.
-- `tabs` always includes `drive`; invalid, empty, unknown, or restriction-forbidden lists are rejected rather than silently changed.
+- Without a restriction, an explicit non-empty `tabs` list may omit `drive`; omitted `tabs` retains the three defaults. If `drive` is omitted, `defaultDirId` is ignored and the first visible tab in the effective display order opens. Empty, unknown or restriction-forbidden lists are rejected rather than silently changed. With `restrictToDefaultDir: true`, only `drive` is allowed.
 - A successful selection returns the existing bare `document: FilePickerEntry[]` payload. Documents entries include a full response-only `path` with the item's name; historical link entries are unchanged. Business errors remain in the picker and user cancellation uses the generic `cancel` channel without a File Picker-specific payload.
