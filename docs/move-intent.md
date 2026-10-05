@@ -1,6 +1,6 @@
 # Move Intent
 
-This document specifies the standalone **Move intent** for moving an already-uploaded local file to a destination selected in Drive. It is a draft for collaborative review, not a statement that the proposed behavior is already implemented.
+This document specifies the standalone **Move intent** for moving one or more already-uploaded local files to a single destination selected in Drive. It is a draft for collaborative review, not a statement that the proposed behavior is already implemented.
 
 It assumes you already know how to create and run a Cozy intent (requesting an intent, loading the returned service URL, and handling the generic `ready` / `done` / `error` / `cancel` postMessage flow). It only documents what is specific to the Move service.
 
@@ -13,7 +13,7 @@ action = 'MOVE'
 type = 'io.cozy.files'
 ```
 
-The calling application uploads the file before invoking the intent. The Move intent receives the ID of that existing local `io.cozy.files` file, lets the user choose one destination folder in Drive, and executes the move. It does not upload bytes or accept a remote source identifier.
+The calling application uploads the files before invoking the intent. The Move intent receives their local `io.cozy.files` IDs, lets the user choose one destination folder in Drive, and moves each file there. It does not upload bytes or accept remote source identifiers.
 
 ## Configuration
 
@@ -22,14 +22,14 @@ Pass the Move configuration in the intent data.
 - With `IntentDialogOpener`, pass it as the `options` prop.
 - In raw intent attributes, it must be placed in `attributes.data`.
 
-The source file is identified by the required `fileId` property. It is not a top-level intent attribute.
+The source files are identified by the required, non-empty `fileIds` array in intent data. To move one file, pass a one-element array; IDs are not top-level intent attributes.
 
 ```json
 {
   "action": "MOVE",
   "type": "io.cozy.files",
   "data": {
-    "fileId": "already-uploaded-local-file-id",
+    "fileIds": ["first-local-file-id", "second-local-file-id"],
     "defaultDirId": "local-destination-folder-id",
     "restrictToDefaultDir": true,
     "tabs": ["drive"]
@@ -44,10 +44,10 @@ Drive executes the move using its existing application permissions and MoveTo be
 ```ts
 interface MoveIntentConfig {
   /**
-   * ID of an already-uploaded local io.cozy.files file on the Drive instance.
-   * Required. Remote source identifiers are not supported.
+   * IDs of already-uploaded local io.cozy.files files on the Drive instance.
+   * Required, non-empty array. Remote source identifiers are not supported.
    */
-  fileId: string
+  fileIds: string[]
 
   /**
    * Theme used to render the Move picker.
@@ -86,7 +86,7 @@ interface MoveIntentConfig {
 
 ### Defaults
 
-When no configuration other than the required `fileId` is provided, Drive uses:
+When no configuration other than the required `fileIds` is provided, Drive uses:
 
 ```js
 {
@@ -104,11 +104,11 @@ For `undefined`, omit `theme` from the options passed to `IntentDialogOpener`, w
 
 ## Destination selection
 
-The picker displays folders, not files, and allows confirmation of exactly one destination folder. Use current-folder confirmation as in MoveTo. The picker performs the move after confirmation and destination validation; disabling confirmation on files is not sufficient to meet the folders-only requirement.
+The picker displays folders, not files, and allows confirmation of exactly one destination folder for all source files. Use current-folder confirmation as in MoveTo. The picker performs the moves after confirmation and destination validation; disabling confirmation on files is not sufficient to meet the folders-only requirement.
 
 The destination must be accessible and writable. Any eligible folder in a displayed tab may be selected, including shared folders and Shared Drive locations, subject to access controls and any restricted subtree. Apply MoveTo's destination eligibility checks and revalidate the destination before moving, preserving the shared-drive context. An inaccessible or non-writable folder must not be presented as a valid destination.
 
-The source may be outside a `defaultDirId` restricted subtree. The restriction bounds navigation and destination selection; it does not impose a source-location condition. Receiving a file ID alone does not grant access or permission to move the file. These application permissions do not bypass user, file or destination access controls.
+Any source may be outside a `defaultDirId` restricted subtree. The restriction bounds navigation and destination selection; it does not impose a source-location condition. Receiving file IDs alone does not grant access or permission to move the files. These application permissions do not bypass user, file or destination access controls.
 
 ## Starting folder and restricted subtree
 
@@ -124,13 +124,13 @@ A supplied `tabs` list filters the visible tabs, but Drive must always remain vi
 
 ## Success result
 
-On success, the intent result document is a one-element array containing the complete updated file document, enriched with its full path:
+Once all requested move operations have succeeded, the intent result document is an array of the surviving selected files' complete updated documents, each enriched with its full path:
 
 ```ts
 import type { IOCozyFile } from 'cozy-client/types/types'
 
 interface MoveIntentResult {
-  document: [IOCozyFile & { path: string }]
+  document: Array<IOCozyFile & { path: string }>
 }
 ```
 
@@ -140,31 +140,42 @@ For example:
 {
   "document": [
     {
-      "_id": "already-uploaded-local-file-id",
+      "_id": "first-local-file-id",
       "_type": "io.cozy.files",
       "name": "invoice.pdf",
       "mime": "application/pdf",
       "size": 123456,
       "dir_id": "destination-folder-id",
       "path": "/Projects/invoice.pdf"
+    },
+    {
+      "_id": "second-local-file-id",
+      "_type": "io.cozy.files",
+      "name": "notes.txt",
+      "mime": "text/plain",
+      "size": 456,
+      "dir_id": "destination-folder-id",
+      "path": "/Projects/notes.txt"
     }
   ]
 }
 ```
 
-The returned item is the moved file, not the destination folder. It is the complete updated `io.cozy.files` document reflecting its new location, with a full, absolute `path` that includes the filename (not just the destination folder path). Compute this response-only field from the final parent folder and final file name after the move, using the correct Shared Drive context when applicable; do not persist it in CouchDB or reuse the source file's old path. It contains no binary file content or generated link or thumbnail. Success is returned only after the move succeeds and its updated result and path are available, not merely after the user chooses a destination.
+Each returned item is a moved file, not the destination folder. It is the complete updated `io.cozy.files` document reflecting its new location, with a full, absolute `path` that includes the filename (not just the destination folder path). Compute this response-only field from the final parent folder and final file name after each move, using the correct Shared Drive context when applicable; do not persist it in CouchDB or reuse a source file's old path. Results contain no binary file content or generated links or thumbnails. Do not return success merely because the user chose a destination: all requested move operations must have succeeded, and the surviving selected files' updated documents and paths must be available.
 
-Keep the successful mutation separate from obtaining its updated result. If the move succeeds but retrieving the updated document or its final path fails, retry obtaining the result in its new location, not the move itself. Do not repeat a known-successful mutation or return the stale input document as success.
+Keep each successful mutation separate from obtaining its updated result. If a move succeeds but retrieving a surviving file's updated document or final path fails, retry obtaining the result in its new location, not the move itself. Do not repeat a known-successful mutation or return a stale input document as success.
 
 ## Error handling
 
-Move errors are displayed inside the picker with retry available. A failed move does not produce a success result. Business errors remain inside the picker; they are not thrown back to the caller.
+Moves are performed per file, not as an atomic batch. Follow MoveTo's per-file conflict handling and partial-failure behavior: show how many succeeded and failed, keep the picker open on failure, and retry only files not yet moved while keeping the destination fixed after partial success. Do not repeat successful moves. No success result is returned while some requested files remain unmoved. Business errors remain inside the picker; they are not thrown back to the caller.
 
-Invalid configuration and fatal initialization errors terminate through the existing generic intent `error` channel to the caller. This includes a missing `fileId`, a remote source or destination folder, `restrictToDefaultDir: true` without `defaultDirId`, and a missing, deleted, inaccessible or unverifiable folder required as the restricted root. Invalid, empty, unknown or restriction-forbidden tab lists are rejected. No new error codes are introduced. A recoverable starting-folder fallback remains a fallback, not a fatal error.
+Keep MoveTo's existing name-conflict handling, including replacement when it applies; do not add automatic renaming or a new collision rule. If two requested sources have the same name and one replaces a file moved earlier, only surviving selected files appear in `result.document`. The array can contain fewer documents than `fileIds` even though all move operations succeeded. Do not return a deleted earlier file as an updated result.
+
+Invalid configuration and fatal initialization errors terminate through the existing generic intent `error` channel to the caller. This includes missing or empty `fileIds`, a remote source file or destination folder, `restrictToDefaultDir: true` without `defaultDirId`, and a missing, deleted, inaccessible or unverifiable folder required as the restricted root. Invalid, empty, unknown or restriction-forbidden tab lists are rejected. No new error codes are introduced. A recoverable starting-folder fallback remains a fallback, not a fatal error.
 
 ## Cancel result
 
-User cancellation uses the generic intent `cancel` channel. There is no Move cancellation payload and no `CANCELLED` error code. Cancelling does not delete or otherwise undo the already-uploaded source file.
+User cancellation uses the generic intent `cancel` channel, without a Move-specific payload or `CANCELLED` error code. As in MoveTo, after partial success the user sees the successful-move notification and may close the picker; successful moves remain in place, while the files reported as failed remain pending for retry. Closing does not return partial results to the caller or roll back any moves. The caller cannot infer which files moved from a payload-free cancellation. Cancellation during an in-progress batch is disabled, as in MoveTo.
 
 ## `readyToUse` signal
 
@@ -174,10 +185,10 @@ The signal fires once when the picker becomes usable; navigating into subfolders
 
 ## Acceptance criteria
 
-- The intent identity is `MOVE` / `io.cozy.files`; the request identifies exactly one already-uploaded local source file by `data.fileId`.
+- The intent identity is `MOVE` / `io.cozy.files`; the request identifies one or more already-uploaded local source files by a non-empty `data.fileIds` array.
 - The picker presents folders only and confirms exactly one accessible, writable destination, using MoveTo's eligibility and revalidation behavior.
 - Omitted `tabs` displays `drive`, `recents`, `sharings` in that order; with `restrictToDefaultDir: true`, omission displays only `drive`. Drive is always visible, and invalid tab lists are rejected.
 - `defaultDirId` accepts only a local folder. Without restriction it sets the starting location and falls back to the usual root with a console warning if unavailable; with restriction it is required and bounds navigation and destination selection to itself and descendants, without a broader fallback.
-- Restriction does not require the source file to be inside the destination subtree. It does not bypass access or writability checks.
-- Success returns exactly one complete updated moved file document with a response-only full `path` including the filename after the mutation; a failed mutation does not return success, and result retrieval retries do not repeat a successful mutation.
-- Business move errors remain in the picker with retry; invalid configuration uses the generic intent `error` channel; user cancellation uses the generic `cancel` channel without deleting the uploaded source.
+- Restriction does not require any source file to be inside the destination subtree. It does not bypass access or writability checks.
+- After all requested move operations succeed, success returns the surviving selected files' complete updated documents, each with a response-only full `path` including the filename. Same-name replacements follow MoveTo, so the result may contain fewer files than requested. Result retrieval retries do not repeat successful mutations. Moves are not atomic: failures leave successful moves intact and retry only remaining files.
+- Business move errors remain in the picker with retry; invalid configuration uses the generic intent `error` channel. Cancelling after partial success uses the generic `cancel` channel without a partial result; successful moves remain in place.
