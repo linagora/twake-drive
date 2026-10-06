@@ -32,7 +32,7 @@ services:
       COZY_SUBDOMAINS: flat
     # Served from its directory: an app installed from file:// is reinstalled
     # by the stack on every load of its index page, one instance at a time.
-    command: ["cozy-stack", "serve", "--dev", "--appdir", "drive:/app/drive"]
+    command: ["cozy-stack", "serve", "--dev", "--config", "/etc/cozy/cozy.yml", "--appdir", "drive:/app/drive"]
     volumes:
       - ./build:/app/drive
       - ./e2e/cozy.yml:/etc/cozy/cozy.yml
