@@ -1,7 +1,11 @@
-import CozyClient from 'cozy-client'
-
 import { USERS, stackExec } from '../helpers/config'
 import { test, expect, stamp } from '../helpers/fixtures'
+import {
+  fetchFileBytes,
+  fetchFileMetadataByPath,
+  makeCozyClient,
+  trashById
+} from '../helpers/stack'
 import {
   startUrlUploadSource,
   type UrlUploadSource
@@ -10,14 +14,6 @@ import { UrlUploadIntentPage } from '../pages/UrlUploadIntentPage'
 
 const content = Buffer.from([0, 255, 128, 42])
 let source: UrlUploadSource
-
-function makeClient(token: string): CozyClient {
-  return new CozyClient({
-    uri: `http://${USERS.alice.instance}`,
-    token,
-    schema: { files: { doctype: 'io.cozy.files' } }
-  })
-}
 
 test.beforeAll(async () => {
   source = await startUrlUploadSource()
@@ -104,7 +100,7 @@ test('Stack imports CORS-free bytes through hidden intents and keep-both never o
       hidden: true,
       content: ''
     })
-    const client = makeClient(token)
+    const client = makeCozyClient(USERS.alice.instance, token)
     const { data: directory } = await client.create('io.cozy.files', {
       type: 'directory',
       dirId: 'io.cozy.files.root-dir',
@@ -126,12 +122,11 @@ test('Stack imports CORS-free bytes through hidden intents and keep-both never o
       content: ''
     })
     for (const id of created.filter(id => id !== directory._id)) {
-      const response = await fetch(
-        `http://${USERS.alice.instance}/files/download/${id}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
-      expect(response.ok).toBe(true)
-      expect(Buffer.from(await response.arrayBuffer())).toEqual(content)
+      expect(
+        Buffer.from(
+          await fetchFileBytes({ instance: USERS.alice.instance, fileId: id })
+        )
+      ).toEqual(content)
     }
     expect(browserSourceRequests).toEqual([])
     expect(creationBodies.length).toBeGreaterThanOrEqual(7)
@@ -152,10 +147,30 @@ test('Stack imports CORS-free bytes through hidden intents and keep-both never o
     }
   } finally {
     for (const id of created.reverse())
-      await fetch(`http://${USERS.alice.instance}/files/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
-      })
+      await trashById(USERS.alice.instance, id)
+  }
+})
+
+test('manual caller displays actual metadata and a sanitized source failure', async ({
+  alicePage
+}) => {
+  const caller = new UrlUploadIntentPage(alicePage)
+  await caller.openManual()
+  await caller.submitManual(`${source.url}/bytes`, `manual-${stamp()}.bin`)
+  await expect.poll(() => caller.getManualResult()).toContain('"document"')
+  const { document } = JSON.parse(await caller.getManualResult())
+  try {
+    expect(Number(document.size)).toBe(content.length)
+    await caller.submitManual(
+      `${source.url}/missing?signature=must-not-leak`,
+      `failed-${stamp()}.bin`
+    )
+    await expect
+      .poll(() => caller.getManualResult())
+      .toContain('URL upload failed (HTTP 502)')
+    expect(await caller.getManualResult()).not.toContain('must-not-leak')
+  } finally {
+    await trashById(USERS.alice.instance, document._id)
   }
 })
 
@@ -169,7 +184,7 @@ test('Stack checks write permission before fetching the source', async () => {
   const before = source.getRequests().length
   const name = `denied-${stamp()}.bin`
   await expect(
-    makeClient(token).create('io.cozy.files', {
+    makeCozyClient(USERS.alice.instance, token).create('io.cozy.files', {
       type: 'file',
       sourceURL: `${source.url}/denied`,
       dirId: 'io.cozy.files.root-dir',
@@ -177,18 +192,10 @@ test('Stack checks write permission before fetching the source', async () => {
     })
   ).rejects.toMatchObject({ status: 403 })
   expect(source.getRequests()).toHaveLength(before)
-  const fullToken = stackExec(
-    'instances',
-    'token-app',
-    USERS.alice.instance,
-    'drive'
-  )
-  const absent = await fetch(
-    `http://${USERS.alice.instance}/files/metadata?Path=${encodeURIComponent(
-      `/${name}`
-    )}`,
-    { headers: { Authorization: `Bearer ${fullToken}` } }
-  )
+  const absent = await fetchFileMetadataByPath({
+    instance: USERS.alice.instance,
+    path: `/${name}`
+  })
   expect(absent.status).toBe(404)
 })
 
@@ -197,12 +204,6 @@ test('source failures cross the iframe as sanitized HTTP errors, not temporary l
 }) => {
   const caller = new UrlUploadIntentPage(alicePage)
   await caller.open()
-  const token = stackExec(
-    'instances',
-    'token-app',
-    USERS.alice.instance,
-    'drive'
-  )
   const observations: {
     path: string
     status: number
@@ -240,34 +241,29 @@ test('source failures cross the iframe as sanitized HTTP errors, not temporary l
       hidden: true,
       content: ''
     })
-    const metadata = await fetch(
-      `http://${USERS.alice.instance}/files/metadata?Path=${encodeURIComponent(
-        `/${name}`
-      )}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    )
+    const metadata = await fetchFileMetadataByPath({
+      instance: USERS.alice.instance,
+      path: `/${name}`
+    })
     observations.push({
       path,
       status: result.error!.status!,
       metadataStatus: metadata.status
     })
-    if (metadata.ok) {
-      const { data } = await metadata.json()
+    if (metadata.data) {
+      const data = metadata.data
       try {
         // An error during body copying is not a guarantee of server rollback.
         expect(path).toBe('/slow-body')
         expect(data.attributes).toMatchObject({ name, type: 'file' })
-        const download = await fetch(
-          `http://${USERS.alice.instance}/files/download/${data.id}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        )
-        expect(download.ok).toBe(true)
-        expect(Buffer.from(await download.arrayBuffer())).toHaveLength(0)
+        expect(
+          await fetchFileBytes({
+            instance: USERS.alice.instance,
+            fileId: data.id
+          })
+        ).toHaveLength(0)
       } finally {
-        await fetch(`http://${USERS.alice.instance}/files/${data.id}`, {
-          method: 'DELETE',
-          headers: { Authorization: `Bearer ${token}` }
-        })
+        await trashById(USERS.alice.instance, data.id)
       }
     } else {
       expect(metadata.status).toBe(404)

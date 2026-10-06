@@ -1,3 +1,5 @@
+import CozyClient from 'cozy-client'
+
 import { stackExec } from './config'
 
 /**
@@ -115,6 +117,14 @@ export function makeFilesToken(instance: string): string {
 interface FileRef {
   instance: string
   fileId: string
+}
+
+export function makeCozyClient(instance: string, token: string): CozyClient {
+  return new CozyClient({
+    uri: `http://${instance}`,
+    token,
+    schema: { files: { doctype: 'io.cozy.files' } }
+  })
 }
 
 /** Create a file at the root of the instance, text by default, and return its id. */
@@ -282,6 +292,22 @@ export async function trashById(
   }
 }
 
+/** Download a file from its owner instance to verify its stored bytes. */
+export async function fetchFileBytes({
+  instance,
+  fileId
+}: FileRef): Promise<Uint8Array> {
+  const res = await fetch(`http://${instance}/files/download/${fileId}`, {
+    headers: { Authorization: `Bearer ${makeFilesToken(instance)}` }
+  })
+  if (!res.ok) {
+    throw new Error(
+      `Download file ${fileId} on ${instance} failed (${res.status}): ${await res.text()}`
+    )
+  }
+  return new Uint8Array(await res.arrayBuffer())
+}
+
 /** Download a file from its owner instance to verify its stored content. */
 export async function fetchFileContent({
   instance,
@@ -296,6 +322,38 @@ export async function fetchFileContent({
     )
   }
   return await res.text()
+}
+
+/** Read file metadata by its root-relative path. */
+export async function fetchFileMetadataByPath({
+  instance,
+  path
+}: {
+  instance: string
+  path: string
+}): Promise<{
+  status: number
+  data: { id: string; attributes: { name?: string; type?: string } } | null
+}> {
+  const res = await fetch(
+    `http://${instance}/files/metadata?Path=${encodeURIComponent(path)}`,
+    {
+      headers: {
+        Authorization: `Bearer ${makeFilesToken(instance)}`,
+        Accept: 'application/json'
+      }
+    }
+  )
+  if (res.status === 404) return { status: res.status, data: null }
+  if (!res.ok) {
+    throw new Error(
+      `Get file metadata for ${path} on ${instance} failed (${res.status}): ${await res.text()}`
+    )
+  }
+  const body = (await res.json()) as {
+    data: { id: string; attributes: { name?: string; type?: string } }
+  }
+  return { status: res.status, data: body.data }
 }
 
 /** Number of versions the stack currently keeps for a file. */
