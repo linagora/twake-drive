@@ -332,6 +332,77 @@ describe('handlePasteOperation', () => {
     })
   })
 
+  describe('Stop sharing before moving a shared folder inside another', () => {
+    const setupSharedInside = ({ revokeAllRecipients, files }) => {
+      hasOneOfEntriesShared.mockReturnValue(true)
+      // canValidateSharing needs a path on both sides.
+      resolveNameConflictsForCut.mockResolvedValue(files)
+
+      const sharingContext = {
+        // The moved file is shared, and lives outside the target's shared tree.
+        getSharedParentPath: () => '/other-shared',
+        hasSharedParent: () => true,
+        byDocId: { file1: {}, file2: {} },
+        isOwner: () => true,
+        revokeAllRecipients,
+        revokeSelf: jest.fn().mockResolvedValue()
+      }
+
+      mockOptions.sharingContext = sharingContext
+      // Confirm the modal straight away, as a user clicking "Stop sharing".
+      mockOptions.showMoveValidationModal = jest.fn(
+        (modalType, file, targetFolder, onConfirm) => onConfirm()
+      )
+
+      return sharingContext
+    }
+
+    it('should revoke the sharing before moving', async () => {
+      const revokeAllRecipients = jest.fn().mockResolvedValue()
+      const files = [{ ...mockFiles[0], path: '/other-shared/test1.txt' }]
+      setupSharedInside({ revokeAllRecipients, files })
+
+      await handlePasteOperation(
+        mockClient,
+        files,
+        'cut',
+        mockSourceDirectory,
+        mockTargetFolder,
+        mockOptions
+      )
+
+      expect(mockOptions.showMoveValidationModal).toHaveBeenCalledWith(
+        'moveSharedInside',
+        expect.anything(),
+        expect.anything(),
+        expect.any(Function),
+        expect.any(Function)
+      )
+      expect(revokeAllRecipients).toHaveBeenCalled()
+    })
+
+    it('should not move the entry when the revocation fails', async () => {
+      const revokeAllRecipients = jest
+        .fn()
+        .mockRejectedValue(new Error('revocation failed'))
+      const files = [{ ...mockFiles[0], path: '/other-shared/test1.txt' }]
+      setupSharedInside({ revokeAllRecipients, files })
+
+      const results = await handlePasteOperation(
+        mockClient,
+        files,
+        'cut',
+        mockSourceDirectory,
+        mockTargetFolder,
+        mockOptions
+      )
+
+      expect(revokeAllRecipients).toHaveBeenCalled()
+      expect(move).not.toHaveBeenCalled()
+      expect(results[0].success).toBe(false)
+    })
+  })
+
   describe('Nextcloud Integration', () => {
     it('should handle Nextcloud files', async () => {
       const nextcloudFiles = [

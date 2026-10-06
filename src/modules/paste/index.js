@@ -12,6 +12,7 @@ import { DOCTYPE_FILES } from '@/lib/doctypes'
 import logger from '@/lib/logger'
 import { joinPath } from '@/lib/path'
 import { hasOneOfEntriesShared } from '@/modules/move/helpers'
+import { revokeSharingsForEntries } from '@/modules/move/revokeSharings'
 import { computeNextcloudFolderQueryId } from '@/modules/nextcloud/helpers'
 
 /**
@@ -224,11 +225,20 @@ const createMoveWithConfirmation = (
   file,
   targetFolder,
   client,
-  sourceDirectory
+  sourceDirectory,
+  sharingContext
 ) => {
   return new Promise((resolve, reject) => {
     const executeConfirmedMove = async () => {
       try {
+        // The moveSharedInside modal confirms with "Stop sharing", so the
+        // sharing has to be revoked before the move. If the revocation fails
+        // the move is abandoned, rather than leaving recipients with an
+        // access the user was told had been removed.
+        if (modalType === 'moveSharedInside') {
+          await revokeSharingsForEntries([file], sharingContext)
+        }
+
         const result = await executeMove(
           client,
           file,
@@ -338,7 +348,8 @@ const handleSharingValidation = async (
         file,
         targetFolder,
         client,
-        sourceDirectory
+        sourceDirectory,
+        sharingContext
       )
     }
 
@@ -349,7 +360,8 @@ const handleSharingValidation = async (
         file,
         targetFolder,
         client,
-        sourceDirectory
+        sourceDirectory,
+        sharingContext
       )
     }
 
@@ -360,7 +372,8 @@ const handleSharingValidation = async (
         file,
         targetFolder,
         client,
-        sourceDirectory
+        sourceDirectory,
+        sharingContext
       )
     }
   } catch (error) {

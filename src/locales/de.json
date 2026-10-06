@@ -364,7 +364,8 @@
     "error": "Etwas ist beim Verschieben dieses Elements schiefgelaufen, bitte versuche es später erneut. |||| Etwas ist beim Verschieben dieser Elemente schiefgelaufen, bitte versuche es später erneut.",
     "cancelled": "%{subject} wurde zurück an seinen Ursprungsort geschoben. |||| %{smart_count} Elemente wurden zurück an ihren Ursprungsort geschoben.",
     "cancelledWithRestoreErrors": "%{subject} wurde zurück an seinen Ursprungsort geschoben, aber es gab einen Fehler beim Wiederherstellen der Datei aus dem Papierkorb. |||| %{smart_count} Elemente wurden zurück an ihren Ursprungsort geschoben, aber es gab %{restoreErrorsCount} Fehler beim Wiederherstellen der Datei(en) aus dem Papierkorb.",
-    "cancelled_error": "Entschuldige, es gab einen Fehler beim Zurückschieben dieses Elements. |||| Entschuldige, es gab einen Fehler beim Zurückschieben dieser Elemente."
+    "cancelled_error": "Entschuldige, es gab einen Fehler beim Zurückschieben dieses Elements. |||| Entschuldige, es gab einen Fehler beim Zurückschieben dieser Elemente.",
+    "revoke_error": "Die Freigabe konnte nicht beendet werden, das Element wurde nicht verschoben. Bitte versuchen Sie es später erneut."
   },
   "ImportToDrive": {
     "title": "%{smart_count} Element |||| %{smart_count} Elemente",

@@ -501,7 +501,8 @@
       "content_2": "If you still wish to move %{source} to %{destination}, please stop sharing :",
       "cancel": "Cancel move",
       "confirm": "Stop sharing"
-    }
+    },
+    "revoke_error": "Sharing could not be stopped, the element was not moved. Please try again later."
   },
   "ImportToDrive": {
     "title": "%{smart_count} element |||| %{smart_count} elements",

@@ -479,7 +479,8 @@
       "content_2": "Nếu bạn vẫn muốn di chuyển %{source} đến %{destination}, vui lòng ngừng chia sẻ:",
       "cancel": "Hủy di chuyển",
       "confirm": "Ngừng chia sẻ"
-    }
+    },
+    "revoke_error": "Không thể dừng chia sẻ, phần tử chưa được di chuyển. Vui lòng thử lại sau."
   },
   "ImportToDrive": {
     "title": "%{smart_count} phần tử |||| %{smart_count} phần tử",
