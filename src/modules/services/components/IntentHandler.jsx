@@ -10,6 +10,7 @@ import CozyTheme from 'cozy-ui-plus/dist/providers/CozyTheme'
 
 import { getFilePickerConfig } from './FilePicker/config'
 import Picker from './Picker'
+import { Upload } from './Upload'
 
 import { buildContentFolderQuery } from '@/components/FilePicker/queries'
 import { ROOT_DIR_ID } from '@/constants/config'
@@ -51,6 +52,7 @@ const IntentHandler = ({ intentId }) => {
   }, [state.service])
 
   useEffect(() => {
+    let isActive = true
     const startService = async () => {
       let service
       try {
@@ -68,8 +70,13 @@ const IntentHandler = ({ intentId }) => {
           : null
 
         service = await servicePromise
+        if (!isActive) return
         const intent = service.getIntent()
-        const component = await pickerInitialization
+        const component =
+          intent?.attributes?.action === 'UPLOAD' &&
+          intent?.attributes?.type === 'io.cozy.files'
+            ? Upload
+            : await pickerInitialization
 
         setState({
           component,
@@ -77,12 +84,16 @@ const IntentHandler = ({ intentId }) => {
           intent
         })
       } catch (error) {
+        if (!isActive) return
         logger.error(error)
-        service.throw(error)
+        service?.throw(error)
       }
     }
 
     startService()
+    return () => {
+      isActive = false
+    }
   }, [client, intentId])
 
   const content = ServiceComponent ? (

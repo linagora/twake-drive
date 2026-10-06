@@ -32,6 +32,53 @@ yarn build
 yarn e2e:setup
 ```
 
+## URL-upload source fixture
+
+URL uploads now send `SourceURL` to Stack instead of downloading in the browser.
+The committed dependencies still resolve cozy-stack-client 60.33.0, which does
+not support this creation path. This migration is **local-only until the client
+extension is published and Drive's dependency versions/lockfile are updated**.
+Do not activate it on a Stack that ignores SourceURL: it can create an empty file.
+
+For local validation, use the built cozy-stack-client package from the client
+implementation revision `7aee70f4b452bc5ec0eddebed2e0aa2bc80be753` on
+`fm/url-upload-client-source-url`. With Yarn 4 in this Drive worktree:
+
+```sh
+CLIENT=/path/to/cozy-client-at-that-revision
+yarn link "$CLIENT/packages/cozy-stack-client"
+node -p 'require.resolve("cozy-stack-client/dist/FileCollection")'
+yarn build
+```
+
+The existing locked cozy-client can use the new collection through its normal
+creation path; linking cozy-client itself is unnecessary. Its newer local
+package has incompatible portal dependency resolutions in this worktree.
+The library package must already be built by its owner; do not edit node_modules
+or change another checkout to build it. Yarn link changes local resolutions and
+the lockfile: **do not commit those machine-specific changes**. After qualification,
+`yarn unlink "$CLIENT/packages/cozy-stack-client"` removes the local resolution.
+Do not infer sourceURL support from the package's unchanged version alone.
+
+Tests require a verified Stack build containing SourceURL support (inspected
+revision `eae9d5597bb7be0312edea6bd703600c61c8a217`), not an assumed `latest` tag.
+Use the image-ID workflow below, with an isolated Compose project; never restart
+another lane's runtime. Test setup/teardown can delete that project's data.
+
+`e2e/helpers/urlUploadSource.ts` starts a CORS-free Node source **inside the test
+Stack container** on loopback with an ephemeral port, and closes it after the
+suite. No host port, extra production server or browser CSP exception is needed.
+`e2e/cozy.yml` narrowly trusts `127.0.0.1/32` for these test sources. Production
+safehttp settings remain unchanged. This test exception does not demonstrate
+that loopback/private sources are allowed in production.
+
+The tests observe browser requests (no source fetch, empty Stack creation body),
+read actual stored bytes back, exercise native folders/file and directory
+collisions, read-only permission denial before source GET and serialized failures.
+Source and body timeout failures are separate cases; their
+HTTP statuses need not match. Do not interpret a passing HTTP fixture unit test
+as proof of actual Stack retrieval.
+
 ## Run the suite
 
 ```sh

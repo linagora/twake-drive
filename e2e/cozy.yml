@@ -7,6 +7,12 @@ admin:
 
 subdomains: flat
 
+# URL-upload fixtures run inside the test Stack on an ephemeral loopback port.
+# Only this test config permits that source; production safehttp stays unchanged.
+safe_http:
+  trusted_private_networks:
+    - 127.0.0.1/32
+
 fs:
   url: file:///var/lib/cozy/storage
   # The stack otherwise waits 15 minutes before recording a new version, which

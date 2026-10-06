@@ -6,6 +6,11 @@ import logger from 'cozy-logger'
 import IntentHandler from './IntentHandler'
 
 import { buildContentFolderQuery } from '@/components/FilePicker/queries'
+jest.mock('./Upload', () => ({
+  Upload: ({ service }) => (
+    <div data-testid="upload-service">{service.getData().name}</div>
+  )
+}))
 
 const mockClient = { query: jest.fn() }
 const mockCreateService = jest.fn()
@@ -152,6 +157,21 @@ describe('IntentHandler', () => {
     const { getByTestId } = render(<IntentHandler intentId="intent-id" />)
 
     await waitFor(() => expect(getByTestId('picker')).toBeInTheDocument())
+  })
+
+  it('routes UPLOAD files to its service component without picker initialization', async () => {
+    const intent = { attributes: { action: 'UPLOAD', type: 'io.cozy.files' } }
+    mockGetIntent.mockResolvedValue(intent)
+    mockCreateService.mockResolvedValue({
+      getIntent: () => intent,
+      getData: () => ({ name: 'upload.bin' })
+    })
+    const { queryByTestId } = render(<IntentHandler intentId="upload-id" />)
+    await waitFor(() =>
+      expect(queryByTestId('upload-service')).toHaveTextContent('upload.bin')
+    )
+    expect(queryByTestId('picker')).toBe(null)
+    expect(buildContentFolderQuery).not.toHaveBeenCalled()
   })
 
   it('does not prefetch the root folder for unrelated intents', async () => {
