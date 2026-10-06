@@ -6,18 +6,27 @@
     "item_shared": "Von mir geteilt",
     "item_activity": "Aktivität",
     "item_trash": "Papierkorb",
+    "item_migration": "Migration",
     "item_settings": "Einstellungen",
     "item_collect": "Verwaltung",
-    "btn-client": "Hol' dir Twake für den Desktop!",
-    "btn-client-web": "Hol' dir Twake!",
-    "btn-client-mobile": "Hol' dir %{name} auf dein Handy!",
-    "banner-txt-client": "Hol' dir %{name} für den Desktop und synchronisiere deine Dateien sicher, um jederzeit auf sie zuzugreifen.",
+    "item_shared_drives": "Team-Drives",
+    "item_favorites": "Favoriten",
+    "item_external_drives": "Externe Laufwerke",
+    "item_my_drive": "Mein Drive",
+    "item_file_picker": "Datei auswählen",
+    "btn-client": "Holen Sie sich Twake für den Desktop!",
+    "btn-client-web": "Holen Sie sich Twake!",
+    "btn-client-mobile": "Holen Sie sich %{name} auf Ihr Handy!",
+    "banner-txt-client": "Holen Sie sich %{name} für den Desktop und synchronisieren Sie Ihre Dateien sicher, um jederzeit auf sie zuzugreifen.",
     "banner-btn-client": "Herunterladen",
     "link-client": "https://cozy.io/en/download/",
     "link-client-desktop": "https://nuts.cozycloud.cc/download/channel/stable/",
     "link-client-android": "https://play.google.com/store/apps/details?id=io.cozy.drive.mobile",
     "link-client-ios": "https://itunes.apple.com/us/app/cozy-drive/id1224102389?mt=8",
-    "link-client-web": "https://cozy.io/try-it"
+    "link-client-web": "https://cozy.io/try-it",
+    "view_more": "Mehr anzeigen",
+    "view_less": "Weniger anzeigen",
+    "item_nextcloud": "Nextcloud"
   },
   "breadcrumb": {
     "title_drive": "Laufwerk",
@@ -25,12 +34,17 @@
     "title_sharings": "Freigaben",
     "title_shared": "Von mir geteilt",
     "title_activity": "Aktivität",
-    "title_trash": "Papierkorb"
+    "title_trash": "Papierkorb",
+    "label": "Pfad anzeigen",
+    "title_shared_drives": "Drives",
+    "title_favorites": "Favoriten"
   },
   "Toolbar": {
     "more": "Mehr"
   },
   "toolbar": {
+    "menu_manage_access": "Zugriff verwalten",
+    "menu_leave_shared_drive": "Freigabe verlassen",
     "menu_upload": "Dateien hochladen",
     "item_more": "Mehr",
     "menu_new_folder": "Ordner",
@@ -42,23 +56,66 @@
     "menu_download_folder": "Ordner herunterladen",
     "menu_download_file": "Diese Datei herunterladen",
     "menu_create_note": "Notizen",
+    "menu_create_docs": "Docs",
     "menu_create_excalidraw": "Excalidraw",
+    "menu_create_grist": "Grist",
     "menu_create_shortcut": "Abkürzung",
-    "empty_trash": "Papierkorb leeren",
     "share": "Freigeben",
     "trash": "Entfernen",
     "leave": "Geteilten Ordner verlassen & löschen",
     "menu_add": "Hinzufügen",
     "menu_create": "Erstellen",
+    "menu_add_item": "Element hinzufügen",
     "menu_onlyOffice": {
       "text": "Textdokument",
       "spreadsheet": "Tabellenkalkulation",
       "slide": "Präsentation"
     },
     "select_all": "Alle auswählen",
+    "select_all_mobile": "alle",
     "clear_selection": "Auswahl aufheben",
-    "sharings_tab_all": "Alle",
+    "clear_selection_mobile": "Aufheben",
+    "sharings_tabs": "Freigabe-Tabs",
+    "sharings_tab_with_me": "Mit mir",
+    "sharings_tab_by_me": "Von mir",
     "sharings_tab_drives": "Laufwerke"
+  },
+  "filters": {
+    "contact": {
+      "label": "Kontakt",
+      "clear": "Kontaktfilter löschen",
+      "me": "ich"
+    },
+    "clear_all": "Alle löschen",
+    "date": {
+      "label": "Änderungsdatum",
+      "aria_label": "Filter nach Änderungsdatum",
+      "clear": "Filter nach Änderungsdatum löschen",
+      "options": {
+        "today": "Heute",
+        "last_7_days": "Letzte 7 Tage",
+        "last_month": "Letzter Monat",
+        "this_year": "Dieses Jahr"
+      }
+    },
+    "type": {
+      "label": "Typ",
+      "aria_label": "Filter nach Typ",
+      "clear": "Typfilter löschen",
+      "options": {
+        "folder": "Ordner",
+        "document": "Dokumente",
+        "spreadsheet": "Tabellen",
+        "presentation": "Präsentationen",
+        "photo": "Fotos",
+        "pdf": "PDFs",
+        "video": "Videos",
+        "archive": "Archive",
+        "audio": "Audio",
+        "draw": "Zeichnungen",
+        "shortcut": "Verknüpfungen"
+      }
+    }
   },
   "Share": {
     "create-cozy": "Meinen Twake erstellen"
@@ -73,29 +130,30 @@
         "ro": "Kann lesen",
         "rw": "Darf ändern",
         "desc": {
-          "ro": "Du kannst diesen Inhalt sehen, herunterladen und deinem Twake hinzufügen. Du wirst Aktualisierungen des Besitzers erhalten, selbst jedoch keine Änderungen vornehmen können.",
-          "rw": "Du kannst diesen Inhalt sehen, ändern, löschen und deinem Twake hinzufügen. Deine Änderungen sind auf anderen Cozies sichtbar."
+          "ro": "Sie können diesen Inhalt sehen, herunterladen und Ihrem Twake hinzufügen. Sie werden Aktualisierungen des Besitzers erhalten, selbst jedoch keine Änderungen vornehmen können.",
+          "rw": "Sie können diesen Inhalt sehen, ändern, löschen und Ihrem Twake hinzufügen. Ihre Änderungen sind auf anderen Cozies sichtbar."
         }
       },
+      "shared": "Geteilt",
       "sharedByMe": "Von mir geteilt",
       "sharedWithMe": "Mit mir geteilt",
       "sharedBy": "Geteilt von %{name}",
       "shareByLink": {
         "subtitle": "Über öffentlichen Link",
-        "desc": "Jeder der den Link kennt, kann deine Dateien sehen und herunterladen.",
-        "creating": "Erstellen deines Links...",
+        "desc": "Jeder der den Link kennt, kann Ihre Dateien sehen und herunterladen.",
+        "creating": "Erstellen Ihres Links...",
         "copy": "Link kopieren",
-        "copied": "Der Link wurde in deine Zwischenablage kopiert",
-        "failed": "Unfähig in deine Zwischenablage zu kopieren"
+        "copied": "Der Link wurde in Ihre Zwischenablage kopiert",
+        "failed": "Unfähig in Ihre Zwischenablage zu kopieren"
       },
       "shareByEmail": {
         "subtitle": "Per E-Mail",
         "email": "An:",
-        "emailPlaceholder": "Gib die E-Mail-Adresse oder den Namen des Empfängers ein",
+        "emailPlaceholder": "Geben Sie die E-Mail-Adresse oder den Namen des Empfängers ein",
         "send": "Senden",
-        "genericSuccess": "Du hast eine Einladung an %{count} Kontakte gesendet.",
-        "success": "Du hast eine Einladung an %{email} gesendet.",
-        "comingsoon": "Bald verfügbar: Du wirst mit nur einem Klick Fotos und Dokumente deiner Familie, deinen Freunden und sogar deinen Kollegen freigeben können. Keine Sorge, wir benachrichtigen dich sobald es soweit ist!",
+        "genericSuccess": "Sie haben eine Einladung an %{count} Kontakte gesendet.",
+        "success": "Sie haben eine Einladung an %{email} gesendet.",
+        "comingsoon": "Bald verfügbar: Sie werden mit nur einem Klick Fotos und Dokumente Ihrer Familie, Ihren Freunden und sogar Ihren Kollegen freigeben können. Keine Sorge, wir benachrichtigen Sie sobald es soweit ist!",
         "onlyByLink": "Dieser %{type} kann nur als Link geteilt werden, da",
         "type": {
           "file": "Datei",
@@ -107,12 +165,12 @@
       "revoke": {
         "title": "Freigabe aufheben",
         "desc": "Dieser Kontakt behält eine Kopie. Änderungen werden jedoch nicht mehr synchronisiert.",
-        "success": "Du hast diese geteilte Datei von %{email} entfernt."
+        "success": "Sie haben diese geteilte Datei von %{email} entfernt."
       },
       "revokeSelf": {
-        "title": "Entferne mich von der Freigabe",
-        "desc": "Du behältst den Inhalt. Er wird aber nicht mehr in deinem Twake erneuert.",
-        "success": "Du wurdest von dieser Freigabe entfernt."
+        "title": "Mich von der Freigabe entfernen",
+        "desc": "Sie behalten den Inhalt. Er wird aber nicht mehr in Ihrem Twake erneuert.",
+        "success": "Sie wurden von dieser Freigabe entfernt."
       },
       "sharingLink": {
         "title": "Link zum Freigeben",
@@ -124,13 +182,13 @@
       },
       "protectedShare": {
         "title": "Bald verfügbar!",
-        "desc": "Teile alles per E-Mail mit deiner Familie und Freunden!"
+        "desc": "Teilen Sie alles per E-Mail mit Ihrer Familie und Freunden!"
       },
       "close": "Schließen",
-      "gettingLink": "Erstelle deinen Link ...",
+      "gettingLink": "Erstelle Ihren Link ...",
       "error": {
-        "generic": "Beim Erstellen des Dateifreigabelinks ist ein Fehler aufgetreten, bitte versuche es erneut.",
-        "revoke": "Hoppla, das hat nicht geklappt. Bitte kontaktiere uns, damit wir den Fehler so schnell wie möglich beheben können."
+        "generic": "Beim Erstellen des Dateifreigabelinks ist ein Fehler aufgetreten, bitte versuchen Sie es erneut.",
+        "revoke": "Hoppla, das hat nicht geklappt. Bitte kontaktieren Sie uns, damit wir den Fehler so schnell wie möglich beheben können."
       },
       "specialCase": {
         "base": "Dieser %{type} kann nur als Link geteilt werden, da",
@@ -138,10 +196,10 @@
         "hasSharedFolder": "enthält einen geteilten Ordner"
       }
     },
-    "viewer-fallback": "Sobald der Download begonnen hat, kannst du mich schließen.",
+    "viewer-fallback": "Sobald der Download begonnen hat, können Sie mich schließen.",
     "dropzone": {
-      "teaser": "Ziehe Dateien hierher um sie hochzuladen:",
-      "noFolderSupport": "Ordner drag&drop wird von deinem Browser derzeit nicht unterstützt. Lade deine Dateien bitte manuell hoch."
+      "teaser": "Ziehen Sie Dateien hierher um sie hochzuladen:",
+      "noFolderSupport": "Ordner drag&drop wird von Ihrem Browser derzeit nicht unterstützt. Laden Sie Ihre Dateien bitte manuell hoch."
     }
   },
   "table": {
@@ -149,7 +207,10 @@
     "head_update": "Letzte Änderung",
     "head_size": "Größe",
     "head_status": "Teilen",
-    "head_thumbnail_size": "Wechsele die Größe des Vorschaubildes",
+    "head_thumbnail_size": "Wechseln Sie die Größe des Vorschaubildes",
+    "head_view_mode": "Ansichtsmodus",
+    "head_view_list": "Listenansicht",
+    "head_view_grid": "Rasteransicht",
     "row_update_format": "dd.LL.yyyy",
     "row_update_format_full": "dd.LL.yyyy",
     "row_read_only": "Freigeben (nur Lesen)",
@@ -165,6 +226,7 @@
       "ZB": "Zettabyte",
       "YB": "Yottabyte"
     },
+    "row_sharing_shortcut_aria_label": "Neue Freigabe-Verknüpfung",
     "load_more": "Mehr laden",
     "mobile": {
       "head_name_asc": "A-Z",
@@ -184,7 +246,11 @@
     "selected_count": "Element ausgewählt |||| Elemente ausgewählt",
     "share": "Freigeben",
     "download": "Herunterladen",
+    "copy": "Kopieren",
+    "cut": "Ausschneiden",
+    "paste": "Einfügen",
     "trash": "Entfernen",
+    "trash_all": "Alle entfernen",
     "destroy": "Dauerhaft löschen",
     "rename": "Umbenennen",
     "restore": "Wiederherstellen",
@@ -197,47 +263,59 @@
     "moveto_mobile": "Verschieben",
     "phone-download": "Offline verfügbar machen",
     "qualify": "Kategorisieren",
-    "history": "Verlauf"
+    "history": "Verlauf",
+    "more": "Mehr",
+    "openWithinNextcloud": "In Nextcloud öffnen"
   },
   "DeleteConfirm": {
-    "title": "Dieses Element löschen? |||| Diese Elemente löschen?",
+    "title": "%{filename} löschen? |||| %{smart_count} %{type} löschen?",
     "trash": "Es wird in den Papierkorb verschoben. |||| Sie werden in den Papierkorb verschoben.",
-    "restore": "Du kannst es jederzeit wiederherstellen. |||| Du kannst sie jederzeit wiederherstellen.",
+    "restore": "Sie können es jederzeit wiederherstellen. |||| Sie können sie jederzeit wiederherstellen.",
+    "share_accepted": "Die Freigabe wird beendet",
+    "share_waiting": "Die Freigabe wird beendet. Die folgenden Kontakte können die Freigabe nicht mehr annehmen und nicht mehr auf die geteilten Inhalte zugreifen:",
+    "share_both": "Die Freigabe wird beendet. Kontakte, die die Dateien in ihrem Twake gespeichert haben, behalten eine Kopie, während andere Kontakte nicht mehr auf die geteilten Inhalte zugreifen können:",
     "link": "Link Freigabe wird nicht länger aktiv sein",
-    "referenced": "Einige der Dateien innerhalb der Auswahl beziehen sich auf ein Fotoalbum. Sie werden aus ihm entfernt, wenn du sie in den Müll verschiebst.",
+    "referenced": "Einige der Dateien innerhalb der Auswahl beziehen sich auf ein Fotoalbum. Sie werden aus ihm entfernt, wenn Sie sie in den Müll verschieben.",
     "cancel": "Abbrechen",
     "delete": "Entfernen"
   },
-  "emptytrashconfirmation": {
-    "title": " Dauerhaft löschen? ",
-    "forbidden": "Du kannst nicht mehr auf diese Dateien zugreifen.",
-    "restore": "Du kannst diese Dateien nicht wiederherstellen, wenn du keine Sicherung gemacht hast.",
+  "EmptyTrashConfirm": {
+    "title": "Endgültig löschen?",
+    "forbidden": "Sie können nicht mehr auf diese Dateien zugreifen.",
+    "restore": "Sie können diese Dateien nicht wiederherstellen, wenn Sie keine Sicherung erstellt haben.",
     "cancel": "Abbrechen",
-    "delete": "Alles löschen"
+    "delete": "Alle löschen",
+    "processing": "Ihr Papierkorb wird geleert. Dies kann einen Moment dauern.",
+    "success": "Der Papierkorb wurde geleert.",
+    "error": "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut."
   },
   "DestroyConfirm": {
-    "title": "Dauerhaft löschen?",
-    "forbidden": "Du kannst nicht mehr auf diese Datei zugreifen. |||| Du kannst nicht mehr auf diese Dateien zugreifen.",
-    "restore": "Du kannst diese Datei nicht wiederherstellen, wenn du keine Sicherung gemacht hast. |||| Du kannst diese Dateien nicht wiederherstellen, wenn du keine Sicherung gemacht hast.",
+    "title": "%{filename} löschen? |||| %{smart_count} %{type} löschen?",
+    "forbidden": "Sie können danach nicht mehr auf dieses Element (%{type}) zugreifen. |||| Sie können danach nicht mehr auf diese %{type} zugreifen.",
+    "restore": "Sie können dieses Element (%{type}) nicht wiederherstellen, wenn Sie keine Sicherung erstellt haben. |||| Sie können diese %{type} nicht wiederherstellen, wenn Sie keine Sicherung erstellt haben.",
     "cancel": "Abbrechen",
-    "delete": "Dauerhaft löschen"
+    "delete": "Dauerhaft löschen",
+    "success": "Das Element (%{type}) wurde endgültig gelöscht. |||| %{smart_count} %{type} wurden endgültig gelöscht.",
+    "error": "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
+    "processing": "Der Löschvorgang läuft. Dies kann einen Moment dauern."
   },
   "quotaalert": {
-    "title": "Dein Speicherplatz ist voll :(",
-    "desc": "Bitte entferne Dateien, leere deinen Mülleiemer oder erhöhe dein Speicherkontingent bevor du wieder Dateien hochlädtst.",
+    "title": "Ihr Speicherplatz ist voll :(",
+    "desc": "Bitte entfernen Sie Dateien, leeren Sie Ihren Mülleiemer oder erhöhen Sie Ihr Speicherkontingent bevor Sie wieder Dateien hochladen.",
     "confirm": "OK",
-    "increase": "Erhöhe dein Speicherkontingent"
+    "increase": "Erhöhen Sie Ihr Speicherkontingent"
   },
   "loading": {
     "message": "Lädt",
     "onlyOfficeCreateInProgress": "Erstellen der aktuellen Datei..."
   },
   "empty": {
-    "title": "Du hast keine Dateien in diesem Ordner.",
+    "title": "Sie haben keine Dateien in diesem Ordner.",
     "text": "Wählen Sie Dateien auf Ihrem Computer aus oder ziehen Sie sie hierher.",
     "mobile_text": "Wählen Sie Dateien auf Ihrem Gerät aus.",
-    "trash_title": "Du hast keine gelöschten Dateien.",
-    "trash_text": "Verschiebe Dateien, die du nicht länger benötigst in den Papierkorb und lösche Elemente dauerhaft, um Speicherplatz freizumachen."
+    "trash_title": "Sie haben keine gelöschten Dateien.",
+    "trash_text": "Verschieben Sie Dateien, die Sie nicht länger benötigen in den Papierkorb und löschen Sie Elemente dauerhaft, um Speicherplatz freizumachen.",
+    "sharing_text": "Sie haben noch keine geteilten Dateien oder Drives."
   },
   "error": {
     "open_folder": "Beim Öffnen des Ordners ist etwas schief gelaufen.",
@@ -246,32 +324,32 @@
       "reload": "Jetzt aktualisieren"
     },
     "download_file": {
-      "offline": "Du solltest verbunden sein, um diese Datei herunterzuladen.",
+      "offline": "Sie sollten verbunden sein, um diese Datei herunterzuladen.",
       "missing": "Diese Datei fehlt"
-    }
+    },
+    "paste_failed": "Die Dateien konnten nicht eingefügt werden. Bitte versuchen Sie es erneut."
   },
   "Error": {
-    "public_unshared_title": "Entschuldige, dieser Links ist nicht länger verfügbar.",
-    "public_unshared_text": "Dieser Link ist abgelaufen oder vom Besitzer entfernt worden. Lass' es ihn wissen, dass du ihn verpasst hast.",
-    "generic": "Etwas ist schiefgelaufen. Warte ein paar Minuten und versuche es erneut."
+    "public_unshared_title": "Entschuldigen Sie, dieser Links ist nicht länger verfügbar.",
+    "public_unshared_text": "Dieser Link ist abgelaufen oder vom Besitzer entfernt worden. Lassen Sie es ihn wissen, dass Sie ihn verpasst haben.",
+    "generic": "Etwas ist schiefgelaufen. Warten Sie ein paar Minuten und versuchen Sie es erneut."
   },
   "alert": {
     "could_not_open_file": "Diese Datei konnte nicht geöffnet werden",
-    "try_again": "Ein Fehler ist aufgetreten, bitte versuche es gleich noch einmal.",
+    "try_again": "Ein Fehler ist aufgetreten, bitte versuchen Sie es gleich noch einmal.",
     "restore_file_success": "Die Auswahl wurde erfolgreich wiederhergestellt.",
     "trash_file_success": "Die Auswahl wurde in den Papierkorb verschoben.",
+    "trash_file_processing": "Wird in den Papierkorb verschoben...",
     "destroy_file_success": "Die Auswahl wurde endgültig gelöscht.",
-    "empty_trash_progress": "Dein Papierkorb wird entleert. Dies kann einen Augenblick dauern.",
-    "empty_trash_success": "Der Papierkorb wurde entleert.",
-    "folder_name": "Das Element %{folderName} existiert bereits, bitte wähle einen neuen Namen.",
-    "file_name": "Das Element %{fileName} existiert bereits, bitte wähle einen neuen Namen.",
+    "folder_name": "Das Element %{folderName} existiert bereits, bitte wählen Sie einen neuen Namen.",
+    "file_name": "Das Element %{fileName} existiert bereits, bitte wählen Sie einen neuen Namen.",
     "file_name_missing": "Der Dateiname ist falsch, bitte geben Sie einen neuen Namen ein.",
     "file_name_illegal_name": "Der Name %{fileName} ist ungültig, bitte wählen Sie einen neuen Namen.",
     "file_name_illegal_characters": "Das Element %{fileName} enthält ungültige Zeichen: %{characters}",
-    "folder_generic": " Ein Fehler ist aufgetreten, bitte versuche es noch einmal.",
-    "folder_abort": "Du musst deinem neuen Ordner einen Namen hinzufügen, wenn du ihn speichern möchtest. Deine Daten wurden nicht gespeichert.",
+    "folder_generic": " Ein Fehler ist aufgetreten, bitte versuchen Sie es noch einmal.",
+    "folder_abort": "Sie müssen Ihrem neuen Ordner einen Namen hinzufügen, wenn Sie ihn speichern möchten. Ihre Daten wurden nicht gespeichert.",
     "offline": "Diese Funktion ist offline nicht verfügbar.",
-    "preparing": "Deine Dateien werden vorbereitet...",
+    "preparing": "Ihre Dateien werden vorbereitet...",
     "item_copied": "1 Element kopiert",
     "items_copied": "%{count} Elemente kopiert",
     "item_cut": "1 Element ausgeschnitten",
@@ -283,6 +361,7 @@
     "copy_files_only": "Ordner können nicht kopiert werden",
     "copy_not_allowed": "Der Kopiervorgang ist in dieser Ansicht nicht erlaubt.",
     "cut_not_allowed": "Der Ausschneiden-Vorgang ist in dieser Ansicht nicht erlaubt.",
+    "delete_not_allowed": "Löschen ist in dieser Ansicht nicht erlaubt.",
     "paste_error": "Beim Einfügen der Dateien ist ein Fehler aufgetreten",
     "paste_failed": "Einfügen der Dateien fehlgeschlagen",
     "paste_sharing_error": "Dateien können aufgrund von Freigabebeschränkungen nicht eingefügt werden. Bitte verwenden Sie stattdessen die Verschieben-Aktion.",
@@ -291,13 +370,35 @@
   },
   "upload": {
     "label": "Hochladen",
+    "documentType": {
+      "file": "Datei",
+      "directory": "Ordner",
+      "element": "Element"
+    },
     "alert": {
-      "network": "Du bist zurzeit offline. Bitte versuche es erneut, sobald du wieder verbunden bist."
+      "success": "%{smart_count} %{type} erfolgreich hochgeladen. |||| %{smart_count} %{type} erfolgreich hochgeladen.",
+      "success_conflicts": "%{smart_count} %{type} mit %{conflictNumber} Konflikt(en) hochgeladen. |||| %{smart_count} %{type} mit %{conflictNumber} Konflikt(en) hochgeladen.",
+      "success_updated": "%{smart_count} %{type} hochgeladen und %{updatedCount} aktualisiert. |||| %{smart_count} %{type} hochgeladen und %{updatedCount} aktualisiert.",
+      "success_updated_conflicts": "%{smart_count} %{type} hochgeladen, %{updatedCount} aktualisiert und %{conflictCount} Konflikt(e). |||| %{smart_count} %{type} hochgeladen, %{updatedCount} aktualisiert und %{conflictCount} Konflikt(e).",
+      "updated": "%{smart_count} %{type} aktualisiert. |||| %{smart_count} %{type} aktualisiert.",
+      "updated_conflicts": "%{smart_count} %{type} mit %{conflictCount} Konflikt(en) aktualisiert. |||| %{smart_count} %{type} mit %{conflictCount} Konflikt(en) aktualisiert.",
+      "errors": "Beim Hochladen (%{type}) sind Fehler aufgetreten.",
+      "network": "Sie sind zurzeit offline. Bitte versuchen Sie es erneut, sobald Sie wieder verbunden sind.",
+      "fileTooLargeErrors": "Datei zu groß. Maximale Dateigröße: %{max_size_value} GB",
+      "unreadable_files": "Einige Dateien konnten nicht gelesen werden. Möglicherweise ist der Dateipfad zu lang oder der Ordner wurde während der Übertragung geändert."
+    },
+    "limit": {
+      "title": "Sie können nicht mehr als %{limit} Dateien auf einmal hochladen.",
+      "content": "Sie möchten mehr hochladen? Laden Sie am besten das Synchronisierungstool auf Ihren Computer herunter",
+      "content_public": "Bitte verringern Sie die Anzahl der Dateien und versuchen Sie es erneut.",
+      "cancel": "Abbrechen",
+      "close": "Schließen",
+      "download_desktop": "Für Desktop herunterladen"
     },
     "conflict": {
       "title": "Upload-Optionen",
-      "content": "Eine oder mehrere Dateien sind in diesem Ordner bereits vorhanden. Möchtest du die vorhandene Datei ersetzen oder beide Versionen behalten?",
-      "apply_all": "Die Freigabeeinstellungen bleiben unverändert, wenn du die Datei ersetzt",
+      "content": "Eine oder mehrere Dateien sind in diesem Ordner bereits vorhanden. Möchten Sie die vorhandene Datei ersetzen oder beide Versionen behalten?",
+      "apply_all": "Die Freigabeeinstellungen bleiben unverändert, wenn Sie die Datei ersetzen",
       "replace": "Vorhandene Datei ersetzen",
       "keep_both": "Beide Dateien behalten",
       "cancel": "Abbrechen",
@@ -306,22 +407,25 @@
   },
   "intents": {
     "alert": {
-      "error": "Unfähig, die Datei automatisch hochzuladen, bitte lade sie manuell über das Hochlademenü hoch."
+      "error": "Unfähig, die Datei automatisch hochzuladen, bitte laden Sie sie manuell über das Hochlademenü hoch."
     },
     "picker": {
       "select": "Auswählen",
       "cancel": "Abbrechen",
       "new_folder": "Neuer Ordner",
-      "instructions": "Wähle ein Ziel"
+      "instructions": "Wählen Sie ein Ziel"
     }
   },
   "UploadQueue": {
-    "header": "Hochladen von %{smart_count} Foto in dein Twake Drive |||| Hochladen von %{smart_count} Fotos in dein Twake Drive",
+    "header": "Hochladen von %{smart_count} Foto in Ihr Twake Drive |||| Hochladen von %{smart_count} Fotos in Ihr Twake Drive",
+    "header_preparing": "%{smart_count} Element wird für den Upload vorbereitet |||| %{smart_count} Elemente werden für den Upload vorbereitet",
     "header_mobile": "Hochladen %{done} von %{total}",
     "header_done": "Hochladen %{done} aus %{total} erfolgreich",
+    "success_flagship": "%{smart_count} Datei erfolgreich hochgeladen. |||| %{smart_count} Dateien erfolgreich hochgeladen.",
     "close": "Schließen",
     "item": {
       "pending": "Ausstehend",
+      "preparing": "Wird vorbereitet",
       "conflict": "Wartet auf Auswahl"
     }
   },
@@ -332,9 +436,9 @@
       "openWith": "Öffnen mit...",
       "openInOnlyOffice": "Öffnen mit Only Office",
       "cta": {
-        "saveTime": "Spare etwas Zeit!",
-        "installDesktop": "Installiere das Synchronisationstool für deinen Computer",
-        "accessFiles": "Greife direkt von deinem Computer auf deine Datein zu"
+        "saveTime": "Sparen Sie etwas Zeit!",
+        "installDesktop": "Installieren Sie das Synchronisationstool für Ihren Computer",
+        "accessFiles": "Greifen Sie direkt von Ihrem Computer auf Ihre Datein zu"
       }
     },
     "actions": {
@@ -342,29 +446,62 @@
       "forward": "Weiterleiten"
     },
     "loading": {
-      "error": "Diese Datei konnte nicht geladen werden. Hast du eine funktionierende Internetverbindung?",
+      "error": "Diese Datei konnte nicht geladen werden. Haben Sie eine funktionierende Internetverbindung?",
       "retry": "Wiederholen"
     },
     "error": {
       "noapp": "Keine Anwendung auf Ihrem Gerät kann diese Datei verarbeiten.",
-      "generic": "Ein Fehler ist beim Öffnen dieser Datei aufgetreten, bitte versuche es erneut.",
-      "noNetwork": "Du bist derzeit offline."
+      "generic": "Ein Fehler ist beim Öffnen dieser Datei aufgetreten, bitte versuchen Sie es erneut.",
+      "noNetwork": "Sie sind derzeit offline."
     },
     "panel": {
       "title": "Nützliche Informationen"
     }
   },
   "Move": {
-    "to": "Verschiebe zu:",
+    "to": "Verschieben zu:",
     "action": "Verschieben",
+    "openFolder": "Ordner öffnen",
     "cancel": "Abbrechen",
     "modalTitle": "Verschieben",
     "title": "%{smart_count} Element |||| %{smart_count} Elemente",
     "success": "%{subject} wurde in %{target} verschoben. |||| %{smart_count} Elemente wurden in %{target} verschoben.",
-    "error": "Etwas ist beim Verschieben dieses Elements schiefgelaufen, bitte versuche es später erneut. |||| Etwas ist beim Verschieben dieser Elemente schiefgelaufen, bitte versuche es später erneut.",
+    "error": "Etwas ist beim Verschieben dieses Elements schiefgelaufen, bitte versuchen Sie es später erneut. |||| Etwas ist beim Verschieben dieser Elemente schiefgelaufen, bitte versuchen Sie es später erneut.",
+    "partialError": "Verschoben: %{successCount}. Fehlgeschlagen: %{failureCount}.",
     "cancelled": "%{subject} wurde zurück an seinen Ursprungsort geschoben. |||| %{smart_count} Elemente wurden zurück an ihren Ursprungsort geschoben.",
     "cancelledWithRestoreErrors": "%{subject} wurde zurück an seinen Ursprungsort geschoben, aber es gab einen Fehler beim Wiederherstellen der Datei aus dem Papierkorb. |||| %{smart_count} Elemente wurden zurück an ihren Ursprungsort geschoben, aber es gab %{restoreErrorsCount} Fehler beim Wiederherstellen der Datei(en) aus dem Papierkorb.",
-    "cancelled_error": "Entschuldige, es gab einen Fehler beim Zurückschieben dieses Elements. |||| Entschuldige, es gab einen Fehler beim Zurückschieben dieser Elemente."
+    "cancelled_error": "Entschuldigen Sie, es gab einen Fehler beim Zurückschieben dieses Elements. |||| Entschuldigen Sie, es gab einen Fehler beim Zurückschieben dieser Elemente.",
+    "multipleEntries": "%{smart_count} Element |||| %{smart_count} Elemente",
+    "addFolder": "Ordner erstellen",
+    "folderName": "Ordnername",
+    "folderCreationError": "Der Ordner konnte nicht erstellt werden. Bitte versuchen Sie es erneut.",
+    "folderCreationInProgress": "Ordner wird erstellt",
+    "moveInProgress": "Elemente werden verschoben",
+    "destinationLocked": "Schließen Sie diesen Verschiebevorgang ab oder brechen Sie ihn ab, bevor Sie das Ziel ändern.",
+    "destinationSource": "Dieser Ordner wird gerade verschoben.",
+    "destinationDescendant": "Ein Ordner kann nicht in sich selbst verschoben werden.",
+    "destinationReadOnly": "Dieser Ordner ist schreibgeschützt.",
+    "permissionsLoading": "Die Berechtigungen werden noch geladen.",
+    "outsideSharedFolder": {
+      "title": "Aus dem Ordner %{sharedFolder} verschieben",
+      "content_1": "Achtung: Sie möchten %{name} aus dem geteilten Ordner %{sharedFolder} verschieben. |||| Achtung: Sie möchten %{smart_count} %{type} aus dem geteilten Ordner %{sharedFolder} verschieben.",
+      "content_2": "Durch das Verschieben wird %{name} (%{type}) aus der Freigabe entfernt. |||| Durch das Verschieben werden %{smart_count} %{type} aus der Freigabe entfernt.",
+      "cancel": "Abbrechen",
+      "confirm": "Verstanden"
+    },
+    "insideSharedFolder": {
+      "title": "In einen geteilten Ordner verschieben?",
+      "content": "Alle Mitglieder mit Zugriff auf %{destination} erhalten auch Zugriff auf %{source}. |||| Alle Mitglieder mit Zugriff auf %{destination} erhalten auch Zugriff auf die ausgewählten %{type}.",
+      "cancel": "Abbrechen",
+      "confirm": "OK"
+    },
+    "sharedFolderInsideAnother": {
+      "title": "Verschieben nicht möglich",
+      "content_1": "Sie möchten ein geteiltes Element in einen geteilten Ordner verschieben. Diese Art von Verschiebung ist nicht erlaubt.",
+      "content_2": "Wenn Sie %{source} trotzdem nach %{destination} verschieben möchten, beenden Sie bitte die Freigabe von:",
+      "cancel": "Verschieben abbrechen",
+      "confirm": "Freigabe beenden"
+    }
   },
   "ImportToDrive": {
     "title": "%{smart_count} Element |||| %{smart_count} Elemente",
@@ -372,7 +509,7 @@
     "action": "Speichern",
     "cancel": "Abbrechen",
     "success": "%{smart_count} gesicherte Datei |||| %{smart_count} gesicherte Dateien",
-    "error": "Etwas ist schiefgelaufen. Bitte versuche es erneut"
+    "error": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut"
   },
   "FileOpenerExternal": {
     "fileNotFoundError": "Fehler: Datei nicht gefunden"
@@ -383,16 +520,16 @@
       "detail": "Im Rahmen der General Data Protection Regulation (GDPR), [wurden unsere Nutzungsbedingungen aktualisiert](%{link}) und werden ab dem 25. März 2018 auf alle unsere Nutzer angewandt.",
       "cta": "TOS akzeptieren und fortfahren",
       "disconnect": "Ablehnen und trennen",
-      "error": "Etwas ist schiefgelaufen. Bitte versuche es später erneut"
+      "error": "Etwas ist schiefgelaufen. Bitte versuchen Sie es später erneut"
     }
   },
   "manifest": {
     "permissions": {
       "contacts": {
-        "description": "Erforderlich, um deinen Kontakten Dateien freizugeben"
+        "description": "Erforderlich, um Ihren Kontakten Dateien freizugeben"
       },
       "groups": {
-        "description": "Erforderlich, um deinen Gruppen Dateien freizugeben"
+        "description": "Erforderlich, um Ihren Gruppen Dateien freizugeben"
       }
     }
   },
@@ -402,55 +539,73 @@
     }
   },
   "Scan": {
-    "scan_a_doc": "Scanne ein Dokument",
-    "save_doc": "Speichere das Dokument",
+    "none": "Keine",
+    "scan_a_doc": "Scannen Sie ein Dokument",
+    "save_doc": "Speichern Sie das Dokument",
     "filename": "Dateiname",
     "save": "Speichern",
     "cancel": "Abbrechen",
     "qualify": "Kategorisieren",
+    "requalify": "Neu kategorisieren",
     "apply": "Anwenden",
     "error": {
-      "offline": "Du bist derzeit offline und kannst diese Funktion nicht nutzen. Versuche es später erneut",
-      "uploading": "Du lädst bereits eine Datei hoch. Warte bis zur Fertigstellung und versuche es erneut.",
-      "generic": "Etwas ist schiefgelaufen. Bitte versuche es erneut"
+      "offline": "Sie sind derzeit offline und können diese Funktion nicht nutzen. Versuchen Sie es später erneut",
+      "uploading": "Sie laden bereits eine Datei hoch. Warten Sie bis zur Fertigstellung und versuchen Sie es erneut.",
+      "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut"
     },
     "successful": {
-      "qualified_ok": "Du hast die Datei erfolgreich kategorisiert!"
+      "qualified_ok": "Sie haben die Datei erfolgreich kategorisiert!"
     }
   },
   "History": {
-    "description": "Die letzten 20 Versionen deiner Dateien werden automatisch behalten. Wähle eine Version aus, um sie herunterzuladen.",
+    "description": "Die letzten 20 Versionen Ihrer Dateien werden automatisch behalten. Wählen Sie eine Version aus, um sie herunterzuladen.",
     "current_version": "Aktuelle Version",
     "loading": "Lädt...",
-    "noFileVersionEnabled": "Dein Twake wird bald dazu in der Lage sein, deine letzten Dateiänderungen zu archivieren, um einem Verlust vorzubeugen"
+    "noFileVersionEnabled": "Ihr Twake wird bald dazu in der Lage sein, Ihre letzten Dateiänderungen zu archivieren, um einem Verlust vorzubeugen",
+    "download": "Diese Version herunterladen",
+    "deleteVersion": {
+      "action": "Diese Version löschen",
+      "title": "Diese Version löschen?",
+      "version": "Version vom %{date} (%{size})",
+      "irreversible": "Diese Version wird endgültig gelöscht. Diese Aktion kann nicht rückgängig gemacht werden.",
+      "cancel": "Abbrechen",
+      "confirm": "Löschen",
+      "error": "Diese Version konnte nicht gelöscht werden."
+    }
   },
   "External": {
     "redirection": {
       "title": "Weiterleitung",
-      "text": "Du wirst gleich weitergeleitet...",
-      "error": "Fehler während der Weiterleitung. Im Allgemeinen deutet dies auf ein falsches Format deines Inhalts hin."
+      "text": "Sie werden gleich weitergeleitet...",
+      "error": "Fehler während der Weiterleitung. Im Allgemeinen deutet dies auf ein falsches Format Ihres Inhalts hin."
     }
   },
   "RenameModal": {
     "title": "Umbenennen",
-    "description": "Du bist dabei, die Dateiendung zu ändern. Möchtest du fortfahren?",
+    "description": "Sie sind dabei, die Dateiendung zu ändern. Möchten Sie fortfahren?",
     "continue": "Fortsetzen",
     "cancel": "Abbrechen"
   },
   "Shortcut": {
-    "title_modal": "Erstelle eine Verknüpfung",
+    "title_modal": "Erstellen Sie eine Verknüpfung",
     "filename": "Dateiname",
     "url": "URL",
     "cancel": "Abbrechen",
     "create": "Erstellen",
-    "created": "Deine Verknüpfung wurde erstellt",
+    "created": "Ihre Verknüpfung wurde erstellt",
     "errored": "Ein Fehler ist aufgetreten",
     "filename_error_ends": "Der Name sollte mit .url enden",
     "needs_info": "Die Verknüpfung benötigt mindestens eine URL und einen Dateinamen",
-    "url_badformat": "Deine URL hat nicht das richtige Format"
+    "url_badformat": "Ihre URL hat nicht das richtige Format"
   },
   "Excalidraw": {
-    "createFileName": "Neue Zeichnung"
+    "createFileName": "Neue Zeichnung",
+    "collaboration": {
+      "guest": "Gast"
+    }
+  },
+  "Pdf": {
+    "save": "Speichern"
   },
   "OnlyOffice": {
     "Error": {
@@ -465,6 +620,12 @@
       "text": "Neues Textdokument",
       "spreadsheet": " Neue Tabellenkalkulation",
       "slide": "Neue Präsentation"
+    },
+    "toolbar": {
+      "goToHome": "Zur Startseite"
+    },
+    "actions": {
+      "validate": "Bestätigen"
     }
   },
   "Migration": {
@@ -477,12 +638,158 @@
     "placeholder": "Alle Dateien durchsuchen",
     "empty": "Es wurde kein Ergebnis für die Suche \"%{query}\" gefunden"
   },
+  "button": {
+    "back": "Zurück",
+    "add": "Hinzufügen",
+    "create": "Erstellen"
+  },
+  "search": {
+    "action": "Suchen",
+    "empty": {
+      "title": "Kein Ergebnis",
+      "subtitle": "Für die Suche „%{query}“ wurde kein Ergebnis gefunden"
+    }
+  },
+  "PushBanner": {
+    "quota": {
+      "text": "Ihr Speicherplatz ist fast voll. Wenn Sie das Limit erreichen, können Sie keine weiteren Dateien hinzufügen. Sie können Dateien löschen, Ihren Papierkorb leeren oder Ihr Angebot ändern.",
+      "actions": {
+        "first": "Verstanden",
+        "second": "Unsere Angebote ansehen"
+      }
+    }
+  },
+  "FileDivergedModal": {
+    "title": "Jemand hat diese Datei geändert",
+    "content": "Jemand hat die Datei außerhalb von Twake geändert, während Sie sie bearbeitet haben. Sie können die Änderungen der anderen Person anstelle Ihrer eigenen übernehmen oder Ihre Bearbeitung in einer neuen Datei fortsetzen.",
+    "confirm": "Weiter bearbeiten",
+    "cancel": "Änderungen ansehen",
+    "error": "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
+    "confirmReload": {
+      "title": "Änderungen ansehen",
+      "content": "Wenn Sie die neue Datei öffnen, werden Ihre Änderungen verworfen.",
+      "cancel": "Abbrechen",
+      "confirm": "OK, verstanden"
+    },
+    "viewMode": {
+      "title": "Jemand hat diese Datei geändert",
+      "content": "Jemand hat den Inhalt dieser Datei geändert. Sie können diese Änderungen übernehmen.",
+      "confirm": "Änderungen ansehen"
+    }
+  },
+  "FileDeletedModal": {
+    "title": "Jemand hat diese Datei gelöscht",
+    "content": "Jemand hat diese Datei gelöscht, während Sie sie bearbeitet haben. Sie können die Bearbeitung beenden oder die Datei wiederherstellen, um weiterzuarbeiten.",
+    "confirm": "Datei wiederherstellen",
+    "cancel": "Änderungen verwerfen",
+    "error": "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut."
+  },
+  "TrashedBanner": {
+    "text": "Das Element befindet sich in Ihrem Papierkorb",
+    "destroy": "Endgültig löschen",
+    "restore": "Wiederherstellen",
+    "restoreSuccess": "Das Element wurde wiederhergestellt",
+    "restoreError": "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
+    "destroySuccess": "Das Element wurde gelöscht"
+  },
+  "MigrationProgressBanner": {
+    "title": "Migration von Nextcloud läuft",
+    "percent": "%{percent}% abgeschlossen",
+    "importing": "%{count} Dateien werden aus Nextcloud importiert...",
+    "cancel": "Abbrechen",
+    "done": {
+      "title": "Migration abgeschlossen!",
+      "body": "%{count} Dateien erfolgreich aus Nextcloud importiert"
+    }
+  },
+  "EntriesType": {
+    "file": "Datei |||| Dateien",
+    "directory": "Ordner |||| Ordner",
+    "element": "Element |||| Elemente"
+  },
+  "NotFound": {
+    "title": "Das Element wurde nicht gefunden",
+    "text": "Unter dieser Adresse wurde nichts gefunden. Vielleicht handelt es sich um einen Tippfehler."
+  },
+  "NextcloudBreadcrumb": {
+    "root": "Geteilte Drives",
+    "trash": "Papierkorb"
+  },
+  "NextcloudToolbar": {
+    "share": "Teilen"
+  },
+  "NextcloudDeleteConfirm": {
+    "title": "%{filename} löschen? |||| %{smart_count} %{type} löschen?",
+    "trash": "Dieses Element wird in den Nextcloud-Papierkorb verschoben. |||| Diese Elemente werden in den Nextcloud-Papierkorb verschoben.",
+    "restore": "Sie können es jederzeit in Nextcloud wiederherstellen.",
+    "error": "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
+    "cancel": "Abbrechen",
+    "delete": "Löschen"
+  },
+  "FileName": {
+    "sharedDrive": "Drives",
+    "trash": "Papierkorb"
+  },
+  "NextcloudBanner": {
+    "title": "Die folgenden Elemente werden aus einem NextCloud-Drive angezeigt und nicht in Ihrem Twake gespeichert."
+  },
+  "favorites": {
+    "label": {
+      "add": "Zu Favoriten hinzufügen",
+      "addMobile": "Favoriten",
+      "remove": "Aus Favoriten entfernen"
+    },
+    "error": "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
+    "success": {
+      "add": "%{filename} wurde zu den Favoriten hinzugefügt |||| Diese Elemente wurden zu den Favoriten hinzugefügt",
+      "remove": "%{filename} wurde aus den Favoriten entfernt |||| Diese Elemente wurden aus den Favoriten entfernt"
+    }
+  },
+  "TrashToolbar": {
+    "emptyTrash": "Papierkorb leeren"
+  },
+  "RestoreNextcloudFile": {
+    "label": "Wiederherstellen",
+    "success": "Das Element wurde wiederhergestellt",
+    "error": "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut."
+  },
   "actions": {
     "details": "Details",
+    "infos": "Details und Kategorisierung",
+    "infosMobile": "Details",
+    "duplicateTo": {
+      "label": "Duplizieren nach…"
+    },
+    "duplicateToMobile": {
+      "label": "Duplizieren"
+    },
     "personalizeFolder": {
       "label": "Ordner personalisieren"
     },
-    "summariseByAI": "Zusammenfassen"
+    "summariseByAI": "Zusammenfassen",
+    "signWithEuDss": "Signieren",
+    "verifyWithEuDss": "Signatur prüfen"
+  },
+  "DuplicateModal": {
+    "subTitle": "Duplizieren nach:",
+    "confirmLabel": "Hierher duplizieren",
+    "success": "%{fileName} wurde nach %{destinationName} dupliziert. |||| %{smart_count} Elemente wurden nach %{destinationName} dupliziert.",
+    "error": "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut."
+  },
+  "OpenFolderButton": {
+    "label": "Ordner öffnen"
+  },
+  "LastUpdate": {
+    "titleFormat": "dd. LLLL yyyy, HH:MM"
+  },
+  "AddMenu": {
+    "readOnlyFolder": "Dieser Ordner ist schreibgeschützt. Sie können diese Aktion nicht ausführen."
+  },
+  "PublicNoteRedirect": {
+    "error": {
+      "title": "Zugriff auf das Dokument nicht möglich",
+      "subtitle": "Der Freigabelink fehlt oder ist ungültig. Bitten Sie den Eigentümer des Dokuments, den Zugriff zu prüfen"
+    }
   },
   "FolderCustomizer": {
     "title": "Ordner personalisieren",
@@ -497,6 +804,47 @@
     "iconPicker": {
       "recents": "Zuletzt verwendet",
       "chooseCustomIcon": "Wählen Sie ein benutzerdefiniertes Symbol"
+    }
+  },
+  "antivirus": {
+    "infectedFile": "Diese Datei ist mit einem Virus infiziert",
+    "popover": {
+      "title": "Herunterladen und Teilen sind aus Sicherheitsgründen gesperrt",
+      "description": "Das Twake-System hat einen Virus erkannt"
+    }
+  },
+  "FilePicker": {
+    "linkTitle": "Link für %{name}",
+    "close": "Schließen",
+    "recents": {
+      "empty": "Keine aktuellen Dateien.",
+      "error": "Die zuletzt verwendeten Dateien können nicht geladen werden."
+    },
+    "footer": {
+      "buttons": {
+        "cancel": "Abbrechen",
+        "publicLink": "Als Link hinzufügen",
+        "temporaryDownloadLink": "Als Anhang hinzufügen"
+      }
+    },
+    "constraints": {
+      "disabledReasons": {
+        "folderNotAllowed": "Ordner sind für diese Aktion nicht zulässig",
+        "mimeTypeNotAllowed": "Dieser Dateityp ist für diese Aktion nicht zulässig",
+        "fileTooLarge": "Diese Datei ist größer als %{maxFileSize}",
+        "maxFileCountExceeded": "Zu viele Dateien ausgewählt (Limit: %{maxFileCount})",
+        "availableSizeExceeded": "Die ausgewählte Gesamtgröße überschreitet %{availableSize}"
+      }
+    },
+    "actions": {
+      "sharingLink": "Als Link hinzufügen",
+      "downloadLink": "Als Anhang hinzufügen"
+    },
+    "errors": {
+      "ITEM_NOT_FOUND": "Die ausgewählte Datei wurde nicht gefunden.",
+      "DESTINATION_UNAVAILABLE": "Der Zielordner konnte nicht geladen werden.",
+      "SHARING_LINK_FAILED": "Es konnte kein Freigabelink erstellt werden.",
+      "DOWNLOAD_LINK_FAILED": "Es konnte kein Download-Link erstellt werden."
     }
   }
 }
