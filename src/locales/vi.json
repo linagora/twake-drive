@@ -11,11 +11,10 @@
     "item_collect": "Quản trị",
     "item_shared_drives": "Ổ đĩa nhóm",
     "item_favorites": "Yêu thích",
+    "item_external_drives": "Ổ đĩa ngoài",
     "item_my_drive": "Ổ đĩa của tôi",
     "item_file_picker": "Chọn một tệp",
     "btn-client": "Tải TwakeDrive cho máy tính",
-    "support-us": "Xem những ưu đãi",
-    "support-us-description": "Bạn muốn có thêm dung lượng hay đơn giản chỉ muốn ủng hộ Cozy??",
     "btn-client-web": "Tải Twake",
     "btn-client-mobile": "Mang đám mây cá nhân theo bạn mọi nơi: cài đặt %{name} trên tất cả thiết bị của bạn!",
     "banner-txt-client": "Tải %{name} cho máy tính và đồng bộ hóa tệp của bạn một cách an toàn để luôn có thể truy cập mọi lúc",
@@ -44,6 +43,7 @@
     "more": "Thêm"
   },
   "toolbar": {
+    "menu_manage_access": "Quản lý quyền truy cập",
     "menu_leave_shared_drive": "Rời khỏi chia sẻ",
     "menu_upload": "Tải lên tệp tin",
     "item_more": "Thêm",
@@ -56,7 +56,9 @@
     "menu_download_folder": "Tải thư mục xuống",
     "menu_download_file": "Tải tệp này xuống",
     "menu_create_note": "Ghi chú",
+    "menu_create_docs": "Docs",
     "menu_create_excalidraw": "Excalidraw",
+    "menu_create_grist": "Grist",
     "menu_create_shortcut": "Lối tắt",
     "share": "Chia sẻ",
     "trash": "Xoá",
@@ -124,7 +126,7 @@
       "title": "Chia sẻ",
       "details": {
         "title": "Chi tiết chia sẻ",
-        "createdAt": "On %{date}",
+        "createdAt": "Vào %{date}",
         "ro": "Có thể đọc",
         "rw": "Có quyền chỉnh sửa",
         "desc": {
@@ -209,8 +211,8 @@
     "head_view_mode": "Chế độ xem",
     "head_view_list": "Chế độ danh sách",
     "head_view_grid": "Chế độ lưới",
-    "row_update_format": "LLL d, yyyy",
-    "row_update_format_full": "LLLL d, yyyy",
+    "row_update_format": "dd/MM/yyyy",
+    "row_update_format_full": "d MMMM, yyyy",
     "row_read_only": "Chia sẻ (Chỉ đọc)",
     "row_read_write": "Chia sẻ (Đọc & Ghi)",
     "row_size_symbols": {
@@ -244,7 +246,11 @@
     "selected_count": "mục đã chọn |||| mục đã chọn",
     "share": "Chia sẻ",
     "download": "tải xuống",
+    "copy": "Sao chép",
+    "cut": "Cắt",
+    "paste": "Dán",
     "trash": "Xoá bỏ",
+    "trash_all": "Xoá tất cả",
     "destroy": "Xoá vĩnh viễn",
     "rename": "Đổi tên",
     "restore": "Khôi phục",
@@ -286,11 +292,12 @@
   "DestroyConfirm": {
     "title": "Xóa %{filename}? |||| Xóa %{smart_count} %{type}?",
     "forbidden": "Bạn sẽ không thể truy cập %{type} này nữa. |||| Bạn sẽ không thể truy cập các %{type} này nữa.",
-    "restore": "Không thể khôi phục nếu bạn chưa sao lưu. |||| Không thể khôi phục các %{type} này nếu chưa sao lưu.",
+    "restore": "Bạn sẽ không thể khôi phục %{type} này nếu chưa sao lưu. |||| Bạn sẽ không thể khôi phục các %{type} này nếu chưa sao lưu.",
     "cancel": "Huỷ",
     "delete": "Xóa vĩnh viễn",
     "success": "%{type} đã được xóa vĩnh viễn. |||| %{smart_count} %{type} đã được xóa vĩnh viễn.",
-    "error": "Đã xảy ra lỗi, vui lòng thử lại."
+    "error": "Đã xảy ra lỗi, vui lòng thử lại.",
+    "processing": "Đang xoá. Quá trình này có thể mất một lúc."
   },
   "quotaalert": {
     "title": "Dung lượng của bạn đã đầy :(",
@@ -319,7 +326,8 @@
     "download_file": {
       "offline": "Bạn cần kết nối mạng để tải tệp này",
       "missing": "Tệp này không tồn tại"
-    }
+    },
+    "paste_failed": "Không thể dán tệp. Vui lòng thử lại."
   },
   "Error": {
     "public_unshared_title": "Rất tiếc, liên kết này không còn tồn tại.",
@@ -331,6 +339,7 @@
     "try_again": "Đã xảy ra lỗi, vui lòng thử lại sau.",
     "restore_file_success": "Các mục đã được khôi phục thành công.",
     "trash_file_success": "Các mục đã được chuyển vào Thùng rác.",
+    "trash_file_processing": "Đang chuyển vào Thùng rác...",
     "destroy_file_success": "Các mục đã được xóa vĩnh viễn.",
     "folder_name": "Thư mục %{folderName} đã tồn tại, vui lòng chọn tên khác.",
     "file_name": "Tệp %{fileName} đã tồn tại, vui lòng chọn tên khác.",
@@ -352,6 +361,7 @@
     "copy_files_only": "Không thể sao chép thư mục",
     "copy_not_allowed": "Thao tác sao chép không được phép trong chế độ xem này.",
     "cut_not_allowed": "Thao tác cắt không được phép trong chế độ xem này.",
+    "delete_not_allowed": "Không thể xoá trong chế độ xem này.",
     "paste_error": "Đã xảy ra lỗi khi dán tệp",
     "paste_failed": "Dán tệp thất bại",
     "paste_sharing_error": "Không thể dán tệp do hạn chế chia sẻ. Vui lòng sử dụng hành động Di chuyển thay thế.",
@@ -374,7 +384,16 @@
       "updated_conflicts": "Đã cập nhật %{smart_count} %{type} với %{conflictCount} xung đột. |||| Đã cập nhật %{smart_count} %{type} với %{conflictCount} xung đột.",
       "errors": "Đã xảy ra lỗi trong quá trình tải lên %{type}.",
       "network": "Bạn hiện đang ngoại tuyến. Vui lòng thử lại khi có kết nối mạng.",
-      "fileTooLargeErrors": "Tệp quá lớn. Kích thước tệp tối đa: %{max_size_value} GB"
+      "fileTooLargeErrors": "Tệp quá lớn. Kích thước tệp tối đa: %{max_size_value} GB",
+      "unreadable_files": "Không thể đọc một số tệp. Đường dẫn tệp có thể quá dài hoặc thư mục đã bị thay đổi trong quá trình truyền."
+    },
+    "limit": {
+      "title": "Bạn không thể tải lên quá %{limit} tệp cùng lúc.",
+      "content": "Cần tải lên nhiều hơn? Hãy tải công cụ đồng bộ hoá về máy tính của bạn",
+      "content_public": "Vui lòng giảm số lượng tệp và thử lại.",
+      "cancel": "Huỷ",
+      "close": "Đóng",
+      "download_desktop": "Tải về cho máy tính"
     },
     "conflict": {
       "title": "Tùy chọn tải lên",
@@ -398,13 +417,15 @@
     }
   },
   "UploadQueue": {
-    "header": "Đang tải lên %{smart_count} ảnh lên Twake Drive |||| Đang tải lên %{smart_count} ảnh lên Twake Drive",
+    "header": "Đang tải %{smart_count} mục lên Twake Drive |||| Đang tải %{smart_count} mục lên Twake Drive",
+    "header_preparing": "Đang chuẩn bị tải lên %{smart_count} mục |||| Đang chuẩn bị tải lên %{smart_count} mục",
     "header_mobile": "Đã tải lên %{done} / %{total}",
     "header_done": "Đã tải lên thành công %{done} trong tổng số %{total}",
     "success_flagship": "Đã tải lên %{smart_count} tệp thành công. |||| Đã tải lên %{smart_count} tệp thành công.",
     "close": "đóng",
     "item": {
       "pending": "Đang chờ",
+      "preparing": "Đang chuẩn bị",
       "conflict": "Đang chờ lựa chọn"
     }
   },
@@ -440,6 +461,7 @@
   "Move": {
     "to": "Di chuyển đến:",
     "action": "Di chuyển",
+    "openFolder": "Mở thư mục",
     "cancel": "Huỷ",
     "modalTitle": "Di chuyển",
     "title": "%{smart_count} phần tử |||| %{smart_count} phần tử",
@@ -577,7 +599,13 @@
     "url_badformat": "URL của bạn không đúng định dạng"
   },
   "Excalidraw": {
-    "createFileName": "Bản vẽ mới"
+    "createFileName": "Bản vẽ mới",
+    "collaboration": {
+      "guest": "Khách"
+    }
+  },
+  "Pdf": {
+    "save": "Lưu"
   },
   "OnlyOffice": {
     "Error": {
@@ -738,7 +766,30 @@
     "personalizeFolder": {
       "label": "Cá nhân hóa thư mục"
     },
-    "summariseByAI": "Tóm tắt"
+    "summariseByAI": "Tóm tắt",
+    "signWithEuDss": "Ký",
+    "verifyWithEuDss": "Xác minh chữ ký"
+  },
+  "DuplicateModal": {
+    "subTitle": "Nhân bản đến:",
+    "confirmLabel": "Nhân bản tại đây",
+    "success": "%{fileName} đã được nhân bản đến %{destinationName}. |||| %{smart_count} mục đã được nhân bản đến %{destinationName}.",
+    "error": "Đã xảy ra lỗi, vui lòng thử lại."
+  },
+  "OpenFolderButton": {
+    "label": "Mở thư mục"
+  },
+  "LastUpdate": {
+    "titleFormat": "d MMMM, yyyy, HH:mm"
+  },
+  "AddMenu": {
+    "readOnlyFolder": "Đây là thư mục chỉ đọc. Bạn không thể thực hiện hành động này."
+  },
+  "PublicNoteRedirect": {
+    "error": {
+      "title": "Không thể truy cập tài liệu",
+      "subtitle": "Liên kết chia sẻ bị thiếu hoặc không hợp lệ. Vui lòng yêu cầu chủ sở hữu tài liệu kiểm tra quyền truy cập"
+    }
   },
   "FolderCustomizer": {
     "title": "Cá nhân hóa thư mục",
@@ -755,25 +806,11 @@
       "chooseCustomIcon": "Chọn biểu tượng tùy chỉnh"
     }
   },
-  "DuplicateModal": {
-    "subTitle": "Nhân bản đến:",
-    "confirmLabel": "Nhân bản tại đây",
-    "success": "%{fileName} đã được nhân bản đến %{destinationName}. |||| %{smart_count} mục đã được nhân bản đến %{destinationName}.",
-    "error": "Đã xảy ra lỗi, vui lòng thử lại."
-  },
-  "OpenFolderButton": {
-    "label": "Mở thư mục"
-  },
-  "LastUpdate": {
-    "titleFormat": "LLLL dd, yyyy, HH:mm"
-  },
-  "AddMenu": {
-    "readOnlyFolder": "Đây là thư mục chỉ đọc. Bạn không thể thực hiện hành động này."
-  },
-  "PublicNoteRedirect": {
-    "error": {
-      "title": "Không thể truy cập tài liệu",
-      "subtitle": "Liên kết chia sẻ bị thiếu hoặc không hợp lệ. Vui lòng yêu cầu chủ sở hữu tài liệu kiểm tra quyền truy cập"
+  "antivirus": {
+    "infectedFile": "Tệp này bị nhiễm virus",
+    "popover": {
+      "title": "Tải xuống và chia sẻ bị chặn vì lý do bảo mật",
+      "description": "Hệ thống Twake đã phát hiện virus"
     }
   },
   "FilePicker": {
@@ -804,10 +841,10 @@
       "downloadLink": "Thêm dưới dạng tệp đính kèm"
     },
     "errors": {
-      "ITEM_NOT_FOUND": "The selected file could not be found.",
+      "ITEM_NOT_FOUND": "Không tìm thấy tệp đã chọn.",
       "DESTINATION_UNAVAILABLE": "Không thể tải thư mục đích.",
-      "SHARING_LINK_FAILED": "Could not generate a sharing link.",
-      "DOWNLOAD_LINK_FAILED": "Could not generate a download link."
+      "SHARING_LINK_FAILED": "Không thể tạo liên kết chia sẻ.",
+      "DOWNLOAD_LINK_FAILED": "Không thể tạo liên kết tải xuống."
     }
   }
 }
