@@ -1,0 +1,12 @@
+<main>
+  <h1>Local URL Upload caller</h1>
+  <p>Test-only page. The intent frame stays hidden. Refreshing returns to Drive.</p>
+  <form id="url-upload-form">
+    <p><label>URL <input name="url" type="url" required size="60" autocomplete="off"></label></p>
+    <p><label>Folder ID <input name="folderId" required value="io.cozy.files.root-dir" size="40"></label></p>
+    <p><label>File name <input name="name" required></label></p>
+    <button type="submit">Upload</button>
+  </form>
+  <h2>Result</h2>
+  <pre id="url-upload-result" role="status" aria-live="polite">Ready</pre>
+</main>
