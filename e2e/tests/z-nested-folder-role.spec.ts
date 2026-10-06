@@ -6,6 +6,7 @@ import {
   openSharedDrive,
   waitForSharingRow
 } from '../helpers/sharing'
+import { trashByName } from '../helpers/stack'
 import { DowngradeConfirmDialogPage } from '../pages/DowngradeConfirmDialogPage'
 
 const PARENT_FOLDER = `Parent Folder ${stamp()}`
@@ -26,10 +27,9 @@ test.describe
     }
   })
 
-  test.afterAll(() => {
-    // Note: Do not call trashByName here. Trashing root folders with nested
-    // cross-instance federated shares triggers a cozy-stack cascade-deletion
-    // panic. All fixtures use unique stamp() names, and globalTeardown wipes containers.
+  test.afterAll(async () => {
+    await trashByName(USERS.alice.instance, PARENT_FOLDER)
+    await trashByName(USERS.alice.instance, PARENT_EDITOR_FOLDER)
     for (const u of [USERS.alice, USERS.bob, USERS.charlie]) {
       setFlags(u.instance, DEFAULT_FLAGS)
     }
