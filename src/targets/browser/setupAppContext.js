@@ -7,9 +7,10 @@ import { initTranslation } from 'twake-i18n'
 import appMetadata from '@/lib/appMetadata'
 import { schema } from '@/lib/doctypes'
 import registerClientPlugins from '@/lib/registerClientPlugins'
+import { loadLocales } from '@/locales'
 import configureStore from '@/store/configureStore'
 
-const setupApp = memoize(() => {
+const setupApp = memoize(async () => {
   const root = document.querySelector('[role=application]')
   const data = JSON.parse(root.dataset.cozy)
 
@@ -38,7 +39,7 @@ const setupApp = memoize(() => {
 
   const locale = data.locale
   registerClientPlugins(client)
-  const polyglot = initTranslation(locale, lang => require(`@/locales/${lang}`))
+  const polyglot = initTranslation(locale, await loadLocales(locale))
 
   const store = configureStore({
     client,

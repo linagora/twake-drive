@@ -37,10 +37,10 @@ const AppComponent = props => (
   </App>
 )
 
-const init = () => {
+const init = async () => {
   initSentry()
 
-  const { locale, polyglot, client, store, root } = setupApp()
+  const { locale, polyglot, client, store, root } = await setupApp()
 
   createRoot(root).render(
     <AppComponent

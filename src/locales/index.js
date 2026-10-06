@@ -1,37 +1,59 @@
 import { getI18n } from 'twake-i18n'
 
-import ar from './ar.json'
-import de from './de.json'
-import en from './en.json'
-import es from './es.json'
-import fr from './fr.json'
-import it from './it.json'
-import ja from './ja.json'
-import ko from './ko.json'
-import nl from './nl.json'
-import nl_NL from './nl_NL.json'
-import pl from './pl.json'
-import ru from './ru.json'
-import vi from './vi.json'
-import zh_CN from './zh_CN.json'
-import zh_TW from './zh_TW.json'
+const FALLBACK_LOCALE = 'en'
 
-export const locales = {
-  ar,
-  de,
-  en,
-  es,
-  fr,
-  it,
-  ja,
-  ko,
-  nl,
-  nl_NL,
-  pl,
-  ru,
-  vi,
-  zh_CN,
-  zh_TW
+export const supportedLocales = [
+  'ar',
+  'de',
+  'en',
+  'es',
+  'fr',
+  'it',
+  'ja',
+  'ko',
+  'nl',
+  'nl_NL',
+  'pl',
+  'ru',
+  'vi',
+  'zh_CN',
+  'zh_TW'
+]
+
+// Each locale is its own async chunk: never require a locale file
+// synchronously, or every locale ends up in the initial bundle again.
+async function importLocale(locale) {
+  const localeModule = await import(`./${locale}.json`)
+  return localeModule.default ?? localeModule
 }
 
-export const getDriveI18n = () => getI18n(undefined, lang => locales[lang])
+let loadedDictRequire = () => ({})
+
+/**
+ * Loads the current locale and the English fallback.
+ *
+ * @param {string} locale - The locale to load (e.g. `'fr'`).
+ * @param {Function} [loadDictionary] - Loads one locale dictionary.
+ * @returns {Promise<Function>} A synchronous `dictRequire` for twake-i18n.
+ */
+export async function loadLocales(locale, loadDictionary = importLocale) {
+  const fallbackDictionaryPromise = loadDictionary(FALLBACK_LOCALE)
+  if (locale === FALLBACK_LOCALE) {
+    const fallbackDictionary = await fallbackDictionaryPromise
+    loadedDictRequire = () => fallbackDictionary
+    return loadedDictRequire
+  }
+
+  const [fallbackDictionary, currentDictionary] = await Promise.all([
+    fallbackDictionaryPromise,
+    loadDictionary(locale).catch(() => null)
+  ])
+
+  loadedDictRequire = requestedLocale =>
+    requestedLocale === locale
+      ? (currentDictionary ?? fallbackDictionary)
+      : fallbackDictionary
+  return loadedDictRequire
+}
+
+export const getDriveI18n = () => getI18n(undefined, loadedDictRequire)
