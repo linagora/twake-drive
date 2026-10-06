@@ -124,6 +124,11 @@
       "action": "MOVE",
       "type": ["io.cozy.files"],
       "href": "/intents"
+    },
+    {
+      "action": "UPLOAD",
+      "type": ["io.cozy.files"],
+      "href": "/intents"
     }
   ],
   "entrypoints": [

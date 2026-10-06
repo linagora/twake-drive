@@ -7,6 +7,12 @@ admin:
 
 subdomains: flat
 
+# URL-upload fixtures run inside the test Stack on an ephemeral loopback port.
+# Only this test config permits that source; production safehttp stays unchanged.
+safe_http:
+  trusted_private_networks:
+    - 127.0.0.1/32
+
 # The stack hardcodes its default registry, which changed over releases; pin it
 # so app installs do not depend on the image version.
 registries:
