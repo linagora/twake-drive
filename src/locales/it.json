@@ -780,7 +780,7 @@
     "label": "Apri la cartella"
   },
   "LastUpdate": {
-    "titleFormat": "dd LLLL yyyy, HH:MM"
+    "titleFormat": "dd LLLL yyyy, HH:mm"
   },
   "AddMenu": {
     "readOnlyFolder": "Questa cartella è di sola lettura. Non puoi eseguire questa azione."

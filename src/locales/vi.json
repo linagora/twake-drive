@@ -765,7 +765,7 @@
     "label": "Mở thư mục"
   },
   "LastUpdate": {
-    "titleFormat": "LLLL dd, yyyy, HH:MM"
+    "titleFormat": "LLLL dd, yyyy, HH:mm"
   },
   "AddMenu": {
     "readOnlyFolder": "Đây là thư mục chỉ đọc. Bạn không thể thực hiện hành động này."

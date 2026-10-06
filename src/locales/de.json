@@ -780,7 +780,7 @@
     "label": "Ordner öffnen"
   },
   "LastUpdate": {
-    "titleFormat": "dd. LLLL yyyy, HH:MM"
+    "titleFormat": "dd. LLLL yyyy, HH:mm"
   },
   "AddMenu": {
     "readOnlyFolder": "Dieser Ordner ist schreibgeschützt. Sie können diese Aktion nicht ausführen."

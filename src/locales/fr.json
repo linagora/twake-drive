@@ -795,7 +795,7 @@
     "label": "Ouvrir le dossier"
   },
   "LastUpdate": {
-    "titleFormat": "dd LLLL yyyy, HH:MM"
+    "titleFormat": "dd LLLL yyyy, HH:mm"
   },
   "AddMenu": {
     "readOnlyFolder": "Ce dossier est en lecture seule. Vous ne pouvez pas effectuer cette action."
