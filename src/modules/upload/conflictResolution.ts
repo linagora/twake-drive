@@ -18,7 +18,7 @@ type ConflictError = { status?: number }
 type RenameLimitError = Error & { code: string }
 type UploadConflictError = Error & { status: number }
 
-type FileDoc = {
+export type FileDoc = {
   id: string
   name?: string
   type: string
@@ -59,12 +59,14 @@ type ReplaceConflictingFileParams = {
 
 type UploadWithRenamedFileParams = {
   client: CozyClient
-  file: File
   dirID: string
   options?: UploadOptions
   driveId?: DriveId
   onNameResolved?: NameResolvedCallback
-}
+} & (
+  | { file: File }
+  | { name: string; createFile: (name: string) => Promise<FileDoc> }
+)
 
 type ResolveFileConflictParams = {
   client: CozyClient
@@ -88,7 +90,11 @@ type ReplaceConflictResult = {
   isUpdate: true
   finalName: string
 }
-type RenamedUploadResult = { data: FileDoc; isUpdate: false; finalName: string }
+type RenamedUploadResult = {
+  data: FileDoc
+  isUpdate: false
+  finalName: string
+}
 type PendingConflictResult = { isConflict: true }
 type CancelConflictResult = { isCancel: true }
 export type FileConflictResult =
@@ -109,7 +115,7 @@ type FolderCollisionResult = {
  * @param {{status?: number}} [error] - Error returned by the file collection request.
  * @returns {boolean} True when the error is an HTTP 409 conflict.
  */
-const isConflictError = (error: unknown): error is ConflictError =>
+export const isConflictError = (error: unknown): error is ConflictError =>
   (error as ConflictError | undefined)?.status === CONFLICT_ERROR
 
 /**
@@ -278,37 +284,34 @@ export const replaceConflictingFile = async ({
  *
  * @param {object} params - Renamed upload parameters.
  * @param {object} params.client - CozyClient instance.
- * @param {File} params.file - Browser File object to upload.
+ * @param {File} [params.file] - Browser File object for binary uploads.
+ * @param {string} [params.name] - Original name when using a creation callback instead of a File.
+ * @param {Function} [params.createFile] - Creates a file with the generated name; required without a File.
  * @param {string} params.dirID - Target parent directory id.
  * @param {object} [params.options] - Additional createFile options.
  * @param {string} [params.driveId] - Shared drive id.
  * @param {Function} [params.onNameResolved] - Callback called with each generated name before upload.
  * @returns {Promise<{data: object, isUpdate: boolean, finalName: string}>} Created file result.
  */
-export const uploadWithRenamedFile = async ({
-  client,
-  file,
-  dirID,
-  options = {},
-  driveId,
-  onNameResolved
-}: UploadWithRenamedFileParams): Promise<RenamedUploadResult> => {
+export const uploadWithRenamedFile = async (
+  params: UploadWithRenamedFileParams
+): Promise<RenamedUploadResult> => {
+  const { client, dirID, options = {}, driveId, onNameResolved } = params
+  const originalName = 'file' in params ? params.file.name : params.name
+  const createFile =
+    'file' in params
+      ? (name: string): Promise<FileDoc> =>
+          createFileWithName(client, params.file, dirID, name, options, driveId)
+      : params.createFile
   // Keep-both starts from the next generated name and retries on 409.
-  let name = generateUploadConflictName(file.name)
+  let name = generateUploadConflictName(originalName)
   let attempt = 0
 
   while (attempt < MAX_UPLOAD_CONFLICT_RENAME_ATTEMPTS) {
     attempt += 1
     onNameResolved?.(name)
     try {
-      const data = await createFileWithName(
-        client,
-        file,
-        dirID,
-        name,
-        options,
-        driveId
-      )
+      const data = await createFile(name)
       return { data, isUpdate: false, finalName: name }
     } catch (error) {
       if (!isConflictError(error)) throw error
