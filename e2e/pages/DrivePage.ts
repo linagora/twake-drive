@@ -94,6 +94,10 @@ export class DrivePage {
     await this.row(name).waitVisible()
   }
 
+  get uploadButton(): Locator {
+    return this.page.getByRole('button', { name: 'Upload', exact: true })
+  }
+
   /** cozy-ui's FileInput spreads extra props onto the underlying <input
    * type=file>, so the `upload-btn` testid lives on the input itself. */
   async uploadFiles(filePaths: string | string[]): Promise<void> {
