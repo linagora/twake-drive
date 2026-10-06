@@ -2,6 +2,7 @@ import CozyClient from 'cozy-client'
 
 import { USERS, stackExec } from '../helpers/config'
 import { test, expect, stamp } from '../helpers/fixtures'
+import { trashById } from '../helpers/stack'
 import {
   startUrlUploadSource,
   type UrlUploadSource
@@ -152,10 +153,30 @@ test('Stack imports CORS-free bytes through hidden intents and keep-both never o
     }
   } finally {
     for (const id of created.reverse())
-      await fetch(`http://${USERS.alice.instance}/files/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
-      })
+      await trashById(USERS.alice.instance, id)
+  }
+})
+
+test('manual caller displays actual metadata and a sanitized source failure', async ({
+  alicePage
+}) => {
+  const caller = new UrlUploadIntentPage(alicePage)
+  await caller.openManual()
+  await caller.submitManual(`${source.url}/bytes`, `manual-${stamp()}.bin`)
+  await expect.poll(() => caller.getManualResult()).toContain('"document"')
+  const { document } = JSON.parse(await caller.getManualResult())
+  try {
+    expect(Number(document.size)).toBe(content.length)
+    await caller.submitManual(
+      `${source.url}/missing?signature=must-not-leak`,
+      `failed-${stamp()}.bin`
+    )
+    await expect
+      .poll(() => caller.getManualResult())
+      .toContain('URL upload failed (HTTP 502)')
+    expect(await caller.getManualResult()).not.toContain('must-not-leak')
+  } finally {
+    await trashById(USERS.alice.instance, document._id)
   }
 })
 
@@ -264,10 +285,7 @@ test('source failures cross the iframe as sanitized HTTP errors, not temporary l
         expect(download.ok).toBe(true)
         expect(Buffer.from(await download.arrayBuffer())).toHaveLength(0)
       } finally {
-        await fetch(`http://${USERS.alice.instance}/files/${data.id}`, {
-          method: 'DELETE',
-          headers: { Authorization: `Bearer ${token}` }
-        })
+        await trashById(USERS.alice.instance, data.id)
       }
     } else {
       expect(metadata.status).toBe(404)

@@ -74,10 +74,63 @@ that loopback/private sources are allowed in production.
 
 The tests observe browser requests (no source fetch, empty Stack creation body),
 read actual stored bytes back, exercise native folders/file and directory
-collisions, read-only permission denial before source GET and serialized failures.
-Source and body timeout failures are separate cases; their
+collisions, read-only permission denial before source GET, serialized failures
+and the manual form. Source and body timeout failures are separate cases; their
 HTTP statuses need not match. Do not interpret a passing HTTP fixture unit test
 as proof of actual Stack retrieval.
+
+## Manual URL-upload caller
+
+From this worktree, with the local client link above, a graphical display and
+Playwright Chromium installed. Use a verified compatible image ID and a new
+project owned by this worktree; do not reuse or upgrade a shared runtime:
+
+```sh
+yarn build
+E2E_PROJECT_NAME=my-url-upload-manual \
+  COZY_E2E_ROOT_DOMAIN=url-upload-manual.localhost \
+  COZY_E2E_STACK_IMAGE="$STACK_IMAGE_ID" \
+  COZY_E2E_STACK_PULL_POLICY=never yarn stack up
+node e2e/setup/url-upload-caller.js
+```
+
+`STACK_IMAGE_ID` must be the compatible image inspected/built as described below.
+`yarn stack up` alone does not prove that an existing runtime supports SourceURL.
+
+The launcher opens an authenticated Alice browser using the existing local test
+runtime and auth helpers. It prints the actual Drive origin from this worktree's
+`e2e/.dev-ports.json`; use that URL rather than assuming a port/domain. Inside
+that browser only, a temporary caller page replaces Drive's content with `url`,
+`folderId`, and `name` fields, an Upload button and a result/error display. Its
+intent frame stays hidden. No production route, UI, embedded token or separate
+web server is added. Refreshing the page returns to Drive; rerun the launcher
+to restore the caller. Opening the printed URL in another browser opens Drive,
+not this injected test page.
+
+The source must be reachable from **Stack**, not the browser. CORS headers are
+unnecessary. A host-side `127.0.0.1` source is not the Stack container's loopback.
+With the compatible Stack and the test-only safehttp config above, run this in a
+second terminal to create a known source inside the manual runtime:
+
+```sh
+docker compose -f docker-compose.e2e.yml \
+  -p "$(node -p 'require("./e2e/.dev-ports.json").projectName')" \
+  exec -T cozystack node -e 'const s=require("http").createServer((q,r)=>r.end("URL upload example"));s.listen(0,"127.0.0.1",()=>console.log("http://127.0.0.1:"+s.address().port+"/example.txt"))'
+```
+
+Copy the printed URL into the form. Stack uses that container-local URL; the
+browser never reads it. Do not use this command against a shared runtime without
+its owner's approval.
+
+Use `io.cozy.files.root-dir` (the form default), `io.cozy.apps/mail`,
+`io.cozy.apps/notes`, or a concrete local folder ID, and an explicit name such
+as `example.txt`. Successful calls create real files in the disposable local
+instance. The page displays metadata or the service error without echoing the
+source URL. Do not use production credentials.
+
+Close the browser to stop the launcher and Ctrl+C the sample source server.
+The Stack remains running until `yarn stack down --volumes` removes this
+worktree's local test runtime. No page is available while its launcher is stopped.
 
 ## Run the suite
 
