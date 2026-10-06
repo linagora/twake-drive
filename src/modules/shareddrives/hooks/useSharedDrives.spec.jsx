@@ -64,4 +64,21 @@ describe('useSharedDrives', () => {
     expect(result.current.error).toBe(null)
     expect(result.current.sharedDrives).toEqual([{ _id: 'drive-1' }])
   })
+
+  it('shares one request between components mounting together', async () => {
+    const fetchSharedDrives = jest
+      .fn()
+      .mockResolvedValue({ data: [{ _id: 'drive-1' }] })
+    useClient.mockReturnValue({
+      collection: () => ({ fetchSharedDrives }),
+      plugins: {}
+    })
+
+    const first = renderHook(() => useSharedDrives())
+    const second = renderHook(() => useSharedDrives())
+
+    await waitFor(() => expect(second.result.current.isLoaded).toBe(true))
+    expect(first.result.current.sharedDrives).toEqual([{ _id: 'drive-1' }])
+    expect(fetchSharedDrives).toHaveBeenCalledTimes(1)
+  })
 })

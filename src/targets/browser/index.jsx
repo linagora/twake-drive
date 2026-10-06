@@ -9,6 +9,8 @@ import 'cozy-viewer/dist/stylesheet.css'
 import 'cozy-bar/dist/stylesheet.css'
 import 'cozy-sharing/dist/stylesheet.css'
 
+import '@/lib/pdfjsWorker'
+
 // Uncomment to activate why-did-you-render
 // https://github.com/welldone-software/why-did-you-render
 // import './wdyr'
