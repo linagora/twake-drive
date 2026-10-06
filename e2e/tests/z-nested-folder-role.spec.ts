@@ -6,10 +6,10 @@ import {
   openSharedDrive
 } from '../helpers/sharing'
 import { DowngradeConfirmDialogPage } from '../pages/DowngradeConfirmDialogPage'
-import { ShareModalPage } from '../pages/ShareModalPage'
 
 const PARENT_FOLDER = `Parent Folder ${stamp()}`
 const NESTED_FOLDER = `Nested Folder ${stamp()}`
+const NESTED_CHARLIE_FOLDER = `Nested Charlie ${stamp()}`
 const PARENT_EDITOR_FOLDER = `Parent Editor ${stamp()}`
 const NESTED_EDITOR_FOLDER = `Nested Editor ${stamp()}`
 
@@ -97,32 +97,25 @@ test.describe
     await bobPage.goto('about:blank')
   })
 
-  test('Bob as recipient adds Charlie to nested folder: Charlie does not exist in parent folder', async ({
+  test('Alice adds Charlie to nested folder: Charlie does not exist in parent folder', async ({
     alicePage,
-    aliceDrive,
-    bobPage,
-    bobDrive
+    aliceDrive
   }) => {
-    // 1. Bob opens parent shared drive from Sharings and navigates into nested folder
-    await openSharedDrive(bobPage, USERS.bob, bobDrive, PARENT_FOLDER)
-    await bobDrive.row(NESTED_FOLDER).open()
-    await bobPage.waitForURL(/\/shareddrive\/[^/]+\/[^/]+/)
-    const nestedFolderUrl = bobPage.url()
+    // 1. Alice opens parent folder and creates a new nested folder for Charlie
+    await alicePage.goto(`${USERS.alice.appUrl}/#/folder`)
+    await aliceDrive.openFolder(PARENT_FOLDER)
+    await aliceDrive.createFolder(NESTED_CHARLIE_FOLDER)
+    await aliceDrive.row(NESTED_CHARLIE_FOLDER).waitVisible()
 
-    // 2. Bob opens share modal on nested folder and adds Charlie as Editor
-    await bobPage.goto(`${nestedFolderUrl}/share`)
-    const modal = new ShareModalPage(bobPage)
-    await modal.waitForOpen()
+    // 2. Alice opens share modal for nested folder and adds Charlie as Editor
+    const modal = await aliceDrive.row(NESTED_CHARLIE_FOLDER).share()
     await modal.addMember(USERS.charlie.email)
     await modal.share()
 
     // 3. Reopening nested folder modal confirms Charlie is an Editor
-    await bobPage.goto(`${nestedFolderUrl}/share`)
-    const childModal = new ShareModalPage(bobPage)
-    await childModal.waitForOpen()
+    const childModal = await aliceDrive.row(NESTED_CHARLIE_FOLDER).share()
     await expect(childModal.memberItem('charlie')).toContainText(/editor/i)
     await childModal.close()
-    await bobPage.goto('about:blank')
 
     // 4. Checking parent folder modal confirms Charlie is NOT added to parent folder
     await alicePage.goto(`${USERS.alice.appUrl}/#/folder`)
@@ -138,7 +131,7 @@ test.describe
   }) => {
     // 1. Charlie verifies Sharings with-me tab: sees nested folder, but does NOT see parent folder
     await charliePage.goto(`${USERS.charlie.appUrl}/#/sharings/with-me`)
-    await charlieDrive.row(NESTED_FOLDER).waitVisible()
+    await charlieDrive.row(NESTED_CHARLIE_FOLDER).waitVisible()
     await expect(charlieDrive.row(PARENT_FOLDER).cell).toHaveCount(0)
 
     // 2. Charlie opens nested folder
@@ -146,7 +139,7 @@ test.describe
       charliePage,
       USERS.charlie,
       charlieDrive,
-      NESTED_FOLDER
+      NESTED_CHARLIE_FOLDER
     )
 
     // 3. Charlie has Editor access -> Upload is enabled and can create a subfolder
