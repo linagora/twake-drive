@@ -188,7 +188,7 @@
       "gettingLink": "Création du lien…",
       "error": {
         "generic": "Une erreur est survenue lors de la création du lien de partage, merci de réessayer",
-        "revoke": "Oups, une erreur est survenue. Contactez-nous pour que nous résolvions la situation au plus vite.\n"
+        "revoke": "Oups, une erreur est survenue. Contactez-nous pour que nous résolvions la situation au plus vite."
       },
       "specialCase": {
         "base": "Ce %{type} ne peut être partagé que sous la forme d'un lien, car il",
@@ -246,6 +246,9 @@
     "selected_count": "élément sélectionné |||| éléments sélectionnés",
     "share": "Partager",
     "download": "Télécharger",
+    "copy": "Copier",
+    "cut": "Couper",
+    "paste": "Coller",
     "trash": "Supprimer",
     "trash_all": "Supprimer tout",
     "destroy": "Supprimer définitivement",
@@ -259,7 +262,6 @@
     "moveto": "Déplacer vers…",
     "moveto_mobile": "Déplacer",
     "phone-download": "Rendre accessible hors-ligne",
-    "requalify": "Requalifier",
     "qualify": "Qualifier",
     "history": "Versions",
     "more": "Afficher plus d'action",
@@ -268,7 +270,7 @@
   "DeleteConfirm": {
     "title": "Supprimer %{filename} ? |||| Supprimer %{smart_count} %{type} ?",
     "trash": "Cet élément sera déplacé dans la corbeille. |||| Ces éléments seront déplacés dans la corbeille.",
-    "restore": "Vous pouvez toujours le restaurer quand vous voulez.",
+    "restore": "Vous pouvez toujours le restaurer quand vous voulez. |||| Vous pouvez toujours les restaurer quand vous voulez.",
     "share_accepted": "Le partage sera arrêté.",
     "share_waiting": "Le partage sera arrêté. Ainsi, les contacts suivant ne pourront donc plus accepter le partage et ne pourront plus accéder aux contenus partagés :",
     "share_both": "Le partage sera arrêté. Ainsi, les contacts ayant stocké les fichiers dans leur Twake conserveront une copie, les autres contacts ne pourront plus accéder aux contenus partagés :",
@@ -324,7 +326,8 @@
     "download_file": {
       "offline": "Vous devez être connecté pour pouvoir ouvrir ce fichier",
       "missing": "Le fichier n'existe pas"
-    }
+    },
+    "paste_failed": "Échec du collage des fichiers. Veuillez réessayer."
   },
   "Error": {
     "public_unshared_title": "Désolé, ce lien n'est plus disponible.",
@@ -458,6 +461,7 @@
   "Move": {
     "to": "Déplacer vers :",
     "action": "Déplacer",
+    "openFolder": "Ouvrir le dossier",
     "cancel": "Annuler",
     "modalTitle": "Déplacer",
     "title": "%{smart_count} élément |||| %{smart_count} éléments",
