@@ -212,7 +212,7 @@
     "head_view_list": "Vista de lista",
     "head_view_grid": "Vista de cuadrícula",
     "row_update_format": "d LLL yyyy",
-    "row_update_format_full": "LLL d, yyyy",
+    "row_update_format_full": "d LLLL yyyy",
     "row_read_only": "Compartido (sólo en lectura)",
     "row_read_write": "Compartido (Lectura & Escritura)",
     "row_size_symbols": {
@@ -780,7 +780,7 @@
     "label": "Abrir la carpeta"
   },
   "LastUpdate": {
-    "titleFormat": "dd LLLL yyyy, HH:MM"
+    "titleFormat": "dd LLLL yyyy, HH:mm"
   },
   "AddMenu": {
     "readOnlyFolder": "Esta carpeta es de solo lectura. No puede realizar esta acción."

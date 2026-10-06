@@ -780,7 +780,7 @@
     "label": "Open directory"
   },
   "LastUpdate": {
-    "titleFormat": "LLLL dd, yyyy, HH:MM"
+    "titleFormat": "LLLL dd, yyyy, HH:mm"
   },
   "AddMenu": {
     "readOnlyFolder": "This is a read-only folder. You cannot perform this action."

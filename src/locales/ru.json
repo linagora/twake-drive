@@ -765,7 +765,7 @@
     "label": "Открыть папку"
   },
   "LastUpdate": {
-    "titleFormat": "LLLL dd, yyyy, HH:MM"
+    "titleFormat": "LLLL dd, yyyy, HH:mm"
   },
   "AddMenu": {
     "readOnlyFolder": "Это папка только для чтения. Вы не можете выполнить это действие."
