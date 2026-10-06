@@ -16,7 +16,7 @@ import appMetadata from '@/lib/appMetadata'
 import { schema } from '@/lib/doctypes'
 import registerClientPlugins from '@/lib/registerClientPlugins'
 import IntentHandler from '@/modules/services'
-import { loadIntentLocales } from '@/targets/intents/loadIntentLocales'
+import { loadLocales } from '@/locales'
 import { SelectionProvider } from '@/modules/selection/SelectionProvider'
 
 // ambient styles
@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   registerClientPlugins(client)
 
-  const dictRequire = await loadIntentLocales(data.locale)
+  const dictRequire = await loadLocales(data.locale)
 
   createRoot(root).render(
     <IntentProvider
