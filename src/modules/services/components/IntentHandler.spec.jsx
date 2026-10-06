@@ -10,6 +10,12 @@ import {
   buildCurrentFolderQuery
 } from '@/components/FilePicker/queries'
 
+jest.mock('./Upload', () => ({
+  Upload: ({ service }) => (
+    <div data-testid="upload-service">{service.getData().name}</div>
+  )
+}))
+
 const mockClient = { query: jest.fn() }
 const mockCreateService = jest.fn()
 const mockGetIntent = jest.fn()
@@ -196,6 +202,88 @@ describe('IntentHandler', () => {
 
     await waitFor(() => expect(getByTestId('picker')).toBeInTheDocument())
   })
+
+  it('routes UPLOAD files to its service component without picker initialization', async () => {
+    const intent = { attributes: { action: 'UPLOAD', type: 'io.cozy.files' } }
+    mockGetIntent.mockResolvedValue(intent)
+    mockCreateService.mockResolvedValue({
+      getIntent: () => intent,
+      getData: () => ({ name: 'upload.bin' })
+    })
+    const { queryByTestId } = render(<IntentHandler intentId="upload-id" />)
+    await waitFor(() =>
+      expect(queryByTestId('upload-service')).toHaveTextContent('upload.bin')
+    )
+    expect(queryByTestId('picker')).toBe(null)
+    expect(buildContentFolderQuery).not.toHaveBeenCalled()
+  })
+
+  it.each(['intent', 'handshake', 'folder'])(
+    'ignores an obsolete %s response after the intent changes',
+    async pendingStep => {
+      const pending = makeDeferredPromise()
+      const oldIntent = {
+        attributes: {
+          action: 'PICK',
+          type: 'io.cozy.files',
+          data: { theme: { type: 'dark' } }
+        }
+      }
+      const oldService = { getIntent: () => oldIntent }
+      const currentIntent = {
+        attributes: { action: 'UPLOAD', type: 'io.cozy.files' }
+      }
+      mockGetIntent
+        .mockReturnValueOnce(
+          pendingStep === 'intent'
+            ? pending.promise
+            : Promise.resolve(oldIntent)
+        )
+        .mockResolvedValue(currentIntent)
+      mockCreateService
+        .mockReturnValueOnce(
+          pendingStep === 'handshake'
+            ? pending.promise
+            : Promise.resolve(oldService)
+        )
+        .mockResolvedValue({
+          getIntent: () => currentIntent,
+          getData: () => ({ name: 'current-upload.bin' })
+        })
+      mockClient.query.mockReturnValue(
+        pendingStep === 'folder'
+          ? pending.promise
+          : Promise.resolve({ data: [] })
+      )
+
+      const { rerender, queryByTestId } = render(
+        <IntentHandler intentId="old-intent" />
+      )
+      await act(async () => {})
+      rerender(<IntentHandler intentId="current-intent" />)
+      await waitFor(() =>
+        expect(queryByTestId('upload-service')).toHaveTextContent(
+          'current-upload.bin'
+        )
+      )
+
+      await act(async () => {
+        pending.resolve(
+          pendingStep === 'intent'
+            ? oldIntent
+            : pendingStep === 'handshake'
+              ? oldService
+              : { data: [] }
+        )
+      })
+
+      expect(queryByTestId('upload-service')).toHaveTextContent(
+        'current-upload.bin'
+      )
+      expect(queryByTestId('picker')).toBe(null)
+      expect(queryByTestId('intent-theme')).toBe(null)
+    }
+  )
 
   it('does not prefetch the root folder for unrelated intents', async () => {
     const intent = {

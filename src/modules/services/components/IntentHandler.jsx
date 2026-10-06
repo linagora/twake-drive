@@ -15,6 +15,7 @@ import {
   initializeMoveIntent
 } from './MoveIntent/initialization'
 import Picker from './Picker'
+import { Upload } from './Upload'
 import { getIntentData, getPickerNavigationConfig } from './intentConfig'
 import { initializePickerNavigation } from './pickerNavigation'
 
@@ -44,6 +45,8 @@ const IntentHandler = ({ intentId }) => {
 
   // The iframe handshake is external I/O, started after mount for this intent.
   useEffect(() => {
+    // A late handshake must not start an upload for a replaced or unmounted intent.
+    let isActive = true
     const startService = async () => {
       let service
       try {
@@ -52,13 +55,19 @@ const IntentHandler = ({ intentId }) => {
         const intentPromise = intents.request.get(intentId, { tryDOM: true })
         const servicePromise = intents.createService(intentId, window)
         const pendingIntent = await intentPromise
-        setState(currentState => ({
-          ...currentState,
-          intent: pendingIntent
-        }))
+        if (isActive) {
+          setState(currentState => ({
+            ...currentState,
+            intent: pendingIntent
+          }))
+        }
         service = await servicePromise
+        if (!isActive) return
         const intent = service.getIntent()
-        let component = null
+        const isUploadIntent =
+          intent?.attributes?.action === 'UPLOAD' &&
+          intent?.attributes?.type === 'io.cozy.files'
+        let component = isUploadIntent ? Upload : null
         let pickerConfig = null
         if (isFileNavigationIntent(intent)) {
           const serviceData = service.getData?.()
@@ -74,15 +83,20 @@ const IntentHandler = ({ intentId }) => {
               )
           component = isMove ? MoveIntent : Picker
         }
+        if (!isActive) return
 
         setState({ component, service, intent, pickerConfig })
       } catch (error) {
+        if (!isActive) return
         logger.error(error)
         service?.throw(new Error(error?.message || String(error)))
       }
     }
 
     startService()
+    return () => {
+      isActive = false
+    }
   }, [client, intentId])
 
   const content = ServiceComponent ? (
