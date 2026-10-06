@@ -1,7 +1,4 @@
 {
-  "Excalidraw": {
-    "createFileName": "Nuevo dibujo"
-  },
   "Nav": {
     "item_drive": "Drive",
     "item_recent": "Recientes",
@@ -9,8 +6,14 @@
     "item_shared": "Compartido por mí",
     "item_activity": "Actividad",
     "item_trash": "Papelera",
+    "item_migration": "Migración",
     "item_settings": "Parámetros",
     "item_collect": "Administración",
+    "item_shared_drives": "Unidades de equipo",
+    "item_favorites": "Favoritos",
+    "item_external_drives": "Unidades externas",
+    "item_my_drive": "Mi Drive",
+    "item_file_picker": "Elegir un archivo",
     "btn-client": "Descargar Twake Drive para ordenador",
     "btn-client-web": "Descargar Twake",
     "btn-client-mobile": "Descargar %{name} en su celular",
@@ -20,7 +23,10 @@
     "link-client-desktop": "https://nuts.cozycloud.cc/download/channel/stable/",
     "link-client-android": "https://play.google.com/store/apps/details?id=io.cozy.drive.mobile",
     "link-client-ios": "https://itunes.apple.com/us/app/cozy-drive/id1224102389?mt=8",
-    "link-client-web": "https://cozy.io/try-it"
+    "link-client-web": "https://cozy.io/try-it",
+    "view_more": "Ver más",
+    "view_less": "Ver menos",
+    "item_nextcloud": "Nextcloud"
   },
   "breadcrumb": {
     "title_drive": "Drive",
@@ -28,12 +34,17 @@
     "title_sharings": "Compartidos",
     "title_shared": "Mis archivos compartidos",
     "title_activity": "Actividad",
-    "title_trash": "Papelera"
+    "title_trash": "Papelera",
+    "label": "Mostrar la ruta",
+    "title_shared_drives": "Unidades",
+    "title_favorites": "Favoritos"
   },
   "Toolbar": {
     "more": "Más"
   },
   "toolbar": {
+    "menu_manage_access": "Gestionar el acceso",
+    "menu_leave_shared_drive": "Abandonar el uso compartido",
     "menu_upload": "Cargar archivos",
     "item_more": "Más",
     "menu_new_folder": "Carpeta",
@@ -45,17 +56,66 @@
     "menu_download_folder": "Descargar carpeta",
     "menu_download_file": "Descargar este archivo",
     "menu_create_note": "Nota",
+    "menu_create_docs": "Docs",
     "menu_create_excalidraw": "Excalidraw",
-    "empty_trash": "Vaciar la papelera",
+    "menu_create_grist": "Grist",
+    "menu_create_shortcut": "Acceso directo",
     "share": "Compartir",
     "trash": "Suprimir",
     "leave": "Salir de la carpeta compartida & borrarla",
+    "menu_add": "Añadir",
+    "menu_create": "Crear",
+    "menu_add_item": "Añadir un elemento",
+    "menu_onlyOffice": {
+      "text": "Documento de texto",
+      "spreadsheet": "Hoja de cálculo",
+      "slide": "Presentación"
+    },
     "select_all": "Seleccionar todo",
     "select_all_mobile": "todos",
     "clear_selection": "Borrar selección",
     "clear_selection_mobile": "Cancelar",
-    "sharings_tab_all": "Todo",
+    "sharings_tabs": "Pestañas de uso compartido",
+    "sharings_tab_with_me": "Conmigo",
+    "sharings_tab_by_me": "Por mí",
     "sharings_tab_drives": "Unidades"
+  },
+  "filters": {
+    "contact": {
+      "label": "Contacto",
+      "clear": "Borrar el filtro de contacto",
+      "me": "yo"
+    },
+    "clear_all": "Borrar todo",
+    "date": {
+      "label": "Fecha de modificación",
+      "aria_label": "Filtro por fecha de modificación",
+      "clear": "Borrar el filtro de fecha de modificación",
+      "options": {
+        "today": "Hoy",
+        "last_7_days": "Últimos 7 días",
+        "last_month": "El mes pasado",
+        "this_year": "Este año"
+      }
+    },
+    "type": {
+      "label": "Tipo",
+      "aria_label": "Filtro por tipo",
+      "clear": "Borrar el filtro de tipo",
+      "options": {
+        "folder": "Carpetas",
+        "document": "Documentos",
+        "spreadsheet": "Hojas de cálculo",
+        "presentation": "Presentaciones",
+        "photo": "Fotos",
+        "pdf": "PDF",
+        "video": "Vídeos",
+        "archive": "Archivos comprimidos",
+        "audio": "Audio",
+        "draw": "Dibujos",
+        "shortcut": "Accesos directos"
+      }
+    }
   },
   "Share": {
     "create-cozy": "Crear mi Twake"
@@ -74,6 +134,7 @@
           "rw": "Usted puede consultar, modificar y suprimir el contenido. Las modificaciones del contenido se repercutirán automaticamente entre sus Twake."
         }
       },
+      "shared": "Compartido",
       "sharedByMe": "Compartido por mí",
       "sharedWithMe": "Compartido conmigo",
       "sharedBy": "Compartido por %{name}",
@@ -147,7 +208,10 @@
     "head_size": "Tamaño",
     "head_status": "Compartir",
     "head_thumbnail_size": "Cambiar el tamaño de las miniaturas",
-    "row_update_format": "LLL d, yyyy",
+    "head_view_mode": "Modo de visualización",
+    "head_view_list": "Vista de lista",
+    "head_view_grid": "Vista de cuadrícula",
+    "row_update_format": "d LLL yyyy",
     "row_update_format_full": "LLL d, yyyy",
     "row_read_only": "Compartido (sólo en lectura)",
     "row_read_write": "Compartido (Lectura & Escritura)",
@@ -162,6 +226,7 @@
       "ZB": "Zo",
       "YB": "Yo"
     },
+    "row_sharing_shortcut_aria_label": "Nuevo acceso directo de uso compartido",
     "load_more": "Cargar más archivos",
     "mobile": {
       "head_name_asc": "A-Z",
@@ -175,13 +240,17 @@
   "Storage": {
     "title": "Almacenamiento",
     "availability": "%{smart_count} GB disponibles",
-    "increase": "Aumenta tu espacio"
+    "increase": "Aumente su espacio"
   },
   "SelectionBar": {
     "selected_count": "item seleccionado |||| items seleccionados",
     "share": "Compartir",
     "download": "Descargar",
+    "copy": "Copiar",
+    "cut": "Cortar",
+    "paste": "Pegar",
     "trash": "Borrar",
+    "trash_all": "Eliminar todo",
     "destroy": "Borrar definitivamente",
     "rename": "Cambiar el nombre",
     "restore": "Restaurar",
@@ -194,30 +263,41 @@
     "moveto_mobile": "Trasladar",
     "phone-download": "Hacerla disponible cuando esté desconectado",
     "qualify": "Clasificar",
-    "history": "Historia"
+    "history": "Historia",
+    "more": "Más",
+    "openWithinNextcloud": "Abrir en Nextcloud"
   },
   "DeleteConfirm": {
-    "title": "¿Suprimir este elemento? |||| ¿Suprimir estos elementos?",
-    "trash": "Será desplazado a la Papelera. ||| Serán desplazados a la Papelera.",
-    "restore": "Usted puede restaurarlo cuando lo desee. ||| Usted puede restaurarlos cuando lo desee.",
+    "title": "¿Eliminar %{filename}? |||| ¿Eliminar %{smart_count} %{type}?",
+    "trash": "Se moverá a la papelera. |||| Se moverán a la papelera.",
+    "restore": "Podrá restaurarlo cuando quiera. |||| Podrá restaurarlos cuando quiera.",
+    "share_accepted": "Se dejará de compartir",
+    "share_waiting": "Se dejará de compartir. Los siguientes contactos ya no podrán aceptar el uso compartido ni acceder al contenido compartido:",
+    "share_both": "Se dejará de compartir. Esto significa que los contactos que han guardado los archivos en su Twake conservarán una copia, mientras que los demás contactos ya no podrán acceder al contenido compartido:",
     "link": "El intercambio de enlaces ya no estará activo",
     "referenced": "Algunos de los archivos incluidos en la selección se refieren a un álbum de fotos. Se borrarán si usted procede a enviarlos a la papelera.",
     "cancel": "Anular",
     "delete": "Suprimir"
   },
-  "emptytrashconfirmation": {
-    "title": "¿Suprimir definitivamente?",
-    "forbidden": "Usted no podrá acceder más a estos archivos.",
-    "restore": "Usted no podrá recuperar estos archivos si no ha hecho una copia de seguridad.",
-    "cancel": "Anular",
-    "delete": "Suprimir definitivamente"
+  "EmptyTrashConfirm": {
+    "title": "¿Eliminar definitivamente?",
+    "forbidden": "Ya no podrá acceder a estos archivos.",
+    "restore": "No podrá restaurar estos archivos si no ha hecho una copia de seguridad.",
+    "cancel": "Cancelar",
+    "delete": "Eliminar todo",
+    "processing": "Se está vaciando la papelera. Esto puede tardar unos instantes.",
+    "success": "Se ha vaciado la papelera.",
+    "error": "Se ha producido un error. Inténtelo de nuevo."
   },
   "DestroyConfirm": {
-    "title": "¿Suprimir definitivamente?",
-    "forbidden": "Usted no podrá acceder más a este archivo. ||| Usted no podrá acceder más a estos archivos.",
-    "restore": "Usted no podrá recuperar este archivo si no ha hecho una copia de seguridad. ||| Usted no podrá recuperar estos archivos si no ha hecho una copia de seguridad.",
+    "title": "¿Eliminar %{filename}? |||| ¿Eliminar %{smart_count} %{type}?",
+    "forbidden": "Ya no podrá acceder a este elemento (%{type}). |||| Ya no podrá acceder a estos elementos (%{type}).",
+    "restore": "No podrá restaurar este elemento (%{type}) si no ha hecho una copia de seguridad. |||| No podrá restaurar estos elementos (%{type}) si no ha hecho una copia de seguridad.",
     "cancel": "Anular",
-    "delete": "Suprimir definitivamente"
+    "delete": "Suprimir definitivamente",
+    "success": "El elemento (%{type}) se ha eliminado definitivamente. |||| Se han eliminado definitivamente %{smart_count} %{type}.",
+    "error": "Se ha producido un error. Inténtelo de nuevo.",
+    "processing": "La eliminación está en curso. Esto puede tardar unos instantes."
   },
   "quotaalert": {
     "title": "Su espacio disco está lleno :(",
@@ -226,24 +306,28 @@
     "increase": "Aumente su espacio disco"
   },
   "loading": {
-    "message": "Cargando"
+    "message": "Cargando",
+    "onlyOfficeCreateInProgress": "Creando el archivo..."
   },
   "empty": {
     "title": "No hay archivos en esta carpeta.",
-    "text": "Selecciona archivos en tu computadora o arrástralos aquí.",
-    "mobile_text": "Selecciona archivos en tu dispositivo.",
+    "text": "Seleccione archivos en su computadora o arrástrelos aquí.",
+    "mobile_text": "Seleccione archivos en su dispositivo.",
     "trash_title": "Usted no tiene ningún archivo borrado.",
-    "trash_text": "Los archivos que no necesita más échelos a la Papelera y suprímalos definitivamente para liberar espacio de almacenamiento."
+    "trash_text": "Los archivos que no necesita más échelos a la Papelera y suprímalos definitivamente para liberar espacio de almacenamiento.",
+    "sharing_text": "Aún no tiene archivos ni unidades compartidos."
   },
   "error": {
     "open_folder": "Algo ha fallado al abrir la carpeta.",
+    "open_file": "Se ha producido un problema al abrir el archivo.",
     "button": {
       "reload": "Actualizar ahora"
     },
     "download_file": {
       "offline": "Usted debe estar conectado para descargar este archivo",
       "missing": "Este archivo no existe"
-    }
+    },
+    "paste_failed": "No se han podido pegar los archivos. Inténtelo de nuevo."
   },
   "Error": {
     "public_unshared_title": "Lo sentimos, este enlace ya no es válido.",
@@ -255,11 +339,13 @@
     "try_again": "Ha ocurrido un error, por favor ensaye más tarde.",
     "restore_file_success": "La selección ha sido restaurada con éxito.",
     "trash_file_success": "La selección ha sido desplazada a la Papelera.",
+    "trash_file_processing": "Moviendo a la papelera...",
     "destroy_file_success": "Se ha suprimido definitivamente la selección.",
-    "empty_trash_progress": "Su papelera se está vaciando. Esto puede tomar poco tiempo.",
-    "empty_trash_success": "La papelera ha sido vaciada.",
     "folder_name": "El elemento %{folderName} ya existe, por favor escoger otro nombre.",
     "file_name": "El elemento %{fileName} ya existe, por favor escoger otro nombre.",
+    "file_name_missing": "Falta el nombre del archivo. Elija un nombre nuevo.",
+    "file_name_illegal_name": "El nombre %{fileName} no es válido. Elija un nombre nuevo.",
+    "file_name_illegal_characters": "El elemento %{fileName} contiene caracteres no válidos: %{characters}",
     "folder_generic": "Ha ocurrido un error, por favor vuelva a ensayar.",
     "folder_abort": "Se requiere poner un nombre a la nueva carpeta si desea guardarla. Su información no ha sido guardada.",
     "offline": "Esta función no esta disponible cuando usted está desconectado.",
@@ -275,20 +361,43 @@
     "copy_files_only": "No se pueden copiar carpetas",
     "copy_not_allowed": "La operación de copia no está permitida en esta vista.",
     "cut_not_allowed": "La operación de corte no está permitida en esta vista.",
+    "delete_not_allowed": "La eliminación no está permitida en esta vista.",
     "paste_error": "Ha ocurrido un error al pegar los archivos",
     "paste_failed": "Error al pegar los archivos",
     "paste_sharing_error": "No se pueden pegar los archivos debido a restricciones de compartición. Por favor use la acción Mover en su lugar.",
     "paste_same_folder_skipped": "No se pueden mover elementos a la misma carpeta en la que ya se encuentran.",
-    "paste_not_allowed": "No puedes pegar en esta carpeta"
+    "paste_not_allowed": "No puede pegar en esta carpeta"
   },
   "upload": {
     "label": "Subir",
+    "documentType": {
+      "file": "archivo",
+      "directory": "carpeta",
+      "element": "elemento"
+    },
     "alert": {
-      "network": "Usted no dispone de una conexión internet. Vuelva a ensayar cuando disponga de una."
+      "success": "%{smart_count} %{type} cargado correctamente. |||| %{smart_count} %{type} cargados correctamente.",
+      "success_conflicts": "%{smart_count} %{type} cargado con %{conflictNumber} conflicto(s). |||| %{smart_count} %{type} cargados con %{conflictNumber} conflicto(s).",
+      "success_updated": "%{smart_count} %{type} cargado y %{updatedCount} actualizado(s). |||| %{smart_count} %{type} cargados y %{updatedCount} actualizado(s).",
+      "success_updated_conflicts": "%{smart_count} %{type} cargado, %{updatedCount} actualizado(s) y %{conflictCount} conflicto(s). |||| %{smart_count} %{type} cargados, %{updatedCount} actualizado(s) y %{conflictCount} conflicto(s).",
+      "updated": "%{smart_count} %{type} actualizado. |||| %{smart_count} %{type} actualizados.",
+      "updated_conflicts": "%{smart_count} %{type} actualizado con %{conflictCount} conflicto(s). |||| %{smart_count} %{type} actualizados con %{conflictCount} conflicto(s).",
+      "errors": "Se han producido errores durante la carga (%{type}).",
+      "network": "Usted no dispone de una conexión internet. Vuelva a ensayar cuando disponga de una.",
+      "fileTooLargeErrors": "Archivo demasiado grande. Tamaño máximo por archivo: %{max_size_value} GB",
+      "unreadable_files": "No se han podido leer algunos archivos. Es posible que la ruta sea demasiado larga o que la carpeta se haya modificado durante la transferencia."
+    },
+    "limit": {
+      "title": "No puede cargar más de %{limit} archivos a la vez.",
+      "content": "¿Necesita cargar más? Le recomendamos descargar la herramienta de sincronización en su ordenador",
+      "content_public": "Reduzca el número de archivos e inténtelo de nuevo.",
+      "cancel": "Cancelar",
+      "close": "Cerrar",
+      "download_desktop": "Descargar para escritorio"
     },
     "conflict": {
       "title": "Opciones de subida",
-      "content": "Uno o varios archivos ya existen en esta carpeta. ¿Quieres reemplazar el archivo existente o conservar ambas versiones?",
+      "content": "Uno o varios archivos ya existen en esta carpeta. ¿Quiere reemplazar el archivo existente o conservar ambas versiones?",
       "apply_all": "La configuración de uso compartido no cambiará si reemplazas el archivo",
       "replace": "Reemplazar el archivo existente",
       "keep_both": "Conservar ambos archivos",
@@ -309,11 +418,14 @@
   },
   "UploadQueue": {
     "header": "Subiendo %{smart_count} foto a Twake Drive |||| Subiendo %{smart_count} fotos a Twake Drive",
+    "header_preparing": "Preparando %{smart_count} elemento para cargar |||| Preparando %{smart_count} elementos para cargar",
     "header_mobile": "Subiendo %{done} de %{total}",
     "header_done": "Subidos %{done} de %{total} con éxito",
+    "success_flagship": "%{smart_count} archivo cargado correctamente. |||| %{smart_count} archivos cargados correctamente.",
     "close": "cerrar",
     "item": {
       "pending": "Pendiente",
+      "preparing": "Preparando",
       "conflict": "Esperando elección"
     }
   },
@@ -322,6 +434,7 @@
     "noviewer": {
       "download": "Descargar este archivo",
       "openWith": "Abir con...",
+      "openInOnlyOffice": "Abrir con Only Office",
       "cta": {
         "saveTime": "¡Gane tiempo!",
         "installDesktop": "Instale la herramienta de sincronización para su ordenador",
@@ -333,10 +446,11 @@
       "forward": "Reenviar"
     },
     "loading": {
-      "error": "Este archivo no se puede cargar. ¿Tienes alguna conexión a Internet funcionando ahora?",
+      "error": "Este archivo no se puede cargar. ¿Tiene alguna conexión a Internet funcionando ahora?",
       "retry": "Reinténtelo"
     },
     "error": {
+      "noapp": "Ninguna aplicación de su dispositivo puede abrir este archivo.",
       "generic": "Se ha producido un error al abrir este archivo, por favor inténtelo de nuevo.",
       "noNetwork": "Actualmente usted está desconectado."
     },
@@ -347,14 +461,47 @@
   "Move": {
     "to": "Trasladar a:",
     "action": "Trasladar",
+    "openFolder": "Abrir la carpeta",
     "cancel": "Anular",
     "modalTitle": "Trasladar",
     "title": "%{smart_count} elemento |||| %{smart_count} elementos",
     "success": "%{subject} ha sido desplazado a %{target}. |||| %{smart_count} elementos han sido desplazados a %{target}.",
     "error": "Ha ocurrido un error al desplazar este elemento, por favor vuelva a ensayar. |||| Ha ocurrido un error al desplazar estos elementos, por favor vuelva a ensayar.",
+    "partialError": "Movidos: %{successCount}. Con errores: %{failureCount}.",
     "cancelled": "%{subject} ha sido devuelto a su carpeta de origen. |||| %{smart_count} elementos han sido devueltos a sus carpetas de origen.",
     "cancelledWithRestoreErrors": "%{subject} ha sido desplazado a su ubicación original pero hubo un error al restaurar el archivo de la papelera. |||| %{smart_count} elementos han sido desplazados a su ubicación original pero hubo  %{restoreErrorsCount} error(es) al  restaurar los archivos de la papelera.",
-    "cancelled_error": "Lo sentimos, ha ocurrido un error al anular el desplazamiento. |||| Lo sentimos, un error ha ocurrido al anular los desplazamientos."
+    "cancelled_error": "Lo sentimos, ha ocurrido un error al anular el desplazamiento. |||| Lo sentimos, un error ha ocurrido al anular los desplazamientos.",
+    "multipleEntries": "%{smart_count} elemento |||| %{smart_count} elementos",
+    "addFolder": "Crear una carpeta",
+    "folderName": "Nombre de la carpeta",
+    "folderCreationError": "No se ha podido crear la carpeta. Inténtelo de nuevo.",
+    "folderCreationInProgress": "Creando la carpeta",
+    "moveInProgress": "Moviendo los elementos",
+    "destinationLocked": "Termine o cancele este traslado antes de cambiar el destino.",
+    "destinationSource": "Esta carpeta se está moviendo.",
+    "destinationDescendant": "Una carpeta no puede moverse dentro de sí misma.",
+    "destinationReadOnly": "Esta carpeta es de solo lectura.",
+    "permissionsLoading": "Los permisos aún se están cargando.",
+    "outsideSharedFolder": {
+      "title": "Mover fuera de la carpeta %{sharedFolder}",
+      "content_1": "Atención: va a mover %{name} fuera de la carpeta compartida %{sharedFolder}. |||| Atención: va a mover %{smart_count} %{type} fuera de la carpeta compartida %{sharedFolder}.",
+      "content_2": "Este traslado quitará %{name} (%{type}) del uso compartido. |||| Este traslado quitará %{smart_count} %{type} del uso compartido.",
+      "cancel": "Cancelar",
+      "confirm": "Entendido"
+    },
+    "insideSharedFolder": {
+      "title": "¿Mover a una carpeta compartida?",
+      "content": "Todos los miembros con acceso a %{destination} también tendrán acceso a %{source}. |||| Todos los miembros con acceso a %{destination} también tendrán acceso a los elementos seleccionados (%{type}).",
+      "cancel": "Cancelar",
+      "confirm": "Aceptar"
+    },
+    "sharedFolderInsideAnother": {
+      "title": "No se puede mover",
+      "content_1": "Quiere mover un elemento compartido a una carpeta compartida. Este tipo de traslado no está permitido.",
+      "content_2": "Si aun así desea mover %{source} a %{destination}, deje de compartir:",
+      "cancel": "Cancelar el traslado",
+      "confirm": "Dejar de compartir"
+    }
   },
   "ImportToDrive": {
     "title": "%{smart_count} elemento |||| %{smart_count} elementos",
@@ -392,12 +539,14 @@
     }
   },
   "Scan": {
+    "none": "Ninguno",
     "scan_a_doc": "Escanear un doc",
     "save_doc": "Guardar el doc",
     "filename": "Nombre del archivo",
     "save": "Guardar",
     "cancel": "Anular",
     "qualify": "Clasificar",
+    "requalify": "Volver a categorizar",
     "apply": "Aplicar",
     "error": {
       "offline": "Usted está actualmente fuera de línea y no puede utilizar esta funcionalidad. Vuelva a ensayarlo más tarde",
@@ -412,7 +561,17 @@
     "description": "Las últimas 20 versiones de sus archivos se guardan automáticamente. Seleccione una versión para descargarla.",
     "current_version": "Versión actual",
     "loading": "Cargando...",
-    "noFileVersionEnabled": "Su Twake pronto podrá archivar las últimas modificaciones de un archivo para no arriesgarse a perderlas en el futuro."
+    "noFileVersionEnabled": "Su Twake pronto podrá archivar las últimas modificaciones de un archivo para no arriesgarse a perderlas en el futuro.",
+    "download": "Descargar esta versión",
+    "deleteVersion": {
+      "action": "Eliminar esta versión",
+      "title": "¿Eliminar esta versión?",
+      "version": "Versión del %{date} (%{size})",
+      "irreversible": "Esta versión se eliminará definitivamente. Esta acción no se puede deshacer.",
+      "cancel": "Cancelar",
+      "confirm": "Eliminar",
+      "error": "No se ha podido eliminar esta versión."
+    }
   },
   "External": {
     "redirection": {
@@ -439,21 +598,198 @@
     "needs_info": "El atajo necesita al menos una url y un nombre de archivo",
     "url_badformat": "Su url no está en el formato correcto"
   },
+  "Excalidraw": {
+    "createFileName": "Nuevo dibujo",
+    "collaboration": {
+      "guest": "Invitado"
+    }
+  },
+  "Pdf": {
+    "save": "Guardar"
+  },
+  "OnlyOffice": {
+    "Error": {
+      "title": "Algo no ha funcionado",
+      "text": "Intente volver a cargar la página"
+    },
+    "readOnly": {
+      "title": "Solo lectura",
+      "tooltip": "Solo tiene permiso para ver este documento. Póngase en contacto con el propietario para obtener permisos de escritura."
+    },
+    "createFileName": {
+      "text": "Nuevo documento de texto",
+      "spreadsheet": "Nueva hoja de cálculo",
+      "slide": "Nueva presentación"
+    },
+    "toolbar": {
+      "goToHome": "Ir al inicio"
+    },
+    "actions": {
+      "validate": "Validar"
+    }
+  },
+  "Migration": {
+    "title": "Actualizar Twake Drive",
+    "content": "Twake Drive necesita actualizarse para mejorar su rendimiento. Esto puede tardar varios minutos, durante los cuales no podrá usar la aplicación. ¿Desea hacerlo ahora? Si lo rechaza, se lo volveremos a preguntar la próxima vez",
+    "confirm": "¡De acuerdo, adelante!",
+    "cancel": "No, ahora no"
+  },
   "searchbar": {
     "placeholder": "Buscar",
     "empty": "No se ha encontrado ningún resultado para su consulta “%{query}”"
   },
+  "button": {
+    "back": "Volver",
+    "add": "Añadir",
+    "create": "Crear"
+  },
   "search": {
+    "action": "Buscar",
     "empty": {
+      "title": "Ningún resultado",
       "subtitle": "No se ha encontrado ningún resultado para su consulta “%{query}”"
     }
   },
+  "PushBanner": {
+    "quota": {
+      "text": "Casi se ha quedado sin espacio de almacenamiento. Si alcanza el límite, no podrá añadir más archivos. Puede eliminar archivos, vaciar la papelera o cambiar de plan.",
+      "actions": {
+        "first": "Entendido",
+        "second": "Ver nuestros planes"
+      }
+    }
+  },
+  "FileDivergedModal": {
+    "title": "Alguien ha modificado este archivo",
+    "content": "Alguien ha modificado el archivo fuera de Twake mientras usted lo editaba. Puede recuperar sus cambios en lugar de los suyos o continuar la edición en un archivo nuevo.",
+    "confirm": "Seguir editando",
+    "cancel": "Ver sus cambios",
+    "error": "Se ha producido un error. Inténtelo de nuevo.",
+    "confirmReload": {
+      "title": "Ver los cambios",
+      "content": "Al acceder al nuevo archivo, se cancelarán sus cambios.",
+      "cancel": "Cancelar",
+      "confirm": "De acuerdo, entendido"
+    },
+    "viewMode": {
+      "title": "Alguien ha modificado este archivo",
+      "content": "Alguien ha cambiado el contenido de este archivo. Puede recuperar estos cambios.",
+      "confirm": "Ver los cambios"
+    }
+  },
+  "FileDeletedModal": {
+    "title": "Alguien ha eliminado este archivo",
+    "content": "Alguien ha eliminado este archivo mientras usted lo editaba. Puede dejar de editarlo o restaurar el archivo para seguir editándolo.",
+    "confirm": "Restaurar el archivo",
+    "cancel": "Deshacer los cambios",
+    "error": "Se ha producido un error. Inténtelo de nuevo."
+  },
+  "TrashedBanner": {
+    "text": "El elemento está en su papelera",
+    "destroy": "Eliminar definitivamente",
+    "restore": "Restaurar",
+    "restoreSuccess": "El elemento se ha restaurado",
+    "restoreError": "Se ha producido un error. Inténtelo de nuevo.",
+    "destroySuccess": "El elemento se ha eliminado"
+  },
+  "MigrationProgressBanner": {
+    "title": "Migración desde Nextcloud en curso",
+    "percent": "%{percent}% completado",
+    "importing": "Importando %{count} archivos desde Nextcloud...",
+    "cancel": "Cancelar",
+    "done": {
+      "title": "¡Migración completada!",
+      "body": "Se han importado correctamente %{count} archivos desde Nextcloud"
+    }
+  },
+  "EntriesType": {
+    "file": "archivo |||| archivos",
+    "directory": "carpeta |||| carpetas",
+    "element": "elemento |||| elementos"
+  },
+  "NotFound": {
+    "title": "No se encuentra el elemento",
+    "text": "No hemos encontrado nada en esta dirección. Puede que se trate de un error tipográfico."
+  },
+  "NextcloudBreadcrumb": {
+    "root": "Unidades compartidas",
+    "trash": "Papelera"
+  },
+  "NextcloudToolbar": {
+    "share": "Compartir"
+  },
+  "NextcloudDeleteConfirm": {
+    "title": "¿Eliminar %{filename}? |||| ¿Eliminar %{smart_count} %{type}?",
+    "trash": "Este elemento se moverá a la papelera de Nextcloud. |||| Estos elementos se moverán a la papelera de Nextcloud.",
+    "restore": "Podrá restaurarlo cuando quiera desde Nextcloud.",
+    "error": "Se ha producido un error. Inténtelo de nuevo.",
+    "cancel": "Cancelar",
+    "delete": "Eliminar"
+  },
+  "FileName": {
+    "sharedDrive": "Unidades",
+    "trash": "Papelera"
+  },
+  "NextcloudBanner": {
+    "title": "Los elementos siguientes se muestran desde una unidad de NextCloud y no se almacenan en su Twake."
+  },
+  "favorites": {
+    "label": {
+      "add": "Añadir a favoritos",
+      "addMobile": "Favoritos",
+      "remove": "Quitar de favoritos"
+    },
+    "error": "Se ha producido un error. Inténtelo de nuevo.",
+    "success": {
+      "add": "%{filename} se ha añadido a favoritos |||| Estos elementos se han añadido a favoritos",
+      "remove": "%{filename} se ha quitado de favoritos |||| Estos elementos se han quitado de favoritos"
+    }
+  },
+  "TrashToolbar": {
+    "emptyTrash": "Vaciar la papelera"
+  },
+  "RestoreNextcloudFile": {
+    "label": "Restaurar",
+    "success": "El elemento se ha restaurado",
+    "error": "Se ha producido un error. Inténtelo de nuevo."
+  },
   "actions": {
     "details": "Detalles",
+    "infos": "Detalles y clasificación",
+    "infosMobile": "Detalles",
+    "duplicateTo": {
+      "label": "Duplicar en…"
+    },
+    "duplicateToMobile": {
+      "label": "Duplicar"
+    },
     "personalizeFolder": {
       "label": "Personalizar carpeta"
     },
-    "summariseByAI": "Resumir"
+    "summariseByAI": "Resumir",
+    "signWithEuDss": "Firmar",
+    "verifyWithEuDss": "Verificar la firma"
+  },
+  "DuplicateModal": {
+    "subTitle": "Duplicar en:",
+    "confirmLabel": "Duplicar aquí",
+    "success": "%{fileName} se ha duplicado en %{destinationName}. |||| Se han duplicado %{smart_count} elementos en %{destinationName}.",
+    "error": "Se ha producido un error. Inténtelo de nuevo."
+  },
+  "OpenFolderButton": {
+    "label": "Abrir la carpeta"
+  },
+  "LastUpdate": {
+    "titleFormat": "dd LLLL yyyy, HH:MM"
+  },
+  "AddMenu": {
+    "readOnlyFolder": "Esta carpeta es de solo lectura. No puede realizar esta acción."
+  },
+  "PublicNoteRedirect": {
+    "error": {
+      "title": "No se puede acceder al documento",
+      "subtitle": "Parece que el enlace para compartir falta o no es válido. Pida al propietario del documento que compruebe el acceso"
+    }
   },
   "FolderCustomizer": {
     "title": "Personalizar carpeta",
@@ -468,6 +804,47 @@
     "iconPicker": {
       "recents": "Recientes",
       "chooseCustomIcon": "Elegir un icono personalizado"
+    }
+  },
+  "antivirus": {
+    "infectedFile": "Este archivo está infectado con un virus",
+    "popover": {
+      "title": "La descarga y el uso compartido están bloqueados por motivos de seguridad",
+      "description": "El sistema de Twake ha detectado un virus"
+    }
+  },
+  "FilePicker": {
+    "linkTitle": "Enlace para %{name}",
+    "close": "Cerrar",
+    "recents": {
+      "empty": "No hay archivos recientes.",
+      "error": "No se pueden cargar los archivos recientes."
+    },
+    "footer": {
+      "buttons": {
+        "cancel": "Cancelar",
+        "publicLink": "Añadir como enlace",
+        "temporaryDownloadLink": "Añadir como adjunto"
+      }
+    },
+    "constraints": {
+      "disabledReasons": {
+        "folderNotAllowed": "No se permiten carpetas para esta acción",
+        "mimeTypeNotAllowed": "Este tipo de archivo no está permitido para esta acción",
+        "fileTooLarge": "Este archivo supera %{maxFileSize}",
+        "maxFileCountExceeded": "Demasiados archivos seleccionados (límite: %{maxFileCount})",
+        "availableSizeExceeded": "El tamaño total seleccionado supera %{availableSize}"
+      }
+    },
+    "actions": {
+      "sharingLink": "Añadir como enlace",
+      "downloadLink": "Añadir como adjunto"
+    },
+    "errors": {
+      "ITEM_NOT_FOUND": "No se encuentra el archivo seleccionado.",
+      "DESTINATION_UNAVAILABLE": "No se ha podido cargar la carpeta de destino.",
+      "SHARING_LINK_FAILED": "No se ha podido generar un enlace para compartir.",
+      "DOWNLOAD_LINK_FAILED": "No se ha podido generar un enlace de descarga."
     }
   }
 }
