@@ -1,1 +1,0 @@
-"use strict";(globalThis.rspackChunkcozy_drive=globalThis.rspackChunkcozy_drive||[]).push([["5r"],{DXq(r,c,e){var s=e("Pjz");e("Pl2"),e.d(c,{createArchitectureServices:()=>s.S})}}]);

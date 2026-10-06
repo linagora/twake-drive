@@ -1,1 +1,0 @@
-"use strict";(globalThis.rspackChunkcozy_drive=globalThis.rspackChunkcozy_drive||[]).push([["bca"],{By(c,a,e){var r=e("YS");e("Pl2"),e.d(a,{createPacketServices:()=>r.$})}}]);
