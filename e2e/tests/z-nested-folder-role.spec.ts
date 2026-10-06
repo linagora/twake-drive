@@ -28,11 +28,15 @@ test.describe
   })
 
   test.afterAll(async () => {
+    try {
+      await trashByName(USERS.alice.instance, PARENT_FOLDER)
+    } catch {}
+    try {
+      await trashByName(USERS.alice.instance, PARENT_EDITOR_FOLDER)
+    } catch {}
     for (const u of [USERS.alice, USERS.bob, USERS.charlie]) {
       setFlags(u.instance, DEFAULT_FLAGS)
     }
-    await trashByName(USERS.alice.instance, PARENT_FOLDER)
-    await trashByName(USERS.alice.instance, PARENT_EDITOR_FOLDER)
   })
 
   test('Alice changes Bob role on nested from Viewer to Editor without mutating parent role', async ({
@@ -131,6 +135,7 @@ test.describe
     await waitForSharingRow(
       charliePage,
       USERS.charlie,
+      charlieDrive,
       NESTED_CHARLIE_FOLDER
     )
     await expect(charlieDrive.row(PARENT_FOLDER).cell).toHaveCount(0)
