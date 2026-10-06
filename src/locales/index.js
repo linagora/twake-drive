@@ -12,6 +12,7 @@ import nl from './nl.json'
 import nl_NL from './nl_NL.json'
 import pl from './pl.json'
 import ru from './ru.json'
+import vi from './vi.json'
 import zh_CN from './zh_CN.json'
 import zh_TW from './zh_TW.json'
 
@@ -28,6 +29,7 @@ export const locales = {
   nl_NL,
   pl,
   ru,
+  vi,
   zh_CN,
   zh_TW
 }
