@@ -27,6 +27,9 @@ test.describe
   })
 
   test.afterAll(() => {
+    // Note: Do not call trashByName here. Trashing root folders with nested
+    // cross-instance federated shares triggers a cozy-stack cascade-deletion
+    // panic. All fixtures use unique stamp() names, and globalTeardown wipes containers.
     for (const u of [USERS.alice, USERS.bob, USERS.charlie]) {
       setFlags(u.instance, DEFAULT_FLAGS)
     }
