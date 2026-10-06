@@ -74,6 +74,7 @@ test.describe
   }) => {
     // 1. Bob opens parent shared drive from Sharings
     await openSharedDrive(bobPage, USERS.bob, bobDrive, PARENT_FOLDER)
+    const parentDriveUrl = bobPage.url()
 
     // 2. In parent folder, Bob is Viewer -> Upload button is disabled
     await expect(bobDrive.uploadButton).toBeDisabled()
@@ -81,7 +82,10 @@ test.describe
 
     // 3. Bob navigates into nested folder from parent
     await bobDrive.row(NESTED_FOLDER).open()
-    await bobPage.waitForURL(/\/shareddrive\/[^/]+\/[^/]+/)
+    await expect.poll(() => bobPage.url()).not.toBe(parentDriveUrl)
+    await expect(
+      bobPage.locator('main').getByRole('navigation').first()
+    ).toContainText(NESTED_FOLDER)
 
     // 4. In nested folder, Bob has Editor access -> Upload button is enabled
     await expect(bobDrive.uploadButton).toBeEnabled()
@@ -208,6 +212,7 @@ test.describe
   }) => {
     // 1. Bob opens parent folder from Sharings
     await openSharedDrive(bobPage, USERS.bob, bobDrive, PARENT_EDITOR_FOLDER)
+    const parentDriveUrl = bobPage.url()
 
     // 2. In parent folder, Bob is now Viewer -> Upload button is disabled
     await expect(bobDrive.uploadButton).toBeDisabled()
@@ -215,7 +220,10 @@ test.describe
 
     // 3. Bob navigates into nested folder
     await bobDrive.row(NESTED_EDITOR_FOLDER).open()
-    await bobPage.waitForURL(/\/shareddrive\/[^/]+\/[^/]+/)
+    await expect.poll(() => bobPage.url()).not.toBe(parentDriveUrl)
+    await expect(
+      bobPage.locator('main').getByRole('navigation').first()
+    ).toContainText(NESTED_EDITOR_FOLDER)
 
     // 4. In nested folder, Bob is also Viewer -> Upload button is disabled
     await expect(bobDrive.uploadButton).toBeDisabled()
