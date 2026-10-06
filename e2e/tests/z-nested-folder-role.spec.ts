@@ -3,8 +3,10 @@ import { test, expect, stamp } from '../helpers/fixtures'
 import { DEFAULT_FLAGS, setFlags } from '../helpers/flags'
 import {
   createAndShareFolderWithBob,
-  openSharedDrive
+  openSharedDrive,
+  waitForSharingRow
 } from '../helpers/sharing'
+import { trashByName } from '../helpers/stack'
 import { DowngradeConfirmDialogPage } from '../pages/DowngradeConfirmDialogPage'
 
 const PARENT_FOLDER = `Parent Folder ${stamp()}`
@@ -20,17 +22,17 @@ test.describe
       setFlags(u.instance, {
         ...DEFAULT_FLAGS,
         'drive.file-picker-demo.enabled': false,
-        'cozy.hide-sharing-cozy-to-cozy': false,
-        'drive.shared-drive.enabled': true,
-        'drive.federated-shared-folder.enabled': true
+        'cozy.hide-sharing-cozy-to-cozy': false
       })
     }
   })
 
-  test.afterAll(() => {
+  test.afterAll(async () => {
     for (const u of [USERS.alice, USERS.bob, USERS.charlie]) {
       setFlags(u.instance, DEFAULT_FLAGS)
     }
+    await trashByName(USERS.alice.instance, PARENT_FOLDER)
+    await trashByName(USERS.alice.instance, PARENT_EDITOR_FOLDER)
   })
 
   test('Alice changes Bob role on nested from Viewer to Editor without mutating parent role', async ({
@@ -76,9 +78,7 @@ test.describe
     await openSharedDrive(bobPage, USERS.bob, bobDrive, PARENT_FOLDER)
 
     // 2. In parent folder, Bob is Viewer -> Upload button is disabled
-    await expect(
-      bobPage.getByRole('button', { name: 'Upload', exact: true })
-    ).toBeDisabled()
+    await expect(bobDrive.uploadButton).toBeDisabled()
     await bobDrive.row(NESTED_FOLDER).waitVisible()
 
     // 3. Bob navigates into nested folder from parent
@@ -86,9 +86,7 @@ test.describe
     await bobPage.waitForURL(/\/shareddrive\/[^/]+\/[^/]+/)
 
     // 4. In nested folder, Bob has Editor access -> Upload button is enabled
-    await expect(
-      bobPage.getByRole('button', { name: 'Upload', exact: true })
-    ).toBeEnabled()
+    await expect(bobDrive.uploadButton).toBeEnabled()
 
     // 5. Bob can create a folder inside nested
     const BOB_SUBFOLDER = `Bob Folder ${stamp()}`
@@ -130,8 +128,11 @@ test.describe
     charlieDrive
   }) => {
     // 1. Charlie verifies Sharings with-me tab: sees nested folder, but does NOT see parent folder
-    await charliePage.goto(`${USERS.charlie.appUrl}/#/sharings/with-me`)
-    await charlieDrive.row(NESTED_CHARLIE_FOLDER).waitVisible()
+    await waitForSharingRow(
+      charliePage,
+      USERS.charlie,
+      NESTED_CHARLIE_FOLDER
+    )
     await expect(charlieDrive.row(PARENT_FOLDER).cell).toHaveCount(0)
 
     // 2. Charlie opens nested folder
@@ -143,9 +144,7 @@ test.describe
     )
 
     // 3. Charlie has Editor access -> Upload is enabled and can create a subfolder
-    await expect(
-      charliePage.getByRole('button', { name: 'Upload', exact: true })
-    ).toBeEnabled()
+    await expect(charlieDrive.uploadButton).toBeEnabled()
     const CHARLIE_SUBFOLDER = `Charlie Folder ${stamp()}`
     await charlieDrive.createFolder(CHARLIE_SUBFOLDER)
     await charlieDrive.row(CHARLIE_SUBFOLDER).waitVisible()
@@ -210,9 +209,7 @@ test.describe
     await openSharedDrive(bobPage, USERS.bob, bobDrive, PARENT_EDITOR_FOLDER)
 
     // 2. In parent folder, Bob is now Viewer -> Upload button is disabled
-    await expect(
-      bobPage.getByRole('button', { name: 'Upload', exact: true })
-    ).toBeDisabled()
+    await expect(bobDrive.uploadButton).toBeDisabled()
     await bobDrive.row(NESTED_EDITOR_FOLDER).waitVisible()
 
     // 3. Bob navigates into nested folder
@@ -220,9 +217,7 @@ test.describe
     await bobPage.waitForURL(/\/shareddrive\/[^/]+\/[^/]+/)
 
     // 4. In nested folder, Bob is also Viewer -> Upload button is disabled
-    await expect(
-      bobPage.getByRole('button', { name: 'Upload', exact: true })
-    ).toBeDisabled()
+    await expect(bobDrive.uploadButton).toBeDisabled()
     await bobPage.goto('about:blank')
   })
 })
