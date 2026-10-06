@@ -1,6 +1,6 @@
-import { locales } from '@/locales'
+import { supportedLocales as supportedLocaleList } from '@/locales'
 
-const supportedLocales = new Set(Object.keys(locales))
+const supportedLocales = new Set(supportedLocaleList)
 
 /**
  * Returns the best matching supported locale from the browser's language
