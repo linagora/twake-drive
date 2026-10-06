@@ -12,7 +12,8 @@ export const TEMPORARY_LINK_TTL = '5m'
 
 export const filePickerLinkModes = {
   PUBLIC_LINK: 'public-link',
-  TEMPORARY_DOWNLOAD_LINK: 'temporary-download-link'
+  TEMPORARY_DOWNLOAD_LINK: 'temporary-download-link',
+  DOCUMENTS: 'documents'
 }
 
 export const filePickerThemes = ['light', 'dark']
@@ -48,10 +49,16 @@ export const filePickerErrorCodes = {
  * allowFolder semantics: sharingLink allows folders (folders can be
  * shared via a public link), downloadLink does not (downloading a
  * folder is not meaningful for an attachment use case).
+ *
+ * The documents action returns the picked io.cozy.files documents as
+ * they are, with no link generated: it is only offered to callers that
+ * ask for it.
  */
 export const defaultFilePickerConfig = {
   theme: { type: undefined },
   multiple: true,
+  rootDirId: null,
   sharingLink: { allowFolder: true },
-  downloadLink: { allowFolder: false }
+  downloadLink: { allowFolder: false },
+  documents: null
 }

@@ -820,7 +820,8 @@
       "buttons": {
         "cancel": "Annuler",
         "publicLink": "Ajouter comme lien",
-        "temporaryDownloadLink": "Ajouter en pièce jointe"
+        "temporaryDownloadLink": "Ajouter en pièce jointe",
+        "documents": "Sélectionner"
       }
     },
     "constraints": {
@@ -829,7 +830,8 @@
         "mimeTypeNotAllowed": "Ce type de fichier n'est pas autorisé pour cette action",
         "fileTooLarge": "Ce fichier est plus grand que %{maxFileSize}",
         "maxFileCountExceeded": "Trop de fichiers sélectionnés (limite %{maxFileCount})",
-        "availableSizeExceeded": "La taille totale sélectionnée dépasse %{availableSize}"
+        "availableSizeExceeded": "La taille totale sélectionnée dépasse %{availableSize}",
+        "fileNotAllowed": "Seuls les dossiers peuvent être sélectionnés pour cette action"
       }
     },
     "actions": {
@@ -840,7 +842,8 @@
       "ITEM_NOT_FOUND": "Le fichier sélectionné est introuvable.",
       "DESTINATION_UNAVAILABLE": "Impossible de charger le dossier de destination.",
       "SHARING_LINK_FAILED": "Impossible de générer le lien de partage.",
-      "DOWNLOAD_LINK_FAILED": "Impossible de générer le lien de téléchargement."
+      "DOWNLOAD_LINK_FAILED": "Impossible de générer le lien de téléchargement.",
+      "ROOT_DIR_UNAVAILABLE": "Le dossier auquel ce sélecteur est limité n'a pas pu être chargé."
     }
   }
 }
