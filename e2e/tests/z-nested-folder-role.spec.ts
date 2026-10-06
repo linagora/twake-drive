@@ -6,7 +6,6 @@ import {
   openSharedDrive,
   waitForSharingRow
 } from '../helpers/sharing'
-import { trashByName } from '../helpers/stack'
 import { DowngradeConfirmDialogPage } from '../pages/DowngradeConfirmDialogPage'
 
 const PARENT_FOLDER = `Parent Folder ${stamp()}`
@@ -27,13 +26,7 @@ test.describe
     }
   })
 
-  test.afterAll(async () => {
-    try {
-      await trashByName(USERS.alice.instance, PARENT_FOLDER)
-    } catch {}
-    try {
-      await trashByName(USERS.alice.instance, PARENT_EDITOR_FOLDER)
-    } catch {}
+  test.afterAll(() => {
     for (const u of [USERS.alice, USERS.bob, USERS.charlie]) {
       setFlags(u.instance, DEFAULT_FLAGS)
     }
@@ -72,6 +65,7 @@ test.describe
     // Expected: Bob remains Viewer on parent
     await expect(parentModal.memberItem('bob')).toContainText(/viewer/i)
     await parentModal.close()
+    await alicePage.goto('about:blank')
   })
 
   test('Bob opens parent then navigates to nested: Bob has write access on nested (linagora/twake-drive#4220)', async ({
@@ -125,6 +119,7 @@ test.describe
     await expect(parentModal.memberItem('bob')).toContainText(/viewer/i)
     await expect(parentModal.memberItem('charlie')).toHaveCount(0)
     await parentModal.close()
+    await alicePage.goto('about:blank')
   })
 
   test('Charlie accesses nested folder with write access and has no access to parent folder', async ({
@@ -204,6 +199,7 @@ test.describe
     const parentModal = await aliceDrive.row(PARENT_EDITOR_FOLDER).share()
     await expect(parentModal.memberItem('bob')).toContainText(/viewer/i)
     await parentModal.close()
+    await alicePage.goto('about:blank')
   })
 
   test('Bob has downgraded Viewer access on both parent and nested folder', async ({
