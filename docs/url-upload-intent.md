@@ -243,8 +243,9 @@ guarantees. There is no service cancel button.
 3. Update Drive's real dependency versions/lockfile before publishing Drive.
 
 The local migration is validated with a linked, exact client revision, not a
-fabricated published package version. The current committed lock still resolves
-cozy-client/cozy-stack-client 60.33.0 and **does not provide SourceURL support**.
+fabricated published package version. The current committed lock resolves
+cozy-client 60.40.0 and cozy-stack-client 60.37.0. The published collection
+**does not provide SourceURL support** despite sharing the draft's version.
 See [local linking and server-source setup](e2e.md#url-upload-source-fixture).
 
 An older Stack can ignore SourceURL and create an empty file. Do not expose this
@@ -288,7 +289,7 @@ boundary outside this local migration, not a silent browser fallback.
   `web/files/files.go` source retrieval, permissions and synchronous creation;
   `model/instance/instance.go`/`model/vfs/referenced_dir.go` native folder
   resolution; `pkg/safehttp/client.go` network restrictions and timeout.
-- cozy-interapp 0.18.1 `errorSerializer` copies enumerable properties plus
+- cozy-interapp 0.21.0 `errorSerializer` copies enumerable properties plus
   name/message; the caller boundary therefore must not receive raw FetchError.
 
 These are inspected/locally qualified revisions, not claims that a particular

@@ -35,8 +35,9 @@ yarn e2e:setup
 ## URL-upload source fixture
 
 URL uploads now send `SourceURL` to Stack instead of downloading in the browser.
-The committed dependencies still resolve cozy-stack-client 60.33.0, which does
-not support this creation path. This migration is **local-only until the client
+The committed dependencies resolve cozy-client 60.40.0 and cozy-stack-client
+60.37.0. The published collection does not support this creation path despite
+sharing the draft's version. This migration is **local-only until the client
 extension is published and Drive's dependency versions/lockfile are updated**.
 Do not activate it on a Stack that ignores SourceURL: it can create an empty file.
 
