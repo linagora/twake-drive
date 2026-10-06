@@ -238,7 +238,12 @@ export const computePath = (
         fromPublicFolder: isPublic
       })
     case 'shared-drive':
-      if (!driveId || isOwner) {
+      if (
+        !driveId ||
+        isOwner ||
+        pathname.startsWith('/folder') ||
+        pathname === '/'
+      ) {
         return `/folder/${file._id}`
       }
 

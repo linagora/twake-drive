@@ -683,6 +683,16 @@ describe('computePath', () => {
     ).toBe('/sharings/drives/shareddrive/drive456/folder123')
   })
 
+  it('should return folder path for shared-drive when opened from folder view', () => {
+    const file = { _id: 'folder123', driveId: 'drive456' }
+    expect(
+      computePath(file, {
+        type: 'shared-drive',
+        pathname: '/folder'
+      })
+    ).toBe('/folder/folder123')
+  })
+
   it('should return correct path for shared-drive-root-file', () => {
     const file = {
       _id: 'file123',
