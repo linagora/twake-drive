@@ -167,8 +167,8 @@ test.describe('File Picker v2 Options', () => {
 
       await expect(picker.documentsButton()).toBeVisible()
       await expect(picker.isDocumentsDisabled()).resolves.toBe(false)
-      await expect(picker.hasPublicLinkButton()).resolves.toBe(false)
-      await expect(picker.hasTemporaryDownloadButton()).resolves.toBe(false)
+      await expect(picker.publicLinkButton()).toHaveCount(0)
+      await expect(picker.temporaryDownloadLinkButton()).toHaveCount(0)
 
       await picker.clickDocumentsButton()
       await picker.waitForClosed()
@@ -283,8 +283,8 @@ test.describe('File Picker v2 Options', () => {
       await picker.selectItem(textFileName)
 
       await expect(picker.documentsButton()).toBeVisible()
-      await expect(picker.hasPublicLinkButton()).resolves.toBe(true)
-      await expect(picker.hasTemporaryDownloadButton()).resolves.toBe(true)
+      await expect(picker.publicLinkButton()).toBeVisible()
+      await expect(picker.temporaryDownloadLinkButton()).toBeVisible()
       await expect(picker.isDocumentsDisabled()).resolves.toBe(false)
       await expect(picker.isPublicLinkDisabled()).resolves.toBe(false)
       await expect(picker.isTemporaryDownloadDisabled()).resolves.toBe(false)
@@ -297,8 +297,8 @@ test.describe('File Picker v2 Options', () => {
       await picker.selectItem(textFileName)
 
       await expect(picker.documentsButton()).toBeVisible()
-      await expect(picker.hasPublicLinkButton()).resolves.toBe(false)
-      await expect(picker.hasTemporaryDownloadButton()).resolves.toBe(false)
+      await expect(picker.publicLinkButton()).toHaveCount(0)
+      await expect(picker.temporaryDownloadLinkButton()).toHaveCount(0)
     })
 
     test('custom action labels render on sharing and download buttons', async () => {
@@ -321,9 +321,10 @@ test.describe('File Picker v2 Options', () => {
       await picker.navigateToFolder(parentFolder)
       await picker.selectItem(textFileName)
 
+      await expect(picker.item(textFileName)).toBeVisible()
       await expect(picker.documentsButton()).toHaveCount(0)
-      await expect(picker.hasPublicLinkButton()).resolves.toBe(false)
-      await expect(picker.hasTemporaryDownloadButton()).resolves.toBe(false)
+      await expect(picker.publicLinkButton()).toHaveCount(0)
+      await expect(picker.temporaryDownloadLinkButton()).toHaveCount(0)
     })
   })
 
@@ -475,26 +476,26 @@ test.describe('File Picker v2 Options', () => {
     test('tabs configuration filters visible tabs and opens first effective tab', async () => {
       await picker.openWithPreset('Tabs: sharings and recents')
 
-      await expect(picker.hasTab('My Drive')).resolves.toBe(false)
-      await expect(picker.hasTab('Recents')).resolves.toBe(true)
-      await expect(picker.hasTab('Sharings')).resolves.toBe(true)
+      await expect(picker.tab('Recents')).toBeVisible()
+      await expect(picker.tab('Sharings')).toBeVisible()
+      await expect(picker.tab('My Drive')).toHaveCount(0)
       await expect(picker.isTabSelected('Recents')).resolves.toBe(true)
     })
 
     test('single tab config shows only Drive tab', async () => {
       await picker.openWithPreset('Tabs: drive only')
 
-      await expect(picker.hasTab('My Drive')).resolves.toBe(true)
-      await expect(picker.hasTab('Recents')).resolves.toBe(false)
-      await expect(picker.hasTab('Sharings')).resolves.toBe(false)
+      await expect(picker.tab('My Drive')).toBeVisible()
+      await expect(picker.tab('Recents')).toHaveCount(0)
+      await expect(picker.tab('Sharings')).toHaveCount(0)
     })
 
     test('tabs ordering preserves Drive canonical order regardless of caller array order', async () => {
       await picker.openWithPreset('Tabs: sharings and recents')
 
       // In Drive canonical order, Recents comes before Sharings
-      await expect(picker.hasTab('Recents')).resolves.toBe(true)
-      await expect(picker.hasTab('Sharings')).resolves.toBe(true)
+      await expect(picker.tab('Recents')).toBeVisible()
+      await expect(picker.tab('Sharings')).toBeVisible()
       await expect(picker.isTabSelected('Recents')).resolves.toBe(true)
     })
 
@@ -531,8 +532,8 @@ test.describe('File Picker v2 Options', () => {
       await expect(picker.breadcrumbButton('My Drive')).toBeVisible()
 
       // Tabs are not restricted
-      await expect(picker.hasTab('Recents')).resolves.toBe(true)
-      await expect(picker.hasTab('Sharings')).resolves.toBe(true)
+      await expect(picker.tab('Recents')).toBeVisible()
+      await expect(picker.tab('Sharings')).toBeVisible()
     })
 
     test('unrestricted defaultDirId with nonexistent folder gracefully falls back to Drive root', async () => {
@@ -558,10 +559,12 @@ test.describe('File Picker v2 Options', () => {
       // Breadcrumb has restricted folder root but NO 'My Drive' button above it
       await expect(picker.breadcrumbButton('My Drive')).toHaveCount(0)
 
+      // The Drive tab confirms the configured tabs have rendered.
+      await expect(picker.tab('My Drive')).toBeVisible()
+
       // Non-drive tabs (Recents and Sharings) are forbidden and hidden
-      await expect(picker.hasTab('Recents')).resolves.toBe(false)
-      await expect(picker.hasTab('Sharings')).resolves.toBe(false)
-      await expect(picker.hasTab('My Drive')).resolves.toBe(true)
+      await expect(picker.tab('Recents')).toHaveCount(0)
+      await expect(picker.tab('Sharings')).toHaveCount(0)
 
       // Outside folders/files are not present
       await expect(picker.item(parentFolder)).toHaveCount(0)

@@ -286,7 +286,7 @@ test.describe('File Picker', () => {
     picker = new FilePickerPage(alicePage)
     await pick(testFileName, 'Image only')
 
-    await expect(picker.hasTemporaryDownloadButton()).resolves.toBe(true)
+    await expect(picker.temporaryDownloadLinkButton()).toBeVisible()
     await expect(picker.isTemporaryDownloadDisabled()).resolves.toBe(true)
 
     await picker.doubleClickItem(testFileName)
@@ -299,7 +299,7 @@ test.describe('File Picker', () => {
     picker = new FilePickerPage(alicePage)
     await pick(largeFileName, 'Max size 1 KB')
 
-    await expect(picker.hasTemporaryDownloadButton()).resolves.toBe(true)
+    await expect(picker.temporaryDownloadLinkButton()).toBeVisible()
     await expect(picker.isTemporaryDownloadDisabled()).resolves.toBe(true)
   })
 
@@ -374,10 +374,10 @@ test.describe('File Picker', () => {
     picker = new FilePickerPage(alicePage)
     await picker.open('Photos picker')
 
-    await expect(picker.documentsButton()).toBeVisible()
-    await expect(picker.hasPublicLinkButton()).resolves.toBe(false)
-    await expect(picker.hasTemporaryDownloadButton()).resolves.toBe(false)
     await expect(picker.item(photosFileName)).toBeVisible()
+    await expect(picker.documentsButton()).toBeVisible()
+    await expect(picker.publicLinkButton()).toHaveCount(0)
+    await expect(picker.temporaryDownloadLinkButton()).toHaveCount(0)
     await expect(picker.breadcrumbButton('My Drive')).toHaveCount(0)
     await expect(picker.item(testFileName)).toHaveCount(0)
 

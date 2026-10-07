@@ -245,9 +245,8 @@ export class FilePickerPage {
     )
   }
 
-  async hasTab(tabLabel: string): Promise<boolean> {
-    const frame = this.getFrameLocator()
-    return (await frame.getByRole('tab', { name: tabLabel }).count()) > 0
+  tab(tabLabel: string): Locator {
+    return this.getFrameLocator().getByRole('tab', { name: tabLabel })
   }
 
   async isTabSelected(tabLabel: string): Promise<boolean> {
@@ -338,10 +337,8 @@ export class FilePickerPage {
     return frame.getByTestId('temporary-download-link-btn').isDisabled()
   }
 
-  /** Whether the "Temporary download link" button is visible. */
-  async hasTemporaryDownloadButton(): Promise<boolean> {
-    const frame = this.getFrameLocator()
-    return frame.getByTestId('temporary-download-link-btn').isVisible()
+  temporaryDownloadLinkButton(): Locator {
+    return this.getFrameLocator().getByTestId('temporary-download-link-btn')
   }
 
   /** Whether the "Public link" button is currently disabled. */
@@ -350,10 +347,8 @@ export class FilePickerPage {
     return frame.getByTestId('public-link-btn').isDisabled()
   }
 
-  /** Whether the "Public link" button is visible. */
-  async hasPublicLinkButton(): Promise<boolean> {
-    const frame = this.getFrameLocator()
-    return frame.getByTestId('public-link-btn').isVisible()
+  publicLinkButton(): Locator {
+    return this.getFrameLocator().getByTestId('public-link-btn')
   }
 
   // ---------------------------------------------------------------------------
