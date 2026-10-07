@@ -697,6 +697,12 @@
     "cancel": "Annuler l'édition",
     "error": "Une erreur est survenue, merci de réessayer."
   },
+  "SharingInvitations": {
+    "text": "%{owner} vous a partagé « %{name} »",
+    "accept": "Accepter",
+    "decline": "Refuser",
+    "close": "Fermer"
+  },
   "TrashedBanner": {
     "text": "Cet élément est dans la corbeille",
     "destroy": "Supprimer définitivement",

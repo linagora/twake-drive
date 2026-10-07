@@ -697,6 +697,12 @@
     "cancel": "Änderungen verwerfen",
     "error": "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut."
   },
+  "SharingInvitations": {
+    "text": "%{owner} hat „%{name}“ mit Ihnen geteilt",
+    "accept": "Annehmen",
+    "decline": "Ablehnen",
+    "close": "Schließen"
+  },
   "TrashedBanner": {
     "text": "Das Element befindet sich in Ihrem Papierkorb",
     "destroy": "Endgültig löschen",

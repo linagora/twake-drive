@@ -182,5 +182,11 @@
       "recents": "المستخدمة مؤخراً",
       "chooseCustomIcon": "اختر أيقونة مخصصة"
     }
+  },
+  "SharingInvitations": {
+    "text": "شارك %{owner} معك \"%{name}\"",
+    "accept": "قبول",
+    "decline": "رفض",
+    "close": "إغلاق"
   }
 }

@@ -450,5 +450,11 @@
       "recents": "最近使用",
       "chooseCustomIcon": "カスタムアイコンを選択"
     }
+  },
+  "SharingInvitations": {
+    "text": "%{owner} さんが「%{name}」を共有しました",
+    "accept": "承諾",
+    "decline": "辞退",
+    "close": "閉じる"
   }
 }

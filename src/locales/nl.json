@@ -138,5 +138,11 @@
       "recents": "Recente",
       "chooseCustomIcon": "Kies een aangepast pictogram"
     }
+  },
+  "SharingInvitations": {
+    "text": "%{owner} heeft \"%{name}\" met je gedeeld",
+    "accept": "Accepteren",
+    "decline": "Weigeren",
+    "close": "Sluiten"
   }
 }

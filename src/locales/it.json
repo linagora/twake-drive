@@ -697,6 +697,12 @@
     "cancel": "Annulla le modifiche",
     "error": "Si è verificato un errore, riprova."
   },
+  "SharingInvitations": {
+    "text": "%{owner} ha condiviso «%{name}» con te",
+    "accept": "Accetta",
+    "decline": "Rifiuta",
+    "close": "Chiudi"
+  },
   "TrashedBanner": {
     "text": "L'elemento si trova nel cestino",
     "destroy": "Elimina definitivamente",
