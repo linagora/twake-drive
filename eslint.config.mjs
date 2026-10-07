@@ -8,6 +8,7 @@ const baseImportOrderOptions = baseImportOrderRule[1]
 const basePathGroups = baseImportOrderOptions.pathGroups
 
 export default [
+  { ignores: ['plugins/*/build/'] },
   ...cozyReact,
   {
     rules: {

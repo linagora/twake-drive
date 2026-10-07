@@ -1,0 +1,533 @@
+/* global Api, Asc */
+
+// The functions of this file run inside the editor: the plugin sends their
+// source to it with `callCommand`. They cannot use anything defined outside
+// of them, and their parameters come in `Asc.scope`.
+
+/**
+ * Reads the text the scribe works on: the selection, or the whole document
+ * without one. The Markdown of the editor gives the tables in HTML tags, one
+ * cell after the other: the cells that take several columns or rows get
+ * their `colspan` and `rowspan`.
+ *
+ * @returns {{ content: string, target: 'selection' | 'document' }} the text,
+ * in Markdown
+ */
+export function readContent() {
+  const doc = Api.GetDocument()
+  const selection = doc.GetRangeBySelect()
+  const hasSelection =
+    Boolean(selection) && selection.GetText({ Numbering: false }).trim() !== ''
+  // The editor converts the selection when there is one, even an empty one
+  if (!hasSelection) doc.RemoveSelection()
+
+  // The cells of a table, as laid on its grid: the column each one starts
+  // at, the columns it takes, and whether it starts or continues a cell
+  // merged with the ones above
+  function readLayout(table) {
+    return JSON.parse(table.ToJSON()).content.map(row => {
+      let column = 0
+      return row.content.map(cell => {
+        const span = cell.tcPr?.gridSpan ?? 1
+        const laid = { column, span, merge: cell.tcPr?.vMerge ?? null }
+        column += span
+        return laid
+      })
+    })
+  }
+
+  // The tables of the Markdown, in its order, each with the rows and cells
+  // it shows: all of them for a whole table
+  // The selected cells of each table, by row
+  const collectSelectedCells = () => {
+    const tables = new Map()
+    ;(selection.GetAllParagraphs() ?? []).forEach(paragraph => {
+      const cell = paragraph.GetParentTableCell()
+      if (!cell) return
+      const table = cell.GetParentTable()
+      const id = table.GetInternalId()
+      if (!tables.has(id)) tables.set(id, { table, rows: new Map() })
+      const { rows } = tables.get(id)
+      const row = cell.GetRowIndex()
+      if (!rows.has(row)) rows.set(row, new Set())
+      rows.get(row).add(cell.GetIndex())
+    })
+    return tables
+  }
+
+  // Whether the cell that a cell continuing a merged one is part of is
+  // selected: the first cell above it, in its column, that does not continue
+  const isMergeSelected = (layout, rows, row, column) => {
+    for (let above = row - 1; above >= 0; above -= 1) {
+      const index = layout[above].findIndex(cell => cell.column === column)
+      const isStart = index === -1 || layout[above][index].merge !== 'continue'
+      if (isStart) return Boolean(rows.get(above)?.has(index))
+    }
+    return false
+  }
+
+  // A cell that continues a merged one has no text of its own to select:
+  // the editor shows it with the cell it continues
+  const addContinuedCells = ({ table, rows }) => {
+    const layout = readLayout(table)
+    rows.forEach((cells, row) => {
+      layout[row].forEach((laid, cellIndex) => {
+        if (laid.merge !== 'continue') return
+        if (isMergeSelected(layout, rows, row, laid.column))
+          cells.add(cellIndex)
+      })
+    })
+  }
+
+  function sortRows({ table, rows }) {
+    return {
+      table,
+      rows: [...rows.keys()]
+        .sort((a, b) => a - b)
+        .map(row => ({ row, cells: [...rows.get(row)].sort((a, b) => a - b) }))
+    }
+  }
+
+  const getTables = () => {
+    if (!hasSelection) {
+      return doc
+        .GetAllTables()
+        .filter(table => !table.GetParentTableCell())
+        .map(table => ({ table, rows: null }))
+    }
+    const tables = collectSelectedCells()
+    tables.forEach(addContinuedCells)
+    return [...tables.values()].map(sortRows)
+  }
+
+  // The spans of the cells a table shows, row by row: null for a cell that
+  // continues a merged one, which has no tag of its own
+  const getSpans = ({ table, rows }) => {
+    const layout = readLayout(table)
+    // Whether a shown row continues the merged cell of a column
+    const isContinuation = (cell, laid) =>
+      cell.column === laid.column && cell.merge === 'continue'
+    const continuesBelow = (shownRow, laid) =>
+      Boolean(shownRow) &&
+      layout[shownRow.row].some(cell => isContinuation(cell, laid))
+    const shown =
+      rows ??
+      layout.map((cells, row) => ({ row, cells: cells.map((cell, i) => i) }))
+    return shown.map(({ row, cells }, index) =>
+      cells.map(cellIndex => {
+        const laid = layout[row][cellIndex]
+        if (laid.merge === 'continue') return null
+        let rowSpan = 1
+        while (continuesBelow(shown[index + rowSpan], laid)) rowSpan += 1
+        return { colSpan: laid.span, rowSpan }
+      })
+    )
+  }
+
+  const CELL = /<td>([\s\S]*?)<\/td>/g
+  const ROW = /<tr>([\s\S]*?)<\/tr>/g
+  function describe(html, spans) {
+    return [...html.matchAll(ROW)]
+      .map((row, i) => {
+        let j = -1
+        const cells = row[1].replace(CELL, (tag, inner) => {
+          j += 1
+          const span = spans[i][j]
+          if (!span) return ''
+          const attributes =
+            (span.colSpan > 1 ? ` colspan="${span.colSpan}"` : '') +
+            (span.rowSpan > 1 ? ` rowspan="${span.rowSpan}"` : '')
+          return `<td${attributes}>${inner}</td>`
+        })
+        return `<tr>${cells}</tr>`
+      })
+      .join('\n  ')
+  }
+
+  // A table of the Markdown is the next table of the document that has its
+  // rows and cells: one the editor left out, or a table in a table, is
+  // skipped
+  const describeMerges = markdown => {
+    const tables = getTables()
+    let next = 0
+    return markdown.replace(
+      /<table>\n([\s\S]*?)\n<\/table>/g,
+      (block, html) => {
+        const rows = [...html.matchAll(ROW)].map(
+          row => row[1].match(CELL)?.length ?? 0
+        )
+        for (; next < tables.length; next += 1) {
+          const spans = getSpans(tables[next])
+          const isSame =
+            spans.length === rows.length &&
+            spans.every((cells, i) => cells.length === rows[i])
+          if (isSame) {
+            next += 1
+            return `<table>\n  ${describe(html, spans)}\n</table>`
+          }
+        }
+        return block
+      }
+    )
+  }
+
+  return {
+    content: describeMerges(doc.ToMarkdown()),
+    target: hasSelection ? 'selection' : 'document'
+  }
+}
+
+/**
+ * Writes the blocks of an answer in the document, with the styles of the
+ * document: in place of the selection (`Asc.scope.isReplace`), or after its
+ * paragraph. The new text is left selected: the user sees it, and the next
+ * answer can replace it.
+ *
+ * @returns {boolean} false when there was nowhere to write
+ */
+export function writeBlocks() {
+  const { blocks, isReplace } = Asc.scope
+  const doc = Api.GetDocument()
+  function getText(element) {
+    return element.GetText({ Numbering: false, ParaSeparator: '\n' })
+  }
+  const selection = doc.GetRangeBySelect()
+  // A new text has the look of the text at the cursor
+  const cursorTextPr = doc.GetCurrentRun()?.GetTextPr()
+  const numberings = {}
+  let lastWritten = null
+
+  const makeRun = (span, textPr) => {
+    const run = Api.CreateRun()
+    if (textPr) run.SetTextPr(textPr)
+    run.AddText(span.text)
+    // The emphasis is the one of the answer, over the one of the style
+    run.SetBold(span.isBold ? true : undefined)
+    run.SetItalic(span.isItalic ? true : undefined)
+    run.SetStrikeout(span.isStrike ? true : undefined)
+    if (span.isCode) run.SetFontFamily('Courier New')
+    return run
+  }
+
+  const addSpans = (paragraph, spans, textPr) => {
+    spans.forEach(span => {
+      if (span.isBreak) {
+        paragraph.AddLineBreak()
+        return
+      }
+      const element = span.href
+        ? Api.CreateHyperlink(span.href, span.text)
+        : makeRun(span, textPr)
+      paragraph.AddElement(element)
+      lastWritten = element
+    })
+  }
+
+  const makeParagraph = (spans, styleName, textPr) => {
+    const paragraph = Api.CreateParagraph()
+    const style = styleName ? doc.GetStyle(styleName) : null
+    if (style) paragraph.SetStyle(style)
+    addSpans(paragraph, spans, textPr)
+    return paragraph
+  }
+
+  const makeListItem = block => {
+    const paragraph = makeParagraph(block.spans, 'List Paragraph', cursorTextPr)
+    if (!numberings[block.listId]) {
+      numberings[block.listId] = doc.CreateNumbering(
+        block.isOrdered ? 'numbered' : 'bullet'
+      )
+    }
+    paragraph.SetNumbering(numberings[block.listId].GetLevel(block.depth))
+    return paragraph
+  }
+
+  // Lays the cells of a table on its grid: each one takes the first free
+  // column of its row, then the columns and rows it spans
+  const layCells = rows => {
+    const taken = new Set()
+    const cells = []
+    rows.forEach((row, rowIndex) => {
+      let column = 0
+      row.forEach(cell => {
+        while (taken.has(`${rowIndex},${column}`)) column += 1
+        const colSpan = cell.colSpan ?? 1
+        const rowSpan = cell.rowSpan ?? 1
+        for (let r = rowIndex; r < rowIndex + rowSpan; r += 1) {
+          for (let c = column; c < column + colSpan; c += 1) {
+            taken.add(`${r},${c}`)
+          }
+        }
+        cells.push({
+          row: rowIndex,
+          column,
+          colSpan,
+          rowSpan,
+          spans: cell.spans
+        })
+        column += colSpan
+      })
+    })
+    return cells
+  }
+
+  const makeTable = rows => {
+    const cells = layCells(rows)
+    const rowCount = Math.max(...cells.map(cell => cell.row + cell.rowSpan))
+    const columnCount = Math.max(
+      ...cells.map(cell => cell.column + cell.colSpan)
+    )
+    // The editor takes the rows first since its version 9.4, the columns
+    // first before
+    const table = [
+      Api.CreateTable(rowCount, columnCount),
+      Api.CreateTable(columnCount, rowCount)
+    ].find(created => created.GetRowsCount() === rowCount)
+    table.SetWidth('percent', 100)
+    const sides = ['Top', 'Bottom', 'Left', 'Right', 'InsideH', 'InsideV']
+    sides.forEach(side => {
+      table[`SetTableBorder${side}`]('single', 4, 0, 0, 0, 0)
+    })
+    cells.forEach(cell => {
+      const content = table.GetCell(cell.row, cell.column).GetContent()
+      addSpans(content.GetElement(0), cell.spans, cursorTextPr)
+    })
+    // A merge takes the cells on its right in its rows: the rightmost ones
+    // are merged first, while their cells are still where they were laid
+    cells
+      .filter(cell => cell.colSpan > 1 || cell.rowSpan > 1)
+      .sort((a, b) => b.column - a.column)
+      .forEach(cell => {
+        const merged = []
+        for (let r = cell.row; r < cell.row + cell.rowSpan; r += 1) {
+          for (let c = cell.column; c < cell.column + cell.colSpan; c += 1) {
+            merged.push(table.GetCell(r, c))
+          }
+        }
+        table.MergeCells(merged)
+      })
+    return table
+  }
+
+  const makeElement = block => {
+    // A heading has the look of its style only
+    if (block.type === 'heading') {
+      return makeParagraph(block.spans, `Heading ${block.level}`, null)
+    }
+    if (block.type === 'quote') {
+      return makeParagraph(block.spans, 'Quote', cursorTextPr)
+    }
+    if (block.type === 'listItem') return makeListItem(block)
+    if (block.type === 'table') return makeTable(block.rows)
+    return makeParagraph(block.spans, null, cursorTextPr)
+  }
+
+  // The cells the selection takes, when it takes several cells of one table:
+  // their rows, each with its cells in order
+  const getSelectedCells = () => {
+    const tables = new Map()
+    ;(selection?.GetAllParagraphs() ?? []).forEach(paragraph => {
+      const cell = paragraph.GetParentTableCell()
+      if (!cell) return
+      const table = cell.GetParentTable()
+      if (!tables.has(table.GetInternalId())) {
+        tables.set(table.GetInternalId(), { table, cells: new Map() })
+      }
+      tables.get(table.GetInternalId()).cells.set(cell.GetInternalId(), cell)
+    })
+    if (tables.size !== 1) return null
+    const [{ table, cells }] = tables.values()
+    if (cells.size < 2) return null
+    const rows = new Map()
+    cells.forEach(cell => {
+      if (!rows.has(cell.GetRowIndex())) rows.set(cell.GetRowIndex(), [])
+      rows.get(cell.GetRowIndex()).push(cell)
+    })
+    return {
+      table,
+      rows: [...rows.keys()]
+        .sort((a, b) => a - b)
+        .map(row => rows.get(row).sort((a, b) => a.GetIndex() - b.GetIndex()))
+    }
+  }
+
+  // Writes the text of an answer in a cell, in the look of its text, with
+  // the emphasis of the answer added
+  const fillCell = (cell, spans) => {
+    const content = cell.GetContent()
+    const paragraph = content.GetElement(0)
+    const first = paragraph.GetElement(0)
+    const textPr = first?.GetClassType() === 'run' ? first.GetTextPr() : null
+    for (let i = content.GetElementsCount() - 1; i > 0; i -= 1) {
+      content.RemoveElement(i)
+    }
+    paragraph.RemoveAllElements()
+    const kept = spans.map(span => ({
+      ...span,
+      isBold: span.isBold || textPr?.GetBold() === true,
+      isItalic: span.isItalic || textPr?.GetItalic() === true
+    }))
+    addSpans(paragraph, kept, textPr)
+  }
+
+  // The cells of a table that are not merged into one above them
+  function countCells(table) {
+    return JSON.parse(table.ToJSON()).content.reduce(
+      (count, row) =>
+        count +
+        row.content.filter(cell => cell.tcPr?.vMerge !== 'continue').length,
+      0
+    )
+  }
+
+  function countSelected(rows) {
+    return rows.reduce((sum, row) => sum + row.length, 0)
+  }
+
+  function hasSameShape(selectedCells, table) {
+    return (
+      table.rows.length === selectedCells.rows.length &&
+      table.rows.every((row, i) => row.length === selectedCells.rows[i].length)
+    )
+  }
+
+  // Writes a table in the selected cells of the same shape, and selects the
+  // table when they are all of its cells
+  const fillCells = (selectedCells, table) => {
+    selectedCells.rows.forEach((cells, i) => {
+      cells.forEach((cell, j) => fillCell(cell, table.rows[i][j].spans))
+    })
+    const cellCount = countSelected(selectedCells.rows)
+    if (cellCount === countCells(selectedCells.table)) {
+      selectedCells.table.Select()
+    }
+  }
+
+  // The mark that ends the last selected paragraph is kept: the answer takes
+  // the place of the text, in the paragraphs that hold it
+  const keepParagraphMark = () => {
+    const start = selection.GetStartPos()
+    let end = selection.GetEndPos()
+    while (end > start && getText(selection).endsWith('\n')) {
+      end -= 1
+      selection.SetEndPos(end)
+    }
+    selection.Select()
+  }
+
+  // An answer to the cells of a table goes under the table. A whole table
+  // replaced by an answer of another shape goes away: the answer takes its
+  // place.
+  const placeAfterTable = (placeholder, { table: selectedTable, rows }) => {
+    const parent = selectedTable.GetParentTableCell()?.GetContent() ?? doc
+    let index = selectedTable.GetPosInParent() + 1
+    if (isReplace && countSelected(rows) === countCells(selectedTable)) {
+      index -= 1
+      selectedTable.Delete()
+    }
+    parent.AddElement(index, placeholder)
+    return true
+  }
+
+  // The answer takes the place of a new paragraph, after the one of the
+  // selection or of the cursor
+  const placeAfterParagraph = placeholder => {
+    const paragraphs = selection?.GetAllParagraphs() ?? []
+    const anchor = paragraphs.length
+      ? paragraphs[paragraphs.length - 1]
+      : doc.GetCurrentParagraph()
+    if (!anchor) return false
+    anchor.InsertParagraph(placeholder, 'after', true)
+    return true
+  }
+
+  // Selects a new paragraph for the answer to take its place
+  const selectPlaceholder = selectedCells => {
+    const placeholder = Api.CreateParagraph()
+    const isPlaced = selectedCells
+      ? placeAfterTable(placeholder, selectedCells)
+      : placeAfterParagraph(placeholder)
+    if (isPlaced) placeholder.Select()
+    return isPlaced
+  }
+
+  // Selects the answer written from `start`. A text written in a line is
+  // copied before the cursor: it ends where the run of the cursor starts.
+  const selectAnswer = (start, isInline) => {
+    const ending = isInline ? doc.GetCurrentRun() : lastWritten
+    if (!ending) return
+    const written = ending.GetRange()
+    const endPos = isInline ? written.GetStartPos() : written.GetEndPos()
+    written.SetStartPos(start)
+    written.SetEndPos(endPos)
+    written.Select()
+  }
+
+  // Blocks leave the end of the paragraph they were written in after them:
+  // an empty paragraph, when they took the place of all its text. It stays
+  // after a table that nothing else follows: a table cannot end a document.
+  const removeLeftParagraph = last => {
+    const parent = last.GetParentTableCell()?.GetContent() ?? doc
+    const index = last.GetPosInParent()
+    const rest = parent.GetElement(index + 1)
+    const after = parent.GetElement(index + 2)
+    const isNeeded =
+      last.GetClassType() === 'table' && after?.GetClassType() !== 'paragraph'
+    if (rest?.GetClassType() !== 'paragraph' || isNeeded) return
+    if (getText(rest).trim() === '') rest.Delete()
+  }
+
+  function isAnswerOf(type) {
+    return blocks.length === 1 && blocks[0].type === type
+  }
+
+  // A table with the rows and cells of the selected ones is written in them:
+  // the table of the document keeps its style and its merged cells
+  function canFillCells(selectedCells) {
+    return (
+      isReplace &&
+      Boolean(selectedCells) &&
+      isAnswerOf('table') &&
+      hasSameShape(selectedCells, blocks[0])
+    )
+  }
+
+  // Other answers to the cells of a table are written under the table
+  function isReplacingText(selectedCells) {
+    return (
+      isReplace &&
+      !selectedCells &&
+      Boolean(selection) &&
+      getText(selection).trim() !== ''
+    )
+  }
+
+  // Writes the blocks in place of the selection, a single paragraph in its
+  // line (`isInline`), and selects them
+  const writeAnswer = isInline => {
+    const start = doc.GetRangeBySelect().GetStartPos()
+    const elements = blocks.map(makeElement)
+    if (!doc.InsertContent(elements, isInline)) return false
+
+    const last = elements[elements.length - 1]
+    // The editor copies the blocks it cannot move, as a table written in a
+    // table: their place is unknown, and they are left unselected
+    const isMoved = !isInline && last.GetPosInParent() !== -1
+    if (isInline || isMoved) selectAnswer(start, isInline)
+    if (isMoved) removeLeftParagraph(last)
+    return true
+  }
+
+  const selectedCells = getSelectedCells()
+  if (canFillCells(selectedCells)) {
+    fillCells(selectedCells, blocks[0])
+    return true
+  }
+
+  const isReplacing = isReplacingText(selectedCells)
+  if (isReplacing) keepParagraphMark()
+  else if (!selectPlaceholder(selectedCells)) return false
+
+  // A single paragraph is written in the line of the selection
+  return writeAnswer(isReplacing && isAnswerOf('paragraph'))
+}

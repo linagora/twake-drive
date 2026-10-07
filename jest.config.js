@@ -1,5 +1,5 @@
 module.exports = {
-  roots: ['<rootDir>/src'],
+  roots: ['<rootDir>/src', '<rootDir>/plugins'],
   setupFiles: ['<rootDir>/jestHelpers/setup.js'],
   setupFilesAfterEnv: ['<rootDir>/jestHelpers/setupFilesAfterEnv.js'],
   moduleFileExtensions: ['js', 'jsx', 'ts', 'tsx', 'json', 'styl'],
@@ -61,7 +61,7 @@ module.exports = {
     '^.+\\.webapp$': '<rootDir>/test/jestLib/json-transformer.js'
   },
   transformIgnorePatterns: [
-    'node_modules/(?!cozy-ui|cozy-sharing|react-dnd|react-dnd-html5-backend|dnd-core|@react-dnd|pdfjs-dist)',
+    'node_modules/(?!cozy-ui|cozy-sharing|marked|react-dnd|react-dnd-html5-backend|dnd-core|@react-dnd|pdfjs-dist)',
     'jest-runner'
   ],
   testEnvironment: 'jsdom',
