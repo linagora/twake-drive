@@ -86,6 +86,19 @@
       "text": "새 문서 만들기",
       "spreadsheet": "새 스프레드시트 만들기",
       "slide": "새 프레젠테이션 만들기"
+    },
+    "scribe": {
+      "open": "글쓰기 도우미",
+      "close": "닫기",
+      "insert": "삽입",
+      "replace": "바꾸기",
+      "insertSlide": "슬라이드 삽입",
+      "suggestions": {
+        "newSlide": "새 슬라이드",
+        "newSlideMessage": "이 슬라이드 다음에 텍스트에 관한 새 슬라이드를 추가해 줘",
+        "table": "표 만들기",
+        "tableMessage": "텍스트를 표로 정리해 줘"
+      }
     }
   },
   "actions": {

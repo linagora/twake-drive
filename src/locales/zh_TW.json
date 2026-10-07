@@ -2,6 +2,21 @@
   "Excalidraw": {
     "createFileName": "新增繪圖"
   },
+  "OnlyOffice": {
+    "scribe": {
+      "open": "幫我寫作",
+      "close": "關閉",
+      "insert": "插入",
+      "replace": "取代",
+      "insertSlide": "插入投影片",
+      "suggestions": {
+        "newSlide": "新投影片",
+        "newSlideMessage": "在這張投影片之後新增一張關於該文字的投影片",
+        "table": "製作表格",
+        "tableMessage": "將文字以表格形式呈現"
+      }
+    }
+  },
   "Nav": {
     "item_drive": "硬碟",
     "item_recent": "最近更改",

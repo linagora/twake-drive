@@ -626,6 +626,19 @@
     },
     "actions": {
       "validate": "Xác nhận"
+    },
+    "scribe": {
+      "open": "Trợ giúp soạn thảo",
+      "close": "Đóng",
+      "insert": "Chèn",
+      "replace": "Thay thế",
+      "insertSlide": "Chèn trang chiếu",
+      "suggestions": {
+        "newSlide": "Trang chiếu mới",
+        "newSlideMessage": "Thêm một trang chiếu mới sau trang này, về nội dung văn bản",
+        "table": "Tạo bảng",
+        "tableMessage": "Trình bày văn bản dưới dạng bảng"
+      }
     }
   },
   "Migration": {

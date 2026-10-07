@@ -626,6 +626,19 @@
     },
     "actions": {
       "validate": "Подтвердить"
+    },
+    "scribe": {
+      "open": "Помощь в написании",
+      "close": "Закрыть",
+      "insert": "Вставить",
+      "replace": "Заменить",
+      "insertSlide": "Вставить слайд",
+      "suggestions": {
+        "newSlide": "Новый слайд",
+        "newSlideMessage": "Добавь новый слайд после этого, по тексту",
+        "table": "Сделать таблицу",
+        "tableMessage": "Представь текст в виде таблицы"
+      }
     }
   },
   "Migration": {

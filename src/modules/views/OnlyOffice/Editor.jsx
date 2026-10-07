@@ -8,6 +8,7 @@ import ViewerProvider from 'cozy-viewer/dist/providers/ViewerProvider'
 import FallbackViewer from '@/modules/views/OnlyOffice/FallbackViewer'
 import Loading from '@/modules/views/OnlyOffice/Loading'
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
+import { ScribeProvider } from '@/modules/views/OnlyOffice/Scribe/ScribeProvider'
 import Title from '@/modules/views/OnlyOffice/Title'
 import View from '@/modules/views/OnlyOffice/View'
 import { FileDeletedModal } from '@/modules/views/OnlyOffice/components/FileDeletedModal'
@@ -49,25 +50,30 @@ export const Editor = () => {
   )
   return (
     <ViewerProvider file={file} isPublic={isPublic} isReadOnly={isReadOnly}>
-      <Title />
-      <DialogContent
-        style={
-          isEditorModeView
-            ? {
-                marginTop: `-${editorToolbarHeight}px`
-              }
-            : undefined
-        }
-        className="u-flex u-flex-column u-p-0"
+      <ScribeProvider
+        serverUrl={serverUrl}
+        documentType={docEditorConfig.documentType}
       >
-        <View
-          id={new URL(serverUrl).hostname}
-          apiUrl={apiUrl}
-          docEditorConfig={docEditorConfig}
-        />
-        {hasFileDiverged ? <FileDivergedModal /> : null}
-        {hasFileDeleted ? <FileDeletedModal /> : null}
-      </DialogContent>
+        <Title />
+        <DialogContent
+          style={
+            isEditorModeView
+              ? {
+                  marginTop: `-${editorToolbarHeight}px`
+                }
+              : undefined
+          }
+          className="u-flex u-flex-column u-p-0"
+        >
+          <View
+            id={new URL(serverUrl).hostname}
+            apiUrl={apiUrl}
+            docEditorConfig={docEditorConfig}
+          />
+          {hasFileDiverged ? <FileDivergedModal /> : null}
+          {hasFileDeleted ? <FileDeletedModal /> : null}
+        </DialogContent>
+      </ScribeProvider>
     </ViewerProvider>
   )
 }

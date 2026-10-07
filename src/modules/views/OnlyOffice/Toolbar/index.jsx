@@ -16,6 +16,7 @@ import Sharing from '@/components/EditorToolbar/Sharing'
 import { useRedirectLink } from '@/hooks/useRedirectLink'
 import PublicToolbarMoreMenu from '@/modules/public/PublicToolbarMoreMenu'
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
+import { ScribeButton } from '@/modules/views/OnlyOffice/Scribe/ScribeButton'
 import FileIcon from '@/modules/views/OnlyOffice/Toolbar/FileIcon'
 import SummarizeByAIButtonWrapper from '@/modules/views/OnlyOffice/Toolbar/SummarizeByAIButtonWrapper'
 import { showCreateCozyButton } from '@/modules/views/OnlyOffice/helpers'
@@ -103,6 +104,8 @@ const Toolbar = ({ sharingInfos }) => {
       {isPublic && !isCozyToCozySharingSynced && (
         <PublicToolbarMoreMenu files={[file]} actions={actions} />
       )}
+
+      <ScribeButton />
 
       <SummarizeByAIButtonWrapper isLoaded={isEditorReady} />
 

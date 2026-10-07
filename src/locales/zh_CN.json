@@ -2,6 +2,21 @@
   "Excalidraw": {
     "createFileName": "新建绘图"
   },
+  "OnlyOffice": {
+    "scribe": {
+      "open": "帮我写作",
+      "close": "关闭",
+      "insert": "插入",
+      "replace": "替换",
+      "insertSlide": "插入幻灯片",
+      "suggestions": {
+        "newSlide": "新幻灯片",
+        "newSlideMessage": "在这张幻灯片之后添加一张关于该文本的新幻灯片",
+        "table": "制作表格",
+        "tableMessage": "将文本以表格形式呈现"
+      }
+    }
+  },
   "Nav": {
     "item_drive": "硬盘",
     "item_recent": "最近更改",

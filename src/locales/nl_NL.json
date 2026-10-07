@@ -469,6 +469,19 @@
     },
     "actions": {
       "validate": "Verifiëren"
+    },
+    "scribe": {
+      "open": "Schrijfhulp",
+      "close": "Sluiten",
+      "insert": "Invoegen",
+      "replace": "Vervangen",
+      "insertSlide": "Dia invoegen",
+      "suggestions": {
+        "newSlide": "Nieuwe dia",
+        "newSlideMessage": "Voeg na deze dia een nieuwe dia over de tekst toe",
+        "table": "Tabel maken",
+        "tableMessage": "Zet de tekst in een tabel"
+      }
     }
   },
   "Migration": {
