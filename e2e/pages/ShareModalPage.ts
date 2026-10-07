@@ -39,7 +39,10 @@ export class ShareModalPage {
    * outside the combobox, so they can't be confused with it. The role menu
    * itself is portal'd outside the dialog. */
   async setNewMemberRole(role: 'Viewer' | 'Editor'): Promise<void> {
-    await this.dialog.getByRole('combobox').getByRole('button').click()
+    await this.dialog
+      .getByRole('combobox')
+      .getByRole('button', { name: /^(Viewer|Editor)$/i })
+      .click()
     const menu = this.page.getByRole('menu')
     await menu
       .getByRole('menuitem', { name: new RegExp(`^${role}$`, 'i') })
@@ -100,6 +103,13 @@ export class ShareModalPage {
     return this.memberItem(nameOrEmail)
       .getByRole('button')
       .filter({ hasText: /^(editor|viewer)$/i })
+  }
+
+  /** Remove/revoke button of a member row. */
+  memberRemoveButton(nameOrEmail: string): Locator {
+    return this.memberItem(nameOrEmail).getByRole('button', {
+      name: /remove from sharing/i
+    })
   }
 
   /** Revoke a member's access from the member list. Some cozy-sharing
