@@ -1,4 +1,5 @@
 import React from 'react'
+import { useLocation } from 'react-router-dom'
 
 import { useInstanceInfo } from 'cozy-client'
 import { makeDiskInfos } from 'cozy-client/dist/models/instance'
@@ -8,12 +9,15 @@ import { usePushBannerContext } from './PushBannerProvider'
 import QuotaBanner from './QuotaBanner'
 import BannerClient from '../../components/pushClient/Banner'
 
+import { SHARINGS_VIEW_ROUTE } from '@/constants/config'
+
 /**
  * Component to manage all banner display logic
  */
 const PushBanner = () => {
   const { bannerDismissed } = usePushBannerContext()
   const { isLoaded, diskUsage } = useInstanceInfo()
+  const { pathname } = useLocation()
 
   if (!isLoaded) return null
 
@@ -26,7 +30,7 @@ const PushBanner = () => {
     return <QuotaBanner />
   }
 
-  if (!isFlagshipApp()) {
+  if (!isFlagshipApp() && !pathname.startsWith(SHARINGS_VIEW_ROUTE)) {
     return <BannerClient />
   }
 

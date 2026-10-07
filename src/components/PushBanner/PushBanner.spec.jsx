@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import React from 'react'
+import { MemoryRouter } from 'react-router-dom'
 
 import { useInstanceInfo } from 'cozy-client'
 import { makeDiskInfos } from 'cozy-client/dist/models/instance'
@@ -7,6 +8,8 @@ import { isFlagshipApp } from 'cozy-device-helper'
 
 import PushBanner from '.'
 import { usePushBannerContext } from './PushBannerProvider'
+
+import { ROUTER_FUTURE_FLAGS } from '@/constants/config'
 
 jest.mock('./QuotaBanner', () => () => <div>QuotaBanner</div>)
 
@@ -33,8 +36,16 @@ jest.mock('cozy-device-helper', () => ({
   isFlagshipApp: jest.fn(() => false)
 }))
 
+function renderAt(pathname = '/folder') {
+  return render(
+    <MemoryRouter future={ROUTER_FUTURE_FLAGS} initialEntries={[pathname]}>
+      <PushBanner />
+    </MemoryRouter>
+  )
+}
+
 describe('PushBanner', () => {
-  const setup = (percentUsage = 50, dismissed = false) => {
+  const setup = (percentUsage = 50, dismissed = false, pathname) => {
     usePushBannerContext.mockReturnValue({
       bannerDismissed: {
         quota: dismissed
@@ -43,7 +54,7 @@ describe('PushBanner', () => {
     makeDiskInfos.mockReturnValue({
       percentUsage
     })
-    return render(<PushBanner />)
+    return renderAt(pathname)
   }
 
   describe('QuotaBanner', () => {
@@ -69,6 +80,18 @@ describe('PushBanner', () => {
       expect(screen.findByText('QuotaBanner')).toBeDefined()
     })
 
+    it('should hide client banner on sharings pages', () => {
+      isFlagshipApp.mockReturnValue(false)
+      setup(50, false, '/sharings/with-me/folder/folder-id')
+      expect(screen.queryByText('BannerClient')).toBe(null)
+    })
+
+    it('should keep the quota banner on sharings pages', () => {
+      isFlagshipApp.mockReturnValue(false)
+      setup(80, false, '/sharings/with-me')
+      expect(screen.queryByText('QuotaBanner')).toBeInTheDocument()
+    })
+
     it('should hide client banner on flagship app', () => {
       isFlagshipApp.mockReturnValue(true)
       const { container } = setup()
@@ -80,7 +103,7 @@ describe('PushBanner', () => {
     useInstanceInfo.mockReturnValue({
       isLoaded: false
     })
-    const { container } = render(<PushBanner />)
+    const { container } = renderAt()
     expect(container).toBeEmptyDOMElement()
   })
 })
