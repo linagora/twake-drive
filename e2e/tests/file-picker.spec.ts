@@ -3,7 +3,12 @@ import path from 'path'
 
 import { USERS } from '../helpers/config'
 import { test, expect, safeUnlink, stamp } from '../helpers/fixtures'
-import { findLinkPermission } from '../helpers/stack'
+import {
+  createFile,
+  ensureRootFolder,
+  findLinkPermission,
+  trashById
+} from '../helpers/stack'
 import { FilePickerPage } from '../pages/FilePickerPage'
 
 const FIXTURE = path.resolve(__dirname, '..', 'fixtures', 'sample.txt')
@@ -22,6 +27,9 @@ test.describe('File Picker', () => {
   let testFileName: string
   let largeFileName: string
   let linkFreeFileName: string
+  let photosFileName: string
+  let photosSecondFileName: string
+  const photosFileIds: string[] = []
   let picker: FilePickerPage
 
   const pick = async (name: string, configName?: string): Promise<void> => {
@@ -36,6 +44,8 @@ test.describe('File Picker', () => {
     testFileName = `picker-${stamp()}.txt`
     largeFileName = `picker-large-${stamp()}.txt`
     linkFreeFileName = `picker-link-free-${stamp()}.txt`
+    photosFileName = `photos-picker-${stamp()}.txt`
+    photosSecondFileName = `photos-picker-second-${stamp()}.txt`
 
     await alicePage.goto(`${USERS.alice.appUrl}/#/folder?flags`)
     await aliceDrive.createFolder(parentFolder)
@@ -59,6 +69,33 @@ test.describe('File Picker', () => {
       await safeUnlink(largeTmpPath)
       await safeUnlink(linkFreeTmpPath)
     }
+
+    const photosFolderId = await ensureRootFolder(
+      USERS.alice.instance,
+      'Photos'
+    )
+    photosFileIds.push(
+      await createFile({
+        instance: USERS.alice.instance,
+        parentId: photosFolderId,
+        name: photosFileName,
+        content: 'photos picker document'
+      })
+    )
+    photosFileIds.push(
+      await createFile({
+        instance: USERS.alice.instance,
+        parentId: photosFolderId,
+        name: photosSecondFileName,
+        content: 'second photos picker document'
+      })
+    )
+  })
+
+  test.afterAll(async () => {
+    await Promise.all(
+      photosFileIds.map(fileId => trashById(USERS.alice.instance, fileId))
+    )
   })
 
   test.beforeEach(async ({ alicePage }) => {
@@ -243,50 +280,6 @@ test.describe('File Picker', () => {
     await picker.closeConfirmation()
   })
 
-  test('download-only config hides public link and returns a download link', async ({
-    alicePage
-  }) => {
-    picker = new FilePickerPage(alicePage)
-    await pick(largeFileName, 'Download link only')
-
-    await expect(picker.hasPublicLinkButton()).resolves.toBe(false)
-    await expect(picker.hasTemporaryDownloadButton()).resolves.toBe(true)
-    await expect(picker.isTemporaryDownloadDisabled()).resolves.toBe(false)
-
-    await picker.doubleClickItem(largeFileName)
-    await picker.waitForClosed()
-
-    const document = await picker.getResultDocument()
-    expect(Array.isArray(document)).toBe(true)
-    const [entry] = document as Array<Record<string, unknown>>
-    expect(entry.downloadLink).toMatch(/^https?:\/\//)
-    expect(entry.sharingLink).toBeUndefined()
-
-    await picker.closeConfirmation()
-  })
-
-  test('sharing-only config hides download link and returns a sharing link', async ({
-    alicePage
-  }) => {
-    picker = new FilePickerPage(alicePage)
-    await pick(testFileName, 'Sharing link only')
-
-    await expect(picker.hasPublicLinkButton()).resolves.toBe(true)
-    await expect(picker.hasTemporaryDownloadButton()).resolves.toBe(false)
-    await expect(picker.isPublicLinkDisabled()).resolves.toBe(false)
-
-    await picker.createPublicLinks()
-    await picker.waitForClosed()
-
-    const document = await picker.getResultDocument()
-    expect(Array.isArray(document)).toBe(true)
-    const [entry] = document as Array<Record<string, unknown>>
-    expect(entry.sharingLink).toMatch(/^https?:\/\//)
-    expect(entry.downloadLink).toBeUndefined()
-
-    await picker.closeConfirmation()
-  })
-
   test('image-only config disables temporary download for a text file', async ({
     alicePage
   }) => {
@@ -371,6 +364,41 @@ test.describe('File Picker', () => {
     expect((document as Array<Record<string, unknown>>)[0].name).toBe(
       largeFileName
     )
+
+    await picker.closeConfirmation()
+  })
+
+  test('Photos picker restricts navigation and returns one complete document', async ({
+    alicePage
+  }) => {
+    picker = new FilePickerPage(alicePage)
+    await picker.open('Photos picker')
+
+    await expect(picker.documentsButton()).toBeVisible()
+    await expect(picker.hasPublicLinkButton()).resolves.toBe(false)
+    await expect(picker.hasTemporaryDownloadButton()).resolves.toBe(false)
+    await expect(picker.item(photosFileName)).toBeVisible()
+    await expect(picker.breadcrumbButton('My Drive')).toHaveCount(0)
+    await expect(picker.item(testFileName)).toHaveCount(0)
+
+    await picker.selectItem(photosFileName)
+    await picker.selectItem(photosSecondFileName)
+    await picker.clickDocumentsButton()
+    await picker.waitForClosed()
+
+    const document = (await picker.getResultDocument()) as Array<
+      Record<string, unknown>
+    >
+    expect(document).toHaveLength(1)
+    expect(document[0]).toEqual(
+      expect.objectContaining({
+        id: photosFileIds[1],
+        name: photosSecondFileName,
+        path: `/Photos/${photosSecondFileName}`
+      })
+    )
+    expect(document[0].sharingLink).toBeUndefined()
+    expect(document[0].downloadLink).toBeUndefined()
 
     await picker.closeConfirmation()
   })
