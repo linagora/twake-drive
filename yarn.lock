@@ -2163,14 +2163,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@linagora/twake-icons@npm:^2.10.0":
-  version: 2.10.0
-  resolution: "@linagora/twake-icons@npm:2.10.0"
+"@linagora/twake-icons@npm:^2.13.1":
+  version: 2.13.1
+  resolution: "@linagora/twake-icons@npm:2.13.1"
   dependencies:
     mime: "npm:4.1.0"
   peerDependencies:
-    react: ^18
-  checksum: 10/33ad04d9cfe60dc47f6d3db0f114068cef4a10ea539d6ba3e3434bfa68874cc22a37ad7d2aad734b682700945aecb9d951e47addca26390c09e472a12084ec92
+    react: ^18 || ^19
+  checksum: 10/e847e7bd623ff04d8e920b82d3871e361b99967ed213306f9c7273f5cbbdacf51b7896024647056b5160bab8f06c7f9ae8529f845cc86f02e4ad2656e0bf9738
   languageName: node
   linkType: hard
 
@@ -8190,7 +8190,7 @@ __metadata:
     "@embedpdf/pdfium": "npm:2.14.3"
     "@embedpdf/react-pdf-viewer": "npm:2.14.3"
     "@excalidraw/excalidraw": "npm:0.18.1"
-    "@linagora/twake-icons": "npm:^2.10.0"
+    "@linagora/twake-icons": "npm:^2.13.1"
     "@playwright/test": "npm:^1.58.2"
     "@rsbuild/core": "npm:^2.2.7"
     "@sentry/react": "npm:7.120.4"
