@@ -8238,6 +8238,7 @@ __metadata:
     diacritics: "npm:1.3.0"
     eslint: "npm:10.0.2"
     eslint-config-cozy-app: "npm:7.0.0"
+    fflate: "npm:^0.8.3"
     filesize: "npm:10.1.6"
     identity-obj-proxy: "npm:3.0.0"
     jest: "npm:^30.0.0"
@@ -10558,6 +10559,13 @@ __metadata:
   dependencies:
     tough-cookie: "npm:^2.3.3 || ^3.0.1 || ^4.0.0"
   checksum: 10/0d2082cb7de34c1e566a7c22ab844c6e9e6a8f8c9c1bc7a62382931b4bb99f0ff6c00324ec00874728c57cfd0c655c6fde62badcae019f2e5bb220c5726fdd17
+  languageName: node
+  linkType: hard
+
+"fflate@npm:^0.8.3":
+  version: 0.8.3
+  resolution: "fflate@npm:0.8.3"
+  checksum: 10/6ebf528dc9c56e78e715eac615b009b25dc33e15c1920b11ebba44e6d76181c647756a81a23e19247907496b93aa99928514c53090579a65109e026ac2824aa7
   languageName: node
   linkType: hard
 

@@ -113,6 +113,7 @@
     "cozy-viewer": "^31.1.4",
     "date-fns": "2.30.0",
     "diacritics": "1.3.0",
+    "fflate": "^0.8.3",
     "filesize": "10.1.6",
     "localforage": "1.10.0",
     "lodash": "4.18.1",
