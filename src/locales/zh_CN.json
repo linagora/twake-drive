@@ -125,5 +125,11 @@
       "recents": "最近使用",
       "chooseCustomIcon": "选择自定义图标"
     }
+  },
+  "SharingInvitations": {
+    "text": "%{owner} 与您共享了“%{name}”",
+    "accept": "接受",
+    "decline": "拒绝",
+    "close": "关闭"
   }
 }

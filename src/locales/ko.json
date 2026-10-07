@@ -122,5 +122,11 @@
       "recents": "최근 항목",
       "chooseCustomIcon": "사용자 지정 아이콘 선택"
     }
+  },
+  "SharingInvitations": {
+    "text": "%{owner}님이 \"%{name}\"을(를) 공유했습니다",
+    "accept": "수락",
+    "decline": "거절",
+    "close": "닫기"
   }
 }

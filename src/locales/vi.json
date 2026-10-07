@@ -697,6 +697,12 @@
     "cancel": "Hủy thay đổi",
     "error": "Đã xảy ra lỗi, vui lòng thử lại."
   },
+  "SharingInvitations": {
+    "text": "%{owner} đã chia sẻ \"%{name}\" với bạn",
+    "accept": "Chấp nhận",
+    "decline": "Từ chối",
+    "close": "Đóng"
+  },
   "TrashedBanner": {
     "text": "Mục này đang nằm trong thùng rác",
     "destroy": "Xóa vĩnh viễn",

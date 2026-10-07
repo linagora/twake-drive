@@ -122,5 +122,11 @@
       "recents": "Ostatnie",
       "chooseCustomIcon": "Wybierz niestandardową ikonę"
     }
+  },
+  "SharingInvitations": {
+    "text": "%{owner} udostępnia Ci „%{name}”",
+    "accept": "Akceptuj",
+    "decline": "Odrzuć",
+    "close": "Zamknij"
   }
 }

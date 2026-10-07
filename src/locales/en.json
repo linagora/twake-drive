@@ -697,6 +697,12 @@
     "cancel": "Undo changes",
     "error": "An error occurred, please try again."
   },
+  "SharingInvitations": {
+    "text": "%{owner} shared “%{name}” with you",
+    "accept": "Accept",
+    "decline": "Decline",
+    "close": "Close"
+  },
   "TrashedBanner": {
     "text": "The item is in your trash",
     "destroy": "Delete permanently",

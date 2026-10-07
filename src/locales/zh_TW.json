@@ -212,5 +212,11 @@
       "recents": "最近使用",
       "chooseCustomIcon": "選擇自訂圖示"
     }
+  },
+  "SharingInvitations": {
+    "text": "%{owner} 與您共用了「%{name}」",
+    "accept": "接受",
+    "decline": "拒絕",
+    "close": "關閉"
   }
 }

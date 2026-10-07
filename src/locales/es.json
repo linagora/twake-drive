@@ -697,6 +697,12 @@
     "cancel": "Deshacer los cambios",
     "error": "Se ha producido un error. Inténtelo de nuevo."
   },
+  "SharingInvitations": {
+    "text": "%{owner} ha compartido «%{name}» con usted",
+    "accept": "Aceptar",
+    "decline": "Rechazar",
+    "close": "Cerrar"
+  },
   "TrashedBanner": {
     "text": "El elemento está en su papelera",
     "destroy": "Eliminar definitivamente",
