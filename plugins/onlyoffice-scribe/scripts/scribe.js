@@ -12,6 +12,10 @@ const host = window.parent.parent
 // Time for a selection to settle before it is read: a selection made with
 // the mouse or the keyboard changes many times
 const SELECTION_DELAY = 400
+// A selection is read with callCommand, which empties the redo of the editor.
+// An undo or a redo changes the selection: none is read for this time after
+// one, long enough for the throttled timers of a background frame.
+const UNDO_REDO_PAUSE = 3000
 // The paragraphs of the last answer written in a presentation
 let written = null
 // The origin of the app, known once it has asked for the text
@@ -20,6 +24,7 @@ let hostOrigin = null
 let lastContent = null
 let isWriting = false
 let selectionTimer = null
+let pausedUntil = 0
 let isStarted = false
 
 function runInEditor(command, { scope = {}, isRecalculated = false } = {}) {
@@ -90,7 +95,7 @@ async function sendContent(origin) {
 // A cursor that moves, or the text of an answer just written, is not another
 // text.
 async function sendSelection() {
-  if (!hostOrigin || isWriting) return
+  if (!hostOrigin || isWriting || Date.now() < pausedUntil) return
   const selectedText = await fetchSelectedText()
   if (!selectedText || selectedText.trim() === '') return
 
@@ -107,6 +112,35 @@ async function sendSelection() {
 function handleSelectionChange() {
   clearTimeout(selectionTimer)
   selectionTimer = setTimeout(sendSelection, SELECTION_DELAY)
+}
+
+// A read already planned would come after the undo or the redo: it is dropped
+function pauseSelection() {
+  pausedUntil = Date.now() + UNDO_REDO_PAUSE
+  clearTimeout(selectionTimer)
+}
+
+// Ctrl+Z undoes, Ctrl+Y and Ctrl+Shift+Z redo (Cmd on a Mac)
+function handleUndoRedoKey(event) {
+  if (!event.ctrlKey && !event.metaKey) return
+  if (['z', 'y'].includes(event.key?.toLowerCase())) pauseSelection()
+}
+
+function handleUndoRedoClick(event) {
+  if (event.target?.closest?.('[id*="btn-undo"], [id*="btn-redo"]')) {
+    pauseSelection()
+  }
+}
+
+// The frame of the plugin has the origin of the editor: it hears the keys of
+// the editor and the clicks on its toolbar
+function watchUndoRedo() {
+  try {
+    window.parent.document.addEventListener('keydown', handleUndoRedoKey, true)
+    window.parent.document.addEventListener('click', handleUndoRedoClick, true)
+  } catch {
+    document.addEventListener('keydown', handleUndoRedoKey, true)
+  }
 }
 
 async function writeAnswer({ answerAction, text }) {
@@ -182,6 +216,7 @@ window.Asc.plugin.init = () => {
   }
   isStarted = true
   window.addEventListener('message', handleMessage)
+  watchUndoRedo()
   // The app is not known yet: this first message holds nothing of the document
   host.postMessage({ type: 'twake-scribe:ready' }, '*')
 }
