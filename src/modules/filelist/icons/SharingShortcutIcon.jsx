@@ -14,8 +14,7 @@ const SharingShortcutIcon = ({ file, size }) => {
   const targetMimeType = getSharingShortcutTargetMime(file)
   const targetDoctype = getSharingShortcutTargetDoctype(file)
   const isShortcut = targetMimeType === 'application/internet-shortcut'
-  const targetIsDirectory =
-    targetMimeType === '' && targetDoctype === DOCTYPE_FILES
+  const targetIsDirectory = !targetMimeType && targetDoctype === DOCTYPE_FILES
 
   return isShortcut ? (
     <FileIconShortcut file={file} size={size} />
