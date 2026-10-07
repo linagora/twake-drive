@@ -15,6 +15,9 @@ jest.mock('cozy-flags', () => jest.fn())
 jest.mock('@/components/PushBanner', () => () => (
   <div data-testid="push-banner" />
 ))
+jest.mock('@/modules/views/Sharings/SharingInvitations', () => () => (
+  <div data-testid="sharing-invitations" />
+))
 jest.mock('@/components/Migration/MigrationProgressBanner', () => ({
   MigrationProgressBanner: () => <div data-testid="migration-banner" />
 }))
@@ -38,6 +41,23 @@ describe('Main', () => {
     render(<Main isPublic={false}>{[]}</Main>)
 
     expect(screen.queryByTestId('push-banner')).not.toBeNull()
+  })
+
+  it('mounts the sharing invitations below the push banner', () => {
+    render(<Main isPublic={false}>{[]}</Main>)
+
+    const pushBanner = screen.getByTestId('push-banner')
+    const invitations = screen.getByTestId('sharing-invitations')
+    expect(
+      pushBanner.compareDocumentPosition(invitations) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy()
+  })
+
+  it('does not mount the sharing invitations on the public route', () => {
+    render(<Main isPublic>{[]}</Main>)
+
+    expect(screen.queryByTestId('sharing-invitations')).toBe(null)
   })
 
   it('does not mount the migration banner when the flag is off', () => {

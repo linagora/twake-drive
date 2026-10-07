@@ -8,6 +8,7 @@ import { Main as MainUI } from 'cozy-ui/transpiled/react/Layout'
 import { MigrationProgressBanner } from '@/components/Migration/MigrationProgressBanner'
 import PushBanner from '@/components/PushBanner'
 import { NEXTCLOUD_MIGRATIONS_DOCTYPE } from '@/lib/doctypes'
+import SharingInvitations from '@/modules/views/Sharings/SharingInvitations'
 
 const Main = ({ children, isPublic = false }) => (
   <MainUI>
@@ -20,6 +21,7 @@ const Main = ({ children, isPublic = false }) => (
             <MigrationProgressBanner />
           </>
         )}
+        <SharingInvitations />
       </>
     )}
     {children}
