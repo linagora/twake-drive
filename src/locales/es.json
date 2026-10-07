@@ -626,6 +626,19 @@
     },
     "actions": {
       "validate": "Validar"
+    },
+    "scribe": {
+      "open": "Ayuda para redactar",
+      "close": "Cerrar",
+      "insert": "Insertar",
+      "replace": "Reemplazar",
+      "insertSlide": "Insertar la diapositiva",
+      "suggestions": {
+        "newSlide": "Nueva diapositiva",
+        "newSlideMessage": "Añade una nueva diapositiva después de esta, sobre el texto",
+        "table": "Hacer una tabla",
+        "tableMessage": "Presenta el texto en forma de tabla"
+      }
     }
   },
   "Migration": {

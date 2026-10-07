@@ -2,6 +2,21 @@
   "Excalidraw": {
     "createFileName": "رسم جديد"
   },
+  "OnlyOffice": {
+    "scribe": {
+      "open": "مساعدة في الكتابة",
+      "close": "إغلاق",
+      "insert": "إدراج",
+      "replace": "استبدال",
+      "insertSlide": "إدراج الشريحة",
+      "suggestions": {
+        "newSlide": "شريحة جديدة",
+        "newSlideMessage": "أضف شريحة جديدة بعد هذه الشريحة، حول النص",
+        "table": "إنشاء جدول",
+        "tableMessage": "اعرض النص على شكل جدول"
+      }
+    }
+  },
   "Nav": {
     "item_drive": "القرص",
     "item_recent": "الحديثة",

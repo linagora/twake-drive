@@ -2,6 +2,21 @@
   "Excalidraw": {
     "createFileName": "新しい描画"
   },
+  "OnlyOffice": {
+    "scribe": {
+      "open": "文章作成を支援",
+      "close": "閉じる",
+      "insert": "挿入",
+      "replace": "置換",
+      "insertSlide": "スライドを挿入",
+      "suggestions": {
+        "newSlide": "新しいスライド",
+        "newSlideMessage": "このスライドの後に、テキストについての新しいスライドを追加して",
+        "table": "表を作成",
+        "tableMessage": "テキストを表にまとめて"
+      }
+    }
+  },
   "Nav": {
     "item_drive": "ドライブ",
     "item_recent": "最近使用したファイル",

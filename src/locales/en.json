@@ -626,6 +626,19 @@
     },
     "actions": {
       "validate": "Validate"
+    },
+    "scribe": {
+      "open": "Help me write",
+      "close": "Close",
+      "insert": "Insert",
+      "replace": "Replace",
+      "insertSlide": "Insert the slide",
+      "suggestions": {
+        "newSlide": "New slide",
+        "newSlideMessage": "Add a new slide after this one, about the text",
+        "table": "Make a table",
+        "tableMessage": "Present the text as a table"
+      }
     }
   },
   "Migration": {

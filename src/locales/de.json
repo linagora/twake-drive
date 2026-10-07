@@ -626,6 +626,19 @@
     },
     "actions": {
       "validate": "Bestätigen"
+    },
+    "scribe": {
+      "open": "Schreibhilfe",
+      "close": "Schließen",
+      "insert": "Einfügen",
+      "replace": "Ersetzen",
+      "insertSlide": "Folie einfügen",
+      "suggestions": {
+        "newSlide": "Neue Folie",
+        "newSlideMessage": "Füge nach dieser Folie eine neue Folie zum Text hinzu",
+        "table": "Tabelle erstellen",
+        "tableMessage": "Stelle den Text als Tabelle dar"
+      }
     }
   },
   "Migration": {

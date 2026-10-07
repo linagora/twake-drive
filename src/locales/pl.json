@@ -2,6 +2,21 @@
   "Excalidraw": {
     "createFileName": "Nowy rysunek"
   },
+  "OnlyOffice": {
+    "scribe": {
+      "open": "Pomoc w pisaniu",
+      "close": "Zamknij",
+      "insert": "Wstaw",
+      "replace": "Zastąp",
+      "insertSlide": "Wstaw slajd",
+      "suggestions": {
+        "newSlide": "Nowy slajd",
+        "newSlideMessage": "Dodaj nowy slajd po tym, na temat tekstu",
+        "table": "Utwórz tabelę",
+        "tableMessage": "Przedstaw tekst w formie tabeli"
+      }
+    }
+  },
   "Nav": {
     "item_drive": "Dysk",
     "item_recent": "Bieżące",
