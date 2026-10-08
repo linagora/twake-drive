@@ -1,9 +1,12 @@
 import { connectToTwakeSpace, embedRoute } from '@linagora/twake-embed'
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Navigate, Outlet, useNavigate, useParams } from 'react-router-dom'
 
 import { hasQueryBeenLoaded, useQuery } from 'cozy-client'
 import { Layout as LayoutUI } from 'cozy-ui/transpiled/react/Layout'
+import { ThemeProvider } from 'cozy-ui/transpiled/react/styles'
+
+import { connectSpaceOverlay } from './connectSpaceOverlay'
 
 import FilesRealTimeQueries from '@/components/FilesRealTimeQueries'
 import FileListRowsPlaceholder from '@/modules/filelist/FileListRowsPlaceholder'
@@ -31,7 +34,22 @@ const reportSpaceFiles = (driveId, count) => {
   space.reportMetadata(filesMetadata())
 }
 
+const reportOverlayRegion = region => space?.reportOverlayRegion(region)
+
+const makeOverlayTheme = overlay => outerTheme => {
+  const container = () => overlay.getBody()
+  return {
+    ...outerTheme,
+    props: {
+      ...outerTheme.props,
+      MuiDialog: { ...outerTheme.props?.MuiDialog, container },
+      MuiDrawer: { ...outerTheme.props?.MuiDrawer, container }
+    }
+  }
+}
+
 const useTwakeSpace = () => {
+  const [overlay] = useState(() => connectSpaceOverlay(reportOverlayRegion))
   const navigate = useNavigate()
   const navigateRef = useRef(navigate)
   useEffect(() => {
@@ -57,12 +75,18 @@ const useTwakeSpace = () => {
       space = null
     }
   }, [])
+
+  return overlay
 }
 
 const SpaceLayout = () => {
-  useTwakeSpace()
+  const overlay = useTwakeSpace()
+  const overlayTheme = useMemo(
+    () => (overlay ? makeOverlayTheme(overlay) : null),
+    [overlay]
+  )
 
-  return (
+  const layout = (
     <LayoutUI monoColumn>
       <NewItemHighlightProvider>
         <UploadQueue />
@@ -73,6 +97,9 @@ const SpaceLayout = () => {
       </NewItemHighlightProvider>
     </LayoutUI>
   )
+
+  if (!overlayTheme) return layout
+  return <ThemeProvider theme={overlayTheme}>{layout}</ThemeProvider>
 }
 
 const SpaceRootRedirect = () => {

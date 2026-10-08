@@ -62,6 +62,10 @@ config.environments = {
           from: 'src/assets/favicons',
           to: 'favicons'
         },
+        {
+          from: 'src/assets/embed',
+          to: 'embed'
+        },
         // Self-host the Excalidraw fonts (the default unpkg CDN is blocked by
         // our CSP). Since 0.18 the library fetches them at runtime from
         // `${EXCALIDRAW_ASSET_PATH}fonts/...`; the asset path is set to
