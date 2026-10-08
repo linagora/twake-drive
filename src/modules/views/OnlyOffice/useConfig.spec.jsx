@@ -2,6 +2,7 @@ import { renderHook, waitFor } from '@testing-library/react'
 
 import { useClient } from 'cozy-client'
 import useFetchJSON from 'cozy-client/dist/hooks/useFetchJSON'
+import flag from 'cozy-flags'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import { officeDoc } from 'test/data'
@@ -141,6 +142,28 @@ describe('useConfig', () => {
           callbackUrl: officeDoc.attributes.onlyoffice.editor.callbackUrl
         })
       })
+    )
+  })
+
+  it('leaves out the AI plugin of OnlyOffice when the assistant of Twake is on', async () => {
+    flag.mockImplementation(name => name === 'cozy.assistant.enabled')
+    const { result } = setup()
+
+    await waitFor(() => expect(result.current.config).toBeDefined())
+
+    expect(result.current.config.docEditorConfig.editorConfig.plugins).toEqual({
+      disable: ['asc.{9DC93CDB-B576-4F0C-B55E-FCC9C48DD007}']
+    })
+  })
+
+  it('keeps the AI plugin of OnlyOffice without the assistant of Twake', async () => {
+    flag.mockReturnValue(false)
+    const { result } = setup()
+
+    await waitFor(() => expect(result.current.config).toBeDefined())
+
+    expect(result.current.config.docEditorConfig.editorConfig.plugins).toBe(
+      undefined
     )
   })
 

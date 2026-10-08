@@ -24,6 +24,7 @@ Drive (OnlyOffice view)
 ## For the user
 
 - The AI button is in the toolbar of the document, for a text document or a presentation the user can edit.
+- With the flag `cozy.assistant.enabled`, the editor has no AI tab of its own: Drive leaves out the AI plugin of OnlyOffice (`editorConfig.plugins.disable`), which would sit beside the assistant.
 - A click opens the assistant in a panel beside the document. Another click, or the cross of the panel, closes it.
 - With a selection, the assistant works on the selected text, and each answer can be inserted under it or can replace it. An answer is text: a selection that holds an image, a chart, an equation, a footnote, a field, a form or a comment, or that crosses a table, can only have the answers inserted under it.
 - Without a selection, the assistant works on the whole document, and each answer can be inserted under the paragraph of the cursor. Nothing replaces a whole document.
