@@ -89,7 +89,6 @@
     },
     "scribe": {
       "open": "글쓰기 도우미",
-      "close": "닫기",
       "insert": "삽입",
       "replace": "바꾸기",
       "insertSlide": "슬라이드 삽입",

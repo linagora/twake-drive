@@ -629,7 +629,6 @@
     },
     "scribe": {
       "open": "Ayuda para redactar",
-      "close": "Cerrar",
       "insert": "Insertar",
       "replace": "Reemplazar",
       "insertSlide": "Insertar la diapositiva",

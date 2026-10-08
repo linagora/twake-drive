@@ -629,7 +629,6 @@
     },
     "scribe": {
       "open": "Trợ giúp soạn thảo",
-      "close": "Đóng",
       "insert": "Chèn",
       "replace": "Thay thế",
       "insertSlide": "Chèn trang chiếu",

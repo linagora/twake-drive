@@ -629,7 +629,6 @@
     },
     "scribe": {
       "open": "Schreibhilfe",
-      "close": "Schließen",
       "insert": "Einfügen",
       "replace": "Ersetzen",
       "insertSlide": "Folie einfügen",

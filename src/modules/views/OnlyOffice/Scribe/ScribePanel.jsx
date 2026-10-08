@@ -1,7 +1,5 @@
-import { CrossSmall, Icon } from '@linagora/twake-icons'
 import React from 'react'
 
-import IconButton from 'cozy-ui/transpiled/react/IconButton'
 import IntentIframe from 'cozy-ui-plus/dist/Intent/IntentIframe'
 import { useCozyTheme } from 'cozy-ui-plus/dist/providers/CozyTheme'
 import { useI18n } from 'twake-i18n'
@@ -54,15 +52,6 @@ export const ScribePanel = () => {
       className={styles['scribe-panel']}
       aria-label={t('OnlyOffice.scribe.open')}
     >
-      <div className={styles['scribe-close']}>
-        <IconButton
-          size="small"
-          aria-label={t('OnlyOffice.scribe.close')}
-          onClick={close}
-        >
-          <Icon icon={CrossSmall} />
-        </IconButton>
-      </div>
       <IntentIframe
         action="OPEN"
         type="io.cozy.ai.chat.conversations"
