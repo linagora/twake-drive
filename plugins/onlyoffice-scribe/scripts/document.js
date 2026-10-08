@@ -234,7 +234,11 @@ export function writeBlocks() {
   function getText(element) {
     return element.GetText({ Numbering: false, ParaSeparator: '\n' })
   }
-  const selection = doc.GetRangeBySelect()
+  // A cursor is no selection: once the document has been read, the editor
+  // gives for it an empty range in the first cell of its table
+  const range = doc.GetRangeBySelect()
+  const selection =
+    range && range.GetStartPos() < range.GetEndPos() ? range : null
   const paragraphs = selection?.GetAllParagraphs() ?? []
   // The look of the new text, once its place is known
   let textPr = null
