@@ -1,0 +1,91 @@
+{
+  "document": "table-image.docx",
+  "cases": [
+    {
+      "id": "T9",
+      "selection": "T1.full",
+      "answerAction": "insert",
+      "answer": "<table>\n  <tr><td>![](image1.png)</td><td>BetaI</td></tr>\n  <tr><td>GammaI</td><td>DeltaI</td></tr>\n</table>",
+      "expected": {
+        "content": {
+          "content": "<table>\n  <tr>\n   <td>\n\n![](image1.png)\n\n</td>\n   <td>\n\nBeta\n\n</td>\n  </tr>\n  <tr>\n   <td>\n\nGamma\n\n</td>\n   <td>\n\nDelta\n\n</td>\n  </tr>\n</table>\n\n",
+          "target": "selection",
+          "canReplace": false
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[],"images":1}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
+                [{"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Delta"}]}]}]
+              ]
+            },
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[]}]},{"blocks":[{"type":"p","runs":[{"t":"BetaI"}]}]}],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"GammaI"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"DeltaI"}]}]}
+                ]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "BetaI\nGammaIDeltaI\n",
+          "selMarkup": [
+            {"at":{"block":2,"cell":{"r":0,"c":0},"cellBlock":0},"text":""},
+            {"at":{"block":2,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«BetaI»"},
+            {"at":{"block":2,"cell":{"r":1,"c":0},"cellBlock":0},"text":"«GammaI»"},
+            {"at":{"block":2,"cell":{"r":1,"c":1},"cellBlock":0},"text":"«DeltaI»"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "T9",
+      "selection": "T1.full",
+      "answerAction": "replace",
+      "answer": "<table>\n  <tr><td>![](image1.png)</td><td>BetaX</td></tr>\n  <tr><td>GammaX</td><td>DeltaX</td></tr>\n</table>",
+      "expected": {
+        "content": {
+          "content": "<table>\n  <tr>\n   <td>\n\n![](image1.png)\n\n</td>\n   <td>\n\nBeta\n\n</td>\n  </tr>\n  <tr>\n   <td>\n\nGamma\n\n</td>\n   <td>\n\nDelta\n\n</td>\n  </tr>\n</table>\n\n",
+          "target": "selection",
+          "canReplace": false
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[],"images":1}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
+                [{"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Delta"}]}]}]
+              ]
+            },
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[]}]},{"blocks":[{"type":"p","runs":[{"t":"BetaX"}]}]}],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"GammaX"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"DeltaX"}]}]}
+                ]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "BetaX\nGammaXDeltaX\n",
+          "selMarkup": [
+            {"at":{"block":2,"cell":{"r":0,"c":0},"cellBlock":0},"text":""},
+            {"at":{"block":2,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«BetaX»"},
+            {"at":{"block":2,"cell":{"r":1,"c":0},"cellBlock":0},"text":"«GammaX»"},
+            {"at":{"block":2,"cell":{"r":1,"c":1},"cellBlock":0},"text":"«DeltaX»"}
+          ]
+        }
+      }
+    }
+  ]
+}

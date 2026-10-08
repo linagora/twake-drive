@@ -1,0 +1,45 @@
+{
+  "document": "breaks.docx",
+  "cases": [
+    {
+      "id": "page-break",
+      "selection": "P2@start..P2@start",
+      "answerAction": "insert",
+      "answer": "Under the page break.",
+      "expected": {
+        "content": {"content":"Before\n\n \\\n\n\nAfter\n\n","target":"document","canReplace":false},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Before"}]},
+            {"type":"p","runs":[],"pageBreaks":1},
+            {"type":"p","runs":[{"t":"Under the page break."}]},
+            {"type":"p","runs":[],"section":1},
+            {"type":"p","runs":[{"t":"After"}]}
+          ],
+          "selText": "Under the page break.",
+          "selMarkup": [{"at":{"block":2},"text":"«Under the page break.»"}]
+        }
+      }
+    },
+    {
+      "id": "section-break",
+      "selection": "P3@start..P3@start",
+      "answerAction": "insert",
+      "answer": "Under the end of the section.",
+      "expected": {
+        "content": {"content":"Before\n\n \\\n\n\nAfter\n\n","target":"document","canReplace":false},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Before"}]},
+            {"type":"p","runs":[],"pageBreaks":1},
+            {"type":"p","runs":[],"section":1},
+            {"type":"p","runs":[{"t":"Under the end of the section."}]},
+            {"type":"p","runs":[{"t":"After"}]}
+          ],
+          "selText": "Under the end of the section.",
+          "selMarkup": [{"at":{"block":3},"text":"«Under the end of the section.»"}]
+        }
+      }
+    }
+  ]
+}

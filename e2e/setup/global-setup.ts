@@ -307,6 +307,14 @@ export async function setupStack(portsConfig: E2EPortsConfig): Promise<void> {
     console.log('[e2e] Persistent mode — retaining this runtime and its data.')
   }
 
+  // Document Server mounts the folder: it must hold the plugin before it
+  // starts, and the plugin of this worktree when a persistent runtime is reused
+  console.log('[e2e] Building the scribe plugin of the Document Server...')
+  execFileSync('node', ['plugins/onlyoffice-scribe/build.mjs'], {
+    cwd: process.cwd(),
+    stdio: 'inherit'
+  })
+
   console.log('[e2e] Starting Docker containers...')
   compose(
     'up',

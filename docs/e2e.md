@@ -166,6 +166,16 @@ both the PDF frontend changes and a Stack image built from a revision that
 includes the PDF Office backend; `cozy/cozy-stack:latest` is not proof of PDF
 support.
 
+The Document Server has the scribe plugin of the worktree
+(`plugins/onlyoffice-scribe/build`, built by the global setup).
+`e2e/tests/onlyoffice-scribe.spec.ts` plays its selection cases on real
+documents, see `e2e/fixtures/scribe/README.md`. Its tests are tagged
+`@e2e-scribe`:
+
+```sh
+yarn e2e --grep @e2e-scribe --project=chromium
+```
+
 ## Debugging and reports
 
 ```sh

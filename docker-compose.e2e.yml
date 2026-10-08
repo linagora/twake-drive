@@ -44,6 +44,9 @@ services:
       JWT_ENABLED: "false"
       ALLOW_PRIVATE_IP_ADDRESS: "true"
       ALLOW_META_IP_ADDRESS: "false"
+    volumes:
+      # The scribe plugin of Drive, built by the global setup
+      - ./plugins/onlyoffice-scribe/build:/var/www/onlyoffice/documentserver/sdkjs-plugins/twake-scribe:ro
     networks:
       - office
     healthcheck:

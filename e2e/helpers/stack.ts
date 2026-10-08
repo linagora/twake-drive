@@ -117,15 +117,17 @@ interface FileRef {
   fileId: string
 }
 
-/** Create a text file at the root of the instance and return its id. */
+/** Create a file at the root of the instance, text by default, and return its id. */
 export async function createFile({
   instance,
   name,
-  content
+  content,
+  contentType = 'text/plain'
 }: {
   instance: string
   name: string
-  content: string
+  content: string | Uint8Array
+  contentType?: string
 }): Promise<string> {
   const res = await fetch(
     `http://${instance}/files/${ROOT_DIR_ID}?Type=file&Name=${encodeURIComponent(name)}`,
@@ -133,7 +135,7 @@ export async function createFile({
       method: 'POST',
       headers: {
         Authorization: `Bearer ${filesToken(instance)}`,
-        'Content-Type': 'text/plain'
+        'Content-Type': contentType
       },
       body: content
     }

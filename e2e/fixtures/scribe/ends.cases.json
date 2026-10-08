@@ -1,0 +1,138 @@
+{
+  "document": "ends.docx",
+  "cases": [
+    {
+      "id": "note-at-end",
+      "selection": "P1@start..P1@end",
+      "answerAction": "replace",
+      "answer": "The budget is voted by the board.\n\nIt starts in June.",
+      "expected": {
+        "content": {"content":"The budget is voted.\n\n","target":"selection","canReplace":false},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"The budget is voted."}],"notes":1},
+            {"type":"p","runs":[{"t":"The budget is voted by the board."}]},
+            {"type":"p","runs":[{"t":"It starts in June."}]},
+            {"type":"p","runs":[{"t":"The first part ends here."}],"section":1},
+            {"type":"p","runs":[{"t":"The second part starts here."}]},
+            {"type":"p","runs":[{"t":"Chapter one ends."},{"t":"Chapter two starts."}],"pageBreaks":1}
+          ],
+          "selText": "The budget is voted by the board.\nIt starts in June.",
+          "selMarkup": [
+            {"at":{"block":1},"text":"«The budget is voted by the board.»"},
+            {"at":{"block":2},"text":"«It starts in June.»"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "note-at-end-line",
+      "selection": "P1@start..P1@end",
+      "answerAction": "replace",
+      "answer": "The budget is voted by the board.",
+      "expected": {
+        "content": {"content":"The budget is voted.\n\n","target":"selection","canReplace":false},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"The budget is voted."}],"notes":1},
+            {"type":"p","runs":[{"t":"The budget is voted by the board."}]},
+            {"type":"p","runs":[{"t":"The first part ends here."}],"section":1},
+            {"type":"p","runs":[{"t":"The second part starts here."}]},
+            {"type":"p","runs":[{"t":"Chapter one ends."},{"t":"Chapter two starts."}],"pageBreaks":1}
+          ],
+          "selText": "The budget is voted by the board.",
+          "selMarkup": [{"at":{"block":1},"text":"«The budget is voted by the board.»"}]
+        }
+      }
+    },
+    {
+      "id": "note-after-text",
+      "selection": "P1@start..P1@20",
+      "answerAction": "replace",
+      "answer": "The budget is voted by the board.\n\nIt starts in June.",
+      "expected": {
+        "content": {"content":"The budget is voted.\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"The budget is voted by the board."}]},
+            {"type":"p","runs":[{"t":"It starts in June."}]},
+            {"type":"p","runs":[],"notes":1},
+            {"type":"p","runs":[{"t":"The first part ends here."}],"section":1},
+            {"type":"p","runs":[{"t":"The second part starts here."}]},
+            {"type":"p","runs":[{"t":"Chapter one ends."},{"t":"Chapter two starts."}],"pageBreaks":1}
+          ],
+          "selText": "The budget is voted by the board.\nIt starts in June.",
+          "selMarkup": [
+            {"at":{"block":0},"text":"«The budget is voted by the board.»"},
+            {"at":{"block":1},"text":"«It starts in June.»"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "section-end",
+      "selection": "P2@start..P2@end",
+      "answerAction": "replace",
+      "answer": "The first part ends.\n\nIt was short.",
+      "expected": {
+        "content": {"content":"The first part ends here.\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"The budget is voted."}],"notes":1},
+            {"type":"p","runs":[{"t":"The first part ends."}]},
+            {"type":"p","runs":[{"t":"It was short."}]},
+            {"type":"p","runs":[],"section":1},
+            {"type":"p","runs":[{"t":"The second part starts here."}]},
+            {"type":"p","runs":[{"t":"Chapter one ends."},{"t":"Chapter two starts."}],"pageBreaks":1}
+          ],
+          "selText": "The first part ends.\nIt was short.",
+          "selMarkup": [{"at":{"block":1},"text":"«The first part ends.»"},{"at":{"block":2},"text":"«It was short.»"}]
+        }
+      }
+    },
+    {
+      "id": "across-section",
+      "selection": "P2@start..P3@end",
+      "answerAction": "replace",
+      "answer": "Both parts in one.",
+      "expected": {
+        "content": {
+          "content": "The first part ends here.\n\nThe second part starts here.\n\n",
+          "target": "selection",
+          "canReplace": false
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"The budget is voted."}],"notes":1},
+            {"type":"p","runs":[{"t":"The first part ends here."}],"section":1},
+            {"type":"p","runs":[{"t":"The second part starts here."}]},
+            {"type":"p","runs":[{"t":"Both parts in one."}]},
+            {"type":"p","runs":[{"t":"Chapter one ends."},{"t":"Chapter two starts."}],"pageBreaks":1}
+          ],
+          "selText": "Both parts in one.",
+          "selMarkup": [{"at":{"block":3},"text":"«Both parts in one.»"}]
+        }
+      }
+    },
+    {
+      "id": "page-break-inside",
+      "selection": "P4@start..P4@end",
+      "answerAction": "replace",
+      "answer": "Chapter one ends, chapter two starts.",
+      "expected": {
+        "content": {"content":"Chapter one ends. \\\nChapter two starts.\n\n","target":"selection","canReplace":false},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"The budget is voted."}],"notes":1},
+            {"type":"p","runs":[{"t":"The first part ends here."}],"section":1},
+            {"type":"p","runs":[{"t":"The second part starts here."}]},
+            {"type":"p","runs":[{"t":"Chapter one ends."},{"t":"Chapter two starts."}],"pageBreaks":1},
+            {"type":"p","runs":[{"t":"Chapter one ends, chapter two starts."}]}
+          ],
+          "selText": "Chapter one ends, chapter two starts.",
+          "selMarkup": [{"at":{"block":4},"text":"«Chapter one ends, chapter two starts.»"}]
+        }
+      }
+    }
+  ]
+}

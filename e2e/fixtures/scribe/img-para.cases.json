@@ -1,0 +1,66 @@
+{
+  "document": "img-para.docx",
+  "cases": [
+    {
+      "id": "C1",
+      "selection": "P2@start..P2@end",
+      "answerAction": "insert",
+      "answer": "Extra ![](image1.png)",
+      "expected": {
+        "content": {"content":"Photo ![](image1.png)\n\n","target":"selection","canReplace":false},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {"type":"p","runs":[{"t":"Photo "}],"images":1},
+            {"type":"p","runs":[{"t":"Extra "}]},
+            {"type":"p","runs":[],"images":1},
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "Extra ",
+          "selMarkup": [{"at":{"block":2},"text":"«Extra »"}]
+        }
+      }
+    },
+    {
+      "id": "C1",
+      "selection": "P2@start..P2@end",
+      "answerAction": "replace",
+      "answer": "Caption ![](image1.png)",
+      "expected": {
+        "content": {"content":"Photo ![](image1.png)\n\n","target":"selection","canReplace":false},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {"type":"p","runs":[{"t":"Photo "}],"images":1},
+            {"type":"p","runs":[{"t":"Caption "}]},
+            {"type":"p","runs":[],"images":1},
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "Caption ",
+          "selMarkup": [{"at":{"block":2},"text":"«Caption »"}]
+        }
+      }
+    },
+    {
+      "id": "image-after-text",
+      "selection": "P2@start..P2@6",
+      "answerAction": "replace",
+      "answer": "A photo of the team.\n\nTaken in May.",
+      "expected": {
+        "content": {"content":"Photo \n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {"type":"p","runs":[{"t":"A photo of the team."}]},
+            {"type":"p","runs":[{"t":"Taken in May."}]},
+            {"type":"p","runs":[],"images":1},
+            {"type":"p","runs":[],"images":1},
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "A photo of the team.\nTaken in May.",
+          "selMarkup": [{"at":{"block":1},"text":"«A photo of the team.»"},{"at":{"block":2},"text":"«Taken in May.»"}]
+        }
+      }
+    }
+  ]
+}
