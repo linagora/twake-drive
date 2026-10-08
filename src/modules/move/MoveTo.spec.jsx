@@ -10,6 +10,7 @@ import { useI18n } from 'twake-i18n'
 
 import { MoveTo } from './MoveTo'
 import { getMoveDestinationDisabledReason } from './helpers'
+import { useMoveDestinationPicker } from './hooks/useMoveDestinationPicker'
 
 import { ROOT_DIR_ID } from '@/constants/config'
 import { useBreadcrumbPath } from '@/modules/breadcrumb/hooks/useBreadcrumbPath'
@@ -188,11 +189,23 @@ function DriveSelection() {
   )
 }
 
+function InlineDestinationPicker(props) {
+  const { content, actions } = useMoveDestinationPicker(props)
+  return (
+    <>
+      {content}
+      {actions}
+    </>
+  )
+}
+
+let PickerComponent
+
 function setup(props = {}) {
   return render(
     <SelectionProvider clearOnLocationChange={false}>
       <DriveSelection />
-      <MoveTo
+      <PickerComponent
         currentFolder={currentFolder}
         entries={[{ _id: 'file-id', dir_id: 'source-folder', name: 'File' }]}
         onConfirm={jest.fn()}
@@ -203,7 +216,13 @@ function setup(props = {}) {
   )
 }
 
-describe('MoveTo', () => {
+describe.each([
+  ['MoveTo dialog', MoveTo],
+  ['inline destination picker', InlineDestinationPicker]
+])('%s', (_name, Component) => {
+  beforeEach(() => {
+    PickerComponent = Component
+  })
   it('detects descendants by path segments instead of string prefixes', () => {
     const source = {
       _id: 'source',
