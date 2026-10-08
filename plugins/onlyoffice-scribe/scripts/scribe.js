@@ -128,6 +128,8 @@ async function sendSelection() {
   if (!hostOrigin || target !== 'selection' || content === lastContent) return
   lastContent = content
   lastSelectedText = selectedText
+  // The answer last written in a presentation is no more the selection
+  written = null
 
   host.postMessage(
     { type: 'twake-scribe:selection', content, target, canReplace },
@@ -232,10 +234,13 @@ async function handleMessage(event) {
   if (event.data?.type === 'twake-scribe:getContent') {
     await sendContent(event.origin)
   }
-  // The panel is closed: the selection is no more read
+  // The panel is closed: the selection is no more read, and the next panel
+  // starts on the text then selected, not on the answer last written in a
+  // presentation
   if (event.data?.type === 'twake-scribe:close') {
     contentRequest += 1
     hostOrigin = null
+    written = null
     clearTimeout(selectionTimer)
   }
   if (event.data?.type === 'twake-scribe:applyAnswer') {
