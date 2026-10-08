@@ -31,11 +31,11 @@ Drive (OnlyOffice view)
 
 ## For the user
 
-- The AI button is in the toolbar of the document, for a text document or a presentation the user can edit.
+- The AI button is in the toolbar of the document, for a text document, a presentation or a spreadsheet the user can edit.
 - With the flag `cozy.assistant.enabled`, the editor has no AI tab of its own: Drive leaves out the AI plugin of OnlyOffice (`editorConfig.plugins.disable`), which would sit beside the assistant.
 - A click opens the assistant in a panel beside the document. Another click, or the cross of the panel, closes it.
 - A text selected in a text document shows a small sparkle button under its end once the selection settles, "Help me write": a click opens the panel on it. The panel open, the button is not shown: the panel follows the selection by itself. See [The button under the selection](#the-button-under-the-selection).
-- A text document also has a floating button, "Scribe Panel", 12 px inside the top right corner of the area that shows the document, faded until the pointer is over it. Its mark plays while the pointer is over it, unless the system asks for reduced motion. A click opens the panel; the panel open, the button is not shown, the panel having its own close button. Until the plugin has given the place of that area, the button waits in the bottom right corner of the window. A presentation has none: the plugin gives no geometry there.
+- A text document also has a floating button, "Scribe Panel", 12 px inside the top right corner of the area that shows the document, faded until the pointer is over it. Its mark plays while the pointer is over it, unless the system asks for reduced motion. A click opens the panel; the panel open, the button is not shown, the panel having its own close button. Until the plugin has given the place of that area, the button waits in the bottom right corner of the window. A presentation and a spreadsheet have none.
 - Where the AI button is shown, the toolbar of the editor has the scribe too: a "Scribe" button in its Plugins tab, and an "Assistant" tab with "Scribe Panel". Both open the panel, or close it. See [The entries of the editor's toolbar](#the-entries-of-the-editors-toolbar).
 - With a selection, the assistant works on the selected text, and each answer can be inserted after it or can replace it. An answer is text, so a selection that holds what it cannot give back can only have the answers inserted after it: a chart, an equation, an endnote, a field, a content control or a form, a comment, a page or column break, a footnote in a cell of a table or in a code, or an image the plugin cannot give a marker. So can a selection that crosses the end of a section, or the edges of more than two tables or of a table in a table. See [What an answer can replace](#what-an-answer-can-replace).
 - The underlined text of the selection is given between `<u>` tags, and its footnotes, its links to a heading or a bookmark of the document and its images as markers. They are written back where the answer keeps them, as underlined text, new notes, links and copies of the images, see [Markers](#markers).
@@ -44,11 +44,13 @@ Drive (OnlyOffice view)
 - An answer whose table has fewer cells than the selected cells it replaces leaves the others as they were: a notice above the assistant tells how many, see [Tables](#tables).
 - Another text selected while the panel is open is the one the next request is about: the conversation goes on, and the prompts are offered again. A click that only moves the cursor changes nothing.
 
-- Above the composer, the assistant offers its prompts, then a chip of the editor: "Make a table" in a text document, "New slide" in a presentation.
+- Above the composer, the assistant offers its prompts, then a chip of the editor: "Make a table" in a text document, "New slide" in a presentation. A spreadsheet has its own chips only: "Explain", "Clean up", "Add totals".
 
 In a text document the user can also ask for a table, from the text or from what they say: it is added under the text, with a header row, see [New tables](#new-tables).
 
 In a presentation the scribe works on the current slide: the selected text, the text of a selected shape, or the whole slide. See [Presentations](#presentations). The user can also ask for a new slide, added after the current one, see [New slides](#new-slides).
+
+In a spreadsheet the scribe works on the selected cells, or on the block of data around the selected cell. An answer has a single action, "Apply", which writes its cells where they go: in place of the cells it changes, under or beside the data for the ones it adds. See [Spreadsheets](#spreadsheets).
 
 ## When the button is shown
 
@@ -60,12 +62,12 @@ All of these are needed:
 
 The entries of the scribe in the toolbar of the editor follow the same rule: Drive asks the plugin for them only then, see [The entries of the editor's toolbar](#the-entries-of-the-editors-toolbar).
 
-The plugin only loads in the editors of text documents and presentations, in edit mode. Without it Drive is unchanged.
+The plugin only loads in the editors of text documents, presentations and spreadsheets, in edit mode. Without it Drive is unchanged.
 
 ## Requirements
 
 - The flag `cozy.assistant.enabled` on. Without it the AI button is not shown, and Drive is unchanged.
-- The Twake Assistant app ([linagora/twake-assistant](https://github.com/linagora/twake-assistant), slug `assistant`) installed on the instance. It serves the Assistant intent in scribe mode, and reads the `capabilities` and `suggestions` of its data. The button does not check that the app is installed. For the markers, an assistant that reads `rules`: an older one is not told to keep them.
+- The Twake Assistant app ([linagora/twake-assistant](https://github.com/linagora/twake-assistant), slug `assistant`) installed on the instance. It serves the Assistant intent in scribe mode, and reads the `capabilities`, `suggestions` and `instructions` of its data. The button does not check that the app is installed. For the markers, an assistant that reads `rules`: an older one is not told to keep them. An assistant that does not read `instructions` sends the requests on cells with its own instructions, written for a text: the LLM then writes figures it computed instead of formulas, about half of the time.
 - A cozy-stack that knows the `documents` and `instructions` options of the chat.
 - A `cozy-interapp` and a `cozy-ui-plus` that have the `result` message of intents (`onResult` prop of `IntentIframe`). With older ones the assistant opens, but the clicks on its action buttons do not reach Drive.
 - For another text while the panel is open, a `cozy-interapp` with the `data` message on both sides, and a `cozy-ui-plus` whose `IntentIframe` sends new `data`. With older ones the assistant keeps the first text.
@@ -86,6 +88,8 @@ The plugin is a background plugin of the document editor: it has no interface of
 | `scripts/geometry.js` | Reads where the selection is drawn, from the page of the editor and without a command, see [The button under the selection](#the-button-under-the-selection) |
 | `scripts/toolbar.js` | The entries of the scribe in the toolbar of the editor, and their labels, see [The entries of the editor's toolbar](#the-entries-of-the-editors-toolbar) |
 | `scripts/presentation.js` | Functions run inside the presentation editor: read a slide, write lines in its shapes |
+| `scripts/grid.js` | Turns cells into the text of the assistant, and an answer into the cells to write |
+| `scripts/spreadsheet.js` | Functions run inside the spreadsheet editor: read the selected cells, write the cells of an answer |
 | `resources/` | The icons of the entries of the editor's toolbar, for the light and the dark themes |
 
 It relies on the editor for both ways:
@@ -118,11 +122,11 @@ Drive and the plugin talk with `postMessage`. Drive only listens to the origin o
 | Plugin → Drive | `twake-scribe:ready` | — | The plugin is loaded. Drive shows the AI button. Not sent when the editor has no `parentOrigin`. |
 | Drive → Plugin | `twake-scribe:showToolbar` | `labels` | Sent once the plugin is ready, where Drive shows its AI button (see [When the button is shown](#when-the-button-is-shown)). The plugin adds its entries to the toolbar of the editor, once. Without it, the editor shows none, see [The entries of the editor's toolbar](#the-entries-of-the-editors-toolbar). |
 | Drive → Plugin | `twake-scribe:getContent` | — | Asks for the text to work on. |
-| Plugin → Drive | `twake-scribe:content` | `content`, `target`, `canReplace` | The text in Markdown, what it is (`selection`, `document` without a selection, or `slide` in a presentation, see [Presentations](#presentations)), and whether an answer can take its place, see [What an answer can replace](#what-an-answer-can-replace). A presentation sends no `canReplace`: a selection of a slide can always be replaced. Drive opens the panel with it. |
+| Plugin → Drive | `twake-scribe:content` | `content`, `target`, `canReplace` | The text in Markdown, what it is (`selection`, `document` without a selection, or `slide` in a presentation, see [Presentations](#presentations); in a spreadsheet `selection`, or `region` for the block around a cell, see [Spreadsheets](#spreadsheets)), and whether an answer can take its place, see [What an answer can replace](#what-an-answer-can-replace). A presentation sends no `canReplace`: a selection of a slide can always be replaced. Drive opens the panel with it. |
 | Plugin → Drive | `twake-scribe:selection` | `content`, `target`, `canReplace` | Another text selected, once Drive has asked for one: not for a cursor that moves, nor for an answer just written. Drive gives it to the open assistant of the panel (new `data` of the intent). |
 | Drive → Plugin | `twake-scribe:close` | — | The panel is closed: the plugin stops reading the selection, and drops a text it is still reading, until Drive asks for the text again. |
-| Drive → Plugin | `twake-scribe:applyAnswer` | `answerAction`, `text`, `format` | A result of the Assistant intent, as it is, or the table of an `insert_table` call, written in Markdown by Drive. The plugin writes `text`, in Markdown, in the document. |
-| Plugin → Drive | `twake-scribe:applied` | `skippedCells` | The answer of an `applyAnswer` is handled, once Drive has asked for the text and until the panel is closed. `skippedCells` counts the selected cells the answer had no cell for (see [Tables](#tables)), 0 otherwise. Drive shows a count above 0 in the panel, unless it was closed since the answer. |
+| Drive → Plugin | `twake-scribe:applyAnswer` | `answerAction`, `text`, `format` | A result of the Assistant intent, as it is, or the table of an `insert_table` call, written in Markdown by Drive. The plugin writes `text`, in Markdown, in the document; in a spreadsheet, the cells of `text` (`answerAction: 'apply'`). |
+| Plugin → Drive | `twake-scribe:applied` | `skippedCells` | The answer of an `applyAnswer` is handled, once Drive has asked for the text and until the panel is closed. `skippedCells` counts the selected cells the answer had no cell for (see [Tables](#tables)), 0 otherwise. Drive shows a count above 0 in the panel, unless it was closed since the answer. Not sent in a spreadsheet. |
 | Drive → Plugin | `twake-scribe:insertSlide` | `title`, `bullets` | A slide the assistant has made, checked by Drive. The plugin adds it after the current slide. Presentations only. |
 | Plugin → Drive | `twake-scribe:geometry` | `selection`, `viewer`, `page` | Where the selection is, in pixels of the editor frame, sent from the start and each time it changes. Drive shows its button under the selection with it, see [The button under the selection](#the-button-under-the-selection). |
 | Plugin → Drive | `twake-scribe:open` | `source` | An entry of the editor's toolbar is clicked: `toolbar-panel` for "Scribe" and "Scribe Panel". Drive opens the panel, or closes it when it is open, where its AI button is shown (see [When the button is shown](#when-the-button-is-shown)), and does nothing elsewhere. |
@@ -150,6 +154,7 @@ Drive gives the Assistant intent:
 - `content`, the text of the plugin, and `answerActions`, see [What an answer can replace](#what-an-answer-can-replace);
 - `rules`, only when the text holds markers: for each kind of marker it holds, a sentence that tells to keep them, which the assistant joins to the system message of each request, see [Markers](#markers);
 - `capabilities` and `suggestions`, see [Capabilities and suggestions](#capabilities-and-suggestions);
+- `instructions`, in a spreadsheet only: how the LLM answers with cells, which the assistant sends in place of its own, see [Spreadsheets](#spreadsheets);
 - `theme`, the theme of Drive;
 - `source`: where the scribe was opened from, `toolbar` (the AI button), `floating`, `selection`, `editor-toolbar`, or `restored` (the panel open at the last visit). The assistant reads it at its opening only, and does not act on it.
 
@@ -269,6 +274,62 @@ What is done with an answer, read as lines. A line is written in the look of the
 
 A line of the answer is a paragraph: a line break of the Markdown breaks the paragraph, unlike in a text document. The first paragraph written is left selected, and the plugin keeps all of them: the next answer takes their place while the selection is still on them.
 
+### Spreadsheets
+
+The editor of spreadsheets has no Markdown, and a cell holds a value, the formula that gives it and the format that shows it. The LLM computes badly: a sum or a rate must be a formula the editor computes, not a figure the LLM made up. So the assistant sees the cells as a Markdown table with their addresses, and answers with a table whose addresses say where each cell goes.
+
+#### What the assistant gets
+
+```
+Sheet "Budget", cells A1:D5
+
+|   | A | B | C | D |
+|---|---|---|---|---|
+| 1 | Poste | T1 | T2 | Total |
+| 2 | Loyer | 1,200.00 € | 1,200.00 € | 2,400.00 € |
+...
+| 5 | Total | 2,150.00 € | 2,330.00 € | 4,480.00 € |
+
+Formulas:
+D2: =B2+C2
+...
+D5: =SUM(D2:D4)
+```
+
+- The header row holds the letters of the columns, the first column the numbers of the rows: they are not cells. A cell is given as the editor shows it, its number format applied; a pipe is escaped, a line break is `<br>`. Its formula, in English, is listed after the table.
+- `target` is `selection` for the selected cells (the first area of a selection of several), `region` for the block of data around a single selected cell (`GetCurrentRegion`, as Ctrl+A): the first line names that cell (`cells A1:C5, around B3`). An empty cell alone is `cell D10, empty: the cells of an answer start there`.
+- A range of more than 1000 cells, as a whole column, is cut to the cells in use, then to its first rows: the first line tells it (`only A1:C333 given`).
+- Drive gives the LLM its own instructions for a spreadsheet, in the `instructions` of the intent, which the assistant sends in place of its own, written for a text (`makeInstructions`): answer with a Markdown table of the cells to write, at the same letters and numbers, a computed value as a formula in English, never a figure computed by the LLM; a question in a few sentences; a request that asks both, as "make the ratio, then tell who is the best", the table first, then the sentences under it. They also settle what the LLM hesitates on: whether to give the unchanged cells, the label of a new column, a new row above a total row, a value the user gives.
+
+The LLM behind the assistant reasons before it answers, and the stack lets openRAG bound the whole answer, about 2000 tokens on staging: an answer whose reasoning goes past it comes empty, and the assistant says it found no answer. Measured on qwen3.8 with requests on a few sheets (sums, a column of growth, an average row, a ratio to compute and a question on it, a translation, a sort, a question, a table at an empty cell, the chips), the answers could be applied and gave the right sheet 52 times out of 64 within 2048 tokens; most of the others were cut, a translation of the whole sheet most of all. Without a limit, 45 out of 48, the three others giving a total the user asked for as a formula to apply, with a sentence, rather than a figure. With the instructions of the assistant and a line of these rules joined to the content, as a first version did, the LLM weighed the two and was cut twice as often; with the instructions of the assistant alone, it wrote figures it computed. A greater limit for the requests of the scribe, in the stack or openRAG, would remove the cuts.
+
+#### Where the cells of an answer go
+
+The plugin reads the cells of the answer (`readAnswerCells`):
+
+- its first table, at the addresses of its letters and numbers. The LLM gives the whole range back, or only the cells it changes or adds;
+- a table without letters nor numbers is laid from the top-left cell of the range;
+- a table of cells by address, one per row under a header as `| Address | Value |`, at those addresses. The header tells it: a label as `T1` or `Q2` looks like an address;
+- without a table, lines of formulas are laid under the range, in its first column, or at an empty cell. Any other text is an explanation, even a single line: nothing is written for it;
+- a formula given on a line with its address, as the content lists them (`D5: =B5+C5`), takes its cell over the value of the table;
+- an empty cell of the answer is not given: the LLM leaves a cell empty to keep it as it is. The scribe never empties a cell.
+
+Then it plans the writing (`planSheetWrite`), and writes it in one command, one step of the undo:
+
+- a cell whose text is the one the cell shows, its formula, or the same number written another way (`1 200,00 €`, `1200`) is left untouched: a translation changes the labels only, the totals stay formulas;
+- a cell of the range is written;
+- a cell under the range is written when it is empty; when one of them holds something, whole rows are inserted under the range first, as many as the answer has rows there, so that nothing is overwritten. Beside the range, whole columns, the same way;
+- a cell above or left of the range that holds something is kept;
+- a text starting with `=` is a formula. The editor reads it in English, whatever the language of its formulas: by default it is the language of the editor, `SOMME` and `;` in French. Another text is written as typed, read with the locale of the editor, and keeps the number format of its cell.
+
+The range and the cells written are left selected: they are not other cells to work on.
+
+#### While the panel is open
+
+Other cells selected become the ones the next request is about, as another text. A click on a single cell moves the cursor: it changes nothing, the answers still go in the cells last given. Each selection is read with a command, which empties the redo of the editor: while the panel is open, a click on a cell costs the redo. A selection made through the API of the editor is not seen: the editor tells the plugins only of a selection of the user.
+
+The editor runs no command while it saves or loads: the reading and the writing of an answer are sent again every 500 ms for 5 s.
+
 ### Capabilities and suggestions
 
 Beside its `answerActions`, Drive gives the Assistant intent what the editor can do, from `src/modules/views/OnlyOffice/Scribe/capabilities.js`, keyed by the `documentType` of the OnlyOffice config:
@@ -280,8 +341,9 @@ Beside its `answerActions`, Drive gives the Assistant intent what the editor can
 | --- | --- | --- | --- |
 | Presentation (`slide`) | `insert_slide`, `{ title, bullets }` | New slide | Add a new slide after this one, about the text |
 | Text document (`word`) | `insert_table`, `{ caption, columns, rows }` | Make a table | Present the text as a table |
+| Spreadsheet (`cell`) | none: formulas, rows and columns come as cells of an answer | Explain, Clean up, Add totals | Explain what these cells and their formulas do; Fix the typos and make the spelling, the case and the format of these cells consistent; Add a total row under the data, with formulas |
 
-Another editor gets neither key: the assistant shows its own menu. The labels and the requests of the chips are translated by Drive (`OnlyOffice.scribe.suggestions`); what the LLM reads is in English, whatever the language of the user.
+A spreadsheet has no menu of the assistant, whose prompts are written for a text: its chips are sent with the instructions of a spreadsheet, as any request on its cells. Another editor gets neither key: the assistant shows its own menu. The labels and the requests of the chips are translated by Drive (`OnlyOffice.scribe.suggestions`); what the LLM reads is in English, whatever the language of the user.
 
 Drive checks each call: an unknown capability, one of another editor, parameters of the wrong type, or an empty slide or table are left out, with a warning in the console.
 
@@ -306,10 +368,15 @@ Drive then writes the table in Markdown (`makeTableMarkdown`), the caption as th
 
 ## Limits
 
-### Both editors
+### All editors
 
-- Text documents and presentations only: the plugin does not load in spreadsheets and PDF forms.
+- Text documents, presentations and spreadsheets only: the plugin does not load in PDF forms.
 - While the panel is open, the plugin reads every other text the user selects with `callCommand`, and a command of a plugin empties the redo of the editor. It reads a selection only when its text changes, and not for 3 s after an undo or a redo (Ctrl+Z, Ctrl+Y, Ctrl+Shift+Z, or the buttons of the toolbar), so a redo right after an undo works. Another text selected later is read, and the redo is lost. Once it is closed, nothing is read.
+
+### In spreadsheets
+
+- The scribe reads and writes the text of the cells and their formulas, not their look: no bold, color, border or number format from an answer. Charts, comments, filters, data validation and pivot tables are neither read nor written, and a selected chart counts as no selection. A workbook is never given whole: one sheet, one range, at most 1000 cells.
+- The LLM decides where the cells of its answer go: a wrong address writes a wrong cell, undone in one step. Rows or columns inserted to make room shift what is beside the data too, as the user would. A cell of a merge is written on its first cell, and a protected sheet refuses the writing.
 
 ### Text documents
 
