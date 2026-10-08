@@ -328,7 +328,19 @@ export function writeBlocks() {
     return paragraph
   }
 
+  // Items written in place of items of a list stay in that list, at the
+  // level of the first one and under it
+  let hostItem = null
   const makeListItem = block => {
+    if (hostItem) {
+      const paragraph = makeParagraph(block.spans, null, textPr)
+      const style = hostItem.GetStyle()
+      if (style) paragraph.SetStyle(style)
+      const level = hostItem.GetNumbering()
+      const depth = Math.min(level.GetLevelIndex() + block.depth, 8)
+      paragraph.SetNumbering(level.GetNumbering().GetLevel(depth))
+      return paragraph
+    }
     const paragraph = makeParagraph(block.spans, 'List Paragraph', textPr)
     if (!numberings[block.listId]) {
       numberings[block.listId] = doc.CreateNumbering(
@@ -789,6 +801,11 @@ export function writeBlocks() {
     const isPartOfParagraph = !isWhole && paragraphs.length === 1
     fitSelection(isWhole)
     textPr = findStartLook()
+    // A heading numbered by its style is no list the items can join
+    const [first] = paragraphs
+    if (first.GetNumbering() && first.GetOutlineLvl() === undefined) {
+      hostItem = first
+    }
     const [block] = blocks
     const isLine =
       blocks.length === 1 &&
