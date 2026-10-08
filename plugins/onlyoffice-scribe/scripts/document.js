@@ -21,6 +21,11 @@ export function readContent() {
     Boolean(selection) && selection.GetText({ Numbering: false }).trim() !== ''
   // The editor converts the selection when there is one, even an empty one
   if (!hasSelection) doc.RemoveSelection()
+  // The editor gives no paragraphs for a selection it does not let change,
+  // as one that holds a locked content control: it is not replaced
+  const selected = hasSelection ? selection.GetAllParagraphs() : []
+  const isLocked = selected === null
+  const paragraphs = selected ?? []
 
   // The cells of a table, as laid on its grid: the column each one starts
   // at, the columns it takes, and whether it starts or continues a cell
@@ -42,7 +47,7 @@ export function readContent() {
   // The selected cells of each table, by row
   const collectSelectedCells = () => {
     const tables = new Map()
-    ;(selection.GetAllParagraphs() ?? []).forEach(paragraph => {
+    paragraphs.forEach(paragraph => {
       const cell = paragraph.GetParentTableCell()
       if (!cell) return
       const table = cell.GetParentTable()
@@ -178,7 +183,6 @@ export function readContent() {
   const KEPT =
     /"type":"(paraDrawing|paraMath|footnoteRef|endnoteRef|fldChar|inlineLvlSdt|blockLvlSdt|commentRangeStart)"/
   const canReplace = () => {
-    const paragraphs = selection.GetAllParagraphs()
     const tables = new Set(
       paragraphs.map(
         paragraph =>
@@ -190,10 +194,29 @@ export function readContent() {
     return !isCrossing && !KEPT.test(selection.ToJSON(false, false))
   }
 
+  // A part of a paragraph is a text, not the heading, the item or the quote
+  // its paragraph is: the editor gives it with the mark of the paragraph,
+  // which the assistant would keep, and which is not in the text. The mark of
+  // an item of a sublist comes after its indent.
+  const MARK = /^[ \t]*(?:#{1,6} |> ?|(?:[*+-]|\d+[.)]) )/
+  const removeMark = markdown => {
+    const mark = markdown.match(MARK)?.[0]
+    if (!mark || paragraphs.length !== 1) return markdown
+    const getText = element =>
+      element.GetText({ Numbering: false }).replace(/[\r\n\t]+$/, '')
+    const text = getText(selection)
+    const isPart = text !== getText(paragraphs[0])
+    if (!isPart || text.trimStart().startsWith(mark.trimStart())) {
+      return markdown
+    }
+    return markdown.slice(mark.length)
+  }
+
+  const content = describeMerges(doc.ToMarkdown())
   return {
-    content: describeMerges(doc.ToMarkdown()),
+    content: hasSelection ? removeMark(content) : content,
     target: hasSelection ? 'selection' : 'document',
-    canReplace: hasSelection && canReplace()
+    canReplace: hasSelection && !isLocked && canReplace()
   }
 }
 

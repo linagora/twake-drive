@@ -71,7 +71,7 @@ The plugin is a background plugin of the document editor: it has no interface of
 
 It relies on the editor for both ways:
 
-- the text given to the assistant is the Markdown the editor makes of the selection, or of the whole document (`ApiDocument.ToMarkdown`);
+- the text given to the assistant is the Markdown the editor makes of the selection, or of the whole document (`ApiDocument.ToMarkdown`). A part of a paragraph is given without the mark of the paragraph (`#`, `-`, `1.`, `>`) the editor adds, which is not in its text: the assistant would write a heading for a word of a heading;
 - an answer is written with the document builder API: a heading gets the heading style of the document, a list its numbering, a text written in a line the look of the text it replaces. No HTML is pasted, and the raw HTML of an answer is never run.
 
 An answer the LLM gives as a whole in a code fence or in `"""` quotes, as it often does with an HTML table, is read without them. A fence in another language than `markdown`, `html` or `text` is code.
