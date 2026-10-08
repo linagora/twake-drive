@@ -9,13 +9,18 @@ import { BreakpointsProvider } from 'cozy-ui/transpiled/react/providers/Breakpoi
 import CozyTheme from 'cozy-ui-plus/dist/providers/CozyTheme'
 
 import { getFilePickerConfig } from './FilePicker/config'
+import { MoveIntent } from './MoveIntent'
+import {
+  getMoveIntentConfig,
+  initializeMoveIntent
+} from './MoveIntent/initialization'
 import Picker from './Picker'
 import { getIntentData, getPickerNavigationConfig } from './intentConfig'
 import { initializePickerNavigation } from './pickerNavigation'
 
-function isFilePickerIntent(intent) {
+function isFileNavigationIntent(intent) {
   return (
-    intent?.attributes?.action === 'PICK' &&
+    ['PICK', 'MOVE'].includes(intent?.attributes?.action) &&
     intent?.attributes?.type === 'io.cozy.files'
   )
 }
@@ -28,7 +33,7 @@ const IntentHandler = ({ intentId }) => {
     component: null,
     service: null,
     intent: null,
-    filePickerConfig: null
+    pickerConfig: null
   })
 
   const ServiceComponent = state.component
@@ -53,19 +58,24 @@ const IntentHandler = ({ intentId }) => {
         }))
         service = await servicePromise
         const intent = service.getIntent()
-        const filePickerConfig = isFilePickerIntent(intent)
-          ? await initializePickerNavigation(
-              client,
-              getFilePickerConfig(intent, service.getData?.())
-            )
-          : null
+        let component = null
+        let pickerConfig = null
+        if (isFileNavigationIntent(intent)) {
+          const serviceData = service.getData?.()
+          const isMove = intent.attributes.action === 'MOVE'
+          pickerConfig = isMove
+            ? await initializeMoveIntent(
+                client,
+                getMoveIntentConfig(intent, serviceData)
+              )
+            : await initializePickerNavigation(
+                client,
+                getFilePickerConfig(intent, serviceData)
+              )
+          component = isMove ? MoveIntent : Picker
+        }
 
-        setState({
-          component: filePickerConfig ? Picker : null,
-          service,
-          intent,
-          filePickerConfig
-        })
+        setState({ component, service, intent, pickerConfig })
       } catch (error) {
         logger.error(error)
         service?.throw(new Error(error?.message || String(error)))
@@ -79,18 +89,19 @@ const IntentHandler = ({ intentId }) => {
     <ServiceComponent
       service={state.service}
       intent={state.intent}
-      filePickerConfig={state.filePickerConfig}
+      filePickerConfig={state.pickerConfig}
+      moveIntentConfig={state.pickerConfig}
       onReadyToUse={handleReadyToUse}
     />
   ) : (
     <Box className="u-h-100 u-w-100" bgcolor="background.paper" />
   )
 
-  if (!isFilePickerIntent(state.intent)) return content
+  if (!isFileNavigationIntent(state.intent)) return content
 
   const serviceData = state.service?.getData?.()
   const { type: themeType } = (
-    state.filePickerConfig ||
+    state.pickerConfig ||
     getPickerNavigationConfig(
       getIntentData(state.intent, serviceData) || {},
       []

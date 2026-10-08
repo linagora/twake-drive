@@ -20,6 +20,12 @@ import { ROOT_DIR_ID, TRASH_DIR_ID, TRASH_DIR_PATH } from '@/constants/config'
 const mockCreateService = jest.fn()
 const mockGetIntent = jest.fn()
 
+jest.mock('cozy-client', () => ({
+  __esModule: true,
+  ...jest.requireActual('cozy-client'),
+  cancelable: promise => Object.assign(promise, { cancel: jest.fn() })
+}))
+
 jest.mock('cozy-logger', () => {
   const log = Object.assign(jest.fn(), {
     error: jest.fn(),
@@ -204,7 +210,11 @@ function setup(
     ],
     recents = [],
     simulatePermissions = false,
-    rejectWarmupListing = false
+    rejectWarmupListing = false,
+    action = 'PICK',
+    hasWriteAccess = () => true,
+    beforeRead = null,
+    sharing = {}
   } = {}
 ) {
   const documents = new Map(files.map(file => [file._id, { ...file }]))
@@ -217,10 +227,11 @@ function setup(
         request: async operation => {
           if (operation.mutationType) {
             writes.push(operation)
-            throw new Error('PICK must not save response-only paths')
+            throw new Error('Navigation must not mutate documents')
           }
           requests.push(operation)
           if (operation.id) {
+            if (beforeRead) await beforeRead(operation.id)
             const file = documents.get(
               operation.sharingId
                 ? `${operation.sharingId}/${operation.id}`
@@ -236,8 +247,10 @@ function setup(
           return {
             data:
               operation.doctype === 'io.cozy.files'
-                ? [...documents.values()].filter(
-                    file => file.dir_id === operation.selector?.dir_id
+                ? [...documents.values()].filter(file =>
+                    operation.selector?.path
+                      ? file.path === operation.selector.path
+                      : file.dir_id === operation.selector?.dir_id
                   )
                 : [],
             next: false
@@ -279,7 +292,7 @@ function setup(
     }
   }
   const intent = {
-    attributes: { action: 'PICK', type: 'io.cozy.files', data }
+    attributes: { action, type: 'io.cozy.files', data }
   }
   const service = {
     getIntent: () => intent,
@@ -303,7 +316,14 @@ function setup(
           allLoaded: true,
           byDocId: {},
           isOwner: () => true,
-          ensureSharingLink: sharingProvider?.ensureSharingLink
+          hasWriteAccess,
+          sharedPaths: [],
+          getSharedParentPath: () => null,
+          getSharingForSelf: () => null,
+          hasSharedParent: () => false,
+          refresh: () => null,
+          ensureSharingLink: sharingProvider?.ensureSharingLink,
+          ...sharing
         }}
       >
         <IntentHandler intentId="intent-id" />
@@ -1111,4 +1131,436 @@ describe('PICK intent integration', () => {
       expect(service.notifyReadyToUse).toHaveBeenCalledTimes(1)
     )
   })
+})
+
+describe('MOVE intent navigation integration', () => {
+  afterEach(() => jest.clearAllMocks())
+
+  function setupMove(data = {}, options = {}) {
+    const context = setup(
+      { fileIds: ['invoice'], ...data },
+      { action: 'MOVE', ...options }
+    )
+    const { documents, writes, client } = context
+    const failedIds = new Set()
+    client.collection = () => ({
+      updateFileMetadata: async (id, attributes) => {
+        if (failedIds.has(id)) throw new Error('Move unavailable')
+        const file = documents.get(id)
+        const conflict = [...documents.values()].find(
+          item =>
+            item._id !== id &&
+            !item.trashed &&
+            item.dir_id === attributes.dir_id &&
+            item.name === file.name
+        )
+        if (conflict)
+          throw Object.assign(new Error('Name conflict'), { status: 409 })
+        const moved = { ...file, ...attributes, _rev: `${file._rev}-moved` }
+        documents.set(id, moved)
+        writes.push({ id, attributes })
+        return { data: { ...moved } }
+      },
+      statByPath: async path => ({
+        data: [...documents.values()].find(
+          file =>
+            !file.trashed &&
+            `${documents.get(file.dir_id)?.path.replace(/\/+$/, '')}/${file.name}` ===
+              path
+        )
+      }),
+      destroy: async file => {
+        documents.set(file._id, { ...file, trashed: true })
+        return { data: file }
+      }
+    })
+    return { ...context, failedIds }
+  }
+
+  it('reuses folders-only browsing, canonical Drive/Sharings tabs and payload-free cancellation without mutating', async () => {
+    const { service, documents, writes } = setupMove({
+      tabs: ['sharings', 'drive', 'sharings']
+    })
+    await waitForRow('projects')
+    expect(screen.queryByTestId('move-intent')).toBeInTheDocument()
+    expect(screen.getAllByRole('tab').map(tab => tab.textContent)).toEqual([
+      'My Drive',
+      'Sharings'
+    ])
+    expect(screen.getByRole('button', { name: 'Move' })).not.toBeDisabled()
+    expect(
+      screen.queryByRole('button', { name: /create folder/i })
+    ).toBeInTheDocument()
+    fireEvent.doubleClick(getRow('projects'))
+    await waitForRow('child')
+    expect(getRow('invoice')).toBe(null)
+    expect(screen.getByRole('button', { name: 'Move' })).not.toBeDisabled()
+    expect(documents.get('invoice').dir_id).toBe('projects')
+    expect(writes).toEqual([])
+    expect(service.terminate).not.toHaveBeenCalled()
+    expect(service.notifyReadyToUse).toHaveBeenCalledTimes(1)
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(service.cancel).toHaveBeenCalledWith()
+  })
+
+  it('warns for a later shared source parent even when the first source is private', async () => {
+    const other = {
+      ...projects,
+      _id: 'other',
+      id: 'other',
+      name: 'Other',
+      path: '/Other'
+    }
+    const privateFile = {
+      ...invoice,
+      _id: 'private',
+      id: 'private',
+      dir_id: 'other',
+      name: 'private.pdf'
+    }
+    const { service, documents, writes } = setupMove(
+      { fileIds: ['private', 'invoice'] },
+      {
+        files: [root, projects, other, invoice, privateFile],
+        sharing: {
+          sharedPaths: ['/Projects'],
+          getSharedParentPath: path =>
+            path.startsWith('/Projects/') ? '/Projects' : null,
+          hasSharedParent: path => path.startsWith('/Projects/')
+        }
+      }
+    )
+    await waitForRow('projects')
+    fireEvent.click(screen.getByRole('button', { name: 'Move' }))
+    await screen.findByRole('button', { name: 'I understand' })
+    expect(
+      screen.queryByText('Moving outside the Projects folder')
+    ).toBeInTheDocument()
+    expect(documents.get('private').dir_id).toBe('other')
+    expect(documents.get('invoice').dir_id).toBe('projects')
+    expect(writes).toEqual([])
+    fireEvent.click(screen.getByRole('button', { name: 'I understand' }))
+    await waitFor(() => expect(service.terminate).toHaveBeenCalledTimes(1))
+    expect(documents.get('private').dir_id).toBe(ROOT_DIR_ID)
+    expect(documents.get('invoice').dir_id).toBe(ROOT_DIR_ID)
+    expect(service.terminate.mock.calls[0][0].map(file => file.path)).toEqual([
+      '/private.pdf',
+      '/invoice.pdf'
+    ])
+  })
+
+  it('moves through the real model and returns the mutation document with a freshly resolved path', async () => {
+    const { service, documents, writes, requests } = setupMove()
+    await waitForRow('projects')
+    fireEvent.click(screen.getByRole('button', { name: 'Move' }))
+    await waitFor(() => expect(service.terminate).toHaveBeenCalledTimes(1))
+    expect(documents.get('invoice').dir_id).toBe(ROOT_DIR_ID)
+    expect(service.terminate.mock.calls[0][0]).toEqual([
+      { ...documents.get('invoice'), path: '/invoice.pdf' }
+    ])
+    expect(writes).toHaveLength(1)
+    expect(requests.filter(query => query.id === 'invoice')).toHaveLength(1)
+  })
+
+  it('retains successful mutation results across a failed-only retry from different parents', async () => {
+    const { service, documents, writes, failedIds } = setupMove({
+      fileIds: ['invoice', 'nested']
+    })
+    failedIds.add('nested')
+    await waitForRow('projects')
+    fireEvent.click(screen.getByRole('button', { name: 'Move' }))
+    await screen.findByText('Moved: 1. Failed: 1.')
+    const firstMoved = documents.get('invoice')
+    expect(firstMoved.dir_id).toBe(ROOT_DIR_ID)
+    expect(documents.get('nested').dir_id).toBe('child')
+    expect(service.terminate).not.toHaveBeenCalled()
+    failedIds.clear()
+    fireEvent.click(screen.getByRole('button', { name: 'Move' }))
+    await waitFor(() => expect(service.terminate).toHaveBeenCalledTimes(1))
+    expect(documents.get('invoice')).toBe(firstMoved)
+    expect(writes.map(write => write.id)).toEqual(['invoice', 'nested'])
+    expect(
+      service.terminate.mock.calls[0][0].map(document => document.path)
+    ).toEqual(['/invoice.pdf', '/nested.pdf'])
+  })
+
+  it('returns only surviving selected files when a same-name move replaces an earlier selected file', async () => {
+    const second = {
+      ...invoice,
+      _id: 'second',
+      id: 'second',
+      dir_id: 'child',
+      metadata: { author: 'Bob' }
+    }
+    const { service, documents, writes } = setupMove(
+      { fileIds: ['invoice', 'second'] },
+      { files: [root, projects, child, invoice, second] }
+    )
+    await waitForRow('projects')
+    fireEvent.click(screen.getByRole('button', { name: 'Move' }))
+    await waitFor(() => expect(service.terminate).toHaveBeenCalledTimes(1))
+    expect(documents.get('invoice').trashed).toBe(true)
+    expect(documents.get('second').dir_id).toBe(ROOT_DIR_ID)
+    expect(writes.map(write => write.id)).toEqual(['invoice', 'second'])
+    expect(service.terminate.mock.calls[0][0]).toEqual([
+      { ...documents.get('second'), path: '/invoice.pdf' }
+    ])
+  })
+
+  it('retries only finalization after the mutation succeeded but a parent read failed', async () => {
+    let failResult = true
+    let context
+    context = setupMove(
+      {},
+      {
+        beforeRead: id => {
+          if (
+            failResult &&
+            id === ROOT_DIR_ID &&
+            context.documents.get('invoice').dir_id === ROOT_DIR_ID
+          )
+            throw new Error('Final parent unavailable')
+        }
+      }
+    )
+    const { service, documents, writes } = context
+    await waitForRow('projects')
+    fireEvent.click(screen.getByRole('button', { name: 'Move' }))
+    await screen.findByText(
+      'Could not retrieve the selected documents and their paths.'
+    )
+    const moved = documents.get('invoice')
+    expect(moved.dir_id).toBe(ROOT_DIR_ID)
+    expect(writes).toHaveLength(1)
+    expect(service.terminate).not.toHaveBeenCalled()
+    expect(service.throw).not.toHaveBeenCalled()
+    failResult = false
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
+    await waitFor(() => expect(service.terminate).toHaveBeenCalledTimes(1))
+    expect(documents.get('invoice')).toBe(moved)
+    expect(writes).toHaveLength(1)
+    expect(service.terminate.mock.calls[0][0]).toEqual([
+      { ...moved, path: '/invoice.pdf' }
+    ])
+  })
+
+  it('cancels after a partial move without returning results or undoing the successful file', async () => {
+    const { service, documents, failedIds } = setupMove({
+      fileIds: ['invoice', 'nested']
+    })
+    failedIds.add('nested')
+    await waitForRow('projects')
+    fireEvent.click(screen.getByRole('button', { name: 'Move' }))
+    await screen.findByText('Moved: 1. Failed: 1.')
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(service.cancel).toHaveBeenCalledWith()
+    expect(service.terminate).not.toHaveBeenCalled()
+    expect(documents.get('invoice').dir_id).toBe(ROOT_DIR_ID)
+    expect(documents.get('nested').dir_id).toBe('child')
+  })
+
+  it('waits for the current folder resolver even when the listing is already usable', async () => {
+    let resolveRoot
+    const rootRead = new Promise(resolve => {
+      resolveRoot = resolve
+    })
+    const { service } = setupMove(
+      {},
+      {
+        beforeRead: id => (id === ROOT_DIR_ID ? rootRead : null)
+      }
+    )
+    await waitForRow('projects')
+    expect(service.notifyReadyToUse).not.toHaveBeenCalled()
+    resolveRoot()
+    await waitFor(() =>
+      expect(service.notifyReadyToUse).toHaveBeenCalledTimes(1)
+    )
+    expect(screen.getByRole('button', { name: 'Cancel' })).not.toBeDisabled()
+  })
+
+  it('keeps restricted MOVE navigation usable after the starting folder warm-up fails', async () => {
+    const { service, documents, writes } = setupMove(
+      { defaultDirId: 'projects', restrictToDefaultDir: true },
+      { rejectWarmupListing: true }
+    )
+    await waitForRow('child')
+    expect(screen.queryByTestId('move-intent')).toBeInTheDocument()
+    expect(screen.getAllByRole('tab').map(tab => tab.textContent)).toEqual([
+      'My Drive'
+    ])
+    expect(getRow('projects')).toBe(null)
+    expect(getRow('invoice')).toBe(null)
+    expect(
+      within(screen.getByTestId('file-picker-breadcrumb')).queryByRole(
+        'button',
+        { name: 'My Drive' }
+      )
+    ).toBe(null)
+    fireEvent.doubleClick(getRow('child'))
+    await waitFor(() =>
+      expect(screen.queryByTestId('file-picker-empty')).toBeInTheDocument()
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Projects' }))
+    await waitForRow('child')
+    expect(documents.get('invoice').dir_id).toBe('projects')
+    expect(writes).toEqual([])
+    expect(service.throw).not.toHaveBeenCalled()
+    expect(service.notifyReadyToUse).toHaveBeenCalledTimes(1)
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(service.cancel).toHaveBeenCalledWith()
+  })
+
+  it('applies a starting folder without restricting navigation and preserves the explicit theme', async () => {
+    const { service } = setupMove({
+      defaultDirId: 'projects',
+      theme: { type: 'dark' }
+    })
+    await waitForRow('child')
+    expect(document.querySelector('.TwakeTheme--dark')).not.toBe(null)
+    fireEvent.click(screen.getByRole('button', { name: 'My Drive' }))
+    await waitForRow('projects')
+    expect(service.notifyReadyToUse).toHaveBeenCalledTimes(1)
+  })
+
+  it('restricts destinations, not source locations, and anchors breadcrumbs after descendant navigation', async () => {
+    const { service, writes } = setupMove(
+      {
+        defaultDirId: 'projects',
+        restrictToDefaultDir: true,
+        fileIds: ['outside']
+      },
+      {
+        files: [
+          root,
+          projects,
+          child,
+          invoice,
+          { ...nested, _id: 'outside', id: 'outside', dir_id: ROOT_DIR_ID }
+        ]
+      }
+    )
+    await waitForRow('child')
+    expect(screen.getAllByRole('tab').map(tab => tab.textContent)).toEqual([
+      'My Drive'
+    ])
+    expect(
+      within(screen.getByTestId('file-picker-breadcrumb')).queryByRole(
+        'button',
+        { name: 'My Drive' }
+      )
+    ).toBe(null)
+    fireEvent.doubleClick(getRow('child'))
+    await waitFor(() =>
+      expect(screen.queryByTestId('file-picker-empty')).toBeInTheDocument()
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Projects' }))
+    await waitForRow('child')
+    expect(service.notifyReadyToUse).toHaveBeenCalledTimes(1)
+    expect(service.throw).not.toHaveBeenCalled()
+    expect(writes).toEqual([])
+  })
+
+  it('rechecks ancestry before entering a listed folder that moved outside the restriction', async () => {
+    const { documents, client } = setupMove({
+      defaultDirId: 'projects',
+      restrictToDefaultDir: true
+    })
+    await waitForRow('child')
+    documents.set('child', { ...child, dir_id: ROOT_DIR_ID, path: '/Child' })
+    fireEvent.doubleClick(getRow('child'))
+    await waitFor(() =>
+      expect(client.getDocumentFromState('io.cozy.files', 'child').dir_id).toBe(
+        ROOT_DIR_ID
+      )
+    )
+    expect(
+      within(screen.getByTestId('file-picker-breadcrumb')).queryByText('Child')
+    ).toBe(null)
+    expect(
+      within(screen.getByTestId('file-picker-breadcrumb')).queryByText(
+        'Projects'
+      )
+    ).toBeInTheDocument()
+  })
+
+  it('does not enter a read-only destination', async () => {
+    setupMove({}, { hasWriteAccess: id => id !== 'projects' })
+    const row = await waitForRow('projects')
+    expect(row).toHaveAttribute('aria-disabled', 'true')
+    fireEvent.doubleClick(row)
+    expect(getRow('child')).toBe(null)
+    expect(
+      within(screen.getByTestId('file-picker-breadcrumb')).queryByText(
+        'Projects'
+      )
+    ).toBe(null)
+  })
+
+  it('falls back to root when the unrestricted initial folder cannot be resolved', async () => {
+    const { service } = setupMove({ defaultDirId: 'missing' })
+    await waitForRow('projects')
+    expect(
+      within(screen.getByTestId('file-picker-breadcrumb')).queryByText(
+        'My Drive'
+      )
+    ).toBeInTheDocument()
+    expect(service.notifyReadyToUse).toHaveBeenCalledTimes(1)
+    expect(service.throw).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    { fileIds: undefined },
+    { fileIds: null },
+    { fileIds: [] },
+    { fileIds: [42] },
+    { fileIds: [''] },
+    { fileIds: ['missing'] },
+    { fileIds: ['projects'] },
+    { tabs: [] },
+    { tabs: ['sharings'] },
+    { tabs: ['drive', 'recents'] },
+    { tabs: ['unknown'] },
+    { tabs: null },
+    { restrictToDefaultDir: true },
+    { restrictToDefaultDir: true, defaultDirId: 'missing' },
+    { restrictToDefaultDir: true, defaultDirId: 'invoice' },
+    {
+      restrictToDefaultDir: true,
+      defaultDirId: 'projects',
+      tabs: ['drive', 'sharings']
+    }
+  ])(
+    'rejects unusable MOVE configuration without exposing a browser or readiness: %j',
+    async config => {
+      const { service, writes, documents } = setupMove(config)
+      await waitFor(() => expect(service.throw).toHaveBeenCalledTimes(1))
+      expect(service.throw.mock.calls[0][0]).toBeInstanceOf(Error)
+      expect(screen.queryByTestId('move-intent')).toBe(null)
+      expect(service.notifyReadyToUse).not.toHaveBeenCalled()
+      expect(service.terminate).not.toHaveBeenCalled()
+      expect(documents.get('invoice').dir_id).toBe('projects')
+      expect(writes).toEqual([])
+    }
+  )
+
+  it.each([
+    { driveId: 'remote' },
+    { trashed: true },
+    { _deleted: true },
+    { _type: 'io.cozy.nextcloud.files' },
+    { cozyMetadata: { createdByApp: 'nextcloud' } }
+  ])(
+    'refuses non-local or deleted sources before exposing navigation: %j',
+    async attributes => {
+      const { service, writes } = setupMove(
+        {},
+        { files: [root, projects, { ...invoice, ...attributes }] }
+      )
+      await waitFor(() => expect(service.throw).toHaveBeenCalledTimes(1))
+      expect(screen.queryByTestId('move-intent')).toBe(null)
+      expect(service.notifyReadyToUse).not.toHaveBeenCalled()
+      expect(writes).toEqual([])
+    }
+  )
 })
