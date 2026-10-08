@@ -1,5 +1,7 @@
 import {
+  makeAnswerActions,
   makeCapabilities,
+  makeInstructions,
   makeSuggestions,
   makeTableMarkdown,
   normalizeSlide,
@@ -108,9 +110,62 @@ describe('makeSuggestions', () => {
     ])
   })
 
+  it('offers the chips of a spreadsheet only', () => {
+    const suggestions = makeSuggestions({ documentType: 'cell', t })
+
+    expect(suggestions.map(({ name }) => name)).toEqual([
+      'explain',
+      'clean_up',
+      'totals'
+    ])
+    expect(suggestions[2]).toEqual({
+      name: 'totals',
+      label: 't(OnlyOffice.scribe.suggestions.totals)',
+      message: 't(OnlyOffice.scribe.suggestions.totalsMessage)'
+    })
+  })
+
   it('gives the other editors no chip', () => {
-    expect(makeSuggestions({ documentType: 'cell', t })).toEqual([])
+    expect(makeSuggestions({ documentType: 'pdf', t })).toEqual([])
     expect(makeSuggestions({ documentType: undefined, t })).toEqual([])
+  })
+})
+
+describe('makeInstructions', () => {
+  it('tells the LLM how to answer with the cells of a spreadsheet', () => {
+    const instructions = makeInstructions({ documentType: 'cell' })
+
+    expect(instructions).toContain('column letter')
+    expect(instructions).toContain('formula in English')
+  })
+
+  it('leaves the other editors the instructions of the assistant', () => {
+    expect(makeInstructions({ documentType: 'word' })).toBe(null)
+    expect(makeInstructions({ documentType: 'slide' })).toBe(null)
+  })
+})
+
+describe('makeAnswerActions', () => {
+  it('inserts an answer, or replaces a selection that can be', () => {
+    expect(
+      makeAnswerActions({ documentType: 'word', target: 'selection' })
+    ).toEqual(['insert', 'replace'])
+    expect(
+      makeAnswerActions({
+        documentType: 'word',
+        target: 'selection',
+        canReplace: false
+      })
+    ).toEqual(['insert'])
+    expect(
+      makeAnswerActions({ documentType: 'slide', target: 'slide' })
+    ).toEqual(['insert'])
+  })
+
+  it('applies the cells of an answer in a spreadsheet', () => {
+    expect(
+      makeAnswerActions({ documentType: 'cell', target: 'region' })
+    ).toEqual(['apply'])
   })
 })
 

@@ -659,6 +659,7 @@
       "open": "Ayuda para redactar",
       "insert": "Insertar",
       "replace": "Reemplazar",
+      "apply": "Aplicar",
       "insertSlide": "Insertar la diapositiva",
       "panel": "Panel de Scribe",
       "toolbar": {
@@ -673,7 +674,13 @@
         "newSlide": "Nueva diapositiva",
         "newSlideMessage": "Añade una nueva diapositiva después de esta, sobre el texto",
         "table": "Hacer una tabla",
-        "tableMessage": "Presenta el texto en forma de tabla"
+        "tableMessage": "Presenta el texto en forma de tabla",
+        "explain": "Explicar",
+        "explainMessage": "Explica qué hacen estas celdas y sus fórmulas",
+        "cleanUp": "Limpiar",
+        "cleanUpMessage": "Corrige las erratas y unifica la ortografía, las mayúsculas y el formato de estas celdas",
+        "totals": "Añadir totales",
+        "totalsMessage": "Añade una fila de totales debajo de los datos, con fórmulas"
       }
     }
   },

@@ -659,6 +659,7 @@
       "open": "Help me write",
       "insert": "Insert",
       "replace": "Replace",
+      "apply": "Apply",
       "insertSlide": "Insert the slide",
       "panel": "Scribe Panel",
       "toolbar": {
@@ -673,7 +674,13 @@
         "newSlide": "New slide",
         "newSlideMessage": "Add a new slide after this one, about the text",
         "table": "Make a table",
-        "tableMessage": "Present the text as a table"
+        "tableMessage": "Present the text as a table",
+        "explain": "Explain",
+        "explainMessage": "Explain what these cells and their formulas do",
+        "cleanUp": "Clean up",
+        "cleanUpMessage": "Fix the typos and make the spelling, the case and the format of these cells consistent",
+        "totals": "Add totals",
+        "totalsMessage": "Add a total row under the data, with formulas"
       }
     }
   },
