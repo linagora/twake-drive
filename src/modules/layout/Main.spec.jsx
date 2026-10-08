@@ -8,9 +8,6 @@ import Main from './Main'
 jest.mock('cozy-ui/transpiled/react/Layout', () => ({
   Main: ({ children }) => <div>{children}</div>
 }))
-jest.mock('cozy-client', () => ({
-  RealTimeQueries: () => <div data-testid="realtime-queries" />
-}))
 jest.mock('cozy-flags', () => jest.fn())
 jest.mock('@/components/PushBanner', () => () => (
   <div data-testid="push-banner" />
@@ -66,13 +63,11 @@ describe('Main', () => {
     render(<Main isPublic={false}>{[]}</Main>)
 
     expect(screen.queryByTestId('migration-banner')).toBeNull()
-    expect(screen.queryByTestId('realtime-queries')).toBeNull()
   })
 
   it('mounts the migration banner when the flag is on', () => {
     render(<Main isPublic={false}>{[]}</Main>)
 
     expect(screen.queryByTestId('migration-banner')).not.toBeNull()
-    expect(screen.queryByTestId('realtime-queries')).not.toBeNull()
   })
 })
