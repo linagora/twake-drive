@@ -427,14 +427,52 @@ export function writeBlocks() {
     }
   }
 
-  // The mark that ends the last selected paragraph is kept: the answer takes
-  // the place of the text, in the paragraphs that hold it
-  const keepParagraphMark = () => {
-    const start = selection.GetStartPos()
+  // The text of the selected paragraphs before and after the selection
+  const getAround = () => {
+    const first = paragraphs[0].GetRange().GetStartPos()
+    const last = paragraphs[paragraphs.length - 1].GetRange().GetEndPos()
+    const getPart = (from, to) =>
+      getText(doc.GetRange(from, to)).replace(/[\n\t]+$/, '')
+    return {
+      before: getPart(first, selection.GetStartPos()),
+      after: getPart(selection.GetEndPos(), last)
+    }
+  }
+
+  // A selection from the end of a line holds nothing of its paragraph but
+  // the mark: the answer starts in the next paragraph, and the one above
+  // keeps its text and its style
+  const skipEndOfLine = () => {
+    const [first, next] = paragraphs
+    const part = doc.GetRange(
+      selection.GetStartPos(),
+      first.GetRange().GetEndPos()
+    )
+    const isEndOfLine =
+      getText(part).trim() === '' && getText(first).trim() !== ''
+    if (!next || !isEndOfLine) return
+    paragraphs.shift()
+    selection.SetStartPos(next.GetRange().GetStartPos())
+  }
+
+  // Moves an end of the selection over what the answer does not replace
+  const shrinkSelection = (isStart, isOut) => {
+    let start = selection.GetStartPos()
     let end = selection.GetEndPos()
-    while (end > start && getText(selection).endsWith('\n')) {
-      end -= 1
-      selection.SetEndPos(end)
+    while (end > start && isOut(getText(selection))) {
+      if (isStart) selection.SetStartPos((start += 1))
+      else selection.SetEndPos((end -= 1))
+    }
+  }
+
+  // The answer takes the place of the text, in the paragraphs that hold it:
+  // the mark that ends the last one is kept, and the spaces around a part of
+  // a paragraph, which the answer of the LLM never has
+  const fitSelection = isWhole => {
+    shrinkSelection(false, text => text.endsWith('\n'))
+    if (!isWhole) {
+      shrinkSelection(true, text => /^\s/.test(text))
+      shrinkSelection(false, text => /\s$/.test(text))
     }
     selection.Select()
   }
@@ -590,16 +628,96 @@ export function writeBlocks() {
     return true
   }
 
+  // In a part of the paragraphs, the answer joins the text around it, as a
+  // pasted one: its first paragraph continues the text before the selection,
+  // its last one the text after it, in the style of their paragraph. A
+  // heading, an item or a table stays a block of its own.
+  const writeAround = ({ before, after }) => {
+    const isPlain = block => block.type === 'paragraph'
+    const isJoiningBefore = before !== '' && isPlain(blocks[0])
+    const isJoiningAfter =
+      after !== '' && blocks.length > 1 && isPlain(blocks[blocks.length - 1])
+    const middle = blocks
+      .slice(isJoiningBefore ? 1 : 0, isJoiningAfter ? -1 : undefined)
+      .map(makeElement)
+    const answerStart = selection.GetStartPos()
+    // The editor gives the text before the selection to the first block it
+    // writes: an empty copy of its paragraph takes it, with its style and its
+    // numbering, and the text after it stays in a paragraph of its own. That
+    // one keeps the end of a section: a copy would end a section too.
+    const [first] = paragraphs
+    const isEndingSection = Boolean(
+      JSON.parse(first.ToJSON(false, false)).pPr?.sectPr
+    )
+    const head = isEndingSection ? Api.CreateParagraph() : first.Copy()
+    if (isEndingSection) {
+      if (first.GetStyle()) head.SetStyle(first.GetStyle())
+      if (first.GetNumbering()) head.SetNumbering(first.GetNumbering())
+    } else {
+      head.RemoveAllElements()
+    }
+    const following = paragraphs[paragraphs.length - 1].GetNext()
+    if (!doc.InsertContent([head, ...middle], false)) return false
+
+    const parent = head.GetParentTableCell()?.GetContent() ?? doc
+    const lastBlock = middle[middle.length - 1] ?? head
+    const tail = parent.GetElement(lastBlock.GetPosInParent() + 1)
+    const writeInLine = (block, at) => {
+      at.Select()
+      doc.InsertContent([makeParagraph(block.spans, null, cursorTextPr)], true)
+    }
+    // The text before the selection has not moved
+    if (isJoiningBefore) {
+      writeInLine(blocks[0], doc.GetRange(answerStart, answerStart))
+    }
+    if (isJoiningAfter)
+      writeInLine(blocks[blocks.length - 1], tail.GetRange(0, 0))
+
+    // The answer is left selected, without the text around it
+    const startPos = isJoiningBefore
+      ? answerStart
+      : middle[0].GetRange().GetStartPos()
+    const endPos = isJoiningAfter
+      ? doc.GetCurrentRun().GetRange().GetStartPos()
+      : lastBlock.GetRange().GetEndPos()
+    doc.GetRange(startPos, endPos).Select()
+    // An edge of the selection at an edge of its paragraph leaves an empty
+    // paragraph, not the one that was there after it
+    if (isEmpty(head)) head.Delete()
+    const isLeft =
+      tail?.GetClassType() === 'paragraph' &&
+      tail.GetInternalId() !== following?.GetInternalId()
+    if (isLeft && isEmpty(tail)) tail.Delete()
+    return true
+  }
+
+  // A single paragraph is written in the line of the selection, and so is a
+  // single block in a part of a paragraph: the editor gives a part of a
+  // heading or of a list item with its mark, which the answer keeps
+  const replaceText = () => {
+    skipEndOfLine()
+    const around = getAround()
+    const isWhole = around.before === '' && around.after === ''
+    const isPartOfParagraph = !isWhole && paragraphs.length === 1
+    fitSelection(isWhole)
+    const [block] = blocks
+    const isLine =
+      blocks.length === 1 &&
+      (block.type === 'paragraph' ||
+        (isPartOfParagraph && block.type !== 'table'))
+    if (isLine) {
+      return writeAnswer([makeParagraph(block.spans, null, cursorTextPr)], true)
+    }
+    if (isWhole) return writeAnswer(blocks.map(makeElement), false)
+    return writeAround(getAround())
+  }
+
   const selectedCells = getSelectedCells()
   if (canFillCells(selectedCells)) {
     fillCells(selectedCells, blocks[0])
     return true
   }
-  if (isReplacingText(selectedCells)) {
-    keepParagraphMark()
-    // A single paragraph is written in the line of the selection
-    return writeAnswer(blocks.map(makeElement), isAnswerOf('paragraph'))
-  }
+  if (isReplacingText(selectedCells)) return replaceText()
   if (!selectPlaceholder(selectedCells)) return false
   return writeAnswer(blocks.map(makeElement), false)
 }
