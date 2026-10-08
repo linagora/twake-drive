@@ -5,6 +5,15 @@ import { normalizeModel, type ScribeModel } from '../helpers/scribeModel'
 
 const PLUGIN_URL = /\/sdkjs-plugins\/twake-scribe\//
 
+// A sheet as the cases compare it: the text each cell shows from A1 to the
+// last cell used, the formulas by address, and the selected cells
+export interface SheetModel {
+  sheet: string
+  selection: string
+  cells: string[][]
+  formulas: Record<string, string>
+}
+
 export interface ScribeContent {
   content: string
   target: string
@@ -502,6 +511,50 @@ function readEditor(): ScribeModel {
 }
 
 /**
+ * Runs in the frame of the editor: selects the cells of a spec in A1
+ * notation, on a sheet named before a `!` (`Budget!B2:C5`)
+ */
+function selectInSheet(spec: string): { ok: boolean; error?: string } {
+  const Api = (window as any).g_asc_plugins.api.getJsApi()
+  const [name, address] = spec.includes('!') ? spec.split('!') : [null, spec]
+  const sheet = name ? Api.GetSheet(name) : Api.GetActiveSheet()
+  if (!sheet) return { ok: false, error: `No sheet ${name}` }
+  sheet.SetActive()
+  const range = sheet.GetRange(address)
+  if (!range) return { ok: false, error: `No cells ${address}` }
+  range.Select()
+  return { ok: true }
+}
+
+/** Runs in the frame of the editor: a sheet, the active one by default */
+function readSheetInEditor(name: string | null): SheetModel {
+  const Api = (window as any).g_asc_plugins.api.getJsApi()
+  const sheet = name ? Api.GetSheet(name) : Api.GetActiveSheet()
+  const used = sheet.GetUsedRange()
+  const rowCount = used.GetRow() - 1 + used.GetRowsCount()
+  const columnCount = used.GetCol() - 1 + used.GetColumnsCount()
+  const cells: string[][] = []
+  const formulas: Record<string, string> = {}
+  for (let row = 0; row < rowCount; row += 1) {
+    cells.push([])
+    for (let col = 0; col < columnCount; col += 1) {
+      const cell = sheet.GetRangeByNumber(row, col)
+      const formula = cell.GetFormula()
+      cells[row].push(String(cell.GetText() ?? ''))
+      if (typeof formula === 'string' && formula.startsWith('=')) {
+        formulas[cell.GetAddress(false, false)] = formula
+      }
+    }
+  }
+  return {
+    sheet: sheet.GetName(),
+    selection: Api.GetSelection().GetAddress(false, false),
+    cells,
+    formulas
+  }
+}
+
+/**
  * Drives the scribe plugin of the Document Server as Drive does, by its
  * messages, and reads the document from the editor
  */
@@ -577,13 +630,16 @@ export class ScribePluginPage {
                     api: {
                       getJsApi: () => {
                         GetDocument?: () => unknown
+                        GetActiveSheet?: () => unknown
                       }
                     }
                   }
                 }
               ).g_asc_plugins
               const builder = api.getJsApi()
-              return Boolean(builder.GetDocument?.())
+              return Boolean(
+                builder.GetActiveSheet?.() ?? builder.GetDocument?.()
+              )
             })
             .catch(() => false),
         { timeout: 60_000 }
@@ -594,9 +650,13 @@ export class ScribePluginPage {
   /** Undoes every change made since the document was opened */
   async reset(): Promise<void> {
     await this.editor().evaluate(() => {
+      // The editors of text and presentations are `editor`, all of them the
+      // API of the plugins
       ;(
-        window as unknown as { editor: { asc_undoAllChanges: () => void } }
-      ).editor.asc_undoAllChanges()
+        window as unknown as {
+          g_asc_plugins: { api: { asc_undoAllChanges: () => void } }
+        }
+      ).g_asc_plugins.api.asc_undoAllChanges()
     })
     await this.page.waitForTimeout(300)
   }
@@ -604,7 +664,14 @@ export class ScribePluginPage {
   /** Undoes the last change, as Ctrl+Z */
   async undo(): Promise<void> {
     await this.editor().evaluate(() => {
-      ;(window as unknown as { editor: { Undo: () => void } }).editor.Undo()
+      // The editors of text and presentations are `editor`; the one of
+      // spreadsheets undoes through the API of the plugins
+      const { editor, g_asc_plugins } = window as unknown as {
+        editor?: { Undo?: () => void }
+        g_asc_plugins: { api: { asc_Undo: () => void } }
+      }
+      if (editor?.Undo) editor.Undo()
+      else g_asc_plugins.api.asc_Undo()
     })
     await this.page.waitForTimeout(300)
   }
@@ -687,6 +754,93 @@ export class ScribePluginPage {
       )
       .toBe(true)
     return found as unknown as ScribeContent
+  }
+
+  async selectCells(spec: string): Promise<void> {
+    const result = await this.editor().evaluate(selectInSheet, spec)
+    if (!result.ok) throw new Error(result.error)
+    await this.page.waitForTimeout(700)
+  }
+
+  /**
+   * Selects cells of the active sheet as a user does, by their address in
+   * the name box: the editor tells the plugins, unlike a selection of its API
+   */
+  async typeCellName(address: string): Promise<void> {
+    const nameBox = this.editor().locator('#ce-cell-name')
+    await nameBox.fill(address)
+    await nameBox.press('Enter')
+    await this.page.waitForTimeout(700)
+  }
+
+  async readSheet(name: string | null = null): Promise<SheetModel> {
+    return this.editor().evaluate(readSheetInEditor, name)
+  }
+
+  /** The cells and formulas of every sheet, without the selection */
+  async readSheets(): Promise<Omit<SheetModel, 'selection'>[]> {
+    const names = await this.editor().evaluate(() => {
+      const Api = (window as any).g_asc_plugins.api.getJsApi()
+      return (Api.GetSheets() as { GetName: () => string }[]).map(sheet =>
+        sheet.GetName()
+      )
+    })
+    const sheets = []
+    for (const name of names) {
+      const { selection: _selection, ...sheet } = await this.readSheet(name)
+      sheets.push(sheet)
+    }
+    return sheets
+  }
+
+  /**
+   * The editor reads the formulas typed in the cells in this language from
+   * now on, as a user who chose it in its settings. By default it is the
+   * language of the editor.
+   */
+  async useFormulaLanguage(lang: string): Promise<void> {
+    await this.page.addInitScript(lang => {
+      if (location.hostname.startsWith('onlyoffice.')) {
+        localStorage.setItem('sse-settings-func-locale', lang)
+      }
+    }, lang)
+  }
+
+  /** The editor is busy for a while, as when it saves: it runs no command */
+  async holdEditor(duration: number): Promise<void> {
+    await this.editor().evaluate(duration => {
+      const { api } = (
+        window as unknown as {
+          g_asc_plugins: {
+            api: {
+              incrementCounterLongAction: () => void
+              decrementCounterLongAction: () => void
+            }
+          }
+        }
+      ).g_asc_plugins
+      api.incrementCounterLongAction()
+      setTimeout(() => api.decrementCounterLongAction(), duration)
+    }, duration)
+  }
+
+  /**
+   * Another selection the plugin gives Drive while its panel is open, or
+   * null when it gives none in that time
+   */
+  async waitForSelection(timeout = 3_000): Promise<ScribeContent | null> {
+    const deadline = Date.now() + timeout
+    while (Date.now() < deadline) {
+      const message = (await this.takeMessages()).find(
+        ({ type }) => type === 'twake-scribe:selection'
+      )
+      if (message) {
+        const { type: _type, ...content } = message
+        return content as unknown as ScribeContent
+      }
+      await this.page.waitForTimeout(250)
+    }
+    return null
   }
 
   /**
