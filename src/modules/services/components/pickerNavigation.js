@@ -1,7 +1,11 @@
 import { models } from 'cozy-client'
 import logger from 'cozy-logger'
 
-import { fetchPickerDocument, isTrashedDocument } from './documents'
+import {
+  fetchPickerDocument,
+  isTrashedDocument,
+  isWithinPickerRoot
+} from './FilePicker/documents'
 
 import {
   filePickerSections,
@@ -73,7 +77,7 @@ function getRestrictedRoot(folderId, folder, restrictToDefaultDir) {
     : null
 }
 
-export async function initializeFilePicker(client, config) {
+export async function initializePickerNavigation(client, config) {
   const tabs = getFilePickerTabs(config)
   if (
     config.restrictToDefaultDir &&
@@ -107,5 +111,18 @@ export async function initializeFilePicker(client, config) {
     tabs,
     initialLocation: { section, folderId, driveId: null },
     restrictedRoot
+  }
+}
+
+export async function canNavigateToPickerFolder(client, folder, rootId) {
+  if (folder.driveId) return false
+  try {
+    const document = await fetchPickerDocument(client, folder._id ?? folder.id)
+    return (
+      models.file.isDirectory(document) &&
+      (await isWithinPickerRoot(client, document, rootId))
+    )
+  } catch {
+    return false
   }
 }

@@ -9,8 +9,9 @@ import { BreakpointsProvider } from 'cozy-ui/transpiled/react/providers/Breakpoi
 import CozyTheme from 'cozy-ui-plus/dist/providers/CozyTheme'
 
 import { getFilePickerConfig } from './FilePicker/config'
-import { initializeFilePicker } from './FilePicker/initialization'
 import Picker from './Picker'
+import { getIntentData, getPickerNavigationConfig } from './intentConfig'
+import { initializePickerNavigation } from './pickerNavigation'
 
 function isFilePickerIntent(intent) {
   return (
@@ -53,7 +54,7 @@ const IntentHandler = ({ intentId }) => {
         service = await servicePromise
         const intent = service.getIntent()
         const filePickerConfig = isFilePickerIntent(intent)
-          ? await initializeFilePicker(
+          ? await initializePickerNavigation(
               client,
               getFilePickerConfig(intent, service.getData?.())
             )
@@ -89,7 +90,11 @@ const IntentHandler = ({ intentId }) => {
 
   const serviceData = state.service?.getData?.()
   const { type: themeType } = (
-    state.filePickerConfig || getFilePickerConfig(state.intent, serviceData)
+    state.filePickerConfig ||
+    getPickerNavigationConfig(
+      getIntentData(state.intent, serviceData) || {},
+      []
+    )
   ).theme
 
   return (

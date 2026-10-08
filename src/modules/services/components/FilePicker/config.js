@@ -1,4 +1,5 @@
-import { defaultFilePickerConfig, filePickerThemes } from './constants'
+import { defaultFilePickerConfig } from './constants'
+import { getIntentData, getPickerNavigationConfig } from '../intentConfig'
 
 /**
  * Read the FilePickerConfig carried in the intent data and merge it
@@ -35,12 +36,8 @@ import { defaultFilePickerConfig, filePickerThemes } from './constants'
  *   downloadLink: object|null
  * }}
  */
-export const getFilePickerConfig = (intent, serviceData = null) => {
-  const intentData = intent?.attributes?.data
-  const data =
-    intentData || serviceData
-      ? { ...(serviceData || {}), ...(intentData || {}) }
-      : null
+export function getFilePickerConfig(intent, serviceData = null) {
+  const data = getIntentData(intent, serviceData)
 
   if (!data) {
     return defaultFilePickerConfig
@@ -54,25 +51,9 @@ export const getFilePickerConfig = (intent, serviceData = null) => {
     return { ...enabledDefault, ...clientAction }
   }
 
-  const themeType = data.theme?.type
-  const restrictToDefaultDir = data.restrictToDefaultDir === true
-  const tabs =
-    data.tabs === undefined
-      ? restrictToDefaultDir
-        ? ['drive']
-        : defaultFilePickerConfig.tabs
-      : data.tabs
-
   return {
-    theme: {
-      type: filePickerThemes.includes(themeType)
-        ? themeType
-        : defaultFilePickerConfig.theme.type
-    },
+    ...getPickerNavigationConfig(data, defaultFilePickerConfig.tabs),
     multiple: data.multiple ?? defaultFilePickerConfig.multiple,
-    defaultDirId: data.defaultDirId ?? null,
-    restrictToDefaultDir,
-    tabs,
     documents: resolveActionConfig(data.documents, null),
     sharingLink: resolveActionConfig(
       data.sharingLink,

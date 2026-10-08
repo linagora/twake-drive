@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { useClient, fetchPolicies, models } from 'cozy-client'
+import { useClient, fetchPolicies } from 'cozy-client'
 
 import FilePicker from './FilePicker'
 import { getFilePickerConfig } from './FilePicker/config'
@@ -15,7 +15,6 @@ import {
   getDownloadLinkDisabledState
 } from './FilePicker/constraints'
 import {
-  fetchPickerDocument,
   isWithinPickerRoot,
   fetchPickerDocumentWithPath,
   isTrashedDocument
@@ -27,6 +26,7 @@ import {
   getOrCreateSharingLink,
   makeTemporaryDownloadLinks
 } from './FilePicker/sharing'
+import { canNavigateToPickerFolder } from './pickerNavigation'
 
 import logger from '@/lib/logger'
 import {
@@ -71,25 +71,8 @@ const Picker = ({
     initializedConfig || getFilePickerConfig(intent, serviceData)
 
   const canNavigateTo = filePickerConfig.restrictToDefaultDir
-    ? async folder => {
-        if (folder.driveId) return false
-        try {
-          const document = await fetchPickerDocument(
-            client,
-            folder._id ?? folder.id
-          )
-          return (
-            models.file.isDirectory(document) &&
-            (await isWithinPickerRoot(
-              client,
-              document,
-              filePickerConfig.defaultDirId
-            ))
-          )
-        } catch {
-          return false
-        }
-      }
+    ? folder =>
+        canNavigateToPickerFolder(client, folder, filePickerConfig.defaultDirId)
     : null
 
   const fetchSelectedFiles = async selectedItems => {
