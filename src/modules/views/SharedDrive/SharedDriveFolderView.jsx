@@ -117,16 +117,8 @@ function SharedDriveFolderViewContent({ sharing, driveId, folderId }) {
   const { isSelectionBarVisible } = useSelectionContext()
 
   const { sharedDriveResult, fetchStatus, lastUpdate, hasMore, fetchMore } =
-    useSharedDriveFolder({
-      driveId,
-      folderId
-    })
-
-  useReportSpaceFiles({
-    driveId,
-    folder: sharedDriveResult.folder,
-    isRoot: isInRootOfSharedDrive
-  })
+    useSharedDriveFolder({ driveId, folderId })
+  useReportSpaceFiles(driveId, sharedDriveResult.folder, isInRootOfSharedDrive)
 
   const queryResults = [
     {
