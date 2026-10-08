@@ -1,6 +1,8 @@
 import { USERS } from '../helpers/config'
 import { test, expect, stamp } from '../helpers/fixtures'
 import {
+  createAndShareFolderWithBob,
+  openOwnerFolder,
   openSharedDrive,
   waitForSharingRow
 } from '../helpers/sharing'
@@ -284,5 +286,219 @@ test.describe.serial('Recipient permissions & member controls', () => {
     await expect(nestedModal.memberItem(USERS.charlie.email)).toHaveCount(0)
 
     await nestedModal.close()
+  })
+})
+
+const MANAGED_DRIVE = `Managed Members Drive ${stamp()}`
+const VIEWER_SELF_DRIVE = `Viewer Self Drive ${stamp()}`
+
+test.describe.serial('Recipient edits himself and other members', () => {
+  test.afterAll(async () => {
+    await trashByName(USERS.alice.instance, MANAGED_DRIVE)
+    await trashByName(USERS.alice.instance, VIEWER_SELF_DRIVE)
+  })
+
+  test('Alice shares a drive with Bob and Charlie as Editors', async ({
+    alicePage,
+    aliceDrive
+  }) => {
+    await alicePage.goto(`${USERS.alice.appUrl}/#/folder`)
+    await aliceDrive.createFolder(MANAGED_DRIVE)
+    await aliceDrive.openFolder(MANAGED_DRIVE)
+
+    const folderUrl = alicePage.url()
+    const modal = await aliceDrive.openShareModal()
+    await modal.setNewMemberRole('Editor')
+    await modal.addMember(USERS.bob.email)
+    await modal.share()
+
+    await alicePage.goto(`${folderUrl}/share`)
+    const modal2 = new ShareModalPage(alicePage)
+    await modal2.waitForOpen()
+    await modal2.setNewMemberRole('Editor')
+    await modal2.addMember(USERS.charlie.email)
+    await modal2.share()
+
+    await waitForSharingRow(
+      alicePage,
+      USERS.alice,
+      aliceDrive,
+      MANAGED_DRIVE,
+      'by-me'
+    )
+  })
+
+  test('Alice shares a drive with Bob and Charlie as Viewers', async ({
+    alicePage,
+    aliceDrive
+  }) => {
+    await createAndShareFolderWithBob(
+      alicePage,
+      aliceDrive,
+      VIEWER_SELF_DRIVE,
+      {
+        role: 'Viewer'
+      }
+    )
+
+    await alicePage.goto(`${alicePage.url()}/share`)
+    const modal = new ShareModalPage(alicePage)
+    await modal.waitForOpen()
+    await modal.setNewMemberRole('Viewer')
+    await modal.addMember(USERS.charlie.email)
+    await modal.share()
+
+    await waitForSharingRow(
+      alicePage,
+      USERS.alice,
+      aliceDrive,
+      VIEWER_SELF_DRIVE,
+      'by-me'
+    )
+  })
+
+  test('Editor (Bob) downgrades Charlie to Viewer without changing himself', async ({
+    bobPage,
+    bobDrive
+  }) => {
+    await openSharedDrive(bobPage, USERS.bob, bobDrive, MANAGED_DRIVE)
+
+    const modal = await bobDrive.openShareFromToolbarRecipients()
+    await expect(modal.memberRole(USERS.charlie.email)).toContainText(/editor/i)
+    await modal.setMemberRole(USERS.charlie.email, 'Viewer')
+
+    await expect(modal.memberRole(USERS.charlie.email)).toContainText(/viewer/i)
+    await expect(modal.memberRole('You')).toContainText(/editor/i)
+    await modal.close()
+
+    await expect(bobDrive.uploadButton).toBeEnabled()
+
+    await bobPage.reload()
+    const reopened = await bobDrive.openShareFromToolbarRecipients()
+    await expect(reopened.memberRole(USERS.charlie.email)).toContainText(
+      /viewer/i
+    )
+    await expect(reopened.memberRole('You')).toContainText(/editor/i)
+    await reopened.close()
+  })
+
+  test('Owner (Alice) and Charlie see the downgrade made by Bob', async ({
+    alicePage,
+    aliceDrive,
+    charliePage,
+    charlieDrive
+  }) => {
+    await expect(async () => {
+      await openOwnerFolder(alicePage, USERS.alice, aliceDrive, MANAGED_DRIVE)
+      const modal = await aliceDrive.openShareModal()
+      await expect(modal.memberRole(USERS.charlie.email)).toContainText(
+        /viewer/i,
+        { timeout: 2_000 }
+      )
+      await expect(modal.memberRole(USERS.bob.email)).toContainText(/editor/i)
+    }).toPass({ timeout: 30_000 })
+
+    await openSharedDrive(
+      charliePage,
+      USERS.charlie,
+      charlieDrive,
+      MANAGED_DRIVE
+    )
+    await expect(async () => {
+      await charliePage.reload()
+      await expect(charlieDrive.uploadButton).toBeDisabled({ timeout: 2_000 })
+    }).toPass({ timeout: 30_000 })
+  })
+
+  test('Editor (Bob) upgrades Charlie back to Editor', async ({
+    bobPage,
+    bobDrive,
+    charliePage,
+    charlieDrive
+  }) => {
+    await openSharedDrive(bobPage, USERS.bob, bobDrive, MANAGED_DRIVE)
+
+    const modal = await bobDrive.openShareFromToolbarRecipients()
+    await modal.setMemberRole(USERS.charlie.email, 'Editor')
+    await expect(modal.memberRole(USERS.charlie.email)).toContainText(/editor/i)
+    await expect(modal.memberRole('You')).toContainText(/editor/i)
+    await modal.close()
+
+    await openSharedDrive(
+      charliePage,
+      USERS.charlie,
+      charlieDrive,
+      MANAGED_DRIVE
+    )
+    await expect(async () => {
+      await charliePage.reload()
+      await expect(charlieDrive.uploadButton).toBeEnabled({ timeout: 2_000 })
+    }).toPass({ timeout: 30_000 })
+  })
+
+  test('Editor (Bob) removes Charlie and stays a member himself', async ({
+    bobPage,
+    bobDrive
+  }) => {
+    await openSharedDrive(bobPage, USERS.bob, bobDrive, MANAGED_DRIVE)
+
+    const modal = await bobDrive.openShareFromToolbarRecipients()
+    await modal.removeMember(USERS.charlie.email)
+
+    await expect(modal.memberItem('You')).toBeVisible()
+    await expect(modal.memberRole('You')).toContainText(/editor/i)
+    await modal.close()
+
+    await expect(bobDrive.uploadButton).toBeEnabled()
+
+    await bobPage.reload()
+    const reopened = await bobDrive.openShareFromToolbarRecipients()
+    await expect(reopened.memberItem(USERS.charlie.email)).toHaveCount(0)
+    await expect(reopened.memberItem('You')).toBeVisible()
+    await reopened.close()
+  })
+
+  test('Owner (Alice) and Charlie see the removal made by Bob', async ({
+    alicePage,
+    aliceDrive,
+    charliePage,
+    charlieDrive
+  }) => {
+    await expect(async () => {
+      await openOwnerFolder(alicePage, USERS.alice, aliceDrive, MANAGED_DRIVE)
+      const modal = await aliceDrive.openShareModal()
+      await expect(modal.memberItem(USERS.bob.email)).toBeVisible({
+        timeout: 2_000
+      })
+      await expect(modal.memberItem(USERS.charlie.email)).toHaveCount(0)
+    }).toPass({ timeout: 30_000 })
+
+    // VIEWER_SELF_DRIVE stays shared with Charlie: its row proves the list
+    // has loaded before asserting the absence.
+    await expect(async () => {
+      await waitForSharingRow(
+        charliePage,
+        USERS.charlie,
+        charlieDrive,
+        VIEWER_SELF_DRIVE
+      )
+      await expect(charlieDrive.row(MANAGED_DRIVE).cell).toHaveCount(0, {
+        timeout: 2_000
+      })
+    }).toPass({ timeout: 60_000 })
+  })
+
+  test('Viewer (Bob) cannot upgrade himself to Editor', async ({
+    bobPage,
+    bobDrive
+  }) => {
+    await openSharedDrive(bobPage, USERS.bob, bobDrive, VIEWER_SELF_DRIVE)
+    await expect(bobDrive.uploadButton).toBeDisabled()
+    await expect(bobDrive.createButton).toBeDisabled()
+
+    const modal = await bobDrive.openShareFromToolbarRecipients()
+    await expect(modal.memberItem('You')).toContainText(/viewer/i)
+    await expect(modal.memberRole('You')).toHaveCount(0)
+    await modal.close()
   })
 })
