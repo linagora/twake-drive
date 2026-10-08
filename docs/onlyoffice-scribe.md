@@ -109,12 +109,14 @@ Drive and the plugin talk with `postMessage`. Drive only listens to the origin o
 
 | `answerAction` | Selection | Result |
 | --- | --- | --- |
-| `replace` | A text | The answer takes the place of the text. A single paragraph is written in the line, whole blocks otherwise. |
+| `replace` | Whole paragraphs | The answer takes their place: a single paragraph in the line, keeping the paragraph, its blocks otherwise. |
+| `replace` | A part of a paragraph | A single block is written in the line: the editor gives a part of a heading or of a list item with its mark, which the answer keeps. Several blocks are written as a pasted text, see below. |
+| `replace` | Parts of paragraphs | The answer is written as a pasted text: its first paragraph continues the text before the selection, its last one the text after it, both in the style of their paragraph. A heading, a list item or a table of the answer stays a block of its own. |
 | `replace` | A text that `canReplace` refuses, or none | Same as `insert`. |
 | any other | A text | The answer is written in new paragraphs, under the last paragraph of the selection, or under the table when the selection takes cells and more than one cell. |
 | any other | None | The answer is written in new paragraphs, under the paragraph of the cursor. |
 
-An empty paragraph where the answer goes, as the one of an empty document, takes the answer itself; a paragraph that holds only a page break, an image or a field, or that ends a section, is not empty, and one between a table and a table of the answer stays, to keep the two tables apart. The answer is left selected.
+An empty paragraph where the answer goes, as the one of an empty document, takes the answer itself; a paragraph that holds only a page break, an image or a field, or that ends a section, is not empty, and one between a table and a table of the answer stays, to keep the two tables apart. Whole paragraphs replaced by several blocks leave the end of their last paragraph after them: it is removed when empty, and kept when it holds a note or an image that followed the text, or the end of a section. The spaces around a part of a paragraph are kept: the answer of a LLM never has them. A selection that starts at the end of a line does not take the paragraph of that line. List items written in place of items of a list stay in that list, numbered after the items above them. The answer is left selected.
 
 The plugin checks `canReplace` again before it replaces a text: it never replaces a selection that holds what an answer cannot give back, even when Drive asks.
 
