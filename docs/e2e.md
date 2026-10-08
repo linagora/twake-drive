@@ -176,6 +176,9 @@ documents, see `e2e/fixtures/scribe/README.md`. Its tests are tagged
 yarn e2e --grep @e2e-scribe --project=chromium
 ```
 
+The E2E workflow runs them in a job of their own, `Scribe E2E`, and the rest
+with `--grep-invert @e2e-scribe`.
+
 ## Debugging and reports
 
 ```sh
