@@ -13,6 +13,9 @@ export interface ScribeContent {
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+// The builder of the editor, in the commands the plugin runs
+declare const Api: any
+
 /**
  * Runs in the frame of the editor: selects what a spec of the harness names.
  *
@@ -355,6 +358,86 @@ function readEditor(): ScribeModel {
   }
 }
 
+export interface ScribeSlide {
+  index: number
+  shapes: { placeholder: string | null; lines: string[] }[]
+  // The selected text, its line breaks as spaces
+  selection: string
+}
+
+export interface ScribeSlideRun {
+  text: string
+  bold: boolean
+  italic: boolean
+  strike: boolean
+  size: number | null
+  fill: string | null
+}
+
+// Runs in the frame of the presentation editor: the shapes of the current
+// slide, with their placeholder and their lines
+function readSlideInEditor(): Omit<ScribeSlide, 'selection'> {
+  const Api = (window as any).g_asc_plugins.api.getJsApi()
+  const presentation = Api.GetPresentation()
+  const index = presentation.GetCurSlideIndex()
+  return {
+    index,
+    shapes: presentation
+      .GetSlideByIndex(index)
+      .GetAllShapes()
+      .map((shape: any) => {
+        const content = shape.GetDocContent()
+        const lines = []
+        for (let i = 0; i < (content?.GetElementsCount() ?? 0); i += 1) {
+          lines.push(
+            content
+              .GetElement(i)
+              .GetText()
+              .replace(/[\r\n]+$/, '')
+          )
+        }
+        return {
+          placeholder: shape.GetPlaceholder()?.GetType() ?? null,
+          lines
+        }
+      })
+  }
+}
+
+// Runs in the frame of the presentation editor: the runs of a paragraph of a
+// shape that hold text, with the look set on them
+function readSlideRunsInEditor({
+  shape,
+  paragraph
+}: {
+  shape: number
+  paragraph: number
+}): ScribeSlideRun[] {
+  const Api = (window as any).g_asc_plugins.api.getJsApi()
+  const presentation = Api.GetPresentation()
+  const element = presentation
+    .GetSlideByIndex(presentation.GetCurSlideIndex())
+    .GetAllShapes()
+    [shape].GetDocContent()
+    .GetElement(paragraph)
+  const runs = []
+  for (let i = 0; i < element.GetElementsCount(); i += 1) {
+    const run = element.GetElement(i)
+    if (run.GetClassType() !== 'run' || run.GetText() === '') continue
+    const textPr = run.GetTextPr()
+    const fill = textPr.GetFill?.()
+    runs.push({
+      text: run.GetText(),
+      bold: textPr.GetBold() === true,
+      italic: textPr.GetItalic() === true,
+      strike: textPr.GetStrikeout() === true,
+      size: textPr.GetFontSize() || null,
+      fill: fill?.ToJSON ? JSON.stringify(fill.ToJSON()) : null
+    })
+  }
+  return runs
+}
+
 /**
  * Drives the scribe plugin of the Document Server as Drive does, by its
  * messages, and reads the document from the editor
@@ -429,13 +512,16 @@ export class ScribePluginPage {
                     api: {
                       getJsApi: () => {
                         GetDocument?: () => unknown
+                        GetPresentation?: () => unknown
                       }
                     }
                   }
                 }
               ).g_asc_plugins
               const builder = api.getJsApi()
-              return Boolean(builder.GetDocument?.())
+              return Boolean(
+                builder.GetDocument?.() ?? builder.GetPresentation?.()
+              )
             })
             .catch(() => false),
         { timeout: 60_000 }
@@ -538,5 +624,144 @@ export class ScribePluginPage {
 
   async read(): Promise<ScribeModel> {
     return normalizeModel(await this.editor().evaluate(readEditor))
+  }
+
+  /** A method of the editor, called by the plugin: no command is run */
+  private async callMethod(name: string, params: unknown[]): Promise<unknown> {
+    return this.plugin().evaluate(
+      ([name, params]) =>
+        new Promise(resolve => {
+          ;(
+            window as unknown as {
+              Asc: {
+                plugin: {
+                  executeMethod: (
+                    name: string,
+                    params: unknown[],
+                    callback: (value: unknown) => void
+                  ) => void
+                }
+              }
+            }
+          ).Asc.plugin.executeMethod(name, params, resolve)
+        }),
+      [name, params] as const
+    )
+  }
+
+  async readSlide(): Promise<ScribeSlide> {
+    const slide = await this.editor().evaluate(readSlideInEditor)
+    const selection = await this.callMethod('GetSelectedText', [
+      { ParaSeparator: '\n' }
+    ])
+    return {
+      ...slide,
+      selection: String(selection ?? '')
+        .replace(/\s+/g, ' ')
+        .trim()
+    }
+  }
+
+  async readSlideRuns(
+    shape: number,
+    paragraph: number
+  ): Promise<ScribeSlideRun[]> {
+    return this.editor().evaluate(readSlideRunsInEditor, { shape, paragraph })
+  }
+
+  async goToSlide(number: number): Promise<void> {
+    await this.callMethod('GoToSlide', [number])
+    await this.page.waitForTimeout(400)
+  }
+
+  /**
+   * Selects a paragraph of a shape of the current slide, or the shape itself
+   * without `paragraph`
+   */
+  async selectInSlide(shape: number, paragraph?: number): Promise<void> {
+    await this.runCommand(
+      ({ shape, paragraph }) => {
+        const presentation = Api.GetPresentation()
+        const target = presentation
+          .GetSlideByIndex(presentation.GetCurSlideIndex())
+          .GetAllShapes()[shape]
+        if (paragraph === null) target.Select(true)
+        else target.GetDocContent().GetElement(paragraph).Select()
+        return true
+      },
+      { shape, paragraph: paragraph ?? null }
+    )
+    await this.page.waitForTimeout(700)
+  }
+
+  /** Writes a paragraph of a shape of the current slide as runs of a look */
+  async setSlideRuns(
+    shape: number,
+    paragraph: number,
+    runs: { text: string; isBold?: boolean; size: number; rgb: number[] }[]
+  ): Promise<void> {
+    await this.runCommand(
+      ({ shape, paragraph, runs }) => {
+        const presentation = Api.GetPresentation()
+        const element = presentation
+          .GetSlideByIndex(presentation.GetCurSlideIndex())
+          .GetAllShapes()
+          [shape].GetDocContent()
+          .GetElement(paragraph)
+        element.RemoveAllElements()
+        runs.forEach(part => {
+          const run = Api.CreateRun()
+          run.AddText(part.text)
+          if (part.isBold) run.SetBold(true)
+          run.SetFontSize(part.size)
+          const [red, green, blue] = part.rgb
+          run.SetFill(Api.CreateSolidFill(Api.CreateRGBColor(red, green, blue)))
+          element.AddElement(run)
+        })
+        return true
+      },
+      { shape, paragraph, runs }
+    )
+  }
+
+  async press(...keys: string[]): Promise<void> {
+    await this.callMethod('FocusEditor', [])
+    for (const key of keys) await this.page.keyboard.press(key)
+    await this.page.waitForTimeout(300)
+  }
+
+  /**
+   * Runs a command of the builder in the editor, as the plugin does: only
+   * while the plugin runs none, since the editor keeps one callback for them
+   */
+  async runCommand<T>(
+    command: (scope: T) => unknown,
+    scope: T
+  ): Promise<unknown> {
+    return this.plugin().evaluate(
+      ([source, scope]) =>
+        new Promise(resolve => {
+          const holder = window as unknown as {
+            Asc: {
+              scope: Record<string, unknown>
+              plugin: {
+                callCommand: (
+                  command: () => unknown,
+                  isClose: boolean,
+                  isCalc: boolean,
+                  callback: (value: unknown) => void
+                ) => void
+              }
+            }
+          }
+          holder.Asc.scope.harness = scope
+          // The editor runs the source of the command, with the scope
+          const command = new Function(
+            `return (${source})(Asc.scope.harness)`
+          ) as () => unknown
+          holder.Asc.plugin.callCommand(command, false, true, resolve)
+        }),
+      [command.toString(), scope] as const
+    )
   }
 }
