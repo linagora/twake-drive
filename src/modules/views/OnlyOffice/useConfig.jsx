@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 
 import { useClient, isQueryLoading } from 'cozy-client'
 import useFetchJSON from 'cozy-client/dist/hooks/useFetchJSON'
+import flag from 'cozy-flags'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import { changeLocation } from '@/hooks/helpers'
@@ -13,6 +14,8 @@ import {
   shouldBeOpenedOnOtherInstance
 } from '@/modules/views/editor/helpers'
 import { useEditorAuthor } from '@/modules/views/editor/useEditorAuthor'
+
+const ONLYOFFICE_AI_PLUGIN = 'asc.{9DC93CDB-B576-4F0C-B55E-FCC9C48DD007}'
 
 const useConfig = () => {
   const {
@@ -94,7 +97,12 @@ const useConfig = () => {
             user: { name: author },
             customization: {
               reviewDisplay: 'markup'
-            }
+            },
+            // The AI plugin of the editor would sit beside the assistant of
+            // Twake, which writes in the document through the scribe
+            ...(flag('cozy.assistant.enabled') && {
+              plugins: { disable: [ONLYOFFICE_AI_PLUGIN] }
+            })
           },
           token: onlyoffice.token,
           documentType: onlyoffice.documentType,
