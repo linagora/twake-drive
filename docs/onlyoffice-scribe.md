@@ -114,7 +114,7 @@ Drive and the plugin talk with `postMessage`. Drive only listens to the origin o
 | any other | A text | The answer is written in new paragraphs, under the last paragraph of the selection, or under the table when the selection takes cells and more than one cell. |
 | any other | None | The answer is written in new paragraphs, under the paragraph of the cursor. |
 
-The answer is left selected.
+An empty paragraph where the answer goes, as the one of an empty document, takes the answer itself; a paragraph that holds only a page break, an image or a field, or that ends a section, is not empty, and one between a table and a table of the answer stays, to keep the two tables apart. The answer is left selected.
 
 The plugin checks `canReplace` again before it replaces a text: it never replaces a selection that holds what an answer cannot give back, even when Drive asks.
 
