@@ -17,13 +17,24 @@ import {
 export const ScribePanel = () => {
   const { t } = useI18n()
   const { type: themeType } = useCozyTheme()
-  const { isOpen, content, target, documentType, close, applyResult } =
-    useScribe()
+  const {
+    isOpen,
+    content,
+    target,
+    canReplace,
+    documentType,
+    close,
+    applyResult
+  } = useScribe()
 
   if (!isOpen) return null
 
+  // A selection that holds what an answer cannot give back, as an image or a
+  // note, is not offered to be replaced. An older plugin does not tell.
   const answerActions =
-    target === 'selection' ? ['insert', 'replace'] : ['insert']
+    target === 'selection' && canReplace !== false
+      ? ['insert', 'replace']
+      : ['insert']
   const capabilities = makeCapabilities({ documentType, t })
   const suggestions = makeSuggestions({ documentType, t })
   const data = {

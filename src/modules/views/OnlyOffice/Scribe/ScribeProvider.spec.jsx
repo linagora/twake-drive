@@ -29,13 +29,21 @@ const TABLE = {
 }
 
 const ScribeState = ({ results = [] }) => {
-  const { isAvailable, isOpen, content, target, open, close, applyResult } =
-    useScribe()
+  const {
+    isAvailable,
+    isOpen,
+    content,
+    target,
+    canReplace,
+    open,
+    close,
+    applyResult
+  } = useScribe()
 
   return (
     <>
       <output data-testid="state">
-        {JSON.stringify({ isAvailable, isOpen, content, target })}
+        {JSON.stringify({ isAvailable, isOpen, content, target, canReplace })}
       </output>
       <button onClick={open}>open</button>
       <button onClick={close}>close</button>
@@ -116,14 +124,16 @@ describe('ScribeProvider', () => {
     receive({
       type: 'twake-scribe:content',
       content: 'Un **texte**',
-      target: 'selection'
+      target: 'selection',
+      canReplace: true
     })
 
     expect(getState()).toEqual({
       isAvailable: true,
       isOpen: true,
       content: 'Un **texte**',
-      target: 'selection'
+      target: 'selection',
+      canReplace: true
     })
   })
 
@@ -141,14 +151,16 @@ describe('ScribeProvider', () => {
     receive({
       type: 'twake-scribe:selection',
       content: 'Autre',
-      target: 'selection'
+      target: 'selection',
+      canReplace: false
     })
 
     expect(getState()).toEqual({
       isAvailable: true,
       isOpen: true,
       content: 'Autre',
-      target: 'selection'
+      target: 'selection',
+      canReplace: false
     })
   })
 

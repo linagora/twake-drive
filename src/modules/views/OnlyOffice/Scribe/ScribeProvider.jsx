@@ -32,11 +32,12 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
     const handleMessage = event => {
       if (event.origin !== serverOrigin) return
 
-      const { type, content, target } = event.data ?? {}
+      const { type, content, target, canReplace } = event.data ?? {}
+      const text = { content, target, canReplace }
       if (type === 'twake-scribe:ready') setPlugin(event.source)
-      if (type === 'twake-scribe:content') setText({ content, target })
+      if (type === 'twake-scribe:content') setText(text)
       if (type === 'twake-scribe:selection') {
-        setText(current => (current === null ? null : { content, target }))
+        setText(current => (current === null ? null : text))
       }
     }
 
@@ -85,6 +86,7 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
       isOpen: text !== null,
       content: text?.content,
       target: text?.target,
+      canReplace: text?.canReplace,
       documentType,
       // The panel opens once the plugin answers with twake-scribe:content
       open: () =>

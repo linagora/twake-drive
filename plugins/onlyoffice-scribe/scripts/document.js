@@ -10,8 +10,9 @@
  * cell after the other: the cells that take several columns or rows get
  * their `colspan` and `rowspan`.
  *
- * @returns {{ content: string, target: 'selection' | 'document' }} the text,
- * in Markdown
+ * @returns {{ content: string, target: 'selection' | 'document',
+ * canReplace: boolean }} the text, in Markdown, and whether an answer can take
+ * its place
  */
 export function readContent() {
   const doc = Api.GetDocument()
@@ -171,9 +172,28 @@ export function readContent() {
     )
   }
 
+  // An answer is text: it cannot give back an image, a chart, an equation, a
+  // note, a field, a form or a comment, nor take the place of a text and a
+  // table together
+  const KEPT =
+    /"type":"(paraDrawing|paraMath|footnoteRef|endnoteRef|fldChar|inlineLvlSdt|blockLvlSdt|commentRangeStart)"/
+  const canReplace = () => {
+    const paragraphs = selection.GetAllParagraphs()
+    const tables = new Set(
+      paragraphs.map(
+        paragraph =>
+          paragraph.GetParentTableCell()?.GetParentTable().GetInternalId() ??
+          null
+      )
+    )
+    const isCrossing = tables.size > 1
+    return !isCrossing && !KEPT.test(selection.ToJSON(false, false))
+  }
+
   return {
     content: describeMerges(doc.ToMarkdown()),
-    target: hasSelection ? 'selection' : 'document'
+    target: hasSelection ? 'selection' : 'document',
+    canReplace: hasSelection && canReplace()
   }
 }
 
@@ -192,6 +212,7 @@ export function writeBlocks() {
     return element.GetText({ Numbering: false, ParaSeparator: '\n' })
   }
   const selection = doc.GetRangeBySelect()
+  const paragraphs = selection?.GetAllParagraphs() ?? []
   // A new text has the look of the text at the cursor
   const cursorTextPr = doc.GetCurrentRun()?.GetTextPr()
   const numberings = {}
@@ -325,10 +346,13 @@ export function writeBlocks() {
   // The cells the selection takes, when it takes several cells of one table:
   // their rows, each with its cells in order
   const getSelectedCells = () => {
+    // A text around the cells makes it a selection of text and table
+    if (paragraphs.some(paragraph => !paragraph.GetParentTableCell())) {
+      return null
+    }
     const tables = new Map()
-    ;(selection?.GetAllParagraphs() ?? []).forEach(paragraph => {
+    paragraphs.forEach(paragraph => {
       const cell = paragraph.GetParentTableCell()
-      if (!cell) return
       const table = cell.GetParentTable()
       if (!tables.has(table.GetInternalId())) {
         tables.set(table.GetInternalId(), { table, cells: new Map() })
@@ -429,26 +453,40 @@ export function writeBlocks() {
     return true
   }
 
-  // The answer takes the place of a new paragraph, after the one of the
-  // selection or of the cursor
-  const placeAfterParagraph = placeholder => {
-    const paragraphs = selection?.GetAllParagraphs() ?? []
-    const anchor = paragraphs.length
-      ? paragraphs[paragraphs.length - 1]
-      : doc.GetCurrentParagraph()
-    if (!anchor) return false
-    anchor.InsertParagraph(placeholder, 'after', true)
-    return true
+  // What the answer goes under: the last paragraph of the selection, or the
+  // one of the cursor, or the table of its last cell when the selection is
+  // not in that cell only
+  const findAnchor = () => {
+    const last = paragraphs[paragraphs.length - 1] ?? doc.GetCurrentParagraph()
+    const cell = last?.GetParentTableCell()
+    const cells = new Set(
+      paragraphs.map(
+        paragraph => paragraph.GetParentTableCell()?.GetInternalId() ?? null
+      )
+    )
+    return cell && cells.size > 1 ? cell.GetParentTable() : last
   }
 
-  // Selects a new paragraph for the answer to take its place
+  // Selects a new paragraph after the anchor, for the answer to take its
+  // place
   const selectPlaceholder = selectedCells => {
     const placeholder = Api.CreateParagraph()
-    const isPlaced = selectedCells
-      ? placeAfterTable(placeholder, selectedCells)
-      : placeAfterParagraph(placeholder)
-    if (isPlaced) placeholder.Select()
-    return isPlaced
+    if (selectedCells) {
+      placeAfterTable(placeholder, selectedCells)
+      placeholder.Select()
+      return true
+    }
+    const anchor = findAnchor()
+    if (!anchor) return false
+    if (anchor.GetClassType() === 'table') {
+      const parent = anchor.GetParentTableCell()?.GetContent() ?? doc
+      parent.AddElement(anchor.GetPosInParent() + 1, placeholder)
+      placeholder.Select()
+      return true
+    }
+    anchor.InsertParagraph(placeholder, 'after', true)
+    placeholder.Select()
+    return true
   }
 
   // Selects the answer written from `start`. A text written in a line is
@@ -502,11 +540,10 @@ export function writeBlocks() {
     )
   }
 
-  // Writes the blocks in place of the selection, a single paragraph in its
-  // line (`isInline`), and selects them
-  const writeAnswer = isInline => {
+  // Writes elements in place of the selection, a single paragraph in its line
+  // (`isInline`), and selects them
+  const writeAnswer = (elements, isInline) => {
     const start = doc.GetRangeBySelect().GetStartPos()
-    const elements = blocks.map(makeElement)
     if (!doc.InsertContent(elements, isInline)) return false
 
     const last = elements[elements.length - 1]
@@ -523,11 +560,11 @@ export function writeBlocks() {
     fillCells(selectedCells, blocks[0])
     return true
   }
-
-  const isReplacing = isReplacingText(selectedCells)
-  if (isReplacing) keepParagraphMark()
-  else if (!selectPlaceholder(selectedCells)) return false
-
-  // A single paragraph is written in the line of the selection
-  return writeAnswer(isReplacing && isAnswerOf('paragraph'))
+  if (isReplacingText(selectedCells)) {
+    keepParagraphMark()
+    // A single paragraph is written in the line of the selection
+    return writeAnswer(blocks.map(makeElement), isAnswerOf('paragraph'))
+  }
+  if (!selectPlaceholder(selectedCells)) return false
+  return writeAnswer(blocks.map(makeElement), false)
 }
