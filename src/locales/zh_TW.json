@@ -1,4 +1,32 @@
 {
+  "FilePickerDemo": {
+    "title": "File Picker 意圖示範"
+  },
+  "MoveIntentDemo": {
+    "options": "意圖選項",
+    "chooseSources": "選擇本機檔案",
+    "invalidSources": "請僅為 MOVE 選擇本機檔案。不支援遠端檔案、資料夾或 Nextcloud 來源。",
+    "title": "MOVE 意圖示範",
+    "warning": "此示範會實際移動檔案，並非模擬。請僅使用您在此執行個體上自行選擇的測試檔案。名稱衝突可能依 Drive 的一般規則取代檔案。取消不會復原已完成的移動；部分失敗後，有些檔案可能已經移動。",
+    "recovery": "終止錯誤會顯示在對話方塊中，可能需要重新載入頁面才能返回。重新載入不會復原移動。重試中斷的操作前，請檢查 Drive。",
+    "directoryRequired": "請選擇初始資料夾以限制目標。",
+    "restrict": "將目標限制為此資料夾及其子資料夾（不限制來源）",
+    "tabs": "目標分頁",
+    "defaultTabs": "服務預設值（Drive 和共用；啟用限制時僅 Drive）",
+    "driveOnly": "僅 Drive",
+    "theme": "佈景主題",
+    "theme_default": "執行個體預設",
+    "theme_light": "淺色",
+    "theme_dark": "深色",
+    "open": "開啟 MOVE 示範",
+    "opening": "正在開啟意圖…",
+    "ready": "目標選擇器已就緒。這不代表檔案已移動。",
+    "completed": "已完成。傳回的檔案數：%{smart_count}。",
+    "cancelled": "已取消，未傳回結果。已完成的移動仍會保留。",
+    "chooseDirectory": "選擇初始資料夾",
+    "clearDirectory": "清除初始資料夾",
+    "invalidDirectory": "請選擇一個本機資料夾。檔案和遠端資料夾不能作為初始資料夾。"
+  },
   "Excalidraw": {
     "createFileName": "新增繪圖"
   },
@@ -32,7 +60,8 @@
     "btn-client-web": "取得 Twake",
     "btn-client-mobile": "在您的手機上下載 %{name}",
     "banner-txt-client": "下載桌面版 %{name} 來安全地同步您的檔案並隨時存取它們",
-    "banner-btn-client": "下載"
+    "banner-btn-client": "下載",
+    "item_file_picker": "選取檔案"
   },
   "breadcrumb": {
     "title_drive": "硬碟",

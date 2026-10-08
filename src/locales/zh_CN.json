@@ -1,4 +1,32 @@
 {
+  "FilePickerDemo": {
+    "title": "File Picker 意图演示"
+  },
+  "MoveIntentDemo": {
+    "options": "意图选项",
+    "chooseSources": "选择本地文件",
+    "invalidSources": "请仅为 MOVE 选择本地文件。不支持远程文件、文件夹或 Nextcloud 来源。",
+    "title": "MOVE 意图演示",
+    "warning": "此演示会实际移动文件，并非模拟。请仅使用您在此实例上自行选择的测试文件。名称冲突可能按 Drive 的常规规则替换文件。取消不会撤销已完成的移动；部分失败后，有些文件可能已经移动。",
+    "recovery": "终止错误会显示在对话框中，可能需要重新加载页面才能返回。重新加载不会撤销移动。重试中断的操作前，请检查 Drive。",
+    "directoryRequired": "请选择初始文件夹以限制目标。",
+    "restrict": "将目标限制为此文件夹及其子文件夹（不限制来源）",
+    "tabs": "目标选项卡",
+    "defaultTabs": "服务默认值（Drive 和共享；启用限制时仅 Drive）",
+    "driveOnly": "仅 Drive",
+    "theme": "主题",
+    "theme_default": "实例默认",
+    "theme_light": "浅色",
+    "theme_dark": "深色",
+    "open": "打开 MOVE 演示",
+    "opening": "正在打开意图…",
+    "ready": "目标选择器已就绪。这不代表文件已移动。",
+    "completed": "已完成。返回的文件数：%{smart_count}。",
+    "cancelled": "已取消，未返回结果。已完成的移动仍然保留。",
+    "chooseDirectory": "选择初始文件夹",
+    "clearDirectory": "清除初始文件夹",
+    "invalidDirectory": "请选择一个本地文件夹。文件和远程文件夹不能用作初始文件夹。"
+  },
   "Excalidraw": {
     "createFileName": "新建绘图"
   },
@@ -34,7 +62,8 @@
     "link-client-desktop": "https://nuts.cozycloud.cc/download/channel/stable/",
     "link-client-android": "https://play.google.com/store/apps/details?id=io.cozy.drive.mobile",
     "link-client-ios": "https://itunes.apple.com/us/app/cozy-drive/id1224102389?mt=8",
-    "link-client-web": "https://cozy.io/try-it"
+    "link-client-web": "https://cozy.io/try-it",
+    "item_file_picker": "选择文件"
   },
   "breadcrumb": {
     "title_drive": "硬盘",

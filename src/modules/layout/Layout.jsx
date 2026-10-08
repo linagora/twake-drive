@@ -10,13 +10,13 @@ import FlagSwitcher from 'cozy-flags/dist/FlagSwitcher'
 import { Layout as LayoutUI } from 'cozy-ui/transpiled/react/Layout'
 import Sidebar from 'cozy-ui/transpiled/react/Sidebar'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
-import Storage from 'cozy-ui-plus/dist/Storage'
 import { useI18n } from 'twake-i18n'
+
+import { LayoutSidebarFooter } from './LayoutSidebarFooter'
 
 import FilesRealTimeQueries from '@/components/FilesRealTimeQueries'
 import Drive from '@/components/Icons/Drive'
 import DriveText from '@/components/Icons/DriveText'
-import ButtonClient from '@/components/pushClient/Button'
 import { ROOT_DIR_ID, TRASH_DIR_ID } from '@/constants/config'
 import { useDisplayedFolder } from '@/hooks'
 import { isEditableTarget } from '@/hooks/helpers'
@@ -28,7 +28,6 @@ import AddMenuProvider from '@/modules/drive/AddMenu/AddMenuProvider'
 import AddButton from '@/modules/drive/Toolbar/components/AddButton'
 import Nav from '@/modules/navigation/Nav'
 import { NavProvider, useNavContext } from '@/modules/navigation/NavContext'
-import FilePickerButton from '@/modules/navigation/components/FilePickerButton'
 import {
   wasOperationRedirected,
   RESET_OPERATION_REDIRECTED
@@ -156,15 +155,7 @@ const LayoutContent = () => {
             ) : null}
             <Nav />
           </div>
-          {isDesktop && (
-            <div>
-              {flag('drive.file-picker-demo.enabled') && <FilePickerButton />}
-              <div className="u-p-1-half">
-                <Storage />
-              </div>
-              <ButtonClient />
-            </div>
-          )}
+          {isDesktop && <LayoutSidebarFooter />}
         </Sidebar>
         <UploadQueue />
         <FilesRealTimeQueries />

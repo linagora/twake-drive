@@ -1,4 +1,32 @@
 {
+  "FilePickerDemo": {
+    "title": "File Picker インテントのデモ"
+  },
+  "MoveIntentDemo": {
+    "options": "インテントのオプション",
+    "chooseSources": "ローカルファイルを選択",
+    "invalidSources": "MOVE にはローカルファイルのみを選択してください。リモートファイル、フォルダー、Nextcloud のソースはサポートされていません。",
+    "title": "MOVE インテントのデモ",
+    "warning": "このデモは実際にファイルを移動します。シミュレーションではありません。このインスタンスで自分で選んだテスト用ファイルのみを使用してください。名前が競合すると、Drive の通常のルールに従ってファイルが置き換えられる場合があります。キャンセルしても完了済みの移動は元に戻りません。一部が失敗しても、移動済みのファイルがある場合があります。",
+    "recovery": "終了エラーはダイアログに表示されます。ここに戻るにはページの再読み込みが必要な場合があります。再読み込みしても移動は元に戻りません。中断した操作を再試行する前に Drive を確認してください。",
+    "directoryRequired": "移動先を制限するには開始フォルダーを選択してください。",
+    "restrict": "移動先をこのフォルダーとその配下に制限する（移動元は制限しない）",
+    "tabs": "移動先タブ",
+    "defaultTabs": "既定（Drive と共有。制限時は Drive のみ）",
+    "driveOnly": "Drive のみ",
+    "theme": "テーマ",
+    "theme_default": "インスタンスの既定",
+    "theme_light": "ライト",
+    "theme_dark": "ダーク",
+    "open": "MOVE デモを開く",
+    "opening": "インテントを開いています…",
+    "ready": "移動先の選択画面が準備できました。ファイルが移動されたという意味ではありません。",
+    "completed": "完了。返されたファイル数: %{smart_count}。",
+    "cancelled": "キャンセルされました。結果は返されません。完了済みの移動はそのままです。",
+    "chooseDirectory": "開始フォルダーを選択",
+    "clearDirectory": "開始フォルダーを解除",
+    "invalidDirectory": "ローカルフォルダーを 1 つ選択してください。ファイルやリモートフォルダーは開始フォルダーとして使用できません。"
+  },
   "Excalidraw": {
     "createFileName": "新しい描画"
   },
@@ -37,7 +65,8 @@
     "link-client-desktop": "https://nuts.cozycloud.cc/download/channel/stable/",
     "link-client-android": "https://play.google.com/store/apps/details?id=io.cozy.drive.mobile",
     "link-client-ios": "https://itunes.apple.com/us/app/cozy-drive/id1224102389?mt=8",
-    "link-client-web": "https://cozy.io/try-it"
+    "link-client-web": "https://cozy.io/try-it",
+    "item_file_picker": "ファイルを選択"
   },
   "breadcrumb": {
     "title_drive": "ドライブ",

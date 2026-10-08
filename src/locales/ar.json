@@ -1,4 +1,32 @@
 {
+  "FilePickerDemo": {
+    "title": "عرض توضيحي لـ File Picker"
+  },
+  "MoveIntentDemo": {
+    "options": "خيارات الطلب",
+    "chooseSources": "اختيار ملفات محلية",
+    "invalidSources": "اختر ملفات محلية فقط لـ MOVE. الملفات البعيدة والمجلدات ومصادر Nextcloud غير مدعومة.",
+    "title": "عرض توضيحي لـ MOVE",
+    "warning": "ينقل هذا العرض ملفاتك فعليًا. إنه ليس محاكاة. استخدم فقط ملفات اختبار تختارها على هذا المثيل. قد تؤدي تعارضات الأسماء إلى استبدال ملفات وفق قواعد Drive المعتادة. الإلغاء لا يتراجع عن عمليات النقل المكتملة؛ بعد فشل جزئي قد تكون بعض الملفات قد نُقلت بالفعل.",
+    "recovery": "يظهر الخطأ النهائي في مربع الحوار وقد يتطلب إعادة تحميل الصفحة للعودة إلى هنا. إعادة التحميل لا تتراجع عن النقل. تحقق من Drive قبل إعادة محاولة عملية متوقفة.",
+    "directoryRequired": "اختر مجلد البداية لتقييد الوجهات.",
+    "restrict": "تقييد الوجهات بهذا المجلد ومجلداته الفرعية (وليس المصادر)",
+    "tabs": "علامات تبويب الوجهة",
+    "defaultTabs": "الإعدادات الافتراضية (Drive والمشاركات؛ Drive فقط عند التقييد)",
+    "driveOnly": "Drive فقط",
+    "theme": "المظهر",
+    "theme_default": "الإعداد الافتراضي للمثيل",
+    "theme_light": "فاتح",
+    "theme_dark": "داكن",
+    "open": "فتح عرض MOVE",
+    "opening": "جارٍ فتح الطلب…",
+    "ready": "محدد الوجهة جاهز. هذا لا يعني أن الملفات قد نُقلت.",
+    "completed": "اكتمل. الملفات المُعادة: %{smart_count}.",
+    "cancelled": "تم الإلغاء؛ لم تُعد أي نتيجة. تظل عمليات النقل المكتملة سارية.",
+    "chooseDirectory": "اختيار مجلد البداية",
+    "clearDirectory": "مسح مجلد البداية",
+    "invalidDirectory": "اختر مجلدًا محليًا واحدًا. لا يمكن استخدام الملفات أو المجلدات البعيدة كمجلد البداية."
+  },
   "Excalidraw": {
     "createFileName": "رسم جديد"
   },
@@ -30,7 +58,8 @@
     "link-client": "https://cozy.io/en/download/",
     "link-client-desktop": "https://nuts.cozycloud.cc/download/channel/stable/",
     "link-client-android": "https://play.google.com/store/apps/details?id=io.cozy.drive.mobile",
-    "link-client-ios": "https://itunes.apple.com/us/app/cozy-drive/id1224102389?mt=8"
+    "link-client-ios": "https://itunes.apple.com/us/app/cozy-drive/id1224102389?mt=8",
+    "item_file_picker": "اختيار ملف"
   },
   "breadcrumb": {
     "title_drive": "القرص",

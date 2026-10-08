@@ -211,6 +211,58 @@ In addition to the generic intent `ready` handshake, the Move picker sends a `re
 
 The signal fires once when the picker becomes usable; navigating into subfolders does not re-fire it. A recoverable query error does not prevent the signal if the picker remains interactive. Invalid configuration or a terminal initialization error is reported through the generic intent `error` channel instead; do not announce `readyToUse` for an unusable picker.
 
+## In-app demo
+
+Enable `drive.move-intent-demo.enabled` and open `/#/move-intent-demo` on the
+Drive app. The desktop sidebar includes a link when the flag is enabled; the
+same page works at mobile width. The flag is off by default outside the E2E
+configuration.
+
+The demo **really moves files**. Choose only disposable test files already on
+this instance. Use **Choose local files** to open the existing PICK intent with
+only My Drive, multiple selection and `documents: { accept: ['file'] }`.
+Sharing/download actions are disabled, so selecting sources creates no links
+or permissions and moves nothing. Only the selected file names are displayed;
+cancelling PICK keeps the previous selection. The caller rejects non-local or
+non-file results, and MOVE still revalidates sources before any mutation.
+There is no source-ID input, source-count display or acknowledgment checkbox.
+The visible warning about real movement, replacement and no rollback remains.
+No sample files or folders are provisioned. Opening MOVE does not move files:
+confirm a destination inside its picker. Successful completion clears the
+source selection to avoid accidentally reusing old source identities.
+
+Use **Choose default folder** for the optional starting directory. This opens
+PICK with `multiple: false`, `tabs: ['drive']`,
+`documents: { accept: ['folder'] }`, and both link actions set to `null`.
+Folders remain navigable but only one local folder can be confirmed; files
+cannot be confirmed. The page displays the folder path/name, not its ID.
+Cancelling keeps the previous folder; **Clear default folder** omits
+`defaultDirId` again. An invalid folder result clears the default and shows an
+error rather than using a file or remote folder as the navigation root.
+
+By default MOVE receives only `fileIds`: Drive and Sharings tabs, unrestricted
+navigation and the instance theme. You can restrict destinations to the chosen
+folder's subtree, select Drive-only destination tabs, or force light/dark.
+Restriction requires a chosen starting folder; it does not constrain sources.
+MOVE never offers Recents. A read-only JSON preview at the bottom shows the MOVE
+options. After completion or cancellation it retains the submitted options,
+including source IDs even after the selection is cleared. Editing the form or
+opening a PICK returns the preview to the current configuration.
+
+The demo uses the real `IntentDialogOpener` with `closable={false}` and
+`waitForReadyToUse`. Completion shows the actual surviving documents and final
+paths, which may have new IDs or fewer entries after replacements. Service
+cancellation returns no result; completed moves remain in place. Business
+failures and retries stay inside the service, including partial failures and
+result-read retries. Do not reopen the intent as a substitute for Retry.
+
+In cozy-ui-plus 14.0.1, the opener does not forward `onError`; its inner
+`IntentIframe` displays a terminal error in the dialog. Returning to the form
+may require **reloading the browser page**. Reloading or forcibly closing the
+browser does not undo moves. Check Drive before retrying an interrupted
+operation. The demo deliberately does not add host dismissal that could bypass
+busy protection, and it does not infer partial results from cancellation.
+
 ## Acceptance criteria
 
 - The intent identity is `MOVE` / `io.cozy.files`; the request identifies one or more already-uploaded local source files by a non-empty `data.fileIds` array.

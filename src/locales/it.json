@@ -1,4 +1,32 @@
 {
+  "FilePickerDemo": {
+    "title": "Demo dell’intent File Picker"
+  },
+  "MoveIntentDemo": {
+    "options": "Opzioni dell’intent",
+    "chooseSources": "Scegli file locali",
+    "invalidSources": "Scegli solo file locali per MOVE. File remoti, cartelle e origini Nextcloud non sono supportati.",
+    "title": "Demo dell’intent MOVE",
+    "warning": "Questa demo sposta realmente i file. Non è una simulazione. Usa solo file di prova scelti su questa istanza. I conflitti di nome possono sostituire file secondo le normali regole di Drive. Annullare non ripristina gli spostamenti completati; dopo un errore parziale alcuni file potrebbero essere già stati spostati.",
+    "recovery": "Un errore terminale appare nella finestra e potrebbe richiedere di ricaricare la pagina per tornare qui. Ricaricare non annulla gli spostamenti. Controlla Drive prima di riprovare un’operazione interrotta.",
+    "directoryRequired": "Scegli una cartella iniziale per limitare le destinazioni.",
+    "restrict": "Limita le destinazioni a questa cartella e alle sottocartelle (non le origini)",
+    "tabs": "Schede di destinazione",
+    "defaultTabs": "Predefinite (Drive e Condivisioni; solo Drive con restrizione)",
+    "driveOnly": "Solo Drive",
+    "theme": "Tema",
+    "theme_default": "Predefinito dell’istanza",
+    "theme_light": "Chiaro",
+    "theme_dark": "Scuro",
+    "open": "Apri demo MOVE",
+    "opening": "Apertura dell’intent…",
+    "ready": "Selettore di destinazione pronto. Non significa che i file siano stati spostati.",
+    "completed": "Completato. File restituiti: %{smart_count}.",
+    "cancelled": "Annullato; nessun risultato restituito. Gli spostamenti completati restano validi.",
+    "chooseDirectory": "Scegli cartella iniziale",
+    "clearDirectory": "Rimuovi cartella iniziale",
+    "invalidDirectory": "Scegli una sola cartella locale. File e cartelle remote non possono essere usati come cartella iniziale."
+  },
   "Nav": {
     "item_drive": "Drive",
     "item_recent": "Recenti",

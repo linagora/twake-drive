@@ -1,4 +1,32 @@
 {
+  "FilePickerDemo": {
+    "title": "File Picker 인텐트 데모"
+  },
+  "MoveIntentDemo": {
+    "options": "인텐트 옵션",
+    "chooseSources": "로컬 파일 선택",
+    "invalidSources": "MOVE에는 로컬 파일만 선택하세요. 원격 파일, 폴더 및 Nextcloud 원본은 지원되지 않습니다.",
+    "title": "MOVE 인텐트 데모",
+    "warning": "이 데모는 파일을 실제로 이동합니다. 시뮬레이션이 아닙니다. 이 인스턴스에서 직접 선택한 테스트 파일만 사용하세요. 이름 충돌 시 Drive의 일반 규칙에 따라 파일이 교체될 수 있습니다. 취소해도 완료된 이동은 되돌리지 않습니다. 일부 실패 후에도 일부 파일은 이미 이동되었을 수 있습니다.",
+    "recovery": "종료 오류는 대화상자에 표시되며 여기로 돌아오려면 페이지를 새로고침해야 할 수 있습니다. 새로고침은 이동을 되돌리지 않습니다. 중단된 작업을 다시 시도하기 전에 Drive를 확인하세요.",
+    "directoryRequired": "대상을 제한하려면 시작 폴더를 선택하세요.",
+    "restrict": "대상을 이 폴더와 하위 폴더로 제한 (원본은 제한하지 않음)",
+    "tabs": "대상 탭",
+    "defaultTabs": "서비스 기본값 (Drive 및 공유, 제한 시 Drive만)",
+    "driveOnly": "Drive만",
+    "theme": "테마",
+    "theme_default": "인스턴스 기본값",
+    "theme_light": "밝게",
+    "theme_dark": "어둡게",
+    "open": "MOVE 데모 열기",
+    "opening": "인텐트를 여는 중…",
+    "ready": "대상 선택기가 준비되었습니다. 파일이 이동되었다는 뜻은 아닙니다.",
+    "completed": "완료. 반환된 파일: %{smart_count}.",
+    "cancelled": "취소됨. 반환된 결과가 없습니다. 완료된 이동은 유지됩니다.",
+    "chooseDirectory": "시작 폴더 선택",
+    "clearDirectory": "시작 폴더 지우기",
+    "invalidDirectory": "로컬 폴더 하나를 선택하세요. 파일이나 원격 폴더는 시작 폴더로 사용할 수 없습니다."
+  },
   "Nav": {
     "item_sharings": "공유",
     "item_drive": "드라이브",
@@ -10,7 +38,8 @@
     "link-client-desktop": "https://nuts.cozycloud.cc/download/channel/stable/",
     "link-client-android": "https://play.google.com/store/apps/details?id=io.cozy.drive.mobile",
     "link-client-ios": "https://itunes.apple.com/us/app/cozy-drive/id1224102389?mt=8",
-    "link-client-web": "https://cozy.io/try-it"
+    "link-client-web": "https://cozy.io/try-it",
+    "item_file_picker": "파일 선택"
   },
   "breadcrumb": {
     "title_drive": "드라이브",

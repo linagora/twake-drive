@@ -1,4 +1,32 @@
 {
+  "FilePickerDemo": {
+    "title": "File Picker-intentdemo"
+  },
+  "MoveIntentDemo": {
+    "options": "Intentopties",
+    "chooseSources": "Lokale bestanden kiezen",
+    "invalidSources": "Kies alleen lokale bestanden voor MOVE. Externe bestanden, mappen en Nextcloud-bronnen worden niet ondersteund.",
+    "title": "MOVE-intentdemo",
+    "warning": "Deze demo verplaatst uw bestanden echt. Het is geen simulatie. Gebruik alleen zelfgekozen testbestanden op deze instantie. Naamconflicten kunnen bestanden vervangen volgens de normale Drive-regels. Annuleren maakt voltooide verplaatsingen niet ongedaan; na een gedeeltelijke fout kunnen bestanden al verplaatst zijn.",
+    "recovery": "Een definitieve fout verschijnt in het dialoogvenster. Mogelijk moet u de pagina herladen om terug te keren. Herladen maakt verplaatsingen niet ongedaan. Controleer Drive voordat u een onderbroken bewerking opnieuw probeert.",
+    "directoryRequired": "Kies een startmap om de bestemmingen te beperken.",
+    "restrict": "Bestemmingen beperken tot deze map en submappen (niet de bronnen)",
+    "tabs": "Bestemmingstabbladen",
+    "defaultTabs": "Standaard (Drive en Gedeeld; alleen Drive bij beperking)",
+    "driveOnly": "Alleen Drive",
+    "theme": "Thema",
+    "theme_default": "Standaard van instantie",
+    "theme_light": "Licht",
+    "theme_dark": "Donker",
+    "open": "MOVE-demo openen",
+    "opening": "Intent openen…",
+    "ready": "Bestemmingskiezer gereed. Dit betekent niet dat bestanden zijn verplaatst.",
+    "completed": "Voltooid. Teruggegeven bestanden: %{smart_count}.",
+    "cancelled": "Geannuleerd; geen resultaat teruggegeven. Voltooide verplaatsingen blijven behouden.",
+    "chooseDirectory": "Startmap kiezen",
+    "clearDirectory": "Startmap wissen",
+    "invalidDirectory": "Kies één lokale map. Bestanden en externe mappen kunnen niet als startmap worden gebruikt."
+  },
   "Nav": {
     "item_drive": "Schijf",
     "item_recent": "Recent",
@@ -17,7 +45,8 @@
     "link-client-desktop": "https://nuts.cozycloud.cc/download/channel/stable/",
     "link-client-android": "https://play.google.com/store/apps/details?id=io.cozy.drive.mobile",
     "link-client-ios": "https://itunes.apple.com/us/app/cozy-drive/id1224102389?mt=8",
-    "link-client-web": "https://cozy.io/try-it"
+    "link-client-web": "https://cozy.io/try-it",
+    "item_file_picker": "Bestand kiezen"
   },
   "breadcrumb": {
     "title_drive": "Schijf",

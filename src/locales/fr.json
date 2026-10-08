@@ -1,4 +1,32 @@
 {
+  "FilePickerDemo": {
+    "title": "Démo de l’intent File Picker"
+  },
+  "MoveIntentDemo": {
+    "options": "Options de l’intent",
+    "chooseSources": "Choisir des fichiers locaux",
+    "invalidSources": "Choisissez uniquement des fichiers locaux pour MOVE. Les fichiers distants, les dossiers et les sources Nextcloud ne sont pas pris en charge.",
+    "title": "Démo de l’intent MOVE",
+    "warning": "Cette démo déplace réellement vos fichiers. Ce n’est pas une simulation. Utilisez uniquement des fichiers de test choisis sur cette instance. Les conflits de noms peuvent remplacer des fichiers selon les règles habituelles de Drive. Annuler ne rétablit pas les déplacements terminés ; après un échec partiel, certains fichiers peuvent déjà avoir été déplacés.",
+    "recovery": "Une erreur terminale s’affiche dans la fenêtre et peut nécessiter de recharger la page pour revenir ici. Recharger n’annule pas les déplacements. Vérifiez Drive avant de réessayer une opération interrompue.",
+    "directoryRequired": "Choisissez un dossier initial pour restreindre les destinations.",
+    "restrict": "Restreindre les destinations à ce dossier et ses descendants (pas les sources)",
+    "tabs": "Onglets de destination",
+    "defaultTabs": "Par défaut (Drive et Partages ; Drive seul avec restriction)",
+    "driveOnly": "Drive uniquement",
+    "theme": "Thème",
+    "theme_default": "Par défaut de l’instance",
+    "theme_light": "Clair",
+    "theme_dark": "Sombre",
+    "open": "Ouvrir la démo MOVE",
+    "opening": "Ouverture de l’intent…",
+    "ready": "Sélecteur de destination prêt. Cela ne signifie pas que les fichiers ont été déplacés.",
+    "completed": "Terminé. Fichiers renvoyés : %{smart_count}.",
+    "cancelled": "Annulé ; aucun résultat renvoyé. Les déplacements déjà terminés sont conservés.",
+    "chooseDirectory": "Choisir le dossier initial",
+    "clearDirectory": "Effacer le dossier initial",
+    "invalidDirectory": "Choisissez un seul dossier local. Les fichiers et les dossiers distants ne peuvent pas servir de dossier initial."
+  },
   "Nav": {
     "item_drive": "Mon Drive",
     "item_recent": "Récents",

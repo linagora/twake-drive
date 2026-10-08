@@ -1,4 +1,32 @@
 {
+  "FilePickerDemo": {
+    "title": "Demo intencji File Picker"
+  },
+  "MoveIntentDemo": {
+    "options": "Opcje intencji",
+    "chooseSources": "Wybierz pliki lokalne",
+    "invalidSources": "Wybierz tylko lokalne pliki dla MOVE. Pliki zdalne, foldery i źródła Nextcloud nie są obsługiwane.",
+    "title": "Demo intencji MOVE",
+    "warning": "To demo naprawdę przenosi pliki. To nie jest symulacja. Używaj tylko wybranych plików testowych w tej instancji. Konflikty nazw mogą zastąpić pliki zgodnie ze zwykłymi zasadami Drive. Anulowanie nie cofa zakończonych przeniesień; po częściowym błędzie niektóre pliki mogą być już przeniesione.",
+    "recovery": "Błąd końcowy jest wyświetlany w oknie i może wymagać odświeżenia strony, aby wrócić. Odświeżenie nie cofa przeniesień. Sprawdź Drive przed ponowieniem przerwanej operacji.",
+    "directoryRequired": "Wybierz folder początkowy, aby ograniczyć miejsca docelowe.",
+    "restrict": "Ogranicz miejsca docelowe do tego folderu i jego podfolderów (nie źródła)",
+    "tabs": "Karty miejsc docelowych",
+    "defaultTabs": "Domyślne (Drive i Udostępnione; tylko Drive przy ograniczeniu)",
+    "driveOnly": "Tylko Drive",
+    "theme": "Motyw",
+    "theme_default": "Domyślny dla instancji",
+    "theme_light": "Jasny",
+    "theme_dark": "Ciemny",
+    "open": "Otwórz demo MOVE",
+    "opening": "Otwieranie intencji…",
+    "ready": "Wybór miejsca docelowego jest gotowy. Nie oznacza to, że pliki zostały przeniesione.",
+    "completed": "Zakończono. Zwrócone pliki: %{smart_count}.",
+    "cancelled": "Anulowano; nie zwrócono wyniku. Zakończone przeniesienia pozostają w mocy.",
+    "chooseDirectory": "Wybierz folder początkowy",
+    "clearDirectory": "Wyczyść folder początkowy",
+    "invalidDirectory": "Wybierz jeden lokalny folder. Pliki i foldery zdalne nie mogą być folderem początkowym."
+  },
   "Excalidraw": {
     "createFileName": "Nowy rysunek"
   },
@@ -32,7 +60,8 @@
     "link-client": "https://cozy.io/en/download/",
     "link-client-desktop": "https://nuts.cozycloud.cc/download/channel/stable/",
     "link-client-android": "https://play.google.com/store/apps/details?id=io.cozy.drive.mobile",
-    "link-client-ios": "https://itunes.apple.com/us/app/cozy-drive/id1224102389?mt=8"
+    "link-client-ios": "https://itunes.apple.com/us/app/cozy-drive/id1224102389?mt=8",
+    "item_file_picker": "Wybierz plik"
   },
   "breadcrumb": {
     "title_drive": "Dysk",

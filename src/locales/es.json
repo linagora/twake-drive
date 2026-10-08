@@ -1,4 +1,32 @@
 {
+  "FilePickerDemo": {
+    "title": "Demostración del intent File Picker"
+  },
+  "MoveIntentDemo": {
+    "options": "Opciones del intent",
+    "chooseSources": "Elegir archivos locales",
+    "invalidSources": "Elija solo archivos locales para MOVE. No se admiten archivos remotos, carpetas ni fuentes Nextcloud.",
+    "title": "Demostración del intent MOVE",
+    "warning": "Esta demostración mueve realmente sus archivos. No es una simulación. Use solo archivos de prueba elegidos en esta instancia. Los conflictos de nombres pueden reemplazar archivos según las reglas habituales de Drive. Cancelar no deshace los movimientos completados; tras un fallo parcial, algunos archivos pueden haberse movido.",
+    "recovery": "Un error terminal se muestra en el diálogo y puede requerir recargar la página para volver aquí. Recargar no deshace los movimientos. Revise Drive antes de reintentar una operación interrumpida.",
+    "directoryRequired": "Elija una carpeta inicial para restringir los destinos.",
+    "restrict": "Restringir destinos a esta carpeta y sus subcarpetas (no los orígenes)",
+    "tabs": "Pestañas de destino",
+    "defaultTabs": "Predeterminado (Drive y Compartidos; solo Drive con restricción)",
+    "driveOnly": "Solo Drive",
+    "theme": "Tema",
+    "theme_default": "Predeterminado de la instancia",
+    "theme_light": "Claro",
+    "theme_dark": "Oscuro",
+    "open": "Abrir demostración MOVE",
+    "opening": "Abriendo el intent…",
+    "ready": "Selector de destino listo. Esto no significa que se hayan movido archivos.",
+    "completed": "Completado. Archivos devueltos: %{smart_count}.",
+    "cancelled": "Cancelado; no se devolvió ningún resultado. Los movimientos completados se mantienen.",
+    "chooseDirectory": "Elegir carpeta inicial",
+    "clearDirectory": "Quitar carpeta inicial",
+    "invalidDirectory": "Elija una carpeta local. Los archivos y las carpetas remotas no pueden ser la carpeta inicial."
+  },
   "Nav": {
     "item_drive": "Drive",
     "item_recent": "Recientes",
