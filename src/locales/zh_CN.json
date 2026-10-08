@@ -134,6 +134,51 @@
     "decline": "拒绝",
     "close": "关闭"
   },
+  "Move": {
+    "to": "移动到：",
+    "action": "移动",
+    "cancel": "取消",
+    "title": "%{smart_count} 个项目",
+    "success": "已将 %{smart_count} 个项目移动到 %{target}。",
+    "error": "移动项目时发生错误，请稍后重试。",
+    "partialError": "已移动：%{successCount}。失败：%{failureCount}。",
+    "multipleEntries": "%{smart_count} 个项目",
+    "addFolder": "创建文件夹",
+    "folderName": "文件夹名称",
+    "folderCreationError": "无法创建文件夹，请重试。",
+    "folderCreationInProgress": "正在创建文件夹",
+    "moveInProgress": "正在移动项目",
+    "destinationLocked": "请完成或取消此次移动后再更改目标位置。",
+    "destinationSource": "此文件夹正在被移动。",
+    "destinationDescendant": "不能将文件夹移动到自身内部。",
+    "destinationReadOnly": "此文件夹为只读。",
+    "permissionsLoading": "权限仍在加载中。",
+    "outsideSharedFolder": {
+      "title": "移出 %{sharedFolder} 文件夹",
+      "content_1": "警告：您正要将所选项目移出共享文件夹 %{sharedFolder}。",
+      "content_2": "此次移动将取消所选项目的共享。",
+      "cancel": "取消",
+      "confirm": "我已了解"
+    },
+    "insideSharedFolder": {
+      "title": "移动到共享文件夹？",
+      "content": "所有有权访问 %{destination} 的成员也将有权访问 %{source}。",
+      "cancel": "取消",
+      "confirm": "确定"
+    },
+    "sharedFolderInsideAnother": {
+      "title": "无法移动",
+      "content_1": "您正要将共享项目移动到共享文件夹。此类移动不被允许。",
+      "content_2": "如果您仍要将 %{source} 移动到 %{destination}，请先停止共享：",
+      "cancel": "取消移动",
+      "confirm": "停止共享"
+    }
+  },
+  "Viewer": {
+    "loading": {
+      "retry": "重试"
+    }
+  },
   "FilePicker": {
     "footer": {
       "buttons": {
@@ -142,7 +187,8 @@
     },
     "errors": {
       "CONSTRAINT_VIOLATION": "所选项目不符合此操作的要求。",
-      "DOCUMENTS_FAILED": "无法获取所选文档及其路径。"
+      "DOCUMENTS_FAILED": "无法获取所选文档及其路径。",
+      "DESTINATION_UNAVAILABLE": "无法加载目标文件夹。"
     }
   }
 }

@@ -1,5 +1,6 @@
 {
   "Nav": {
+    "item_sharings": "공유",
     "item_drive": "드라이브",
     "item_recent": "최근",
     "item_activity": "활동",
@@ -131,6 +132,51 @@
     "decline": "거절",
     "close": "닫기"
   },
+  "Move": {
+    "to": "이동 위치:",
+    "action": "이동",
+    "cancel": "취소",
+    "title": "%{smart_count}개 항목",
+    "success": "%{smart_count}개 항목을 %{target}(으)로 이동했습니다.",
+    "error": "항목을 이동하는 중 문제가 발생했습니다. 나중에 다시 시도하세요.",
+    "partialError": "이동 완료: %{successCount}개. 실패: %{failureCount}개.",
+    "multipleEntries": "%{smart_count}개 항목",
+    "addFolder": "폴더 만들기",
+    "folderName": "폴더 이름",
+    "folderCreationError": "폴더를 만들 수 없습니다. 다시 시도하세요.",
+    "folderCreationInProgress": "폴더 만드는 중",
+    "moveInProgress": "항목 이동 중",
+    "destinationLocked": "이동 위치를 변경하기 전에 이 이동을 완료하거나 취소하세요.",
+    "destinationSource": "이 폴더는 이동 대상입니다.",
+    "destinationDescendant": "폴더를 자기 자신 안으로 이동할 수 없습니다.",
+    "destinationReadOnly": "이 폴더는 읽기 전용입니다.",
+    "permissionsLoading": "권한을 불러오는 중입니다.",
+    "outsideSharedFolder": {
+      "title": "%{sharedFolder} 폴더 밖으로 이동",
+      "content_1": "주의: 선택한 항목을 공유 폴더 %{sharedFolder} 밖으로 이동하려고 합니다.",
+      "content_2": "이동하면 선택한 항목이 공유에서 제외됩니다.",
+      "cancel": "취소",
+      "confirm": "이해했습니다"
+    },
+    "insideSharedFolder": {
+      "title": "공유 폴더로 이동할까요?",
+      "content": "%{destination}에 접근할 수 있는 모든 구성원이 %{source}에도 접근할 수 있게 됩니다.",
+      "cancel": "취소",
+      "confirm": "확인"
+    },
+    "sharedFolderInsideAnother": {
+      "title": "이동할 수 없음",
+      "content_1": "공유 항목을 공유 폴더로 이동하려고 합니다. 이러한 이동은 허용되지 않습니다.",
+      "content_2": "%{source}을(를) %{destination}(으)로 이동하려면 공유를 중지하세요:",
+      "cancel": "이동 취소",
+      "confirm": "공유 중지"
+    }
+  },
+  "Viewer": {
+    "loading": {
+      "retry": "다시 시도"
+    }
+  },
   "FilePicker": {
     "footer": {
       "buttons": {
@@ -139,7 +185,8 @@
     },
     "errors": {
       "CONSTRAINT_VIOLATION": "선택한 항목이 이 작업의 조건을 충족하지 않습니다.",
-      "DOCUMENTS_FAILED": "선택한 문서와 경로를 가져올 수 없습니다."
+      "DOCUMENTS_FAILED": "선택한 문서와 경로를 가져올 수 없습니다.",
+      "DESTINATION_UNAVAILABLE": "이동할 폴더를 불러올 수 없습니다."
     }
   }
 }

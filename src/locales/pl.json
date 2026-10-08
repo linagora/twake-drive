@@ -20,6 +20,7 @@
     "open": "Asystent"
   },
   "Nav": {
+    "item_sharings": "Udostępnione",
     "item_drive": "Dysk",
     "item_recent": "Bieżące",
     "item_shared": "Udostępnione przeze mnie",
@@ -131,6 +132,51 @@
     "decline": "Odrzuć",
     "close": "Zamknij"
   },
+  "Move": {
+    "to": "Przenieś do:",
+    "action": "Przenieś",
+    "cancel": "Anuluj",
+    "title": "%{smart_count} element |||| %{smart_count} elementy |||| %{smart_count} elementów",
+    "success": "Przeniesiono %{subject} do %{target}. |||| Przeniesiono %{smart_count} elementy do %{target}. |||| Przeniesiono %{smart_count} elementów do %{target}.",
+    "error": "Wystąpił błąd podczas przenoszenia. Spróbuj ponownie później.",
+    "partialError": "Przeniesiono: %{successCount}. Niepowodzenia: %{failureCount}.",
+    "multipleEntries": "%{smart_count} element |||| %{smart_count} elementy |||| %{smart_count} elementów",
+    "addFolder": "Utwórz folder",
+    "folderName": "Nazwa folderu",
+    "folderCreationError": "Nie udało się utworzyć folderu. Spróbuj ponownie.",
+    "folderCreationInProgress": "Tworzenie folderu",
+    "moveInProgress": "Przenoszenie elementów",
+    "destinationLocked": "Zakończ lub anuluj przenoszenie przed zmianą miejsca docelowego.",
+    "destinationSource": "Ten folder jest przenoszony.",
+    "destinationDescendant": "Nie można przenieść folderu do niego samego.",
+    "destinationReadOnly": "Ten folder jest tylko do odczytu.",
+    "permissionsLoading": "Uprawnienia są nadal wczytywane.",
+    "outsideSharedFolder": {
+      "title": "Przenoszenie poza folder %{sharedFolder}",
+      "content_1": "Uwaga: chcesz przenieść wybrane elementy poza udostępniony folder %{sharedFolder}.",
+      "content_2": "Przeniesienie usunie wybrane elementy z udostępniania.",
+      "cancel": "Anuluj",
+      "confirm": "Rozumiem"
+    },
+    "insideSharedFolder": {
+      "title": "Przenieść do udostępnionego folderu?",
+      "content": "Wszyscy użytkownicy z dostępem do %{destination} uzyskają również dostęp do %{source}.",
+      "cancel": "Anuluj",
+      "confirm": "OK"
+    },
+    "sharedFolderInsideAnother": {
+      "title": "Nie można przenieść",
+      "content_1": "Chcesz przenieść udostępniony element do udostępnionego folderu. Taki rodzaj przenoszenia jest niedozwolony.",
+      "content_2": "Jeśli nadal chcesz przenieść %{source} do %{destination}, zatrzymaj udostępnianie:",
+      "cancel": "Anuluj przenoszenie",
+      "confirm": "Zatrzymaj udostępnianie"
+    }
+  },
+  "Viewer": {
+    "loading": {
+      "retry": "Spróbuj ponownie"
+    }
+  },
   "FilePicker": {
     "footer": {
       "buttons": {
@@ -139,7 +185,8 @@
     },
     "errors": {
       "CONSTRAINT_VIOLATION": "Wybrane elementy nie spełniają wymagań tej czynności.",
-      "DOCUMENTS_FAILED": "Nie udało się pobrać wybranych dokumentów i ich ścieżek."
+      "DOCUMENTS_FAILED": "Nie udało się pobrać wybranych dokumentów i ich ścieżek.",
+      "DESTINATION_UNAVAILABLE": "Nie udało się wczytać folderu docelowego."
     }
   }
 }

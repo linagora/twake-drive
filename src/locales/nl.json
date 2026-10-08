@@ -147,6 +147,55 @@
     "decline": "Weigeren",
     "close": "Sluiten"
   },
+  "Move": {
+    "to": "Verplaatsen naar:",
+    "action": "Verplaatsen",
+    "cancel": "Annuleren",
+    "title": "%{smart_count} item |||| %{smart_count} items",
+    "success": "%{subject} is verplaatst naar %{target}. |||| %{smart_count} items zijn verplaatst naar %{target}.",
+    "error": "Er is iets misgegaan tijdens het verplaatsen. Probeer het later opnieuw.",
+    "partialError": "Verplaatst: %{successCount}. Mislukt: %{failureCount}.",
+    "multipleEntries": "%{smart_count} item |||| %{smart_count} items",
+    "addFolder": "Map maken",
+    "folderName": "Mapnaam",
+    "folderCreationError": "De map kon niet worden gemaakt. Probeer het opnieuw.",
+    "folderCreationInProgress": "Map maken",
+    "moveInProgress": "Items verplaatsen",
+    "destinationLocked": "Voltooi of annuleer deze verplaatsing voordat je de bestemming wijzigt.",
+    "destinationSource": "Deze map wordt verplaatst.",
+    "destinationDescendant": "Een map kan niet naar zichzelf worden verplaatst.",
+    "destinationReadOnly": "Deze map is alleen-lezen.",
+    "permissionsLoading": "De machtigingen worden nog geladen.",
+    "outsideSharedFolder": {
+      "title": "Verplaatsen buiten de map %{sharedFolder}",
+      "content_1": "Let op: je wilt %{name} buiten de gedeelde map %{sharedFolder} verplaatsen. |||| Let op: je wilt %{smart_count} %{type} buiten de gedeelde map %{sharedFolder} verplaatsen.",
+      "content_2": "Deze verplaatsing verwijdert %{type} %{name} uit de gedeelde map. |||| Deze verplaatsing verwijdert %{smart_count} %{type} uit de gedeelde map.",
+      "cancel": "Annuleren",
+      "confirm": "Ik begrijp het"
+    },
+    "insideSharedFolder": {
+      "title": "Verplaatsen naar een gedeelde map?",
+      "content": "Alle leden met toegang tot %{destination} krijgen ook toegang tot %{source}. |||| Alle leden met toegang tot %{destination} krijgen ook toegang tot de geselecteerde %{type}.",
+      "cancel": "Annuleren",
+      "confirm": "OK"
+    },
+    "sharedFolderInsideAnother": {
+      "title": "Kan niet worden verplaatst",
+      "content_1": "Je wilt een gedeeld item naar een gedeelde map verplaatsen. Dit type verplaatsing is niet toegestaan.",
+      "content_2": "Als je %{source} toch naar %{destination} wilt verplaatsen, stop dan met delen:",
+      "cancel": "Verplaatsing annuleren",
+      "confirm": "Stoppen met delen"
+    }
+  },
+  "Nav": {
+    "item_drive": "Mijn Drive",
+    "item_sharings": "Gedeeld"
+  },
+  "Viewer": {
+    "loading": {
+      "retry": "Opnieuw proberen"
+    }
+  },
   "FilePicker": {
     "footer": {
       "buttons": {
@@ -155,7 +204,8 @@
     },
     "errors": {
       "CONSTRAINT_VIOLATION": "De geselecteerde items voldoen niet aan de vereisten voor deze actie.",
-      "DOCUMENTS_FAILED": "De geselecteerde documenten en hun paden konden niet worden opgehaald."
+      "DOCUMENTS_FAILED": "De geselecteerde documenten en hun paden konden niet worden opgehaald.",
+      "DESTINATION_UNAVAILABLE": "De bestemmingsmap kon niet worden geladen."
     }
   }
 }

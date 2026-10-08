@@ -20,6 +20,7 @@
     "open": "المساعد"
   },
   "Nav": {
+    "item_sharings": "المشاركات",
     "item_drive": "القرص",
     "item_recent": "الحديثة",
     "item_activity": "النشاط",
@@ -191,6 +192,46 @@
     "decline": "رفض",
     "close": "إغلاق"
   },
+  "Move": {
+    "to": "نقل إلى:",
+    "action": "نقل",
+    "cancel": "إلغاء",
+    "title": "%{smart_count} عنصر",
+    "success": "تم نقل %{smart_count} عنصر إلى %{target}.",
+    "error": "حدث خطأ أثناء نقل العناصر. يرجى المحاولة مرة أخرى لاحقًا.",
+    "partialError": "تم النقل: %{successCount}. فشل: %{failureCount}.",
+    "multipleEntries": "%{smart_count} عنصر",
+    "addFolder": "إنشاء مجلد",
+    "folderName": "اسم المجلد",
+    "folderCreationError": "تعذّر إنشاء المجلد. يرجى المحاولة مرة أخرى.",
+    "folderCreationInProgress": "جارٍ إنشاء المجلد",
+    "moveInProgress": "جارٍ نقل العناصر",
+    "destinationLocked": "أكمل هذا النقل أو ألغِه قبل تغيير الوجهة.",
+    "destinationSource": "يجري نقل هذا المجلد.",
+    "destinationDescendant": "لا يمكن نقل مجلد إلى داخل نفسه.",
+    "destinationReadOnly": "هذا المجلد للقراءة فقط.",
+    "permissionsLoading": "لا تزال الأذونات قيد التحميل.",
+    "outsideSharedFolder": {
+      "title": "النقل إلى خارج المجلد %{sharedFolder}",
+      "content_1": "تحذير: تريد نقل العناصر المحددة إلى خارج المجلد المشترك %{sharedFolder}.",
+      "content_2": "سيؤدي هذا النقل إلى إزالة العناصر المحددة من المشاركة.",
+      "cancel": "إلغاء",
+      "confirm": "أفهم ذلك"
+    },
+    "insideSharedFolder": {
+      "title": "النقل إلى مجلد مشترك؟",
+      "content": "سيتمكن جميع الأعضاء الذين لديهم وصول إلى %{destination} من الوصول أيضًا إلى %{source}.",
+      "cancel": "إلغاء",
+      "confirm": "موافق"
+    },
+    "sharedFolderInsideAnother": {
+      "title": "لا يمكن النقل",
+      "content_1": "تريد نقل عنصر مشترك إلى مجلد مشترك. هذا النوع من النقل غير مسموح به.",
+      "content_2": "إذا كنت لا تزال ترغب في نقل %{source} إلى %{destination}، فيرجى إيقاف المشاركة:",
+      "cancel": "إلغاء النقل",
+      "confirm": "إيقاف المشاركة"
+    }
+  },
   "FilePicker": {
     "footer": {
       "buttons": {
@@ -199,7 +240,8 @@
     },
     "errors": {
       "CONSTRAINT_VIOLATION": "العناصر المحددة لا تستوفي شروط هذا الإجراء.",
-      "DOCUMENTS_FAILED": "تعذّر استرداد المستندات المحددة ومساراتها."
+      "DOCUMENTS_FAILED": "تعذّر استرداد المستندات المحددة ومساراتها.",
+      "DESTINATION_UNAVAILABLE": "تعذّر تحميل مجلد الوجهة."
     }
   }
 }

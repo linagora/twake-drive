@@ -221,6 +221,51 @@
     "decline": "拒絕",
     "close": "關閉"
   },
+  "Move": {
+    "to": "移動到：",
+    "action": "移動",
+    "cancel": "取消",
+    "title": "%{smart_count} 個項目",
+    "success": "已將 %{smart_count} 個項目移動到 %{target}。",
+    "error": "移動項目時發生錯誤，請稍後重試。",
+    "partialError": "已移動：%{successCount}。失敗：%{failureCount}。",
+    "multipleEntries": "%{smart_count} 個項目",
+    "addFolder": "建立資料夾",
+    "folderName": "資料夾名稱",
+    "folderCreationError": "無法建立資料夾，請再試一次。",
+    "folderCreationInProgress": "正在建立資料夾",
+    "moveInProgress": "正在移動項目",
+    "destinationLocked": "請完成或取消此次移動後再變更目的地。",
+    "destinationSource": "此資料夾正在被移動。",
+    "destinationDescendant": "不能將資料夾移動到自身內部。",
+    "destinationReadOnly": "此資料夾為唯讀。",
+    "permissionsLoading": "權限仍在載入中。",
+    "outsideSharedFolder": {
+      "title": "移出 %{sharedFolder} 資料夾",
+      "content_1": "警告：您正要將所選項目移出共用資料夾 %{sharedFolder}。",
+      "content_2": "此次移動將取消所選項目的共用。",
+      "cancel": "取消",
+      "confirm": "我已了解"
+    },
+    "insideSharedFolder": {
+      "title": "移動到共用資料夾？",
+      "content": "所有有權存取 %{destination} 的成員也將有權存取 %{source}。",
+      "cancel": "取消",
+      "confirm": "確定"
+    },
+    "sharedFolderInsideAnother": {
+      "title": "無法移動",
+      "content_1": "您正要將共用項目移動到共用資料夾。此類移動不被允許。",
+      "content_2": "如果您仍要將 %{source} 移動到 %{destination}，請先停止共用：",
+      "cancel": "取消移動",
+      "confirm": "停止共用"
+    }
+  },
+  "Viewer": {
+    "loading": {
+      "retry": "再試一次"
+    }
+  },
   "FilePicker": {
     "footer": {
       "buttons": {
@@ -229,7 +274,8 @@
     },
     "errors": {
       "CONSTRAINT_VIOLATION": "所選項目不符合此操作的要求。",
-      "DOCUMENTS_FAILED": "無法取得所選文件及其路徑。"
+      "DOCUMENTS_FAILED": "無法取得所選文件及其路徑。",
+      "DESTINATION_UNAVAILABLE": "無法載入目的地資料夾。"
     }
   }
 }

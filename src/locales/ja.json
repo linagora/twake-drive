@@ -338,11 +338,43 @@
     "cancel": "キャンセル",
     "modalTitle": "移動",
     "title": "%{smart_count} アイテム |||| %{smart_count} アイテム",
-    "success": "%{subject} を %{target} に移動しました。 |||| %{smart_count} アイテムを %{target} に移動しました。",
+    "success": "%{smart_count} 件のアイテムを %{target} に移動しました。",
     "error": "このアイテムを移動中に問題が発生しました。後でもう一度やり直してください。 |||| これらのアイテムを移動中に問題が発生しました。後でもう一度やり直してください。",
     "cancelled": "%{subject} を元の場所にもどしました。 |||| %{smart_count} アイテムを元の場所に戻しました。",
     "cancelledWithRestoreErrors": "%{subject} を元の場所に戻しましたが、ゴミ箱からファイルを復元する時にエラーが発生しました。 |||| %{smart_count} 件を元の場所に戻しましたが、ゴミ箱からファイルを復元する時に %{restoreErrorsCount} エラーが発生しました。",
-    "cancelled_error": "アイテムを戻す際にエラーが発生しました。 |||| アイテムを戻す際にエラーが発生しました。"
+    "cancelled_error": "アイテムを戻す際にエラーが発生しました。 |||| アイテムを戻す際にエラーが発生しました。",
+    "partialError": "移動済み: %{successCount} 件。失敗: %{failureCount} 件。",
+    "multipleEntries": "%{smart_count} 件のアイテム",
+    "addFolder": "フォルダーを作成",
+    "folderName": "フォルダー名",
+    "folderCreationError": "フォルダーを作成できませんでした。もう一度お試しください。",
+    "folderCreationInProgress": "フォルダーを作成中",
+    "moveInProgress": "アイテムを移動中",
+    "destinationLocked": "移動を完了するかキャンセルしてから移動先を変更してください。",
+    "destinationSource": "このフォルダーは移動対象です。",
+    "destinationDescendant": "フォルダーをそのフォルダー自身の中に移動することはできません。",
+    "destinationReadOnly": "このフォルダーは読み取り専用です。",
+    "permissionsLoading": "権限を読み込み中です。",
+    "outsideSharedFolder": {
+      "title": "%{sharedFolder} フォルダーの外へ移動",
+      "content_1": "注意: 選択したアイテムを共有フォルダー %{sharedFolder} の外へ移動しようとしています。",
+      "content_2": "この移動により、選択したアイテムは共有対象から外れます。",
+      "cancel": "キャンセル",
+      "confirm": "理解しました"
+    },
+    "insideSharedFolder": {
+      "title": "共有フォルダーに移動しますか？",
+      "content": "%{destination} にアクセスできるすべてのメンバーが %{source} にもアクセスできるようになります。",
+      "cancel": "キャンセル",
+      "confirm": "OK"
+    },
+    "sharedFolderInsideAnother": {
+      "title": "移動できません",
+      "content_1": "共有アイテムを共有フォルダーに移動しようとしています。この種類の移動は許可されていません。",
+      "content_2": "%{source} を %{destination} に移動する場合は、共有を停止してください:",
+      "cancel": "移動をキャンセル",
+      "confirm": "共有を停止"
+    }
   },
   "ImportToDrive": {
     "title": "%{smart_count} アイテム |||| %{smart_count} アイテム",
@@ -467,7 +499,8 @@
     },
     "errors": {
       "CONSTRAINT_VIOLATION": "選択した項目はこの操作の条件を満たしていません。",
-      "DOCUMENTS_FAILED": "選択したドキュメントとそのパスを取得できませんでした。"
+      "DOCUMENTS_FAILED": "選択したドキュメントとそのパスを取得できませんでした。",
+      "DESTINATION_UNAVAILABLE": "移動先フォルダーを読み込めませんでした。"
     }
   }
 }
