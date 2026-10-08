@@ -91,6 +91,7 @@ function SharedDriveFolderActions({
         canCreateFolder={canWrite}
         driveId={driveId}
         showShareButton={showShareButton}
+        showSharedRecipients={!isInSpace}
       />
     </>
   )
