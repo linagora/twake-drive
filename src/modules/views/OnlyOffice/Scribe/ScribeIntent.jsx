@@ -6,7 +6,9 @@ import { useI18n } from 'twake-i18n'
 
 import { useScribe } from '@/modules/views/OnlyOffice/Scribe/ScribeProvider'
 import {
+  makeAnswerActions,
   makeCapabilities,
+  makeInstructions,
   makeSuggestions
 } from '@/modules/views/OnlyOffice/Scribe/capabilities'
 import { makeRules } from '@/modules/views/OnlyOffice/Scribe/rules'
@@ -39,14 +41,10 @@ export const ScribeIntent = ({ source, onResult, onCancel }) => {
     if (isMounted.current) onCancel()
   }
 
-  // A selection that holds what an answer cannot give back, as an image or a
-  // note, is not offered to be replaced. An older plugin does not tell.
-  const answerActions =
-    target === 'selection' && canReplace !== false
-      ? ['insert', 'replace']
-      : ['insert']
+  const answerActions = makeAnswerActions({ documentType, target, canReplace })
   const capabilities = makeCapabilities({ documentType, t })
   const suggestions = makeSuggestions({ documentType, t })
+  const instructions = makeInstructions({ documentType })
   const rules = makeRules(content)
   const data = {
     content,
@@ -57,6 +55,7 @@ export const ScribeIntent = ({ source, onResult, onCancel }) => {
     // Left out when empty: the assistant then shows its own chips
     ...(capabilities.length > 0 && { capabilities }),
     ...(suggestions.length > 0 && { suggestions }),
+    ...(instructions !== null && { instructions }),
     theme: { type: themeType },
     source,
     ...(rules !== null && { rules })
