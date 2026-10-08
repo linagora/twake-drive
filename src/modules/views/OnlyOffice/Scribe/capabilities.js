@@ -38,7 +38,7 @@ const INSERT_SLIDE_FOR_LLM = {
 
 const INSERT_TABLE_FOR_LLM = {
   description:
-    'insert a table in the text document the user is editing, at the cursor, with a header row and data rows. Pick it when the user asks for a table, a grid or a comparison in columns, from the text given with the message or from what they say. Do not pick it to fix, rewrite, shorten or translate the text: that is an answer.',
+    'insert a new table in the text document the user is editing, at the cursor, with a header row and data rows. Pick it when the user asks to make a table, a grid or a comparison in columns, from the text given with the message or from what they say. When the text given with the message already is a table, never pick it: to add a column or a row to that table, to sort it or to change its cells is an answer with the whole table changed. Do not pick it either to fix, rewrite, shorten or translate the text: that is an answer.',
   examples: [
     {
       message: 'Fais un tableau des lots et de leur budget',
