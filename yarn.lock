@@ -2163,10 +2163,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@linagora/twake-embed@npm:^3.1.0":
-  version: 3.1.0
-  resolution: "@linagora/twake-embed@npm:3.1.0"
-  checksum: 10/ef554944c62eeb397bd88434888379d8261078fbe7e660bcbc102220cff1c9603b1e77a75d1cc862aa3a8b97889cb22686da841f1d9d9b5e21825109c96faf8c
+"@linagora/twake-embed@npm:^3.4.0":
+  version: 3.4.0
+  resolution: "@linagora/twake-embed@npm:3.4.0"
+  checksum: 10/3a28b67292ce90909cec3a4e0c4ea2af0e0f9b4706fa9981cb84940702cb1a03a18ab5cb10bd4bc3f65ef29ea561cb05c6b784f80ca8ec8cca6927fcdc4e94db
   languageName: node
   linkType: hard
 
@@ -8197,7 +8197,7 @@ __metadata:
     "@embedpdf/pdfium": "npm:2.14.3"
     "@embedpdf/react-pdf-viewer": "npm:2.14.3"
     "@excalidraw/excalidraw": "npm:0.18.1"
-    "@linagora/twake-embed": "npm:^3.1.0"
+    "@linagora/twake-embed": "npm:^3.4.0"
     "@linagora/twake-icons": "npm:^2.13.1"
     "@playwright/test": "npm:^1.58.2"
     "@rsbuild/core": "npm:^2.2.7"

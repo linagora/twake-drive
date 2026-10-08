@@ -22,6 +22,7 @@ interface SharedDriveFolderReturn {
   sharedDriveResult: {
     data?: IOCozyFile[] | null
     included?: IOCozyFile[] | null
+    folder?: IOCozyFile
   }
   fetchStatus: 'loading' | 'loaded' | 'failed'
   // Timestamp of the last successful load, kept across in-folder refreshes.
@@ -94,6 +95,7 @@ const useSharedDriveFolder = ({
 
       try {
         let allIncluded: IOCozyFile[] = []
+        let folder: IOCozyFile | undefined
         let cursor: string | null = null
 
         for (let page = 0; page < pagesToLoad; page++) {
@@ -101,13 +103,14 @@ const useSharedDriveFolder = ({
             folderId,
             cursor
           )
+          folder = result.folder
           allIncluded = [...allIncluded, ...(result.included ?? [])]
           cursor = result.nextCursor
           if (!result.nextCursor) break
         }
 
         if (fetchGeneration.current === currentGeneration) {
-          setSharedDriveResult({ included: allIncluded })
+          setSharedDriveResult({ included: allIncluded, folder })
           setFetchStatus('loaded')
           setLastUpdate(Date.now())
           nextCursorRef.current = cursor

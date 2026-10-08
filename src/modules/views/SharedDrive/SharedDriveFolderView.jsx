@@ -46,6 +46,7 @@ import { UploadButton } from '@/modules/upload/UploadButton'
 import FolderView from '@/modules/views/Folder/FolderView'
 import FolderViewHeader from '@/modules/views/Folder/FolderViewHeader'
 import FolderViewBodyVz from '@/modules/views/Folder/virtualized/FolderViewBody'
+import { useReportSpaceFiles } from '@/modules/views/Space/useReportSpaceFiles'
 import { buildSharedDriveIdQuery } from '@/queries'
 
 function SharedDriveFolderActions({
@@ -120,6 +121,12 @@ function SharedDriveFolderViewContent({ sharing, driveId, folderId }) {
       driveId,
       folderId
     })
+
+  useReportSpaceFiles({
+    driveId,
+    folder: sharedDriveResult.folder,
+    isRoot: isInRootOfSharedDrive
+  })
 
   const queryResults = [
     {

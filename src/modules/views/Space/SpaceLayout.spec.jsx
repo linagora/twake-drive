@@ -2,7 +2,7 @@ import { act, render, screen } from '@testing-library/react'
 import React from 'react'
 import { HashRouter, Route, Routes, useLocation } from 'react-router-dom'
 
-import { useTwakeSpace } from './SpaceLayout'
+import { reportSpaceFiles, useTwakeSpace } from './SpaceLayout'
 
 import { ROUTER_FUTURE_FLAGS } from '@/constants/config'
 
@@ -74,5 +74,37 @@ describe('useTwakeSpace', () => {
 
     unmount()
     expect(Object.hasOwn(window.history, 'pushState')).toBe(false)
+  })
+
+  it('reports the files of every shared drive shown, when they change', () => {
+    const metadata = () =>
+      parent.postMessage.mock.calls
+        .map(([data]) => data)
+        .filter(data => data.type === 'twake-embed:metadata')
+        .map(data => data.metadata)
+
+    const { unmount } = setup()
+    fromHost(parent, { type: 'twake-embed:hello' })
+
+    reportSpaceFiles('d1', 3)
+    reportSpaceFiles('d1', 3)
+    expect(metadata()).toEqual([
+      [{ resourceId: 'd1', name: 'files.count', value: 3 }]
+    ])
+
+    reportSpaceFiles('d2', 5)
+    expect(metadata()).toHaveLength(2)
+    expect(metadata()[1]).toEqual([
+      { resourceId: 'd1', name: 'files.count', value: 3 },
+      { resourceId: 'd2', name: 'files.count', value: 5 }
+    ])
+
+    unmount()
+    parent.postMessage.mockClear()
+    setup()
+    expect(metadata()).toEqual([])
+    fromHost(parent, { type: 'twake-embed:hello' })
+    expect(metadata()).toHaveLength(1)
+    expect(metadata()[0]).toHaveLength(2)
   })
 })
