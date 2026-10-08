@@ -99,7 +99,7 @@ describe('ScribePanel', () => {
     expect(capabilities).toEqual([
       {
         name: 'insert_table',
-        description: expect.stringContaining('insert a table'),
+        description: expect.stringContaining('insert a new table'),
         examples: expect.any(Array),
         parameters: {
           type: 'object',

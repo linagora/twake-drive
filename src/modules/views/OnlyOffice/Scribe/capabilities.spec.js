@@ -40,7 +40,7 @@ describe('makeCapabilities', () => {
     expect(others).toEqual([])
     expect(capability).toEqual({
       name: 'insert_table',
-      description: expect.stringContaining('insert a table'),
+      description: expect.stringContaining('insert a new table'),
       examples: [
         {
           message: 'Fais un tableau des lots et de leur budget',
