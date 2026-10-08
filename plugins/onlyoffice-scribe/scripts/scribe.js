@@ -18,7 +18,7 @@ const SELECTION_DELAY = 400
 const UNDO_REDO_PAUSE = 3000
 // The paragraphs of the last answer written in a presentation
 let written = null
-// The origin of the app, known once it has asked for the text
+// The origin of the app while its panel is open: it has asked for the text
 let hostOrigin = null
 // The text last given to the app, and whether an answer is being written
 let lastContent = null
@@ -211,6 +211,11 @@ async function handleMessage(event) {
 
   if (event.data?.type === 'twake-scribe:getContent') {
     await sendContent(event.origin)
+  }
+  // The panel is closed: the selection is no more read
+  if (event.data?.type === 'twake-scribe:close') {
+    hostOrigin = null
+    clearTimeout(selectionTimer)
   }
   if (event.data?.type === 'twake-scribe:applyAnswer') {
     await applyAnswer(event.data)
