@@ -1,5 +1,15 @@
 import { readContent, writeBlocks } from './document.js'
 import { isSameGeometry, readGeometry } from './geometry.js'
+import {
+  MAX_ANSWER_CELLS,
+  MAX_CELLS,
+  getAnswerOrigins,
+  getBoxSize,
+  makeSheetContent,
+  makeUnionBox,
+  planSheetWrite,
+  readAnswerCells
+} from './grid.js'
 import { makeBlocks, makeLineSpans, makeLines } from './markdown.js'
 import { writeMarkers } from './markers.js'
 import {
@@ -8,6 +18,11 @@ import {
   readSlideContent,
   writeSlideLines
 } from './presentation.js'
+import {
+  readSheetCells,
+  readSheetSelection,
+  writeSheetPlan
+} from './spreadsheet.js'
 import { makeOpenMessage, makeToolbarItems, readEditorLang } from './toolbar.js'
 
 // The plugin is in the frame of the editor, itself in the app that shows it
@@ -24,6 +39,8 @@ const UNDO_REDO_PAUSE = 3000
 const GEOMETRY_INTERVAL = 125
 // The paragraphs of the last answer written in a presentation
 let written = null
+// The cells last given to the app in a spreadsheet: where an answer goes
+let sheetTarget = null
 // The origin of the app while its panel is open: it has asked for the text
 let hostOrigin = null
 // The origin of the app that shows the editor, from the address of its frame
@@ -70,6 +87,21 @@ function runInEditor(command, { scope = {}, isRecalculated = false } = {}) {
   return run
 }
 
+// The editor runs no command while it saves, or while a cell is being
+// edited: the command gives nothing. A command that must not be lost, as
+// the writing of an answer, is sent again for a while.
+const BUSY_DELAY = 500
+const BUSY_RETRIES = 10
+
+async function runInFreeEditor(command, options) {
+  for (let attempt = 0; attempt < BUSY_RETRIES; attempt += 1) {
+    const result = await runInEditor(command, options)
+    if (result !== undefined) return result
+    await new Promise(resolve => setTimeout(resolve, BUSY_DELAY))
+  }
+  return undefined
+}
+
 function callEditor(method, parameters) {
   return new Promise(resolve => {
     window.Asc.plugin.executeMethod(method, parameters, resolve)
@@ -78,6 +110,63 @@ function callEditor(method, parameters) {
 
 function isPresentation() {
   return window.Asc.plugin.info.editorType === 'slide'
+}
+
+function isSpreadsheet() {
+  return window.Asc.plugin.info.editorType === 'cell'
+}
+
+// The cells the app gets, and where an answer goes. `key` leaves out the
+// selected cell: another cell of the same block gives the same cells.
+async function readSheet({ isCellIgnored = false } = {}) {
+  const selection = await runInEditor(readSheetSelection, {
+    scope: { maxCells: MAX_CELLS }
+  })
+  if (!selection || (isCellIgnored && selection.around)) return null
+  const cells = await runInEditor(readSheetCells, {
+    scope: { sheetName: selection.sheet, box: selection.given }
+  })
+  if (!cells) return null
+
+  const sheet = { ...selection, ...cells }
+  const { range } = selection
+  const isEmpty =
+    getBoxSize(range) === 1 && cells.texts[0][0] === '' && !cells.formulas[0][0]
+  return {
+    content: makeSheetContent(sheet),
+    key: makeSheetContent({ ...sheet, around: null }),
+    target: selection.around ? 'region' : 'selection',
+    sheetTarget: { sheetName: selection.sheet, range, isEmpty }
+  }
+}
+
+function keepSheet(read) {
+  lastContent = read.key
+  sheetTarget = read.sheetTarget
+}
+
+// The cells of an answer, written at their addresses in the cells last
+// given to the app: see planSheetWrite
+async function writeSheetAnswer(text) {
+  if (!sheetTarget) return
+  const { sheetName, range, isEmpty } = sheetTarget
+  const cells = readAnswerCells(text, getAnswerOrigins({ range, isEmpty }))
+  const box = makeUnionBox(range, cells)
+  if (cells.length === 0 || getBoxSize(box) > MAX_ANSWER_CELLS) return
+
+  const read = await runInFreeEditor(readSheetCells, {
+    scope: { sheetName, box }
+  })
+  if (!read) return
+  const plan = planSheetWrite({ cells, range, box, ...read })
+  if (plan.writes.length === 0) return
+  await runInFreeEditor(writeSheetPlan, {
+    scope: { sheetName, plan },
+    isRecalculated: true
+  })
+  // The cells written are left selected: they are not other cells to work on
+  const after = await readSheet()
+  if (after) keepSheet(after)
 }
 
 // The editor gives the selected text of a presentation to the plugin only,
@@ -123,6 +212,15 @@ function fetchContent() {
 async function sendContent(origin) {
   contentRequest += 1
   const request = contentRequest
+  if (isSpreadsheet()) {
+    const read = await readSheet()
+    if (!read || request !== contentRequest) return
+    hostOrigin = origin
+    keepSheet(read)
+    const { content, target } = read
+    host.postMessage({ type: 'twake-scribe:content', content, target }, origin)
+    return
+  }
   const read = await fetchContent()
   const selectedText = await fetchSelectedText()
   if (!read || request !== contentRequest) return
@@ -140,8 +238,24 @@ async function sendContent(origin) {
 // text.
 // The selection is read by a command only when its text changes: a command
 // empties the redo of the editor.
+// Other cells selected. A click on a single cell is a cursor that moves.
+async function sendSheetSelection() {
+  const read = await readSheet({ isCellIgnored: true })
+  if (!hostOrigin || !read || read.key === lastContent) return
+  keepSheet(read)
+  const { content, target } = read
+  host.postMessage(
+    { type: 'twake-scribe:selection', content, target },
+    hostOrigin
+  )
+}
+
 async function sendSelection() {
   if (!hostOrigin || isWriting || Date.now() < pausedUntil) return
+  if (isSpreadsheet()) {
+    await sendSheetSelection()
+    return
+  }
   const selectedText = await fetchSelectedText()
   // The panel may have been closed while the selection was read
   if (!hostOrigin || !selectedText?.trim()) return
@@ -262,6 +376,10 @@ async function writeAnswer({ answerAction, text }) {
 async function applyAnswer(answer) {
   isWriting = true
   try {
+    if (isSpreadsheet()) {
+      await writeSheetAnswer(answer.text)
+      return
+    }
     const skippedCells = await writeAnswer(answer)
     if (hostOrigin) {
       host.postMessage(
@@ -322,6 +440,7 @@ async function handleMessage(event) {
     contentRequest += 1
     hostOrigin = null
     written = null
+    sheetTarget = null
     clearTimeout(selectionTimer)
   }
   if (event.data?.type === 'twake-scribe:applyAnswer') {
