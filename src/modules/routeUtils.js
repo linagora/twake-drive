@@ -14,10 +14,12 @@ export const getSharedDriveViewerPath = (driveId, folderId, fileId) => {
   return `/shareddrive/${driveId}/${folderId}/file/${fileId}`
 }
 
-export const isSpacePath = pathname => pathname.startsWith('/space/')
+export const SPACE_EMBED_PREFIX = '/embed/sharings/'
+
+export const isSpacePath = pathname => pathname.startsWith(SPACE_EMBED_PREFIX)
 
 export const getSpacePath = (driveId, folderId) =>
-  `/space/${driveId}/${folderId}`
+  `${SPACE_EMBED_PREFIX}${driveId}/${folderId}`
 
 export const SHARED_DRIVE_ROOT_FILE_ROUTE = 'shareddrive/:driveId/file/:fileId'
 

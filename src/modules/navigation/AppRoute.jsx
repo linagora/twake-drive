@@ -193,7 +193,7 @@ const AppRoutes = ({ sharedDrivesEnabled }) => (
     <Route path="note/:driveId/:fileId" element={<PublicNoteRedirect />} />
 
     {sharedDrivesEnabled ? (
-      <Route path="space/:driveId" element={<SpaceLayout />}>
+      <Route path="embed/sharings/:driveId" element={<SpaceLayout />}>
         <Route index element={<SpaceRootRedirect />} />
         {sharedDriveFolderRoute(':folderId')}
       </Route>

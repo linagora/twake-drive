@@ -89,6 +89,7 @@
     "@embedpdf/pdfium": "2.14.3",
     "@embedpdf/react-pdf-viewer": "2.14.3",
     "@excalidraw/excalidraw": "0.18.1",
+    "@linagora/twake-embed": "^3.1.0",
     "@linagora/twake-icons": "^2.13.1",
     "@sentry/react": "7.120.4",
     "classnames": "2.3.1",
