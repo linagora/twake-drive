@@ -12,6 +12,7 @@ interface StatByIdLinks {
 }
 
 interface StatByIdResult {
+  data?: IOCozyFile
   included?: IOCozyFile[]
   links?: StatByIdLinks
 }
@@ -24,6 +25,7 @@ interface TypedFileCollection {
 }
 
 export interface PaginatedStatByIdResult {
+  folder?: IOCozyFile
   included: IOCozyFile[]
   nextCursor: string | null
 }
@@ -46,12 +48,17 @@ export const paginatedStatById =
       driveId
     }) as unknown as TypedFileCollection
 
-    const { included = [], links } = await collection.statById(folderId, {
+    const {
+      data: folder,
+      included = [],
+      links
+    } = await collection.statById(folderId, {
       ...(cursor ? { 'page[cursor]': cursor } : {}),
       'page[limit]': PAGE_LIMIT
     })
 
     return {
+      folder,
       included,
       nextCursor: getNextCursor(links)
     }

@@ -15,6 +15,22 @@ import UploadQueue from '@/modules/upload/UploadQueue'
 import FolderView from '@/modules/views/Folder/FolderView'
 import { buildSharedDriveIdQuery } from '@/queries'
 
+let space = null
+const filesByDrive = new Map()
+
+const filesMetadata = () =>
+  Array.from(filesByDrive, ([resourceId, value]) => ({
+    resourceId,
+    name: 'files.count',
+    value
+  }))
+
+const reportSpaceFiles = (driveId, count) => {
+  if (space === null || filesByDrive.get(driveId) === count) return
+  filesByDrive.set(driveId, count)
+  space.reportMetadata(filesMetadata())
+}
+
 const useTwakeSpace = () => {
   const navigate = useNavigate()
   const navigateRef = useRef(navigate)
@@ -23,7 +39,7 @@ const useTwakeSpace = () => {
   }, [navigate])
 
   useEffect(() => {
-    const space = connectToTwakeSpace({
+    space = connectToTwakeSpace({
       embedPrefix: SPACE_EMBED_PREFIX,
       hashRouting: true
     })
@@ -34,7 +50,12 @@ const useTwakeSpace = () => {
         replace: true
       })
     space.syncHistory({ onLoad: show, onNavigate: show })
-    return space.disconnect
+    if (filesByDrive.size > 0) space.reportMetadata(filesMetadata())
+    const { disconnect } = space
+    return () => {
+      disconnect()
+      space = null
+    }
   }, [])
 }
 
@@ -76,4 +97,4 @@ const SpaceRootRedirect = () => {
   return <Navigate to={folderId} replace />
 }
 
-export { SpaceLayout, SpaceRootRedirect, useTwakeSpace }
+export { SpaceLayout, SpaceRootRedirect, reportSpaceFiles, useTwakeSpace }
