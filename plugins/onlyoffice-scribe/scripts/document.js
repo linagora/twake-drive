@@ -240,6 +240,16 @@ export function writeBlocks() {
   const selection =
     range && range.GetStartPos() < range.GetEndPos() ? range : null
   const paragraphs = selection?.GetAllParagraphs() ?? []
+  // The editor writes a table in a table over its cells: a table of the
+  // answer goes under the table of the selection, out of any other one
+  const hasTable = blocks.some(block => block.type === 'table')
+  const findOuterTable = table => {
+    let outer = table
+    while (outer.GetParentTableCell()) {
+      outer = outer.GetParentTableCell().GetParentTable()
+    }
+    return outer
+  }
   // The look of the new text, once its place is known
   let textPr = null
   const numberings = {}
@@ -539,11 +549,14 @@ export function writeBlocks() {
   // replaced by an answer of another shape goes away: the answer takes its
   // place.
   const placeAfterTable = (placeholder, { table: selectedTable, rows }) => {
-    const parent = selectedTable.GetParentTableCell()?.GetContent() ?? doc
-    let index = selectedTable.GetPosInParent() + 1
-    if (isReplace && countSelected(rows) === countCells(selectedTable)) {
+    const table = hasTable ? findOuterTable(selectedTable) : selectedTable
+    const parent = table.GetParentTableCell()?.GetContent() ?? doc
+    let index = table.GetPosInParent() + 1
+    const isWhole =
+      table === selectedTable && countSelected(rows) === countCells(table)
+    if (isReplace && isWhole) {
       index -= 1
-      selectedTable.Delete()
+      table.Delete()
     }
     parent.AddElement(index, placeholder)
     return true
@@ -551,10 +564,11 @@ export function writeBlocks() {
 
   // What the answer goes under: the last paragraph of the selection, or the
   // one of the cursor, or the table of its last cell when the selection is
-  // not in that cell only
+  // not in that cell only, or when the answer has a table
   const findAnchor = () => {
     const last = paragraphs[paragraphs.length - 1] ?? doc.GetCurrentParagraph()
     const cell = last?.GetParentTableCell()
+    if (cell && hasTable) return findOuterTable(cell.GetParentTable())
     const cells = new Set(
       paragraphs.map(
         paragraph => paragraph.GetParentTableCell()?.GetInternalId() ?? null
@@ -662,11 +676,16 @@ export function writeBlocks() {
     )
   }
 
-  // Other answers to the cells of a table are written under the table
+  // Other answers to the cells of a table are written under the table, as an
+  // answer with a table to a text of a cell
   function isReplacingText(selectedCells) {
+    const isInCell = paragraphs.some(paragraph =>
+      paragraph.GetParentTableCell()
+    )
     return (
       isReplace &&
       !selectedCells &&
+      !(hasTable && isInCell) &&
       Boolean(selection) &&
       getText(selection).trim() !== ''
     )

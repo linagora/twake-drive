@@ -132,6 +132,7 @@ The tables are given and taken in the HTML tags of the Markdown of the editor, w
 | A table, a row, cells | A table with the same rows and cells | Written in the cells, which keep their look: the table keeps its style and its merged cells. |
 | A whole table | A table of another shape, or any other blocks | Takes the place of the table. |
 | Some cells | Anything else | Written under the table. |
+| A text, or the cursor, in a cell | An answer with a table | Written under the table: the editor would write a table in a table over its cells. |
 | A text | A table | A new table, with the merged cells of the answer. |
 
 ### Presentations
