@@ -178,10 +178,10 @@ export function readContent() {
   }
 
   // An answer is text: it cannot give back an image, a chart, an equation, a
-  // note, a field, a form or a comment, nor take the place of a text and a
-  // table together
+  // note, a field, a form, a comment or a page break, nor take the place of a
+  // text and a table together, or of the end of a section
   const KEPT =
-    /"type":"(paraDrawing|paraMath|footnoteRef|endnoteRef|fldChar|inlineLvlSdt|blockLvlSdt|commentRangeStart)"/
+    /"type":"(paraDrawing|paraMath|footnoteRef|endnoteRef|fldChar|inlineLvlSdt|blockLvlSdt|commentRangeStart)"|"breakType":"(page|column)"/
   const canReplace = () => {
     const tables = new Set(
       paragraphs.map(
@@ -191,7 +191,15 @@ export function readContent() {
       )
     )
     const isCrossing = tables.size > 1
-    return !isCrossing && !KEPT.test(selection.ToJSON(false, false))
+    // The copy of the selection leaves the ends of sections out
+    const isEndingSection = paragraphs
+      .slice(0, -1)
+      .some(paragraph => JSON.parse(paragraph.ToJSON(false, false)).pPr?.sectPr)
+    return (
+      !isCrossing &&
+      !isEndingSection &&
+      !KEPT.test(selection.ToJSON(false, false))
+    )
   }
 
   // A part of a paragraph is a text, not the heading, the item or the quote
@@ -658,7 +666,9 @@ export function writeBlocks() {
     const isNeeded =
       last.GetClassType() === 'table' && after?.GetClassType() !== 'paragraph'
     if (rest?.GetClassType() !== 'paragraph' || isNeeded) return
-    if (getText(rest).trim() === '') rest.Delete()
+    // A note or an image that was after the text, or the end of a section,
+    // stays
+    if (isEmpty(rest)) rest.Delete()
   }
 
   function isAnswerOf(type) {
