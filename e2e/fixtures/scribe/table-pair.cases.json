@@ -1,0 +1,107 @@
+{
+  "document": "table-pair.docx",
+  "cases": [
+    {
+      "id": "T6",
+      "selection": "T1.C(1,0)@start..T2.C(0,1)@end",
+      "answerAction": "insert",
+      "answer": "<table>\n  <tr><td>aa</td><td>bb</td></tr>\n</table>\n\nMid edit\n\n<table>\n  <tr><td>cc</td><td>dd</td></tr>\n</table>",
+      "expected": {
+        "content": {
+          "content": "<table>\n  <tr>\n   <td>\n\nA3\n\n</td>\n   <td>\n\nA4\n\n</td>\n  </tr>\n</table>\n\nMiddle paragraph\n\n<table>\n  <tr>\n   <td>\n\nB1\n\n</td>\n   <td>\n\nB2\n\n</td>\n  </tr>\n</table>\n\n",
+          "target": "selection",
+          "canReplace": false
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"A1"}]}]},{"blocks":[{"type":"p","runs":[{"t":"A2"}]}]}],
+                [{"blocks":[{"type":"p","runs":[{"t":"A3"}]}]},{"blocks":[{"type":"p","runs":[{"t":"A4"}]}]}]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Middle paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"B1"}]}]},{"blocks":[{"type":"p","runs":[{"t":"B2"}]}]}],
+                [{"blocks":[{"type":"p","runs":[{"t":"B3"}]}]},{"blocks":[{"type":"p","runs":[{"t":"B4"}]}]}]
+              ]
+            },
+            {
+              "type": "table",
+              "grid": [[{"blocks":[{"type":"p","runs":[{"t":"aa"}]}]},{"blocks":[{"type":"p","runs":[{"t":"bb"}]}]}]]
+            },
+            {"type":"p","runs":[{"t":"Mid edit"}]},
+            {
+              "type": "table",
+              "grid": [[{"blocks":[{"type":"p","runs":[{"t":"cc"}]}]},{"blocks":[{"type":"p","runs":[{"t":"dd"}]}]}]]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "aabb\nMid edit\nccdd\n",
+          "selMarkup": [
+            {"at":{"block":4,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«aa»"},
+            {"at":{"block":4,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«bb»"},
+            {"at":{"block":5},"text":"«Mid edit»"},
+            {"at":{"block":6,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«cc»"},
+            {"at":{"block":6,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«dd»"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "T6",
+      "selection": "T1.C(1,0)@start..T2.C(0,1)@end",
+      "answerAction": "replace",
+      "answer": "<table>\n  <tr><td>aa</td><td>bb</td></tr>\n</table>\n\nMid edit\n\n<table>\n  <tr><td>cc</td><td>dd</td></tr>\n</table>",
+      "expected": {
+        "content": {
+          "content": "<table>\n  <tr>\n   <td>\n\nA3\n\n</td>\n   <td>\n\nA4\n\n</td>\n  </tr>\n</table>\n\nMiddle paragraph\n\n<table>\n  <tr>\n   <td>\n\nB1\n\n</td>\n   <td>\n\nB2\n\n</td>\n  </tr>\n</table>\n\n",
+          "target": "selection",
+          "canReplace": false
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"A1"}]}]},{"blocks":[{"type":"p","runs":[{"t":"A2"}]}]}],
+                [{"blocks":[{"type":"p","runs":[{"t":"A3"}]}]},{"blocks":[{"type":"p","runs":[{"t":"A4"}]}]}]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Middle paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"B1"}]}]},{"blocks":[{"type":"p","runs":[{"t":"B2"}]}]}],
+                [{"blocks":[{"type":"p","runs":[{"t":"B3"}]}]},{"blocks":[{"type":"p","runs":[{"t":"B4"}]}]}]
+              ]
+            },
+            {
+              "type": "table",
+              "grid": [[{"blocks":[{"type":"p","runs":[{"t":"aa"}]}]},{"blocks":[{"type":"p","runs":[{"t":"bb"}]}]}]]
+            },
+            {"type":"p","runs":[{"t":"Mid edit"}]},
+            {
+              "type": "table",
+              "grid": [[{"blocks":[{"type":"p","runs":[{"t":"cc"}]}]},{"blocks":[{"type":"p","runs":[{"t":"dd"}]}]}]]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "aabb\nMid edit\nccdd\n",
+          "selMarkup": [
+            {"at":{"block":4,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«aa»"},
+            {"at":{"block":4,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«bb»"},
+            {"at":{"block":5},"text":"«Mid edit»"},
+            {"at":{"block":6,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«cc»"},
+            {"at":{"block":6,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«dd»"}
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+{
+  "document": "nested-lists.docx",
+  "cases": [
+    {
+      "id": "L1",
+      "selection": "P1@start..P6@end",
+      "answerAction": null,
+      "answer": null,
+      "expected": {
+        "content": {
+          "content": "1. Numbered one\n\n2. Numbered two\n\n   * Bullet under two\n\n   2. Numbered sub\n\n      * Deep bullet\n\n3. Numbered three\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": null
+      }
+    },
+    {
+      "id": "list-word",
+      "selection": "P1@9..P1@12",
+      "answerAction": "replace",
+      "answer": "1. un",
+      "expected": {
+        "content": {"content":"one\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Numbered "},{"t":"un"}],"list":[0,"1."]},
+            {"type":"p","runs":[{"t":"Numbered two"}],"list":[0,"2."]},
+            {"type":"p","runs":[{"t":"Bullet under two"}],"list":[1,"o"]},
+            {"type":"p","runs":[{"t":"Numbered sub"}],"list":[1,"a."]},
+            {"type":"p","runs":[{"t":"Deep bullet"}],"list":[2,"§"]},
+            {"type":"p","runs":[{"t":"Numbered three"}],"list":[0,"3."]}
+          ],
+          "selText": "un",
+          "selMarkup": [{"at":{"block":0},"text":"Numbered «un»"}]
+        }
+      }
+    },
+    {
+      "id": "list-item",
+      "selection": "P2@start..P2@end",
+      "answerAction": "replace",
+      "answer": "1. Numbered two, better",
+      "expected": {
+        "content": {"content":"2. Numbered two\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Numbered one"}],"list":[0,"1."]},
+            {"type":"p","runs":[{"t":"Numbered two, better"}],"list":[0,"2."]},
+            {"type":"p","runs":[{"t":"Bullet under two"}],"list":[1,"o"]},
+            {"type":"p","runs":[{"t":"Numbered sub"}],"list":[1,"a."]},
+            {"type":"p","runs":[{"t":"Deep bullet"}],"list":[2,"§"]},
+            {"type":"p","runs":[{"t":"Numbered three"}],"list":[0,"3."]}
+          ],
+          "selText": "2.Numbered two, better",
+          "selMarkup": [{"at":{"block":1},"text":"«Numbered two, better»"}]
+        }
+      }
+    },
+    {
+      "id": "list-items",
+      "selection": "P1@start..P2@end",
+      "answerAction": "replace",
+      "answer": "1. One\n2. Two",
+      "expected": {
+        "content": {"content":"1. Numbered one\n\n2. Numbered two\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"One"}],"list":[0,"1."]},
+            {"type":"p","runs":[{"t":"Two"}],"list":[0,"2."]},
+            {"type":"p","runs":[{"t":"Bullet under two"}],"list":[1,"o"]},
+            {"type":"p","runs":[{"t":"Numbered sub"}],"list":[1,"a."]},
+            {"type":"p","runs":[{"t":"Deep bullet"}],"list":[2,"§"]},
+            {"type":"p","runs":[{"t":"Numbered three"}],"list":[0,"3."]}
+          ],
+          "selText": "1.One\n2.Two",
+          "selMarkup": [{"at":{"block":0},"text":"«One»"},{"at":{"block":1},"text":"«Two»"}]
+        }
+      }
+    }
+  ]
+}

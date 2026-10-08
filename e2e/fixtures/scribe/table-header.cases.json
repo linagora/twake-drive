@@ -1,0 +1,532 @@
+{
+  "document": "table-header.docx",
+  "cases": [
+    {
+      "id": "H-reg",
+      "selection": "T2.full",
+      "answerAction": "insert",
+      "answer": "<table>\n  <tr><td>w</td><td>x</td></tr>\n  <tr><td>y</td><td>z</td></tr>\n</table>",
+      "expected": {
+        "content": {
+          "content": "<table>\n  <tr>\n   <td>\n\nXa\n\n</td>\n   <td>\n\nXb\n\n</td>\n  </tr>\n  <tr>\n   <td>\n\nXc\n\n</td>\n   <td>\n\nXd\n\n</td>\n  </tr>\n</table>\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
+                [{"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Delta"}]}]}]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Body intro paragraph"}]},
+            {"type":"p","runs":[{"t":"Line 01"}]},
+            {"type":"p","runs":[{"t":"Line 02"}]},
+            {"type":"p","runs":[{"t":"Line 03"}]},
+            {"type":"p","runs":[{"t":"Line 04"}]},
+            {"type":"p","runs":[{"t":"Line 05"}]},
+            {"type":"p","runs":[{"t":"Line 06"}]},
+            {"type":"p","runs":[{"t":"Line 07"}]},
+            {"type":"p","runs":[{"t":"Line 08"}]},
+            {"type":"p","runs":[{"t":"Line 09"}]},
+            {"type":"p","runs":[{"t":"Line 10"}]},
+            {"type":"p","runs":[{"t":"Line 11"}]},
+            {"type":"p","runs":[{"t":"Line 12"}]},
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"Xa"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Xb"}]}]}],
+                [{"blocks":[{"type":"p","runs":[{"t":"Xc"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Xd"}]}]}]
+              ]
+            },
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"w"}]}]},{"blocks":[{"type":"p","runs":[{"t":"x"}]}]}],
+                [{"blocks":[{"type":"p","runs":[{"t":"y"}]}]},{"blocks":[{"type":"p","runs":[{"t":"z"}]}]}]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "wx\nyz\n",
+          "selMarkup": [
+            {"at":{"block":15,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«w»"},
+            {"at":{"block":15,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«x»"},
+            {"at":{"block":15,"cell":{"r":1,"c":0},"cellBlock":0},"text":"«y»"},
+            {"at":{"block":15,"cell":{"r":1,"c":1},"cellBlock":0},"text":"«z»"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "H-reg",
+      "selection": "T2.full",
+      "answerAction": "replace",
+      "answer": "<table>\n  <tr><td>w</td><td>x</td></tr>\n  <tr><td>y</td><td>z</td></tr>\n</table>",
+      "expected": {
+        "content": {
+          "content": "<table>\n  <tr>\n   <td>\n\nXa\n\n</td>\n   <td>\n\nXb\n\n</td>\n  </tr>\n  <tr>\n   <td>\n\nXc\n\n</td>\n   <td>\n\nXd\n\n</td>\n  </tr>\n</table>\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
+                [{"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Delta"}]}]}]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Body intro paragraph"}]},
+            {"type":"p","runs":[{"t":"Line 01"}]},
+            {"type":"p","runs":[{"t":"Line 02"}]},
+            {"type":"p","runs":[{"t":"Line 03"}]},
+            {"type":"p","runs":[{"t":"Line 04"}]},
+            {"type":"p","runs":[{"t":"Line 05"}]},
+            {"type":"p","runs":[{"t":"Line 06"}]},
+            {"type":"p","runs":[{"t":"Line 07"}]},
+            {"type":"p","runs":[{"t":"Line 08"}]},
+            {"type":"p","runs":[{"t":"Line 09"}]},
+            {"type":"p","runs":[{"t":"Line 10"}]},
+            {"type":"p","runs":[{"t":"Line 11"}]},
+            {"type":"p","runs":[{"t":"Line 12"}]},
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"w"}]}]},{"blocks":[{"type":"p","runs":[{"t":"x"}]}]}],
+                [{"blocks":[{"type":"p","runs":[{"t":"y"}]}]},{"blocks":[{"type":"p","runs":[{"t":"z"}]}]}]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "wx\nyz\n",
+          "selMarkup": [
+            {"at":{"block":14,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«w»"},
+            {"at":{"block":14,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«x»"},
+            {"at":{"block":14,"cell":{"r":1,"c":0},"cellBlock":0},"text":"«y»"},
+            {"at":{"block":14,"cell":{"r":1,"c":1},"cellBlock":0},"text":"«z»"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "H1",
+      "selection": "T1.full",
+      "answerAction": "insert",
+      "answer": "<table>\n  <tr><td>w</td><td>x</td></tr>\n  <tr><td>y</td><td>z</td></tr>\n</table>",
+      "expected": {
+        "content": {
+          "content": "<table>\n  <tr>\n   <td>\n\nAlpha\n\n</td>\n   <td>\n\nBeta\n\n</td>\n  </tr>\n  <tr>\n   <td>\n\nGamma\n\n</td>\n   <td>\n\nDelta\n\n</td>\n  </tr>\n</table>\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
+                [{"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Delta"}]}]}]
+              ]
+            },
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"w"}]}]},{"blocks":[{"type":"p","runs":[{"t":"x"}]}]}],
+                [{"blocks":[{"type":"p","runs":[{"t":"y"}]}]},{"blocks":[{"type":"p","runs":[{"t":"z"}]}]}]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Body intro paragraph"}]},
+            {"type":"p","runs":[{"t":"Line 01"}]},
+            {"type":"p","runs":[{"t":"Line 02"}]},
+            {"type":"p","runs":[{"t":"Line 03"}]},
+            {"type":"p","runs":[{"t":"Line 04"}]},
+            {"type":"p","runs":[{"t":"Line 05"}]},
+            {"type":"p","runs":[{"t":"Line 06"}]},
+            {"type":"p","runs":[{"t":"Line 07"}]},
+            {"type":"p","runs":[{"t":"Line 08"}]},
+            {"type":"p","runs":[{"t":"Line 09"}]},
+            {"type":"p","runs":[{"t":"Line 10"}]},
+            {"type":"p","runs":[{"t":"Line 11"}]},
+            {"type":"p","runs":[{"t":"Line 12"}]},
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"Xa"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Xb"}]}]}],
+                [{"blocks":[{"type":"p","runs":[{"t":"Xc"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Xd"}]}]}]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "wx\nyz\n",
+          "selMarkup": [
+            {"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«w»"},
+            {"at":{"block":1,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«x»"},
+            {"at":{"block":1,"cell":{"r":1,"c":0},"cellBlock":0},"text":"«y»"},
+            {"at":{"block":1,"cell":{"r":1,"c":1},"cellBlock":0},"text":"«z»"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "H1",
+      "selection": "T1.full",
+      "answerAction": "replace",
+      "answer": "<table>\n  <tr><td>w</td><td>x</td></tr>\n  <tr><td>y</td><td>z</td></tr>\n</table>",
+      "expected": {
+        "content": {
+          "content": "<table>\n  <tr>\n   <td>\n\nAlpha\n\n</td>\n   <td>\n\nBeta\n\n</td>\n  </tr>\n  <tr>\n   <td>\n\nGamma\n\n</td>\n   <td>\n\nDelta\n\n</td>\n  </tr>\n</table>\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"w"}]}]},{"blocks":[{"type":"p","runs":[{"t":"x"}]}]}],
+                [{"blocks":[{"type":"p","runs":[{"t":"y"}]}]},{"blocks":[{"type":"p","runs":[{"t":"z"}]}]}]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Body intro paragraph"}]},
+            {"type":"p","runs":[{"t":"Line 01"}]},
+            {"type":"p","runs":[{"t":"Line 02"}]},
+            {"type":"p","runs":[{"t":"Line 03"}]},
+            {"type":"p","runs":[{"t":"Line 04"}]},
+            {"type":"p","runs":[{"t":"Line 05"}]},
+            {"type":"p","runs":[{"t":"Line 06"}]},
+            {"type":"p","runs":[{"t":"Line 07"}]},
+            {"type":"p","runs":[{"t":"Line 08"}]},
+            {"type":"p","runs":[{"t":"Line 09"}]},
+            {"type":"p","runs":[{"t":"Line 10"}]},
+            {"type":"p","runs":[{"t":"Line 11"}]},
+            {"type":"p","runs":[{"t":"Line 12"}]},
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"Xa"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Xb"}]}]}],
+                [{"blocks":[{"type":"p","runs":[{"t":"Xc"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Xd"}]}]}]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "wx\nyz\n",
+          "selMarkup": [
+            {"at":{"block":0,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«w»"},
+            {"at":{"block":0,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«x»"},
+            {"at":{"block":0,"cell":{"r":1,"c":0},"cellBlock":0},"text":"«y»"},
+            {"at":{"block":0,"cell":{"r":1,"c":1},"cellBlock":0},"text":"«z»"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "H2",
+      "selection": "T1.C(1,1)@start..P1@end",
+      "answerAction": "insert",
+      "answer": "<table>\n  <tr><td>GG</td><td>DD</td></tr>\n</table>\n\nIntro edit",
+      "expected": {
+        "content": {
+          "content": "<table>\n  <tr>\n   <td>\n\nGamma\n\n</td>\n   <td>\n\nDelta\n\n</td>\n  </tr>\n</table>\n\nBody intro paragraph\n\n",
+          "target": "selection",
+          "canReplace": false
+        },
+        "model": {
+          "blocks": [
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
+                [{"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Delta"}]}]}]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Body intro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [[{"blocks":[{"type":"p","runs":[{"t":"GG"}]}]},{"blocks":[{"type":"p","runs":[{"t":"DD"}]}]}]]
+            },
+            {"type":"p","runs":[{"t":"Intro edit"}]},
+            {"type":"p","runs":[{"t":"Line 01"}]},
+            {"type":"p","runs":[{"t":"Line 02"}]},
+            {"type":"p","runs":[{"t":"Line 03"}]},
+            {"type":"p","runs":[{"t":"Line 04"}]},
+            {"type":"p","runs":[{"t":"Line 05"}]},
+            {"type":"p","runs":[{"t":"Line 06"}]},
+            {"type":"p","runs":[{"t":"Line 07"}]},
+            {"type":"p","runs":[{"t":"Line 08"}]},
+            {"type":"p","runs":[{"t":"Line 09"}]},
+            {"type":"p","runs":[{"t":"Line 10"}]},
+            {"type":"p","runs":[{"t":"Line 11"}]},
+            {"type":"p","runs":[{"t":"Line 12"}]},
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"Xa"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Xb"}]}]}],
+                [{"blocks":[{"type":"p","runs":[{"t":"Xc"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Xd"}]}]}]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "GGDD\nIntro edit",
+          "selMarkup": [
+            {"at":{"block":2,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«GG»"},
+            {"at":{"block":2,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«DD»"},
+            {"at":{"block":3},"text":"«Intro edit»"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "H2",
+      "selection": "T1.C(1,1)@start..P1@end",
+      "answerAction": "replace",
+      "answer": "<table>\n  <tr><td>GG</td><td>DD</td></tr>\n</table>\n\nIntro edit",
+      "expected": {
+        "content": {
+          "content": "<table>\n  <tr>\n   <td>\n\nGamma\n\n</td>\n   <td>\n\nDelta\n\n</td>\n  </tr>\n</table>\n\nBody intro paragraph\n\n",
+          "target": "selection",
+          "canReplace": false
+        },
+        "model": {
+          "blocks": [
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
+                [{"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Delta"}]}]}]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Body intro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [[{"blocks":[{"type":"p","runs":[{"t":"GG"}]}]},{"blocks":[{"type":"p","runs":[{"t":"DD"}]}]}]]
+            },
+            {"type":"p","runs":[{"t":"Intro edit"}]},
+            {"type":"p","runs":[{"t":"Line 01"}]},
+            {"type":"p","runs":[{"t":"Line 02"}]},
+            {"type":"p","runs":[{"t":"Line 03"}]},
+            {"type":"p","runs":[{"t":"Line 04"}]},
+            {"type":"p","runs":[{"t":"Line 05"}]},
+            {"type":"p","runs":[{"t":"Line 06"}]},
+            {"type":"p","runs":[{"t":"Line 07"}]},
+            {"type":"p","runs":[{"t":"Line 08"}]},
+            {"type":"p","runs":[{"t":"Line 09"}]},
+            {"type":"p","runs":[{"t":"Line 10"}]},
+            {"type":"p","runs":[{"t":"Line 11"}]},
+            {"type":"p","runs":[{"t":"Line 12"}]},
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"Xa"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Xb"}]}]}],
+                [{"blocks":[{"type":"p","runs":[{"t":"Xc"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Xd"}]}]}]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "GGDD\nIntro edit",
+          "selMarkup": [
+            {"at":{"block":2,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«GG»"},
+            {"at":{"block":2,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«DD»"},
+            {"at":{"block":3},"text":"«Intro edit»"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "H3",
+      "selection": "T1.C(0,0)@start..T1.C(0,0)@end",
+      "answerAction": "insert",
+      "answer": "XXX",
+      "expected": {
+        "content": {"content":"Alpha\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {
+              "type": "table",
+              "grid": [
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Alpha"}]},{"type":"p","runs":[{"t":"XXX"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}
+                ],
+                [{"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Delta"}]}]}]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Body intro paragraph"}]},
+            {"type":"p","runs":[{"t":"Line 01"}]},
+            {"type":"p","runs":[{"t":"Line 02"}]},
+            {"type":"p","runs":[{"t":"Line 03"}]},
+            {"type":"p","runs":[{"t":"Line 04"}]},
+            {"type":"p","runs":[{"t":"Line 05"}]},
+            {"type":"p","runs":[{"t":"Line 06"}]},
+            {"type":"p","runs":[{"t":"Line 07"}]},
+            {"type":"p","runs":[{"t":"Line 08"}]},
+            {"type":"p","runs":[{"t":"Line 09"}]},
+            {"type":"p","runs":[{"t":"Line 10"}]},
+            {"type":"p","runs":[{"t":"Line 11"}]},
+            {"type":"p","runs":[{"t":"Line 12"}]},
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"Xa"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Xb"}]}]}],
+                [{"blocks":[{"type":"p","runs":[{"t":"Xc"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Xd"}]}]}]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "XXX",
+          "selMarkup": [{"at":{"block":0,"cell":{"r":0,"c":0},"cellBlock":1},"text":"«XXX»"}]
+        }
+      }
+    },
+    {
+      "id": "H3",
+      "selection": "T1.C(0,0)@start..T1.C(0,0)@end",
+      "answerAction": "replace",
+      "answer": "XXX",
+      "expected": {
+        "content": {"content":"Alpha\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"XXX"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
+                [{"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Delta"}]}]}]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Body intro paragraph"}]},
+            {"type":"p","runs":[{"t":"Line 01"}]},
+            {"type":"p","runs":[{"t":"Line 02"}]},
+            {"type":"p","runs":[{"t":"Line 03"}]},
+            {"type":"p","runs":[{"t":"Line 04"}]},
+            {"type":"p","runs":[{"t":"Line 05"}]},
+            {"type":"p","runs":[{"t":"Line 06"}]},
+            {"type":"p","runs":[{"t":"Line 07"}]},
+            {"type":"p","runs":[{"t":"Line 08"}]},
+            {"type":"p","runs":[{"t":"Line 09"}]},
+            {"type":"p","runs":[{"t":"Line 10"}]},
+            {"type":"p","runs":[{"t":"Line 11"}]},
+            {"type":"p","runs":[{"t":"Line 12"}]},
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"Xa"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Xb"}]}]}],
+                [{"blocks":[{"type":"p","runs":[{"t":"Xc"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Xd"}]}]}]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "XXX",
+          "selMarkup": [{"at":{"block":0,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«XXX»"}]
+        }
+      }
+    },
+    {
+      "id": "H4",
+      "selection": "T1.C(0,0)@start..T1.C(0,1)@end",
+      "answerAction": "insert",
+      "answer": "<table>\n  <tr><td>AA</td><td>BB</td></tr>\n</table>",
+      "expected": {
+        "content": {
+          "content": "<table>\n  <tr>\n   <td>\n\nAlpha\n\n</td>\n   <td>\n\nBeta\n\n</td>\n  </tr>\n</table>\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
+                [{"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Delta"}]}]}]
+              ]
+            },
+            {
+              "type": "table",
+              "grid": [[{"blocks":[{"type":"p","runs":[{"t":"AA"}]}]},{"blocks":[{"type":"p","runs":[{"t":"BB"}]}]}]]
+            },
+            {"type":"p","runs":[{"t":"Body intro paragraph"}]},
+            {"type":"p","runs":[{"t":"Line 01"}]},
+            {"type":"p","runs":[{"t":"Line 02"}]},
+            {"type":"p","runs":[{"t":"Line 03"}]},
+            {"type":"p","runs":[{"t":"Line 04"}]},
+            {"type":"p","runs":[{"t":"Line 05"}]},
+            {"type":"p","runs":[{"t":"Line 06"}]},
+            {"type":"p","runs":[{"t":"Line 07"}]},
+            {"type":"p","runs":[{"t":"Line 08"}]},
+            {"type":"p","runs":[{"t":"Line 09"}]},
+            {"type":"p","runs":[{"t":"Line 10"}]},
+            {"type":"p","runs":[{"t":"Line 11"}]},
+            {"type":"p","runs":[{"t":"Line 12"}]},
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"Xa"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Xb"}]}]}],
+                [{"blocks":[{"type":"p","runs":[{"t":"Xc"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Xd"}]}]}]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "AABB\n",
+          "selMarkup": [
+            {"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«AA»"},
+            {"at":{"block":1,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«BB»"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "H4",
+      "selection": "T1.C(0,0)@start..T1.C(0,1)@end",
+      "answerAction": "replace",
+      "answer": "<table>\n  <tr><td>AA</td><td>BB</td></tr>\n</table>",
+      "expected": {
+        "content": {
+          "content": "<table>\n  <tr>\n   <td>\n\nAlpha\n\n</td>\n   <td>\n\nBeta\n\n</td>\n  </tr>\n</table>\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"AA"}]}]},{"blocks":[{"type":"p","runs":[{"t":"BB"}]}]}],
+                [{"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Delta"}]}]}]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Body intro paragraph"}]},
+            {"type":"p","runs":[{"t":"Line 01"}]},
+            {"type":"p","runs":[{"t":"Line 02"}]},
+            {"type":"p","runs":[{"t":"Line 03"}]},
+            {"type":"p","runs":[{"t":"Line 04"}]},
+            {"type":"p","runs":[{"t":"Line 05"}]},
+            {"type":"p","runs":[{"t":"Line 06"}]},
+            {"type":"p","runs":[{"t":"Line 07"}]},
+            {"type":"p","runs":[{"t":"Line 08"}]},
+            {"type":"p","runs":[{"t":"Line 09"}]},
+            {"type":"p","runs":[{"t":"Line 10"}]},
+            {"type":"p","runs":[{"t":"Line 11"}]},
+            {"type":"p","runs":[{"t":"Line 12"}]},
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"Xa"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Xb"}]}]}],
+                [{"blocks":[{"type":"p","runs":[{"t":"Xc"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Xd"}]}]}]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "AABB\n",
+          "selMarkup": [
+            {"at":{"block":0,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«AA»"},
+            {"at":{"block":0,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«BB»"}
+          ]
+        }
+      }
+    }
+  ]
+}

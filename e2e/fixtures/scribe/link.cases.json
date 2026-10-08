@@ -1,0 +1,111 @@
+{
+  "document": "link.docx",
+  "cases": [
+    {
+      "id": "link-end",
+      "selection": "P1@start..P1@end",
+      "answerAction": "replace",
+      "answer": "Write to us at [example.org](https://example.org).",
+      "expected": {
+        "content": {
+          "content": "Contact us at [example.org](https://example.org)\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {
+              "type": "p",
+              "runs": [{"t":"Write to us at "},{"t":"example.org","link":"https://example.org"},{"t":"."}]
+            },
+            {"type":"p","runs":[{"t":"Thanks for reading."}]},
+            {"type":"p","runs":[{"t":"Read the "},{"t":"terms","u":1}]}
+          ],
+          "selText": "Write to us at example.org.",
+          "selMarkup": [{"at":{"block":0},"text":"«Write to us at .»"}]
+        }
+      }
+    },
+    {
+      "id": "link-end",
+      "selection": "P1@start..P1@end",
+      "answerAction": "insert",
+      "answer": "XXX",
+      "expected": {
+        "content": {
+          "content": "Contact us at [example.org](https://example.org)\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Contact us at "},{"t":"example.org","u":1,"link":"https://example.org"}]},
+            {"type":"p","runs":[{"t":"XXX"}]},
+            {"type":"p","runs":[{"t":"Thanks for reading."}]},
+            {"type":"p","runs":[{"t":"Read the "},{"t":"terms","u":1}]}
+          ],
+          "selText": "XXX",
+          "selMarkup": [{"at":{"block":1},"text":"«XXX»"}]
+        }
+      }
+    },
+    {
+      "id": "before-link",
+      "selection": "P1@0..P1@10",
+      "answerAction": "replace",
+      "answer": "Write to us",
+      "expected": {
+        "content": {"content":"Contact us\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {
+              "type": "p",
+              "runs": [{"t":"Write to us"},{"t":" at "},{"t":"example.org","u":1,"link":"https://example.org"}]
+            },
+            {"type":"p","runs":[{"t":"Thanks for reading."}]},
+            {"type":"p","runs":[{"t":"Read the "},{"t":"terms","u":1}]}
+          ],
+          "selText": "Write to us",
+          "selMarkup": [{"at":{"block":0},"text":"«Write to us» at "}]
+        }
+      }
+    },
+    {
+      "id": "underlined-end",
+      "selection": "P3@start..P3@end",
+      "answerAction": "insert",
+      "answer": "Sign below.",
+      "expected": {
+        "content": {"content":"Read the terms\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Contact us at "},{"t":"example.org","u":1,"link":"https://example.org"}]},
+            {"type":"p","runs":[{"t":"Thanks for reading."}]},
+            {"type":"p","runs":[{"t":"Read the "},{"t":"terms","u":1}]},
+            {"type":"p","runs":[{"t":"Sign below."}]}
+          ],
+          "selText": "Sign below.",
+          "selMarkup": [{"at":{"block":3},"text":"«Sign below.»"}]
+        }
+      }
+    },
+    {
+      "id": "underlined-word",
+      "selection": "P3@9..P3@14",
+      "answerAction": "replace",
+      "answer": "conditions",
+      "expected": {
+        "content": {"content":"terms\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Contact us at "},{"t":"example.org","u":1,"link":"https://example.org"}]},
+            {"type":"p","runs":[{"t":"Thanks for reading."}]},
+            {"type":"p","runs":[{"t":"Read the "},{"t":"conditions","u":1}]}
+          ],
+          "selText": "conditions",
+          "selMarkup": [{"at":{"block":2},"text":"Read the «conditions»"}]
+        }
+      }
+    }
+  ]
+}

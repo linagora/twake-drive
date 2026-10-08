@@ -1,0 +1,87 @@
+{
+  "document": "format-family.docx",
+  "cases": [
+    {
+      "id": "A6",
+      "selection": "P1@mid..P3@mid",
+      "answerAction": "insert",
+      "answer": "First\n\nSecond",
+      "expected": {
+        "content": {
+          "content": " brown *fox*\n\nJumps over the dog\n\nLazy riv\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"The "},{"t":"quick","b":1},{"t":" brown "},{"t":"fox","i":1}]},
+            {"type":"p","runs":[{"t":"Jumps over the dog"}]},
+            {"type":"p","runs":[{"t":"Lazy river flows"}]},
+            {"type":"p","runs":[{"t":"First"}]},
+            {"type":"p","runs":[{"t":"Second"}]}
+          ],
+          "selText": "First\nSecond",
+          "selMarkup": [{"at":{"block":3},"text":"«First»"},{"at":{"block":4},"text":"«Second»"}]
+        }
+      }
+    },
+    {
+      "id": "A6",
+      "selection": "P1@mid..P3@mid",
+      "answerAction": "replace",
+      "answer": "First\n\nSecond",
+      "expected": {
+        "content": {
+          "content": " brown *fox*\n\nJumps over the dog\n\nLazy riv\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"The "},{"t":"quick","b":1},{"t":" "},{"t":"First"}]},
+            {"type":"p","runs":[{"t":"Second"},{"t":"er flows"}]}
+          ],
+          "selText": "First\nSecond",
+          "selMarkup": [{"at":{"block":0},"text":"The quick «First»"},{"at":{"block":1},"text":"«Second»er flows"}]
+        }
+      }
+    },
+    {
+      "id": "italic-end",
+      "selection": "P1@start..P1@end",
+      "answerAction": "insert",
+      "answer": "XXX",
+      "expected": {
+        "content": {"content":"The **quick** brown *fox*\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"The "},{"t":"quick","b":1},{"t":" brown "},{"t":"fox","i":1}]},
+            {"type":"p","runs":[{"t":"XXX"}]},
+            {"type":"p","runs":[{"t":"Jumps over the dog"}]},
+            {"type":"p","runs":[{"t":"Lazy river flows"}]}
+          ],
+          "selText": "XXX",
+          "selMarkup": [{"at":{"block":1},"text":"«XXX»"}]
+        }
+      }
+    },
+    {
+      "id": "italic-end",
+      "selection": "P1@start..P1@end",
+      "answerAction": "replace",
+      "answer": "XXX",
+      "expected": {
+        "content": {"content":"The **quick** brown *fox*\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"XXX"}]},
+            {"type":"p","runs":[{"t":"Jumps over the dog"}]},
+            {"type":"p","runs":[{"t":"Lazy river flows"}]}
+          ],
+          "selText": "XXX",
+          "selMarkup": [{"at":{"block":0},"text":"«XXX»"}]
+        }
+      }
+    }
+  ]
+}

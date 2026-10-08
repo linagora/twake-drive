@@ -1,0 +1,44 @@
+{
+  "document": "a7-empty.docx",
+  "cases": [
+    {
+      "id": "A7",
+      "selection": "P2@start..P4@end",
+      "answerAction": "insert",
+      "answer": "Added line",
+      "expected": {
+        "content": {"content":"Middle paragraph\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {"type":"p","runs":[]},
+            {"type":"p","runs":[{"t":"Middle paragraph"}]},
+            {"type":"p","runs":[{"t":"Added line"}]},
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "Added line",
+          "selMarkup": [{"at":{"block":3},"text":"«Added line»"}]
+        }
+      }
+    },
+    {
+      "id": "A7",
+      "selection": "P2@start..P4@end",
+      "answerAction": "replace",
+      "answer": "New middle",
+      "expected": {
+        "content": {"content":"Middle paragraph\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {"type":"p","runs":[{"t":"New middle"}]},
+            {"type":"p","runs":[]},
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "New middle",
+          "selMarkup": [{"at":{"block":1},"text":"«New middle»"}]
+        }
+      }
+    }
+  ]
+}

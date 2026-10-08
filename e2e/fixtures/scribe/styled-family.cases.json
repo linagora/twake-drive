@@ -1,0 +1,431 @@
+{
+  "document": "styled-family.docx",
+  "cases": [
+    {
+      "id": "styledHost-styledFixture/A0",
+      "selection": "P1@x..P1@x",
+      "answerAction": "insert",
+      "answer": "# Injected",
+      "expected": {
+        "content": {
+          "content": "# **The quick brown fox**\n\n## **Jumps over the dog**\n\nLazy river flows\n\n",
+          "target": "document",
+          "canReplace": false
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"The quick brown fox"}],"style":"Heading 1","lvl":1},
+            {"type":"p","runs":[{"t":"Injected"}],"style":"Heading 1","lvl":1},
+            {"type":"p","runs":[{"t":"Jumps over the dog"}],"style":"Heading 2","lvl":2},
+            {"type":"p","runs":[{"t":"Lazy river flows"}]}
+          ],
+          "selText": "Injected",
+          "selMarkup": [{"at":{"block":1},"text":"«Injected»"}]
+        }
+      }
+    },
+    {
+      "id": "styledHost-styledFixture/A1",
+      "selection": "P1@start..P1@end",
+      "answerAction": "insert",
+      "answer": "# Injected",
+      "expected": {
+        "content": {"content":"# **The quick brown fox**\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"The quick brown fox"}],"style":"Heading 1","lvl":1},
+            {"type":"p","runs":[{"t":"Injected"}],"style":"Heading 1","lvl":1},
+            {"type":"p","runs":[{"t":"Jumps over the dog"}],"style":"Heading 2","lvl":2},
+            {"type":"p","runs":[{"t":"Lazy river flows"}]}
+          ],
+          "selText": "Injected",
+          "selMarkup": [{"at":{"block":1},"text":"«Injected»"}]
+        }
+      }
+    },
+    {
+      "id": "styledHost-styledFixture/A1",
+      "selection": "P1@start..P1@end",
+      "answerAction": "replace",
+      "answer": "# Injected",
+      "expected": {
+        "content": {"content":"# **The quick brown fox**\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Injected"}],"style":"Heading 1","lvl":1},
+            {"type":"p","runs":[{"t":"Jumps over the dog"}],"style":"Heading 2","lvl":2},
+            {"type":"p","runs":[{"t":"Lazy river flows"}]}
+          ],
+          "selText": "Injected",
+          "selMarkup": [{"at":{"block":0},"text":"«Injected»"}]
+        }
+      }
+    },
+    {
+      "id": "styledHost-styledFixture/A2",
+      "selection": "P1@mid..P1@mid",
+      "answerAction": "insert",
+      "answer": "# Injected",
+      "expected": {
+        "content": {
+          "content": "# **The quick brown fox**\n\n## **Jumps over the dog**\n\nLazy river flows\n\n",
+          "target": "document",
+          "canReplace": false
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"The quick brown fox"}],"style":"Heading 1","lvl":1},
+            {"type":"p","runs":[{"t":"Injected"}],"style":"Heading 1","lvl":1},
+            {"type":"p","runs":[{"t":"Jumps over the dog"}],"style":"Heading 2","lvl":2},
+            {"type":"p","runs":[{"t":"Lazy river flows"}]}
+          ],
+          "selText": "Injected",
+          "selMarkup": [{"at":{"block":1},"text":"«Injected»"}]
+        }
+      }
+    },
+    {
+      "id": "styledHost-styledFixture/A2",
+      "selection": "P1@mid..P1@mid",
+      "answerAction": "replace",
+      "answer": "# Injected",
+      "expected": {
+        "content": {
+          "content": "# **The quick brown fox**\n\n## **Jumps over the dog**\n\nLazy river flows\n\n",
+          "target": "document",
+          "canReplace": false
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"The quick brown fox"}],"style":"Heading 1","lvl":1},
+            {"type":"p","runs":[{"t":"Injected"}],"style":"Heading 1","lvl":1},
+            {"type":"p","runs":[{"t":"Jumps over the dog"}],"style":"Heading 2","lvl":2},
+            {"type":"p","runs":[{"t":"Lazy river flows"}]}
+          ],
+          "selText": "Injected",
+          "selMarkup": [{"at":{"block":1},"text":"«Injected»"}]
+        }
+      }
+    },
+    {
+      "id": "styledHost-styledFixture/A3",
+      "selection": "P1@space..P1@end",
+      "answerAction": "insert",
+      "answer": "# Injected",
+      "expected": {
+        "content": {"content":"**quick brown fox**\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"The quick brown fox"}],"style":"Heading 1","lvl":1},
+            {"type":"p","runs":[{"t":"Injected"}],"style":"Heading 1","lvl":1},
+            {"type":"p","runs":[{"t":"Jumps over the dog"}],"style":"Heading 2","lvl":2},
+            {"type":"p","runs":[{"t":"Lazy river flows"}]}
+          ],
+          "selText": "Injected",
+          "selMarkup": [{"at":{"block":1},"text":"«Injected»"}]
+        }
+      }
+    },
+    {
+      "id": "styledHost-styledFixture/A3",
+      "selection": "P1@space..P1@end",
+      "answerAction": "replace",
+      "answer": "# Injected",
+      "expected": {
+        "content": {"content":"**quick brown fox**\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"The "},{"t":"Injected"}],"style":"Heading 1","lvl":1},
+            {"type":"p","runs":[{"t":"Jumps over the dog"}],"style":"Heading 2","lvl":2},
+            {"type":"p","runs":[{"t":"Lazy river flows"}]}
+          ],
+          "selText": "Injected",
+          "selMarkup": [{"at":{"block":0},"text":"The «Injected»"}]
+        }
+      }
+    },
+    {
+      "id": "styledHost-styledFixture/A4",
+      "selection": "P1@start..P1@space",
+      "answerAction": "insert",
+      "answer": "# Injected",
+      "expected": {
+        "content": {"content":"**The** \n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"The quick brown fox"}],"style":"Heading 1","lvl":1},
+            {"type":"p","runs":[{"t":"Injected"}],"style":"Heading 1","lvl":1},
+            {"type":"p","runs":[{"t":"Jumps over the dog"}],"style":"Heading 2","lvl":2},
+            {"type":"p","runs":[{"t":"Lazy river flows"}]}
+          ],
+          "selText": "Injected",
+          "selMarkup": [{"at":{"block":1},"text":"«Injected»"}]
+        }
+      }
+    },
+    {
+      "id": "styledHost-styledFixture/A4",
+      "selection": "P1@start..P1@space",
+      "answerAction": "replace",
+      "answer": "# Injected",
+      "expected": {
+        "content": {"content":"**The** \n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Injected"},{"t":" quick brown fox"}],"style":"Heading 1","lvl":1},
+            {"type":"p","runs":[{"t":"Jumps over the dog"}],"style":"Heading 2","lvl":2},
+            {"type":"p","runs":[{"t":"Lazy river flows"}]}
+          ],
+          "selText": "Injected",
+          "selMarkup": [{"at":{"block":0},"text":"«Injected» quick brown fox"}]
+        }
+      }
+    },
+    {
+      "id": "styledHost-styledFixture/A9",
+      "selection": "P1@start..P2@end",
+      "answerAction": "insert",
+      "answer": "# Injected H1\n## Injected H2",
+      "expected": {
+        "content": {
+          "content": "# **The quick brown fox**\n\n## **Jumps over the dog**\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"The quick brown fox"}],"style":"Heading 1","lvl":1},
+            {"type":"p","runs":[{"t":"Jumps over the dog"}],"style":"Heading 2","lvl":2},
+            {"type":"p","runs":[{"t":"Injected H1"}],"style":"Heading 1","lvl":1},
+            {"type":"p","runs":[{"t":"Injected H2"}],"style":"Heading 2","lvl":2},
+            {"type":"p","runs":[{"t":"Lazy river flows"}]}
+          ],
+          "selText": "Injected H1\nInjected H2",
+          "selMarkup": [{"at":{"block":2},"text":"«Injected H1»"},{"at":{"block":3},"text":"«Injected H2»"}]
+        }
+      }
+    },
+    {
+      "id": "styledHost/A0",
+      "selection": "P1@x..P1@x",
+      "answerAction": "insert",
+      "answer": "XXX",
+      "expected": {
+        "content": {
+          "content": "# **The quick brown fox**\n\n## **Jumps over the dog**\n\nLazy river flows\n\n",
+          "target": "document",
+          "canReplace": false
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"The quick brown fox"}],"style":"Heading 1","lvl":1},
+            {"type":"p","runs":[{"t":"XXX"}]},
+            {"type":"p","runs":[{"t":"Jumps over the dog"}],"style":"Heading 2","lvl":2},
+            {"type":"p","runs":[{"t":"Lazy river flows"}]}
+          ],
+          "selText": "XXX",
+          "selMarkup": [{"at":{"block":1},"text":"«XXX»"}]
+        }
+      }
+    },
+    {
+      "id": "styledHost/A1",
+      "selection": "P1@start..P1@end",
+      "answerAction": "insert",
+      "answer": "XXX",
+      "expected": {
+        "content": {"content":"# **The quick brown fox**\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"The quick brown fox"}],"style":"Heading 1","lvl":1},
+            {"type":"p","runs":[{"t":"XXX"}]},
+            {"type":"p","runs":[{"t":"Jumps over the dog"}],"style":"Heading 2","lvl":2},
+            {"type":"p","runs":[{"t":"Lazy river flows"}]}
+          ],
+          "selText": "XXX",
+          "selMarkup": [{"at":{"block":1},"text":"«XXX»"}]
+        }
+      }
+    },
+    {
+      "id": "styledHost/A1",
+      "selection": "P1@start..P1@end",
+      "answerAction": "replace",
+      "answer": "XXX",
+      "expected": {
+        "content": {"content":"# **The quick brown fox**\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"XXX"}],"style":"Heading 1","lvl":1},
+            {"type":"p","runs":[{"t":"Jumps over the dog"}],"style":"Heading 2","lvl":2},
+            {"type":"p","runs":[{"t":"Lazy river flows"}]}
+          ],
+          "selText": "XXX",
+          "selMarkup": [{"at":{"block":0},"text":"«XXX»"}]
+        }
+      }
+    },
+    {
+      "id": "styledHost/A2",
+      "selection": "P1@mid..P1@mid",
+      "answerAction": "insert",
+      "answer": "XXX",
+      "expected": {
+        "content": {
+          "content": "# **The quick brown fox**\n\n## **Jumps over the dog**\n\nLazy river flows\n\n",
+          "target": "document",
+          "canReplace": false
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"The quick brown fox"}],"style":"Heading 1","lvl":1},
+            {"type":"p","runs":[{"t":"XXX"}]},
+            {"type":"p","runs":[{"t":"Jumps over the dog"}],"style":"Heading 2","lvl":2},
+            {"type":"p","runs":[{"t":"Lazy river flows"}]}
+          ],
+          "selText": "XXX",
+          "selMarkup": [{"at":{"block":1},"text":"«XXX»"}]
+        }
+      }
+    },
+    {
+      "id": "styledHost/A2",
+      "selection": "P1@mid..P1@mid",
+      "answerAction": "replace",
+      "answer": "XXX",
+      "expected": {
+        "content": {
+          "content": "# **The quick brown fox**\n\n## **Jumps over the dog**\n\nLazy river flows\n\n",
+          "target": "document",
+          "canReplace": false
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"The quick brown fox"}],"style":"Heading 1","lvl":1},
+            {"type":"p","runs":[{"t":"XXX"}]},
+            {"type":"p","runs":[{"t":"Jumps over the dog"}],"style":"Heading 2","lvl":2},
+            {"type":"p","runs":[{"t":"Lazy river flows"}]}
+          ],
+          "selText": "XXX",
+          "selMarkup": [{"at":{"block":1},"text":"«XXX»"}]
+        }
+      }
+    },
+    {
+      "id": "styledHost/A3",
+      "selection": "P1@space..P1@end",
+      "answerAction": "insert",
+      "answer": "XXX",
+      "expected": {
+        "content": {"content":"**quick brown fox**\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"The quick brown fox"}],"style":"Heading 1","lvl":1},
+            {"type":"p","runs":[{"t":"XXX"}]},
+            {"type":"p","runs":[{"t":"Jumps over the dog"}],"style":"Heading 2","lvl":2},
+            {"type":"p","runs":[{"t":"Lazy river flows"}]}
+          ],
+          "selText": "XXX",
+          "selMarkup": [{"at":{"block":1},"text":"«XXX»"}]
+        }
+      }
+    },
+    {
+      "id": "styledHost/A3",
+      "selection": "P1@space..P1@end",
+      "answerAction": "replace",
+      "answer": "XXX",
+      "expected": {
+        "content": {"content":"**quick brown fox**\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"The "},{"t":"XXX"}],"style":"Heading 1","lvl":1},
+            {"type":"p","runs":[{"t":"Jumps over the dog"}],"style":"Heading 2","lvl":2},
+            {"type":"p","runs":[{"t":"Lazy river flows"}]}
+          ],
+          "selText": "XXX",
+          "selMarkup": [{"at":{"block":0},"text":"The «XXX»"}]
+        }
+      }
+    },
+    {
+      "id": "styledHost/A4",
+      "selection": "P1@start..P1@space",
+      "answerAction": "insert",
+      "answer": "XXX",
+      "expected": {
+        "content": {"content":"**The** \n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"The quick brown fox"}],"style":"Heading 1","lvl":1},
+            {"type":"p","runs":[{"t":"XXX"}]},
+            {"type":"p","runs":[{"t":"Jumps over the dog"}],"style":"Heading 2","lvl":2},
+            {"type":"p","runs":[{"t":"Lazy river flows"}]}
+          ],
+          "selText": "XXX",
+          "selMarkup": [{"at":{"block":1},"text":"«XXX»"}]
+        }
+      }
+    },
+    {
+      "id": "styledHost/A4",
+      "selection": "P1@start..P1@space",
+      "answerAction": "replace",
+      "answer": "XXX",
+      "expected": {
+        "content": {"content":"**The** \n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"XXX"},{"t":" quick brown fox"}],"style":"Heading 1","lvl":1},
+            {"type":"p","runs":[{"t":"Jumps over the dog"}],"style":"Heading 2","lvl":2},
+            {"type":"p","runs":[{"t":"Lazy river flows"}]}
+          ],
+          "selText": "XXX",
+          "selMarkup": [{"at":{"block":0},"text":"«XXX» quick brown fox"}]
+        }
+      }
+    },
+    {
+      "id": "heading-word",
+      "selection": "P1@4..P1@9",
+      "answerAction": "replace",
+      "answer": "# **rapid**",
+      "expected": {
+        "content": {"content":"**quick**\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {
+              "type": "p",
+              "runs": [{"t":"The "},{"t":"rapid","b":1},{"t":" brown fox"}],
+              "style": "Heading 1",
+              "lvl": 1
+            },
+            {"type":"p","runs":[{"t":"Jumps over the dog"}],"style":"Heading 2","lvl":2},
+            {"type":"p","runs":[{"t":"Lazy river flows"}]}
+          ],
+          "selText": "rapid",
+          "selMarkup": [{"at":{"block":0},"text":"The «rapid» brown fox"}]
+        }
+      }
+    },
+    {
+      "id": "heading-words-blocks",
+      "selection": "P1@4..P1@15",
+      "answerAction": "replace",
+      "answer": "red\n\nblue",
+      "expected": {
+        "content": {"content":"**quick brown**\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"The "},{"t":"red"}],"style":"Heading 1","lvl":1},
+            {"type":"p","runs":[{"t":"blue"},{"t":" fox"}],"style":"Heading 1","lvl":1},
+            {"type":"p","runs":[{"t":"Jumps over the dog"}],"style":"Heading 2","lvl":2},
+            {"type":"p","runs":[{"t":"Lazy river flows"}]}
+          ],
+          "selText": "red\nblue",
+          "selMarkup": [{"at":{"block":0},"text":"The «red»"},{"at":{"block":1},"text":"«blue» fox"}]
+        }
+      }
+    }
+  ]
+}

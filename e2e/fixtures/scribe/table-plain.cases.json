@@ -1,0 +1,633 @@
+{
+  "document": "table-plain.docx",
+  "cases": [
+    {
+      "id": "T1",
+      "selection": "T1.C(0,0)@start..T1.C(0,0)@end",
+      "answerAction": "insert",
+      "answer": "XXX",
+      "expected": {
+        "content": {"content":"Alpha\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Alpha"}]},{"type":"p","runs":[{"t":"XXX"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}
+                ],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Delta"}]},{"type":"p","runs":[{"t":"Delta2"}]}]}
+                ]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "XXX",
+          "selMarkup": [{"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":1},"text":"«XXX»"}]
+        }
+      }
+    },
+    {
+      "id": "T1",
+      "selection": "T1.C(0,0)@start..T1.C(0,0)@end",
+      "answerAction": "replace",
+      "answer": "XXX",
+      "expected": {
+        "content": {"content":"Alpha\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"XXX"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Delta"}]},{"type":"p","runs":[{"t":"Delta2"}]}]}
+                ]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "XXX",
+          "selMarkup": [{"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«XXX»"}]
+        }
+      }
+    },
+    {
+      "id": "T2a",
+      "selection": "T1.C(0,0)@start..T1.C(0,1)@end",
+      "answerAction": "insert",
+      "answer": "<table>\n  <tr><td>AA</td><td>BB</td></tr>\n</table>",
+      "expected": {
+        "content": {
+          "content": "<table>\n  <tr>\n   <td>\n\nAlpha\n\n</td>\n   <td>\n\nBeta\n\n</td>\n  </tr>\n</table>\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Delta"}]},{"type":"p","runs":[{"t":"Delta2"}]}]}
+                ]
+              ]
+            },
+            {
+              "type": "table",
+              "grid": [[{"blocks":[{"type":"p","runs":[{"t":"AA"}]}]},{"blocks":[{"type":"p","runs":[{"t":"BB"}]}]}]]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "AABB\n",
+          "selMarkup": [
+            {"at":{"block":2,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«AA»"},
+            {"at":{"block":2,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«BB»"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "T2a",
+      "selection": "T1.C(0,0)@start..T1.C(0,1)@end",
+      "answerAction": "replace",
+      "answer": "<table>\n  <tr><td>CC</td><td>DD</td></tr>\n</table>",
+      "expected": {
+        "content": {
+          "content": "<table>\n  <tr>\n   <td>\n\nAlpha\n\n</td>\n   <td>\n\nBeta\n\n</td>\n  </tr>\n</table>\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"CC"}]}]},{"blocks":[{"type":"p","runs":[{"t":"DD"}]}]}],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Delta"}]},{"type":"p","runs":[{"t":"Delta2"}]}]}
+                ]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "CCDD\n",
+          "selMarkup": [
+            {"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«CC»"},
+            {"at":{"block":1,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«DD»"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "T3",
+      "selection": "T1.full",
+      "answerAction": "insert",
+      "answer": "<table>\n  <tr><td>w</td><td>x</td></tr>\n  <tr><td>y</td><td>z</td></tr>\n</table>",
+      "expected": {
+        "content": {
+          "content": "<table>\n  <tr>\n   <td>\n\nAlpha\n\n</td>\n   <td>\n\nBeta\n\n</td>\n  </tr>\n  <tr>\n   <td>\n\nGamma\n\n</td>\n   <td>\n\nDelta\n\nDelta2\n\n</td>\n  </tr>\n</table>\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Delta"}]},{"type":"p","runs":[{"t":"Delta2"}]}]}
+                ]
+              ]
+            },
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"w"}]}]},{"blocks":[{"type":"p","runs":[{"t":"x"}]}]}],
+                [{"blocks":[{"type":"p","runs":[{"t":"y"}]}]},{"blocks":[{"type":"p","runs":[{"t":"z"}]}]}]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "wx\nyz\n",
+          "selMarkup": [
+            {"at":{"block":2,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«w»"},
+            {"at":{"block":2,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«x»"},
+            {"at":{"block":2,"cell":{"r":1,"c":0},"cellBlock":0},"text":"«y»"},
+            {"at":{"block":2,"cell":{"r":1,"c":1},"cellBlock":0},"text":"«z»"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "T3",
+      "selection": "T1.full",
+      "answerAction": "replace",
+      "answer": "<table>\n  <tr><td>p</td><td>q</td></tr>\n  <tr><td>r</td><td>s</td></tr>\n</table>",
+      "expected": {
+        "content": {
+          "content": "<table>\n  <tr>\n   <td>\n\nAlpha\n\n</td>\n   <td>\n\nBeta\n\n</td>\n  </tr>\n  <tr>\n   <td>\n\nGamma\n\n</td>\n   <td>\n\nDelta\n\nDelta2\n\n</td>\n  </tr>\n</table>\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"p"}]}]},{"blocks":[{"type":"p","runs":[{"t":"q"}]}]}],
+                [{"blocks":[{"type":"p","runs":[{"t":"r"}]}]},{"blocks":[{"type":"p","runs":[{"t":"s"}]}]}]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "pq\nrs\n",
+          "selMarkup": [
+            {"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«p»"},
+            {"at":{"block":1,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«q»"},
+            {"at":{"block":1,"cell":{"r":1,"c":0},"cellBlock":0},"text":"«r»"},
+            {"at":{"block":1,"cell":{"r":1,"c":1},"cellBlock":0},"text":"«s»"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "T4",
+      "selection": "P1@mid..T1.C(0,1)@end",
+      "answerAction": "insert",
+      "answer": "Head edit\n\n<table>\n  <tr><td>AA</td><td>BB</td></tr>\n</table>",
+      "expected": {
+        "content": {
+          "content": "aragraph\n\n<table>\n  <tr>\n   <td>\n\nAlpha\n\n</td>\n   <td>\n\nBeta\n\n</td>\n  </tr>\n</table>\n\n",
+          "target": "selection",
+          "canReplace": false
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Delta"}]},{"type":"p","runs":[{"t":"Delta2"}]}]}
+                ]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Head edit"}]},
+            {
+              "type": "table",
+              "grid": [[{"blocks":[{"type":"p","runs":[{"t":"AA"}]}]},{"blocks":[{"type":"p","runs":[{"t":"BB"}]}]}]]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "Head edit\nAABB\n",
+          "selMarkup": [
+            {"at":{"block":2},"text":"«Head edit»"},
+            {"at":{"block":3,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«AA»"},
+            {"at":{"block":3,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«BB»"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "T4",
+      "selection": "P1@mid..T1.C(0,1)@end",
+      "answerAction": "replace",
+      "answer": "Head edit\n\n<table>\n  <tr><td>AA</td><td>BB</td></tr>\n</table>",
+      "expected": {
+        "content": {
+          "content": "aragraph\n\n<table>\n  <tr>\n   <td>\n\nAlpha\n\n</td>\n   <td>\n\nBeta\n\n</td>\n  </tr>\n</table>\n\n",
+          "target": "selection",
+          "canReplace": false
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Delta"}]},{"type":"p","runs":[{"t":"Delta2"}]}]}
+                ]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Head edit"}]},
+            {
+              "type": "table",
+              "grid": [[{"blocks":[{"type":"p","runs":[{"t":"AA"}]}]},{"blocks":[{"type":"p","runs":[{"t":"BB"}]}]}]]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "Head edit\nAABB\n",
+          "selMarkup": [
+            {"at":{"block":2},"text":"«Head edit»"},
+            {"at":{"block":3,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«AA»"},
+            {"at":{"block":3,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«BB»"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "T5",
+      "selection": "T1.C(1,0)@start..P2@mid",
+      "answerAction": "insert",
+      "answer": "<table>\n  <tr><td>GG</td><td>DD</td></tr>\n</table>\n\nTail edit",
+      "expected": {
+        "content": {
+          "content": "<table>\n  <tr>\n   <td>\n\nGamma\n\n</td>\n   <td>\n\nDelta\n\nDelta2\n\n</td>\n  </tr>\n</table>\n\nOutro p\n\n",
+          "target": "selection",
+          "canReplace": false
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Delta"}]},{"type":"p","runs":[{"t":"Delta2"}]}]}
+                ]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [[{"blocks":[{"type":"p","runs":[{"t":"GG"}]}]},{"blocks":[{"type":"p","runs":[{"t":"DD"}]}]}]]
+            },
+            {"type":"p","runs":[{"t":"Tail edit"}]}
+          ],
+          "selText": "GGDD\nTail edit",
+          "selMarkup": [
+            {"at":{"block":3,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«GG»"},
+            {"at":{"block":3,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«DD»"},
+            {"at":{"block":4},"text":"«Tail edit»"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "T5",
+      "selection": "T1.C(1,0)@start..P2@mid",
+      "answerAction": "replace",
+      "answer": "<table>\n  <tr><td>GG</td><td>DD</td></tr>\n</table>\n\nTail edit",
+      "expected": {
+        "content": {
+          "content": "<table>\n  <tr>\n   <td>\n\nGamma\n\n</td>\n   <td>\n\nDelta\n\nDelta2\n\n</td>\n  </tr>\n</table>\n\nOutro p\n\n",
+          "target": "selection",
+          "canReplace": false
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Delta"}]},{"type":"p","runs":[{"t":"Delta2"}]}]}
+                ]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [[{"blocks":[{"type":"p","runs":[{"t":"GG"}]}]},{"blocks":[{"type":"p","runs":[{"t":"DD"}]}]}]]
+            },
+            {"type":"p","runs":[{"t":"Tail edit"}]}
+          ],
+          "selText": "GGDD\nTail edit",
+          "selMarkup": [
+            {"at":{"block":3,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«GG»"},
+            {"at":{"block":3,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«DD»"},
+            {"at":{"block":4},"text":"«Tail edit»"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "T7",
+      "selection": "T1.C(0,0)@start..P2@end",
+      "answerAction": "insert",
+      "answer": "<table>\n  <tr><td>AA</td><td>BB</td></tr>\n  <tr><td>CC</td><td>DD</td></tr>\n</table>\n\nZZZtail",
+      "expected": {
+        "content": {
+          "content": "<table>\n  <tr>\n   <td>\n\nAlpha\n\n</td>\n   <td>\n\nBeta\n\n</td>\n  </tr>\n  <tr>\n   <td>\n\nGamma\n\n</td>\n   <td>\n\nDelta\n\nDelta2\n\n</td>\n  </tr>\n</table>\n\nOutro paragraph\n\n",
+          "target": "selection",
+          "canReplace": false
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Delta"}]},{"type":"p","runs":[{"t":"Delta2"}]}]}
+                ]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"AA"}]}]},{"blocks":[{"type":"p","runs":[{"t":"BB"}]}]}],
+                [{"blocks":[{"type":"p","runs":[{"t":"CC"}]}]},{"blocks":[{"type":"p","runs":[{"t":"DD"}]}]}]
+              ]
+            },
+            {"type":"p","runs":[{"t":"ZZZtail"}]}
+          ],
+          "selText": "AABB\nCCDD\nZZZtail",
+          "selMarkup": [
+            {"at":{"block":3,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«AA»"},
+            {"at":{"block":3,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«BB»"},
+            {"at":{"block":3,"cell":{"r":1,"c":0},"cellBlock":0},"text":"«CC»"},
+            {"at":{"block":3,"cell":{"r":1,"c":1},"cellBlock":0},"text":"«DD»"},
+            {"at":{"block":4},"text":"«ZZZtail»"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "T8",
+      "selection": "T1.C(1,1)@end..T1.C(1,1)@end",
+      "answerAction": "insert",
+      "answer": "AAA\n\nBBB",
+      "expected": {
+        "content": {
+          "content": "Intro paragraph\n\n<table>\n  <tr>\n   <td>\n\nAlpha\n\n</td>\n   <td>\n\nBeta\n\n</td>\n  </tr>\n  <tr>\n   <td>\n\nGamma\n\n</td>\n   <td>\n\nDelta\n\nDelta2\n\n</td>\n  </tr>\n</table>\n\nOutro paragraph\n\n",
+          "target": "document",
+          "canReplace": false
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
+                  {
+                    "blocks": [
+                      {"type":"p","runs":[{"t":"Delta"}]},
+                      {"type":"p","runs":[{"t":"AAA"}]},
+                      {"type":"p","runs":[{"t":"BBB"}]},
+                      {"type":"p","runs":[{"t":"Delta2"}]}
+                    ]
+                  }
+                ]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "AAA\nBBB",
+          "selMarkup": [
+            {"at":{"block":1,"cell":{"r":1,"c":1},"cellBlock":1},"text":"«AAA»"},
+            {"at":{"block":1,"cell":{"r":1,"c":1},"cellBlock":2},"text":"«BBB»"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "T8",
+      "selection": "T1.C(1,1)@start..T1.C(1,1)@end",
+      "answerAction": "replace",
+      "answer": "CCC\n\nDDD",
+      "expected": {
+        "content": {"content":"Delta\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
+                  {
+                    "blocks": [
+                      {"type":"p","runs":[{"t":"CCC"}]},
+                      {"type":"p","runs":[{"t":"DDD"}]},
+                      {"type":"p","runs":[{"t":"Delta2"}]}
+                    ]
+                  }
+                ]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "CCC\nDDD",
+          "selMarkup": [
+            {"at":{"block":1,"cell":{"r":1,"c":1},"cellBlock":0},"text":"«CCC»"},
+            {"at":{"block":1,"cell":{"r":1,"c":1},"cellBlock":1},"text":"«DDD»"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "cell-cursor-text",
+      "selection": "T1.C(1,1)@mid",
+      "answerAction": "insert",
+      "answer": "Under Delta.",
+      "expected": {
+        "content": {
+          "content": "Intro paragraph\n\n<table>\n  <tr>\n   <td>\n\nAlpha\n\n</td>\n   <td>\n\nBeta\n\n</td>\n  </tr>\n  <tr>\n   <td>\n\nGamma\n\n</td>\n   <td>\n\nDelta\n\nDelta2\n\n</td>\n  </tr>\n</table>\n\nOutro paragraph\n\n",
+          "target": "document",
+          "canReplace": false
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
+                  {
+                    "blocks": [
+                      {"type":"p","runs":[{"t":"Delta"}]},
+                      {"type":"p","runs":[{"t":"Under Delta."}]},
+                      {"type":"p","runs":[{"t":"Delta2"}]}
+                    ]
+                  }
+                ]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "Under Delta.",
+          "selMarkup": [{"at":{"block":1,"cell":{"r":1,"c":1},"cellBlock":1},"text":"«Under Delta.»"}]
+        }
+      }
+    },
+    {
+      "id": "cursor-after-table",
+      "selection": "P2@mid",
+      "answerAction": "insert",
+      "answer": "Under the outro.",
+      "expected": {
+        "content": {
+          "content": "Intro paragraph\n\n<table>\n  <tr>\n   <td>\n\nAlpha\n\n</td>\n   <td>\n\nBeta\n\n</td>\n  </tr>\n  <tr>\n   <td>\n\nGamma\n\n</td>\n   <td>\n\nDelta\n\nDelta2\n\n</td>\n  </tr>\n</table>\n\nOutro paragraph\n\n",
+          "target": "document",
+          "canReplace": false
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Delta"}]},{"type":"p","runs":[{"t":"Delta2"}]}]}
+                ]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]},
+            {"type":"p","runs":[{"t":"Under the outro."}]}
+          ],
+          "selText": "Under the outro.",
+          "selMarkup": [{"at":{"block":3},"text":"«Under the outro.»"}]
+        }
+      }
+    },
+    {
+      "id": "cell-cursor-table",
+      "selection": "T1.C(1,1)@mid",
+      "answerAction": "insert",
+      "answer": "<table>\n  <tr><td>N1</td><td>N2</td></tr>\n</table>",
+      "expected": {
+        "content": {
+          "content": "Intro paragraph\n\n<table>\n  <tr>\n   <td>\n\nAlpha\n\n</td>\n   <td>\n\nBeta\n\n</td>\n  </tr>\n  <tr>\n   <td>\n\nGamma\n\n</td>\n   <td>\n\nDelta\n\nDelta2\n\n</td>\n  </tr>\n</table>\n\nOutro paragraph\n\n",
+          "target": "document",
+          "canReplace": false
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Delta"}]},{"type":"p","runs":[{"t":"Delta2"}]}]}
+                ]
+              ]
+            },
+            {
+              "type": "table",
+              "grid": [[{"blocks":[{"type":"p","runs":[{"t":"N1"}]}]},{"blocks":[{"type":"p","runs":[{"t":"N2"}]}]}]]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "N1N2\n",
+          "selMarkup": [
+            {"at":{"block":2,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«N1»"},
+            {"at":{"block":2,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«N2»"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "cell-text-table",
+      "selection": "T1.C(0,1)@start..T1.C(0,1)@end",
+      "answerAction": "replace",
+      "answer": "<table>\n  <tr><td>N1</td><td>N2</td></tr>\n</table>",
+      "expected": {
+        "content": {"content":"Beta\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Delta"}]},{"type":"p","runs":[{"t":"Delta2"}]}]}
+                ]
+              ]
+            },
+            {
+              "type": "table",
+              "grid": [[{"blocks":[{"type":"p","runs":[{"t":"N1"}]}]},{"blocks":[{"type":"p","runs":[{"t":"N2"}]}]}]]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "N1N2\n",
+          "selMarkup": [
+            {"at":{"block":2,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«N1»"},
+            {"at":{"block":2,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«N2»"}
+          ]
+        }
+      }
+    }
+  ]
+}

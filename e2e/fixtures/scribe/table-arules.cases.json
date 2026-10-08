@@ -1,0 +1,542 @@
+{
+  "document": "table-arules.docx",
+  "cases": [
+    {
+      "id": "Ac1",
+      "selection": "T1.C(0,0)@start..T1.C(0,0)@end",
+      "answerAction": "insert",
+      "answer": "XXX",
+      "expected": {
+        "content": {"content":"The quick brown fox\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"The quick brown fox"}]},{"type":"p","runs":[{"t":"XXX"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}
+                ],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
+                  {
+                    "blocks": [
+                      {"type":"p","runs":[{"t":"The quick brown fox"}]},
+                      {"type":"p","runs":[{"t":"Jumps over the dog"}]},
+                      {"type":"p","runs":[{"t":"Lazy river flows"}]}
+                    ]
+                  }
+                ]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "XXX",
+          "selMarkup": [{"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":1},"text":"«XXX»"}]
+        }
+      }
+    },
+    {
+      "id": "Ac1",
+      "selection": "T1.C(0,0)@start..T1.C(0,0)@end",
+      "answerAction": "replace",
+      "answer": "XXX",
+      "expected": {
+        "content": {"content":"The quick brown fox\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"XXX"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
+                  {
+                    "blocks": [
+                      {"type":"p","runs":[{"t":"The quick brown fox"}]},
+                      {"type":"p","runs":[{"t":"Jumps over the dog"}]},
+                      {"type":"p","runs":[{"t":"Lazy river flows"}]}
+                    ]
+                  }
+                ]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "XXX",
+          "selMarkup": [{"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«XXX»"}]
+        }
+      }
+    },
+    {
+      "id": "Ac2",
+      "selection": "T1.C(0,0)@mid..T1.C(0,0)@mid",
+      "answerAction": "insert",
+      "answer": "XXX",
+      "expected": {
+        "content": {
+          "content": "Intro paragraph\n\n<table>\n  <tr>\n   <td>\n\nThe quick brown fox\n\n</td>\n   <td>\n\nBeta\n\n</td>\n  </tr>\n  <tr>\n   <td>\n\nGamma\n\n</td>\n   <td>\n\nThe quick brown fox\n\nJumps over the dog\n\nLazy river flows\n\n</td>\n  </tr>\n</table>\n\nOutro paragraph\n\n",
+          "target": "document",
+          "canReplace": false
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"The quick brown fox"}]},{"type":"p","runs":[{"t":"XXX"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}
+                ],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
+                  {
+                    "blocks": [
+                      {"type":"p","runs":[{"t":"The quick brown fox"}]},
+                      {"type":"p","runs":[{"t":"Jumps over the dog"}]},
+                      {"type":"p","runs":[{"t":"Lazy river flows"}]}
+                    ]
+                  }
+                ]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "XXX",
+          "selMarkup": [{"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":1},"text":"«XXX»"}]
+        }
+      }
+    },
+    {
+      "id": "Ac2",
+      "selection": "T1.C(0,0)@mid..T1.C(0,0)@mid",
+      "answerAction": "replace",
+      "answer": "XXX",
+      "expected": {
+        "content": {
+          "content": "Intro paragraph\n\n<table>\n  <tr>\n   <td>\n\nThe quick brown fox\n\n</td>\n   <td>\n\nBeta\n\n</td>\n  </tr>\n  <tr>\n   <td>\n\nGamma\n\n</td>\n   <td>\n\nThe quick brown fox\n\nJumps over the dog\n\nLazy river flows\n\n</td>\n  </tr>\n</table>\n\nOutro paragraph\n\n",
+          "target": "document",
+          "canReplace": false
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"The quick brown fox"}]},{"type":"p","runs":[{"t":"XXX"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}
+                ],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
+                  {
+                    "blocks": [
+                      {"type":"p","runs":[{"t":"The quick brown fox"}]},
+                      {"type":"p","runs":[{"t":"Jumps over the dog"}]},
+                      {"type":"p","runs":[{"t":"Lazy river flows"}]}
+                    ]
+                  }
+                ]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "XXX",
+          "selMarkup": [{"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":1},"text":"«XXX»"}]
+        }
+      }
+    },
+    {
+      "id": "Ac2w",
+      "selection": "T1.C(0,0)@10..T1.C(0,0)@15",
+      "answerAction": "insert",
+      "answer": "XXX",
+      "expected": {
+        "content": {"content":"brown\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"The quick brown fox"}]},{"type":"p","runs":[{"t":"XXX"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}
+                ],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
+                  {
+                    "blocks": [
+                      {"type":"p","runs":[{"t":"The quick brown fox"}]},
+                      {"type":"p","runs":[{"t":"Jumps over the dog"}]},
+                      {"type":"p","runs":[{"t":"Lazy river flows"}]}
+                    ]
+                  }
+                ]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "XXX",
+          "selMarkup": [{"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":1},"text":"«XXX»"}]
+        }
+      }
+    },
+    {
+      "id": "Ac2w",
+      "selection": "T1.C(0,0)@10..T1.C(0,0)@15",
+      "answerAction": "replace",
+      "answer": "XXX",
+      "expected": {
+        "content": {"content":"brown\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"The quick "},{"t":"XXX"},{"t":" fox"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}
+                ],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
+                  {
+                    "blocks": [
+                      {"type":"p","runs":[{"t":"The quick brown fox"}]},
+                      {"type":"p","runs":[{"t":"Jumps over the dog"}]},
+                      {"type":"p","runs":[{"t":"Lazy river flows"}]}
+                    ]
+                  }
+                ]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "XXX",
+          "selMarkup": [{"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":0},"text":"The quick «XXX» fox"}]
+        }
+      }
+    },
+    {
+      "id": "Ac3",
+      "selection": "T1.C(0,0)@space..T1.C(0,0)@end",
+      "answerAction": "insert",
+      "answer": "XXX",
+      "expected": {
+        "content": {"content":"quick brown fox\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"The quick brown fox"}]},{"type":"p","runs":[{"t":"XXX"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}
+                ],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
+                  {
+                    "blocks": [
+                      {"type":"p","runs":[{"t":"The quick brown fox"}]},
+                      {"type":"p","runs":[{"t":"Jumps over the dog"}]},
+                      {"type":"p","runs":[{"t":"Lazy river flows"}]}
+                    ]
+                  }
+                ]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "XXX",
+          "selMarkup": [{"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":1},"text":"«XXX»"}]
+        }
+      }
+    },
+    {
+      "id": "Ac3",
+      "selection": "T1.C(0,0)@space..T1.C(0,0)@end",
+      "answerAction": "replace",
+      "answer": "XXX",
+      "expected": {
+        "content": {"content":"quick brown fox\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"The "},{"t":"XXX"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}
+                ],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
+                  {
+                    "blocks": [
+                      {"type":"p","runs":[{"t":"The quick brown fox"}]},
+                      {"type":"p","runs":[{"t":"Jumps over the dog"}]},
+                      {"type":"p","runs":[{"t":"Lazy river flows"}]}
+                    ]
+                  }
+                ]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "XXX",
+          "selMarkup": [{"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":0},"text":"The «XXX»"}]
+        }
+      }
+    },
+    {
+      "id": "Ac4",
+      "selection": "T1.C(0,0)@start..T1.C(0,0)@space",
+      "answerAction": "insert",
+      "answer": "XXX",
+      "expected": {
+        "content": {"content":"The \n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"The quick brown fox"}]},{"type":"p","runs":[{"t":"XXX"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}
+                ],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
+                  {
+                    "blocks": [
+                      {"type":"p","runs":[{"t":"The quick brown fox"}]},
+                      {"type":"p","runs":[{"t":"Jumps over the dog"}]},
+                      {"type":"p","runs":[{"t":"Lazy river flows"}]}
+                    ]
+                  }
+                ]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "XXX",
+          "selMarkup": [{"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":1},"text":"«XXX»"}]
+        }
+      }
+    },
+    {
+      "id": "Ac4",
+      "selection": "T1.C(0,0)@start..T1.C(0,0)@space",
+      "answerAction": "replace",
+      "answer": "XXX",
+      "expected": {
+        "content": {"content":"The \n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"XXX"},{"t":" quick brown fox"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}
+                ],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
+                  {
+                    "blocks": [
+                      {"type":"p","runs":[{"t":"The quick brown fox"}]},
+                      {"type":"p","runs":[{"t":"Jumps over the dog"}]},
+                      {"type":"p","runs":[{"t":"Lazy river flows"}]}
+                    ]
+                  }
+                ]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "XXX",
+          "selMarkup": [{"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«XXX» quick brown fox"}]
+        }
+      }
+    },
+    {
+      "id": "Ac5",
+      "selection": "T1.C(1,1).P1@start..T1.C(1,1).P3@end",
+      "answerAction": "insert",
+      "answer": "XXX",
+      "expected": {
+        "content": {
+          "content": "The quick brown fox\n\nJumps over the dog\n\nLazy river flows\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"The quick brown fox"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}
+                ],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
+                  {
+                    "blocks": [
+                      {"type":"p","runs":[{"t":"The quick brown fox"}]},
+                      {"type":"p","runs":[{"t":"Jumps over the dog"}]},
+                      {"type":"p","runs":[{"t":"Lazy river flows"}]},
+                      {"type":"p","runs":[{"t":"XXX"}]}
+                    ]
+                  }
+                ]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "XXX",
+          "selMarkup": [{"at":{"block":1,"cell":{"r":1,"c":1},"cellBlock":3},"text":"«XXX»"}]
+        }
+      }
+    },
+    {
+      "id": "Ac5",
+      "selection": "T1.C(1,1).P1@start..T1.C(1,1).P3@end",
+      "answerAction": "replace",
+      "answer": "Replaced one\n\nReplaced two\n\nReplaced three",
+      "expected": {
+        "content": {
+          "content": "The quick brown fox\n\nJumps over the dog\n\nLazy river flows\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"The quick brown fox"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}
+                ],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
+                  {
+                    "blocks": [
+                      {"type":"p","runs":[{"t":"Replaced one"}]},
+                      {"type":"p","runs":[{"t":"Replaced two"}]},
+                      {"type":"p","runs":[{"t":"Replaced three"}]}
+                    ]
+                  }
+                ]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "Replaced one\nReplaced two\nReplaced three",
+          "selMarkup": [
+            {"at":{"block":1,"cell":{"r":1,"c":1},"cellBlock":0},"text":"«Replaced one»"},
+            {"at":{"block":1,"cell":{"r":1,"c":1},"cellBlock":1},"text":"«Replaced two»"},
+            {"at":{"block":1,"cell":{"r":1,"c":1},"cellBlock":2},"text":"«Replaced three»"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "Ac6",
+      "selection": "T1.C(1,1).P1@mid..T1.C(1,1).P3@mid",
+      "answerAction": "insert",
+      "answer": "First\n\nSecond",
+      "expected": {
+        "content": {
+          "content": " brown fox\n\nJumps over the dog\n\nLazy riv\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"The quick brown fox"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}
+                ],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
+                  {
+                    "blocks": [
+                      {"type":"p","runs":[{"t":"The quick brown fox"}]},
+                      {"type":"p","runs":[{"t":"Jumps over the dog"}]},
+                      {"type":"p","runs":[{"t":"Lazy river flows"}]},
+                      {"type":"p","runs":[{"t":"First"}]},
+                      {"type":"p","runs":[{"t":"Second"}]}
+                    ]
+                  }
+                ]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "First\nSecond",
+          "selMarkup": [
+            {"at":{"block":1,"cell":{"r":1,"c":1},"cellBlock":3},"text":"«First»"},
+            {"at":{"block":1,"cell":{"r":1,"c":1},"cellBlock":4},"text":"«Second»"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "Ac6",
+      "selection": "T1.C(1,1).P1@mid..T1.C(1,1).P3@mid",
+      "answerAction": "replace",
+      "answer": "First\n\nSecond",
+      "expected": {
+        "content": {
+          "content": " brown fox\n\nJumps over the dog\n\nLazy riv\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"The quick brown fox"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}
+                ],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
+                  {
+                    "blocks": [
+                      {"type":"p","runs":[{"t":"The quick "},{"t":"First"}]},
+                      {"type":"p","runs":[{"t":"Second"},{"t":"er flows"}]}
+                    ]
+                  }
+                ]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "First\nSecond",
+          "selMarkup": [
+            {"at":{"block":1,"cell":{"r":1,"c":1},"cellBlock":0},"text":"The quick «First»"},
+            {"at":{"block":1,"cell":{"r":1,"c":1},"cellBlock":1},"text":"«Second»er flows"}
+          ]
+        }
+      }
+    }
+  ]
+}

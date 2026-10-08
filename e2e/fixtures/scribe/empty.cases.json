@@ -1,0 +1,22 @@
+{
+  "document": "empty.docx",
+  "cases": [
+    {
+      "id": "empty",
+      "selection": "P1@start..P1@start",
+      "answerAction": "insert",
+      "answer": "# Title\n\nSome text.",
+      "expected": {
+        "content": {"content":"","target":"document","canReplace":false},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Title"}],"style":"Heading 1","lvl":1},
+            {"type":"p","runs":[{"t":"Some text."}]}
+          ],
+          "selText": "Title\nSome text.",
+          "selMarkup": [{"at":{"block":0},"text":"«Title»"},{"at":{"block":1},"text":"«Some text.»"}]
+        }
+      }
+    }
+  ]
+}
