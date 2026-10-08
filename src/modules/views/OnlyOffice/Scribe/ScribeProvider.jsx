@@ -89,7 +89,12 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
       // The panel opens once the plugin answers with twake-scribe:content
       open: () =>
         plugin.postMessage({ type: 'twake-scribe:getContent' }, serverOrigin),
-      close: () => setText(null),
+      // The plugin reads every selection while the panel is open, which
+      // empties the redo of the editor: it stops once the panel is closed
+      close: () => {
+        plugin.postMessage({ type: 'twake-scribe:close' }, serverOrigin)
+        setText(null)
+      },
       applyResult: result => {
         if (result?.capability !== undefined) {
           callCapability(result)

@@ -152,8 +152,8 @@ describe('ScribeProvider', () => {
     })
   })
 
-  it('closes', () => {
-    const { receive, getState } = setup()
+  it('closes, and tells the plugin to stop reading the selection', () => {
+    const { plugin, receive, getState } = setup()
     receive({ type: 'twake-scribe:ready' })
     receive({ type: 'twake-scribe:content', content: '', target: 'document' })
     expect(getState().isOpen).toBe(true)
@@ -161,6 +161,10 @@ describe('ScribeProvider', () => {
     fireEvent.click(screen.getByText('close'))
 
     expect(getState()).toEqual({ isAvailable: true, isOpen: false })
+    expect(plugin.postMessage).toHaveBeenCalledWith(
+      { type: 'twake-scribe:close' },
+      SERVER_ORIGIN
+    )
   })
 
   it('hands an answer of the assistant to the plugin as it is', () => {

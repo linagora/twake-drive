@@ -99,6 +99,7 @@ Drive and the plugin talk with `postMessage`. Drive only listens to the origin o
 | Drive → Plugin | `twake-scribe:getContent` | — | Asks for the text to work on. |
 | Plugin → Drive | `twake-scribe:content` | `content`, `target` | The text in Markdown, and what it is: `selection`, or `document` without a selection. Drive opens the panel with it. |
 | Plugin → Drive | `twake-scribe:selection` | `content`, `target` | Another text selected, once Drive has asked for one: not for a cursor that moves, nor for an answer just written. Drive gives it to the open assistant (new `data` of the intent). |
+| Drive → Plugin | `twake-scribe:close` | — | The panel is closed: the plugin stops reading the selection, until Drive asks for the text again. |
 | Drive → Plugin | `twake-scribe:applyAnswer` | `answerAction`, `text`, `format` | A result of the Assistant intent, as it is, or the table of an `insert_table` call, written in Markdown by Drive. The plugin writes `text`, in Markdown, in the document. |
 | Drive → Plugin | `twake-scribe:insertSlide` | `title`, `bullets` | A slide the assistant has made, checked by Drive. The plugin adds it after the current slide. Presentations only. |
 
@@ -189,7 +190,7 @@ Drive then writes the table in Markdown (`makeTableMarkdown`), the caption as th
 ## Limits
 
 - Text documents and presentations only: the plugin does not load in spreadsheets and PDF forms.
-- While the panel is open, the plugin reads every other text the user selects with `callCommand`, and a command of a plugin empties the redo of the editor. The plugin does not read the selection for 3 s after an undo or a redo (Ctrl+Z, Ctrl+Y, Ctrl+Shift+Z, or the buttons of the toolbar), so a redo right after an undo works. A text selected later is read, and the redo is lost.
+- While the panel is open, the plugin reads every other text the user selects with `callCommand`, and a command of a plugin empties the redo of the editor. The plugin does not read the selection for 3 s after an undo or a redo (Ctrl+Z, Ctrl+Y, Ctrl+Shift+Z, or the buttons of the toolbar), so a redo right after an undo works. A text selected later is read, and the redo is lost. Once the panel is closed, nothing is read.
 - A paragraph that replaces several ones has the default paragraph style of the document: the alignment or the spacing set by hand on the replaced paragraphs are not kept. A text replaced in its line keeps them.
 - The images of an answer are not loaded: their alternative text is written.
 - In a presentation, the look of a word set apart from the rest of its paragraph (a color, a size) is not kept when the paragraph is replaced, nor the emphasis of an answer written in a part of a paragraph. A table is written one row per line, and the scribe does not add shapes or speaker notes: the builder API has no access to the notes. It adds a slide only through the `insert_slide` capability, with a title and bullets.
