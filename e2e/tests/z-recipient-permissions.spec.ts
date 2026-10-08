@@ -214,8 +214,9 @@ test.describe.serial('Recipient permissions & member controls', () => {
     await expect(modal.dialog).toContainText(/cancelled sharing/i)
     await modal.close()
 
-    // Navigating back to Bob's sharings list
-    await bobPage.goto(`${USERS.bob.appUrl}/#/sharings/with-me`)
+    // Navigating back to Bob's sharings list. READER_DRIVE stays shared with
+    // Bob: its row proves the list has loaded before asserting the absence.
+    await waitForSharingRow(bobPage, USERS.bob, bobDrive, READER_DRIVE)
     await expect(bobDrive.row(LEAVE_DRIVE).cell).toHaveCount(0)
   })
 
