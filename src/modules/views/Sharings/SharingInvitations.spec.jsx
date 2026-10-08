@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import React from 'react'
+import { MemoryRouter } from 'react-router-dom'
 
 import { useClient } from 'cozy-client'
 import { useSharingContext } from 'cozy-sharing'
@@ -9,6 +10,7 @@ import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import SharingInvitations from './SharingInvitations'
 import { useSharingsQueryResult } from './useSharingsQueryResult'
 
+import { ROUTER_FUTURE_FLAGS } from '@/constants/config'
 import { useFileLink } from '@/modules/navigation/hooks/useFileLink'
 
 jest.mock('cozy-client', () => ({
@@ -52,7 +54,7 @@ function makeShortcut(id, { status = 'new' } = {}) {
   }
 }
 
-function setup(files) {
+function setup(files, pathname = '/folder') {
   const deleteFilePermanently = jest.fn().mockResolvedValue({})
   const client = {
     save: jest.fn().mockResolvedValue({}),
@@ -71,7 +73,13 @@ function setup(files) {
   const openLink = jest.fn()
   useFileLink.mockReturnValue({ openLink })
 
-  const view = render(<SharingInvitations />)
+  const view = render(<SharingInvitations />, {
+    wrapper: ({ children }) => (
+      <MemoryRouter initialEntries={[pathname]} future={ROUTER_FUTURE_FLAGS}>
+        {children}
+      </MemoryRouter>
+    )
+  })
   return { ...view, client, deleteFilePermanently, openLink }
 }
 
@@ -85,6 +93,12 @@ function getDisplayedText() {
 describe('SharingInvitations', () => {
   it('renders nothing without new invitations', () => {
     setup([makeShortcut('s1', { status: 'seen' })])
+
+    expect(screen.queryByTestId('sharing-invitations')).toBe(null)
+  })
+
+  it('renders nothing in the embedded space', () => {
+    setup([makeShortcut('s1')], '/embed/sharings/drive-id/folder-id')
 
     expect(screen.queryByTestId('sharing-invitations')).toBe(null)
   })
