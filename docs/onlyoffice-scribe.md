@@ -121,7 +121,7 @@ An empty paragraph where the answer goes, as the one of an empty document, takes
 
 A text written in place of another one has the look of its first character, as a text typed over it; new paragraphs have the look of most of the text of the paragraph above them, so that a word in italics or a link does not give its look to the answer. The emphasis is the one of the answer.
 
-The plugin checks `canReplace` again before it replaces a text: it never replaces a selection that holds what an answer cannot give back, even when Drive asks.
+The plugin checks `canReplace` again before it replaces a text: it never replaces a selection that holds what an answer cannot give back, even when Drive asks, nor a selection the editor was too busy to read.
 
 ### Tables
 
