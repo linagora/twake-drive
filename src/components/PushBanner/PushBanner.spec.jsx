@@ -100,7 +100,11 @@ describe('PushBanner', () => {
 
     it('should hide client banner in the embedded space', () => {
       isFlagshipApp.mockReturnValue(false)
-      const { container } = setup(50, false, '/space/drive-id/folder-id')
+      const { container } = setup(
+        50,
+        false,
+        '/embed/sharings/drive-id/folder-id'
+      )
       expect(container).toBeEmptyDOMElement()
     })
   })
