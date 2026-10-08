@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { Outlet, useNavigate, useParams } from 'react-router-dom'
 
 import { BarComponent } from 'cozy-bar'
+import { RealTimeQueries } from 'cozy-client'
 import CozyDevtools from 'cozy-devtools'
 import flag from 'cozy-flags'
 import FlagSwitcher from 'cozy-flags/dist/FlagSwitcher'
@@ -21,6 +22,7 @@ import { useDisplayedFolder } from '@/hooks'
 import { isEditableTarget } from '@/hooks/helpers'
 import useCurrentFolderId from '@/hooks/useCurrentFolderId'
 import useCurrentFolderWriteAccess from '@/hooks/useCurrentFolderWriteAccess'
+import { NEXTCLOUD_MIGRATIONS_DOCTYPE } from '@/lib/doctypes'
 import { initFlags } from '@/lib/flags'
 import AddMenuProvider from '@/modules/drive/AddMenu/AddMenuProvider'
 import AddButton from '@/modules/drive/Toolbar/components/AddButton'
@@ -166,6 +168,9 @@ const LayoutContent = () => {
         </Sidebar>
         <UploadQueue />
         <FilesRealTimeQueries />
+        {flag('settings.migration.enabled') && (
+          <RealTimeQueries doctype={NEXTCLOUD_MIGRATIONS_DOCTYPE} />
+        )}
         <SelectionProvider>
           <Outlet />
         </SelectionProvider>
