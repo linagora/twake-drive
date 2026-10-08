@@ -213,10 +213,41 @@ export function writeBlocks() {
   }
   const selection = doc.GetRangeBySelect()
   const paragraphs = selection?.GetAllParagraphs() ?? []
-  // A new text has the look of the text at the cursor
-  const cursorTextPr = doc.GetCurrentRun()?.GetTextPr()
+  // The look of the new text, once its place is known
+  let textPr = null
   const numberings = {}
   let lastWritten = null
+
+  // The look of most of the text of a paragraph: a word set apart, as a word
+  // in italics or a link, does not give its look to a new paragraph
+  const findMainLook = paragraph => {
+    let found = null
+    for (let i = 0; i < (paragraph?.GetElementsCount() ?? 0); i += 1) {
+      const element = paragraph.GetElement(i)
+      if (element.GetClassType() !== 'run') continue
+      // The empty run of an empty paragraph holds the look the user chose
+      if (!found || element.GetText().length > found.GetText().length) {
+        found = element
+      }
+    }
+    return found?.GetTextPr() ?? null
+  }
+
+  // A text written in place of a selected one has the look of its first
+  // character, as a text typed over it
+  const findStartLook = () => {
+    const start = selection.GetStartPos()
+    const paragraph = paragraphs[0]
+    for (let i = 0; i < paragraph.GetElementsCount(); i += 1) {
+      const element = paragraph.GetElement(i)
+      const isText =
+        element.GetClassType() === 'run' && element.GetText() !== ''
+      if (isText && element.GetRange().GetEndPos() > start) {
+        return element.GetTextPr()
+      }
+    }
+    return findMainLook(paragraph)
+  }
 
   const makeRun = (span, textPr) => {
     const run = Api.CreateRun()
@@ -253,7 +284,7 @@ export function writeBlocks() {
   }
 
   const makeListItem = block => {
-    const paragraph = makeParagraph(block.spans, 'List Paragraph', cursorTextPr)
+    const paragraph = makeParagraph(block.spans, 'List Paragraph', textPr)
     if (!numberings[block.listId]) {
       numberings[block.listId] = doc.CreateNumbering(
         block.isOrdered ? 'numbered' : 'bullet'
@@ -311,7 +342,7 @@ export function writeBlocks() {
     })
     cells.forEach(cell => {
       const content = table.GetCell(cell.row, cell.column).GetContent()
-      addSpans(content.GetElement(0), cell.spans, cursorTextPr)
+      addSpans(content.GetElement(0), cell.spans, textPr)
     })
     // A merge takes the cells on its right in its rows: the rightmost ones
     // are merged first, while their cells are still where they were laid
@@ -336,11 +367,11 @@ export function writeBlocks() {
       return makeParagraph(block.spans, `Heading ${block.level}`, null)
     }
     if (block.type === 'quote') {
-      return makeParagraph(block.spans, 'Quote', cursorTextPr)
+      return makeParagraph(block.spans, 'Quote', textPr)
     }
     if (block.type === 'listItem') return makeListItem(block)
     if (block.type === 'table') return makeTable(block.rows)
-    return makeParagraph(block.spans, null, cursorTextPr)
+    return makeParagraph(block.spans, null, textPr)
   }
 
   // The cells the selection takes, when it takes several cells of one table:
@@ -553,6 +584,7 @@ export function writeBlocks() {
       placeholder.Select()
       return true
     }
+    textPr = findMainLook(anchor)
     if (isEmpty(anchor) && !isBetweenTables(anchor)) {
       anchor.Select()
       return true
@@ -664,7 +696,7 @@ export function writeBlocks() {
     const tail = parent.GetElement(lastBlock.GetPosInParent() + 1)
     const writeInLine = (block, at) => {
       at.Select()
-      doc.InsertContent([makeParagraph(block.spans, null, cursorTextPr)], true)
+      doc.InsertContent([makeParagraph(block.spans, null, textPr)], true)
     }
     // The text before the selection has not moved
     if (isJoiningBefore) {
@@ -700,13 +732,14 @@ export function writeBlocks() {
     const isWhole = around.before === '' && around.after === ''
     const isPartOfParagraph = !isWhole && paragraphs.length === 1
     fitSelection(isWhole)
+    textPr = findStartLook()
     const [block] = blocks
     const isLine =
       blocks.length === 1 &&
       (block.type === 'paragraph' ||
         (isPartOfParagraph && block.type !== 'table'))
     if (isLine) {
-      return writeAnswer([makeParagraph(block.spans, null, cursorTextPr)], true)
+      return writeAnswer([makeParagraph(block.spans, null, textPr)], true)
     }
     if (isWhole) return writeAnswer(blocks.map(makeElement), false)
     return writeAround(getAround())

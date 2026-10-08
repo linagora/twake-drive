@@ -118,6 +118,8 @@ Drive and the plugin talk with `postMessage`. Drive only listens to the origin o
 
 An empty paragraph where the answer goes, as the one of an empty document, takes the answer itself; a paragraph that holds only a page break, an image or a field, or that ends a section, is not empty, and one between a table and a table of the answer stays, to keep the two tables apart. Whole paragraphs replaced by several blocks leave the end of their last paragraph after them: it is removed when empty, and kept when it holds a note or an image that followed the text, or the end of a section. The spaces around a part of a paragraph are kept: the answer of a LLM never has them. A selection that starts at the end of a line does not take the paragraph of that line. List items written in place of items of a list stay in that list, numbered after the items above them. The answer is left selected.
 
+A text written in place of another one has the look of its first character, as a text typed over it; new paragraphs have the look of most of the text of the paragraph above them, so that a word in italics or a link does not give its look to the answer. The emphasis is the one of the answer.
+
 The plugin checks `canReplace` again before it replaces a text: it never replaces a selection that holds what an answer cannot give back, even when Drive asks.
 
 ### Tables
