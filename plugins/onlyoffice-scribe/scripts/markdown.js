@@ -104,6 +104,51 @@ function makeTableRows(token) {
   ]
 }
 
+const LIST_ITEM = /^( *)([-*+]|\d{1,9}[.)]) +(.*)$/
+// A fence in an item is indented as its text
+const FENCE = /^ *(```|~~~)/
+
+// The LLM indents a sublist by 2 spaces, but Markdown nests it only under the
+// text of its parent item, 3 spaces in after "1. ": each item is indented
+// again under the text of the item it belongs to. A block of code stays
+// as it is.
+function nestLists(markdown) {
+  let fence = null
+  // Each level of the list being read: the indent the LLM gave its items,
+  // and the one they get
+  let levels = []
+
+  return markdown
+    .split('\n')
+    .map(line => {
+      const fenceMark = line.match(FENCE)?.[1]
+      if (fence !== null || fenceMark) {
+        if (fence === null) fence = fenceMark
+        else if (fenceMark === fence) fence = null
+        return line
+      }
+      const item = line.match(LIST_ITEM)
+      if (!item || (levels.length === 0 && item[1].length > 3)) {
+        if (/^\S/.test(line)) levels = []
+        return line
+      }
+
+      const [, { length: indent }, marker, text] = item
+      while (levels.length > 0 && indent < levels[levels.length - 1].indent) {
+        levels.pop()
+      }
+      const parent = levels[levels.length - 1]
+      if (!parent || indent > parent.indent) {
+        const nested = parent ? parent.nested + parent.width : 0
+        levels.push({ indent, nested, width: 0 })
+      }
+      const level = levels[levels.length - 1]
+      level.width = marker.length + 1
+      return `${' '.repeat(level.nested)}${marker} ${text}`
+    })
+    .join('\n')
+}
+
 function getTagName(tag) {
   return tag.match(/^<(\/?[a-z]+)/i)?.[1].toLowerCase() ?? null
 }
@@ -241,7 +286,7 @@ export function makeBlocks(markdown, { hasLineBreaks = false } = {}) {
   }
 
   const lexer = new Lexer({ ...getDefaults(), breaks: hasLineBreaks })
-  addTokens(lexer.lex(markdown.match(WRAPPED)?.[2] ?? markdown))
+  addTokens(lexer.lex(nestLists(markdown.match(WRAPPED)?.[2] ?? markdown)))
   // A table left open still gives what it holds
   if (htmlTable) readHtmlTag('</table>')
 
