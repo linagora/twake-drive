@@ -28,6 +28,9 @@ let isWriting = false
 let selectionTimer = null
 let pausedUntil = 0
 let isStarted = false
+// Each request for the text, and each close of the panel, ends the requests
+// still being read: the panel does not open again for an older one
+let contentRequest = 0
 // The editor keeps a single callback of the plugin for its commands: a
 // command sent while another one runs would take its result, and the other
 // one would never end. They run one after the other.
@@ -97,11 +100,14 @@ function fetchContent() {
 // The editor runs no command while it loads or saves: the text is then not
 // read, and the app asks again
 async function sendContent(origin) {
+  contentRequest += 1
+  const request = contentRequest
   const read = await fetchContent()
-  if (!read) return
+  const selectedText = await fetchSelectedText()
+  if (!read || request !== contentRequest) return
   hostOrigin = origin
   lastContent = read.content
-  lastSelectedText = await fetchSelectedText()
+  lastSelectedText = selectedText
 
   host.postMessage({ type: 'twake-scribe:content', ...read }, origin)
 }
@@ -114,10 +120,12 @@ async function sendContent(origin) {
 async function sendSelection() {
   if (!hostOrigin || isWriting || Date.now() < pausedUntil) return
   const selectedText = await fetchSelectedText()
-  if (!selectedText?.trim() || selectedText === lastSelectedText) return
+  // The panel may have been closed while the selection was read
+  if (!hostOrigin || !selectedText?.trim()) return
+  if (selectedText === lastSelectedText) return
 
   const { content, target, canReplace } = (await fetchContent()) ?? {}
-  if (target !== 'selection' || content === lastContent) return
+  if (!hostOrigin || target !== 'selection' || content === lastContent) return
   lastContent = content
   lastSelectedText = selectedText
 
@@ -226,6 +234,7 @@ async function handleMessage(event) {
   }
   // The panel is closed: the selection is no more read
   if (event.data?.type === 'twake-scribe:close') {
+    contentRequest += 1
     hostOrigin = null
     clearTimeout(selectionTimer)
   }
