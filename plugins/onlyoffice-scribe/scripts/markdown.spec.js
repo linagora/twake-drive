@@ -105,6 +105,68 @@ describe('makeBlocks', () => {
     ])
   })
 
+  it('nests the lists the LLM indents by 2 spaces under a numbered item', () => {
+    const blocks = makeBlocks(
+      [
+        '1. First item',
+        '2. Second item',
+        '  1. Numbered sub-item',
+        '  2. Another sub-item',
+        '    1. Even deeper level',
+        '    2. Continuation',
+        '3. Third item',
+        '  - First bullet',
+        '  - Second bullet'
+      ].join('\n')
+    )
+
+    expect(
+      blocks.map(({ depth, isOrdered, spans }) => [
+        depth,
+        isOrdered,
+        spans.map(span => span.text).join('')
+      ])
+    ).toEqual([
+      [0, true, 'First item'],
+      [0, true, 'Second item'],
+      [1, true, 'Numbered sub-item'],
+      [1, true, 'Another sub-item'],
+      [2, true, 'Even deeper level'],
+      [2, true, 'Continuation'],
+      [0, true, 'Third item'],
+      [1, false, 'First bullet'],
+      [1, false, 'Second bullet']
+    ])
+  })
+
+  it('nests a list under an item whose number takes more room', () => {
+    const blocks = makeBlocks('9. neuf\n10. dix\n  - dedans')
+
+    expect(blocks.map(block => block.depth)).toEqual([0, 0, 1])
+  })
+
+  it('leaves an indented block of code out of the lists', () => {
+    const blocks = makeBlocks('Un texte.\n\n    - pas une liste')
+
+    expect(blocks[1]).toEqual(
+      paragraph({ text: '- pas une liste', isCode: true })
+    )
+  })
+
+  it('leaves the code of a fence in a list item as it is', () => {
+    const blocks = makeBlocks(
+      '10. Configure:\n    ```yaml\n    steps:\n      - run: build\n    ```'
+    )
+
+    expect(blocks[1]).toEqual(
+      paragraph(
+        { text: 'steps:', isCode: true },
+        { isBreak: true },
+        { text: '  - run: build', isCode: true }
+      )
+    )
+  })
+
   it('writes the boxes of a task list in its items', () => {
     const blocks = makeBlocks('- [x] fait\n- [ ] à faire')
 
