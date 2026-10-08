@@ -467,8 +467,39 @@ export function writeBlocks() {
     return cell && cells.size > 1 ? cell.GetParentTable() : last
   }
 
-  // Selects a new paragraph after the anchor, for the answer to take its
-  // place
+  // An empty paragraph has no text, and nothing but runs: not an image, a
+  // page break, a field or a form, nor the end of a section. The look of its
+  // runs, as a color of the theme, does not count.
+  const isEmpty = paragraph => {
+    if (getText(paragraph).trim() !== '') return false
+    const { pPr, content } = JSON.parse(paragraph.ToJSON(false, false))
+    return (
+      !pPr?.sectPr &&
+      content.every(
+        element =>
+          ['run', 'endRun'].includes(element.type) &&
+          element.content.every(item => typeof item === 'string')
+      )
+    )
+  }
+
+  // Whether an empty paragraph holds a table of the answer apart from a
+  // table of the document beside it, which it would join
+  const isBetweenTables = paragraph => {
+    const parent = paragraph.GetParentTableCell()?.GetContent() ?? doc
+    const index = paragraph.GetPosInParent()
+    const isTable = (block, at) =>
+      block.type === 'table' &&
+      parent.GetElement(at)?.GetClassType() === 'table'
+    return (
+      isTable(blocks[0], index - 1) ||
+      isTable(blocks[blocks.length - 1], index + 1)
+    )
+  }
+
+  // Selects where the answer goes: a new paragraph after its anchor, or the
+  // anchor itself when it is an empty paragraph, as the one of an empty
+  // document
   const selectPlaceholder = selectedCells => {
     const placeholder = Api.CreateParagraph()
     if (selectedCells) {
@@ -482,6 +513,10 @@ export function writeBlocks() {
       const parent = anchor.GetParentTableCell()?.GetContent() ?? doc
       parent.AddElement(anchor.GetPosInParent() + 1, placeholder)
       placeholder.Select()
+      return true
+    }
+    if (isEmpty(anchor) && !isBetweenTables(anchor)) {
+      anchor.Select()
       return true
     }
     anchor.InsertParagraph(placeholder, 'after', true)
