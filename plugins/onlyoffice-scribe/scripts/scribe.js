@@ -20,8 +20,10 @@ const UNDO_REDO_PAUSE = 3000
 let written = null
 // The origin of the app while its panel is open: it has asked for the text
 let hostOrigin = null
-// The text last given to the app, and whether an answer is being written
+// The text last given to the app, its plain text, and whether an answer is
+// being written
 let lastContent = null
+let lastSelectedText = null
 let isWriting = false
 let selectionTimer = null
 let pausedUntil = 0
@@ -99,6 +101,7 @@ async function sendContent(origin) {
   if (!read) return
   hostOrigin = origin
   lastContent = read.content
+  lastSelectedText = await fetchSelectedText()
 
   host.postMessage({ type: 'twake-scribe:content', ...read }, origin)
 }
@@ -106,14 +109,17 @@ async function sendContent(origin) {
 // Another text selected: the app gives it to the assistant if it is open.
 // A cursor that moves, or the text of an answer just written, is not another
 // text.
+// The selection is read by a command only when its text changes: a command
+// empties the redo of the editor.
 async function sendSelection() {
   if (!hostOrigin || isWriting || Date.now() < pausedUntil) return
   const selectedText = await fetchSelectedText()
-  if (!selectedText || selectedText.trim() === '') return
+  if (!selectedText?.trim() || selectedText === lastSelectedText) return
 
   const { content, target } = (await fetchContent()) ?? {}
   if (target !== 'selection' || content === lastContent) return
   lastContent = content
+  lastSelectedText = selectedText
 
   host.postMessage(
     { type: 'twake-scribe:selection', content, target },
@@ -175,8 +181,10 @@ async function applyAnswer(answer) {
   try {
     await writeAnswer(answer)
     // The answer is left selected: it is not another text to work on
-    if ((await fetchSelectedText())?.trim()) {
+    const selectedText = await fetchSelectedText()
+    if (selectedText?.trim()) {
       lastContent = (await fetchContent())?.content ?? lastContent
+      lastSelectedText = selectedText
     }
   } finally {
     isWriting = false
