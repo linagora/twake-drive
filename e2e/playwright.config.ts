@@ -21,7 +21,7 @@ export default defineConfig({
   // Covers docker provisioning plus the full suite — the shared-drive specs
   // add ~15 multi-instance tests and the nested-sharing spec runs its five
   // scenarios for every flag combination, on a single worker.
-  globalTimeout: 1_500_000,
+  globalTimeout: 2_100_000,
   projects: [
     {
       name: 'chromium',
