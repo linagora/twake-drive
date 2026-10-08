@@ -26,13 +26,22 @@ let isWriting = false
 let selectionTimer = null
 let pausedUntil = 0
 let isStarted = false
+// The editor keeps a single callback of the plugin for its commands: a
+// command sent while another one runs would take its result, and the other
+// one would never end. They run one after the other.
+let lastCommand = Promise.resolve()
 
 function runInEditor(command, { scope = {}, isRecalculated = false } = {}) {
-  Object.assign(window.Asc.scope, scope)
-
-  return new Promise(resolve => {
-    window.Asc.plugin.callCommand(command, false, isRecalculated, resolve)
-  })
+  const run = lastCommand.then(
+    () =>
+      new Promise(resolve => {
+        // The scope goes with the command when it is sent
+        Object.assign(window.Asc.scope, scope)
+        window.Asc.plugin.callCommand(command, false, isRecalculated, resolve)
+      })
+  )
+  lastCommand = run
+  return run
 }
 
 function callEditor(method, parameters) {
@@ -83,12 +92,15 @@ function fetchContent() {
   return isPresentation() ? readPresentation() : runInEditor(readContent)
 }
 
+// The editor runs no command while it loads or saves: the text is then not
+// read, and the app asks again
 async function sendContent(origin) {
-  const { content, target } = await fetchContent()
+  const read = await fetchContent()
+  if (!read) return
   hostOrigin = origin
-  lastContent = content
+  lastContent = read.content
 
-  host.postMessage({ type: 'twake-scribe:content', content, target }, origin)
+  host.postMessage({ type: 'twake-scribe:content', ...read }, origin)
 }
 
 // Another text selected: the app gives it to the assistant if it is open.
@@ -99,7 +111,7 @@ async function sendSelection() {
   const selectedText = await fetchSelectedText()
   if (!selectedText || selectedText.trim() === '') return
 
-  const { content, target } = await fetchContent()
+  const { content, target } = (await fetchContent()) ?? {}
   if (target !== 'selection' || content === lastContent) return
   lastContent = content
 
@@ -164,7 +176,7 @@ async function applyAnswer(answer) {
     await writeAnswer(answer)
     // The answer is left selected: it is not another text to work on
     if ((await fetchSelectedText())?.trim()) {
-      lastContent = (await fetchContent()).content
+      lastContent = (await fetchContent())?.content ?? lastContent
     }
   } finally {
     isWriting = false
