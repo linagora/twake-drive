@@ -25,7 +25,7 @@ Drive (OnlyOffice view)
 
 - The AI button is in the toolbar of the document, for a text document or a presentation the user can edit.
 - A click opens the assistant in a panel beside the document. Another click, or the cross of the panel, closes it.
-- With a selection, the assistant works on the selected text, and each answer can be inserted under it or can replace it.
+- With a selection, the assistant works on the selected text, and each answer can be inserted under it or can replace it. An answer is text: a selection that holds an image, a chart, an equation, a footnote, a field, a form or a comment, or that crosses a table, can only have the answers inserted under it.
 - Without a selection, the assistant works on the whole document, and each answer can be inserted under the paragraph of the cursor. Nothing replaces a whole document.
 - The text written in the document is left selected: the next answer of the conversation can replace it.
 - Another text selected while the panel is open is the one the next request is about: the conversation goes on, and the prompts are offered again. A click that only moves the cursor changes nothing.
@@ -97,8 +97,8 @@ Drive and the plugin talk with `postMessage`. Drive only listens to the origin o
 | --- | --- | --- | --- |
 | Plugin → Drive | `twake-scribe:ready` | — | The plugin is loaded. Drive shows the AI button. |
 | Drive → Plugin | `twake-scribe:getContent` | — | Asks for the text to work on. |
-| Plugin → Drive | `twake-scribe:content` | `content`, `target` | The text in Markdown, and what it is: `selection`, or `document` without a selection. Drive opens the panel with it. |
-| Plugin → Drive | `twake-scribe:selection` | `content`, `target` | Another text selected, once Drive has asked for one: not for a cursor that moves, nor for an answer just written. Drive gives it to the open assistant (new `data` of the intent). |
+| Plugin → Drive | `twake-scribe:content` | `content`, `target`, `canReplace` | The text in Markdown, what it is (`selection`, or `document` without a selection), and whether an answer can take its place. Drive opens the panel with it. |
+| Plugin → Drive | `twake-scribe:selection` | `content`, `target`, `canReplace` | Another text selected, once Drive has asked for one: not for a cursor that moves, nor for an answer just written. Drive gives it to the open assistant (new `data` of the intent). |
 | Drive → Plugin | `twake-scribe:close` | — | The panel is closed: the plugin stops reading the selection, until Drive asks for the text again. |
 | Drive → Plugin | `twake-scribe:applyAnswer` | `answerAction`, `text`, `format` | A result of the Assistant intent, as it is, or the table of an `insert_table` call, written in Markdown by Drive. The plugin writes `text`, in Markdown, in the document. |
 | Drive → Plugin | `twake-scribe:insertSlide` | `title`, `bullets` | A slide the assistant has made, checked by Drive. The plugin adds it after the current slide. Presentations only. |
@@ -110,11 +110,13 @@ Drive and the plugin talk with `postMessage`. Drive only listens to the origin o
 | `answerAction` | Selection | Result |
 | --- | --- | --- |
 | `replace` | A text | The answer takes the place of the text. A single paragraph is written in the line, whole blocks otherwise. |
-| `replace` | None | Same as `insert`. |
-| any other | A text | The answer is written in new paragraphs, under the last paragraph of the selection. |
+| `replace` | A text that `canReplace` refuses, or none | Same as `insert`. |
+| any other | A text | The answer is written in new paragraphs, under the last paragraph of the selection, or under the table when the selection takes cells and more than one cell. |
 | any other | None | The answer is written in new paragraphs, under the paragraph of the cursor. |
 
 The answer is left selected.
+
+The plugin checks `canReplace` again before it replaces a text: it never replaces a selection that holds what an answer cannot give back, even when Drive asks.
 
 ### Tables
 

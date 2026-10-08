@@ -162,7 +162,10 @@ function watchUndoRedo() {
 }
 
 async function writeAnswer({ answerAction, text }) {
-  const isReplace = answerAction === 'replace'
+  // A text that holds what an answer cannot give back, as an image or a
+  // note, is never replaced, even when the app asks: the answer goes under it
+  const isReplace =
+    answerAction === 'replace' && (await fetchContent())?.canReplace !== false
   if (isPresentation()) {
     await writePresentation(text, isReplace)
     return

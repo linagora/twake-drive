@@ -197,6 +197,14 @@ describe('ScribePanel', () => {
     ])
   })
 
+  it('only lets an answer be inserted when the selection cannot be replaced', () => {
+    setup({ canReplace: false })
+
+    expect(getIntentProps().data.answerActions).toEqual([
+      { name: 'insert', label: 'Insert' }
+    ])
+  })
+
   it('hands each answer over, and stays open', () => {
     const { applyResult, close } = setup()
 
