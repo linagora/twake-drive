@@ -29,7 +29,8 @@ const Toolbar = ({
   hasWriteAccess,
   isSharedWithMe,
   showShareButton = true,
-  showSharedRecipients = true
+  showSharedRecipients = true,
+  showMoreMenu = true
 }) => {
   const { displayedFolder } = useDisplayedFolder()
   const { isMobile } = useBreakpoints()
@@ -84,7 +85,7 @@ const Toolbar = ({
       <ViewSwitcher className="u-mr-half" />
       <BarRightOnMobile>
         {isMobile && <SearchButton />}
-        <MoreMenu {...moreMenuProps} />
+        {showMoreMenu && <MoreMenu {...moreMenuProps} />}
       </BarRightOnMobile>
     </div>
   )
@@ -97,7 +98,8 @@ Toolbar.propTypes = {
   canCreateFolder: PropTypes.bool,
   hasWriteAccess: PropTypes.bool,
   showShareButton: PropTypes.bool,
-  showSharedRecipients: PropTypes.bool
+  showSharedRecipients: PropTypes.bool,
+  showMoreMenu: PropTypes.bool
 }
 
 Toolbar.defaultProps = {

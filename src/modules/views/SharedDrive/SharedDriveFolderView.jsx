@@ -92,6 +92,7 @@ function SharedDriveFolderActions({
         driveId={driveId}
         showShareButton={showShareButton}
         showSharedRecipients={!isInSpace}
+        showMoreMenu={!isInSpace}
       />
     </>
   )
