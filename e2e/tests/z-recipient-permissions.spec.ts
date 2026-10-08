@@ -12,15 +12,15 @@ import { ShareModalPage } from '../pages/ShareModalPage'
 const READER_DRIVE = `Reader Members Drive ${stamp()}`
 const EDITOR_DRIVE = `Editor Members Drive ${stamp()}`
 const LEAVE_DRIVE = `Leave Members Drive ${stamp()}`
-const NESTED_DRIVE = `Nested Editor Drive ${stamp()}`
-const NESTED_CHILD = `Nested Child ${stamp()}`
+// const NESTED_DRIVE = `Nested Editor Drive ${stamp()}`
+// const NESTED_CHILD = `Nested Child ${stamp()}`
 
 test.describe.serial('Recipient permissions & member controls', () => {
   test.afterAll(async () => {
     await trashByName(USERS.alice.instance, READER_DRIVE)
     await trashByName(USERS.alice.instance, EDITOR_DRIVE)
     await trashByName(USERS.alice.instance, LEAVE_DRIVE)
-    await trashByName(USERS.alice.instance, NESTED_DRIVE)
+    // await trashByName(USERS.alice.instance, NESTED_DRIVE)
   })
 
   test('Alice shares a drive with Bob as Viewer and Charlie as Editor', async ({
@@ -219,74 +219,79 @@ test.describe.serial('Recipient permissions & member controls', () => {
     await expect(bobDrive.row(LEAVE_DRIVE).cell).toHaveCount(0)
   })
 
-  test('Alice shares nested parent drive with Bob as Editor', async ({
-    alicePage,
-    aliceDrive
-  }) => {
-    await alicePage.goto(`${USERS.alice.appUrl}/#/folder`)
-    await aliceDrive.createFolder(NESTED_DRIVE)
-    await aliceDrive.openFolder(NESTED_DRIVE)
-
-    const modal = await aliceDrive.openShareModal()
-    await modal.setNewMemberRole('Editor')
-    await modal.addMember(USERS.bob.email)
-    await modal.share()
-
-    await waitForSharingRow(
-      alicePage,
-      USERS.alice,
-      aliceDrive,
-      NESTED_DRIVE,
-      'by-me'
-    )
-  })
-
-  test('Editor (Bob) can add, downgrade, and remove a member on a nested sharing', async ({
-    bobPage,
-    bobDrive
-  }) => {
-    await openSharedDrive(bobPage, USERS.bob, bobDrive, NESTED_DRIVE)
-    const parentDriveUrl = bobPage.url()
-
-    // 1. Bob creates a subfolder inside the shared drive
-    await bobDrive.createFolder(NESTED_CHILD)
-    await bobDrive.row(NESTED_CHILD).waitVisible()
-
-    // 2. Bob navigates into the subfolder
-    await bobDrive.row(NESTED_CHILD).open()
-    await expect.poll(() => bobPage.url()).not.toBe(parentDriveUrl)
-    await expect(
-      bobPage.locator('main').getByRole('navigation').first()
-    ).toContainText(NESTED_CHILD)
-    const childFolderUrl = bobPage.url()
-
-    // 3. Bob opens the share modal on the subfolder
-    await bobPage.goto(`${childFolderUrl}/share`)
-    const modal = new ShareModalPage(bobPage)
-    await modal.waitForOpen()
-
-    // 4. Bob adds Charlie as Editor to the nested subfolder
-    await modal.setNewMemberRole('Editor')
-    await modal.addMember(USERS.charlie.email)
-    await modal.share()
-
-    // 5. Bob reopens share modal on the nested subfolder
-    await bobPage.goto(`${childFolderUrl}/share`)
-    const nestedModal = new ShareModalPage(bobPage)
-    await nestedModal.waitForOpen()
-    await expect(nestedModal.memberItem(USERS.charlie.email)).toBeVisible()
-    await expect(nestedModal.memberRole(USERS.charlie.email)).toContainText(/editor/i)
-
-    // 6. Bob downgrades Charlie to Viewer
-    await nestedModal.setMemberRole(USERS.charlie.email, 'Viewer')
-    await expect(nestedModal.memberRole(USERS.charlie.email)).toContainText(/viewer/i)
-
-    // 7. Bob removes Charlie from the nested sharing
-    await nestedModal.memberRemoveButton(USERS.charlie.email).click()
-    await expect(nestedModal.memberItem(USERS.charlie.email)).toHaveCount(0)
-
-    await nestedModal.close()
-  })
+  // Disabled until cozy-stack lets a shared drive recipient create a
+  // sharing on a subfolder of a drive they do not own: POST /sharings/drives
+  // runs on the recipient instance where the folder does not exist (404).
+  // See linagora/twake-drive#4288 for what the stack needs. When re-enabling
+  // it, move the breadcrumb locator into DrivePage (no raw selectors here).
+  // test('Alice shares nested parent drive with Bob as Editor', async ({
+  //   alicePage,
+  //   aliceDrive
+  // }) => {
+  //   await alicePage.goto(`${USERS.alice.appUrl}/#/folder`)
+  //   await aliceDrive.createFolder(NESTED_DRIVE)
+  //   await aliceDrive.openFolder(NESTED_DRIVE)
+  //
+  //   const modal = await aliceDrive.openShareModal()
+  //   await modal.setNewMemberRole('Editor')
+  //   await modal.addMember(USERS.bob.email)
+  //   await modal.share()
+  //
+  //   await waitForSharingRow(
+  //     alicePage,
+  //     USERS.alice,
+  //     aliceDrive,
+  //     NESTED_DRIVE,
+  //     'by-me'
+  //   )
+  // })
+  //
+  // test('Editor (Bob) can add, downgrade, and remove a member on a nested sharing', async ({
+  //   bobPage,
+  //   bobDrive
+  // }) => {
+  //   await openSharedDrive(bobPage, USERS.bob, bobDrive, NESTED_DRIVE)
+  //   const parentDriveUrl = bobPage.url()
+  //
+  //   // 1. Bob creates a subfolder inside the shared drive
+  //   await bobDrive.createFolder(NESTED_CHILD)
+  //   await bobDrive.row(NESTED_CHILD).waitVisible()
+  //
+  //   // 2. Bob navigates into the subfolder
+  //   await bobDrive.row(NESTED_CHILD).open()
+  //   await expect.poll(() => bobPage.url()).not.toBe(parentDriveUrl)
+  //   await expect(
+  //     bobPage.locator('main').getByRole('navigation').first()
+  //   ).toContainText(NESTED_CHILD)
+  //   const childFolderUrl = bobPage.url()
+  //
+  //   // 3. Bob opens the share modal on the subfolder
+  //   await bobPage.goto(`${childFolderUrl}/share`)
+  //   const modal = new ShareModalPage(bobPage)
+  //   await modal.waitForOpen()
+  //
+  //   // 4. Bob adds Charlie as Editor to the nested subfolder
+  //   await modal.setNewMemberRole('Editor')
+  //   await modal.addMember(USERS.charlie.email)
+  //   await modal.share()
+  //
+  //   // 5. Bob reopens share modal on the nested subfolder
+  //   await bobPage.goto(`${childFolderUrl}/share`)
+  //   const nestedModal = new ShareModalPage(bobPage)
+  //   await nestedModal.waitForOpen()
+  //   await expect(nestedModal.memberItem(USERS.charlie.email)).toBeVisible()
+  //   await expect(nestedModal.memberRole(USERS.charlie.email)).toContainText(/editor/i)
+  //
+  //   // 6. Bob downgrades Charlie to Viewer
+  //   await nestedModal.setMemberRole(USERS.charlie.email, 'Viewer')
+  //   await expect(nestedModal.memberRole(USERS.charlie.email)).toContainText(/viewer/i)
+  //
+  //   // 7. Bob removes Charlie from the nested sharing
+  //   await nestedModal.memberRemoveButton(USERS.charlie.email).click()
+  //   await expect(nestedModal.memberItem(USERS.charlie.email)).toHaveCount(0)
+  //
+  //   await nestedModal.close()
+  // })
 })
 
 const MANAGED_DRIVE = `Managed Members Drive ${stamp()}`
