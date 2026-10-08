@@ -116,13 +116,13 @@ async function sendSelection() {
   const selectedText = await fetchSelectedText()
   if (!selectedText?.trim() || selectedText === lastSelectedText) return
 
-  const { content, target } = (await fetchContent()) ?? {}
+  const { content, target, canReplace } = (await fetchContent()) ?? {}
   if (target !== 'selection' || content === lastContent) return
   lastContent = content
   lastSelectedText = selectedText
 
   host.postMessage(
-    { type: 'twake-scribe:selection', content, target },
+    { type: 'twake-scribe:selection', content, target, canReplace },
     hostOrigin
   )
 }
@@ -163,9 +163,10 @@ function watchUndoRedo() {
 
 async function writeAnswer({ answerAction, text }) {
   // A text that holds what an answer cannot give back, as an image or a
-  // note, is never replaced, even when the app asks: the answer goes under it
-  const isReplace =
-    answerAction === 'replace' && (await fetchContent())?.canReplace !== false
+  // note, is never replaced, even when the app asks: the answer goes under
+  // it, as when the editor was too busy to read the selection
+  const read = answerAction === 'replace' ? await fetchContent() : null
+  const isReplace = Boolean(read) && read.canReplace !== false
   if (isPresentation()) {
     await writePresentation(text, isReplace)
     return
