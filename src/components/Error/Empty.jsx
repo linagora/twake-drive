@@ -51,7 +51,6 @@ const EmptyCanvas = ({
         </div>
       }
       iconSize={isDesktop ? 'medium' : 'large'}
-      centered={!isDesktop}
       title={title}
       text={
         <>
