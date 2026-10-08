@@ -28,7 +28,8 @@ const Toolbar = ({
   canCreateFolder,
   hasWriteAccess,
   isSharedWithMe,
-  showShareButton = true
+  showShareButton = true,
+  showSharedRecipients = true
 }) => {
   const { displayedFolder } = useDisplayedFolder()
   const { isMobile } = useBreakpoints()
@@ -66,7 +67,7 @@ const Toolbar = ({
         displayedFolder={displayedFolder}
         folderId={folderId}
       >
-        <SharedRecipients />
+        {showSharedRecipients && <SharedRecipients />}
       </InsideRegularFolder>
       <InsideRegularFolder
         displayedFolder={displayedFolder}
@@ -94,7 +95,9 @@ Toolbar.propTypes = {
   disabled: PropTypes.bool,
   canUpload: PropTypes.bool,
   canCreateFolder: PropTypes.bool,
-  hasWriteAccess: PropTypes.bool
+  hasWriteAccess: PropTypes.bool,
+  showShareButton: PropTypes.bool,
+  showSharedRecipients: PropTypes.bool
 }
 
 Toolbar.defaultProps = {
