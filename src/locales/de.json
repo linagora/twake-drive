@@ -642,7 +642,10 @@
     }
   },
   "Assistant": {
-    "open": "Assistent"
+    "open": "Assistent",
+    "createFolder": "Ordner erstellen",
+    "folderCreated": "Ordner erstellt",
+    "folderError": "Der Ordner konnte nicht erstellt werden, bitte versuchen Sie es erneut."
   },
   "Migration": {
     "title": "Aktualisierte Twake Drive",

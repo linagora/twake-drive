@@ -18,7 +18,10 @@
     }
   },
   "Assistant": {
-    "open": "アシスタント"
+    "open": "アシスタント",
+    "createFolder": "フォルダを作成",
+    "folderCreated": "フォルダを作成しました",
+    "folderError": "フォルダを作成できませんでした。もう一度お試しください。"
   },
   "Nav": {
     "item_drive": "ドライブ",

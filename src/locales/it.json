@@ -642,7 +642,10 @@
     }
   },
   "Assistant": {
-    "open": "Assistente"
+    "open": "Assistente",
+    "createFolder": "Crea la cartella",
+    "folderCreated": "Cartella creata",
+    "folderError": "Impossibile creare la cartella, riprova."
   },
   "Migration": {
     "title": "Aggiorna Twake Drive",

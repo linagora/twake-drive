@@ -642,7 +642,10 @@
     }
   },
   "Assistant": {
-    "open": "Trợ lý"
+    "open": "Trợ lý",
+    "createFolder": "Tạo thư mục",
+    "folderCreated": "Đã tạo thư mục",
+    "folderError": "Không thể tạo thư mục, vui lòng thử lại."
   },
   "Migration": {
     "title": "Cập nhật Twake Drive",
