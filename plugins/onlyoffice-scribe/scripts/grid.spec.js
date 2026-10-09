@@ -1,11 +1,17 @@
 import {
+  CHART_ROWS,
   findColumnIndex,
   getAnswerOrigins,
   getColumnName,
+  isChartInRows,
   isSameCell,
+  makeChartRange,
   makeBoxAddress,
   makeSheetContent,
   makeUnionBox,
+  parseRange,
+  parseRanges,
+  placeChart,
   planSheetWrite,
   readAnswerCells,
   readLooseNumber
@@ -375,5 +381,69 @@ describe('planSheetWrite', () => {
 
     expect(result.writes).toEqual([{ row: 1, col: 1, text: '1300' }])
     expect(result.skipped).toEqual([{ row: 0, col: 1 }])
+  })
+})
+
+describe('charts', () => {
+  it('reads a range in A1 notation, with its sheet or not', () => {
+    expect(parseRange('A1:C5')).toEqual(box(0, 0, 4, 2))
+    expect(parseRange("'Ventes'!$B$2:$C$5")).toEqual(box(1, 1, 4, 2))
+    expect(parseRange('C5:A1')).toEqual(box(0, 0, 4, 2))
+    expect(parseRange('D3')).toEqual(box(2, 3, 2, 3))
+    expect(parseRange('the sales')).toBe(null)
+  })
+
+  it('reads a range of several areas', () => {
+    expect(parseRanges('A1:A5,C1:C5')).toEqual([
+      box(0, 0, 4, 0),
+      box(0, 2, 4, 2)
+    ])
+    expect(parseRanges('A1:A5,sales')).toBe(null)
+  })
+
+  it('writes the range of the data as the editor takes it', () => {
+    expect(makeChartRange('Ventes', [box(0, 0, 4, 2)])).toBe(
+      "'Ventes'!$A$1:$C$5"
+    )
+    expect(makeChartRange("Paul's", [box(1, 1, 2, 1)])).toBe(
+      "'Paul''s'!$B$2:$B$3"
+    )
+    expect(makeChartRange('Ventes', [box(0, 0, 4, 0), box(0, 2, 4, 2)])).toBe(
+      "'Ventes'!$A$1:$A$5,'Ventes'!$C$1:$C$5"
+    )
+  })
+
+  it('runs the series along the longer side of the data', () => {
+    expect(isChartInRows(box(0, 0, 4, 2))).toBe(false)
+    expect(isChartInRows(box(0, 0, 1, 6))).toBe(true)
+  })
+
+  it('places a chart one column after the last cell used on its rows', () => {
+    const lastColumns = [4, 4, 2, 2, 2, ...Array(CHART_ROWS - 5).fill(-1)]
+
+    expect(
+      placeChart({ range: box(0, 0, 4, 2), lastColumns, drawings: [] })
+    ).toEqual({ row: 0, col: 6 })
+  })
+
+  it('places a chart under the charts already beside the data', () => {
+    const lastColumns = Array(CHART_ROWS).fill(2)
+    const drawings = [box(0, 4, 14, 10), box(40, 4, 50, 10)]
+
+    expect(
+      placeChart({ range: box(0, 0, 4, 2), lastColumns, drawings })
+    ).toEqual({ row: 16, col: 4 })
+  })
+
+  it('leaves a chart elsewhere in the sheet where it is', () => {
+    const lastColumns = Array(CHART_ROWS).fill(2)
+
+    expect(
+      placeChart({
+        range: box(0, 0, 4, 2),
+        lastColumns,
+        drawings: [box(0, 0, 3, 1), box(40, 4, 50, 10)]
+      })
+    ).toEqual({ row: 0, col: 4 })
   })
 })

@@ -144,3 +144,134 @@ export function writeSheetPlan() {
     if (locale) Object.assign(locale, saved)
   }
 }
+
+/**
+ * Reads what decides where a chart goes in the sheet `Asc.scope.sheetName`:
+ * the last column used on each row from `Asc.scope.r1`, for
+ * `Asc.scope.rowCount` rows, and the boxes of its charts and shapes
+ *
+ * @returns {{ lastColumns: number[], drawings: object[] }|null}
+ */
+export function readChartPlace() {
+  const { sheetName, r1, rowCount } = Asc.scope
+  const sheet = Api.GetSheet(sheetName)
+  if (!sheet) return null
+
+  const used = sheet.GetUsedRange()
+  const lastUsed = used.GetCol() - 2 + used.GetColumnsCount()
+  const lastColumns = []
+  for (let row = r1; row < r1 + rowCount; row += 1) {
+    let last = -1
+    for (let col = lastUsed; col >= 0 && last === -1; col -= 1) {
+      if (String(sheet.GetRangeByNumber(row, col).GetText() ?? '') !== '') {
+        last = col
+      }
+    }
+    lastColumns.push(last)
+  }
+  // The builder gives no position of a drawing: its anchor does, and the
+  // cells it covers once drawn. A drawing not drawn yet takes the room of a
+  // chart.
+  const drawings = (sheet.worksheet?.Drawings ?? []).flatMap(base => {
+    const from = base?.from
+    if (!from) return []
+    const to = base.boundsFromTo?.to
+    const isDrawn = to && to.row > from.row
+    return [
+      {
+        r1: from.row,
+        c1: from.col,
+        r2: isDrawn ? to.row : from.row + rowCount - 1,
+        c2: isDrawn ? to.col : from.col + 7
+      }
+    ]
+  })
+  return { lastColumns, drawings }
+}
+
+/**
+ * Inserts a chart in the sheet `Asc.scope.sheetName`, of the data
+ * `Asc.scope.range` (as 'Ventes'!$A$1:$C$5), with its type, its title and its
+ * top-left cell, in one step of the undo. With `Asc.scope.areas`, the range
+ * is the box of these areas: the series of the cells left out between them
+ * are removed.
+ *
+ * @returns {boolean} false when the editor could not make it, as a stock
+ * chart of data that is no prices
+ */
+export function insertChart() {
+  const {
+    sheetName,
+    range,
+    areas,
+    isInRows,
+    type,
+    title,
+    place,
+    width,
+    height
+  } = Asc.scope
+  const sheet = Api.GetSheet(sheetName)
+  if (!sheet) return false
+
+  // An exception would give nothing, as a busy editor: the chart would be
+  // asked again for nothing
+  try {
+    const chart = sheet.AddChart(
+      range,
+      isInRows,
+      type,
+      2,
+      width,
+      height,
+      place.col,
+      0,
+      place.row,
+      0
+    )
+    if (!chart) return false
+    if (title) chart.SetTitle(title, 13, true)
+
+    // The editor takes the first column of one block for the names, not the
+    // one of separate areas: the chart is made of their box, then the series
+    // of the cells between them are removed
+    if (areas && areas.length > 1) {
+      const column = letters =>
+        [...letters].reduce(
+          (n, letter) => n * 26 + letter.charCodeAt(0) - 64,
+          0
+        ) - 1
+      const isKept = ref => {
+        const match = String(ref ?? '').match(
+          /\$?([A-Z]+)\$?(\d+)(?::\$?([A-Z]+)\$?(\d+))?$/
+        )
+        if (!match) return true
+        const [, letters1, number1, letters2 = letters1, number2 = number1] =
+          match
+        const box = {
+          r1: Number(number1) - 1,
+          c1: column(letters1),
+          r2: Number(number2) - 1,
+          c2: column(letters2)
+        }
+        return areas.some(
+          area =>
+            box.r1 >= area.r1 &&
+            box.r2 <= area.r2 &&
+            box.c1 >= area.c1 &&
+            box.c2 <= area.c2
+        )
+      }
+      const series = chart.Chart?.getAllSeries?.() ?? []
+      const kept = series.map(serie => isKept(serie.val?.numRef?.f))
+      if (kept.some(Boolean)) {
+        for (let index = series.length - 1; index >= 0; index -= 1) {
+          if (!kept[index]) chart.RemoveSeria(index)
+        }
+      }
+    }
+    return true
+  } catch {
+    return false
+  }
+}

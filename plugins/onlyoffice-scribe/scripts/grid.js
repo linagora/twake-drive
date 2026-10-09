@@ -426,3 +426,93 @@ export function planSheetWrite({ cells, range, box, texts, formulas }) {
     box: makeUnionBox(range, writes)
   }
 }
+
+const RANGE =
+  /^\$?([A-Z]{1,3})\$?([1-9]\d{0,6})(?::\$?([A-Z]{1,3})\$?([1-9]\d{0,6}))?$/
+
+/**
+ * @param {string} address - a range in A1 notation, as A1:C5 or $B$2, after
+ * the name of its sheet or not
+ * @returns {Box|null} null for another text
+ */
+export function parseRange(address) {
+  const match = address.trim().replace(/^.*!/, '').match(RANGE)
+  if (!match) return null
+  const [, letters1, number1, letters2 = letters1, number2 = number1] = match
+  const r1 = Number(number1) - 1
+  const r2 = Number(number2) - 1
+  const c1 = findColumnIndex(letters1)
+  const c2 = findColumnIndex(letters2)
+  return {
+    r1: Math.min(r1, r2),
+    c1: Math.min(c1, c2),
+    r2: Math.max(r1, r2),
+    c2: Math.max(c1, c2)
+  }
+}
+
+/**
+ * @param {string} address - a range of one area or more, joined by commas,
+ * as A1:A5,C1:C5
+ * @returns {Box[]|null} null when one of them is no range
+ */
+export function parseRanges(address) {
+  const areas = address.split(/[,;]/).map(parseRange)
+  return areas.every(Boolean) ? areas : null
+}
+
+/**
+ * @param {string} sheet - the name of the sheet
+ * @param {Box[]} areas
+ * @returns {string} the range as the editor takes the data of a chart:
+ * 'Ventes'!$A$1:$A$5,'Ventes'!$C$1:$C$5
+ */
+export function makeChartRange(sheet, areas) {
+  const name = `'${sheet.replace(/'/g, "''")}'`
+  const cell = (row, col) => `$${getColumnName(col)}$${row + 1}`
+  return areas
+    .map(({ r1, c1, r2, c2 }) => `${name}!${cell(r1, c1)}:${cell(r2, c2)}`)
+    .join(',')
+}
+
+/**
+ * The series of a chart run along the longer side of its data, as in the
+ * editor: the columns of a range taller than wide
+ */
+export function isChartInRows({ r1, c1, r2, c2 }) {
+  return c2 - c1 > r2 - r1
+}
+
+// The rows a chart takes, about: 7 cm under the default height of a row
+export const CHART_ROWS = 15
+
+/**
+ * Where a chart goes beside its data: one empty column after the last cell
+ * used on its rows, and under the charts already there
+ *
+ * @param {object} options
+ * @param {Box} options.range - the data of the chart
+ * @param {number[]} options.lastColumns - the last column used on each row
+ * from the first row of the data, -1 for an empty row
+ * @param {Box[]} options.drawings - the charts and shapes of the sheet
+ * @returns {Cell} the top-left cell of the chart
+ */
+export function placeChart({ range, lastColumns, drawings }) {
+  const col = Math.max(range.c2, ...lastColumns) + 2
+  let row = range.r1
+  // A drawing in the way pushes the chart under it, until none is
+  for (let moved = true; moved; ) {
+    moved = false
+    for (const drawing of drawings) {
+      const isInWay =
+        drawing.c2 >= col &&
+        drawing.r2 >= row &&
+        drawing.r1 <= row + CHART_ROWS - 1
+      if (isInWay) {
+        row = drawing.r2 + 2
+        moved = true
+      }
+    }
+  }
+  return { row, col }
+}

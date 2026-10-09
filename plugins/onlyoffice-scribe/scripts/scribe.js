@@ -1,12 +1,17 @@
 import { readContent, writeBlocks } from './document.js'
 import { isSameGeometry, readGeometry } from './geometry.js'
 import {
+  CHART_ROWS,
   MAX_ANSWER_CELLS,
   MAX_CELLS,
   getAnswerOrigins,
   getBoxSize,
+  isChartInRows,
+  makeChartRange,
   makeSheetContent,
   makeUnionBox,
+  parseRanges,
+  placeChart,
   planSheetWrite,
   readAnswerCells
 } from './grid.js'
@@ -19,6 +24,8 @@ import {
   writeSlideLines
 } from './presentation.js'
 import {
+  insertChart,
+  readChartPlace,
   readSheetCells,
   readSheetSelection,
   writeSheetPlan
@@ -209,6 +216,52 @@ function fetchContent() {
 
 // The editor runs no command while it loads or saves: the text is then not
 // read, and the app asks again
+// The size of a chart, in English measure units: 12 cm by 7 cm
+const CHART_WIDTH = 4320000
+const CHART_HEIGHT = 2520000
+
+// A chart the assistant has made, of a range of the cells last given to the
+// app, or of all of them, beside the data. The app has checked it already.
+async function addChart({ chartType, title, range }) {
+  if (!isSpreadsheet() || !sheetTarget || typeof chartType !== 'string') return
+  const { sheetName } = sheetTarget
+  // The areas of the data, as the names and one column of values of a pie
+  const areas = (typeof range === 'string' && parseRanges(range)) || [
+    sheetTarget.range
+  ]
+  const data = makeUnionBox(
+    areas[0],
+    areas.flatMap(({ r1, c1, r2, c2 }) => [
+      { row: r1, col: c1 },
+      { row: r2, col: c2 }
+    ])
+  )
+
+  isWriting = true
+  try {
+    const read = await runInFreeEditor(readChartPlace, {
+      scope: { sheetName, r1: data.r1, rowCount: CHART_ROWS }
+    })
+    if (!read) return
+    await runInFreeEditor(insertChart, {
+      scope: {
+        sheetName,
+        range: makeChartRange(sheetName, [data]),
+        areas,
+        isInRows: isChartInRows(data),
+        type: chartType,
+        title: typeof title === 'string' ? title : '',
+        place: placeChart({ range: data, ...read }),
+        width: CHART_WIDTH,
+        height: CHART_HEIGHT
+      },
+      isRecalculated: true
+    })
+  } finally {
+    isWriting = false
+  }
+}
+
 async function sendContent(origin) {
   contentRequest += 1
   const request = contentRequest
@@ -448,6 +501,9 @@ async function handleMessage(event) {
   }
   if (event.data?.type === 'twake-scribe:insertSlide') {
     await addSlide(event.data)
+  }
+  if (event.data?.type === 'twake-scribe:insertChart') {
+    await addChart(event.data)
   }
   // The plugin cannot tell whether the app acts on its entries: where the app
   // shows no scribe, as on a public link or in another app, it does not ask
