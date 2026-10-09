@@ -670,6 +670,7 @@
       "resizeHandle": "Ridimensiona il pannello",
       "skippedCells": "Tabella: %{smart_count} cella selezionata è rimasta invariata |||| Tabella: %{smart_count} celle selezionate sono rimaste invariate",
       "closeNotice": "Chiudi",
+      "insertChart": "Inserisci il grafico",
       "suggestions": {
         "newSlide": "Nuova diapositiva",
         "newSlideMessage": "Aggiungi una nuova diapositiva dopo questa, sul testo",
@@ -680,7 +681,9 @@
         "cleanUp": "Ripulisci",
         "cleanUpMessage": "Correggi i refusi e uniforma l'ortografia, le maiuscole e il formato di queste celle",
         "totals": "Aggiungi i totali",
-        "totalsMessage": "Aggiungi una riga dei totali sotto i dati, con le formule"
+        "totalsMessage": "Aggiungi una riga dei totali sotto i dati, con le formule",
+        "chart": "Crea un grafico",
+        "chartMessage": "Crea un grafico di queste celle"
       }
     }
   },

@@ -540,6 +540,7 @@
       "resizeHandle": "Grootte van het paneel wijzigen",
       "skippedCells": "Tabel: %{smart_count} geselecteerde cel is ongewijzigd gebleven |||| Tabel: %{smart_count} geselecteerde cellen zijn ongewijzigd gebleven",
       "closeNotice": "Sluiten",
+      "insertChart": "Grafiek invoegen",
       "suggestions": {
         "newSlide": "Nieuwe dia",
         "newSlideMessage": "Voeg na deze dia een nieuwe dia over de tekst toe",
@@ -550,7 +551,9 @@
         "cleanUp": "Opschonen",
         "cleanUpMessage": "Verbeter de typfouten en maak de spelling, het hoofdlettergebruik en de opmaak van deze cellen consistent",
         "totals": "Totalen toevoegen",
-        "totalsMessage": "Voeg onder de gegevens een rij met totalen toe, met formules"
+        "totalsMessage": "Voeg onder de gegevens een rij met totalen toe, met formules",
+        "chart": "Grafiek maken",
+        "chartMessage": "Maak een grafiek van deze cellen"
       }
     }
   },

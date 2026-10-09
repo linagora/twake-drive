@@ -46,6 +46,7 @@
       "resizeHandle": "调整面板大小",
       "skippedCells": "表格：有 %{smart_count} 个选中的单元格未更改",
       "closeNotice": "关闭",
+      "insertChart": "插入图表",
       "suggestions": {
         "newSlide": "新幻灯片",
         "newSlideMessage": "在这张幻灯片之后添加一张关于该文本的新幻灯片",
@@ -56,7 +57,9 @@
         "cleanUp": "整理",
         "cleanUpMessage": "修正错别字，并统一这些单元格的拼写、大小写和格式",
         "totals": "添加合计",
-        "totalsMessage": "在数据下方添加一行使用公式的合计"
+        "totalsMessage": "在数据下方添加一行使用公式的合计",
+        "chart": "制作图表",
+        "chartMessage": "用这些单元格制作图表"
       }
     }
   },

@@ -670,6 +670,7 @@
       "resizeHandle": "Resize the panel",
       "skippedCells": "Table: %{smart_count} selected cell was left unchanged |||| Table: %{smart_count} selected cells were left unchanged",
       "closeNotice": "Close",
+      "insertChart": "Insert the chart",
       "suggestions": {
         "newSlide": "New slide",
         "newSlideMessage": "Add a new slide after this one, about the text",
@@ -680,7 +681,9 @@
         "cleanUp": "Clean up",
         "cleanUpMessage": "Fix the typos and make the spelling, the case and the format of these cells consistent",
         "totals": "Add totals",
-        "totalsMessage": "Add a total row under the data, with formulas"
+        "totalsMessage": "Add a total row under the data, with formulas",
+        "chart": "Make a chart",
+        "chartMessage": "Make a chart of these cells"
       }
     }
   },

@@ -14,9 +14,11 @@ import logger from '@/lib/logger'
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
 import { isScribeAllowed } from '@/modules/views/OnlyOffice/Scribe/availability'
 import {
+  INSERT_CHART,
   INSERT_SLIDE,
   INSERT_TABLE,
   makeTableMarkdown,
+  normalizeChart,
   normalizeSlide,
   normalizeTable
 } from '@/modules/views/OnlyOffice/Scribe/capabilities'
@@ -70,6 +72,12 @@ const makeCapabilityMessage = ({ capability, params }, documentType) => {
     return slide === null
       ? null
       : { type: 'twake-scribe:insertSlide', ...slide }
+  }
+  if (capability === INSERT_CHART && documentType === 'cell') {
+    const chart = normalizeChart(params)
+    return chart === null
+      ? null
+      : { type: 'twake-scribe:insertChart', ...chart }
   }
   if (capability === INSERT_TABLE && documentType === 'word') {
     const table = normalizeTable(params)

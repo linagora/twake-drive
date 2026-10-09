@@ -46,6 +46,7 @@
       "resizeHandle": "Zmień rozmiar panelu",
       "skippedCells": "Tabela: liczba niezmienionych zaznaczonych komórek: %{smart_count}",
       "closeNotice": "Zamknij",
+      "insertChart": "Wstaw wykres",
       "suggestions": {
         "newSlide": "Nowy slajd",
         "newSlideMessage": "Dodaj nowy slajd po tym, na temat tekstu",
@@ -56,7 +57,9 @@
         "cleanUp": "Uporządkuj",
         "cleanUpMessage": "Popraw literówki i zadbaj o spójną pisownię, wielkość liter i format tych komórek",
         "totals": "Dodaj sumy",
-        "totalsMessage": "Dodaj pod danymi wiersz sum z formułami"
+        "totalsMessage": "Dodaj pod danymi wiersz sum z formułami",
+        "chart": "Utwórz wykres",
+        "chartMessage": "Utwórz wykres z tych komórek"
       }
     }
   },

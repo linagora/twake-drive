@@ -132,6 +132,7 @@
       "resizeHandle": "패널 크기 조정",
       "skippedCells": "표: 선택한 셀 중 %{smart_count}개가 변경되지 않았습니다",
       "closeNotice": "닫기",
+      "insertChart": "차트 삽입",
       "suggestions": {
         "newSlide": "새 슬라이드",
         "newSlideMessage": "이 슬라이드 다음에 텍스트에 관한 새 슬라이드를 추가해 줘",
@@ -142,7 +143,9 @@
         "cleanUp": "정리",
         "cleanUpMessage": "오타를 고치고 이 셀들의 철자, 대소문자, 형식을 통일해 줘",
         "totals": "합계 추가",
-        "totalsMessage": "데이터 아래에 수식으로 합계 행을 추가해 줘"
+        "totalsMessage": "데이터 아래에 수식으로 합계 행을 추가해 줘",
+        "chart": "차트 만들기",
+        "chartMessage": "이 셀들로 차트를 만들어 줘"
       }
     }
   },

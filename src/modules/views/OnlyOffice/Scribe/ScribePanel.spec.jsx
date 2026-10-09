@@ -121,7 +121,7 @@ describe('ScribePanel', () => {
     expect(content).toBe('Sheet "Ventes", cells A1:C5, around B3')
     expect(instructions).toContain('cells of a spreadsheet')
     expect(answerActions).toEqual([{ name: 'apply', label: 'Apply' }])
-    expect(capabilities).toBeUndefined()
+    expect(capabilities.map(({ name }) => name)).toEqual(['insert_chart'])
     expect(suggestions).toEqual([
       {
         name: 'explain',
@@ -138,6 +138,12 @@ describe('ScribePanel', () => {
         name: 'totals',
         label: 'Add totals',
         message: 'Add a total row under the data, with formulas'
+      },
+      {
+        name: 'chart',
+        capability: 'insert_chart',
+        label: 'Make a chart',
+        message: 'Make a chart of these cells'
       }
     ])
   })
