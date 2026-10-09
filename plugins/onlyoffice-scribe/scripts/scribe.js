@@ -154,19 +154,20 @@ function keepSheet(read) {
 
 // The cells of an answer, written at their addresses in the cells last
 // given to the app: see planSheetWrite
+// @returns {Promise<boolean>} whether a cell was written
 async function writeSheetAnswer(text) {
-  if (!sheetTarget) return
+  if (!sheetTarget) return false
   const { sheetName, range, isEmpty } = sheetTarget
   const cells = readAnswerCells(text, getAnswerOrigins({ range, isEmpty }))
   const box = makeUnionBox(range, cells)
-  if (cells.length === 0 || getBoxSize(box) > MAX_ANSWER_CELLS) return
+  if (cells.length === 0 || getBoxSize(box) > MAX_ANSWER_CELLS) return false
 
   const read = await runInFreeEditor(readSheetCells, {
     scope: { sheetName, box }
   })
-  if (!read) return
+  if (!read) return false
   const plan = planSheetWrite({ cells, range, box, ...read })
-  if (plan.writes.length === 0) return
+  if (plan.writes.length === 0) return false
   await runInFreeEditor(writeSheetPlan, {
     scope: { sheetName, plan },
     isRecalculated: true
@@ -174,6 +175,7 @@ async function writeSheetAnswer(text) {
   // The cells written are left selected: they are not other cells to work on
   const after = await readSheet()
   if (after) keepSheet(after)
+  return true
 }
 
 // The editor gives the selected text of a presentation to the plugin only,
@@ -430,7 +432,11 @@ async function applyAnswer(answer) {
   isWriting = true
   try {
     if (isSpreadsheet()) {
-      await writeSheetAnswer(answer.text)
+      // An explanation has no cells: the app tells the user nothing changed
+      const isWritten = await writeSheetAnswer(answer.text)
+      if (!isWritten && hostOrigin) {
+        host.postMessage({ type: 'twake-scribe:notApplied' }, hostOrigin)
+      }
       return
     }
     const skippedCells = await writeAnswer(answer)

@@ -14,7 +14,13 @@ import {
 } from '@/modules/views/OnlyOffice/Scribe/ScribeProvider'
 
 jest.mock('cozy-flags')
+
+const mockShowAlert = jest.fn()
+
 jest.mock('@/lib/logger', () => ({ warn: jest.fn() }))
+jest.mock('cozy-ui/transpiled/react/providers/Alert', () => ({
+  useAlert: () => ({ showAlert: mockShowAlert })
+}))
 
 const SERVER_URL = 'https://onlyoffice.example.org/'
 const SERVER_ORIGIN = 'https://onlyoffice.example.org'
@@ -212,6 +218,18 @@ describe('ScribeProvider', () => {
     )
 
     expect(getState().isAvailable).toBe(false)
+  })
+
+  it('tells the user when the plugin wrote nothing of an answer', () => {
+    const { receive } = setup({ documentType: 'cell' })
+    receive({ type: 'twake-scribe:ready' })
+
+    receive({ type: 'twake-scribe:notApplied' })
+
+    expect(mockShowAlert).toHaveBeenCalledWith({
+      message: 'This answer has no cells to write in the sheet',
+      severity: 'secondary'
+    })
   })
 
   it('asks the plugin for the text, and opens when it comes', () => {
