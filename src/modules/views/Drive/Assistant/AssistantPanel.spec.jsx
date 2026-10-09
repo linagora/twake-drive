@@ -84,6 +84,12 @@ describe('AssistantPanel', () => {
         label: 'Create the folder',
         description: expect.stringContaining('create a folder'),
         parameters: expect.objectContaining({ required: ['name'] })
+      }),
+      expect.objectContaining({
+        name: 'create_document',
+        label: 'Create the document',
+        description: expect.stringContaining('write a text document'),
+        content: { max_tokens: 2048 }
       })
     ])
   })

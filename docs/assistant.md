@@ -17,7 +17,7 @@ The scribe of the OnlyOffice editor is another use of the same intent, on a text
 - The assistant button is in the toolbar of the file list, with the flag `cozy.assistant.enabled`. A click opens the assistant in a card beside the list; another click, or the close button of the assistant, closes it.
 - On a phone, the button is in the bar at the top, and the assistant takes the place of the list.
 - The assistant answers from the documents of the user, with their sources. The user can turn the documents off in the composer.
-- A request for a folder ("crée un dossier Factures 2026") gets a card: the name of the folder, with a button. On the click, Drive creates the folder in the folder the user is looking at, and tells it with an alert. The list shows the new item.
+- A request for a folder ("crée un dossier Factures 2026") or for a document ("rédige un rapport d'avancement du projet Atlas à partir de mes fichiers") gets a card: the name of the folder, or the document written by the assistant and its title, with a button. On the click, Drive creates the folder, or saves the document as a `.docx`, in the folder the user is looking at, and tells it with an alert. The list shows the new item.
 
 ## The tools
 
@@ -26,8 +26,9 @@ The scribe of the OnlyOffice editor is another use of the same intent, on a text
 | Tool | Parameters | Run by Drive |
 | --- | --- | --- |
 | `create_folder` | `name` | `io.cozy.files` directory in the displayed folder (the root when the user is in the trash or in no folder) |
+| `create_document` | content written by the assistant: `title`, and the Markdown `text` | `.docx` built from the Markdown (`markdownToDocx.js`), uploaded in the displayed folder, renamed on a conflict |
 
-It asks for a confirmation: it creates something the user cannot take back by undoing.
+Both ask for a confirmation: they create something the user cannot take back by undoing.
 
 A call Drive cannot use, for a tool it did not give or with params it cannot read, is logged and left alone.
 

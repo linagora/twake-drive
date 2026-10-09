@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useMemo, useState } from 'react'
 
-import { useClient, useQuery } from 'cozy-client'
+import { models, useClient, useQuery } from 'cozy-client'
 import flag from 'cozy-flags'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import { useI18n } from 'twake-i18n'
@@ -11,8 +11,15 @@ import { DOCTYPE_FILES } from '@/lib/doctypes'
 import logger from '@/lib/logger'
 import { useNewItemHighlightContext } from '@/modules/upload/NewItemHighlightProvider'
 import {
+  DOCX_MIME_TYPE,
+  markdownToDocx
+} from '@/modules/views/Drive/Assistant/markdownToDocx'
+import {
+  CREATE_DOCUMENT,
   CREATE_FOLDER,
-  normalizeFolderName
+  makeFileName,
+  normalizeFolderName,
+  splitTitle
 } from '@/modules/views/Drive/Assistant/tools'
 import { buildAssistantsQuery } from '@/queries'
 
@@ -83,6 +90,44 @@ export const AssistantProvider = ({ folderId, children }) => {
       }
     }
 
+    const createDocument = async (params, text) => {
+      if (typeof text !== 'string') {
+        logger.warn('Assistant: document call ignored, no text', params)
+        return
+      }
+      // The assistant writes the content with a "# " title line and sends
+      // the title as params.title (Tool.content, docs/assistant-intent.md of
+      // twake-assistant); params.title is the fallback when the LLM leaves
+      // the line out
+      const { title: heading, body } = splitTitle(text)
+      const title = heading ?? params?.title
+      if (typeof title !== 'string' || title.trim() === '') {
+        logger.warn('Assistant: document call ignored, no title', params)
+        return
+      }
+      try {
+        const docx = markdownToDocx(title, body)
+        const { data } = await models.file.uploadFileWithConflictStrategy(
+          client,
+          docx.buffer.slice(docx.byteOffset, docx.byteOffset + docx.byteLength),
+          {
+            name: makeFileName(title, 'docx'),
+            dirId,
+            conflictStrategy: 'rename',
+            contentType: DOCX_MIME_TYPE
+          }
+        )
+        addItems([data])
+        showAlert({
+          message: t('Assistant.documentCreated'),
+          severity: 'success'
+        })
+      } catch (error) {
+        logger.warn('Assistant: document creation failed', error)
+        showAlert({ message: t('Assistant.documentError'), severity: 'error' })
+      }
+    }
+
     return {
       isAvailable: true,
       isKnowledgeBaseFolder,
@@ -90,9 +135,11 @@ export const AssistantProvider = ({ folderId, children }) => {
       open: () => setIsOpen(true),
       close: () => setIsOpen(false),
       applyResult: async result => {
-        const { tool, params } = result ?? {}
+        const { tool, params, text } = result ?? {}
         if (tool === CREATE_FOLDER) {
           await createFolder(params)
+        } else if (tool === CREATE_DOCUMENT) {
+          await createDocument(params, text)
         } else {
           logger.warn(`Assistant: tool call ignored: ${tool}`, params)
         }

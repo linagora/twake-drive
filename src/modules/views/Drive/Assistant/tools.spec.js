@@ -1,15 +1,20 @@
 import {
   makeTools,
-  normalizeFolderName
+  makeFileName,
+  normalizeFolderName,
+  splitTitle
 } from '@/modules/views/Drive/Assistant/tools'
 
 const t = key => `t(${key})`
 
 describe('makeTools', () => {
-  it('lets the assistant create a folder, with a translated label', () => {
+  it('lets the assistant create a folder and a document, with translated labels', () => {
     const tools = makeTools({ t })
 
-    expect(tools.map(tool => tool.name)).toEqual(['create_folder'])
+    expect(tools.map(tool => tool.name)).toEqual([
+      'create_folder',
+      'create_document'
+    ])
     tools.forEach(tool => {
       expect(tool.name).toMatch(/^[a-z][a-z0-9_]{0,39}$/)
       expect(tool.examples.length).toBeLessThanOrEqual(5)
@@ -24,6 +29,12 @@ describe('makeTools', () => {
       instructions: expect.any(String)
     })
     expect(tools[0]).not.toHaveProperty('content')
+    expect(tools[1]).toMatchObject({
+      label: 't(Assistant.createDocument)',
+      content: { max_tokens: 2048 },
+      instructions: expect.any(String)
+    })
+    expect(tools[1]).not.toHaveProperty('parameters')
   })
 })
 
@@ -53,5 +64,40 @@ describe('normalizeFolderName', () => {
     expect(normalizeFolderName({ name: 3 })).toBe(null)
     expect(normalizeFolderName({ name: '' })).toBe(null)
     expect(normalizeFolderName({ name: ' . / ' })).toBe(null)
+  })
+})
+
+describe('splitTitle', () => {
+  it('splits the title line from the content', () => {
+    expect(splitTitle('# **Atlas** report\n\n## Status\nOn time.')).toEqual({
+      title: 'Atlas report',
+      body: '## Status\nOn time.'
+    })
+  })
+
+  it('keeps a content without title line whole', () => {
+    expect(splitTitle('## Status\nOn time.')).toEqual({
+      title: null,
+      body: '## Status\nOn time.'
+    })
+  })
+})
+
+describe('makeFileName', () => {
+  it('names the file after the title, with the extension', () => {
+    expect(makeFileName('Atlas report', 'docx')).toBe('Atlas report.docx')
+  })
+
+  it('leaves out the characters a file name cannot have', () => {
+    expect(makeFileName(' Atlas: report / 2026? ', 'docx')).toBe(
+      'Atlas report 2026.docx'
+    )
+    expect(makeFileName(`${'a'.repeat(120)}`, 'docx')).toBe(
+      `${'a'.repeat(100)}.docx`
+    )
+  })
+
+  it('names a document without title', () => {
+    expect(makeFileName('/', 'docx')).toBe('Document.docx')
   })
 })
