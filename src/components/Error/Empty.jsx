@@ -1,16 +1,14 @@
-import { Icon } from '@linagora/twake-icons'
-import cx from 'classnames'
+import { Icon, Upload } from '@linagora/twake-icons'
 import React from 'react'
 import { useLocation } from 'react-router-dom'
 
-import Empty from 'cozy-ui/transpiled/react/Empty'
+import Typography from 'cozy-ui/transpiled/react/Typography'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import { useI18n } from 'twake-i18n'
 
 import styles from './empty.styl'
 
-import FolderEmptyIllu from '@/assets/icons/illu-folder-empty.svg'
-import TrashIllustration from '@/assets/icons/illu-trash-empty.svg'
+import DriveEmptyIllu from '@/assets/icons/illu-drive-empty.svg'
 import { TRASH_DIR_ID } from '@/constants/config'
 import { useCurrentFolderId, useDisplayedFolder } from '@/hooks'
 import { useSharedDriveFolder } from '@/modules/shareddrives/hooks/useSharedDriveFolder'
@@ -32,44 +30,37 @@ const EmptyCanvas = ({
   const { sharedDriveResult } = useSharedDriveFolder({ driveId, folderId })
   const displayedSharedFolder = sharedDriveResult?.data
 
-  const IconToShow = type === 'trash' ? TrashIllustration : FolderEmptyIllu
   const showUploadLayout = type === 'drive'
-  const title = localeKey ? t(`empty.${type}_title`) : undefined
-  const text =
-    (hasTextMobileVersion && !isDesktop && t(`empty.mobile_text`)) ||
-    (localeKey && t(`empty.${localeKey}_text`)) ||
+  const title =
+    (localeKey && t(`empty.${type}_title`)) ||
+    (hasTextMobileVersion && !isDesktop && t('empty.mobile_text')) ||
     (showUploadLayout && t('empty.text')) ||
     (type === 'sharing' && t('empty.sharing_text'))
 
   return (
-    <Empty
-      className={cx({ [styles['empty']]: showUploadLayout })}
-      data-testid="empty-folder"
-      icon={
-        <div className="u-w-100">
-          <Icon icon={IconToShow} size={160} />
-        </div>
-      }
-      iconSize={isDesktop ? 'medium' : 'large'}
-      title={title}
-      text={
-        <>
-          {text}
-          {showUploadLayout && canUpload !== false && (
-            <span className="u-db u-mt-1">
-              <UploadButton
-                componentsProps={{
-                  button: { variant: 'secondary' }
-                }}
-                label={t('toolbar.menu_upload')}
-                displayedFolder={displayedSharedFolder || displayedFolder}
-                onUploaded={onUploaded}
-              />
-            </span>
-          )}
-        </>
-      }
-    />
+    <div className={styles['empty']} data-testid="empty-folder">
+      <Icon icon={DriveEmptyIllu} size={200} />
+      <Typography variant="h3" className={styles['empty-title']}>
+        {title}
+      </Typography>
+      {showUploadLayout && canUpload !== false && (
+        <UploadButton
+          componentsProps={{
+            button: {
+              style: {
+                color: 'var(--primaryTextColor)',
+                backgroundColor: 'var(--primaryColorLight)'
+              },
+              startIcon: undefined,
+              endIcon: <Icon icon={Upload} size={18} />
+            }
+          }}
+          label={t('toolbar.menu_upload')}
+          displayedFolder={displayedSharedFolder || displayedFolder}
+          onUploaded={onUploaded}
+        />
+      )}
+    </div>
   )
 }
 
