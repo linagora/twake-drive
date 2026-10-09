@@ -66,7 +66,12 @@
     }
   },
   "Assistant": {
-    "open": "アシスタント"
+    "open": "アシスタント",
+    "createFolder": "フォルダを作成",
+    "folderCreated": "フォルダを作成しました",
+    "folderError": "フォルダを作成できませんでした。もう一度お試しください。",
+    "readOnly": "このフォルダーは読み取り専用のため、中に作成できません。",
+    "toolError": "アシスタントが Drive にできない操作を求めました。"
   },
   "Nav": {
     "item_drive": "ドライブ",

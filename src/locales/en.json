@@ -689,7 +689,12 @@
     }
   },
   "Assistant": {
-    "open": "Assistant"
+    "open": "Assistant",
+    "createFolder": "Create the folder",
+    "folderCreated": "Folder created",
+    "folderError": "The folder could not be created, please try again.",
+    "readOnly": "This folder is read-only, nothing can be created in it.",
+    "toolError": "The assistant asked for something Drive cannot do."
   },
   "Migration": {
     "title": "Update Twake Drive",

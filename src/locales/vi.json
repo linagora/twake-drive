@@ -689,7 +689,12 @@
     }
   },
   "Assistant": {
-    "open": "Trợ lý"
+    "open": "Trợ lý",
+    "createFolder": "Tạo thư mục",
+    "folderCreated": "Đã tạo thư mục",
+    "folderError": "Không thể tạo thư mục, vui lòng thử lại.",
+    "readOnly": "Thư mục này chỉ đọc, không thể tạo gì trong đó.",
+    "toolError": "Trợ lý đã yêu cầu một việc mà Drive không thể làm."
   },
   "Migration": {
     "title": "Cập nhật Twake Drive",
