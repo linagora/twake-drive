@@ -46,6 +46,7 @@
       "resizeHandle": "パネルのサイズを変更",
       "skippedCells": "表：選択したセルのうち %{smart_count} 個は変更されませんでした",
       "closeNotice": "閉じる",
+      "insertChart": "グラフを挿入",
       "suggestions": {
         "newSlide": "新しいスライド",
         "newSlideMessage": "このスライドの後に、テキストについての新しいスライドを追加して",
@@ -56,7 +57,9 @@
         "cleanUp": "整える",
         "cleanUpMessage": "誤字を直し、これらのセルの表記・大文字小文字・書式をそろえて",
         "totals": "合計を追加",
-        "totalsMessage": "データの下に数式で合計行を追加して"
+        "totalsMessage": "データの下に数式で合計行を追加して",
+        "chart": "グラフを作成",
+        "chartMessage": "これらのセルのグラフを作成して"
       }
     }
   },

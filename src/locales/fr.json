@@ -670,6 +670,7 @@
       "resizeHandle": "Redimensionner le panneau",
       "skippedCells": "Tableau : %{smart_count} cellule sélectionnée est restée inchangée |||| Tableau : %{smart_count} cellules sélectionnées sont restées inchangées",
       "closeNotice": "Fermer",
+      "insertChart": "Insérer le graphique",
       "suggestions": {
         "newSlide": "Nouvelle diapositive",
         "newSlideMessage": "Ajoute une nouvelle diapositive après celle-ci, à partir du texte",
@@ -680,7 +681,9 @@
         "cleanUp": "Nettoyer",
         "cleanUpMessage": "Corrige les fautes et rends cohérents l'orthographe, la casse et le format de ces cellules",
         "totals": "Ajouter les totaux",
-        "totalsMessage": "Ajoute une ligne de totaux sous les données, avec des formules"
+        "totalsMessage": "Ajoute une ligne de totaux sous les données, avec des formules",
+        "chart": "Faire un graphique",
+        "chartMessage": "Fais un graphique de ces cellules"
       }
     }
   },
