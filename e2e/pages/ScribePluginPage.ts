@@ -14,6 +14,15 @@ export interface SheetModel {
   formulas: Record<string, string>
 }
 
+export interface SheetChart {
+  type: string
+  title: string
+  // The cells of the values of each series, as Ventes!$C$2:$C$5
+  series: string[]
+  from: { row: number; col: number }
+  to: { row: number; col: number }
+}
+
 export interface ScribeContent {
   content: string
   target: string
@@ -822,6 +831,44 @@ export class ScribePluginPage {
       api.incrementCounterLongAction()
       setTimeout(() => api.decrementCounterLongAction(), duration)
     }, duration)
+  }
+
+  /** The charts of a sheet: their type, title and top-left cell */
+  async readCharts(name: string | null = null): Promise<SheetChart[]> {
+    return this.editor().evaluate(name => {
+      const Api = (window as any).g_asc_plugins.api.getJsApi()
+      const sheet = name ? Api.GetSheet(name) : Api.GetActiveSheet()
+      return (sheet.GetAllCharts() as any[]).map(chart => {
+        // Its anchor, and the last cell it covers once drawn
+        const base = chart.Chart?.drawingBase
+        const bounds = base?.boundsFromTo
+        return {
+          type: chart.GetChartType() as string,
+          title: String(chart.GetTitle() ?? '').trim(),
+          series: (chart.Chart?.getAllSeries?.() ?? []).map(
+            (serie: any) => String(serie.val?.numRef?.f ?? '')
+          ),
+          from: { row: base?.from.row ?? -1, col: base?.from.col ?? -1 },
+          to: { row: bounds?.to.row ?? -1, col: bounds?.to.col ?? -1 }
+        }
+      })
+    }, name)
+  }
+
+  /**
+   * Asks the plugin for a chart, as Drive does for an `insert_chart` call of
+   * the assistant, and waits for it in the active sheet
+   */
+  async insertChart(chart: {
+    chartType: string
+    range?: string | null
+    title?: string
+  }): Promise<void> {
+    const count = (await this.readCharts()).length
+    await this.send({ type: 'twake-scribe:insertChart', ...chart })
+    await expect
+      .poll(async () => (await this.readCharts()).length, { timeout: 10_000 })
+      .toBe(count + 1)
   }
 
   /**
