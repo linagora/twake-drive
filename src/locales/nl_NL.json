@@ -559,7 +559,12 @@
     }
   },
   "Assistant": {
-    "open": "Assistent"
+    "open": "Assistent",
+    "createFolder": "Map maken",
+    "folderCreated": "Map gemaakt",
+    "folderError": "De map kon niet worden gemaakt, probeer het opnieuw.",
+    "readOnly": "Deze map is alleen-lezen, er kan niets in worden aangemaakt.",
+    "toolError": "De assistent vroeg om iets wat Drive niet kan doen."
   },
   "Migration": {
     "title": "Twake Schijf bijwerken",

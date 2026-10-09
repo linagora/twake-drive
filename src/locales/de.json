@@ -689,7 +689,12 @@
     }
   },
   "Assistant": {
-    "open": "Assistent"
+    "open": "Assistent",
+    "createFolder": "Ordner erstellen",
+    "folderCreated": "Ordner erstellt",
+    "folderError": "Der Ordner konnte nicht erstellt werden, bitte versuchen Sie es erneut.",
+    "readOnly": "Dieser Ordner ist schreibgeschützt, darin kann nichts erstellt werden.",
+    "toolError": "Der Assistent hat etwas angefordert, das Drive nicht ausführen kann."
   },
   "Migration": {
     "title": "Aktualisierte Twake Drive",

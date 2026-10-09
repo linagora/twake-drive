@@ -689,7 +689,12 @@
     }
   },
   "Assistant": {
-    "open": "Assistant"
+    "open": "Assistant",
+    "createFolder": "Créer le dossier",
+    "folderCreated": "Dossier créé",
+    "folderError": "Le dossier n'a pas pu être créé, merci de réessayer.",
+    "readOnly": "Ce dossier est en lecture seule, rien ne peut y être créé.",
+    "toolError": "L'assistant a demandé une action que Drive ne sait pas faire."
   },
   "Migration": {
     "title": "Mettre à jour Twake Drive",

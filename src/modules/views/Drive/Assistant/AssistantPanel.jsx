@@ -7,6 +7,7 @@ import { useI18n } from 'twake-i18n'
 import styles from './styles.styl'
 
 import { useAssistant } from '@/modules/views/Drive/Assistant/AssistantProvider'
+import { makeTools } from '@/modules/views/Drive/Assistant/tools'
 
 export const KEYBOARD_SAFE_HEIGHT = '--assistant-keyboard-safe-height'
 
@@ -42,13 +43,20 @@ const useKeyboardSafeHeight = (ref, isOpen) => {
 export const AssistantPanel = () => {
   const { t } = useI18n()
   const { type: themeType } = useCozyTheme()
-  const { isOpen, close } = useAssistant()
+  const { isOpen, canWrite, close, applyResult } = useAssistant()
   const panelRef = useRef(null)
+  // IntentIframe keeps the onResult of its mount: without the latest
+  // applyResult, a call confirmed after a navigation would create the item in
+  // the folder where the assistant was opened
+  const applyResultRef = useRef(applyResult)
+  applyResultRef.current = applyResult
   useKeyboardSafeHeight(panelRef, isOpen)
 
   if (!isOpen) return null
 
   const data = {
+    // In a folder the user cannot write to, the assistant has nothing to offer
+    tools: canWrite ? makeTools({ t }) : [],
     // Lets the assistant answer from the files of the user
     documents: true,
     theme: { type: themeType }
@@ -65,6 +73,7 @@ export const AssistantPanel = () => {
         action="OPEN"
         type="io.cozy.ai.chat.conversations"
         data={data}
+        onResult={result => applyResultRef.current(result)}
         onCancel={close}
         onTerminate={close}
       />

@@ -689,7 +689,12 @@
     }
   },
   "Assistant": {
-    "open": "Assistente"
+    "open": "Assistente",
+    "createFolder": "Crea la cartella",
+    "folderCreated": "Cartella creata",
+    "folderError": "Impossibile creare la cartella, riprova.",
+    "readOnly": "Questa cartella è di sola lettura, non è possibile crearvi nulla.",
+    "toolError": "L'assistente ha chiesto qualcosa che Drive non può fare."
   },
   "Migration": {
     "title": "Aggiorna Twake Drive",
