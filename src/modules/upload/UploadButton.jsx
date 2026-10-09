@@ -58,7 +58,6 @@ const UploadButtonBase = ({
 
   const button = (
     <Button
-      {...componentsProps?.button}
       variant={buttonVariant}
       disabled={disabled}
       style={
@@ -72,6 +71,7 @@ const UploadButtonBase = ({
       component="span"
       startIcon={<Icon icon={Upload} size={12} />}
       label={label}
+      {...componentsProps?.button}
     />
   )
 

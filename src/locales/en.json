@@ -311,10 +311,9 @@
   },
   "empty": {
     "title": "You don’t have any files in this folder.",
-    "text": "Select files on your computer or drag them here.",
+    "text": "Select files on your device or drop them here",
     "mobile_text": "Select files on your device.",
     "trash_title": "You don’t have any deleted files.",
-    "trash_text": "Move files you don't need anymore to the Trash and permanently delete items to free up storage page.",
     "sharing_text": "You don’t have any shared files or drives yet."
   },
   "error": {
