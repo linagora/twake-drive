@@ -230,13 +230,12 @@ describe('ScribePanel', () => {
     expect(close).not.toHaveBeenCalled()
   })
 
-  it('closes with its cross, or when the intent ends', () => {
+  it('closes when the assistant cancels the intent', () => {
     const { close } = setup()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Close' }))
-    expect(close).toHaveBeenCalledTimes(1)
+    expect(screen.queryByRole('button', { name: 'Close' })).toBe(null)
 
     getIntentProps().onCancel()
-    expect(close).toHaveBeenCalledTimes(2)
+    expect(close).toHaveBeenCalledTimes(1)
   })
 })

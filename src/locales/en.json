@@ -629,7 +629,6 @@
     },
     "scribe": {
       "open": "Help me write",
-      "close": "Close",
       "insert": "Insert",
       "replace": "Replace",
       "insertSlide": "Insert the slide",
