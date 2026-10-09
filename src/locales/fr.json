@@ -644,8 +644,11 @@
   "Assistant": {
     "open": "Assistant",
     "createFolder": "Créer le dossier",
+    "createDocument": "Créer le document",
     "folderCreated": "Dossier créé",
-    "folderError": "Le dossier n'a pas pu être créé, merci de réessayer."
+    "folderError": "Le dossier n'a pas pu être créé, merci de réessayer.",
+    "documentCreated": "Document créé",
+    "documentError": "Le document n'a pas pu être créé, merci de réessayer."
   },
   "Migration": {
     "title": "Mettre à jour Twake Drive",

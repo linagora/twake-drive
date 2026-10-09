@@ -20,8 +20,11 @@
   "Assistant": {
     "open": "助手",
     "createFolder": "创建文件夹",
+    "createDocument": "创建文档",
     "folderCreated": "文件夹已创建",
-    "folderError": "无法创建文件夹，请重试。"
+    "folderError": "无法创建文件夹，请重试。",
+    "documentCreated": "文档已创建",
+    "documentError": "无法创建文档，请重试。"
   },
   "Nav": {
     "item_drive": "硬盘",

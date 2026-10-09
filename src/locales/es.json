@@ -644,8 +644,11 @@
   "Assistant": {
     "open": "Asistente",
     "createFolder": "Crear la carpeta",
+    "createDocument": "Crear el documento",
     "folderCreated": "Carpeta creada",
-    "folderError": "No se ha podido crear la carpeta. Inténtelo de nuevo."
+    "folderError": "No se ha podido crear la carpeta. Inténtelo de nuevo.",
+    "documentCreated": "Documento creado",
+    "documentError": "No se ha podido crear el documento. Inténtelo de nuevo."
   },
   "Migration": {
     "title": "Actualizar Twake Drive",

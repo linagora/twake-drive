@@ -1,7 +1,8 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
+import { strFromU8, unzipSync } from 'fflate'
 import React from 'react'
 
-import { createMockClient } from 'cozy-client'
+import { createMockClient, models } from 'cozy-client'
 
 import AppLike from 'test/components/AppLike'
 
@@ -12,11 +13,19 @@ import {
   AssistantProvider,
   useAssistant
 } from '@/modules/views/Drive/Assistant/AssistantProvider'
+import { DOCX_MIME_TYPE } from '@/modules/views/Drive/Assistant/markdownToDocx'
 
 jest.mock('@/lib/logger', () => ({ warn: jest.fn() }))
 jest.mock('@/hooks', () => ({ useDisplayedFolder: jest.fn() }))
 
 const FOLDER = { _id: 'folder-id', id: 'folder-id', type: 'directory' }
+
+const DOCUMENT = {
+  capability: 'create_document',
+  params: { title: 'Atlas report' },
+  text: '# Atlas **report**\n\n## Status\nOn time.',
+  format: 'markdown'
+}
 
 const AssistantState = ({ results }) => {
   const { isAvailable, isOpen, open, close, applyResult } = useAssistant()
@@ -42,6 +51,9 @@ const setup = ({ results = [], displayedFolder = FOLDER } = {}) => {
   const client = createMockClient({})
   const create = jest.fn().mockResolvedValue({ data: { _id: 'new-folder' } })
   jest.spyOn(client, 'collection').mockReturnValue({ create })
+  const upload = jest
+    .spyOn(models.file, 'uploadFileWithConflictStrategy')
+    .mockResolvedValue({ data: { _id: 'new-document' } })
 
   render(
     <AppLike client={client}>
@@ -58,7 +70,7 @@ const setup = ({ results = [], displayedFolder = FOLDER } = {}) => {
     })
   }
 
-  return { client, create, getState, apply }
+  return { client, create, upload, getState, apply }
 }
 
 describe('AssistantProvider', () => {
@@ -160,20 +172,71 @@ describe('AssistantProvider', () => {
     ).toBeInTheDocument()
   })
 
+  it('uploads the document the assistant has written, as a .docx named after its title', async () => {
+    const { client, upload, apply } = setup({ results: [DOCUMENT] })
+
+    await apply(0)
+
+    expect(upload).toHaveBeenCalledWith(client, expect.any(ArrayBuffer), {
+      name: 'Atlas report.docx',
+      dirId: 'folder-id',
+      conflictStrategy: 'rename',
+      contentType: DOCX_MIME_TYPE
+    })
+    const files = unzipSync(new Uint8Array(upload.mock.calls[0][1]))
+    const document = strFromU8(files['word/document.xml'])
+    expect(document).toContain(
+      '<w:pStyle w:val="Heading1"/></w:pPr><w:r><w:t xml:space="preserve">Atlas report</w:t>'
+    )
+    expect(document.match(/Atlas/g)).toHaveLength(1)
+    expect(document).toContain('On time.')
+    expect(await screen.findByText('Document created')).toBeInTheDocument()
+  })
+
+  it('names the document after the title parameter when the text has no heading', async () => {
+    const { upload, apply } = setup({
+      results: [{ ...DOCUMENT, text: 'On time.' }]
+    })
+
+    await apply(0)
+
+    expect(upload).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.any(ArrayBuffer),
+      expect.objectContaining({ name: 'Atlas report.docx' })
+    )
+  })
+
+  it('says when the document could not be created', async () => {
+    const { upload, apply } = setup({ results: [DOCUMENT] })
+    upload.mockRejectedValue(new Error('Network'))
+
+    await apply(0)
+
+    expect(
+      await screen.findByText(
+        'The document could not be created, please try again.'
+      )
+    ).toBeInTheDocument()
+  })
+
   it('ignores an unknown capability and wrong parameters', async () => {
     const results = [
       { capability: 'delete_folder', params: {} },
       { capability: 'create_folder', params: {} },
       { capability: 'create_folder', params: { name: ' / ' } },
+      { capability: 'create_document', params: { title: '' }, text: 'Text' },
+      { capability: 'create_document', params: {} },
       null
     ]
-    const { create, apply } = setup({ results })
+    const { create, upload, apply } = setup({ results })
 
     for (let index = 0; index < results.length; index += 1) {
       await apply(index)
     }
 
     expect(create).not.toHaveBeenCalled()
+    expect(upload).not.toHaveBeenCalled()
     expect(logger.warn).toHaveBeenCalledTimes(results.length)
   })
 })

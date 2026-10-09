@@ -20,8 +20,11 @@
   "Assistant": {
     "open": "Asystent",
     "createFolder": "Utwórz folder",
+    "createDocument": "Utwórz dokument",
     "folderCreated": "Folder utworzony",
-    "folderError": "Nie udało się utworzyć folderu, spróbuj ponownie."
+    "folderError": "Nie udało się utworzyć folderu, spróbuj ponownie.",
+    "documentCreated": "Dokument utworzony",
+    "documentError": "Nie udało się utworzyć dokumentu, spróbuj ponownie."
   },
   "Nav": {
     "item_drive": "Dysk",
