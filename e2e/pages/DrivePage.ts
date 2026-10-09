@@ -24,6 +24,14 @@ export class DrivePage {
     return new FileRow(this.page, this.fileList, name)
   }
 
+  get createButton(): Locator {
+    return this.page.getByRole('button', { name: /^create$/i })
+  }
+
+  get uploadButton(): Locator {
+    return this.page.getByRole('button', { name: /^upload$/i })
+  }
+
   async selectRows(names: string[]): Promise<void> {
     if (names.length === 0) throw new Error('At least one row is required')
     for (const name of names) {
@@ -94,9 +102,6 @@ export class DrivePage {
     await this.row(name).waitVisible()
   }
 
-  get uploadButton(): Locator {
-    return this.page.getByRole('button', { name: 'Upload', exact: true })
-  }
 
   /** cozy-ui's FileInput spreads extra props onto the underlying <input
    * type=file>, so the `upload-btn` testid lives on the input itself. */
