@@ -17,6 +17,9 @@
       }
     }
   },
+  "Assistant": {
+    "open": "Asystent"
+  },
   "Nav": {
     "item_drive": "Dysk",
     "item_recent": "Bieżące",

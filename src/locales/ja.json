@@ -17,6 +17,9 @@
       }
     }
   },
+  "Assistant": {
+    "open": "アシスタント"
+  },
   "Nav": {
     "item_drive": "ドライブ",
     "item_recent": "最近使用したファイル",

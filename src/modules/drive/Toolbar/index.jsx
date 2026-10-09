@@ -20,6 +20,7 @@ import {
   isSharedDriveDoc,
   getFolderIdFromSharing
 } from '@/modules/shareddrives/helpers'
+import { AssistantButton } from '@/modules/views/Drive/Assistant/AssistantButton'
 
 const Toolbar = ({
   folderId,
@@ -64,6 +65,7 @@ const Toolbar = ({
       className={cx(styles['fil-toolbar-files'], 'u-flex-items-center')}
       role="toolbar"
     >
+      <AssistantButton />
       <InsideRegularFolder
         displayedFolder={displayedFolder}
         folderId={folderId}

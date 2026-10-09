@@ -101,6 +101,9 @@
       }
     }
   },
+  "Assistant": {
+    "open": "어시스턴트"
+  },
   "actions": {
     "details": "세부 정보",
     "personalizeFolder": {

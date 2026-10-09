@@ -641,6 +641,9 @@
       }
     }
   },
+  "Assistant": {
+    "open": "Trợ lý"
+  },
   "Migration": {
     "title": "Cập nhật Twake Drive",
     "content": "Twake Drive cần được cập nhật để cải thiện hiệu năng. Quá trình này có thể mất vài phút và trong thời gian đó bạn sẽ không thể sử dụng ứng dụng. Bạn có muốn cập nhật ngay bây giờ không? Nếu từ chối, chúng tôi sẽ nhắc lại vào lần sau.",

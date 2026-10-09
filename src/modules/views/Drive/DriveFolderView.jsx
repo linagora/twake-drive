@@ -40,6 +40,8 @@ import FabWithAddMenuContext from '@/modules/drive/FabWithAddMenuContext'
 import Toolbar from '@/modules/drive/Toolbar'
 import Dropzone from '@/modules/upload/Dropzone'
 import DropzoneDnD from '@/modules/upload/DropzoneDnD'
+import { AssistantLayout } from '@/modules/views/Drive/Assistant/AssistantLayout'
+import { AssistantProvider } from '@/modules/views/Drive/Assistant/AssistantProvider'
 import { useTrashRedirect } from '@/modules/views/Drive/useTrashRedirect'
 import FolderView from '@/modules/views/Folder/FolderView'
 import FolderViewBody from '@/modules/views/Folder/FolderViewBody'
@@ -152,85 +154,83 @@ const DriveFolderView = () => {
 
   const isFabDisplayed = useFabOnMobile(canWriteToCurrentFolder)
 
+  const orderProps = { sortOrder, setOrder: setSortOrder, isSettingsLoaded }
+
   const DropzoneComp =
     flag('drive.virtualization.enabled') && !base.isMobile
       ? DropzoneDnD
       : Dropzone
 
   return (
-    <FolderView isNotFound={isNotFound}>
-      <DropzoneComp
-        disabled={!canWriteToCurrentFolder}
-        displayedFolder={displayedFolder}
-      >
-        <FolderViewHeader>
-          {currentFolderId && (
-            <FolderViewBreadcrumb
-              rootBreadcrumbPath={rootBreadcrumbPath}
-              currentFolderId={currentFolderId}
-            />
-          )}
-          <Toolbar
-            canUpload={true}
-            canCreateFolder={true}
-            disabled={isLoading || isInError || isPending}
-            isBigThumbnail={isBigThumbnail}
-            toggleThumbnailSize={toggleThumbnailSize}
-          />
-        </FolderViewHeader>
-        {flag('drive.virtualization.enabled') && !base.isMobile ? (
-          <FolderViewBodyVz
-            actions={actions}
-            queryResults={allResults}
-            currentFolderId={currentFolderId}
+    <AssistantProvider>
+      <FolderView isNotFound={isNotFound}>
+        <AssistantLayout>
+          <DropzoneComp
+            disabled={!canWriteToCurrentFolder}
             displayedFolder={displayedFolder}
-            canDrag
-            canUpload={canWriteToCurrentFolder}
-            orderProps={{
-              sortOrder,
-              setOrder: setSortOrder,
-              isSettingsLoaded
-            }}
-          />
-        ) : (
-          <FolderViewBody
-            actions={actions}
-            queryResults={allResults}
-            canSort
-            currentFolderId={currentFolderId}
-            displayedFolder={displayedFolder}
-            canUpload={canWriteToCurrentFolder}
-            orderProps={{
-              sortOrder,
-              setOrder: setSortOrder,
-              isSettingsLoaded
-            }}
-          />
-        )}
-        {isFabDisplayed && (
-          <AddMenuProvider
-            componentsProps={{
-              AddMenu: {
-                anchorOrigin: {
-                  vertical: 'top',
-                  horizontal: 'left'
-                }
-              }
-            }}
-            canCreateFolder={true}
-            canUpload={true}
-            disabled={isLoading || isInError || isPending}
-            navigate={base.navigate}
-            params={params}
-            displayedFolder={displayedFolder}
-            isSelectionBarVisible={base.isSelectionBarVisible}
           >
-            <FabWithAddMenuContext />
-          </AddMenuProvider>
-        )}
-        <Outlet />
-      </DropzoneComp>
-    </FolderView>
+            <FolderViewHeader>
+              {currentFolderId && (
+                <FolderViewBreadcrumb
+                  rootBreadcrumbPath={rootBreadcrumbPath}
+                  currentFolderId={currentFolderId}
+                />
+              )}
+              <Toolbar
+                canUpload={true}
+                canCreateFolder={true}
+                disabled={isLoading || isInError || isPending}
+                isBigThumbnail={isBigThumbnail}
+                toggleThumbnailSize={toggleThumbnailSize}
+              />
+            </FolderViewHeader>
+            {flag('drive.virtualization.enabled') && !base.isMobile ? (
+              <FolderViewBodyVz
+                actions={actions}
+                queryResults={allResults}
+                currentFolderId={currentFolderId}
+                displayedFolder={displayedFolder}
+                canDrag
+                canUpload={canWriteToCurrentFolder}
+                orderProps={orderProps}
+              />
+            ) : (
+              <FolderViewBody
+                actions={actions}
+                queryResults={allResults}
+                canSort
+                currentFolderId={currentFolderId}
+                displayedFolder={displayedFolder}
+                canUpload={canWriteToCurrentFolder}
+                orderProps={orderProps}
+              />
+            )}
+            {isFabDisplayed && (
+              <AddMenuProvider
+                componentsProps={{
+                  AddMenu: {
+                    anchorOrigin: {
+                      vertical: 'top',
+                      horizontal: 'left'
+                    }
+                  }
+                }}
+                canCreateFolder={true}
+                canUpload={true}
+                disabled={isLoading || isInError || isPending}
+                navigate={base.navigate}
+                params={params}
+                displayedFolder={displayedFolder}
+                isSelectionBarVisible={base.isSelectionBarVisible}
+              >
+                <FabWithAddMenuContext />
+              </AddMenuProvider>
+            )}
+            <Outlet />
+          </DropzoneComp>
+        </AssistantLayout>
+      </FolderView>
+    </AssistantProvider>
   )
 }
 
