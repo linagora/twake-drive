@@ -32,6 +32,107 @@ yarn build
 yarn e2e:setup
 ```
 
+## URL-upload source fixture
+
+URL uploads now send `SourceURL` to Stack instead of downloading in the browser.
+The committed dependencies resolve cozy-client 60.40.0 and cozy-stack-client
+60.37.0. The published collection does not support this creation path despite
+sharing the draft's version. This migration is **local-only until the client
+extension is published and Drive's dependency versions/lockfile are updated**.
+Do not activate it on a Stack that ignores SourceURL: it can create an empty file.
+
+For local validation, use the built cozy-stack-client package from the client
+implementation revision `7aee70f4b452bc5ec0eddebed2e0aa2bc80be753` on
+`fm/url-upload-client-source-url`. With Yarn 4 in this Drive worktree:
+
+```sh
+CLIENT=/path/to/cozy-client-at-that-revision
+yarn link "$CLIENT/packages/cozy-stack-client"
+node -p 'require.resolve("cozy-stack-client/dist/FileCollection")'
+yarn build
+```
+
+The existing locked cozy-client can use the new collection through its normal
+creation path; linking cozy-client itself is unnecessary. Its newer local
+package has incompatible portal dependency resolutions in this worktree.
+The library package must already be built by its owner; do not edit node_modules
+or change another checkout to build it. Yarn link changes local resolutions and
+the lockfile: **do not commit those machine-specific changes**. After qualification,
+`yarn unlink "$CLIENT/packages/cozy-stack-client"` removes the local resolution.
+Do not infer sourceURL support from the package's unchanged version alone.
+
+Tests require a verified Stack build containing SourceURL support (inspected
+revision `eae9d5597bb7be0312edea6bd703600c61c8a217`), not an assumed `latest` tag.
+Use the image-ID workflow below, with an isolated Compose project; never restart
+another lane's runtime. Test setup/teardown can delete that project's data.
+
+`e2e/helpers/urlUploadSource.ts` starts a CORS-free Node source **inside the test
+Stack container** on loopback with an ephemeral port, and closes it after the
+suite. No host port, extra production server or browser CSP exception is needed.
+`e2e/cozy.yml` narrowly trusts `127.0.0.1/32` for these test sources. Production
+safehttp settings remain unchanged. This test exception does not demonstrate
+that loopback/private sources are allowed in production.
+
+The tests observe browser requests (no source fetch, empty Stack creation body),
+read actual stored bytes back, exercise native folders/file and directory
+collisions, read-only permission denial before source GET, serialized failures
+and the manual form. Source and body timeout failures are separate cases; their
+HTTP statuses need not match. Do not interpret a passing HTTP fixture unit test
+as proof of actual Stack retrieval.
+
+## Manual URL-upload caller
+
+From this worktree, with the local client link above, a graphical display and
+Playwright Chromium installed. Use a verified compatible image ID and a new
+project owned by this worktree; do not reuse or upgrade a shared runtime:
+
+```sh
+yarn build
+E2E_PROJECT_NAME=my-url-upload-manual \
+  COZY_E2E_ROOT_DOMAIN=url-upload-manual.localhost \
+  COZY_E2E_STACK_IMAGE="$STACK_IMAGE_ID" \
+  COZY_E2E_STACK_PULL_POLICY=never yarn stack up
+node e2e/setup/url-upload-caller.js
+```
+
+`STACK_IMAGE_ID` must be the compatible image inspected/built as described below.
+`yarn stack up` alone does not prove that an existing runtime supports SourceURL.
+
+The launcher opens an authenticated Alice browser using the existing local test
+runtime and auth helpers. It prints the actual Drive origin from this worktree's
+`e2e/.dev-ports.json`; use that URL rather than assuming a port/domain. Inside
+that browser only, a temporary caller page replaces Drive's content with `url`,
+`folderId`, and `name` fields, an Upload button and a result/error display. Its
+intent frame stays hidden. No production route, UI, embedded token or separate
+web server is added. Refreshing the page returns to Drive; rerun the launcher
+to restore the caller. Opening the printed URL in another browser opens Drive,
+not this injected test page.
+
+The source must be reachable from **Stack**, not the browser. CORS headers are
+unnecessary. A host-side `127.0.0.1` source is not the Stack container's loopback.
+With the compatible Stack and the test-only safehttp config above, run this in a
+second terminal to create a known source inside the manual runtime:
+
+```sh
+docker compose -f docker-compose.e2e.yml \
+  -p "$(node -p 'require("./e2e/.dev-ports.json").projectName')" \
+  exec -T cozystack node -e 'const s=require("http").createServer((q,r)=>r.end("URL upload example"));s.listen(0,"127.0.0.1",()=>console.log("http://127.0.0.1:"+s.address().port+"/example.txt"))'
+```
+
+Copy the printed URL into the form. Stack uses that container-local URL; the
+browser never reads it. Do not use this command against a shared runtime without
+its owner's approval.
+
+Use `io.cozy.files.root-dir` (the form default), `io.cozy.apps/mail`,
+`io.cozy.apps/notes`, or a concrete local folder ID, and an explicit name such
+as `example.txt`. Successful calls create real files in the disposable local
+instance. The page displays metadata or the service error without echoing the
+source URL. Do not use production credentials.
+
+Close the browser to stop the launcher and Ctrl+C the sample source server.
+The Stack remains running until `yarn stack down --volumes` removes this
+worktree's local test runtime. No page is available while its launcher is stopped.
+
 ## Run the suite
 
 ```sh
