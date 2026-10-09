@@ -44,13 +44,13 @@ Drive (OnlyOffice view)
 - An answer whose table has fewer cells than the selected cells it replaces leaves the others as they were: a notice above the assistant tells how many, see [Tables](#tables).
 - Another text selected while the panel is open is the one the next request is about: the conversation goes on, and the prompts are offered again. A click that only moves the cursor changes nothing.
 
-- Above the composer, the assistant offers its prompts, then a chip of the editor: "Make a table" in a text document, "New slide" in a presentation. A spreadsheet has its own chips only: "Explain", "Clean up", "Add totals".
+- Above the composer, the assistant offers its prompts, then a chip of the editor: "Make a table" in a text document, "New slide" in a presentation. A spreadsheet has its own chips only: "Explain", "Clean up", "Add totals", "Make a chart".
 
 In a text document the user can also ask for a table, from the text or from what they say: it is added under the text, with a header row, see [New tables](#new-tables).
 
 In a presentation the scribe works on the current slide: the selected text, the text of a selected shape, or the whole slide. See [Presentations](#presentations). The user can also ask for a new slide, added after the current one, see [New slides](#new-slides).
 
-In a spreadsheet the scribe works on the selected cells, or on the block of data around the selected cell. An answer has a single action, "Apply", which writes its cells where they go: in place of the cells it changes, under or beside the data for the ones it adds. See [Spreadsheets](#spreadsheets).
+In a spreadsheet the scribe works on the selected cells, or on the block of data around the selected cell. An answer has a single action, "Apply", which writes its cells where they go: in place of the cells it changes, under or beside the data for the ones it adds. See [Spreadsheets](#spreadsheets). The user can also ask for a chart of the cells, of any type the editor makes, added beside the data, see [New charts](#new-charts).
 
 ## When the button is shown
 
@@ -128,6 +128,7 @@ Drive and the plugin talk with `postMessage`. Drive only listens to the origin o
 | Drive → Plugin | `twake-scribe:applyAnswer` | `answerAction`, `text`, `format` | A result of the Assistant intent, as it is, or the table of an `insert_table` call, written in Markdown by Drive. The plugin writes `text`, in Markdown, in the document; in a spreadsheet, the cells of `text` (`answerAction: 'apply'`). |
 | Plugin → Drive | `twake-scribe:applied` | `skippedCells` | The answer of an `applyAnswer` is handled, once Drive has asked for the text and until the panel is closed. `skippedCells` counts the selected cells the answer had no cell for (see [Tables](#tables)), 0 otherwise. Drive shows a count above 0 in the panel, unless it was closed since the answer. Not sent in a spreadsheet. |
 | Drive → Plugin | `twake-scribe:insertSlide` | `title`, `bullets` | A slide the assistant has made, checked by Drive. The plugin adds it after the current slide. Presentations only. |
+| Drive → Plugin | `twake-scribe:insertChart` | `chartType`, `range`, `title` | A chart the assistant has made, checked by Drive. The plugin adds it beside the data. Spreadsheets only. |
 | Plugin → Drive | `twake-scribe:geometry` | `selection`, `viewer`, `page` | Where the selection is, in pixels of the editor frame, sent from the start and each time it changes. Drive shows its button under the selection with it, see [The button under the selection](#the-button-under-the-selection). |
 | Plugin → Drive | `twake-scribe:open` | `source` | An entry of the editor's toolbar is clicked: `toolbar-panel` for "Scribe" and "Scribe Panel". Drive opens the panel, or closes it when it is open, where its AI button is shown (see [When the button is shown](#when-the-button-is-shown)), and does nothing elsewhere. |
 
@@ -341,7 +342,7 @@ Beside its `answerActions`, Drive gives the Assistant intent what the editor can
 | --- | --- | --- | --- |
 | Presentation (`slide`) | `insert_slide`, `{ title, bullets }` | New slide | Add a new slide after this one, about the text |
 | Text document (`word`) | `insert_table`, `{ caption, columns, rows }` | Make a table | Present the text as a table |
-| Spreadsheet (`cell`) | none: formulas, rows and columns come as cells of an answer | Explain, Clean up, Add totals | Explain what these cells and their formulas do; Fix the typos and make the spelling, the case and the format of these cells consistent; Add a total row under the data, with formulas |
+| Spreadsheet (`cell`) | `insert_chart`, `{ type, range, title }`; formulas, rows and columns come as cells of an answer | Explain, Clean up, Add totals, Make a chart | Explain what these cells and their formulas do; Fix the typos and make the spelling, the case and the format of these cells consistent; Add a total row under the data, with formulas; Make a chart of these cells |
 
 A spreadsheet has no menu of the assistant, whose prompts are written for a text: its chips are sent with the instructions of a spreadsheet, as any request on its cells. Another editor gets neither key: the assistant shows its own menu. The labels and the requests of the chips are translated by Drive (`OnlyOffice.scribe.suggestions`); what the LLM reads is in English, whatever the language of the user.
 
@@ -366,6 +367,20 @@ A table comes back as `{ capability: 'insert_table', params: { caption, columns,
 
 Drive then writes the table in Markdown (`makeTableMarkdown`), the caption as the paragraph above it and a pipe in a cell escaped, and sends it to the plugin as an answer to insert: `twake-scribe:applyAnswer` with `{ answerAction: 'insert', text, format: 'markdown' }`. The plugin needs nothing more: it writes it as it writes the tables of any answer, see [Tables](#tables), a table of the document with its header row in bold, under the paragraph of the cursor or under the last paragraph of the selection, and the caption in a paragraph above it. Nothing is replaced: a table is always inserted.
 
+### New charts
+
+A chart comes back as `{ capability: 'insert_chart', params: { type, range, title } }`. The stack gives the LLM a type and a description for each parameter, and no list of values: the description names the families of charts and how the editor names their variants, the instructions of the capability tell which one fits which data. Drive takes any of the 32 types the editor makes (`CHART_TYPES`, the `ChartType` of its API: bars, horizontal bars, lines, pies, doughnuts, scatters, areas, stocks, and their stacked, percent, 3D and marker variants), whatever their case, and `line`, `column` or `horizontal` for the plain ones (`normalizeChart`). Another type is left out, with a warning in the console. The range may have several areas, as `A1:A5,C1:C5` for the names and one column of values. A range that is no A1 range is dropped: the chart is then of the cells given to the assistant. Drive then sends `twake-scribe:insertChart` to the plugin.
+
+The plugin adds the chart in the sheet of the cells given to the assistant, in one step of the undo, 12 cm by 7 cm, with its title in bold:
+
+- its data is the range, the row of the headers and the column of the names with the values. Its series run along the longer side of the range, as in the editor: the columns of a range taller than wide. The editor takes the first column of one block for the names, but not the first area of several: a chart of several areas is made of their box, then the series of the cells between them are removed;
+- it goes one empty column after the last cell used on its rows, so that it covers no data, at the first row of its data;
+- under a chart or a shape already there, past one empty row.
+
+The cells and the selection are left as they are. The capabilities of Drive keep within the limits the stack sets on actions (300 characters for a parameter, 1000 for a description or instructions, 5 examples with the requests of the chips): the stack refuses every message of the conversation for an action past them.
+
+A request is either cells or a chart: "make the ratio, then a chart of it" takes two messages, since the stack calls a capability or answers.
+
 ## Limits
 
 ### All editors
@@ -375,7 +390,7 @@ Drive then writes the table in Markdown (`makeTableMarkdown`), the caption as th
 
 ### In spreadsheets
 
-- The scribe reads and writes the text of the cells and their formulas, not their look: no bold, color, border or number format from an answer. Charts, comments, filters, data validation and pivot tables are neither read nor written, and a selected chart counts as no selection. A workbook is never given whole: one sheet, one range, at most 1000 cells.
+- The scribe reads and writes the text of the cells and their formulas, not their look: no bold, color, border or number format from an answer. The charts of the sheet are not read, nor changed: a chart is only added. Comments, filters, data validation and pivot tables are neither read nor written, and a selected chart counts as no selection. A workbook is never given whole: one sheet, one range, at most 1000 cells.
 - The LLM decides where the cells of its answer go: a wrong address writes a wrong cell, undone in one step. Rows or columns inserted to make room shift what is beside the data too, as the user would. A cell of a merge is written on its first cell, and a protected sheet refuses the writing.
 
 ### Text documents
