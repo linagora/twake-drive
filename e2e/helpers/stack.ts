@@ -122,15 +122,17 @@ export async function createFile({
   instance,
   name,
   content,
+  parentId = ROOT_DIR_ID,
   contentType = 'text/plain'
 }: {
   instance: string
   name: string
   content: string | Uint8Array
+  parentId?: string
   contentType?: string
 }): Promise<string> {
   const res = await fetch(
-    `http://${instance}/files/${ROOT_DIR_ID}?Type=file&Name=${encodeURIComponent(name)}`,
+    `http://${instance}/files/${parentId}?Type=file&Name=${encodeURIComponent(name)}`,
     {
       method: 'POST',
       headers: {
@@ -147,6 +149,64 @@ export async function createFile({
   }
   const body = (await res.json()) as { data: { id: string } }
   return body.data.id
+}
+
+/** Return the root-level folder named `name`, creating it when absent. */
+export async function ensureRootFolder(
+  instance: string,
+  name: string
+): Promise<string> {
+  const headers = {
+    Authorization: `Bearer ${filesToken(instance)}`,
+    Accept: 'application/json'
+  }
+  const listRes = await fetch(`http://${instance}/files/${ROOT_DIR_ID}`, {
+    headers
+  })
+  if (!listRes.ok) {
+    throw new Error(
+      `List root files on ${instance} failed (${listRes.status}): ${await listRes.text()}`
+    )
+  }
+  const body = (await listRes.json()) as {
+    included?: {
+      id: string
+      attributes?: { name?: string; type?: string }
+    }[]
+  }
+  const existingFolder = body.included?.find(
+    doc => doc.attributes?.name === name && doc.attributes?.type === 'directory'
+  )
+  if (existingFolder) return existingFolder.id
+
+  return createFolder({ instance, name })
+}
+
+/** Create a folder on the instance and return its id. */
+export async function createFolder({
+  instance,
+  name,
+  parentId = ROOT_DIR_ID
+}: {
+  instance: string
+  name: string
+  parentId?: string
+}): Promise<string> {
+  const headers = {
+    Authorization: `Bearer ${filesToken(instance)}`,
+    Accept: 'application/json'
+  }
+  const createRes = await fetch(
+    `http://${instance}/files/${parentId}?Type=directory&Name=${encodeURIComponent(name)}`,
+    { method: 'POST', headers }
+  )
+  if (!createRes.ok) {
+    throw new Error(
+      `Create folder ${name} on ${instance} failed (${createRes.status}): ${await createRes.text()}`
+    )
+  }
+  const created = (await createRes.json()) as { data: { id: string } }
+  return created.data.id
 }
 
 /** Overwrite a file's content, which makes the stack keep the former one as a version. */

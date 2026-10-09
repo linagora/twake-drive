@@ -843,7 +843,8 @@
       "buttons": {
         "cancel": "Annuler",
         "publicLink": "Ajouter comme lien",
-        "temporaryDownloadLink": "Ajouter en pièce jointe"
+        "temporaryDownloadLink": "Ajouter en pièce jointe",
+        "documents": "Sélectionner"
       }
     },
     "constraints": {
@@ -863,7 +864,8 @@
       "ITEM_NOT_FOUND": "Le fichier sélectionné est introuvable.",
       "DESTINATION_UNAVAILABLE": "Impossible de charger le dossier de destination.",
       "SHARING_LINK_FAILED": "Impossible de générer le lien de partage.",
-      "DOWNLOAD_LINK_FAILED": "Impossible de générer le lien de téléchargement."
+      "DOWNLOAD_LINK_FAILED": "Impossible de générer le lien de téléchargement.",
+      "DOCUMENTS_FAILED": "Impossible de récupérer les documents sélectionnés et leurs chemins."
     }
   }
 }

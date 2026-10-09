@@ -6,6 +6,18 @@ import { matchMimeType } from '@/components/FilePicker/helpers'
 
 export { matchMimeType }
 
+export function getDownloadLinkDisabledState(actionConfig, selectedItems) {
+  const items = [].concat(selectedItems ?? [])
+  // Folder archives cannot be size-validated before attachment generation.
+  if (actionConfig && items.some(item => fileModel.isDirectory(item))) {
+    return {
+      disabled: true,
+      reasonKey: 'FilePicker.constraints.disabledReasons.folderNotAllowed'
+    }
+  }
+  return getActionDisabledState(actionConfig, selectedItems)
+}
+
 const { file: fileModel } = models
 
 const getFileMime = file => {
@@ -23,7 +35,9 @@ const getFileMime = file => {
  *
  * Rules (in order):
  * 1. No action config -> disabled, no reason.
- * 2. Selected item is a folder and the action disallows folders ->
+ * 2. When accept is supplied, every selected item must match it; the
+ *    deprecated folder and MIME filters are ignored, including for [].
+ *    Otherwise, selected item is a folder and the action disallows folders ->
  *    FilePicker.constraints.disabledReasons.folderNotAllowed.
  * 3. Selected item is a file whose mime is not in the action's
  *    allowedMimeTypes (when that list is non-empty) ->
@@ -46,11 +60,31 @@ export const getActionDisabledState = (actionConfig, selectedItems) => {
     return { disabled: true, reasonKey: null }
   }
 
-  const items = selectedItems == null ? [] : [].concat(selectedItems)
+  const items = [].concat(selectedItems ?? [])
+  const hasAccept = actionConfig.accept !== undefined
 
   for (const selectedItem of items) {
+    if (hasAccept) {
+      const accept = actionConfig.accept
+      const isFolder = fileModel.isDirectory(selectedItem)
+      const accepted =
+        Array.isArray(accept) &&
+        (isFolder
+          ? accept.includes('folder')
+          : fileModel.isFile(selectedItem) &&
+            (accept.includes('file') ||
+              matchMimeType(getFileMime(selectedItem), accept)))
+      if (!accepted) {
+        return {
+          disabled: true,
+          reasonKey: isFolder
+            ? 'FilePicker.constraints.disabledReasons.folderNotAllowed'
+            : 'FilePicker.constraints.disabledReasons.mimeTypeNotAllowed'
+        }
+      }
+    }
     if (selectedItem && fileModel.isDirectory(selectedItem)) {
-      if (actionConfig.allowFolder === false) {
+      if (!hasAccept && actionConfig.allowFolder === false) {
         return {
           disabled: true,
           reasonKey: 'FilePicker.constraints.disabledReasons.folderNotAllowed'
@@ -62,6 +96,7 @@ export const getActionDisabledState = (actionConfig, selectedItems) => {
     if (selectedItem && fileModel.isFile(selectedItem)) {
       const allowedMimeTypes = actionConfig.allowedMimeTypes
       if (
+        !hasAccept &&
         Array.isArray(allowedMimeTypes) &&
         allowedMimeTypes.length > 0 &&
         !matchMimeType(getFileMime(selectedItem), allowedMimeTypes)

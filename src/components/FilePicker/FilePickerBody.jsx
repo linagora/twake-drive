@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types'
-import React, { useCallback, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 
 import { models } from 'cozy-client'
 import { isSharingShortcutNew } from 'cozy-client/dist/models/file'
@@ -58,7 +58,8 @@ const filePickerContentPropTypes = {
   onSectionReady: PropTypes.func,
   emptyMessage: PropTypes.node,
   beforeItems: PropTypes.node,
-  isNavigationDisabled: PropTypes.bool
+  isNavigationDisabled: PropTypes.bool,
+  onReadyToUse: PropTypes.func
 }
 
 const CurrentFolderContent = ({
@@ -73,12 +74,9 @@ const CurrentFolderContent = ({
 }) => {
   const { t } = useI18n()
   const { isMobile } = useBreakpoints()
-  const handleItemDoubleClick = useCallback(
-    item => {
-      if (isDirectory(item)) navigateTo(item)
-    },
-    [navigateTo]
-  )
+  const handleItemDoubleClick = item => {
+    if (isDirectory(item)) navigateTo(item)
+  }
 
   return (
     <PickerView
@@ -127,32 +125,31 @@ const SelectionFilePickerContent = ({
   isNavigationDisabled
 }) => {
   const { t } = useI18n()
+  // Keyboard selection must focus the container and scroll virtualized rows.
   const selectionContainerRef = useRef(null)
   const virtuosoRef = useRef(null)
+  // The scroller arrives after mount; keyboard navigation must use that element.
   const [scrollElement, setScrollElement] = useState(null)
   const items = source.items ?? []
   const { isItemDisabled } = source
 
-  const canSelectItem = useCallback(
-    item => {
-      if (isItemDisabled(item)) return false
-      if (isDirectory(item)) {
-        return selectableTypes.includes(filePickerItemTypes.FOLDER)
-      }
+  const canSelectItem = item => {
+    if (isItemDisabled(item)) return false
+    if (isDirectory(item)) {
+      return selectableTypes.includes(filePickerItemTypes.FOLDER)
+    }
 
-      if (selectableTypes.includes(filePickerItemTypes.FILE)) return true
-      return isValidFile(item, selectableTypes)
-    },
-    [isItemDisabled, selectableTypes]
-  )
+    if (selectableTypes.includes(filePickerItemTypes.FILE)) return true
+    return isValidFile(item, selectableTypes)
+  }
 
-  const scrollToIndex = useCallback((index, align) => {
+  const scrollToIndex = (index, align) => {
     virtuosoRef.current?.scrollToIndex({
       index,
       align,
       behavior: 'auto'
     })
-  }, [])
+  }
 
   const pickerAdapter = useFilePickerAdapter({
     items,
@@ -206,12 +203,19 @@ const SelectionFilePickerContent = ({
 
 SelectionFilePickerContent.propTypes = filePickerContentPropTypes
 
-const FilePickerContent = props =>
-  props.mode === filePickerModes.CURRENT_FOLDER ? (
+const FilePickerContent = props => {
+  const { source, onReadyToUse } = props
+  // The intent client must wait for committed content, including empty/error views.
+  useEffect(() => {
+    if (source.fetchStatus !== 'loading') onReadyToUse?.()
+  }, [source.fetchStatus, onReadyToUse])
+
+  return props.mode === filePickerModes.CURRENT_FOLDER ? (
     <CurrentFolderContent {...props} />
   ) : (
     <SelectionFilePickerContent {...props} />
   )
+}
 
 FilePickerContent.propTypes = filePickerContentPropTypes
 
@@ -225,7 +229,6 @@ const LocalFolderContent = ({
   filterReceivedShares,
   allLoaded,
   isOwner,
-  onReady,
   renderFilePickerContent,
   getItemDisabledReason,
   additionalItems,
@@ -241,30 +244,21 @@ const LocalFolderContent = ({
     filterReceivedShares,
     allLoaded,
     isOwner,
-    onReady,
     isItemDisabled,
     getItemDisabledReason
   })
-  const items = useMemo(() => {
-    const sourceItems = source.items ?? []
-    const sourceIds = new Set(sourceItems.map(item => item._id))
-    const addedItems = additionalItems.filter(
-      item => item?.dir_id === folderId && !sourceIds.has(item._id)
-    )
-    const visibleItems = [...sourceItems, ...addedItems].filter(
-      item => isItemTypeDisplayed(item, displayedTypes) && isItemIncluded(item)
-    )
-    return additionalItems.length > 0
+  const sourceItems = source.items ?? []
+  const sourceIds = new Set(sourceItems.map(item => item._id))
+  const addedItems = additionalItems.filter(
+    item => item?.dir_id === folderId && !sourceIds.has(item._id)
+  )
+  const visibleItems = [...sourceItems, ...addedItems].filter(
+    item => isItemTypeDisplayed(item, displayedTypes) && isItemIncluded(item)
+  )
+  const items =
+    additionalItems.length > 0
       ? sortFiles(visibleItems, sortOrder)
       : visibleItems
-  }, [
-    additionalItems,
-    displayedTypes,
-    folderId,
-    isItemIncluded,
-    sortOrder,
-    source.items
-  ])
 
   return renderFilePickerContent({
     ...source,
@@ -282,7 +276,6 @@ LocalFolderContent.propTypes = {
   filterReceivedShares: PropTypes.bool.isRequired,
   allLoaded: PropTypes.bool.isRequired,
   isOwner: PropTypes.func.isRequired,
-  onReady: PropTypes.func,
   renderFilePickerContent: PropTypes.func.isRequired,
   getItemDisabledReason: PropTypes.func.isRequired,
   additionalItems: PropTypes.arrayOf(PropTypes.object),
@@ -313,33 +306,23 @@ const SharedDriveFolderContent = ({
   })
   const { sharedDriveResult, fetchStatus, hasMore, fetchMore } =
     useSharedDriveFolder({ driveId, folderId })
-  const items = useMemo(() => {
-    const fetchedItems = (sharedDriveResult.included ?? []).map(item => ({
-      ...item,
-      driveId
-    }))
-    const fetchedItemIds = new Set(fetchedItems.map(item => item._id))
-    const locallyAddedItems = additionalItems.filter(
-      item =>
-        item.dir_id === folderId &&
-        item.driveId === driveId &&
-        !fetchedItemIds.has(item._id)
-    )
-    return sortFiles(
-      [...fetchedItems, ...locallyAddedItems]
-        .filter(item => isItemTypeDisplayed(item, displayedTypes))
-        .filter(isItemIncluded),
-      sortOrder
-    )
-  }, [
-    additionalItems,
-    displayedTypes,
-    driveId,
-    folderId,
-    isItemIncluded,
-    sharedDriveResult.included,
+  const fetchedItems = (sharedDriveResult.included ?? []).map(item => ({
+    ...item,
+    driveId
+  }))
+  const fetchedItemIds = new Set(fetchedItems.map(item => item._id))
+  const locallyAddedItems = additionalItems.filter(
+    item =>
+      item.dir_id === folderId &&
+      item.driveId === driveId &&
+      !fetchedItemIds.has(item._id)
+  )
+  const items = sortFiles(
+    [...fetchedItems, ...locallyAddedItems]
+      .filter(item => isItemTypeDisplayed(item, displayedTypes))
+      .filter(isItemIncluded),
     sortOrder
-  ])
+  )
 
   return renderFilePickerContent({
     items,
@@ -390,41 +373,37 @@ export const FilePickerBody = ({
   isNavigationDisabled,
   isSectionChanging,
   onSectionReady,
-  sortOrder
+  sortOrder,
+  restrictedRoot
 }) => {
   const { t } = useI18n()
   const { allLoaded, byDocId, isOwner } = useSharingContext()
-  const readyNotified = useRef(false)
+  // Breadcrumb ancestry fetching must not restart on unrelated picker renders.
   const sharedDocumentIds = useMemo(() => Object.keys(byDocId ?? {}), [byDocId])
   const rootBreadcrumbPath = useMemo(
-    () => ({
-      id:
-        section === filePickerSections.DRIVE
-          ? ROOT_DIR_ID
-          : section === filePickerSections.RECENTS
-            ? FILE_PICKER_RECENTS_ROOT_ID
-            : FILE_PICKER_SHARINGS_ROOT_ID,
-      name: t(
-        section === filePickerSections.DRIVE
-          ? 'Nav.item_drive'
-          : section === filePickerSections.RECENTS
-            ? 'Nav.item_recent'
-            : 'Nav.item_sharings'
-      )
-    }),
-    [section, t]
+    () =>
+      restrictedRoot || {
+        id:
+          section === filePickerSections.DRIVE
+            ? ROOT_DIR_ID
+            : section === filePickerSections.RECENTS
+              ? FILE_PICKER_RECENTS_ROOT_ID
+              : FILE_PICKER_SHARINGS_ROOT_ID,
+        name: t(
+          section === filePickerSections.DRIVE
+            ? 'Nav.item_drive'
+            : section === filePickerSections.RECENTS
+              ? 'Nav.item_recent'
+              : 'Nav.item_sharings'
+        )
+      },
+    [section, t, restrictedRoot]
   )
 
   const isItemDisabled = item =>
     (section === filePickerSections.SHARINGS && isSharingShortcutNew(item)) ||
     Boolean(externalGetItemDisabledReason(item)) ||
     externalIsItemDisabled(item)
-
-  const handleDriveReady = useCallback(() => {
-    if (readyNotified.current) return
-    readyNotified.current = true
-    onReadyToUse?.()
-  }, [onReadyToUse])
 
   const renderFilePickerContent = source => (
     <FilePickerContent
@@ -445,6 +424,7 @@ export const FilePickerBody = ({
       isNavigationDisabled={isNavigationDisabled}
       isSectionChanging={isSectionChanging}
       onSectionReady={onSectionReady}
+      onReadyToUse={onReadyToUse}
     />
   )
 
@@ -514,9 +494,6 @@ export const FilePickerBody = ({
       }
       allLoaded={allLoaded === true}
       isOwner={isOwner}
-      onReady={
-        section === filePickerSections.DRIVE ? handleDriveReady : undefined
-      }
       renderFilePickerContent={renderFilePickerContent}
       additionalItems={additionalItems}
       sortOrder={sortOrder}
@@ -550,7 +527,11 @@ FilePickerBody.propTypes = {
   filterReceivedShares: PropTypes.bool,
   isNavigationDisabled: PropTypes.bool,
   isSectionChanging: PropTypes.bool,
-  onSectionReady: PropTypes.func
+  onSectionReady: PropTypes.func,
+  restrictedRoot: PropTypes.shape({
+    id: PropTypes.string,
+    name: PropTypes.string
+  })
 }
 
 FilePickerBody.defaultProps = {

@@ -53,11 +53,7 @@ jest.mock('cozy-client', () => {
       olderThan: () => () => true
     },
     generateWebLink,
-    models: {
-      file: {
-        isFile: item => item?.type === 'file'
-      }
-    },
+    models: jest.requireActual('cozy-client').models,
     useClient: () => ({
       query: mockQuery,
       getStackClient: mockGetStackClient,

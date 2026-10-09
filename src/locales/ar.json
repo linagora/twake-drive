@@ -188,5 +188,15 @@
     "accept": "قبول",
     "decline": "رفض",
     "close": "إغلاق"
+  },
+  "FilePicker": {
+    "footer": {
+      "buttons": {
+        "documents": "اختيار"
+      }
+    },
+    "errors": {
+      "DOCUMENTS_FAILED": "تعذّر استرداد المستندات المحددة ومساراتها."
+    }
   }
 }

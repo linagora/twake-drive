@@ -4,10 +4,20 @@ import React from 'react'
 import { Q, createMockClient } from 'cozy-client'
 import { useDataProxy } from 'cozy-dataproxy-lib'
 
-import Picker from './Picker'
-import AppLike from 'test/components/AppLike'
+import IntentHandler from './IntentHandler'
+import { IntentLike } from 'test/components/IntentLike'
 
 import { buildContentFolderQuery } from '@/components/FilePicker/queries'
+
+const mockCreateService = jest.fn()
+const mockGetIntent = jest.fn()
+
+jest.mock('cozy-interapp', () =>
+  jest.fn().mockImplementation(() => ({
+    createService: mockCreateService,
+    request: { get: mockGetIntent }
+  }))
+)
 
 jest.mock('cozy-dataproxy-lib', () => ({
   DataProxyProvider: ({ children }) => children,
@@ -111,19 +121,25 @@ describe('Picker Recents integration', () => {
       recents: mockRecents
     })
     const client = makeClient()
+    const intent = { attributes: { action: 'PICK', type: 'io.cozy.files' } }
     const service = {
+      getIntent: () => intent,
+      getData: () => ({}),
       cancel: jest.fn(),
       terminate: jest.fn(),
-      throw: jest.fn()
+      throw: jest.fn(),
+      notifyReadyToUse: jest.fn()
     }
+    mockGetIntent.mockResolvedValue(intent)
+    mockCreateService.mockResolvedValue(service)
 
     render(
-      <AppLike client={client}>
-        <Picker service={service} intent={null} />
-      </AppLike>
+      <IntentLike client={client}>
+        <IntentHandler intentId="intent-id" />
+      </IntentLike>
     )
 
-    fireEvent.click(screen.getByRole('tab', { name: /Recents/i }))
+    fireEvent.click(await screen.findByRole('tab', { name: /Recents/i }))
     expect(await screen.findByTestId('list-item')).toHaveAttribute(
       'data-file-id',
       recentFile._id

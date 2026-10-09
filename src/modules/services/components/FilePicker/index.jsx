@@ -1,13 +1,5 @@
 import PropTypes from 'prop-types'
-import React, {
-  useState,
-  memo,
-  useMemo,
-  useRef,
-  useCallback,
-  lazy,
-  Suspense
-} from 'react'
+import React, { useState, useRef, lazy, Suspense } from 'react'
 
 import Divider from 'cozy-ui/transpiled/react/Divider'
 import Paper from 'cozy-ui/transpiled/react/Paper'
@@ -22,7 +14,10 @@ import {
   filePickerLinkModes,
   filePickerThemes
 } from './constants'
-import { getActionDisabledState } from './constraints'
+import {
+  getActionDisabledState,
+  getDownloadLinkDisabledState
+} from './constraints'
 
 import { FilePicker as SharedFilePicker } from '@/components/FilePicker/FilePicker'
 import {
@@ -43,25 +38,26 @@ const FilePicker = ({
   multiple,
   filePickerConfig,
   onReadyToUse,
-  onFileDoubleClick
+  onFileDoubleClick,
+  canNavigateTo,
+  validateSharingSelection
 }) => {
+  // Selection, action progress and business errors change the visible picker UI.
   const [error, setError] = useState(null)
   const [isLinkAccessOpen, setIsLinkAccessOpen] = useState(false)
   const [selectedItems, setSelectedItems] = useState([])
   const { showAlert } = useAlert()
+  // Lock immediately: repeated double clicks can arrive before a state rerender.
   const isProcessingRef = useRef(false)
   const [busyLinkMode, setBusyLinkMode] = useState(null)
-  const itemsIdsSelected = useMemo(
-    () => selectedItems.map(item => item._id),
-    [selectedItems]
-  )
 
   const config = filePickerConfig || defaultFilePickerConfig
   const publicLinkAction = config.sharingLink ?? null
   const downloadLinkAction = config.downloadLink ?? null
+  const documentsAction = config.documents ?? null
 
   const clearSelection = () => setSelectedItems([])
-  const handleLocationChange = useCallback(() => setError(null), [])
+  const handleLocationChange = () => setError(null)
 
   const handleConfirm = async linkMode => {
     if (busyLinkMode) return null
@@ -85,10 +81,10 @@ const FilePicker = ({
     }
   }
 
-  const handleOpenLinkAccess = useCallback(() => {
+  const handleOpenLinkAccess = () => {
     setError(null)
     setIsLinkAccessOpen(true)
-  }, [])
+  }
 
   const handleLinkAccessConfirm = async sharingLinks => {
     if (busyLinkMode) return
@@ -128,66 +124,68 @@ const FilePicker = ({
     itemTypesAccepted.length === 0
       ? Object.values(filePickerItemTypes)
       : [filePickerItemTypes.FOLDER, ...itemTypesAccepted]
-  const hasSelection = itemsIdsSelected.length > 0
+  const hasSelection = selectedItems.length > 0
 
   const publicLinkState = hasSelection
     ? getActionDisabledState(publicLinkAction, selectedItems)
     : { disabled: true, reasonKey: null }
   const downloadLinkState = hasSelection
-    ? getActionDisabledState(downloadLinkAction, selectedItems)
+    ? getDownloadLinkDisabledState(downloadLinkAction, selectedItems)
+    : { disabled: true, reasonKey: null }
+  const documentsState = hasSelection
+    ? getActionDisabledState(documentsAction, selectedItems)
     : { disabled: true, reasonKey: null }
 
-  const handleFileDoubleClick = useCallback(
-    async item => {
-      if (!onFileDoubleClick) return
-      if (isProcessingRef.current) return
+  const handleFileDoubleClick = async item => {
+    if (!onFileDoubleClick) return
+    if (isProcessingRef.current) return
 
-      if (!isValidFile(item, itemTypesAccepted)) return
+    if (!isValidFile(item, itemTypesAccepted)) return
 
-      // Sharing takes priority over download
-      const sharingState = publicLinkAction
-        ? getActionDisabledState(publicLinkAction, [item])
-        : { disabled: true }
-      const downloadState = downloadLinkAction
-        ? getActionDisabledState(downloadLinkAction, [item])
-        : { disabled: true }
-      const useDownload = sharingState.disabled && !downloadState.disabled
-      if (sharingState.disabled && downloadState.disabled) return
+    // Sharing takes priority over download
+    const sharingState = publicLinkAction
+      ? getActionDisabledState(publicLinkAction, [item])
+      : { disabled: true }
+    const downloadState = downloadLinkAction
+      ? getDownloadLinkDisabledState(downloadLinkAction, [item])
+      : { disabled: true }
+    const useDownload = sharingState.disabled && !downloadState.disabled
+    const useDocuments = sharingState.disabled && downloadState.disabled
+    if (
+      useDocuments &&
+      getActionDisabledState(documentsAction, [item]).disabled
+    )
+      return
 
-      const linkMode = useDownload
+    const linkMode = useDocuments
+      ? filePickerLinkModes.DOCUMENTS
+      : useDownload
         ? filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK
         : filePickerLinkModes.PUBLIC_LINK
 
-      isProcessingRef.current = true
-      setError(null)
-      setSelectedItems([item])
+    isProcessingRef.current = true
+    setError(null)
+    setSelectedItems([item])
 
-      try {
-        const result = await onFileDoubleClick(item, linkMode)
-        if (result === filePickerDoubleClickResults.OPEN_MODAL) {
-          handleOpenLinkAccess()
-        } else if (result) {
-          setError(result)
-        }
-      } catch {
-        setError(
-          useDownload
+    try {
+      const result = await onFileDoubleClick(item, linkMode)
+      if (result === filePickerDoubleClickResults.OPEN_MODAL) {
+        handleOpenLinkAccess()
+      } else if (result) {
+        setError(result)
+      }
+    } catch {
+      setError(
+        useDocuments
+          ? filePickerErrorCodes.DOCUMENTS_FAILED
+          : useDownload
             ? filePickerErrorCodes.DOWNLOAD_LINK_FAILED
             : filePickerErrorCodes.SHARING_LINK_FAILED
-        )
-      } finally {
-        isProcessingRef.current = false
-      }
-    },
-    [
-      publicLinkAction,
-      downloadLinkAction,
-      itemTypesAccepted,
-      onFileDoubleClick,
-      setSelectedItems,
-      handleOpenLinkAccess
-    ]
-  )
+      )
+    } finally {
+      isProcessingRef.current = false
+    }
+  }
 
   return (
     <>
@@ -198,7 +196,10 @@ const FilePicker = ({
       >
         <SharedFilePicker
           mode={filePickerModes.SELECTION}
-          availableSections={Object.values(filePickerSections)}
+          initialLocation={config.initialLocation}
+          restrictedRoot={config.restrictedRoot}
+          canNavigateTo={canNavigateTo}
+          availableSections={config.tabs || Object.values(filePickerSections)}
           displayedTypes={Object.values(filePickerItemTypes)}
           selectableTypes={selectableTypes}
           multiple={multiple}
@@ -240,6 +241,8 @@ const FilePicker = ({
             downloadLinkState={downloadLinkState}
             publicLinkAction={publicLinkAction}
             downloadLinkAction={downloadLinkAction}
+            documentsAction={documentsAction}
+            documentsState={documentsState}
             busyLinkMode={busyLinkMode}
             selectedItems={selectedItems}
             onClearSelection={clearSelection}
@@ -253,6 +256,7 @@ const FilePicker = ({
             selectedItems={selectedItems}
             onCancel={() => setIsLinkAccessOpen(false)}
             onConfirm={handleLinkAccessConfirm}
+            validateSelection={validateSharingSelection}
           />
         </Suspense>
       )}
@@ -271,8 +275,14 @@ FilePicker.propTypes = {
     }),
     multiple: PropTypes.bool,
     sharingLink: PropTypes.object,
-    downloadLink: PropTypes.object
+    downloadLink: PropTypes.object,
+    documents: PropTypes.object,
+    tabs: PropTypes.arrayOf(PropTypes.string),
+    initialLocation: PropTypes.object,
+    restrictedRoot: PropTypes.object
   }),
+  canNavigateTo: PropTypes.func,
+  validateSharingSelection: PropTypes.func,
   onReadyToUse: PropTypes.func,
   onFileDoubleClick: PropTypes.func
 }
@@ -283,4 +293,4 @@ FilePicker.defaultProps = {
   filePickerConfig: defaultFilePickerConfig
 }
 
-export default memo(FilePicker)
+export default FilePicker

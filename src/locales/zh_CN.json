@@ -131,5 +131,15 @@
     "accept": "接受",
     "decline": "拒绝",
     "close": "关闭"
+  },
+  "FilePicker": {
+    "footer": {
+      "buttons": {
+        "documents": "选择"
+      }
+    },
+    "errors": {
+      "DOCUMENTS_FAILED": "无法获取所选文档及其路径。"
+    }
   }
 }

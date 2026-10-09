@@ -7,7 +7,7 @@ import {
 } from '@linagora/twake-icons'
 import { filesize } from 'filesize'
 import PropTypes from 'prop-types'
-import React, { memo } from 'react'
+import React from 'react'
 
 import Box from 'cozy-ui/transpiled/react/Box'
 import Button from 'cozy-ui/transpiled/react/Buttons'
@@ -47,6 +47,8 @@ const FilePickerFooter = ({
   downloadLinkState,
   publicLinkAction,
   downloadLinkAction,
+  documentsAction,
+  documentsState,
   busyLinkMode,
   selectedItems,
   onClearSelection
@@ -64,6 +66,10 @@ const FilePickerFooter = ({
     (downloadLinkAction.label ??
       t('FilePicker.footer.buttons.temporaryDownloadLink'))
 
+  const documentsLabel =
+    documentsAction &&
+    (documentsAction.label ?? t('FilePicker.footer.buttons.documents'))
+
   const renderAction = (
     linkMode,
     label,
@@ -77,7 +83,9 @@ const FilePickerFooter = ({
     if (!label) return null
 
     const mobileMarginClass =
-      hasLeftMargin && (downloadLinkLabel || !isMobile) ? 'u-ml-1' : ''
+      hasLeftMargin && (downloadLinkLabel || documentsLabel || !isMobile)
+        ? 'u-ml-1'
+        : ''
     const button = (
       <Button
         className={isMobile ? `u-flex-grow-1 ${mobileMarginClass}` : null}
@@ -168,13 +176,23 @@ const FilePickerFooter = ({
         }
       >
         {renderAction(
+          filePickerLinkModes.DOCUMENTS,
+          documentsLabel,
+          documentsState,
+          documentsAction,
+          'documents-btn',
+          CheckCircle,
+          'primary'
+        )}
+        {renderAction(
           filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK,
           downloadLinkLabel,
           downloadLinkState,
           downloadLinkAction,
           'temporary-download-link-btn',
           Attachment,
-          'text'
+          'text',
+          Boolean(documentsLabel)
         )}
         {renderAction(
           filePickerLinkModes.PUBLIC_LINK,
@@ -203,6 +221,11 @@ FilePickerFooter.propTypes = {
   }),
   publicLinkAction: PropTypes.object,
   downloadLinkAction: PropTypes.object,
+  documentsAction: PropTypes.object,
+  documentsState: PropTypes.shape({
+    disabled: PropTypes.bool,
+    reasonKey: PropTypes.string
+  }),
   busyLinkMode: PropTypes.string,
   selectedItems: PropTypes.arrayOf(PropTypes.object),
   onClearSelection: PropTypes.func.isRequired
@@ -213,8 +236,10 @@ FilePickerFooter.defaultProps = {
   downloadLinkState: { disabled: true, reasonKey: null },
   publicLinkAction: null,
   downloadLinkAction: null,
+  documentsAction: null,
+  documentsState: { disabled: true, reasonKey: null },
   busyLinkMode: null,
   selectedItems: []
 }
 
-export default memo(FilePickerFooter)
+export default FilePickerFooter

@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { useClient, fetchPolicies } from 'cozy-client'
+import { useClient, fetchPolicies, models } from 'cozy-client'
 
 import FilePicker from './FilePicker'
 import { getFilePickerConfig } from './FilePicker/config'
@@ -10,6 +10,15 @@ import {
   filePickerLinkModes,
   filePickerSharingLinkStatuses
 } from './FilePicker/constants'
+import {
+  getActionDisabledState,
+  getDownloadLinkDisabledState
+} from './FilePicker/constraints'
+import {
+  fetchPickerDocument,
+  isWithinPickerRoot,
+  fetchPickerDocumentWithPath
+} from './FilePicker/documents'
 import { makeFilePickerFileEntry } from './FilePicker/payload'
 import {
   fetchExistingSharingLink,
@@ -49,47 +58,134 @@ function terminateWithGeneratedSharingLinks(
   }
 }
 
-const Picker = ({ service, intent, onReadyToUse }) => {
+const Picker = ({
+  service,
+  intent,
+  filePickerConfig: initializedConfig,
+  onReadyToUse
+}) => {
   const client = useClient()
   const serviceData = service.getData?.()
-  const filePickerConfig = getFilePickerConfig(intent, serviceData)
+  const filePickerConfig =
+    initializedConfig || getFilePickerConfig(intent, serviceData)
 
-  const handlePick = async (selectedItems, linkMode, generatedSharingLinks) => {
+  const canNavigateTo = filePickerConfig.restrictToDefaultDir
+    ? async folder => {
+        if (folder.driveId) return false
+        try {
+          const document = await fetchPickerDocument(
+            client,
+            folder._id ?? folder.id
+          )
+          return (
+            models.file.isDirectory(document) &&
+            (await isWithinPickerRoot(
+              client,
+              document,
+              filePickerConfig.defaultDirId
+            ))
+          )
+        } catch {
+          return false
+        }
+      }
+    : null
+
+  const fetchSelectedFiles = async selectedItems => {
     const selectedFiles = Array.isArray(selectedItems)
       ? selectedItems
       : [selectedItems]
-    let queryResults
-    try {
-      queryResults = await Promise.all(
-        selectedFiles.map(async file => {
-          const fileId = getFileId(file)
-          const driveId = file.driveId ?? null
-          const query = driveId
-            ? buildSharedDriveFileOrFolderByIdQuery({ fileId, driveId })
-            : buildFileOrFolderByIdQuery(fileId)
+    const queryResults = await Promise.all(
+      selectedFiles.map(async file => {
+        const fileId = getFileId(file)
+        const driveId = file.driveId ?? null
+        const query = driveId
+          ? buildSharedDriveFileOrFolderByIdQuery({ fileId, driveId })
+          : buildFileOrFolderByIdQuery(fileId)
 
-          const result = await client.query(query.definition(), {
-            ...query.options,
-            ...(driveId ? {} : { as: `picker-confirm-${fileId}` }),
-            // Always go to the network — the file might have been deleted
-            // between listing and confirmation.
-            fetchPolicy: fetchPolicies.olderThan(0)
-          })
-
-          return { result, driveId }
+        const result = await client.query(query.definition(), {
+          ...query.options,
+          ...(driveId ? {} : { as: `picker-confirm-${fileId}` }),
+          // Always go to the network — the file might have been deleted
+          // between listing and confirmation.
+          fetchPolicy: fetchPolicies.olderThan(0)
         })
-      )
-    } catch {
-      return filePickerErrorCodes.ITEM_NOT_FOUND
-    }
+
+        return { result, driveId }
+      })
+    )
 
     const files = []
     for (const { result, driveId } of queryResults) {
       const data = result?.data
-      if (!data) {
-        return filePickerErrorCodes.ITEM_NOT_FOUND
+      if (!data || data.trashed) {
+        throw new Error(filePickerErrorCodes.ITEM_NOT_FOUND)
       }
       files.push(driveId ? { ...data, driveId } : data)
+    }
+
+    if (filePickerConfig.restrictToDefaultDir) {
+      const allowed = await Promise.all(
+        files.map(file =>
+          isWithinPickerRoot(client, file, filePickerConfig.defaultDirId)
+        )
+      )
+      if (allowed.some(isAllowed => !isAllowed))
+        throw new Error(filePickerErrorCodes.ITEM_NOT_FOUND)
+    }
+
+    return files
+  }
+
+  const validateSharingSelection = async selectedItems => {
+    const files = await fetchSelectedFiles(selectedItems)
+    if (getActionDisabledState(filePickerConfig.sharingLink, files).disabled) {
+      throw new Error(filePickerErrorCodes.ITEM_NOT_FOUND)
+    }
+    return files
+  }
+
+  const handlePick = async (selectedItems, linkMode, generatedSharingLinks) => {
+    let files
+    try {
+      files = await fetchSelectedFiles(selectedItems)
+    } catch {
+      return filePickerErrorCodes.ITEM_NOT_FOUND
+    }
+
+    if (linkMode === filePickerLinkModes.DOCUMENTS) {
+      try {
+        if (
+          !filePickerConfig.documents ||
+          getActionDisabledState(filePickerConfig.documents, files).disabled
+        ) {
+          return filePickerErrorCodes.DOCUMENTS_FAILED
+        }
+        const documents = await Promise.all(
+          files.map(file => fetchPickerDocumentWithPath(client, file))
+        )
+        service.terminate(documents)
+        return null
+      } catch (error) {
+        logger.warn('FilePicker document resolution failed', error)
+        return filePickerErrorCodes.DOCUMENTS_FAILED
+      }
+    }
+
+    const linkAction =
+      linkMode === filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK
+        ? filePickerConfig.downloadLink
+        : filePickerConfig.sharingLink
+    const linkState =
+      linkMode === filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK
+        ? getDownloadLinkDisabledState(linkAction, files)
+        : getActionDisabledState(linkAction, files)
+    if (
+      (linkMode === filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK ||
+        linkAction?.accept !== undefined) &&
+      linkState.disabled
+    ) {
+      return filePickerErrorCodes.ITEM_NOT_FOUND
     }
 
     if (linkMode === filePickerLinkModes.PUBLIC_LINK && generatedSharingLinks) {
@@ -129,7 +225,12 @@ const Picker = ({ service, intent, onReadyToUse }) => {
   }
 
   const handleFileDoubleClick = async (file, linkMode) => {
-    if (linkMode === filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK) {
+    if (
+      [
+        filePickerLinkModes.DOCUMENTS,
+        filePickerLinkModes.TEMPORARY_DOWNLOAD_LINK
+      ].includes(linkMode)
+    ) {
       return handlePick([file], linkMode)
     }
 
@@ -161,6 +262,8 @@ const Picker = ({ service, intent, onReadyToUse }) => {
       onFileDoubleClick={handleFileDoubleClick}
       onClose={handleClose}
       filePickerConfig={filePickerConfig}
+      canNavigateTo={canNavigateTo}
+      validateSharingSelection={validateSharingSelection}
       onReadyToUse={onReadyToUse}
       multiple={filePickerConfig.multiple}
     />

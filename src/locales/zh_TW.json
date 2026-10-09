@@ -218,5 +218,15 @@
     "accept": "接受",
     "decline": "拒絕",
     "close": "關閉"
+  },
+  "FilePicker": {
+    "footer": {
+      "buttons": {
+        "documents": "選取"
+      }
+    },
+    "errors": {
+      "DOCUMENTS_FAILED": "無法取得所選文件及其路徑。"
+    }
   }
 }

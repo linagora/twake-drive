@@ -40,6 +40,41 @@ export class FilePickerPage {
     await this.waitForPicker()
   }
 
+  /** Open a demo preset with optional directory controls. */
+  async openWithPreset(
+    configName: string,
+    options: { defaultDirId?: string; restrictToDefaultDir?: boolean } = {},
+    waitForPicker = true
+  ): Promise<void> {
+    await this.page.goto(`${this.user.appUrl}/#/folder`)
+    await this.page.getByRole('button', { name: /pick a file/i }).waitFor({
+      state: 'visible'
+    })
+
+    await this.page.getByRole('radio', { name: configName }).check()
+
+    const dirInput = this.page.getByLabel('Default directory ID')
+    if (typeof options.defaultDirId === 'string') {
+      await dirInput.fill(options.defaultDirId)
+    } else {
+      await dirInput.fill('')
+    }
+
+    const restrictCheckbox = this.page.getByRole('checkbox', {
+      name: 'Restrict to default directory'
+    })
+    if (options.restrictToDefaultDir === true) {
+      await restrictCheckbox.check()
+    } else {
+      await restrictCheckbox.uncheck()
+    }
+
+    await this.page.getByRole('button', { name: /pick a file/i }).click()
+    if (waitForPicker) {
+      await this.waitForPicker()
+    }
+  }
+
   /** Navigate to the mobile demo route and open the picker with a tap. */
   async openMobile(): Promise<void> {
     await this.page.goto(`${this.user.appUrl}/#/file-picker-demo`)
@@ -175,6 +210,68 @@ export class FilePickerPage {
     await listItem.getByTestId('choice-onclick').click()
   }
 
+  item(name: string): Locator {
+    return this.getListItemByName(name)
+  }
+
+  documentsButton(): Locator {
+    return this.getFrameLocator().getByTestId('documents-btn')
+  }
+
+  async clickDocumentsButton(): Promise<void> {
+    await this.getFrameLocator().getByTestId('documents-btn').click()
+  }
+
+  async isDocumentsDisabled(): Promise<boolean> {
+    const frame = this.getFrameLocator()
+    return frame.getByTestId('documents-btn').isDisabled()
+  }
+
+  async getDocumentsButtonLabel(): Promise<string> {
+    const frame = this.getFrameLocator()
+    return (await frame.getByTestId('documents-btn').textContent()) ?? ''
+  }
+
+  async getPublicLinkButtonLabel(): Promise<string> {
+    const frame = this.getFrameLocator()
+    return (await frame.getByTestId('public-link-btn').textContent()) ?? ''
+  }
+
+  async getTemporaryDownloadButtonLabel(): Promise<string> {
+    const frame = this.getFrameLocator()
+    return (
+      (await frame.getByTestId('temporary-download-link-btn').textContent()) ??
+      ''
+    )
+  }
+
+  tab(tabLabel: string): Locator {
+    return this.getFrameLocator().getByRole('tab', { name: tabLabel })
+  }
+
+  async isTabSelected(tabLabel: string): Promise<boolean> {
+    const frame = this.getFrameLocator()
+    const tab = frame.getByRole('tab', { name: tabLabel })
+    return (await tab.getAttribute('aria-selected')) === 'true'
+  }
+
+  /** Read the intent container error displayed when intent initialization fails. */
+  async getIntentContainerError(): Promise<string> {
+    const errorLocator = this.page.locator('[class*="intentContainer__error"]')
+    await errorLocator.waitFor({ state: 'visible', timeout: 10_000 })
+    return (await errorLocator.textContent()) ?? ''
+  }
+
+  pickerHeader(): Locator {
+    return this.getFrameLocator().getByTestId('file-picker-header')
+  }
+
+  breadcrumbButton(name: string): Locator {
+    return this.getFrameLocator()
+      .getByTestId('file-picker-breadcrumb')
+      .getByRole('button', { name, exact: true })
+  }
+
   /**
    * Ctrl-click a choice area to toggle it without clearing existing selection.
    * Works only in multiple mode (checkboxes).
@@ -240,10 +337,8 @@ export class FilePickerPage {
     return frame.getByTestId('temporary-download-link-btn').isDisabled()
   }
 
-  /** Whether the "Temporary download link" button is visible. */
-  async hasTemporaryDownloadButton(): Promise<boolean> {
-    const frame = this.getFrameLocator()
-    return frame.getByTestId('temporary-download-link-btn').isVisible()
+  temporaryDownloadLinkButton(): Locator {
+    return this.getFrameLocator().getByTestId('temporary-download-link-btn')
   }
 
   /** Whether the "Public link" button is currently disabled. */
@@ -252,10 +347,8 @@ export class FilePickerPage {
     return frame.getByTestId('public-link-btn').isDisabled()
   }
 
-  /** Whether the "Public link" button is visible. */
-  async hasPublicLinkButton(): Promise<boolean> {
-    const frame = this.getFrameLocator()
-    return frame.getByTestId('public-link-btn').isVisible()
+  publicLinkButton(): Locator {
+    return this.getFrameLocator().getByTestId('public-link-btn')
   }
 
   // ---------------------------------------------------------------------------

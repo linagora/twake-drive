@@ -843,7 +843,8 @@
       "buttons": {
         "cancel": "Cancel",
         "publicLink": "Add as link",
-        "temporaryDownloadLink": "Add as attachment"
+        "temporaryDownloadLink": "Add as attachment",
+        "documents": "Select"
       }
     },
     "constraints": {
@@ -863,7 +864,8 @@
       "ITEM_NOT_FOUND": "The selected file could not be found.",
       "DESTINATION_UNAVAILABLE": "The destination folder could not be loaded.",
       "SHARING_LINK_FAILED": "Could not generate a sharing link.",
-      "DOWNLOAD_LINK_FAILED": "Could not generate a download link."
+      "DOWNLOAD_LINK_FAILED": "Could not generate a download link.",
+      "DOCUMENTS_FAILED": "Could not retrieve the selected documents and their paths."
     }
   }
 }

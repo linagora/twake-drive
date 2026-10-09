@@ -843,7 +843,8 @@
       "buttons": {
         "cancel": "Cancelar",
         "publicLink": "Añadir como enlace",
-        "temporaryDownloadLink": "Añadir como adjunto"
+        "temporaryDownloadLink": "Añadir como adjunto",
+        "documents": "Seleccionar"
       }
     },
     "constraints": {
@@ -863,7 +864,8 @@
       "ITEM_NOT_FOUND": "No se encuentra el archivo seleccionado.",
       "DESTINATION_UNAVAILABLE": "No se ha podido cargar la carpeta de destino.",
       "SHARING_LINK_FAILED": "No se ha podido generar un enlace para compartir.",
-      "DOWNLOAD_LINK_FAILED": "No se ha podido generar un enlace de descarga."
+      "DOWNLOAD_LINK_FAILED": "No se ha podido generar un enlace de descarga.",
+      "DOCUMENTS_FAILED": "No se pudieron recuperar los documentos seleccionados y sus rutas."
     }
   }
 }

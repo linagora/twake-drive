@@ -11,6 +11,7 @@
 export const TEMPORARY_LINK_TTL = '5m'
 
 export const filePickerLinkModes = {
+  DOCUMENTS: 'documents',
   PUBLIC_LINK: 'public-link',
   TEMPORARY_DOWNLOAD_LINK: 'temporary-download-link'
 }
@@ -34,7 +35,8 @@ export const filePickerDoubleClickResults = {
 export const filePickerErrorCodes = {
   ITEM_NOT_FOUND: 'ITEM_NOT_FOUND',
   SHARING_LINK_FAILED: 'SHARING_LINK_FAILED',
-  DOWNLOAD_LINK_FAILED: 'DOWNLOAD_LINK_FAILED'
+  DOWNLOAD_LINK_FAILED: 'DOWNLOAD_LINK_FAILED',
+  DOCUMENTS_FAILED: 'DOCUMENTS_FAILED'
 }
 
 /**
@@ -52,6 +54,10 @@ export const filePickerErrorCodes = {
 export const defaultFilePickerConfig = {
   theme: { type: undefined },
   multiple: true,
+  defaultDirId: null,
+  restrictToDefaultDir: false,
+  tabs: ['drive', 'recents', 'sharings'],
+  documents: null,
   sharingLink: { allowFolder: true },
   downloadLink: { allowFolder: false }
 }
