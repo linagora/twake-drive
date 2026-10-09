@@ -11,15 +11,21 @@ export async function fetchPickerDocument(client, fileId, driveId = null) {
   return data ?? null
 }
 
+function isLocalPickerDocument(item) {
+  if (!item) return false
+  if (item.driveId || item.trashed) return false
+  return !item._type || item._type === 'io.cozy.files'
+}
+
+function hasAbsoluteDirectoryPath(folder) {
+  if (!folder || !models.file.isDirectory(folder)) return false
+  return typeof folder.path === 'string' && folder.path.startsWith('/')
+}
+
 export async function isWithinPickerRoot(client, item, rootId) {
   const visited = new Set()
   let current = item
-  while (
-    current &&
-    !current.driveId &&
-    !current.trashed &&
-    (!current._type || current._type === 'io.cozy.files')
-  ) {
+  while (isLocalPickerDocument(current)) {
     const id = current._id ?? current.id
     if (id === rootId) return true
     if (!current.dir_id || visited.has(id)) return false
@@ -32,18 +38,13 @@ export async function isWithinPickerRoot(client, item, rootId) {
 
 export async function fetchPickerDocumentWithPath(client, item) {
   if (models.file.isDirectory(item)) {
-    if (typeof item.path !== 'string' || !item.path.startsWith('/')) {
+    if (!hasAbsoluteDirectoryPath(item)) {
       throw new Error('Missing folder path')
     }
     return { ...item }
   }
   const parent = await fetchPickerDocument(client, item.dir_id, item.driveId)
-  if (
-    !parent ||
-    !models.file.isDirectory(parent) ||
-    typeof parent.path !== 'string' ||
-    !parent.path.startsWith('/')
-  ) {
+  if (!hasAbsoluteDirectoryPath(parent)) {
     throw new Error('Missing parent folder path')
   }
   // File paths are computed response data, never a field to save in CouchDB.
