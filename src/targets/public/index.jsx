@@ -31,15 +31,16 @@ import logger from '@/lib/logger'
 import { joinPath } from '@/lib/path'
 import { getQueryParameter } from '@/lib/react-cozy-helpers'
 import registerClientPlugins from '@/lib/registerClientPlugins'
+import { loadLocales } from '@/locales'
 import configureStore from '@/store/configureStore'
 import styles from '@/styles/main.styl'
 
 import { getPublicPageLocale } from './localeHelper'
 import { ROUTER_FUTURE_FLAGS } from '@/constants/config'
 
-const renderError = (lang, root) =>
+const renderError = (lang, dictRequire, root) =>
   createRoot(root).render(
-    <I18n lang={lang} dictRequire={lang => require(`@/locales/${lang}`)}>
+    <I18n lang={lang} dictRequire={dictRequire}>
       <CozyTheme ignoreCozySettings className="u-w-100">
         <main className={styles['center-layout']}>
           <ErrorShare errorType="public_unshared" />
@@ -67,9 +68,8 @@ const init = async () => {
   })
   registerClientPlugins(client)
 
-  const polyglot = initTranslation(lang, locale =>
-    require(`@/locales/${locale}`)
-  )
+  const dictRequire = await loadLocales(lang)
+  const polyglot = initTranslation(lang, dictRequire)
 
   const store = configureStore({
     client,
@@ -114,7 +114,7 @@ const init = async () => {
     }
   } catch (e) {
     logger.warn(e)
-    renderError(lang, root)
+    renderError(lang, dictRequire, root)
   }
 }
 

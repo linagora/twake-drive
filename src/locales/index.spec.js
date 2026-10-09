@@ -1,24 +1,6 @@
 import { initTranslation } from 'twake-i18n'
 
-import { loadIntentLocales } from './loadIntentLocales'
-
-const supportedLocales = [
-  'ar',
-  'de',
-  'en',
-  'es',
-  'fr',
-  'it',
-  'ja',
-  'ko',
-  'nl',
-  'nl_NL',
-  'pl',
-  'ru',
-  'vi',
-  'zh_CN',
-  'zh_TW'
-]
+import { loadLocales, supportedLocales } from '.'
 
 const dictionaries = {
   en: { greeting: 'Hello' },
@@ -29,11 +11,11 @@ function makeLocaleLoader() {
   return jest.fn(locale => Promise.resolve(dictionaries[locale]))
 }
 
-describe('loadIntentLocales', () => {
+describe('loadLocales', () => {
   it('loads only the current locale and the English fallback', async () => {
     const loadLocale = makeLocaleLoader()
 
-    const requireLocale = await loadIntentLocales('fr', loadLocale)
+    const requireLocale = await loadLocales('fr', loadLocale)
 
     expect(loadLocale).toHaveBeenCalledTimes(2)
     expect(loadLocale).toHaveBeenNthCalledWith(1, 'en')
@@ -47,7 +29,7 @@ describe('loadIntentLocales', () => {
     async locale => {
       const loadLocale = localeCode =>
         Promise.resolve(require(`@/locales/${localeCode}.json`))
-      const requireLocale = await loadIntentLocales(locale, loadLocale)
+      const requireLocale = await loadLocales(locale, loadLocale)
       const translation = initTranslation(locale, requireLocale)
 
       expect(translation.t('Nav.item_drive')).not.toBe('Nav.item_drive')
@@ -61,7 +43,7 @@ describe('loadIntentLocales', () => {
         : Promise.reject(new Error('locale unavailable'))
     )
 
-    const requireLocale = await loadIntentLocales('fr', loadLocale)
+    const requireLocale = await loadLocales('fr', loadLocale)
 
     expect(requireLocale('fr')).toEqual(dictionaries.en)
   })
@@ -69,7 +51,7 @@ describe('loadIntentLocales', () => {
   it('loads English only once when it is the current locale', async () => {
     const loadLocale = makeLocaleLoader()
 
-    const requireLocale = await loadIntentLocales('en', loadLocale)
+    const requireLocale = await loadLocales('en', loadLocale)
 
     expect(loadLocale).toHaveBeenCalledTimes(1)
     expect(loadLocale).toHaveBeenCalledWith('en')
