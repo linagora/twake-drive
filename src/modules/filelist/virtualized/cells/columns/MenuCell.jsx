@@ -9,6 +9,8 @@ import FileAction from '@/modules/filelist/virtualized/cells/FileAction'
 
 const canInteractWithRow = row => row._id && !row._id.endsWith('.trash-dir')
 
+const stopPropagation = event => event.stopPropagation()
+
 const MenuCell = ({ row, actions }) => {
   const filerowMenuToggleRef = useRef()
   const [showActionMenu, toggleShowActionMenu] = useReducer(
@@ -29,15 +31,22 @@ const MenuCell = ({ row, actions }) => {
         file={row}
         ref={filerowMenuToggleRef}
         disabled={isInSyncFromSharing}
-        onClick={toggleShowActionMenu}
+        onClick={event => {
+          stopPropagation(event)
+          toggleShowActionMenu()
+        }}
       />
       {contextMenuActions && showActionMenu && (
-        <ActionMenuWithHeader
-          file={row}
-          anchorElRef={filerowMenuToggleRef}
-          actions={contextMenuActions}
-          onClose={toggleShowActionMenu}
-        />
+        // The menu renders in a portal, but its events still bubble through
+        // the React tree to the row, which selects it on click.
+        <span onClick={stopPropagation} onContextMenu={stopPropagation}>
+          <ActionMenuWithHeader
+            file={row}
+            anchorElRef={filerowMenuToggleRef}
+            actions={contextMenuActions}
+            onClose={toggleShowActionMenu}
+          />
+        </span>
       )}
     </>
   )
