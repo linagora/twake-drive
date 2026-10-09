@@ -641,6 +641,9 @@
       }
     }
   },
+  "Assistant": {
+    "open": "Assistant"
+  },
   "Migration": {
     "title": "Mettre à jour Twake Drive",
     "content": "Twake Drive doit être mis à jour afin d'améliorer ses performances. Cela peut prendre jusqu'à plusieurs minutes durant lesquelles vous ne pourrez pas utiliser l'application. Souhaitez-vous le faire maintenant ? Si vous refusez, nous vous redemanderons la prochaine fois.",

@@ -641,6 +641,9 @@
       }
     }
   },
+  "Assistant": {
+    "open": "Assistente"
+  },
   "Migration": {
     "title": "Aggiorna Twake Drive",
     "content": "Twake Drive deve essere aggiornato per migliorare le prestazioni. L'operazione può richiedere diversi minuti, durante i quali non potrai usare l'app. Vuoi farlo ora? Se rifiuti, te lo chiederemo di nuovo la prossima volta",

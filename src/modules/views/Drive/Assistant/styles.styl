@@ -1,0 +1,15 @@
+@require 'settings/breakpoints'
+
+// cozy-ui gives the content of the layout the whole height, which its
+// margins would overflow beside the assistant
+.assistant-layout > :first-child
+    height auto
+
+// cozy-ui has no utility for this width nor for the background of a paper
+.assistant-panel
+    flex 0 0 365px
+    max-width 100%
+    background-color var(--paperBackgroundColor)
+
+    +medium-screen()
+        border-left 1px solid var(--dividerColor)

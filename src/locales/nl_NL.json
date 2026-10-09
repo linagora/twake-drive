@@ -484,6 +484,9 @@
       }
     }
   },
+  "Assistant": {
+    "open": "Assistent"
+  },
   "Migration": {
     "title": "Twake Schijf bijwerken",
     "content": "Twake Schijf moet worden bijgewerkt om de prestaties ervan te verbeteren - dit kan enkele minuten duren. Gedurende deze periode kun je de app niet gebruiken. Wil je Twake Schijf nu bijwerken? Als je dat niet wilt, dan vragen we het volgende keer opnieuw.",
