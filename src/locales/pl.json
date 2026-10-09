@@ -66,7 +66,10 @@
     }
   },
   "Assistant": {
-    "open": "Asystent"
+    "open": "Asystent",
+    "createFolder": "Utwórz folder",
+    "folderCreated": "Folder utworzony",
+    "folderError": "Nie udało się utworzyć folderu, spróbuj ponownie."
   },
   "Nav": {
     "item_sharings": "Udostępnione",
