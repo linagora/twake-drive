@@ -11,73 +11,95 @@ import {
 import { buildContentFolderQuery } from '@/components/FilePicker/queries'
 import { ROOT_DIR_ID } from '@/constants/config'
 
-export async function initializeFilePicker(client, config) {
+function getFilePickerTabs(config) {
   const sections = Object.values(filePickerSections)
-  if (
-    !Array.isArray(config.tabs) ||
-    config.tabs.length === 0 ||
-    config.tabs.some(tab => !sections.includes(tab)) ||
-    (config.restrictToDefaultDir && config.tabs.some(tab => tab !== 'drive'))
-  ) {
+  if (!Array.isArray(config.tabs) || config.tabs.length === 0) {
     throw new Error('Invalid File Picker tabs')
   }
-  const tabs = sections.filter(section => config.tabs.includes(section))
+  if (config.tabs.some(tab => !sections.includes(tab))) {
+    throw new Error('Invalid File Picker tabs')
+  }
+  if (config.restrictToDefaultDir && config.tabs.some(tab => tab !== 'drive')) {
+    throw new Error('Invalid File Picker tabs')
+  }
+  return sections.filter(section => config.tabs.includes(section))
+}
+
+function isValidDefaultDirId(id) {
+  return typeof id === 'string' && Boolean(id)
+}
+
+function findLocalStartingFolder(folder) {
+  if (!folder) return null
+  if (folder.driveId) throw new Error('defaultDirId must be local')
+  if (folder._type && folder._type !== 'io.cozy.files') {
+    throw new Error('defaultDirId must be local')
+  }
+  if (!models.file.isDirectory(folder) || folder.trashed) return null
+  return folder
+}
+
+async function fetchStartingFolder(client, config) {
+  if (!isValidDefaultDirId(config.defaultDirId)) {
+    throw new Error('defaultDirId must be a local folder ID')
+  }
+  let folder = null
+  let resolutionError = null
+  try {
+    folder = await fetchPickerDocument(client, config.defaultDirId)
+  } catch (error) {
+    resolutionError = error
+  }
+  const localFolder = findLocalStartingFolder(folder)
+  if (localFolder) return localFolder
+
+  const error =
+    resolutionError || new Error('defaultDirId is not an accessible folder')
+  if (config.restrictToDefaultDir) throw error
+  logger.warn(
+    'File Picker starting folder unavailable; using Drive root',
+    error
+  )
+  return null
+}
+
+async function prefetchStartingFolder(client, folderId, restrictToDefaultDir) {
+  const query = buildContentFolderQuery(folderId)
+  try {
+    await client.query(query.definition(), query.options)
+  } catch (error) {
+    if (restrictToDefaultDir) throw error
+    logger.warn('File Picker folder prefetch failed', error)
+  }
+}
+
+export async function initializeFilePicker(client, config) {
+  const tabs = getFilePickerTabs(config)
   if (
     config.restrictToDefaultDir &&
-    (typeof config.defaultDirId !== 'string' || !config.defaultDirId)
+    !isValidDefaultDirId(config.defaultDirId)
   ) {
     throw new Error('A restricted File Picker requires defaultDirId')
   }
 
   const section = tabs[0]
-  let folderId =
-    section === filePickerSections.DRIVE
-      ? ROOT_DIR_ID
-      : section === filePickerSections.RECENTS
-        ? FILE_PICKER_RECENTS_ROOT_ID
-        : FILE_PICKER_SHARINGS_ROOT_ID
-  let restrictedRoot = null
+  let folderId = {
+    [filePickerSections.DRIVE]: ROOT_DIR_ID,
+    [filePickerSections.RECENTS]: FILE_PICKER_RECENTS_ROOT_ID,
+    [filePickerSections.SHARINGS]: FILE_PICKER_SHARINGS_ROOT_ID
+  }[section]
+  let folder = null
   if (section === filePickerSections.DRIVE && config.defaultDirId !== null) {
-    if (typeof config.defaultDirId !== 'string' || !config.defaultDirId) {
-      throw new Error('defaultDirId must be a local folder ID')
-    }
-    let folder = null
-    let resolutionError = null
-    try {
-      folder = await fetchPickerDocument(client, config.defaultDirId)
-    } catch (error) {
-      resolutionError = error
-    }
-    if (
-      folder &&
-      (folder.driveId || (folder._type && folder._type !== 'io.cozy.files'))
-    ) {
-      throw new Error('defaultDirId must be local')
-    }
-    if (!folder || !models.file.isDirectory(folder) || folder.trashed) {
-      const error =
-        resolutionError || new Error('defaultDirId is not an accessible folder')
-      if (config.restrictToDefaultDir) throw error
-      logger.warn(
-        'File Picker starting folder unavailable; using Drive root',
-        error
-      )
-    } else {
-      folderId = config.defaultDirId
-      if (config.restrictToDefaultDir) {
-        restrictedRoot = { id: folderId, name: folder.name }
-      }
-    }
+    folder = await fetchStartingFolder(client, config)
+    if (folder) folderId = config.defaultDirId
   }
+  const restrictedRoot =
+    config.restrictToDefaultDir && folder
+      ? { id: folderId, name: folder.name }
+      : null
 
   if (section === filePickerSections.DRIVE) {
-    const query = buildContentFolderQuery(folderId)
-    try {
-      await client.query(query.definition(), query.options)
-    } catch (error) {
-      if (config.restrictToDefaultDir) throw error
-      logger.warn('File Picker folder prefetch failed', error)
-    }
+    await prefetchStartingFolder(client, folderId, config.restrictToDefaultDir)
   }
   return {
     ...config,
