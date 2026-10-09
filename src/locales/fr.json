@@ -671,6 +671,7 @@
       "skippedCells": "Tableau : %{smart_count} cellule sélectionnée est restée inchangée |||| Tableau : %{smart_count} cellules sélectionnées sont restées inchangées",
       "closeNotice": "Fermer",
       "insertChart": "Insérer le graphique",
+      "notApplied": "Cette réponse n’a pas de cellules à écrire dans la feuille",
       "suggestions": {
         "newSlide": "Nouvelle diapositive",
         "newSlideMessage": "Ajoute une nouvelle diapositive après celle-ci, à partir du texte",

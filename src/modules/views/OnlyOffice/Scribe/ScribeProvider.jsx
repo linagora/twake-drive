@@ -8,6 +8,7 @@ import React, {
   useState
 } from 'react'
 
+import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import { useI18n } from 'twake-i18n'
 
 import logger from '@/lib/logger'
@@ -120,6 +121,7 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
   // for it, and the panel is not opened again either
   const canRestore = isRestorePending && isAllowed
   const isOpen = text !== null
+  const { showAlert } = useAlert()
 
   useEffect(() => {
     const handleMessage = event => {
@@ -146,11 +148,17 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
         const count = event.data.skippedCells
         if (Number.isInteger(count) && count > 0) setSkippedCells(count)
       }
+      if (type === 'twake-scribe:notApplied') {
+        showAlert({
+          message: t('OnlyOffice.scribe.notApplied'),
+          severity: 'secondary'
+        })
+      }
     }
 
     window.addEventListener('message', handleMessage)
     return () => window.removeEventListener('message', handleMessage)
-  }, [serverOrigin])
+  }, [serverOrigin, showAlert, t])
 
   useEffect(() => {
     const handleResize = () => {
