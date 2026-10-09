@@ -303,6 +303,55 @@ test.describe('the scribe plugin in a workbook', () => {
   )
 
   test(
+    'adds the charts the assistant makes beside the data, one under the other',
+    { tag: '@e2e-scribe' },
+    async ({ alicePage }) => {
+      const scribe = new ScribePluginPage(alicePage)
+      await openWorkbook(scribe)
+      await scribe.selectCells('Ventes!A1:C5')
+      await scribe.getContent()
+
+      // One empty column after the block of E1:E2, beside the data
+      await scribe.insertChart({
+        chartType: 'bar',
+        range: 'A1:C5',
+        title: 'Ventes par région'
+      })
+      const [bars] = await scribe.readCharts()
+      expect(bars).toMatchObject({
+        type: 'bar',
+        title: 'Ventes par région',
+        from: { row: 0, col: 6 }
+      })
+
+      // The names and one column of values, as two areas
+      await scribe.insertChart({ chartType: 'pie', range: 'A1:A5,C1:C5' })
+      const charts = await scribe.readCharts()
+      expect(charts[1]).toMatchObject({ type: 'pie', from: { col: 6 } })
+      expect(charts[1].series).toEqual(['Ventes!$C$2:$C$5'])
+      expect(charts[1].from.row).toBeGreaterThan(bars.to.row)
+
+      // Without a range, the chart is of the cells given
+      await scribe.insertChart({ chartType: 'lineNormal' })
+      const [, pie, line] = await scribe.readCharts()
+      expect(line.series).toEqual([
+        'Ventes!$B$2:$B$5',
+        'Ventes!$C$2:$C$5'
+      ])
+      expect(line.from.row).toBeGreaterThan(pie.to.row)
+
+      // The cells are left as they are, and one undo takes a chart back
+      expect((await scribe.readSheet()).cells[1].slice(0, 3)).toEqual([
+        'Nord',
+        '1200',
+        '1350'
+      ])
+      await scribe.undo()
+      expect(await scribe.readCharts()).toEqual([bars, pie])
+    }
+  )
+
+  test(
     'writes English formulas in an editor whose formulas are French',
     { tag: '@e2e-scribe' },
     async ({ alicePage }) => {
