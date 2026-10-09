@@ -68,8 +68,11 @@
   "Assistant": {
     "open": "Asystent",
     "createFolder": "Utwórz folder",
+    "createDocument": "Utwórz dokument",
     "folderCreated": "Folder utworzony",
     "folderError": "Nie udało się utworzyć folderu, spróbuj ponownie.",
+    "documentCreated": "Dokument utworzony",
+    "documentError": "Nie udało się utworzyć dokumentu, spróbuj ponownie.",
     "readOnly": "Ten folder jest tylko do odczytu, nie można w nim nic utworzyć.",
     "toolError": "Asystent poprosił o coś, czego Drive nie potrafi zrobić."
   },

@@ -691,8 +691,11 @@
   "Assistant": {
     "open": "Asistente",
     "createFolder": "Crear la carpeta",
+    "createDocument": "Crear el documento",
     "folderCreated": "Carpeta creada",
     "folderError": "No se ha podido crear la carpeta. Inténtelo de nuevo.",
+    "documentCreated": "Documento creado",
+    "documentError": "No se ha podido crear el documento. Inténtelo de nuevo.",
     "readOnly": "Esta carpeta es de solo lectura, no se puede crear nada en ella.",
     "toolError": "El asistente pidió algo que Drive no puede hacer."
   },

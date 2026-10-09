@@ -68,8 +68,11 @@
   "Assistant": {
     "open": "助理",
     "createFolder": "建立資料夾",
+    "createDocument": "建立文件",
     "folderCreated": "資料夾已建立",
     "folderError": "無法建立資料夾，請再試一次。",
+    "documentCreated": "文件已建立",
+    "documentError": "無法建立文件，請再試一次。",
     "readOnly": "此資料夾為唯讀，無法在其中建立任何內容。",
     "toolError": "助理要求了 Drive 無法執行的操作。"
   },
