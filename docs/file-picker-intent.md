@@ -1,8 +1,8 @@
 # File Picker Intent
 
-This document describes the **File Picker intent** exposed by Drive.
+This document specifies **version 2 of the File Picker intent API**. It is a draft for collaborative review, not a statement that the proposed extensions are already implemented. Existing link actions retain their public contract; `documents` is an explicit opt-in extension. Options marked as proposals remain open product questions.
 
-It assumes you already know how to create and run a Cozy intent (requesting an intent, loading the returned service URL, and handling the generic `ready` / `done` / `error` / `cancel` postMessage flow). It only documents what is specific to the File Picker service.
+It assumes you already know how to create and run an intent (requesting an intent, loading the returned service URL, and handling the generic `ready` / `done` / `error` / `cancel` postMessage flow). It only documents what is specific to the File Picker service.
 
 ## Intent identity
 
@@ -13,7 +13,7 @@ action = 'PICK'
 type = 'io.cozy.files'
 ```
 
-The service lets the user browse Drive, select a file or folder, and choose one of the configured link actions. By default, several files or folders can be selected. Set `multiple: false` to limit the selection to one item; the result is still returned as a `FilePickerEntry[]` array containing at most one entry.
+The service lets the user browse Drive, select a file or folder, and choose one of the configured actions. For the existing selection actions, several files or folders can be selected by default. Set `multiple: false` to limit that selection to one item; its result is still returned as a `FilePickerEntry[]` array containing at most one entry.
 
 ## Configuration
 
@@ -23,6 +23,8 @@ Pass the File Picker configuration in the intent data.
 - In raw intent attributes, it must be placed in `attributes.data`.
 
 It is not a top-level `actions` field.
+
+This example retains the existing link-action configuration:
 
 ```json
 {
@@ -59,6 +61,42 @@ interface FilePickerConfig {
   multiple?: boolean
 
   /**
+   * Local folder on the Drive instance initially opened; remote folders are
+   * not supported. Does not itself restrict navigation or hide tabs.
+   * Required when restrictToDefaultDir is true; then also defines the restricted root.
+   * Without a restriction, omit to retain the existing starting location;
+   * if deleted or inaccessible, use the usual root with a console warning.
+   * With a restriction, an invalid root produces an intent error, not a fallback.
+   */
+  defaultDirId?: string
+
+  /**
+   * Restrict navigation and selection to defaultDirId and its descendants.
+   * Defaults to false. When true, defaultDirId is required and must resolve
+   * to an accessible local folder; otherwise report a generic intent error.
+   * This restricts browsing and selection to that subtree.
+   */
+  restrictToDefaultDir?: boolean
+
+  /**
+   * Visible tabs. By default, display ['drive', 'recents', 'sharings'] in
+   * that order; with restrictToDefaultDir: true, display only ['drive'].
+   * Without a restriction, an explicit non-empty list may omit "drive".
+   * Reject empty lists, unknown identifiers and tabs forbidden by the
+   * restriction; never silently add the Drive tab. Ignore duplicates and
+   * display in Drive's usual order, not the supplied order.
+   */
+  tabs?: Array<'drive' | 'recents' | 'sharings'>
+
+  /**
+   * Proposed action returning complete selected io.cozy.files documents (files
+   * or folders), without creating links or granting permissions.
+   * Pass an object (even {}) to show its button; use ActionConfig to set its
+   * label or selection constraints. Omitted or null means hidden.
+   */
+  documents?: ActionConfig | null
+
+  /**
    * Configuration for the public sharing link action.
    * Omit to use defaults. Set to null to hide the action.
    */
@@ -84,14 +122,23 @@ interface ActionConfig {
   label?: string
 
   /**
-   * Whether folders are allowed for this action.
+   * Accepted types: "file", "folder", exact MIME types and MIME wildcards.
+   * Entries use OR matching. An empty list accepts nothing.
+   * When supplied, overrides allowFolder and allowedMimeTypes.
+   */
+  accept?: string[]
+
+  /**
+   * Whether folders are allowed for this action when accept is absent.
+   * @deprecated Use accept instead. Ignored when accept is supplied.
    */
   allowFolder?: boolean
 
   /**
-   * Allowed MIME type patterns for files.
-   * Supports exact values and wildcards: "image/png", "image/*", "*/*".
+   * Allowed MIME type patterns for files when accept is absent.
+   * Supports "image/png", "image/*" and "*/*".
    * Empty or absent means no MIME restriction.
+   * @deprecated Use accept instead. Ignored when accept is supplied.
    */
   allowedMimeTypes?: string[]
 
@@ -124,16 +171,25 @@ When no config is provided, Drive uses:
 {
   theme: { type: undefined },
   multiple: true,
+  restrictToDefaultDir: false,
+  documents: null,
   sharingLink: { allowFolder: true },
   downloadLink: { allowFolder: false }
 }
 ```
 
-Default labels:
+When no action is configured, Drive enables `sharingLink` and `downloadLink`, preserving the historical behavior. The `documents` action must be enabled explicitly and is not offered by default.
 
-| Action | Default label |
-| --- | --- |
-| `sharingLink` | `Share with public link` |
+An omitted link action keeps its default; an object overrides its default options; `null` hides it. Configuring `documents` does not implicitly hide either link action. Options such as `theme`, `multiple`, `defaultDirId`, `restrictToDefaultDir` and `tabs` do not enable `documents` or change these action defaults.
+
+For example, `{ "downloadLink": {} }` still offers both link actions. To offer only Documents, pass `{ "documents": {}, "sharingLink": null, "downloadLink": null }`. To offer Documents alongside the default link actions, pass `{ "documents": {} }`. Explicitly hiding every action leaves no confirmation action; cancellation remains available.
+
+Default labels (`documents` is proposed):
+
+| Action         | Default label                |
+| -------------- | ---------------------------- |
+| `documents`    | `Select`                     |
+| `sharingLink`  | `Share with public link`     |
 | `downloadLink` | `Attach with temporary link` |
 
 ### Theme
@@ -143,10 +199,10 @@ theme is fixed when the intent is created and does not change while it remains
 open.
 
 `undefined`, an invalid value or an omitted value preserves the existing behavior:
-the iframe follows the Cozy instance theme, with the system color scheme as a
-fallback. But following the Cozy instance theme imply to send a request to the backend
-and the theme may change after the request succeed. So if the client app knows its theme,
-it should pass it to ensure no theme glitch.
+the iframe follows the instance theme, with the system color scheme as a
+fallback. Following the instance theme requires a backend request, so the
+theme may change after that request succeeds. If the client app knows its theme,
+it should pass it to avoid a theme glitch.
 
 For `undefined`, omit `theme` from the options passed to
 `IntentDialogOpener`, which only accepts explicit `light` or `dark` values.
@@ -157,10 +213,20 @@ calling application's surrounding UI keeps its own theme.
 
 Custom intent containers remain responsible for styling their own UI. For raw
 intents, pass the `theme` object in `attributes.data` like the other File Picker
-options. The option never changes Cozy settings, local storage or the caller's
-global theme.
+options. The option never changes instance settings, local storage or the
+caller's global theme.
 
 ## Actions
+
+### `documents`
+
+Returns the complete selected `io.cozy.files` documents, enriched with each item's full `path`.
+
+- Must be explicitly enabled with an object, for example `documents: {}`.
+- Works for files and folders by default.
+- Creates no sharing link, download link or permission.
+- Does not grant the calling application additional access to the selected resources.
+- Use `accept: ["folder"]` for folder-only confirmation or `accept: ["file"]` for files only. A selection constraint alone does not hide files from the browser.
 
 ### `sharingLink`
 
@@ -194,7 +260,7 @@ Set an action to `null` to hide its button:
 
 ## Constraint behavior
 
-Drive evaluates constraints independently for each action button.
+Drive evaluates the following selection constraints independently for each selection-action button.
 
 When the selected item violates an action constraint, the corresponding button is disabled and Drive displays a tooltip explaining why.
 
@@ -202,17 +268,26 @@ When the selected item violates an action constraint, the corresponding button i
 | --- | --- |
 | `allowFolder: false` and selected item is a folder | Button disabled |
 | `allowedMimeTypes` does not match selected file MIME | Button disabled |
+| selected item does not match `accept` | Button disabled |
 | selected file size > `maxFileSize` | Button disabled |
 | selected items count > `maxFileCount` | Button disabled |
 | total selected file size > `availableSize` | Button disabled |
 
-MIME matching supports:
+`accept` is the preferred type-filtering option. The existing options with the same scope, `allowFolder` and `allowedMimeTypes`, are deprecated but remain supported for backward compatibility. When `accept` is explicitly supplied, it overrides both; their constraints are ignored rather than combined with it. This precedence also applies to `accept: []`, which accepts nothing. When `accept` is absent, both deprecated options retain their historical behavior, including no MIME restriction for empty or absent `allowedMimeTypes`. Size and count constraints remain independent and are not deprecated. No `onlyFolder` alias is specified.
+
+The `accept` vocabulary is:
 
 ```txt
-image/png       exact match
-image/*         any image type
-*/*             any MIME type
+file            any file
+folder          any folder
+image/png       file with an exact MIME type
+image/*         file with any image MIME type
+*/*             file with any MIME type
 ```
+
+`file` and `folder` are picker tokens, not MIME types stored in the documents. Entries are combined with OR: `["folder", "image/*"]` accepts folders or images. Every selected item must match for the action to be enabled. An empty `accept` list accepts nothing. Without an explicit filter, Documents and sharing links accept files and folders, while download links retain their files-only default.
+
+Folder navigation remains available even when folders cannot be selected for an action. Constraints control confirmation, not the types displayed in the browser; the browser may display both folders and files.
 
 `maxFileCount` and `availableSize` are enforced when present. Folders count
 toward `maxFileCount` but are excluded from the `availableSize` total.
@@ -227,10 +302,16 @@ On success, the intent result document is a **bare array** of file entries:
 }
 ```
 
+All entries come from the action selected by the user. There is no new result wrapper or action discriminator.
+
 ### FilePickerEntry
 
 ```ts
-interface FilePickerEntry {
+import type { IOCozyFile, IOCozyFolder } from 'cozy-client/types/types'
+
+type FilePickerDocument = (IOCozyFile | IOCozyFolder) & { path: string }
+
+interface FilePickerLinkEntry {
   id: string
   name: string
   size: number
@@ -241,11 +322,15 @@ interface FilePickerEntry {
     link: string
   }
 }
+
+type FilePickerEntry = FilePickerDocument | FilePickerLinkEntry
 ```
 
-Exactly one of `sharingLink` or `downloadLink` is present, depending on the action selected by the user.
+The `documents` action returns complete `io.cozy.files` documents, preserving their fields and types, including metadata and relationships. Each returned item has a full, absolute `path` including its own name (for example `/Projects/invoice.pdf` for a file), not just its parent directory. For files, Drive derives this response-only field from the parent folder's path and the selected item's name, using the correct sharing/Shared Drive context when applicable. The path is not a field persisted in the file's CouchDB document; Drive does not save the enriched result or return an incomplete path if the parent cannot be resolved. It does not include binary file contents or recursively load a folder's children.
 
-Example:
+The link actions retain their historical result: `id`, `name`, numeric `size`, `mimeType`, the generated link and an optional thumbnail. They do not switch to complete `io.cozy.files` documents. Exactly one of `sharingLink` or `downloadLink` is present for the corresponding link action.
+
+Example of a download result:
 
 ```json
 {
@@ -257,25 +342,27 @@ Example:
       "mimeType": "application/pdf",
       "downloadLink": "https://alice.example/files/download/...",
       "thumbnail": {
-        "link": "https://cdn.example.com/files/pdf.jpg"
+        "link": "https://files.twake.app/email-assets/file-picker/pdf.png"
       }
     }
   ]
 }
 ```
 
-For folders, `size` is `0` and `mimeType` is `null`.
+For link-action folders, `size` is `0` and `mimeType` is `null`. For `documents`, folders retain their original document fields; Drive does not synthesize those values or rename `_id` to `id`.
+
+Caller-controlled projection (`fields`) is deferred to a possible future option, outside this contract. No configuration support, projection behavior or projected result type is promised. Documents return complete documents; link actions retain their historical payload.
 
 ### Thumbnails
 
-The File Picker may provide a thumbnail (an illustration or a preview) that may be used by the caller. The thumbnail link is public and has an unlimited lifetime. It is currently a 60x60 png image. Folders use a dedicated `folder.png` thumbnail.
+For link actions, the File Picker may provide a thumbnail (an illustration or a preview) that may be used by the caller. The `documents` action returns its documents without generating a thumbnail. The thumbnail link is public and has an unlimited lifetime. It is currently a 60x60 png image. Folders use a dedicated `folder.png` thumbnail.
 
 ## Error handling
 
-Business errors (such as a missing file or failure to generate a link) are handled internally by the File Picker.
+For the selection actions, business errors (such as a missing file or failure to generate a link) are handled internally by the File Picker.
 It displays an error message directly to the user, allowing them to select another file or cancel.
 
-The intent does not throw business errors back to the caller application. It will only return a success document or a cancellation.
+Business errors remain inside the picker; they are not thrown back to the caller. Invalid configuration and fatal initialization errors instead terminate through the existing generic intent `error` channel to the caller. This includes invalid tab lists, a remote folder supplied as `defaultDirId`, `restrictToDefaultDir: true` without `defaultDirId`, and a missing, deleted, inaccessible or unverifiable folder required as the restricted root. No new error codes are introduced. The specified recoverable starting-folder fallbacks remain fallbacks, not fatal errors.
 
 ## Cancel result
 
@@ -286,13 +373,17 @@ There is no File Picker cancellation payload and no `CANCELLED` error code.
 ## `readyToUse` signal
 
 In addition to the generic intent `ready` handshake, the File Picker sends a
-`readyToUse` message once its UI is rendered and the root folder has loaded.
+`readyToUse` message once its UI and the actual validated initial location are
+usable, after applying any specified fallback. This location may be a custom
+starting folder or the restricted root, not the ordinary Drive root.
 
-The signal fires exactly once per intent. Navigating into subfolders does not
-re-fire it. It fires even if the initial folder query errors, since the picker
-is still interactive.
+The signal fires once when the picker becomes usable; navigating into subfolders
+does not re-fire it. A recoverable query error does not prevent the signal if the
+picker remains interactive. Invalid configuration or a terminal initialization
+error is reported through the generic intent `error` channel instead; do not
+announce `readyToUse` for an unusable picker.
 
-## Handling both link modes
+## Handling result modes
 
 ```js
 const handleComplete = result => {
@@ -306,7 +397,10 @@ const handleComplete = result => {
 
   if (entry.sharingLink) {
     insertLink(entry.sharingLink)
+    return
   }
+
+  useDocument(entry)
 }
 ```
 
@@ -315,3 +409,42 @@ const handleComplete = result => {
 The count and size limits are checked on the currently selected items only:
 `maxFileCount` counts every selected item including folders, while
 `availableSize` sums only selected files (folders are excluded).
+
+`defaultDirId` accepts only local `io.cozy.files` folder documents on the Drive instance, not remote folder identifiers. A remote folder supplied for this option is invalid configuration and is reported through the generic intent `error` channel; do not attempt to resolve it through a remote sharing. Locality does not itself mean unshared: a shared folder stored on this instance is still local. This input restriction does not hide shared folders reached through navigation.
+
+A supplied `tabs` list filters the visible tabs. Without a restriction, a non-empty list may omit `drive`; for example, `{"tabs": ["sharings", "recents"]}` displays Recents then Sharings and opens Recents first. Drive is not silently added. Empty lists and unknown identifiers are rejected, not replaced by defaults. Duplicate identifiers are ignored after their first occurrence. Tabs appear in Drive's usual order, regardless of the caller's order. When `restrictToDefaultDir` is absent or false, omitting `tabs` retains all three default tabs.
+
+When `restrictToDefaultDir` is absent or false and the explicit `tabs` list omits `drive`, a supplied `defaultDirId` is ignored. The picker initializes the first visible tab in the effective display order (Drive's usual order filtered by `tabs`), rather than rejecting the configuration or opening an unavailable Drive location. For example, with `{"tabs": ["sharings", "recents"], "defaultDirId": "local-folder-id"}`, Recents is the first visible tab and opens first; the folder ID has no effect.
+
+`restrictToDefaultDir` defaults to `false`. When absent or false, `defaultDirId` is optional and only sets the starting location. When true, `defaultDirId` is required and defines both the starting folder and the hard navigation and selection boundary. `restrictToDefaultDir: true` without `defaultDirId` is invalid configuration, reported through the generic intent `error` channel; no implicit root is substituted.
+
+The permitted subtree includes `defaultDirId` itself and its descendants. Users cannot navigate above it or select an item outside it through the picker. This configuration does not define a separate starting folder below a distinct restricted root.
+
+With `restrictToDefaultDir: true`, Recents and Sharings are forbidden. Omitted `tabs` shows Drive alone. An explicit list may contain only `drive` (duplicates are ignored); any other identifier, including `recents` or `sharings`, is rejected rather than silently hidden. The existing empty-list rejection still applies. When `restrictToDefaultDir` is absent or false, there is no imposed subtree and callers may choose a non-empty list without Drive.
+
+Without a restriction, if `defaultDirId` refers to a deleted or inaccessible folder, Drive falls back to the usual root without a user-visible message and logs a warning to the browser console. The starting folder does not itself restrict navigation or change the configured tabs.
+
+With `restrictToDefaultDir: true`, a missing, deleted, inaccessible or unverifiable `defaultDirId` folder terminates the intent through the generic `error` channel to the caller. It must never fall back to a broader location.
+
+For example, this configuration enables document selection, starts in a local folder and confines browsing and selection to its subtree:
+
+```json
+{
+  "action": "PICK",
+  "type": "io.cozy.files",
+  "data": {
+    "documents": {},
+    "defaultDirId": "local-folder-id",
+    "restrictToDefaultDir": true,
+    "tabs": ["drive"]
+  }
+}
+```
+
+## Acceptance criteria
+
+- The intent identity is `PICK` / `io.cozy.files`; `documents` is opt-in, while the historical link actions retain their defaults.
+- Omitted `tabs` displays `drive`, `recents`, `sharings` in that order; with `restrictToDefaultDir: true`, omission displays only `drive`.
+- `defaultDirId` accepts only an accessible local folder. Without restriction it sets the starting location and falls back to the usual root with a console warning if unavailable; with restriction it is required and forms the navigation and selection boundary, with no broader fallback.
+- Without a restriction, an explicit non-empty `tabs` list may omit `drive`; omitted `tabs` retains the three defaults. If `drive` is omitted, `defaultDirId` is ignored and the first visible tab in the effective display order opens. Empty, unknown or restriction-forbidden lists are rejected rather than silently changed. With `restrictToDefaultDir: true`, only `drive` is allowed.
+- A successful selection returns the existing bare `document: FilePickerEntry[]` payload. Documents entries include a full response-only `path` with the item's name; historical link entries are unchanged. Business errors remain in the picker and user cancellation uses the generic `cancel` channel without a File Picker-specific payload.
