@@ -12,14 +12,13 @@ import { buildContentFolderQuery } from '@/components/FilePicker/queries'
 import { ROOT_DIR_ID } from '@/constants/config'
 
 function getFilePickerTabs(config) {
-  const sections = Object.values(filePickerSections)
+  const sections = config.restrictToDefaultDir
+    ? [filePickerSections.DRIVE]
+    : Object.values(filePickerSections)
   if (!Array.isArray(config.tabs) || config.tabs.length === 0) {
     throw new Error('Invalid File Picker tabs')
   }
   if (config.tabs.some(tab => !sections.includes(tab))) {
-    throw new Error('Invalid File Picker tabs')
-  }
-  if (config.restrictToDefaultDir && config.tabs.some(tab => tab !== 'drive')) {
     throw new Error('Invalid File Picker tabs')
   }
   return sections.filter(section => config.tabs.includes(section))
@@ -29,12 +28,13 @@ function isValidDefaultDirId(id) {
   return typeof id === 'string' && Boolean(id)
 }
 
+function hasLocalFileScope(folder) {
+  return !folder.driveId && (!folder._type || folder._type === 'io.cozy.files')
+}
+
 function findLocalStartingFolder(folder) {
   if (!folder) return null
-  if (folder.driveId) throw new Error('defaultDirId must be local')
-  if (folder._type && folder._type !== 'io.cozy.files') {
-    throw new Error('defaultDirId must be local')
-  }
+  if (!hasLocalFileScope(folder)) throw new Error('defaultDirId must be local')
   if (!models.file.isDirectory(folder) || folder.trashed) return null
   return folder
 }
@@ -73,6 +73,12 @@ async function prefetchStartingFolder(client, folderId, restrictToDefaultDir) {
   }
 }
 
+function getRestrictedRoot(folderId, folder, restrictToDefaultDir) {
+  return restrictToDefaultDir && folder
+    ? { id: folderId, name: folder.name }
+    : null
+}
+
 export async function initializeFilePicker(client, config) {
   const tabs = getFilePickerTabs(config)
   if (
@@ -93,10 +99,11 @@ export async function initializeFilePicker(client, config) {
     folder = await fetchStartingFolder(client, config)
     if (folder) folderId = config.defaultDirId
   }
-  const restrictedRoot =
-    config.restrictToDefaultDir && folder
-      ? { id: folderId, name: folder.name }
-      : null
+  const restrictedRoot = getRestrictedRoot(
+    folderId,
+    folder,
+    config.restrictToDefaultDir
+  )
 
   if (section === filePickerSections.DRIVE) {
     await prefetchStartingFolder(client, folderId, config.restrictToDefaultDir)
