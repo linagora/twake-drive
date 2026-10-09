@@ -642,7 +642,13 @@
     }
   },
   "Assistant": {
-    "open": "Ассистент"
+    "open": "Ассистент",
+    "createFolder": "Создать папку",
+    "createDocument": "Создать документ",
+    "folderCreated": "Папка создана",
+    "folderError": "Не удалось создать папку, попробуйте ещё раз.",
+    "documentCreated": "Документ создан",
+    "documentError": "Не удалось создать документ, попробуйте ещё раз."
   },
   "Migration": {
     "title": "Обновление Twake Drive",

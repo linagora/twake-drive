@@ -642,7 +642,13 @@
     }
   },
   "Assistant": {
-    "open": "Assistant"
+    "open": "Assistant",
+    "createFolder": "Create the folder",
+    "createDocument": "Create the document",
+    "folderCreated": "Folder created",
+    "folderError": "The folder could not be created, please try again.",
+    "documentCreated": "Document created",
+    "documentError": "The document could not be created, please try again."
   },
   "Migration": {
     "title": "Update Twake Drive",

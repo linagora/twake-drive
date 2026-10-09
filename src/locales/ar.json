@@ -18,7 +18,13 @@
     }
   },
   "Assistant": {
-    "open": "المساعد"
+    "open": "المساعد",
+    "createFolder": "إنشاء المجلد",
+    "createDocument": "إنشاء المستند",
+    "folderCreated": "تم إنشاء المجلد",
+    "folderError": "تعذّر إنشاء المجلد، يرجى المحاولة مرة أخرى.",
+    "documentCreated": "تم إنشاء المستند",
+    "documentError": "تعذّر إنشاء المستند، يرجى المحاولة مرة أخرى."
   },
   "Nav": {
     "item_drive": "القرص",

@@ -485,7 +485,13 @@
     }
   },
   "Assistant": {
-    "open": "Assistent"
+    "open": "Assistent",
+    "createFolder": "Map maken",
+    "createDocument": "Document maken",
+    "folderCreated": "Map gemaakt",
+    "folderError": "De map kon niet worden gemaakt, probeer het opnieuw.",
+    "documentCreated": "Document gemaakt",
+    "documentError": "Het document kon niet worden gemaakt, probeer het opnieuw."
   },
   "Migration": {
     "title": "Twake Schijf bijwerken",

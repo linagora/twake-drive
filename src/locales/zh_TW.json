@@ -18,7 +18,13 @@
     }
   },
   "Assistant": {
-    "open": "助理"
+    "open": "助理",
+    "createFolder": "建立資料夾",
+    "createDocument": "建立文件",
+    "folderCreated": "資料夾已建立",
+    "folderError": "無法建立資料夾，請再試一次。",
+    "documentCreated": "文件已建立",
+    "documentError": "無法建立文件，請再試一次。"
   },
   "Nav": {
     "item_drive": "硬碟",

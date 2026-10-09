@@ -102,7 +102,13 @@
     }
   },
   "Assistant": {
-    "open": "어시스턴트"
+    "open": "어시스턴트",
+    "createFolder": "폴더 만들기",
+    "createDocument": "문서 만들기",
+    "folderCreated": "폴더를 만들었습니다",
+    "folderError": "폴더를 만들 수 없습니다. 다시 시도해 주세요.",
+    "documentCreated": "문서를 만들었습니다",
+    "documentError": "문서를 만들 수 없습니다. 다시 시도해 주세요."
   },
   "actions": {
     "details": "세부 정보",
