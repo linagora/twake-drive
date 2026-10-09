@@ -691,8 +691,11 @@
   "Assistant": {
     "open": "Assistant",
     "createFolder": "Create the folder",
+    "createDocument": "Create the document",
     "folderCreated": "Folder created",
     "folderError": "The folder could not be created, please try again.",
+    "documentCreated": "Document created",
+    "documentError": "The document could not be created, please try again.",
     "readOnly": "This folder is read-only, nothing can be created in it.",
     "toolError": "The assistant asked for something Drive cannot do."
   },

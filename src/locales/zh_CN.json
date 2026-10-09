@@ -68,8 +68,11 @@
   "Assistant": {
     "open": "助手",
     "createFolder": "创建文件夹",
+    "createDocument": "创建文档",
     "folderCreated": "文件夹已创建",
     "folderError": "无法创建文件夹，请重试。",
+    "documentCreated": "文档已创建",
+    "documentError": "无法创建文档，请重试。",
     "readOnly": "此文件夹为只读，无法在其中创建任何内容。",
     "toolError": "助手请求了 Drive 无法执行的操作。"
   },
