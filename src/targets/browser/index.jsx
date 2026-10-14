@@ -36,8 +36,8 @@ const AppComponent = props => (
   </App>
 )
 
-const init = () => {
-  const { locale, polyglot, client, store, root } = setupApp()
+const init = async () => {
+  const { locale, polyglot, client, store, root } = await setupApp()
 
   createRoot(root).render(
     <AppComponent
