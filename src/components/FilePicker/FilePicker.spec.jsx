@@ -47,6 +47,7 @@ jest.mock('cozy-client', () => ({
 }))
 jest.mock('cozy-sharing', () => ({ useSharingContext: jest.fn() }))
 jest.mock('twake-i18n')
+jest.mock('@/modules/filelist/icons/FileThumbnail', () => () => null)
 jest.mock('@/hooks', () => ({
   useFolderSort: jest.fn()
 }))

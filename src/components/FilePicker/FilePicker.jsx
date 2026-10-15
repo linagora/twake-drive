@@ -114,6 +114,7 @@ function useCurrentFolderResolver({
 
 const FilePickerController = ({
   mode,
+  viewType,
   initialLocation,
   availableSections,
   displayedTypes,
@@ -248,6 +249,7 @@ const FilePickerController = ({
         <FilePickerBody
           key={location.section}
           mode={mode}
+          viewType={viewType}
           isSectionChanging={isSectionChanging}
           onSectionReady={handleSectionReady}
           sortOrder={sortOrder}
@@ -280,6 +282,7 @@ const FilePickerController = ({
 }
 
 FilePickerController.propTypes = {
+  viewType: PropTypes.oneOf(['list', 'grid']),
   mode: PropTypes.oneOf(Object.values(filePickerModes)).isRequired,
   initialLocation: PropTypes.shape({
     section: PropTypes.oneOf(Object.values(filePickerSections)).isRequired,
@@ -332,6 +335,7 @@ export const FilePicker = ({ selectedItems, onSelectionChange, ...props }) => {
 }
 
 FilePicker.propTypes = {
+  viewType: PropTypes.oneOf(['list', 'grid']),
   mode: PropTypes.oneOf(Object.values(filePickerModes)).isRequired,
   initialLocation: PropTypes.shape({
     section: PropTypes.oneOf(Object.values(filePickerSections)).isRequired,
@@ -369,6 +373,7 @@ FilePicker.propTypes = {
 }
 
 FilePicker.defaultProps = {
+  viewType: 'list',
   initialLocation: DEFAULT_LOCATION,
   availableSections: Object.values(filePickerSections),
   displayedTypes: Object.values(filePickerItemTypes),

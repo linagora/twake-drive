@@ -1,6 +1,6 @@
 import cx from 'classnames'
 import PropTypes from 'prop-types'
-import React, { forwardRef, memo, useCallback, useMemo, useRef } from 'react'
+import React, { forwardRef, memo, useCallback, useMemo } from 'react'
 
 import Box from 'cozy-ui/transpiled/react/Box'
 import VirtualizedTable from 'cozy-ui/transpiled/react/Table/Virtualized'
@@ -12,8 +12,7 @@ import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import { useI18n } from 'twake-i18n'
 
 import { PickerViewTableCell } from './PickerViewTableCell'
-
-import { makeMobileHandlers } from '@/hooks/useOnLongPress/helpers'
+import { usePickerItemHandlers } from './usePickerItemHandlers'
 
 export const makePickerViewColumns = t => [
   {
@@ -39,37 +38,15 @@ export const makePickerViewColumns = t => [
 export const PickerViewTableRow = forwardRef(
   ({ item, context, className, ...props }, ref) => {
     const row = item
-    const timerId = useRef()
-    const isLongPress = useRef(false)
     const isDisabled = context.isItemDisabled(row)
     const disabledReason = context.getItemDisabledReason?.(row)
     const { t } = useI18n()
 
-    const handleClick = event => {
-      if (!isDisabled) context.onItemClick(row, event)
-    }
-
-    const handleToggle = event => {
-      if (!isDisabled) context.onItemToggle?.(row, event)
-    }
-
-    const handleDoubleClick = event => {
-      if (!isDisabled) context.onItemDoubleClick?.(row, event)
-    }
-
-    let handlers = { onClick: handleClick, onDoubleClick: handleDoubleClick }
-    if (context.isMobile) {
-      // eslint-disable-next-line react-hooks/refs
-      handlers = makeMobileHandlers({
-        timerId,
-        disabled: isDisabled,
-        selectionModeActive: context.selectionModeActive,
-        isRenaming: false,
-        isLongPress,
-        openLink: handleClick,
-        toggle: handleToggle
-      })
-    }
+    const handlers = usePickerItemHandlers({
+      ...context,
+      item: row,
+      isDisabled
+    })
 
     return (
       <TableRow

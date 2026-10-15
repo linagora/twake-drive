@@ -11,6 +11,7 @@ const {
 
 export const useFilePickerAdapter = ({
   items = [],
+  viewType = 'list',
   canSelectItem,
   multiple = false,
   selectionContainerRef,
@@ -24,6 +25,7 @@ export const useFilePickerAdapter = ({
   const { handleItemClick, handleMobileToggleSelect, selectedItemIds } =
     useFilePickerSelection({
       items,
+      viewType,
       canSelectItem,
       multiple,
       selectionContainerRef,

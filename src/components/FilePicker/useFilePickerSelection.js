@@ -6,6 +6,7 @@ import { useSelectionContext } from '@/modules/selection/SelectionProvider'
 
 export const useFilePickerSelection = ({
   items,
+  viewType = 'list',
   canSelectItem,
   multiple,
   selectionContainerRef,
@@ -48,7 +49,7 @@ export const useFilePickerSelection = ({
   const { setLastInteractedItem, onShiftClick } = useShiftSelection(
     {
       items: multiple ? selectableItems : [],
-      viewType: 'list',
+      viewType,
       scrollElement,
       keyboardEventTarget: document,
       scrollToIndex: scrollToSelectableItem
