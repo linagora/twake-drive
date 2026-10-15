@@ -85,6 +85,15 @@ describe('makeSheetContent', () => {
     )
   })
 
+  it('keeps the column after a cell that ends with a backslash', () => {
+    const content = makeSheetContent({
+      ...sheet,
+      texts: [['C:\\', 'T1', 'Total'], ...sheet.texts.slice(1)]
+    })
+
+    expect(content.split('\n')[4]).toBe('| 1 | C:\\\\ | T1 | Total |')
+  })
+
   it('names the selected cell of a block, and the part of a range given', () => {
     const content = makeSheetContent({
       ...sheet,
