@@ -183,7 +183,8 @@ support.
 The Document Server has the scribe plugin of the worktree
 (`plugins/onlyoffice-scribe/build`, built by the global setup).
 `e2e/tests/onlyoffice-scribe.spec.ts` plays its selection cases on real
-documents, see `e2e/fixtures/scribe/README.md`. Its tests are tagged
+documents, and `e2e/tests/onlyoffice-scribe-slides.spec.ts` on a
+presentation, see `e2e/fixtures/scribe/README.md`. Their tests are tagged
 `@e2e-scribe`:
 
 ```sh
