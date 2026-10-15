@@ -144,6 +144,25 @@ Consider using [rlink] instead of `yarn link`
 
 [Cozy-client] is our API library that provides an unified API on top of the cozy-stack. If you need to develop / hack cozy-client in parallel of your application, you can use the same trick that we used with [cozy-ui]: yarn linking.
 
+### Error reporting
+
+Error reporting is off unless the build is given a collector. Set `SENTRY_DSN`
+in the build environment and `initSentry` will report there; leave it unset and
+no reporter is initialised at all, which is what a deployment that must not send
+anything outside its own perimeter wants.
+
+```sh
+$ SENTRY_DSN='https://<key>@<your-collector>/<project>' yarn build
+```
+
+The CI build reads it from the `SENTRY_DSN` repository variable. It is a
+variable rather than a secret: the DSN ships inside the client bundle and is
+readable by anyone loading the app.
+
+Reports are scrubbed before they leave the browser, see `src/lib/sentryScrub.js`:
+public pages authenticate with the sharecode carried in their URL, and download
+and thumbnail links hold their secret in the path.
+
 ### Tests
 
 Tests are run by [jest] under the hood, and written using [chai] and [sinon]. You can easily run the tests suite with:
