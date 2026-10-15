@@ -75,7 +75,8 @@ export function makeBoxAddress({ r1, c1, r2, c2 }) {
     : `${start}:${makeAddress({ row: r2, col: c2 })}`
 }
 
-const escapeCell = text => text.replace(/\|/g, '\\|').replace(/\r?\n/g, '<br>')
+const escapeCell = text =>
+  text.replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/\r?\n/g, '<br>')
 
 /**
  * The cells as the assistant gets them: a Markdown table with the letters
