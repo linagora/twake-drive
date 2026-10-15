@@ -3,8 +3,10 @@ import path from 'path'
 
 import { USERS } from '../helpers/config'
 import { test, expect, safeUnlink, stamp } from '../helpers/fixtures'
+import { DEFAULT_FLAGS, setFlags } from '../helpers/flags'
 import {
   createFile,
+  createFolder,
   ensureRootFolder,
   findLinkPermission,
   trashById
@@ -70,6 +72,17 @@ test.describe('File Picker', () => {
       await safeUnlink(linkFreeTmpPath)
     }
 
+    const parentFolderId = await ensureRootFolder(
+      USERS.alice.instance,
+      parentFolder
+    )
+    await createFile({
+      instance: USERS.alice.instance,
+      parentId: parentFolderId,
+      name: 'a.txt',
+      content: 'Short filename for grid alignment'
+    })
+
     const photosFolderId = await ensureRootFolder(
       USERS.alice.instance,
       'Photos'
@@ -101,6 +114,111 @@ test.describe('File Picker', () => {
   test.beforeEach(async ({ alicePage }) => {
     // Every test starts from Drive root.
     await alicePage.goto(`${USERS.alice.appUrl}/#/folder`)
+  })
+
+  test('keeps grid spacing compact and names aligned at desktop and narrow widths', async ({
+    alicePage
+  }) => {
+    picker = new FilePickerPage(alicePage)
+    await picker.openDemo()
+    await picker.navigateToFolder(parentFolder)
+    await picker.showGrid()
+
+    for (const width of [1280, 600, 375]) {
+      await alicePage.setViewportSize({ width, height: 812 })
+      await expect.poll(() => picker.getGridFilenameOverflows()).toEqual([])
+      await expect
+        .poll(async (): Promise<boolean> => {
+          const gaps: number[] = await picker.getGridColumnGaps()
+          return gaps.length > 0 && gaps.every(gap => Math.abs(gap - 8) <= 0.5)
+        })
+        .toBe(true)
+      await expect
+        .poll(() => picker.getGridFilenameAlignment('a.txt'))
+        .toBeLessThanOrEqual(1)
+    }
+  })
+
+  test('keeps all grid selections visible without hover regardless of reset stylesheet order', async ({
+    alicePage
+  }) => {
+    picker = new FilePickerPage(alicePage)
+    await picker.openDemo()
+    await picker.navigateToFolder(parentFolder)
+    await picker.showGrid()
+    await picker.selectAllGridItems()
+    await picker.moveGridResetStylesLast()
+
+    for (const width of [1280, 375]) {
+      await alicePage.setViewportSize({ width, height: 812 })
+      await expect
+        .poll(() => picker.getGridSelectionBackgroundErrors())
+        .toEqual([])
+    }
+  })
+
+  test('selects a later-page file after scrolling a large folder in grid view', async ({
+    alicePage
+  }) => {
+    const folderName: string = `picker-pagination-${stamp()}`
+    const folderId: string = await createFolder({
+      instance: USERS.alice.instance,
+      name: folderName
+    })
+    const names: string[] = Array.from(
+      { length: 121 },
+      (_, index) => `file-${String(index).padStart(3, '0')}.txt`
+    )
+    const fileIds: string[] = []
+    try {
+      for (const name of names) {
+        fileIds.push(
+          await createFile({
+            instance: USERS.alice.instance,
+            parentId: folderId,
+            name,
+            content: name
+          })
+        )
+      }
+      setFlags(USERS.alice.instance, {
+        ...DEFAULT_FLAGS,
+        'drive.default-updated-at-sort.enabled': false
+      })
+      const lastName: string = names[names.length - 1]
+      picker = new FilePickerPage(alicePage)
+      await picker.openWithPreset('Documents only', {
+        defaultDirId: folderId,
+        restrictToDefaultDir: true
+      })
+      await picker.showGrid()
+      await expect(picker.gridItem(names[0])).toBeVisible()
+      await expect(picker.gridItem(lastName)).toHaveCount(0)
+
+      await picker.scrollToGridItem(lastName)
+      await expect(picker.gridItem(lastName)).toBeVisible()
+      await picker.gridItem(lastName).click()
+      await expect(picker.gridItem(lastName)).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      )
+      await picker.clickDocumentsButton()
+      await picker.waitForClosed()
+
+      expect(await picker.getResultDocument()).toEqual([
+        expect.objectContaining({
+          id: fileIds[fileIds.length - 1],
+          name: lastName,
+          type: 'file',
+          dir_id: folderId,
+          path: `/${folderName}/${lastName}`
+        })
+      ])
+      await picker.closeConfirmation()
+    } finally {
+      setFlags(USERS.alice.instance, DEFAULT_FLAGS)
+      await trashById(USERS.alice.instance, folderId)
+    }
   })
 
   test('forces the dark theme without relying on caller layout utilities', async ({
