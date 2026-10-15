@@ -159,20 +159,18 @@ export function readChartPlace() {
 
   const used = sheet.GetUsedRange()
   const lastUsed = used.GetCol() - 2 + used.GetColumnsCount()
-  const lastColumns = []
-  for (let row = r1; row < r1 + rowCount; row += 1) {
-    let last = -1
-    for (let col = lastUsed; col >= 0 && last === -1; col -= 1) {
-      if (String(sheet.GetRangeByNumber(row, col).GetText() ?? '') !== '') {
-        last = col
-      }
+  const hasText = (row, col) =>
+    String(sheet.GetRangeByNumber(row, col).GetText() ?? '') !== ''
+  const findLastColumn = row => {
+    for (let col = lastUsed; col >= 0; col -= 1) {
+      if (hasText(row, col)) return col
     }
-    lastColumns.push(last)
+    return -1
   }
   // The builder gives no position of a drawing: its anchor does, and the
   // cells it covers once drawn. A drawing not drawn yet takes the room of a
   // chart.
-  const drawings = (sheet.worksheet?.Drawings ?? []).flatMap(base => {
+  const getDrawingBoxes = base => {
     const from = base?.from
     if (!from) return []
     const to = base.boundsFromTo?.to
@@ -185,7 +183,12 @@ export function readChartPlace() {
         c2: isDrawn ? to.col : from.col + 7
       }
     ]
-  })
+  }
+
+  const lastColumns = Array.from({ length: rowCount }, (_, index) =>
+    findLastColumn(r1 + index)
+  )
+  const drawings = (sheet.worksheet?.Drawings ?? []).flatMap(getDrawingBoxes)
   return { lastColumns, drawings }
 }
 
@@ -211,12 +214,44 @@ export function insertChart() {
     width,
     height
   } = Asc.scope
-  const sheet = Api.GetSheet(sheetName)
-  if (!sheet) return false
 
-  // An exception would give nothing, as a busy editor: the chart would be
-  // asked again for nothing
-  try {
+  const column = letters =>
+    [...letters].reduce((n, letter) => n * 26 + letter.charCodeAt(0) - 64, 0) -
+    1
+  const parseBox = ref => {
+    const match = String(ref ?? '').match(
+      /\$?([A-Z]+)\$?(\d+)(?::\$?([A-Z]+)\$?(\d+))?$/
+    )
+    if (!match) return null
+    const [, letters1, number1, letters2 = letters1, number2 = number1] = match
+    return {
+      r1: Number(number1) - 1,
+      c1: column(letters1),
+      r2: Number(number2) - 1,
+      c2: column(letters2)
+    }
+  }
+  const isInArea = (box, area) =>
+    box.r1 >= area.r1 &&
+    box.r2 <= area.r2 &&
+    box.c1 >= area.c1 &&
+    box.c2 <= area.c2
+  const isKept = ref => {
+    const box = parseBox(ref)
+    return !box || areas.some(area => isInArea(box, area))
+  }
+  // The editor takes the first column of one block for the names, not the
+  // one of separate areas: the chart is made of their box, then the series
+  // of the cells between them are removed
+  const removeLeftOutSeries = chart => {
+    const series = chart.Chart?.getAllSeries?.() ?? []
+    const kept = series.map(serie => isKept(serie.val?.numRef?.f))
+    if (!kept.some(Boolean)) return
+    for (let index = series.length - 1; index >= 0; index -= 1) {
+      if (!kept[index]) chart.RemoveSeria(index)
+    }
+  }
+  const addChart = sheet => {
     const chart = sheet.AddChart(
       range,
       isInRows,
@@ -231,46 +266,16 @@ export function insertChart() {
     )
     if (!chart) return false
     if (title) chart.SetTitle(title, 13, true)
-
-    // The editor takes the first column of one block for the names, not the
-    // one of separate areas: the chart is made of their box, then the series
-    // of the cells between them are removed
-    if (areas && areas.length > 1) {
-      const column = letters =>
-        [...letters].reduce(
-          (n, letter) => n * 26 + letter.charCodeAt(0) - 64,
-          0
-        ) - 1
-      const isKept = ref => {
-        const match = String(ref ?? '').match(
-          /\$?([A-Z]+)\$?(\d+)(?::\$?([A-Z]+)\$?(\d+))?$/
-        )
-        if (!match) return true
-        const [, letters1, number1, letters2 = letters1, number2 = number1] =
-          match
-        const box = {
-          r1: Number(number1) - 1,
-          c1: column(letters1),
-          r2: Number(number2) - 1,
-          c2: column(letters2)
-        }
-        return areas.some(
-          area =>
-            box.r1 >= area.r1 &&
-            box.r2 <= area.r2 &&
-            box.c1 >= area.c1 &&
-            box.c2 <= area.c2
-        )
-      }
-      const series = chart.Chart?.getAllSeries?.() ?? []
-      const kept = series.map(serie => isKept(serie.val?.numRef?.f))
-      if (kept.some(Boolean)) {
-        for (let index = series.length - 1; index >= 0; index -= 1) {
-          if (!kept[index]) chart.RemoveSeria(index)
-        }
-      }
-    }
+    if (areas && areas.length > 1) removeLeftOutSeries(chart)
     return true
+  }
+
+  const sheet = Api.GetSheet(sheetName)
+  if (!sheet) return false
+  // An exception would give nothing, as a busy editor: the chart would be
+  // asked again for nothing
+  try {
+    return addChart(sheet)
   } catch {
     return false
   }
