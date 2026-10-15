@@ -121,6 +121,11 @@ jest.mock('cozy-ui/transpiled/react/Table/Virtualized', () => {
   return { __esModule: true, default: VirtualizedTable }
 })
 
+jest.mock('cozy-ui/transpiled/react/GridList/Virtualized', () => ({
+  __esModule: true,
+  default: require('test/components/VirtualizedGridMock').VirtualizedGridMock
+}))
+
 const mockOnChange = jest.fn()
 const mockOnFileDoubleClick = jest.fn()
 const mockOnClose = jest.fn()
@@ -168,6 +173,66 @@ describe('FilePicker mobile navigation, list and actions', () => {
   afterEach(() => {
     jest.clearAllMocks()
     jest.useRealTimers()
+  })
+
+  it('keeps touch selection through view changes and navigates grid folders on tap', () => {
+    jest.useFakeTimers()
+    const { getByRole, getAllByTestId, getByTestId } = setup({
+      multiple: true
+    })
+    fireEvent.click(getByRole('button', { name: 'Grid view' }))
+    const findCard = id =>
+      getAllByTestId('grid-item').find(item => item.dataset.fileId === id)
+    longPress(findCard(mockFile.id))
+    expect(findCard(mockFile.id)).toHaveAttribute('aria-pressed', 'true')
+    expect(getByTestId('file-picker-selected-count')).toHaveTextContent('1')
+    tap(findCard(mockFolder.id))
+    expect(findCard(mockFolder.id)).toHaveAttribute('aria-pressed', 'true')
+    expect(getByTestId('file-picker-selected-count')).toHaveTextContent('2')
+    fireEvent.click(getByRole('button', { name: 'List view' }))
+    const selectedRow = getAllByTestId('list-item').find(
+      item => item.dataset.fileId === mockFile.id
+    )
+    expect(within(selectedRow).getByRole('checkbox')).toBeChecked()
+    fireEvent.click(getByRole('button', { name: 'Grid view' }))
+    tap(findCard(mockFile.id))
+    tap(findCard(mockFolder.id))
+    expect(getByTestId('public-link-btn')).toBeDisabled()
+    tap(findCard(mockFolder.id))
+    expect(getByTestId('file-picker-breadcrumb')).toHaveTextContent('Photos')
+    expect(findCard(mockChildFile.id)).toBeInTheDocument()
+    tap(findCard(mockChildFile.id))
+    expect(findCard(mockChildFile.id)).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(getByRole('button', { name: 'Back' }))
+    expect(findCard(mockFile.id)).toHaveAttribute('aria-pressed', 'false')
+    expect(getByTestId('public-link-btn')).toBeDisabled()
+  })
+
+  it.each(['touchMove', 'touchCancel'])(
+    'does not select a grid item after %s cancels a pending long touch',
+    event => {
+      jest.useFakeTimers()
+      const { getByRole, getAllByTestId, getByTestId } = setup()
+      fireEvent.click(getByRole('button', { name: 'Grid view' }))
+      const card = getAllByTestId('grid-item').find(
+        item => item.dataset.fileId === mockFile.id
+      )
+      fireEvent.touchStart(card)
+      fireEvent[event](card)
+      act(() => jest.advanceTimersByTime(300))
+      expect(card).toHaveAttribute('aria-pressed', 'false')
+      expect(getByTestId('public-link-btn')).toBeDisabled()
+    }
+  )
+
+  it('does not apply a pending grid long press after switching views', () => {
+    jest.useFakeTimers()
+    const { getByRole, getAllByTestId, getByTestId } = setup()
+    fireEvent.click(getByRole('button', { name: 'Grid view' }))
+    fireEvent.touchStart(getAllByTestId('grid-item')[0])
+    fireEvent.click(getByRole('button', { name: 'List view' }))
+    act(() => jest.advanceTimersByTime(300))
+    expect(getByTestId('public-link-btn')).toBeDisabled()
   })
 
   it('gives a single mobile action the available width', () => {

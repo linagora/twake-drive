@@ -90,6 +90,19 @@ jest.mock('cozy-ui/transpiled/react/Table/Virtualized', () => {
   return { __esModule: true, default: VirtualizedTable }
 })
 
+jest.mock('cozy-ui/transpiled/react/GridList/Virtualized', () => ({
+  __esModule: true,
+  default: require('test/components/VirtualizedGridMock').VirtualizedGridMock
+}))
+
+async function switchView(viewType) {
+  fireEvent.click(
+    await screen.findByRole('button', {
+      name: viewType === 'grid' ? 'Grid view' : 'List view'
+    })
+  )
+}
+
 const root = {
   _id: ROOT_DIR_ID,
   id: ROOT_DIR_ID,
@@ -316,7 +329,7 @@ function setup(
 function getRow(id) {
   return (
     screen
-      .queryAllByTestId('list-item')
+      .queryAllByTestId(/^(list|grid)-item$/)
       .find(row => row.getAttribute('data-file-id') === id) ?? null
   )
 }
@@ -355,6 +368,96 @@ function provideExistingSharingLink(client) {
 
 describe('PICK intent integration', () => {
   afterEach(() => jest.clearAllMocks())
+
+  it('switches presentation without losing selection, folder, action filters or writing preferences', async () => {
+    const { service, writes } = setup({
+      ...onlyDocuments,
+      defaultDirId: 'projects',
+      documents: { accept: ['file'] }
+    })
+    fireEvent.click(await waitForRow('invoice'))
+    expect(
+      screen.queryByRole('columnheader', { name: 'Name' })
+    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'List view' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    )
+    await switchView('grid')
+    expect(screen.queryByRole('table')).toBe(null)
+    expect(screen.getByRole('button', { name: 'Grid view' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    )
+    expect(getRow('invoice')).toHaveAttribute('aria-pressed', 'true')
+    expect(getRow('invoice')).toHaveAccessibleName('invoice.pdf')
+    expect(screen.getByTestId('documents-btn')).not.toBeDisabled()
+    expect(screen.getByTestId('file-picker-breadcrumb')).toHaveTextContent(
+      'Projects'
+    )
+    await switchView('list')
+    expect(
+      screen.queryByRole('columnheader', { name: 'Name' })
+    ).toBeInTheDocument()
+    expect(screen.getByTestId('documents-btn')).not.toBeDisabled()
+    await switchView('grid')
+    fireEvent.click(screen.getByTestId('documents-btn'))
+    await waitFor(() => expect(service.terminate).toHaveBeenCalledTimes(1))
+    expect(service.terminate.mock.calls[0][0]).toEqual([
+      { ...invoice, path: '/Projects/invoice.pdf' }
+    ])
+    expect(writes).toEqual([])
+  })
+
+  it('retains grid mode across folder and section navigation and returns to list without changing the folder', async () => {
+    setup(
+      { ...onlyDocuments, defaultDirId: 'projects' },
+      { recents: [invoice] }
+    )
+    await switchView('grid')
+    fireEvent.doubleClick(await waitForRow('child'))
+    expect(await waitForRow('nested')).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.queryByTestId('list-item')).toBe(null)
+    await switchView('list')
+    expect(await waitForRow('nested')).toBeInTheDocument()
+    expect(screen.queryByTestId('grid-item')).toBe(null)
+    await switchView('grid')
+    fireEvent.click(screen.getByRole('tab', { name: 'Recents' }))
+    expect(await waitForRow('invoice')).toHaveAttribute('aria-pressed', 'false')
+    fireEvent.click(screen.getByRole('tab', { name: 'My Drive' }))
+    expect(await waitForRow('projects')).toHaveAttribute(
+      'aria-pressed',
+      'false'
+    )
+    expect(screen.getByRole('button', { name: 'Grid view' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    )
+  })
+
+  it('extends the existing selection with grid keyboard arrows and confirms the actual range', async () => {
+    const { service } = setup({ ...onlyDocuments, defaultDirId: 'projects' })
+    fireEvent.click(await waitForRow('child'))
+    await switchView('grid')
+    fireEvent.keyDown(document, { key: 'ArrowRight', shiftKey: true })
+    expect(getRow('child')).toHaveAttribute('aria-pressed', 'true')
+    expect(getRow('invoice')).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(screen.getByTestId('documents-btn'))
+    await waitFor(() => expect(service.terminate).toHaveBeenCalledTimes(1))
+    expect(service.terminate.mock.calls[0][0]).toEqual([
+      child,
+      { ...invoice, path: '/Projects/invoice.pdf' }
+    ])
+  })
+
+  it('opens a grid folder with Enter without Drive actions or a viewer', async () => {
+    setup({ ...onlyDocuments, defaultDirId: 'projects' })
+    await switchView('grid')
+    fireEvent.keyDown(await waitForRow('child'), { key: 'Enter' })
+    expect(await waitForRow('nested')).toBeInTheDocument()
+    expect(screen.queryByRole('menu')).toBe(null)
+    expect(screen.queryByRole('dialog')).toBe(null)
+  })
 
   it('preserves legacy default tabs and link actions, and cancellation has no result payload', async () => {
     const { service } = setup()
@@ -444,36 +547,40 @@ describe('PICK intent integration', () => {
     expect(service.notifyReadyToUse).toHaveBeenCalledTimes(1)
   })
 
-  it('revalidates and returns complete Documents with a freshly computed absolute file path, without saving it', async () => {
-    const { service, documents, writes, client } = setup({
-      ...onlyDocuments,
-      defaultDirId: 'projects'
-    })
-    await waitForRow('invoice')
-    documents.set('invoice', {
-      ...invoice,
-      _rev: '2-fresh',
-      metadata: { author: 'Bob' },
-      path: '/stale/invoice.pdf'
-    })
-    await confirmDocument('invoice')
-    await waitFor(() => expect(service.terminate).toHaveBeenCalledTimes(1))
-    expect(service.terminate.mock.calls[0][0]).toEqual([
-      {
+  it.each(['list', 'grid'])(
+    'revalidates and returns complete Documents in %s with a freshly computed absolute file path, without saving it',
+    async viewType => {
+      const { service, documents, writes, client } = setup({
+        ...onlyDocuments,
+        defaultDirId: 'projects'
+      })
+      await waitForRow('invoice')
+      await switchView(viewType)
+      documents.set('invoice', {
         ...invoice,
         _rev: '2-fresh',
         metadata: { author: 'Bob' },
-        path: '/Projects/invoice.pdf'
-      }
-    ])
-    expect(writes).toEqual([])
-    expect(documents.get('invoice').path).toBe('/stale/invoice.pdf')
-    expect(client.getDocumentFromState('io.cozy.files', 'invoice').path).toBe(
-      '/stale/invoice.pdf'
-    )
-    expect(screen.queryByTestId('public-link-btn')).toBe(null)
-    expect(screen.queryByTestId('temporary-download-link-btn')).toBe(null)
-  })
+        path: '/stale/invoice.pdf'
+      })
+      await confirmDocument('invoice')
+      await waitFor(() => expect(service.terminate).toHaveBeenCalledTimes(1))
+      expect(service.terminate.mock.calls[0][0]).toEqual([
+        {
+          ...invoice,
+          _rev: '2-fresh',
+          metadata: { author: 'Bob' },
+          path: '/Projects/invoice.pdf'
+        }
+      ])
+      expect(writes).toEqual([])
+      expect(documents.get('invoice').path).toBe('/stale/invoice.pdf')
+      expect(client.getDocumentFromState('io.cozy.files', 'invoice').path).toBe(
+        '/stale/invoice.pdf'
+      )
+      expect(screen.queryByTestId('public-link-btn')).toBe(null)
+      expect(screen.queryByTestId('temporary-download-link-btn')).toBe(null)
+    }
+  )
 
   it('includes the filename at the Drive root and preserves complete folder documents', async () => {
     const file = { ...invoice, dir_id: ROOT_DIR_ID }
@@ -538,20 +645,24 @@ describe('PICK intent integration', () => {
     expect(service.throw).not.toHaveBeenCalled()
   })
 
-  it('keeps single selection as an array result, including document-only double click confirmation', async () => {
-    const { service } = setup({
-      ...onlyDocuments,
-      multiple: false,
-      defaultDirId: 'projects'
-    })
-    fireEvent.click(await waitForRow('child'))
-    fireEvent.click(getRow('invoice'), { ctrlKey: true })
-    fireEvent.doubleClick(getRow('invoice'))
-    await waitFor(() => expect(service.terminate).toHaveBeenCalledTimes(1))
-    expect(service.terminate.mock.calls[0][0]).toEqual([
-      { ...invoice, path: '/Projects/invoice.pdf' }
-    ])
-  })
+  it.each(['list', 'grid'])(
+    'keeps single selection as an array result in %s, including document-only double click confirmation',
+    async viewType => {
+      const { service } = setup({
+        ...onlyDocuments,
+        multiple: false,
+        defaultDirId: 'projects'
+      })
+      await switchView(viewType)
+      fireEvent.click(await waitForRow('child'))
+      fireEvent.click(getRow('invoice'), { ctrlKey: true })
+      fireEvent.doubleClick(getRow('invoice'))
+      await waitFor(() => expect(service.terminate).toHaveBeenCalledTimes(1))
+      expect(service.terminate.mock.calls[0][0]).toEqual([
+        { ...invoice, path: '/Projects/invoice.pdf' }
+      ])
+    }
+  )
 
   it('preserves local shared-folder selection without adding rights', async () => {
     const { service, writes } = setup(
@@ -780,32 +891,36 @@ describe('PICK intent integration', () => {
     expect(service.notifyReadyToUse).toHaveBeenCalledTimes(1)
   })
 
-  it('anchors restricted breadcrumbs and navigation, and clears selection when entering and leaving descendants', async () => {
-    const { service } = setup({
-      ...onlyDocuments,
-      defaultDirId: 'projects',
-      restrictToDefaultDir: true
-    })
-    fireEvent.click(await waitForRow('invoice'))
-    expect(screen.getByTestId('documents-btn')).not.toBeDisabled()
-    expect(screen.getAllByRole('tab').map(tab => tab.textContent)).toEqual([
-      'My Drive'
-    ])
-    expect(
-      within(screen.getByTestId('file-picker-breadcrumb')).queryByRole(
-        'button',
-        { name: 'My Drive' }
-      )
-    ).toBe(null)
-    fireEvent.doubleClick(getRow('child'))
-    await waitForRow('nested')
-    expect(screen.getByTestId('documents-btn')).toBeDisabled()
-    fireEvent.click(await screen.findByRole('button', { name: 'Projects' }))
-    await waitForRow('invoice')
-    expect(screen.getByTestId('documents-btn')).toBeDisabled()
-    expect(service.notifyReadyToUse).toHaveBeenCalledTimes(1)
-    expect(service.throw).not.toHaveBeenCalled()
-  })
+  it.each(['list', 'grid'])(
+    'anchors restricted breadcrumbs and navigation in %s, and clears selection when entering and leaving descendants',
+    async viewType => {
+      const { service } = setup({
+        ...onlyDocuments,
+        defaultDirId: 'projects',
+        restrictToDefaultDir: true
+      })
+      await switchView(viewType)
+      fireEvent.click(await waitForRow('invoice'))
+      expect(screen.getByTestId('documents-btn')).not.toBeDisabled()
+      expect(screen.getAllByRole('tab').map(tab => tab.textContent)).toEqual([
+        'My Drive'
+      ])
+      expect(
+        within(screen.getByTestId('file-picker-breadcrumb')).queryByRole(
+          'button',
+          { name: 'My Drive' }
+        )
+      ).toBe(null)
+      fireEvent.doubleClick(getRow('child'))
+      await waitForRow('nested')
+      expect(screen.getByTestId('documents-btn')).toBeDisabled()
+      fireEvent.click(await screen.findByRole('button', { name: 'Projects' }))
+      await waitForRow('invoice')
+      expect(screen.getByTestId('documents-btn')).toBeDisabled()
+      expect(service.notifyReadyToUse).toHaveBeenCalledTimes(1)
+      expect(service.throw).not.toHaveBeenCalled()
+    }
+  )
 
   it('keeps restricted navigation and confirmation inside a freshly renamed root', async () => {
     const { service, documents } = setup({
@@ -918,25 +1033,29 @@ describe('PICK intent integration', () => {
     expect(service.throw).not.toHaveBeenCalled()
   })
 
-  it('evaluates accept independently for each action without hiding files or preventing folder navigation', async () => {
-    setup({
-      defaultDirId: 'projects',
-      documents: { accept: ['folder'] },
-      sharingLink: { accept: ['file'] },
-      downloadLink: { accept: ['folder'] }
-    })
-    fireEvent.click(await waitForRow('invoice'))
-    expect(screen.getByTestId('documents-btn')).toBeDisabled()
-    expect(screen.getByTestId('public-link-btn')).not.toBeDisabled()
-    expect(screen.getByTestId('temporary-download-link-btn')).toBeDisabled()
-    fireEvent.click(getRow('child'))
-    expect(screen.getByTestId('documents-btn')).not.toBeDisabled()
-    expect(screen.getByTestId('public-link-btn')).toBeDisabled()
-    expect(screen.getByTestId('temporary-download-link-btn')).toBeDisabled()
-    expect(getRow('invoice')).toBeInTheDocument()
-    fireEvent.doubleClick(getRow('child'))
-    await waitForRow('nested')
-  })
+  it.each(['list', 'grid'])(
+    'evaluates accept independently for each action in %s without hiding files or preventing folder navigation',
+    async viewType => {
+      setup({
+        defaultDirId: 'projects',
+        documents: { accept: ['folder'] },
+        sharingLink: { accept: ['file'] },
+        downloadLink: { accept: ['folder'] }
+      })
+      await switchView(viewType)
+      fireEvent.click(await waitForRow('invoice'))
+      expect(screen.getByTestId('documents-btn')).toBeDisabled()
+      expect(screen.getByTestId('public-link-btn')).not.toBeDisabled()
+      expect(screen.getByTestId('temporary-download-link-btn')).toBeDisabled()
+      fireEvent.click(getRow('child'))
+      expect(screen.getByTestId('documents-btn')).not.toBeDisabled()
+      expect(screen.getByTestId('public-link-btn')).toBeDisabled()
+      expect(screen.getByTestId('temporary-download-link-btn')).toBeDisabled()
+      expect(getRow('invoice')).toBeInTheDocument()
+      fireEvent.doubleClick(getRow('child'))
+      await waitForRow('nested')
+    }
+  )
 
   it('keeps path resolution business failures in the picker instead of returning an incomplete path', async () => {
     const { service, documents, writes } = setup({
@@ -1024,24 +1143,28 @@ describe('PICK intent integration', () => {
     expect(writes).toEqual([])
   })
 
-  it('uses the correct Shared Drive parent path rather than the local parent with the same ID', async () => {
-    const sharedFile = {
-      ...invoice,
-      driveId: 'shared-drive',
-      dir_id: 'projects'
+  it.each(['list', 'grid'])(
+    'uses the correct Shared Drive parent path in %s rather than the local parent with the same ID',
+    async viewType => {
+      const sharedFile = {
+        ...invoice,
+        driveId: 'shared-drive',
+        dir_id: 'projects'
+      }
+      const { service, documents } = setup(
+        { ...onlyDocuments, tabs: ['recents'] },
+        { recents: [sharedFile] }
+      )
+      documents.set('shared-drive/invoice', invoice)
+      documents.set('shared-drive/projects', { ...projects, path: '/Team' })
+      await switchView(viewType)
+      await confirmDocument('invoice')
+      await waitFor(() => expect(service.terminate).toHaveBeenCalledTimes(1))
+      expect(service.terminate.mock.calls[0][0]).toEqual([
+        { ...invoice, driveId: 'shared-drive', path: '/Team/invoice.pdf' }
+      ])
     }
-    const { service, documents } = setup(
-      { ...onlyDocuments, tabs: ['recents'] },
-      { recents: [sharedFile] }
-    )
-    documents.set('shared-drive/invoice', invoice)
-    documents.set('shared-drive/projects', { ...projects, path: '/Team' })
-    await confirmDocument('invoice')
-    await waitFor(() => expect(service.terminate).toHaveBeenCalledTimes(1))
-    expect(service.terminate.mock.calls[0][0]).toEqual([
-      { ...invoice, driveId: 'shared-drive', path: '/Team/invoice.pdf' }
-    ])
-  })
+  )
 
   it.each([
     ['trashed folder', 'trashed-folder'],

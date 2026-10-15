@@ -10,6 +10,7 @@ import { FilePickerHeaderTabs } from '@/components/FilePicker/FilePickerHeaderTa
 import { filePickerSections } from '@/components/FilePicker/constants'
 import Drive from '@/components/Icons/Drive'
 import DriveText from '@/components/Icons/DriveText'
+import ViewSwitcher from '@/modules/drive/Toolbar/components/ViewSwitcher'
 
 const FilePickerHeader = ({
   activeSection,
@@ -29,11 +30,14 @@ const FilePickerHeader = ({
           </IconButton>
         )}
       </div>
-      <FilePickerHeaderTabs
-        activeSection={activeSection}
-        availableSections={availableSections}
-        onSectionChange={onSectionChange}
-      />
+      <div className="u-flex u-flex-wrap u-flex-items-center u-flex-justify-between">
+        <FilePickerHeaderTabs
+          activeSection={activeSection}
+          availableSections={availableSections}
+          onSectionChange={onSectionChange}
+        />
+        <ViewSwitcher className="u-ml-auto u-mb-half" />
+      </div>
     </div>
   )
 }
