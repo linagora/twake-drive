@@ -200,17 +200,18 @@ export function readChartPlace() {
       ? { row: to.row, col: to.col }
       : { row: from.row + rowCount - 1, col: from.col + 7 }
   const getDrawingBoxes = base => {
-    const from = base?.from
+    const { from, boundsFromTo } = base ?? {}
     if (!from) return []
-    const end = getDrawingEnd(from, base.boundsFromTo?.to)
+    const end = getDrawingEnd(from, (boundsFromTo ?? {}).to)
     return [{ r1: from.row, c1: from.col, r2: end.row, c2: end.col }]
   }
 
   const sheet = Api.GetSheet(sheetName)
   if (!sheet) return null
+  const { Drawings } = sheet.worksheet ?? {}
   return {
     lastColumns: getLastColumns(sheet),
-    drawings: (sheet.worksheet?.Drawings ?? []).flatMap(getDrawingBoxes)
+    drawings: (Drawings ?? []).flatMap(getDrawingBoxes)
   }
 }
 
