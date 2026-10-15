@@ -19,9 +19,6 @@
  */
 export function readSheetSelection() {
   const { maxCells } = Asc.scope
-  const sheet = Api.GetActiveSheet()
-  const selection = Api.GetSelection()
-  if (!sheet || !selection) return null
 
   const getBox = range => {
     const r1 = range.GetRow() - 1
@@ -33,34 +30,50 @@ export function readSheetSelection() {
       c2: c1 + range.GetColumnsCount() - 1
     }
   }
-  const areas = selection.GetAreas()
-  const area = areas && areas.GetCount() > 1 ? areas.GetItem(1) : selection
-  let range = getBox(area)
-  let around = null
-  if (range.r1 === range.r2 && range.c1 === range.c2) {
-    around = { row: range.r1, col: range.c1 }
-    range = getBox(area.GetCurrentRegion() ?? area)
+  const isCell = box => box.r1 === box.r2 && box.c1 === box.c2
+  const getSize = box => (box.r2 - box.r1 + 1) * (box.c2 - box.c1 + 1)
+  const findRange = selection => {
+    const areas = selection.GetAreas()
+    const area = areas && areas.GetCount() > 1 ? areas.GetItem(1) : selection
+    const box = getBox(area)
+    if (!isCell(box)) return { range: box, around: null }
+    return {
+      range: getBox(area.GetCurrentRegion() ?? area),
+      around: { row: box.r1, col: box.c1 }
+    }
   }
-
   // A whole column or row: the cells in use only
-  if ((range.r2 - range.r1 + 1) * (range.c2 - range.c1 + 1) > maxCells) {
+  const keepUsedCells = (sheet, range) => {
+    if (getSize(range) <= maxCells) return range
     const used = getBox(sheet.GetUsedRange())
-    range = {
+    return {
       ...range,
       r2: Math.max(range.r1, Math.min(range.r2, used.r2)),
       c2: Math.max(range.c1, Math.min(range.c2, used.c2))
     }
   }
-  const columns = Math.min(range.c2 - range.c1 + 1, maxCells)
-  const rows = Math.max(1, Math.floor(maxCells / columns))
-  const given = {
-    r1: range.r1,
-    c1: range.c1,
-    r2: Math.min(range.r2, range.r1 + rows - 1),
-    c2: range.c1 + columns - 1
+  const getGiven = range => {
+    const columns = Math.min(range.c2 - range.c1 + 1, maxCells)
+    const rows = Math.max(1, Math.floor(maxCells / columns))
+    return {
+      r1: range.r1,
+      c1: range.c1,
+      r2: Math.min(range.r2, range.r1 + rows - 1),
+      c2: range.c1 + columns - 1
+    }
   }
 
-  return { sheet: sheet.GetName(), range, given, around }
+  const sheet = Api.GetActiveSheet()
+  const selection = Api.GetSelection()
+  if (!sheet || !selection) return null
+  const { range, around } = findRange(selection)
+  const used = keepUsedCells(sheet, range)
+  return {
+    sheet: sheet.GetName(),
+    range: used,
+    given: getGiven(used),
+    around
+  }
 }
 
 /**
@@ -71,27 +84,27 @@ export function readSheetSelection() {
  */
 export function readSheetCells() {
   const { sheetName, box } = Asc.scope
+
+  const getIndexes = (first, last) =>
+    Array.from({ length: last - first + 1 }, (_, index) => first + index)
+  const readText = cell => String(cell.GetText() ?? '')
+  // A cell without a formula gives its value
+  const readFormula = cell => {
+    const formula = cell.GetFormula()
+    return typeof formula === 'string' && formula.startsWith('=')
+      ? formula
+      : null
+  }
+  const getRow = (sheet, row) =>
+    getIndexes(box.c1, box.c2).map(col => sheet.GetRangeByNumber(row, col))
+
   const sheet = Api.GetSheet(sheetName)
   if (!sheet) return null
-
-  const texts = []
-  const formulas = []
-  for (let row = box.r1; row <= box.r2; row += 1) {
-    const textRow = []
-    const formulaRow = []
-    for (let col = box.c1; col <= box.c2; col += 1) {
-      const cell = sheet.GetRangeByNumber(row, col)
-      // A cell without a formula gives its value
-      const formula = cell.GetFormula()
-      textRow.push(String(cell.GetText() ?? ''))
-      formulaRow.push(
-        typeof formula === 'string' && formula.startsWith('=') ? formula : null
-      )
-    }
-    texts.push(textRow)
-    formulas.push(formulaRow)
+  const cells = getIndexes(box.r1, box.r2).map(row => getRow(sheet, row))
+  return {
+    texts: cells.map(row => row.map(readText)),
+    formulas: cells.map(row => row.map(readFormula))
   }
-  return { texts, formulas }
 }
 
 /**
@@ -104,44 +117,53 @@ export function readSheetCells() {
  */
 export function writeSheetPlan() {
   const { sheetName, plan } = Asc.scope
-  const sheet = Api.GetSheet(sheetName)
-  if (!sheet) return plan.writes.length
-
-  const cell = (row, col) => sheet.GetRangeByNumber(row, col)
   const { insertColumns, insertRows, writes, box } = plan
-  // The formulas of an answer are in English, whatever the language the
-  // editor reads the formulas typed in its cells in
-  const locale =
-    typeof AscCommonExcel === 'undefined'
-      ? null
-      : AscCommonExcel.oFormulaLocaleInfo
-  const saved = locale && { Parse: locale.Parse, DigitSep: locale.DigitSep }
-  if (locale) {
-    locale.Parse = false
-    locale.DigitSep = false
-  }
-  try {
+
+  const getRange = (sheet, r1, c1, r2, c2) =>
+    sheet.GetRange(
+      sheet.GetRangeByNumber(r1, c1),
+      sheet.GetRangeByNumber(r2, c2)
+    )
+  const insertCells = sheet => {
     if (insertColumns) {
       const { at, count } = insertColumns
-      sheet
-        .GetRange(cell(0, at), cell(0, at + count - 1))
+      getRange(sheet, 0, at, 0, at + count - 1)
         .GetEntireColumn()
         .Insert('right')
     }
     if (insertRows) {
       const { at, count } = insertRows
-      sheet
-        .GetRange(cell(at, 0), cell(at + count - 1, 0))
+      getRange(sheet, at, 0, at + count - 1, 0)
         .GetEntireRow()
         .Insert('down')
     }
+  }
+  const writeCells = sheet => {
+    insertCells(sheet)
     const refused = writes.filter(
-      ({ row, col, text }) => cell(row, col).SetValue(text) === false
+      ({ row, col, text }) =>
+        sheet.GetRangeByNumber(row, col).SetValue(text) === false
     ).length
-    sheet.GetRange(cell(box.r1, box.c1), cell(box.r2, box.c2)).Select()
+    getRange(sheet, box.r1, box.c1, box.r2, box.c2).Select()
     return refused
+  }
+  // The formulas of an answer are in English, whatever the language the
+  // editor reads the formulas typed in its cells in
+  const getLocale = () =>
+    typeof AscCommonExcel === 'undefined'
+      ? null
+      : AscCommonExcel.oFormulaLocaleInfo
+
+  const sheet = Api.GetSheet(sheetName)
+  if (!sheet) return writes.length
+  const locale = getLocale()
+  if (!locale) return writeCells(sheet)
+  const saved = { Parse: locale.Parse, DigitSep: locale.DigitSep }
+  Object.assign(locale, { Parse: false, DigitSep: false })
+  try {
+    return writeCells(sheet)
   } finally {
-    if (locale) Object.assign(locale, saved)
+    Object.assign(locale, saved)
   }
 }
 
@@ -154,42 +176,42 @@ export function writeSheetPlan() {
  */
 export function readChartPlace() {
   const { sheetName, r1, rowCount } = Asc.scope
-  const sheet = Api.GetSheet(sheetName)
-  if (!sheet) return null
 
-  const used = sheet.GetUsedRange()
-  const lastUsed = used.GetCol() - 2 + used.GetColumnsCount()
-  const hasText = (row, col) =>
+  const hasText = (sheet, row, col) =>
     String(sheet.GetRangeByNumber(row, col).GetText() ?? '') !== ''
-  const findLastColumn = row => {
+  const findLastColumn = (sheet, lastUsed, row) => {
     for (let col = lastUsed; col >= 0; col -= 1) {
-      if (hasText(row, col)) return col
+      if (hasText(sheet, row, col)) return col
     }
     return -1
+  }
+  const getLastColumns = sheet => {
+    const used = sheet.GetUsedRange()
+    const lastUsed = used.GetCol() - 2 + used.GetColumnsCount()
+    return Array.from({ length: rowCount }, (_, index) =>
+      findLastColumn(sheet, lastUsed, r1 + index)
+    )
   }
   // The builder gives no position of a drawing: its anchor does, and the
   // cells it covers once drawn. A drawing not drawn yet takes the room of a
   // chart.
+  const getDrawingEnd = (from, to) =>
+    to && to.row > from.row
+      ? { row: to.row, col: to.col }
+      : { row: from.row + rowCount - 1, col: from.col + 7 }
   const getDrawingBoxes = base => {
     const from = base?.from
     if (!from) return []
-    const to = base.boundsFromTo?.to
-    const isDrawn = to && to.row > from.row
-    return [
-      {
-        r1: from.row,
-        c1: from.col,
-        r2: isDrawn ? to.row : from.row + rowCount - 1,
-        c2: isDrawn ? to.col : from.col + 7
-      }
-    ]
+    const end = getDrawingEnd(from, base.boundsFromTo?.to)
+    return [{ r1: from.row, c1: from.col, r2: end.row, c2: end.col }]
   }
 
-  const lastColumns = Array.from({ length: rowCount }, (_, index) =>
-    findLastColumn(r1 + index)
-  )
-  const drawings = (sheet.worksheet?.Drawings ?? []).flatMap(getDrawingBoxes)
-  return { lastColumns, drawings }
+  const sheet = Api.GetSheet(sheetName)
+  if (!sheet) return null
+  return {
+    lastColumns: getLastColumns(sheet),
+    drawings: (sheet.worksheet?.Drawings ?? []).flatMap(getDrawingBoxes)
+  }
 }
 
 /**
