@@ -78,6 +78,46 @@ export function makeBoxAddress({ r1, c1, r2, c2 }) {
 const escapeCell = text =>
   text.replace(/\\/g, '\\\\').replace(/\|/g, '\\|').replace(/\r?\n/g, '<br>')
 
+function makeSheetPlace({ sheet, range, given, around, isCell }) {
+  const parts = [
+    `Sheet ${JSON.stringify(sheet)}, ${
+      isCell ? 'cell' : 'cells'
+    } ${makeBoxAddress(range)}`
+  ]
+  if (around && !isCell) parts.push(`around ${makeAddress(around)}`)
+  if (given.r2 < range.r2 || given.c2 < range.c2) {
+    parts.push(`only ${makeBoxAddress(given)} given`)
+  }
+  return parts.join(', ')
+}
+
+function makeCellsTable(texts, given) {
+  const columns = texts[0].map((_, index) => getColumnName(given.c1 + index))
+  return [
+    `|   | ${columns.join(' | ')} |`,
+    `|---|${columns.map(() => '---|').join('')}`,
+    ...texts.map(
+      (row, index) =>
+        `| ${given.r1 + index + 1} | ${row.map(escapeCell).join(' | ')} |`
+    )
+  ].join('\n')
+}
+
+function makeFormulaLines(formulas, given) {
+  return formulas.flatMap((row, rowIndex) =>
+    row.flatMap((formula, colIndex) =>
+      formula
+        ? [
+            `${makeAddress({
+              row: given.r1 + rowIndex,
+              col: given.c1 + colIndex
+            })}: ${formula}`
+          ]
+        : []
+    )
+  )
+}
+
 /**
  * The cells as the assistant gets them: a Markdown table with the letters
  * of the columns and the numbers of the rows, then the formulas
@@ -101,44 +141,15 @@ export function makeSheetContent({
 }) {
   const isCell = range.r1 === range.r2 && range.c1 === range.c2
   const isEmpty = texts.every(row => row.every(text => text === ''))
-  const place = [
-    `Sheet ${JSON.stringify(sheet)}, ${
-      isCell ? 'cell' : 'cells'
-    } ${makeBoxAddress(range)}`,
-    ...(around && !isCell ? [`around ${makeAddress(around)}`] : []),
-    ...(given.r2 < range.r2 || given.c2 < range.c2
-      ? [`only ${makeBoxAddress(given)} given`]
-      : [])
-  ].join(', ')
+  const place = makeSheetPlace({ sheet, range, given, around, isCell })
   if (isCell && isEmpty) {
     return `${place}, empty: the cells of an answer start there`
   }
 
-  const columns = texts[0].map((_, index) => getColumnName(given.c1 + index))
-  const table = [
-    `|   | ${columns.join(' | ')} |`,
-    `|---|${columns.map(() => '---|').join('')}`,
-    ...texts.map(
-      (row, index) =>
-        `| ${given.r1 + index + 1} | ${row.map(escapeCell).join(' | ')} |`
-    )
-  ]
-  const formulaLines = formulas.flatMap((row, rowIndex) =>
-    row.flatMap((formula, colIndex) =>
-      formula
-        ? [
-            `${makeAddress({
-              row: given.r1 + rowIndex,
-              col: given.c1 + colIndex
-            })}: ${formula}`
-          ]
-        : []
-    )
-  )
-
+  const formulaLines = makeFormulaLines(formulas, given)
   return [
     place,
-    table.join('\n'),
+    makeCellsTable(texts, given),
     ...(formulaLines.length > 0
       ? [`Formulas:\n${formulaLines.join('\n')}`]
       : [])
@@ -172,38 +183,52 @@ function readAddressList(header, lines) {
   }))
 }
 
-function readTable({ header, rows }, origin) {
-  const headerTexts = header.map(cell => cell.text.trim())
-  const lines = rows.map(row => row.map(cell => cell.text))
-  const list = readAddressList(
-    header.map(cell => cell.text),
-    lines
-  )
-  if (list) return list
+const isColumnName = text => findColumnIndex(text) !== null
+const hasRowNumber = line => ROW_NUMBER.test(line[0]?.trim() ?? '')
+
+function readTableHeader(headerTexts, lines) {
   const hasRowHeader = ROW_HEADER.test(headerTexts[0] ?? '')
   const start = hasRowHeader ? 1 : 0
   const letters = headerTexts.slice(start)
-  const hasLetters =
-    letters.length > 0 && letters.every(text => findColumnIndex(text) !== null)
-  const hasNumbers =
-    hasRowHeader && lines.every(line => ROW_NUMBER.test(line[0]?.trim() ?? ''))
+  const hasLetters = letters.length > 0 && letters.every(isColumnName)
+  const hasNumbers = hasRowHeader && lines.every(hasRowNumber)
+  return {
+    letters,
+    hasLetters,
+    hasNumbers,
+    firstColumn: hasLetters || hasNumbers ? start : 0
+  }
+}
+
+function readTableLine(line, lineIndex, layout, origin) {
+  const { letters, hasLetters, hasNumbers, firstColumn } = layout
+  const row = hasNumbers ? Number(line[0].trim()) - 1 : origin.row + lineIndex
+  const getColumn = hasLetters
+    ? index => findColumnIndex(letters[index] ?? '') ?? -1
+    : index => origin.col + index
+  return line.slice(firstColumn).map((raw, index) => ({
+    row,
+    col: getColumn(index),
+    text: readCellText(raw ?? '')
+  }))
+}
+
+function readTable({ header, rows }, origin) {
+  const headerTexts = header.map(cell => cell.text)
+  const lines = rows.map(row => row.map(cell => cell.text))
+  const list = readAddressList(headerTexts, lines)
+  if (list) return list
+  const layout = readTableHeader(
+    headerTexts.map(text => text.trim()),
+    lines
+  )
 
   // Without the letters, the header row is the first row of cells
-  const grid = hasLetters ? lines : [header.map(cell => cell.text), ...lines]
-  const firstColumn = hasLetters || hasNumbers ? start : 0
+  const grid = layout.hasLetters ? lines : [headerTexts, ...lines]
   return grid
-    .flatMap((line, lineIndex) => {
-      const row = hasNumbers
-        ? Number(line[0].trim()) - 1
-        : origin.row + lineIndex
-      return line.slice(firstColumn).map((raw, index) => ({
-        row,
-        col: hasLetters
-          ? (findColumnIndex(letters[index] ?? '') ?? -1)
-          : origin.col + index,
-        text: readCellText(raw ?? '')
-      }))
-    })
+    .flatMap((line, lineIndex) =>
+      readTableLine(line, lineIndex, layout, origin)
+    )
     .filter(cell => cell.col >= 0)
 }
 
@@ -307,6 +332,15 @@ export function getBoxSize({ r1, c1, r2, c2 }) {
   return (r2 - r1 + 1) * (c2 - c1 + 1)
 }
 
+// A single separator before three digits groups the thousands
+function isDecimalSeparator(separators, decimals) {
+  if (separators.length === 0) return false
+  return (
+    new Set(separators).size > 1 ||
+    (separators.length === 1 && decimals.length !== 3)
+  )
+}
+
 /**
  * A number however the LLM or the sheet writes it: `1 200,50 €`, `1,200.5`,
  * `-3`
@@ -320,12 +354,8 @@ export function readLooseNumber(text) {
 
   const separators = compact.match(/[.,]/g) ?? []
   const last = compact.search(/[.,][^.,]*$/)
-  const decimals = last === -1 ? '' : compact.slice(last + 1)
-  // A single separator before three digits groups the thousands
-  const isDecimal =
-    last !== -1 &&
-    (new Set(separators).size > 1 ||
-      (separators.length === 1 && decimals.length !== 3))
+  const decimals = compact.slice(last + 1)
+  const isDecimal = isDecimalSeparator(separators, decimals)
   const integer = (isDecimal ? compact.slice(0, last) : compact).replace(
     /[.,]/g,
     ''
@@ -355,6 +385,33 @@ export function isSameCell(text, { shown, formula }) {
 const isInside = ({ row, col }, { r1, c1, r2, c2 }) =>
   row >= r1 && row <= r2 && col >= c1 && col <= c2
 
+function makeCellReader({ box, texts, formulas }) {
+  return ({ row, col }) => ({
+    shown: texts[row - box.r1]?.[col - box.c1] ?? '',
+    formula: formulas[row - box.r1]?.[col - box.c1] ?? null
+  })
+}
+
+function getPlace(cell, range) {
+  if (isInside(cell, range)) return 'inside'
+  if (cell.row > range.r2) return 'below'
+  if (cell.col > range.c2) return 'beside'
+  return 'before'
+}
+
+function groupByPlace(cells, range) {
+  const groups = { inside: [], below: [], beside: [], before: [] }
+  cells.forEach(cell => groups[getPlace(cell, range)].push(cell))
+  return groups
+}
+
+// The rows or columns to insert from `at` for the cells past the range,
+// when one of them would overwrite a cell
+function makeInsert(cells, collides, at, getIndex) {
+  if (!cells.some(collides)) return null
+  return { at, count: Math.max(...cells.map(getIndex)) - at + 1 }
+}
+
 /**
  * What to do to write the cells of an answer: the cells left as they are,
  * the ones written, and the rows or columns to insert first, so that nothing
@@ -377,51 +434,24 @@ const isInside = ({ row, col }, { r1, c1, r2, c2 }) =>
  * are inserted
  */
 export function planSheetWrite({ cells, range, box, texts, formulas }) {
-  const read = ({ row, col }) => ({
-    shown: texts[row - box.r1]?.[col - box.c1] ?? '',
-    formula: formulas[row - box.r1]?.[col - box.c1] ?? null
-  })
-  const isEmptyCell = cell => {
+  const read = makeCellReader({ box, texts, formulas })
+  const collides = cell => {
     const { shown, formula } = read(cell)
-    return shown === '' && !formula
+    return shown !== '' || Boolean(formula)
   }
 
   const changed = cells.filter(cell => !isSameCell(cell.text, read(cell)))
-  const inside = changed.filter(cell => isInside(cell, range))
-  const outside = changed.filter(cell => !isInside(cell, range))
-  const isBelow = cell => cell.row > range.r2
-  const isBeside = cell => !isBelow(cell) && cell.col > range.c2
-  const collides = cell => !isEmptyCell(cell)
-
-  const below = outside.filter(isBelow)
-  const beside = outside.filter(isBeside)
+  const { inside, below, beside, before } = groupByPlace(changed, range)
   // Above or left of the range, a cell that holds something is kept
-  const skipped = outside.filter(
-    cell => !isBelow(cell) && !isBeside(cell) && collides(cell)
-  )
-  const others = outside.filter(
-    cell => !isBelow(cell) && !isBeside(cell) && !collides(cell)
-  )
-
-  const insertRows = below.some(collides)
-    ? {
-        at: range.r2 + 1,
-        count: Math.max(...below.map(cell => cell.row)) - range.r2
-      }
-    : null
-  const insertColumns = beside.some(collides)
-    ? {
-        at: range.c2 + 1,
-        count: Math.max(...beside.map(cell => cell.col)) - range.c2
-      }
-    : null
+  const skipped = before.filter(collides)
+  const others = before.filter(cell => !collides(cell))
 
   const writes = [...inside, ...below, ...beside, ...others].map(
     ({ row, col, text }) => ({ row, col, text })
   )
   return {
-    insertRows,
-    insertColumns,
+    insertRows: makeInsert(below, collides, range.r2 + 1, cell => cell.row),
+    insertColumns: makeInsert(beside, collides, range.c2 + 1, cell => cell.col),
     writes,
     skipped: skipped.map(({ row, col }) => ({ row, col })),
     box: makeUnionBox(range, writes)
