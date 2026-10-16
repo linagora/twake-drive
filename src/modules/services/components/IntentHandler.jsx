@@ -11,6 +11,7 @@ import CozyTheme from 'cozy-ui-plus/dist/providers/CozyTheme'
 import { getFilePickerConfig } from './FilePicker/config'
 import { initializeFilePicker } from './FilePicker/initialization'
 import Picker from './Picker'
+import { Upload } from './Upload'
 
 function isFilePickerIntent(intent) {
   return (
@@ -38,6 +39,8 @@ const IntentHandler = ({ intentId }) => {
 
   // The iframe handshake is external I/O, started after mount for this intent.
   useEffect(() => {
+    // A late handshake must not start an upload for a replaced or unmounted intent.
+    let isActive = true
     const startService = async () => {
       let service
       try {
@@ -46,32 +49,43 @@ const IntentHandler = ({ intentId }) => {
         const intentPromise = intents.request.get(intentId, { tryDOM: true })
         const servicePromise = intents.createService(intentId, window)
         const pendingIntent = await intentPromise
-        setState(currentState => ({
-          ...currentState,
-          intent: pendingIntent
-        }))
+        if (isActive) {
+          setState(currentState => ({
+            ...currentState,
+            intent: pendingIntent
+          }))
+        }
         service = await servicePromise
+        if (!isActive) return
         const intent = service.getIntent()
+        const isUploadIntent =
+          intent?.attributes?.action === 'UPLOAD' &&
+          intent?.attributes?.type === 'io.cozy.files'
         const filePickerConfig = isFilePickerIntent(intent)
           ? await initializeFilePicker(
               client,
               getFilePickerConfig(intent, service.getData?.())
             )
           : null
+        if (!isActive) return
 
         setState({
-          component: filePickerConfig ? Picker : null,
+          component: isUploadIntent ? Upload : filePickerConfig ? Picker : null,
           service,
           intent,
           filePickerConfig
         })
       } catch (error) {
+        if (!isActive) return
         logger.error(error)
         service?.throw(new Error(error?.message || String(error)))
       }
     }
 
     startService()
+    return () => {
+      isActive = false
+    }
   }, [client, intentId])
 
   const content = ServiceComponent ? (
