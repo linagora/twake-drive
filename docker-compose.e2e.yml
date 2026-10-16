@@ -12,9 +12,31 @@ services:
       timeout: 5s
       retries: 10
 
+  # Owns the network namespace of the whole runtime and serves its DNS. The
+  # stack calls the instances' own URLs (alice/bob/charlie.<domain>, one trio
+  # per Playwright worker) to deliver sharings between the instances it hosts;
+  # Docker's embedded DNS does not resolve unregistered .localhost names, which
+  # made every delivery fall back to e-mail (unavailable in e2e) — so every
+  # name under the root domain resolves to loopback, where the stack listens on
+  # the stack port and the OnlyOffice relay on the office port. Everything else
+  # (app registry) is forwarded to public resolvers. It also holds the
+  # published ports: joining services cannot declare any network config.
+  coredns:
+    image: coredns/coredns:1.15.0@sha256:0a9d8c8ddf34347eb59aad9a8784f0710de88d6d112726d11d271f9bc6daca26
+    dns: [127.0.0.1]
+    command: ["-conf", "/etc/coredns/Corefile"]
+    configs:
+      - source: runtime-dns-corefile
+        target: /etc/coredns/Corefile
+    ports:
+      - "127.0.0.1:${COZY_E2E_STACK_PORT:-18080}:${COZY_E2E_STACK_PORT:-18080}"
+      - "127.0.0.1:${COZY_E2E_ADMIN_PORT:-16060}:${COZY_E2E_ADMIN_PORT:-16060}"
+      - "127.0.0.1:${COZY_E2E_ONLYOFFICE_PORT:-18081}:${COZY_E2E_ONLYOFFICE_PORT:-18081}"
+
   cozystack:
     image: ${COZY_E2E_STACK_IMAGE-cozy/cozy-stack:latest}
     pull_policy: ${COZY_E2E_STACK_PULL_POLICY:-always}
+    network_mode: "service:coredns"
     depends_on:
       couchdb:
         condition: service_healthy
@@ -36,12 +58,10 @@ services:
     volumes:
       - ./build:/app/drive
       - ./e2e/cozy.yml:/etc/cozy/cozy.yml
-    ports:
-      - "127.0.0.1:${COZY_E2E_STACK_PORT:-18080}:${COZY_E2E_STACK_PORT:-18080}"
-      - "127.0.0.1:${COZY_E2E_ADMIN_PORT:-16060}:${COZY_E2E_ADMIN_PORT:-16060}"
 
   onlyoffice:
     image: onlyoffice/documentserver:9.4@sha256:e3da62a847b9a5d51a11f73cfea1d9c13c3be3809614490d4edddcf01dcf919b
+    network_mode: "service:coredns"
     environment:
       JWT_ENABLED: "false"
       ALLOW_PRIVATE_IP_ADDRESS: "true"
@@ -49,8 +69,6 @@ services:
     volumes:
       # The scribe plugin of Drive, built by the global setup
       - ./plugins/onlyoffice-scribe/build:/var/www/onlyoffice/documentserver/sdkjs-plugins/twake-scribe:ro
-    networks:
-      - office
     # Document Server ignores SIGTERM and would hold every stop for 10s
     stop_grace_period: 0s
     healthcheck:
@@ -61,39 +79,20 @@ services:
       retries: 60
       start_period: 30s
 
+  # Relays the office port to the Document Server: the onlyoffice_url served by
+  # the stack must work both from inside the runtime and from the browser,
+  # while the Document Server only listens on port 80.
   onlyoffice-proxy:
     image: nginx:1.27-alpine@sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10
+    network_mode: "service:coredns"
     depends_on:
       onlyoffice:
         condition: service_healthy
     environment:
       COZY_E2E_ONLYOFFICE_PORT: "${COZY_E2E_ONLYOFFICE_PORT:-18081}"
-      COZY_E2E_STACK_PORT: "${COZY_E2E_STACK_PORT:-18080}"
-      NGINX_ENVSUBST_FILTER: "^COZY_E2E_(ONLYOFFICE|STACK)_PORT$"
+      NGINX_ENVSUBST_FILTER: "^COZY_E2E_ONLYOFFICE_PORT$"
     volumes:
       - ./e2e/onlyoffice-proxy.conf.template:/etc/nginx/templates/default.conf.template:ro
-    ports:
-      - "127.0.0.1:${COZY_E2E_ONLYOFFICE_PORT:-18081}:${COZY_E2E_ONLYOFFICE_PORT:-18081}"
-    networks:
-      default:
-        aliases:
-          - onlyoffice.${COZY_E2E_ROOT_DOMAIN:-cozy.localhost}
-      office:
-        # One Alice/Bob/Charlie trio per Playwright worker, up to MAX_WORKERS
-        # in e2e/helpers/config.ts.
-        aliases:
-          - alice.${COZY_E2E_ROOT_DOMAIN:-cozy.localhost}
-          - bob.${COZY_E2E_ROOT_DOMAIN:-cozy.localhost}
-          - charlie.${COZY_E2E_ROOT_DOMAIN:-cozy.localhost}
-          - alice1.${COZY_E2E_ROOT_DOMAIN:-cozy.localhost}
-          - bob1.${COZY_E2E_ROOT_DOMAIN:-cozy.localhost}
-          - charlie1.${COZY_E2E_ROOT_DOMAIN:-cozy.localhost}
-          - alice2.${COZY_E2E_ROOT_DOMAIN:-cozy.localhost}
-          - bob2.${COZY_E2E_ROOT_DOMAIN:-cozy.localhost}
-          - charlie2.${COZY_E2E_ROOT_DOMAIN:-cozy.localhost}
-          - alice3.${COZY_E2E_ROOT_DOMAIN:-cozy.localhost}
-          - bob3.${COZY_E2E_ROOT_DOMAIN:-cozy.localhost}
-          - charlie3.${COZY_E2E_ROOT_DOMAIN:-cozy.localhost}
     healthcheck:
       test:
         [
@@ -104,5 +103,20 @@ services:
       timeout: 5s
       retries: 10
 
-networks:
-  office:
+configs:
+  runtime-dns-corefile:
+    content: |
+      ${COZY_E2E_ROOT_DOMAIN:-cozy.localhost}:53 {
+          errors
+          log
+          template IN A ${COZY_E2E_ROOT_DOMAIN:-cozy.localhost} {
+              answer "{{ .Name }} 60 IN A 127.0.0.1"
+          }
+          template IN AAAA ${COZY_E2E_ROOT_DOMAIN:-cozy.localhost} {
+              rcode NOERROR
+          }
+      }
+      .:53 {
+          errors
+          forward . 8.8.8.8 1.1.1.1
+      }
