@@ -5,6 +5,10 @@ module.exports = {
   moduleFileExtensions: ['js', 'jsx', 'ts', 'tsx', 'json', 'styl'],
   moduleNameMapper: {
     '.(png|gif|jpe?g)$': '<rootDir>/jestHelpers/mocks/fileMock.js',
+    'illu-folder-empty-space\\.svg$':
+      '<rootDir>/jestHelpers/mocks/folderEmptySpaceIllustrationMock.js',
+    'illu-folder-empty\\.svg$':
+      '<rootDir>/jestHelpers/mocks/folderEmptyIllustrationMock.js',
     '.svg$': '<rootDir>/jestHelpers/mocks/iconMock.js',
     '^@excalidraw/excalidraw$': '<rootDir>/jestHelpers/mocks/excalidrawMock.js',
     '\\?raw$': '<rootDir>/jestHelpers/mocks/svgRawMock.js',

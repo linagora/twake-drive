@@ -1,5 +1,9 @@
 @require 'settings/breakpoints'
 
+// doubled selector: must win over cozy-ui's c-empty-img height whatever the stylesheet order
+.spaceIllustration.spaceIllustration
+    height 100px
+
 .empty
     +medium-screen('min')
         border 2px dashed var(--borderMainColor)

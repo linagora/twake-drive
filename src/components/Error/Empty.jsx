@@ -9,10 +9,12 @@ import { useI18n } from 'twake-i18n'
 
 import styles from './empty.styl'
 
+import FolderEmptySpaceIllu from '@/assets/icons/illu-folder-empty-space.svg'
 import FolderEmptyIllu from '@/assets/icons/illu-folder-empty.svg'
 import TrashIllustration from '@/assets/icons/illu-trash-empty.svg'
 import { TRASH_DIR_ID } from '@/constants/config'
 import { useCurrentFolderId, useDisplayedFolder } from '@/hooks'
+import { isSpacePath } from '@/modules/routeUtils'
 import { useSharedDriveFolder } from '@/modules/shareddrives/hooks/useSharedDriveFolder'
 import { UploadButton } from '@/modules/upload/UploadButton'
 import { isSharingsTabRootRoute } from '@/modules/views/Sharings/routes'
@@ -32,7 +34,17 @@ const EmptyCanvas = ({
   const { sharedDriveResult } = useSharedDriveFolder({ driveId, folderId })
   const displayedSharedFolder = sharedDriveResult?.data
 
-  const IconToShow = type === 'trash' ? TrashIllustration : FolderEmptyIllu
+  const { pathname } = useLocation()
+  const isInSpace = isSpacePath(pathname)
+
+  const useSpaceIllustration = isInSpace && type !== 'trash'
+  const IconToShow =
+    type === 'trash'
+      ? TrashIllustration
+      : useSpaceIllustration
+        ? FolderEmptySpaceIllu
+        : FolderEmptyIllu
+  const iconPixelSize = useSpaceIllustration ? 100 : 160
   const showUploadLayout = type === 'drive'
   const title = localeKey ? t(`empty.${type}_title`) : undefined
   const text =
@@ -46,11 +58,17 @@ const EmptyCanvas = ({
       className={cx({ [styles['empty']]: showUploadLayout })}
       data-testid="empty-folder"
       icon={
-        <div className="u-w-100">
-          <Icon icon={IconToShow} size={160} />
+        <div
+          className={cx('u-w-100', {
+            [styles['spaceIllustration']]: useSpaceIllustration
+          })}
+        >
+          <Icon icon={IconToShow} size={iconPixelSize} />
         </div>
       }
-      iconSize={isDesktop ? 'medium' : 'large'}
+      iconSize={
+        useSpaceIllustration ? 'normal' : isDesktop ? 'medium' : 'large'
+      }
       title={title}
       text={
         <>
