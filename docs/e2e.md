@@ -20,10 +20,11 @@ including when starting the development runtime with `yarn stack up`.
 - Playwright Chromium installed
 
 The default `cozy.localhost` names resolve to host loopback in the browser.
-Stack reaches its instance names on loopback. Document Server uses a separate
-Compose network where those names resolve to the proxy, which forwards source
-downloads and save callbacks to Stack. Stack reaches Docs through the proxy's
-`onlyoffice.cozy.localhost` alias on the default network.
+The stack, the Document Server, the OnlyOffice relay and a CoreDNS sidecar
+share a single network namespace where every name under the root domain also
+resolves to loopback: the stack answers instance URLs directly (sharing
+deliveries, source downloads and save callbacks), and the office port on
+loopback is relayed to the Document Server.
 
 Prepare the environment once:
 
