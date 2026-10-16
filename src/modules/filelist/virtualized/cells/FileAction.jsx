@@ -13,7 +13,7 @@ const FileAction = forwardRef(function FileAction({ onClick, disabled }, ref) {
         ref={ref}
         onClick={onClick}
         disabled={disabled}
-        arial-label={t('Toolbar.more')}
+        aria-label={t('Toolbar.more')}
       >
         <Icon icon={Dots} />
       </IconButton>
