@@ -631,12 +631,23 @@
       "open": "Aide à la rédaction",
       "insert": "Insérer",
       "replace": "Remplacer",
+      "apply": "Appliquer",
       "insertSlide": "Insérer la diapositive",
+      "insertChart": "Insérer le graphique",
+      "notApplied": "Cette réponse n’a pas de cellules à écrire dans la feuille",
       "suggestions": {
         "newSlide": "Nouvelle diapositive",
         "newSlideMessage": "Ajoute une nouvelle diapositive après celle-ci, à partir du texte",
         "table": "Faire un tableau",
-        "tableMessage": "Présente le texte sous forme de tableau"
+        "tableMessage": "Présente le texte sous forme de tableau",
+        "explain": "Expliquer",
+        "explainMessage": "Explique ce que font ces cellules et leurs formules",
+        "cleanUp": "Nettoyer",
+        "cleanUpMessage": "Corrige les fautes et rends cohérents l'orthographe, la casse et le format de ces cellules",
+        "totals": "Ajouter les totaux",
+        "totalsMessage": "Ajoute une ligne de totaux sous les données, avec des formules",
+        "chart": "Faire un graphique",
+        "chartMessage": "Fais un graphique de ces cellules"
       }
     }
   },

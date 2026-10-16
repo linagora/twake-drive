@@ -631,12 +631,22 @@
       "open": "Ayuda para redactar",
       "insert": "Insertar",
       "replace": "Reemplazar",
+      "apply": "Aplicar",
       "insertSlide": "Insertar la diapositiva",
+      "insertChart": "Insertar el gráfico",
       "suggestions": {
         "newSlide": "Nueva diapositiva",
         "newSlideMessage": "Añade una nueva diapositiva después de esta, sobre el texto",
         "table": "Hacer una tabla",
-        "tableMessage": "Presenta el texto en forma de tabla"
+        "tableMessage": "Presenta el texto en forma de tabla",
+        "explain": "Explicar",
+        "explainMessage": "Explica qué hacen estas celdas y sus fórmulas",
+        "cleanUp": "Limpiar",
+        "cleanUpMessage": "Corrige las erratas y unifica la ortografía, las mayúsculas y el formato de estas celdas",
+        "totals": "Añadir totales",
+        "totalsMessage": "Añade una fila de totales debajo de los datos, con fórmulas",
+        "chart": "Hacer un gráfico",
+        "chartMessage": "Haz un gráfico de estas celdas"
       }
     }
   },

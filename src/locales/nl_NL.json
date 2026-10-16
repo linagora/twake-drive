@@ -474,12 +474,22 @@
       "open": "Schrijfhulp",
       "insert": "Invoegen",
       "replace": "Vervangen",
+      "apply": "Toepassen",
       "insertSlide": "Dia invoegen",
+      "insertChart": "Grafiek invoegen",
       "suggestions": {
         "newSlide": "Nieuwe dia",
         "newSlideMessage": "Voeg na deze dia een nieuwe dia over de tekst toe",
         "table": "Tabel maken",
-        "tableMessage": "Zet de tekst in een tabel"
+        "tableMessage": "Zet de tekst in een tabel",
+        "explain": "Uitleggen",
+        "explainMessage": "Leg uit wat deze cellen en hun formules doen",
+        "cleanUp": "Opschonen",
+        "cleanUpMessage": "Verbeter de typfouten en maak de spelling, het hoofdlettergebruik en de opmaak van deze cellen consistent",
+        "totals": "Totalen toevoegen",
+        "totalsMessage": "Voeg onder de gegevens een rij met totalen toe, met formules",
+        "chart": "Grafiek maken",
+        "chartMessage": "Maak een grafiek van deze cellen"
       }
     }
   },

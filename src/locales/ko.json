@@ -91,12 +91,22 @@
       "open": "글쓰기 도우미",
       "insert": "삽입",
       "replace": "바꾸기",
+      "apply": "적용",
       "insertSlide": "슬라이드 삽입",
+      "insertChart": "차트 삽입",
       "suggestions": {
         "newSlide": "새 슬라이드",
         "newSlideMessage": "이 슬라이드 다음에 텍스트에 관한 새 슬라이드를 추가해 줘",
         "table": "표 만들기",
-        "tableMessage": "텍스트를 표로 정리해 줘"
+        "tableMessage": "텍스트를 표로 정리해 줘",
+        "explain": "설명",
+        "explainMessage": "이 셀들과 수식이 무엇을 하는지 설명해 줘",
+        "cleanUp": "정리",
+        "cleanUpMessage": "오타를 고치고 이 셀들의 철자, 대소문자, 형식을 통일해 줘",
+        "totals": "합계 추가",
+        "totalsMessage": "데이터 아래에 수식으로 합계 행을 추가해 줘",
+        "chart": "차트 만들기",
+        "chartMessage": "이 셀들로 차트를 만들어 줘"
       }
     }
   },

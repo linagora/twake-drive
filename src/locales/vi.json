@@ -631,12 +631,22 @@
       "open": "Trợ giúp soạn thảo",
       "insert": "Chèn",
       "replace": "Thay thế",
+      "apply": "Áp dụng",
       "insertSlide": "Chèn trang chiếu",
+      "insertChart": "Chèn biểu đồ",
       "suggestions": {
         "newSlide": "Trang chiếu mới",
         "newSlideMessage": "Thêm một trang chiếu mới sau trang này, về nội dung văn bản",
         "table": "Tạo bảng",
-        "tableMessage": "Trình bày văn bản dưới dạng bảng"
+        "tableMessage": "Trình bày văn bản dưới dạng bảng",
+        "explain": "Giải thích",
+        "explainMessage": "Giải thích các ô này và công thức của chúng làm gì",
+        "cleanUp": "Dọn dẹp",
+        "cleanUpMessage": "Sửa lỗi chính tả và thống nhất cách viết, chữ hoa chữ thường và định dạng của các ô này",
+        "totals": "Thêm tổng",
+        "totalsMessage": "Thêm một dòng tổng bên dưới dữ liệu, dùng công thức",
+        "chart": "Tạo biểu đồ",
+        "chartMessage": "Tạo biểu đồ từ các ô này"
       }
     }
   },

@@ -7,12 +7,22 @@
       "open": "幫我寫作",
       "insert": "插入",
       "replace": "取代",
+      "apply": "套用",
       "insertSlide": "插入投影片",
+      "insertChart": "插入圖表",
       "suggestions": {
         "newSlide": "新投影片",
         "newSlideMessage": "在這張投影片之後新增一張關於該文字的投影片",
         "table": "製作表格",
-        "tableMessage": "將文字以表格形式呈現"
+        "tableMessage": "將文字以表格形式呈現",
+        "explain": "解釋",
+        "explainMessage": "解釋這些儲存格及其公式的作用",
+        "cleanUp": "整理",
+        "cleanUpMessage": "修正錯字，並統一這些儲存格的拼寫、大小寫和格式",
+        "totals": "新增合計",
+        "totalsMessage": "在資料下方新增一列使用公式的合計",
+        "chart": "製作圖表",
+        "chartMessage": "用這些儲存格製作圖表"
       }
     }
   },

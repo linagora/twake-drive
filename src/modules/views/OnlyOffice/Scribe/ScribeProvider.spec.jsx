@@ -7,7 +7,14 @@ import {
   useScribe
 } from '@/modules/views/OnlyOffice/Scribe/ScribeProvider'
 
+const mockShowAlert = jest.fn()
+const mockT = key => key
+
 jest.mock('@/lib/logger', () => ({ warn: jest.fn() }))
+jest.mock('cozy-ui/transpiled/react/providers/Alert', () => ({
+  useAlert: () => ({ showAlert: mockShowAlert })
+}))
+jest.mock('twake-i18n', () => ({ useI18n: () => ({ t: mockT }) }))
 
 const SERVER_URL = 'https://onlyoffice.example.org/'
 const SERVER_ORIGIN = 'https://onlyoffice.example.org'
@@ -107,6 +114,17 @@ describe('ScribeProvider', () => {
     receive('a text', { origin: SERVER_ORIGIN })
 
     expect(getState().isAvailable).toBe(false)
+  })
+
+  it('tells the user when the plugin wrote nothing of an answer', () => {
+    const { receive } = setup({ documentType: 'cell' })
+
+    receive({ type: 'twake-scribe:notApplied' })
+
+    expect(mockShowAlert).toHaveBeenCalledWith({
+      message: 'OnlyOffice.scribe.notApplied',
+      severity: 'secondary'
+    })
   })
 
   it('asks the plugin for the text, and opens when it comes', () => {
@@ -288,5 +306,47 @@ describe('ScribeProvider', () => {
 
     expect(plugin.postMessage).not.toHaveBeenCalled()
     expect(logger.warn).toHaveBeenCalledTimes(1)
+  })
+
+  it('asks the plugin to add the chart the assistant has made, in a spreadsheet', () => {
+    const { plugin, receive } = setup({
+      documentType: 'cell',
+      results: [
+        {
+          capability: 'insert_chart',
+          params: { type: 'Pie', range: 'a1:b5', title: ' Ventes 2025 ' }
+        }
+      ]
+    })
+    receive({ type: 'twake-scribe:ready' })
+
+    fireEvent.click(screen.getByText('result 0'))
+
+    expect(plugin.postMessage).toHaveBeenCalledWith(
+      {
+        type: 'twake-scribe:insertChart',
+        chartType: 'pie',
+        range: 'A1:B5',
+        title: 'Ventes 2025'
+      },
+      SERVER_ORIGIN
+    )
+  })
+
+  it('ignores a chart of an unknown type, or outside of a spreadsheet', () => {
+    const chart = { capability: 'insert_chart', params: { type: 'bar' } }
+    const { plugin, receive } = setup({
+      documentType: 'cell',
+      results: [{ capability: 'insert_chart', params: { type: 'treemap' } }]
+    })
+    receive({ type: 'twake-scribe:ready' })
+    fireEvent.click(screen.getByText('result 0'))
+    expect(plugin.postMessage).not.toHaveBeenCalled()
+
+    const other = setup({ results: [chart] })
+    other.receive({ type: 'twake-scribe:ready' })
+    fireEvent.click(screen.getAllByText('result 0')[1])
+    expect(other.plugin.postMessage).not.toHaveBeenCalled()
+    expect(logger.warn).toHaveBeenCalledTimes(2)
   })
 })

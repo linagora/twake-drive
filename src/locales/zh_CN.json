@@ -7,12 +7,22 @@
       "open": "帮我写作",
       "insert": "插入",
       "replace": "替换",
+      "apply": "应用",
       "insertSlide": "插入幻灯片",
+      "insertChart": "插入图表",
       "suggestions": {
         "newSlide": "新幻灯片",
         "newSlideMessage": "在这张幻灯片之后添加一张关于该文本的新幻灯片",
         "table": "制作表格",
-        "tableMessage": "将文本以表格形式呈现"
+        "tableMessage": "将文本以表格形式呈现",
+        "explain": "解释",
+        "explainMessage": "解释这些单元格及其公式的作用",
+        "cleanUp": "整理",
+        "cleanUpMessage": "修正错别字，并统一这些单元格的拼写、大小写和格式",
+        "totals": "添加合计",
+        "totalsMessage": "在数据下方添加一行使用公式的合计",
+        "chart": "制作图表",
+        "chartMessage": "用这些单元格制作图表"
       }
     }
   },

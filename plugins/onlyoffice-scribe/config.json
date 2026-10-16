@@ -5,12 +5,13 @@
   "minVersion": "9.0.0",
   "variations": [
     {
-      "description": "Lets Twake Drive give the selected text to its AI assistant, and write the answers of the assistant in the document or the presentation.",
+      "description": "Lets Twake Drive give the selected text or cells to its AI assistant, and write the answers of the assistant in the document, the presentation or the spreadsheet.",
       "url": "index.html",
       "isViewer": false,
       "EditorsSupport": [
         "word",
-        "slide"
+        "slide",
+        "cell"
       ],
       "type": "background",
       "initDataType": "none",

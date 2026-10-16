@@ -149,6 +149,25 @@ function nestLists(markdown) {
     .join('\n')
 }
 
+/**
+ * @param {string} markdown - an answer
+ * @returns {string} the answer without the fence or the quotes the LLM may
+ * wrap it in
+ */
+export function unwrapAnswer(markdown) {
+  return markdown.match(WRAPPED)?.[2] ?? markdown
+}
+
+/**
+ * @param {string} markdown - an inline text, as a cell of a table
+ * @returns {string} its text, without its marks, a line break as `\n`
+ */
+export function makeInlineText(markdown) {
+  return makeSpans(Lexer.lexInline(markdown))
+    .map(span => (span.isBreak ? '\n' : span.text))
+    .join('')
+}
+
 function getTagName(tag) {
   return tag.match(/^<(\/?[a-z]+)/i)?.[1].toLowerCase() ?? null
 }
@@ -286,7 +305,7 @@ export function makeBlocks(markdown, { hasLineBreaks = false } = {}) {
   }
 
   const lexer = new Lexer({ ...getDefaults(), breaks: hasLineBreaks })
-  addTokens(lexer.lex(nestLists(markdown.match(WRAPPED)?.[2] ?? markdown)))
+  addTokens(lexer.lex(nestLists(unwrapAnswer(markdown))))
   // A table left open still gives what it holds
   if (htmlTable) readHtmlTag('</table>')
 

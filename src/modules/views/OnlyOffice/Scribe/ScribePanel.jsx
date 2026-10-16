@@ -8,7 +8,9 @@ import styles from './styles.styl'
 
 import { useScribe } from '@/modules/views/OnlyOffice/Scribe/ScribeProvider'
 import {
+  makeAnswerActions,
   makeCapabilities,
+  makeInstructions,
   makeSuggestions
 } from '@/modules/views/OnlyOffice/Scribe/capabilities'
 
@@ -27,14 +29,10 @@ export const ScribePanel = () => {
 
   if (!isOpen) return null
 
-  // A selection that holds what an answer cannot give back, as an image or a
-  // note, is not offered to be replaced. An older plugin does not tell.
-  const answerActions =
-    target === 'selection' && canReplace !== false
-      ? ['insert', 'replace']
-      : ['insert']
+  const answerActions = makeAnswerActions({ documentType, target, canReplace })
   const capabilities = makeCapabilities({ documentType, t })
   const suggestions = makeSuggestions({ documentType, t })
+  const instructions = makeInstructions({ documentType })
   const data = {
     content,
     answerActions: answerActions.map(name => ({
@@ -44,6 +42,7 @@ export const ScribePanel = () => {
     // Left out when empty: the assistant then shows its own chips
     ...(capabilities.length > 0 && { capabilities }),
     ...(suggestions.length > 0 && { suggestions }),
+    ...(instructions !== null && { instructions }),
     theme: { type: themeType }
   }
 

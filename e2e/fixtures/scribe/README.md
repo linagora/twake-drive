@@ -15,7 +15,8 @@ instead of in its line.
 
 ## Files
 
-- `<document>.docx`: a document, as small as the cases need.
+- `<document>.docx`: a document, as small as the cases need; `<workbook>.xlsx`
+  a workbook.
 - `<document>.cases.json`: its cases, `{ document, cases }`. A case has:
   - `id`: the name of the case in Benibur's harness, or a name of its own;
   - `selection`: what is selected, see below;
@@ -42,6 +43,11 @@ with a note or an image after its text; an offset ends the selection at a
 character. One end alone is the cursor. From a cell to another cell or to a
 paragraph, the cells are taken whole, as the editor does.
 
+In a workbook (`<workbook>.xlsx`), a selection is an address in A1
+notation, after the name of its sheet: `Ventes!B2:C5`, `Ventes!B3` (a single
+cell, the scribe works on the block around it), `Ventes!B:B`. The answer
+action is `apply`.
+
 ## The document read
 
 `model` is the document as `e2e/helpers/scribeModel.ts` describes it: each
@@ -52,6 +58,11 @@ each table with its cells and their merges. The
 selection is told by the text it covers (`selText`), and each paragraph it
 touches with the selected text between `«` and `»` (`selMarkup`): the positions
 of the editor are left out, since they count the empty runs.
+
+A sheet is read as `SheetModel` of `e2e/pages/ScribePluginPage.ts`: the text
+each cell shows from A1 to the last cell used, the formulas by address, and
+the selected cells. A workbook is back as it was opened when all its sheets
+are.
 
 ## Running
 

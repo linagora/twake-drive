@@ -7,12 +7,22 @@
       "open": "Pomoc w pisaniu",
       "insert": "Wstaw",
       "replace": "Zastąp",
+      "apply": "Zastosuj",
       "insertSlide": "Wstaw slajd",
+      "insertChart": "Wstaw wykres",
       "suggestions": {
         "newSlide": "Nowy slajd",
         "newSlideMessage": "Dodaj nowy slajd po tym, na temat tekstu",
         "table": "Utwórz tabelę",
-        "tableMessage": "Przedstaw tekst w formie tabeli"
+        "tableMessage": "Przedstaw tekst w formie tabeli",
+        "explain": "Wyjaśnij",
+        "explainMessage": "Wyjaśnij, co robią te komórki i ich formuły",
+        "cleanUp": "Uporządkuj",
+        "cleanUpMessage": "Popraw literówki i zadbaj o spójną pisownię, wielkość liter i format tych komórek",
+        "totals": "Dodaj sumy",
+        "totalsMessage": "Dodaj pod danymi wiersz sum z formułami",
+        "chart": "Utwórz wykres",
+        "chartMessage": "Utwórz wykres z tych komórek"
       }
     }
   },
