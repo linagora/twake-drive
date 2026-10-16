@@ -67,7 +67,7 @@ The plugin only loads in the editors of text documents, presentations and spread
 ## Requirements
 
 - The flag `cozy.assistant.enabled` on. Without it the AI button is not shown, and Drive is unchanged.
-- The Twake Assistant app ([linagora/twake-assistant](https://github.com/linagora/twake-assistant), slug `assistant`) installed on the instance. It serves the Assistant intent in scribe mode, and reads the `capabilities`, `suggestions` and `instructions` of its data. The button does not check that the app is installed. For the markers, an assistant that reads `rules`: an older one is not told to keep them. An assistant that does not read `instructions` sends the requests on cells with its own instructions, written for a text: the LLM then writes figures it computed instead of formulas, about half of the time.
+- The Twake Assistant app ([linagora/twake-assistant](https://github.com/linagora/twake-assistant), slug `assistant`) installed on the instance. It serves the Assistant intent in scribe mode, and reads the `capabilities`, `suggestions` and `instructions` of its data. The button does not check that the app is installed. For the markers, an assistant that reads `rules`: an older one is not told to keep them. An assistant that does not read `instructions` sends the requests on cells with its own instructions, written for a text: the LLM may then write figures it computed instead of formulas.
 - A cozy-stack that knows the `documents` and `instructions` options of the chat.
 - A `cozy-interapp` and a `cozy-ui-plus` that have the `result` message of intents (`onResult` prop of `IntentIframe`). With older ones the assistant opens, but the clicks on its action buttons do not reach Drive.
 - For another text while the panel is open, a `cozy-interapp` with the `data` message on both sides, and a `cozy-ui-plus` whose `IntentIframe` sends new `data`. With older ones the assistant keeps the first text.
@@ -302,8 +302,6 @@ D5: =SUM(D2:D4)
 - A range of more than 1000 cells, as a whole column, is cut to the cells in use, then to its first rows: the first line tells it (`only A1:C333 given`).
 - Drive gives the LLM its own instructions for a spreadsheet, in the `instructions` of the intent, which the assistant sends in place of its own, written for a text (`makeInstructions`): answer with a Markdown table of the cells to write, at the same letters and numbers, a computed value as a formula in English, never a figure computed by the LLM; a question in a few sentences; a request that asks both, as "make the ratio, then tell who is the best", the table first, then the sentences under it. They also settle what the LLM hesitates on: whether to give the unchanged cells, the label of a new column, a new row above a total row, a value the user gives.
 
-The LLM behind the assistant reasons before it answers, and the stack lets openRAG bound the whole answer, about 2000 tokens on staging: an answer whose reasoning goes past it comes empty, and the assistant says it found no answer. Measured on qwen3.8 with requests on a few sheets (sums, a column of growth, an average row, a ratio to compute and a question on it, a translation, a sort, a question, a table at an empty cell, the chips), the answers could be applied and gave the right sheet 52 times out of 64 within 2048 tokens; most of the others were cut, a translation of the whole sheet most of all. Without a limit, 45 out of 48, the three others giving a total the user asked for as a formula to apply, with a sentence, rather than a figure. With the instructions of the assistant and a line of these rules joined to the content, as a first version did, the LLM weighed the two and was cut twice as often; with the instructions of the assistant alone, it wrote figures it computed. A greater limit for the requests of the scribe, in the stack or openRAG, would remove the cuts.
-
 #### Where the cells of an answer go
 
 The plugin reads the cells of the answer (`readAnswerCells`):
@@ -391,6 +389,7 @@ A request is either cells or a chart: "make the ratio, then a chart of it" takes
 ### In spreadsheets
 
 - The scribe reads and writes the text of the cells and their formulas, not their look: no bold, color, border or number format from an answer. The charts of the sheet are not read, nor changed: a chart is only added. Comments, filters, data validation and pivot tables are neither read nor written, and a selected chart counts as no selection. A workbook is never given whole: one sheet, one range, at most 1000 cells.
+- An answer is bounded by the limits the stack and the LLM set on a request. A request that needs a long answer, as the translation of a whole sheet, can come cut or empty: Apply writes only the cells given before the cut, and an empty answer has nothing to apply.
 - The LLM decides where the cells of its answer go: a wrong address writes a wrong cell, undone in one step. Rows or columns inserted to make room shift what is beside the data too, as the user would. A cell of a merge is written on its first cell, and a protected sheet refuses the writing.
 
 ### Text documents
