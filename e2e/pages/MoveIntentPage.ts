@@ -124,6 +124,12 @@ export class MoveIntentPage {
       .filter({ has: frame.getByTitle(name, { exact: true }) })
   }
 
+  async expectRowDisabled(name: string): Promise<void> {
+    const row = this.row(name)
+    await expect(row).toBeVisible()
+    await expect(row).toHaveAttribute('aria-disabled', 'true')
+  }
+
   async navigateToFolder(name: string): Promise<void> {
     await this.row(name).getByTestId('listitem-onclick').dblclick()
     await expect(

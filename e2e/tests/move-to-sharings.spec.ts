@@ -21,8 +21,16 @@ const EDITOR_SHARE = `Move Editor Share ${stamp()}`
 const DESTINATION_SHARE = `Move Destination Share ${stamp()}`
 const VIEWER_SHARE = `Move Viewer Share ${stamp()}`
 const NESTED_DESTINATION = `Move Nested Destination ${stamp()}`
+const SEEDED_FILE = `Move Seeded File ${stamp()}.txt`
+let seededFileId: string | null = null
 
 test.describe.serial('MoveTo sharing destinations', () => {
+  test.afterAll(async () => {
+    if (seededFileId) {
+      await trashById(USERS.alice.instance, seededFileId)
+    }
+  })
+
   test('sets up received sharing destinations', async ({
     alicePage,
     aliceDrive,
@@ -34,6 +42,15 @@ test.describe.serial('MoveTo sharing destinations', () => {
     await createAndShareFolderWithBob(alicePage, aliceDrive, EDITOR_SHARE, {
       seed: async () => {
         await aliceDrive.createFolder(NESTED_DESTINATION)
+        const folderId = new URL(alicePage.url()).hash.split('/').pop()
+        if (folderId) {
+          seededFileId = await createFile({
+            instance: USERS.alice.instance,
+            name: SEEDED_FILE,
+            parentId: folderId,
+            content: 'Seeded file inside shared destination'
+          })
+        }
       }
     })
     await createAndShareFolderWithBob(alicePage, aliceDrive, VIEWER_SHARE, {
@@ -71,6 +88,7 @@ test.describe.serial('MoveTo sharing destinations', () => {
         await aliceDrive.row(sourceFile).waitVisible()
         const moveTo = await aliceDrive.row(sourceFile).openMoveTo()
         await moveTo.openFolder(EDITOR_SHARE)
+        if (!nested) await moveTo.expectRowDisabled(SEEDED_FILE)
         if (nested) await moveTo.openFolder(NESTED_DESTINATION)
         await moveTo.confirmSharedFolderMove()
 
@@ -110,6 +128,7 @@ test.describe.serial('MoveTo sharing destinations', () => {
       await moveTo.expectDestinationTabs()
       await moveTo.openSharings()
       await moveTo.openFolder(EDITOR_SHARE)
+      await moveTo.expectRowDisabled(SEEDED_FILE)
       await moveTo.openFolder(NESTED_DESTINATION)
       await moveTo.confirmSharedFolderMove()
 
@@ -150,6 +169,7 @@ test.describe.serial('MoveTo sharing destinations', () => {
       const moveTo = await bobDrive.row(sourceFolder).openMoveTo()
       await moveTo.openSharings()
       await moveTo.openFolder(EDITOR_SHARE)
+      await moveTo.expectRowDisabled(SEEDED_FILE)
       await moveTo.showFolderCreation()
       await moveTo.creationInput.fill(createdDestination)
       await moveTo.creationInput.press('Enter')

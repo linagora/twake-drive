@@ -67,7 +67,7 @@ test.describe('MOVE intent navigation', () => {
     await picker.expectTabs(['My Drive', 'Sharings'])
     await picker.expectTheme('dark')
     await picker.expectBreadcrumb(rootName)
-    await expect(picker.row(hiddenFileName)).toHaveCount(0)
+    await picker.expectRowDisabled(hiddenFileName)
     await picker.expectCanMove()
     await picker.navigateToFolder(childName)
     await expect
@@ -106,7 +106,7 @@ test.describe('MOVE intent navigation', () => {
     await picker.waitReady()
     await picker.expectTabs(['My Drive'])
     await picker.expectBreadcrumb('My Drive', false)
-    await expect(picker.row(hiddenFileName)).toHaveCount(0)
+    await picker.expectRowDisabled(hiddenFileName)
     await picker.navigateToFolder(childName)
     await picker.expectBreadcrumb('My Drive', false)
     await picker.expectCanMove()
@@ -152,7 +152,7 @@ test.describe('MOVE intent navigation', () => {
     expect(message).not.toHaveProperty('document')
   })
 
-  test('browses owned and received shared destinations without showing their files or moving before confirmation', async ({
+  test('browses owned and received shared destinations showing their files as disabled without moving before confirmation', async ({
     alicePage,
     aliceDrive,
     bobPage,
@@ -191,7 +191,7 @@ test.describe('MOVE intent navigation', () => {
       await ownedPicker.waitReady()
       await ownedPicker.navigateToFolder(shareName)
       await expect(ownedPicker.row(nestedName)).toBeVisible()
-      await expect(ownedPicker.row(fileName)).toHaveCount(0)
+      await ownedPicker.expectRowDisabled(fileName)
       await ownedPicker.cancel()
       const receivedPicker = new MoveIntentPage(bobPage, USERS.bob)
       await receivedPicker.open({ fileIds: [bobSourceId] })
@@ -199,7 +199,7 @@ test.describe('MOVE intent navigation', () => {
       await receivedPicker.selectSharings()
       await receivedPicker.navigateToFolder(shareName)
       await expect(receivedPicker.row(nestedName)).toBeVisible()
-      await expect(receivedPicker.row(fileName)).toHaveCount(0)
+      await receivedPicker.expectRowDisabled(fileName)
       await receivedPicker.navigateToFolder(nestedName)
       await receivedPicker.expectCanMove()
       await receivedPicker.cancel()

@@ -360,8 +360,14 @@ describe.each([
       ]
     })
     useQuery.mockImplementation((_definition, options) => {
-      if (options.as.startsWith('filePicker-folders-')) {
-        const folderId = options.as.replace('filePicker-folders-', '')
+      if (
+        options.as.startsWith('filePicker-folders-') ||
+        options.as.startsWith('buildContentFolderQuery-')
+      ) {
+        const folderId = options.as.replace(
+          /^(filePicker-folders-|buildContentFolderQuery-)/,
+          ''
+        )
         return {
           data: folderId === currentFolder._id ? contentItems : [],
           fetchStatus: 'loaded',
@@ -538,7 +544,10 @@ describe.each([
       fetchMore: null
     }))
     useQuery.mockImplementation((_definition, options) => {
-      if (options.as.startsWith('filePicker-folders-')) {
+      if (
+        options.as.startsWith('filePicker-folders-') ||
+        options.as.startsWith('buildContentFolderQuery-')
+      ) {
         return { data: contentItems, fetchStatus: 'loaded', hasMore: false }
       }
 
@@ -761,8 +770,14 @@ describe.each([
   it('shows an error and keeps the action disabled when the destination cannot be loaded', () => {
     const onConfirm = jest.fn()
     useQuery.mockImplementation((_definition, options) => {
-      if (options.as.startsWith('filePicker-folders-')) {
-        const folderId = options.as.replace('filePicker-folders-', '')
+      if (
+        options.as.startsWith('filePicker-folders-') ||
+        options.as.startsWith('buildContentFolderQuery-')
+      ) {
+        const folderId = options.as.replace(
+          /^(filePicker-folders-|buildContentFolderQuery-)/,
+          ''
+        )
         return {
           data: folderId === currentFolder._id ? [destinationFolder] : [],
           fetchStatus: 'loaded',
@@ -792,8 +807,14 @@ describe.each([
       const onConfirm = jest.fn()
       let rootStatus = 'loaded'
       useQuery.mockImplementation((_definition, options) => {
-        if (options.as.startsWith('filePicker-folders-')) {
-          const folderId = options.as.replace('filePicker-folders-', '')
+        if (
+          options.as.startsWith('filePicker-folders-') ||
+          options.as.startsWith('buildContentFolderQuery-')
+        ) {
+          const folderId = options.as.replace(
+            /^(filePicker-folders-|buildContentFolderQuery-)/,
+            ''
+          )
           return {
             data:
               folderId === currentFolder._id || folderId === ROOT_DIR_ID
@@ -827,7 +848,10 @@ describe.each([
 
   it('hides Nextcloud and team-drive destinations', () => {
     useQuery.mockImplementation((_definition, options) => {
-      if (options.as.startsWith('filePicker-folders-')) {
+      if (
+        options.as.startsWith('filePicker-folders-') ||
+        options.as.startsWith('buildContentFolderQuery-')
+      ) {
         return {
           data: [
             destinationFolder,
@@ -896,8 +920,14 @@ describe.each([
     const onConfirm = jest.fn()
     let invalidDestination = false
     useQuery.mockImplementation((_definition, options) => {
-      if (options.as.startsWith('filePicker-folders-')) {
-        const folderId = options.as.replace('filePicker-folders-', '')
+      if (
+        options.as.startsWith('filePicker-folders-') ||
+        options.as.startsWith('buildContentFolderQuery-')
+      ) {
+        const folderId = options.as.replace(
+          /^(filePicker-folders-|buildContentFolderQuery-)/,
+          ''
+        )
         return {
           data:
             folderId === currentFolder._id || folderId === ROOT_DIR_ID
@@ -992,7 +1022,10 @@ describe.each([
     }
 
     useQuery.mockImplementation((_definition, options) => {
-      if (options.as.startsWith('filePicker-folders-')) {
+      if (
+        options.as.startsWith('filePicker-folders-') ||
+        options.as.startsWith('buildContentFolderQuery-')
+      ) {
         return {
           data: [destinationFolder, folderToMove],
           fetchStatus: 'loaded',
@@ -1019,5 +1052,54 @@ describe.each([
         name: 'Folder to move. Move.destinationSource'
       })
     ).toBeDisabled()
+  })
+
+  it('displays files as disabled context items that cannot be selected or navigated into', () => {
+    const fileItem = {
+      _id: 'context-file',
+      _type: 'io.cozy.files',
+      type: 'file',
+      name: 'notes.pdf',
+      dir_id: currentFolder._id
+    }
+    const movedEntry = {
+      _id: 'entry-to-move',
+      _type: 'io.cozy.files',
+      type: 'file',
+      name: 'file-to-move.pdf',
+      dir_id: currentFolder._id
+    }
+
+    useQuery.mockImplementation((_definition, options) => {
+      if (
+        options.as.startsWith('filePicker-folders-') ||
+        options.as.startsWith('buildContentFolderQuery-')
+      ) {
+        return {
+          data: [destinationFolder, fileItem],
+          fetchStatus: 'loaded',
+          hasMore: false
+        }
+      }
+
+      const folderId = options.as.split('/').at(-1)
+      return { data: getFolder(folderId), fetchStatus: 'loaded' }
+    })
+
+    setup({
+      entries: [movedEntry]
+    })
+
+    const folderButton = screen.getByRole('button', { name: 'Child folder' })
+    const fileButton = screen.getByRole('button', { name: 'notes.pdf' })
+
+    expect(folderButton).toBeInTheDocument()
+    expect(folderButton).not.toBeDisabled()
+    expect(fileButton).toBeInTheDocument()
+    expect(fileButton).toBeDisabled()
+
+    fireEvent.click(fileButton)
+    fireEvent.doubleClick(fileButton)
+    expect(clientQuery).not.toHaveBeenCalled()
   })
 })

@@ -373,6 +373,12 @@ async function confirmDocument(id) {
   fireEvent.click(screen.getByTestId('documents-btn'))
 }
 
+async function clickMove() {
+  const moveButton = screen.getByRole('button', { name: 'Move' })
+  await waitFor(() => expect(moveButton).not.toBeDisabled())
+  fireEvent.click(moveButton)
+}
+
 function provideExistingSharingLink(client) {
   client.getStackClient().setUri('https://alice.example')
   client.capabilities = { flat_subdomains: true }
@@ -1299,7 +1305,7 @@ describe('MOVE intent navigation integration', () => {
   }
 
   it.each(['Cancel', 'Close'])(
-    'reuses folders-only browsing and cancels via %s without mutating',
+    'reuses shared destination browsing, canonical Drive/Sharings tabs and cancels via %s without mutating',
     async closeLabel => {
       const { service, documents, writes } = setupMove({
         tabs: ['sharings', 'drive', 'sharings']
@@ -1310,14 +1316,22 @@ describe('MOVE intent navigation integration', () => {
         'My Drive',
         'Sharings'
       ])
-      expect(screen.getByRole('button', { name: 'Move' })).not.toBeDisabled()
+      await waitFor(() =>
+        expect(screen.getByRole('button', { name: 'Move' })).not.toBeDisabled()
+      )
       expect(
         screen.queryByRole('button', { name: /create folder/i })
       ).toBeInTheDocument()
       fireEvent.doubleClick(getRow('projects'))
       await waitForRow('child')
-      expect(getRow('invoice')).toBe(null)
-      expect(screen.getByRole('button', { name: 'Move' })).not.toBeDisabled()
+      const invoiceRow = await waitForRow('invoice')
+      expect(invoiceRow).toHaveAttribute('aria-disabled', 'true')
+      expect(invoiceRow).toHaveClass('u-c-default', 'u-o-50')
+      fireEvent.click(invoiceRow)
+      fireEvent.doubleClick(invoiceRow)
+      await waitFor(() =>
+        expect(screen.getByRole('button', { name: 'Move' })).not.toBeDisabled()
+      )
       expect(documents.get('invoice').dir_id).toBe('projects')
       expect(writes).toEqual([])
       expect(service.terminate).not.toHaveBeenCalled()
@@ -1388,7 +1402,7 @@ describe('MOVE intent navigation integration', () => {
       }
     )
     await waitForRow('projects')
-    fireEvent.click(screen.getByRole('button', { name: 'Move' }))
+    await clickMove()
     await screen.findByRole('button', { name: 'I understand' })
     expect(
       screen.queryByText('Moving outside the Projects folder')
@@ -1409,7 +1423,7 @@ describe('MOVE intent navigation integration', () => {
   it('moves through the real model and returns the mutation document with a freshly resolved path', async () => {
     const { service, documents, writes, requests } = setupMove()
     await waitForRow('projects')
-    fireEvent.click(screen.getByRole('button', { name: 'Move' }))
+    await clickMove()
     await waitFor(() => expect(service.terminate).toHaveBeenCalledTimes(1))
     expect(documents.get('invoice').dir_id).toBe(ROOT_DIR_ID)
     expect(service.terminate.mock.calls[0][0]).toEqual([
@@ -1425,14 +1439,14 @@ describe('MOVE intent navigation integration', () => {
     })
     failedIds.add('nested')
     await waitForRow('projects')
-    fireEvent.click(screen.getByRole('button', { name: 'Move' }))
+    await clickMove()
     await screen.findByText('Moved: 1. Failed: 1.')
     const firstMoved = documents.get('invoice')
     expect(firstMoved.dir_id).toBe(ROOT_DIR_ID)
     expect(documents.get('nested').dir_id).toBe('child')
     expect(service.terminate).not.toHaveBeenCalled()
     failedIds.clear()
-    fireEvent.click(screen.getByRole('button', { name: 'Move' }))
+    await clickMove()
     await waitFor(() => expect(service.terminate).toHaveBeenCalledTimes(1))
     expect(documents.get('invoice')).toBe(firstMoved)
     expect(writes.map(write => write.id)).toEqual(['invoice', 'nested'])
@@ -1454,7 +1468,7 @@ describe('MOVE intent navigation integration', () => {
       { files: [root, projects, child, invoice, second] }
     )
     await waitForRow('projects')
-    fireEvent.click(screen.getByRole('button', { name: 'Move' }))
+    await clickMove()
     await waitFor(() => expect(service.terminate).toHaveBeenCalledTimes(1))
     expect(documents.get('invoice').trashed).toBe(true)
     expect(documents.get('second').dir_id).toBe(ROOT_DIR_ID)
@@ -1482,7 +1496,7 @@ describe('MOVE intent navigation integration', () => {
     )
     const { service, documents, writes } = context
     await waitForRow('projects')
-    fireEvent.click(screen.getByRole('button', { name: 'Move' }))
+    await clickMove()
     await screen.findByText(
       'Could not retrieve the selected documents and their paths.'
     )
@@ -1509,7 +1523,7 @@ describe('MOVE intent navigation integration', () => {
       })
       failedIds.add('nested')
       await waitForRow('projects')
-      fireEvent.click(screen.getByRole('button', { name: 'Move' }))
+      await clickMove()
       await screen.findByText('Moved: 1. Failed: 1.')
       fireEvent.click(
         within(screen.getByTestId('move-intent')).getByRole('button', {
@@ -1554,7 +1568,8 @@ describe('MOVE intent navigation integration', () => {
       'My Drive'
     ])
     expect(getRow('projects')).toBe(null)
-    expect(getRow('invoice')).toBe(null)
+    const invoiceRow = await waitForRow('invoice')
+    expect(invoiceRow).toHaveAttribute('aria-disabled', 'true')
     expect(
       within(screen.getByTestId('file-picker-breadcrumb')).queryByRole(
         'button',
@@ -1562,9 +1577,8 @@ describe('MOVE intent navigation integration', () => {
       )
     ).toBe(null)
     fireEvent.doubleClick(getRow('child'))
-    await waitFor(() =>
-      expect(screen.queryByTestId('file-picker-empty')).toBeInTheDocument()
-    )
+    const nestedRow = await waitForRow('nested')
+    expect(nestedRow).toHaveAttribute('aria-disabled', 'true')
     fireEvent.click(screen.getByRole('button', { name: 'Projects' }))
     await waitForRow('child')
     expect(documents.get('invoice').dir_id).toBe('projects')
@@ -1669,7 +1683,9 @@ describe('MOVE intent navigation integration', () => {
         'My Drive'
       )
     ).toBeInTheDocument()
-    expect(service.notifyReadyToUse).toHaveBeenCalledTimes(1)
+    await waitFor(() =>
+      expect(service.notifyReadyToUse).toHaveBeenCalledTimes(1)
+    )
     expect(service.throw).not.toHaveBeenCalled()
   })
 

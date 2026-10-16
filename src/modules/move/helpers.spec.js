@@ -4,7 +4,10 @@ import { move } from 'cozy-client/dist/models/file'
 import {
   cancelMove,
   computeNextcloudMoveDirections,
-  hasOneOfEntriesShared
+  hasOneOfEntriesShared,
+  isDirectoryItem,
+  isMoveBrowserItem,
+  isMoveDestinationFolder
 } from '@/modules/move/helpers'
 
 jest.mock('cozy-client/dist/models/file', () => ({
@@ -137,5 +140,67 @@ describe('hasOneOfEntriesShared', () => {
       2: { permissions: [], sharings: ['sharingId'] }
     }
     expect(hasOneOfEntriesShared(entries, byDocId)).toBe(true)
+  })
+})
+
+describe('isDirectoryItem', () => {
+  it('returns true for directory items and false for files or null', () => {
+    expect(isDirectoryItem({ type: 'directory' })).toBe(true)
+    expect(isDirectoryItem({ type: 'file' })).toBe(false)
+    expect(isDirectoryItem(null)).toBe(false)
+    expect(isDirectoryItem(undefined)).toBe(false)
+  })
+})
+
+describe('isMoveBrowserItem', () => {
+  it('returns true for local directories and files', () => {
+    expect(
+      isMoveBrowserItem({ _type: 'io.cozy.files', type: 'directory' })
+    ).toBe(true)
+    expect(isMoveBrowserItem({ _type: 'io.cozy.files', type: 'file' })).toBe(
+      true
+    )
+  })
+
+  it('returns false for non-local, nextcloud, or team-drive items', () => {
+    expect(isMoveBrowserItem(null)).toBe(false)
+    expect(
+      isMoveBrowserItem({
+        _type: 'io.cozy.remote.nextcloud.files',
+        type: 'file'
+      })
+    ).toBe(false)
+    expect(
+      isMoveBrowserItem({
+        _type: 'io.cozy.files',
+        type: 'file',
+        cozyMetadata: { createdByApp: 'nextcloud' }
+      })
+    ).toBe(false)
+    expect(
+      isMoveBrowserItem({
+        _type: 'io.cozy.files',
+        type: 'file',
+        orgDrive: true
+      })
+    ).toBe(false)
+    expect(
+      isMoveBrowserItem({
+        _type: 'io.cozy.files',
+        type: 'file',
+        driveOwner: true
+      })
+    ).toBe(false)
+  })
+})
+
+describe('isMoveDestinationFolder', () => {
+  it('returns true only for local directories', () => {
+    expect(
+      isMoveDestinationFolder({ _type: 'io.cozy.files', type: 'directory' })
+    ).toBe(true)
+    expect(
+      isMoveDestinationFolder({ _type: 'io.cozy.files', type: 'file' })
+    ).toBe(false)
   })
 })

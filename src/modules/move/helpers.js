@@ -22,7 +22,7 @@ function isSameOrDescendantPath(candidatePath, ancestorPath) {
   )
 }
 
-function isDirectoryItem(item) {
+export function isDirectoryItem(item) {
   return Boolean(item) && models.file.isDirectory(item)
 }
 
@@ -32,6 +32,10 @@ function isCozyItem(item) {
     !isNextcloudFile(item) &&
     item.cozyMetadata?.createdByApp !== 'nextcloud'
   )
+}
+
+export function isMoveBrowserItem(item) {
+  return Boolean(item) && isCozyItem(item) && !item.orgDrive && !item.driveOwner
 }
 
 export function isMoveDestinationFolder(item) {

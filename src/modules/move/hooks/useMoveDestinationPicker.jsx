@@ -10,6 +10,8 @@ import {
   getItemId,
   getMoveDestinationDisabledReason,
   isDestinationAllowed,
+  isDirectoryItem,
+  isMoveBrowserItem,
   isMoveDestinationFolder
 } from '../helpers'
 
@@ -26,7 +28,10 @@ import { MoveDestinationActions } from '@/modules/move/components/MoveDestinatio
 import { createFolder } from '@/modules/navigation/duck'
 
 const MOVE_TO_SECTIONS = [filePickerSections.DRIVE, filePickerSections.SHARINGS]
-const MOVE_TO_DISPLAYED_TYPES = [filePickerItemTypes.FOLDER]
+const MOVE_TO_DISPLAYED_TYPES = [
+  filePickerItemTypes.FOLDER,
+  filePickerItemTypes.FILE
+]
 
 function useMoveDestinationReadiness({
   onReadyToUse,
@@ -183,7 +188,8 @@ export function useMoveDestinationPicker({
     allLoaded,
     isDestinationLocked
   })
-  const isItemIncluded = isMoveDestinationFolder
+  const isItemIncluded = isMoveBrowserItem
+  const isItemDisabled = item => !isDirectoryItem(item)
   const getItemDisabledReason = item => {
     if (isBusy || isValidatingDestination) return 'Move.moveInProgress'
     if (isCreatingFolder) return 'Move.folderCreationInProgress'
@@ -320,6 +326,7 @@ export function useMoveDestinationPicker({
           displayedTypes={MOVE_TO_DISPLAYED_TYPES}
           selectableTypes={[]}
           isItemIncluded={isItemIncluded}
+          isItemDisabled={isItemDisabled}
           getItemDisabledReason={getItemDisabledReason}
           isNavigationDisabled={isNavigationLocked}
           additionalItems={createdItems}

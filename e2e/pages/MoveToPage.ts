@@ -110,6 +110,18 @@ export class MoveToPage {
     })
   }
 
+  row(name: string): Locator {
+    return this.dialog
+      .getByTestId('list-item')
+      .filter({ has: this.page.getByTitle(name, { exact: true }) })
+  }
+
+  async expectRowDisabled(name: string): Promise<void> {
+    const row = this.row(name)
+    await expect(row).toBeVisible()
+    await expect(row).toHaveAttribute('aria-disabled', 'true')
+  }
+
   async folderId(name: string): Promise<string> {
     const folderId = await this.folderRow(name).getAttribute('data-file-id')
     if (!folderId) throw new Error(`No folder id found for ${name}`)
