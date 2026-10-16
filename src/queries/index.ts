@@ -101,6 +101,28 @@ export const buildRecentQuery: QueryBuilder = () => ({
   }
 })
 
+/**
+ * The Settings folder (hidden from the Drive root, see buildDriveQuery) and
+ * its subfolders, whose files must not show up in the Recent view either.
+ * The path range also matches siblings like "/Settings 2": filter the result
+ * with isInSettingsFolder. Folders have no `trashed` attribute: trashed ones
+ * live under /.cozy_trash, out of the path range.
+ */
+export const buildSettingsFoldersQuery: QueryBuilder = () => ({
+  definition: () =>
+    Q('io.cozy.files')
+      .where({
+        path: { $gte: SETTINGS_DIR_PATH, $lte: `${SETTINGS_DIR_PATH}/\uffff` }
+      })
+      .partialIndex({ type: 'directory' })
+      .indexFields(['path'])
+      .limitBy(1000),
+  options: {
+    as: 'settings-folders',
+    fetchPolicy: defaultFetchPolicy
+  }
+})
+
 export const buildParentsByIdsQuery: QueryBuilder<string[]> = ids => ({
   definition: () => Q('io.cozy.files').getByIds(ids),
   options: {
