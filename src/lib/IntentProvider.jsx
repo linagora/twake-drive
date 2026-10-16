@@ -1,5 +1,6 @@
 import PropTypes from 'prop-types'
 import React from 'react'
+import { Provider } from 'react-redux'
 
 import { CozyProvider } from 'cozy-client'
 import { DataProxyProvider } from 'cozy-dataproxy-lib'
@@ -11,17 +12,19 @@ import { DOCTYPE_APPS, DOCTYPE_CONTACTS, DOCTYPE_FILES } from '@/lib/doctypes'
 const IntentProvider = ({ client, lang, polyglot, dictRequire, children }) => {
   return (
     <I18n lang={lang} polyglot={polyglot} dictRequire={dictRequire}>
-      <CozyProvider client={client}>
-        <DataProxyProvider
-          options={{
-            doctypes: [DOCTYPE_FILES, DOCTYPE_CONTACTS, DOCTYPE_APPS]
-          }}
-        >
-          <SharingProvider doctype="io.cozy.files" documentType="Files">
-            {children}
-          </SharingProvider>
-        </DataProxyProvider>
-      </CozyProvider>
+      <Provider store={client.store}>
+        <CozyProvider client={client}>
+          <DataProxyProvider
+            options={{
+              doctypes: [DOCTYPE_FILES, DOCTYPE_CONTACTS, DOCTYPE_APPS]
+            }}
+          >
+            <SharingProvider doctype="io.cozy.files" documentType="Files">
+              {children}
+            </SharingProvider>
+          </DataProxyProvider>
+        </CozyProvider>
+      </Provider>
     </I18n>
   )
 }

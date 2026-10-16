@@ -1,4 +1,32 @@
 {
+  "FilePickerDemo": {
+    "title": "File Picker intent demo"
+  },
+  "MoveIntentDemo": {
+    "options": "Intent options",
+    "chooseSources": "Choose local files",
+    "invalidSources": "Choose only local files for MOVE. Remote files, folders and Nextcloud sources are not supported.",
+    "title": "MOVE intent demo",
+    "warning": "This demo really moves your files. It is not a simulation. Use only test files you chose on this instance. Name conflicts may replace files under Drive’s normal rules. Cancel does not undo completed moves; after a partial failure some files may already have moved.",
+    "recovery": "A terminal error is displayed in the dialog and may require a browser reload to return here. Reloading does not undo moves. Inspect Drive before retrying an interrupted operation.",
+    "directoryRequired": "Choose a default folder to restrict destinations.",
+    "restrict": "Restrict destinations to this directory and its descendants (not sources)",
+    "tabs": "Destination tabs",
+    "defaultTabs": "Service defaults (Drive and Sharings; Drive only when restricted)",
+    "driveOnly": "Drive only",
+    "theme": "Theme",
+    "theme_default": "Instance default",
+    "theme_light": "Light",
+    "theme_dark": "Dark",
+    "open": "Open MOVE demo",
+    "opening": "Opening the intent…",
+    "ready": "Destination picker ready. This does not mean files have moved.",
+    "completed": "Completed. Returned files: %{smart_count}.",
+    "cancelled": "Cancelled; no result returned. Completed moves, if any, remain.",
+    "chooseDirectory": "Choose default folder",
+    "clearDirectory": "Clear default folder",
+    "invalidDirectory": "Choose one local folder. Files and remote folders cannot be used as the default directory."
+  },
   "Nav": {
     "item_drive": "My Drive",
     "item_recent": "Recents",

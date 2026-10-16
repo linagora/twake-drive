@@ -23,9 +23,14 @@ export class FilePickerPage {
     this.user = user
   }
 
-  /** Navigate to Drive and open the file picker dialog. */
+  /** Direct navigation to the File Picker demo route. */
+  async visit(): Promise<void> {
+    await this.page.goto(`${this.user.appUrl}/#/file-picker-demo`)
+  }
+
+  /** Navigate to the demo page and open the file picker dialog. */
   async open(configName?: string, themeName?: string): Promise<void> {
-    await this.page.goto(`${this.user.appUrl}/#/folder`)
+    await this.visit()
     await this.page.getByRole('button', { name: /pick a file/i }).waitFor({
       state: 'visible'
     })
@@ -46,7 +51,7 @@ export class FilePickerPage {
     options: { defaultDirId?: string; restrictToDefaultDir?: boolean } = {},
     waitForPicker = true
   ): Promise<void> {
-    await this.page.goto(`${this.user.appUrl}/#/folder`)
+    await this.visit()
     await this.page.getByRole('button', { name: /pick a file/i }).waitFor({
       state: 'visible'
     })
@@ -77,7 +82,7 @@ export class FilePickerPage {
 
   /** Navigate to the mobile demo route and open the picker with a tap. */
   async openMobile(): Promise<void> {
-    await this.page.goto(`${this.user.appUrl}/#/file-picker-demo`)
+    await this.visit()
     const button = this.page.getByRole('button', { name: /pick a file/i })
     await button.waitFor({ state: 'visible' })
     await button.tap()

@@ -59,6 +59,9 @@ jest.mock(
 )
 
 jest.mock('./Picker', () => () => <div data-testid="picker" />)
+jest.mock('./MoveIntent', () => ({
+  MoveIntent: () => <div data-testid="move-intent" />
+}))
 
 function makeDeferredPromise() {
   let resolvePromise

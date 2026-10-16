@@ -1,4 +1,32 @@
 {
+  "FilePickerDemo": {
+    "title": "File Picker 意图演示"
+  },
+  "MoveIntentDemo": {
+    "options": "意图选项",
+    "chooseSources": "选择本地文件",
+    "invalidSources": "请仅为 MOVE 选择本地文件。不支持远程文件、文件夹或 Nextcloud 来源。",
+    "title": "MOVE 意图演示",
+    "warning": "此演示会实际移动文件，并非模拟。请仅使用您在此实例上自行选择的测试文件。名称冲突可能按 Drive 的常规规则替换文件。取消不会撤销已完成的移动；部分失败后，有些文件可能已经移动。",
+    "recovery": "终止错误会显示在对话框中，可能需要重新加载页面才能返回。重新加载不会撤销移动。重试中断的操作前，请检查 Drive。",
+    "directoryRequired": "请选择初始文件夹以限制目标。",
+    "restrict": "将目标限制为此文件夹及其子文件夹（不限制来源）",
+    "tabs": "目标选项卡",
+    "defaultTabs": "服务默认值（Drive 和共享；启用限制时仅 Drive）",
+    "driveOnly": "仅 Drive",
+    "theme": "主题",
+    "theme_default": "实例默认",
+    "theme_light": "浅色",
+    "theme_dark": "深色",
+    "open": "打开 MOVE 演示",
+    "opening": "正在打开意图…",
+    "ready": "目标选择器已就绪。这不代表文件已移动。",
+    "completed": "已完成。返回的文件数：%{smart_count}。",
+    "cancelled": "已取消，未返回结果。已完成的移动仍然保留。",
+    "chooseDirectory": "选择初始文件夹",
+    "clearDirectory": "清除初始文件夹",
+    "invalidDirectory": "请选择一个本地文件夹。文件和远程文件夹不能用作初始文件夹。"
+  },
   "Excalidraw": {
     "createFileName": "新建绘图"
   },
@@ -34,7 +62,8 @@
     "link-client-desktop": "https://nuts.cozycloud.cc/download/channel/stable/",
     "link-client-android": "https://play.google.com/store/apps/details?id=io.cozy.drive.mobile",
     "link-client-ios": "https://itunes.apple.com/us/app/cozy-drive/id1224102389?mt=8",
-    "link-client-web": "https://cozy.io/try-it"
+    "link-client-web": "https://cozy.io/try-it",
+    "item_file_picker": "选择文件"
   },
   "breadcrumb": {
     "title_drive": "硬盘",
@@ -134,6 +163,51 @@
     "decline": "拒绝",
     "close": "关闭"
   },
+  "Move": {
+    "to": "移动到：",
+    "action": "移动",
+    "cancel": "取消",
+    "title": "%{smart_count} 个项目",
+    "success": "已将 %{smart_count} 个项目移动到 %{target}。",
+    "error": "移动项目时发生错误，请稍后重试。",
+    "partialError": "已移动：%{successCount}。失败：%{failureCount}。",
+    "multipleEntries": "%{smart_count} 个项目",
+    "addFolder": "创建文件夹",
+    "folderName": "文件夹名称",
+    "folderCreationError": "无法创建文件夹，请重试。",
+    "folderCreationInProgress": "正在创建文件夹",
+    "moveInProgress": "正在移动项目",
+    "destinationLocked": "请完成或取消此次移动后再更改目标位置。",
+    "destinationSource": "此文件夹正在被移动。",
+    "destinationDescendant": "不能将文件夹移动到自身内部。",
+    "destinationReadOnly": "此文件夹为只读。",
+    "permissionsLoading": "权限仍在加载中。",
+    "outsideSharedFolder": {
+      "title": "移出 %{sharedFolder} 文件夹",
+      "content_1": "警告：您正要将所选项目移出共享文件夹 %{sharedFolder}。",
+      "content_2": "此次移动将取消所选项目的共享。",
+      "cancel": "取消",
+      "confirm": "我已了解"
+    },
+    "insideSharedFolder": {
+      "title": "移动到共享文件夹？",
+      "content": "所有有权访问 %{destination} 的成员也将有权访问 %{source}。",
+      "cancel": "取消",
+      "confirm": "确定"
+    },
+    "sharedFolderInsideAnother": {
+      "title": "无法移动",
+      "content_1": "您正要将共享项目移动到共享文件夹。此类移动不被允许。",
+      "content_2": "如果您仍要将 %{source} 移动到 %{destination}，请先停止共享：",
+      "cancel": "取消移动",
+      "confirm": "停止共享"
+    }
+  },
+  "Viewer": {
+    "loading": {
+      "retry": "重试"
+    }
+  },
   "FilePicker": {
     "footer": {
       "buttons": {
@@ -142,7 +216,8 @@
     },
     "errors": {
       "CONSTRAINT_VIOLATION": "所选项目不符合此操作的要求。",
-      "DOCUMENTS_FAILED": "无法获取所选文档及其路径。"
+      "DOCUMENTS_FAILED": "无法获取所选文档及其路径。",
+      "DESTINATION_UNAVAILABLE": "无法加载目标文件夹。"
     }
   }
 }

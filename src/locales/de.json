@@ -1,4 +1,32 @@
 {
+  "FilePickerDemo": {
+    "title": "File-Picker-Intent-Demo"
+  },
+  "MoveIntentDemo": {
+    "options": "Intent-Optionen",
+    "chooseSources": "Lokale Dateien auswählen",
+    "invalidSources": "Wählen Sie für MOVE nur lokale Dateien. Entfernte Dateien, Ordner und Nextcloud-Quellen werden nicht unterstützt.",
+    "title": "MOVE-Intent-Demo",
+    "warning": "Diese Demo verschiebt Ihre Dateien tatsächlich. Sie ist keine Simulation. Verwenden Sie nur selbst ausgewählte Testdateien auf dieser Instanz. Namenskonflikte können Dateien gemäß den üblichen Drive-Regeln ersetzen. Abbrechen macht abgeschlossene Verschiebungen nicht rückgängig; bei einem Teilfehler können Dateien bereits verschoben sein.",
+    "recovery": "Ein endgültiger Fehler wird im Dialog angezeigt. Um hierher zurückzukehren, müssen Sie eventuell die Seite neu laden. Das macht Verschiebungen nicht rückgängig. Prüfen Sie Drive vor einem erneuten Versuch.",
+    "directoryRequired": "Wählen Sie einen Startordner, um die Ziele einzuschränken.",
+    "restrict": "Ziele auf diesen Ordner und seine Unterordner beschränken (nicht die Quellen)",
+    "tabs": "Zielregisterkarten",
+    "defaultTabs": "Standard (Drive und Freigaben; bei Einschränkung nur Drive)",
+    "driveOnly": "Nur Drive",
+    "theme": "Design",
+    "theme_default": "Instanzstandard",
+    "theme_light": "Hell",
+    "theme_dark": "Dunkel",
+    "open": "MOVE-Demo öffnen",
+    "opening": "Intent wird geöffnet…",
+    "ready": "Zielauswahl bereit. Das bedeutet nicht, dass Dateien verschoben wurden.",
+    "completed": "Abgeschlossen. Zurückgegebene Dateien: %{smart_count}.",
+    "cancelled": "Abgebrochen; kein Ergebnis zurückgegeben. Bereits abgeschlossene Verschiebungen bleiben bestehen.",
+    "chooseDirectory": "Startordner auswählen",
+    "clearDirectory": "Startordner zurücksetzen",
+    "invalidDirectory": "Wählen Sie einen lokalen Ordner. Dateien und entfernte Ordner können nicht als Startordner verwendet werden."
+  },
   "Nav": {
     "item_drive": "Laufwerk",
     "item_recent": "Zuletzt",

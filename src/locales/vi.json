@@ -1,4 +1,32 @@
 {
+  "FilePickerDemo": {
+    "title": "Bản demo intent File Picker"
+  },
+  "MoveIntentDemo": {
+    "options": "Tùy chọn intent",
+    "chooseSources": "Chọn tệp cục bộ",
+    "invalidSources": "Chỉ chọn tệp cục bộ cho MOVE. Không hỗ trợ tệp từ xa, thư mục hoặc nguồn Nextcloud.",
+    "title": "Bản demo intent MOVE",
+    "warning": "Bản demo này thực sự di chuyển tệp. Đây không phải mô phỏng. Chỉ dùng các tệp thử nghiệm bạn chọn trên phiên bản này. Xung đột tên có thể thay thế tệp theo quy tắc thông thường của Drive. Hủy không hoàn tác các lần di chuyển đã xong; sau lỗi một phần, một số tệp có thể đã được di chuyển.",
+    "recovery": "Lỗi kết thúc hiển thị trong hộp thoại và có thể cần tải lại trang để quay lại đây. Tải lại không hoàn tác việc di chuyển. Kiểm tra Drive trước khi thử lại thao tác bị gián đoạn.",
+    "directoryRequired": "Chọn thư mục ban đầu để giới hạn đích đến.",
+    "restrict": "Giới hạn đích đến trong thư mục này và các thư mục con (không giới hạn nguồn)",
+    "tabs": "Thẻ đích đến",
+    "defaultTabs": "Mặc định (Drive và Chia sẻ; chỉ Drive khi giới hạn)",
+    "driveOnly": "Chỉ Drive",
+    "theme": "Giao diện",
+    "theme_default": "Mặc định của phiên bản",
+    "theme_light": "Sáng",
+    "theme_dark": "Tối",
+    "open": "Mở demo MOVE",
+    "opening": "Đang mở intent…",
+    "ready": "Bộ chọn đích đến đã sẵn sàng. Điều này không có nghĩa là tệp đã được di chuyển.",
+    "completed": "Hoàn tất. Số tệp trả về: %{smart_count}.",
+    "cancelled": "Đã hủy; không có kết quả trả về. Các lần di chuyển đã hoàn tất vẫn được giữ nguyên.",
+    "chooseDirectory": "Chọn thư mục ban đầu",
+    "clearDirectory": "Bỏ thư mục ban đầu",
+    "invalidDirectory": "Chọn một thư mục cục bộ. Không thể dùng tệp hoặc thư mục từ xa làm thư mục ban đầu."
+  },
   "Nav": {
     "item_drive": "Ổ đĩa của tôi",
     "item_recent": "Gần đây",
