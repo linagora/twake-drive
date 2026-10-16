@@ -37,7 +37,9 @@ test.describe
 
   test('Alice changes Bob role on nested from Viewer to Editor without mutating parent role', async ({
     alicePage,
-    aliceDrive
+    aliceDrive,
+    bobPage,
+    bobDrive
   }) => {
     // 1. Alice creates parent folder, seeds nested folder, and shares parent with Bob as Viewer
     await createAndShareFolderWithBob(alicePage, aliceDrive, PARENT_FOLDER, {
@@ -56,9 +58,40 @@ test.describe
     await expect(modal.memberItem('bob')).toContainText(/viewer/i)
 
     // 3. Alice changes Bob's role on nested from Viewer to Editor
-    await modal.setMemberRole('bob', 'Editor')
+    const confirmDialog = new DowngradeConfirmDialogPage(alicePage)
+    await modal.selectMemberRole('bob', 'Editor')
     await expect(modal.memberItem('bob')).toContainText(/editor/i)
+
+    // linagora/twake-drive#4205: an upgrade must not route through the
+    // parent's sharing, so no "Update parent" confirm dialog appears.
+    await confirmDialog.dialog
+    .waitFor({ state: 'visible', timeout: 2_000 })
+    .then(() => {
+      throw new Error('Unexpected Update parent confirmation dialog')
+    })
+    .catch((error: Error) => {
+      if (error.name !== 'TimeoutError') throw error
+    })
     await modal.close()
+
+    // The upgrade created a second sharing for the nested folder, visible
+    // on both the owner's and the recipient's Sharings.
+    await waitForSharingRow(
+      alicePage,
+      USERS.alice,
+      aliceDrive,
+      PARENT_FOLDER,
+      'by-me'
+    )
+    await waitForSharingRow(
+      alicePage,
+      USERS.alice,
+      aliceDrive,
+      NESTED_FOLDER,
+      'by-me'
+    )
+    await waitForSharingRow(bobPage, USERS.bob, bobDrive, PARENT_FOLDER)
+    await waitForSharingRow(bobPage, USERS.bob, bobDrive, NESTED_FOLDER)
 
     // 4. Verify Alice's parent folder share modal still has Bob as Viewer
     await alicePage.goto(`${USERS.alice.appUrl}/#/folder`)
