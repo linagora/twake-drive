@@ -10,6 +10,7 @@ import { useI18n } from 'twake-i18n'
 
 import { EmptyMessage as DefaultEmptyMessage } from './EmptyMessage'
 import PickerViewBreadcrumb from './PickerViewBreadcrumb'
+import { PickerViewGrid } from './PickerViewGrid'
 import { PickerViewTable } from './PickerViewTable'
 import styles from './styles.styl'
 
@@ -33,8 +34,9 @@ PickerViewErrorMessage.propTypes = {
   error: PropTypes.string
 }
 
-function PickerViewTableContent({
+function PickerViewItemsContent({
   items,
+  viewType,
   hasMore,
   fetchMore,
   isFetchingMore,
@@ -50,6 +52,8 @@ function PickerViewTableContent({
   scrollerRef,
   beforeItems
 }) {
+  const ItemsView = viewType === 'grid' ? PickerViewGrid : PickerViewTable
+
   return (
     <>
       {isFetchingMore && (
@@ -58,7 +62,7 @@ function PickerViewTableContent({
           data-testid="file-picker-loading-more"
         />
       )}
-      <PickerViewTable
+      <ItemsView
         items={items}
         itemsIdsSelected={selectedItemIds}
         isItemDisabled={isItemDisabled}
@@ -77,7 +81,8 @@ function PickerViewTableContent({
   )
 }
 
-PickerViewTableContent.propTypes = {
+PickerViewItemsContent.propTypes = {
+  viewType: PropTypes.oneOf(['list', 'grid']),
   items: PropTypes.arrayOf(PropTypes.object).isRequired,
   hasMore: PropTypes.bool.isRequired,
   fetchMore: PropTypes.func,
@@ -97,6 +102,7 @@ PickerViewTableContent.propTypes = {
 
 function PickerViewContent({
   items,
+  viewType,
   fetchStatus,
   hasMore,
   fetchMore,
@@ -155,7 +161,8 @@ function PickerViewContent({
           {emptyMessage ?? <DefaultEmptyMessage />}
         </>
       ) : (
-        <PickerViewTableContent
+        <PickerViewItemsContent
+          viewType={viewType}
           items={items}
           hasMore={hasMore}
           fetchMore={fetchMore}
@@ -178,6 +185,7 @@ function PickerViewContent({
 }
 
 PickerViewContent.propTypes = {
+  viewType: PropTypes.oneOf(['list', 'grid']),
   items: PropTypes.arrayOf(PropTypes.object).isRequired,
   fetchStatus: PropTypes.string.isRequired,
   hasMore: PropTypes.bool.isRequired,
@@ -203,6 +211,7 @@ PickerViewContent.propTypes = {
 
 export const PickerView = ({
   items = [],
+  viewType = 'list',
   breadcrumbPath,
   onBreadcrumbClick,
   fetchStatus = 'loaded',
@@ -254,6 +263,7 @@ export const PickerView = ({
         />
       </Box>
       <PickerViewContent
+        viewType={viewType}
         items={items}
         fetchStatus={fetchStatus}
         hasMore={hasMore}
@@ -282,6 +292,7 @@ export const PickerView = ({
 
 PickerView.displayName = 'PickerView'
 PickerView.propTypes = {
+  viewType: PropTypes.oneOf(['list', 'grid']),
   items: PropTypes.arrayOf(PropTypes.object),
   breadcrumbPath: PropTypes.array,
   onBreadcrumbClick: PropTypes.func,

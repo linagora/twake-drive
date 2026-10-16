@@ -7,6 +7,8 @@ import MidEllipsis from 'cozy-ui/transpiled/react/MidEllipsis'
 import { TableCell } from 'cozy-ui/transpiled/react/deprecated/Table'
 import { useI18n } from 'twake-i18n'
 
+import { FileNameLabel } from './FileNameLabel'
+
 import styles from '@/styles/filelist.styl'
 
 import { useViewSwitcherContext } from '@/lib/ViewSwitcherContext'
@@ -52,20 +54,11 @@ const FileName = ({
         />
       ) : (
         <div className={styles['fil-file']}>
-          <div className={styles['fil-file-filename']}>
-            <div className={styles['fil-file-filename-wrapper']}>
-              <div
-                data-testid="fil-file-filename-and-ext"
-                className={styles['fil-file-filename-and-ext']}
-                title={title}
-              >
-                {filename}
-                {extension && (
-                  <span className={styles['fil-content-ext']}>{extension}</span>
-                )}
-              </div>
-            </div>
-          </div>
+          <FileNameLabel
+            title={title}
+            filename={filename}
+            extension={extension}
+          />
           {withFilePath &&
             parentFolderPath &&
             (isMobile ? (

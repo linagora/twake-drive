@@ -38,6 +38,7 @@ jest.mock('cozy-client/dist/models/file', () => ({
 }))
 jest.mock('cozy-sharing', () => ({ useSharingContext: jest.fn() }))
 jest.mock('twake-i18n')
+jest.mock('@/modules/filelist/icons/FileThumbnail', () => () => null)
 jest.mock('cozy-ui/transpiled/react/providers/Breakpoints', () => ({
   useBreakpoints: jest.fn()
 }))

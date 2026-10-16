@@ -34,6 +34,7 @@ const {
 } = models
 
 const filePickerContentPropTypes = {
+  viewType: PropTypes.oneOf(['list', 'grid']),
   source: PropTypes.shape({
     items: PropTypes.arrayOf(PropTypes.object),
     fetchStatus: PropTypes.string.isRequired,
@@ -116,6 +117,7 @@ CurrentFolderContent.propTypes = filePickerContentPropTypes
 
 const SelectionFilePickerContent = ({
   source,
+  viewType = 'list',
   navigateTo,
   selectableTypes,
   multiple,
@@ -159,6 +161,7 @@ const SelectionFilePickerContent = ({
 
   const pickerAdapter = useFilePickerAdapter({
     items,
+    viewType,
     canSelectItem,
     multiple,
     selectionContainerRef,
@@ -170,6 +173,7 @@ const SelectionFilePickerContent = ({
 
   return (
     <PickerView
+      viewType={viewType}
       selectionContainerRef={selectionContainerRef}
       virtuosoRef={virtuosoRef}
       scrollerRef={setScrollElement}
@@ -378,6 +382,7 @@ SharedDriveFolderContent.propTypes = {
 
 export const FilePickerBody = ({
   mode,
+  viewType = 'list',
   navigateTo,
   section,
   folderId,
@@ -433,6 +438,7 @@ export const FilePickerBody = ({
     <FilePickerContent
       source={source}
       mode={mode}
+      viewType={viewType}
       navigateTo={navigateTo}
       selectableTypes={selectableTypes}
       multiple={multiple}
@@ -526,6 +532,7 @@ export const FilePickerBody = ({
 }
 
 FilePickerBody.propTypes = {
+  viewType: PropTypes.oneOf(['list', 'grid']),
   mode: PropTypes.oneOf(Object.values(filePickerModes)).isRequired,
   section: PropTypes.oneOf(Object.values(filePickerSections)).isRequired,
   folderId: PropTypes.string.isRequired,

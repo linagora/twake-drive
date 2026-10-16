@@ -98,7 +98,9 @@ const FileThumbnail: React.FC<FileThumbnailProps> = ({
           className="u-flex u-flex-items-center u-flex-justify-center u-bdrs-4"
           width={size}
           height={size}
-          bgcolor={viewType === 'list' ? 'var(--contrastBackgroundColor)' : ''}
+          bgcolor={
+            viewType === 'list' ? 'var(--contrastBackgroundColor)' : null
+          }
         >
           {isKonnectorFolder ? (
             <BadgeKonnector file={file}>
