@@ -171,8 +171,8 @@ test.describe.serial('Shared drive write flows (recipient)', () => {
       await aliceDrive.row(ALICE_FILE).waitVisible()
 
       // The recipient's view is a live proxy of Alice's instance, so a reload
-      // reflects her upload. (Owner->recipient websocket push exists but isn't
-      // delivered by the CI stack, so we don't depend on a push here.)
+      // reflects her upload. (Owner->recipient push is covered by the realtime
+      // specs, e.g. z-nested-realtime, which assert rows without any reload.)
       await expect(async () => {
         await bobPage.reload()
         await bobDrive.row(ALICE_FILE).waitVisible({ timeout: 5_000 })
