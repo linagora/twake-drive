@@ -41,5 +41,8 @@ FileViewer, FilePicker, …). Read the file for its methods.
 - Only `*.mobile.spec.ts` runs in the `mobile` project; everything else is
   desktop chromium.
 - Prefer `expect(...).toBeVisible()` / `toPass()` over `waitForTimeout()`.
+- Assert file absence with `drive.row(name).waitHidden()`, which scans every
+  viewport and loads further pages. A filename cell count of zero only proves
+  the row is currently unmounted, not that the file is absent.
 - Specs run on several workers, each with its own Alice/Bob/Charlie instances:
   never hardcode an instance name, email or URL, always go through `USERS`.

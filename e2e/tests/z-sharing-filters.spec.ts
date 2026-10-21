@@ -48,7 +48,7 @@ test.describe.serial('Filtered federated re-sharing', () => {
 
     await charliePage.goto(`${USERS.charlie.appUrl}/#/sharings/with-me`)
     await expect(charliePage.getByTestId('sharings-filters')).toBeVisible()
-    await expect(charlieDrive.row(FOLDER_NAME).cell).toHaveCount(0)
+    await charlieDrive.row(FOLDER_NAME).waitHidden()
     await charliePage.locator('html').evaluate((root, marker) => {
       root.dataset.e2eDocumentMarker = marker
     }, DOCUMENT_MARKER)
@@ -61,7 +61,7 @@ test.describe.serial('Filtered federated re-sharing', () => {
       bobPage.getByRole('button', { name: 'Folders', exact: true })
     ).toBeVisible()
     await bobDrive.row(FOLDER_NAME).waitVisible()
-    await expect(bobDrive.row(DOCUMENT_NAME).cell).toHaveCount(0)
+    await bobDrive.row(DOCUMENT_NAME).waitHidden()
 
     const shareModal = await bobDrive.row(FOLDER_NAME).share()
     await expect(bobPage).toHaveURL(
@@ -75,7 +75,7 @@ test.describe.serial('Filtered federated re-sharing', () => {
       bobPage.getByRole('button', { name: 'Folders', exact: true })
     ).toBeVisible()
     await bobDrive.row(FOLDER_NAME).waitVisible()
-    await expect(bobDrive.row(DOCUMENT_NAME).cell).toHaveCount(0)
+    await bobDrive.row(DOCUMENT_NAME).waitHidden()
 
     await charlieDrive.row(FOLDER_NAME).waitVisible({ timeout: 30_000 })
     await expect(charliePage).toHaveURL(/#\/sharings\/with-me$/)

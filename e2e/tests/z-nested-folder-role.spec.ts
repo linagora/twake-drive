@@ -173,7 +173,7 @@ test.describe
       charlieDrive,
       NESTED_CHARLIE_FOLDER
     )
-    await expect(charlieDrive.row(PARENT_FOLDER).cell).toHaveCount(0)
+    await charlieDrive.row(PARENT_FOLDER).waitHidden()
 
     // 2. Charlie opens nested folder
     await openSharedDrive(

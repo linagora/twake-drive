@@ -1,4 +1,4 @@
-import type { Page, Locator } from '@playwright/test'
+import type { Page, Locator, Request } from '@playwright/test'
 
 import { MoveToPage } from './MoveToPage'
 import { ShareModalPage } from './ShareModalPage'
@@ -111,8 +111,92 @@ export class FileRow {
     })
   }
 
+  /** Check all list pages: unmounted rows can still contain the file. */
   async waitHidden(opts?: { timeout?: number }): Promise<void> {
-    await this.cell.waitFor({ state: 'hidden', timeout: opts?.timeout })
+    const timeout: number = opts?.timeout ?? 10_000
+    const scroller: Locator = this.fileList
+      .locator('xpath=ancestor::*[@data-testid="virtuoso-scroller"][1]')
+      .or(this.fileList)
+      .first()
+    const waitForRows = async (): Promise<void> => {
+      await this.page.evaluate(
+        () =>
+          new Promise<void>(resolve => {
+            requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+          })
+      )
+    }
+    const isAtEnd = async (): Promise<boolean> =>
+      scroller.evaluate(
+        (element: HTMLElement) =>
+          element.scrollTop + element.clientHeight >= element.scrollHeight - 1
+      )
+
+    await expect(async () => {
+      await this.fileList.waitFor({ state: 'visible', timeout })
+      await this.page
+        .getByTestId('empty-folder')
+        .or(
+          this.fileList.locator(
+            '[data-file-id], [data-testid="fil-file-filename-and-ext"]'
+          )
+        )
+        .first()
+        .waitFor({ state: 'attached', timeout })
+      const scrollTop: number = await scroller.evaluate(
+        (element: HTMLElement) => element.scrollTop
+      )
+      const requests: Request[] = []
+      const trackRequest = (request: Request): void => {
+        if (
+          /^\/(files|sharings\/drives|data\/io\.cozy\.files)(\/|$)/.test(
+            new URL(request.url()).pathname
+          )
+        ) {
+          requests.push(request)
+        }
+      }
+      this.page.on('request', trackRequest)
+      try {
+        await scroller.evaluate((element: HTMLElement) => {
+          element.scrollTop = 0
+        })
+        while (true) {
+          await waitForRows()
+          expect(
+            await this.cell.count(),
+            `Expected file "${this.name}" to be absent`
+          ).toBe(0)
+          if (await isAtEnd()) {
+            // Wait for pagination, not DataProxy's long-lived script requests.
+            await Promise.all(
+              requests.map(async request => {
+                const response = await request.response()
+                await response?.finished()
+              })
+            )
+            await waitForRows()
+            expect(
+              await this.cell.count(),
+              `Expected file "${this.name}" to be absent`
+            ).toBe(0)
+            if (await isAtEnd()) return
+          }
+          await scroller.evaluate((element: HTMLElement) => {
+            element.scrollTop += Math.max(
+              1,
+              Math.floor(element.clientHeight / 2)
+            )
+          })
+        }
+      } finally {
+        this.page.off('request', trackRequest)
+        await scroller.evaluate((element: HTMLElement, top: number) => {
+          element.scrollTop = top
+        }, scrollTop)
+        await waitForRows()
+      }
+    }).toPass({ intervals: [100], timeout })
   }
 
   async isNewSharingShortcut(): Promise<boolean> {
