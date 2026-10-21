@@ -4,6 +4,8 @@ import { MoveToPage } from './MoveToPage'
 import { ShareModalPage } from './ShareModalPage'
 import { escapeRegExp } from '../helpers/fixtures'
 
+import { DOUBLE_CLICK_DELAY } from '@/hooks/useOnLongPress/helpers'
+
 interface ConfirmDialog {
   button: RegExp
   /** `required`: the dialog always shows up. `optional`: only confirm when
@@ -48,6 +50,12 @@ export class FileRow {
     )
   }
 
+  private get actionButton(): Locator {
+    return this.rowEl
+      .getByRole('button', { name: 'More' })
+      .or(this.rowEl.locator('button[arial-label="More"]'))
+  }
+
   async waitVisible(opts?: { timeout?: number }): Promise<void> {
     await this.cell.waitFor({ state: 'visible', timeout: opts?.timeout })
   }
@@ -70,20 +78,32 @@ export class FileRow {
   }
 
   async select(): Promise<void> {
-    await this.rowEl.getByRole('checkbox').click()
+    await this.waitVisible()
+    await this.rowEl
+      .getByRole('link')
+      .first()
+      .click({ modifiers: ['ControlOrMeta'] })
   }
 
-  /** cozy-drive desktop semantics: single-click selects, double-click
-   * navigates / opens. See src/hooks/useOnLongPress/helpers.js handleClick. */
   async open(): Promise<void> {
-    // The row's link includes the value of every column in its accessible
-    // name ("Foo — — —"), so we locate the row through the filename cell
-    // and dblclick whichever link sits inside.
-    await this.rowEl.getByRole('link').first().dblclick()
+    await this.waitVisible()
+    const link = this.rowEl.getByRole('link').first()
+    // FileOpener uses cozy-ui's desktop breakpoint, not touch capability.
+    const isDesktop: boolean = await this.page.evaluate(
+      () => window.matchMedia('(min-width: 1024px)').matches
+    )
+    if (!isDesktop) {
+      await link.click()
+      return
+    }
+    // Virtuoso can reuse a row whose last click just opened its parent.
+    await this.page.waitForTimeout(DOUBLE_CLICK_DELAY)
+    await link.dblclick()
   }
 
   async openMenu(): Promise<Locator> {
-    await this.rowEl.getByRole('button', { name: 'More' }).click()
+    await this.waitVisible()
+    await this.actionButton.click()
     return this.page.getByRole('menu')
   }
 
