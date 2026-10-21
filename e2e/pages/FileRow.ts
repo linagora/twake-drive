@@ -39,13 +39,12 @@ export class FileRow {
     return this.fileList
       .getByTestId('fil-file-filename-and-ext')
       .filter({ hasText: this.anchored })
+      .or(this.fileList.getByTitle(this.name, { exact: true }))
   }
 
   private get rowEl(): Locator {
-    // Each row is a plain <div> with no semantic role; locate the closest
-    // ancestor that contains the per-row "More" button — that's the row.
     return this.cell.locator(
-      'xpath=ancestor::*[.//button[@aria-label="More"]][1]'
+      'xpath=ancestor::*[.//button[@aria-label="More" or @arial-label="More"]][1]'
     )
   }
 
@@ -63,7 +62,9 @@ export class FileRow {
 
   async fileId(): Promise<string> {
     const href = await this.rowEl.getByRole('link').first().getAttribute('href')
-    const fileId = href?.match(/\/(?:file|onlyoffice)\/(?:[^/?#]+\/)?([^/?#]+)/)?.[1]
+    const fileId = href?.match(
+      /\/(?:file|onlyoffice)\/(?:[^/?#]+\/)?([^/?#]+)/
+    )?.[1]
     if (!fileId) throw new Error(`No file id found for ${this.name}`)
     return fileId
   }
@@ -123,8 +124,12 @@ export class FileRow {
     await input.fill(newName)
     await input.press('Enter')
     await this.fileList
-      .getByTestId('fil-file-filename-and-ext')
-      .filter({ hasText: new RegExp(`^${escapeRegExp(newName)}$`) })
+      .getByTitle(newName, { exact: true })
+      .or(
+        this.fileList
+          .getByTestId('fil-file-filename-and-ext')
+          .filter({ hasText: new RegExp(`^${escapeRegExp(newName)}$`) })
+      )
       .waitFor({ state: 'visible' })
   }
 

@@ -13,11 +13,17 @@ import { ShareModalPage } from './ShareModalPage'
  */
 export class DrivePage {
   private readonly page: Page
-  private readonly fileList: Locator
 
   constructor(page: Page) {
     this.page = page
-    this.fileList = page.getByTestId('fil-content-body')
+  }
+
+  /** Legacy empty views nest the message inside the table; prefer that ancestor. */
+  get fileList(): Locator {
+    return this.page
+      .getByRole('table', { includeHidden: true })
+      .or(this.page.getByTestId('empty-folder'))
+      .first()
   }
 
   row(name: string): FileRow {
@@ -90,6 +96,7 @@ export class DrivePage {
     return this.fileList
       .getByTestId('fil-file-filename-and-ext')
       .filter({ hasText: stem })
+      .or(this.fileList.getByTitle(stem, { exact: false }))
   }
 
   async createFolder(name: string): Promise<void> {
@@ -102,10 +109,10 @@ export class DrivePage {
     await this.row(name).waitVisible()
   }
 
-
   /** cozy-ui's FileInput spreads extra props onto the underlying <input
    * type=file>, so the `upload-btn` testid lives on the input itself. */
   async uploadFiles(filePaths: string | string[]): Promise<void> {
+    await this.fileList.waitFor({ state: 'visible' })
     await this.page
       .locator('input[data-testid="upload-btn"]')
       .first()
