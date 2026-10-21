@@ -3,6 +3,7 @@ import type { Page, Locator } from '@playwright/test'
 import { FileRow } from './FileRow'
 import { MoveToPage } from './MoveToPage'
 import { ShareModalPage } from './ShareModalPage'
+import { expect } from '../helpers/fixtures'
 
 /**
  * Page object for the Drive file list view (My Drive, Trash, Favorites,
@@ -103,6 +104,16 @@ export class DrivePage {
     await this.page.getByRole('button', { name: 'Create' }).click()
     await this.page.getByTestId('add-folder-link').click()
     const input = this.page.getByTestId('name-input').locator('input')
+    await expect
+      .poll(
+        async (): Promise<number> => {
+          const count = await input.count()
+          if (count === 0) await this.scrollFileListToTop()
+          return count
+        },
+        { intervals: [50], timeout: 10_000 }
+      )
+      .toBeGreaterThan(0)
     await input.waitFor({ state: 'visible' })
     await input.fill(name)
     await input.press('Enter')
@@ -174,9 +185,15 @@ export class DrivePage {
     await this.fileList.dispatchEvent('drop', { dataTransfer })
   }
 
-  /** Right-click the empty content area; the dropzone wrapper's onContextMenu
-   * opens the AddMenu. Callers must be in an empty folder so the click lands
-   * on blank space and not on a file row (which opens the file menu instead). */
+  private async scrollFileListToTop(): Promise<void> {
+    const scroller = this.page.getByTestId('virtuoso-scroller')
+    if ((await scroller.count()) === 0) return
+    await scroller.evaluate((element: HTMLElement) => {
+      element.scrollTop = 0
+    })
+  }
+
+  /** Callers must be in an empty folder so the click opens AddMenu, not a row menu. */
   private async openAddContextMenu(): Promise<void> {
     await this.fileList.click({ button: 'right' })
     await this.page.getByRole('menu').waitFor({ state: 'visible' })

@@ -2,7 +2,7 @@ import type { Page, Locator } from '@playwright/test'
 
 import { MoveToPage } from './MoveToPage'
 import { ShareModalPage } from './ShareModalPage'
-import { escapeRegExp } from '../helpers/fixtures'
+import { escapeRegExp, expect } from '../helpers/fixtures'
 
 import { DOUBLE_CLICK_DELAY } from '@/hooks/useOnLongPress/helpers'
 
@@ -57,7 +57,58 @@ export class FileRow {
   }
 
   async waitVisible(opts?: { timeout?: number }): Promise<void> {
-    await this.cell.waitFor({ state: 'visible', timeout: opts?.timeout })
+    let startedFromCurrentPosition = false
+    await expect
+      .poll(
+        async (): Promise<number> => {
+          const cell = this.cell.first()
+          if ((await cell.count()) === 0) {
+            if (startedFromCurrentPosition) await this.scrollNextViewport()
+            else {
+              await this.scrollFileListToTop()
+              startedFromCurrentPosition = true
+            }
+            return 0
+          }
+
+          try {
+            await cell.scrollIntoViewIfNeeded()
+            return (await cell.isVisible()) ? 1 : 0
+          } catch {
+            return 0
+          }
+        },
+        { intervals: [50], timeout: opts?.timeout ?? 10_000 }
+      )
+      .toBe(1)
+  }
+
+  private async scrollFileListToTop(): Promise<void> {
+    const scroller = this.fileList.locator(
+      'xpath=ancestor::*[@data-testid="virtuoso-scroller"][1]'
+    )
+    if ((await scroller.count()) === 0) return
+    await scroller.evaluate((element: HTMLElement) => {
+      element.scrollTop = 0
+    })
+  }
+
+  private async scrollNextViewport(): Promise<void> {
+    const scroller = this.fileList.locator(
+      'xpath=ancestor::*[@data-testid="virtuoso-scroller"][1]'
+    )
+    if ((await scroller.count()) === 0) return
+    await scroller.evaluate((element: HTMLElement) => {
+      const maxScrollTop = element.scrollHeight - element.clientHeight
+      element.scrollTop =
+        element.scrollTop >= maxScrollTop
+          ? 0
+          : Math.min(
+              element.scrollTop +
+                Math.max(1, Math.floor(element.clientHeight / 2)),
+              maxScrollTop
+            )
+    })
   }
 
   async waitHidden(opts?: { timeout?: number }): Promise<void> {

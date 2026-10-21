@@ -132,6 +132,6 @@ test.describe('Folder CRUD', () => {
 
     await aliceDrive.row(name).restore()
     await alicePage.goto(ALICE_ROOT)
-    await expect(aliceDrive.row(name).cell).toBeVisible()
+    await aliceDrive.row(name).waitVisible()
   })
 })
