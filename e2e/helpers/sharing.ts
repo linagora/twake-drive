@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test'
+import type { Page, Response } from '@playwright/test'
 
 import { USERS, User } from './config'
 import { expect } from './fixtures'
@@ -84,7 +84,22 @@ export async function openSharedDrive(
   // Opening the drive starts a foreground realtime connection. The stack
   // uses it to mark the shortcut as seen, so wait until Drive receives that
   // update before a beforeAll hook can close this temporary browser context.
-  const folderLoaded = page.waitForResponse(response => {
+  const folderLoaded = waitForDriveFolderContent(page)
+  await sharingRow.open()
+  await page.waitForURL(/\/shareddrive\/[^/]+\/[^/]+/)
+  await folderLoaded
+  if (sharingsLinkText !== null) {
+    await expect
+      .poll(() => sharingsLink.textContent(), { timeout: 30_000 })
+      .not.toBe(sharingsLinkText)
+  }
+}
+
+/** The proxied folder-content fetch of a shared drive. Waiting for it —
+ * not just for the URL change — is what guarantees the displayed folder
+ * has actually switched. */
+function waitForDriveFolderContent(page: Page): Promise<Response> {
+  return page.waitForResponse(response => {
     const url = new URL(response.url())
 
     return (
@@ -94,14 +109,33 @@ export async function openSharedDrive(
       response.ok()
     )
   })
-  await sharingRow.open()
-  await page.waitForURL(/\/shareddrive\/[^/]+\/[^/]+/)
+}
+
+/** Open a folder from inside the currently displayed shared drive. The
+ * double-click only starts the navigation: the URL can point at the target
+ * while the displayed folder still holds the parent's contents, so a write
+ * issued too early would land in the parent. */
+export async function openFolderInDrive(
+  page: Page,
+  drive: DrivePage,
+  name: string
+): Promise<void> {
+  const folderLoaded = waitForDriveFolderContent(page)
+  await drive.row(name).open()
   await folderLoaded
-  if (sharingsLinkText !== null) {
-    await expect
-      .poll(() => sharingsLink.textContent(), { timeout: 30_000 })
-      .not.toBe(sharingsLinkText)
-  }
+}
+
+/** Record every realtime frame received on the page's WebSocket
+ * connections from now on. Returns the live array: inspect it once the
+ * update whose presence or absence is expected has been observed in the
+ * UI. A connection that was already open cannot be observed — reload the
+ * page after attaching so the realtime socket opens under the capture. */
+export function captureRealtimeFrames(page: Page): string[] {
+  const frames: string[] = []
+  page.on('websocket', socket => {
+    socket.on('framereceived', message => frames.push(String(message.payload)))
+  })
+  return frames
 }
 
 /**
