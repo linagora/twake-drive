@@ -8,7 +8,7 @@ import {
   readSlideContent,
   writeSlideLines
 } from './presentation.js'
-import { makeToolbarItems, readEditorLang } from './toolbar.js'
+import { makeOpenMessage, makeToolbarItems, readEditorLang } from './toolbar.js'
 
 // The plugin is in the frame of the editor, itself in the app that shows it
 const host = window.parent.parent
@@ -48,6 +48,7 @@ let isWriting = false
 let selectionTimer = null
 let pausedUntil = 0
 let isStarted = false
+let isToolbarShown = false
 // Each request for the text, and each close of the panel, ends the requests
 // still being read: the panel does not open again for an older one
 let contentRequest = 0
@@ -325,6 +326,9 @@ async function handleMessage(event) {
   if (event.data?.type === 'twake-scribe:insertSlide') {
     await addSlide(event.data)
   }
+  // The plugin cannot tell whether the app acts on its entries: where the app
+  // shows no scribe, as on a public link or in another app, it does not ask
+  if (event.data?.type === 'twake-scribe:showToolbar') showToolbar()
 }
 
 function stopGeometryLoop() {
@@ -422,29 +426,18 @@ function findHostOrigin() {
   }
 }
 
-// The entry of the Plugins tab works on the selection, as the inline one
+// The selection is read when clicked: lastSelectedTextLive follows it only
+// where the editor gives its geometry, not in a presentation
 async function handleToolbarClick(id) {
-  if (id === 'scribePanel') {
-    host.postMessage(
-      { type: 'twake-scribe:open', source: 'toolbar-panel' },
-      appOrigin
-    )
-    return
-  }
-  if (id !== 'scribe' && id !== 'scribeInline') return
-  // Read when clicked: lastSelectedTextLive follows the selection only where
-  // the editor gives its geometry, not in a presentation
-  const selectedText = await fetchSelectedText()
-  if (!selectedText?.trim()) return
-  host.postMessage(
-    { type: 'twake-scribe:open', source: 'toolbar-inline' },
-    appOrigin
-  )
+  const message = makeOpenMessage(id, await fetchSelectedText())
+  if (message !== null) host.postMessage(message, appOrigin)
 }
 
 // The editor sends a click on an entry only to a plugin that has told it
 // it listens
-function addToolbarEntries() {
+function showToolbar() {
+  if (isToolbarShown || !appOrigin) return
+  isToolbarShown = true
   window.Asc.plugin.attachEditorEvent('onToolbarMenuClick', handleToolbarClick)
   const lang = readEditorLang(window.parent.location.href)
   const baseUrl = new URL('./', window.location.href).href
@@ -467,7 +460,6 @@ window.Asc.plugin.init = () => {
   appOrigin = findHostOrigin()
   if (!appOrigin) return
   host.postMessage({ type: 'twake-scribe:ready' }, appOrigin)
-  addToolbarEntries()
   // The presentation editor gives no selection bounds
   if (!isPresentation()) watchGeometry()
 }

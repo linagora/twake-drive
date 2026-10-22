@@ -7,6 +7,7 @@
     {
       "description": "Lets Twake Drive give the selected text to its AI assistant, and write the answers of the assistant in the document or the presentation.",
       "url": "index.html",
+      "icons": "resources/%theme-type%(light|dark)/icon%scale%(100).%extension%(png)",
       "isViewer": false,
       "EditorsSupport": [
         "word",

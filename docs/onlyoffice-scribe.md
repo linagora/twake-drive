@@ -20,7 +20,8 @@ Drive (OnlyOffice view)
        ├─ entries of its toolbar ── open or close ──▶ side panel, through the plugin
        └─ scribe plugin (iframe, in the background)
             twake-scribe:getContent, twake-scribe:close,
-            twake-scribe:applyAnswer, twake-scribe:insertSlide ◀── Drive
+            twake-scribe:applyAnswer, twake-scribe:insertSlide,
+            twake-scribe:showToolbar ◀── Drive
             twake-scribe:ready, twake-scribe:content,
             twake-scribe:selection, twake-scribe:applied,
             twake-scribe:geometry, twake-scribe:open ──▶ Drive
@@ -33,7 +34,7 @@ Drive (OnlyOffice view)
 - A click opens the assistant in a panel beside the document. Another click, or the cross of the panel, closes it.
 - A text selected in a text document shows a small sparkle button under its end, "Scribe Menu": a click opens the assistant on it too, see [The button under the selection](#the-button-under-the-selection).
 - A text document also has a floating button, "Scribe Panel", 12 px inside the top right corner of the area that shows the document, faded until the pointer is over it. Its mark plays while the pointer is over it, unless the system asks for reduced motion. A click opens the panel, or closes it. Until the plugin has given the place of that area, the button waits in the bottom right corner of the window. A presentation has none: the plugin gives no geometry there.
-- The toolbar of the editor has the scribe too: a "Scribe" button in its Plugins tab, and an "Assistant" tab with "Inline Scribe" and "Scribe panel". "Scribe" and "Inline Scribe" open the panel on the selected text, and do nothing without a selection. "Scribe panel" opens the panel, or closes it. See [The entries of the editor's toolbar](#the-entries-of-the-editors-toolbar).
+- Where the AI button is shown, the toolbar of the editor has the scribe too: a "Scribe" button in its Plugins tab, and an "Assistant" tab with "Inline Scribe" and "Scribe panel". "Scribe" and "Inline Scribe" open the panel on the selected text, and do nothing without a selection. "Scribe panel" opens the panel, or closes it. See [The entries of the editor's toolbar](#the-entries-of-the-editors-toolbar).
 - With a selection, the assistant works on the selected text, and each answer can be inserted after it or can replace it. An answer is text, so a selection that holds what it cannot give back can only have the answers inserted after it: a chart, an equation, an endnote, a field, a content control or a form, a comment, a page or column break, a footnote in a cell of a table or in a code, or an image the plugin cannot give a marker. So can a selection that crosses the end of a section, or the edges of more than two tables or of a table in a table. See [What an answer can replace](#what-an-answer-can-replace).
 - The underlined text of the selection is given between `<u>` tags, and its footnotes, its links to a heading or a bookmark of the document and its images as markers. They are written back where the answer keeps them, as underlined text, new notes, links and copies of the images, see [Markers](#markers).
 - Without a selection, the assistant works on the whole document, and each answer can be inserted at the cursor. Nothing replaces a whole document.
@@ -53,6 +54,8 @@ All of these are needed:
 - the scribe plugin is installed on the Document Server, and has said it is ready;
 - the flag `cozy.assistant.enabled` is on;
 - the document is not opened from a public link, and the user can edit it.
+
+The entries of the scribe in the toolbar of the editor follow the same rule: Drive asks the plugin for them only then, see [The entries of the editor's toolbar](#the-entries-of-the-editors-toolbar).
 
 The plugin only loads in the editors of text documents and presentations, in edit mode. Without it Drive is unchanged.
 
@@ -105,11 +108,12 @@ The Document Server lists the plugins of that folder by itself. It serves its st
 
 ### Messages
 
-Drive and the plugin talk with `postMessage`. Drive only listens to the origin of the Document Server, and the plugin only to the window that shows the editor. The plugin sends its messages to the origin of Drive only: the first one, before Drive has written to it, to the origin the `api.js` of the Document Server gives the editor (`parentOrigin` in the address of its frame).
+Drive and the plugin talk with `postMessage`. Drive only listens to the origin of the Document Server and, once the plugin has said it is ready, to the window of the plugin only: another plugin of the Document Server has the same origin. The plugin only listens to the window that shows the editor. The plugin sends its messages to the origin of Drive only: the first one, before Drive has written to it, to the origin the `api.js` of the Document Server gives the editor (`parentOrigin` in the address of its frame).
 
 | Direction | `type` | Fields | Meaning |
 | --- | --- | --- | --- |
 | Plugin → Drive | `twake-scribe:ready` | — | The plugin is loaded. Drive shows the AI button. Not sent when the editor has no `parentOrigin`. |
+| Drive → Plugin | `twake-scribe:showToolbar` | — | Sent once the plugin is ready, where Drive shows its AI button (see [When the button is shown](#when-the-button-is-shown)). The plugin adds its entries to the toolbar of the editor, once. Without it, the editor shows none, see [The entries of the editor's toolbar](#the-entries-of-the-editors-toolbar). |
 | Drive → Plugin | `twake-scribe:getContent` | — | Asks for the text to work on. |
 | Plugin → Drive | `twake-scribe:content` | `content`, `target`, `canReplace` | The text in Markdown, what it is (`selection`, `document` without a selection, or `slide` in a presentation, see [Presentations](#presentations)), and whether an answer can take its place, see [What an answer can replace](#what-an-answer-can-replace). A presentation sends no `canReplace`: a selection of a slide can always be replaced. Drive opens the panel with it. |
 | Plugin → Drive | `twake-scribe:selection` | `content`, `target`, `canReplace` | Another text selected, once Drive has asked for one: not for a cursor that moves, nor for an answer just written. Drive gives it to the open assistant (new `data` of the intent). |
@@ -136,14 +140,14 @@ Drive adds the box of the editor frame, taken when a geometry comes and when the
 
 ### The entries of the editor's toolbar
 
-Once started, and when the editor has given it the origin of Drive, the plugin adds its entries to the toolbar of the editor with the `AddToolbarMenuItem` method of the plugin API (Document Server 8.1 or later): a "Scribe" button in the Plugins tab (`scribe`), and an "Assistant" tab (`scribeAssistantTab`) with "Inline Scribe" (`scribeInline`) and "Scribe panel" (`scribePanel`). The editor sends a click to a plugin only for an event it has asked for: the plugin listens to `onToolbarMenuClick` with `attachEditorEvent`.
+When Drive sends `twake-scribe:showToolbar`, the plugin adds its entries to the toolbar of the editor, once, with the `AddToolbarMenuItem` method of the plugin API (Document Server 8.1 or later): a "Scribe" button in the Plugins tab (`scribe`), and an "Assistant" tab (`scribeAssistantTab`) with "Inline Scribe" (`scribeInline`) and "Scribe panel" (`scribePanel`). The editor sends a click to a plugin only for an event it has asked for: the plugin listens to `onToolbarMenuClick` with `attachEditorEvent`.
 
 - "Scribe" and "Inline Scribe" read the selected text with `GetSelectedText`, a method of the editor and not a command, when clicked. With a text selected, the plugin sends `twake-scribe:open` with `source: 'toolbar-inline'`; without one, nothing.
 - "Scribe panel" always sends `twake-scribe:open` with `source: 'toolbar-panel'`.
 
-Drive records the panel as opened from `editor-toolbar`. The editor shows the texts as they are given: the plugin labels the entries in French when the `lang` of the editor's address starts with `fr`, in English otherwise. The icons are the images of `resources/`, at their address next to the page of the plugin, in the version of the current theme of the editor (light or dark). The entries are locked in view mode (`lockInViewMode`).
+Drive records the panel as opened from `editor-toolbar`. The editor shows the texts as they are given: the plugin labels the entries in French when the `lang` of the editor's address starts with `fr`, in English otherwise. The icons are the images of `resources/`, at their address next to the page of the plugin, in the version of the current theme of the editor (light or dark); `config.json` gives the icon of "Scribe" to the plugin in the list of background plugins of the editor. The entries are locked in view mode (`lockInViewMode`).
 
-The plugin cannot know whether Drive shows its AI button: on a public link, or without the flag `cozy.assistant.enabled`, the entries are in the toolbar and Drive does nothing when they are clicked.
+The plugin cannot know whether the app that shows the editor offers the scribe: it adds no entry until it is asked. On a public link, in a read-only document, without the flag `cozy.assistant.enabled`, or in another app that shows the same Document Server, nothing sends `twake-scribe:showToolbar`, and the editor has no entry of the scribe. Drive also ignores `twake-scribe:open` there.
 
 ### What an answer can replace
 
