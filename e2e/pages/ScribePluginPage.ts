@@ -646,7 +646,7 @@ export class ScribePluginPage {
     return messages
   }
 
-  /** The last geometry the plugin has sent since the previous take */
+  /** The last geometry the plugin has sent since the previous takeGeometry */
   async takeGeometry(): Promise<Geometry | null> {
     await this.takeMessages()
     const geometry = this.lastGeometry
