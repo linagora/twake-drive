@@ -631,6 +631,80 @@
           "selMarkup": [{"at":{"block":3},"text":"«Under the third paragraph.»"}]
         }
       }
+    },
+    {
+      "id": "code-insert",
+      "selection": "P2@start..P2@end",
+      "answerAction": "insert",
+      "answer": "```js\nconst a = 1\n\nconst b = 2\n```",
+      "expected": {
+        "content": {"content":"Jumps over the dog\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"The quick brown fox"}]},
+            {"type":"p","runs":[{"t":"Jumps over the dog"}]},
+            {"type":"p","runs":[{"t":"const a = 1","code":1}],"shade":1},
+            {"type":"p","runs":[{"t":" ","code":1}],"shade":1},
+            {"type":"p","runs":[{"t":"const b = 2","code":1}],"shade":1},
+            {"type":"p","runs":[{"t":"Lazy river flows"}]}
+          ],
+          "selText": "const a = 1\n \nconst b = 2",
+          "selMarkup": [
+            {"at":{"block":2},"text":"«const a = 1»"},
+            {"at":{"block":3},"text":"« »"},
+            {"at":{"block":4},"text":"«const b = 2»"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "code-replace",
+      "selection": "P2@start..P2@end",
+      "answerAction": "replace",
+      "answer": "```js\nconst a = 1\n\nconst b = 2\n```",
+      "expected": {
+        "content": {"content":"Jumps over the dog\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"The quick brown fox"}]},
+            {"type":"p","runs":[{"t":"const a = 1","code":1}],"shade":1},
+            {"type":"p","runs":[{"t":" ","code":1}],"shade":1},
+            {"type":"p","runs":[{"t":"const b = 2","code":1}],"shade":1},
+            {"type":"p","runs":[{"t":"Lazy river flows"}]}
+          ],
+          "selText": "const a = 1\n \nconst b = 2",
+          "selMarkup": [
+            {"at":{"block":1},"text":"«const a = 1»"},
+            {"at":{"block":2},"text":"« »"},
+            {"at":{"block":3},"text":"«const b = 2»"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "code-replace-part",
+      "selection": "P1@space..P1@end",
+      "answerAction": "replace",
+      "answer": "```js\nconst a = 1\n\nconst b = 2\n```",
+      "expected": {
+        "content": {"content":"quick brown fox\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"The "}]},
+            {"type":"p","runs":[{"t":"const a = 1","code":1}],"shade":1},
+            {"type":"p","runs":[{"t":" ","code":1}],"shade":1},
+            {"type":"p","runs":[{"t":"const b = 2","code":1}],"shade":1},
+            {"type":"p","runs":[{"t":"Jumps over the dog"}]},
+            {"type":"p","runs":[{"t":"Lazy river flows"}]}
+          ],
+          "selText": "const a = 1\n \nconst b = 2\n",
+          "selMarkup": [
+            {"at":{"block":1},"text":"«const a = 1»"},
+            {"at":{"block":2},"text":"« »"},
+            {"at":{"block":3},"text":"«const b = 2»"}
+          ]
+        }
+      }
     }
   ]
 }

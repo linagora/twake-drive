@@ -1,11 +1,13 @@
 import { makeBlocks, makeLineSpans, makeLines } from './markdown'
 
 const paragraph = (...spans) => ({ type: 'paragraph', spans })
+const code = (...lines) => ({ type: 'code', lines })
 
 describe('makeBlocks', () => {
   it('gives no block for an empty answer', () => {
     expect(makeBlocks('')).toEqual([])
     expect(makeBlocks('\n\n')).toEqual([])
+    expect(makeBlocks('```js\n```')).toEqual([])
   })
 
   it('reads the paragraphs with the marks of their text', () => {
@@ -148,9 +150,7 @@ describe('makeBlocks', () => {
   it('leaves an indented block of code out of the lists', () => {
     const blocks = makeBlocks('Un texte.\n\n    - pas une liste')
 
-    expect(blocks[1]).toEqual(
-      paragraph({ text: '- pas une liste', isCode: true })
-    )
+    expect(blocks[1]).toEqual(code('- pas une liste'))
   })
 
   it('leaves the code of a fence in a list item as it is', () => {
@@ -158,13 +158,7 @@ describe('makeBlocks', () => {
       '10. Configure:\n    ```yaml\n    steps:\n      - run: build\n    ```'
     )
 
-    expect(blocks[1]).toEqual(
-      paragraph(
-        { text: 'steps:', isCode: true },
-        { isBreak: true },
-        { text: '  - run: build', isCode: true }
-      )
-    )
+    expect(blocks[1]).toEqual(code('steps:', '  - run: build'))
   })
 
   it('writes the boxes of a task list in its items', () => {
@@ -188,12 +182,19 @@ describe('makeBlocks', () => {
           { text: '.' }
         ]
       },
-      paragraph(
-        { text: 'const a = 1', isCode: true },
-        { isBreak: true },
-        { isBreak: true },
-        { text: 'b()', isCode: true }
-      )
+      code('const a = 1', ' ', 'b()')
+    ])
+  })
+
+  it('gives a fenced block as a code block, one line each, an empty line a space', () => {
+    expect(makeBlocks('```js\nconst a = 1\n\nconst b = 2\n```')).toEqual([
+      { type: 'code', lines: ['const a = 1', ' ', 'const b = 2'] }
+    ])
+  })
+
+  it('keeps markers as text inside a code block', () => {
+    expect(makeBlocks('```js\n<u>a</u> ![image 1]\n```')).toEqual([
+      { type: 'code', lines: ['<u>a</u> ![image 1]'] }
     ])
   })
 
@@ -274,6 +275,27 @@ describe('makeBlocks', () => {
     ])
   })
 
+  it('writes a block of code in a cell of a table in HTML tags as its text', () => {
+    expect(
+      makeBlocks('<table><tr><td>\n\n```js\na\nb\n```\n\n</td></tr></table>')
+    ).toEqual([
+      {
+        type: 'table',
+        rows: [
+          [
+            {
+              spans: [
+                { text: 'a', isCode: true },
+                { isBreak: true },
+                { text: 'b', isCode: true }
+              ]
+            }
+          ]
+        ]
+      }
+    ])
+  })
+
   it('unwraps an answer given as a whole in quotes or in a fence', () => {
     expect(makeBlocks('"""\nUn **texte**.\n"""')).toEqual([
       paragraph({ text: 'Un ' }, { text: 'texte', isBold: true }, { text: '.' })
@@ -287,12 +309,10 @@ describe('makeBlocks', () => {
   })
 
   it('keeps the code of a fence in another language, and a fence among other blocks', () => {
-    expect(makeBlocks('```js\nconst a = 1\n```')).toEqual([
-      paragraph({ text: 'const a = 1', isCode: true })
-    ])
+    expect(makeBlocks('```js\nconst a = 1\n```')).toEqual([code('const a = 1')])
     expect(makeBlocks('Avant.\n\n```\nUn **texte**.\n```')).toEqual([
       paragraph({ text: 'Avant.' }),
-      paragraph({ text: 'Un **texte**.', isCode: true })
+      code('Un **texte**.')
     ])
   })
 
@@ -365,6 +385,14 @@ describe('makeLines', () => {
 
   it('gives no line for an empty answer', () => {
     expect(makeLines(makeBlocks(''))).toEqual([])
+  })
+
+  it('still gives the lines of a code block to a presentation', () => {
+    expect(makeLines(makeBlocks('```js\na\nb\n```'))).toEqual(['a', 'b'])
+  })
+
+  it('leaves the empty lines of a code block, and the indent of its lines, out of a presentation', () => {
+    expect(makeLines(makeBlocks('```js\na\n\n  b\n```'))).toEqual(['a', 'b'])
   })
 })
 
