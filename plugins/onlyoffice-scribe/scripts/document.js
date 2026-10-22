@@ -419,7 +419,7 @@ export function readContent() {
  * selected cells the answer had no cell for
  */
 export function writeBlocks() {
-  const { blocks, isReplace } = Asc.scope
+  const { blocks } = Asc.scope
   const doc = Api.GetDocument()
   function getText(element) {
     return element.GetText({ Numbering: false, ParaSeparator: '\n' })
@@ -433,6 +433,21 @@ export function writeBlocks() {
   // The editor writes a table in a table over its cells: a table of the
   // answer goes under the table of the selection, out of any other one
   const hasTable = blocks.some(block => block.type === 'table')
+  // A selection across the edge of a table: a text and cells, or the cells
+  // of two tables
+  const tableIds = new Set(
+    paragraphs
+      .map(paragraph => paragraph.GetParentTableCell()?.GetParentTable())
+      .filter(Boolean)
+      .map(table => table.GetInternalId())
+  )
+  const isCrossing =
+    tableIds.size > 1 ||
+    (tableIds.size === 1 &&
+      paragraphs.some(paragraph => !paragraph.GetParentTableCell()))
+  // Across it, an answer takes the place of the selection when it mirrors
+  // its shape, with a table: another one, as a summary, is inserted
+  const isReplace = Asc.scope.isReplace && (hasTable || !isCrossing)
   const findOuterTable = table => {
     let outer = table
     while (outer.GetParentTableCell()) {
@@ -1159,22 +1174,6 @@ export function writeBlocks() {
     return writeAround({ before, after, isSpaced: true })
   }
 
-  // A selection across the edge of a table: a text and cells, or the cells
-  // of two tables
-  const isMixed = () => {
-    if (!isReplace || !selection) return false
-    const tables = new Set(
-      paragraphs
-        .map(paragraph => paragraph.GetParentTableCell()?.GetParentTable())
-        .filter(Boolean)
-        .map(table => table.GetInternalId())
-    )
-    const hasText = paragraphs.some(
-      paragraph => !paragraph.GetParentTableCell()
-    )
-    return tables.size > 1 || (tables.size === 1 && hasText)
-  }
-
   // The selected text of a paragraph, without its mark nor the spaces around
   // it, which the answer of a LLM never has
   const findSelectedText = paragraph => {
@@ -1300,7 +1299,7 @@ export function writeBlocks() {
   }
 
   const write = () => {
-    if (isMixed()) return replaceMixed()
+    if (isReplace && isCrossing) return replaceMixed()
     const selectedCells = getSelectedCells()
     if (canFillCells(selectedCells)) {
       fillCells(selectedCells, blocks[0])

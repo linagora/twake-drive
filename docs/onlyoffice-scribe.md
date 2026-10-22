@@ -114,7 +114,7 @@ Drive and the plugin talk with `postMessage`. Drive only listens to the origin o
 | `replace` | Whole paragraphs | The answer takes their place: a single paragraph in the line, keeping the paragraph, its blocks otherwise. |
 | `replace` | A part of a paragraph | A single block is written in the line: the editor gives a part of a heading or of a list item with its mark, which the answer keeps. Several blocks are written as a pasted text, see below. |
 | `replace` | Parts of paragraphs | The answer is written as a pasted text: its first paragraph continues the text before the selection, its last one the text after it, both in the style of their paragraph. A heading, a list item or a table of the answer stays a block of its own. |
-| `replace` | A text and cells, across the edge of a table | See [Tables](#tables). |
+| `replace` | A text and cells, across the edge of a table | An answer with a table takes its place, see [Tables](#tables). Another answer, as a summary, is written as for `insert`, and `canReplace` stays true. |
 | `replace` | A text that `canReplace` refuses, or none | Same as `insert`. |
 | any other | A text | The answer is written at the end of the selection, as at a cursor. An answer with a table is written in new paragraphs under the last paragraph of the selection, and any answer under the table when the selection takes cells and more than one cell. |
 | any other | None (cursor in a text) | A single paragraph is written in the line at the cursor, with the space the text needs on each side; several blocks without a table split the paragraph, the first and last plain ones joining its text. At the end of a paragraph, in an empty one, or when the answer has a table, the answer is written in new paragraphs under the paragraph, in its cell when it is in a table (see [Tables](#tables) for a table there). |
@@ -140,7 +140,7 @@ The tables are given and taken in the HTML tags of the Markdown of the editor, w
 | Some cells | Anything else | Written under the table. |
 | A text, or the cursor, in a cell | An answer with a table | Written under the table: the editor would write a table in a table over its cells. |
 | A text | A table | A new table, with the merged cells of the answer. |
-| A text and cells of one or two tables, or cells of two tables, to replace | Tables and other blocks | Each table of the answer is written in the selected cells of a table, in order, row by row, and the cells keep their look; a whole table selected, with a table of another shape, is replaced by it. Each other block takes the place of the selected text of a paragraph, in order, in its line: the text around it is kept. A selected cell without a cell of the answer stays as it was, and is counted in `twake-scribe:applied`; a block without a selected text is not written. The text and the cells are left selected. |
+| A text and cells of one or two tables, or cells of two tables, to replace | At least a table, and other blocks | Each table of the answer is written in the selected cells of a table, in order, row by row, and the cells keep their look; a whole table selected, with a table of another shape, is replaced by it. Each other block takes the place of the selected text of a paragraph, in order, in its line: the text around it is kept. A selected cell without a cell of the answer stays as it was, and is counted in `twake-scribe:applied`; a block without a selected text is not written. The text and the cells are left selected. |
 
 ### Presentations
 
