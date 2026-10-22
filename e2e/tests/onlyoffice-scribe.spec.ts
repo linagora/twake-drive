@@ -35,6 +35,8 @@ interface ScribeCase {
     model: ScribeModel | null
     // What the plugin tells Drive once it has written the answer
     applied?: ScribeApplied | null
+    // The document after one undo of the answer
+    undone?: ScribeModel | null
   }
 }
 
@@ -124,17 +126,24 @@ for (const suite of suites) {
           const content = await scribe.getContent()
           let model: ScribeModel | null = null
           let applied: ScribeApplied | null = null
+          let undone: ScribeModel | null = null
+          const isUndone = scribeCase.expected?.undone !== undefined
           if (scribeCase.answerAction) {
             applied = await scribe.applyAnswer(
               scribeCase.answerAction,
               scribeCase.answer ?? ''
             )
             model = await scribe.read()
+            if (isUndone) {
+              await scribe.undo()
+              undone = await scribe.read()
+            }
           }
           const result = {
             content,
             model,
-            ...(scribeCase.expected?.applied !== undefined && { applied })
+            ...(scribeCase.expected?.applied !== undefined && { applied }),
+            ...(isUndone && { undone })
           }
           if (isUpdate) {
             scribeCase.expected = result

@@ -189,6 +189,18 @@ function hasMarkers(blocks) {
   )
 }
 
+// The answer and its markers are one command: one step of the undo, and no
+// placeholder left when the editor runs no command, as while it saves.
+// `callCommand` sends the source of what it is given.
+function makeWriteCommand(blocks) {
+  if (!hasMarkers(blocks)) return writeBlocks
+  return `function () {
+    const result = (${writeBlocks})()
+    if (result.written) (${writeMarkers})()
+    return result
+  }`
+}
+
 // Writes an answer, and gives the count of the selected cells it had no cell
 // for
 async function writeAnswer({ answerAction, text }) {
@@ -204,18 +216,15 @@ async function writeAnswer({ answerAction, text }) {
   const blocks = makeBlocks(text)
   if (blocks.length === 0) return 0
 
-  const result = await runInEditor(writeBlocks, {
-    scope: { blocks, isReplace },
+  const result = await runInEditor(makeWriteCommand(blocks), {
+    scope: {
+      blocks,
+      isReplace,
+      notes: lastMarkers.notes,
+      refs: lastMarkers.refs
+    },
     isRecalculated: true
   })
-  // The markers of the answer are written in it once it is in the document,
-  // and left selected
-  if (result?.written && hasMarkers(blocks)) {
-    await runInEditor(writeMarkers, {
-      scope: { notes: lastMarkers.notes, refs: lastMarkers.refs },
-      isRecalculated: true
-    })
-  }
   return result?.skippedCells ?? 0
 }
 

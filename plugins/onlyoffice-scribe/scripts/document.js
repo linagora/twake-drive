@@ -267,6 +267,8 @@ export function readContent() {
     const parts = []
     let copied = 0
     let at = 0
+    // Whether a text of the paragraph being read was found
+    let hasParagraphText = false
 
     const replace = (start, end, text) => {
       parts.push(markdown.slice(copied, start), text)
@@ -379,6 +381,7 @@ export function readContent() {
         .match(/^(\s*)([\s\S]*?)(\s*)$/)
       const index = core === '' ? -1 : find(core)
       if (index === -1) return
+      hasParagraphText = true
       const textPr = run.GetTextPr()
       const place = textPr.GetUnderline()
         ? placeTags(index, index + core.length, textPr)
@@ -397,6 +400,7 @@ export function readContent() {
         (element.content ?? [])
           .map(item => {
             if (typeof item === 'string') return item
+            if (['tab', 'break'].includes(item.type)) return ' '
             return ['run', 'hyperlink'].includes(item.type)
               ? readText(item)
               : ''
@@ -406,27 +410,41 @@ export function readContent() {
       return first ? readText(first).trim() : ''
     }
 
-    // A note is given after the text before its reference, out of a link. A
+    // A note is given after the text before its reference, out of a link,
+    // and after the mark of its paragraph when it comes first there. A
     // marker would be text in a code, and an answer writes no note in a cell:
     // a note there gives none.
     const hasNotes = NOTE_REFERENCE.test(selectionJson)
+    const PARAGRAPH_START = /[*_~]*\s*(?:#{1,6} |> ?|(?:[*+-]|\d+[.)]) )?/y
+    const findNotePoint = () => {
+      if (hasParagraphText) return at
+      PARAGRAPH_START.lastIndex = at
+      PARAGRAPH_START.test(markdown)
+      return PARAGRAPH_START.lastIndex
+    }
     const addNoteMarkers = (run, paragraph) => {
       const range = run.GetRange()
       if (range.GetStartPos() >= to || range.GetEndPos() <= from) return
       const json = run.ToJSON()
       if (!NOTE_REFERENCE.test(json)) return
-      if (paragraph.GetParentTableCell() || isInFence(at) || isInCode(at)) {
+      const point = findNotePoint()
+      if (
+        paragraph.GetParentTableCell() ||
+        isInFence(point) ||
+        isInCode(point)
+      ) {
         hasUnmarkedNote = true
         return
       }
       JSON.parse(json).footnotes.forEach(footnote => {
         notes.push(readNoteText(footnote))
-        replace(at, at, `[^scribe-fn-${notes.length}]`)
+        replace(point, point, `[^scribe-fn-${notes.length}]`)
       })
     }
 
     const LINK_END = /[*_~`]*\]\([^)]*\)/y
     selectedParagraphs.forEach(paragraph => {
+      hasParagraphText = false
       const addNotes = run => {
         if (hasNotes) addNoteMarkers(run, paragraph)
       }
@@ -476,7 +494,7 @@ export function readContent() {
  * selected cells the answer had no cell for
  */
 export function writeBlocks() {
-  const { blocks } = Asc.scope
+  const { blocks, notes = [] } = Asc.scope
   const doc = Api.GetDocument()
   function getText(element) {
     return element.GetText({ Numbering: false, ParaSeparator: '\n' })
@@ -574,8 +592,14 @@ export function writeBlocks() {
     return hyperlink
   }
 
+  // A marker the text read did not give has no note: a placeholder written
+  // for it would stay in the text where the answer is not left selected
+  const isUnknownNote = span =>
+    span.note !== undefined && typeof notes[span.note - 1] !== 'string'
+
   const addSpans = (paragraph, spans, textPr) => {
     spans.forEach(span => {
+      if (isUnknownNote(span)) return
       if (span.isBreak) {
         paragraph.AddLineBreak()
         return

@@ -10,7 +10,7 @@
         "content": {"content":"The budget is voted.[^scribe-fn-1]\n\n","target":"selection","canReplace":true},
         "model": {
           "blocks": [
-            {"type":"p","runs":[{"t":"The budget is voted by the board."}],"notes":1},
+            {"type":"p","runs":[{"t":"The budget is voted by the board."}],"notes":1,"noteTexts":["Voted on May 3."]},
             {"type":"p","runs":[{"t":"It starts in June."}]},
             {"type":"p","runs":[{"t":"The first part ends here."}],"section":1},
             {"type":"p","runs":[{"t":"The second part starts here."}]},
@@ -33,7 +33,7 @@
         "content": {"content":"The budget is voted.[^scribe-fn-1]\n\n","target":"selection","canReplace":true},
         "model": {
           "blocks": [
-            {"type":"p","runs":[{"t":"The budget is voted by the board."}],"notes":1},
+            {"type":"p","runs":[{"t":"The budget is voted by the board."}],"notes":1,"noteTexts":["Voted on May 3."]},
             {"type":"p","runs":[{"t":"The first part ends here."}],"section":1},
             {"type":"p","runs":[{"t":"The second part starts here."}]},
             {"type":"p","runs":[{"t":"Chapter one ends."},{"t":"Chapter two starts."}],"pageBreaks":1}
@@ -54,7 +54,7 @@
           "blocks": [
             {"type":"p","runs":[{"t":"The budget is voted by the board."}]},
             {"type":"p","runs":[{"t":"It starts in June."}]},
-            {"type":"p","runs":[],"notes":1},
+            {"type":"p","runs":[],"notes":1,"noteTexts":["Voted on May 3."]},
             {"type":"p","runs":[{"t":"The first part ends here."}],"section":1},
             {"type":"p","runs":[{"t":"The second part starts here."}]},
             {"type":"p","runs":[{"t":"Chapter one ends."},{"t":"Chapter two starts."}],"pageBreaks":1}
@@ -76,7 +76,7 @@
         "content": {"content":"The first part ends here.\n\n","target":"selection","canReplace":true},
         "model": {
           "blocks": [
-            {"type":"p","runs":[{"t":"The budget is voted."}],"notes":1},
+            {"type":"p","runs":[{"t":"The budget is voted."}],"notes":1,"noteTexts":["Voted on May 3."]},
             {"type":"p","runs":[{"t":"The first part ends."}]},
             {"type":"p","runs":[{"t":"It was short."}]},
             {"type":"p","runs":[],"section":1},
@@ -101,7 +101,7 @@
         },
         "model": {
           "blocks": [
-            {"type":"p","runs":[{"t":"The budget is voted."}],"notes":1},
+            {"type":"p","runs":[{"t":"The budget is voted."}],"notes":1,"noteTexts":["Voted on May 3."]},
             {"type":"p","runs":[{"t":"The first part ends here."}],"section":1},
             {"type":"p","runs":[{"t":"The second part starts here."}]},
             {"type":"p","runs":[{"t":"Both parts in one."}]},
@@ -121,7 +121,7 @@
         "content": {"content":"Chapter one ends. \\\nChapter two starts.\n\n","target":"selection","canReplace":false},
         "model": {
           "blocks": [
-            {"type":"p","runs":[{"t":"The budget is voted."}],"notes":1},
+            {"type":"p","runs":[{"t":"The budget is voted."}],"notes":1,"noteTexts":["Voted on May 3."]},
             {"type":"p","runs":[{"t":"The first part ends here."}],"section":1},
             {"type":"p","runs":[{"t":"The second part starts here."}]},
             {"type":"p","runs":[{"t":"Chapter one ends."},{"t":"Chapter two starts."}],"pageBreaks":1},

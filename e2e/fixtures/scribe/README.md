@@ -25,7 +25,8 @@ the same.
   - `expected`: the text the plugin gives (`content`, `target`) and the
     document once written (`model`); in some cases, what the plugin tells
     Drive once it has written the answer (`applied`, the message
-    `twake-scribe:applied` without its type), compared only when present.
+    `twake-scribe:applied` without its type), and the document after one
+    undo (`undone`), each compared only when present.
 
 ## Selections
 
@@ -49,8 +50,10 @@ paragraph, the cells are taken whole, as the editor does.
 `model` is the document as `e2e/helpers/scribeModel.ts` describes it: each
 paragraph with its runs (text, bold `b`, italic `i`, underline `u`,
 strikethrough `s`, `code`, `link`), its style when it is not Normal, its list
-level and label, its images, notes and page breaks, whether it ends a section
-and whether it is shaded (`shade`); each table with the width it asks for
+level and label, its images, notes (`notes`, their count, and `noteTexts`, the
+plain text of the first paragraph of each note) and page breaks, whether it
+ends a section and whether it is shaded (`shade`); each table with the width
+it asks for
 (`width`: `100%` of the width of the text, or points as `240pt`), whether it
 has borders of its own (`borders`), and its cells and their merges: a copy of
 a table of the document keeps its width, a new table of the plugin is
