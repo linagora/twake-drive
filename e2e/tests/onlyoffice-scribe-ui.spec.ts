@@ -135,4 +135,43 @@ test.describe('the scribe of Drive', { tag: '@e2e-scribe' }, () => {
     await expect(scribe.selectionButton()).toBeVisible()
     expect((await plugin.takeGeometry())?.selection?.hasText).toBe(true)
   })
+
+  test('a floating button opens and closes the panel', async ({
+    alicePage
+  }) => {
+    const fileId = await uploadScribeDocument(
+      USERS.alice.instance,
+      'a-family.docx'
+    )
+    const scribe = new ScribePage(alicePage)
+    await scribe.openDocument(USERS.alice.appUrl, fileId)
+
+    await expect(scribe.floatingButton()).toBeVisible()
+    // Until the first geometry of the plugin, the button waits in the bottom
+    // right corner of the window
+    await expect(async () => {
+      const frame = await scribe.editorFrame().boundingBox()
+      const viewer = await scribe.viewerBox()
+      const button = await scribe.floatingButton().boundingBox()
+      if (!frame || !viewer || !button) {
+        throw new Error('No box of the editor or of the floating button')
+      }
+      expect(button.x).toBeGreaterThanOrEqual(frame.x)
+      expect(button.y).toBeGreaterThanOrEqual(frame.y)
+      expect(button.x + button.width).toBeLessThanOrEqual(frame.x + frame.width)
+      expect(button.y + button.height).toBeLessThanOrEqual(
+        frame.y + frame.height
+      )
+      // 12 px inside the top right corner of the document area
+      expect(Math.abs(button.y - (viewer.y + 12))).toBeLessThanOrEqual(1)
+      expect(
+        Math.abs(button.x + button.width - (viewer.x + viewer.width - 12))
+      ).toBeLessThanOrEqual(1)
+    }).toPass({ timeout: 10_000 })
+
+    await scribe.floatingButton().click()
+    await expect(scribe.panel()).toBeVisible()
+    await scribe.floatingButton().click()
+    await expect(scribe.panel()).toBeHidden()
+  })
 })

@@ -37,6 +37,7 @@
       "replace": "استبدال",
       "insertSlide": "إدراج الشريحة",
       "selectionMenu": "قائمة Scribe",
+      "panel": "لوحة Scribe",
       "suggestions": {
         "newSlide": "شريحة جديدة",
         "newSlideMessage": "أضف شريحة جديدة بعد هذه الشريحة، حول النص",

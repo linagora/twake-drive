@@ -17,8 +17,8 @@ export interface Box {
 
 /**
  * Drive's chrome around the scribe of an OnlyOffice document: the AI button
- * of the toolbar, the button under the selection and the panel that holds
- * the assistant
+ * of the toolbar, the button under the selection, the floating button of the
+ * document area and the panel that holds the assistant
  */
 export class ScribePage {
   constructor(private readonly page: Page) {}
@@ -72,10 +72,7 @@ export class ScribePage {
    * the editor scrolls a step for each turn, whatever its delta
    */
   async scrollEditor(deltaY: number): Promise<void> {
-    const viewer = await this.page
-      .frameLocator('iframe[name="frameEditor"]')
-      .locator('#id_viewer')
-      .boundingBox()
+    const viewer = await this.viewerBox()
     if (!viewer) throw new Error('No viewer in the editor')
     await this.page.mouse.move(
       viewer.x + viewer.width / 2,
@@ -91,12 +88,24 @@ export class ScribePage {
     return this.page.locator('iframe[name="frameEditor"]')
   }
 
+  /** The area of the editor that shows the document, in the page */
+  async viewerBox(): Promise<Box | null> {
+    return this.page
+      .frameLocator('iframe[name="frameEditor"]')
+      .locator('#id_viewer')
+      .boundingBox()
+  }
+
   toolbarButton(): Locator {
     return this.page.getByRole('button', { name: 'Help me write' })
   }
 
   selectionButton(): Locator {
     return this.page.getByRole('button', { name: 'Scribe Menu' })
+  }
+
+  floatingButton(): Locator {
+    return this.page.getByRole('button', { name: 'Scribe Panel' })
   }
 
   /** The visible disc of the button under the selection */

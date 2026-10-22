@@ -123,6 +123,7 @@
       "replace": "바꾸기",
       "insertSlide": "슬라이드 삽입",
       "selectionMenu": "Scribe 메뉴",
+      "panel": "Scribe 패널",
       "suggestions": {
         "newSlide": "새 슬라이드",
         "newSlideMessage": "이 슬라이드 다음에 텍스트에 관한 새 슬라이드를 추가해 줘",

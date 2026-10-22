@@ -15,3 +15,39 @@
     &:hover
     &:focus-within
         opacity 1
+
+// Over the full screen dialog that holds the editor
+.scribe-floating-button
+    z-index 100000
+    opacity .4
+    transition opacity 200ms
+
+    &:hover
+    &:focus-within
+        opacity 1
+
+    // Over the styles that ButtonBase injects after this sheet
+    button
+        box-sizing border-box
+        width 48px
+        padding 5px 2px
+        border-radius 20px
+        background-color var(--paperBackgroundColor)
+        box-shadow var(--shadow2)
+
+// Without geometry: the editor draws no chrome of its own in this corner
+.scribe-floating-button--corner
+    right 40px
+    bottom 80px
+
+// The mark is a square of 334 px centred at (585, 387) on a canvas of
+// 1200 x 900: the canvas is drawn at 22/334, the slot shows the mark alone
+.scribe-floating-button-slot
+    width 44px
+    height 33px
+
+.scribe-floating-button-mark
+    top -9px
+    left -17px
+    width 79px
+    height 59px
