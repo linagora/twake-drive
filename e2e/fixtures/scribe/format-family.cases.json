@@ -110,6 +110,99 @@
           "selMarkup": [{"at":{"block":0},"text":"«The quick brown fox 中文粗体中文»"}]
         }
       }
+    },
+    {
+      "id": "cursor-in-bold",
+      "selection": "P1@6",
+      "answerAction": "insert",
+      "answer": "XXX",
+      "expected": {
+        "content": {
+          "content": "The **quick** brown *fox*\n\nJumps over the dog\n\nLazy river flows\n\n",
+          "target": "document",
+          "canReplace": false
+        },
+        "model": {
+          "blocks": [
+            {
+              "type": "p",
+              "runs": [
+                {"t":"The "},
+                {"t":"qu","b":1},
+                {"t":" "},
+                {"t":"XXX"},
+                {"t":" "},
+                {"t":"ick","b":1},
+                {"t":" brown "},
+                {"t":"fox","i":1}
+              ]
+            },
+            {"type":"p","runs":[{"t":"Jumps over the dog"}]},
+            {"type":"p","runs":[{"t":"Lazy river flows"}]}
+          ],
+          "selText": " XXX ",
+          "selMarkup": [{"at":{"block":0},"text":"The qu« XXX »ick brown fox"}]
+        }
+      }
+    },
+    {
+      "id": "cursor-after-bold",
+      "selection": "P1@9",
+      "answerAction": "insert",
+      "answer": "XXX",
+      "expected": {
+        "content": {
+          "content": "The **quick** brown *fox*\n\nJumps over the dog\n\nLazy river flows\n\n",
+          "target": "document",
+          "canReplace": false
+        },
+        "model": {
+          "blocks": [
+            {
+              "type": "p",
+              "runs": [{"t":"The "},{"t":"quick","b":1},{"t":" "},{"t":"XXX"},{"t":" brown "},{"t":"fox","i":1}]
+            },
+            {"type":"p","runs":[{"t":"Jumps over the dog"}]},
+            {"type":"p","runs":[{"t":"Lazy river flows"}]}
+          ],
+          "selText": " XXX",
+          "selMarkup": [{"at":{"block":0},"text":"The quick« XXX» brown fox"}]
+        }
+      }
+    },
+    {
+      "id": "cursor-in-italic",
+      "selection": "P1@17",
+      "answerAction": "insert",
+      "answer": "XXX",
+      "expected": {
+        "content": {
+          "content": "The **quick** brown *fox*\n\nJumps over the dog\n\nLazy river flows\n\n",
+          "target": "document",
+          "canReplace": false
+        },
+        "model": {
+          "blocks": [
+            {
+              "type": "p",
+              "runs": [
+                {"t":"The "},
+                {"t":"quick","b":1},
+                {"t":" brown "},
+                {"t":"f","i":1},
+                {"t":" "},
+                {"t":"XXX"},
+                {"t":" "},
+                {"t":"ox","i":1}
+              ]
+            },
+            {"type":"p","runs":[{"t":"Jumps over the dog"}]},
+            {"type":"p","runs":[{"t":"Lazy river flows"}]}
+          ],
+          "selText": " XXX ",
+          "selMarkup": [{"at":{"block":0},"text":"The quick brown f« XXX »ox"}]
+        }
+      }
     }
   ]
 }
