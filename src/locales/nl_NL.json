@@ -530,6 +530,7 @@
       "insert": "Invoegen",
       "replace": "Vervangen",
       "insertSlide": "Dia invoegen",
+      "selectionMenu": "Scribe-menu",
       "suggestions": {
         "newSlide": "Nieuwe dia",
         "newSlideMessage": "Voeg na deze dia een nieuwe dia over de tekst toe",

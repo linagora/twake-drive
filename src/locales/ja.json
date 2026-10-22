@@ -36,6 +36,7 @@
       "insert": "挿入",
       "replace": "置換",
       "insertSlide": "スライドを挿入",
+      "selectionMenu": "Scribe メニュー",
       "suggestions": {
         "newSlide": "新しいスライド",
         "newSlideMessage": "このスライドの後に、テキストについての新しいスライドを追加して",

@@ -35,6 +35,8 @@ const ScribeState = ({ results = [] }) => {
     content,
     target,
     canReplace,
+    geometry,
+    source,
     open,
     close,
     applyResult
@@ -45,7 +47,9 @@ const ScribeState = ({ results = [] }) => {
       <output data-testid="state">
         {JSON.stringify({ isAvailable, isOpen, content, target, canReplace })}
       </output>
-      <button onClick={open}>open</button>
+      <output data-testid="geometry">{JSON.stringify(geometry)}</output>
+      <output data-testid="source">{JSON.stringify(source)}</output>
+      <button onClick={() => open({ source: 'selection' })}>open</button>
       <button onClick={close}>close</button>
       <button
         onClick={() =>
@@ -85,11 +89,45 @@ const setup = ({ documentType = 'word', results } = {}) => {
   )
 
   const getState = () => JSON.parse(screen.getByTestId('state').textContent)
+  const getGeometry = () =>
+    JSON.parse(screen.getByTestId('geometry').textContent)
+  const getSource = () => JSON.parse(screen.getByTestId('source').textContent)
 
-  return { plugin, receive, getState }
+  return { plugin, receive, getState, getGeometry, getSource }
+}
+
+const SELECTION = {
+  rect: {
+    left: 358,
+    top: 269,
+    width: 118,
+    height: 15,
+    corners: [
+      [358, 269],
+      [358, 284],
+      [476, 269],
+      [476, 284]
+    ]
+  },
+  hasText: true
+}
+const VIEWER = { left: 59, top: 174, width: 1167, height: 465 }
+
+const addEditorFrame = box => {
+  const frame = document.createElement('iframe')
+  frame.name = 'frameEditor'
+  frame.getBoundingClientRect = () => box
+  document.body.appendChild(frame)
+  return frame
 }
 
 describe('ScribeProvider', () => {
+  afterEach(() => {
+    ;[...document.getElementsByName('frameEditor')].forEach(frame =>
+      frame.remove()
+    )
+  })
+
   it('has no scribe until the plugin of the Document Server is ready', () => {
     const { receive, getState } = setup()
 
@@ -135,6 +173,80 @@ describe('ScribeProvider', () => {
       target: 'selection',
       canReplace: true
     })
+  })
+
+  it('records where the scribe was opened from', () => {
+    const { receive, getSource } = setup()
+    receive({ type: 'twake-scribe:ready' })
+    expect(getSource()).toBe(null)
+
+    fireEvent.click(screen.getByText('open'))
+
+    expect(getSource()).toBe('selection')
+  })
+
+  it('keeps the geometry the plugin sends, with the box of the editor frame', () => {
+    const frame = addEditorFrame({ left: 0, top: 49, width: 1280, height: 671 })
+    const { receive, getGeometry } = setup()
+    receive({ type: 'twake-scribe:ready' })
+    expect(getGeometry()).toBe(null)
+
+    receive({
+      type: 'twake-scribe:geometry',
+      selection: SELECTION,
+      viewer: VIEWER,
+      page: null
+    })
+
+    expect(getGeometry()).toEqual({
+      selection: SELECTION,
+      viewer: VIEWER,
+      frame: { left: 0, top: 49, width: 1280, height: 671 }
+    })
+
+    frame.getBoundingClientRect = () => ({
+      left: 0,
+      top: 80,
+      width: 900,
+      height: 640
+    })
+    act(() => {
+      window.dispatchEvent(new Event('resize'))
+    })
+
+    expect(getGeometry().frame).toEqual({
+      left: 0,
+      top: 80,
+      width: 900,
+      height: 640
+    })
+
+    receive({
+      type: 'twake-scribe:geometry',
+      selection: null,
+      viewer: VIEWER,
+      page: null
+    })
+
+    expect(getGeometry()).toEqual({
+      selection: null,
+      viewer: VIEWER,
+      frame: { left: 0, top: 80, width: 900, height: 640 }
+    })
+  })
+
+  it('has no geometry without the editor frame', () => {
+    const { receive, getGeometry } = setup()
+    receive({ type: 'twake-scribe:ready' })
+
+    receive({
+      type: 'twake-scribe:geometry',
+      selection: SELECTION,
+      viewer: VIEWER,
+      page: null
+    })
+
+    expect(getGeometry()).toBe(null)
   })
 
   it('works on another text selected while it is open, and not when closed', () => {

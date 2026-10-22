@@ -15,6 +15,20 @@ export interface ScribeApplied {
   skippedCells: number
 }
 
+interface Box {
+  left: number
+  top: number
+  width: number
+  height: number
+}
+
+/** Where the selection is, in pixels of the editor frame */
+export interface Geometry {
+  selection: { rect: Box & { corners: number[][] }; hasText: boolean } | null
+  viewer: Box | null
+  page: Box | null
+}
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 /**
@@ -31,7 +45,10 @@ export interface ScribeApplied {
  * the paragraph is taken whole, with a note or an image after its text; an
  * offset ends the selection at a character. One end alone is the cursor.
  */
-function selectInEditor(spec: string): { ok: boolean; error?: string } {
+export function selectInEditor(spec: string): {
+  ok: boolean
+  error?: string
+} {
   const Api = (window as any).g_asc_plugins.api.getJsApi()
   const doc = Api.GetDocument()
 
@@ -618,6 +635,16 @@ export class ScribePluginPage {
       }
       return holder.scribeMessages.splice(0)
     })
+  }
+
+  /** The last geometry the plugin has sent since the previous take */
+  async takeGeometry(): Promise<Geometry | null> {
+    const geometries = (await this.takeMessages()).filter(
+      ({ type }) => type === 'twake-scribe:geometry'
+    )
+    if (geometries.length === 0) return null
+    const { type: _type, ...geometry } = geometries[geometries.length - 1]
+    return geometry as unknown as Geometry
   }
 
   /** What the plugin gives Drive to work on, as when its button is clicked */

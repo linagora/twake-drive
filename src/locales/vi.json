@@ -660,6 +660,7 @@
       "insert": "Chèn",
       "replace": "Thay thế",
       "insertSlide": "Chèn trang chiếu",
+      "selectionMenu": "Menu Scribe",
       "suggestions": {
         "newSlide": "Trang chiếu mới",
         "newSlideMessage": "Thêm một trang chiếu mới sau trang này, về nội dung văn bản",

@@ -5,3 +5,13 @@
     max-width 100%
     border-left 1px solid var(--dividerColor)
     background-color var(--paperBackgroundColor)
+
+// Over the full screen dialog that holds the editor
+.scribe-selection-button
+    z-index 100000
+    opacity .75
+    transition opacity 200ms
+
+    &:hover
+    &:focus-within
+        opacity 1

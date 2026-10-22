@@ -660,6 +660,7 @@
       "insert": "Insertar",
       "replace": "Reemplazar",
       "insertSlide": "Insertar la diapositiva",
+      "selectionMenu": "Menú de Scribe",
       "suggestions": {
         "newSlide": "Nueva diapositiva",
         "newSlideMessage": "Añade una nueva diapositiva después de esta, sobre el texto",
