@@ -495,6 +495,8 @@ function readEditor(): ScribeModel {
  * messages, and reads the document from the editor
  */
 export class ScribePluginPage {
+  private lastGeometry: Geometry | null = null
+
   constructor(private readonly page: Page) {}
 
   private findPlugin(): Frame | null {
@@ -628,23 +630,28 @@ export class ScribePluginPage {
     )
   }
 
+  // The geometries are kept for takeGeometry: the other takes drop them
   private async takeMessages(): Promise<{ type: string }[]> {
-    return this.page.evaluate(() => {
+    const messages = await this.page.evaluate(() => {
       const holder = window as unknown as {
         scribeMessages: { type: string }[]
       }
       return holder.scribeMessages.splice(0)
     })
+    for (const { type, ...geometry } of messages) {
+      if (type === 'twake-scribe:geometry') {
+        this.lastGeometry = geometry as unknown as Geometry
+      }
+    }
+    return messages
   }
 
   /** The last geometry the plugin has sent since the previous take */
   async takeGeometry(): Promise<Geometry | null> {
-    const geometries = (await this.takeMessages()).filter(
-      ({ type }) => type === 'twake-scribe:geometry'
-    )
-    if (geometries.length === 0) return null
-    const { type: _type, ...geometry } = geometries[geometries.length - 1]
-    return geometry as unknown as Geometry
+    await this.takeMessages()
+    const geometry = this.lastGeometry
+    this.lastGeometry = null
+    return geometry
   }
 
   /** What the plugin gives Drive to work on, as when its button is clicked */

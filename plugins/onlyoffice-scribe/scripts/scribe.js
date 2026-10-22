@@ -32,6 +32,7 @@ let lastSelectedTextLive = ''
 let lastGeometry = null
 let geometryTimer = null
 let geometryFrame = null
+let isGeometryWatched = false
 let isZoomWatched = false
 let viewerObserver = null
 // The text last given to the app, its plain text, and whether an answer is
@@ -264,6 +265,12 @@ async function applyAnswer(answer) {
     }
     // The answer is left selected: it is not another text to work on
     const selectedText = await fetchSelectedText()
+    // Its button does not wait for the editor to start the plugin again, which
+    // it does not do for every selection made by code
+    if (isGeometryWatched) {
+      lastSelectedTextLive = selectedText ?? ''
+      sendGeometry()
+    }
     if (selectedText?.trim()) {
       lastContent = (await fetchContent())?.content ?? lastContent
       lastSelectedText = selectedText
@@ -394,6 +401,7 @@ function unwatchGeometry() {
 }
 
 function watchGeometry() {
+  isGeometryWatched = true
   window.Asc.plugin.attachEditorEvent('onTargetPositionChanged', sendGeometry)
   window.addEventListener('pagehide', unwatchGeometry)
   updateGeometry()
@@ -417,7 +425,7 @@ function findHostOrigin() {
 window.Asc.plugin.init = () => {
   if (isStarted) {
     handleSelectionChange()
-    updateGeometry()
+    if (isGeometryWatched) updateGeometry()
     return
   }
   isStarted = true
@@ -427,5 +435,6 @@ window.Asc.plugin.init = () => {
   appOrigin = findHostOrigin()
   if (!appOrigin) return
   host.postMessage({ type: 'twake-scribe:ready' }, appOrigin)
-  watchGeometry()
+  // The presentation editor gives no selection bounds
+  if (!isPresentation()) watchGeometry()
 }

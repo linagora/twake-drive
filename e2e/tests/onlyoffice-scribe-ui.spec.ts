@@ -118,10 +118,21 @@ test.describe('the scribe of Drive', { tag: '@e2e-scribe' }, () => {
       expect(disc.y - (frame.y + endY + 4)).toBeLessThanOrEqual(1)
     }).toPass({ timeout: 10_000 })
 
+    // Scrolled above the viewer, then back
+    await scribe.scrollEditor(300)
+    await expect(scribe.selectionButton()).toBeHidden()
+    await scribe.scrollEditor(-300)
+    await expect(scribe.selectionButton()).toBeVisible()
+
     await scribe.selectionButton().click()
     await expect(scribe.panel()).toBeVisible()
 
     await scribe.selectInEditor('P2@mid')
     await expect(scribe.selectionButton()).toBeHidden()
+
+    // An answer written at the cursor is left selected
+    await plugin.applyAnswer('insert', 'Un texte écrit')
+    await expect(scribe.selectionButton()).toBeVisible()
+    expect((await plugin.takeGeometry())?.selection?.hasText).toBe(true)
   })
 })
