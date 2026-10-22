@@ -177,6 +177,26 @@ export function readContent() {
     )
   }
 
+  // The editor opens a fence on each code paragraph, after the text of a
+  // line of spaces, and closes it after the last one only:
+  // "\n```\na\n\n\n```\nb\n```\n" is a block of two lines
+  const joinCodeLines = markdown => {
+    let isOpen = false
+    return markdown.replace(
+      /(\n\n([ \t]*))?\n```\n/g,
+      (fence, paragraphEnd, indent, at) => {
+        const isNextLine = isOpen && paragraphEnd !== undefined
+        if (markdown.startsWith('```\n', at + fence.length)) {
+          isOpen = false
+          return isNextLine ? `\n${indent}\n` : fence
+        }
+        if (isNextLine) return `\n${indent}`
+        isOpen = !isOpen
+        return fence
+      }
+    )
+  }
+
   // An answer is text: it cannot give back an image, a chart, an equation, a
   // note, a field, a form, a comment or a page break, nor take the place of a
   // text and a table together, or of the end of a section
@@ -220,7 +240,7 @@ export function readContent() {
     return markdown.slice(mark.length)
   }
 
-  const content = describeMerges(doc.ToMarkdown())
+  const content = describeMerges(joinCodeLines(doc.ToMarkdown()))
   return {
     content: hasSelection ? removeMark(content) : content,
     target: hasSelection ? 'selection' : 'document',
