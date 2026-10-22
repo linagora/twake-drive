@@ -402,9 +402,10 @@ export function readContent() {
 
 /**
  * Writes the blocks of an answer in the document, with the styles of the
- * document: in place of the selection (`Asc.scope.isReplace`), or after its
- * paragraph. The new text is left selected: the user sees it, and the next
- * answer can replace it.
+ * document: in place of the selection (`Asc.scope.isReplace`), or else at its
+ * end or at the cursor: in the line when that is inside a text, after the
+ * paragraph otherwise. The new text is left selected: the user sees it, and
+ * the next answer can replace it.
  *
  * @returns {boolean} false when there was nowhere to write
  */
@@ -417,9 +418,9 @@ export function writeBlocks() {
   // A cursor is no selection: once the document has been read, the editor
   // gives for it an empty range in the first cell of its table
   const range = doc.GetRangeBySelect()
-  const selection =
+  let selection =
     range && range.GetStartPos() < range.GetEndPos() ? range : null
-  const paragraphs = selection?.GetAllParagraphs() ?? []
+  let paragraphs = selection?.GetAllParagraphs() ?? []
   // The editor writes a table in a table over its cells: a table of the
   // answer goes under the table of the selection, out of any other one
   const hasTable = blocks.some(block => block.type === 'table')
@@ -823,6 +824,63 @@ export function writeBlocks() {
     return cell && cells.size > 1 ? cell.GetParentTable() : last
   }
 
+  // The editor gives no range at a cursor, but the parts of its sentence
+  // before and after it: the cursor is where they meet, in its run
+  const findCursorRange = paragraph => {
+    const current = doc.GetCurrentRun()
+    const before = doc.GetCurrentSentence('before')
+    const after = doc.GetCurrentSentence('after')
+    if (!current || (before === '' && after === '')) return null
+    const runs = []
+    for (let i = 0; i < paragraph.GetElementsCount(); i += 1) {
+      const element = paragraph.GetElement(i)
+      if (element.GetClassType() === 'run') runs.push(element)
+      if (element.GetClassType() !== 'hyperlink') continue
+      for (let j = 0; j < element.GetElementsCount(); j += 1) {
+        runs.push(element.GetElement(j))
+      }
+    }
+    const text = runs.map(run => run.GetText()).join('')
+    const start = current.GetRange().GetStartPos()
+    // A sentence met twice in the run leaves the cursor unknown
+    const found = new Map()
+    let offset = 0
+    runs.forEach(run => {
+      const length = run.GetText().length
+      const isCurrent = run.GetRange().GetStartPos() === start
+      for (let k = 0; isCurrent && k <= length; k += 1) {
+        const at = offset + k
+        if (text.endsWith(before, at) && text.startsWith(after, at)) {
+          found.set(at, run.GetRange(k, k))
+        }
+      }
+      offset += length
+    })
+    return found.size === 1 ? [...found.values()][0] : null
+  }
+
+  // Where an answer is inserted in the line of a text: at the end of the
+  // selection, or at the cursor, with the text of its paragraph on each side.
+  // At the end of a paragraph, in an empty one, or where the answer goes
+  // under a table, it is written in new paragraphs instead.
+  const findCursor = () => {
+    const paragraph = findAnchor()
+    if (paragraph?.GetClassType() !== 'paragraph') return null
+    const range = selection
+      ? doc.GetRange(selection.GetEndPos(), selection.GetEndPos())
+      : findCursorRange(paragraph)
+    if (!range) return null
+    const point = range.GetStartPos()
+    const whole = paragraph.GetRange()
+    const after = getText(doc.GetRange(point, whole.GetEndPos())).replace(
+      /[\n\t]+$/,
+      ''
+    )
+    if (after.trim() === '') return null
+    const before = getText(doc.GetRange(whole.GetStartPos(), point))
+    return { paragraph, range, before, after }
+  }
+
   // An empty paragraph has no text, and nothing but runs: not an image, a
   // page break, a field or a form, nor the end of a section. The look of its
   // runs, as a color of the theme, does not count.
@@ -939,6 +997,20 @@ export function writeBlocks() {
     )
   }
 
+  // A text written in a line is kept apart from the text around it by a
+  // space on each side, unless there is one already
+  const addGlueSpaces = (spans, { before, after }) => {
+    const text = spans
+      .map(span => (span.isBreak ? '\n' : (span.text ?? '')))
+      .join('')
+    const space = { text: ' ' }
+    return [
+      ...(/\S$/.test(before) && /^\S/.test(text) ? [space] : []),
+      ...spans,
+      ...(/\S$/.test(text) && /^\S/.test(after) ? [space] : [])
+    ]
+  }
+
   // Writes elements in place of the selection, a single paragraph in its line
   // (`isInline`), and selects them
   const writeAnswer = (elements, isInline) => {
@@ -958,7 +1030,7 @@ export function writeBlocks() {
   // pasted one: its first paragraph continues the text before the selection,
   // its last one the text after it, in the style of their paragraph. A
   // heading, an item, a table or a block of code stays a block of its own.
-  const writeAround = ({ before, after }) => {
+  const writeAround = ({ before, after, isSpaced = false }) => {
     const isPlain = block => block.type === 'paragraph'
     const isJoiningBefore = before !== '' && isPlain(blocks[0])
     const isJoiningAfter =
@@ -988,16 +1060,28 @@ export function writeBlocks() {
     const parent = head.GetParentTableCell()?.GetContent() ?? doc
     const lastBlock = middle[middle.length - 1] ?? head
     const tail = parent.GetElement(lastBlock.GetPosInParent() + 1)
-    const writeInLine = (block, at) => {
+    // An insert has the spaces the text around it needs, a replace keeps the
+    // ones around the selection
+    const writeInLine = (block, around, at) => {
+      const spans = isSpaced ? addGlueSpaces(block.spans, around) : block.spans
       at.Select()
-      doc.InsertContent([makeParagraph(block.spans, null, textPr)], true)
+      doc.InsertContent([makeParagraph(spans, null, textPr)], true)
     }
     // The text before the selection has not moved
     if (isJoiningBefore) {
-      writeInLine(blocks[0], doc.GetRange(answerStart, answerStart))
+      writeInLine(
+        blocks[0],
+        { before, after: '' },
+        doc.GetRange(answerStart, answerStart)
+      )
     }
-    if (isJoiningAfter)
-      writeInLine(blocks[blocks.length - 1], tail.GetRange(0, 0))
+    if (isJoiningAfter) {
+      writeInLine(
+        blocks[blocks.length - 1],
+        { before: '', after },
+        tail.GetRange(0, 0)
+      )
+    }
 
     // The answer is left selected, without the text around it
     const startPos = isJoiningBefore
@@ -1045,12 +1129,29 @@ export function writeBlocks() {
     return writeAround(getAround())
   }
 
+  // An answer inserted in a line is written there as in place of an empty
+  // selection, in the look of most of the text of its paragraph
+  const insertAtCursor = ({ paragraph, range, before, after }) => {
+    selection = range
+    paragraphs = [paragraph]
+    textPr = findMainLook(paragraph)
+    range.Select()
+    const [block] = blocks
+    if (blocks.length === 1 && block.type === 'paragraph') {
+      const spans = addGlueSpaces(block.spans, { before, after })
+      return writeAnswer([makeParagraph(spans, null, textPr)], true)
+    }
+    return writeAround({ before, after, isSpaced: true })
+  }
+
   const selectedCells = getSelectedCells()
   if (canFillCells(selectedCells)) {
     fillCells(selectedCells, blocks[0])
     return true
   }
   if (isReplacingText(selectedCells)) return replaceText()
+  const cursor = isReplace ? null : findCursor()
+  if (cursor) return insertAtCursor(cursor)
   if (!selectPlaceholder(selectedCells)) return false
   return writeAnswer(blocks.flatMap(makeElement), false)
 }

@@ -314,18 +314,18 @@
                 ]
               ]
             },
-            {"type":"p","runs":[{"t":"Outro paragraph"}]},
+            {"type":"p","runs":[{"t":"Outro p"}]},
             {
               "type": "table",
               "grid": [[{"blocks":[{"type":"p","runs":[{"t":"GG"}]}]},{"blocks":[{"type":"p","runs":[{"t":"DD"}]}]}]]
             },
-            {"type":"p","runs":[{"t":"Tail edit"}]}
+            {"type":"p","runs":[{"t":"Tail edit"},{"t":" "},{"t":"aragraph"}]}
           ],
-          "selText": "GGDD\nTail edit",
+          "selText": "GGDD\nTail edit ",
           "selMarkup": [
             {"at":{"block":3,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«GG»"},
             {"at":{"block":3,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«DD»"},
-            {"at":{"block":4},"text":"«Tail edit»"}
+            {"at":{"block":4},"text":"«Tail edit »aragraph"}
           ]
         }
       }
@@ -354,18 +354,18 @@
                 ]
               ]
             },
-            {"type":"p","runs":[{"t":"Outro paragraph"}]},
+            {"type":"p","runs":[{"t":"Outro p"}]},
             {
               "type": "table",
               "grid": [[{"blocks":[{"type":"p","runs":[{"t":"GG"}]}]},{"blocks":[{"type":"p","runs":[{"t":"DD"}]}]}]]
             },
-            {"type":"p","runs":[{"t":"Tail edit"}]}
+            {"type":"p","runs":[{"t":"Tail edit"},{"t":" "},{"t":"aragraph"}]}
           ],
-          "selText": "GGDD\nTail edit",
+          "selText": "GGDD\nTail edit ",
           "selMarkup": [
             {"at":{"block":3,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«GG»"},
             {"at":{"block":3,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«DD»"},
-            {"at":{"block":4},"text":"«Tail edit»"}
+            {"at":{"block":4},"text":"«Tail edit »aragraph"}
           ]
         }
       }
@@ -496,7 +496,7 @@
       "id": "cell-cursor-text",
       "selection": "T1.C(1,1)@mid",
       "answerAction": "insert",
-      "answer": "Under Delta.",
+      "answer": "In Delta.",
       "expected": {
         "content": {
           "content": "Intro paragraph\n\n<table>\n  <tr>\n   <td>\n\nAlpha\n\n</td>\n   <td>\n\nBeta\n\n</td>\n  </tr>\n  <tr>\n   <td>\n\nGamma\n\n</td>\n   <td>\n\nDelta\n\nDelta2\n\n</td>\n  </tr>\n</table>\n\nOutro paragraph\n\n",
@@ -514,8 +514,7 @@
                   {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
                   {
                     "blocks": [
-                      {"type":"p","runs":[{"t":"Delta"}]},
-                      {"type":"p","runs":[{"t":"Under Delta."}]},
+                      {"type":"p","runs":[{"t":"De"},{"t":" "},{"t":"In Delta."},{"t":" "},{"t":"lta"}]},
                       {"type":"p","runs":[{"t":"Delta2"}]}
                     ]
                   }
@@ -524,8 +523,8 @@
             },
             {"type":"p","runs":[{"t":"Outro paragraph"}]}
           ],
-          "selText": "Under Delta.",
-          "selMarkup": [{"at":{"block":1,"cell":{"r":1,"c":1},"cellBlock":1},"text":"«Under Delta.»"}]
+          "selText": " In Delta. ",
+          "selMarkup": [{"at":{"block":1,"cell":{"r":1,"c":1},"cellBlock":0},"text":"De« In Delta. »lta"}]
         }
       }
     },
@@ -533,7 +532,7 @@
       "id": "cursor-after-table",
       "selection": "P2@mid",
       "answerAction": "insert",
-      "answer": "Under the outro.",
+      "answer": "In the outro.",
       "expected": {
         "content": {
           "content": "Intro paragraph\n\n<table>\n  <tr>\n   <td>\n\nAlpha\n\n</td>\n   <td>\n\nBeta\n\n</td>\n  </tr>\n  <tr>\n   <td>\n\nGamma\n\n</td>\n   <td>\n\nDelta\n\nDelta2\n\n</td>\n  </tr>\n</table>\n\nOutro paragraph\n\n",
@@ -553,11 +552,10 @@
                 ]
               ]
             },
-            {"type":"p","runs":[{"t":"Outro paragraph"}]},
-            {"type":"p","runs":[{"t":"Under the outro."}]}
+            {"type":"p","runs":[{"t":"Outro p"},{"t":" "},{"t":"In the outro."},{"t":" "},{"t":"aragraph"}]}
           ],
-          "selText": "Under the outro.",
-          "selMarkup": [{"at":{"block":3},"text":"«Under the outro.»"}]
+          "selText": " In the outro. ",
+          "selMarkup": [{"at":{"block":2},"text":"Outro p« In the outro. »aragraph"}]
         }
       }
     },

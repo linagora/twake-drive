@@ -10,8 +10,8 @@ document from the editor and compares it with what is expected.
 
 Most cases and documents come from the test harness of the scribe of
 Benibur/cozy-drive (`test-harness/`): the expected results were written again
-for the rules of this plugin, which inserts an answer under the selected text
-instead of in its line.
+for the rules of this plugin, and taken from that harness where its rules are
+the same.
 
 ## Files
 
