@@ -30,6 +30,9 @@ interface ScribeCase {
   // null: the text the plugin gives is the whole case
   answerAction: 'insert' | 'replace' | null
   answer: string | null
+  // The next answer of the conversation, written over the first one, left
+  // selected, without the text being read again
+  next?: { answerAction: 'insert' | 'replace'; answer: string }
   expected?: {
     content: ScribeContent
     model: ScribeModel | null
@@ -133,6 +136,12 @@ for (const suite of suites) {
               scribeCase.answerAction,
               scribeCase.answer ?? ''
             )
+            if (scribeCase.next) {
+              applied = await scribe.applyAnswer(
+                scribeCase.next.answerAction,
+                scribeCase.next.answer
+              )
+            }
             model = await scribe.read()
             if (isUndone) {
               await scribe.undo()

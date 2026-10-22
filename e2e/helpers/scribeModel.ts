@@ -22,6 +22,9 @@ export interface ScribeParagraph {
   // The level of the item and the label the editor numbers it with
   list?: [number, string]
   images?: number
+  // When an image floats, each image in its order: `inline`, or the wrapping
+  // of a floating one, as `square`
+  wraps?: string[]
   // The references to footnotes, and the plain text of the first paragraph
   // of each of their notes
   notes?: number
@@ -90,6 +93,7 @@ const PARAGRAPH_FIELDS = [
   'lvl',
   'list',
   'images',
+  'wraps',
   'notes',
   'noteTexts',
   'bookmarks',
@@ -104,7 +108,7 @@ const hasField = (
   field: (typeof PARAGRAPH_FIELDS)[number]
 ): boolean => {
   if (field === 'lvl') return typeof paragraph.lvl === 'number'
-  if (field === 'noteTexts' || field === 'bookmarks') {
+  if (field === 'noteTexts' || field === 'bookmarks' || field === 'wraps') {
     return (paragraph[field]?.length ?? 0) > 0
   }
   return Boolean(paragraph[field])
