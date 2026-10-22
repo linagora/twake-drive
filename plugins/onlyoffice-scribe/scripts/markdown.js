@@ -184,8 +184,9 @@ function getTagName(tag) {
  * Turns the Markdown of an answer into the blocks the document is written
  * with: paragraphs, headings, quotes, list items and tables, each with its
  * spans, and blocks of code with their lines, an empty one a space. A cell
- * of a table has its spans, and the columns and rows it takes
- * (`colSpan`, `rowSpan`) when it takes more than one.
+ * of a table has its spans, its blocks when it holds several (`blocks`, each
+ * with its spans), and the columns and rows it takes (`colSpan`, `rowSpan`)
+ * when it takes more than one.
  *
  * @param {string} markdown
  * @param {object} [options]
@@ -217,13 +218,17 @@ export function makeBlocks(markdown, { hasLineBreaks = false } = {}) {
     const row = htmlTable[htmlTable.length - 1]
     const cell = row?.[row.length - 1]
     if (!cell) return
-    if (cell.spans.length > 0) cell.spans.push({ isBreak: true })
-    if (block.type === 'code') cell.spans.push(...makeCodeSpans(block.lines))
-    else cell.spans.push(...(block.spans ?? []))
+    // In a cell, a block of code is the text of one paragraph, and a table is
+    // left out
+    if (block.type === 'code') {
+      cell.blocks.push({ ...block, spans: makeCodeSpans(block.lines) })
+    } else if (block.spans) {
+      cell.blocks.push(block)
+    }
   }
 
   const makeCell = tag => {
-    const cell = { spans: [] }
+    const cell = { blocks: [] }
     for (const [, attribute, value] of tag.matchAll(SPAN_ATTRIBUTE)) {
       const span = Number(value)
       if (span > 1) cell[attribute === 'colspan' ? 'colSpan' : 'rowSpan'] = span
@@ -236,8 +241,20 @@ export function makeBlocks(markdown, { hasLineBreaks = false } = {}) {
     htmlTable[htmlTable.length - 1].push(makeCell(tag))
   }
 
+  // A cell gives the spans of its blocks, a line each, and its blocks when
+  // it holds several
+  const makeHtmlCell = ({ blocks: cellBlocks, ...cell }) => ({
+    ...cell,
+    spans: cellBlocks.flatMap((block, index) =>
+      index === 0 ? block.spans : [{ isBreak: true }, ...block.spans]
+    ),
+    ...(cellBlocks.length > 1 && { blocks: cellBlocks })
+  })
+
   const closeHtmlTable = () => {
-    const rows = htmlTable.filter(row => row.length > 0)
+    const rows = htmlTable
+      .filter(row => row.length > 0)
+      .map(row => row.map(makeHtmlCell))
     htmlTable = null
     if (rows.length > 0) addBlock({ type: 'table', rows })
   }
