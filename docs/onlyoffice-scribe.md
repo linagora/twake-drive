@@ -10,6 +10,7 @@ Drive does not talk to the LLM, and does not read or format the document. It lin
 ```
 Drive (OnlyOffice view)
   ├─ AI button of the toolbar ── opens ──▶ side panel
+  ├─ floating button of the document area ── opens or closes ──▶ side panel
   ├─ button under the selection ── opens ──▶ side panel
   │                                          └─ Assistant intent (iframe of Twake Assistant)
   │                                               content, answerActions, capabilities, suggestions ◀── Drive
@@ -30,6 +31,7 @@ Drive (OnlyOffice view)
 - With the flag `cozy.assistant.enabled`, the editor has no AI tab of its own: Drive leaves out the AI plugin of OnlyOffice (`editorConfig.plugins.disable`), which would sit beside the assistant.
 - A click opens the assistant in a panel beside the document. Another click, or the cross of the panel, closes it.
 - A text selected in a text document shows a small sparkle button under its end, "Scribe Menu": a click opens the assistant on it too, see [The button under the selection](#the-button-under-the-selection).
+- A text document also has a floating button, "Scribe Panel", 12 px inside the top right corner of the area that shows the document, faded until the pointer is over it. Its mark plays while the pointer is over it, unless the system asks for reduced motion. A click opens the panel, or closes it. Until the plugin has given the place of that area, the button waits in the bottom right corner of the window. A presentation has none: the plugin gives no geometry there.
 - With a selection, the assistant works on the selected text, and each answer can be inserted after it or can replace it. An answer is text, so a selection that holds what it cannot give back can only have the answers inserted after it: a chart, an equation, an endnote, a field, a content control or a form, a comment, a page or column break, a footnote in a cell of a table or in a code, or an image the plugin cannot give a marker. So can a selection that crosses the end of a section, or the edges of more than two tables or of a table in a table. See [What an answer can replace](#what-an-answer-can-replace).
 - The underlined text of the selection is given between `<u>` tags, and its footnotes, its links to a heading or a bookmark of the document and its images as markers. They are written back where the answer keeps them, as underlined text, new notes, links and copies of the images, see [Markers](#markers).
 - Without a selection, the assistant works on the whole document, and each answer can be inserted at the cursor. Nothing replaces a whole document.
