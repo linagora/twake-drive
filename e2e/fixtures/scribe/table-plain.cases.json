@@ -194,6 +194,53 @@
       }
     },
     {
+      "id": "ragged-answer",
+      "selection": "T1.full",
+      "answerAction": "insert",
+      "answer": "<table>\n  <tr><td>AA</td><td>BB</td></tr>\n  <tr><td>CC</td></tr>\n</table>",
+      "expected": {
+        "content": {
+          "content": "<table>\n  <tr>\n   <td>\n\nAlpha\n\n</td>\n   <td>\n\nBeta\n\n</td>\n  </tr>\n  <tr>\n   <td>\n\nGamma\n\n</td>\n   <td>\n\nDelta\n\nDelta2\n\n</td>\n  </tr>\n</table>\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "width": "240pt",
+              "borders": 1,
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Delta"}]},{"type":"p","runs":[{"t":"Delta2"}]}]}
+                ]
+              ]
+            },
+            {
+              "type": "table",
+              "width": "240pt",
+              "borders": 1,
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"AA"}]}]},{"blocks":[{"type":"p","runs":[{"t":"BB"}]}]}],
+                [{"blocks":[{"type":"p","runs":[{"t":"CC"}]}]},{"blocks":[{"type":"p","runs":[]}]}]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "AABB\nCC\n",
+          "selMarkup": [
+            {"at":{"block":2,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«AA»"},
+            {"at":{"block":2,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«BB»"},
+            {"at":{"block":2,"cell":{"r":1,"c":0},"cellBlock":0},"text":"«CC»"},
+            {"at":{"block":2,"cell":{"r":1,"c":1},"cellBlock":0},"text":""}
+          ]
+        }
+      }
+    },
+    {
       "id": "T2a",
       "selection": "T1.C(0,0)@start..T1.C(0,1)@end",
       "answerAction": "replace",

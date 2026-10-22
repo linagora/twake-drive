@@ -1,0 +1,68 @@
+{
+  "document": "table-ragged.docx",
+  "cases": [
+    {
+      "id": "ragged-copy",
+      "selection": "T1.C(0,0)@start..T1.C(1,2)@end",
+      "answerAction": "insert",
+      "answer": "<table>\n  <tr><td>Bx</td><td>Cx</td></tr>\n  <tr><td>By</td><td>Cy</td></tr>\n</table>",
+      "expected": {
+        "content": {
+          "content": "<table>\n  <tr>\n   <td>\n\nB0\n\n</td>\n   <td>\n\nC0\n\n</td>\n  </tr>\n  <tr>\n   <td>\n\nB1\n\n</td>\n   <td>\n\nC1\n\n</td>\n  </tr>\n</table>\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "width": "360pt",
+              "borders": 1,
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"B0"}]}]},{"blocks":[{"type":"p","runs":[{"t":"C0"}]}]}],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"A1"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"B1"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"C1"}]}]}
+                ],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"A2"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"B2"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"C2"}]}]}
+                ]
+              ]
+            },
+            {
+              "type": "table",
+              "width": "360pt",
+              "borders": 1,
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"Bx"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Cx"}]}]}],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"A1"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"By"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Cy"}]}]}
+                ],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"A2"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"B2"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"C2"}]}]}
+                ]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "BxCx\nByCy\n",
+          "selMarkup": [
+            {"at":{"block":2,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«Bx»"},
+            {"at":{"block":2,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«Cx»"},
+            {"at":{"block":2,"cell":{"r":1,"c":0},"cellBlock":0},"text":"«A1»"},
+            {"at":{"block":2,"cell":{"r":1,"c":1},"cellBlock":0},"text":"«By»"},
+            {"at":{"block":2,"cell":{"r":1,"c":2},"cellBlock":0},"text":"«Cy»"}
+          ]
+        }
+      }
+    }
+  ]
+}
