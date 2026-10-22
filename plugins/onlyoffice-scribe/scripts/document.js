@@ -240,7 +240,117 @@ export function readContent() {
     return markdown.slice(mark.length)
   }
 
-  const content = describeMerges(joinCodeLines(doc.ToMarkdown()))
+  // The editor's Markdown leaves the underline out: each run of the selection
+  // is found in it after the run before it, out of the tags and the addresses
+  // of the links, and an underlined one is put between <u> tags
+  const decorate = (selectedParagraphs, markdown) => {
+    const from = selection.GetStartPos()
+    const to = selection.GetEndPos()
+    const parts = []
+    let copied = 0
+    let at = 0
+
+    const replace = (start, end, text) => {
+      parts.push(markdown.slice(copied, start), text)
+      copied = end
+      at = end
+    }
+
+    // The positions of a run count its characters
+    const getSelectedText = run => {
+      const text = run.GetText()
+      const start = run.GetRange().GetStartPos()
+      const clip = position =>
+        Math.min(Math.max(position - start, 0), text.length)
+      return text.slice(clip(from), clip(to))
+    }
+
+    // The editor gives the HTML characters of a text as entities: a < opens
+    // a tag
+    const ENTITIES = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    }
+    const isInTag = index => {
+      const before = markdown.slice(at, index)
+      return before.lastIndexOf('<') > before.lastIndexOf('>')
+    }
+    const find = text => {
+      let index = markdown.indexOf(text, at)
+      while (index !== -1 && isInTag(index)) {
+        index = markdown.indexOf(text, index + 1)
+      }
+      return index
+    }
+
+    // Outside of the emphasis marks that hold the text alone, since the tags
+    // would be code inside backticks, and with the spaces of the run
+    const EMPHASIS = /[*_~`]/
+    const WORD = /[\p{L}\p{N}]/u
+    const underline = (index, { lead, core, trail }) => {
+      let start = index
+      let end = index + core.length
+      let left = start
+      while (left > at && EMPHASIS.test(markdown[left - 1])) left -= 1
+      let right = end
+      while (EMPHASIS.test(markdown[right] ?? '')) right += 1
+      const opening = markdown.slice(left, start)
+      const isHolding =
+        opening !== '' &&
+        markdown.slice(end, right) === [...opening].reverse().join('') &&
+        !WORD.test(markdown[left - 1] ?? '') &&
+        !WORD.test(markdown[right] ?? '')
+      if (isHolding) {
+        start = left
+        end = right
+      }
+      if (
+        start - lead.length >= at &&
+        markdown.startsWith(lead, start - lead.length)
+      ) {
+        start -= lead.length
+      }
+      if (markdown.startsWith(trail, end)) end += trail.length
+      replace(start, end, `<u>${markdown.slice(start, end)}</u>`)
+    }
+
+    const readRun = run => {
+      const [, lead, core, trail] = getSelectedText(run)
+        .replace(/[&<>"']/g, char => ENTITIES[char])
+        .match(/^(\s*)([\s\S]*?)(\s*)$/)
+      const index = core === '' ? -1 : find(core)
+      if (index === -1) return
+      if (!run.GetTextPr().GetUnderline()) {
+        at = index + core.length
+        return
+      }
+      underline(index, { lead, core, trail })
+    }
+
+    const LINK_END = /[*_~`]*\]\([^)]*\)/y
+    selectedParagraphs.forEach(paragraph => {
+      for (let i = 0; i < paragraph.GetElementsCount(); i += 1) {
+        const element = paragraph.GetElement(i)
+        if (element.GetClassType() === 'run') readRun(element)
+        if (element.GetClassType() !== 'hyperlink') continue
+        for (let j = 0; j < element.GetElementsCount(); j += 1) {
+          readRun(element.GetElement(j))
+        }
+        LINK_END.lastIndex = at
+        if (LINK_END.test(markdown)) at = LINK_END.lastIndex
+      }
+    })
+    parts.push(markdown.slice(copied))
+    return parts.join('')
+  }
+
+  const markdown = joinCodeLines(doc.ToMarkdown())
+  const content = describeMerges(
+    hasSelection ? decorate(paragraphs, markdown) : markdown
+  )
   return {
     content: hasSelection ? removeMark(content) : content,
     target: hasSelection ? 'selection' : 'document',
@@ -322,8 +432,19 @@ export function writeBlocks() {
     run.SetBold(span.isBold ? true : undefined)
     run.SetItalic(span.isItalic ? true : undefined)
     run.SetStrikeout(span.isStrike ? true : undefined)
+    run.SetUnderline(span.isUnderline ? true : undefined)
     if (span.isCode) run.SetFontFamily('Courier New')
     return run
+  }
+
+  // A link has no underline of its own: its runs have
+  const makeHyperlink = span => {
+    const hyperlink = Api.CreateHyperlink(span.href, span.text)
+    if (!span.isUnderline) return hyperlink
+    for (let i = 0; i < hyperlink.GetElementsCount(); i += 1) {
+      hyperlink.GetElement(i).SetUnderline(true)
+    }
+    return hyperlink
   }
 
   const addSpans = (paragraph, spans, textPr) => {
@@ -332,9 +453,7 @@ export function writeBlocks() {
         paragraph.AddLineBreak()
         return
       }
-      const element = span.href
-        ? Api.CreateHyperlink(span.href, span.text)
-        : makeRun(span, textPr)
+      const element = span.href ? makeHyperlink(span) : makeRun(span, textPr)
       paragraph.AddElement(element)
       lastWritten = element
     })
@@ -519,7 +638,8 @@ export function writeBlocks() {
     const kept = spans.map(span => ({
       ...span,
       isBold: span.isBold || textPr?.GetBold() === true,
-      isItalic: span.isItalic || textPr?.GetItalic() === true
+      isItalic: span.isItalic || textPr?.GetItalic() === true,
+      isUnderline: span.isUnderline || textPr?.GetUnderline() === true
     }))
     addSpans(paragraph, kept, textPr)
   }
