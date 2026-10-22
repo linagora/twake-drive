@@ -119,7 +119,7 @@
       }
     },
     {
-      "id": "refs-kept",
+      "id": "refs-inserted-edges",
       "selection": "P2@start..P2@end",
       "answerAction": "insert",
       "answer": "{{REF:scribe-ref-2:The note}} and {{REF:scribe-ref-1:the budget}}",
