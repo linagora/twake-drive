@@ -70,7 +70,7 @@ test.describe('the scribe of Drive', { tag: '@e2e-scribe' }, () => {
 
     await scribe.openPanel()
     await expect(scribe.panel()).toBeVisible()
-    await expect(scribe.assistantFrame().getByRole('textbox')).toBeVisible({
+    await expect(scribe.assistantComposer()).toBeVisible({
       timeout: 60_000
     })
 
@@ -194,7 +194,26 @@ test.describe('the scribe of Drive', { tag: '@e2e-scribe' }, () => {
     await scribe.selectInEditor('P1@start..P1@end')
     await scribe.editorToolbarButton('Inline Scribe').click()
     await expect(scribe.panel()).toBeVisible()
-    await expect(scribe.assistantFrame().getByRole('textbox')).toBeVisible({
+    await expect(scribe.assistantComposer()).toBeVisible({
+      timeout: 60_000
+    })
+  })
+
+  test('the Scribe button of the Plugins tab opens the scribe', async ({
+    alicePage
+  }) => {
+    const fileId = await uploadScribeDocument(
+      USERS.alice.instance,
+      'a-family.docx'
+    )
+    const scribe = new ScribePage(alicePage)
+    await scribe.openDocument(USERS.alice.appUrl, fileId)
+
+    await scribe.selectInEditor('P1@start..P1@end')
+    await scribe.editorTab('Plugins').click()
+    await scribe.editorToolbarButton('Scribe').click()
+    await expect(scribe.panel()).toBeVisible()
+    await expect(scribe.assistantComposer()).toBeVisible({
       timeout: 60_000
     })
   })
