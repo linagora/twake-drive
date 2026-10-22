@@ -521,6 +521,18 @@ describe('makeBlocks', () => {
     ])
   })
 
+  it('gives a link of a single image marker as the image alone', () => {
+    expect(makeBlocks('a [![image 1]](https://a.b) b')[0].spans).toEqual([
+      { text: 'a ' },
+      { image: 1 },
+      { text: ' b' }
+    ])
+    expect(makeBlocks('a [ ![image 1] ](https://a.b)')[0].spans).toEqual([
+      { text: 'a ' },
+      { image: 1 }
+    ])
+  })
+
   it('leaves the HTML tags out, and loads no image', () => {
     const blocks = makeBlocks(
       'Un <span>souligné</span><br>puis ![une image](https://example.org/a.png)\n\n<div onclick="alert(1)">Un bloc</div>'

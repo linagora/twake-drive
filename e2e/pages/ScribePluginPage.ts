@@ -257,6 +257,7 @@ function readEditor(): ScribeModel {
     name?: string
     drawingType?: string
     wrapType?: string
+    docPr?: { descr?: string }
     content?: (string | JsonElement)[]
     footnotes?: JsonElement[]
   }
@@ -293,6 +294,10 @@ function readEditor(): ScribeModel {
       drawingType === 'anchor' ? (wrapType ?? 'none') : 'inline'
     )
   }
+  const readAlts = (element?: JsonElement): string[] => {
+    const alts = findDrawings(element).map(({ docPr }) => docPr?.descr ?? '')
+    return alts.some(alt => alt !== '') ? alts : []
+  }
   // The JSON of a run holds the notes of its references, in their order
   const readNoteTexts = (element?: JsonElement): string[] =>
     findElements(element).flatMap(item => [
@@ -317,7 +322,9 @@ function readEditor(): ScribeModel {
       lvl: typeof level === 'number' && level >= 0 ? level : null,
       list: readList(paragraph),
       images: paragraph.GetAllDrawingObjects().length,
+      shapes: paragraph.GetAllShapes().length,
       wraps: readWraps(parsed),
+      alts: readAlts(parsed),
       notes: count(json, /"type":"footnoteRef"/g),
       noteTexts: readNoteTexts(parsed),
       bookmarks: findElements(parsed)
@@ -570,6 +577,14 @@ export class ScribePluginPage {
       ;(window as unknown as { editor: { Undo: () => void } }).editor.Undo()
     })
     await this.page.waitForTimeout(300)
+  }
+
+  /** Keys the user presses in the document, as Control+z */
+  async press(keys: string[]): Promise<void> {
+    for (const key of keys) {
+      await this.editor().locator('#area_id').press(key)
+      await this.page.waitForTimeout(300)
+    }
   }
 
   async select(spec: string): Promise<void> {

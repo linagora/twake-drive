@@ -41,13 +41,14 @@ function makeText(text, marks) {
 
 // A link is a single text: the notes and the images of its text come after
 // it, and a reference in it, which would be a link in a link, is text of the
-// link
+// link. A link without text, as the one of a linked image, is left out.
 function makeLinkSpans(token, marks) {
   const all = makeSpans(token.tokens, marks)
   const isAfter = span => span.note !== undefined || span.image !== undefined
   const after = all.filter(isAfter)
   const spans = all.filter(span => !isAfter(span))
   const text = spans.map(span => span.text ?? ' ').join('')
+  if (text.trim() === '') return after
   // Other links, as `javascript:` ones, are written as their text
   if (!LINK_PROTOCOL.test(token.href)) return [{ ...marks, text }, ...after]
 

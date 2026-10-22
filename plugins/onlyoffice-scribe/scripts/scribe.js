@@ -25,9 +25,10 @@ let hostOrigin = null
 // being written
 let lastContent = null
 let lastSelectedText = null
-// What the markers of the text last given stand for, and the count of its
-// images: an answer keeps them
-let lastMarkers = { notes: [], refs: [], imageCount: 0 }
+// What the markers of the text last given stand for, the count of its images,
+// and the marker each image of the answer last written is a copy for: an
+// answer keeps them
+let lastMarkers = { notes: [], refs: [], imageCount: 0, writtenImages: null }
 let isWriting = false
 let selectionTimer = null
 let pausedUntil = 0
@@ -101,10 +102,6 @@ function fetchContent() {
   return isPresentation() ? readPresentation() : runInEditor(readContent)
 }
 
-function countImages(content) {
-  return content?.match(/!\[image \d+\]/g)?.length ?? 0
-}
-
 // The editor runs no command while it loads or saves: the text is then not
 // read, and the app asks again
 async function sendContent(origin) {
@@ -113,11 +110,11 @@ async function sendContent(origin) {
   const read = await fetchContent()
   const selectedText = await fetchSelectedText()
   if (!read || request !== contentRequest) return
-  const { notes = [], refs = [], ...content } = read
+  const { notes = [], refs = [], imageCount = 0, ...content } = read
   hostOrigin = origin
   lastContent = content.content
   lastSelectedText = selectedText
-  lastMarkers = { notes, refs, imageCount: countImages(content.content) }
+  lastMarkers = { notes, refs, imageCount, writtenImages: null }
 
   host.postMessage({ type: 'twake-scribe:content', ...content }, origin)
 }
@@ -139,12 +136,13 @@ async function sendSelection() {
     target,
     canReplace,
     notes = [],
-    refs = []
+    refs = [],
+    imageCount = 0
   } = (await fetchContent()) ?? {}
   if (!hostOrigin || target !== 'selection' || content === lastContent) return
   lastContent = content
   lastSelectedText = selectedText
-  lastMarkers = { notes, refs, imageCount: countImages(content) }
+  lastMarkers = { notes, refs, imageCount, writtenImages: null }
   // The answer last written in a presentation is no more the selection
   written = null
 
@@ -159,10 +157,13 @@ function handleSelectionChange() {
   selectionTimer = setTimeout(sendSelection, SELECTION_DELAY)
 }
 
-// A read already planned would come after the undo or the redo: it is dropped
+// A read already planned would come after the undo or the redo: it is
+// dropped. The images of the selection may no more be the copies the last
+// answer wrote.
 function pauseSelection() {
   pausedUntil = Date.now() + UNDO_REDO_PAUSE
   clearTimeout(selectionTimer)
+  lastMarkers = { ...lastMarkers, writtenImages: null }
 }
 
 // Ctrl+Z undoes, Ctrl+Y and Ctrl+Shift+Z redo (Cmd on a Mac)
@@ -227,10 +228,14 @@ async function writeAnswer({ answerAction, text }) {
       isReplace,
       notes: lastMarkers.notes,
       refs: lastMarkers.refs,
-      imageCount: lastMarkers.imageCount
+      imageCount: lastMarkers.imageCount,
+      writtenImages: lastMarkers.writtenImages
     },
     isRecalculated: true
   })
+  if (result?.written) {
+    lastMarkers = { ...lastMarkers, writtenImages: result.images ?? null }
+  }
   return result?.skippedCells ?? 0
 }
 

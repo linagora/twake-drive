@@ -119,12 +119,56 @@
         "model": {
           "blocks": [
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {"type":"p","runs":[{"t":"Caption "}],"images":1},
+            {"type":"p","runs":[],"images":1},
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "Caption ",
+          "selMarkup": [{"at":{"block":1},"text":"«Caption »"}]
+        }
+      }
+    },
+    {
+      "id": "image-redo-count",
+      "selection": "P2@start..P2@end",
+      "answerAction": "replace",
+      "answer": "![image 1] and ![image 1]",
+      "next": {
+        "keys": ["Control+z","Control+y"],
+        "answerAction": "replace",
+        "answer": "Caption ![image 1]"
+      },
+      "expected": {
+        "content": {"content":"Photo ![image 1]\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {"type":"p","runs":[{"t":"Caption "},{"t":"[image]"}]},
             {"type":"p","runs":[],"images":1},
             {"type":"p","runs":[{"t":"Outro paragraph"}]}
           ],
           "selText": "Caption [image]",
           "selMarkup": [{"at":{"block":1},"text":"«Caption [image]»"}]
+        }
+      }
+    },
+    {
+      "id": "image-block",
+      "selection": "P2@start..P2@end",
+      "answerAction": "replace",
+      "answer": "Caption\n\n![image 1]",
+      "expected": {
+        "content": {"content":"Photo ![image 1]\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {"type":"p","runs":[{"t":"Caption"}]},
+            {"type":"p","runs":[],"images":1},
+            {"type":"p","runs":[],"images":1},
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "Caption\n",
+          "selMarkup": [{"at":{"block":1},"text":"«Caption»"},{"at":{"block":2},"text":""}]
         }
       }
     },
