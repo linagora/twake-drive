@@ -20,6 +20,16 @@ export const ScribeResizeHandle = ({ width, onResize }) => {
   // How far into the handle the pointer grabbed it, while it drags
   const [grabOffset, setGrabOffset] = useState(null)
   const isDragging = grabOffset !== null
+  // A window resize that leaves the width of the panel as it was does not
+  // draw the handle again: its bounds follow the window on their own
+  const [windowWidth, setWindowWidth] = useState(() => window.innerWidth)
+
+  useEffect(() => {
+    const handleWindowResize = () => setWindowWidth(window.innerWidth)
+
+    window.addEventListener('resize', handleWindowResize)
+    return () => window.removeEventListener('resize', handleWindowResize)
+  }, [])
 
   // The pointer crosses the editor and the assistant while it drags: their
   // text must not get selected, nor their cursor show
@@ -57,8 +67,11 @@ export const ScribeResizeHandle = ({ width, onResize }) => {
     setGrabOffset(null)
   }
 
-  const edge = window.innerWidth - width
   const handleKeyDown = event => {
+    // Left to the browser: Alt+ArrowLeft goes back, Ctrl+Home scrolls up
+    if (event.altKey || event.ctrlKey || event.metaKey) return
+
+    const edge = window.innerWidth - width
     const step = event.shiftKey ? KEY_LARGE_STEP : KEY_STEP
     // Home and End put the edge past either side: the clamp stops the panel
     // at its smallest and largest width
@@ -81,8 +94,8 @@ export const ScribeResizeHandle = ({ width, onResize }) => {
       aria-orientation="vertical"
       aria-label={t('OnlyOffice.scribe.resizeHandle')}
       aria-valuenow={Math.round(width)}
-      aria-valuemin={Math.round(clampPanelWidth(0, window.innerWidth))}
-      aria-valuemax={Math.round(clampPanelWidth(Infinity, window.innerWidth))}
+      aria-valuemin={Math.round(clampPanelWidth(0, windowWidth))}
+      aria-valuemax={Math.round(clampPanelWidth(Infinity, windowWidth))}
       tabIndex={0}
       className={cx(
         'u-flex u-flex-items-center u-flex-justify-center u-flex-shrink-0',

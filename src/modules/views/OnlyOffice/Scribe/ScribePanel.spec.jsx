@@ -296,6 +296,23 @@ describe('ScribePanel', () => {
     expect(panel).toHaveStyle({ width: '280px' })
   })
 
+  it('resizes the panel from the keyboard after the window changed, the panel not', () => {
+    window.innerWidth = 1280
+    setup()
+    const panel = screen.getByRole('complementary', { name: 'Help me write' })
+    const handle = screen.getByRole('separator', { name: 'Resize the panel' })
+
+    window.innerWidth = 1000
+    act(() => {
+      window.dispatchEvent(new Event('resize'))
+    })
+    expect(panel).toHaveStyle({ width: '400px' })
+    expect(handle).toHaveAttribute('aria-valuemax', '600')
+
+    fireEvent.keyDown(handle, { key: 'ArrowLeft' })
+    expect(panel).toHaveStyle({ width: '416px' })
+  })
+
   it('keeps the panel within 60% of a window that shrinks', () => {
     window.innerWidth = 1280
     setup()
