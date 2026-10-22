@@ -174,3 +174,20 @@ test('rescans folders inserted before already checked files', async ({
     await trashById(USERS.alice.instance, folderId)
   }
 })
+
+test('accepts absence in an empty virtualized folder', async ({
+  alicePage,
+  aliceDrive
+}) => {
+  const folderId: string = await createFolder({
+    instance: USERS.alice.instance,
+    name: `Virtualized empty folder ${stamp()}`
+  })
+
+  try {
+    await alicePage.goto(`${USERS.alice.appUrl}/#/folder/${folderId}`)
+    await aliceDrive.row('not-created.txt').waitHidden()
+  } finally {
+    await trashById(USERS.alice.instance, folderId)
+  }
+})

@@ -118,7 +118,8 @@ export class FileRow {
     const timeout: number = opts?.timeout ?? 10_000
     const scroller: Locator = this.fileList
       .locator('xpath=ancestor::*[@data-testid="virtuoso-scroller"][1]')
-      .or(this.fileList)
+      .or(this.fileList.getByTestId('fil-content-body'))
+      .or(this.fileList.and(this.page.getByTestId('empty-folder')))
       .first()
     const waitForRows = async (): Promise<void> => {
       await this.page.evaluate(
