@@ -16,9 +16,10 @@ Drive (OnlyOffice view)
   │                                               result { capability, params } ──▶ Drive
   └─ editor (iframe of the Document Server)
        └─ scribe plugin (iframe, in the background)
-            twake-scribe:getContent, twake-scribe:applyAnswer,
-            twake-scribe:insertSlide ◀── Drive
-            twake-scribe:ready, twake-scribe:content ──▶ Drive
+            twake-scribe:getContent, twake-scribe:close,
+            twake-scribe:applyAnswer, twake-scribe:insertSlide ◀── Drive
+            twake-scribe:ready, twake-scribe:content,
+            twake-scribe:selection, twake-scribe:applied ──▶ Drive
 ```
 
 ## For the user
@@ -26,7 +27,8 @@ Drive (OnlyOffice view)
 - The AI button is in the toolbar of the document, for a text document or a presentation the user can edit.
 - With the flag `cozy.assistant.enabled`, the editor has no AI tab of its own: Drive leaves out the AI plugin of OnlyOffice (`editorConfig.plugins.disable`), which would sit beside the assistant.
 - A click opens the assistant in a panel beside the document. Another click, or the cross of the panel, closes it.
-- With a selection, the assistant works on the selected text, and each answer can be inserted after it or can replace it. An answer is text: a selection that holds a chart, an equation, an endnote, a field, a form, a comment or a page break, or that crosses the end of a section, or the edges of more than two tables or of a table in a table, can only have the answers inserted after it. The footnotes of the selection are kept where the answer keeps them; a footnote in a cell of a table or inside code still keeps the selection from being replaced. So are its links to a heading or a bookmark of the document, with the text the answer gives them, and its images, as copies.
+- With a selection, the assistant works on the selected text, and each answer can be inserted after it or can replace it. An answer is text, so a selection that holds what it cannot give back can only have the answers inserted after it: a chart, an equation, an endnote, a field, a content control or a form, a comment, a page or column break, a footnote in a cell of a table or in a code, or an image the plugin cannot give a marker. So can a selection that crosses the end of a section, or the edges of more than two tables or of a table in a table. See [What an answer can replace](#what-an-answer-can-replace).
+- The underlined text of the selection stays underlined. Its footnotes, its links to a heading or a bookmark of the document and its images are given to the assistant as markers, and written back where the answer keeps them, as new notes, links and copies of the images, see [Markers](#markers).
 - Without a selection, the assistant works on the whole document, and each answer can be inserted at the cursor. Nothing replaces a whole document.
 - The text written in the document is left selected: the next answer of the conversation can replace it.
 - Another text selected while the panel is open is the one the next request is about: the conversation goes on, and the prompts are offered again. A click that only moves the cursor changes nothing.
@@ -64,15 +66,15 @@ The plugin is a background plugin of the document editor: it has no interface of
 | --- | --- |
 | `config.json` | Manifest of the plugin |
 | `index.html` | Page of the plugin, loads the scripts as modules |
-| `scripts/scribe.js` | Messages with Drive |
-| `scripts/markdown.js` | Turns the Markdown of an answer into blocks: paragraphs, headings, quotes, list items, tables and images |
-| `scripts/document.js` | Functions run inside the text editor: read the text, write the blocks |
+| `scripts/scribe.js` | Messages with Drive; sends the functions below to the editor |
+| `scripts/markdown.js` | Turns the Markdown of an answer into blocks (paragraphs, headings, quotes, list items, blocks of code, tables and images) with its markers, and into lines for a presentation |
+| `scripts/document.js` | Functions run inside the text editor: read the text with its markers, write the blocks and the copies of the images |
 | `scripts/markers.js` | Function run inside the text editor, in the command that writes an answer, once it is written: write the notes and the links of its markers |
 | `scripts/presentation.js` | Functions run inside the presentation editor: read a slide, write lines in its shapes |
 
 It relies on the editor for both ways:
 
-- the text given to the assistant is the Markdown the editor makes of the selection, or of the whole document (`ApiDocument.ToMarkdown`). A part of a paragraph is given without the mark of the paragraph (`#`, `-`, `1.`, `>`) the editor adds, which is not in its text: the assistant would write a heading for a word of a heading. An underlined text of the selection is given as `<u>…</u>`, and written back underlined; a footnote of the selection as a marker, `[^scribe-fn-1]` for the first one, a link to a heading or a bookmark as a marker with its text, `{{REF:scribe-ref-1:text}}`, and an image as a marker, `![image 1]` for the first one, see [Where an answer is written](#where-an-answer-is-written);
+- the text given to the assistant is the Markdown the editor makes of the selection, or of the whole document (`ApiDocument.ToMarkdown`). A part of a paragraph is given without the mark of the paragraph (`#`, `-`, `1.`, `>`) the editor adds, which is not in its text: the assistant would write a heading for a word of a heading. What that Markdown leaves out, or gives in a form of its own, as the underline, the footnotes, the links to a place of the document and the images, is given as markers, see [Markers](#markers);
 - an answer is written with the document builder API: a heading gets the heading style of the document, a list its numbering, a text written in a line the look of the text it replaces. No HTML is pasted, and the raw HTML of an answer is never run.
 
 An answer the LLM gives as a whole in a code fence or in `"""` quotes, as it often does with an HTML table, is read without them. A fence in another language than `markdown`, `html` or `text` is code.
@@ -99,7 +101,7 @@ Drive and the plugin talk with `postMessage`. Drive only listens to the origin o
 | --- | --- | --- | --- |
 | Plugin → Drive | `twake-scribe:ready` | — | The plugin is loaded. Drive shows the AI button. Not sent when the editor has no `parentOrigin`. |
 | Drive → Plugin | `twake-scribe:getContent` | — | Asks for the text to work on. |
-| Plugin → Drive | `twake-scribe:content` | `content`, `target`, `canReplace` | The text in Markdown, what it is (`selection`, or `document` without a selection), and whether an answer can take its place. Drive opens the panel with it. |
+| Plugin → Drive | `twake-scribe:content` | `content`, `target`, `canReplace` | The text in Markdown, what it is (`selection`, `document` without a selection, or `slide` in a presentation, see [Presentations](#presentations)), and whether an answer can take its place, see [What an answer can replace](#what-an-answer-can-replace). A presentation sends no `canReplace`: a selection of a slide can always be replaced. Drive opens the panel with it. |
 | Plugin → Drive | `twake-scribe:selection` | `content`, `target`, `canReplace` | Another text selected, once Drive has asked for one: not for a cursor that moves, nor for an answer just written. Drive gives it to the open assistant (new `data` of the intent). |
 | Drive → Plugin | `twake-scribe:close` | — | The panel is closed: the plugin stops reading the selection, until Drive asks for the text again. |
 | Drive → Plugin | `twake-scribe:applyAnswer` | `answerAction`, `text`, `format` | A result of the Assistant intent, as it is, or the table of an `insert_table` call, written in Markdown by Drive. The plugin writes `text`, in Markdown, in the document. |
@@ -108,17 +110,29 @@ Drive and the plugin talk with `postMessage`. Drive only listens to the origin o
 
 `content` is the `content` of the Assistant intent, and the fields of `applyAnswer` are those of its result.
 
+### What an answer can replace
+
+A `replace` answer takes the place of the selection when `canReplace` is true, and is written as an `insert` otherwise. `canReplace` is false for the whole document, and for a selection that holds what an answer cannot give back:
+
+- a chart, an equation, an endnote, a field, a content control or a form, a comment, a page or column break;
+- the end of a section, in any paragraph but the last;
+- a footnote in a cell of a table or in a code, which gets no marker, and an image that gets none, see [Markers](#markers);
+- a selection across the edge of a table that takes the cells of more than two tables, or of a table in a table;
+- a part the editor does not let change, as a locked content control.
+
+The plugin checks `canReplace` again before it replaces a text: it never replaces a selection that holds what an answer cannot give back, even when Drive asks, nor a selection the editor was too busy to read.
+
 ### Where an answer is written
 
 | `answerAction` | Selection | Result |
 | --- | --- | --- |
 | `replace` | Whole paragraphs | The answer takes their place: a single paragraph in the line, keeping the paragraph, its blocks otherwise. |
-| `replace` | A part of a paragraph | A single block is written in the line: the editor gives a part of a heading or of a list item with its mark, which the answer keeps. Several blocks are written as a pasted text, see below. |
-| `replace` | Parts of paragraphs | The answer is written as a pasted text: its first paragraph continues the text before the selection, its last one the text after it, both in the style of their paragraph. A heading, a list item or a table of the answer stays a block of its own. |
-| `replace` | A text and cells, across the edge of a table | An answer with a table takes its place, see [Tables](#tables). Another answer, as a summary, is written as for `insert`, and `canReplace` stays true. |
+| `replace` | A part of a paragraph | A single block, except a table or a block of code, is written in the line, whatever its kind: the paragraph keeps its style, as a heading or a list item. Another answer is written as a pasted text, as for parts of paragraphs. |
+| `replace` | Parts of paragraphs | The answer is written as a pasted text: a plain paragraph at its start continues the text before the selection, one at its end the text after it, both in the style of their paragraph. Any other block (a heading, a quote, a list item, a block of code, an image, a table) stays a block of its own. |
+| `replace` | Across the edge of a table: a text and cells, or the cells of two tables | An answer with a table takes its place, see [Tables](#tables). Another answer, as a summary, is written as for `insert`, and `canReplace` stays true. |
 | `replace` | A text that `canReplace` refuses, or none | Same as `insert`. |
-| any other | A text | The answer is written at the end of the selection, as at a cursor. An answer with a table is written in new paragraphs under the last paragraph of the selection, and any answer under the table when the selection takes cells and more than one cell. |
-| any other | None (cursor in a text) | A single paragraph is written in the line at the cursor, with the space the text needs on each side; several blocks without a table split the paragraph, the first and last plain ones joining its text. At the end of a paragraph, in an empty one, or when the answer has a table, the answer is written in new paragraphs under the paragraph, in its cell when it is in a table (see [Tables](#tables) for a table there). |
+| any other | A text | The answer is written at the end of the selection, as at a cursor. An answer with a table is written in new paragraphs under the last paragraph of the selection. When the selection ends in a table, the answer goes under the table if the selection takes more than one cell, and an answer with a table goes there in any case, see [Tables](#tables). |
+| any other | None (cursor in a text) | A single paragraph is written in the line at the cursor, with the space the text needs on each side. Another answer without a table splits the paragraph, as a pasted text: a plain paragraph at its start or end joins the text on that side. At the end of a paragraph, in an empty one, where the cursor is not found, or when the answer has a table, the answer is written in new paragraphs under the paragraph, in its cell when it is in a table (a table there goes under the table, see [Tables](#tables)). |
 
 A text inserted in a line, at the cursor or at the end of a selection, is kept apart from the text around it: a space before it when the character before is not a space, one after it likewise, never two. The spaces are selected with the answer.
 
@@ -126,29 +140,57 @@ The editor gives no position for a cursor, only the text of its sentence on each
 
 An empty paragraph where the answer goes, as the one of an empty document, takes the answer itself; a paragraph that holds only a page break, an image or a field, or that ends a section, is not empty, and one between a table and a table of the answer stays, to keep the two tables apart. Whole paragraphs replaced by several blocks leave the end of their last paragraph after them: it is removed when empty, and kept when it holds a note or an image that followed the text, or the end of a section. The spaces around a part of a paragraph are kept: the answer of a LLM never has them. A selection that starts at the end of a line does not take the paragraph of that line. List items written in place of items of a list stay in that list, numbered after the items above them; a heading numbered by its style is no list. The answer is left selected.
 
-A text written in place of another one has the look of its first character, as a text typed over it; new paragraphs have the look of most of the text of the paragraph above them, so that a word in italics or a link does not give its look to the answer. The emphasis is the one of the answer.
+A text written in place of another one has the look of its first character, as a text typed over it; new paragraphs have the look of most of the text of the paragraph above them, so that a word in italics or a link does not give its look to the answer. The emphasis is the one of the answer. A block of code is written as a paragraph per line, in Courier New, light on a dark shading, in the size of the text around it; in a cell, as the lines of a paragraph in Courier New. The code paragraphs of a selection are given to the assistant as a single fenced block.
 
-A footnote of the selection is given to the assistant as a marker where its reference is, `[^scribe-fn-1]` for the first one of the selection. Each marker the answer keeps becomes a new note at its place, with the text of the first paragraph of the note it stood for: a marker kept twice gives two notes, and an answer inserted after its text gives the note again. A marker the answer leaves out leaves its note out, and a marker the text did not give is removed. A note in a cell of a table or in a code gets no marker, and the selection that holds it is not replaced; a marker in a cell of an answer stays text. The notes are written once the rest of the answer is, in the same command: one undo takes the answer and its notes away.
+### Markers
 
-A link of the selection to a heading or a bookmark of the document, which the editor gives as `[text]()`, is given to the assistant as a marker with its text, `{{REF:scribe-ref-1:text}}` for the first one. Each marker the answer keeps becomes a link of the text the answer gives it, to the place the link went to: its bookmark, the hidden one that Word and the editor put on a heading included, unless the answer replaced the text that held it. A link to a heading whose bookmark is gone, as when the answer rewrote the heading, goes to the heading of its name: its anchor without the leading `_`, a `_` for each space, in any case. That heading gets one bookmark for all the markers that go to it, `scribe_heading_N` for the marker N, or the next free number. A marker whose place is not found, or that the text did not give, leaves its text plain. A link in a cell of a table or in a code, cut by the selection, or whose text holds a `}` or a line break, gets no marker: an answer gives back its text without the link. A marker in a cell of an answer stays text. The links are written with the notes, in the same command.
+The Markdown of the editor leaves out the underline and the reference of a footnote, gives a link to a place of the document as `[text]()` and a picture as `![](its address)`. The plugin gives them to the assistant as markers, numbered from 1 in the order of the document, and writes back the markers an answer keeps.
 
-An image of the selection, a picture or another drawing, as a shape, is given to the assistant as a marker, `![image 1]` for the first one of the selection, in the order of the document; a picture of the whole document is given as `[image]`. The Markdown of the editor gives each picture as `![](its address)`, which the marker takes the place of, and no other drawing: the marker of one is put after the text before it. Each marker the answer keeps becomes a copy of its image at its place, a floating image with its wrapping, with the alternative text, the name and the link of the image: a marker kept twice gives two copies, a paragraph of a single marker is a paragraph of the image, and a marker in a cell of an answer is a copy in that cell. A marker the answer leaves out leaves its image out, and a marker the text did not give is written as `[image]`. The next answer of the conversation, written over the answer left selected, names the images the same way: its marker is a copy of the image the answer wrote for that marker. Every marker of an answer is written as `[image]` where the selection does not hold as many images as its markers name, as after an undo or a redo: the markers may name other images. The copies are written with the answer, in the same command.
+| In the selection | Marker | In the answer, it becomes |
+| --- | --- | --- |
+| An underlined text | `<u>text</u>` | The text, underlined |
+| A footnote | `[^scribe-fn-1]`, where its reference is | A new note at the marker |
+| A link to a heading or a bookmark of the document | `{{REF:scribe-ref-1:text}}` | The text the answer gives the marker, as a link to the place the link went to |
+| An image, a picture or another drawing as a shape | `![image 1]` | A copy of the image |
 
-The plugin checks `canReplace` again before it replaces a text: it never replaces a selection that holds what an answer cannot give back, even when Drive asks, nor a selection the editor was too busy to read.
+What holds for every marker:
+
+- A marker the answer keeps twice gives two notes, two links, two copies.
+- A note, a link or an image whose marker the answer leaves out is not written.
+- A marker the text did not give is removed for a note, leaves its text plain for a link, and is written as `[image]` for an image.
+- A marker, or a `<u>` tag, in a code of the answer stays text. In a cell of a table of the answer, the marker of a note or of a link stays text, and the marker of an image is a copy in that cell.
+- The notes, the links and the images are written with the answer, in the same command: one undo takes them all away.
+
+**Underline.** A text between `<u>` tags in the answer is written underlined, and so is a link whose whole text is. The plugin leaves the tags out where they would be text or break the Markdown, in a code and where they would break the marks of an emphasis: that text is given without its underline.
+
+**Notes.** A new note has the plain text of the first paragraph of the note it stood for. An answer inserted after its text gives the note again. A note in a cell of a table or in a code gets no marker, and the selection that holds it is not replaced.
+
+**Links to a place of the document.** The editor gives such a link as `[text]()`, with its text as it is, and the marker has that text: `{{REF:scribe-ref-1:text}}` for the first one. Each marker the answer keeps becomes a link of the text the answer gives it, to the place the link went to: its bookmark, the hidden one that Word and the editor put on a heading included, unless the answer replaced the text that held it. A link to a heading whose bookmark is gone, as when the answer rewrote the heading, goes to the heading of its name: its anchor without the leading `_`, a `_` for each space, in any case. That heading gets one bookmark for all the markers that go to it, `scribe_heading_N` for the marker N, or the next free number. A marker whose place is not found leaves its text plain. A link in a cell of a table or in a code, cut by the selection, or whose text holds a `}` or a line break, gets no marker: an answer gives back its text without the link.
+
+**Images.** The images of the selection are numbered in the order of the document; a picture of the whole document, which has no selection, is given as `[image]`. The Markdown of the editor gives each picture as `![](its address)`, which the marker takes the place of, and no other drawing: the marker of one is put after the text before it. Each marker the answer keeps becomes a copy of its image at its place: a floating image keeps its wrapping, and the copy takes the alternative text, the name and the link of the image. A paragraph of a single marker is a paragraph of the image. The next answer of the conversation, written over the answer left selected, names the images the same way: its marker is a copy of the image the answer wrote for that marker. Every marker of an answer is written as `[image]` where the selection does not hold as many images as its markers name, as after an undo or a redo: the markers may name other images. Where the plugin cannot place every image of the selection, or the Markdown does not give each picture, as a picture in code, no image gets a marker and each picture is given as `[image]`; an image in a code gets none either. A selection with an image that gets no marker is not replaced.
 
 ### Tables
 
-The tables are given and taken in the HTML tags of the Markdown of the editor, with the `colspan` and `rowspan` of the cells merged with others, the way a browser and a LLM know them.
+The tables are given and taken in the HTML tags of the Markdown of the editor, with the `colspan` and `rowspan` of the cells merged with others, the way a browser and a LLM know them. A table in Markdown pipes is taken too, without merged cells.
 
 | Selection | Answer | Result |
 | --- | --- | --- |
-| A table, a row, cells, to replace | A table with the same rows and cells | Written in the cells, which keep their look: the table keeps its style and its merged cells. |
-| A whole table, to replace | A table of another shape, or other blocks | Takes the place of the table. A table of the answer is a copy of the table in its shape, with its borders, widths and fonts: its last rows and columns are removed, or new ones added after them in their look. A table with merged cells, with a table in a cell or with rows of different lengths, or an answer with merged cells, gives a new table, as for a text. |
-| Cells or a whole table, to insert after, or cells to replace by a table of another shape | A table | Written under the table: a copy of it cut down to the selected rows and columns, then given the shape of the answer as above, each cell in the look of the text it replaces. A table with merged cells, with a table in a cell or with rows of different lengths is not cut: its copy is whole, with the selected cells rewritten and left selected, for an answer of their shape. Another answer, or an answer with merged cells to a table without, is a new table, as for a text. A cell the answer leaves empty is emptied: an image of a cell is kept by its marker. |
-| Some cells | Any other answer | Written under the table. |
-| A text, or the cursor, in a cell | An answer with a table | Written under the table: the editor would write a table in a table over its cells. |
+| Two cells or more of a table, a row, a whole table, to replace | A table with the same rows and cells | Written in the cells, which keep their look: the table keeps its style and its merged cells. |
+| A whole table, to replace | A table of another shape, or other blocks | Takes the place of the table. A table of the answer is a copy of the table, see below. |
+| Cells or a whole table, to insert after, or cells to replace by a table of another shape | A table | Written under the table, as a copy of it, see below. |
+| Some cells, or a whole table to insert after | Any other answer | Written under the table. |
+| A text, or the cursor, in a cell | An answer with a table | Written under the table, as a new table: the editor would write a table in a table over its cells. |
 | A text | A table | A new table, 100 % wide with single borders, with the merged cells of the answer. |
-| A text and cells of one or two tables, or cells of two tables, to replace | At least a table, and other blocks | Each table of the answer is written in the selected cells of a table, in order, row by row, and the cells keep their look; a whole table selected, with a table of another shape, is replaced by a copy of it in that shape, as above. Each other block takes the place of the selected text of a paragraph, in order, in its line: the text around it is kept. A selected cell without a cell of the answer stays as it was, and is counted in `twake-scribe:applied`; a block without a selected text is not written. The text and the cells are left selected. |
+| A text and cells of one or two tables, or cells of two tables, to replace | At least a table | Each table of the answer is written in the selected cells of a table, in order, row by row, and the cells keep their look; a whole table selected, with a table of another shape, is replaced by a copy of it in that shape, see below. Each other block takes the place of the selected text of a paragraph, in order, in its line: the text around it is kept. A selected cell without a cell of the answer, and a selected text without a block, stay as they were; the cell is counted in `twake-scribe:applied`. A block of the answer with no selected text or table is not written. The text and the cells are left selected. |
+
+A table of the answer written under the table of the selection, or in place of a whole table, is a copy of that table when it can be: it keeps the style, the borders, the widths and the fonts.
+
+- The copy of the selected cells is cut down to their rows and columns. Then, as the copy of a whole table, it is given the shape of the answer: its last rows and columns are removed, or new ones added after them in their look.
+- Each cell takes the text of the answer in the look of the text it replaces, with the emphasis of the answer added. A cell the answer leaves empty is emptied: an image of a cell is kept by its marker.
+- A table with merged cells, with a table in a cell or with rows of different lengths is neither cut down nor given another shape. A table of the shape of the selected cells, to insert after such a table, is a copy of the whole table, with those cells rewritten and left selected. Any other table of the answer gives a new table, as for a text.
+- A table of the answer with merged cells, for a table without, gives a new table too.
+
+When a selection across the edge of a table is replaced (the last row of the table above), `twake-scribe:applied` carries the count of the selected cells the answer had no cell for. It is 0 for any other answer.
 
 ### Presentations
 
@@ -212,18 +254,33 @@ Drive then writes the table in Markdown (`makeTableMarkdown`), the caption as th
 
 ## Limits
 
+### Both editors
+
 - Text documents and presentations only: the plugin does not load in spreadsheets and PDF forms.
 - While the panel is open, the plugin reads every other text the user selects with `callCommand`, and a command of a plugin empties the redo of the editor. It reads a selection only when its text changes, and not for 3 s after an undo or a redo (Ctrl+Z, Ctrl+Y, Ctrl+Shift+Z, or the buttons of the toolbar), so a redo right after an undo works. Another text selected later is read, and the redo is lost. Once the panel is closed, nothing is read.
+
+### Text documents
+
 - A paragraph that replaces several ones has the default paragraph style of the document: the alignment or the spacing set by hand on the replaced paragraphs are not kept. A text replaced in its line keeps them.
-- An image of an answer is written only from its marker: another one is not loaded, and its alternative text is written.
-- An image of the selection that the editor's Markdown does not give, as a shape, gets its marker after the text before it, and gives it to the next paragraph when its own paragraph has no text. When the plugin cannot place every image of the selection, or the Markdown does not give each picture, as a picture in code, no image gets a marker, each picture is given as `[image]`, and the selection is not replaced.
-- A copy loses the stacking order of a floating image among the others, its size relative to the page, and the outline of a tight wrapping, which keeps its type.
-- The plugin tells the images of the selection apart by their count and their order only: an answer written over another selection that holds as many images, and that was not read again because its text is the same, copies the images of that selection.
-- An image at the very start or end of an answer that also has notes or links to a place of the document is left out of the answer left selected: the next answer that replaces it writes its markers as `[image]`, and the image stays beside it.
-- A note written back keeps the first paragraph of its note as plain text, a tab or a line break as a space: its other paragraphs, its look, and what it holds besides text are lost, and a note with a mark of its own, as `*`, comes back with an automatic number. A marker kept in a part of the answer the plugin leaves unselected, as a copy the editor makes of a table written in a table, stays in the text as a placeholder.
+- A table the assistant makes through `insert_table` has a header row and plain rows: no merged cells, unlike a table written in an answer. The capability tells the LLM to change a table of the selection in an answer instead, which takes its place.
+
+### Notes and links
+
+- A note written back keeps the first paragraph of its note as plain text, a tab or a line break as a space: its other paragraphs, its look, and what it holds besides text are lost, and a note with a mark of its own, as `*`, comes back with an automatic number.
+- A marker kept in a part of the answer the plugin leaves unselected, as a copy the editor makes of a table written in a table, stays in the text as a placeholder.
 - A paragraph that holds only a footnote reference gives its marker to the next paragraph.
-- A footnote reference at the very start or end of an answer is left out of the answer left selected: the next answer that replaces it gets no marker for it.
+- In an answer that has notes or links to a place of the document, a footnote reference or an image at the very start or end is left out of the answer left selected: the next answer that replaces it gets no marker for the note, and writes the markers of the image as `[image]`, the image staying beside it.
 - A link to a heading whose bookmark is gone finds the heading only when its anchor holds the whole text of the heading: the editor names the bookmark of a heading after its first ten characters. A link to a hidden bookmark that is not on a heading, as the `_Ref…` that Word puts on a caption, is given back as its text without the link.
 - A bold or italic link reaches the assistant without its emphasis: the editor writes no emphasis marks inside a link.
+
+### Images
+
+- An image of an answer is written only from its marker: another one is not loaded, and its alternative text is written.
+- An image whose marker the answer leaves out is lost when the answer replaces its text.
+- An image of the selection that the editor's Markdown does not give, as a shape, gets its marker after the text before it, and gives it to the next paragraph when its own paragraph has no text.
+- A copy loses the stacking order of a floating image among the others, its size relative to the page, and the outline of a tight wrapping, which keeps its type.
+- The plugin tells the images of the selection apart by their count and their order only: an answer written over another selection that holds as many images, and that was not read again because its text is the same, copies the images of that selection.
+
+### In presentations
+
 - In a presentation, the look of a word set apart from the rest of its paragraph (a color, a size) is not kept when the paragraph is replaced, nor the emphasis of an answer written in a part of a paragraph. A table is written one row per line, and the scribe does not add shapes or speaker notes: the builder API has no access to the notes. It adds a slide only through the `insert_slide` capability, with a title and bullets.
-- A table the assistant makes through `insert_table` has a header row and plain rows: no merged cells, unlike a table written in an answer. The capability tells the LLM to change a table of the selection in an answer instead, which takes its place.
