@@ -107,8 +107,13 @@ const setup = ({
   const getGeometry = () =>
     JSON.parse(screen.getByTestId('geometry').textContent)
   const getSource = () => JSON.parse(screen.getByTestId('source').textContent)
+  // Every ready plugin is told to show its entries in the editor's toolbar
+  const getSent = () =>
+    plugin.postMessage.mock.calls.filter(
+      ([message]) => message.type !== 'twake-scribe:showToolbar'
+    )
 
-  return { plugin, receive, getState, getGeometry, getSource }
+  return { plugin, receive, getState, getGeometry, getSource, getSent }
 }
 
 const SELECTION = {
@@ -202,25 +207,66 @@ describe('ScribeProvider', () => {
     expect(getSource()).toBe('selection')
   })
 
+  it('tells the plugin once to show its entries in the toolbar of the editor', () => {
+    const { plugin, receive } = setup()
+
+    receive({ type: 'twake-scribe:ready' })
+    receive({ type: 'twake-scribe:ready' })
+
+    expect(plugin.postMessage.mock.calls).toEqual([
+      [{ type: 'twake-scribe:showToolbar' }, SERVER_ORIGIN]
+    ])
+  })
+
+  it('ignores the messages of another frame of the Document Server', () => {
+    addEditorFrame({ left: 0, top: 49, width: 1280, height: 671 })
+    const other = { postMessage: jest.fn() }
+    const { plugin, receive, getState, getGeometry } = setup()
+    receive({ type: 'twake-scribe:ready' })
+    plugin.postMessage.mockClear()
+
+    receive(
+      { type: 'twake-scribe:content', content: 'Autre', target: 'selection' },
+      { source: other }
+    )
+    receive(
+      {
+        type: 'twake-scribe:geometry',
+        selection: SELECTION,
+        viewer: VIEWER,
+        page: null
+      },
+      { source: other }
+    )
+    receive(
+      { type: 'twake-scribe:open', source: 'toolbar-panel' },
+      { source: other }
+    )
+
+    expect(getState().isOpen).toBe(false)
+    expect(getGeometry()).toBe(null)
+    expect(plugin.postMessage).not.toHaveBeenCalled()
+  })
+
   it('opens the panel from the toolbar of the editor', () => {
-    const { plugin, receive, getSource } = setup()
+    const { receive, getSource, getSent } = setup()
     receive({ type: 'twake-scribe:ready' })
 
     receive({ type: 'twake-scribe:open', source: 'toolbar-inline' })
 
-    expect(plugin.postMessage.mock.calls).toEqual([
+    expect(getSent()).toEqual([
       [{ type: 'twake-scribe:getContent' }, SERVER_ORIGIN]
     ])
     expect(getSource()).toBe('editor-toolbar')
   })
 
   it('toggles the panel from its panel entry', () => {
-    const { plugin, receive, getState, getSource } = setup()
+    const { plugin, receive, getState, getSource, getSent } = setup()
     receive({ type: 'twake-scribe:ready' })
 
     receive({ type: 'twake-scribe:open', source: 'toolbar-panel' })
 
-    expect(plugin.postMessage.mock.calls).toEqual([
+    expect(getSent()).toEqual([
       [{ type: 'twake-scribe:getContent' }, SERVER_ORIGIN]
     ])
     expect(getSource()).toBe('editor-toolbar')
@@ -238,7 +284,7 @@ describe('ScribeProvider', () => {
   })
 
   it('ignores another entry, or another origin, asking to open', () => {
-    const { plugin, receive } = setup()
+    const { receive, getSent } = setup()
     receive({ type: 'twake-scribe:ready' })
 
     receive({ type: 'twake-scribe:open', source: 'toolbar' })
@@ -248,26 +294,34 @@ describe('ScribeProvider', () => {
       { origin: 'https://example.org' }
     )
 
-    expect(plugin.postMessage).not.toHaveBeenCalled()
+    expect(getSent()).toEqual([])
   })
 
   it.each([
     ['on a public link', { isPublic: true }],
     ['in a read-only document', { isReadOnly: true }],
     ['without the assistant', { isAssistantEnabled: false }]
-  ])('ignores the toolbar of the editor %s', (_, options) => {
-    const { plugin, receive, getState } = setup(options)
-    receive({ type: 'twake-scribe:ready' })
+  ])(
+    'shows no entry in the toolbar of the editor, and ignores them, %s',
+    (_, options) => {
+      const { plugin, receive, getState } = setup(options)
+      receive({ type: 'twake-scribe:ready' })
 
-    receive({ type: 'twake-scribe:open', source: 'toolbar-inline' })
-    receive({ type: 'twake-scribe:open', source: 'toolbar-panel' })
+      receive({ type: 'twake-scribe:open', source: 'toolbar-inline' })
+      receive({ type: 'twake-scribe:open', source: 'toolbar-panel' })
 
-    expect(plugin.postMessage).not.toHaveBeenCalled()
-    expect(getState().isOpen).toBe(false)
-  })
+      expect(plugin.postMessage).not.toHaveBeenCalled()
+      expect(getState().isOpen).toBe(false)
+    }
+  )
 
   it('keeps the geometry the plugin sends, with the box of the editor frame', () => {
-    const frame = addEditorFrame({ left: 0, top: 49, width: 1280, height: 671 })
+    const frame = addEditorFrame({
+      left: 0,
+      top: 49,
+      width: 1280,
+      height: 671
+    })
     const { receive, getGeometry } = setup()
     receive({ type: 'twake-scribe:ready' })
     expect(getGeometry()).toBe(null)
@@ -374,13 +428,13 @@ describe('ScribeProvider', () => {
 
   it('asks the plugin for the text at start when the panel was open', () => {
     localStorage.setItem('scribe-panel-open', 'true')
-    const { plugin, receive, getSource } = setup()
-    expect(plugin.postMessage).not.toHaveBeenCalled()
+    const { receive, getSource, getSent } = setup()
+    expect(getSent()).toEqual([])
 
     receive({ type: 'twake-scribe:ready' })
     receive({ type: 'twake-scribe:ready' })
 
-    expect(plugin.postMessage.mock.calls).toEqual([
+    expect(getSent()).toEqual([
       [{ type: 'twake-scribe:getContent' }, SERVER_ORIGIN]
     ])
     expect(getSource()).toBe('restored')
@@ -400,21 +454,21 @@ describe('ScribeProvider', () => {
 
   it('stays closed at start when the panel was closed', () => {
     localStorage.setItem('scribe-panel-open', 'false')
-    const { plugin, receive } = setup()
+    const { receive, getSent } = setup()
 
     receive({ type: 'twake-scribe:ready' })
 
-    expect(plugin.postMessage).not.toHaveBeenCalled()
+    expect(getSent()).toEqual([])
   })
 
   it('stays closed at start when the panel is closed before the plugin is ready', () => {
     localStorage.setItem('scribe-panel-open', 'true')
-    const { plugin, receive } = setup()
+    const { receive, getSent } = setup()
 
     fireEvent.click(screen.getByText('close'))
     receive({ type: 'twake-scribe:ready' })
 
-    expect(plugin.postMessage).not.toHaveBeenCalled()
+    expect(getSent()).toEqual([])
     expect(localStorage.getItem('scribe-panel-open')).toBe('false')
   })
 
@@ -433,7 +487,12 @@ describe('ScribeProvider', () => {
 
   it('gives the focus back to the document 100 ms after closing', () => {
     jest.useFakeTimers()
-    const frame = addEditorFrame({ left: 0, top: 49, width: 1280, height: 671 })
+    const frame = addEditorFrame({
+      left: 0,
+      top: 49,
+      width: 1280,
+      height: 671
+    })
     frame.focus = jest.fn()
     const { receive } = setup()
     receive({ type: 'twake-scribe:ready' })
@@ -506,24 +565,24 @@ describe('ScribeProvider', () => {
       { capability: 'insert_slide', params: { title: '', bullets: [] } },
       { capability: 'insert_slide', params: null }
     ]
-    const { plugin, receive } = setup({ documentType: 'slide', results })
+    const { receive, getSent } = setup({ documentType: 'slide', results })
     receive({ type: 'twake-scribe:ready' })
 
     results.forEach((_, index) =>
       fireEvent.click(screen.getByText(`result ${index}`))
     )
 
-    expect(plugin.postMessage).not.toHaveBeenCalled()
+    expect(getSent()).toEqual([])
     expect(logger.warn).toHaveBeenCalledTimes(results.length)
   })
 
   it('adds no slide to a text document', () => {
-    const { plugin, receive } = setup({ results: [SLIDE] })
+    const { receive, getSent } = setup({ results: [SLIDE] })
     receive({ type: 'twake-scribe:ready' })
 
     fireEvent.click(screen.getByText('result 0'))
 
-    expect(plugin.postMessage).not.toHaveBeenCalled()
+    expect(getSent()).toEqual([])
     expect(logger.warn).toHaveBeenCalledTimes(1)
   })
 
@@ -550,19 +609,19 @@ describe('ScribeProvider', () => {
       { capability: 'insert_table', params: { columns: [], rows: ['Atlas'] } },
       { capability: 'insert_table', params: null }
     ]
-    const { plugin, receive } = setup({ results })
+    const { receive, getSent } = setup({ results })
     receive({ type: 'twake-scribe:ready' })
 
     results.forEach((_, index) =>
       fireEvent.click(screen.getByText(`result ${index}`))
     )
 
-    expect(plugin.postMessage).not.toHaveBeenCalled()
+    expect(getSent()).toEqual([])
     expect(logger.warn).toHaveBeenCalledTimes(results.length)
   })
 
   it('adds no table to a presentation', () => {
-    const { plugin, receive } = setup({
+    const { receive, getSent } = setup({
       documentType: 'slide',
       results: [TABLE]
     })
@@ -570,7 +629,7 @@ describe('ScribeProvider', () => {
 
     fireEvent.click(screen.getByText('result 0'))
 
-    expect(plugin.postMessage).not.toHaveBeenCalled()
+    expect(getSent()).toEqual([])
     expect(logger.warn).toHaveBeenCalledTimes(1)
   })
 })

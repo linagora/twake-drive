@@ -4,13 +4,13 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState
 } from 'react'
 
-import flag from 'cozy-flags'
-
 import logger from '@/lib/logger'
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
+import { isScribeAllowed } from '@/modules/views/OnlyOffice/Scribe/availability'
 import {
   INSERT_SLIDE,
   INSERT_TABLE,
@@ -50,16 +50,17 @@ const makeGeometry = ({ selection, viewer }) => {
  */
 export const ScribeProvider = ({ serverUrl, documentType, children }) => {
   const serverOrigin = new URL(serverUrl).origin
-  const { isPublic, isReadOnly } = useOnlyOfficeContext()
+  const isAllowed = isScribeAllowed(useOnlyOfficeContext())
   const [plugin, setPlugin] = useState(null)
   const [text, setText] = useState(null)
   const [geometry, setGeometry] = useState(null)
   const [source, setSource] = useState(null)
   const [isRestorePending, setIsRestorePending] = useState(readPanelOpen)
-  // Where Drive shows no button for the scribe, the entries of the editor's
-  // toolbar do not open it, and the panel is not opened again either
-  const isAllowed =
-    !isPublic && !isReadOnly && Boolean(flag('cozy.assistant.enabled'))
+  // Set at once, unlike the state: the plugin sends its geometry right after
+  // it is ready, maybe before a render
+  const pluginWindow = useRef(null)
+  // Where Drive shows no button for the scribe, the editor shows no entry
+  // for it, and the panel is not opened again either
   const canRestore = isRestorePending && isAllowed
   const isOpen = text !== null
 
@@ -69,7 +70,12 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
 
       const { type, content, target, canReplace } = event.data ?? {}
       const text = { content, target, canReplace }
-      if (type === 'twake-scribe:ready') setPlugin(event.source)
+      if (type === 'twake-scribe:ready') {
+        pluginWindow.current = event.source
+        setPlugin(event.source)
+      }
+      // Another plugin of the Document Server has its origin too
+      if (event.source !== pluginWindow.current) return
       if (type === 'twake-scribe:content') setText(text)
       if (type === 'twake-scribe:selection') {
         setText(current => (current === null ? null : text))
@@ -120,10 +126,16 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
   }, [plugin, canRestore, open])
 
   useEffect(() => {
+    if (plugin !== null && isAllowed) {
+      plugin.postMessage({ type: 'twake-scribe:showToolbar' }, serverOrigin)
+    }
+  }, [plugin, isAllowed, serverOrigin])
+
+  useEffect(() => {
     if (plugin === null || !isAllowed) return
 
     const handleOpenRequest = event => {
-      if (event.origin !== serverOrigin) return
+      if (event.origin !== serverOrigin || event.source !== plugin) return
       const { type, source } = event.data ?? {}
       if (type !== 'twake-scribe:open') return
 

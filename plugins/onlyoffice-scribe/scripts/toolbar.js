@@ -79,6 +79,21 @@ export function makeToolbarItems(lang, baseUrl) {
   }
 }
 
+// The entry of the Plugins tab works on the selection, as the inline one
+const INLINE_ENTRIES = ['scribe', 'scribeInline']
+
+/**
+ * The message for the app when an entry is clicked, or null: the entries that
+ * work on the selection need a selected text
+ */
+export function makeOpenMessage(id, selectedText) {
+  if (id === 'scribePanel') {
+    return { type: 'twake-scribe:open', source: 'toolbar-panel' }
+  }
+  if (!INLINE_ENTRIES.includes(id) || !selectedText?.trim()) return null
+  return { type: 'twake-scribe:open', source: 'toolbar-inline' }
+}
+
 // The api.js of the Document Server gives the editor the language of the app
 // in the address of its frame
 export function readEditorLang(href) {

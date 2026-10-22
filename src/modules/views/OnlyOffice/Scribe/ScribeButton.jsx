@@ -1,23 +1,20 @@
 import React from 'react'
 
 import { Assistant, Icon } from '@linagora/twake-icons'
-import flag from 'cozy-flags'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
 import Tooltip from 'cozy-ui/transpiled/react/Tooltip'
 import { useI18n } from 'twake-i18n'
 
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
 import { useScribe } from '@/modules/views/OnlyOffice/Scribe/ScribeProvider'
+import { isScribeAllowed } from '@/modules/views/OnlyOffice/Scribe/availability'
 
 export const ScribeButton = () => {
   const { t } = useI18n()
-  const { isPublic, isReadOnly } = useOnlyOfficeContext()
+  const isAllowed = isScribeAllowed(useOnlyOfficeContext())
   const { isAvailable, isOpen, open, close } = useScribe()
 
-  // A public link has no assistant, and a read-only document cannot take
-  // its answers
-  if (!isAvailable || isPublic || isReadOnly) return null
-  if (!flag('cozy.assistant.enabled')) return null
+  if (!isAvailable || !isAllowed) return null
 
   const label = t('OnlyOffice.scribe.open')
 

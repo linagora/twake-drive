@@ -1,5 +1,5 @@
 import config from '../config.json'
-import { makeToolbarItems, readEditorLang } from './toolbar'
+import { makeOpenMessage, makeToolbarItems, readEditorLang } from './toolbar'
 
 const BASE_URL =
   'https://onlyoffice.example.org/9.4.0-1/sdkjs-plugins/twake-scribe/'
@@ -82,5 +82,37 @@ describe('readEditorLang', () => {
     expect(readEditorLang(`${EDITOR_URL}?_dc=9.4.0-1`)).toBe('en')
     expect(readEditorLang(`${EDITOR_URL}?lang=`)).toBe('en')
     expect(readEditorLang('not an address')).toBe('en')
+  })
+})
+
+describe('makeOpenMessage', () => {
+  it('asks the app to open or close the panel for its entry, with or without a selection', () => {
+    for (const selectedText of ['Un texte', '']) {
+      expect(makeOpenMessage('scribePanel', selectedText)).toEqual({
+        type: 'twake-scribe:open',
+        source: 'toolbar-panel'
+      })
+    }
+  })
+
+  it('asks the app to open on the selected text for the Scribe and Inline Scribe entries', () => {
+    for (const id of ['scribe', 'scribeInline']) {
+      expect(makeOpenMessage(id, 'Un texte')).toEqual({
+        type: 'twake-scribe:open',
+        source: 'toolbar-inline'
+      })
+    }
+  })
+
+  it('sends nothing for those entries without a selected text', () => {
+    for (const id of ['scribe', 'scribeInline']) {
+      for (const selectedText of [undefined, null, '', ' \n']) {
+        expect(makeOpenMessage(id, selectedText)).toBe(null)
+      }
+    }
+  })
+
+  it('sends nothing for another entry', () => {
+    expect(makeOpenMessage('scribeToolbarBtn', 'Un texte')).toBe(null)
   })
 })

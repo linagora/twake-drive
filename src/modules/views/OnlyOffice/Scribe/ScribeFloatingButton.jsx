@@ -1,7 +1,6 @@
 import cx from 'classnames'
 import React, { Suspense, lazy, useRef } from 'react'
 
-import flag from 'cozy-flags'
 import ButtonBase from 'cozy-ui/transpiled/react/ButtonBase'
 import Portal from 'cozy-ui/transpiled/react/Portal'
 import Tooltip from 'cozy-ui/transpiled/react/Tooltip'
@@ -12,6 +11,7 @@ import styles from './styles.styl'
 
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
 import { useScribe } from '@/modules/views/OnlyOffice/Scribe/ScribeProvider'
+import { isScribeAllowed } from '@/modules/views/OnlyOffice/Scribe/availability'
 
 // lottie-web and the animation weigh about 85 kB gzip: they stay out of the
 // entry chunks, for a button only an open text document shows
@@ -44,13 +44,12 @@ const findButtonPosition = geometry => {
 export const ScribeFloatingButton = () => {
   const { t } = useI18n()
   const { type: themeType } = useCozyTheme()
-  const { isPublic, isReadOnly } = useOnlyOfficeContext()
+  const isAllowed = isScribeAllowed(useOnlyOfficeContext())
   const { isAvailable, isOpen, documentType, geometry, open, close } =
     useScribe()
   const lottieRef = useRef(null)
 
-  if (!isAvailable || isPublic || isReadOnly) return null
-  if (!flag('cozy.assistant.enabled')) return null
+  if (!isAvailable || !isAllowed) return null
   // The plugin sends no geometry for a presentation: the button would stay
   // in the corner of the window, over the panel once open
   if (documentType !== 'word') return null

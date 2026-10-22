@@ -2,7 +2,6 @@ import { Icon } from '@linagora/twake-icons'
 import cx from 'classnames'
 import React from 'react'
 
-import flag from 'cozy-flags'
 import ButtonBase from 'cozy-ui/transpiled/react/ButtonBase'
 import Portal from 'cozy-ui/transpiled/react/Portal'
 import Tooltip from 'cozy-ui/transpiled/react/Tooltip'
@@ -13,6 +12,7 @@ import styles from './styles.styl'
 
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
 import { useScribe } from '@/modules/views/OnlyOffice/Scribe/ScribeProvider'
+import { isScribeAllowed } from '@/modules/views/OnlyOffice/Scribe/availability'
 
 const ASSET_SIZE = 48
 // The asset holds its white disc and the shadow around it: the disc is
@@ -56,11 +56,10 @@ const findButtonPosition = geometry => {
 
 export const ScribeSelectionButton = () => {
   const { t } = useI18n()
-  const { isPublic, isReadOnly } = useOnlyOfficeContext()
+  const isAllowed = isScribeAllowed(useOnlyOfficeContext())
   const { isAvailable, geometry, open } = useScribe()
 
-  if (!isAvailable || isPublic || isReadOnly) return null
-  if (!flag('cozy.assistant.enabled')) return null
+  if (!isAvailable || !isAllowed) return null
   const position = findButtonPosition(geometry)
   if (position === null) return null
 
