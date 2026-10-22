@@ -15,7 +15,8 @@ export const DEFAULT_FLAGS: Record<string, boolean | string | number> = {
   'drive.move-to-picker.enabled': true,
   'drive.default-updated-at-sort.enabled': true,
   'drive.office.enabled': true,
-  'drive.office.write': true
+  'drive.office.write': true,
+  'cozy.assistant.enabled': true
 }
 
 export function setFlags(

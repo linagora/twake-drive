@@ -184,8 +184,12 @@ support.
 The Document Server has the scribe plugin of the worktree
 (`plugins/onlyoffice-scribe/build`, built by the global setup).
 `e2e/tests/onlyoffice-scribe.spec.ts` plays its selection cases on real
-documents, see `e2e/fixtures/scribe/README.md`. Its tests are tagged
-`@e2e-scribe`:
+documents, see `e2e/fixtures/scribe/README.md`.
+`e2e/tests/onlyoffice-scribe-ui.spec.ts` checks Drive's chrome around the
+scribe: its button, its panel and the assistant in it. The global setup
+installs the assistant from the registry `dev` channel and turns on
+`cozy.assistant.enabled`; the stack has no LLM, so no test waits for an
+answer of the assistant. The tests of both specs are tagged `@e2e-scribe`:
 
 ```sh
 yarn e2e --grep @e2e-scribe --project=chromium
