@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import React from 'react'
 
 import { createMockClient } from 'cozy-client'
@@ -126,5 +126,30 @@ describe('ScribeResizeHandle', () => {
       [1280],
       [0]
     ])
+  })
+
+  it('follows a window resized since it was drawn', () => {
+    const { onResize, handle } = setup()
+
+    window.innerWidth = 1000
+    act(() => {
+      window.dispatchEvent(new Event('resize'))
+    })
+    fireEvent.keyDown(handle, { key: 'ArrowLeft' })
+    fireEvent.keyDown(handle, { key: 'Home' })
+
+    expect(onResize.mock.calls).toEqual([[584], [1000]])
+    expect(handle).toHaveAttribute('aria-valuemax', '600')
+  })
+
+  it('leaves the keys with Alt, Ctrl or Meta to the browser', () => {
+    const { onResize, handle } = setup()
+
+    expect(fireEvent.keyDown(handle, { key: 'ArrowLeft', altKey: true })).toBe(
+      true
+    )
+    expect(fireEvent.keyDown(handle, { key: 'Home', ctrlKey: true })).toBe(true)
+    expect(fireEvent.keyDown(handle, { key: 'End', metaKey: true })).toBe(true)
+    expect(onResize).not.toHaveBeenCalled()
   })
 })
