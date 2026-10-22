@@ -38,22 +38,42 @@ function makeText(text, marks) {
   return { ...marks, text: decodeEntities(text).replace(/\n/g, ' ') }
 }
 
-function getPlainText(tokens) {
-  return makeSpans(tokens)
-    .map(span => span.text ?? ' ')
-    .join('')
-}
-
 function makeLinkSpans(token, marks) {
-  const text = getPlainText(token.tokens)
+  const spans = makeSpans(token.tokens, marks)
+  const text = spans.map(span => span.text ?? ' ').join('')
   // Other links, as `javascript:` ones, are written as their text
   if (!LINK_PROTOCOL.test(token.href)) return [{ ...marks, text }]
 
-  return [{ text, href: token.href }]
+  // A link is written in one look: underlined when all its text is
+  const isUnderline = spans.every(span => span.isUnderline)
+  return [{ text, href: token.href, ...(isUnderline && { isUnderline }) }]
 }
 
 // The marks an inline token sets on the text it holds
-const MARKS = { strong: 'isBold', em: 'isItalic', del: 'isStrike' }
+const MARKS = {
+  strong: 'isBold',
+  em: 'isItalic',
+  del: 'isStrike',
+  underline: 'isUnderline'
+}
+
+// The text between <u> tags, in the form `marked.use` gives the extensions to
+// the lexer. A tag left open is left out, as the other tags.
+const UNDERLINE = /^<u>([\s\S]*?)<\/u>/i
+const EXTENSIONS = {
+  inline: [
+    function tokenizeUnderline(src) {
+      const match = src.match(UNDERLINE)
+      if (!match) return null
+      return {
+        type: 'underline',
+        raw: match[0],
+        tokens: this.lexer.inlineTokens(match[1])
+      }
+    }
+  ],
+  startInline: [src => src.match(/<u>/i)?.index]
+}
 
 // The spans of the inline tokens that are not a mark nor a text
 const INLINE_TOKENS = {
@@ -292,7 +312,11 @@ export function makeBlocks(markdown, { hasLineBreaks = false } = {}) {
     })
   }
 
-  const lexer = new Lexer({ ...getDefaults(), breaks: hasLineBreaks })
+  const lexer = new Lexer({
+    ...getDefaults(),
+    breaks: hasLineBreaks,
+    extensions: EXTENSIONS
+  })
   addTokens(lexer.lex(nestLists(markdown.match(WRAPPED)?.[2] ?? markdown)))
   // A table left open still gives what it holds
   if (htmlTable) readHtmlTag('</table>')

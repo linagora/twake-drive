@@ -332,9 +332,42 @@ describe('makeBlocks', () => {
     ])
   })
 
+  it('marks the text between <u> tags as underlined, with the other marks', () => {
+    expect(makeBlocks('a <u>b **c**</u> d')[0].spans).toEqual([
+      { text: 'a ' },
+      { text: 'b ', isUnderline: true },
+      { text: 'c', isUnderline: true, isBold: true },
+      { text: ' d' }
+    ])
+  })
+
+  it('underlines the text of a link', () => {
+    expect(makeBlocks('<u>[x](https://a.b)</u>')[0].spans).toEqual([
+      { text: 'x', href: 'https://a.b', isUnderline: true }
+    ])
+  })
+
+  it('underlines a link whose whole text is underlined, as the editor gives it', () => {
+    expect(
+      makeBlocks('[<u>x</u>](https://a.b) [<u>y</u> z](https://a.b)')[0].spans
+    ).toEqual([
+      { text: 'x', href: 'https://a.b', isUnderline: true },
+      { text: ' ' },
+      { text: 'y z', href: 'https://a.b' }
+    ])
+  })
+
+  it('underlines a code span between <u> tags, and keeps the tags of a code span as its text', () => {
+    expect(makeBlocks('<u>`a`</u> `<u>b</u>`')[0].spans).toEqual([
+      { text: 'a', isCode: true, isUnderline: true },
+      { text: ' ' },
+      { text: '<u>b</u>', isCode: true }
+    ])
+  })
+
   it('leaves the HTML tags out, and loads no image', () => {
     const blocks = makeBlocks(
-      'Un <u>souligné</u><br>puis ![une image](https://example.org/a.png)\n\n<div onclick="alert(1)">Un bloc</div>'
+      'Un <span>souligné</span><br>puis ![une image](https://example.org/a.png)\n\n<div onclick="alert(1)">Un bloc</div>'
     )
 
     expect(blocks).toEqual([
