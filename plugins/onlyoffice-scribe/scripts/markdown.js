@@ -58,9 +58,11 @@ const MARKS = {
   underline: 'isUnderline'
 }
 
-// The text between <u> tags, in the form `marked.use` gives the extensions to
-// the lexer. A tag left open is left out, as the other tags.
+// The text between <u> tags, and the markers of the footnotes of the text, in
+// the form `marked.use` gives the extensions to the lexer. A tag left open is
+// left out, as the other tags.
 const UNDERLINE = /^<u>([\s\S]*?)<\/u>/i
+const NOTE = /^\[\^scribe-fn-(\d+)\]/
 const EXTENSIONS = {
   inline: [
     function tokenizeUnderline(src) {
@@ -71,14 +73,23 @@ const EXTENSIONS = {
         raw: match[0],
         tokens: this.lexer.inlineTokens(match[1])
       }
+    },
+    function tokenizeNote(src) {
+      const match = src.match(NOTE)
+      if (!match) return null
+      return { type: 'note', raw: match[0], note: Number(match[1]) }
     }
   ],
-  startInline: [src => src.match(/<u>/i)?.index]
+  startInline: [
+    src => src.match(/<u>/i)?.index,
+    src => src.match(/\[\^scribe-fn-\d+\]/)?.index
+  ]
 }
 
 // The spans of the inline tokens that are not a mark nor a text
 const INLINE_TOKENS = {
   codespan: (token, marks) => [{ ...marks, text: token.text, isCode: true }],
+  note: token => [{ note: token.note }],
   link: makeLinkSpans,
   br: () => [{ isBreak: true }],
   // The tags are left out: the text they hold comes in its own tokens
@@ -365,9 +376,15 @@ function addToLines(lines, span) {
   return [...lines.slice(0, -1), [...lines[lines.length - 1], span]]
 }
 
+// A presentation has no footnotes: their markers stay text
+function makeNoteText(span) {
+  return span.note === undefined ? span : { text: `[^scribe-fn-${span.note}]` }
+}
+
 // The lines of spans, a line break starting a line
 function splitLines(spans) {
   return spans
+    .map(makeNoteText)
     .reduce(addToLines, [[]])
     .map(trimLine)
     .filter(line => line.length > 0)

@@ -1,5 +1,6 @@
 import { readContent, writeBlocks } from './document.js'
 import { makeBlocks, makeLineSpans, makeLines } from './markdown.js'
+import { writeMarkers } from './markers.js'
 import {
   findWrittenParagraphs,
   insertSlide,
@@ -24,6 +25,8 @@ let hostOrigin = null
 // being written
 let lastContent = null
 let lastSelectedText = null
+// What the markers of the text last given stand for: an answer keeps them
+let lastMarkers = { notes: [], refs: [] }
 let isWriting = false
 let selectionTimer = null
 let pausedUntil = 0
@@ -105,11 +108,13 @@ async function sendContent(origin) {
   const read = await fetchContent()
   const selectedText = await fetchSelectedText()
   if (!read || request !== contentRequest) return
+  const { notes = [], refs = [], ...content } = read
   hostOrigin = origin
-  lastContent = read.content
+  lastContent = content.content
   lastSelectedText = selectedText
+  lastMarkers = { notes, refs }
 
-  host.postMessage({ type: 'twake-scribe:content', ...read }, origin)
+  host.postMessage({ type: 'twake-scribe:content', ...content }, origin)
 }
 
 // Another text selected: the app gives it to the assistant if it is open.
@@ -124,10 +129,17 @@ async function sendSelection() {
   if (!hostOrigin || !selectedText?.trim()) return
   if (selectedText === lastSelectedText) return
 
-  const { content, target, canReplace } = (await fetchContent()) ?? {}
+  const {
+    content,
+    target,
+    canReplace,
+    notes = [],
+    refs = []
+  } = (await fetchContent()) ?? {}
   if (!hostOrigin || target !== 'selection' || content === lastContent) return
   lastContent = content
   lastSelectedText = selectedText
+  lastMarkers = { notes, refs }
   // The answer last written in a presentation is no more the selection
   written = null
 
@@ -171,11 +183,17 @@ function watchUndoRedo() {
   }
 }
 
+function hasMarkers(blocks) {
+  return blocks.some(block =>
+    block.spans?.some(span => span.note !== undefined || span.ref !== undefined)
+  )
+}
+
 // Writes an answer, and gives the count of the selected cells it had no cell
 // for
 async function writeAnswer({ answerAction, text }) {
   // A text that holds what an answer cannot give back, as an image or a
-  // note, is never replaced, even when the app asks: the answer is inserted
+  // field, is never replaced, even when the app asks: the answer is inserted
   // after it, as when the editor was too busy to read the selection
   const read = answerAction === 'replace' ? await fetchContent() : null
   const isReplace = Boolean(read) && read.canReplace !== false
@@ -190,6 +208,14 @@ async function writeAnswer({ answerAction, text }) {
     scope: { blocks, isReplace },
     isRecalculated: true
   })
+  // The markers of the answer are written in it once it is in the document,
+  // and left selected
+  if (result?.written && hasMarkers(blocks)) {
+    await runInEditor(writeMarkers, {
+      scope: { notes: lastMarkers.notes, refs: lastMarkers.refs },
+      isRecalculated: true
+    })
+  }
   return result?.skippedCells ?? 0
 }
 
