@@ -1,0 +1,40 @@
+{
+  "document": "code.docx",
+  "cases": [
+    {
+      "id": "code-read",
+      "selection": "P1@start..P4@end",
+      "answerAction": null,
+      "answer": null,
+      "expected": {
+        "content": {
+          "content": "\n```\nconst a = 1\nconst b = 2\nconst c = 3\n```\n\n\nAfter the code\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": null
+      }
+    },
+    {
+      "id": "code-replace-all",
+      "selection": "P1@start..P3@end",
+      "answerAction": "replace",
+      "answer": "```js\nconst z = 0\n```",
+      "expected": {
+        "content": {
+          "content": "\n```\nconst a = 1\nconst b = 2\nconst c = 3\n```\n\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"const z = 0","code":1}],"shade":1},
+            {"type":"p","runs":[{"t":"After the code"}]}
+          ],
+          "selText": "const z = 0",
+          "selMarkup": [{"at":{"block":0},"text":"«const z = 0»"}]
+        }
+      }
+    }
+  ]
+}
