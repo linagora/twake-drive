@@ -314,18 +314,18 @@
                 ]
               ]
             },
-            {"type":"p","runs":[{"t":"Outro p"}]},
+            {"type":"p","runs":[{"t":"Outro paragraph"}]},
             {
               "type": "table",
               "grid": [[{"blocks":[{"type":"p","runs":[{"t":"GG"}]}]},{"blocks":[{"type":"p","runs":[{"t":"DD"}]}]}]]
             },
-            {"type":"p","runs":[{"t":"Tail edit"},{"t":" "},{"t":"aragraph"}]}
+            {"type":"p","runs":[{"t":"Tail edit"}]}
           ],
-          "selText": "GGDD\nTail edit ",
+          "selText": "GGDD\nTail edit",
           "selMarkup": [
             {"at":{"block":3,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«GG»"},
             {"at":{"block":3,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«DD»"},
-            {"at":{"block":4},"text":"«Tail edit »aragraph"}
+            {"at":{"block":4},"text":"«Tail edit»"}
           ]
         }
       }
@@ -354,18 +354,18 @@
                 ]
               ]
             },
-            {"type":"p","runs":[{"t":"Outro p"}]},
+            {"type":"p","runs":[{"t":"Outro paragraph"}]},
             {
               "type": "table",
               "grid": [[{"blocks":[{"type":"p","runs":[{"t":"GG"}]}]},{"blocks":[{"type":"p","runs":[{"t":"DD"}]}]}]]
             },
-            {"type":"p","runs":[{"t":"Tail edit"},{"t":" "},{"t":"aragraph"}]}
+            {"type":"p","runs":[{"t":"Tail edit"}]}
           ],
-          "selText": "GGDD\nTail edit ",
+          "selText": "GGDD\nTail edit",
           "selMarkup": [
             {"at":{"block":3,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«GG»"},
             {"at":{"block":3,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«DD»"},
-            {"at":{"block":4},"text":"«Tail edit »aragraph"}
+            {"at":{"block":4},"text":"«Tail edit»"}
           ]
         }
       }

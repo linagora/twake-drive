@@ -705,6 +705,45 @@
           ]
         }
       }
+    },
+    {
+      "id": "cursor-table",
+      "selection": "P2@mid",
+      "answerAction": "insert",
+      "answer": "Caption\n\n| a | b |\n|---|---|\n| 1 | 2 |",
+      "expected": {
+        "content": {
+          "content": "The quick brown fox\n\nJumps over the dog\n\nLazy river flows\n\n",
+          "target": "document",
+          "canReplace": false
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"The quick brown fox"}]},
+            {"type":"p","runs":[{"t":"Jumps over the dog"}]},
+            {"type":"p","runs":[{"t":"Caption"}]},
+            {
+              "type": "table",
+              "grid": [
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"a","b":1}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"b","b":1}]}]}
+                ],
+                [{"blocks":[{"type":"p","runs":[{"t":"1"}]}]},{"blocks":[{"type":"p","runs":[{"t":"2"}]}]}]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Lazy river flows"}]}
+          ],
+          "selText": "Caption\nab\n12\n",
+          "selMarkup": [
+            {"at":{"block":2},"text":"«Caption»"},
+            {"at":{"block":3,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«a»"},
+            {"at":{"block":3,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«b»"},
+            {"at":{"block":3,"cell":{"r":1,"c":0},"cellBlock":0},"text":"«1»"},
+            {"at":{"block":3,"cell":{"r":1,"c":1},"cellBlock":0},"text":"«2»"}
+          ]
+        }
+      }
     }
   ]
 }

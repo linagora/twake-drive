@@ -825,12 +825,14 @@ export function writeBlocks() {
   }
 
   // The editor gives no range at a cursor, but the parts of its sentence
-  // before and after it: the cursor is where they meet, in its run
+  // before and after it: the cursor is where they meet, in its run. It gives
+  // no sentence that holds an image or a field, and a tab in it as a space.
   const findCursorRange = paragraph => {
     const current = doc.GetCurrentRun()
     const before = doc.GetCurrentSentence('before')
     const after = doc.GetCurrentSentence('after')
-    if (!current || (before === '' && after === '')) return null
+    const isRead = typeof before === 'string' && typeof after === 'string'
+    if (!current || !isRead || (before === '' && after === '')) return null
     const runs = []
     for (let i = 0; i < paragraph.GetElementsCount(); i += 1) {
       const element = paragraph.GetElement(i)
@@ -840,13 +842,14 @@ export function writeBlocks() {
         runs.push(element.GetElement(j))
       }
     }
-    const text = runs.map(run => run.GetText()).join('')
+    const getRunText = run => run.GetText({ TabSymbol: ' ' })
+    const text = runs.map(getRunText).join('')
     const start = current.GetRange().GetStartPos()
     // A sentence met twice in the run leaves the cursor unknown
     const found = new Map()
     let offset = 0
     runs.forEach(run => {
-      const length = run.GetText().length
+      const { length } = getRunText(run)
       const isCurrent = run.GetRange().GetStartPos() === start
       for (let k = 0; isCurrent && k <= length; k += 1) {
         const at = offset + k
@@ -861,9 +864,11 @@ export function writeBlocks() {
 
   // Where an answer is inserted in the line of a text: at the end of the
   // selection, or at the cursor, with the text of its paragraph on each side.
-  // At the end of a paragraph, in an empty one, or where the answer goes
-  // under a table, it is written in new paragraphs instead.
+  // At the end of a paragraph, in an empty one, after cells, or for an answer
+  // with a table, as a caption and its table, it is written in new
+  // paragraphs.
   const findCursor = () => {
+    if (hasTable) return null
     const paragraph = findAnchor()
     if (paragraph?.GetClassType() !== 'paragraph') return null
     const range = selection

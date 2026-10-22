@@ -1,0 +1,48 @@
+{
+  "document": "cursor.docx",
+  "cases": [
+    {
+      "id": "cursor-after-tab",
+      "selection": "P1@10",
+      "answerAction": "insert",
+      "answer": "XXX",
+      "expected": {
+        "content": {
+          "content": "Alpha\tbeta gamma\n\nSame sentence. Same sentence.\n\n",
+          "target": "document",
+          "canReplace": false
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Alphabeta"},{"t":" "},{"t":"XXX"},{"t":" gamma"}]},
+            {"type":"p","runs":[{"t":"Same sentence. Same sentence."}]}
+          ],
+          "selText": " XXX",
+          "selMarkup": [{"at":{"block":0},"text":"Alphabeta« XXX» gamma"}]
+        }
+      }
+    },
+    {
+      "id": "cursor-sentence-twice",
+      "selection": "P2@20",
+      "answerAction": "insert",
+      "answer": "XXX",
+      "expected": {
+        "content": {
+          "content": "Alpha\tbeta gamma\n\nSame sentence. Same sentence.\n\n",
+          "target": "document",
+          "canReplace": false
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Alphabeta gamma"}]},
+            {"type":"p","runs":[{"t":"Same sentence. Same sentence."}]},
+            {"type":"p","runs":[{"t":"XXX"}]}
+          ],
+          "selText": "XXX",
+          "selMarkup": [{"at":{"block":2},"text":"«XXX»"}]
+        }
+      }
+    }
+  ]
+}
