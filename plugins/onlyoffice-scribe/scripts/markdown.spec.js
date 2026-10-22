@@ -199,6 +199,9 @@ describe('makeBlocks', () => {
     expect(makeBlocks('`[^scribe-fn-1]`')[0].spans).toEqual([
       { text: '[^scribe-fn-1]', isCode: true }
     ])
+    expect(makeBlocks('`{{REF:scribe-ref-1:a}}`')[0].spans).toEqual([
+      { text: '{{REF:scribe-ref-1:a}}', isCode: true }
+    ])
   })
 
   it('reads a table, its header in bold', () => {
@@ -453,6 +456,30 @@ describe('makeBlocks', () => {
       { text: ' ' },
       { text: 'c' },
       { note: 2 }
+    ])
+  })
+
+  it('gives a reference marker as a ref span with its text', () => {
+    expect(makeBlocks('see {{REF:scribe-ref-1:Budget}} now')[0].spans).toEqual([
+      { text: 'see ' },
+      { ref: 1, text: 'Budget' },
+      { text: ' now' }
+    ])
+    expect(
+      makeBlocks('**{{REF:scribe-ref-2:R&amp;D}}**{{REF:scribe-ref-3:}}')[0]
+        .spans
+    ).toEqual([{ ref: 2, text: 'R&D', isBold: true }])
+  })
+
+  it('gives a reference marker of a link text as text of the link', () => {
+    expect(
+      makeBlocks(
+        '[see {{REF:scribe-ref-1:Budget}}](https://a.b) [{{REF:scribe-ref-2:c}}](x:y)'
+      )[0].spans
+    ).toEqual([
+      { text: 'see Budget', href: 'https://a.b' },
+      { text: ' ' },
+      { text: 'c' }
     ])
   })
 

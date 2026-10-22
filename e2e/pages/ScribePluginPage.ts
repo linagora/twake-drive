@@ -78,8 +78,12 @@ function selectInEditor(spec: string): { ok: boolean; error?: string } {
     let passed = 0
     for (let i = 0; i < paragraph.GetElementsCount(); i += 1) {
       const element = paragraph.GetElement(i)
-      if (!['run', 'hyperlink'].includes(element.GetClassType())) continue
-      const length = element.GetText().replace(/[\r\n]+$/, '').length
+      const type = element.GetClassType()
+      if (!['run', 'hyperlink'].includes(type)) continue
+      // A link has no GetText
+      const text =
+        type === 'run' ? element.GetText() : element.GetDisplayedText()
+      const length = text.replace(/[\r\n]+$/, '').length
       if (offset <= passed + length) {
         return element.GetRange(offset - passed, offset - passed)
       }
@@ -217,10 +221,13 @@ function readEditor(): ScribeModel {
       first = first ?? run
     }
     if (text === '') return null
+    // A link to a place of the document has no address: its anchor is the
+    // bookmark it goes to
+    const link = hyperlink.GetLinkedText()
     return {
       ...readFlags(first?.GetTextPr()),
       t: text,
-      link: hyperlink.GetLinkedText()
+      ...(link ? { link } : { anchor: JSON.parse(hyperlink.ToJSON()).anchor })
     }
   }
   const readRun = (element: any): any => {
@@ -247,6 +254,7 @@ function readEditor(): ScribeModel {
     json.match(pattern)?.length ?? 0
   interface JsonElement {
     type?: string
+    name?: string
     content?: (string | JsonElement)[]
     footnotes?: JsonElement[]
   }
@@ -292,6 +300,9 @@ function readEditor(): ScribeModel {
       images: paragraph.GetAllDrawingObjects().length,
       notes: count(json, /"type":"footnoteRef"/g),
       noteTexts: readNoteTexts(parsed),
+      bookmarks: findElements(parsed)
+        .filter(item => item.type === 'bookmarkStart')
+        .map(item => item.name),
       pageBreaks: count(json, /"breakType":"page"/g),
       // The section properties of a note are in its own JSON: only the ones
       // of the paragraph tell that it ends a section

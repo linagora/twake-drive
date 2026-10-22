@@ -10,6 +10,8 @@ export interface ScribeRun {
   s?: 1
   code?: 1
   link?: string
+  // The bookmark a link to a place of the document goes to
+  anchor?: string
 }
 
 export interface ScribeParagraph {
@@ -24,6 +26,8 @@ export interface ScribeParagraph {
   // of each of their notes
   notes?: number
   noteTexts?: string[]
+  // The names of the bookmarks that start in the paragraph
+  bookmarks?: string[]
   pageBreaks?: number
   // The paragraph ends a section of the document
   section?: 1
@@ -76,6 +80,7 @@ const normalizeRun = (run: ScribeRun): ScribeRun => {
   const normalized: ScribeRun = { t: normalizeText(run.t) }
   for (const flag of RUN_FLAGS) if (run[flag]) normalized[flag] = 1
   if (run.link) normalized.link = run.link
+  if (run.anchor) normalized.anchor = run.anchor
   return normalized
 }
 
@@ -87,6 +92,7 @@ const PARAGRAPH_FIELDS = [
   'images',
   'notes',
   'noteTexts',
+  'bookmarks',
   'pageBreaks',
   'section',
   'shade'
@@ -98,7 +104,9 @@ const hasField = (
   field: (typeof PARAGRAPH_FIELDS)[number]
 ): boolean => {
   if (field === 'lvl') return typeof paragraph.lvl === 'number'
-  if (field === 'noteTexts') return (paragraph.noteTexts?.length ?? 0) > 0
+  if (field === 'noteTexts' || field === 'bookmarks') {
+    return (paragraph[field]?.length ?? 0) > 0
+  }
   return Boolean(paragraph[field])
 }
 
@@ -106,7 +114,7 @@ const normalizeParagraph = (paragraph: ScribeParagraph): ScribeParagraph => ({
   type: 'p',
   runs: paragraph.runs
     .map(normalizeRun)
-    .filter(run => run.t !== '' || run.link),
+    .filter(run => run.t !== '' || run.link || run.anchor),
   ...Object.fromEntries(
     PARAGRAPH_FIELDS.filter(field => hasField(paragraph, field)).map(field => [
       field,

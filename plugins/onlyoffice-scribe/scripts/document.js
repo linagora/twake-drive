@@ -10,7 +10,9 @@
  * cell after the other: the cells that take several columns or rows get
  * their `colspan` and `rowspan`. A footnote of the selection is the marker
  * `[^scribe-fn-N]`, N from 1, and the N-th text of `notes` is the first
- * paragraph of that note, in plain text.
+ * paragraph of that note, in plain text. A link to a heading or a bookmark of
+ * the document is the marker `{{REF:scribe-ref-N:text}}`, and the N-th item
+ * of `refs` the `anchor` it goes to and its `kind`, `heading` or `bookmark`.
  *
  * @returns {{ content: string, target: 'selection' | 'document',
  * canReplace: boolean, notes: string[], refs: object[] }} the text, in
@@ -33,6 +35,7 @@ export function readContent() {
     paragraphs.length > 0 ? selection.ToJSON(false, false) : ''
   const NOTE_REFERENCE = /"type":"footnoteRef"/
   const notes = []
+  const refs = []
   // A note the content gives no marker for, which an answer would lose
   let hasUnmarkedNote = false
 
@@ -441,6 +444,63 @@ export function readContent() {
       })
     }
 
+    // The builder lists no bookmark whose name starts with `_`, as the one
+    // Word and the editor put on a heading a link goes to: the JSON of the
+    // headings has them. A link whose bookmark is gone goes to the heading.
+    let headingBookmarks = null
+    const readBookmarks = paragraph =>
+      JSON.parse(paragraph.ToJSON(false, false))
+        .content.filter(element => element.type === 'bookmarkStart')
+        .map(element => element.name)
+    const getRefKind = anchor => {
+      if (!anchor.startsWith('_')) return 'bookmark'
+      if (!headingBookmarks) {
+        headingBookmarks = new Set(
+          doc.GetAllHeadingParagraphs().flatMap(readBookmarks)
+        )
+      }
+      return headingBookmarks.has(anchor) ? 'bookmark' : 'heading'
+    }
+
+    // The editor gives a link to a place of the document, which has no
+    // address, as `[text]()`, and the part of it a selection cuts as plain
+    // text. A `}` would end the marker; in a cell or a code the link stays,
+    // and an answer gives back its text.
+    const REF_LINK = /\[([^\]\n]*)\]\(\)/y
+    const LINK_MARKS = /[*_~`\\]/g
+    const isSameText = (a, b) =>
+      a.replace(LINK_MARKS, '').trim() === b.replace(LINK_MARKS, '').trim()
+    const addRefMarker = (hyperlink, runs, paragraph) => {
+      if (hyperlink.GetLinkedText() || paragraph.GetParentTableCell()) {
+        return false
+      }
+      const { anchor } = JSON.parse(hyperlink.ToJSON())
+      const text = runs
+        .map(getSelectedText)
+        .join('')
+        .replace(/[&<>"']/g, char => ENTITIES[char])
+      const start = markdown.indexOf('[', at)
+      REF_LINK.lastIndex = start
+      const link = start === -1 ? null : REF_LINK.exec(markdown)
+      const isMarked =
+        Boolean(anchor) &&
+        Boolean(link) &&
+        text.trim() !== '' &&
+        !text.includes('}') &&
+        isSameText(link[1], text) &&
+        !isInFence(start) &&
+        !isInCode(start)
+      if (!isMarked) return false
+      refs.push({ anchor, kind: getRefKind(anchor) })
+      hasParagraphText = true
+      replace(
+        start,
+        start + link[0].length,
+        `{{REF:scribe-ref-${refs.length}:${text}}}`
+      )
+      return true
+    }
+
     const LINK_END = /[*_~`]*\]\([^)]*\)/y
     selectedParagraphs.forEach(paragraph => {
       hasParagraphText = false
@@ -458,9 +518,11 @@ export function readContent() {
         for (let j = 0; j < element.GetElementsCount(); j += 1) {
           runs.push(element.GetElement(j))
         }
-        runs.forEach(readRun)
-        LINK_END.lastIndex = at
-        if (LINK_END.test(markdown)) at = LINK_END.lastIndex
+        if (!addRefMarker(element, runs, paragraph)) {
+          runs.forEach(readRun)
+          LINK_END.lastIndex = at
+          if (LINK_END.test(markdown)) at = LINK_END.lastIndex
+        }
         runs.forEach(addNotes)
       }
     })
@@ -477,7 +539,7 @@ export function readContent() {
     target: hasSelection ? 'selection' : 'document',
     canReplace: hasSelection && !isLocked && canReplace(),
     notes,
-    refs: []
+    refs
   }
 }
 
@@ -493,7 +555,7 @@ export function readContent() {
  * selected cells the answer had no cell for
  */
 export function writeBlocks() {
-  const { blocks, notes = [] } = Asc.scope
+  const { blocks, notes = [], refs = [] } = Asc.scope
   const doc = Api.GetDocument()
   function getText(element) {
     return element.GetText({ Numbering: false, ParaSeparator: '\n' })
@@ -564,14 +626,23 @@ export function writeBlocks() {
     return findMainLook(paragraph)
   }
 
+  // A reference the text read did not give stays plain text
+  const isKnownRef = span =>
+    span.ref !== undefined && typeof refs[span.ref - 1]?.anchor === 'string'
+
   // A note takes the place of its placeholder once the answer is written:
-  // the editor adds a note at the cursor only
+  // the editor adds a note at the cursor only. The text of a reference,
+  // between its placeholders, then becomes a link.
+  const makeRunText = span => {
+    if (span.note !== undefined) return `\u0000fn:${span.note}\u0000`
+    if (!isKnownRef(span)) return span.text
+    return `\u0000ref:${span.ref}\u0000${span.text}\u0000/ref\u0000`
+  }
+
   const makeRun = (span, textPr) => {
     const run = Api.CreateRun()
     if (textPr) run.SetTextPr(textPr)
-    run.AddText(
-      span.note === undefined ? span.text : `\u0000fn:${span.note}\u0000`
-    )
+    run.AddText(makeRunText(span))
     // The emphasis is the one of the answer, over the one of the style
     run.SetBold(span.isBold ? true : undefined)
     run.SetItalic(span.isItalic ? true : undefined)
@@ -670,14 +741,18 @@ export function writeBlocks() {
     return cells
   }
 
+  const makeMarkerText = ({ note, ref, ...span }) => {
+    if (note !== undefined) return { text: `[^scribe-fn-${note}]` }
+    if (ref === undefined) return span
+    return { ...span, text: `{{REF:scribe-ref-${ref}:${span.text}}}` }
+  }
+
   // The spans of each paragraph a cell of an answer is written in: a heading
   // or an item of a list is a plain paragraph in a cell, and the marker of a
-  // note stays text
+  // note or of a reference stays text
   const getCellParagraphs = answerCell =>
     (answerCell.blocks ?? [answerCell]).map(block =>
-      block.spans.map(span =>
-        span.note === undefined ? span : { text: `[^scribe-fn-${span.note}]` }
-      )
+      block.spans.map(makeMarkerText)
     )
 
   // The first paragraph of a cell takes the first spans, and empty copies of
