@@ -469,6 +469,10 @@ describe('makeBlocks', () => {
       makeBlocks('**{{REF:scribe-ref-2:R&amp;D}}**{{REF:scribe-ref-3:}}')[0]
         .spans
     ).toEqual([{ ref: 2, text: 'R&D', isBold: true }])
+    expect(makeBlocks('see {{REF:scribe-ref-1:[1]}}')[0].spans).toEqual([
+      { text: 'see ' },
+      { ref: 1, text: '[1]' }
+    ])
   })
 
   it('gives a reference marker of a link text as text of the link', () => {

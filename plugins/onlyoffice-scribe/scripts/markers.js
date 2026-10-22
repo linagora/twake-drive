@@ -104,17 +104,37 @@ export function writeMarkers() {
     return `scribe_heading_${index}`
   }
 
-  // The bookmark of the reference N, or a new one on the heading its anchor
-  // names, as Word and the editor name the bookmark of a heading: `_` before
-  // its text and in place of its spaces. Null when there is none.
+  // The builder lists no bookmark whose name starts with `_`, as the one of
+  // a heading: the JSON of the headings has them
+  let headingBookmarks = null
+  const hasBookmark = name => {
+    if (!name.startsWith('_')) return doc.GetAllBookmarksNames().includes(name)
+    if (!headingBookmarks) {
+      headingBookmarks = doc.GetAllHeadingParagraphs().flatMap(paragraph =>
+        JSON.parse(paragraph.ToJSON(false, false))
+          .content.filter(element => element.type === 'bookmarkStart')
+          .map(element => element.name)
+      )
+    }
+    return headingBookmarks.includes(name)
+  }
+
+  // The bookmark of the reference N, if the answer has not replaced the text
+  // that held it, or else a single bookmark on the heading its anchor names:
+  // `_` before its text and for its spaces, as Word and the editor name them
+  const madeBookmarks = {}
   const ensureBookmark = number => {
     const ref = refs[number - 1]
     if (typeof ref?.anchor !== 'string') return null
-    if (ref.kind !== 'heading') return ref.anchor
-    const heading = findHeading(ref.anchor)
+    const { anchor, kind } = ref
+    if (kind === 'bookmark' && hasBookmark(anchor)) return anchor
+    if (!anchor.startsWith('_')) return null
+    if (madeBookmarks[anchor]) return madeBookmarks[anchor]
+    const heading = findHeading(anchor)
     if (!heading) return null
     const name = makeBookmarkName(number)
     heading.GetRange().AddBookmark(name)
+    madeBookmarks[anchor] = name
     return name
   }
 

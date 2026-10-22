@@ -463,13 +463,24 @@ export function readContent() {
     }
 
     // The editor gives a link to a place of the document, which has no
-    // address, as `[text]()`, and the part of it a selection cuts as plain
-    // text. A `}` would end the marker; in a cell or a code the link stays,
-    // and an answer gives back its text.
-    const REF_LINK = /\[([^\]\n]*)\]\(\)/y
+    // address, as `[text]()` with its text as it is (`[1]` gives `[[1]]()`),
+    // and the part of it a selection cuts as plain text. A `}` would end the
+    // marker; in a cell or a code the link stays, and an answer gives back
+    // its text. The marks of an emphasis of the whole text go around the
+    // marker.
+    const REF_LINK_END = ']()'
     const LINK_MARKS = /[*_~`\\]/g
+    const EDGE_MARKS = /^([*_~]*)[\s\S]*?([*_~]*)$/
     const isSameText = (a, b) =>
       a.replace(LINK_MARKS, '').trim() === b.replace(LINK_MARKS, '').trim()
+    const wrapInMarks = (marker, linkText, text) => {
+      const [, open, close] = linkText.match(EDGE_MARKS)
+      const isWrapped =
+        open !== '' &&
+        open === [...close].reverse().join('') &&
+        !text.trimStart().startsWith(open)
+      return isWrapped ? `${open}${marker}${close}` : marker
+    }
     const addRefMarker = (hyperlink, runs, paragraph) => {
       if (hyperlink.GetLinkedText() || paragraph.GetParentTableCell()) {
         return false
@@ -480,23 +491,24 @@ export function readContent() {
         .join('')
         .replace(/[&<>"']/g, char => ENTITIES[char])
       const start = markdown.indexOf('[', at)
-      REF_LINK.lastIndex = start
-      const link = start === -1 ? null : REF_LINK.exec(markdown)
+      const end = start === -1 ? -1 : markdown.indexOf(REF_LINK_END, start)
+      const linkText = markdown.slice(start + 1, end)
       const isMarked =
         Boolean(anchor) &&
-        Boolean(link) &&
+        end !== -1 &&
         text.trim() !== '' &&
         !text.includes('}') &&
-        isSameText(link[1], text) &&
+        isSameText(linkText, text) &&
         !isInFence(start) &&
         !isInCode(start)
       if (!isMarked) return false
       refs.push({ anchor, kind: getRefKind(anchor) })
       hasParagraphText = true
+      const marker = `{{REF:scribe-ref-${refs.length}:${text}}}`
       replace(
         start,
-        start + link[0].length,
-        `{{REF:scribe-ref-${refs.length}:${text}}}`
+        end + REF_LINK_END.length,
+        wrapInMarks(marker, linkText, text)
       )
       return true
     }
