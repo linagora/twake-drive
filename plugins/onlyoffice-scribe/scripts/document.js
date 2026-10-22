@@ -198,25 +198,32 @@ export function readContent() {
   }
 
   // An answer is text: it cannot give back an image, a chart, an equation, a
-  // note, a field, a form, a comment or a page break, nor take the place of a
-  // text and a table together, or of the end of a section
+  // note, a field, a form, a comment or a page break, nor take the place of
+  // the end of a section
   const KEPT =
     /"type":"(paraDrawing|paraMath|footnoteRef|endnoteRef|fldChar|inlineLvlSdt|blockLvlSdt|commentRangeStart)"|"breakType":"(page|column)"/
   const canReplace = () => {
-    const tables = new Set(
-      paragraphs.map(
-        paragraph =>
-          paragraph.GetParentTableCell()?.GetParentTable().GetInternalId() ??
-          null
-      )
-    )
-    const isCrossing = tables.size > 1
+    const tables = new Map()
+    paragraphs.forEach(paragraph => {
+      const table = paragraph.GetParentTableCell()?.GetParentTable()
+      if (table) tables.set(table.GetInternalId(), table)
+    })
+    const isCrossing =
+      tables.size > 1 ||
+      (tables.size === 1 &&
+        paragraphs.some(paragraph => !paragraph.GetParentTableCell()))
+    // Across the edge of a table, an answer is written in the cells of one
+    // or two tables, not of a table in a table
+    const isWritable =
+      !isCrossing ||
+      (tables.size <= 2 &&
+        [...tables.values()].every(table => !table.GetParentTableCell()))
     // The copy of the selection leaves the ends of sections out
     const isEndingSection = paragraphs
       .slice(0, -1)
       .some(paragraph => JSON.parse(paragraph.ToJSON(false, false)).pPr?.sectPr)
     return (
-      !isCrossing &&
+      isWritable &&
       !isEndingSection &&
       !KEPT.test(selection.ToJSON(false, false))
     )
@@ -407,7 +414,9 @@ export function readContent() {
  * paragraph otherwise. The new text is left selected: the user sees it, and
  * the next answer can replace it.
  *
- * @returns {boolean} false when there was nowhere to write
+ * @returns {{ written: boolean, skippedCells: number }} whether the answer
+ * was written, not when there was nowhere to write, and the count of the
+ * selected cells the answer had no cell for
  */
 export function writeBlocks() {
   const { blocks, isReplace } = Asc.scope
@@ -435,6 +444,7 @@ export function writeBlocks() {
   let textPr = null
   const numberings = {}
   let lastWritten = null
+  let skippedCells = 0
 
   // The look of most of the text of a paragraph: a word set apart, as a word
   // in italics or a link, does not give its look to a new paragraph
@@ -453,9 +463,7 @@ export function writeBlocks() {
 
   // A text written in place of a selected one has the look of its first
   // character, as a text typed over it
-  const findStartLook = () => {
-    const start = selection.GetStartPos()
-    const paragraph = paragraphs[0]
+  const findStartLook = (paragraph, start) => {
     for (let i = 0; i < paragraph.GetElementsCount(); i += 1) {
       const element = paragraph.GetElement(i)
       const isText =
@@ -654,6 +662,18 @@ export function writeBlocks() {
     return makeParagraph(block.spans, null, textPr)
   }
 
+  // Cells by row, each row with its cells in order
+  function groupByRow(cells) {
+    const rows = new Map()
+    cells.forEach(cell => {
+      if (!rows.has(cell.GetRowIndex())) rows.set(cell.GetRowIndex(), [])
+      rows.get(cell.GetRowIndex()).push(cell)
+    })
+    return [...rows.keys()]
+      .sort((a, b) => a - b)
+      .map(row => rows.get(row).sort((a, b) => a.GetIndex() - b.GetIndex()))
+  }
+
   // The cells the selection takes, when it takes several cells of one table:
   // their rows, each with its cells in order
   const getSelectedCells = () => {
@@ -673,17 +693,7 @@ export function writeBlocks() {
     if (tables.size !== 1) return null
     const [{ table, cells }] = tables.values()
     if (cells.size < 2) return null
-    const rows = new Map()
-    cells.forEach(cell => {
-      if (!rows.has(cell.GetRowIndex())) rows.set(cell.GetRowIndex(), [])
-      rows.get(cell.GetRowIndex()).push(cell)
-    })
-    return {
-      table,
-      rows: [...rows.keys()]
-        .sort((a, b) => a - b)
-        .map(row => rows.get(row).sort((a, b) => a.GetIndex() - b.GetIndex()))
-    }
+    return { table, rows: groupByRow(cells) }
   }
 
   // Writes the text of an answer in a cell, in the look of its text, with
@@ -770,13 +780,13 @@ export function writeBlocks() {
     selection.SetStartPos(next.GetRange().GetStartPos())
   }
 
-  // Moves an end of the selection over what the answer does not replace
-  const shrinkSelection = (isStart, isOut) => {
-    let start = selection.GetStartPos()
-    let end = selection.GetEndPos()
-    while (end > start && isOut(getText(selection))) {
-      if (isStart) selection.SetStartPos((start += 1))
-      else selection.SetEndPos((end -= 1))
+  // Moves an end of a range over what the answer does not replace
+  const shrinkRange = (range, isStart, isOut) => {
+    let start = range.GetStartPos()
+    let end = range.GetEndPos()
+    while (end > start && isOut(getText(range))) {
+      if (isStart) range.SetStartPos((start += 1))
+      else range.SetEndPos((end -= 1))
     }
   }
 
@@ -784,10 +794,10 @@ export function writeBlocks() {
   // the mark that ends the last one is kept, and the spaces around a part of
   // a paragraph, which the answer of the LLM never has
   const fitSelection = isWhole => {
-    shrinkSelection(false, text => text.endsWith('\n'))
+    shrinkRange(selection, false, text => text.endsWith('\n'))
     if (!isWhole) {
-      shrinkSelection(true, text => /^\s/.test(text))
-      shrinkSelection(false, text => /\s$/.test(text))
+      shrinkRange(selection, true, text => /^\s/.test(text))
+      shrinkRange(selection, false, text => /\s$/.test(text))
     }
     selection.Select()
   }
@@ -1116,7 +1126,7 @@ export function writeBlocks() {
     const isWhole = around.before === '' && around.after === ''
     const isPartOfParagraph = !isWhole && paragraphs.length === 1
     fitSelection(isWhole)
-    textPr = findStartLook()
+    textPr = findStartLook(paragraphs[0], selection.GetStartPos())
     // A heading numbered by its style is no list the items can join
     const [first] = paragraphs
     if (first.GetNumbering() && first.GetOutlineLvl() === undefined) {
@@ -1149,14 +1159,160 @@ export function writeBlocks() {
     return writeAround({ before, after, isSpaced: true })
   }
 
-  const selectedCells = getSelectedCells()
-  if (canFillCells(selectedCells)) {
-    fillCells(selectedCells, blocks[0])
+  // A selection across the edge of a table: a text and cells, or the cells
+  // of two tables
+  const isMixed = () => {
+    if (!isReplace || !selection) return false
+    const tables = new Set(
+      paragraphs
+        .map(paragraph => paragraph.GetParentTableCell()?.GetParentTable())
+        .filter(Boolean)
+        .map(table => table.GetInternalId())
+    )
+    const hasText = paragraphs.some(
+      paragraph => !paragraph.GetParentTableCell()
+    )
+    return tables.size > 1 || (tables.size === 1 && hasText)
+  }
+
+  // The selected text of a paragraph, without its mark nor the spaces around
+  // it, which the answer of a LLM never has
+  const findSelectedText = paragraph => {
+    const whole = paragraph.GetRange()
+    const range = doc.GetRange(
+      Math.max(whole.GetStartPos(), selection.GetStartPos()),
+      Math.min(whole.GetEndPos(), selection.GetEndPos())
+    )
+    shrinkRange(range, false, text => /\s$/.test(text))
+    shrinkRange(range, true, text => /^\s/.test(text))
+    return range
+  }
+
+  // What the selection takes, in the order of the document: the selected
+  // text of each paragraph out of the tables that has one, and each table
+  // with its selected cells by row
+  const getMixedParts = () => {
+    const parts = []
+    paragraphs.forEach(paragraph => {
+      const cell = paragraph.GetParentTableCell()
+      if (!cell) {
+        const range = findSelectedText(paragraph)
+        if (getText(range) !== '') parts.push({ paragraph, range })
+        return
+      }
+      const table = cell.GetParentTable()
+      const last = parts[parts.length - 1]
+      if (last?.table?.GetInternalId() === table.GetInternalId()) {
+        last.cells.set(cell.GetInternalId(), cell)
+        return
+      }
+      parts.push({ table, cells: new Map([[cell.GetInternalId(), cell]]) })
+    })
+    return parts.map(({ cells, ...part }) =>
+      cells ? { ...part, rows: groupByRow(cells) } : part
+    )
+  }
+
+  // The spans of a block written in a line: a block of code gives its lines
+  function getLineSpans(block) {
+    return (
+      block.spans ??
+      block.lines.flatMap((line, index) => [
+        ...(index === 0 ? [] : [{ isBreak: true }]),
+        { text: line, isCode: true }
+      ])
+    )
+  }
+
+  function getCellRange(cell, isEnd) {
+    const content = cell.GetContent()
+    const index = isEnd ? content.GetElementsCount() - 1 : 0
+    return content.GetElement(index).GetRange()
+  }
+
+  // A block takes the place of the selected text of a paragraph, in its line.
+  // Each part written gives the ranges of its start and of its end, read once
+  // all are written: the start of a text is a position, right for the first
+  // part only, written last.
+  const writeText = ({ paragraph, range }, block) => {
+    const start = range.GetStartPos()
+    const getStart = () => doc.GetRange(start, start)
+    if (!block) return { getStart, getEnd: () => paragraph.GetRange() }
+    const look = findStartLook(paragraph, start)
+    range.Select()
+    doc.InsertContent([makeParagraph(getLineSpans(block), null, look)], true)
+    // A text written in a line ends where the run of the cursor starts
+    const ending = doc.GetCurrentRun()
+    return { getStart, getEnd: () => ending.GetRange(0, 0) }
+  }
+
+  // The selected cells of a table take the cells of a table of the answer,
+  // row by row, and a whole table of another shape takes its place
+  const writeCells = ({ table, rows }, answerTable) => {
+    const isWhole = countSelected(rows) === countCells(table)
+    if (isWhole && answerTable && !hasSameShape({ rows }, answerTable)) {
+      const created = makeTable(answerTable.rows)
+      const index = table.GetPosInParent()
+      table.Delete()
+      doc.AddElement(index, created)
+      const lastRow = created.GetRow(created.GetRowsCount() - 1)
+      const lastCell = lastRow.GetCell(lastRow.GetCellsCount() - 1)
+      return {
+        getStart: () => getCellRange(created.GetCell(0, 0), false),
+        getEnd: () => getCellRange(lastCell, true)
+      }
+    }
+    rows.forEach((cells, i) => {
+      cells.forEach((cell, j) => {
+        const answerCell = answerTable?.rows[i]?.[j]
+        if (answerCell) fillCell(cell, answerCell)
+        else skippedCells += 1
+      })
+    })
+    const lastRow = rows[rows.length - 1]
+    return {
+      getStart: () => getCellRange(rows[0][0], false),
+      getEnd: () => getCellRange(lastRow[lastRow.length - 1], true)
+    }
+  }
+
+  // Across the edge of a table, the tables of the answer go in the tables of
+  // the selection, in order, and its other blocks in place of the selected
+  // texts, in order. The parts are written from the last one: the positions
+  // of the ones before do not move.
+  const replaceMixed = () => {
+    const parts = getMixedParts()
+    const tableParts = parts.filter(part => part.table)
+    const textParts = parts.filter(part => !part.table)
+    const answerTables = blocks.filter(block => block.type === 'table')
+    const answerTexts = blocks.filter(block => block.type !== 'table')
+    const edges = [...parts]
+      .reverse()
+      .map(part =>
+        part.table
+          ? writeCells(part, answerTables[tableParts.indexOf(part)])
+          : writeText(part, answerTexts[textParts.indexOf(part)])
+      )
+    const [last] = edges
+    const first = edges[edges.length - 1]
+    first.getStart().ExpandTo(last.getEnd())?.Select()
     return true
   }
-  if (isReplacingText(selectedCells)) return replaceText()
-  const cursor = isReplace ? null : findCursor()
-  if (cursor) return insertAtCursor(cursor)
-  if (!selectPlaceholder(selectedCells)) return false
-  return writeAnswer(blocks.flatMap(makeElement), false)
+
+  const write = () => {
+    if (isMixed()) return replaceMixed()
+    const selectedCells = getSelectedCells()
+    if (canFillCells(selectedCells)) {
+      fillCells(selectedCells, blocks[0])
+      return true
+    }
+    if (isReplacingText(selectedCells)) return replaceText()
+    const cursor = isReplace ? null : findCursor()
+    if (cursor) return insertAtCursor(cursor)
+    if (!selectPlaceholder(selectedCells)) return false
+    return writeAnswer(blocks.flatMap(makeElement), false)
+  }
+
+  const written = write()
+  return { written, skippedCells }
 }

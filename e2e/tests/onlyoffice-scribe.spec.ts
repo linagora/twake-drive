@@ -5,7 +5,11 @@ import { USERS } from '../helpers/config'
 import { test, expect, stamp } from '../helpers/fixtures'
 import type { ScribeModel } from '../helpers/scribeModel'
 import { createFile, trashById } from '../helpers/stack'
-import { ScribePluginPage, type ScribeContent } from '../pages/ScribePluginPage'
+import {
+  ScribePluginPage,
+  type ScribeApplied,
+  type ScribeContent
+} from '../pages/ScribePluginPage'
 
 // The selection cases of the scribe plugin (plugins/onlyoffice-scribe), each
 // played on a document as Drive plays them: a text is selected, the plugin
@@ -24,7 +28,12 @@ interface ScribeCase {
   // null: the text the plugin gives is the whole case
   answerAction: 'insert' | 'replace' | null
   answer: string | null
-  expected?: { content: ScribeContent; model: ScribeModel | null }
+  expected?: {
+    content: ScribeContent
+    model: ScribeModel | null
+    // What the plugin tells Drive once it has written the answer
+    applied?: ScribeApplied | null
+  }
 }
 
 // Indented JSON, with what fits in 100 characters on a single line: a run, a
@@ -94,18 +103,24 @@ for (const suite of suites) {
           await scribe.select(scribeCase.selection)
           const content = await scribe.getContent()
           let model: ScribeModel | null = null
+          let applied: ScribeApplied | null = null
           if (scribeCase.answerAction) {
-            await scribe.applyAnswer(
+            applied = await scribe.applyAnswer(
               scribeCase.answerAction,
               scribeCase.answer ?? ''
             )
             model = await scribe.read()
           }
+          const result = {
+            content,
+            model,
+            ...(scribeCase.expected?.applied !== undefined && { applied })
+          }
           if (isUpdate) {
-            scribeCase.expected = { content, model }
+            scribeCase.expected = result
             return
           }
-          expect.soft({ content, model }).toEqual(scribeCase.expected)
+          expect.soft(result).toEqual(scribeCase.expected)
         })
       }
 

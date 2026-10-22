@@ -11,6 +11,10 @@ export interface ScribeContent {
   canReplace?: boolean
 }
 
+export interface ScribeApplied {
+  skippedCells: number
+}
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 /**
@@ -514,30 +518,43 @@ export class ScribePluginPage {
     return found as unknown as ScribeContent
   }
 
-  /** Writes an answer, and waits for the document to be written */
+  /**
+   * Writes an answer, and waits for the plugin to tell it is written: its
+   * `twake-scribe:applied` message, null from a plugin that does not send it
+   */
   async applyAnswer(
     answerAction: string,
     text: string,
     read: () => Promise<unknown> = () => this.read()
-  ): Promise<void> {
+  ): Promise<ScribeApplied | null> {
     const before = JSON.stringify(await read())
+    await this.takeMessages()
     await this.send({
       type: 'twake-scribe:applyAnswer',
       answerAction,
       text,
       format: 'markdown'
     })
-    // The plugin gives no answer: the document is read until it changes,
-    // then until two reads agree
+    // Without the message, the document is read until it changes, then until
+    // two reads agree
+    let applied: ScribeApplied | null = null
     let last = before
     let isStable = false
     const deadline = Date.now() + 10_000
-    while (!isStable && Date.now() < deadline) {
+    while (!applied && !isStable && Date.now() < deadline) {
       await this.page.waitForTimeout(400)
+      const message = (await this.takeMessages()).find(
+        ({ type }) => type === 'twake-scribe:applied'
+      )
+      if (message) {
+        const { type: _type, ...rest } = message
+        applied = rest as unknown as ScribeApplied
+      }
       const current = JSON.stringify(await read())
       isStable = current === last && current !== before
       last = current
     }
+    return applied
   }
 
   async read(): Promise<ScribeModel> {

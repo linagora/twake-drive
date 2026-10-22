@@ -171,6 +171,8 @@ function watchUndoRedo() {
   }
 }
 
+// Writes an answer, and gives the count of the selected cells it had no cell
+// for
 async function writeAnswer({ answerAction, text }) {
   // A text that holds what an answer cannot give back, as an image or a
   // note, is never replaced, even when the app asks: the answer is inserted
@@ -179,21 +181,28 @@ async function writeAnswer({ answerAction, text }) {
   const isReplace = Boolean(read) && read.canReplace !== false
   if (isPresentation()) {
     await writePresentation(text, isReplace)
-    return
+    return 0
   }
   const blocks = makeBlocks(text)
-  if (blocks.length === 0) return
+  if (blocks.length === 0) return 0
 
-  await runInEditor(writeBlocks, {
+  const result = await runInEditor(writeBlocks, {
     scope: { blocks, isReplace },
     isRecalculated: true
   })
+  return result?.skippedCells ?? 0
 }
 
 async function applyAnswer(answer) {
   isWriting = true
   try {
-    await writeAnswer(answer)
+    const skippedCells = await writeAnswer(answer)
+    if (hostOrigin) {
+      host.postMessage(
+        { type: 'twake-scribe:applied', skippedCells },
+        hostOrigin
+      )
+    }
     // The answer is left selected: it is not another text to work on
     const selectedText = await fetchSelectedText()
     if (selectedText?.trim()) {

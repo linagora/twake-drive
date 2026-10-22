@@ -219,7 +219,7 @@
         "content": {
           "content": "aragraph\n\n<table>\n  <tr>\n   <td>\n\nAlpha\n\n</td>\n   <td>\n\nBeta\n\n</td>\n  </tr>\n</table>\n\n",
           "target": "selection",
-          "canReplace": false
+          "canReplace": true
         },
         "model": {
           "blocks": [
@@ -259,33 +259,28 @@
         "content": {
           "content": "aragraph\n\n<table>\n  <tr>\n   <td>\n\nAlpha\n\n</td>\n   <td>\n\nBeta\n\n</td>\n  </tr>\n</table>\n\n",
           "target": "selection",
-          "canReplace": false
+          "canReplace": true
         },
         "model": {
           "blocks": [
-            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {"type":"p","runs":[{"t":"Intro p"},{"t":"Head edit"}]},
             {
               "type": "table",
               "grid": [
-                [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
+                [{"blocks":[{"type":"p","runs":[{"t":"AA"}]}]},{"blocks":[{"type":"p","runs":[{"t":"BB"}]}]}],
                 [
                   {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
                   {"blocks":[{"type":"p","runs":[{"t":"Delta"}]},{"type":"p","runs":[{"t":"Delta2"}]}]}
                 ]
               ]
             },
-            {"type":"p","runs":[{"t":"Head edit"}]},
-            {
-              "type": "table",
-              "grid": [[{"blocks":[{"type":"p","runs":[{"t":"AA"}]}]},{"blocks":[{"type":"p","runs":[{"t":"BB"}]}]}]]
-            },
             {"type":"p","runs":[{"t":"Outro paragraph"}]}
           ],
           "selText": "Head edit\nAABB\n",
           "selMarkup": [
-            {"at":{"block":2},"text":"«Head edit»"},
-            {"at":{"block":3,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«AA»"},
-            {"at":{"block":3,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«BB»"}
+            {"at":{"block":0},"text":"Intro p«Head edit»"},
+            {"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«AA»"},
+            {"at":{"block":1,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«BB»"}
           ]
         }
       }
@@ -299,7 +294,7 @@
         "content": {
           "content": "<table>\n  <tr>\n   <td>\n\nGamma\n\n</td>\n   <td>\n\nDelta\n\nDelta2\n\n</td>\n  </tr>\n</table>\n\nOutro p\n\n",
           "target": "selection",
-          "canReplace": false
+          "canReplace": true
         },
         "model": {
           "blocks": [
@@ -339,7 +334,7 @@
         "content": {
           "content": "<table>\n  <tr>\n   <td>\n\nGamma\n\n</td>\n   <td>\n\nDelta\n\nDelta2\n\n</td>\n  </tr>\n</table>\n\nOutro p\n\n",
           "target": "selection",
-          "canReplace": false
+          "canReplace": true
         },
         "model": {
           "blocks": [
@@ -348,24 +343,16 @@
               "type": "table",
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
-                [
-                  {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
-                  {"blocks":[{"type":"p","runs":[{"t":"Delta"}]},{"type":"p","runs":[{"t":"Delta2"}]}]}
-                ]
+                [{"blocks":[{"type":"p","runs":[{"t":"GG"}]}]},{"blocks":[{"type":"p","runs":[{"t":"DD"}]}]}]
               ]
             },
-            {"type":"p","runs":[{"t":"Outro paragraph"}]},
-            {
-              "type": "table",
-              "grid": [[{"blocks":[{"type":"p","runs":[{"t":"GG"}]}]},{"blocks":[{"type":"p","runs":[{"t":"DD"}]}]}]]
-            },
-            {"type":"p","runs":[{"t":"Tail edit"}]}
+            {"type":"p","runs":[{"t":"Tail edit"},{"t":"aragraph"}]}
           ],
           "selText": "GGDD\nTail edit",
           "selMarkup": [
-            {"at":{"block":3,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«GG»"},
-            {"at":{"block":3,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«DD»"},
-            {"at":{"block":4},"text":"«Tail edit»"}
+            {"at":{"block":1,"cell":{"r":1,"c":0},"cellBlock":0},"text":"«GG»"},
+            {"at":{"block":1,"cell":{"r":1,"c":1},"cellBlock":0},"text":"«DD»"},
+            {"at":{"block":2},"text":"«Tail edit»aragraph"}
           ]
         }
       }
@@ -379,7 +366,7 @@
         "content": {
           "content": "<table>\n  <tr>\n   <td>\n\nAlpha\n\n</td>\n   <td>\n\nBeta\n\n</td>\n  </tr>\n  <tr>\n   <td>\n\nGamma\n\n</td>\n   <td>\n\nDelta\n\nDelta2\n\n</td>\n  </tr>\n</table>\n\nOutro paragraph\n\n",
           "target": "selection",
-          "canReplace": false
+          "canReplace": true
         },
         "model": {
           "blocks": [
@@ -411,6 +398,65 @@
             {"at":{"block":3,"cell":{"r":1,"c":0},"cellBlock":0},"text":"«CC»"},
             {"at":{"block":3,"cell":{"r":1,"c":1},"cellBlock":0},"text":"«DD»"},
             {"at":{"block":4},"text":"«ZZZtail»"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "T7",
+      "selection": "T1.C(0,0)@start..P2@end",
+      "answerAction": "replace",
+      "answer": "<table>\n  <tr><td>AA</td><td>BB</td></tr>\n  <tr><td>CC</td><td>DD</td></tr>\n</table>\n\nZZZtail",
+      "expected": {
+        "content": {
+          "content": "<table>\n  <tr>\n   <td>\n\nAlpha\n\n</td>\n   <td>\n\nBeta\n\n</td>\n  </tr>\n  <tr>\n   <td>\n\nGamma\n\n</td>\n   <td>\n\nDelta\n\nDelta2\n\n</td>\n  </tr>\n</table>\n\nOutro paragraph\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"AA"}]}]},{"blocks":[{"type":"p","runs":[{"t":"BB"}]}]}],
+                [{"blocks":[{"type":"p","runs":[{"t":"CC"}]}]},{"blocks":[{"type":"p","runs":[{"t":"DD"}]}]}]
+              ]
+            },
+            {"type":"p","runs":[{"t":"ZZZtail"}]}
+          ],
+          "selText": "AABB\nCCDD\nZZZtail",
+          "selMarkup": [
+            {"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«AA»"},
+            {"at":{"block":1,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«BB»"},
+            {"at":{"block":1,"cell":{"r":1,"c":0},"cellBlock":0},"text":"«CC»"},
+            {"at":{"block":1,"cell":{"r":1,"c":1},"cellBlock":0},"text":"«DD»"},
+            {"at":{"block":2},"text":"«ZZZtail»"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "whole-table-text",
+      "selection": "T1.C(0,0)@start..P2@end",
+      "answerAction": "replace",
+      "answer": "<table>\n  <tr><td>W</td></tr>\n</table>\n\nZZZtail",
+      "expected": {
+        "content": {
+          "content": "<table>\n  <tr>\n   <td>\n\nAlpha\n\n</td>\n   <td>\n\nBeta\n\n</td>\n  </tr>\n  <tr>\n   <td>\n\nGamma\n\n</td>\n   <td>\n\nDelta\n\nDelta2\n\n</td>\n  </tr>\n</table>\n\nOutro paragraph\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {"type":"table","grid":[[{"blocks":[{"type":"p","runs":[{"t":"W"}]}]}]]},
+            {"type":"p","runs":[{"t":"ZZZtail"}]}
+          ],
+          "selText": "W\nZZZtail",
+          "selMarkup": [
+            {"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«W»"},
+            {"at":{"block":2},"text":"«ZZZtail»"}
           ]
         }
       }
@@ -490,6 +536,42 @@
             {"at":{"block":1,"cell":{"r":1,"c":1},"cellBlock":1},"text":"«DDD»"}
           ]
         }
+      }
+    },
+    {
+      "id": "T11",
+      "selection": "P1@mid..T1.C(0,1)@end",
+      "answerAction": "replace",
+      "answer": "Head edit\n\n<table>\n  <tr><td>AA</td></tr>\n</table>",
+      "expected": {
+        "content": {
+          "content": "aragraph\n\n<table>\n  <tr>\n   <td>\n\nAlpha\n\n</td>\n   <td>\n\nBeta\n\n</td>\n  </tr>\n</table>\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro p"},{"t":"Head edit"}]},
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"AA"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Delta"}]},{"type":"p","runs":[{"t":"Delta2"}]}]}
+                ]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "Head edit\nAABeta\n",
+          "selMarkup": [
+            {"at":{"block":0},"text":"Intro p«Head edit»"},
+            {"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«AA»"},
+            {"at":{"block":1,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«Beta»"}
+          ]
+        },
+        "applied": {"skippedCells":1}
       }
     },
     {

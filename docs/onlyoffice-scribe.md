@@ -26,7 +26,7 @@ Drive (OnlyOffice view)
 - The AI button is in the toolbar of the document, for a text document or a presentation the user can edit.
 - With the flag `cozy.assistant.enabled`, the editor has no AI tab of its own: Drive leaves out the AI plugin of OnlyOffice (`editorConfig.plugins.disable`), which would sit beside the assistant.
 - A click opens the assistant in a panel beside the document. Another click, or the cross of the panel, closes it.
-- With a selection, the assistant works on the selected text, and each answer can be inserted after it or can replace it. An answer is text: a selection that holds an image, a chart, an equation, a footnote, a field, a form, a comment or a page break, or that crosses a table or the end of a section, can only have the answers inserted after it.
+- With a selection, the assistant works on the selected text, and each answer can be inserted after it or can replace it. An answer is text: a selection that holds an image, a chart, an equation, a footnote, a field, a form, a comment or a page break, or that crosses the end of a section, or the edges of more than two tables or of a table in a table, can only have the answers inserted after it.
 - Without a selection, the assistant works on the whole document, and each answer can be inserted at the cursor. Nothing replaces a whole document.
 - The text written in the document is left selected: the next answer of the conversation can replace it.
 - Another text selected while the panel is open is the one the next request is about: the conversation goes on, and the prompts are offered again. A click that only moves the cursor changes nothing.
@@ -102,6 +102,7 @@ Drive and the plugin talk with `postMessage`. Drive only listens to the origin o
 | Plugin → Drive | `twake-scribe:selection` | `content`, `target`, `canReplace` | Another text selected, once Drive has asked for one: not for a cursor that moves, nor for an answer just written. Drive gives it to the open assistant (new `data` of the intent). |
 | Drive → Plugin | `twake-scribe:close` | — | The panel is closed: the plugin stops reading the selection, until Drive asks for the text again. |
 | Drive → Plugin | `twake-scribe:applyAnswer` | `answerAction`, `text`, `format` | A result of the Assistant intent, as it is, or the table of an `insert_table` call, written in Markdown by Drive. The plugin writes `text`, in Markdown, in the document. |
+| Plugin → Drive | `twake-scribe:applied` | `skippedCells` | The answer of an `applyAnswer` is written, once Drive has asked for the text and until the panel is closed. `skippedCells` counts the selected cells the answer had no cell for (see [Tables](#tables)), 0 otherwise. |
 | Drive → Plugin | `twake-scribe:insertSlide` | `title`, `bullets` | A slide the assistant has made, checked by Drive. The plugin adds it after the current slide. Presentations only. |
 
 `content` is the `content` of the Assistant intent, and the fields of `applyAnswer` are those of its result.
@@ -113,6 +114,7 @@ Drive and the plugin talk with `postMessage`. Drive only listens to the origin o
 | `replace` | Whole paragraphs | The answer takes their place: a single paragraph in the line, keeping the paragraph, its blocks otherwise. |
 | `replace` | A part of a paragraph | A single block is written in the line: the editor gives a part of a heading or of a list item with its mark, which the answer keeps. Several blocks are written as a pasted text, see below. |
 | `replace` | Parts of paragraphs | The answer is written as a pasted text: its first paragraph continues the text before the selection, its last one the text after it, both in the style of their paragraph. A heading, a list item or a table of the answer stays a block of its own. |
+| `replace` | A text and cells, across the edge of a table | See [Tables](#tables). |
 | `replace` | A text that `canReplace` refuses, or none | Same as `insert`. |
 | any other | A text | The answer is written at the end of the selection, as at a cursor. An answer with a table is written in new paragraphs under the last paragraph of the selection, and any answer under the table when the selection takes cells and more than one cell. |
 | any other | None (cursor in a text) | A single paragraph is written in the line at the cursor, with the space the text needs on each side; several blocks without a table split the paragraph, the first and last plain ones joining its text. At the end of a paragraph, in an empty one, or when the answer has a table, the answer is written in new paragraphs under the paragraph, in its cell when it is in a table (see [Tables](#tables) for a table there). |
@@ -138,6 +140,7 @@ The tables are given and taken in the HTML tags of the Markdown of the editor, w
 | Some cells | Anything else | Written under the table. |
 | A text, or the cursor, in a cell | An answer with a table | Written under the table: the editor would write a table in a table over its cells. |
 | A text | A table | A new table, with the merged cells of the answer. |
+| A text and cells of one or two tables, or cells of two tables, to replace | Tables and other blocks | Each table of the answer is written in the selected cells of a table, in order, row by row, and the cells keep their look; a whole table selected, with a table of another shape, is replaced by it. Each other block takes the place of the selected text of a paragraph, in order, in its line: the text around it is kept. A selected cell without a cell of the answer stays as it was, and is counted in `twake-scribe:applied`; a block without a selected text is not written. The text and the cells are left selected. |
 
 ### Presentations
 

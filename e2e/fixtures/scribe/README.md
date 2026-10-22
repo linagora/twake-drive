@@ -23,7 +23,9 @@ the same.
     plugin gives is checked;
   - `answer`: the Markdown of the answer, as the LLM would write it;
   - `expected`: the text the plugin gives (`content`, `target`) and the
-    document once written (`model`).
+    document once written (`model`); in some cases, what the plugin tells
+    Drive once it has written the answer (`applied`, the message
+    `twake-scribe:applied` without its type), compared only when present.
 
 ## Selections
 
