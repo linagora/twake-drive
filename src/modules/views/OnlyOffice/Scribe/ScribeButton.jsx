@@ -27,7 +27,7 @@ export const ScribeButton = () => {
         className="u-mr-half"
         aria-label={label}
         aria-pressed={isOpen}
-        onClick={isOpen ? close : open}
+        onClick={isOpen ? close : () => open({ source: 'toolbar' })}
       >
         <Icon icon={Assistant} />
       </IconButton>

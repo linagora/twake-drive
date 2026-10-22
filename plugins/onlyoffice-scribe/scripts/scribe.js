@@ -1,4 +1,5 @@
 import { readContent, writeBlocks } from './document.js'
+import { isSameGeometry, readGeometry } from './geometry.js'
 import { makeBlocks, makeLineSpans, makeLines } from './markdown.js'
 import { writeMarkers } from './markers.js'
 import {
@@ -17,10 +18,22 @@ const SELECTION_DELAY = 400
 // An undo or a redo changes the selection: none is read for this time after
 // one, long enough for the throttled timers of a background frame.
 const UNDO_REDO_PAUSE = 3000
+// The editor tells no scroll of its document: the geometry of a selection is
+// read again this often
+const GEOMETRY_INTERVAL = 125
 // The paragraphs of the last answer written in a presentation
 let written = null
 // The origin of the app while its panel is open: it has asked for the text
 let hostOrigin = null
+// The origin of the app that shows the editor, from the address of its frame
+let appOrigin = null
+// The text selected now, and the geometry last given to the app
+let lastSelectedTextLive = ''
+let lastGeometry = null
+let geometryTimer = null
+let geometryFrame = null
+let isZoomWatched = false
+let viewerObserver = null
 // The text last given to the app, its plain text, and whether an answer is
 // being written
 let lastContent = null
@@ -306,6 +319,86 @@ async function handleMessage(event) {
   }
 }
 
+function stopGeometryLoop() {
+  clearTimeout(geometryTimer)
+  if (geometryFrame !== null) window.parent.cancelAnimationFrame(geometryFrame)
+  geometryTimer = null
+  geometryFrame = null
+}
+
+// The frame of the plugin is out of view: the browser runs no animation
+// frame in it, only in the editor
+function loopGeometry() {
+  if (geometryTimer !== null || geometryFrame !== null) return
+  geometryTimer = setTimeout(() => {
+    geometryTimer = null
+    geometryFrame = window.parent.requestAnimationFrame(() => {
+      geometryFrame = null
+      sendGeometry()
+    })
+  }, GEOMETRY_INTERVAL)
+}
+
+// The editor may not be loaded yet when the plugin starts: each reading
+// tries again to watch its zoom and its viewer
+function watchEditor() {
+  const editorWindow = window.parent
+  if (!isZoomWatched && editorWindow.editor?.asc_registerCallback) {
+    editorWindow.editor.asc_registerCallback('asc_onZoomChange', sendGeometry)
+    isZoomWatched = true
+  }
+  const viewer = editorWindow.document.getElementById('id_viewer')
+  if (!viewerObserver && viewer) {
+    viewerObserver = new editorWindow.ResizeObserver(() => sendGeometry())
+    viewerObserver.observe(viewer)
+  }
+}
+
+// Where the selection is, for the app to show its button under it
+function sendGeometry() {
+  if (!appOrigin) return
+  watchEditor()
+  const geometry = readGeometry(
+    window.parent,
+    Boolean(lastSelectedTextLive.trim())
+  )
+  if (geometry.selection) {
+    loopGeometry()
+  } else {
+    stopGeometryLoop()
+    // The editor starts the plugin again when a selection ends, not when it
+    // turns into a cursor: the text read then is no more selected
+    lastSelectedTextLive = ''
+  }
+  if (isSameGeometry(geometry, lastGeometry)) return
+
+  lastGeometry = geometry
+  host.postMessage({ type: 'twake-scribe:geometry', ...geometry }, appOrigin)
+}
+
+async function updateGeometry() {
+  lastSelectedTextLive = (await fetchSelectedText()) ?? ''
+  sendGeometry()
+}
+
+// The editor would call the plugin once its frame is gone
+function unwatchGeometry() {
+  stopGeometryLoop()
+  viewerObserver?.disconnect()
+  if (isZoomWatched) {
+    window.parent.editor?.asc_unregisterCallback?.(
+      'asc_onZoomChange',
+      sendGeometry
+    )
+  }
+}
+
+function watchGeometry() {
+  window.Asc.plugin.attachEditorEvent('onTargetPositionChanged', sendGeometry)
+  window.addEventListener('pagehide', unwatchGeometry)
+  updateGeometry()
+}
+
 // The api.js of the Document Server gives the editor the origin of the app
 // that shows it, in the address of its frame
 function findHostOrigin() {
@@ -324,12 +417,15 @@ function findHostOrigin() {
 window.Asc.plugin.init = () => {
   if (isStarted) {
     handleSelectionChange()
+    updateGeometry()
     return
   }
   isStarted = true
   window.addEventListener('message', handleMessage)
   watchUndoRedo()
   // Without the origin of the app, the plugin stays silent: no AI button
-  const origin = findHostOrigin()
-  if (origin) host.postMessage({ type: 'twake-scribe:ready' }, origin)
+  appOrigin = findHostOrigin()
+  if (!appOrigin) return
+  host.postMessage({ type: 'twake-scribe:ready' }, appOrigin)
+  watchGeometry()
 }

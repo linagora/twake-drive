@@ -660,6 +660,7 @@
       "insert": "Insert",
       "replace": "Replace",
       "insertSlide": "Insert the slide",
+      "selectionMenu": "Scribe Menu",
       "suggestions": {
         "newSlide": "New slide",
         "newSlideMessage": "Add a new slide after this one, about the text",

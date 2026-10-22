@@ -14,10 +14,21 @@ import {
   normalizeSlide,
   normalizeTable
 } from '@/modules/views/OnlyOffice/Scribe/capabilities'
+import { FRAME_EDITOR_NAME } from '@/modules/views/OnlyOffice/config'
 
 const ScribeContext = createContext({ isAvailable: false, isOpen: false })
 
 export const useScribe = () => useContext(ScribeContext)
+
+const findFrameBox = () =>
+  document.getElementsByName(FRAME_EDITOR_NAME)[0]?.getBoundingClientRect() ??
+  null
+
+// The plugin gives the geometry in pixels of the editor frame
+const makeGeometry = ({ selection, viewer }) => {
+  const frame = findFrameBox()
+  return frame === null ? null : { selection, viewer, frame }
+}
 
 /**
  * Talks to the scribe plugin of the Document Server (plugins/onlyoffice-scribe)
@@ -27,6 +38,8 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
   const serverOrigin = new URL(serverUrl).origin
   const [plugin, setPlugin] = useState(null)
   const [text, setText] = useState(null)
+  const [geometry, setGeometry] = useState(null)
+  const [source, setSource] = useState(null)
 
   useEffect(() => {
     const handleMessage = event => {
@@ -39,11 +52,23 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
       if (type === 'twake-scribe:selection') {
         setText(current => (current === null ? null : text))
       }
+      if (type === 'twake-scribe:geometry') {
+        setGeometry(makeGeometry(event.data))
+      }
     }
 
     window.addEventListener('message', handleMessage)
     return () => window.removeEventListener('message', handleMessage)
   }, [serverOrigin])
+
+  useEffect(() => {
+    const handleResize = () => {
+      setGeometry(current => current && makeGeometry(current))
+    }
+
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   const value = useMemo(() => {
     // The plugin has no message for a table: it goes in as a Markdown
@@ -88,9 +113,13 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
       target: text?.target,
       canReplace: text?.canReplace,
       documentType,
+      geometry,
+      source,
       // The panel opens once the plugin answers with twake-scribe:content
-      open: () =>
-        plugin.postMessage({ type: 'twake-scribe:getContent' }, serverOrigin),
+      open: ({ source = null } = {}) => {
+        setSource(source)
+        plugin.postMessage({ type: 'twake-scribe:getContent' }, serverOrigin)
+      },
       // The plugin reads every selection while the panel is open, which
       // empties the redo of the editor: it stops once the panel is closed
       close: () => {
@@ -108,7 +137,7 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
         )
       }
     }
-  }, [plugin, text, serverOrigin, documentType])
+  }, [plugin, text, geometry, source, serverOrigin, documentType])
 
   return (
     <ScribeContext.Provider value={value}>{children}</ScribeContext.Provider>

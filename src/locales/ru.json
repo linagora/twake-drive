@@ -660,6 +660,7 @@
       "insert": "Вставить",
       "replace": "Заменить",
       "insertSlide": "Вставить слайд",
+      "selectionMenu": "Меню Scribe",
       "suggestions": {
         "newSlide": "Новый слайд",
         "newSlideMessage": "Добавь новый слайд после этого, по тексту",

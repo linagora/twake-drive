@@ -54,7 +54,7 @@ describe('ScribeButton', () => {
 
     fireEvent.click(queryButton())
 
-    expect(open).toHaveBeenCalled()
+    expect(open).toHaveBeenCalledWith({ source: 'toolbar' })
     expect(queryButton().getAttribute('aria-pressed')).toBe('false')
   })
 

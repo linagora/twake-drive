@@ -7,6 +7,7 @@ import { test, expect, stamp } from '../helpers/fixtures'
 import { DEFAULT_FLAGS, setFlags } from '../helpers/flags'
 import { createFile, trashById } from '../helpers/stack'
 import { ScribePage } from '../pages/ScribePage'
+import { type Geometry, ScribePluginPage } from '../pages/ScribePluginPage'
 
 // Drive's chrome around the scribe plugin, with the assistant of the e2e
 // stack. The stack has no LLM: no test waits for an answer of the assistant.
@@ -75,5 +76,52 @@ test.describe('the scribe of Drive', { tag: '@e2e-scribe' }, () => {
 
     await scribe.closePanel()
     await expect(scribe.panel()).toBeHidden()
+  })
+
+  test('a button under the selection opens the scribe', async ({
+    alicePage
+  }) => {
+    const fileId = await uploadScribeDocument(
+      USERS.alice.instance,
+      'a-family.docx'
+    )
+    const scribe = new ScribePage(alicePage)
+    const plugin = new ScribePluginPage(alicePage)
+    await scribe.openDocument(USERS.alice.appUrl, fileId)
+    await scribe.watchMessages()
+
+    await scribe.selectInEditor('P1@start..P1@end')
+    await expect(scribe.selectionButton()).toBeVisible()
+
+    // The keys that end the selection each send a geometry: the button
+    // follows the last one
+    let geometry: Geometry | null = null
+    await expect(async () => {
+      geometry = (await plugin.takeGeometry()) ?? geometry
+      const frame = await scribe.editorFrame().boundingBox()
+      const button = await scribe.selectionButton().boundingBox()
+      const disc = await scribe.selectionDiscBox()
+      const [endX, endY] = geometry?.selection?.rect.corners[3] ?? []
+      if (!frame || !button || !disc || endX === undefined) {
+        throw new Error('No geometry of the selection or of its button')
+      }
+      expect(button.x).toBeGreaterThanOrEqual(frame.x)
+      expect(button.y).toBeGreaterThanOrEqual(frame.y)
+      expect(button.x + button.width).toBeLessThanOrEqual(frame.x + frame.width)
+      expect(button.y + button.height).toBeLessThanOrEqual(
+        frame.y + frame.height
+      )
+      // The disc is 4 px below and right of the end of the selection
+      expect(disc.x).toBeGreaterThanOrEqual(frame.x + endX)
+      expect(disc.y).toBeGreaterThanOrEqual(frame.y + endY)
+      expect(disc.x - (frame.x + endX + 4)).toBeLessThanOrEqual(1)
+      expect(disc.y - (frame.y + endY + 4)).toBeLessThanOrEqual(1)
+    }).toPass({ timeout: 10_000 })
+
+    await scribe.selectionButton().click()
+    await expect(scribe.panel()).toBeVisible()
+
+    await scribe.selectInEditor('P2@mid')
+    await expect(scribe.selectionButton()).toBeHidden()
   })
 })

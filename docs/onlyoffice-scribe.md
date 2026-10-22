@@ -10,6 +10,7 @@ Drive does not talk to the LLM, and does not read or format the document. It lin
 ```
 Drive (OnlyOffice view)
   ├─ AI button of the toolbar ── opens ──▶ side panel
+  ├─ button under the selection ── opens ──▶ side panel
   │                                          └─ Assistant intent (iframe of Twake Assistant)
   │                                               content, answerActions, capabilities, suggestions ◀── Drive
   │                                               result { answerAction, text } ──▶ Drive
@@ -19,7 +20,8 @@ Drive (OnlyOffice view)
             twake-scribe:getContent, twake-scribe:close,
             twake-scribe:applyAnswer, twake-scribe:insertSlide ◀── Drive
             twake-scribe:ready, twake-scribe:content,
-            twake-scribe:selection, twake-scribe:applied ──▶ Drive
+            twake-scribe:selection, twake-scribe:applied,
+            twake-scribe:geometry ──▶ Drive
 ```
 
 ## For the user
@@ -27,6 +29,7 @@ Drive (OnlyOffice view)
 - The AI button is in the toolbar of the document, for a text document or a presentation the user can edit.
 - With the flag `cozy.assistant.enabled`, the editor has no AI tab of its own: Drive leaves out the AI plugin of OnlyOffice (`editorConfig.plugins.disable`), which would sit beside the assistant.
 - A click opens the assistant in a panel beside the document. Another click, or the cross of the panel, closes it.
+- A text selected in a text document shows a small sparkle button under its end, "Scribe Menu": a click opens the assistant on it too, see [The button under the selection](#the-button-under-the-selection).
 - With a selection, the assistant works on the selected text, and each answer can be inserted after it or can replace it. An answer is text, so a selection that holds what it cannot give back can only have the answers inserted after it: a chart, an equation, an endnote, a field, a content control or a form, a comment, a page or column break, a footnote in a cell of a table or in a code, or an image the plugin cannot give a marker. So can a selection that crosses the end of a section, or the edges of more than two tables or of a table in a table. See [What an answer can replace](#what-an-answer-can-replace).
 - The underlined text of the selection stays underlined. Its footnotes, its links to a heading or a bookmark of the document and its images are given to the assistant as markers, and written back where the answer keeps them, as new notes, links and copies of the images, see [Markers](#markers).
 - Without a selection, the assistant works on the whole document, and each answer can be inserted at the cursor. Nothing replaces a whole document.
@@ -70,6 +73,7 @@ The plugin is a background plugin of the document editor: it has no interface of
 | `scripts/markdown.js` | Turns the Markdown of an answer into blocks (paragraphs, headings, quotes, list items, blocks of code, tables and images) with its markers, and into lines for a presentation |
 | `scripts/document.js` | Functions run inside the text editor: read the text with its markers, write the blocks and the copies of the images |
 | `scripts/markers.js` | Function run inside the text editor, in the command that writes an answer, once it is written: write the notes and the links of its markers |
+| `scripts/geometry.js` | Reads where the selection is drawn, from the page of the editor and without a command, see [The button under the selection](#the-button-under-the-selection) |
 | `scripts/presentation.js` | Functions run inside the presentation editor: read a slide, write lines in its shapes |
 
 It relies on the editor for both ways:
@@ -107,8 +111,21 @@ Drive and the plugin talk with `postMessage`. Drive only listens to the origin o
 | Drive → Plugin | `twake-scribe:applyAnswer` | `answerAction`, `text`, `format` | A result of the Assistant intent, as it is, or the table of an `insert_table` call, written in Markdown by Drive. The plugin writes `text`, in Markdown, in the document. |
 | Plugin → Drive | `twake-scribe:applied` | `skippedCells` | The answer of an `applyAnswer` is written, once Drive has asked for the text and until the panel is closed. `skippedCells` counts the selected cells the answer had no cell for (see [Tables](#tables)), 0 otherwise. |
 | Drive → Plugin | `twake-scribe:insertSlide` | `title`, `bullets` | A slide the assistant has made, checked by Drive. The plugin adds it after the current slide. Presentations only. |
+| Plugin → Drive | `twake-scribe:geometry` | `selection`, `viewer`, `page` | Where the selection is, in pixels of the editor frame, sent from the start and each time it changes. Drive shows its button under the selection with it, see [The button under the selection](#the-button-under-the-selection). |
 
 `content` is the `content` of the Assistant intent, and the fields of `applyAnswer` are those of its result.
+
+### The button under the selection
+
+The plugin reads where the selection is drawn from the page of the editor, without a command, which would empty the redo: `editor.asc_GetSelectionBounds()` and the box of `#id_viewer`. It sends `twake-scribe:geometry` when a selection ends (the editor starts the plugin again, and the plugin reads the selected text with `GetSelectedText`), when the editor moves its cursor (`onTargetPositionChanged`), zooms (`asc_onZoomChange`) or resizes its viewer, and every 125 ms while a text is selected, since the editor tells no scroll. A geometry that has not changed is not sent again.
+
+- `selection`: `{ rect: { left, top, width, height, corners }, hasText }`, or `null` for a cursor alone, a selection without text (an image alone), and while the editor has no document. `corners` are the four corners the editor gives (start top, start bottom, end top, end bottom), moved from the top left of its viewer, where the editor counts them, to the top left of its frame; `rect` is their box.
+- `viewer`: the box of `#id_viewer` in the frame, the part of the editor that shows the document.
+- `page`: `null`.
+
+The editor starts the plugin when a user ends a selection, not when its API selects a text: such a selection gets its button once the user changes it. The presentation editor has no `asc_GetSelectionBounds`: a presentation has no button under its selection.
+
+Drive adds the box of the editor frame, taken when a geometry comes and when the window is resized. It shows a sparkle button 4 px below and right of the end of the selection (`corners[3]`), over the editor, while the AI button is shown (see [When the button is shown](#when-the-button-is-shown)), the selection has text, and the disc of the button is inside the viewer: a selection scrolled out of it has no button. A click opens the panel, as the AI button does.
 
 ### What an answer can replace
 

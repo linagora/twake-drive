@@ -36,6 +36,7 @@
       "insert": "Wstaw",
       "replace": "Zastąp",
       "insertSlide": "Wstaw slajd",
+      "selectionMenu": "Menu Scribe",
       "suggestions": {
         "newSlide": "Nowy slajd",
         "newSlideMessage": "Dodaj nowy slajd po tym, na temat tekstu",
