@@ -9,7 +9,7 @@ import { ScribePluginPage, type ScribeContent } from '../pages/ScribePluginPage'
 
 // The selection cases of the scribe plugin (plugins/onlyoffice-scribe), each
 // played on a document as Drive plays them: a text is selected, the plugin
-// gives it, then writes an answer in its place or under it. See
+// gives it, then writes an answer in its place or after it. See
 // e2e/fixtures/scribe/README.md. SCRIBE_UPDATE=1 writes what the plugin does
 // as the expected result.
 

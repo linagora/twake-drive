@@ -88,7 +88,7 @@
               "type": "table",
               "grid": [
                 [
-                  {"blocks":[{"type":"p","runs":[{"t":"The quick brown fox"}]},{"type":"p","runs":[{"t":"XXX"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"The quick"},{"t":" "},{"t":"XXX"},{"t":" brown fox"}]}]},
                   {"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}
                 ],
                 [
@@ -105,8 +105,8 @@
             },
             {"type":"p","runs":[{"t":"Outro paragraph"}]}
           ],
-          "selText": "XXX",
-          "selMarkup": [{"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":1},"text":"«XXX»"}]
+          "selText": " XXX",
+          "selMarkup": [{"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":0},"text":"The quick« XXX» brown fox"}]
         }
       }
     },
@@ -128,7 +128,7 @@
               "type": "table",
               "grid": [
                 [
-                  {"blocks":[{"type":"p","runs":[{"t":"The quick brown fox"}]},{"type":"p","runs":[{"t":"XXX"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"The quick"},{"t":" "},{"t":"XXX"},{"t":" brown fox"}]}]},
                   {"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}
                 ],
                 [
@@ -145,8 +145,8 @@
             },
             {"type":"p","runs":[{"t":"Outro paragraph"}]}
           ],
-          "selText": "XXX",
-          "selMarkup": [{"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":1},"text":"«XXX»"}]
+          "selText": " XXX",
+          "selMarkup": [{"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":0},"text":"The quick« XXX» brown fox"}]
         }
       }
     },
@@ -164,7 +164,7 @@
               "type": "table",
               "grid": [
                 [
-                  {"blocks":[{"type":"p","runs":[{"t":"The quick brown fox"}]},{"type":"p","runs":[{"t":"XXX"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"The quick brown"},{"t":" "},{"t":"XXX"},{"t":" fox"}]}]},
                   {"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}
                 ],
                 [
@@ -181,8 +181,8 @@
             },
             {"type":"p","runs":[{"t":"Outro paragraph"}]}
           ],
-          "selText": "XXX",
-          "selMarkup": [{"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":1},"text":"«XXX»"}]
+          "selText": " XXX",
+          "selMarkup": [{"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":0},"text":"The quick brown« XXX» fox"}]
         }
       }
     },
@@ -308,7 +308,7 @@
               "type": "table",
               "grid": [
                 [
-                  {"blocks":[{"type":"p","runs":[{"t":"The quick brown fox"}]},{"type":"p","runs":[{"t":"XXX"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"The "},{"t":"XXX"},{"t":" "},{"t":"quick brown fox"}]}]},
                   {"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}
                 ],
                 [
@@ -325,8 +325,8 @@
             },
             {"type":"p","runs":[{"t":"Outro paragraph"}]}
           ],
-          "selText": "XXX",
-          "selMarkup": [{"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":1},"text":"«XXX»"}]
+          "selText": "XXX ",
+          "selMarkup": [{"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":0},"text":"The «XXX »quick brown fox"}]
         }
       }
     },
@@ -478,9 +478,8 @@
                     "blocks": [
                       {"type":"p","runs":[{"t":"The quick brown fox"}]},
                       {"type":"p","runs":[{"t":"Jumps over the dog"}]},
-                      {"type":"p","runs":[{"t":"Lazy river flows"}]},
-                      {"type":"p","runs":[{"t":"First"}]},
-                      {"type":"p","runs":[{"t":"Second"}]}
+                      {"type":"p","runs":[{"t":"Lazy riv"},{"t":" "},{"t":"First"}]},
+                      {"type":"p","runs":[{"t":"Second"},{"t":" "},{"t":"er flows"}]}
                     ]
                   }
                 ]
@@ -488,10 +487,10 @@
             },
             {"type":"p","runs":[{"t":"Outro paragraph"}]}
           ],
-          "selText": "First\nSecond",
+          "selText": " First\nSecond ",
           "selMarkup": [
-            {"at":{"block":1,"cell":{"r":1,"c":1},"cellBlock":3},"text":"«First»"},
-            {"at":{"block":1,"cell":{"r":1,"c":1},"cellBlock":4},"text":"«Second»"}
+            {"at":{"block":1,"cell":{"r":1,"c":1},"cellBlock":2},"text":"Lazy riv« First»"},
+            {"at":{"block":1,"cell":{"r":1,"c":1},"cellBlock":3},"text":"«Second »er flows"}
           ]
         }
       }

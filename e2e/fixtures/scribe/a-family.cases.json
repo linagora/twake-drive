@@ -14,13 +14,13 @@
         },
         "model": {
           "blocks": [
-            {"type":"p","runs":[{"t":"The quick brown fox"}]},
             {"type":"p","runs":[{"t":"Injected"}],"style":"Heading 1","lvl":1},
+            {"type":"p","runs":[{"t":"The quick brown fox"}]},
             {"type":"p","runs":[{"t":"Jumps over the dog"}]},
             {"type":"p","runs":[{"t":"Lazy river flows"}]}
           ],
-          "selText": "Injected",
-          "selMarkup": [{"at":{"block":1},"text":"«Injected»"}]
+          "selText": "Injected\n",
+          "selMarkup": [{"at":{"block":0},"text":"«Injected»"}]
         }
       }
     },
@@ -74,12 +74,13 @@
         },
         "model": {
           "blocks": [
-            {"type":"p","runs":[{"t":"The quick brown fox"}]},
+            {"type":"p","runs":[{"t":"The quick"}]},
             {"type":"p","runs":[{"t":"Injected"}],"style":"Heading 1","lvl":1},
+            {"type":"p","runs":[{"t":" brown fox"}]},
             {"type":"p","runs":[{"t":"Jumps over the dog"}]},
             {"type":"p","runs":[{"t":"Lazy river flows"}]}
           ],
-          "selText": "Injected",
+          "selText": "Injected\n",
           "selMarkup": [{"at":{"block":1},"text":"«Injected»"}]
         }
       }
@@ -97,12 +98,13 @@
         },
         "model": {
           "blocks": [
-            {"type":"p","runs":[{"t":"The quick brown fox"}]},
+            {"type":"p","runs":[{"t":"The quick"}]},
             {"type":"p","runs":[{"t":"Injected"}],"style":"Heading 1","lvl":1},
+            {"type":"p","runs":[{"t":" brown fox"}]},
             {"type":"p","runs":[{"t":"Jumps over the dog"}]},
             {"type":"p","runs":[{"t":"Lazy river flows"}]}
           ],
-          "selText": "Injected",
+          "selText": "Injected\n",
           "selMarkup": [{"at":{"block":1},"text":"«Injected»"}]
         }
       }
@@ -153,12 +155,13 @@
         "content": {"content":"The \n\n","target":"selection","canReplace":true},
         "model": {
           "blocks": [
-            {"type":"p","runs":[{"t":"The quick brown fox"}]},
+            {"type":"p","runs":[{"t":"The "}]},
             {"type":"p","runs":[{"t":"Injected"}],"style":"Heading 1","lvl":1},
+            {"type":"p","runs":[{"t":"quick brown fox"}]},
             {"type":"p","runs":[{"t":"Jumps over the dog"}]},
             {"type":"p","runs":[{"t":"Lazy river flows"}]}
           ],
-          "selText": "Injected",
+          "selText": "Injected\n",
           "selMarkup": [{"at":{"block":1},"text":"«Injected»"}]
         }
       }
@@ -194,13 +197,12 @@
         },
         "model": {
           "blocks": [
-            {"type":"p","runs":[{"t":"The quick brown fox"}]},
-            {"type":"p","runs":[{"t":"XXX"}]},
+            {"type":"p","runs":[{"t":"XXX"},{"t":" "},{"t":"The quick brown fox"}]},
             {"type":"p","runs":[{"t":"Jumps over the dog"}]},
             {"type":"p","runs":[{"t":"Lazy river flows"}]}
           ],
-          "selText": "XXX",
-          "selMarkup": [{"at":{"block":1},"text":"«XXX»"}]
+          "selText": "XXX ",
+          "selMarkup": [{"at":{"block":0},"text":"«XXX »The quick brown fox"}]
         }
       }
     },
@@ -254,13 +256,12 @@
         },
         "model": {
           "blocks": [
-            {"type":"p","runs":[{"t":"The quick brown fox"}]},
-            {"type":"p","runs":[{"t":"XXX"}]},
+            {"type":"p","runs":[{"t":"The quick"},{"t":" "},{"t":"XXX"},{"t":" brown fox"}]},
             {"type":"p","runs":[{"t":"Jumps over the dog"}]},
             {"type":"p","runs":[{"t":"Lazy river flows"}]}
           ],
-          "selText": "XXX",
-          "selMarkup": [{"at":{"block":1},"text":"«XXX»"}]
+          "selText": " XXX",
+          "selMarkup": [{"at":{"block":0},"text":"The quick« XXX» brown fox"}]
         }
       }
     },
@@ -277,13 +278,12 @@
         },
         "model": {
           "blocks": [
-            {"type":"p","runs":[{"t":"The quick brown fox"}]},
-            {"type":"p","runs":[{"t":"XXX"}]},
+            {"type":"p","runs":[{"t":"The quick"},{"t":" "},{"t":"XXX"},{"t":" brown fox"}]},
             {"type":"p","runs":[{"t":"Jumps over the dog"}]},
             {"type":"p","runs":[{"t":"Lazy river flows"}]}
           ],
-          "selText": "XXX",
-          "selMarkup": [{"at":{"block":1},"text":"«XXX»"}]
+          "selText": " XXX",
+          "selMarkup": [{"at":{"block":0},"text":"The quick« XXX» brown fox"}]
         }
       }
     },
@@ -296,13 +296,12 @@
         "content": {"content":"brown\n\n","target":"selection","canReplace":true},
         "model": {
           "blocks": [
-            {"type":"p","runs":[{"t":"The quick brown fox"}]},
-            {"type":"p","runs":[{"t":"XXX"}]},
+            {"type":"p","runs":[{"t":"The quick brown"},{"t":" "},{"t":"XXX"},{"t":" fox"}]},
             {"type":"p","runs":[{"t":"Jumps over the dog"}]},
             {"type":"p","runs":[{"t":"Lazy river flows"}]}
           ],
-          "selText": "XXX",
-          "selMarkup": [{"at":{"block":1},"text":"«XXX»"}]
+          "selText": " XXX",
+          "selMarkup": [{"at":{"block":0},"text":"The quick brown« XXX» fox"}]
         }
       }
     },
@@ -370,13 +369,12 @@
         "content": {"content":"The \n\n","target":"selection","canReplace":true},
         "model": {
           "blocks": [
-            {"type":"p","runs":[{"t":"The quick brown fox"}]},
-            {"type":"p","runs":[{"t":"XXX"}]},
+            {"type":"p","runs":[{"t":"The "},{"t":"XXX"},{"t":" "},{"t":"quick brown fox"}]},
             {"type":"p","runs":[{"t":"Jumps over the dog"}]},
             {"type":"p","runs":[{"t":"Lazy river flows"}]}
           ],
-          "selText": "XXX",
-          "selMarkup": [{"at":{"block":1},"text":"«XXX»"}]
+          "selText": "XXX ",
+          "selMarkup": [{"at":{"block":0},"text":"The «XXX »quick brown fox"}]
         }
       }
     },
@@ -613,7 +611,7 @@
       "id": "cursor-third",
       "selection": "P3@mid",
       "answerAction": "insert",
-      "answer": "Under the third paragraph.",
+      "answer": "In the third paragraph.",
       "expected": {
         "content": {
           "content": "The quick brown fox\n\nJumps over the dog\n\nLazy river flows\n\n",
@@ -624,11 +622,13 @@
           "blocks": [
             {"type":"p","runs":[{"t":"The quick brown fox"}]},
             {"type":"p","runs":[{"t":"Jumps over the dog"}]},
-            {"type":"p","runs":[{"t":"Lazy river flows"}]},
-            {"type":"p","runs":[{"t":"Under the third paragraph."}]}
+            {
+              "type": "p",
+              "runs": [{"t":"Lazy riv"},{"t":" "},{"t":"In the third paragraph."},{"t":" "},{"t":"er flows"}]
+            }
           ],
-          "selText": "Under the third paragraph.",
-          "selMarkup": [{"at":{"block":3},"text":"«Under the third paragraph.»"}]
+          "selText": " In the third paragraph. ",
+          "selMarkup": [{"at":{"block":2},"text":"Lazy riv« In the third paragraph. »er flows"}]
         }
       }
     },

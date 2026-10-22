@@ -26,8 +26,8 @@ Drive (OnlyOffice view)
 - The AI button is in the toolbar of the document, for a text document or a presentation the user can edit.
 - With the flag `cozy.assistant.enabled`, the editor has no AI tab of its own: Drive leaves out the AI plugin of OnlyOffice (`editorConfig.plugins.disable`), which would sit beside the assistant.
 - A click opens the assistant in a panel beside the document. Another click, or the cross of the panel, closes it.
-- With a selection, the assistant works on the selected text, and each answer can be inserted under it or can replace it. An answer is text: a selection that holds an image, a chart, an equation, a footnote, a field, a form, a comment or a page break, or that crosses a table or the end of a section, can only have the answers inserted under it.
-- Without a selection, the assistant works on the whole document, and each answer can be inserted under the paragraph of the cursor. Nothing replaces a whole document.
+- With a selection, the assistant works on the selected text, and each answer can be inserted after it or can replace it. An answer is text: a selection that holds an image, a chart, an equation, a footnote, a field, a form, a comment or a page break, or that crosses a table or the end of a section, can only have the answers inserted after it.
+- Without a selection, the assistant works on the whole document, and each answer can be inserted at the cursor. Nothing replaces a whole document.
 - The text written in the document is left selected: the next answer of the conversation can replace it.
 - Another text selected while the panel is open is the one the next request is about: the conversation goes on, and the prompts are offered again. A click that only moves the cursor changes nothing.
 
@@ -114,8 +114,10 @@ Drive and the plugin talk with `postMessage`. Drive only listens to the origin o
 | `replace` | A part of a paragraph | A single block is written in the line: the editor gives a part of a heading or of a list item with its mark, which the answer keeps. Several blocks are written as a pasted text, see below. |
 | `replace` | Parts of paragraphs | The answer is written as a pasted text: its first paragraph continues the text before the selection, its last one the text after it, both in the style of their paragraph. A heading, a list item or a table of the answer stays a block of its own. |
 | `replace` | A text that `canReplace` refuses, or none | Same as `insert`. |
-| any other | A text | The answer is written in new paragraphs, under the last paragraph of the selection, or under the table when the selection takes cells and more than one cell. |
-| any other | None | The answer is written in new paragraphs, under the paragraph of the cursor, in its cell when it is in a table. |
+| any other | A text | The answer is written at the end of the selection, as at a cursor, or under the table when the selection takes cells and more than one cell. |
+| any other | None (cursor in a text) | A single paragraph is written in the line at the cursor, with the space the text needs on each side; several blocks split the paragraph, the first and last plain ones joining its text. At the end of a paragraph, or in an empty one, the answer is written in new paragraphs under it, in its cell when it is in a table. |
+
+A text inserted in a line, at the cursor or at the end of a selection, is kept apart from the text around it: a space before it when the character before is not a space, one after it likewise, never two. The spaces are selected with the answer.
 
 An empty paragraph where the answer goes, as the one of an empty document, takes the answer itself; a paragraph that holds only a page break, an image or a field, or that ends a section, is not empty, and one between a table and a table of the answer stays, to keep the two tables apart. Whole paragraphs replaced by several blocks leave the end of their last paragraph after them: it is removed when empty, and kept when it holds a note or an image that followed the text, or the end of a section. The spaces around a part of a paragraph are kept: the answer of a LLM never has them. A selection that starts at the end of a line does not take the paragraph of that line. List items written in place of items of a list stay in that list, numbered after the items above them; a heading numbered by its style is no list. The answer is left selected.
 
