@@ -51,7 +51,7 @@
   "homepage": "https://github.com/cozy/cozy-drive#readme",
   "devDependencies": {
     "@playwright/test": "1.64.1",
-    "@rsbuild/core": "^2.2.7",
+    "@rsbuild/core": "^2.2.14",
     "@swc-contrib/mut-cjs-exports": "^14.7.0",
     "@swc/core": "^1.15.18",
     "@swc/jest": "^0.2.39",
