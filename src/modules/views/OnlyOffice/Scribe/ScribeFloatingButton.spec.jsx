@@ -12,20 +12,22 @@ import { useScribe } from '@/modules/views/OnlyOffice/Scribe/ScribeProvider'
 
 const mockPlay = jest.fn()
 const mockGoToAndStop = jest.fn()
+const mockLottieProps = jest.fn()
 
 jest.mock('cozy-flags')
 jest.mock('@/modules/views/OnlyOffice/Scribe/ScribeProvider', () => ({
   useScribe: jest.fn()
 }))
-// lottie-web draws on a canvas that jsdom does not have
+// Over the mock of jest.config.js: the button drives the mark by its ref
 jest.mock('lottie-react', () => {
   const { useImperativeHandle } = jest.requireActual('react')
-  const Lottie = ({ lottieRef }) => {
-    useImperativeHandle(lottieRef, () => ({
+  const Lottie = props => {
+    mockLottieProps(props)
+    useImperativeHandle(props.lottieRef, () => ({
       play: mockPlay,
       goToAndStop: mockGoToAndStop
     }))
-    return null
+    return <div data-testid="scribe-button-mark" />
   }
   return { __esModule: true, default: Lottie }
 })
@@ -51,6 +53,7 @@ const setup = ({
     useScribe.mockReturnValue({
       isAvailable: true,
       isOpen: false,
+      documentType: 'word',
       geometry: GEOMETRY,
       open,
       close,
@@ -81,13 +84,15 @@ const setup = ({
 
 const queryButton = () => screen.queryByRole('button', { name: 'Scribe Panel' })
 const getZone = () => screen.getByTestId('scribe-floating-button')
+// The mark comes in its own chunk, after the button
+const findMark = () => screen.findByTestId('scribe-button-mark')
 
 describe('ScribeFloatingButton', () => {
   afterEach(() => {
     delete window.matchMedia
   })
 
-  it('places the button at the top right of the document area', () => {
+  it('places the button at the top right of the document area', async () => {
     setup()
 
     expect(queryButton()).toBeInTheDocument()
@@ -95,9 +100,10 @@ describe('ScribeFloatingButton', () => {
     // 12 px inside the right and top edges of the viewer, 48 px wide
     expect(style.left).toBe(`${10 + 59 + 1167 - 12 - 48}px`)
     expect(style.top).toBe(`${49 + 174 + 12}px`)
+    await findMark()
   })
 
-  it('keeps the button inside the left edge of a narrow document area', () => {
+  it('keeps the button inside the left edge of a narrow document area', async () => {
     setup({
       scribe: {
         geometry: {
@@ -108,12 +114,13 @@ describe('ScribeFloatingButton', () => {
     })
 
     expect(getZone().style.left).toBe(`${10 + 59 + 12}px`)
+    await findMark()
   })
 
   it.each([
     ['without geometry', null],
     ['without a viewer', { ...GEOMETRY, viewer: null }]
-  ])('falls back to the bottom right %s', (_, geometry) => {
+  ])('falls back to the bottom right %s', async (_, geometry) => {
     setup({ scribe: { geometry } })
 
     expect(queryButton()).toBeInTheDocument()
@@ -121,10 +128,12 @@ describe('ScribeFloatingButton', () => {
     expect(zone.style.left).toBe('')
     expect(zone.style.top).toBe('')
     expect(zone).toHaveClass('scribe-floating-button--corner')
+    await findMark()
   })
 
-  it('toggles the panel', () => {
+  it('toggles the panel', async () => {
     const { open, close, rerender } = setup()
+    await findMark()
 
     fireEvent.click(queryButton())
     expect(open).toHaveBeenCalledWith({ source: 'floating' })
@@ -137,8 +146,24 @@ describe('ScribeFloatingButton', () => {
     expect(open).toHaveBeenCalledTimes(1)
   })
 
-  it('plays its mark while the pointer is over it', () => {
+  it('stops its mark on click, as the button moves from under the pointer', async () => {
     setup()
+    await findMark()
+
+    fireEvent.mouseEnter(queryButton())
+    fireEvent.click(queryButton())
+
+    expect(mockGoToAndStop).toHaveBeenCalledWith(0)
+  })
+
+  it('plays its mark only while the pointer is over it', async () => {
+    setup()
+    await findMark()
+
+    expect(mockLottieProps).toHaveBeenLastCalledWith(
+      expect.objectContaining({ autoplay: false })
+    )
+    expect(mockPlay).not.toHaveBeenCalled()
 
     fireEvent.mouseEnter(queryButton())
     expect(mockPlay).toHaveBeenCalledTimes(1)
@@ -147,13 +172,14 @@ describe('ScribeFloatingButton', () => {
     expect(mockGoToAndStop).toHaveBeenCalledWith(0)
   })
 
-  it('keeps its mark still for a user who asks for less motion', () => {
+  it('keeps its mark still for a user who asks for less motion', async () => {
     window.matchMedia = query => ({
       matches: query === '(prefers-reduced-motion: reduce)',
       addListener: () => {},
       removeListener: () => {}
     })
     setup()
+    await findMark()
 
     fireEvent.mouseEnter(queryButton())
 
@@ -167,7 +193,8 @@ describe('ScribeFloatingButton', () => {
     ],
     ['on a public page', { isPublic: true }],
     ['on a document the user cannot change', { isReadOnly: true }],
-    ['without the assistant', { isAssistantEnabled: false }]
+    ['without the assistant', { isAssistantEnabled: false }],
+    ['in a presentation', { scribe: { documentType: 'slide' } }]
   ])('is not shown %s', (_, options) => {
     setup(options)
 

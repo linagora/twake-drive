@@ -1,6 +1,5 @@
 import cx from 'classnames'
-import Lottie from 'lottie-react'
-import React, { useRef } from 'react'
+import React, { Suspense, lazy, useRef } from 'react'
 
 import flag from 'cozy-flags'
 import ButtonBase from 'cozy-ui/transpiled/react/ButtonBase'
@@ -9,11 +8,17 @@ import Tooltip from 'cozy-ui/transpiled/react/Tooltip'
 import { useCozyTheme } from 'cozy-ui-plus/dist/providers/CozyTheme'
 import { useI18n } from 'twake-i18n'
 
-import buttonAnimation from './assets/scribeButtonAnimation.json'
 import styles from './styles.styl'
 
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
 import { useScribe } from '@/modules/views/OnlyOffice/Scribe/ScribeProvider'
+
+// lottie-web and the animation weigh about 85 kB gzip: they stay out of the
+// entry chunks, for a button only an open text document shows
+const ScribeButtonMark = lazy(async () => {
+  const { ScribeButtonMark } = await import('./ScribeButtonMark')
+  return { default: ScribeButtonMark }
+})
 
 const BUTTON_WIDTH = 48
 const EDGE_MARGIN = 12
@@ -40,11 +45,15 @@ export const ScribeFloatingButton = () => {
   const { t } = useI18n()
   const { type: themeType } = useCozyTheme()
   const { isPublic, isReadOnly } = useOnlyOfficeContext()
-  const { isAvailable, isOpen, geometry, open, close } = useScribe()
+  const { isAvailable, isOpen, documentType, geometry, open, close } =
+    useScribe()
   const lottieRef = useRef(null)
 
   if (!isAvailable || isPublic || isReadOnly) return null
   if (!flag('cozy.assistant.enabled')) return null
+  // The plugin sends no geometry for a presentation: the button would stay
+  // in the corner of the window, over the panel once open
+  if (documentType !== 'word') return null
 
   const position = findButtonPosition(geometry)
   const label = t('OnlyOffice.scribe.panel')
@@ -52,8 +61,15 @@ export const ScribeFloatingButton = () => {
   const handleMouseEnter = () => {
     if (!isMotionReduced()) lottieRef.current?.play()
   }
-  const handleMouseLeave = () => {
+  const stopMark = () => {
     lottieRef.current?.goToAndStop(0)
+  }
+  // The panel resizes the viewer, so the button moves from under a still
+  // pointer, which gets no mouseleave until it moves
+  const handleClick = () => {
+    stopMark()
+    if (isOpen) close()
+    else open({ source: 'floating' })
   }
 
   return (
@@ -76,9 +92,9 @@ export const ScribeFloatingButton = () => {
             aria-label={label}
             aria-pressed={isOpen}
             disableRipple
-            onClick={isOpen ? close : () => open({ source: 'floating' })}
+            onClick={handleClick}
             onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
+            onMouseLeave={stopMark}
           >
             <div
               className={cx(
@@ -86,16 +102,9 @@ export const ScribeFloatingButton = () => {
                 styles['scribe-floating-button-slot']
               )}
             >
-              <Lottie
-                className={cx(
-                  'u-pos-absolute',
-                  styles['scribe-floating-button-mark']
-                )}
-                lottieRef={lottieRef}
-                animationData={buttonAnimation}
-                autoplay={false}
-                aria-hidden="true"
-              />
+              <Suspense fallback={null}>
+                <ScribeButtonMark lottieRef={lottieRef} />
+              </Suspense>
             </div>
           </ButtonBase>
         </Tooltip>
