@@ -245,14 +245,44 @@ function readEditor(): ScribeModel {
   }
   const count = (json: string, pattern: RegExp): number =>
     json.match(pattern)?.length ?? 0
+  interface JsonElement {
+    type?: string
+    content?: (string | JsonElement)[]
+    footnotes?: JsonElement[]
+  }
+  const findElements = (element?: JsonElement): JsonElement[] =>
+    (element?.content ?? []).filter(
+      (item): item is JsonElement => typeof item === 'object'
+    )
+  // The plain text of an element of the JSON of a paragraph: a tab or a
+  // line break is a space
+  const readJsonText = (element?: JsonElement): string =>
+    (element?.content ?? [])
+      .map(item => {
+        if (typeof item === 'string') return item
+        if (['tab', 'break'].includes(item.type ?? '')) return ' '
+        return ['run', 'hyperlink'].includes(item.type ?? '')
+          ? readJsonText(item)
+          : ''
+      })
+      .join('')
+  // The JSON of a run holds the notes of its references, in their order
+  const readNoteTexts = (element?: JsonElement): string[] =>
+    findElements(element).flatMap(item => [
+      ...(item.footnotes ?? []).map(note =>
+        readJsonText(findElements(note)[0]).trim()
+      ),
+      ...readNoteTexts(item)
+    ])
   // `normalizeModel` leaves out what is missing or counts 0
   const readParagraph = (paragraph: any): any => {
     const style = paragraph.GetStyle()?.GetName()
     const level = paragraph.GetOutlineLvl()
     const json = paragraph.ToJSON(false, false)
-    const { pPr } = JSON.parse(json as string) as {
+    const parsed = JSON.parse(json as string) as JsonElement & {
       pPr?: { sectPr?: unknown; shd?: unknown }
     }
+    const { pPr } = parsed
     return {
       type: 'p',
       runs: readRuns(paragraph),
@@ -261,6 +291,7 @@ function readEditor(): ScribeModel {
       list: readList(paragraph),
       images: paragraph.GetAllDrawingObjects().length,
       notes: count(json, /"type":"footnoteRef"/g),
+      noteTexts: readNoteTexts(parsed),
       pageBreaks: count(json, /"breakType":"page"/g),
       // The section properties of a note are in its own JSON: only the ones
       // of the paragraph tell that it ends a section
@@ -498,6 +529,14 @@ export class ScribePluginPage {
       ;(
         window as unknown as { editor: { asc_undoAllChanges: () => void } }
       ).editor.asc_undoAllChanges()
+    })
+    await this.page.waitForTimeout(300)
+  }
+
+  /** Undoes the last change, as Ctrl+Z */
+  async undo(): Promise<void> {
+    await this.editor().evaluate(() => {
+      ;(window as unknown as { editor: { Undo: () => void } }).editor.Undo()
     })
     await this.page.waitForTimeout(300)
   }

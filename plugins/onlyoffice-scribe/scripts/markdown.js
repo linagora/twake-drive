@@ -39,15 +39,21 @@ function makeText(text, marks) {
   return { ...marks, text: decodeEntities(text).replace(/\n/g, ' ') }
 }
 
+// A link is a single text: the notes of its text come after it
 function makeLinkSpans(token, marks) {
-  const spans = makeSpans(token.tokens, marks)
+  const all = makeSpans(token.tokens, marks)
+  const notes = all.filter(span => span.note !== undefined)
+  const spans = all.filter(span => span.note === undefined)
   const text = spans.map(span => span.text ?? ' ').join('')
   // Other links, as `javascript:` ones, are written as their text
-  if (!LINK_PROTOCOL.test(token.href)) return [{ ...marks, text }]
+  if (!LINK_PROTOCOL.test(token.href)) return [{ ...marks, text }, ...notes]
 
   // A link is written in one look: underlined when all its text is
   const isUnderline = spans.every(span => span.isUnderline)
-  return [{ text, href: token.href, ...(isUnderline && { isUnderline }) }]
+  return [
+    { text, href: token.href, ...(isUnderline && { isUnderline }) },
+    ...notes
+  ]
 }
 
 // The marks an inline token sets on the text it holds

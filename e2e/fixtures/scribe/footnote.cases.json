@@ -28,11 +28,24 @@
         },
         "model": {
           "blocks": [
-            {"type":"p","runs":[{"t":"The budget is voted."},{"t":" The works begin in June."}],"notes":1},
+            {"type":"p","runs":[{"t":"The budget is voted."},{"t":" The works begin in June."}],"notes":1,"noteTexts":["Voted on May 3."]},
             {"type":"p","runs":[{"t":"Next steps follow."}]}
           ],
           "selText": "The budget is voted. The works begin in June.",
           "selMarkup": [{"at":{"block":0},"text":"«The budget is voted. The works begin in June.»"}]
+        },
+        "undone": {
+          "blocks": [
+            {
+              "type": "p",
+              "runs": [{"t":"The budget is approved."},{"t":" The works start in June."}],
+              "notes": 1,
+              "noteTexts": ["Voted on May 3."]
+            },
+            {"type":"p","runs":[{"t":"Next steps follow."}]}
+          ],
+          "selText": "The budget is approved. The works start in June.\n",
+          "selMarkup": [{"at":{"block":0},"text":"«The budget is approved. The works start in June.»"}]
         }
       }
     },
@@ -49,8 +62,8 @@
         },
         "model": {
           "blocks": [
-            {"type":"p","runs":[{"t":"The budget is approved."},{"t":" The works start in June."}],"notes":1},
-            {"type":"p","runs":[{"t":"The budget is voted."}],"notes":1},
+            {"type":"p","runs":[{"t":"The budget is approved."},{"t":" The works start in June."}],"notes":1,"noteTexts":["Voted on May 3."]},
+            {"type":"p","runs":[{"t":"The budget is voted."}],"notes":1,"noteTexts":["Voted on May 3."]},
             {"type":"p","runs":[{"t":"Next steps follow."}]}
           ],
           "selText": "The budget is voted.",
@@ -95,7 +108,8 @@
             {
               "type": "p",
               "runs": [{"t":"The budget"},{"t":" is voted."},{"t":" The works begin in June."}],
-              "notes": 2
+              "notes": 2,
+              "noteTexts": ["Voted on May 3.", "Voted on May 3."]
             },
             {"type":"p","runs":[{"t":"Next steps follow."}]}
           ],
@@ -116,7 +130,8 @@
             {
               "type": "p",
               "runs": [{"t":"The budget is approved."},{"t":" "},{"t":"Works begin in June."}],
-              "notes": 1
+              "notes": 1,
+              "noteTexts": ["Voted on May 3."]
             },
             {"type":"p","runs":[{"t":"Next steps follow."}]}
           ],

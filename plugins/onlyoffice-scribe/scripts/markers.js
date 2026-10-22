@@ -75,15 +75,22 @@ export function writeMarkers() {
     selectInRun(run, match.index, end).Delete()
   }
 
-  // A run at an offset of the text of a paragraph
-  const findCursor = (paragraph, offset) => {
+  // A run at an offset of the text of a paragraph. Between two runs, the
+  // start of the answer is in the later one and its end in the earlier one:
+  // a note reference of the text around it, which has no text, stays out.
+  const findCursor = (paragraph, offset, isStart) => {
+    const runs = getRuns(paragraph)
     let passed = 0
-    for (const run of getRuns(paragraph)) {
+    for (const run of runs) {
       const { length } = run.GetText()
-      if (offset <= passed + length) return { run, at: offset - passed }
+      const isIn = isStart
+        ? offset < passed + length
+        : offset <= passed + length
+      if (isIn) return { run, at: offset - passed }
       passed += length
     }
-    return null
+    const last = runs[runs.length - 1]
+    return isStart && last ? { run: last, at: last.GetText().length } : null
   }
 
   const count = paragraphs
@@ -109,7 +116,7 @@ export function writeMarkers() {
     writeNote(found)
   }
 
-  const start = findCursor(first, head)
+  const start = findCursor(first, head, true)
   const end = findCursor(last, countText(last) - tail)
   if (start && end) {
     selectInRun(start.run, start.at, start.at)

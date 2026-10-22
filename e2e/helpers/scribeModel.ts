@@ -20,8 +20,10 @@ export interface ScribeParagraph {
   // The level of the item and the label the editor numbers it with
   list?: [number, string]
   images?: number
-  // The references to footnotes
+  // The references to footnotes, and the plain text of the first paragraph
+  // of each of their notes
   notes?: number
+  noteTexts?: string[]
   pageBreaks?: number
   // The paragraph ends a section of the document
   section?: 1
@@ -84,19 +86,21 @@ const PARAGRAPH_FIELDS = [
   'list',
   'images',
   'notes',
+  'noteTexts',
   'pageBreaks',
   'section',
   'shade'
 ] as const
 
-// The level 0 of the outline is a level, a count of 0 is nothing
+// The level 0 of the outline is a level, a count of 0 or no text is nothing
 const hasField = (
   paragraph: ScribeParagraph,
   field: (typeof PARAGRAPH_FIELDS)[number]
-): boolean =>
-  field === 'lvl'
-    ? typeof paragraph.lvl === 'number'
-    : Boolean(paragraph[field])
+): boolean => {
+  if (field === 'lvl') return typeof paragraph.lvl === 'number'
+  if (field === 'noteTexts') return (paragraph.noteTexts?.length ?? 0) > 0
+  return Boolean(paragraph[field])
+}
 
 const normalizeParagraph = (paragraph: ScribeParagraph): ScribeParagraph => ({
   type: 'p',

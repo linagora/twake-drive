@@ -443,6 +443,19 @@ describe('makeBlocks', () => {
     ])
   })
 
+  it('gives a footnote marker of a link text after the link', () => {
+    expect(
+      makeBlocks('[a[^scribe-fn-1] b](https://a.b) [c[^scribe-fn-2]](x:y)')[0]
+        .spans
+    ).toEqual([
+      { text: 'a b', href: 'https://a.b' },
+      { note: 1 },
+      { text: ' ' },
+      { text: 'c' },
+      { note: 2 }
+    ])
+  })
+
   it('leaves the HTML tags out, and loads no image', () => {
     const blocks = makeBlocks(
       'Un <span>souligné</span><br>puis ![une image](https://example.org/a.png)\n\n<div onclick="alert(1)">Un bloc</div>'
