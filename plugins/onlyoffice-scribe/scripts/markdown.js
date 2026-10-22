@@ -39,7 +39,8 @@ function makeText(text, marks) {
   return { ...marks, text: decodeEntities(text).replace(/\n/g, ' ') }
 }
 
-// A link is a single text: the notes of its text come after it
+// A link is a single text: the notes of its text come after it, and a
+// reference in it, which would be a link in a link, is text of the link
 function makeLinkSpans(token, marks) {
   const all = makeSpans(token.tokens, marks)
   const notes = all.filter(span => span.note !== undefined)
@@ -64,11 +65,12 @@ const MARKS = {
   underline: 'isUnderline'
 }
 
-// The text between <u> tags, and the markers of the footnotes of the text, in
-// the form `marked.use` gives the extensions to the lexer. A tag left open is
-// left out, as the other tags.
+// The text between <u> tags, and the markers of the footnotes and of the
+// references of the text, in the form `marked.use` gives the extensions to
+// the lexer. A tag left open is left out, as the other tags.
 const UNDERLINE = /^<u>([\s\S]*?)<\/u>/i
 const NOTE = /^\[\^scribe-fn-(\d+)\]/
+const REF = /^\{\{REF:scribe-ref-(\d+):([^}]*)\}\}/
 const EXTENSIONS = {
   inline: [
     function tokenizeUnderline(src) {
@@ -84,11 +86,22 @@ const EXTENSIONS = {
       const match = src.match(NOTE)
       if (!match) return null
       return { type: 'note', raw: match[0], note: Number(match[1]) }
+    },
+    function tokenizeRef(src) {
+      const match = src.match(REF)
+      if (!match) return null
+      return {
+        type: 'ref',
+        raw: match[0],
+        ref: Number(match[1]),
+        text: match[2]
+      }
     }
   ],
   startInline: [
     src => src.match(/<u>/i)?.index,
-    src => src.match(/\[\^scribe-fn-\d+\]/)?.index
+    src => src.match(/\[\^scribe-fn-\d+\]/)?.index,
+    src => src.match(/\{\{REF:scribe-ref-\d+:/)?.index
   ]
 }
 
@@ -96,6 +109,7 @@ const EXTENSIONS = {
 const INLINE_TOKENS = {
   codespan: (token, marks) => [{ ...marks, text: token.text, isCode: true }],
   note: token => [{ note: token.note }],
+  ref: (token, marks) => [{ ...makeText(token.text, marks), ref: token.ref }],
   link: makeLinkSpans,
   br: () => [{ isBreak: true }],
   // The tags are left out: the text they hold comes in its own tokens

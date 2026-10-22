@@ -49,9 +49,11 @@ paragraph, the cells are taken whole, as the editor does.
 
 `model` is the document as `e2e/helpers/scribeModel.ts` describes it: each
 paragraph with its runs (text, bold `b`, italic `i`, underline `u`,
-strikethrough `s`, `code`, `link`), its style when it is not Normal, its list
+strikethrough `s`, `code`, `link`, and `anchor`, the bookmark a link to a
+place of the document goes to), its style when it is not Normal, its list
 level and label, its images, notes (`notes`, their count, and `noteTexts`, the
-plain text of the first paragraph of each note) and page breaks, whether it
+plain text of the first paragraph of each note), the names of the bookmarks
+that start in it (`bookmarks`) and its page breaks, whether it
 ends a section and whether it is shaded (`shade`); each table with the width
 it asks for
 (`width`: `100%` of the width of the text, or points as `240pt`), whether it

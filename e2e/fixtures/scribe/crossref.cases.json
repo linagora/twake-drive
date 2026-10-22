@@ -1,0 +1,215 @@
+{
+  "document": "crossref.docx",
+  "cases": [
+    {
+      "id": "refs-content",
+      "selection": "P2@start..P2@end",
+      "answerAction": null,
+      "answer": null,
+      "expected": {
+        "content": {
+          "content": "See {{REF:scribe-ref-1:Budget}} above and the {{REF:scribe-ref-2:note}}.\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": null
+      }
+    },
+    {
+      "id": "refs-part",
+      "selection": "P2@6..P2@end",
+      "answerAction": null,
+      "answer": null,
+      "expected": {
+        "content": {
+          "content": "dget above and the {{REF:scribe-ref-1:note}}.\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": null
+      }
+    },
+    {
+      "id": "refs-kept",
+      "selection": "P2@start..P2@end",
+      "answerAction": "replace",
+      "answer": "Look at {{REF:scribe-ref-1:the budget}} and {{REF:scribe-ref-2:this note}}.",
+      "expected": {
+        "content": {
+          "content": "See {{REF:scribe-ref-1:Budget}} above and the {{REF:scribe-ref-2:note}}.\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Budget"}],"style":"Heading 1","lvl":1,"bookmarks":["_Budget"]},
+            {
+              "type": "p",
+              "runs": [
+                {"t":"Look at "},
+                {"t":"the budget","anchor":"_Budget"},
+                {"t":" and "},
+                {"t":"this note","anchor":"mynote"},
+                {"t":"."}
+              ]
+            },
+            {"type":"p","runs":[{"t":"The note."}],"bookmarks":["mynote"]},
+            {"type":"p","runs":[{"t":"Plan"}],"style":"Heading 1","lvl":1},
+            {"type":"p","runs":[{"t":"Read the "},{"t":"plan","anchor":"_Plan"},{"t":" first."}]}
+          ],
+          "selText": "Look at the budget and this note.",
+          "selMarkup": [{"at":{"block":1},"text":"«Look at  and .»"}]
+        },
+        "undone": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Budget"}],"style":"Heading 1","lvl":1,"bookmarks":["_Budget"]},
+            {
+              "type": "p",
+              "runs": [
+                {"t":"See "},
+                {"t":"Budget","anchor":"_Budget"},
+                {"t":" above and the "},
+                {"t":"note","anchor":"mynote"},
+                {"t":"."}
+              ]
+            },
+            {"type":"p","runs":[{"t":"The note."}],"bookmarks":["mynote"]},
+            {"type":"p","runs":[{"t":"Plan"}],"style":"Heading 1","lvl":1},
+            {"type":"p","runs":[{"t":"Read the "},{"t":"plan","anchor":"_Plan"},{"t":" first."}]}
+          ],
+          "selText": "See Budget above and the note.\n",
+          "selMarkup": [{"at":{"block":1},"text":"«See  above and the .»"}]
+        }
+      }
+    },
+    {
+      "id": "refs-moved",
+      "selection": "P2@start..P2@end",
+      "answerAction": "replace",
+      "answer": "Look at {{REF:scribe-ref-2:this note}} and {{REF:scribe-ref-1:the budget}}.",
+      "expected": {
+        "content": {
+          "content": "See {{REF:scribe-ref-1:Budget}} above and the {{REF:scribe-ref-2:note}}.\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Budget"}],"style":"Heading 1","lvl":1,"bookmarks":["_Budget"]},
+            {
+              "type": "p",
+              "runs": [
+                {"t":"Look at "},
+                {"t":"this note","anchor":"mynote"},
+                {"t":" and "},
+                {"t":"the budget","anchor":"_Budget"},
+                {"t":"."}
+              ]
+            },
+            {"type":"p","runs":[{"t":"The note."}],"bookmarks":["mynote"]},
+            {"type":"p","runs":[{"t":"Plan"}],"style":"Heading 1","lvl":1},
+            {"type":"p","runs":[{"t":"Read the "},{"t":"plan","anchor":"_Plan"},{"t":" first."}]}
+          ],
+          "selText": "Look at this note and the budget.",
+          "selMarkup": [{"at":{"block":1},"text":"«Look at  and .»"}]
+        }
+      }
+    },
+    {
+      "id": "refs-kept",
+      "selection": "P2@start..P2@end",
+      "answerAction": "insert",
+      "answer": "{{REF:scribe-ref-2:The note}} and {{REF:scribe-ref-1:the budget}}",
+      "expected": {
+        "content": {
+          "content": "See {{REF:scribe-ref-1:Budget}} above and the {{REF:scribe-ref-2:note}}.\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Budget"}],"style":"Heading 1","lvl":1,"bookmarks":["_Budget"]},
+            {
+              "type": "p",
+              "runs": [
+                {"t":"See "},
+                {"t":"Budget","anchor":"_Budget"},
+                {"t":" above and the "},
+                {"t":"note","anchor":"mynote"},
+                {"t":"."}
+              ]
+            },
+            {"type":"p","runs":[{"t":"The note","anchor":"mynote"},{"t":" and "},{"t":"the budget","anchor":"_Budget"}]},
+            {"type":"p","runs":[{"t":"The note."}],"bookmarks":["mynote"]},
+            {"type":"p","runs":[{"t":"Plan"}],"style":"Heading 1","lvl":1},
+            {"type":"p","runs":[{"t":"Read the "},{"t":"plan","anchor":"_Plan"},{"t":" first."}]}
+          ],
+          "selText": "The note and the budget",
+          "selMarkup": [{"at":{"block":2},"text":"« and »"}]
+        }
+      }
+    },
+    {
+      "id": "refs-heading",
+      "selection": "P5@start..P5@end",
+      "answerAction": "replace",
+      "answer": "Read {{REF:scribe-ref-1:the plan}} before {{REF:scribe-ref-2:the budget}}.",
+      "expected": {
+        "content": {
+          "content": "Read the {{REF:scribe-ref-1:plan}} first.\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Budget"}],"style":"Heading 1","lvl":1,"bookmarks":["_Budget"]},
+            {
+              "type": "p",
+              "runs": [
+                {"t":"See "},
+                {"t":"Budget","anchor":"_Budget"},
+                {"t":" above and the "},
+                {"t":"note","anchor":"mynote"},
+                {"t":"."}
+              ]
+            },
+            {"type":"p","runs":[{"t":"The note."}],"bookmarks":["mynote"]},
+            {"type":"p","runs":[{"t":"Plan"}],"style":"Heading 1","lvl":1,"bookmarks":["scribe_heading_1"]},
+            {
+              "type": "p",
+              "runs": [
+                {"t":"Read "},
+                {"t":"the plan","anchor":"scribe_heading_1"},
+                {"t":" before "},
+                {"t":"the budget"},
+                {"t":"."}
+              ]
+            }
+          ],
+          "selText": "Read the plan before the budget.",
+          "selMarkup": [{"at":{"block":4},"text":"«Read  before the budget.»"}]
+        },
+        "undone": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Budget"}],"style":"Heading 1","lvl":1,"bookmarks":["_Budget"]},
+            {
+              "type": "p",
+              "runs": [
+                {"t":"See "},
+                {"t":"Budget","anchor":"_Budget"},
+                {"t":" above and the "},
+                {"t":"note","anchor":"mynote"},
+                {"t":"."}
+              ]
+            },
+            {"type":"p","runs":[{"t":"The note."}],"bookmarks":["mynote"]},
+            {"type":"p","runs":[{"t":"Plan"}],"style":"Heading 1","lvl":1},
+            {"type":"p","runs":[{"t":"Read the "},{"t":"plan","anchor":"_Plan"},{"t":" first."}]}
+          ],
+          "selText": "Read the plan first.\n",
+          "selMarkup": [{"at":{"block":4},"text":"«Read the  first.»"}]
+        }
+      }
+    }
+  ]
+}

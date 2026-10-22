@@ -5,22 +5,27 @@
 // of them, and their parameters come in `Asc.scope`.
 
 /**
- * Writes the notes of the answer that `writeBlocks` has written and left
- * selected: each placeholder of a note marker takes a new note, whose text is
- * the one of the marker (`Asc.scope.notes`, the N-th for the marker N). The
- * placeholder of a marker the text read did not give is removed. The answer
- * stays selected.
+ * Writes the notes and the references of the answer that `writeBlocks` has
+ * written and left selected: each placeholder of a note marker takes a new
+ * note, whose text is the one of the marker (`Asc.scope.notes`, the N-th for
+ * the marker N), and the text between the placeholders of a reference
+ * becomes a link to the place of the reference (`Asc.scope.refs`). The
+ * placeholder of a marker the text read did not give is removed, and so are
+ * the placeholders of a reference whose place is not found: its text stays
+ * plain. The answer stays selected.
  *
  * @returns {boolean}
  */
 export function writeMarkers() {
-  const { notes = [] } = Asc.scope
+  const { notes = [], refs = [] } = Asc.scope
   const doc = Api.GetDocument()
   const answer = doc.GetRangeBySelect()
   const paragraphs = answer?.GetAllParagraphs() ?? []
   // NUL characters, which no text of a document holds
-  // eslint-disable-next-line no-control-regex
-  const PLACEHOLDER = /\u0000fn:(\d+)\u0000/
+  const PLACEHOLDER =
+    // eslint-disable-next-line no-control-regex
+    /\u0000fn:(?<note>\d+)\u0000|\u0000ref:(?<ref>\d+)\u0000(?<text>[^\u0000]*)\u0000\/ref\u0000/
+  const REF_END = '\u0000/ref\u0000'
 
   // The runs of a paragraph, those of its links included
   const getRuns = paragraph => {
@@ -64,7 +69,7 @@ export function writeMarkers() {
   // placeholder keeps its place in its run until it is removed
   const writeNote = ({ run, match }) => {
     const end = match.index + match[0].length
-    const text = notes[Number(match[1]) - 1]
+    const text = notes[Number(match.groups.note) - 1]
     if (typeof text === 'string') {
       selectInRun(run, match.index, end)
       const content = doc.AddFootnote()
@@ -73,6 +78,59 @@ export function writeMarkers() {
       content?.GetElement(0).AddElement(noteRun)
     }
     selectInRun(run, match.index, end).Delete()
+  }
+
+  const findHeading = anchor => {
+    const name = anchor
+      .replace(/^_/, '')
+      .replace(/_/g, ' ')
+      .trim()
+      .toLowerCase()
+    return (
+      doc
+        .GetAllHeadingParagraphs()
+        .find(
+          heading =>
+            heading.GetText({ Numbering: false }).trim().toLowerCase() === name
+        ) ?? null
+    )
+  }
+
+  // A bookmark added under a name in use moves there, with the links to it
+  const makeBookmarkName = number => {
+    const names = doc.GetAllBookmarksNames()
+    let index = number
+    while (names.includes(`scribe_heading_${index}`)) index += 1
+    return `scribe_heading_${index}`
+  }
+
+  // The bookmark of the reference N, or a new one on the heading its anchor
+  // names, as Word and the editor name the bookmark of a heading: `_` before
+  // its text and in place of its spaces. Null when there is none.
+  const ensureBookmark = number => {
+    const ref = refs[number - 1]
+    if (typeof ref?.anchor !== 'string') return null
+    if (ref.kind !== 'heading') return ref.anchor
+    const heading = findHeading(ref.anchor)
+    if (!heading) return null
+    const name = makeBookmarkName(number)
+    heading.GetRange().AddBookmark(name)
+    return name
+  }
+
+  // The placeholders are removed before the link splits the run, the end one
+  // first: removing the start one moves it
+  const writeRef = ({ run, match }) => {
+    const { ref, text } = match.groups
+    const start = match.index
+    const textEnd = start + match[0].length - REF_END.length
+    const textStart = textEnd - text.length
+    selectInRun(run, textEnd, textEnd + REF_END.length).Delete()
+    selectInRun(run, start, textStart).Delete()
+    const bookmark = ensureBookmark(Number(ref))
+    if (bookmark) {
+      run.GetRange(start, start + text.length).AddHyperlink('', '', bookmark)
+    }
   }
 
   // A run at an offset of the text of a paragraph. Between two runs, the
@@ -113,7 +171,8 @@ export function writeMarkers() {
   for (let i = 0; i < count; i += 1) {
     const found = findPlaceholder()
     if (!found) break
-    writeNote(found)
+    if (found.match.groups.note) writeNote(found)
+    else writeRef(found)
   }
 
   const start = findCursor(first, head, true)
