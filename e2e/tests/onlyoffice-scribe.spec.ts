@@ -1,8 +1,10 @@
 import { readFileSync, readdirSync, writeFileSync } from 'fs'
 import path from 'path'
 
+import { ensureAppInstalled } from '../helpers/apps'
 import { USERS } from '../helpers/config'
 import { test, expect, stamp } from '../helpers/fixtures'
+import { DEFAULT_FLAGS, setFlags } from '../helpers/flags'
 import type { ScribeModel } from '../helpers/scribeModel'
 import { createFile, trashById } from '../helpers/stack'
 import {
@@ -65,6 +67,24 @@ const suites = readdirSync(FIXTURE_DIR)
 // The documents go to the trash after their test: in a runtime kept between
 // runs, they would fill the root of the Drive of Alice
 const fileIds: string[] = []
+test.beforeAll(() => {
+  ensureAppInstalled(
+    USERS.alice.instance,
+    'assistant',
+    'registry://assistant/dev'
+  )
+  setFlags(USERS.alice.instance, {
+    ...DEFAULT_FLAGS,
+    'cozy.assistant.enabled': true
+  })
+})
+// The stack merges flags: DEFAULT_FLAGS alone would leave this one on
+test.afterAll(() => {
+  setFlags(USERS.alice.instance, {
+    ...DEFAULT_FLAGS,
+    'cozy.assistant.enabled': false
+  })
+})
 test.afterEach(async () => {
   for (const fileId of fileIds.splice(0)) {
     await trashById(USERS.alice.instance, fileId)

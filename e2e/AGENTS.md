@@ -31,6 +31,7 @@ docs: `../docs/e2e.md`.
   `countFileVersions()`, `waitForVersionWindow()`, `findLinkPermission()`,
   `setLinkExpiry()`.
 - `helpers/flags.ts` — `setFlags(instance, {...})`.
+- `helpers/apps.ts` — `isAppInstalled()`, `ensureAppInstalled()`.
 
 Page objects live in `pages/` (DrivePage, FileRow, SidebarPage, ShareModal,
 FileViewer, FilePicker, …). Read the file for its methods.

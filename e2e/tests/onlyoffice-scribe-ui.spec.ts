@@ -1,8 +1,10 @@
 import { readFileSync } from 'fs'
 import path from 'path'
 
+import { ensureAppInstalled } from '../helpers/apps'
 import { USERS } from '../helpers/config'
 import { test, expect, stamp } from '../helpers/fixtures'
+import { DEFAULT_FLAGS, setFlags } from '../helpers/flags'
 import { createFile, trashById } from '../helpers/stack'
 import { ScribePage } from '../pages/ScribePage'
 
@@ -16,6 +18,24 @@ const DOCX =
 // In a runtime kept between runs, the documents would fill the root of the
 // Drive
 const uploaded: { instance: string; fileId: string }[] = []
+test.beforeAll(() => {
+  ensureAppInstalled(
+    USERS.alice.instance,
+    'assistant',
+    'registry://assistant/dev'
+  )
+  setFlags(USERS.alice.instance, {
+    ...DEFAULT_FLAGS,
+    'cozy.assistant.enabled': true
+  })
+})
+// The stack merges flags: DEFAULT_FLAGS alone would leave this one on
+test.afterAll(() => {
+  setFlags(USERS.alice.instance, {
+    ...DEFAULT_FLAGS,
+    'cozy.assistant.enabled': false
+  })
+})
 test.afterEach(async () => {
   for (const { instance, fileId } of uploaded.splice(0)) {
     await trashById(instance, fileId)
