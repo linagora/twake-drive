@@ -122,19 +122,19 @@ export function writeMarkers() {
   // The bookmark of the reference N, if the answer has not replaced the text
   // that held it, or else a single bookmark on the heading its anchor names:
   // `_` before its text and for its spaces, as Word and the editor name them
-  const madeBookmarks = {}
+  const madeBookmarks = new Map()
   const ensureBookmark = number => {
     const ref = refs[number - 1]
     if (typeof ref?.anchor !== 'string') return null
     const { anchor, kind } = ref
     if (kind === 'bookmark' && hasBookmark(anchor)) return anchor
     if (!anchor.startsWith('_')) return null
-    if (madeBookmarks[anchor]) return madeBookmarks[anchor]
+    if (madeBookmarks.has(anchor)) return madeBookmarks.get(anchor)
     const heading = findHeading(anchor)
     if (!heading) return null
     const name = makeBookmarkName(number)
     heading.GetRange().AddBookmark(name)
-    madeBookmarks[anchor] = name
+    madeBookmarks.set(anchor, name)
     return name
   }
 
