@@ -267,7 +267,6 @@ export function readContent() {
     const parts = []
     let copied = 0
     let at = 0
-    // Whether a text of the paragraph being read was found
     let hasParagraphText = false
 
     const replace = (start, end, text) => {
