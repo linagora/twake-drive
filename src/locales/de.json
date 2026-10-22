@@ -661,6 +661,7 @@
       "replace": "Ersetzen",
       "insertSlide": "Folie einfügen",
       "selectionMenu": "Scribe-Menü",
+      "panel": "Scribe-Bereich",
       "suggestions": {
         "newSlide": "Neue Folie",
         "newSlideMessage": "Füge nach dieser Folie eine neue Folie zum Text hinzu",

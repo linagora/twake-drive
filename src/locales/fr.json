@@ -661,6 +661,7 @@
       "replace": "Remplacer",
       "insertSlide": "Insérer la diapositive",
       "selectionMenu": "Menu Scribe",
+      "panel": "Panneau Scribe",
       "suggestions": {
         "newSlide": "Nouvelle diapositive",
         "newSlideMessage": "Ajoute une nouvelle diapositive après celle-ci, à partir du texte",

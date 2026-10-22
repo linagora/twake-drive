@@ -661,6 +661,7 @@
       "replace": "Заменить",
       "insertSlide": "Вставить слайд",
       "selectionMenu": "Меню Scribe",
+      "panel": "Панель Scribe",
       "suggestions": {
         "newSlide": "Новый слайд",
         "newSlideMessage": "Добавь новый слайд после этого, по тексту",
