@@ -124,7 +124,7 @@ const useTransformFolderListHasSharedDriveShortcuts = (
                     drive_root_type: DRIVE_ROOT_TYPE.FILE
                   }
                 : {})
-            } as TransformedSharedDrive
+            }
           ]
 
         return [

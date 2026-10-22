@@ -43,7 +43,7 @@ const DuplicateModal: FC<DuplicateModalProps> = ({
       await Promise.all(
         entries.map(async entry => {
           await registerCancelable(
-            models.file.copy(client, entry as Partial<File>, folder, {
+            models.file.copy(client, entry, folder, {
               driveId: entry.driveId
             })
           )
