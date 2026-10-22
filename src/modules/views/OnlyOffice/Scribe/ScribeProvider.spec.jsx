@@ -1,12 +1,16 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import React from 'react'
 
+import flag from 'cozy-flags'
+
 import logger from '@/lib/logger'
+import { OnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
 import {
   ScribeProvider,
   useScribe
 } from '@/modules/views/OnlyOffice/Scribe/ScribeProvider'
 
+jest.mock('cozy-flags')
 jest.mock('@/lib/logger', () => ({ warn: jest.fn() }))
 
 const SERVER_URL = 'https://onlyoffice.example.org/'
@@ -71,7 +75,16 @@ const ScribeState = ({ results = [] }) => {
   )
 }
 
-const setup = ({ documentType = 'word', results } = {}) => {
+const setup = ({
+  documentType = 'word',
+  results,
+  isPublic = false,
+  isReadOnly = false,
+  isAssistantEnabled = true
+} = {}) => {
+  flag.mockImplementation(
+    name => name === 'cozy.assistant.enabled' && isAssistantEnabled
+  )
   const plugin = { postMessage: jest.fn() }
   const receive = (data, { origin = SERVER_ORIGIN, source = plugin } = {}) => {
     act(() => {
@@ -83,9 +96,11 @@ const setup = ({ documentType = 'word', results } = {}) => {
   }
 
   render(
-    <ScribeProvider serverUrl={SERVER_URL} documentType={documentType}>
-      <ScribeState results={results} />
-    </ScribeProvider>
+    <OnlyOfficeContext.Provider value={{ isPublic, isReadOnly }}>
+      <ScribeProvider serverUrl={SERVER_URL} documentType={documentType}>
+        <ScribeState results={results} />
+      </ScribeProvider>
+    </OnlyOfficeContext.Provider>
   )
 
   const getState = () => JSON.parse(screen.getByTestId('state').textContent)
@@ -126,6 +141,8 @@ describe('ScribeProvider', () => {
     ;[...document.getElementsByName('frameEditor')].forEach(frame =>
       frame.remove()
     )
+    localStorage.clear()
+    jest.useRealTimers()
   })
 
   it('has no scribe until the plugin of the Document Server is ready', () => {
@@ -289,6 +306,97 @@ describe('ScribeProvider', () => {
       { type: 'twake-scribe:close' },
       SERVER_ORIGIN
     )
+  })
+
+  it('asks the plugin for the text at start when the panel was open', () => {
+    localStorage.setItem('scribe-panel-open', 'true')
+    const { plugin, receive, getSource } = setup()
+    expect(plugin.postMessage).not.toHaveBeenCalled()
+
+    receive({ type: 'twake-scribe:ready' })
+    receive({ type: 'twake-scribe:ready' })
+
+    expect(plugin.postMessage.mock.calls).toEqual([
+      [{ type: 'twake-scribe:getContent' }, SERVER_ORIGIN]
+    ])
+    expect(getSource()).toBe('restored')
+  })
+
+  it('remembers whether the panel was open', () => {
+    const { receive } = setup()
+    receive({ type: 'twake-scribe:ready' })
+
+    fireEvent.click(screen.getByText('open'))
+    expect(localStorage.getItem('scribe-panel-open')).toBe('true')
+
+    receive({ type: 'twake-scribe:content', content: '', target: 'document' })
+    fireEvent.click(screen.getByText('close'))
+    expect(localStorage.getItem('scribe-panel-open')).toBe('false')
+  })
+
+  it('stays closed at start when the panel was closed', () => {
+    localStorage.setItem('scribe-panel-open', 'false')
+    const { plugin, receive } = setup()
+
+    receive({ type: 'twake-scribe:ready' })
+
+    expect(plugin.postMessage).not.toHaveBeenCalled()
+  })
+
+  it('stays closed at start when the panel is closed before the plugin is ready', () => {
+    localStorage.setItem('scribe-panel-open', 'true')
+    const { plugin, receive } = setup()
+
+    fireEvent.click(screen.getByText('close'))
+    receive({ type: 'twake-scribe:ready' })
+
+    expect(plugin.postMessage).not.toHaveBeenCalled()
+    expect(localStorage.getItem('scribe-panel-open')).toBe('false')
+  })
+
+  it.each([
+    ['on a public link', { isPublic: true }],
+    ['in a read-only document', { isReadOnly: true }],
+    ['without the assistant', { isAssistantEnabled: false }]
+  ])('stays closed at start %s', (_, options) => {
+    localStorage.setItem('scribe-panel-open', 'true')
+    const { plugin, receive } = setup(options)
+
+    receive({ type: 'twake-scribe:ready' })
+
+    expect(plugin.postMessage).not.toHaveBeenCalled()
+  })
+
+  it('gives the focus back to the document 100 ms after closing', () => {
+    jest.useFakeTimers()
+    const frame = addEditorFrame({ left: 0, top: 49, width: 1280, height: 671 })
+    frame.focus = jest.fn()
+    const { receive } = setup()
+    receive({ type: 'twake-scribe:ready' })
+    receive({ type: 'twake-scribe:content', content: '', target: 'document' })
+
+    fireEvent.click(screen.getByText('close'))
+    act(() => {
+      jest.advanceTimersByTime(99)
+    })
+    expect(frame.focus).not.toHaveBeenCalled()
+
+    act(() => {
+      jest.advanceTimersByTime(1)
+    })
+    expect(frame.focus).toHaveBeenCalledTimes(1)
+  })
+
+  it('closes without the editor frame', () => {
+    jest.useFakeTimers()
+    const { receive, getState } = setup()
+    receive({ type: 'twake-scribe:ready' })
+    receive({ type: 'twake-scribe:content', content: '', target: 'document' })
+
+    fireEvent.click(screen.getByText('close'))
+
+    expect(() => jest.advanceTimersByTime(100)).not.toThrow()
+    expect(getState().isOpen).toBe(false)
   })
 
   it('hands an answer of the assistant to the plugin as it is', () => {

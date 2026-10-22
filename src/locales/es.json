@@ -662,6 +662,7 @@
       "insertSlide": "Insertar la diapositiva",
       "selectionMenu": "Menú de Scribe",
       "panel": "Panel de Scribe",
+      "resizeHandle": "Cambiar el tamaño del panel",
       "suggestions": {
         "newSlide": "Nueva diapositiva",
         "newSlideMessage": "Añade una nueva diapositiva después de esta, sobre el texto",

@@ -1,4 +1,5 @@
-import React from 'react'
+import cx from 'classnames'
+import React, { useEffect, useState } from 'react'
 
 import IntentIframe from 'cozy-ui-plus/dist/Intent/IntentIframe'
 import { useCozyTheme } from 'cozy-ui-plus/dist/providers/CozyTheme'
@@ -7,10 +8,15 @@ import { useI18n } from 'twake-i18n'
 import styles from './styles.styl'
 
 import { useScribe } from '@/modules/views/OnlyOffice/Scribe/ScribeProvider'
+import { ScribeResizeHandle } from '@/modules/views/OnlyOffice/Scribe/ScribeResizeHandle'
 import {
   makeCapabilities,
   makeSuggestions
 } from '@/modules/views/OnlyOffice/Scribe/capabilities'
+import {
+  PANEL_DEFAULT_WIDTH,
+  clampPanelWidth
+} from '@/modules/views/OnlyOffice/Scribe/panelState'
 
 export const ScribePanel = () => {
   const { t } = useI18n()
@@ -24,6 +30,18 @@ export const ScribePanel = () => {
     close,
     applyResult
   } = useScribe()
+  const [panelWidth, setPanelWidth] = useState(() =>
+    clampPanelWidth(PANEL_DEFAULT_WIDTH, window.innerWidth)
+  )
+
+  useEffect(() => {
+    const handleWindowResize = () => {
+      setPanelWidth(width => clampPanelWidth(width, window.innerWidth))
+    }
+
+    window.addEventListener('resize', handleWindowResize)
+    return () => window.removeEventListener('resize', handleWindowResize)
+  }, [])
 
   if (!isOpen) return null
 
@@ -47,19 +65,37 @@ export const ScribePanel = () => {
     theme: { type: themeType }
   }
 
+  // The panel ends at the right edge of the window
+  const handleResize = clientX => {
+    setPanelWidth(
+      clampPanelWidth(window.innerWidth - clientX, window.innerWidth)
+    )
+  }
+
   return (
     <aside
-      className={styles['scribe-panel']}
+      className={cx(
+        'u-flex u-flex-shrink-0',
+        styles['scribe-panel'],
+        themeType === 'dark' && styles['scribe-panel--dark']
+      )}
+      // Dragged by the handle: the only value that cannot be static
+      style={{ width: panelWidth }}
       aria-label={t('OnlyOffice.scribe.open')}
     >
-      <IntentIframe
-        action="OPEN"
-        type="io.cozy.ai.chat.conversations"
-        data={data}
-        onResult={applyResult}
-        onCancel={close}
-        onTerminate={close}
-      />
+      <ScribeResizeHandle onResize={handleResize} />
+      <div
+        className={cx('u-flex-grow-1 u-ov-hidden', styles['scribe-panel-card'])}
+      >
+        <IntentIframe
+          action="OPEN"
+          type="io.cozy.ai.chat.conversations"
+          data={data}
+          onResult={applyResult}
+          onCancel={close}
+          onTerminate={close}
+        />
+      </div>
     </aside>
   )
 }

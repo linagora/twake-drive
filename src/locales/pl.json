@@ -38,6 +38,7 @@
       "insertSlide": "Wstaw slajd",
       "selectionMenu": "Menu Scribe",
       "panel": "Panel Scribe",
+      "resizeHandle": "Zmień rozmiar panelu",
       "suggestions": {
         "newSlide": "Nowy slajd",
         "newSlideMessage": "Dodaj nowy slajd po tym, na temat tekstu",
