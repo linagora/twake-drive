@@ -286,27 +286,65 @@ export function readContent() {
       return index
     }
 
-    // Outside of the emphasis marks that hold the text alone, since the tags
-    // would be code inside backticks, and with the spaces of the run
-    const EMPHASIS = /[*_~`]/
+    // Inside code the tags would be code: a block of code holds none, and a
+    // code span only around all of it
+    const FENCES = [...markdown.matchAll(/^[ \t]*```/gm)].map(
+      match => match.index
+    )
+    const isInFence = index =>
+      FENCES.filter(fence => fence < index).length % 2 === 1
+    const isInCode = index => {
+      const line = markdown.slice(markdown.lastIndexOf('\n', index) + 1, index)
+      return line.split('`').length % 2 === 0
+    }
+
+    // The marks the editor writes around a text: two for bold, one for italic,
+    // two for strikethrough; none in a code, which wins over them
+    const countMarks = textPr =>
+      (textPr.GetBold() ? 2 : 0) +
+      (textPr.GetItalic() ? 1 : 0) +
+      (textPr.GetStrikeout() ? 2 : 0)
+    const EMPHASIS = /[*_~]/
     const WORD = /[\p{L}\p{N}]/u
-    const underline = (index, { lead, core, trail }) => {
-      let start = index
-      let end = index + core.length
+
+    // Between a text and the marks of an emphasis that goes on past it, the
+    // tags would break the marks that touch a word
+    const isBreakingMarks = (start, end) => {
       let left = start
       while (left > at && EMPHASIS.test(markdown[left - 1])) left -= 1
       let right = end
       while (EMPHASIS.test(markdown[right] ?? '')) right += 1
-      const opening = markdown.slice(left, start)
-      const isHolding =
-        opening !== '' &&
-        markdown.slice(end, right) === [...opening].reverse().join('') &&
-        !WORD.test(markdown[left - 1] ?? '') &&
-        !WORD.test(markdown[right] ?? '')
-      if (isHolding) {
-        start = left
-        end = right
+      return (
+        (left < start && WORD.test(markdown[left - 1] ?? '')) ||
+        (right > end && WORD.test(markdown[right] ?? ''))
+      )
+    }
+
+    // Where the tags of an underlined text go: outside of the marks of its
+    // own emphasis or code, else next to it; nowhere when they would break
+    // the Markdown
+    const placeTags = (start, end, textPr) => {
+      if (isInFence(start)) return null
+      if (isInCode(start)) {
+        const isWhole =
+          start > at && markdown[start - 1] === '`' && markdown[end] === '`'
+        return isWhole ? [start - 1, end + 1] : null
       }
+      const count = countMarks(textPr)
+      if (count === 0) return [start, end]
+      const opening = markdown.slice(start - count, start)
+      const isOwn =
+        start - count >= at &&
+        [...opening].every(char => EMPHASIS.test(char)) &&
+        markdown.slice(end, end + count) === [...opening].reverse().join('')
+      if (isOwn) return [start - count, end + count]
+      return isBreakingMarks(start, end) ? null : [start, end]
+    }
+
+    // The spaces of the run go inside the tags
+    const underline = ([placeStart, placeEnd], { lead, trail }) => {
+      let start = placeStart
+      let end = placeEnd
       if (
         start - lead.length >= at &&
         markdown.startsWith(lead, start - lead.length)
@@ -323,11 +361,15 @@ export function readContent() {
         .match(/^(\s*)([\s\S]*?)(\s*)$/)
       const index = core === '' ? -1 : find(core)
       if (index === -1) return
-      if (!run.GetTextPr().GetUnderline()) {
+      const textPr = run.GetTextPr()
+      const place = textPr.GetUnderline()
+        ? placeTags(index, index + core.length, textPr)
+        : null
+      if (!place) {
         at = index + core.length
         return
       }
-      underline(index, { lead, core, trail })
+      underline(place, { lead, trail })
     }
 
     const LINK_END = /[*_~`]*\]\([^)]*\)/y
