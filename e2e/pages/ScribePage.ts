@@ -6,6 +6,7 @@ import { expect } from '../helpers/fixtures'
 // The button under the selection is an asset of 48 px that holds a disc of
 // 24 px, 12 px inside its left edge and 9 px inside its top edge
 const DISC = { left: 12, top: 9, size: 24 }
+const WHEEL_TURN = 100
 
 export interface Box {
   x: number
@@ -64,6 +65,26 @@ export class ScribePage {
     const area = editor.locator('#area_id')
     await area.press('Shift+ArrowLeft')
     await area.press('Shift+ArrowRight')
+  }
+
+  /**
+   * Turns the mouse wheel over the document, 100 px a turn as a mouse does:
+   * the editor scrolls a step for each turn, whatever its delta
+   */
+  async scrollEditor(deltaY: number): Promise<void> {
+    const viewer = await this.page
+      .frameLocator('iframe[name="frameEditor"]')
+      .locator('#id_viewer')
+      .boundingBox()
+    if (!viewer) throw new Error('No viewer in the editor')
+    await this.page.mouse.move(
+      viewer.x + viewer.width / 2,
+      viewer.y + viewer.height / 2
+    )
+    const turn = Math.sign(deltaY) * WHEEL_TURN
+    for (let rest = Math.abs(deltaY); rest > 0; rest -= WHEEL_TURN) {
+      await this.page.mouse.wheel(0, turn)
+    }
   }
 
   editorFrame(): Locator {

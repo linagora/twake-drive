@@ -18,13 +18,22 @@ function readCorners(editorWindow) {
       Array.isArray(corners) &&
       corners.length === 4 &&
       corners.every(
-        corner => Array.isArray(corner) && corner.every(Number.isFinite)
+        corner =>
+          Array.isArray(corner) &&
+          corner.length === 2 &&
+          corner.every(Number.isFinite)
       )
     if (!isRead || corners.flat().every(value => value === 0)) return null
     return corners
   } catch {
     return null
   }
+}
+
+// A cursor starts with no height. A selection that ends at the start of a
+// paragraph has no width, and is not a cursor.
+function isCursor([[x0, y0], [x1, y1]]) {
+  return x0 === x1 && y0 === y1
 }
 
 function makeRect(corners) {
@@ -48,12 +57,15 @@ function makeRect(corners) {
 export function readGeometry(editorWindow, hasText) {
   const viewer = readViewer(editorWindow)
   const corners = hasText && viewer ? readCorners(editorWindow) : null
+  if (!corners || isCursor(corners)) {
+    return { selection: null, viewer, page: null }
+  }
+
   // The editor gives the corners from the top left of its viewer
-  const rect =
-    corners &&
-    makeRect(corners.map(([x, y]) => [x + viewer.left, y + viewer.top]))
-  const selection = rect?.width > 0 ? { rect, hasText } : null
-  return { selection, viewer, page: null }
+  const rect = makeRect(
+    corners.map(([x, y]) => [x + viewer.left, y + viewer.top])
+  )
+  return { selection: { rect, hasText }, viewer, page: null }
 }
 
 export function isSameGeometry(a, b) {

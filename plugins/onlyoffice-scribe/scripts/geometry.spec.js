@@ -89,6 +89,31 @@ describe('readGeometry', () => {
     expect(readGeometry(editorWindow, true).selection).toBe(null)
   })
 
+  it('gives null for corners that are not pairs of numbers', () => {
+    const corners = [[10], [10, 40], [110, 20, 0], [110, 40]]
+
+    expect(readGeometry(makeEditorWindow({ corners }), true).selection).toBe(
+      null
+    )
+  })
+
+  it('keeps a selection that ends at the start of a paragraph', () => {
+    // The end is the start of the next paragraph, where nothing is selected
+    const corners = [
+      [299, 95],
+      [299, 110],
+      [299, 110],
+      [299, 110]
+    ]
+
+    expect(readGeometry(makeEditorWindow({ corners }), true).selection).toEqual(
+      {
+        rect: { left: 299, top: 95, width: 0, height: 15, corners },
+        hasText: true
+      }
+    )
+  })
+
   it('gives no selection for a cursor alone', () => {
     const cursor = [
       [356, 110],

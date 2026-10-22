@@ -23,6 +23,14 @@ const DISC_INSET_TOP = 9
 // Between the end of the selection and the disc
 const GAP = 4
 const TOOLTIP_DELAY = 500
+// The tooltip goes under the disc, not under the shadow of the asset, and
+// stays there: above, the offset would put it on the disc
+const TOOLTIP_POPPER_PROPS = {
+  modifiers: {
+    flip: { enabled: false },
+    offset: { offset: `0,${DISC_INSET_TOP + DISC_SIZE - ASSET_SIZE}` }
+  }
+}
 
 const isInBox = (disc, box) =>
   disc.left >= box.left &&
@@ -67,7 +75,11 @@ export const ScribeSelectionButton = () => {
         style={position}
         data-testid="scribe-selection-button"
       >
-        <Tooltip title={label} enterDelay={TOOLTIP_DELAY}>
+        <Tooltip
+          title={label}
+          enterDelay={TOOLTIP_DELAY}
+          PopperProps={TOOLTIP_POPPER_PROPS}
+        >
           <ButtonBase
             aria-label={label}
             disableRipple
