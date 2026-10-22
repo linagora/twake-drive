@@ -1,4 +1,4 @@
-import type { FrameLocator, Locator, Page } from '@playwright/test'
+import type { Frame, FrameLocator, Locator, Page } from '@playwright/test'
 
 import { selectInEditor } from './ScribePluginPage'
 import { expect } from '../helpers/fixtures'
@@ -18,8 +18,8 @@ export interface Box {
 /**
  * Drive's chrome around the scribe of an OnlyOffice document: the AI button
  * of the toolbar, the button under the selection, the floating button of the
- * document area, the entries of the plugin in the ribbon of the editor and
- * the panel that holds the assistant
+ * document area, the entries of the plugin in the ribbon of the editor, and
+ * the panel and the popover that hold the assistant
  */
 export class ScribePage {
   constructor(private readonly page: Page) {}
@@ -147,6 +147,108 @@ export class ScribePage {
 
   panel(): Locator {
     return this.page.getByRole('complementary', { name: 'Help me write' })
+  }
+
+  /** The scribe on the selection, in a popover anchored to it */
+  popover(): Locator {
+    return this.page
+      .getByRole('dialog', { name: 'Scribe Menu' })
+      .and(this.page.getByTestId('scribe-popover'))
+  }
+
+  /** The scribe on the selection, in a drawer at the bottom of a small screen */
+  drawer(): Locator {
+    return this.page
+      .getByRole('dialog', { name: 'Scribe Menu' })
+      .and(this.page.getByTestId('scribe-drawer'))
+  }
+
+  /** The frame of the assistant in a surface of the scribe */
+  intentFrame(surface: Locator): Locator {
+    return surface.locator('iframe')
+  }
+
+  /**
+   * Keeps, in each frame loaded from now on, the data of the intent it
+   * receives: the assistant reads them once, at its opening
+   */
+  async watchIntentData(): Promise<void> {
+    await this.page.addInitScript(() => {
+      const received: unknown[] = []
+      Object.assign(window, { scribeIntentData: received })
+      window.addEventListener('message', event => {
+        const data = event.data as {
+          answerActions?: unknown
+          type?: unknown
+          data?: unknown
+        } | null
+        if (typeof data !== 'object' || data === null) return
+        // The first data answer the `ready` of the assistant, the next ones
+        // come in a `data` message
+        if ('answerActions' in data) received.push(data)
+        else if (typeof data.type === 'string' && data.type.endsWith(':data')) {
+          received.push(data.data)
+        }
+      })
+    })
+  }
+
+  private async findIntentFrame(surface: Locator): Promise<Frame> {
+    const handle = await this.intentFrame(surface).elementHandle()
+    const frame = await handle?.contentFrame()
+    if (!frame) throw new Error('No frame of the assistant')
+    return frame
+  }
+
+  /**
+   * The last data the assistant of a surface has received, once
+   * `watchIntentData` was called before it opened; null before the first
+   */
+  async receivedIntentData(
+    surface: Locator
+  ): Promise<Record<string, unknown> | null> {
+    const frame = await this.findIntentFrame(surface)
+    return frame.evaluate(() => {
+      const { scribeIntentData } = window as unknown as {
+        scribeIntentData?: Record<string, unknown>[]
+      }
+      return scribeIntentData?.at(-1) ?? null
+    })
+  }
+
+  /**
+   * Sends a result to Drive as the assistant of a surface does, from its
+   * frame: cozy-interapp only takes the messages of the origin of the
+   * assistant, once it has received its data. Needs `watchIntentData`.
+   */
+  async postIntentResult(
+    surface: Locator,
+    result: Record<string, unknown>
+  ): Promise<void> {
+    const src = await this.intentFrame(surface).getAttribute('src')
+    const intentId = src ? new URL(src).searchParams.get('intent') : null
+    if (!intentId) throw new Error(`No intent in the address ${src}`)
+    await expect
+      .poll(() => this.receivedIntentData(surface), { timeout: 60_000 })
+      .not.toBe(null)
+
+    const frame = await this.findIntentFrame(surface)
+    await frame.evaluate(message => window.parent.postMessage(message, '*'), {
+      type: `intent-${intentId}:result`,
+      result
+    })
+  }
+
+  /** Presses Escape with the focus in the page of Drive, out of its frames */
+  async pressEscapeInPage(): Promise<void> {
+    await this.page.evaluate(() => {
+      ;(document.activeElement as HTMLElement | null)?.blur()
+    })
+    await this.page.keyboard.press('Escape')
+  }
+
+  async setWindowSize(width: number, height: number): Promise<void> {
+    await this.page.setViewportSize({ width, height })
   }
 
   assistantFrame(): FrameLocator {

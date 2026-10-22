@@ -7,12 +7,16 @@ import flag from 'cozy-flags'
 import AppLike from 'test/components/AppLike'
 
 import { OnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
-import { useScribe } from '@/modules/views/OnlyOffice/Scribe/ScribeProvider'
+import {
+  useScribe,
+  useScribeGeometry
+} from '@/modules/views/OnlyOffice/Scribe/ScribeProvider'
 import { ScribeSelectionButton } from '@/modules/views/OnlyOffice/Scribe/ScribeSelectionButton'
 
 jest.mock('cozy-flags')
 jest.mock('@/modules/views/OnlyOffice/Scribe/ScribeProvider', () => ({
-  useScribe: jest.fn()
+  useScribe: jest.fn(),
+  useScribeGeometry: jest.fn()
 }))
 
 const makeSelection = end => ({
@@ -37,16 +41,18 @@ const setup = ({
   isReadOnly = false,
   isAssistantEnabled = true
 } = {}) => {
-  const open = jest.fn()
+  const openPopover = jest.fn()
   flag.mockImplementation(
     name => name === 'cozy.assistant.enabled' && isAssistantEnabled
   )
+  const { geometry = GEOMETRY, ...state } = scribe
   useScribe.mockReturnValue({
     isAvailable: true,
-    geometry: GEOMETRY,
-    open,
-    ...scribe
+    isPopoverOpen: false,
+    openPopover,
+    ...state
   })
+  useScribeGeometry.mockReturnValue(geometry)
 
   render(
     <AppLike client={createMockClient({})}>
@@ -56,7 +62,7 @@ const setup = ({
     </AppLike>
   )
 
-  return { open }
+  return { openPopover }
 }
 
 const queryButton = () => screen.queryByRole('button', { name: 'Scribe Menu' })
@@ -110,12 +116,18 @@ describe('ScribeSelectionButton', () => {
     expect(queryButton()).toBe(null)
   })
 
-  it('opens the scribe with the selection source on click', () => {
-    const { open } = setup()
+  it('opens the popover with the selection source on click', () => {
+    const { openPopover } = setup()
 
     fireEvent.click(queryButton())
 
-    expect(open).toHaveBeenCalledWith({ source: 'selection' })
+    expect(openPopover).toHaveBeenCalledWith({ source: 'selection' })
+  })
+
+  it('hides it while the popover is open', () => {
+    setup({ scribe: { isPopoverOpen: true } })
+
+    expect(queryButton()).toBe(null)
   })
 
   it.each([
