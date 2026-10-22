@@ -82,6 +82,35 @@
           "selMarkup": [{"at":{"block":0},"text":"«XXX»"}]
         }
       }
+    },
+    {
+      "id": "underlined-in-word",
+      "selection": "P1@start..P1@end",
+      "answerAction": "replace",
+      "answer": "The <u>**qu**</u>ick brown <u>*f*</u>ox 中文<u>**粗体**</u>中文",
+      "expected": {
+        "content": {"content":"The **quick** brown *fox*\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {
+              "type": "p",
+              "runs": [
+                {"t":"The "},
+                {"t":"qu","b":1,"u":1},
+                {"t":"ick brown "},
+                {"t":"f","i":1,"u":1},
+                {"t":"ox 中文"},
+                {"t":"粗体","b":1,"u":1},
+                {"t":"中文"}
+              ]
+            },
+            {"type":"p","runs":[{"t":"Jumps over the dog"}]},
+            {"type":"p","runs":[{"t":"Lazy river flows"}]}
+          ],
+          "selText": "The quick brown fox 中文粗体中文",
+          "selMarkup": [{"at":{"block":0},"text":"«The quick brown fox 中文粗体中文»"}]
+        }
+      }
     }
   ]
 }

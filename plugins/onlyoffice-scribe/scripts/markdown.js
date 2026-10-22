@@ -3,7 +3,8 @@ import { Lexer, getDefaults } from 'marked'
 // The editor has nine levels of list
 const MAX_LIST_DEPTH = 8
 const LINK_PROTOCOL = /^(https?:|mailto:)/i
-const HTML_TAG = /(<[^>]*>)/
+// The <u> tags of a text are read with it, as its underline
+const HTML_TAG = /(<(?!\/?u>)[^>]*>)/i
 const SPAN_ATTRIBUTE = /\b(colspan|rowspan)\s*=\s*"?(\d+)/gi
 const LINE_BREAK_TAG = /^<br\s*\/?>$/i
 // A whole answer fenced as text or quoted: the LLM wraps the text it was
@@ -199,6 +200,12 @@ export function makeBlocks(markdown, { hasLineBreaks = false } = {}) {
   // The table being read in HTML tags, the way the editor gives its tables.
   // Its cells take the blocks that come before its end.
   let htmlTable = null
+  // A lexer keeps its tokenizer in its options: each one gets its own
+  const makeOptions = () => ({
+    ...getDefaults(),
+    breaks: hasLineBreaks,
+    extensions: EXTENSIONS
+  })
 
   const addBlock = block => {
     if (block.spans?.length === 0 || block.lines?.length === 0) return
@@ -251,7 +258,10 @@ export function makeBlocks(markdown, { hasLineBreaks = false } = {}) {
         return
       }
       if (part.trim() === '') return
-      addBlock({ type: 'paragraph', spans: makeSpans(Lexer.lexInline(part)) })
+      addBlock({
+        type: 'paragraph',
+        spans: makeSpans(Lexer.lexInline(part, makeOptions()))
+      })
     })
   }
 
@@ -312,11 +322,7 @@ export function makeBlocks(markdown, { hasLineBreaks = false } = {}) {
     })
   }
 
-  const lexer = new Lexer({
-    ...getDefaults(),
-    breaks: hasLineBreaks,
-    extensions: EXTENSIONS
-  })
+  const lexer = new Lexer(makeOptions())
   addTokens(lexer.lex(nestLists(markdown.match(WRAPPED)?.[2] ?? markdown)))
   // A table left open still gives what it holds
   if (htmlTable) readHtmlTag('</table>')

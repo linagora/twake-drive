@@ -365,6 +365,39 @@ describe('makeBlocks', () => {
     ])
   })
 
+  it('keeps the emphasis of an underlined part of a word', () => {
+    expect(makeBlocks('x<u>*a*</u>y 中文<u>**粗体**</u>中文')[0].spans).toEqual(
+      [
+        { text: 'x' },
+        { text: 'a', isUnderline: true, isItalic: true },
+        { text: 'y 中文' },
+        { text: '粗体', isUnderline: true, isBold: true },
+        { text: '中文' }
+      ]
+    )
+  })
+
+  it('keeps the underline of a text in an HTML cell without a line break', () => {
+    expect(makeBlocks('<table><tr><td>a <u>b</u> c</td></tr></table>')).toEqual(
+      [
+        {
+          type: 'table',
+          rows: [
+            [
+              {
+                spans: [
+                  { text: 'a ' },
+                  { text: 'b', isUnderline: true },
+                  { text: ' c' }
+                ]
+              }
+            ]
+          ]
+        }
+      ]
+    )
+  })
+
   it('leaves the HTML tags out, and loads no image', () => {
     const blocks = makeBlocks(
       'Un <span>souligné</span><br>puis ![une image](https://example.org/a.png)\n\n<div onclick="alert(1)">Un bloc</div>'
