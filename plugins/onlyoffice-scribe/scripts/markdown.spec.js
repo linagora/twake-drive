@@ -235,6 +235,10 @@ describe('makeBlocks', () => {
                 { text: 'Montant', isBold: true },
                 { isBreak: true },
                 { text: 'HT' }
+              ],
+              blocks: [
+                paragraph({ text: 'Montant', isBold: true }),
+                paragraph({ text: 'HT' })
               ]
             }
           ],
@@ -293,6 +297,36 @@ describe('makeBlocks', () => {
           ]
         ]
       }
+    ])
+  })
+
+  it('keeps the paragraphs of an HTML cell as its blocks', () => {
+    const [table] = makeBlocks(
+      '<table><tr><td>\n\nOne\n\nTwo\n\n</td></tr></table>'
+    )
+    expect(table.rows[0][0].blocks.map(b => b.spans[0].text)).toEqual([
+      'One',
+      'Two'
+    ])
+    expect(table.rows[0][0].spans).toEqual([
+      { text: 'One' },
+      { isBreak: true },
+      { text: 'Two' }
+    ])
+  })
+
+  it('gives each block of an HTML cell its spans, the lines of a block of code in one', () => {
+    const [table] = makeBlocks(
+      '<table><tr><td>\n\n# Title\n\n```js\na\nb\n```\n\n</td></tr></table>'
+    )
+
+    expect(table.rows[0][0].blocks.map(block => block.spans)).toEqual([
+      [{ text: 'Title' }],
+      [
+        { text: 'a', isCode: true },
+        { isBreak: true },
+        { text: 'b', isCode: true }
+      ]
     ])
   })
 

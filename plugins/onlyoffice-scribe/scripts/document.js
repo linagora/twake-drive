@@ -553,12 +553,31 @@ export function writeBlocks() {
           column,
           colSpan,
           rowSpan,
-          spans: cell.spans
+          spans: cell.spans,
+          blocks: cell.blocks
         })
         column += colSpan
       })
     })
     return cells
+  }
+
+  // The spans of each paragraph a cell of an answer is written in: a heading
+  // or an item of a list is a plain paragraph in a cell
+  const getCellParagraphs = answerCell =>
+    (answerCell.blocks ?? [answerCell]).map(block => block.spans)
+
+  // The first paragraph of a cell takes the first spans, and empty copies of
+  // it, which keep its look, the next ones
+  const writeCellParagraphs = (content, paragraphSpans, textPr) => {
+    const paragraph = content.GetElement(0)
+    const paragraphs = paragraphSpans.map((spans, index) =>
+      index === 0 ? paragraph : paragraph.Copy()
+    )
+    paragraphs.forEach((written, index) => {
+      if (index > 0) content.AddElement(index, written)
+      addSpans(written, paragraphSpans[index], textPr)
+    })
   }
 
   const makeTable = rows => {
@@ -580,7 +599,7 @@ export function writeBlocks() {
     })
     cells.forEach(cell => {
       const content = table.GetCell(cell.row, cell.column).GetContent()
-      addSpans(content.GetElement(0), cell.spans, textPr)
+      writeCellParagraphs(content, getCellParagraphs(cell), textPr)
     })
     // A merge takes the cells on its right in its rows: the rightmost ones
     // are merged first, while their cells are still where they were laid
@@ -668,7 +687,7 @@ export function writeBlocks() {
 
   // Writes the text of an answer in a cell, in the look of its text, with
   // the emphasis of the answer added
-  const fillCell = (cell, spans) => {
+  const fillCell = (cell, answerCell) => {
     const content = cell.GetContent()
     const paragraph = content.GetElement(0)
     const first = paragraph.GetElement(0)
@@ -677,13 +696,16 @@ export function writeBlocks() {
       content.RemoveElement(i)
     }
     paragraph.RemoveAllElements()
-    const kept = spans.map(span => ({
+    const keepLook = span => ({
       ...span,
       isBold: span.isBold || textPr?.GetBold() === true,
       isItalic: span.isItalic || textPr?.GetItalic() === true,
       isUnderline: span.isUnderline || textPr?.GetUnderline() === true
-    }))
-    addSpans(paragraph, kept, textPr)
+    })
+    const paragraphSpans = getCellParagraphs(answerCell).map(spans =>
+      spans.map(keepLook)
+    )
+    writeCellParagraphs(content, paragraphSpans, textPr)
   }
 
   // The cells of a table that are not merged into one above them
@@ -711,7 +733,7 @@ export function writeBlocks() {
   // table when they are all of its cells
   const fillCells = (selectedCells, table) => {
     selectedCells.rows.forEach((cells, i) => {
-      cells.forEach((cell, j) => fillCell(cell, table.rows[i][j].spans))
+      cells.forEach((cell, j) => fillCell(cell, table.rows[i][j]))
     })
     const cellCount = countSelected(selectedCells.rows)
     if (cellCount === countCells(selectedCells.table)) {

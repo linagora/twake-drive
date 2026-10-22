@@ -177,7 +177,7 @@
       "id": "T3",
       "selection": "T1.full",
       "answerAction": "replace",
-      "answer": "<table>\n  <tr><td>p</td><td>q</td></tr>\n  <tr><td>r</td><td>s</td></tr>\n</table>",
+      "answer": "<table>\n  <tr><td>p</td><td>q</td></tr>\n  <tr><td>r</td><td>Delta<br>Delta2</td></tr>\n</table>",
       "expected": {
         "content": {
           "content": "<table>\n  <tr>\n   <td>\n\nAlpha\n\n</td>\n   <td>\n\nBeta\n\n</td>\n  </tr>\n  <tr>\n   <td>\n\nGamma\n\n</td>\n   <td>\n\nDelta\n\nDelta2\n\n</td>\n  </tr>\n</table>\n\n",
@@ -191,17 +191,21 @@
               "type": "table",
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"p"}]}]},{"blocks":[{"type":"p","runs":[{"t":"q"}]}]}],
-                [{"blocks":[{"type":"p","runs":[{"t":"r"}]}]},{"blocks":[{"type":"p","runs":[{"t":"s"}]}]}]
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"r"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Delta"}]},{"type":"p","runs":[{"t":"Delta2"}]}]}
+                ]
               ]
             },
             {"type":"p","runs":[{"t":"Outro paragraph"}]}
           ],
-          "selText": "pq\nrs\n",
+          "selText": "pq\nrDelta\nDelta2\n",
           "selMarkup": [
             {"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«p»"},
             {"at":{"block":1,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«q»"},
             {"at":{"block":1,"cell":{"r":1,"c":0},"cellBlock":0},"text":"«r»"},
-            {"at":{"block":1,"cell":{"r":1,"c":1},"cellBlock":0},"text":"«s»"}
+            {"at":{"block":1,"cell":{"r":1,"c":1},"cellBlock":0},"text":"«Delta»"},
+            {"at":{"block":1,"cell":{"r":1,"c":1},"cellBlock":1},"text":"«Delta2»"}
           ]
         }
       }
