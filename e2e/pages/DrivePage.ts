@@ -3,6 +3,7 @@ import type { Page, Locator } from '@playwright/test'
 import { FileRow } from './FileRow'
 import { MoveToPage } from './MoveToPage'
 import { ShareModalPage } from './ShareModalPage'
+import { FileListRequests } from '../helpers/fileListRequests'
 import { expect } from '../helpers/fixtures'
 
 /**
@@ -14,9 +15,11 @@ import { expect } from '../helpers/fixtures'
  */
 export class DrivePage {
   private readonly page: Page
+  private readonly fileRequests: FileListRequests
 
   constructor(page: Page) {
     this.page = page
+    this.fileRequests = new FileListRequests(page)
   }
 
   /** Legacy empty views nest the message inside the table; prefer that ancestor. */
@@ -28,7 +31,7 @@ export class DrivePage {
   }
 
   row(name: string): FileRow {
-    return new FileRow(this.page, this.fileList, name)
+    return new FileRow(this.page, this.fileList, name, this.fileRequests)
   }
 
   get createButton(): Locator {

@@ -1,7 +1,8 @@
-import type { Page, Locator, Request } from '@playwright/test'
+import type { Page, Locator } from '@playwright/test'
 
 import { MoveToPage } from './MoveToPage'
 import { ShareModalPage } from './ShareModalPage'
+import type { FileListRequests } from '../helpers/fileListRequests'
 import { escapeRegExp, expect } from '../helpers/fixtures'
 
 import { DOUBLE_CLICK_DELAY } from '@/hooks/useOnLongPress/helpers'
@@ -29,7 +30,8 @@ export class FileRow {
   constructor(
     private readonly page: Page,
     private readonly fileList: Locator,
-    private readonly name: string
+    private readonly name: string,
+    private readonly fileRequests: FileListRequests
   ) {
     this.anchored = new RegExp(`^${escapeRegExp(name)}$`)
   }
@@ -146,17 +148,6 @@ export class FileRow {
       const scrollTop: number = await scroller.evaluate(
         (element: HTMLElement) => element.scrollTop
       )
-      const requests: Request[] = []
-      const trackRequest = (request: Request): void => {
-        if (
-          /^\/(files|sharings\/drives|data\/io\.cozy\.files)(\/|$)/.test(
-            new URL(request.url()).pathname
-          )
-        ) {
-          requests.push(request)
-        }
-      }
-      this.page.on('request', trackRequest)
       try {
         await scroller.evaluate((element: HTMLElement) => {
           element.scrollTop = 0
@@ -169,12 +160,12 @@ export class FileRow {
           ).toBe(0)
           if (await isAtEnd()) {
             // Wait for pagination, not DataProxy's long-lived script requests.
-            await Promise.all(
-              requests.map(async request => {
-                const response = await request.response()
-                await response?.finished()
+            await expect
+              .poll(() => this.fileRequests.pending.size, {
+                intervals: [50],
+                timeout
               })
-            )
+              .toBe(0)
             await waitForRows()
             expect(
               await this.cell.count(),
@@ -190,7 +181,6 @@ export class FileRow {
           })
         }
       } finally {
-        this.page.off('request', trackRequest)
         await scroller.evaluate((element: HTMLElement, top: number) => {
           element.scrollTop = top
         }, scrollTop)
