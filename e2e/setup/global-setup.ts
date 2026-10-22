@@ -203,6 +203,11 @@ const DEFAULT_APPS: AppSpec[] = [
     slug: 'dataproxy',
     source: 'registry://dataproxy/stable',
     label: 'Dataproxy'
+  },
+  {
+    slug: 'assistant',
+    source: 'registry://assistant/dev',
+    label: 'Assistant'
   }
 ]
 
