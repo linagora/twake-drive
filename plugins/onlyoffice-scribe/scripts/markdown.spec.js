@@ -193,8 +193,11 @@ describe('makeBlocks', () => {
   })
 
   it('keeps markers as text inside a code block', () => {
-    expect(makeBlocks('```js\n<u>a</u> ![image 1]\n```')).toEqual([
-      { type: 'code', lines: ['<u>a</u> ![image 1]'] }
+    expect(
+      makeBlocks('```js\n<u>a</u> ![image 1] [^scribe-fn-1]\n```')
+    ).toEqual([{ type: 'code', lines: ['<u>a</u> ![image 1] [^scribe-fn-1]'] }])
+    expect(makeBlocks('`[^scribe-fn-1]`')[0].spans).toEqual([
+      { text: '[^scribe-fn-1]', isCode: true }
     ])
   })
 
@@ -432,6 +435,14 @@ describe('makeBlocks', () => {
     )
   })
 
+  it('gives a footnote marker as a note span', () => {
+    expect(makeBlocks('a[^scribe-fn-2] b')[0].spans).toEqual([
+      { text: 'a' },
+      { note: 2 },
+      { text: ' b' }
+    ])
+  })
+
   it('leaves the HTML tags out, and loads no image', () => {
     const blocks = makeBlocks(
       'Un <span>souligné</span><br>puis ![une image](https://example.org/a.png)\n\n<div onclick="alert(1)">Un bloc</div>'
@@ -493,6 +504,12 @@ describe('makeLines', () => {
 
   it('leaves the empty lines of a code block, and the indent of its lines, out of a presentation', () => {
     expect(makeLines(makeBlocks('```js\na\n\n  b\n```'))).toEqual(['a', 'b'])
+  })
+
+  it('gives a footnote marker to a presentation as its text', () => {
+    expect(makeLines(makeBlocks('[^scribe-fn-1] a[^scribe-fn-2]'))).toEqual([
+      '[^scribe-fn-1] a[^scribe-fn-2]'
+    ])
   })
 })
 

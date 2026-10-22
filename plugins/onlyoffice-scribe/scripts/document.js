@@ -8,11 +8,14 @@
  * Reads the text the scribe works on: the selection, or the whole document
  * without one. The Markdown of the editor gives the tables in HTML tags, one
  * cell after the other: the cells that take several columns or rows get
- * their `colspan` and `rowspan`.
+ * their `colspan` and `rowspan`. A footnote of the selection is the marker
+ * `[^scribe-fn-N]`, N from 1, and the N-th text of `notes` is the first
+ * paragraph of that note, in plain text.
  *
  * @returns {{ content: string, target: 'selection' | 'document',
- * canReplace: boolean }} the text, in Markdown, and whether an answer can take
- * its place
+ * canReplace: boolean, notes: string[], refs: object[] }} the text, in
+ * Markdown, whether an answer can take its place, and what its markers stand
+ * for
  */
 export function readContent() {
   const doc = Api.GetDocument()
@@ -26,6 +29,12 @@ export function readContent() {
   const selected = hasSelection ? selection.GetAllParagraphs() : []
   const isLocked = selected === null
   const paragraphs = selected ?? []
+  const selectionJson =
+    paragraphs.length > 0 ? selection.ToJSON(false, false) : ''
+  const NOTE_REFERENCE = /"type":"footnoteRef"/
+  const notes = []
+  // A note the content gives no marker for, which an answer would lose
+  let hasUnmarkedNote = false
 
   // The cells of a table, as laid on its grid: the column each one starts
   // at, the columns it takes, and whether it starts or continues a cell
@@ -197,11 +206,11 @@ export function readContent() {
     )
   }
 
-  // An answer is text: it cannot give back an image, a chart, an equation, a
-  // note, a field, a form, a comment or a page break, nor take the place of
-  // the end of a section
+  // An answer is text: it cannot give back an image, a chart, an equation, an
+  // endnote, a field, a form, a comment or a page break, nor take the place
+  // of the end of a section. It gives back a footnote by its marker.
   const KEPT =
-    /"type":"(paraDrawing|paraMath|footnoteRef|endnoteRef|fldChar|inlineLvlSdt|blockLvlSdt|commentRangeStart)"|"breakType":"(page|column)"/
+    /"type":"(paraDrawing|paraMath|endnoteRef|fldChar|inlineLvlSdt|blockLvlSdt|commentRangeStart)"|"breakType":"(page|column)"/
   const canReplace = () => {
     const tables = new Map()
     paragraphs.forEach(paragraph => {
@@ -225,7 +234,8 @@ export function readContent() {
     return (
       isWritable &&
       !isEndingSection &&
-      !KEPT.test(selection.ToJSON(false, false))
+      !hasUnmarkedNote &&
+      !KEPT.test(selectionJson)
     )
   }
 
@@ -247,9 +257,10 @@ export function readContent() {
     return markdown.slice(mark.length)
   }
 
-  // The editor's Markdown leaves the underline out: each run of the selection
-  // is found in it after the run before it, out of the tags and the addresses
-  // of the links, and an underlined one is put between <u> tags
+  // The editor's Markdown leaves the underline and the note references out:
+  // each run of the selection is found in it after the run before it, out of
+  // the tags and the addresses of the links, an underlined one is put between
+  // <u> tags, and a note reference gives a marker
   const decorate = (selectedParagraphs, markdown) => {
     const from = selection.GetStartPos()
     const to = selection.GetEndPos()
@@ -379,17 +390,61 @@ export function readContent() {
       underline(place, { lead, trail })
     }
 
+    // The plain text of the first paragraph of a note, from the JSON of the
+    // run of its reference
+    const readNoteText = footnote => {
+      const readText = element =>
+        (element.content ?? [])
+          .map(item => {
+            if (typeof item === 'string') return item
+            return ['run', 'hyperlink'].includes(item.type)
+              ? readText(item)
+              : ''
+          })
+          .join('')
+      const [first] = footnote.content
+      return first ? readText(first).trim() : ''
+    }
+
+    // A note is given after the text before its reference, out of a link. A
+    // marker would be text in a code, and an answer writes no note in a cell:
+    // a note there gives none.
+    const hasNotes = NOTE_REFERENCE.test(selectionJson)
+    const addNoteMarkers = (run, paragraph) => {
+      const range = run.GetRange()
+      if (range.GetStartPos() >= to || range.GetEndPos() <= from) return
+      const json = run.ToJSON()
+      if (!NOTE_REFERENCE.test(json)) return
+      if (paragraph.GetParentTableCell() || isInFence(at) || isInCode(at)) {
+        hasUnmarkedNote = true
+        return
+      }
+      JSON.parse(json).footnotes.forEach(footnote => {
+        notes.push(readNoteText(footnote))
+        replace(at, at, `[^scribe-fn-${notes.length}]`)
+      })
+    }
+
     const LINK_END = /[*_~`]*\]\([^)]*\)/y
     selectedParagraphs.forEach(paragraph => {
+      const addNotes = run => {
+        if (hasNotes) addNoteMarkers(run, paragraph)
+      }
       for (let i = 0; i < paragraph.GetElementsCount(); i += 1) {
         const element = paragraph.GetElement(i)
-        if (element.GetClassType() === 'run') readRun(element)
-        if (element.GetClassType() !== 'hyperlink') continue
-        for (let j = 0; j < element.GetElementsCount(); j += 1) {
-          readRun(element.GetElement(j))
+        if (element.GetClassType() === 'run') {
+          readRun(element)
+          addNotes(element)
         }
+        if (element.GetClassType() !== 'hyperlink') continue
+        const runs = []
+        for (let j = 0; j < element.GetElementsCount(); j += 1) {
+          runs.push(element.GetElement(j))
+        }
+        runs.forEach(readRun)
         LINK_END.lastIndex = at
         if (LINK_END.test(markdown)) at = LINK_END.lastIndex
+        runs.forEach(addNotes)
       }
     })
     parts.push(markdown.slice(copied))
@@ -403,7 +458,9 @@ export function readContent() {
   return {
     content: hasSelection ? removeMark(content) : content,
     target: hasSelection ? 'selection' : 'document',
-    canReplace: hasSelection && !isLocked && canReplace()
+    canReplace: hasSelection && !isLocked && canReplace(),
+    notes,
+    refs: []
   }
 }
 
@@ -490,10 +547,14 @@ export function writeBlocks() {
     return findMainLook(paragraph)
   }
 
+  // A note takes the place of its placeholder once the answer is written:
+  // the editor adds a note at the cursor only
   const makeRun = (span, textPr) => {
     const run = Api.CreateRun()
     if (textPr) run.SetTextPr(textPr)
-    run.AddText(span.text)
+    run.AddText(
+      span.note === undefined ? span.text : `\u0000fn:${span.note}\u0000`
+    )
     // The emphasis is the one of the answer, over the one of the style
     run.SetBold(span.isBold ? true : undefined)
     run.SetItalic(span.isItalic ? true : undefined)
@@ -587,9 +648,14 @@ export function writeBlocks() {
   }
 
   // The spans of each paragraph a cell of an answer is written in: a heading
-  // or an item of a list is a plain paragraph in a cell
+  // or an item of a list is a plain paragraph in a cell, and the marker of a
+  // note stays text
   const getCellParagraphs = answerCell =>
-    (answerCell.blocks ?? [answerCell]).map(block => block.spans)
+    (answerCell.blocks ?? [answerCell]).map(block =>
+      block.spans.map(span =>
+        span.note === undefined ? span : { text: `[^scribe-fn-${span.note}]` }
+      )
+    )
 
   // The first paragraph of a cell takes the first spans, and empty copies of
   // it, which keep its look, the next ones

@@ -5,13 +5,12 @@
       "id": "note-at-end",
       "selection": "P1@start..P1@end",
       "answerAction": "replace",
-      "answer": "The budget is voted by the board.\n\nIt starts in June.",
+      "answer": "The budget is voted by the board.[^scribe-fn-1]\n\nIt starts in June.",
       "expected": {
-        "content": {"content":"The budget is voted.\n\n","target":"selection","canReplace":false},
+        "content": {"content":"The budget is voted.[^scribe-fn-1]\n\n","target":"selection","canReplace":true},
         "model": {
           "blocks": [
-            {"type":"p","runs":[{"t":"The budget is voted."}],"notes":1},
-            {"type":"p","runs":[{"t":"The budget is voted by the board."}]},
+            {"type":"p","runs":[{"t":"The budget is voted by the board."}],"notes":1},
             {"type":"p","runs":[{"t":"It starts in June."}]},
             {"type":"p","runs":[{"t":"The first part ends here."}],"section":1},
             {"type":"p","runs":[{"t":"The second part starts here."}]},
@@ -19,8 +18,8 @@
           ],
           "selText": "The budget is voted by the board.\nIt starts in June.",
           "selMarkup": [
-            {"at":{"block":1},"text":"«The budget is voted by the board.»"},
-            {"at":{"block":2},"text":"«It starts in June.»"}
+            {"at":{"block":0},"text":"«The budget is voted by the board.»"},
+            {"at":{"block":1},"text":"«It starts in June.»"}
           ]
         }
       }
@@ -29,19 +28,18 @@
       "id": "note-at-end-line",
       "selection": "P1@start..P1@end",
       "answerAction": "replace",
-      "answer": "The budget is voted by the board.",
+      "answer": "The budget is voted by the board.[^scribe-fn-1]",
       "expected": {
-        "content": {"content":"The budget is voted.\n\n","target":"selection","canReplace":false},
+        "content": {"content":"The budget is voted.[^scribe-fn-1]\n\n","target":"selection","canReplace":true},
         "model": {
           "blocks": [
-            {"type":"p","runs":[{"t":"The budget is voted."}],"notes":1},
-            {"type":"p","runs":[{"t":"The budget is voted by the board."}]},
+            {"type":"p","runs":[{"t":"The budget is voted by the board."}],"notes":1},
             {"type":"p","runs":[{"t":"The first part ends here."}],"section":1},
             {"type":"p","runs":[{"t":"The second part starts here."}]},
             {"type":"p","runs":[{"t":"Chapter one ends."},{"t":"Chapter two starts."}],"pageBreaks":1}
           ],
           "selText": "The budget is voted by the board.",
-          "selMarkup": [{"at":{"block":1},"text":"«The budget is voted by the board.»"}]
+          "selMarkup": [{"at":{"block":0},"text":"«The budget is voted by the board.»"}]
         }
       }
     },

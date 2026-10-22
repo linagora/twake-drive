@@ -2,24 +2,37 @@
   "document": "footnote.docx",
   "cases": [
     {
+      "id": "footnote-content",
+      "selection": "P1@4..P2@end",
+      "answerAction": null,
+      "answer": null,
+      "expected": {
+        "content": {
+          "content": "budget is approved.[^scribe-fn-1] The works start in June.\n\nNext steps follow.\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": null
+      }
+    },
+    {
       "id": "footnote",
       "selection": "P1@start..P1@end",
       "answerAction": "replace",
-      "answer": "The budget is voted. The works begin in June.",
+      "answer": "The budget is voted.[^scribe-fn-1] The works begin in June.",
       "expected": {
         "content": {
-          "content": "The budget is approved. The works start in June.\n\n",
+          "content": "The budget is approved.[^scribe-fn-1] The works start in June.\n\n",
           "target": "selection",
-          "canReplace": false
+          "canReplace": true
         },
         "model": {
           "blocks": [
-            {"type":"p","runs":[{"t":"The budget is approved."},{"t":" The works start in June."}],"notes":1},
-            {"type":"p","runs":[{"t":"The budget is voted. The works begin in June."}]},
+            {"type":"p","runs":[{"t":"The budget is voted."},{"t":" The works begin in June."}],"notes":1},
             {"type":"p","runs":[{"t":"Next steps follow."}]}
           ],
           "selText": "The budget is voted. The works begin in June.",
-          "selMarkup": [{"at":{"block":1},"text":"«The budget is voted. The works begin in June.»"}]
+          "selMarkup": [{"at":{"block":0},"text":"«The budget is voted. The works begin in June.»"}]
         }
       }
     },
@@ -27,21 +40,67 @@
       "id": "footnote",
       "selection": "P1@start..P1@end",
       "answerAction": "insert",
-      "answer": "The budget is voted.",
+      "answer": "The budget is voted.[^scribe-fn-1]",
       "expected": {
         "content": {
-          "content": "The budget is approved. The works start in June.\n\n",
+          "content": "The budget is approved.[^scribe-fn-1] The works start in June.\n\n",
           "target": "selection",
-          "canReplace": false
+          "canReplace": true
         },
         "model": {
           "blocks": [
             {"type":"p","runs":[{"t":"The budget is approved."},{"t":" The works start in June."}],"notes":1},
-            {"type":"p","runs":[{"t":"The budget is voted."}]},
+            {"type":"p","runs":[{"t":"The budget is voted."}],"notes":1},
             {"type":"p","runs":[{"t":"Next steps follow."}]}
           ],
           "selText": "The budget is voted.",
           "selMarkup": [{"at":{"block":1},"text":"«The budget is voted.»"}]
+        }
+      }
+    },
+    {
+      "id": "footnote-dropped",
+      "selection": "P1@start..P1@end",
+      "answerAction": "replace",
+      "answer": "The budget is voted. The works begin in June.",
+      "expected": {
+        "content": {
+          "content": "The budget is approved.[^scribe-fn-1] The works start in June.\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"The budget is voted. The works begin in June."}]},
+            {"type":"p","runs":[{"t":"Next steps follow."}]}
+          ],
+          "selText": "The budget is voted. The works begin in June.",
+          "selMarkup": [{"at":{"block":0},"text":"«The budget is voted. The works begin in June.»"}]
+        }
+      }
+    },
+    {
+      "id": "footnote-twice",
+      "selection": "P1@start..P1@end",
+      "answerAction": "replace",
+      "answer": "The budget[^scribe-fn-1] is voted.[^scribe-fn-1] The works begin in June.[^scribe-fn-2]",
+      "expected": {
+        "content": {
+          "content": "The budget is approved.[^scribe-fn-1] The works start in June.\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {
+              "type": "p",
+              "runs": [{"t":"The budget"},{"t":" is voted."},{"t":" The works begin in June."}],
+              "notes": 2
+            },
+            {"type":"p","runs":[{"t":"Next steps follow."}]}
+          ],
+          "selText": "The budget is voted. The works begin in June.",
+          "selMarkup": [{"at":{"block":0},"text":"«The budget is voted. The works begin in June.»"}]
         }
       }
     },
