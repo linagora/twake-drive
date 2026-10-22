@@ -202,6 +202,70 @@ describe('ScribeProvider', () => {
     expect(getSource()).toBe('selection')
   })
 
+  it('opens the panel from the toolbar of the editor', () => {
+    const { plugin, receive, getSource } = setup()
+    receive({ type: 'twake-scribe:ready' })
+
+    receive({ type: 'twake-scribe:open', source: 'toolbar-inline' })
+
+    expect(plugin.postMessage.mock.calls).toEqual([
+      [{ type: 'twake-scribe:getContent' }, SERVER_ORIGIN]
+    ])
+    expect(getSource()).toBe('editor-toolbar')
+  })
+
+  it('toggles the panel from its panel entry', () => {
+    const { plugin, receive, getState, getSource } = setup()
+    receive({ type: 'twake-scribe:ready' })
+
+    receive({ type: 'twake-scribe:open', source: 'toolbar-panel' })
+
+    expect(plugin.postMessage.mock.calls).toEqual([
+      [{ type: 'twake-scribe:getContent' }, SERVER_ORIGIN]
+    ])
+    expect(getSource()).toBe('editor-toolbar')
+
+    receive({ type: 'twake-scribe:content', content: '', target: 'document' })
+    expect(getState().isOpen).toBe(true)
+
+    receive({ type: 'twake-scribe:open', source: 'toolbar-panel' })
+
+    expect(getState().isOpen).toBe(false)
+    expect(plugin.postMessage).toHaveBeenLastCalledWith(
+      { type: 'twake-scribe:close' },
+      SERVER_ORIGIN
+    )
+  })
+
+  it('ignores another entry, or another origin, asking to open', () => {
+    const { plugin, receive } = setup()
+    receive({ type: 'twake-scribe:ready' })
+
+    receive({ type: 'twake-scribe:open', source: 'toolbar' })
+    receive({ type: 'twake-scribe:open' })
+    receive(
+      { type: 'twake-scribe:open', source: 'toolbar-panel' },
+      { origin: 'https://example.org' }
+    )
+
+    expect(plugin.postMessage).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['on a public link', { isPublic: true }],
+    ['in a read-only document', { isReadOnly: true }],
+    ['without the assistant', { isAssistantEnabled: false }]
+  ])('ignores the toolbar of the editor %s', (_, options) => {
+    const { plugin, receive, getState } = setup(options)
+    receive({ type: 'twake-scribe:ready' })
+
+    receive({ type: 'twake-scribe:open', source: 'toolbar-inline' })
+    receive({ type: 'twake-scribe:open', source: 'toolbar-panel' })
+
+    expect(plugin.postMessage).not.toHaveBeenCalled()
+    expect(getState().isOpen).toBe(false)
+  })
+
   it('keeps the geometry the plugin sends, with the box of the editor frame', () => {
     const frame = addEditorFrame({ left: 0, top: 49, width: 1280, height: 671 })
     const { receive, getGeometry } = setup()

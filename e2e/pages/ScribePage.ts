@@ -18,7 +18,8 @@ export interface Box {
 /**
  * Drive's chrome around the scribe of an OnlyOffice document: the AI button
  * of the toolbar, the button under the selection, the floating button of the
- * document area and the panel that holds the assistant
+ * document area, the entries of the plugin in the ribbon of the editor and
+ * the panel that holds the assistant
  */
 export class ScribePage {
   constructor(private readonly page: Page) {}
@@ -104,6 +105,20 @@ export class ScribePage {
       .frameLocator('iframe[name="frameEditor"]')
       .locator('#id_viewer')
       .boundingBox()
+  }
+
+  /** A tab of the ribbon of the editor, as the one the plugin adds */
+  editorTab(name: string): Locator {
+    return this.page
+      .frameLocator('iframe[name="frameEditor"]')
+      .getByRole('tab', { name, exact: true })
+  }
+
+  /** A button of the ribbon of the editor, in the tab shown */
+  editorToolbarButton(name: string): Locator {
+    return this.page
+      .frameLocator('iframe[name="frameEditor"]')
+      .getByRole('button', { name, exact: true })
   }
 
   toolbarButton(): Locator {
