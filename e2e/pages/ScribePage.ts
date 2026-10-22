@@ -153,6 +153,11 @@ export class ScribePage {
     return this.panel().frameLocator('iframe')
   }
 
+  /** The field where the user writes a request to the assistant */
+  assistantComposer(): Locator {
+    return this.assistantFrame().getByRole('textbox')
+  }
+
   resizeHandle(): Locator {
     return this.panel().getByRole('separator', { name: 'Resize the panel' })
   }
