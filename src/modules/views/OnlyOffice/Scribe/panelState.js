@@ -22,8 +22,9 @@ export const writePanelOpen = isOpen => {
   }
 }
 
-export const clampPanelWidth = (width, windowWidth) =>
-  Math.min(
-    Math.max(width, PANEL_MIN_WIDTH),
-    windowWidth * PANEL_MAX_WINDOW_SHARE
-  )
+export const clampPanelWidth = (width, windowWidth) => {
+  const maxWidth = windowWidth * PANEL_MAX_WINDOW_SHARE
+  // Too narrow a window for both: the panel takes the place of the document
+  if (maxWidth < PANEL_MIN_WIDTH) return windowWidth
+  return Math.min(Math.max(width, PANEL_MIN_WIDTH), maxWidth)
+}

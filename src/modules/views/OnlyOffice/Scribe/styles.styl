@@ -36,6 +36,13 @@
     &:hover::after
         opacity .4
 
+    // The grip stands for the outline
+    &:focus-visible
+        outline 0
+
+        &::after
+            opacity .8
+
 .scribe-resize-handle--dragging::after
     opacity .8
 

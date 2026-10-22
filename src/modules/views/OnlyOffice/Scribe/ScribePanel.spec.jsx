@@ -243,27 +243,57 @@ describe('ScribePanel', () => {
     expect(close).not.toHaveBeenCalled()
   })
 
-  it('resizes the panel from the handle', () => {
+  it('resizes the panel from the handle, without a jump where it is grabbed', () => {
     window.innerWidth = 1280
     setup()
     const panel = screen.getByRole('complementary', { name: 'Help me write' })
     const handle = screen.getByRole('separator', { name: 'Resize the panel' })
+    handle.getBoundingClientRect = () => ({ left: 880 })
     expect(panel).toHaveStyle({ width: '400px' })
 
     fireEvent.pointerDown(handle, { clientX: 886, pointerId: 1 })
-    fireEvent.pointerMove(handle, { clientX: 780, pointerId: 1 })
+    fireEvent.pointerMove(handle, { clientX: 887, pointerId: 1 })
+    expect(panel).toHaveStyle({ width: '399px' })
+
+    fireEvent.pointerMove(handle, { clientX: 786, pointerId: 1 })
     expect(panel).toHaveStyle({ width: '500px' })
 
-    fireEvent.pointerMove(handle, { clientX: 100, pointerId: 1 })
+    fireEvent.pointerMove(handle, { clientX: 106, pointerId: 1 })
     expect(panel).toHaveStyle({ width: '768px' })
 
-    fireEvent.pointerMove(handle, { clientX: 1200, pointerId: 1 })
+    fireEvent.pointerMove(handle, { clientX: 1206, pointerId: 1 })
     expect(panel).toHaveStyle({ width: '280px' })
 
-    fireEvent.pointerMove(handle, { clientX: 680, pointerId: 1 })
-    fireEvent.pointerUp(handle, { clientX: 680, pointerId: 1 })
-    fireEvent.pointerMove(handle, { clientX: 500, pointerId: 1 })
+    fireEvent.pointerMove(handle, { clientX: 686, pointerId: 1 })
+    fireEvent.pointerUp(handle, { clientX: 686, pointerId: 1 })
+    fireEvent.pointerMove(handle, { clientX: 506, pointerId: 1 })
     expect(panel).toHaveStyle({ width: '600px' })
+  })
+
+  it('resizes the panel from the keyboard', () => {
+    window.innerWidth = 1280
+    setup()
+    const panel = screen.getByRole('complementary', { name: 'Help me write' })
+    const handle = screen.getByRole('separator', { name: 'Resize the panel' })
+
+    fireEvent.keyDown(handle, { key: 'ArrowLeft' })
+    expect(panel).toHaveStyle({ width: '416px' })
+    expect(handle).toHaveAttribute('aria-valuenow', '416')
+
+    fireEvent.keyDown(handle, { key: 'ArrowLeft', shiftKey: true })
+    expect(panel).toHaveStyle({ width: '480px' })
+
+    fireEvent.keyDown(handle, { key: 'ArrowRight' })
+    expect(panel).toHaveStyle({ width: '464px' })
+
+    fireEvent.keyDown(handle, { key: 'End' })
+    expect(panel).toHaveStyle({ width: '768px' })
+
+    fireEvent.keyDown(handle, { key: 'Home' })
+    expect(panel).toHaveStyle({ width: '280px' })
+
+    fireEvent.keyDown(handle, { key: 'ArrowRight' })
+    expect(panel).toHaveStyle({ width: '280px' })
   })
 
   it('keeps the panel within 60% of a window that shrinks', () => {
@@ -277,6 +307,15 @@ describe('ScribePanel', () => {
     })
 
     expect(panel).toHaveStyle({ width: '360px' })
+  })
+
+  it('takes the whole of a window too narrow for the panel and the document', () => {
+    window.innerWidth = 400
+    setup()
+
+    expect(
+      screen.getByRole('complementary', { name: 'Help me write' })
+    ).toHaveStyle({ width: '400px' })
   })
 
   it('closes when the assistant cancels the intent', () => {
