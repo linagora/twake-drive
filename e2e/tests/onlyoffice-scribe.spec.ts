@@ -31,8 +31,13 @@ interface ScribeCase {
   answerAction: 'insert' | 'replace' | null
   answer: string | null
   // The next answer of the conversation, written over the first one, left
-  // selected, without the text being read again
-  next?: { answerAction: 'insert' | 'replace'; answer: string }
+  // selected, without the text being read again; the keys the user presses
+  // before, as an undo and a redo
+  next?: {
+    answerAction: 'insert' | 'replace'
+    answer: string
+    keys?: string[]
+  }
   expected?: {
     content: ScribeContent
     model: ScribeModel | null
@@ -137,6 +142,7 @@ for (const suite of suites) {
               scribeCase.answer ?? ''
             )
             if (scribeCase.next) {
+              await scribe.press(scribeCase.next.keys ?? [])
               applied = await scribe.applyAnswer(
                 scribeCase.next.answerAction,
                 scribeCase.next.answer

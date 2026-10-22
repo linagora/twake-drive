@@ -14,12 +14,13 @@
  * the document is the marker `{{REF:scribe-ref-N:text}}`, and the N-th item
  * of `refs` the `anchor` it goes to and its `kind`, `heading` or `bookmark`.
  * The K-th drawing of the selection, K from 1 in their order, is the marker
- * `![image K]`, and a picture of the whole document `[image]`.
+ * `![image K]`, and a picture of the whole document `[image]`; `imageCount`
+ * counts the drawings numbered.
  *
  * @returns {{ content: string, target: 'selection' | 'document',
- * canReplace: boolean, notes: string[], refs: object[] }} the text, in
- * Markdown, whether an answer can take its place, and what its markers stand
- * for
+ * canReplace: boolean, notes: string[], refs: object[],
+ * imageCount: number }} the text, in Markdown, whether an answer can take its
+ * place, and what its markers stand for
  */
 export function readContent() {
   const doc = Api.GetDocument()
@@ -38,8 +39,10 @@ export function readContent() {
   const NOTE_REFERENCE = /"type":"footnoteRef"/
   const notes = []
   const refs = []
-  // A note the content gives no marker for, which an answer would lose
+  // A note or a drawing the content gives no marker for, which an answer
+  // would lose
   let hasUnmarkedNote = false
+  let hasUnmarkedDrawing = false
 
   // The runs of a paragraph, those of its links included
   const getRuns = paragraph => {
@@ -288,6 +291,7 @@ export function readContent() {
       isWritable &&
       !isEndingSection &&
       !hasUnmarkedNote &&
+      !hasUnmarkedDrawing &&
       !KEPT.test(selectionJson)
     )
   }
@@ -564,7 +568,7 @@ export function readContent() {
     }
 
     // A drawing the editor's Markdown does not give is given after the text
-    // before it
+    // before it, out of a code
     const addDrawingMarkers = run => {
       if (unlisted.length === 0) return
       const range = run.GetRange()
@@ -572,6 +576,10 @@ export function readContent() {
         place >= range?.GetStartPos() && place < range?.GetEndPos()
       unlisted.filter(isInRun).forEach(({ number }) => {
         const point = findNotePoint()
+        if (isInFence(point) || isInCode(point)) {
+          hasUnmarkedDrawing = true
+          return
+        }
         const space = /\S/.test(markdown[point - 1] ?? '') ? ' ' : ''
         replace(point, point, `${space}![image ${number}]`)
       })
@@ -625,24 +633,40 @@ export function readContent() {
     : []
   const pictureNumbers = numbered.filter(isPicture).map(({ number }) => number)
   const unlisted = numbered.filter(found => !isPicture(found))
+  hasUnmarkedDrawing =
+    paragraphs.length > 0 &&
+    (drawings === null || (!isNumbered && drawings.length > 0))
+  // A marker would be text in a code
+  const isInCodeText = (text, index) => {
+    const fences = text.slice(0, index).match(/^[ \t]*```/gm)?.length ?? 0
+    const line = text.slice(text.lastIndexOf('\n', index) + 1, index)
+    return fences % 2 === 1 || line.split('`').length % 2 === 0
+  }
   const numberPictures = text => {
     let next = 0
-    return text.replace(PICTURE, () => {
+    return text.replace(PICTURE, (picture, index) => {
       const number = pictureNumbers[next]
       next += 1
-      return number ? `![image ${number}]` : '[image]'
+      if (!number) return '[image]'
+      if (!isInCodeText(text, index)) return `![image ${number}]`
+      hasUnmarkedDrawing = true
+      return '[image]'
     })
   }
 
-  const content = describeMerges(
+  const decorated = describeMerges(
     hasSelection ? decorate(paragraphs, markdown) : markdown
   )
+  const content = numberPictures(
+    hasSelection ? removeMark(decorated) : decorated
+  )
   return {
-    content: numberPictures(hasSelection ? removeMark(content) : content),
+    content,
     target: hasSelection ? 'selection' : 'document',
     canReplace: hasSelection && !isLocked && canReplace(),
     notes,
-    refs
+    refs,
+    imageCount: numbered.length
   }
 }
 
@@ -652,15 +676,24 @@ export function readContent() {
  * end or at the cursor: in the line when that is inside a text, after the
  * paragraph otherwise. The new text is left selected: the user sees it, and
  * the next answer can replace it. The marker of an image, `![image K]`, is a
- * copy of the K-th drawing of the selection, when the selection holds as many
- * drawings as the text read gave markers (`Asc.scope.imageCount`).
+ * copy of the drawing of the selection it names: the K-th one, when the
+ * selection holds as many drawings as the text read gave markers
+ * (`Asc.scope.imageCount`), or, over an answer written for the same text, the
+ * copy written for K (`Asc.scope.writtenImages`, the markers its drawings
+ * were copies for).
  *
- * @returns {{ written: boolean, skippedCells: number }} whether the answer
- * was written, not when there was nowhere to write, and the count of the
- * selected cells the answer had no cell for
+ * @returns {{ written: boolean, skippedCells: number, images: number[] }}
+ * whether the answer was written, not when there was nowhere to write, the
+ * count of the selected cells the answer had no cell for, and the marker each
+ * drawing of the answer left selected is a copy for, null when not known
  */
 export function writeBlocks() {
-  const { notes = [], refs = [], imageCount = 0 } = Asc.scope
+  const {
+    notes = [],
+    refs = [],
+    imageCount = 0,
+    writtenImages = null
+  } = Asc.scope
   // An image block is a paragraph of its image
   const blocks = Asc.scope.blocks.map(block =>
     block.type === 'image'
@@ -692,8 +725,9 @@ export function writeBlocks() {
     return runs
   }
 
-  // The drawings of the selection, in their order, as `readContent` numbers
-  // them: a position counts each character and each drawing of a run
+  // The drawings of a range, in their order, with their places, as
+  // `readContent` numbers them: a position counts each character and each
+  // drawing of a run
   const findDrawingPlaces = paragraph =>
     getRuns(paragraph).flatMap(run => {
       const { content } = JSON.parse(run.ToJSON())
@@ -705,32 +739,47 @@ export function writeBlocks() {
         return item.type === 'paraDrawing' ? [place] : []
       })
     })
-  const findSelectedDrawings = () => {
-    const from = selection.GetStartPos()
-    const to = selection.GetEndPos()
+  const findDrawings = selected => {
+    if (!selected || selected.GetStartPos() >= selected.GetEndPos()) return []
+    const from = selected.GetStartPos()
+    const to = selected.GetEndPos()
     const found = []
-    for (const paragraph of paragraphs) {
+    for (const paragraph of selected.GetAllParagraphs() ?? []) {
       const id = paragraph.GetInternalId()
       const drawings = paragraph
         .GetAllDrawingObjects()
         .filter(drawing => drawing.GetParentParagraph()?.GetInternalId() === id)
       const places = drawings.length > 0 ? findDrawingPlaces(paragraph) : []
       if (places.length !== drawings.length) return []
-      found.push(
-        ...drawings.filter((drawing, i) => places[i] >= from && places[i] < to)
-      )
+      drawings.forEach((drawing, i) => {
+        const place = places[i]
+        if (place >= from && place < to) found.push({ drawing, place })
+      })
     }
     return found
   }
 
   // Read before anything changes. A selection that does not hold as many
-  // drawings as the text the assistant got, as after an undo, may not hold
-  // the ones its markers name: each image is then written as its text.
-  const drawings = selection ? findSelectedDrawings() : []
-  const isSameDrawings = drawings.length === imageCount
-  // A copy keeps the wrapping of a floating drawing
-  const copyOf = number =>
-    isSameDrawings ? (drawings[number - 1]?.Copy() ?? null) : null
+  // drawings as its markers name, as after an undo, may not hold the ones
+  // they name: each image is then written as its text.
+  const drawings = findDrawings(selection).map(({ drawing }) => drawing)
+  const findOriginal = number => {
+    if (writtenImages?.length === drawings.length) {
+      return drawings[writtenImages.indexOf(number)] ?? null
+    }
+    if (drawings.length !== imageCount) return null
+    return drawings[number - 1] ?? null
+  }
+  // The blocks in the order of the document once written
+  let writtenBlocks = blocks
+  // A copy keeps the wrapping of a floating drawing, and takes the
+  // alternative text, the name and the link of the original
+  const copyOf = number => {
+    const original = findOriginal(number)
+    const copy = original?.Copy() ?? null
+    copy?.SetDrawingPrFromDrawing(original)
+    return copy
+  }
   // The editor writes a table in a table over its cells: a table of the
   // answer goes under the table of the selection, out of any other one
   const hasTable = blocks.some(block => block.type === 'table')
@@ -1712,6 +1761,13 @@ export function writeBlocks() {
     const textParts = parts.filter(part => !part.table)
     const answerTables = blocks.filter(block => block.type === 'table')
     const answerTexts = blocks.filter(block => block.type !== 'table')
+    writtenBlocks = parts
+      .map(part =>
+        part.table
+          ? answerTables[tableParts.indexOf(part)]
+          : answerTexts[textParts.indexOf(part)]
+      )
+      .filter(Boolean)
     const edges = [...parts]
       .reverse()
       .map(part =>
@@ -1775,6 +1831,29 @@ export function writeBlocks() {
     return writeAnswer(blocks.flatMap(makeElement), false)
   }
 
+  // The markers of the images of blocks, in their order
+  const listImages = listed =>
+    listed.flatMap(block => {
+      if (block.type === 'table') {
+        return block.rows
+          .flat()
+          .flatMap(cell => listImages(cell.blocks ?? [cell]))
+      }
+      return (block.spans ?? [])
+        .filter(span => span.image !== undefined)
+        .map(span => span.image)
+    })
+
+  // The marker each drawing of the answer left selected is a copy for, in
+  // their order, null when it is unknown. The editor copies what it writes in
+  // a line, and the copies have no mark of their own: they are told by the
+  // order the blocks are written in, when the selection holds as many.
+  const findWrittenImages = () => {
+    const numbers = listImages(writtenBlocks).filter(findOriginal)
+    const found = findDrawings(doc.GetRangeBySelect())
+    return found.length === numbers.length ? numbers : found.map(() => null)
+  }
+
   const written = write()
-  return { written, skippedCells }
+  return { written, skippedCells, images: findWrittenImages() }
 }
