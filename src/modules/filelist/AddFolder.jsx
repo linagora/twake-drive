@@ -74,9 +74,7 @@ const AddFolderWithState = ({
           driveId,
           addItems
         )
-      ).then(() => {
-        afterSubmit?.() // eslint-disable-line promise/always-return
-      })
+      ).then(() => afterSubmit?.())
     )
 
   const onAbort = (accidental, showAlert, t) => {
