@@ -575,6 +575,39 @@
       }
     },
     {
+      "id": "cross-text-only",
+      "selection": "P1@mid..T1.C(0,1)@end",
+      "answerAction": "replace",
+      "answer": "Summary of it all",
+      "expected": {
+        "content": {
+          "content": "aragraph\n\n<table>\n  <tr>\n   <td>\n\nAlpha\n\n</td>\n   <td>\n\nBeta\n\n</td>\n  </tr>\n</table>\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Delta"}]},{"type":"p","runs":[{"t":"Delta2"}]}]}
+                ]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Summary of it all"}]},
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "Summary of it all",
+          "selMarkup": [{"at":{"block":2},"text":"«Summary of it all»"}]
+        },
+        "applied": {"skippedCells":0}
+      }
+    },
+    {
       "id": "cell-cursor-text",
       "selection": "T1.C(1,1)@mid",
       "answerAction": "insert",
