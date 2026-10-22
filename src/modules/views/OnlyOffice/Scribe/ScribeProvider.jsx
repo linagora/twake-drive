@@ -1,12 +1,16 @@
 import React, {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
   useState
 } from 'react'
 
+import flag from 'cozy-flags'
+
 import logger from '@/lib/logger'
+import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
 import {
   INSERT_SLIDE,
   INSERT_TABLE,
@@ -14,11 +18,21 @@ import {
   normalizeSlide,
   normalizeTable
 } from '@/modules/views/OnlyOffice/Scribe/capabilities'
+import {
+  readPanelOpen,
+  writePanelOpen
+} from '@/modules/views/OnlyOffice/Scribe/panelState'
 import { FRAME_EDITOR_NAME } from '@/modules/views/OnlyOffice/config'
 
 const ScribeContext = createContext({ isAvailable: false, isOpen: false })
 
 export const useScribe = () => useContext(ScribeContext)
+
+const EDITOR_FOCUS_DELAY = 100
+
+const focusEditorFrame = () => {
+  document.getElementsByName(FRAME_EDITOR_NAME)[0]?.focus()
+}
 
 const findFrameBox = () =>
   document.getElementsByName(FRAME_EDITOR_NAME)[0]?.getBoundingClientRect() ??
@@ -36,10 +50,18 @@ const makeGeometry = ({ selection, viewer }) => {
  */
 export const ScribeProvider = ({ serverUrl, documentType, children }) => {
   const serverOrigin = new URL(serverUrl).origin
+  const { isPublic, isReadOnly } = useOnlyOfficeContext()
   const [plugin, setPlugin] = useState(null)
   const [text, setText] = useState(null)
   const [geometry, setGeometry] = useState(null)
   const [source, setSource] = useState(null)
+  const [isRestorePending, setIsRestorePending] = useState(readPanelOpen)
+  // Where no button could open the panel, it is not opened again either
+  const canRestore =
+    isRestorePending &&
+    !isPublic &&
+    !isReadOnly &&
+    Boolean(flag('cozy.assistant.enabled'))
 
   useEffect(() => {
     const handleMessage = event => {
@@ -69,6 +91,22 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
+
+  // The panel opens once the plugin answers with twake-scribe:content
+  const open = useCallback(
+    ({ source = null } = {}) => {
+      setIsRestorePending(false)
+      writePanelOpen(true)
+      setSource(source)
+      plugin.postMessage({ type: 'twake-scribe:getContent' }, serverOrigin)
+    },
+    [plugin, serverOrigin]
+  )
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (plugin !== null && canRestore) open({ source: 'restored' })
+  }, [plugin, canRestore, open])
 
   const value = useMemo(() => {
     // The plugin has no message for a table: it goes in as a Markdown
@@ -115,16 +153,16 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
       documentType,
       geometry,
       source,
-      // The panel opens once the plugin answers with twake-scribe:content
-      open: ({ source = null } = {}) => {
-        setSource(source)
-        plugin.postMessage({ type: 'twake-scribe:getContent' }, serverOrigin)
-      },
+      open,
       // The plugin reads every selection while the panel is open, which
       // empties the redo of the editor: it stops once the panel is closed
       close: () => {
-        plugin.postMessage({ type: 'twake-scribe:close' }, serverOrigin)
+        setIsRestorePending(false)
+        writePanelOpen(false)
+        plugin?.postMessage({ type: 'twake-scribe:close' }, serverOrigin)
         setText(null)
+        // The focus was in the assistant, which goes with the panel
+        setTimeout(focusEditorFrame, EDITOR_FOCUS_DELAY)
       },
       applyResult: result => {
         if (result?.capability !== undefined) {
@@ -137,7 +175,7 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
         )
       }
     }
-  }, [plugin, text, geometry, source, serverOrigin, documentType])
+  }, [plugin, text, geometry, source, serverOrigin, documentType, open])
 
   return (
     <ScribeContext.Provider value={value}>{children}</ScribeContext.Provider>

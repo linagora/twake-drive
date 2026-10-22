@@ -1,10 +1,43 @@
-// On a small screen the panel takes the place of the document. The assistant
-// has its own close button.
+// The panel measures the whole distance the handle drags from the right edge
+// of the window: the air around the card is padding, never margin
 .scribe-panel
-    flex 0 0 26rem
-    max-width 100%
-    border-left 1px solid var(--dividerColor)
+    box-sizing border-box
+    padding 12px 12px 12px 0
+    background-color rgba(20, 20, 45, .055)
+
+.scribe-panel--dark
+    background-color rgba(0, 0, 0, .38)
+
+.scribe-panel-card
+    min-width 0
+    border-radius 14px
     background-color var(--paperBackgroundColor)
+    box-shadow 0 2px 4px rgba(20, 20, 45, .10), 0 14px 34px rgba(20, 20, 45, .16)
+
+    .scribe-panel--dark &
+        box-shadow 0 2px 4px rgba(0, 0, 0, .55), 0 16px 40px rgba(0, 0, 0, .55)
+
+// The whole gutter between the editor and the card is the grab area; the
+// grip shows on hover
+.scribe-resize-handle
+    width 12px
+    cursor col-resize
+    touch-action none
+
+    &::after
+        content ''
+        width 3px
+        height 32%
+        border-radius 2px
+        background-color var(--primaryColor)
+        opacity 0
+        transition opacity 150ms ease
+
+    &:hover::after
+        opacity .4
+
+.scribe-resize-handle--dragging::after
+    opacity .8
 
 // Over the full screen dialog that holds the editor
 .scribe-selection-button

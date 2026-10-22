@@ -38,6 +38,7 @@
       "insertSlide": "إدراج الشريحة",
       "selectionMenu": "قائمة Scribe",
       "panel": "لوحة Scribe",
+      "resizeHandle": "تغيير حجم اللوحة",
       "suggestions": {
         "newSlide": "شريحة جديدة",
         "newSlideMessage": "أضف شريحة جديدة بعد هذه الشريحة، حول النص",

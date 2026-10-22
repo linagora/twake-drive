@@ -26,6 +26,16 @@ export class ScribePage {
   /** Opens a document in OnlyOffice and waits for the AI button */
   async openDocument(appUrl: string, fileId: string): Promise<void> {
     await this.page.goto(`${appUrl}/#/onlyoffice/${fileId}`)
+    await this.waitForScribe()
+  }
+
+  /** Reloads the document and waits for the AI button again */
+  async reload(): Promise<void> {
+    await this.page.reload()
+    await this.waitForScribe()
+  }
+
+  private async waitForScribe(): Promise<void> {
     await expect(this.editorFrame()).toBeVisible({
       timeout: 90_000
     })
@@ -126,6 +136,31 @@ export class ScribePage {
 
   assistantFrame(): FrameLocator {
     return this.panel().frameLocator('iframe')
+  }
+
+  resizeHandle(): Locator {
+    return this.panel().getByRole('separator', { name: 'Resize the panel' })
+  }
+
+  async panelWidth(): Promise<number> {
+    const box = await this.panel().boundingBox()
+    if (!box) throw new Error('No panel')
+    return box.width
+  }
+
+  /**
+   * Drags the handle dx px to the right. The left edge of the panel follows
+   * the pointer, so the handle is grabbed at that edge.
+   */
+  async dragHandle(dx: number): Promise<void> {
+    const box = await this.resizeHandle().boundingBox()
+    if (!box) throw new Error('No resize handle')
+    const x = box.x + 1
+    const y = box.y + box.height / 2
+    await this.page.mouse.move(x, y)
+    await this.page.mouse.down()
+    await this.page.mouse.move(x + dx, y, { steps: 5 })
+    await this.page.mouse.up()
   }
 
   async openPanel(): Promise<void> {

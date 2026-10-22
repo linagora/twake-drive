@@ -532,6 +532,7 @@
       "insertSlide": "Dia invoegen",
       "selectionMenu": "Scribe-menu",
       "panel": "Scribe-paneel",
+      "resizeHandle": "Grootte van het paneel wijzigen",
       "suggestions": {
         "newSlide": "Nieuwe dia",
         "newSlideMessage": "Voeg na deze dia een nieuwe dia over de tekst toe",

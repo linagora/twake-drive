@@ -174,4 +174,37 @@ test.describe('the scribe of Drive', { tag: '@e2e-scribe' }, () => {
     await scribe.floatingButton().click()
     await expect(scribe.panel()).toBeHidden()
   })
+
+  // The panel is remembered in the localStorage of the browser context, which
+  // each test gets afresh: the whole scenario stays in this test
+  test('the panel resizes and stays open', async ({ alicePage }) => {
+    const fileId = await uploadScribeDocument(
+      USERS.alice.instance,
+      'a-family.docx'
+    )
+    const scribe = new ScribePage(alicePage)
+    await scribe.openDocument(USERS.alice.appUrl, fileId)
+
+    await scribe.openPanel()
+    await expect(scribe.panel()).toBeVisible()
+    expect(await scribe.panelWidth()).toBe(400)
+    const frame = await scribe.editorFrame().boundingBox()
+    if (!frame) throw new Error('No editor frame')
+
+    await scribe.dragHandle(-100)
+    await expect(async () => {
+      expect(Math.abs((await scribe.panelWidth()) - 500)).toBeLessThanOrEqual(2)
+      const resized = await scribe.editorFrame().boundingBox()
+      if (!resized) throw new Error('No editor frame')
+      expect(Math.abs(frame.width - resized.width - 100)).toBeLessThanOrEqual(2)
+    }).toPass({ timeout: 5_000 })
+
+    await scribe.reload()
+    await expect(scribe.panel()).toBeVisible()
+
+    await scribe.closePanel()
+    await expect(scribe.panel()).toBeHidden()
+    await scribe.reload()
+    await expect(scribe.panel()).toBeHidden()
+  })
 })

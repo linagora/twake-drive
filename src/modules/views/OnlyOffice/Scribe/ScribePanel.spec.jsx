@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import React from 'react'
 
 import { createMockClient } from 'cozy-client'
@@ -67,7 +67,20 @@ const setup = (scribe = {}) => {
 
 const getIntentProps = () => mockIntentIframe.mock.calls.at(-1)[0]
 
+const WINDOW_WIDTH = window.innerWidth
+
 describe('ScribePanel', () => {
+  // jsdom has no PointerEvent: without it, the events lose their clientX
+  beforeAll(() => {
+    window.PointerEvent = window.MouseEvent
+  })
+  afterAll(() => {
+    delete window.PointerEvent
+  })
+  afterEach(() => {
+    window.innerWidth = WINDOW_WIDTH
+  })
+
   it('shows nothing while the scribe is closed', () => {
     setup({ isOpen: false })
 
@@ -228,6 +241,42 @@ describe('ScribePanel', () => {
       params: { title: 'Budget', bullets: ['Dépenses'] }
     })
     expect(close).not.toHaveBeenCalled()
+  })
+
+  it('resizes the panel from the handle', () => {
+    window.innerWidth = 1280
+    setup()
+    const panel = screen.getByRole('complementary', { name: 'Help me write' })
+    const handle = screen.getByRole('separator', { name: 'Resize the panel' })
+    expect(panel).toHaveStyle({ width: '400px' })
+
+    fireEvent.pointerDown(handle, { clientX: 886, pointerId: 1 })
+    fireEvent.pointerMove(handle, { clientX: 780, pointerId: 1 })
+    expect(panel).toHaveStyle({ width: '500px' })
+
+    fireEvent.pointerMove(handle, { clientX: 100, pointerId: 1 })
+    expect(panel).toHaveStyle({ width: '768px' })
+
+    fireEvent.pointerMove(handle, { clientX: 1200, pointerId: 1 })
+    expect(panel).toHaveStyle({ width: '280px' })
+
+    fireEvent.pointerMove(handle, { clientX: 680, pointerId: 1 })
+    fireEvent.pointerUp(handle, { clientX: 680, pointerId: 1 })
+    fireEvent.pointerMove(handle, { clientX: 500, pointerId: 1 })
+    expect(panel).toHaveStyle({ width: '600px' })
+  })
+
+  it('keeps the panel within 60% of a window that shrinks', () => {
+    window.innerWidth = 1280
+    setup()
+    const panel = screen.getByRole('complementary', { name: 'Help me write' })
+
+    window.innerWidth = 600
+    act(() => {
+      window.dispatchEvent(new Event('resize'))
+    })
+
+    expect(panel).toHaveStyle({ width: '360px' })
   })
 
   it('closes when the assistant cancels the intent', () => {

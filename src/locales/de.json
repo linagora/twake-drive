@@ -662,6 +662,7 @@
       "insertSlide": "Folie einfügen",
       "selectionMenu": "Scribe-Menü",
       "panel": "Scribe-Bereich",
+      "resizeHandle": "Größe des Bereichs ändern",
       "suggestions": {
         "newSlide": "Neue Folie",
         "newSlideMessage": "Füge nach dieser Folie eine neue Folie zum Text hinzu",

@@ -662,6 +662,7 @@
       "insertSlide": "Chèn trang chiếu",
       "selectionMenu": "Menu Scribe",
       "panel": "Bảng Scribe",
+      "resizeHandle": "Thay đổi kích thước bảng",
       "suggestions": {
         "newSlide": "Trang chiếu mới",
         "newSlideMessage": "Thêm một trang chiếu mới sau trang này, về nội dung văn bản",
