@@ -457,6 +457,8 @@
             {"type":"p","runs":[{"t":"The quick brown fox"}]},
             {
               "type": "table",
+              "width": "100%",
+              "borders": 1,
               "grid": [
                 [
                   {"blocks":[{"type":"p","runs":[{"t":"A","b":1}]}]},
@@ -509,6 +511,8 @@
           "blocks": [
             {
               "type": "table",
+              "width": "100%",
+              "borders": 1,
               "grid": [
                 [
                   {"blocks":[{"type":"p","runs":[{"t":"A","b":1}]}]},
@@ -724,6 +728,8 @@
             {"type":"p","runs":[{"t":"Caption"}]},
             {
               "type": "table",
+              "width": "100%",
+              "borders": 1,
               "grid": [
                 [
                   {"blocks":[{"type":"p","runs":[{"t":"a","b":1}]}]},

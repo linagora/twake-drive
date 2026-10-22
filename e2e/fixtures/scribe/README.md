@@ -50,8 +50,11 @@ paragraph, the cells are taken whole, as the editor does.
 paragraph with its runs (text, bold `b`, italic `i`, underline `u`,
 strikethrough `s`, `code`, `link`), its style when it is not Normal, its list
 level and label, its images, notes and page breaks, whether it ends a section
-and whether it is shaded (`shade`); each table with its cells and their
-merges. The
+and whether it is shaded (`shade`); each table with the width it asks for
+(`width`: `100%` of the width of the text, or points as `240pt`), whether it
+has borders of its own (`borders`), and its cells and their merges: a copy of
+a table of the document keeps its width, a new table of the plugin is
+`100%` wide. The
 selection is told by the text it covers (`selText`), and each paragraph it
 touches with the selected text between `«` and `»` (`selMarkup`): the positions
 of the editor are left out, since they count the empty runs.

@@ -17,6 +17,8 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[],"images":1}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
                 [{"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Delta"}]}]}]
@@ -24,8 +26,10 @@
             },
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
-                [{"blocks":[{"type":"p","runs":[]}]},{"blocks":[{"type":"p","runs":[{"t":"BetaI"}]}]}],
+                [{"blocks":[{"type":"p","runs":[],"images":1}]},{"blocks":[{"type":"p","runs":[{"t":"BetaI"}]}]}],
                 [
                   {"blocks":[{"type":"p","runs":[{"t":"GammaI"}]}]},
                   {"blocks":[{"type":"p","runs":[{"t":"DeltaI"}]}]}
@@ -60,6 +64,8 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[],"images":1}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
                 [{"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Delta"}]}]}]
@@ -67,8 +73,10 @@
             },
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
-                [{"blocks":[{"type":"p","runs":[]}]},{"blocks":[{"type":"p","runs":[{"t":"BetaX"}]}]}],
+                [{"blocks":[{"type":"p","runs":[],"images":1}]},{"blocks":[{"type":"p","runs":[{"t":"BetaX"}]}]}],
                 [
                   {"blocks":[{"type":"p","runs":[{"t":"GammaX"}]}]},
                   {"blocks":[{"type":"p","runs":[{"t":"DeltaX"}]}]}

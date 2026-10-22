@@ -135,12 +135,13 @@ The tables are given and taken in the HTML tags of the Markdown of the editor, w
 
 | Selection | Answer | Result |
 | --- | --- | --- |
-| A table, a row, cells | A table with the same rows and cells | Written in the cells, which keep their look: the table keeps its style and its merged cells. |
-| A whole table | A table of another shape, or any other blocks | Takes the place of the table. |
-| Some cells | Anything else | Written under the table. |
+| A table, a row, cells, to replace | A table with the same rows and cells | Written in the cells, which keep their look: the table keeps its style and its merged cells. |
+| A whole table, to replace | A table of another shape, or other blocks | Takes the place of the table. A table of the answer is a copy of the table in its shape, with its borders, widths and fonts: its last rows and columns are removed, or new ones added after them in their look. |
+| Cells or a whole table, to insert after, or cells to replace by a table of another shape | A table | Written under the table: a copy of it cut down to the selected rows and columns, then given the shape of the answer as above, each cell in the look of the text it replaces. A table with merged cells or with a table in a cell is not cut: its copy is whole, with the selected cells rewritten and left selected, for an answer of their shape. Another answer, or an answer with merged cells to a table without, is a new table, as for a text. A cell the answer leaves empty keeps its image. |
+| Some cells | Any other answer | Written under the table. |
 | A text, or the cursor, in a cell | An answer with a table | Written under the table: the editor would write a table in a table over its cells. |
-| A text | A table | A new table, with the merged cells of the answer. |
-| A text and cells of one or two tables, or cells of two tables, to replace | At least a table, and other blocks | Each table of the answer is written in the selected cells of a table, in order, row by row, and the cells keep their look; a whole table selected, with a table of another shape, is replaced by it. Each other block takes the place of the selected text of a paragraph, in order, in its line: the text around it is kept. A selected cell without a cell of the answer stays as it was, and is counted in `twake-scribe:applied`; a block without a selected text is not written. The text and the cells are left selected. |
+| A text | A table | A new table, 100 % wide with single borders, with the merged cells of the answer. |
+| A text and cells of one or two tables, or cells of two tables, to replace | At least a table, and other blocks | Each table of the answer is written in the selected cells of a table, in order, row by row, and the cells keep their look; a whole table selected, with a table of another shape, is replaced by a copy of it in that shape, as above. Each other block takes the place of the selected text of a paragraph, in order, in its line: the text around it is kept. A selected cell without a cell of the answer stays as it was, and is counted in `twake-scribe:applied`; a block without a selected text is not written. The text and the cells are left selected. |
 
 ### Presentations
 

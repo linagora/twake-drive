@@ -268,12 +268,53 @@ function readEditor(): ScribeModel {
       shade: pPr?.shd ? 1 : null
     }
   }
+  // The editor gives a width in percent or in twentieths of a point, and a
+  // side without a border as `none`
+  const readWidth = (width?: { type: string; w: number }): string | null => {
+    if (width?.type === 'pct') return `${width.w}%`
+    if (width?.type === 'dxa') return `${width.w / 20}pt`
+    return null
+  }
+  const hasBorders = (
+    borders: Record<string, { value?: string }> = {}
+  ): boolean =>
+    Object.values(borders).some(
+      ({ value }) => value !== undefined && value !== 'none'
+    )
+  interface LaidRow {
+    trPr?: { gridBefore?: number }
+    content: { tcPr?: { gridSpan?: number; vMerge?: string } }[]
+  }
+  // The column of the grid each cell of a row starts at
+  const getStartColumns = (row: LaidRow): number[] => {
+    let column = row.trPr?.gridBefore ?? 0
+    return row.content.map(laid => {
+      const start = column
+      column += laid.tcPr?.gridSpan ?? 1
+      return start
+    })
+  }
   const readTable = (table: any): any => {
-    const layout = JSON.parse(table.ToJSON()).content
+    const { tblPr, content: layout } = JSON.parse(table.ToJSON() as string) as {
+      tblPr?: {
+        tblW?: { type: string; w: number }
+        tblBorders?: Record<string, { value?: string }>
+      }
+      content: LaidRow[]
+    }
+    const columns = layout.map(getStartColumns)
+    // A cell starts a merge when the cell under it continues it: the editor
+    // marks the cells of a row it adds as starts
+    const isContinued = (r: number, c: number): boolean => {
+      const index = columns[r + 1]?.indexOf(columns[r][c]) ?? -1
+      return layout[r + 1]?.content[index]?.tcPr?.vMerge === 'continue'
+    }
     return {
       type: 'table',
-      grid: layout.map((row: any, r: number) =>
-        row.content.map((laid: any, c: number) => {
+      width: readWidth(tblPr?.tblW),
+      borders: hasBorders(tblPr?.tblBorders) ? 1 : null,
+      grid: layout.map((row, r) =>
+        row.content.map((laid, c) => {
           const content = table.GetCell(r, c).GetContent()
           const blocks = []
           for (let i = 0; i < content.GetElementsCount(); i += 1) {
@@ -284,7 +325,8 @@ function readEditor(): ScribeModel {
           }
           const cell: any = { blocks }
           const merge = laid.tcPr?.vMerge
-          if (merge) cell.vmerge = merge === 'continue' ? 'cont' : 'master'
+          if (merge === 'continue') cell.vmerge = 'cont'
+          else if (merge && isContinued(r, c)) cell.vmerge = 'master'
           if ((laid.tcPr?.gridSpan ?? 1) > 1) cell.hspan = laid.tcPr.gridSpan
           return cell
         })
