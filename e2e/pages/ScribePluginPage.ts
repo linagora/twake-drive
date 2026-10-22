@@ -285,7 +285,6 @@ function readEditor(): ScribeModel {
     trPr?: { gridBefore?: number }
     content: { tcPr?: { gridSpan?: number; vMerge?: string } }[]
   }
-  // The column of the grid each cell of a row starts at
   const getStartColumns = (row: LaidRow): number[] => {
     let column = row.trPr?.gridBefore ?? 0
     return row.content.map(laid => {

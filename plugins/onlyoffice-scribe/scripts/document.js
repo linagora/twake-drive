@@ -768,17 +768,21 @@ export function writeBlocks() {
   }
 
   // Rows and columns are added and removed through one of their cells: a
-  // merged cell would be cut, and a table in that cell would take the change.
+  // merged cell would be cut, a table in that cell would take the change,
+  // and in rows of different lengths the cells of an index are not a column.
   // The editor marks the cells of a row it adds as starting a merge: a merge
   // is told by the cells that continue it.
   function canReshape(table) {
-    const isMerged = JSON.parse(table.ToJSON()).content.some(row =>
-      row.content.some(
-        cell =>
-          cell.tcPr?.vMerge === 'continue' || (cell.tcPr?.gridSpan ?? 1) > 1
-      )
+    const isRegular = JSON.parse(table.ToJSON()).content.every(
+      ({ trPr, content }) =>
+        !trPr?.gridBefore &&
+        !trPr?.gridAfter &&
+        content.every(
+          cell =>
+            cell.tcPr?.vMerge !== 'continue' && (cell.tcPr?.gridSpan ?? 1) === 1
+        )
     )
-    return !isMerged && table.GetTables().length === 0
+    return isRegular && table.GetTables().length === 0
   }
 
   function hasSpans(answerTable) {
@@ -797,9 +801,7 @@ export function writeBlocks() {
     fillCell(cell, answerCell)
   }
 
-  // Gives a copy of a table the shape of a table of an answer, and its
-  // cells: its last rows and columns are removed, or new ones added after
-  // them in their look
+  // Added rows and columns take the look of the last ones
   const shapeCopy = (copy, answerTable) => {
     const rowCount = answerTable.rows.length
     const columnCount = Math.max(...answerTable.rows.map(row => row.length))
@@ -831,8 +833,8 @@ export function writeBlocks() {
   // ones. Cut down to the selected rows and columns, it takes the shape of
   // the answer; a table that cannot be cut stays whole, for an answer of the
   // shape of the cells only.
-  const makeTableCopy = ({ table, rows }, answerTable) => {
-    if (!canReshape(table)) {
+  const makeTableCopy = ({ table, rows }, answerTable, isReshapable) => {
+    if (!isReshapable) {
       if (!hasSameShape({ rows }, answerTable)) return null
       const copy = table.Copy()
       rows.forEach((cells, i) => {
@@ -858,8 +860,8 @@ export function writeBlocks() {
 
   // A whole table replaced by a table of another shape: a copy of it in that
   // shape keeps its look
-  const reshapeTable = (table, answerTable) =>
-    canReshape(table) && !hasSpans(answerTable)
+  const reshapeTable = (table, answerTable, isReshapable) =>
+    isReshapable && !hasSpans(answerTable)
       ? shapeCopy(table.Copy(), answerTable)
       : null
 
@@ -923,12 +925,11 @@ export function writeBlocks() {
 
   // An answer to the cells of a table goes under the table, or in place of
   // the whole table it replaces
-  const placeAfterTable = (placeholder, selectedCells) => {
-    const { table: selectedTable } = selectedCells
+  const placeAfterTable = (placeholder, selectedTable, isWhole) => {
     const table = hasTable ? findOuterTable(selectedTable) : selectedTable
     const parent = table.GetParentTableCell()?.GetContent() ?? doc
     let index = table.GetPosInParent() + 1
-    if (isReplacingTable(selectedCells)) {
+    if (isWhole) {
       index -= 1
       table.Delete()
     }
@@ -1319,6 +1320,11 @@ export function writeBlocks() {
     )
   }
 
+  function getLastCell(table) {
+    const lastRow = table.GetRow(table.GetRowsCount() - 1)
+    return lastRow.GetCell(lastRow.GetCellsCount() - 1)
+  }
+
   function getCellRange(cell, isEnd) {
     const content = cell.GetContent()
     const index = isEnd ? content.GetElementsCount() - 1 : 0
@@ -1348,12 +1354,12 @@ export function writeBlocks() {
     const isWhole = countSelected(rows) === countCells(table)
     if (isWhole && answerTable && !hasSameShape({ rows }, answerTable)) {
       const created =
-        reshapeTable(table, answerTable) ?? makeTable(answerTable.rows)
+        reshapeTable(table, answerTable, canReshape(table)) ??
+        makeTable(answerTable.rows)
       const index = table.GetPosInParent()
       table.Delete()
       doc.AddElement(index, created)
-      const lastRow = created.GetRow(created.GetRowsCount() - 1)
-      const lastCell = lastRow.GetCell(lastRow.GetCellsCount() - 1)
+      const lastCell = getLastCell(created)
       return {
         getStart: () => getCellRange(created.GetCell(0, 0), false),
         getEnd: () => getCellRange(lastCell, true)
@@ -1403,28 +1409,31 @@ export function writeBlocks() {
   const writeForCells = selectedCells => {
     const { table, rows } = selectedCells
     const isWhole = isReplacingTable(selectedCells)
-    const isCopiedWhole = !isWhole && !canReshape(table)
+    const isReshapable = canReshape(table)
     let wholeCopy = null
     const elements = blocks.flatMap(block => {
       if (block.type !== 'table') return makeElement(block)
       const copy = isWhole
-        ? reshapeTable(table, block)
-        : makeTableCopy(selectedCells, block)
-      if (copy && isCopiedWhole) wholeCopy = copy
+        ? reshapeTable(table, block, isReshapable)
+        : makeTableCopy(selectedCells, block, isReshapable)
+      if (copy && !isWhole && !isReshapable) wholeCopy = copy
       return copy ?? makeTable(block.rows)
     })
     const placeholder = Api.CreateParagraph()
-    placeAfterTable(placeholder, selectedCells)
+    placeAfterTable(placeholder, table, isWhole)
     placeholder.Select()
     if (!writeAnswer(elements, false)) return false
-    // In a whole copy, the cells of the answer are selected
-    if (wholeCopy && isAnswerOf('table')) {
-      const lastRow = rows[rows.length - 1]
-      const [first, last] = [rows[0][0], lastRow[lastRow.length - 1]].map(
-        cell => wholeCopy.GetCell(cell.GetRowIndex(), cell.GetIndex())
-      )
-      getCellRange(first, false).ExpandTo(getCellRange(last, true))?.Select()
-    }
+    // The last cell may have no run written to end the selection; in a whole
+    // copy, only the selected cells hold the answer
+    const [written] = elements
+    if (!isAnswerOf('table') || written.GetPosInParent() === -1) return true
+    const lastRow = rows[rows.length - 1]
+    const [first, last] = wholeCopy
+      ? [rows[0][0], lastRow[lastRow.length - 1]].map(cell =>
+          wholeCopy.GetCell(cell.GetRowIndex(), cell.GetIndex())
+        )
+      : [written.GetCell(0, 0), getLastCell(written)]
+    getCellRange(first, false).ExpandTo(getCellRange(last, true))?.Select()
     return true
   }
 

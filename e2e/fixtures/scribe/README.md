@@ -57,7 +57,11 @@ a table of the document keeps its width, a new table of the plugin is
 `100%` wide. The
 selection is told by the text it covers (`selText`), and each paragraph it
 touches with the selected text between `«` and `»` (`selMarkup`): the positions
-of the editor are left out, since they count the empty runs.
+of the editor are left out, since they count the empty runs. `selMarkup` marks
+the text between the two ends of the selection: in a selection of cells that
+are not the whole width of their rows, as in `table-ragged`, a cell between
+them in the document is marked though the editor does not select it, and
+`selText` leaves it out.
 
 ## Running
 
