@@ -124,3 +124,53 @@ test('waits for pagination started before the absence check', async ({
     await trashById(USERS.alice.instance, folderId)
   }
 })
+
+test('rescans folders inserted before already checked files', async ({
+  alicePage,
+  aliceDrive
+}) => {
+  const folderId: string = await createFolder({
+    instance: USERS.alice.instance,
+    name: `Inserted pagination ${stamp()}`
+  })
+  const target: string = 'folder-000'
+
+  try {
+    for (let index = 0; index < 101; index++) {
+      await createFolder({
+        instance: USERS.alice.instance,
+        parentId: folderId,
+        name: `folder-${String(index).padStart(3, '0')}`
+      })
+    }
+    const token: string = makeFilesToken(USERS.alice.instance)
+    for (let index = 0; index < 100; index++) {
+      await createFile({
+        instance: USERS.alice.instance,
+        parentId: folderId,
+        name: `file-${String(index).padStart(3, '0')}.txt`,
+        content: 'pagination fixture',
+        token
+      })
+    }
+    await alicePage.route('**/files/_find', async route => {
+      const query: unknown = route.request().postDataJSON()
+      if (typeof query === 'object' && query !== null && 'bookmark' in query) {
+        await new Promise<void>(resolve => setTimeout(resolve, 300))
+      }
+      await route.continue()
+    })
+    await alicePage.goto(`${USERS.alice.appUrl}/#/folder/${folderId}`)
+    await aliceDrive.row('folder-100').waitVisible()
+    await expect(aliceDrive.row(target).cell).toHaveCount(0)
+
+    await expect(
+      aliceDrive.row(target).waitHidden({ timeout: 5_000 })
+    ).rejects.toThrow(`Expected file "${target}" to be absent`)
+    await aliceDrive.row(target).waitVisible()
+    await aliceDrive.row('not-created.txt').waitHidden()
+  } finally {
+    await alicePage.unroute('**/files/_find')
+    await trashById(USERS.alice.instance, folderId)
+  }
+})

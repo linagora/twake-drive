@@ -148,6 +148,7 @@ export class FileRow {
       const scrollTop: number = await scroller.evaluate(
         (element: HTMLElement) => element.scrollTop
       )
+      let scannedRevision: number = this.fileRequests.revision
       try {
         await scroller.evaluate((element: HTMLElement) => {
           element.scrollTop = 0
@@ -171,7 +172,16 @@ export class FileRow {
               await this.cell.count(),
               `Expected file "${this.name}" to be absent`
             ).toBe(0)
-            if (await isAtEnd()) return
+            const reachedEnd: boolean = await isAtEnd()
+            // New folders can be sorted into an already scanned viewport.
+            if (scannedRevision !== this.fileRequests.revision) {
+              scannedRevision = this.fileRequests.revision
+              await scroller.evaluate((element: HTMLElement) => {
+                element.scrollTop = 0
+              })
+              continue
+            }
+            if (reachedEnd && this.fileRequests.pending.size === 0) return
           }
           await scroller.evaluate((element: HTMLElement) => {
             element.scrollTop += Math.max(

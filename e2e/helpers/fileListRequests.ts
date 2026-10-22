@@ -3,6 +3,7 @@ import type { Page, Request } from '@playwright/test'
 /** Start before navigation so absence checks include pagination already in flight. */
 export class FileListRequests {
   readonly pending: Set<Request> = new Set()
+  revision: number = 0
 
   constructor(page: Page) {
     page.on('request', request => {
@@ -14,7 +15,10 @@ export class FileListRequests {
         this.pending.add(request)
       }
     })
-    page.on('requestfinished', request => this.pending.delete(request))
-    page.on('requestfailed', request => this.pending.delete(request))
+    const finishRequest = (request: Request): void => {
+      if (this.pending.delete(request)) this.revision += 1
+    }
+    page.on('requestfinished', finishRequest)
+    page.on('requestfailed', finishRequest)
   }
 }
