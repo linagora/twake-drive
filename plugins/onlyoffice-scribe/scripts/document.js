@@ -767,6 +767,102 @@ export function writeBlocks() {
     }
   }
 
+  // Rows and columns are added and removed through one of their cells: a
+  // merged cell would be cut, and a table in that cell would take the change.
+  // The editor marks the cells of a row it adds as starting a merge: a merge
+  // is told by the cells that continue it.
+  function canReshape(table) {
+    const isMerged = JSON.parse(table.ToJSON()).content.some(row =>
+      row.content.some(
+        cell =>
+          cell.tcPr?.vMerge === 'continue' || (cell.tcPr?.gridSpan ?? 1) > 1
+      )
+    )
+    return !isMerged && table.GetTables().length === 0
+  }
+
+  function hasSpans(answerTable) {
+    return answerTable.rows.some(row =>
+      row.some(cell => (cell.colSpan ?? 1) > 1 || (cell.rowSpan ?? 1) > 1)
+    )
+  }
+
+  // A cell of a copy keeps an image that the answer, empty there, cannot give
+  // back
+  const fillCopiedCell = (cell, answerCell = { spans: [] }) => {
+    const isBlank = getCellParagraphs(answerCell).every(
+      spans => spans.length === 0
+    )
+    if (isBlank && cell.GetContent().GetAllDrawingObjects().length > 0) return
+    fillCell(cell, answerCell)
+  }
+
+  // Gives a copy of a table the shape of a table of an answer, and its
+  // cells: its last rows and columns are removed, or new ones added after
+  // them in their look
+  const shapeCopy = (copy, answerTable) => {
+    const rowCount = answerTable.rows.length
+    const columnCount = Math.max(...answerTable.rows.map(row => row.length))
+    const copyRows = copy.GetRowsCount()
+    const copyColumns = copy.GetRow(0).GetCellsCount()
+    for (let r = copyRows - 1; r >= rowCount; r -= 1) {
+      copy.RemoveRow(copy.GetCell(r, 0))
+    }
+    if (copyRows < rowCount) {
+      copy.AddRows(copy.GetCell(copyRows - 1, 0), rowCount - copyRows)
+    }
+    for (let c = copyColumns - 1; c >= columnCount; c -= 1) {
+      copy.RemoveColumn(copy.GetCell(0, c))
+    }
+    if (copyColumns < columnCount) {
+      const last = copy.GetCell(0, copyColumns - 1)
+      copy.AddColumns(last, columnCount - copyColumns)
+    }
+    for (let r = 0; r < rowCount; r += 1) {
+      for (let c = 0; c < columnCount; c += 1) {
+        fillCopiedCell(copy.GetCell(r, c), answerTable.rows[r][c])
+      }
+    }
+    return copy
+  }
+
+  // A copy of the table of the selected cells, which keeps its borders,
+  // widths and fonts, with the cells of an answer in place of the selected
+  // ones. Cut down to the selected rows and columns, it takes the shape of
+  // the answer; a table that cannot be cut stays whole, for an answer of the
+  // shape of the cells only.
+  const makeTableCopy = ({ table, rows }, answerTable) => {
+    if (!canReshape(table)) {
+      if (!hasSameShape({ rows }, answerTable)) return null
+      const copy = table.Copy()
+      rows.forEach((cells, i) => {
+        cells.forEach((cell, j) => {
+          const copied = copy.GetCell(cell.GetRowIndex(), cell.GetIndex())
+          fillCopiedCell(copied, answerTable.rows[i][j])
+        })
+      })
+      return copy
+    }
+    if (hasSpans(answerTable)) return null
+    const copy = table.Copy()
+    const selectedRows = rows.map(cells => cells[0].GetRowIndex())
+    const selectedColumns = rows[0].map(cell => cell.GetIndex())
+    for (let r = copy.GetRowsCount() - 1; r >= 0; r -= 1) {
+      if (!selectedRows.includes(r)) copy.RemoveRow(copy.GetCell(r, 0))
+    }
+    for (let c = copy.GetRow(0).GetCellsCount() - 1; c >= 0; c -= 1) {
+      if (!selectedColumns.includes(c)) copy.RemoveColumn(copy.GetCell(0, c))
+    }
+    return shapeCopy(copy, answerTable)
+  }
+
+  // A whole table replaced by a table of another shape: a copy of it in that
+  // shape keeps its look
+  const reshapeTable = (table, answerTable) =>
+    canReshape(table) && !hasSpans(answerTable)
+      ? shapeCopy(table.Copy(), answerTable)
+      : null
+
   // The text of the selected paragraphs before and after the selection
   const getAround = () => {
     const first = paragraphs[0].GetRange().GetStartPos()
@@ -817,21 +913,26 @@ export function writeBlocks() {
     selection.Select()
   }
 
-  // An answer to the cells of a table goes under the table. A whole table
-  // replaced by an answer of another shape goes away: the answer takes its
-  // place.
-  const placeAfterTable = (placeholder, { table: selectedTable, rows }) => {
+  // A whole table replaced by an answer that does not fill it goes away: the
+  // answer takes its place, unless a table of the answer would then be in a
+  // table
+  const isReplacingTable = ({ table, rows }) =>
+    isReplace &&
+    countSelected(rows) === countCells(table) &&
+    (!hasTable || !table.GetParentTableCell())
+
+  // An answer to the cells of a table goes under the table, or in place of
+  // the whole table it replaces
+  const placeAfterTable = (placeholder, selectedCells) => {
+    const { table: selectedTable } = selectedCells
     const table = hasTable ? findOuterTable(selectedTable) : selectedTable
     const parent = table.GetParentTableCell()?.GetContent() ?? doc
     let index = table.GetPosInParent() + 1
-    const isWhole =
-      table === selectedTable && countSelected(rows) === countCells(table)
-    if (isReplace && isWhole) {
+    if (isReplacingTable(selectedCells)) {
       index -= 1
       table.Delete()
     }
     parent.AddElement(index, placeholder)
-    return true
   }
 
   // What the answer goes under: the last paragraph of the selection, or the
@@ -944,13 +1045,8 @@ export function writeBlocks() {
   // Selects where the answer goes: a new paragraph after its anchor, or the
   // anchor itself when it is an empty paragraph, as the one of an empty
   // document
-  const selectPlaceholder = selectedCells => {
+  const selectPlaceholder = () => {
     const placeholder = Api.CreateParagraph()
-    if (selectedCells) {
-      placeAfterTable(placeholder, selectedCells)
-      placeholder.Select()
-      return true
-    }
     const anchor = findAnchor()
     if (!anchor) return false
     if (anchor.GetClassType() === 'table') {
@@ -1246,11 +1342,13 @@ export function writeBlocks() {
   }
 
   // The selected cells of a table take the cells of a table of the answer,
-  // row by row, and a whole table of another shape takes its place
+  // row by row, and a whole table of another shape takes its place, in its
+  // look when it can be reshaped
   const writeCells = ({ table, rows }, answerTable) => {
     const isWhole = countSelected(rows) === countCells(table)
     if (isWhole && answerTable && !hasSameShape({ rows }, answerTable)) {
-      const created = makeTable(answerTable.rows)
+      const created =
+        reshapeTable(table, answerTable) ?? makeTable(answerTable.rows)
       const index = table.GetPosInParent()
       table.Delete()
       doc.AddElement(index, created)
@@ -1298,6 +1396,38 @@ export function writeBlocks() {
     return true
   }
 
+  // An answer to cells that it does not fill goes under their table, or in
+  // place of the whole table. A table of the answer is a copy of theirs,
+  // made before the place of the answer is selected: the editor moves its
+  // cursor when the rows of a table change.
+  const writeForCells = selectedCells => {
+    const { table, rows } = selectedCells
+    const isWhole = isReplacingTable(selectedCells)
+    const isCopiedWhole = !isWhole && !canReshape(table)
+    let wholeCopy = null
+    const elements = blocks.flatMap(block => {
+      if (block.type !== 'table') return makeElement(block)
+      const copy = isWhole
+        ? reshapeTable(table, block)
+        : makeTableCopy(selectedCells, block)
+      if (copy && isCopiedWhole) wholeCopy = copy
+      return copy ?? makeTable(block.rows)
+    })
+    const placeholder = Api.CreateParagraph()
+    placeAfterTable(placeholder, selectedCells)
+    placeholder.Select()
+    if (!writeAnswer(elements, false)) return false
+    // In a whole copy, the cells of the answer are selected
+    if (wholeCopy && isAnswerOf('table')) {
+      const lastRow = rows[rows.length - 1]
+      const [first, last] = [rows[0][0], lastRow[lastRow.length - 1]].map(
+        cell => wholeCopy.GetCell(cell.GetRowIndex(), cell.GetIndex())
+      )
+      getCellRange(first, false).ExpandTo(getCellRange(last, true))?.Select()
+    }
+    return true
+  }
+
   const write = () => {
     if (isReplace && isCrossing) return replaceMixed()
     const selectedCells = getSelectedCells()
@@ -1308,7 +1438,8 @@ export function writeBlocks() {
     if (isReplacingText(selectedCells)) return replaceText()
     const cursor = isReplace ? null : findCursor()
     if (cursor) return insertAtCursor(cursor)
-    if (!selectPlaceholder(selectedCells)) return false
+    if (selectedCells) return writeForCells(selectedCells)
+    if (!selectPlaceholder()) return false
     return writeAnswer(blocks.flatMap(makeElement), false)
   }
 

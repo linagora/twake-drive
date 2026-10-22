@@ -17,6 +17,8 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"A1"}]}]},{"blocks":[{"type":"p","runs":[{"t":"A2"}]}]}],
                 [{"blocks":[{"type":"p","runs":[{"t":"A3"}]}]},{"blocks":[{"type":"p","runs":[{"t":"A4"}]}]}]
@@ -25,6 +27,8 @@
             {"type":"p","runs":[{"t":"Middle paragraph"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"B1"}]}]},{"blocks":[{"type":"p","runs":[{"t":"B2"}]}]}],
                 [{"blocks":[{"type":"p","runs":[{"t":"B3"}]}]},{"blocks":[{"type":"p","runs":[{"t":"B4"}]}]}]
@@ -32,11 +36,15 @@
             },
             {
               "type": "table",
+              "width": "100%",
+              "borders": 1,
               "grid": [[{"blocks":[{"type":"p","runs":[{"t":"aa"}]}]},{"blocks":[{"type":"p","runs":[{"t":"bb"}]}]}]]
             },
             {"type":"p","runs":[{"t":"Mid edit"}]},
             {
               "type": "table",
+              "width": "100%",
+              "borders": 1,
               "grid": [[{"blocks":[{"type":"p","runs":[{"t":"cc"}]}]},{"blocks":[{"type":"p","runs":[{"t":"dd"}]}]}]]
             },
             {"type":"p","runs":[{"t":"Outro paragraph"}]}
@@ -68,6 +76,8 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"A1"}]}]},{"blocks":[{"type":"p","runs":[{"t":"A2"}]}]}],
                 [{"blocks":[{"type":"p","runs":[{"t":"aa"}]}]},{"blocks":[{"type":"p","runs":[{"t":"bb"}]}]}]
@@ -76,6 +86,8 @@
             {"type":"p","runs":[{"t":"Mid edit"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"cc"}]}]},{"blocks":[{"type":"p","runs":[{"t":"dd"}]}]}],
                 [{"blocks":[{"type":"p","runs":[{"t":"B3"}]}]},{"blocks":[{"type":"p","runs":[{"t":"B4"}]}]}]

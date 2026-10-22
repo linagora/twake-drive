@@ -13,6 +13,8 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [
                   {"blocks":[{"type":"p","runs":[{"t":"Alpha"}]},{"type":"p","runs":[{"t":"XXX"}]}]},
@@ -43,6 +45,8 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"XXX"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
                 [
@@ -74,6 +78,8 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
                 [
@@ -84,6 +90,8 @@
             },
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [[{"blocks":[{"type":"p","runs":[{"t":"AA"}]}]},{"blocks":[{"type":"p","runs":[{"t":"BB"}]}]}]]
             },
             {"type":"p","runs":[{"t":"Outro paragraph"}]}
@@ -92,6 +100,95 @@
           "selMarkup": [
             {"at":{"block":2,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«AA»"},
             {"at":{"block":2,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«BB»"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "column-copy",
+      "selection": "T1.C(0,0)@start..T1.C(1,0)@end",
+      "answerAction": "insert",
+      "answer": "<table>\n  <tr><td>AA</td></tr>\n  <tr><td>CC</td></tr>\n</table>",
+      "expected": {
+        "content": {
+          "content": "<table>\n  <tr>\n   <td>\n\nAlpha\n\n</td>\n  </tr>\n  <tr>\n   <td>\n\nGamma\n\n</td>\n  </tr>\n</table>\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "width": "240pt",
+              "borders": 1,
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Delta"}]},{"type":"p","runs":[{"t":"Delta2"}]}]}
+                ]
+              ]
+            },
+            {
+              "type": "table",
+              "width": "240pt",
+              "borders": 1,
+              "grid": [[{"blocks":[{"type":"p","runs":[{"t":"AA"}]}]}],[{"blocks":[{"type":"p","runs":[{"t":"CC"}]}]}]]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "AA\nCC\n",
+          "selMarkup": [
+            {"at":{"block":2,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«AA»"},
+            {"at":{"block":2,"cell":{"r":1,"c":0},"cellBlock":0},"text":"«CC»"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "row-copy-reshaped",
+      "selection": "T1.C(0,0)@start..T1.C(0,1)@end",
+      "answerAction": "insert",
+      "answer": "<table>\n  <tr><td>AA</td><td>BB</td></tr>\n  <tr><td>CC</td><td>DD</td></tr>\n</table>",
+      "expected": {
+        "content": {
+          "content": "<table>\n  <tr>\n   <td>\n\nAlpha\n\n</td>\n   <td>\n\nBeta\n\n</td>\n  </tr>\n</table>\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "width": "240pt",
+              "borders": 1,
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"Delta"}]},{"type":"p","runs":[{"t":"Delta2"}]}]}
+                ]
+              ]
+            },
+            {
+              "type": "table",
+              "width": "240pt",
+              "borders": 1,
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"AA"}]}]},{"blocks":[{"type":"p","runs":[{"t":"BB"}]}]}],
+                [{"blocks":[{"type":"p","runs":[{"t":"CC"}]}]},{"blocks":[{"type":"p","runs":[{"t":"DD"}]}]}]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "AABB\nCCDD\n",
+          "selMarkup": [
+            {"at":{"block":2,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«AA»"},
+            {"at":{"block":2,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«BB»"},
+            {"at":{"block":2,"cell":{"r":1,"c":0},"cellBlock":0},"text":"«CC»"},
+            {"at":{"block":2,"cell":{"r":1,"c":1},"cellBlock":0},"text":"«DD»"}
           ]
         }
       }
@@ -112,6 +209,8 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"CC"}]}]},{"blocks":[{"type":"p","runs":[{"t":"DD"}]}]}],
                 [
@@ -146,6 +245,8 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
                 [
@@ -156,6 +257,8 @@
             },
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"w"}]}]},{"blocks":[{"type":"p","runs":[{"t":"x"}]}]}],
                 [{"blocks":[{"type":"p","runs":[{"t":"y"}]}]},{"blocks":[{"type":"p","runs":[{"t":"z"}]}]}]
@@ -189,6 +292,8 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"p"}]}]},{"blocks":[{"type":"p","runs":[{"t":"q"}]}]}],
                 [
@@ -211,6 +316,89 @@
       }
     },
     {
+      "id": "shape-3x2",
+      "selection": "T1.full",
+      "answerAction": "replace",
+      "answer": "<table>\n  <tr><td>AA</td><td>BB</td></tr>\n  <tr><td>CC</td><td>DD</td></tr>\n  <tr><td>EE</td><td>FF</td></tr>\n</table>",
+      "expected": {
+        "content": {
+          "content": "<table>\n  <tr>\n   <td>\n\nAlpha\n\n</td>\n   <td>\n\nBeta\n\n</td>\n  </tr>\n  <tr>\n   <td>\n\nGamma\n\n</td>\n   <td>\n\nDelta\n\nDelta2\n\n</td>\n  </tr>\n</table>\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "width": "240pt",
+              "borders": 1,
+              "grid": [
+                [{"blocks":[{"type":"p","runs":[{"t":"AA"}]}]},{"blocks":[{"type":"p","runs":[{"t":"BB"}]}]}],
+                [{"blocks":[{"type":"p","runs":[{"t":"CC"}]}]},{"blocks":[{"type":"p","runs":[{"t":"DD"}]}]}],
+                [{"blocks":[{"type":"p","runs":[{"t":"EE"}]}]},{"blocks":[{"type":"p","runs":[{"t":"FF"}]}]}]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "AABB\nCCDD\nEEFF\n",
+          "selMarkup": [
+            {"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«AA»"},
+            {"at":{"block":1,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«BB»"},
+            {"at":{"block":1,"cell":{"r":1,"c":0},"cellBlock":0},"text":"«CC»"},
+            {"at":{"block":1,"cell":{"r":1,"c":1},"cellBlock":0},"text":"«DD»"},
+            {"at":{"block":1,"cell":{"r":2,"c":0},"cellBlock":0},"text":"«EE»"},
+            {"at":{"block":1,"cell":{"r":2,"c":1},"cellBlock":0},"text":"«FF»"}
+          ]
+        }
+      }
+    },
+    {
+      "id": "shape-2x3",
+      "selection": "T1.full",
+      "answerAction": "replace",
+      "answer": "<table>\n  <tr><td>AA</td><td>BB</td><td>CC</td></tr>\n  <tr><td>DD</td><td>EE</td><td>FF</td></tr>\n</table>",
+      "expected": {
+        "content": {
+          "content": "<table>\n  <tr>\n   <td>\n\nAlpha\n\n</td>\n   <td>\n\nBeta\n\n</td>\n  </tr>\n  <tr>\n   <td>\n\nGamma\n\n</td>\n   <td>\n\nDelta\n\nDelta2\n\n</td>\n  </tr>\n</table>\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {
+              "type": "table",
+              "width": "240pt",
+              "borders": 1,
+              "grid": [
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"AA"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"BB"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"CC"}]}]}
+                ],
+                [
+                  {"blocks":[{"type":"p","runs":[{"t":"DD"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"EE"}]}]},
+                  {"blocks":[{"type":"p","runs":[{"t":"FF"}]}]}
+                ]
+              ]
+            },
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "AABBCC\nDDEEFF\n",
+          "selMarkup": [
+            {"at":{"block":1,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«AA»"},
+            {"at":{"block":1,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«BB»"},
+            {"at":{"block":1,"cell":{"r":0,"c":2},"cellBlock":0},"text":"«CC»"},
+            {"at":{"block":1,"cell":{"r":1,"c":0},"cellBlock":0},"text":"«DD»"},
+            {"at":{"block":1,"cell":{"r":1,"c":1},"cellBlock":0},"text":"«EE»"},
+            {"at":{"block":1,"cell":{"r":1,"c":2},"cellBlock":0},"text":"«FF»"}
+          ]
+        }
+      }
+    },
+    {
       "id": "T4",
       "selection": "P1@mid..T1.C(0,1)@end",
       "answerAction": "insert",
@@ -226,6 +414,8 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
                 [
@@ -237,6 +427,8 @@
             {"type":"p","runs":[{"t":"Head edit"}]},
             {
               "type": "table",
+              "width": "100%",
+              "borders": 1,
               "grid": [[{"blocks":[{"type":"p","runs":[{"t":"AA"}]}]},{"blocks":[{"type":"p","runs":[{"t":"BB"}]}]}]]
             },
             {"type":"p","runs":[{"t":"Outro paragraph"}]}
@@ -266,6 +458,8 @@
             {"type":"p","runs":[{"t":"Intro p"},{"t":"Head edit"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"AA"}]}]},{"blocks":[{"type":"p","runs":[{"t":"BB"}]}]}],
                 [
@@ -301,6 +495,8 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
                 [
@@ -312,6 +508,8 @@
             {"type":"p","runs":[{"t":"Outro paragraph"}]},
             {
               "type": "table",
+              "width": "100%",
+              "borders": 1,
               "grid": [[{"blocks":[{"type":"p","runs":[{"t":"GG"}]}]},{"blocks":[{"type":"p","runs":[{"t":"DD"}]}]}]]
             },
             {"type":"p","runs":[{"t":"Tail edit"}]}
@@ -341,6 +539,8 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
                 [{"blocks":[{"type":"p","runs":[{"t":"GG"}]}]},{"blocks":[{"type":"p","runs":[{"t":"DD"}]}]}]
@@ -373,6 +573,8 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
                 [
@@ -384,6 +586,8 @@
             {"type":"p","runs":[{"t":"Outro paragraph"}]},
             {
               "type": "table",
+              "width": "100%",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"AA"}]}]},{"blocks":[{"type":"p","runs":[{"t":"BB"}]}]}],
                 [{"blocks":[{"type":"p","runs":[{"t":"CC"}]}]},{"blocks":[{"type":"p","runs":[{"t":"DD"}]}]}]
@@ -418,6 +622,8 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"AA"}]}]},{"blocks":[{"type":"p","runs":[{"t":"BB"}]}]}],
                 [{"blocks":[{"type":"p","runs":[{"t":"CC"}]}]},{"blocks":[{"type":"p","runs":[{"t":"DD"}]}]}]
@@ -450,7 +656,7 @@
         "model": {
           "blocks": [
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
-            {"type":"table","grid":[[{"blocks":[{"type":"p","runs":[{"t":"W"}]}]}]]},
+            {"type":"table","width":"240pt","borders":1,"grid":[[{"blocks":[{"type":"p","runs":[{"t":"W"}]}]}]]},
             {"type":"p","runs":[{"t":"ZZZtail"}]}
           ],
           "selText": "W\nZZZtail",
@@ -477,6 +683,8 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
                 [
@@ -514,6 +722,8 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
                 [
@@ -554,6 +764,8 @@
             {"type":"p","runs":[{"t":"Intro p"},{"t":"Head edit"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"AA"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
                 [
@@ -590,6 +802,8 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
                 [
@@ -623,6 +837,8 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
                 [
@@ -659,6 +875,8 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
                 [
@@ -690,6 +908,8 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
                 [
@@ -700,6 +920,8 @@
             },
             {
               "type": "table",
+              "width": "100%",
+              "borders": 1,
               "grid": [[{"blocks":[{"type":"p","runs":[{"t":"N1"}]}]},{"blocks":[{"type":"p","runs":[{"t":"N2"}]}]}]]
             },
             {"type":"p","runs":[{"t":"Outro paragraph"}]}
@@ -724,6 +946,8 @@
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
                 [
@@ -734,6 +958,8 @@
             },
             {
               "type": "table",
+              "width": "100%",
+              "borders": 1,
               "grid": [[{"blocks":[{"type":"p","runs":[{"t":"N1"}]}]},{"blocks":[{"type":"p","runs":[{"t":"N2"}]}]}]]
             },
             {"type":"p","runs":[{"t":"Outro paragraph"}]}

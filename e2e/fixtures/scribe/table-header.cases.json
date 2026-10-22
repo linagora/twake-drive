@@ -16,6 +16,8 @@
           "blocks": [
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
                 [{"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Delta"}]}]}]
@@ -36,6 +38,8 @@
             {"type":"p","runs":[{"t":"Line 12"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"Xa"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Xb"}]}]}],
                 [{"blocks":[{"type":"p","runs":[{"t":"Xc"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Xd"}]}]}]
@@ -43,6 +47,8 @@
             },
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"w"}]}]},{"blocks":[{"type":"p","runs":[{"t":"x"}]}]}],
                 [{"blocks":[{"type":"p","runs":[{"t":"y"}]}]},{"blocks":[{"type":"p","runs":[{"t":"z"}]}]}]
@@ -75,6 +81,8 @@
           "blocks": [
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
                 [{"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Delta"}]}]}]
@@ -95,6 +103,8 @@
             {"type":"p","runs":[{"t":"Line 12"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"w"}]}]},{"blocks":[{"type":"p","runs":[{"t":"x"}]}]}],
                 [{"blocks":[{"type":"p","runs":[{"t":"y"}]}]},{"blocks":[{"type":"p","runs":[{"t":"z"}]}]}]
@@ -127,6 +137,8 @@
           "blocks": [
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
                 [{"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Delta"}]}]}]
@@ -134,6 +146,8 @@
             },
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"w"}]}]},{"blocks":[{"type":"p","runs":[{"t":"x"}]}]}],
                 [{"blocks":[{"type":"p","runs":[{"t":"y"}]}]},{"blocks":[{"type":"p","runs":[{"t":"z"}]}]}]
@@ -154,6 +168,8 @@
             {"type":"p","runs":[{"t":"Line 12"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"Xa"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Xb"}]}]}],
                 [{"blocks":[{"type":"p","runs":[{"t":"Xc"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Xd"}]}]}]
@@ -186,6 +202,8 @@
           "blocks": [
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"w"}]}]},{"blocks":[{"type":"p","runs":[{"t":"x"}]}]}],
                 [{"blocks":[{"type":"p","runs":[{"t":"y"}]}]},{"blocks":[{"type":"p","runs":[{"t":"z"}]}]}]
@@ -206,6 +224,8 @@
             {"type":"p","runs":[{"t":"Line 12"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"Xa"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Xb"}]}]}],
                 [{"blocks":[{"type":"p","runs":[{"t":"Xc"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Xd"}]}]}]
@@ -238,6 +258,8 @@
           "blocks": [
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
                 [{"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Delta"}]}]}]
@@ -246,6 +268,8 @@
             {"type":"p","runs":[{"t":"Body intro paragraph"}]},
             {
               "type": "table",
+              "width": "100%",
+              "borders": 1,
               "grid": [[{"blocks":[{"type":"p","runs":[{"t":"GG"}]}]},{"blocks":[{"type":"p","runs":[{"t":"DD"}]}]}]]
             },
             {"type":"p","runs":[{"t":"Intro edit"}]},
@@ -263,6 +287,8 @@
             {"type":"p","runs":[{"t":"Line 12"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"Xa"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Xb"}]}]}],
                 [{"blocks":[{"type":"p","runs":[{"t":"Xc"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Xd"}]}]}]
@@ -294,6 +320,8 @@
           "blocks": [
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
                 [{"blocks":[{"type":"p","runs":[{"t":"GG"}]}]},{"blocks":[{"type":"p","runs":[{"t":"DD"}]}]}]
@@ -314,6 +342,8 @@
             {"type":"p","runs":[{"t":"Line 12"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"Xa"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Xb"}]}]}],
                 [{"blocks":[{"type":"p","runs":[{"t":"Xc"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Xd"}]}]}]
@@ -341,6 +371,8 @@
           "blocks": [
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [
                   {"blocks":[{"type":"p","runs":[{"t":"Alpha"}]},{"type":"p","runs":[{"t":"XXX"}]}]},
@@ -364,6 +396,8 @@
             {"type":"p","runs":[{"t":"Line 12"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"Xa"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Xb"}]}]}],
                 [{"blocks":[{"type":"p","runs":[{"t":"Xc"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Xd"}]}]}]
@@ -387,6 +421,8 @@
           "blocks": [
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"XXX"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
                 [{"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Delta"}]}]}]
@@ -407,6 +443,8 @@
             {"type":"p","runs":[{"t":"Line 12"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"Xa"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Xb"}]}]}],
                 [{"blocks":[{"type":"p","runs":[{"t":"Xc"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Xd"}]}]}]
@@ -434,6 +472,8 @@
           "blocks": [
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
                 [{"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Delta"}]}]}]
@@ -441,6 +481,8 @@
             },
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [[{"blocks":[{"type":"p","runs":[{"t":"AA"}]}]},{"blocks":[{"type":"p","runs":[{"t":"BB"}]}]}]]
             },
             {"type":"p","runs":[{"t":"Body intro paragraph"}]},
@@ -458,6 +500,8 @@
             {"type":"p","runs":[{"t":"Line 12"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"Xa"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Xb"}]}]}],
                 [{"blocks":[{"type":"p","runs":[{"t":"Xc"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Xd"}]}]}]
@@ -488,6 +532,8 @@
           "blocks": [
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"AA"}]}]},{"blocks":[{"type":"p","runs":[{"t":"BB"}]}]}],
                 [{"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Delta"}]}]}]
@@ -508,6 +554,8 @@
             {"type":"p","runs":[{"t":"Line 12"}]},
             {
               "type": "table",
+              "width": "240pt",
+              "borders": 1,
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"Xa"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Xb"}]}]}],
                 [{"blocks":[{"type":"p","runs":[{"t":"Xc"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Xd"}]}]}]

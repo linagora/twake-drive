@@ -36,6 +36,11 @@ export interface ScribeCell {
 
 export interface ScribeTable {
   type: 'table'
+  // The width the table asks for: a percent of the width of the text, as
+  // `100%`, or points, as `240pt`
+  width?: string
+  // The table has borders of its own, not of its style
+  borders?: 1
   grid: ScribeCell[][]
 }
 
@@ -116,6 +121,8 @@ function normalizeBlock(block: ScribeBlock): ScribeBlock {
   if (block.type === 'p') return normalizeParagraph(block)
   return {
     type: 'table',
+    ...(block.width && { width: block.width }),
+    ...(block.borders && { borders: block.borders }),
     grid: block.grid.map(row => row.map(normalizeCell))
   }
 }
