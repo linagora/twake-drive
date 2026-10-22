@@ -232,7 +232,7 @@
         "content": {
           "content": "<table>\n  <tr>\n   <td>\n\nGamma\n\n</td>\n   <td>\n\nDelta\n\n</td>\n  </tr>\n</table>\n\nBody intro paragraph\n\n",
           "target": "selection",
-          "canReplace": false
+          "canReplace": true
         },
         "model": {
           "blocks": [
@@ -288,7 +288,7 @@
         "content": {
           "content": "<table>\n  <tr>\n   <td>\n\nGamma\n\n</td>\n   <td>\n\nDelta\n\n</td>\n  </tr>\n</table>\n\nBody intro paragraph\n\n",
           "target": "selection",
-          "canReplace": false
+          "canReplace": true
         },
         "model": {
           "blocks": [
@@ -296,13 +296,8 @@
               "type": "table",
               "grid": [
                 [{"blocks":[{"type":"p","runs":[{"t":"Alpha"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Beta"}]}]}],
-                [{"blocks":[{"type":"p","runs":[{"t":"Gamma"}]}]},{"blocks":[{"type":"p","runs":[{"t":"Delta"}]}]}]
+                [{"blocks":[{"type":"p","runs":[{"t":"GG"}]}]},{"blocks":[{"type":"p","runs":[{"t":"DD"}]}]}]
               ]
-            },
-            {"type":"p","runs":[{"t":"Body intro paragraph"}]},
-            {
-              "type": "table",
-              "grid": [[{"blocks":[{"type":"p","runs":[{"t":"GG"}]}]},{"blocks":[{"type":"p","runs":[{"t":"DD"}]}]}]]
             },
             {"type":"p","runs":[{"t":"Intro edit"}]},
             {"type":"p","runs":[{"t":"Line 01"}]},
@@ -328,9 +323,9 @@
           ],
           "selText": "GGDD\nIntro edit",
           "selMarkup": [
-            {"at":{"block":2,"cell":{"r":0,"c":0},"cellBlock":0},"text":"«GG»"},
-            {"at":{"block":2,"cell":{"r":0,"c":1},"cellBlock":0},"text":"«DD»"},
-            {"at":{"block":3},"text":"«Intro edit»"}
+            {"at":{"block":0,"cell":{"r":1,"c":0},"cellBlock":0},"text":"«GG»"},
+            {"at":{"block":0,"cell":{"r":1,"c":1},"cellBlock":0},"text":"«DD»"},
+            {"at":{"block":1},"text":"«Intro edit»"}
           ]
         }
       }
