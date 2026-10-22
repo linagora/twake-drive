@@ -46,4 +46,11 @@ describe('panelState', () => {
     expect(clampPanelWidth(100, 1280)).toBe(280)
     expect(clampPanelWidth(1000, 1280)).toBe(768)
   })
+
+  it('gives the whole of a window too narrow for the panel and the document', () => {
+    expect(clampPanelWidth(400, 400)).toBe(400)
+    expect(clampPanelWidth(100, 466)).toBe(466)
+    expect(clampPanelWidth(100, 467)).toBe(280)
+    expect(clampPanelWidth(1000, 467)).toBeCloseTo(280.2)
+  })
 })

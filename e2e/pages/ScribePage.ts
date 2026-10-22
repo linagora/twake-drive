@@ -148,19 +148,23 @@ export class ScribePage {
     return box.width
   }
 
-  /**
-   * Drags the handle dx px to the right. The left edge of the panel follows
-   * the pointer, so the handle is grabbed at that edge.
-   */
+  /** Drags the handle dx px to the right, from its middle */
   async dragHandle(dx: number): Promise<void> {
     const box = await this.resizeHandle().boundingBox()
     if (!box) throw new Error('No resize handle')
-    const x = box.x + 1
+    const x = box.x + box.width / 2
     const y = box.y + box.height / 2
     await this.page.mouse.move(x, y)
     await this.page.mouse.down()
     await this.page.mouse.move(x + dx, y, { steps: 5 })
     await this.page.mouse.up()
+  }
+
+  /** Whether Drive has kept the panel open for the next load */
+  async isPanelOpenStored(): Promise<boolean> {
+    return this.page.evaluate(
+      () => localStorage.getItem('scribe-panel-open') === 'true'
+    )
   }
 
   async openPanel(): Promise<void> {

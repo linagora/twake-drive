@@ -205,6 +205,9 @@ test.describe('the scribe of Drive', { tag: '@e2e-scribe' }, () => {
     await scribe.closePanel()
     await expect(scribe.panel()).toBeHidden()
     await scribe.reload()
+    // The panel shows only once the plugin answers, but a restore saves it
+    // open as soon as the plugin is ready
+    expect(await scribe.isPanelOpenStored()).toBe(false)
     await expect(scribe.panel()).toBeHidden()
   })
 })

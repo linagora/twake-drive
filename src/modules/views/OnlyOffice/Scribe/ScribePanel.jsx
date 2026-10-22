@@ -66,10 +66,8 @@ export const ScribePanel = () => {
   }
 
   // The panel ends at the right edge of the window
-  const handleResize = clientX => {
-    setPanelWidth(
-      clampPanelWidth(window.innerWidth - clientX, window.innerWidth)
-    )
+  const handleResize = edge => {
+    setPanelWidth(clampPanelWidth(window.innerWidth - edge, window.innerWidth))
   }
 
   return (
@@ -83,7 +81,7 @@ export const ScribePanel = () => {
       style={{ width: panelWidth }}
       aria-label={t('OnlyOffice.scribe.open')}
     >
-      <ScribeResizeHandle onResize={handleResize} />
+      <ScribeResizeHandle width={panelWidth} onResize={handleResize} />
       <div
         className={cx('u-flex-grow-1 u-ov-hidden', styles['scribe-panel-card'])}
       >
