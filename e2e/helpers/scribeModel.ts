@@ -25,6 +25,7 @@ export interface ScribeParagraph {
   pageBreaks?: number
   // The paragraph ends a section of the document
   section?: 1
+  shade?: 1
 }
 
 export interface ScribeCell {
@@ -79,7 +80,8 @@ const PARAGRAPH_FIELDS = [
   'images',
   'notes',
   'pageBreaks',
-  'section'
+  'section',
+  'shade'
 ] as const
 
 // The level 0 of the outline is a level, a count of 0 is nothing

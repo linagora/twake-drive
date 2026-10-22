@@ -418,6 +418,27 @@ export function writeBlocks() {
     return table
   }
 
+  // A line of code is a paragraph of its own, light on a dark shading: of
+  // the look of the text around it, it takes the size only
+  const makeCodeParagraphs = block => {
+    const codePr = Api.CreateTextPr()
+    codePr.SetColor(212, 212, 212)
+    const size = textPr?.GetFontSize()
+    if (size) codePr.SetFontSize(size)
+    return block.lines.map(line => {
+      const paragraph = makeParagraph(
+        [{ text: line, isCode: true }],
+        null,
+        codePr
+      )
+      paragraph.SetShd('clear', 40, 44, 52)
+      paragraph.SetSpacingBefore(0)
+      paragraph.SetSpacingAfter(0)
+      return paragraph
+    })
+  }
+
+  // The elements of a block: several paragraphs for a block of code
   const makeElement = block => {
     // A heading has the look of its style only
     if (block.type === 'heading') {
@@ -428,6 +449,7 @@ export function writeBlocks() {
     }
     if (block.type === 'listItem') return makeListItem(block)
     if (block.type === 'table') return makeTable(block.rows)
+    if (block.type === 'code') return makeCodeParagraphs(block)
     return makeParagraph(block.spans, null, textPr)
   }
 
@@ -731,7 +753,7 @@ export function writeBlocks() {
   // In a part of the paragraphs, the answer joins the text around it, as a
   // pasted one: its first paragraph continues the text before the selection,
   // its last one the text after it, in the style of their paragraph. A
-  // heading, an item or a table stays a block of its own.
+  // heading, an item, a table or a block of code stays a block of its own.
   const writeAround = ({ before, after }) => {
     const isPlain = block => block.type === 'paragraph'
     const isJoiningBefore = before !== '' && isPlain(blocks[0])
@@ -739,7 +761,7 @@ export function writeBlocks() {
       after !== '' && blocks.length > 1 && isPlain(blocks[blocks.length - 1])
     const middle = blocks
       .slice(isJoiningBefore ? 1 : 0, isJoiningAfter ? -1 : undefined)
-      .map(makeElement)
+      .flatMap(makeElement)
     const answerStart = selection.GetStartPos()
     // The editor gives the text before the selection to the first block it
     // writes: an empty copy of its paragraph takes it, with its style and its
@@ -793,7 +815,8 @@ export function writeBlocks() {
 
   // A single paragraph is written in the line of the selection, and so is a
   // single block in a part of a paragraph: the editor gives a part of a
-  // heading or of a list item with its mark, which the answer keeps
+  // heading or of a list item with its mark, which the answer keeps. A table
+  // or a block of code stays a block of its own.
   const replaceText = () => {
     skipEndOfLine()
     const around = getAround()
@@ -810,11 +833,11 @@ export function writeBlocks() {
     const isLine =
       blocks.length === 1 &&
       (block.type === 'paragraph' ||
-        (isPartOfParagraph && block.type !== 'table'))
+        (isPartOfParagraph && !['table', 'code'].includes(block.type)))
     if (isLine) {
       return writeAnswer([makeParagraph(block.spans, null, textPr)], true)
     }
-    if (isWhole) return writeAnswer(blocks.map(makeElement), false)
+    if (isWhole) return writeAnswer(blocks.flatMap(makeElement), false)
     return writeAround(getAround())
   }
 
@@ -825,5 +848,5 @@ export function writeBlocks() {
   }
   if (isReplacingText(selectedCells)) return replaceText()
   if (!selectPlaceholder(selectedCells)) return false
-  return writeAnswer(blocks.map(makeElement), false)
+  return writeAnswer(blocks.flatMap(makeElement), false)
 }

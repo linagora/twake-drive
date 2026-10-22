@@ -246,6 +246,9 @@ function readEditor(): ScribeModel {
     const style = paragraph.GetStyle()?.GetName()
     const level = paragraph.GetOutlineLvl()
     const json = paragraph.ToJSON(false, false)
+    const { pPr } = JSON.parse(json as string) as {
+      pPr?: { sectPr?: unknown; shd?: unknown }
+    }
     return {
       type: 'p',
       runs: readRuns(paragraph),
@@ -257,7 +260,8 @@ function readEditor(): ScribeModel {
       pageBreaks: count(json, /"breakType":"page"/g),
       // The section properties of a note are in its own JSON: only the ones
       // of the paragraph tell that it ends a section
-      section: JSON.parse(json).pPr?.sectPr ? 1 : null
+      section: pPr?.sectPr ? 1 : null,
+      shade: pPr?.shd ? 1 : null
     }
   }
   const readTable = (table: any): any => {

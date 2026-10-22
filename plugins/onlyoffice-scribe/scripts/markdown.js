@@ -85,11 +85,17 @@ function makeSpans(tokens, marks = {}) {
     .filter(span => span.isBreak || span.text !== '')
 }
 
-function makeCodeSpans(code) {
-  return code.split('\n').flatMap((line, index) => {
-    const spans = line === '' ? [] : [{ text: line, isCode: true }]
-    return index === 0 ? spans : [{ isBreak: true }, ...spans]
-  })
+function makeCodeLines(code) {
+  if (code === '') return []
+  return code.split('\n').map(line => (line === '' ? ' ' : line))
+}
+
+// The lines of a block of code as the text of a single paragraph
+function makeCodeSpans(lines) {
+  return lines.flatMap((line, index) => [
+    ...(index === 0 ? [] : [{ isBreak: true }]),
+    { text: line, isCode: true }
+  ])
 }
 
 // The rows of a Markdown table, its header in bold
@@ -156,7 +162,8 @@ function getTagName(tag) {
 /**
  * Turns the Markdown of an answer into the blocks the document is written
  * with: paragraphs, headings, quotes, list items and tables, each with its
- * spans. A cell of a table has its spans, and the columns and rows it takes
+ * spans, and blocks of code with their lines, an empty one a space. A cell
+ * of a table has its spans, and the columns and rows it takes
  * (`colSpan`, `rowSpan`) when it takes more than one.
  *
  * @param {string} markdown
@@ -174,7 +181,7 @@ export function makeBlocks(markdown, { hasLineBreaks = false } = {}) {
   let htmlTable = null
 
   const addBlock = block => {
-    if (block.type !== 'table' && block.spans.length === 0) return
+    if (block.spans?.length === 0 || block.lines?.length === 0) return
     if (!htmlTable) {
       blocks.push(block)
       return
@@ -184,7 +191,8 @@ export function makeBlocks(markdown, { hasLineBreaks = false } = {}) {
     const cell = row?.[row.length - 1]
     if (!cell) return
     if (cell.spans.length > 0) cell.spans.push({ isBreak: true })
-    cell.spans.push(...(block.spans ?? []))
+    if (block.type === 'code') cell.spans.push(...makeCodeSpans(block.lines))
+    else cell.spans.push(...(block.spans ?? []))
   }
 
   const makeCell = tag => {
@@ -265,8 +273,7 @@ export function makeBlocks(markdown, { hasLineBreaks = false } = {}) {
     list: (token, depth) => addList(token, depth),
     blockquote: (token, depth) =>
       addTokens(token.tokens, { depth, isQuote: true }),
-    code: token =>
-      addBlock({ type: 'paragraph', spans: makeCodeSpans(token.text) }),
+    code: token => addBlock({ type: 'code', lines: makeCodeLines(token.text) }),
     table: token => addBlock({ type: 'table', rows: makeTableRows(token) }),
     html: token => addHtml(token.text)
   }
@@ -339,11 +346,11 @@ function makeRowLine(row) {
  * @returns {object[][]}
  */
 export function makeLineSpans(blocks) {
-  return blocks.flatMap(block =>
-    block.type === 'table'
-      ? block.rows.map(makeRowLine)
-      : splitLines(block.spans)
-  )
+  return blocks.flatMap(block => {
+    if (block.type === 'table') return block.rows.map(makeRowLine)
+    if (block.type === 'code') return splitLines(makeCodeSpans(block.lines))
+    return splitLines(block.spans)
+  })
 }
 
 /**
