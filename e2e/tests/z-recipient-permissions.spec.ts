@@ -92,7 +92,9 @@ test.describe.serial('Recipient permissions & member controls', () => {
 
     // 1. All members are visible to Reader
     const aliceItem = modal.memberItem(USERS.alice.email)
-    const bobItem = modal.memberItem('You').or(modal.memberItem(USERS.bob.email))
+    const bobItem = modal
+      .memberItem('You')
+      .or(modal.memberItem(USERS.bob.email))
     const charlieItem = modal.memberItem(USERS.charlie.email)
 
     await expect(aliceItem).toBeVisible()
@@ -166,11 +168,17 @@ test.describe.serial('Recipient permissions & member controls', () => {
     await expect(modal.memberRemoveButton(USERS.alice.email)).toHaveCount(0)
 
     // Bob (You) CAN see role and remove controls for himself
-    const bobSelf = modal.memberItem('You').or(modal.memberItem(USERS.bob.email))
+    const bobSelf = modal
+      .memberItem('You')
+      .or(modal.memberItem(USERS.bob.email))
     await expect(bobSelf).toBeVisible()
-    const bobSelfRole = modal.memberRole('You').or(modal.memberRole(USERS.bob.email))
+    const bobSelfRole = modal
+      .memberRole('You')
+      .or(modal.memberRole(USERS.bob.email))
     await expect(bobSelfRole).toBeVisible()
-    const bobSelfRemove = modal.memberRemoveButton('You').or(modal.memberRemoveButton(USERS.bob.email))
+    const bobSelfRemove = modal
+      .memberRemoveButton('You')
+      .or(modal.memberRemoveButton(USERS.bob.email))
     await expect(bobSelfRemove).toBeVisible()
 
     await modal.close()
@@ -246,11 +254,11 @@ test.describe.serial('Recipient permissions & member controls', () => {
     await expect(bobDrive.row(LEAVE_DRIVE).cell).toHaveCount(0)
   })
 
-  // Disabled until cozy-stack lets a shared drive recipient create a
-  // sharing on a subfolder of a drive they do not own: POST /sharings/drives
-  // runs on the recipient instance where the folder does not exist (404).
-  // See linagora/twake-drive#4288 for what the stack needs. When re-enabling
-  // it, move the breadcrumb locator into DrivePage (no raw selectors here).
+  // Disabled until a non-owner creator can manage the members of a nested
+  // sharing (change role, remove): the delegated nested sharing is created
+  // on the drive owner's instance and the initiator is not among its
+  // members, so the modal shows other members' roles as plain text.
+  // Prerequisite to re-enable: https://github.com/linagora/cozy-libs/issues/3195
   // test('Alice shares nested parent drive with Bob as Editor', async ({
   //   alicePage,
   //   aliceDrive
