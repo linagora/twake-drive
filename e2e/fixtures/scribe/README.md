@@ -22,6 +22,9 @@ the same.
   - `answerAction`: `insert` or `replace`, or `null` when only the text the
     plugin gives is checked;
   - `answer`: the Markdown of the answer, as the LLM would write it;
+  - `next`, in some cases: the next answer of the conversation
+    (`{ answerAction, answer }`), written over the first one, which is left
+    selected, without the text being read again;
   - `expected`: the text the plugin gives (`content`, `target`) and the
     document once written (`model`); in some cases, what the plugin tells
     Drive once it has written the answer (`applied`, the message
@@ -51,7 +54,9 @@ paragraph, the cells are taken whole, as the editor does.
 paragraph with its runs (text, bold `b`, italic `i`, underline `u`,
 strikethrough `s`, `code`, `link`, and `anchor`, the bookmark a link to a
 place of the document goes to), its style when it is not Normal, its list
-level and label, its images, notes (`notes`, their count, and `noteTexts`, the
+level and label, its images (`images`, their count, and `wraps`, when one of
+them floats, `inline` or the wrapping of each one in its order), notes
+(`notes`, their count, and `noteTexts`, the
 plain text of the first paragraph of each note), the names of the bookmarks
 that start in it (`bookmarks`) and its page breaks, whether it
 ends a section and whether it is shaded (`shade`); each table with the width

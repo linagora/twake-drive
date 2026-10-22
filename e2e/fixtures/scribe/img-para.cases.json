@@ -5,19 +5,19 @@
       "id": "C1",
       "selection": "P2@start..P2@end",
       "answerAction": "insert",
-      "answer": "Extra ![](image1.png)",
+      "answer": "Extra ![image 1] text",
       "expected": {
-        "content": {"content":"Photo ![](image1.png)\n\n","target":"selection","canReplace":false},
+        "content": {"content":"Photo ![image 1]\n\n","target":"selection","canReplace":true},
         "model": {
           "blocks": [
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
             {"type":"p","runs":[{"t":"Photo "}],"images":1},
-            {"type":"p","runs":[{"t":"Extra "}]},
+            {"type":"p","runs":[{"t":"Extra "},{"t":" text"}],"images":1},
             {"type":"p","runs":[],"images":1},
             {"type":"p","runs":[{"t":"Outro paragraph"}]}
           ],
-          "selText": "Extra ",
-          "selMarkup": [{"at":{"block":2},"text":"«Extra »"}]
+          "selText": "Extra  text",
+          "selMarkup": [{"at":{"block":2},"text":"«Extra  text»"}]
         }
       }
     },
@@ -25,19 +25,106 @@
       "id": "C1",
       "selection": "P2@start..P2@end",
       "answerAction": "replace",
-      "answer": "Caption ![](image1.png)",
+      "answer": "Caption ![image 1]",
       "expected": {
-        "content": {"content":"Photo ![](image1.png)\n\n","target":"selection","canReplace":false},
+        "content": {"content":"Photo ![image 1]\n\n","target":"selection","canReplace":true},
         "model": {
           "blocks": [
             {"type":"p","runs":[{"t":"Intro paragraph"}]},
-            {"type":"p","runs":[{"t":"Photo "}],"images":1},
-            {"type":"p","runs":[{"t":"Caption "}]},
+            {"type":"p","runs":[{"t":"Caption "}],"images":1},
             {"type":"p","runs":[],"images":1},
             {"type":"p","runs":[{"t":"Outro paragraph"}]}
           ],
           "selText": "Caption ",
-          "selMarkup": [{"at":{"block":2},"text":"«Caption »"}]
+          "selMarkup": [{"at":{"block":1},"text":"«Caption »"}]
+        },
+        "undone": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {"type":"p","runs":[{"t":"Photo "}],"images":1},
+            {"type":"p","runs":[],"images":1},
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "Photo \n",
+          "selMarkup": [{"at":{"block":1},"text":"«Photo »"}]
+        }
+      }
+    },
+    {
+      "id": "image-dropped",
+      "selection": "P2@start..P2@end",
+      "answerAction": "replace",
+      "answer": "No picture",
+      "expected": {
+        "content": {"content":"Photo ![image 1]\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {"type":"p","runs":[{"t":"No picture"}]},
+            {"type":"p","runs":[],"images":1},
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "No picture",
+          "selMarkup": [{"at":{"block":1},"text":"«No picture»"}]
+        }
+      }
+    },
+    {
+      "id": "image-unknown",
+      "selection": "P2@start..P2@end",
+      "answerAction": "replace",
+      "answer": "Caption ![image 2]",
+      "expected": {
+        "content": {"content":"Photo ![image 1]\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {"type":"p","runs":[{"t":"Caption "},{"t":"[image]"}]},
+            {"type":"p","runs":[],"images":1},
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "Caption [image]",
+          "selMarkup": [{"at":{"block":1},"text":"«Caption [image]»"}]
+        }
+      }
+    },
+    {
+      "id": "image-next",
+      "selection": "P2@start..P2@end",
+      "answerAction": "replace",
+      "answer": "Caption ![image 1]",
+      "next": {"answerAction":"replace","answer":"Better caption ![image 1]"},
+      "expected": {
+        "content": {"content":"Photo ![image 1]\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {"type":"p","runs":[{"t":"Better caption "}],"images":1},
+            {"type":"p","runs":[],"images":1},
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "Better caption ",
+          "selMarkup": [{"at":{"block":1},"text":"«Better caption »"}]
+        }
+      }
+    },
+    {
+      "id": "image-count-changed",
+      "selection": "P2@start..P2@end",
+      "answerAction": "replace",
+      "answer": "![image 1] and ![image 1]",
+      "next": {"answerAction":"replace","answer":"Caption ![image 1]"},
+      "expected": {
+        "content": {"content":"Photo ![image 1]\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Intro paragraph"}]},
+            {"type":"p","runs":[{"t":"Caption "},{"t":"[image]"}]},
+            {"type":"p","runs":[],"images":1},
+            {"type":"p","runs":[{"t":"Outro paragraph"}]}
+          ],
+          "selText": "Caption [image]",
+          "selMarkup": [{"at":{"block":1},"text":"«Caption [image]»"}]
         }
       }
     },
@@ -60,6 +147,20 @@
           "selText": "A photo of the team.\nTaken in May.",
           "selMarkup": [{"at":{"block":1},"text":"«A photo of the team.»"},{"at":{"block":2},"text":"«Taken in May.»"}]
         }
+      }
+    },
+    {
+      "id": "image-document",
+      "selection": "P1@5",
+      "answerAction": null,
+      "answer": null,
+      "expected": {
+        "content": {
+          "content": "Intro paragraph\n\nPhoto [image]\n\n[image]\n\nOutro paragraph\n\n",
+          "target": "document",
+          "canReplace": false
+        },
+        "model": null
       }
     }
   ]

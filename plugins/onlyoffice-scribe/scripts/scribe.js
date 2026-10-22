@@ -25,8 +25,9 @@ let hostOrigin = null
 // being written
 let lastContent = null
 let lastSelectedText = null
-// What the markers of the text last given stand for: an answer keeps them
-let lastMarkers = { notes: [], refs: [] }
+// What the markers of the text last given stand for, and the count of its
+// images: an answer keeps them
+let lastMarkers = { notes: [], refs: [], imageCount: 0 }
 let isWriting = false
 let selectionTimer = null
 let pausedUntil = 0
@@ -100,6 +101,10 @@ function fetchContent() {
   return isPresentation() ? readPresentation() : runInEditor(readContent)
 }
 
+function countImages(content) {
+  return content?.match(/!\[image \d+\]/g)?.length ?? 0
+}
+
 // The editor runs no command while it loads or saves: the text is then not
 // read, and the app asks again
 async function sendContent(origin) {
@@ -112,7 +117,7 @@ async function sendContent(origin) {
   hostOrigin = origin
   lastContent = content.content
   lastSelectedText = selectedText
-  lastMarkers = { notes, refs }
+  lastMarkers = { notes, refs, imageCount: countImages(content.content) }
 
   host.postMessage({ type: 'twake-scribe:content', ...content }, origin)
 }
@@ -139,7 +144,7 @@ async function sendSelection() {
   if (!hostOrigin || target !== 'selection' || content === lastContent) return
   lastContent = content
   lastSelectedText = selectedText
-  lastMarkers = { notes, refs }
+  lastMarkers = { notes, refs, imageCount: countImages(content) }
   // The answer last written in a presentation is no more the selection
   written = null
 
@@ -221,7 +226,8 @@ async function writeAnswer({ answerAction, text }) {
       blocks,
       isReplace,
       notes: lastMarkers.notes,
-      refs: lastMarkers.refs
+      refs: lastMarkers.refs,
+      imageCount: lastMarkers.imageCount
     },
     isRecalculated: true
   })

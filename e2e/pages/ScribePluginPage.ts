@@ -255,6 +255,8 @@ function readEditor(): ScribeModel {
   interface JsonElement {
     type?: string
     name?: string
+    drawingType?: string
+    wrapType?: string
     content?: (string | JsonElement)[]
     footnotes?: JsonElement[]
   }
@@ -274,6 +276,23 @@ function readEditor(): ScribeModel {
           : ''
       })
       .join('')
+  // The images of the runs, those of links included
+  const findDrawings = (element?: JsonElement): JsonElement[] =>
+    findElements(element).flatMap(item => {
+      if (item.type === 'paraDrawing') return [item]
+      return ['run', 'hyperlink'].includes(item.type ?? '')
+        ? findDrawings(item)
+        : []
+    })
+  // Each image in its order, `inline` or the wrapping of a floating one,
+  // when one of them floats
+  const readWraps = (element?: JsonElement): string[] => {
+    const drawings = findDrawings(element)
+    if (drawings.every(({ drawingType }) => drawingType !== 'anchor')) return []
+    return drawings.map(({ drawingType, wrapType }) =>
+      drawingType === 'anchor' ? (wrapType ?? 'none') : 'inline'
+    )
+  }
   // The JSON of a run holds the notes of its references, in their order
   const readNoteTexts = (element?: JsonElement): string[] =>
     findElements(element).flatMap(item => [
@@ -298,6 +317,7 @@ function readEditor(): ScribeModel {
       lvl: typeof level === 'number' && level >= 0 ? level : null,
       list: readList(paragraph),
       images: paragraph.GetAllDrawingObjects().length,
+      wraps: readWraps(parsed),
       notes: count(json, /"type":"footnoteRef"/g),
       noteTexts: readNoteTexts(parsed),
       bookmarks: findElements(parsed)

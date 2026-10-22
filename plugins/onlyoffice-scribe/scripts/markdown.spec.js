@@ -487,6 +487,40 @@ describe('makeBlocks', () => {
     ])
   })
 
+  it('gives an image marker as an image span', () => {
+    expect(makeBlocks('Photo ![image 1] here')[0].spans).toEqual([
+      { text: 'Photo ' },
+      { image: 1 },
+      { text: ' here' }
+    ])
+    expect(makeBlocks('**a ![image 3](image1.png)** b')[0].spans).toEqual([
+      { text: 'a ', isBold: true },
+      { image: 3 },
+      { text: ' b' }
+    ])
+  })
+
+  it('gives a paragraph of one image as an image block', () => {
+    expect(makeBlocks('![image 2]')).toEqual([{ type: 'image', image: 2 }])
+    expect(makeBlocks('Text\n\n![image 1] \n\nMore')).toEqual([
+      paragraph({ text: 'Text' }),
+      { type: 'image', image: 1 },
+      paragraph({ text: 'More' })
+    ])
+  })
+
+  it('keeps an image marker of a cell or a link as an image span', () => {
+    const [table] = makeBlocks(
+      '<table>\n  <tr><td>![image 1]</td><td>b</td></tr>\n</table>'
+    )
+
+    expect(table.rows[0][0].spans).toEqual([{ image: 1 }])
+    expect(makeBlocks('[see ![image 2] here](https://a.b)')[0].spans).toEqual([
+      { text: 'see  here', href: 'https://a.b' },
+      { image: 2 }
+    ])
+  })
+
   it('leaves the HTML tags out, and loads no image', () => {
     const blocks = makeBlocks(
       'Un <span>souligné</span><br>puis ![une image](https://example.org/a.png)\n\n<div onclick="alert(1)">Un bloc</div>'
@@ -553,6 +587,13 @@ describe('makeLines', () => {
   it('gives a footnote marker to a presentation as its text', () => {
     expect(makeLines(makeBlocks('[^scribe-fn-1] a[^scribe-fn-2]'))).toEqual([
       '[^scribe-fn-1] a[^scribe-fn-2]'
+    ])
+  })
+
+  it('gives an image marker to a presentation as the text of an image', () => {
+    expect(makeLines(makeBlocks('a ![image 1]\n\n![image 2]'))).toEqual([
+      'a [image]',
+      '[image]'
     ])
   })
 })

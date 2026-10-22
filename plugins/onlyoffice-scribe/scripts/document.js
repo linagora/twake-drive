@@ -13,6 +13,8 @@
  * paragraph of that note, in plain text. A link to a heading or a bookmark of
  * the document is the marker `{{REF:scribe-ref-N:text}}`, and the N-th item
  * of `refs` the `anchor` it goes to and its `kind`, `heading` or `bookmark`.
+ * The K-th drawing of the selection, K from 1 in their order, is the marker
+ * `![image K]`, and a picture of the whole document `[image]`.
  *
  * @returns {{ content: string, target: 'selection' | 'document',
  * canReplace: boolean, notes: string[], refs: object[] }} the text, in
@@ -38,6 +40,53 @@ export function readContent() {
   const refs = []
   // A note the content gives no marker for, which an answer would lose
   let hasUnmarkedNote = false
+
+  // The runs of a paragraph, those of its links included
+  const getRuns = paragraph => {
+    const runs = []
+    for (let i = 0; i < paragraph.GetElementsCount(); i += 1) {
+      const element = paragraph.GetElement(i)
+      if (element.GetClassType() === 'run') runs.push(element)
+      if (element.GetClassType() !== 'hyperlink') continue
+      for (let j = 0; j < element.GetElementsCount(); j += 1) {
+        runs.push(element.GetElement(j))
+      }
+    }
+    return runs
+  }
+
+  // The positions of the drawings of a paragraph: a position counts each
+  // character and each drawing of a run, as the JSON of the run lists them
+  const findDrawingPlaces = paragraph =>
+    getRuns(paragraph).flatMap(run => {
+      const { content } = JSON.parse(run.ToJSON())
+      if (!content.some(item => item.type === 'paraDrawing')) return []
+      let at = run.GetRange().GetStartPos()
+      return content.flatMap(item => {
+        const place = at
+        at += typeof item === 'string' ? item.length : 1
+        return item.type === 'paraDrawing' ? [place] : []
+      })
+    })
+
+  // The drawings between two positions, in their order, with their places: a
+  // drawing in a drawing goes with it. Null when one cannot be placed.
+  const findSelectedDrawings = (from, to) => {
+    const found = []
+    for (const paragraph of paragraphs) {
+      const id = paragraph.GetInternalId()
+      const drawings = paragraph
+        .GetAllDrawingObjects()
+        .filter(drawing => drawing.GetParentParagraph()?.GetInternalId() === id)
+      const places = drawings.length > 0 ? findDrawingPlaces(paragraph) : []
+      if (places.length !== drawings.length) return null
+      drawings.forEach((drawing, i) => {
+        const place = places[i]
+        if (place >= from && place < to) found.push({ drawing, place })
+      })
+    }
+    return found
+  }
 
   // The cells of a table, as laid on its grid: the column each one starts
   // at, the columns it takes, and whether it starts or continues a cell
@@ -209,11 +258,12 @@ export function readContent() {
     )
   }
 
-  // An answer is text: it cannot give back an image, a chart, an equation, an
-  // endnote, a field, a form, a comment or a page break, nor take the place
-  // of the end of a section. It gives back a footnote by its marker.
+  // An answer is text: it cannot give back a chart, an equation, an endnote,
+  // a field, a form, a comment or a page break, nor take the place of the end
+  // of a section. It gives back a footnote, a link to a place of the document
+  // and a drawing by their markers.
   const KEPT =
-    /"type":"(paraDrawing|paraMath|endnoteRef|fldChar|inlineLvlSdt|blockLvlSdt|commentRangeStart)"|"breakType":"(page|column)"/
+    /"type":"(chartSpace|paraMath|endnoteRef|fldChar|inlineLvlSdt|blockLvlSdt|commentRangeStart)"|"breakType":"(page|column)"/
   const canReplace = () => {
     const tables = new Map()
     paragraphs.forEach(paragraph => {
@@ -513,17 +563,32 @@ export function readContent() {
       return true
     }
 
+    // A drawing the editor's Markdown does not give is given after the text
+    // before it
+    const addDrawingMarkers = run => {
+      if (unlisted.length === 0) return
+      const range = run.GetRange()
+      const isInRun = ({ place }) =>
+        place >= range?.GetStartPos() && place < range?.GetEndPos()
+      unlisted.filter(isInRun).forEach(({ number }) => {
+        const point = findNotePoint()
+        const space = /\S/.test(markdown[point - 1] ?? '') ? ' ' : ''
+        replace(point, point, `${space}![image ${number}]`)
+      })
+    }
+
     const LINK_END = /[*_~`]*\]\([^)]*\)/y
     selectedParagraphs.forEach(paragraph => {
       hasParagraphText = false
-      const addNotes = run => {
+      const addMarkers = run => {
         if (hasNotes) addNoteMarkers(run, paragraph)
+        addDrawingMarkers(run)
       }
       for (let i = 0; i < paragraph.GetElementsCount(); i += 1) {
         const element = paragraph.GetElement(i)
         if (element.GetClassType() === 'run') {
           readRun(element)
-          addNotes(element)
+          addMarkers(element)
         }
         if (element.GetClassType() !== 'hyperlink') continue
         const runs = []
@@ -535,19 +600,45 @@ export function readContent() {
           LINK_END.lastIndex = at
           if (LINK_END.test(markdown)) at = LINK_END.lastIndex
         }
-        runs.forEach(addNotes)
+        runs.forEach(addMarkers)
       }
     })
     parts.push(markdown.slice(copied))
     return parts.join('')
   }
 
+  // The editor's Markdown gives each picture as `![](its address)`, in the
+  // order of the drawings, and no other drawing, as a shape. The drawings are
+  // numbered when the pictures are all there.
+  const PICTURE = /!\[\]\([^)]*\)/g
   const markdown = joinCodeLines(doc.ToMarkdown())
+  const drawings =
+    paragraphs.length > 0
+      ? findSelectedDrawings(selection.GetStartPos(), selection.GetEndPos())
+      : []
+  const isPicture = ({ drawing }) => drawing.GetClassType() === 'image'
+  const isNumbered =
+    drawings !== null &&
+    drawings.filter(isPicture).length === (markdown.match(PICTURE)?.length ?? 0)
+  const numbered = isNumbered
+    ? drawings.map((found, index) => ({ ...found, number: index + 1 }))
+    : []
+  const pictureNumbers = numbered.filter(isPicture).map(({ number }) => number)
+  const unlisted = numbered.filter(found => !isPicture(found))
+  const numberPictures = text => {
+    let next = 0
+    return text.replace(PICTURE, () => {
+      const number = pictureNumbers[next]
+      next += 1
+      return number ? `![image ${number}]` : '[image]'
+    })
+  }
+
   const content = describeMerges(
     hasSelection ? decorate(paragraphs, markdown) : markdown
   )
   return {
-    content: hasSelection ? removeMark(content) : content,
+    content: numberPictures(hasSelection ? removeMark(content) : content),
     target: hasSelection ? 'selection' : 'document',
     canReplace: hasSelection && !isLocked && canReplace(),
     notes,
@@ -560,14 +651,22 @@ export function readContent() {
  * document: in place of the selection (`Asc.scope.isReplace`), or else at its
  * end or at the cursor: in the line when that is inside a text, after the
  * paragraph otherwise. The new text is left selected: the user sees it, and
- * the next answer can replace it.
+ * the next answer can replace it. The marker of an image, `![image K]`, is a
+ * copy of the K-th drawing of the selection, when the selection holds as many
+ * drawings as the text read gave markers (`Asc.scope.imageCount`).
  *
  * @returns {{ written: boolean, skippedCells: number }} whether the answer
  * was written, not when there was nowhere to write, and the count of the
  * selected cells the answer had no cell for
  */
 export function writeBlocks() {
-  const { blocks, notes = [], refs = [] } = Asc.scope
+  const { notes = [], refs = [], imageCount = 0 } = Asc.scope
+  // An image block is a paragraph of its image
+  const blocks = Asc.scope.blocks.map(block =>
+    block.type === 'image'
+      ? { ...block, spans: [{ image: block.image }] }
+      : block
+  )
   const doc = Api.GetDocument()
   function getText(element) {
     return element.GetText({ Numbering: false, ParaSeparator: '\n' })
@@ -578,6 +677,60 @@ export function writeBlocks() {
   let selection =
     range && range.GetStartPos() < range.GetEndPos() ? range : null
   let paragraphs = selection?.GetAllParagraphs() ?? []
+
+  // The runs of a paragraph, those of its links included
+  const getRuns = paragraph => {
+    const runs = []
+    for (let i = 0; i < paragraph.GetElementsCount(); i += 1) {
+      const element = paragraph.GetElement(i)
+      if (element.GetClassType() === 'run') runs.push(element)
+      if (element.GetClassType() !== 'hyperlink') continue
+      for (let j = 0; j < element.GetElementsCount(); j += 1) {
+        runs.push(element.GetElement(j))
+      }
+    }
+    return runs
+  }
+
+  // The drawings of the selection, in their order, as `readContent` numbers
+  // them: a position counts each character and each drawing of a run
+  const findDrawingPlaces = paragraph =>
+    getRuns(paragraph).flatMap(run => {
+      const { content } = JSON.parse(run.ToJSON())
+      if (!content.some(item => item.type === 'paraDrawing')) return []
+      let at = run.GetRange().GetStartPos()
+      return content.flatMap(item => {
+        const place = at
+        at += typeof item === 'string' ? item.length : 1
+        return item.type === 'paraDrawing' ? [place] : []
+      })
+    })
+  const findSelectedDrawings = () => {
+    const from = selection.GetStartPos()
+    const to = selection.GetEndPos()
+    const found = []
+    for (const paragraph of paragraphs) {
+      const id = paragraph.GetInternalId()
+      const drawings = paragraph
+        .GetAllDrawingObjects()
+        .filter(drawing => drawing.GetParentParagraph()?.GetInternalId() === id)
+      const places = drawings.length > 0 ? findDrawingPlaces(paragraph) : []
+      if (places.length !== drawings.length) return []
+      found.push(
+        ...drawings.filter((drawing, i) => places[i] >= from && places[i] < to)
+      )
+    }
+    return found
+  }
+
+  // Read before anything changes. A selection that does not hold as many
+  // drawings as the text the assistant got, as after an undo, may not hold
+  // the ones its markers name: each image is then written as its text.
+  const drawings = selection ? findSelectedDrawings() : []
+  const isSameDrawings = drawings.length === imageCount
+  // A copy keeps the wrapping of a floating drawing
+  const copyOf = number =>
+    isSameDrawings ? (drawings[number - 1]?.Copy() ?? null) : null
   // The editor writes a table in a table over its cells: a table of the
   // answer goes under the table of the selection, out of any other one
   const hasTable = blocks.some(block => block.type === 'table')
@@ -646,6 +799,7 @@ export function writeBlocks() {
   // the editor adds a note at the cursor only. The text of a reference,
   // between its placeholders, then becomes a link.
   const makeRunText = span => {
+    if (span.image !== undefined) return '[image]'
     if (span.note !== undefined) return `\u0000fn:${span.note}\u0000`
     if (!isKnownRef(span)) return span.text
     return `\u0000ref:${span.ref}\u0000${span.text}\u0000/ref\u0000`
@@ -654,7 +808,9 @@ export function writeBlocks() {
   const makeRun = (span, textPr) => {
     const run = Api.CreateRun()
     if (textPr) run.SetTextPr(textPr)
-    run.AddText(makeRunText(span))
+    const copy = span.image === undefined ? null : copyOf(span.image)
+    if (copy) run.AddDrawing(copy)
+    else run.AddText(makeRunText(span))
     // The emphasis is the one of the answer, over the one of the style
     run.SetBold(span.isBold ? true : undefined)
     run.SetItalic(span.isItalic ? true : undefined)
@@ -888,8 +1044,9 @@ export function writeBlocks() {
   }
 
   // Writes the text of an answer in a cell, in the look of its text, with
-  // the emphasis of the answer added
-  const fillCell = (cell, answerCell) => {
+  // the emphasis of the answer added: a cell the answer has none for is
+  // emptied
+  const fillCell = (cell, answerCell = { spans: [] }) => {
     const content = cell.GetContent()
     const paragraph = content.GetElement(0)
     const first = paragraph.GetElement(0)
@@ -967,16 +1124,6 @@ export function writeBlocks() {
     )
   }
 
-  // A cell of a copy keeps an image that the answer, empty there, cannot give
-  // back
-  const fillCopiedCell = (cell, answerCell = { spans: [] }) => {
-    const isBlank = getCellParagraphs(answerCell).every(
-      spans => spans.length === 0
-    )
-    if (isBlank && cell.GetContent().GetAllDrawingObjects().length > 0) return
-    fillCell(cell, answerCell)
-  }
-
   // Added rows and columns take the look of the last ones
   const shapeCopy = (copy, answerTable) => {
     const rowCount = answerTable.rows.length
@@ -998,7 +1145,7 @@ export function writeBlocks() {
     }
     for (let r = 0; r < rowCount; r += 1) {
       for (let c = 0; c < columnCount; c += 1) {
-        fillCopiedCell(copy.GetCell(r, c), answerTable.rows[r][c])
+        fillCell(copy.GetCell(r, c), answerTable.rows[r][c])
       }
     }
     return copy
@@ -1016,7 +1163,7 @@ export function writeBlocks() {
       rows.forEach((cells, i) => {
         cells.forEach((cell, j) => {
           const copied = copy.GetCell(cell.GetRowIndex(), cell.GetIndex())
-          fillCopiedCell(copied, answerTable.rows[i][j])
+          fillCell(copied, answerTable.rows[i][j])
         })
       })
       return copy

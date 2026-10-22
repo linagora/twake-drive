@@ -39,21 +39,23 @@ function makeText(text, marks) {
   return { ...marks, text: decodeEntities(text).replace(/\n/g, ' ') }
 }
 
-// A link is a single text: the notes of its text come after it, and a
-// reference in it, which would be a link in a link, is text of the link
+// A link is a single text: the notes and the images of its text come after
+// it, and a reference in it, which would be a link in a link, is text of the
+// link
 function makeLinkSpans(token, marks) {
   const all = makeSpans(token.tokens, marks)
-  const notes = all.filter(span => span.note !== undefined)
-  const spans = all.filter(span => span.note === undefined)
+  const isAfter = span => span.note !== undefined || span.image !== undefined
+  const after = all.filter(isAfter)
+  const spans = all.filter(span => !isAfter(span))
   const text = spans.map(span => span.text ?? ' ').join('')
   // Other links, as `javascript:` ones, are written as their text
-  if (!LINK_PROTOCOL.test(token.href)) return [{ ...marks, text }, ...notes]
+  if (!LINK_PROTOCOL.test(token.href)) return [{ ...marks, text }, ...after]
 
   // A link is written in one look: underlined when all its text is
   const isUnderline = spans.every(span => span.isUnderline)
   return [
     { text, href: token.href, ...(isUnderline && { isUnderline }) },
-    ...notes
+    ...after
   ]
 }
 
@@ -65,12 +67,15 @@ const MARKS = {
   underline: 'isUnderline'
 }
 
-// The text between <u> tags, and the markers of the footnotes and of the
-// references of the text, in the form `marked.use` gives the extensions to
-// the lexer. A tag left open is left out, as the other tags.
+// The text between <u> tags, and the markers of the footnotes, of the
+// references and of the images of the text, in the form `marked.use` gives
+// the extensions to the lexer. A tag left open is left out, as the other
+// tags. The LLM may give an image marker the address of an image: it is left
+// out, and never loaded.
 const UNDERLINE = /^<u>([\s\S]*?)<\/u>/i
 const NOTE = /^\[\^scribe-fn-(\d+)\]/
 const REF = /^\{\{REF:scribe-ref-(\d+):([^}]*)\}\}/
+const IMAGE = /^!\[image (\d+)\](?:\([^)]*\))?/
 const EXTENSIONS = {
   inline: [
     function tokenizeUnderline(src) {
@@ -96,12 +101,18 @@ const EXTENSIONS = {
         ref: Number(match[1]),
         text: match[2]
       }
+    },
+    function tokenizeImage(src) {
+      const match = src.match(IMAGE)
+      if (!match) return null
+      return { type: 'imageMarker', raw: match[0], image: Number(match[1]) }
     }
   ],
   startInline: [
     src => src.match(/<u>/i)?.index,
     src => src.match(/\[\^scribe-fn-\d+\]/)?.index,
-    src => src.match(/\{\{REF:scribe-ref-\d+:/)?.index
+    src => src.match(/\{\{REF:scribe-ref-\d+:/)?.index,
+    src => src.match(/!\[image \d+\]/)?.index
   ]
 }
 
@@ -110,6 +121,7 @@ const INLINE_TOKENS = {
   codespan: (token, marks) => [{ ...marks, text: token.text, isCode: true }],
   note: token => [{ note: token.note }],
   ref: (token, marks) => [{ ...makeText(token.text, marks), ref: token.ref }],
+  imageMarker: token => [{ image: token.image }],
   link: makeLinkSpans,
   br: () => [{ isBreak: true }],
   // The tags are left out: the text they hold comes in its own tokens
@@ -214,10 +226,11 @@ function getTagName(tag) {
 /**
  * Turns the Markdown of an answer into the blocks the document is written
  * with: paragraphs, headings, quotes, list items and tables, each with its
- * spans, and blocks of code with their lines, an empty one a space. A cell
- * of a table has its spans, its blocks when it holds several (`blocks`, each
- * with its spans), and the columns and rows it takes (`colSpan`, `rowSpan`)
- * when it takes more than one.
+ * spans, blocks of code with their lines, an empty one a space, and images,
+ * each with the number of its marker (`image`). A cell of a table has its
+ * spans, its blocks when it holds several (`blocks`, each with its spans),
+ * and the columns and rows it takes (`colSpan`, `rowSpan`) when it takes
+ * more than one.
  *
  * @param {string} markdown
  * @param {object} [options]
@@ -239,10 +252,20 @@ export function makeBlocks(markdown, { hasLineBreaks = false } = {}) {
     extensions: EXTENSIONS
   })
 
+  // A paragraph of a single image is a block of its own, out of a table
+  const makeImageBlock = block => {
+    const shown = block.spans.filter(span => span.text?.trim() !== '')
+    const isImage =
+      block.type === 'paragraph' &&
+      shown.length === 1 &&
+      shown[0].image !== undefined
+    return isImage ? { type: 'image', image: shown[0].image } : block
+  }
+
   const addBlock = block => {
     if (block.spans?.length === 0 || block.lines?.length === 0) return
     if (!htmlTable) {
-      blocks.push(block)
+      blocks.push(block.spans ? makeImageBlock(block) : block)
       return
     }
 
@@ -396,15 +419,17 @@ function addToLines(lines, span) {
   return [...lines.slice(0, -1), [...lines[lines.length - 1], span]]
 }
 
-// A presentation has no footnotes: their markers stay text
-function makeNoteText(span) {
+// A presentation has no footnotes, and gets no copy of an image: the marker
+// of a note stays text, and an image is written as the text of an image
+function makeMarkerText(span) {
+  if (span.image !== undefined) return { text: '[image]' }
   return span.note === undefined ? span : { text: `[^scribe-fn-${span.note}]` }
 }
 
 // The lines of spans, a line break starting a line
 function splitLines(spans) {
   return spans
-    .map(makeNoteText)
+    .map(makeMarkerText)
     .reduce(addToLines, [[]])
     .map(trimLine)
     .filter(line => line.length > 0)
@@ -433,6 +458,7 @@ export function makeLineSpans(blocks) {
   return blocks.flatMap(block => {
     if (block.type === 'table') return block.rows.map(makeRowLine)
     if (block.type === 'code') return splitLines(makeCodeSpans(block.lines))
+    if (block.type === 'image') return splitLines([{ image: block.image }])
     return splitLines(block.spans)
   })
 }
