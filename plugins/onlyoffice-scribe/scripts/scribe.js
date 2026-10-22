@@ -8,6 +8,7 @@ import {
   readSlideContent,
   writeSlideLines
 } from './presentation.js'
+import { makeToolbarItems, readEditorLang } from './toolbar.js'
 
 // The plugin is in the frame of the editor, itself in the app that shows it
 const host = window.parent.parent
@@ -421,6 +422,37 @@ function findHostOrigin() {
   }
 }
 
+// The entry of the Plugins tab works on the selection, as the inline one
+async function handleToolbarClick(id) {
+  if (id === 'scribePanel') {
+    host.postMessage(
+      { type: 'twake-scribe:open', source: 'toolbar-panel' },
+      appOrigin
+    )
+    return
+  }
+  if (id !== 'scribe' && id !== 'scribeInline') return
+  // Read when clicked: lastSelectedTextLive follows the selection only where
+  // the editor gives its geometry, not in a presentation
+  const selectedText = await fetchSelectedText()
+  if (!selectedText?.trim()) return
+  host.postMessage(
+    { type: 'twake-scribe:open', source: 'toolbar-inline' },
+    appOrigin
+  )
+}
+
+// The editor sends a click on an entry only to a plugin that has told it
+// it listens
+function addToolbarEntries() {
+  window.Asc.plugin.attachEditorEvent('onToolbarMenuClick', handleToolbarClick)
+  const lang = readEditorLang(window.parent.location.href)
+  const baseUrl = new URL('./', window.location.href).href
+  window.Asc.plugin.executeMethod('AddToolbarMenuItem', [
+    makeToolbarItems(lang, baseUrl)
+  ])
+}
+
 // The editor starts the plugin again each time the selection changes
 window.Asc.plugin.init = () => {
   if (isStarted) {
@@ -435,6 +467,7 @@ window.Asc.plugin.init = () => {
   appOrigin = findHostOrigin()
   if (!appOrigin) return
   host.postMessage({ type: 'twake-scribe:ready' }, appOrigin)
+  addToolbarEntries()
   // The presentation editor gives no selection bounds
   if (!isPresentation()) watchGeometry()
 }

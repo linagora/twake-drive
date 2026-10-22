@@ -56,12 +56,12 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
   const [geometry, setGeometry] = useState(null)
   const [source, setSource] = useState(null)
   const [isRestorePending, setIsRestorePending] = useState(readPanelOpen)
-  // Where no button could open the panel, it is not opened again either
-  const canRestore =
-    isRestorePending &&
-    !isPublic &&
-    !isReadOnly &&
-    Boolean(flag('cozy.assistant.enabled'))
+  // Where Drive shows no button for the scribe, the entries of the editor's
+  // toolbar do not open it, and the panel is not opened again either
+  const isAllowed =
+    !isPublic && !isReadOnly && Boolean(flag('cozy.assistant.enabled'))
+  const canRestore = isRestorePending && isAllowed
+  const isOpen = text !== null
 
   useEffect(() => {
     const handleMessage = event => {
@@ -103,10 +103,40 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
     [plugin, serverOrigin]
   )
 
+  // The plugin reads every selection while the panel is open, which
+  // empties the redo of the editor: it stops once the panel is closed
+  const close = useCallback(() => {
+    setIsRestorePending(false)
+    writePanelOpen(false)
+    plugin?.postMessage({ type: 'twake-scribe:close' }, serverOrigin)
+    setText(null)
+    // The focus was in the assistant, which goes with the panel
+    setTimeout(focusEditorFrame, EDITOR_FOCUS_DELAY)
+  }, [plugin, serverOrigin])
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (plugin !== null && canRestore) open({ source: 'restored' })
   }, [plugin, canRestore, open])
+
+  useEffect(() => {
+    if (plugin === null || !isAllowed) return
+
+    const handleOpenRequest = event => {
+      if (event.origin !== serverOrigin) return
+      const { type, source } = event.data ?? {}
+      if (type !== 'twake-scribe:open') return
+
+      if (source === 'toolbar-inline') open({ source: 'editor-toolbar' })
+      if (source === 'toolbar-panel') {
+        if (isOpen) close()
+        else open({ source: 'editor-toolbar' })
+      }
+    }
+
+    window.addEventListener('message', handleOpenRequest)
+    return () => window.removeEventListener('message', handleOpenRequest)
+  }, [plugin, isAllowed, isOpen, serverOrigin, open, close])
 
   const value = useMemo(() => {
     // The plugin has no message for a table: it goes in as a Markdown
@@ -146,7 +176,7 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
 
     return {
       isAvailable: plugin !== null,
-      isOpen: text !== null,
+      isOpen,
       content: text?.content,
       target: text?.target,
       canReplace: text?.canReplace,
@@ -154,16 +184,7 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
       geometry,
       source,
       open,
-      // The plugin reads every selection while the panel is open, which
-      // empties the redo of the editor: it stops once the panel is closed
-      close: () => {
-        setIsRestorePending(false)
-        writePanelOpen(false)
-        plugin?.postMessage({ type: 'twake-scribe:close' }, serverOrigin)
-        setText(null)
-        // The focus was in the assistant, which goes with the panel
-        setTimeout(focusEditorFrame, EDITOR_FOCUS_DELAY)
-      },
+      close,
       applyResult: result => {
         if (result?.capability !== undefined) {
           callCapability(result)
@@ -175,7 +196,17 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
         )
       }
     }
-  }, [plugin, text, geometry, source, serverOrigin, documentType, open])
+  }, [
+    plugin,
+    text,
+    isOpen,
+    geometry,
+    source,
+    serverOrigin,
+    documentType,
+    open,
+    close
+  ])
 
   return (
     <ScribeContext.Provider value={value}>{children}</ScribeContext.Provider>

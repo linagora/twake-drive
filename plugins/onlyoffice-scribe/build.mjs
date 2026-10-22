@@ -13,7 +13,7 @@ const scripts = readdirSync(join(source, 'scripts')).filter(
 )
 
 // The folder itself is kept: a Document Server may have it mounted
-for (const name of ['scripts', 'vendor']) {
+for (const name of ['scripts', 'vendor', 'resources']) {
   rmSync(join(output, name), { recursive: true, force: true })
   mkdirSync(join(output, name), { recursive: true })
 }
@@ -23,6 +23,9 @@ for (const name of ['config.json', 'index.html']) {
 for (const name of scripts) {
   cpSync(join(source, 'scripts', name), join(output, 'scripts', name))
 }
+cpSync(join(source, 'resources'), join(output, 'resources'), {
+  recursive: true
+})
 cpSync(
   fileURLToPath(import.meta.resolve('marked')),
   join(output, 'vendor', 'marked.esm.js')

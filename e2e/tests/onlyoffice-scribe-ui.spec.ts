@@ -175,6 +175,30 @@ test.describe('the scribe of Drive', { tag: '@e2e-scribe' }, () => {
     await expect(scribe.panel()).toBeHidden()
   })
 
+  test('the Assistant tab of the editor opens the scribe', async ({
+    alicePage
+  }) => {
+    const fileId = await uploadScribeDocument(
+      USERS.alice.instance,
+      'a-family.docx'
+    )
+    const scribe = new ScribePage(alicePage)
+    await scribe.openDocument(USERS.alice.appUrl, fileId)
+
+    await scribe.editorTab('Assistant').click()
+    await scribe.editorToolbarButton('Scribe panel').click()
+    await expect(scribe.panel()).toBeVisible()
+    await scribe.editorToolbarButton('Scribe panel').click()
+    await expect(scribe.panel()).toBeHidden()
+
+    await scribe.selectInEditor('P1@start..P1@end')
+    await scribe.editorToolbarButton('Inline Scribe').click()
+    await expect(scribe.panel()).toBeVisible()
+    await expect(scribe.assistantFrame().getByRole('textbox')).toBeVisible({
+      timeout: 60_000
+    })
+  })
+
   // The panel is remembered in the localStorage of the browser context, which
   // each test gets afresh: the whole scenario stays in this test
   test('the panel resizes and stays open', async ({ alicePage }) => {

@@ -17,12 +17,13 @@ Drive (OnlyOffice view)
   │                                               result { answerAction, text } ──▶ Drive
   │                                               result { capability, params } ──▶ Drive
   └─ editor (iframe of the Document Server)
+       ├─ entries of its toolbar ── open or close ──▶ side panel, through the plugin
        └─ scribe plugin (iframe, in the background)
             twake-scribe:getContent, twake-scribe:close,
             twake-scribe:applyAnswer, twake-scribe:insertSlide ◀── Drive
             twake-scribe:ready, twake-scribe:content,
             twake-scribe:selection, twake-scribe:applied,
-            twake-scribe:geometry ──▶ Drive
+            twake-scribe:geometry, twake-scribe:open ──▶ Drive
 ```
 
 ## For the user
@@ -32,6 +33,7 @@ Drive (OnlyOffice view)
 - A click opens the assistant in a panel beside the document. Another click, or the cross of the panel, closes it.
 - A text selected in a text document shows a small sparkle button under its end, "Scribe Menu": a click opens the assistant on it too, see [The button under the selection](#the-button-under-the-selection).
 - A text document also has a floating button, "Scribe Panel", 12 px inside the top right corner of the area that shows the document, faded until the pointer is over it. Its mark plays while the pointer is over it, unless the system asks for reduced motion. A click opens the panel, or closes it. Until the plugin has given the place of that area, the button waits in the bottom right corner of the window. A presentation has none: the plugin gives no geometry there.
+- The toolbar of the editor has the scribe too: a "Scribe" button in its Plugins tab, and an "Assistant" tab with "Inline Scribe" and "Scribe panel". "Scribe" and "Inline Scribe" open the panel on the selected text, and do nothing without a selection. "Scribe panel" opens the panel, or closes it. See [The entries of the editor's toolbar](#the-entries-of-the-editors-toolbar).
 - With a selection, the assistant works on the selected text, and each answer can be inserted after it or can replace it. An answer is text, so a selection that holds what it cannot give back can only have the answers inserted after it: a chart, an equation, an endnote, a field, a content control or a form, a comment, a page or column break, a footnote in a cell of a table or in a code, or an image the plugin cannot give a marker. So can a selection that crosses the end of a section, or the edges of more than two tables or of a table in a table. See [What an answer can replace](#what-an-answer-can-replace).
 - The underlined text of the selection is given between `<u>` tags, and its footnotes, its links to a heading or a bookmark of the document and its images as markers. They are written back where the answer keeps them, as underlined text, new notes, links and copies of the images, see [Markers](#markers).
 - Without a selection, the assistant works on the whole document, and each answer can be inserted at the cursor. Nothing replaces a whole document.
@@ -76,7 +78,9 @@ The plugin is a background plugin of the document editor: it has no interface of
 | `scripts/document.js` | Functions run inside the text editor: read the text with its markers, write the blocks and the copies of the images |
 | `scripts/markers.js` | Function run inside the text editor, in the command that writes an answer, once it is written: write the notes and the links of its markers |
 | `scripts/geometry.js` | Reads where the selection is drawn, from the page of the editor and without a command, see [The button under the selection](#the-button-under-the-selection) |
+| `scripts/toolbar.js` | The entries of the scribe in the toolbar of the editor, and their labels, see [The entries of the editor's toolbar](#the-entries-of-the-editors-toolbar) |
 | `scripts/presentation.js` | Functions run inside the presentation editor: read a slide, write lines in its shapes |
+| `resources/` | The icons of the entries of the editor's toolbar, for the light and the dark themes |
 
 It relies on the editor for both ways:
 
@@ -114,6 +118,7 @@ Drive and the plugin talk with `postMessage`. Drive only listens to the origin o
 | Plugin → Drive | `twake-scribe:applied` | `skippedCells` | The answer of an `applyAnswer` is handled, once Drive has asked for the text and until the panel is closed. `skippedCells` counts the selected cells the answer had no cell for (see [Tables](#tables)), 0 otherwise. |
 | Drive → Plugin | `twake-scribe:insertSlide` | `title`, `bullets` | A slide the assistant has made, checked by Drive. The plugin adds it after the current slide. Presentations only. |
 | Plugin → Drive | `twake-scribe:geometry` | `selection`, `viewer`, `page` | Where the selection is, in pixels of the editor frame, sent from the start and each time it changes. Drive shows its button under the selection with it, see [The button under the selection](#the-button-under-the-selection). |
+| Plugin → Drive | `twake-scribe:open` | `source` | An entry of the editor's toolbar is clicked: `toolbar-inline` for "Scribe" or "Inline Scribe" with a text selected, `toolbar-panel` for "Scribe panel". Drive opens the panel, or closes it for `toolbar-panel` when it is open, where its AI button is shown (see [When the button is shown](#when-the-button-is-shown)), and does nothing elsewhere. |
 
 `content` is the `content` of the Assistant intent, and the fields of `applyAnswer` are those of its result.
 
@@ -128,6 +133,17 @@ The plugin reads where the selection is drawn from the page of the editor, witho
 The answer the plugin has just written is left selected, and gets its button. Another selection made by code, and not by the user, may not start the plugin, as one the builder API makes from the page of the editor: it gets its button once the user changes it. The presentation editor has no `asc_GetSelectionBounds`: a presentation has no button under its selection.
 
 Drive adds the box of the editor frame, taken when a geometry comes and when the window is resized. It shows a sparkle button 4 px below and right of the end of the selection (`corners[3]`), over the editor, while the AI button is shown (see [When the button is shown](#when-the-button-is-shown)), the selection has text, and the disc of the button is inside the viewer: a selection scrolled out of it has no button. A click opens the panel, as the AI button does.
+
+### The entries of the editor's toolbar
+
+Once started, and when the editor has given it the origin of Drive, the plugin adds its entries to the toolbar of the editor with the `AddToolbarMenuItem` method of the plugin API (Document Server 8.1 or later): a "Scribe" button in the Plugins tab (`scribe`), and an "Assistant" tab (`scribeAssistantTab`) with "Inline Scribe" (`scribeInline`) and "Scribe panel" (`scribePanel`). The editor sends a click to a plugin only for an event it has asked for: the plugin listens to `onToolbarMenuClick` with `attachEditorEvent`.
+
+- "Scribe" and "Inline Scribe" read the selected text with `GetSelectedText`, a method of the editor and not a command, when clicked. With a text selected, the plugin sends `twake-scribe:open` with `source: 'toolbar-inline'`; without one, nothing.
+- "Scribe panel" always sends `twake-scribe:open` with `source: 'toolbar-panel'`.
+
+Drive records the panel as opened from `editor-toolbar`. The editor shows the texts as they are given: the plugin labels the entries in French when the `lang` of the editor's address starts with `fr`, in English otherwise. The icons are the images of `resources/`, at their address next to the page of the plugin, in the version of the current theme of the editor (light or dark). The entries are locked in view mode (`lockInViewMode`).
+
+The plugin cannot know whether Drive shows its AI button: on a public link, or without the flag `cozy.assistant.enabled`, the entries are in the toolbar and Drive does nothing when they are clicked.
 
 ### What an answer can replace
 
