@@ -1,0 +1,71 @@
+import { render } from '@testing-library/react'
+import React from 'react'
+
+import { createMockClient } from 'cozy-client'
+
+import AppLike from 'test/components/AppLike'
+
+import { ScribeIntent } from '@/modules/views/OnlyOffice/Scribe/ScribeIntent'
+import { useScribe } from '@/modules/views/OnlyOffice/Scribe/ScribeProvider'
+
+jest.mock('@/modules/views/OnlyOffice/Scribe/ScribeProvider', () => ({
+  useScribe: jest.fn()
+}))
+
+const mockIntentIframe = jest.fn()
+jest.mock('cozy-ui-plus/dist/Intent/IntentIframe', () => ({
+  __esModule: true,
+  default: props => {
+    mockIntentIframe(props)
+    return null
+  }
+}))
+
+const setup = props => {
+  const onResult = jest.fn()
+  const onCancel = jest.fn()
+  useScribe.mockReturnValue({
+    content: 'Un **texte**',
+    target: 'selection',
+    documentType: 'word'
+  })
+
+  const { unmount } = render(
+    <AppLike client={createMockClient({})}>
+      <ScribeIntent
+        layout="compact"
+        source="selection"
+        onResult={onResult}
+        onCancel={onCancel}
+        {...props}
+      />
+    </AppLike>
+  )
+
+  return { onResult, onCancel, unmount }
+}
+
+const getIntentProps = () => mockIntentIframe.mock.calls.at(-1)[0]
+
+describe('ScribeIntent', () => {
+  it('ends with the assistant, as it cancels or terminates', () => {
+    const { onCancel } = setup()
+
+    getIntentProps().onCancel()
+    getIntentProps().onTerminate()
+
+    expect(onCancel).toHaveBeenCalledTimes(2)
+  })
+
+  // The page of the assistant tells it is cancelled as it unloads with the
+  // surface: the surface opened since stays
+  it('ignores the end of an intent whose surface is gone', () => {
+    const { onCancel, unmount } = setup()
+    const { onCancel: cancelIntent } = getIntentProps()
+
+    unmount()
+    cancelIntent()
+
+    expect(onCancel).not.toHaveBeenCalled()
+  })
+})

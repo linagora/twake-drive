@@ -11,7 +11,10 @@ import SparkleIcon from './assets/sparkle.svg'
 import styles from './styles.styl'
 
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
-import { useScribe } from '@/modules/views/OnlyOffice/Scribe/ScribeProvider'
+import {
+  useScribe,
+  useScribeGeometry
+} from '@/modules/views/OnlyOffice/Scribe/ScribeProvider'
 import { isScribeAllowed } from '@/modules/views/OnlyOffice/Scribe/availability'
 
 const ASSET_SIZE = 48
@@ -57,9 +60,10 @@ const findButtonPosition = geometry => {
 export const ScribeSelectionButton = () => {
   const { t } = useI18n()
   const isAllowed = isScribeAllowed(useOnlyOfficeContext())
-  const { isAvailable, geometry, open } = useScribe()
+  const { isAvailable, isPopoverOpen, openPopover } = useScribe()
+  const geometry = useScribeGeometry()
 
-  if (!isAvailable || !isAllowed) return null
+  if (!isAvailable || !isAllowed || isPopoverOpen) return null
   const position = findButtonPosition(geometry)
   if (position === null) return null
 
@@ -82,7 +86,7 @@ export const ScribeSelectionButton = () => {
           <ButtonBase
             aria-label={label}
             disableRipple
-            onClick={() => open({ source: 'selection' })}
+            onClick={() => openPopover({ source: 'selection' })}
           >
             <Icon icon={SparkleIcon} size={ASSET_SIZE} preserveColor />
           </ButtonBase>

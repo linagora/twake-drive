@@ -7,7 +7,8 @@ import logger from '@/lib/logger'
 import { OnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
 import {
   ScribeProvider,
-  useScribe
+  useScribe,
+  useScribeGeometry
 } from '@/modules/views/OnlyOffice/Scribe/ScribeProvider'
 
 jest.mock('cozy-flags')
@@ -36,25 +37,41 @@ const ScribeState = ({ results = [] }) => {
   const {
     isAvailable,
     isOpen,
+    isPopoverOpen,
     content,
     target,
     canReplace,
-    geometry,
     source,
+    popoverSource,
+    draft,
+    conversation,
     open,
     close,
+    openPopover,
+    closePopover,
     applyResult
   } = useScribe()
+  const geometry = useScribeGeometry()
 
   return (
     <>
       <output data-testid="state">
         {JSON.stringify({ isAvailable, isOpen, content, target, canReplace })}
       </output>
+      <output data-testid="popover">
+        {JSON.stringify({ isPopoverOpen, popoverSource })}
+      </output>
+      <output data-testid="hand-over">
+        {JSON.stringify({ draft, conversation })}
+      </output>
       <output data-testid="geometry">{JSON.stringify(geometry)}</output>
       <output data-testid="source">{JSON.stringify(source)}</output>
       <button onClick={() => open({ source: 'selection' })}>open</button>
       <button onClick={close}>close</button>
+      <button onClick={() => openPopover({ source: 'selection' })}>
+        open popover
+      </button>
+      <button onClick={closePopover}>close popover</button>
       <button
         onClick={() =>
           applyResult({
@@ -80,7 +97,8 @@ const setup = ({
   results,
   isPublic = false,
   isReadOnly = false,
-  isAssistantEnabled = true
+  isAssistantEnabled = true,
+  extra = null
 } = {}) => {
   flag.mockImplementation(
     name => name === 'cozy.assistant.enabled' && isAssistantEnabled
@@ -99,11 +117,15 @@ const setup = ({
     <OnlyOfficeContext.Provider value={{ isPublic, isReadOnly }}>
       <ScribeProvider serverUrl={SERVER_URL} documentType={documentType}>
         <ScribeState results={results} />
+        {extra}
       </ScribeProvider>
     </OnlyOfficeContext.Provider>
   )
 
   const getState = () => JSON.parse(screen.getByTestId('state').textContent)
+  const getPopover = () => JSON.parse(screen.getByTestId('popover').textContent)
+  const getHandOver = () =>
+    JSON.parse(screen.getByTestId('hand-over').textContent)
   const getGeometry = () =>
     JSON.parse(screen.getByTestId('geometry').textContent)
   const getSource = () => JSON.parse(screen.getByTestId('source').textContent)
@@ -113,7 +135,16 @@ const setup = ({
       ([message]) => message.type !== 'twake-scribe:showToolbar'
     )
 
-  return { plugin, receive, getState, getGeometry, getSource, getSent }
+  return {
+    plugin,
+    receive,
+    getState,
+    getPopover,
+    getHandOver,
+    getGeometry,
+    getSource,
+    getSent
+  }
 }
 
 const SELECTION = {
@@ -132,6 +163,18 @@ const SELECTION = {
   hasText: true
 }
 const VIEWER = { left: 59, top: 174, width: 1167, height: 465 }
+const FRAME = { left: 0, top: 49, width: 1280, height: 671 }
+const SELECTION_GEOMETRY = {
+  type: 'twake-scribe:geometry',
+  selection: SELECTION,
+  viewer: VIEWER,
+  page: null
+}
+const SELECTED_TEXT = {
+  content: 'Un **texte**',
+  target: 'selection',
+  canReplace: true
+}
 
 const addEditorFrame = box => {
   const frame = document.createElement('iframe')
@@ -248,16 +291,27 @@ describe('ScribeProvider', () => {
     expect(plugin.postMessage).not.toHaveBeenCalled()
   })
 
-  it('opens the panel from the toolbar of the editor', () => {
-    const { receive, getSource, getSent } = setup()
+  it('opens the popover on the selection from the toolbar of the editor', () => {
+    addEditorFrame(FRAME)
+    const { receive, getState, getPopover, getSent } = setup()
     receive({ type: 'twake-scribe:ready' })
+    receive(SELECTION_GEOMETRY)
 
     receive({ type: 'twake-scribe:open', source: 'toolbar-inline' })
 
     expect(getSent()).toEqual([
       [{ type: 'twake-scribe:getContent' }, SERVER_ORIGIN]
     ])
-    expect(getSource()).toBe('editor-toolbar')
+    receive({
+      type: 'twake-scribe:content',
+      content: 'Un texte',
+      target: 'selection'
+    })
+    expect(getPopover()).toEqual({
+      isPopoverOpen: true,
+      popoverSource: 'editor-toolbar'
+    })
+    expect(getState().isOpen).toBe(false)
   })
 
   it('toggles the panel from its panel entry', () => {
@@ -520,6 +574,216 @@ describe('ScribeProvider', () => {
 
     expect(() => jest.advanceTimersByTime(100)).not.toThrow()
     expect(getState().isOpen).toBe(false)
+  })
+
+  it('opens the popover, not the panel, when the content was asked for it', () => {
+    addEditorFrame(FRAME)
+    const { receive, getState, getPopover, getSent } = setup()
+    receive({ type: 'twake-scribe:ready' })
+    receive(SELECTION_GEOMETRY)
+
+    fireEvent.click(screen.getByText('open popover'))
+
+    expect(getSent()).toEqual([
+      [{ type: 'twake-scribe:getContent' }, SERVER_ORIGIN]
+    ])
+    expect(getPopover().isPopoverOpen).toBe(false)
+
+    receive({ type: 'twake-scribe:content', ...SELECTED_TEXT })
+
+    expect(getPopover()).toEqual({
+      isPopoverOpen: true,
+      popoverSource: 'selection'
+    })
+    expect(getState()).toEqual({
+      isAvailable: true,
+      isOpen: false,
+      ...SELECTED_TEXT
+    })
+    // Only the panel opens again on the next load
+    expect(localStorage.getItem('scribe-panel-open')).toBe(null)
+  })
+
+  it('opens the panel instead of the popover without the place of the selection', () => {
+    const { receive, getState, getPopover, getSource } = setup({
+      documentType: 'slide'
+    })
+    receive({ type: 'twake-scribe:ready' })
+
+    fireEvent.click(screen.getByText('open popover'))
+    receive({ type: 'twake-scribe:content', content: 'Diapo', target: 'slide' })
+
+    expect(getPopover().isPopoverOpen).toBe(false)
+    expect(getState().isOpen).toBe(true)
+    expect(getSource()).toBe('selection')
+  })
+
+  it('hands a draft over to the panel on a panel request', () => {
+    addEditorFrame(FRAME)
+    const {
+      plugin,
+      receive,
+      getState,
+      getPopover,
+      getHandOver,
+      getSource,
+      getSent
+    } = setup({
+      results: [{ request: 'panel', draft: 'Plus court', conversation: 'c1' }]
+    })
+    receive({ type: 'twake-scribe:ready' })
+    receive(SELECTION_GEOMETRY)
+    fireEvent.click(screen.getByText('open popover'))
+    receive({ type: 'twake-scribe:content', ...SELECTED_TEXT })
+    plugin.postMessage.mockClear()
+
+    fireEvent.click(screen.getByText('result 0'))
+
+    expect(getPopover().isPopoverOpen).toBe(false)
+    expect(getState()).toEqual({
+      isAvailable: true,
+      isOpen: true,
+      ...SELECTED_TEXT
+    })
+    expect(getHandOver()).toEqual({ draft: 'Plus court', conversation: 'c1' })
+    expect(getSource()).toBe('popover')
+    expect(localStorage.getItem('scribe-panel-open')).toBe('true')
+    // The text of the popover is still the selection: the plugin is neither
+    // asked for it again nor told to stop reading it
+    expect(getSent()).toEqual([])
+
+    fireEvent.click(screen.getByText('close'))
+
+    expect(getHandOver()).toEqual({ draft: null, conversation: null })
+  })
+
+  it('tells the plugin to close only when both are closed', () => {
+    addEditorFrame(FRAME)
+    const { plugin, receive, getState, getPopover } = setup()
+    receive({ type: 'twake-scribe:ready' })
+    receive(SELECTION_GEOMETRY)
+    const isCloseSent = () =>
+      plugin.postMessage.mock.calls.some(
+        ([message]) => message.type === 'twake-scribe:close'
+      )
+
+    fireEvent.click(screen.getByText('open'))
+    receive({ type: 'twake-scribe:content', ...SELECTED_TEXT })
+    fireEvent.click(screen.getByText('open popover'))
+    receive({ type: 'twake-scribe:content', ...SELECTED_TEXT })
+    expect(getState().isOpen).toBe(true)
+    expect(getPopover().isPopoverOpen).toBe(true)
+
+    fireEvent.click(screen.getByText('close popover'))
+    expect(isCloseSent()).toBe(false)
+    expect(getState()).toEqual({
+      isAvailable: true,
+      isOpen: true,
+      ...SELECTED_TEXT
+    })
+
+    fireEvent.click(screen.getByText('open popover'))
+    receive({ type: 'twake-scribe:content', ...SELECTED_TEXT })
+    fireEvent.click(screen.getByText('close'))
+    expect(isCloseSent()).toBe(false)
+    expect(getPopover().isPopoverOpen).toBe(true)
+
+    fireEvent.click(screen.getByText('close popover'))
+    expect(isCloseSent()).toBe(true)
+    expect(getState()).toEqual({ isAvailable: true, isOpen: false })
+  })
+
+  it('keeps the plugin reading while the text for the panel is awaited', () => {
+    addEditorFrame(FRAME)
+    const { plugin, receive, getState, getPopover } = setup()
+    receive({ type: 'twake-scribe:ready' })
+    receive(SELECTION_GEOMETRY)
+    fireEvent.click(screen.getByText('open popover'))
+    receive({ type: 'twake-scribe:content', ...SELECTED_TEXT })
+
+    // The AI button is clicked away from the popover
+    fireEvent.click(screen.getByText('open'))
+    fireEvent.click(screen.getByText('close popover'))
+
+    expect(plugin.postMessage).not.toHaveBeenCalledWith(
+      { type: 'twake-scribe:close' },
+      SERVER_ORIGIN
+    )
+    receive({ type: 'twake-scribe:content', ...SELECTED_TEXT })
+    expect(getState().isOpen).toBe(true)
+    expect(getPopover().isPopoverOpen).toBe(false)
+  })
+
+  it('closes the popover when another text is selected', () => {
+    addEditorFrame(FRAME)
+    const { plugin, receive, getState, getPopover } = setup()
+    receive({ type: 'twake-scribe:ready' })
+    receive(SELECTION_GEOMETRY)
+    fireEvent.click(screen.getByText('open popover'))
+    receive({ type: 'twake-scribe:content', ...SELECTED_TEXT })
+
+    receive({ type: 'twake-scribe:selection', ...SELECTED_TEXT })
+    expect(getPopover().isPopoverOpen).toBe(true)
+
+    receive({
+      type: 'twake-scribe:selection',
+      content: 'Autre',
+      target: 'selection'
+    })
+
+    expect(getPopover().isPopoverOpen).toBe(false)
+    expect(getState()).toEqual({ isAvailable: true, isOpen: false })
+    expect(plugin.postMessage).toHaveBeenLastCalledWith(
+      { type: 'twake-scribe:close' },
+      SERVER_ORIGIN
+    )
+  })
+
+  it('gives the focus back to the document after the popover, unless it went elsewhere', () => {
+    jest.useFakeTimers()
+    const frame = addEditorFrame(FRAME)
+    frame.focus = jest.fn()
+    const { receive } = setup()
+    receive({ type: 'twake-scribe:ready' })
+    receive(SELECTION_GEOMETRY)
+    const openPopover = () => {
+      fireEvent.click(screen.getByText('open popover'))
+      receive({ type: 'twake-scribe:content', ...SELECTED_TEXT })
+    }
+
+    openPopover()
+    fireEvent.click(screen.getByText('close popover'))
+    act(() => {
+      jest.advanceTimersByTime(100)
+    })
+    expect(frame.focus).toHaveBeenCalledTimes(1)
+
+    openPopover()
+    fireEvent.click(screen.getByText('close popover'))
+    screen.getByText('open').focus()
+    act(() => {
+      jest.advanceTimersByTime(100)
+    })
+    expect(frame.focus).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not render the scribe again for a geometry', () => {
+    addEditorFrame(FRAME)
+    const renders = jest.fn()
+    const ScribeConsumer = () => {
+      useScribe()
+      renders()
+      return null
+    }
+    const { receive, getGeometry } = setup({ extra: <ScribeConsumer /> })
+    receive({ type: 'twake-scribe:ready' })
+    renders.mockClear()
+
+    receive(SELECTION_GEOMETRY)
+    receive({ ...SELECTION_GEOMETRY, selection: null })
+
+    expect(getGeometry().selection).toBe(null)
+    expect(renders).not.toHaveBeenCalled()
   })
 
   it('hands an answer of the assistant to the plugin as it is', () => {

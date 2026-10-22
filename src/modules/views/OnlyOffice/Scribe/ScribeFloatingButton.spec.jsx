@@ -8,7 +8,10 @@ import AppLike from 'test/components/AppLike'
 
 import { OnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
 import { ScribeFloatingButton } from '@/modules/views/OnlyOffice/Scribe/ScribeFloatingButton'
-import { useScribe } from '@/modules/views/OnlyOffice/Scribe/ScribeProvider'
+import {
+  useScribe,
+  useScribeGeometry
+} from '@/modules/views/OnlyOffice/Scribe/ScribeProvider'
 
 const mockPlay = jest.fn()
 const mockGoToAndStop = jest.fn()
@@ -16,7 +19,8 @@ const mockLottieProps = jest.fn()
 
 jest.mock('cozy-flags')
 jest.mock('@/modules/views/OnlyOffice/Scribe/ScribeProvider', () => ({
-  useScribe: jest.fn()
+  useScribe: jest.fn(),
+  useScribeGeometry: jest.fn()
 }))
 // Over the mock of jest.config.js: the button drives the mark by its ref
 jest.mock('lottie-react', () => {
@@ -50,16 +54,16 @@ const setup = ({
     name => name === 'cozy.assistant.enabled' && isAssistantEnabled
   )
   const mockScribe = changes => {
+    const { geometry = GEOMETRY, ...state } = { ...scribe, ...changes }
     useScribe.mockReturnValue({
       isAvailable: true,
       isOpen: false,
       documentType: 'word',
-      geometry: GEOMETRY,
       open,
       close,
-      ...scribe,
-      ...changes
+      ...state
     })
+    useScribeGeometry.mockReturnValue(geometry)
   }
   const makeTree = () => (
     <AppLike client={createMockClient({})}>

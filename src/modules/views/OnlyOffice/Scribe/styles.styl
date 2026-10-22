@@ -46,6 +46,70 @@
 .scribe-resize-handle--dragging::after
     opacity .8
 
+// Over the full screen dialog that holds the editor, under the popover; the
+// clicks go through it to the document
+.scribe-popover-veil
+    top 0
+    right 0
+    bottom 0
+    left 0
+    z-index 100000
+    background-color rgba(0, 0, 0, .24)
+    pointer-events none
+
+.scribe-popover
+    z-index 100001
+
+    // Nested: over the styles that Paper injects after this sheet
+    .scribe-popover-paper
+        width 380px
+        border-radius 14px
+        overflow hidden
+
+// cozy-interapp gives the element of the intent the height the compact
+// scribe reports: the body follows it, and scrolls beyond its maximum
+.scribe-popover-body
+    min-height 120px
+    max-height unquote('min(500px, 70vh)')
+    overflow-y auto
+
+// Popper.js sets its left, and the placement on the popper
+.scribe-popover-arrow
+    position absolute
+    width 12px
+    height 12px
+    background-color var(--paperBackgroundColor)
+    transform rotate(45deg)
+
+    .scribe-popover[x-placement^='bottom'] &
+        top -6px
+
+    .scribe-popover[x-placement^='top'] &
+        bottom -6px
+
+// Nested: over the styles that Drawer injects after this sheet
+.scribe-drawer-root .scribe-drawer
+    max-height 85vh
+    border-radius 12px 12px 0 0
+
+// The whole strip is the grab area of the grip
+.scribe-drawer-handle
+    flex-shrink 0
+    padding 10px 0
+    cursor pointer
+
+    &::after
+        content ''
+        width 32px
+        height 4px
+        border-radius 2px
+        background-color var(--dividerColor)
+
+.scribe-drawer-body
+    flex 1 1 auto
+    min-height 120px
+    overflow-y auto
+
 // Over the full screen dialog that holds the editor
 .scribe-selection-button
     z-index 100000

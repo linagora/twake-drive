@@ -125,10 +125,11 @@ test.describe('the scribe of Drive', { tag: '@e2e-scribe' }, () => {
     await expect(scribe.selectionButton()).toBeVisible()
 
     await scribe.selectionButton().click()
-    await expect(scribe.panel()).toBeVisible()
+    await expect(scribe.popover()).toBeVisible()
 
     await scribe.selectInEditor('P2@mid')
     await expect(scribe.selectionButton()).toBeHidden()
+    await expect(scribe.popover()).toBeHidden()
 
     // An answer written at the cursor is left selected
     await plugin.applyAnswer('insert', 'Un texte écrit')
@@ -193,8 +194,8 @@ test.describe('the scribe of Drive', { tag: '@e2e-scribe' }, () => {
 
     await scribe.selectInEditor('P1@start..P1@end')
     await scribe.editorToolbarButton('Inline Scribe').click()
-    await expect(scribe.panel()).toBeVisible()
-    await expect(scribe.assistantComposer()).toBeVisible({
+    await expect(scribe.popover()).toBeVisible()
+    await expect(scribe.intentFrame(scribe.popover())).toBeVisible({
       timeout: 60_000
     })
   })
@@ -212,10 +213,113 @@ test.describe('the scribe of Drive', { tag: '@e2e-scribe' }, () => {
     await scribe.selectInEditor('P1@start..P1@end')
     await scribe.editorTab('Plugins').click()
     await scribe.editorToolbarButton('Scribe').click()
-    await expect(scribe.panel()).toBeVisible()
-    await expect(scribe.assistantComposer()).toBeVisible({
+    await expect(scribe.popover()).toBeVisible()
+    await expect(scribe.intentFrame(scribe.popover())).toBeVisible({
       timeout: 60_000
     })
+  })
+
+  test('the selection button opens a popover on the selection', async ({
+    alicePage
+  }) => {
+    const fileId = await uploadScribeDocument(
+      USERS.alice.instance,
+      'a-family.docx'
+    )
+    const scribe = new ScribePage(alicePage)
+    const plugin = new ScribePluginPage(alicePage)
+    await scribe.openDocument(USERS.alice.appUrl, fileId)
+    await scribe.watchMessages()
+    await scribe.watchIntentData()
+
+    await scribe.selectInEditor('P1@start..P1@end')
+    await scribe.selectionButton().click()
+    await expect(scribe.popover()).toBeVisible()
+    await expect(scribe.intentFrame(scribe.popover())).toBeVisible({
+      timeout: 60_000
+    })
+    // The button goes under the popover
+    await expect(scribe.selectionButton()).toBeHidden()
+
+    let geometry: Geometry | null = null
+    await expect(async () => {
+      geometry = (await plugin.takeGeometry()) ?? geometry
+      const frame = await scribe.editorFrame().boundingBox()
+      const popover = await scribe.popover().boundingBox()
+      const rect = geometry?.selection?.rect
+      if (!frame || !popover || !rect) {
+        throw new Error('No geometry of the selection or of the popover')
+      }
+      const [endX, endY] = rect.corners[3]
+      // 12 px below the selection, from its left edge
+      expect(popover.y).toBeGreaterThanOrEqual(frame.y + endY)
+      expect(
+        Math.abs(popover.y - (frame.y + rect.top + rect.height + 12))
+      ).toBeLessThanOrEqual(1)
+      expect(Math.abs(popover.x - (frame.x + rect.left))).toBeLessThanOrEqual(1)
+      expect(popover.x).toBeLessThanOrEqual(frame.x + endX)
+    }).toPass({ timeout: 10_000 })
+
+    await expect
+      .poll(() => scribe.receivedIntentData(scribe.popover()), {
+        timeout: 60_000
+      })
+      .toMatchObject({ layout: 'compact', source: 'selection' })
+
+    await scribe.pressEscapeInPage()
+    await expect(scribe.popover()).toBeHidden()
+    await expect(scribe.selectionButton()).toBeVisible()
+  })
+
+  test('a panel request moves the scribe to the panel', async ({
+    alicePage
+  }) => {
+    const fileId = await uploadScribeDocument(
+      USERS.alice.instance,
+      'a-family.docx'
+    )
+    const scribe = new ScribePage(alicePage)
+    await scribe.openDocument(USERS.alice.appUrl, fileId)
+    await scribe.watchIntentData()
+
+    await scribe.selectInEditor('P1@start..P1@end')
+    await scribe.selectionButton().click()
+    await expect(scribe.popover()).toBeVisible()
+
+    await scribe.postIntentResult(scribe.popover(), {
+      request: 'panel',
+      draft: 'Hello',
+      conversation: 'c1'
+    })
+
+    await expect(scribe.popover()).toBeHidden()
+    await expect(scribe.panel()).toBeVisible()
+    await expect
+      .poll(() => scribe.receivedIntentData(scribe.panel()), {
+        timeout: 60_000
+      })
+      .toMatchObject({
+        layout: 'panel',
+        source: 'popover',
+        draft: 'Hello',
+        conversation: 'c1'
+      })
+  })
+
+  test('the popover is a drawer on a narrow screen', async ({ alicePage }) => {
+    const fileId = await uploadScribeDocument(
+      USERS.alice.instance,
+      'a-family.docx'
+    )
+    const scribe = new ScribePage(alicePage)
+    await scribe.openDocument(USERS.alice.appUrl, fileId)
+
+    await scribe.setWindowSize(390, 800)
+    await scribe.selectInEditor('P1@start..P1@space')
+    await scribe.selectionButton().click()
+
+    await expect(scribe.drawer()).toBeVisible()
+    await expect(scribe.popover()).toBeHidden()
   })
 
   // The panel is remembered in the localStorage of the browser context, which

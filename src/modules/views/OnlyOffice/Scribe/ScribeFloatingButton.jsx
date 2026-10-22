@@ -10,7 +10,10 @@ import { useI18n } from 'twake-i18n'
 import styles from './styles.styl'
 
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
-import { useScribe } from '@/modules/views/OnlyOffice/Scribe/ScribeProvider'
+import {
+  useScribe,
+  useScribeGeometry
+} from '@/modules/views/OnlyOffice/Scribe/ScribeProvider'
 import { isScribeAllowed } from '@/modules/views/OnlyOffice/Scribe/availability'
 
 // lottie-web and the animation weigh about 85 kB gzip: they stay out of the
@@ -45,8 +48,8 @@ export const ScribeFloatingButton = () => {
   const { t } = useI18n()
   const { type: themeType } = useCozyTheme()
   const isAllowed = isScribeAllowed(useOnlyOfficeContext())
-  const { isAvailable, isOpen, documentType, geometry, open, close } =
-    useScribe()
+  const { isAvailable, isOpen, documentType, open, close } = useScribe()
+  const geometry = useScribeGeometry()
   const lottieRef = useRef(null)
 
   if (!isAvailable || !isAllowed) return null

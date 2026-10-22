@@ -13,10 +13,14 @@ jest.mock('@/modules/views/OnlyOffice/Scribe/ScribeProvider', () => ({
 }))
 
 const mockIntentIframe = jest.fn()
-jest.mock('cozy-ui-plus/dist/Intent/IntentIframe', () => ({
-  __esModule: true,
-  default: props => {
+const mockIntentMount = jest.fn()
+jest.mock('cozy-ui-plus/dist/Intent/IntentIframe', () => {
+  const { useEffect } = jest.requireActual('react')
+  const IntentIframe = props => {
     mockIntentIframe(props)
+    useEffect(() => {
+      mockIntentMount()
+    }, [])
     return (
       <>
         <button
@@ -41,7 +45,8 @@ jest.mock('cozy-ui-plus/dist/Intent/IntentIframe', () => ({
       </>
     )
   }
-}))
+  return { __esModule: true, default: IntentIframe }
+})
 
 const setup = (scribe = {}) => {
   const close = jest.fn()
@@ -51,6 +56,10 @@ const setup = (scribe = {}) => {
     content: 'Un **texte**',
     target: 'selection',
     documentType: 'word',
+    source: 'toolbar',
+    draft: null,
+    conversation: null,
+    handOverId: null,
     close,
     applyResult,
     ...scribe
@@ -100,8 +109,53 @@ describe('ScribePanel', () => {
           { name: 'insert', label: 'Insert' },
           { name: 'replace', label: 'Replace' }
         ],
-        theme: { type: 'light' }
+        theme: { type: 'light' },
+        layout: 'panel',
+        source: 'toolbar'
       }
+    })
+    expect(getIntentProps().data).not.toHaveProperty('draft')
+    expect(getIntentProps().data).not.toHaveProperty('conversation')
+  })
+
+  it('opens the assistant on the draft and the conversation handed over by the popover', () => {
+    setup({
+      source: 'popover',
+      draft: 'Plus court',
+      conversation: 'c1',
+      handOverId: 1
+    })
+
+    expect(getIntentProps().data).toMatchObject({
+      layout: 'panel',
+      source: 'popover',
+      draft: 'Plus court',
+      conversation: 'c1'
+    })
+  })
+
+  it('opens a new intent for each hand-over, never the open one', () => {
+    mockIntentMount.mockClear()
+    const { rerender } = setup()
+    expect(mockIntentMount).toHaveBeenCalledTimes(1)
+
+    useScribe.mockReturnValue({
+      ...useScribe(),
+      source: 'popover',
+      draft: 'Plus court',
+      conversation: 'c1',
+      handOverId: 1
+    })
+    rerender(
+      <AppLike client={createMockClient({})}>
+        <ScribePanel />
+      </AppLike>
+    )
+
+    expect(mockIntentMount).toHaveBeenCalledTimes(2)
+    expect(getIntentProps().data).toMatchObject({
+      draft: 'Plus court',
+      conversation: 'c1'
     })
   })
 
