@@ -60,14 +60,14 @@ const findButtonPosition = geometry => {
 export const ScribeSelectionButton = () => {
   const { t } = useI18n()
   const isAllowed = isScribeAllowed(useOnlyOfficeContext())
-  const { isAvailable, isPopoverOpen, openPopover } = useScribe()
+  const { isAvailable, open } = useScribe()
   const geometry = useScribeGeometry()
 
-  if (!isAvailable || !isAllowed || isPopoverOpen) return null
+  if (!isAvailable || !isAllowed) return null
   const position = findButtonPosition(geometry)
   if (position === null) return null
 
-  const label = t('OnlyOffice.scribe.selectionMenu')
+  const label = t('OnlyOffice.scribe.open')
 
   return (
     <Portal into="body">
@@ -86,7 +86,7 @@ export const ScribeSelectionButton = () => {
           <ButtonBase
             aria-label={label}
             disableRipple
-            onClick={() => openPopover({ source: 'selection' })}
+            onClick={() => open({ source: 'selection' })}
           >
             <Icon icon={SparkleIcon} size={ASSET_SIZE} preserveColor />
           </ButtonBase>

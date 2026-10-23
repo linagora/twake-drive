@@ -18,15 +18,7 @@ import {
 export const ScribePanel = () => {
   const { t } = useI18n()
   const { type: themeType } = useCozyTheme()
-  const {
-    isOpen,
-    source,
-    draft,
-    conversation,
-    handOverId,
-    close,
-    applyResult
-  } = useScribe()
+  const { isOpen, source, close, applyResult } = useScribe()
   const [panelWidth, setPanelWidth] = useState(() =>
     clampPanelWidth(PANEL_DEFAULT_WIDTH, window.innerWidth)
   )
@@ -65,18 +57,11 @@ export const ScribePanel = () => {
           styles['scribe-panel-card']
         )}
       >
-        <ScribeSkippedCellsNotice
-          surface="panel"
-          className="u-flex-shrink-0 u-m-half"
-        />
+        <ScribeSkippedCellsNotice className="u-flex-shrink-0 u-m-half" />
         <div className={styles['scribe-panel-intent']}>
           <ScribeIntent
-            key={handOverId}
-            layout="panel"
             source={source}
-            draft={draft}
-            conversation={conversation}
-            onResult={result => applyResult(result, 'panel')}
+            onResult={applyResult}
             onCancel={close}
           />
         </div>

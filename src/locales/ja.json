@@ -36,7 +36,6 @@
       "insert": "挿入",
       "replace": "置換",
       "insertSlide": "スライドを挿入",
-      "selectionMenu": "Scribe メニュー",
       "panel": "Scribe パネル",
       "resizeHandle": "パネルのサイズを変更",
       "skippedCells": "表：選択したセルのうち %{smart_count} 個は変更されませんでした",

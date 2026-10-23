@@ -36,7 +36,6 @@
       "insert": "إدراج",
       "replace": "استبدال",
       "insertSlide": "إدراج الشريحة",
-      "selectionMenu": "قائمة Scribe",
       "panel": "لوحة Scribe",
       "resizeHandle": "تغيير حجم اللوحة",
       "skippedCells": "الجدول: عدد الخلايا المحددة التي لم تتغير: %{smart_count}",

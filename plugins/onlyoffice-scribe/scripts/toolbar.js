@@ -11,8 +11,6 @@ const LABELS = {
     tab: 'Assistant',
     scribe: 'Scribe',
     scribeHint: 'Scribe AI writing assistant',
-    inline: 'Inline Scribe',
-    inlineHint: 'Open Scribe on the selected text',
     panel: 'Scribe panel',
     panelHint: 'Open or close the Scribe panel'
   },
@@ -20,8 +18,6 @@ const LABELS = {
     tab: 'Assistant',
     scribe: 'Scribe',
     scribeHint: "Assistant d'écriture Scribe",
-    inline: 'Scribe en ligne',
-    inlineHint: 'Ouvrir Scribe sur le texte sélectionné',
     panel: 'Panneau Scribe',
     panelHint: 'Ouvrir ou fermer le panneau Scribe'
   }
@@ -62,12 +58,6 @@ export function makeToolbarItems(lang, baseUrl) {
         text: labels.tab,
         items: [
           makeButton(
-            'scribeInline',
-            labels.inline,
-            labels.inlineHint,
-            makeIcons(baseUrl, 'icon-inline')
-          ),
-          makeButton(
             'scribePanel',
             labels.panel,
             labels.panelHint,
@@ -79,21 +69,16 @@ export function makeToolbarItems(lang, baseUrl) {
   }
 }
 
-// The entry of the Plugins tab works on the selection, as the inline one
-const INLINE_ENTRIES = ['scribe', 'scribeInline']
-
-export const isInlineEntry = id => INLINE_ENTRIES.includes(id)
+// Both entries open or close the panel
+const PANEL_ENTRIES = ['scribe', 'scribePanel']
 
 /**
- * The message for the app when an entry is clicked, or null: the entries that
- * work on the selection need a selected text
+ * The message for the app when an entry is clicked, or null
  */
-export function makeOpenMessage(id, selectedText) {
-  if (id === 'scribePanel') {
-    return { type: 'twake-scribe:open', source: 'toolbar-panel' }
-  }
-  if (!isInlineEntry(id) || !selectedText?.trim()) return null
-  return { type: 'twake-scribe:open', source: 'toolbar-inline' }
+export function makeOpenMessage(id) {
+  return PANEL_ENTRIES.includes(id)
+    ? { type: 'twake-scribe:open', source: 'toolbar-panel' }
+    : null
 }
 
 // The api.js of the Document Server gives the editor the language of the app

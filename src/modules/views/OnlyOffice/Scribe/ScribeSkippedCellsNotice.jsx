@@ -6,18 +6,17 @@ import { useI18n } from 'twake-i18n'
 import { useScribe } from '@/modules/views/OnlyOffice/Scribe/ScribeProvider'
 
 /**
- * Tells how many selected cells kept their text, the last answer of the
- * surface having no cell for them
+ * Tells how many selected cells kept their text, the last answer having no
+ * cell for them
  *
  * @param {object} props
- * @param {'panel' | 'popover'} props.surface
  * @param {string} [props.className]
  */
-export const ScribeSkippedCellsNotice = ({ surface, className }) => {
+export const ScribeSkippedCellsNotice = ({ className }) => {
   const { t } = useI18n()
   const { skippedCells, dismissSkippedCells } = useScribe()
 
-  if (skippedCells?.surface !== surface) return null
+  if (!skippedCells) return null
 
   return (
     <Alert
@@ -27,7 +26,7 @@ export const ScribeSkippedCellsNotice = ({ surface, className }) => {
       onClose={dismissSkippedCells}
     >
       {t('OnlyOffice.scribe.skippedCells', {
-        smart_count: skippedCells.count
+        smart_count: skippedCells
       })}
     </Alert>
   )

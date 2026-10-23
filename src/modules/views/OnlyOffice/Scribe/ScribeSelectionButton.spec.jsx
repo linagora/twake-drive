@@ -41,15 +41,14 @@ const setup = ({
   isReadOnly = false,
   isAssistantEnabled = true
 } = {}) => {
-  const openPopover = jest.fn()
+  const open = jest.fn()
   flag.mockImplementation(
     name => name === 'cozy.assistant.enabled' && isAssistantEnabled
   )
   const { geometry = GEOMETRY, ...state } = scribe
   useScribe.mockReturnValue({
     isAvailable: true,
-    isPopoverOpen: false,
-    openPopover,
+    open,
     ...state
   })
   useScribeGeometry.mockReturnValue(geometry)
@@ -62,10 +61,11 @@ const setup = ({
     </AppLike>
   )
 
-  return { openPopover }
+  return { open }
 }
 
-const queryButton = () => screen.queryByRole('button', { name: 'Scribe Menu' })
+const queryButton = () =>
+  screen.queryByRole('button', { name: 'Help me write' })
 
 describe('ScribeSelectionButton', () => {
   it('shows the button at the end corner of the selection', () => {
@@ -116,18 +116,18 @@ describe('ScribeSelectionButton', () => {
     expect(queryButton()).toBe(null)
   })
 
-  it('opens the popover with the selection source on click', () => {
-    const { openPopover } = setup()
+  it('opens the panel with the selection source on click', () => {
+    const { open } = setup()
 
     fireEvent.click(queryButton())
 
-    expect(openPopover).toHaveBeenCalledWith({ source: 'selection' })
+    expect(open).toHaveBeenCalledWith({ source: 'selection' })
   })
 
-  it('hides it while the popover is open', () => {
-    setup({ scribe: { isPopoverOpen: true } })
+  it('shows it while the panel is open, to work on the selection', () => {
+    setup({ scribe: { isOpen: true } })
 
-    expect(queryButton()).toBe(null)
+    expect(queryButton()).toBeInTheDocument()
   })
 
   it.each([

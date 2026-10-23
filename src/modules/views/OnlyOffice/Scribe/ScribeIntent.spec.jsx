@@ -34,7 +34,6 @@ const setup = (props, scribe = {}) => {
   const { unmount } = render(
     <AppLike client={createMockClient({})}>
       <ScribeIntent
-        layout="compact"
         source="selection"
         onResult={onResult}
         onCancel={onCancel}
@@ -59,8 +58,8 @@ describe('ScribeIntent', () => {
   })
 
   // The page of the assistant tells it is cancelled as it unloads with the
-  // surface: the surface opened since stays
-  it('ignores the end of an intent whose surface is gone', () => {
+  // panel: the panel opened since stays
+  it('ignores the end of an intent whose panel is gone', () => {
     const { onCancel, unmount } = setup()
     const { onCancel: cancelIntent } = getIntentProps()
 

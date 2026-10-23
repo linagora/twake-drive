@@ -8,7 +8,6 @@ import OnlyOfficeAIAssistantPanel from '@/modules/views/OnlyOffice/OnlyOfficeAIA
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
 import { ScribeFloatingButton } from '@/modules/views/OnlyOffice/Scribe/ScribeFloatingButton'
 import { ScribePanel } from '@/modules/views/OnlyOffice/Scribe/ScribePanel'
-import { ScribePopover } from '@/modules/views/OnlyOffice/Scribe/ScribePopover'
 import { ScribeSelectionButton } from '@/modules/views/OnlyOffice/Scribe/ScribeSelectionButton'
 import { FRAME_EDITOR_NAME } from '@/modules/views/OnlyOffice/config'
 
@@ -69,7 +68,6 @@ const View = ({ id, apiUrl, docEditorConfig }) => {
       </div>
       <ScribeFloatingButton />
       <ScribeSelectionButton />
-      <ScribePopover />
     </>
   )
 }

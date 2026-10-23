@@ -198,8 +198,7 @@ describe('ScribeFloatingButton', () => {
     ['on a public page', { isPublic: true }],
     ['on a document the user cannot change', { isReadOnly: true }],
     ['without the assistant', { isAssistantEnabled: false }],
-    ['in a presentation', { scribe: { documentType: 'slide' } }],
-    ['while the popover is open', { scribe: { isPopoverOpen: true } }]
+    ['in a presentation', { scribe: { documentType: 'slide' } }]
   ])('is not shown %s', (_, options) => {
     setup(options)
 

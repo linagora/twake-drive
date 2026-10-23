@@ -11,15 +11,14 @@ Drive does not talk to the LLM, and does not read or format the document. It lin
 Drive (OnlyOffice view)
   ├─ AI button of the toolbar ── opens ──▶ side panel
   ├─ floating button of the document area ── opens or closes ──▶ side panel
-  ├─ button under the selection ── opens ──▶ popover on the selection (drawer on a small screen)
-  │                                          └─ Assistant intent (iframe of Twake Assistant), in either
+  ├─ button under the selection ── opens ──▶ side panel
+  │                                          └─ Assistant intent (iframe of Twake Assistant)
   │                                               content, rules, answerActions, capabilities, suggestions,
-  │                                               theme, layout, source, draft, conversation ◀── Drive
+  │                                               theme, source ◀── Drive
   │                                               result { answerAction, text } ──▶ Drive
   │                                               result { capability, params } ──▶ Drive
-  │                                               result { request: 'panel', draft, conversation } ──▶ Drive
   └─ editor (iframe of the Document Server)
-       ├─ entries of its toolbar ── open or close ──▶ side panel or popover, through the plugin
+       ├─ entries of its toolbar ── open or close ──▶ side panel, through the plugin
        └─ scribe plugin (iframe, in the background)
             twake-scribe:getContent, twake-scribe:close,
             twake-scribe:applyAnswer,
@@ -35,10 +34,9 @@ Drive (OnlyOffice view)
 - The AI button is in the toolbar of the document, for a text document or a presentation the user can edit.
 - With the flag `cozy.assistant.enabled`, the editor has no AI tab of its own: Drive leaves out the AI plugin of OnlyOffice (`editorConfig.plugins.disable`), which would sit beside the assistant.
 - A click opens the assistant in a panel beside the document. Another click, or the cross of the panel, closes it.
-- A text selected in a text document shows a small sparkle button under its end, "Scribe Menu": a click opens the assistant on it in a popover, see [The button under the selection](#the-button-under-the-selection).
-- The popover, "Scribe Menu", opens 12 px under the selected text, or above it without room, and dims the rest of the page. It holds a compact assistant: its prompts, a "Scribe panel" row, the composer, then the latest exchange only. Escape, a click elsewhere in Drive, a click in the document that leaves a cursor, another text selected, or the selection scrolled out of view close it. The floating button is hidden while it is open. The "Scribe panel" row moves the conversation to the panel, with the text being written in the composer; the popover closes. On a small screen the popover is a drawer at the bottom of the screen, closed by a tap on its grip, a swipe down, a tap out of it, or Escape. See [The popover](#the-popover).
+- A text selected in a text document shows a small sparkle button under its end, "Help me write": a click opens the panel on it, or gives it to the panel already open, see [The button under the selection](#the-button-under-the-selection).
 - A text document also has a floating button, "Scribe Panel", 12 px inside the top right corner of the area that shows the document, faded until the pointer is over it. Its mark plays while the pointer is over it, unless the system asks for reduced motion. A click opens the panel, or closes it. Until the plugin has given the place of that area, the button waits in the bottom right corner of the window. A presentation has none: the plugin gives no geometry there.
-- Where the AI button is shown, the toolbar of the editor has the scribe too: a "Scribe" button in its Plugins tab, and an "Assistant" tab with "Inline Scribe" and "Scribe panel". "Scribe" and "Inline Scribe" open the popover on the selected text, and do nothing without a selection. "Scribe panel" opens the panel, or closes it. See [The entries of the editor's toolbar](#the-entries-of-the-editors-toolbar).
+- Where the AI button is shown, the toolbar of the editor has the scribe too: a "Scribe" button in its Plugins tab, and an "Assistant" tab with "Scribe panel". Both open the panel, or close it. See [The entries of the editor's toolbar](#the-entries-of-the-editors-toolbar).
 - With a selection, the assistant works on the selected text, and each answer can be inserted after it or can replace it. An answer is text, so a selection that holds what it cannot give back can only have the answers inserted after it: a chart, an equation, an endnote, a field, a content control or a form, a comment, a page or column break, a footnote in a cell of a table or in a code, or an image the plugin cannot give a marker. So can a selection that crosses the end of a section, or the edges of more than two tables or of a table in a table. See [What an answer can replace](#what-an-answer-can-replace).
 - The underlined text of the selection is given between `<u>` tags, and its footnotes, its links to a heading or a bookmark of the document and its images as markers. They are written back where the answer keeps them, as underlined text, new notes, links and copies of the images, see [Markers](#markers).
 - Without a selection, the assistant works on the whole document, and each answer can be inserted at the cursor. Nothing replaces a whole document.
@@ -67,7 +65,7 @@ The plugin only loads in the editors of text documents and presentations, in edi
 ## Requirements
 
 - The flag `cozy.assistant.enabled` on. Without it the AI button is not shown, and Drive is unchanged.
-- The Twake Assistant app ([linagora/twake-assistant](https://github.com/linagora/twake-assistant), slug `assistant`) installed on the instance. It serves the Assistant intent in scribe mode, and reads the `capabilities` and `suggestions` of its data. The button does not check that the app is installed. For the popover, an assistant that reads `layout`, `draft` and `conversation`: an older one shows its panel layout in the popover, without the "Scribe panel" row. For the markers, an assistant that reads `rules`: an older one is not told to keep them.
+- The Twake Assistant app ([linagora/twake-assistant](https://github.com/linagora/twake-assistant), slug `assistant`) installed on the instance. It serves the Assistant intent in scribe mode, and reads the `capabilities` and `suggestions` of its data. The button does not check that the app is installed. For the markers, an assistant that reads `rules`: an older one is not told to keep them.
 - A cozy-stack that knows the `documents` and `instructions` options of the chat.
 - A `cozy-interapp` and a `cozy-ui-plus` that have the `result` message of intents (`onResult` prop of `IntentIframe`). With older ones the assistant opens, but the clicks on its action buttons do not reach Drive.
 - For another text while the panel is open, a `cozy-interapp` with the `data` message on both sides, and a `cozy-ui-plus` whose `IntentIframe` sends new `data`. With older ones the assistant keeps the first text.
@@ -120,14 +118,14 @@ Drive and the plugin talk with `postMessage`. Drive only listens to the origin o
 | Plugin → Drive | `twake-scribe:ready` | — | The plugin is loaded. Drive shows the AI button. Not sent when the editor has no `parentOrigin`. |
 | Drive → Plugin | `twake-scribe:showToolbar` | — | Sent once the plugin is ready, where Drive shows its AI button (see [When the button is shown](#when-the-button-is-shown)). The plugin adds its entries to the toolbar of the editor, once. Without it, the editor shows none, see [The entries of the editor's toolbar](#the-entries-of-the-editors-toolbar). |
 | Drive → Plugin | `twake-scribe:getContent` | — | Asks for the text to work on. |
-| Plugin → Drive | `twake-scribe:content` | `content`, `target`, `canReplace` | The text in Markdown, what it is (`selection`, `document` without a selection, or `slide` in a presentation, see [Presentations](#presentations)), and whether an answer can take its place, see [What an answer can replace](#what-an-answer-can-replace). A presentation sends no `canReplace`: a selection of a slide can always be replaced. Drive opens with it the panel or the popover it asked the text for. |
-| Plugin → Drive | `twake-scribe:selection` | `content`, `target`, `canReplace` | Another text selected, once Drive has asked for one: not for a cursor that moves, nor for an answer just written. Drive gives it to the open assistant of the panel (new `data` of the intent), and closes the popover when the text is not the one it opened on. |
-| Drive → Plugin | `twake-scribe:close` | — | Neither the panel nor the popover stays open, nor is awaiting its text: the plugin stops reading the selection, until Drive asks for the text again. |
+| Plugin → Drive | `twake-scribe:content` | `content`, `target`, `canReplace` | The text in Markdown, what it is (`selection`, `document` without a selection, or `slide` in a presentation, see [Presentations](#presentations)), and whether an answer can take its place, see [What an answer can replace](#what-an-answer-can-replace). A presentation sends no `canReplace`: a selection of a slide can always be replaced. Drive opens the panel with it. |
+| Plugin → Drive | `twake-scribe:selection` | `content`, `target`, `canReplace` | Another text selected, once Drive has asked for one: not for a cursor that moves, nor for an answer just written. Drive gives it to the open assistant of the panel (new `data` of the intent). |
+| Drive → Plugin | `twake-scribe:close` | — | The panel is closed: the plugin stops reading the selection, and drops a text it is still reading, until Drive asks for the text again. |
 | Drive → Plugin | `twake-scribe:applyAnswer` | `answerAction`, `text`, `format` | A result of the Assistant intent, as it is, or the table of an `insert_table` call, written in Markdown by Drive. The plugin writes `text`, in Markdown, in the document. |
-| Plugin → Drive | `twake-scribe:applied` | `skippedCells` | The answer of an `applyAnswer` is handled, once Drive has asked for the text and until the panel and the popover are closed. `skippedCells` counts the selected cells the answer had no cell for (see [Tables](#tables)), 0 otherwise. Drive shows a count above 0 in the panel or the popover the answer came from. |
+| Plugin → Drive | `twake-scribe:applied` | `skippedCells` | The answer of an `applyAnswer` is handled, once Drive has asked for the text and until the panel is closed. `skippedCells` counts the selected cells the answer had no cell for (see [Tables](#tables)), 0 otherwise. Drive shows a count above 0 in the panel, unless it was closed since the answer. |
 | Drive → Plugin | `twake-scribe:insertSlide` | `title`, `bullets` | A slide the assistant has made, checked by Drive. The plugin adds it after the current slide. Presentations only. |
-| Plugin → Drive | `twake-scribe:geometry` | `selection`, `viewer`, `page` | Where the selection is, in pixels of the editor frame, sent from the start and each time it changes. Drive shows its button under the selection with it, see [The button under the selection](#the-button-under-the-selection), and places its popover, see [The popover](#the-popover). |
-| Plugin → Drive | `twake-scribe:open` | `source` | An entry of the editor's toolbar is clicked: `toolbar-inline` for "Scribe" or "Inline Scribe" with a text selected, `toolbar-panel` for "Scribe panel". Drive opens the popover for `toolbar-inline`, and the panel for `toolbar-panel`, or closes it when it is open, where its AI button is shown (see [When the button is shown](#when-the-button-is-shown)), and does nothing elsewhere. |
+| Plugin → Drive | `twake-scribe:geometry` | `selection`, `viewer`, `page` | Where the selection is, in pixels of the editor frame, sent from the start and each time it changes. Drive shows its button under the selection with it, see [The button under the selection](#the-button-under-the-selection). |
+| Plugin → Drive | `twake-scribe:open` | `source` | An entry of the editor's toolbar is clicked: `toolbar-panel` for "Scribe" and "Scribe panel". Drive opens the panel, or closes it when it is open, where its AI button is shown (see [When the button is shown](#when-the-button-is-shown)), and does nothing elsewhere. |
 
 `content` is the `content` of the Assistant intent, and the fields of `applyAnswer` are those of its result.
 
@@ -141,45 +139,25 @@ The plugin reads where the selection is drawn from the page of the editor, witho
 
 The answer the plugin has just written is left selected, and gets its button. Another selection made by code, and not by the user, may not start the plugin, as one the builder API makes from the page of the editor: it gets its button once the user changes it. The presentation editor has no `asc_GetSelectionBounds`: a presentation has no button under its selection.
 
-Drive adds the box of the editor frame, taken when a geometry comes and when the window is resized. It shows a sparkle button 4 px below and right of the end of the selection (`corners[3]`), over the editor, while the AI button is shown (see [When the button is shown](#when-the-button-is-shown)), the selection has text, the disc of the button is inside the viewer (a selection scrolled out of it has no button), and the popover is closed. A click opens the popover on the selection.
+Drive adds the box of the editor frame, taken when a geometry comes and when the window is resized. It shows a sparkle button 4 px below and right of the end of the selection (`corners[3]`), over the editor, while the AI button is shown (see [When the button is shown](#when-the-button-is-shown)), the selection has text, and the disc of the button is inside the viewer (a selection scrolled out of it has no button). A click opens the panel on the selection: Drive asks the plugin for the text, as the AI button does. With the panel open, the plugin already gives it each text selected; the click asks for the text again, and the open assistant gets it as new data, in the same intent.
 
-### The popover
-
-`openPopover` asks the plugin for the text, as the panel does; the content that comes back opens the popover instead of the panel. The popover needs the place of the selection, which the plugin gives in a text document only: without a selection in the last geometry, as in a presentation, the panel opens instead.
-
-- On a large screen, a `Popper` of cozy-ui anchored to the part of the selection rect inside the viewer, moved by the box of the editor frame. It goes 12 px under the selection, from its left edge (`bottom-start`), flips above it without room, and keeps 8 px from the edges of the window, with an arrow toward the selection. A veil dims the page under it, and lets the clicks through to the document; it fades in and out in 160 ms. The card is 380 px wide, and as high as the compact assistant says in its `resize` messages, which `cozy-interapp` sets on the element of the intent: at least 120 px, at most `min(500px, 70vh)`, scrolled beyond. The popover is placed again each time the card changes size.
-- On a small screen (`isMobile` of cozy-ui), a `Drawer` at the bottom, at most 85 % of the screen high, with a grip.
-
-The assistant is the same intent as in the panel, with `layout: 'compact'` and the `source` it was opened from (`selection` or `editor-toolbar`). A click in the editor does not reach Drive: the popover closes on what the plugin tells instead, a geometry whose selection is `null` (a cursor) or wholly out of the viewer (scrolled away), or a `twake-scribe:selection` with another text. It also closes on Escape while the focus is in the page of Drive (the assistant closes itself on Escape in its composer), on a click elsewhere in Drive, and when the assistant cancels. The button under the selection and the floating button are hidden while it is open. Asking for the popover while it is open does nothing: it already works on that selection, and its intent keeps its data.
-
-The "Scribe panel" row of the compact assistant sends `{ request: 'panel', draft, conversation }`. Drive closes the popover and opens the panel on a new intent, with that `draft` and `conversation` in its data and `source: 'popover'`; it never sends them to an open intent, which reads them at its opening only. The panel goes on with the text of the popover, without asking the plugin again: another text selected would have closed the popover. The draft and the conversation are forgotten once the panel closes.
-
-The panel and the popover can be open at once. `twake-scribe:close` is sent once neither is open, nor awaiting its text: the close would make the plugin drop the text it is reading. The plugin answers no request while the editor loads or saves, so Drive waits 3 s at most for that text, then sends the close.
-
-The compact assistant is a single card: the popover cannot be dragged nor resized.
+The scribe has no popover on the selection: two Assistant intents in one page reject the messages of each other, since `cozy-interapp` checks the intent id of every message of the origin of the assistant, and both would show "Invalid event id".
 
 ### The data of the intent
 
-Drive gives the Assistant intent, in the panel and in the popover:
+Drive gives the Assistant intent:
 
 - `content`, the text of the plugin, and `answerActions`, see [What an answer can replace](#what-an-answer-can-replace);
 - `rules`, only when the text holds markers: for each kind of marker it holds, a sentence that tells to keep them, which the assistant joins to the system message of each request, see [Markers](#markers);
 - `capabilities` and `suggestions`, see [Capabilities and suggestions](#capabilities-and-suggestions);
 - `theme`, the theme of Drive;
-- `layout`: `panel`, or `compact` in the popover;
-- `source`: where the scribe was opened from, `toolbar` (the AI button), `floating`, `selection`, `editor-toolbar`, `restored` (the panel open at the last visit) or `popover` (the panel the popover handed over to). The assistant does not act on it;
-- `draft` and `conversation`, only in the panel the popover hands over to.
-
-The assistant reads `layout`, `source`, `draft` and `conversation` at its opening only.
+- `source`: where the scribe was opened from, `toolbar` (the AI button), `floating`, `selection`, `editor-toolbar`, or `restored` (the panel open at the last visit). The assistant reads it at its opening only, and does not act on it.
 
 ### The entries of the editor's toolbar
 
-When Drive sends `twake-scribe:showToolbar`, the plugin adds its entries to the toolbar of the editor, once, with the `AddToolbarMenuItem` method of the plugin API (Document Server 8.1 or later): a "Scribe" button in the Plugins tab (`scribe`), and an "Assistant" tab (`scribeAssistantTab`) with "Inline Scribe" (`scribeInline`) and "Scribe panel" (`scribePanel`). The editor sends a click to a plugin only for an event it has asked for: the plugin listens to `onToolbarMenuClick` with `attachEditorEvent`.
+When Drive sends `twake-scribe:showToolbar`, the plugin adds its entries to the toolbar of the editor, once, with the `AddToolbarMenuItem` method of the plugin API (Document Server 8.1 or later): a "Scribe" button in the Plugins tab (`scribe`), and an "Assistant" tab (`scribeAssistantTab`) with "Scribe panel" (`scribePanel`). The editor sends a click to a plugin only for an event it has asked for: the plugin listens to `onToolbarMenuClick` with `attachEditorEvent`.
 
-- "Scribe" and "Inline Scribe" read the selected text with `GetSelectedText`, a method of the editor and not a command, when clicked. With a text selected, the plugin sends `twake-scribe:open` with `source: 'toolbar-inline'`; without one, nothing.
-- "Scribe panel" always sends `twake-scribe:open` with `source: 'toolbar-panel'`.
-
-Drive records the panel or the popover as opened from `editor-toolbar`. The editor shows the texts as they are given: the plugin labels the entries in French when the `lang` of the editor's address starts with `fr`, in English otherwise. The icons are the images of `resources/`, at their address next to the page of the plugin, in the version of the current theme of the editor (light or dark); `config.json` gives the icon of "Scribe" to the plugin in the list of background plugins of the editor. The entries are locked in view mode (`lockInViewMode`).
+Both send `twake-scribe:open` with `source: 'toolbar-panel'`, and Drive records the panel as opened from `editor-toolbar`. The editor shows the texts as they are given: the plugin labels the entries in French when the `lang` of the editor's address starts with `fr`, in English otherwise. The icons are the images of `resources/`, at their address next to the page of the plugin, in the version of the current theme of the editor (light or dark); `config.json` gives the icon of "Scribe" to the plugin in the list of background plugins of the editor. The entries are locked in view mode (`lockInViewMode`).
 
 The plugin cannot know whether the app that shows the editor offers the scribe: it adds no entry until it is asked. On a public link, in a read-only document, without the flag `cozy.assistant.enabled`, or in another app that shows the same Document Server, nothing sends `twake-scribe:showToolbar`, and the editor has no entry of the scribe. Drive also ignores `twake-scribe:open` there.
 
@@ -264,7 +242,7 @@ A table of the answer written under the table of the selection, or in place of a
 - A table with merged cells, with a table in a cell or with rows of different lengths is neither cut down nor given another shape. A table of the shape of the selected cells, to insert after such a table, is a copy of the whole table, with those cells rewritten and left selected. Any other table of the answer gives a new table, as for a text.
 - A table of the answer with merged cells, for a table without, gives a new table too.
 
-When an answer with a table replaces a selection across the edge of a table, `twake-scribe:applied` carries the count of the selected cells the answer had no cell for. It is 0 for any other answer. Above the assistant of the panel or the popover the answer came from, Drive then shows "Table: N selected cells were left unchanged", until the user closes it, the next answer is written, that panel or popover closes, or the popover hands over to the panel.
+When an answer with a table replaces a selection across the edge of a table, `twake-scribe:applied` carries the count of the selected cells the answer had no cell for. It is 0 for any other answer. Above the assistant of the panel, Drive then shows "Table: N selected cells were left unchanged", until the user closes it, the next answer is written, or the panel closes.
 
 ### Presentations
 
@@ -331,7 +309,7 @@ Drive then writes the table in Markdown (`makeTableMarkdown`), the caption as th
 ### Both editors
 
 - Text documents and presentations only: the plugin does not load in spreadsheets and PDF forms.
-- While the panel or the popover is open, the plugin reads every other text the user selects with `callCommand`, and a command of a plugin empties the redo of the editor. It reads a selection only when its text changes, and not for 3 s after an undo or a redo (Ctrl+Z, Ctrl+Y, Ctrl+Shift+Z, or the buttons of the toolbar), so a redo right after an undo works. Another text selected later is read, and the redo is lost. Once both are closed, nothing is read.
+- While the panel is open, the plugin reads every other text the user selects with `callCommand`, and a command of a plugin empties the redo of the editor. It reads a selection only when its text changes, and not for 3 s after an undo or a redo (Ctrl+Z, Ctrl+Y, Ctrl+Shift+Z, or the buttons of the toolbar), so a redo right after an undo works. Another text selected later is read, and the redo is lost. Once it is closed, nothing is read.
 
 ### Text documents
 
