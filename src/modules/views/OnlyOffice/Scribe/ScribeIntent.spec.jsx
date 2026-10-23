@@ -28,7 +28,6 @@ const setup = (props, scribe = {}) => {
     content: 'Un **texte**',
     target: 'selection',
     documentType: 'word',
-    documentData: null,
     ...scribe
   })
 
@@ -71,14 +70,6 @@ describe('ScribeIntent', () => {
     expect(onCancel).not.toHaveBeenCalled()
   })
 
-  it('lets the assistant ask for the document of a text document only', () => {
-    setup()
-    expect(getIntentProps().data.documentAvailable).toBe(true)
-
-    setup({}, { documentType: 'slide', target: 'slide' })
-    expect(getIntentProps().data.documentAvailable).toBe(false)
-  })
-
   it('tells the assistant the rules of the markers of the text', () => {
     setup()
     expect(getIntentProps().data).not.toHaveProperty('rules')
@@ -87,37 +78,5 @@ describe('ScribeIntent', () => {
     expect(getIntentProps().data.rules).toBe(
       'Keep the <u> and </u> tags around the underlined text, and do not add any.'
     )
-
-    setup(
-      {},
-      {
-        documentData: {
-          document: 'Titre ![image 1]',
-          documentTruncated: false
-        }
-      }
-    )
-    expect(getIntentProps().data).not.toHaveProperty('rules')
-  })
-
-  it('gives the assistant the document it asked for', () => {
-    setup()
-    expect(getIntentProps().data).not.toHaveProperty('document')
-    expect(getIntentProps().data).not.toHaveProperty('documentTruncated')
-
-    setup(
-      {},
-      {
-        documentData: {
-          document: 'Titre\n\nUn **texte**',
-          documentTruncated: true
-        }
-      }
-    )
-    expect(getIntentProps().data).toMatchObject({
-      content: 'Un **texte**',
-      document: 'Titre\n\nUn **texte**',
-      documentTruncated: true
-    })
   })
 })

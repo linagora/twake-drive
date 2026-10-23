@@ -17,20 +17,18 @@
  * `![image K]`, and a picture of the whole document `[image]`; `imageCount`
  * counts the drawings numbered.
  *
- * @param {boolean} [isCursorKept] - the cursor is in the text of a shape,
- * where the editor converts no selection: it is left there
  * @returns {{ content: string, target: 'selection' | 'document',
  * canReplace: boolean, notes: string[], refs: object[],
  * imageCount: number }} the text, in Markdown, whether an answer can take its
  * place, and what its markers stand for
  */
-export function readContent(isCursorKept = false) {
+export function readContent() {
   const doc = Api.GetDocument()
   const selection = doc.GetRangeBySelect()
   const hasSelection =
     Boolean(selection) && selection.GetText({ Numbering: false }).trim() !== ''
   // The editor converts the selection when there is one, even an empty one
-  if (!hasSelection && !isCursorKept) doc.RemoveSelection()
+  if (!hasSelection) doc.RemoveSelection()
   // The editor gives no paragraphs for a selection it does not let change,
   // as one that holds a locked content control: it is not replaced
   const selected = hasSelection ? selection.GetAllParagraphs() : []
@@ -669,37 +667,6 @@ export function readContent(isCursorKept = false) {
     notes,
     refs,
     imageCount: numbered.length
-  }
-}
-
-/**
- * Reads the whole document as `readContent` reads it without a selection:
- * its Markdown, a picture as `[image]`, and no marker. The editor gives the
- * Markdown of the selection when there is one: the selection is put away,
- * then selected again, at the positions it had in the document.
- *
- * @param {Function} readWhole - `readContent`, which the command gives:
- * nothing defined outside of this function can be called from it
- * @returns {string} the text, in Markdown
- */
-export function readDocument(readWhole) {
-  const doc = Api.GetDocument()
-  const selection = doc.GetRangeBySelect()
-  const isSelected =
-    Boolean(selection) && selection.GetStartPos() < selection.GetEndPos()
-  // An image selected by a click has no range of text: it is selected again
-  // by itself
-  const drawings = selection ? [] : doc.GetSelectedDrawings()
-  // A cursor in the text of a shape has a range that is not the cursor:
-  // nothing is removed, the editor converts no selection for it
-  const isInShape =
-    Boolean(selection) && !isSelected && doc.GetSelectedDrawings().length > 0
-  if (isSelected) doc.RemoveSelection()
-  try {
-    return readWhole(isInShape).content
-  } finally {
-    if (isSelected) selection.Select()
-    drawings.forEach(drawing => drawing.Select())
   }
 }
 

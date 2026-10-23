@@ -8,8 +8,6 @@ import React, {
   useState
 } from 'react'
 
-import flag from 'cozy-flags'
-
 import logger from '@/lib/logger'
 import { useOnlyOfficeContext } from '@/modules/views/OnlyOffice/OnlyOfficeProvider'
 import { isScribeAllowed } from '@/modules/views/OnlyOffice/Scribe/availability'
@@ -20,7 +18,6 @@ import {
   normalizeSlide,
   normalizeTable
 } from '@/modules/views/OnlyOffice/Scribe/capabilities'
-import { cutDocument } from '@/modules/views/OnlyOffice/Scribe/documentBudget'
 import {
   readPanelOpen,
   writePanelOpen
@@ -44,10 +41,7 @@ const EDITOR_FOCUS_DELAY = 100
 // The plugin answers in a few hundred milliseconds, and not at all while the
 // editor loads or saves
 const CONTENT_WAIT = 3000
-// The assistant waits as long for the whole document, then goes on without
-const DOCUMENT_WAIT = 8000
 const NO_SURFACE = { panel: false, popover: false }
-const NO_DOCUMENT = { document: null, documentTruncated: false }
 
 const clearTimer = timer => {
   clearTimeout(timer.current)
@@ -71,15 +65,6 @@ const findFrameBox = () =>
 const makeGeometry = ({ selection, viewer }) => {
   const frame = findFrameBox()
   return frame === null ? null : { selection, viewer, frame }
-}
-
-const makeDocumentData = content => {
-  if (typeof content !== 'string') return NO_DOCUMENT
-  const { document, isTruncated } = cutDocument(
-    content,
-    flag('drive.scribe.contextBudget')
-  )
-  return { document, documentTruncated: isTruncated }
 }
 
 // The plugin has no message for a table: it goes in as a Markdown answer,
@@ -122,7 +107,6 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
   const [source, setSource] = useState(null)
   const [popoverSource, setPopoverSource] = useState(null)
   const [handOver, setHandOver] = useState(null)
-  const [documentData, setDocumentData] = useState(null)
   // { surface, count }: the cells of the selection the last answer of the
   // surface had no cell for
   const [skippedCells, setSkippedCells] = useState(null)
@@ -137,9 +121,6 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
   // The surfaces whose text is asked for: the answer of the plugin opens them
   const pendingSurfaces = useRef(new Set())
   const closeTimer = useRef(null)
-  // Set while the whole document is awaited: an answer after the wait is
-  // dropped
-  const documentTimer = useRef(null)
   // The plugin tells what it wrote without telling for which surface
   const writingSurface = useRef(null)
   // Where Drive shows no button for the scribe, the editor shows no entry
@@ -171,8 +152,6 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
       setSkippedCells(current => (current?.surface === name ? null : current))
       if (name === 'panel') setHandOver(null)
       if (surfacesRef.current.panel || surfacesRef.current.popover) return
-      clearTimer(documentTimer)
-      setDocumentData(null)
       if (pendingSurfaces.current.size === 0) {
         stopReading()
         return
@@ -191,8 +170,7 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
   )
 
   useEffect(() => {
-    const timers = [closeTimer, documentTimer]
-    return () => timers.forEach(clearTimer)
+    return () => clearTimer(closeTimer)
   }, [])
 
   useEffect(() => {
@@ -229,10 +207,6 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
       if (type === 'twake-scribe:geometry') {
         geometryRef.current = makeGeometry(event.data)
         setGeometry(geometryRef.current)
-      }
-      if (type === 'twake-scribe:document' && documentTimer.current !== null) {
-        clearTimer(documentTimer)
-        setDocumentData(makeDocumentData(content))
       }
       if (type === 'twake-scribe:applied') {
         const count = event.data.skippedCells
@@ -277,23 +251,6 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
     },
     [serverOrigin]
   )
-
-  // A request while one is awaited waits for the same answer, which goes to
-  // the panel and the popover alike
-  const requestDocument = useCallback(() => {
-    if (documentTimer.current !== null) return
-    // The data lose the previous document: the same one given again is new
-    // data for the assistant
-    setDocumentData(null)
-    documentTimer.current = setTimeout(() => {
-      documentTimer.current = null
-      setDocumentData(NO_DOCUMENT)
-    }, DOCUMENT_WAIT)
-    pluginWindow.current?.postMessage(
-      { type: 'twake-scribe:getDocument' },
-      serverOrigin
-    )
-  }, [serverOrigin])
 
   // The panel opens once the plugin answers with twake-scribe:content
   const open = useCallback(
@@ -367,10 +324,6 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
         handOverToPanel(result)
         return
       }
-      if (result?.request === 'document') {
-        requestDocument()
-        return
-      }
       // A newer assistant may send results this version does not know
       const isAnswer =
         typeof result?.answerAction === 'string' &&
@@ -394,7 +347,7 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
       setSkippedCells(null)
       pluginWindow.current?.postMessage(message, serverOrigin)
     },
-    [serverOrigin, documentType, handOverToPanel, requestDocument]
+    [serverOrigin, documentType, handOverToPanel]
   )
 
   const dismissSkippedCells = useCallback(() => setSkippedCells(null), [])
@@ -443,7 +396,6 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
       draft: handOver?.draft ?? null,
       conversation: handOver?.conversation ?? null,
       handOverId: handOver?.id ?? null,
-      documentData,
       skippedCells,
       open,
       close,
@@ -461,7 +413,6 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
       source,
       popoverSource,
       handOver,
-      documentData,
       skippedCells,
       open,
       close,
