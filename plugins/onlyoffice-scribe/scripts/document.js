@@ -1300,6 +1300,17 @@ export function writeBlocks() {
     selection.SetStartPos(next.GetRange().GetStartPos())
   }
 
+  // A selection to the start of a line of text, as Shift+Down makes it,
+  // holds nothing of it: the answer goes under the paragraph above
+  const skipStartOfLine = () => {
+    const last = paragraphs[paragraphs.length - 1]
+    const previous = paragraphs[paragraphs.length - 2]
+    if (!previous || getText(last).trim() === '') return
+    if (selection.GetEndPos() > last.GetRange().GetStartPos()) return
+    paragraphs.pop()
+    selection.SetEndPos(previous.GetRange().GetEndPos())
+  }
+
   // Moves an end of a range over what the answer does not replace
   const shrinkRange = (range, isStart, isOut) => {
     let start = range.GetStartPos()
@@ -1641,6 +1652,7 @@ export function writeBlocks() {
   // of its own.
   const replaceText = () => {
     skipEndOfLine()
+    skipStartOfLine()
     const around = getAround()
     const isWhole = around.before === '' && around.after === ''
     const isPartOfParagraph = !isWhole && paragraphs.length === 1
@@ -1859,6 +1871,9 @@ export function writeBlocks() {
       return true
     }
     if (isReplacingText(selectedCells)) return replaceText()
+    if (!paragraphs.some(paragraph => paragraph.GetParentTableCell())) {
+      skipStartOfLine()
+    }
     const cursor = isReplace ? null : findCursor()
     if (cursor) return insertAtCursor(cursor)
     if (selectedCells) return writeForCells(selectedCells)
