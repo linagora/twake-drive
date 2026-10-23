@@ -450,8 +450,7 @@ function findHostOrigin() {
 }
 
 // The selection is read when clicked: lastSelectedTextLive follows it only
-// where the editor gives its geometry, not in a presentation. The panel
-// entry does not wait for it.
+// where the editor gives its geometry, not in a presentation
 async function handleToolbarClick(id) {
   const selectedText = isInlineEntry(id) ? await fetchSelectedText() : null
   const message = makeOpenMessage(id, selectedText)

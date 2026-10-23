@@ -17,18 +17,20 @@
  * `![image K]`, and a picture of the whole document `[image]`; `imageCount`
  * counts the drawings numbered.
  *
+ * @param {boolean} [isCursorKept] - the cursor is in the text of a shape,
+ * where the editor converts no selection: it is left there
  * @returns {{ content: string, target: 'selection' | 'document',
  * canReplace: boolean, notes: string[], refs: object[],
  * imageCount: number }} the text, in Markdown, whether an answer can take its
  * place, and what its markers stand for
  */
-export function readContent() {
+export function readContent(isCursorKept = false) {
   const doc = Api.GetDocument()
   const selection = doc.GetRangeBySelect()
   const hasSelection =
     Boolean(selection) && selection.GetText({ Numbering: false }).trim() !== ''
   // The editor converts the selection when there is one, even an empty one
-  if (!hasSelection) doc.RemoveSelection()
+  if (!hasSelection && !isCursorKept) doc.RemoveSelection()
   // The editor gives no paragraphs for a selection it does not let change,
   // as one that holds a locked content control: it is not replaced
   const selected = hasSelection ? selection.GetAllParagraphs() : []
@@ -683,16 +685,24 @@ export function readContent() {
 export function readDocument(readWhole) {
   const doc = Api.GetDocument()
   const selection = doc.GetRangeBySelect()
-  // A cursor is no selection, and stays where it is. An image selected by a
-  // click has no range of text: it is selected again by itself.
   const isSelected =
     Boolean(selection) && selection.GetStartPos() < selection.GetEndPos()
-  const drawings = isSelected ? [] : doc.GetSelectedDrawings()
+  // An image selected by a click has no range of text: it is selected again
+  // by itself
+  const drawings = selection ? [] : doc.GetSelectedDrawings()
+  // A cursor is no selection, and stays where it is. Removing the selection
+  // would take a cursor out of the text of a shape, whose shape is selected,
+  // and the range the editor gives there is not the cursor: nothing is
+  // removed, the editor converts no selection for it.
+  const isInShape =
+    Boolean(selection) && !isSelected && doc.GetSelectedDrawings().length > 0
   if (isSelected) doc.RemoveSelection()
-  const { content } = readWhole()
-  if (isSelected) selection.Select()
-  drawings.forEach(drawing => drawing.Select())
-  return content
+  try {
+    return readWhole(isInShape).content
+  } finally {
+    if (isSelected) selection.Select()
+    drawings.forEach(drawing => drawing.Select())
+  }
 }
 
 /**
