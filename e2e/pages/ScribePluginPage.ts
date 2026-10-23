@@ -678,6 +678,27 @@ export class ScribePluginPage {
     return found as unknown as ScribeContent
   }
 
+  /** The whole document the plugin gives Drive for the assistant */
+  async getDocument(): Promise<string | null> {
+    await this.takeMessages()
+    await this.send({ type: 'twake-scribe:getDocument' })
+    let found: { content: string | null } | null = null
+    await expect
+      .poll(
+        async () => {
+          const messages = await this.takeMessages()
+          const message = messages.find(
+            ({ type }) => type === 'twake-scribe:document'
+          )
+          if (message) found = message as unknown as { content: string | null }
+          return found !== null
+        },
+        { timeout: 15_000 }
+      )
+      .toBe(true)
+    return (found as unknown as { content: string | null }).content
+  }
+
   /**
    * Writes an answer, and waits for the plugin to tell it is written: its
    * `twake-scribe:applied` message, null from a plugin that does not send it

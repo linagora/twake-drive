@@ -14,19 +14,22 @@ Drive (OnlyOffice view)
   ├─ button under the selection ── opens ──▶ popover on the selection (drawer on a small screen)
   │                                          └─ Assistant intent (iframe of Twake Assistant), in either
   │                                               content, answerActions, capabilities, suggestions,
-  │                                               theme, layout, source, draft, conversation ◀── Drive
+  │                                               theme, layout, source, draft, conversation,
+  │                                               documentAvailable, document, documentTruncated ◀── Drive
   │                                               result { answerAction, text } ──▶ Drive
   │                                               result { capability, params } ──▶ Drive
   │                                               result { request: 'panel', draft, conversation } ──▶ Drive
+  │                                               result { request: 'document' } ──▶ Drive
   └─ editor (iframe of the Document Server)
        ├─ entries of its toolbar ── open or close ──▶ side panel or popover, through the plugin
        └─ scribe plugin (iframe, in the background)
-            twake-scribe:getContent, twake-scribe:close,
-            twake-scribe:applyAnswer, twake-scribe:insertSlide,
-            twake-scribe:showToolbar ◀── Drive
+            twake-scribe:getContent, twake-scribe:getDocument,
+            twake-scribe:close, twake-scribe:applyAnswer,
+            twake-scribe:insertSlide, twake-scribe:showToolbar ◀── Drive
             twake-scribe:ready, twake-scribe:content,
-            twake-scribe:selection, twake-scribe:applied,
-            twake-scribe:geometry, twake-scribe:open ──▶ Drive
+            twake-scribe:document, twake-scribe:selection,
+            twake-scribe:applied, twake-scribe:geometry,
+            twake-scribe:open ──▶ Drive
 ```
 
 ## For the user
@@ -43,6 +46,7 @@ Drive (OnlyOffice view)
 - Without a selection, the assistant works on the whole document, and each answer can be inserted at the cursor. Nothing replaces a whole document.
 - The text written in the document is left selected: the next answer of the conversation can replace it.
 - Another text selected while the panel is open is the one the next request is about: the conversation goes on, and the prompts are offered again. A click that only moves the cursor changes nothing.
+- In a text document, the "Document" box of the assistant sends the whole document with a typed request, besides the selected text: the selection stays as it was. See [The whole document](#the-whole-document).
 
 - Above the composer, the assistant offers its prompts, then a chip of the editor: "Make a table" in a text document, "New slide" in a presentation.
 
@@ -65,10 +69,10 @@ The plugin only loads in the editors of text documents and presentations, in edi
 ## Requirements
 
 - The flag `cozy.assistant.enabled` on. Without it the AI button is not shown, and Drive is unchanged.
-- The Twake Assistant app ([linagora/twake-assistant](https://github.com/linagora/twake-assistant), slug `assistant`) installed on the instance. It serves the Assistant intent in scribe mode, and reads the `capabilities` and `suggestions` of its data. The button does not check that the app is installed. For the popover, an assistant that reads `layout`, `draft` and `conversation`: an older one shows its panel layout in the popover, without the "Scribe panel" row.
+- The Twake Assistant app ([linagora/twake-assistant](https://github.com/linagora/twake-assistant), slug `assistant`) installed on the instance. It serves the Assistant intent in scribe mode, and reads the `capabilities` and `suggestions` of its data. The button does not check that the app is installed. For the popover, an assistant that reads `layout`, `draft` and `conversation`: an older one shows its panel layout in the popover, without the "Scribe panel" row. For the whole document, an assistant that reads `documentAvailable`: an older one has no "Document" box.
 - A cozy-stack that knows the `documents` and `instructions` options of the chat.
 - A `cozy-interapp` and a `cozy-ui-plus` that have the `result` message of intents (`onResult` prop of `IntentIframe`). With older ones the assistant opens, but the clicks on its action buttons do not reach Drive.
-- For another text while the panel is open, a `cozy-interapp` with the `data` message on both sides, and a `cozy-ui-plus` whose `IntentIframe` sends new `data`. With older ones the assistant keeps the first text.
+- For another text while the panel is open, and for the whole document, a `cozy-interapp` with the `data` message on both sides, and a `cozy-ui-plus` whose `IntentIframe` sends new `data`. With older ones the assistant keeps the first text, and a request that includes the document waits 8 s and goes without it.
 - An OnlyOffice Document Server 9.0 or later, with the scribe plugin. It was tested with 9.4.
 
 ## The scribe plugin
@@ -81,7 +85,7 @@ The plugin is a background plugin of the document editor: it has no interface of
 | `index.html` | Page of the plugin, loads the scripts as modules |
 | `scripts/scribe.js` | Messages with Drive; sends the functions below to the editor |
 | `scripts/markdown.js` | Turns the Markdown of an answer into blocks (paragraphs, headings, quotes, list items, blocks of code, tables and images) with its markers, and into lines for a presentation |
-| `scripts/document.js` | Functions run inside the text editor: read the text with its markers, write the blocks and the copies of the images |
+| `scripts/document.js` | Functions run inside the text editor: read the text with its markers, or the whole document, write the blocks and the copies of the images |
 | `scripts/markers.js` | Function run inside the text editor, in the command that writes an answer, once it is written: write the notes and the links of its markers |
 | `scripts/geometry.js` | Reads where the selection is drawn, from the page of the editor and without a command, see [The button under the selection](#the-button-under-the-selection) |
 | `scripts/toolbar.js` | The entries of the scribe in the toolbar of the editor, and their labels, see [The entries of the editor's toolbar](#the-entries-of-the-editors-toolbar) |
@@ -119,6 +123,8 @@ Drive and the plugin talk with `postMessage`. Drive only listens to the origin o
 | Drive → Plugin | `twake-scribe:showToolbar` | — | Sent once the plugin is ready, where Drive shows its AI button (see [When the button is shown](#when-the-button-is-shown)). The plugin adds its entries to the toolbar of the editor, once. Without it, the editor shows none, see [The entries of the editor's toolbar](#the-entries-of-the-editors-toolbar). |
 | Drive → Plugin | `twake-scribe:getContent` | — | Asks for the text to work on. |
 | Plugin → Drive | `twake-scribe:content` | `content`, `target`, `canReplace` | The text in Markdown, what it is (`selection`, `document` without a selection, or `slide` in a presentation, see [Presentations](#presentations)), and whether an answer can take its place, see [What an answer can replace](#what-an-answer-can-replace). A presentation sends no `canReplace`: a selection of a slide can always be replaced. Drive opens with it the panel or the popover it asked the text for. |
+| Drive → Plugin | `twake-scribe:getDocument` | — | Asks for the whole document, for a request of the assistant that includes it, see [The whole document](#the-whole-document). |
+| Plugin → Drive | `twake-scribe:document` | `content` | The whole document in Markdown, as the `document` target of `twake-scribe:content`, with the selection left as it was; `null` in a presentation, and when the editor runs no command, as while it saves. |
 | Plugin → Drive | `twake-scribe:selection` | `content`, `target`, `canReplace` | Another text selected, once Drive has asked for one: not for a cursor that moves, nor for an answer just written. Drive gives it to the open assistant of the panel (new `data` of the intent), and closes the popover when the text is not the one it opened on. |
 | Drive → Plugin | `twake-scribe:close` | — | Neither the panel nor the popover stays open, nor is awaiting its text: the plugin stops reading the selection, until Drive asks for the text again. |
 | Drive → Plugin | `twake-scribe:applyAnswer` | `answerAction`, `text`, `format` | A result of the Assistant intent, as it is, or the table of an `insert_table` call, written in Markdown by Drive. The plugin writes `text`, in Markdown, in the document. |
@@ -165,9 +171,20 @@ Drive gives the Assistant intent, in the panel and in the popover:
 - `theme`, the theme of Drive;
 - `layout`: `panel`, or `compact` in the popover;
 - `source`: where the scribe was opened from, `toolbar` (the AI button), `floating`, `selection`, `editor-toolbar`, `restored` (the panel open at the last visit) or `popover` (the panel the popover handed over to). The assistant does not act on it;
-- `draft` and `conversation`, only in the panel the popover hands over to.
+- `draft` and `conversation`, only in the panel the popover hands over to;
+- `documentAvailable`: `true` in a text document, whose whole document the plugin reads, `false` in a presentation. The assistant shows its "Document" box only then;
+- `document` and `documentTruncated`, once the assistant has asked for the whole document, see [The whole document](#the-whole-document).
 
 The assistant reads `layout`, `source`, `draft` and `conversation` at its opening only.
+
+### The whole document
+
+With its "Document" box checked, the assistant sends `{ request: 'document' }` before a typed request, and waits 8 s at most for new data that hold a `document`. Drive asks the plugin with `twake-scribe:getDocument`:
+
+- The plugin reads the whole document as it reads it without a selection: the same Markdown, a picture as `[image]`, without markers. The editor gives the Markdown of the selection when there is one: in the same command, the plugin puts the selection away, reads, and selects again the range it had, cells of a table included, or the images selected by a click. A cursor alone stays where it is.
+- Drive gives the open assistant new data, with `document` and `documentTruncated`. With the flag `drive.scribe.contextBudget`, a number of characters, the document is cut at the last paragraph break (`\n\n`) within that budget, or at the budget when the first paragraph is longer, and `documentTruncated` is `true`. Unset or not above 0, the document is given whole.
+- When the plugin gives `null`, or nothing within 8 s, as while the editor saves, Drive gives `document: null`, and the assistant sends the request without it. An answer that comes later is dropped.
+- The data lose the previous document when the assistant asks again, so that the same document is new data, and once neither the panel nor the popover is open. A request while another one waits gets the same answer: the panel and the popover share the data of the document.
 
 ### The entries of the editor's toolbar
 
@@ -327,10 +344,11 @@ Drive then writes the table in Markdown (`makeTableMarkdown`), the caption as th
 ### Both editors
 
 - Text documents and presentations only: the plugin does not load in spreadsheets and PDF forms.
-- While the panel or the popover is open, the plugin reads every other text the user selects with `callCommand`, and a command of a plugin empties the redo of the editor. It reads a selection only when its text changes, and not for 3 s after an undo or a redo (Ctrl+Z, Ctrl+Y, Ctrl+Shift+Z, or the buttons of the toolbar), so a redo right after an undo works. Another text selected later is read, and the redo is lost. Once both are closed, nothing is read.
+- While the panel or the popover is open, the plugin reads every other text the user selects with `callCommand`, and a command of a plugin empties the redo of the editor. It reads a selection only when its text changes, and not for 3 s after an undo or a redo (Ctrl+Z, Ctrl+Y, Ctrl+Shift+Z, or the buttons of the toolbar), so a redo right after an undo works. Another text selected later is read, and the redo is lost. Once both are closed, nothing is read. A request that includes the whole document empties the redo too.
 
 ### Text documents
 
+- A selection made backwards, as with Shift and the left arrow, is selected again forwards after a read of the whole document: Shift and an arrow then move its other end.
 - A paragraph that replaces several ones has the default paragraph style of the document: the alignment or the spacing set by hand on the replaced paragraphs are not kept. A text replaced in its line keeps them.
 - A table the assistant makes through `insert_table` has a header row and plain rows: no merged cells, unlike a table written in an answer. The capability tells the LLM to change a table of the selection in an answer instead, which takes its place.
 

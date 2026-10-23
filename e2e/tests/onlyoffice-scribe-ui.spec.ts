@@ -309,6 +309,34 @@ test.describe('the scribe of Drive', { tag: '@e2e-scribe' }, () => {
     expect(await scribe.intentId(scribe.panel())).not.toBe(popoverIntentId)
   })
 
+  test('the assistant gets the whole document it asks for', async ({
+    alicePage
+  }) => {
+    const fileId = await uploadScribeDocument(
+      USERS.alice.instance,
+      'a-family.docx'
+    )
+    const scribe = new ScribePage(alicePage)
+    await scribe.openDocument(USERS.alice.appUrl, fileId)
+    await scribe.watchIntentData()
+
+    await scribe.selectInEditor('P1@start..P1@end')
+    await scribe.openPanel()
+    await expect(scribe.panel()).toBeVisible()
+    await scribe.postIntentResult(scribe.panel(), { request: 'document' })
+
+    await expect
+      .poll(() => scribe.receivedIntentData(scribe.panel()), {
+        timeout: 15_000
+      })
+      .toMatchObject({
+        documentAvailable: true,
+        document:
+          'The quick brown fox\n\nJumps over the dog\n\nLazy river flows\n\n',
+        documentTruncated: false
+      })
+  })
+
   test('the popover is a drawer on a narrow screen', async ({ alicePage }) => {
     const fileId = await uploadScribeDocument(
       USERS.alice.instance,

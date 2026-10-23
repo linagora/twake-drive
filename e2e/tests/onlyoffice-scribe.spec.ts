@@ -175,3 +175,44 @@ for (const suite of suites) {
     }
   )
 }
+
+test(
+  'the scribe plugin gives the whole document on request',
+  { tag: '@e2e-scribe' },
+  async ({ alicePage }) => {
+    const fileId = await createFile({
+      instance: USERS.alice.instance,
+      name: `Scribe ${stamp()} a-family.docx`,
+      content: readFileSync(path.join(FIXTURE_DIR, 'a-family.docx')),
+      contentType: DOCX
+    })
+    fileIds.push(fileId)
+    const scribe = new ScribePluginPage(alicePage)
+    await scribe.open(USERS.alice.appUrl, fileId)
+    // Without a selection, the text the plugin gives is the whole document
+    await scribe.select('P1@start')
+    const whole = await scribe.getContent()
+    expect(whole.target).toBe('document')
+
+    await scribe.select('P1@start..P1@end')
+    const selected = await scribe.read()
+    expect(selected.selText).toContain('The quick brown fox')
+
+    expect(await scribe.getDocument()).toBe(whole.content)
+    const { selText, selMarkup } = await scribe.read()
+    expect({ selText, selMarkup }).toEqual({
+      selText: selected.selText,
+      selMarkup: selected.selMarkup
+    })
+
+    // A cursor stays where it is: a key typed then goes there
+    await scribe.select('P2@mid')
+    expect(await scribe.getDocument()).toBe(whole.content)
+    await scribe.press(['X'])
+    const { blocks } = await scribe.read()
+    expect(blocks[1]).toEqual({
+      type: 'p',
+      runs: [{ t: 'Jumps oveXr the dog' }]
+    })
+  }
+)

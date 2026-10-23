@@ -45,6 +45,7 @@ const ScribeState = ({ results = [] }) => {
     popoverSource,
     draft,
     conversation,
+    documentData,
     open,
     close,
     openPopover,
@@ -64,6 +65,7 @@ const ScribeState = ({ results = [] }) => {
       <output data-testid="hand-over">
         {JSON.stringify({ draft, conversation })}
       </output>
+      <output data-testid="document">{JSON.stringify(documentData)}</output>
       <output data-testid="geometry">{JSON.stringify(geometry)}</output>
       <output data-testid="source">{JSON.stringify(source)}</output>
       <button onClick={() => open({ source: 'selection' })}>open</button>
@@ -98,11 +100,13 @@ const setup = ({
   isPublic = false,
   isReadOnly = false,
   isAssistantEnabled = true,
+  contextBudget = null,
   extra = null
 } = {}) => {
-  flag.mockImplementation(
-    name => name === 'cozy.assistant.enabled' && isAssistantEnabled
-  )
+  flag.mockImplementation(name => {
+    if (name === 'drive.scribe.contextBudget') return contextBudget
+    return name === 'cozy.assistant.enabled' && isAssistantEnabled
+  })
   const plugin = { postMessage: jest.fn() }
   const receive = (data, { origin = SERVER_ORIGIN, source = plugin } = {}) => {
     act(() => {
@@ -129,6 +133,8 @@ const setup = ({
   const getGeometry = () =>
     JSON.parse(screen.getByTestId('geometry').textContent)
   const getSource = () => JSON.parse(screen.getByTestId('source').textContent)
+  const getDocumentData = () =>
+    JSON.parse(screen.getByTestId('document').textContent)
   // Every ready plugin is told to show its entries in the editor's toolbar
   const getSent = () =>
     plugin.postMessage.mock.calls.filter(
@@ -143,6 +149,7 @@ const setup = ({
     getHandOver,
     getGeometry,
     getSource,
+    getDocumentData,
     getSent
   }
 }
@@ -611,7 +618,11 @@ describe('ScribeProvider', () => {
     receive({ type: 'twake-scribe:ready' })
 
     fireEvent.click(screen.getByText('open popover'))
-    receive({ type: 'twake-scribe:content', content: 'Diapo', target: 'slide' })
+    receive({
+      type: 'twake-scribe:content',
+      content: 'Diapo',
+      target: 'slide'
+    })
 
     expect(getPopover().isPopoverOpen).toBe(false)
     expect(getState().isOpen).toBe(true)
@@ -962,5 +973,107 @@ describe('ScribeProvider', () => {
 
     expect(getSent()).toEqual([])
     expect(logger.warn).toHaveBeenCalledTimes(1)
+  })
+
+  describe('the document asked for by the assistant', () => {
+    const DOCUMENT_REQUEST = { request: 'document' }
+    const WHOLE_DOCUMENT = 'Titre\n\nUn **texte**'
+
+    const setupOpen = options => {
+      const scribe = setup({ results: [DOCUMENT_REQUEST], ...options })
+      scribe.receive({ type: 'twake-scribe:ready' })
+      fireEvent.click(screen.getByText('open'))
+      scribe.receive({ type: 'twake-scribe:content', ...SELECTED_TEXT })
+      scribe.plugin.postMessage.mockClear()
+      return scribe
+    }
+
+    it('asks the plugin for the document and gives it to the assistant', () => {
+      const { receive, getSent, getDocumentData } = setupOpen()
+
+      fireEvent.click(screen.getByText('result 0'))
+
+      expect(getSent()).toEqual([
+        [{ type: 'twake-scribe:getDocument' }, SERVER_ORIGIN]
+      ])
+      expect(getDocumentData()).toBe(null)
+
+      // Another plugin of the Document Server has its origin too
+      receive(
+        { type: 'twake-scribe:document', content: 'Autre' },
+        { source: { postMessage: jest.fn() } }
+      )
+      expect(getDocumentData()).toBe(null)
+
+      receive({ type: 'twake-scribe:document', content: WHOLE_DOCUMENT })
+      expect(getDocumentData()).toEqual({
+        document: WHOLE_DOCUMENT,
+        documentTruncated: false
+      })
+    })
+
+    it('cuts the document to the budget of its flag', () => {
+      const { receive, getDocumentData } = setupOpen({ contextBudget: 7 })
+
+      fireEvent.click(screen.getByText('result 0'))
+      receive({ type: 'twake-scribe:document', content: WHOLE_DOCUMENT })
+
+      expect(getDocumentData()).toEqual({
+        document: 'Titre',
+        documentTruncated: true
+      })
+    })
+
+    it('answers null when the plugin cannot read the document', () => {
+      const { receive, getDocumentData } = setupOpen()
+
+      fireEvent.click(screen.getByText('result 0'))
+      receive({ type: 'twake-scribe:document', content: null })
+
+      expect(getDocumentData()).toEqual({
+        document: null,
+        documentTruncated: false
+      })
+    })
+
+    it('answers null when the plugin does not reply in 8 s', () => {
+      jest.useFakeTimers()
+      const { receive, getDocumentData } = setupOpen()
+
+      // The editor saves: the plugin does not answer
+      fireEvent.click(screen.getByText('result 0'))
+      act(() => {
+        jest.advanceTimersByTime(7999)
+      })
+      expect(getDocumentData()).toBe(null)
+
+      act(() => {
+        jest.advanceTimersByTime(1)
+      })
+      const timedOut = { document: null, documentTruncated: false }
+      expect(getDocumentData()).toEqual(timedOut)
+
+      // The assistant has gone on without it
+      receive({ type: 'twake-scribe:document', content: WHOLE_DOCUMENT })
+      expect(getDocumentData()).toEqual(timedOut)
+    })
+
+    it('asks again for each request, and forgets the document once closed', () => {
+      const { receive, getSent, getDocumentData } = setupOpen()
+      fireEvent.click(screen.getByText('result 0'))
+      receive({ type: 'twake-scribe:document', content: WHOLE_DOCUMENT })
+
+      // The same document given again is new data for the assistant
+      fireEvent.click(screen.getByText('result 0'))
+      expect(getDocumentData()).toBe(null)
+      expect(getSent()).toEqual([
+        [{ type: 'twake-scribe:getDocument' }, SERVER_ORIGIN],
+        [{ type: 'twake-scribe:getDocument' }, SERVER_ORIGIN]
+      ])
+
+      fireEvent.click(screen.getByText('close'))
+      receive({ type: 'twake-scribe:document', content: WHOLE_DOCUMENT })
+      expect(getDocumentData()).toBe(null)
+    })
   })
 })
