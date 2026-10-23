@@ -1517,8 +1517,8 @@ export function writeBlocks() {
     if (!doc.InsertContent(elements, isInline)) return false
 
     const last = elements[elements.length - 1]
-    // The editor copies the blocks it cannot move, as a table written in a
-    // table: their place is unknown, and they are left unselected
+    // A block the editor copies instead of moving it has no known place: it
+    // is left unselected
     const isMoved = !isInline && last.GetPosInParent() !== -1
     if (isInline || isMoved) selectAnswer(start, isInline)
     if (isMoved) removeLeftParagraph(last)
@@ -1601,9 +1601,9 @@ export function writeBlocks() {
   }
 
   // A single paragraph is written in the line of the selection, and so is a
-  // single block in a part of a paragraph: the editor gives a part of a
-  // heading or of a list item with its mark, which the answer keeps. A table
-  // or a block of code stays a block of its own.
+  // single block, as a heading or an item, in a part of a paragraph: the
+  // paragraph keeps its own style. A table or a block of code stays a block
+  // of its own.
   const replaceText = () => {
     skipEndOfLine()
     const around = getAround()
