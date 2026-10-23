@@ -285,6 +285,7 @@ test.describe('the scribe of Drive', { tag: '@e2e-scribe' }, () => {
     await scribe.selectInEditor('P1@start..P1@end')
     await scribe.selectionButton().click()
     await expect(scribe.popover()).toBeVisible()
+    const popoverIntentId = await scribe.intentId(scribe.popover())
 
     await scribe.postIntentResult(scribe.popover(), {
       request: 'panel',
@@ -304,6 +305,8 @@ test.describe('the scribe of Drive', { tag: '@e2e-scribe' }, () => {
         draft: 'Hello',
         conversation: 'c1'
       })
+    // A new intent: an open one reads its data at its opening only
+    expect(await scribe.intentId(scribe.panel())).not.toBe(popoverIntentId)
   })
 
   test('the popover is a drawer on a narrow screen', async ({ alicePage }) => {
@@ -320,6 +323,9 @@ test.describe('the scribe of Drive', { tag: '@e2e-scribe' }, () => {
 
     await expect(scribe.drawer()).toBeVisible()
     await expect(scribe.popover()).toBeHidden()
+
+    await scribe.swipeDrawerDown(80)
+    await expect(scribe.drawer()).toBeHidden()
   })
 
   // The panel is remembered in the localStorage of the browser context, which

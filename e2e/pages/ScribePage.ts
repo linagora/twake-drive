@@ -193,6 +193,43 @@ export class ScribePage {
     })
   }
 
+  /** The id of the intent of a surface, in the address of its frame */
+  async intentId(surface: Locator): Promise<string> {
+    const src = await this.intentFrame(surface).getAttribute('src')
+    const intentId = src ? new URL(src).searchParams.get('intent') : null
+    if (!intentId) throw new Error(`No intent in the address ${src}`)
+    return intentId
+  }
+
+  /** Swipes the grip of the drawer down by dy px, as a finger does */
+  async swipeDrawerDown(dy: number): Promise<void> {
+    await this.drawer()
+      .getByTestId('scribe-drawer-handle')
+      .evaluate((handle, distance) => {
+        const box = handle.getBoundingClientRect()
+        const clientX = box.left + box.width / 2
+        const clientY = box.top + box.height / 2
+        const makeTouch = (y: number): Touch =>
+          new Touch({ identifier: 1, target: handle, clientX, clientY: y })
+        const start = makeTouch(clientY)
+        const end = makeTouch(clientY + distance)
+        handle.dispatchEvent(
+          new TouchEvent('touchstart', {
+            bubbles: true,
+            touches: [start],
+            changedTouches: [start]
+          })
+        )
+        handle.dispatchEvent(
+          new TouchEvent('touchend', {
+            bubbles: true,
+            touches: [],
+            changedTouches: [end]
+          })
+        )
+      }, dy)
+  }
+
   private async findIntentFrame(surface: Locator): Promise<Frame> {
     const handle = await this.intentFrame(surface).elementHandle()
     const frame = await handle?.contentFrame()
@@ -225,9 +262,7 @@ export class ScribePage {
     surface: Locator,
     result: Record<string, unknown>
   ): Promise<void> {
-    const src = await this.intentFrame(surface).getAttribute('src')
-    const intentId = src ? new URL(src).searchParams.get('intent') : null
-    if (!intentId) throw new Error(`No intent in the address ${src}`)
+    const intentId = await this.intentId(surface)
     await expect
       .poll(() => this.receivedIntentData(surface), { timeout: 60_000 })
       .not.toBe(null)

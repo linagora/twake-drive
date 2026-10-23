@@ -38,7 +38,15 @@ export const useScribe = () => useContext(ScribeContext)
 export const useScribeGeometry = () => useContext(ScribeGeometryContext)
 
 const EDITOR_FOCUS_DELAY = 100
+// The plugin answers in a few hundred milliseconds, and not at all while the
+// editor loads or saves
+const CONTENT_WAIT = 3000
 const NO_SURFACE = { panel: false, popover: false }
+
+const clearTimer = timer => {
+  clearTimeout(timer.current)
+  timer.current = null
+}
 
 const focusEditorFrame = () => {
   document.getElementsByName(FRAME_EDITOR_NAME)[0]?.focus()
@@ -109,6 +117,7 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
   const popoverContent = useRef(null)
   // The surfaces whose text is asked for: the answer of the plugin opens them
   const pendingSurfaces = useRef(new Set())
+  const closeTimer = useRef(null)
   // Where Drive shows no button for the scribe, the editor shows no entry
   // for it, and the panel is not opened again either
   const canRestore = isRestorePending && isAllowed
@@ -120,24 +129,44 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
     setSurfaces(surfacesRef.current)
   }, [])
 
+  const stopReading = useCallback(() => {
+    pluginWindow.current?.postMessage(
+      { type: 'twake-scribe:close' },
+      serverOrigin
+    )
+    setText(null)
+  }, [serverOrigin])
+
   // The plugin reads every selection while a surface is open, which empties
-  // the redo of the editor: it stops once none is open nor awaited
+  // the redo of the editor: it stops once none is open nor awaited. The
+  // close would make it drop the text being read.
   const hideSurface = useCallback(
     name => {
       showSurfaces({ [name]: false })
       pendingSurfaces.current.delete(name)
       if (name === 'panel') setHandOver(null)
-      const { panel, popover } = surfacesRef.current
-      if (panel || popover || pendingSurfaces.current.size > 0) return
+      if (surfacesRef.current.panel || surfacesRef.current.popover) return
+      if (pendingSurfaces.current.size === 0) {
+        stopReading()
+        return
+      }
 
-      pluginWindow.current?.postMessage(
-        { type: 'twake-scribe:close' },
-        serverOrigin
-      )
-      setText(null)
+      clearTimer(closeTimer)
+      closeTimer.current = setTimeout(() => {
+        closeTimer.current = null
+        pendingSurfaces.current.clear()
+        if (!surfacesRef.current.panel && !surfacesRef.current.popover) {
+          stopReading()
+        }
+      }, CONTENT_WAIT)
     },
-    [serverOrigin, showSurfaces]
+    [showSurfaces, stopReading]
   )
+
+  useEffect(() => {
+    const timer = closeTimer
+    return () => clearTimer(timer)
+  }, [])
 
   useEffect(() => {
     const handleMessage = event => {
@@ -152,6 +181,7 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
       // Another plugin of the Document Server has its origin too
       if (event.source !== pluginWindow.current) return
       if (type === 'twake-scribe:content') {
+        clearTimer(closeTimer)
         const opened =
           pendingSurfaces.current.size > 0
             ? [...pendingSurfaces.current]
@@ -192,6 +222,11 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
 
   const requestContent = useCallback(
     surface => {
+      // The plugin answers the last request only: the ones given up on go
+      if (closeTimer.current !== null) {
+        clearTimer(closeTimer)
+        pendingSurfaces.current.clear()
+      }
       pendingSurfaces.current.add(surface)
       pluginWindow.current?.postMessage(
         { type: 'twake-scribe:getContent' },
@@ -224,6 +259,8 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
   // a text document only: elsewhere the scribe opens in the panel
   const openPopover = useCallback(
     ({ source = null } = {}) => {
+      // Already on this selection: another text selected would have closed it
+      if (surfacesRef.current.popover) return
       if (!geometryRef.current?.selection) {
         open({ source })
         return

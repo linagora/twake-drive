@@ -48,7 +48,8 @@ export const ScribeFloatingButton = () => {
   const { t } = useI18n()
   const { type: themeType } = useCozyTheme()
   const isAllowed = isScribeAllowed(useOnlyOfficeContext())
-  const { isAvailable, isOpen, documentType, open, close } = useScribe()
+  const { isAvailable, isOpen, isPopoverOpen, documentType, open, close } =
+    useScribe()
   const geometry = useScribeGeometry()
   const lottieRef = useRef(null)
 
@@ -56,6 +57,8 @@ export const ScribeFloatingButton = () => {
   // The plugin sends no geometry for a presentation: the button would stay
   // in the corner of the window, over the panel once open
   if (documentType !== 'word') return null
+  // Over the drawer and the veil, it would open a second assistant
+  if (isPopoverOpen) return null
 
   const position = findButtonPosition(geometry)
   const label = t('OnlyOffice.scribe.panel')

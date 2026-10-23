@@ -24,13 +24,32 @@ jest.mock('cozy-ui/transpiled/react/providers/Breakpoints', () => ({
 }))
 
 const mockPopper = jest.fn()
-jest.mock('cozy-ui/transpiled/react/Popper', () => ({
-  __esModule: true,
-  default: ({ anchorEl, placement, modifiers, open, popperRef, ...props }) => {
+const mockScheduleUpdate = jest.fn()
+// As the Popper of cozy-ui, whose Portal mounts the content in a second
+// commit, and which gives its Popper.js instance to `popperRef`
+jest.mock('cozy-ui/transpiled/react/Popper', () => {
+  const { useImperativeHandle, useLayoutEffect, useState } =
+    jest.requireActual('react')
+  const Popper = ({
+    anchorEl,
+    placement,
+    modifiers,
+    open,
+    popperRef,
+    ...props
+  }) => {
+    const [isMounted, setIsMounted] = useState(false)
     mockPopper({ anchorEl, placement, modifiers, open })
-    return <div {...props} />
+    useImperativeHandle(popperRef, () => ({
+      scheduleUpdate: mockScheduleUpdate
+    }))
+    useLayoutEffect(() => {
+      setIsMounted(true)
+    }, [])
+    return isMounted ? <div {...props} /> : null
   }
-}))
+  return { __esModule: true, default: Popper }
+})
 
 const mockIntentIframe = jest.fn()
 jest.mock('cozy-ui-plus/dist/Intent/IntentIframe', () => ({
@@ -109,6 +128,7 @@ describe('ScribePopover', () => {
   beforeEach(() => {
     mockPopper.mockClear()
     mockIntentIframe.mockClear()
+    mockScheduleUpdate.mockClear()
   })
   afterEach(() => {
     jest.useRealTimers()
@@ -227,6 +247,63 @@ describe('ScribePopover', () => {
     expect(closePopover).not.toHaveBeenCalled()
   })
 
+  // The viewer goes from 174 to 639 in the frame
+  it.each([
+    ['above the viewer', { top: 100, height: 40 }],
+    ['below the viewer', { top: 700, height: 15 }]
+  ])('closes when the selection is scrolled %s', (_, box) => {
+    const { closePopover, rerender } = setup()
+
+    rerender({
+      geometry: {
+        ...GEOMETRY,
+        selection: { ...SELECTION, rect: { ...SELECTION.rect, ...box } }
+      }
+    })
+
+    expect(closePopover).toHaveBeenCalledTimes(1)
+  })
+
+  it('places itself again as the assistant grows', () => {
+    const observed = []
+    let notifyResize = null
+    window.ResizeObserver = class {
+      constructor(callback) {
+        notifyResize = callback
+      }
+      observe(element) {
+        observed.push(element)
+      }
+      disconnect() {}
+    }
+
+    try {
+      setup()
+
+      expect(observed).toHaveLength(1)
+      expect(observed[0]).toContainElement(screen.getByTestId('intent-iframe'))
+      act(() => notifyResize())
+      expect(mockScheduleUpdate).toHaveBeenCalledTimes(1)
+    } finally {
+      delete window.ResizeObserver
+    }
+  })
+
+  it('fades the veil in, and out once closed', () => {
+    jest.useFakeTimers()
+    const { rerender } = setup()
+    expect(screen.queryByTestId('scribe-popover-veil')).toBeInTheDocument()
+
+    rerender({ isPopoverOpen: false })
+    expect(queryPopover()).toBe(null)
+    expect(screen.queryByTestId('scribe-popover-veil')).toBeInTheDocument()
+
+    act(() => {
+      jest.advanceTimersByTime(160)
+    })
+    expect(screen.queryByTestId('scribe-popover-veil')).toBe(null)
+  })
+
   it('closes on Escape in the page', () => {
     const { closePopover } = setup()
 
@@ -246,6 +323,11 @@ describe('ScribePopover', () => {
     })
 
     fireEvent.click(screen.getByTestId('intent-iframe'))
+    fireEvent.click(
+      screen
+        .getByTestId('scribe-popover')
+        .querySelector('.scribe-popover-arrow')
+    )
     expect(closePopover).not.toHaveBeenCalled()
 
     fireEvent.click(document.body)
@@ -262,6 +344,8 @@ describe('ScribePopover', () => {
     expect(queryPopover()).toBe(null)
     expect(mockPopper).not.toHaveBeenCalled()
     expect(getIntentProps().data.layout).toBe('compact')
+    // The drawer has its own backdrop
+    expect(screen.queryByTestId('scribe-popover-veil')).toBe(null)
   })
 
   it('closes the drawer on a tap on its handle', () => {
