@@ -690,10 +690,8 @@ export function readDocument(readWhole) {
   // An image selected by a click has no range of text: it is selected again
   // by itself
   const drawings = selection ? [] : doc.GetSelectedDrawings()
-  // A cursor is no selection, and stays where it is. Removing the selection
-  // would take a cursor out of the text of a shape, whose shape is selected,
-  // and the range the editor gives there is not the cursor: nothing is
-  // removed, the editor converts no selection for it.
+  // A cursor in the text of a shape has a range that is not the cursor:
+  // nothing is removed, the editor converts no selection for it
   const isInShape =
     Boolean(selection) && !isSelected && doc.GetSelectedDrawings().length > 0
   if (isSelected) doc.RemoveSelection()
@@ -1378,15 +1376,7 @@ export function writeBlocks() {
     const after = doc.GetCurrentSentence('after')
     const isRead = typeof before === 'string' && typeof after === 'string'
     if (!current || !isRead || (before === '' && after === '')) return null
-    const runs = []
-    for (let i = 0; i < paragraph.GetElementsCount(); i += 1) {
-      const element = paragraph.GetElement(i)
-      if (element.GetClassType() === 'run') runs.push(element)
-      if (element.GetClassType() !== 'hyperlink') continue
-      for (let j = 0; j < element.GetElementsCount(); j += 1) {
-        runs.push(element.GetElement(j))
-      }
-    }
+    const runs = getRuns(paragraph)
     const getRunText = run => run.GetText({ TabSymbol: ' ' })
     const text = runs.map(getRunText).join('')
     const start = current.GetRange().GetStartPos()
@@ -1851,14 +1841,14 @@ export function writeBlocks() {
     if (!writeAnswer(elements, false)) return false
     // The last cell may have no run written to end the selection; in a whole
     // copy, only the selected cells hold the answer
-    const [written] = elements
-    if (!isAnswerOf('table') || written.GetPosInParent() === -1) return true
+    const [inserted] = elements
+    if (!isAnswerOf('table') || inserted.GetPosInParent() === -1) return true
     const lastRow = rows[rows.length - 1]
     const [first, last] = wholeCopy
       ? [rows[0][0], lastRow[lastRow.length - 1]].map(cell =>
           wholeCopy.GetCell(cell.GetRowIndex(), cell.GetIndex())
         )
-      : [written.GetCell(0, 0), getLastCell(written)]
+      : [inserted.GetCell(0, 0), getLastCell(inserted)]
     getCellRange(first, false).ExpandTo(getCellRange(last, true))?.Select()
     return true
   }
