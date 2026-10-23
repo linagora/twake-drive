@@ -926,6 +926,22 @@ describe('ScribeProvider', () => {
     expect(logger.warn).toHaveBeenCalledTimes(results.length)
   })
 
+  it('ignores a result that is neither an answer, a call nor a known request', () => {
+    const results = [
+      { request: 'outcome' },
+      { answerAction: 'insert', format: 'markdown' }
+    ]
+    const { receive, getSent } = setup({ results })
+    receive({ type: 'twake-scribe:ready' })
+
+    results.forEach((_, index) =>
+      fireEvent.click(screen.getByText(`result ${index}`))
+    )
+
+    expect(getSent()).toEqual([])
+    expect(logger.warn).toHaveBeenCalledTimes(results.length)
+  })
+
   it('adds no slide to a text document', () => {
     const { receive, getSent } = setup({ results: [SLIDE] })
     receive({ type: 'twake-scribe:ready' })
