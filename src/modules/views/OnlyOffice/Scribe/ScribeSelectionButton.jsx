@@ -1,6 +1,6 @@
 import { Icon } from '@linagora/twake-icons'
 import cx from 'classnames'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 
 import ButtonBase from 'cozy-ui/transpiled/react/ButtonBase'
 import Portal from 'cozy-ui/transpiled/react/Portal'
@@ -26,6 +26,11 @@ const DISC_INSET_TOP = 9
 // Between the end of the selection and the disc
 const GAP = 4
 const TOOLTIP_DELAY = 500
+// A double or a triple click, or a selection drawn with the mouse, changes
+// the selection several times: the button waits for it to keep its size this
+// long, as the plugin waits before it reads a selection, rather than show up
+// at once and jump to the next one
+const SETTLE_DELAY = 400
 // The tooltip goes under the disc, not under the shadow of the asset, and
 // stays there: above, the offset would put it on the disc
 const TOOLTIP_POPPER_PROPS = {
@@ -57,13 +62,32 @@ const findButtonPosition = geometry => {
   }
 }
 
+// Once shown, the button follows a scroll at once: the selection keeps its
+// size then
+const useIsSettled = geometry => {
+  const rect = geometry?.selection?.rect
+  const size = rect ? `${rect.width}x${rect.height}` : null
+  const [settledSize, setSettledSize] = useState(null)
+
+  useEffect(() => {
+    const timer = setTimeout(
+      () => setSettledSize(size),
+      size === null ? 0 : SETTLE_DELAY
+    )
+    return () => clearTimeout(timer)
+  }, [size])
+
+  return size !== null && size === settledSize
+}
+
 export const ScribeSelectionButton = () => {
   const { t } = useI18n()
   const isAllowed = isScribeAllowed(useOnlyOfficeContext())
   const { isAvailable, open } = useScribe()
   const geometry = useScribeGeometry()
+  const isSettled = useIsSettled(geometry)
 
-  if (!isAvailable || !isAllowed) return null
+  if (!isAvailable || !isAllowed || !isSettled) return null
   const position = findButtonPosition(geometry)
   if (position === null) return null
 

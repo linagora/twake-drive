@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import React from 'react'
 
 import { createMockClient } from 'cozy-client'
@@ -53,21 +53,96 @@ const setup = ({
   })
   useScribeGeometry.mockReturnValue(geometry)
 
-  render(
+  // A new element each time: React skips the same one
+  const makeView = () => (
     <AppLike client={createMockClient({})}>
       <OnlyOfficeContext.Provider value={{ isPublic, isReadOnly }}>
         <ScribeSelectionButton />
       </OnlyOfficeContext.Provider>
     </AppLike>
   )
+  const { rerender } = render(makeView())
+  const wait = ms =>
+    act(() => {
+      jest.advanceTimersByTime(ms)
+    })
+  // The selection has kept its size long enough for the button
+  wait(SETTLE_DELAY)
+  const changeGeometry = next => {
+    useScribeGeometry.mockReturnValue(next)
+    rerender(makeView())
+  }
 
-  return { open }
+  return { open, wait, changeGeometry }
 }
+
+const SETTLE_DELAY = 400
 
 const queryButton = () =>
   screen.queryByRole('button', { name: 'Help me write' })
 
 describe('ScribeSelectionButton', () => {
+  beforeEach(() => {
+    jest.useFakeTimers()
+  })
+  afterEach(() => {
+    jest.useRealTimers()
+  })
+
+  it('waits for the selection to keep its size before it shows', () => {
+    const { wait, changeGeometry } = setup({ scribe: { geometry: null } })
+
+    // A triple click: the word, then its paragraph
+    changeGeometry(GEOMETRY)
+    wait(SETTLE_DELAY - 1)
+    expect(queryButton()).toBe(null)
+    const paragraph = { ...GEOMETRY, selection: makeSelection([700, 299]) }
+    changeGeometry(paragraph)
+    wait(SETTLE_DELAY - 1)
+    expect(queryButton()).toBe(null)
+
+    wait(1)
+    expect(queryButton()).toBeInTheDocument()
+    expect(screen.getByTestId('scribe-selection-button').style.left).toBe(
+      `${10 + 700 + 4 - 12}px`
+    )
+  })
+
+  it('follows a scroll at once, the selection keeping its size', () => {
+    const { changeGeometry } = setup()
+    const { rect } = GEOMETRY.selection
+    const scrolled = {
+      ...GEOMETRY,
+      selection: {
+        ...GEOMETRY.selection,
+        rect: {
+          ...rect,
+          top: rect.top - 50,
+          corners: rect.corners.map(([x, y]) => [x, y - 50])
+        }
+      }
+    }
+
+    changeGeometry(scrolled)
+
+    expect(queryButton()).toBeInTheDocument()
+    expect(screen.getByTestId('scribe-selection-button').style.top).toBe(
+      `${49 + 284 - 50 + 4 - 9}px`
+    )
+  })
+
+  it('waits again for another selection of the same size', () => {
+    const { wait, changeGeometry } = setup()
+
+    changeGeometry({ ...GEOMETRY, selection: null })
+    wait(0)
+    changeGeometry(GEOMETRY)
+
+    expect(queryButton()).toBe(null)
+    wait(SETTLE_DELAY)
+    expect(queryButton()).toBeInTheDocument()
+  })
+
   it('shows the button at the end corner of the selection', () => {
     setup()
 
