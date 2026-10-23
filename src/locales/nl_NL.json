@@ -533,7 +533,7 @@
       "selectionMenu": "Scribe-menu",
       "panel": "Scribe-paneel",
       "resizeHandle": "Grootte van het paneel wijzigen",
-      "skippedCells": "Tabel: %{count} cellen van het antwoord zijn niet geschreven",
+      "skippedCells": "Tabel: %{smart_count} geselecteerde cel is ongewijzigd gebleven |||| Tabel: %{smart_count} geselecteerde cellen zijn ongewijzigd gebleven",
       "closeNotice": "Sluiten",
       "suggestions": {
         "newSlide": "Nieuwe dia",

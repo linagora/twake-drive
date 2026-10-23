@@ -39,7 +39,7 @@
       "selectionMenu": "قائمة Scribe",
       "panel": "لوحة Scribe",
       "resizeHandle": "تغيير حجم اللوحة",
-      "skippedCells": "الجدول: لم تُكتب %{count} من خلايا الإجابة",
+      "skippedCells": "الجدول: عدد الخلايا المحددة التي لم تتغير: %{smart_count}",
       "closeNotice": "إغلاق",
       "suggestions": {
         "newSlide": "شريحة جديدة",

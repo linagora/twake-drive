@@ -39,7 +39,7 @@
       "selectionMenu": "Scribe 選單",
       "panel": "Scribe 面板",
       "resizeHandle": "調整面板大小",
-      "skippedCells": "表格：答案中有 %{count} 個儲存格未寫入",
+      "skippedCells": "表格：有 %{smart_count} 個選取的儲存格未變更",
       "closeNotice": "關閉",
       "suggestions": {
         "newSlide": "新投影片",

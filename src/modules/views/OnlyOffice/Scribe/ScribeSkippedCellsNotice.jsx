@@ -26,7 +26,9 @@ export const ScribeSkippedCellsNotice = ({ surface, className }) => {
       closeText={t('OnlyOffice.scribe.closeNotice')}
       onClose={dismissSkippedCells}
     >
-      {t('OnlyOffice.scribe.skippedCells', { count: skippedCells.count })}
+      {t('OnlyOffice.scribe.skippedCells', {
+        smart_count: skippedCells.count
+      })}
     </Alert>
   )
 }

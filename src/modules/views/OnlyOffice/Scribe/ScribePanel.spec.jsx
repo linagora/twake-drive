@@ -308,11 +308,19 @@ describe('ScribePanel', () => {
     setup({ skippedCells: { surface: 'panel', count: 2 }, dismissSkippedCells })
 
     expect(screen.getByRole('alert')).toHaveTextContent(
-      'Table: 2 cells of the answer were not written'
+      'Table: 2 selected cells were left unchanged'
     )
 
     fireEvent.click(screen.getByRole('button', { name: 'Close' }))
     expect(dismissSkippedCells).toHaveBeenCalledTimes(1)
+  })
+
+  it('says a single skipped cell in the singular', () => {
+    setup({ skippedCells: { surface: 'panel', count: 1 } })
+
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Table: 1 selected cell was left unchanged'
+    )
   })
 
   it('leaves the cells skipped by an answer of the popover to the popover', () => {

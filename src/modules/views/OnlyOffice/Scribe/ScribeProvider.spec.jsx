@@ -984,9 +984,9 @@ describe('ScribeProvider', () => {
   })
 
   describe('the cells of the selection an answer had no cell for', () => {
-    const setupOpen = () => {
+    const setupOpen = options => {
       addEditorFrame(FRAME)
-      const scribe = setup()
+      const scribe = setup(options)
       scribe.receive({ type: 'twake-scribe:ready' })
       scribe.receive(SELECTION_GEOMETRY)
       fireEvent.click(screen.getByText('open'))
@@ -1040,6 +1040,27 @@ describe('ScribeProvider', () => {
       fireEvent.click(screen.getByText('apply'))
       receive({ type: 'twake-scribe:applied', skippedCells: 2 })
       fireEvent.click(screen.getByText('close'))
+      expect(getSkippedCells()).toBe(null)
+    })
+
+    it('forgets the count when the popover hands over to the panel', () => {
+      const { receive, getSkippedCells } = setupOpen({
+        results: [{ request: 'panel', draft: 'Plus court', conversation: 'c1' }]
+      })
+      fireEvent.click(screen.getByText('open popover'))
+      receive({ type: 'twake-scribe:content', ...SELECTED_TEXT })
+
+      fireEvent.click(screen.getByText('apply in popover'))
+      receive({ type: 'twake-scribe:applied', skippedCells: 2 })
+      expect(getSkippedCells()).toEqual({ surface: 'popover', count: 2 })
+      fireEvent.click(screen.getByText('result 0'))
+      expect(getSkippedCells()).toBe(null)
+
+      // The panel opens a new intent: the count of the former one goes
+      fireEvent.click(screen.getByText('apply'))
+      receive({ type: 'twake-scribe:applied', skippedCells: 1 })
+      expect(getSkippedCells()).toEqual({ surface: 'panel', count: 1 })
+      fireEvent.click(screen.getByText('result 0'))
       expect(getSkippedCells()).toBe(null)
     })
 

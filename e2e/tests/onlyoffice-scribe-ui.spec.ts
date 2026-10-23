@@ -7,7 +7,11 @@ import { test, expect, stamp } from '../helpers/fixtures'
 import { DEFAULT_FLAGS, setFlags } from '../helpers/flags'
 import { createFile, trashById } from '../helpers/stack'
 import { ScribePage } from '../pages/ScribePage'
-import { type Geometry, ScribePluginPage } from '../pages/ScribePluginPage'
+import {
+  type Geometry,
+  type ScribeApplied,
+  ScribePluginPage
+} from '../pages/ScribePluginPage'
 
 // Drive's chrome around the scribe plugin, with the assistant of the e2e
 // stack. The stack has no LLM: no test waits for an answer of the assistant.
@@ -55,6 +59,24 @@ const uploadScribeDocument = async (
   })
   uploaded.push({ instance, fileId })
   return fileId
+}
+
+interface ScribeCase {
+  id: string
+  selection: string
+  answerAction: 'insert' | 'replace'
+  answer: string
+  expected: { applied: ScribeApplied }
+}
+
+// A case of the plugin spec, played through Drive's chrome
+const findScribeCase = (casesName: string, id: string): ScribeCase => {
+  const { cases } = JSON.parse(
+    readFileSync(path.join(FIXTURE_DIR, casesName), 'utf-8')
+  ) as { cases: ScribeCase[] }
+  const found = cases.find(scribeCase => scribeCase.id === id)
+  if (!found) throw new Error(`No case ${id} in ${casesName}`)
+  return found
 }
 
 test.describe('the scribe of Drive', { tag: '@e2e-scribe' }, () => {
@@ -337,11 +359,15 @@ test.describe('the scribe of Drive', { tag: '@e2e-scribe' }, () => {
       })
   })
 
-  // The case T11 of table-plain.cases.json: its answer has a cell for one of
-  // the two selected cells
   test('the panel tells how many selected cells an answer left', async ({
     alicePage
   }) => {
+    // Its answer has a cell for one of the two selected cells
+    const { selection, answerAction, answer, expected } = findScribeCase(
+      'table-plain.cases.json',
+      'T11'
+    )
+    expect(expected.applied.skippedCells).toBe(1)
     const fileId = await uploadScribeDocument(
       USERS.alice.instance,
       'table-plain.docx'
@@ -353,18 +379,18 @@ test.describe('the scribe of Drive', { tag: '@e2e-scribe' }, () => {
 
     // Ended with keys, as by ScribePage.selectInEditor, this selection loses
     // its cells: the plugin reads the selection of the API as it is
-    await plugin.select('P1@mid..T1.C(0,1)@end')
+    await plugin.select(selection)
     await scribe.openPanel()
     await expect(scribe.panel()).toBeVisible()
     await expect(scribe.skippedCellsNotice(scribe.panel())).toBeHidden()
     await scribe.postIntentResult(scribe.panel(), {
-      answerAction: 'replace',
-      text: 'Head edit\n\n<table>\n  <tr><td>AA</td></tr>\n</table>',
+      answerAction,
+      text: answer,
       format: 'markdown'
     })
 
     await expect(scribe.skippedCellsNotice(scribe.panel())).toHaveText(
-      'Table: 1 cells of the answer were not written',
+      'Table: 1 selected cell was left unchanged',
       { timeout: 15_000 }
     )
 

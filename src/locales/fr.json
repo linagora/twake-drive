@@ -663,7 +663,7 @@
       "selectionMenu": "Menu Scribe",
       "panel": "Panneau Scribe",
       "resizeHandle": "Redimensionner le panneau",
-      "skippedCells": "Tableau : %{count} cellules de la réponse n'ont pas été écrites",
+      "skippedCells": "Tableau : %{smart_count} cellule sélectionnée est restée inchangée |||| Tableau : %{smart_count} cellules sélectionnées sont restées inchangées",
       "closeNotice": "Fermer",
       "suggestions": {
         "newSlide": "Nouvelle diapositive",

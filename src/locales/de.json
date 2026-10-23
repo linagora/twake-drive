@@ -663,7 +663,7 @@
       "selectionMenu": "Scribe-Menü",
       "panel": "Scribe-Bereich",
       "resizeHandle": "Größe des Bereichs ändern",
-      "skippedCells": "Tabelle: %{count} Zellen der Antwort wurden nicht geschrieben",
+      "skippedCells": "Tabelle: %{smart_count} ausgewählte Zelle blieb unverändert |||| Tabelle: %{smart_count} ausgewählte Zellen blieben unverändert",
       "closeNotice": "Schließen",
       "suggestions": {
         "newSlide": "Neue Folie",
