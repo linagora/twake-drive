@@ -446,6 +446,44 @@
       }
     },
     {
+      "id": "shift-down",
+      "selection": "P1@start..P2@start",
+      "answerAction": "insert",
+      "answer": "XXX",
+      "expected": {
+        "content": {"content":"The quick brown fox\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"The quick brown fox"}]},
+            {"type":"p","runs":[{"t":"XXX"}]},
+            {"type":"p","runs":[{"t":"Jumps over the dog"}]},
+            {"type":"p","runs":[{"t":"Lazy river flows"}]}
+          ],
+          "selText": "XXX",
+          "selMarkup": [{"at":{"block":1},"text":"«XXX»"}]
+        }
+      }
+    },
+    {
+      "id": "shift-down",
+      "selection": "P1@start..P2@start",
+      "answerAction": "replace",
+      "answer": "Replaced one\n\nReplaced two",
+      "expected": {
+        "content": {"content":"The quick brown fox\n\n","target":"selection","canReplace":true},
+        "model": {
+          "blocks": [
+            {"type":"p","runs":[{"t":"Replaced one"}]},
+            {"type":"p","runs":[{"t":"Replaced two"}]},
+            {"type":"p","runs":[{"t":"Jumps over the dog"}]},
+            {"type":"p","runs":[{"t":"Lazy river flows"}]}
+          ],
+          "selText": "Replaced one\nReplaced two",
+          "selMarkup": [{"at":{"block":0},"text":"«Replaced one»"},{"at":{"block":1},"text":"«Replaced two»"}]
+        }
+      }
+    },
+    {
       "id": "Tmd",
       "selection": "P1@start..P1@end",
       "answerAction": "insert",
