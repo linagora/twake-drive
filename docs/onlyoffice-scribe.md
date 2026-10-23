@@ -13,7 +13,7 @@ Drive (OnlyOffice view)
   ├─ floating button of the document area ── opens or closes ──▶ side panel
   ├─ button under the selection ── opens ──▶ popover on the selection (drawer on a small screen)
   │                                          └─ Assistant intent (iframe of Twake Assistant), in either
-  │                                               content, answerActions, capabilities, suggestions,
+  │                                               content, rules, answerActions, capabilities, suggestions,
   │                                               theme, layout, source, draft, conversation,
   │                                               documentAvailable, document, documentTruncated ◀── Drive
   │                                               result { answerAction, text } ──▶ Drive
@@ -45,6 +45,7 @@ Drive (OnlyOffice view)
 - The underlined text of the selection is given between `<u>` tags, and its footnotes, its links to a heading or a bookmark of the document and its images as markers. They are written back where the answer keeps them, as underlined text, new notes, links and copies of the images, see [Markers](#markers).
 - Without a selection, the assistant works on the whole document, and each answer can be inserted at the cursor. Nothing replaces a whole document.
 - The text written in the document is left selected: the next answer of the conversation can replace it.
+- An answer whose table has fewer cells than the selected cells it replaces leaves the others as they were: a notice above the assistant tells how many, see [Tables](#tables).
 - Another text selected while the panel is open is the one the next request is about: the conversation goes on, and the prompts are offered again. A click that only moves the cursor changes nothing.
 - In a text document, the "Document" box of the assistant sends the whole document with a typed request, besides the selected text: the selection stays as it was. See [The whole document](#the-whole-document).
 
@@ -69,7 +70,7 @@ The plugin only loads in the editors of text documents and presentations, in edi
 ## Requirements
 
 - The flag `cozy.assistant.enabled` on. Without it the AI button is not shown, and Drive is unchanged.
-- The Twake Assistant app ([linagora/twake-assistant](https://github.com/linagora/twake-assistant), slug `assistant`) installed on the instance. It serves the Assistant intent in scribe mode, and reads the `capabilities` and `suggestions` of its data. The button does not check that the app is installed. For the popover, an assistant that reads `layout`, `draft` and `conversation`: an older one shows its panel layout in the popover, without the "Scribe panel" row. For the whole document, an assistant that reads `documentAvailable`: an older one has no "Document" box.
+- The Twake Assistant app ([linagora/twake-assistant](https://github.com/linagora/twake-assistant), slug `assistant`) installed on the instance. It serves the Assistant intent in scribe mode, and reads the `capabilities` and `suggestions` of its data. The button does not check that the app is installed. For the popover, an assistant that reads `layout`, `draft` and `conversation`: an older one shows its panel layout in the popover, without the "Scribe panel" row. For the whole document, an assistant that reads `documentAvailable`: an older one has no "Document" box. For the markers, an assistant that reads `rules`: an older one is not told to keep them.
 - A cozy-stack that knows the `documents` and `instructions` options of the chat.
 - A `cozy-interapp` and a `cozy-ui-plus` that have the `result` message of intents (`onResult` prop of `IntentIframe`). With older ones the assistant opens, but the clicks on its action buttons do not reach Drive.
 - For another text while the panel is open, and for the whole document, a `cozy-interapp` with the `data` message on both sides, and a `cozy-ui-plus` whose `IntentIframe` sends new `data`. With older ones the assistant keeps the first text, and a request that includes the document waits 8 s and goes without it.
@@ -128,7 +129,7 @@ Drive and the plugin talk with `postMessage`. Drive only listens to the origin o
 | Plugin → Drive | `twake-scribe:selection` | `content`, `target`, `canReplace` | Another text selected, once Drive has asked for one: not for a cursor that moves, nor for an answer just written. Drive gives it to the open assistant of the panel (new `data` of the intent), and closes the popover when the text is not the one it opened on. |
 | Drive → Plugin | `twake-scribe:close` | — | Neither the panel nor the popover stays open, nor is awaiting its text: the plugin stops reading the selection, until Drive asks for the text again. |
 | Drive → Plugin | `twake-scribe:applyAnswer` | `answerAction`, `text`, `format` | A result of the Assistant intent, as it is, or the table of an `insert_table` call, written in Markdown by Drive. The plugin writes `text`, in Markdown, in the document. |
-| Plugin → Drive | `twake-scribe:applied` | `skippedCells` | The answer of an `applyAnswer` is handled, once Drive has asked for the text and until the panel and the popover are closed. `skippedCells` counts the selected cells the answer had no cell for (see [Tables](#tables)), 0 otherwise. |
+| Plugin → Drive | `twake-scribe:applied` | `skippedCells` | The answer of an `applyAnswer` is handled, once Drive has asked for the text and until the panel and the popover are closed. `skippedCells` counts the selected cells the answer had no cell for (see [Tables](#tables)), 0 otherwise. Drive shows a count above 0 in the panel or the popover the answer came from. |
 | Drive → Plugin | `twake-scribe:insertSlide` | `title`, `bullets` | A slide the assistant has made, checked by Drive. The plugin adds it after the current slide. Presentations only. |
 | Plugin → Drive | `twake-scribe:geometry` | `selection`, `viewer`, `page` | Where the selection is, in pixels of the editor frame, sent from the start and each time it changes. Drive shows its button under the selection with it, see [The button under the selection](#the-button-under-the-selection), and places its popover, see [The popover](#the-popover). |
 | Plugin → Drive | `twake-scribe:open` | `source` | An entry of the editor's toolbar is clicked: `toolbar-inline` for "Scribe" or "Inline Scribe" with a text selected, `toolbar-panel` for "Scribe panel". Drive opens the popover for `toolbar-inline`, and the panel for `toolbar-panel`, or closes it when it is open, where its AI button is shown (see [When the button is shown](#when-the-button-is-shown)), and does nothing elsewhere. |
@@ -167,6 +168,7 @@ The compact assistant is a single card: the popover cannot be dragged nor resize
 Drive gives the Assistant intent, in the panel and in the popover:
 
 - `content`, the text of the plugin, and `answerActions`, see [What an answer can replace](#what-an-answer-can-replace);
+- `rules`, only when the text holds markers: for each kind of marker it holds, a sentence that tells to keep them, which the assistant joins to the system message of each request, see [Markers](#markers);
 - `capabilities` and `suggestions`, see [Capabilities and suggestions](#capabilities-and-suggestions);
 - `theme`, the theme of Drive;
 - `layout`: `panel`, or `compact` in the popover;
@@ -277,7 +279,7 @@ A table of the answer written under the table of the selection, or in place of a
 - A table with merged cells, with a table in a cell or with rows of different lengths is neither cut down nor given another shape. A table of the shape of the selected cells, to insert after such a table, is a copy of the whole table, with those cells rewritten and left selected. Any other table of the answer gives a new table, as for a text.
 - A table of the answer with merged cells, for a table without, gives a new table too.
 
-When an answer with a table replaces a selection across the edge of a table, `twake-scribe:applied` carries the count of the selected cells the answer had no cell for. It is 0 for any other answer.
+When an answer with a table replaces a selection across the edge of a table, `twake-scribe:applied` carries the count of the selected cells the answer had no cell for. It is 0 for any other answer. Above the assistant of the panel or the popover the answer came from, Drive then shows "Table: N cells of the answer were not written", until the user closes it, the next answer is written, or that panel or popover closes.
 
 ### Presentations
 

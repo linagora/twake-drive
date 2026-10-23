@@ -663,6 +663,8 @@
       "selectionMenu": "Scribe Menu",
       "panel": "Scribe Panel",
       "resizeHandle": "Resize the panel",
+      "skippedCells": "Table: %{count} cells of the answer were not written",
+      "closeNotice": "Close",
       "suggestions": {
         "newSlide": "New slide",
         "newSlideMessage": "Add a new slide after this one, about the text",

@@ -39,6 +39,8 @@
       "selectionMenu": "Scribe メニュー",
       "panel": "Scribe パネル",
       "resizeHandle": "パネルのサイズを変更",
+      "skippedCells": "表：回答のセル %{count} 個が書き込まれませんでした",
+      "closeNotice": "閉じる",
       "suggestions": {
         "newSlide": "新しいスライド",
         "newSlideMessage": "このスライドの後に、テキストについての新しいスライドを追加して",

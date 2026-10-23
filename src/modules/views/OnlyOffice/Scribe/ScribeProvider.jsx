@@ -123,6 +123,9 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
   const [popoverSource, setPopoverSource] = useState(null)
   const [handOver, setHandOver] = useState(null)
   const [documentData, setDocumentData] = useState(null)
+  // { surface, count }: the cells of the selection the last answer of the
+  // surface had no cell for
+  const [skippedCells, setSkippedCells] = useState(null)
   const [isRestorePending, setIsRestorePending] = useState(readPanelOpen)
   // Set at once, unlike the state: the plugin sends its geometry right after
   // it is ready, maybe before a render
@@ -137,6 +140,8 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
   // Set while the whole document is awaited: an answer after the wait is
   // dropped
   const documentTimer = useRef(null)
+  // The plugin tells what it wrote without telling for which surface
+  const writingSurface = useRef(null)
   // Where Drive shows no button for the scribe, the editor shows no entry
   // for it, and the panel is not opened again either
   const canRestore = isRestorePending && isAllowed
@@ -163,6 +168,7 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
     name => {
       showSurfaces({ [name]: false })
       pendingSurfaces.current.delete(name)
+      setSkippedCells(current => (current?.surface === name ? null : current))
       if (name === 'panel') setHandOver(null)
       if (surfacesRef.current.panel || surfacesRef.current.popover) return
       clearTimer(documentTimer)
@@ -227,6 +233,17 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
       if (type === 'twake-scribe:document' && documentTimer.current !== null) {
         clearTimer(documentTimer)
         setDocumentData(makeDocumentData(content))
+      }
+      if (type === 'twake-scribe:applied') {
+        const count = event.data.skippedCells
+        const surface = writingSurface.current
+        if (
+          Number.isInteger(count) &&
+          count > 0 &&
+          surfacesRef.current[surface]
+        ) {
+          setSkippedCells({ surface, count })
+        }
       }
     }
 
@@ -341,8 +358,9 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
     [open, showSurfaces]
   )
 
+  // `surface`: the panel or the popover whose assistant gave the result
   const applyResult = useCallback(
-    result => {
+    (result, surface) => {
       if (result?.request === 'panel') {
         handOverToPanel(result)
         return
@@ -351,25 +369,25 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
         requestDocument()
         return
       }
-      if (result?.capability !== undefined) {
-        const message = makeCapabilityMessage(result, documentType)
-        if (message === null) {
-          logger.warn(
-            `Scribe: capability call ignored: ${result.capability}`,
-            result.params
-          )
-          return
-        }
-        plugin.postMessage(message, serverOrigin)
+      const message =
+        result?.capability !== undefined
+          ? makeCapabilityMessage(result, documentType)
+          : { ...result, type: 'twake-scribe:applyAnswer' }
+      if (message === null) {
+        logger.warn(
+          `Scribe: capability call ignored: ${result.capability}`,
+          result.params
+        )
         return
       }
-      plugin.postMessage(
-        { ...result, type: 'twake-scribe:applyAnswer' },
-        serverOrigin
-      )
+      writingSurface.current = surface
+      setSkippedCells(null)
+      plugin.postMessage(message, serverOrigin)
     },
     [plugin, serverOrigin, documentType, handOverToPanel, requestDocument]
   )
+
+  const dismissSkippedCells = useCallback(() => setSkippedCells(null), [])
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -416,11 +434,13 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
       conversation: handOver?.conversation ?? null,
       handOverId: handOver?.id ?? null,
       documentData,
+      skippedCells,
       open,
       close,
       openPopover,
       closePopover,
-      applyResult
+      applyResult,
+      dismissSkippedCells
     }),
     [
       plugin,
@@ -432,11 +452,13 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
       popoverSource,
       handOver,
       documentData,
+      skippedCells,
       open,
       close,
       openPopover,
       closePopover,
-      applyResult
+      applyResult,
+      dismissSkippedCells
     ]
   )
 

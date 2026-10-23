@@ -169,6 +169,20 @@ export class ScribePage {
   }
 
   /**
+   * The notice, in a surface of the scribe, of the selected cells its answer
+   * had no cell for
+   */
+  skippedCellsNotice(surface: Locator): Locator {
+    return surface.getByRole('alert')
+  }
+
+  async closeSkippedCellsNotice(surface: Locator): Promise<void> {
+    await this.skippedCellsNotice(surface)
+      .getByRole('button', { name: 'Close' })
+      .click()
+  }
+
+  /**
    * Keeps, in each frame loaded from now on, the data of the intent it
    * receives: the assistant reads them once, at its opening
    */

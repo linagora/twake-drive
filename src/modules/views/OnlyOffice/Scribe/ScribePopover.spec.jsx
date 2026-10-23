@@ -217,11 +217,37 @@ describe('ScribePopover', () => {
       conversation: 'c1'
     })
 
-    expect(applyResult).toHaveBeenCalledWith({
-      request: 'panel',
-      draft: '',
-      conversation: 'c1'
+    expect(applyResult).toHaveBeenCalledWith(
+      {
+        request: 'panel',
+        draft: '',
+        conversation: 'c1'
+      },
+      'popover'
+    )
+  })
+
+  it('shows how many cells of its answer were skipped', () => {
+    const dismissSkippedCells = jest.fn()
+    setup({
+      scribe: {
+        skippedCells: { surface: 'popover', count: 3 },
+        dismissSkippedCells
+      }
     })
+
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Table: 3 cells of the answer were not written'
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+    expect(dismissSkippedCells).toHaveBeenCalledTimes(1)
+  })
+
+  it('leaves the cells skipped by an answer of the panel to the panel', () => {
+    setup({ scribe: { skippedCells: { surface: 'panel', count: 3 } } })
+
+    expect(screen.queryByRole('alert')).toBe(null)
   })
 
   it('closes when the assistant cancels', () => {

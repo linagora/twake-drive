@@ -17,6 +17,12 @@
     .scribe-panel--dark &
         box-shadow 0 2px 4px rgba(0, 0, 0, .55), 0 16px 40px rgba(0, 0, 0, .55)
 
+// A basis of 0 gives the intent, which is 100% high, a definite height under
+// the notice
+.scribe-panel-intent
+    flex 1 1 0
+    min-height 0
+
 // The whole gutter between the editor and the card is the grab area; the
 // grip shows on hover
 .scribe-resize-handle

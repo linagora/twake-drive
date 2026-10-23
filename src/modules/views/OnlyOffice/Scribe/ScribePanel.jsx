@@ -9,6 +9,7 @@ import styles from './styles.styl'
 import { ScribeIntent } from '@/modules/views/OnlyOffice/Scribe/ScribeIntent'
 import { useScribe } from '@/modules/views/OnlyOffice/Scribe/ScribeProvider'
 import { ScribeResizeHandle } from '@/modules/views/OnlyOffice/Scribe/ScribeResizeHandle'
+import { ScribeSkippedCellsNotice } from '@/modules/views/OnlyOffice/Scribe/ScribeSkippedCellsNotice'
 import {
   PANEL_DEFAULT_WIDTH,
   clampPanelWidth
@@ -59,17 +60,26 @@ export const ScribePanel = () => {
     >
       <ScribeResizeHandle width={panelWidth} onResize={handleResize} />
       <div
-        className={cx('u-flex-grow-1 u-ov-hidden', styles['scribe-panel-card'])}
+        className={cx(
+          'u-flex u-flex-column u-flex-grow-1 u-ov-hidden',
+          styles['scribe-panel-card']
+        )}
       >
-        <ScribeIntent
-          key={handOverId}
-          layout="panel"
-          source={source}
-          draft={draft}
-          conversation={conversation}
-          onResult={applyResult}
-          onCancel={close}
+        <ScribeSkippedCellsNotice
+          surface="panel"
+          className="u-flex-shrink-0 u-m-half"
         />
+        <div className={styles['scribe-panel-intent']}>
+          <ScribeIntent
+            key={handOverId}
+            layout="panel"
+            source={source}
+            draft={draft}
+            conversation={conversation}
+            onResult={result => applyResult(result, 'panel')}
+            onCancel={close}
+          />
+        </div>
       </div>
     </aside>
   )
