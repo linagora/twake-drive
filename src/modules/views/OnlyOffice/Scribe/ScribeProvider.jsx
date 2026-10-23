@@ -339,6 +339,8 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
   // the panel opens a new intent with them, even when it is open
   const handOverToPanel = useCallback(
     ({ draft = null, conversation = null }) => {
+      // The popover goes, and the panel gets a new intent
+      setSkippedCells(null)
       setHandOver(current => ({
         draft,
         conversation,

@@ -237,7 +237,7 @@ describe('ScribePopover', () => {
     })
 
     expect(screen.getByRole('alert')).toHaveTextContent(
-      'Table: 3 cells of the answer were not written'
+      'Table: 3 selected cells were left unchanged'
     )
 
     fireEvent.click(screen.getByRole('button', { name: 'Close' }))

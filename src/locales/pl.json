@@ -39,7 +39,7 @@
       "selectionMenu": "Menu Scribe",
       "panel": "Panel Scribe",
       "resizeHandle": "Zmień rozmiar panelu",
-      "skippedCells": "Tabela: liczba niezapisanych komórek odpowiedzi: %{count}",
+      "skippedCells": "Tabela: liczba niezmienionych zaznaczonych komórek: %{smart_count}",
       "closeNotice": "Zamknij",
       "suggestions": {
         "newSlide": "Nowy slajd",

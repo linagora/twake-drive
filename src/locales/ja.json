@@ -39,7 +39,7 @@
       "selectionMenu": "Scribe メニュー",
       "panel": "Scribe パネル",
       "resizeHandle": "パネルのサイズを変更",
-      "skippedCells": "表：回答のセル %{count} 個が書き込まれませんでした",
+      "skippedCells": "表：選択したセルのうち %{smart_count} 個は変更されませんでした",
       "closeNotice": "閉じる",
       "suggestions": {
         "newSlide": "新しいスライド",

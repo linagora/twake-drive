@@ -663,7 +663,7 @@
       "selectionMenu": "Меню Scribe",
       "panel": "Панель Scribe",
       "resizeHandle": "Изменить размер панели",
-      "skippedCells": "Таблица: не записано ячеек ответа: %{count}",
+      "skippedCells": "Таблица: выделенных ячеек без изменений: %{smart_count}",
       "closeNotice": "Закрыть",
       "suggestions": {
         "newSlide": "Новый слайд",

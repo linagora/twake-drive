@@ -663,7 +663,7 @@
       "selectionMenu": "Scribe Menu",
       "panel": "Scribe Panel",
       "resizeHandle": "Resize the panel",
-      "skippedCells": "Table: %{count} cells of the answer were not written",
+      "skippedCells": "Table: %{smart_count} selected cell was left unchanged |||| Table: %{smart_count} selected cells were left unchanged",
       "closeNotice": "Close",
       "suggestions": {
         "newSlide": "New slide",

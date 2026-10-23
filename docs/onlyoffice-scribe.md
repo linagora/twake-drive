@@ -244,6 +244,7 @@ The Markdown of the editor leaves out the underline and the reference of a footn
 
 What holds for every marker:
 
+- Drive gives the assistant `rules` (`src/modules/views/OnlyOffice/Scribe/rules.js`): a sentence for each kind of marker the text holds, which tells it to keep them as they are and to add none; the text of a link's marker may change, not its id. See [The data of the intent](#the-data-of-the-intent).
 - A marker the answer keeps twice gives two notes, two links, two copies.
 - A note, a link or an image whose marker the answer leaves out is not written.
 - A marker the text did not give is removed for a note, leaves its text plain for a link, and is written as `[image]` for an image.
@@ -279,7 +280,7 @@ A table of the answer written under the table of the selection, or in place of a
 - A table with merged cells, with a table in a cell or with rows of different lengths is neither cut down nor given another shape. A table of the shape of the selected cells, to insert after such a table, is a copy of the whole table, with those cells rewritten and left selected. Any other table of the answer gives a new table, as for a text.
 - A table of the answer with merged cells, for a table without, gives a new table too.
 
-When an answer with a table replaces a selection across the edge of a table, `twake-scribe:applied` carries the count of the selected cells the answer had no cell for. It is 0 for any other answer. Above the assistant of the panel or the popover the answer came from, Drive then shows "Table: N cells of the answer were not written", until the user closes it, the next answer is written, or that panel or popover closes.
+When an answer with a table replaces a selection across the edge of a table, `twake-scribe:applied` carries the count of the selected cells the answer had no cell for. It is 0 for any other answer. Above the assistant of the panel or the popover the answer came from, Drive then shows "Table: N selected cells were left unchanged", until the user closes it, the next answer is written, that panel or popover closes, or the popover hands over to the panel.
 
 ### Presentations
 
