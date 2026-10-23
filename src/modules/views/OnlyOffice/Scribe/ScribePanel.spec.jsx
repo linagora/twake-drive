@@ -277,11 +277,14 @@ describe('ScribePanel', () => {
 
     fireEvent.click(screen.getByTestId('intent-iframe'))
 
-    expect(applyResult).toHaveBeenCalledWith({
-      answerAction: 'insert',
-      text: 'Bonjour',
-      format: 'markdown'
-    })
+    expect(applyResult).toHaveBeenCalledWith(
+      {
+        answerAction: 'insert',
+        text: 'Bonjour',
+        format: 'markdown'
+      },
+      'panel'
+    )
     expect(close).not.toHaveBeenCalled()
   })
 
@@ -290,11 +293,32 @@ describe('ScribePanel', () => {
 
     fireEvent.click(screen.getByTestId('intent-capability'))
 
-    expect(applyResult).toHaveBeenCalledWith({
-      capability: 'insert_slide',
-      params: { title: 'Budget', bullets: ['Dépenses'] }
-    })
+    expect(applyResult).toHaveBeenCalledWith(
+      {
+        capability: 'insert_slide',
+        params: { title: 'Budget', bullets: ['Dépenses'] }
+      },
+      'panel'
+    )
     expect(close).not.toHaveBeenCalled()
+  })
+
+  it('shows how many cells were skipped', () => {
+    const dismissSkippedCells = jest.fn()
+    setup({ skippedCells: { surface: 'panel', count: 2 }, dismissSkippedCells })
+
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Table: 2 cells of the answer were not written'
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }))
+    expect(dismissSkippedCells).toHaveBeenCalledTimes(1)
+  })
+
+  it('leaves the cells skipped by an answer of the popover to the popover', () => {
+    setup({ skippedCells: { surface: 'popover', count: 2 } })
+
+    expect(screen.queryByRole('alert')).toBe(null)
   })
 
   it('resizes the panel from the handle, without a jump where it is grabbed', () => {

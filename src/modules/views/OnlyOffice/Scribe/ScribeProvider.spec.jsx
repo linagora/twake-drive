@@ -33,6 +33,12 @@ const TABLE = {
   }
 }
 
+const ANSWER = {
+  answerAction: 'replace',
+  text: 'Bonjour',
+  format: 'markdown'
+}
+
 const ScribeState = ({ results = [] }) => {
   const {
     isAvailable,
@@ -46,11 +52,13 @@ const ScribeState = ({ results = [] }) => {
     draft,
     conversation,
     documentData,
+    skippedCells,
     open,
     close,
     openPopover,
     closePopover,
-    applyResult
+    applyResult,
+    dismissSkippedCells
   } = useScribe()
   const geometry = useScribeGeometry()
 
@@ -68,25 +76,22 @@ const ScribeState = ({ results = [] }) => {
       <output data-testid="document">{JSON.stringify(documentData)}</output>
       <output data-testid="geometry">{JSON.stringify(geometry)}</output>
       <output data-testid="source">{JSON.stringify(source)}</output>
+      <output data-testid="skipped-cells">
+        {JSON.stringify(skippedCells)}
+      </output>
       <button onClick={() => open({ source: 'selection' })}>open</button>
       <button onClick={close}>close</button>
       <button onClick={() => openPopover({ source: 'selection' })}>
         open popover
       </button>
       <button onClick={closePopover}>close popover</button>
-      <button
-        onClick={() =>
-          applyResult({
-            answerAction: 'replace',
-            text: 'Bonjour',
-            format: 'markdown'
-          })
-        }
-      >
-        apply
+      <button onClick={() => applyResult(ANSWER, 'panel')}>apply</button>
+      <button onClick={() => applyResult(ANSWER, 'popover')}>
+        apply in popover
       </button>
+      <button onClick={dismissSkippedCells}>dismiss skipped cells</button>
       {results.map((result, index) => (
-        <button key={index} onClick={() => applyResult(result)}>
+        <button key={index} onClick={() => applyResult(result, 'panel')}>
           {`result ${index}`}
         </button>
       ))}
@@ -135,6 +140,8 @@ const setup = ({
   const getSource = () => JSON.parse(screen.getByTestId('source').textContent)
   const getDocumentData = () =>
     JSON.parse(screen.getByTestId('document').textContent)
+  const getSkippedCells = () =>
+    JSON.parse(screen.getByTestId('skipped-cells').textContent)
   // Every ready plugin is told to show its entries in the editor's toolbar
   const getSent = () =>
     plugin.postMessage.mock.calls.filter(
@@ -150,6 +157,7 @@ const setup = ({
     getGeometry,
     getSource,
     getDocumentData,
+    getSkippedCells,
     getSent
   }
 }
@@ -973,6 +981,79 @@ describe('ScribeProvider', () => {
 
     expect(getSent()).toEqual([])
     expect(logger.warn).toHaveBeenCalledTimes(1)
+  })
+
+  describe('the cells of the selection an answer had no cell for', () => {
+    const setupOpen = () => {
+      addEditorFrame(FRAME)
+      const scribe = setup()
+      scribe.receive({ type: 'twake-scribe:ready' })
+      scribe.receive(SELECTION_GEOMETRY)
+      fireEvent.click(screen.getByText('open'))
+      scribe.receive({ type: 'twake-scribe:content', ...SELECTED_TEXT })
+      return scribe
+    }
+
+    it('keeps the count of cells the plugin skipped', () => {
+      const { receive, getSkippedCells } = setupOpen()
+
+      fireEvent.click(screen.getByText('apply'))
+      expect(getSkippedCells()).toBe(null)
+      receive({ type: 'twake-scribe:applied', skippedCells: 2 })
+
+      expect(getSkippedCells()).toEqual({ surface: 'panel', count: 2 })
+    })
+
+    it('keeps no count when none was skipped, or before an answer', () => {
+      const { receive, getSkippedCells } = setupOpen()
+
+      receive({ type: 'twake-scribe:applied', skippedCells: 4 })
+      expect(getSkippedCells()).toBe(null)
+
+      fireEvent.click(screen.getByText('apply'))
+      receive({ type: 'twake-scribe:applied', skippedCells: 0 })
+      expect(getSkippedCells()).toBe(null)
+      receive({ type: 'twake-scribe:applied' })
+      expect(getSkippedCells()).toBe(null)
+    })
+
+    it('forgets the count on the next answer, once dismissed, and once its surface closes', () => {
+      const { receive, getSkippedCells } = setupOpen()
+      fireEvent.click(screen.getByText('open popover'))
+      receive({ type: 'twake-scribe:content', ...SELECTED_TEXT })
+
+      fireEvent.click(screen.getByText('apply in popover'))
+      receive({ type: 'twake-scribe:applied', skippedCells: 1 })
+      expect(getSkippedCells()).toEqual({ surface: 'popover', count: 1 })
+
+      fireEvent.click(screen.getByText('apply'))
+      expect(getSkippedCells()).toBe(null)
+      receive({ type: 'twake-scribe:applied', skippedCells: 3 })
+      expect(getSkippedCells()).toEqual({ surface: 'panel', count: 3 })
+
+      fireEvent.click(screen.getByText('close popover'))
+      expect(getSkippedCells()).toEqual({ surface: 'panel', count: 3 })
+
+      fireEvent.click(screen.getByText('dismiss skipped cells'))
+      expect(getSkippedCells()).toBe(null)
+
+      fireEvent.click(screen.getByText('apply'))
+      receive({ type: 'twake-scribe:applied', skippedCells: 2 })
+      fireEvent.click(screen.getByText('close'))
+      expect(getSkippedCells()).toBe(null)
+    })
+
+    it('keeps no count for a surface closed before the plugin answered', () => {
+      const { receive, getSkippedCells } = setupOpen()
+      fireEvent.click(screen.getByText('open popover'))
+      receive({ type: 'twake-scribe:content', ...SELECTED_TEXT })
+
+      fireEvent.click(screen.getByText('apply in popover'))
+      fireEvent.click(screen.getByText('close popover'))
+      receive({ type: 'twake-scribe:applied', skippedCells: 2 })
+
+      expect(getSkippedCells()).toBe(null)
+    })
   })
 
   describe('the document asked for by the assistant', () => {

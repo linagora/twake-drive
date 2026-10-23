@@ -663,6 +663,8 @@
       "selectionMenu": "Menu di Scribe",
       "panel": "Pannello di Scribe",
       "resizeHandle": "Ridimensiona il pannello",
+      "skippedCells": "Tabella: %{count} celle della risposta non sono state scritte",
+      "closeNotice": "Chiudi",
       "suggestions": {
         "newSlide": "Nuova diapositiva",
         "newSlideMessage": "Aggiungi una nuova diapositiva dopo questa, sul testo",

@@ -24,6 +24,7 @@ import {
   useScribe,
   useScribeGeometry
 } from '@/modules/views/OnlyOffice/Scribe/ScribeProvider'
+import { ScribeSkippedCellsNotice } from '@/modules/views/OnlyOffice/Scribe/ScribeSkippedCellsNotice'
 
 const GAP = 12
 const EDGE_PADDING = 8
@@ -252,10 +253,11 @@ export const ScribePopover = () => {
       </Portal>
       {isPopoverOpen && (
         <Surface label={label} onClose={closePopover}>
+          <ScribeSkippedCellsNotice surface="popover" className="u-m-half" />
           <ScribeIntent
             layout="compact"
             source={popoverSource}
-            onResult={applyResult}
+            onResult={result => applyResult(result, 'popover')}
             onCancel={closePopover}
           />
         </Surface>

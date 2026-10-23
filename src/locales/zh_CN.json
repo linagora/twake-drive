@@ -39,6 +39,8 @@
       "selectionMenu": "Scribe 菜单",
       "panel": "Scribe 面板",
       "resizeHandle": "调整面板大小",
+      "skippedCells": "表格：答案中有 %{count} 个单元格未写入",
+      "closeNotice": "关闭",
       "suggestions": {
         "newSlide": "新幻灯片",
         "newSlideMessage": "在这张幻灯片之后添加一张关于该文本的新幻灯片",

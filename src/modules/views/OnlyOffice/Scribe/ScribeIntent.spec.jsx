@@ -79,6 +79,27 @@ describe('ScribeIntent', () => {
     expect(getIntentProps().data.documentAvailable).toBe(false)
   })
 
+  it('tells the assistant the rules of the markers of the text', () => {
+    setup()
+    expect(getIntentProps().data).not.toHaveProperty('rules')
+
+    setup({}, { content: 'Un <u>texte</u>' })
+    expect(getIntentProps().data.rules).toBe(
+      'Keep the <u> and </u> tags around the underlined text, and do not add any.'
+    )
+
+    setup(
+      {},
+      {
+        documentData: {
+          document: 'Titre ![image 1]',
+          documentTruncated: false
+        }
+      }
+    )
+    expect(getIntentProps().data).not.toHaveProperty('rules')
+  })
+
   it('gives the assistant the document it asked for', () => {
     setup()
     expect(getIntentProps().data).not.toHaveProperty('document')

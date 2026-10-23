@@ -9,6 +9,7 @@ import {
   makeCapabilities,
   makeSuggestions
 } from '@/modules/views/OnlyOffice/Scribe/capabilities'
+import { makeRules } from '@/modules/views/OnlyOffice/Scribe/rules'
 
 /**
  * The Assistant intent on the text of the scribe, in the panel or in the
@@ -58,6 +59,8 @@ export const ScribeIntent = ({
       : ['insert']
   const capabilities = makeCapabilities({ documentType, t })
   const suggestions = makeSuggestions({ documentType, t })
+  // Of the text alone: the plugin gives the whole document without markers
+  const rules = makeRules(content)
   const data = {
     content,
     answerActions: answerActions.map(name => ({
@@ -72,6 +75,7 @@ export const ScribeIntent = ({
     source,
     ...(draft !== null && { draft }),
     ...(conversation !== null && { conversation }),
+    ...(rules !== undefined && { rules }),
     // The plugin reads the whole document of a text document only
     documentAvailable: documentType === 'word',
     ...documentData

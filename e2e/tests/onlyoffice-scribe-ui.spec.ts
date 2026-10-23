@@ -337,6 +337,41 @@ test.describe('the scribe of Drive', { tag: '@e2e-scribe' }, () => {
       })
   })
 
+  // The case T11 of table-plain.cases.json: its answer has a cell for one of
+  // the two selected cells
+  test('the panel tells how many selected cells an answer left', async ({
+    alicePage
+  }) => {
+    const fileId = await uploadScribeDocument(
+      USERS.alice.instance,
+      'table-plain.docx'
+    )
+    const scribe = new ScribePage(alicePage)
+    const plugin = new ScribePluginPage(alicePage)
+    await scribe.openDocument(USERS.alice.appUrl, fileId)
+    await scribe.watchIntentData()
+
+    // Ended with keys, as by ScribePage.selectInEditor, this selection loses
+    // its cells: the plugin reads the selection of the API as it is
+    await plugin.select('P1@mid..T1.C(0,1)@end')
+    await scribe.openPanel()
+    await expect(scribe.panel()).toBeVisible()
+    await expect(scribe.skippedCellsNotice(scribe.panel())).toBeHidden()
+    await scribe.postIntentResult(scribe.panel(), {
+      answerAction: 'replace',
+      text: 'Head edit\n\n<table>\n  <tr><td>AA</td></tr>\n</table>',
+      format: 'markdown'
+    })
+
+    await expect(scribe.skippedCellsNotice(scribe.panel())).toHaveText(
+      'Table: 1 cells of the answer were not written',
+      { timeout: 15_000 }
+    )
+
+    await scribe.closeSkippedCellsNotice(scribe.panel())
+    await expect(scribe.skippedCellsNotice(scribe.panel())).toBeHidden()
+  })
+
   test('the popover is a drawer on a narrow screen', async ({ alicePage }) => {
     const fileId = await uploadScribeDocument(
       USERS.alice.instance,
