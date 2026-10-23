@@ -1,5 +1,10 @@
 import config from '../config.json'
-import { makeOpenMessage, makeToolbarItems, readEditorLang } from './toolbar'
+import {
+  isInlineEntry,
+  makeOpenMessage,
+  makeToolbarItems,
+  readEditorLang
+} from './toolbar'
 
 const BASE_URL =
   'https://onlyoffice.example.org/9.4.0-1/sdkjs-plugins/twake-scribe/'
@@ -114,5 +119,14 @@ describe('makeOpenMessage', () => {
 
   it('sends nothing for another entry', () => {
     expect(makeOpenMessage('scribeToolbarBtn', 'Un texte')).toBe(null)
+  })
+})
+
+describe('isInlineEntry', () => {
+  it('tells the entries that need the selected text', () => {
+    expect(isInlineEntry('scribe')).toBe(true)
+    expect(isInlineEntry('scribeInline')).toBe(true)
+    expect(isInlineEntry('scribePanel')).toBe(false)
+    expect(isInlineEntry('scribeToolbarBtn')).toBe(false)
   })
 })

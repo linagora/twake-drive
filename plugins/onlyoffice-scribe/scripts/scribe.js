@@ -8,7 +8,12 @@ import {
   readSlideContent,
   writeSlideLines
 } from './presentation.js'
-import { makeOpenMessage, makeToolbarItems, readEditorLang } from './toolbar.js'
+import {
+  isInlineEntry,
+  makeOpenMessage,
+  makeToolbarItems,
+  readEditorLang
+} from './toolbar.js'
 
 // The plugin is in the frame of the editor, itself in the app that shows it
 const host = window.parent.parent
@@ -427,9 +432,11 @@ function findHostOrigin() {
 }
 
 // The selection is read when clicked: lastSelectedTextLive follows it only
-// where the editor gives its geometry, not in a presentation
+// where the editor gives its geometry, not in a presentation. The panel
+// entry does not wait for it.
 async function handleToolbarClick(id) {
-  const message = makeOpenMessage(id, await fetchSelectedText())
+  const selectedText = isInlineEntry(id) ? await fetchSelectedText() : null
+  const message = makeOpenMessage(id, selectedText)
   if (message !== null) host.postMessage(message, appOrigin)
 }
 
