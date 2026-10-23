@@ -19,7 +19,7 @@ export interface Box {
  * Drive's chrome around the scribe of an OnlyOffice document: the AI button
  * of the toolbar, the button under the selection, the floating button of the
  * document area, the entries of the plugin in the ribbon of the editor, and
- * the panel and the popover that hold the assistant
+ * the panel that holds the assistant
  */
 export class ScribePage {
   constructor(private readonly page: Page) {}
@@ -121,12 +121,17 @@ export class ScribePage {
       .getByRole('button', { name, exact: true })
   }
 
+  // The button under the selection has the same name
   toolbarButton(): Locator {
-    return this.page.getByRole('button', { name: 'Help me write' })
+    return this.page
+      .getByRole('button', { name: 'Help me write' })
+      .and(this.page.locator(':not([data-testid="scribe-selection-button"] *)'))
   }
 
   selectionButton(): Locator {
-    return this.page.getByRole('button', { name: 'Scribe Menu' })
+    return this.page
+      .getByTestId('scribe-selection-button')
+      .getByRole('button', { name: 'Help me write' })
   }
 
   floatingButton(): Locator {
@@ -149,23 +154,14 @@ export class ScribePage {
     return this.page.getByRole('complementary', { name: 'Help me write' })
   }
 
-  /** The scribe on the selection, in a popover anchored to it */
-  popover(): Locator {
-    return this.page
-      .getByRole('dialog', { name: 'Scribe Menu' })
-      .and(this.page.getByTestId('scribe-popover'))
-  }
-
-  /** The scribe on the selection, in a drawer at the bottom of a small screen */
-  drawer(): Locator {
-    return this.page
-      .getByRole('dialog', { name: 'Scribe Menu' })
-      .and(this.page.getByTestId('scribe-drawer'))
-  }
-
   /** The frame of the assistant in a surface of the scribe */
   intentFrame(surface: Locator): Locator {
     return surface.locator('iframe')
+  }
+
+  /** Every frame of an intent in the page */
+  intentFrames(): Locator {
+    return this.page.locator('iframe.coz-intent')
   }
 
   /**
@@ -215,35 +211,6 @@ export class ScribePage {
     return intentId
   }
 
-  /** Swipes the grip of the drawer down by dy px, as a finger does */
-  async swipeDrawerDown(dy: number): Promise<void> {
-    await this.drawer()
-      .getByTestId('scribe-drawer-handle')
-      .evaluate((handle, distance) => {
-        const box = handle.getBoundingClientRect()
-        const clientX = box.left + box.width / 2
-        const clientY = box.top + box.height / 2
-        const makeTouch = (y: number): Touch =>
-          new Touch({ identifier: 1, target: handle, clientX, clientY: y })
-        const start = makeTouch(clientY)
-        const end = makeTouch(clientY + distance)
-        handle.dispatchEvent(
-          new TouchEvent('touchstart', {
-            bubbles: true,
-            touches: [start],
-            changedTouches: [start]
-          })
-        )
-        handle.dispatchEvent(
-          new TouchEvent('touchend', {
-            bubbles: true,
-            touches: [],
-            changedTouches: [end]
-          })
-        )
-      }, dy)
-  }
-
   private async findIntentFrame(surface: Locator): Promise<Frame> {
     const handle = await this.intentFrame(surface).elementHandle()
     const frame = await handle?.contentFrame()
@@ -286,18 +253,6 @@ export class ScribePage {
       type: `intent-${intentId}:result`,
       result
     })
-  }
-
-  /** Presses Escape with the focus in the page of Drive, out of its frames */
-  async pressEscapeInPage(): Promise<void> {
-    await this.page.evaluate(() => {
-      ;(document.activeElement as HTMLElement | null)?.blur()
-    })
-    await this.page.keyboard.press('Escape')
-  }
-
-  async setWindowSize(width: number, height: number): Promise<void> {
-    await this.page.setViewportSize({ width, height })
   }
 
   assistantFrame(): FrameLocator {

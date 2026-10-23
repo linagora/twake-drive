@@ -13,14 +13,9 @@ jest.mock('@/modules/views/OnlyOffice/Scribe/ScribeProvider', () => ({
 }))
 
 const mockIntentIframe = jest.fn()
-const mockIntentMount = jest.fn()
 jest.mock('cozy-ui-plus/dist/Intent/IntentIframe', () => {
-  const { useEffect } = jest.requireActual('react')
   const IntentIframe = props => {
     mockIntentIframe(props)
-    useEffect(() => {
-      mockIntentMount()
-    }, [])
     return (
       <>
         <button
@@ -57,9 +52,6 @@ const setup = (scribe = {}) => {
     target: 'selection',
     documentType: 'word',
     source: 'toolbar',
-    draft: null,
-    conversation: null,
-    handOverId: null,
     close,
     applyResult,
     ...scribe
@@ -110,52 +102,8 @@ describe('ScribePanel', () => {
           { name: 'replace', label: 'Replace' }
         ],
         theme: { type: 'light' },
-        layout: 'panel',
         source: 'toolbar'
       }
-    })
-    expect(getIntentProps().data).not.toHaveProperty('draft')
-    expect(getIntentProps().data).not.toHaveProperty('conversation')
-  })
-
-  it('opens the assistant on the draft and the conversation handed over by the popover', () => {
-    setup({
-      source: 'popover',
-      draft: 'Plus court',
-      conversation: 'c1',
-      handOverId: 1
-    })
-
-    expect(getIntentProps().data).toMatchObject({
-      layout: 'panel',
-      source: 'popover',
-      draft: 'Plus court',
-      conversation: 'c1'
-    })
-  })
-
-  it('opens a new intent for each hand-over, never the open one', () => {
-    mockIntentMount.mockClear()
-    const { rerender } = setup()
-    expect(mockIntentMount).toHaveBeenCalledTimes(1)
-
-    useScribe.mockReturnValue({
-      ...useScribe(),
-      source: 'popover',
-      draft: 'Plus court',
-      conversation: 'c1',
-      handOverId: 1
-    })
-    rerender(
-      <AppLike client={createMockClient({})}>
-        <ScribePanel />
-      </AppLike>
-    )
-
-    expect(mockIntentMount).toHaveBeenCalledTimes(2)
-    expect(getIntentProps().data).toMatchObject({
-      draft: 'Plus court',
-      conversation: 'c1'
     })
   })
 
@@ -277,14 +225,11 @@ describe('ScribePanel', () => {
 
     fireEvent.click(screen.getByTestId('intent-iframe'))
 
-    expect(applyResult).toHaveBeenCalledWith(
-      {
-        answerAction: 'insert',
-        text: 'Bonjour',
-        format: 'markdown'
-      },
-      'panel'
-    )
+    expect(applyResult).toHaveBeenCalledWith({
+      answerAction: 'insert',
+      text: 'Bonjour',
+      format: 'markdown'
+    })
     expect(close).not.toHaveBeenCalled()
   })
 
@@ -293,19 +238,16 @@ describe('ScribePanel', () => {
 
     fireEvent.click(screen.getByTestId('intent-capability'))
 
-    expect(applyResult).toHaveBeenCalledWith(
-      {
-        capability: 'insert_slide',
-        params: { title: 'Budget', bullets: ['Dépenses'] }
-      },
-      'panel'
-    )
+    expect(applyResult).toHaveBeenCalledWith({
+      capability: 'insert_slide',
+      params: { title: 'Budget', bullets: ['Dépenses'] }
+    })
     expect(close).not.toHaveBeenCalled()
   })
 
   it('shows how many cells were skipped', () => {
     const dismissSkippedCells = jest.fn()
-    setup({ skippedCells: { surface: 'panel', count: 2 }, dismissSkippedCells })
+    setup({ skippedCells: 2, dismissSkippedCells })
 
     expect(screen.getByRole('alert')).toHaveTextContent(
       'Table: 2 selected cells were left unchanged'
@@ -316,17 +258,11 @@ describe('ScribePanel', () => {
   })
 
   it('says a single skipped cell in the singular', () => {
-    setup({ skippedCells: { surface: 'panel', count: 1 } })
+    setup({ skippedCells: 1 })
 
     expect(screen.getByRole('alert')).toHaveTextContent(
       'Table: 1 selected cell was left unchanged'
     )
-  })
-
-  it('leaves the cells skipped by an answer of the popover to the popover', () => {
-    setup({ skippedCells: { surface: 'popover', count: 2 } })
-
-    expect(screen.queryByRole('alert')).toBe(null)
   })
 
   it('resizes the panel from the handle, without a jump where it is grabbed', () => {

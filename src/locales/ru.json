@@ -660,7 +660,6 @@
       "insert": "Вставить",
       "replace": "Заменить",
       "insertSlide": "Вставить слайд",
-      "selectionMenu": "Меню Scribe",
       "panel": "Панель Scribe",
       "resizeHandle": "Изменить размер панели",
       "skippedCells": "Таблица: выделенных ячеек без изменений: %{smart_count}",

@@ -660,7 +660,6 @@
       "insert": "Inserisci",
       "replace": "Sostituisci",
       "insertSlide": "Inserisci la diapositiva",
-      "selectionMenu": "Menu di Scribe",
       "panel": "Pannello di Scribe",
       "resizeHandle": "Ridimensiona il pannello",
       "skippedCells": "Tabella: %{smart_count} cella selezionata è rimasta invariata |||| Tabella: %{smart_count} celle selezionate sono rimaste invariate",

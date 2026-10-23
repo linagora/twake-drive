@@ -660,7 +660,6 @@
       "insert": "Einfügen",
       "replace": "Ersetzen",
       "insertSlide": "Folie einfügen",
-      "selectionMenu": "Scribe-Menü",
       "panel": "Scribe-Bereich",
       "resizeHandle": "Größe des Bereichs ändern",
       "skippedCells": "Tabelle: %{smart_count} ausgewählte Zelle blieb unverändert |||| Tabelle: %{smart_count} ausgewählte Zellen blieben unverändert",

@@ -660,7 +660,6 @@
       "insert": "Chèn",
       "replace": "Thay thế",
       "insertSlide": "Chèn trang chiếu",
-      "selectionMenu": "Menu Scribe",
       "panel": "Bảng Scribe",
       "resizeHandle": "Thay đổi kích thước bảng",
       "skippedCells": "Bảng: %{smart_count} ô đã chọn không được thay đổi",

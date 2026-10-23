@@ -36,7 +36,6 @@
       "insert": "插入",
       "replace": "替换",
       "insertSlide": "插入幻灯片",
-      "selectionMenu": "Scribe 菜单",
       "panel": "Scribe 面板",
       "resizeHandle": "调整面板大小",
       "skippedCells": "表格：有 %{smart_count} 个选中的单元格未更改",

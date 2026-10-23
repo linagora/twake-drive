@@ -36,7 +36,6 @@
       "insert": "Wstaw",
       "replace": "Zastąp",
       "insertSlide": "Wstaw slajd",
-      "selectionMenu": "Menu Scribe",
       "panel": "Panel Scribe",
       "resizeHandle": "Zmień rozmiar panelu",
       "skippedCells": "Tabela: liczba niezmienionych zaznaczonych komórek: %{smart_count}",

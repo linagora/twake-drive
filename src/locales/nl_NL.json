@@ -530,7 +530,6 @@
       "insert": "Invoegen",
       "replace": "Vervangen",
       "insertSlide": "Dia invoegen",
-      "selectionMenu": "Scribe-menu",
       "panel": "Scribe-paneel",
       "resizeHandle": "Grootte van het paneel wijzigen",
       "skippedCells": "Tabel: %{smart_count} geselecteerde cel is ongewijzigd gebleven |||| Tabel: %{smart_count} geselecteerde cellen zijn ongewijzigd gebleven",

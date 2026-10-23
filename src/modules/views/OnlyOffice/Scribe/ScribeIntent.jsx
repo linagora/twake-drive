@@ -12,26 +12,15 @@ import {
 import { makeRules } from '@/modules/views/OnlyOffice/Scribe/rules'
 
 /**
- * The Assistant intent on the text of the scribe, in the panel or in the
- * popover. `layout`, `source`, `draft` and `conversation` are read by the
+ * The Assistant intent on the text of the scribe. `source` is read by the
  * assistant at its opening only.
  *
  * @param {object} props
- * @param {'panel' | 'compact'} props.layout
  * @param {string | null} props.source - where the scribe was opened from
- * @param {string | null} [props.draft] - the text of the composer handed over
- * @param {string | null} [props.conversation] - the conversation handed over
  * @param {Function} props.onResult
  * @param {Function} props.onCancel
  */
-export const ScribeIntent = ({
-  layout,
-  source,
-  draft = null,
-  conversation = null,
-  onResult,
-  onCancel
-}) => {
+export const ScribeIntent = ({ source, onResult, onCancel }) => {
   const { t } = useI18n()
   const { type: themeType } = useCozyTheme()
   const { content, target, canReplace, documentType } = useScribe()
@@ -44,8 +33,8 @@ export const ScribeIntent = ({
     }
   }, [])
 
-  // The page of the assistant may say it is cancelled as it unloads with its
-  // surface, once another surface has opened
+  // The page of the assistant may say it is cancelled as it unloads with the
+  // panel, once the panel has opened again
   const handleEnd = () => {
     if (isMounted.current) onCancel()
   }
@@ -69,10 +58,7 @@ export const ScribeIntent = ({
     ...(capabilities.length > 0 && { capabilities }),
     ...(suggestions.length > 0 && { suggestions }),
     theme: { type: themeType },
-    layout,
     source,
-    ...(draft !== null && { draft }),
-    ...(conversation !== null && { conversation }),
     ...(rules !== undefined && { rules })
   }
 

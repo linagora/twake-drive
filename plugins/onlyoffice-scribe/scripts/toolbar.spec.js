@@ -1,10 +1,5 @@
 import config from '../config.json'
-import {
-  isInlineEntry,
-  makeOpenMessage,
-  makeToolbarItems,
-  readEditorLang
-} from './toolbar'
+import { makeOpenMessage, makeToolbarItems, readEditorLang } from './toolbar'
 
 const BASE_URL =
   'https://onlyoffice.example.org/9.4.0-1/sdkjs-plugins/twake-scribe/'
@@ -43,14 +38,6 @@ describe('makeToolbarItems', () => {
           text: 'Assistant',
           items: [
             {
-              id: 'scribeInline',
-              type: 'button',
-              text: 'Scribe en ligne',
-              hint: 'Ouvrir Scribe sur le texte sélectionné',
-              icons: makeIcons('icon-inline'),
-              lockInViewMode: true
-            },
-            {
               id: 'scribePanel',
               type: 'button',
               text: 'Panneau Scribe',
@@ -70,8 +57,6 @@ describe('makeToolbarItems', () => {
         'Scribe',
         'Scribe AI writing assistant',
         'Assistant',
-        'Inline Scribe',
-        'Open Scribe on the selected text',
         'Scribe panel',
         'Open or close the Scribe panel'
       ])
@@ -91,42 +76,16 @@ describe('readEditorLang', () => {
 })
 
 describe('makeOpenMessage', () => {
-  it('asks the app to open or close the panel for its entry, with or without a selection', () => {
-    for (const selectedText of ['Un texte', '']) {
-      expect(makeOpenMessage('scribePanel', selectedText)).toEqual({
+  it('asks the app to open or close the panel for both entries', () => {
+    for (const id of ['scribe', 'scribePanel']) {
+      expect(makeOpenMessage(id)).toEqual({
         type: 'twake-scribe:open',
         source: 'toolbar-panel'
       })
     }
   })
 
-  it('asks the app to open on the selected text for the Scribe and Inline Scribe entries', () => {
-    for (const id of ['scribe', 'scribeInline']) {
-      expect(makeOpenMessage(id, 'Un texte')).toEqual({
-        type: 'twake-scribe:open',
-        source: 'toolbar-inline'
-      })
-    }
-  })
-
-  it('sends nothing for those entries without a selected text', () => {
-    for (const id of ['scribe', 'scribeInline']) {
-      for (const selectedText of [undefined, null, '', ' \n']) {
-        expect(makeOpenMessage(id, selectedText)).toBe(null)
-      }
-    }
-  })
-
   it('sends nothing for another entry', () => {
-    expect(makeOpenMessage('scribeToolbarBtn', 'Un texte')).toBe(null)
-  })
-})
-
-describe('isInlineEntry', () => {
-  it('tells the entries that need the selected text', () => {
-    expect(isInlineEntry('scribe')).toBe(true)
-    expect(isInlineEntry('scribeInline')).toBe(true)
-    expect(isInlineEntry('scribePanel')).toBe(false)
-    expect(isInlineEntry('scribeToolbarBtn')).toBe(false)
+    expect(makeOpenMessage('scribeToolbarBtn')).toBe(null)
   })
 })
