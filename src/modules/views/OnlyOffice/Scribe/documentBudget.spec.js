@@ -41,4 +41,15 @@ describe('cutDocument', () => {
       isTruncated: true
     })
   })
+
+  it('does not cut a character written in two code units', () => {
+    expect(cutDocument('ab😀cd', 3)).toEqual({
+      document: 'ab',
+      isTruncated: true
+    })
+    expect(cutDocument('ab😀cd', 4)).toEqual({
+      document: 'ab😀',
+      isTruncated: true
+    })
+  })
 })

@@ -1,5 +1,7 @@
 const PARAGRAPH_BREAK = '\n\n'
 
+const isHighSurrogate = code => code >= 0xd800 && code <= 0xdbff
+
 /**
  * The head of the whole document the assistant gets, within a budget of
  * characters: up to the last paragraph break that fits
@@ -13,8 +15,11 @@ export const cutDocument = (text, budget) => {
     return { document: text, isTruncated: false }
   }
   const lastBreak = text.lastIndexOf(PARAGRAPH_BREAK, budget)
+  if (lastBreak > 0) {
+    return { document: text.slice(0, lastBreak), isTruncated: true }
+  }
   // A text without a break in the budget is cut in its first paragraph,
-  // rather than given empty
-  const end = lastBreak > 0 ? lastBreak : budget
+  // rather than given empty, and not inside a character, as an emoji
+  const end = isHighSurrogate(text.charCodeAt(budget - 1)) ? budget - 1 : budget
   return { document: text.slice(0, end), isTruncated: true }
 }

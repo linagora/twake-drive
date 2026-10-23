@@ -1075,5 +1075,38 @@ describe('ScribeProvider', () => {
       receive({ type: 'twake-scribe:document', content: WHOLE_DOCUMENT })
       expect(getDocumentData()).toBe(null)
     })
+
+    it('waits for the same answer when asked again meanwhile', () => {
+      const { receive, getSent, getDocumentData } = setupOpen()
+
+      fireEvent.click(screen.getByText('result 0'))
+      fireEvent.click(screen.getByText('result 0'))
+      expect(getSent()).toEqual([
+        [{ type: 'twake-scribe:getDocument' }, SERVER_ORIGIN]
+      ])
+
+      receive({ type: 'twake-scribe:document', content: WHOLE_DOCUMENT })
+      expect(getDocumentData()).toEqual({
+        document: WHOLE_DOCUMENT,
+        documentTruncated: false
+      })
+    })
+
+    it('keeps the request of the panel when the popover closes', () => {
+      addEditorFrame(FRAME)
+      const { receive, getDocumentData } = setupOpen()
+      receive(SELECTION_GEOMETRY)
+      fireEvent.click(screen.getByText('open popover'))
+      receive({ type: 'twake-scribe:content', ...SELECTED_TEXT })
+
+      fireEvent.click(screen.getByText('result 0'))
+      fireEvent.click(screen.getByText('close popover'))
+      receive({ type: 'twake-scribe:document', content: WHOLE_DOCUMENT })
+
+      expect(getDocumentData()).toEqual({
+        document: WHOLE_DOCUMENT,
+        documentTruncated: false
+      })
+    })
   })
 })
