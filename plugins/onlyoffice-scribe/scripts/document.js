@@ -671,6 +671,31 @@ export function readContent() {
 }
 
 /**
+ * Reads the whole document as `readContent` reads it without a selection:
+ * its Markdown, a picture as `[image]`, and no marker. The editor gives the
+ * Markdown of the selection when there is one: the selection is put away,
+ * then selected again, at the positions it had in the document.
+ *
+ * @param {Function} readWhole - `readContent`, which the command gives:
+ * nothing defined outside of this function can be called from it
+ * @returns {string} the text, in Markdown
+ */
+export function readDocument(readWhole) {
+  const doc = Api.GetDocument()
+  const selection = doc.GetRangeBySelect()
+  // A cursor is no selection, and stays where it is. An image selected by a
+  // click has no range of text: it is selected again by itself.
+  const isSelected =
+    Boolean(selection) && selection.GetStartPos() < selection.GetEndPos()
+  const drawings = isSelected ? [] : doc.GetSelectedDrawings()
+  if (isSelected) doc.RemoveSelection()
+  const { content } = readWhole()
+  if (isSelected) selection.Select()
+  drawings.forEach(drawing => drawing.Select())
+  return content
+}
+
+/**
  * Writes the blocks of an answer in the document, with the styles of the
  * document: in place of the selection (`Asc.scope.isReplace`), or else at its
  * end or at the cursor: in the line when that is inside a text, after the

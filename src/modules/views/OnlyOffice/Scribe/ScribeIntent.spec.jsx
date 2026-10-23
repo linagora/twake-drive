@@ -21,13 +21,15 @@ jest.mock('cozy-ui-plus/dist/Intent/IntentIframe', () => ({
   }
 }))
 
-const setup = props => {
+const setup = (props, scribe = {}) => {
   const onResult = jest.fn()
   const onCancel = jest.fn()
   useScribe.mockReturnValue({
     content: 'Un **texte**',
     target: 'selection',
-    documentType: 'word'
+    documentType: 'word',
+    documentData: null,
+    ...scribe
   })
 
   const { unmount } = render(
@@ -67,5 +69,34 @@ describe('ScribeIntent', () => {
     cancelIntent()
 
     expect(onCancel).not.toHaveBeenCalled()
+  })
+
+  it('lets the assistant ask for the document of a text document only', () => {
+    setup()
+    expect(getIntentProps().data.documentAvailable).toBe(true)
+
+    setup({}, { documentType: 'slide', target: 'slide' })
+    expect(getIntentProps().data.documentAvailable).toBe(false)
+  })
+
+  it('gives the assistant the document it asked for', () => {
+    setup()
+    expect(getIntentProps().data).not.toHaveProperty('document')
+    expect(getIntentProps().data).not.toHaveProperty('documentTruncated')
+
+    setup(
+      {},
+      {
+        documentData: {
+          document: 'Titre\n\nUn **texte**',
+          documentTruncated: true
+        }
+      }
+    )
+    expect(getIntentProps().data).toMatchObject({
+      content: 'Un **texte**',
+      document: 'Titre\n\nUn **texte**',
+      documentTruncated: true
+    })
   })
 })

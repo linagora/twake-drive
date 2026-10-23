@@ -33,7 +33,8 @@ export const ScribeIntent = ({
 }) => {
   const { t } = useI18n()
   const { type: themeType } = useCozyTheme()
-  const { content, target, canReplace, documentType } = useScribe()
+  const { content, target, canReplace, documentType, documentData } =
+    useScribe()
   const isMounted = useRef(false)
 
   useEffect(() => {
@@ -70,7 +71,10 @@ export const ScribeIntent = ({
     layout,
     source,
     ...(draft !== null && { draft }),
-    ...(conversation !== null && { conversation })
+    ...(conversation !== null && { conversation }),
+    // The plugin reads the whole document of a text document only
+    documentAvailable: documentType === 'word',
+    ...documentData
   }
 
   return (
