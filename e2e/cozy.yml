@@ -7,6 +7,11 @@ admin:
 
 subdomains: flat
 
+# The stack hardcodes its default registry, which changed over releases; pin it
+# so app installs do not depend on the image version.
+registries:
+  - https://apps-registry.cozycloud.cc/
+
 fs:
   url: file:///var/lib/cozy/storage
   # The stack otherwise waits 15 minutes before recording a new version, which
