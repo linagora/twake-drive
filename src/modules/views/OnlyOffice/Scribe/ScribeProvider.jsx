@@ -392,9 +392,9 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
       }
       writingSurface.current = surface
       setSkippedCells(null)
-      plugin.postMessage(message, serverOrigin)
+      pluginWindow.current?.postMessage(message, serverOrigin)
     },
-    [plugin, serverOrigin, documentType, handOverToPanel, requestDocument]
+    [serverOrigin, documentType, handOverToPanel, requestDocument]
   )
 
   const dismissSkippedCells = useCallback(() => setSkippedCells(null), [])
