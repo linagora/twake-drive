@@ -714,6 +714,73 @@ describe('ScribeProvider', () => {
     expect(getPopover().isPopoverOpen).toBe(false)
   })
 
+  it('stops the plugin reading when the text awaited does not come in 3 s', () => {
+    jest.useFakeTimers()
+    addEditorFrame(FRAME)
+    const { plugin, receive, getState } = setup()
+    receive({ type: 'twake-scribe:ready' })
+    receive(SELECTION_GEOMETRY)
+    fireEvent.click(screen.getByText('open popover'))
+    receive({ type: 'twake-scribe:content', ...SELECTED_TEXT })
+    const isCloseSent = () =>
+      plugin.postMessage.mock.calls.some(
+        ([message]) => message.type === 'twake-scribe:close'
+      )
+
+    // The editor saves: the plugin does not answer
+    fireEvent.click(screen.getByText('open'))
+    fireEvent.click(screen.getByText('close popover'))
+    act(() => {
+      jest.advanceTimersByTime(2999)
+    })
+    expect(isCloseSent()).toBe(false)
+
+    act(() => {
+      jest.advanceTimersByTime(1)
+    })
+    expect(isCloseSent()).toBe(true)
+    expect(getState()).toEqual({ isAvailable: true, isOpen: false })
+  })
+
+  it('opens only the surface asked last once the text awaited is given up on', () => {
+    jest.useFakeTimers()
+    addEditorFrame(FRAME)
+    const { receive, getState, getPopover } = setup()
+    receive({ type: 'twake-scribe:ready' })
+    receive(SELECTION_GEOMETRY)
+    fireEvent.click(screen.getByText('open popover'))
+    receive({ type: 'twake-scribe:content', ...SELECTED_TEXT })
+    fireEvent.click(screen.getByText('open'))
+    fireEvent.click(screen.getByText('close popover'))
+
+    fireEvent.click(screen.getByText('open popover'))
+    receive({ type: 'twake-scribe:content', ...SELECTED_TEXT })
+    act(() => {
+      jest.advanceTimersByTime(3000)
+    })
+
+    expect(getPopover().isPopoverOpen).toBe(true)
+    expect(getState().isOpen).toBe(false)
+  })
+
+  it('leaves the popover as it is when asked to open it again', () => {
+    addEditorFrame(FRAME)
+    const { plugin, receive, getPopover, getSent } = setup()
+    receive({ type: 'twake-scribe:ready' })
+    receive(SELECTION_GEOMETRY)
+    fireEvent.click(screen.getByText('open popover'))
+    receive({ type: 'twake-scribe:content', ...SELECTED_TEXT })
+    plugin.postMessage.mockClear()
+
+    receive({ type: 'twake-scribe:open', source: 'toolbar-inline' })
+
+    expect(getSent()).toEqual([])
+    expect(getPopover()).toEqual({
+      isPopoverOpen: true,
+      popoverSource: 'selection'
+    })
+  })
+
   it('closes the popover when another text is selected', () => {
     addEditorFrame(FRAME)
     const { plugin, receive, getState, getPopover } = setup()
