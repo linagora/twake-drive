@@ -371,6 +371,14 @@ export const ScribeProvider = ({ serverUrl, documentType, children }) => {
         requestDocument()
         return
       }
+      // A newer assistant may send results this version does not know
+      const isAnswer =
+        typeof result?.answerAction === 'string' &&
+        typeof result?.text === 'string'
+      if (result?.capability === undefined && !isAnswer) {
+        logger.warn('Scribe: result ignored', result)
+        return
+      }
       const message =
         result?.capability !== undefined
           ? makeCapabilityMessage(result, documentType)
