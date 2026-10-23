@@ -34,8 +34,7 @@ export const ScribeIntent = ({
 }) => {
   const { t } = useI18n()
   const { type: themeType } = useCozyTheme()
-  const { content, target, canReplace, documentType, documentData } =
-    useScribe()
+  const { content, target, canReplace, documentType } = useScribe()
   const isMounted = useRef(false)
 
   useEffect(() => {
@@ -59,7 +58,6 @@ export const ScribeIntent = ({
       : ['insert']
   const capabilities = makeCapabilities({ documentType, t })
   const suggestions = makeSuggestions({ documentType, t })
-  // Of the text alone: the plugin gives the whole document without markers
   const rules = makeRules(content)
   const data = {
     content,
@@ -75,10 +73,7 @@ export const ScribeIntent = ({
     source,
     ...(draft !== null && { draft }),
     ...(conversation !== null && { conversation }),
-    ...(rules !== undefined && { rules }),
-    // The plugin reads the whole document of a text document only
-    documentAvailable: documentType === 'word',
-    ...documentData
+    ...(rules !== undefined && { rules })
   }
 
   return (

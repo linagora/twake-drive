@@ -1,4 +1,4 @@
-import { readContent, readDocument, writeBlocks } from './document.js'
+import { readContent, writeBlocks } from './document.js'
 import { isSameGeometry, readGeometry } from './geometry.js'
 import { makeBlocks, makeLineSpans, makeLines } from './markdown.js'
 import { writeMarkers } from './markers.js'
@@ -121,21 +121,6 @@ async function writePresentation(text, isReplace) {
 
 function fetchContent() {
   return isPresentation() ? readPresentation() : runInEditor(readContent)
-}
-
-// `callCommand` sends the source of what it is given: `readDocument` gets
-// the source of `readContent` with it
-const READ_DOCUMENT = `function () {
-  return (${readDocument})(${readContent})
-}`
-
-// The whole document, for the assistant to work with: null in a
-// presentation, and while the editor runs no command, as when it saves
-async function sendDocument(origin) {
-  const content = isPresentation()
-    ? null
-    : ((await runInEditor(READ_DOCUMENT)) ?? null)
-  host.postMessage({ type: 'twake-scribe:document', content }, origin)
 }
 
 // The editor runs no command while it loads or saves: the text is then not
@@ -330,9 +315,6 @@ async function handleMessage(event) {
 
   if (event.data?.type === 'twake-scribe:getContent') {
     await sendContent(event.origin)
-  }
-  if (event.data?.type === 'twake-scribe:getDocument') {
-    await sendDocument(event.origin)
   }
   // The panel is closed: the selection is no more read, and the next panel
   // starts on the text then selected, not on the answer last written in a
