@@ -73,7 +73,7 @@ The plugin only loads in the editors of text documents and presentations, in edi
 - A cozy-stack that knows the `documents` and `instructions` options of the chat.
 - A `cozy-interapp` and a `cozy-ui-plus` that have the `result` message of intents (`onResult` prop of `IntentIframe`). With older ones the assistant opens, but the clicks on its action buttons do not reach Drive.
 - For another text while the panel is open, and for the whole document, a `cozy-interapp` with the `data` message on both sides, and a `cozy-ui-plus` whose `IntentIframe` sends new `data`. With older ones the assistant keeps the first text, and a request that includes the document waits 8 s and goes without it.
-- An OnlyOffice Document Server 9.0 or later, with the scribe plugin. It was tested with 9.4.
+- An OnlyOffice Document Server 9.0 or later, with the scribe plugin. It was tested with 9.4. A scribe plugin older than `twake-scribe:getDocument` sends no `twake-scribe:document`: a request that includes the document then waits 8 s and goes without it.
 
 ## The scribe plugin
 
@@ -181,7 +181,7 @@ The assistant reads `layout`, `source`, `draft` and `conversation` at its openin
 
 With its "Document" box checked, the assistant sends `{ request: 'document' }` before a typed request, and waits 8 s at most for new data that hold a `document`. Drive asks the plugin with `twake-scribe:getDocument`:
 
-- The plugin reads the whole document as it reads it without a selection: the same Markdown, a picture as `[image]`, without markers. The editor gives the Markdown of the selection when there is one: in the same command, the plugin puts the selection away, reads, and selects again the range it had, cells of a table included, or the images selected by a click. A cursor alone stays where it is.
+- The plugin reads the whole document as it reads it without a selection: the same Markdown, a picture as `[image]`, without markers. The editor gives the Markdown of the selection when there is one: in the same command, the plugin puts the selection away, reads, and selects again the range it had, cells of a table included, or the images selected by a click. A cursor alone stays where it is, in the text of a shape too.
 - Drive gives the open assistant new data, with `document` and `documentTruncated`. With the flag `drive.scribe.contextBudget`, a number of characters, the document is cut at the last paragraph break (`\n\n`) within that budget, or at the budget when the first paragraph is longer, and `documentTruncated` is `true`. Unset or not above 0, the document is given whole.
 - When the plugin gives `null`, or nothing within 8 s, as while the editor saves, Drive gives `document: null`, and the assistant sends the request without it. An answer that comes later is dropped.
 - The data lose the previous document when the assistant asks again, so that the same document is new data, and once neither the panel nor the popover is open. A request while another one waits gets the same answer: the panel and the popover share the data of the document.
@@ -349,6 +349,7 @@ Drive then writes the table in Markdown (`makeTableMarkdown`), the caption as th
 ### Text documents
 
 - A selection made backwards, as with Shift and the left arrow, is selected again forwards after a read of the whole document: Shift and an arrow then move its other end.
+- A read of the whole document does not select again a selection across several footnotes, for which the editor gives no range: a cursor is left. Before Document Server 9.3, of several images selected at once, only the last one is selected again.
 - A paragraph that replaces several ones has the default paragraph style of the document: the alignment or the spacing set by hand on the replaced paragraphs are not kept. A text replaced in its line keeps them.
 - A table the assistant makes through `insert_table` has a header row and plain rows: no merged cells, unlike a table written in an answer. The capability tells the LLM to change a table of the selection in an answer instead, which takes its place.
 

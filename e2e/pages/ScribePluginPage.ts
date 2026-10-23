@@ -29,6 +29,25 @@ export interface Geometry {
   page: Box | null
 }
 
+// The parts of the builder of the editor the drawings and shapes need
+interface BuilderParagraph {
+  GetText: () => string
+  AddText: (text: string) => { MoveCursorToPos: (position: number) => boolean }
+}
+interface BuilderDocument {
+  GetAllDrawingObjects: () => { Select: () => boolean }[]
+  GetSelectedDrawings: () => unknown[]
+  GetAllShapes: () => {
+    GetDocContent: () => { GetElement: (index: number) => BuilderParagraph }
+  }[]
+}
+interface EditorWindow {
+  g_asc_plugins: {
+    api: { getJsApi: () => { GetDocument: () => BuilderDocument } }
+  }
+  editor: { asc_GetSelectionBounds: () => number[][] | null }
+}
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 /**
@@ -740,5 +759,61 @@ export class ScribePluginPage {
 
   async read(): Promise<ScribeModel> {
     return normalizeModel(await this.editor().evaluate(readEditor))
+  }
+
+  /** The corners of the selection the editor draws, in pixels of its frame */
+  async selectionBounds(): Promise<number[][] | null> {
+    return this.editor().evaluate(() =>
+      (window as unknown as EditorWindow).editor.asc_GetSelectionBounds()
+    )
+  }
+
+  /** Selects the n-th drawing of the document, from 0, as a click on it */
+  async selectDrawing(index: number): Promise<void> {
+    await this.editor().evaluate(n => {
+      const { api } = (window as unknown as EditorWindow).g_asc_plugins
+      api.getJsApi().GetDocument().GetAllDrawingObjects()[n].Select()
+    }, index)
+    await this.page.waitForTimeout(700)
+  }
+
+  async countSelectedDrawings(): Promise<number> {
+    return this.editor().evaluate(() => {
+      const { api } = (window as unknown as EditorWindow).g_asc_plugins
+      return api.getJsApi().GetDocument().GetSelectedDrawings().length
+    })
+  }
+
+  /**
+   * Writes a text in the first paragraph of the first shape of the document,
+   * and puts the cursor at an offset of it
+   */
+  async placeCursorInShape(text: string, offset: number): Promise<void> {
+    await this.editor().evaluate(
+      ({ text, offset }) => {
+        const { api } = (window as unknown as EditorWindow).g_asc_plugins
+        const [shape] = api.getJsApi().GetDocument().GetAllShapes()
+        shape
+          .GetDocContent()
+          .GetElement(0)
+          .AddText(text)
+          .MoveCursorToPos(offset)
+      },
+      { text, offset }
+    )
+    await this.page.waitForTimeout(700)
+  }
+
+  /** The text of the first paragraph of the first shape of the document */
+  async readShapeText(): Promise<string> {
+    return this.editor().evaluate(() => {
+      const { api } = (window as unknown as EditorWindow).g_asc_plugins
+      const [shape] = api.getJsApi().GetDocument().GetAllShapes()
+      return shape
+        .GetDocContent()
+        .GetElement(0)
+        .GetText()
+        .replace(/[\r\n]+$/, '')
+    })
   }
 }

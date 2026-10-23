@@ -1,11 +1,13 @@
 import { readFileSync, readdirSync, writeFileSync } from 'fs'
 import path from 'path'
 
+import type { Page } from '@playwright/test'
+
 import { ensureAppInstalled } from '../helpers/apps'
 import { USERS } from '../helpers/config'
 import { test, expect, stamp } from '../helpers/fixtures'
 import { DEFAULT_FLAGS, setFlags } from '../helpers/flags'
-import type { ScribeModel } from '../helpers/scribeModel'
+import type { ScribeModel, ScribeTable } from '../helpers/scribeModel'
 import { createFile, trashById } from '../helpers/stack'
 import {
   ScribePluginPage,
@@ -176,19 +178,27 @@ for (const suite of suites) {
   )
 }
 
+const openScribeDocument = async (
+  page: Page,
+  name: string
+): Promise<ScribePluginPage> => {
+  const fileId = await createFile({
+    instance: USERS.alice.instance,
+    name: `Scribe ${stamp()} ${name}`,
+    content: readFileSync(path.join(FIXTURE_DIR, name)),
+    contentType: DOCX
+  })
+  fileIds.push(fileId)
+  const scribe = new ScribePluginPage(page)
+  await scribe.open(USERS.alice.appUrl, fileId)
+  return scribe
+}
+
 test(
   'the scribe plugin gives the whole document on request',
   { tag: '@e2e-scribe' },
   async ({ alicePage }) => {
-    const fileId = await createFile({
-      instance: USERS.alice.instance,
-      name: `Scribe ${stamp()} a-family.docx`,
-      content: readFileSync(path.join(FIXTURE_DIR, 'a-family.docx')),
-      contentType: DOCX
-    })
-    fileIds.push(fileId)
-    const scribe = new ScribePluginPage(alicePage)
-    await scribe.open(USERS.alice.appUrl, fileId)
+    const scribe = await openScribeDocument(alicePage, 'a-family.docx')
     // Without a selection, the text the plugin gives is the whole document
     await scribe.select('P1@start')
     const whole = await scribe.getContent()
@@ -214,5 +224,57 @@ test(
       type: 'p',
       runs: [{ t: 'Jumps oveXr the dog' }]
     })
+  }
+)
+
+test(
+  'the scribe plugin keeps cells and a cursor in a cell as it gives the document',
+  { tag: '@e2e-scribe' },
+  async ({ alicePage }) => {
+    const scribe = await openScribeDocument(alicePage, 'table-plain.docx')
+    await scribe.select('P1@start')
+    const whole = await scribe.getContent()
+
+    await scribe.select('T1.C(0,0)@start..T1.C(0,1)@end')
+    const selected = await scribe.read()
+    // A selection of cells is drawn over the whole cells
+    const bounds = await scribe.selectionBounds()
+    expect(await scribe.getDocument()).toBe(whole.content)
+    const { selText, selMarkup } = await scribe.read()
+    expect({ selText, selMarkup }).toEqual({
+      selText: selected.selText,
+      selMarkup: selected.selMarkup
+    })
+    expect(await scribe.selectionBounds()).toEqual(bounds)
+
+    await scribe.select('T1.C(1,1)@3')
+    expect(await scribe.getDocument()).toBe(whole.content)
+    await scribe.press(['X'])
+    const table = (await scribe.read()).blocks[1] as ScribeTable
+    expect(table.grid[1][1].blocks[0]).toEqual({
+      type: 'p',
+      runs: [{ t: 'DelXta' }]
+    })
+  }
+)
+
+test(
+  'the scribe plugin keeps a selected image and a cursor in a shape as it gives the document',
+  { tag: '@e2e-scribe' },
+  async ({ alicePage }) => {
+    const scribe = await openScribeDocument(alicePage, 'img-anchor.docx')
+    await scribe.select('P1@start')
+    const whole = await scribe.getContent()
+
+    await scribe.selectDrawing(0)
+    expect(await scribe.countSelectedDrawings()).toBe(1)
+    expect(await scribe.getDocument()).toBe(whole.content)
+    expect(await scribe.countSelectedDrawings()).toBe(1)
+
+    // The editor's Markdown leaves the text of a shape out
+    await scribe.placeCursorInShape('Hello shape', 3)
+    expect(await scribe.getDocument()).toBe(whole.content)
+    await scribe.press(['X'])
+    expect(await scribe.readShapeText()).toBe('HelXlo shape')
   }
 )
