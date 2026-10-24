@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { useDispatch } from 'react-redux'
 
 import { fetchPolicies, useClient } from 'cozy-client'
 import { useSharingContext } from 'cozy-sharing'
@@ -25,7 +24,6 @@ import {
 import { buildCurrentFolderQuery } from '@/components/FilePicker/queries'
 import { FolderPickerAddFolderItem } from '@/components/FolderPicker/FolderPickerAddFolderItem'
 import { MoveDestinationActions } from '@/modules/move/components/MoveDestinationActions'
-import { createFolder } from '@/modules/navigation/duck'
 
 const MOVE_TO_SECTIONS = [filePickerSections.DRIVE, filePickerSections.SHARINGS]
 const MOVE_TO_DISPLAYED_TYPES = [
@@ -149,7 +147,6 @@ export function useMoveDestinationPicker({
 }) {
   const { t } = useI18n()
   const client = useClient()
-  const dispatch = useDispatch()
   const { allLoaded, hasWriteAccess } = useSharingContext()
   const [initialLocation] = useState(
     () =>
@@ -280,16 +277,20 @@ export function useMoveDestinationPicker({
   const handleFolderCreation = async name => {
     setCreatingFolder(true)
     try {
-      await dispatch(
-        createFolder(
-          client,
+      const { data: folder } = await client.create(
+        'io.cozy.files',
+        {
+          type: 'directory',
           name,
-          currentFolderState.location.folderId,
-          { t },
-          currentFolderState.location.driveId,
-          handleItemsAdded
-        )
+          dirId: currentFolderState.location.folderId
+        },
+        null,
+        {
+          driveId: currentFolderState.location.driveId ?? null,
+          forceLink: 'stack'
+        }
       )
+      handleItemsAdded([folder])
       setFolderCreationDisplayed(false)
     } finally {
       setCreatingFolder(false)

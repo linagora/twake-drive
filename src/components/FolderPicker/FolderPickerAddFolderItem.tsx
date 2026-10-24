@@ -1,5 +1,4 @@
 import React, { FC } from 'react'
-import { useDispatch } from 'react-redux'
 
 import { Icon, FileTypeFolder } from '@linagora/twake-icons'
 import { useClient } from 'cozy-client'
@@ -10,7 +9,6 @@ import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import { useI18n } from 'twake-i18n'
 
 import FilenameInput from '@/modules/filelist/FilenameInput'
-import { createFolder } from '@/modules/navigation/duck'
 
 interface FolderPickerAddFolderItemProps {
   currentFolderId: string
@@ -37,7 +35,6 @@ const FolderPickerAddFolderItem: FC<FolderPickerAddFolderItemProps> = ({
 }) => {
   const { isMobile } = useBreakpoints()
   const gutters = disableGutters ? 'disabled' : isMobile ? 'default' : 'double'
-  const dispatch = useDispatch()
   const { showAlert } = useAlert()
   const { t } = useI18n()
   const client = useClient()
@@ -47,10 +44,28 @@ const FolderPickerAddFolderItem: FC<FolderPickerAddFolderItemProps> = ({
       await onSubmit(name)
       return
     }
-    dispatch(
-      createFolder(client, name, currentFolderId, { showAlert, t }, driveId)
-    )
-    afterSubmit?.()
+    try {
+      await client.create(
+        'io.cozy.files',
+        { type: 'directory', name, dirId: currentFolderId },
+        null,
+        { driveId: driveId ?? null, forceLink: 'stack' }
+      )
+      afterSubmit?.()
+    } catch (error: unknown) {
+      const isConflict =
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        (error.response as { status?: number })?.status === 409
+      showAlert({
+        message: isConflict
+          ? t('alert.folder_name', { folderName: name })
+          : t('alert.folder_generic'),
+        severity: 'error'
+      })
+      throw error
+    }
   }
 
   const handleAbort = (accidental: boolean): void => {

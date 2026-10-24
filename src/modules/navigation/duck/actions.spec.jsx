@@ -1,10 +1,11 @@
 import CozyClient from 'cozy-client'
 import flag from 'cozy-flags'
 
-import { createFolder, uploadFiles } from './actions'
+import { createFolder, operationRedirected, uploadFiles } from './actions'
 import { generateFile } from 'test/generate'
 import { setupFolderContent } from 'test/setup'
 
+import { ROOT_DIR_ID, TRASH_DIR_ID } from '@/constants/config'
 import {
   addToUploadQueue,
   createUploadBatchId,
@@ -79,15 +80,11 @@ afterEach(() => {
 
 describe('createFolder', () => {
   beforeEach(() => {
-    jest.spyOn(CozyClient.prototype, 'create').mockImplementation(() => {})
-    jest.spyOn(CozyClient.prototype, 'collection').mockReturnValue({
-      create: jest.fn().mockResolvedValue({})
-    })
+    jest.spyOn(CozyClient.prototype, 'create').mockResolvedValue({ data: {} })
   })
 
   afterEach(() => {
     CozyClient.prototype.create.mockRestore()
-    CozyClient.prototype.collection.mockRestore()
   })
 
   it('should not be possible to create a folder with a same name of an existing folder', async () => {
@@ -112,16 +109,47 @@ describe('createFolder', () => {
       createFolder(client, 'foobar5', folderId, { showAlert, t })
     )
 
-    expect(client.collection).toHaveBeenCalledWith('io.cozy.files', {
-      driveId: undefined
-    })
-    const mockCollection = client.collection.mock.results[0].value
-    expect(mockCollection.create).toHaveBeenCalledWith({
-      dirId: 'folder123456',
-      name: 'foobar5',
-      type: 'directory'
-    })
+    expect(client.create).toHaveBeenCalledWith(
+      'io.cozy.files',
+      { dirId: 'folder123456', name: 'foobar5', type: 'directory' },
+      null,
+      { driveId: null, forceLink: 'stack' }
+    )
   })
+
+  it.each([null, TRASH_DIR_ID])(
+    'redirects historical creation from %s to root after completion',
+    async currentFolderId => {
+      const { client, store } = await setupFolderContent({
+        folderId: ROOT_DIR_ID
+      })
+      const folder = {
+        _id: 'created',
+        name: 'New',
+        type: 'directory',
+        dir_id: ROOT_DIR_ID
+      }
+      CozyClient.prototype.create.mockResolvedValue({ data: folder })
+      const dispatch = jest.fn()
+      const addItems = jest.fn()
+      await createFolder(
+        client,
+        'New',
+        currentFolderId,
+        { t },
+        null,
+        addItems
+      )(dispatch, store.getState)
+      expect(client.create).toHaveBeenCalledWith(
+        'io.cozy.files',
+        { type: 'directory', name: 'New', dirId: ROOT_DIR_ID },
+        null,
+        { driveId: null, forceLink: 'stack' }
+      )
+      expect(addItems).toHaveBeenCalledWith([folder])
+      expect(dispatch).toHaveBeenCalledWith(operationRedirected())
+    }
+  )
 
   it('should not show an alert when no alert callback is provided', async () => {
     const folderId = 'folder123456'
@@ -129,9 +157,7 @@ describe('createFolder', () => {
       folderId
     })
     const error = new Error('failed')
-    CozyClient.prototype.collection.mockReturnValue({
-      create: jest.fn().mockRejectedValue(error)
-    })
+    CozyClient.prototype.create.mockRejectedValue(error)
 
     await expect(
       store.dispatch(createFolder(client, 'foobar5', folderId, { t }))
