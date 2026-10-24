@@ -1,10 +1,15 @@
+import { useParams } from 'react-router-dom'
+
 import { useQuery } from 'cozy-client'
 import { IOCozyFile } from 'cozy-client/types/types'
 
 import { ROOT_DIR_ID } from '@/constants/config'
 import useCurrentFolderId from '@/hooks/useCurrentFolderId'
 import { usePublicContext } from '@/modules/public/PublicProvider'
-import { buildFileOrFolderByIdQuery } from '@/queries'
+import {
+  buildFileOrFolderByIdQuery,
+  buildSharedDriveFileOrFolderByIdQuery
+} from '@/queries'
 
 interface DisplayedFolderResult {
   isNotFound: boolean
@@ -19,6 +24,7 @@ const SETTLED_STATUSES = ['loaded', 'failed']
 
 const useDisplayedFolder = (): DisplayedFolderResult => {
   const { isPublic } = usePublicContext()
+  const { driveId } = useParams<{ driveId: string }>()
   const folderId = useCurrentFolderId() ?? ROOT_DIR_ID
 
   // Public-share tokens cannot read the instance root directory, so the query
@@ -26,7 +32,9 @@ const useDisplayedFolder = (): DisplayedFolderResult => {
   // surfaces as an unhandled promise rejection. Skip it.
   const isForbiddenRootOnPublic = isPublic && folderId === ROOT_DIR_ID
 
-  const folderQuery = buildFileOrFolderByIdQuery(folderId)
+  const folderQuery = driveId
+    ? buildSharedDriveFileOrFolderByIdQuery({ fileId: folderId, driveId })
+    : buildFileOrFolderByIdQuery(folderId)
   const folderResult = useQuery(folderQuery.definition, {
     ...folderQuery.options,
     enabled: folderQuery.options.enabled !== false && !isForbiddenRootOnPublic
