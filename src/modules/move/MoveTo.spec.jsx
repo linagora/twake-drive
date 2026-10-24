@@ -1,6 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import React from 'react'
-import { useDispatch } from 'react-redux'
 
 import { useClient, useQuery } from 'cozy-client'
 import { useSharingContext } from 'cozy-sharing'
@@ -14,7 +13,6 @@ import { useMoveDestinationPicker } from './hooks/useMoveDestinationPicker'
 
 import { ROOT_DIR_ID } from '@/constants/config'
 import { useBreadcrumbPath } from '@/modules/breadcrumb/hooks/useBreadcrumbPath'
-import { createFolder } from '@/modules/navigation/duck'
 import {
   SelectionProvider,
   useSelectionContext
@@ -29,11 +27,6 @@ jest.mock('cozy-client', () => ({
   useQuery: jest.fn()
 }))
 jest.mock('cozy-sharing', () => ({ useSharingContext: jest.fn() }))
-jest.mock('react-redux', () => ({
-  ...jest.requireActual('react-redux'),
-  useDispatch: jest.fn()
-}))
-jest.mock('@/modules/navigation/duck', () => ({ createFolder: jest.fn() }))
 jest.mock('twake-i18n', () => ({
   useI18n: jest.fn(),
   translate: () => Component => props => (
@@ -156,6 +149,7 @@ const destinationFolder = {
   path: '/Source folder/Child folder'
 }
 let contentItems
+let clientCreate
 let clientQuery
 
 function getFolder(folderId) {
@@ -314,10 +308,9 @@ describe.each([
       const folderId = options.as.replace('move-confirm-', '')
       return Promise.resolve({ data: getFolder(folderId) })
     })
-    useClient.mockReturnValue({ query: clientQuery })
-    useDispatch.mockReturnValue(action => action())
+    clientCreate = jest.fn()
+    useClient.mockReturnValue({ query: clientQuery, create: clientCreate })
     useAlert.mockReturnValue({ showAlert: jest.fn() })
-    createFolder.mockReset()
     contentItems = [destinationFolder]
     useSharingContext.mockReturnValue({
       allLoaded: true,
@@ -560,9 +553,7 @@ describe.each([
       }
       return { data: getFolder(folderId), fetchStatus: 'loaded' }
     })
-    createFolder.mockImplementation((...args) => async () => {
-      args[5]([createdFolder])
-    })
+    clientCreate.mockResolvedValue({ data: createdFolder })
     clientQuery.mockResolvedValue({ data: receivedChild })
 
     setup({ onConfirm })
@@ -577,13 +568,15 @@ describe.each([
     fireEvent.change(input, { target: { value: 'Created folder' } })
     fireEvent.keyDown(input, { keyCode: 13 })
 
-    expect(createFolder).toHaveBeenCalledWith(
-      expect.anything(),
-      'Created folder',
-      receivedRoot._id,
-      expect.anything(),
-      'sharing-id',
-      expect.any(Function)
+    expect(clientCreate).toHaveBeenCalledWith(
+      'io.cozy.files',
+      {
+        type: 'directory',
+        name: 'Created folder',
+        dirId: receivedRoot._id
+      },
+      null,
+      { driveId: 'sharing-id', forceLink: 'stack' }
     )
     expect(
       await screen.findByRole('button', { name: 'Created folder' })
@@ -630,9 +623,9 @@ describe.each([
     const createPromise = new Promise(resolve => {
       resolveCreate = resolve
     })
-    createFolder.mockImplementation((...args) => async () => {
+    clientCreate.mockImplementation(async () => {
       await createPromise
-      args[5]([createdFolder])
+      return { data: createdFolder }
     })
     setup()
 
@@ -677,7 +670,7 @@ describe.each([
     const createPromise = new Promise((resolve, reject) => {
       rejectCreate = reject
     })
-    createFolder.mockImplementation(() => async () => {
+    clientCreate.mockImplementation(async () => {
       await createPromise
     })
     setup()
@@ -687,9 +680,6 @@ describe.each([
     expect(screen.queryByRole('alert')).toBe(null)
     fireEvent.change(input, { target: { value: 'Broken' } })
     fireEvent.keyDown(input, { keyCode: 13 })
-    expect(createFolder.mock.calls[0][3]).toEqual({
-      t: expect.any(Function)
-    })
     rejectCreate(new Error('conflict'))
 
     const error = await screen.findByRole('alert')
