@@ -69,7 +69,11 @@ async function prefetchStartingFolder(client, folderId) {
   } catch (error) {
     logger.warn('File Picker folder prefetch failed', error)
     // Clear failed prefetch from store so subsequent useQuery in the UI is not blocked by olderThan fetch policy
-    await client.resetQuery?.(query.options.as)
+    try {
+      await client.resetQuery?.(query.options.as)
+    } catch (resetError) {
+      logger.warn('File Picker failed to clear prefetch query', resetError)
+    }
   }
 }
 
