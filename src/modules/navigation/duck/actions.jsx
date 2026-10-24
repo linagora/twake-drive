@@ -450,18 +450,16 @@ export const createFolder = (
       throw new Error('alert.folder_name')
     }
 
-    let createdFolder
     try {
-      createdFolder = await client
-        .collection('io.cozy.files', { driveId })
-        .create({
-          name: name,
-          dirId: targetFolderId,
-          type: 'directory'
-        })
+      const { data: createdFolder } = await client.create(
+        'io.cozy.files',
+        { type: 'directory', name, dirId: targetFolderId },
+        null,
+        { driveId: driveId ?? null, forceLink: 'stack' }
+      )
 
       if (createdFolder) {
-        safeAddItems([createdFolder.data])
+        safeAddItems([createdFolder])
       }
 
       if (navigateAfterCreate && createdFolder) {

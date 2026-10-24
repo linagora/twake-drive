@@ -446,4 +446,63 @@ test.describe('MOVE intent execution', () => {
       await trashByName(USERS.alice.instance, shareName)
     }
   })
+
+  for (const received of [false, true]) {
+    test(`creates and enters a destination in a ${received ? 'received' : 'owned'} shared drive before MOVE`, async ({
+      alicePage,
+      aliceDrive,
+      bobPage,
+      bobDrive
+    }) => {
+      const shareName = `Intent creation share ${stamp()}`
+      const folderName = `Intent shared creation ${stamp()}`
+      const user = received ? USERS.bob : USERS.alice
+      const page = received ? bobPage : alicePage
+      const name = received
+        ? `Recipient creation source ${stamp()}.txt`
+        : sourceName
+      const id = received
+        ? await createFile({
+            instance: user.instance,
+            name,
+            content: 'Real MOVE content'
+          })
+        : sourceId
+      try {
+        await createAndShareFolderWithBob(alicePage, aliceDrive, shareName)
+        await openSharedDrive(bobPage, USERS.bob, bobDrive, shareName)
+        const picker = new MoveIntentPage(page, user)
+        await picker.open({ fileIds: [id] })
+        await picker.waitReady()
+        if (received) await picker.selectSharings()
+        await picker.navigateToFolder(shareName)
+        await picker.createFolder(folderName)
+        await expect(picker.row(folderName)).toHaveCount(1)
+        await picker.navigateToFolder(folderName)
+        await picker.expectCanMove()
+        await picker.confirmMove()
+        await picker.confirmInsideSharing()
+        const result = await picker.waitResult()
+        expect(result).toHaveLength(1)
+        expect(result[0]).toMatchObject({
+          name,
+          path: `/${shareName}/${folderName}/${name}`
+        })
+        await alicePage.goto(`${USERS.alice.appUrl}/#/folder/${result[0].dir_id}`)
+        await aliceDrive.row(name).waitVisible()
+        expect(
+          await fetchFileContent({
+            instance: USERS.alice.instance,
+            fileId: result[0]._id
+          })
+        ).toBe('Real MOVE content')
+        await openSharedDrive(bobPage, USERS.bob, bobDrive, shareName)
+        await bobDrive.row(folderName).open()
+        await bobDrive.row(name).waitVisible()
+      } finally {
+        if (received) await trashByName(USERS.bob.instance, name)
+        await trashByName(USERS.alice.instance, shareName)
+      }
+    })
+  }
 })
