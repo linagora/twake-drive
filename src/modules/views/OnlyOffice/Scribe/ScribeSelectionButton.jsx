@@ -83,11 +83,12 @@ const useIsSettled = geometry => {
 export const ScribeSelectionButton = () => {
   const { t } = useI18n()
   const isAllowed = isScribeAllowed(useOnlyOfficeContext())
-  const { isAvailable, open } = useScribe()
+  const { isAvailable, isOpen, open } = useScribe()
   const geometry = useScribeGeometry()
   const isSettled = useIsSettled(geometry)
 
-  if (!isAvailable || !isAllowed || !isSettled) return null
+  // Only to open the panel: open, it follows the selection by itself
+  if (!isAvailable || !isAllowed || isOpen || !isSettled) return null
   const position = findButtonPosition(geometry)
   if (position === null) return null
 
