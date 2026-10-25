@@ -153,13 +153,18 @@ test.describe('the scribe of Drive', { tag: '@e2e-scribe' }, () => {
     await expect(scribe.selectionButton()).toBeHidden()
     await expect(scribe.panel()).toBeVisible()
 
-    // An answer written at the cursor is left selected
+    // An answer written at the cursor is left selected: its button waits
+    // for the panel to close
     await plugin.applyAnswer('insert', 'Un texte écrit')
+    await expect
+      .poll(async () => (await plugin.takeGeometry())?.selection?.hasText)
+      .toBe(true)
+    await expect(scribe.selectionButton()).toBeHidden()
+    await scribe.closePanel()
     await expect(scribe.selectionButton()).toBeVisible()
-    expect((await plugin.takeGeometry())?.selection?.hasText).toBe(true)
   })
 
-  test('a floating button opens and closes the panel', async ({
+  test('a floating button opens the panel, and waits for it to close', async ({
     alicePage
   }) => {
     const fileId = await uploadScribeDocument(
@@ -194,8 +199,10 @@ test.describe('the scribe of Drive', { tag: '@e2e-scribe' }, () => {
 
     await scribe.floatingButton().click()
     await expect(scribe.panel()).toBeVisible()
-    await scribe.floatingButton().click()
+    await expect(scribe.floatingButton()).toBeHidden()
+    await scribe.closePanel()
     await expect(scribe.panel()).toBeHidden()
+    await expect(scribe.floatingButton()).toBeVisible()
   })
 
   test('the Assistant tab of the editor opens and closes the panel', async ({
@@ -238,8 +245,9 @@ test.describe('the scribe of Drive', { tag: '@e2e-scribe' }, () => {
   })
 
   // Two assistants in one page would reject the messages of each other in
-  // cozy-interapp ("Invalid event id"): the button works in the panel
-  test('the selection button opens the panel, and works in it once open', async ({
+  // cozy-interapp ("Invalid event id"): the panel keeps its intent, which
+  // follows the selection
+  test('the selection button opens the panel, which follows the selection', async ({
     alicePage
   }) => {
     const fileId = await uploadScribeDocument(
@@ -264,7 +272,7 @@ test.describe('the scribe of Drive', { tag: '@e2e-scribe' }, () => {
     const intentId = await scribe.intentId(scribe.panel())
 
     await scribe.selectInEditor('P2@start..P2@end')
-    await scribe.selectionButton().click()
+    await expect(scribe.selectionButton()).toBeHidden()
 
     await expect
       .poll(() => scribe.receivedIntentData(scribe.panel()), {

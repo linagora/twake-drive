@@ -49,7 +49,6 @@ const setup = ({
   isAssistantEnabled = true
 } = {}) => {
   const open = jest.fn()
-  const close = jest.fn()
   flag.mockImplementation(
     name => name === 'cozy.assistant.enabled' && isAssistantEnabled
   )
@@ -60,7 +59,6 @@ const setup = ({
       isOpen: false,
       documentType: 'word',
       open,
-      close,
       ...state
     })
     useScribeGeometry.mockReturnValue(geometry)
@@ -78,7 +76,6 @@ const setup = ({
 
   return {
     open,
-    close,
     rerender: changes => {
       mockScribe(changes)
       rerender(makeTree())
@@ -135,29 +132,22 @@ describe('ScribeFloatingButton', () => {
     await findMark()
   })
 
-  it('toggles the panel', async () => {
-    const { open, close, rerender } = setup()
+  it('opens the panel', async () => {
+    const { open } = setup()
     await findMark()
 
     fireEvent.click(queryButton())
-    expect(open).toHaveBeenCalledWith({ source: 'floating' })
-    expect(close).not.toHaveBeenCalled()
 
-    rerender({ isOpen: true })
-    expect(queryButton()).toBeInTheDocument()
-    fireEvent.click(queryButton())
-    expect(close).toHaveBeenCalledTimes(1)
-    expect(open).toHaveBeenCalledTimes(1)
+    expect(open).toHaveBeenCalledWith({ source: 'floating' })
   })
 
-  it('stops its mark on click, as the button moves from under the pointer', async () => {
-    setup()
+  it('is not shown while the panel is open', async () => {
+    const { rerender } = setup()
     await findMark()
 
-    fireEvent.mouseEnter(queryButton())
-    fireEvent.click(queryButton())
+    rerender({ isOpen: true })
 
-    expect(mockGoToAndStop).toHaveBeenCalledWith(0)
+    expect(queryButton()).toBe(null)
   })
 
   it('plays its mark only while the pointer is over it', async () => {

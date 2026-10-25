@@ -48,13 +48,14 @@ export const ScribeFloatingButton = () => {
   const { t } = useI18n()
   const { type: themeType } = useCozyTheme()
   const isAllowed = isScribeAllowed(useOnlyOfficeContext())
-  const { isAvailable, isOpen, documentType, open, close } = useScribe()
+  const { isAvailable, isOpen, documentType, open } = useScribe()
   const geometry = useScribeGeometry()
   const lottieRef = useRef(null)
 
-  if (!isAvailable || !isAllowed) return null
+  // Only to open the panel: the panel has its own close button
+  if (!isAvailable || !isAllowed || isOpen) return null
   // The plugin sends no geometry for a presentation: the button would stay
-  // in the corner of the window, over the panel once open
+  // in the corner of the window
   if (documentType !== 'word') return null
 
   const position = findButtonPosition(geometry)
@@ -65,13 +66,6 @@ export const ScribeFloatingButton = () => {
   }
   const stopMark = () => {
     lottieRef.current?.goToAndStop(0)
-  }
-  // The panel resizes the viewer, so the button moves from under a still
-  // pointer, which gets no mouseleave until it moves
-  const handleClick = () => {
-    stopMark()
-    if (isOpen) close()
-    else open({ source: 'floating' })
   }
 
   return (
@@ -92,9 +86,8 @@ export const ScribeFloatingButton = () => {
         <Tooltip title={label}>
           <ButtonBase
             aria-label={label}
-            aria-pressed={isOpen}
             disableRipple
-            onClick={handleClick}
+            onClick={() => open({ source: 'floating' })}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={stopMark}
           >

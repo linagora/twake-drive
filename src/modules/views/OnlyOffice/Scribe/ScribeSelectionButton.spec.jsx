@@ -199,10 +199,10 @@ describe('ScribeSelectionButton', () => {
     expect(open).toHaveBeenCalledWith({ source: 'selection' })
   })
 
-  it('shows it while the panel is open, to work on the selection', () => {
+  it('is not shown while the panel is open, which follows the selection', () => {
     setup({ scribe: { isOpen: true } })
 
-    expect(queryButton()).toBeInTheDocument()
+    expect(queryButton()).toBe(null)
   })
 
   it.each([
