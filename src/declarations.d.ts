@@ -36,12 +36,7 @@ declare module 'cozy-ui/transpiled/react/providers/Alert' {
   export interface showAlertProps {
     message: string
     severity?:
-      | 'primary'
-      | 'secondary'
-      | 'success'
-      | 'error'
-      | 'warning'
-      | 'info'
+      'primary' | 'secondary' | 'success' | 'error' | 'warning' | 'info'
     action?: React.ReactNode
     duration?: number | null
     noClickAway?: boolean
