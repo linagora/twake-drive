@@ -79,7 +79,7 @@
     "stylint": "1.5.9",
     "stylus-config-cozy-app": "^0.1.0",
     "typescript": "4.9.5",
-    "undici": "^6.27.0"
+    "undici": "^6.29.1"
   },
   "dependencies": {
     "@embedpdf/default-stamps": "0.0.1",
