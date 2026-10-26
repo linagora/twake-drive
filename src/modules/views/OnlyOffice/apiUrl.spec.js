@@ -39,6 +39,35 @@ describe('makeOfficeApiUrl', () => {
     ).toBe('https://victim.example.org/web-apps/apps/api/documents/api.js')
   })
 
+  it.each([
+    'https://proxy.example:8443/onlyoffice',
+    'https://proxy.example:8443/onlyoffice/',
+    'https://proxy.example:8443/onlyoffice///',
+    'https://user:password@proxy.example:8443/onlyoffice?ignored#ignored'
+  ])('preserves a trusted server prefix without query or fragment: %s', url => {
+    expect(makeOfficeApiUrl(url, { isServerUrlTrusted: true })).toBe(
+      'https://proxy.example:8443/onlyoffice/web-apps/apps/api/documents/api.js'
+    )
+  })
+
+  it('does not interpret a trusted path as another origin', () => {
+    expect(
+      makeOfficeApiUrl('https://proxy.example//onlyoffice', {
+        isServerUrlTrusted: true
+      })
+    ).toBe(
+      'https://proxy.example//onlyoffice/web-apps/apps/api/documents/api.js'
+    )
+  })
+
+  it.each([
+    'javascript:alert(1)//',
+    'data:text/javascript,alert(1)',
+    '/relative'
+  ])('rejects an invalid URL even from a trusted source: %s', url => {
+    expect(makeOfficeApiUrl(url, { isServerUrlTrusted: true })).toBe(null)
+  })
+
   it('should reject a javascript url', () => {
     expect(makeOfficeApiUrl('javascript:alert(1)//')).toBe(null)
   })
