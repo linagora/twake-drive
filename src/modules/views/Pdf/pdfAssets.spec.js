@@ -34,6 +34,8 @@ const {
 // Worker, where root-relative paths cannot be resolved. Every asset URL must be
 // absolute (anchored to the page origin), otherwise the editor hangs forever on
 // "Initializing plugins". jsdom serves the test page from http://cozy.localhost:8080.
+// Rslint takes this regex .test() call for a test without a body
+// eslint-disable-next-line jest/no-disabled-tests
 const isAbsolute = url => /^https?:\/\//.test(url)
 
 describe('pdfAssets', () => {

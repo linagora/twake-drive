@@ -55,9 +55,6 @@ konnector-dev-config.json
 # SWC
 .swc
 
-# eslint
-.eslintcache*
-
 # E2E test artifacts
 e2e/.auth-state.json
 e2e/.dev-ports.json

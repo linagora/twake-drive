@@ -1,24 +1,20 @@
-import basics from 'eslint-config-cozy-app/basics'
-import cozyReact from 'eslint-config-cozy-app/react'
+import { define } from 'rstack'
+import { importOrderOptions } from 'rslint-config-cozy-app/basics'
+import fmt from 'rslint-config-cozy-app/fmt'
+import react from 'rslint-config-cozy-app/react'
 
-const baseImportOrderRule = basics.find(c => c.rules?.['import/order'])?.rules[
-  'import/order'
-]
-const baseImportOrderOptions = baseImportOrderRule[1]
-const basePathGroups = baseImportOrderOptions.pathGroups
-
-export default [
-  { ignores: ['plugins/*/build/'] },
-  ...cozyReact,
+define.lint(lint => [
+  { ignores: ['plugins/*/build/**'] },
+  ...react(lint),
   {
     rules: {
       'import/order': [
         'warn',
         {
-          ...baseImportOrderOptions,
+          ...importOrderOptions,
           pathGroups: [
-            ...basePathGroups,
             { pattern: '**/*.styl', group: 'index', position: 'after' },
+            ...importOrderOptions.pathGroups,
             { pattern: 'test/**/*', group: 'index' },
             { pattern: 'lib/**/*', group: 'index' },
             { pattern: 'hooks/**/*', group: 'index' },
@@ -35,4 +31,6 @@ export default [
       ]
     }
   }
-]
+])
+
+define.fmt(fmt)

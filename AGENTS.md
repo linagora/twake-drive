@@ -64,7 +64,7 @@ solves the same problem, and vice versa.
 - Colocated `*.spec.{js,jsx,ts,tsx}` files, no `__tests__` folders.
 - Assert absence with `queryBy...` + `.toBe(null)`, presence with
   `.toBeInTheDocument()`.
-- `yarn lint` (ESLint with Prettier, and stylint), `yarn test` (Jest),
+- `yarn lint` (Rslint, rs fmt and stylint), `yarn test` (Jest),
   `yarn build` (rsbuild). E2E specs run with Playwright, see `docs/e2e.md`.
 
 ## Before opening a PR
