@@ -49,16 +49,20 @@ const isInBox = (disc, box) =>
 // The disc goes below and right of the end of the selection, and is not
 // shown once it would leave the viewer of the editor, as when the selection
 // is scrolled out of it
-const findButtonPosition = geometry => {
-  const { selection, viewer, frame } = geometry ?? {}
-  const end = selection?.rect?.corners?.[3]
-  if (!selection?.hasText || !end || !viewer || !frame) return null
+const findDisc = ({ selection, viewer }) => {
+  const end = selection?.hasText ? selection.rect?.corners?.[3] : null
+  if (!end || !viewer) return null
 
   const disc = { left: end[0] + GAP, top: end[1] + GAP }
-  if (!isInBox(disc, viewer)) return null
+  return isInBox(disc, viewer) ? disc : null
+}
+
+const findButtonPosition = geometry => {
+  const disc = geometry?.frame ? findDisc(geometry) : null
+  if (disc === null) return null
   return {
-    left: frame.left + disc.left - DISC_INSET_LEFT,
-    top: frame.top + disc.top - DISC_INSET_TOP
+    left: geometry.frame.left + disc.left - DISC_INSET_LEFT,
+    top: geometry.frame.top + disc.top - DISC_INSET_TOP
   }
 }
 
