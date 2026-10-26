@@ -7291,16 +7291,16 @@ __metadata:
   linkType: hard
 
 "bn.js@npm:^4.0.0, bn.js@npm:^4.1.0, bn.js@npm:^4.11.9":
-  version: 4.12.0
-  resolution: "bn.js@npm:4.12.0"
-  checksum: 10/10f8db196d3da5adfc3207d35d0a42aa29033eb33685f20ba2c36cadfe2de63dad05df0a20ab5aae01b418d1c4b3d4d205273085262fa020d17e93ff32b67527
+  version: 4.12.5
+  resolution: "bn.js@npm:4.12.5"
+  checksum: 10/be6afe3e31e812e240983a6661e4c8f31f7f5a28e6fc4fbd8ea04d18c887ce4a5089c4bd28d8495a535411deda84d1125f72bcfa253f223067d15f743d8e65a8
   languageName: node
   linkType: hard
 
 "bn.js@npm:^5.2.1":
-  version: 5.2.1
-  resolution: "bn.js@npm:5.2.1"
-  checksum: 10/7a7e8764d7a6e9708b8b9841b2b3d6019cc154d2fc23716d0efecfe1e16921b7533c6f7361fb05471eab47986c4aa310c270f88e3507172104632ac8df2cfd84
+  version: 5.2.5
+  resolution: "bn.js@npm:5.2.5"
+  checksum: 10/10b1ac91e76fd828c1187cf65a9f1a0374e7afb9acd167e19c2d7c4108f6216841007c1e3aef145fa95cc7b3d07f705236a707184af1537667362b3a842d01ac
   languageName: node
   linkType: hard
 
