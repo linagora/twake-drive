@@ -1,7 +1,7 @@
-import { Icon } from '@linagora/twake-icons'
 import PropTypes from 'prop-types'
 import React, { useCallback } from 'react'
 
+import { Icon } from '@linagora/twake-icons'
 import { DialogTitle } from 'cozy-ui/transpiled/react/Dialog'
 import Divider from 'cozy-ui/transpiled/react/Divider'
 import { makeStyles } from 'cozy-ui/transpiled/react/styles'

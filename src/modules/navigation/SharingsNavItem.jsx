@@ -1,6 +1,6 @@
-import { Icon, ShareExternal } from '@linagora/twake-icons'
 import React, { useMemo } from 'react'
 
+import { Icon, ShareExternal } from '@linagora/twake-icons'
 import { useQuery } from 'cozy-client'
 import { isSharingShortcutNew } from 'cozy-client/dist/models/file'
 import { useSharingContext } from 'cozy-sharing'

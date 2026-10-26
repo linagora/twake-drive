@@ -1,7 +1,7 @@
-import { Icon, Share } from '@linagora/twake-icons'
 import React, { useState, useCallback } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
+import { Icon, Share } from '@linagora/twake-icons'
 import { deconstructRedirectLink } from 'cozy-client'
 import flag from 'cozy-flags'
 import { ShareButton, ShareModal, SharedRecipients } from 'cozy-sharing'

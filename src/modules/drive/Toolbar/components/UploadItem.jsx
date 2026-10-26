@@ -1,7 +1,7 @@
-import { Icon, Upload } from '@linagora/twake-icons'
 import React from 'react'
 import { useDispatch } from 'react-redux'
 
+import { Icon, Upload } from '@linagora/twake-icons'
 import { useClient } from 'cozy-client'
 import withSharingState from 'cozy-sharing/dist/hoc/withSharingState'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'

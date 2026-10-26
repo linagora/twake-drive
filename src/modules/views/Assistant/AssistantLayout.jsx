@@ -1,8 +1,8 @@
-import { TwakeWorkplace } from '@linagora/twake-icons'
 import cx from 'classnames'
 import React from 'react'
 import { Link, Outlet } from 'react-router-dom'
 
+import { TwakeWorkplace } from '@linagora/twake-icons'
 import { BarComponent, BarLeft } from 'cozy-bar'
 import { RealTimeQueries } from 'cozy-client'
 import { AiText } from 'cozy-search'

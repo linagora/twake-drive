@@ -1,6 +1,6 @@
-import { Icon } from '@linagora/twake-icons'
 import React, { useCallback, useEffect, useState } from 'react'
 
+import { Icon } from '@linagora/twake-icons'
 import { useClient } from 'cozy-client'
 import { splitFilename } from 'cozy-client/dist/models/file'
 import { SharedDocument, SharedRecipientsList } from 'cozy-sharing'

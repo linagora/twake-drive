@@ -3,9 +3,9 @@ import React from 'react'
 
 import { useSharingContext } from 'cozy-sharing'
 
+import { generateFileFixtures, getByTextWithMarkup } from '../testUtils'
 import { PublicFolderView } from './PublicFolderView'
 import usePublicFilesQuery from './usePublicFilesQuery'
-import { generateFileFixtures, getByTextWithMarkup } from '../testUtils'
 import AppLike from 'test/components/AppLike'
 import { setupStoreAndClient } from 'test/setup'
 

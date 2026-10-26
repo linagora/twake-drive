@@ -1,8 +1,8 @@
-import { Icon, Right } from '@linagora/twake-icons'
 import { filesize } from 'filesize'
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import { Icon, Right } from '@linagora/twake-icons'
 import { isDirectory } from 'cozy-client/dist/models/file'
 import Checkbox from 'cozy-ui/transpiled/react/Checkbox'
 import Filename from 'cozy-ui/transpiled/react/Filename'

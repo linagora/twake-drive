@@ -1,6 +1,6 @@
-import { Icon, Globe } from '@linagora/twake-icons'
 import React, { useState } from 'react'
 
+import { Icon, Globe } from '@linagora/twake-icons'
 import { useClient, useFetchShortcut } from 'cozy-client'
 
 const FileIconShortcut = ({ file, size = 32 }) => {

@@ -1,3 +1,7 @@
+import { filesize } from 'filesize'
+import PropTypes from 'prop-types'
+import React, { memo } from 'react'
+
 import {
   Attachment,
   CheckCircle,
@@ -5,10 +9,6 @@ import {
   Icon,
   Link
 } from '@linagora/twake-icons'
-import { filesize } from 'filesize'
-import PropTypes from 'prop-types'
-import React, { memo } from 'react'
-
 import Box from 'cozy-ui/transpiled/react/Box'
 import Button from 'cozy-ui/transpiled/react/Buttons'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'

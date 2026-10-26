@@ -1,6 +1,7 @@
-import { Icon } from '@linagora/twake-icons'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import { Icon } from '@linagora/twake-icons'
 
 import { makeOnlyOfficeIconByClass } from '@/modules/views/OnlyOffice/helpers'
 

@@ -1,6 +1,6 @@
-import { FileTypeSharedDrive } from '@linagora/twake-icons'
 import React, { FC } from 'react'
 
+import { FileTypeSharedDrive } from '@linagora/twake-icons'
 import { NavIcon, NavItem } from 'cozy-ui/transpiled/react/Nav'
 import Typography from 'cozy-ui/transpiled/react/Typography'
 

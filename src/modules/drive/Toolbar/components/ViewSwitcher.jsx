@@ -1,6 +1,6 @@
-import { Icon, ListMin, MosaicMin } from '@linagora/twake-icons'
 import React from 'react'
 
+import { Icon, ListMin, MosaicMin } from '@linagora/twake-icons'
 import ToggleButton from 'cozy-ui/transpiled/react/ToggleButton'
 import ToggleButtonGroup from 'cozy-ui/transpiled/react/ToggleButtonGroup'
 import { useI18n } from 'twake-i18n'

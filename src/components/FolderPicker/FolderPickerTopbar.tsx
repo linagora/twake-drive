@@ -1,7 +1,7 @@
-import { Icon, FolderAdd } from '@linagora/twake-icons'
 import cx from 'classnames'
 import React, { useCallback, useState } from 'react'
 
+import { Icon, FolderAdd } from '@linagora/twake-icons'
 import { useClient } from 'cozy-client'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
 import Typography from 'cozy-ui/transpiled/react/Typography'

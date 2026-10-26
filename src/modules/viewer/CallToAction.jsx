@@ -1,7 +1,7 @@
-import { Icon, Cross } from '@linagora/twake-icons'
 import localforage from 'localforage'
 import React, { Component } from 'react'
 
+import { Icon, Cross } from '@linagora/twake-icons'
 import { withClient } from 'cozy-client'
 
 import styles from './styles.styl'

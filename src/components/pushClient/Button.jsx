@@ -1,7 +1,7 @@
-import { Icon, CrossSmall, Drive } from '@linagora/twake-icons'
 import localforage from 'localforage'
 import React, { useState, useEffect } from 'react'
 
+import { Icon, CrossSmall, Drive } from '@linagora/twake-icons'
 import { withClient } from 'cozy-client'
 import { isFlagshipApp } from 'cozy-device-helper'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'

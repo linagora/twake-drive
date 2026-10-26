@@ -1,3 +1,5 @@
+import get from 'lodash/get'
+
 import {
   FileTypeAudio,
   FileTypeBin,
@@ -13,7 +15,6 @@ import {
   FileTypeVideo,
   FileTypeZip
 } from '@linagora/twake-icons'
-import get from 'lodash/get'
 
 import IconDocs from '@/assets/icons/icon-docs.svg'
 import IconExcalidraw from '@/assets/icons/icon-excalidraw.svg'

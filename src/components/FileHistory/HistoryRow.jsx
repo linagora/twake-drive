@@ -1,7 +1,7 @@
-import { Icon, Download, File, Trash } from '@linagora/twake-icons'
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import { Icon, Download, File, Trash } from '@linagora/twake-icons'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
 import ListItem from 'cozy-ui/transpiled/react/ListItem'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'

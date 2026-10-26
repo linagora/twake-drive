@@ -1,6 +1,6 @@
-import { Icon, Restore } from '@linagora/twake-icons'
 import React, { forwardRef } from 'react'
 
+import { Icon, Restore } from '@linagora/twake-icons'
 import CozyClient from 'cozy-client/types/CozyClient'
 import { NextcloudFile } from 'cozy-client/types/types'
 import { Action } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'

@@ -1,7 +1,7 @@
-import { Globe } from '@linagora/twake-icons'
 import React from 'react'
 import { useParams } from 'react-router-dom'
 
+import { Globe } from '@linagora/twake-icons'
 import { useClient, useFetchShortcut } from 'cozy-client'
 import Empty from 'cozy-ui/transpiled/react/Empty'
 import { translate } from 'twake-i18n'

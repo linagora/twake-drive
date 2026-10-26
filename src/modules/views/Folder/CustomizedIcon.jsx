@@ -1,5 +1,6 @@
-import { Icon } from '@linagora/twake-icons'
 import React from 'react'
+
+import { Icon } from '@linagora/twake-icons'
 
 import ColoredFolder from './ColoredFolder'
 

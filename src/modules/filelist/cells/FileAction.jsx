@@ -1,7 +1,7 @@
-import { Icon, Dots } from '@linagora/twake-icons'
 import cx from 'classnames'
 import React, { forwardRef } from 'react'
 
+import { Icon, Dots } from '@linagora/twake-icons'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
 import { TableCell } from 'cozy-ui/transpiled/react/deprecated/Table'
 

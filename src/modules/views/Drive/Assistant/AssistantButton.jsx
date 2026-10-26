@@ -1,6 +1,6 @@
-import { Assistant, Icon } from '@linagora/twake-icons'
 import React from 'react'
 
+import { Assistant, Icon } from '@linagora/twake-icons'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
 import Tooltip from 'cozy-ui/transpiled/react/Tooltip'
 import { useI18n } from 'twake-i18n'

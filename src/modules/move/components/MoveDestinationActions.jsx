@@ -1,6 +1,6 @@
-import { FolderOutlined, Icon } from '@linagora/twake-icons'
 import React from 'react'
 
+import { FolderOutlined, Icon } from '@linagora/twake-icons'
 import Buttons from 'cozy-ui/transpiled/react/Buttons'
 import { useI18n } from 'twake-i18n'
 

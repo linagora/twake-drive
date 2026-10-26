@@ -1,6 +1,6 @@
-import { Icon, MultiFiles } from '@linagora/twake-icons'
 import React, { forwardRef } from 'react'
 
+import { Icon, MultiFiles } from '@linagora/twake-icons'
 import { isFile } from 'cozy-client/dist/models/file'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'

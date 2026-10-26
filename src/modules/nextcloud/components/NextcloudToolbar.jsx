@@ -1,7 +1,7 @@
-import { Icon, Plus, Share } from '@linagora/twake-icons'
 import cx from 'classnames'
 import React, { useState, useRef } from 'react'
 
+import { Icon, Plus, Share } from '@linagora/twake-icons'
 import ActionsMenu from 'cozy-ui/transpiled/react/ActionsMenu'
 import {
   makeActions,

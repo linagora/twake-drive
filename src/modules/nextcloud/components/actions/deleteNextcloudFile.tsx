@@ -1,6 +1,6 @@
-import { Icon, Trash } from '@linagora/twake-icons'
 import React, { forwardRef } from 'react'
 
+import { Icon, Trash } from '@linagora/twake-icons'
 import { Action } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'

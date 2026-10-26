@@ -1,5 +1,5 @@
-import { defaultFilePickerConfig } from './constants'
 import { getIntentData, getPickerNavigationConfig } from '../intentConfig'
+import { defaultFilePickerConfig } from './constants'
 
 /**
  * Read the FilePickerConfig carried in the intent data and merge it

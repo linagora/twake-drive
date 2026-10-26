@@ -1,8 +1,8 @@
-import { CrossSmall, Icon } from '@linagora/twake-icons'
 import cx from 'classnames'
 import PropTypes from 'prop-types'
 import React, { forwardRef } from 'react'
 
+import { CrossSmall, Icon } from '@linagora/twake-icons'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
 import TextField from 'cozy-ui/transpiled/react/TextField'
 import { alpha, makeStyles } from 'cozy-ui/transpiled/react/styles'

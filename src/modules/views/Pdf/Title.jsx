@@ -1,7 +1,7 @@
-import { FileTypePdf } from '@linagora/twake-icons'
 import PropTypes from 'prop-types'
 import React, { useCallback, useState } from 'react'
 
+import { FileTypePdf } from '@linagora/twake-icons'
 import Button from 'cozy-ui/transpiled/react/Buttons'
 import { useI18n } from 'twake-i18n'
 

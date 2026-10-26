@@ -1,6 +1,6 @@
-import { Icon, Camera } from '@linagora/twake-icons'
 import React from 'react'
 
+import { Icon, Camera } from '@linagora/twake-icons'
 import logger from 'cozy-logger'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'

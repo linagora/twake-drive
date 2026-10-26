@@ -1,7 +1,7 @@
-import { Icon } from '@linagora/twake-icons'
 import classNames from 'classnames'
 import React, { useCallback } from 'react'
 
+import { Icon } from '@linagora/twake-icons'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
 
 import styles from '@/modules/breadcrumb/styles/breadcrumb.styl'

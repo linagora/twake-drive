@@ -1,7 +1,7 @@
-import { Icon, TrashDuotone } from '@linagora/twake-icons'
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import { Icon, TrashDuotone } from '@linagora/twake-icons'
 import { useClient, useQuery } from 'cozy-client'
 import Alert from 'cozy-ui/transpiled/react/Alert'
 import Buttons from 'cozy-ui/transpiled/react/Buttons'

@@ -1,8 +1,8 @@
-import { Icon, Share } from '@linagora/twake-icons'
 import React, { useCallback, useEffect, useState, useMemo } from 'react'
 import { RemoveScroll } from 'react-remove-scroll'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 
+import { Icon, Share } from '@linagora/twake-icons'
 import { Q, useClient } from 'cozy-client'
 import flag from 'cozy-flags'
 import Button from 'cozy-ui/transpiled/react/Buttons'

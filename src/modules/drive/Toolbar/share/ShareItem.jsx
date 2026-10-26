@@ -1,7 +1,7 @@
-import { Icon, Share } from '@linagora/twake-icons'
 import React from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 
+import { Icon, Share } from '@linagora/twake-icons'
 import { SharedDocument } from 'cozy-sharing'
 import { AvatarList } from 'cozy-sharing/dist/components/Avatar/AvatarList'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'

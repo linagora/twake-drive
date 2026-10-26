@@ -1,6 +1,6 @@
-import { Icon, LabelOutlined, Qualify } from '@linagora/twake-icons'
 import React, { forwardRef } from 'react'
 
+import { Icon, LabelOutlined, Qualify } from '@linagora/twake-icons'
 import { getQualification } from 'cozy-client/dist/models/document'
 import { getBoundT } from 'cozy-client/dist/models/document/locales'
 import { isFile } from 'cozy-client/dist/models/file'

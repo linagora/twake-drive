@@ -4,7 +4,6 @@ import {
   FileTypeSlide,
   FileTypeText
 } from '@linagora/twake-icons'
-
 import { shouldBeOpenedByOnlyOffice } from 'cozy-client/dist/models/file'
 import { isMobile } from 'cozy-device-helper'
 import flag from 'cozy-flags'

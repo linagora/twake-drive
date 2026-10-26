@@ -1,6 +1,6 @@
-import { Icon, Certified } from '@linagora/twake-icons'
 import React, { forwardRef } from 'react'
 
+import { Icon, Certified } from '@linagora/twake-icons'
 import flag from 'cozy-flags'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'

@@ -1,8 +1,8 @@
-import { Icon, Upload } from '@linagora/twake-icons'
 import PropTypes from 'prop-types'
 import React from 'react'
 import { useDispatch } from 'react-redux'
 
+import { Icon, Upload } from '@linagora/twake-icons'
 import { useClient } from 'cozy-client'
 import withSharingState from 'cozy-sharing/dist/hoc/withSharingState'
 import Button from 'cozy-ui/transpiled/react/Buttons'

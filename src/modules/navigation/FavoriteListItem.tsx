@@ -1,6 +1,6 @@
-import { File, FileTypeServer, Folder } from '@linagora/twake-icons'
 import React, { FC } from 'react'
 
+import { File, FileTypeServer, Folder } from '@linagora/twake-icons'
 import {
   splitFilename,
   isDirectory,

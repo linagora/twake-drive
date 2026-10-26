@@ -1,7 +1,7 @@
-import { Cross, Icon } from '@linagora/twake-icons'
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import { Cross, Icon } from '@linagora/twake-icons'
 import AppTitle from 'cozy-ui/transpiled/react/AppTitle'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
 import { useI18n } from 'twake-i18n'

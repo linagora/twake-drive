@@ -1,6 +1,6 @@
-import { Icon, Bottom } from '@linagora/twake-icons'
 import React, { useState } from 'react'
 
+import { Icon, Bottom } from '@linagora/twake-icons'
 import Accordion from 'cozy-ui/transpiled/react/Accordion'
 import AccordionDetails from 'cozy-ui/transpiled/react/AccordionDetails'
 import AccordionSummary from 'cozy-ui/transpiled/react/AccordionSummary'

@@ -5,8 +5,6 @@ import { BarRoutes } from 'cozy-bar'
 import flag from 'cozy-flags'
 import { AssistantView } from 'cozy-search'
 
-import ExternalRedirect from './ExternalRedirect'
-import Index from './Index'
 import AIAssistantPaywallView from '../views/AI/AIAssistantPaywallView'
 import AssistantLayout from '../views/Assistant/AssistantLayout'
 import { DriveFolderView } from '../views/Drive/DriveFolderView'
@@ -26,6 +24,8 @@ import SharingsFilesViewer from '../views/Sharings/FilesViewerSharings'
 import SharingsFolderView from '../views/Sharings/SharingsFolderView'
 import FilesViewerTrash from '../views/Trash/FilesViewerTrash'
 import TrashFolderView from '../views/Trash/TrashFolderView'
+import ExternalRedirect from './ExternalRedirect'
+import Index from './Index'
 
 import FileHistory from '@/components/FileHistory'
 import {

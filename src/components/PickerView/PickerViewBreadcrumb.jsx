@@ -1,8 +1,8 @@
-import { Icon, Right } from '@linagora/twake-icons'
 import cx from 'classnames'
 import PropTypes from 'prop-types'
 import React, { Fragment, useCallback, memo } from 'react'
 
+import { Icon, Right } from '@linagora/twake-icons'
 import Typography from 'cozy-ui/transpiled/react/Typography'
 import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'
 

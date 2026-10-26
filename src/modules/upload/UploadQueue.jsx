@@ -1,3 +1,7 @@
+import cx from 'classnames'
+import React, { useCallback, useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+
 import {
   Icon,
   CheckCircle,
@@ -5,10 +9,6 @@ import {
   Spinner,
   Warning
 } from '@linagora/twake-icons'
-import cx from 'classnames'
-import React, { useCallback, useEffect } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-
 import Button from 'cozy-ui/transpiled/react/Buttons'
 import LinearProgress from 'cozy-ui/transpiled/react/LinearProgress'
 import List from 'cozy-ui/transpiled/react/List'

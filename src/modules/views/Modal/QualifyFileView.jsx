@@ -1,7 +1,7 @@
-import { Icon, FileDuotone, FileTypeNote } from '@linagora/twake-icons'
 import React from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
+import { Icon, FileDuotone, FileTypeNote } from '@linagora/twake-icons'
 import { isQueryLoading, useClient, useQuery } from 'cozy-client'
 import { getQualification } from 'cozy-client/dist/models/document'
 import { themesList } from 'cozy-client/dist/models/document/documentTypeData'

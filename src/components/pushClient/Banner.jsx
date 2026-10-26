@@ -1,16 +1,16 @@
 // eslint-disable-next-line no-redeclare,no-unused-vars
 /* global localStorage */
 
+import localforage from 'localforage'
+import flow from 'lodash/flow'
+import React, { Component } from 'react'
+
 import {
   Icon,
   DesktopDownload,
   Download,
   PhoneDownload
 } from '@linagora/twake-icons'
-import localforage from 'localforage'
-import flow from 'lodash/flow'
-import React, { Component } from 'react'
-
 import { withClient } from 'cozy-client'
 import flag from 'cozy-flags'
 import Alert from 'cozy-ui/transpiled/react/Alert'

@@ -5,13 +5,13 @@ import { Route, Routes } from 'react-router-dom'
 import { useQuery } from 'cozy-client'
 import flag from 'cozy-flags'
 
-import { SharingsView } from './index'
-import { SharingsTabProvider } from './useSharingsTab'
 import {
   generateFileFixtures,
   getByTextWithMarkup,
   removeNonASCII
 } from '../testUtils'
+import { SharingsView } from './index'
+import { SharingsTabProvider } from './useSharingsTab'
 import AppLike from 'test/components/AppLike'
 import { setupStoreAndClient } from 'test/setup'
 

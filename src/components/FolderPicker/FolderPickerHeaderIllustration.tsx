@@ -1,6 +1,6 @@
-import { Icon, FileTypeFolder } from '@linagora/twake-icons'
 import React from 'react'
 
+import { Icon, FileTypeFolder } from '@linagora/twake-icons'
 import Avatar from 'cozy-ui/transpiled/react/Avatar'
 
 import { FolderPickerEntry } from '@/components/FolderPicker/types'

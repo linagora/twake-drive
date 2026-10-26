@@ -1,8 +1,8 @@
-import { Icon } from '@linagora/twake-icons'
 import cx from 'classnames'
 import React from 'react'
 import { useLocation } from 'react-router-dom'
 
+import { Icon } from '@linagora/twake-icons'
 import Empty from 'cozy-ui/transpiled/react/Empty'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 import { useI18n } from 'twake-i18n'

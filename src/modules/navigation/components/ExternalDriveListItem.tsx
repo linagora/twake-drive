@@ -1,6 +1,6 @@
-import { FileTypeServer } from '@linagora/twake-icons'
 import React, { FC } from 'react'
 
+import { FileTypeServer } from '@linagora/twake-icons'
 import { splitFilename } from 'cozy-client/dist/models/file'
 import type { IOCozyFile } from 'cozy-client/types/types'
 import { NavIcon, NavLink, NavItem } from 'cozy-ui/transpiled/react/Nav'

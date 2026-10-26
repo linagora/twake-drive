@@ -6,9 +6,9 @@ import { useSharingContext } from 'cozy-sharing'
 import { useAlert } from 'cozy-ui/transpiled/react/providers/Alert'
 import { useI18n } from 'twake-i18n'
 
-import Grid from './Grid'
 import { sortFiles } from '../sortFiles'
 import { useSyncingFakeFile } from '../useSyncingFakeFile'
+import Grid from './Grid'
 
 import { useShiftSelection } from '@/hooks/useShiftSelection'
 import { useViewSwitcherContext } from '@/lib/ViewSwitcherContext'
