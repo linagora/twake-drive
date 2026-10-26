@@ -4,6 +4,7 @@ import { test as base, expect } from '@playwright/test'
 import type {
   Browser,
   BrowserContextOptions,
+  Locator,
   Page,
   TestInfo
 } from '@playwright/test'
@@ -123,3 +124,10 @@ export const safeUnlink = async (filePath: string): Promise<void> => {
 /** Escape regex metacharacters so a literal name can be used in a RegExp. */
 export const escapeRegExp = (text: string): string =>
   text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+/** Assert that a row locator is visible and marked disabled. */
+export const expectRowDisabled = async (row: Locator): Promise<void> => {
+  await expect(row).toBeVisible()
+  await expect(row).toHaveAttribute('aria-disabled', 'true')
+}
+
