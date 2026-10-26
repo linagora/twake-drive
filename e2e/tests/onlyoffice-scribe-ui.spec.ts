@@ -6,7 +6,7 @@ import { USERS } from '../helpers/config'
 import { test, expect, stamp } from '../helpers/fixtures'
 import { DEFAULT_FLAGS, setFlags } from '../helpers/flags'
 import { createFile, trashById } from '../helpers/stack'
-import { ScribePage } from '../pages/ScribePage'
+import { ScribePage, type Box } from '../pages/ScribePage'
 import {
   type Geometry,
   type ScribeApplied,
@@ -59,6 +59,19 @@ const uploadScribeDocument = async (
   })
   uploaded.push({ instance, fileId })
   return fileId
+}
+
+// Throws while the box is not laid out yet, for `toPass` to try again
+const ensureBox = (box: Box | null, name: string): Box => {
+  if (box === null) throw new Error(`No box of ${name}`)
+  return box
+}
+
+const expectInside = (box: Box, frame: Box): void => {
+  expect(box.x).toBeGreaterThanOrEqual(frame.x)
+  expect(box.y).toBeGreaterThanOrEqual(frame.y)
+  expect(box.x + box.width).toBeLessThanOrEqual(frame.x + frame.width)
+  expect(box.y + box.height).toBeLessThanOrEqual(frame.y + frame.height)
 }
 
 interface ScribeCase {
@@ -120,19 +133,18 @@ test.describe('the scribe of Drive', { tag: '@e2e-scribe' }, () => {
     let geometry: Geometry | null = null
     await expect(async () => {
       geometry = (await plugin.takeGeometry()) ?? geometry
-      const frame = await scribe.editorFrame().boundingBox()
-      const button = await scribe.selectionButton().boundingBox()
-      const disc = await scribe.selectionDiscBox()
-      const [endX, endY] = geometry?.selection?.rect.corners[3] ?? []
-      if (!frame || !button || !disc || endX === undefined) {
-        throw new Error('No geometry of the selection or of its button')
-      }
-      expect(button.x).toBeGreaterThanOrEqual(frame.x)
-      expect(button.y).toBeGreaterThanOrEqual(frame.y)
-      expect(button.x + button.width).toBeLessThanOrEqual(frame.x + frame.width)
-      expect(button.y + button.height).toBeLessThanOrEqual(
-        frame.y + frame.height
+      const end = geometry?.selection?.rect.corners[3]
+      if (!end) throw new Error('No geometry of the selection')
+      const [endX, endY] = end
+      const frame = ensureBox(
+        await scribe.editorFrame().boundingBox(),
+        'the editor'
       )
+      expectInside(
+        ensureBox(await scribe.selectionButton().boundingBox(), 'the button'),
+        frame
+      )
+      const disc = ensureBox(await scribe.selectionDiscBox(), 'the disc')
       // The disc is 4 px below and right of the end of the selection
       expect(disc.x).toBeGreaterThanOrEqual(frame.x + endX)
       expect(disc.y).toBeGreaterThanOrEqual(frame.y + endY)
@@ -178,18 +190,16 @@ test.describe('the scribe of Drive', { tag: '@e2e-scribe' }, () => {
     // Until the first geometry of the plugin, the button waits in the bottom
     // right corner of the window
     await expect(async () => {
-      const frame = await scribe.editorFrame().boundingBox()
-      const viewer = await scribe.viewerBox()
-      const button = await scribe.floatingButton().boundingBox()
-      if (!frame || !viewer || !button) {
-        throw new Error('No box of the editor or of the floating button')
-      }
-      expect(button.x).toBeGreaterThanOrEqual(frame.x)
-      expect(button.y).toBeGreaterThanOrEqual(frame.y)
-      expect(button.x + button.width).toBeLessThanOrEqual(frame.x + frame.width)
-      expect(button.y + button.height).toBeLessThanOrEqual(
-        frame.y + frame.height
+      const frame = ensureBox(
+        await scribe.editorFrame().boundingBox(),
+        'the editor'
       )
+      const viewer = ensureBox(await scribe.viewerBox(), 'the viewer')
+      const button = ensureBox(
+        await scribe.floatingButton().boundingBox(),
+        'the floating button'
+      )
+      expectInside(button, frame)
       // 12 px inside the top right corner of the document area
       expect(Math.abs(button.y - (viewer.y + 12))).toBeLessThanOrEqual(1)
       expect(
@@ -271,6 +281,8 @@ test.describe('the scribe of Drive', { tag: '@e2e-scribe' }, () => {
       })
     const intentId = await scribe.intentId(scribe.panel())
 
+    // As a user does: the composer of the open panel has the focus
+    await scribe.editorFrame().click()
     await scribe.selectInEditor('P2@start..P2@end')
     await expect(scribe.selectionButton()).toBeHidden()
 
