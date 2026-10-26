@@ -5,7 +5,10 @@ import { createMockClient } from 'cozy-client'
 
 import AppLike from 'test/components/AppLike'
 
-import { AssistantPanel } from '@/modules/views/Drive/Assistant/AssistantPanel'
+import {
+  AssistantPanel,
+  KEYBOARD_SAFE_HEIGHT
+} from '@/modules/views/Drive/Assistant/AssistantPanel'
 import { useAssistant } from '@/modules/views/Drive/Assistant/AssistantProvider'
 
 jest.mock('@/modules/views/Drive/Assistant/AssistantProvider', () => ({
@@ -73,5 +76,30 @@ describe('AssistantPanel', () => {
 
     getIntentProps().onTerminate()
     expect(close).toHaveBeenCalledTimes(2)
+  })
+
+  it('stops above the keyboard of a phone', () => {
+    const listeners = {}
+    window.visualViewport = {
+      height: 800,
+      offsetTop: 0,
+      addEventListener: (event, listener) => (listeners[event] = listener),
+      removeEventListener: jest.fn()
+    }
+    jest
+      .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+      .mockReturnValue({ top: 100 })
+
+    setup()
+    const panel = screen.getByTestId('assistant-panel')
+    expect(panel.style.getPropertyValue(KEYBOARD_SAFE_HEIGHT)).toBe('700px')
+
+    window.visualViewport.height = 400.4
+    window.visualViewport.offsetTop = 50
+    listeners.resize()
+    expect(panel.style.getPropertyValue(KEYBOARD_SAFE_HEIGHT)).toBe('350px')
+
+    delete window.visualViewport
+    jest.restoreAllMocks()
   })
 })
