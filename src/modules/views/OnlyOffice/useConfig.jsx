@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useClient, isQueryLoading } from 'cozy-client'
 import useFetchJSON from 'cozy-client/dist/hooks/useFetchJSON'
 import flag from 'cozy-flags'
+import { useSharingContext } from 'cozy-sharing'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import { changeLocation } from '@/hooks/helpers'
@@ -35,6 +36,8 @@ const useConfig = () => {
     setOfficeKey
   } = useOnlyOfficeContext()
   const client = useClient()
+  const { getSharingById } = useSharingContext()
+  const sharing = driveId ? getSharingById(driveId) : null
   const instanceUri = client.getStackClient().uri
   const [currentSearchParams] = useSearchParams()
   const { author, isLoading: isAuthorLoading } = useEditorAuthor({ isPublic })
@@ -94,11 +97,14 @@ const useConfig = () => {
     }
 
     // The editor reads the author from its config at mount, so wait for it.
-    if (isAuthorLoading) return
+    if (isAuthorLoading || (driveId && !sharing)) return
 
     setOfficeKey(onlyoffice.document.key)
 
-    const apiUrl = makeOfficeApiUrl(onlyoffice.url)
+    // Only received drives proxy /open; ownership must come from local sharing state.
+    const apiUrl = makeOfficeApiUrl(onlyoffice.url, {
+      isServerUrlTrusted: !driveId || sharing?.attributes.owner === true
+    })
     if (!apiUrl) {
       logger.error(
         'Refusing the OnlyOffice server URL returned by the open route'
@@ -146,6 +152,8 @@ const useConfig = () => {
       docEditorConfig
     })
   }, [
+    driveId,
+    sharing,
     editorMode,
     queryResult,
     fetchStatus,

@@ -3,6 +3,7 @@ import { renderHook, waitFor } from '@testing-library/react'
 import { useClient } from 'cozy-client'
 import useFetchJSON from 'cozy-client/dist/hooks/useFetchJSON'
 import flag from 'cozy-flags'
+import { useSharingContext } from 'cozy-sharing'
 import useBreakpoints from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
 import { officeDoc } from 'test/data'
@@ -40,6 +41,11 @@ jest.mock('@/modules/views/OnlyOffice/helpers', () => ({
   isOfficeEnabled: jest.fn(() => true)
 }))
 jest.mock('cozy-flags')
+jest.mock('cozy-sharing', () => ({ useSharingContext: jest.fn() }))
+jest.mock('@/lib/logger', () => ({
+  __esModule: true,
+  default: { error: jest.fn() }
+}))
 jest.mock('@/hooks/helpers', () => ({
   ...jest.requireActual('@/hooks/helpers'),
   changeLocation: jest.fn()
@@ -79,17 +85,34 @@ const setup = ({
   author = 'Bob',
   isAuthorLoading = false,
   isPublic = false,
-  isReadOnly = false
+  isReadOnly = false,
+  driveId = null,
+  sharing = null,
+  serverUrl = data.data.attributes.onlyoffice?.url
 } = {}) => {
   useClient.mockReturnValue({
     getStackClient: () => ({ uri: 'https://bob.cozy.example' })
   })
   useBreakpoints.mockReturnValue({ isDesktop: true })
-  useFetchJSON.mockReturnValue({ data, fetchStatus: 'loaded' })
+  useFetchJSON.mockReturnValue({
+    data: {
+      data: {
+        ...data.data,
+        attributes: {
+          ...data.data.attributes,
+          onlyoffice: { ...data.data.attributes.onlyoffice, url: serverUrl }
+        }
+      }
+    },
+    fetchStatus: 'loaded'
+  })
+  useSharingContext.mockReturnValue({
+    getSharingById: id => (id === driveId ? sharing : null)
+  })
   useEditorAuthor.mockReturnValue({ author, isLoading: isAuthorLoading })
   useOnlyOfficeContext.mockReturnValue({
     fileId: '123',
-    driveId: undefined,
+    driveId,
     setIsEditorReady: jest.fn(),
     isPublic,
     isReadOnly,
@@ -118,6 +141,71 @@ describe('useConfig', () => {
       'Bob'
     )
   })
+
+  it.each([
+    { driveId: null, sharing: null },
+    { driveId: 'owned-drive', sharing: { attributes: { owner: true } } }
+  ])(
+    'preserves the locally configured OnlyOffice prefix for $driveId',
+    async options => {
+      const { result } = setup({
+        ...options,
+        serverUrl: 'https://proxy.example/onlyoffice/?ignored#ignored'
+      })
+
+      await waitFor(() => expect(result.current.config).toBeDefined())
+
+      expect(result.current.config.apiUrl).toBe(
+        'https://proxy.example/onlyoffice/web-apps/apps/api/documents/api.js'
+      )
+      expect(result.current.config.serverUrl).toBe('https://proxy.example')
+    }
+  )
+
+  it('discards a received drive URL path even when the response claims to be local', async () => {
+    const { result } = setup({
+      driveId: 'received-drive',
+      sharing: { attributes: { owner: false } },
+      serverUrl: 'https://bob.cozy.example/sharings/drives/x/downloads/y/p.js?'
+    })
+
+    await waitFor(() => expect(result.current.config).toBeDefined())
+
+    expect(result.current.config.apiUrl).toBe(
+      'https://bob.cozy.example/web-apps/apps/api/documents/api.js'
+    )
+  })
+
+  it('waits for drive ownership before building the config', async () => {
+    const { result, rerender } = setup({
+      driveId: 'owned-drive',
+      serverUrl: 'https://proxy.example/onlyoffice'
+    })
+
+    expect(result.current.config).toBeUndefined()
+
+    useSharingContext.mockReturnValue({
+      getSharingById: () => ({ attributes: { owner: true } })
+    })
+    rerender()
+
+    await waitFor(() => expect(result.current.config).toBeDefined())
+
+    expect(result.current.config.apiUrl).toBe(
+      'https://proxy.example/onlyoffice/web-apps/apps/api/documents/api.js'
+    )
+  })
+
+  it.each(['javascript:alert(1)//', 'data:text/javascript,alert(1)'])(
+    'rejects an invalid locally configured URL: %s',
+    async serverUrl => {
+      const { result } = setup({ serverUrl })
+
+      await waitFor(() => expect(result.current.status).toBe('error'))
+
+      expect(result.current.config).toBeUndefined()
+    }
+  )
 
   it('does not build the config until the editor author is resolved', () => {
     const { result } = setup({ isAuthorLoading: true })
@@ -196,28 +284,32 @@ describe('useConfig', () => {
     expect(result.current.config).toBeUndefined()
   })
 
-  it('sends a document the stack resolved elsewhere to its owner', async () => {
-    setup({
-      data: {
+  it.each([null, 'received-drive'])(
+    'sends a document resolved elsewhere to its owner before loading sharing %s',
+    async driveId => {
+      setup({
+        driveId,
         data: {
-          ...officeDoc,
-          attributes: {
-            ...officeDoc.attributes,
-            protocol: 'https',
-            instance: 'alice.cozy.example',
-            subdomain: 'flat',
-            sharecode: 'abc123',
-            public_name: 'Bob',
-            document_id: 'owner-file-id'
+          data: {
+            ...officeDoc,
+            attributes: {
+              ...officeDoc.attributes,
+              protocol: 'https',
+              instance: 'alice.cozy.example',
+              subdomain: 'flat',
+              sharecode: 'abc123',
+              public_name: 'Bob',
+              document_id: 'owner-file-id'
+            }
           }
         }
-      }
-    })
+      })
 
-    await waitFor(() =>
-      expect(changeLocation).toHaveBeenCalledWith(
-        'https://alice-drive.cozy.example/public/?sharecode=abc123&isOnlyOfficeDocShared=true&onlyOfficeDocId=owner-file-id&username=Bob#/'
+      await waitFor(() =>
+        expect(changeLocation).toHaveBeenCalledWith(
+          'https://alice-drive.cozy.example/public/?sharecode=abc123&isOnlyOfficeDocShared=true&onlyOfficeDocId=owner-file-id&username=Bob#/'
+        )
       )
-    )
-  })
+    }
+  )
 })
