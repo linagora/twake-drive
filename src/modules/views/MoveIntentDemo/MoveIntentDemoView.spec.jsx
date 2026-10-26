@@ -44,6 +44,8 @@ describe('MoveIntentDemoView', () => {
         message.includes('supplied to `Main`')
       const knownNonclosableWarning =
         message.includes('Invalid prop `onClose` of type `boolean`') &&
+        // Rslint takes this regex .test() call for a test without a body
+        // eslint-disable-next-line jest/no-disabled-tests
         /ForwardRef\((Dialog|Modal)\)/.test(message)
       if (!knownMainWarning && !knownNonclosableWarning)
         throw new Error(message)

@@ -10,7 +10,7 @@ other concerns; do not duplicate them.
 | You (OpenCode)                      | Logic errors, regressions, data loss, architecture, Twake/Cozy conventions | Review these                                    |
 | CodeRabbit                          | PR summary, security and supply chain, CI config                           | Do not summarize the PR                         |
 | CodeScene                           | Complexity, duplication, code health                                       | Do not comment on function length or complexity |
-| ESLint / Prettier / TypeScript (CI) | Style, formatting, imports order, types                                    | Do not comment on style or formatting           |
+| Rslint / rs fmt / TypeScript (CI)   | Style, formatting, imports order, types                                    | Do not comment on style or formatting           |
 | Jest / Playwright (CI)              | Behaviour under test                                                       | Only flag missing tests for risky logic         |
 
 Before writing, read the existing comments on the pull request
