@@ -1,6 +1,6 @@
-import { Icon, Star } from '@linagora/twake-icons'
 import React, { forwardRef } from 'react'
 
+import { Icon, Star } from '@linagora/twake-icons'
 import { splitFilename } from 'cozy-client/dist/models/file'
 import CozyClient from 'cozy-client/types/CozyClient'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'

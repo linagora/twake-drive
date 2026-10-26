@@ -1,7 +1,7 @@
-import { Icon, Dots } from '@linagora/twake-icons'
 import cx from 'classnames'
 import React, { useState, useRef } from 'react'
 
+import { Icon, Dots } from '@linagora/twake-icons'
 import ActionsMenu from 'cozy-ui/transpiled/react/ActionsMenu'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
 import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'

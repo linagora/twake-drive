@@ -28,8 +28,8 @@ const {
   moveRelateToSharedDrive
 } = require('cozy-client/dist/models/file')
 
-const { resolveNameConflictsForCut } = require('./utils')
 const { hasOneOfEntriesShared } = require('../move/helpers')
+const { resolveNameConflictsForCut } = require('./utils')
 
 describe('handlePasteOperation', () => {
   let mockClient, mockFiles, mockTargetFolder, mockSourceDirectory, mockOptions

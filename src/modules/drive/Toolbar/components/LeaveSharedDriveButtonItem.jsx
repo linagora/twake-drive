@@ -1,7 +1,7 @@
-import { Icon, Logout } from '@linagora/twake-icons'
 import React from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 
+import { Icon, Logout } from '@linagora/twake-icons'
 import { useClient } from 'cozy-client'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'

@@ -7,8 +7,8 @@ import React from 'react'
 
 import CozyClient from 'cozy-client'
 
-import { generateFile } from './generate'
 import configureStore from '../src/store/configureStore'
+import { generateFile } from './generate'
 import AppLike from 'test/components/AppLike'
 import FolderContent from 'test/components/FolderContent'
 

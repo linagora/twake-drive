@@ -1,6 +1,6 @@
-import { Icon, InfoOutlined, ShieldClean } from '@linagora/twake-icons'
 import React, { useRef, useState } from 'react'
 
+import { Icon, InfoOutlined, ShieldClean } from '@linagora/twake-icons'
 import ActionsBar from 'cozy-ui/transpiled/react/ActionsBar'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
 import List from 'cozy-ui/transpiled/react/List'

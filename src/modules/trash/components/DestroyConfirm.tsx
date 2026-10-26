@@ -1,6 +1,6 @@
-import { Icon, Forbidden, Restore } from '@linagora/twake-icons'
 import React, { useState } from 'react'
 
+import { Icon, Forbidden, Restore } from '@linagora/twake-icons'
 import { splitFilename } from 'cozy-client/dist/models/file'
 import Button from 'cozy-ui/transpiled/react/Buttons'
 import { ConfirmDialog } from 'cozy-ui/transpiled/react/CozyDialogs'

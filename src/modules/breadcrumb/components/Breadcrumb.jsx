@@ -1,8 +1,8 @@
-import { Icon, Right } from '@linagora/twake-icons'
 import cx from 'classnames'
 import PropTypes from 'prop-types'
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 
+import { Icon, Right } from '@linagora/twake-icons'
 import Spinner from 'cozy-ui/transpiled/react/Spinner'
 
 import styles from '@/modules/breadcrumb/styles/breadcrumb.styl'

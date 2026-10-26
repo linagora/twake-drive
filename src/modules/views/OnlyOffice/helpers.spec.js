@@ -1,5 +1,4 @@
 import { FileTypePdf } from '@linagora/twake-icons'
-
 import flag from 'cozy-flags'
 
 import {

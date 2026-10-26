@@ -1,6 +1,6 @@
-import { Icon, CloudSync } from '@linagora/twake-icons'
 import React, { useEffect, useState } from 'react'
 
+import { Icon, CloudSync } from '@linagora/twake-icons'
 import { useInstanceInfo } from 'cozy-client'
 import {
   arePremiumLinksEnabled,

@@ -3,9 +3,9 @@ import { useSelector } from 'react-redux'
 
 import { useBreakpoints } from 'cozy-ui/transpiled/react/providers/Breakpoints'
 
-import FolderViewBodyContent from './FolderViewBodyContent'
 import { makeColumns } from '../helpers'
 import { getFolderViewState } from '../hooks/getFolderViewState'
+import FolderViewBodyContent from './FolderViewBodyContent'
 
 import { EmptyWrapper } from '@/components/Error/Empty'
 import Oops from '@/components/Error/Oops'

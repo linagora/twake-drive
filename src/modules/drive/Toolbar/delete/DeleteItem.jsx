@@ -1,8 +1,8 @@
-import { Icon, Trash } from '@linagora/twake-icons'
 import compose from 'lodash/flowRight'
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import { Icon, Trash } from '@linagora/twake-icons'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'

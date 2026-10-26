@@ -1,7 +1,7 @@
 import React from 'react'
 
-import SharingsTabs from './SharingsTabs'
 import FolderViewHeader from '../Folder/FolderViewHeader'
+import SharingsTabs from './SharingsTabs'
 
 import styles from '@/styles/topbar.styl'
 

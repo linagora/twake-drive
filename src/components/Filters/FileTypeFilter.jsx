@@ -1,7 +1,7 @@
-import { File, Icon } from '@linagora/twake-icons'
 import PropTypes from 'prop-types'
 import React from 'react'
 
+import { File, Icon } from '@linagora/twake-icons'
 import MenuItem from 'cozy-ui/transpiled/react/MenuItem'
 import { makeStyles } from 'cozy-ui/transpiled/react/styles'
 import { useI18n } from 'twake-i18n'

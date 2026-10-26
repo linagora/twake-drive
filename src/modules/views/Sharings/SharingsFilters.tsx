@@ -1,6 +1,6 @@
-import { Cross, Icon } from '@linagora/twake-icons'
 import React from 'react'
 
+import { Cross, Icon } from '@linagora/twake-icons'
 import { GroupAvatar, MemberAvatar } from 'cozy-sharing'
 import Button from 'cozy-ui/transpiled/react/Button'
 import { makeStyles } from 'cozy-ui/transpiled/react/styles'

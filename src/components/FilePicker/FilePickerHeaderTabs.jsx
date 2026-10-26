@@ -1,13 +1,13 @@
+import cx from 'classnames'
+import PropTypes from 'prop-types'
+import React from 'react'
+
 import {
   ClockOutline,
   Cloud2,
   Icon,
   ShareExternal
 } from '@linagora/twake-icons'
-import cx from 'classnames'
-import PropTypes from 'prop-types'
-import React from 'react'
-
 import Tab from 'cozy-ui/transpiled/react/Tab'
 import Tabs from 'cozy-ui/transpiled/react/Tabs'
 import { useI18n } from 'twake-i18n'

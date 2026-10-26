@@ -1,6 +1,6 @@
-import { Icon, DesktopDownload } from '@linagora/twake-icons'
 import React from 'react'
 
+import { Icon, DesktopDownload } from '@linagora/twake-icons'
 import Button from 'cozy-ui/transpiled/react/Buttons'
 import { ConfirmDialog } from 'cozy-ui/transpiled/react/CozyDialogs'
 import Typography from 'cozy-ui/transpiled/react/Typography'

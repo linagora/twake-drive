@@ -1,3 +1,5 @@
+import React from 'react'
+
 import {
   Icon,
   FileTypeServer,
@@ -5,8 +7,6 @@ import {
   TrashDuotone,
   WarningCircle
 } from '@linagora/twake-icons'
-import React from 'react'
-
 import { isReferencedBy, models } from 'cozy-client'
 import { isDirectory } from 'cozy-client/dist/models/file'
 import { SharedBadge, SharingOwnerAvatar } from 'cozy-sharing'

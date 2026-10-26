@@ -1,6 +1,6 @@
-import { Icon, Upload } from '@linagora/twake-icons'
 import React from 'react'
 
+import { Icon, Upload } from '@linagora/twake-icons'
 import { translate } from 'twake-i18n'
 
 import styles from '@/styles/dropzone.styl'

@@ -3,8 +3,8 @@ import React from 'react'
 
 import { useSharingContext } from 'cozy-sharing'
 
-import RecentViewWithProvider from './index'
 import { generateFileFixtures } from '../testUtils'
+import RecentViewWithProvider from './index'
 import AppLike from 'test/components/AppLike'
 import { setupStoreAndClient } from 'test/setup'
 

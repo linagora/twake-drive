@@ -1,8 +1,8 @@
-import { Icon, FileTypeNote } from '@linagora/twake-icons'
 import get from 'lodash/get'
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import { Icon, FileTypeNote } from '@linagora/twake-icons'
 import {
   withClient,
   generateWebLink,

@@ -1,6 +1,6 @@
-import { Icon, ClockOutline, Cloud2, Star, Trash } from '@linagora/twake-icons'
 import React from 'react'
 
+import { Icon, ClockOutline, Cloud2, Star, Trash } from '@linagora/twake-icons'
 import flag from 'cozy-flags'
 import { NavDesktopDropdown } from 'cozy-ui/transpiled/react/Nav'
 import UINav from 'cozy-ui/transpiled/react/Nav'

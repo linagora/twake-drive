@@ -1,6 +1,6 @@
-import { CloudBroken } from '@linagora/twake-icons'
 import React from 'react'
 
+import { CloudBroken } from '@linagora/twake-icons'
 import Empty from 'cozy-ui/transpiled/react/Empty'
 import { useI18n } from 'twake-i18n'
 

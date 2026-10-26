@@ -1,6 +1,6 @@
-import { Palette } from '@linagora/twake-icons'
 import React from 'react'
 
+import { Palette } from '@linagora/twake-icons'
 import { makeAction } from 'cozy-ui/transpiled/react/ActionsMenu/Actions/makeAction'
 
 import { FolderCustomizerModal } from '../../views/Folder/FolderCustomizer'

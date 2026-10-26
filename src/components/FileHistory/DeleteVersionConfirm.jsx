@@ -1,7 +1,7 @@
-import { Icon, Forbidden, Trash } from '@linagora/twake-icons'
 import PropTypes from 'prop-types'
 import React, { useCallback, useState } from 'react'
 
+import { Icon, Forbidden, Trash } from '@linagora/twake-icons'
 import { useClient } from 'cozy-client'
 import Buttons from 'cozy-ui/transpiled/react/Buttons'
 import { ConfirmDialog } from 'cozy-ui/transpiled/react/CozyDialogs'

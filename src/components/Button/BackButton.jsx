@@ -1,6 +1,6 @@
-import { Icon, Previous } from '@linagora/twake-icons'
 import React from 'react'
 
+import { Icon, Previous } from '@linagora/twake-icons'
 import IconButton from 'cozy-ui/transpiled/react/IconButton'
 import { useI18n } from 'twake-i18n'
 

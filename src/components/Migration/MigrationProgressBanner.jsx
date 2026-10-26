@@ -1,6 +1,6 @@
-import { Icon, Upload } from '@linagora/twake-icons'
 import React, { useCallback, useEffect, useState } from 'react'
 
+import { Icon, Upload } from '@linagora/twake-icons'
 import { useClient, useQuery } from 'cozy-client'
 import Buttons from 'cozy-ui/transpiled/react/Buttons'
 import ProgressionBanner from 'cozy-ui/transpiled/react/ProgressionBanner'

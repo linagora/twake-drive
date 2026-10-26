@@ -10,6 +10,10 @@ import {
 import { makeActions } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
 import { Content } from 'cozy-ui/transpiled/react/Layout'
 
+import FolderView from '../Folder/FolderView'
+import FolderViewBody from '../Folder/FolderViewBody'
+import { useFolderViewBase } from '../Folder/hooks/useFolderViewBase'
+import FolderViewBodyVz from '../Folder/virtualized/FolderViewBody'
 import { SharingsFilters } from './SharingsFilters'
 import SharingsHeader from './SharingsHeader'
 import { SharingsRootListProvider } from './SharingsRootListContext'
@@ -23,10 +27,6 @@ import {
 } from './useSharingsQueryResult'
 import { areDrivesAvailable, useSharingsTab } from './useSharingsTab'
 import withSharedDocumentIds from './withSharedDocumentIds'
-import FolderView from '../Folder/FolderView'
-import FolderViewBody from '../Folder/FolderViewBody'
-import { useFolderViewBase } from '../Folder/hooks/useFolderViewBase'
-import FolderViewBodyVz from '../Folder/virtualized/FolderViewBody'
 
 import useHead from '@/components/useHead'
 import {

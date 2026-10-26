@@ -1,6 +1,6 @@
-import { Plus } from '@linagora/twake-icons'
 import React, { useContext } from 'react'
 
+import { Plus } from '@linagora/twake-icons'
 import { ExtendableFab } from 'cozy-ui/transpiled/react/Fab'
 import { useI18n } from 'twake-i18n'
 

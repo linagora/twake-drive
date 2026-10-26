@@ -1,7 +1,7 @@
-import { Account, Bottom, Icon } from '@linagora/twake-icons'
 import React, { useState, type FormEvent, type ReactElement } from 'react'
 import Autosuggest from 'react-autosuggest'
 
+import { Account, Bottom, Icon } from '@linagora/twake-icons'
 import ActionsMenuWrapper from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuWrapper'
 import InputAdornment from 'cozy-ui/transpiled/react/InputAdornment'
 import { useI18n } from 'twake-i18n'

@@ -1,7 +1,7 @@
-import { Icon, DeviceBrowser } from '@linagora/twake-icons'
 import React from 'react'
 import { connect } from 'react-redux'
 
+import { Icon, DeviceBrowser } from '@linagora/twake-icons'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import ListItemText from 'cozy-ui/transpiled/react/ListItemText'

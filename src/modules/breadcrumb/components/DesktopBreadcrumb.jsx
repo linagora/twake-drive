@@ -1,6 +1,6 @@
-import { Icon, Folder, Right } from '@linagora/twake-icons'
 import React, { useEffect, useMemo, useState } from 'react'
 
+import { Icon, Folder, Right } from '@linagora/twake-icons'
 import ActionsMenu from 'cozy-ui/transpiled/react/ActionsMenu'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
 import BreadcrumbMui from 'cozy-ui/transpiled/react/Breadcrumbs'

@@ -1,7 +1,7 @@
-import { Icon, FileTypeFolder } from '@linagora/twake-icons'
 import React, { FC } from 'react'
 import { useDispatch } from 'react-redux'
 
+import { Icon, FileTypeFolder } from '@linagora/twake-icons'
 import { useClient } from 'cozy-client'
 import ListItem from 'cozy-ui/transpiled/react/ListItem'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'

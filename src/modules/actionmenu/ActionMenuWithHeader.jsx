@@ -1,6 +1,6 @@
-import { Icon } from '@linagora/twake-icons'
 import React from 'react'
 
+import { Icon } from '@linagora/twake-icons'
 import { isDirectory, splitFilename } from 'cozy-client/dist/models/file'
 import ActionsMenu from 'cozy-ui/transpiled/react/ActionsMenu'
 import ActionsMenuMobileHeader from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuMobileHeader'

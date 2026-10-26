@@ -1,6 +1,6 @@
-import { Icon, Folder, Openwith } from '@linagora/twake-icons'
 import React, { useMemo, useState } from 'react'
 
+import { Icon, Folder, Openwith } from '@linagora/twake-icons'
 import { useQuery } from 'cozy-client'
 import Button from 'cozy-ui/transpiled/react/Buttons'
 import Checkbox from 'cozy-ui/transpiled/react/Checkbox'

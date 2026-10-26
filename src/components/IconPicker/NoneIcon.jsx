@@ -1,6 +1,7 @@
-import { Cross } from '@linagora/twake-icons'
 import PropTypes from 'prop-types'
 import React from 'react'
+
+import { Cross } from '@linagora/twake-icons'
 
 import styles from '@/styles/folder-customizer.styl'
 

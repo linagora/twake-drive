@@ -1,6 +1,6 @@
-import { Icon, Download } from '@linagora/twake-icons'
 import React from 'react'
 
+import { Icon, Download } from '@linagora/twake-icons'
 import { useClient } from 'cozy-client'
 import ActionsMenuItem from 'cozy-ui/transpiled/react/ActionsMenu/ActionsMenuItem'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'

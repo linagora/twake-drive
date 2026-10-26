@@ -1,8 +1,8 @@
-import { Icon, Trash } from '@linagora/twake-icons'
 import cx from 'classnames'
 import React, { FC } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import { Icon, Trash } from '@linagora/twake-icons'
 import { BarRight } from 'cozy-bar'
 import { makeActions } from 'cozy-ui/transpiled/react/ActionsMenu/Actions'
 import Button from 'cozy-ui/transpiled/react/Buttons'

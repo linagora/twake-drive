@@ -1,7 +1,7 @@
-import { Icon, List, ListMin } from '@linagora/twake-icons'
 import cx from 'classnames'
 import React, { useState, useCallback } from 'react'
 
+import { Icon, List, ListMin } from '@linagora/twake-icons'
 import Button from 'cozy-ui/transpiled/react/Buttons'
 import {
   TableHead,

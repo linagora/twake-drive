@@ -1,7 +1,7 @@
-import { connectToTwakeSpace, embedRoute } from '@linagora/twake-embed'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Navigate, Outlet, useNavigate, useParams } from 'react-router-dom'
 
+import { connectToTwakeSpace, embedRoute } from '@linagora/twake-embed'
 import { hasQueryBeenLoaded, useQuery } from 'cozy-client'
 import { Layout as LayoutUI } from 'cozy-ui/transpiled/react/Layout'
 import { ThemeProvider } from 'cozy-ui/transpiled/react/styles'

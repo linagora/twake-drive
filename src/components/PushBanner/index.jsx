@@ -5,9 +5,9 @@ import { useInstanceInfo } from 'cozy-client'
 import { makeDiskInfos } from 'cozy-client/dist/models/instance'
 import { isFlagshipApp } from 'cozy-device-helper'
 
+import BannerClient from '../../components/pushClient/Banner'
 import { usePushBannerContext } from './PushBannerProvider'
 import QuotaBanner from './QuotaBanner'
-import BannerClient from '../../components/pushClient/Banner'
 
 import { isSpacePath } from '@/modules/routeUtils'
 
