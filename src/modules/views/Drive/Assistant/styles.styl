@@ -19,6 +19,8 @@
 
     +small-screen()
         flex 1 1 auto
+        // Above the keyboard (see useKeyboardSafeHeight)
+        max-height var(--assistant-keyboard-safe-height, none)
 
 // A phone has no room for both: the assistant takes the place of the list,
 // which stays mounted to keep its state
