@@ -10,21 +10,21 @@ function readViewer(editorWindow) {
   return { left, top, width, height }
 }
 
-// The editor gives zeros, or throws, while it has no document
+const isPoint = point =>
+  Array.isArray(point) && point.length === 2 && point.every(Number.isFinite)
+
+// The editor gives zeros while it has no document
+const isRead = corners =>
+  Array.isArray(corners) &&
+  corners.length === 4 &&
+  corners.every(isPoint) &&
+  corners.flat().some(value => value !== 0)
+
+// The editor throws while it has no document
 function readCorners(editorWindow) {
   try {
     const corners = editorWindow.editor?.asc_GetSelectionBounds?.()
-    const isRead =
-      Array.isArray(corners) &&
-      corners.length === 4 &&
-      corners.every(
-        corner =>
-          Array.isArray(corner) &&
-          corner.length === 2 &&
-          corner.every(Number.isFinite)
-      )
-    if (!isRead || corners.flat().every(value => value === 0)) return null
-    return corners
+    return isRead(corners) ? corners : null
   } catch {
     return null
   }
