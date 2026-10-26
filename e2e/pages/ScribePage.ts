@@ -249,10 +249,15 @@ export class ScribePage {
       .not.toBe(null)
 
     const frame = await this.findIntentFrame(surface)
-    await frame.evaluate(message => window.parent.postMessage(message, '*'), {
-      type: `intent-${intentId}:result`,
-      result
-    })
+    // Drive is the page of the test
+    const driveOrigin = new URL(this.page.url()).origin
+    await frame.evaluate(
+      ({ message, origin }) => window.parent.postMessage(message, origin),
+      {
+        message: { type: `intent-${intentId}:result`, result },
+        origin: driveOrigin
+      }
+    )
   }
 
   assistantFrame(): FrameLocator {
