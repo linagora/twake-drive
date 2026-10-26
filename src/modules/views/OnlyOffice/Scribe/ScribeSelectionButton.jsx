@@ -1,7 +1,7 @@
-import { Icon } from '@linagora/twake-icons'
 import cx from 'classnames'
 import React, { useEffect, useState } from 'react'
 
+import { Icon } from '@linagora/twake-icons'
 import ButtonBase from 'cozy-ui/transpiled/react/ButtonBase'
 import Portal from 'cozy-ui/transpiled/react/Portal'
 import Tooltip from 'cozy-ui/transpiled/react/Tooltip'
