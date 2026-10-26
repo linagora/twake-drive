@@ -1,7 +1,7 @@
 import type { FrameLocator, Locator, Page } from '@playwright/test'
 
 import { USERS, type User } from '../helpers/config'
-import { expect } from '../helpers/fixtures'
+import { expect, expectRowDisabled } from '../helpers/fixtures'
 import { createMoveIntent } from '../helpers/intents'
 
 export interface MoveIntentMessage {
@@ -125,9 +125,7 @@ export class MoveIntentPage {
   }
 
   async expectRowDisabled(name: string): Promise<void> {
-    const row = this.row(name)
-    await expect(row).toBeVisible()
-    await expect(row).toHaveAttribute('aria-disabled', 'true')
+    await expectRowDisabled(this.row(name))
   }
 
   async navigateToFolder(name: string): Promise<void> {

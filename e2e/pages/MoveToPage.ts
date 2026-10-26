@@ -1,6 +1,6 @@
 import type { Locator, Page } from '@playwright/test'
 
-import { escapeRegExp, expect } from '../helpers/fixtures'
+import { escapeRegExp, expect, expectRowDisabled } from '../helpers/fixtures'
 
 /**
  * Page object for the MoveTo destination picker.
@@ -117,9 +117,7 @@ export class MoveToPage {
   }
 
   async expectRowDisabled(name: string): Promise<void> {
-    const row = this.row(name)
-    await expect(row).toBeVisible()
-    await expect(row).toHaveAttribute('aria-disabled', 'true')
+    await expectRowDisabled(this.row(name))
   }
 
   async folderId(name: string): Promise<string> {
