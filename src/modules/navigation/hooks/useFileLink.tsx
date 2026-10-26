@@ -89,8 +89,7 @@ const useFileLink = (
   const isExcalidrawEnabled = computeExcalidrawEnabled()
   const { isPublic } = usePublicContext()
   const sharingContext = useSharingContext() as
-    | SharingContextForFileLink
-    | undefined
+    SharingContextForFileLink | undefined
   const isSharingsOwner = computeIsSharingsOwner({
     file,
     pathname,
