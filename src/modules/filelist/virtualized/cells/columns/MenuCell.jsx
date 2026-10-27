@@ -35,6 +35,7 @@ const MenuCell = ({ row, actions }) => {
           stopPropagation(event)
           toggleShowActionMenu()
         }}
+        onContextMenu={stopPropagation}
       />
       {contextMenuActions && showActionMenu && (
         // The menu renders in a portal, but its events still bubble through

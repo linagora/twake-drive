@@ -5,13 +5,17 @@ import IconButton from 'cozy-ui/transpiled/react/IconButton'
 import ListItemIcon from 'cozy-ui/transpiled/react/ListItemIcon'
 import { useI18n } from 'twake-i18n'
 
-const FileAction = forwardRef(function FileAction({ onClick, disabled }, ref) {
+const FileAction = forwardRef(function FileAction(
+  { onClick, onContextMenu, disabled },
+  ref
+) {
   const { t } = useI18n()
   return (
     <ListItemIcon>
       <IconButton
         ref={ref}
         onClick={onClick}
+        onContextMenu={onContextMenu}
         disabled={disabled}
         aria-label={t('Toolbar.more')}
       >

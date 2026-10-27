@@ -97,4 +97,12 @@ describe('MenuCell', () => {
 
     expect(onRowContextMenu).not.toHaveBeenCalled()
   })
+
+  it('keeps a right click on the row menu button away from the row', () => {
+    const { onRowContextMenu } = setup()
+
+    fireEvent.contextMenu(screen.getByRole('button', { name: 'More' }))
+
+    expect(onRowContextMenu).not.toHaveBeenCalled()
+  })
 })
