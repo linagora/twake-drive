@@ -10,10 +10,12 @@ const path = require('path')
 const jiti = require('jiti')(__filename)
 
 const { setupStack } = jiti('../../e2e/setup/global-setup.ts')
-const { USERS, stackExec } = jiti('../../e2e/helpers/config.ts')
+const { USERS } = jiti('../../e2e/helpers/config.ts')
+const { createFile, createFolder, makeFilesToken } = jiti(
+  '../../e2e/helpers/stack.ts'
+)
 
 const FIXTURES = path.join(__dirname, '..', '..', 'e2e', 'fixtures')
-const ROOT_DIR_ID = 'io.cozy.files.root-dir'
 const DOCX =
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
 
@@ -32,51 +34,21 @@ const SEED = {
   }
 }
 
-// file ({ body, contentType }) is left out for a directory
-async function createEntry({ user, token, dirId }, query, file = {}) {
-  const { body, contentType } = file
-  const res = await fetch(
-    `http://${user.instance}/files/${dirId}?${new URLSearchParams(query)}`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/vnd.api+json',
-        ...(contentType ? { 'Content-Type': contentType } : {})
-      },
-      body
-    }
-  )
-  if (!res.ok) {
-    throw new Error(
-      `Creating ${query.Name} on ${user.instance} failed (${
-        res.status
-      }): ${await res.text()}`
-    )
-  }
-  return (await res.json()).data.id
-}
-
 async function seedFiles() {
   for (const [label, folders] of Object.entries(SEED)) {
-    const user = USERS[label]
-    const token = stackExec(
-      'instances',
-      'token-cli',
-      user.instance,
-      'io.cozy.files'
-    )
+    const { instance } = USERS[label]
+    const token = makeFilesToken(instance)
     for (const [folder, files] of Object.entries(folders)) {
-      const dirId = await createEntry(
-        { user, token, dirId: ROOT_DIR_ID },
-        { Type: 'directory', Name: folder }
-      )
+      const parentId = await createFolder({ instance, name: folder })
       for (const [name, contentType] of files) {
-        await createEntry(
-          { user, token, dirId },
-          { Type: 'file', Name: name },
-          { body: fs.readFileSync(path.join(FIXTURES, name)), contentType }
-        )
+        await createFile({
+          instance,
+          name,
+          content: fs.readFileSync(path.join(FIXTURES, name)),
+          parentId,
+          contentType,
+          token
+        })
       }
       console.log(`    ${label}: /${folder} (${files.length} files)`)
     }
