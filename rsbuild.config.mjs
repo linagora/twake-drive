@@ -192,12 +192,12 @@ config.environments = {
 // async chunks once the main bundle runs, a round trip before the first
 // render. cozy-stack renders index.html as a Go template, so preload English
 // and, through `{{if eq .Locale}}`, the instance locale while the main bundle
-// downloads. The public page skips the instance locale: anonymous visitors
-// get their browser locale instead.
+// downloads. On the public page, anonymous visitors use their browser locale,
+// so for them the instance locale preload can be unused.
 const preloadLocalesPlugin = {
   name: 'preload-locales',
   setup(api) {
-    api.modifyHTML((html, { compilation, filename }) => {
+    api.modifyHTML((html, { compilation }) => {
       const { publicPath } = compilation.outputOptions
       const preloads = []
       for (const [name, chunk] of compilation.namedChunks) {
@@ -212,7 +212,7 @@ const preloadLocalesPlugin = {
           .join('')
         if (locale === 'en') {
           preloads.push(link)
-        } else if (filename !== 'public/index.html') {
+        } else {
           preloads.push(`{{if eq .Locale "${locale}"}}${link}{{end}}`)
         }
       }
