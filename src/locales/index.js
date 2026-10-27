@@ -40,7 +40,10 @@ let loadedDictRequire = () => ({})
  * @returns {Promise<Function>} A synchronous `dictRequire` for twake-i18n.
  */
 export async function loadLocales(locale, loadDictionary = importLocale) {
-  const fallbackDictionaryPromise = loadDictionary(FALLBACK_LOCALE)
+  // A failed fallback chunk renders translation keys rather than a blank page
+  const fallbackDictionaryPromise = loadDictionary(FALLBACK_LOCALE).catch(
+    () => ({})
+  )
   if (locale === FALLBACK_LOCALE) {
     const fallbackDictionary = await fallbackDictionaryPromise
     loadedDictRequire = () => fallbackDictionary

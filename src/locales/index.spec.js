@@ -48,6 +48,29 @@ describe('loadLocales', () => {
     expect(requireLocale('fr')).toEqual(dictionaries.en)
   })
 
+  it('resolves when the English fallback cannot be loaded', async () => {
+    const loadLocale = jest.fn(locale =>
+      locale === 'en'
+        ? Promise.reject(new Error('locale unavailable'))
+        : Promise.resolve(dictionaries[locale])
+    )
+
+    const requireLocale = await loadLocales('fr', loadLocale)
+
+    expect(requireLocale('fr')).toEqual(dictionaries.fr)
+    expect(requireLocale('en')).toEqual({})
+  })
+
+  it('resolves when English is the current locale and cannot be loaded', async () => {
+    const loadLocale = jest.fn(() =>
+      Promise.reject(new Error('locale unavailable'))
+    )
+
+    const requireLocale = await loadLocales('en', loadLocale)
+
+    expect(requireLocale('en')).toEqual({})
+  })
+
   it('loads English only once when it is the current locale', async () => {
     const loadLocale = makeLocaleLoader()
 
