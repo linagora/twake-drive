@@ -1,8 +1,8 @@
-# Files Upload Intent
+# Upload Intent: Local Files
 
-The Files Upload intent stores files picked in the calling app at the root of a shared drive. Twake Space uses it to put files shared in a space's feed into the space's Drive.
+This is the same intent as the [URL Upload](./url-upload-intent.md): same action, same type, same handler. It accepts a second data shape that stores files picked in the calling app at the root of a shared drive. Twake Space uses it to put files shared in a space's feed into the space's Drive.
 
-It shares its action and type with the [URL Upload intent](./url-upload-intent.md). Drive tells them apart by the data: a `files` field means a files upload.
+Drive picks the shape from the data: a `files` field means local files, anything else is a URL upload.
 
 ## Request
 
