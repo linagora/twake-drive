@@ -22,8 +22,11 @@ export const supportedLocales = [
 
 // Each locale is its own async chunk: never require a locale file
 // synchronously, or every locale ends up in the initial bundle again.
+// The chunk name lets rsbuild.config.mjs preload it from the HTML.
 async function importLocale(locale) {
-  const localeModule = await import(`./${locale}.json`)
+  const localeModule = await import(
+    /* webpackChunkName: "locale-[request]" */ `./${locale}.json`
+  )
   return localeModule.default ?? localeModule
 }
 

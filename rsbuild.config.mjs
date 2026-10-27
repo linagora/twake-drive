@@ -188,7 +188,41 @@ config.environments = {
   services
 }
 
+// src/locales/index.js loads the current locale and the English fallback as
+// async chunks once the main bundle runs, a round trip before the first
+// render. cozy-stack renders index.html as a Go template, so preload English
+// and, through `{{if eq .Locale}}`, the instance locale while the main bundle
+// downloads. The public page skips the instance locale: anonymous visitors
+// get their browser locale instead.
+const preloadLocalesPlugin = {
+  name: 'preload-locales',
+  setup(api) {
+    api.modifyHTML((html, { compilation, filename }) => {
+      const { publicPath } = compilation.outputOptions
+      const preloads = []
+      for (const [name, chunk] of compilation.namedChunks) {
+        const locale = name.match(/^locale-(.+)-json$/)?.[1]
+        if (!locale) continue
+        const link = [...chunk.files]
+          .filter(file => file.endsWith('.js'))
+          .map(
+            file =>
+              `<link rel="preload" as="script" href="${publicPath}${file}" />`
+          )
+          .join('')
+        if (locale === 'en') {
+          preloads.push(link)
+        } else if (filename !== 'public/index.html') {
+          preloads.push(`{{if eq .Locale "${locale}"}}${link}{{end}}`)
+        }
+      }
+      return html.replace('</head>', `${preloads.join('\n')}\n</head>`)
+    })
+  }
+}
+
 const mergedConfig = mergeRsbuildConfig(config, {
+  plugins: [preloadLocalesPlugin],
   // Rsbuild enables dev.lazyCompilation by default, which defers compiling async
   // chunks until the browser requests them from the dev server's on-demand
   // compile endpoint. That endpoint lives on the rsbuild dev server, but the app
