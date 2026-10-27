@@ -4,6 +4,8 @@ The URL Upload intent imports one file from an HTTP(S) URL into a folder in the 
 
 It uses the usual Cozy intent lifecycle (`ready`, then `done`, `error` or `cancel`). This page describes only the URL Upload-specific contract.
 
+The same intent also stores local files in a shared drive, with another data shape: see [Upload Intent: Local Files](./files-upload-intent.md).
+
 ## Request
 
 ```ts
