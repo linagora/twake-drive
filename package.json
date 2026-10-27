@@ -53,6 +53,7 @@
   "devDependencies": {
     "@playwright/test": "1.64.1",
     "@rsbuild/core": "^2.2.14",
+    "@rsdoctor/core": "2.0.1",
     "@swc-contrib/mut-cjs-exports": "^14.7.0",
     "@swc/core": "^1.15.18",
     "@swc/jest": "^0.2.39",
@@ -73,7 +74,7 @@
     "marked": "^16.3.0",
     "mockdate": "^3.0.5",
     "npm-run-all2": "5.0.0",
-    "rsbuild-config-cozy-app": "^0.9.0",
+    "rsbuild-config-cozy-app": "^0.10.0",
     "rslint-config-cozy-app": "^0.2.0",
     "rstack": "0.8.5",
     "stylint": "1.5.9",
