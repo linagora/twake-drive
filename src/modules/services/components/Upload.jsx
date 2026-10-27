@@ -3,6 +3,10 @@ import { useEffect } from 'react'
 import { useClient } from 'cozy-client'
 
 import {
+  isFilesUpload,
+  uploadFilesToDrive
+} from '@/modules/services/uploadFiles'
+import {
   normalizeUrlUploadError,
   uploadFileFromUrl
 } from '@/modules/services/uploadFromUrl'
@@ -21,11 +25,11 @@ export function Upload({ service }) {
         // Let React's effect cleanup cancel a discarded mount before any I/O.
         await Promise.resolve()
         if (controller.signal.aborted) return
-        const document = await uploadFileFromUrl(
-          client,
-          service.getData(),
-          controller.signal
-        )
+        const data = service.getData()
+        const upload = isFilesUpload(data)
+          ? uploadFilesToDrive
+          : uploadFileFromUrl
+        const document = await upload(client, data, controller.signal)
         if (!controller.signal.aborted) {
           hasTerminated = true
           service.terminate(document)

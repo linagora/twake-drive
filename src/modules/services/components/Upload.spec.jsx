@@ -5,12 +5,17 @@ import { errorSerializer as errors } from 'cozy-interapp/dist/helpers'
 
 import { Upload } from './Upload'
 
+import { uploadFilesToDrive } from '@/modules/services/uploadFiles'
 import { uploadFileFromUrl } from '@/modules/services/uploadFromUrl'
 
 const mockClient = {}
 jest.mock('cozy-client', () => ({
   ...jest.requireActual('cozy-client'),
   useClient: () => mockClient
+}))
+jest.mock('@/modules/services/uploadFiles', () => ({
+  ...jest.requireActual('@/modules/services/uploadFiles'),
+  uploadFilesToDrive: jest.fn()
 }))
 jest.mock('@/modules/services/uploadFromUrl', () => ({
   ...jest.requireActual('@/modules/services/uploadFromUrl'),
@@ -95,4 +100,25 @@ describe('Upload intent service lifecycle', () => {
       }
     }
   )
+
+  it('stores picked files in a shared drive', async () => {
+    const documents = [{ _id: 'a' }]
+    const data = { driveId: 'drive', files: [new File(['a'], 'a.txt')] }
+    const service = {
+      getData: () => data,
+      terminate: jest.fn(),
+      throw: jest.fn()
+    }
+    uploadFilesToDrive.mockResolvedValue(documents)
+    render(<Upload service={service} />)
+    await waitFor(() =>
+      expect(service.terminate).toHaveBeenCalledWith(documents)
+    )
+    expect(uploadFilesToDrive).toHaveBeenCalledWith(
+      mockClient,
+      data,
+      expect.any(AbortSignal)
+    )
+    expect(uploadFileFromUrl).not.toHaveBeenCalled()
+  })
 })
