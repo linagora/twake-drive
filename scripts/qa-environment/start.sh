@@ -39,6 +39,7 @@ E2E_PROJECT_NAME="$QA_PROJECT" \
   COZY_E2E_ADMIN_PORT="$QA_ADMIN_PORT" \
   COZY_E2E_COUCHDB_PORT="$QA_COUCHDB_PORT" \
   COZY_E2E_ONLYOFFICE_PORT="$QA_ONLYOFFICE_PORT" \
+  E2E_AUTH_STATE_PATH=/tmp/auth-state.json \
   TOOLBOX_DOCKER=1 \
   "$SCRIPT_DIR/toolbox.sh" node scripts/qa-environment/setup.js
 
