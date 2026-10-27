@@ -34,7 +34,7 @@ jobs:
         run: yarn install --immutable
       - name: Build
         run: RSDOCTOR_CI=true yarn build
-      - uses: web-infra-dev/rsdoctor-action@4d71e0001b4df27b50215fdbc685a0e69e2ced44 #v1
+      - uses: web-infra-dev/rsdoctor-action@21f1a9449eedfb4a7ce0f39a0004b950e616d489 # v1.2.0
         with:
           file_path: rsdoctor-data.json
           target_branch: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.event.repository.default_branch }}

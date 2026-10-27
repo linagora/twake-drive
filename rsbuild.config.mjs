@@ -1,5 +1,5 @@
 import { defineConfig, mergeRsbuildConfig } from '@rsbuild/core'
-import { RsdoctorRspackPlugin } from '@rsdoctor/rspack-plugin'
+import { RsdoctorRspackPlugin } from '@rsdoctor/core'
 import { getRsbuildConfig } from 'rsbuild-config-cozy-app'
 
 const config = getRsbuildConfig({
