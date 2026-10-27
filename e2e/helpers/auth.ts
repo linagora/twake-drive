@@ -3,7 +3,9 @@ import * as path from 'path'
 import type { Page } from '@playwright/test'
 import { ROOT_DOMAIN, USERS, type UserLabel } from './config'
 
-const AUTH_STATE_PATH = path.join(__dirname, '..', '.auth-state.json')
+const AUTH_STATE_PATH =
+  process.env.E2E_AUTH_STATE_PATH ||
+  path.join(__dirname, '..', '.auth-state.json')
 
 /** Session cookies of every provisioned instance, keyed by instance domain
  * since each Playwright worker uses its own Alice, Bob and Charlie. */
