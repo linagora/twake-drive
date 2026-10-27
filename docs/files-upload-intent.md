@@ -26,5 +26,5 @@ On success, the caller receives the created files' metadata through the normal `
 
 - A name already taken keeps both files, with an adjusted name for the new one.
 - Files upload one at a time.
-- A failed file does not stop the others. The intent then ends with `error`, and the files stored before or alongside the failure stay. Retrying the whole batch stores those files again under adjusted names.
+- A failed file does not stop the others. The intent then ends with `error`, and the files that were stored stay. Retrying the whole batch stores them again under adjusted names.
 - The intent has no UI. The calling app gives the user feedback.
