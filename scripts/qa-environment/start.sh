@@ -51,8 +51,9 @@ cat <<INFO
   Office:   http://onlyoffice.$ROOT_DOMAIN:$QA_ONLYOFFICE_PORT
   Admin:    http://127.0.0.1:$QA_ADMIN_PORT  (admin / cozy)
 
-From a container (e.g. Playwright), join the network '${QA_PROJECT}_default' and use:
-  --host-resolver-rules="MAP onlyoffice.$ROOT_DOMAIN onlyoffice-proxy,MAP *.$ROOT_DOMAIN cozystack"
+From a container (e.g. Playwright), share the network of the stack, whose DNS resolves
+*.$ROOT_DOMAIN to it, and use the URLs above:
+  docker run --network container:${QA_PROJECT}-coredns-1 ...
 
 Stop it with: scripts/qa-environment/stop.sh
 INFO
