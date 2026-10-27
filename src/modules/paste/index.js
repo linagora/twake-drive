@@ -122,7 +122,9 @@ export const handlePasteOperation = async (
   const isCopyOperation = operation === 'copy'
   const isCutOperation = operation === 'cut'
 
-  let hasValidatedMove = false
+  const validations = isCutOperation
+    ? await validateMoves(processedFiles, targetFolder, options)
+    : new Map()
 
   for (const file of processedFiles) {
     try {
@@ -137,22 +139,12 @@ export const handlePasteOperation = async (
         )
         results.push({ success: true, file: result, operation: 'copy' })
       } else if (isCutOperation) {
-        const shouldValidateMove = !hasValidatedMove
-        if (shouldValidateMove) {
-          hasValidatedMove = true
-        }
-
         const result = await handleMoveWithValidation(
           client,
           file,
           sourceDirectory,
           targetFolder,
-          {
-            sharingContext: shouldValidateMove ? sharingContext : null,
-            showMoveValidationModal: shouldValidateMove
-              ? options.showMoveValidationModal
-              : null
-          }
+          { validation: validations.get(file), sharingContext }
         )
         results.push({ success: true, file: result, operation: 'move' })
       }
@@ -209,60 +201,24 @@ const handleDuplicateWithValidation = async (
 }
 
 /**
- * Creates a promisified move operation with user confirmation modal.
+ * Shows a move validation modal for a batch of files.
  *
  * @param {Function} showMoveValidationModal - Function to show validation modal
  * @param {string} modalType - Type of modal to show
- * @param {import('@/components/FolderPicker/types').File} file - File to move
+ * @param {Array<import('@/components/FolderPicker/types').File>} files - Files the modal is about
  * @param {import('@/components/FolderPicker/types').File} targetFolder - Target folder
- * @param {CozyClient} client - Cozy client instance
- * @param {import('@/components/FolderPicker/types').File} sourceDirectory - Source directory
- * @returns {Promise<Object>} Promise that resolves with move result
+ * @returns {Promise<boolean>} Whether the user confirmed
  */
-const createMoveWithConfirmation = (
-  showMoveValidationModal,
-  modalType,
-  file,
-  targetFolder,
-  client,
-  sourceDirectory,
-  sharingContext
-) => {
-  return new Promise((resolve, reject) => {
-    const executeConfirmedMove = async () => {
-      try {
-        // The moveSharedInside modal confirms with "Stop sharing", so the
-        // sharing has to be revoked before the move. If the revocation fails
-        // the move is abandoned, rather than leaving recipients with an
-        // access the user was told had been removed.
-        if (modalType === 'moveSharedInside') {
-          await revokeSharingsForEntries([file], sharingContext)
-        }
-
-        const result = await executeMove(
-          client,
-          file,
-          sourceDirectory,
-          targetFolder,
-          true
-        )
-        resolve(result)
-      } catch (error) {
-        reject(error)
-      }
-    }
-
-    const cancelMove = () => reject(new Error('Move cancelled by user'))
-
+const confirmMove = (showMoveValidationModal, modalType, files, targetFolder) =>
+  new Promise(resolve => {
     showMoveValidationModal(
       modalType,
-      file,
+      files,
       targetFolder,
-      executeConfirmedMove,
-      cancelMove
+      async () => resolve(true),
+      () => resolve(false)
     )
   })
-}
 
 /**
  * Determines the sharing context for a file and target folder.
@@ -299,24 +255,14 @@ const analyzeSharingContext = (file, targetFolder, sharingContext) => {
 }
 
 /**
- * Handles sharing validation and shows appropriate modals if needed.
+ * Returns the move validation modal a file needs, if any.
  *
  * @param {import('@/components/FolderPicker/types').File} file - File to move
  * @param {import('@/components/FolderPicker/types').File} targetFolder - Target folder
  * @param {Object} sharingContext - Sharing context
- * @param {Function} showMoveValidationModal - Modal function
- * @param {CozyClient} client - Cozy client
- * @param {import('@/components/FolderPicker/types').File} sourceDirectory - Source directory
- * @returns {Promise<Object>|null} Move result or null if no validation needed
+ * @returns {'moveOutside' | 'moveInside' | 'moveSharedInside' | null} Modal type
  */
-const handleSharingValidation = async (
-  file,
-  targetFolder,
-  sharingContext,
-  showMoveValidationModal,
-  client,
-  sourceDirectory
-) => {
+const getMoveValidationType = (file, targetFolder, sharingContext) => {
   const { getSharedParentPath, hasSharedParent, byDocId } = sharingContext
 
   const needsSharingValidation =
@@ -340,47 +286,66 @@ const handleSharingValidation = async (
     } = sharingAnalysis
 
     if (isInsideSameSharedFolder) return null
-
-    if (isOriginParentShared && !isTargetShared) {
-      return createMoveWithConfirmation(
-        showMoveValidationModal,
-        'moveOutside',
-        file,
-        targetFolder,
-        client,
-        sourceDirectory,
-        sharingContext
-      )
-    }
-
-    if (!areMovedFilesShared && isTargetShared) {
-      return createMoveWithConfirmation(
-        showMoveValidationModal,
-        'moveInside',
-        file,
-        targetFolder,
-        client,
-        sourceDirectory,
-        sharingContext
-      )
-    }
-
-    if (areMovedFilesShared && isTargetShared) {
-      return createMoveWithConfirmation(
-        showMoveValidationModal,
-        'moveSharedInside',
-        file,
-        targetFolder,
-        client,
-        sourceDirectory,
-        sharingContext
-      )
-    }
+    if (isOriginParentShared && !isTargetShared) return 'moveOutside'
+    if (!areMovedFilesShared && isTargetShared) return 'moveInside'
+    if (areMovedFilesShared && isTargetShared) return 'moveSharedInside'
   } catch (error) {
     logger.error('Failed to validate sharing context:', error)
   }
 
   return null
+}
+
+/**
+ * Asks the user to confirm every move validation the cut files need, with one
+ * modal per type (and per source share for moveOutside) listing all the files
+ * it concerns.
+ *
+ * @param {Array<import('@/components/FolderPicker/types').File>} files - Files to move
+ * @param {import('@/components/FolderPicker/types').File} targetFolder - Target folder
+ * @param {Object} [options={}] - Additional options
+ * @param {Object} [options.sharingContext] - Sharing context for validation
+ * @param {Function} [options.showMoveValidationModal] - Function to show move validation modals
+ * @returns {Promise<Map<import('@/components/FolderPicker/types').File, { type: string, confirmed: boolean }>>} Validation of each file that needs one
+ */
+const validateMoves = async (files, targetFolder, options = {}) => {
+  const { sharingContext, showMoveValidationModal } = options
+  const validations = new Map()
+
+  if (!sharingContext || !showMoveValidationModal || !targetFolder?.path) {
+    return validations
+  }
+
+  const groups = new Map()
+  for (const file of files) {
+    if (!file.path && !file.driveId) continue
+    const type = getMoveValidationType(file, targetFolder, sharingContext)
+    if (!type) continue
+    // The moveOutside modal names the share the files leave, so one per share.
+    const key =
+      type === 'moveOutside'
+        ? JSON.stringify([
+            type,
+            file.driveId ?? null,
+            sharingContext.getSharedParentPath?.(file.path ?? '') ?? null
+          ])
+        : type
+    const group = groups.get(key) ?? { type, files: [] }
+    group.files.push(file)
+    groups.set(key, group)
+  }
+
+  for (const { type, files: groupFiles } of groups.values()) {
+    const confirmed = await confirmMove(
+      showMoveValidationModal,
+      type,
+      groupFiles,
+      targetFolder
+    )
+    for (const file of groupFiles) validations.set(file, { type, confirmed })
+  }
+
+  return validations
 }
 
 /**
@@ -420,8 +385,7 @@ const handleNextcloudRefresh = (client, file, targetFolder) => {
 }
 
 /**
- * Handles file/folder move operations with comprehensive sharing validation.
- * Checks for shared folder boundaries and shows appropriate validation modals.
+ * Handles file/folder move operations once their sharing validation is known.
  * Handles name conflicts and Nextcloud integration.
  *
  * @param {CozyClient} client - The cozy client instance
@@ -429,8 +393,8 @@ const handleNextcloudRefresh = (client, file, targetFolder) => {
  * @param {import('@/components/FolderPicker/types').File} sourceDirectory - The source directory containing the file
  * @param {import('@/components/FolderPicker/types').File} targetFolder - The target folder for the move
  * @param {Object} [options={}] - Additional options
- * @param {Object} [options.sharingContext] - Sharing context for validation
- * @param {Function} [options.showMoveValidationModal] - Function to show move validation modals
+ * @param {{ type: string, confirmed: boolean }} [options.validation] - The user's answer to the file's validation modal
+ * @param {Object} [options.sharingContext] - Sharing context for revocation
  * @returns {Promise<Object>} The moved file/folder object
  */
 const handleMoveWithValidation = async (
@@ -440,26 +404,17 @@ const handleMoveWithValidation = async (
   targetFolder,
   options = {}
 ) => {
-  const { sharingContext, showMoveValidationModal } = options
+  const { validation, sharingContext } = options
 
-  const canValidateSharing =
-    sharingContext &&
-    (file.path || file.driveId) &&
-    targetFolder.path &&
-    showMoveValidationModal
+  if (validation) {
+    if (!validation.confirmed) throw new Error('Move cancelled by user')
 
-  if (canValidateSharing) {
-    const validationResult = await handleSharingValidation(
-      file,
-      targetFolder,
-      sharingContext,
-      showMoveValidationModal,
-      client,
-      sourceDirectory
-    )
-
-    if (validationResult !== null) {
-      return validationResult
+    // The moveSharedInside modal confirms with "Stop sharing", so the sharing
+    // has to be revoked before the move. If the revocation fails the move is
+    // abandoned, rather than leaving recipients with an access the user was
+    // told had been removed.
+    if (validation.type === 'moveSharedInside') {
+      await revokeSharingsForEntries([file], sharingContext)
     }
   }
 
