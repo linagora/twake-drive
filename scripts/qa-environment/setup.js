@@ -57,7 +57,8 @@ async function seedFiles() {
 
 async function main() {
   // Not resolveE2EPorts: it saves the ports in e2e/.e2e-ports.json, which the next `yarn e2e` of
-  // the checkout would reuse
+  // the checkout would reuse. Not `yarn stack up` either: it saves its ports too, keeps the data
+  // and seeds nothing.
   const env = process.env
   await setupStack({
     projectName: env.E2E_PROJECT_NAME,
