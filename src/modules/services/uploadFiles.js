@@ -1,6 +1,7 @@
 import { uploadFileWithConflictStrategy } from 'cozy-client/dist/models/file'
 
 import { getFolderIdFromSharing } from '@/modules/shareddrives/helpers'
+import { isConflictError } from '@/modules/upload/conflictResolution'
 import { buildSharedDriveIdQuery } from '@/queries'
 
 const PARALLEL_UPLOADS = 3
@@ -14,14 +15,18 @@ function getFilesConfig(data) {
   if (typeof driveId !== 'string' || !driveId) {
     throw new Error('driveId is required')
   }
-  if (
-    !Array.isArray(files) ||
-    files.length === 0 ||
-    !files.every(file => file instanceof File)
-  ) {
+  if (!isFileList(files)) {
     throw new Error('files must be a non-empty list of files')
   }
   return { driveId, files }
+}
+
+function isFileList(files) {
+  return (
+    Array.isArray(files) &&
+    files.length > 0 &&
+    files.every(file => file instanceof File)
+  )
 }
 
 async function getRootId(client, driveId) {
@@ -35,8 +40,19 @@ async function getRootId(client, driveId) {
   return dirId
 }
 
-// The intent has no dialog, so a taken name keeps both files. A failed file
-// does not stop the others; the intent still ends in error.
+// The intent has no dialog, so a taken name keeps both files. Two files with
+// the same name uploading at once can both find the name free, and the second
+// to land gets a conflict: a retry sees the first and renames.
+async function uploadFile(client, file, options) {
+  try {
+    return await uploadFileWithConflictStrategy(client, file, options)
+  } catch (error) {
+    if (!isConflictError(error)) throw error
+    return uploadFileWithConflictStrategy(client, file, options)
+  }
+}
+
+// A failed file does not stop the others; the intent still ends in error.
 export async function uploadFilesToDrive(client, data, signal) {
   const { driveId, files } = getFilesConfig(data)
   signal.throwIfAborted()
@@ -47,7 +63,7 @@ export async function uploadFilesToDrive(client, data, signal) {
     signal.throwIfAborted()
     const results = await Promise.allSettled(
       files.slice(i, i + PARALLEL_UPLOADS).map(file =>
-        uploadFileWithConflictStrategy(client, file, {
+        uploadFile(client, file, {
           name: file.name,
           dirId,
           driveId,
