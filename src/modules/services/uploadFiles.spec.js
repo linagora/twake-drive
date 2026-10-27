@@ -70,26 +70,19 @@ describe('uploadFilesToDrive', () => {
     expect(uploadFileWithConflictStrategy).toHaveBeenCalledTimes(4)
   })
 
-  it('retries a file that lost a same-name race', async () => {
-    const conflict = Object.assign(new Error('Conflict'), { status: 409 })
-    const twin = new File(['a2'], 'a.txt')
-    uploadFileWithConflictStrategy
-      .mockResolvedValueOnce({ data: { name: 'a.txt' } })
-      .mockRejectedValueOnce(conflict)
-      .mockResolvedValueOnce({ data: { name: 'a (1).txt' } })
+  it('uploads one file at a time', async () => {
+    let running = 0
+    let most = 0
+    uploadFileWithConflictStrategy.mockImplementation(async () => {
+      most = Math.max(most, ++running)
+      await Promise.resolve()
+      running--
+      return { data: {} }
+    })
 
-    const documents = await uploadFilesToDrive(
-      fakeClient(),
-      { driveId: 'd1', files: [files[0], twin] },
-      signal
-    )
+    await uploadFilesToDrive(fakeClient(), { driveId: 'd1', files }, signal)
 
-    expect(documents.map(doc => doc.name)).toEqual(['a.txt', 'a (1).txt'])
-    expect(uploadFileWithConflictStrategy).toHaveBeenLastCalledWith(
-      expect.anything(),
-      twin,
-      expect.objectContaining({ name: 'a.txt', conflictStrategy: 'rename' })
-    )
+    expect(most).toBe(1)
   })
 
   it.each([

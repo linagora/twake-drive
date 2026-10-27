@@ -121,4 +121,16 @@ describe('Upload intent service lifecycle', () => {
     )
     expect(uploadFileFromUrl).not.toHaveBeenCalled()
   })
+
+  it('reports a failed files upload as is', async () => {
+    const quota = Object.assign(new Error('Quota exceeded'), { status: 413 })
+    const service = {
+      getData: () => ({ driveId: 'drive', files: [new File(['a'], 'a.txt')] }),
+      terminate: jest.fn(),
+      throw: jest.fn()
+    }
+    uploadFilesToDrive.mockRejectedValue(quota)
+    render(<Upload service={service} />)
+    await waitFor(() => expect(service.throw).toHaveBeenCalledWith(quota))
+  })
 })
