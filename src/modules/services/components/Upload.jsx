@@ -21,14 +21,13 @@ export function Upload({ service }) {
     let hasTerminated = false
 
     const startUpload = async () => {
+      const data = service.getData()
+      const isFiles = isFilesUpload(data)
       try {
         // Let React's effect cleanup cancel a discarded mount before any I/O.
         await Promise.resolve()
         if (controller.signal.aborted) return
-        const data = service.getData()
-        const upload = isFilesUpload(data)
-          ? uploadFilesToDrive
-          : uploadFileFromUrl
+        const upload = isFiles ? uploadFilesToDrive : uploadFileFromUrl
         const document = await upload(client, data, controller.signal)
         if (!controller.signal.aborted) {
           hasTerminated = true
@@ -37,7 +36,7 @@ export function Upload({ service }) {
       } catch (error) {
         if (controller.signal.aborted || hasTerminated) return
         hasTerminated = true
-        service.throw(normalizeUrlUploadError(error))
+        service.throw(isFiles ? error : normalizeUrlUploadError(error))
       }
     }
 

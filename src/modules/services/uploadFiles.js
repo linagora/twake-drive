@@ -1,10 +1,7 @@
 import { uploadFileWithConflictStrategy } from 'cozy-client/dist/models/file'
 
 import { getFolderIdFromSharing } from '@/modules/shareddrives/helpers'
-import { isConflictError } from '@/modules/upload/conflictResolution'
 import { buildSharedDriveIdQuery } from '@/queries'
-
-const PARALLEL_UPLOADS = 3
 
 export function isFilesUpload(data) {
   return !!data && typeof data === 'object' && 'files' in data
@@ -40,40 +37,27 @@ async function getRootId(client, driveId) {
   return dirId
 }
 
-// The intent has no dialog, so a taken name keeps both files. Two files with
-// the same name uploading at once can both find the name free, and the second
-// to land gets a conflict: a retry sees the first and renames.
-async function uploadFile(client, file, options) {
-  try {
-    return await uploadFileWithConflictStrategy(client, file, options)
-  } catch (error) {
-    if (!isConflictError(error)) throw error
-    return uploadFileWithConflictStrategy(client, file, options)
-  }
-}
-
-// A failed file does not stop the others; the intent still ends in error.
+// One file at a time: two same-name files uploading together both find the
+// name free, and one of them fails. The intent has no dialog, so a taken name
+// keeps both files. A failed file does not stop the others; the intent still
+// ends in error.
 export async function uploadFilesToDrive(client, data, signal) {
   const { driveId, files } = getFilesConfig(data)
   signal.throwIfAborted()
   const dirId = await getRootId(client, driveId)
   const documents = []
   let failure
-  for (let i = 0; i < files.length; i += PARALLEL_UPLOADS) {
+  for (const file of files) {
     signal.throwIfAborted()
-    const results = await Promise.allSettled(
-      files.slice(i, i + PARALLEL_UPLOADS).map(file =>
-        uploadFile(client, file, {
-          name: file.name,
-          dirId,
-          driveId,
-          conflictStrategy: 'rename'
-        })
+    try {
+      const { data: document } = await uploadFileWithConflictStrategy(
+        client,
+        file,
+        { name: file.name, dirId, driveId, conflictStrategy: 'rename' }
       )
-    )
-    for (const result of results) {
-      if (result.status === 'fulfilled') documents.push(result.value.data)
-      else failure ??= result.reason
+      documents.push(document)
+    } catch (error) {
+      failure ??= error
     }
   }
   if (failure) throw failure
