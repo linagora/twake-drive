@@ -50,6 +50,9 @@ const getMimeTypeIcon = (isDirectory, name, mime) => {
     return IconDocs
   } else if (/\.excalidraw$/.test(name)) {
     return IconExcalidraw
+  } else if (/\.(vcf|ics)$/i.test(name)) {
+    // Contacts and events have a text/* mime type but are not text documents
+    return FileTypeFiles
   } else {
     const type = getFileMimetype(mime, name)
     return get(MIME_TYPE_ICONS, type, FileTypeFiles)
