@@ -91,7 +91,7 @@ const FilePickerFooter = ({
         className={isMobile ? `u-flex-grow-1 ${mobileMarginClass}` : null}
         data-testid={testId}
         label={
-          isMobile ? (
+          isMobile || !IconComponent ? (
             label
           ) : (
             <span className="u-flex u-flex-items-center">
@@ -181,7 +181,7 @@ const FilePickerFooter = ({
           documentsState,
           documentsAction,
           'documents-btn',
-          CheckCircle,
+          null,
           'primary'
         )}
         {renderAction(
