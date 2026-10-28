@@ -3,6 +3,7 @@ import type { FrameLocator, Locator, Page } from '@playwright/test'
 import { USERS, type User } from '../helpers/config'
 import { expect, expectRowDisabled } from '../helpers/fixtures'
 import { createMoveIntent } from '../helpers/intents'
+import { FilePickerPage } from './FilePickerPage'
 
 export interface MoveIntentMessage {
   type: string
@@ -129,6 +130,7 @@ export class MoveIntentPage {
   }
 
   async navigateToFolder(name: string): Promise<void> {
+    await new FilePickerPage(this.page, this.user).scrollToItem(name)
     await this.row(name).getByTestId('listitem-onclick').dblclick()
     await expect(
       this.breadcrumb().getByText(name, { exact: true })

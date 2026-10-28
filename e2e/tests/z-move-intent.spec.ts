@@ -167,6 +167,7 @@ test.describe('MOVE intent navigation', () => {
       name: bobSourceName,
       content: 'Unmoved Bob source'
     })
+    const fillerIds: string[] = []
     try {
       await createAndShareFolderWithBob(alicePage, aliceDrive, shareName, {
         seed: async () => {
@@ -186,6 +187,15 @@ test.describe('MOVE intent navigation', () => {
         }
       })
       await openSharedDrive(bobPage, USERS.bob, bobDrive, shareName)
+      for (let index = 0; index < 20; index++) {
+        fillerIds.push(
+          await createFile({
+            instance: USERS.alice.instance,
+            name: `MOVE filler ${stamp()}.txt`,
+            content: 'Filler'
+          })
+        )
+      }
       const ownedPicker = new MoveIntentPage(alicePage)
       await ownedPicker.open({ fileIds: [sourceId] })
       await ownedPicker.waitReady()
@@ -206,6 +216,7 @@ test.describe('MOVE intent navigation', () => {
       await bobPage.goto(`${USERS.bob.appUrl}/#/folder`)
       await bobDrive.row(bobSourceName).waitVisible()
     } finally {
+      for (const id of fillerIds) await trashById(USERS.alice.instance, id)
       await trashById(USERS.bob.instance, bobSourceId)
       await trashByName(USERS.alice.instance, shareName)
     }
