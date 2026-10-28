@@ -57,16 +57,52 @@ describe('uploadFilesToDrive', () => {
     )
   })
 
-  it('keeps uploading after a failed file, then fails', async () => {
-    const quota = new Error('quota')
-    uploadFileWithConflictStrategy.mockImplementation(async (client, file) => {
-      if (file === files[1]) throw quota
-      return { data: {} }
-    })
+  it('stores the files in a folder of the user Drive', async () => {
+    uploadFileWithConflictStrategy.mockResolvedValue({ data: {} })
+    const client = fakeClient({ _id: 'f1', type: 'directory' })
+
+    await uploadFilesToDrive(client, { folderId: 'f1', files }, signal)
+
+    expect(uploadFileWithConflictStrategy).toHaveBeenCalledWith(
+      client,
+      files[0],
+      {
+        name: 'a.txt',
+        dirId: 'f1',
+        driveId: undefined,
+        conflictStrategy: 'rename'
+      }
+    )
+  })
+
+  it('refuses a folder of a shared drive', async () => {
+    const client = fakeClient({ _id: 'f1', type: 'directory', driveId: 'd1' })
 
     await expect(
-      uploadFilesToDrive(fakeClient(), { driveId: 'd1', files }, signal)
-    ).rejects.toBe(quota)
+      uploadFilesToDrive(client, { folderId: 'f1', files }, signal)
+    ).rejects.toThrow('The destination is not a local Drive folder')
+  })
+
+  it('keeps uploading after a failed file, then fails with a result per file', async () => {
+    const quota = Object.assign(new Error('quota'), { status: 413 })
+    uploadFileWithConflictStrategy.mockImplementation(async (client, file) => {
+      if (file === files[1]) throw quota
+      return { data: { name: file.name } }
+    })
+
+    const failure = await uploadFilesToDrive(
+      fakeClient(),
+      { driveId: 'd1', files },
+      signal
+    ).catch(error => error)
+
+    expect(failure).toBe(quota)
+    expect(failure.results).toEqual([
+      { document: { name: 'a.txt' } },
+      { error: { message: 'quota', status: 413 } },
+      { document: { name: 'c.txt' } },
+      { document: { name: 'd.txt' } }
+    ])
     expect(uploadFileWithConflictStrategy).toHaveBeenCalledTimes(4)
   })
 
@@ -86,7 +122,8 @@ describe('uploadFilesToDrive', () => {
   })
 
   it.each([
-    ['no drive', { files }],
+    ['no destination', { files }],
+    ['both a drive and a folder', { driveId: 'd1', folderId: 'f1', files }],
     ['no files', { driveId: 'd1', files: [] }],
     ['something else than files', { driveId: 'd1', files: ['a.txt'] }]
   ])('refuses %s', async (_, data) => {
