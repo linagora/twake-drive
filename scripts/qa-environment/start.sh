@@ -32,6 +32,9 @@ if [ ! -f "$REPO_DIR/build/manifest.webapp" ]; then
   exit 1
 fi
 
+# toolbox.sh forwards every E2E_* variable, and either of these would make the e2e setup keep the old stack
+unset E2E_PERSIST E2E_SKIP_TEARDOWN
+
 echo "==> Starting the stack as compose project '$QA_PROJECT'"
 E2E_PROJECT_NAME="$QA_PROJECT" \
   COZY_E2E_ROOT_DOMAIN="$ROOT_DOMAIN" \
