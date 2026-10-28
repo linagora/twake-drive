@@ -116,15 +116,19 @@ function getLocalFolderId(folder) {
   return folder._id
 }
 
-export async function uploadFileFromUrl(client, data, signal) {
-  const config = getUploadConfig(data)
-  signal.throwIfAborted()
-  const query = buildFileOrFolderByIdQuery(config.folderId)
+export async function getLocalDirId(client, folderId) {
+  const query = buildFileOrFolderByIdQuery(getUploadFolderId(folderId))
   const result = await client.fetchQueryAndGetFromState({
     definition: query.definition(),
     options: query.options
   })
-  const dirId = getLocalFolderId(result.data)
+  return getLocalFolderId(result.data)
+}
+
+export async function uploadFileFromUrl(client, data, signal) {
+  const config = getUploadConfig(data)
+  signal.throwIfAborted()
+  const dirId = await getLocalDirId(client, config.folderId)
   const createFile = async name => {
     signal.throwIfAborted()
     const response = await client.create(DOCTYPE_FILES, {
