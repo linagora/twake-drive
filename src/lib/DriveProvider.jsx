@@ -3,6 +3,7 @@ import React from 'react'
 
 import { CozyProvider } from 'cozy-client'
 import { DataProxyProvider } from 'cozy-dataproxy-lib'
+import flag from 'cozy-flags'
 import SharingProvider, { NativeFileSharingProvider } from 'cozy-sharing'
 import AlertProvider from 'cozy-ui/transpiled/react/providers/Alert'
 import { BreakpointsProvider } from 'cozy-ui/transpiled/react/providers/Breakpoints'
@@ -25,6 +26,7 @@ const DriveProvider = ({ client, lang, polyglot, dictRequire, children }) => {
             doctype="io.cozy.files"
             documentType="Files"
             isPublic={isPublic}
+            contactsSuggestEnabled={flag('sharing.contacts-suggest.enabled')}
           >
             <NativeFileSharingProvider>
               <CozyTheme ignoreCozySettings={isPublic} className="u-w-100">
