@@ -14,7 +14,7 @@ export const OPERATION_COPY = 'copy' as const
 interface MoveValidationModal {
   isVisible: boolean
   type: 'moveOutside' | 'moveInside' | 'moveSharedInside' | null
-  file: IOCozyFile | null
+  files: IOCozyFile[]
   targetFolder: IOCozyFile
   onConfirm: (() => Promise<void>) | null
   onCancel: (() => void) | null
@@ -43,7 +43,7 @@ interface ClipboardContextValue {
   isItemCut: (itemId: string) => boolean
   showMoveValidationModal: (
     type: MoveValidationModal['type'],
-    file: IOCozyFile,
+    files: IOCozyFile[],
     targetFolder: IOCozyFile,
     onConfirm: () => Promise<void>,
     onCancel: () => void
@@ -80,7 +80,7 @@ type ClipboardAction =
       type: typeof SHOW_SHARING_MODAL
       payload: {
         type: MoveValidationModal['type']
-        file: IOCozyFile
+        files: IOCozyFile[]
         targetFolder: IOCozyFile
         onConfirm: () => Promise<void>
         onCancel: () => void
@@ -98,7 +98,7 @@ const initialState: ClipboardState = {
   moveValidationModal: {
     isVisible: false,
     type: null,
-    file: null,
+    files: [],
     targetFolder: {} as IOCozyFile,
     onConfirm: null,
     onCancel: null
@@ -140,7 +140,7 @@ const clipboardReducer = (
         moveValidationModal: {
           isVisible: true,
           type: action.payload.type,
-          file: action.payload.file,
+          files: action.payload.files,
           targetFolder: action.payload.targetFolder,
           onConfirm: action.payload.onConfirm,
           onCancel: action.payload.onCancel
@@ -200,14 +200,14 @@ const ClipboardProvider: React.FC<ClipboardProviderProps> = ({ children }) => {
   const showMoveValidationModal = useCallback(
     (
       type: MoveValidationModal['type'],
-      file: IOCozyFile,
+      files: IOCozyFile[],
       targetFolder: IOCozyFile,
       onConfirm: () => Promise<void>,
       onCancel: () => void
     ) => {
       dispatch({
         type: SHOW_SHARING_MODAL,
-        payload: { type, file, targetFolder, onConfirm, onCancel }
+        payload: { type, files, targetFolder, onConfirm, onCancel }
       })
     },
     []

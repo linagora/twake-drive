@@ -332,6 +332,256 @@ describe('handlePasteOperation', () => {
     })
   })
 
+  describe('Stop sharing before moving a shared folder inside another', () => {
+    const setupSharedInside = ({ revokeAllRecipients, files }) => {
+      hasOneOfEntriesShared.mockReturnValue(true)
+      // canValidateSharing needs a path on both sides.
+      resolveNameConflictsForCut.mockResolvedValue(files)
+
+      const sharingContext = {
+        // The moved file is shared, and lives outside the target's shared tree.
+        getSharedParentPath: () => '/other-shared',
+        hasSharedParent: () => true,
+        byDocId: {
+          file1: { sharings: ['sharing-1'] },
+          file2: { sharings: ['sharing-2'] }
+        },
+        isOwner: () => true,
+        revokeAllRecipients,
+        revokeSelf: jest.fn().mockResolvedValue()
+      }
+
+      mockOptions.sharingContext = sharingContext
+      // Confirm the modal straight away, as a user clicking "Stop sharing".
+      mockOptions.showMoveValidationModal = jest.fn(
+        (modalType, files, targetFolder, onConfirm) => onConfirm()
+      )
+
+      return sharingContext
+    }
+
+    it('should revoke the sharing before moving', async () => {
+      const revokeAllRecipients = jest.fn().mockResolvedValue()
+      const files = [{ ...mockFiles[0], path: '/other-shared/test1.txt' }]
+      setupSharedInside({ revokeAllRecipients, files })
+
+      await handlePasteOperation(
+        mockClient,
+        files,
+        'cut',
+        mockSourceDirectory,
+        mockTargetFolder,
+        mockOptions
+      )
+
+      expect(mockOptions.showMoveValidationModal).toHaveBeenCalledWith(
+        'moveSharedInside',
+        expect.anything(),
+        expect.anything(),
+        expect.any(Function),
+        expect.any(Function)
+      )
+      expect(revokeAllRecipients).toHaveBeenCalled()
+    })
+
+    it('should not move the entry when the revocation fails', async () => {
+      const revokeAllRecipients = jest
+        .fn()
+        .mockRejectedValue(new Error('revocation failed'))
+      const files = [{ ...mockFiles[0], path: '/other-shared/test1.txt' }]
+      setupSharedInside({ revokeAllRecipients, files })
+
+      const results = await handlePasteOperation(
+        mockClient,
+        files,
+        'cut',
+        mockSourceDirectory,
+        mockTargetFolder,
+        mockOptions
+      )
+
+      expect(revokeAllRecipients).toHaveBeenCalled()
+      expect(move).not.toHaveBeenCalled()
+      expect(results[0].success).toBe(false)
+    })
+
+    it('should confirm once and revoke every shared entry of a multi-entry cut', async () => {
+      const revokeAllRecipients = jest.fn().mockResolvedValue()
+      const files = [
+        { ...mockFiles[0], path: '/other-shared/test1.txt' },
+        { ...mockFiles[1], path: '/other-shared/test2.txt' }
+      ]
+      setupSharedInside({ revokeAllRecipients, files })
+
+      const results = await handlePasteOperation(
+        mockClient,
+        files,
+        'cut',
+        mockSourceDirectory,
+        mockTargetFolder,
+        mockOptions
+      )
+
+      expect(mockOptions.showMoveValidationModal).toHaveBeenCalledTimes(1)
+      expect(mockOptions.showMoveValidationModal).toHaveBeenCalledWith(
+        'moveSharedInside',
+        files,
+        mockTargetFolder,
+        expect.any(Function),
+        expect.any(Function)
+      )
+      expect(revokeAllRecipients).toHaveBeenCalledWith(files[0])
+      expect(revokeAllRecipients).toHaveBeenCalledWith(files[1])
+      expect(move).toHaveBeenCalledTimes(2)
+      expect(results.every(result => result.success)).toBe(true)
+    })
+
+    it('should validate a shared entry that is not the first of the cut', async () => {
+      const revokeAllRecipients = jest.fn().mockResolvedValue()
+      const files = [
+        { ...mockFiles[0], _id: 'not-shared', path: '/other-shared/test1.txt' },
+        { ...mockFiles[1], path: '/other-shared/test2.txt' }
+      ]
+      setupSharedInside({ revokeAllRecipients, files })
+      hasOneOfEntriesShared.mockImplementation((entries, byDocId) =>
+        entries.some(({ _id }) => byDocId[_id] !== undefined)
+      )
+
+      await handlePasteOperation(
+        mockClient,
+        files,
+        'cut',
+        mockSourceDirectory,
+        mockTargetFolder,
+        mockOptions
+      )
+
+      expect(mockOptions.showMoveValidationModal).toHaveBeenCalledWith(
+        'moveInside',
+        [files[0]],
+        mockTargetFolder,
+        expect.any(Function),
+        expect.any(Function)
+      )
+      expect(mockOptions.showMoveValidationModal).toHaveBeenCalledWith(
+        'moveSharedInside',
+        [files[1]],
+        mockTargetFolder,
+        expect.any(Function),
+        expect.any(Function)
+      )
+      expect(revokeAllRecipients).toHaveBeenCalledTimes(1)
+      expect(revokeAllRecipients).toHaveBeenCalledWith(files[1])
+      expect(move).toHaveBeenCalledTimes(2)
+    })
+
+    it('should neither revoke nor move any entry when the user cancels', async () => {
+      const revokeAllRecipients = jest.fn().mockResolvedValue()
+      const files = [
+        { ...mockFiles[0], path: '/other-shared/test1.txt' },
+        { ...mockFiles[1], path: '/other-shared/test2.txt' }
+      ]
+      setupSharedInside({ revokeAllRecipients, files })
+      mockOptions.showMoveValidationModal = jest.fn(
+        (modalType, files, targetFolder, onConfirm, onCancel) => onCancel()
+      )
+
+      const results = await handlePasteOperation(
+        mockClient,
+        files,
+        'cut',
+        mockSourceDirectory,
+        mockTargetFolder,
+        mockOptions
+      )
+
+      expect(revokeAllRecipients).not.toHaveBeenCalled()
+      expect(move).not.toHaveBeenCalled()
+      expect(results.some(result => result.success)).toBe(false)
+    })
+
+    it('should rename a validated entry instead of overwriting the destination', async () => {
+      const revokeAllRecipients = jest.fn().mockResolvedValue()
+      const update = jest.fn().mockResolvedValue({ data: {} })
+      mockClient.collection = jest.fn(() => ({ update }))
+      const files = [
+        {
+          ...mockFiles[0],
+          _rev: '1-rev',
+          path: '/other-shared/test1.txt',
+          needsRename: true,
+          uniqueName: 'test1 (1).txt'
+        }
+      ]
+      setupSharedInside({ revokeAllRecipients, files })
+
+      await handlePasteOperation(
+        mockClient,
+        files,
+        'cut',
+        mockSourceDirectory,
+        mockTargetFolder,
+        mockOptions
+      )
+
+      expect(update).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'test1 (1).txt' })
+      )
+      expect(move).toHaveBeenCalledWith(
+        mockClient,
+        files[0],
+        mockTargetFolder,
+        {
+          force: false
+        }
+      )
+    })
+  })
+
+  describe('Moving out of several shared folders', () => {
+    it('should show one warning per shared folder the entries leave', async () => {
+      const files = [
+        { ...mockFiles[0], path: '/X/test1.txt' },
+        { ...mockFiles[1], path: '/Y/test2.txt' }
+      ]
+      resolveNameConflictsForCut.mockResolvedValue(files)
+      mockOptions.sharingContext = {
+        getSharedParentPath: path => (path.startsWith('/X') ? '/X' : '/Y'),
+        hasSharedParent: path => path.startsWith('/X') || path.startsWith('/Y'),
+        byDocId: {}
+      }
+      mockOptions.showMoveValidationModal = jest.fn(
+        (modalType, files, targetFolder, onConfirm) => onConfirm()
+      )
+
+      await handlePasteOperation(
+        mockClient,
+        files,
+        'cut',
+        mockSourceDirectory,
+        mockTargetFolder,
+        mockOptions
+      )
+
+      expect(mockOptions.showMoveValidationModal).toHaveBeenCalledTimes(2)
+      expect(mockOptions.showMoveValidationModal).toHaveBeenCalledWith(
+        'moveOutside',
+        [files[0]],
+        mockTargetFolder,
+        expect.any(Function),
+        expect.any(Function)
+      )
+      expect(mockOptions.showMoveValidationModal).toHaveBeenCalledWith(
+        'moveOutside',
+        [files[1]],
+        mockTargetFolder,
+        expect.any(Function),
+        expect.any(Function)
+      )
+      expect(move).toHaveBeenCalledTimes(2)
+    })
+  })
+
   describe('Nextcloud Integration', () => {
     it('should handle Nextcloud files', async () => {
       const nextcloudFiles = [

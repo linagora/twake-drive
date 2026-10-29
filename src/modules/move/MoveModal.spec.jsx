@@ -681,6 +681,41 @@ describe('MoveModal component', () => {
         expect(refreshSpy).toHaveBeenCalled()
       })
     })
+
+    it('should not move files when stopping the sharing fails', async () => {
+      const revokeAllSpy = jest.fn().mockRejectedValue(new Error('nope'))
+
+      setup({
+        sharedPaths: ['/bills', '/Destination Folder'],
+        byDocId: {
+          bill_201903: {
+            permissions: [],
+            sharings: ['sharing-id-1']
+          }
+        },
+        getSharedParentPath: path =>
+          path.includes('/bills')
+            ? '/bills'
+            : path.includes('/Destination Folder')
+              ? '/Destination Folder'
+              : null,
+        sharingContext: {
+          isOwner: () => true,
+          revokeAllRecipients: revokeAllSpy,
+          revokeSelf: jest.fn()
+        }
+      })
+
+      fireEvent.click(await screen.findByText('Move'))
+      fireEvent.click(await screen.findByText('Stop sharing'))
+
+      await waitFor(() => {
+        expect(revokeAllSpy).toHaveBeenCalled()
+        expect(screen.getByRole('button', { name: 'Move' })).toBeEnabled()
+      })
+      expect(move).not.toHaveBeenCalled()
+      expect(onCloseSpy).not.toHaveBeenCalled()
+    })
   })
 
   describe('Shared Drive context', () => {
