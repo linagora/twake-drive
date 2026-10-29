@@ -4,6 +4,16 @@ on:
   schedule:
     - cron: '0 3 * * *'
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      drive-ref:
+        description: Drive branch, tag or commit to test
+        type: string
+        required: true
+      stack-image:
+        description: Published Stack image to pull for this run
+        type: string
+        required: true
   pull_request:
     types: [labeled, synchronize, reopened]
 
@@ -14,6 +24,7 @@ jobs:
     name: Drive E2E
     # Adding another label to a labelled pull request does not run it again
     if: >
+      inputs.stack-image != '' ||
       github.event_name != 'pull_request' ||
       (github.event.action != 'labeled' || github.event.label.name == 'e2e') &&
       contains(github.event.pull_request.labels.*.name, 'e2e')
@@ -34,9 +45,15 @@ jobs:
     env:
       E2E_ARGS: --grep-invert @e2e-scribe --shard=${{ matrix.shard }}/4
       E2E_REPORT: drive-${{ matrix.shard }}
+      COZY_E2E_STACK_IMAGE: ${{ inputs.stack-image || 'cozy/cozy-stack:latest' }}
     steps: &e2e-steps
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: ${{ inputs.drive-ref != '' && 'linagora/twake-drive' || github.repository }}
+          ref: ${{ inputs.drive-ref || github.sha }}
+          persist-credentials: false
+
       - name: Enable Corepack
         run: corepack enable
       - name: Use Node.js
@@ -95,14 +112,15 @@ jobs:
     name: Scribe E2E
     # Runs again only when the first of its two labels is added
     if: >
-      github.event_name != 'pull_request' ||
+      inputs.stack-image == '' &&
+      (github.event_name != 'pull_request' ||
       (github.event.action != 'labeled' ||
         (github.event.label.name == 'e2e' &&
           !contains(github.event.pull_request.labels.*.name, 'e2e-scribe')) ||
         (github.event.label.name == 'e2e-scribe' &&
           !contains(github.event.pull_request.labels.*.name, 'e2e'))) &&
       (contains(github.event.pull_request.labels.*.name, 'e2e') ||
-        contains(github.event.pull_request.labels.*.name, 'e2e-scribe'))
+        contains(github.event.pull_request.labels.*.name, 'e2e-scribe')))
     concurrency:
       group: e2e-scribe-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
       cancel-in-progress: true

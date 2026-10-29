@@ -39,6 +39,14 @@ yarn e2e:setup
 yarn e2e
 ```
 
+### Call the suite from Stack CI
+
+Call `.github/workflows/e2e.yml` with `drive-ref` set to the Drive branch, tag or
+commit to test (normally `master`) and `stack-image` set to a public Docker image. This runs the
+existing four Drive shards, excluding Scribe, with their normal setup, teardown
+and reports. Mutable PR tags use the latest build; re-run all Stack jobs to
+rebuild the original revision.
+
 ### Test an unpublished Stack revision
 
 1. **Choose a Stack revision.** Use a clean checkout and record its commit SHA.
