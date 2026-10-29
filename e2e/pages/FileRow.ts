@@ -63,7 +63,9 @@ export class FileRow {
 
   async fileId(): Promise<string> {
     const href = await this.rowEl.getByRole('link').first().getAttribute('href')
-    const fileId = href?.match(/\/(?:file|onlyoffice)\/(?:[^/?#]+\/)?([^/?#]+)/)?.[1]
+    const fileId = href?.match(
+      /\/(?:file|onlyoffice)\/(?:[^/?#]+\/)?([^/?#]+)/
+    )?.[1]
     if (!fileId) throw new Error(`No file id found for ${this.name}`)
     return fileId
   }
@@ -79,6 +81,10 @@ export class FileRow {
     // name ("Foo — — —"), so we locate the row through the filename cell
     // and dblclick whichever link sits inside.
     await this.rowEl.getByRole('link').first().dblclick()
+  }
+
+  async openOnMobile(): Promise<void> {
+    await this.rowEl.getByRole('link').first().tap()
   }
 
   async openMenu(): Promise<Locator> {
