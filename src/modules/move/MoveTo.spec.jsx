@@ -12,6 +12,7 @@ import { getMoveDestinationDisabledReason } from './helpers'
 import { useMoveDestinationPicker } from './hooks/useMoveDestinationPicker'
 
 import { ROOT_DIR_ID } from '@/constants/config'
+import { useFolderSort } from '@/hooks/useFolderSort'
 import { useBreadcrumbPath } from '@/modules/breadcrumb/hooks/useBreadcrumbPath'
 import {
   SelectionProvider,
@@ -21,6 +22,28 @@ import { useSharedDriveFolder } from '@/modules/shareddrives/hooks/useSharedDriv
 import { useFilteredSharings } from '@/modules/views/Sharings/useFilteredSharings'
 import { useSharingsQueryResult } from '@/modules/views/Sharings/useSharingsQueryResult'
 
+jest.mock('@/hooks/useFolderSort', () => ({ useFolderSort: jest.fn() }))
+jest.mock('@/modules/views/Drive/useDriveQueries', () => ({
+  useDriveQueries: folderId => {
+    const { useQuery } = require('cozy-client')
+    const folders = useQuery(null, { as: `filePicker-folders-${folderId}` })
+    const files = useQuery(null, { as: `filePicker-files-${folderId}` })
+    const allResults = [folders, files].map((result, index) => ({
+      ...result,
+      data: Array.isArray(result.data)
+        ? result.data.filter(
+            item => item.type === (index === 0 ? 'directory' : 'file')
+          )
+        : []
+    }))
+    return {
+      allResults,
+      isInError: allResults.some(result => result.fetchStatus === 'failed'),
+      isLoading: allResults.some(result => result.fetchStatus === 'loading'),
+      isPending: allResults.some(result => result.fetchStatus === 'pending')
+    }
+  }
+}))
 jest.mock('cozy-client', () => ({
   ...jest.requireActual('cozy-client'),
   useClient: jest.fn(),
@@ -303,6 +326,7 @@ describe.each([
     ).toBe('Move.destinationDescendant')
   })
   beforeEach(() => {
+    useFolderSort.mockReturnValue([{ attribute: 'name', order: 'asc' }])
     useI18n.mockReturnValue({ t: key => key })
     clientQuery = jest.fn((_definition, options) => {
       const folderId = options.as.replace('move-confirm-', '')
@@ -1044,7 +1068,44 @@ describe.each([
     ).toBeDisabled()
   })
 
-  it('displays files as disabled context items that cannot be selected or navigated into', () => {
+  it('shows files while later folders remain paginated', async () => {
+    useFolderSort.mockReturnValue([{ attribute: 'name', order: 'asc' }])
+    const file = { _id: 'context-file', type: 'file', name: 'notes.pdf' }
+    useQuery.mockImplementation((_definition, options) => {
+      if (options.as.startsWith('filePicker-folders-')) {
+        const [loaded, setLoaded] = React.useState(false)
+        return {
+          data: loaded
+            ? [
+                destinationFolder,
+                { ...destinationFolder, _id: 'other', name: 'Other folder' }
+              ]
+            : [destinationFolder],
+          fetchStatus: 'loaded',
+          hasMore: !loaded,
+          fetchMore: async () => setLoaded(true)
+        }
+      }
+      if (options.as.startsWith('filePicker-files-')) {
+        return { data: [file], fetchStatus: 'loaded', hasMore: false }
+      }
+      const folderId = options.as.split('/').at(-1)
+      return { data: getFolder(folderId), fetchStatus: 'loaded' }
+    })
+    setup()
+    expect(
+      screen.getByRole('button', { name: 'Child folder' })
+    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'notes.pdf' })).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', { name: 'More' }))
+    expect(
+      await screen.findByRole('button', { name: 'Other folder' })
+    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'notes.pdf' })).toBeDisabled()
+  })
+
+  it('shows folders before disabled files while preserving order within each group', () => {
+    useFolderSort.mockReturnValue([{ attribute: 'name', order: 'desc' }])
     const fileItem = {
       _id: 'context-file',
       _type: 'io.cozy.files',
@@ -1066,12 +1127,25 @@ describe.each([
         options.as.startsWith('buildContentFolderQuery-')
       ) {
         return {
-          data: [destinationFolder, fileItem],
+          data: [
+            destinationFolder,
+            { ...destinationFolder, _id: 'other-folder', name: 'Other folder' }
+          ],
           fetchStatus: 'loaded',
           hasMore: false
         }
       }
 
+      if (options.as.startsWith('filePicker-files-')) {
+        return {
+          data: [
+            fileItem,
+            { ...fileItem, _id: 'other-file', name: 'other.pdf' }
+          ],
+          fetchStatus: 'loaded',
+          hasMore: false
+        }
+      }
       const folderId = options.as.split('/').at(-1)
       return { data: getFolder(folderId), fetchStatus: 'loaded' }
     })
@@ -1083,6 +1157,20 @@ describe.each([
     const folderButton = screen.getByRole('button', { name: 'Child folder' })
     const fileButton = screen.getByRole('button', { name: 'notes.pdf' })
 
+    const browser = screen.getByTestId('move-to-browser')
+    const names = Array.from(browser.querySelectorAll('button'))
+      .map(button => button.textContent)
+      .filter(name =>
+        ['Child folder', 'Other folder', 'notes.pdf', 'other.pdf'].includes(
+          name
+        )
+      )
+    expect(names).toEqual([
+      'Other folder',
+      'Child folder',
+      'other.pdf',
+      'notes.pdf'
+    ])
     expect(folderButton).toBeInTheDocument()
     expect(folderButton).not.toBeDisabled()
     expect(fileButton).toBeInTheDocument()

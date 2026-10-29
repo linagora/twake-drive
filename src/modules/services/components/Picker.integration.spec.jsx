@@ -1,4 +1,5 @@
 import {
+  act,
   fireEvent,
   render,
   screen,
@@ -17,6 +18,8 @@ import IntentHandler from './IntentHandler'
 import { IntentLike } from 'test/components/IntentLike'
 
 import { ROOT_DIR_ID, TRASH_DIR_ID, TRASH_DIR_PATH } from '@/constants/config'
+import * as folderSort from '@/hooks/useFolderSort'
+import { buildDriveQuery } from '@/queries'
 
 const mockCreateService = jest.fn()
 const mockGetIntent = jest.fn()
@@ -57,39 +60,54 @@ jest.mock('cozy-ui/transpiled/react/Table/Virtualized', () => {
   const React = require('react')
   const VirtualizedTable = React.forwardRef(
     (
-      { rows, columns, context, components, componentsProps, isSelectedItem },
+      {
+        rows,
+        columns,
+        context,
+        components,
+        componentsProps,
+        isSelectedItem,
+        endReached
+      },
       ref
     ) => {
       const TableHead = components.TableHead
       const TableRow = components.TableRow
       return (
-        <table ref={ref}>
-          <TableHead>
-            <tr>
-              {columns.map(column => (
-                <th key={column.id}>{column.label}</th>
-              ))}
-            </tr>
-          </TableHead>
-          <tbody>
-            {rows.map(row => (
-              <TableRow
-                key={row._id}
-                item={row}
-                context={{ ...context, isSelectedItem }}
-              >
+        <>
+          <table ref={ref}>
+            <TableHead>
+              <tr>
                 {columns.map(column => (
-                  <td key={column.id}>
-                    {React.cloneElement(componentsProps.rowContent.children, {
-                      column,
-                      row
-                    })}
-                  </td>
+                  <th key={column.id}>{column.label}</th>
                 ))}
-              </TableRow>
-            ))}
-          </tbody>
-        </table>
+              </tr>
+            </TableHead>
+            <tbody>
+              {rows.map(row => (
+                <TableRow
+                  key={row._id}
+                  item={row}
+                  context={{ ...context, isSelectedItem }}
+                >
+                  {columns.map(column => (
+                    <td key={column.id}>
+                      {React.cloneElement(componentsProps.rowContent.children, {
+                        column,
+                        row
+                      })}
+                    </td>
+                  ))}
+                </TableRow>
+              ))}
+            </tbody>
+          </table>
+          {endReached && (
+            <button type="button" onClick={endReached}>
+              Load next page
+            </button>
+          )}
+        </>
       )
     }
   )
@@ -228,7 +246,9 @@ function setup(
     action = 'PICK',
     hasWriteAccess = () => true,
     beforeRead = null,
-    sharing = {}
+    beforeList = null,
+    sharing = {},
+    pageSize = null
   } = {}
 ) {
   const documents = new Map(files.map(file => [file._id, { ...file }]))
@@ -254,20 +274,28 @@ function setup(
             if (!file) throw new Error('Document not found')
             return { data: { ...file } }
           }
+          if (beforeList) await beforeList(operation)
           if (rejectWarmupListing && !rejectedWarmup) {
             rejectedWarmup = true
             throw new Error('Warm-up content prefetch failed')
           }
-          return {
-            data:
-              operation.doctype === 'io.cozy.files'
-                ? [...documents.values()].filter(file =>
-                    operation.selector?.path
+          const matching =
+            operation.doctype === 'io.cozy.files'
+              ? [...documents.values()].filter(
+                  file =>
+                    (operation.selector?.path
                       ? file.path === operation.selector.path
-                      : file.dir_id === operation.selector?.dir_id
-                  )
-                : [],
-            next: false
+                      : file.dir_id === operation.selector?.dir_id) &&
+                    (typeof operation.selector?.type !== 'string' ||
+                      file.type === operation.selector.type)
+                )
+              : []
+          const offset = operation.skip ?? 0
+          return {
+            data: pageSize
+              ? matching.slice(offset, offset + pageSize)
+              : matching,
+            next: pageSize ? offset + pageSize < matching.length : false
           }
         },
         persistCozyData: async () => {}
@@ -1261,7 +1289,10 @@ describe('PICK intent integration', () => {
 })
 
 describe('MOVE intent navigation integration', () => {
-  afterEach(() => jest.clearAllMocks())
+  afterEach(() => {
+    jest.restoreAllMocks()
+    jest.clearAllMocks()
+  })
 
   function setupMove(data = {}, options = {}) {
     const context = setup(
@@ -1303,6 +1334,255 @@ describe('MOVE intent navigation integration', () => {
     })
     return { ...context, failedIds }
   }
+
+  it('shows folders and files immediately while later pages remain available', async () => {
+    jest
+      .spyOn(folderSort, 'useFolderSort')
+      .mockReturnValue([{ attribute: 'name', order: 'asc' }, jest.fn(), true])
+    const secondFolder = {
+      ...projects,
+      _id: 'second-folder',
+      id: 'second-folder',
+      name: 'Z folder'
+    }
+    const thirdFolder = {
+      ...projects,
+      _id: 'third-folder',
+      id: 'third-folder',
+      name: 'A folder'
+    }
+    const firstFile = {
+      ...invoice,
+      _id: 'first-file',
+      id: 'first-file',
+      name: '10.txt',
+      dir_id: ROOT_DIR_ID
+    }
+    const secondFile = {
+      ...firstFile,
+      _id: 'second-file',
+      id: 'second-file',
+      name: '2.txt'
+    }
+    const thirdFile = {
+      ...firstFile,
+      _id: 'third-file',
+      id: 'third-file',
+      name: '1.txt'
+    }
+    const { requests } = setupMove(
+      {},
+      {
+        files: [
+          root,
+          projects,
+          secondFolder,
+          thirdFolder,
+          firstFile,
+          secondFile,
+          thirdFile,
+          invoice
+        ],
+        pageSize: 2
+      }
+    )
+    await waitForRow('second-folder')
+    expect(await waitForRow('first-file')).toHaveAttribute(
+      'aria-disabled',
+      'true'
+    )
+    expect(getRow('third-folder')).toBe(null)
+    expect(
+      screen
+        .getAllByTestId('list-item')
+        .map(row => row.getAttribute('data-file-id'))
+    ).toEqual(['projects', 'second-folder', 'second-file', 'first-file'])
+    expect(
+      requests.some(
+        request =>
+          request.selector?.type === 'file' &&
+          request.selector?.dir_id === ROOT_DIR_ID
+      )
+    ).toBe(true)
+    fireEvent.click(screen.getByRole('button', { name: 'Load next page' }))
+    expect(await waitForRow('third-folder')).toBeInTheDocument()
+    expect(await waitForRow('first-file')).toHaveAttribute(
+      'aria-disabled',
+      'true'
+    )
+    expect(
+      screen
+        .getAllByTestId('list-item')
+        .map(row => row.getAttribute('data-file-id'))
+    ).toEqual([
+      'third-folder',
+      'projects',
+      'second-folder',
+      'second-file',
+      'first-file'
+    ])
+    expect(getRow('third-file')).toBe(null)
+    fireEvent.click(screen.getByRole('button', { name: 'Load next page' }))
+    expect(await waitForRow('third-file')).toHaveAttribute(
+      'aria-disabled',
+      'true'
+    )
+    expect(
+      screen
+        .getAllByTestId('list-item')
+        .map(row => row.getAttribute('data-file-id'))
+    ).toEqual([
+      'third-folder',
+      'projects',
+      'second-folder',
+      'third-file',
+      'second-file',
+      'first-file'
+    ])
+  })
+
+  it('recovers the destination list after a failed page and successful refresh', async () => {
+    jest
+      .spyOn(folderSort, 'useFolderSort')
+      .mockReturnValue([{ attribute: 'name', order: 'asc' }, jest.fn(), true])
+    let failPage = true
+    const secondFolder = {
+      ...projects,
+      _id: 'second-folder',
+      id: 'second-folder'
+    }
+    const { client } = setupMove(
+      {},
+      {
+        files: [root, projects, secondFolder, invoice],
+        pageSize: 1,
+        beforeList: operation => {
+          if (
+            failPage &&
+            operation.selector?.type === 'directory' &&
+            operation.skip > 0
+          ) {
+            failPage = false
+            throw new Error('Temporary page failure')
+          }
+        }
+      }
+    )
+    await waitForRow('projects')
+    fireEvent.click(screen.getByRole('button', { name: 'Load next page' }))
+    expect(
+      await screen.findByTestId('file-picker-source-error')
+    ).toBeInTheDocument()
+
+    const query = buildDriveQuery({
+      currentFolderId: ROOT_DIR_ID,
+      type: 'directory',
+      sortAttribute: 'name',
+      sortOrder: 'asc'
+    })
+    await act(async () => {
+      await client.query(query.definition(), { as: query.options.as })
+    })
+    expect(await waitForRow('projects')).toBeInTheDocument()
+    expect(screen.queryByTestId('file-picker-source-error')).toBe(null)
+    fireEvent.click(screen.getByRole('button', { name: 'Load next page' }))
+    expect(await waitForRow('second-folder')).toBeInTheDocument()
+  })
+
+  it('shows folders while the first file page is still loading', async () => {
+    let resolveFiles
+    const filePage = new Promise(resolve => {
+      resolveFiles = resolve
+    })
+    const firstFile = {
+      ...invoice,
+      _id: 'first-file',
+      id: 'first-file',
+      dir_id: ROOT_DIR_ID
+    }
+    setupMove(
+      {},
+      {
+        files: [root, projects, firstFile, invoice],
+        beforeList: operation =>
+          operation.selector?.dir_id === ROOT_DIR_ID &&
+          operation.selector?.type === 'file'
+            ? filePage
+            : null
+      }
+    )
+    expect(await waitForRow('projects')).toBeInTheDocument()
+    expect(getRow('first-file')).toBe(null)
+    resolveFiles()
+    expect(await waitForRow('first-file')).toHaveAttribute(
+      'aria-disabled',
+      'true'
+    )
+  })
+
+  it('continues past a fully filtered first page', async () => {
+    const hidden = {
+      ...projects,
+      _id: 'hidden',
+      id: 'hidden',
+      cozyMetadata: { createdByApp: 'nextcloud' }
+    }
+    const hidden2 = { ...hidden, _id: 'hidden-2', id: 'hidden-2' }
+    const { requests } = setupMove(
+      {},
+      {
+        files: [root, hidden, hidden2, projects, invoice],
+        pageSize: 2
+      }
+    )
+    expect(await waitForRow('projects')).toBeInTheDocument()
+    expect(getRow('hidden')).toBe(null)
+    expect(requests.some(request => request.skip === 2)).toBe(true)
+  })
+
+  it('shows folders before disabled files in the destination list', async () => {
+    jest
+      .spyOn(folderSort, 'useFolderSort')
+      .mockReturnValue([{ attribute: 'name', order: 'desc' }, jest.fn(), true])
+    const firstFile = {
+      ...invoice,
+      _id: 'first-file',
+      id: 'first-file',
+      dir_id: ROOT_DIR_ID
+    }
+    const secondFile = {
+      ...invoice,
+      _id: 'second-file',
+      id: 'second-file',
+      dir_id: ROOT_DIR_ID
+    }
+    const secondFolder = {
+      ...projects,
+      _id: 'second-folder',
+      id: 'second-folder'
+    }
+    const { requests } = setupMove(
+      {},
+      {
+        files: [root, firstFile, secondFile, projects, secondFolder, invoice],
+        pageSize: 2
+      }
+    )
+
+    await waitForRow('second-file')
+    expect(
+      requests.some(request => request.selector?.type === 'directory')
+    ).toBe(true)
+    const rows = screen.getAllByTestId('list-item')
+    expect(rows.map(row => row.getAttribute('data-file-id'))).toEqual([
+      'projects',
+      'second-folder',
+      'first-file',
+      'second-file'
+    ])
+    expect(getRow('first-file')).toHaveAttribute('aria-disabled', 'true')
+    expect(getRow('second-file')).toHaveAttribute('aria-disabled', 'true')
+  })
 
   it.each(['Cancel', 'Close'])(
     'reuses shared destination browsing, canonical Drive/Sharings tabs and cancels via %s without mutating',

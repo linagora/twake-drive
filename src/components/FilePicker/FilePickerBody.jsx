@@ -28,7 +28,9 @@ import { ROOT_DIR_ID } from '@/constants/config'
 import { useBreadcrumbPath } from '@/modules/breadcrumb/hooks/useBreadcrumbPath'
 import { FilePickerRecentsContent } from '@/modules/services/components/FilePicker/FilePickerRecentsContent'
 import { useSharedDriveFolder } from '@/modules/shareddrives/hooks/useSharedDriveFolder'
+import { useDriveQueries } from '@/modules/views/Drive/useDriveQueries'
 import { sortFiles } from '@/modules/views/Folder/sortFiles'
+import { filterOutReceivedShares } from '@/modules/views/Folder/syncHelpers'
 
 const {
   file: { isDirectory }
@@ -46,6 +48,7 @@ const filePickerContentPropTypes = {
     getItemDisabledReason: PropTypes.func,
     withFilePath: PropTypes.bool,
     isFetchingMore: PropTypes.bool,
+    isReady: PropTypes.bool,
     keepItemsOnError: PropTypes.bool,
     emptyMessageKey: PropTypes.string,
     errorMessageKey: PropTypes.string
@@ -218,8 +221,9 @@ const FilePickerContent = props => {
   const { source, onReadyToUse } = props
   // The intent client must wait for committed content, including empty/error views.
   useEffect(() => {
-    if (source.fetchStatus !== 'loading') onReadyToUse?.()
-  }, [source.fetchStatus, onReadyToUse])
+    if (source.fetchStatus !== 'loading' && source.isReady !== false)
+      onReadyToUse?.()
+  }, [source.fetchStatus, source.isReady, onReadyToUse])
 
   return props.mode === filePickerModes.CURRENT_FOLDER ? (
     <CurrentFolderContent {...props} />
@@ -279,10 +283,7 @@ const LocalFolderContent = ({
     source.items
   ])
 
-  return renderFilePickerContent({
-    ...source,
-    items
-  })
+  return renderFilePickerContent({ ...source, items })
 }
 
 LocalFolderContent.propTypes = {
@@ -304,6 +305,97 @@ LocalFolderContent.propTypes = {
   }).isRequired
 }
 
+const MoveLocalFolderContent = ({
+  folderId,
+  rootBreadcrumbPath,
+  sharedDocumentIds,
+  isItemDisabled,
+  isItemIncluded,
+  filterReceivedShares,
+  allLoaded,
+  isOwner,
+  renderFilePickerContent,
+  getItemDisabledReason,
+  additionalItems,
+  sortOrder
+}) => {
+  const [fetchingMore, setFetchingMore] = useState(false)
+  const fetchingRef = useRef(false)
+  const breadcrumbPath = useBreadcrumbPath({
+    currentFolderId: folderId,
+    rootBreadcrumbPath,
+    sharedDocumentIds
+  })
+  const { allResults, isInError, isLoading, isPending } = useDriveQueries(
+    folderId,
+    sortOrder
+  )
+  const results =
+    filterReceivedShares && allLoaded
+      ? filterOutReceivedShares(allResults, isOwner)
+      : allResults
+  const source = results.find(result => result.hasMore) ?? null
+  const hasMore = Boolean(source)
+  const sourceStatus = isInError
+    ? 'failed'
+    : isLoading || isPending
+      ? 'loading'
+      : 'loaded'
+  const items = useMemo(() => {
+    const fetched = results.flatMap(result => result.data ?? [])
+    const ids = new Set(fetched.map(item => item._id))
+    const added = additionalItems.filter(
+      item => item?.dir_id === folderId && !ids.has(item._id)
+    )
+    const visible = [...fetched, ...added].filter(isItemIncluded)
+    return sortFiles(visible, sortOrder)
+  }, [results, additionalItems, folderId, isItemIncluded, sortOrder])
+  const fetchNext = source?.fetchMore
+  const fetchMore = useCallback(async () => {
+    if (fetchingRef.current || !fetchNext) return
+    fetchingRef.current = true
+    setFetchingMore(true)
+    try {
+      await fetchNext()
+    } catch {
+      return
+    } finally {
+      fetchingRef.current = false
+      setFetchingMore(false)
+    }
+  }, [fetchNext])
+  useEffect(() => {
+    if (
+      items.length === 0 &&
+      sourceStatus === 'loaded' &&
+      hasMore &&
+      !fetchingMore
+    ) {
+      void fetchMore()
+    }
+  }, [items.length, sourceStatus, hasMore, fetchingMore, fetchMore])
+  return renderFilePickerContent({
+    items,
+    breadcrumbPath,
+    isItemDisabled,
+    getItemDisabledReason,
+    isReady: !isLoading && !isPending,
+    fetchStatus:
+      sourceStatus === 'failed'
+        ? 'failed'
+        : items.length === 0 &&
+            (sourceStatus === 'loading' || fetchingMore || hasMore)
+          ? 'loading'
+          : sourceStatus === 'loading' && items.length > 0
+            ? 'loaded'
+            : sourceStatus,
+    hasMore,
+    fetchMore
+  })
+}
+
+MoveLocalFolderContent.propTypes = LocalFolderContent.propTypes
+
 const SharedDriveFolderContent = ({
   driveId,
   folderId,
@@ -315,8 +407,11 @@ const SharedDriveFolderContent = ({
   isItemIncluded,
   renderFilePickerContent,
   additionalItems,
-  sortOrder
+  sortOrder,
+  reportPageErrors
 }) => {
+  const [autoFetching, setAutoFetching] = useState(false)
+  const [pageFetchFailed, setPageFetchFailed] = useState(false)
   const path = useBreadcrumbPath({
     currentFolderId: folderId,
     rootBreadcrumbPath,
@@ -325,6 +420,14 @@ const SharedDriveFolderContent = ({
   })
   const { sharedDriveResult, fetchStatus, hasMore, fetchMore } =
     useSharedDriveFolder({ driveId, folderId })
+  useEffect(() => {
+    setPageFetchFailed(false)
+  }, [sharedDriveResult])
+  const fetchNextPage = useCallback(async () => {
+    const result = await fetchMore()
+    if (reportPageErrors && result === false) setPageFetchFailed(true)
+    return result
+  }, [fetchMore, reportPageErrors])
   const items = useMemo(() => {
     const fetchedItems = (sharedDriveResult.included ?? []).map(item => ({
       ...item,
@@ -353,11 +456,41 @@ const SharedDriveFolderContent = ({
     sortOrder
   ])
 
-  return renderFilePickerContent({
-    items,
+  useEffect(() => {
+    if (
+      !reportPageErrors ||
+      items.length > 0 ||
+      fetchStatus !== 'loaded' ||
+      !hasMore ||
+      autoFetching ||
+      pageFetchFailed
+    )
+      return
+    setAutoFetching(true)
+    const fetchNext = async () => {
+      await fetchNextPage()
+      setAutoFetching(false)
+    }
+    void fetchNext()
+  }, [
+    reportPageErrors,
+    items.length,
     fetchStatus,
     hasMore,
-    fetchMore,
+    autoFetching,
+    pageFetchFailed,
+    fetchNextPage
+  ])
+
+  return renderFilePickerContent({
+    items,
+    fetchStatus: pageFetchFailed
+      ? 'failed'
+      : autoFetching || (reportPageErrors && items.length === 0 && hasMore)
+        ? 'loading'
+        : fetchStatus,
+    hasMore,
+    fetchMore: fetchNextPage,
     breadcrumbPath: path,
     isItemDisabled,
     getItemDisabledReason
@@ -374,6 +507,7 @@ SharedDriveFolderContent.propTypes = {
   getItemDisabledReason: PropTypes.func,
   isItemIncluded: PropTypes.func.isRequired,
   renderFilePickerContent: PropTypes.func.isRequired,
+  reportPageErrors: PropTypes.bool,
   additionalItems: PropTypes.arrayOf(PropTypes.object),
   sortOrder: PropTypes.shape({
     attribute: PropTypes.string.isRequired,
@@ -491,9 +625,16 @@ export const FilePickerBody = ({
     )
   }
 
+  const isMoveBrowser =
+    mode === filePickerModes.CURRENT_FOLDER &&
+    displayedTypes.includes(filePickerItemTypes.FOLDER) &&
+    displayedTypes.includes(filePickerItemTypes.FILE)
+
   if (driveId) {
     return (
       <SharedDriveFolderContent
+        key={`${driveId}/${folderId}`}
+        reportPageErrors={isMoveBrowser}
         driveId={driveId}
         folderId={folderId}
         displayedTypes={displayedTypes}
@@ -509,8 +650,12 @@ export const FilePickerBody = ({
     )
   }
 
+  const LocalContent = isMoveBrowser
+    ? MoveLocalFolderContent
+    : LocalFolderContent
   return (
-    <LocalFolderContent
+    <LocalContent
+      key={`${section}/${folderId}/${sortOrder.attribute}/${sortOrder.order}`}
       folderId={folderId}
       displayedTypes={displayedTypes}
       rootBreadcrumbPath={rootBreadcrumbPath}

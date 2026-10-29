@@ -28,7 +28,7 @@ test.describe('MoveTo mobile', () => {
       await moveTo.confirm()
 
       await aliceDrive.row(sourceFile).waitHidden()
-      await aliceDrive.openFolder(destination)
+      await aliceDrive.openFolderOnMobile(destination)
       await expect(aliceDrive.row(sourceFile).cell).toBeVisible()
     } finally {
       if (sourceId) await trashById(USERS.alice.instance, sourceId)
