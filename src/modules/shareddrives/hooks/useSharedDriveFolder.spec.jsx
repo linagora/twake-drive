@@ -58,7 +58,10 @@ describe('useSharedDriveFolder', () => {
 
     return renderHook(
       () =>
-        useSharedDriveFolder({ driveId: mockDriveId, folderId: mockFolderId }),
+        useSharedDriveFolder({
+          driveId: mockDriveId,
+          folderId: mockFolderId
+        }),
       { wrapper }
     )
   }

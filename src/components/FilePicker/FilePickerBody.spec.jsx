@@ -37,6 +37,9 @@ jest.mock('cozy-client/dist/models/file', () => ({
   isSharingShortcutNew: item => item.metadata?.sharing?.status === 'new'
 }))
 jest.mock('cozy-sharing', () => ({ useSharingContext: jest.fn() }))
+jest.mock('@/modules/views/Drive/useDriveQueries', () => ({
+  useDriveQueries: jest.fn()
+}))
 jest.mock('twake-i18n')
 jest.mock('@/modules/filelist/icons/FileThumbnail', () => () => null)
 jest.mock('cozy-ui/transpiled/react/providers/Breakpoints', () => ({

@@ -38,6 +38,18 @@ describe('FilePicker queries', () => {
     expect(query.options.as).toBe('filePicker-folders-folder-id')
   })
 
+  it('orders directories before files in ascending mixed-content queries', () => {
+    const query = buildDisplayedContentFolderQuery('folder-id', [
+      filePickerItemTypes.FOLDER,
+      filePickerItemTypes.FILE
+    ])
+    expect(query.definition().sort).toEqual([
+      { dir_id: 'asc' },
+      { type: 'asc' },
+      { name: 'asc' }
+    ])
+  })
+
   it('uses the selected sort in the selector, index, and ordering', () => {
     const query = buildDisplayedContentFolderQuery(
       'folder-id',
