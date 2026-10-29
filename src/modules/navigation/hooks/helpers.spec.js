@@ -193,6 +193,38 @@ describe('computeFileType', () => {
     )
   })
 
+  it.each([
+    ['Contact.vcf', 'text/vcard'],
+    ['Event.ics', 'text/calendar'],
+    ['Notes.txt', 'text/plain']
+  ])(
+    'should return "shared-drive-root-file" for a %s file-root .url shortcut OnlyOffice cannot open',
+    (name, mime) => {
+      // The stack derives class 'text' from any text/* mime
+      const file = {
+        driveId: 'sharing-1',
+        _id: 'shortcut-1',
+        name,
+        mime: 'application/internet-shortcut',
+        class: 'shortcut',
+        dir_id: SHARED_DRIVES_DIR_ID,
+        _type: 'io.cozy.files',
+        type: 'file',
+        metadata: {
+          target: {
+            _type: 'io.cozy.files',
+            drive_root_type: DRIVE_ROOT_TYPE.FILE,
+            class: 'text',
+            mime
+          }
+        }
+      }
+      expect(computeFileType(file, { isOfficeEnabled: true })).toBe(
+        'shared-drive-root-file'
+      )
+    }
+  )
+
   it('should return "shortcut" for legacy file-root .url shortcuts without metadata.target.mime', () => {
     const file = {
       _id: 'shortcut-1',
