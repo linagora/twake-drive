@@ -95,7 +95,7 @@
     "@linagora/twake-icons": "^2.13.1",
     "@sentry/react": "7.120.4",
     "classnames": "2.3.1",
-    "cozy-bar": "^36.1.4",
+    "cozy-bar": "^36.2.0",
     "cozy-client": "^61.0.0",
     "cozy-dataproxy-lib": "^4.15.6",
     "cozy-device-helper": "^4.0.3",
