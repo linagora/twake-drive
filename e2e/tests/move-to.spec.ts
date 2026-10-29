@@ -5,7 +5,7 @@ import type { Page } from '@playwright/test'
 
 import { USERS } from '../helpers/config'
 import { expect, safeUnlink, stamp, test } from '../helpers/fixtures'
-import { trashById } from '../helpers/stack'
+import { createFile, createFolder, trashById } from '../helpers/stack'
 import type { DrivePage } from '../pages/DrivePage'
 import type { MoveToPage } from '../pages/MoveToPage'
 
@@ -74,6 +74,49 @@ async function cleanupMoveScenario(
 }
 
 test.describe('MoveTo folder creation', () => {
+  test('lists folders before disabled files in a destination', async ({
+    alicePage,
+    aliceDrive
+  }) => {
+    const destinationName = `0 MOVE destination ${stamp()}`
+    const folderName = `Z MOVE folder ${stamp()}`
+    const fileName = `A MOVE context ${stamp()}.txt`
+    const sourceName = `0 MOVE source ${stamp()}.txt`
+    let destinationId: string | null = null
+    let sourceId: string | null = null
+    try {
+      destinationId = await createFolder({
+        instance: USERS.alice.instance,
+        name: destinationName
+      })
+      await createFolder({
+        instance: USERS.alice.instance,
+        name: folderName,
+        parentId: destinationId
+      })
+      await createFile({
+        instance: USERS.alice.instance,
+        name: fileName,
+        parentId: destinationId,
+        content: 'Context'
+      })
+      sourceId = await createFile({
+        instance: USERS.alice.instance,
+        name: sourceName,
+        content: 'Source'
+      })
+      await alicePage.goto(ALICE_ROOT)
+      await aliceDrive.row(sourceName).waitVisible()
+      const moveTo = await aliceDrive.row(sourceName).openMoveTo()
+      await moveTo.openFolder(destinationName)
+      await moveTo.expectFolderBeforeFile(folderName, fileName)
+      await moveTo.close()
+    } finally {
+      if (sourceId) await trashById(USERS.alice.instance, sourceId)
+      if (destinationId) await trashById(USERS.alice.instance, destinationId)
+    }
+  })
+
   test('creates a destination folder inline and moves the source into it', async ({
     alicePage,
     aliceDrive

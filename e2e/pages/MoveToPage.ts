@@ -1,6 +1,7 @@
 import type { Locator, Page } from '@playwright/test'
 
 import { escapeRegExp, expect, expectRowDisabled } from '../helpers/fixtures'
+import { expectFolderBeforeFile } from './pickerOrdering'
 
 /**
  * Page object for the MoveTo destination picker.
@@ -118,6 +119,10 @@ export class MoveToPage {
 
   async expectRowDisabled(name: string): Promise<void> {
     await expectRowDisabled(this.row(name))
+  }
+
+  async expectFolderBeforeFile(folder: string, file: string): Promise<void> {
+    await expectFolderBeforeFile(this.row(folder), this.row(file))
   }
 
   async folderId(name: string): Promise<string> {
