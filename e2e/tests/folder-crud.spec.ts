@@ -124,7 +124,6 @@ test.describe('Folder CRUD', () => {
 
     await aliceDrive.createFolder(name)
     await aliceDrive.row(name).sendToTrash()
-    await expect(aliceDrive.row(name).cell).toHaveCount(0)
 
     await sidebar.goToTrash()
     await alicePage.waitForURL(/\/trash/)
@@ -132,6 +131,6 @@ test.describe('Folder CRUD', () => {
 
     await aliceDrive.row(name).restore()
     await alicePage.goto(ALICE_ROOT)
-    await expect(aliceDrive.row(name).cell).toBeVisible()
+    await aliceDrive.row(name).waitVisible()
   })
 })

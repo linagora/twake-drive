@@ -3,6 +3,12 @@ import path from 'path'
 
 import { USERS } from '../helpers/config'
 import { test, expect, stamp, safeUnlink } from '../helpers/fixtures'
+import {
+  createFile,
+  createFolder,
+  makeFilesToken,
+  trashById
+} from '../helpers/stack'
 import { FileViewerPage } from '../pages/FileViewerPage'
 import { UploadQueuePage } from '../pages/UploadQueuePage'
 
@@ -75,21 +81,46 @@ test.describe('Upload & file viewer', () => {
     }
   })
 
-  test('uploads a file by dragging it onto the dropzone', async ({
+  test('uploads files by dragging onto empty and populated dropzones', async ({
     alicePage,
     aliceDrive
   }) => {
-    await alicePage.goto(ALICE_ROOT)
+    const folderId: string = await createFolder({
+      instance: USERS.alice.instance,
+      name: `DragDrop ${stamp()}`
+    })
 
-    const folder = `DragDrop ${stamp()}`
-    await aliceDrive.createFolder(folder)
-    await aliceDrive.openFolder(folder)
+    try {
+      await alicePage.goto(`${ALICE_ROOT}/${folderId}`)
+      for (const state of ['empty', 'populated', 'overflowing']) {
+        if (state === 'overflowing') {
+          const token: string = makeFilesToken(USERS.alice.instance)
+          for (let index = 0; index < 40; index++) {
+            await createFile({
+              instance: USERS.alice.instance,
+              parentId: folderId,
+              name: `seed-${index}.txt`,
+              content: 'Drop target fixture',
+              token
+            })
+          }
+          await alicePage.reload()
+          await aliceDrive.row('seed-39.txt').waitVisible()
+        }
 
-    const fileName = `dropped-${stamp()}.txt`
-    await aliceDrive.dropFiles([
-      { name: fileName, mime: 'text/plain', content: 'dropped via DnD' }
-    ])
-    await aliceDrive.row(fileName).waitVisible()
+        const fileName = `dropped-${state}-${stamp()}.txt`
+        const fixturePath = path.join(FIXTURE_DIR, fileName)
+        await copyFile(SAMPLE, fixturePath)
+        try {
+          await aliceDrive.dropFiles([fixturePath])
+          await aliceDrive.row(fileName).waitVisible()
+        } finally {
+          await safeUnlink(fixturePath)
+        }
+      }
+    } finally {
+      await trashById(USERS.alice.instance, folderId)
+    }
   })
 
   test('opens an uploaded file in the viewer and closes it', async ({

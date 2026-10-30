@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from '@testing-library/react'
+import { act, renderHook, waitFor } from '@testing-library/react'
 
 import { useClient } from 'cozy-client'
 import { useDataProxy } from 'cozy-dataproxy-lib'
@@ -70,6 +70,38 @@ describe('useDataProxyRecents', () => {
       expect(logger.error).not.toHaveBeenCalled()
     })
   })
+
+  it.each(['resolve', 'reject'])(
+    'keeps DataProxy recents when an older fallback finishes with %s',
+    async outcome => {
+      let resolveFallback
+      let rejectFallback
+      const fallback = new Promise((resolve, reject) => {
+        resolveFallback = resolve
+        rejectFallback = reject
+      })
+      mockClient.fetchQueryAndGetFromState.mockReturnValue(fallback)
+      mockUseDataProxy.mockReturnValue({ dataProxyServicesAvailable: false })
+      const { result, rerender } = renderHook(() => useDataProxyRecents())
+
+      const recents = [{ id: 'shared-file', name: 'shared.txt' }]
+      mockUseDataProxy.mockReturnValue({
+        dataProxyServicesAvailable: true,
+        recents: jest.fn().mockResolvedValue(recents)
+      })
+      rerender()
+      await waitFor(() => expect(result.current.data).toEqual(recents))
+
+      await act(async () => {
+        if (outcome === 'resolve') resolveFallback({ data: [] })
+        else rejectFallback(new Error('Old fallback failed'))
+      })
+
+      expect(result.current.data).toEqual(recents)
+      expect(result.current.fetchStatus).toBe('loaded')
+      expect(result.current.error).toBe(null)
+    }
+  )
 
   describe('when dataProxy throws an error', () => {
     it('should use fallback query when dataProxy fails', async () => {

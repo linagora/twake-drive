@@ -2,7 +2,10 @@ import type { Page, Locator } from '@playwright/test'
 
 import { MoveToPage } from './MoveToPage'
 import { ShareModalPage } from './ShareModalPage'
-import { escapeRegExp } from '../helpers/fixtures'
+import type { FileListRequests } from '../helpers/fileListRequests'
+import { escapeRegExp, expect } from '../helpers/fixtures'
+
+import { DOUBLE_CLICK_DELAY } from '@/hooks/useOnLongPress/helpers'
 
 interface ConfirmDialog {
   button: RegExp
@@ -27,7 +30,8 @@ export class FileRow {
   constructor(
     private readonly page: Page,
     private readonly fileList: Locator,
-    private readonly name: string
+    private readonly name: string,
+    private readonly fileRequests: FileListRequests
   ) {
     this.anchored = new RegExp(`^${escapeRegExp(name)}$`)
   }
@@ -39,22 +43,161 @@ export class FileRow {
     return this.fileList
       .getByTestId('fil-file-filename-and-ext')
       .filter({ hasText: this.anchored })
+      .or(this.fileList.getByTitle(this.name, { exact: true }))
   }
 
   private get rowEl(): Locator {
-    // Each row is a plain <div> with no semantic role; locate the closest
-    // ancestor that contains the per-row "More" button — that's the row.
     return this.cell.locator(
-      'xpath=ancestor::*[.//button[@aria-label="More"]][1]'
+      'xpath=ancestor::*[.//button[@aria-label="More" or @arial-label="More"]][1]'
     )
   }
 
-  async waitVisible(opts?: { timeout?: number }): Promise<void> {
-    await this.cell.waitFor({ state: 'visible', timeout: opts?.timeout })
+  private get actionButton(): Locator {
+    return this.rowEl
+      .getByRole('button', { name: 'More' })
+      .or(this.rowEl.locator('button[arial-label="More"]'))
   }
 
+  async waitVisible(opts?: { timeout?: number }): Promise<void> {
+    let startedFromCurrentPosition = false
+    await expect
+      .poll(
+        async (): Promise<number> => {
+          const cell = this.cell.first()
+          if ((await cell.count()) === 0) {
+            if (startedFromCurrentPosition) await this.scrollNextViewport()
+            else {
+              await this.scrollFileListToTop()
+              startedFromCurrentPosition = true
+            }
+            return 0
+          }
+
+          try {
+            await cell.scrollIntoViewIfNeeded()
+            return (await cell.isVisible()) ? 1 : 0
+          } catch {
+            return 0
+          }
+        },
+        { intervals: [50], timeout: opts?.timeout ?? 10_000 }
+      )
+      .toBe(1)
+  }
+
+  private async scrollFileListToTop(): Promise<void> {
+    const scroller = this.fileList.locator(
+      'xpath=ancestor::*[@data-testid="virtuoso-scroller"][1]'
+    )
+    if ((await scroller.count()) === 0) return
+    await scroller.evaluate((element: HTMLElement) => {
+      element.scrollTop = 0
+    })
+  }
+
+  private async scrollNextViewport(): Promise<void> {
+    const scroller = this.fileList.locator(
+      'xpath=ancestor::*[@data-testid="virtuoso-scroller"][1]'
+    )
+    if ((await scroller.count()) === 0) return
+    await scroller.evaluate((element: HTMLElement) => {
+      const maxScrollTop = element.scrollHeight - element.clientHeight
+      element.scrollTop =
+        element.scrollTop >= maxScrollTop
+          ? 0
+          : Math.min(
+              element.scrollTop +
+                Math.max(1, Math.floor(element.clientHeight / 2)),
+              maxScrollTop
+            )
+    })
+  }
+
+  /** Check all list pages: unmounted rows can still contain the file. */
   async waitHidden(opts?: { timeout?: number }): Promise<void> {
-    await this.cell.waitFor({ state: 'hidden', timeout: opts?.timeout })
+    const timeout: number = opts?.timeout ?? 10_000
+    const scroller: Locator = this.fileList
+      .locator('xpath=ancestor::*[@data-testid="virtuoso-scroller"][1]')
+      .or(this.fileList.getByTestId('fil-content-body'))
+      .or(this.fileList.and(this.page.getByTestId('empty-folder')))
+      .first()
+    const waitForRows = async (): Promise<void> => {
+      await this.page.evaluate(
+        () =>
+          new Promise<void>(resolve => {
+            requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+          })
+      )
+    }
+    const isAtEnd = async (): Promise<boolean> =>
+      scroller.evaluate(
+        (element: HTMLElement) =>
+          element.scrollTop + element.clientHeight >= element.scrollHeight - 1
+      )
+
+    await expect(async () => {
+      await this.fileList.waitFor({ state: 'visible', timeout })
+      await this.page
+        .getByTestId('empty-folder')
+        .or(
+          this.fileList.locator(
+            '[data-file-id], [data-testid="fil-file-filename-and-ext"]'
+          )
+        )
+        .first()
+        .waitFor({ state: 'attached', timeout })
+      const scrollTop: number = await scroller.evaluate(
+        (element: HTMLElement) => element.scrollTop
+      )
+      let scannedRevision: number = this.fileRequests.revision
+      try {
+        await scroller.evaluate((element: HTMLElement) => {
+          element.scrollTop = 0
+        })
+        while (true) {
+          await waitForRows()
+          expect(
+            await this.cell.count(),
+            `Expected file "${this.name}" to be absent`
+          ).toBe(0)
+          if (await isAtEnd()) {
+            // Wait for pagination, not DataProxy's long-lived script requests.
+            await expect
+              .poll(() => this.fileRequests.pending.size, {
+                intervals: [50],
+                timeout
+              })
+              .toBe(0)
+            await waitForRows()
+            expect(
+              await this.cell.count(),
+              `Expected file "${this.name}" to be absent`
+            ).toBe(0)
+            const reachedEnd: boolean = await isAtEnd()
+            // New folders can be sorted into an already scanned viewport.
+            if (scannedRevision !== this.fileRequests.revision) {
+              scannedRevision = this.fileRequests.revision
+              await scroller.evaluate((element: HTMLElement) => {
+                element.scrollTop = 0
+              })
+              continue
+            }
+            if (reachedEnd && this.fileRequests.pending.size === 0) return
+          }
+          await scroller.evaluate((element: HTMLElement) => {
+            element.scrollTop += Math.max(
+              1,
+              Math.floor(element.clientHeight / 2)
+            )
+          })
+        }
+      } finally {
+        await scroller.evaluate((element: HTMLElement, top: number) => {
+          element.scrollTop = top
+        }, scrollTop)
+        await waitForRows()
+      }
+    }).toPass({ intervals: [100], timeout })
   }
 
   async isNewSharingShortcut(): Promise<boolean> {
@@ -63,26 +206,40 @@ export class FileRow {
 
   async fileId(): Promise<string> {
     const href = await this.rowEl.getByRole('link').first().getAttribute('href')
-    const fileId = href?.match(/\/(?:file|onlyoffice)\/(?:[^/?#]+\/)?([^/?#]+)/)?.[1]
+    const fileId = href?.match(
+      /\/(?:file|onlyoffice)\/(?:[^/?#]+\/)?([^/?#]+)/
+    )?.[1]
     if (!fileId) throw new Error(`No file id found for ${this.name}`)
     return fileId
   }
 
   async select(): Promise<void> {
-    await this.rowEl.getByRole('checkbox').click()
+    await this.waitVisible()
+    await this.rowEl
+      .getByRole('link')
+      .first()
+      .click({ modifiers: ['ControlOrMeta'] })
   }
 
-  /** cozy-drive desktop semantics: single-click selects, double-click
-   * navigates / opens. See src/hooks/useOnLongPress/helpers.js handleClick. */
   async open(): Promise<void> {
-    // The row's link includes the value of every column in its accessible
-    // name ("Foo — — —"), so we locate the row through the filename cell
-    // and dblclick whichever link sits inside.
-    await this.rowEl.getByRole('link').first().dblclick()
+    await this.waitVisible()
+    const link = this.rowEl.getByRole('link').first()
+    // FileOpener uses cozy-ui's desktop breakpoint, not touch capability.
+    const isDesktop: boolean = await this.page.evaluate(
+      () => window.matchMedia('(min-width: 1024px)').matches
+    )
+    if (!isDesktop) {
+      await link.click()
+      return
+    }
+    // Virtuoso can reuse a row whose last click just opened its parent.
+    await this.page.waitForTimeout(DOUBLE_CLICK_DELAY)
+    await link.dblclick()
   }
 
   async openMenu(): Promise<Locator> {
-    await this.rowEl.getByRole('button', { name: 'More' }).click()
+    await this.waitVisible()
+    await this.actionButton.click()
     return this.page.getByRole('menu')
   }
 
@@ -123,8 +280,12 @@ export class FileRow {
     await input.fill(newName)
     await input.press('Enter')
     await this.fileList
-      .getByTestId('fil-file-filename-and-ext')
-      .filter({ hasText: new RegExp(`^${escapeRegExp(newName)}$`) })
+      .getByTitle(newName, { exact: true })
+      .or(
+        this.fileList
+          .getByTestId('fil-file-filename-and-ext')
+          .filter({ hasText: new RegExp(`^${escapeRegExp(newName)}$`) })
+      )
       .waitFor({ state: 'visible' })
   }
 

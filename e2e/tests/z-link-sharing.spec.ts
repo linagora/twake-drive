@@ -110,8 +110,8 @@ test.describe('Share by link', () => {
       await link.waitForLinkRow()
       await link.allowEditing()
 
-      await publicPage.goto(url)
       const publicLink = new PublicLinkPage(publicPage)
+      await publicPage.goto(url)
       await expect(publicLink.fileList).toBeVisible({ timeout: 15_000 })
 
       const moveTo = await publicLink.openMoveTo(sourceFile)

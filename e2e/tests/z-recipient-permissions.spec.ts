@@ -251,7 +251,7 @@ test.describe.serial('Recipient permissions & member controls', () => {
     // READER_DRIVE stays shared with Bob: its row proves the list has loaded
     // before asserting the departed drive is absent, without forcing navigation.
     await expect(bobDrive.row(READER_DRIVE).cell).toBeVisible()
-    await expect(bobDrive.row(LEAVE_DRIVE).cell).toHaveCount(0)
+    await bobDrive.row(LEAVE_DRIVE).waitHidden()
   })
 
   // Disabled until a non-owner creator can manage the members of a nested
@@ -519,9 +519,7 @@ test.describe.serial('Recipient edits himself and other members', () => {
         charlieDrive,
         VIEWER_SELF_DRIVE
       )
-      await expect(charlieDrive.row(MANAGED_DRIVE).cell).toHaveCount(0, {
-        timeout: 2_000
-      })
+      await charlieDrive.row(MANAGED_DRIVE).waitHidden({ timeout: 2_000 })
     }).toPass({ timeout: 60_000 })
   })
 

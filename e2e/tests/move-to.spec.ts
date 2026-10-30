@@ -221,7 +221,7 @@ test.describe('MoveTo execution', () => {
       await scenario.moveTo.expectTotalFailure()
 
       for (const entry of scenario.entries) {
-        await expect(aliceDrive.row(entry).cell).toBeVisible()
+        await aliceDrive.row(entry).waitVisible()
       }
 
       await scenario.moveTo.confirm()
