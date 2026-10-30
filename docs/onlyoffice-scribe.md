@@ -56,7 +56,7 @@ The plugin only loads in the editors of text documents, presentations and spread
 - A cozy-stack that knows the `documents` and `instructions` options of the chat.
 - A `cozy-interapp` and a `cozy-ui-plus` that have the `result` message of intents (`onResult` prop of `IntentIframe`). With older ones the assistant opens, but the clicks on its action buttons do not reach Drive.
 - For another text while the panel is open, a `cozy-interapp` with the `data` message on both sides, and a `cozy-ui-plus` whose `IntentIframe` sends new `data`. With older ones the assistant keeps the first text.
-- An OnlyOffice Document Server 9.0 or later, with the scribe plugin. It was tested with 9.4.
+- An OnlyOffice Document Server 9.2 or later, with the scribe plugin. It was tested with 9.4. In a spreadsheet the plugin also uses parts of the editor its API does not give: the formula parser it switches to English, the decimal separator of the locale, the merges of the cells and the drawings of a sheet. It checks them when it starts, and in an editor without them, as a build that renames its internals, it does not tell Drive it is ready: Drive shows no button in its spreadsheets.
 
 ## The scribe plugin
 
@@ -187,31 +187,34 @@ D2: =B2+C2
 D5: =SUM(D2:D4)
 ```
 
-- The header row holds the letters of the columns, the first column the numbers of the rows: they are not cells. A cell is given as the editor shows it, its number format applied; a pipe is escaped, a line break is `<br>`. Its formula, in English, is listed after the table.
+- The header row holds the letters of the columns, the first column the numbers of the rows: they are not cells. A cell is given as the editor shows it, its number format applied; a backslash and a pipe are escaped, and a `*` or a backquote that starts it, so that the answer that gives it back gives the same text; a line break is `<br>`. Its formula, in English, is listed after the table.
 - `target` is `selection` for the selected cells (the first area of a selection of several), `region` for the block of data around a single selected cell (`GetCurrentRegion`, as Ctrl+A): the first line names that cell (`cells A1:C5, around B3`). An empty cell alone is `cell D10, empty: the cells of an answer start there`.
 - A range of more than 1000 cells, as a whole column, is cut to the cells in use, then to its first rows: the first line tells it (`only A1:C333 given`).
-- Drive gives the LLM its own instructions for a spreadsheet, in the `instructions` of the intent, which the assistant sends in place of its own, written for a text (`makeInstructions`): answer with a Markdown table of the cells to write, at the same letters and numbers, a computed value as a formula in English, never a figure computed by the LLM; a question in a few sentences; a request that asks both, as "make the ratio, then tell who is the best", the table first, then the sentences under it. They also settle what the LLM hesitates on: whether to give the unchanged cells, the label of a new column, a new row above a total row, a value the user gives.
+- Drive gives the LLM its own instructions for a spreadsheet, in the `instructions` of the intent, which the assistant sends in place of its own, written for a text (`makeInstructions`): answer with a Markdown table of the cells to write, at the same letters and numbers, a computed value as a formula in English, never a figure computed by the LLM, a number with a dot for decimals and no thousands separator, as the editor reads it whatever its locale; a question in a few sentences; a request that asks both, as "make the ratio, then tell who is the best", the table first, then the sentences under it. They also settle what the LLM hesitates on: whether to give the unchanged cells, the label of a new column, a new row above a total row, a value the user gives.
 
 #### Where the cells of an answer go
 
 The plugin reads the cells of the answer (`readAnswerCells`):
 
-- its first table, at the addresses of its letters and numbers. The LLM gives the whole range back, or only the cells it changes or adds;
-- a table without letters nor numbers is laid from the top-left cell of the range;
-- a table of cells by address, one per row under a header as `| Address | Value |`, at those addresses. The header tells it: a label as `T1` or `Q2` looks like an address;
+- its first table, at the addresses of its letters and numbers: its first header cell is a corner (empty, `#`, `Row`, `Ligne`), the others upper-case column letters, and each row starts with its number. The LLM gives the whole range back, or only the cells it changes or adds;
+- a table of cells by address, one per row under a header as `| Address | Value |` (or `Cell`, `Ref`, `Adresse`, `Cellule`, `Zelle`, `Celda`), at those addresses. The header tells it: a label as `T1` or `Q2` looks like an address;
+- a table without these addresses is written only at an empty cell, from it, its header as its first row. Over cells, it would overwrite them with what the LLM meant for somewhere else, as a table that answers a question: nothing is written;
 - without a table, lines of formulas are laid under the range, in its first column, or at an empty cell. Any other text is an explanation, even a single line: nothing is written for it;
-- a formula given on a line with its address, as the content lists them (`D5: =B5+C5`), takes its cell over the value of the table;
+- formulas listed with their addresses under a line `Formulas:`, as the content lists them (`D5: =B5+C5`), take their cells over the values of the table. A list whose lines go on after their formula, as `D2: =B2+C2 — adds the quarters`, is an explanation: none of them is read, nor a formula given with its address anywhere else;
+- a cell is read as the content gives it: its text as it is, `20*30*40 cm` or `R&amp;D`, but for the escapes of the content and a mark around all of it, as `**Total**` or `` `=SUM(B2:B5)` ``. A row number or a column letter in bold or as code is read too;
 - an empty cell of the answer is not given: the LLM leaves a cell empty to keep it as it is. The scribe never empties a cell.
 
 Then it plans the writing (`planSheetWrite`), and writes it in one command, one step of the undo:
 
-- a cell whose text is the one the cell shows, its formula, or the same number written another way (`1 200,00 €`, `1200`) is left untouched: a translation changes the labels only, the totals stay formulas;
-- a cell of the range is written;
-- a cell under the range is written when it is empty; when one of them holds something, whole rows are inserted under the range first, as many as the answer has rows there, so that nothing is overwritten. Beside the range, whole columns, the same way;
+- a cell whose text is the one the cell shows, or its formula, is left untouched. A cell with a formula is kept for its figure however written (`2400` for `2 400,00 €`): a translation changes the labels only, the totals stay formulas. A value is kept for the same number in English only (`1200` for `1,200.00 €`): `06.12.34.56.78` for `06 12 34 56 78` is a change;
+- a cell of the range is written, but a cell of a merge that starts at another cell: the editor would write that one;
+- a cell under the range is written when it is empty; when one of them holds something, or is in a merge, whole rows are inserted under the range first, as many as the answer has rows there, so that nothing is overwritten. All the cells of the answer there are then written, the ones it gives as they were too. Beside the range, whole columns, the same way;
 - a cell above or left of the range that holds something is kept;
-- a text starting with `=` is a formula. The editor reads it in English, whatever the language of its formulas: by default it is the language of the editor, `SOMME` and `;` in French. Another text is written as typed, read with the locale of the editor, and keeps the number format of its cell.
+- a text starting with `=` is a formula. The editor reads it in English, whatever the language of its formulas: by default it is the language of the editor, `SOMME` and `;` in French. A formula it cannot read, as `=C2*0,055`, leaves the cell as it was. Another text is written as typed, read with the locale of the editor, and keeps the number format of its cell; a number with a dot for decimals, as the instructions ask, takes the decimal separator of the locale first.
 
-The range and the cells written are left selected: they are not other cells to work on.
+The range and the cells written are left selected: they are not other cells to work on. The next answers of the conversation still go in the cells the assistant was given, as it knows them: a total row added under them is under the range, and a row the next answer adds there is inserted above it.
+
+Apply writes one answer at a time: a second click while an answer is written does nothing. In a spreadsheet the plugin writes only for `answerAction: 'apply'`: an older Drive offers to insert or replace an answer there, as in a text. When nothing or not all of an answer is written, the plugin sends `twake-scribe:notApplied`, and Drive tells the user: `reason: 'noCells'` when the answer has no cells to write, an explanation or a table without addresses, `notWritten` when the editor did not write them, as on a protected sheet, for a formula it cannot read, or when it stays busy past its retries. A write that fails in the middle is not sent again: what it did is one step of the undo.
 
 #### While the panel is open
 
@@ -234,7 +237,7 @@ Beside its `answerActions`, Drive gives the Assistant intent what the editor can
 
 A spreadsheet has no menu of the assistant, whose prompts are written for a text: its chips are sent with the instructions of a spreadsheet, as any request on its cells. Another editor gets neither key: the assistant shows its own menu. The labels and the requests of the chips are translated by Drive (`OnlyOffice.scribe.suggestions`); what the LLM reads is in English, whatever the language of the user.
 
-Drive checks each call: an unknown capability, one of another editor, parameters of the wrong type, or an empty slide or table are left out, with a warning in the console.
+Drive checks each call: an unknown capability, one of another editor, parameters of the wrong type, or an empty slide or table are left out, with a warning in the console, and the user is told that the answer was not applied.
 
 ### New slides
 
@@ -261,9 +264,11 @@ A chart comes back as `{ capability: 'insert_chart', params: { type, range, titl
 
 The plugin adds the chart in the sheet of the cells given to the assistant, in one step of the undo, 12 cm by 7 cm, with its title in bold:
 
-- its data is the range, the row of the headers and the column of the names with the values. Its series run along the longer side of the range, as in the editor: the columns of a range taller than wide. The editor takes the first column of one block for the names, but not the first area of several: a chart of several areas is made of their box, then the series of the cells between them are removed;
+- its data is the range, the row of the headers and the column of the names with the values. Its series run along the longer side of the range, as in the editor: the columns of a range taller than wide. The editor takes the first column of one block for the names, but not the first area of several: a chart of several areas is made of their box, then the series of the cells between them are removed. The series of several areas run along the last one, whatever the shape of their box, and a scatter chart is read by its y values;
 - it goes one empty column after the last cell used on its rows, so that it covers no data, at the first row of its data;
-- under a chart or a shape already there, past one empty row.
+- under a chart or a shape already there, past one empty row, in its column, or one empty column after the last cell used on its new rows.
+
+When the editor cannot make the chart, or Drive leaves out a call (a type it does not know, as `treemap`; `Pie chart` is a pie), the user is told: the assistant shows the call as done.
 
 The cells and the selection are left as they are. The capabilities of Drive keep within the limits the stack sets on actions (300 characters for a parameter, 1000 for a description or instructions, 5 examples with the requests of the chips): the stack refuses every message of the conversation for an action past them.
 
@@ -274,7 +279,7 @@ A request is either cells or a chart: "make the ratio, then a chart of it" takes
 - Text documents, presentations and spreadsheets only: the plugin does not load in PDF forms.
 - In a spreadsheet the scribe reads and writes the text of the cells and their formulas, not their look: no bold, color, border or number format from an answer. The charts of the sheet are not read, nor changed: a chart is only added. Comments, filters, data validation and pivot tables are neither read nor written, and a selected chart counts as no selection. A workbook is never given whole: one sheet, one range, at most 1000 cells.
 - An answer is bounded by the limits the stack and the LLM set on a request. A request that needs a long answer, as the translation of a whole sheet, can come cut or empty: Apply writes only the cells given before the cut, and an empty answer has nothing to apply.
-- The LLM decides where the cells of its answer go: a wrong address writes a wrong cell, undone in one step. Rows or columns inserted to make room shift what is beside the data too, as the user would. A cell of a merge is written on its first cell, and a protected sheet refuses the writing.
+- The LLM decides where the cells of its answer go: a wrong address writes a wrong cell, undone in one step. Rows or columns inserted to make room shift what is beside the data too, as the user would. A protected sheet refuses the writing, and Drive tells the user.
 - While the panel is open, the plugin reads every other text the user selects with `callCommand`, and a command of a plugin empties the redo of the editor. It reads a selection only when its text changes, and not for 3 s after an undo or a redo (Ctrl+Z, Ctrl+Y, Ctrl+Shift+Z, or the buttons of the toolbar), so a redo right after an undo works. Another text selected later is read, and the redo is lost. Once the panel is closed, nothing is read.
 - A paragraph that replaces several ones has the default paragraph style of the document: the alignment or the spacing set by hand on the replaced paragraphs are not kept. A text replaced in its line keeps them.
 - The images of an answer are not loaded: their alternative text is written.
