@@ -22,6 +22,8 @@ the same.
   - `answerAction`: `insert` or `replace`, or `null` when only the text the
     plugin gives is checked;
   - `answer`: the Markdown of the answer, as the LLM would write it;
+  - `keys`, in some cases: the keys the user presses in the document once
+    the text is read, before the answer (as `["Shift+ArrowRight"]`);
   - `next`, in some cases: the next answer of the conversation
     (`{ answerAction, answer }`), written over the first one, which is left
     selected, without the text being read again, after the keys the user

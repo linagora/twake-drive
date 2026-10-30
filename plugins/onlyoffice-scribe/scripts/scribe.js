@@ -228,9 +228,13 @@ function makeWriteCommand(blocks) {
 async function writeAnswer({ answerAction, text }) {
   // A text that holds what an answer cannot give back, as an image or a
   // field, is never replaced, even when the app asks: the answer is inserted
-  // after it, as when the editor was too busy to read the selection
+  // after it, as when the editor was too busy to read the selection. Nor is a
+  // text that is not the one the answer was made for, as a selection
+  // stretched over an image, which adds no text to it: the markers of the
+  // answer are those of the text read.
   const read = answerAction === 'replace' ? await fetchContent() : null
-  const isReplace = Boolean(read) && read.canReplace !== false
+  const isReplace =
+    Boolean(read) && read.canReplace !== false && read.content === lastContent
   if (isPresentation()) {
     await writePresentation(text, isReplace)
     return 0

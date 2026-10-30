@@ -30,6 +30,8 @@ interface ScribeCase {
   // null: the text the plugin gives is the whole case
   answerAction: 'insert' | 'replace' | null
   answer: string | null
+  // The keys the user presses once the text is read, before the answer
+  keys?: string[]
   // The next answer of the conversation, written over the first one, left
   // selected, without the text being read again; the keys the user presses
   // before, as an undo and a redo
@@ -137,6 +139,7 @@ for (const suite of suites) {
           let undone: ScribeModel | null = null
           const isUndone = scribeCase.expected?.undone !== undefined
           if (scribeCase.answerAction) {
+            await scribe.press(scribeCase.keys ?? [])
             applied = await scribe.applyAnswer(
               scribeCase.answerAction,
               scribeCase.answer ?? ''

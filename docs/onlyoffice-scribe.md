@@ -171,7 +171,7 @@ A `replace` answer takes the place of the selection when `canReplace` is true, a
 - a selection across the edge of a table that takes the cells of more than two tables, or of a table in a table;
 - a part the editor does not let change, as a locked content control.
 
-The plugin checks `canReplace` again before it replaces a text: it never replaces a selection that holds what an answer cannot give back, even when Drive asks, nor a selection the editor was too busy to read.
+The plugin reads the selection again before it replaces a text: it never replaces a selection that holds what an answer cannot give back, even when Drive asks, nor a selection the editor was too busy to read, nor one whose text is no more the text it gave, as a selection stretched over an image, which adds no text to it: the markers of the answer are those of the text it gave.
 
 ### Where an answer is written
 
