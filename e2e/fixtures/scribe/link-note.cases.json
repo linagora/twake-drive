@@ -1,0 +1,60 @@
+{
+  "document": "link-note.docx",
+  "cases": [
+    {
+      "id": "link-parens-content",
+      "selection": "P1@start..P1@end",
+      "answerAction": null,
+      "answer": null,
+      "expected": {
+        "content": {
+          "content": "See [<u>Mercury</u>](https://en.wikipedia.org/wiki/Mercury_(planet))[^scribe-fn-1] for details.\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": null
+      }
+    },
+    {
+      "id": "link-parens-replace",
+      "selection": "P1@start..P1@end",
+      "answerAction": "replace",
+      "answer": "See [Mercury](https://en.wikipedia.org/wiki/Mercury_(planet))[^scribe-fn-1] for more.",
+      "expected": {
+        "content": {
+          "content": "See [<u>Mercury</u>](https://en.wikipedia.org/wiki/Mercury_(planet))[^scribe-fn-1] for details.\n\n",
+          "target": "selection",
+          "canReplace": true
+        },
+        "model": {
+          "blocks": [
+            {
+              "type": "p",
+              "runs": [
+                {"t":"See "},
+                {"t":"Mercury","link":"https://en.wikipedia.org/wiki/Mercury_(planet)"},
+                {"t":" for more."}
+              ],
+              "notes": 1,
+              "noteTexts": ["Named after the god."]
+            },
+            {"type":"p","runs":[{"t":"Fill in the formand return it."}],"notes":1,"noteTexts":["By post."]},
+            {"type":"p","runs":[{"t":"Fill in the formand return the "},{"t":"form","u":1},{"t":" by Friday."}]},
+            {
+              "type": "p",
+              "runs": [
+                {"t":"Read the "},
+                {"t":"terms and conditions","u":1,"link":"https://example.org/terms"},
+                {"t":" now."}
+              ]
+            },
+            {"type":"p","runs":[{"t":"The form　and the "},{"t":"form","u":1},{"t":" after."}]},
+            {"type":"p","runs":[{"t":"Next steps follow."}]}
+          ],
+          "selText": "See Mercury for more.",
+          "selMarkup": [{"at":{"block":0},"text":"«See  for more.»"}]
+        }
+      }
+    }
+  ]
+}
