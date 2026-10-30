@@ -27,7 +27,8 @@ export function writeMarkers() {
     /\uFDD0fn:(?<note>\d+)\uFDD0|\uFDD0ref:(?<ref>\d+)\uFDD0(?<text>[^\uFDD0]*)\uFDD0\/ref\uFDD0/
   const REF_END = '\uFDD0/ref\uFDD0'
 
-  // The runs of a paragraph, those of its links included
+  // The runs of a paragraph, those of its links included: the builder gives
+  // nothing for another element of a link, as a bookmark or a comment
   const getRuns = paragraph => {
     const runs = []
     for (let i = 0; i < paragraph.GetElementsCount(); i += 1) {
@@ -35,7 +36,8 @@ export function writeMarkers() {
       if (element.GetClassType() === 'run') runs.push(element)
       if (element.GetClassType() !== 'hyperlink') continue
       for (let j = 0; j < element.GetElementsCount(); j += 1) {
-        runs.push(element.GetElement(j))
+        const child = element.GetElement(j)
+        if (child) runs.push(child)
       }
     }
     return runs
