@@ -165,6 +165,14 @@ export class ScribePage {
   }
 
   /**
+   * The error of cozy-interapp when two intents of the page take each
+   * other's messages
+   */
+  intentIdError(): Locator {
+    return this.page.getByText('Invalid event id')
+  }
+
+  /**
    * The notice, in a surface of the scribe, of the selected cells its answer
    * had no cell for
    */
