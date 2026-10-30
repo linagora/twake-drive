@@ -795,9 +795,29 @@ export function writeBlocks() {
     tableIds.size > 1 ||
     (tableIds.size === 1 &&
       paragraphs.some(paragraph => !paragraph.GetParentTableCell()))
+  // The markers of the images of blocks, in their order
+  function listImages(listed) {
+    return listed.flatMap(block => {
+      if (block.type === 'table') {
+        return block.rows
+          .flat()
+          .flatMap(cell => listImages(cell.blocks ?? [cell]))
+      }
+      return (block.spans ?? [])
+        .filter(span => span.image !== undefined)
+        .map(span => span.image)
+    })
+  }
+  // An image of the text read that the answer keeps, but whose drawing is no
+  // more known, as after an undo and a redo, would be lost: the answer is
+  // inserted, and the drawings stay
+  const isLosingImage = listImages(blocks).some(
+    number => number <= imageCount && findOriginal(number) === null
+  )
   // Across it, an answer takes the place of the selection when it mirrors
   // its shape, with a table: another one, as a summary, is inserted
-  const isReplace = Asc.scope.isReplace && (hasTable || !isCrossing)
+  const isReplace =
+    Asc.scope.isReplace && (hasTable || !isCrossing) && !isLosingImage
   const findOuterTable = table => {
     let outer = table
     while (outer.GetParentTableCell()) {
@@ -1837,19 +1857,6 @@ export function writeBlocks() {
     if (!selectPlaceholder()) return false
     return writeAnswer(blocks.flatMap(makeElement), false)
   }
-
-  // The markers of the images of blocks, in their order
-  const listImages = listed =>
-    listed.flatMap(block => {
-      if (block.type === 'table') {
-        return block.rows
-          .flat()
-          .flatMap(cell => listImages(cell.blocks ?? [cell]))
-      }
-      return (block.spans ?? [])
-        .filter(span => span.image !== undefined)
-        .map(span => span.image)
-    })
 
   // The marker each drawing of the answer left selected is a copy for, in
   // their order, null when it is unknown. The editor copies what it writes in
