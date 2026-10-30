@@ -111,7 +111,7 @@ The Document Server lists the plugins of that folder by itself. It serves its st
 
 ### Messages
 
-Drive and the plugin talk with `postMessage`. Drive only listens to the origin of the Document Server and, once the plugin has said it is ready, to the window of the plugin only: another plugin of the Document Server has the same origin. `twake-scribe:ready` itself is trusted on its origin alone, since it is what gives Drive the window of the plugin, which changes when the editor starts the plugin again; every later message also checks that window. The plugin only listens to the window that shows the editor. The plugin sends its messages to the origin of Drive only: the first one, before Drive has written to it, to the origin the `api.js` of the Document Server gives the editor (`parentOrigin` in the address of its frame).
+Drive and the plugin talk with `postMessage`. Drive only listens to the origin of the Document Server and, once the plugin has said it is ready, to the window of the plugin only: another plugin of the Document Server has the same origin. `twake-scribe:ready` is what gives Drive the window of the plugin, which changes when the editor starts the plugin again: Drive takes it only from a frame of the frame of the editor, and every later message also checks that window. The plugin only listens to the window that shows the editor. The plugin sends its messages to the origin of Drive only: the first one, before Drive has written to it, to the origin the `api.js` of the Document Server gives the editor (`parentOrigin` in the address of its frame).
 
 | Direction | `type` | Fields | Meaning |
 | --- | --- | --- | --- |
