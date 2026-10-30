@@ -245,11 +245,12 @@ export function readContent() {
 
   // The editor opens a fence on each code paragraph, after the text of a
   // line of spaces, and closes it after the last one only:
-  // "\n```\na\n\n\n```\nb\n```\n" is a block of two lines
+  // "\n```\na\n\n\n```\nb\n```\n" is a block of two lines. The spaces are
+  // the indent of the line: the first one gets its own too.
   const joinCodeLines = markdown => {
     let isOpen = false
     return markdown.replace(
-      /(\n\n([ \t]*))?\n```\n/g,
+      /(?:(\n\n|^)([ \t]*))?\n```\n/g,
       (fence, paragraphEnd, indent, at) => {
         const isNextLine = isOpen && paragraphEnd !== undefined
         if (markdown.startsWith('```\n', at + fence.length)) {
@@ -258,7 +259,8 @@ export function readContent() {
         }
         if (isNextLine) return `\n${indent}`
         isOpen = !isOpen
-        return fence
+        if (!isOpen || !indent) return fence
+        return `${paragraphEnd}\`\`\`\n${indent}`
       }
     )
   }
