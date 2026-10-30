@@ -108,16 +108,27 @@ export function selectInEditor(spec: string): {
     }
     return paragraph.GetRange(0, 0)
   }
-  // The cursor at an offset of the text: the editor does not move it to a
-  // collapsed range it selects
+  // The elements of a paragraph or a link: the builder gives nothing for an
+  // element of a link that is not a run
+  const getChildren = (element: any): any[] =>
+    Array.from({ length: element.GetElementsCount() }, (_, i) =>
+      element.GetElement(i)
+    ).filter(Boolean)
+  // The runs of a paragraph, those of its links included
+  const getRuns = (paragraph: any): any[] =>
+    getChildren(paragraph).flatMap(element => {
+      const type = element.GetClassType()
+      if (type === 'run') return [element]
+      return type === 'hyperlink' ? getChildren(element) : []
+    })
+  // The cursor at an offset of the text, those of its links included: the
+  // editor does not move it to a collapsed range it selects
   const placeCursor = (paragraph: any, offset: number): void => {
     let passed = 0
-    for (let i = 0; i < paragraph.GetElementsCount(); i += 1) {
-      const element = paragraph.GetElement(i)
-      if (element.GetClassType() !== 'run') continue
-      const length = element.GetText().replace(/[\r\n]+$/, '').length
+    for (const run of getRuns(paragraph)) {
+      const length = run.GetText().replace(/[\r\n]+$/, '').length
       if (offset <= passed + length) {
-        element.MoveCursorToPos(offset - passed)
+        run.MoveCursorToPos(offset - passed)
         return
       }
       passed += length
