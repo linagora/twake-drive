@@ -1442,11 +1442,27 @@ export function writeBlocks() {
     return found.size === 1 ? [...found.values()][0] : null
   }
 
+  // A text written in a link or in a content control, even at its edge,
+  // would become part of it: the link would take the answer
+  const isInLinkOrControl = (paragraph, point) => {
+    for (let i = 0; i < paragraph.GetElementsCount(); i += 1) {
+      const element = paragraph.GetElement(i)
+      const isHolder = ['hyperlink', 'inlineLvlSdt'].includes(
+        element?.GetClassType()
+      )
+      const range = isHolder ? element.GetRange() : null
+      if (range && range.GetStartPos() <= point && point <= range.GetEndPos()) {
+        return true
+      }
+    }
+    return false
+  }
+
   // Where an answer is inserted in the line of a text: at the end of the
   // selection, or at the cursor, with the text of its paragraph on each side.
-  // At the end of a paragraph, in an empty one, after cells, or for an answer
-  // with a table, as a caption and its table, it is written in new
-  // paragraphs.
+  // At the end of a paragraph, in an empty one, after cells, in a link or a
+  // content control, or for an answer with a table, as a caption and its
+  // table, it is written in new paragraphs.
   const findCursor = () => {
     if (hasTable) return null
     const paragraph = findAnchor()
@@ -1456,6 +1472,7 @@ export function writeBlocks() {
       : findCursorRange(paragraph)
     if (!range) return null
     const point = range.GetStartPos()
+    if (isInLinkOrControl(paragraph, point)) return null
     const whole = paragraph.GetRange()
     const after = getText(doc.GetRange(point, whole.GetEndPos())).replace(
       /[\n\t]+$/,

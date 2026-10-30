@@ -108,16 +108,24 @@ export function selectInEditor(spec: string): {
     }
     return paragraph.GetRange(0, 0)
   }
-  // The cursor at an offset of the text: the editor does not move it to a
-  // collapsed range it selects
+  // The cursor at an offset of the text, those of its links included: the
+  // editor does not move it to a collapsed range it selects
   const placeCursor = (paragraph: any, offset: number): void => {
-    let passed = 0
+    const runs: any[] = []
     for (let i = 0; i < paragraph.GetElementsCount(); i += 1) {
       const element = paragraph.GetElement(i)
-      if (element.GetClassType() !== 'run') continue
-      const length = element.GetText().replace(/[\r\n]+$/, '').length
+      if (element.GetClassType() === 'run') runs.push(element)
+      if (element.GetClassType() !== 'hyperlink') continue
+      for (let j = 0; j < element.GetElementsCount(); j += 1) {
+        const child = element.GetElement(j)
+        if (child) runs.push(child)
+      }
+    }
+    let passed = 0
+    for (const run of runs) {
+      const length = run.GetText().replace(/[\r\n]+$/, '').length
       if (offset <= passed + length) {
-        element.MoveCursorToPos(offset - passed)
+        run.MoveCursorToPos(offset - passed)
         return
       }
       passed += length
